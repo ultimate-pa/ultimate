@@ -6,4 +6,5 @@ Bundle-Version: 0.0.1
 Fragment-Host: de.uni_freiburg.informatik.ultimate.lib.srparse
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Require-Bundle: org.junit,
- de.uni_freiburg.informatik.ultimate.lib.pea
+ de.uni_freiburg.informatik.ultimate.lib.pea,
+ de.uni_freiburg.informatik.ultimate.lib.test

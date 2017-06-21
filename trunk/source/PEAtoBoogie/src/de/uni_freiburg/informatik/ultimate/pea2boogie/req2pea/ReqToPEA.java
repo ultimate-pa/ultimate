@@ -32,6 +32,7 @@ import java.util.List;
 import com.github.jhoenicke.javacup.runtime.Symbol;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.pea.modelchecking.J2UPPAALConverter;
 import de.uni_freiburg.informatik.ultimate.lib.pea.reqcheck.PatternToPEA;
@@ -39,14 +40,16 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.ReqParser;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 
 public class ReqToPEA {
-	private ILogger mLogger = null;
+	private final ILogger mLogger;
+	private final IUltimateServiceProvider mServices;
 
-	public ReqToPEA(final ILogger logger) {
+	public ReqToPEA(final IUltimateServiceProvider services, final ILogger logger) {
 		mLogger = logger;
+		mServices = services;
 	}
 
 	public PatternType[] genPatterns(final String reqFileName) throws Exception {
-		final ReqParser parser = new ReqParser(reqFileName);
+		final ReqParser parser = new ReqParser(mServices, mLogger, reqFileName);
 		final Symbol goal = parser.parse();
 		final PatternType[] patterns = (PatternType[]) goal.value;
 		return patterns;

@@ -13,70 +13,70 @@ public class InstAbsPattern extends PatternType {
 	public void transform() {
 
 		// Case: GLOBALLY
-		if (scope instanceof srParseScopeGlob) {
-			if (cdds.size() != 1) {
+		if (mScope instanceof srParseScopeGlob) {
+			if (mCdds.size() != 1) {
 				// Das AbsentPattern besitzt nur zwei-drei nonLiteralTerminals!
 				System.out.println("ERROR: Wrong number of nonLiteralTerminals for the absentPattern");
 			}
 
-			final CDD p_cdd = cdds.get(0); // für Duration Calculus muß das als CDD gegeben sein
-			final CDD q_cdd = getDefaultQ_cdd();
-			final CDD r_cdd = getDefaultR_cdd();
+			final CDD p_cdd = mCdds.get(0); // für Duration Calculus muß das als CDD gegeben sein
+			final CDD q_cdd = DEFAULT_Q;
+			final CDD r_cdd = DEFAULT_R;
 
-			pea = peaTransformator.absencePattern(p_cdd, q_cdd, r_cdd, scope.toString());
+			mPea = mPeaTransformator.absencePattern(p_cdd, q_cdd, r_cdd, mScope.toString());
 		}
 		// CASE: BEFORE R
-		else if (scope instanceof srParseScopeBefore) {
-			if (cdds.size() != 2) {
+		else if (mScope instanceof srParseScopeBefore) {
+			if (mCdds.size() != 2) {
 				// Das AbsentPattern besitzt nur zwei-drei nonLiteralTerminals!
 				System.out.println("ERROR: Wrong number of nonLiteralTerminals for the absentPattern");
 			}
 
-			final CDD p_cdd = cdds.get(0); // für Duration Calculus muß das als CDD gegeben sein
-			final CDD q_cdd = getDefaultQ_cdd();
-			final CDD r_cdd = cdds.get(1);
+			final CDD p_cdd = mCdds.get(0); // für Duration Calculus muß das als CDD gegeben sein
+			final CDD q_cdd = DEFAULT_Q;
+			final CDD r_cdd = mCdds.get(1);
 
-			pea = peaTransformator.absencePattern(p_cdd, q_cdd, r_cdd, scope.toString());
+			mPea = mPeaTransformator.absencePattern(p_cdd, q_cdd, r_cdd, mScope.toString());
 
 		}
 		// CASE: AFTER Q UNTIL R
-		else if (scope instanceof srParseScopeAfterUntil) {
-			if (cdds.size() != 1) {
+		else if (mScope instanceof srParseScopeAfterUntil) {
+			if (mCdds.size() != 1) {
 				// Das AbsentPattern besitzt nur zwei-drei nonLiteralTerminals!
 				System.out.println("ERROR: Wrong number of nonLiteralTerminals for the absentPattern");
 			}
 
-			final CDD p_cdd = cdds.get(0);
-			final CDD q_cdd = scope.getCdd1();
-			final CDD r_cdd = scope.getCdd2();
+			final CDD p_cdd = mCdds.get(0);
+			final CDD q_cdd = mScope.getCdd1();
+			final CDD r_cdd = mScope.getCdd2();
 
-			pea = peaTransformator.absencePattern(p_cdd, q_cdd, r_cdd, scope.toString());
+			mPea = mPeaTransformator.absencePattern(p_cdd, q_cdd, r_cdd, mScope.toString());
 
 		}
 		// CASE: AFTER Q
-		else if (scope instanceof srParseScopeAfter) {
-			if (cdds.size() != 1) {
+		else if (mScope instanceof srParseScopeAfter) {
+			if (mCdds.size() != 1) {
 				// Das AbsentPattern besitzt nur zwei-drei nonLiteralTerminals!
 				System.out.println("ERROR: Wrong number of nonLiteralTerminals for the absentPattern");
 			}
-			final CDD p_cdd = cdds.get(0); // für Duration Calculus muß das als CDD gegeben sein
-			final CDD q_cdd = scope.getCdd1();
-			final CDD r_cdd = getDefaultR_cdd();
+			final CDD p_cdd = mCdds.get(0); // für Duration Calculus muß das als CDD gegeben sein
+			final CDD q_cdd = mScope.getCdd1();
+			final CDD r_cdd = DEFAULT_R;
 
-			pea = peaTransformator.absencePattern(p_cdd, q_cdd, r_cdd, scope.toString());
+			mPea = mPeaTransformator.absencePattern(p_cdd, q_cdd, r_cdd, mScope.toString());
 		}
 		// CASE: BETWEEN Q AND R
-		else if (scope instanceof srParseScopeBetween) {
-			if (cdds.size() != 1) {
+		else if (mScope instanceof srParseScopeBetween) {
+			if (mCdds.size() != 1) {
 				// Das AbsentPattern besitzt nur zwei-drei nonLiteralTerminals!
 				System.out.println("ERROR: Wrong number of nonLiteralTerminals for the absentPattern");
 			}
 
-			final CDD p_cdd = cdds.get(0); // für Duration Calculus muß das als CDD gegeben sein
-			final CDD q_cdd = scope.getCdd1();
-			final CDD r_cdd = scope.getCdd2();
+			final CDD p_cdd = mCdds.get(0); // für Duration Calculus muß das als CDD gegeben sein
+			final CDD q_cdd = mScope.getCdd1();
+			final CDD r_cdd = mScope.getCdd2();
 
-			pea = peaTransformator.absencePattern(p_cdd, q_cdd, r_cdd, scope.toString());
+			mPea = mPeaTransformator.absencePattern(p_cdd, q_cdd, r_cdd, mScope.toString());
 			// return this.getFormulaInLTL();
 		}
 	}
@@ -85,7 +85,7 @@ public class InstAbsPattern extends PatternType {
 	public String toString() {
 		String res = new String();
 
-		res = "it is never the case that \"" + cdds.get(0) + "\" holds";
+		res = "it is never the case that \"" + mCdds.get(0) + "\" holds";
 
 		return res;
 	}

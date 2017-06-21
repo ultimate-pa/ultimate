@@ -4,6 +4,7 @@ import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import org.hamcrest.core.Is;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -12,6 +13,7 @@ import org.junit.runners.Parameterized.Parameters;
 
 import com.github.jhoenicke.javacup.runtime.Symbol;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.ReqLexer;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.ReqParser;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.srParseScopeAfter;
@@ -19,6 +21,7 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.srParseScopeBefore;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.srParseScopeBetween;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.srParseScopeGlob;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
+import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
 
 @RunWith(Parameterized.class)
 public class BoogieRequirementsParserTestAllPatterns {
@@ -35,6 +38,7 @@ public class BoogieRequirementsParserTestAllPatterns {
 		final PatternType[] parsedPatterns = genPatterns(t.testString);
 
 		Assert.assertNotNull(t.testString, parsedPatterns);
+		Assert.assertThat(parsedPatterns.length, Is.is(1));
 		Assert.assertNotNull("failed parsing: " + t.testString, parsedPatterns[0]);
 		Assert.assertTrue("fail recognize: " + t.scopezz.toString() + "[" + t.scopezz + "]:\n" + t.testString,
 				parsedPatterns[0].getScope().getClass() == t.scopezz);
@@ -50,9 +54,10 @@ public class BoogieRequirementsParserTestAllPatterns {
 	 * @throws Exception
 	 */
 	private PatternType[] genPatterns(final String testInput) throws Exception {
+		final IUltimateServiceProvider services = UltimateMocks.createUltimateServiceProviderMock();
 		final StringReader sr = new StringReader(testInput);
 		final ReqLexer lexer = new ReqLexer(sr);
-		final ReqParser parser = new ReqParser(lexer);
+		final ReqParser parser = new ReqParser(services, services.getLoggingService().getLogger(getClass()), lexer);
 
 		final Symbol goal = parser.parse();
 		final PatternType[] patterns = (PatternType[]) goal.value;

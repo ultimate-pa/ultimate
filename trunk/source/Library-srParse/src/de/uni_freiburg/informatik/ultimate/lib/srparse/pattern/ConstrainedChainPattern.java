@@ -6,20 +6,20 @@ public class ConstrainedChainPattern extends PatternType
 {
 	public void transform()
 	{
-		CDD p_cdd = cdds.get(0); 
-		CDD q_cdd = scope.getCdd1(); 
-		CDD r_cdd = scope.getCdd2();
+		CDD p_cdd = mCdds.get(0); 
+		CDD q_cdd = mScope.getCdd1(); 
+		CDD r_cdd = mScope.getCdd2();
 		
 		System.err.println( "Kein PEA" );
 		
-		pea = null;//peaTransformator.bndExistencePattern(p_cdd, q_cdd, r_cdd, scope.toString());
+		mPea = null;//peaTransformator.bndExistencePattern(p_cdd, q_cdd, r_cdd, scope.toString());
 	}
 	
 	public String toString()
 	{
 		String res=new String();
 		
-		res="it is always the case that if \""+cdds.get(5)+"\" holds, then \""+cdds.get(4)+"\" eventually holds and is succeeded by \""+cdds.get(3)+"\", where \""+cdds.get(2)+"\" does not hold between \""+cdds.get(1)+"\" and \""+cdds.get(0)+"\"";
+		res="it is always the case that if \""+mCdds.get(5)+"\" holds, then \""+mCdds.get(4)+"\" eventually holds and is succeeded by \""+mCdds.get(3)+"\", where \""+mCdds.get(2)+"\" does not hold between \""+mCdds.get(1)+"\" and \""+mCdds.get(0)+"\"";
 		
 		return res;
 	}

@@ -62,6 +62,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Phase;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseBits;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
@@ -79,7 +80,7 @@ public class Translator {
 	/**
 	 * The name of the input file containing the requirements/peas.
 	 */
-	public String inputFilePath;
+	private String mInputFilePath;
 
 	/**
 	 * The address of the Boogie text file.
@@ -136,12 +137,14 @@ public class Translator {
 	 * The boogie locations used to annotate the boogie code. This array contains the location for requirement reqNr in
 	 * index reqNr+1 and the location for code that is not specific to any requirements in index 0.
 	 */
-	public BoogieLocation[] boogieLocations;
+	private BoogieLocation[] mBoogieLocations;
 
 	private final ILogger mLogger;
+	private final IUltimateServiceProvider mServices;
 
-	public Translator(final ILogger logger) {
+	public Translator(final IUltimateServiceProvider services, final ILogger logger) {
 		mLogger = logger;
+		mServices = services;
 	}
 
 	/**
@@ -152,11 +155,11 @@ public class Translator {
 	 *            input file name.
 	 */
 	public void setInputFilePath(final String path) {
-		inputFilePath = path;
+		mInputFilePath = path;
 	}
 
 	public String getInputFilePath() {
-		return inputFilePath;
+		return mInputFilePath;
 	}
 
 	/**
@@ -205,7 +208,7 @@ public class Translator {
 	public void genGlobVars() {
 
 		try {
-			final BoogieLocation blUnit = boogieLocations[0];
+			final BoogieLocation blUnit = mBoogieLocations[0];
 			final BoogieLocation blVar = blUnit;
 			final BoogieLocation blPrimType = blUnit;
 
@@ -868,7 +871,7 @@ public class Translator {
 	 * result is a Boogie text file.
 	 */
 	public Unit genProc() {
-		final BoogieLocation bl = boogieLocations[0];
+		final BoogieLocation bl = mBoogieLocations[0];
 		final VariableDeclaration[] localVars = new VariableDeclaration[0];
 		final Body body = new Body(bl, localVars, genProcBodySmts(bl));
 		final List<String> modifiedVarsList = new ArrayList<>();
@@ -908,13 +911,13 @@ public class Translator {
 	}
 
 	public void initBoogieLocations(final int count) {
-		if (inputFilePath == null) {
-			inputFilePath = boogieFilePath;
+		if (mInputFilePath == null) {
+			mInputFilePath = boogieFilePath;
 		}
-		boogieLocations = new BoogieLocation[count + 1];
-		boogieLocations[0] = new BoogieLocation(inputFilePath, 1, count, 0, 100, false);
+		mBoogieLocations = new BoogieLocation[count + 1];
+		mBoogieLocations[0] = new BoogieLocation(mInputFilePath, 1, count, 0, 100, false);
 		for (int i = 0; i < count; i++) {
-			boogieLocations[i + 1] = new BoogieLocation(inputFilePath, i + 1, i + 1, 0, 100, false);
+			mBoogieLocations[i + 1] = new BoogieLocation(mInputFilePath, i + 1, i + 1, 0, 100, false);
 		}
 	}
 
@@ -924,7 +927,7 @@ public class Translator {
 
 	public Unit genBoogie(final PatternType[] patterns) {
 		mRequirements = patterns;
-		return genBoogie(new ReqToPEA(mLogger).genPEA(patterns));
+		return genBoogie(new ReqToPEA(mServices, mLogger).genPEA(patterns));
 	}
 
 	public Unit genBoogie(final PhaseEventAutomata[] automata) {

@@ -13,18 +13,18 @@ public class UniversalityPattern extends PatternType
 		*/
 		
 		
-		CDD p_cdd = cdds.get(0); 
-		CDD q_cdd = scope.getCdd1(); 
-		CDD r_cdd = scope.getCdd2();
+		CDD p_cdd = mCdds.get(0); 
+		CDD q_cdd = mScope.getCdd1(); 
+		CDD r_cdd = mScope.getCdd2();
 					
-		pea = peaTransformator.universalityPattern(p_cdd, q_cdd, r_cdd, scope.toString());
+		mPea = mPeaTransformator.universalityPattern(p_cdd, q_cdd, r_cdd, mScope.toString());
 	}
 	
 	public String toString()
 	{
 		String res=new String();
 		
-		res="it is always the case that \""+cdds.get(0)+"\" holds";
+		res="it is always the case that \""+mCdds.get(0)+"\" holds";
 		
 		return res;
 	}

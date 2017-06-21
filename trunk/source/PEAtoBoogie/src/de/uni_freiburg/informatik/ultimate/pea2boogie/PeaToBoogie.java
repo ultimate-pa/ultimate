@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.Translator;
 public class PeaToBoogie implements ISource {
 	private ILogger mLogger;
 	private List<String> mFileNames = new ArrayList<>();
+	private IUltimateServiceProvider mServices;
 
 	@Override
 	public void init() {
@@ -84,16 +85,17 @@ public class PeaToBoogie implements ISource {
 	}
 
 	private IElement parseAST(final File file) throws Exception {
-		final Translator translator = new Translator(mLogger);
+		final Translator translator = new Translator(mServices, mLogger);
 		final String inputPath = file.getAbsolutePath();
 		mFileNames = new ArrayList<>();
 		mFileNames.add(inputPath);
 		mLogger.info("Parsing: '" + inputPath + "'");
-		final PatternType[] patterns = new ReqToPEA(mLogger).genPatterns(inputPath);
+		final PatternType[] patterns = new ReqToPEA(mServices, mLogger).genPatterns(inputPath);
 
 		if (Arrays.stream(patterns).anyMatch(Objects::isNull)) {
 			throw new Exception("The parser had errors but didnt tell anyone");
 		}
+		mLogger.info("Successfully parsed " + patterns.length + " requirements");
 
 		// TODO: Add options to this cruel program
 		final BitSet vacuityChecks = new BitSet(patterns.length);
@@ -134,6 +136,7 @@ public class PeaToBoogie implements ISource {
 
 	@Override
 	public void setServices(final IUltimateServiceProvider services) {
+		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 	}
 
