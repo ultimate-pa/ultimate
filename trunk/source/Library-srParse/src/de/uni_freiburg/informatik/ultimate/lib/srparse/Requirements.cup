@@ -38,23 +38,33 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 
 parser ReqParser;
 option symbols = ReqSymbols;
 option java15, compact_red, newpositions;
 
 parser code {:
-	String filename;
-	Symbol lookahead;
-	String error;
-	
-	public ReqParser(String filename) throws IOException {
-		this(new ReqLexer(new FileReader(filename)));
-		setFileName(filename);
-	}
 
-	public void setFileName(String filename) {
-		this.filename = filename;
+	private IUltimateServiceProvider mServices;	
+	private String mFilename;
+	private ILogger mLogger;
+	private Symbol lookahead;
+
+	
+	public ReqParser(final IUltimateServiceProvider services, final ILogger logger, final String filename) throws IOException {
+		this(new ReqLexer(new FileReader(filename)));
+		mServices = services;
+		mLogger = logger;
+		mFilename = filename;
+	}
+	
+		public ReqParser(final IUltimateServiceProvider services, final ILogger logger, final ReqLexer lexer) throws IOException {
+		this(lexer);
+		mServices = services;
+		mLogger = logger;
+		mFilename = null;
 	}
 	
 	public void report_error(String s, Object sym) {
@@ -65,10 +75,11 @@ parser code {:
 	    } else if ((sym instanceof Symbol) 
 	    	       && ((Symbol)sym).sym == ReqSymbols.EOF) {
 	    	location = "EOF";
-	    } else
+	    } else {
 	        location = "UNKNOWN";
-	    
-	    error = filename+":"+location+": "+s;
+	    }
+	    final String filename = mFilename == null ? "" : (mFilename+":");
+	    mLogger.error(filename + location + ": " + s);
 	}
 
 	public void report_error(String s) {	
@@ -77,21 +88,6 @@ parser code {:
 	
 	public void syntax_error(Symbol sym) {
 	    report_error("Syntax Error", sym);
-		System.err.println(error);
-		error = null;
-	}
-
-	public Symbol nextToken() throws Exception {
-		Symbol token = lookahead != null ? lookahead : 
-			getScanner().next_token();
-		lookahead = null;
-		if (token.sym == ReqSymbols.DOT) {
-			lookahead = getScanner().next_token();
-			if (lookahead.sym == ReqSymbols.ID) {
-				token.sym = ReqSymbols.IDDOT;
-			}
-		}
-		return token;
 	}
 :}
 
@@ -120,8 +116,7 @@ action code {:
 :}
 
 /*init with {: getScanner().init(); :} */
-scan with {: return nextToken(); :}
-
+scan with {: return getScanner().next_token(); :}
 
 /* Keywords */
 terminal GLOBALLY, BEFORE, AFTER, BETWEEN, AND, UNTIL, INPUT, OUTPUT, INTERNAL;
@@ -136,7 +131,7 @@ terminal MOST, LEAST, LESS, THAN;
 terminal TIME, UNITS, SEC, USEC, MSEC;
 terminal THERE, ONE, EXECUTION, SEQUENCE, SUCH;
 /* Other Symbols */
-terminal IDDOT, DOT, COMMA;
+terminal DOT, COMMA, IDSEP;
 terminal LAND, LOR, LNOT;
 terminal LPAR, RPAR, QUOTE;
 terminal LE, GREATER, LTEQ, GTEQ, NEQ, EQ, PARTORDER;
@@ -150,6 +145,7 @@ terminal String NUMBER;
 
 
 /* Non-terminals */
+non terminal String propid;
 non terminal CDD expression, expr;
 non terminal String atom, cid;
 non terminal PatternType property;
@@ -171,17 +167,21 @@ patternset ::=
 	property*:set {: RESULT = set; :}
 	;
 
-property ::= scope:s COMMA? pattern:p DOT?
-             {: p.setScope(s); RESULT = p; :}
-           | error
-             {: RESULT = null; :}
+property ::= propid?:id scope:s COMMA? pattern:p DOT?
+               {: p.setScope(s); p.setId(id); RESULT = p; :}
+            | error
+               {: RESULT = null; :}
           	| INPUT cid:i IS ID:t
-		  	{: RESULT = new InitializationPattern(i,t,InitializationPattern.VarAccess.in); :}
+		  	   {: RESULT = new InitializationPattern(i,t,InitializationPattern.VarAccess.in); :}
 		  	| OUTPUT cid:i IS ID:t
-		  	{: RESULT = new InitializationPattern(i,t,InitializationPattern.VarAccess.out); :}
+		  	   {: RESULT = new InitializationPattern(i,t,InitializationPattern.VarAccess.out); :}
 		 	| INTERNAL cid:i IS ID:t
-		  	{: RESULT = new InitializationPattern(i,t,InitializationPattern.VarAccess.hidden); :}
+		  	   {: RESULT = new InitializationPattern(i,t,InitializationPattern.VarAccess.hidden); :}
            ;
+
+propid ::= ID:id IDSEP
+			{: RESULT = id; :}
+		;
 
 scope ::=
     GLOBALLY
@@ -305,7 +305,7 @@ realtimepattern ::=
   ;
 
 expression ::= QUOTE expr:e QUOTE {: RESULT = e; :}
-             | expr;
+ ;
              
 expr ::= LPAR expr:e RPAR {: RESULT = e; :}
        | expr:e1 LAND expr:e2 {: RESULT = e1.and(e2); :}
@@ -362,7 +362,7 @@ expr9NI ::= REALNUMBER:n
 	;
 	
 cid ::= ID
-      | cid:c IDDOT ID:id {: RESULT= c + "." + id; :}
+      | cid:c DOT ID:id {: RESULT= c + "." + id; :}
       ;
 
 bool ::= TRUE {: RESULT = true; :}

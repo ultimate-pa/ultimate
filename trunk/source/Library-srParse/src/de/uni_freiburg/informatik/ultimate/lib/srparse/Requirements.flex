@@ -1,4 +1,4 @@
-/* Boogie 2 lexer */
+/* Requirements lexer */
 package de.uni_freiburg.informatik.ultimate.lib.srparse;
 import com.github.jhoenicke.javacup.runtime.Symbol;
 
@@ -56,7 +56,7 @@ RealIntegerLiteral = {DecIntegerLiteral} "." [0-9]+
    "initially"      { return symbol(ReqSymbols.INITIALLY); }
    "Input"      	{ return symbol(ReqSymbols.INPUT); }
    "Output"      	{ return symbol(ReqSymbols.OUTPUT); }
-   "Internal"     	 { return symbol(ReqSymbols.INTERNAL); }
+   "Internal"     	{ return symbol(ReqSymbols.INTERNAL); }
    "one"            { return symbol(ReqSymbols.ONE); }
    "sequence"       { return symbol(ReqSymbols.SEQUENCE); }
    "such"           { return symbol(ReqSymbols.SUCH); }
@@ -123,9 +123,10 @@ RealIntegerLiteral = {DecIntegerLiteral} "." [0-9]+
   ")"             { return symbol(ReqSymbols.RPAR); }
   ","             { return symbol(ReqSymbols.COMMA); }
   "."             { return symbol(ReqSymbols.DOT); }
+  ":"             { return symbol(ReqSymbols.IDSEP); }
   
-  "true"             { return symbol(ReqSymbols.TRUE); }
-  "false"             { return symbol(ReqSymbols.FALSE); }
+  "true"          { return symbol(ReqSymbols.TRUE); }
+  "false"         { return symbol(ReqSymbols.FALSE); }
   
   "<"             { return symbol(ReqSymbols.LE); }
   ">"             { return symbol(ReqSymbols.GREATER); }

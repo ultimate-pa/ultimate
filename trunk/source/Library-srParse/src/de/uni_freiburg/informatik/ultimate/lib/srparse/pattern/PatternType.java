@@ -110,4 +110,12 @@ public class PatternType {
 	public String toString() {
 		return mScope.toString() + this.getClass().toString();
 	}
+
+	public void setId(final String id) {
+		mId = id;
+	}
+
+	public String getId() {
+		return mId;
+	}
 }

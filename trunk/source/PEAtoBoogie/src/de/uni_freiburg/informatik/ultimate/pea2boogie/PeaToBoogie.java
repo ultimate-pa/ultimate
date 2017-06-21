@@ -95,7 +95,8 @@ public class PeaToBoogie implements ISource {
 		if (Arrays.stream(patterns).anyMatch(Objects::isNull)) {
 			throw new Exception("The parser had errors but didnt tell anyone");
 		}
-		mLogger.info("Successfully parsed " + patterns.length + " requirements");
+		final long patternWithId = Arrays.stream(patterns).filter(a -> a.getId() != null).count();
+		mLogger.info("Successfully parsed " + patterns.length + " requirements (" + patternWithId + " named ones)");
 
 		// TODO: Add options to this cruel program
 		final BitSet vacuityChecks = new BitSet(patterns.length);
