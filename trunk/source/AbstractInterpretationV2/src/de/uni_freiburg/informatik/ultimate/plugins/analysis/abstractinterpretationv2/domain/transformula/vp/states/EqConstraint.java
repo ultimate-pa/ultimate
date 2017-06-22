@@ -21,12 +21,15 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ConstantFinder;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.IEqNodeIdentifier;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainHelpers;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainSymmetricPair;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqFunctionNode;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.IEqFunctionIdentifier;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
-public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>, NODE extends IEqNodeIdentifier<NODE, FUNCTION>, FUNCTION extends IEqFunctionIdentifier<NODE, FUNCTION>> {
+public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>, 
+		NODE extends IEqNodeIdentifier<NODE, FUNCTION>, 
+		FUNCTION extends IEqFunctionIdentifier<NODE, FUNCTION>> {
 	// implements IAbstractState<EqConstraint<ACTION, NODE, FUNCTION>,
 	// IProgramVarOrConst> {
 
@@ -103,17 +106,31 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>, NODE ext
 
 	public void havoc(NODE node) {
 		assert !mIsFrozen;
-		if (!mNodes.contains(node)) {
+		if (!mNodes.contains(node) || isBottom()) {
+			assert VPDomainHelpers.constraintFreeOfVars(Arrays.asList(node.getTerm().getFreeVars()), 
+					this, 
+					mFactory.getEqNodeAndFunctionFactory().getScript().getScript()) : 
+						"resulting constraint still has at least one of the to-be-projected vars";
 			return;
 		}
-		if (isBottom()) {
-			return;
-		}
+
 		mElementCongruenceGraph.havoc(node);
+//		assert VPDomainHelpers.constraintFreeOfVars(Arrays.asList(node.getTerm().getFreeVars()), 
+//				this, 
+//				mFactory.getEqNodeAndFunctionFactory().getScript().getScript()) : 
+//					"resulting constraint still has at least one of the to-be-projected vars";
 	}
 
 	public void havocFunction(FUNCTION func) {
 		assert !mIsFrozen;
+
+//		if (!mFunctions.stream().anyMatch(f -> f.dependsOn(func)) || isBottom()) {
+		if (!mFunctions.contains(func) || isBottom()) {
+//			assert VPDomainHelpers.constraintFreeOfVars(Arrays.asList(func.getTerm().getFreeVars()), this, 
+//				mFactory.getEqNodeAndFunctionFactory().getScript().getScript()) : 
+//					"resulting constraint still has at least one of the to-be-projected vars";
+			return;
+		}
 
 		// havoc all dependent nodes
 		final Set<NODE> nodesWithFunc = mNodes.stream()
@@ -122,6 +139,11 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>, NODE ext
 		nodesWithFunc.stream().forEach(node -> havoc(node));
 
 		mFunctionEquivalenceGraph.havocFunction(func);
+		assert !getAllFunctions().contains(func);
+//		assert VPDomainHelpers.constraintFreeOfVars(Arrays.asList(func.getTerm().getFreeVars()), this, 
+//				mFactory.getEqNodeAndFunctionFactory().getScript().getScript()) : 
+//					"resulting constraint still has at least one of the to-be-projected vars";
+
 
 		// // remove from function disequalities
 		//// mFunctionDisequalities.removeIf(pair -> pair.contains(func));
@@ -281,29 +303,36 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>, NODE ext
 		final EqConstraint<ACTION, NODE, FUNCTION> unfrozen = mFactory.unfreeze(this);
 
 		for (TermVariable var : varsToProjectAway) {
-			if (var.getSort().isArraySort()) {
-				FUNCTION funcCorrespondingToVariable = getFunctionForTerm(var);
-				unfrozen.havocFunction(funcCorrespondingToVariable);
-			} else {
-				NODE nodeCorrespondingToVariable = getNodeForTerm(var);
-				unfrozen.havoc(nodeCorrespondingToVariable);
-			}
+			unfrozen.havoc(var);
+//			if (var.getSort().isArraySort()) {
+//				FUNCTION funcCorrespondingToVariable = getFunctionForTerm(var);
+//				unfrozen.havocFunction(funcCorrespondingToVariable);
+//			} else {
+//				NODE nodeCorrespondingToVariable = getNodeForTerm(var);
+//				unfrozen.havoc(nodeCorrespondingToVariable);
+//			}
 		}
 		unfrozen.freeze();
-		assert varsToProjectAway.isEmpty() || !varsToProjectAway.stream().map(tv -> 
-			unfrozen.getAllNodes().stream()
-				.anyMatch(node -> 
-					Arrays.asList(node.getTerm().getFreeVars()).contains(tv)))
-				.reduce((a, b) -> a || b)
-			.get() : "resulting constraint still has at least one of the to-be-projected vars";
-		assert varsToProjectAway.isEmpty() || !varsToProjectAway.stream().map(tv -> 
-			unfrozen.getAllFunctions().stream()
-				.anyMatch(func -> 
-					Arrays.asList(func.getTerm().getFreeVars()).contains(tv)))
-				.reduce((a, b) -> a || b)
-			.get() : "resulting constraint still has at least one of the to-be-projected vars";
+		assert VPDomainHelpers.constraintFreeOfVars(varsToProjectAway, unfrozen, 
+				mFactory.getEqNodeAndFunctionFactory().getScript().getScript()) : 
+					"resulting constraint still has at least one of the to-be-projected vars";
 
 		return unfrozen;
+	}
+
+
+	private void havoc(TermVariable var) {
+		
+		final Set<NODE> nodesWithVar = getAllNodes().stream()
+				.filter(n -> Arrays.asList(n.getTerm().getFreeVars()).contains(var)).collect(Collectors.toSet());
+		final Set<FUNCTION> functionsWithVar = getAllFunctions().stream()
+				.filter(f -> Arrays.asList(f.getTerm().getFreeVars()).contains(var)).collect(Collectors.toSet());
+		
+		nodesWithVar.forEach(f -> havoc(f));
+		functionsWithVar.forEach(f -> havocFunction(f));
+		assert VPDomainHelpers.constraintFreeOfVars(Collections.singleton(var), this, 
+				mFactory.getEqNodeAndFunctionFactory().getScript().getScript()) : 
+					"resulting constraint still has at least one of the to-be-projected vars";
 	}
 
 	private FUNCTION getFunctionForTerm(Term var) {
@@ -547,7 +576,7 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>, NODE ext
 	}
 
 	public Term getTerm(Script script) {
-		assert mIsFrozen : "not yet frozen, term may not be final..";
+//		assert mIsFrozen : "not yet frozen, term may not be final..";
 		if (mTerm == null) {
 			final List<Term> elementEqualities = getSupportingElementEqualities().entrySet().stream()
 					.map(en -> script.term("=", en.getKey().getTerm(), en.getValue().getTerm()))

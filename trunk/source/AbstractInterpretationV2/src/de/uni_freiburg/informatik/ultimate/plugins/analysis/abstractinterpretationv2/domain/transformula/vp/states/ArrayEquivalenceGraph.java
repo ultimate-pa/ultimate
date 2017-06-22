@@ -5,7 +5,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
@@ -137,14 +136,18 @@ public class ArrayEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		}
 		mFunctionEqualities = newFunctionEqualities;	
 		
+		assert !mFunctionEqualities.getAllEquivalenceClasses().stream()
+			.map(eqc -> eqc.contains(func))
+			.reduce((a,b) -> a || b).get();
 		mOwner.removeFunction(func);
 
-		// call recursively on all functions depending on func
-		final Set<FUNCTION> dependentFunctions = 
-				mOwner.getAllFunctions().stream().filter(f -> f.dependsOn(func)).collect(Collectors.toSet());
-		for (FUNCTION f : dependentFunctions) {
-			havocFunction(f);
-		}
+//		// EDIT (22/06/2017): don't do any recursion because we call havoc on dependent nodes anyway
+//		// call recursively on all functions depending on func
+//		final Set<FUNCTION> dependentFunctions = 
+//				mOwner.getAllFunctions().stream().filter(f -> f.dependsOn(func)).collect(Collectors.toSet());
+//		for (FUNCTION f : dependentFunctions) {
+//			havocFunction(f);
+//		}
 	}
 
 	public void addFunction(FUNCTION func) {

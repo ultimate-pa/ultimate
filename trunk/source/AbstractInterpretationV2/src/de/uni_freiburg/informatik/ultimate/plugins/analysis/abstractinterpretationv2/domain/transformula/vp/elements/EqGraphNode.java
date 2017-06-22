@@ -74,15 +74,16 @@ public class EqGraphNode<NODE extends IEqNodeIdentifier<NODE, FUNCTION>,
 	public EqGraphNode(NODE id) {
 		assert id != null;
 		
-		this.mNodeIdentifier = id;
-		this.mRepresentative = this;
-		this.mReverseRepresentative = new HashSet<>();
-		this.mCcpar = new HashSet<>();
-		this.mCcchild = new HashRelation<>();
+		mNodeIdentifier = id;
+		mRepresentative = this;
+		mReverseRepresentative = new HashSet<>();
+		mReverseRepresentative.add(this);
+		mCcpar = new HashSet<>();
+		mCcchild = new HashRelation<>();
 //		this.mInitCcpar = null;
-		this.mInitCcpar = new HashSet<>();
+		mInitCcpar = new HashSet<>();
 		if (id.isFunction()) {
-			this.mInitCcchild = id.getArgs();
+			mInitCcchild = id.getArgs();
 			mCcchild.addPair(mNodeIdentifier.getFunction(), id.getArgs());
 		}
 	}
@@ -107,8 +108,12 @@ public class EqGraphNode<NODE extends IEqNodeIdentifier<NODE, FUNCTION>,
 //	}
 
 	public void setNodeToInitial() {
-		mRepresentative = this;
-		mReverseRepresentative.clear();
+//		mRepresentative = this;
+//		mReverseRepresentative.clear();
+//		mReverseRepresentative.add(this);
+		setRepresentative(this);
+		
+		
 
 		mCcpar.clear();
 		mCcpar.addAll(mInitCcpar);
@@ -120,6 +125,9 @@ public class EqGraphNode<NODE extends IEqNodeIdentifier<NODE, FUNCTION>,
 		if (mNodeIdentifier.isFunction()) {
 			mCcchild.addPair(mNodeIdentifier.getFunction(), mInitCcchild);
 		}
+		
+		
+
 	}	
 	
 	public EqGraphNode<NODE, FUNCTION> find() {
@@ -179,21 +187,29 @@ public class EqGraphNode<NODE extends IEqNodeIdentifier<NODE, FUNCTION>,
 	}
 
 	public void setRepresentative(EqGraphNode<NODE, FUNCTION> representative) {
-		this.mRepresentative = representative;
+		
+		EqGraphNode<NODE, FUNCTION> oldRepresentative = mRepresentative;
+		oldRepresentative.removeReverseRepresentative(this);
+
+		mRepresentative = representative;
+		representative.addToReverseRepresentative(this);
+
+
 		//TODO check
         // if (eqNodes are identical) then (graphnodes must be identical)
         assert this.mRepresentative.mNodeIdentifier != this.mNodeIdentifier || this.mRepresentative == this;
+
 	}
 
 	public Set<EqGraphNode<NODE, FUNCTION>> getReverseRepresentative() {
-		return mReverseRepresentative;
+		return Collections.unmodifiableSet(mReverseRepresentative);
 	}
 
-	public void setReverseRepresentative(Set<EqGraphNode<NODE, FUNCTION>> reverseRepresentative) {
-		this.mReverseRepresentative = reverseRepresentative;
-	}
+//	public void setReverseRepresentative(Set<EqGraphNode<NODE, FUNCTION>> reverseRepresentative) {
+//		this.mReverseRepresentative = reverseRepresentative;
+//	}
 
-	public void addToReverseRepresentative(EqGraphNode<NODE, FUNCTION> reverseRepresentative) {
+	private void addToReverseRepresentative(EqGraphNode<NODE, FUNCTION> reverseRepresentative) {
 		this.mReverseRepresentative.add(reverseRepresentative);
 	}
 
@@ -312,5 +328,10 @@ public class EqGraphNode<NODE extends IEqNodeIdentifier<NODE, FUNCTION>,
 
 	public void removeFromCcchild(HashRelation<FUNCTION, List<NODE>> ccchild) {
 		mCcchild.removeAllPairs(ccchild);
+	}
+
+	private void removeReverseRepresentative(EqGraphNode<NODE, FUNCTION> graphNodeForNodeToBeHavocced) {
+		assert mReverseRepresentative.contains(graphNodeForNodeToBeHavocced);
+		mReverseRepresentative.remove(graphNodeForNodeToBeHavocced);
 	}
 }

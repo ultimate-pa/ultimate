@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -38,15 +39,21 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalStore;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqFunction;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqGraphNode;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNode;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.IEqFunctionIdentifier;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.EqConstraint;
 
 /**
  *
@@ -433,4 +440,51 @@ public class VPDomainHelpers {
 ////		return resultStates.stream().filter(state -> !state.isBottom()).collect(Collectors.toSet());
 //	}
 
+	public static <ACTION extends IIcfgTransition<IcfgLocation>, 
+		NODE extends IEqNodeIdentifier<NODE, FUNCTION>, 
+		FUNCTION extends IEqFunctionIdentifier<NODE, FUNCTION>> boolean 
+			constraintFreeOfVars(final Collection<TermVariable> varsToProjectAway,
+					final EqConstraint<ACTION, NODE, FUNCTION> unfrozen, 
+					final Script script) {
+		if (varsToProjectAway.isEmpty()) {
+			return true;
+		}
+		if (varsToProjectAway.stream().map(tv -> 
+			unfrozen.getAllNodes().stream()
+				.anyMatch(node -> 
+					Arrays.asList(node.getTerm().getFreeVars()).contains(tv)))
+				.reduce((a, b) -> a || b)
+			.get()) {
+			return false;
+		}
+		if (varsToProjectAway.stream().map(tv -> 
+			unfrozen.getAllFunctions().stream()
+				.anyMatch(func -> 
+					Arrays.asList(func.getTerm().getFreeVars()).contains(tv)))
+				.reduce((a, b) -> a || b)
+			.get()) {
+			return false;
+		}
+		if (script != null && Arrays.asList(unfrozen.getTerm(script)
+				.getFreeVars()).stream().anyMatch(fv -> varsToProjectAway.contains(fv))) {
+			return false;
+		}
+		return true;
+	}
+
+	public static <NODE extends IEqNodeIdentifier<NODE, FUNCTION>, 
+		FUNCTION extends IEqFunctionIdentifier<NODE, FUNCTION>> boolean 
+			representativePointersAreConsistent(Collection<EqGraphNode<NODE, FUNCTION>> values) {
+		for (EqGraphNode<NODE, FUNCTION> eqgn : values) {
+			for (EqGraphNode<NODE, FUNCTION> rr : eqgn.getReverseRepresentative()) {
+				if (rr.getRepresentative() != eqgn) {
+					return false;
+				}
+			}
+			if (!eqgn.getRepresentative().getReverseRepresentative().contains(eqgn)) {
+				return false;
+			}
+		}
+		return true;
+	}
 }

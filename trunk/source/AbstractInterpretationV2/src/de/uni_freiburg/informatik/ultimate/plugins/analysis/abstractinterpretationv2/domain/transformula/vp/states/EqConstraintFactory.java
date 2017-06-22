@@ -257,6 +257,9 @@ public class EqConstraintFactory<
 		chosenNodes.addAll(newConstraintWithPropagations.getAllNodes().stream()
 			.filter(node -> node.isFunction())
 			.map(node -> node.getArgs().get(0)).collect(Collectors.toSet())); // TODO deal with multidim arrays
+		chosenNodes.addAll(newConstraintWithPropagations.getAllFunctions().stream()
+			.filter(f -> f.isStore())
+			.map(f -> f.getStoreIndices().get(0)).collect(Collectors.toSet())); // TODO deal with multidim arrays
 
 		
 		/*

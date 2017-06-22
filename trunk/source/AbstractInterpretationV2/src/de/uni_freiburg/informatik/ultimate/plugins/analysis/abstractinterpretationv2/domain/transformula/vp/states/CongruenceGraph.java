@@ -12,10 +12,9 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.IEqNodeIdentifier;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainHelpers;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainSymmetricPair;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqAtomicBaseNode;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqGraphNode;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNonAtomicBaseNode;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.IEqFunctionIdentifier;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
@@ -99,7 +98,7 @@ public class CongruenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		final EqGraphNode<NODE, FUNCTION> newRepresentative = 
 				getOrConstructEqGraphNode(oldRepresentativeSubstituted, newNodeToEqGraphNodeMap);
 		newEqgn.setRepresentative(newRepresentative);
-		newRepresentative.addToReverseRepresentative(newEqgn);
+//		newRepresentative.addToReverseRepresentative(newEqgn);
 		newEqgn.setCcpar(new HashSet<>(oldEqgn.getCcpar()));
 		newEqgn.setCcchild(new HashRelation<>(oldEqgn.getCcchild()));
 	}
@@ -212,7 +211,7 @@ public class CongruenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		
 		final EqGraphNode<NODE, FUNCTION> oldNode1Representative = node1.find();
 		
-		node2.find().addToReverseRepresentative(node1.find());
+//		node2.find().addToReverseRepresentative(node1.find());
 		node2.find().addToCcpar(node1.find().getCcpar());
 		node2.find().addToCcchild(node1.find().getCcchild());
 		// this set-operation must come after the other 3 above (because find is called on node1 for all the others)!!
@@ -292,6 +291,7 @@ public class CongruenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 
 		assert !nodeToBeHavocced.isLiteral() : "cannot havoc a literal";
 
+		assert VPDomainHelpers.representativePointersAreConsistent(mNodeToEqGraphNode.values());
 		
 		final EqGraphNode<NODE, FUNCTION> graphNodeForNodeToBeHavocced = mNodeToEqGraphNode.get(nodeToBeHavocced);
 
@@ -308,9 +308,11 @@ public class CongruenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		 */
 		final EqGraphNode<NODE, FUNCTION> firstRepresentative =
 				graphNodeForNodeToBeHavocced.getRepresentative();
+		boolean havocNodeWasItsRepresentativeBeforeHavoc = firstRepresentative == graphNodeForNodeToBeHavocced;
+
 		EqGraphNode<NODE, FUNCTION> nextRepresentative = firstRepresentative;
 		// remove the outgoing equality edge from the nodeToBeHavocced
-		nextRepresentative.getReverseRepresentative().remove(graphNodeForNodeToBeHavocced);
+//		nextRepresentative.removeReverseRepresentative(graphNodeForNodeToBeHavocced); --> EDIT: setNodetoInitial will do that
 		while (!(nextRepresentative.equals(nextRepresentative.getRepresentative()))) {
 			nextRepresentative.removeFromCcpar(graphNodeForNodeToBeHavocced.getCcpar());
 			nextRepresentative.removeFromCcchild(graphNodeForNodeToBeHavocced.getCcchild());
@@ -320,11 +322,13 @@ public class CongruenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		 *  if nextRepresentativ == graphNodeForNodeToBeHavocced then graphNodeForNodeToBeHavocced was its own 
 		 *  representative --> we do nothing in this step
 		 */
-		if (nextRepresentative != graphNodeForNodeToBeHavocced) {
+//		if (nextRepresentative != graphNodeForNodeToBeHavocced) {
+		if (!havocNodeWasItsRepresentativeBeforeHavoc) {
 			// one more step is needed for the last element of the representative chain
 			nextRepresentative.removeFromCcpar(graphNodeForNodeToBeHavocced.getCcpar());
 			nextRepresentative.removeFromCcchild(graphNodeForNodeToBeHavocced.getCcchild());
 		}
+		assert VPDomainHelpers.representativePointersAreConsistent(mNodeToEqGraphNode.values());
 
 		/*
 		 * 2. Handling the incoming edges (reverseRepresentative). Point nodes in reverseRepresentative to the
@@ -333,34 +337,48 @@ public class CongruenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		 * them. For example, y -> x <- z, Havoc x, then we have y -> z or z -> y.
 		 */
 		EqGraphNode<NODE, FUNCTION> firstReverseRepresentativeNode = null;
-		if (!graphNodeForNodeToBeHavocced.getReverseRepresentative().isEmpty()) {
-			firstReverseRepresentativeNode = graphNodeForNodeToBeHavocced.getReverseRepresentative().iterator().next();
+		final Set<EqGraphNode<NODE, FUNCTION>> reverseRepresentativeBeforeHavoc = 
+				graphNodeForNodeToBeHavocced.getReverseRepresentative().stream()
+				 .filter(eqgn -> eqgn != graphNodeForNodeToBeHavocced)
+				 .collect(Collectors.toSet()); //copying the set for debugging
+
+//		if (!reverseRepresentativeBeforeHavoc.isEmpty()) {
+		if (!reverseRepresentativeBeforeHavoc.isEmpty()) {
+			firstReverseRepresentativeNode = reverseRepresentativeBeforeHavoc.iterator().next();
 		}
-		for (final EqGraphNode<NODE, FUNCTION> reverseNode : graphNodeForNodeToBeHavocced
-				.getReverseRepresentative()) {
+		for (final EqGraphNode<NODE, FUNCTION> reverseNode : reverseRepresentativeBeforeHavoc) {
+			if (reverseNode == graphNodeForNodeToBeHavocced) {
+				continue;
+			}
 			// first reset the representative of all the reverseRepresentative nodes.
 			reverseNode.setRepresentative(reverseNode);
 		}
+		assert VPDomainHelpers.representativePointersAreConsistent(mNodeToEqGraphNode.values());
+		assert !reverseRepresentativeBeforeHavoc.stream().anyMatch(rr -> rr.getRepresentative() != rr);
+		assert graphNodeForNodeToBeHavocced.getReverseRepresentative().isEmpty() 
+			|| graphNodeForNodeToBeHavocced.getReverseRepresentative().size() == 1;
 		
 		/*
 		 * we have to reconnect nodes that were connected through an equality chain that contained the nodeToBeHavocced
 		 */
-		boolean havocNodeWasItsRepresentativeBeforeHavoc = false;
-		for (final EqGraphNode<NODE, FUNCTION> reverseNode : graphNodeForNodeToBeHavocced
-				.getReverseRepresentative()) {
+		for (final EqGraphNode<NODE, FUNCTION> reverseNode : reverseRepresentativeBeforeHavoc) {
+			if (reverseNode == graphNodeForNodeToBeHavocced) {
+				continue;
+			}
 			// case y -> x <- z
-			if (firstRepresentative.equals(graphNodeForNodeToBeHavocced)) {
-				havocNodeWasItsRepresentativeBeforeHavoc = true;
-				if (graphNodeForNodeToBeHavocced.getReverseRepresentative().size() > 1) {
+			if (havocNodeWasItsRepresentativeBeforeHavoc) {
+				if (reverseRepresentativeBeforeHavoc.size() > 1) {
 					assert firstReverseRepresentativeNode != null;
-					merge(reverseNode.getNode(), firstRepresentative.getNode());
+//					merge(reverseNode.getNode(), firstRepresentative.getNode());// BUG!!
+					merge(reverseNode.getNode(), firstReverseRepresentativeNode.getNode());
 					
 				}
 			} else { // case y -> x -> z
 				merge(reverseNode.getNode(), firstRepresentative.getNode());
 			}
 		}
-		
+		assert VPDomainHelpers.representativePointersAreConsistent(mNodeToEqGraphNode.values());
+
 //		final VPStateBuilder<ACTION> builder2 = copy(resultState);
 //		graphNodeForNodeToBeHavocced = builder2.getEqGraphNode(nodeToBeHavocced);
 		
@@ -374,7 +392,7 @@ public class CongruenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 			 */
 			final Set<VPDomainSymmetricPair<NODE>> newDisEqualitySet = new HashSet<>();
 			for (final VPDomainSymmetricPair<NODE> pair : getDisequalities()) {
-				if (pair.contains(graphNodeForNodeToBeHavocced.mNodeIdentifier)) {
+				if (pair.contains(graphNodeForNodeToBeHavocced.getNode())) {
 					newDisEqualitySet.add(new VPDomainSymmetricPair<NODE>(
 							pair.getOther(nodeToBeHavocced),
 							find(firstReverseRepresentativeNode.getNode())));
@@ -387,6 +405,7 @@ public class CongruenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 			// do nothing: no need to update disequality set, because if x is not representative, then x should not be
 			// in disequality set.
 		}
+		assert VPDomainHelpers.representativePointersAreConsistent(mNodeToEqGraphNode.values());
 		graphNodeForNodeToBeHavocced.setNodeToInitial();
 
 		/*
@@ -396,26 +415,42 @@ public class CongruenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 //			restorePropagation(nodeToBeHavocced);
 //		}
 		
+		
+		// EDIT (22/06/2017): don't do any recursion because we call havoc on dependent nodes anyway
 		/*
 		 * havoc the function nodes which nodeToBeHavocced was an index of
 		 */
-		if (!graphNodeForNodeToBeHavocced.getInitCcpar().isEmpty()) {
-			for (final NODE initCcpar : graphNodeForNodeToBeHavocced.getInitCcpar()) {
-				havoc(initCcpar);
-			}
-		}
+//		if (!graphNodeForNodeToBeHavocced.getInitCcpar().isEmpty()) {
+//			for (final NODE initCcpar : graphNodeForNodeToBeHavocced.getInitCcpar()) {
+//				havoc(initCcpar);
+//			}
+//		}
 		
 		/*
 		 * havoc all the non-atomic EqNodes which depend on this one
 		 */
-		if (nodeToBeHavocced instanceof EqAtomicBaseNode) {
-			for (final EqNonAtomicBaseNode dependentNode : ((EqAtomicBaseNode) nodeToBeHavocced)
-					.getDependentNonAtomicBaseNodes()) {
-				havoc((NODE) dependentNode);
-			}
-		}
+//		if (nodeToBeHavocced instanceof EqAtomicBaseNode) {
+//			for (final EqNonAtomicBaseNode dependentNode : ((EqAtomicBaseNode) nodeToBeHavocced)
+//					.getDependentNonAtomicBaseNodes()) {
+//				havoc((NODE) dependentNode);
+//			}
+//		}
 		
+//		mNodeToEqGraphNode.remove(nodeToBeHavocced);
 		mOwningConstraint.removeNode(nodeToBeHavocced);
+		assert VPDomainHelpers.representativePointersAreConsistent(mNodeToEqGraphNode.values());
+		assert graphNodeForNodeToBeHavocced.getRepresentative() == graphNodeForNodeToBeHavocced;
+		assert graphNodeForNodeToBeHavocced.getReverseRepresentative().size() == 1 
+				&& graphNodeForNodeToBeHavocced.getReverseRepresentative().iterator().next() 
+					== graphNodeForNodeToBeHavocced;
+		assert !mNodeToEqGraphNode.values().stream()
+			.anyMatch(eqgn -> eqgn != graphNodeForNodeToBeHavocced 
+					&& eqgn.getRepresentative() == graphNodeForNodeToBeHavocced);
+//		assert VPDomainHelpers.constraintFreeOfVars(Arrays.asList(nodeToBeHavocced.getTerm().getFreeVars()), 
+//				mOwningConstraint, 
+//				null) :
+////				mOwningConstraint.getFactory().getEqNodeAndFunctionFactory().getScript().getScript()) : 
+//					"resulting constraint still has at least one of the to-be-projected vars";
 	}
 	
 	
