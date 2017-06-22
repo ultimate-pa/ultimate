@@ -9,7 +9,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -17,7 +16,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.IEqNodeIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainHelpers;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainSymmetricPair;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqFunctionNode;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNodeAndFunctionFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.IEqFunctionIdentifier;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
@@ -252,40 +250,63 @@ public class EqConstraintFactory<
 		// TODO propagations
 		EqConstraint<ACTION, NODE, FUNCTION> newConstraintWithPropagations = newConstraint;
 		
-		// TODO: which nodes to take here??
-		final Set<NODE> nodesWithFunc1 = newConstraint.getAllNodes().stream()
-			.filter(node -> ((node instanceof EqFunctionNode) && ((NODE) node).getFunction().equals(func1)))
-			.collect(Collectors.toSet());
-		final Set<NODE> nodesWithFunc2 = newConstraint.getAllNodes().stream()
-			.filter(node -> ((node instanceof EqFunctionNode) && ((NODE) node).getFunction().equals(func2)))
-			.collect(Collectors.toSet());
+		
+		final Set<NODE> chosenNodes = new HashSet<>();
+		chosenNodes.addAll(newConstraintWithPropagations.getAllNodes()); // TODO: chose by correct sort
+		// also choose some subterms
+		chosenNodes.addAll(newConstraintWithPropagations.getAllNodes().stream()
+			.filter(node -> node.isFunction())
+			.map(node -> node.getArgs().get(0)).collect(Collectors.toSet())); // TODO deal with multidim arrays
+
 		
 		/*
-		 * 
-		 *  <li> for each node func1(t), we add the equality "func1(t) = func2(t)" and vice versa
-		 *  <li> furthermore, if func1 has the form (store a i x), and the constraint says t != i, we add 
-		 *     "a(t) = func2(t)" (??) EDIT: don't do that here, instead add (store a i x)[j] = a[j] in constraints where
-		 *      i != j holds. (triggers: addFunction(store) and addDisequality 
+		 * for each node t (that we chose before), we add the equality "func1(t) = func2(t)"
 		 */
 		final ManagedScript mgdScript = mEqNodeAndFunctionFactory.getScript();
 		mgdScript.lock(this);
-		for (NODE func1Node : nodesWithFunc1) {
-			final EqFunctionNode efn = (EqFunctionNode) func1Node;
-			final ApplicationTerm at = (ApplicationTerm) efn.getTerm();
-			assert "select".equals(at.getFunction().getName());
-			final Term func2AtIndexTerm = mgdScript.term(this, "select", func2.getTerm(), at.getParameters()[1]);
-			final NODE func2AtIndex = (NODE) mEqNodeAndFunctionFactory.getOrConstructEqNode(func2AtIndexTerm);
-			newConstraintWithPropagations = addEqualityFlat(func1Node, func2AtIndex, newConstraintWithPropagations);
-		}
-		for (NODE func2Node : nodesWithFunc2) {
-			final EqFunctionNode efn = (EqFunctionNode) func2Node;
-			final ApplicationTerm at = (ApplicationTerm) efn.getTerm();
-			assert "select".equals(at.getFunction().getName());
-			final Term func1AtIndexTerm = mgdScript.term(this, "select", func1.getTerm(), at.getParameters()[1]);
+		for (NODE cn : chosenNodes) {
+			final Term func1AtIndexTerm = mgdScript.term(this, "select", func1.getTerm(), cn.getTerm());
 			final NODE func1AtIndex = (NODE) mEqNodeAndFunctionFactory.getOrConstructEqNode(func1AtIndexTerm);
-			newConstraintWithPropagations = addEqualityFlat(func2Node, func1AtIndex, newConstraintWithPropagations);
+			final Term func2AtIndexTerm = mgdScript.term(this, "select", func2.getTerm(), cn.getTerm());
+			final NODE func2AtIndex = (NODE) mEqNodeAndFunctionFactory.getOrConstructEqNode(func2AtIndexTerm);
+			newConstraintWithPropagations = addEqualityFlat(func1AtIndex, func2AtIndex, newConstraintWithPropagations);
 		}
 		mgdScript.unlock(this);
+		
+//		// TODO: which nodes to take here??
+//		final Set<NODE> nodesWithFunc1 = newConstraint.getAllNodes().stream()
+//			.filter(node -> ((node instanceof EqFunctionNode) && ((NODE) node).getFunction().equals(func1)))
+//			.collect(Collectors.toSet());
+//		final Set<NODE> nodesWithFunc2 = newConstraint.getAllNodes().stream()
+//			.filter(node -> ((node instanceof EqFunctionNode) && ((NODE) node).getFunction().equals(func2)))
+//			.collect(Collectors.toSet());
+//		
+//		/*
+//		 * 
+//		 *  <li> for each node func1(t), we add the equality "func1(t) = func2(t)" and vice versa
+//		 *  <li> furthermore, if func1 has the form (store a i x), and the constraint says t != i, we add 
+//		 *     "a(t) = func2(t)" (??) EDIT: don't do that here, instead add (store a i x)[j] = a[j] in constraints where
+//		 *      i != j holds. (triggers: addFunction(store) and addDisequality 
+//		 */
+//		final ManagedScript mgdScript = mEqNodeAndFunctionFactory.getScript();
+//		mgdScript.lock(this);
+//		for (NODE func1Node : nodesWithFunc1) {
+//			final EqFunctionNode efn = (EqFunctionNode) func1Node;
+//			final ApplicationTerm at = (ApplicationTerm) efn.getTerm();
+//			assert "select".equals(at.getFunction().getName());
+//			final Term func2AtIndexTerm = mgdScript.term(this, "select", func2.getTerm(), at.getParameters()[1]);
+//			final NODE func2AtIndex = (NODE) mEqNodeAndFunctionFactory.getOrConstructEqNode(func2AtIndexTerm);
+//			newConstraintWithPropagations = addEqualityFlat(func1Node, func2AtIndex, newConstraintWithPropagations);
+//		}
+//		for (NODE func2Node : nodesWithFunc2) {
+//			final EqFunctionNode efn = (EqFunctionNode) func2Node;
+//			final ApplicationTerm at = (ApplicationTerm) efn.getTerm();
+//			assert "select".equals(at.getFunction().getName());
+//			final Term func1AtIndexTerm = mgdScript.term(this, "select", func1.getTerm(), at.getParameters()[1]);
+//			final NODE func1AtIndex = (NODE) mEqNodeAndFunctionFactory.getOrConstructEqNode(func1AtIndexTerm);
+//			newConstraintWithPropagations = addEqualityFlat(func2Node, func1AtIndex, newConstraintWithPropagations);
+//		}
+//		mgdScript.unlock(this);
 	
 		return newConstraintWithPropagations;
 	}
