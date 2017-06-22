@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
@@ -25,20 +26,25 @@ public class ArrayEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 	 */
 	private Set<VPDomainSymmetricPair<FUNCTION>> mFunctionDisequalities;
 	private boolean mIsFrozen = false;
+
+	private final EqConstraint<ACTION, NODE, FUNCTION> mOwner;
 	
 	/**
 	 * constructs empty array equivalence graph
 	 */
-	public ArrayEquivalenceGraph() {
+	public ArrayEquivalenceGraph(EqConstraint<ACTION, NODE, FUNCTION> owner) {
 		mFunctionEqualities = new UnionFind<>();
 		mFunctionDisequalities = new HashSet<>();
+		mOwner = owner;
 	}
 
 	/**
 	 * copy constructor
 	 * @param original
 	 */
-	public ArrayEquivalenceGraph(ArrayEquivalenceGraph<ACTION, NODE, FUNCTION> original) {
+	public ArrayEquivalenceGraph(ArrayEquivalenceGraph<ACTION, NODE, FUNCTION> original,
+			EqConstraint<ACTION, NODE, FUNCTION> owner) {
+		mOwner = owner;
 		mFunctionEqualities = new UnionFind<>();
 		for (FUNCTION rep : original.mFunctionEqualities.getAllRepresentatives()) {
 			mFunctionEqualities.findAndConstructEquivalenceClassIfNeeded(rep);
@@ -130,6 +136,15 @@ public class ArrayEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 			}
 		}
 		mFunctionEqualities = newFunctionEqualities;	
+		
+		mOwner.removeFunction(func);
+
+		// call recursively on all functions depending on func
+		final Set<FUNCTION> dependentFunctions = 
+				mOwner.getAllFunctions().stream().filter(f -> f.dependsOn(func)).collect(Collectors.toSet());
+		for (FUNCTION f : dependentFunctions) {
+			havocFunction(f);
+		}
 	}
 
 	public void addFunction(FUNCTION func) {

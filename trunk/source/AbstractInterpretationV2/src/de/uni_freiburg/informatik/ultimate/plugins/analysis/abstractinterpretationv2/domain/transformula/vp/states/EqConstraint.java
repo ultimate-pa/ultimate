@@ -67,7 +67,7 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>, NODE ext
 
 		mElementCongruenceGraph = new CongruenceGraph<>(this);
 		// mFunctionEqualities = new UnionFind<>();
-		mFunctionEquivalenceGraph = new ArrayEquivalenceGraph<>();
+		mFunctionEquivalenceGraph = new ArrayEquivalenceGraph<>(this);
 		// mFunctionDisequalities = new HashSet<>();
 
 		mNodes = new HashSet<>();
@@ -84,7 +84,7 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>, NODE ext
 		mElementCongruenceGraph = new CongruenceGraph<>(constraint.mElementCongruenceGraph, this);
 
 		// copy the union find containing array equalities
-		mFunctionEquivalenceGraph = new ArrayEquivalenceGraph<>(constraint.mFunctionEquivalenceGraph);
+		mFunctionEquivalenceGraph = new ArrayEquivalenceGraph<>(constraint.mFunctionEquivalenceGraph, this);
 
 		mNodes = new HashSet<>(constraint.mNodes);
 		mFunctions = new HashSet<>(constraint.mFunctions);
@@ -290,6 +290,19 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>, NODE ext
 			}
 		}
 		unfrozen.freeze();
+		assert varsToProjectAway.isEmpty() || !varsToProjectAway.stream().map(tv -> 
+			unfrozen.getAllNodes().stream()
+				.anyMatch(node -> 
+					Arrays.asList(node.getTerm().getFreeVars()).contains(tv)))
+				.reduce((a, b) -> a || b)
+			.get() : "resulting constraint still has at least one of the to-be-projected vars";
+		assert varsToProjectAway.isEmpty() || !varsToProjectAway.stream().map(tv -> 
+			unfrozen.getAllFunctions().stream()
+				.anyMatch(func -> 
+					Arrays.asList(func.getTerm().getFreeVars()).contains(tv)))
+				.reduce((a, b) -> a || b)
+			.get() : "resulting constraint still has at least one of the to-be-projected vars";
+
 		return unfrozen;
 	}
 
@@ -746,6 +759,17 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>, NODE ext
 
 	public Set<FUNCTION> getAllFunctions() {
 		return Collections.unmodifiableSet(mFunctions);
+	}
+
+	/**
+	 * called from ElementCongruenceGraph.havoc on every node that was havocced.
+	 * 
+	 * @param node
+	 */
+	public void removeFunction(FUNCTION func) {
+		assert !mIsFrozen;
+		mFunctions.remove(func);
+//		mFunctions.removeIf(f -> f.dependsOn(func));
 	}
 
 }
