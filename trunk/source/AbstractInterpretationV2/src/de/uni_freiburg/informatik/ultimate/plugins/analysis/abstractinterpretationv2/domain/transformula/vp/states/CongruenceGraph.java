@@ -279,6 +279,8 @@ public class CongruenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 	 *  <li> Handling the outgoing edge chain. 
 	 *  <li> Handling the incoming edges. 
 	 *  <li> Handling the node itself.
+	 *  <li> restoring propagations that still hold despite the node being havocced EDIT: done no more since
+	 *      "havoc" means "projectExistentially", i.e., since switch to PredicateTransformer
 	 * </ol>
 	 *
 	 * @param nodeToBeHavocced EqGraphNode to be havocced
@@ -388,11 +390,11 @@ public class CongruenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		graphNodeForNodeToBeHavocced.setNodeToInitial();
 
 		/*
-		 * 
+		 * restore propagations EDIT: done no more since switch to PredicateTransformer
 		 */
-		if (nodeToBeHavocced.isFunction()) {
-			restorePropagation(nodeToBeHavocced);
-		}
+//		if (nodeToBeHavocced.isFunction()) {
+//			restorePropagation(nodeToBeHavocced);
+//		}
 		
 		/*
 		 * havoc the function nodes which nodeToBeHavocced was an index of

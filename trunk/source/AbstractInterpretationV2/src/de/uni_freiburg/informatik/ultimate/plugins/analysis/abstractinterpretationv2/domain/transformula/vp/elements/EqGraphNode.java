@@ -107,18 +107,18 @@ public class EqGraphNode<NODE extends IEqNodeIdentifier<NODE, FUNCTION>,
 //	}
 
 	public void setNodeToInitial() {
-		this.mRepresentative = this;
-		this.mReverseRepresentative.clear();
+		mRepresentative = this;
+		mReverseRepresentative.clear();
 
-		this.mCcpar.clear();
-		this.mCcpar.addAll(mInitCcpar);
+		mCcpar.clear();
+		mCcpar.addAll(mInitCcpar);
 
-		this.mCcchild = new HashRelation<>();
+		mCcchild = new HashRelation<>();
 		/*
 		 * Only function node have initCcchild.
 		 */
 		if (mNodeIdentifier.isFunction()) {
-			this.mCcchild.addPair(mNodeIdentifier.getFunction(), mInitCcchild);
+			mCcchild.addPair(mNodeIdentifier.getFunction(), mInitCcchild);
 		}
 	}	
 	
