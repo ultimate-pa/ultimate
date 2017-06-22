@@ -40,7 +40,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  *
  * @param <ARRAYID>
  */
-public interface IEqNodeIdentifier<NODE, FUNCTION extends IEqFunctionIdentifier<FUNCTION>> {
+public interface IEqNodeIdentifier<NODE extends IEqNodeIdentifier<NODE, FUNCTION>, 
+			FUNCTION extends IEqFunctionIdentifier<NODE, FUNCTION>> {
 	 //extends IEqNodeIdentifier<NODE, FUNCTION>
 	boolean isFunction();
 

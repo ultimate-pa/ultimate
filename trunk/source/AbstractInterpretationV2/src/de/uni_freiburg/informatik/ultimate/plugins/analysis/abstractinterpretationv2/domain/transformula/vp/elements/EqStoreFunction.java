@@ -36,11 +36,18 @@ public class EqStoreFunction extends EqFunction {
 		return mFunction;
 	}
 
-	public List<EqNode> getIndices() {
+	@Override
+	public List<EqNode> getStoreIndices() {
 		return mIndices;
 	}
 
+	@Override
 	public EqNode getValue() {
 		return mValue;
+	}
+	
+	@Override
+	public boolean isStore() {
+		return true;
 	}
 }

@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  *
  */
 public class EqGraphNode<NODE extends IEqNodeIdentifier<NODE, FUNCTION>, 
-		FUNCTION extends IEqFunctionIdentifier<FUNCTION>> {
+		FUNCTION extends IEqFunctionIdentifier<NODE, FUNCTION>> {
 
 	/**
 	 * identifies an EqGraphNode uniquely _within one state or transitionstate_

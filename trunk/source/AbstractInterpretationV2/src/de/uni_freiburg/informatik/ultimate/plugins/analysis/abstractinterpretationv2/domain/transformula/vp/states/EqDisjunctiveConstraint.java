@@ -20,7 +20,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 public class EqDisjunctiveConstraint<
 				ACTION extends IIcfgTransition<IcfgLocation>, 
 				NODE extends IEqNodeIdentifier<NODE, FUNCTION>, 
-				FUNCTION extends IEqFunctionIdentifier<FUNCTION>>  {
+				FUNCTION extends IEqFunctionIdentifier<NODE, FUNCTION>>  {
 //     			 	extends AbstractMultiState<EqConstraint<ACTION, NODE, FUNCTION>, IProgramVarOrConst>{
 
 	Set<EqConstraint<ACTION, NODE, FUNCTION>> mConstraints;
@@ -93,7 +93,8 @@ public class EqDisjunctiveConstraint<
 				elementDisequalities.retainAll(currentElementDisequalities);
 			}
 			
-			final Set<VPDomainSymmetricPair<FUNCTION>> currentFunctionEqualities = constraint.getAllFunctionEqualities();
+			final Set<VPDomainSymmetricPair<FUNCTION>> currentFunctionEqualities = 
+					constraint.getAllFunctionEqualities();
 			if (functionEqualities == null) {
 				functionEqualities = currentFunctionEqualities;
 			} else {

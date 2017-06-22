@@ -21,7 +21,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 
 public class CongruenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		NODE extends IEqNodeIdentifier<NODE, FUNCTION>, 
-		FUNCTION extends IEqFunctionIdentifier<FUNCTION>> {
+		FUNCTION extends IEqFunctionIdentifier<NODE, FUNCTION>> {
 	
 	private boolean mIsFrozen = false;
 	
@@ -47,9 +47,10 @@ public class CongruenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 	/**
 	 * 
 	 */
-	public CongruenceGraph(CongruenceGraph<ACTION, NODE, FUNCTION> original) {
+	public CongruenceGraph(CongruenceGraph<ACTION, NODE, FUNCTION> original, 
+			EqConstraint<ACTION, NODE, FUNCTION> owner) {
 		
-		mOwningConstraint = original.mOwningConstraint;
+		mOwningConstraint = owner;
 		
 		// make copies of the EqGraphNodes
 		for (Entry<NODE, EqGraphNode<NODE, FUNCTION>> en : original.mNodeToEqGraphNode.entrySet()) {
@@ -290,7 +291,7 @@ public class CongruenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		assert !nodeToBeHavocced.isLiteral() : "cannot havoc a literal";
 
 		
-		EqGraphNode<NODE, FUNCTION> graphNodeForNodeToBeHavocced = mNodeToEqGraphNode.get(nodeToBeHavocced);
+		final EqGraphNode<NODE, FUNCTION> graphNodeForNodeToBeHavocced = mNodeToEqGraphNode.get(nodeToBeHavocced);
 
 		// TODO: determine if state becomes top through the havoc!
 
@@ -367,6 +368,7 @@ public class CongruenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		if (havocNodeWasItsRepresentativeBeforeHavoc) {
 			/*
 			 *  nodeToBehavocced was the representative of an equivalence class --> we need to 
+			 *  update the disequalities
 			 */
 			final Set<VPDomainSymmetricPair<NODE>> newDisEqualitySet = new HashSet<>();
 			for (final VPDomainSymmetricPair<NODE> pair : getDisequalities()) {

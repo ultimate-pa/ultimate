@@ -16,9 +16,13 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 
 public class ArrayEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 	NODE extends IEqNodeIdentifier<NODE, FUNCTION>, 
-	FUNCTION extends IEqFunctionIdentifier<FUNCTION>> {
+	FUNCTION extends IEqFunctionIdentifier<NODE, FUNCTION>> {
 	
 	private UnionFind<FUNCTION> mFunctionEqualities;
+	
+	/**
+	 * stores all disequalities in terms of equivalence representatives
+	 */
 	private Set<VPDomainSymmetricPair<FUNCTION>> mFunctionDisequalities;
 	private boolean mIsFrozen = false;
 	
@@ -50,8 +54,9 @@ public class ArrayEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 	public void union(FUNCTION func1, FUNCTION func2) {
 		assert !mIsFrozen;
 
-		mFunctionEqualities.union(mFunctionEqualities.findAndConstructEquivalenceClassIfNeeded(func1),
-				mFunctionEqualities.findAndConstructEquivalenceClassIfNeeded(func2));
+		FUNCTION func1Rep = mFunctionEqualities.findAndConstructEquivalenceClassIfNeeded(func1);
+		FUNCTION func2Rep = mFunctionEqualities.findAndConstructEquivalenceClassIfNeeded(func2);
+		mFunctionEqualities.union(func1Rep, func2Rep);
 		
 	}
 
@@ -116,11 +121,11 @@ public class ArrayEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 
 			// construct the new equivalence class by merging all elements of the old, except func
 			for (FUNCTION el : eqc) {
-				newFunctionEqualities.findAndConstructEquivalenceClassIfNeeded(el);
 				if (el.dependsOn(func)) {
 					// el is havocced --> don't merge its equivalence class
 					continue;
 				}
+				newFunctionEqualities.findAndConstructEquivalenceClassIfNeeded(el);
 				newFunctionEqualities.union(first, el);
 			}
 		}
@@ -178,6 +183,41 @@ public class ArrayEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 			return false;
 		}
 		return mFunctionDisequalities.contains(new VPDomainSymmetricPair<FUNCTION>(rep1, rep2));
+	}
+
+	/**
+	 * 
+	 * @return all equalities between functions that hold here, modulo symmetry, reflexivity --> might be expensive..
+	 *    (used for simple implementation of flatten/merge/constraint set intersection)
+	 */
+	public Set<VPDomainSymmetricPair<FUNCTION>> getAllFunctionEqualities() {
+		final Set<VPDomainSymmetricPair<FUNCTION>> result = new HashSet<>();
+		for (Set<FUNCTION > eqc : mFunctionEqualities.getAllEquivalenceClasses()) {
+			// TODO: naive implementation could do in little Gauss instead of n^2
+			for (FUNCTION f1 : eqc) {
+				for (FUNCTION f2 : eqc) {
+					result.add(new VPDomainSymmetricPair<>(f1, f2));
+				}
+			}
+			
+		}
+		return result;
+	}
+
+	/**
+	 * analogue to getAllFunctionEqualities
+	 * @return
+	 */
+	public Set<VPDomainSymmetricPair<FUNCTION>> getAllFunctionDisequalities() {
+		final Set<VPDomainSymmetricPair<FUNCTION>> result = new HashSet<>();
+		for (VPDomainSymmetricPair<FUNCTION> deq : mFunctionDisequalities) {
+			for (FUNCTION f1 : mFunctionEqualities.getEquivalenceClassMembers(deq.getFirst())) {
+				for (FUNCTION f2 : mFunctionEqualities.getEquivalenceClassMembers(deq.getSecond())) {
+					result.add(new VPDomainSymmetricPair<>(f1, f2));
+				}
+			}
+		}
+		return result;
 	}
 
 }

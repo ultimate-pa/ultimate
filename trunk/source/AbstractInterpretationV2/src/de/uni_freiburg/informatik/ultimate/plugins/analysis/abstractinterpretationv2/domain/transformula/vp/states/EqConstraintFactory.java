@@ -19,14 +19,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainSymmetricPair;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqFunctionNode;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNodeAndFunctionFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqStoreFunction;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.IEqFunctionIdentifier;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 public class EqConstraintFactory<
 			ACTION extends IIcfgTransition<IcfgLocation>, 
 			NODE extends IEqNodeIdentifier<NODE, FUNCTION>, 
-			FUNCTION extends IEqFunctionIdentifier<FUNCTION>> {
+			FUNCTION extends IEqFunctionIdentifier<NODE, FUNCTION>> {
 
 	private final EqConstraint<ACTION, NODE, FUNCTION> mBottomConstraint;
 
@@ -261,11 +260,12 @@ public class EqConstraintFactory<
 			.filter(node -> ((node instanceof EqFunctionNode) && ((NODE) node).getFunction().equals(func2)))
 			.collect(Collectors.toSet());
 		
-		HashSet<NODE> selectNodes1 = new HashSet<>(nodesWithFunc1);
-		HashSet<NODE> selectNodes2 = new HashSet<>(nodesWithFunc2);
-		
 		/*
-		 *  add for each node func1(t) a node func2(t) and vice versa
+		 * 
+		 *  <li> for each node func1(t), we add the equality "func1(t) = func2(t)" and vice versa
+		 *  <li> furthermore, if func1 has the form (store a i x), and the constraint says t != i, we add 
+		 *     "a(t) = func2(t)" (??) EDIT: don't do that here, instead add (store a i x)[j] = a[j] in constraints where
+		 *      i != j holds. (triggers: addFunction(store) and addDisequality 
 		 */
 		final ManagedScript mgdScript = mEqNodeAndFunctionFactory.getScript();
 		mgdScript.lock(this);
@@ -286,48 +286,9 @@ public class EqConstraintFactory<
 			newConstraintWithPropagations = addEqualityFlat(func2Node, func1AtIndex, newConstraintWithPropagations);
 		}
 		mgdScript.unlock(this);
-//		for (NODE node : nodesWithFunc2) {
-//			final EqFunctionNode efn = (EqFunctionNode) node;
-//			final ApplicationTerm at = (ApplicationTerm) efn.getTerm();
-//			assert "select".equals(at.getFunction().getName());
-//			final Term newTerm = mgdScript.term(this, "select", func1.getTerm(), at.getParameters()[1]);
-//			selectNodes1.add((NODE) mEqNodeAndFunctionFactory.getOrConstructEqNode(newTerm));
-//		}
-		
-//		// add the equalities due to array extensionality (or element congruence)
-//		for (NODE node1 : selectNodes1) {
-//			for (NODE node2 : selectNodes2) {
-//				newConstraintWithPropagations = addEqualityFlat(node1, node2, newConstraintWithPropagations);
-//			}
-//		}
 	
 		return newConstraintWithPropagations;
 	}
-
-	EqConstraint<ACTION, NODE, FUNCTION> propagateIdx(FUNCTION func1, EqConstraint<ACTION, NODE, FUNCTION> orig) {
-		if (!(func1 instanceof EqStoreFunction)) {
-			return orig;
-		}
-		// idx axiom: ( a[i:=v][i] == v )
-		EqStoreFunction store = (EqStoreFunction) func1;
-
-		final ManagedScript mgdScript = mEqNodeAndFunctionFactory.getScript();
-		mgdScript.lock(this);
-
-		assert store.getIndices().size() == 1 : "TODO: deal with multidimensional case";
-		Term selectTerm = mgdScript.term(this, 
-				"select", 
-				func1.getTerm(), 
-				store.getIndices().iterator().next().getTerm());
-		mgdScript.unlock(this);
-
-		final NODE selectIdxNode = (NODE) mEqNodeAndFunctionFactory.getOrConstructEqNode(selectTerm);
-		final NODE storeValueNode = 
-				(NODE) mEqNodeAndFunctionFactory.getOrConstructEqNode(store.getValue().getTerm());
-
-		return addEqualityFlat(selectIdxNode, storeValueNode, orig);
-	}
-
 
 	public EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> disjoinDisjunctiveConstraints(
 			EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> disjunct1,
@@ -438,18 +399,15 @@ public class EqConstraintFactory<
 		EqConstraint<ACTION, NODE, FUNCTION> resultConstraint = constraintAfterMerge;
 		for (Entry<NODE, NODE> pair : mergeHistory.entrySet()) {
 			
-//			for (final NODE other : originalState.getDisequalities(pair.getKey())) {
 			for (final NODE other : constraintAfterMerge.getDisequalities(pair.getKey())) {
 				//			factory.getBenchmark().stop(VPSFO.addEqualityClock);
 				resultConstraint = propagateDisequalitesFlat(resultConstraint, pair.getKey(), other);
 			}
-//			for (final NODE other : originalState.getDisequalities(pair.getValue())) {
 			for (final NODE other : constraintAfterMerge.getDisequalities(pair.getValue())) {
 				//			factory.getBenchmark().stop(VPSFO.addEqualityClock);
 				resultConstraint = propagateDisequalitesFlat(resultConstraint, pair.getValue(), other);
 			}
 		}
-//		resultConstraint.freeze();
 //		factory.getBenchmark().stop(VPSFO.addEqualityClock);
 		return resultConstraint;
 	}
@@ -564,130 +522,20 @@ public class EqConstraintFactory<
 		/*
 		 * propagate disequality to children
 		 */
-		EqConstraint<ACTION, NODE, FUNCTION> result = propagateDisequalitesFlat(unfrozen, node1, node2);
+		final EqConstraint<ACTION, NODE, FUNCTION> newConstraintWithBackwardCongruence = 
+				propagateDisequalitesFlat(unfrozen, node1, node2);
+		
+		/*
+		 * adding a disequality may trigger the read-over-write axiom
+		 */
+		EqConstraint<ACTION, NODE, FUNCTION> newConstraintWithPropagations = newConstraintWithBackwardCongruence;
+		// TOOD: would getAllStoreFunctions be better?
+		for (FUNCTION func : newConstraintWithPropagations.getAllFunctions()) { 
+			newConstraintWithPropagations = propagateRowDeq(func, newConstraintWithPropagations);
+		}
 
 //		result.freeze();
-		return result;
-	}
-	
-	
-	/**
-	 * Takes a preState and two representatives of different equivalence classes. Under the assumption that a
-	 * disequality between the equivalence classes has been introduced, propagates all the disequalities that follow
-	 * from that disequality.
-	 * 
-	 * Note that the resulting disjunction is guaranteed to subsume the input state. Thus, if no propagations are
-	 * possible, the input state is returned.
-	 * 
-	 * Background: 
-	 * <ul>
-	 *  <li> our disequality relation is stored as disequalities between equivalence classes
-	 *  <li> joining two equivalence may add implicit equalities that allow disequality propagation (via function 
-	 *      congruence)
-	 * </ul>
-	 * 
-	 * Furthermore, we store information about which arguments for any function node in each equivalence class are 
-	 *  present -- the "ccchild" field, which corresponds to the ccpar field from standard congruence closure.
-	 * <p>
-	 * This method is a helper that, for two representatives of equivalence classes in the inputState which we know to
-	 * be unequal in the inputState, checks if, because of merging the two states, any disequality propagations are 
-	 * possible.
-	 * It returns a disjunction of states where all possible propagations have been done.
-	 * 
-	 * Example:
-	 *  <li> preState:
-	 *   (i = f(y)) , (j != f(x)), (i = j)
-	 *  <li> we just added an equality between i and j (did the merge operation)
-	 *  <li> one call of this method will be with (preState, i, f(x))
-	 *  <li> we will get the output state:
-	 *   (i = f(y)) , (j != f(x)), (i = j), (x != y)
-	 *
-	 * @param inputState
-	 * @param representative1
-	 * @param representative2
-	 * @return
-	 */
-	private EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> propagateDisequalites(
-			final EqConstraint<ACTION, NODE, FUNCTION> inputState, 
-			final NODE representative1,
-			final NODE representative2) {
-		return propagateDisEqualites(inputState, representative1, representative2, true);
-	}
-	
-	
-	private EqConstraint<ACTION, NODE, FUNCTION> propagateDisequalitesFlat(
-			final EqConstraint<ACTION, NODE, FUNCTION> inputState, 
-			final NODE representative1,
-			final NODE representative2) {
-		EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> result = 
-				propagateDisEqualites(inputState, representative1, representative2, false);
-		assert result.getConstraints().size() == 1;
-		return result.getConstraints().iterator().next();
-	}
-
-
-
-	private EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> propagateDisEqualites(
-			final EqConstraint<ACTION, NODE, FUNCTION> inputState, 
-			final NODE representative1,
-			final NODE representative2,
-			final boolean allowDisjunctions) {
-		assert inputState.areUnequal(representative1, representative2);
-
-//		factory.getBenchmark().unpause(VPSFO.propagateDisEqualitiesClock);
-//		if (factory.isDebugMode()) {
-//			factory.getLogger().debug("VPFactoryHelpers: propagateDisEqualities(..)");
-//		}
-
-		EqDisjunctiveConstraint<ACTION, NODE, FUNCTION>	result = 
-				getDisjunctiveConstraint(Collections.singleton(inputState));
-		
-		final HashRelation<FUNCTION, List<NODE>> ccchild1 = inputState.getCCChild(representative1);
-		final HashRelation<FUNCTION, List<NODE>> ccchild2 = inputState.getCCChild(representative2);
-
-		for (final FUNCTION arrayId : ccchild1.getDomain()) {
-			
-			// if we disallow disjunction we only propagate disequalities for one-dimensional arrays/unary functions
-			if (!allowDisjunctions && arrayId.getArity() > 1) {
-				continue;
-			}
-			
-			for (final List<NODE> list1 : ccchild1.getImage(arrayId)) {
-				for (final List<NODE> list2 : ccchild2.getImage(arrayId)) {
-					/**
-					 * the result "frozen" at the start of each propagation of a single function disequality
-					 */
-					final EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> intermediateResult = 
-							getDisjunctiveConstraint(result.getConstraints());
-					
-					
-					/*
-					 * reset the result, because it will be filled in the loop
-					 */
-					result = getDisjunctiveConstraint(Collections.emptySet());
-
-					for (int i = 0; i < list1.size(); i++) {
-						final NODE c1 = list1.get(i);
-						final NODE c2 = list2.get(i);
-						if (inputState.areUnequal(c1, c2)) {
-							continue;
-						}
-//						factory.getBenchmark().stop(VPSFO.propagateDisEqualitiesClock);
-						result = disjoinDisjunctiveConstraints(result,
-								addDisequality(c1, c2, intermediateResult));
-//						factory.getBenchmark().unpause(VPSFO.propagateDisEqualitiesClock);
-					}
-				}
-			}
-		}
-
-		if (result.isEmpty()) {
-			// no propagations -- return the input state
-//			factory.getBenchmark().stop(VPSFO.propagateDisEqualitiesClock);
-			return getDisjunctiveConstraint(Collections.singleton(inputState));
-		}
-//		factory.getBenchmark().stop(VPSFO.propagateDisEqualitiesClock);
-		return result;
+		return newConstraintWithPropagations;
 	}
 	
 	
@@ -756,13 +604,191 @@ public class EqConstraintFactory<
 		newConstraint.addFunctionRaw(func);
 		newConstraint.freeze();
 		// TODO propagations
+		EqConstraint<ACTION, NODE, FUNCTION> newConstraintWithPropagations = newConstraint;
 
-		// propagate read-over-write
-		EqConstraint<ACTION, NODE, FUNCTION> newConstraintWithPropagations = propagateIdx(func, newConstraint);
-	
+		/*
+		 *  propagate read-over-write (both cases)
+		 */
+		newConstraintWithPropagations = propagateIdx(func, newConstraintWithPropagations);
+		
+		newConstraintWithPropagations = propagateRowDeq(func, newConstraintWithPropagations);
 		
 		return newConstraintWithPropagations;
 	}
+
+	private EqConstraint<ACTION, NODE, FUNCTION> propagateIdx(FUNCTION func, EqConstraint<ACTION, NODE, FUNCTION> orig) {
+		if (!(func.isStore())) {
+			return orig;
+		}
+		// idx axiom: ( a[i:=v][i] == v )
+//		EqStoreFunction store = (EqStoreFunction) func1;
+	
+	
+		assert func.getStoreIndices().size() == 1 : "TODO: deal with multidimensional case";
+		assert !func.getFunction().isStore() : "TODO: deal with nested stores";
+
+		final ManagedScript mgdScript = mEqNodeAndFunctionFactory.getScript();
+		mgdScript.lock(this);
+		Term selectTerm = mgdScript.term(this, 
+				"select", 
+				func.getTerm(), 
+				func.getStoreIndices().iterator().next().getTerm());
+		mgdScript.unlock(this);
+	
+		final NODE selectIdxNode = (NODE) mEqNodeAndFunctionFactory.getOrConstructEqNode(selectTerm);
+		final NODE storeValueNode = 
+				(NODE) mEqNodeAndFunctionFactory.getOrConstructEqNode(func.getValue().getTerm());
+	
+		return addEqualityFlat(selectIdxNode, storeValueNode, orig);
+	}
+
+	private EqConstraint<ACTION, NODE, FUNCTION> propagateRowDeq(FUNCTION func,
+			EqConstraint<ACTION, NODE, FUNCTION> inputConstraint) {
+		if (!func.isStore()) {
+			return inputConstraint;
+		}
+		EqConstraint<ACTION, NODE, FUNCTION> newConstraint = inputConstraint;
+
+		assert func.getStoreIndices().size() == 1 : "TODO: deal with multidimensional case";
+		assert !func.getFunction().isStore() : "TODO: deal with nested stores";
+		NODE storeIndex = func.getStoreIndices().iterator().next();
+		for (NODE nodeUnequalToStoreIndex : inputConstraint.getDisequalities(storeIndex)) {
+			final ManagedScript mgdScript = mEqNodeAndFunctionFactory.getScript();
+			mgdScript.lock(this);
+			Term selectOverStoreTerm = mgdScript.term(this, 
+					"select", 
+					func.getTerm(), 
+					nodeUnequalToStoreIndex.getTerm());
+			Term selectInsideStoreTerm = mgdScript.term(this, 
+					"select", 
+					func.getFunction().getTerm(), 
+					nodeUnequalToStoreIndex.getTerm());
+			mgdScript.unlock(this);
+			final NODE selectOverStoreNode = (NODE) mEqNodeAndFunctionFactory
+					.getOrConstructEqNode(selectOverStoreTerm);
+			final NODE selectInsideStoreNode = (NODE) mEqNodeAndFunctionFactory
+					.getOrConstructEqNode(selectInsideStoreTerm);
+			newConstraint = addEqualityFlat(selectOverStoreNode, selectInsideStoreNode, newConstraint);
+		}
+		
+		return newConstraint;
+	}
+
+	/**
+	 * Takes a preState and two representatives of different equivalence classes. Under the assumption that a
+	 * disequality between the equivalence classes has been introduced, propagates all the disequalities that follow
+	 * from that disequality.
+	 * 
+	 * Note that the resulting disjunction is guaranteed to subsume the input state. Thus, if no propagations are
+	 * possible, the input state is returned.
+	 * 
+	 * Background: 
+	 * <ul>
+	 *  <li> our disequality relation is stored as disequalities between equivalence classes
+	 *  <li> joining two equivalence may add implicit equalities that allow disequality propagation (via function 
+	 *      congruence)
+	 * </ul>
+	 * 
+	 * Furthermore, we store information about which arguments for any function node in each equivalence class are 
+	 *  present -- the "ccchild" field, which corresponds to the ccpar field from standard congruence closure.
+	 * <p>
+	 * This method is a helper that, for two representatives of equivalence classes in the inputState which we know to
+	 * be unequal in the inputState, checks if, because of merging the two states, any disequality propagations are 
+	 * possible.
+	 * It returns a disjunction of states where all possible propagations have been done.
+	 * 
+	 * Example:
+	 *  <li> preState:
+	 *   (i = f(y)) , (j != f(x)), (i = j)
+	 *  <li> we just added an equality between i and j (did the merge operation)
+	 *  <li> one call of this method will be with (preState, i, f(x))
+	 *  <li> we will get the output state:
+	 *   (i = f(y)) , (j != f(x)), (i = j), (x != y)
+	 *
+	 * @param inputState
+	 * @param representative1
+	 * @param representative2
+	 * @return
+	 */
+	private EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> propagateDisequalites(
+			final EqConstraint<ACTION, NODE, FUNCTION> inputState, 
+			final NODE representative1,
+			final NODE representative2) {
+		return propagateDisEqualites(inputState, representative1, representative2, true);
+	}
+
+	private EqConstraint<ACTION, NODE, FUNCTION> propagateDisequalitesFlat(
+			final EqConstraint<ACTION, NODE, FUNCTION> inputState, 
+			final NODE representative1,
+			final NODE representative2) {
+		EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> result = 
+				propagateDisEqualites(inputState, representative1, representative2, false);
+		assert result.getConstraints().size() == 1;
+		return result.getConstraints().iterator().next();
+	}
+
+	private EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> propagateDisEqualites(
+				final EqConstraint<ACTION, NODE, FUNCTION> inputState, 
+				final NODE representative1,
+				final NODE representative2,
+				final boolean allowDisjunctions) {
+			assert inputState.areUnequal(representative1, representative2);
+	
+	//		factory.getBenchmark().unpause(VPSFO.propagateDisEqualitiesClock);
+	//		if (factory.isDebugMode()) {
+	//			factory.getLogger().debug("VPFactoryHelpers: propagateDisEqualities(..)");
+	//		}
+	
+			EqDisjunctiveConstraint<ACTION, NODE, FUNCTION>	result = 
+					getDisjunctiveConstraint(Collections.singleton(inputState));
+			
+			final HashRelation<FUNCTION, List<NODE>> ccchild1 = inputState.getCCChild(representative1);
+			final HashRelation<FUNCTION, List<NODE>> ccchild2 = inputState.getCCChild(representative2);
+	
+			for (final FUNCTION arrayId : ccchild1.getDomain()) {
+				
+				// if we disallow disjunction we only propagate disequalities for one-dimensional arrays/unary functions
+				if (!allowDisjunctions && arrayId.getArity() > 1) {
+					continue;
+				}
+				
+				for (final List<NODE> list1 : ccchild1.getImage(arrayId)) {
+					for (final List<NODE> list2 : ccchild2.getImage(arrayId)) {
+						/**
+						 * the result "frozen" at the start of each propagation of a single function disequality
+						 */
+						final EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> intermediateResult = 
+								getDisjunctiveConstraint(result.getConstraints());
+						
+						
+						/*
+						 * reset the result, because it will be filled in the loop
+						 */
+						result = getDisjunctiveConstraint(Collections.emptySet());
+	
+						for (int i = 0; i < list1.size(); i++) {
+							final NODE c1 = list1.get(i);
+							final NODE c2 = list2.get(i);
+							if (inputState.areUnequal(c1, c2)) {
+								continue;
+							}
+	//						factory.getBenchmark().stop(VPSFO.propagateDisEqualitiesClock);
+							result = disjoinDisjunctiveConstraints(result,
+									addDisequality(c1, c2, intermediateResult));
+	//						factory.getBenchmark().unpause(VPSFO.propagateDisEqualitiesClock);
+						}
+					}
+				}
+			}
+	
+			if (result.isEmpty()) {
+				// no propagations -- return the input state
+	//			factory.getBenchmark().stop(VPSFO.propagateDisEqualitiesClock);
+				return getDisjunctiveConstraint(Collections.singleton(inputState));
+			}
+	//		factory.getBenchmark().stop(VPSFO.propagateDisEqualitiesClock);
+			return result;
+		}
 
 	public EqStateFactory<ACTION> getEqStateFactory() {
 		return mEqStateFactory;

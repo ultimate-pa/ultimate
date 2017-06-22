@@ -1,12 +1,13 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements;
 
+import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 
-public class EqFunction implements IEqFunctionIdentifier<EqFunction> {
+public class EqFunction implements IEqFunctionIdentifier<EqNode, EqFunction> {
 	
 	
 	
@@ -100,6 +101,26 @@ public class EqFunction implements IEqFunctionIdentifier<EqFunction> {
 	@Override
 	public boolean dependsOn(EqFunction f) {
 		return this.equals(f);
+	}
+
+	@Override
+	public boolean isStore() {
+		return false;
+	}
+	
+	@Override
+	public EqFunction getFunction() {
+		throw new AssertionError("check isStore() first");
+	}
+	
+	@Override
+	public List<EqNode> getStoreIndices() {
+		throw new AssertionError("check isStore() first");
+	}
+
+	@Override
+	public EqNode getValue() {
+		throw new AssertionError("check isStore() first");
 	}
 
 }

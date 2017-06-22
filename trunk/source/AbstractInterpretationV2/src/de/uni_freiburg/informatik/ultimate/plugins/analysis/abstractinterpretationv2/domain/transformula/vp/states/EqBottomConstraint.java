@@ -7,7 +7,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 
 public class EqBottomConstraint<ACTION extends IIcfgTransition<IcfgLocation>, 
 		NODE extends IEqNodeIdentifier<NODE, FUNCTION>, 
-		FUNCTION extends IEqFunctionIdentifier<FUNCTION>> 
+		FUNCTION extends IEqFunctionIdentifier<NODE, FUNCTION>> 
 	extends EqConstraint<ACTION, NODE, FUNCTION> {
 
 	public EqBottomConstraint(EqConstraintFactory<ACTION, NODE, FUNCTION> factory) {

@@ -47,7 +47,7 @@ public class EqStateFactory<ACTION extends IIcfgTransition<IcfgLocation>> {
 	}
 
 //	public EqState<ACTION> getEqState(EqDisjunctiveConstraint<ACTION, EqNode, EqFunction> projectedConstraint,
-	public <NODE extends IEqNodeIdentifier<NODE, FUNCTION>, FUNCTION extends IEqFunctionIdentifier<FUNCTION>> 
+	public <NODE extends IEqNodeIdentifier<NODE, FUNCTION>, FUNCTION extends IEqFunctionIdentifier<NODE, FUNCTION>> 
 		EqState<ACTION> getEqState(EqConstraint<ACTION, NODE, FUNCTION> constraint,
 				Set<IProgramVarOrConst> variables) {
 		// TODO something smarter
