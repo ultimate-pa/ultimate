@@ -26,6 +26,9 @@ public class EqStoreFunction extends EqFunction {
 
 	@Override
 	public boolean dependsOn(EqFunction f) {
+		if (this.equals(f)) {
+			return true;
+		}
 		if ((mFunction instanceof EqStoreFunction)) {
 			return mFunction.dependsOn(f);
 		}

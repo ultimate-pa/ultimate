@@ -23,7 +23,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ConstantFinder;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.IEqNodeIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainHelpers;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainSymmetricPair;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqFunctionNode;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.IEqFunctionIdentifier;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
@@ -133,10 +132,10 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 		}
 
 		// havoc all dependent nodes
-		final Set<NODE> nodesWithFunc = mNodes.stream()
-				.filter(node -> ((node instanceof EqFunctionNode) && ((NODE) node).getFunction().dependsOn(func)))
-				.collect(Collectors.toSet());
-		nodesWithFunc.stream().forEach(node -> havoc(node));
+//		final Set<NODE> nodesWithFunc = mNodes.stream()
+//				.filter(node -> ((node instanceof EqFunctionNode) && ((NODE) node).getFunction().dependsOn(func)))
+//				.collect(Collectors.toSet());
+//		nodesWithFunc.stream().forEach(node -> havoc(node));
 
 		mFunctionEquivalenceGraph.havocFunction(func);
 		assert !getAllFunctions().contains(func);
@@ -577,29 +576,33 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 
 	public Term getTerm(Script script) {
 //		assert mIsFrozen : "not yet frozen, term may not be final..";
-		if (mTerm == null) {
-			final List<Term> elementEqualities = getSupportingElementEqualities().entrySet().stream()
-					.map(en -> script.term("=", en.getKey().getTerm(), en.getValue().getTerm()))
-					.collect(Collectors.toList());
-			final List<Term> elementDisequalities = getElementDisequalities().stream()
-					.map(pair -> script.term("distinct", pair.getFirst().getTerm(), pair.getSecond().getTerm()))
-					.collect(Collectors.toList());
-			final List<Term> functionEqualities = getSupportingFunctionEqualities().entrySet().stream()
-					.map(en -> script.term("=", en.getKey().getTerm(), en.getValue().getTerm()))
-					.collect(Collectors.toList());
-			final List<Term> functionDisequalities = getFunctionDisequalites().stream()
-					.map(pair -> script.term("distinct", pair.getFirst().getTerm(), pair.getSecond().getTerm()))
-					.collect(Collectors.toList());
-
-			final List<Term> allConjuncts = new ArrayList<>();
-			allConjuncts.addAll(elementEqualities);
-			allConjuncts.addAll(elementDisequalities);
-			allConjuncts.addAll(functionEqualities);
-			allConjuncts.addAll(functionDisequalities);
-
-			mTerm = Util.and(script, allConjuncts.toArray(new Term[allConjuncts.size()]));
+		if (mTerm != null) {
+			return mTerm;
 		}
-		return mTerm;
+		final List<Term> elementEqualities = getSupportingElementEqualities().entrySet().stream()
+				.map(en -> script.term("=", en.getKey().getTerm(), en.getValue().getTerm()))
+				.collect(Collectors.toList());
+		final List<Term> elementDisequalities = getElementDisequalities().stream()
+				.map(pair -> script.term("distinct", pair.getFirst().getTerm(), pair.getSecond().getTerm()))
+				.collect(Collectors.toList());
+		final List<Term> functionEqualities = getSupportingFunctionEqualities().entrySet().stream()
+				.map(en -> script.term("=", en.getKey().getTerm(), en.getValue().getTerm()))
+				.collect(Collectors.toList());
+		final List<Term> functionDisequalities = getFunctionDisequalites().stream()
+				.map(pair -> script.term("distinct", pair.getFirst().getTerm(), pair.getSecond().getTerm()))
+				.collect(Collectors.toList());
+
+		final List<Term> allConjuncts = new ArrayList<>();
+		allConjuncts.addAll(elementEqualities);
+		allConjuncts.addAll(elementDisequalities);
+		allConjuncts.addAll(functionEqualities);
+		allConjuncts.addAll(functionDisequalities);
+
+		final Term result= Util.and(script, allConjuncts.toArray(new Term[allConjuncts.size()]));
+		if (mIsFrozen) {
+			mTerm = result;
+		}
+		return result;
 	}
 
 	public boolean areEqual(FUNCTION func1, FUNCTION func2) {

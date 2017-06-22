@@ -99,10 +99,10 @@ public class ArrayEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		mFunctionDisequalities = newFunctionDisequalites;
 	}
 
-	public void havocFunction(FUNCTION func) {
+	public void havocFunction(FUNCTION funcToBeHavocced) {
 		assert !mIsFrozen;
 		// remove from function disequalities
-		mFunctionDisequalities.removeIf(pair -> pair.contains(func));
+		mFunctionDisequalities.removeIf(pair -> pair.contains(mFunctionEqualities.find(funcToBeHavocced)));
 	
 		// remove from function equalities
 		final UnionFind<FUNCTION> newFunctionEqualities = new UnionFind<>();
@@ -111,7 +111,8 @@ public class ArrayEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 			// look for an element that is not func --> everything but func will be merged with it
 			final Iterator<FUNCTION> eqcIt = eqc.iterator();
 			FUNCTION first = eqcIt.next();
-			while (first.dependsOn(func)) {
+//			while (first.dependsOn(funcToBeHavocced)) {
+			while (first.equals(funcToBeHavocced)) {
 				if (eqcIt.hasNext()) {
 					first = eqcIt.next();
 				} else {
@@ -122,11 +123,13 @@ public class ArrayEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 					continue;
 				}
 			}
-			assert !first.dependsOn(func);
+//			assert !first.dependsOn(funcToBeHavocced);
+			assert !first.equals(funcToBeHavocced);
 
 			// construct the new equivalence class by merging all elements of the old, except func
 			for (FUNCTION el : eqc) {
-				if (el.dependsOn(func)) {
+//				if (el.dependsOn(funcToBeHavocced)) {
+				if (el.equals(funcToBeHavocced)) {
 					// el is havocced --> don't merge its equivalence class
 					continue;
 				}
@@ -137,9 +140,9 @@ public class ArrayEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		mFunctionEqualities = newFunctionEqualities;	
 		
 		assert !mFunctionEqualities.getAllEquivalenceClasses().stream()
-			.map(eqc -> eqc.contains(func))
+			.map(eqc -> eqc.contains(funcToBeHavocced))
 			.reduce((a,b) -> a || b).get();
-		mOwner.removeFunction(func);
+		mOwner.removeFunction(funcToBeHavocced);
 
 //		// EDIT (22/06/2017): don't do any recursion because we call havoc on dependent nodes anyway
 //		// call recursively on all functions depending on func
