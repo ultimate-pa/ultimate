@@ -51,46 +51,48 @@ public class LoopAccelerationDevelTestsuite extends AbstractEvalTestSuite {
 	private static final int DEFAULT_LIMIT = Integer.MAX_VALUE;
 
 	@SuppressWarnings("unchecked")
-	private static final Triple<String, String[], String>[] TOOLCHAINS = new Triple[] {
+	private static final Triple<String, String[], String>[] TOOLCHAINS =
+			new Triple[] {
 
-			// BPL
-			// new Triple<>("AutomizerBplTransformed.xml", BPL,
-			// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_BB_Debug.epf"),
-			// new Triple<>("AutomizerBplTransformed.xml", BPL,
-			// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Ahmed_Debug.epf"),
+					// BPL
+					// new Triple<>("AutomizerBplTransformed.xml", BPL,
+					// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_BB_Debug.epf"),
+					// new Triple<>("AutomizerBplTransformed.xml", BPL,
+					// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Ahmed_Debug.epf"),
 
-			new Triple<>("AutomizerBpl.xml", BPL,
-					"loopacceleration/svcomp-Reach-32bit-Automizer_Default_Werner_Debug.epf"),
-			new Triple<>("AutomizerBplTransformed.xml", BPL,
-					"loopacceleration/svcomp-Reach-32bit-Automizer_Default_Werner_Debug.epf"),
+					// new Triple<>("AutomizerBpl.xml", BPL,
+					// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Werner_Debug.epf"),
+					// new Triple<>("AutomizerBplTransformed.xml", BPL,
+					// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Werner_Debug.epf"),
 
-			// new Triple<>("AutomizerBplTransformed.xml", BPL,
-			// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_FastUpr_EE.epf"),
-			// new Triple<>("AutomizerBplTransformed.xml", BPL,
-			// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_FastUpr_LE.epf"),
-			// new Triple<>("AutomizerBpl.xml", BPL,
-			// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_FastUpr_EE.epf"),
-			// new Triple<>("AutomizerBpl.xml", BPL,
-			// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_FastUpr_Debug.epf"),
-			// new Triple<>("AutomizerBpl.xml", BPL,
-			// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Woelfing.epf"),
-			//
-			// new Triple<>("AutomizerBplTransformed.xml", BPL,
-			// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Woelfing_Debug.epf"),
-			// new Triple<>("AutomizerBplTransformed.xml", BPL,
-			// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Woelfing.epf"),
-			//
-			// new Triple<>("AutomizerBpl.xml", BPL, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Mohr.epf"),
-			// new Triple<>("AutomizerBplTransformed.xml", BPL,
-			// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Mohr.epf"),
+					// new Triple<>("AutomizerBplTransformed.xml", BPL,
+					// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_FastUpr_EE.epf"),
+					// new Triple<>("AutomizerBplTransformed.xml", BPL,
+					// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_FastUpr_LE.epf"),
+					// new Triple<>("AutomizerBpl.xml", BPL,
+					// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_FastUpr_EE.epf"),
+					// new Triple<>("AutomizerBpl.xml", BPL,
+					// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_FastUpr_Debug.epf"),
+					// new Triple<>("AutomizerBpl.xml", BPL,
+					// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Woelfing.epf"),
+					//
+					// new Triple<>("AutomizerBplTransformed.xml", BPL,
+					// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Woelfing_Debug.epf"),
+					// new Triple<>("AutomizerBplTransformed.xml", BPL,
+					// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Woelfing.epf"),
+					//
+					new Triple<>("AutomizerBpl.xml", BPL,
+							"loopacceleration/svcomp-Reach-32bit-Automizer_Default_Mohr.epf"),
+					new Triple<>("AutomizerBplTransformed.xml", BPL,
+							"loopacceleration/svcomp-Reach-32bit-Automizer_Default_Mohr.epf"),
 			// new Triple<>("AutomizerBplTransformed.xml", BPL,
 			// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Mohr_Debug.epf"),
 
 			// C
-			//new Triple<>("AutomizerCInline.xml", C,
-			//"loopacceleration/svcomp-Reach-32bit-Automizer_Default_Woelfing.epf"),
-			//new Triple<>("AutomizerCInlineTransformed.xml", C,
-			//"loopacceleration/svcomp-Reach-32bit-Automizer_Default_Woelfing.epf"),
+			// new Triple<>("AutomizerCInline.xml", C,
+			// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Woelfing.epf"),
+			// new Triple<>("AutomizerCInlineTransformed.xml", C,
+			// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Woelfing.epf"),
 			//
 			// new Triple<>("AutomizerCInlineTransformed.xml", C,
 			// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_FastUpr_EE.epf"),
@@ -99,22 +101,22 @@ public class LoopAccelerationDevelTestsuite extends AbstractEvalTestSuite {
 			// new Triple<>("AutomizerCInline.xml", C,
 			// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_FastUpr_EE.epf"),
 
-			new Triple<>("AutomizerCInlineTransformed.xml", C,
-					"loopacceleration/svcomp-Reach-32bit-Automizer_Default_FastUpr_noMod_EE.epf"),
-			new Triple<>("AutomizerCInlineTransformed.xml", C,
-					"loopacceleration/svcomp-Reach-32bit-Automizer_Default_FastUpr_noMod_LE.epf"),
-			new Triple<>("AutomizerCInline.xml", C,
-					"loopacceleration/svcomp-Reach-32bit-Automizer_Default_FastUpr_noMod_EE.epf"),
+			// new Triple<>("AutomizerCInlineTransformed.xml", C,
+			// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_FastUpr_noMod_EE.epf"),
+			// new Triple<>("AutomizerCInlineTransformed.xml", C,
+			// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_FastUpr_noMod_LE.epf"),
+			// new Triple<>("AutomizerCInline.xml", C,
+			// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_FastUpr_noMod_EE.epf"),
 
-	};
+			};
 
 	private static final String[] INPUT = new String[] {
 
 			// Normal regressions
-			// "examples/programs/loopAcceleration",
+			"examples/programs/loopAcceleration",
 			// "examples/programs/loopAcceleration/twoLoops.bpl",
-			//			"examples/svcomp/loop-acceleration/const_true-unreach-call1.i",
-			//			"examples/svcomp/loop-acceleration/const_false-unreach-call1.i",
+			// "examples/svcomp/loop-acceleration/const_true-unreach-call1.i",
+			// "examples/svcomp/loop-acceleration/const_false-unreach-call1.i",
 			// "examples/svcomp/loops/sum03_true-unreach-call_false-termination.i",
 			// "examples/programs/loopAcceleration/loopAccelerationFastUPR/OctagonTest_Default.bpl",
 			// "examples/programs/loopAcceleration/loopAccelerationBB/loop1.bpl",
@@ -134,10 +136,10 @@ public class LoopAccelerationDevelTestsuite extends AbstractEvalTestSuite {
 			// "examples/svcomp/loop-invgen/NetBSD_loop_true-unreach-call_true-termination.i",
 
 			// unsafe expected safe
-			"examples/svcomp/loop-acceleration/functions_true-unreach-call1_true-termination.i",
-			//			"examples/svcomp/loops/linear_sea.ch_true-unreach-call.i",
-			//			"examples/svcomp/loops/nec40_true-unreach-call_true-termination.i",
-			//			"examples/svcomp/loops/while_infinite_loop_3_true-unreach-call_false-termination.i",
+			// "examples/svcomp/loop-acceleration/functions_true-unreach-call1_true-termination.i",
+			// "examples/svcomp/loops/linear_sea.ch_true-unreach-call.i",
+			// "examples/svcomp/loops/nec40_true-unreach-call_true-termination.i",
+			// "examples/svcomp/loops/while_infinite_loop_3_true-unreach-call_false-termination.i",
 
 	};
 
