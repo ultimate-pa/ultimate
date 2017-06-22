@@ -26,24 +26,26 @@ import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
 @RunWith(Parameterized.class)
 public class BoogieRequirementsParserTestAllPatterns {
 
-	private final Testpurpose t;
+	private final Testpurpose mActualTest;
 
-	public BoogieRequirementsParserTestAllPatterns(final Testpurpose t) {
-		this.t = t;
+	public BoogieRequirementsParserTestAllPatterns(final Testpurpose purpose) {
+		mActualTest = purpose;
 
 	}
 
 	@Test
 	public void testPatternParse() throws Exception {
-		final PatternType[] parsedPatterns = genPatterns(t.testString);
+		final PatternType[] parsedPatterns = genPatterns(mActualTest.mTestString);
 
-		Assert.assertNotNull(t.testString, parsedPatterns);
+		Assert.assertNotNull(mActualTest.mTestString, parsedPatterns);
 		Assert.assertThat(parsedPatterns.length, Is.is(1));
-		Assert.assertNotNull("failed parsing: " + t.testString, parsedPatterns[0]);
-		Assert.assertTrue("fail recognize: " + t.scopezz.toString() + "[" + t.scopezz + "]:\n" + t.testString,
-				parsedPatterns[0].getScope().getClass() == t.scopezz);
-		Assert.assertTrue("fail recognize: " + parsedPatterns[0].getClass().toString() + "[" + t.patternName + "]:\n"
-				+ t.testString, parsedPatterns[0].getClass().toString().endsWith(t.patternName));
+		Assert.assertNotNull("failed parsing: " + mActualTest.mTestString, parsedPatterns[0]);
+		Assert.assertTrue("fail recognize: " + mActualTest.mScopeClazz.toString() + "[" + mActualTest.mScopeClazz
+				+ "]:\n" + mActualTest.mTestString, parsedPatterns[0].getScope().getClass() == mActualTest.mScopeClazz);
+		Assert.assertTrue(
+				"fail recognize: " + parsedPatterns[0].getClass().toString() + "[" + mActualTest.mPatternName + "]:\n"
+						+ mActualTest.mTestString,
+				parsedPatterns[0].getClass().toString().endsWith(mActualTest.mPatternName));
 	}
 
 	/**
@@ -65,22 +67,7 @@ public class BoogieRequirementsParserTestAllPatterns {
 		return patterns;
 	}
 
-	/**
-	 * Struct transporting data for one test case
-	 */
-	static class Testpurpose {
-		public String testString;
-		public Class<?> scopezz;
-		public String patternName;
-
-		public Testpurpose(final String testString, final Class<?> scopezz, final String patternName) {
-			this.testString = testString;
-			this.scopezz = scopezz;
-			this.patternName = patternName;
-		}
-	}
-
-	@Parameters
+	@Parameters(name = "{index}: {0}")
 	public static Collection<Object[]> data() {
 		final Collection<Object[]> data = new ArrayList<>();
 		// definition of all patterns
@@ -117,6 +104,26 @@ public class BoogieRequirementsParserTestAllPatterns {
 		}
 
 		return data;
+	}
+
+	/**
+	 * Struct transporting data for one test case
+	 */
+	private static final class Testpurpose {
+		public final String mTestString;
+		public final Class<?> mScopeClazz;
+		public final String mPatternName;
+
+		public Testpurpose(final String testString, final Class<?> scopezz, final String patternName) {
+			mTestString = testString;
+			mScopeClazz = scopezz;
+			mPatternName = patternName;
+		}
+
+		@Override
+		public String toString() {
+			return mPatternName;
+		}
 	}
 
 }
