@@ -759,8 +759,11 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 			return "Top";
 		}
 
+		String sep = "";
 		final StringBuilder sb = new StringBuilder();
 		for (String s : allConjuncts) {
+			sb.append(sep);
+			sep = "\n";
 			sb.append(s);
 		}
 
