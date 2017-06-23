@@ -35,7 +35,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaInclusionStat
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.IntersectDD;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 
 /**
@@ -67,8 +66,7 @@ public final class Intersect<LETTER, STATE>
 	 * @throws AutomataLibraryException
 	 *             if construction fails
 	 */
-	public <SF extends IIntersectionStateFactory<STATE> & IEmptyStackStateFactory<STATE>> Intersect(
-			final AutomataLibraryServices services, final SF stateFactory,
+	public Intersect(final AutomataLibraryServices services, final IIntersectionStateFactory<STATE> stateFactory,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> fstOperand,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> sndOperand) throws AutomataLibraryException {
 		super(services);
