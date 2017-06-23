@@ -334,4 +334,19 @@ public class EqGraphNode<NODE extends IEqNodeIdentifier<NODE, FUNCTION>,
 		assert mReverseRepresentative.contains(graphNodeForNodeToBeHavocced);
 		mReverseRepresentative.remove(graphNodeForNodeToBeHavocced);
 	}
+
+	/**
+	 * after havoccing a node, we have to make sure no other node still remembers it, in particular in its ccpar and 
+	 * ccchild fields..
+	 * 
+	 * @param nodeToBeHavocced
+	 * @return
+	 */
+	public void purgeNodeFromFields(NODE nodeToBeHavocced) {
+		mCcpar.remove(nodeToBeHavocced);
+		for (Entry<FUNCTION, List<NODE>> en : mCcchild.entrySet()) {
+			en.getValue().remove(nodeToBeHavocced);
+		}
+			
+	}
 }

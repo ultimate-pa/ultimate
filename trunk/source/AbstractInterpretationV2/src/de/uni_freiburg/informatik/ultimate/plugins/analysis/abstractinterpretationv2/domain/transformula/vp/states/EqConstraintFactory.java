@@ -559,6 +559,7 @@ public class EqConstraintFactory<
 		}
 
 //		result.freeze();
+		assert newConstraintWithPropagations.allNodesAndEqgnMapAreConsistent();
 		return newConstraintWithPropagations;
 	}
 	
@@ -617,6 +618,7 @@ public class EqConstraintFactory<
 			}
 		}
 		
+		assert newConstraintWithPropagations.allNodesAndEqgnMapAreConsistent();
 		return newConstraintWithPropagations;
 //		return unf;
 	}

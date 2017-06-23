@@ -67,13 +67,14 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 	public EqConstraint(EqConstraintFactory<ACTION, NODE, FUNCTION> factory) {
 		mFactory = factory;
 
+		mNodes = new HashSet<>();
+		mFunctions = new HashSet<>();
+
 		mElementCongruenceGraph = new CongruenceGraph<>(this);
 		// mFunctionEqualities = new UnionFind<>();
 		mFunctionEquivalenceGraph = new ArrayEquivalenceGraph<>(this);
 		// mFunctionDisequalities = new HashSet<>();
 
-		mNodes = new HashSet<>();
-		mFunctions = new HashSet<>();
 	}
 
 	/**
@@ -83,13 +84,14 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 	 */
 	public EqConstraint(EqConstraint<ACTION, NODE, FUNCTION> constraint) {
 		mFactory = constraint.mFactory;
+		mNodes = new HashSet<>(constraint.mNodes);
+		mFunctions = new HashSet<>(constraint.mFunctions);
+
 		mElementCongruenceGraph = new CongruenceGraph<>(constraint.mElementCongruenceGraph, this);
 
 		// copy the union find containing array equalities
 		mFunctionEquivalenceGraph = new ArrayEquivalenceGraph<>(constraint.mFunctionEquivalenceGraph, this);
 
-		mNodes = new HashSet<>(constraint.mNodes);
-		mFunctions = new HashSet<>(constraint.mFunctions);
 	}
 
 	/**
@@ -190,6 +192,7 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 		mIsFrozen = true;
 		mElementCongruenceGraph.freeze();
 		mFunctionEquivalenceGraph.freeze();
+		assert allNodesAndEqgnMapAreConsistent();
 		// mFunctionDisequalities =
 		// Collections.unmodifiableSet(mFunctionDisequalities);
 	}
@@ -469,6 +472,17 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 
 	public void renameVariables(Map<Term, Term> substitutionMapping) {
 		assert !mIsFrozen;
+		
+		final Set<NODE> newNodes = mNodes.stream()
+				.map(node -> node.renameVariables(substitutionMapping)).collect(Collectors.toSet());
+		final Set<FUNCTION> newFunctions = mFunctions.stream()
+				.map(node -> node.renameVariables(substitutionMapping)).collect(Collectors.toSet());
+		
+		mNodes.clear();
+		mNodes.addAll(newNodes);
+		
+		mFunctions.clear();
+		mFunctions.addAll(newFunctions);
 
 		mElementCongruenceGraph.renameVariables(substitutionMapping);
 
@@ -768,7 +782,7 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 		if (hasNode(nodeToAdd)) {
 			return;
 		}
-		mNodes.add(nodeToAdd);
+//		mNodes.add(nodeToAdd); // done by mElementCongruenceGraph (also for child nodes)
 		mElementCongruenceGraph.addNode(nodeToAdd, null);
 
 	}
@@ -804,4 +818,18 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 //		mFunctions.removeIf(f -> f.dependsOn(func));
 	}
 
+	
+	
+	boolean allNodesAndEqgnMapAreConsistent() {
+		return mElementCongruenceGraph.allNodesAndEqgnMapAreConsistent();
+	}
+
+	/**
+	 * only called from mElementCongruenceGraph
+	 * @param node
+	 */
+	public void addToAllNodes(NODE node) {
+		mNodes.add(node);
+		
+	}
 }

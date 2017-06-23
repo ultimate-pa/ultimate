@@ -41,6 +41,7 @@ public class CongruenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 //		mNodeToEqGraphNode = new HashMap<>();
 		mDisequalities = new HashSet<>();
 		mOwningConstraint = owningConstraint;
+		assert allNodesAndEqgnMapAreConsistent();
 	}
 	
 	/**
@@ -60,6 +61,8 @@ public class CongruenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		
 		// copy the disequality set
 		mDisequalities = new HashSet<>(original.mDisequalities);
+		assert allNodesAndEqgnMapAreConsistent();
+  
 	}
 
 	private void copyFields(final EqGraphNode<NODE, FUNCTION> newEqgn, final EqGraphNode<NODE, FUNCTION> oldEqgn) {
@@ -113,6 +116,7 @@ public class CongruenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 	 */
 	HashRelation<NODE, NODE> merge(NODE node1, NODE node2) {
 		assert !mIsFrozen;
+		assert allNodesAndEqgnMapAreConsistent();
 		
 		final EqGraphNode<NODE, FUNCTION> egn1 = mNodeToEqGraphNode.get(node1);
 		final EqGraphNode<NODE, FUNCTION> egn2 = mNodeToEqGraphNode.get(node2);
@@ -129,6 +133,7 @@ public class CongruenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 
 		mergeHistory.addAll(equalityPropagation(egn1, egn2));
 
+		assert allNodesAndEqgnMapAreConsistent();
 		return mergeHistory;
 	}
 	
@@ -265,6 +270,7 @@ public class CongruenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 	 * @return representative or null
 	 */
 	public NODE find(NODE node) {
+		assert allNodesAndEqgnMapAreConsistent();
 		EqGraphNode<NODE, FUNCTION> egn = mNodeToEqGraphNode.get(node);
 		if (egn == null) {
 			return null;
@@ -438,8 +444,14 @@ public class CongruenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 //			}
 //		}
 		
+		assert allNodesAndEqgnMapAreConsistent();
+		// remove the havocced node from all known records..
 		mNodeToEqGraphNode.remove(nodeToBeHavocced);
 		mOwningConstraint.removeNode(nodeToBeHavocced);
+		//TODO is there a more efficient way?? for the purging..
+		mNodeToEqGraphNode.values().forEach(eqgn -> eqgn.purgeNodeFromFields(nodeToBeHavocced)); 
+		assert noCcparContainsNode(nodeToBeHavocced) && noCcChildContaintsNode(nodeToBeHavocced);
+		assert allNodesAndEqgnMapAreConsistent();
 		assert VPDomainHelpers.representativePointersAreConsistent(mNodeToEqGraphNode.values());
 		assert graphNodeForNodeToBeHavocced.getRepresentative() == graphNodeForNodeToBeHavocced;
 		assert graphNodeForNodeToBeHavocced.getReverseRepresentative().size() == 1 
@@ -456,6 +468,26 @@ public class CongruenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 	}
 	
 	
+	private boolean noCcChildContaintsNode(NODE nodeToBeHavocced) {
+		for (Entry<NODE, EqGraphNode<NODE, FUNCTION>> en : mNodeToEqGraphNode.entrySet()) {
+			for (Entry<FUNCTION, List<NODE>> e2 : en.getValue().getCcchild().entrySet()) {
+				if (e2.getValue().contains(nodeToBeHavocced)) {
+					return false;
+				}
+			}
+		}
+		return true;
+	}
+
+	private boolean noCcparContainsNode(NODE nodeToBeHavocced) {
+		for (Entry<NODE, EqGraphNode<NODE, FUNCTION>> en : mNodeToEqGraphNode.entrySet()) {
+			if (en.getValue().getCcpar().contains(nodeToBeHavocced)) {
+				return false;
+			}
+		}
+		return true;
+	}
+
 	/**
 	 * An additional process after a function node is havoc, in order to restore the propagation.
 	 * For example, we have two nodes a[i] and a[j], if i = j, by equality propagation,
@@ -495,6 +527,7 @@ public class CongruenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 	 * @return true if there is contradiction
 	 */
 	boolean checkContradiction() {
+		assert allNodesAndEqgnMapAreConsistent();
 		
 		for (final VPDomainSymmetricPair<NODE> disEqPair : mDisequalities) {
 			if (getEqGraphNode(disEqPair.getFirst()).find().equals(getEqGraphNode(disEqPair.getSecond()).find())) {
@@ -515,7 +548,6 @@ public class CongruenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 	}
 
 	public void renameVariables(Map<Term, Term> substitutionMapping) {
-		assert allNodesAndEqgnMapAreConsistent();
 		assert !mIsFrozen;
 		
 		final Map<NODE, NODE> oldNodeToSubstitutedNode = new HashMap<>();
@@ -542,6 +574,7 @@ public class CongruenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 					oldNodeToSubstitutedNode.get(deq.getSecond())));
 		}
 		mDisequalities = newDisequalities;
+		assert allNodesAndEqgnMapAreConsistent();
 	}
 
 	public void addDisequality(NODE find, NODE find2) {
@@ -584,10 +617,11 @@ public class CongruenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 			eqgn.addToInitCcpar(initCCpar);
 		}
 		
+		mOwningConstraint.addToAllNodes(node);
 		mNodeToEqGraphNode.put(node, eqgn);
 	}
 
-	private boolean allNodesAndEqgnMapAreConsistent() {
+	boolean allNodesAndEqgnMapAreConsistent() {
 		return mOwningConstraint.getAllNodes().equals(mNodeToEqGraphNode.keySet());
 	}
 
