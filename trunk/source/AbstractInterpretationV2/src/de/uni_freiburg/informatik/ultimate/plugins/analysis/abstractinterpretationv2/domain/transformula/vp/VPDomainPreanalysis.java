@@ -678,6 +678,10 @@ public class VPDomainPreanalysis {
 //		return mSettings.getArraysToTrack().contains(normalizedName);
 //		return mSettings.getArraysToTrack().contains(pvoc.toString());
 		
+		if (mSettings.trackAllArrays()) {
+			return true;
+		}
+		
 		for (String arrayName : mSettings.getArraysToTrack()) {
 			if (pvoc.toString().contains(arrayName)) {
 				return true;
@@ -752,7 +756,7 @@ class VPDomainPreanalysisSettings {
 	}
 	
 	public boolean trackAllArrays() {
-		return false;
+		return true;
 	}
 	
 	public Set<String> getArraysToTrack() {
