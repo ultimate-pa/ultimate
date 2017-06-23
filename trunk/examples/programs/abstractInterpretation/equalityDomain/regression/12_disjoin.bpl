@@ -1,7 +1,7 @@
-//#Safe
+//#Unsafe
 /*
  * Author: Yu-Wen Chen
- * Note: The result of this test is not manually verified. DD just added the missing header based on some Ultimate results. 
+ * counterexample: x = 1, y = 1, i = 2, j = 3
  * 
  */
 
