@@ -1,7 +1,7 @@
 /*
- * Copyright (C) 2010-2016 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * Copyright (C) 2010-2016 Christian Schilling (schillic@informatik.uni-freiburg.de)
- * Copyright (C) 2009-2016 University of Freiburg
+ * Copyright (C) 2010-2017 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * Copyright (C) 2010-2017 Christian Schilling (schillic@informatik.uni-freiburg.de)
+ * Copyright (C) 2009-2017 University of Freiburg
  *
  * This file is part of the ULTIMATE Automata Library.
  *
@@ -55,7 +55,7 @@ public class StringFactory implements ISenwaStateFactory<String>, IBlackWhiteSta
 		IFinitePrefix2PetriNetStateFactory<String>, IBuchiComplementDeterministicStateFactory<String>,
 		IBuchiComplementNcsbStateFactory<String>, IBuchiComplementSvwStateFactory<String>,
 		IPetriNet2FiniteAutomatonStateFactory<String>, IIncrementalInclusionStateFactory<String>,
-		IMinimizationStateFactory<String>, IMinimizationCheckResultStateFactory<String> {
+		IMinimizationStateFactory<String>, IMinimizationCheckResultStateFactory<String>, IUnionStateFactory<String> {
 
 	public static final String INFINITY = "∞";
 	private static final String EMPTY_STRING = "";
@@ -75,6 +75,12 @@ public class StringFactory implements ISenwaStateFactory<String>, IBlackWhiteSta
 	private static final int RANK_THREE = 3;
 	private static final int MINIMUM_LIST_SIZE = 2;
 	private static final int MINIMUM_PAIR_LIST_SIZE = 7;
+
+	@Override
+	public String union(final String state1, final String state2) {
+		// use the same string as for intersection
+		return intersection(state1, state2);
+	}
 
 	@Override
 	public String intersection(final String state1, final String state2) {
@@ -214,17 +220,17 @@ public class StringFactory implements ISenwaStateFactory<String>, IBlackWhiteSta
 					throw new IllegalArgumentException("must have rank");
 				}
 				switch (upState.getRank()) {
-				case RANK_THREE:
-					listN.add(new Pair<>(downState, upState.getState()));
-					break;
-				case RANK_TWO:
-					buchiComplementNcsbHelperRankTwo(listC, listB, downState, upState);
-					break;
-				case RANK_ONE:
-					listS.add(new Pair<>(downState, upState.getState()));
-					break;
-				default:
-					throw new IllegalArgumentException("Only ranks 1, 2, 3 are allowed.");
+					case RANK_THREE:
+						listN.add(new Pair<>(downState, upState.getState()));
+						break;
+					case RANK_TWO:
+						buchiComplementNcsbHelperRankTwo(listC, listB, downState, upState);
+						break;
+					case RANK_ONE:
+						listS.add(new Pair<>(downState, upState.getState()));
+						break;
+					default:
+						throw new IllegalArgumentException("Only ranks 1, 2, 3 are allowed.");
 				}
 			}
 		}
