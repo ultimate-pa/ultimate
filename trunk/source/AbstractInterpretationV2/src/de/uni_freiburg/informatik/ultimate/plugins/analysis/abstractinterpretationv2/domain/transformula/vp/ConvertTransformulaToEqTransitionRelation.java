@@ -108,17 +108,19 @@ public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTrans
 				final ApplicationTerm innerEqualsTerm = (ApplicationTerm) term.getParameters()[0];
 				handleXquality(innerEqualsTerm.getParameters()[0], innerEqualsTerm.getParameters()[1], false);
 			} else if ("or".equals(term.getFunction().getName())) {
-				for (Term param : term.getParameters()) {
-					walker.enqueueWalker(new ConvertTfToEqDisjConsWalker(param));
-				}
-				
 				walker.enqueueWalker(new MakeDisjunctionWalker(term.getParameters().length));
-			} else if ("and".equals(term.getFunction().getName())) {
+
 				for (Term param : term.getParameters()) {
 					walker.enqueueWalker(new ConvertTfToEqDisjConsWalker(param));
 				}
 				
+			} else if ("and".equals(term.getFunction().getName())) {
 				walker.enqueueWalker(new MakeConjunctionWalker(term.getParameters().length));
+
+				for (Term param : term.getParameters()) {
+					walker.enqueueWalker(new ConvertTfToEqDisjConsWalker(param));
+				}
+				
 
 			} else if ("false".equals(term.getFunction().getName())) {
 				mResultStack.push(mEqConstraintFactory.getDisjunctiveConstraint(
