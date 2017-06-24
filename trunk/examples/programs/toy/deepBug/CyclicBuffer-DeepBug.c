@@ -1,4 +1,4 @@
-//#Safe
+//#Unsafe
 /*
  * Modification of the CyclicBuffer.c example where we need more than
  * 100 loop unfoldings until we reach the bug.
