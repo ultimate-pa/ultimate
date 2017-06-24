@@ -1,7 +1,7 @@
-//#Unsafe
+//#Safe
 /*
  * Author: Yu-Wen Chen
- * Note: The result of this test is not manually verified. DD just added the missing header based on some Ultimate results. 
+ * (AN: safe according to Ultimate Automizer webinterface on 24.06.2017)
  * 
  */
 
