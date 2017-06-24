@@ -1,8 +1,10 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -116,21 +118,34 @@ public class EqState<ACTION extends IIcfgTransition<IcfgLocation>>
 
 	@Override
 	public boolean isEqualTo(final EqState<ACTION> other) {
-		// TODO Auto-generated method stub
-		return false;
+		return this.isSubsetOf(other) == SubsetResult.NON_STRICT && other.isSubsetOf(this) == SubsetResult.NON_STRICT;
 	}
 
 	@Override
-	public de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState.SubsetResult
+	public SubsetResult
 			isSubsetOf(final EqState<ACTION> other) {
-		// TODO Auto-generated method stub
-		return null;
+		// TODO
+//		final EqConstraintFactory<ACTION, EqNode, EqFunction> constraintFactory = mFactory.getEqConstraintFactory();
+//		final EqDisjunctiveConstraint<ACTION, EqNode, EqFunction> intersectionWithComplement = 
+//				constraintFactory.conjoinDisjunctiveConstraints(
+//						toList(constraintFactory.getDisjunctiveConstraint(toList(mConstraint)), 
+//								constraintFactory.complement(other.getConstraint())));
+//		if (intersectionWithComplement.isBottom()) {
+//			return SubsetResult.
+//			
+//		}
+//		return null;
+		return SubsetResult.NONE;
+	}
+	
+	@SafeVarargs
+	private static <E> List<E> toList(final E... elems) {
+		return Arrays.asList(elems);
 	}
 
 	@Override
 	public EqState<ACTION> compact() {
-		// TODO Auto-generated method stub
-		return null;
+		return this;
 	}
 
 	@Override
@@ -156,7 +171,7 @@ public class EqState<ACTION extends IIcfgTransition<IcfgLocation>>
 		return new EqPredicate<>(
 				mFactory.getEqConstraintFactory().getDisjunctiveConstraint(Collections.singleton(mConstraint)),
 				mConstraint.getVariables(mFactory.getSymbolTable()),
-				// mVariables.stream() // TODO: maybe ask the constraint for its variables?
+				// mVariables.stream()
 				// .filter(pvoc -> (pvoc instanceof IProgramVar))
 				// .map(pvoc -> ((IProgramVar) pvoc))
 				// .collect(Collectors.toSet()),

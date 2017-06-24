@@ -16,6 +16,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.IEqNodeIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainHelpers;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainSymmetricPair;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqFunction;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNode;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNodeAndFunctionFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.IEqFunctionIdentifier;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
@@ -826,5 +828,11 @@ public class EqConstraintFactory<
 
 	public EqNodeAndFunctionFactory getEqNodeAndFunctionFactory() {
 		return mEqNodeAndFunctionFactory;
+	}
+
+	public EqDisjunctiveConstraint<ACTION, EqNode, EqFunction> complement(
+			EqConstraint<ACTION, EqNode, EqFunction> constraint) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }
