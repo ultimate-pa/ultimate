@@ -393,7 +393,8 @@ public class CongruenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		/*
 		 * 3. Handling the nodeToBeHavocced itself: First update disequality set. Then set nodeToBeHavocced to initial.
 		 */
-		if (havocNodeWasItsRepresentativeBeforeHavoc) {
+		if (havocNodeWasItsRepresentativeBeforeHavoc 
+				) {
 			/*
 			 *  nodeToBehavocced was the representative of an equivalence class --> we need to 
 			 *  update the disequalities
@@ -401,9 +402,17 @@ public class CongruenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 			final Set<VPDomainSymmetricPair<NODE>> newDisEqualitySet = new HashSet<>();
 			for (final VPDomainSymmetricPair<NODE> pair : getDisequalities()) {
 				if (pair.contains(graphNodeForNodeToBeHavocced.getNode())) {
-					newDisEqualitySet.add(new VPDomainSymmetricPair<NODE>(
+					if (!reverseRepresentativeBeforeHavoc.isEmpty()) {
+						newDisEqualitySet.add(new VPDomainSymmetricPair<NODE>(
 							pair.getOther(nodeToBeHavocced),
 							find(firstReverseRepresentativeNode.getNode())));
+					} else {
+						/* 
+						 *    if reverseRepresentativeBeforeHavoc is empty, then nodeToBeHavocced was the only member of 
+						 *    its equivalence class -> we just omit the disequality from newDisEqualitySet
+						 */
+						assert firstReverseRepresentativeNode == null;
+					}
 				} else {
 					newDisEqualitySet.add(pair);
 				}
