@@ -13,6 +13,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.IEqNodeIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainSymmetricPair;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.IEqFunctionIdentifier;
@@ -128,13 +129,23 @@ public class EqDisjunctiveConstraint<
 		return newConstraint;
 	}
 
+	/**
+	 * Convert this EqDisjunctiveConstraints to a corresponding set of EqStates. (Assumes that all the TermVariables
+	 *  and nullary ApplicationTerms in this.mConstraints have a symbol table entry.)
+	 * @return
+	 */
 	public List<EqState<ACTION>> toEqStates() {
-//		EqConstraint<ACTION, NODE, FUNCTION> cons = mConstraints.iterator().next();
-//		Object st = mEqConstraintFactory.getEqStateFactory().getEqState(cons, cons.getPvocs());
+		/*
+		 *  The AbstractInterpretation framework demads that all EqStates here have the same Pvocs
+		 *  Thus we set the Pvocs of all the disjunct-states to be the union of the pvocs that each 
+		 *  disjunct-state/constraint talks about.
+		 */
 		final IIcfgSymbolTable symbolTable = mFactory.getEqStateFactory().getSymbolTable();
+		final Set<IProgramVarOrConst> allVariables = new HashSet<>();
+		mConstraints.stream().forEach(cons -> allVariables.addAll(cons.getPvocs(symbolTable)));
+	
 		return mConstraints.stream()
-			.map(cons -> mFactory.getEqStateFactory().getEqState(cons, 
-					cons.getPvocs(symbolTable)))
+			.map(cons -> mFactory.getEqStateFactory().getEqState(cons, allVariables))
 			.collect(Collectors.toList());
 	}
 

@@ -655,8 +655,15 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 	}
 
 	/**
+	 * Collects the Pvocs (IprogramVarOrConsts) that are mentioned in this EqConstraint by looking up the TermVariables 
+	 * and nullary ApplicationTerms in the symbol table. 
+	 * 
+	 * These Pvocs correspond to the Pvocs of the compacted version of an EqState that has this constraint, i.e.,
+	 * only Pvocs that are actually constrained by this constraint are mentioned.
+	 * 
 	 * We expect this to only be called when this constraint is the constraint
-	 * of an EqState.
+	 * of an EqState, thus we expect all TermVariables to correspond to an IProgramVar and all nullary ApplicationTerms
+	 * to correspond to a constant that is mentioned in the symbol table.
 	 * 
 	 * @param symbolTable
 	 * 

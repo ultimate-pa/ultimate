@@ -44,20 +44,21 @@ public class EqState<ACTION extends IIcfgTransition<IcfgLocation>>
 
 	@Override
 	public EqState<ACTION> addVariable(final IProgramVarOrConst variable) {
-		mPvocs.add(variable);
-		return this;
+		Set<IProgramVarOrConst> newPvocs = new HashSet<>(mPvocs);
+		newPvocs.add(variable);
+		return mFactory.getEqState(mConstraint, newPvocs);
 	}
 
 	@Override
 	public EqState<ACTION> removeVariable(final IProgramVarOrConst variable) {
-		mPvocs.remove(variable);
-		return this;
+		return removeVariables(Collections.singleton(variable));
 	}
 
 	@Override
 	public EqState<ACTION> addVariables(final Collection<IProgramVarOrConst> variables) {
-		mPvocs.addAll(variables);
-		return this;
+		Set<IProgramVarOrConst> newPvocs = new HashSet<>(mPvocs);
+		newPvocs.addAll(variables);
+		return mFactory.getEqState(mConstraint, newPvocs);
 	}
 
 	@Override
@@ -145,7 +146,7 @@ public class EqState<ACTION extends IIcfgTransition<IcfgLocation>>
 
 	@Override
 	public EqState<ACTION> compact() {
-		return this;
+		return mFactory.getEqState(mConstraint, mConstraint.getPvocs(mFactory.getSymbolTable()));
 	}
 
 	@Override
