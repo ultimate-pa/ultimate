@@ -107,7 +107,7 @@ public class PeaToBoogie implements ISource {
 		translator.setVacuityChecks(vacuityChecks);
 		translator.setCombinationNum(combinationNum);
 		translator.setInputFilePath(inputPath);
-		return translator.genBoogie(patterns);
+		return translator.generateBoogie(patterns);
 	}
 
 	@Override

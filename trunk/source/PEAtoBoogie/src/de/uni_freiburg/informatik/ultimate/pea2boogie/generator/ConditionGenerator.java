@@ -33,15 +33,15 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Phase;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Transition;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.CDDTranslator;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.Translator;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.Permutation;
 
 public class ConditionGenerator {
@@ -77,7 +77,7 @@ public class ConditionGenerator {
 				cddOuter = cddOuter.and(cddInner);
 				impliesLHS.add(genPCCompEQ(automataPermutation[j], vector[j], fileName, bl));
 			}
-			final CDD cdd = new VarRemoval().excludeEventsAndPrimedVars(cddOuter, translator.primedVars);
+			final CDD cdd = new VarRemoval().excludeEventsAndPrimedVars(cddOuter, translator.getPrimedVars());
 			if (cdd == CDD.TRUE) {
 				continue;
 			}
@@ -106,13 +106,13 @@ public class ConditionGenerator {
 
 	/*
 	 * public Expression nonDLCGeneratorToy (PhaseEventAutomata[] automata, String fileName, BoogieLocation bl) {
-	 * 
+	 *
 	 * BoogieLocation blAssert = new BoogieLocation (fileName, 0, 0, 0, 0, bl);
-	 * 
+	 *
 	 * Expression OrExprOuter = new BooleanLiteral(blAssert, false); Expression ANDExprInner = new
 	 * BooleanLiteral(blAssert, true); Expression ANDExprOuter = new BooleanLiteral(blAssert, true); CDD OrCDDInner =
 	 * CDD.FALSE; CDD AndCDDInner = CDD.TRUE;
-	 * 
+	 *
 	 * for (int i = 0; i < automata.length; i++) { PhaseEventAutomata automaton = automata[i]; Phase[] phases =
 	 * automaton.getPhases(); for (int j = 0; j < phases.length; j++) { List<Transition> transitions =
 	 * phases[j].getTransitions(); for (int k = 0; k < transitions.size(); k++) { CDD cddInner = genPropsIntersection
