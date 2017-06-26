@@ -128,8 +128,8 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 		mErrorLocalizationStatisticsGenerator.continueErrorLocalizationTime();
 		try {
 			if (doNonFlowSensitiveAnalysis) {
-				doNonFlowSensitiveAnalysis(counterexample.getWord(), predicateUnifier.getFalsePredicate(),
-						modifiableGlobalsTable, csToolkit);
+				doNonFlowSensitiveAnalysis(counterexample.getWord(),predicateUnifier.getTruePredicate(), 
+						predicateUnifier.getFalsePredicate(), modifiableGlobalsTable, csToolkit);
 			}
 
 			if (doFlowSensitiveAnalysis) {
@@ -329,7 +329,7 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 		return new Boolean[] { relevanceCriterionUC, relevanceCriterionGF };
 	}
 
-	private void doNonFlowSensitiveAnalysis(final NestedWord<LETTER> counterexampleWord,
+	private void doNonFlowSensitiveAnalysis(final NestedWord<LETTER> counterexampleWord, final IPredicate truePredicate,
 			final IPredicate falsePredicate, final ModifiableGlobalsTable modGlobVarManager,
 			final CfgSmtToolkit csToolkit) {
 		mLogger.info("Starting non-flow-sensitive error relevancy analysis");
@@ -337,13 +337,13 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 		final FaultLocalizationRelevanceChecker rc = new FaultLocalizationRelevanceChecker(csToolkit);
 		// Non-Flow Sensitive INCREMENTAL ANALYSIS
 
-		// Calculating the WP-List
+		// Calculating the WP and SP List
 		final IterativePredicateTransformer ipt = new IterativePredicateTransformer(mPredicateFactory,
 				csToolkit.getManagedScript(), csToolkit.getModifiableGlobalsTable(), mServices, counterexampleWord,
-				null, falsePredicate, null, mPredicateFactory.not(falsePredicate), mSimplificationTechnique,
+				truePredicate, falsePredicate, null, mPredicateFactory.not(falsePredicate), mSimplificationTechnique,
 				mXnfConversionTechnique, mSymbolTable);
 
-		final DefaultTransFormulas dtf = new DefaultTransFormulas(counterexampleWord, null, falsePredicate,
+		final DefaultTransFormulas dtf = new DefaultTransFormulas(counterexampleWord, truePredicate, falsePredicate,
 				Collections.emptySortedMap(), csToolkit.getOldVarsAssignmentCache(), false);
 
 		final List<IPredicatePostprocessor> postprocessors;
@@ -356,23 +356,27 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 			postprocessors = Collections.emptyList();
 		}
 		TracePredicates weakestPreconditionSequence;
+		TracePredicates strongestPostconditionSequence;
 		try {
 			weakestPreconditionSequence = ipt.computeWeakestPreconditionSequence(dtf, postprocessors, true, false);
+			strongestPostconditionSequence = ipt.computeStrongestPostconditionSequence(dtf, postprocessors);
 		} catch (final TraceInterpolationException e) {
 			// TODO: What to do with this exception?
 			throw new RuntimeException(e);
 		}
 		// End of the calculation
-
+		
 		for (int i = counterexampleWord.length() - 1; i >= 0; i--) {
 			final IAction action = counterexampleWord.getSymbolAt(i);
 			// Calculate WP and PRE
 			final IPredicate wp = weakestPreconditionSequence.getPredicate(i + 1);
 			final IPredicate pre = mPredicateFactory.not(weakestPreconditionSequence.getPredicate(i));
+			final IPredicate sp = strongestPostconditionSequence.getPredicate(i);
+			final IPredicate intersection = mPredicateFactory.and(pre,sp);
 
 			// Figure out what is the type of the statement (internal, call or Return)
 			final ERelevanceStatus relevance;
-			relevance = computeRelevance(i, action, pre, wp, null, weakestPreconditionSequence, counterexampleWord, rc,
+			relevance = computeRelevance(i, action, intersection, wp, null, weakestPreconditionSequence, counterexampleWord, rc,
 					csToolkit);
 
 			final Boolean[] relevanceCriterionVariables = relevanceCriterionVariables(relevance);
