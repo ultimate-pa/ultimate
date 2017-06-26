@@ -909,44 +909,44 @@ public final class SmtUtils {
 			}
 			result = comparison(script, funcname, params[0], params[1]);
 			break;
-		case "store": {
-			final Term array = params[0];
-			final Term idx = params[1];
-			final Term nestedIdx = getArrayStoreIdx(array);
-			if (nestedIdx != null) {
-				// Check for store-over-store
-				if (nestedIdx.equals(idx)) {
-					// Found store-over-store => ignore inner store
-					final ApplicationTerm appArray = (ApplicationTerm) array;
-					result = script.term(funcname,
-							appArray.getParameters()[0], params[1], params[2]);
-				} else {
-					result = script.term(funcname, indices, null, params);
-				} 
-			} else {
-				result = script.term(funcname, indices, null, params);
-			}
-			break;
-		}
-		case "select": {
-			final Term array = params[0];
-			final Term idx = params[1];
-			final Term nestedIdx = getArrayStoreIdx(array);
-			if (nestedIdx != null) {
-				// Check for store-over-store
-				if (nestedIdx.equals(idx)) {
-					// Found store-over-store => ignore inner store
-					final ApplicationTerm appArray = (ApplicationTerm) array;
-					// => transform into value
-					result = appArray.getParameters()[2];
-				} else {
-					result = script.term(funcname, indices, null, params);
-				} 
-			} else {
-				result = script.term(funcname, indices, null, params);
-			}
-			break;
-		}
+//		case "store": {
+//			final Term array = params[0];
+//			final Term idx = params[1];
+//			final Term nestedIdx = getArrayStoreIdx(array);
+//			if (nestedIdx != null) {
+//				// Check for store-over-store
+//				if (nestedIdx.equals(idx)) {
+//					// Found store-over-store => ignore inner store
+//					final ApplicationTerm appArray = (ApplicationTerm) array;
+//					result = script.term(funcname,
+//							appArray.getParameters()[0], params[1], params[2]);
+//				} else {
+//					result = script.term(funcname, indices, null, params);
+//				} 
+//			} else {
+//				result = script.term(funcname, indices, null, params);
+//			}
+//			break;
+//		}
+//		case "select": {
+//			final Term array = params[0];
+//			final Term idx = params[1];
+//			final Term nestedIdx = getArrayStoreIdx(array);
+//			if (nestedIdx != null) {
+//				// Check for store-over-store
+//				if (nestedIdx.equals(idx)) {
+//					// Found store-over-store => ignore inner store
+//					final ApplicationTerm appArray = (ApplicationTerm) array;
+//					// => transform into value
+//					result = appArray.getParameters()[2];
+//				} else {
+//					result = script.term(funcname, indices, null, params);
+//				} 
+//			} else {
+//				result = script.term(funcname, indices, null, params);
+//			}
+//			break;
+//		}
 		case "zero_extend":
 		case "extract":
 		case "bvsub":
