@@ -684,7 +684,7 @@ public class EqConstraintFactory<
 
 		assert currentFunction.getStoreIndices().size() == 1 : "TODO: deal with multidimensional case";
 		
-		final EqConstraint<ACTION, NODE, FUNCTION> newConstraint;
+		EqConstraint<ACTION, NODE, FUNCTION> newConstraint;
 		if (isIndexDifferentFromAllIndices(currentFunction.getStoreIndices(), storeIndicesOverwrittenSoFar, orig)) {
 			/*
 			 * The current store index is guaranteed to be different from all storeIndicesOverwrittenSoFar.
@@ -705,6 +705,11 @@ public class EqConstraintFactory<
 			newConstraint = addEqualityFlat(selectIdxNode, storeValueNode, orig);
 		} else {
 			newConstraint = orig;
+		}
+		
+		// also propagate for inner stores
+		if (currentFunction != overAllStore) {
+			newConstraint = propagateIdx(currentFunction, newConstraint);
 		}
 
 		final Set<List<NODE>> newOverwrittenStoreIndices = new HashSet<>(storeIndicesOverwrittenSoFar);

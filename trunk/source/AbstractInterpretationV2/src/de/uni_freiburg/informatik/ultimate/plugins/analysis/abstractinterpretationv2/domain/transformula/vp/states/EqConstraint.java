@@ -744,16 +744,20 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 	public String toString() {
 		// (adapted from getTerm())
 		final List<String> elementEqualities = getSupportingElementEqualities().entrySet().stream()
-				.map(en -> String.format("(%s = %s)", en.getKey().getTerm(), en.getValue().getTerm()))
+				.map(en -> String.format("(%s = %s)", en.getKey().getTerm().toStringDirect(), 
+						en.getValue().getTerm().toStringDirect()))
 				.collect(Collectors.toList());
 		final List<String> elementDisequalities = getElementDisequalities().stream()
-				.map(pair -> String.format("(%s != %s)", pair.getFirst().getTerm(), pair.getSecond().getTerm()))
+				.map(pair -> String.format("(%s != %s)", pair.getFirst().getTerm().toStringDirect(), 
+						pair.getSecond().getTerm().toStringDirect()))
 				.collect(Collectors.toList());
 		final List<String> functionEqualities = getSupportingFunctionEqualities().entrySet().stream()
-				.map(en -> String.format("(%s = %s)", en.getKey().getTerm(), en.getValue().getTerm()))
+				.map(en -> String.format("(%s = %s)", en.getKey().getTerm().toStringDirect(), 
+						en.getValue().getTerm().toStringDirect()))
 				.collect(Collectors.toList());
 		final List<String> functionDisequalities = getFunctionDisequalites().stream()
-				.map(pair -> String.format("(%s != %s)", pair.getFirst().getTerm(), pair.getSecond().getTerm()))
+				.map(pair -> String.format("(%s != %s)", pair.getFirst().getTerm().toStringDirect(), 
+						pair.getSecond().getTerm().toStringDirect()))
 				.collect(Collectors.toList());
 
 		final List<String> allConjuncts = new ArrayList<>();
