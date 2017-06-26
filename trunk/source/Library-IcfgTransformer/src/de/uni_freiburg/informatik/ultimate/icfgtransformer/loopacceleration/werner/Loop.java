@@ -29,7 +29,9 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.wer
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -45,33 +47,30 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Tra
 
 public class Loop {
 
-	private final Deque<IcfgEdge> mPath;
+	private Deque<IcfgEdge> mPath;
 	private Deque<Backbone> mBackbones;
 	private final IcfgLocation mLoopHead;
-	private final TransFormula mFormula;
+	private TransFormula mFormula;
 	private Term mCondition;
 	private IteratedSymbolicMemory mIteratedMemory;
 	private List<TermVariable> mAuxVars;
+	private Map<IcfgLocation, Backbone> mErrorPaths;
 
 	/**
 	 * Construct a new loop.
 	 * 
-	 * @param path
-	 *            The loop's path in the ICFG.
-	 * 
 	 * @param loopHead
 	 *            The loop entry node.
-	 * @param tf
-	 *            the loops {@link TransFormula}
 	 */
-	public Loop(final Deque<IcfgEdge> path, final IcfgLocation loopHead, final TransFormula tf) {
-		mPath = path;
+	public Loop(final IcfgLocation loopHead) {
+		mPath = null;
 		mLoopHead = loopHead;
 		mBackbones = new ArrayDeque<>();
-		mFormula = tf;
+		mFormula = null;
 		mCondition = null;
 		mIteratedMemory = null;
 		mAuxVars = new ArrayList<>();
+		mErrorPaths = new HashMap<>();
 	}
 
 	/**
@@ -109,6 +108,10 @@ public class Loop {
 		return mCondition;
 	}
 
+	public Map<IcfgLocation, Backbone> getErrorPaths() {
+		return mErrorPaths;
+	}
+
 	public IteratedSymbolicMemory getIteratedMemory() {
 		return mIteratedMemory;
 	}
@@ -124,19 +127,40 @@ public class Loop {
 		return mLoopHead;
 	}
 
-	public void setCondition(Term condition) {
+	public void setPath(final Deque<IcfgEdge> path) {
+		mPath = path;
+	}
+
+	/**
+	 * If there is an Assertion in the Loop, add it here
+	 * @param errorLocation 
+	 * The Error {@link IcfgLocation}
+	 * 
+	 * @param errorPath
+	 * The Errorpath in form of a {@link Backbone}
+	 */
+	public void addErrorPath(final IcfgLocation errorLocation, final Backbone errorPath) {
+		mErrorPaths.put(errorLocation, errorPath);
+	}
+
+	public void setFormula(final TransFormula tf) {
+		mFormula = tf;
+	}
+
+	public void setCondition(final Term condition) {
 		mCondition = condition;
 	}
 
-	public void setIteratedSymbolicMemory(IteratedSymbolicMemory memory) {
+	public void setIteratedSymbolicMemory(final IteratedSymbolicMemory memory) {
 		mIteratedMemory = memory;
 	}
-	
+
 	/**
 	 * add a var
+	 * 
 	 * @param vars
 	 */
-	public void addVar(List<TermVariable> vars) {
+	public void addVar(final List<TermVariable> vars) {
 		mAuxVars.addAll(vars);
 	}
 

@@ -35,6 +35,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -59,6 +60,7 @@ public class LoopDetector<INLOC extends IcfgLocation> {
 	private final ManagedScript mScript;
 	private final Deque<Loop> mLoopBodies;
 	private final IUltimateServiceProvider mServices;
+	private final Set<INLOC> mErrorLocations;
 
 	/**
 	 * Loop Detector for retrieving loops in an {@link IIcfg}.
@@ -73,7 +75,9 @@ public class LoopDetector<INLOC extends IcfgLocation> {
 		mLogger = Objects.requireNonNull(logger);
 		mServices = services;
 		mScript = script;
+		mErrorLocations = IcfgUtils.getErrorLocations(originalIcfg);
 		mLogger.debug("Loop detector constructed.");
+
 		mLoopBodies = getLoop(originalIcfg);
 
 		for (final Loop loop : mLoopBodies) {
@@ -84,6 +88,12 @@ public class LoopDetector<INLOC extends IcfgLocation> {
 		}
 	}
 
+	/**
+	 * Get Loops of the originalIcfg.
+	 * 
+	 * @param originalIcfg
+	 * @return
+	 */
 	private Deque<Loop> getLoop(final IIcfg<INLOC> originalIcfg) {
 		final Set<INLOC> loopHeads = originalIcfg.getLoopLocations();
 		final Deque<Loop> loopBodies = new ArrayDeque<>();
@@ -92,12 +102,16 @@ public class LoopDetector<INLOC extends IcfgLocation> {
 			mLogger.debug("Loops found.");
 
 			for (final INLOC loopHead : loopHeads) {
-				final Deque<IcfgEdge> path = getPath(loopHead);
+
+				final Loop loop = new Loop(loopHead);
+
+				final Deque<IcfgEdge> path = getPath(loopHead, loop, loopHead);
+				loop.setPath(path);
+
 				final TransFormula tf = calculateFormula(path);
+				loop.setFormula(tf);
 
 				mLogger.debug("LOOP: " + tf);
-
-				final Loop loop = new Loop(path, loopHead, tf);
 				loopBodies.add(loop);
 			}
 
@@ -109,28 +123,33 @@ public class LoopDetector<INLOC extends IcfgLocation> {
 		return loopBodies;
 	}
 
-	private Deque<IcfgEdge> getPath(final IcfgLocation loopHead) {
+	private Deque<IcfgEdge> getPath(final IcfgLocation start, final Loop loop, final IcfgLocation target) {
 		Deque<IcfgEdge> loopPath = new ArrayDeque<>();
 		final Deque<IcfgEdge> stack = new ArrayDeque<>();
 
-		for (final IcfgEdge edge : loopHead.getOutgoingEdges()) {
-			stack.push(edge);
-		}
+		stack.addAll(start.getOutgoingEdges());
 
 		while (!stack.isEmpty()) {
 			final IcfgEdge edge = stack.pop();
+
 			final Deque<IcfgEdge> newPath = new ArrayDeque<>(loopPath);
 			newPath.addLast(edge);
 
-			if (findLoopHeader(newPath, loopHead)) {
+			if (mErrorLocations.contains(edge.getTarget())) {
+				mLogger.debug("FOUND ERROR LOCATIONS");
+				mErrorLocations.remove(edge.getTarget());
+				final Deque<IcfgEdge> errorPath = getPath(start, loop, edge.getTarget());
+				final TransFormula errorFormula = calculateFormula(errorPath);
+				final Backbone errorLocationPath = new Backbone(errorPath, errorFormula);
+
+				loop.addErrorPath(edge.getTarget(), errorLocationPath);
+			}
+
+			if (findLoopHeader(newPath, start, target)) {
 				loopPath = newPath;
-				if (!edge.getTarget().equals(loopHead)) {
-
+				if (!edge.getTarget().equals(target)) {
+					stack.addAll(edge.getTarget().getOutgoingEdges());
 					// TODO something for nested loops and more than one loop.
-
-					for (final IcfgEdge transition : edge.getTarget().getOutgoingEdges()) {
-						stack.push(transition);
-					}
 				}
 			}
 		}
@@ -146,7 +165,8 @@ public class LoopDetector<INLOC extends IcfgLocation> {
 	 * @param loopHead
 	 *            loopHeader
 	 */
-	private boolean findLoopHeader(final Deque<IcfgEdge> path, final IcfgLocation loopHead) {
+	private static boolean findLoopHeader(final Deque<IcfgEdge> path, final IcfgLocation start,
+			final IcfgLocation target) {
 		final Deque<IcfgEdge> stack = new ArrayDeque<>();
 		final Deque<IcfgLocation> visited = new ArrayDeque<>();
 		stack.push(path.getLast());
@@ -155,16 +175,17 @@ public class LoopDetector<INLOC extends IcfgLocation> {
 
 			final IcfgLocation node = stack.pop().getTarget();
 
-			for (final IcfgLocation successor : node.getOutgoingNodes()) {
-				if (successor.equals(loopHead) || node.equals(loopHead)) {
-					return true;
-				}
-				if (!visited.contains(successor)) {
-					visited.addLast(successor);
-					for (final IcfgEdge edge : successor.getOutgoingEdges()) {
-						stack.push(edge);
-					}
-				}
+			if (node.equals(target)) {
+				return true;
+			}
+
+			if (node.equals(start)) {
+				return false;
+			}
+
+			if (!visited.contains(node)) {
+				visited.addLast(node);
+				stack.addAll(node.getOutgoingEdges());
 			}
 		}
 		return false;
@@ -199,8 +220,8 @@ public class LoopDetector<INLOC extends IcfgLocation> {
 						newPossibleBackbone.addLast(target.getOutgoingEdges().get(i));
 						possibleBackbones.addLast(newPossibleBackbone);
 					}
+					backbone.add(target.getOutgoingEdges().get(0));
 				}
-				backbone.add(target.getOutgoingEdges().get(0));
 			}
 
 			final TransFormula tf = calculateFormula(backbone);

@@ -37,6 +37,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -62,8 +63,10 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
- * A basic IcfgTransformer that applies the {@link ExampleLoopAccelerationTransformulaTransformer}, i.e., replaces all
- * transformulas of an {@link IIcfg} with a new instance. + First tries for loop acceleration.
+ * A basic IcfgTransformer that applies the
+ * {@link ExampleLoopAccelerationTransformulaTransformer}, i.e., replaces all
+ * transformulas of an {@link IIcfg} with a new instance. + First tries for loop
+ * acceleration.
  *
  * @param <INLOC>
  *            The type of the locations of the old IIcfg.
@@ -137,11 +140,11 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 				final SymbolicMemory symbolicMemory = new SymbolicMemory(mScript, mLogger, tf, mOldSymbolTable);
 				symbolicMemory.updateVars(update.getUpdatedVars());
 
-				final Term condition =
-						symbolicMemory.updateCondition(TransFormulaUtils.computeGuard(tf, mScript, mServices, mLogger));
+				final Term condition = symbolicMemory
+						.updateCondition(TransFormulaUtils.computeGuard(tf, mScript, mServices, mLogger));
 
-				final TermVariable backbonePathCounter =
-						mScript.constructFreshTermVariable("kappa", mScript.getScript().sort(SmtSortUtils.INT_SORT));
+				final TermVariable backbonePathCounter = mScript.constructFreshTermVariable("kappa",
+						mScript.getScript().sort(SmtSortUtils.INT_SORT));
 
 				pathCounter.add(backbonePathCounter);
 				mLogger.debug(backbonePathCounter);
@@ -156,8 +159,8 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 			final Map<TermVariable, TermVariable> newPathCounter = new HashMap<>();
 
 			for (int i = 0; i < pathCounter.size(); i++) {
-				final TermVariable newBackbonePathCounter =
-						mScript.constructFreshTermVariable("tau", mScript.getScript().sort(SmtSortUtils.INT_SORT));
+				final TermVariable newBackbonePathCounter = mScript.constructFreshTermVariable("tau",
+						mScript.getScript().sort(SmtSortUtils.INT_SORT));
 				newPathCounter.put(pathCounter.get(i), newBackbonePathCounter);
 			}
 			loop.addVar(pathCounter);
@@ -177,10 +180,10 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 			mLogger.debug("ABSTRACT PATH CONDITION: " + iteratedSymbolicMemory.getAbstractCondition());
 		}
 
-		final BasicIcfg<OUTLOC> resultIcfg =
-				new BasicIcfg<>(newIcfgIdentifier, originalIcfg.getCfgSmtToolkit(), outLocationClass);
-		final TransformedIcfgBuilder<INLOC, OUTLOC> lst =
-				new TransformedIcfgBuilder<>(funLocFac, backtranslationTracker, transformer, originalIcfg, resultIcfg);
+		final BasicIcfg<OUTLOC> resultIcfg = new BasicIcfg<>(newIcfgIdentifier, originalIcfg.getCfgSmtToolkit(),
+				outLocationClass);
+		final TransformedIcfgBuilder<INLOC, OUTLOC> lst = new TransformedIcfgBuilder<>(funLocFac,
+				backtranslationTracker, transformer, originalIcfg, resultIcfg);
 		processLocations(originalIcfg.getInitialNodes(), lst);
 		lst.finish();
 
@@ -201,27 +204,49 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 			final OUTLOC newSource = lst.createNewLocation(oldSource);
 
 			if (mLoopMapping.containsKey(oldSource)) {
+				final Loop loop = mLoopMapping.get(oldSource);
+
+				if (!loop.getErrorPaths().isEmpty()) {
+					mLogger.debug("LOOP WITH ERRORPATH");
+
+					for (final Entry<IcfgLocation, Backbone> entry : loop.getErrorPaths().entrySet()) {
+						final OUTLOC newTarget = lst.createNewLocation((INLOC) entry.getKey());
+
+						lst.createNewInternalTransition(newSource, newTarget,
+								(UnmodifiableTransFormula) entry.getValue().getFormula(), true);
+					}
+
+				}
+
 				for (final IcfgEdge oldTransition : oldSource.getOutgoingEdges()) {
-					if (oldTransition.getTarget().equals(oldSource)) {
-						continue;
+
+					if (loop.getPath().contains(oldTransition)) {
+
+						final OUTLOC newTarget = lst.createNewLocation(oldSource);
+
+						final TransFormula formula = loop.getFormula();
+
+						final TransFormulaBuilder tfb = new TransFormulaBuilder(loop.getIteratedMemory().getVars(),
+								loop.getIteratedMemory().getVars(), false, formula.getNonTheoryConsts(), true,
+								Collections.emptySet(), false);
+
+						tfb.setFormula(loop.getIteratedMemory().getAbstractCondition());
+
+						for (final TermVariable var : loop.getVars()) {
+							tfb.addAuxVar(var);
+						}
+
+						tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
+						final UnmodifiableTransFormula tf = tfb.finishConstruction(mScript);
+
+						lst.createNewInternalTransition(newSource, newTarget, tf, true);
+
+					} else {
+						final INLOC oldTarget = (INLOC) oldTransition.getTarget();
+						open.add(oldTarget);
+						final OUTLOC newTarget = lst.createNewLocation(oldTarget);
+						lst.createNewTransition(newSource, newTarget, oldTransition);
 					}
-					final INLOC oldTarget = (INLOC) oldTransition.getTarget();
-					open.add(oldTarget);
-					final OUTLOC newTarget = lst.createNewLocation(oldTarget);
-					final Loop loop = mLoopMapping.get(oldSource);
-					final TransFormula formula = loop.getFormula();
-					final TransFormulaBuilder tfb = new TransFormulaBuilder(formula.getInVars(), formula.getInVars(),
-							false, formula.getNonTheoryConsts(), true, Collections.emptySet(), false);
-
-					tfb.setFormula(loop.getIteratedMemory().getAbstractCondition());
-
-					for (final TermVariable var : loop.getVars()) {
-						tfb.addAuxVar(var);
-					}
-
-					tfb.setInfeasibility(Infeasibility.INFEASIBLE);
-					final UnmodifiableTransFormula tf = tfb.finishConstruction(mScript);
-					lst.createNewInternalTransition(newSource, newTarget, tf, true);
 				}
 
 			} else {

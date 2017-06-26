@@ -166,7 +166,7 @@ public class SymbolicMemory {
 		}
 
 		final ApplicationTerm appTerm = (ApplicationTerm) term;
-		for (Term subTerm : appTerm.getParameters()) {
+		for (final Term subTerm : appTerm.getParameters()) {
 			result.putAll(termUnravel(subTerm));
 		}
 		return result;
@@ -199,7 +199,7 @@ public class SymbolicMemory {
 		}
 
 		final ApplicationTerm appTerm = (ApplicationTerm) term;
-		for (Term subTerm : appTerm.getParameters()) {
+		for (final Term subTerm : appTerm.getParameters()) {
 			result.putAll(termUnravel(subTerm, progVars));
 		}
 
@@ -240,8 +240,17 @@ public class SymbolicMemory {
 	 * 
 	 * @return The whole symbolic memory
 	 */
+
 	public Map<IProgramVar, Term> getMemory() {
 		return mMemoryMapping;
+	}
+
+	public Map<IProgramVar, TermVariable> getVars() {
+		final Map<IProgramVar, TermVariable> result = new HashMap<>();
+		for (final Entry<IProgramVar, Term> entry : mMemoryMapping.entrySet()) {
+			result.put(entry.getKey(), (TermVariable) entry.getValue());
+		}
+		return result;
 	}
 
 }

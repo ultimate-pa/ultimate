@@ -76,6 +76,8 @@ public class IteratedSymbolicMemory extends SymbolicMemory {
 	 *            {@link Loop} whose iterated memory is computed
 	 * @param pathCounters
 	 *            list of pathcounters of the loops backbones
+	 * @param newPathCounter
+	 *            mapping of {@link TermVariable} to new Path Counter Tau
 	 */
 	public IteratedSymbolicMemory(final ManagedScript script, final ILogger logger, final TransFormula tf,
 			final IIcfgSymbolTable oldSymbolTable, final Loop loop, final List<TermVariable> pathCounters,
@@ -159,7 +161,7 @@ public class IteratedSymbolicMemory extends SymbolicMemory {
 				// a constant for each backbone.
 				if ("-".equals(((ApplicationTerm) memory).getFunction().getName())
 						&& Arrays.asList(((ApplicationTerm) memory).getParameters()).contains(symbol)) {
-					
+
 					mLogger.debug("Subtraction");
 
 					update = mScript.getScript().term("-", update, mScript.getScript().term("*",
