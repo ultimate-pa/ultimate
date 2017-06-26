@@ -123,4 +123,9 @@ public class EqFunction implements IEqFunctionIdentifier<EqNode, EqFunction> {
 		throw new AssertionError("check isStore() first");
 	}
 
+	@Override
+	public EqFunction getInnerMostFunction() {
+		return this;
+	}
+
 }

@@ -63,7 +63,8 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>> implem
 		final EqDisjunctiveConstraint<ACTION, EqNode, EqFunction> postConstraint = 
 				mPredicateTransformer.strongestPostcondition(
 						oldstate.toEqPredicate(), transitionRelation);
-		return postConstraint.toEqStates();
+		final List<EqState<ACTION>> result = postConstraint.toEqStates(oldstate.getVariables());
+		return result;
 	}
 
 	@Override
@@ -90,7 +91,8 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>> implem
 							stateBeforeLeaving.toEqPredicate(), 
 							localVarAssignments, globalVarAssignments, oldVarAssignments, 
 							modifiableGlobalsOfCalledProcedure);
-			return postConstraint.toEqStates();
+			//TODO where do we get the variables for the new scope??
+			return postConstraint.toEqStates(hierarchicalPre.getVariables()); 
 		} else if (transition instanceof Summary) {
 			return apply(stateBeforeLeaving, transition);
 		} else if (transition instanceof Return) {
@@ -118,10 +120,24 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>> implem
 							oldVarAssignments, 
 							modifiableGlobals);
 			
-			return postConstraint.toEqStates();
+			return postConstraint.toEqStates(hierarchicalPre.getVariables());
 		} else {
 			throw new UnsupportedOperationException();
 		}
 	}
+
+//	/**
+//	 * copied with minimal modifications from AbstractMultiState..
+//	 * used only for assertions
+//	 * @param states
+//	 * @return
+//	 */
+//	private boolean haveSameVars(final Collection<EqState<ACTION>> states) {
+//		if (states.size() <= 1) {
+//			return true;
+//		}
+//		final Set<IProgramVarOrConst> firstVars = states.iterator().next().getVariables();
+//		return states.stream().allMatch(a -> firstVars.equals(a.getVariables()));
+//	}
 	
 }

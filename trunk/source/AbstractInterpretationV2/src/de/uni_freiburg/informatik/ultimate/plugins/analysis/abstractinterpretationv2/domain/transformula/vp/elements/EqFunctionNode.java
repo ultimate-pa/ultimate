@@ -61,6 +61,7 @@ public class EqFunctionNode extends EqNode {
 				&& args.stream().map(arg -> arg.mIsConstant).reduce((b1, b2) -> b1 && b2).get(),
 				VPDomainHelpers.computeProcedure(function, args), 
 				eqNodeFactory);
+		assert args.size() == function.getArity();
 
 		mFunction = function;
 		mArgs = args;

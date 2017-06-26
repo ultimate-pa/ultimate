@@ -24,4 +24,6 @@ public interface IEqFunctionIdentifier<NODE extends IEqNodeIdentifier<NODE, FUNC
 	List<NODE> getStoreIndices();
 
 	NODE getValue();
+
+	FUNCTION getInnerMostFunction();
 }

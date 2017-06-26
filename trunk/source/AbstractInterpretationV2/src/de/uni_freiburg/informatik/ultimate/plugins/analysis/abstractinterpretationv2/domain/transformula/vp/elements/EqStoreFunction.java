@@ -53,4 +53,9 @@ public class EqStoreFunction extends EqFunction {
 	public boolean isStore() {
 		return true;
 	}
+	
+	@Override
+	public EqFunction getInnerMostFunction() {
+		return mFunction.getInnerMostFunction();
+	}
 }

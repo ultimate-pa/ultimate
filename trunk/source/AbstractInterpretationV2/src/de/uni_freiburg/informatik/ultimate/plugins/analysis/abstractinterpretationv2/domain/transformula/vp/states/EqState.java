@@ -40,6 +40,7 @@ public class EqState<ACTION extends IIcfgTransition<IcfgLocation>>
 		mConstraint = constraint;
 		mFactory = eqStateFactory;
 		mPvocs = new HashSet<>(variables);
+		assert mPvocs.containsAll(constraint.getPvocs(mFactory.getSymbolTable()));
 	}
 
 	@Override
@@ -198,9 +199,9 @@ public class EqState<ACTION extends IIcfgTransition<IcfgLocation>>
 	public boolean areUnequal(final Term term1, final Term term2) {
 		if (term1.getSort().isArraySort()) {
 			assert term2.getSort().isArraySort();
-			final EqFunction node1 = mFactory.getEqNodeAndFunctionFactory().getExistingEqFunction(term1);
-			final EqFunction node2 = mFactory.getEqNodeAndFunctionFactory().getExistingEqFunction(term2);
-			return mConstraint.areUnequal(node1, node2);
+			final EqFunction func1 = mFactory.getEqNodeAndFunctionFactory().getExistingEqFunction(term1);
+			final EqFunction func2 = mFactory.getEqNodeAndFunctionFactory().getExistingEqFunction(term2);
+			return mConstraint.areUnequal(func1, func2);
 		}
 		final EqNode node1 = mFactory.getEqNodeAndFunctionFactory().getExistingEqNode(term1);
 		final EqNode node2 = mFactory.getEqNodeAndFunctionFactory().getExistingEqNode(term2);

@@ -12,6 +12,9 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalStore;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.IEqNodeIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainHelpers;
@@ -644,53 +647,161 @@ public class EqConstraintFactory<
 		return newConstraintWithPropagations;
 	}
 
-	private EqConstraint<ACTION, NODE, FUNCTION> propagateIdx(FUNCTION func, EqConstraint<ACTION, NODE, FUNCTION> orig) {
-		if (!(func.isStore())) {
-			return orig;
-		}
-		// idx axiom: ( a[i:=v][i] == v )
-//		EqStoreFunction store = (EqStoreFunction) func1;
-	
-	
-		assert func.getStoreIndices().size() == 1 : "TODO: deal with multidimensional case";
-		assert !func.getFunction().isStore() : "TODO: deal with nested stores";
-
-		final ManagedScript mgdScript = mEqNodeAndFunctionFactory.getScript();
-		mgdScript.lock(this);
-		Term selectTerm = mgdScript.term(this, 
-				"select", 
-				func.getTerm(), 
-				func.getStoreIndices().iterator().next().getTerm());
-		mgdScript.unlock(this);
-	
-		final NODE selectIdxNode = (NODE) mEqNodeAndFunctionFactory.getOrConstructEqNode(selectTerm);
-		final NODE storeValueNode = 
-				(NODE) mEqNodeAndFunctionFactory.getOrConstructEqNode(func.getValue().getTerm());
-	
-		return addEqualityFlat(selectIdxNode, storeValueNode, orig);
+	/**
+	 * Convenience function for propagateIdx, for the 'outermost' call.
+	 * 
+	 * @param func
+	 * @param newConstraintWithPropagations
+	 * @return
+	 */
+	private EqConstraint<ACTION, NODE, FUNCTION> propagateIdx(FUNCTION func,
+			EqConstraint<ACTION, NODE, FUNCTION> newConstraintWithPropagations) {
+		return propagateIdx(func, newConstraintWithPropagations, func, Collections.emptySet());
 	}
 
+	/**
+	 * Attempts a propagation via the 'idx' array axiom. The idx axiom is applicable when the given FUNCTION is a
+	 *  store.
+	 *
+	 * Simple form of the idx axiom: a[i:=v][i] == v
+	 * Nested case: a[j:=u][i:=v][i] == v, i != j --> a[j:=u][i:=v][j] == u  (more nestings: more constraints..)
+	 * 
+	 * @param currentFunction current (store or non-store) function
+	 * @param orig the constraint before propagation
+	 * @param overAllStore the store term we want to talk about (relevant for the nested case, the store we called 
+	 * 		propagateIdx the first time with)
+	 * @param storeIndicesOverwrittenSoFar the storeIndices that our current one must be different from in order to
+	 *     "write through" to the array of the overall store term (could be computed from currentFunction and 
+	 *    	 overAllStore)
+	 * @return a constraint with added idx-propagations
+	 */
+	private EqConstraint<ACTION, NODE, FUNCTION> propagateIdx(FUNCTION currentFunction, 
+			EqConstraint<ACTION, NODE, FUNCTION> orig,
+			FUNCTION overAllStore,
+			Set<List<NODE>> storeIndicesOverwrittenSoFar) {
+		if (!(currentFunction.isStore())) {
+			return orig;
+		}
+
+		assert currentFunction.getStoreIndices().size() == 1 : "TODO: deal with multidimensional case";
+		
+		/*
+		 */
+		
+		final EqConstraint<ACTION, NODE, FUNCTION> newConstraint;
+		if (isIndexDifferentFromAllIndices(currentFunction.getStoreIndices(), storeIndicesOverwrittenSoFar, orig)) {
+			/*
+			 * The current store index is guaranteed to be different from all storeIndicesOverwrittenSoFar.
+			 * prepare the nodes for the equality and add the equality..
+			 */
+			final ManagedScript mgdScript = mEqNodeAndFunctionFactory.getScript();
+			mgdScript.lock(this);
+			Term selectTerm = mgdScript.term(this, 
+					"select", 
+//					currentFunction.getTerm(), 
+					overAllStore.getTerm(), 
+					currentFunction.getStoreIndices().iterator().next().getTerm());
+			mgdScript.unlock(this);
+
+			final NODE selectIdxNode = (NODE) mEqNodeAndFunctionFactory.getOrConstructEqNode(selectTerm);
+			final NODE storeValueNode = 
+//					(NODE) mEqNodeAndFunctionFactory.getOrConstructEqNode(currentFunction.getValue().getTerm());
+					(NODE) mEqNodeAndFunctionFactory.getOrConstructEqNode(currentFunction.getValue().getTerm());
+		
+			newConstraint = addEqualityFlat(selectIdxNode, storeValueNode, orig);
+		} else {
+			newConstraint = orig;
+		}
+
+		final Set<List<NODE>> newOverwrittenStoreIndices = new HashSet<>(storeIndicesOverwrittenSoFar);
+		newOverwrittenStoreIndices.add(currentFunction.getStoreIndices());
+		return propagateIdx(currentFunction.getFunction(), newConstraint, overAllStore, newOverwrittenStoreIndices);
+//		} else {
+//			final ManagedScript mgdScript = mEqNodeAndFunctionFactory.getScript();
+//			mgdScript.lock(this);
+//			Term selectTerm = mgdScript.term(this, 
+//					"select", 
+//					func.getTerm(), 
+//					func.getStoreIndices().iterator().next().getTerm());
+//			mgdScript.unlock(this);
+//
+//			final NODE selectIdxNode = (NODE) mEqNodeAndFunctionFactory.getOrConstructEqNode(selectTerm);
+//			final NODE storeValueNode = 
+//					(NODE) mEqNodeAndFunctionFactory.getOrConstructEqNode(func.getValue().getTerm());
+//
+//			return addEqualityFlat(selectIdxNode, storeValueNode, orig);
+//		}
+	}
+
+	/**
+	 * Determines if the given constraint guarantees that index is different from all otherIndices.
+	 * 
+	 * @param index
+	 * @param otherIndices
+	 * @param constraint
+	 * @return
+	 */
+	private boolean isIndexDifferentFromAllIndices(List<NODE> index,
+			Set<List<NODE>> otherIndices, EqConstraint<ACTION, NODE, FUNCTION> constraint) {
+		boolean storeIndexDifferentFromAllOverwrittenOnes = true;
+		for (List<NODE> siosf : otherIndices) {
+			boolean unEqualOnAtLeastOnePosition = false;
+			for (int storeIndexPosition = 0; storeIndexPosition < index.size(); storeIndexPosition++) {
+				if (constraint.areUnequal(index.get(storeIndexPosition), siosf.get(storeIndexPosition))) {
+					unEqualOnAtLeastOnePosition = true;
+					break;
+				}
+			}
+			storeIndexDifferentFromAllOverwrittenOnes &= unEqualOnAtLeastOnePosition;
+		}
+		return storeIndexDifferentFromAllOverwrittenOnes;
+	}
+
+	/**
+	 * Add propagations that are made possible by the read-over-write array axiom (the 'disequality case')
+	 * 
+	 * the row axiom: j != i -> a[i:=v][j] = a[j]
+	 *  nested case: k != i /\ k != j -> a[i:=v][j:=u][k] = a[k]
+	 * 
+	 * @param func
+	 * @param inputConstraint
+	 * @return
+	 */
 	private EqConstraint<ACTION, NODE, FUNCTION> propagateRowDeq(FUNCTION func,
 			EqConstraint<ACTION, NODE, FUNCTION> inputConstraint) {
 		if (!func.isStore()) {
 			return inputConstraint;
 		}
+		
+		
 		EqConstraint<ACTION, NODE, FUNCTION> newConstraint = inputConstraint;
 
 		assert func.getStoreIndices().size() == 1 : "TODO: deal with multidimensional case";
-		assert !func.getFunction().isStore() : "TODO: deal with nested stores";
-		NODE storeIndex = func.getStoreIndices().iterator().next();
-		for (NODE nodeUnequalToStoreIndex : inputConstraint.getDisequalities(storeIndex)) {
+
+//		NODE storeIndex = func.getStoreIndices().iterator().next();
+//		for (NODE nodeUnequalToStoreIndex : inputConstraint.getDisequalities(storeIndex)) {
+		for (List<NODE> indexUnequalToAllStoreIndices : 
+				getIndicesThatAreUnequalToAllStoreIndices(func, inputConstraint)) {
 			final ManagedScript mgdScript = mEqNodeAndFunctionFactory.getScript();
 			mgdScript.lock(this);
-			Term selectOverStoreTerm = mgdScript.term(this, 
-					"select", 
+//			Term selectOverStoreTerm = mgdScript.term(this, 
+//					"select", 
+//					func.getTerm(), 
+//					nodeUnequalToStoreIndex.getTerm());
+			final ArrayIndex unequalArrayIndex = new ArrayIndex(
+					indexUnequalToAllStoreIndices.stream()
+						.map(node -> node.getTerm())
+						.collect(Collectors.toList()));
+			final Term selectOverStoreTerm = SmtUtils.multiDimensionalSelect(mgdScript.getScript(), 
 					func.getTerm(), 
-					nodeUnequalToStoreIndex.getTerm());
-			Term selectInsideStoreTerm = mgdScript.term(this, 
-					"select", 
-					func.getFunction().getTerm(), 
-					nodeUnequalToStoreIndex.getTerm());
+					unequalArrayIndex);
+//			Term selectInsideStoreTerm = mgdScript.term(this, 
+//					"select", 
+//					func.getFunction().getTerm(), 
+//					nodeUnequalToStoreIndex.getTerm());
+			final Term selectInsideStoreTerm = SmtUtils.multiDimensionalSelect(mgdScript.getScript(), 
+					func.getInnerMostFunction().getTerm(), 
+					unequalArrayIndex);
 			mgdScript.unlock(this);
 			final NODE selectOverStoreNode = (NODE) mEqNodeAndFunctionFactory
 					.getOrConstructEqNode(selectOverStoreTerm);
@@ -698,8 +809,86 @@ public class EqConstraintFactory<
 					.getOrConstructEqNode(selectInsideStoreTerm);
 			newConstraint = addEqualityFlat(selectOverStoreNode, selectInsideStoreNode, newConstraint);
 		}
-		
+
 		return newConstraint;
+	}
+
+	/**
+	 * 
+	 * @param func
+	 * @param inputConstraint
+	 * @return
+	 */
+	private Set<List<NODE>> getIndicesThatAreUnequalToAllStoreIndices(FUNCTION func,
+			EqConstraint<ACTION, NODE, FUNCTION> inputConstraint) {
+		assert func.isStore();
+		/*
+		 * the nodes over which we build our index set, i.e., resultOfThisMethod subseteq candidateNodes^n, where
+		 * n is the dimension of the store function func.
+		 */
+		final Set<NODE> candidateNodes = inputConstraint.getAllNodes(); //TODO: is this a smart choice?
+		
+		
+		List<ArrayIndex> nestedStoreIndices = new ArrayList<>();
+		FUNCTION currentFunc = func;
+		while (currentFunc.isStore()) {
+			final MultiDimensionalStore mds = new MultiDimensionalStore(func.getTerm());
+			nestedStoreIndices.add(mds.getIndex());
+			currentFunc = currentFunc.getFunction();
+		}
+		
+		Set<List<NODE>> result = null;
+		/*
+		 * the indices we collect need to be different from _all_ nestedStoreIndices on _at least one_ position.
+		 */
+		for (ArrayIndex nestedStoreIndex : nestedStoreIndices) {
+
+			/*
+			 * at the end of the for loop below, this holds all the indices build from the candidateNodes that differ on
+			 * at least one position from the current nested store index
+			 */
+			Set<List<NODE>> currentUnequalIndices = new HashSet<>();
+			Set<List<NODE>> currentNotYetUnequalIndices = new HashSet<>();
+
+			for (int indexPosition = 0; indexPosition < func.getStoreIndices().size(); indexPosition++) {
+				Set<List<NODE>> newUnequalIndices = new HashSet<>();
+				Set<List<NODE>> newNotYetUnequalIndices = new HashSet<>();
+				for (List<NODE> currentIndex : currentNotYetUnequalIndices) {
+					for (NODE candidateNode : candidateNodes) {
+						final ArrayList<NODE> newIndex = new ArrayList<>(currentIndex);
+						newIndex.add(candidateNode);
+
+						final NODE storeIndexNode = (NODE) mEqNodeAndFunctionFactory
+								.getExistingEqNode(nestedStoreIndex.get(indexPosition));
+
+						if (inputConstraint.areUnequal(candidateNode, storeIndexNode)) {
+							newUnequalIndices.add(newIndex);
+						} else {
+							newNotYetUnequalIndices.add(newIndex);
+						}
+					}
+				}
+
+				for (List<NODE> currentIndex : currentUnequalIndices) {
+					for (NODE candidateNode : candidateNodes) {
+						final ArrayList newIndex = new ArrayList<>(currentIndex);
+						newIndex.add(candidateNode.getTerm());
+						newUnequalIndices.add(newIndex);
+					}
+				}
+
+				currentUnequalIndices = newUnequalIndices;
+				currentNotYetUnequalIndices = newNotYetUnequalIndices;
+			}
+			
+			if (result == null) {
+				result = currentUnequalIndices;
+			} else {
+				result.retainAll(currentUnequalIndices);
+			}
+		}
+		
+		return result;
 	}
 
 	/**

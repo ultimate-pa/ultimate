@@ -10,7 +10,6 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
@@ -132,20 +131,23 @@ public class EqDisjunctiveConstraint<
 	/**
 	 * Convert this EqDisjunctiveConstraints to a corresponding set of EqStates. (Assumes that all the TermVariables
 	 *  and nullary ApplicationTerms in this.mConstraints have a symbol table entry.)
+	 * @param variablesThatTheFrameworkLikesToSee 
 	 * @return
 	 */
-	public List<EqState<ACTION>> toEqStates() {
-		/*
-		 *  The AbstractInterpretation framework demads that all EqStates here have the same Pvocs
-		 *  Thus we set the Pvocs of all the disjunct-states to be the union of the pvocs that each 
-		 *  disjunct-state/constraint talks about.
-		 */
-		final IIcfgSymbolTable symbolTable = mFactory.getEqStateFactory().getSymbolTable();
-		final Set<IProgramVarOrConst> allVariables = new HashSet<>();
-		mConstraints.stream().forEach(cons -> allVariables.addAll(cons.getPvocs(symbolTable)));
+	public List<EqState<ACTION>> toEqStates(Set<IProgramVarOrConst> variablesThatTheFrameworkLikesToSee) {
+//		/*
+//		 *  The AbstractInterpretation framework demands that all EqStates here have the same Pvocs
+//		 *  Thus we set the Pvocs of all the disjunct-states to be the union of the pvocs that each 
+//		 *  disjunct-state/constraint talks about.
+		  // EDIT: the variables are now determined externally (by the oldstate of the post operator..)
+//		 */
+//		final IIcfgSymbolTable symbolTable = mFactory.getEqStateFactory().getSymbolTable();
+//		final Set<IProgramVarOrConst> allVariables = new HashSet<>();
+//		mConstraints.stream().forEach(cons -> allVariables.addAll(cons.getPvocs(symbolTable)));
 	
 		return mConstraints.stream()
-			.map(cons -> mFactory.getEqStateFactory().getEqState(cons, allVariables))
+//			.map(cons -> mFactory.getEqStateFactory().getEqState(cons, allVariables))
+			.map(cons -> mFactory.getEqStateFactory().getEqState(cons, variablesThatTheFrameworkLikesToSee))
 			.collect(Collectors.toList());
 	}
 
