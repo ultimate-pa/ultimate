@@ -563,7 +563,6 @@ public class EqConstraintFactory<
 			newConstraintWithPropagations = propagateRowDeq(func, newConstraintWithPropagations);
 		}
 
-//		result.freeze();
 		assert newConstraintWithPropagations.allNodesAndEqgnMapAreConsistent();
 		return newConstraintWithPropagations;
 	}
@@ -685,9 +684,6 @@ public class EqConstraintFactory<
 
 		assert currentFunction.getStoreIndices().size() == 1 : "TODO: deal with multidimensional case";
 		
-		/*
-		 */
-		
 		final EqConstraint<ACTION, NODE, FUNCTION> newConstraint;
 		if (isIndexDifferentFromAllIndices(currentFunction.getStoreIndices(), storeIndicesOverwrittenSoFar, orig)) {
 			/*
@@ -698,14 +694,12 @@ public class EqConstraintFactory<
 			mgdScript.lock(this);
 			Term selectTerm = mgdScript.term(this, 
 					"select", 
-//					currentFunction.getTerm(), 
 					overAllStore.getTerm(), 
 					currentFunction.getStoreIndices().iterator().next().getTerm());
 			mgdScript.unlock(this);
 
 			final NODE selectIdxNode = (NODE) mEqNodeAndFunctionFactory.getOrConstructEqNode(selectTerm);
 			final NODE storeValueNode = 
-//					(NODE) mEqNodeAndFunctionFactory.getOrConstructEqNode(currentFunction.getValue().getTerm());
 					(NODE) mEqNodeAndFunctionFactory.getOrConstructEqNode(currentFunction.getValue().getTerm());
 		
 			newConstraint = addEqualityFlat(selectIdxNode, storeValueNode, orig);
@@ -716,21 +710,6 @@ public class EqConstraintFactory<
 		final Set<List<NODE>> newOverwrittenStoreIndices = new HashSet<>(storeIndicesOverwrittenSoFar);
 		newOverwrittenStoreIndices.add(currentFunction.getStoreIndices());
 		return propagateIdx(currentFunction.getFunction(), newConstraint, overAllStore, newOverwrittenStoreIndices);
-//		} else {
-//			final ManagedScript mgdScript = mEqNodeAndFunctionFactory.getScript();
-//			mgdScript.lock(this);
-//			Term selectTerm = mgdScript.term(this, 
-//					"select", 
-//					func.getTerm(), 
-//					func.getStoreIndices().iterator().next().getTerm());
-//			mgdScript.unlock(this);
-//
-//			final NODE selectIdxNode = (NODE) mEqNodeAndFunctionFactory.getOrConstructEqNode(selectTerm);
-//			final NODE storeValueNode = 
-//					(NODE) mEqNodeAndFunctionFactory.getOrConstructEqNode(func.getValue().getTerm());
-//
-//			return addEqualityFlat(selectIdxNode, storeValueNode, orig);
-//		}
 	}
 
 	/**
@@ -773,21 +752,14 @@ public class EqConstraintFactory<
 			return inputConstraint;
 		}
 		
-		
 		EqConstraint<ACTION, NODE, FUNCTION> newConstraint = inputConstraint;
 
 		assert func.getStoreIndices().size() == 1 : "TODO: deal with multidimensional case";
 
-//		NODE storeIndex = func.getStoreIndices().iterator().next();
-//		for (NODE nodeUnequalToStoreIndex : inputConstraint.getDisequalities(storeIndex)) {
 		for (List<NODE> indexUnequalToAllStoreIndices : 
 				getIndicesThatAreUnequalToAllStoreIndices(func, inputConstraint)) {
 			final ManagedScript mgdScript = mEqNodeAndFunctionFactory.getScript();
 			mgdScript.lock(this);
-//			Term selectOverStoreTerm = mgdScript.term(this, 
-//					"select", 
-//					func.getTerm(), 
-//					nodeUnequalToStoreIndex.getTerm());
 			final ArrayIndex unequalArrayIndex = new ArrayIndex(
 					indexUnequalToAllStoreIndices.stream()
 						.map(node -> node.getTerm())
@@ -795,10 +767,6 @@ public class EqConstraintFactory<
 			final Term selectOverStoreTerm = SmtUtils.multiDimensionalSelect(mgdScript.getScript(), 
 					func.getTerm(), 
 					unequalArrayIndex);
-//			Term selectInsideStoreTerm = mgdScript.term(this, 
-//					"select", 
-//					func.getFunction().getTerm(), 
-//					nodeUnequalToStoreIndex.getTerm());
 			final Term selectInsideStoreTerm = SmtUtils.multiDimensionalSelect(mgdScript.getScript(), 
 					func.getInnerMostFunction().getTerm(), 
 					unequalArrayIndex);
@@ -1022,6 +990,7 @@ public class EqConstraintFactory<
 	public EqDisjunctiveConstraint<ACTION, EqNode, EqFunction> complement(
 			EqConstraint<ACTION, EqNode, EqFunction> constraint) {
 		// TODO Auto-generated method stub
+		assert false;
 		return null;
 	}
 }

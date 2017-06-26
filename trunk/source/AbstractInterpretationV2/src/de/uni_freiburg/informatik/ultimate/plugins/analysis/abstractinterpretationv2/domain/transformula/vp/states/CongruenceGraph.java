@@ -294,16 +294,11 @@ public class CongruenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 	 */
 	public void havoc(NODE nodeToBeHavocced) {
 		assert !mIsFrozen;
-
 		assert !nodeToBeHavocced.isLiteral() : "cannot havoc a literal";
-
 		assert allNodesAndEqgnMapAreConsistent();
-
 		assert VPDomainHelpers.representativePointersAreConsistent(mNodeToEqGraphNode.values());
 		
 		final EqGraphNode<NODE, FUNCTION> graphNodeForNodeToBeHavocced = mNodeToEqGraphNode.get(nodeToBeHavocced);
-
-		// TODO: determine if state becomes top through the havoc!
 
 		/*
 		 * 1. Handling the outgoing edge chain
@@ -320,7 +315,6 @@ public class CongruenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 
 		EqGraphNode<NODE, FUNCTION> nextRepresentative = firstRepresentative;
 		// remove the outgoing equality edge from the nodeToBeHavocced
-//		nextRepresentative.removeReverseRepresentative(graphNodeForNodeToBeHavocced); --> EDIT: setNodetoInitial will do that
 		while (!(nextRepresentative.equals(nextRepresentative.getRepresentative()))) {
 			nextRepresentative.removeFromCcpar(graphNodeForNodeToBeHavocced.getCcpar());
 			nextRepresentative.removeFromCcchild(graphNodeForNodeToBeHavocced.getCcchild());
@@ -330,7 +324,6 @@ public class CongruenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		 *  if nextRepresentativ == graphNodeForNodeToBeHavocced then graphNodeForNodeToBeHavocced was its own 
 		 *  representative --> we do nothing in this step
 		 */
-//		if (nextRepresentative != graphNodeForNodeToBeHavocced) {
 		if (!havocNodeWasItsRepresentativeBeforeHavoc) {
 			// one more step is needed for the last element of the representative chain
 			nextRepresentative.removeFromCcpar(graphNodeForNodeToBeHavocced.getCcpar());
@@ -386,9 +379,6 @@ public class CongruenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 			}
 		}
 		assert VPDomainHelpers.representativePointersAreConsistent(mNodeToEqGraphNode.values());
-
-//		final VPStateBuilder<ACTION> builder2 = copy(resultState);
-//		graphNodeForNodeToBeHavocced = builder2.getEqGraphNode(nodeToBeHavocced);
 		
 		/*
 		 * 3. Handling the nodeToBeHavocced itself: First update disequality set. Then set nodeToBeHavocced to initial.
@@ -424,34 +414,6 @@ public class CongruenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		}
 		assert VPDomainHelpers.representativePointersAreConsistent(mNodeToEqGraphNode.values());
 		graphNodeForNodeToBeHavocced.setNodeToInitial();
-
-		/*
-		 * restore propagations EDIT: done no more since switch to PredicateTransformer
-		 */
-//		if (nodeToBeHavocced.isFunction()) {
-//			restorePropagation(nodeToBeHavocced);
-//		}
-		
-		
-		// EDIT (22/06/2017): don't do any recursion because we call havoc on dependent nodes anyway
-		/*
-		 * havoc the function nodes which nodeToBeHavocced was an index of
-		 */
-//		if (!graphNodeForNodeToBeHavocced.getInitCcpar().isEmpty()) {
-//			for (final NODE initCcpar : graphNodeForNodeToBeHavocced.getInitCcpar()) {
-//				havoc(initCcpar);
-//			}
-//		}
-		
-		/*
-		 * havoc all the non-atomic EqNodes which depend on this one
-		 */
-//		if (nodeToBeHavocced instanceof EqAtomicBaseNode) {
-//			for (final EqNonAtomicBaseNode dependentNode : ((EqAtomicBaseNode) nodeToBeHavocced)
-//					.getDependentNonAtomicBaseNodes()) {
-//				havoc((NODE) dependentNode);
-//			}
-//		}
 		
 		assert allNodesAndEqgnMapAreConsistent();
 		// remove the havocced node from all known records..
@@ -469,11 +431,6 @@ public class CongruenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		assert !mNodeToEqGraphNode.values().stream()
 			.anyMatch(eqgn -> eqgn != graphNodeForNodeToBeHavocced 
 					&& eqgn.getRepresentative() == graphNodeForNodeToBeHavocced);
-//		assert VPDomainHelpers.constraintFreeOfVars(Arrays.asList(nodeToBeHavocced.getTerm().getFreeVars()), 
-//				mOwningConstraint, 
-//				null) :
-////				mOwningConstraint.getFactory().getEqNodeAndFunctionFactory().getScript().getScript()) : 
-//					"resulting constraint still has at least one of the to-be-projected vars";
 	}
 	
 	
