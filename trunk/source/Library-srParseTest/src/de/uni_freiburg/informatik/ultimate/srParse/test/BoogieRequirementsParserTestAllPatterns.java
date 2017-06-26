@@ -36,11 +36,10 @@ public class BoogieRequirementsParserTestAllPatterns {
 	@Test
 	public void testPatternParse() throws Exception {
 		final PatternType[] parsedPatterns = genPatterns(mActualTest.mTestString);
-
-		Assert.assertNotNull(mActualTest.mTestString, parsedPatterns);
-		Assert.assertThat(parsedPatterns.length, Is.is(1));
-		Assert.assertNotNull("failed parsing: " + mActualTest.mTestString, parsedPatterns[0]);
-		Assert.assertTrue("fail recognize: " + mActualTest.mScopeClazz.toString() + "[" + mActualTest.mScopeClazz
+		Assert.assertNotNull("Pattern is null", parsedPatterns);
+		Assert.assertThat("Is not only one pattern", parsedPatterns.length, Is.is(1));
+		Assert.assertNotNull("Failed parsing: " + mActualTest.mTestString, parsedPatterns[0]);
+		Assert.assertTrue("Fail recognize: " + mActualTest.mScopeClazz.toString() + "[" + mActualTest.mScopeClazz
 				+ "]:\n" + mActualTest.mTestString, parsedPatterns[0].getScope().getClass() == mActualTest.mScopeClazz);
 		Assert.assertTrue(
 				"fail recognize: " + parsedPatterns[0].getClass().toString() + "[" + mActualTest.mPatternName + "]:\n"
@@ -77,8 +76,8 @@ public class BoogieRequirementsParserTestAllPatterns {
 		final Class<?>[] scopezz = new Class<?>[] { srParseScopeGlob.class, srParseScopeBefore.class,
 				srParseScopeAfter.class, srParseScopeBetween.class };
 
-		final String[] pattern = new String[] { "it is never the case that \"y >= 5\" holds.",
-				"it is always the case that \"y >= 5\" holds.",
+		final String[] pattern = new String[] { "it is never the case that \"y >= 5\" holds",
+				"it is always the case that \"y >= 5\" holds",
 				"transitions to states in which \"y >= 5\" holds occur at most twice",
 				"it is always the case that if \"y >= 5\" holds, then \"y <= 5\" previously held",
 				// timed

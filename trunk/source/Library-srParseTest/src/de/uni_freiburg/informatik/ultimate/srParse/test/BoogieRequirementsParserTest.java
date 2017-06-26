@@ -83,7 +83,7 @@ public class BoogieRequirementsParserTest {
 		final String testString = "Globally, it is always the case that \"(ABC_curr >=  BCD_MAX &&"
 				+ " diddlidu + 3 == A_bli -3) || a \" holds";
 		final PatternType[] parsedPatterns = genPatterns(testString);
-		check(parsedPatterns, "(a ∨ ABC_curr >= BCD_MAX ∧ diddlidu + 3 == A_bli - 3)");
+		check(parsedPatterns, "a ∨ ABC_curr >= BCD_MAX ∧ diddlidu + 3 == A_bli - 3");
 	}
 
 	@Test
