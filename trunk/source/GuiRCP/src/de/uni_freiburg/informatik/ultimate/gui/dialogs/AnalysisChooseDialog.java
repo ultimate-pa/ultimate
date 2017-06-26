@@ -87,20 +87,15 @@ public class AnalysisChooseDialog extends Dialog {
 	private final ILogger mLogger;
 	private final ICore<RunDefinition> mCore;
 
-	public AnalysisChooseDialog(final ILogger logger, final Shell parent, final int style, final List<ITool> tools,
+	public AnalysisChooseDialog(final ILogger logger, final Shell parent, final List<ITool> tools,
 			final List<ITool> previous, final ICore<RunDefinition> core) {
-		super(parent, style);
+		super(parent, SWT.NONE);
 		mAvailableTools = tools;
 		mPreviouslySelectedTools = previous;
 		mLogger = logger;
 		mCore = core;
 		mToolchainFilePath = null;
 		mResult = null;
-	}
-
-	public AnalysisChooseDialog(final ILogger logger, final Shell parent, final List<ITool> tools,
-			final List<ITool> previous, final ICore<RunDefinition> core) {
-		this(logger, parent, SWT.NONE, tools, previous, core);
 	}
 
 	public IToolchainData<RunDefinition> open() throws FileNotFoundException, JAXBException, SAXException {
@@ -145,7 +140,7 @@ public class AnalysisChooseDialog extends Dialog {
 	 * Create contents of the dialog
 	 */
 	protected void createContents() {
-		mShell = new Shell(getParent(), SWT.DIALOG_TRIM | SWT.APPLICATION_MODAL | SWT.RESIZE);
+		mShell = new Shell(SWT.DIALOG_TRIM | SWT.APPLICATION_MODAL | SWT.RESIZE);
 		final GridLayout gridLayout = new GridLayout();
 		gridLayout.numColumns = 4;
 
