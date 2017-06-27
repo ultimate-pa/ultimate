@@ -32,12 +32,13 @@ import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
@@ -99,10 +100,6 @@ public class Req2BoogieTranslator {
 	 */
 	private Unit mUnit;
 	/**
-	 * The list of declarations.
-	 */
-	private final List<Declaration> mDecls;
-	/**
 	 * The list of clock identifiers.
 	 */
 	private final List<String> mClockIds;
@@ -114,15 +111,15 @@ public class Req2BoogieTranslator {
 	/**
 	 * The list of state variables.
 	 */
-	private final List<String> mStateVars;
+	private final Set<String> mStateVars;
 	/**
 	 * The list of primed variables.
 	 */
-	private final List<String> mPrimedVars;
+	private final Set<String> mPrimedVars;
 	/**
 	 * The list of events.
 	 */
-	private final List<String> mEventVars;
+	private final Set<String> mEventVars;
 	/**
 	 * The list of automata.
 	 */
@@ -171,12 +168,11 @@ public class Req2BoogieTranslator {
 		mVacuityChecks = vacuityChecks;
 		mCombinationNum = num;
 
-		mDecls = new ArrayList<>();
 		mClockIds = new ArrayList<>();
 		mPcIds = new ArrayList<>();
-		mStateVars = new ArrayList<>();
-		mPrimedVars = new ArrayList<>();
-		mEventVars = new ArrayList<>();
+		mStateVars = new LinkedHashSet<>();
+		mPrimedVars = new LinkedHashSet<>();
+		mEventVars = new LinkedHashSet<>();
 
 		// TODO: Remove this?
 		mBoogieFilePath = null;
@@ -191,15 +187,21 @@ public class Req2BoogieTranslator {
 	private Unit generateBoogie(final PatternType[] patterns) {
 		mRequirements = patterns;
 		final PhaseEventAutomata[] automata = new ReqToPEA(mServices, mLogger).genPEA(patterns);
+
+		// TODO: initBoogieLocations is completely broken. Rewrite.
 		initBoogieLocations(automata.length);
 
 		mAutomata = automata;
-		generateGlobalVars();
-		return generateProcedures();
+		final List<Declaration> decls = new ArrayList<>();
+		decls.addAll(generateGlobalVars());
+		decls.add(generateProcedures());
+
+		mUnit = new Unit(mBoogieLocations[0], decls.toArray(new Declaration[decls.size()]));
+		return mUnit;
 	}
 
-	public List<String> getPrimedVars() {
-		return Collections.unmodifiableList(mPrimedVars);
+	private Set<String> getPrimedVars() {
+		return Collections.unmodifiableSet(mPrimedVars);
 	}
 
 	private boolean checkVacuity(final int propertyNum) {
@@ -208,99 +210,72 @@ public class Req2BoogieTranslator {
 
 	/**
 	 * Generate global variables.
+	 *
+	 * @return
 	 */
-	private void generateGlobalVars() {
+	private List<Declaration> generateGlobalVars() {
+		final BoogieLocation loc = mBoogieLocations[0];
+		final PrimitiveType realType = new PrimitiveType(loc, "real");
+		final PrimitiveType intType = new PrimitiveType(loc, "int");
+		final PrimitiveType boolType = new PrimitiveType(loc, "bool");
+		final List<VarList> varLists = new ArrayList<>();
 
-		try {
-			final BoogieLocation blUnit = mBoogieLocations[0];
-			final BoogieLocation blVar = blUnit;
-			final BoogieLocation blPrimType = blUnit;
+		// declare delta var
+		varLists.add(new VarList(loc, new String[] { "delta" }, realType));
 
-			for (int i = 0; i < mAutomata.length; i++) {
-				final List<String> tempClocks = mAutomata[i].getClocks();
-				for (int j = 0; j < tempClocks.size(); j++) {
-					mClockIds.add(tempClocks.get(j));
-				}
-			}
-			ASTType astType = new PrimitiveType(blPrimType, "real");
-			final VarList clockVars = new VarList(blVar, mClockIds.toArray(new String[mClockIds.size()]), astType);
+		// extract pcid vars, clock vars, state vars, primed state vars, and event vars
+		for (int i = 0; i < mAutomata.length; i++) {
+			mPcIds.add("pc" + i);
+			final PhaseEventAutomata currentAutomaton = mAutomata[i];
+			mClockIds.addAll(currentAutomaton.getClocks());
+			final Map<String, String> varMap = currentAutomaton.getVariables();
 
-			final List<String> extraVars = new ArrayList<>();
-			for (int i = 0; i < mAutomata.length; i++) {
-				mPcIds.add("pc" + i);
-				extraVars.add("pc" + i);
-			}
-			astType = new PrimitiveType(blPrimType, "int");
-			final VarList pcVar = new VarList(blVar, extraVars.toArray(new String[extraVars.size()]), astType);
-
-			boolean visited = false;
-			for (int i = 0; i < mAutomata.length; i++) {
-				final Map<String, String> map = mAutomata[i].getVariables();
-
-				for (final Entry<String, String> entry : map.entrySet()) {
-					final String value = entry.getValue();
-					final String name = entry.getKey();
-					if ("boolean".equals(value)) {
-						for (int j = 0; j < mStateVars.size(); j++) {
-							if (name.equals(mStateVars.get(j))) {
-								visited = true;
-								break;
-							}
-						}
-						if (!visited) {
-							mStateVars.add(name);
-							mPrimedVars.add(name + "'");
-						}
-					} else if ("event".equals(value)) {
-						for (int j = 0; j < mEventVars.size(); j++) {
-							if (name.equals(mEventVars.get(j))) {
-								visited = true;
-								break;
-							}
-						}
-						if (!visited) {
-							mEventVars.add(name);
-						}
+			for (final Entry<String, String> entry : varMap.entrySet()) {
+				final String type = entry.getValue();
+				final String name = entry.getKey();
+				if ("boolean".equals(type)) {
+					if (mStateVars.add(name)) {
+						mPrimedVars.add(getPrimedVar(name));
 					}
-					visited = false;
+				} else if ("event".equals(type)) {
+					mEventVars.add(name);
+				} else {
+					mLogger.warn("Skipping unknown PEA variable type " + type);
 				}
 			}
-			extraVars.clear();
-			extraVars.add("delta");
-			astType = new PrimitiveType(blPrimType, "real");
-			final VarList deltaVar = new VarList(blVar, extraVars.toArray(new String[extraVars.size()]), astType);
-			final List<VarList> varList = new ArrayList<>();
-			if (!mClockIds.isEmpty()) {
-				varList.add(clockVars);
-			}
-			varList.add(pcVar);
-			varList.add(deltaVar);
-
-			if (!mStateVars.isEmpty()) {
-				astType = new PrimitiveType(blPrimType, "bool");
-				final List<String> stVarsList = new ArrayList<>();
-				for (int i = 0; i < mStateVars.size(); i++) {
-					stVarsList.add(mStateVars.get(i));
-					stVarsList.add(mPrimedVars.get(i));
-				}
-				final VarList stVars = new VarList(blVar, stVarsList.toArray(new String[stVarsList.size()]), astType);
-				varList.add(stVars);
-			}
-
-			if (!mEventVars.isEmpty()) {
-				astType = new PrimitiveType(blPrimType, "bool");
-				final VarList evVars = new VarList(blVar, mEventVars.toArray(new String[mEventVars.size()]), astType);
-				varList.add(evVars);
-			}
-			final Attribute[] attribute = new Attribute[0];
-			final VariableDeclaration vars =
-					new VariableDeclaration(blVar, attribute, varList.toArray(new VarList[varList.size()]));
-			mDecls.add(vars);
-			final Declaration[] decArray = mDecls.toArray(new Declaration[mDecls.size()]);
-			mUnit = new Unit(blUnit, decArray);
-		} catch (final Exception e) {
-			mLogger.error("Exception during generation of global vars: ", e);
 		}
+
+		if (!mClockIds.isEmpty()) {
+			varLists.add(new VarList(loc, mClockIds.toArray(new String[mClockIds.size()]), realType));
+		}
+
+		if (!mPcIds.isEmpty()) {
+			varLists.add(new VarList(loc, mPcIds.toArray(new String[mPcIds.size()]), intType));
+		}
+
+		if (!mStateVars.isEmpty()) {
+			varLists.add(new VarList(loc, mStateVars.toArray(new String[mStateVars.size()]), boolType));
+		}
+
+		if (!mPrimedVars.isEmpty()) {
+			varLists.add(new VarList(loc, mPrimedVars.toArray(new String[mPrimedVars.size()]), boolType));
+		}
+
+		if (!mEventVars.isEmpty()) {
+			varLists.add(new VarList(loc, mEventVars.toArray(new String[mEventVars.size()]), boolType));
+		}
+
+		final List<Declaration> vardecls = new ArrayList<>();
+		final Attribute[] attr = new Attribute[0];
+		for (final VarList varlist : varLists) {
+			final VariableDeclaration varDecl = new VariableDeclaration(loc, attr, new VarList[] { varlist });
+			vardecls.add(varDecl);
+		}
+		return vardecls;
+	}
+
+	private static String getPrimedVar(final String name) {
+		return name + "'";
 	}
 
 	/**
@@ -386,11 +361,11 @@ public class Req2BoogieTranslator {
 	private Statement[] genDelay(final BoogieLocation bl) {
 
 		final List<VariableLHS> havocIds = new ArrayList<>();
-		for (int i = 0; i < mPrimedVars.size(); i++) {
-			havocIds.add(new VariableLHS(bl, mPrimedVars.get(i)));
+		for (final String primedVar : mPrimedVars) {
+			havocIds.add(new VariableLHS(bl, primedVar));
 		}
-		for (int i = 0; i < mEventVars.size(); i++) {
-			havocIds.add(new VariableLHS(bl, mEventVars.get(i)));
+		for (final String eventVar : mEventVars) {
+			havocIds.add(new VariableLHS(bl, eventVar));
 		}
 		havocIds.add(new VariableLHS(bl, "delta"));
 		final VariableLHS[] ids = havocIds.toArray(new VariableLHS[havocIds.size()]);
@@ -613,9 +588,9 @@ public class Req2BoogieTranslator {
 
 	private List<Statement> genStateVarsAssign(final BoogieLocation bl) {
 		final List<Statement> statements = new ArrayList<>();
-		for (int i = 0; i < mStateVars.size(); i++) {
-			final VariableLHS lhsVar = new VariableLHS(bl, mStateVars.get(i));
-			final IdentifierExpression rhs = new IdentifierExpression(bl, mPrimedVars.get(i));
+		for (final String stateVar : mStateVars) {
+			final VariableLHS lhsVar = new VariableLHS(bl, stateVar);
+			final IdentifierExpression rhs = new IdentifierExpression(bl, getPrimedVar(stateVar));
 			final LeftHandSide[] lhs = new LeftHandSide[1];
 			lhs[0] = lhsVar;
 			final Expression[] expr = new Expression[1];
@@ -627,9 +602,8 @@ public class Req2BoogieTranslator {
 	}
 
 	private Statement genAssertRTInconsistency(final int[] permutation, final BoogieLocation bl) {
-		final ConditionGenerator conGen = new ConditionGenerator();
-		conGen.setTranslator(this);
-		final Expression expr = conGen.nonDLCGenerator(mAutomata, permutation, mBoogieFilePath, bl);
+		final Expression expr =
+				new ConditionGenerator(getPrimedVars(), mAutomata, permutation, mBoogieFilePath, bl).getResult();
 		if (expr == null) {
 			return null;
 		}
@@ -883,27 +857,21 @@ public class Req2BoogieTranslator {
 	 * The procedure statement is initialized. It is deployed to the unit. The unit is sent to the print process. The
 	 * result is a Boogie text file.
 	 */
-	private Unit generateProcedures() {
+	private Declaration generateProcedures() {
 		final BoogieLocation bl = mBoogieLocations[0];
 		final VariableDeclaration[] localVars = new VariableDeclaration[0];
 		final Body body = new Body(bl, localVars, generateProcedureBodyStmts(bl));
 		final List<String> modifiedVarsList = new ArrayList<>();
-		for (int i = 0; i < mClockIds.size(); i++) {
-			modifiedVarsList.add(mClockIds.get(i));
-		}
-		for (int i = 0; i < mPcIds.size(); i++) {
-			modifiedVarsList.add(mPcIds.get(i));
-		}
+		modifiedVarsList.addAll(mClockIds);
+		modifiedVarsList.addAll(mPcIds);
 		modifiedVarsList.add("delta");
 
-		for (int i = 0; i < mStateVars.size(); i++) {
-			modifiedVarsList.add(mStateVars.get(i));
-			modifiedVarsList.add(mPrimedVars.get(i));
+		for (final String stateVar : mStateVars) {
+			modifiedVarsList.add(stateVar);
+			modifiedVarsList.add(getPrimedVar(stateVar));
 		}
+		modifiedVarsList.addAll(mEventVars);
 
-		for (int i = 0; i < mEventVars.size(); i++) {
-			modifiedVarsList.add(mEventVars.get(i));
-		}
 		final VariableLHS[] modifiedVars = new VariableLHS[modifiedVarsList.size()];
 		for (int i = 0; i < modifiedVars.length; i++) {
 			modifiedVars[i] = new VariableLHS(bl, modifiedVarsList.get(i));
@@ -915,12 +883,7 @@ public class Req2BoogieTranslator {
 		final String[] typeParams = new String[0];
 		final VarList[] inParams = new VarList[0];
 		final VarList[] outParams = new VarList[0];
-		final Procedure proc =
-				new Procedure(bl, attribute, "myProcedure", typeParams, inParams, outParams, modArray, body);
-		mDecls.add(proc);
-		final Declaration[] decArray = mDecls.toArray(new Declaration[mDecls.size()]);
-		mUnit.setDeclarations(decArray);
-		return mUnit;
+		return new Procedure(bl, attribute, "myProcedure", typeParams, inParams, outParams, modArray, body);
 	}
 
 	private void initBoogieLocations(final int count) {

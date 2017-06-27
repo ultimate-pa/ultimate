@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.pea2boogie.generator;
 
+import java.util.Collection;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.lib.pea.BoogieBooleanExpressionDecision;
@@ -85,7 +86,7 @@ public class VarRemoval {
 		return decisionCDD;
 	}
 
-	public CDD excludeEventsAndPrimedVars(final CDD cdd, final List<String> primedVars) {
+	public CDD excludeEventsAndPrimedVars(final CDD cdd, final Collection<String> primedVars) {
 		if (cdd == CDD.TRUE) {
 			return CDD.TRUE;
 		}
@@ -103,11 +104,10 @@ public class VarRemoval {
 				newChilds[i] = excludeEventsAndPrimedVars(childs[i], primedVars);
 			}
 			return cdd.getDecision().simplify(newChilds);
-		} else {
-			assert childs.length == 2;
-			decisionCDD = excludeEventsAndPrimedVars(childs[0], primedVars)
-					.or(excludeEventsAndPrimedVars(childs[1], primedVars));
 		}
+		assert childs.length == 2;
+		decisionCDD =
+				excludeEventsAndPrimedVars(childs[0], primedVars).or(excludeEventsAndPrimedVars(childs[1], primedVars));
 		return decisionCDD;
 	}
 
@@ -128,10 +128,9 @@ public class VarRemoval {
 				newChilds[i] = getUnPrimedVars(childs[i], stateVars);
 			}
 			return cdd.getDecision().simplify(newChilds);
-		} else {
-			assert childs.length == 2;
-			decisionCDD = getUnPrimedVars(childs[0], stateVars).or(getUnPrimedVars(childs[1], stateVars));
 		}
+		assert childs.length == 2;
+		decisionCDD = getUnPrimedVars(childs[0], stateVars).or(getUnPrimedVars(childs[1], stateVars));
 		return decisionCDD;
 	}
 
