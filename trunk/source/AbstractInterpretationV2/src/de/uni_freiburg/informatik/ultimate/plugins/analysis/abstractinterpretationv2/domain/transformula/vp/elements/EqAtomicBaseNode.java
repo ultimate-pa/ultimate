@@ -31,7 +31,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
@@ -127,14 +126,14 @@ public class EqAtomicBaseNode extends EqNode {
 		return Collections.emptySet();
 	}
 
-	@Override
-	public EqNode renameVariables(Map<Term, Term> substitutionMapping) {
-		Term substitutedTerm = substitutionMapping.get(getTerm());
-		if (substitutedTerm == null) {
-			return this;
-		} 
-			
-//		return mEqNodeFactory.getOrConstructEqAtomicNode(mVarOrConst, substitutedTerm);
-		return mEqNodeFactory.getOrConstructEqNode(substitutedTerm);
-	}
+//	@Override
+//	public EqNode renameVariables(Map<Term, Term> substitutionMapping) {
+//		Term substitutedTerm = substitutionMapping.get(getTerm());
+//		if (substitutedTerm == null) {
+//			return this;
+//		} 
+//			
+////		return mEqNodeFactory.getOrConstructEqAtomicNode(mVarOrConst, substitutedTerm);
+//		return mEqNodeFactory.getOrConstructEqNode(substitutedTerm);
+//	}
 }

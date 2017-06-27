@@ -11,6 +11,7 @@ import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.CommuhashNormalForm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalStore;
@@ -79,20 +80,28 @@ public class EqNodeAndFunctionFactory {
 				throw new UnsupportedOperationException();
 			}
 		} else if (term instanceof ApplicationTerm && ((ApplicationTerm) term).getParameters().length == 0) {
-			return getOrConstructEqBaseNode(term);
+			return getOrConstructEqAtomicBaseNode(term);
 		} else if (term instanceof TermVariable) {
-			return getOrConstructEqBaseNode(term);
+			return getOrConstructEqAtomicBaseNode(term);
 		} else if (term instanceof ConstantTerm) {
-			return getOrConstructEqBaseNode(term);
+			return getOrConstructEqAtomicBaseNode(term);
 		} else {
 			throw new UnsupportedOperationException();
 		}
 	}
 
 	private EqNode getOrConstructNonAtomicBaseNode(Term term) {
-		// TODO Auto-generated method stub
-		assert false;
-		return null;
+		mMgdScript.lock(this);
+		final Term normalizedTerm = new CommuhashNormalForm(
+				mPreAnalysis.getServices(), mMgdScript.getScript()).transform(term);
+		mMgdScript.unlock(this);
+		EqNode result = mTermToEqNode.get(normalizedTerm);
+		if (result == null) {
+			result = new EqNonAtomicBaseNode(normalizedTerm, this);
+			mTermToEqNode.put(normalizedTerm, result);
+		}
+		assert result instanceof EqNonAtomicBaseNode;
+		return result;		
 	}
 
 	private EqNode getOrConstructEqFunctionNode(ApplicationTerm selectTerm) {
@@ -115,7 +124,7 @@ public class EqNodeAndFunctionFactory {
 		return result;
 	}
 
-	private EqNode getOrConstructEqBaseNode(Term term) {
+	private EqNode getOrConstructEqAtomicBaseNode(Term term) {
 		EqNode result = mTermToEqNode.get(term);
 		if (result == null) {
 			result = new EqAtomicBaseNode(term, this);
@@ -187,7 +196,16 @@ public class EqNodeAndFunctionFactory {
 	 * @return
 	 */
 	public EqNode getExistingEqNode(Term term) {
-		return mTermToEqNode.get(term);
+		final Term normalizedTerm;
+		if (term instanceof ApplicationTerm && ((ApplicationTerm) term).getParameters().length > 0) {
+			mMgdScript.lock(this);
+			normalizedTerm = new CommuhashNormalForm(
+					mPreAnalysis.getServices(), mMgdScript.getScript()).transform(term);
+			mMgdScript.unlock(this);
+		} else {
+			normalizedTerm = term;
+		}
+		return mTermToEqNode.get(normalizedTerm);
 	}
 
 	/**

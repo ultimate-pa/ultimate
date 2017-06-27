@@ -30,11 +30,13 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.IEqNodeIdentifier;
 
 /**
@@ -149,5 +151,11 @@ public abstract class EqNode implements IEqNodeIdentifier<EqNode, EqFunction> {
 	 */
 	public String getProcedure() {
 		return mProcedure;
+	}
+	
+	public final EqNode renameVariables(Map<Term, Term> substitutionMapping) {
+		final Term substitutedTerm = 
+				new Substitution(mEqNodeFactory.mMgdScript, substitutionMapping).transform(getTerm());
+		return mEqNodeFactory.getOrConstructEqNode(substitutedTerm);
 	}
 }

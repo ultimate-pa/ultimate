@@ -32,6 +32,8 @@ public class EqConstraintFactory<
 
 	private final EqConstraint<ACTION, NODE, FUNCTION> mBottomConstraint;
 
+	private final EqConstraint<ACTION, NODE, FUNCTION> mEmptyConstraint;
+
 	private EqStateFactory<ACTION> mEqStateFactory;
 
 	private final EqNodeAndFunctionFactory mEqNodeAndFunctionFactory;
@@ -39,19 +41,18 @@ public class EqConstraintFactory<
 	public EqConstraintFactory(EqNodeAndFunctionFactory eqNodeAndFunctionFactory) {
 		mBottomConstraint = new EqBottomConstraint<>(this);
 		mBottomConstraint.freeze();
+		
+		mEmptyConstraint = new EqConstraint<>(this);
+		mEmptyConstraint.freeze();
 
 		mEqNodeAndFunctionFactory = eqNodeAndFunctionFactory;
 	}
 
 	public EqConstraint<ACTION, NODE, FUNCTION> getEmptyConstraint() {
-		final EqConstraint<ACTION, NODE, FUNCTION> result = new EqConstraint<>(this);
-		result.freeze();
-		return result;
+		return mEmptyConstraint;
 	}
 
 	public EqConstraint<ACTION, NODE, FUNCTION> getBottomConstraint() {
-//		EqConstraint<ACTION, NODE, FUNCTION> result = mBottomConstraint;;
-//		if (result == null)
 		return mBottomConstraint;
 	}
 
