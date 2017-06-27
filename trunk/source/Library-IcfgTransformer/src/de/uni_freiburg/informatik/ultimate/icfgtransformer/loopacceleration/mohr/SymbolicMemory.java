@@ -103,7 +103,6 @@ public class SymbolicMemory {
 		mCurrentPath++;
 		mAssignedVars.put(mCurrentPath, new HashSet<>());
 		final TermVariable k = mManagedScript.variable("kappa" + mCurrentPath, mManagedScript.getScript().sort("Int"));
-		final TermVariable kappa = mManagedScript.constructFreshCopy(k);
 		mKappas.add(k);
 		final TermVariable t = mManagedScript.variable("tau" + mCurrentPath, mManagedScript.getScript().sort("Int"));
 		mKappa2Tau.put(k, t);
@@ -220,7 +219,9 @@ public class SymbolicMemory {
 
 		for (final IProgramVar iv : guard.getInVars().keySet()) {
 			if (!mReplaceInV.containsKey(iv.getTermVariable())) {
-				mInVars.put(iv, mManagedScript.constructFreshCopy(iv.getTermVariable()));
+				final TermVariable cp = mManagedScript.constructFreshCopy(iv.getTermVariable());
+				mInVars.put(iv, cp);
+				mReplaceInV.put(iv.getTermVariable(), cp);
 			}
 		}
 
@@ -235,12 +236,12 @@ public class SymbolicMemory {
 		final Map<Term, Term> symValueSubMap = new HashMap<>();
 		for (final TermVariable freeVar : guard.getFormula().getFreeVars()) {
 			final IProgramVar pv = revInVars.get(freeVar);
-			if (mUpdateTypeMap.get(pv) != UpdateType.UNDEFINED) {
+			if (mUpdateTypeMap.get(pv) != UpdateType.UNDEFINED && mUpdateTypeMap.get(pv) != null) {
 				symValueSubMap.put(freeVar, mIteratedSymbolicMemory.get(revInVars.get(freeVar)));
 			}
 		}
 		final Substitution varSub = new Substitution(mManagedScript, symValueSubMap);
-		final Term varReplacedGuard = varSub.transform(guard.getFormula());
+		final Term varReplacedGuard = symValueSubMap.size() > 0 ? varSub.transform(guard.getFormula()) : guard.getFormula();
 
 		final Map<Term, Term> cleanSubMap = new HashMap<>();
 		for (final Map.Entry<TermVariable, IProgramVar> revInEntry : revInVars.entrySet()) {
@@ -337,7 +338,7 @@ public class SymbolicMemory {
 			case CONSTANT_WITH_SINGLE_PATHCOUNTER:
 				final Term assignedTerm = symEntry.getValue().iterator().next();
 				final int p = mAssigningPaths.get(symEntry.getKey().getTermVariable()).iterator().next();
-				boolean cwsp = true;
+				boolean cwsp = assignedTerm.getFreeVars().length > 0 ? true : false;
 				for (final TermVariable tv : assignedTerm.getFreeVars()) {
 					if (mAssigningPaths.get(tv).size() > 1 || !mAssigningPaths.get(tv).contains(p)) {
 						cwsp = false;
@@ -347,6 +348,7 @@ public class SymbolicMemory {
 					mIteratedSymbolicMemory.put(pv, generateConstantAssignment(
 							UpdateType.CONSTANT_WITH_SINGLE_PATHCOUNTER, pv, symEntry.getValue()));
 				} else {
+					mUpdateTypeMap.put(pv, UpdateType.CONSTANT);
 					mIteratedSymbolicMemory.put(pv,
 							generateConstantAssignment(UpdateType.CONSTANT, pv, symEntry.getValue()));
 				}

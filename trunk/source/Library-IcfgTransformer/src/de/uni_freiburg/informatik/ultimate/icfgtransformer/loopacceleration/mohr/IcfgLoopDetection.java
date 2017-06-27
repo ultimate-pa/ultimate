@@ -29,21 +29,18 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.moh
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Dnf;
 
 public class IcfgLoopDetection<INLOC extends IcfgLocation> {
 
@@ -51,12 +48,6 @@ public class IcfgLoopDetection<INLOC extends IcfgLocation> {
 
 	public IcfgLoopDetection(final IIcfg<INLOC> icfg) {
 		mLoops = loopExtraction(icfg);
-	}
-
-	private Term[] toDnf(final ManagedScript mgScript, final IUltimateServiceProvider services, final Term term) {
-		final Dnf dnf = new Dnf(mgScript, services);
-		final Term transFormedTerm = dnf.transform(term);
-		return SmtUtils.getDisjuncts(transFormedTerm);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -153,8 +144,40 @@ public class IcfgLoopDetection<INLOC extends IcfgLocation> {
 				}
 			}
 		}
+
+		if (loopbodies.isEmpty()) {
+			return altLoopExtraction(originalIcfg);
+		}
+
 		return new HashSet<>(loopbodies.values());
 
+	}
+
+	@SuppressWarnings("unchecked")
+	private Set<IcfgLoop<INLOC>> altLoopExtraction(final IIcfg<INLOC> originalIcfg) {
+		final Set<IcfgLoop<INLOC>> result = new HashSet<>();
+		final Set<INLOC> loopHeaders = originalIcfg.getLoopLocations();
+		for (final INLOC head : loopHeaders) {
+			final Set<INLOC> loopBody = new HashSet<>();
+			final Deque<List<IcfgEdge>> paths = new ArrayDeque<>();
+			for (final IcfgEdge e : head.getOutgoingEdges()) {
+				paths.addLast(new ArrayList<>(Arrays.asList(e)));
+			}
+			while (!paths.isEmpty()) {
+				final List<IcfgEdge> path = paths.pop();
+				if (path.get(path.size() - 1).getTarget().equals(head)) {
+					path.forEach(edge -> loopBody.add((INLOC) edge.getSource()));
+					continue;
+				}
+				for (final IcfgEdge e : path.get(path.size() - 1).getTarget().getOutgoingEdges()) {
+					final List<IcfgEdge> newPath = new ArrayList<>(path);
+					newPath.add(e);
+					paths.addLast(newPath);
+				}
+			}
+			result.add(new IcfgLoop<INLOC>(loopBody, head));
+		}
+		return result;
 	}
 
 	public Set<IcfgLoop<INLOC>> getResult() {

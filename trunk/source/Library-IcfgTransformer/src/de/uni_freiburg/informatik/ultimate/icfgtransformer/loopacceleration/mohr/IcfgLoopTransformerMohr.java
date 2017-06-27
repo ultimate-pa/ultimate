@@ -76,8 +76,6 @@ public class IcfgLoopTransformerMohr<INLOC extends IcfgLocation, OUTLOC extends 
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 
-	private final SymbolicMemory mSymbolicMemory;
-
 	public IcfgLoopTransformerMohr(final ILogger logger, final IUltimateServiceProvider services,
 			final IIcfg<INLOC> originalIcfg, final ILocationFactory<INLOC, OUTLOC> funLocFac,
 			final IBacktranslationTracker backtranslationTracker, final Class<OUTLOC> outLocationClass,
@@ -96,8 +94,6 @@ public class IcfgLoopTransformerMohr<INLOC extends IcfgLocation, OUTLOC extends 
 		mTib = new TransformedIcfgBuilder<>(funLocFac, backtranslationTracker, identityTransformer, originalIcfg,
 				resultIcfg);
 
-		mSymbolicMemory = new SymbolicMemory(mManagedScript, mLogger);
-
 		transform(originalIcfg);
 		mTib.finish();
 		mResult = resultIcfg;
@@ -111,10 +107,12 @@ public class IcfgLoopTransformerMohr<INLOC extends IcfgLocation, OUTLOC extends 
 		final Set<INLOC> loopHeads = new HashSet<>();
 		final Set<INLOC> loopNodes = new HashSet<>();
 		final Map<INLOC, UnmodifiableTransFormula> loopSummaries = new HashMap<>();
-		for (final IcfgLoop<INLOC> loop : loops) {
-			loopHeads.add(loop.getHead());
-			loopNodes.addAll(loop.getLoopbody());
-			loopSummaries.put(loop.getHead(), transformLoop(loop));
+		if (!loops.isEmpty()) {
+			for (final IcfgLoop<INLOC> loop : loops) {
+				loopHeads.add(loop.getHead());
+				loopNodes.addAll(loop.getLoopbody());
+				loopSummaries.put(loop.getHead(), transformLoop(loop));
+			}
 		}
 
 		// build new IIcfg
@@ -147,14 +145,15 @@ public class IcfgLoopTransformerMohr<INLOC extends IcfgLocation, OUTLOC extends 
 
 	}
 
-
 	private UnmodifiableTransFormula transformLoop(IcfgLoop<INLOC> loop) {
 		final List<Map<IProgramVar, Term>> pathSymbolicMemory = new ArrayList<>();
 		final List<UnmodifiableTransFormula> pathGuards = new ArrayList<>();
+		final SymbolicMemory symbolicMemory = new SymbolicMemory(mManagedScript, mLogger);
 		int pathCount = 0;
+
 		for (final ArrayList<IcfgEdge> path : loop.getPaths()) {
 
-			mSymbolicMemory.newPath();
+			symbolicMemory.newPath();
 
 			pathSymbolicMemory.add(new HashMap<>());
 			final List<UnmodifiableTransFormula> formulas = new ArrayList<>();
@@ -162,7 +161,7 @@ public class IcfgLoopTransformerMohr<INLOC extends IcfgLocation, OUTLOC extends 
 				formulas.add(edge.getTransformula());
 			}
 			final UnmodifiableTransFormula composition = TransFormulaUtils.sequentialComposition(
-					mLogger, mServices, mManagedScript, false, false, false, null, SimplificationTechnique.SIMPLIFY_QUICK, formulas);
+					mLogger, mServices, mManagedScript, false, false, false, null, SimplificationTechnique.NONE, formulas);
 			final SimultaneousUpdate su = new SimultaneousUpdate(composition, mManagedScript);
 			final Map<IProgramVar, Term> varUpdates = su.getUpdatedVars();
 			final Set<IProgramVar> havocVars = su.getHavocedVars();
@@ -171,13 +170,13 @@ public class IcfgLoopTransformerMohr<INLOC extends IcfgLocation, OUTLOC extends 
 			// calculate symbolic memory of the path
 			for (final Map.Entry<IProgramVar, Term> newValue : varUpdates.entrySet()) {
 				if (newValue.getValue() instanceof ConstantTerm || newValue.getValue() instanceof TermVariable) {
-					mSymbolicMemory.updateConst(newValue.getKey(), newValue.getValue(), mSymbolTable);
+					symbolicMemory.updateConst(newValue.getKey(), newValue.getValue(), mSymbolTable);
 				} else if (newValue.getValue() instanceof ApplicationTerm && (
 						"+".equals(((ApplicationTerm) newValue.getValue()).getFunction().getName()) ||
 						"-".equals(((ApplicationTerm) newValue.getValue()).getFunction().getName()))) {
-					mSymbolicMemory.updateInc(newValue.getKey(), newValue.getValue(), mSymbolTable);
+					symbolicMemory.updateInc(newValue.getKey(), newValue.getValue(), mSymbolTable);
 				} else {
-					mSymbolicMemory.updateUndefined(newValue.getKey(), mSymbolTable);
+					symbolicMemory.updateUndefined(newValue.getKey(), mSymbolTable);
 				}
 			}
 			pathCount++;
@@ -186,16 +185,16 @@ public class IcfgLoopTransformerMohr<INLOC extends IcfgLocation, OUTLOC extends 
 
 		final Term[] pathSummaries = new Term[pathCount];
 		for (int i = 0; i < pathCount; i++) {
-			pathSummaries[i] = mSymbolicMemory.getFormula(i, pathGuards.get(i));
+			pathSummaries[i] = symbolicMemory.getFormula(i, pathGuards.get(i));
 		}
 		final Term loopSummary = Util.and(mManagedScript.getScript(), pathSummaries);
 
-		final Map<IProgramVar, TermVariable> inVars = mSymbolicMemory.getInVars();
-		final Map<IProgramVar, TermVariable> outVars = mSymbolicMemory.getOutVars();
+		final Map<IProgramVar, TermVariable> inVars = symbolicMemory.getInVars();
+		final Map<IProgramVar, TermVariable> outVars = symbolicMemory.getOutVars();
 
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(inVars, outVars, true, null, true, null, false);
-		final Set<TermVariable> aux = mSymbolicMemory.getKappas();
-		aux.addAll(mSymbolicMemory.getTaus());
+		final Set<TermVariable> aux = symbolicMemory.getKappas();
+		aux.addAll(symbolicMemory.getTaus());
 		final Term quantFreeFormula = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mManagedScript,
 				loopSummary, SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 		tfb.setFormula(quantFreeFormula);
