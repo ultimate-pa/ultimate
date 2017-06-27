@@ -81,8 +81,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.be
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorabstraction.ErrorAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorabstraction.ErrorAutomatonStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorabstraction.ErrorTraceContainer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorabstraction.IErrorAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorabstraction.ErrorTraceContainer.ErrorTrace;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorabstraction.IErrorAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorlocalization.FlowSensitiveFaultLocalizer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.InterpolantAutomatonBuilderFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
@@ -422,7 +422,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 					mServices, mPredicateFactory, mTraceCheckAndRefinementEngine.getPredicateUnifier(), mCsToolkit,
 					mSimplificationTechnique, mXnfConversionTechnique,
 					mIcfgContainer.getCfgSmtToolkit().getSymbolTable(), mPredicateFactoryInterpolantAutomata,
-					new VpAlphabet<>(mAbstraction), trace, mIteration, getErrorAutomatonEnhancementMode());
+					new VpAlphabet<>(mAbstraction), trace, mIteration, mPref.interpolantAutomatonEnhancement());
 		} catch (final ToolchainCanceledException tce) {
 			mErrorAutomatonStatisticsGenerator.stopErrorAutomatonConstructionTime();
 			mErrorAutomatonStatisticsGenerator.finishAutomatonInstance();
@@ -446,11 +446,6 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		stat.aggregateBenchmarkData(mErrorAutomatonStatisticsGenerator);
 		final IResult benchmarkResult = new StatisticsResult<>(Activator.PLUGIN_NAME, "ErrorAutomatonStatistics", stat);
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID, benchmarkResult);
-	}
-
-	private InterpolantAutomatonEnhancement getErrorAutomatonEnhancementMode() {
-		// TODO 2017-06-01 Christian: add setting for error automaton enhancement?
-		return mPref.interpolantAutomatonEnhancement();
 	}
 
 	@Override
@@ -481,11 +476,9 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 			automatonType = "error";
 			useErrorAutomaton = true;
 			exploitSigmaStarConcatOfIa = false;
-			enhanceMode = getErrorAutomatonEnhancementMode();
+			enhanceMode = mErrorAutomatonBuilder.getEnhancementMode();
 			subtrahendBeforeEnhancement = mErrorAutomatonBuilder.getResultBeforeEnhancement();
-			subtrahend = (enhanceMode == InterpolantAutomatonEnhancement.NONE)
-					? subtrahendBeforeEnhancement
-					: mErrorAutomatonBuilder.getResultAfterEnhancement();
+			subtrahend = mErrorAutomatonBuilder.getResultAfterEnhancement();
 		} else {
 			automatonType = "interpolant";
 			useErrorAutomaton = false;
@@ -551,7 +544,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 				tce.addRunningTaskInfo(runningTaskInfo);
 				throw tce;
 			} finally {
-				if (!useErrorAutomaton && enhanceMode != InterpolantAutomatonEnhancement.NONE) {
+				if (enhanceMode != InterpolantAutomatonEnhancement.NONE) {
 					assert subtrahend instanceof AbstractInterpolantAutomaton :
 						"if enhancement is used, we need AbstractInterpolantAutomaton";
 					((AbstractInterpolantAutomaton<LETTER>) subtrahend).switchToReadonlyMode();

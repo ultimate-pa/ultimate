@@ -31,6 +31,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
@@ -127,6 +128,7 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements
 	private final NondeterministicInterpolantAutomaton<LETTER> mResultAfterEnhancement;
 	private IPredicate mErrorPrecondition;
 	private final int mLastIteration;
+	private final InterpolantAutomatonEnhancement mEnhancementMode;
 
 	/**
 	 * @param services
@@ -151,7 +153,7 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements
 	 *            error trace
 	 * @param iteration
 	 *            CEGAR loop iteration in which this builder was created
-	 * @param enhanceMode
+	 * @param enhancementMode
 	 *            mode for automaton enhancement
 	 */
 	@SuppressWarnings("squid:S00107")
@@ -161,9 +163,10 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements
 			final IIcfgSymbolTable symbolTable,
 			final PredicateFactoryForInterpolantAutomata predicateFactoryErrorAutomaton,
 			final VpAlphabet<LETTER> alphabet, final NestedWord<LETTER> trace, final int iteration,
-			final InterpolantAutomatonEnhancement enhanceMode) {
+			final InterpolantAutomatonEnhancement enhancementMode) {
 		final ILogger logger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mLastIteration = iteration;
+		mEnhancementMode = enhancementMode;
 		final PredicateUnificationMechanism internalPredicateUnifier =
 				new PredicateUnificationMechanism(predicateUnifier, UNIFY_PREDICATES);
 
@@ -171,7 +174,7 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements
 				internalPredicateUnifier, simplificationTechnique, xnfConversionTechnique, symbolTable,
 				predicateFactoryErrorAutomaton, alphabet, trace);
 
-		mResultAfterEnhancement = enhanceMode != InterpolantAutomatonEnhancement.NONE
+		mResultAfterEnhancement = mEnhancementMode != InterpolantAutomatonEnhancement.NONE
 				? constructNondeterministicAutomaton(services, mResultBeforeEnhancement, csToolkit,
 						internalPredicateUnifier, predicateFactory)
 				: null;
@@ -188,7 +191,7 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements
 	}
 
 	@Override
-	public NondeterministicInterpolantAutomaton<LETTER> getResultAfterEnhancement() {
+	public INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> getResultAfterEnhancement() {
 		if (mResultAfterEnhancement == null) {
 			throw new UnsupportedOperationException("No enhancement was requested.");
 		}
@@ -204,6 +207,11 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements
 	@Override
 	public boolean hasAutomatonInIteration(final int iteration) {
 		return mLastIteration == iteration;
+	}
+
+	@Override
+	public InterpolantAutomatonEnhancement getEnhancementMode() {
+		return mEnhancementMode;
 	}
 
 	@SuppressWarnings("squid:S00107")

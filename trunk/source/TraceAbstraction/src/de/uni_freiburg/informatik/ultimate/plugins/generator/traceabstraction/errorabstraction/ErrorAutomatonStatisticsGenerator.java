@@ -233,7 +233,6 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 			final PredicateFactoryForInterpolantAutomata predicateFactory,
 			final PredicateFactoryResultChecking predicateFactoryResultChecking)
 			throws AutomataOperationCanceledException, AutomataLibraryException {
-		errorAutomatonBuilder.getResultAfterEnhancement().switchToReadonlyMode();
 		final NestedWordAutomatonReachableStates<LETTER, IPredicate> errorAutomatonAfterEnhancement =
 				new RemoveUnreachable<>(services, errorAutomatonBuilder.getResultAfterEnhancement()).getResult();
 		final INestedWordAutomaton<LETTER, IPredicate> intersection =
