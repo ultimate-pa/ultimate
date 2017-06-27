@@ -154,7 +154,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 	private INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> mWitnessAutomaton;
 	protected IRefinementEngine<NestedWordAutomaton<LETTER, IPredicate>> mTraceCheckAndRefinementEngine;
 	
-	private ErrorAutomatonBuilder<LETTER> mErrorAutomatonBuilder;
+	private IErrorAutomatonBuilder<LETTER> mErrorAutomatonBuilder;
 	private final ErrorTraceContainer<LETTER> mErrorTraces = new ErrorTraceContainer<>();
 	private final ErrorAutomatonStatisticsGenerator mErrorAutomatonStatisticsGenerator;
 
@@ -165,7 +165,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 			final IToolchainStorage storage) {
 		super(services, storage, name, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs,
 				services.getLoggingService().getLogger(Activator.PLUGIN_ID));
-		mPathProgramDumpController = new PathProgramDumpController(mServices, mPref, mIcfgContainer);
+		mPathProgramDumpController = new PathProgramDumpController<>(mServices, mPref, mIcfgContainer);
 		if (mFallbackToFpIfInterprocedural && rootNode.getProcedureEntryNodes().size() > 1) {
 			if (interpolation == InterpolationTechnique.FPandBP) {
 				mLogger.info("fallback from FPandBP to FP because CFG is interprocedural");
@@ -429,10 +429,10 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		mInterpolAutomaton = null;
 		mErrorAutomatonStatisticsGenerator.stopErrorAutomatonConstructionTime();
 		mErrorTraces.addPrecondition(mErrorAutomatonBuilder.getErrorPrecondition());
-		
-		 assert isInterpolantAutomatonOfSingleStateType(mErrorAutomatonBuilder.getResultBeforeEnhancement());
-		 assert accepts(mServices, mErrorAutomatonBuilder.getResultBeforeEnhancement(), mCounterexample.getWord()) :
-		 	"Error automaton broken!";
+
+		assert isInterpolantAutomatonOfSingleStateType(mErrorAutomatonBuilder.getResultBeforeEnhancement());
+		assert accepts(mServices, mErrorAutomatonBuilder.getResultBeforeEnhancement(),
+				mCounterexample.getWord()) : "Error automaton broken!";
 	}
 
 	@Override
@@ -476,8 +476,8 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 			automatonType = "error";
 			useErrorAutomaton = true;
 			exploitSigmaStarConcatOfIa = false;
-			subtrahendBeforeEnhancement = mErrorAutomatonBuilder.getResultBeforeEnhancement();
 			enhanceMode = getErrorAutomatonEnhancementMode();
+			subtrahendBeforeEnhancement = mErrorAutomatonBuilder.getResultBeforeEnhancement();
 			subtrahend = (enhanceMode == InterpolantAutomatonEnhancement.NONE)
 					? subtrahendBeforeEnhancement
 					: mErrorAutomatonBuilder.getResultAfterEnhancement();

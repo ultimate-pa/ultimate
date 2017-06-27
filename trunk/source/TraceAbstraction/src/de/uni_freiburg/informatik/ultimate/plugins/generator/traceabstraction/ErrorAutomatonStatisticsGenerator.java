@@ -35,6 +35,7 @@ import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
@@ -105,30 +106,22 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 	}
 
 	public <LETTER extends IIcfgTransition<?>> void evaluateFinalErrorAutomaton(final AutomataLibraryServices services,
-			final ILogger logger, final ErrorAutomatonBuilder<LETTER> errorAutomatonBuilder,
+			final ILogger logger, final IErrorAutomatonBuilder<LETTER> errorAutomatonBuilder,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> abstraction,
 			final PredicateFactoryForInterpolantAutomata predicateFactory,
 			final PredicateFactoryResultChecking predicateFactoryResultChecking) throws AutomataLibraryException {
-		errorAutomatonBuilder.getResultAfterEnhancement().switchToReadonlyMode();
-		final NestedWordAutomatonReachableStates<LETTER, IPredicate> errorAutomatonAfterEnhancement =
-				new RemoveUnreachable<>(services, errorAutomatonBuilder.getResultAfterEnhancement()).getResult();
-		final INestedWordAutomaton<LETTER, IPredicate> intersection =
-				new Intersect<>(services, predicateFactoryResultChecking, abstraction, errorAutomatonAfterEnhancement)
-						.getResult();
-		final INestedWordAutomaton<LETTER, IPredicate> withoutDeadEnds = new RemoveDeadEnds<LETTER, IPredicate>(services, intersection).getResult();
-		final INestedWordAutomaton<LETTER, IPredicate> effectiveErrorAutomaton = new Determinize<>(services, predicateFactoryResultChecking, withoutDeadEnds).getResult();
-		final NestedWordAutomaton<LETTER, IPredicate> subtrahend = errorAutomatonBuilder.getResultBeforeEnhancement();
-		final PowersetDeterminizer<LETTER, IPredicate> psd =
-				new PowersetDeterminizer<>(subtrahend, true, predicateFactory);
-		final IDoubleDeckerAutomaton<LETTER, IPredicate> diff = new Difference<>(services,
-				predicateFactoryResultChecking, effectiveErrorAutomaton, subtrahend, psd, false).getResult();
-		mAcceptsSingleTrace = new IsEmpty<>(services, diff).getResult();
-		if (mAcceptsSingleTrace) {
-			logger.warn("Enhancement did not add additional traces.");
+		switch (errorAutomatonBuilder.getType()) {
+			case ERROR_AUTOMATON:
+				evaluateErrorAutomaton(services, logger, errorAutomatonBuilder, abstraction, predicateFactory,
+						predicateFactoryResultChecking);
+				break;
+			case DANGER_AUTOMATON:
+				evaluateDangerAutomaton(services, logger, errorAutomatonBuilder, abstraction, predicateFactory,
+						predicateFactoryResultChecking);
+				break;
+			default:
+				throw new IllegalArgumentException("Unknown error automaton type: " + errorAutomatonBuilder.getType());
 		}
-		final NestedWordAutomatonReachableStates<LETTER, IPredicate> nwars = new NestedWordAutomatonReachableStates<>(services, effectiveErrorAutomaton);
-		nwars.computeAcceptingComponents();
-		logger.info("Effective error automaton size information: " + nwars.sizeInformation());
 	}
 
 	public void finishAutomatonInstance() {
@@ -188,6 +181,11 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 		}
 	}
 
+	@Override
+	public IStatisticsType getBenchmarkType() {
+		return ErrorAutomatonStatisticsType.getInstance();
+	}
+
 	private int getAverageTraceLength() {
 		final int total = mAutomatonStatistics.size();
 		if (total == 0) {
@@ -227,9 +225,44 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 		return time;
 	}
 
-	@Override
-	public IStatisticsType getBenchmarkType() {
-		return ErrorAutomatonStatisticsType.getInstance();
+	private <LETTER extends IIcfgTransition<?>> void evaluateErrorAutomaton(final AutomataLibraryServices services,
+			final ILogger logger, final IErrorAutomatonBuilder<LETTER> errorAutomatonBuilder,
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> abstraction,
+			final PredicateFactoryForInterpolantAutomata predicateFactory,
+			final PredicateFactoryResultChecking predicateFactoryResultChecking)
+			throws AutomataOperationCanceledException, AutomataLibraryException {
+		errorAutomatonBuilder.getResultAfterEnhancement().switchToReadonlyMode();
+		final NestedWordAutomatonReachableStates<LETTER, IPredicate> errorAutomatonAfterEnhancement =
+				new RemoveUnreachable<>(services, errorAutomatonBuilder.getResultAfterEnhancement()).getResult();
+		final INestedWordAutomaton<LETTER, IPredicate> intersection =
+				new Intersect<>(services, predicateFactoryResultChecking, abstraction, errorAutomatonAfterEnhancement)
+						.getResult();
+		final INestedWordAutomaton<LETTER, IPredicate> withoutDeadEnds =
+				new RemoveDeadEnds<>(services, intersection).getResult();
+		final INestedWordAutomaton<LETTER, IPredicate> effectiveErrorAutomaton =
+				new Determinize<>(services, predicateFactoryResultChecking, withoutDeadEnds).getResult();
+		final NestedWordAutomaton<LETTER, IPredicate> subtrahend = errorAutomatonBuilder.getResultBeforeEnhancement();
+		final PowersetDeterminizer<LETTER, IPredicate> psd =
+				new PowersetDeterminizer<>(subtrahend, true, predicateFactory);
+		final IDoubleDeckerAutomaton<LETTER, IPredicate> diff = new Difference<>(services,
+				predicateFactoryResultChecking, effectiveErrorAutomaton, subtrahend, psd, false).getResult();
+		mAcceptsSingleTrace = new IsEmpty<>(services, diff).getResult();
+		if (mAcceptsSingleTrace) {
+			logger.warn("Enhancement did not add additional traces.");
+		}
+		final NestedWordAutomatonReachableStates<LETTER, IPredicate> nwars =
+				new NestedWordAutomatonReachableStates<>(services, effectiveErrorAutomaton);
+		nwars.computeAcceptingComponents();
+		logger.info("Effective error automaton size information: " + nwars.sizeInformation());
+	}
+
+	private <LETTER extends IIcfgTransition<?>> void evaluateDangerAutomaton(final AutomataLibraryServices services,
+			final ILogger logger, final IErrorAutomatonBuilder<LETTER> errorAutomatonBuilder,
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> abstraction,
+			final PredicateFactoryForInterpolantAutomata predicateFactory,
+			final PredicateFactoryResultChecking predicateFactoryResultChecking) {
+		// TODO Auto-generated method stub
+		logger.warn("No evaluation for danger automaton yet.");
 	}
 
 	/**

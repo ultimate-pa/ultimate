@@ -85,7 +85,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  * @param <LETTER>
  *            letter type in the trace
  */
-public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
+public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements IErrorAutomatonBuilder<LETTER> {
 	/**
 	 * This is used to avoid 'strange' predicates. Consider the example trace
 	 * <p>
@@ -154,6 +154,8 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 	 *            alphabet
 	 * @param trace
 	 *            error trace
+	 * @param iteration
+	 *            CEGAR loop iteration in which this builder was created
 	 * @param enhanceMode
 	 *            mode for automaton enhancement
 	 */
@@ -175,19 +177,22 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 				predicateFactoryErrorAutomaton, alphabet, trace);
 
 		mResultAfterEnhancement = enhanceMode != InterpolantAutomatonEnhancement.NONE
-				? constructNondeterministicAutomaton(services, logger, mResultBeforeEnhancement, csToolkit,
+				? constructNondeterministicAutomaton(services, mResultBeforeEnhancement, csToolkit,
 						internalPredicateUnifier, predicateFactory)
 				: null;
 	}
 
+	@Override
+	public ErrorAutomatonType getType() {
+		return ErrorAutomatonType.ERROR_AUTOMATON;
+	}
+
+	@Override
 	public NestedWordAutomaton<LETTER, IPredicate> getResultBeforeEnhancement() {
 		return mResultBeforeEnhancement;
 	}
 
-	/**
-	 * @return Automaton after (on-demand) enhancement. The additional transitions are not explicitly added. They will
-	 *         be computed when asking for successors.
-	 */
+	@Override
 	public NondeterministicInterpolantAutomaton<LETTER> getResultAfterEnhancement() {
 		if (mResultAfterEnhancement == null) {
 			throw new UnsupportedOperationException("No enhancement was requested.");
@@ -195,16 +200,13 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 		return mResultAfterEnhancement;
 	}
 
+	@Override
 	public IPredicate getErrorPrecondition() {
 		assert mErrorPrecondition != null : "Precondition was not computed yet.";
 		return mErrorPrecondition;
 	}
 
-	/**
-	 * @param iteration
-	 *            Iteration of CEGAR loop.
-	 * @return {@code true} iff iteration of last error automaton construction coincides with passed iteration
-	 */
+	@Override
 	public boolean hasAutomatonInIteration(final int iteration) {
 		return mLastIteration == iteration;
 	}
@@ -303,7 +305,6 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 
 	private NondeterministicInterpolantAutomaton<LETTER> constructNondeterministicAutomaton(
 			final IUltimateServiceProvider services,
-			final ILogger logger,
 			final NestedWordAutomaton<LETTER, IPredicate> straightLineAutomaton, final CfgSmtToolkit csToolkit,
 			final PredicateUnificationMechanism predicateUnifier, final PredicateFactory predicateFactory) {
 		assert !containsPredicateState(straightLineAutomaton, predicateUnifier
@@ -319,7 +320,8 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 		final MonolithicImplicationChecker mic = new MonolithicImplicationChecker(services, mgdScript);
 		final PredicateTransformer<Term, IPredicate, TransFormula> pt =
 				new PredicateTransformer<>(mgdScript, new TermDomainOperationProvider(services, mgdScript));
-		final IHoareTripleChecker hoareTripleChecker = new InclusionInPreChecker(services, null, mic, pt, predicateFactory, csToolkit);
+		final IHoareTripleChecker hoareTripleChecker =
+				new InclusionInPreChecker(services, null, mic, pt, predicateFactory, csToolkit);
 		return new NondeterministicErrorAutomaton<>(services, csToolkit, hoareTripleChecker, straightLineAutomaton,
 				predicateUnifier.getPredicateUnifier());
 	}
@@ -341,16 +343,15 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
 	 */
 	private static class InclusionInPreChecker implements IHoareTripleChecker {
+		// apply nontrivial quantifier elimination
+		private static final boolean EXPENSIVE_PQE_FOR_WP_RESULTS = true;
+
 		private final IUltimateServiceProvider mServices;
 		private final ILogger mLogger;
 		private final MonolithicImplicationChecker mMic;
 		private final PredicateTransformer<Term, IPredicate, TransFormula> mPt;
 		private final PredicateFactory mPf;
 		private final CfgSmtToolkit mCsToolkit;
-		/**
-		 * Apply nontrivial quantifier elimination.
-		 */
-		private final boolean mExpensivePqeForWpResults = true;
 
 		public InclusionInPreChecker(final IUltimateServiceProvider services, final ILogger logger,
 				final MonolithicImplicationChecker mic,
@@ -403,10 +404,9 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 
 		private Term getWpInternal(final IInternalAction act, final IPredicate succ) {
 			Term result = mPt.weakestPrecondition(mPf.not(succ), act.getTransformula());
-			if (mExpensivePqeForWpResults) {
-				result = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, 
-						mCsToolkit.getManagedScript(),
-						result, SimplificationTechnique.SIMPLIFY_DDA, 
+			if (EXPENSIVE_PQE_FOR_WP_RESULTS) {
+				result = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mCsToolkit.getManagedScript(),
+						result, SimplificationTechnique.SIMPLIFY_DDA,
 						XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 			}
 			return result;
@@ -421,10 +421,9 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 					mCsToolkit.getModifiableGlobalsTable().getModifiedBoogieVars(act.getSucceedingProcedure());
 			Term result = mPt.weakestPreconditionCall(mPf.not(succ), act.getTransformula(), globalVarsAssignments,
 					oldVarAssignments, modifiableGlobals);
-			if (mExpensivePqeForWpResults) {
-				result = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, 
-						mCsToolkit.getManagedScript(),
-						result, SimplificationTechnique.SIMPLIFY_DDA, 
+			if (EXPENSIVE_PQE_FOR_WP_RESULTS) {
+				result = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mCsToolkit.getManagedScript(),
+						result, SimplificationTechnique.SIMPLIFY_DDA,
 						XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 			}
 			return result;
@@ -440,10 +439,9 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 					mCsToolkit.getModifiableGlobalsTable().getModifiedBoogieVars(act.getSucceedingProcedure());
 			Term result = mPt.weakestPreconditionReturn(mPf.not(succ), preHier, returnTf, callTf, oldVarAssignments,
 					modifiableGlobals);
-			if (mExpensivePqeForWpResults) {
-				result = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, 
-						mCsToolkit.getManagedScript(),
-						result, SimplificationTechnique.SIMPLIFY_DDA, 
+			if (EXPENSIVE_PQE_FOR_WP_RESULTS) {
+				result = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mCsToolkit.getManagedScript(),
+						result, SimplificationTechnique.SIMPLIFY_DDA,
 						XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 			}
 			return result;
@@ -455,7 +453,7 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 	 * 
 	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
 	 */
-	private class PredicateUnificationMechanism {
+	private static class PredicateUnificationMechanism {
 		private final IPredicateUnifier mPredicateUnifier;
 
 		public PredicateUnificationMechanism(final IPredicateUnifier predicateUnifier) {
