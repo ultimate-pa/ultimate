@@ -671,4 +671,8 @@ public class CongruenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 	public String toString() {
 		return String.format("Nodes: %s \n Disequalities: %s", mNodeToEqGraphNode, mDisequalities);
 	}
+
+	public boolean isEmpty() {
+		return getSupportingEqualities().isEmpty() && mDisequalities.isEmpty();
+	}
 }

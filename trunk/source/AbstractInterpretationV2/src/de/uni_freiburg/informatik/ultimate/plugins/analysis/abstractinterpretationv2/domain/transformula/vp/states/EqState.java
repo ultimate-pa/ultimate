@@ -136,12 +136,30 @@ public class EqState<ACTION extends IIcfgTransition<IcfgLocation>>
 
 	@Override
 	public boolean isEqualTo(final EqState<ACTION> other) {
-		return this.isSubsetOf(other) == SubsetResult.NON_STRICT && other.isSubsetOf(this) == SubsetResult.NON_STRICT;
+		return this.isSubsetOf(other) == SubsetResult.EQUAL ||
+				(this.isSubsetOf(other) == SubsetResult.NON_STRICT 
+					&& other.isSubsetOf(this) == SubsetResult.NON_STRICT);
 	}
 
 	@Override
 	public SubsetResult
 			isSubsetOf(final EqState<ACTION> other) {
+		if (mConstraint.isTop() && other.mConstraint.isTop()) {
+			return SubsetResult.EQUAL;
+		}
+		if (mConstraint.isBottom() && other.mConstraint.isBottom()) {
+			return SubsetResult.EQUAL;
+		}
+		if (mConstraint.isBottom()) {
+			// we know from the case above that other.mConstraint != bottom
+			return SubsetResult.STRICT;
+		}
+		if (other.mConstraint.isTop()) {
+			// we know from the case above that !mConstraint.isTop()
+			return SubsetResult.STRICT;
+		}
+	
+		
 		// TODO
 //		final EqConstraintFactory<ACTION, EqNode, EqFunction> constraintFactory = mFactory.getEqConstraintFactory();
 //		final EqDisjunctiveConstraint<ACTION, EqNode, EqFunction> intersectionWithComplement = 

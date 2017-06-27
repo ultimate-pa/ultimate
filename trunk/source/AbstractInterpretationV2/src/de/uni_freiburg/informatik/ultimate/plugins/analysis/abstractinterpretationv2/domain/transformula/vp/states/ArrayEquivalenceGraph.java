@@ -241,4 +241,9 @@ public class ArrayEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		return result;
 	}
 
+	public boolean isEmpty() {
+		//TODO could be done more efficiently
+		return getAllFunctionEqualities().isEmpty() && getAllFunctionDisequalities().isEmpty(); 
+	}
+
 }

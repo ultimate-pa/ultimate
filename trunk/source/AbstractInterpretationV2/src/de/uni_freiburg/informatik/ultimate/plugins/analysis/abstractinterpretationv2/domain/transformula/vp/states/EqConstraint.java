@@ -846,4 +846,8 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 		mNodes.add(node);
 		
 	}
+
+	public boolean isTop() {
+		return mElementCongruenceGraph.isEmpty() && mFunctionEquivalenceGraph.isEmpty();
+	}
 }
