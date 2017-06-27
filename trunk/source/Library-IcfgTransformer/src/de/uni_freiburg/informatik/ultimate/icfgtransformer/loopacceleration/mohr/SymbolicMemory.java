@@ -241,7 +241,8 @@ public class SymbolicMemory {
 			}
 		}
 		final Substitution varSub = new Substitution(mManagedScript, symValueSubMap);
-		final Term varReplacedGuard = symValueSubMap.size() > 0 ? varSub.transform(guard.getFormula()) : guard.getFormula();
+		final Term varReplacedGuard =
+				symValueSubMap.size() > 0 ? varSub.transform(guard.getFormula()) : guard.getFormula();
 
 		final Map<Term, Term> cleanSubMap = new HashMap<>();
 		for (final Map.Entry<TermVariable, IProgramVar> revInEntry : revInVars.entrySet()) {
@@ -267,7 +268,7 @@ public class SymbolicMemory {
 		conjTerms.add(mManagedScript.getScript().term(">=", mKappas.get(path),
 				Rational.ZERO.toTerm(mManagedScript.getScript().sort("Int"))));
 		final Term formulaTerm = Util.and(mManagedScript.getScript(), conjTerms.toArray(new Term[conjTerms.size()]));
-		final Term ex = mCurrentPath > 1
+		final Term ex = mCurrentPath > 0
 				? mManagedScript.getScript().quantifier(QuantifiedFormula.EXISTS, exitsTaus, formulaTerm) : formulaTerm;
 		final TermVariable[] allTaus = new TermVariable[1];
 		allTaus[0] = mKappa2Tau.get(mKappas.get(path));
