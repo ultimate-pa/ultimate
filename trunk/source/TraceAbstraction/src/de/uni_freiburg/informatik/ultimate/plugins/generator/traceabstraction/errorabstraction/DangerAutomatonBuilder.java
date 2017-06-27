@@ -27,6 +27,15 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorabstraction;
 
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.Map;
+import java.util.Set;
+
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
@@ -78,8 +87,8 @@ public class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implement
 	 *            symbol table
 	 * @param predicateFactoryForAutomaton
 	 *            predicate factory for the danger automaton (will eventually be removed by a refactoring)
-	 * @param alphabet
-	 *            alphabet
+	 * @param abstraction
+	 *            current program abstraction
 	 * @param trace
 	 *            error trace
 	 * @param iteration
@@ -91,15 +100,16 @@ public class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implement
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
 			final IIcfgSymbolTable symbolTable,
 			final PredicateFactoryForInterpolantAutomata predicateFactoryForAutomaton,
-			final VpAlphabet<LETTER> alphabet, final NestedWord<LETTER> trace, final int iteration) {
+			final INestedWordAutomaton<LETTER, IPredicate> abstraction, final NestedWord<LETTER> trace,
+			final int iteration) {
 		final ILogger logger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mLastIteration = iteration;
 		final PredicateUnificationMechanism internalPredicateUnifier =
 				new PredicateUnificationMechanism(predicateUnifier, UNIFY_PREDICATES);
 
-		mResult = constructDangerAutomaton(services, logger, predicateFactory, internalPredicateUnifier, csToolkit,
-				simplificationTechnique, xnfConversionTechnique, symbolTable, predicateFactoryForAutomaton, alphabet,
-				trace);
+		mResult = constructDangerAutomaton(new AutomataLibraryServices(services), logger, predicateFactory,
+				internalPredicateUnifier, csToolkit, simplificationTechnique, xnfConversionTechnique, symbolTable,
+				predicateFactoryForAutomaton, abstraction, trace);
 	}
 
 	@Override
@@ -132,14 +142,34 @@ public class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implement
 		return InterpolantAutomatonEnhancement.NONE;
 	}
 
-	private NestedWordAutomaton<LETTER, IPredicate> constructDangerAutomaton(final IUltimateServiceProvider services,
+	private NestedWordAutomaton<LETTER, IPredicate> constructDangerAutomaton(final AutomataLibraryServices services,
 			final ILogger logger, final PredicateFactory predicateFactory,
-			final PredicateUnificationMechanism internalPredicateUnifier, final CfgSmtToolkit csToolkit,
+			final PredicateUnificationMechanism predicateUnifier, final CfgSmtToolkit csToolkit,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
 			final IIcfgSymbolTable symbolTable,
 			final PredicateFactoryForInterpolantAutomata predicateFactoryForAutomaton,
-			final VpAlphabet<LETTER> alphabet, final NestedWord<LETTER> trace) {
-		// TODO Auto-generated method stub
-		return null;
+			final INestedWordAutomaton<LETTER, IPredicate> abstraction, final NestedWord<LETTER> trace) {
+		final Map<IPredicate, IPredicate> abstState2dangState = new HashMap<>();
+		final Set<IPredicate> visited = new HashSet<>();
+		final Deque<IPredicate> visit = new LinkedList<>();
+
+		final NestedWordAutomaton<LETTER, IPredicate> result =
+				new NestedWordAutomaton<>(services, new VpAlphabet<>(abstraction), predicateFactoryForAutomaton);
+
+		final IPredicate trueState = predicateUnifier.getTruePredicate();
+		result.addState(false, true, trueState);
+		for (final IPredicate state : abstraction.getFinalStates()) {
+			abstState2dangState.put(state, trueState);
+			visit.add(state);
+			visited.add(state);
+		}
+
+		while (!visit.isEmpty()) {
+			final IPredicate state = visit.pop();
+			assert visited.contains(state);
+			// TODO
+		}
+
+		return result;
 	}
 }
