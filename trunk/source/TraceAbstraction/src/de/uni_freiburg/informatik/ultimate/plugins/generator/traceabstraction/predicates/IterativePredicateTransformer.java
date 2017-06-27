@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -522,7 +523,24 @@ public class IterativePredicateTransformer {
 		return TransFormulaUtils.sequentialComposition(mLogger, mServices, mMgdScript, true, false,
 				TRANSFORM_SUMMARY_TO_CNF, mXnfConversionTechnique, mSimplificationTechnique,
 				transformulasToComputeSummaryFor);
-
+	}
+	
+	
+	/**
+	 * TODO: documentation (short, refer to WP computation)
+	 */
+	public TracePredicates computePreSequence(final NestedFormulas<UnmodifiableTransFormula, IPredicate> nf,
+			final List<IPredicatePostprocessor> postprocs, final boolean alternatingQuantifierBailout)
+			throws TraceInterpolationException {
+		final TracePredicates wpSequence = computeWeakestPreconditionSequence(nf, postprocs, true,
+				alternatingQuantifierBailout);
+		final IPredicate precondition = mPredicateFactory.not(wpSequence.getPrecondition());
+		final IPredicate postcondition = mPredicateFactory.not(wpSequence.getPostcondition());
+		final List<IPredicate> predicates = new ArrayList<>(wpSequence.getPredicates().size());
+		for (final IPredicate wpPredicate : wpSequence.getPredicates()) {
+			predicates.add(mPredicateFactory.not(wpPredicate));
+		}
+		return new TracePredicates(precondition, postcondition, predicates);
 	}
 
 	public static class TraceInterpolationException extends Exception {
