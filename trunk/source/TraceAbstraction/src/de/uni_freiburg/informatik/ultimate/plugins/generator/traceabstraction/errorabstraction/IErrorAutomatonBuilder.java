@@ -80,7 +80,7 @@ public interface IErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 	boolean hasAutomatonInIteration(final int iteration);
 
 	/**
-	 * @return Error precondition.
+	 * @return Error precondition (may be {@code null}).
 	 */
 	IPredicate getErrorPrecondition();
 
