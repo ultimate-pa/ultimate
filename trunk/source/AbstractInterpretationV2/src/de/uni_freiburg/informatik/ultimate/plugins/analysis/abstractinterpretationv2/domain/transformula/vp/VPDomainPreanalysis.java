@@ -721,6 +721,9 @@ public class VPDomainPreanalysis {
 	}
 
 	private boolean isElementTracked(Term term, Map<TermVariable, IProgramVar> tvToPvMap) {
+		if (mSettings.trackAllElements()) {
+			return true;
+		}
 		final Term normalizedTerm = 
 				new Substitution(mManagedScript, VPDomainHelpers.computeNormalizingSubstitution(tvToPvMap))
 				.transform(term);
@@ -765,6 +768,10 @@ class VPDomainPreanalysisSettings {
 			oldArrayNames.add("old(" + an + ")");
 		}
 		mArrayNames.addAll(oldArrayNames);
+	}
+	
+	public boolean trackAllElements() {
+		return true;
 	}
 	
 	public boolean trackAllArrays() {
