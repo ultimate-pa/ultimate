@@ -286,11 +286,17 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements
 				postcondition, null, truePredicate, simplificationTechnique, xnfConversionTechnique, symbolTable);
 		final TracePredicates predicates;
 		try {
-			predicates =
-					(predicateTransformer == PredicateTransformerType.WP)
-							? ipt.computeWeakestPreconditionSequence(dtf, postprocessors,
-									USE_TRUE_AS_CALL_PREDECESSOR_FOR_WP, false)
-							: ipt.computeStrongestPostconditionSequence(dtf, postprocessors);
+			switch (predicateTransformer) {
+				case WP:
+					predicates = ipt.computeWeakestPreconditionSequence(dtf, postprocessors,
+							USE_TRUE_AS_CALL_PREDECESSOR_FOR_WP, false);
+					break;
+				case SP:
+					predicates = ipt.computeStrongestPostconditionSequence(dtf, postprocessors);
+					break;
+				default:
+					throw new IllegalArgumentException("Unknown predicate transformer: " + predicateTransformer);
+			}
 		} catch (final TraceInterpolationException e) {
 			// TODO 2017-05-17 Christian: better error handling
 			throw new AssertionError();
