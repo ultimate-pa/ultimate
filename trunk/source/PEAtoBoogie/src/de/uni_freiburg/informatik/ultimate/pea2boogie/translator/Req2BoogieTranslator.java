@@ -37,6 +37,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
@@ -65,6 +66,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -72,6 +74,7 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.Phase;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseBits;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Transition;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.generator.ConditionGenerator;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.req2pea.ReqToPEA;
@@ -85,6 +88,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.Permutation;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
 public class Req2BoogieTranslator {
+
+	private static final Attribute[] EMPTY_ATTRIBUTES = new Attribute[0];
 
 	/**
 	 * The name of the input file containing the requirements/peas.
@@ -193,7 +198,8 @@ public class Req2BoogieTranslator {
 
 		mAutomata = automata;
 		final List<Declaration> decls = new ArrayList<>();
-		decls.addAll(generateGlobalVars());
+		decls.addAll(generateGlobalVarsFromAutomata());
+		decls.addAll(generateGlobalVarsFromInitPattern());
 		decls.add(generateProcedures());
 
 		mUnit = new Unit(mBoogieLocations[0], decls.toArray(new Declaration[decls.size()]));
@@ -208,12 +214,35 @@ public class Req2BoogieTranslator {
 		return mVacuityChecks != null && mVacuityChecks.get(propertyNum);
 	}
 
+	private List<Declaration> generateGlobalVarsFromInitPattern() {
+		final ILocation loc = null;
+
+		return Arrays.stream(mRequirements).filter(a -> a instanceof InitializationPattern)
+				.map(a -> (InitializationPattern) a)
+				.map(a -> new VarList(loc, new String[] { a.getIdent() }, toPrimitiveType(a.getType()).toASTType(loc)))
+				.map(a -> new VariableDeclaration(loc, EMPTY_ATTRIBUTES, new VarList[] { a }))
+				.collect(Collectors.toList());
+	}
+
+	private static de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType toPrimitiveType(final String type) {
+		switch (type.toLowerCase()) {
+		case "bool":
+			return BoogieType.TYPE_BOOL;
+		case "real":
+			return BoogieType.TYPE_REAL;
+		case "int":
+			return BoogieType.TYPE_INT;
+		default:
+			throw new IllegalArgumentException("Unknown type " + type);
+		}
+	}
+
 	/**
 	 * Generate global variables.
 	 *
 	 * @return
 	 */
-	private List<Declaration> generateGlobalVars() {
+	private List<Declaration> generateGlobalVarsFromAutomata() {
 		final BoogieLocation loc = mBoogieLocations[0];
 		final PrimitiveType realType = new PrimitiveType(loc, "real");
 		final PrimitiveType intType = new PrimitiveType(loc, "int");
@@ -266,9 +295,9 @@ public class Req2BoogieTranslator {
 		}
 
 		final List<Declaration> vardecls = new ArrayList<>();
-		final Attribute[] attr = new Attribute[0];
 		for (final VarList varlist : varLists) {
-			final VariableDeclaration varDecl = new VariableDeclaration(loc, attr, new VarList[] { varlist });
+			final VariableDeclaration varDecl =
+					new VariableDeclaration(loc, EMPTY_ATTRIBUTES, new VarList[] { varlist });
 			vardecls.add(varDecl);
 		}
 		return vardecls;
