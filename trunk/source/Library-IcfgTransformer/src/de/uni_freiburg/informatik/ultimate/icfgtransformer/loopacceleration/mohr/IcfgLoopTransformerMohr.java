@@ -102,7 +102,7 @@ public class IcfgLoopTransformerMohr<INLOC extends IcfgLocation, OUTLOC extends 
 
 	@SuppressWarnings("unchecked")
 	private void transform(final IIcfg<INLOC> origIcfg) {
-		final IcfgLoopDetection<INLOC> loopDetector = new IcfgLoopDetection<>(origIcfg);
+		final IcfgLoopDetection<INLOC> loopDetector = new IcfgLoopDetection<>(mServices, origIcfg);
 		final Set<IcfgLoop<INLOC>> loops = loopDetector.getResult();
 		final Set<INLOC> loopHeads = new HashSet<>();
 		final Set<INLOC> loopNodes = new HashSet<>();
@@ -123,8 +123,8 @@ public class IcfgLoopTransformerMohr<INLOC extends IcfgLocation, OUTLOC extends 
 			final INLOC node = queue.removeFirst();
 			final OUTLOC newSource = mTib.createNewLocation(node);
 			for (final IcfgEdge edge : node.getOutgoingEdges()) {
-				if ((loopNodes.contains(edge.getTarget()) && !loopHeads.contains(edge.getTarget())) ||
-						node.equals(edge.getTarget())) {
+				if ((loopNodes.contains(edge.getTarget()) && !loopHeads.contains(edge.getTarget()))
+						|| node.equals(edge.getTarget())) {
 					continue;
 				} else if (!visited.contains(edge.getTarget())) {
 					queue.add((INLOC) edge.getTarget());
@@ -132,9 +132,11 @@ public class IcfgLoopTransformerMohr<INLOC extends IcfgLocation, OUTLOC extends 
 				final OUTLOC newTarget = mTib.createNewLocation((INLOC) edge.getTarget());
 				if (loopHeads.contains(node)) {
 					// todo: check for overapprox
-					final UnmodifiableTransFormula utf = TransFormulaUtils.sequentialComposition(mLogger, mServices,
-							mManagedScript, false, false, false, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION,
-							SimplificationTechnique.SIMPLIFY_DDA, Arrays.asList(edge.getTransformula(), loopSummaries.get(node)));
+					final UnmodifiableTransFormula utf =
+							TransFormulaUtils.sequentialComposition(mLogger, mServices, mManagedScript, false, false,
+									false, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION,
+									SimplificationTechnique.SIMPLIFY_DDA,
+									Arrays.asList(edge.getTransformula(), loopSummaries.get(node)));
 					mLogger.debug(utf);
 					mTib.createNewInternalTransition(newSource, newTarget, utf, false);
 				} else {
@@ -145,7 +147,7 @@ public class IcfgLoopTransformerMohr<INLOC extends IcfgLocation, OUTLOC extends 
 
 	}
 
-	private UnmodifiableTransFormula transformLoop(IcfgLoop<INLOC> loop) {
+	private UnmodifiableTransFormula transformLoop(final IcfgLoop<INLOC> loop) {
 		final List<Map<IProgramVar, Term>> pathSymbolicMemory = new ArrayList<>();
 		final List<UnmodifiableTransFormula> pathGuards = new ArrayList<>();
 		final SymbolicMemory symbolicMemory = new SymbolicMemory(mManagedScript, mLogger);
@@ -160,8 +162,8 @@ public class IcfgLoopTransformerMohr<INLOC extends IcfgLocation, OUTLOC extends 
 			for (final IcfgEdge edge : path) {
 				formulas.add(edge.getTransformula());
 			}
-			final UnmodifiableTransFormula composition = TransFormulaUtils.sequentialComposition(
-					mLogger, mServices, mManagedScript, false, false, false, null, SimplificationTechnique.NONE, formulas);
+			final UnmodifiableTransFormula composition = TransFormulaUtils.sequentialComposition(mLogger, mServices,
+					mManagedScript, false, false, false, null, SimplificationTechnique.NONE, formulas);
 			final SimultaneousUpdate su = new SimultaneousUpdate(composition, mManagedScript);
 			final Map<IProgramVar, Term> varUpdates = su.getUpdatedVars();
 			final Set<IProgramVar> havocVars = su.getHavocedVars();
@@ -171,9 +173,9 @@ public class IcfgLoopTransformerMohr<INLOC extends IcfgLocation, OUTLOC extends 
 			for (final Map.Entry<IProgramVar, Term> newValue : varUpdates.entrySet()) {
 				if (newValue.getValue() instanceof ConstantTerm || newValue.getValue() instanceof TermVariable) {
 					symbolicMemory.updateConst(newValue.getKey(), newValue.getValue(), mSymbolTable);
-				} else if (newValue.getValue() instanceof ApplicationTerm && (
-						"+".equals(((ApplicationTerm) newValue.getValue()).getFunction().getName()) ||
-						"-".equals(((ApplicationTerm) newValue.getValue()).getFunction().getName()))) {
+				} else if (newValue.getValue() instanceof ApplicationTerm
+						&& ("+".equals(((ApplicationTerm) newValue.getValue()).getFunction().getName())
+								|| "-".equals(((ApplicationTerm) newValue.getValue()).getFunction().getName()))) {
 					symbolicMemory.updateInc(newValue.getKey(), newValue.getValue(), mSymbolTable);
 				} else {
 					symbolicMemory.updateUndefined(newValue.getKey(), mSymbolTable);
@@ -181,7 +183,6 @@ public class IcfgLoopTransformerMohr<INLOC extends IcfgLocation, OUTLOC extends 
 			}
 			pathCount++;
 		}
-
 
 		final Term[] pathSummaries = new Term[pathCount];
 		for (int i = 0; i < pathCount; i++) {
@@ -196,7 +197,8 @@ public class IcfgLoopTransformerMohr<INLOC extends IcfgLocation, OUTLOC extends 
 		final Set<TermVariable> aux = symbolicMemory.getKappas();
 		aux.addAll(symbolicMemory.getTaus());
 		final Term quantFreeFormula = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mManagedScript,
-				loopSummary, SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+				loopSummary, SimplificationTechnique.SIMPLIFY_DDA,
+				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 		tfb.setFormula(quantFreeFormula);
 		tfb.addAuxVarsButRenameToFreshCopies(aux, mManagedScript);
 		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);

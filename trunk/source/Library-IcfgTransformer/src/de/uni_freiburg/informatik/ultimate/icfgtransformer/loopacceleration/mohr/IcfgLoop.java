@@ -33,6 +33,8 @@ import java.util.Deque;
 import java.util.HashSet;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 
@@ -43,21 +45,19 @@ public class IcfgLoop<INLOC extends IcfgLocation> {
 	private final INLOC mHead;
 	private final Set<INLOC> mNestedNodes;
 	private final Set<ArrayList<IcfgEdge>> mPaths;
+	private final IUltimateServiceProvider mServices;
 
-	public IcfgLoop() {
-		mNestedLoops = new HashSet<>();
-		mLoopbody = new HashSet<>();
-		mHead = null;
-		mNestedNodes = new HashSet<>();
-		mPaths = new HashSet<>();
+	public IcfgLoop(final IUltimateServiceProvider services) {
+		this(services, new HashSet<>(), null);
 	}
 
-	public IcfgLoop(final Set<INLOC> loopNodes, final INLOC head) {
+	public IcfgLoop(final IUltimateServiceProvider services, final Set<INLOC> loopNodes, final INLOC head) {
 		mNestedLoops = new HashSet<>();
 		mLoopbody = new HashSet<>(loopNodes);
 		mHead = head;
 		mNestedNodes = new HashSet<>();
 		mPaths = new HashSet<>();
+		mServices = services;
 	}
 
 	public void addAll(final Set<INLOC> loopNodes) {
@@ -116,6 +116,9 @@ public class IcfgLoop<INLOC extends IcfgLocation> {
 		}
 
 		while (!queue.isEmpty()) {
+			if (!mServices.getProgressMonitorService().continueProcessing()) {
+				throw new ToolchainCanceledException(getClass(), "enumerating all paths in loop");
+			}
 			final ArrayList<IcfgEdge> path = queue.removeFirst();
 			final INLOC destination = (INLOC) path.get(path.size() - 1).getTarget();
 			if (destination.equals(mHead)) {

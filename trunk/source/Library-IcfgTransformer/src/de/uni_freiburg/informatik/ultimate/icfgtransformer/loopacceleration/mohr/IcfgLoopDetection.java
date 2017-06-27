@@ -38,6 +38,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -45,8 +46,10 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 public class IcfgLoopDetection<INLOC extends IcfgLocation> {
 
 	private final Set<IcfgLoop<INLOC>> mLoops;
+	private final IUltimateServiceProvider mServices;
 
-	public IcfgLoopDetection(final IIcfg<INLOC> icfg) {
+	public IcfgLoopDetection(final IUltimateServiceProvider services, final IIcfg<INLOC> icfg) {
+		mServices = services;
 		mLoops = loopExtraction(icfg);
 	}
 
@@ -128,7 +131,7 @@ public class IcfgLoopDetection<INLOC extends IcfgLocation> {
 			if (loopbodies.containsKey(head)) {
 				loopbodies.get(head).addAll(body);
 			} else {
-				loopbodies.put(head, new IcfgLoop<>(body, head));
+				loopbodies.put(head, new IcfgLoop<>(mServices, body, head));
 			}
 		}
 
@@ -175,7 +178,7 @@ public class IcfgLoopDetection<INLOC extends IcfgLocation> {
 					paths.addLast(newPath);
 				}
 			}
-			result.add(new IcfgLoop<INLOC>(loopBody, head));
+			result.add(new IcfgLoop<INLOC>(mServices, loopBody, head));
 		}
 		return result;
 	}
