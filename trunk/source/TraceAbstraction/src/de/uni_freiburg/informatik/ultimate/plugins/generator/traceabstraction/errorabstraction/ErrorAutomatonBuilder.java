@@ -67,11 +67,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 /**
  * Constructs an error automaton for a given error trace.
  * <p>
- * TODO 2017-06-05 Christian: Why do I use two different predicate factories? Do I use them correctly?
- * <p>
- * TODO 2017-06-05 Christian: Should we use predicate unification or not? For which parts? Currently we need it only for
- * 'True'/'False' and constructing the {@link NondeterministicInterpolantAutomaton}.
- * <p>
  * TODO 2017-06-05 Christian: Should we apply simplifications?
  * <p>
  * TODO 2017-06-09 Christian: The successor 'True' (and 'False', but this does not matter) is never checked by the
