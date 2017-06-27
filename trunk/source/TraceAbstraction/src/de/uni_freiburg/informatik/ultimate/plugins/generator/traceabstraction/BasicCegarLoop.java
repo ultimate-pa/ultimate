@@ -423,6 +423,12 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 					mSimplificationTechnique, mXnfConversionTechnique,
 					mIcfgContainer.getCfgSmtToolkit().getSymbolTable(), mPredicateFactoryInterpolantAutomata,
 					new VpAlphabet<>(mAbstraction), trace, mIteration, mPref.interpolantAutomatonEnhancement());
+//			mErrorAutomatonBuilder = new DangerAutomatonBuilder<LETTER>(
+//					mServices, mPredicateFactory, mTraceCheckAndRefinementEngine.getPredicateUnifier(), mCsToolkit,
+//					mSimplificationTechnique, mXnfConversionTechnique,
+//					mIcfgContainer.getCfgSmtToolkit().getSymbolTable(), mPredicateFactoryInterpolantAutomata,
+//					(INestedWordAutomaton<LETTER, IPredicate>) mAbstraction, trace, mIteration);
+
 		} catch (final ToolchainCanceledException tce) {
 			mErrorAutomatonStatisticsGenerator.stopErrorAutomatonConstructionTime();
 			mErrorAutomatonStatisticsGenerator.finishAutomatonInstance();
