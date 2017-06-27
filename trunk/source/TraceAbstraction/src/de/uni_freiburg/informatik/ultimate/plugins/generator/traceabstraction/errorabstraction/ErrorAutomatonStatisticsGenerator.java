@@ -30,16 +30,20 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.e
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.IRun;
+import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Determinize;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Difference;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Intersect;
@@ -49,10 +53,18 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Remove
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryResultChecking;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.StraightLineInterpolantAutomatonBuilder;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.IInterpolantGenerator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantComputationStatus;
 import de.uni_freiburg.informatik.ultimate.util.statistics.Benchmark;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
@@ -107,23 +119,49 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 		mTraceLength = length;
 	}
 
-	public <LETTER extends IIcfgTransition<?>> void evaluateFinalErrorAutomaton(final AutomataLibraryServices services,
+	public <LETTER extends IIcfgTransition<?>> void evaluateFinalErrorAutomaton(final IUltimateServiceProvider services,
 			final ILogger logger, final IErrorAutomatonBuilder<LETTER> errorAutomatonBuilder,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> abstraction,
 			final PredicateFactoryForInterpolantAutomata predicateFactory,
-			final PredicateFactoryResultChecking predicateFactoryResultChecking) throws AutomataLibraryException {
+			final PredicateFactoryResultChecking predicateFactoryResultChecking,
+			final IRun<LETTER, IPredicate, ?> errorTrace) throws AutomataLibraryException {
+		final NestedWordAutomaton<LETTER, IPredicate> subtrahend;
+		String automatonType;
+		final AutomataLibraryServices alServices = new AutomataLibraryServices(services);
 		switch (errorAutomatonBuilder.getType()) {
 			case ERROR_AUTOMATON:
-				evaluateErrorAutomaton(services, logger, errorAutomatonBuilder, abstraction, predicateFactory,
-						predicateFactoryResultChecking);
+				subtrahend = errorAutomatonBuilder.getResultBeforeEnhancement();
+				automatonType = "error";
 				break;
 			case DANGER_AUTOMATON:
-				evaluateDangerAutomaton(services, logger, errorAutomatonBuilder, abstraction, predicateFactory,
-						predicateFactoryResultChecking);
+				subtrahend = constructStraightLineAutomaton(services, errorTrace, new VpAlphabet<>(abstraction),
+						predicateFactory);
+				automatonType = "danger";
 				break;
 			default:
 				throw new IllegalArgumentException("Unknown error automaton type: " + errorAutomatonBuilder.getType());
 		}
+		final NestedWordAutomatonReachableStates<LETTER, IPredicate> errorAutomatonAfterEnhancement =
+				new RemoveUnreachable<>(alServices, errorAutomatonBuilder.getResultAfterEnhancement()).getResult();
+		final INestedWordAutomaton<LETTER, IPredicate> intersectionWithAbstraction =
+				new Intersect<>(alServices, predicateFactoryResultChecking, abstraction, errorAutomatonAfterEnhancement)
+						.getResult();
+		final INestedWordAutomaton<LETTER, IPredicate> withoutDeadEnds =
+				new RemoveDeadEnds<>(alServices, intersectionWithAbstraction).getResult();
+		final INestedWordAutomaton<LETTER, IPredicate> effectiveErrorAutomaton =
+				new Determinize<>(alServices, predicateFactoryResultChecking, withoutDeadEnds).getResult();
+		final PowersetDeterminizer<LETTER, IPredicate> psd =
+				new PowersetDeterminizer<>(subtrahend, true, predicateFactory);
+		final IDoubleDeckerAutomaton<LETTER, IPredicate> diff = new Difference<>(alServices,
+				predicateFactoryResultChecking, effectiveErrorAutomaton, subtrahend, psd, false).getResult();
+		mAcceptsSingleTrace = new IsEmpty<>(alServices, diff).getResult();
+		if (mAcceptsSingleTrace) {
+			logger.warn("Enhancement did not add additional traces.");
+		}
+		final NestedWordAutomatonReachableStates<LETTER, IPredicate> nwars =
+				new NestedWordAutomatonReachableStates<>(alServices, effectiveErrorAutomaton);
+		nwars.computeAcceptingComponents();
+		logger.info("Effective " + automatonType + " automaton size information: " + nwars.sizeInformation());
 	}
 
 	public void finishAutomatonInstance() {
@@ -227,43 +265,82 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 		return time;
 	}
 
-	private <LETTER extends IIcfgTransition<?>> void evaluateErrorAutomaton(final AutomataLibraryServices services,
-			final ILogger logger, final IErrorAutomatonBuilder<LETTER> errorAutomatonBuilder,
-			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> abstraction,
-			final PredicateFactoryForInterpolantAutomata predicateFactory,
-			final PredicateFactoryResultChecking predicateFactoryResultChecking)
-			throws AutomataOperationCanceledException, AutomataLibraryException {
-		final NestedWordAutomatonReachableStates<LETTER, IPredicate> errorAutomatonAfterEnhancement =
-				new RemoveUnreachable<>(services, errorAutomatonBuilder.getResultAfterEnhancement()).getResult();
-		final INestedWordAutomaton<LETTER, IPredicate> intersection =
-				new Intersect<>(services, predicateFactoryResultChecking, abstraction, errorAutomatonAfterEnhancement)
-						.getResult();
-		final INestedWordAutomaton<LETTER, IPredicate> withoutDeadEnds =
-				new RemoveDeadEnds<>(services, intersection).getResult();
-		final INestedWordAutomaton<LETTER, IPredicate> effectiveErrorAutomaton =
-				new Determinize<>(services, predicateFactoryResultChecking, withoutDeadEnds).getResult();
-		final NestedWordAutomaton<LETTER, IPredicate> subtrahend = errorAutomatonBuilder.getResultBeforeEnhancement();
-		final PowersetDeterminizer<LETTER, IPredicate> psd =
-				new PowersetDeterminizer<>(subtrahend, true, predicateFactory);
-		final IDoubleDeckerAutomaton<LETTER, IPredicate> diff = new Difference<>(services,
-				predicateFactoryResultChecking, effectiveErrorAutomaton, subtrahend, psd, false).getResult();
-		mAcceptsSingleTrace = new IsEmpty<>(services, diff).getResult();
-		if (mAcceptsSingleTrace) {
-			logger.warn("Enhancement did not add additional traces.");
-		}
-		final NestedWordAutomatonReachableStates<LETTER, IPredicate> nwars =
-				new NestedWordAutomatonReachableStates<>(services, effectiveErrorAutomaton);
-		nwars.computeAcceptingComponents();
-		logger.info("Effective error automaton size information: " + nwars.sizeInformation());
-	}
+	private static <LETTER extends IIcfgTransition<?>> NestedWordAutomaton<LETTER, IPredicate>
+			constructStraightLineAutomaton(final IUltimateServiceProvider services,
+					final IRun<LETTER, IPredicate, ?> errorTrace, final VpAlphabet<LETTER> alphabet,
+					final PredicateFactoryForInterpolantAutomata predicateFactory) {
+		final IInterpolantGenerator ig = new IInterpolantGenerator() {
+			@Override
+			public boolean isPerfectSequence() {
+				throw new UnsupportedOperationException();
+			}
 
-	private <LETTER extends IIcfgTransition<?>> void evaluateDangerAutomaton(final AutomataLibraryServices services,
-			final ILogger logger, final IErrorAutomatonBuilder<LETTER> errorAutomatonBuilder,
-			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> abstraction,
-			final PredicateFactoryForInterpolantAutomata predicateFactory,
-			final PredicateFactoryResultChecking predicateFactoryResultChecking) {
-		// TODO Auto-generated method stub
-		logger.warn("No evaluation for danger automaton yet.");
+			@Override
+			public Word<? extends IAction> getTrace() {
+				return errorTrace.getWord();
+			}
+
+			@Override
+			public IPredicateUnifier getPredicateUnifier() {
+				throw new UnsupportedOperationException();
+			}
+
+			@Override
+			public IPredicate getPrecondition() {
+				return createPredicate();
+			}
+
+			@Override
+			public IPredicate getPostcondition() {
+				return createPredicate();
+			}
+
+			@Override
+			public Map<Integer, IPredicate> getPendingContexts() {
+				throw new UnsupportedOperationException();
+			}
+
+			@Override
+			public IPredicate[] getInterpolants() {
+				final IPredicate[] list = new IPredicate[errorTrace.getLength()];
+				for (int i = 0; i < list.length; ++i) {
+					list[i] = createPredicate();
+				}
+				return list;
+			}
+
+			@Override
+			public InterpolantComputationStatus getInterpolantComputationStatus() {
+				throw new UnsupportedOperationException();
+			}
+
+			private IPredicate createPredicate() {
+				return new IPredicate() {
+					@Override
+					public Set<IProgramVar> getVars() {
+						throw new UnsupportedOperationException();
+					}
+
+					@Override
+					public String[] getProcedures() {
+						throw new UnsupportedOperationException();
+					}
+
+					@Override
+					public Term getFormula() {
+						throw new UnsupportedOperationException();
+					}
+
+					@Override
+					public Term getClosedFormula() {
+						throw new UnsupportedOperationException();
+					}
+				};
+			}
+		};
+		return new StraightLineInterpolantAutomatonBuilder<>(services, alphabet, ig, predicateFactory,
+				StraightLineInterpolantAutomatonBuilder.InitialAndAcceptingStateMode.ONLY_FIRST_INITIAL_LAST_ACCEPTING)
+						.getResult();
 	}
 
 	/**

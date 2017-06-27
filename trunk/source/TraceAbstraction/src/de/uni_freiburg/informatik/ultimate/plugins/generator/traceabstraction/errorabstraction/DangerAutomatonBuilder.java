@@ -81,14 +81,13 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  * @param <LETTER>
  *            letter type in the trace/automaton
  */
-public class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements IErrorAutomatonBuilder<LETTER> {
+class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements IErrorAutomatonBuilder<LETTER> {
 	/**
 	 * {@code true} iff predicates are unified.
 	 */
 	private static final boolean UNIFY_PREDICATES = false;
 
 	private final NestedWordAutomaton<LETTER, IPredicate> mResult;
-	private final int mLastIteration;
 
 	private final IUltimateServiceProvider mServices;
 
@@ -108,8 +107,7 @@ public class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implement
 	 * @param symbolTable
 	 *            symbol table
 	 * @param predicateFactoryForAutomaton
-	 *            predicate factory for the danger automaton (will eventually be
-	 *            removed by a refactoring)
+	 *            predicate factory for the danger automaton (will eventually be removed by a refactoring)
 	 * @param abstraction
 	 *            current program abstraction
 	 * @param trace
@@ -123,13 +121,11 @@ public class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implement
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
 			final IIcfgSymbolTable symbolTable,
 			final PredicateFactoryForInterpolantAutomata predicateFactoryForAutomaton,
-			final INestedWordAutomaton<LETTER, IPredicate> abstraction, final NestedWord<LETTER> trace,
-			final int iteration) {
+			final INestedWordAutomaton<LETTER, IPredicate> abstraction, final NestedWord<LETTER> trace) {
 		mServices = services;
 		final ILogger logger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		mLastIteration = iteration;
-		final PredicateUnificationMechanism internalPredicateUnifier = new PredicateUnificationMechanism(
-				predicateUnifier, UNIFY_PREDICATES);
+		final PredicateUnificationMechanism internalPredicateUnifier =
+				new PredicateUnificationMechanism(predicateUnifier, UNIFY_PREDICATES);
 
 		mResult = constructDangerAutomaton(new AutomataLibraryServices(services), logger, predicateFactory,
 				internalPredicateUnifier, csToolkit, simplificationTechnique, xnfConversionTechnique, symbolTable,
@@ -157,11 +153,6 @@ public class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implement
 	}
 
 	@Override
-	public boolean hasAutomatonInIteration(final int iteration) {
-		return mLastIteration == iteration;
-	}
-
-	@Override
 	public InterpolantAutomatonEnhancement getEnhancementMode() {
 		return InterpolantAutomatonEnhancement.NONE;
 	}
@@ -174,22 +165,23 @@ public class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implement
 			final PredicateFactoryForInterpolantAutomata predicateFactoryForAutomaton,
 			final INestedWordAutomaton<LETTER, IPredicate> abstraction, final NestedWord<LETTER> trace) {
 		final HashRelation<IPredicate, IPredicate> abstState2dangStates = new HashRelation<>();
-		final IValueConstruction<Set<IPredicate>, IPredicate> valueConstruction = new IValueConstruction<Set<IPredicate>, IPredicate>() {
+		final IValueConstruction<Set<IPredicate>, IPredicate> valueConstruction =
+				new IValueConstruction<Set<IPredicate>, IPredicate>() {
 
-			@Override
-			public IPredicate constructValue(final Set<IPredicate> key) {
-				return predicateFactory.or(false, key);
-			}
-		};
-		final ConstructionCache<Set<IPredicate>, IPredicate> disjunctionProvider = new ConstructionCache<>(
-				valueConstruction);
+					@Override
+					public IPredicate constructValue(final Set<IPredicate> key) {
+						return predicateFactory.or(false, key);
+					}
+				};
+		final ConstructionCache<Set<IPredicate>, IPredicate> disjunctionProvider =
+				new ConstructionCache<>(valueConstruction);
 		final Deque<IPredicate> worklist = new ArrayDeque<>();
 
 		final Set<IPredicate> predicates = constructPredicates(logger, predicateFactory, predicateUnifier, csToolkit,
 				simplificationTechnique, xnfConversionTechnique, symbolTable, trace);
 
-		final NestedWordAutomaton<LETTER, IPredicate> result = new NestedWordAutomaton<>(services,
-				new VpAlphabet<>(abstraction), predicateFactoryForAutomaton);
+		final NestedWordAutomaton<LETTER, IPredicate> result =
+				new NestedWordAutomaton<>(services, new VpAlphabet<>(abstraction), predicateFactoryForAutomaton);
 
 		final IPredicate trueState = predicateUnifier.getTruePredicate();
 		result.addState(false, true, trueState);
@@ -198,10 +190,10 @@ public class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implement
 			worklist.add(state);
 		}
 
-		final PredicateTransformer<Term, IPredicate, TransFormula> pt = new PredicateTransformer<Term, IPredicate, TransFormula>(
+		final PredicateTransformer<Term, IPredicate, TransFormula> pt = new PredicateTransformer<>(
 				csToolkit.getManagedScript(), new TermDomainOperationProvider(mServices, csToolkit.getManagedScript()));
-		final MonolithicImplicationChecker ic = new MonolithicImplicationChecker(mServices,
-				csToolkit.getManagedScript());
+		final MonolithicImplicationChecker ic =
+				new MonolithicImplicationChecker(mServices, csToolkit.getManagedScript());
 
 		while (!worklist.isEmpty()) {
 			final IPredicate state = worklist.pop();
@@ -222,7 +214,7 @@ public class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implement
 				}
 				final IPredicate statesThatHaveSucc = predicateFactory
 						.newPredicate(SmtUtils.or(csToolkit.getManagedScript().getScript(), statesThatHaveSuccTerms));
-				final Set<IPredicate> coveredPredicates = new HashSet<IPredicate>();
+				final Set<IPredicate> coveredPredicates = new HashSet<>();
 				for (final IPredicate candidate : predicates) {
 					final Validity icres = ic.checkImplication(candidate, false, statesThatHaveSucc, false);
 					if (icres == Validity.VALID) {
@@ -295,15 +287,16 @@ public class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implement
 			final PredicateUnificationMechanism predicateUnifier, final CfgSmtToolkit csToolkit,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
 			final IIcfgSymbolTable symbolTable, final NestedWord<LETTER> trace) throws AssertionError {
-		final IterativePredicateTransformer ipt = new IterativePredicateTransformer(predicateFactory, csToolkit.getManagedScript(), 
-				csToolkit.getModifiableGlobalsTable(), mServices, trace, null, predicateUnifier.getFalsePredicate(), 
-				null, predicateUnifier.getTruePredicate(), simplificationTechnique, xnfConversionTechnique, symbolTable);
+		final IterativePredicateTransformer ipt = new IterativePredicateTransformer(predicateFactory,
+				csToolkit.getManagedScript(), csToolkit.getModifiableGlobalsTable(), mServices, trace, null,
+				predicateUnifier.getFalsePredicate(), null, predicateUnifier.getTruePredicate(),
+				simplificationTechnique, xnfConversionTechnique, symbolTable);
 		final List<IPredicatePostprocessor> postprocessors;
-			final QuantifierEliminationPostprocessor qepp = new QuantifierEliminationPostprocessor(mServices, logger,
-					csToolkit.getManagedScript(), predicateFactory, simplificationTechnique, xnfConversionTechnique);
-			postprocessors = Collections.singletonList(qepp);
-			final DefaultTransFormulas dtf = new DefaultTransFormulas(trace, null, null,
-					Collections.emptySortedMap(), csToolkit.getOldVarsAssignmentCache(), false);
+		final QuantifierEliminationPostprocessor qepp = new QuantifierEliminationPostprocessor(mServices, logger,
+				csToolkit.getManagedScript(), predicateFactory, simplificationTechnique, xnfConversionTechnique);
+		postprocessors = Collections.singletonList(qepp);
+		final DefaultTransFormulas dtf = new DefaultTransFormulas(trace, null, null, Collections.emptySortedMap(),
+				csToolkit.getOldVarsAssignmentCache(), false);
 		TracePredicates tp = null;
 		try {
 			tp = ipt.computePreSequence(dtf, postprocessors, false);
@@ -321,6 +314,5 @@ public class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implement
 		for (final IncomingInternalTransition<LETTER, IPredicate> in : result.internalPredecessors(oldstate)) {
 			result.addInternalTransition(in.getPred(), in.getLetter(), newState);
 		}
-
 	}
 }

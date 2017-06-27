@@ -31,6 +31,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
@@ -76,7 +77,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  * @param <LETTER>
  *            letter type in the trace
  */
-public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements IErrorAutomatonBuilder<LETTER> {
+class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements IErrorAutomatonBuilder<LETTER> {
 	/**
 	 * This is used to avoid 'strange' predicates. Consider the example trace
 	 * <p>
@@ -102,6 +103,10 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements
 	 * {@code true} iff SP predicates are used.
 	 */
 	private static final boolean INTERSECT_WITH_SP_PREDICATES = false;
+	/**
+	 * {@code true} iff enhancement should be used.
+	 */
+	private static final boolean USE_ENHANCEMENT = false;
 
 	/**
 	 * Predicate transformer types.
@@ -122,8 +127,6 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements
 	private final NestedWordAutomaton<LETTER, IPredicate> mResultBeforeEnhancement;
 	private final NondeterministicInterpolantAutomaton<LETTER> mResultAfterEnhancement;
 	private IPredicate mErrorPrecondition;
-	private final int mLastIteration;
-	private final InterpolantAutomatonEnhancement mEnhancementMode;
 
 	/**
 	 * @param services
@@ -142,7 +145,7 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements
 	 *            symbol table
 	 * @param predicateFactoryErrorAutomaton
 	 *            predicate factory for the error automaton
-	 * @param alphabet
+	 * @param abstraction
 	 *            alphabet
 	 * @param trace
 	 *            error trace
@@ -157,19 +160,16 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
 			final IIcfgSymbolTable symbolTable,
 			final PredicateFactoryForInterpolantAutomata predicateFactoryErrorAutomaton,
-			final VpAlphabet<LETTER> alphabet, final NestedWord<LETTER> trace, final int iteration,
-			final InterpolantAutomatonEnhancement enhancementMode) {
+			final INestedWordAutomaton<LETTER, IPredicate> abstraction, final NestedWord<LETTER> trace) {
 		final ILogger logger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		mLastIteration = iteration;
-		mEnhancementMode = enhancementMode;
 		final PredicateUnificationMechanism internalPredicateUnifier =
 				new PredicateUnificationMechanism(predicateUnifier, UNIFY_PREDICATES);
 
 		mResultBeforeEnhancement = constructStraightLineAutomaton(services, logger, csToolkit, predicateFactory,
 				internalPredicateUnifier, simplificationTechnique, xnfConversionTechnique, symbolTable,
-				predicateFactoryErrorAutomaton, alphabet, trace);
+				predicateFactoryErrorAutomaton, new VpAlphabet<>(abstraction), trace);
 
-		mResultAfterEnhancement = mEnhancementMode != InterpolantAutomatonEnhancement.NONE
+		mResultAfterEnhancement = USE_ENHANCEMENT
 				? constructNondeterministicAutomaton(services, mResultBeforeEnhancement, csToolkit,
 						internalPredicateUnifier, predicateFactory)
 				: null;
@@ -187,10 +187,7 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements
 
 	@Override
 	public INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> getResultAfterEnhancement() {
-		if (mResultAfterEnhancement == null) {
-			throw new UnsupportedOperationException("No enhancement was requested.");
-		}
-		return mResultAfterEnhancement;
+		return (mResultAfterEnhancement == null) ? mResultBeforeEnhancement : mResultAfterEnhancement;
 	}
 
 	@Override
@@ -200,13 +197,10 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements
 	}
 
 	@Override
-	public boolean hasAutomatonInIteration(final int iteration) {
-		return mLastIteration == iteration;
-	}
-
-	@Override
 	public InterpolantAutomatonEnhancement getEnhancementMode() {
-		return mEnhancementMode;
+		return USE_ENHANCEMENT
+				? InterpolantAutomatonEnhancement.NO_SECOND_CHANCE
+				: InterpolantAutomatonEnhancement.NONE;
 	}
 
 	@SuppressWarnings("squid:S00107")
@@ -312,7 +306,7 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements
 			final NestedWordAutomaton<LETTER, IPredicate> straightLineAutomaton, final CfgSmtToolkit csToolkit,
 			final PredicateUnificationMechanism predicateUnifier, final PredicateFactory predicateFactory) {
 		assert !containsPredicateState(straightLineAutomaton, predicateUnifier
-				.getFalsePredicate()) : "The error trace is feasible; hence the predicate 'False' should not be present.";
+				.getFalsePredicate()) : "The error trace is feasible; hence the predicate 'False' should not exist.";
 
 		// 'True' state is needed by automaton construction
 		if (!containsPredicateState(straightLineAutomaton, predicateUnifier.getTruePredicate())) {

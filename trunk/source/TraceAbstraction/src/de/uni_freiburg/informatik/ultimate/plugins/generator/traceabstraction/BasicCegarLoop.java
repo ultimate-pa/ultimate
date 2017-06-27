@@ -46,7 +46,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLette
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Accepts;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Difference;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty;
@@ -59,10 +58,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.senwa.DifferenceS
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
-import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -78,11 +75,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization.AutomataMinimization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization.AutomataMinimization.AutomataMinimizationTimeout;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.LineCoverageCalculator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorabstraction.ErrorAutomatonBuilder;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorabstraction.ErrorAutomatonStatisticsGenerator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorabstraction.ErrorTraceContainer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorabstraction.ErrorTraceContainer.ErrorTrace;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorabstraction.IErrorAutomatonBuilder;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorabstraction.ErrorGeneralizationEngine;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorlocalization.FlowSensitiveFaultLocalizer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.InterpolantAutomatonBuilderFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
@@ -111,7 +104,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.interactive.InteractiveRefinementStrategyFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.witnesschecking.WitnessProductAutomaton;
 import de.uni_freiburg.informatik.ultimate.util.HistogramOfIterable;
-import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdge;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 
@@ -158,10 +150,8 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 	protected HoareAnnotationFragments<LETTER> mHaf;
 	private INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> mWitnessAutomaton;
 	protected IRefinementEngine<NestedWordAutomaton<LETTER, IPredicate>> mTraceCheckAndRefinementEngine;
-	
-	private IErrorAutomatonBuilder<LETTER> mErrorAutomatonBuilder;
-	private final ErrorTraceContainer<LETTER> mErrorTraces = new ErrorTraceContainer<>();
-	private final ErrorAutomatonStatisticsGenerator mErrorAutomatonStatisticsGenerator;
+
+	private final ErrorGeneralizationEngine<LETTER> mErrorGeneralizationEngine;
 
 	public BasicCegarLoop(final String name, final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit,
 			final PredicateFactory predicateFactory, final TAPreferences taPrefs,
@@ -194,7 +184,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		} else {
 			mHoareAnnotationLocations = Collections.emptySet();
 		}
-		mErrorAutomatonStatisticsGenerator = new ErrorAutomatonStatisticsGenerator();
+		mErrorGeneralizationEngine = new ErrorGeneralizationEngine<>(services);
 		mHaf = new HoareAnnotationFragments<>(mLogger, mHoareAnnotationLocations, mPref.getHoareAnnotationPositions());
 		mStateFactoryForRefinement = new PredicateFactoryRefinement(mServices, super.mCsToolkit.getManagedScript(),
 				predicateFactory, mPref.computeHoareAnnotation(), mHoareAnnotationLocations);
@@ -407,51 +397,22 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 
 	@Override
 	protected void constructErrorAutomaton() throws AutomataOperationCanceledException {
-		mErrorTraces.addTrace(mCounterexample);
-		
-		final NestedWord<LETTER> trace = (NestedWord<LETTER>) mCounterexample.getWord();
-		if (mLogger.isInfoEnabled()) {
-			mLogger.info("Constructing error automaton for trace of length " + trace.length());
-		}
+		mErrorGeneralizationEngine.constructErrorAutomaton(mCounterexample, mPredicateFactory,
+				mTraceCheckAndRefinementEngine.getPredicateUnifier(), mCsToolkit, mSimplificationTechnique,
+				mXnfConversionTechnique, mIcfgContainer.getCfgSmtToolkit().getSymbolTable(),
+				mPredicateFactoryInterpolantAutomata, (INestedWordAutomaton<LETTER, IPredicate>) mAbstraction,
+				mIteration);
 
-		mErrorAutomatonStatisticsGenerator.reportTraceLength(trace.length());
-		mErrorAutomatonStatisticsGenerator.startErrorAutomatonConstructionTime();
-		
-		try {
-			mErrorAutomatonBuilder = new ErrorAutomatonBuilder<>(
-					mServices, mPredicateFactory, mTraceCheckAndRefinementEngine.getPredicateUnifier(), mCsToolkit,
-					mSimplificationTechnique, mXnfConversionTechnique,
-					mIcfgContainer.getCfgSmtToolkit().getSymbolTable(), mPredicateFactoryInterpolantAutomata,
-					new VpAlphabet<>(mAbstraction), trace, mIteration, mPref.interpolantAutomatonEnhancement());
-//			mErrorAutomatonBuilder = new DangerAutomatonBuilder<LETTER>(
-//					mServices, mPredicateFactory, mTraceCheckAndRefinementEngine.getPredicateUnifier(), mCsToolkit,
-//					mSimplificationTechnique, mXnfConversionTechnique,
-//					mIcfgContainer.getCfgSmtToolkit().getSymbolTable(), mPredicateFactoryInterpolantAutomata,
-//					(INestedWordAutomaton<LETTER, IPredicate>) mAbstraction, trace, mIteration);
-
-		} catch (final ToolchainCanceledException tce) {
-			mErrorAutomatonStatisticsGenerator.stopErrorAutomatonConstructionTime();
-			mErrorAutomatonStatisticsGenerator.finishAutomatonInstance();
-			final RunningTaskInfo rti = new RunningTaskInfo(getClass(),
-					"constructing error automaton for trace of length " + trace.length() + " (spent "
-							+ mErrorAutomatonStatisticsGenerator.getLastConstructionTime() + " nanoseconds)");
-			throw new ToolchainCanceledException(tce, rti);
-		}
 		mInterpolAutomaton = null;
-		mErrorAutomatonStatisticsGenerator.stopErrorAutomatonConstructionTime();
-		mErrorTraces.addPrecondition(mErrorAutomatonBuilder.getErrorPrecondition());
-
-		assert isInterpolantAutomatonOfSingleStateType(mErrorAutomatonBuilder.getResultBeforeEnhancement());
-		assert accepts(mServices, mErrorAutomatonBuilder.getResultBeforeEnhancement(),
-				mCounterexample.getWord()) : "Error automaton broken!";
+		final NestedWordAutomaton<LETTER, IPredicate> resultBeforeEnhancement =
+				mErrorGeneralizationEngine.getResultBeforeEnhancement();
+		assert isInterpolantAutomatonOfSingleStateType(resultBeforeEnhancement);
+		assert accepts(mServices, resultBeforeEnhancement, mCounterexample.getWord()) : "Error automaton broken!";
 	}
 
 	@Override
 	protected void reportErrorAutomatonBenchmarks() {
-		final StatisticsData stat = new StatisticsData();
-		stat.aggregateBenchmarkData(mErrorAutomatonStatisticsGenerator);
-		final IResult benchmarkResult = new StatisticsResult<>(Activator.PLUGIN_NAME, "ErrorAutomatonStatistics", stat);
-		mServices.getResultService().reportResult(Activator.PLUGIN_ID, benchmarkResult);
+		mErrorGeneralizationEngine.reportErrorGeneralizationBenchmarks();
 	}
 
 	@Override
@@ -477,14 +438,14 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		final InterpolantAutomatonEnhancement enhanceMode;
 		final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> subtrahend;
 		final boolean exploitSigmaStarConcatOfIa;
-		if (mErrorAutomatonBuilder != null && mErrorAutomatonBuilder.hasAutomatonInIteration(mIteration)) {
-			mErrorAutomatonStatisticsGenerator.startErrorAutomatonDifferenceTime();
+		if (mErrorGeneralizationEngine.hasAutomatonInIteration(mIteration)) {
+			mErrorGeneralizationEngine.startDifference();
 			automatonType = "error";
 			useErrorAutomaton = true;
 			exploitSigmaStarConcatOfIa = false;
-			enhanceMode = mErrorAutomatonBuilder.getEnhancementMode();
-			subtrahendBeforeEnhancement = mErrorAutomatonBuilder.getResultBeforeEnhancement();
-			subtrahend = mErrorAutomatonBuilder.getResultAfterEnhancement();
+			enhanceMode = mErrorGeneralizationEngine.getEnhancementMode();
+			subtrahendBeforeEnhancement = mErrorGeneralizationEngine.getResultBeforeEnhancement();
+			subtrahend = mErrorGeneralizationEngine.getResultAfterEnhancement();
 		} else {
 			automatonType = "interpolant";
 			useErrorAutomaton = false;
@@ -500,13 +461,9 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		computeAutomataDifference(minuend, subtrahend, subtrahendBeforeEnhancement,
 				predicateUnifier, exploitSigmaStarConcatOfIa, htc, enhanceMode, useErrorAutomaton, automatonType);
 
-		if (mErrorAutomatonBuilder != null && mErrorAutomatonBuilder.hasAutomatonInIteration(mIteration)) {
-			mErrorAutomatonStatisticsGenerator.stopErrorAutomatonDifferenceTime();
-			mErrorAutomatonStatisticsGenerator.evaluateFinalErrorAutomaton(new AutomataLibraryServices(mServices),
-					mLogger, mErrorAutomatonBuilder,
-					(INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate>) minuend,
-					mPredicateFactoryInterpolantAutomata, mPredicateFactoryResultChecking);
-			mErrorAutomatonStatisticsGenerator.finishAutomatonInstance();
+		if (mErrorGeneralizationEngine.hasAutomatonInIteration(mIteration)) {
+			mErrorGeneralizationEngine.stopDifference(minuend, mPredicateFactoryInterpolantAutomata,
+					mPredicateFactoryResultChecking, mCounterexample);
 		}
 		
 		mLogger.info(predicateUnifier.collectPredicateUnifierStatistics());
@@ -842,25 +799,10 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 
 	@Override
 	protected boolean isResultUnsafe(final boolean errorGeneralizationEnabled, final Result abstractResult) {
-		if (!errorGeneralizationEnabled || mErrorTraces.isEmpty()) {
+		if (!errorGeneralizationEnabled) {
 			return false;
 		}
-		if (mLogger.isInfoEnabled()) {
-			mLogger.info("Found " + mErrorTraces.size() + (mErrorTraces.size() == 1
-					? " error trace:"
-					: " different error traces in total:"));
-			int i = 0;
-			for (final ErrorTrace<LETTER> errorTrace : mErrorTraces) {
-				final IPredicate precondition = errorTrace.getPrecondition();
-				// TODO 2017-06-14 Christian: Do not print error precondition on info level after testing phase.
-				mLogger.info(++i + ": Error trace of length " + errorTrace.getTrace().getWord().length()
-						+ (precondition == null
-								? " (precondition not computed yet)."
-								: " has precondition " + precondition.getFormula() + '.'));
-			}
-		}
-		// TODO 2017-06-18 Christian: Currently we want to run the CEGAR loop until the abstraction is empty.
-		return abstractResult == Result.SAFE;
+		return mErrorGeneralizationEngine.isResultUnsafe(abstractResult);
 	}
 
 	public void setWitnessAutomaton(final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> witnessAutomaton) {

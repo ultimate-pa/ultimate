@@ -73,13 +73,6 @@ public interface IErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 	ErrorAutomatonType getType();
 
 	/**
-	 * @param iteration
-	 *            Iteration of CEGAR loop.
-	 * @return {@code true} iff iteration of last error automaton construction coincides with passed iteration
-	 */
-	boolean hasAutomatonInIteration(final int iteration);
-
-	/**
 	 * @return Error precondition (may be {@code null}).
 	 */
 	IPredicate getErrorPrecondition();
