@@ -22,6 +22,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 public class EqState<ACTION extends IIcfgTransition<IcfgLocation>>
 		implements IAbstractState<EqState<ACTION>, IProgramVarOrConst> {
 
+	private static int sNextFreeId = 0;
+	
+	private final int mId;
+
 	/**
 	 * The variables and constants that this state has "for the abstract interpretation"/"as an IAbstractState".
 	 * Note that these should be related but need not be identical to mConstraint.getPvocs(..).
@@ -37,6 +41,8 @@ public class EqState<ACTION extends IIcfgTransition<IcfgLocation>>
 			final EqNodeAndFunctionFactory eqNodeAndFunctionFactory, 
 			final EqStateFactory<ACTION> eqStateFactory,
 			final Set<IProgramVarOrConst> variables) {
+		mId = sNextFreeId++;
+		assert sNextFreeId != Integer.MAX_VALUE;
 		mConstraint = constraint;
 		mFactory = eqStateFactory;
 		mPvocs = new HashSet<>(variables);
@@ -95,16 +101,26 @@ public class EqState<ACTION extends IIcfgTransition<IcfgLocation>>
 	public EqState<ACTION> intersect(final EqState<ACTION> other) {
 		final EqConstraint<ACTION, EqNode, EqFunction> newConstraint =
 				mFactory.getEqConstraintFactory().conjoinFlat(this.getConstraint(), other.getConstraint());
+		
+		final Set<IProgramVarOrConst> newVariables = new HashSet<>();
+		newVariables.addAll(this.getVariables());
+		newVariables.addAll(other.getVariables());
 
-		return mFactory.getEqState(newConstraint, newConstraint.getPvocs(mFactory.getSymbolTable()));
+//		return mFactory.getEqState(newConstraint, newConstraint.getPvocs(mFactory.getSymbolTable()));
+		return mFactory.getEqState(newConstraint, newVariables);
 	}
 
 	@Override
 	public EqState<ACTION> union(final EqState<ACTION> other) {
 		final EqConstraint<ACTION, EqNode, EqFunction> newConstraint =
 				mFactory.getEqConstraintFactory().disjoinFlat(this.getConstraint(), other.getConstraint());
+		
+		final Set<IProgramVarOrConst> newVariables = new HashSet<>();
+		newVariables.addAll(this.getVariables());
+		newVariables.addAll(other.getVariables());
 
-		return mFactory.getEqState(newConstraint, newConstraint.getPvocs(mFactory.getSymbolTable()));
+//		return mFactory.getEqState(newConstraint, newConstraint.getPvocs(mFactory.getSymbolTable()));
+		return mFactory.getEqState(newConstraint, newVariables);
 
 	}
 
@@ -207,5 +223,27 @@ public class EqState<ACTION extends IIcfgTransition<IcfgLocation>>
 		final EqNode node2 = mFactory.getEqNodeAndFunctionFactory().getExistingEqNode(term2);
 		return mConstraint.areUnequal(node1, node2);
 	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		return this.mId == ((EqState) obj).mId;
+	}
+
+	@Override
+	public int hashCode() {
+//		return super.hashCode();
+		return mId;
+	}
+	
+	
 
 }

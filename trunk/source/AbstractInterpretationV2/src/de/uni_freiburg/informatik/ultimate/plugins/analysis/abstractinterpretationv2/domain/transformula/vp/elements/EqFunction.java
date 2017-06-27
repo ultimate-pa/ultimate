@@ -20,10 +20,14 @@ public class EqFunction implements IEqFunctionIdentifier<EqNode, EqFunction> {
 	private boolean mIsVersioned;
 
 	private final EqNodeAndFunctionFactory mFactory;
+
+	private final int mArity;
 	
 	public EqFunction(Term term, EqNodeAndFunctionFactory factory) {
 		mTerm = term;
 		mFactory = factory;
+		assert mTerm.getSort().isArraySort();
+		mArity = mTerm.getSort().getArguments().length - 1;
 	}
 
 	@Deprecated
@@ -32,6 +36,8 @@ public class EqFunction implements IEqFunctionIdentifier<EqNode, EqFunction> {
 		mTerm = pvoc.getTerm();
 		mIsVersioned = false;
 		mFactory = factory;
+		assert mTerm.getSort().isArraySort();
+		mArity = mTerm.getSort().getArguments().length - 1;
 	}
 	
 	@Deprecated
@@ -40,6 +46,8 @@ public class EqFunction implements IEqFunctionIdentifier<EqNode, EqFunction> {
 		mTerm = term;
 		mIsVersioned = true;
 		mFactory = factory;
+		assert mTerm.getSort().isArraySort();
+		mArity = mTerm.getSort().getArguments().length - 1;
 	}
 
 
@@ -89,8 +97,7 @@ public class EqFunction implements IEqFunctionIdentifier<EqNode, EqFunction> {
 
 	@Override
 	public int getArity() {
-		assert mTerm.getSort().isArraySort();
-		return mTerm.getSort().getArguments().length - 1;
+		return mArity;
 	}
 	
 	@Override

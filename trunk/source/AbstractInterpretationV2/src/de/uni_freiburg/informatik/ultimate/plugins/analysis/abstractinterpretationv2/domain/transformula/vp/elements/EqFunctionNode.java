@@ -62,9 +62,10 @@ public class EqFunctionNode extends EqNode {
 				VPDomainHelpers.computeProcedure(function, args), 
 				eqNodeFactory);
 		assert args.size() == function.getArity();
+		assert args.size() > 0;
 
 		mFunction = function;
-		mArgs = args;
+		mArgs = Collections.unmodifiableList(args);
 		mVariables = Collections.unmodifiableSet(computeVars(function, args));
 		mAllFunctionSymbols = Collections.unmodifiableSet(computeAllFunctions(function, args));
 
@@ -73,9 +74,11 @@ public class EqFunctionNode extends EqNode {
 	
 	public EqFunctionNode(EqFunction function, List<EqNode> args, Term term, EqNodeAndFunctionFactory eqNodeFactory) {
 		super(term, eqNodeFactory);
+		assert args.size() == function.getArity();
+		assert args.size() > 0;
 		
 		mFunction = function;
-		mArgs = args;
+		mArgs = Collections.unmodifiableList(args);
 		mAllFunctionSymbols = Collections.unmodifiableSet(computeAllFunctions(function, args));
 	}
 

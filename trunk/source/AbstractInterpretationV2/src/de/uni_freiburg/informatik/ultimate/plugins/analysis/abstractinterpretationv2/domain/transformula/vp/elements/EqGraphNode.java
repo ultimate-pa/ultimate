@@ -83,8 +83,8 @@ public class EqGraphNode<NODE extends IEqNodeIdentifier<NODE, FUNCTION>,
 //		this.mInitCcpar = null;
 		mInitCcpar = new HashSet<>();
 		if (id.isFunction()) {
-			mInitCcchild = id.getArgs();
-			mCcchild.addPair(mNodeIdentifier.getFunction(), id.getArgs());
+			mInitCcchild = Collections.unmodifiableList(id.getArgs());
+			mCcchild.addPair(mNodeIdentifier.getFunction(), Collections.unmodifiableList(id.getArgs()));
 		}
 	}
 	
@@ -111,6 +111,9 @@ public class EqGraphNode<NODE extends IEqNodeIdentifier<NODE, FUNCTION>,
 //		mRepresentative = this;
 //		mReverseRepresentative.clear();
 //		mReverseRepresentative.add(this);
+		
+		// do nothing to this.reverseRepresentative, because it is not really a property of this node (by convention)
+		
 		setRepresentative(this);
 		
 		
@@ -344,9 +347,18 @@ public class EqGraphNode<NODE extends IEqNodeIdentifier<NODE, FUNCTION>,
 	 */
 	public void purgeNodeFromFields(NODE nodeToBeHavocced) {
 		mCcpar.remove(nodeToBeHavocced);
-		for (Entry<FUNCTION, List<NODE>> en : mCcchild.entrySet()) {
-			en.getValue().remove(nodeToBeHavocced);
-		}
+//		for (Entry<FUNCTION, List<NODE>> en : mCcchild.entrySet()) {
+//			en.getValue().remove(nodeToBeHavocced);
+//		}
+//		mCcchild..entrySet().removeIf(en -> en.getValue().contains(nodeToBeHavocced));
 			
+		final HashRelation<FUNCTION, List<NODE>> newCchild = new HashRelation<>();
+		for (Entry<FUNCTION, List<NODE>> en : mCcchild.entrySet()) {
+			if (en.getValue().contains(nodeToBeHavocced)) {
+				continue;
+			}
+			newCchild.addPair(en.getKey(), en.getValue());
+		}
+		mCcchild = newCchild;
 	}
 }

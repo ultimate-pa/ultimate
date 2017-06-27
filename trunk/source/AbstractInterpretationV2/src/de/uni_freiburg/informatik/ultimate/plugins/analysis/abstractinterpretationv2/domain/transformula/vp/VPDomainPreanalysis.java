@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
@@ -121,10 +122,13 @@ public class VPDomainPreanalysis {
 
 	private final IUltimateServiceProvider mServices;
 
+	private final CfgSmtToolkit mCfgSmtToolkit;
+
 	public VPDomainPreanalysis(final IIcfg<?> root, final ILogger logger, IUltimateServiceProvider services) {
 		mManagedScript = root.getCfgSmtToolkit().getManagedScript();
 		mLogger = logger;
 		mSymboltable = root.getCfgSmtToolkit().getSymbolTable();
+		mCfgSmtToolkit = root.getCfgSmtToolkit();
 		mSettings = new VPDomainPreanalysisSettings();
 		mEqNodeAndFunctionFactory = new EqNodeAndFunctionFactory(this, mManagedScript);
 		mServices = services;
@@ -731,6 +735,14 @@ public class VPDomainPreanalysis {
 
 	public IUltimateServiceProvider getServices() {
 		return mServices;
+	}
+
+	public IIcfgSymbolTable getSymboltable() {
+		return mSymboltable;
+	}
+
+	public CfgSmtToolkit getCfgSmtToolkit() {
+		return mCfgSmtToolkit;
 	}
 }
 

@@ -358,6 +358,9 @@ public class CongruenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		assert !reverseRepresentativeBeforeHavoc.stream().anyMatch(rr -> rr.getRepresentative() != rr);
 		assert graphNodeForNodeToBeHavocced.getReverseRepresentative().isEmpty() 
 			|| graphNodeForNodeToBeHavocced.getReverseRepresentative().size() == 1;
+		assert graphNodeForNodeToBeHavocced.getReverseRepresentative().isEmpty() 
+			|| (graphNodeForNodeToBeHavocced.getReverseRepresentative().size() == 1 
+				&& graphNodeForNodeToBeHavocced.getRepresentative() == graphNodeForNodeToBeHavocced);
 		
 		/*
 		 * we have to reconnect nodes that were connected through an equality chain that contained the nodeToBeHavocced
@@ -379,6 +382,12 @@ public class CongruenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 			}
 		}
 		assert VPDomainHelpers.representativePointersAreConsistent(mNodeToEqGraphNode.values());
+		assert graphNodeForNodeToBeHavocced.getReverseRepresentative().isEmpty() 
+			|| (graphNodeForNodeToBeHavocced.getReverseRepresentative().size() == 1 
+				&& graphNodeForNodeToBeHavocced.getRepresentative() == graphNodeForNodeToBeHavocced);
+//		assert graphNodeForNodeToBeHavocced.getReverseRepresentative().size() == 1 
+//				&& graphNodeForNodeToBeHavocced.getReverseRepresentative().iterator().next() 
+//					== graphNodeForNodeToBeHavocced;
 		
 		/*
 		 * 3. Handling the nodeToBeHavocced itself: First update disequality set. Then set nodeToBeHavocced to initial.

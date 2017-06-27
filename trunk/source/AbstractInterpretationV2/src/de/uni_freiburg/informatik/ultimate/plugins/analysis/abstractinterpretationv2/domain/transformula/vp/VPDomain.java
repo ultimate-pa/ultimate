@@ -111,8 +111,9 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 		@Override
 		public EqState<ACTION> apply(final EqState<ACTION> first, final EqState<ACTION> second) {
 //			return VPFactoryHelpers.disjoin(first, second, getVpStateFactory());
-			assert false : "TODO"; // TODO
-			return null;
+//			assert false : "TODO"; // TODO
+//			return null;
+			return first.union(second);
 		}
 	}
 

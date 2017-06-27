@@ -129,7 +129,11 @@ public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTrans
 				mResultStack.push(mEqConstraintFactory.getDisjunctiveConstraint(
 						Collections.singleton(mEqConstraintFactory.getEmptyConstraint())));
 			} else {
-				assert false : "TODO";
+//				assert false : "TODO";
+				// we don't recognize this function symbol -- overapproximating its effects by "top"
+				// TODO: perhaps we could make some checks here if it is trivially bottom or something like that..
+				mResultStack.push(mEqConstraintFactory.getDisjunctiveConstraint(
+						Collections.singleton(mEqConstraintFactory.getEmptyConstraint())));
 			}
 			
 		}

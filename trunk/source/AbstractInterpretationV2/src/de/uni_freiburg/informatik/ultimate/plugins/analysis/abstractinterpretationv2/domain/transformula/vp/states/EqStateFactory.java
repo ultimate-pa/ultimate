@@ -19,6 +19,7 @@ public class EqStateFactory<ACTION extends IIcfgTransition<IcfgLocation>> {
 	private final EqNodeAndFunctionFactory mEqNodeAndFunctionFactory;
 	private final EqConstraintFactory<ACTION, EqNode, EqFunction> mEqConstraintFactory;
 	private final IIcfgSymbolTable mSymbolTable;
+	private EqState<ACTION> mTopStateWithEmptyPvocs;
 	
 	public EqStateFactory(EqNodeAndFunctionFactory eqNodeAndFunctionFactory, 
 			EqConstraintFactory<ACTION, EqNode, EqFunction> eqConstraintFactory,
@@ -39,7 +40,10 @@ public class EqStateFactory<ACTION extends IIcfgTransition<IcfgLocation>> {
 	}
 
 	public EqState<ACTION> getTopState() {
-		return getEqState(mEqConstraintFactory.getEmptyConstraint(), Collections.emptySet());
+		if (mTopStateWithEmptyPvocs == null) {
+			mTopStateWithEmptyPvocs = getEqState(mEqConstraintFactory.getEmptyConstraint(), Collections.emptySet());
+		}
+		return mTopStateWithEmptyPvocs;
 	}
 
 	public EqNodeAndFunctionFactory getEqNodeAndFunctionFactory() {

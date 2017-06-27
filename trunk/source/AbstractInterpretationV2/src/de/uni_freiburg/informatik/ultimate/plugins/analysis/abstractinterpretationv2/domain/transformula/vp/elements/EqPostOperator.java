@@ -34,7 +34,7 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>> implem
 			EqPredicate<ACTION>, 
 			EqTransitionRelation<ACTION>> mPredicateTransformer;
 	private final TransFormulaConverterCache<ACTION> mTransFormulaConverter;
-	private CfgSmtToolkit mCfgSmtToolkit;
+	private final CfgSmtToolkit mCfgSmtToolkit;
 	private final EqConstraintFactory<ACTION, EqNode, EqFunction> mEqConstraintFactory;
 	private final EqNodeAndFunctionFactory mEqNodeAndFunctionFactory;
 	private final VPDomainPreanalysis mPreAnalysis;
@@ -46,6 +46,7 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>> implem
 		mEqConstraintFactory = eqConstraintFactory;
 		mPreAnalysis = preAnalysis;
 		mMgdScript = preAnalysis.getManagedScript();
+		mCfgSmtToolkit = preAnalysis.getCfgSmtToolkit();
 
 		mOperationProvider = new EqOperationProvider<>(eqConstraintFactory);
 
@@ -64,12 +65,19 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>> implem
 				mPredicateTransformer.strongestPostcondition(
 						oldstate.toEqPredicate(), transitionRelation);
 		final List<EqState<ACTION>> result = postConstraint.toEqStates(oldstate.getVariables());
+		assert result.stream().allMatch(state -> state.getVariables().containsAll(oldstate.getVariables()));
 		return result;
 	}
 
 	@Override
-	public List<EqState<ACTION>> apply(EqState<ACTION> stateBeforeLeaving, EqState<ACTION> hierarchicalPre,
+	public List<EqState<ACTION>> apply(EqState<ACTION> stateBeforeLeaving, 
+			EqState<ACTION> hierarchicalPreOrStateAfterLeaving,
 			ACTION transition) {
+		assert hierarchicalPreOrStateAfterLeaving.getVariables().containsAll(
+				mCfgSmtToolkit.getSymbolTable().getGlobals());
+		assert hierarchicalPreOrStateAfterLeaving.getVariables().containsAll(
+				mCfgSmtToolkit.getSymbolTable().getLocals(transition.getSucceedingProcedure()));
+
 		if (transition instanceof Call) {
 			final String calledProcedure = transition.getSucceedingProcedure();
 
@@ -92,13 +100,26 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>> implem
 							localVarAssignments, globalVarAssignments, oldVarAssignments, 
 							modifiableGlobalsOfCalledProcedure);
 			//TODO where do we get the variables for the new scope??
-			return postConstraint.toEqStates(hierarchicalPre.getVariables()); 
+//			Set<ILocalProgramVar> newScopeLocalVars = 
+//					mCfgSmtToolkit.getSymbolTable().getLocals(transition.getSucceedingProcedure());
+//			Set<IProgramNonOldVar> globalVars = mCfgSmtToolkit.getSymbolTable().getGlobals();
+//			Set<IProgramConst> constants = mCfgSmtToolkit.getSymbolTable().getConstants();
+//			Set<IProgramVarOrConst> newScopePvocs = new HashSet<>();
+//			newScopePvocs.addAll(newScopeLocalVars);
+//			newScopePvocs.addAll(globalVars);
+//			newScopePvocs.addAll(constants);
+//			return postConstraint.toEqStates(newScopePvocs); 
+			final List<EqState<ACTION>> result = 
+					postConstraint.toEqStates(hierarchicalPreOrStateAfterLeaving.getVariables()); 
+			assert result.stream()
+				.allMatch(state -> state.getVariables().containsAll(hierarchicalPreOrStateAfterLeaving.getVariables()));
+			return result;
 		} else if (transition instanceof Summary) {
 			return apply(stateBeforeLeaving, transition);
 		} else if (transition instanceof Return) {
 
 			final EqPredicate<ACTION> returnPred = stateBeforeLeaving.toEqPredicate();
-			final EqPredicate<ACTION> callPred = hierarchicalPre.toEqPredicate();
+			final EqPredicate<ACTION> callPred = hierarchicalPreOrStateAfterLeaving.toEqPredicate();
 
 			EqTransitionRelation<ACTION> returnTF = mTransFormulaConverter
 					.getEqTransitionRelationFromTransformula(((Return) transition).getAssignmentOfReturn());
@@ -120,7 +141,21 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>> implem
 							oldVarAssignments, 
 							modifiableGlobals);
 			
-			return postConstraint.toEqStates(hierarchicalPre.getVariables());
+//			Set<ILocalProgramVar> newScopeLocalVars = 
+//					mCfgSmtToolkit.getSymbolTable().getLocals(transition.getSucceedingProcedure());
+//			Set<IProgramNonOldVar> globalVars = mCfgSmtToolkit.getSymbolTable().getGlobals();
+//			Set<IProgramConst> constants = mCfgSmtToolkit.getSymbolTable().getConstants();
+//			Set<IProgramVarOrConst> newScopePvocs = new HashSet<>();
+//			newScopePvocs.addAll(newScopeLocalVars);
+//			newScopePvocs.addAll(globalVars);
+//			newScopePvocs.addAll(constants);
+//			return postConstraint.toEqStates(newScopePvocs); 
+			
+			final List<EqState<ACTION>> result = 
+					postConstraint.toEqStates(hierarchicalPreOrStateAfterLeaving.getVariables());
+			assert result.stream()
+				.allMatch(state -> state.getVariables().containsAll(hierarchicalPreOrStateAfterLeaving.getVariables()));
+			return result;
 		} else {
 			throw new UnsupportedOperationException();
 		}
