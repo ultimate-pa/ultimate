@@ -65,6 +65,7 @@ public class SymbolicMemory {
 	private final List<TermVariable> mKappas;
 	private final Map<TermVariable, TermVariable> mKappa2Tau;
 	private final List<Term> mRangeTerms;
+	private final List<Term> mRangeExTerms;
 	private final Map<Integer, Set<IProgramVar>> mAssignedVars;
 	private final Map<TermVariable, Set<Integer>> mAssigningPaths;
 	private final Map<IProgramVar, TermVariable> mInVars;
@@ -88,6 +89,7 @@ public class SymbolicMemory {
 		mKappas = new ArrayList<>();
 		mKappa2Tau = new HashMap<>();
 		mRangeTerms = new ArrayList<>();
+		mRangeExTerms = new ArrayList<>();
 		mAssignedVars = new HashMap<>();
 		mAssigningPaths = new HashMap<>();
 		mInVars = new HashMap<>();
@@ -110,6 +112,10 @@ public class SymbolicMemory {
 				mManagedScript.getScript().term("<=", Rational.ZERO.toTerm(mManagedScript.getScript().sort("Int")), t),
 				mManagedScript.getScript().term("<", t, k));
 		mRangeTerms.add(range);
+		final Term rangeEx = Util.and(mManagedScript.getScript(),
+				mManagedScript.getScript().term("<=", Rational.ZERO.toTerm(mManagedScript.getScript().sort("Int")), t),
+				mManagedScript.getScript().term("<=", t, k));
+		mRangeExTerms.add(rangeEx);
 	}
 
 	/**
@@ -256,7 +262,7 @@ public class SymbolicMemory {
 		int arrayIndex = 0;
 		for (int i = 0; i < mKappas.size(); i++) {
 			if (i != path) {
-				conjTerms.add(mRangeTerms.get(i));
+				conjTerms.add(mRangeExTerms.get(i));
 				exitsTaus[arrayIndex] = mKappa2Tau.get(mKappas.get(i));
 				arrayIndex++;
 			}
@@ -265,8 +271,6 @@ public class SymbolicMemory {
 			conjTerms.add(mManagedScript.getScript().term("=", mOutVars.get(var), mIteratedSymbolicMemory.get(var)));
 		}
 		conjTerms.add(cleanReplacedGuard);
-		conjTerms.add(mManagedScript.getScript().term(">=", mKappas.get(path),
-				Rational.ZERO.toTerm(mManagedScript.getScript().sort("Int"))));
 		final Term formulaTerm = Util.and(mManagedScript.getScript(), conjTerms.toArray(new Term[conjTerms.size()]));
 		final Term ex = mCurrentPath > 0
 				? mManagedScript.getScript().quantifier(QuantifiedFormula.EXISTS, exitsTaus, formulaTerm) : formulaTerm;
@@ -274,8 +278,10 @@ public class SymbolicMemory {
 		allTaus[0] = mKappa2Tau.get(mKappas.get(path));
 		final Term allTerm = mManagedScript.getScript().quantifier(QuantifiedFormula.FORALL, allTaus,
 				Util.implies(mManagedScript.getScript(), mRangeTerms.get(path), ex));
+		final Term kappaMin = mManagedScript.getScript().term("<", Rational.ZERO.toTerm(mManagedScript.getScript().sort("Int")),
+				mKappas.get(path));
 		mLogger.debug(allTerm.toStringDirect());
-		return allTerm;
+		return Util.and(mManagedScript.getScript(), allTerm, kappaMin);
 	}
 
 	/**
