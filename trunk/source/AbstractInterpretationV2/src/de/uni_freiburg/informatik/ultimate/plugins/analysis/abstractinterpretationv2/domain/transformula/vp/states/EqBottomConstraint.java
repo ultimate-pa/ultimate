@@ -41,8 +41,6 @@ public class EqBottomConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 	public Term getTerm(Script script) {
 		return script.term("false");
 	}
-	
-	
 
 	@Override
 	public void freeze() {
@@ -58,7 +56,7 @@ public class EqBottomConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 	
 	////////////////////////////////////////////////////////////////////////
 	/*
-	 * from here on down: methods that probably don't need to be overwritten, but are, for performance and to be safe..
+	 * from here on down: methods that probably don't need to be overwritten, but are, for performance, and to be safe..
 	 */
 
 	@Override

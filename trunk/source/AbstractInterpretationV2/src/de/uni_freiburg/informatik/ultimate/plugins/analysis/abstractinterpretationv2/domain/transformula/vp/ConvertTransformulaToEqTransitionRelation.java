@@ -230,7 +230,7 @@ public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTrans
 		@Override
 		public void walk(NonRecursive walker, TermVariable term) {
 			if ("Bool".equals(term.getSort().getName())) {
-				assert false : "TODO: implement";
+				throw new UnsupportedOperationException("we don't support boolean variables right now"); // TODO
 			} else {
 				assert false : "we should have caught this before, right?";
 			}

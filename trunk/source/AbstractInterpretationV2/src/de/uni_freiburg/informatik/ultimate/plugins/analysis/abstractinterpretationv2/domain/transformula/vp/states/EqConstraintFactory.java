@@ -57,14 +57,11 @@ public class EqConstraintFactory<
 
 	public EqConstraint<ACTION, NODE, FUNCTION> unfreeze(EqConstraint<ACTION, NODE, FUNCTION> constraint) {
 		assert constraint.isFrozen();
+		if (constraint.isBottom()) {
+			return constraint;
+		}
 		return new EqConstraint<>(constraint);
 	}
-
-//	public EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> unfreeze(
-//			EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> constraint) {
-//		// TODO Auto-generated method stub
-//		return null;
-//	}
 
 	public EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> 
 			getDisjunctiveConstraint(Collection<EqConstraint<ACTION, NODE, FUNCTION>> constraintList) {

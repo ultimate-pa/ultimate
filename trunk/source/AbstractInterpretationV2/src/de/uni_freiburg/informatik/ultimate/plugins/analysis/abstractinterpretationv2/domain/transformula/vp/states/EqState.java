@@ -14,6 +14,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqFunction;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNode;
@@ -46,7 +47,8 @@ public class EqState<ACTION extends IIcfgTransition<IcfgLocation>>
 		mConstraint = constraint;
 		mFactory = eqStateFactory;
 		mPvocs = new HashSet<>(variables);
-		assert mPvocs.containsAll(constraint.getPvocs(mFactory.getSymbolTable()));
+		assert mPvocs.containsAll(constraint.getPvocs(mFactory.getSymbolTable())
+				.stream().filter(pvoc -> !(pvoc instanceof IProgramOldVar)).collect(Collectors.toSet()));
 	}
 
 	@Override

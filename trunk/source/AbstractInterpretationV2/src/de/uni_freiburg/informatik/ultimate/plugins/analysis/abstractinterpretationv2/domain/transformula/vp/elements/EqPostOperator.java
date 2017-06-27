@@ -111,8 +111,8 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>> implem
 //			return postConstraint.toEqStates(newScopePvocs); 
 			final List<EqState<ACTION>> result = 
 					postConstraint.toEqStates(hierarchicalPreOrStateAfterLeaving.getVariables()); 
-			assert result.stream()
-				.allMatch(state -> state.getVariables().containsAll(hierarchicalPreOrStateAfterLeaving.getVariables()));
+//			assert result.stream()
+//				.allMatch(state -> state.getVariables().containsAll(hierarchicalPreOrStateAfterLeaving.getVariables()));
 			return result;
 		} else if (transition instanceof Summary) {
 			return apply(stateBeforeLeaving, transition);
@@ -121,16 +121,16 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>> implem
 			final EqPredicate<ACTION> returnPred = stateBeforeLeaving.toEqPredicate();
 			final EqPredicate<ACTION> callPred = hierarchicalPreOrStateAfterLeaving.toEqPredicate();
 
-			EqTransitionRelation<ACTION> returnTF = mTransFormulaConverter
+			final EqTransitionRelation<ACTION> returnTF = mTransFormulaConverter
 					.getEqTransitionRelationFromTransformula(((Return) transition).getAssignmentOfReturn());
-			EqTransitionRelation<ACTION> callTF = mTransFormulaConverter
+			final EqTransitionRelation<ACTION> callTF = mTransFormulaConverter
 					.getEqTransitionRelationFromTransformula(
 							((Return) transition).getLocalVarsAssignmentOfCall());
-			EqTransitionRelation<ACTION> oldVarAssignments = mTransFormulaConverter
+			final EqTransitionRelation<ACTION> oldVarAssignments = mTransFormulaConverter
 					.getEqTransitionRelationFromTransformula(
 							mCfgSmtToolkit.getOldVarsAssignmentCache().getOldVarsAssignment(
 									transition.getPrecedingProcedure()));
-			Set<IProgramNonOldVar> modifiableGlobals = mCfgSmtToolkit.getModifiableGlobalsTable()
+			final Set<IProgramNonOldVar> modifiableGlobals = mCfgSmtToolkit.getModifiableGlobalsTable()
 					.getModifiedBoogieVars(transition.getPrecedingProcedure());
 
 			final EqDisjunctiveConstraint<ACTION, EqNode, EqFunction> postConstraint = 
@@ -153,8 +153,8 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>> implem
 			
 			final List<EqState<ACTION>> result = 
 					postConstraint.toEqStates(hierarchicalPreOrStateAfterLeaving.getVariables());
-			assert result.stream()
-				.allMatch(state -> state.getVariables().containsAll(hierarchicalPreOrStateAfterLeaving.getVariables()));
+//			assert result.stream()
+//				.allMatch(state -> state.getVariables().containsAll(hierarchicalPreOrStateAfterLeaving.getVariables()));
 			return result;
 		} else {
 			throw new UnsupportedOperationException();
