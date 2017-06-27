@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.lib.pea;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
@@ -17,18 +18,13 @@ import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 
 /**
- * Pea Decision expressed by a BoogieAST Expression.
+ * {@link Decision} expressed by a BoogieAST Expression.
  *
- * @author langenfeld
- * @see pea.Decision
+ * @author Vincent Langenfeld (langenfv@informatik.uni-freiburg.de)
  */
 public class BoogieBooleanExpressionDecision extends Decision {
 
-	private final Expression expression;
-
-	public Expression getExpression() {
-		return expression;
-	}
+	private final Expression mExpression;
 
 	/**
 	 *
@@ -36,7 +32,11 @@ public class BoogieBooleanExpressionDecision extends Decision {
 	 *            A Boogie expression which evaluates to boolean but has no boolean expressions as children.
 	 */
 	public BoogieBooleanExpressionDecision(final Expression expression) {
-		this.expression = expression;
+		mExpression = expression;
+	}
+
+	public Expression getExpression() {
+		return mExpression;
 	}
 
 	/**
@@ -56,7 +56,7 @@ public class BoogieBooleanExpressionDecision extends Decision {
 		}
 
 		// TODO: is there somethin better than a string comparison for that
-		return ((BoogieBooleanExpressionDecision) o).getExpression().toString().compareTo(expression.toString());
+		return ((BoogieBooleanExpressionDecision) o).getExpression().toString().compareTo(mExpression.toString());
 
 	}
 
@@ -65,7 +65,7 @@ public class BoogieBooleanExpressionDecision extends Decision {
 		if (!(o instanceof BoogieBooleanExpressionDecision)) {
 			return false;
 		}
-		if (!expression.equals(((BoogieBooleanExpressionDecision) o).getExpression())) {
+		if (!mExpression.equals(((BoogieBooleanExpressionDecision) o).getExpression())) {
 			return false;
 		}
 		return true;
@@ -73,61 +73,7 @@ public class BoogieBooleanExpressionDecision extends Decision {
 
 	@Override
 	public int hashCode() {
-		return expression.hashCode();
-	}
-
-	/**
-	 * Transforms a BoggieExpressino to a BoogieExpression with primed Variable names
-	 *
-	 */
-	class BoogiePrimeIdentifierTransformer extends BoogieTransformer {
-		private String ignore = new String();
-
-		public void setIgnore(final String ignore) {
-			if (ignore != null) {
-				this.ignore = ignore;
-			}
-		}
-
-		@Override
-		protected Expression processExpression(final Expression expr) {
-			if (expr instanceof IdentifierExpression) {
-				if (ignore != null && ((IdentifierExpression) expr).getIdentifier().equals(ignore)) {
-					return expr;
-				}
-				return new IdentifierExpression(expr.getLocation(),
-						((IdentifierExpression) expr).getIdentifier().replaceAll("([a-zA-Z_])(\\w*)", "$1$2" + "'"));
-			}
-			return super.processExpression(expr);
-		}
-
-	}
-
-	/**
-	 * Transforms a BoggieExpressino to a BoogieExpression with unprimed Variable names
-	 *
-	 */
-	class BoogieRemovePrimeIdentifierTransformer extends BoogieTransformer {
-		private String ignore = new String();
-
-		public void setIgnore(final String ignore) {
-			if (ignore != null) {
-				this.ignore = ignore;
-			}
-		}
-
-		@Override
-		protected Expression processExpression(final Expression expr) {
-			if (expr instanceof IdentifierExpression) {
-				if (ignore != null && ((IdentifierExpression) expr).getIdentifier().equals(ignore)) {
-					return expr;
-				}
-				return new IdentifierExpression(expr.getLocation(),
-						((IdentifierExpression) expr).getIdentifier().replaceAll("([a-zA-Z_])(\\w*)" + "'", "$1$2"));
-			}
-			return super.processExpression(expr);
-		}
-
+		return mExpression.hashCode();
 	}
 
 	@Override
@@ -144,7 +90,7 @@ public class BoogieBooleanExpressionDecision extends Decision {
 	public Decision unprime(final String ignore) {
 		final BoogieRemovePrimeIdentifierTransformer bpit = new BoogieRemovePrimeIdentifierTransformer();
 		bpit.setIgnore(ignore);
-		final Expression primed = bpit.processExpression(expression);
+		final Expression primed = bpit.processExpression(mExpression);
 		return new BoogieBooleanExpressionDecision(primed);
 	}
 
@@ -152,7 +98,7 @@ public class BoogieBooleanExpressionDecision extends Decision {
 	public Decision prime(final String ignore) {
 		final BoogiePrimeIdentifierTransformer bpit = new BoogiePrimeIdentifierTransformer();
 		bpit.setIgnore(ignore);
-		final Expression primed = bpit.processExpression(expression);
+		final Expression primed = bpit.processExpression(mExpression);
 		return new BoogieBooleanExpressionDecision(primed);
 	}
 
@@ -160,81 +106,35 @@ public class BoogieBooleanExpressionDecision extends Decision {
 	public String toString(final int child) {
 		if (child != 0) {
 			final BoogieLocation loc = new BoogieLocation("", 0, 0, 0, 0, false);
-			return BoogiePrettyPrinter.print(new UnaryExpression(loc, UnaryExpression.Operator.LOGICNEG, expression));
+			return BoogiePrettyPrinter.print(new UnaryExpression(loc, UnaryExpression.Operator.LOGICNEG, mExpression));
 		}
-		return BoogiePrettyPrinter.print(expression);
+		return BoogiePrettyPrinter.print(mExpression);
 	}
 
 	@Override
 	public String toSmtString(final int child) {
-		return null;
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public String toTexString(final int child) {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public String toUppaalString(final int child) {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public String toUppaalStringDOM(final int child) {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public String getVar() {
-		throw new RuntimeException("getVar not supported by BoogieBooleanExpressionDecision (use getVars)!");
-	}
-
-	/**
-	 * Collects all identifier statements from a boogie expression
-	 */
-	class BoogieIdentifierCollector extends BoogieVisitor {
-
-		private final ArrayList<IdentifierExpression> identifiers = new ArrayList<IdentifierExpression>();
-		private BoogieType aproxType = BoogieType.TYPE_BOOL;
-
-		@Override
-		protected void visit(final IdentifierExpression expr) {
-			identifiers.add(expr);
-		}
-
-		@Override
-		protected void visit(final RealLiteral expr) {
-			aproxType = BoogieType.TYPE_REAL;
-		}
-
-		@Override
-		protected void visit(final BooleanLiteral expr) {
-			aproxType = BoogieType.TYPE_BOOL;
-		}
-
-		@Override
-		protected void visit(final IntegerLiteral expr) {
-			aproxType = BoogieType.TYPE_INT;
-		}
-
-		public ArrayList<IdentifierExpression> getIdentifiers(final Expression expr) {
-			processExpression(expr);
-
-			// try to find a solution to what type the variables of the expression are, by giving them
-			// simply the type of type the literals in the expression had.
-			// TODO: get a better solution for this!
-			for (final IdentifierExpression ident : identifiers) {
-				if (ident.getType() == null) {
-					ident.setType(aproxType);
-				}
-			}
-			return identifiers;
-		}
-
+		throw new UnsupportedOperationException(
+				"getVar not supported by BoogieBooleanExpressionDecision (use getVars)!");
 	}
 
 	/**
@@ -243,16 +143,112 @@ public class BoogieBooleanExpressionDecision extends Decision {
 	 * @return Map: ident -> type
 	 */
 	public Map<String, String> getVars() {
-		final Map<String, String> vars = new HashMap<String, String>();
+		final Map<String, String> vars = new HashMap<>();
 
 		final BoogieIdentifierCollector collector = new BoogieIdentifierCollector();
-		final ArrayList<IdentifierExpression> idents = collector.getIdentifiers(expression);
+		final List<IdentifierExpression> idents = collector.getIdentifiers(mExpression);
 
 		for (final IdentifierExpression ident : idents) {
-			vars.put(ident.getIdentifier().toString(), ident.getType().toString());
+			vars.put(ident.getIdentifier(), ident.getType().toString());
 		}
 
 		return vars;
+	}
+
+	/**
+	 * Collects all identifier statements from a boogie expression
+	 */
+	private static final class BoogieIdentifierCollector extends BoogieVisitor {
+
+		private final ArrayList<IdentifierExpression> mIdentifiers = new ArrayList<>();
+		private BoogieType mAproxType = BoogieType.TYPE_BOOL;
+
+		@Override
+		protected void visit(final IdentifierExpression expr) {
+			mIdentifiers.add(expr);
+		}
+
+		@Override
+		protected void visit(final RealLiteral expr) {
+			mAproxType = BoogieType.TYPE_REAL;
+		}
+
+		@Override
+		protected void visit(final BooleanLiteral expr) {
+			mAproxType = BoogieType.TYPE_BOOL;
+		}
+
+		@Override
+		protected void visit(final IntegerLiteral expr) {
+			mAproxType = BoogieType.TYPE_INT;
+		}
+
+		public List<IdentifierExpression> getIdentifiers(final Expression expr) {
+			processExpression(expr);
+
+			// try to find a solution to what type the variables of the expression are, by giving them
+			// simply the type of type the literals in the expression had.
+			// TODO: get a better solution for this!
+			for (final IdentifierExpression ident : mIdentifiers) {
+				if (ident.getType() == null) {
+					ident.setType(mAproxType);
+				}
+			}
+			return mIdentifiers;
+		}
+	}
+
+	/**
+	 * Transforms a BoggieExpressino to a BoogieExpression with primed Variable names
+	 *
+	 */
+	private static final class BoogiePrimeIdentifierTransformer extends BoogieTransformer {
+		private String mIgnore;
+
+		public void setIgnore(final String ignore) {
+			if (ignore != null) {
+				mIgnore = ignore;
+			}
+		}
+
+		@Override
+		protected Expression processExpression(final Expression expr) {
+			if (expr instanceof IdentifierExpression) {
+				if (mIgnore != null && ((IdentifierExpression) expr).getIdentifier().equals(mIgnore)) {
+					return expr;
+				}
+				return new IdentifierExpression(expr.getLocation(),
+						((IdentifierExpression) expr).getIdentifier().replaceAll("([a-zA-Z_])(\\w*)", "$1$2" + "'"));
+			}
+			return super.processExpression(expr);
+		}
+
+	}
+
+	/**
+	 * Transforms a BoggieExpressino to a BoogieExpression with unprimed Variable names
+	 *
+	 */
+	private static final class BoogieRemovePrimeIdentifierTransformer extends BoogieTransformer {
+		private String mIgnore;
+
+		public void setIgnore(final String ignore) {
+			if (ignore != null) {
+				mIgnore = ignore;
+			}
+		}
+
+		@Override
+		protected Expression processExpression(final Expression expr) {
+			if (expr instanceof IdentifierExpression) {
+				if (mIgnore != null && ((IdentifierExpression) expr).getIdentifier().equals(mIgnore)) {
+					return expr;
+				}
+				return new IdentifierExpression(expr.getLocation(),
+						((IdentifierExpression) expr).getIdentifier().replaceAll("([a-zA-Z_])(\\w*)" + "'", "$1$2"));
+			}
+			return super.processExpression(expr);
+		}
 	}
 
 }

@@ -41,11 +41,11 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.Phase;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Transition;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.CDDTranslator;
-import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.Translator;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.Req2BoogieTranslator;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.Permutation;
 
 public class ConditionGenerator {
-	public Translator translator;
+	public Req2BoogieTranslator translator;
 
 	public Expression nonDLCGenerator(final PhaseEventAutomata[] automata, final int[] automataPermutation,
 			final String fileName, final BoogieLocation bl) {
@@ -123,7 +123,7 @@ public class ConditionGenerator {
 	 * if (i == 0) { ANDExprOuter = OrExprOuter; } else { ANDExprOuter = new BinaryExpression(bl,
 	 * BinaryExpression.Operator.LOGICAND, OrExprOuter, ANDExprOuter); } } return ANDExprOuter; }
 	 */
-	public void setTranslator(final Translator translator) {
+	public void setTranslator(final Req2BoogieTranslator translator) {
 		this.translator = translator;
 	}
 

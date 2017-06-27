@@ -1,6 +1,7 @@
 /*
- * Copyright (C) 2013-2015 Jochen Hoenicke (hoenicke@informatik.uni-freiburg.de)
- * Copyright (C) 2015 University of Freiburg
+ * Copyright (C) 2013-2017 Jochen Hoenicke (hoenicke@informatik.uni-freiburg.de)
+ * Copyright (C) 2017 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2013-2017 University of Freiburg
  *
  * This file is part of the ULTIMATE PEAtoBoogie plug-in.
  *
@@ -63,6 +64,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Phase;
@@ -72,12 +74,16 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.Transition;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.generator.ConditionGenerator;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.req2pea.ReqToPEA;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.ReqCheck.ReqSpec;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.Permutation;
 
 /**
  * This class translates a phase event automaton to an equivalent Boogie code.
+ *
+ * @author Jochen Hoenicke (hoenicke@informatik.uni-freiburg.de)
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
-public class Translator {
+public class Req2BoogieTranslator {
 
 	/**
 	 * The name of the input file containing the requirements/peas.
@@ -87,7 +93,7 @@ public class Translator {
 	/**
 	 * The address of the Boogie text file.
 	 */
-	private String mBoogieFilePath;
+	private final String mBoogieFilePath;
 	/**
 	 * The unit that contains declarations.
 	 */
@@ -95,28 +101,28 @@ public class Translator {
 	/**
 	 * The list of declarations.
 	 */
-	private final List<Declaration> mDecls = new ArrayList<>();
+	private final List<Declaration> mDecls;
 	/**
 	 * The list of clock identifiers.
 	 */
-	private final List<String> mClockIds = new ArrayList<>();
+	private final List<String> mClockIds;
 	/**
 	 * The list of unique identifiers. Each identifier is in the form of "pc" + phaseIndex. Each automaton has an array
 	 * of phases. The location of each phase in that array specifies the value of phaseIndex.
 	 */
-	private final List<String> mPcIds = new ArrayList<>();
+	private final List<String> mPcIds;
 	/**
 	 * The list of state variables.
 	 */
-	private final List<String> mStateVars = new ArrayList<>();
+	private final List<String> mStateVars;
 	/**
 	 * The list of primed variables.
 	 */
-	private final List<String> mPrimedVars = new ArrayList<>();
+	private final List<String> mPrimedVars;
 	/**
 	 * The list of events.
 	 */
-	private final List<String> mEventVars = new ArrayList<>();
+	private final List<String> mEventVars;
 	/**
 	 * The list of automata.
 	 */
@@ -129,11 +135,11 @@ public class Translator {
 	/**
 	 * The properties for which we check for vacuity.
 	 */
-	private BitSet mVacuityChecks;
+	private final BitSet mVacuityChecks;
 	/**
 	 * The value of combinations of automata.
 	 */
-	private int mCombinationNum;
+	private final int mCombinationNum;
 
 	/**
 	 * The boogie locations used to annotate the boogie code. This array contains the location for requirement reqNr in
@@ -144,64 +150,60 @@ public class Translator {
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 
-	public Translator(final IUltimateServiceProvider services, final ILogger logger) {
+	/**
+	 *
+	 * @param services
+	 * @param logger
+	 * @param vacuityChecks
+	 *            A bitset containing the numbers of the components for which vacuity should be checked. Bit i is set if
+	 *            we should check vacuity for the i-th property.
+	 * @param path
+	 *            The input file name. This is used to annotate the Boogie code with the right file name. The
+	 *            {@link ILocation} object should contain the name of the original file name.
+	 * @param num
+	 *            Assign a value to the combinationNum.
+	 */
+	public Req2BoogieTranslator(final IUltimateServiceProvider services, final ILogger logger,
+			final BitSet vacuityChecks, final String path, final int num, final PatternType[] patterns) {
 		mLogger = logger;
 		mServices = services;
-	}
-
-	/**
-	 * Set the input file name. This is used to annotate the Boogie code with the right file name. The Location object
-	 * should contain the name of the original file name.
-	 *
-	 * @param The
-	 *            input file name.
-	 */
-	public void setInputFilePath(final String path) {
 		mInputFilePath = path;
-	}
-
-	public String getInputFilePath() {
-		return mInputFilePath;
-	}
-
-	/**
-	 * Assign an address to the boogieFilePath.
-	 *
-	 * @param The
-	 *            address of a Boogie text file.
-	 */
-	public void setBoogieFilePath(final String path) {
-		mBoogieFilePath = path;
-	}
-
-	/**
-	 * @return The address of a Boogie text file.
-	 */
-	public String getBoogieFilePath() {
-		return mBoogieFilePath;
-	}
-
-	/**
-	 * Add a bitset containing the numbers of the components for which vacuity should be checked.
-	 *
-	 * @param vacuityChecks
-	 *            the bitset. Bit i is set if we should check vacuity for the i-th property.
-	 */
-	public void setVacuityChecks(final BitSet vacuityChecks) {
 		mVacuityChecks = vacuityChecks;
-	}
-
-	public boolean checkVacuity(final int propertyNum) {
-		return mVacuityChecks != null && mVacuityChecks.get(propertyNum);
-	}
-
-	/**
-	 * Assign a value to the combinationNum.
-	 *
-	 * @param num
-	 */
-	public void setCombinationNum(final int num) {
 		mCombinationNum = num;
+
+		mDecls = new ArrayList<>();
+		mClockIds = new ArrayList<>();
+		mPcIds = new ArrayList<>();
+		mStateVars = new ArrayList<>();
+		mPrimedVars = new ArrayList<>();
+		mEventVars = new ArrayList<>();
+
+		// TODO: Remove this?
+		mBoogieFilePath = null;
+
+		generateBoogie(patterns);
+	}
+
+	public Unit getUnit() {
+		return mUnit;
+	}
+
+	private Unit generateBoogie(final PatternType[] patterns) {
+		mRequirements = patterns;
+		final PhaseEventAutomata[] automata = new ReqToPEA(mServices, mLogger).genPEA(patterns);
+		initBoogieLocations(automata.length);
+
+		mAutomata = automata;
+		generateGlobalVars();
+		return generateProcedures();
+	}
+
+	public List<String> getPrimedVars() {
+		return Collections.unmodifiableList(mPrimedVars);
+	}
+
+	private boolean checkVacuity(final int propertyNum) {
+		return mVacuityChecks != null && mVacuityChecks.get(propertyNum);
 	}
 
 	/**
@@ -310,7 +312,7 @@ public class Translator {
 	 *            Boogie location.
 	 * @return the CNF of a list of expressions.
 	 */
-	public static Expression genConjunction(final List<Expression> exprs, final BoogieLocation bl) {
+	private static Expression genConjunction(final List<Expression> exprs, final BoogieLocation bl) {
 		final Iterator<Expression> it = exprs.iterator();
 		if (!it.hasNext()) {
 			return new BooleanLiteral(bl, true);
@@ -331,7 +333,7 @@ public class Translator {
 	 *            Boogie location.
 	 * @return the CNF of a list of expressions.
 	 */
-	public static Expression genDisjunction(final List<Expression> exprs, final BoogieLocation bl) {
+	private static Expression genDisjunction(final List<Expression> exprs, final BoogieLocation bl) {
 		final Iterator<Expression> it = exprs.iterator();
 		if (!it.hasNext()) {
 			return new BooleanLiteral(bl, false);
@@ -352,7 +354,7 @@ public class Translator {
 	 *            location.
 	 * @return time passing statement.
 	 */
-	public static Statement genClockPlusDelta(final String clockId, final BoogieLocation bl) {
+	private static Statement genClockPlusDelta(final String clockId, final BoogieLocation bl) {
 		final VariableLHS clockVar = new VariableLHS(bl, clockId);
 
 		final IdentifierExpression clockID = new IdentifierExpression(bl, clockId);
@@ -381,7 +383,7 @@ public class Translator {
 	 * @param bl
 	 * @return
 	 */
-	public Statement[] genDelay(final BoogieLocation bl) {
+	private Statement[] genDelay(final BoogieLocation bl) {
 
 		final List<VariableLHS> havocIds = new ArrayList<>();
 		for (int i = 0; i < mPrimedVars.size(); i++) {
@@ -421,7 +423,8 @@ public class Translator {
 	 * @param bl
 	 * @return
 	 */
-	public static Expression genComparePhaseCounter(final int phaseIndex, final int autIndex, final BoogieLocation bl) {
+	private static Expression genComparePhaseCounter(final int phaseIndex, final int autIndex,
+			final BoogieLocation bl) {
 		final IdentifierExpression identifier = new IdentifierExpression(bl, "pc" + autIndex);
 		final IntegerLiteral intLiteral = new IntegerLiteral(bl, Integer.toString(phaseIndex));
 		final BinaryExpression ifCon =
@@ -437,10 +440,10 @@ public class Translator {
 	 * @param bl
 	 * @return the array of (two) statements that check the invariant.
 	 */
-	public Statement[] genCheckPhaseInvariant(final Phase phase, final BoogieLocation bl) {
-		Expression expr = new CDDTranslator().CDD_To_Boogie(phase.getClockInvariant(), getBoogieFilePath(), bl);
+	private Statement[] genCheckPhaseInvariant(final Phase phase, final BoogieLocation bl) {
+		Expression expr = new CDDTranslator().CDD_To_Boogie(phase.getClockInvariant(), mBoogieFilePath, bl);
 		final AssumeStatement assumeClInv = new AssumeStatement(bl, expr);
-		expr = new CDDTranslator().CDD_To_Boogie(phase.getStateInvariant(), getBoogieFilePath(), bl);
+		expr = new CDDTranslator().CDD_To_Boogie(phase.getStateInvariant(), mBoogieFilePath, bl);
 		final AssumeStatement assumeStateInv = new AssumeStatement(bl, expr);
 		final Statement[] statements = new Statement[2];
 		statements[0] = assumeClInv;
@@ -448,7 +451,7 @@ public class Translator {
 		return statements;
 	}
 
-	public static Statement joinIfSmts(final Statement[] statements, final BoogieLocation bl) {
+	private static Statement joinIfSmts(final Statement[] statements, final BoogieLocation bl) {
 
 		final List<Statement> smtList = new ArrayList<>();
 		for (int i = 0; i < statements.length; i++) {
@@ -469,7 +472,7 @@ public class Translator {
 		return smtList.get(smtList.size() - 1);
 	}
 
-	public static Statement joinInnerIfSmts(final Statement[] statements, final BoogieLocation bl) {
+	private static Statement joinInnerIfSmts(final Statement[] statements, final BoogieLocation bl) {
 
 		final List<Statement> smtList = new ArrayList<>();
 		for (int i = 0; i < statements.length; i++) {
@@ -504,7 +507,7 @@ public class Translator {
 	 *            The location information to correspond the generated source to the property.
 	 * @return The if statement checking the p
 	 */
-	public Statement genCheckInvariants(final PhaseEventAutomata automaton, final int autIndex,
+	private Statement genCheckInvariants(final PhaseEventAutomata automaton, final int autIndex,
 			final BoogieLocation bl) {
 
 		final Phase[] phases = automaton.getPhases();
@@ -520,7 +523,7 @@ public class Translator {
 		return statement;
 	}
 
-	public static Statement genReset(final String resetVar, final BoogieLocation bl) {
+	private static Statement genReset(final String resetVar, final BoogieLocation bl) {
 		final VariableLHS reset = new VariableLHS(bl, resetVar);
 
 		final RealLiteral realLiteral = new RealLiteral(bl, Double.toString(0.0));
@@ -533,7 +536,7 @@ public class Translator {
 		return assignment;
 	}
 
-	public static Statement genPCAssign(final int autIndex, final int phaseIndex, final BoogieLocation bl) {
+	private static Statement genPCAssign(final int autIndex, final int phaseIndex, final BoogieLocation bl) {
 		final VariableLHS pc = new VariableLHS(bl, "pc" + autIndex);
 
 		final IntegerLiteral intLiteral = new IntegerLiteral(bl, Integer.toString(phaseIndex));
@@ -546,11 +549,11 @@ public class Translator {
 		return assignment;
 	}
 
-	public Statement[] genInnerIfBody(final PhaseEventAutomata automaton, final Transition transition,
+	private Statement[] genInnerIfBody(final PhaseEventAutomata automaton, final Transition transition,
 			final int autIndex, final BoogieLocation bl) {
 
 		final List<Statement> smtList = new ArrayList<>();
-		final Expression expr = new CDDTranslator().CDD_To_Boogie(transition.getGuard(), getBoogieFilePath(), bl);
+		final Expression expr = new CDDTranslator().CDD_To_Boogie(transition.getGuard(), mBoogieFilePath, bl);
 		final AssumeStatement assumeGuard = new AssumeStatement(bl, expr);
 		smtList.add(assumeGuard);
 		if (transition.getResets().length != 0) {
@@ -573,7 +576,7 @@ public class Translator {
 		return statements;
 	}
 
-	public Statement genOuterIfBody(final PhaseEventAutomata automaton, final Phase phase, final int autIndex,
+	private Statement genOuterIfBody(final PhaseEventAutomata automaton, final Phase phase, final int autIndex,
 			final BoogieLocation bl) {
 
 		final Statement[] statements = new Statement[phase.getTransitions().size()];
@@ -590,7 +593,7 @@ public class Translator {
 		return statement;
 	}
 
-	public Statement genOuterIfTransition(final PhaseEventAutomata automaton, final int autIndex,
+	private Statement genOuterIfTransition(final PhaseEventAutomata automaton, final int autIndex,
 			final BoogieLocation bl) {
 
 		final Phase[] phases = automaton.getPhases();
@@ -608,7 +611,7 @@ public class Translator {
 		return statement;
 	}
 
-	public List<Statement> genStateVarsAssign(final BoogieLocation bl) {
+	private List<Statement> genStateVarsAssign(final BoogieLocation bl) {
 		final List<Statement> statements = new ArrayList<>();
 		for (int i = 0; i < mStateVars.size(); i++) {
 			final VariableLHS lhsVar = new VariableLHS(bl, mStateVars.get(i));
@@ -623,23 +626,32 @@ public class Translator {
 		return statements;
 	}
 
-	public Statement genAssertRTInconsistency(final int[] permutation, final BoogieLocation bl) {
+	private Statement genAssertRTInconsistency(final int[] permutation, final BoogieLocation bl) {
 		final ConditionGenerator conGen = new ConditionGenerator();
 		conGen.setTranslator(this);
-		final Expression expr = conGen.nonDLCGenerator(mAutomata, permutation, getBoogieFilePath(), bl);
+		final Expression expr = conGen.nonDLCGenerator(mAutomata, permutation, mBoogieFilePath, bl);
 		if (expr == null) {
 			return null;
 		}
-		final ReqCheck check = new ReqCheck(ReqCheck.ReqSpec.RTINCONSISTENT, permutation, this);
+
+		final ReqCheck check = createReqCheck(ReqSpec.RTINCONSISTENT, permutation);
 		final ReqLocation loc = new ReqLocation(check);
 		final AssertStatement assertSmt = new AssertStatement(loc, expr);
 		return assertSmt;
 	}
 
 	private Statement genAssertConsistency(final BoogieLocation bl) {
-		final ReqCheck check = new ReqCheck(ReqCheck.ReqSpec.CONSISTENCY, new int[] { 0 }, this);
+		final ReqCheck check = createReqCheck(ReqSpec.CONSISTENCY, 0);
 		final ReqLocation loc = new ReqLocation(check);
 		return new AssertStatement(loc, new BooleanLiteral(bl, false));
+	}
+
+	private ReqCheck createReqCheck(final ReqCheck.ReqSpec reqSpec, final int... idx) {
+		final PatternType[] reqs = new PatternType[idx.length];
+		for (int i = 0; i < idx.length; ++i) {
+			reqs[i] = mRequirements[idx[i]];
+		}
+		return new ReqCheck(reqSpec, idx, reqs, mInputFilePath);
 	}
 
 	/**
@@ -688,7 +700,7 @@ public class Translator {
 			return null;
 		}
 		final Expression disjunction = genDisjunction(checkReached, bl);
-		final ReqCheck check = new ReqCheck(ReqCheck.ReqSpec.VACUOUS, new int[] { automatonIndex }, this);
+		final ReqCheck check = createReqCheck(ReqSpec.VACUOUS, automatonIndex);
 		final ReqLocation loc = new ReqLocation(check);
 		return new AssertStatement(loc, disjunction);
 	}
@@ -707,7 +719,7 @@ public class Translator {
 	 *            Location of the procedure body.
 	 * @return Statements of the while-body.
 	 */
-	public Statement[] genWhileBody(final BoogieLocation bl) {
+	private Statement[] genWhileBody(final BoogieLocation bl) {
 		final List<Statement> stmtList = new ArrayList<>();
 		stmtList.addAll(Arrays.asList(genDelay(bl)));
 
@@ -757,7 +769,7 @@ public class Translator {
 	 *            Location of the procedure body.
 	 * @return The while-statement.
 	 */
-	public Statement genWhileSmt(final BoogieLocation bl) {
+	private Statement genWhileSmt(final BoogieLocation bl) {
 		final WildcardExpression wce = new WildcardExpression(bl);
 		final LoopInvariantSpecification[] invariants = new LoopInvariantSpecification[0];
 		final WhileStatement whileStatement = new WhileStatement(bl, wce, invariants, genWhileBody(bl));
@@ -911,7 +923,7 @@ public class Translator {
 		return mUnit;
 	}
 
-	public void initBoogieLocations(final int count) {
+	private void initBoogieLocations(final int count) {
 		if (mInputFilePath == null) {
 			mInputFilePath = mBoogieFilePath;
 		}
@@ -922,24 +934,4 @@ public class Translator {
 		}
 	}
 
-	public PatternType getRequirement(final int idx) {
-		return mRequirements[idx];
-	}
-
-	public Unit generateBoogie(final PatternType[] patterns) {
-		mRequirements = patterns;
-		return generateBoogie(new ReqToPEA(mServices, mLogger).genPEA(patterns));
-	}
-
-	public Unit generateBoogie(final PhaseEventAutomata[] automata) {
-		initBoogieLocations(automata.length);
-
-		mAutomata = automata;
-		generateGlobalVars();
-		return generateProcedures();
-	}
-
-	public List<String> getPrimedVars() {
-		return Collections.unmodifiableList(mPrimedVars);
-	}
 }

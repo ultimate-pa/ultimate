@@ -108,6 +108,10 @@ public class PatternType {
 
 	@Override
 	public String toString() {
+		assert mScope != null || this instanceof InitializationPattern;
+		if (mScope == null) {
+			return getClass().toString();
+		}
 		return mScope.toString() + this.getClass().toString();
 	}
 

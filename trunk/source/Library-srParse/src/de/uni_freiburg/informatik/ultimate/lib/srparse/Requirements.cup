@@ -172,11 +172,11 @@ property ::= propid?:id scope:s COMMA? pattern:p DOT?
             | error
                {: RESULT = null; :}
           	| INPUT cid:i IS ID:t
-		  	   {: RESULT = new InitializationPattern(i,t,InitializationPattern.VarAccess.in); :}
+		  	   {: RESULT = new InitializationPattern(i,t,InitializationPattern.VarAccess.IN); :}
 		  	| OUTPUT cid:i IS ID:t
-		  	   {: RESULT = new InitializationPattern(i,t,InitializationPattern.VarAccess.out); :}
+		  	   {: RESULT = new InitializationPattern(i,t,InitializationPattern.VarAccess.OUT); :}
 		 	| INTERNAL cid:i IS ID:t
-		  	   {: RESULT = new InitializationPattern(i,t,InitializationPattern.VarAccess.hidden); :}
+		  	   {: RESULT = new InitializationPattern(i,t,InitializationPattern.VarAccess.HIDDEN); :}
            ;
 
 propid ::= ID:id IDSEP

@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.req2pea.ReqToPEA;
-import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.Translator;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.Req2BoogieTranslator;
 
 public class PeaToBoogie implements ISource {
 	private ILogger mLogger;
@@ -85,7 +85,6 @@ public class PeaToBoogie implements ISource {
 	}
 
 	private IElement parseAST(final File file) throws Exception {
-		final Translator translator = new Translator(mServices, mLogger);
 		final String inputPath = file.getAbsolutePath();
 		mFileNames = new ArrayList<>();
 		mFileNames.add(inputPath);
@@ -104,10 +103,9 @@ public class PeaToBoogie implements ISource {
 
 		// TODO preference
 		final int combinationNum = Math.min(patterns.length, 2);
-		translator.setVacuityChecks(vacuityChecks);
-		translator.setCombinationNum(combinationNum);
-		translator.setInputFilePath(inputPath);
-		return translator.generateBoogie(patterns);
+		final Req2BoogieTranslator translator =
+				new Req2BoogieTranslator(mServices, mLogger, vacuityChecks, inputPath, combinationNum, patterns);
+		return translator.getUnit();
 	}
 
 	@Override

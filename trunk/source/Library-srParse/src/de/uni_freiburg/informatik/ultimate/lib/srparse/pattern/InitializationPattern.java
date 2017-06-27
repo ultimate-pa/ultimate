@@ -1,46 +1,48 @@
 package de.uni_freiburg.informatik.ultimate.lib.srparse.pattern;
 
-import java.util.Vector;
+import java.util.Collections;
 
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 
+/**
+ *
+ * @author Vincent Langenfeld (langenfv@informatik.uni-freiburg.de)
+ *
+ */
 public class InitializationPattern extends PatternType {
 
 	public enum VarAccess {
-		in, out, hidden
+		IN, OUT, HIDDEN
 	}
 
-	private final String type;
-	private final VarAccess visibility;
-	private final String ident;
+	private final String mType;
+	private final VarAccess mVisibility;
+	private final String mIdent;
 
 	public InitializationPattern(final String ident, final String type, final VarAccess visibility) {
-		this.ident = ident;
-		this.type = type;
-		this.visibility = visibility;
+		this(ident, type, visibility, null);
 	}
 
 	public InitializationPattern(final String ident, final String type, final VarAccess visibility,
 			final CDD initially) {
-		this.ident = ident;
-		this.type = type;
-		this.visibility = visibility;
+		mIdent = ident;
+		mType = type;
+		mVisibility = visibility;
 
-		final Vector<CDD> aux = new Vector<CDD>();
-		aux.add(initially);
-		mergeCDDs(aux);
+		if (initially != null) {
+			mergeCDDs(Collections.singletonList(initially));
+		}
 	}
 
 	public VarAccess getAccessability() {
-		return visibility;
+		return mVisibility;
 	}
 
 	public String getIdent() {
-		return ident;
+		return mIdent;
 	}
 
 	public String getType() {
-		return type;
+		return mType;
 	}
-
 }
