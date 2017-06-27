@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2017 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * Copyright (C) 2017 Christian Schilling (schillic@informatik.uni-freiburg.de)
  * Copyright (C) 2017 University of Freiburg
  * 
  * This file is part of the ULTIMATE ModelCheckerUtils Library.
@@ -24,20 +25,18 @@
  * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
+package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorabstraction;
 
 import de.uni_freiburg.informatik.ultimate.util.statistics.AStatisticsType;
 
-public class ErrorLocalizationStatisticsType extends AStatisticsType<ErrorLocalizationStatisticsDefinitions> {
-	
-	public ErrorLocalizationStatisticsType() {
-		super(ErrorLocalizationStatisticsDefinitions.class);
+public class ErrorAutomatonStatisticsType extends AStatisticsType<ErrorAutomatonStatisticsDefinitions> {
+	public ErrorAutomatonStatisticsType() {
+		super(ErrorAutomatonStatisticsDefinitions.class);
 	}
 
-	private static ErrorLocalizationStatisticsType s_Instance = new ErrorLocalizationStatisticsType();
+	private static ErrorAutomatonStatisticsType s_Instance = new ErrorAutomatonStatisticsType();
 	
-	public static ErrorLocalizationStatisticsType getInstance() {
+	public static ErrorAutomatonStatisticsType getInstance() {
 		return s_Instance;
 	}
-	
 }

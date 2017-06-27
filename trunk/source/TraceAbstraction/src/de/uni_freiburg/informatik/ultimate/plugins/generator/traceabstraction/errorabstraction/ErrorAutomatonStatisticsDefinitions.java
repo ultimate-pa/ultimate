@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2017 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * Copyright (C) 2017 Christian Schilling (schillic@informatik.uni-freiburg.de)
  * Copyright (C) 2017 University of Freiburg
  *
  * This file is part of the ULTIMATE TraceAbstraction plug-in.
@@ -24,40 +25,28 @@
  * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
+package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorabstraction;
 
 import java.util.Objects;
 import java.util.function.Function;
 
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
 import de.uni_freiburg.informatik.ultimate.util.statistics.AStatisticsType;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsElement;
-import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 
-public enum ErrorLocalizationStatisticsDefinitions implements IStatisticsElement {
-
-	SuccesfullyFinished(Result.class, AStatisticsType.sIntegerAddition, AStatisticsType.sDataBeforeKey),
-
-	ErrorLocalizationTime(Long.class, AStatisticsType.sLongAddition, AStatisticsType.sTimeBeforeKey),
-
-	IcfgEdges(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sDataBeforeKey),
-
-	ErrorEnforcingIcfgEdges(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sDataBeforeKey),
-	
-	ErrorAdmittingIcfgEdges(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sDataBeforeKey),
-	
-	ErrorIrrelevantIcfgEdges(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sDataBeforeKey),
-
-	HoareTripleCheckerStatistics(StatisticsData.class, AStatisticsType.sStatisticsDataAggregation,
-			AStatisticsType.sKeyBeforeData),
-	;
+public enum ErrorAutomatonStatisticsDefinitions implements IStatisticsElement {
+	TotalNumber(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
+	TraceLengthAvg(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
+	ErrorAutomatonConstructionTimeAvg(Long.class, AStatisticsType.sLongAddition, AStatisticsType.sTimeBeforeKey),
+	ErrorAutomatonConstructionTimeTotal(Long.class, AStatisticsType.sLongAddition, AStatisticsType.sTimeBeforeKey),
+	ErrorAutomatonDifferenceTimeAvg(Long.class, AStatisticsType.sLongAddition, AStatisticsType.sTimeBeforeKey),
+	ErrorAutomatonDifferenceTimeTotal(Long.class, AStatisticsType.sLongAddition, AStatisticsType.sTimeBeforeKey),
+	AcceptsSingleTrace(Boolean.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData);
 
 	private final Class<?> mClazz;
 	private final Function<Object, Function<Object, Object>> mAggr;
 	private final Function<String, Function<Object, String>> mPrettyprinter;
 
-
-	ErrorLocalizationStatisticsDefinitions(final Class<?> clazz, final Function<Object, Function<Object, Object>> aggr,
+	ErrorAutomatonStatisticsDefinitions(final Class<?> clazz, final Function<Object, Function<Object, Object>> aggr,
 			final Function<String, Function<Object, String>> prettyprinter) {
 		mClazz = Objects.requireNonNull(clazz);
 		mAggr = Objects.requireNonNull(aggr);
@@ -78,5 +67,4 @@ public enum ErrorLocalizationStatisticsDefinitions implements IStatisticsElement
 	public Class<?> getDataType() {
 		return mClazz;
 	}
-
 }
