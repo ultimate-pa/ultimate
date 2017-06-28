@@ -37,7 +37,6 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.pea.modelchecking.J2UPPAALConverter;
 import de.uni_freiburg.informatik.ultimate.lib.pea.reqcheck.PatternToPEA;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.ReqParser;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 
 public class ReqToPEA {
@@ -56,7 +55,7 @@ public class ReqToPEA {
 		return patterns;
 	}
 
-	public PhaseEventAutomata[] genPEA(final PatternType[] patterns) {
+	public PhaseEventAutomata[] genPEA(final List<PatternType> patterns) {
 		final List<PhaseEventAutomata> peaList = new ArrayList<>();
 
 		final PatternToPEA peaTrans = new PatternToPEA(mLogger);
@@ -64,10 +63,6 @@ public class ReqToPEA {
 			// ignore patterns with syntax errors
 			if (pat == null) {
 				mLogger.warn("Ignoring pattern with syntax error");
-				continue;
-			}
-
-			if (pat instanceof InitializationPattern) {
 				continue;
 			}
 

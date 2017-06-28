@@ -132,7 +132,7 @@ public class Req2BoogieTranslator {
 	/**
 	 * The array of input requirements.
 	 */
-	private PatternType[] mRequirements;
+	private final List<PatternType> mRequirements;
 
 	/**
 	 * The properties for which we check for vacuity.
@@ -151,6 +151,8 @@ public class Req2BoogieTranslator {
 
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
+
+	private final List<InitializationPattern> mInit;
 
 	/**
 	 *
@@ -181,7 +183,10 @@ public class Req2BoogieTranslator {
 
 		// TODO: Remove this?
 		mBoogieFilePath = null;
-
+		mInit = Arrays.stream(patterns).filter(a -> a instanceof InitializationPattern)
+				.map(a -> (InitializationPattern) a).collect(Collectors.toList());
+		mRequirements =
+				Arrays.stream(patterns).filter(a -> !(a instanceof InitializationPattern)).collect(Collectors.toList());
 		generateBoogie(patterns);
 	}
 
@@ -190,8 +195,7 @@ public class Req2BoogieTranslator {
 	}
 
 	private Unit generateBoogie(final PatternType[] patterns) {
-		mRequirements = patterns;
-		final PhaseEventAutomata[] automata = new ReqToPEA(mServices, mLogger).genPEA(patterns);
+		final PhaseEventAutomata[] automata = new ReqToPEA(mServices, mLogger).genPEA(mRequirements);
 
 		// TODO: initBoogieLocations is completely broken. Rewrite.
 		initBoogieLocations(automata.length);
@@ -217,8 +221,7 @@ public class Req2BoogieTranslator {
 	private List<Declaration> generateGlobalVarsFromInitPattern() {
 		final ILocation loc = null;
 
-		return Arrays.stream(mRequirements).filter(a -> a instanceof InitializationPattern)
-				.map(a -> (InitializationPattern) a)
+		return mInit.stream()
 				.map(a -> new VarList(loc, new String[] { a.getIdent() }, toPrimitiveType(a.getType()).toASTType(loc)))
 				.map(a -> new VariableDeclaration(loc, EMPTY_ATTRIBUTES, new VarList[] { a }))
 				.collect(Collectors.toList());
@@ -652,7 +655,7 @@ public class Req2BoogieTranslator {
 	private ReqCheck createReqCheck(final ReqCheck.ReqSpec reqSpec, final int... idx) {
 		final PatternType[] reqs = new PatternType[idx.length];
 		for (int i = 0; i < idx.length; ++i) {
-			reqs[i] = mRequirements[idx[i]];
+			reqs[i] = mRequirements.get(idx[i]);
 		}
 		return new ReqCheck(reqSpec, idx, reqs, mInputFilePath);
 	}
