@@ -73,6 +73,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 import de.uni_freiburg.informatik.ultimate.util.ConstructionCache;
 import de.uni_freiburg.informatik.ultimate.util.ConstructionCache.IValueConstruction;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Constructs a danger automaton for a given error trace.
@@ -165,15 +166,15 @@ class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements IErro
 			final PredicateFactoryForInterpolantAutomata predicateFactoryForAutomaton,
 			final INestedWordAutomaton<LETTER, IPredicate> abstraction, final NestedWord<LETTER> trace) {
 		final HashRelation<IPredicate, IPredicate> abstState2dangStates = new HashRelation<>();
-		final IValueConstruction<Set<IPredicate>, IPredicate> valueConstruction =
-				new IValueConstruction<Set<IPredicate>, IPredicate>() {
+		final IValueConstruction<Pair<IPredicate,Set<IPredicate>>, IPredicate> valueConstruction =
+				new IValueConstruction<Pair<IPredicate,Set<IPredicate>>, IPredicate>() {
 
 					@Override
-					public IPredicate constructValue(final Set<IPredicate> key) {
-						return predicateFactory.or(false, key);
+					public IPredicate constructValue(final Pair<IPredicate,Set<IPredicate>> key) {
+						return predicateFactory.or(false, key.getSecond());
 					}
 				};
-		final ConstructionCache<Set<IPredicate>, IPredicate> disjunctionProvider =
+		final ConstructionCache<Pair<IPredicate,Set<IPredicate>>, IPredicate> disjunctionProvider =
 				new ConstructionCache<>(valueConstruction);
 		final Deque<IPredicate> worklist = new ArrayDeque<>();
 
@@ -184,8 +185,8 @@ class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements IErro
 				new NestedWordAutomaton<>(services, new VpAlphabet<>(abstraction), predicateFactoryForAutomaton);
 
 		final IPredicate trueState = predicateUnifier.getTruePredicate();
-		result.addState(false, true, trueState);
 		for (final IPredicate state : abstraction.getFinalStates()) {
+			result.addState(false, true, disjunctionProvider.getOrConstruct(new Pair<>(state,Collections.singleton(trueState))));
 			abstState2dangStates.addPair(state, trueState);
 			worklist.add(state);
 		}
@@ -207,8 +208,8 @@ class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements IErro
 						// successor state does not (yet?) have corresponding predicate
 						continue;
 					}
-					final IPredicate succInDanger = disjunctionProvider.getOrConstruct(succDisjunctionInDanger);
-					final Term wp = pt.weakestPrecondition(succInDanger, out.getLetter().getTransformula());
+					final IPredicate succInDanger = disjunctionProvider.getOrConstruct(new Pair<>(pred,succDisjunctionInDanger));
+					final Term wp = pt.weakestPrecondition(predicateFactory.not(succInDanger), out.getLetter().getTransformula());
 					final Term pre = SmtUtils.not(csToolkit.getManagedScript().getScript(), wp);
 					statesThatHaveSuccTerms.add(pre);
 				}
@@ -222,14 +223,15 @@ class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements IErro
 					}
 				}
 				if (coveredPredicates.isEmpty()) {
-					// no need to continue, a state labeled with false will not
-					// help us
+					continue;
+					// no need to proceed in this iteration, a state labeled 
+					// with false will not help us
 				}
 				IPredicate newState;
 				final Set<IPredicate> oldAbstraction = abstState2dangStates.getImage(pred);
 				if (coveredPredicates.equals(oldAbstraction)) {
 					// do nothing
-					final IPredicate oldstate = disjunctionProvider.getOrConstruct(oldAbstraction);
+					final IPredicate oldstate = disjunctionProvider.getOrConstruct(new Pair<>(pred,oldAbstraction));
 					newState = oldstate;
 				} else {
 					// predicate changed we have to "backtrack" (want to try
@@ -238,17 +240,20 @@ class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements IErro
 						worklist.add(pred);
 					}
 
-					newState = disjunctionProvider.getOrConstruct(coveredPredicates);
+					newState = disjunctionProvider.getOrConstruct(new Pair<>(pred,coveredPredicates));
 					final boolean isInitial = abstraction.isInitial(pred);
 					final boolean isFinal = abstraction.isFinal(pred);
 					result.addState(isInitial, isFinal, newState);
 					if (!oldAbstraction.isEmpty()) {
-						final IPredicate oldstate = disjunctionProvider.getOrConstruct(oldAbstraction);
+						final IPredicate oldstate = disjunctionProvider.getOrConstruct(new Pair<>(pred,oldAbstraction));
 						// there was already a state, we have to copy all its
 						// incoming
 						// transitions and remove it
 						copyAllIncomingTransitions(oldstate, newState, result);
 						result.removeState(oldstate);
+					}
+					for (final IPredicate p : coveredPredicates) {
+						abstState2dangStates.addPair(pred, p);
 					}
 				}
 				// add outgoing transitions to all successors that finally
@@ -262,14 +267,14 @@ class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements IErro
 						// successor state does not (yet?) have corresponding predicate
 						continue;
 					}
-					final IPredicate succInDanger = disjunctionProvider.getOrConstruct(succDisjunctionInDanger);
+					final IPredicate succInDanger = disjunctionProvider.getOrConstruct(new Pair<>(pred,succDisjunctionInDanger));
 					assert result.getStates().contains(succInDanger);
-					final Term wp = pt.weakestPrecondition(succInDanger, out.getLetter().getTransformula());
+					final Term wp = pt.weakestPrecondition(predicateFactory.not(succInDanger), out.getLetter().getTransformula());
 					final Term pre = SmtUtils.not(csToolkit.getManagedScript().getScript(), wp);
 					final Term conjunction = SmtUtils.and(csToolkit.getManagedScript().getScript(),
 							Arrays.asList(new Term[] { pre, newState.getFormula() }));
 					final LBool lBool = SmtUtils.checkSatTerm(csToolkit.getManagedScript().getScript(), conjunction);
-					if (lBool != lBool.UNSAT) {
+					if (lBool != LBool.UNSAT) {
 						// edge probably (result might be unknown) contributed
 						// we add it
 						result.addInternalTransition(newState, out.getLetter(), succInDanger);
