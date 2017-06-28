@@ -60,11 +60,14 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Tra
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermClassifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
- * A basic IcfgTransformer that applies the {@link ExampleLoopAccelerationTransformulaTransformer}, i.e., replaces all
- * transformulas of an {@link IIcfg} with a new instance. + First tries for loop acceleration.
+ * A basic IcfgTransformer that applies the
+ * {@link ExampleLoopAccelerationTransformulaTransformer}, i.e., replaces all
+ * transformulas of an {@link IIcfg} with a new instance. + First tries for loop
+ * acceleration.
  *
  * @param <INLOC>
  *            The type of the locations of the old IIcfg.
@@ -85,6 +88,12 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 	private final IUltimateServiceProvider mServices;
 	private final IIcfgSymbolTable mOldSymbolTable;
 	private final Map<IcfgLocation, Loop> mLoopMapping;
+
+	private enum mDealingWithArraysTypes {
+		EXCEPTION, SKIP_LOOP;
+	}
+
+	private final mDealingWithArraysTypes mDealingWithArrays;
 
 	/**
 	 * Construct a new Loop Acceleration Icfg Transformer.
@@ -111,6 +120,9 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 		mOldSymbolTable = originalIcfg.getCfgSmtToolkit().getSymbolTable();
 		mLoopMapping = new HashMap<>();
 
+		// How to deal with Arrays in the loop:
+		mDealingWithArrays = mDealingWithArraysTypes.SKIP_LOOP;
+
 		mLoopBodies = mLoopDetector.getLoopBodies();
 
 		mResult = transform(originalIcfg, funLocFac, backtranslationTracker, outLocationClass, newIcfgIdentifier,
@@ -123,6 +135,20 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 
 		transformer.preprocessIcfg(originalIcfg);
 		for (final Loop loop : mLoopBodies) {
+
+			final TermClassifier classifier = new TermClassifier();
+			classifier.checkTerm(loop.getFormula().getFormula());
+
+			if (classifier.hasArrays() && mDealingWithArrays.equals(mDealingWithArraysTypes.EXCEPTION)) {
+				mLogger.debug("LOOP HAS ARRAYS");
+				throw new IllegalArgumentException("Cannot deal with Arrays");
+			}
+
+			if (classifier.hasArrays() && mDealingWithArrays.equals(mDealingWithArraysTypes.SKIP_LOOP)) {
+				mLogger.debug("LOOP HAS ARRAYS");
+				continue;
+			}
+
 			final List<TermVariable> pathCounter = new ArrayList<>();
 
 			for (final Backbone backbone : loop.getBackbones()) {
@@ -136,11 +162,11 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 				final SymbolicMemory symbolicMemory = new SymbolicMemory(mScript, mLogger, tf, mOldSymbolTable);
 				symbolicMemory.updateVars(update.getUpdatedVars());
 
-				final Term condition =
-						symbolicMemory.updateCondition(TransFormulaUtils.computeGuard(tf, mScript, mServices, mLogger));
+				final Term condition = symbolicMemory
+						.updateCondition(TransFormulaUtils.computeGuard(tf, mScript, mServices, mLogger));
 
-				final TermVariable backbonePathCounter =
-						mScript.constructFreshTermVariable("kappa", mScript.getScript().sort(SmtSortUtils.INT_SORT));
+				final TermVariable backbonePathCounter = mScript.constructFreshTermVariable("kappa",
+						mScript.getScript().sort(SmtSortUtils.INT_SORT));
 
 				pathCounter.add(backbonePathCounter);
 				if (mLogger.isDebugEnabled()) {
@@ -158,8 +184,8 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 			final Map<TermVariable, TermVariable> newPathCounter = new HashMap<>();
 
 			for (int i = 0; i < pathCounter.size(); i++) {
-				final TermVariable newBackbonePathCounter =
-						mScript.constructFreshTermVariable("tau", mScript.getScript().sort(SmtSortUtils.INT_SORT));
+				final TermVariable newBackbonePathCounter = mScript.constructFreshTermVariable("tau",
+						mScript.getScript().sort(SmtSortUtils.INT_SORT));
 				newPathCounter.put(pathCounter.get(i), newBackbonePathCounter);
 			}
 			loop.addVar(pathCounter);
@@ -180,10 +206,10 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 			}
 		}
 
-		final BasicIcfg<OUTLOC> resultIcfg =
-				new BasicIcfg<>(newIcfgIdentifier, originalIcfg.getCfgSmtToolkit(), outLocationClass);
-		final TransformedIcfgBuilder<INLOC, OUTLOC> lst =
-				new TransformedIcfgBuilder<>(funLocFac, backtranslationTracker, transformer, originalIcfg, resultIcfg);
+		final BasicIcfg<OUTLOC> resultIcfg = new BasicIcfg<>(newIcfgIdentifier, originalIcfg.getCfgSmtToolkit(),
+				outLocationClass);
+		final TransformedIcfgBuilder<INLOC, OUTLOC> lst = new TransformedIcfgBuilder<>(funLocFac,
+				backtranslationTracker, transformer, originalIcfg, resultIcfg);
 		processLocations(originalIcfg.getInitialNodes(), lst);
 		lst.finish();
 

@@ -133,11 +133,12 @@ public class Loop {
 
 	/**
 	 * If there is an Assertion in the Loop, add it here
-	 * @param errorLocation 
-	 * The Error {@link IcfgLocation}
+	 * 
+	 * @param errorLocation
+	 *            The Error {@link IcfgLocation}
 	 * 
 	 * @param errorPath
-	 * The Errorpath in form of a {@link Backbone}
+	 *            The Errorpath in form of a {@link Backbone}
 	 */
 	public void addErrorPath(final IcfgLocation errorLocation, final Backbone errorPath) {
 		mErrorPaths.put(errorLocation, errorPath);

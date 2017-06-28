@@ -104,7 +104,6 @@ public class LoopDetector<INLOC extends IcfgLocation> {
 			for (final INLOC loopHead : loopHeads) {
 
 				final Loop loop = new Loop(loopHead);
-
 				final Deque<IcfgEdge> path = getPath(loopHead, loop, loopHead);
 				loop.setPath(path);
 
