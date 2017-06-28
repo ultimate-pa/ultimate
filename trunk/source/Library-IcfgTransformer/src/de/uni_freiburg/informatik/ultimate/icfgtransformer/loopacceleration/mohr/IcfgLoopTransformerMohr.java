@@ -131,12 +131,12 @@ public class IcfgLoopTransformerMohr<INLOC extends IcfgLocation, OUTLOC extends 
 				}
 				final OUTLOC newTarget = mTib.createNewLocation((INLOC) edge.getTarget());
 				if (loopHeads.contains(node)) {
+					final UnmodifiableTransFormula loopSummary = loopSummaries.get(node);
 					// todo: check for overapprox
-					final UnmodifiableTransFormula utf =
-							TransFormulaUtils.sequentialComposition(mLogger, mServices, mManagedScript, false, false,
-									false, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION,
-									SimplificationTechnique.SIMPLIFY_DDA,
-									Arrays.asList(edge.getTransformula(), loopSummaries.get(node)));
+					final UnmodifiableTransFormula utf = TransFormulaUtils.sequentialComposition(mLogger, mServices,
+							mManagedScript, false, false, false,
+							XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION,
+							SimplificationTechnique.SIMPLIFY_DDA, Arrays.asList(loopSummary, edge.getTransformula()));
 					mLogger.debug(utf);
 					mTib.createNewInternalTransition(newSource, newTarget, utf, false);
 				} else {
