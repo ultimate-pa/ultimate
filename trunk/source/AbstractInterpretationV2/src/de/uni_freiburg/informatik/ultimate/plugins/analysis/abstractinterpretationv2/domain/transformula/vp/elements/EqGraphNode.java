@@ -197,11 +197,8 @@ public class EqGraphNode<NODE extends IEqNodeIdentifier<NODE, FUNCTION>,
 		mRepresentative = representative;
 		representative.addToReverseRepresentative(this);
 
-
-		//TODO check
-        // if (eqNodes are identical) then (graphnodes must be identical)
-        assert this.mRepresentative.mNodeIdentifier != this.mNodeIdentifier || this.mRepresentative == this;
-
+        assert this.mRepresentative.mNodeIdentifier != this.mNodeIdentifier || this.mRepresentative == this
+        		: "if (eqNodes are identical) then (graphnodes must be identical)";
 	}
 
 	public Set<EqGraphNode<NODE, FUNCTION>> getReverseRepresentative() {

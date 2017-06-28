@@ -358,10 +358,7 @@ public class CongruenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		assert !reverseRepresentativeBeforeHavoc.stream().anyMatch(rr -> rr.getRepresentative() != rr);
 		assert graphNodeForNodeToBeHavocced.getReverseRepresentative().isEmpty() 
 			|| graphNodeForNodeToBeHavocced.getReverseRepresentative().size() == 1;
-		assert graphNodeForNodeToBeHavocced.getReverseRepresentative().isEmpty() 
-			|| (graphNodeForNodeToBeHavocced.getReverseRepresentative().size() == 1 
-				&& graphNodeForNodeToBeHavocced.getRepresentative() == graphNodeForNodeToBeHavocced);
-		
+
 		/*
 		 * we have to reconnect nodes that were connected through an equality chain that contained the nodeToBeHavocced
 		 */
@@ -369,16 +366,22 @@ public class CongruenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 			if (reverseNode == graphNodeForNodeToBeHavocced) {
 				continue;
 			}
-			// case y -> x <- z
 			if (havocNodeWasItsRepresentativeBeforeHavoc) {
 				if (reverseRepresentativeBeforeHavoc.size() > 1) {
+					// case y -> x <- z
 					assert firstReverseRepresentativeNode != null;
 //					merge(reverseNode.getNode(), firstRepresentative.getNode());// BUG!!
-					merge(reverseNode.getNode(), firstReverseRepresentativeNode.getNode());
-					
+//					merge(reverseNode.getNode(), firstReverseRepresentativeNode.getNode());
+					if (reverseNode != firstReverseRepresentativeNode) {
+						union(reverseNode, firstReverseRepresentativeNode);
+					}
 				}
-			} else { // case y -> x -> z
-				merge(reverseNode.getNode(), firstRepresentative.getNode());
+			} else {
+				// case y -> x -> z
+//				merge(reverseNode.getNode(), firstRepresentative.getNode());
+				if (reverseNode != firstRepresentative) {
+					union(reverseNode, firstRepresentative);
+				}
 			}
 		}
 		assert VPDomainHelpers.representativePointersAreConsistent(mNodeToEqGraphNode.values());
