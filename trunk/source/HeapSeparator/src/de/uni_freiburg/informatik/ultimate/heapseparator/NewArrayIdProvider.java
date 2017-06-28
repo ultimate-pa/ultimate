@@ -34,7 +34,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -47,9 +46,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.IntraproceduralReplacementVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ProgramVarUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNode;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
 public class NewArrayIdProvider {
@@ -219,39 +218,43 @@ class PartitionInformation {
 				BoogieNonOldVar bnovOld = (BoogieNonOldVar) arrayId;
 
 				final String newId = bnovOld.getIdentifier() + "_part_" + getFreshVersionIndex();
-				final TermVariable newTv = mManagedScript.constructFreshCopy(bnovOld.getTermVariable());
-				final TermVariable newTvOld = mManagedScript.constructFreshCopy(bnovOld.getOldVar().getTermVariable());
+//				final TermVariable newTv = mManagedScript.constructFreshCopy(bnovOld.getTermVariable());
+//				final TermVariable newTvOld = mManagedScript.constructFreshCopy(bnovOld.getOldVar().getTermVariable());
+//
+//				String constString = newId + "_const";
+//				mManagedScript.getScript().declareFun(constString, new Sort[0], newTv.getSort());
+//				final ApplicationTerm newConst = (ApplicationTerm) mManagedScript.term(this, constString);
+//				mManagedScript.getScript().declareFun(constString + "_old", new Sort[0], newTv.getSort());
+//				final ApplicationTerm newConstOld = (ApplicationTerm) mManagedScript.term(this, constString + "_old");
+//
+//				String constPrimedString = newId + "_const_primed";
+//				mManagedScript.getScript().declareFun(constPrimedString, new Sort[0], newTv.getSort());
+//				final ApplicationTerm newPrimedConst = (ApplicationTerm) mManagedScript.term(this, constPrimedString);
+//				mManagedScript.getScript().declareFun(constPrimedString + "_old", new Sort[0], newTv.getSort());
+//				final ApplicationTerm newPrimedConstOld = (ApplicationTerm) mManagedScript.term(this, constPrimedString + "_old");
 
-				String constString = newId + "_const";
-				mManagedScript.getScript().declareFun(constString, new Sort[0], newTv.getSort());
-				final ApplicationTerm newConst = (ApplicationTerm) mManagedScript.term(this, constString);
-				mManagedScript.getScript().declareFun(constString + "_old", new Sort[0], newTv.getSort());
-				final ApplicationTerm newConstOld = (ApplicationTerm) mManagedScript.term(this, constString + "_old");
-
-				String constPrimedString = newId + "_const_primed";
-				mManagedScript.getScript().declareFun(constPrimedString, new Sort[0], newTv.getSort());
-				final ApplicationTerm newPrimedConst = (ApplicationTerm) mManagedScript.term(this, constPrimedString);
-				mManagedScript.getScript().declareFun(constPrimedString + "_old", new Sort[0], newTv.getSort());
-				final ApplicationTerm newPrimedConstOld = (ApplicationTerm) mManagedScript.term(this, constPrimedString + "_old");
-
-				final BoogieOldVar bovNew = new BoogieOldVar(newId + "_old", 
-						null, 
-						newTvOld, 
-						newConstOld, 
-						newPrimedConstOld);
+//				final BoogieOldVar bovNew = new BoogieOldVar(newId + "_old", 
+//						null, 
+//						newTvOld, 
+//						newConstOld, 
+//						newPrimedConstOld);
+//				
+//				BoogieNonOldVar bnovNew = new BoogieNonOldVar(
+//							newId, 
+//							null, 
+//							newTv, 
+//							newConst, 
+//							newPrimedConst,
+//							bovNew);
 				
-				BoogieNonOldVar bnovNew = new BoogieNonOldVar(
-							newId, 
-							null, 
-							newTv, 
-							newConst, 
-							newPrimedConst,
-							bovNew);
+				final BoogieNonOldVar bnovNew = 
+						ProgramVarUtils.constructGlobalProgramVarPair(newId, bnovOld.getSort(), mManagedScript, this);
 				
 //				if (arrayId instanceof BoogieNonOldVar) {
 				freshVar = bnovNew;
 				mNewSymbolTable.add(freshVar);
-				partitionVectorToOldArrayIdToNewArrayId.put(partitionVector, ((BoogieNonOldVar) arrayId).getOldVar(), bovNew);
+				partitionVectorToOldArrayIdToNewArrayId.put(partitionVector, 
+						((BoogieNonOldVar) arrayId).getOldVar(), bnovNew.getOldVar());
 //				} else {
 //					assert arrayId instanceof BoogieOldVar;
 //					freshVar = bov;
