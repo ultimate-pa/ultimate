@@ -30,9 +30,9 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.e
 import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Deque;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Queue;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLette
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IOutgoingTransitionlet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -167,17 +168,16 @@ class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements IErro
 			final PredicateFactoryForInterpolantAutomata predicateFactoryForAutomaton,
 			final INestedWordAutomaton<LETTER, IPredicate> abstraction, final NestedWord<LETTER> trace) {
 		final HashRelation<IPredicate, IPredicate> abstState2dangStates = new HashRelation<>();
-		final IValueConstruction<Pair<IPredicate,Set<IPredicate>>, IPredicate> valueConstruction =
-				new IValueConstruction<Pair<IPredicate,Set<IPredicate>>, IPredicate>() {
-
+		final IValueConstruction<Pair<IPredicate, Set<IPredicate>>, IPredicate> valueConstruction =
+				new IValueConstruction<Pair<IPredicate, Set<IPredicate>>, IPredicate>() {
 					@Override
-					public IPredicate constructValue(final Pair<IPredicate,Set<IPredicate>> key) {
+					public IPredicate constructValue(final Pair<IPredicate, Set<IPredicate>> key) {
 						return predicateFactory.or(false, key.getSecond());
 					}
 				};
-		final ConstructionCache<Pair<IPredicate,Set<IPredicate>>, IPredicate> disjunctionProvider =
+		final ConstructionCache<Pair<IPredicate, Set<IPredicate>>, IPredicate> disjunctionProvider =
 				new ConstructionCache<>(valueConstruction);
-		final Deque<IPredicate> worklist = new ArrayDeque<>();
+		final Queue<IPredicate> worklist = new ArrayDeque<>();
 
 		final Set<IPredicate> predicates = constructPredicates(logger, predicateFactory, predicateUnifier, csToolkit,
 				simplificationTechnique, xnfConversionTechnique, symbolTable, trace);
@@ -187,7 +187,8 @@ class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements IErro
 
 		final IPredicate trueState = predicateUnifier.getTruePredicate();
 		for (final IPredicate state : abstraction.getFinalStates()) {
-			result.addState(false, true, disjunctionProvider.getOrConstruct(new Pair<>(state,Collections.singleton(trueState))));
+			result.addState(false, true,
+					disjunctionProvider.getOrConstruct(new Pair<>(state, Collections.singleton(trueState))));
 			abstState2dangStates.addPair(state, trueState);
 			worklist.add(state);
 		}
@@ -198,105 +199,138 @@ class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements IErro
 				new MonolithicImplicationChecker(mServices, csToolkit.getManagedScript());
 
 		while (!worklist.isEmpty()) {
-			final IPredicate state = worklist.pop();
+			final IPredicate state = worklist.poll();
 			for (final IncomingInternalTransition<LETTER, IPredicate> in : abstraction.internalPredecessors(state)) {
 				final IPredicate pred = in.getPred();
-				final Set<Term> statesThatHaveSuccTerms = new HashSet<>();
-				for (final OutgoingInternalTransition<LETTER, IPredicate> out : abstraction.internalSuccessors(pred)) {
-					final IPredicate succInAbstraction = out.getSucc();
-					final Set<IPredicate> succDisjunctionInDanger = abstState2dangStates.getImage(succInAbstraction);
-					if (succDisjunctionInDanger.isEmpty()) {
-						// successor state does not (yet?) have corresponding predicate
-						continue;
-					}
-					final IPredicate succInDanger = disjunctionProvider
-							.getOrConstruct(new Pair<>(out.getSucc(), succDisjunctionInDanger));
-					final Term pre = constructPreInternal(logger, predicateFactory, csToolkit, pt,
-							out.getLetter().getTransformula(), succInDanger);
-					statesThatHaveSuccTerms.add(pre);
-				}
-				final IPredicate statesThatHaveSucc = predicateFactory
-						.newPredicate(SmtUtils.or(csToolkit.getManagedScript().getScript(), statesThatHaveSuccTerms));
-				final Set<IPredicate> coveredPredicates = new HashSet<>();
-				for (final IPredicate candidate : predicates) {
-					final Validity icres = ic.checkImplication(candidate, false, statesThatHaveSucc, false);
-					if (icres == Validity.VALID) {
-						coveredPredicates.add(candidate);
-					}
-				}
+				final Set<IPredicate> coveredPredicates = getCoveredPredicates(logger, predicateFactory, csToolkit,
+						abstraction, abstState2dangStates, disjunctionProvider, predicates, pt, ic, pred);
 				if (coveredPredicates.isEmpty()) {
 					continue;
-					// no need to proceed in this iteration, a state labeled 
-					// with false will not help us
+					// no need to proceed in this iteration, a state labeled with false will not help us
 				}
-				IPredicate newState;
-				final Set<IPredicate> oldAbstraction = abstState2dangStates.getImage(pred);
-				if (coveredPredicates.equals(oldAbstraction)) {
-					// do nothing
-					final IPredicate oldstate = disjunctionProvider.getOrConstruct(new Pair<>(pred,oldAbstraction));
-					newState = oldstate;
-				} else {
-					// predicate changed we have to "backtrack" (want to try
-					// if we can computer better predecessors)
-					if (!worklist.contains(pred)) {
-						worklist.add(pred);
-					}
-
-					newState = disjunctionProvider.getOrConstruct(new Pair<>(pred,coveredPredicates));
-					final boolean isInitial = abstraction.isInitial(pred);
-					final boolean isFinal = abstraction.isFinal(pred);
-					result.addState(isInitial, isFinal, newState);
-					if (!oldAbstraction.isEmpty()) {
-						final IPredicate oldstate = disjunctionProvider.getOrConstruct(new Pair<>(pred,oldAbstraction));
-						// there was already a state, we have to copy all its
-						// incoming
-						// transitions and remove it
-						copyAllIncomingTransitions(oldstate, newState, result);
-						result.removeState(oldstate);
-					}
-					for (final IPredicate p : coveredPredicates) {
-						abstState2dangStates.addPair(pred, p);
-					}
-				}
-				// add outgoing transitions to all successors that finally
-				// contributed
-				// (i.e., where the intersection of pre with the abstract state
-				// is not empty)
-				for (final OutgoingInternalTransition<LETTER, IPredicate> out : abstraction.internalSuccessors(pred)) {
-					final IPredicate succInAbstraction = out.getSucc();
-					final Set<IPredicate> succDisjunctionInDanger = abstState2dangStates.getImage(succInAbstraction);
-					if (succDisjunctionInDanger.isEmpty()) {
-						// successor state does not (yet?) have corresponding predicate
-						continue;
-					}
-					final IPredicate succInDanger = disjunctionProvider.getOrConstruct(new Pair<>(out.getSucc(),succDisjunctionInDanger));
-					assert result.getStates().contains(succInDanger);
-					final Term pre = constructPreInternal(logger, predicateFactory, csToolkit, pt,
-							out.getLetter().getTransformula(), succInDanger);
-					final Term conjunction = SmtUtils.and(csToolkit.getManagedScript().getScript(),
-							Arrays.asList(new Term[] { pre, newState.getFormula() }));
-					final LBool lBool = SmtUtils.checkSatTerm(csToolkit.getManagedScript().getScript(), conjunction);
-					if (lBool != LBool.UNSAT) {
-						// edge probably (result might be unknown) contributed
-						// we add it
-						result.addInternalTransition(newState, out.getLetter(), succInDanger);
-						// Matthias: maybe this crashes and we have to check if edge was
-						// already added
-					}
-				}
+				final IPredicate newState = getNewState(abstraction, abstState2dangStates, disjunctionProvider,
+						worklist, result, pred, coveredPredicates);
+				addOutgoingTransitionsToContributingStates(logger, predicateFactory, csToolkit, abstraction,
+						abstState2dangStates, disjunctionProvider, result, pt, pred, newState);
 			}
 		}
 
 		return result;
 	}
 
+	private Set<IPredicate> getCoveredPredicates(final ILogger logger, final PredicateFactory predicateFactory,
+			final CfgSmtToolkit csToolkit, final INestedWordAutomaton<LETTER, IPredicate> abstraction,
+			final HashRelation<IPredicate, IPredicate> abstState2dangStates,
+			final ConstructionCache<Pair<IPredicate, Set<IPredicate>>, IPredicate> disjunctionProvider,
+			final Set<IPredicate> predicates, final PredicateTransformer<Term, IPredicate, TransFormula> pt,
+			final MonolithicImplicationChecker ic, final IPredicate pred) {
+		final Set<Term> statesThatHaveSuccTerms = new HashSet<>();
+		for (final OutgoingInternalTransition<LETTER, IPredicate> out : abstraction.internalSuccessors(pred)) {
+			final IPredicate succInDanger = getSuccessorDisjunction(abstState2dangStates, disjunctionProvider, out);
+			if (succInDanger == null) {
+				// successor state does not (yet?) have corresponding predicate
+				continue;
+			}
+			final Term pre = constructPreInternal(logger, predicateFactory, csToolkit, pt,
+					out.getLetter().getTransformula(), succInDanger);
+			statesThatHaveSuccTerms.add(pre);
+		}
+		final IPredicate statesThatHaveSucc = predicateFactory
+				.newPredicate(SmtUtils.or(csToolkit.getManagedScript().getScript(), statesThatHaveSuccTerms));
+		final Set<IPredicate> coveredPredicates = new HashSet<>();
+		for (final IPredicate candidate : predicates) {
+			final Validity icres = ic.checkImplication(candidate, false, statesThatHaveSucc, false);
+			if (icres == Validity.VALID) {
+				coveredPredicates.add(candidate);
+			}
+		}
+		return coveredPredicates;
+	}
+
+	private IPredicate getNewState(final INestedWordAutomaton<LETTER, IPredicate> abstraction,
+			final HashRelation<IPredicate, IPredicate> abstState2dangStates,
+			final ConstructionCache<Pair<IPredicate, Set<IPredicate>>, IPredicate> disjunctionProvider,
+			final Queue<IPredicate> worklist, final NestedWordAutomaton<LETTER, IPredicate> result,
+			final IPredicate pred, final Set<IPredicate> coveredPredicates) {
+		final Set<IPredicate> oldAbstraction = abstState2dangStates.getImage(pred);
+		if (coveredPredicates.equals(oldAbstraction)) {
+			// do nothing
+			return disjunctionProvider.getOrConstruct(new Pair<>(pred, oldAbstraction));
+		}
+
+		// predicate changed
+		// we have to "backtrack" (want to try if we can computer better predecessors)
+		if (!worklist.contains(pred)) {
+			worklist.add(pred);
+		}
+
+		final IPredicate newState = disjunctionProvider.getOrConstruct(new Pair<>(pred, coveredPredicates));
+		final boolean isInitial = abstraction.isInitial(pred);
+		final boolean isFinal = abstraction.isFinal(pred);
+		result.addState(isInitial, isFinal, newState);
+		if (!oldAbstraction.isEmpty()) {
+			final IPredicate oldstate = disjunctionProvider.getOrConstruct(new Pair<>(pred, oldAbstraction));
+			// there was already a state, we have to copy all its incoming transitions and remove it
+			assert result.contains(oldstate);
+			copyAllIncomingTransitions(oldstate, newState, result);
+			result.removeState(oldstate);
+		}
+		for (final IPredicate p : coveredPredicates) {
+			abstState2dangStates.addPair(pred, p);
+		}
+		return newState;
+	}
+
+	/* add outgoing transitions to all successors that finally contributed
+	 *(i.e., where the intersection of pre with the abstract state is not empty)
+	 */
+	private void addOutgoingTransitionsToContributingStates(final ILogger logger,
+			final PredicateFactory predicateFactory, final CfgSmtToolkit csToolkit,
+			final INestedWordAutomaton<LETTER, IPredicate> abstraction,
+			final HashRelation<IPredicate, IPredicate> abstState2dangStates,
+			final ConstructionCache<Pair<IPredicate, Set<IPredicate>>, IPredicate> disjunctionProvider,
+			final NestedWordAutomaton<LETTER, IPredicate> result,
+			final PredicateTransformer<Term, IPredicate, TransFormula> pt, final IPredicate pred,
+			final IPredicate newState) {
+		for (final OutgoingInternalTransition<LETTER, IPredicate> out : abstraction.internalSuccessors(pred)) {
+			final IPredicate succInDanger = getSuccessorDisjunction(abstState2dangStates, disjunctionProvider, out);
+			if (succInDanger == null) {
+				// successor state does not (yet?) have corresponding predicate
+				continue;
+			}
+			final Term pre = constructPreInternal(logger, predicateFactory, csToolkit, pt,
+					out.getLetter().getTransformula(), succInDanger);
+			assert result.getStates().contains(succInDanger);
+			final Term conjunction = SmtUtils.and(csToolkit.getManagedScript().getScript(),
+					Arrays.asList(new Term[] { pre, newState.getFormula() }));
+			final LBool lBool = SmtUtils.checkSatTerm(csToolkit.getManagedScript().getScript(), conjunction);
+			if (lBool != LBool.UNSAT) {
+				// edge probably (result might be unknown) contributed we add it
+				result.addInternalTransition(newState, out.getLetter(), succInDanger);
+				// Matthias: maybe this crashes and we have to check if edge was already added
+			}
+		}
+	}
+
+	private IPredicate getSuccessorDisjunction(final HashRelation<IPredicate, IPredicate> abstState2dangStates,
+			final ConstructionCache<Pair<IPredicate, Set<IPredicate>>, IPredicate> disjunctionProvider,
+			final IOutgoingTransitionlet<LETTER, IPredicate> out) {
+		final IPredicate succInAbstraction = out.getSucc();
+		final Set<IPredicate> succDisjunctionInDanger = abstState2dangStates.getImage(succInAbstraction);
+		if (succDisjunctionInDanger.isEmpty()) {
+			// successor state does not (yet?) have corresponding predicate
+			return null;
+		}
+		return disjunctionProvider.getOrConstruct(new Pair<>(succInAbstraction, succDisjunctionInDanger));
+	}
+
 	private Term constructPreInternal(final ILogger logger, final PredicateFactory predicateFactory,
 			final CfgSmtToolkit csToolkit, final PredicateTransformer<Term, IPredicate, TransFormula> pt,
 			final TransFormula tf, final IPredicate succPred) {
 		final Term wp = pt.weakestPrecondition(predicateFactory.not(succPred), tf);
-		final Term wpLessQuantifiers = PartialQuantifierElimination.tryToEliminate(mServices, logger, csToolkit.getManagedScript(),
-					wp, SimplificationTechnique.SIMPLIFY_DDA,
-					XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+		final Term wpLessQuantifiers = PartialQuantifierElimination.tryToEliminate(mServices, logger,
+				csToolkit.getManagedScript(), wp, SimplificationTechnique.SIMPLIFY_DDA,
+				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 		final Term pre = SmtUtils.not(csToolkit.getManagedScript().getScript(), wpLessQuantifiers);
 		return pre;
 	}
