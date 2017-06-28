@@ -53,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.MonolithicImplicationChecker;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
@@ -208,9 +209,10 @@ class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements IErro
 						// successor state does not (yet?) have corresponding predicate
 						continue;
 					}
-					final IPredicate succInDanger = disjunctionProvider.getOrConstruct(new Pair<>(pred,succDisjunctionInDanger));
-					final Term wp = pt.weakestPrecondition(predicateFactory.not(succInDanger), out.getLetter().getTransformula());
-					final Term pre = SmtUtils.not(csToolkit.getManagedScript().getScript(), wp);
+					final IPredicate succInDanger = disjunctionProvider
+							.getOrConstruct(new Pair<>(out.getSucc(), succDisjunctionInDanger));
+					final Term pre = constructPreInternal(logger, predicateFactory, csToolkit, pt,
+							out.getLetter().getTransformula(), succInDanger);
 					statesThatHaveSuccTerms.add(pre);
 				}
 				final IPredicate statesThatHaveSucc = predicateFactory
@@ -267,10 +269,10 @@ class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements IErro
 						// successor state does not (yet?) have corresponding predicate
 						continue;
 					}
-					final IPredicate succInDanger = disjunctionProvider.getOrConstruct(new Pair<>(pred,succDisjunctionInDanger));
+					final IPredicate succInDanger = disjunctionProvider.getOrConstruct(new Pair<>(out.getSucc(),succDisjunctionInDanger));
 					assert result.getStates().contains(succInDanger);
-					final Term wp = pt.weakestPrecondition(predicateFactory.not(succInDanger), out.getLetter().getTransformula());
-					final Term pre = SmtUtils.not(csToolkit.getManagedScript().getScript(), wp);
+					final Term pre = constructPreInternal(logger, predicateFactory, csToolkit, pt,
+							out.getLetter().getTransformula(), succInDanger);
 					final Term conjunction = SmtUtils.and(csToolkit.getManagedScript().getScript(),
 							Arrays.asList(new Term[] { pre, newState.getFormula() }));
 					final LBool lBool = SmtUtils.checkSatTerm(csToolkit.getManagedScript().getScript(), conjunction);
@@ -286,6 +288,17 @@ class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements IErro
 		}
 
 		return result;
+	}
+
+	private Term constructPreInternal(final ILogger logger, final PredicateFactory predicateFactory,
+			final CfgSmtToolkit csToolkit, final PredicateTransformer<Term, IPredicate, TransFormula> pt,
+			final TransFormula tf, final IPredicate succPred) {
+		final Term wp = pt.weakestPrecondition(predicateFactory.not(succPred), tf);
+		final Term wpLessQuantifiers = PartialQuantifierElimination.tryToEliminate(mServices, logger, csToolkit.getManagedScript(),
+					wp, SimplificationTechnique.SIMPLIFY_DDA,
+					XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+		final Term pre = SmtUtils.not(csToolkit.getManagedScript().getScript(), wpLessQuantifiers);
+		return pre;
 	}
 
 	private Set<IPredicate> constructPredicates(final ILogger logger, final PredicateFactory predicateFactory,
