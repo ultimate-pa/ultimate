@@ -90,9 +90,9 @@ class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements IErro
 	 */
 	private static final boolean UNIFY_PREDICATES = false;
 
-	private final NestedWordAutomaton<LETTER, IPredicate> mResult;
-
 	private final IUltimateServiceProvider mServices;
+	private final NestedWordAutomaton<LETTER, IPredicate> mResult;
+	private final IPredicate mErrorPrecondition;
 
 	/**
 	 * @param services
@@ -130,9 +130,13 @@ class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements IErro
 		final PredicateUnificationMechanism internalPredicateUnifier =
 				new PredicateUnificationMechanism(predicateUnifier, UNIFY_PREDICATES);
 
+		final TracePredicates tracePredicates = constructPredicates(logger, predicateFactory, internalPredicateUnifier,
+				csToolkit, simplificationTechnique, xnfConversionTechnique, symbolTable, trace);
+		mErrorPrecondition = tracePredicates.getPrecondition();
+		final Set<IPredicate> predicates = collectPredicates(tracePredicates);
+
 		mResult = constructDangerAutomaton(new AutomataLibraryServices(services), logger, predicateFactory,
-				internalPredicateUnifier, csToolkit, simplificationTechnique, xnfConversionTechnique, symbolTable,
-				predicateFactoryForAutomaton, abstraction, trace);
+				internalPredicateUnifier, csToolkit, predicateFactoryForAutomaton, abstraction, predicates);
 	}
 
 	@Override
@@ -152,7 +156,7 @@ class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements IErro
 
 	@Override
 	public IPredicate getErrorPrecondition() {
-		return null;
+		return mErrorPrecondition;
 	}
 
 	@Override
@@ -163,10 +167,8 @@ class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements IErro
 	private NestedWordAutomaton<LETTER, IPredicate> constructDangerAutomaton(final AutomataLibraryServices services,
 			final ILogger logger, final PredicateFactory predicateFactory,
 			final PredicateUnificationMechanism predicateUnifier, final CfgSmtToolkit csToolkit,
-			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
-			final IIcfgSymbolTable symbolTable,
 			final PredicateFactoryForInterpolantAutomata predicateFactoryForAutomaton,
-			final INestedWordAutomaton<LETTER, IPredicate> abstraction, final NestedWord<LETTER> trace) {
+			final INestedWordAutomaton<LETTER, IPredicate> abstraction, final Set<IPredicate> predicates) {
 		final HashRelation<IPredicate, IPredicate> abstState2dangStates = new HashRelation<>();
 		final IValueConstruction<Pair<IPredicate, Set<IPredicate>>, IPredicate> valueConstruction =
 				new IValueConstruction<Pair<IPredicate, Set<IPredicate>>, IPredicate>() {
@@ -178,9 +180,6 @@ class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements IErro
 		final ConstructionCache<Pair<IPredicate, Set<IPredicate>>, IPredicate> disjunctionProvider =
 				new ConstructionCache<>(valueConstruction);
 		final Queue<IPredicate> worklist = new ArrayDeque<>();
-
-		final Set<IPredicate> predicates = constructPredicates(logger, predicateFactory, predicateUnifier, csToolkit,
-				simplificationTechnique, xnfConversionTechnique, symbolTable, trace);
 
 		final NestedWordAutomaton<LETTER, IPredicate> result =
 				new NestedWordAutomaton<>(services, new VpAlphabet<>(abstraction), predicateFactoryForAutomaton);
@@ -335,7 +334,7 @@ class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements IErro
 		return pre;
 	}
 
-	private Set<IPredicate> constructPredicates(final ILogger logger, final PredicateFactory predicateFactory,
+	private TracePredicates constructPredicates(final ILogger logger, final PredicateFactory predicateFactory,
 			final PredicateUnificationMechanism predicateUnifier, final CfgSmtToolkit csToolkit,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
 			final IIcfgSymbolTable symbolTable, final NestedWord<LETTER> trace) throws AssertionError {
@@ -349,15 +348,17 @@ class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements IErro
 		postprocessors = Collections.singletonList(qepp);
 		final DefaultTransFormulas dtf = new DefaultTransFormulas(trace, null, null, Collections.emptySortedMap(),
 				csToolkit.getOldVarsAssignmentCache(), false);
-		TracePredicates tp = null;
 		try {
-			tp = ipt.computePreSequence(dtf, postprocessors, false);
+			return ipt.computePreSequence(dtf, postprocessors, false);
 		} catch (final TraceInterpolationException e) {
 			throw new AssertionError("failed to compute sequence " + e);
 		}
-		final Set<IPredicate> predicates = new HashSet<>(tp.getPredicates());
-		predicates.add(tp.getPostcondition());
-		predicates.add(tp.getPrecondition());
+	}
+
+	private static Set<IPredicate> collectPredicates(final TracePredicates tracePredicates) {
+		final Set<IPredicate> predicates = new HashSet<>(tracePredicates.getPredicates());
+		predicates.add(tracePredicates.getPostcondition());
+		predicates.add(tracePredicates.getPrecondition());
 		return predicates;
 	}
 
