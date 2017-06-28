@@ -298,14 +298,14 @@ class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements IErro
 				// successor state does not (yet?) have corresponding predicate
 				continue;
 			}
+			assert result.getStates().contains(succInDanger);
 			final Term pre = constructPreInternal(logger, predicateFactory, csToolkit, pt,
 					out.getLetter().getTransformula(), succInDanger);
-			assert result.getStates().contains(succInDanger);
 			final Term conjunction = SmtUtils.and(csToolkit.getManagedScript().getScript(),
 					Arrays.asList(new Term[] { pre, newState.getFormula() }));
-			final LBool lBool = SmtUtils.checkSatTerm(csToolkit.getManagedScript().getScript(), conjunction);
-			if (lBool != LBool.UNSAT) {
-				// edge probably (result might be unknown) contributed we add it
+			final LBool checkSatRes = SmtUtils.checkSatTerm(csToolkit.getManagedScript().getScript(), conjunction);
+			if (checkSatRes != LBool.UNSAT) {
+				// edge probably (result might be unknown) contributed, so we add it
 				result.addInternalTransition(newState, out.getLetter(), succInDanger);
 				// Matthias: maybe this crashes and we have to check if edge was already added
 			}
