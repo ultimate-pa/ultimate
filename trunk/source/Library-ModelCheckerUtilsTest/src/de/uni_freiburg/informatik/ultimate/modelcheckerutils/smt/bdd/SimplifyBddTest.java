@@ -54,30 +54,33 @@ import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
  */
 public class SimplifyBddTest {
 
-	IUltimateServiceProvider services;
-	Script script;
-	SimplifyBdd simplifyBdd;
-	Sort bool;
-	Sort ints;
+	private IUltimateServiceProvider mServices;
+	private Script mScript;
+	private SimplifyBdd mSimplifyBdd;
+	private Sort mBool;
+	private Sort mInts;
 
 	@Before
-	public void setUP() {
-		services = UltimateMocks.createUltimateServiceProviderMock();
-		script = new SMTInterpol();
-		final ManagedScript mgdScript = new ManagedScript(services, script);
-		simplifyBdd = new SimplifyBdd(services, mgdScript);
+	public void setUp() {
+		mServices = UltimateMocks.createUltimateServiceProviderMock();
+		mScript = new SMTInterpol();
+		final ManagedScript mgdScript = new ManagedScript(mServices, mScript);
+		mSimplifyBdd = new SimplifyBdd(mServices, mgdScript);
+		mScript.setLogic(Logics.QF_UFIDL);
+		mBool = SmtSortUtils.getBoolSort(mgdScript);
+		mInts = SmtSortUtils.getIntSort(mgdScript);
+	}
 
-		script.setLogic(Logics.QF_UFIDL);
-		bool = ((SMTInterpol) script).getTheory().getBooleanSort();
-		ints = ((SMTInterpol) script).getTheory().getNumericSort();
+	public void tearDown() {
+		mScript.exit();
 	}
 
 	@Test
 	public void testAtomCollection() {
-		final Term x1 = script.variable("x1", bool);
-		final Term x2 = script.variable("x2", bool);
-		final Term x3 = script.variable("x3", bool);
-		final Term t = SmtUtils.or(script, Arrays.asList(SmtUtils.and(script, Arrays.asList(x1, x2, x3)), x1));
+		final Term x1 = mScript.variable("x1", mBool);
+		final Term x2 = mScript.variable("x2", mBool);
+		final Term x3 = mScript.variable("x3", mBool);
+		final Term t = SmtUtils.or(mScript, Arrays.asList(SmtUtils.and(mScript, Arrays.asList(x1, x2, x3)), x1));
 
 		final CollectAtoms ca = new CollectAtoms();
 		final List<Term> atoms = ca.getTerms(t);
@@ -89,117 +92,117 @@ public class SimplifyBddTest {
 
 	@Test
 	public void testTransform() {
-		final Term x1 = script.variable("x1", bool);
-		final Term x2 = script.variable("x2", bool);
-		final Term x3 = script.variable("x3", bool);
-		final Term t = SmtUtils.or(script, Arrays.asList(SmtUtils.and(script, Arrays.asList(x1, x2, x3)), x1));
-		final Term out = simplifyBdd.transform(t);
+		final Term x1 = mScript.variable("x1", mBool);
+		final Term x2 = mScript.variable("x2", mBool);
+		final Term x3 = mScript.variable("x3", mBool);
+		final Term t = SmtUtils.or(mScript, Arrays.asList(SmtUtils.and(mScript, Arrays.asList(x1, x2, x3)), x1));
+		final Term out = mSimplifyBdd.transform(t);
 		Assert.assertEquals(x1, out);
 	}
 
 	@Test
 	public void testCNF() {
-		final Term x1 = script.variable("x1", bool);
-		final Term x2 = script.variable("x2", bool);
-		final Term x3 = script.variable("x3", bool);
-		final Term t = SmtUtils.or(script, Arrays.asList(SmtUtils.and(script, Arrays.asList(x1, x2, x3)), x1));
-		final Term out = simplifyBdd.transformToCNF(t);
+		final Term x1 = mScript.variable("x1", mBool);
+		final Term x2 = mScript.variable("x2", mBool);
+		final Term x3 = mScript.variable("x3", mBool);
+		final Term t = SmtUtils.or(mScript, Arrays.asList(SmtUtils.and(mScript, Arrays.asList(x1, x2, x3)), x1));
+		final Term out = mSimplifyBdd.transformToCNF(t);
 		Assert.assertEquals(x1, out);
 	}
 
 	@Test
 	public void testDNF() {
-		final Term x1 = script.variable("x1", bool);
-		final Term x2 = script.variable("x2", bool);
-		final Term x3 = script.variable("x3", bool);
-		final Term t = SmtUtils.or(script, Arrays.asList(SmtUtils.and(script, Arrays.asList(x1, x2, x3)), x1));
-		final Term out = simplifyBdd.transformToDNF(t);
+		final Term x1 = mScript.variable("x1", mBool);
+		final Term x2 = mScript.variable("x2", mBool);
+		final Term x3 = mScript.variable("x3", mBool);
+		final Term t = SmtUtils.or(mScript, Arrays.asList(SmtUtils.and(mScript, Arrays.asList(x1, x2, x3)), x1));
+		final Term out = mSimplifyBdd.transformToDNF(t);
 		Assert.assertEquals(x1, out);
 	}
 
 	@Test
 	public void testAssozImp() {
-		final Term x1 = script.variable("x1", bool);
-		final Term x2 = script.variable("x2", bool);
-		final Term x3 = script.variable("x3", bool);
-		final Term t1 = script.term("=>", x1, x2, x3);
-		final Term t2 = script.term("=>", x1, script.term("=>", x2, x3));
-		final Term t3 = script.term("=>", script.term("=>", x1, x2), x3);
+		final Term x1 = mScript.variable("x1", mBool);
+		final Term x2 = mScript.variable("x2", mBool);
+		final Term x3 = mScript.variable("x3", mBool);
+		final Term t1 = mScript.term("=>", x1, x2, x3);
+		final Term t2 = mScript.term("=>", x1, mScript.term("=>", x2, x3));
+		final Term t3 = mScript.term("=>", mScript.term("=>", x1, x2), x3);
 
-		final Term out1 = simplifyBdd.transform(t1);
-		final Term out2 = simplifyBdd.transform(t2);
-		final Term out3 = simplifyBdd.transform(t3);
+		final Term out1 = mSimplifyBdd.transform(t1);
+		final Term out2 = mSimplifyBdd.transform(t2);
+		final Term out3 = mSimplifyBdd.transform(t3);
 		Assert.assertEquals(out2, out1);
 		Assert.assertNotEquals(out3, out1);
 	}
 
 	@Test
 	public void testPairImp() {
-		final Term t1 = script.term("<", script.numeral("1"), script.numeral("2"));
-		final Term t2 = script.term("<", script.numeral("1"), script.numeral("3"));
-		simplifyBdd.impliesPairwise(Arrays.asList(t1, t2));
+		final Term t1 = mScript.term("<", mScript.numeral("1"), mScript.numeral("2"));
+		final Term t2 = mScript.term("<", mScript.numeral("1"), mScript.numeral("3"));
+		mSimplifyBdd.impliesPairwise(Arrays.asList(t1, t2));
 	}
 
 	@Test
 	public void testWithImplications() {
-		script.declareFun("noMemleak_a", new Sort[] {}, ints);
-		script.declareFun("noMemleak_b", new Sort[] {}, ints);
-		script.declareFun("v_noMemleak_a_3", new Sort[] {}, ints);
-		script.declareFun("select", new Sort[] { ints, ints }, bool);
-		script.declareFun("store", new Sort[] { ints, ints, bool }, ints);
+		mScript.declareFun("noMemleak_a", new Sort[] {}, mInts);
+		mScript.declareFun("noMemleak_b", new Sort[] {}, mInts);
+		mScript.declareFun("v_noMemleak_a_3", new Sort[] {}, mInts);
+		mScript.declareFun("select", new Sort[] { mInts, mInts }, mBool);
+		mScript.declareFun("store", new Sort[] { mInts, mInts, mBool }, mInts);
 
-		final Term a = script.term("noMemleak_a");
-		final Term b = script.term("noMemleak_b");
-		final Term a_3 = script.term("v_noMemleak_a_3");
-		final Term v7 = script.numeral("7");
-		final Term vTrue = script.term("true");
-		final Term vFalse = script.term("false");
+		final Term a = mScript.term("noMemleak_a");
+		final Term b = mScript.term("noMemleak_b");
+		final Term a_3 = mScript.term("v_noMemleak_a_3");
+		final Term v7 = mScript.numeral("7");
+		final Term vTrue = mScript.term("true");
+		final Term vFalse = mScript.term("false");
 
-		final Term s1 = script.term("store", a_3, v7, vTrue);
-		final Term s2 = script.term("store", s1, v7, vFalse);
-		final Term e1 = script.term("=", a, s2);
+		final Term s1 = mScript.term("store", a_3, v7, vTrue);
+		final Term s2 = mScript.term("store", s1, v7, vFalse);
+		final Term e1 = mScript.term("=", a, s2);
 
-		final Term s3 = script.term("select", a_3, v7);
+		final Term s3 = mScript.term("select", a_3, v7);
 
 		// Term e2 = SmtUtils.not(script, script.term("=", b, a_3));
-		final Term e2 = script.term("=", b, a_3);
+		final Term e2 = mScript.term("=", b, a_3);
 
-		final Term and = script.term("and", e2, s3, e1);
+		final Term and = mScript.term("and", e2, s3, e1);
 
-		final Term out = simplifyBdd.transformWithImplications(and);
+		final Term out = mSimplifyBdd.transformWithImplications(and);
 		System.out.println(out + "\n" + and);
 
 	}
 
 	@Test
 	public void testWeirdStuff() {
-		script.declareFun("noMemleak_a", new Sort[] {}, ints);
-		script.declareFun("noMemleak_b", new Sort[] {}, ints);
-		script.declareFun("v_noMemleak_a_3", new Sort[] {}, ints);
-		script.declareFun("select", new Sort[] { ints, ints }, bool);
-		script.declareFun("store", new Sort[] { ints, ints, bool }, ints);
+		mScript.declareFun("noMemleak_a", new Sort[] {}, mInts);
+		mScript.declareFun("noMemleak_b", new Sort[] {}, mInts);
+		mScript.declareFun("v_noMemleak_a_3", new Sort[] {}, mInts);
+		mScript.declareFun("select", new Sort[] { mInts, mInts }, mBool);
+		mScript.declareFun("store", new Sort[] { mInts, mInts, mBool }, mInts);
 
-		final Term a = script.term("noMemleak_a");
-		final Term b = script.term("noMemleak_b");
-		final Term a_3 = script.term("v_noMemleak_a_3");
-		final Term v7 = script.numeral("7");
-		final Term vTrue = script.term("true");
-		final Term vFalse = script.term("false");
+		final Term a = mScript.term("noMemleak_a");
+		final Term b = mScript.term("noMemleak_b");
+		final Term a_3 = mScript.term("v_noMemleak_a_3");
+		final Term v7 = mScript.numeral("7");
+		final Term vTrue = mScript.term("true");
+		final Term vFalse = mScript.term("false");
 
-		final Term s1 = script.term("store", a_3, v7, vTrue);
-		final Term s2 = script.term("store", s1, v7, vFalse);
-		final Term e1 = script.term("=", a, s2);
+		final Term s1 = mScript.term("store", a_3, v7, vTrue);
+		final Term s2 = mScript.term("store", s1, v7, vFalse);
+		final Term e1 = mScript.term("=", a, s2);
 
-		final Term s3 = script.term("select", a_3, v7);
+		final Term s3 = mScript.term("select", a_3, v7);
 
 		// Term e2 = SmtUtils.not(script, script.term("=", b, a_3));
-		final Term e2 = script.term("=", b, a_3);
+		final Term e2 = mScript.term("=", b, a_3);
 
-		final Term and = script.term("and", e2, s3, e1);
+		final Term and = mScript.term("and", e2, s3, e1);
 
-		final Term out = simplifyBdd.transformToDNF(and);
+		final Term out = mSimplifyBdd.transformToDNF(and);
 		Assert.assertTrue(and + " got in and that got out " + out,
-				Util.checkSat(script, script.term("distinct", and, out)) != LBool.SAT);
+				Util.checkSat(mScript, mScript.term("distinct", and, out)) != LBool.SAT);
 
 		/*
 		 * (and (not (= noMemleak_b v_noMemleak_a_3) ) (select v_noMemleak_a_3 7) (= noMemleak_a (store (store
@@ -211,15 +214,15 @@ public class SimplifyBddTest {
 	@Test
 	public void bugSimplification20161108() {
 		// Sorts
-		final Sort sort_Bool = SmtSortUtils.getBoolSort(script);
+		final Sort sort_Bool = SmtSortUtils.getBoolSort(mScript);
 		// Vars
-		final TermVariable t = script.variable("main_#t~switch0", sort_Bool);
+		final TermVariable t = mScript.variable("main_#t~switch0", sort_Bool);
 		// term
-		final Term term = script.term("not", t);
-		final Term out = simplifyBdd.transform(term);
+		final Term term = mScript.term("not", t);
+		final Term out = mSimplifyBdd.transform(term);
 
 		Assert.assertTrue("simplification unsound. Input: " + term,
-				Util.checkSat(script, script.term("distinct", term, out)) != LBool.SAT);
+				Util.checkSat(mScript, mScript.term("distinct", term, out)) != LBool.SAT);
 	}
 
 }
