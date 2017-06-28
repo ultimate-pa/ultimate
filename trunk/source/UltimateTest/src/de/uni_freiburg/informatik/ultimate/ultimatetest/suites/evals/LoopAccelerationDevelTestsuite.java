@@ -76,8 +76,8 @@ public class LoopAccelerationDevelTestsuite extends AbstractEvalTestSuite {
 					// new Triple<>("AutomizerBpl.xml", BPL,
 					// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Woelfing.epf"),
 					//
-					// new Triple<>("AutomizerBplTransformed.xml", BPL,
-					// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Woelfing_Debug.epf"),
+					new Triple<>("AutomizerBplTransformed.xml", BPL,
+							"loopacceleration/svcomp-Reach-32bit-Automizer_Default_Woelfing_Debug.epf"),
 					// new Triple<>("AutomizerBplTransformed.xml", BPL,
 					// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Woelfing.epf"),
 					//
@@ -113,8 +113,8 @@ public class LoopAccelerationDevelTestsuite extends AbstractEvalTestSuite {
 	private static final String[] INPUT = new String[] {
 
 			// Normal regressions
-			"examples/programs/loopAcceleration",
-			// "examples/programs/loopAcceleration/twoLoops.bpl",
+			// "examples/programs/loopAcceleration",
+			"examples/programs/loopAcceleration/unsafeLoop.bpl",
 			// "examples/svcomp/loop-acceleration/const_true-unreach-call1.i",
 			// "examples/svcomp/loop-acceleration/const_false-unreach-call1.i",
 			// "examples/svcomp/loops/sum03_true-unreach-call_false-termination.i",
