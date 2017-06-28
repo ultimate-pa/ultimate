@@ -613,7 +613,9 @@ public class EqConstraintFactory<
 		EqConstraint<ACTION, NODE, FUNCTION> newConstraintWithPropagations = unf;
 		if (nodeToAdd.isLiteral()) {
 			for (NODE otherNode : newConstraintWithPropagations.getAllNodes()) {
-				if (otherNode.equals(nodeToAdd) || !otherNode.isLiteral()) {
+				if (otherNode.equals(nodeToAdd) 
+						|| !otherNode.isLiteral()
+						|| nodeToAdd.getTerm().getSort() != otherNode.getTerm().getSort()) {
 					continue;
 				}
 				newConstraintWithPropagations = addDisequalityFlat(nodeToAdd, otherNode, newConstraintWithPropagations);

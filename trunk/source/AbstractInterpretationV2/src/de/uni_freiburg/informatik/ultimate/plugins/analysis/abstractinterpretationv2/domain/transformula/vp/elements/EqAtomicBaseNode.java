@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 
 /**
  * 
@@ -77,7 +78,9 @@ public class EqAtomicBaseNode extends EqNode {
 	
 	public EqAtomicBaseNode(Term term, EqNodeAndFunctionFactory eqNodeAndFunctionFactory) {
 		super(term, eqNodeAndFunctionFactory);
-		mIsLiteral = term instanceof ConstantTerm;
+		mIsLiteral = term instanceof ConstantTerm
+				|| SmtUtils.isTrue(term)
+				|| SmtUtils.isFalse(term);
 	}
 
 	@Override
