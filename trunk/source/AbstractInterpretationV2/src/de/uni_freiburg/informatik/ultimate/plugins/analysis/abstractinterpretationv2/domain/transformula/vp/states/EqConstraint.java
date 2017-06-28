@@ -707,6 +707,10 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 		return result;
 	}
 
+	/**
+	 * (expensive)
+	 * @return all disequalities (as symmetric pairs) that hold in this state, i.e., not only those over representatives
+	 */
 	public Set<VPDomainSymmetricPair<NODE>> getAllElementDisequalities() {
 		Set<VPDomainSymmetricPair<NODE>> result = new HashSet<>();
 		final List<NODE> allNodes = new ArrayList<>(getAllNodes());
@@ -733,7 +737,7 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 	}
 
 	/**
-	 * analogue to getAllFunctionEqualities
+	 * analogue to getAllFunctionEqualities, i.e. _all_ disequalities, not only the disequalities over representatives
 	 * @return
 	 */
 	public Set<VPDomainSymmetricPair<FUNCTION>> getAllFunctionDisequalities() {

@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -12,10 +13,12 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainSymmetricPair;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqFunction;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNode;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNodeAndFunctionFactory;
@@ -48,7 +51,10 @@ public class EqState<ACTION extends IIcfgTransition<IcfgLocation>>
 		mFactory = eqStateFactory;
 		mPvocs = new HashSet<>(variables);
 		assert mPvocs.containsAll(constraint.getPvocs(mFactory.getSymbolTable())
-				.stream().filter(pvoc -> !(pvoc instanceof IProgramOldVar)).collect(Collectors.toSet()));
+				.stream()
+				.filter(pvoc -> !(pvoc instanceof IProgramOldVar))
+				.filter(pvoc -> !(pvoc instanceof BoogieConst))
+				.collect(Collectors.toSet()));
 	}
 
 	@Override
@@ -160,7 +166,37 @@ public class EqState<ACTION extends IIcfgTransition<IcfgLocation>>
 			// we know from the case above that !mConstraint.isTop()
 			return SubsetResult.STRICT;
 		}
+		
+		/*
+		 *  checking inclusion between states via inclusion check on the constraints 
+		 *   --> note the inversion constraints vs models!
+		 */
 	
+		// supporting equalities should, here (because the other state is closed under transitivity etc..)
+		for (Entry<EqNode, EqNode> elEq : other.getConstraint().getSupportingElementEqualities()) { 
+			if (!mConstraint.areEqual(elEq.getKey(), elEq.getValue())) {
+				return SubsetResult.NONE;
+			}
+		}
+		
+		for (VPDomainSymmetricPair<EqNode> elDeq : other.getConstraint().getAllElementDisequalities()) {
+			if (!mConstraint.areUnequal(elDeq.getFirst(), elDeq.getSecond())) {
+				return SubsetResult.NONE;
+			}
+		}
+		
+		for (Entry<EqFunction, EqFunction> fnEq : other.getConstraint().getSupportingFunctionEqualities()) {
+			if (!mConstraint.areEqual(fnEq.getKey(), fnEq.getValue())) {
+				return SubsetResult.NONE;
+			}
+		}
+		
+		for (VPDomainSymmetricPair<EqFunction> fnDeq : other.getConstraint().getAllFunctionDisequalities()) {
+			if (!mConstraint.areUnequal(fnDeq.getFirst(), fnDeq.getSecond())) {
+				return SubsetResult.NONE;
+			}
+		}
+		
 		
 		// TODO
 //		final EqConstraintFactory<ACTION, EqNode, EqFunction> constraintFactory = mFactory.getEqConstraintFactory();
@@ -173,7 +209,7 @@ public class EqState<ACTION extends IIcfgTransition<IcfgLocation>>
 //			
 //		}
 //		return null;
-		return SubsetResult.NONE;
+		return SubsetResult.NON_STRICT;
 	}
 	
 	@SafeVarargs
