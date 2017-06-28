@@ -70,7 +70,6 @@ public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTrans
 		mResultConstraint = mResultStack.pop();
 	}
 
-//	public EqDisjunctiveConstraint<ACTION, EqNode, EqFunction> getResult() {
 	public EqTransitionRelation<ACTION> getResult() {
 		assert mResultConstraint != null;
 		return new EqTransitionRelation<>(mResultConstraint, mTf);
@@ -107,6 +106,9 @@ public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTrans
 							&& "=".equals(((ApplicationTerm) term.getParameters()[0]).getFunction().getName())) {
 				final ApplicationTerm innerEqualsTerm = (ApplicationTerm) term.getParameters()[0];
 				handleXquality(innerEqualsTerm.getParameters()[0], innerEqualsTerm.getParameters()[1], false);
+			} else if ("not".equals(term.getFunction().getName()) 
+							&& term.getParameters()[0] instanceof TermVariable) {
+				handleBooleanVariable((TermVariable) term.getParameters()[0], false);
 			} else if ("or".equals(term.getFunction().getName())) {
 				walker.enqueueWalker(new MakeDisjunctionWalker(term.getParameters().length));
 
@@ -129,13 +131,36 @@ public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTrans
 				mResultStack.push(mEqConstraintFactory.getDisjunctiveConstraint(
 						Collections.singleton(mEqConstraintFactory.getEmptyConstraint())));
 			} else {
-//				assert false : "TODO";
 				// we don't recognize this function symbol -- overapproximating its effects by "top"
 				// TODO: perhaps we could make some checks here if it is trivially bottom or something like that..
 				mResultStack.push(mEqConstraintFactory.getDisjunctiveConstraint(
 						Collections.singleton(mEqConstraintFactory.getEmptyConstraint())));
 			}
 			
+		}
+
+		private void handleBooleanVariable(TermVariable termVariable, boolean polarity) {
+			assert "Bool".equals(termVariable.getSort().getName());
+			final EqConstraint<ACTION, EqNode, EqFunction> emptyConstraint = 
+					mEqConstraintFactory.getEmptyConstraint();
+			final EqNode tvNode = mEqNodeAndFunctionFactory.getOrConstructEqNode(termVariable);
+			if (polarity) {
+				mMgdScript.lock(this);
+				final EqNode trueNode = mEqNodeAndFunctionFactory.getOrConstructEqNode(mMgdScript.term(this, "true"));
+				mMgdScript.unlock(this);
+				final EqConstraint<ACTION, EqNode, EqFunction> tvEqualsTrue = 
+						mEqConstraintFactory.addEqualityFlat(tvNode, trueNode, emptyConstraint);
+				mResultStack.push(mEqConstraintFactory.getDisjunctiveConstraint(
+						Collections.singleton(tvEqualsTrue)));
+			} else {
+				mMgdScript.lock(this);
+				final EqNode falseNode = mEqNodeAndFunctionFactory.getOrConstructEqNode(mMgdScript.term(this, "false"));
+				mMgdScript.unlock(this);
+				final EqConstraint<ACTION, EqNode, EqFunction> tvEqualsTrue = 
+						mEqConstraintFactory.addEqualityFlat(tvNode, falseNode, emptyConstraint);
+				mResultStack.push(mEqConstraintFactory.getDisjunctiveConstraint(
+						Collections.singleton(tvEqualsTrue)));
+			}
 		}
 
 		private void handleXquality(Term arg1, Term arg2, boolean polarity) {
@@ -153,13 +178,11 @@ public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTrans
 					mResultStack.push(emptyDisjunctiveConstraint);
 					return;
 				}
-	
 				
 				final EqFunction func1 = mEqNodeAndFunctionFactory.getOrConstructEqFunction(arg1);
 				final EqFunction func2 = mEqNodeAndFunctionFactory.getOrConstructEqFunction(arg2);
 				
 			
-//				final EqDisjunctiveConstraint<ACTION, EqNode, EqFunction> newConstraint;
 				final EqConstraint<ACTION, EqNode, EqFunction> newConstraint;
 				if (polarity) {
 					newConstraint = 
@@ -169,7 +192,6 @@ public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTrans
 							mEqConstraintFactory.addFunctionDisequalityFlat(func1, func2, emptyConstraint);
 				}
 				
-//				mResultStack.push(newConstraint);
 				mResultStack.push(mEqConstraintFactory.getDisjunctiveConstraint(Collections.singleton(newConstraint)));
 				return;
 			} else {
@@ -184,25 +206,14 @@ public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTrans
 				final EqNode node1 = mEqNodeAndFunctionFactory.getOrConstructEqNode(arg1);
 				final EqNode node2 = mEqNodeAndFunctionFactory.getOrConstructEqNode(arg2);
 				
-//				if (node1 == null || node2 == null) {
-//					// we don't track both sides of the equation --> return an empty constraint
-//					mResultStack.push(emptyDisjunctiveConstraint);
-//					return;
-//				}
-
-
-//				final EqDisjunctiveConstraint<ACTION, EqNode, EqFunction> newConstraint;
 				final EqConstraint<ACTION, EqNode, EqFunction> newConstraint;
 				if (polarity) {
 					newConstraint = 
-//							mEqConstraintFactory.addEquality(node1, node2, emptyConstraint);
 							mEqConstraintFactory.addEqualityFlat(node1, node2, emptyConstraint);
 				} else {
 					newConstraint = 
 							mEqConstraintFactory.addDisequalityFlat(node1, node2, emptyConstraint);
 				}
-
-//				mResultStack.push(newConstraint);
 				mResultStack.push(mEqConstraintFactory.getDisjunctiveConstraint(Collections.singleton(newConstraint)));
 				return;
 			}
@@ -230,12 +241,11 @@ public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTrans
 		@Override
 		public void walk(NonRecursive walker, TermVariable term) {
 			if ("Bool".equals(term.getSort().getName())) {
-				throw new UnsupportedOperationException("we don't support boolean variables right now"); // TODO
-			} else {
-				assert false : "we should have caught this before, right?";
+				handleBooleanVariable(term, true);
+				return;
 			}
+			throw new AssertionError("we should have caught this before, right?");
 		}
-		
 	}
 	
 	class MakeDisjunctionWalker implements Walker {
@@ -256,7 +266,6 @@ public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTrans
 			}
 			mResultStack.push(mEqConstraintFactory.getDisjunctiveConstraint(allConjunctiveConstraints));
 		}
-		
 	}
 	
 	class MakeConjunctionWalker implements Walker {
