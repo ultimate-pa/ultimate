@@ -29,16 +29,10 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>, 
 		NODE extends IEqNodeIdentifier<NODE, FUNCTION>, 
 		FUNCTION extends IEqFunctionIdentifier<NODE, FUNCTION>> {
-	// implements IAbstractState<EqConstraint<ACTION, NODE, FUNCTION>,
-	// IProgramVarOrConst> {
 
 	private boolean mIsFrozen = false;
 
 	CongruenceGraph<ACTION, NODE, FUNCTION> mElementCongruenceGraph;
-
-	// UnionFind<FUNCTION> mFunctionEqualities;
-	//
-	// Set<VPDomainSymmetricPair<FUNCTION>> mFunctionDisequalities;
 
 	ArrayEquivalenceGraph<ACTION, NODE, FUNCTION> mFunctionEquivalenceGraph;
 
@@ -71,9 +65,7 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 		mFunctions = new HashSet<>();
 
 		mElementCongruenceGraph = new CongruenceGraph<>(this);
-		// mFunctionEqualities = new UnionFind<>();
 		mFunctionEquivalenceGraph = new ArrayEquivalenceGraph<>(this);
-		// mFunctionDisequalities = new HashSet<>();
 
 	}
 
@@ -116,75 +108,17 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 		}
 
 		mElementCongruenceGraph.havoc(node);
-//		assert VPDomainHelpers.constraintFreeOfVars(Arrays.asList(node.getTerm().getFreeVars()), 
-//				this, 
-//				mFactory.getEqNodeAndFunctionFactory().getScript().getScript()) : 
-//					"resulting constraint still has at least one of the to-be-projected vars";
 	}
 
 	public void havocFunction(FUNCTION func) {
 		assert !mIsFrozen;
 
-//		if (!mFunctions.stream().anyMatch(f -> f.dependsOn(func)) || isBottom()) {
 		if (!mFunctions.contains(func) || isBottom()) {
-//			assert VPDomainHelpers.constraintFreeOfVars(Arrays.asList(func.getTerm().getFreeVars()), this, 
-//				mFactory.getEqNodeAndFunctionFactory().getScript().getScript()) : 
-//					"resulting constraint still has at least one of the to-be-projected vars";
 			return;
 		}
 
-		// havoc all dependent nodes
-//		final Set<NODE> nodesWithFunc = mNodes.stream()
-//				.filter(node -> ((node instanceof EqFunctionNode) && ((NODE) node).getFunction().dependsOn(func)))
-//				.collect(Collectors.toSet());
-//		nodesWithFunc.stream().forEach(node -> havoc(node));
-
 		mFunctionEquivalenceGraph.havocFunction(func);
 		assert !getAllFunctions().contains(func);
-//		assert VPDomainHelpers.constraintFreeOfVars(Arrays.asList(func.getTerm().getFreeVars()), this, 
-//				mFactory.getEqNodeAndFunctionFactory().getScript().getScript()) : 
-//					"resulting constraint still has at least one of the to-be-projected vars";
-
-
-		// // remove from function disequalities
-		//// mFunctionDisequalities.removeIf(pair -> pair.contains(func));
-		//
-		// // remove from function equalities
-		//// final UnionFind<FUNCTION> newFunctionEqualities = new
-		// UnionFind<>();
-		// final ArrayEquivalenceGraph<ACTION, NODE, FUNCTION>
-		// newFunctionEqualities = new ArrayEquivalenceGraph<>();
-		// // (union find has no remove -> has to be built anew)
-		// for (Set<FUNCTION> eqc :
-		// mFunctionEqualities.getAllEquivalenceClasses()) {
-		// // look for an element that is not func --> everything but func will
-		// be merged with it
-		// Iterator<FUNCTION> eqcIt = eqc.iterator();
-		// FUNCTION first = eqcIt.next();
-		// while (first.dependsOn(func)) {
-		// if (eqcIt.hasNext()) {
-		// first = eqcIt.next();
-		// } else {
-		// // equivalence class has only elements that need to be havocced
-		// for (FUNCTION el : eqc) {
-		// newFunctionEqualities.findAndConstructEquivalenceClassIfNeeded(el);
-		// }
-		// continue;
-		// }
-		// }
-		// assert !first.dependsOn(func);
-		//
-		// for (FUNCTION el : eqc) {
-		// newFunctionEqualities.findAndConstructEquivalenceClassIfNeeded(el);
-		// if (el.dependsOn(func)) {
-		// // el is havocced --> don't merge its equivalence class
-		// continue;
-		// }
-		// newFunctionEqualities.union(first, el);
-		// }
-		// }
-		// mFunctionEqualities = newFunctionEqualities;
-
 	}
 
 	public void freeze() {
@@ -345,131 +279,6 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 		return (NODE) mFactory.getEqStateFactory().getEqNodeAndFunctionFactory().getExistingEqNode(var);
 	}
 
-	// /*
-	// * **************** methods inherited from IAbstractState ****************
-	// */
-	//
-	//
-	//
-	// @Override
-	// public EqConstraint<ACTION, NODE, FUNCTION>
-	// addVariable(IProgramVarOrConst variable) {
-	// // TODO Auto-generated method stub
-	// return null;
-	// }
-	//
-	//
-	// @Override
-	// public EqConstraint<ACTION, NODE, FUNCTION>
-	// removeVariable(IProgramVarOrConst variable) {
-	// return removeVariables(Collections.singleton(variable));
-	// }
-	//
-	//
-	// @Override
-	// public EqConstraint<ACTION, NODE, FUNCTION>
-	// addVariables(Collection<IProgramVarOrConst> variables) {
-	// // TODO Auto-generated method stub
-	// return null;
-	// }
-	//
-	//
-	// @Override
-	// public EqConstraint<ACTION, NODE, FUNCTION>
-	// removeVariables(Collection<IProgramVarOrConst> variables) {
-	// assert !mIsVersioned : "this constraint is not a 'predicate-style'
-	// constraint, it should not be treated like an"
-	// + " abstract state";
-	// Set<TermVariable> termVariablesFromPvocs = variables.stream()
-	// .map(pvoc -> (TermVariable) pvoc.getTerm()).collect(Collectors.toSet());
-	// return projectExistentially(termVariablesFromPvocs);
-	// }
-	//
-	//
-	// @Override
-	// public boolean containsVariable(IProgramVarOrConst var) {
-	// return getVariables().contains(var);
-	// }
-	//
-	//
-	// @Override
-	// public Set<IProgramVarOrConst> getVariables() {
-	// return mVariables;
-	// }
-	//
-	//
-	// @Override
-	// public EqConstraint<ACTION, NODE, FUNCTION> patch(EqConstraint<ACTION,
-	// NODE, FUNCTION> dominator) {
-	// EqConstraint<ACTION, NODE, FUNCTION> newConstraint =
-	// this.removeVariables(dominator.getVariables());
-	// return newConstraint.intersect(dominator);
-	// }
-	//
-	//
-	// @Override
-	// public EqConstraint<ACTION, NODE, FUNCTION>
-	// intersect(EqConstraint<ACTION, NODE, FUNCTION> other) {
-	// final List<EqConstraint<ACTION, NODE, FUNCTION>> constraints = new
-	// ArrayList<>(2);
-	// constraints.add(this);
-	// constraints.add(other);
-	// return mFactory.conjoin(constraints).flatten();
-	// }
-	//
-	//
-	// @Override
-	// public EqConstraint<ACTION, NODE, FUNCTION> union(EqConstraint<ACTION,
-	// NODE, FUNCTION> other) {
-	// final List<EqConstraint<ACTION, NODE, FUNCTION>> constraints = new
-	// ArrayList<>(2);
-	// constraints.add(this);
-	// constraints.add(other);
-	// return mFactory.getDisjunctiveConstraint(constraints).flatten();
-	// }
-	//
-	//
-	// @Override
-	// public boolean isEmpty() {
-	// return getVariables().isEmpty();
-	// }
-	//
-	//
-	// @Override
-	// public boolean isEqualTo(EqConstraint<ACTION, NODE, FUNCTION> other) {
-	// // TODO Auto-generated method stub
-	// return false;
-	// }
-	//
-	//
-	// @Override
-	// public SubsetResult isSubsetOf(EqConstraint<ACTION, NODE, FUNCTION>
-	// other) {
-	// // TODO Auto-generated method stub
-	// return null;
-	// }
-	//
-	//
-	// @Override
-	// public EqConstraint<ACTION, NODE, FUNCTION> compact() {
-	// // TODO Auto-generated method stub
-	// return null;
-	// }
-	//
-	//
-	// @Override
-	// public Term getTerm(Script script) {
-	// // TODO Auto-generated method stub
-	// return null;
-	// }
-	//
-	//
-	// @Override
-	// public String toLogString() {
-	// // TODO Auto-generated method stub
-	// return null;
-	// }
-
 	public void renameVariables(Map<Term, Term> substitutionMapping) {
 		assert !mIsFrozen;
 		
@@ -486,41 +295,7 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 
 		mElementCongruenceGraph.renameVariables(substitutionMapping);
 
-		//// final UnionFind<FUNCTION> newFunctionUF = new UnionFind<>();
-		// final ArrayEquivalenceGraph<ACTION, NODE, FUNCTION> newFunctionUF =
-		//// new ArrayEquivalenceGraph<>();
-		//// for (Entry<FUNCTION, FUNCTION> fEq :
-		//// getSupportingFunctionEqualities()) {
-		// for (Set<FUNCTION> eqc :
-		//// mFunctionEquivalenceGraph.getAllEquivalenceClasses()) {
-		// FUNCTION first =
-		//// newFunctionUF.findAndConstructEquivalenceClassIfNeeded(
-		// eqc.iterator().next().renameVariables(substitutionMapping));
-		// for (FUNCTION f : eqc) {
-		// FUNCTION renamedF =
-		//// newFunctionUF.findAndConstructEquivalenceClassIfNeeded(
-		// f.renameVariables(substitutionMapping));
-		// newFunctionUF.union(first, renamedF);
-		//// FUNCTION renamedF1 =
-		//// newFunctionUF.findAndConstructEquivalenceClassIfNeeded(
-		//// fEq.getKey().renameVariables(substitutionMapping));
-		//// FUNCTION renamedF2 =
-		//// newFunctionUF.findAndConstructEquivalenceClassIfNeeded(
-		//// fEq.getKey().renameVariables(substitutionMapping));
-		//// newFunctionUF.union(renamedF1, renamedF2);
-		// }
-		// }
-		// mFunctionEquivalenceGraph = newFunctionUF;
 		mFunctionEquivalenceGraph.renameVariables(substitutionMapping);
-
-		// Set<VPDomainSymmetricPair<FUNCTION>> newFunctionDisequalites = new
-		// HashSet<>();
-		// for (VPDomainSymmetricPair<FUNCTION> fDeq : mFunctionDisequalities) {
-		// newFunctionDisequalites.add(new VPDomainSymmetricPair<FUNCTION>(
-		// fDeq.getFirst().renameVariables(substitutionMapping),
-		// fDeq.getSecond().renameVariables(substitutionMapping)));
-		// }
-		// mFunctionDisequalities = newFunctionDisequalites;
 	}
 
 	/**
@@ -567,24 +342,12 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 	public Set<NODE> getDisequalities(NODE node) {
 		final Set<NODE> result = new HashSet<>();
 
-		// if (node.isLiteral()) {
-		// // towards symbolic treatment of literal disequalities between
-		// literals
-		// result.addAll(mNodes.stream()
-		// .filter(n -> (!n.equals(node) && n.isLiteral())) // keep only
-		// literals unequal to node
-		// .map(n -> mElementCongruenceGraph.find(node)) // take their
-		// representatives
-		// .filter(n -> n != null)
-		// .collect(Collectors.toSet()));
-		// } else {
 		final NODE nodeRep = mElementCongruenceGraph.find(node);
 		for (VPDomainSymmetricPair<NODE> deq : mElementCongruenceGraph.getDisequalities()) {
 			if (deq.contains(nodeRep)) {
 				result.add(deq.getOther(nodeRep));
 			}
 		}
-		// }
 		return result;
 	}
 
@@ -800,9 +563,7 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 		if (hasNode(nodeToAdd)) {
 			return;
 		}
-//		mNodes.add(nodeToAdd); // done by mElementCongruenceGraph (also for child nodes)
 		mElementCongruenceGraph.addNode(nodeToAdd, null);
-
 	}
 
 	/**
@@ -833,10 +594,7 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 	public void removeFunction(FUNCTION func) {
 		assert !mIsFrozen;
 		mFunctions.remove(func);
-//		mFunctions.removeIf(f -> f.dependsOn(func));
 	}
-
-	
 	
 	boolean allNodesAndEqgnMapAreConsistent() {
 		return mElementCongruenceGraph.allNodesAndEqgnMapAreConsistent();

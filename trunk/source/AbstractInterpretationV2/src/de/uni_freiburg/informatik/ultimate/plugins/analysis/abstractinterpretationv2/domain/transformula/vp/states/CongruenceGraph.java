@@ -38,7 +38,6 @@ public class CongruenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 	 * constructs an empty CongruenceGraph
 	 */
 	public CongruenceGraph(EqConstraint<ACTION, NODE, FUNCTION> owningConstraint) {
-//		mNodeToEqGraphNode = new HashMap<>();
 		mDisequalities = new HashSet<>();
 		mOwningConstraint = owningConstraint;
 		assert allNodesAndEqgnMapAreConsistent();
@@ -559,13 +558,6 @@ public class CongruenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		assert allNodesAndEqgnMapAreConsistent();
 		mDisequalities.add(new VPDomainSymmetricPair<NODE>(find, find2));
 	}
-	
-
-
-//	public void addNodes(Collection<NODE> allNodes) {
-//		// TOD Auto-generated method stub
-//		assert false;
-//	}
 
 	/**
 	 * Add a node to the congruence graph.
@@ -577,7 +569,6 @@ public class CongruenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		
 		if (mNodeToEqGraphNode.containsKey(node)) {
 			final EqGraphNode<NODE, FUNCTION> eqgn = mNodeToEqGraphNode.get(node);
-//			if (initCCpar != null && eqgn.getInitCcpar().isEmpty()) {
 			if (initCCpar != null && eqgn.getInitCcpar() != null) {
 				eqgn.addToInitCcpar(initCCpar);
 			}
@@ -633,13 +624,7 @@ public class CongruenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 				for (NODE child : result.getInitCcchild()) {
 					final EqGraphNode<NODE, FUNCTION> childEqgn = getOrConstructEqGraphNode(child, 
 							newNodeToEqGraphNodeMap);
-//					if (childEqgn.getInitCcpar().contains(node)) {
-						childEqgn.addToInitCcpar(node);
-//					} else {
-////						assert childEqgn.getInitCcpar().size() == 1 
-////								&& childEqgn.getInitCcpar().iterator().next() == node;
-//						assert childEqgn.getInitCcpar() == node;
-//					}
+					childEqgn.addToInitCcpar(node);
 				}
 			}
 			if (newNodeToEqGraphNodeMap == null) {
@@ -659,7 +644,6 @@ public class CongruenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		assert allNodesAndEqgnMapAreConsistent();
 		final HashRelation<NODE, NODE> result = new HashRelation<>();
 
-//		for (NODE node : mNodeToEqGraphNode.keySet()) {
 		for (NODE node : mOwningConstraint.getAllNodes()) {
 			NODE representative = find(node);
 			if (representative != node) {
