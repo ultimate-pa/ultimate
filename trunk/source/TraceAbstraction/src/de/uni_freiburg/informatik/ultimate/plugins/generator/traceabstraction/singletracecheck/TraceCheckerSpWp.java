@@ -276,7 +276,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 				}
 				postprocs.add(new IterativePredicateTransformer.QuantifierEliminationPostprocessor(mServices, mLogger,
 						mCfgManagedScript, mPredicateFactory, mSimplificationTechnique, mXnfConversionTechnique));
-				postprocs.add(new UnifyPostprocessor());
+				postprocs.add(new UnifyPostprocessor(mPredicateUnifier));
 				final IterativePredicateTransformer spt = new IterativePredicateTransformer(mPredicateFactory,
 						mCfgManagedScript, mCsToolkit.getModifiableGlobalsTable(), mServices, mTrace, mPrecondition,
 						mPostcondition, mPendingContexts, null, mSimplificationTechnique, mXnfConversionTechnique,
@@ -320,7 +320,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 				}
 				postprocs.add(new IterativePredicateTransformer.QuantifierEliminationPostprocessor(mServices, mLogger,
 						mCfgManagedScript, mPredicateFactory, mSimplificationTechnique, mXnfConversionTechnique));
-				postprocs.add(new UnifyPostprocessor());
+				postprocs.add(new UnifyPostprocessor(mPredicateUnifier));
 				final IterativePredicateTransformer spt = new IterativePredicateTransformer(mPredicateFactory,
 						mCfgManagedScript, mCsToolkit.getModifiableGlobalsTable(), mServices, mTrace, mPrecondition,
 						mPostcondition, mPendingContexts, null, mSimplificationTechnique, mXnfConversionTechnique,
@@ -565,7 +565,13 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 		}
 	}
 
-	public class UnifyPostprocessor implements IPredicatePostprocessor {
+	public static class UnifyPostprocessor implements IPredicatePostprocessor {
+		
+		private final IPredicateUnifier mPredicateUnifier;
+		
+		public UnifyPostprocessor(final IPredicateUnifier predicateUnifier) {
+			mPredicateUnifier = predicateUnifier;
+		}
 		@Override
 		public IPredicate postprocess(final IPredicate pred, final int i) {
 			final IPredicate unified = mPredicateUnifier.getOrConstructPredicate(pred.getFormula());
