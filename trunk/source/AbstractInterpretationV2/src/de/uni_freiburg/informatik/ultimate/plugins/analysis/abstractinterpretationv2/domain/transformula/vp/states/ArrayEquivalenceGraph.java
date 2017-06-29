@@ -2,7 +2,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -105,41 +104,43 @@ public class ArrayEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		mFunctionDisequalities.removeIf(pair -> pair.contains(mFunctionEqualities.find(funcToBeHavocced)));
 	
 		// remove from function equalities
-		final UnionFind<FUNCTION> newFunctionEqualities = new UnionFind<>();
-		// (union find has no remove -> has to be built anew)
-		for (Set<FUNCTION> eqc : mFunctionEqualities.getAllEquivalenceClasses()) {
-			// look for an element that is not func --> everything but func will be merged with it
-			final Iterator<FUNCTION> eqcIt = eqc.iterator();
-			FUNCTION first = eqcIt.next();
-//			while (first.dependsOn(funcToBeHavocced)) {
-			while (first.equals(funcToBeHavocced)) {
-				if (eqcIt.hasNext()) {
-					first = eqcIt.next();
-				} else {
-					// equivalence class has only elements that need to be havocced
-					for (FUNCTION el : eqc) {
-						newFunctionEqualities.findAndConstructEquivalenceClassIfNeeded(el);
-					}
-					continue;
-				}
-			}
-//			assert !first.dependsOn(funcToBeHavocced);
-			assert !first.equals(funcToBeHavocced);
-
-			// construct the new equivalence class by merging all elements of the old, except func
-			for (FUNCTION el : eqc) {
-//				if (el.dependsOn(funcToBeHavocced)) {
-				if (el.equals(funcToBeHavocced)) {
-					// el is havocced --> don't merge its equivalence class
-					continue;
-				}
-				newFunctionEqualities.findAndConstructEquivalenceClassIfNeeded(el);
-				newFunctionEqualities.union(first, el);
-			}
-		}
-		mFunctionEqualities = newFunctionEqualities;	
+		mFunctionEqualities.remove(funcToBeHavocced);
+//		final UnionFind<FUNCTION> newFunctionEqualities = new UnionFind<>();
+//		// (union find has no remove -> has to be built anew)
+//		for (Set<FUNCTION> eqc : mFunctionEqualities.getAllEquivalenceClasses()) {
+//			// look for an element that is not func --> everything but func will be merged with it
+//			final Iterator<FUNCTION> eqcIt = eqc.iterator();
+//			FUNCTION first = eqcIt.next();
+////			while (first.dependsOn(funcToBeHavocced)) {
+//			while (first.equals(funcToBeHavocced)) {
+//				if (eqcIt.hasNext()) {
+//					first = eqcIt.next();
+//				} else {
+//					// equivalence class has only elements that need to be havocced
+//					for (FUNCTION el : eqc) {
+//						newFunctionEqualities.findAndConstructEquivalenceClassIfNeeded(el);
+//					}
+//					continue;
+//				}
+//			}
+////			assert !first.dependsOn(funcToBeHavocced);
+//			assert !first.equals(funcToBeHavocced);
+//
+//			// construct the new equivalence class by merging all elements of the old, except func
+//			for (FUNCTION el : eqc) {
+////				if (el.dependsOn(funcToBeHavocced)) {
+//				if (el.equals(funcToBeHavocced)) {
+//					// el is havocced --> don't merge its equivalence class
+//					continue;
+//				}
+//				newFunctionEqualities.findAndConstructEquivalenceClassIfNeeded(el);
+//				newFunctionEqualities.union(first, el);
+//			}
+//		}
+//		mFunctionEqualities = newFunctionEqualities;	
 		
-		assert !mFunctionEqualities.getAllEquivalenceClasses().stream()
+		assert mFunctionEqualities.getAllEquivalenceClasses().isEmpty()
+			|| !mFunctionEqualities.getAllEquivalenceClasses().stream()
 			.map(eqc -> eqc.contains(funcToBeHavocced))
 			.reduce((a,b) -> a || b).get();
 		mOwner.removeFunction(funcToBeHavocced);
