@@ -32,6 +32,7 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorabstraction.ErrorAutomatonStatisticsGenerator.EnhancementType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorabstraction.ErrorTraceContainer.ErrorTrace;
 
 /**
@@ -73,6 +74,14 @@ public class ErrorTraceContainer<LETTER> implements Iterable<ErrorTrace<LETTER>>
 	}
 
 	/**
+	 * TODO remove this and the field after collecting statistics.
+	 * @param enhancement Enhancement type.
+	 */
+	public void addEnhancementType(final EnhancementType enhancement) {
+		mTraces.get(mTraces.size() - 1).mEnhancement = enhancement;
+	}
+
+	/**
 	 * @return {@code true} iff there is no error trace.
 	 */
 	public boolean isEmpty() {
@@ -101,6 +110,7 @@ public class ErrorTraceContainer<LETTER> implements Iterable<ErrorTrace<LETTER>>
 	public static final class ErrorTrace<LETTER> {
 		private final IRun<LETTER, IPredicate, ?> mTrace;
 		private IPredicate mPrecondition;
+		public EnhancementType mEnhancement;
 
 		/**
 		 * @param trace
@@ -127,6 +137,10 @@ public class ErrorTraceContainer<LETTER> implements Iterable<ErrorTrace<LETTER>>
 
 		public IPredicate getPrecondition() {
 			return mPrecondition;
+		}
+
+		public EnhancementType getEnhancement() {
+			return mEnhancement;
 		}
 	}
 }

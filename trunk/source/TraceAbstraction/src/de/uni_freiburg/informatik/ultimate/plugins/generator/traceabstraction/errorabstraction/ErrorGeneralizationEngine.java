@@ -213,6 +213,7 @@ public class ErrorGeneralizationEngine<LETTER extends IIcfgTransition<?>> implem
 				(INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate>) abstraction,
 				predicateFactoryInterpolantAutomata, predicateFactoryResultChecking, errorTrace);
 		mErrorAutomatonStatisticsGenerator.finishAutomatonInstance();
+		mErrorTraces.addEnhancementType(mErrorAutomatonStatisticsGenerator.getEnhancement());
 	}
 
 	/**
@@ -243,12 +244,30 @@ public class ErrorGeneralizationEngine<LETTER extends IIcfgTransition<?>> implem
 					+ (mErrorTraces.size() == 1 ? " error trace:" : " different error traces in total:"));
 			int ctr = 0;
 			for (final ErrorTrace<LETTER> errorTrace : mErrorTraces) {
+				final StringBuilder builder = new StringBuilder();
+				builder.append(++ctr).append(": Error trace of length ")
+						.append(errorTrace.getTrace().getWord().length());
+				switch (errorTrace.getEnhancement()) {
+					case NONE:
+						builder.append(" (no additional traces)");
+						break;
+					case FINITE:
+						builder.append(" (finite language)");
+						break;
+					case INFINITE:
+						builder.append(" (infinite language)");
+						break;
+					default:
+						throw new IllegalArgumentException("Unknown enhancement type: " + errorTrace.getEnhancement());
+				}
 				final IPredicate precondition = errorTrace.getPrecondition();
 				// TODO 2017-06-14 Christian: Do not print error precondition on info level after testing phase.
-				mLogger.info(++ctr + ": Error trace of length " + errorTrace.getTrace().getWord().length()
-						+ (precondition == null
-								? " (precondition not computed)."
-								: " has precondition " + precondition.getFormula() + '.'));
+				if (precondition == null) {
+					builder.append(" (precondition not computed).");
+				} else {
+					builder.append(" has precondition ").append(precondition.getFormula()).append('.');
+				}
+				mLogger.warn(builder.toString());
 			}
 		}
 		// TODO 2017-06-18 Christian: Currently we want to run the CEGAR loop until the abstraction is empty.

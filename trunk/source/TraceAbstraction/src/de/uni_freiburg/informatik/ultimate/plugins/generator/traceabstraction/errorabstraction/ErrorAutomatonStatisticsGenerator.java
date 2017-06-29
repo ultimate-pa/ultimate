@@ -48,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Determ
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Difference;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Intersect;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsFinite;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveDeadEnds;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveUnreachable;
@@ -76,6 +77,26 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
 public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvider {
+	/**
+	 * Type of enhancement over the {@code StraightLineInterpolantAutomatonBuilder} result.
+	 * 
+	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+	 */
+	public enum EnhancementType {
+		/**
+		 * No enhancement, just the straight-line automaton.
+		 */
+		NONE,
+		/**
+		 * Enhancement, but language is finite.
+		 */
+		FINITE,
+		/**
+		 * Enhancement, language is infinite.
+		 */
+		INFINITE
+	}
+
 	private static final String ERROR_AUTOMATON_CONSTRUCTION_TIME = "ErrorAutomatonConstructionTime";
 	private static final String ERROR_AUTOMATON_DIFFERENCE_TIME = "ErrorAutomatonDifferenceTime";
 	private final Benchmark mBenchmark;
@@ -83,7 +104,7 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 	private boolean mRunningDifference = false;
 	private int mTraceLength = -1;
 	private final List<AutomatonStatisticsEntry> mAutomatonStatistics = new LinkedList<>();
-	private Boolean mAcceptsSingleTrace;
+	private EnhancementType mEnhancement;
 
 	public ErrorAutomatonStatisticsGenerator() {
 		mBenchmark = new Benchmark();
@@ -126,17 +147,14 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 			final PredicateFactoryResultChecking predicateFactoryResultChecking,
 			final IRun<LETTER, IPredicate, ?> errorTrace) throws AutomataLibraryException {
 		final NestedWordAutomaton<LETTER, IPredicate> subtrahend;
-		String automatonType;
 		final AutomataLibraryServices alServices = new AutomataLibraryServices(services);
 		switch (errorAutomatonBuilder.getType()) {
 			case ERROR_AUTOMATON:
 				subtrahend = errorAutomatonBuilder.getResultBeforeEnhancement();
-				automatonType = "error";
 				break;
 			case DANGER_AUTOMATON:
 				subtrahend = constructStraightLineAutomaton(services, errorTrace, new VpAlphabet<>(abstraction),
 						predicateFactory);
-				automatonType = "danger";
 				break;
 			default:
 				throw new IllegalArgumentException("Unknown error automaton type: " + errorAutomatonBuilder.getType());
@@ -154,28 +172,42 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 				new PowersetDeterminizer<>(subtrahend, true, predicateFactory);
 		final IDoubleDeckerAutomaton<LETTER, IPredicate> diff = new Difference<>(alServices,
 				predicateFactoryResultChecking, effectiveErrorAutomaton, subtrahend, psd, false).getResult();
-		mAcceptsSingleTrace = new IsEmpty<>(alServices, diff).getResult();
-		if (mAcceptsSingleTrace) {
-			logger.warn("Enhancement did not add additional traces.");
+		if (new IsEmpty<>(alServices, diff).getResult()) {
+			mEnhancement = EnhancementType.NONE;
+			if (logger.isWarnEnabled()) {
+				logger.warn("Automaton did not add additional traces.");
+			}
+		} else if (new IsFinite<>(alServices, effectiveErrorAutomaton).getResult()) {
+			mEnhancement = EnhancementType.FINITE;
+			if (logger.isWarnEnabled()) {
+				logger.warn("Automaton has a finite language.");
+			}
+		} else {
+			mEnhancement = EnhancementType.INFINITE;
+			if (logger.isInfoEnabled()) {
+				logger.info("Automaton has an infinite language.");
+			}
 		}
 		final NestedWordAutomatonReachableStates<LETTER, IPredicate> nwars =
 				new NestedWordAutomatonReachableStates<>(alServices, effectiveErrorAutomaton);
 		nwars.computeAcceptingComponents();
-		logger.info("Effective " + automatonType + " automaton size information: " + nwars.sizeInformation());
+		if (logger.isInfoEnabled()) {
+			logger.info("Effective automaton size information: " + nwars.sizeInformation());
+		}
 	}
 
 	public void finishAutomatonInstance() {
-		if (mRunningConstruction || mRunningDifference || mTraceLength == -1 || mAcceptsSingleTrace == null) {
+		if (mRunningConstruction || mRunningDifference || mTraceLength == -1 || mEnhancement == null) {
 			throw new IllegalAccessError("Not all statistics data were provided.");
 		}
 		final long constructionTime = getLastConstructionTime();
 		final long differenceTime =
 				(long) mBenchmark.getElapsedTime(ERROR_AUTOMATON_DIFFERENCE_TIME, TimeUnit.NANOSECONDS);
 		final int traceLength = mTraceLength;
-		final boolean acceptsSingleTrace = mAcceptsSingleTrace;
+		final EnhancementType enhancement = mEnhancement;
 		mTraceLength = -1;
 		mAutomatonStatistics
-				.add(new AutomatonStatisticsEntry(constructionTime, differenceTime, traceLength, acceptsSingleTrace));
+				.add(new AutomatonStatisticsEntry(constructionTime, differenceTime, traceLength, enhancement));
 	}
 
 	/**
@@ -190,6 +222,10 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 	 */
 	public Object getTotalNumber() {
 		return mAutomatonStatistics.size();
+	}
+
+	public EnhancementType getEnhancement() {
+		return mEnhancement;
 	}
 
 	@Override
@@ -214,8 +250,12 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 				return getAverageErrorAutomatonConstructionTime(stats -> stats.mDifferenceTime);
 			case ErrorAutomatonDifferenceTimeTotal:
 				return getTotalErrorAutomatonConstructionTime(stats -> stats.mDifferenceTime);
-			case AcceptsSingleTrace:
-				return getTotalNumberOfSingleTraceAcceptance();
+			case NumberOfNoEnhancement:
+				return getNumberOfGivenEnhancementType(EnhancementType.NONE);
+			case NumberOfFiniteEnhancement:
+				return getNumberOfGivenEnhancementType(EnhancementType.FINITE);
+			case NumberOfInfiniteEnhancement:
+				return getNumberOfGivenEnhancementType(EnhancementType.INFINITE);
 			default:
 				throw new AssertionError("Unknown key: " + key);
 		}
@@ -238,10 +278,10 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 		return result / total;
 	}
 
-	private Object getTotalNumberOfSingleTraceAcceptance() {
+	private Object getNumberOfGivenEnhancementType(final EnhancementType enhancementType) {
 		int result = 0;
 		for (final AutomatonStatisticsEntry stats : mAutomatonStatistics) {
-			if (stats.mAcceptsSingleTrace) {
+			if (stats.mEnhancement == enhancementType) {
 				++result;
 			}
 		}
@@ -352,14 +392,14 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 		private final long mConstructionTime;
 		private final int mTraceLength;
 		private final long mDifferenceTime;
-		private final boolean mAcceptsSingleTrace;
+		private final EnhancementType mEnhancement;
 
 		public AutomatonStatisticsEntry(final long constructionTime, final long differenceTime, final int traceLength,
-				final boolean acceptsSingleTrace) {
+				final EnhancementType enhancement) {
 			mDifferenceTime = differenceTime;
 			mConstructionTime = constructionTime;
 			mTraceLength = traceLength;
-			mAcceptsSingleTrace = acceptsSingleTrace;
+			mEnhancement = enhancement;
 		}
 	}
 }
