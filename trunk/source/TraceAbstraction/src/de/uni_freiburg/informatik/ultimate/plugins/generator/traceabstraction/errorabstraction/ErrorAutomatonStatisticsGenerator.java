@@ -342,7 +342,7 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 
 			@Override
 			public IPredicate[] getInterpolants() {
-				final IPredicate[] list = new IPredicate[errorTrace.getLength()];
+				final IPredicate[] list = new IPredicate[errorTrace.getWord().length() - 1];
 				for (int i = 0; i < list.length; ++i) {
 					list[i] = createPredicate();
 				}
