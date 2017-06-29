@@ -73,6 +73,8 @@ public class IcfgLoop<INLOC extends IcfgLocation> {
 		}
 
 		mNestedLoops.add(loopNodes);
+		mNestedNodes.addAll(loopNodes.getLoopbody());
+		mNestedNodes.remove(loopNodes.mHead);
 	}
 
 	public boolean hasNestedLoops() {
