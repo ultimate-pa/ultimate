@@ -33,7 +33,6 @@ import java.util.Deque;
 import java.util.HashSet;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -116,9 +115,6 @@ public class IcfgLoop<INLOC extends IcfgLocation> {
 		}
 
 		while (!queue.isEmpty()) {
-			if (!mServices.getProgressMonitorService().continueProcessing()) {
-				throw new ToolchainCanceledException(getClass(), "enumerating all paths in loop");
-			}
 			final ArrayList<IcfgEdge> path = queue.removeFirst();
 			final INLOC destination = (INLOC) path.get(path.size() - 1).getTarget();
 			if (destination.equals(mHead)) {
@@ -126,7 +122,7 @@ public class IcfgLoop<INLOC extends IcfgLocation> {
 				continue;
 			}
 			for (final IcfgEdge edge : destination.getOutgoingEdges()) {
-				if (!mNestedNodes.contains(edge.getTarget()) && mLoopbody.contains(edge.getTarget())) {
+				if (!mNestedNodes.contains(edge.getTarget()) && mLoopbody.contains(edge.getTarget()) && !destination.equals(edge.getTarget())) {
 					final ArrayList<IcfgEdge> addPath = new ArrayList<>(path);
 					addPath.add(edge);
 					queue.add(addPath);
