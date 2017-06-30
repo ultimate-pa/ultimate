@@ -78,6 +78,7 @@ import de.uni_freiburg.informatik.ultimate.util.ConstructionCache;
 import de.uni_freiburg.informatik.ultimate.util.ConstructionCache.IValueConstruction;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  * Constructs a danger automaton for a given error trace.
@@ -90,11 +91,21 @@ class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements IErro
 	/**
 	 * {@code true} iff predicates are unified.
 	 */
-	private static final boolean UNIFY_PREDICATES = false;
+	private static final boolean UNIFY_PREDICATES = true;
 
 	private final IUltimateServiceProvider mServices;
 	private final NestedWordAutomaton<LETTER, IPredicate> mResult;
 	private final IPredicate mErrorPrecondition;
+
+	private final Set<IPredicate> mPredicates;
+
+	private final ILogger mLogger;
+
+	private final CfgSmtToolkit mCsTookit;
+
+	private PredicateTransformer<Term, IPredicate, TransFormula> mPt;
+	final ConstructionCache<Pair<IPredicate, LETTER>, Term> mPreInternalCc;
+	final ConstructionCache<Triple<IPredicate, LETTER, IPredicate>, LBool> mIntersectionWithPreInternalCc;
 
 	/**
 	 * @param services
@@ -128,17 +139,53 @@ class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements IErro
 			final PredicateFactoryForInterpolantAutomata predicateFactoryForAutomaton,
 			final INestedWordAutomaton<LETTER, IPredicate> abstraction, final NestedWord<LETTER> trace) {
 		mServices = services;
-		final ILogger logger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		mCsTookit = csToolkit;
 		final PredicateUnificationMechanism internalPredicateUnifier =
 				new PredicateUnificationMechanism(predicateUnifier, UNIFY_PREDICATES);
 
-		final TracePredicates tracePredicates = constructPredicates(logger, predicateFactory, internalPredicateUnifier,
+		final TracePredicates tracePredicates = constructPredicates(mLogger, predicateFactory, internalPredicateUnifier,
 				csToolkit, simplificationTechnique, xnfConversionTechnique, symbolTable, trace, predicateUnifier);
 		mErrorPrecondition = tracePredicates.getPrecondition();
-		final Set<IPredicate> predicates = collectPredicates(tracePredicates);
+		mPredicates = collectPredicates(tracePredicates);
+		mPt = new PredicateTransformer<>(
+				csToolkit.getManagedScript(), new TermDomainOperationProvider(mServices, csToolkit.getManagedScript()));
+		
+		{
+			final IValueConstruction<Pair<IPredicate, LETTER>, Term> valueConstruction =
+					new IValueConstruction<Pair<IPredicate, LETTER>, Term>() {
+				@Override
+				public Term constructValue(final Pair<IPredicate, LETTER> key) {
+					final Term wp = mPt.weakestPrecondition(predicateFactory.not(key.getFirst()), key.getSecond().getTransformula());
+					final Term wpLessQuantifiers = PartialQuantifierElimination.tryToEliminate(mServices, mLogger,
+							csToolkit.getManagedScript(), wp, SimplificationTechnique.SIMPLIFY_DDA,
+							XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+					final Term pre = SmtUtils.not(csToolkit.getManagedScript().getScript(), wpLessQuantifiers);
+					return pre;
+				}
+			};
+			mPreInternalCc = new ConstructionCache<>(valueConstruction);
+		}
+		
+		{
+			final IValueConstruction<Triple<IPredicate, LETTER, IPredicate>, LBool> valueConstruction =
+					new IValueConstruction<Triple<IPredicate, LETTER, IPredicate>, LBool>() {
 
-		mResult = constructDangerAutomaton(new AutomataLibraryServices(services), logger, predicateFactory,
-				internalPredicateUnifier, csToolkit, predicateFactoryForAutomaton, abstraction, predicates);
+						@Override
+						public LBool constructValue(final Triple<IPredicate, LETTER, IPredicate> key) {
+							final Term pre = mPreInternalCc.getOrConstruct(new Pair<IPredicate, LETTER>(key.getThird(), key.getSecond())); 
+							final Term conjunction = SmtUtils.and(csToolkit.getManagedScript().getScript(),
+									Arrays.asList(new Term[] { pre, key.getFirst().getFormula() }));
+							final LBool checkSatRes = SmtUtils.checkSatTerm(csToolkit.getManagedScript().getScript(), conjunction);
+							return checkSatRes;
+						}
+			};
+			mIntersectionWithPreInternalCc = new ConstructionCache<>(valueConstruction);
+		}
+		
+
+		mResult = constructDangerAutomaton(new AutomataLibraryServices(services), mLogger, predicateFactory,
+				internalPredicateUnifier, csToolkit, predicateFactoryForAutomaton, abstraction, mPredicates);
 	}
 
 	@Override
@@ -232,8 +279,7 @@ class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements IErro
 				// successor state does not (yet?) have corresponding predicate
 				continue;
 			}
-			final Term pre = constructPreInternal(logger, predicateFactory, csToolkit, pt,
-					out.getLetter().getTransformula(), succInDanger);
+			final Term pre = mPreInternalCc.getOrConstruct(new Pair<IPredicate, LETTER>(succInDanger, out.getLetter())); 
 			programStatesWithSucc_Term.add(pre);
 		}
 		final IPredicate programStatesWithSucc_Pred = predicateFactory
@@ -301,8 +347,8 @@ class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements IErro
 			}
 			assert result.getStates().contains(succInDanger);
 			final LBool checkSatRes;
-			checkSatRes = checkIntersectionWithPre(logger, predicateFactory, csToolkit, pt, newState, out,
-					succInDanger);
+			checkSatRes = mIntersectionWithPreInternalCc.getOrConstruct(
+					new Triple<IPredicate, LETTER, IPredicate>(newState, out.getLetter(), succInDanger));
 			if (checkSatRes != LBool.UNSAT) {
 				// edge probably (result might be unknown) contributed, so we add it
 				result.addInternalTransition(newState, out.getLetter(), succInDanger);
@@ -319,14 +365,10 @@ class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements IErro
 			final CfgSmtToolkit csToolkit, final PredicateTransformer<Term, IPredicate, TransFormula> pt,
 			final IPredicate predecessor, final OutgoingInternalTransition<LETTER, IPredicate> out,
 			final IPredicate successor) {
-		final LBool checkSatRes;
-		{
-			final Term pre = constructPreInternal(logger, predicateFactory, csToolkit, pt,
-					out.getLetter().getTransformula(), successor);
-			final Term conjunction = SmtUtils.and(csToolkit.getManagedScript().getScript(),
-					Arrays.asList(new Term[] { pre, predecessor.getFormula() }));
-			checkSatRes = SmtUtils.checkSatTerm(csToolkit.getManagedScript().getScript(), conjunction);
-		}
+		final Term pre = mPreInternalCc.getOrConstruct(new Pair<IPredicate, LETTER>(successor, out.getLetter())); 
+		final Term conjunction = SmtUtils.and(csToolkit.getManagedScript().getScript(),
+				Arrays.asList(new Term[] { pre, predecessor.getFormula() }));
+		final LBool checkSatRes = SmtUtils.checkSatTerm(csToolkit.getManagedScript().getScript(), conjunction);
 		return checkSatRes;
 	}
 
