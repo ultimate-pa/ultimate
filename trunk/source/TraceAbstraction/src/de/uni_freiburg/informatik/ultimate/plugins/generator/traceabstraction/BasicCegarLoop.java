@@ -815,7 +815,14 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		if (!errorGeneralizationEnabled) {
 			return false;
 		}
-		return mErrorGeneralizationEngine.isResultUnsafe(abstractResult);
+		final CFG2NestedWordAutomaton<LETTER> cFG2NestedWordAutomaton = new CFG2NestedWordAutomaton<>(mServices,
+				mPref.interprocedural(), super.mCsToolkit, mPredicateFactory, mLogger);
+		final INestedWordAutomaton<LETTER, IPredicate> cfg = cFG2NestedWordAutomaton
+				.getNestedWordAutomaton(super.mIcfgContainer, mStateFactoryForRefinement, super.mErrorLocs);
+		return mErrorGeneralizationEngine.isResultUnsafe(abstractResult,
+				cfg, mCsToolkit, mPredicateFactory, mTraceCheckAndRefinementEngine.getPredicateUnifier(),
+				mSimplificationTechnique, mXnfConversionTechnique, mIcfgContainer.getCfgSmtToolkit().getSymbolTable()
+				);
 	}
 
 	public void setWitnessAutomaton(final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> witnessAutomaton) {

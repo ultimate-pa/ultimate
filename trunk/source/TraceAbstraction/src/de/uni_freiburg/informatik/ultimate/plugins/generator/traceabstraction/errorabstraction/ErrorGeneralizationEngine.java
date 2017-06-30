@@ -26,21 +26,34 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorabstraction;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
+import de.uni_freiburg.informatik.ultimate.core.model.results.IRelevanceInformation;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
@@ -50,8 +63,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Ab
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryResultChecking;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.RelevanceInformation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorabstraction.ErrorAutomatonStatisticsGenerator.EnhancementType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorabstraction.ErrorTraceContainer.ErrorTrace;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorlocalization.FlowSensitiveFaultLocalizer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomatonEnhancement;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
@@ -242,7 +258,10 @@ public class ErrorGeneralizationEngine<LETTER extends IIcfgTransition<?>> implem
 	 *            result that would be reported by {@link AbstractCegarLoop}
 	 * @return {@code true} if at least one feasible counterexample was detected
 	 */
-	public boolean isResultUnsafe(final Result abstractResult) {
+	public boolean isResultUnsafe(final Result abstractResult, final INestedWordAutomaton<LETTER, IPredicate> cfg,
+			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
+			final IPredicateUnifier predicateUnifier, final SimplificationTechnique simplificationTechnique,
+			final XnfConversionTechnique xnfConversionTechnique, final IIcfgSymbolTable symbolTable) {
 		if (mErrorTraces.isEmpty()) {
 			return false;
 		}
@@ -250,11 +269,11 @@ public class ErrorGeneralizationEngine<LETTER extends IIcfgTransition<?>> implem
 			mLogger.info("Found " + mErrorTraces.size()
 					+ (mErrorTraces.size() == 1 ? " error trace:" : " different error traces in total:"));
 			int ctr = 0;
-			for (final ErrorTrace<LETTER> errorTrace : mErrorTraces) {
+			for (final ErrorTrace<LETTER> errorTraceWrapper : mErrorTraces) {
 				final StringBuilder builder = new StringBuilder();
 				builder.append(++ctr).append(": Error trace of length ")
-						.append(errorTrace.getTrace().getWord().length());
-				switch (errorTrace.getEnhancement()) {
+						.append(errorTraceWrapper.getTrace().getWord().length());
+				switch (errorTraceWrapper.getEnhancement()) {
 					case NONE:
 						builder.append(" (no additional traces)");
 						break;
@@ -268,9 +287,10 @@ public class ErrorGeneralizationEngine<LETTER extends IIcfgTransition<?>> implem
 						builder.append(" (unknown trace enhancement)");
 						break;
 					default:
-						throw new IllegalArgumentException("Unknown enhancement type: " + errorTrace.getEnhancement());
+						throw new IllegalArgumentException(
+								"Unknown enhancement type: " + errorTraceWrapper.getEnhancement());
 				}
-				final IPredicate precondition = errorTrace.getPrecondition();
+				final IPredicate precondition = errorTraceWrapper.getPrecondition();
 				// TODO 2017-06-14 Christian: Do not print error precondition on info level after testing phase.
 				if (precondition == null) {
 					builder.append(" (precondition not computed).");
@@ -280,7 +300,85 @@ public class ErrorGeneralizationEngine<LETTER extends IIcfgTransition<?>> implem
 				mLogger.warn(builder.toString());
 			}
 		}
+
+		// apply fault localization to all error traces
+		faultLocalization(cfg, csToolkit, predicateFactory, predicateUnifier, simplificationTechnique,
+				xnfConversionTechnique, symbolTable);
+
 		// TODO 2017-06-18 Christian: Currently we want to run the CEGAR loop until the abstraction is empty.
 		return abstractResult == Result.SAFE;
+	}
+
+	@SuppressWarnings("unchecked")
+	private void faultLocalization(final INestedWordAutomaton<LETTER, IPredicate> cfg, final CfgSmtToolkit csToolkit,
+			final PredicateFactory predicateFactory, final IPredicateUnifier predicateUnifier,
+			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
+			final IIcfgSymbolTable symbolTable) {
+		final Map<IcfgLocation, Set<LETTER>> finalLoc2responsibleStmts = new HashMap<>();
+		for (final ErrorTrace<LETTER> errorTraceWrapper : mErrorTraces) {
+			final NestedRun<LETTER, IPredicate> trace = (NestedRun<LETTER, IPredicate>) errorTraceWrapper.getTrace();
+
+			// fault localization of single trace
+			final List<IRelevanceInformation> relevanceInformation =
+					new FlowSensitiveFaultLocalizer<>(trace, cfg, mServices, csToolkit, predicateFactory,
+							csToolkit.getModifiableGlobalsTable(), predicateUnifier, true, false,
+							simplificationTechnique, xnfConversionTechnique, symbolTable).getRelevanceInformation();
+
+			final Collection<LETTER> newResponsibleStmts =
+					findResponsibleStatements(relevanceInformation, trace.getWord());
+
+			aggregate(newResponsibleStmts, finalLoc2responsibleStmts, trace.getStateSequence());
+		}
+
+		presentResult(finalLoc2responsibleStmts);
+	}
+
+	private Collection<LETTER> findResponsibleStatements(final List<IRelevanceInformation> relevanceInformation,
+			final NestedWord<LETTER> word) {
+		assert word.length() == relevanceInformation.size();
+		final Iterator<LETTER> traceIt = word.iterator();
+		final Iterator<IRelevanceInformation> relIt = relevanceInformation.iterator();
+		final List<LETTER> result = new ArrayList<>();
+		while (traceIt.hasNext()) {
+			final LETTER stmt = traceIt.next();
+			final RelevanceInformation rel = (RelevanceInformation) relIt.next();
+			if (rel != null && (rel.getCriterion1GF() || rel.getCriterion1UC())) {
+				result.add(stmt);
+			}
+		}
+		return result;
+	}
+
+	private static <LETTER> void aggregate(final Collection<LETTER> newResponsibleStmts,
+			final Map<IcfgLocation, Set<LETTER>> finalLoc2responsibleStmts, final ArrayList<IPredicate> stateSequence) {
+		final IcfgLocation finalLoc = ((ISLPredicate) stateSequence.get(stateSequence.size() - 1)).getProgramPoint();
+		Set<LETTER> responsibleStmts = finalLoc2responsibleStmts.get(finalLoc);
+		if (responsibleStmts == null) {
+			// we start with all responsible statements in this trace
+			responsibleStmts = new HashSet<>(newResponsibleStmts);
+			finalLoc2responsibleStmts.put(finalLoc, responsibleStmts);
+		} else {
+			// we take the intersection with all responsible statements
+			responsibleStmts.retainAll(newResponsibleStmts);
+		}
+	}
+
+	private void presentResult(final Map<IcfgLocation, Set<LETTER>> finalLoc2responsibleStmts) {
+		if (mLogger.isWarnEnabled()) {
+			final StringBuilder builder = new StringBuilder();
+			for (final Entry<IcfgLocation, Set<LETTER>> entry : finalLoc2responsibleStmts.entrySet()) {
+				builder.append("Error location '").append(entry.getKey());
+				final Set<LETTER> statements = entry.getValue();
+				if (statements.isEmpty()) {
+					builder.append("' has no responsible statements.");
+				} else {
+					builder.append("' has the following responsible statements:\n");
+					for (final LETTER stmt : statements) {
+						builder.append(stmt).append(", ");
+					}
+				}
+			}
+			mLogger.warn(builder);
+		}
 	}
 }
