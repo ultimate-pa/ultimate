@@ -18,9 +18,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDim
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.IEqNodeIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainHelpers;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainPreanalysis;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainSymmetricPair;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqFunction;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNode;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNodeAndFunctionFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.IEqFunctionIdentifier;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
@@ -37,14 +36,16 @@ public class EqConstraintFactory<
 	private EqStateFactory<ACTION> mEqStateFactory;
 
 	private final EqNodeAndFunctionFactory mEqNodeAndFunctionFactory;
+	private final VPDomainPreanalysis mPreanalysis;
 	
-	public EqConstraintFactory(EqNodeAndFunctionFactory eqNodeAndFunctionFactory) {
+	public EqConstraintFactory(EqNodeAndFunctionFactory eqNodeAndFunctionFactory, VPDomainPreanalysis preanalysis) {
 		mBottomConstraint = new EqBottomConstraint<>(this);
 		mBottomConstraint.freeze();
 		
 		mEmptyConstraint = new EqConstraint<>(this);
 		mEmptyConstraint.freeze();
 
+		mPreanalysis = preanalysis;
 		mEqNodeAndFunctionFactory = eqNodeAndFunctionFactory;
 	}
 
@@ -126,7 +127,15 @@ public class EqConstraintFactory<
 				.map(conjunct -> conjunct.getConstraints()).collect(Collectors.toList());
 	
 		final Set<List<EqConstraint<ACTION, NODE, FUNCTION>>> crossProduct = 
-				VPDomainHelpers.computeCrossProduct(listOfConstraintSets);
+				VPDomainHelpers.computeCrossProduct(listOfConstraintSets, mPreanalysis.getServices());
+		
+		if (crossProduct == null) {
+			if (!mPreanalysis.getServices().getProgressMonitorService().continueProcessing()) {
+				return getTopDisjunctiveConstraint();
+			} else {
+				throw new AssertionError("cross product should only return null if there is a timeout");
+			}
+		}
 	
 		final Set<Set<EqConstraint<ACTION, NODE, FUNCTION>>> constraintSetSet = crossProduct.stream()
 				.map(constraintList -> (conjoin(constraintList).getConstraints()))
@@ -271,6 +280,11 @@ public class EqConstraintFactory<
 		final ManagedScript mgdScript = mEqNodeAndFunctionFactory.getScript();
 		mgdScript.lock(this);
 		for (NODE cn : chosenNodes) {
+			if (!mPreanalysis.getServices().getProgressMonitorService().continueProcessing()) {
+				mgdScript.unlock(this);
+				return newConstraintWithPropagations;
+			}
+			
 			final Term func1AtIndexTerm = mgdScript.term(this, "select", func1.getTerm(), cn.getTerm());
 			final NODE func1AtIndex = (NODE) mEqNodeAndFunctionFactory.getOrConstructEqNode(func1AtIndexTerm);
 			final Term func2AtIndexTerm = mgdScript.term(this, "select", func2.getTerm(), cn.getTerm());
@@ -992,10 +1006,14 @@ public class EqConstraintFactory<
 		return mEqNodeAndFunctionFactory;
 	}
 
-	public EqDisjunctiveConstraint<ACTION, EqNode, EqFunction> complement(
-			EqConstraint<ACTION, EqNode, EqFunction> constraint) {
-		// TODO Auto-generated method stub
-		assert false;
-		return null;
+//	public EqDisjunctiveConstraint<ACTION, EqNode, EqFunction> complement(
+//			EqConstraint<ACTION, EqNode, EqFunction> constraint) {
+//		// TODO Auto-generated method stub
+//		assert false;
+//		return null;
+//	}
+
+	public EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> getTopDisjunctiveConstraint() {
+		return getDisjunctiveConstraint(Collections.singleton(getEmptyConstraint()));
 	}
 }

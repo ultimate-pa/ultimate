@@ -57,6 +57,9 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>> implem
 
 	@Override
 	public List<EqState<ACTION>> apply(EqState<ACTION> oldstate, ACTION transition) {
+		if (!mPreAnalysis.getServices().getProgressMonitorService().continueProcessing()) {
+			return mEqConstraintFactory.getTopDisjunctiveConstraint().toEqStates(oldstate.getVariables());
+		}
 		
 		final EqTransitionRelation<ACTION> transitionRelation = 
 				mTransFormulaConverter.getEqTransitionRelationFromTransformula(transition.getTransformula());
@@ -77,6 +80,11 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>> implem
 				mCfgSmtToolkit.getSymbolTable().getGlobals());
 		assert hierarchicalPreOrStateAfterLeaving.getVariables().containsAll(
 				mCfgSmtToolkit.getSymbolTable().getLocals(transition.getSucceedingProcedure()));
+
+		if (!mPreAnalysis.getServices().getProgressMonitorService().continueProcessing()) {
+			return mEqConstraintFactory.getTopDisjunctiveConstraint()
+					.toEqStates(hierarchicalPreOrStateAfterLeaving.getVariables());
+		}
 
 		if (transition instanceof Call) {
 			final String calledProcedure = transition.getSucceedingProcedure();
@@ -99,20 +107,8 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>> implem
 							stateBeforeLeaving.toEqPredicate(), 
 							localVarAssignments, globalVarAssignments, oldVarAssignments, 
 							modifiableGlobalsOfCalledProcedure);
-			//TODO where do we get the variables for the new scope??
-//			Set<ILocalProgramVar> newScopeLocalVars = 
-//					mCfgSmtToolkit.getSymbolTable().getLocals(transition.getSucceedingProcedure());
-//			Set<IProgramNonOldVar> globalVars = mCfgSmtToolkit.getSymbolTable().getGlobals();
-//			Set<IProgramConst> constants = mCfgSmtToolkit.getSymbolTable().getConstants();
-//			Set<IProgramVarOrConst> newScopePvocs = new HashSet<>();
-//			newScopePvocs.addAll(newScopeLocalVars);
-//			newScopePvocs.addAll(globalVars);
-//			newScopePvocs.addAll(constants);
-//			return postConstraint.toEqStates(newScopePvocs); 
 			final List<EqState<ACTION>> result = 
 					postConstraint.toEqStates(hierarchicalPreOrStateAfterLeaving.getVariables()); 
-//			assert result.stream()
-//				.allMatch(state -> state.getVariables().containsAll(hierarchicalPreOrStateAfterLeaving.getVariables()));
 			return result;
 		} else if (transition instanceof Summary) {
 			return apply(stateBeforeLeaving, transition);
@@ -140,16 +136,6 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>> implem
 							callTF, 
 							oldVarAssignments, 
 							modifiableGlobals);
-			
-//			Set<ILocalProgramVar> newScopeLocalVars = 
-//					mCfgSmtToolkit.getSymbolTable().getLocals(transition.getSucceedingProcedure());
-//			Set<IProgramNonOldVar> globalVars = mCfgSmtToolkit.getSymbolTable().getGlobals();
-//			Set<IProgramConst> constants = mCfgSmtToolkit.getSymbolTable().getConstants();
-//			Set<IProgramVarOrConst> newScopePvocs = new HashSet<>();
-//			newScopePvocs.addAll(newScopeLocalVars);
-//			newScopePvocs.addAll(globalVars);
-//			newScopePvocs.addAll(constants);
-//			return postConstraint.toEqStates(newScopePvocs); 
 			
 			final List<EqState<ACTION>> result = 
 					postConstraint.toEqStates(hierarchicalPreOrStateAfterLeaving.getVariables());

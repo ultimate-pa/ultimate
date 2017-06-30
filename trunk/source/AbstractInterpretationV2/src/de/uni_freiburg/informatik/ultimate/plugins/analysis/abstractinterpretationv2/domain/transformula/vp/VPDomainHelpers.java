@@ -38,6 +38,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -306,15 +307,21 @@ public class VPDomainHelpers {
 	 * cross product computation
 	 *
 	 * @param
-	 * @return
+	 * @return the cross product, null if there was a timeout
 	 */
-	public static <T> Set<List<T>> computeCrossProduct(final List<Set<T>> nodesWithSideConditions) {
+	public static <T> Set<List<T>> computeCrossProduct(final List<Set<T>> nodesWithSideConditions,
+			IUltimateServiceProvider services) {
 		
 		Set<List<T>> result = new HashSet<>();
 		result.add(new ArrayList<>());
 		for (final Set<T> nwscs : nodesWithSideConditions) {
 			final Set<List<T>> newResult = new HashSet<>();
 			
+			// check timeout
+			if (!services.getProgressMonitorService().continueProcessing()) {
+				return null;
+			}
+
 			for (final List<T> index : result) {
 				for (final T nwsc : nwscs) {
 					final List<T> newIndex = new ArrayList<>(index);

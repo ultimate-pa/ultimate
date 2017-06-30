@@ -70,7 +70,8 @@ public class EqDisjunctiveConstraint<
 	 * @return
 	 */
 	public EqConstraint<ACTION, NODE, FUNCTION> flatten() {
-		
+		// TODO: catch cases where mConstraints.size <= 1;
+
 		Set<VPDomainSymmetricPair<NODE>> elementEqualities = null;
 		Set<VPDomainSymmetricPair<NODE>> elementDisequalities = null;
 		Set<VPDomainSymmetricPair<FUNCTION>> functionEqualities = null;

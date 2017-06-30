@@ -88,7 +88,7 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 //		mPost = new VPPostOperator<>(script, services, this);
 		
 		mEqNodeAndFunctionFactory = new EqNodeAndFunctionFactory(preAnalysis, mgdScript);
-		mEqConstraintFactory = new EqConstraintFactory<>(mEqNodeAndFunctionFactory);
+		mEqConstraintFactory = new EqConstraintFactory<>(mEqNodeAndFunctionFactory, mPreAnalysis);
 		mEqStateFactory = new EqStateFactory<>(mEqNodeAndFunctionFactory, mEqConstraintFactory, symbolTable);
 		mEqConstraintFactory.setEqStateFactory(mEqStateFactory);
 
