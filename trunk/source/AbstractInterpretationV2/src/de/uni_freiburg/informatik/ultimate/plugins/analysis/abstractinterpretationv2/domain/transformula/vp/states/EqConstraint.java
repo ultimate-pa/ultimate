@@ -237,17 +237,13 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 	 */
 	public EqConstraint<ACTION, NODE, FUNCTION> projectExistentially(Set<TermVariable> varsToProjectAway) {
 		final EqConstraint<ACTION, NODE, FUNCTION> unfrozen = mFactory.unfreeze(this);
-
-		for (TermVariable var : varsToProjectAway) {
-			unfrozen.havoc(var);
-//			if (var.getSort().isArraySort()) {
-//				FUNCTION funcCorrespondingToVariable = getFunctionForTerm(var);
-//				unfrozen.havocFunction(funcCorrespondingToVariable);
-//			} else {
-//				NODE nodeCorrespondingToVariable = getNodeForTerm(var);
-//				unfrozen.havoc(nodeCorrespondingToVariable);
-//			}
-		}
+		
+		
+		varsToProjectAway.forEach(var -> unfrozen.havoc(var));
+		
+//		for (TermVariable var : varsToProjectAway) {
+//			unfrozen.havoc(var);
+//		}
 		unfrozen.freeze();
 		assert VPDomainHelpers.constraintFreeOfVars(varsToProjectAway, unfrozen, 
 				mFactory.getEqNodeAndFunctionFactory().getScript().getScript()) : 
@@ -458,11 +454,11 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 	 * @return
 	 */
 	public Set<VPDomainSymmetricPair<NODE>> getAllElementEqualities() {
-		Set<VPDomainSymmetricPair<NODE>> result = new HashSet<>();
+		final Set<VPDomainSymmetricPair<NODE>> result = new HashSet<>();
 		final List<NODE> allNodes = new ArrayList<>(getAllNodes());
 		for (int i = 0; i < allNodes.size(); i++) {
 			for (int j = 0; j < i; j++) {
-				if (areEqual(allNodes.get(i), allNodes.get(i))) {
+				if (areEqual(allNodes.get(i), allNodes.get(j))) {
 					result.add(new VPDomainSymmetricPair<NODE>(allNodes.get(i), allNodes.get(j)));
 				}
 			}
@@ -475,11 +471,11 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 	 * @return all disequalities (as symmetric pairs) that hold in this state, i.e., not only those over representatives
 	 */
 	public Set<VPDomainSymmetricPair<NODE>> getAllElementDisequalities() {
-		Set<VPDomainSymmetricPair<NODE>> result = new HashSet<>();
+		final Set<VPDomainSymmetricPair<NODE>> result = new HashSet<>();
 		final List<NODE> allNodes = new ArrayList<>(getAllNodes());
 		for (int i = 0; i < allNodes.size(); i++) {
 			for (int j = 0; j < i; j++) {
-				if (areUnequal(allNodes.get(i), allNodes.get(i))) {
+				if (areUnequal(allNodes.get(i), allNodes.get(j))) {
 					result.add(new VPDomainSymmetricPair<NODE>(allNodes.get(i), allNodes.get(j)));
 				}
 			}
