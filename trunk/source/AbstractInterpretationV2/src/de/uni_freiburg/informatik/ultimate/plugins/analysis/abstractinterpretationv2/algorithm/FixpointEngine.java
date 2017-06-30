@@ -240,7 +240,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, VARDECL>, ACTION
 		} else {
 			// a context switch happened
 			if (mUseHierachicalPre && mTransitionProvider.isLeavingScope(currentAction)) {
-				postState = preStateWithFreshVariables.apply(postOp, hierachicalPreState, currentAction);
+				postState = hierachicalPreState.apply(postOp, preState, currentAction);
 			} else {
 				postState = preStateWithFreshVariables.apply(postOp, preState, currentAction);
 			}

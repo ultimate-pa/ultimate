@@ -2,17 +2,21 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.TransFormulaConverterCache;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainPreanalysis;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.EqConstraint;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.EqConstraintFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.EqDisjunctiveConstraint;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.EqOperationProvider;
@@ -115,7 +119,18 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>> implem
 		} else if (transition instanceof Return) {
 
 			final EqPredicate<ACTION> returnPred = stateBeforeLeaving.toEqPredicate();
-			final EqPredicate<ACTION> callPred = hierarchicalPreOrStateAfterLeaving.toEqPredicate();
+
+			Set<IProgramVar> oldVars = 
+					hierarchicalPreOrStateAfterLeaving.getConstraint().getVariables(
+							mCfgSmtToolkit.getSymbolTable()).stream().filter(var -> var.isOldvar()).collect(Collectors.toSet());
+			Set<TermVariable> ovTvs = oldVars.stream().map(ov -> ov.getTermVariable()).collect(Collectors.toSet());
+			EqConstraint<ACTION, EqNode, EqFunction> projectedCons = 
+					hierarchicalPreOrStateAfterLeaving.getConstraint().projectExistentially(ovTvs);
+			EqState<ACTION> hier = mEqConstraintFactory.getEqStateFactory().getEqState(projectedCons, hierarchicalPreOrStateAfterLeaving.getVariables());
+
+			final EqPredicate<ACTION> callPred = hier.toEqPredicate();
+//			final EqPredicate<ACTION> callPred = hierarchicalPreOrStateAfterLeaving.toEqPredicate();
+
 
 			final EqTransitionRelation<ACTION> returnTF = mTransFormulaConverter
 					.getEqTransitionRelationFromTransformula(((Return) transition).getAssignmentOfReturn());
