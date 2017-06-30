@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorabstraction;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -71,6 +72,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomatonEnhancement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.DefaultTransFormulas;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerSpWp.UnifyPostprocessor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TracePredicates;
 import de.uni_freiburg.informatik.ultimate.util.ConstructionCache;
 import de.uni_freiburg.informatik.ultimate.util.ConstructionCache.IValueConstruction;
@@ -131,7 +133,7 @@ class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements IErro
 				new PredicateUnificationMechanism(predicateUnifier, UNIFY_PREDICATES);
 
 		final TracePredicates tracePredicates = constructPredicates(logger, predicateFactory, internalPredicateUnifier,
-				csToolkit, simplificationTechnique, xnfConversionTechnique, symbolTable, trace);
+				csToolkit, simplificationTechnique, xnfConversionTechnique, symbolTable, trace, predicateUnifier);
 		mErrorPrecondition = tracePredicates.getPrecondition();
 		final Set<IPredicate> predicates = collectPredicates(tracePredicates);
 
@@ -223,7 +225,7 @@ class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements IErro
 			final ConstructionCache<Pair<IPredicate, Set<IPredicate>>, IPredicate> disjunctionProvider,
 			final Set<IPredicate> predicates, final PredicateTransformer<Term, IPredicate, TransFormula> pt,
 			final MonolithicImplicationChecker ic, final IPredicate pred) {
-		final Set<Term> statesThatHaveSuccTerms = new HashSet<>();
+		final Set<Term> programStatesWithSucc_Term = new HashSet<>();
 		for (final OutgoingInternalTransition<LETTER, IPredicate> out : abstraction.internalSuccessors(pred)) {
 			final IPredicate succInDanger = getSuccessorDisjunction(abstState2dangStates, disjunctionProvider, out);
 			if (succInDanger == null) {
@@ -232,13 +234,13 @@ class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements IErro
 			}
 			final Term pre = constructPreInternal(logger, predicateFactory, csToolkit, pt,
 					out.getLetter().getTransformula(), succInDanger);
-			statesThatHaveSuccTerms.add(pre);
+			programStatesWithSucc_Term.add(pre);
 		}
-		final IPredicate statesThatHaveSucc = predicateFactory
-				.newPredicate(SmtUtils.or(csToolkit.getManagedScript().getScript(), statesThatHaveSuccTerms));
+		final IPredicate programStatesWithSucc_Pred = predicateFactory
+				.newPredicate(SmtUtils.or(csToolkit.getManagedScript().getScript(), programStatesWithSucc_Term));
 		final Set<IPredicate> coveredPredicates = new HashSet<>();
 		for (final IPredicate candidate : predicates) {
-			final Validity icres = ic.checkImplication(candidate, false, statesThatHaveSucc, false);
+			final Validity icres = ic.checkImplication(candidate, false, programStatesWithSucc_Pred, false);
 			if (icres == Validity.VALID) {
 				coveredPredicates.add(candidate);
 			}
@@ -335,17 +337,18 @@ class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements IErro
 	}
 
 	private TracePredicates constructPredicates(final ILogger logger, final PredicateFactory predicateFactory,
-			final PredicateUnificationMechanism predicateUnifier, final CfgSmtToolkit csToolkit,
+			final PredicateUnificationMechanism pum, final CfgSmtToolkit csToolkit,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
-			final IIcfgSymbolTable symbolTable, final NestedWord<LETTER> trace) throws AssertionError {
+			final IIcfgSymbolTable symbolTable, final NestedWord<LETTER> trace, final IPredicateUnifier predicateUnifier) throws AssertionError {
 		final IterativePredicateTransformer ipt = new IterativePredicateTransformer(predicateFactory,
 				csToolkit.getManagedScript(), csToolkit.getModifiableGlobalsTable(), mServices, trace, null,
-				predicateUnifier.getFalsePredicate(), null, predicateUnifier.getTruePredicate(),
+				pum.getFalsePredicate(), null, pum.getTruePredicate(),
 				simplificationTechnique, xnfConversionTechnique, symbolTable);
-		final List<IPredicatePostprocessor> postprocessors;
+		final List<IPredicatePostprocessor> postprocessors = new ArrayList<>();
 		final QuantifierEliminationPostprocessor qepp = new QuantifierEliminationPostprocessor(mServices, logger,
 				csToolkit.getManagedScript(), predicateFactory, simplificationTechnique, xnfConversionTechnique);
-		postprocessors = Collections.singletonList(qepp);
+		postprocessors.add(qepp);
+		postprocessors.add(new UnifyPostprocessor(predicateUnifier));
 		final DefaultTransFormulas dtf = new DefaultTransFormulas(trace, null, null, Collections.emptySortedMap(),
 				csToolkit.getOldVarsAssignmentCache(), false);
 		try {
