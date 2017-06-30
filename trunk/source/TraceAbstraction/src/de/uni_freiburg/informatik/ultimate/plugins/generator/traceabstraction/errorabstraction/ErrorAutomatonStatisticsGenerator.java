@@ -94,7 +94,11 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 		/**
 		 * Enhancement, language is infinite.
 		 */
-		INFINITE
+		INFINITE,
+		/**
+		 * No information, execution was canceled.
+		 */
+		UNKNOWN
 	}
 
 	private static final String ERROR_AUTOMATON_CONSTRUCTION_TIME = "ErrorAutomatonConstructionTime";
@@ -196,25 +200,39 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 		}
 	}
 
-	public void finishAutomatonInstance() {
-		if (mRunningConstruction || mRunningDifference || mTraceLength == -1 || mEnhancement == null) {
-			throw new IllegalAccessError("Not all statistics data were provided.");
+	public void finishAutomatonInstance(final boolean prematureTermination) {
+		final long constructionTime;
+		final long differenceTime;
+		final int traceLength;
+		final EnhancementType enhancement;
+		if (prematureTermination) {
+			enhancement = EnhancementType.UNKNOWN;
+		} else {
+			if (mRunningConstruction || mRunningDifference || mTraceLength == -1 || mEnhancement == null) {
+				throw new IllegalAccessError("Not all statistics data were provided.");
+			}
+			enhancement = mEnhancement;
 		}
-		final long constructionTime = getLastConstructionTime();
-		final long differenceTime =
-				(long) mBenchmark.getElapsedTime(ERROR_AUTOMATON_DIFFERENCE_TIME, TimeUnit.NANOSECONDS);
-		final int traceLength = mTraceLength;
-		final EnhancementType enhancement = mEnhancement;
+		constructionTime = getLastConstructionTime();
+		differenceTime = getLastDifferenceTime();
+		traceLength = mTraceLength;
 		mTraceLength = -1;
 		mAutomatonStatistics
 				.add(new AutomatonStatisticsEntry(constructionTime, differenceTime, traceLength, enhancement));
 	}
 
 	/**
-	 * @return Construction time of last (previous) error automaton (in nanoseconds).
+	 * @return Construction time of previous error automaton (in nanoseconds).
 	 */
 	public long getLastConstructionTime() {
 		return (long) mBenchmark.getElapsedTime(ERROR_AUTOMATON_CONSTRUCTION_TIME, TimeUnit.NANOSECONDS);
+	}
+
+	/**
+	 * @return Difference time of previous error automaton (in nanoseconds).
+	 */
+	public long getLastDifferenceTime() {
+		return (long) mBenchmark.getElapsedTime(ERROR_AUTOMATON_DIFFERENCE_TIME, TimeUnit.NANOSECONDS);
 	}
 
 	/**

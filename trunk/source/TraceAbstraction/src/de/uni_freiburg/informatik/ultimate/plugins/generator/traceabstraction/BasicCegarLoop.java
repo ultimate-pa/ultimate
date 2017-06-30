@@ -460,11 +460,6 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 
 		computeAutomataDifference(minuend, subtrahend, subtrahendBeforeEnhancement,
 				predicateUnifier, exploitSigmaStarConcatOfIa, htc, enhanceMode, useErrorAutomaton, automatonType);
-
-		if (mErrorGeneralizationEngine.hasAutomatonInIteration(mIteration)) {
-			mErrorGeneralizationEngine.stopDifference(minuend, mPredicateFactoryInterpolantAutomata,
-					mPredicateFactoryResultChecking, mCounterexample);
-		}
 		
 		mLogger.info(predicateUnifier.collectPredicateUnifierStatistics());
 
@@ -497,12 +492,12 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 							minuend, subtrahend, psd, explointSigmaStarConcatOfIA);
 				}
 			} catch (final AutomataOperationCanceledException aoce) {
-				final RunningTaskInfo runningTaskInfo = getDifferenceTimeoutRunningTaskInfo(minuend, subtrahend,
+				final RunningTaskInfo runningTaskInfo = executeDifferenceTimeoutActions(minuend, subtrahend,
 						subtrahendBeforeEnhancement, automatonType);
 				aoce.addRunningTaskInfo(runningTaskInfo);
 				throw aoce;
 			} catch (final ToolchainCanceledException tce) {
-				final RunningTaskInfo runningTaskInfo = getDifferenceTimeoutRunningTaskInfo(minuend, subtrahend,
+				final RunningTaskInfo runningTaskInfo = executeDifferenceTimeoutActions(minuend, subtrahend,
 						subtrahendBeforeEnhancement, automatonType);
 				tce.addRunningTaskInfo(runningTaskInfo);
 				throw tce;
@@ -512,6 +507,11 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 						"if enhancement is used, we need AbstractInterpolantAutomaton";
 					((AbstractInterpolantAutomaton<LETTER>) subtrahend).switchToReadonlyMode();
 				}
+			}
+
+			if (mErrorGeneralizationEngine.hasAutomatonInIteration(mIteration)) {
+				mErrorGeneralizationEngine.stopDifference(minuend, mPredicateFactoryInterpolantAutomata,
+						mPredicateFactoryResultChecking, mCounterexample, false);
 			}
 
 			dumpAutomatonIfEnabled(subtrahend, "", automatonType);
@@ -538,6 +538,19 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 			mCegarLoopBenchmark.addPredicateUnifierData(predicateUnifier.getPredicateUnifierBenchmark());
 			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
 		}
+	}
+
+	private RunningTaskInfo executeDifferenceTimeoutActions(final INestedWordAutomaton<LETTER, IPredicate> minuend,
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> subtrahend,
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> subtrahendBeforeEnhancement,
+			final String automatonType) throws AutomataLibraryException {
+		final RunningTaskInfo runningTaskInfo = getDifferenceTimeoutRunningTaskInfo(minuend, subtrahend,
+				subtrahendBeforeEnhancement, automatonType);
+		if (mErrorGeneralizationEngine.hasAutomatonInIteration(mIteration)) {
+			mErrorGeneralizationEngine.stopDifference(minuend, mPredicateFactoryInterpolantAutomata,
+					mPredicateFactoryResultChecking, mCounterexample, true);
+		}
+		return runningTaskInfo;
 	}
 
 	private RunningTaskInfo getDifferenceTimeoutRunningTaskInfo(final INestedWordAutomaton<LETTER, IPredicate> minuend,

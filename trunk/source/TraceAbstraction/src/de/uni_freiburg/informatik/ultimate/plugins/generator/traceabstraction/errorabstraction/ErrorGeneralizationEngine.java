@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Ab
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryResultChecking;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorabstraction.ErrorAutomatonStatisticsGenerator.EnhancementType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorabstraction.ErrorTraceContainer.ErrorTrace;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomatonEnhancement;
@@ -175,7 +176,7 @@ public class ErrorGeneralizationEngine<LETTER extends IIcfgTransition<?>> implem
 			}
 		} catch (final ToolchainCanceledException tce) {
 			mErrorAutomatonStatisticsGenerator.stopErrorAutomatonConstructionTime();
-			mErrorAutomatonStatisticsGenerator.finishAutomatonInstance();
+			mErrorAutomatonStatisticsGenerator.finishAutomatonInstance(true);
 			final RunningTaskInfo rti = new RunningTaskInfo(getClass(),
 					"constructing error automaton for trace of length " + trace.length() + " (spent "
 							+ mErrorAutomatonStatisticsGenerator.getLastConstructionTime() + " nanoseconds)");
@@ -207,13 +208,19 @@ public class ErrorGeneralizationEngine<LETTER extends IIcfgTransition<?>> implem
 	public void stopDifference(final INestedWordAutomaton<LETTER, IPredicate> abstraction,
 			final PredicateFactoryForInterpolantAutomata predicateFactoryInterpolantAutomata,
 			final PredicateFactoryResultChecking predicateFactoryResultChecking,
-			final IRun<LETTER, IPredicate, ?> errorTrace) throws AutomataLibraryException {
+			final IRun<LETTER, IPredicate, ?> errorTrace, final boolean prematureTermination)
+			throws AutomataLibraryException {
 		mErrorAutomatonStatisticsGenerator.stopErrorAutomatonDifferenceTime();
-		mErrorAutomatonStatisticsGenerator.evaluateFinalErrorAutomaton(mServices, mLogger, mErrorAutomatonBuilder,
-				(INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate>) abstraction,
-				predicateFactoryInterpolantAutomata, predicateFactoryResultChecking, errorTrace);
-		mErrorAutomatonStatisticsGenerator.finishAutomatonInstance();
-		mErrorTraces.addEnhancementType(mErrorAutomatonStatisticsGenerator.getEnhancement());
+		if (prematureTermination) {
+			// TODO 2017-06-30 Christian: temporary workaround, should not be stored in the error traces
+			mErrorTraces.addEnhancementType(EnhancementType.UNKNOWN);
+		} else {
+			mErrorAutomatonStatisticsGenerator.evaluateFinalErrorAutomaton(mServices, mLogger, mErrorAutomatonBuilder,
+					(INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate>) abstraction,
+					predicateFactoryInterpolantAutomata, predicateFactoryResultChecking, errorTrace);
+			mErrorTraces.addEnhancementType(mErrorAutomatonStatisticsGenerator.getEnhancement());
+		}
+		mErrorAutomatonStatisticsGenerator.finishAutomatonInstance(prematureTermination);
 	}
 
 	/**
@@ -256,6 +263,9 @@ public class ErrorGeneralizationEngine<LETTER extends IIcfgTransition<?>> implem
 						break;
 					case INFINITE:
 						builder.append(" (infinite language)");
+						break;
+					case UNKNOWN:
+						builder.append(" (unknown trace enhancement)");
 						break;
 					default:
 						throw new IllegalArgumentException("Unknown enhancement type: " + errorTrace.getEnhancement());
