@@ -300,17 +300,34 @@ class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements IErro
 				continue;
 			}
 			assert result.getStates().contains(succInDanger);
-			final Term pre = constructPreInternal(logger, predicateFactory, csToolkit, pt,
-					out.getLetter().getTransformula(), succInDanger);
-			final Term conjunction = SmtUtils.and(csToolkit.getManagedScript().getScript(),
-					Arrays.asList(new Term[] { pre, newState.getFormula() }));
-			final LBool checkSatRes = SmtUtils.checkSatTerm(csToolkit.getManagedScript().getScript(), conjunction);
+			final LBool checkSatRes;
+			checkSatRes = checkIntersectionWithPre(logger, predicateFactory, csToolkit, pt, newState, out,
+					succInDanger);
 			if (checkSatRes != LBool.UNSAT) {
 				// edge probably (result might be unknown) contributed, so we add it
 				result.addInternalTransition(newState, out.getLetter(), succInDanger);
 				// Matthias: maybe this crashes and we have to check if edge was already added
 			}
 		}
+	}
+
+	/**
+	 * Check if the intersection between "predecessor and pre("successor",st)
+	 * is satisfiable.
+	 */
+	private LBool checkIntersectionWithPre(final ILogger logger, final PredicateFactory predicateFactory,
+			final CfgSmtToolkit csToolkit, final PredicateTransformer<Term, IPredicate, TransFormula> pt,
+			final IPredicate predecessor, final OutgoingInternalTransition<LETTER, IPredicate> out,
+			final IPredicate successor) {
+		final LBool checkSatRes;
+		{
+			final Term pre = constructPreInternal(logger, predicateFactory, csToolkit, pt,
+					out.getLetter().getTransformula(), successor);
+			final Term conjunction = SmtUtils.and(csToolkit.getManagedScript().getScript(),
+					Arrays.asList(new Term[] { pre, predecessor.getFormula() }));
+			checkSatRes = SmtUtils.checkSatTerm(csToolkit.getManagedScript().getScript(), conjunction);
+		}
+		return checkSatRes;
 	}
 
 	private IPredicate getSuccessorDisjunction(final HashRelation<IPredicate, IPredicate> abstState2dangStates,
