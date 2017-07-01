@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLette
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
@@ -330,7 +331,7 @@ public class ErrorGeneralizationEngine<LETTER extends IIcfgTransition<?>> implem
 			aggregate(newResponsibleStmts, finalLoc2responsibleStmts, trace.getStateSequence());
 		}
 
-		presentResult(finalLoc2responsibleStmts);
+		presentResult(finalLoc2responsibleStmts, cfg);
 	}
 
 	private Collection<LETTER> findResponsibleStatements(final List<IRelevanceInformation> relevanceInformation,
@@ -363,16 +364,21 @@ public class ErrorGeneralizationEngine<LETTER extends IIcfgTransition<?>> implem
 		}
 	}
 
-	private void presentResult(final Map<IcfgLocation, Set<LETTER>> finalLoc2responsibleStmts) {
+	private void presentResult(final Map<IcfgLocation, Set<LETTER>> finalLoc2responsibleStmts,
+			final INestedWordAutomaton<LETTER, IPredicate> cfg) {
 		if (mLogger.isWarnEnabled()) {
 			final StringBuilder builder = new StringBuilder();
+			final VpAlphabet<LETTER> vpAlphabet = cfg.getVpAlphabet();
+			final int alphabetSize = vpAlphabet.getInternalAlphabet().size() + vpAlphabet.getCallAlphabet().size()
+					+ vpAlphabet.getReturnAlphabet().size();
 			for (final Entry<IcfgLocation, Set<LETTER>> entry : finalLoc2responsibleStmts.entrySet()) {
 				builder.append("Error location '").append(entry.getKey());
 				final Set<LETTER> statements = entry.getValue();
 				if (statements.isEmpty()) {
-					builder.append("' has no responsible statements.");
+					builder.append("' has no responsible statements (out of ").append(alphabetSize).append(").");
 				} else {
-					builder.append("' has the following responsible statements:\n");
+					builder.append("' has the following ").append(statements.size())
+							.append(" responsible statements (out of ").append(alphabetSize).append("):\n");
 					for (final LETTER stmt : statements) {
 						builder.append(stmt).append(", ");
 					}
