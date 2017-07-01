@@ -401,7 +401,7 @@ class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements IErro
 			final IIcfgSymbolTable symbolTable, final NestedWord<LETTER> trace, final IPredicateUnifier predicateUnifier) throws AssertionError {
 		final IterativePredicateTransformer ipt = new IterativePredicateTransformer(predicateFactory,
 				csToolkit.getManagedScript(), csToolkit.getModifiableGlobalsTable(), mServices, trace, null,
-				pum.getFalsePredicate(), null, pum.getTruePredicate(),
+				pum.getTruePredicate(), null, pum.getTruePredicate(),
 				simplificationTechnique, xnfConversionTechnique, symbolTable);
 		final List<IPredicatePostprocessor> postprocessors = new ArrayList<>();
 		final QuantifierEliminationPostprocessor qepp = new QuantifierEliminationPostprocessor(mServices, logger,
