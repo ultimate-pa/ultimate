@@ -67,10 +67,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.RelevanceInformation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorabstraction.ErrorAutomatonStatisticsGenerator.EnhancementType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorabstraction.ErrorTraceContainer.ErrorTrace;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorlocalization.ErrorLocalizationStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorlocalization.FlowSensitiveFaultLocalizer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomatonEnhancement;
+import de.uni_freiburg.informatik.ultimate.util.statistics.AStatisticsType;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 
 /**
@@ -316,14 +318,16 @@ public class ErrorGeneralizationEngine<LETTER extends IIcfgTransition<?>> implem
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
 			final IIcfgSymbolTable symbolTable) {
 		final Map<IcfgLocation, Set<LETTER>> finalLoc2responsibleStmts = new HashMap<>();
+		final List<ErrorLocalizationStatisticsGenerator> faultLocalizerStatistics = new ArrayList<>();
 		for (final ErrorTrace<LETTER> errorTraceWrapper : mErrorTraces) {
 			final NestedRun<LETTER, IPredicate> trace = (NestedRun<LETTER, IPredicate>) errorTraceWrapper.getTrace();
 
 			// fault localization of single trace
-			final List<IRelevanceInformation> relevanceInformation =
-					new FlowSensitiveFaultLocalizer<>(trace, cfg, mServices, csToolkit, predicateFactory,
-							csToolkit.getModifiableGlobalsTable(), predicateUnifier, true, false,
-							simplificationTechnique, xnfConversionTechnique, symbolTable).getRelevanceInformation();
+			final FlowSensitiveFaultLocalizer<LETTER> faultLocalizer = new FlowSensitiveFaultLocalizer<>(trace, cfg,
+					mServices, csToolkit, predicateFactory, csToolkit.getModifiableGlobalsTable(), predicateUnifier,
+					true, false, simplificationTechnique, xnfConversionTechnique, symbolTable);
+			final List<IRelevanceInformation> relevanceInformation = faultLocalizer.getRelevanceInformation();
+			faultLocalizerStatistics.add(faultLocalizer.getStatistics());
 
 			final Collection<LETTER> newResponsibleStmts =
 					findResponsibleStatements(relevanceInformation, trace.getWord());
@@ -331,7 +335,7 @@ public class ErrorGeneralizationEngine<LETTER extends IIcfgTransition<?>> implem
 			aggregate(newResponsibleStmts, finalLoc2responsibleStmts, trace.getStateSequence());
 		}
 
-		presentResult(finalLoc2responsibleStmts, cfg);
+		presentResult(finalLoc2responsibleStmts, cfg, faultLocalizerStatistics);
 	}
 
 	private Collection<LETTER> findResponsibleStatements(final List<IRelevanceInformation> relevanceInformation,
@@ -365,7 +369,8 @@ public class ErrorGeneralizationEngine<LETTER extends IIcfgTransition<?>> implem
 	}
 
 	private void presentResult(final Map<IcfgLocation, Set<LETTER>> finalLoc2responsibleStmts,
-			final INestedWordAutomaton<LETTER, IPredicate> cfg) {
+			final INestedWordAutomaton<LETTER, IPredicate> cfg,
+			final List<ErrorLocalizationStatisticsGenerator> faultLocalizerStatistics) {
 		if (mLogger.isWarnEnabled()) {
 			final StringBuilder builder = new StringBuilder();
 			final VpAlphabet<LETTER> vpAlphabet = cfg.getVpAlphabet();
@@ -384,6 +389,15 @@ public class ErrorGeneralizationEngine<LETTER extends IIcfgTransition<?>> implem
 					}
 				}
 			}
+
+			long totalFaultLocalizationTimeNano = 0l;
+			for (final ErrorLocalizationStatisticsGenerator stats : faultLocalizerStatistics) {
+				totalFaultLocalizationTimeNano += stats.getErrorLocalizationTime();
+			}
+			builder.append("\nFault localization was applied ").append(faultLocalizerStatistics.size())
+					.append(" times and altogether took ")
+					.append(AStatisticsType.prettyprintNanoseconds(totalFaultLocalizationTimeNano)).append(" seconds.");
+
 			mLogger.warn(builder);
 		}
 	}
