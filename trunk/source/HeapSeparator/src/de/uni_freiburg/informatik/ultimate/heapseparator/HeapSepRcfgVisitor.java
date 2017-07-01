@@ -29,29 +29,24 @@ package de.uni_freiburg.informatik.ultimate.heapseparator;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayEquality;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
@@ -61,7 +56,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDim
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainHelpers;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNode;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.visitors.SimpleRCFGVisitor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
@@ -71,7 +65,7 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 	/**
 	 * arrayId before separation --> pointerId --> arrayId after separation
 	 */
-	NestedMap2<IProgramVarOrConst, EqNode, IProgramVar> moldArrayToPointerToNewArray;
+	NestedMap2<Term, Term, Term> moldArrayToPointerToNewArray;
 	/**
 	 * arrayId before separation --> arrayId after separation--> Set of pointerIds
 	 */
@@ -199,17 +193,23 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 				continue;
 			}
 
-			//TODO: we can't work on the normalized TermVariables like this, I think..
-			IProgramVarOrConst oldArray = 
-					mVpDomain.getPreAnalysis().getIProgramVarOrConstOrLiteral(
-							VPDomainHelpers.getArrayTerm(mds.getArray()),
-							VPDomainHelpers.computeProgramVarMappingFromTransFormula(tf));
+//			TODO: we can't work on the normalized TermVariables like this, I think..
+//			IProgramVarOrConst oldArray = 
+//					mVpDomain.getPreAnalysis().getIProgramVarOrConstOrLiteral(
+//							VPDomainHelpers.getArrayTerm(mds.getArray()),
+//							VPDomainHelpers.computeProgramVarMappingFromTransFormula(tf));
 //							VPDomainHelpers.computeProgramVarMappingFromInVarOutVarMappings(newInVars, newOutVars));
-			assert oldArray != null;
+//			assert oldArray != null;
+			
+			final Term oldArray = VPDomainHelpers.normalizeTerm(mds.getArray(), tf, mScript);
 
-			List<EqNode> pointers = convertArrayIndexToEqNodeList(newInVars, newOutVars, mds.getIndex());
+//			List<Term> pointers = convertArrayIndexToEqNodeList(newInVars, newOutVars, mds.getIndex());
+			final List<Term> pointers = mds.getIndex().stream()
+					.map(t -> VPDomainHelpers.normalizeTerm(t, newInVars, newOutVars, mScript))
+					.collect(Collectors.toList());
+	
 
-			IProgramVarOrConst newArray = mNewArrayIdProvider.getNewArrayId(oldArray, pointers);
+			Term newArray = mNewArrayIdProvider.getNewArrayId(oldArray, pointers);
 
 			updateMappingsForSubstitution(oldArray, newArray, newInVars, newOutVars, substitutionMapPvoc);
 		}
@@ -228,14 +228,18 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 				continue;
 			}
 
-			IProgramVarOrConst oldArray = 
-					mVpDomain.getPreAnalysis().getIProgramVarOrConstOrLiteral(
-							VPDomainHelpers.getArrayTerm(mds.getArray()),
-							VPDomainHelpers.computeProgramVarMappingFromTransFormula(tf));
+//			IProgramVarOrConst oldArray = 
+//					mVpDomain.getPreAnalysis().getIProgramVarOrConstOrLiteral(
+//							VPDomainHelpers.getArrayTerm(mds.getArray()),
+//							VPDomainHelpers.computeProgramVarMappingFromTransFormula(tf));
+			final Term oldArray = VPDomainHelpers.normalizeTerm(mds.getArray(), tf, mScript);
 
-			List<EqNode> pointers = convertArrayIndexToEqNodeList(newInVars, newOutVars, mds.getIndex());
+//			List<Term> pointers = convertArrayIndexToEqNodeList(newInVars, newOutVars, mds.getIndex());
+			final List<Term> pointers = mds.getIndex().stream()
+					.map(t -> VPDomainHelpers.normalizeTerm(t, newInVars, newOutVars, mScript))
+					.collect(Collectors.toList());
 					
-			IProgramVarOrConst newArray = mNewArrayIdProvider.getNewArrayId(oldArray, pointers);
+			Term newArray = mNewArrayIdProvider.getNewArrayId(oldArray, pointers);
 
 			updateMappingsForSubstitution(oldArray, newArray, newInVars, newOutVars, substitutionMapPvoc);
 		}
@@ -255,31 +259,35 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 		for (ArrayUpdate au : arrayUpdates) {
 			
 
-			List<EqNode> pointers = convertArrayIndexToEqNodeList(newInVars, newOutVars, au.getMultiDimensionalStore().getIndex());
+//			List<EqNode> pointers = convertArrayIndexToEqNodeList(newInVars, newOutVars, au.getMultiDimensionalStore().getIndex());
+			
+			final ArrayIndex pointers = au.getMultiDimensionalStore().getIndex();
 
 			if (mVpDomain.getPreAnalysis().isArrayTracked(au.getNewArray(), 
 					VPDomainHelpers.computeProgramVarMappingFromTransFormula(tf))) {
 //					VPDomainHelpers.computeProgramVarMappingFromInVarOutVarMappings(newInVars, newOutVars))) {
-				IProgramVarOrConst lhs = 
-						mVpDomain.getPreAnalysis().getIProgramVarOrConstOrLiteral(
-								au.getNewArray(), 
-								VPDomainHelpers.computeProgramVarMappingFromTransFormula(tf));
-//								VPDomainHelpers.computeProgramVarMappingFromInVarOutVarMappings(newInVars, newOutVars));
-				assert lhs != null;
-				IProgramVarOrConst newArrayLhs = mNewArrayIdProvider.getNewArrayId(lhs, pointers);
+//				IProgramVarOrConst lhs = 
+//						mVpDomain.getPreAnalysis().getIProgramVarOrConstOrLiteral(
+//								au.getNewArray(), 
+//								VPDomainHelpers.computeProgramVarMappingFromTransFormula(tf));
+////								VPDomainHelpers.computeProgramVarMappingFromInVarOutVarMappings(newInVars, newOutVars));
+//				assert lhs != null;
+				final Term lhs = au.getNewArray();
+				final Term newArrayLhs = mNewArrayIdProvider.getNewArrayId(lhs, pointers);
 				updateMappingsForSubstitution(lhs, newArrayLhs, newInVars, newOutVars, substitutionMapPvoc);
 			}
 			
 			if (mVpDomain.getPreAnalysis().isArrayTracked(au.getOldArray(), 
 					VPDomainHelpers.computeProgramVarMappingFromTransFormula(tf))) {
 //					VPDomainHelpers.computeProgramVarMappingFromInVarOutVarMappings(newInVars, newOutVars))) {
-				IProgramVarOrConst rhsArray = 
-						mVpDomain.getPreAnalysis().getIProgramVarOrConstOrLiteral(
-								au.getOldArray(), 
-								VPDomainHelpers.computeProgramVarMappingFromTransFormula(tf));
-//								VPDomainHelpers.computeProgramVarMappingFromInVarOutVarMappings(newInVars, newOutVars));
-				assert rhsArray != null;
-				IProgramVarOrConst newArrayRhs = mNewArrayIdProvider.getNewArrayId(rhsArray, pointers);
+//				IProgramVarOrConst rhsArray = 
+//						mVpDomain.getPreAnalysis().getIProgramVarOrConstOrLiteral(
+//								au.getOldArray(), 
+//								VPDomainHelpers.computeProgramVarMappingFromTransFormula(tf));
+////								VPDomainHelpers.computeProgramVarMappingFromInVarOutVarMappings(newInVars, newOutVars));
+//				assert rhsArray != null;
+				final Term rhsArray = au.getOldArray();
+				Term newArrayRhs = mNewArrayIdProvider.getNewArrayId(rhsArray, pointers);
 				updateMappingsForSubstitution(rhsArray, newArrayRhs, newInVars, newOutVars, substitutionMapPvoc);
 			}
 		}
@@ -290,15 +298,15 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 
 
 
-	private List<EqNode> convertArrayIndexToEqNodeList(final Map<IProgramVar, TermVariable> newInVars,
-			final Map<IProgramVar, TermVariable> newOutVars, ArrayIndex index) {
-		List<EqNode> pointers = index.stream()
-				.map(indexTerm -> mVpDomain.getPreAnalysis().getEqNode(
-						indexTerm, 
-						VPDomainHelpers.computeProgramVarMappingFromInVarOutVarMappings(newInVars, newOutVars)))
-				.collect(Collectors.toList());
-		return pointers;
-	}
+//	private List<EqNode> convertArrayIndexToEqNodeList(final Map<IProgramVar, TermVariable> newInVars,
+//			final Map<IProgramVar, TermVariable> newOutVars, ArrayIndex index) {
+//		List<EqNode> pointers = index.stream()
+//				.map(indexTerm -> mVpDomain.getPreAnalysis().getEqNode(
+//						indexTerm, 
+//						VPDomainHelpers.computeProgramVarMappingFromInVarOutVarMappings(newInVars, newOutVars)))
+//				.collect(Collectors.toList());
+//		return pointers;
+//	}
 
 
 
@@ -306,8 +314,8 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 			final Map<IProgramVar, TermVariable> newInVars, 
 			final Map<IProgramVar, TermVariable> newOutVars, 
 			final Term intermediateFormula) {
-		List<ArrayEquality> arrayEqualities = ArrayEquality.extractArrayEqualities(intermediateFormula);
-		Map<Term, Term> equalitySubstitution = new HashMap<>();
+		final List<ArrayEquality> arrayEqualities = ArrayEquality.extractArrayEqualities(intermediateFormula);
+		final Map<Term, Term> equalitySubstitution = new HashMap<>();
 		mScript.lock(this);
 		for (ArrayEquality ae : arrayEqualities) {
 			/*
@@ -327,54 +335,55 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 			
 			List<Term> newEqualities = new ArrayList<>();
 			
-			IProgramVarOrConst oldLhs = mVpDomain.getPreAnalysis().getIProgramVarOrConstOrLiteral(
-							ae.getLhs(), 
-					VPDomainHelpers.computeProgramVarMappingFromTransFormula(tf));
+			final Term oldLhs = ae.getLhs();
+//			IProgramVarOrConst oldLhs = mVpDomain.getPreAnalysis().getIProgramVarOrConstOrLiteral(
+//							ae.getLhs(), 
+//					VPDomainHelpers.computeProgramVarMappingFromTransFormula(tf));
 //							VPDomainHelpers.computeProgramVarMappingFromInVarOutVarMappings(newInVars, newOutVars));
-			List<IProgramVarOrConst> newLhss = mNewArrayIdProvider.getAllNewArrayIds(oldLhs);
+			final List<Term> newLhss = mNewArrayIdProvider.getAllNewArrayIds(oldLhs);
 
-			IProgramVarOrConst oldRhs = mVpDomain.getPreAnalysis().getIProgramVarOrConstOrLiteral(
-							ae.getRhs(), 
-					VPDomainHelpers.computeProgramVarMappingFromTransFormula(tf));
+			final Term oldRhs = ae.getRhs();
+//			IProgramVarOrConst oldRhs = mVpDomain.getPreAnalysis().getIProgramVarOrConstOrLiteral(
+//							ae.getRhs(), 
+//					VPDomainHelpers.computeProgramVarMappingFromTransFormula(tf));
 //							VPDomainHelpers.computeProgramVarMappingFromInVarOutVarMappings(newInVars, newOutVars));
-			List<IProgramVarOrConst> newRhss = mNewArrayIdProvider.getAllNewArrayIds(oldRhs);
+			final List<Term> newRhss = mNewArrayIdProvider.getAllNewArrayIds(oldRhs);
 			
 			
 			assert newLhss.size() == newRhss.size();
 			for (int i = 0; i < newLhss.size(); i++) {
-				IProgramVarOrConst newLhs = newLhss.get(i);
-				IProgramVarOrConst newRhs = newRhss.get(i);
-				Term newEquality = mScript.term(this, "=", 
-						newLhs.getTerm(), 
-						newRhs.getTerm());
+				final Term newLhs = newLhss.get(i);
+				final Term newRhs = newRhss.get(i);
+				final Term newEquality = mScript.term(this, "=", newLhs, newRhs);
 				newEqualities.add(newEquality);
 				
 				if (tf.getInVars().containsKey(oldLhs)) {
 					newInVars.remove(oldLhs);
-					newInVars.put((IProgramVar) newLhs, (TermVariable) newLhs.getTerm());
+					newInVars.put((IProgramVar) newLhs, (TermVariable) newLhs);
 				}
 				if (tf.getInVars().containsKey(oldRhs)) {
 					newInVars.remove(oldRhs);
-					newInVars.put((IProgramVar) newRhs, (TermVariable) newRhs.getTerm());
+					newInVars.put((IProgramVar) newRhs, (TermVariable) newRhs);
 				}
 				if (tf.getOutVars().containsKey(oldLhs)) {
 					newOutVars.remove(oldLhs);
-					newOutVars.put((IProgramVar) newLhs, (TermVariable) newLhs.getTerm());
+					newOutVars.put((IProgramVar) newLhs, (TermVariable) newLhs);
 				}
 				if (tf.getOutVars().containsKey(oldRhs)) {
 					newOutVars.remove(oldRhs);
-					newOutVars.put((IProgramVar) newRhs, (TermVariable) newRhs.getTerm());
+					newOutVars.put((IProgramVar) newRhs, (TermVariable) newRhs);
 				}
 
 			}
 			assert newEqualities.size() > 0;
-			Term newConjunctionOfEquations = newEqualities.size() == 1 ?
-					newEqualities.get(0) :
-					mScript.term(this, "and", newEqualities.toArray(new Term[newEqualities.size()]));
+			final Term newConjunctionOfEquations = SmtUtils.and(mScript.getScript(), newEqualities);
+//					newEqualities.size() == 1 ?
+//					newEqualities.get(0) :
+//					mScript.term(this, "and", newEqualities.toArray(new Term[newEqualities.size()]));
 			equalitySubstitution.put(ae.getOriginalTerm(), newConjunctionOfEquations);
 		}
 		mScript.unlock(this);
-		Term newTerm = new Substitution(mScript, equalitySubstitution).transform(intermediateFormula);
+		final Term newTerm = new Substitution(mScript, equalitySubstitution).transform(intermediateFormula);
 		return newTerm;
 	}
 
@@ -395,7 +404,7 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 	 * @param newOutVars
 	 * @param substitutionMap
 	 */
-	private void updateMappingsForSubstitution(IProgramVarOrConst oldArray, IProgramVarOrConst newArray,
+	private void updateMappingsForSubstitution(Term oldArray, Term newArray,
 			final Map<IProgramVar, TermVariable> newInVars,
 			final Map<IProgramVar, TermVariable> newOutVars,
 			final Map<Term, Term> substitutionMap) {
@@ -407,7 +416,7 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 
 			TermVariable invNewTv = null;
 			if (inv != null) {
-				invNewTv = mScript.constructFreshCopy((TermVariable) newArray.getTerm());
+				invNewTv = mScript.constructFreshCopy((TermVariable) newArray);
 				newInVars.remove(oldArray);
 				newInVars.put((IProgramVar) newArray, invNewTv);
 				substitutionMap.put(inv, invNewTv);
@@ -418,7 +427,7 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 				if (inv == outv) {
 					newTv = invNewTv;
 				} else {
-					newTv = mScript.constructFreshCopy((TermVariable) newArray.getTerm());
+					newTv = mScript.constructFreshCopy((TermVariable) newArray);
 				}
 				newOutVars.remove(oldArray);
 				newOutVars.put((IProgramVar) newArray, newTv);
@@ -430,7 +439,7 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 			 * the array id is a constant (or literal)
 			 *  --> there are no changes to the invar/outvar mappings, only to the substitution
 			 */
-			substitutionMap.put(oldArray.getTerm(), newArray.getTerm());
+			substitutionMap.put(oldArray, newArray);
 		}
 	}
 }

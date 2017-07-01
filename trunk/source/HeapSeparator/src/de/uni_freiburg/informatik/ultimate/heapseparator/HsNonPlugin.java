@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.heapseparator;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -35,6 +36,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -44,7 +46,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainPreanalysis;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainSymmetricPair;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNode;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.EqState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.AbstractInterpreter;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.IAbstractInterpretationResult;
@@ -62,6 +63,7 @@ public class HsNonPlugin {
 	private final ILogger mLogger;
 	private final ReplacementVarFactory mReplacementVarFactory;
 	private final ManagedScript mManagedScript;
+	private HeapSepPreAnalysisVisitor mHeapSepPreanalysis;
 	
 	public HsNonPlugin(final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit, final ILogger logger) {
 		
@@ -91,20 +93,19 @@ public class HsNonPlugin {
 		 * point in the program, two arrays are assigned to each other, then their partitionings must be made compatible
 		 * (equal?, through union of partitions?)
 		 */
-		HeapSepPreAnalysisVisitor heapSepPreanalysis = null;
 		{
 			final ObserverDispatcher od = new ObserverDispatcherSequential(mLogger);
 			final RCFGWalkerBreadthFirst walker = new RCFGWalkerBreadthFirst(od, mLogger);
 			od.setWalker(walker);
 			
-			heapSepPreanalysis = new HeapSepPreAnalysisVisitor(mLogger, mManagedScript, vpDomain);
-			walker.addObserver(heapSepPreanalysis);
+			mHeapSepPreanalysis = new HeapSepPreAnalysisVisitor(mLogger, mManagedScript, vpDomain);
+			walker.addObserver(mHeapSepPreanalysis);
 			
 			walker.run(BoogieIcfgContainer.extractStartEdges(oldBoogieIcfg));
 		}
 		
 		final NewArrayIdProvider newArrayIdProvider =
-				processAbstractInterpretationResult(abstractInterpretationResult, heapSepPreanalysis);
+				processAbstractInterpretationResult(abstractInterpretationResult, mHeapSepPreanalysis);
 		
 		mLogger.info("built NewArrayIdProvider: " + newArrayIdProvider);
 		
@@ -150,11 +151,12 @@ public class HsNonPlugin {
 		/*
 		 * compute which arrays are equated somewhere in the program and thus need the same partitioning
 		 */
-		final UnionFind<IProgramVarOrConst> arrayGroupingUf = new UnionFind<>();
-		for (final IProgramVarOrConst array : hspav.getArrayToAccessLocations().getDomain()) {
+		final UnionFind<Term> arrayGroupingUf = new UnionFind<>();
+		for (final Term array : hspav.getArrayToAccessLocations().getDomain()) {
 			arrayGroupingUf.findAndConstructEquivalenceClassIfNeeded(array);
 		}
-		for (final VPDomainSymmetricPair<IProgramVarOrConst> pair : hspav.getArrayEqualities()) {
+//		for (final VPDomainSymmetricPair<IProgramVarOrConst> pair : hspav.getArrayEqualities()) {
+		for (final VPDomainSymmetricPair<Term> pair : hspav.getArrayEqualities()) {
 			if (arrayGroupingUf.find(pair.getFirst()) == null) {
 				continue;
 			}
@@ -165,10 +167,10 @@ public class HsNonPlugin {
 		}
 		arrayGroupingUf.getAllEquivalenceClasses();
 		
-		final HashRelation<Set<IProgramVarOrConst>, IcfgLocation> arrayGroupToAccessLocations = new HashRelation<>();
+		final HashRelation<Set<Term>, IcfgLocation> arrayGroupToAccessLocations = new HashRelation<>();
 		
-		for (final Set<IProgramVarOrConst> ec : arrayGroupingUf.getAllEquivalenceClasses()) {
-			for (final IProgramVarOrConst array : ec) {
+		for (final Set<Term> ec : arrayGroupingUf.getAllEquivalenceClasses()) {
+			for (final Term array : ec) {
 				for (final IcfgLocation loc : hspav.getArrayToAccessLocations().getImage(array)) {
 					arrayGroupToAccessLocations.addPair(ec, loc);
 				}
@@ -180,8 +182,8 @@ public class HsNonPlugin {
 		 * which locations. For each array take only the VPStates intro account that belong to a location directly
 		 * before an access to that array. Those are disjoined.
 		 */
-		final Map<Set<IProgramVarOrConst>, EqState<IcfgEdge>> arrayGroupToVPState = new HashMap<>();
-		for (final Set<IProgramVarOrConst> ec : arrayGroupingUf.getAllEquivalenceClasses()) {
+		final Map<Set<Term>, EqState<IcfgEdge>> arrayGroupToVPState = new HashMap<>();
+		for (final Set<Term> ec : arrayGroupingUf.getAllEquivalenceClasses()) {
 			final Set<EqState<IcfgEdge>> statesForCurrentEc = new HashSet<>();
 			for (final IcfgLocation loc : arrayGroupToAccessLocations.getImage(ec)) {
 				final Set<EqState<IcfgEdge>> statesAtLoc = vpDomainResult.getLoc2States().get(loc);
@@ -206,28 +208,45 @@ public class HsNonPlugin {
 		final VPDomainPreanalysis vpPreAnalysis =
 				((VPDomain<IcfgEdge>) vpDomainResult.getUsedDomain()).getPreAnalysis();
 		final NewArrayIdProvider newArrayIdProvider = new NewArrayIdProvider(mCsToolkit);
-		for (final Entry<Set<IProgramVarOrConst>, EqState<IcfgEdge>> en : arrayGroupToVPState.entrySet()) {
-			final Set<IProgramVarOrConst> arrayGroup = en.getKey();
+		for (final Entry<Set<Term>, EqState<IcfgEdge>> en : arrayGroupToVPState.entrySet()) {
+			final Set<Term> arrayGroup = en.getKey();
 			final EqState<IcfgEdge> state = en.getValue();
 			
-			final UnionFind<EqNode> uf = new UnionFind<>();
-			for (final EqNode accessingNode : vpPreAnalysis.getAccessingIndicesForArrays(arrayGroup)) {
-				uf.findAndConstructEquivalenceClassIfNeeded(accessingNode);
+			final UnionFind<List<Term>> uf = new UnionFind<>();
+			for (final List<Term> accessingTerm : getAccessingIndicesForArrays(arrayGroup)) {
+				uf.findAndConstructEquivalenceClassIfNeeded(accessingTerm);
 			}
 			// TODO: optimization: compute partitioning on the equivalence class representatives instead
 			// of all nodes
-			for (final EqNode accessingNode1 : vpPreAnalysis.getAccessingIndicesForArrays(arrayGroup)) {
-				for (final EqNode accessingNode2 : vpPreAnalysis.getAccessingIndicesForArrays(arrayGroup)) {
-					if (!state.areUnequal(accessingNode1, accessingNode2)) {
+			for (final List<Term> accessingNode1 : getAccessingIndicesForArrays(arrayGroup)) {
+				for (final List<Term> accessingNode2 : getAccessingIndicesForArrays(arrayGroup)) {
+					assert accessingNode1.size() == accessingNode2.size();
+					boolean anyUnEqual = false;
+					for (int i = 0; i < accessingNode1.size(); i++) {
+						anyUnEqual |= state.areUnequal(accessingNode1.get(i), accessingNode2.get(i));
+					}
+					
+					if (!anyUnEqual) {
 						uf.union(accessingNode1, accessingNode2);
 					}
+					
+//					if (!state.areUnequal(accessingNode1, accessingNode2)) {
+//						uf.union(accessingNode1, accessingNode2);
+//					}
 				}
 			}
-			for (final Set<EqNode> ec : uf.getAllEquivalenceClasses()) {
+			for (final Set<List<Term>> ec : uf.getAllEquivalenceClasses()) {
 				newArrayIdProvider.registerEquivalenceClass(arrayGroup, ec);
 			}
 		}
 		
 		return newArrayIdProvider;
+	}
+
+	private Set<List<Term>> getAccessingIndicesForArrays(Set<Term> arrayGroup) {
+		 Set<List<Term>> result = new HashSet<>();
+		 arrayGroup.forEach(array -> 
+		 	result.addAll(mHeapSepPreanalysis.getArrayToAccessingIndices().getImage(array)));
+		return result;
 	}
 }

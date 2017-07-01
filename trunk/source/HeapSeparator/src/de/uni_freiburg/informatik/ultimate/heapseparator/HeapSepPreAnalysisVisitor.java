@@ -26,40 +26,32 @@
  */
 package de.uni_freiburg.informatik.ultimate.heapseparator;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayEquality;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalStore;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainPreanalysis;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainHelpers;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainPreanalysis;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainSymmetricPair;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.ConstOrLiteral;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.visitors.SimpleRCFGVisitor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.AbstractRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Does a preanalysis on the program before the actual heap separation is done (using the
@@ -75,9 +67,11 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 public class HeapSepPreAnalysisVisitor extends SimpleRCFGVisitor {
 
-	private final HashRelation<IProgramVarOrConst, IcfgLocation> mArrayToAccessLocations;
+	private final HashRelation<Term, IcfgLocation> mArrayToAccessLocations;
+	
+	private final HashRelation<Term, List<Term>> mArrayToAccessingIndices;
 
-	private final Set<VPDomainSymmetricPair<IProgramVarOrConst>> mArrayEqualities;
+	private final Set<VPDomainSymmetricPair<Term>> mArrayEqualities;
 
 	private final ManagedScript mScript;
 
@@ -92,6 +86,7 @@ public class HeapSepPreAnalysisVisitor extends SimpleRCFGVisitor {
 	public HeapSepPreAnalysisVisitor(ILogger logger, ManagedScript script, VPDomain domain) {
 		super(logger);
 		mArrayToAccessLocations = new HashRelation<>();
+		mArrayToAccessingIndices = new HashRelation<>();
 		mScript = script;
 		mArrayEqualities = new HashSet<>();
 		mVpDomainPreAnalysis = domain.getPreAnalysis();
@@ -106,23 +101,57 @@ public class HeapSepPreAnalysisVisitor extends SimpleRCFGVisitor {
 
 			List<ArrayEquality> aeqs = ArrayEquality.extractArrayEqualities(tf.getFormula());
 			for (ArrayEquality aeq : aeqs) {
-				IProgramVarOrConst first = mVpDomainPreAnalysis.getIProgramVarOrConstOrLiteral(
-						aeq.getLhs(), 
-						VPDomainHelpers.computeProgramVarMappingFromTransFormula(tf));
-				IProgramVarOrConst second = mVpDomainPreAnalysis.getIProgramVarOrConstOrLiteral(
-						aeq.getRhs(), 
-						VPDomainHelpers.computeProgramVarMappingFromTransFormula(tf));
+				Term first = VPDomainHelpers.normalizeTerm(aeq.getLhs(), tf, mScript);
+				Term second = VPDomainHelpers.normalizeTerm(aeq.getRhs(), tf, mScript);
+//				IProgramVarOrConst second = mVpDomainPreAnalysis.getIProgramVarOrConstOrLiteral(
+//						aeq.getRhs(), 
+//						VPDomainHelpers.computeProgramVarMappingFromTransFormula(tf));
 				
-				mArrayEqualities.add(new VPDomainSymmetricPair<IProgramVarOrConst>(first, second));
+				mArrayEqualities.add(new VPDomainSymmetricPair<Term>(first, second));
 			}
 
 			mArrayToAccessLocations.addAll(findArrayAccesses((CodeBlock) edge));
+			
+			mArrayToAccessingIndices.addAll(findAccessingIndices((CodeBlock) edge));
 		}
 		super.level(edge);
 	}
 	
-	private HashRelation<IProgramVarOrConst, IcfgLocation> findArrayAccesses(CodeBlock edge) {
-		HashRelation<IProgramVarOrConst, IcfgLocation> result = new HashRelation<>();
+	private HashRelation<Term, List<Term>> findAccessingIndices(CodeBlock edge) {
+		
+		final UnmodifiableTransFormula tf = edge.getTransformula();
+		final HashRelation<Term, List<Term>> result = new HashRelation<>();
+		
+		/*
+		 * handle selects in the formula
+		 */
+		final List<MultiDimensionalSelect> mdSelectsAll =
+				MultiDimensionalSelect.extractSelectDeep(tf.getFormula(), false);
+		final List<MultiDimensionalSelect> mdSelectsFiltered = 
+							mdSelectsAll.stream()
+							.filter(mds -> mVpDomainPreAnalysis.isArrayTracked(mds.getArray(), tf))
+							.collect(Collectors.toList());
+		mdSelectsFiltered.forEach(mds -> result.addPair(
+				VPDomainHelpers.normalizeTerm(getInnerMostArray(mds.getArray()), tf, mScript), 
+					VPDomainHelpers.normalizeArrayIndex(mds.getIndex(), tf, mScript)));
+
+		/*
+		 * handle stores in the formula
+		 */
+		final List<MultiDimensionalStore> mdStoresAll =
+				MultiDimensionalStore.extractArrayStoresDeep(tf.getFormula());
+		final List<MultiDimensionalStore> mdStoresFiltered = mdStoresAll.stream()
+				.filter(mds -> mVpDomainPreAnalysis.isArrayTracked(mds.getArray(), tf))
+				.collect(Collectors.toList());
+		mdStoresFiltered.forEach(mds -> result.addPair(
+				VPDomainHelpers.normalizeTerm(getInnerMostArray(mds.getArray()), tf, mScript), 
+					VPDomainHelpers.normalizeArrayIndex(mds.getIndex(), tf, mScript)));
+
+		return result;
+	}
+
+	private HashRelation<Term, IcfgLocation> findArrayAccesses(CodeBlock edge) {
+		HashRelation<Term, IcfgLocation> result = new HashRelation<>();
 		
 		for (Entry<IProgramVar, TermVariable> en : edge.getTransformula().getInVars().entrySet()) {
 			IProgramVar pv = en.getKey();
@@ -133,7 +162,7 @@ public class HeapSepPreAnalysisVisitor extends SimpleRCFGVisitor {
 				continue;
 			}
 			// we have an array variable --> store that it occurs after the source location of the edge
-			result.addPair(pv, edge.getSource());
+			result.addPair(pv.getTerm(), edge.getSource());
 		}
 		for (Entry<IProgramVar, TermVariable> en : edge.getTransformula().getOutVars().entrySet()) {
 			IProgramVar pv = en.getKey();
@@ -144,12 +173,12 @@ public class HeapSepPreAnalysisVisitor extends SimpleRCFGVisitor {
 				continue;
 			}
 			// we have an array variable --> store that it occurs after the source location of the edge
-			result.addPair(pv, edge.getSource());
+			result.addPair(pv.getTerm(), edge.getSource());
 		}	
 		return result;
 	}
 	
-	Set<VPDomainSymmetricPair<IProgramVarOrConst>> getArrayEqualities() {
+	Set<VPDomainSymmetricPair<Term>> getArrayEqualities() {
 		return mArrayEqualities;
 	}
 
@@ -169,7 +198,21 @@ public class HeapSepPreAnalysisVisitor extends SimpleRCFGVisitor {
 		return false;
 	}
 	
-	HashRelation<IProgramVarOrConst, IcfgLocation> getArrayToAccessLocations() {
+	HashRelation<Term, IcfgLocation> getArrayToAccessLocations() {
 		return mArrayToAccessLocations;
+	}
+
+	public HashRelation<Term, List<Term>> getArrayToAccessingIndices() {
+		return mArrayToAccessingIndices;
+	}
+	
+	public Term getInnerMostArray(Term arrayTerm) {
+		assert arrayTerm.getSort().isArraySort();
+		Term innerArray = arrayTerm;
+		while (SmtUtils.containsFunctionApplication(innerArray, "store")) {
+			innerArray = ((ApplicationTerm) innerArray).getParameters()[0];
+		}
+		assert innerArray instanceof TermVariable;
+		return innerArray;
 	}
 }

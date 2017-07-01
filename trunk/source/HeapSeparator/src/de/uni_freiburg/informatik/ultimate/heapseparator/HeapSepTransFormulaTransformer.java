@@ -49,17 +49,14 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Unm
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayEquality;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayUpdate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalStore;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainHelpers;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNode;
 
 /**
  *
@@ -162,15 +159,21 @@ public class HeapSepTransFormulaTransformer implements ITransformulaTransformer 
 			}
 
 			// TODO: we can't work on the normalized TermVariables like this, I think..
-			final IProgramVarOrConst oldArray = mVpDomain.getPreAnalysis().getIProgramVarOrConstOrLiteral(
-					VPDomainHelpers.getArrayTerm(mds.getArray()),
-					VPDomainHelpers.computeProgramVarMappingFromTransFormula(tf));
+//			final IProgramVarOrConst oldArray = mVpDomain.getPreAnalysis().getIProgramVarOrConstOrLiteral(
+//					VPDomainHelpers.getArrayTerm(mds.getArray()),
+//					VPDomainHelpers.computeProgramVarMappingFromTransFormula(tf));
 			// VPDomainHelpers.computeProgramVarMappingFromInVarOutVarMappings(newInVars, newOutVars));
-			assert oldArray != null;
+			final Term oldArray = VPDomainHelpers.normalizeTerm(mds.getArray(), tf, mScript);
 
-			final List<EqNode> pointers = convertArrayIndexToEqNodeList(newInVars, newOutVars, mds.getIndex());
+//			assert oldArray != null;
 
-			final IProgramVarOrConst newArray = mNewArrayIdProvider.getNewArrayId(oldArray, pointers);
+//			final List<EqNode> pointers = convertArrayIndexToEqNodeList(newInVars, newOutVars, mds.getIndex());
+			final List<Term> pointers = mds.getIndex().stream()
+					.map(t -> VPDomainHelpers.normalizeTerm(t, newInVars, newOutVars, mScript))
+					.collect(Collectors.toList());
+	
+
+			final Term newArray = mNewArrayIdProvider.getNewArrayId(oldArray, pointers);
 
 			updateMappingsForSubstitution(oldArray, newArray, newInVars, newOutVars, substitutionMapPvoc);
 		}
@@ -191,13 +194,17 @@ public class HeapSepTransFormulaTransformer implements ITransformulaTransformer 
 				continue;
 			}
 
-			final IProgramVarOrConst oldArray = mVpDomain.getPreAnalysis().getIProgramVarOrConstOrLiteral(
-					VPDomainHelpers.getArrayTerm(mds.getArray()),
-					VPDomainHelpers.computeProgramVarMappingFromTransFormula(tf));
+//			final IProgramVarOrConst oldArray = mVpDomain.getPreAnalysis().getIProgramVarOrConstOrLiteral(
+//					VPDomainHelpers.getArrayTerm(mds.getArray()),
+//					VPDomainHelpers.computeProgramVarMappingFromTransFormula(tf));
+			final Term oldArray = VPDomainHelpers.normalizeTerm(mds.getArray(), tf, mScript);
 
-			final List<EqNode> pointers = convertArrayIndexToEqNodeList(newInVars, newOutVars, mds.getIndex());
+//			final List<EqNode> pointers = convertArrayIndexToEqNodeList(newInVars, newOutVars, mds.getIndex());
+			final List<Term> pointers = mds.getIndex().stream()
+					.map(t -> VPDomainHelpers.normalizeTerm(t, newInVars, newOutVars, mScript))
+					.collect(Collectors.toList());
 
-			final IProgramVarOrConst newArray = mNewArrayIdProvider.getNewArrayId(oldArray, pointers);
+			final Term newArray = mNewArrayIdProvider.getNewArrayId(oldArray, pointers);
 
 			updateMappingsForSubstitution(oldArray, newArray, newInVars, newOutVars, substitutionMapPvoc);
 		}
@@ -212,28 +219,37 @@ public class HeapSepTransFormulaTransformer implements ITransformulaTransformer 
 		final List<ArrayUpdate> arrayUpdates = ArrayUpdate.extractArrayUpdates(formula);
 		for (final ArrayUpdate au : arrayUpdates) {
 
-			final List<EqNode> pointers =
-					convertArrayIndexToEqNodeList(newInVars, newOutVars, au.getMultiDimensionalStore().getIndex());
+//			final List<EqNode> pointers =
+//					convertArrayIndexToEqNodeList(newInVars, newOutVars, au.getMultiDimensionalStore().getIndex());
+			final List<Term> pointers = au.getMultiDimensionalStore().getIndex().stream()
+					.map(t -> VPDomainHelpers.normalizeTerm(t, newInVars, newOutVars, mScript))
+					.collect(Collectors.toList());
 
 			if (mVpDomain.getPreAnalysis().isArrayTracked(au.getNewArray(),
 					VPDomainHelpers.computeProgramVarMappingFromTransFormula(tf))) {
 				// VPDomainHelpers.computeProgramVarMappingFromInVarOutVarMappings(newInVars, newOutVars))) {
-				final IProgramVarOrConst lhs = mVpDomain.getPreAnalysis().getIProgramVarOrConstOrLiteral(
-						au.getNewArray(), VPDomainHelpers.computeProgramVarMappingFromTransFormula(tf));
+
+//				final IProgramVarOrConst lhs = mVpDomain.getPreAnalysis().getIProgramVarOrConstOrLiteral(
+//						au.getNewArray(), VPDomainHelpers.computeProgramVarMappingFromTransFormula(tf));
 				// VPDomainHelpers.computeProgramVarMappingFromInVarOutVarMappings(newInVars, newOutVars));
-				assert lhs != null;
-				final IProgramVarOrConst newArrayLhs = mNewArrayIdProvider.getNewArrayId(lhs, pointers);
+				final Term lhs = VPDomainHelpers.normalizeTerm(au.getNewArray(), tf, mScript);
+
+//				assert lhs != null;
+				final Term newArrayLhs = mNewArrayIdProvider.getNewArrayId(lhs, pointers);
 				updateMappingsForSubstitution(lhs, newArrayLhs, newInVars, newOutVars, substitutionMapPvoc);
 			}
 
 			if (mVpDomain.getPreAnalysis().isArrayTracked(au.getOldArray(),
 					VPDomainHelpers.computeProgramVarMappingFromTransFormula(tf))) {
 				// VPDomainHelpers.computeProgramVarMappingFromInVarOutVarMappings(newInVars, newOutVars))) {
-				final IProgramVarOrConst rhsArray = mVpDomain.getPreAnalysis().getIProgramVarOrConstOrLiteral(
-						au.getOldArray(), VPDomainHelpers.computeProgramVarMappingFromTransFormula(tf));
+//				final IProgramVarOrConst rhsArray = mVpDomain.getPreAnalysis().getIProgramVarOrConstOrLiteral(
+//						au.getOldArray(), VPDomainHelpers.computeProgramVarMappingFromTransFormula(tf));
 				// VPDomainHelpers.computeProgramVarMappingFromInVarOutVarMappings(newInVars, newOutVars));
-				assert rhsArray != null;
-				final IProgramVarOrConst newArrayRhs = mNewArrayIdProvider.getNewArrayId(rhsArray, pointers);
+				final Term rhsArray = VPDomainHelpers.normalizeTerm(au.getOldArray(), tf, mScript);
+
+//				assert rhsArray != null;
+//				final IProgramVarOrConst newArrayRhs = mNewArrayIdProvider.getNewArrayId(rhsArray, pointers);
+				final Term newArrayRhs = mNewArrayIdProvider.getNewArrayId(rhsArray, pointers);
 				updateMappingsForSubstitution(rhsArray, newArrayRhs, newInVars, newOutVars, substitutionMapPvoc);
 			}
 		}
@@ -242,16 +258,16 @@ public class HeapSepTransFormulaTransformer implements ITransformulaTransformer 
 		return newTerm;
 	}
 
-	private List<EqNode> convertArrayIndexToEqNodeList(final Map<IProgramVar, TermVariable> newInVars,
-			final Map<IProgramVar, TermVariable> newOutVars, final ArrayIndex index) {
-		final List<EqNode> pointers =
-				index.stream()
-						.map(indexTerm -> mVpDomain.getPreAnalysis()
-								.getEqNode(indexTerm, VPDomainHelpers
-										.computeProgramVarMappingFromInVarOutVarMappings(newInVars, newOutVars)))
-						.collect(Collectors.toList());
-		return pointers;
-	}
+//	private List<EqNode> convertArrayIndexToEqNodeList(final Map<IProgramVar, TermVariable> newInVars,
+//			final Map<IProgramVar, TermVariable> newOutVars, final ArrayIndex index) {
+//		final List<EqNode> pointers =
+//				index.stream()
+//						.map(indexTerm -> mVpDomain.getPreAnalysis()
+//								.getEqNode(indexTerm, VPDomainHelpers
+//										.computeProgramVarMappingFromInVarOutVarMappings(newInVars, newOutVars)))
+//						.collect(Collectors.toList());
+//		return pointers;
+//	}
 
 	private Term substituteArrayEqualites(final TransFormula tf, final Map<IProgramVar, TermVariable> newInVars,
 			final Map<IProgramVar, TermVariable> newOutVars, final Term intermediateFormula) {
@@ -274,38 +290,41 @@ public class HeapSepTransFormulaTransformer implements ITransformulaTransformer 
 
 			final List<Term> newEqualities = new ArrayList<>();
 
-			final IProgramVarOrConst oldLhs = mVpDomain.getPreAnalysis().getIProgramVarOrConstOrLiteral(ae.getLhs(),
-					VPDomainHelpers.computeProgramVarMappingFromTransFormula(tf));
+//			final IProgramVarOrConst oldLhs = mVpDomain.getPreAnalysis().getIProgramVarOrConstOrLiteral(ae.getLhs(),
+//					VPDomainHelpers.computeProgramVarMappingFromTransFormula(tf));
 			// VPDomainHelpers.computeProgramVarMappingFromInVarOutVarMappings(newInVars, newOutVars));
-			final List<IProgramVarOrConst> newLhss = mNewArrayIdProvider.getAllNewArrayIds(oldLhs);
+			final Term oldLhs = VPDomainHelpers.normalizeTerm(ae.getLhs(), tf, mScript);
 
-			final IProgramVarOrConst oldRhs = mVpDomain.getPreAnalysis().getIProgramVarOrConstOrLiteral(ae.getRhs(),
-					VPDomainHelpers.computeProgramVarMappingFromTransFormula(tf));
+			final List<Term> newLhss = mNewArrayIdProvider.getAllNewArrayIds(oldLhs);
+
+//			final IProgramVarOrConst oldRhs = mVpDomain.getPreAnalysis().getIProgramVarOrConstOrLiteral(ae.getRhs(),
+//					VPDomainHelpers.computeProgramVarMappingFromTransFormula(tf));
 			// VPDomainHelpers.computeProgramVarMappingFromInVarOutVarMappings(newInVars, newOutVars));
-			final List<IProgramVarOrConst> newRhss = mNewArrayIdProvider.getAllNewArrayIds(oldRhs);
+			final Term oldRhs = VPDomainHelpers.normalizeTerm(ae.getRhs(), tf, mScript);
+			final List<Term> newRhss = mNewArrayIdProvider.getAllNewArrayIds(oldRhs);
 
 			assert newLhss.size() == newRhss.size();
 			for (int i = 0; i < newLhss.size(); i++) {
-				final IProgramVarOrConst newLhs = newLhss.get(i);
-				final IProgramVarOrConst newRhs = newRhss.get(i);
-				final Term newEquality = mScript.term(this, "=", newLhs.getTerm(), newRhs.getTerm());
+				final Term newLhs = newLhss.get(i);
+				final Term newRhs = newRhss.get(i);
+				final Term newEquality = mScript.term(this, "=", newLhs, newRhs);
 				newEqualities.add(newEquality);
 
 				if (tf.getInVars().containsKey(oldLhs)) {
 					newInVars.remove(oldLhs);
-					newInVars.put((IProgramVar) newLhs, (TermVariable) newLhs.getTerm());
+					newInVars.put((IProgramVar) newLhs, (TermVariable) newLhs);
 				}
 				if (tf.getInVars().containsKey(oldRhs)) {
 					newInVars.remove(oldRhs);
-					newInVars.put((IProgramVar) newRhs, (TermVariable) newRhs.getTerm());
+					newInVars.put((IProgramVar) newRhs, (TermVariable) newRhs);
 				}
 				if (tf.getOutVars().containsKey(oldLhs)) {
 					newOutVars.remove(oldLhs);
-					newOutVars.put((IProgramVar) newLhs, (TermVariable) newLhs.getTerm());
+					newOutVars.put((IProgramVar) newLhs, (TermVariable) newLhs);
 				}
 				if (tf.getOutVars().containsKey(oldRhs)) {
 					newOutVars.remove(oldRhs);
-					newOutVars.put((IProgramVar) newRhs, (TermVariable) newRhs.getTerm());
+					newOutVars.put((IProgramVar) newRhs, (TermVariable) newRhs);
 				}
 
 			}
@@ -333,7 +352,7 @@ public class HeapSepTransFormulaTransformer implements ITransformulaTransformer 
 	 * @param newOutVars
 	 * @param substitutionMap
 	 */
-	private void updateMappingsForSubstitution(final IProgramVarOrConst oldArray, final IProgramVarOrConst newArray,
+	private void updateMappingsForSubstitution(final Term oldArray, final Term newArray,
 			final Map<IProgramVar, TermVariable> newInVars, final Map<IProgramVar, TermVariable> newOutVars,
 			final Map<Term, Term> substitutionMap) {
 		if (oldArray instanceof IProgramVar) {
@@ -344,7 +363,7 @@ public class HeapSepTransFormulaTransformer implements ITransformulaTransformer 
 
 			TermVariable invNewTv = null;
 			if (inv != null) {
-				invNewTv = mScript.constructFreshCopy((TermVariable) newArray.getTerm());
+				invNewTv = mScript.constructFreshCopy((TermVariable) newArray);
 				newInVars.remove(oldArray);
 				newInVars.put((IProgramVar) newArray, invNewTv);
 				substitutionMap.put(inv, invNewTv);
@@ -355,7 +374,7 @@ public class HeapSepTransFormulaTransformer implements ITransformulaTransformer 
 				if (inv == outv) {
 					newTv = invNewTv;
 				} else {
-					newTv = mScript.constructFreshCopy((TermVariable) newArray.getTerm());
+					newTv = mScript.constructFreshCopy((TermVariable) newArray);
 				}
 				newOutVars.remove(oldArray);
 				newOutVars.put((IProgramVar) newArray, newTv);
@@ -367,7 +386,7 @@ public class HeapSepTransFormulaTransformer implements ITransformulaTransformer 
 			 * the array id is a constant (or literal) --> there are no changes to the invar/outvar mappings, only to
 			 * the substitution
 			 */
-			substitutionMap.put(oldArray.getTerm(), newArray.getTerm());
+			substitutionMap.put(oldArray, newArray);
 		}
 	}
 

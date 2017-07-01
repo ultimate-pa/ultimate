@@ -37,6 +37,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieNonOldVar;
@@ -44,24 +45,26 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieOldVar
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.LocalBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.IntraproceduralReplacementVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ProgramVarUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNode;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
 public class NewArrayIdProvider {
 	
-	private final Map<Set<IProgramVarOrConst>, PartitionInformation> mArrayToPartitionInformation = new HashMap<>();
+	private final Map<Set<Term>, PartitionInformation> mArrayToPartitionInformation = new HashMap<>();
 	private final DefaultIcfgSymbolTable mNewSymbolTable;
 	
-	private final Map<IProgramVarOrConst, Set<IProgramVarOrConst>> mArrayIdToArrayGroup = new HashMap<>();
+	private final Map<Term, Set<Term>> mArrayIdToArrayGroup = new HashMap<>();
 
 	private final ManagedScript mManagedScript;
+	private final IIcfgSymbolTable mOldSymbolTable;
 
 	public NewArrayIdProvider(final CfgSmtToolkit csToolkit) {
 		mManagedScript = csToolkit.getManagedScript();
+		mOldSymbolTable = csToolkit.getSymbolTable();
 		mNewSymbolTable = new DefaultIcfgSymbolTable(csToolkit.getSymbolTable(), csToolkit.getProcedures());
 	}
 
@@ -71,29 +74,29 @@ public class NewArrayIdProvider {
 	 * @param indexVector
 	 * @return
 	 */
-	public IProgramVarOrConst getNewArrayId(final IProgramVarOrConst originalArrayId, final List<EqNode> indexVector) {
+	public Term getNewArrayId(final Term originalArrayId, final List<Term> indexVector) {
 		return mArrayToPartitionInformation.get(mArrayIdToArrayGroup.get(originalArrayId)).getNewArray(originalArrayId, indexVector);
 	}
 
 	public void registerEquivalenceClass(
-			final Set<IProgramVarOrConst> arrayIds, 
-			final Set<EqNode> ec) {
+			final Set<Term> arrayIds, 
+			final Set<List<Term>> ec) {
 		final IndexPartition indexPartition = new IndexPartition(arrayIds, ec);
 
 		PartitionInformation partitionInfo = mArrayToPartitionInformation.get(arrayIds);
 		if (partitionInfo == null) {
-			partitionInfo = new PartitionInformation(arrayIds, mManagedScript, mNewSymbolTable);
+			partitionInfo = new PartitionInformation(arrayIds, mManagedScript, mNewSymbolTable, mOldSymbolTable);
 			mArrayToPartitionInformation.put(arrayIds, partitionInfo);
 		}
 		partitionInfo.addPartition(indexPartition);
 		
 		
-		for (IProgramVarOrConst arrayId : arrayIds) {
+		for (Term arrayId : arrayIds) {
 			mArrayIdToArrayGroup.put(arrayId, arrayIds);
 		}
 	}
 
-	public List<IProgramVarOrConst> getAllNewArrayIds(IProgramVarOrConst oldLhs) {
+	public List<Term> getAllNewArrayIds(Term oldLhs) {
 		return mArrayToPartitionInformation.get(mArrayIdToArrayGroup.get(oldLhs)).getNewArrayIds().get(oldLhs);
 	}
 	
@@ -108,10 +111,10 @@ public class NewArrayIdProvider {
  * the indices in any other partition.
  */
 class IndexPartition {
-	final Set<IProgramVarOrConst> arrayIds;
-	final Set<EqNode> indices;
+	final Set<Term> arrayIds;
+	final Set<List<Term>> indices;
 
-	public IndexPartition(final Set<IProgramVarOrConst> arrayIds, final Set<EqNode> indices) {
+	public IndexPartition(final Set<Term> arrayIds, final Set<List<Term>> indices) {
 		this.arrayIds = arrayIds;
 		this.indices = Collections.unmodifiableSet(indices);
 	}
@@ -123,32 +126,35 @@ class IndexPartition {
 }
 
 class PartitionInformation {
-	private final Set<IProgramVarOrConst> arrayIds;
+	private final Set<Term> arrayIds;
 	int versionCounter = 0;
 	private final DefaultIcfgSymbolTable mNewSymbolTable;
 	private final Set<IndexPartition> indexPartitions;
 	
-	private final Map<IProgramVarOrConst, List<IProgramVarOrConst>> mOldArrayIdToNewArrayIds = new HashMap<>();
+	private final Map<Term, List<Term>> mOldArrayIdToNewArrayIds = new HashMap<>();
 	
 //	final Map<IndexPartition, IProgramVarOrConst> indexPartitionToArrayToNewArrayId = new HashMap<>();
-	final NestedMap2<IndexPartition, IProgramVarOrConst, List<IProgramVarOrConst>> indexPartitionToArrayToNewArrayId = new NestedMap2<>();
+	final NestedMap2<IndexPartition, Term, List<Term>> indexPartitionToArrayToNewArrayId = new NestedMap2<>();
 	
-	private final NestedMap2<List<IndexPartition>, IProgramVarOrConst, IProgramVarOrConst> partitionVectorToOldArrayIdToNewArrayId = new NestedMap2<>();
+	private final NestedMap2<List<IndexPartition>, Term, Term> partitionVectorToOldArrayIdToNewArrayId = new NestedMap2<>();
 	
-	private final Map<EqNode, IndexPartition> indexToIndexPartition = new HashMap<>();
+	private final Map<List<Term>, IndexPartition> indexToIndexPartition = new HashMap<>();
 	private final ManagedScript mManagedScript;
+	private final IIcfgSymbolTable mOldSymbolTable;
 	
-	public PartitionInformation(final Set<IProgramVarOrConst> arrayIds, final ManagedScript mScript, final DefaultIcfgSymbolTable newSymbolTable) {
+	public PartitionInformation(final Set<Term> arrayIds, final ManagedScript mScript, 
+			final DefaultIcfgSymbolTable newSymbolTable, IIcfgSymbolTable oldSymbolTable) {
 		this.arrayIds = arrayIds;
 		indexPartitions = new HashSet<>();
 		mManagedScript = mScript;
 		mNewSymbolTable = newSymbolTable;
+		mOldSymbolTable = oldSymbolTable;
 	}
 	
-	IProgramVarOrConst getNewArray(final IProgramVarOrConst arrayId, final List<EqNode> indexVector) {
+	Term getNewArray(final Term arrayId, final List<Term> indexVector) {
 		assert arrayIds.contains(arrayId);
 		List<IndexPartition> partitionVector = new ArrayList<>();
-		for (EqNode eqNode : indexVector) {
+		for (Term eqNode : indexVector) {
 			IndexPartition ip = indexToIndexPartition.get(eqNode);
 			assert ip != null;
 			partitionVector.add(ip);
@@ -158,11 +164,11 @@ class PartitionInformation {
 		return getNewArrayIdsForIndexPartitionVector(arrayId, partitionVector);
 	}
 
-	private IProgramVarOrConst getNewArrayIdsForIndexPartitionVector(IProgramVarOrConst oldArrayId, final List<IndexPartition> partitionVector) {
-		IProgramVarOrConst result = partitionVectorToOldArrayIdToNewArrayId.get(partitionVector, oldArrayId);
+	private Term getNewArrayIdsForIndexPartitionVector(Term oldArrayId, final List<IndexPartition> partitionVector) {
+		Term result = partitionVectorToOldArrayIdToNewArrayId.get(partitionVector, oldArrayId);
 		if (result == null) {
-			Map<IProgramVarOrConst, IProgramVarOrConst> freshVars = obtainFreshProgramVar(oldArrayId, partitionVector);
-			for (Entry<IProgramVarOrConst, IProgramVarOrConst> en : freshVars.entrySet()) {
+			Map<Term, Term> freshVars = obtainFreshProgramVar(oldArrayId, partitionVector);
+			for (Entry<Term, Term> en : freshVars.entrySet()) {
 				partitionVectorToOldArrayIdToNewArrayId.put(partitionVector, en.getKey(), en.getValue());
 			}
 			result = freshVars.get(oldArrayId);
@@ -173,7 +179,7 @@ class PartitionInformation {
 
 	void addPartition(final IndexPartition ip) {
 		indexPartitions.add(ip);
-		for (EqNode index : ip.indices) {
+		for (List<Term> index : ip.indices) {
 			indexToIndexPartition.put(index, ip);
 		}
 	}
@@ -183,15 +189,17 @@ class PartitionInformation {
 		return versionCounter++;
 	}
 
-	private Map<IProgramVarOrConst, IProgramVarOrConst> obtainFreshProgramVar(
-			IProgramVarOrConst oldArrayId, List<IndexPartition> partitionVector) {
+	private Map<Term, Term> obtainFreshProgramVar(
+			Term oldArrayId, List<IndexPartition> partitionVector) {
 		// TODO: would it be a good idea to introduce something like ReplacementVar for this??
 		
 		
-		Map<IProgramVarOrConst, IProgramVarOrConst> oldArrayIdToNewlyCreatedArrayId = new HashMap<>();
+		Map<Term, Term> oldArrayIdToNewlyCreatedArrayId = new HashMap<>();
 		mManagedScript.lock(this);
 		
-		for (IProgramVarOrConst arrayId : arrayIds) {
+		for (Term arrayTv : arrayIds) {
+			IProgramVarOrConst arrayId = mOldSymbolTable.getProgramVar((TermVariable) arrayTv);
+
 			IProgramVarOrConst freshVar = null;
 			if (arrayId instanceof LocalBoogieVar) {
 				final LocalBoogieVar lbv = (LocalBoogieVar) arrayId;
@@ -218,51 +226,17 @@ class PartitionInformation {
 				BoogieNonOldVar bnovOld = (BoogieNonOldVar) arrayId;
 
 				final String newId = bnovOld.getIdentifier() + "_part_" + getFreshVersionIndex();
-//				final TermVariable newTv = mManagedScript.constructFreshCopy(bnovOld.getTermVariable());
-//				final TermVariable newTvOld = mManagedScript.constructFreshCopy(bnovOld.getOldVar().getTermVariable());
-//
-//				String constString = newId + "_const";
-//				mManagedScript.getScript().declareFun(constString, new Sort[0], newTv.getSort());
-//				final ApplicationTerm newConst = (ApplicationTerm) mManagedScript.term(this, constString);
-//				mManagedScript.getScript().declareFun(constString + "_old", new Sort[0], newTv.getSort());
-//				final ApplicationTerm newConstOld = (ApplicationTerm) mManagedScript.term(this, constString + "_old");
-//
-//				String constPrimedString = newId + "_const_primed";
-//				mManagedScript.getScript().declareFun(constPrimedString, new Sort[0], newTv.getSort());
-//				final ApplicationTerm newPrimedConst = (ApplicationTerm) mManagedScript.term(this, constPrimedString);
-//				mManagedScript.getScript().declareFun(constPrimedString + "_old", new Sort[0], newTv.getSort());
-//				final ApplicationTerm newPrimedConstOld = (ApplicationTerm) mManagedScript.term(this, constPrimedString + "_old");
-
-//				final BoogieOldVar bovNew = new BoogieOldVar(newId + "_old", 
-//						null, 
-//						newTvOld, 
-//						newConstOld, 
-//						newPrimedConstOld);
-//				
-//				BoogieNonOldVar bnovNew = new BoogieNonOldVar(
-//							newId, 
-//							null, 
-//							newTv, 
-//							newConst, 
-//							newPrimedConst,
-//							bovNew);
-				
+			
 				final BoogieNonOldVar bnovNew = 
 						ProgramVarUtils.constructGlobalProgramVarPair(newId, bnovOld.getSort(), mManagedScript, this);
 				
-//				if (arrayId instanceof BoogieNonOldVar) {
 				freshVar = bnovNew;
 				mNewSymbolTable.add(freshVar);
 				partitionVectorToOldArrayIdToNewArrayId.put(partitionVector, 
-						((BoogieNonOldVar) arrayId).getOldVar(), bnovNew.getOldVar());
-//				} else {
-//					assert arrayId instanceof BoogieOldVar;
-//					freshVar = bov;
-//					partitionVectorToOldArrayIdToNewArrayId.put(partitionVector, arrayId.get
-//					
-//				}
+						((BoogieNonOldVar) arrayId).getOldVar().getTerm(), bnovNew.getOldVar().getTerm());
 			} else if (arrayId instanceof BoogieOldVar) {
-				freshVar = partitionVectorToOldArrayIdToNewArrayId.get(partitionVector, arrayId);
+				freshVar = mNewSymbolTable.getProgramVar(
+						(TermVariable) partitionVectorToOldArrayIdToNewArrayId.get(partitionVector, arrayTv));
 				assert freshVar != null;
 			} else if (arrayId instanceof IntraproceduralReplacementVar) {
 				assert false : "TODO: implement";
@@ -273,14 +247,14 @@ class PartitionInformation {
 			}
 
 
-			List<IProgramVarOrConst> newIdList = mOldArrayIdToNewArrayIds.get(arrayId);
+			List<Term> newIdList = mOldArrayIdToNewArrayIds.get(arrayId);
 			if (newIdList == null) {
 				newIdList = new ArrayList<>();
-				mOldArrayIdToNewArrayIds.put(arrayId, newIdList);
+				mOldArrayIdToNewArrayIds.put(arrayTv, newIdList);
 			}
-			newIdList.add(freshVar);
+			newIdList.add(freshVar.getTerm());
 			
-			oldArrayIdToNewlyCreatedArrayId.put(arrayId, freshVar);
+			oldArrayIdToNewlyCreatedArrayId.put(arrayTv, freshVar.getTerm());
 		}
 		
 		mManagedScript.unlock(this);
@@ -303,7 +277,7 @@ class PartitionInformation {
 		return sb.toString();
 	}
 	
-	Map<IProgramVarOrConst, List<IProgramVarOrConst>> getNewArrayIds() {
+	Map<Term, List<Term>> getNewArrayIds() {
 		return mOldArrayIdToNewArrayIds;
 	}
 }

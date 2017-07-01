@@ -37,6 +37,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -48,8 +49,11 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalStore;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqFunction;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqGraphNode;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNode;
@@ -80,6 +84,11 @@ public class VPDomainHelpers {
 		return result;
 	}
 	
+	public static Map<Term, Term> computeNormalizingSubstitution(final Map<IProgramVar, TermVariable> map1, 
+			final Map<IProgramVar, TermVariable> map2) {
+		return computeNormalizingSubstitution(computeProgramVarMappingFromInVarOutVarMappings(map1, map2));
+	}
+
 	public static Map<Term, Term> computeNormalizingSubstitution(final TransFormula tf) {
 		return computeNormalizingSubstitution(computeProgramVarMappingFromTransFormula(tf));
 	}
@@ -493,5 +502,22 @@ public class VPDomainHelpers {
 			}
 		}
 		return true;
+	}
+
+	public static Term normalizeTerm(Term term, TransFormula tf, ManagedScript mgdScript) {
+		final Map<Term, Term> subs = computeNormalizingSubstitution(tf);
+		return new Substitution(mgdScript, subs).transform(term);
+	}
+
+	public static Term normalizeTerm(Term t, Map<IProgramVar, TermVariable> newInVars,
+			Map<IProgramVar, TermVariable> newOutVars, ManagedScript mgdScript) {
+		final Map<Term, Term> subs = computeNormalizingSubstitution(newInVars, newOutVars);
+		return new Substitution(mgdScript, subs).transform(t);
+	}
+
+	public static List<Term> normalizeArrayIndex(ArrayIndex index, TransFormula tf, ManagedScript script) {
+		return index.stream()
+				.map(t -> normalizeTerm(t, tf, script))
+				.collect(Collectors.toList());
 	}
 }
