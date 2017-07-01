@@ -35,7 +35,6 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.IEqNodeIdentifier;
 
@@ -49,86 +48,19 @@ public abstract class EqNode implements IEqNodeIdentifier<EqNode, EqFunction> {
 	
 	protected final EqNodeAndFunctionFactory mEqNodeFactory;
 
-	@Deprecated
-	protected Set<IProgramVar> mVariables;
-	
-	/**
-	 * Is true iff this EqNode's term only uses global program symbols.
-	 */
-	@Deprecated
-	protected boolean mIsGlobal;
-	
 	protected boolean mIsConstant;
 
-	@Deprecated
-	private String mProcedure;
-	
 	private Set<EqNode> mParents = new HashSet<>();
 
 	protected Term mTerm;
-	
-	/**
-	 * indicates whether the Term only contains the standard TermVariables belonging to the IProgramVars, or if it
-	 * is "versioned".
-	 */
-	@Deprecated
-	protected boolean mTermIsVersioned;
-	
-	
 	
 	public EqNode(Term term, EqNodeAndFunctionFactory eqNodeFactory) {
 		mTerm = term;
 		mEqNodeFactory = eqNodeFactory;
 	}
 
-
-	@Deprecated
-	EqNode(boolean isGlobal, boolean isConstant, String procedure, EqNodeAndFunctionFactory eqNodeFactory) {
-		assert isGlobal || procedure != null;
-		mIsGlobal = isGlobal;
-		mIsConstant = isConstant;
-		mProcedure = procedure;
-		mEqNodeFactory = eqNodeFactory;
-		mTermIsVersioned = false;
-	}
-
-	@Deprecated
-	public EqNode(boolean isGlobal, boolean isConstant, String procedure, Term versionedTerm, 
-			EqNodeAndFunctionFactory eqNodeFactory) {
-		assert isGlobal || procedure != null;
-		mIsGlobal = isGlobal;
-		mIsConstant = isConstant;
-		mProcedure = procedure;
-		mEqNodeFactory = eqNodeFactory;
-		mTerm = versionedTerm;
-		mTermIsVersioned = true;
-	}
-
-	/**
-	 * Yields the parents of this node in the EqNode graph (where the edges mean "is applied to"/"is a function argument
-	 *  of"). Can be used to obtain initial ccParents for the corresponding EqGraphNode.
-	 */
-	@Deprecated
-	Set<EqNode> getParents() {
-		return mParents;
-	}
-	
-	@Deprecated
-	public void addParent(EqNode parent) {
-		mParents.add(parent);
-	}
-
 	public abstract boolean isLiteral();
 
-	/**
-	 * Is true iff this EqNode's term only uses global program symbols.
-	 */
-	@Deprecated
-	public boolean isGlobal() {
-		return mIsGlobal;
-	}
-	
-	
 	public boolean isConstant() {
 		return mIsConstant;
 	}
@@ -137,20 +69,8 @@ public abstract class EqNode implements IEqNodeIdentifier<EqNode, EqFunction> {
 		return Arrays.asList(mTerm.getFreeVars());
 	}
 
-	@Deprecated
-	public Set<IProgramVar> getVariables() {
-		return mVariables;
-	}
-
 	public Term getTerm() {
 		return mTerm;
-	}
-	
-	/**
-	 * Returns procedure that this EqNode is local to. null if it is global.
-	 */
-	public String getProcedure() {
-		return mProcedure;
 	}
 	
 	public final EqNode renameVariables(Map<Term, Term> substitutionMapping) {

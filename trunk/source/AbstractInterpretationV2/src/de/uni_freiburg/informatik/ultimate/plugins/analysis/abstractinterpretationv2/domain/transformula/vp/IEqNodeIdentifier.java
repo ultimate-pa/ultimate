@@ -27,7 +27,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -42,14 +41,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  */
 public interface IEqNodeIdentifier<NODE extends IEqNodeIdentifier<NODE, FUNCTION>, 
 			FUNCTION extends IEqFunctionIdentifier<NODE, FUNCTION>> {
-	 //extends IEqNodeIdentifier<NODE, FUNCTION>
+
 	boolean isFunction();
 
 	FUNCTION getFunction();
 
 	List<NODE> getArgs();
-	
-	Collection<FUNCTION> getAllFunctions();
 	
 	boolean isLiteral();
 	

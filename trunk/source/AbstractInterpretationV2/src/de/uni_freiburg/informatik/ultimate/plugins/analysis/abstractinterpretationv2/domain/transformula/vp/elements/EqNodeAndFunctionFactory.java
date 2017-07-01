@@ -4,13 +4,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.CommuhashNormalForm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
@@ -33,42 +31,9 @@ public class EqNodeAndFunctionFactory {
 		mMgdScript = script;
 	}
 
-	@Deprecated
-	public EqAtomicBaseNode getOrConstructEqAtomicNode(IProgramVarOrConst varOrConst, Term substitutedTerm) {
-
-		return new EqAtomicBaseNode(varOrConst, substitutedTerm, this);
-	}
-
-	@Deprecated
-	public EqFunctionNode getOrConstructEqFunctionNode(EqFunction function, List<EqNode> args) {
-
-		final List<Term> paramTerms = args.stream().map(eqNode -> eqNode.getTerm()).collect(Collectors.toList());
-		mMgdScript.lock(this);
-		final Term term = mMgdScript.term(this, function.getFunctionName(),
-				paramTerms.toArray(new Term[paramTerms.size()]));
-		mMgdScript.unlock(this);
-
-		return new EqFunctionNode(function, args, term, this);
-	}
-
 	public ManagedScript getScript() {
 		return mMgdScript;
 	}
-
-	@Deprecated
-	public EqNode getOrConstructEqNonAtomicBaseNode(Term substitutedTerm, boolean isGlobal, String procedure) {
-		return new EqNonAtomicBaseNode(substitutedTerm, isGlobal, procedure, this);
-	}
-
-	@Deprecated
-	public EqFunction getOrConstructEqFunction(IProgramVarOrConst pvoc) {
-		return new EqFunction(pvoc, this);
-	}
-
-	// public EqFunction getOrConstructEqFunction(IProgramVarOrConst pvoc, Term
-	// term) {
-	// return new EqFunction(pvoc, term, this);
-	// }
 
 	public EqNode getOrConstructEqNode(Term term) {
 		if (term instanceof ApplicationTerm && ((ApplicationTerm) term).getParameters().length > 0) {

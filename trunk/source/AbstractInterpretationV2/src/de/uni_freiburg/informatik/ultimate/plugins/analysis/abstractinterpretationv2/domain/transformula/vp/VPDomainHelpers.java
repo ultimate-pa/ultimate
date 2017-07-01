@@ -54,9 +54,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayInd
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalStore;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqFunction;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqGraphNode;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNode;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.IEqFunctionIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.EqConstraint;
 
@@ -400,61 +398,6 @@ public class VPDomainHelpers {
 		}
 		return true;
 	}
-
-	/**
-	 * Used when constructing an EqFunctionNode.
-	 * Computes the procedure it is local to, from its constructor arguments, null if it is global.
-	 * 
-	 * @param function
-	 * @param args
-	 * @return
-	 */
-	public static String computeProcedure(EqFunction function, List<EqNode> args) {
-		String result = null;
-		
-		result = function.getProcedure();
-		
-		for (EqNode arg : args) {
-			String argProc = arg.getProcedure();
-			if (argProc != null) {
-				if (result == null) {
-					result = argProc;
-				} else {
-					assert result.equals(argProc);
-				}
-			}
-		}
-		
-		return result;
-	}
-
-//	/**
-//	 * eliminates all the bottom states, except if the set would be empty then. In that case, returns a singleton with
-//	 *  the bottom state.
-//	 * @param resultStates
-//	 * @return
-//	 */
-////	public static  <ACTION extends IIcfgTransition<IcfgLocation>> Set<VPState<ACTION>> 
-////	public static  <NODEID extends IEqNodeIdentifier<ARRAYID>, ARRAYID> Set<IVPStateOrTfState<NODEID, ARRAYID>> 
-//	public static  <T extends IVPStateOrTfState<NODEID, ARRAYID>, NODEID extends IEqNodeIdentifier<NODEID, ARRAYID>, ARRAYID> 
-//		Set<T> 
-//			eliminateBottomStates(Set<T> resultStates) {
-//		final Set<T> result = new HashSet<>();
-//		T bottom = null;
-//		for (T rs : resultStates) {
-//			if (rs.isBottom()) {
-//				bottom = rs;
-//			} else {
-//				result.add(rs);
-//			}
-//		}
-//		if (result.isEmpty()) {
-//			assert bottom != null;
-//			result.add(bottom);
-//		}
-//		return result;
-////		return resultStates.stream().filter(state -> !state.isBottom()).collect(Collectors.toSet());
-//	}
 
 	public static <ACTION extends IIcfgTransition<IcfgLocation>, 
 		NODE extends IEqNodeIdentifier<NODE, FUNCTION>, 
