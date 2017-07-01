@@ -36,10 +36,12 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
@@ -72,15 +74,22 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 	ManagedScript mScript;
 	private VPDomain mVpDomain;
 	private NewArrayIdProvider mNewArrayIdProvider;
+	
+	private final IIcfgSymbolTable mOldSymbolTable;
+	private final IIcfgSymbolTable mNewSymbolTable;
 
 	public HeapSepRcfgVisitor(final ILogger logger,
 			NewArrayIdProvider naip,
 			final ManagedScript script,
-			final VPDomain vpDomain) {
+			final VPDomain vpDomain, 
+			IIcfgSymbolTable oldSymbolTable, 
+			IIcfgSymbolTable newSymbolTable) {
 		super(logger);
 		mNewArrayIdProvider = naip;
 		mVpDomain = vpDomain;
 		mScript = script;
+		mOldSymbolTable = oldSymbolTable;
+		mNewSymbolTable = newSymbolTable;
 	}
 
 	@Override
@@ -187,7 +196,8 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 				continue;
 			}
 			if (!mVpDomain.getPreAnalysis().isArrayTracked(
-					VPDomainHelpers.getArrayTerm(mds.getArray()),
+//					VPDomainHelpers.getArrayTerm(getInnerMostArray(mds.getArray())),
+					getInnerMostArray(mds.getArray()),
 					VPDomainHelpers.computeProgramVarMappingFromTransFormula(tf))) {
 //					VPDomainHelpers.computeProgramVarMappingFromInVarOutVarMappings(newInVars, newOutVars))) {
 				continue;
@@ -201,7 +211,7 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 //							VPDomainHelpers.computeProgramVarMappingFromInVarOutVarMappings(newInVars, newOutVars));
 //			assert oldArray != null;
 			
-			final Term oldArray = VPDomainHelpers.normalizeTerm(mds.getArray(), tf, mScript);
+			final Term oldArray = VPDomainHelpers.normalizeTerm(getInnerMostArray(mds.getArray()), tf, mScript);
 
 //			List<Term> pointers = convertArrayIndexToEqNodeList(newInVars, newOutVars, mds.getIndex());
 			final List<Term> pointers = mds.getIndex().stream()
@@ -222,7 +232,8 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 				continue;
 			}
 			if (!mVpDomain.getPreAnalysis().isArrayTracked(
-					VPDomainHelpers.getArrayTerm(mds.getArray()),
+//					VPDomainHelpers.getArrayTerm(mds.getArray()),
+					getInnerMostArray(mds.getArray()),
 					VPDomainHelpers.computeProgramVarMappingFromTransFormula(tf))) {
 //					VPDomainHelpers.computeProgramVarMappingFromInVarOutVarMappings(newInVars, newOutVars))) {
 				continue;
@@ -232,7 +243,7 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 //					mVpDomain.getPreAnalysis().getIProgramVarOrConstOrLiteral(
 //							VPDomainHelpers.getArrayTerm(mds.getArray()),
 //							VPDomainHelpers.computeProgramVarMappingFromTransFormula(tf));
-			final Term oldArray = VPDomainHelpers.normalizeTerm(mds.getArray(), tf, mScript);
+			final Term oldArray = VPDomainHelpers.normalizeTerm(getInnerMostArray(mds.getArray()), tf, mScript);
 
 //			List<Term> pointers = convertArrayIndexToEqNodeList(newInVars, newOutVars, mds.getIndex());
 			final List<Term> pointers = mds.getIndex().stream()
@@ -404,19 +415,23 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 	 * @param newOutVars
 	 * @param substitutionMap
 	 */
-	private void updateMappingsForSubstitution(Term oldArray, Term newArray,
+	private void updateMappingsForSubstitution(Term oldArrayTerm, Term newArrayTerm,
 			final Map<IProgramVar, TermVariable> newInVars,
 			final Map<IProgramVar, TermVariable> newOutVars,
 			final Map<Term, Term> substitutionMap) {
-		if (oldArray instanceof IProgramVar) {
-			assert newArray instanceof IProgramVar : "right?..";
+		if (oldArrayTerm instanceof TermVariable) {
+//		if (oldArray instanceof IProgramVar) {
+//			assert newArray instanceof IProgramVar : "right?..";
+			assert newArrayTerm instanceof TermVariable;
+			final IProgramVar oldArray = mOldSymbolTable.getProgramVar((TermVariable) oldArrayTerm);
+			final IProgramVar newArray = mNewSymbolTable.getProgramVar((TermVariable) newArrayTerm);
 		
 			TermVariable inv = newInVars.get(oldArray);
 			TermVariable outv = newOutVars.get(oldArray);
 
 			TermVariable invNewTv = null;
 			if (inv != null) {
-				invNewTv = mScript.constructFreshCopy((TermVariable) newArray);
+				invNewTv = mScript.constructFreshCopy((TermVariable) newArrayTerm);
 				newInVars.remove(oldArray);
 				newInVars.put((IProgramVar) newArray, invNewTv);
 				substitutionMap.put(inv, invNewTv);
@@ -427,19 +442,31 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 				if (inv == outv) {
 					newTv = invNewTv;
 				} else {
-					newTv = mScript.constructFreshCopy((TermVariable) newArray);
+					newTv = mScript.constructFreshCopy((TermVariable) newArrayTerm);
 				}
 				newOutVars.remove(oldArray);
 				newOutVars.put((IProgramVar) newArray, newTv);
 				substitutionMap.put(outv, newTv);
 			}
 			
-		} else {
+		} else if (SmtUtils.isConstant(oldArrayTerm)) {
 			/*
 			 * the array id is a constant (or literal)
 			 *  --> there are no changes to the invar/outvar mappings, only to the substitution
 			 */
-			substitutionMap.put(oldArray, newArray);
+			substitutionMap.put(oldArrayTerm, newArrayTerm);
+		} else {
+			throw new AssertionError("did not see this case coming..");
 		}
+	}
+	
+	public static Term getInnerMostArray(Term arrayTerm) {
+		assert arrayTerm.getSort().isArraySort();
+		Term innerArray = arrayTerm;
+		while (SmtUtils.containsFunctionApplication(innerArray, "store")) {
+			innerArray = ((ApplicationTerm) innerArray).getParameters()[0];
+		}
+		assert innerArray instanceof TermVariable;
+		return innerArray;
 	}
 }

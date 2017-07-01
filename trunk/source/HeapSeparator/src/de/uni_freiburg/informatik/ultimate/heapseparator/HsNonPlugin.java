@@ -118,7 +118,8 @@ public class HsNonPlugin {
 		od.setWalker(walker);
 		
 		final HeapSepRcfgVisitor hsv =
-				new HeapSepRcfgVisitor(mLogger, newArrayIdProvider, mCsToolkit.getManagedScript(), vpDomain);
+				new HeapSepRcfgVisitor(mLogger, newArrayIdProvider, mCsToolkit.getManagedScript(), vpDomain,
+						mCsToolkit.getSymbolTable(), newArrayIdProvider.getNewSymbolTable());
 		walker.addObserver(hsv);
 		walker.run(BoogieIcfgContainer.extractStartEdges(oldBoogieIcfg));
 		

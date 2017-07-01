@@ -29,10 +29,8 @@ package de.uni_freiburg.informatik.ultimate.heapseparator;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -75,7 +73,9 @@ public class NewArrayIdProvider {
 	 * @return
 	 */
 	public Term getNewArrayId(final Term originalArrayId, final List<Term> indexVector) {
-		return mArrayToPartitionInformation.get(mArrayIdToArrayGroup.get(originalArrayId)).getNewArray(originalArrayId, indexVector);
+		return mArrayToPartitionInformation
+				.get(mArrayIdToArrayGroup.get(originalArrayId))
+				.getNewArray(originalArrayId, indexVector);
 	}
 
 	public void registerEquivalenceClass(
@@ -104,6 +104,10 @@ public class NewArrayIdProvider {
 	public String toString() {
 		return "NewArrayIdProvider: \n" + mArrayToPartitionInformation.toString();
 	}
+
+	public IIcfgSymbolTable getNewSymbolTable() {
+		return mNewSymbolTable;
+	}
 }
 
 /*
@@ -125,18 +129,30 @@ class IndexPartition {
 	}
 }
 
+/**
+ * Holds partition information for a given array group (as computed by the HeapSepPreAnalysis), i.e. which groups of 
+ * indices (called IndexPartitions) may alias, and what new Term/IProgramVar is assigned to it. 
+ * Also constructs these new identifiers and updates the new symbol table.
+ * 
+ * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
+ *
+ */
 class PartitionInformation {
+	/*
+	 * an array group in the original program, an groups are formed as arrays that are equated anywhere in the program
+	 */
 	private final Set<Term> arrayIds;
+
 	int versionCounter = 0;
 	private final DefaultIcfgSymbolTable mNewSymbolTable;
-	private final Set<IndexPartition> indexPartitions;
+	private final List<IndexPartition> indexPartitions;
 	
 	private final Map<Term, List<Term>> mOldArrayIdToNewArrayIds = new HashMap<>();
 	
 //	final Map<IndexPartition, IProgramVarOrConst> indexPartitionToArrayToNewArrayId = new HashMap<>();
-	final NestedMap2<IndexPartition, Term, List<Term>> indexPartitionToArrayToNewArrayId = new NestedMap2<>();
+	final NestedMap2<IndexPartition, Term, Term> indexPartitionToArrayToNewArrayId = new NestedMap2<>();
 	
-	private final NestedMap2<List<IndexPartition>, Term, Term> partitionVectorToOldArrayIdToNewArrayId = new NestedMap2<>();
+//	private final NestedMap2<List<IndexPartition>, Term, Term> partitionVectorToOldArrayIdToNewArrayId = new NestedMap2<>();
 	
 	private final Map<List<Term>, IndexPartition> indexToIndexPartition = new HashMap<>();
 	private final ManagedScript mManagedScript;
@@ -145,43 +161,48 @@ class PartitionInformation {
 	public PartitionInformation(final Set<Term> arrayIds, final ManagedScript mScript, 
 			final DefaultIcfgSymbolTable newSymbolTable, IIcfgSymbolTable oldSymbolTable) {
 		this.arrayIds = arrayIds;
-		indexPartitions = new HashSet<>();
+//		indexPartitions = new HashSet<>();
+		indexPartitions = new ArrayList<>();
 		mManagedScript = mScript;
 		mNewSymbolTable = newSymbolTable;
 		mOldSymbolTable = oldSymbolTable;
 	}
 	
-	Term getNewArray(final Term arrayId, final List<Term> indexVector) {
-		assert arrayIds.contains(arrayId);
-		List<IndexPartition> partitionVector = new ArrayList<>();
-		for (Term eqNode : indexVector) {
-			IndexPartition ip = indexToIndexPartition.get(eqNode);
-			assert ip != null;
-			partitionVector.add(ip);
-		}
-//		final List<IndexPartition> partitionVector = 
-//				indexVector.stream().map(eqNode -> indexToIndexPartition.get(eqNode)).collect(Collectors.toList());
-		return getNewArrayIdsForIndexPartitionVector(arrayId, partitionVector);
+	Term getNewArray(final Term oldArrayId, final List<Term> indexVector) {
+		assert arrayIds.contains(oldArrayId);
+//		List<IndexPartition> partitionVector = new ArrayList<>();
+//		for (Term eqNode : indexVector) {
+//			IndexPartition ip = indexToIndexPartition.get(eqNode);
+//			assert ip != null;
+//			partitionVector.add(ip);
+//		}
+////		final List<IndexPartition> partitionVector = 
+////				indexVector.stream().map(eqNode -> indexToIndexPartition.get(eqNode)).collect(Collectors.toList());
+//		return getNewArrayIdForIndexPartitionVector(oldArrayId, partitionVector);
+		IndexPartition ip = indexToIndexPartition.get(indexVector);
+		assert indexPartitionToArrayToNewArrayId.get(ip, oldArrayId) != null;
+		return indexPartitionToArrayToNewArrayId.get(ip, oldArrayId);
 	}
 
-	private Term getNewArrayIdsForIndexPartitionVector(Term oldArrayId, final List<IndexPartition> partitionVector) {
-		Term result = partitionVectorToOldArrayIdToNewArrayId.get(partitionVector, oldArrayId);
-		if (result == null) {
-			Map<Term, Term> freshVars = obtainFreshProgramVar(oldArrayId, partitionVector);
-			for (Entry<Term, Term> en : freshVars.entrySet()) {
-				partitionVectorToOldArrayIdToNewArrayId.put(partitionVector, en.getKey(), en.getValue());
-			}
-			result = freshVars.get(oldArrayId);
-			assert result != null;
-		}
-		return result;
-	}
+//	private Term getNewArrayIdForIndexPartitionVector(Term oldArrayId, final List<IndexPartition> partitionVector) {
+//		Term result = partitionVectorToOldArrayIdToNewArrayId.get(partitionVector, oldArrayId);
+//		if (result == null) {
+//			Map<Term, Term> freshVars = obtainFreshProgramVar(oldArrayId, partitionVector);
+//			for (Entry<Term, Term> en : freshVars.entrySet()) {
+//				partitionVectorToOldArrayIdToNewArrayId.put(partitionVector, en.getKey(), en.getValue());
+//			}
+//			result = freshVars.get(oldArrayId);
+//			assert result != null;
+//		}
+//		return result;
+//	}
 
 	void addPartition(final IndexPartition ip) {
 		indexPartitions.add(ip);
 		for (List<Term> index : ip.indices) {
 			indexToIndexPartition.put(index, ip);
 		}
+		constructFreshProgramVarsForIndexPartition(ip);
 	}
 
 	private int getFreshVersionIndex() {
@@ -189,20 +210,31 @@ class PartitionInformation {
 		return versionCounter++;
 	}
 
-	private Map<Term, Term> obtainFreshProgramVar(
-			Term oldArrayId, List<IndexPartition> partitionVector) {
+	/**
+	 * Given an IndexPartition constructs fresh Terms and ProgramVars for all the arrays in this ParititionInformation's
+	 * array group.
+	 * Updates the mappings that holds these fresh Terms.
+	 * 
+	 * @param oldArrayId
+	 * @param indexPartition
+	 * @return
+	 */
+//	private Map<Term, Term> obtainFreshProgramVar(
+	private void constructFreshProgramVarsForIndexPartition(
+			IndexPartition indexPartition) {
+//			Term oldArrayId, List<IndexPartition> partitionVector) {
 		// TODO: would it be a good idea to introduce something like ReplacementVar for this??
 		
 		
-		Map<Term, Term> oldArrayIdToNewlyCreatedArrayId = new HashMap<>();
+//		Map<Term, Term> oldArrayIdToNewlyCreatedArrayId = new HashMap<>();
 		mManagedScript.lock(this);
 		
 		for (Term arrayTv : arrayIds) {
-			IProgramVarOrConst arrayId = mOldSymbolTable.getProgramVar((TermVariable) arrayTv);
+			IProgramVarOrConst arrayPv = mOldSymbolTable.getProgramVar((TermVariable) arrayTv);
 
 			IProgramVarOrConst freshVar = null;
-			if (arrayId instanceof LocalBoogieVar) {
-				final LocalBoogieVar lbv = (LocalBoogieVar) arrayId;
+			if (arrayPv instanceof LocalBoogieVar) {
+				final LocalBoogieVar lbv = (LocalBoogieVar) arrayPv;
 				final String newId = lbv.getIdentifier() + "_part_" + getFreshVersionIndex();
 				final TermVariable newTv = mManagedScript.constructFreshCopy(lbv.getTermVariable());
 
@@ -222,44 +254,73 @@ class PartitionInformation {
 						newConst, 
 						newPrimedConst);
 				mNewSymbolTable.add(freshVar);
-			} else if (arrayId instanceof BoogieNonOldVar) {
-				BoogieNonOldVar bnovOld = (BoogieNonOldVar) arrayId;
 
-				final String newId = bnovOld.getIdentifier() + "_part_" + getFreshVersionIndex();
-			
-				final BoogieNonOldVar bnovNew = 
-						ProgramVarUtils.constructGlobalProgramVarPair(newId, bnovOld.getSort(), mManagedScript, this);
-				
-				freshVar = bnovNew;
-				mNewSymbolTable.add(freshVar);
-				partitionVectorToOldArrayIdToNewArrayId.put(partitionVector, 
-						((BoogieNonOldVar) arrayId).getOldVar().getTerm(), bnovNew.getOldVar().getTerm());
-			} else if (arrayId instanceof BoogieOldVar) {
-				freshVar = mNewSymbolTable.getProgramVar(
-						(TermVariable) partitionVectorToOldArrayIdToNewArrayId.get(partitionVector, arrayTv));
+				indexPartitionToArrayToNewArrayId.put(indexPartition, arrayTv, newTv);
+			} else if (arrayPv instanceof BoogieNonOldVar) {
+				// the oldVar may have come up first..
+				Term alreadyConstructed = indexPartitionToArrayToNewArrayId.get(indexPartition, arrayTv);
+				if (alreadyConstructed == null) {
+					BoogieNonOldVar bnovOld = (BoogieNonOldVar) arrayPv;
+
+					final String newId = bnovOld.getIdentifier() + "_part_" + getFreshVersionIndex();
+
+					final BoogieNonOldVar bnovNew = 
+							ProgramVarUtils.constructGlobalProgramVarPair(newId, bnovOld.getSort(), mManagedScript, this);
+
+					freshVar = bnovNew;
+					mNewSymbolTable.add(freshVar);
+
+					indexPartitionToArrayToNewArrayId.put(indexPartition, arrayTv, freshVar.getTerm());
+					indexPartitionToArrayToNewArrayId.put(indexPartition, 
+							((BoogieNonOldVar) arrayPv).getOldVar().getTerm(), 
+							bnovNew.getOldVar().getTerm());
+				}
+//				partitionVectorToOldArrayIdToNewArrayId.put(partitionVector, 
+//						((BoogieNonOldVar) arrayId).getOldVar().getTerm(), bnovNew.getOldVar().getTerm());
+			} else if (arrayPv instanceof BoogieOldVar) {
+				// the nonOldVar may have come up first..
+				Term alreadyConstructed = indexPartitionToArrayToNewArrayId.get(indexPartition, arrayTv);
+				if (alreadyConstructed == null) {
+					BoogieOldVar bovOld = (BoogieOldVar) arrayPv;
+
+					final String newId = bovOld.getGloballyUniqueId() + "_part_" + getFreshVersionIndex();
+
+					final BoogieNonOldVar bnovNew = 
+							ProgramVarUtils.constructGlobalProgramVarPair(newId, bovOld.getSort(), mManagedScript, this);
+
+					freshVar = bnovNew.getOldVar();
+					mNewSymbolTable.add(freshVar);
+
+					indexPartitionToArrayToNewArrayId.put(indexPartition, arrayTv, freshVar.getTerm());
+					indexPartitionToArrayToNewArrayId.put(indexPartition, 
+							((BoogieOldVar) arrayPv).getNonOldVar().getTerm(), 
+							bnovNew.getTerm());
+				}
+//				freshVar = mNewSymbolTable.getProgramVar(
+//						(TermVariable) partitionVectorToOldArrayIdToNewArrayId.get(partitionVector, arrayTv));
 				assert freshVar != null;
-			} else if (arrayId instanceof IntraproceduralReplacementVar) {
+			} else if (arrayPv instanceof IntraproceduralReplacementVar) {
 				assert false : "TODO: implement";
-			} else if (arrayId instanceof BoogieConst) {
+			} else if (arrayPv instanceof BoogieConst) {
 				assert false : "TODO: implement";
 			} else {
 				assert false : "case missing --> add it?";
 			}
 
 
-			List<Term> newIdList = mOldArrayIdToNewArrayIds.get(arrayId);
+			List<Term> newIdList = mOldArrayIdToNewArrayIds.get(arrayPv);
 			if (newIdList == null) {
 				newIdList = new ArrayList<>();
 				mOldArrayIdToNewArrayIds.put(arrayTv, newIdList);
 			}
 			newIdList.add(freshVar.getTerm());
 			
-			oldArrayIdToNewlyCreatedArrayId.put(arrayTv, freshVar.getTerm());
+//			oldArrayIdToNewlyCreatedArrayId.put(arrayTv, freshVar.getTerm());
 		}
 		
 		mManagedScript.unlock(this);
 		
-		return oldArrayIdToNewlyCreatedArrayId;
+//		return oldArrayIdToNewlyCreatedArrayId;
 	}
 	
 	
