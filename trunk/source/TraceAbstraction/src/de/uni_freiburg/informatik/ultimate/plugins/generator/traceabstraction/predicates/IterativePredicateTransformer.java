@@ -328,7 +328,7 @@ public class IterativePredicateTransformer {
 			final Term backwardTerm;
 
 			final IPredicate successorWp;
-			if (bs == BackwardSequence.WP || i == mTrace.length() - 1) {
+			if (bs == BackwardSequence.WP) {
 				successorWp = ipp.getPredicate(i + 1);
 			} else {
 				successorWp = mPredicateFactory.not(ipp.getPredicate(i + 1));
