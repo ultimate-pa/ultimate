@@ -107,6 +107,10 @@ class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements IErro
 	final ConstructionCache<Pair<IPredicate, LETTER>, Term> mPreInternalCc;
 	final ConstructionCache<Triple<IPredicate, LETTER, IPredicate>, LBool> mIntersectionWithPreInternalCc;
 
+	private final boolean USE_DISJUNCTIONS = false;
+
+	private IPredicateUnifier mPredicateUnifier;
+
 	/**
 	 * @param services
 	 *            Ultimate services.
@@ -141,6 +145,7 @@ class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements IErro
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mCsTookit = csToolkit;
+		mPredicateUnifier = predicateUnifier;
 		final PredicateUnificationMechanism internalPredicateUnifier =
 				new PredicateUnificationMechanism(predicateUnifier, UNIFY_PREDICATES);
 
@@ -148,6 +153,7 @@ class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements IErro
 				csToolkit, simplificationTechnique, xnfConversionTechnique, symbolTable, trace, predicateUnifier);
 		mErrorPrecondition = tracePredicates.getPrecondition();
 		mPredicates = collectPredicates(tracePredicates);
+		mLogger.info("Constructing danger automaton with " + mPredicates.size() + " predicates.");
 		mPt = new PredicateTransformer<>(
 				csToolkit.getManagedScript(), new TermDomainOperationProvider(mServices, csToolkit.getManagedScript()));
 		
@@ -256,10 +262,53 @@ class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements IErro
 					continue;
 					// no need to proceed in this iteration, a state labeled with false will not help us
 				}
-				final IPredicate newState = getNewState(abstraction, abstState2dangStates, disjunctionProvider,
-						worklist, result, pred, coveredPredicates);
-				addOutgoingTransitionsToContributingStates(logger, predicateFactory, csToolkit, abstraction,
-						abstState2dangStates, disjunctionProvider, result, pt, pred, newState);
+//				final Set<IPredicate> minimalCover = PosetUtils
+//						.filterMaximalElements(coveredPredicates,
+//								mPredicateUnifier.getCoverageRelation().getPartialComperator())
+//						.collect(Collectors.toSet());
+//				if (minimalCover.size() < coveredPredicates.size()) {
+//					mLogger.warn("can save " + (coveredPredicates.size() - minimalCover.size()) + " predicates");
+//				}
+				
+				if (USE_DISJUNCTIONS) {
+					final IPredicate newState = getNewState(abstraction, abstState2dangStates, disjunctionProvider,
+							worklist, result, pred, coveredPredicates);
+					addOutgoingTransitionsToContributingStates(logger, predicateFactory, csToolkit, abstraction,
+							abstState2dangStates, disjunctionProvider, result, pt, pred, newState);
+				} else {
+					final Set<IPredicate> currentStatesInDanger = abstState2dangStates.getImage(pred);
+					boolean thereWasNewPredicate = false;
+					for (final IPredicate covered : coveredPredicates) {
+						if (!currentStatesInDanger.contains(covered)) {
+							thereWasNewPredicate = true;
+
+							final IPredicate newState = disjunctionProvider
+									.getOrConstruct(new Pair<>(pred, Collections.singleton(covered)));
+							final boolean isInitial = abstraction.isInitial(pred);
+							final boolean isFinal = abstraction.isFinal(pred);
+							result.addState(isInitial, isFinal, newState);
+
+							abstState2dangStates.addPair(pred, covered);
+						}
+					}
+					if (thereWasNewPredicate) {
+						worklist.add(pred);
+					}
+
+					for (final IPredicate covered : coveredPredicates) {
+						for (final OutgoingInternalTransition<LETTER, IPredicate> out : abstraction.internalSuccessors(pred)) {
+							for (final IPredicate succInDanger : abstState2dangStates.getImage(out.getSucc())) {
+								final LBool isContributing = mIntersectionWithPreInternalCc.getOrConstruct(new Triple<IPredicate, LETTER, IPredicate>(covered, out.getLetter(), succInDanger));
+								if (isContributing == LBool.SAT) {
+									result.addInternalTransition(disjunctionProvider.getOrConstruct(new Pair<>(pred, Collections.singleton(covered))), 
+											out.getLetter(), 
+											disjunctionProvider.getOrConstruct(new Pair<>(out.getSucc(), Collections.singleton(succInDanger))));
+								}
+							}
+						}
+						
+					}
+				}
 			}
 		}
 
@@ -296,13 +345,13 @@ class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements IErro
 
 	private IPredicate getNewState(final INestedWordAutomaton<LETTER, IPredicate> abstraction,
 			final HashRelation<IPredicate, IPredicate> abstState2dangStates,
-			final ConstructionCache<Pair<IPredicate, Set<IPredicate>>, IPredicate> disjunctionProvider,
+			final ConstructionCache<Pair<IPredicate, Set<IPredicate>>, IPredicate> resultStateProvider,
 			final Queue<IPredicate> worklist, final NestedWordAutomaton<LETTER, IPredicate> result,
 			final IPredicate pred, final Set<IPredicate> coveredPredicates) {
 		final Set<IPredicate> oldAbstraction = abstState2dangStates.getImage(pred);
 		if (coveredPredicates.equals(oldAbstraction)) {
 			// do nothing
-			return disjunctionProvider.getOrConstruct(new Pair<>(pred, oldAbstraction));
+			return resultStateProvider.getOrConstruct(new Pair<>(pred, oldAbstraction));
 		}
 
 		// predicate changed
@@ -311,12 +360,12 @@ class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements IErro
 			worklist.add(pred);
 		}
 
-		final IPredicate newState = disjunctionProvider.getOrConstruct(new Pair<>(pred, coveredPredicates));
+		final IPredicate newState = resultStateProvider.getOrConstruct(new Pair<>(pred, coveredPredicates));
 		final boolean isInitial = abstraction.isInitial(pred);
 		final boolean isFinal = abstraction.isFinal(pred);
 		result.addState(isInitial, isFinal, newState);
 		if (!oldAbstraction.isEmpty()) {
-			final IPredicate oldstate = disjunctionProvider.getOrConstruct(new Pair<>(pred, oldAbstraction));
+			final IPredicate oldstate = resultStateProvider.getOrConstruct(new Pair<>(pred, oldAbstraction));
 			// there was already a state, we have to copy all its incoming transitions and remove it
 			assert result.contains(oldstate);
 			copyAllIncomingTransitions(oldstate, newState, result);
