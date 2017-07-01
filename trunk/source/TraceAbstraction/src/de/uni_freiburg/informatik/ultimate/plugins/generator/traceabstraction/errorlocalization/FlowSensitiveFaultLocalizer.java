@@ -682,4 +682,11 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 		}
 		return Arrays.asList(mRelevanceOfTrace);
 	}
+
+	/**
+	 * @return Statistics object.
+	 */
+	public ErrorLocalizationStatisticsGenerator getStatistics() {
+		return mErrorLocalizationStatisticsGenerator;
+	}
 }
