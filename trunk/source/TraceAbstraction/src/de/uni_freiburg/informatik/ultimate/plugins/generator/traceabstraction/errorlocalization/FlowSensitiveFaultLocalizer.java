@@ -340,9 +340,13 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 		// Non-Flow Sensitive INCREMENTAL ANALYSIS
 
 		// Calculating the WP and SP List
-		final IterativePredicateTransformer ipt = new IterativePredicateTransformer(mPredicateFactory,
+		final IterativePredicateTransformer iptWp = new IterativePredicateTransformer(mPredicateFactory,
 				csToolkit.getManagedScript(), csToolkit.getModifiableGlobalsTable(), mServices, counterexampleWord,
-				truePredicate, falsePredicate, null, mPredicateFactory.not(falsePredicate), mSimplificationTechnique,
+				null, falsePredicate, null, mPredicateFactory.not(falsePredicate), mSimplificationTechnique,
+				mXnfConversionTechnique, mSymbolTable);
+		final IterativePredicateTransformer iptSp = new IterativePredicateTransformer(mPredicateFactory,
+				csToolkit.getManagedScript(), csToolkit.getModifiableGlobalsTable(), mServices, counterexampleWord,
+				truePredicate, null, null, mPredicateFactory.not(falsePredicate), mSimplificationTechnique,
 				mXnfConversionTechnique, mSymbolTable);
 
 		final DefaultTransFormulas dtf = new DefaultTransFormulas(counterexampleWord, truePredicate, falsePredicate,
@@ -360,8 +364,8 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 		TracePredicates weakestPreconditionSequence;
 		TracePredicates strongestPostconditionSequence;
 		try {
-			weakestPreconditionSequence = ipt.computeWeakestPreconditionSequence(dtf, postprocessors, true, false);
-			strongestPostconditionSequence = ipt.computeStrongestPostconditionSequence(dtf, postprocessors);
+			weakestPreconditionSequence = iptWp.computeWeakestPreconditionSequence(dtf, postprocessors, true, false);
+			strongestPostconditionSequence = iptSp.computeStrongestPostconditionSequence(dtf, postprocessors);
 		} catch (final TraceInterpolationException e) {
 			// TODO: What to do with this exception?
 			throw new RuntimeException(e);
@@ -638,7 +642,7 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 		final Map<Integer, List<Integer>> informationFromCfg = computeInformationFromCfg(counterexample, cfg);
 		// You should send the counter example, the CFG information and the the start of the branch and the end of the
 		// branch.
-		final PredicateTransformer<Term, IPredicate, TransFormula> pt = new PredicateTransformer<Term, IPredicate, TransFormula>(
+		final PredicateTransformer<Term, IPredicate, TransFormula> pt = new PredicateTransformer<>(
 				csToolkit.getManagedScript(), new TermDomainOperationProvider(mServices, csToolkit.getManagedScript()));
 		final FaultLocalizationRelevanceChecker rc = new FaultLocalizationRelevanceChecker(csToolkit);
 		final int startLocation = 0;
