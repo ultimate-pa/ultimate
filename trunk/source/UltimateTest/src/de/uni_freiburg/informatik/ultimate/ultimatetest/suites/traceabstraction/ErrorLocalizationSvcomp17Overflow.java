@@ -109,7 +109,7 @@ public class ErrorLocalizationSvcomp17Overflow extends AbstractTraceAbstractionT
 
 	private static final String[] TOOLCHAINS = {
 		// @formatter:off
-		"AutomizerC.xml",
+		"AutomizerCInline.xml",
 		// @formatter:on
 	};
 
