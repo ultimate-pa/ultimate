@@ -35,6 +35,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Queue;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
@@ -76,6 +77,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TracePredicates;
 import de.uni_freiburg.informatik.ultimate.util.ConstructionCache;
 import de.uni_freiburg.informatik.ultimate.util.ConstructionCache.IValueConstruction;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.PosetUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
@@ -191,7 +193,7 @@ class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements IErro
 		
 
 		mResult = constructDangerAutomaton(new AutomataLibraryServices(services), mLogger, predicateFactory,
-				internalPredicateUnifier, csToolkit, predicateFactoryForAutomaton, abstraction, mPredicates);
+				internalPredicateUnifier, csToolkit, predicateFactoryForAutomaton, abstraction, mPredicates, false);
 	}
 
 	@Override
@@ -223,7 +225,7 @@ class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements IErro
 			final ILogger logger, final PredicateFactory predicateFactory,
 			final PredicateUnificationMechanism predicateUnifier, final CfgSmtToolkit csToolkit,
 			final PredicateFactoryForInterpolantAutomata predicateFactoryForAutomaton,
-			final INestedWordAutomaton<LETTER, IPredicate> abstraction, final Set<IPredicate> predicates) {
+			final INestedWordAutomaton<LETTER, IPredicate> abstraction, final Set<IPredicate> predicates, final boolean constructMinimalCover) {
 		final HashRelation<IPredicate, IPredicate> abstState2dangStates = new HashRelation<>();
 		final IValueConstruction<Pair<IPredicate, Set<IPredicate>>, IPredicate> valueConstruction =
 				new IValueConstruction<Pair<IPredicate, Set<IPredicate>>, IPredicate>() {
@@ -256,19 +258,22 @@ class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements IErro
 			final IPredicate state = worklist.poll();
 			for (final IncomingInternalTransition<LETTER, IPredicate> in : abstraction.internalPredecessors(state)) {
 				final IPredicate pred = in.getPred();
-				final Set<IPredicate> coveredPredicates = getCoveredPredicates(logger, predicateFactory, csToolkit,
+				Set<IPredicate> coveredPredicates = getCoveredPredicates(logger, predicateFactory, csToolkit,
 						abstraction, abstState2dangStates, disjunctionProvider, predicates, pt, ic, pred);
 				if (coveredPredicates.isEmpty()) {
 					continue;
 					// no need to proceed in this iteration, a state labeled with false will not help us
 				}
-//				final Set<IPredicate> minimalCover = PosetUtils
-//						.filterMaximalElements(coveredPredicates,
-//								mPredicateUnifier.getCoverageRelation().getPartialComperator())
-//						.collect(Collectors.toSet());
-//				if (minimalCover.size() < coveredPredicates.size()) {
-//					mLogger.warn("can save " + (coveredPredicates.size() - minimalCover.size()) + " predicates");
-//				}
+				if (constructMinimalCover) {
+					final Set<IPredicate> minimalCover = PosetUtils
+							.filterMaximalElements(coveredPredicates,
+									mPredicateUnifier.getCoverageRelation().getPartialComperator())
+							.collect(Collectors.toSet());
+					if (minimalCover.size() < coveredPredicates.size()) {
+						mLogger.warn("can save " + (coveredPredicates.size() - minimalCover.size()) + " predicates");
+						coveredPredicates = minimalCover;
+					}
+				}
 				
 				if (USE_DISJUNCTIONS) {
 					final IPredicate newState = getNewState(abstraction, abstState2dangStates, disjunctionProvider,
