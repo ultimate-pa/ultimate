@@ -65,7 +65,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Ac
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryResultChecking;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.RelevanceInformation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorabstraction.ErrorAutomatonStatisticsGenerator.EnhancementType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorabstraction.ErrorTraceContainer.ErrorTrace;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorlocalization.ErrorLocalizationStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorlocalization.FlowSensitiveFaultLocalizer;
@@ -230,10 +229,7 @@ public class ErrorGeneralizationEngine<LETTER extends IIcfgTransition<?>> implem
 			final IRun<LETTER, IPredicate, ?> errorTrace, final boolean prematureTermination)
 			throws AutomataLibraryException {
 		mErrorAutomatonStatisticsGenerator.stopErrorAutomatonDifferenceTime();
-		if (prematureTermination) {
-			// TODO 2017-06-30 Christian: temporary workaround, should not be stored in the error traces
-			mErrorTraces.addEnhancementType(EnhancementType.UNKNOWN);
-		} else {
+		if (!prematureTermination) {
 			mErrorAutomatonStatisticsGenerator.evaluateFinalErrorAutomaton(mServices, mLogger, mErrorAutomatonBuilder,
 					(INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate>) abstraction,
 					predicateFactoryInterpolantAutomata, predicateFactoryResultChecking, errorTrace);

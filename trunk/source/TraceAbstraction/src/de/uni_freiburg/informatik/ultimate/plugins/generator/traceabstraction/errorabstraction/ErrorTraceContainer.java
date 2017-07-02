@@ -121,6 +121,7 @@ public class ErrorTraceContainer<LETTER> implements Iterable<ErrorTrace<LETTER>>
 		public ErrorTrace(final IRun<LETTER, IPredicate, ?> trace, final IPredicate precondition) {
 			mTrace = trace;
 			mPrecondition = precondition;
+			mEnhancement = EnhancementType.UNKNOWN;
 		}
 
 		/**
