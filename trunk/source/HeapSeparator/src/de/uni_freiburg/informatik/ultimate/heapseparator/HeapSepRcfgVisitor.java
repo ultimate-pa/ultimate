@@ -181,6 +181,28 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 
 
 
+	/**
+	 * update selects and stores
+	 * 
+	 * details:
+	 *  select case:
+	 *   the result depends on the accessed index
+	 *   simple example:
+	 *  assume p != q;  mem -> p -> mem1, mem -> q -> mem2 are in the corresponding map from old to new array ids
+	 *   old: mem[p]
+	 *   new: mem1[p]
+	 *   
+	 *   less simple example (select over store):
+	 *  assume p != q;  mem -> p -> mem1, mem -> q -> mem2 are in the corresponding map from old to new array ids
+	 *   old: mem[p:=i][q]
+	 *   new: mem2[q]
+	 *   
+	 * @param tf
+	 * @param newInVars
+	 * @param newOutVars
+	 * @param intermediateFormula
+	 * @return
+	 */
 	private Term substituteRemainingStoresAndSelects(final UnmodifiableTransFormula tf,
 			final Map<IProgramVar, TermVariable> newInVars, final Map<IProgramVar, TermVariable> newOutVars,
 			Term intermediateFormula) {
@@ -260,6 +282,25 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 
 
 
+	/**
+	 * The conversion of an array update depends on which indices are written.
+	 * 
+	 * simplest case: 
+	 *  assume p != q;  mem -> p -> mem1, mem -> q -> mem2 are in the corresponding map from old to new array ids
+	 *  old: mem := mem[p:=i]
+	 *  new: mem1 := mem1[p:=i]
+	 *  
+	 * less simple case: (TODO: implement)
+	 *  assume p != q;  mem -> p -> mem1, mem -> q -> mem2 are in the corresponding map from old to new array ids
+	 *  old: mem := mem[p:=i][q:=j]
+	 *  new: mem1 := mem1[p:=i] ; mem2 := mem2[q:=j]  (this conversion is correct because of p!=q)
+	 * 
+	 * @param tf
+	 * @param newInVars
+	 * @param newOutVars
+	 * @param formula
+	 * @return
+	 */
 	private Term substituteArrayUpdates(final UnmodifiableTransFormula tf,
 			final Map<IProgramVar, TermVariable> newInVars, final Map<IProgramVar, TermVariable> newOutVars,
 			Term formula) {
