@@ -164,6 +164,7 @@ public class IcfgLoopTransformerMohr<INLOC extends IcfgLocation, OUTLOC extends 
 			}
 			final UnmodifiableTransFormula composition = TransFormulaUtils.sequentialComposition(mLogger, mServices,
 					mManagedScript, false, false, false, null, SimplificationTechnique.NONE, formulas);
+			mLogger.info("Consider Path: " + composition);
 			final SimultaneousUpdate su = new SimultaneousUpdate(composition, mManagedScript);
 			final Map<IProgramVar, Term> varUpdates = su.getUpdatedVars();
 			final Set<IProgramVar> havocVars = su.getHavocedVars();
@@ -176,7 +177,12 @@ public class IcfgLoopTransformerMohr<INLOC extends IcfgLocation, OUTLOC extends 
 				} else if (newValue.getValue() instanceof ApplicationTerm
 						&& ("+".equals(((ApplicationTerm) newValue.getValue()).getFunction().getName())
 								|| "-".equals(((ApplicationTerm) newValue.getValue()).getFunction().getName()))) {
-					symbolicMemory.updateInc(newValue.getKey(), newValue.getValue(), mSymbolTable);
+					final Set<TermVariable> freeVars = new HashSet<>(Arrays.asList(newValue.getValue().getFreeVars()));
+					if (freeVars.contains(newValue.getKey().getTermVariable())) {
+						symbolicMemory.updateInc(newValue.getKey(), newValue.getValue(), mSymbolTable);
+					} else {
+						symbolicMemory.updateConst(newValue.getKey(), newValue.getValue(), mSymbolTable);
+					}
 				} else {
 					symbolicMemory.updateUndefined(newValue.getKey(), mSymbolTable);
 				}
@@ -184,10 +190,11 @@ public class IcfgLoopTransformerMohr<INLOC extends IcfgLocation, OUTLOC extends 
 			pathCount++;
 		}
 
-		final Term[] pathSummaries = new Term[pathCount];
+		final Term[] pathSummaries = new Term[pathCount + 1];
 		for (int i = 0; i < pathCount; i++) {
 			pathSummaries[i] = symbolicMemory.getFormula(i, pathGuards.get(i));
 		}
+		pathSummaries[pathSummaries.length - 1] = symbolicMemory.getKappaMin();
 		final Term loopSummary = Util.and(mManagedScript.getScript(), pathSummaries);
 
 		final Map<IProgramVar, TermVariable> inVars = symbolicMemory.getInVars();
