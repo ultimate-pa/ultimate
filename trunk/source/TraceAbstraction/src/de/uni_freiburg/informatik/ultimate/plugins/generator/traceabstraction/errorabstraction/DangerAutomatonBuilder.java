@@ -55,8 +55,11 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.MonolithicImplicationChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
@@ -99,7 +102,7 @@ class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements IErro
 	private static final boolean UNIFY_PREDICATES = true;
 
 	private final IUltimateServiceProvider mServices;
-	private final NestedWordAutomaton<LETTER, IPredicate> mResult;
+	private NestedWordAutomaton<LETTER, IPredicate> mResult;
 	private final IPredicate mErrorPrecondition;
 
 	private final Set<IPredicate> mPredicates;
@@ -161,6 +164,7 @@ class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements IErro
 		mLogger.info("Constructing danger automaton with " + mPredicates.size() + " predicates.");
 		mPt = new PredicateTransformer<>(
 				csToolkit.getManagedScript(), new TermDomainOperationProvider(mServices, csToolkit.getManagedScript()));
+		final IncrementalHoareTripleChecker htc = new IncrementalHoareTripleChecker(mCsTookit);
 		
 		{
 			final IValueConstruction<Pair<IPredicate, LETTER>, Term> valueConstruction =
@@ -184,25 +188,23 @@ class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements IErro
 
 						@Override
 						public LBool constructValue(final Triple<IPredicate, LETTER, IPredicate> key) {
-							final Term pre = mPreInternalCc.getOrConstruct(new Pair<IPredicate, LETTER>(key.getThird(), key.getSecond())); 
-							final Term conjunction = SmtUtils.and(csToolkit.getManagedScript().getScript(),
-									Arrays.asList(new Term[] { pre, key.getFirst().getFormula() }));
-							final LBool checkSatRes = SmtUtils.checkSatTerm(csToolkit.getManagedScript().getScript(), conjunction);
-							return checkSatRes;
+							final Validity val = htc.checkInternal(key.getFirst(), (IInternalAction) key.getSecond(),
+									predicateFactory.not(key.getThird()));
+							return IHoareTripleChecker.convertValidity2Lbool(val);
 						}
-			};
+					};
 			mIntersectionWithPreInternalCc = new ConstructionCache<>(valueConstruction);
 		}
 		
 
-		mResult = constructDangerAutomaton(new AutomataLibraryServices(services), mLogger, predicateFactory,
+		final NestedWordAutomaton<LETTER, IPredicate> optimizedResult = constructDangerAutomaton(new AutomataLibraryServices(services), mLogger, predicateFactory,
 				internalPredicateUnifier, csToolkit, predicateFactoryForAutomaton, abstraction, mPredicates, true);
 		final NestedWordAutomaton<LETTER, IPredicate> unoptimizedResult = constructDangerAutomaton(
 				new AutomataLibraryServices(services), mLogger, predicateFactory, internalPredicateUnifier, csToolkit,
 				predicateFactoryForAutomaton, abstraction, mPredicates, false);
 		try {
 			final Boolean languageIsEquivalent = new IsEquivalent<LETTER, IPredicate>(
-					new AutomataLibraryServices(services), new PredicateFactoryResultChecking(predicateFactory), mResult, unoptimizedResult)
+					new AutomataLibraryServices(services), new PredicateFactoryResultChecking(predicateFactory), optimizedResult, unoptimizedResult)
 							.getResult();
 			if (!languageIsEquivalent) {
 				throw new AssertionError("language not equivalent");
@@ -210,6 +212,7 @@ class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements IErro
 		} catch (final AutomataLibraryException e) {
 			throw new AssertionError(e);
 		}
+		mResult = optimizedResult;
 	}
 
 	@Override
@@ -286,7 +289,7 @@ class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements IErro
 									mPredicateUnifier.getCoverageRelation().getPartialComperator())
 							.collect(Collectors.toSet());
 					if (minimalCover.size() < coveredPredicates.size()) {
-						mLogger.warn("can save " + (coveredPredicates.size() - minimalCover.size()) + " predicates");
+//						mLogger.warn("can save " + (coveredPredicates.size() - minimalCover.size()) + " predicates");
 						coveredPredicates = minimalCover;
 					}
 				}
