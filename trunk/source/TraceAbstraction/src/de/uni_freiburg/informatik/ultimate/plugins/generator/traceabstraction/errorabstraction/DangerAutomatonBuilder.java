@@ -60,7 +60,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Tra
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.MonolithicImplicationChecker;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IncrementalImplicationChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
@@ -270,8 +270,8 @@ class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements IErro
 
 		final PredicateTransformer<Term, IPredicate, TransFormula> pt = new PredicateTransformer<>(
 				csToolkit.getManagedScript(), new TermDomainOperationProvider(mServices, csToolkit.getManagedScript()));
-		final MonolithicImplicationChecker ic =
-				new MonolithicImplicationChecker(mServices, csToolkit.getManagedScript());
+		final IncrementalImplicationChecker ic =
+				new IncrementalImplicationChecker(mServices, csToolkit.getManagedScript());
 
 		while (!worklist.isEmpty()) {
 			final IPredicate state = worklist.poll();
@@ -344,7 +344,7 @@ class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements IErro
 			final HashRelation<IPredicate, IPredicate> abstState2dangStates,
 			final ConstructionCache<Pair<IPredicate, Set<IPredicate>>, IPredicate> disjunctionProvider,
 			final Set<IPredicate> predicates, final PredicateTransformer<Term, IPredicate, TransFormula> pt,
-			final MonolithicImplicationChecker ic, final IPredicate pred) {
+			final IncrementalImplicationChecker ic, final IPredicate pred) {
 		final Set<Term> programStatesWithSucc_Term = new HashSet<>();
 		for (final OutgoingInternalTransition<LETTER, IPredicate> out : abstraction.internalSuccessors(pred)) {
 			final IPredicate succInDanger = getSuccessorDisjunction(abstState2dangStates, disjunctionProvider, out);
@@ -358,11 +358,15 @@ class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements IErro
 		final IPredicate programStatesWithSucc_Pred = predicateFactory
 				.newPredicate(SmtUtils.or(csToolkit.getManagedScript().getScript(), programStatesWithSucc_Term));
 		final Set<IPredicate> coveredPredicates = new HashSet<>();
-		for (final IPredicate candidate : predicates) {
-			final Validity icres = ic.checkImplication(candidate, false, programStatesWithSucc_Pred, false);
-			if (icres == Validity.VALID) {
-				coveredPredicates.add(candidate);
+		try {
+			for (final IPredicate candidate : predicates) {
+				final Validity icres = ic.checkImplication(candidate, programStatesWithSucc_Pred);
+				if (icres == Validity.VALID) {
+					coveredPredicates.add(candidate);
+				}
 			}
+		} finally {
+			ic.releaseLock();
 		}
 		return coveredPredicates;
 	}
