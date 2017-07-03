@@ -149,10 +149,7 @@ class PartitionInformation {
 	
 	private final Map<Term, List<Term>> mOldArrayIdToNewArrayIds = new HashMap<>();
 	
-//	final Map<IndexPartition, IProgramVarOrConst> indexPartitionToArrayToNewArrayId = new HashMap<>();
 	final NestedMap2<IndexPartition, Term, Term> indexPartitionToArrayToNewArrayId = new NestedMap2<>();
-	
-//	private final NestedMap2<List<IndexPartition>, Term, Term> partitionVectorToOldArrayIdToNewArrayId = new NestedMap2<>();
 	
 	private final Map<List<Term>, IndexPartition> indexToIndexPartition = new HashMap<>();
 	private final ManagedScript mManagedScript;
@@ -161,7 +158,6 @@ class PartitionInformation {
 	public PartitionInformation(final Set<Term> arrayIds, final ManagedScript mScript, 
 			final DefaultIcfgSymbolTable newSymbolTable, IIcfgSymbolTable oldSymbolTable) {
 		this.arrayIds = arrayIds;
-//		indexPartitions = new HashSet<>();
 		indexPartitions = new ArrayList<>();
 		mManagedScript = mScript;
 		mNewSymbolTable = newSymbolTable;
@@ -170,32 +166,10 @@ class PartitionInformation {
 	
 	Term getNewArray(final Term oldArrayId, final List<Term> indexVector) {
 		assert arrayIds.contains(oldArrayId);
-//		List<IndexPartition> partitionVector = new ArrayList<>();
-//		for (Term eqNode : indexVector) {
-//			IndexPartition ip = indexToIndexPartition.get(eqNode);
-//			assert ip != null;
-//			partitionVector.add(ip);
-//		}
-////		final List<IndexPartition> partitionVector = 
-////				indexVector.stream().map(eqNode -> indexToIndexPartition.get(eqNode)).collect(Collectors.toList());
-//		return getNewArrayIdForIndexPartitionVector(oldArrayId, partitionVector);
-		IndexPartition ip = indexToIndexPartition.get(indexVector);
+		final IndexPartition ip = indexToIndexPartition.get(indexVector);
 		assert indexPartitionToArrayToNewArrayId.get(ip, oldArrayId) != null;
 		return indexPartitionToArrayToNewArrayId.get(ip, oldArrayId);
 	}
-
-//	private Term getNewArrayIdForIndexPartitionVector(Term oldArrayId, final List<IndexPartition> partitionVector) {
-//		Term result = partitionVectorToOldArrayIdToNewArrayId.get(partitionVector, oldArrayId);
-//		if (result == null) {
-//			Map<Term, Term> freshVars = obtainFreshProgramVar(oldArrayId, partitionVector);
-//			for (Entry<Term, Term> en : freshVars.entrySet()) {
-//				partitionVectorToOldArrayIdToNewArrayId.put(partitionVector, en.getKey(), en.getValue());
-//			}
-//			result = freshVars.get(oldArrayId);
-//			assert result != null;
-//		}
-//		return result;
-//	}
 
 	void addPartition(final IndexPartition ip) {
 		indexPartitions.add(ip);
@@ -219,14 +193,8 @@ class PartitionInformation {
 	 * @param indexPartition
 	 * @return
 	 */
-//	private Map<Term, Term> obtainFreshProgramVar(
 	private void constructFreshProgramVarsForIndexPartition(
 			IndexPartition indexPartition) {
-//			Term oldArrayId, List<IndexPartition> partitionVector) {
-		// TODO: would it be a good idea to introduce something like ReplacementVar for this??
-		
-		
-//		Map<Term, Term> oldArrayIdToNewlyCreatedArrayId = new HashMap<>();
 		mManagedScript.lock(this);
 		
 		for (Term arrayTv : arrayIds) {
@@ -275,8 +243,6 @@ class PartitionInformation {
 							((BoogieNonOldVar) arrayPv).getOldVar().getTerm(), 
 							bnovNew.getOldVar().getTerm());
 				}
-//				partitionVectorToOldArrayIdToNewArrayId.put(partitionVector, 
-//						((BoogieNonOldVar) arrayId).getOldVar().getTerm(), bnovNew.getOldVar().getTerm());
 			} else if (arrayPv instanceof BoogieOldVar) {
 				// the nonOldVar may have come up first..
 				Term alreadyConstructed = indexPartitionToArrayToNewArrayId.get(indexPartition, arrayTv);
@@ -296,8 +262,6 @@ class PartitionInformation {
 							((BoogieOldVar) arrayPv).getNonOldVar().getTerm(), 
 							bnovNew.getTerm());
 				}
-//				freshVar = mNewSymbolTable.getProgramVar(
-//						(TermVariable) partitionVectorToOldArrayIdToNewArrayId.get(partitionVector, arrayTv));
 				assert freshVar != null;
 			} else if (arrayPv instanceof IntraproceduralReplacementVar) {
 				assert false : "TODO: implement";
@@ -314,13 +278,9 @@ class PartitionInformation {
 				mOldArrayIdToNewArrayIds.put(arrayTv, newIdList);
 			}
 			newIdList.add(freshVar.getTerm());
-			
-//			oldArrayIdToNewlyCreatedArrayId.put(arrayTv, freshVar.getTerm());
 		}
 		
 		mManagedScript.unlock(this);
-		
-//		return oldArrayIdToNewlyCreatedArrayId;
 	}
 	
 	

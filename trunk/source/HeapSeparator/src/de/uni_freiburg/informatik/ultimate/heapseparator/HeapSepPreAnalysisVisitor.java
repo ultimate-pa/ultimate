@@ -97,15 +97,12 @@ public class HeapSepPreAnalysisVisitor extends SimpleRCFGVisitor {
 		
 		if (edge instanceof CodeBlock) {
 
-			UnmodifiableTransFormula tf = ((CodeBlock) edge).getTransformula();
+			final UnmodifiableTransFormula tf = ((CodeBlock) edge).getTransformula();
 
-			List<ArrayEquality> aeqs = ArrayEquality.extractArrayEqualities(tf.getFormula());
+			final List<ArrayEquality> aeqs = ArrayEquality.extractArrayEqualities(tf.getFormula());
 			for (ArrayEquality aeq : aeqs) {
-				Term first = VPDomainHelpers.normalizeTerm(aeq.getLhs(), tf, mScript);
-				Term second = VPDomainHelpers.normalizeTerm(aeq.getRhs(), tf, mScript);
-//				IProgramVarOrConst second = mVpDomainPreAnalysis.getIProgramVarOrConstOrLiteral(
-//						aeq.getRhs(), 
-//						VPDomainHelpers.computeProgramVarMappingFromTransFormula(tf));
+				final Term first = VPDomainHelpers.normalizeTerm(aeq.getLhs(), tf, mScript);
+				final Term second = VPDomainHelpers.normalizeTerm(aeq.getRhs(), tf, mScript);
 				
 				mArrayEqualities.add(new VPDomainSymmetricPair<Term>(first, second));
 			}
@@ -151,7 +148,7 @@ public class HeapSepPreAnalysisVisitor extends SimpleRCFGVisitor {
 	}
 
 	private HashRelation<Term, IcfgLocation> findArrayAccesses(CodeBlock edge) {
-		HashRelation<Term, IcfgLocation> result = new HashRelation<>();
+		final HashRelation<Term, IcfgLocation> result = new HashRelation<>();
 		
 		for (Entry<IProgramVar, TermVariable> en : edge.getTransformula().getInVars().entrySet()) {
 			IProgramVar pv = en.getKey();

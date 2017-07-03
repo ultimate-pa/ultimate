@@ -222,18 +222,14 @@ public class HsNonPlugin {
 			for (final List<Term> accessingNode1 : getAccessingIndicesForArrays(arrayGroup)) {
 				for (final List<Term> accessingNode2 : getAccessingIndicesForArrays(arrayGroup)) {
 					assert accessingNode1.size() == accessingNode2.size();
-					boolean anyUnEqual = false;
+					boolean anyUnequal = false;
 					for (int i = 0; i < accessingNode1.size(); i++) {
-						anyUnEqual |= state.areUnequal(accessingNode1.get(i), accessingNode2.get(i));
+						anyUnequal |= state.areUnequal(accessingNode1.get(i), accessingNode2.get(i));
 					}
 					
-					if (!anyUnEqual) {
+					if (!anyUnequal) {
 						uf.union(accessingNode1, accessingNode2);
 					}
-					
-//					if (!state.areUnequal(accessingNode1, accessingNode2)) {
-//						uf.union(accessingNode1, accessingNode2);
-//					}
 				}
 			}
 			for (final Set<List<Term>> ec : uf.getAllEquivalenceClasses()) {

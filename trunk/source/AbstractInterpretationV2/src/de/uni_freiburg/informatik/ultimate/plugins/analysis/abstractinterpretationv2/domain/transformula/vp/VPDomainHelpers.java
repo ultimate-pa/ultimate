@@ -106,36 +106,6 @@ public class VPDomainHelpers {
 		return substitionMap;
 	}
 	
-//	public static <T extends IIcfgTransition<IcfgLocation>> boolean
-//			containsNoNullElement(final Collection<VPState<T>> states) {
-//		for (final VPState<T> state : states) {
-//			if (state == null) {
-//				return false;
-//			}
-//		}
-//		return true;
-//	}
-	
-//	public static <T extends IIcfgTransition<IcfgLocation>> boolean
-//			allStateBuildersHaveSameVariables(final Collection<VPStateBuilder<T>> resultStates) {
-//		final Set<VPState<T>> mapped =
-//				resultStates.stream().map(builder -> builder.build()).collect(Collectors.toSet());
-//		return allStatesHaveSameVariables(mapped);
-//	}
-	
-//	public static <T extends IIcfgTransition<IcfgLocation>> boolean
-//			allStatesHaveSameVariables(final Collection<VPState<T>> resultStates) {
-//		if (resultStates.isEmpty()) {
-//			return true;
-//		}
-//		boolean result = true;
-//		final Set<IProgramVarOrConst> sample = resultStates.iterator().next().getVariables();
-//		for (final VPState<?> rs : resultStates) {
-//			result &= sample.equals(rs.getVariables());
-//		}
-//		return result;
-//	}
-	
 	public static IProgramVar getProgramVar(final TermVariable newArray, final Map<IProgramVar, TermVariable> map) {
 		for (final Entry<IProgramVar, TermVariable> en : map.entrySet()) {
 			if (en.getValue() == newArray) {
@@ -263,53 +233,6 @@ public class VPDomainHelpers {
 		return Collections.unmodifiableMap(result);
 	}
 
-//	public static <NODEID extends IEqNodeIdentifier<NODEID, ARRAYID>, ARRAYID> boolean
-//			disEqualitySetContainsOnlyRepresentatives(final Set<VPDomainSymmetricPair<NODEID>> disEqualitySet,
-//					final IVPStateOrTfState<NODEID, ARRAYID> state) {
-//		for (final VPDomainSymmetricPair<NODEID> pair : disEqualitySet) {
-//			final EqGraphNode<NODEID, ARRAYID> firstEgn = state.getEqGraphNode(pair.getFirst());
-//			if (firstEgn.getRepresentative() != firstEgn) {
-//				return false;
-//			}
-//			final EqGraphNode<NODEID, ARRAYID> secondEgn = state.getEqGraphNode(pair.getSecond());
-//			if (secondEgn.getRepresentative() != secondEgn) {
-//				return false;
-//			}
-//		}
-//		return true;
-//	}
-	
-//	public static <T extends IVPStateOrTfState<NODEID, ARRAYID>, NODEID extends IEqNodeIdentifier<NODEID, ARRAYID>, ARRAYID>
-//			boolean disEqualitySetContainsOnlyRepresentatives(final Set<VPDomainSymmetricPair<NODEID>> disEqualitySet,
-//					final IVPStateOrTfStateBuilder<T, NODEID, ARRAYID> builder) {
-//		for (final VPDomainSymmetricPair<NODEID> pair : disEqualitySet) {
-//			final EqGraphNode<NODEID, ARRAYID> firstEgn = builder.getEqGraphNode(pair.getFirst());
-//			if (firstEgn.getRepresentative() != firstEgn) {
-//				return false;
-//			}
-//			final EqGraphNode<NODEID, ARRAYID> secondEgn = builder.getEqGraphNode(pair.getSecond());
-//			if (secondEgn.getRepresentative() != secondEgn) {
-//				return false;
-//			}
-//		}
-//		return true;
-//	}
-
-//	public static <T extends IVPStateOrTfState<NODEID, ARRAYID>, NODEID extends IEqNodeIdentifier<NODEID, ARRAYID>, ARRAYID>
-//			boolean disEqualityRelationIrreflexive(final Set<VPDomainSymmetricPair<NODEID>> disEqualitySet,
-//					final IVPStateOrTfStateBuilder<T, NODEID, ARRAYID> builder) {
-//		for (final VPDomainSymmetricPair<NODEID> pair : disEqualitySet) {
-//			// both "==" and "equals" just to make sure..
-//			if (pair.getFirst() == pair.getSecond()) {
-//				return false;
-//			}
-//			if (pair.getFirst().equals(pair.getSecond())) {
-//				return false;
-//			}
-//		}
-//		return true;
-//	}
-	
 	/**
 	 * cross product computation
 	 *
@@ -347,41 +270,6 @@ public class VPDomainHelpers {
 			final Term projectionTerm, final Set<IProgramVar> projectionVars) {
 		return projectToTerm(projectToVars(varMapping, projectionVars), projectionTerm);
 	}
-	
-//	public static <ACTION extends IIcfgTransition<IcfgLocation>, NODEID extends IEqNodeIdentifier<NODEID, ARRAYID>, ARRAYID>
-//			boolean isHavocced(final ARRAYID array, final IVPStateOrTfState<NODEID, ARRAYID> resultState) {
-//		// TODO: fix the other isHavocced before using this
-//		for (final EqGraphNode<NODEID, ARRAYID> node : resultState.getAllEqGraphNodes()) {
-//			if (!node.mNodeIdentifier.getAllFunctions().contains(array)) {
-//				continue;
-//			}
-//			if (!isHavocced(node.mNodeIdentifier, resultState)) {
-//				return false;
-//			}
-//			
-//		}
-//		return true;
-//	}
-
-//	public static <ACTION extends IIcfgTransition<IcfgLocation>, NODEID extends IEqNodeIdentifier<NODEID, ARRAYID>, ARRAYID>
-//			boolean isHavocced(final NODEID nodeId, final IVPStateOrTfState<NODEID, ARRAYID> resultState) {
-//		final EqGraphNode<NODEID, ARRAYID> node = resultState.getEqGraphNode(nodeId);
-//		/*
-//		 * the node that has been havocced --> must be its own representative --> its set of reverseRepresentatives must
-//		 * be empty --> may not appear in a disequality ... -except- if there is a reason for propagation somewhere else
-//		 * in the graph(!) --> TODO: either account for this or don't use this method
-//		 */
-//		if (node.getRepresentative() != node) {
-//			return false;
-//		}
-//		if (!node.getReverseRepresentative().isEmpty()) {
-//			return false;
-//		}
-//		if (!resultState.getDisequalities(node.mNodeIdentifier).isEmpty()) {
-//			return false;
-//		}
-//		return true;
-//	}
 	
 	public static <T> Set<T> intersect(Set<T> s1, Set<T> s2) {
 		final Set<T> result = new HashSet<>(s1);
