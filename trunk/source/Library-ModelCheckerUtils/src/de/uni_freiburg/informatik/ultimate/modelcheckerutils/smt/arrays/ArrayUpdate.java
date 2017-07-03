@@ -243,8 +243,18 @@ public class ArrayUpdate {
 			return remainingTerms;
 		}
 	}
-
+	
+	
+	/**
+	 * Extract and wrap subterms that are array updates. Enforce that the right hand side is a TermVariable.
+	 * @param formula
+	 * @return
+	 */
 	public static List<ArrayUpdate> extractArrayUpdates(Term formula) {
+		return extractArrayUpdates(formula, true);
+	}
+
+	public static List<ArrayUpdate> extractArrayUpdates(Term formula, boolean enforceThatOldArrayIsTermVariable) {
 		HashSet<String> functionSymbolNames = new HashSet<>(3);
 		functionSymbolNames.add("=");
 		functionSymbolNames.add("distinct");
@@ -259,7 +269,7 @@ public class ArrayUpdate {
 			boolean isNegated = subterm.getFunction().getName().equals("not")
 					|| subterm.getFunction().getName().equals("distinct");
 			try {
-				arrayUpdate = new ArrayUpdate(subterm, isNegated, true);
+				arrayUpdate = new ArrayUpdate(subterm, isNegated, enforceThatOldArrayIsTermVariable);
 			} catch (ArrayUpdateException e) {
 				continue;
 			}

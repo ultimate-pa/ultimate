@@ -123,6 +123,8 @@ public class HsNonPlugin {
 		walker.addObserver(hsv);
 		walker.run(BoogieIcfgContainer.extractStartEdges(oldBoogieIcfg));
 		
+		// TODO: somehow attach new symbol table to new icfg
+		
 		return oldBoogieIcfg;
 	}
 	

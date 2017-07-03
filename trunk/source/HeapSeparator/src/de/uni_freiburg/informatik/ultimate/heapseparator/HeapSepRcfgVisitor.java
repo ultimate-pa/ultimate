@@ -28,7 +28,9 @@ package de.uni_freiburg.informatik.ultimate.heapseparator;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -145,11 +147,13 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 		
 		Term intermediateFormula = tf.getFormula();
 
+		mScript.lock(this);
 		intermediateFormula = substituteArrayUpdates(tf, newInVars, newOutVars, intermediateFormula);
 
 		intermediateFormula = substituteArrayEqualites(tf, newInVars, newOutVars, intermediateFormula);
 
 		intermediateFormula = substituteRemainingStoresAndSelects(tf, newInVars, newOutVars, intermediateFormula);
+		mScript.unlock(this);
 		
 		boolean newEmptyNonTheoryConsts = false;
 		Set<IProgramConst> newNonTheoryConsts = null;
@@ -225,34 +229,34 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 
 			Term newArray = mNewArrayIdProvider.getNewArrayId(oldArray, pointers);
 
-			updateMappingsForSubstitution(oldArray, newArray, newInVars, newOutVars, substitutionMapPvoc);
+			updateMappingsForSubstitution(oldArray, newArray, newInVars, newOutVars, substitutionMapPvoc, tf);
 		}
 
-		final List<MultiDimensionalStore> mdStores = 
-				MultiDimensionalStore.extractArrayStoresShallow(intermediateFormula);
-		final List<MultiDimensionalStore> mdStoresInOriginalTf = 
-				MultiDimensionalStore.extractArrayStoresShallow(tf.getFormula());
-		for (MultiDimensionalStore mds : mdStores) {
-			if (!mdStoresInOriginalTf.contains(mds)) {
-				// the current mds comes from a replacement we made earlier (during ArrayUpdate or ArrayEquality-handling)
-				continue;
-			}
-			if (!mVpDomain.getPreAnalysis().isArrayTracked(
-					getInnerMostArray(mds.getArray()),
-					VPDomainHelpers.computeProgramVarMappingFromTransFormula(tf))) {
-				continue;
-			}
-
-			final Term oldArray = VPDomainHelpers.normalizeTerm(getInnerMostArray(mds.getArray()), tf, mScript);
-
-			final List<Term> pointers = mds.getIndex().stream()
-					.map(t -> VPDomainHelpers.normalizeTerm(t, newInVars, newOutVars, mScript))
-					.collect(Collectors.toList());
-					
-			final Term newArray = mNewArrayIdProvider.getNewArrayId(oldArray, pointers);
-
-			updateMappingsForSubstitution(oldArray, newArray, newInVars, newOutVars, substitutionMapPvoc);
-		}
+//		final List<MultiDimensionalStore> mdStores = 
+//				MultiDimensionalStore.extractArrayStoresShallow(intermediateFormula);
+//		final List<MultiDimensionalStore> mdStoresInOriginalTf = 
+//				MultiDimensionalStore.extractArrayStoresShallow(tf.getFormula());
+//		for (MultiDimensionalStore mds : mdStores) {
+//			if (!mdStoresInOriginalTf.contains(mds)) {
+//				// the current mds comes from a replacement we made earlier (during ArrayUpdate or ArrayEquality-handling)
+//				continue;
+//			}
+//			if (!mVpDomain.getPreAnalysis().isArrayTracked(
+//					getInnerMostArray(mds.getArray()),
+//					VPDomainHelpers.computeProgramVarMappingFromTransFormula(tf))) {
+//				continue;
+//			}
+//
+//			final Term oldArray = VPDomainHelpers.normalizeTerm(getInnerMostArray(mds.getArray()), tf, mScript);
+//
+//			final List<Term> pointers = mds.getIndex().stream()
+//					.map(t -> VPDomainHelpers.normalizeTerm(t, newInVars, newOutVars, mScript))
+//					.collect(Collectors.toList());
+//					
+//			final Term newArray = mNewArrayIdProvider.getNewArrayId(oldArray, pointers);
+//
+//			updateMappingsForSubstitution(oldArray, newArray, newInVars, newOutVars, substitutionMapPvoc);
+//		}
 		intermediateFormula = new Substitution(mScript, substitutionMapPvoc).transform(intermediateFormula);	
 		return intermediateFormula;
 	}
@@ -270,7 +274,11 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 	 * less simple case: (TODO: implement)
 	 *  assume p != q;  mem -> p -> mem1, mem -> q -> mem2 are in the corresponding map from old to new array ids
 	 *  old: mem := mem[p:=i][q:=j]
-	 *  new: mem1 := mem1[p:=i] ; mem2 := mem2[q:=j]  (this conversion is correct because of p!=q)
+	 *  new: mem1 := mem1[p:=i] ; mem2 := mem2[q:=j]  (this conversion is correct because of p!=q, mem1 will never be 
+	 *  				read at q, and mem2 never at p)
+	 *  
+	 *  new': mem1 := mem1[p:=i][q:=j] ; mem2 := mem2[p:=i][q:=j] 
+	 *   			(contracting the stores could be an additional optimization)
 	 * 
 	 * @param tf
 	 * @param newInVars
@@ -281,31 +289,140 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 	private Term substituteArrayUpdates(final UnmodifiableTransFormula tf,
 			final Map<IProgramVar, TermVariable> newInVars, final Map<IProgramVar, TermVariable> newOutVars,
 			Term formula) {
+		
+		
+		/*
+		 * algorithmic plan:
+		 *  - the rhs is the one that is accessed according to the pointers
+		 *   --> the pointers determine the rhs version(s), many pointers may correspond to the same new rhs version/part
+		 *  - the lhs array has to have compatible partitions to the rhs versions (by convention/construction)
+		 *   --> it may or may not be the same array
+		 *   --> for the lhs, we have to look up the corresponding version according to the rhs version
+		 */
 
 		final Map<Term, Term> substitutionMapPvoc = new HashMap<>();
 
-		List<ArrayUpdate> arrayUpdates = ArrayUpdate.extractArrayUpdates(formula);
+		/*
+		 * substitution from old to new array updates
+		 */
+		final Map<Term, Term> equalitySubstitution = new HashMap<>();
+
+		List<ArrayUpdate> arrayUpdates = ArrayUpdate.extractArrayUpdates(formula, false);
 		for (ArrayUpdate au : arrayUpdates) {
-			
 
-			final ArrayIndex pointers = au.getMultiDimensionalStore().getIndex();
+//			final ArrayIndex pointers = au.getMultiDimensionalStore().getIndex();
 
-			if (mVpDomain.getPreAnalysis().isArrayTracked(au.getNewArray(), 
-					VPDomainHelpers.computeProgramVarMappingFromTransFormula(tf))) {
-				final Term lhs = au.getNewArray();
-				final Term newArrayLhs = mNewArrayIdProvider.getNewArrayId(lhs, pointers);
-				updateMappingsForSubstitution(lhs, newArrayLhs, newInVars, newOutVars, substitutionMapPvoc);
-			}
+			final Term rhsStoreTerm = au.getMultiDimensionalStore().getStoreTerm();
+			final TermVariable oldRhsVar = (TermVariable) getInnerMostArray(rhsStoreTerm);
+
+			// we get a list of indices according to the store chain; 
+			final List<ArrayIndex> pointers = computeAccessingIndicesInStoreChain(rhsStoreTerm);
 			
-			if (mVpDomain.getPreAnalysis().isArrayTracked(au.getOldArray(), 
-					VPDomainHelpers.computeProgramVarMappingFromTransFormula(tf))) {
-				final Term rhsArray = au.getOldArray();
-				Term newArrayRhs = mNewArrayIdProvider.getNewArrayId(rhsArray, pointers);
-				updateMappingsForSubstitution(rhsArray, newArrayRhs, newInVars, newOutVars, substitutionMapPvoc);
+//			Set<Term> bla = pointers.stream().map(pointer -> mNewArrayIdProvider.getNewArrayId(
+//						VPDomainHelpers.normalizeTerm(oldRhsVar, tf, mScript),
+//						VPDomainHelpers.normalizeArrayIndex(pointer, tf, mScript))).collect(Collectors.toSet());
+
+			final List<Term> newEqualities = new ArrayList<>();
+			
+//			final Term oldLhsNormalized = VPDomainHelpers.normalizeTerm(au.getNewArray(), tf, mScript);
+//			final Term oldRhsNormalized = VPDomainHelpers.normalizeTerm(au.getNewArray(), tf, mScript);
+			
+			Set<Term> alreadySeenNewArrayRhs = new HashSet<>();
+			
+			// for each of the pointers we have to determine the corresponding new array and update it
+			for (ArrayIndex pointer : pointers) {
+				
+//				final Term newArrayLhsNorm = mNewArrayIdProvider.getNewArrayId(
+//						VPDomainHelpers.normalizeTerm(au.getNewArray(), tf, mScript), 
+//						VPDomainHelpers.normalizeArrayIndex(pointer, tf, mScript));
+
+				// rhs is chosen according to pointerGroup
+				final Term newArrayRhsVarNorm = mNewArrayIdProvider.getNewArrayId(
+						VPDomainHelpers.normalizeTerm(oldRhsVar, tf, mScript),
+						VPDomainHelpers.normalizeArrayIndex(pointer, tf, mScript));
+
+				if (alreadySeenNewArrayRhs.contains(newArrayRhsVarNorm)) {
+					continue;
+				}
+				alreadySeenNewArrayRhs.add(newArrayRhsVarNorm);
+				
+				/*
+				 *  lhs is chosen according to rhs 
+				 *  --> but actually the outcome is the same as chosing it by pointer group, right?
+				 */
+				final Term newArrayLhsNorm = mNewArrayIdProvider.getNewArrayId(
+						VPDomainHelpers.normalizeTerm(au.getNewArray(), tf, mScript), 
+						VPDomainHelpers.normalizeArrayIndex(pointer, tf, mScript));
+
+				
+				final IProgramVar oldArrayLhsPvoc = mOldSymbolTable.getProgramVar(
+						(TermVariable) VPDomainHelpers.normalizeTerm(au.getNewArray(), tf, mScript));
+				final IProgramVar oldArrayRhsVarPvoc = mOldSymbolTable.getProgramVar(
+						(TermVariable) VPDomainHelpers.normalizeTerm(oldRhsVar, tf, mScript));
+
+				final IProgramVar newArrayLhsPvoc = mNewSymbolTable.getProgramVar((TermVariable) newArrayLhsNorm);
+				final IProgramVar newArrayRhsVarPvoc = mNewSymbolTable.getProgramVar((TermVariable) newArrayRhsVarNorm);
+
+				TermVariable newArrayLhs = newOutVars.get(newArrayLhsPvoc);
+				if (newArrayLhs == null) {
+					newArrayLhs = mScript.constructFreshCopy(au.getNewArray());
+					newOutVars.put(newArrayLhsPvoc, newArrayLhs);
+					newOutVars.remove(oldArrayLhsPvoc);
+				}
+
+				TermVariable newArrayRhsVar = newInVars.get(newArrayRhsVarPvoc);
+				if (newArrayRhsVar == null) {
+					newArrayRhsVar = mScript.constructFreshCopy(au.getNewArray());
+					newInVars.put(newArrayRhsVarPvoc, newArrayRhsVar);
+					newInVars.remove(oldArrayRhsVarPvoc);
+					
+					if (newOutVars.containsKey(oldArrayRhsVarPvoc)) {
+						newOutVars.remove(oldArrayRhsVarPvoc);
+						newOutVars.put(newArrayRhsVarPvoc, newArrayLhs);
+					}
+				}
+				
+				if (newArrayLhs == null || newArrayRhsVar == null) {
+					assert !mVpDomain.getPreAnalysis().isArrayTracked(newArrayLhs, tf) 
+						|| !mVpDomain.getPreAnalysis().isArrayTracked(newArrayRhsVar, tf);
+					continue;
+				}
+				
+				final Term newArrayRhs = new Substitution(mScript, Collections.singletonMap(oldRhsVar, newArrayRhsVar))
+						.transform(rhsStoreTerm);
+
+				final Term newEquality = mScript.term(this, "=", newArrayLhs, newArrayRhs);
+				newEqualities.add(newEquality);
+	
+//				updateNewInVarsAndNewOutVars(tf, newInVars, newOutVars, 
+//						oldArrayLhsPvoc,
+//						oldArrayRhsVarPvoc,
+//						newArrayLhsPvoc,
+//						newArrayRhsVarPvoc,
+//						newArrayLhs, 
+//						newArrayRhsVar);
+				
+//				if (mVpDomain.getPreAnalysis().isArrayTracked(au.getNewArray(), 
+//						VPDomainHelpers.computeProgramVarMappingFromTransFormula(tf))) {
+//					final Term lhs = au.getNewArray();
+//					final Term newArrayLhs = mNewArrayIdProvider.getNewArrayId(lhs, pointer);
+//					updateMappingsForSubstitution(lhs, newArrayLhs, newInVars, newOutVars, substitutionMapPvoc);
+//				}
+//
+//				if (mVpDomain.getPreAnalysis().isArrayTracked(au.getOldArray(), 
+//						VPDomainHelpers.computeProgramVarMappingFromTransFormula(tf))) {
+//					final Term rhsArray = au.getOldArray();
+//					Term newArrayRhs = mNewArrayIdProvider.getNewArrayId(rhsArray, pointer);
+//					updateMappingsForSubstitution(rhsArray, newArrayRhs, newInVars, newOutVars, substitutionMapPvoc);
+//				}
 			}
+
+			final Term newConjunctionOfEquations = SmtUtils.and(mScript.getScript(), newEqualities);
+			equalitySubstitution.put(au.getArrayUpdateTerm(), newConjunctionOfEquations);
 		}
 		
-		Term newTerm = new Substitution(mScript, substitutionMapPvoc).transform(formula);
+		final Term newTerm = new Substitution(mScript, equalitySubstitution).transform(formula);
+//		Term newTerm = new Substitution(mScript, substitutionMapPvoc).transform(formula);
 		return newTerm;
 	}
 
@@ -315,7 +432,7 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 			final Term intermediateFormula) {
 		final List<ArrayEquality> arrayEqualities = ArrayEquality.extractArrayEqualities(intermediateFormula);
 		final Map<Term, Term> equalitySubstitution = new HashMap<>();
-		mScript.lock(this);
+//		mScript.lock(this);
 		for (ArrayEquality ae : arrayEqualities) {
 			/*
 			 * plan:
@@ -346,31 +463,40 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 				final Term newEquality = mScript.term(this, "=", newLhs, newRhs);
 				newEqualities.add(newEquality);
 				
-				if (tf.getInVars().containsKey(oldLhs)) {
-					newInVars.remove(oldLhs);
-					newInVars.put((IProgramVar) newLhs, (TermVariable) newLhs);
-				}
-				if (tf.getInVars().containsKey(oldRhs)) {
-					newInVars.remove(oldRhs);
-					newInVars.put((IProgramVar) newRhs, (TermVariable) newRhs);
-				}
-				if (tf.getOutVars().containsKey(oldLhs)) {
-					newOutVars.remove(oldLhs);
-					newOutVars.put((IProgramVar) newLhs, (TermVariable) newLhs);
-				}
-				if (tf.getOutVars().containsKey(oldRhs)) {
-					newOutVars.remove(oldRhs);
-					newOutVars.put((IProgramVar) newRhs, (TermVariable) newRhs);
-				}
+				// TODO
+//				updateNewInVarsAndNewOutVars(tf, newInVars, newOutVars, oldLhs, oldRhs, newLhs, newRhs);
 
 			}
 			assert newEqualities.size() > 0;
 			final Term newConjunctionOfEquations = SmtUtils.and(mScript.getScript(), newEqualities);
 			equalitySubstitution.put(ae.getOriginalTerm(), newConjunctionOfEquations);
 		}
-		mScript.unlock(this);
+//		mScript.unlock(this);
 		final Term newTerm = new Substitution(mScript, equalitySubstitution).transform(intermediateFormula);
 		return newTerm;
+	}
+
+	private void updateNewInVarsAndNewOutVars(final UnmodifiableTransFormula tf,
+			final Map<IProgramVar, TermVariable> newInVars, final Map<IProgramVar, TermVariable> newOutVars,
+			final IProgramVar oldLhsPvoc, final IProgramVar oldRhsPvoc, 
+			final IProgramVar newLhsPvoc, final IProgramVar newRhsPvoc,
+			final Term newLhs, final Term newRhs) {
+//		if (tf.getInVars().containsKey(oldLhsPvoc)) {
+//			newInVars.remove(oldLhsPvoc);
+//			newInVars.put((IProgramVar) newLhsPvoc, (TermVariable) newLhs);
+//		}
+		if (tf.getInVars().containsKey(oldRhsPvoc)) {
+			newInVars.remove(oldRhsPvoc);
+			newInVars.put((IProgramVar) newRhsPvoc, (TermVariable) newRhs);
+		}
+		if (tf.getOutVars().containsKey(oldLhsPvoc)) {
+			newOutVars.remove(oldLhsPvoc);
+			newOutVars.put((IProgramVar) newLhsPvoc, (TermVariable) newLhs);
+		}
+//		if (tf.getOutVars().containsKey(oldRhsPvoc)) {
+//			newOutVars.remove(oldRhsPvoc);
+//			newOutVars.put((IProgramVar) newRhsPvoc, (TermVariable) newRhs);
+//		}
 	}
 
 
@@ -389,38 +515,64 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 	 * @param newInVars
 	 * @param newOutVars
 	 * @param substitutionMap
+	 * @param tf 
 	 */
 	private void updateMappingsForSubstitution(Term oldArrayTerm, Term newArrayTerm,
 			final Map<IProgramVar, TermVariable> newInVars,
 			final Map<IProgramVar, TermVariable> newOutVars,
-			final Map<Term, Term> substitutionMap) {
+			final Map<Term, Term> substitutionMap, UnmodifiableTransFormula tf) {
 		if (oldArrayTerm instanceof TermVariable) {
 			assert newArrayTerm instanceof TermVariable;
+
 			final IProgramVar oldArray = mOldSymbolTable.getProgramVar((TermVariable) oldArrayTerm);
 			final IProgramVar newArray = mNewSymbolTable.getProgramVar((TermVariable) newArrayTerm);
 		
-			final TermVariable inv = newInVars.get(oldArray);
-			final TermVariable outv = newOutVars.get(oldArray);
+			final TermVariable invOld = newInVars.get(oldArray);
+			final TermVariable outvOld = newOutVars.get(oldArray);
+			
+			final TermVariable invNew = newInVars.get(newArray);
+			final TermVariable outvNew = newOutVars.get(newArray);
 
-			TermVariable invNewTv = null;
-			if (inv != null) {
-				invNewTv = mScript.constructFreshCopy((TermVariable) newArrayTerm);
+			
+			TermVariable versionedInTvNew = newInVars.get(newArray);
+			if (versionedInTvNew == null) {
+				versionedInTvNew = mScript.constructFreshCopy((TermVariable) newArrayTerm);
 				newInVars.remove(oldArray);
-				newInVars.put((IProgramVar) newArray, invNewTv);
-				substitutionMap.put(inv, invNewTv);
+				newInVars.put((IProgramVar) newArray, versionedInTvNew);
 			}
-		
-			if (outv != null) {
-				TermVariable newTv;
-				if (inv == outv) {
-					newTv = invNewTv;
-				} else {
-					newTv = mScript.constructFreshCopy((TermVariable) newArrayTerm);
-				}
-				newOutVars.remove(oldArray);
-				newOutVars.put((IProgramVar) newArray, newTv);
-				substitutionMap.put(outv, newTv);
+			TermVariable versionedInTvOld = tf.getInVars().get(oldArray);
+			substitutionMap.put(versionedInTvOld, versionedInTvNew);
+			
+			
+			TermVariable versionedOutTvNew = newOutVars.get(newArray);
+			if (versionedOutTvNew == null) {
+				versionedOutTvNew = mScript.constructFreshCopy((TermVariable) newArrayTerm);
+				newInVars.remove(oldArray);
+				newInVars.put((IProgramVar) newArray, versionedOutTvNew);
 			}
+			TermVariable versionedOutTvOld = tf.getOutVars().get(oldArray);
+			substitutionMap.put(versionedOutTvOld, versionedOutTvNew);
+	
+			
+//			TermVariable invNewTv = null;
+//			if (invOld != null) {
+//				invNewTv = mScript.constructFreshCopy((TermVariable) newArrayTerm);
+//				newInVars.remove(oldArray);
+//				newInVars.put((IProgramVar) newArray, invNewTv);
+//				substitutionMap.put(inv, invNewTv);
+//			}
+//		
+//			if (outv != null) {
+//				TermVariable newTv;
+//				if (inv == outv) {
+//					newTv = invNewTv;
+//				} else {
+//					newTv = mScript.constructFreshCopy((TermVariable) newArrayTerm);
+//				}
+//				newOutVars.remove(oldArray);
+//				newOutVars.put((IProgramVar) newArray, newTv);
+//				substitutionMap.put(outv, newTv);
+//			}
 			
 		} else if (SmtUtils.isConstant(oldArrayTerm)) {
 			/*
@@ -433,6 +585,22 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 		}
 	}
 	
+	/**
+	 * Computes the ArrayIndexes that are used in a store chain. The result is ordered from the outside in.
+	 * @param arrayUpdateTerm
+	 * @return
+	 */
+	private List<ArrayIndex> computeAccessingIndicesInStoreChain(Term arrayUpdateTerm) {
+		final List<ArrayIndex> result = new ArrayList<>();
+
+		Term currentTerm = arrayUpdateTerm;
+		while (SmtUtils.isFunctionApplication(currentTerm, "store")) {
+			result.add(new MultiDimensionalStore(currentTerm).getIndex());
+			currentTerm = ((ApplicationTerm) currentTerm).getParameters()[0];
+		}
+		return result;
+	}
+
 	public static Term getInnerMostArray(Term arrayTerm) {
 		assert arrayTerm.getSort().isArraySort();
 		Term innerArray = arrayTerm;
