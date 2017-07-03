@@ -131,16 +131,13 @@ public class HornClausePredicateSymbol {
 	}
 
 	public static class HornClauseDontCareSymbol extends HornClauseConstantPredicateSymbol {
-		//private int mVersion;
 		
 		public HornClauseDontCareSymbol nextVersion() {
 			HornClauseDontCareSymbol ret = new HornClauseDontCareSymbol();
-			//ret.mVersion = mVersion + 1;
 			return ret;
 		}
 		public HornClauseDontCareSymbol() {
 			super(null, "€", Collections.emptyList());
-			//mVersion = 0;
 		}
 
 		@Override
@@ -155,7 +152,7 @@ public class HornClausePredicateSymbol {
 
 		@Override
 		public String toString() {
-			return "€";// + mVersion;
+			return "€";
 		}
 	}
 }

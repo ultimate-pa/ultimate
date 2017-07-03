@@ -61,8 +61,6 @@ public class HornClause implements IInternalAction {
 	private final UnmodifiableTransFormula mTransitionFormula;
 
 	private final HCSymbolTable mHornClauseSymbolTable;
-	private final HCPredicateSymbolTable mPredicateSymbolTable;
-	private int mVersion;
 
 	/**
 	 * Standard constructor for a Horn clause as used by TreeAutomizer.
@@ -78,7 +76,7 @@ public class HornClause implements IInternalAction {
 	 * @param bodyPredToTermVariables
 	 */
 	public HornClause(final ManagedScript script, final HCSymbolTable symbolTable,
-			final HCPredicateSymbolTable predicateSymbolTable, final Term transitionFormula,
+			final Term transitionFormula,
 			final HornClausePredicateSymbol head, final List<TermVariable> headVars,
 			final List<HornClausePredicateSymbol> bodyPreds, final List<List<TermVariable>> bodyPredToTermVariables, int version) {
 
@@ -94,8 +92,7 @@ public class HornClause implements IInternalAction {
 				.collect(Collectors.toList());
 
 		mHornClauseSymbolTable = symbolTable;
-
-		mPredicateSymbolTable = predicateSymbolTable;
+		
 		mHeadPredicate = head;
 		mBodyPreds = bodyPreds;
 
@@ -137,26 +134,12 @@ public class HornClause implements IInternalAction {
 		tb.setFormula(convertedFormula);
 		tb.setInfeasibility(Infeasibility.NOT_DETERMINED);
 		mTransitionFormula = tb.finishConstruction(script);
-		mVersion = version;
 	}
 	public HornClause(final ManagedScript script, final HCSymbolTable symbolTable,
-			final HCPredicateSymbolTable predicateSymbolTable, final Term transitionFormula,
+			 final Term transitionFormula,
 			final HornClausePredicateSymbol head, final List<TermVariable> headVars,
 			final List<HornClausePredicateSymbol> bodyPreds, final List<List<TermVariable>> bodyPredToTermVariables) {
-		this(script, symbolTable, predicateSymbolTable, transitionFormula, head, headVars, bodyPreds, bodyPredToTermVariables, 0);
-	}
-	
-	public HornClause versionHornClause(final int version) {
-		HornClause res;
-		try {
-			res = (HornClause) this.clone();
-			res.mVersion = version;
-			return res;
-		} catch (CloneNotSupportedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		return null;
+		this(script, symbolTable, transitionFormula, head, headVars, bodyPreds, bodyPredToTermVariables, 0);
 	}
 
 	@Override

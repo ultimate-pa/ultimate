@@ -33,7 +33,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HCPredicateSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HCSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornClause;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornUtilConstants;
@@ -50,7 +49,6 @@ public class HornAnnot implements IAnnotations {
 	private final ManagedScript mBackendSolverScript;
 	private final Map<String, Object> mMaechtigUnnoetigBenannteMap = new HashMap<>();
 	private final HCSymbolTable mSymbolTable;
-	private final HCPredicateSymbolTable mPredicateSymbolTable;
 
 	/***
 	 * An annotation of horn clauses.
@@ -60,12 +58,10 @@ public class HornAnnot implements IAnnotations {
 	 */
 	public HornAnnot(final List<HornClause> clauses, 
 			final ManagedScript backendSolver,
-			final HCSymbolTable symbolTable,
-			final HCPredicateSymbolTable predicateSymbolTable) {
+			final HCSymbolTable symbolTable) {
 		mMaechtigUnnoetigBenannteMap.put(HornUtilConstants.HORN_ANNOT_NAME, clauses);
 		mBackendSolverScript = backendSolver;
 		mSymbolTable = symbolTable;
-		mPredicateSymbolTable = predicateSymbolTable;
 	}
 
 	@Override
@@ -79,10 +75,6 @@ public class HornAnnot implements IAnnotations {
 	
 	public HCSymbolTable getSymbolTable() {
 		return mSymbolTable;
-	}
-
-	public HCPredicateSymbolTable getPredicateSymbolTable() {
-		return mPredicateSymbolTable;
 	}
 	@Override
 	public String toString() {

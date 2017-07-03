@@ -47,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfCon
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
+import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
 /**
  * A factory for HornClause Predicates.
@@ -80,8 +81,7 @@ public class HCPredicateFactory extends PredicateFactory {
 
 		mBackendSmtSolverScript.lock(this);
 		mDontCarePredicate = newPredicate(symbolTable.getDontCareHornClausePredicateSymbol(),
-				mBackendSmtSolverScript.term(this, "true"), Collections.emptyList(), 1);
-		System.err.println(mDontCarePredicate + ":" + mDontCarePredicate.isDontCare());
+				mBackendSmtSolverScript.term(this, "true"), Collections.emptyList());
 		mFalsePredicate = newPredicate(symbolTable.getFalseHornClausePredicateSymbol(),
 				mBackendSmtSolverScript.term(this, "true"), Collections.emptyList());
 		mTruePredicate = newPredicate(symbolTable.getTrueHornClausePredicateSymbol(),
@@ -116,75 +116,43 @@ public class HCPredicateFactory extends PredicateFactory {
 		return mDontCarePredicate;
 	}
 
-	// public HCPredicate convertItoHCPredicate(final IPredicate p) {
-	// return newPredicate(mSymbolTable.getDontCareHornClausePredicateSymbol(),
-	// p.getFormula(), new HashMap<>());
-	// }
-
-	private HCPredicate newPredicate(HornClausePredicateSymbol loc, Term term, List<TermVariable> vars) {
-		return newPredicate(Collections.singleton(loc), term, vars, 0);
-	}
-	private HCPredicate newPredicate(HornClausePredicateSymbol loc, Term term, List<TermVariable> vars, int dontCare) {
-		return newPredicate(Collections.singleton(loc), term, vars, dontCare);
+	public HCPredicate newPredicate(final HornClausePredicateSymbol loc, final Term term,
+			final List<TermVariable> vars) {
+		return newPredicate(Collections.singleton(loc), 0, term, vars);
 	}
 
-	private HCPredicate newPredicate(Set<HornClausePredicateSymbol> loc, Term term, List<TermVariable> vars, int dontCare) {
+	public HCPredicate newPredicate(final HornClausePredicateSymbol loc, final int serialNumber,
+			final Term term, final List<TermVariable> vars) {
+		return newPredicate(Collections.singleton(loc), serialNumber, term, vars);
+	}
+
+	public HCPredicate newPredicate(final Set<HornClausePredicateSymbol> loc, 
+			final Term term, final List<TermVariable> vars) {
+		return newPredicate(loc, 0, term, vars);
+	}
+	public HCPredicate newPredicate(final Set<HornClausePredicateSymbol> loc, final int serialNumber, 
+			final Term term, final List<TermVariable> vars) {
 		final ComputeHcOutVarsAndNormalizeTerm chovant = new ComputeHcOutVarsAndNormalizeTerm(term, vars);
 
-		return new HCPredicate(loc, chovant.getNormalizedTerm(), chovant.getProgramVars(),
-				computeClosedFormula(chovant.getNormalizedTerm()), vars, dontCare);
+		final int finalSerialNumber = HashUtils.hashHsieh(1000000007, loc, term, vars, serialNumber);
+		return new HCPredicate(loc, finalSerialNumber, chovant.getNormalizedTerm(), chovant.getProgramVars(),
+				computeClosedFormula(chovant.getNormalizedTerm()), vars);
 	}
 
-//	public HCPredicate newHCPredicate(HornClausePredicateSymbol loc, Term term, List<TermVariable> vars) {
-//
-//	}
-
-	public HCPredicate newHCPredicate(Set<HornClausePredicateSymbol> loc, Term term, List<TermVariable> vars) {
-		return newPredicate(loc, term, vars, 0);
-	}
-	
-	public HCPredicate newHCPredicate(Set<HornClausePredicateSymbol> loc, Term term, List<TermVariable> vars, int dontCare) {
-		return newPredicate(loc, term, vars, dontCare);
-	}
-
-	// /**
-	// * Create a new predicate from symbol and formula.
-	// *
-	// * @param mProgramPoint
-	// * symbol
-	// * @param hashCode
-	// * hash code of the formula
-	// * @param formula
-	// * The formula of the predicate
-	// * @param vars
-	// * the set of variables of the formula
-	// * @param termToHcVar
-	// * a map of the variables to HCVars.
-	// * @return HCPredicate the new predicate
-	// */
-	// public HCPredicate newPredicate(final HornClausePredicateSymbol
-	// mProgramPoint, final int hashCode,
-	// final Term formula, final Set<IProgramVar> vars, final Map<Term, HCVar>
-	// termToHcVar) {
-	// return new HCPredicate(mProgramPoint, hashCode, formula, vars,
-	// termToHcVar, computeClosedFormula(formula));
-	// }
-
-	// /**
-	// *
-	// * @param vars
-	// * @return
-	// */
-	// private Set<IProgramVar>
-	// computeHcOutVarsFromTermVariables(List<TermVariable> vars) {
-	// final Set<IProgramVar> result = new HashSet<>();
-	// for (int i = 0; i < vars.size(); i++) {
-	// final HCOutVar hcOutVar = mSymbolTable.getOrConstructHCOutVar(i,
-	// vars.get(i).getSort());
-	// result.add(hcOutVar);
-	// }
-	// return result;
-	// }
+	/***
+	 * Create a new HCPredicate from a predicate symbol and the formulas.
+	 * 
+	 * @param sym
+	 *            The predicate symbol
+	 * @param term
+	 *            The formula of the predicate
+	 * @param vars
+	 * @return
+	 *//*
+	public HCPredicate newHCPredicate(final Set<HornClausePredicateSymbol> sym, final Term term,
+			final List<TermVariable> vars) {
+		return newPredicate(sym, term, vars);
+	}*/
 
 	private Term computeClosedFormula(final Term formula) {
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
@@ -197,8 +165,7 @@ public class HCPredicateFactory extends PredicateFactory {
 
 	/**
 	 * When we construct a HCPredicate from a formula, then there are two cases:
-	 *  - the formula is already normalized, i.e., each of its free 
-	 *  .. TODO..
+	 * - the formula is already normalized, i.e., each of its free .. TODO..
 	 * 
 	 * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
 	 *

@@ -49,7 +49,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HCPredicateSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HCSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornClause;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornUtilConstants;
@@ -76,7 +75,6 @@ public class HornClauseParserScript extends NoopScript {
 	private final ArrayList<Term> mCurrentPredicateAtoms;
 	private final ArrayList<Term> mCurrentTransitionAtoms;
 	private final HCSymbolTable mSymbolTable;
-	private final HCPredicateSymbolTable mPredicateSymbolTable;
 
 	public HornClauseParserScript(final ManagedScript smtSolverScript, final String logic, final Settings settings) {
 		mBackendSmtSolver = smtSolverScript;
@@ -90,16 +88,14 @@ public class HornClauseParserScript extends NoopScript {
 		mCurrentTransitionAtoms = new ArrayList<>();
 
 		mSymbolTable = new HCSymbolTable(mBackendSmtSolver);
-		mPredicateSymbolTable = new HCPredicateSymbolTable(mBackendSmtSolver);
 
 	}
 
 	public IElement getHornClauses() {
 		mSymbolTable.finishConstruction();
-		mPredicateSymbolTable.finishConstruction();
 
 		final Payload payload = new Payload();
-		final HornAnnot annot = new HornAnnot(mCurrentHornClause, mBackendSmtSolver, mSymbolTable, mPredicateSymbolTable);
+		final HornAnnot annot = new HornAnnot(mCurrentHornClause, mBackendSmtSolver, mSymbolTable);
 		payload.getAnnotations().put(HornUtilConstants.HORN_ANNOT_NAME, annot);
 
 		return new HornClauseAST(payload);
@@ -282,7 +278,7 @@ public class HornClauseParserScript extends NoopScript {
 			final QuantifiedFormula thisTerm = (QuantifiedFormula) term;
 			if (thisTerm.getQuantifier() == FORALL) {
 				final HornClauseBody body = parseBody(thisTerm.getSubformula());
-				mCurrentHornClause.add(body.convertToHornClause(mBackendSmtSolver, mSymbolTable, mPredicateSymbolTable));
+				mCurrentHornClause.add(body.convertToHornClause(mBackendSmtSolver, mSymbolTable));
 				// System.err.println(mCurrentHornClause.get(mCurrentHornClause.size() - 1));
 			}
 		}
@@ -294,7 +290,7 @@ public class HornClauseParserScript extends NoopScript {
 				if (thisTerm.getQuantifier() == EXISTS) {
 					final HornClauseCobody cobody = parseCobody(thisTerm.getSubformula());
 					final HornClauseBody body = cobody.negate();
-					mCurrentHornClause.add(body.convertToHornClause(mBackendSmtSolver, mSymbolTable, mPredicateSymbolTable));
+					mCurrentHornClause.add(body.convertToHornClause(mBackendSmtSolver, mSymbolTable));
 					// System.err.println(mCurrentHornClause.get(mCurrentHornClause.size() - 1));
 				}
 			}
