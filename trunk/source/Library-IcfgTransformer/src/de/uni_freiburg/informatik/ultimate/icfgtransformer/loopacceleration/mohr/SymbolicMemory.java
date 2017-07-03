@@ -218,7 +218,7 @@ public class SymbolicMemory {
 	 * @return {@link TransFormula} which summarizes the effects of the path in the loop
 	 */
 	public Term getFormula(final int path, final TransFormula guard) {
-		mLogger.debug(">--- Path: " + path);
+		mLogger.debug("Path: " + path);
 		if (mIteratedSymbolicMemory.isEmpty()) {
 			generateTerms();
 		}
@@ -278,10 +278,8 @@ public class SymbolicMemory {
 		allTaus[0] = mKappa2Tau.get(mKappas.get(path));
 		final Term allTerm = mManagedScript.getScript().quantifier(QuantifiedFormula.FORALL, allTaus,
 				Util.implies(mManagedScript.getScript(), mRangeTerms.get(path), ex));
-		final Term kappaMin = mManagedScript.getScript().term("<", Rational.ZERO.toTerm(mManagedScript.getScript().sort("Int")),
-				mKappas.get(path));
 		mLogger.debug(allTerm.toStringDirect());
-		return Util.and(mManagedScript.getScript(), allTerm, kappaMin);
+		return allTerm;
 	}
 
 	/**
@@ -310,10 +308,19 @@ public class SymbolicMemory {
 		return new HashSet<>(mKappa2Tau.values());
 	}
 
+	public Term getKappaMin() {
+		final Term kappasAdd = mKappas.size() > 1
+				? mManagedScript.getScript().term("+", mKappas.toArray(new Term[mKappas.size()]))
+				: mKappas.get(0);
+		return mManagedScript.getScript().term("<",
+				Rational.ZERO.toTerm(mManagedScript.getScript().sort("Int")), kappasAdd);
+	}
+
 	private void updateInOutVars(final IProgramVar outVar, final IIcfgSymbolTable symbolTable,
 			final TermVariable[] inVars) {
 		for (final TermVariable iv : inVars) {
 			if (!mReplaceInV.containsKey(iv)) {
+				mLogger.info("adding new InVar: " + iv);
 				final TermVariable cp = mManagedScript.constructFreshCopy(iv);
 				mReplaceInV.put(iv, cp);
 				mInVars.put(symbolTable.getProgramVar(iv), cp);
@@ -346,12 +353,19 @@ public class SymbolicMemory {
 				final Term assignedTerm = symEntry.getValue().iterator().next();
 				final int p = mAssigningPaths.get(symEntry.getKey().getTermVariable()).iterator().next();
 				boolean cwsp = assignedTerm.getFreeVars().length > 0 ? true : false;
+				boolean pathAssignsOtherVar = false;
 				for (final TermVariable tv : assignedTerm.getFreeVars()) {
+					// Check for "clean" variables
+					if (!mAssigningPaths.containsKey(tv)) {
+						continue;
+					}
 					if (mAssigningPaths.get(tv).size() > 1 || !mAssigningPaths.get(tv).contains(p)) {
 						cwsp = false;
 					}
+
+					pathAssignsOtherVar = true;
 				}
-				if (cwsp) {
+				if (cwsp && pathAssignsOtherVar) {
 					mIteratedSymbolicMemory.put(pv, generateConstantAssignment(
 							UpdateType.CONSTANT_WITH_SINGLE_PATHCOUNTER, pv, symEntry.getValue()));
 				} else {
@@ -370,7 +384,9 @@ public class SymbolicMemory {
 		final Term result;
 		// Check if invar of pv exists
 		if (!mInVars.containsKey(pv)) {
-			mInVars.put(pv, mManagedScript.constructFreshCopy(pv.getTermVariable()));
+			final TermVariable cp = mManagedScript.constructFreshCopy(pv.getTermVariable());
+			mInVars.put(pv, cp);
+			mReplaceInV.put(pv.getTermVariable(), cp);
 		}
 
 		if (type == UpdateType.CONSTANT) {
@@ -389,11 +405,12 @@ public class SymbolicMemory {
 
 		} else if (type == UpdateType.CONSTANT_WITH_SINGLE_PATHCOUNTER) {
 			int path = -1;
-			for (int i = 0; i < mCurrentPath; i++) {
+			for (int i = 0; i <= mCurrentPath; i++) {
 				if (mAssignedVars.get(i).contains(pv)) {
-					path = 0;
+					path = i;
 				}
 			}
+
 			final Term cond = mManagedScript.getScript().term(">", mKappa2Tau.get(mKappas.get(path)),
 					Rational.ZERO.toTerm(mManagedScript.getScript().sort("Int")));
 			result = Util.ite(mManagedScript.getScript(), cond, mSymbolicMemory.get(pv).get(0), mInVars.get(pv));
