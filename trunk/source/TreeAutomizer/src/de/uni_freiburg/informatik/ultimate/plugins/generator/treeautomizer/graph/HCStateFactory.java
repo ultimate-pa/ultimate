@@ -300,7 +300,7 @@ public class HCStateFactory implements IMergeStateFactory<IPredicate>, IIntersec
 		//}
 		//System.err.printf("%s:%s && %s:%s == %s:%s\n", state1, ((HCPredicate) state1).isDontCare(), state2, ((state2 instanceof HCPredicate) && ((HCPredicate) state2).isDontCare()),
 		//		res, ((HCPredicate) res).isDontCare());
-		System.err.printf("%s && %s = %s\n", state1, state2, res);
+		//System.err.printf("%s && %s = %s\n", state1, state2, res);
 		return res;
 	}
 
@@ -352,12 +352,12 @@ public class HCStateFactory implements IMergeStateFactory<IPredicate>, IIntersec
 		if (mergedLocations.isEmpty()) {
 			return mPredicateFactory.newPredicate(mergedFormula);
 		} else {
-			int isDontCare = sumDontCares(states);
-			for (IPredicate s : states) {
-				System.err.print(s + " || ");
-			}
+			int isDontCare = constructFreshSerialNumber();//sumDontCares(states);
+			//for (IPredicate s : states) {
+			//	System.err.print(s + " || ");
+			//}
 			IPredicate res = mPredicateFactory.newHCPredicate(mergedLocations, mergedFormula, varsForHcPred, isDontCare);
-			System.err.println(" :: " + res);
+			//System.err.println(" :: " + res);
 			return res;
 		}
 	}

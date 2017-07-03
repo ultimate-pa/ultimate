@@ -177,7 +177,6 @@ public class Intersect<LETTER, STATE> implements IOperation<LETTER, STATE, IStat
 
 		for (final TreeAutomatonRule<LETTER, Pair<STATE, STATE>> rule : res.getRules()) {
 			final List<STATE> src = new ArrayList<>();
-			System.out.println(rule.getSource() + " " + rule.getLetter() + " ~~> " + rule.getDest());
 			for (final Pair<STATE, STATE> pr : rule.getSource()) {
 				src.add(reduceState(pr));
 			}
