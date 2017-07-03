@@ -84,7 +84,8 @@ public class HoareTripleCheckerWithPreconditionRelevanceAnalysis extends Increme
 			final String predProc = mAssertedAction.getPrecedingProcedure();
 			final Set<IProgramNonOldVar> modifiableGlobals = mModifiableGlobalVariableManager.getModifiedBoogieVars(predProc);
 			
-			final Collection<Term> oldVarEqualities = constructNonModOldVarsEquality(vars, modifiableGlobals);
+		final Collection<Term> oldVarEqualities = constructNonModOldVarsEquality(vars, modifiableGlobals,
+				mManagedScript, this);
 			if (!oldVarEqualities.isEmpty()) {
 				Term nonModOldVarsEquality = Util.and(mManagedScript.getScript(), oldVarEqualities.toArray(new Term[oldVarEqualities.size()]));
 				if (mUseNamedTerms) {
