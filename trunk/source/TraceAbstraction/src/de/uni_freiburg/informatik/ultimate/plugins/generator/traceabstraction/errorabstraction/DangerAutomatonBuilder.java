@@ -37,14 +37,12 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEquivalent;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IOutgoingTransitionlet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
@@ -71,7 +69,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.Pred
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermDomainOperationProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryResultChecking;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer.IPredicatePostprocessor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer.QuantifierEliminationPostprocessor;
@@ -199,19 +196,19 @@ class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements IErro
 
 		final NestedWordAutomaton<LETTER, IPredicate> optimizedResult = constructDangerAutomaton(new AutomataLibraryServices(services), mLogger, predicateFactory,
 				internalPredicateUnifier, csToolkit, predicateFactoryForAutomaton, abstraction, mPredicates, true);
-		final NestedWordAutomaton<LETTER, IPredicate> unoptimizedResult = constructDangerAutomaton(
-				new AutomataLibraryServices(services), mLogger, predicateFactory, internalPredicateUnifier, csToolkit,
-				predicateFactoryForAutomaton, abstraction, mPredicates, false);
-		try {
-			final Boolean languageIsEquivalent = new IsEquivalent<LETTER, IPredicate>(
-					new AutomataLibraryServices(services), new PredicateFactoryResultChecking(predicateFactory), optimizedResult, unoptimizedResult)
-							.getResult();
-			if (!languageIsEquivalent) {
-				throw new AssertionError("language not equivalent");
-			}
-		} catch (final AutomataLibraryException e) {
-			throw new AssertionError(e);
-		}
+//		final NestedWordAutomaton<LETTER, IPredicate> unoptimizedResult = constructDangerAutomaton(
+//				new AutomataLibraryServices(services), mLogger, predicateFactory, internalPredicateUnifier, csToolkit,
+//				predicateFactoryForAutomaton, abstraction, mPredicates, false);
+//		try {
+//			final Boolean languageIsEquivalent = new IsEquivalent<LETTER, IPredicate>(
+//					new AutomataLibraryServices(services), new PredicateFactoryResultChecking(predicateFactory), optimizedResult, unoptimizedResult)
+//							.getResult();
+//			if (!languageIsEquivalent) {
+//				throw new AssertionError("language not equivalent");
+//			}
+//		} catch (final AutomataLibraryException e) {
+//			throw new AssertionError(e);
+//		}
 		mResult = optimizedResult;
 	}
 
@@ -358,11 +355,17 @@ class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements IErro
 		final IPredicate programStatesWithSucc_Pred = predicateFactory
 				.newPredicate(SmtUtils.or(csToolkit.getManagedScript().getScript(), programStatesWithSucc_Term));
 		final Set<IPredicate> coveredPredicates = new HashSet<>();
+		for (final IPredicate alreadyCovered : abstState2dangStates.getImage(pred)) {
+			coveredPredicates.addAll(mPredicateUnifier.getCoverageRelation().getCoveredPredicates(alreadyCovered));
+		}
 		try {
 			for (final IPredicate candidate : predicates) {
-				final Validity icres = ic.checkImplication(candidate, programStatesWithSucc_Pred);
-				if (icres == Validity.VALID) {
-					coveredPredicates.add(candidate);
+				if (!coveredPredicates.contains(candidate)) {
+					final Validity icres = ic.checkImplication(candidate, programStatesWithSucc_Pred);
+					if (icres == Validity.VALID) {
+						//coveredPredicates.add(candidate);
+						coveredPredicates.addAll(mPredicateUnifier.getCoverageRelation().getCoveredPredicates(candidate));
+					}
 				}
 			}
 		} finally {
