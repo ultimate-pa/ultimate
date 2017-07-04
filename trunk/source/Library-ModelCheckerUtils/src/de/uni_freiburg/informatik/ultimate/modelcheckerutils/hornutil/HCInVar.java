@@ -35,11 +35,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 
 
 /**
- * TODO: rework comment
- * A HCVar for a set of HornClausese is what an IProgramVar is for a program.
- * A HCVar consists of an uninterpreted predicate symbol that occurs in the HornClause set together
- * with a position n identifying the n-th variable of that predicate.
- * 
+ *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  */

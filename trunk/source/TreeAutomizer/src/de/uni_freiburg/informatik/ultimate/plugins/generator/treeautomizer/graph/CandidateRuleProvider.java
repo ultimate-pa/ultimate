@@ -27,13 +27,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.graph;
 
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomatonBU;
-import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeRun;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornClause;
@@ -50,7 +47,7 @@ public class CandidateRuleProvider {
 	
 	
 	
-	private Iterable<TreeAutomatonRule<HornClause, IPredicate>> mCandidateRules;
+	private Set<TreeAutomatonRule<HornClause, IPredicate>> mCandidateRules;
 
 	/**
 	 * Triggers computation of candidate rules.
@@ -61,13 +58,13 @@ public class CandidateRuleProvider {
 	 * @param alphabet 
 	 */
 	public CandidateRuleProvider(ITreeAutomatonBU<HornClause, IPredicate> originalTreeRun, 
-			Map<IPredicate, IPredicate> hcSymbolsToInterpolants, HCHoareTripleChecker hoareTripleChecker) {
+			HCHoareTripleChecker hoareTripleChecker) {
 		mCandidateRules = new HashSet<>();
 		
 		for (final TreeAutomatonRule<HornClause, IPredicate> rule : originalTreeRun.getRules()) {
 			for (final IPredicate dest : originalTreeRun.getStates()) {
 				if (hoareTripleChecker.check(rule.getSource(), rule.getLetter(), dest) == Validity.VALID) {
-					((HashSet<TreeAutomatonRule<HornClause, IPredicate>>) mCandidateRules).add(new TreeAutomatonRule<HornClause, IPredicate>(rule.getLetter(), rule.getSource(), dest));
+					mCandidateRules.add(new TreeAutomatonRule<HornClause, IPredicate>(rule.getLetter(), rule.getSource(), dest));
 				}
 			}
 		}

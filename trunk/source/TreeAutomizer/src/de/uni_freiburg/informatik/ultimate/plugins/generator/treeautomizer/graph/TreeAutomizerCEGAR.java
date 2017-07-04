@@ -105,6 +105,7 @@ public class TreeAutomizerCEGAR {
 
 	private final List<HornClause> mAlphabet;
 	private TreeRun<HornClause, IPredicate> mCounterExample;
+	private IUltimateServiceProvider mServices;
 
 	/**
 	 * Constructor for TreeAutomizer CEGAR
@@ -127,6 +128,8 @@ public class TreeAutomizerCEGAR {
 		mIteration = 0;
 
 		mAutomataLibraryServices = new AutomataLibraryServices(services);
+		
+		mServices = services;
 
 		mPredicateFactory = new HCPredicateFactory(services, mBackendSmtSolverScript, mSymbolTable,
 				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BDD_BASED);
@@ -139,8 +142,7 @@ public class TreeAutomizerCEGAR {
 		mCfgSmtToolkit = new CfgSmtToolkit(new ModifiableGlobalsTable(new HashRelation<>()), mBackendSmtSolverScript,
 				mSymbolTable, mInitialPredicate, Collections.singleton(HornUtilConstants.HORNCLAUSEMETHODNAME));
 		mPredicateUnifier = new PredicateUnifier(services, mBackendSmtSolverScript, mPredicateFactory, mSymbolTable,
-				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BDD_BASED, mInitialPredicate,
-				mFinalPredicate);
+				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BDD_BASED, mInitialPredicate);
 		mHoareTripleChecker =
 				new HCHoareTripleChecker(mPredicateUnifier, mCfgSmtToolkit, mPredicateFactory, mSymbolTable);
 
@@ -159,8 +161,10 @@ public class TreeAutomizerCEGAR {
 
 		mLogger.debug("Abstraction tree automaton before iteration #" + (mIteration + 1));
 		mLogger.debug(mAbstraction);
-		final int mITERATIONS = 3;
-		while (mITERATIONS == -1 || mIteration < mITERATIONS) {
+		final int mITERATIONS = 10;
+		
+		while (mServices.getProgressMonitorService().continueProcessing() 
+				&& (mITERATIONS == -1 || mIteration < mITERATIONS)) {
 			mLogger.debug("Iteration #" + (mIteration + 1));
 			final TreeRun<HornClause, IPredicate> counterExample = isAbstractionCorrect();
 			if (counterExample == null) {
@@ -266,7 +270,7 @@ public class TreeAutomizerCEGAR {
 
 		((TreeAutomatonBU<HornClause, IPredicate>) mInterpolAutomaton).extendAlphabet(mAbstraction.getAlphabet());
 
-		// generalizeCounterExample(mChecker.annotateTreeRunWithInterpolants(interpolantsMapSsaVersioned);
+		generalizeCounterExample(mInterpolAutomaton);
 
 		assert allRulesAreInductive(mInterpolAutomaton);
 	}
@@ -287,18 +291,10 @@ public class TreeAutomizerCEGAR {
 		return true;
 	}
 
-	private void generalizeCounterExample(final ITreeAutomatonBU<HornClause, IPredicate> counterexample,
-			final Map<IPredicate, IPredicate> hcSymbolsToInterpolants) {
+	private void generalizeCounterExample(final ITreeAutomatonBU<HornClause, IPredicate> counterexample) {
 		final Set<TreeAutomatonRule<HornClause, IPredicate>> rules = new HashSet<>();
 		for (final TreeAutomatonRule<HornClause, IPredicate> rule : new CandidateRuleProvider(counterexample,
-				hcSymbolsToInterpolants, mHoareTripleChecker).getCandidateRules()) {
-			// if (mHoareTripleChecker.check(rule.getSource(), rule.getLetter(),
-			// pf) == Validity.VALID) {
-			// mLogger.debug("Adding Rule: " + rule.getLetter() + "(" +
-			// rule.getSource() + ")" + " --> " + pf);
-			// rules.add(new TreeAutomatonRule<HornClause,
-			// IPredicate>(rule.getLetter(), rule.getSource(), pf));
-			// }
+				mHoareTripleChecker).getCandidateRules()) {
 			if (mHoareTripleChecker.check(rule) == Validity.VALID) {
 				mLogger.debug(
 						"Adding Rule: " + rule.getLetter() + "(" + rule.getSource() + ")" + " --> " + rule.getDest());

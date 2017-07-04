@@ -27,15 +27,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.graph;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
-import java.util.TreeSet;
-import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -50,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareT
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HCOutVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HCSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornClause;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
@@ -181,25 +178,45 @@ public class HCHoareTripleChecker {
 	 */
 	private Term substitutePredicateFormula(final IPredicate predicate, final List<IProgramVar> programVars) {
 		int predicateArity = programVars.size();
-		final List<HCOutVar> sortedHCOutVars = sortHCOutVars(predicate.getVars());
-		assert sortedHCOutVars.size() == predicateArity;
+		final Map<Integer, HCOutVar> sortedHCOutVars = sortHCOutVars(predicate);//predicate.getVars());
+//		assert programVars.size() >= predicate.getVars().size();
 
 		final Map<Term, Term> substitution = new HashMap<>();
 		for (int argPos = 0; argPos < predicateArity; argPos++) {
-			substitution.put(
-					sortedHCOutVars.get(argPos).getTermVariable(), 
-					programVars.get(argPos).getDefaultConstant());
+			final HCOutVar predVarAtArgPos = sortedHCOutVars.get(argPos);
+			if (predVarAtArgPos != null) {
+				substitution.put(
+//						sortedHCOutVars.get(argPos).getTermVariable(), 
+						predVarAtArgPos.getTermVariable(), 
+						programVars.get(argPos).getDefaultConstant());
+			}
 		}
-		final Term substitutedFormula = 
+		Term substitutedFormula = 
 				new Substitution(mManagedScript, substitution).transform(predicate.getFormula());
+		
+		substitutedFormula = replaceFreeVarsWithFreshConstants(substitutedFormula);
+		
 		return substitutedFormula;
 	}
 
 
-	private List<HCOutVar> sortHCOutVars(Set<IProgramVar> vars) {
-		TreeSet<HCOutVar> treeSet = new TreeSet<>();
-		treeSet.addAll(vars.stream().map(v -> ((HCOutVar) v)).collect(Collectors.toSet()));
-		return new ArrayList<HCOutVar>(treeSet);
+	private Term replaceFreeVarsWithFreshConstants(Term formula) {
+		final Map<Term, Term> substitution = new HashMap<>();
+		for (TermVariable fv : formula.getFreeVars()) {
+			substitution.put(fv, 
+					SmtUtils.buildNewConstant(mManagedScript.getScript(), fv.getName(), fv.getSort().getName()));
+		}
+		return new Substitution(mManagedScript, substitution).transform(formula);
+	}
+
+
+	private Map<Integer, HCOutVar> sortHCOutVars(IPredicate pred) {
+		Map<Integer, HCOutVar> result = new HashMap<>();
+		for (IProgramVar var : pred.getVars()) {
+			final HCOutVar hcOutVar = (HCOutVar) var;
+			result.put(hcOutVar.getArgumentPos(), hcOutVar);
+		}
+		return result;
 	}
 
 
