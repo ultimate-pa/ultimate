@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IOutgoingTransitionlet;
@@ -149,6 +150,9 @@ class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements IErro
 			final IIcfgSymbolTable symbolTable,
 			final PredicateFactoryForInterpolantAutomata predicateFactoryForAutomaton,
 			final INestedWordAutomaton<LETTER, IPredicate> abstraction, final NestedWord<LETTER> trace) {
+		if (!NestedWordAutomataUtils.isFiniteAutomaton(abstraction)) {
+			throw new IllegalArgumentException("Calls and returns are not yet supported.");
+		}
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mCsTookit = csToolkit;
