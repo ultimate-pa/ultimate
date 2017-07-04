@@ -130,7 +130,7 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 		mErrorLocalizationStatisticsGenerator.continueErrorLocalizationTime();
 		try {
 			if (doNonFlowSensitiveAnalysis) {
-				doNonFlowSensitiveAnalysis(counterexample.getWord(),predicateUnifier.getTruePredicate(), 
+				doNonFlowSensitiveAnalysis(counterexample.getWord(),predicateUnifier.getTruePredicate(),
 						predicateUnifier.getFalsePredicate(), modifiableGlobalsTable, csToolkit);
 			}
 
@@ -312,7 +312,7 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 	/**
 	 * Computes relevance criterion variables (Unsatisfiable core , Golden Frame).
 	 */
-	private static Boolean[] relevanceCriterionVariables(final ERelevanceStatus relevance) {
+	private static boolean[] relevanceCriterionVariables(final ERelevanceStatus relevance) {
 		final boolean relevanceCriterionUC;
 		final boolean relevanceCriterionGF;
 		if (relevance == ERelevanceStatus.InUnsatCore) {
@@ -328,7 +328,7 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 			relevanceCriterionUC = false;
 			relevanceCriterionGF = false;
 		}
-		return new Boolean[] { relevanceCriterionUC, relevanceCriterionGF };
+		return new boolean[] { relevanceCriterionUC, relevanceCriterionGF };
 	}
 
 	private void doNonFlowSensitiveAnalysis(final NestedWord<LETTER> counterexampleWord, final IPredicate truePredicate,
@@ -385,7 +385,7 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 			relevance = computeRelevance(i, action, intersection, wp, null, weakestPreconditionSequence, counterexampleWord, rc,
 					csToolkit);
 
-			final Boolean[] relevanceCriterionVariables = relevanceCriterionVariables(relevance);
+			final boolean[] relevanceCriterionVariables = relevanceCriterionVariables(relevance);
 			final boolean relevanceCriterion1uc = relevanceCriterionVariables[0];
 			final boolean relevanceCriterion1gf = relevanceCriterionVariables[1];
 			{
@@ -570,7 +570,7 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 				final IAction action = counterexampleWord.getSymbolAt(position);
 				final ERelevanceStatus relevance = computeRelevance(position, action, pre, weakestPreconditionRight,
 						weakestPreconditionLeft, null, counterexampleWord, rc, csToolkit);
-				final Boolean[] relevanceCriterionVariables = relevanceCriterionVariables(relevance);
+				final boolean[] relevanceCriterionVariables = relevanceCriterionVariables(relevance);
 				final boolean relevanceCriterion2uc = relevanceCriterionVariables[0];
 				final boolean relevanceCriterion2gf = relevanceCriterionVariables[1];
 				final RelevanceInformation ri = new RelevanceInformation(Collections.singletonList(action),
