@@ -12,6 +12,7 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils,
  de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder,
  de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2 
 Export-Package: de.uni_freiburg.informatik.ultimate.icfgtransformer,
+ de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator,
  de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration,
  de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.ahmed,
  de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.biesenbach,

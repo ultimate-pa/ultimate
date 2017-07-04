@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.icfgtransformer.IcfgTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IcfgTransformerSequence;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.LocalTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.MapEliminationTransformer;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.HeapSepTransFormulaTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.ExampleLoopAccelerationTransformulaTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.ahmed.AhmedLoopAccelerationIcfgTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.biesenbach.LoopDetectionBB;
@@ -172,10 +173,30 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 			return applyRemoveDivMod(icfg, locFac, outlocClass, backtranslationTracker, fac);
 		case MODULO_NEIGHBOR:
 			return applyModuloNeighbor(icfg, locFac, outlocClass, backtranslationTracker, fac, mServices);
+		case HEAP_SEPARATOR:
+			return applyHeapSeparator(icfg, locFac, outlocClass, backtranslationTracker, fac, mServices);
 
 		default:
 			throw new UnsupportedOperationException("Unknown transformation type: " + transformation);
 		}
+	}
+
+	private <INLOC extends IcfgLocation, OUTLOC extends IcfgLocation> 
+		IIcfg<OUTLOC> applyHeapSeparator(
+				IIcfg<INLOC> icfg, ILocationFactory<INLOC, OUTLOC> locFac, // TODO: omit unneeded fields here
+				Class<OUTLOC> outlocClass, IBacktranslationTracker backtranslationTracker, ReplacementVarFactory fac,
+				IUltimateServiceProvider services) {
+		
+		final HeapSepTransFormulaTransformer tftf = 
+				new HeapSepTransFormulaTransformer(icfg.getCfgSmtToolkit(), mServices);
+
+		tftf.preprocessIcfg(icfg);
+		
+		final String newIcfgIdentifier = "IcfgWithHeapSeparation";
+		final IcfgTransformer icfgTransformer = 
+				new IcfgTransformer<>(icfg, null, backtranslationTracker, outlocClass, newIcfgIdentifier, tftf);
+		
+		return icfgTransformer.getResult();
 	}
 
 	private <INLOC extends IcfgLocation, OUTLOC extends IcfgLocation> IIcfg<OUTLOC> applyLoopAccelerationAhmed(

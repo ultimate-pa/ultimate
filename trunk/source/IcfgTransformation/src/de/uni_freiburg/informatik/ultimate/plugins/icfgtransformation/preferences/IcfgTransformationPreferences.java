@@ -76,7 +76,9 @@ public class IcfgTransformationPreferences extends UltimatePreferenceInitializer
 
 		LOOP_ACCELERATION_WERNER,
 
-		LOOP_ACCELERATION_AHMED
+		LOOP_ACCELERATION_AHMED,
+
+		HEAP_SEPARATOR
 
 	}
 

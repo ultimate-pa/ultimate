@@ -392,7 +392,7 @@ public class HeapSepTransFormulaTransformer implements ITransformulaTransformer 
 
 	@Override
 	public IIcfgSymbolTable getNewIcfgSymbolTable() {
-		throw new UnsupportedOperationException("Matthias added this to the interface but did not fix it here");
+		return mNewArrayIdProvider.getNewSymbolTable();
 	}
 
 	@Override
