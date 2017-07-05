@@ -322,7 +322,6 @@
 		<module>../WitnessPrinter</module>
 		<module>../SmtParser</module>
 		<module>../SyntaxChecker</module>
-		<module>../HeapSeparator</module>
 		<module>../TreeAutomizer</module>
 		<module>../UltimateDeltaDebugger</module>
 		<module>../InvariantSynthesis</module>
