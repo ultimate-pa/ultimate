@@ -32,6 +32,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -218,7 +219,6 @@ public class SymbolicMemory {
 	 * @return {@link TransFormula} which summarizes the effects of the path in the loop
 	 */
 	public Term getFormula(final int path, final TransFormula guard) {
-		mLogger.debug("Path: " + path);
 		if (mIteratedSymbolicMemory.isEmpty()) {
 			generateTerms();
 		}
@@ -243,7 +243,10 @@ public class SymbolicMemory {
 		for (final TermVariable freeVar : guard.getFormula().getFreeVars()) {
 			final IProgramVar pv = revInVars.get(freeVar);
 			if (mUpdateTypeMap.get(pv) != UpdateType.UNDEFINED && mUpdateTypeMap.get(pv) != null) {
-				symValueSubMap.put(freeVar, mIteratedSymbolicMemory.get(revInVars.get(freeVar)));
+				symValueSubMap.put(freeVar, mIteratedSymbolicMemory.get(pv));
+			} else if (mUpdateTypeMap.get(pv) != UpdateType.UNDEFINED) {
+				// this variable doesn't get changed during the loop
+				mOutVars.put(pv, mInVars.get(pv));
 			}
 		}
 		final Substitution varSub = new Substitution(mManagedScript, symValueSubMap);
@@ -267,9 +270,7 @@ public class SymbolicMemory {
 				arrayIndex++;
 			}
 		}
-		for (final IProgramVar var : mAssignedVars.get(path)) {
-			conjTerms.add(mManagedScript.getScript().term("=", mOutVars.get(var), mIteratedSymbolicMemory.get(var)));
-		}
+
 		conjTerms.add(cleanReplacedGuard);
 		final Term formulaTerm = Util.and(mManagedScript.getScript(), conjTerms.toArray(new Term[conjTerms.size()]));
 		final Term ex = mCurrentPath > 0
@@ -280,6 +281,34 @@ public class SymbolicMemory {
 				Util.implies(mManagedScript.getScript(), mRangeTerms.get(path), ex));
 		mLogger.debug(allTerm.toStringDirect());
 		return allTerm;
+	}
+
+	public Term getVarUpdateTerm() {
+		final List<Term> terms = new ArrayList<>();
+		for (final Entry<IProgramVar, Term> e : mIteratedSymbolicMemory.entrySet()) {
+
+			terms.add(mManagedScript.getScript().term("=", mOutVars.get(e.getKey()), e.getValue()));
+		}
+
+		if (terms.isEmpty()) {
+			return null;
+		}
+
+		final Map<Term, Term> tau2Kappa = new HashMap<>();
+		mKappa2Tau.forEach((k,v) -> tau2Kappa.put(v, k));
+
+		final Term result = Util.and(mManagedScript.getScript(), terms.toArray(new Term[terms.size()]));
+		return new Substitution(mManagedScript, tau2Kappa).transform(result);
+	}
+
+	public Boolean containsUndefined() {
+		for (final UpdateType ut : mUpdateTypeMap.values()) {
+			if (ut == UpdateType.UNDEFINED) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	/**
@@ -312,7 +341,7 @@ public class SymbolicMemory {
 		final Term kappasAdd = mKappas.size() > 1
 				? mManagedScript.getScript().term("+", mKappas.toArray(new Term[mKappas.size()]))
 				: mKappas.get(0);
-		return mManagedScript.getScript().term("<",
+		return mManagedScript.getScript().term("<=",
 				Rational.ZERO.toTerm(mManagedScript.getScript().sort("Int")), kappasAdd);
 	}
 
@@ -320,7 +349,6 @@ public class SymbolicMemory {
 			final TermVariable[] inVars) {
 		for (final TermVariable iv : inVars) {
 			if (!mReplaceInV.containsKey(iv)) {
-				mLogger.info("adding new InVar: " + iv);
 				final TermVariable cp = mManagedScript.constructFreshCopy(iv);
 				mReplaceInV.put(iv, cp);
 				mInVars.put(symbolTable.getProgramVar(iv), cp);
