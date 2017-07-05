@@ -952,5 +952,14 @@ public final class TransFormulaUtils {
 		}
 		return (new Substitution(mgdScript, substitutionMapping)).transform(tf.getFormula());
 	}
+	
+	
+	public static TransFormula constructHavoc(final TransFormula tf, final ManagedScript mgdScript) {
+		final TransFormulaBuilder tfb = new TransFormulaBuilder(tf.getInVars(), tf.getOutVars(), false,
+				tf.getNonTheoryConsts(), true, null, false);
+		tfb.setFormula(mgdScript.getScript().term("true"));
+		return tfb.finishConstruction(mgdScript);
+
+	}
 
 }
