@@ -190,11 +190,11 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 		final HeapSepTransFormulaTransformer tftf = 
 				new HeapSepTransFormulaTransformer(icfg.getCfgSmtToolkit(), mServices);
 
-		tftf.preprocessIcfg(icfg);
+//		tftf.preprocessIcfg(icfg);
 		
 		final String newIcfgIdentifier = "IcfgWithHeapSeparation";
 		final IcfgTransformer icfgTransformer = 
-				new IcfgTransformer<>(icfg, null, backtranslationTracker, outlocClass, newIcfgIdentifier, tftf);
+				new IcfgTransformer<>(icfg, locFac, backtranslationTracker, outlocClass, newIcfgIdentifier, tftf);
 		
 		return icfgTransformer.getResult();
 	}

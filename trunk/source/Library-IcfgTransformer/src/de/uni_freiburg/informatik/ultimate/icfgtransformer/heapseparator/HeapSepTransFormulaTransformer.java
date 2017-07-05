@@ -40,6 +40,7 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ITransformulaTransformer;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.IcfgTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -88,14 +89,15 @@ public class HeapSepTransFormulaTransformer implements ITransformulaTransformer 
 	
 	private final IIcfgSymbolTable mOldSymbolTable;
 	private IIcfgSymbolTable mNewSymbolTable;
-	private ILogger mLogger;
-	private IUltimateServiceProvider mServices;
+	private final ILogger mLogger;
+	private final IUltimateServiceProvider mServices;
 	private final CfgSmtToolkit mCsToolkit;
 	
 	public HeapSepTransFormulaTransformer(final CfgSmtToolkit csToolkit, IUltimateServiceProvider services) {
 		mMgdScript = csToolkit.getManagedScript();
 		mOldSymbolTable = csToolkit.getSymbolTable();
 		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(IcfgTransformer.class);
 		mCsToolkit = csToolkit;
 	}
 
@@ -169,6 +171,10 @@ public class HeapSepTransFormulaTransformer implements ITransformulaTransformer 
 	 *   old: mem[p:=i][q]
 	 *   new: mem2[q]
 	 *   
+	 *   alternative new: mem2[p:=i][q]
+	 *     --> the store does not hurt us here, as we're not accessing at q anyway.. 
+	 *        (but the above is better, of course, and we may only omit the store for (must) non-aliasing pointers ..)
+	 *   
 	 * @param tf
 	 * @param newInVars
 	 * @param newOutVars
@@ -206,22 +212,26 @@ public class HeapSepTransFormulaTransformer implements ITransformulaTransformer 
 
 			updateMappingsForSubstitution(oldArray, newArray, newInVars, newOutVars, substitutionMapPvoc, tf);
 		}
+		intermediateFormula = new Substitution(mMgdScript, substitutionMapPvoc).transform(intermediateFormula);	
 
-//		final List<MultiDimensionalStore> mdStores = 
-//				MultiDimensionalStore.extractArrayStoresShallow(intermediateFormula);
-//		final List<MultiDimensionalStore> mdStoresInOriginalTf = 
-//				MultiDimensionalStore.extractArrayStoresShallow(tf.getFormula());
-//		for (MultiDimensionalStore mds : mdStores) {
-//			if (!mdStoresInOriginalTf.contains(mds)) {
-//				// the current mds comes from a replacement we made earlier (during ArrayUpdate or ArrayEquality-handling)
-//				continue;
-//			}
-//			if (!mVpDomain.getPreAnalysis().isArrayTracked(
-//					getInnerMostArray(mds.getArray()),
-//					VPDomainHelpers.computeProgramVarMappingFromTransFormula(tf))) {
-//				continue;
-//			}
-//
+		final Map<Term, Term> substitutionMapPvoc2 = new HashMap<>();
+		final List<MultiDimensionalStore> mdStores = 
+				MultiDimensionalStore.extractArrayStoresShallow(intermediateFormula);
+		final List<MultiDimensionalStore> mdStoresInOriginalTf = 
+				MultiDimensionalStore.extractArrayStoresShallow(tf.getFormula());
+		for (MultiDimensionalStore mds : mdStores) {
+			if (!mdStoresInOriginalTf.contains(mds)) {
+				// the current mds comes from a replacement we made earlier (during ArrayUpdate or ArrayEquality-handling)
+				continue;
+			}
+			if (!mVpDomain.getPreAnalysis().isArrayTracked(
+					getInnerMostArray(mds.getArray()),
+					VPDomainHelpers.computeProgramVarMappingFromTransFormula(tf))) {
+				continue;
+			}
+			
+			assert false : "TODO"; // TODO
+
 //			final Term oldArray = VPDomainHelpers.normalizeTerm(getInnerMostArray(mds.getArray()), tf, mScript);
 //
 //			final List<Term> pointers = mds.getIndex().stream()
@@ -230,9 +240,9 @@ public class HeapSepTransFormulaTransformer implements ITransformulaTransformer 
 //					
 //			final Term newArray = mNewArrayIdProvider.getNewArrayId(oldArray, pointers);
 //
-//			updateMappingsForSubstitution(oldArray, newArray, newInVars, newOutVars, substitutionMapPvoc);
-//		}
-		intermediateFormula = new Substitution(mMgdScript, substitutionMapPvoc).transform(intermediateFormula);	
+//			updateMappingsForSubstitution(oldArray, newArray, newInVars, newOutVars, substitutionMapPvoc2);
+		}
+		intermediateFormula = new Substitution(mMgdScript, substitutionMapPvoc2).transform(intermediateFormula);	
 		return intermediateFormula;
 	}
 
@@ -521,9 +531,14 @@ public class HeapSepTransFormulaTransformer implements ITransformulaTransformer 
 			
 			TermVariable versionedOutTvNew = newOutVars.get(newArray);
 			if (versionedOutTvNew == null) {
-				versionedOutTvNew = mMgdScript.constructFreshCopy((TermVariable) newArrayTerm);
-				newInVars.remove(oldArray);
-				newInVars.put((IProgramVar) newArray, versionedOutTvNew);
+				if (tf.getAssignedVars().contains(oldArray)) {
+					versionedOutTvNew = mMgdScript.constructFreshCopy((TermVariable) newArrayTerm);
+				} else {
+					versionedOutTvNew = newInVars.get(newArray);
+					assert versionedOutTvNew != null;
+				}
+				newOutVars.remove(oldArray);
+				newOutVars.put((IProgramVar) newArray, versionedOutTvNew);
 			}
 			TermVariable versionedOutTvOld = tf.getOutVars().get(oldArray);
 			substitutionMap.put(versionedOutTvOld, versionedOutTvNew);
@@ -623,7 +638,8 @@ public class HeapSepTransFormulaTransformer implements ITransformulaTransformer 
 	@Override
 	public TransforumlaTransformationResult transform(final UnmodifiableTransFormula tf) {
 		/*
-		 * The question if the HeapSeparator computes an overapproximation is a bit more complicated:
+		 * The question if the HeapSeparator computes an overapproximation ("true" flag we give below) is a bit more 
+		 * complicated:
 		 *  <li> we introduce fresh program variables, so strictly speaking the transformed program's behaviour is 
 		 *    incomparable to the input program's
 		 *  <li> if we view the TransFormula just by itself, and restrict ourselves to the unchanged program variables,
