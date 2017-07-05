@@ -954,12 +954,12 @@ public final class TransFormulaUtils {
 	}
 	
 	
-	public static TransFormula constructHavoc(final TransFormula tf, final ManagedScript mgdScript) {
+	public static UnmodifiableTransFormula constructHavoc(final TransFormula tf, final ManagedScript mgdScript) {
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(tf.getInVars(), tf.getOutVars(), false,
 				tf.getNonTheoryConsts(), true, null, false);
 		tfb.setFormula(mgdScript.getScript().term("true"));
+		tfb.setInfeasibility(Infeasibility.UNPROVEABLE);
 		return tfb.finishConstruction(mgdScript);
-
 	}
 
 }
