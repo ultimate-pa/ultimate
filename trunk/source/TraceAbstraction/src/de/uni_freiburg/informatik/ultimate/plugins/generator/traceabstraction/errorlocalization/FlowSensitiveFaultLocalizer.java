@@ -378,7 +378,7 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 			final IPredicate wp = weakestPreconditionSequence.getPredicate(i + 1);
 			final IPredicate pre = mPredicateFactory.not(weakestPreconditionSequence.getPredicate(i));
 			final IPredicate sp = strongestPostconditionSequence.getPredicate(i);
-			final IPredicate intersection = mPredicateFactory.and(pre,sp);
+			final IPredicate intersection = mPredicateFactory.and(SimplificationTechnique.SIMPLIFY_QUICK, pre,sp);
 
 			// Figure out what is the type of the statement (internal, call or Return)
 			final ERelevanceStatus relevance;
