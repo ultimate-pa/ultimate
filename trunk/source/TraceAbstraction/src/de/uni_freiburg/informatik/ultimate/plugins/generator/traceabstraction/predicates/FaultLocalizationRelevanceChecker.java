@@ -29,12 +29,15 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.p
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.BasicInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.HoareTripleCheckerStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 
 /**
@@ -45,6 +48,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
 public class FaultLocalizationRelevanceChecker {
+	
+	public final boolean mUseUnsatCores = false;
 	/**
 	 * Statement relevance information for fault localization.
 	 * 
@@ -109,17 +114,60 @@ public class FaultLocalizationRelevanceChecker {
 	}
 	
 	private final FaultLocalizationHoareTripleChecker mHoareTripleChecker;
+	private final ManagedScript mManagedScript;
 	
 	public FaultLocalizationRelevanceChecker(final CfgSmtToolkit csToolkit) {
-		mHoareTripleChecker = new FaultLocalizationHoareTripleChecker(
-				csToolkit);
+		mHoareTripleChecker = new FaultLocalizationHoareTripleChecker(csToolkit);
+		mManagedScript = csToolkit.getManagedScript();
 	}
 	
 	public ERelevanceStatus relevanceInternal(final IPredicate pre,
 			final IInternalAction act, final IPredicate post) {
-		final Validity val = mHoareTripleChecker.checkInternal(pre, act, post);
-		final ERelevanceStatus result = getResult(val, mHoareTripleChecker);
-		mHoareTripleChecker.clearAssertionStack();
+		
+		final ERelevanceStatus result;
+		if (mUseUnsatCores) {
+			final Validity val = mHoareTripleChecker.checkInternal(pre, act, post);
+			result = getResult(val, mHoareTripleChecker);
+			mHoareTripleChecker.clearAssertionStack();
+		} else {
+			result = computeRelevancyInternalWithoutUnsatCores(pre, act, post);
+		}
+		return result;
+	}
+
+	private ERelevanceStatus computeRelevancyInternalWithoutUnsatCores(final IPredicate pre, final IInternalAction act,
+			final IPredicate post) {
+		final ERelevanceStatus result;
+		final Validity havocRes = mHoareTripleChecker.checkInternal(pre, constructHavocedInternalAction(act, mManagedScript), post);
+		switch (havocRes) {
+		case INVALID: {
+			final Validity nomalRes = mHoareTripleChecker.checkInternal(pre, act, post);
+			switch (nomalRes) {
+			case INVALID:
+				result = ERelevanceStatus.Sat;
+				break;
+			case NOT_CHECKED:
+			case UNKNOWN:
+				result = ERelevanceStatus.unknown;
+				break;
+			case VALID:
+				result = ERelevanceStatus.InUnsatCore;
+				break;
+			default:
+				throw new AssertionError();
+			}
+			break;
+		}
+		case NOT_CHECKED:
+		case UNKNOWN:
+			result = ERelevanceStatus.unknown;
+			break;
+		case VALID:
+			result = ERelevanceStatus.NotInUnsatCore;
+			break;
+		default:
+			throw new AssertionError();
+		}
 		return result;
 	}
 	
@@ -176,5 +224,11 @@ public class FaultLocalizationRelevanceChecker {
 	
 	public HoareTripleCheckerStatisticsGenerator getHoareTripleCheckerStatistics() {
 		return mHoareTripleChecker.getEdgeCheckerBenchmark();
+	}
+	
+	public static IInternalAction constructHavocedInternalAction(final IInternalAction act,
+			final ManagedScript mgdScript) {
+		return new BasicInternalAction(act.getPrecedingProcedure(), act.getSucceedingProcedure(),
+				TransFormulaUtils.constructHavoc(act.getTransformula(), mgdScript));
 	}
 }
