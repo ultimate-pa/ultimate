@@ -88,6 +88,7 @@ public class ErrorGeneralizationEngine<LETTER extends IIcfgTransition<?>> implem
 	protected final ILogger mLogger;
 
 	private final ErrorTraceContainer<LETTER> mErrorTraces;
+	private final List<Collection<LETTER>> mRelevantStatements;
 	private final ErrorAutomatonStatisticsGenerator mErrorAutomatonStatisticsGenerator;
 	private IErrorAutomatonBuilder<LETTER> mErrorAutomatonBuilder;
 	private int mLastIteration = -1;
@@ -101,6 +102,7 @@ public class ErrorGeneralizationEngine<LETTER extends IIcfgTransition<?>> implem
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mErrorAutomatonStatisticsGenerator = new ErrorAutomatonStatisticsGenerator();
 		mErrorTraces = new ErrorTraceContainer<>();
+		mRelevantStatements = new ArrayList<>();
 	}
 
 	@Override
@@ -301,7 +303,8 @@ public class ErrorGeneralizationEngine<LETTER extends IIcfgTransition<?>> implem
 		}
 
 		// apply fault localization to all error traces
-		faultLocalization(cfg, csToolkit, predicateFactory, predicateUnifier, simplificationTechnique,
+		// TODO currently this is done in BasicCegarLoop after each error automaton construction due to timeout problems
+		aggregateFaultLocalization(cfg, csToolkit, predicateFactory, predicateUnifier, simplificationTechnique,
 				xnfConversionTechnique, symbolTable);
 
 		// TODO 2017-06-18 Christian: Currently we want to run the CEGAR loop until the abstraction is empty.
@@ -309,29 +312,58 @@ public class ErrorGeneralizationEngine<LETTER extends IIcfgTransition<?>> implem
 	}
 
 	@SuppressWarnings("unchecked")
-	private void faultLocalization(final INestedWordAutomaton<LETTER, IPredicate> cfg, final CfgSmtToolkit csToolkit,
-			final PredicateFactory predicateFactory, final IPredicateUnifier predicateUnifier,
-			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
-			final IIcfgSymbolTable symbolTable) {
+	private void aggregateFaultLocalization(final INestedWordAutomaton<LETTER, IPredicate> cfg,
+			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
+			final IPredicateUnifier predicateUnifier, final SimplificationTechnique simplificationTechnique,
+			final XnfConversionTechnique xnfConversionTechnique, final IIcfgSymbolTable symbolTable) {
 		final Map<IcfgLocation, Set<LETTER>> finalLoc2responsibleStmts = new HashMap<>();
 		final List<ErrorLocalizationStatisticsGenerator> faultLocalizerStatistics = new ArrayList<>();
+		final Iterator<Collection<LETTER>> relevantStatementsIt = mRelevantStatements.iterator();
 		for (final ErrorTrace<LETTER> errorTraceWrapper : mErrorTraces) {
 			final NestedRun<LETTER, IPredicate> trace = (NestedRun<LETTER, IPredicate>) errorTraceWrapper.getTrace();
-
-			// fault localization of single trace
-			final FlowSensitiveFaultLocalizer<LETTER> faultLocalizer = new FlowSensitiveFaultLocalizer<>(trace, cfg,
-					mServices, csToolkit, predicateFactory, csToolkit.getModifiableGlobalsTable(), predicateUnifier,
-					true, false, simplificationTechnique, xnfConversionTechnique, symbolTable);
-			final List<IRelevanceInformation> relevanceInformation = faultLocalizer.getRelevanceInformation();
-			faultLocalizerStatistics.add(faultLocalizer.getStatistics());
+			if (! relevantStatementsIt.hasNext()) {
+				break;
+			}
 
 			final Collection<LETTER> newResponsibleStmts =
-					findResponsibleStatements(relevanceInformation, trace.getWord());
+					// TODO changed this, computed in BasicCegarLoop
+//					faultLocalization(cfg, csToolkit, predicateFactory, predicateUnifier, simplificationTechnique,
+//							xnfConversionTechnique, symbolTable, faultLocalizerStatistics, trace);
+					relevantStatementsIt.next();
 
 			aggregate(newResponsibleStmts, finalLoc2responsibleStmts, trace.getStateSequence());
 		}
 
 		presentResult(finalLoc2responsibleStmts, cfg, faultLocalizerStatistics);
+	}
+
+	public void faultLocalizationWithStorage(final INestedWordAutomaton<LETTER, IPredicate> cfg,
+			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
+			final IPredicateUnifier predicateUnifier, final SimplificationTechnique simplificationTechnique,
+			final XnfConversionTechnique xnfConversionTechnique, final IIcfgSymbolTable symbolTable,
+			final List<ErrorLocalizationStatisticsGenerator> faultLocalizerStatistics,
+			final NestedRun<LETTER, IPredicate> trace) {
+		mRelevantStatements.add(faultLocalization(cfg, csToolkit, predicateFactory, predicateUnifier,
+				simplificationTechnique, xnfConversionTechnique, symbolTable, faultLocalizerStatistics, trace));
+	}
+
+	/**
+	 * Fault localization of single trace.
+	 */
+	private Collection<LETTER> faultLocalization(final INestedWordAutomaton<LETTER, IPredicate> cfg,
+			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
+			final IPredicateUnifier predicateUnifier, final SimplificationTechnique simplificationTechnique,
+			final XnfConversionTechnique xnfConversionTechnique, final IIcfgSymbolTable symbolTable,
+			final List<ErrorLocalizationStatisticsGenerator> faultLocalizerStatistics,
+			final NestedRun<LETTER, IPredicate> trace) {
+		final FlowSensitiveFaultLocalizer<LETTER> faultLocalizer = new FlowSensitiveFaultLocalizer<>(trace, cfg,
+				mServices, csToolkit, predicateFactory, csToolkit.getModifiableGlobalsTable(), predicateUnifier, true,
+				false, simplificationTechnique, xnfConversionTechnique, symbolTable);
+		final List<IRelevanceInformation> relevanceInformation = faultLocalizer.getRelevanceInformation();
+		if (faultLocalizerStatistics != null) {
+			faultLocalizerStatistics.add(faultLocalizer.getStatistics());
+		}
+		return findResponsibleStatements(relevanceInformation, trace.getWord());
 	}
 
 	private Collection<LETTER> findResponsibleStatements(final List<IRelevanceInformation> relevanceInformation,
