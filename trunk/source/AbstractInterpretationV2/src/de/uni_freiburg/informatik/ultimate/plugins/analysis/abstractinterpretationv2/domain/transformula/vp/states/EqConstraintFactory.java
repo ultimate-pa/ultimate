@@ -264,7 +264,21 @@ public class EqConstraintFactory<
 		
 		
 		final Set<NODE> chosenNodes = new HashSet<>();
-//		chosenNodes.addAll(newConstraintWithPropagations.getAllNodes()); // TODO: chose by correct sort
+
+//		chosenNodes.addAll(newConstraintWithPropagations.getAllNodes());  --> too expensive
+		
+		// choose the nodes that we know something about
+
+//		for (Entry<NODE, NODE> eeq : newConstraintWithPropagations.getSupportingElementEqualities()) { --> too expensive
+//			chosenNodes.add(eeq.getKey());
+//			chosenNodes.add(eeq.getValue());
+//		}
+		
+//		for (VPDomainSymmetricPair<NODE> deq : newConstraintWithPropagations.getAllElementEqualities()) {--> too expensive
+//			chosenNodes.add(deq.getFirst());
+//			chosenNodes.add(deq.getSecond());
+//		}
+		
 		// also choose some subterms
 		final Set<NODE> allFunctionNodes = newConstraintWithPropagations.getAllNodes().stream()
 			.filter(node -> node.isFunction()).collect(Collectors.toSet());
