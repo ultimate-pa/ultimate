@@ -6,6 +6,7 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSort;
 
 public class EqFunction implements IEqFunctionIdentifier<EqNode, EqFunction> {
 	
@@ -27,29 +28,9 @@ public class EqFunction implements IEqFunctionIdentifier<EqNode, EqFunction> {
 		mTerm = term;
 		mFactory = factory;
 		assert mTerm.getSort().isArraySort();
-		mArity = mTerm.getSort().getArguments().length - 1;
+//		mArity = mTerm.getSort().getArguments().length - 1;
+		mArity = new MultiDimensionalSort(mTerm.getSort()).getDimension();
 	}
-
-	@Deprecated
-	public EqFunction(IProgramVarOrConst pvoc, EqNodeAndFunctionFactory factory) {
-		mPvoc = pvoc;
-		mTerm = pvoc.getTerm();
-		mIsVersioned = false;
-		mFactory = factory;
-		assert mTerm.getSort().isArraySort();
-		mArity = mTerm.getSort().getArguments().length - 1;
-	}
-	
-	@Deprecated
-	public EqFunction(IProgramVarOrConst pvoc, Term term, EqNodeAndFunctionFactory factory) {
-		mPvoc = pvoc;
-		mTerm = term;
-		mIsVersioned = true;
-		mFactory = factory;
-		assert mTerm.getSort().isArraySort();
-		mArity = mTerm.getSort().getArguments().length - 1;
-	}
-
 
 	public boolean isGlobal() {
 		return mPvoc.isGlobal();

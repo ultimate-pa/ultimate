@@ -264,30 +264,57 @@ public class EqConstraintFactory<
 		
 		
 		final Set<NODE> chosenNodes = new HashSet<>();
-		chosenNodes.addAll(newConstraintWithPropagations.getAllNodes()); // TODO: chose by correct sort
+//		chosenNodes.addAll(newConstraintWithPropagations.getAllNodes()); // TODO: chose by correct sort
 		// also choose some subterms
-		chosenNodes.addAll(newConstraintWithPropagations.getAllNodes().stream()
-			.filter(node -> node.isFunction())
-			.map(node -> node.getArgs().get(0)).collect(Collectors.toSet())); // TODO deal with multidim arrays
-		chosenNodes.addAll(newConstraintWithPropagations.getAllFunctions().stream()
-			.filter(f -> f.isStore())
-			.map(f -> f.getStoreIndices().get(0)).collect(Collectors.toSet())); // TODO deal with multidim arrays
+		final Set<NODE> allFunctionNodes = newConstraintWithPropagations.getAllNodes().stream()
+			.filter(node -> node.isFunction()).collect(Collectors.toSet());
+		allFunctionNodes.forEach(fnode -> chosenNodes.addAll(fnode.getArgs()));
+		final Set<FUNCTION> allStoreFunctions = newConstraintWithPropagations.getAllFunctions().stream()
+			.filter(func -> func.isStore()).collect(Collectors.toSet());
+		allStoreFunctions.forEach(sfunc -> chosenNodes.addAll(sfunc.getStoreIndices()));
 
+//		chosenNodes.addAll(newConstraintWithPropagations.getAllNodes().stream()
+//			.filter(node -> node.isFunction())
+//			.map(node -> node.getArgs().get(0)).collect(Collectors.toSet())); // TOD deal with multidim arrays
+//		chosenNodes.addAll(newConstraintWithPropagations.getAllFunctions().stream()
+//			.filter(f -> f.isStore())
+//			.map(f -> f.getStoreIndices().get(0)).collect(Collectors.toSet())); // TOD deal with multidim arrays
+		
+		assert func1.getArity() == func2.getArity();
+		
 		
 		/*
-		 * for each node t (that we chose before), we add the equality "func1(t) = func2(t)"
+		 * for each index t1 .. tn (that we chose before), we add the equality "func1(t1, ..., tn) = func2(1, ..., tn)"
+		 //* right now we are using the cross product of the chosen nodes here --> this might be expensive.. TODO
 		 */
+
+		final List<Set<NODE>> dimensionTimesChosenNodes = new ArrayList<>();
+		for (int i = 0; i < func1.getArity(); i++) {
+			dimensionTimesChosenNodes.add(chosenNodes);
+		}
+		final Set<List<NODE>> chosenIndices = 
+				VPDomainHelpers.computeCrossProduct(dimensionTimesChosenNodes, mPreanalysis.getServices());
+		
+		
 		final ManagedScript mgdScript = mEqNodeAndFunctionFactory.getScript();
 		mgdScript.lock(this);
-		for (NODE cn : chosenNodes) {
+		for (List<NODE> cn : chosenIndices) {
 			if (!mPreanalysis.getServices().getProgressMonitorService().continueProcessing()) {
 				mgdScript.unlock(this);
 				return newConstraintWithPropagations;
 			}
 			
-			final Term func1AtIndexTerm = mgdScript.term(this, "select", func1.getTerm(), cn.getTerm());
+			assert cn.size() == func1.getArity();
+			
+			List<Term> cnTermList = cn.stream().map(n -> n.getTerm()).collect(Collectors.toList());
+			
+//			final Term func1AtIndexTerm = mgdScript.term(this, "select", func1.getTerm(), cn.getTerm());
+			final Term func1AtIndexTerm = SmtUtils.multiDimensionalSelect(mgdScript.getScript(), 
+					func1.getTerm(), new ArrayIndex(cnTermList));
 			final NODE func1AtIndex = (NODE) mEqNodeAndFunctionFactory.getOrConstructEqNode(func1AtIndexTerm);
-			final Term func2AtIndexTerm = mgdScript.term(this, "select", func2.getTerm(), cn.getTerm());
+//			final Term func2AtIndexTerm = mgdScript.term(this, "select", func2.getTerm(), cn.getTerm());
+			final Term func2AtIndexTerm = SmtUtils.multiDimensionalSelect(mgdScript.getScript(), 
+					func2.getTerm(), new ArrayIndex(cnTermList));
 			final NODE func2AtIndex = (NODE) mEqNodeAndFunctionFactory.getOrConstructEqNode(func2AtIndexTerm);
 			newConstraintWithPropagations = addEqualityFlat(func1AtIndex, func2AtIndex, newConstraintWithPropagations);
 		}
@@ -696,7 +723,7 @@ public class EqConstraintFactory<
 			return orig;
 		}
 
-		assert currentFunction.getStoreIndices().size() == 1 : "TODO: deal with multidimensional case";
+//		assert currentFunction.getStoreIndices().size() == 1 : "TODO: deal with multidimensional case";
 		
 		EqConstraint<ACTION, NODE, FUNCTION> newConstraint;
 		if (isIndexDifferentFromAllIndices(currentFunction.getStoreIndices(), storeIndicesOverwrittenSoFar, orig)) {
@@ -706,10 +733,14 @@ public class EqConstraintFactory<
 			 */
 			final ManagedScript mgdScript = mEqNodeAndFunctionFactory.getScript();
 			mgdScript.lock(this);
-			Term selectTerm = mgdScript.term(this, 
-					"select", 
-					overAllStore.getTerm(), 
-					currentFunction.getStoreIndices().iterator().next().getTerm());
+//			Term selectTerm = mgdScript.term(this, 
+//					"select", 
+//					overAllStore.getTerm(), 
+//					currentFunction.getStoreIndices().iterator().next().getTerm());
+			final ArrayIndex index = new ArrayIndex(currentFunction.getStoreIndices().stream()
+					.map(node -> node.getTerm())
+					.collect(Collectors.toList()));
+			Term selectTerm = SmtUtils.multiDimensionalSelect(mgdScript.getScript(), overAllStore.getTerm(), index);
 			mgdScript.unlock(this);
 
 			final NODE selectIdxNode = (NODE) mEqNodeAndFunctionFactory.getOrConstructEqNode(selectTerm);
@@ -773,7 +804,7 @@ public class EqConstraintFactory<
 		
 		EqConstraint<ACTION, NODE, FUNCTION> newConstraint = inputConstraint;
 
-		assert func.getStoreIndices().size() == 1 : "TODO: deal with multidimensional case";
+//		assert func.getStoreIndices().size() == 1 : "TODO: deal with multidimensional case";
 
 		for (List<NODE> indexUnequalToAllStoreIndices : 
 				getIndicesThatAreUnequalToAllStoreIndices(func, inputConstraint)) {
