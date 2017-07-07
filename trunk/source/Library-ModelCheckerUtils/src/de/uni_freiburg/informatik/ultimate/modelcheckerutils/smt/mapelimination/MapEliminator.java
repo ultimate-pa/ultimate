@@ -30,10 +30,10 @@ import static de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transiti
 import static de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormulaUtils.translateTermVariablesToDefinitions;
 import static de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.mapelimination.MapEliminatorUtils.addReplacementVar;
 import static de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.mapelimination.MapEliminatorUtils.getAndAddAuxVar;
-import static de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.mapelimination.MapEliminatorUtils.getInVarTerm;
-import static de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.mapelimination.MapEliminatorUtils.getOutVarTerm;
 import static de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.mapelimination.MapEliminatorUtils.getInVarIndex;
+import static de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.mapelimination.MapEliminatorUtils.getInVarTerm;
 import static de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.mapelimination.MapEliminatorUtils.getOutVarIndex;
+import static de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.mapelimination.MapEliminatorUtils.getOutVarTerm;
 import static de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.mapelimination.MapEliminatorUtils.getReplacementVar;
 
 import java.util.ArrayList;

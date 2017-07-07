@@ -34,7 +34,6 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -44,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.ReplacementVarFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
@@ -54,10 +54,10 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
- * Analyze for a given {@link ModifiableTransFormula} and mapping from arrays to their indices which pairs of index entries are
- * equal or distinct. The analysis can benefit from additional invariants that hold before this {@link ModifiableTransFormula}
- * and from from additional invariants that hold after this {@link ModifiableTransFormula}. the additional invariants are each
- * given as EqualityAnalysisResult.
+ * Analyze for a given {@link ModifiableTransFormula} and mapping from arrays to their indices which pairs of index
+ * entries are equal or distinct. The analysis can benefit from additional invariants that hold before this
+ * {@link ModifiableTransFormula} and from from additional invariants that hold after this
+ * {@link ModifiableTransFormula}. the additional invariants are each given as EqualityAnalysisResult.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
@@ -82,12 +82,10 @@ public class IndexAnalyzer {
 
 	private final boolean mUseArrayIndexSupportingInvariants = true;
 
-	public IndexAnalyzer(final Term term, final Set<Doubleton<Term>> doubletons,
-			final IIcfgSymbolTable symbolTable, final ModifiableTransFormula tf,
-			final EqualityAnalysisResult invariantEqualitiesBefore,
+	public IndexAnalyzer(final Term term, final Set<Doubleton<Term>> doubletons, final IIcfgSymbolTable symbolTable,
+			final ModifiableTransFormula tf, final EqualityAnalysisResult invariantEqualitiesBefore,
 			final EqualityAnalysisResult invariantEqualitiesAfter, final ILogger logger,
-			final ReplacementVarFactory replacementVarFactory,
-			final ManagedScript mgdScript) {
+			final ReplacementVarFactory replacementVarFactory, final ManagedScript mgdScript) {
 		super();
 		mLogger = logger;
 		mTerm = term;
@@ -102,24 +100,32 @@ public class IndexAnalyzer {
 
 		Term termWithAdditionalInvariants;
 		if (mUseArrayIndexSupportingInvariants) {
-			final Term equalitiesOriginal = SmtUtils.and(mScript,
-					mInvariantEqualitiesBefore.constructListOfEqualities(mScript));
-			final Term notequalsOriginal = SmtUtils.and(mScript,
-					mInvariantEqualitiesBefore.constructListOfNotEquals(mScript));
-			final Term equalitiesRenamed = ModifiableTransFormulaUtils.translateTermVariablesToInVars(mScript, mTransFormula,
-					equalitiesOriginal, mSymbolTable, mRepvarFactory);
-			final Term notequalsRenamed = ModifiableTransFormulaUtils.translateTermVariablesToInVars(mScript, mTransFormula,
-					notequalsOriginal, mSymbolTable, mRepvarFactory);
+			final Term equalitiesOriginal =
+					SmtUtils.and(mScript, mInvariantEqualitiesBefore.constructListOfEqualities(mScript));
+			final Term notequalsOriginal =
+					SmtUtils.and(mScript, mInvariantEqualitiesBefore.constructListOfNotEquals(mScript));
+			final Term equalitiesRenamed = ModifiableTransFormulaUtils.translateTermVariablesToInVars(mScript,
+					mTransFormula, equalitiesOriginal, mSymbolTable, mRepvarFactory);
+			final Term notequalsRenamed = ModifiableTransFormulaUtils.translateTermVariablesToInVars(mScript,
+					mTransFormula, notequalsOriginal, mSymbolTable, mRepvarFactory);
 			termWithAdditionalInvariants = Util.and(mScript, mTerm, equalitiesRenamed, notequalsRenamed);
 		} else {
 			termWithAdditionalInvariants = mTerm;
 		}
 
 		processDoubletonsWithOwnAnalysis(remainingDoubletons, termWithAdditionalInvariants);
-		mLogger.info(mEqualDoubletons.size() + " equalDoubletons");
-		mLogger.info(mDistinctDoubletons.size() + " distinctDoubletons");
-		mLogger.info(mUnknownDoubletons.size() + " unknownDoubletons");
-		mLogger.info(mIgnoredDoubletons.size() + " ignoredDoubletons");
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("Indices for " + tf.getFormula());
+			if (!mEqualDoubletons.isEmpty() || !mDistinctDoubletons.isEmpty() || !mUnknownDoubletons.isEmpty()
+					|| !mIgnoredDoubletons.isEmpty()) {
+				mLogger.debug(mEqualDoubletons.size() + " equalDoubletons");
+				mLogger.debug(mDistinctDoubletons.size() + " distinctDoubletons");
+				mLogger.debug(mUnknownDoubletons.size() + " unknownDoubletons");
+				mLogger.debug(mIgnoredDoubletons.size() + " ignoredDoubletons");
+			} else {
+				mLogger.debug("No Doubletons");
+			}
+		}
 	}
 
 	// TODO: This constructor is only used by the old map-elimination!
@@ -127,8 +133,7 @@ public class IndexAnalyzer {
 			final IIcfgSymbolTable boogie2SmtSymbolTable, final ModifiableTransFormula tf,
 			final EqualityAnalysisResult invariantEqualitiesBefore,
 			final EqualityAnalysisResult invariantEqualitiesAfter, final ILogger logger,
-			final ReplacementVarFactory replacementVarFactory,
-			final ManagedScript mgdScript) {
+			final ReplacementVarFactory replacementVarFactory, final ManagedScript mgdScript) {
 		this(formula, extractDoubletons(arrays2Indices), boogie2SmtSymbolTable, tf, invariantEqualitiesBefore,
 				invariantEqualitiesAfter, logger, replacementVarFactory, mgdScript);
 	}
@@ -179,19 +184,19 @@ public class IndexAnalyzer {
 	}
 
 	private boolean isInVarDoubleton(final Doubleton<Term> doubleton) {
-		final boolean fstIndexIsInvarIndex = ModifiableTransFormulaUtils.allVariablesAreInVars(doubleton.getOneElement(),
-				mTransFormula);
-		final boolean sndIndexIsInvarIndex = ModifiableTransFormulaUtils.allVariablesAreInVars(doubleton.getOtherElement(),
-				mTransFormula);
+		final boolean fstIndexIsInvarIndex =
+				ModifiableTransFormulaUtils.allVariablesAreInVars(doubleton.getOneElement(), mTransFormula);
+		final boolean sndIndexIsInvarIndex =
+				ModifiableTransFormulaUtils.allVariablesAreInVars(doubleton.getOtherElement(), mTransFormula);
 		final boolean isInvarPair = fstIndexIsInvarIndex && sndIndexIsInvarIndex;
 		return isInvarPair;
 	}
 
 	private boolean isOutVarDoubleton(final Doubleton<Term> doubleton) {
-		final boolean fstIndexIsOutvarIndex = ModifiableTransFormulaUtils.allVariablesAreOutVars(doubleton.getOneElement(),
-				mTransFormula);
-		final boolean sndIndexIsOutvarIndex = ModifiableTransFormulaUtils.allVariablesAreOutVars(doubleton.getOtherElement(),
-				mTransFormula);
+		final boolean fstIndexIsOutvarIndex =
+				ModifiableTransFormulaUtils.allVariablesAreOutVars(doubleton.getOneElement(), mTransFormula);
+		final boolean sndIndexIsOutvarIndex =
+				ModifiableTransFormulaUtils.allVariablesAreOutVars(doubleton.getOtherElement(), mTransFormula);
 		final boolean isOutvarPair = fstIndexIsOutvarIndex && sndIndexIsOutvarIndex;
 		return isOutvarPair;
 	}
@@ -207,7 +212,7 @@ public class IndexAnalyzer {
 					final ArrayIndex sndIndex = testArr[j];
 					assert fstIndex.size() == sndIndex.size() : "incompatible size";
 					for (int k = 0; k < fstIndex.size(); k++) {
-						result.add(new Doubleton<Term>(fstIndex.get(k), sndIndex.get(k)));
+						result.add(new Doubleton<>(fstIndex.get(k), sndIndex.get(k)));
 					}
 				}
 			}
@@ -284,19 +289,19 @@ public class IndexAnalyzer {
 		final Set<TermVariable> freeVarsInDoubleton = new HashSet();
 		freeVarsInDoubleton.addAll(Arrays.asList(doubleton.getOneElement().getFreeVars()));
 		freeVarsInDoubleton.addAll(Arrays.asList(doubleton.getOtherElement().getFreeVars()));
-		final Set<TermVariable> freeVarsInFormula = new HashSet(
-				Arrays.asList(termWithAdditionalInvariants.getFreeVars()));
+		final Set<TermVariable> freeVarsInFormula =
+				new HashSet(Arrays.asList(termWithAdditionalInvariants.getFreeVars()));
 		return freeVarsInFormula.containsAll(freeVarsInDoubleton);
 	}
 
 	private Doubleton<Term> constructDefiningDoubleton(final Doubleton<Term> inVarDoubleton) {
 		final Term oneElement = inVarDoubleton.getOneElement();
 		final Term otherElement = inVarDoubleton.getOtherElement();
-		final Term translatedOne = ModifiableTransFormulaUtils.translateTermVariablesToDefinitions(mScript, mTransFormula,
-				oneElement);
-		final Term translatedOther = ModifiableTransFormulaUtils.translateTermVariablesToDefinitions(mScript, mTransFormula,
-				otherElement);
-		return new Doubleton<Term>(translatedOne, translatedOther);
+		final Term translatedOne =
+				ModifiableTransFormulaUtils.translateTermVariablesToDefinitions(mScript, mTransFormula, oneElement);
+		final Term translatedOther =
+				ModifiableTransFormulaUtils.translateTermVariablesToDefinitions(mScript, mTransFormula, otherElement);
+		return new Doubleton<>(translatedOne, translatedOther);
 
 	}
 
