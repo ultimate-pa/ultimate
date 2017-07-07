@@ -303,13 +303,26 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 		final List<ITransformulaTransformer> transformers = new ArrayList<>();
 		transformers.add(new LocalTransformer(new DNF(mServices, mXnfConversionTechnique),
 				icfg.getCfgSmtToolkit().getManagedScript(), fac));
-		final MapEliminationSettings settings =
-				new MapEliminationSettings(false, true, true, true, mSimplificationTechnique, mXnfConversionTechnique);
+		final MapEliminationSettings settings = getMapElimSettings();
 		transformers.add(new MapEliminationTransformer(mServices, mLogger, icfg.getCfgSmtToolkit().getManagedScript(),
 				icfg.getCfgSmtToolkit().getSymbolTable(), fac, settings, equalityProvider));
 		return new IcfgTransformerSequence<>(icfg, locFac, (ILocationFactory<OUTLOC, OUTLOC>) locFac,
 				backtranslationTracker, outlocClass, icfg.getIdentifier() + "IcfgWithMapElim", transformers)
 						.getResult();
+	}
+
+	private MapEliminationSettings getMapElimSettings() {
+		final IPreferenceProvider ups = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
+		final boolean addInequalities = ups.getBoolean(IcfgTransformationPreferences.LABEL_MAPELIM_ADD_INEQUALITIES);
+		final boolean onlyTrivialImplicationsForModifiedArguments = ups
+				.getBoolean(IcfgTransformationPreferences.LABEL_MAPELIM_ONLY_TRIVIAL_IMPLICATIONS_MODIFIED_ARGUMENTS);
+		final boolean onlyTrivialImplicationsArrayWrite =
+				ups.getBoolean(IcfgTransformationPreferences.LABEL_MAPELIM_ONLY_TRIVIAL_IMPLICATIONS_ARRAY_WRITE);
+		final boolean onlyArgumentsInFormula =
+				ups.getBoolean(IcfgTransformationPreferences.LABEL_MAPELIM_ONLY_ARGUMENTS_IN_FORMULA);
+		return new MapEliminationSettings(addInequalities, onlyTrivialImplicationsForModifiedArguments,
+				onlyTrivialImplicationsArrayWrite, onlyArgumentsInFormula, mSimplificationTechnique,
+				mXnfConversionTechnique);
 	}
 
 	private static ILocationFactory<BoogieIcfgLocation, BoogieIcfgLocation> createBoogieLocationFactory() {

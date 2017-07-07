@@ -51,6 +51,28 @@ public class IcfgTransformationPreferences extends UltimatePreferenceInitializer
 					+ "(unknown behavior for already transformed Icfg - "
 					+ "e.g. if the exit edge was already merged with other edges)";
 
+	public static final String LABEL_MAPELIM_ADD_INEQUALITIES = "Map elimination: also add inequalities";
+	private static final String DESC_MAPELIM_ADD_INEQUALITIES =
+			"If true, inequalities provided by the IndexAnalysis are also added as conjuncts to the transformula "
+					+ "(should be disabled for LassoRanker).";
+	public static final String LABEL_MAPELIM_ONLY_TRIVIAL_IMPLICATIONS_MODIFIED_ARGUMENTS =
+			"Map elimination: add only trivial implications for modified arguments";
+	private static final String DESC_MAPELIM_ONLY_TRIVIAL_IMPLICATIONS_MODIFIED_ARGUMENTS =
+			"If true, implications such as (i = j) => (a[i] = a[j]), that occur during handling assignments of indices,"
+					+ " are only added as conjuncts to the transformula, if the invariant i = j holds "
+					+ "(so in this case only a[i] = a[j] is added).";
+	public static final String LABEL_MAPELIM_ONLY_TRIVIAL_IMPLICATIONS_ARRAY_WRITE =
+			"Map elimination: add only trivial implications for array writes";
+	private static final String DESC_MAPELIM_ONLY_TRIVIAL_IMPLICATIONS_ARRAY_WRITE =
+			"If true, implications such as (i = j) => (a[i] = a[j]), that occur during handling array-writes, "
+					+ "are only added as conjuncts to the transformula, if the invariant i = j holds "
+					+ "(so in this case only a[i] = a[j] is added).";
+	public static final String LABEL_MAPELIM_ONLY_ARGUMENTS_IN_FORMULA =
+			"Map elimination: add only implications when all vars are in transformula";
+	private static final String DESC_MAPELIM_ONLY_ARGUMENTS_IN_FORMULA =
+			"If true, implications such as (i = j) => (a[i] = a[j]) are only added as conjuncts to the transformula, "
+					+ "if all free-vars of i and j occur in the transformula.";
+
 	/**
 	 * Select which transformation should be performed by this plugin.
 	 *
@@ -100,6 +122,15 @@ public class IcfgTransformationPreferences extends UltimatePreferenceInitializer
 						PreferenceType.Combo, TransformationTestType.values()),
 				new UltimatePreferenceItem<>(LABEL_FASTUPR_MODE, FastUPRReplacementMethod.REPLACE_EXIT_EDGE,
 						DESC_FASTUPR_MODE, PreferenceType.Combo, FastUPRReplacementMethod.values()),
+
+				new UltimatePreferenceItem<>(LABEL_MAPELIM_ADD_INEQUALITIES, false, DESC_MAPELIM_ADD_INEQUALITIES,
+						PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_MAPELIM_ONLY_TRIVIAL_IMPLICATIONS_MODIFIED_ARGUMENTS, true,
+						DESC_MAPELIM_ONLY_TRIVIAL_IMPLICATIONS_MODIFIED_ARGUMENTS, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_MAPELIM_ONLY_TRIVIAL_IMPLICATIONS_ARRAY_WRITE, true,
+						DESC_MAPELIM_ONLY_TRIVIAL_IMPLICATIONS_ARRAY_WRITE, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_MAPELIM_ONLY_ARGUMENTS_IN_FORMULA, false,
+						DESC_MAPELIM_ONLY_ARGUMENTS_IN_FORMULA, PreferenceType.Boolean),
 
 		};
 	}
