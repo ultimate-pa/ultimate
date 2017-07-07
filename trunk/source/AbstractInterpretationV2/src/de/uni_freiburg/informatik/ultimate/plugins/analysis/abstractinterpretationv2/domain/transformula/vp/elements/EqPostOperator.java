@@ -25,8 +25,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.EqPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.EqState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.EqTransitionRelation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 
 public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>> implements
 		IAbstractPostOperator<EqState<ACTION>, ACTION, IProgramVarOrConst> {
@@ -95,7 +93,7 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>> implem
 			final String calledProcedure = transition.getSucceedingProcedure();
 
 			final EqTransitionRelation<ACTION> localVarAssignments = mTransFormulaConverter
-					.getEqTransitionRelationFromTransformula(((Call) transition)
+					.getEqTransitionRelationFromTransformula(((ICallAction) transition)
 							.getLocalVarsAssignment());
 			final EqTransitionRelation<ACTION> globalVarAssignments = mTransFormulaConverter
 					.getEqTransitionRelationFromTransformula(
@@ -134,10 +132,10 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>> implem
 
 
 			final EqTransitionRelation<ACTION> returnTF = mTransFormulaConverter
-					.getEqTransitionRelationFromTransformula(((Return) transition).getAssignmentOfReturn());
+					.getEqTransitionRelationFromTransformula(((IReturnAction) transition).getAssignmentOfReturn());
 			final EqTransitionRelation<ACTION> callTF = mTransFormulaConverter
 					.getEqTransitionRelationFromTransformula(
-							((Return) transition).getLocalVarsAssignmentOfCall());
+							((IReturnAction) transition).getLocalVarsAssignmentOfCall());
 			final EqTransitionRelation<ACTION> oldVarAssignments = mTransFormulaConverter
 					.getEqTransitionRelationFromTransformula(
 							mCfgSmtToolkit.getOldVarsAssignmentCache().getOldVarsAssignment(
