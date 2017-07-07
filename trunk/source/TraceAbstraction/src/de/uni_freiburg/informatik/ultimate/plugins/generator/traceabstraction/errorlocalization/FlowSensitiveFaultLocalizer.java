@@ -396,7 +396,7 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 				if (relevanceCriterion1gf) {
 					mErrorLocalizationStatisticsGenerator.reportErrorAdmittingIcfgEdge();
 				}
-				if (!relevanceCriterion1uc && !relevanceCriterion1uc) {
+				if (!relevanceCriterion1uc && !relevanceCriterion1gf) {
 					mErrorLocalizationStatisticsGenerator.reportErrorIrrelevantIcfgEdge();
 				}
 			}
