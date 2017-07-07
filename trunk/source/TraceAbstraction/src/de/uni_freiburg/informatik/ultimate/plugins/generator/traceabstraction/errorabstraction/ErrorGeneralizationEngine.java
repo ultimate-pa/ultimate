@@ -308,7 +308,8 @@ public class ErrorGeneralizationEngine<LETTER extends IIcfgTransition<?>> implem
 				xnfConversionTechnique, symbolTable);
 
 		// TODO 2017-06-18 Christian: Currently we want to run the CEGAR loop until the abstraction is empty.
-		return abstractResult == Result.SAFE;
+//		return abstractResult == Result.SAFE;
+		return true;
 	}
 
 	@SuppressWarnings("unchecked")
