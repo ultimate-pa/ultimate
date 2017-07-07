@@ -65,8 +65,9 @@ public class AbsIntEqualityProvider implements IEqualityAnalysisResultProvider<I
 	public void preprocess(final IIcfg<?> icfg) {
 		final IProgressAwareTimer timer = mServices.getProgressMonitorService();
 		final IAbstractInterpretationResult<EqState<IcfgEdge>, IcfgEdge, IProgramVarOrConst, IcfgLocation> absIntResult =
-				AbstractInterpreter.runFutureEqualityDomain(icfg, timer, mServices, false, mLogger);
+				AbstractInterpreter.runFutureEqualityDomain(icfg, timer, mServices, true, mLogger);
 		mLoc2States = absIntResult.getLoc2States();
+		assert mLoc2States != null : "There was no AbsInt result";
 	}
 
 	@Override
