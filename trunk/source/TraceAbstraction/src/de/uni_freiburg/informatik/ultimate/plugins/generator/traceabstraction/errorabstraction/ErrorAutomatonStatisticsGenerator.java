@@ -64,6 +64,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryResultChecking;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorlocalization.ErrorLocalizationStatisticsGenerator;
@@ -107,6 +108,8 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 
 	private static final String ERROR_AUTOMATON_CONSTRUCTION_TIME = "ErrorAutomatonConstructionTime";
 	private static final String ERROR_AUTOMATON_DIFFERENCE_TIME = "ErrorAutomatonDifferenceTime";
+	private final IUltimateServiceProvider mServices;
+	private final ILogger mLogger;
 	private final Benchmark mBenchmark;
 	private boolean mRunningConstruction = false;
 	private boolean mRunningDifference = false;
@@ -118,7 +121,9 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 	private int mRelevantStatements;
 	private long mFaultLocalizationTime = 0l;
 	
-	public ErrorAutomatonStatisticsGenerator() {
+	public ErrorAutomatonStatisticsGenerator(final IUltimateServiceProvider services) {
+		mServices = services;
+		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mBenchmark = new Benchmark();
 		mBenchmark.register(ERROR_AUTOMATON_CONSTRUCTION_TIME);
 	}
@@ -160,10 +165,18 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 
 	public <LETTER> void reportRelevantStatements(final List<Collection<LETTER>> relevantStatements) {
 		final Set<CodeBlock> relevantStatementsSet = new HashSet<>();
+		boolean isFirst = true;
 		for (final Collection<LETTER> letters : relevantStatements) {
-			relevantStatementsSet.addAll((Collection<CodeBlock>) letters);
+			mLogger.warn("current trace's relevant statements: " + letters.size());
+			if (isFirst) {
+				relevantStatementsSet.addAll((Collection<CodeBlock>) letters);
+				isFirst = false;
+			} else {
+				relevantStatementsSet.retainAll(letters);
+			}
 		}
 		mRelevantStatements = relevantStatementsSet.size();
+		mLogger.warn("total relevant statements: " + mRelevantStatements);
 	}
 
 	public void reportFaultLocalizationStatistics(

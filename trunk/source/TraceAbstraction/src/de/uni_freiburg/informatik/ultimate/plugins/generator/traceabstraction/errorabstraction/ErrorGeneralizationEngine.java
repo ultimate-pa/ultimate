@@ -101,7 +101,7 @@ public class ErrorGeneralizationEngine<LETTER extends IIcfgTransition<?>> implem
 	public ErrorGeneralizationEngine(final IUltimateServiceProvider services) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		mErrorAutomatonStatisticsGenerator = new ErrorAutomatonStatisticsGenerator();
+		mErrorAutomatonStatisticsGenerator = new ErrorAutomatonStatisticsGenerator(services);
 		mErrorTraces = new ErrorTraceContainer<>();
 		mRelevantStatements = new ArrayList<>();
 		mFaultLocalizerStatistics = new ArrayList<>();
