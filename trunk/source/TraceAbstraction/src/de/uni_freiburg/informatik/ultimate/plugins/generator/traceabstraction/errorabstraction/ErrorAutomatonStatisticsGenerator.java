@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorabstraction;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -42,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Determinize;
@@ -61,6 +63,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryResultChecking;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.StraightLineInterpolantAutomatonBuilder;
@@ -109,7 +112,9 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 	private int mTraceLength = -1;
 	private final List<AutomatonStatisticsEntry> mAutomatonStatistics = new LinkedList<>();
 	private EnhancementType mEnhancement;
-
+	private final Set<CodeBlock> mLetters = new HashSet<>();
+	private int mLettersFirstTrace = -1;
+	
 	public ErrorAutomatonStatisticsGenerator() {
 		mBenchmark = new Benchmark();
 		mBenchmark.register(ERROR_AUTOMATON_CONSTRUCTION_TIME);
@@ -139,9 +144,15 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 		mBenchmark.pause(ERROR_AUTOMATON_DIFFERENCE_TIME);
 	}
 
-	public void reportTraceLength(final int length) {
+	public void reportTrace(final NestedWord<?> trace) {
 		assert mTraceLength == -1 : "Length already reported";
-		mTraceLength = length;
+		mTraceLength = trace.length();
+		for (int i = 0; i < trace.length(); ++i) {
+			mLetters.add((CodeBlock)trace.getSymbol(i));
+		}
+		if (mLettersFirstTrace == -1) {
+			mLettersFirstTrace = mTraceLength;
+		}
 	}
 
 	public <LETTER extends IIcfgTransition<?>> void evaluateFinalErrorAutomaton(final IUltimateServiceProvider services,
@@ -256,8 +267,12 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 		final ErrorAutomatonStatisticsDefinitions keyEnum =
 				Enum.valueOf(ErrorAutomatonStatisticsDefinitions.class, key);
 		switch (keyEnum) {
-			case TotalNumber:
+			case NumberErrorTraces:
 				return getTotalNumber();
+			case NumberStatementsAllTraces:
+				return mLetters.size();
+			case NumberStatementsFirstTrace:
+				return mLettersFirstTrace;
 			case TraceLengthAvg:
 				return getAverageTraceLength();
 			case ErrorAutomatonConstructionTimeAvg:

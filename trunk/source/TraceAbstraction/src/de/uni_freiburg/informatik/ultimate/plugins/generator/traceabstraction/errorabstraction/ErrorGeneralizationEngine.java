@@ -176,7 +176,7 @@ public class ErrorGeneralizationEngine<LETTER extends IIcfgTransition<?>> implem
 					+ " automaton for trace of length " + trace.length());
 		}
 
-		mErrorAutomatonStatisticsGenerator.reportTraceLength(trace.length());
+		mErrorAutomatonStatisticsGenerator.reportTrace(trace);
 		mErrorAutomatonStatisticsGenerator.startErrorAutomatonConstructionTime();
 
 		try {
