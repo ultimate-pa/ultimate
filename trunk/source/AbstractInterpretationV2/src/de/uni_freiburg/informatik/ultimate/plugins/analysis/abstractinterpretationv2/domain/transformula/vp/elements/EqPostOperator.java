@@ -7,7 +7,9 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
@@ -25,7 +27,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.EqTransitionRelation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 
 public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>> implements
 		IAbstractPostOperator<EqState<ACTION>, ACTION, IProgramVarOrConst> {
@@ -90,7 +91,7 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>> implem
 					.toEqStates(hierarchicalPreOrStateAfterLeaving.getVariables());
 		}
 
-		if (transition instanceof Call) {
+		if (transition instanceof ICallAction) {
 			final String calledProcedure = transition.getSucceedingProcedure();
 
 			final EqTransitionRelation<ACTION> localVarAssignments = mTransFormulaConverter
@@ -114,9 +115,9 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>> implem
 			final List<EqState<ACTION>> result = 
 					postConstraint.toEqStates(hierarchicalPreOrStateAfterLeaving.getVariables()); 
 			return result;
-		} else if (transition instanceof Summary) {
-			return apply(stateBeforeLeaving, transition);
-		} else if (transition instanceof Return) {
+//		} else if (transition instanceof Summary) {
+//			return apply(stateBeforeLeaving, transition);
+		} else if (transition instanceof IReturnAction) {
 
 			final EqPredicate<ACTION> returnPred = stateBeforeLeaving.toEqPredicate();
 
