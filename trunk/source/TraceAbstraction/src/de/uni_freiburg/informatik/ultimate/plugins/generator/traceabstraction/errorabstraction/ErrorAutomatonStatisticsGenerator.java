@@ -66,6 +66,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryResultChecking;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorlocalization.ErrorLocalizationStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.StraightLineInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantComputationStatus;
@@ -115,6 +116,7 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 	private final Set<CodeBlock> mLetters = new HashSet<>();
 	private int mLettersFirstTrace = -1;
 	private int mRelevantStatements;
+	private long mFaultLocalizationTime = 0l;
 	
 	public ErrorAutomatonStatisticsGenerator() {
 		mBenchmark = new Benchmark();
@@ -162,6 +164,13 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 			relevantStatementsSet.addAll((Collection<CodeBlock>) letters);
 		}
 		mRelevantStatements = relevantStatementsSet.size();
+	}
+
+	public void reportFaultLocalizationStatistics(
+			final List<ErrorLocalizationStatisticsGenerator> faultLocalizerStatistics) {
+		for (final ErrorLocalizationStatisticsGenerator stats : faultLocalizerStatistics) {
+			mFaultLocalizationTime += stats.getErrorLocalizationTime();
+		}
 	}
 
 	public <LETTER extends IIcfgTransition<?>> void evaluateFinalErrorAutomaton(final IUltimateServiceProvider services,
@@ -284,6 +293,8 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 				return mLettersFirstTrace;
 			case NumberRelevantStatements:
 				return mRelevantStatements;
+			case FaulLocalizationTime:
+				return mFaultLocalizationTime;
 			case TraceLengthAvg:
 				return getAverageTraceLength();
 			case ErrorAutomatonConstructionTimeAvg:

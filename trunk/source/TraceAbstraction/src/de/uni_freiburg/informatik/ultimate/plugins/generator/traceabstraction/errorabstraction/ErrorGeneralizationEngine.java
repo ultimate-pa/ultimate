@@ -89,6 +89,7 @@ public class ErrorGeneralizationEngine<LETTER extends IIcfgTransition<?>> implem
 
 	private final ErrorTraceContainer<LETTER> mErrorTraces;
 	private final List<Collection<LETTER>> mRelevantStatements;
+	private final List<ErrorLocalizationStatisticsGenerator> mFaultLocalizerStatistics;
 	private final ErrorAutomatonStatisticsGenerator mErrorAutomatonStatisticsGenerator;
 	private IErrorAutomatonBuilder<LETTER> mErrorAutomatonBuilder;
 	private int mLastIteration = -1;
@@ -103,6 +104,7 @@ public class ErrorGeneralizationEngine<LETTER extends IIcfgTransition<?>> implem
 		mErrorAutomatonStatisticsGenerator = new ErrorAutomatonStatisticsGenerator();
 		mErrorTraces = new ErrorTraceContainer<>();
 		mRelevantStatements = new ArrayList<>();
+		mFaultLocalizerStatistics = new ArrayList<>();
 	}
 
 	@Override
@@ -246,6 +248,7 @@ public class ErrorGeneralizationEngine<LETTER extends IIcfgTransition<?>> implem
 	public void reportErrorGeneralizationBenchmarks() {
 		final StatisticsData stat = new StatisticsData();
 		mErrorAutomatonStatisticsGenerator.reportRelevantStatements(mRelevantStatements);
+		mErrorAutomatonStatisticsGenerator.reportFaultLocalizationStatistics(mFaultLocalizerStatistics);
 		stat.aggregateBenchmarkData(mErrorAutomatonStatisticsGenerator);
 		final IResult benchmarkResult = new StatisticsResult<>(Activator.PLUGIN_NAME, "ErrorAutomatonStatistics", stat);
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID, benchmarkResult);
@@ -345,8 +348,10 @@ public class ErrorGeneralizationEngine<LETTER extends IIcfgTransition<?>> implem
 			final XnfConversionTechnique xnfConversionTechnique, final IIcfgSymbolTable symbolTable,
 			final List<ErrorLocalizationStatisticsGenerator> faultLocalizerStatistics,
 			final NestedRun<LETTER, IPredicate> trace) {
+		final List<ErrorLocalizationStatisticsGenerator> realFaultLocalizerStatistics =
+				(faultLocalizerStatistics == null) ? mFaultLocalizerStatistics : faultLocalizerStatistics;
 		mRelevantStatements.add(faultLocalization(cfg, csToolkit, predicateFactory, predicateUnifier,
-				simplificationTechnique, xnfConversionTechnique, symbolTable, faultLocalizerStatistics, trace));
+				simplificationTechnique, xnfConversionTechnique, symbolTable, realFaultLocalizerStatistics, trace));
 	}
 
 	/**
