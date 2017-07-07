@@ -245,6 +245,7 @@ public class ErrorGeneralizationEngine<LETTER extends IIcfgTransition<?>> implem
 	 */
 	public void reportErrorGeneralizationBenchmarks() {
 		final StatisticsData stat = new StatisticsData();
+		mErrorAutomatonStatisticsGenerator.reportRelevantStatements(mRelevantStatements);
 		stat.aggregateBenchmarkData(mErrorAutomatonStatisticsGenerator);
 		final IResult benchmarkResult = new StatisticsResult<>(Activator.PLUGIN_NAME, "ErrorAutomatonStatistics", stat);
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID, benchmarkResult);
@@ -417,13 +418,14 @@ public class ErrorGeneralizationEngine<LETTER extends IIcfgTransition<?>> implem
 						builder.append(stmt).append(", ");
 					}
 				}
+				builder.append('\n');
 			}
 
 			long totalFaultLocalizationTimeNano = 0l;
 			for (final ErrorLocalizationStatisticsGenerator stats : faultLocalizerStatistics) {
 				totalFaultLocalizationTimeNano += stats.getErrorLocalizationTime();
 			}
-			builder.append("\nFault localization was applied ").append(faultLocalizerStatistics.size())
+			builder.append("Fault localization was applied ").append(faultLocalizerStatistics.size())
 					.append(" times and altogether took ")
 					.append(AStatisticsType.prettyprintNanoseconds(totalFaultLocalizationTimeNano)).append(" seconds.");
 

@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsElement;
 public enum ErrorAutomatonStatisticsDefinitions implements IStatisticsElement {
 	NumberErrorTraces(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
 	NumberStatementsAllTraces(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
+	NumberRelevantStatements(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
 	NumberStatementsFirstTrace(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
 	TraceLengthAvg(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
 	ErrorAutomatonConstructionTimeAvg(Long.class, AStatisticsType.sLongAddition, AStatisticsType.sTimeBeforeKey),

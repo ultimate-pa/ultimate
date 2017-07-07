@@ -114,6 +114,7 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 	private EnhancementType mEnhancement;
 	private final Set<CodeBlock> mLetters = new HashSet<>();
 	private int mLettersFirstTrace = -1;
+	private int mRelevantStatements;
 	
 	public ErrorAutomatonStatisticsGenerator() {
 		mBenchmark = new Benchmark();
@@ -153,6 +154,14 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 		if (mLettersFirstTrace == -1) {
 			mLettersFirstTrace = mTraceLength;
 		}
+	}
+
+	public <LETTER> void reportRelevantStatements(final List<Collection<LETTER>> relevantStatements) {
+		final Set<CodeBlock> relevantStatementsSet = new HashSet<>();
+		for (final Collection<LETTER> letters : relevantStatements) {
+			relevantStatementsSet.addAll((Collection<CodeBlock>) letters);
+		}
+		mRelevantStatements = relevantStatementsSet.size();
 	}
 
 	public <LETTER extends IIcfgTransition<?>> void evaluateFinalErrorAutomaton(final IUltimateServiceProvider services,
@@ -273,6 +282,8 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 				return mLetters.size();
 			case NumberStatementsFirstTrace:
 				return mLettersFirstTrace;
+			case NumberRelevantStatements:
+				return mRelevantStatements;
 			case TraceLengthAvg:
 				return getAverageTraceLength();
 			case ErrorAutomatonConstructionTimeAvg:
