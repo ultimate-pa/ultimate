@@ -167,8 +167,12 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 			return applyLoopAccelerationWerner(icfg, locFac, outlocClass, backtranslationTracker, fac);
 		case LOOP_ACCELERATION_AHMED:
 			return applyLoopAccelerationAhmed(icfg, locFac, outlocClass, backtranslationTracker, fac);
-		case MAP_ELIMINATION:
-			return applyMapElimination(icfg, locFac, outlocClass, backtranslationTracker, fac);
+		case MAP_ELIMINATION_NO_EQUALITY:
+			return applyMapElimination(icfg, locFac, outlocClass, backtranslationTracker, fac,
+					new DefaultEqualityAnalysisProvider<>());
+		case MAP_ELIMINATION_EQUALITY:
+			return applyMapElimination(icfg, locFac, outlocClass, backtranslationTracker, fac,
+					new AbsIntEqualityProvider(mServices));
 		case REMOVE_DIV_MOD:
 			return applyRemoveDivMod(icfg, locFac, outlocClass, backtranslationTracker, fac);
 		case MODULO_NEIGHBOR:
@@ -181,19 +185,18 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 		}
 	}
 
-	private <INLOC extends IcfgLocation, OUTLOC extends IcfgLocation> 
-		IIcfg<OUTLOC> applyHeapSeparator(
-				IIcfg<INLOC> icfg, ILocationFactory<INLOC, OUTLOC> locFac, // TODO: omit unneeded fields here
-				Class<OUTLOC> outlocClass, IBacktranslationTracker backtranslationTracker, ReplacementVarFactory fac,
-				IUltimateServiceProvider services) {
-		
-		final HeapSepTransFormulaTransformer tftf = 
+	private <INLOC extends IcfgLocation, OUTLOC extends IcfgLocation> IIcfg<OUTLOC> applyHeapSeparator(
+			final IIcfg<INLOC> icfg, final ILocationFactory<INLOC, OUTLOC> locFac, // TODO: omit unneeded fields here
+			final Class<OUTLOC> outlocClass, final IBacktranslationTracker backtranslationTracker,
+			final ReplacementVarFactory fac, final IUltimateServiceProvider services) {
+
+		final HeapSepTransFormulaTransformer tftf =
 				new HeapSepTransFormulaTransformer(icfg.getCfgSmtToolkit(), mServices);
 
 		final String newIcfgIdentifier = "IcfgWithHeapSeparation";
-		final IcfgTransformer<INLOC, OUTLOC> icfgTransformer = 
+		final IcfgTransformer<INLOC, OUTLOC> icfgTransformer =
 				new IcfgTransformer<>(icfg, locFac, backtranslationTracker, outlocClass, newIcfgIdentifier, tftf);
-		
+
 		return icfgTransformer.getResult();
 	}
 
@@ -294,13 +297,12 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 	@SuppressWarnings("unchecked")
 	private <INLOC extends IcfgLocation, OUTLOC extends IcfgLocation> IIcfg<OUTLOC> applyMapElimination(
 			final IIcfg<INLOC> icfg, final ILocationFactory<INLOC, OUTLOC> locFac, final Class<OUTLOC> outlocClass,
-			final IBacktranslationTracker backtranslationTracker, final ReplacementVarFactory fac) {
+			final IBacktranslationTracker backtranslationTracker, final ReplacementVarFactory fac,
+			final IEqualityAnalysisResultProvider<IcfgLocation, IIcfg<?>> equalityProvider) {
 
 		final List<ITransformulaTransformer> transformers = new ArrayList<>();
 		transformers.add(new LocalTransformer(new DNF(mServices, mXnfConversionTechnique),
 				icfg.getCfgSmtToolkit().getManagedScript(), fac));
-		final IEqualityAnalysisResultProvider<IcfgLocation, IIcfg<?>> equalityProvider =
-				new DefaultEqualityAnalysisProvider<>();
 		final MapEliminationSettings settings =
 				new MapEliminationSettings(false, true, true, true, mSimplificationTechnique, mXnfConversionTechnique);
 		transformers.add(new MapEliminationTransformer(mServices, mLogger, icfg.getCfgSmtToolkit().getManagedScript(),

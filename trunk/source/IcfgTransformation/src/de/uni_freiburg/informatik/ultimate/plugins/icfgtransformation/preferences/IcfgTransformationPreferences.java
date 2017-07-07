@@ -58,7 +58,9 @@ public class IcfgTransformationPreferences extends UltimatePreferenceInitializer
 	 *
 	 */
 	public enum TransformationTestType {
-		MAP_ELIMINATION,
+		MAP_ELIMINATION_NO_EQUALITY,
+
+		MAP_ELIMINATION_EQUALITY,
 
 		REMOVE_DIV_MOD,
 
