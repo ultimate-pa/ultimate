@@ -203,7 +203,7 @@ public class SymbolicMemory {
 	 */
 	public void updateUndefined(final IProgramVar variable, final IIcfgSymbolTable st) {
 		mInVars.remove(variable.getTermVariable());
-		updateInOutVars(variable, st, (TermVariable[]) null);
+		updateInOutVars(variable, st, new TermVariable[0]);
 		mAssignedVars.get(mCurrentPath).add(variable);
 		mSymbolicMemory.put(variable, null);
 		mUpdateTypeMap.put(variable, UpdateType.UNDEFINED);

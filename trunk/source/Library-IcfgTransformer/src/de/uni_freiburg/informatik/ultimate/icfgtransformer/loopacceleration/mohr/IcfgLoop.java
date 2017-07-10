@@ -31,11 +31,14 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class IcfgLoop<INLOC extends IcfgLocation> {
 
@@ -45,6 +48,7 @@ public class IcfgLoop<INLOC extends IcfgLocation> {
 	private final Set<INLOC> mNestedNodes;
 	private final Set<ArrayList<IcfgEdge>> mPaths;
 	private final IUltimateServiceProvider mServices;
+	private final List<Pair<List<UnmodifiableTransFormula>, INLOC>> mLoopExits;
 
 	public IcfgLoop(final IUltimateServiceProvider services) {
 		this(services, new HashSet<>(), null);
@@ -56,6 +60,7 @@ public class IcfgLoop<INLOC extends IcfgLocation> {
 		mHead = head;
 		mNestedNodes = new HashSet<>();
 		mPaths = new HashSet<>();
+		mLoopExits = new ArrayList<>();
 		mServices = services;
 	}
 
@@ -93,6 +98,10 @@ public class IcfgLoop<INLOC extends IcfgLocation> {
 		return mHead;
 	}
 
+	public List<Pair<List<UnmodifiableTransFormula>, INLOC>> getLoopExits() {
+		return mLoopExits;
+	}
+
 	public boolean contains(final INLOC node) {
 		return mLoopbody.contains(node);
 	}
@@ -108,6 +117,7 @@ public class IcfgLoop<INLOC extends IcfgLocation> {
 	@SuppressWarnings("unchecked")
 	private void loopPaths() {
 		final Deque<ArrayList<IcfgEdge>> queue = new ArrayDeque<>();
+		final List<List<IcfgEdge>> breakPaths = new ArrayList<>();
 		for (final IcfgEdge edge : mHead.getOutgoingEdges()) {
 			if (mLoopbody.contains(edge.getTarget())) {
 				final ArrayList<IcfgEdge> a = new ArrayList<>();
@@ -124,12 +134,25 @@ public class IcfgLoop<INLOC extends IcfgLocation> {
 				continue;
 			}
 			for (final IcfgEdge edge : destination.getOutgoingEdges()) {
-				if (!mNestedNodes.contains(edge.getTarget()) && mLoopbody.contains(edge.getTarget()) && !destination.equals(edge.getTarget())) {
+				if (!mNestedNodes.contains(edge.getTarget()) &&
+						mLoopbody.contains(edge.getTarget()) &&
+						!destination.equals(edge.getTarget())) {
 					final ArrayList<IcfgEdge> addPath = new ArrayList<>(path);
 					addPath.add(edge);
 					queue.add(addPath);
+				} else if (!mNestedNodes.contains(edge.getTarget()) && !destination.equals(edge.getTarget())) {
+					final ArrayList<IcfgEdge> addPath = new ArrayList<>(path);
+					addPath.add(edge);
+					breakPaths.add(addPath);
 				}
 			}
+		}
+
+		for (final List<IcfgEdge> bPath : breakPaths) {
+			final List<UnmodifiableTransFormula> bPathFormula = new ArrayList<>();
+			bPath.forEach(edge -> bPathFormula.add(edge.getTransformula()));
+			final INLOC target = (INLOC) bPath.get(bPath.size() - 1).getTarget();
+			mLoopExits.add(new Pair<List<UnmodifiableTransFormula>, INLOC>(bPathFormula, target));
 		}
 	}
 

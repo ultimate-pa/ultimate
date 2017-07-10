@@ -36,7 +36,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IBacktranslationTracker;
@@ -66,6 +65,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.Simpli
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Dnf;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class IcfgLoopTransformerMohr<INLOC extends IcfgLocation, OUTLOC extends IcfgLocation>
 		implements IIcfgTransformer<OUTLOC> {
@@ -111,11 +111,21 @@ public class IcfgLoopTransformerMohr<INLOC extends IcfgLocation, OUTLOC extends 
 		final Set<INLOC> loopHeads = new HashSet<>();
 		final Set<INLOC> loopNodes = new HashSet<>();
 		final Map<INLOC, UnmodifiableTransFormula> loopSummaries = new HashMap<>();
+		final Map<INLOC, Set<Pair<UnmodifiableTransFormula, INLOC>>> loopExits = new HashMap<>();
 		if (!loops.isEmpty()) {
 			for (final IcfgLoop<INLOC> loop : loops) {
 				loopHeads.add(loop.getHead());
 				loopNodes.addAll(loop.getLoopbody());
 				loopSummaries.put(loop.getHead(), transformLoop(loop));
+				loopExits.put(loop.getHead(), new HashSet<>());
+				for (final Pair<List<UnmodifiableTransFormula>, INLOC> exitPath : loop.getLoopExits()) {
+					final UnmodifiableTransFormula exitUtf = TransFormulaUtils.sequentialComposition(mLogger,
+							mServices, mManagedScript, false, false, false,
+							XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION,
+							SimplificationTechnique.SIMPLIFY_DDA, exitPath.getFirst());
+					mLogger.info("Found exit path: " + exitUtf);
+					loopExits.get(loop.getHead()).add(new Pair<UnmodifiableTransFormula, INLOC>(exitUtf, exitPath.getSecond()));
+				}
 			}
 		}
 
@@ -141,10 +151,17 @@ public class IcfgLoopTransformerMohr<INLOC extends IcfgLocation, OUTLOC extends 
 							XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION,
 							SimplificationTechnique.SIMPLIFY_DDA, Arrays.asList(loopSummary, edge.getTransformula()));
 					mLogger.info("Loop Summary Transformula: " + utf);
-					final IcfgEdge e = mTib.createNewInternalTransition(newSource, newTarget, utf, false);
-					if (mOverApproximation.get(node)) {
-						new Overapprox("Because of loop acceleration", null).annotate(e);
+					final IcfgEdge e = mTib.createNewInternalTransition(newSource, newTarget, utf, mOverApproximation.get(node));
+
+					for (final Pair<UnmodifiableTransFormula, INLOC> exit : loopExits.get(node)) {
+						final OUTLOC exitTarget = mTib.createNewLocation(exit.getSecond());
+						final UnmodifiableTransFormula exitSummary = TransFormulaUtils.sequentialComposition(mLogger, mServices,
+								mManagedScript, false, false, false,
+								XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION,
+								SimplificationTechnique.SIMPLIFY_DDA, Arrays.asList(loopSummary, exit.getFirst()));
+						mTib.createNewInternalTransition(newSource, exitTarget, exitSummary, mOverApproximation.get(node));
 					}
+
 				} else {
 					mTib.createNewTransition(newSource, newTarget, edge);
 				}
