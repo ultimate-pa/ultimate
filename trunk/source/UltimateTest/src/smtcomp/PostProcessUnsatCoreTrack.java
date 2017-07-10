@@ -18,16 +18,21 @@ import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
 public final class PostProcessUnsatCoreTrack {
 	private static final String INPUT_FILE_NAME = "/home/matthias/ultimate/Job21979_info.csv";
 
-	
+	// @formatter:off
 	private static final String VALIDATION_CVC4 = "validation-check-sat-result_cvc4";
 	private static final String VALIDATION_MATHSAT = "validation-check-sat-result_mathsat";
 	private static final String VALIDATION_VAMPIRE = "validation-check-sat-result_vampire";
 	private static final String VALIDATION_Z3 = "validation-check-sat-result_z3";
+	private static final String[] VALIDATION_ORIGINAL = new String[] { 
+			VALIDATION_CVC4, VALIDATION_MATHSAT, VALIDATION_VAMPIRE, VALIDATION_Z3 };
 
-	private static final String REVISED_VALIDATION_CVC4 = "REVISED_validation-check-sat-result_cvc4";
-	private static final String REVISED_VALIDATION_MATHSAT = "REVISED_validation-check-sat-result_mathsat";
-	private static final String REVISED_VALIDATION_VAMPIRE = "REVISED_validation-check-sat-result_vampire";
-	private static final String REVISED_VALIDATION_Z3 = "REVISED_validation-check-sat-result_z3";
+	private static final String VALIDATION_REVISED_CVC4 = "REVISED_validation-check-sat-result_cvc4";
+	private static final String VALIDATION_REVISED_MATHSAT = "REVISED_validation-check-sat-result_mathsat";
+	private static final String VALIDATION_REVISED_VAMPIRE = "REVISED_validation-check-sat-result_vampire";
+	private static final String VALIDATION_REVISED_Z3 = "REVISED_validation-check-sat-result_z3";
+	
+	private static final String[] VALIDATION_REVISED = new String[] { 
+			VALIDATION_REVISED_CVC4, VALIDATION_REVISED_MATHSAT, VALIDATION_REVISED_VAMPIRE, VALIDATION_REVISED_Z3 };
 	
 	private static final String UC_VALIDATED = "unsat-core-validated"; // true or false
 	private static final String UC_SIZE = "size-unsat-core";
@@ -116,7 +121,9 @@ public final class PostProcessUnsatCoreTrack {
 	private static Set<String> ELIGIBLE_DIVISIONS_Mathsat;
 	private static Set<String> ELIGIBLE_DIVISIONS_VAMPIRE;
 	private static Set<String> ELIGIBLE_DIVISIONS_Z3;
+	private static Set<String>[] VALIDATION_ELIGIBLE;
 	
+	// @formatter:on
 	
 	private PostProcessUnsatCoreTrack() {
 	}
@@ -127,6 +134,7 @@ public final class PostProcessUnsatCoreTrack {
 		ELIGIBLE_DIVISIONS_Mathsat.removeAll(Arrays.asList(DIVISIONS_UNSOUND_Mathsat));
 		ELIGIBLE_DIVISIONS_VAMPIRE = new HashSet<>(Arrays.asList(DIVISIONS_VAMPIRE));
 		ELIGIBLE_DIVISIONS_Z3 = new HashSet<>(Arrays.asList(DIVISIONS_Z3));
+		VALIDATION_ELIGIBLE = (Set<String>[]) new Set<?>[] { ELIGIBLE_DIVISIONS_CVC4, ELIGIBLE_DIVISIONS_Mathsat, ELIGIBLE_DIVISIONS_VAMPIRE, ELIGIBLE_DIVISIONS_Z3 };
 	}
 	
 	public static void main(final String[] args) {
@@ -134,11 +142,24 @@ public final class PostProcessUnsatCoreTrack {
 		final ICsvProvider<String> input = CsvProviderFromFile.parse(inputFile);
 		final List<String> rh = input.getRowHeaders();
 		final List<String> ct = input.getColumnTitles();
+		
 		final int rows = input.getTable().size();
 		for (int i = 0; i<rows; i++) {
 			final Map<String, String> inputLineMap = extractInputLineMap(input, ct, i);
 			final String division = getDivision(inputLineMap.get("benchmark"));
 			assert DIVISIONS.contains(division) : "illegal division";
+			assert VALIDATION_ORIGINAL.length == VALIDATION_REVISED.length;
+			assert VALIDATION_ORIGINAL.length == VALIDATION_ELIGIBLE.length;
+			for (i=0; i<VALIDATION_ORIGINAL.length; i++) {
+				final String revisedValidationResult;
+				if (VALIDATION_ELIGIBLE[i].contains(division)) {
+					revisedValidationResult = inputLineMap.get(VALIDATION_ORIGINAL[i]);
+				} else {
+					revisedValidationResult = "";
+				}
+				inputLineMap.put(VALIDATION_REVISED[i], revisedValidationResult);
+				
+			}
 			final String revised_validation_cvc4 = null;
 			inputLineMap.toString();
 			initializeEligibleDivisions();
