@@ -3,4 +3,4 @@
 
 parseAutomata("../intersect/Intersect-Bug01.ats");
 
-assert(numberOfStates(union(nwa1,nwa2)) == 3);
+assert(numberOfStates(union(nwa1,nwa2)) == 7);
