@@ -127,7 +127,7 @@ public final class Difference<LETTER, STATE> extends BinaryNwaOperation<LETTER, 
 				mLogger.info("Subtrahend was not deterministic. Computing result with determinization.");
 			}
 		} else if (mStateDeterminizer instanceof PowersetDeterminizer) {
-			final TotalizeNwa<LETTER, STATE> sndTotalized = new TotalizeNwa<>(mSndOperand, mStateFactory);
+			final TotalizeNwa<LETTER, STATE> sndTotalized = new TotalizeNwa<>(mSndOperand, mStateFactory, true);
 			
 			final ComplementDeterministicNwa<LETTER, STATE> sndComplemented =
 					new ComplementDeterministicNwa<>(sndTotalized);

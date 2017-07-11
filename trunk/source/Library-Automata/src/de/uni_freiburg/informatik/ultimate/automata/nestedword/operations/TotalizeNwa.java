@@ -42,8 +42,11 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFacto
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
- * Totalized automaton of input. Expects that input is deterministic. If a transition is nondeterministic an empty
- * transition set is returned and mNondeterminismInInputDetected is set to true.
+ * Totalized automaton of input. 
+ * 
+ * Has a special mode in which it expects that input is deterministic. If then 
+ * a transition is nondeterministic an empty transition set is returned and 
+ * mNondeterminismInInputDetected is set to true.
  * 
  * @author heizmann@informatik.uni-freiburg.de
  * @param <LETTER>
@@ -58,6 +61,7 @@ public class TotalizeNwa<LETTER, STATE> implements INwaOutgoingLetterAndTransiti
 	private boolean mSinkStateWasConstructed;
 	private boolean mNondeterministicTransitionsDetected;
 	private boolean mNondeterministicInitialsDetected;
+	private final boolean mStopIfNondeterminismWasDetected;
 
 	/**
 	 * Constructor.
@@ -66,11 +70,13 @@ public class TotalizeNwa<LETTER, STATE> implements INwaOutgoingLetterAndTransiti
 	 *            operand
 	 * @param stateFactory
 	 *            state factory
+	 * @param stopIfNondeterminismWasDetected 
 	 */
 	public TotalizeNwa(final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand,
-			final ISinkStateFactory<STATE> stateFactory) {
+			final ISinkStateFactory<STATE> stateFactory, final boolean stopIfNondeterminismWasDetected) {
 		mOperand = operand;
 		mStateFactory = stateFactory;
+		mStopIfNondeterminismWasDetected = stopIfNondeterminismWasDetected;
 	}
 
 	private void requestSinkState() {
@@ -199,7 +205,7 @@ public class TotalizeNwa<LETTER, STATE> implements INwaOutgoingLetterAndTransiti
 	@Override
 	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(final STATE state,
 			final LETTER letter) {
-		if (mNondeterministicTransitionsDetected) {
+		if (mStopIfNondeterminismWasDetected && mNondeterministicTransitionsDetected) {
 			return Collections.emptySet();
 		}
 		if (!isNewSinkState(state)) {
@@ -209,7 +215,11 @@ public class TotalizeNwa<LETTER, STATE> implements INwaOutgoingLetterAndTransiti
 				final OutgoingInternalTransition<LETTER, STATE> trans = it.next();
 				if (it.hasNext()) {
 					mNondeterministicTransitionsDetected = true;
-					return Collections.emptySet();
+					if (mStopIfNondeterminismWasDetected) {
+						return Collections.emptySet();
+					} else {
+						return mOperand.internalSuccessors(state, letter);
+					}
 				}
 				return Collections.singleton(trans);
 			}
@@ -222,17 +232,19 @@ public class TotalizeNwa<LETTER, STATE> implements INwaOutgoingLetterAndTransiti
 	@SuppressWarnings("squid:S1941")
 	@Override
 	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(final STATE state) {
-		if (mNondeterministicTransitionsDetected) {
+		if (mStopIfNondeterminismWasDetected && mNondeterministicTransitionsDetected) {
 			return Collections.emptySet();
 		}
 		final Set<LETTER> alphabet = getVpAlphabet().getInternalAlphabet();
 		final ArrayList<OutgoingInternalTransition<LETTER, STATE>> result = new ArrayList<>(alphabet.size());
 		for (final LETTER letter : alphabet) {
 			final Iterator<OutgoingInternalTransition<LETTER, STATE>> it = internalSuccessors(state, letter).iterator();
-			if (mNondeterministicTransitionsDetected) {
+			if (mStopIfNondeterminismWasDetected && mNondeterministicTransitionsDetected) {
 				return Collections.emptySet();
 			}
-			result.add(it.next());
+			while (it.hasNext()) {
+				result.add(it.next());
+			}
 			assert !it.hasNext();
 		}
 		return result;
@@ -240,7 +252,7 @@ public class TotalizeNwa<LETTER, STATE> implements INwaOutgoingLetterAndTransiti
 
 	@Override
 	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(final STATE state, final LETTER letter) {
-		if (mNondeterministicTransitionsDetected) {
+		if (mStopIfNondeterminismWasDetected && mNondeterministicTransitionsDetected) {
 			return Collections.emptySet();
 		}
 		if (!isNewSinkState(state)) {
@@ -250,7 +262,11 @@ public class TotalizeNwa<LETTER, STATE> implements INwaOutgoingLetterAndTransiti
 				final OutgoingCallTransition<LETTER, STATE> trans = it.next();
 				if (it.hasNext()) {
 					mNondeterministicTransitionsDetected = true;
-					return Collections.emptySet();
+					if (mStopIfNondeterminismWasDetected) {
+						return Collections.emptySet();
+					} else {
+						return mOperand.callSuccessors(state, letter);
+					}
 				}
 				return Collections.singleton(trans);
 			}
@@ -263,17 +279,19 @@ public class TotalizeNwa<LETTER, STATE> implements INwaOutgoingLetterAndTransiti
 	@SuppressWarnings("squid:S1941")
 	@Override
 	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(final STATE state) {
-		if (mNondeterministicTransitionsDetected) {
+		if (mStopIfNondeterminismWasDetected && mNondeterministicTransitionsDetected) {
 			return Collections.emptySet();
 		}
 		final Set<LETTER> alphabet = getVpAlphabet().getCallAlphabet();
 		final ArrayList<OutgoingCallTransition<LETTER, STATE>> result = new ArrayList<>(alphabet.size());
 		for (final LETTER letter : alphabet) {
 			final Iterator<OutgoingCallTransition<LETTER, STATE>> it = callSuccessors(state, letter).iterator();
-			if (mNondeterministicTransitionsDetected) {
+			if (mStopIfNondeterminismWasDetected && mNondeterministicTransitionsDetected) {
 				return Collections.emptySet();
 			}
-			result.add(it.next());
+			while (it.hasNext()) {
+				result.add(it.next());
+			}
 			assert !it.hasNext();
 		}
 		return result;
@@ -282,7 +300,7 @@ public class TotalizeNwa<LETTER, STATE> implements INwaOutgoingLetterAndTransiti
 	@Override
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(final STATE state, final STATE hier,
 			final LETTER letter) {
-		if (mNondeterministicTransitionsDetected) {
+		if (mStopIfNondeterminismWasDetected && mNondeterministicTransitionsDetected) {
 			return Collections.emptySet();
 		}
 		if (!isNewSinkState(state)) {
@@ -292,7 +310,11 @@ public class TotalizeNwa<LETTER, STATE> implements INwaOutgoingLetterAndTransiti
 				final OutgoingReturnTransition<LETTER, STATE> trans = it.next();
 				if (it.hasNext()) {
 					mNondeterministicTransitionsDetected = true;
-					return Collections.emptySet();
+					if (mStopIfNondeterminismWasDetected) {
+						return Collections.emptySet();
+					} else {
+						return mOperand.returnSuccessors(state, hier, letter);
+					}
 				}
 				return Collections.singleton(trans);
 			}
@@ -306,7 +328,7 @@ public class TotalizeNwa<LETTER, STATE> implements INwaOutgoingLetterAndTransiti
 	@Override
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(final STATE state,
 			final STATE hier) {
-		if (mNondeterministicTransitionsDetected) {
+		if (mStopIfNondeterminismWasDetected && mNondeterministicTransitionsDetected) {
 			return Collections.emptySet();
 		}
 		final Set<LETTER> alphabet = getVpAlphabet().getReturnAlphabet();
@@ -314,10 +336,12 @@ public class TotalizeNwa<LETTER, STATE> implements INwaOutgoingLetterAndTransiti
 		for (final LETTER letter : alphabet) {
 			final Iterator<OutgoingReturnTransition<LETTER, STATE>> it =
 					returnSuccessors(state, hier, letter).iterator();
-			if (mNondeterministicTransitionsDetected) {
+			if (mStopIfNondeterminismWasDetected && mNondeterministicTransitionsDetected) {
 				return Collections.emptySet();
 			}
-			result.add(it.next());
+			while (it.hasNext()) {
+				result.add(it.next());
+			}
 			assert !it.hasNext();
 		}
 		return result;
