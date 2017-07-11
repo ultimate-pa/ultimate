@@ -27,6 +27,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.empty.EmptyDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.dataflow.DataflowDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.livevariable.LiveVariableDomain;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.arraytheory.SMTTheoryDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainPreanalysis;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
@@ -143,6 +144,8 @@ public class FixpointEngineFutureParameterFactory {
 			return (IAbstractDomain<STATE, IcfgEdge, IProgramVarOrConst>) new DataflowDomain<IcfgEdge>(logger);
 		} else if (VPDomain.class.getSimpleName().equals(domainName)) {
 			return (IAbstractDomain<STATE, IcfgEdge, IProgramVarOrConst>) createEqualityDomain(logger, root, services);
+		} else if (SMTTheoryDomain.class.getSimpleName().equals(domainName)) {
+			return (IAbstractDomain<STATE, IcfgEdge, IProgramVarOrConst>) new SMTTheoryDomain(services, root.getCfgSmtToolkit());
 		} else if (LiveVariableDomain.class.getSimpleName().equals(domainName)) {
 			return (IAbstractDomain<STATE, IcfgEdge, IProgramVarOrConst>) new LiveVariableDomain<IcfgEdge>(logger);
 		} else if (de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.nonrelational.interval.IntervalDomain.class
