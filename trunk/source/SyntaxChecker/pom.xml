@@ -23,13 +23,13 @@
 	<parent>
 		<artifactId>mavenparent</artifactId>
 		<groupId>de.uni_freiburg.informatik.ultimate</groupId>
-		<version>0.1.18</version>
+		<version>0.1.19</version>
 		<relativePath>../BA_MavenParentUltimate/pom.xml</relativePath>
 	</parent>
 
 	<groupId>de.uni_freiburg.informatik.ultimate</groupId>
 	<artifactId>de.uni_freiburg.informatik.ultimate.plugins.analysis.syntaxchecker</artifactId>
-	<version>0.1.18</version>
+	<version>0.1.19</version>
 	<packaging>eclipse-plugin</packaging>
 
 </project>
