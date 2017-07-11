@@ -28,13 +28,13 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<artifactId>de.uni_freiburg.informatik.ultimate.boogie.preprocessor.test</artifactId>
-	<version>0.1.18</version>
+	<version>0.1.19</version>
 	<packaging>eclipse-test-plugin</packaging>
 
 	<parent>
 		<artifactId>mavenparent</artifactId>
 		<groupId>de.uni_freiburg.informatik.ultimate</groupId>
-		<version>0.1.18</version>
+		<version>0.1.19</version>
 		<relativePath>../BA_MavenParentUltimate/pom.xml</relativePath>
 	</parent>
 	

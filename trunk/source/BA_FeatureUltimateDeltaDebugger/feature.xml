@@ -2,7 +2,7 @@
 <feature
       id="BA_FeatureUltimateDeltaDebugger"
       label="BA_FeatureUltimateDeltaDebugger"
-      version="0.1.18">
+      version="0.1.19">
 
    <requires>
       <import plugin="de.uni_freiburg.informatik.ultimate.lib.core"/>
