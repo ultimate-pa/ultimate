@@ -96,6 +96,14 @@ public class CounterExampleResult<ELEM extends IElement, TE extends IElement, E>
 	public Check getCheckedSpecification() {
 		return mCheckedSpecification;
 	}
+	
+	private boolean isRelevanceInformationIncluded() {
+		if (getProgramExecution().getLength() > 0) {
+			return getProgramExecution().getTraceElement(0).getRelevanceInformation() != null;
+		} else {
+			return false;
+		}
+	}
 
 	@Override
 	public String getLongDescription() {
@@ -104,6 +112,13 @@ public class CounterExampleResult<ELEM extends IElement, TE extends IElement, E>
 		sb.append(CoreUtil.getPlatformLineSeparator());
 		sb.append("We found a FailurePath: ");
 		sb.append(CoreUtil.getPlatformLineSeparator());
+		if (isRelevanceInformationIncluded()) {
+			sb.append("(The third column contains information about the relevance of the program statement.");
+			sb.append(" The Asterisk (*) means that the statement's code block is 'error enforcing'.");
+			sb.append(" The at sign (@) means that the statement's code block is 'error admitting'.");
+			sb.append(" The dash (-) means that the statement's code block is irrelevant.)");
+			sb.append(CoreUtil.getPlatformLineSeparator());
+		}
 		sb.append(getProgramExecutionAsString());
 		return sb.toString();
 	}
@@ -130,3 +145,4 @@ public class CounterExampleResult<ELEM extends IElement, TE extends IElement, E>
 		return mProgramExecutionAsString;
 	}
 }
+
