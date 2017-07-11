@@ -29,7 +29,9 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.p
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.BasicCallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.BasicInternalAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.BasicReturnAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
@@ -123,7 +125,6 @@ public class FaultLocalizationRelevanceChecker {
 	
 	public ERelevanceStatus relevanceInternal(final IPredicate pre,
 			final IInternalAction act, final IPredicate post) {
-		
 		final ERelevanceStatus result;
 		if (mUseUnsatCores) {
 			final Validity val = mHoareTripleChecker.checkInternal(pre, act, post);
@@ -173,19 +174,101 @@ public class FaultLocalizationRelevanceChecker {
 	
 	public ERelevanceStatus relevanceCall(final IPredicate pre,
 			final ICallAction call, final IPredicate post) {
-		final Validity val = mHoareTripleChecker.checkCall(pre, call, post);
-		final ERelevanceStatus result = getResult(val, mHoareTripleChecker);
-		mHoareTripleChecker.clearAssertionStack();
+		final ERelevanceStatus result;
+		if (mUseUnsatCores) {
+			final Validity val = mHoareTripleChecker.checkCall(pre, call, post);
+			result = getResult(val, mHoareTripleChecker);
+			mHoareTripleChecker.clearAssertionStack();
+		} else {
+			result = computeRelevancyCallWithoutUnsatCores(pre, call, post);
+		}
+		return result;
+	}
+	
+	private ERelevanceStatus computeRelevancyCallWithoutUnsatCores(final IPredicate pre, final ICallAction act,
+			final IPredicate post) {
+		final ERelevanceStatus result;
+		final Validity havocRes = mHoareTripleChecker.checkCall(pre, constructHavocedCallAction(act, mManagedScript), post);
+		switch (havocRes) {
+		case INVALID: {
+			final Validity nomalRes = mHoareTripleChecker.checkCall(pre, act, post);
+			switch (nomalRes) {
+			case INVALID:
+				result = ERelevanceStatus.Sat;
+				break;
+			case NOT_CHECKED:
+			case UNKNOWN:
+				result = ERelevanceStatus.unknown;
+				break;
+			case VALID:
+				result = ERelevanceStatus.InUnsatCore;
+				break;
+			default:
+				throw new AssertionError();
+			}
+			break;
+		}
+		case NOT_CHECKED:
+		case UNKNOWN:
+			result = ERelevanceStatus.unknown;
+			break;
+		case VALID:
+			result = ERelevanceStatus.NotInUnsatCore;
+			break;
+		default:
+			throw new AssertionError();
+		}
 		return result;
 	}
 	
 	public ERelevanceStatus relevanceReturn(final IPredicate returnPre,
 			final IPredicate callPre,
 			final IReturnAction ret, final IPredicate post) {
-		final Validity val = mHoareTripleChecker.checkReturn(returnPre, 
-				callPre, ret, post);
-		final ERelevanceStatus result = getResult(val, mHoareTripleChecker);
-		mHoareTripleChecker.clearAssertionStack();
+		final ERelevanceStatus result;
+		if (mUseUnsatCores) {
+			final Validity val = mHoareTripleChecker.checkReturn(returnPre, 
+					callPre, ret, post);
+			result = getResult(val, mHoareTripleChecker);
+			mHoareTripleChecker.clearAssertionStack();
+		} else {
+			result = computeRelevancyReturnWithoutUnsatCores(returnPre, callPre, ret, post);
+		}
+		return result;
+	}
+	
+	private ERelevanceStatus computeRelevancyReturnWithoutUnsatCores(final IPredicate pre, final IPredicate hier,
+			final IReturnAction act, final IPredicate post) {
+		final ERelevanceStatus result;
+		final Validity havocRes = mHoareTripleChecker.checkReturn(pre, hier, constructHavocedReturnAction(act, mManagedScript), post);
+		switch (havocRes) {
+		case INVALID: {
+			final Validity nomalRes = mHoareTripleChecker.checkReturn(pre, hier, act, post);
+			switch (nomalRes) {
+			case INVALID:
+				result = ERelevanceStatus.Sat;
+				break;
+			case NOT_CHECKED:
+			case UNKNOWN:
+				result = ERelevanceStatus.unknown;
+				break;
+			case VALID:
+				result = ERelevanceStatus.InUnsatCore;
+				break;
+			default:
+				throw new AssertionError();
+			}
+			break;
+		}
+		case NOT_CHECKED:
+		case UNKNOWN:
+			result = ERelevanceStatus.unknown;
+			break;
+		case VALID:
+			result = ERelevanceStatus.NotInUnsatCore;
+			break;
+		default:
+			throw new AssertionError();
+		}
 		return result;
 	}
 
@@ -230,5 +313,18 @@ public class FaultLocalizationRelevanceChecker {
 			final ManagedScript mgdScript) {
 		return new BasicInternalAction(act.getPrecedingProcedure(), act.getSucceedingProcedure(),
 				TransFormulaUtils.constructHavoc(act.getTransformula(), mgdScript));
+	}
+	
+	public static ICallAction constructHavocedCallAction(final ICallAction act,
+			final ManagedScript mgdScript) {
+		return new BasicCallAction(act.getPrecedingProcedure(), act.getSucceedingProcedure(),
+				TransFormulaUtils.constructHavoc(act.getLocalVarsAssignment(), mgdScript));
+	}
+	
+	public static IReturnAction constructHavocedReturnAction(final IReturnAction act,
+			final ManagedScript mgdScript) {
+		return new BasicReturnAction(act.getPrecedingProcedure(), act.getSucceedingProcedure(),
+				TransFormulaUtils.constructHavoc(act.getAssignmentOfReturn(), mgdScript), 
+				TransFormulaUtils.constructHavoc(act.getLocalVarsAssignmentOfCall(), mgdScript));
 	}
 }
