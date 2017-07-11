@@ -33,7 +33,7 @@ package de.uni_freiburg.informatik.ultimate.automata.statefactory;
  * @param <STATE>
  *            state type
  */
-public interface IUnionStateFactory<STATE> extends IEmptyStackStateFactory<STATE> {
+public interface IUnionStateFactory<STATE> extends IEmptyStackStateFactory<STATE> , ISinkStateFactory<STATE> {
 	/**
 	 * Union of two states ("product construction").
 	 * 

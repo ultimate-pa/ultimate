@@ -75,9 +75,11 @@ public final class Union<LETTER, STATE> extends BinaryNwaOperation<LETTER, STATE
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(startMessage());
 		}
-
-		final UnionNwa<LETTER, STATE> intersect = new UnionNwa<>(mFstOperand, mSndOperand, stateFactory, false);
-		mResult = new NestedWordAutomatonReachableStates<>(mServices, intersect);
+		
+		final TotalizeNwa<LETTER, STATE> fstTotalized = new TotalizeNwa<>(mFstOperand, stateFactory, false);
+		final TotalizeNwa<LETTER, STATE> sndTotalized = new TotalizeNwa<>(mSndOperand, stateFactory, false);
+		final UnionNwa<LETTER, STATE> union = new UnionNwa<>(fstTotalized, sndTotalized, stateFactory, false);
+		mResult = new NestedWordAutomatonReachableStates<>(mServices, union);
 
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(exitMessage());
