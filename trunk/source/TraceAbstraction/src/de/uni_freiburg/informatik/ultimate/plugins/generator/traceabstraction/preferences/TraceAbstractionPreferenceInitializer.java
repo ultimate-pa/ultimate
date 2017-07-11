@@ -90,7 +90,9 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_ABSINT_MODE = "Abstract interpretation Mode";
 	public static final String LABEL_ABSINT_ALWAYS_REFINE = "Refine always when using abstract interpretation";
 	public static final String LABEL_ERROR_TRACE_RELEVANCE_ANALYSIS_NON_FLOW_SENSITIVE =
-			"Non-flow-sensitive error trace relevance analysis";
+			"Highlight relevant statements in error traces";
+	public static final String TOOLTIP_ERROR_TRACE_RELEVANCE_ANALYSIS_NON_FLOW_SENSITIVE =
+			"Analyse error traces and identify relevant statements. Warning: For programs with floats, arrays, or pointers this analysis may take a significant amount of time.";
 	public static final String LABEL_ERROR_TRACE_RELEVANCE_ANALYSIS_FLOW_SENSITIVE =
 			"Flow-sensitive error trace relevance analysis";
 	public static final String LABEL_SIMPLIFICATION_TECHNIQUE = "Simplification technique";
@@ -239,7 +241,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<>(LABEL_ABSINT_ALWAYS_REFINE, DEF_ABSINT_ALWAYS_REFINE,
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_ERROR_TRACE_RELEVANCE_ANALYSIS_NON_FLOW_SENSITIVE,
-						DEF_ERROR_TRACE_RELEVANCE_ANALYSIS_NON_FLOW_SENSITIVE, PreferenceType.Boolean),
+						DEF_ERROR_TRACE_RELEVANCE_ANALYSIS_NON_FLOW_SENSITIVE, 
+						TOOLTIP_ERROR_TRACE_RELEVANCE_ANALYSIS_NON_FLOW_SENSITIVE, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_ERROR_TRACE_RELEVANCE_ANALYSIS_FLOW_SENSITIVE,
 						DEF_ERROR_TRACE_RELEVANCE_ANALYSIS_FLOW_SENSITIVE, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_SIMPLIFICATION_TECHNIQUE, DEF_SIMPLIFICATION_TECHNIQUE,
