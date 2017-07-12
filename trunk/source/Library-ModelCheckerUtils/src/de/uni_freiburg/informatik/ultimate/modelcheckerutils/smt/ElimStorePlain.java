@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -41,13 +42,13 @@ import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalStore;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.LexicographicCounter;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
  *
@@ -64,7 +65,9 @@ public class ElimStorePlain {
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private final SimplificationTechnique mSimplificationTechnique;
-	private final static String s_FreshVariableString = "arrayElim";
+	private final static String s_AUX_VAR_NEW_ARRAY = "arrayElimArr";
+	private final static String s_AUX_VAR_INDEX = "arrayElimIndex";
+	private final static String s_AUX_VAR_ARRAYCELL = "arrayElimCell";
 
 	public ElimStorePlain(final Script script, final ManagedScript mgdScript, final IUltimateServiceProvider services,
 			final SimplificationTechnique simplificationTechnique) {
@@ -77,47 +80,133 @@ public class ElimStorePlain {
 		mSimplificationTechnique = simplificationTechnique;
 	}
 
-	void elim1(final TermVariable eliminatee, final Term term) {
-		final List<MultiDimensionalStore> stores = extractStores(eliminatee, term);
+	void elim1(final TermVariable eliminatee, final Term inputTerm) {
+		final List<MultiDimensionalStore> stores = extractStores(eliminatee, inputTerm);
 		if (stores.size() > 1) {
 			throw new AssertionError("not yet supported");
 		}
 		final MultiDimensionalStore store = stores.iterator().next();
-		final List<MultiDimensionalSelect> selects = extractSelects(eliminatee, term);
+		final Term storeIndex = store.getIndex().get(0);
+		final List<MultiDimensionalSelect> selects = extractSelects(eliminatee, inputTerm);
 		
-		final HashRelation<Term, MultiDimensionalSelect> equivalentIndex = null;
-		final HashRelation<Term, MultiDimensionalSelect> distinctIndex = null;
-		final HashRelation<Term, MultiDimensionalSelect> unknownIndex = null;
+		final List<ApplicationTerm> equivalentIndex = null;
+		final List<ApplicationTerm> distinctIndex = null;
+		final List<ApplicationTerm> unknownIndex = null;
 		
-		final Map<MultiDimensionalSelect, TermVariable> oldCellMapping = null;
-		final List<Term> unk = new ArrayList<Term>(unknownIndex.getDomain());
+		final List<Term> oldCellDefinitions = new ArrayList<>();
+		final Set<TermVariable> newAuxVars = new LinkedHashSet<>(); 
+		final Map<ApplicationTerm, TermVariable> oldCellMapping = constructOldCellValueMapping(equivalentIndex,
+				unknownIndex);
+		for (final Entry<ApplicationTerm, TermVariable> entry : oldCellMapping.entrySet()) {
+			newAuxVars.add(entry.getValue());
+			oldCellDefinitions.add(SmtUtils.binaryEquality(mScript, entry.getValue(), entry.getKey()));
+		}
+		final Term oldCellDefinitionsTerm = SmtUtils.and(mScript, oldCellDefinitions);
+
+		
+		
 		final int[] numberOfValues = new int[unknownIndex.size()];
 		Arrays.fill(numberOfValues, 2);
 		final LexicographicCounter lc = new LexicographicCounter(numberOfValues);
-		final TermVariable newAuxArray = null;
+
+		
 		final Map<Term, Term> indexMapping = new HashMap<>();
+		final List<Term> indexMappingDefinitions = new ArrayList<>();
+		for (final ApplicationTerm entry : unknownIndex) {
+			final Term index = getIndexOfSelect(entry);
+			if (Arrays.asList(index.getFreeVars()).contains(eliminatee)) {
+				// need to replace index
+				final TermVariable newAuxIndex =
+						mMgdScript.constructFreshTermVariable(s_AUX_VAR_INDEX, entry.getSort());
+				newAuxVars.add(newAuxIndex);
+				indexMapping.put(index, newAuxIndex);
+				indexMappingDefinitions.add(SmtUtils.binaryEquality(mScript, newAuxIndex, index));
+			}
+		}
+		final Term indexDefinitionsTerm = SmtUtils.and(mScript, indexMappingDefinitions);
+		final Term term = SmtUtils.and(mScript, Arrays.asList(new Term[]{indexDefinitionsTerm, oldCellDefinitionsTerm, inputTerm}));
+		
+		final TermVariable newAuxArray =
+				mMgdScript.constructFreshTermVariable(s_AUX_VAR_NEW_ARRAY, eliminatee.getSort());
+		newAuxVars.add(newAuxArray) ;
+		
+		final List<Term> disjuncts = new ArrayList<>();
 		do {
 			final Map<Term, Term> substitutionMapping = new HashMap<>();
-			for (final Entry<Term, MultiDimensionalSelect> entry : equivalentIndex.entrySet()) {
-				substitutionMapping.put(entry.getValue().getSelectTerm(), oldCellMapping.get(entry.getValue()));
+			for (final ApplicationTerm entry : equivalentIndex) {
+				substitutionMapping.put(entry, oldCellMapping.get(entry));
 			}
-			for (final Entry<Term, MultiDimensionalSelect> entry : distinctIndex.entrySet()) {
-				substitutionMapping.put(entry.getValue().getSelectTerm(), mMgdScript.getScript().term("select", newAuxArray, indexMapping.get(entry.getValue().getIndex())));
+			for (final ApplicationTerm entry : distinctIndex) {
+				final Term newSelect = constructNewSelectWithPossiblyReplacedIndex(newAuxArray, entry, indexMapping);
+				substitutionMapping.put(entry, newSelect);
 			}
+			final List<Term> indexEqualityTerms = new ArrayList<>();
 			int offset = 0;
-			for (final Term u : unk) {
+			for (final ApplicationTerm entry : unknownIndex) {
+				final Term indexEqualityTerm;
 				if (lc.getCurrentValue()[offset] == 0) {
 					// equal
+					indexEqualityTerm = SmtUtils.binaryEquality(mScript, storeIndex, getIndexOfSelect(entry));
+					substitutionMapping.put(entry, oldCellMapping.get(entry));
 				} else {
 					// different
+					indexEqualityTerm = SmtUtils.distinct(mScript, storeIndex, getIndexOfSelect(entry));
+					final Term newSelect = constructNewSelectWithPossiblyReplacedIndex(newAuxArray, entry, indexMapping);
+					substitutionMapping.put(entry, newSelect);
 				}
 				offset++;
+				
+				indexEqualityTerms.add(indexEqualityTerm);
 			}
 			
-			new Substitution(mMgdScript, substitutionMapping);
+			Term disjuct = new Substitution(mMgdScript, substitutionMapping).transform(term);
+			disjuct = Util.and(mScript, SmtUtils.and(mScript, indexEqualityTerms), disjuct);
+			disjuncts.add(disjuct);
 			
-		} while (lc.isZero());
+			lc.increment();
+		} while (!lc.isZero());
 		
+	}
+
+	private Term constructNewSelectWithPossiblyReplacedIndex(final TermVariable newAuxArray,
+			final ApplicationTerm oldSelectTerm, final Map<Term, Term> indexMapping) {
+		final Term newIndex;
+		final Term originalIndex = getIndexOfSelect(oldSelectTerm);
+		final Term replacementIndex = indexMapping.get(originalIndex);
+		if (replacementIndex == null) {
+			newIndex = originalIndex;
+		} else {
+			newIndex = replacementIndex;
+		}
+		final Term newSelect = mMgdScript.getScript().term("select", newAuxArray, newIndex);
+		return newSelect;
+	}
+
+	private Map<ApplicationTerm, TermVariable> constructOldCellValueMapping(final List<ApplicationTerm> equivalentIndex,
+			final List<ApplicationTerm> unknownIndex) throws AssertionError {
+		final Map<ApplicationTerm, TermVariable> oldCellMapping = new HashMap<>();
+		for (final ApplicationTerm entry : equivalentIndex) {
+			constructAndAddOldCellValueTermVariable(oldCellMapping, entry);
+		}
+		for (final ApplicationTerm entry : unknownIndex) {
+			constructAndAddOldCellValueTermVariable(oldCellMapping, entry);
+		}
+		return oldCellMapping;
+	}
+
+	private void constructAndAddOldCellValueTermVariable(final Map<ApplicationTerm, TermVariable> oldCellMapping,
+			final ApplicationTerm entry) throws AssertionError {
+		final TermVariable oldCell = mMgdScript.constructFreshTermVariable(s_AUX_VAR_ARRAYCELL, entry.getSort());
+		final TermVariable oldValue = oldCellMapping.put(entry, oldCell);
+		if (oldValue != null) {
+			throw new AssertionError("must not insert twice");
+		}
+	}
+	
+	private Term getIndexOfSelect(final ApplicationTerm appTerm) {
+		assert (appTerm.getParameters().length == 2) : "no select";
+		assert (appTerm.getFunction().getName().equals("select")) : "no select";
+		return appTerm.getParameters()[1];
 	}
 
 	private List<MultiDimensionalStore> extractStores(final TermVariable eliminatee, final Term term) {
