@@ -117,7 +117,7 @@ public class SMTTheoryPostOperator implements IAbstractPostOperator<SMTTheorySta
 			final SMTTheoryState callPred = mStateFactory.getOrConstructState(projectedCons, 
 					hierarchicalPreOrStateAfterLeaving.getVariables());
 
-			final UnmodifiableTransFormula returnTF = ((IReturnAction) transition).getAssignmentOfReturn();
+			final UnmodifiableTransFormula returnTF = ((IReturnAction) transition).getTransformula();//.getAssignmentOfReturn();
 			final UnmodifiableTransFormula callTF = ((IReturnAction) transition).getLocalVarsAssignmentOfCall();
 			final UnmodifiableTransFormula oldVarAssignments = mCfgSmtToolkit.getOldVarsAssignmentCache()
 					.getOldVarsAssignment(transition.getPrecedingProcedure());
@@ -134,8 +134,10 @@ public class SMTTheoryPostOperator implements IAbstractPostOperator<SMTTheorySta
 					oldVarAssignments, 
 					modifiableGlobals);
 			
-			return Collections.singletonList(mStateFactory.getOrConstructState(postConstraint, 
+			final List<SMTTheoryState> res = Collections.singletonList(mStateFactory.getOrConstructState(
+					postConstraint, 
 					hierarchicalPreOrStateAfterLeaving.getVariables()));
+			return res;
 		} else {
 			throw new UnsupportedOperationException();
 		}

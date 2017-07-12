@@ -160,13 +160,13 @@ public class SMTTheoryStateFactoryAndPredicateHelper {
 		 * in case keep it.
 		 */
 		final List<Term> conjunctsThatHoldInBoth = new ArrayList<>();
-		final Term[] conjunctsFirst = SmtUtils.getConjuncts(first.getPredicate().getClosedFormula());
+		final Term[] conjunctsFirst = SmtUtils.getConjuncts(first.getPredicate().getFormula());
 		for (Term conjunct : conjunctsFirst) {
 			if (second.impliesLiteral(conjunct)) {
 				conjunctsThatHoldInBoth.add(conjunct);
 			}
 		}
-		final Term[] conjunctsSecond = SmtUtils.getConjuncts(second.getPredicate().getClosedFormula());
+		final Term[] conjunctsSecond = SmtUtils.getConjuncts(second.getPredicate().getFormula());
 		for (Term conjunct : conjunctsSecond) {
 			if (first.impliesLiteral(conjunct)) {
 				conjunctsThatHoldInBoth.add(conjunct);
@@ -211,7 +211,9 @@ public class SMTTheoryStateFactoryAndPredicateHelper {
 		mMgdScript.lock(this);
 		mMgdScript.push(this, 1);
 		mMgdScript.assertTerm(this, arrayTheoryState.getPredicate().getClosedFormula());
-		mMgdScript.assertTerm(this, SmtUtils.not(mMgdScript.getScript(), literalTerm));
+		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(literalTerm, mMgdScript.getScript(), 
+				mCsToolkit.getSymbolTable());
+		mMgdScript.assertTerm(this, SmtUtils.not(mMgdScript.getScript(), tvp.getClosedFormula()));
 		final LBool checkSatResult = mMgdScript.checkSat(this);
 		mMgdScript.pop(this, 1);
 		mMgdScript.unlock(this);

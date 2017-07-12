@@ -36,6 +36,14 @@ public class SMTTheoryTransitionRelationProvider {
 
 	public Set<TransFormula> getTransitionRelationDNF(IcfgEdge edge) {
 		final UnmodifiableTransFormula tf = edge.getTransformula();
+		
+		if (tf.isInfeasible() == Infeasibility.INFEASIBLE) {
+			mMgdScript.lock(this);
+			final Term falseTerm = mMgdScript.term(this, "false");
+			mMgdScript.unlock(this);
+			return Collections.singleton(buildNewDisjunctTf(falseTerm, tf));
+		}
+		
 		final Term formulaInDNF = new Dnf(mMgdScript, mServices).transform(tf.getFormula());
 		
 		final Term[] disjuncts = SmtUtils.getDisjuncts(formulaInDNF);
