@@ -494,6 +494,18 @@ public final class SmtUtils {
 			return script.term("=", lhs, rhs);
 		}
 	}
+	
+	/**
+	 * Returns the negated equality (not ("=" lhs rhs)), or true resp. false if 
+	 * some simple checks detect validity or unsatisfiablity
+	 * of the equality.
+	 * We deliberately do not return the "distinct" function from SMT-LIB.
+	 * In Ultimate we prefer explicit negations, because these can help us 
+	 * detect inconsitencies between terms syntactically.
+	 */
+	public static Term distinct(final Script script, final Term lhs, final Term rhs) {
+		return SmtUtils.not(script, binaryEquality(script, lhs, rhs));
+	}
 
 	/**
 	 * Returns the equality ("=" lhs rhs), but checks if one of the arguments is true/false and simplifies accordingly.
@@ -534,6 +546,8 @@ public final class SmtUtils {
 		}
 		return script.term("=", lhs, rhs);
 	}
+	
+	
 	
 	
 	/**
@@ -873,7 +887,7 @@ public final class SmtUtils {
 			if (params.length != 2) {
 				throw new UnsupportedOperationException("not yet implemented");
 			}
-			result = SmtUtils.not(script, binaryEquality(script, params[0], params[1]));
+			result = SmtUtils.distinct(script, params[0], params[1]);
 			break;
 		case "=>":
 			result = Util.implies(script, params);
