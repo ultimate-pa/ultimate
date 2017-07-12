@@ -2,8 +2,10 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -23,7 +25,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
 
 public class SMTTheoryStateFactoryAndPredicateHelper {
 
@@ -41,6 +43,8 @@ public class SMTTheoryStateFactoryAndPredicateHelper {
 	private SMTTheoryOperationProvider mArrayTheoryOperationProvider;
 	private IUltimateServiceProvider mServices;
 	private ILogger mLogger;
+	private BasicPredicate mFalsePredicate;
+	private Map<Term, IPredicate> mTermToPredicate;
 	
 	public SMTTheoryStateFactoryAndPredicateHelper(IUltimateServiceProvider services, CfgSmtToolkit csToolkit, 
 			SMTTheoryOperationProvider arrayTheoryOperationProvider) {
@@ -51,6 +55,8 @@ public class SMTTheoryStateFactoryAndPredicateHelper {
 
 		mArrayTheoryOperationProvider =	arrayTheoryOperationProvider;
 		
+		mTermToPredicate = new HashMap<>();
+
 		mBasicPredicateFactory = new BasicPredicateFactory(services, csToolkit.getManagedScript(), 
 				csToolkit.getSymbolTable(), mSimplificationTechnique, mXnfConversionTechnique);
 
@@ -59,32 +65,54 @@ public class SMTTheoryStateFactoryAndPredicateHelper {
 		final Term falseTerm = csToolkit.getManagedScript().term(this, "false");
 		csToolkit.getManagedScript().unlock(this);
 		mTopState = getOrConstructState(trueTerm, Collections.emptySet());
-		mBottomState = new SMTTheoryState(mBasicPredicateFactory.newPredicate(falseTerm), 
-				Collections.emptySet(), this);
+		mFalsePredicate = mBasicPredicateFactory.newPredicate(falseTerm);
+		mBottomState = new SMTTheoryState(mFalsePredicate, Collections.emptySet(), this);
 	}
 
+	/**
+	 * @param resTerm
+	 * @param variables
+	 * @return
+	 */
 	public SMTTheoryState getOrConstructState(Term resTerm, Set<IProgramVarOrConst> variables) {
-		Set<IProgramVar> vars = variables.stream()
-				.filter(pvoc -> pvoc instanceof IProgramVar)
-				.map(var -> (IProgramVar) var)
-				.collect(Collectors.toSet());
-		mMgdScript.lock(this);
-		mMgdScript.push(this, 1);
-		mMgdScript.assertTerm(this, 
-				PredicateUtils.computeClosedFormula(resTerm, vars, mMgdScript.getScript()));
-		final LBool checkSatResult = mMgdScript.checkSat(this);
-		mMgdScript.pop(this, 1);
-		mMgdScript.unlock(this);
-	
-		if (checkSatResult == LBool.UNSAT) {
-			return mBottomState;
-		}
 		
-		BasicPredicate pred = mBasicPredicateFactory.newPredicate(resTerm);
+		final IPredicate pred = getOrConstructPredicate(resTerm, variables);
+
 		return getOrConstructState(pred, variables);
 	}
 
+	private IPredicate getOrConstructPredicate(Term resTerm, Set<IProgramVarOrConst> variables) {
+
+		IPredicate pred = mTermToPredicate.get(resTerm);
+
+		if (pred == null) {
+			Set<IProgramVar> vars = variables.stream()
+					.filter(pvoc -> pvoc instanceof IProgramVar)
+					.map(var -> (IProgramVar) var)
+					.collect(Collectors.toSet());
+			mMgdScript.lock(this);
+			mMgdScript.push(this, 1);
+			final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(resTerm, mMgdScript.getScript(), 
+					mCsToolkit.getSymbolTable());
+			mMgdScript.assertTerm(this, tvp.getClosedFormula());
+//					PredicateUtils.computeClosedFormula(resTerm, vars, mMgdScript.getScript()));
+			final LBool checkSatResult = mMgdScript.checkSat(this);
+			mMgdScript.pop(this, 1);
+			mMgdScript.unlock(this);
+
+			if (checkSatResult == LBool.UNSAT) {
+				pred = mFalsePredicate;
+			} else {
+				pred = mBasicPredicateFactory.newPredicate(resTerm);
+			}
+		}
+		return pred;
+	}
+
 	public SMTTheoryState getOrConstructState(IPredicate predicate, Set<IProgramVarOrConst> newPvocs) {
+		if (predicate == mFalsePredicate) {
+			return mBottomState;
+		}
 		return new SMTTheoryState(predicate, newPvocs, this);
 	}
 
@@ -127,14 +155,20 @@ public class SMTTheoryStateFactoryAndPredicateHelper {
 			return first;
 		}
 
-//		final IPredicate disjunction = 
-//				mBasicPredicateFactory.or(mSimplificationTechnique, first.getPredicate(), second.getPredicate());
-		
-		final Term[] conjuncts = SmtUtils.getConjuncts(first.getPredicate().getFormula());
-		
+		/*
+		 * for each conjunct in each state: check if it also holds in the other state,
+		 * in case keep it.
+		 */
 		final List<Term> conjunctsThatHoldInBoth = new ArrayList<>();
-		for (Term conjunct : conjuncts) {
+		final Term[] conjunctsFirst = SmtUtils.getConjuncts(first.getPredicate().getClosedFormula());
+		for (Term conjunct : conjunctsFirst) {
 			if (second.impliesLiteral(conjunct)) {
+				conjunctsThatHoldInBoth.add(conjunct);
+			}
+		}
+		final Term[] conjunctsSecond = SmtUtils.getConjuncts(second.getPredicate().getClosedFormula());
+		for (Term conjunct : conjunctsSecond) {
+			if (first.impliesLiteral(conjunct)) {
 				conjunctsThatHoldInBoth.add(conjunct);
 			}
 		}
