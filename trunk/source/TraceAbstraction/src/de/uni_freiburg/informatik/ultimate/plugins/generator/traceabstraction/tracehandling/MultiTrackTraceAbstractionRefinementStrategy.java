@@ -154,7 +154,7 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy<LETTER extend
 	 */
 	@SuppressWarnings("squid:S1699")
 	public MultiTrackTraceAbstractionRefinementStrategy(final ILogger logger,
-			final TaCheckAndRefinementPreferences prefs, final IUltimateServiceProvider services,
+			final TaCheckAndRefinementPreferences<LETTER> prefs, final IUltimateServiceProvider services,
 			final CfgSmtToolkit cfgSmtToolkit, final PredicateFactory predicateFactory,
 			final PredicateUnifier predicateUnifier, final AssertionOrderModulation<LETTER> assertionOrderModulation,
 			final IRun<LETTER, IPredicate, ?> counterexample, final IAutomaton<LETTER, IPredicate> abstraction,
@@ -248,11 +248,9 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy<LETTER extend
 
 	@Override
 	public IInterpolantAutomatonBuilder<LETTER, IPredicate> getInterpolantAutomatonBuilder(
-			final List<TracePredicates> perfectIpps,
-			final List<TracePredicates> imperfectIpps) {
+			final List<TracePredicates> perfectIpps, final List<TracePredicates> imperfectIpps) {
 		// current policy: use all interpolant sequences
-		final List<TracePredicates> allIpps =
-				IRefinementStrategy.wrapTwoListsInOne(perfectIpps, imperfectIpps);
+		final List<TracePredicates> allIpps = IRefinementStrategy.wrapTwoListsInOne(perfectIpps, imperfectIpps);
 
 		if (mInterpolantAutomatonBuilder == null) {
 			mInterpolantAutomatonBuilder =
