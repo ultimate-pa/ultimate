@@ -1,5 +1,5 @@
 #!/bin/bash
- 
+
 exitOnFail() {
     "$@"
     local status=$?
