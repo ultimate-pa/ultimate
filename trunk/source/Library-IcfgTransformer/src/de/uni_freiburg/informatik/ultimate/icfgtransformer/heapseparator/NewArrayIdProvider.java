@@ -58,6 +58,11 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
+/**
+ * 
+ * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
+ *
+ */
 public class NewArrayIdProvider {
 	
 	private final Map<Set<Term>, PartitionInformation> mArrayToPartitionInformation = new HashMap<>();

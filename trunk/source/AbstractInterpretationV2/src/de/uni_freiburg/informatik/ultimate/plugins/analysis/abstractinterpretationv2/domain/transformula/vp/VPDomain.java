@@ -52,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.Benchmark;
  *
  *
  * @author Yu-Wen Chen (yuwenchen1105@gmail.com)
+ * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  */
 public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 		implements IAbstractDomain<EqState<ACTION>, ACTION, IProgramVarOrConst> {

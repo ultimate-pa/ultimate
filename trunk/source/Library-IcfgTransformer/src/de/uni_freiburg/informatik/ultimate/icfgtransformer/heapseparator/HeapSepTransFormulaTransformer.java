@@ -643,7 +643,7 @@ public class HeapSepTransFormulaTransformer implements ITransformulaTransformer 
 	@Override
 	public TransforumlaTransformationResult transform(final UnmodifiableTransFormula tf) {
 		/*
-		 * The question if the HeapSeparator computes an overapproximation ("true" flag we give below) is a bit more 
+		 * The question if the HeapSeparator computes an overapproximation ("false" flag we give below) is a bit more 
 		 * complicated:
 		 *  <li> we introduce fresh program variables, so strictly speaking the transformed program's behaviour is 
 		 *    incomparable to the input program's
@@ -653,7 +653,7 @@ public class HeapSepTransFormulaTransformer implements ITransformulaTransformer 
 		 *   equality domain, the transformation should be exact
 		 *  <li> some TransFormulas it does not change at all, so there we could say "false" (TODO recognize that)
 		 */
-		return new TransforumlaTransformationResult(splitArraysInTransFormula(tf), true);
+		return new TransforumlaTransformationResult(splitArraysInTransFormula(tf), false);
 	}
 
 
