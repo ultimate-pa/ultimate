@@ -14,9 +14,11 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.IEqualityProvidingState;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 
-public class SMTTheoryState implements IAbstractState<SMTTheoryState, IProgramVarOrConst> {
+public class SMTTheoryState implements IAbstractState<SMTTheoryState, IProgramVarOrConst>, IEqualityProvidingState {
 	
 	private final IPredicate mPredicate;
 	
@@ -157,5 +159,28 @@ public class SMTTheoryState implements IAbstractState<SMTTheoryState, IProgramVa
 	@Override
 	public String toString() {
 		return mPredicate.toString();
+	}
+
+	@Override
+	public boolean areEqual(Term t1, Term t2) {
+		final ManagedScript mgdScript = mFactory.getManagedScript();
+		mgdScript.lock(this);
+		final Term equalsTerm = mgdScript.term(this, "=", t1, t2);
+		mgdScript.unlock(this);
+		return impliesLiteral(equalsTerm);
+	}
+
+	@Override
+	public boolean areUnequal(Term t1, Term t2) {
+		final ManagedScript mgdScript = mFactory.getManagedScript();
+		mgdScript.lock(this);
+		final Term unequalsTerm = mgdScript.term(this, "distinct", t1, t2);
+		mgdScript.unlock(this);
+		return impliesLiteral(unequalsTerm);
+	}
+
+	@Override
+	public IEqualityProvidingState union(IEqualityProvidingState other) {
+		return union((SMTTheoryState) other);
 	}
 }

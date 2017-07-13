@@ -222,4 +222,8 @@ public class SMTTheoryStateFactoryAndPredicateHelper {
 
 		return checkSatResult == LBool.UNSAT;
 	}
+
+	public ManagedScript getManagedScript() {
+		return mMgdScript;
+	}
 }

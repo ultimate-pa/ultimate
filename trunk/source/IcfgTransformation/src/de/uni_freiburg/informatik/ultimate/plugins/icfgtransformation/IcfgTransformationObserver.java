@@ -178,7 +178,8 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 		case MODULO_NEIGHBOR:
 			return applyModuloNeighbor(icfg, locFac, outlocClass, backtranslationTracker, fac, mServices);
 		case HEAP_SEPARATOR:
-			return applyHeapSeparator(icfg, locFac, outlocClass, backtranslationTracker, fac, mServices);
+			return applyHeapSeparator(icfg, locFac, outlocClass, backtranslationTracker, fac, mServices,
+					new AbsIntEqualityProvider(mServices));
 
 		default:
 			throw new UnsupportedOperationException("Unknown transformation type: " + transformation);
@@ -188,10 +189,11 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 	private <INLOC extends IcfgLocation, OUTLOC extends IcfgLocation> IIcfg<OUTLOC> applyHeapSeparator(
 			final IIcfg<INLOC> icfg, final ILocationFactory<INLOC, OUTLOC> locFac, // TODO: omit unneeded fields here
 			final Class<OUTLOC> outlocClass, final IBacktranslationTracker backtranslationTracker,
-			final ReplacementVarFactory fac, final IUltimateServiceProvider services) {
+			final ReplacementVarFactory fac, final IUltimateServiceProvider services,
+			final IEqualityAnalysisResultProvider<IcfgLocation, IIcfg<?>> equalityProvider) {
 
 		final HeapSepTransFormulaTransformer tftf =
-				new HeapSepTransFormulaTransformer(icfg.getCfgSmtToolkit(), mServices);
+				new HeapSepTransFormulaTransformer(icfg.getCfgSmtToolkit(), mServices, equalityProvider);
 
 		final String newIcfgIdentifier = "IcfgWithHeapSeparation";
 		final IcfgTransformer<INLOC, OUTLOC> icfgTransformer =

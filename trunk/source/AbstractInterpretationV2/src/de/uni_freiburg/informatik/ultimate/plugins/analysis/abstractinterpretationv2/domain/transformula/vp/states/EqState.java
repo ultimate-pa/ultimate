@@ -18,13 +18,14 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.IEqualityProvidingState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainSymmetricPair;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqFunction;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNode;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNodeAndFunctionFactory;
 
 public class EqState<ACTION extends IIcfgTransition<IcfgLocation>>
-		implements IAbstractState<EqState<ACTION>, IProgramVarOrConst> {
+		implements IAbstractState<EqState<ACTION>, IProgramVarOrConst>, IEqualityProvidingState {
 
 	private static int sNextFreeId = 0;
 	
@@ -318,6 +319,11 @@ public class EqState<ACTION extends IIcfgTransition<IcfgLocation>>
 	public int hashCode() {
 //		return super.hashCode();
 		return mId;
+	}
+
+	@Override
+	public IEqualityProvidingState union(IEqualityProvidingState other) {
+		return union((EqState<ACTION>) other);
 	}
 	
 	

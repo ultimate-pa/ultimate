@@ -47,14 +47,13 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdgeIterator;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayEquality;
@@ -62,12 +61,10 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayInd
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayUpdate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalStore;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.IEqualityAnalysisResultProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainHelpers;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.EqState;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.AbstractInterpreter;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.IAbstractInterpretationResult;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
 /**
@@ -92,13 +89,16 @@ public class HeapSepTransFormulaTransformer implements ITransformulaTransformer 
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 	private final CfgSmtToolkit mCsToolkit;
+	private final IEqualityAnalysisResultProvider<IcfgLocation, IIcfg<?>> mEqualityProvider;
 	
-	public HeapSepTransFormulaTransformer(final CfgSmtToolkit csToolkit, IUltimateServiceProvider services) {
+	public HeapSepTransFormulaTransformer(final CfgSmtToolkit csToolkit, IUltimateServiceProvider services, 
+			IEqualityAnalysisResultProvider<IcfgLocation, IIcfg<?>> equalityProvider) {
 		mMgdScript = csToolkit.getManagedScript();
 		mOldSymbolTable = csToolkit.getSymbolTable();
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(IcfgTransformer.class);
 		mCsToolkit = csToolkit;
+		mEqualityProvider = equalityProvider;
 	}
 
 	public static IProgramVar getBoogieVarFromTermVar(final TermVariable tv, final Map<IProgramVar, TermVariable> map1,
@@ -605,31 +605,36 @@ public class HeapSepTransFormulaTransformer implements ITransformulaTransformer 
 
 	@Override
 	public void preprocessIcfg(IIcfg<?> icfg) {
-		// run equality domain
-		final IAbstractInterpretationResult<EqState<IcfgEdge>, IcfgEdge, IProgramVarOrConst, ?> 
-			abstractInterpretationResult =
-				AbstractInterpreter.runFutureEqualityDomain(icfg, 
-						mServices.getProgressMonitorService().getChildTimer(0.2), 
-						mServices, 
-						false, 
-						mLogger);
-		mVpDomain = (VPDomain<IcfgEdge>) abstractInterpretationResult.getUsedDomain();
-
+//		// run equality domain
+//AbsIntEqualityProvider aiep = new AbsIntEqualityProvider(mServices);
+//		final IAbstractInterpretationResult<EqState<IcfgEdge>, IcfgEdge, IProgramVarOrConst, ?> 
+//			abstractInterpretationResult =
+//				AbstractInterpreter.runFutureEqualityDomain(icfg, 
+//						mServices.getProgressMonitorService().getChildTimer(0.2), 
+//						mServices, 
+//						false, 
+//						mLogger);
+//		mVpDomain = (VPDomain<IcfgEdge>) abstractInterpretationResult.getUsedDomain();
+		
 		/* 
 		 * run a preanalysis that finds out necessary information for the (heap) array partitioning, in particular:
 		 *  <li> which arrays are equated in the program
 		 *  <li> at which indices each array is accessed
 		 */
 		HeapSepPreAnalysis heapSepPreanalysis = new HeapSepPreAnalysis(mLogger, 
-				icfg.getCfgSmtToolkit().getManagedScript(), mVpDomain);
+				icfg.getCfgSmtToolkit().getManagedScript());
 		new IcfgEdgeIterator(icfg).forEachRemaining(edge -> heapSepPreanalysis.processEdge(edge));
 		
+		
+		mEqualityProvider.preprocess(icfg);
+
 		/* 
 		 * compute the partitioning from the above results, in particular compute which array will translate to which
 		 *  new array for which accessing expression
 		 */
 		mNewArrayIdProvider = 
-				new NewArrayIdProvider(mCsToolkit, abstractInterpretationResult, heapSepPreanalysis);
+//				new NewArrayIdProvider(mCsToolkit, abstractInterpretationResult, heapSepPreanalysis);
+				new NewArrayIdProvider(mCsToolkit, mEqualityProvider, heapSepPreanalysis);
 		mNewSymbolTable = mNewArrayIdProvider.getNewSymbolTable();
 	}
 

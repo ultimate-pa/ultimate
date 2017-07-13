@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -46,17 +45,15 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.LocalBoogieV
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.IntraproceduralReplacementVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ProgramVarUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.IEqualityAnalysisResultProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.IEqualityProvidingState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomain;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainPreanalysis;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainSymmetricPair;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.EqState;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.IAbstractInterpretationResult;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
@@ -72,25 +69,25 @@ public class NewArrayIdProvider {
 	private final IIcfgSymbolTable mOldSymbolTable;
 
 	public NewArrayIdProvider(final CfgSmtToolkit csToolkit, 
-			IAbstractInterpretationResult<EqState<IcfgEdge>, IcfgEdge, IProgramVarOrConst, ?> vpDomainResult, 
+			IEqualityAnalysisResultProvider<IcfgLocation, IIcfg<?>> equalityProvider, 
 			HeapSepPreAnalysis hspav) {
 		mManagedScript = csToolkit.getManagedScript();
 		mOldSymbolTable = csToolkit.getSymbolTable();
 		mNewSymbolTable = new DefaultIcfgSymbolTable(csToolkit.getSymbolTable(), csToolkit.getProcedures());
 		
-		processAbstractInterpretationResult(vpDomainResult, hspav);
+		processAbstractInterpretationResult(equalityProvider, hspav);
 	}
 	
 	/**
 	 *
-	 * @param vpDomainResult
+	 * @param equalityProvider
 	 * @param hspav
 	 * @return a map of the form (unseparated array --> index --> separated array)
 	 */
 	private void processAbstractInterpretationResult(
-			final IAbstractInterpretationResult<EqState<IcfgEdge>, IcfgEdge, IProgramVarOrConst, ?> vpDomainResult,
+			final IEqualityAnalysisResultProvider<IcfgLocation, IIcfg<?>> equalityProvider,
 			final HeapSepPreAnalysis hspav) {
-		final VPDomain<IcfgEdge> vpDomain = (VPDomain<IcfgEdge>) vpDomainResult.getUsedDomain();
+//		final VPDomain<IcfgEdge> vpDomain = (VPDomain<IcfgEdge>) equalityProvider.getUsedDomain();
 		
 		/*
 		 * compute which arrays are equated somewhere in the program and thus need the same partitioning
@@ -121,40 +118,48 @@ public class NewArrayIdProvider {
 			}
 		}
 		
-		/*
-		 * Compute the mapping array to EqState: The HeapSepPreAnalysisVisitor can tell us which arrays are accessed at
-		 * which locations. For each array take only the VPStates intro account that belong to a location directly
-		 * before an access to that array. Those are disjoined.
-		 */
-		final Map<Set<Term>, EqState<IcfgEdge>> arrayGroupToVPState = new HashMap<>();
-		for (final Set<Term> ec : arrayGroupingUf.getAllEquivalenceClasses()) {
-			final Set<EqState<IcfgEdge>> statesForCurrentEc = new HashSet<>();
-			for (final IcfgLocation loc : arrayGroupToAccessLocations.getImage(ec)) {
-				final Set<EqState<IcfgEdge>> statesAtLoc = vpDomainResult.getLoc2States().get(loc);
-				if (statesAtLoc == null) {
-					continue;
-				}
-				statesForCurrentEc.addAll(statesAtLoc);
-			}
-			
-			EqState<IcfgEdge> disjoinedState;
-			if (statesForCurrentEc.isEmpty()) {
-				disjoinedState = vpDomain.getEqStateFactory().getTopState();
-			} else {
-				disjoinedState = vpDomain.getEqStateFactory().disjoinAll(statesForCurrentEc);
-			}
-			arrayGroupToVPState.put(ec, disjoinedState);
+//		/*
+//		 * Compute the mapping array to EqState: The HeapSepPreAnalysisVisitor can tell us which arrays are accessed at
+//		 * which locations. For each array take only the VPStates intro account that belong to a location directly
+//		 * before an access to that array. Those are disjoined.
+//		 */
+//		final Map<Set<Term>, EqState<IcfgEdge>> arrayGroupToVPState = new HashMap<>();
+//		for (final Set<Term> ec : arrayGroupingUf.getAllEquivalenceClasses()) {
+//			final Set<EqState<IcfgEdge>> statesForCurrentEc = new HashSet<>();
+//			for (final IcfgLocation loc : arrayGroupToAccessLocations.getImage(ec)) {
+//				final Set<EqState<IcfgEdge>> statesAtLoc = equalityProvider.getLoc2States().get(loc);
+//				if (statesAtLoc == null) {
+//					continue;
+//				}
+//				statesForCurrentEc.addAll(statesAtLoc);
+//			}
+//			
+//			EqState<IcfgEdge> disjoinedState;
+//			if (statesForCurrentEc.isEmpty()) {
+//				disjoinedState = vpDomain.getEqStateFactory().getTopState();
+//			} else {
+//				disjoinedState = vpDomain.getEqStateFactory().disjoinAll(statesForCurrentEc);
+//			}
+//			arrayGroupToVPState.put(ec, disjoinedState);
+//		}
+
+		final Map<Set<Term>, IEqualityProvidingState> arrayGroupToVPState = new HashMap<>();
+		for (final Set<Term> arrayGroup : arrayGroupingUf.getAllEquivalenceClasses()) {
+			final Set<IcfgLocation> arrayGroupAccessLocations = arrayGroupToAccessLocations.getImage(arrayGroup);
+			arrayGroupToVPState.put(arrayGroup, 
+					equalityProvider.getEqualityProvidingStateForLocationSet(arrayGroupAccessLocations));
 		}
+			
 		
 		/*
 		 * Compute the actual partitioning for each array.
 		 */
-		final VPDomainPreanalysis vpPreAnalysis =
-				((VPDomain<IcfgEdge>) vpDomainResult.getUsedDomain()).getPreAnalysis();
+//		final VPDomainPreanalysis vpPreAnalysis =
+//				((VPDomain<IcfgEdge>) equalityProvider.getUsedDomain()).getPreAnalysis();
 //		final NewArrayIdProvider newArrayIdProvider = new NewArrayIdProvider(mCsToolkit);
-		for (final Entry<Set<Term>, EqState<IcfgEdge>> en : arrayGroupToVPState.entrySet()) {
+		for (final Entry<Set<Term>, IEqualityProvidingState> en : arrayGroupToVPState.entrySet()) {
 			final Set<Term> arrayGroup = en.getKey();
-			final EqState<IcfgEdge> state = en.getValue();
+			final IEqualityProvidingState state = en.getValue();
 			
 			final UnionFind<List<Term>> uf = new UnionFind<>();
 			for (final List<Term> accessingTerm : hspav.getAccessingIndicesForArrays(arrayGroup)) {

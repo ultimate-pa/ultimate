@@ -40,14 +40,13 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgE
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayEquality;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalStore;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainHelpers;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainPreanalysis;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainSymmetricPair;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
@@ -73,21 +72,26 @@ public class HeapSepPreAnalysis {
 
 	private final ManagedScript mScript;
 
-	private VPDomainPreanalysis mVpDomainPreAnalysis;
+//	private final IEqualityAnalysisResultProvider<IcfgLocation, IIcfg<?>> mEqualityProvider;
+
+//	private VPDomainPreanalysis mVpDomainPreAnalysis;
 
 	/**
 	 * The HeapSepPreAnalysisVisitor computes and provides the following information:
 	 *  - which arrays (base arrays, not store terms) are equated in the program
 	 *  - for each array at which locations in the CFG it is accessed
 	 * @param logger
+	 * @param equalityProvider 
 	 */
-	public HeapSepPreAnalysis(ILogger logger, ManagedScript script, VPDomain domain) {
+	public HeapSepPreAnalysis(ILogger logger, ManagedScript script) {
+//			IEqualityAnalysisResultProvider<IcfgLocation, IIcfg<?>> equalityProvider) {
 //		super(logger);
 		mArrayToAccessLocations = new HashRelation<>();
 		mArrayToAccessingIndices = new HashRelation<>();
 		mScript = script;
 		mArrayEqualities = new HashSet<>();
-		mVpDomainPreAnalysis = domain.getPreAnalysis();
+//		mEqualityProvider = equalityProvider;
+//		mVpDomainPreAnalysis = domain.getPreAnalysis();
 	}
 
 	public void processEdge(IcfgEdge edge) {
@@ -122,7 +126,7 @@ public class HeapSepPreAnalysis {
 				MultiDimensionalSelect.extractSelectDeep(tf.getFormula(), false);
 		final List<MultiDimensionalSelect> mdSelectsFiltered = 
 							mdSelectsAll.stream()
-							.filter(mds -> mVpDomainPreAnalysis.isArrayTracked(mds.getArray(), tf))
+							.filter(mds -> isArrayTracked(mds.getArray(), tf))
 							.collect(Collectors.toList());
 		mdSelectsFiltered.forEach(mds -> result.addPair(
 				VPDomainHelpers.normalizeTerm(getInnerMostArray(mds.getArray()), tf, mScript), 
@@ -134,7 +138,7 @@ public class HeapSepPreAnalysis {
 		final List<MultiDimensionalStore> mdStoresAll =
 				MultiDimensionalStore.extractArrayStoresDeep(tf.getFormula());
 		final List<MultiDimensionalStore> mdStoresFiltered = mdStoresAll.stream()
-				.filter(mds -> mVpDomainPreAnalysis.isArrayTracked(mds.getArray(), tf))
+				.filter(mds -> isArrayTracked(mds.getArray(), tf))
 				.collect(Collectors.toList());
 		mdStoresFiltered.forEach(mds -> result.addPair(
 				VPDomainHelpers.normalizeTerm(getInnerMostArray(mds.getArray()), tf, mScript), 
@@ -151,7 +155,7 @@ public class HeapSepPreAnalysis {
 			if (!pv.getTermVariable().getSort().isArraySort()) {
 				continue;
 			}
-			if (!mVpDomainPreAnalysis.isArrayTracked(pv)) {
+			if (!isArrayTracked(pv)) {
 				continue;
 			}
 			// we have an array variable --> store that it occurs after the source location of the edge
@@ -162,7 +166,7 @@ public class HeapSepPreAnalysis {
 			if (!pv.getTermVariable().getSort().isArraySort()) {
 				continue;
 			}
-			if (!mVpDomainPreAnalysis.isArrayTracked(pv)) {
+			if (!isArrayTracked(pv)) {
 				continue;
 			}
 			// we have an array variable --> store that it occurs after the source location of the edge
@@ -198,5 +202,13 @@ public class HeapSepPreAnalysis {
 		 arrayGroup.forEach(array -> 
 		 	result.addAll(getArrayToAccessingIndices().getImage(array)));
 		return result;
+	}
+	
+	private boolean isArrayTracked(IProgramVarOrConst array) {
+		return true;
+	}
+
+	private boolean isArrayTracked(Term array, UnmodifiableTransFormula tf) {
+		return true;
 	}
 }
