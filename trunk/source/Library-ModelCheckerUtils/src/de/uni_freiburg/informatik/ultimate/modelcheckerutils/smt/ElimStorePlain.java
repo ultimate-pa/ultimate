@@ -28,7 +28,10 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -46,9 +49,17 @@ import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSort;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalStore;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.PrenexNormalForm;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierPusher;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierPusher.PqeTechniques;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierSequence;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierSequence.QuantifiedVariables;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.LexicographicCounter;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.TreeRelation;
 
 /**
  *
@@ -79,8 +90,64 @@ public class ElimStorePlain {
 		mLogger = mServices.getLoggingService().getLogger(ModelCheckerUtils.PLUGIN_ID);
 		mSimplificationTechnique = simplificationTechnique;
 	}
+	
+	
+	public Pair<Term, Collection<TermVariable>> elimAll(final Collection<TermVariable> inputEliminatees, final Term inputTerm) {
+		
+		Collection<TermVariable> eliminatees = inputEliminatees;
+		Term term = inputTerm;
+		while (true) {
+			final TreeRelation<Integer, TermVariable> tr = classifyEliminatees(eliminatees);
+			eliminatees = new HashSet<>();
+			TermVariable thisIterationEliminatee = null;
+			for (final Integer dim : tr.getDomain()) {
+				for (final TermVariable var : tr.getImage(dim)) {
+					if (dim > 0 && thisIterationEliminatee == null) {
+						thisIterationEliminatee = var;
+					} else {
+						eliminatees.add(var);
+					}
+				}
+			}
+			if (thisIterationEliminatee == null) {
+				// no array eliminatees left
+				break;
+			}
+			final Pair<Term, Set<TermVariable>> elimRes = elim1(thisIterationEliminatee, term);
+			term = elimRes.getFirst();
+			eliminatees.addAll(elimRes.getSecond());
+			final Term quantified = SmtUtils.quantifier(mScript, mQuantifier, eliminatees, term);
+			final Term pushed = new QuantifierPusher(mMgdScript, mServices, true, PqeTechniques.ALL_LOCAL).transform(quantified);
+			
+			final Term pnf = new PrenexNormalForm(mMgdScript).transform(pushed);
+			final QuantifierSequence qs = new QuantifierSequence(mMgdScript.getScript(), pnf);
+			final Term matrix = qs.getInnerTerm();
+			final List<QuantifiedVariables> qvs = qs.getQuantifierBlocks();
+			if (qvs.size() == 0) {
+				eliminatees = Collections.emptySet();
+			} else if (qvs.size() == 1) {
+				eliminatees = qvs.get(0).getVariables();
+			} else if (qvs.size() > 1) {
+				throw new UnsupportedOperationException("alternation not yet supported");
+			}
+			term = matrix;
 
-	void elim1(final TermVariable eliminatee, final Term inputTerm) {
+		}
+		// return term and variables that we could not eliminate
+		return new Pair<>(term, eliminatees);
+	}
+
+
+	private TreeRelation<Integer, TermVariable> classifyEliminatees(final Collection<TermVariable> eliminatees) {
+		final TreeRelation<Integer, TermVariable> tr = new TreeRelation<>();
+		for (final TermVariable eliminatee : eliminatees) {
+			final MultiDimensionalSort mds = new MultiDimensionalSort(eliminatee.getSort());
+			tr.addPair(mds.getDimension(), eliminatee);
+		}
+		return tr;
+	}
+
+	public Pair<Term, Set<TermVariable>> elim1(final TermVariable eliminatee, final Term inputTerm) {
 		final List<MultiDimensionalStore> stores = extractStores(eliminatee, inputTerm);
 		if (stores.size() > 1) {
 			throw new AssertionError("not yet supported");
@@ -89,9 +156,9 @@ public class ElimStorePlain {
 		final Term storeIndex = store.getIndex().get(0);
 		final List<MultiDimensionalSelect> selects = extractSelects(eliminatee, inputTerm);
 		
-		final List<ApplicationTerm> equivalentIndex = null;
-		final List<ApplicationTerm> distinctIndex = null;
-		final List<ApplicationTerm> unknownIndex = null;
+		final List<ApplicationTerm> equivalentIndex = Collections.emptyList();
+		final List<ApplicationTerm> distinctIndex = Collections.emptyList();
+		final List<ApplicationTerm> unknownIndex = extractSelects2(eliminatee, inputTerm);
 		
 		final List<Term> oldCellDefinitions = new ArrayList<>();
 		final Set<TermVariable> newAuxVars = new LinkedHashSet<>(); 
@@ -133,11 +200,15 @@ public class ElimStorePlain {
 		final List<Term> disjuncts = new ArrayList<>();
 		do {
 			final Map<Term, Term> substitutionMapping = new HashMap<>();
+			substitutionMapping.put(store.getStoreTerm(), newAuxArray);
 			for (final ApplicationTerm entry : equivalentIndex) {
-				substitutionMapping.put(entry, oldCellMapping.get(entry));
+				final Term newSelect = oldCellMapping.get(entry);
+				assert !Arrays.asList(newSelect.getFreeVars()).contains(eliminatee) : "var is still there: " + eliminatee;
+				substitutionMapping.put(entry, newSelect);
 			}
 			for (final ApplicationTerm entry : distinctIndex) {
 				final Term newSelect = constructNewSelectWithPossiblyReplacedIndex(newAuxArray, entry, indexMapping);
+				assert !Arrays.asList(newSelect.getFreeVars()).contains(eliminatee) : "var is still there: " + eliminatee;
 				substitutionMapping.put(entry, newSelect);
 			}
 			final List<Term> indexEqualityTerms = new ArrayList<>();
@@ -147,24 +218,34 @@ public class ElimStorePlain {
 				if (lc.getCurrentValue()[offset] == 0) {
 					// equal
 					indexEqualityTerm = SmtUtils.binaryEquality(mScript, storeIndex, getIndexOfSelect(entry));
-					substitutionMapping.put(entry, oldCellMapping.get(entry));
+					final Term newSelect = oldCellMapping.get(entry);
+					assert !Arrays.asList(newSelect.getFreeVars()).contains(eliminatee) : "var is still there: " + eliminatee;
+					substitutionMapping.put(entry, newSelect);
 				} else {
 					// different
 					indexEqualityTerm = SmtUtils.distinct(mScript, storeIndex, getIndexOfSelect(entry));
 					final Term newSelect = constructNewSelectWithPossiblyReplacedIndex(newAuxArray, entry, indexMapping);
+					assert !Arrays.asList(newSelect.getFreeVars()).contains(eliminatee) : "var is still there: " + eliminatee;
 					substitutionMapping.put(entry, newSelect);
 				}
 				offset++;
 				
 				indexEqualityTerms.add(indexEqualityTerm);
 			}
+			final Term newSelect = SmtUtils.binaryEquality(mScript, 
+					mScript.term("select", newAuxArray, storeIndex), 
+					new SubstitutionWithLocalSimplification(mMgdScript, substitutionMapping).transform(store.getStoreTerm().getParameters()[2]));
 			
-			Term disjuct = new Substitution(mMgdScript, substitutionMapping).transform(term);
-			disjuct = Util.and(mScript, SmtUtils.and(mScript, indexEqualityTerms), disjuct);
+			Term disjuct = new SubstitutionWithLocalSimplification(mMgdScript, substitutionMapping).transform(term);
+			
+			disjuct = Util.and(mScript, SmtUtils.and(mScript, indexEqualityTerms), disjuct, newSelect);
+			assert !Arrays.asList(disjuct.getFreeVars()).contains(eliminatee) : "var is still there: " + eliminatee;
 			disjuncts.add(disjuct);
 			
 			lc.increment();
 		} while (!lc.isZero());
+		final Term result = SmtUtils.or(mScript, disjuncts);
+		return new Pair<Term, Set<TermVariable>>(result, newAuxVars);
 		
 	}
 
@@ -226,6 +307,17 @@ public class ElimStorePlain {
 		for (final ApplicationTerm appTerm : stores) {
 			if (appTerm.getParameters()[0].equals(eliminatee)) {
 				result.add(new MultiDimensionalSelect(appTerm));
+			}
+		}
+		return result;
+	}
+	
+	private List<ApplicationTerm> extractSelects2(final TermVariable eliminatee, final Term term) {
+		final List<ApplicationTerm> result = new ArrayList<>();
+		final Set<ApplicationTerm> stores = new ApplicationTermFinder("select", false).findMatchingSubterms(term);
+		for (final ApplicationTerm appTerm : stores) {
+			if (appTerm.getParameters()[0].equals(eliminatee)) {
+				result.add(appTerm);
 			}
 		}
 		return result;
