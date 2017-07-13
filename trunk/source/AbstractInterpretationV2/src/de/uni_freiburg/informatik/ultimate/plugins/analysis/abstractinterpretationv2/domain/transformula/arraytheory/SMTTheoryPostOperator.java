@@ -142,8 +142,9 @@ public class SMTTheoryPostOperator implements IAbstractPostOperator<SMTTheorySta
 			return Collections.singletonList(mStateFactory.getOrConstructState(postConstraint, 
 					hierarchicalPreOrStateAfterLeaving.getVariables()));
 		} else if (transition instanceof IReturnAction) {
+			// the hierarchicalPrestate may contain oldVars in its predicate --> we need to project them out
 			final Set<IProgramVar> oldVars = 
-					hierarchicalPreOrStateAfterLeaving.getVariables().stream()
+					hierarchicalPreOrStateAfterLeaving.getPredicate().getVars().stream()
 							.filter(var -> (var instanceof IProgramVar) && ((IProgramVar) var).isOldvar())
 							.map(var -> (IProgramVar) var)
 							.collect(Collectors.toSet());
@@ -154,6 +155,7 @@ public class SMTTheoryPostOperator implements IAbstractPostOperator<SMTTheorySta
 			final SMTTheoryState callPred = mStateFactory.getOrConstructState(projectedCons, 
 					hierarchicalPreOrStateAfterLeaving.getVariables());
 
+			// retrieve all the necessary transformulas
 			final UnmodifiableTransFormula returnTF = ((IReturnAction) transition).getTransformula();//.getAssignmentOfReturn();
 			final UnmodifiableTransFormula callTF = ((IReturnAction) transition).getLocalVarsAssignmentOfCall();
 			final UnmodifiableTransFormula oldVarAssignments = mCsToolkit.getOldVarsAssignmentCache()
