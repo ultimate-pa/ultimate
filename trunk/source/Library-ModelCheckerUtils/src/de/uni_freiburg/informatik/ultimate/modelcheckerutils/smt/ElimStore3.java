@@ -482,7 +482,7 @@ public class ElimStore3 {
 		
 
 		public IndicesAndValues(final ManagedScript mgdScript, final int quantifier, final TermVariable array,
-				final Term[] conjuncts) {
+				final Term... conjuncts) {
 			mMgdScript = mgdScript;
 			mQuantifier = quantifier;
 			final Set<MultiDimensionalSelect> set = new HashSet<>();
