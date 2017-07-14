@@ -53,6 +53,7 @@ import org.eclipse.cdt.internal.core.dom.parser.c.CASTFunctionCallExpression;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTFunctionDeclarator;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTFunctionDefinition;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTIfStatement;
+import org.eclipse.cdt.internal.core.dom.parser.c.CASTReturnStatement;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTSimpleDeclaration;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTTranslationUnit;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTWhileStatement;
@@ -408,9 +409,28 @@ public class CACSL2BoogieBacktranslator
 			return i;
 		}
 
-		translatedAtomicTraceElements.add(new AtomicTraceElement<CACSLLocation>(cloc, cloc, origFuncCall.getStepInfo(),
-				origFuncCall.getRelevanceInformation(), origFuncCall.getPrecedingProcedure(),
-				origFuncCall.getSucceedingProcedure()));
+		final EnumSet<StepInfo> stepInfo = origFuncCall.getStepInfo();
+		if (origFuncCall.hasStepInfo(StepInfo.PROC_RETURN)) {
+			// we have to modify the previous statement in the translated list s.t it is the actual return and remove
+			// the return stepinfo from this statement.
+			stepInfo.remove(StepInfo.PROC_RETURN);
+			final AtomicTraceElement<CACSLLocation> last =
+					translatedAtomicTraceElements.remove(translatedAtomicTraceElements.size() - 1);
+			final CLocation lastCloc = (CLocation) last.getTraceElement();
+			assert lastCloc
+					.getNode() instanceof CASTReturnStatement : "We assumed that the last statement before a artifical call statement is a C return statement";
+			final EnumSet<StepInfo> newStepInfo = EnumSet.copyOf(last.getStepInfo());
+			newStepInfo.remove(StepInfo.NONE);
+			newStepInfo.add(StepInfo.PROC_RETURN);
+			final AtomicTraceElement<CACSLLocation> newLast = new AtomicTraceElement<>(last.getTraceElement(),
+					last.getStep(), newStepInfo, last.getRelevanceInformation(), origFuncCall.getPrecedingProcedure(),
+					origFuncCall.getSucceedingProcedure());
+			translatedAtomicTraceElements.add(newLast);
+		}
+
+		translatedAtomicTraceElements
+				.add(new AtomicTraceElement<CACSLLocation>(cloc, cloc, stepInfo, origFuncCall.getRelevanceInformation(),
+						origFuncCall.getPrecedingProcedure(), origFuncCall.getSucceedingProcedure()));
 		translatedProgramStates.add(translateProgramState(programExecution.getProgramState(i)));
 		return i;
 	}
