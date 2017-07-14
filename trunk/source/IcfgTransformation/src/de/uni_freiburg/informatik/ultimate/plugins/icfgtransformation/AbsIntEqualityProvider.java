@@ -69,8 +69,8 @@ public class AbsIntEqualityProvider implements IEqualityAnalysisResultProvider<I
 		
 		final IAbstractInterpretationResult<? extends IEqualityProvidingState, 
 				IcfgEdge, IProgramVarOrConst, IcfgLocation> absIntResult =
-				AbstractInterpreter.runFutureSMTDomain(icfg, timer, mServices, true, mLogger);
-//				AbstractInterpreter.runFutureEqualityDomain(icfg, timer, mServices, true, mLogger);
+//				AbstractInterpreter.runFutureSMTDomain(icfg, timer, mServices, true, mLogger);
+				AbstractInterpreter.runFutureEqualityDomain(icfg, timer, mServices, true, mLogger);
 		final Map<IcfgLocation, ?> loc2states = absIntResult.getLoc2States();
 		mLoc2States = (Map<IcfgLocation, Set<IEqualityProvidingState>>) loc2states;
 		assert mLoc2States != null : "There was no AbsInt result";
@@ -111,6 +111,9 @@ public class AbsIntEqualityProvider implements IEqualityAnalysisResultProvider<I
 		IEqualityProvidingState result = null;
 
 		for (IcfgLocation loc : locSet) {
+			if (!mLoc2States.containsKey(loc)) {
+				continue;
+			}
 			final IEqualityProvidingState unionStateForCurrentLoc = 
 					mLoc2States.get(loc).stream().reduce((s1, s2) -> s1.union(s2)).get();
 			result = result == null ? unionStateForCurrentLoc : result.union(unionStateForCurrentLoc);
