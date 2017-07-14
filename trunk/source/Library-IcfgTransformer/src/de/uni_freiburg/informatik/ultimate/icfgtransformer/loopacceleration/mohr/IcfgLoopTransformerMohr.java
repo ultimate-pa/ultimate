@@ -106,7 +106,7 @@ public class IcfgLoopTransformerMohr<INLOC extends IcfgLocation, OUTLOC extends 
 
 	@SuppressWarnings("unchecked")
 	private void transform(final IIcfg<INLOC> origIcfg) {
-		final IcfgLoopDetection<INLOC> loopDetector = new IcfgLoopDetection<>(mServices, origIcfg);
+		final IcfgLoopDetection<INLOC> loopDetector = new IcfgLoopDetection<>(mLogger, mServices, origIcfg);
 		final Set<IcfgLoop<INLOC>> loops = loopDetector.getResult();
 		final Set<INLOC> loopHeads = new HashSet<>();
 		final Set<INLOC> loopNodes = new HashSet<>();
@@ -135,6 +135,7 @@ public class IcfgLoopTransformerMohr<INLOC extends IcfgLocation, OUTLOC extends 
 		queue.add(origIcfg.getInitialNodes().iterator().next());
 		while (!queue.isEmpty()) {
 			final INLOC node = queue.removeFirst();
+			visited.add(node);
 			final OUTLOC newSource = mTib.createNewLocation(node);
 			for (final IcfgEdge edge : node.getOutgoingEdges()) {
 				if ((loopNodes.contains(edge.getTarget()) && !loopHeads.contains(edge.getTarget()))

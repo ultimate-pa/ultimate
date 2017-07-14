@@ -38,17 +38,21 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermClassifier;
 
 public class IcfgLoopDetection<INLOC extends IcfgLocation> {
 
 	private final Set<IcfgLoop<INLOC>> mLoops;
 	private final IUltimateServiceProvider mServices;
+	private final ILogger mLogger;
 
-	public IcfgLoopDetection(final IUltimateServiceProvider services, final IIcfg<INLOC> icfg) {
+	public IcfgLoopDetection(final ILogger logger, final IUltimateServiceProvider services, final IIcfg<INLOC> icfg) {
+		mLogger = logger;
 		mServices = services;
 		mLoops = loopExtraction(icfg);
 	}
@@ -115,25 +119,34 @@ public class IcfgLoopDetection<INLOC extends IcfgLocation> {
 		}
 		// Find loopbody
 		final Map<INLOC, IcfgLoop<INLOC>> loopbodies = new HashMap<>();
+		final Set<INLOC> badLoops = new HashSet<>();
 		for (final IcfgEdge edge : backedges) {
+			final TermClassifier tc = new TermClassifier();
 			final INLOC head = (INLOC) edge.getTarget();
 			final Set<INLOC> body = new HashSet<>();
 			body.add(head);
-			final Deque<INLOC> stack = new ArrayDeque<>();
-			stack.add((INLOC) edge.getSource());
-			while (!stack.isEmpty()) {
-				final INLOC node = stack.removeFirst();
+			final Deque<INLOC> queue = new ArrayDeque<>();
+			queue.add((INLOC) edge.getSource());
+			tc.checkTerm(edge.getTransformula().getFormula());
+			while (!queue.isEmpty()) {
+				final INLOC node = queue.removeFirst();
 				if (!body.contains(node)) {
 					body.add(node);
-					stack.addAll((Collection<? extends INLOC>) node.getIncomingNodes());
+					queue.addAll((Collection<? extends INLOC>) node.getIncomingNodes());
+					node.getIncomingEdges().forEach(e -> tc.checkTerm(e.getTransformula().getFormula()));
 				}
 			}
-			if (loopbodies.containsKey(head)) {
+			if (tc.hasArrays()) {
+				badLoops.add(head);
+				mLogger.info("Unable to accelerate loop at node " + head + " since it contains array access.");
+			} else if (loopbodies.containsKey(head)) {
 				loopbodies.get(head).addAll(body);
 			} else {
 				loopbodies.put(head, new IcfgLoop<>(mServices, body, head));
 			}
 		}
+
+		badLoops.forEach(loopbodies::remove);
 
 		final ArrayList<INLOC> heads = new ArrayList<>(loopbodies.keySet());
 		for (final INLOC nestedhead : heads) {
@@ -148,7 +161,7 @@ public class IcfgLoopDetection<INLOC extends IcfgLocation> {
 			}
 		}
 
-		if (loopbodies.isEmpty()) {
+		if (loopbodies.isEmpty() && badLoops.isEmpty()) {
 			return altLoopExtraction(originalIcfg);
 		}
 
