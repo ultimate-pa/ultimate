@@ -345,7 +345,6 @@ public class EqConstraintFactory<
 		
 		
 		final ManagedScript mgdScript = mEqNodeAndFunctionFactory.getScript();
-		mgdScript.lock(this);
 		for (List<NODE> cn : chosenIndices) {
 			if (!mPreanalysis.getServices().getProgressMonitorService().continueProcessing()) {
 				mgdScript.unlock(this);
@@ -356,17 +355,19 @@ public class EqConstraintFactory<
 			
 			List<Term> cnTermList = cn.stream().map(n -> n.getTerm()).collect(Collectors.toList());
 			
-//			final Term func1AtIndexTerm = mgdScript.term(this, "select", func1.getTerm(), cn.getTerm());
+			mgdScript.lock(this);
 			final Term func1AtIndexTerm = SmtUtils.multiDimensionalSelect(mgdScript.getScript(), 
 					func1.getTerm(), new ArrayIndex(cnTermList));
+			mgdScript.unlock(this);
 			final NODE func1AtIndex = (NODE) mEqNodeAndFunctionFactory.getOrConstructEqNode(func1AtIndexTerm);
-//			final Term func2AtIndexTerm = mgdScript.term(this, "select", func2.getTerm(), cn.getTerm());
+
+			mgdScript.lock(this);
 			final Term func2AtIndexTerm = SmtUtils.multiDimensionalSelect(mgdScript.getScript(), 
 					func2.getTerm(), new ArrayIndex(cnTermList));
+			mgdScript.unlock(this);
 			final NODE func2AtIndex = (NODE) mEqNodeAndFunctionFactory.getOrConstructEqNode(func2AtIndexTerm);
 			newConstraintWithPropagations = addEqualityFlat(func1AtIndex, func2AtIndex, newConstraintWithPropagations);
 		}
-		mgdScript.unlock(this);
 		
 //		// TODO: which nodes to take here??
 //		final Set<NODE> nodesWithFunc1 = newConstraint.getAllNodes().stream()
