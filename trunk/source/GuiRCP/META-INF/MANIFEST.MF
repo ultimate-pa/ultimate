@@ -10,7 +10,8 @@ Require-Bundle:
  de.uni_freiburg.informatik.ultimate.core,
  de.uni_freiburg.informatik.ultimate.lib.smtlib,
  de.uni_freiburg.informatik.ultimate.gui.preferencepages,
- de.uni_freiburg.informatik.ultimate.gui.logging
+ de.uni_freiburg.informatik.ultimate.gui.logging,
+ org.eclipse.ui.views;bundle-version="3.9.0"
 Export-Package: 
  de.uni_freiburg.informatik.ultimate.gui;uses:="org.eclipse.ui,de.uni_freiburg.informatik.ultimate.ep.interfaces",
  de.uni_freiburg.informatik.ultimate.gui.actions;

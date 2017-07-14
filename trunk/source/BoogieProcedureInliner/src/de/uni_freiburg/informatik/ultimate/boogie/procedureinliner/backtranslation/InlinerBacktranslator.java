@@ -125,7 +125,8 @@ public class InlinerBacktranslator
 					reportUnfinishedBacktranslation("Cannot reconstruct StepInfo (either call or return): " + call);
 				}
 				knownCalls.add(call);
-				atomicTraceElem = new AtomicTraceElement<>(call, call, StepInfo.PROC_CALL, stringProvider, null);
+				atomicTraceElem = new AtomicTraceElement<>(call, call, StepInfo.PROC_CALL, stringProvider, null, null,
+						((CallStatement) traceElem).getMethodName());
 			} else {
 				atomicTraceElem = new AtomicTraceElement<>(traceElem, stringProvider, null);
 			}

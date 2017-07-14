@@ -194,14 +194,14 @@ public class BoogiePreprocessorBacktranslator
 				final AssumeStatement assumeStmt = (AssumeStatement) ate.getTraceElement();
 				final WhileStatement stmt = (WhileStatement) elem;
 				final StepInfo info = getStepInfoFromCondition(assumeStmt.getFormula(), stmt.getCondition());
-				atomicTrace.add(new AtomicTraceElement<BoogieASTNode>(stmt, stmt.getCondition(), info, stringProvider,
+				atomicTrace.add(new AtomicTraceElement<>(stmt, stmt.getCondition(), info, stringProvider,
 						ate.getRelevanceInformation()));
 
 			} else if (elem instanceof IfStatement) {
 				final AssumeStatement assumeStmt = (AssumeStatement) ate.getTraceElement();
 				final IfStatement stmt = (IfStatement) elem;
 				final StepInfo info = getStepInfoFromCondition(assumeStmt.getFormula(), stmt.getCondition());
-				atomicTrace.add(new AtomicTraceElement<BoogieASTNode>(stmt, stmt.getCondition(), info, stringProvider,
+				atomicTrace.add(new AtomicTraceElement<>(stmt, stmt.getCondition(), info, stringProvider,
 						ate.getRelevanceInformation()));
 
 			} else if (elem instanceof CallStatement) {
@@ -210,18 +210,17 @@ public class BoogiePreprocessorBacktranslator
 				// return), else its a procedure call with corresponding return
 
 				if (ate.hasStepInfo(StepInfo.NONE)) {
-					atomicTrace.add(new AtomicTraceElement<BoogieASTNode>(elem, elem, StepInfo.FUNC_CALL,
-							stringProvider, ate.getRelevanceInformation()));
-				} else {
-					atomicTrace.add(new AtomicTraceElement<BoogieASTNode>(elem, elem, ate.getStepInfo(), stringProvider,
+					atomicTrace.add(new AtomicTraceElement<>(elem, elem, StepInfo.FUNC_CALL, stringProvider,
 							ate.getRelevanceInformation()));
+				} else {
+					atomicTrace.add(new AtomicTraceElement<>(elem, elem, ate.getStepInfo(), stringProvider,
+							ate.getRelevanceInformation(), null, ((CallStatement) elem).getMethodName()));
 				}
 
 			} else {
 				// it could be that we missed some cases... revisit this if you
 				// suspect errors in the backtranslation
-				atomicTrace.add(
-						new AtomicTraceElement<BoogieASTNode>(elem, stringProvider, ate.getRelevanceInformation()));
+				atomicTrace.add(new AtomicTraceElement<>(elem, stringProvider, ate.getRelevanceInformation()));
 			}
 		}
 
@@ -328,8 +327,7 @@ public class BoogiePreprocessorBacktranslator
 			newTarget = createLabeledWitnessNode(oldTarget);
 			cache.put(oldTarget, newTarget);
 		}
-		final MultigraphEdge<String, BoogieASTNode> newEdge =
-				new MultigraphEdge<String, BoogieASTNode>(newSourceNode, newLabel, newTarget);
+		final MultigraphEdge<String, BoogieASTNode> newEdge = new MultigraphEdge<>(newSourceNode, newLabel, newTarget);
 		final ConditionAnnotation coan = ConditionAnnotation.getAnnotation(oldEdge.getLabel());
 		if (coan != null) {
 			coan.annotate(newEdge);

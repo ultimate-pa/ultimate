@@ -29,4 +29,5 @@ public interface IBacktranslationValueProvider<TTE, TE> {
 	String getStringFromTraceElement(TTE traceelement);
 
 	String getStringFromExpression(TE expression);
+
 }

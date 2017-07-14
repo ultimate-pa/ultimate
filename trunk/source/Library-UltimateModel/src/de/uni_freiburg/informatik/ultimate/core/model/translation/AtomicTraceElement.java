@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.core.model.translation;
 
 import java.util.EnumSet;
+import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.core.model.results.IRelevanceInformation;
 
@@ -74,18 +75,40 @@ public class AtomicTraceElement<TE> {
 	private final IToString<TE> mToStringFunc;
 	private EnumSet<AtomicTraceElement.StepInfo> mStepInfo;
 	private final IRelevanceInformation mRelevanceInformation;
+	private String mPrecedingProcedure;
+	private String mSucceedingProcedure;
 
 	/**
 	 * Creates an instance where the trace element is evaluated atomically (i.e. {@link #getTraceElement()} ==
 	 * {@link #getStep()}).
 	 */
 	public AtomicTraceElement(final TE element, final IRelevanceInformation relInfo) {
-		this(element, element, StepInfo.NONE, relInfo);
+		this(element, element, StepInfo.NONE, relInfo, null, null);
 	}
 
 	public AtomicTraceElement(final TE element, final IToString<TE> toStringProvider,
 			final IRelevanceInformation relInfo) {
-		this(element, element, StepInfo.NONE, toStringProvider, relInfo);
+		this(element, element, StepInfo.NONE, toStringProvider, relInfo, null, null);
+	}
+
+	public AtomicTraceElement(final TE element, final TE step, final AtomicTraceElement.StepInfo info,
+			final IRelevanceInformation relInfo) {
+		this(element, step, EnumSet.of(info), relInfo, null, null);
+	}
+
+	public AtomicTraceElement(final TE element, final TE step, final EnumSet<AtomicTraceElement.StepInfo> info,
+			final IRelevanceInformation relInfo) {
+		this(element, step, info, a -> a.toString(), relInfo, null, null);
+	}
+
+	public AtomicTraceElement(final TE element, final TE step, final EnumSet<AtomicTraceElement.StepInfo> info,
+			final IToString<TE> toStringProvider, final IRelevanceInformation relInfo) {
+		this(element, step, info, toStringProvider, relInfo, null, null);
+	}
+
+	public AtomicTraceElement(final TE element, final TE step, final AtomicTraceElement.StepInfo info,
+			final IToString<TE> toStringProvider, final IRelevanceInformation relInfo) {
+		this(element, step, EnumSet.of(info), toStringProvider, relInfo, null, null);
 	}
 
 	/**
@@ -97,35 +120,44 @@ public class AtomicTraceElement<TE> {
 	 * @param info
 	 *            provides additional information about the step, e.g. if its a condition that evaluated to true or
 	 *            false, if it is a call or a return, etc.
+	 * @param precedingProcedure
+	 *            if this step is a call or return, the name of the preceding procedure of this step, else null
+	 * @param succeedingProcedure
+	 *            if this step is a call or return, the name of succeeding procedure of this step, else null
 	 */
 	public AtomicTraceElement(final TE element, final TE step, final AtomicTraceElement.StepInfo info,
-			final IRelevanceInformation relInfo) {
-		this(element, step, EnumSet.of(info), relInfo);
+			final IRelevanceInformation relInfo, final String precedingProcedure, final String succeedingProcedure) {
+		this(element, step, EnumSet.of(info), relInfo, precedingProcedure, succeedingProcedure);
 	}
 
 	public AtomicTraceElement(final TE element, final TE step, final AtomicTraceElement.StepInfo info,
-			final IToString<TE> toStringProvider, final IRelevanceInformation relInfo) {
-		this(element, step, EnumSet.of(info), toStringProvider, relInfo);
+			final IToString<TE> toStringProvider, final IRelevanceInformation relInfo, final String precedingProcedure,
+			final String succeedingProcedure) {
+		this(element, step, EnumSet.of(info), toStringProvider, relInfo, precedingProcedure, succeedingProcedure);
 	}
 
 	public AtomicTraceElement(final TE element, final TE step, final EnumSet<AtomicTraceElement.StepInfo> info,
-			final IRelevanceInformation relInfo) {
-		this(element, step, info, a -> a.toString(), relInfo);
+			final IRelevanceInformation relInfo, final String precedingProcedure, final String succeedingProcedure) {
+		this(element, step, info, a -> a.toString(), relInfo, precedingProcedure, succeedingProcedure);
 	}
 
 	public AtomicTraceElement(final TE element, final TE step, final EnumSet<AtomicTraceElement.StepInfo> info,
-			final IToString<TE> toStringProvider, final IRelevanceInformation relInfo) {
+			final IToString<TE> toStringProvider, final IRelevanceInformation relInfo, final String precedingProcedure,
+			final String succeedingProcedure) {
 		assert element != null;
 		assert step != null;
+		assert info != null;
+		assert toStringProvider != null;
+		assert !(info.size() > 1 && info.contains(StepInfo.NONE)) : "You cannot combine NONE with other values";
+		assert (!info.contains(StepInfo.PROC_CALL) && !info.contains(StepInfo.PROC_RETURN))
+				|| !Objects.equals(precedingProcedure,
+						succeedingProcedure) : "Call and return must have different procedure names";
+
 		mElement = element;
 		mStep = step;
 		mStepInfo = info;
-		if (info.size() > 1 && info.contains(StepInfo.NONE)) {
-			throw new IllegalArgumentException("You cannot combine NONE with other values");
-		}
-		if (toStringProvider == null) {
-			throw new IllegalArgumentException("toStringProvider may not be null");
-		}
+		mPrecedingProcedure = precedingProcedure;
+		mSucceedingProcedure = succeedingProcedure;
 		mToStringFunc = toStringProvider;
 		mRelevanceInformation = relInfo;
 	}
@@ -158,6 +190,14 @@ public class AtomicTraceElement<TE> {
 
 	public IRelevanceInformation getRelevanceInformation() {
 		return mRelevanceInformation;
+	}
+
+	public String getPrecedingProcedure() {
+		return mPrecedingProcedure;
+	}
+
+	public String getSucceedingProcedure() {
+		return mSucceedingProcedure;
 	}
 
 	@Override

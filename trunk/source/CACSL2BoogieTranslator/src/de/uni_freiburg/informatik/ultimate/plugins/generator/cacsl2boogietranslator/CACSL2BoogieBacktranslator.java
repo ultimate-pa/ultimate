@@ -276,7 +276,8 @@ public class CACSL2BoogieBacktranslator
 						// we dont want to see no dirty temp havoc
 						continue;
 					}
-					newAte = new AtomicTraceElement<>(cloc, ate.getRelevanceInformation());
+					newAte = new AtomicTraceElement<>(cloc, cloc, ate.getStepInfo(), ate.getRelevanceInformation(),
+							ate.getPrecedingProcedure(), ate.getSucceedingProcedure());
 				}
 				if (newAte != null) {
 					translatedATEs.add(newAte);
@@ -408,7 +409,8 @@ public class CACSL2BoogieBacktranslator
 		}
 
 		translatedAtomicTraceElements.add(new AtomicTraceElement<CACSLLocation>(cloc, cloc, origFuncCall.getStepInfo(),
-				origFuncCall.getRelevanceInformation()));
+				origFuncCall.getRelevanceInformation(), origFuncCall.getPrecedingProcedure(),
+				origFuncCall.getSucceedingProcedure()));
 		translatedProgramStates.add(translateProgramState(programExecution.getProgramState(i)));
 		return i;
 	}
@@ -1282,7 +1284,8 @@ public class CACSL2BoogieBacktranslator
 					set.add(newSi);
 				}
 				return new AtomicTraceElement<>(current.getStep(), ate.getStep(), set,
-						mergeRelevaneInformation(ate.getRelevanceInformation(), current.getRelevanceInformation()));
+						mergeRelevaneInformation(ate.getRelevanceInformation(), current.getRelevanceInformation()),
+						ate.getPrecedingProcedure(), ate.getSucceedingProcedure());
 			}
 		}
 		return ate;

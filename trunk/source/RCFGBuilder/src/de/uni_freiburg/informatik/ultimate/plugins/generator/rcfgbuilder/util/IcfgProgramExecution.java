@@ -95,9 +95,11 @@ public class IcfgProgramExecution implements IProgramExecution<IcfgEdge, Term> {
 				ri = relevanceInformation.get(i);
 			}
 			if (te instanceof IIcfgCallTransition<?>) {
-				atomictrace.add(new AtomicTraceElement<>(te, te, StepInfo.PROC_CALL, ri));
+				atomictrace.add(new AtomicTraceElement<>(te, te, StepInfo.PROC_CALL, ri, te.getPrecedingProcedure(),
+						te.getSucceedingProcedure()));
 			} else if (te instanceof IIcfgReturnTransition<?, ?>) {
-				atomictrace.add(new AtomicTraceElement<>(te, te, StepInfo.PROC_RETURN, ri));
+				atomictrace.add(new AtomicTraceElement<>(te, te, StepInfo.PROC_RETURN, ri, te.getPrecedingProcedure(),
+						te.getSucceedingProcedure()));
 			} else {
 				atomictrace.add(new AtomicTraceElement<>(te, ri));
 			}
@@ -204,7 +206,6 @@ public class IcfgProgramExecution implements IProgramExecution<IcfgEdge, Term> {
 		sb.append("=== End of program execution");
 		return sb.toString();
 	}
-
 
 	@Override
 	public Class<Term> getExpressionClass() {
