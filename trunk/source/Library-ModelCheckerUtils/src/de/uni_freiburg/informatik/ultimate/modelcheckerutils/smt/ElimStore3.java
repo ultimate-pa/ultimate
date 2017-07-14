@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -42,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
@@ -55,6 +57,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDim
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalStore;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifierElimination.EqualityInformation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  *
@@ -138,6 +141,7 @@ public class ElimStore3 {
 
 	public Term elim(final int quantifier, final TermVariable inputeliminatee, final Term inputterm,
 			final Set<TermVariable> newAuxVars) {
+
 		mQuantifier = quantifier;
 		ArrayUpdate writeInto = null;
 		ArrayUpdate writtenFrom = null;
@@ -340,32 +344,40 @@ public class ElimStore3 {
 
 			for (int i = 0; i < indices.size(); i++) {
 				for (int j = i; j < indices.size(); j++) {
-					final Term newConjunct = SmtUtils.indexEqualityImpliesValueEquality(mScript, indices.get(i),
+					Term newConjunct = SmtUtils.indexEqualityImpliesValueEquality(mScript, indices.get(i),
 							indices.get(j), values.get(i), values.get(j));
+					if (quantifier == QuantifiedFormula.FORALL) {
+						newConjunct = SmtUtils.not(mScript, newConjunct);
+					}
 					assert !Arrays.asList(newConjunct.getFreeVars()).contains(eliminatee) : "var is still there";
 					indexValueConstraintsFromEliminatee.add(newConjunct);
 				}
 			}
 		}
+		final Term result1 = PartialQuantifierElimination.applyDualFiniteConnective(mScript, mQuantifier, indexValueConstraintsFromEliminatee);
 
-		Term result;
-		if (quantifier == QuantifiedFormula.EXISTS) {
-			final Term newConjunctsFromSelect = Util.and(mScript,
-					indexValueConstraintsFromEliminatee.toArray(new Term[indexValueConstraintsFromEliminatee.size()]));
-			result = Util.and(script, intermediateResult, newConjunctsFromSelect);
-		} else {
-			assert quantifier == QuantifiedFormula.FORALL;
-			final Term newConjunctsFromSelect =
-					Util.or(mScript, SmtUtils.negateElementwise(mScript, indexValueConstraintsFromEliminatee)
-							.toArray(new Term[indexValueConstraintsFromEliminatee.size()]));
-			result = Util.or(script, intermediateResult, newConjunctsFromSelect);
-		}
+		Term result = PartialQuantifierElimination.applyDualFiniteConnective(mScript, mQuantifier, Arrays.asList(new Term[] {result1, intermediateResult})) ;
+//		if (quantifier == QuantifiedFormula.EXISTS) {
+//			final Term newConjunctsFromSelect = Util.and(mScript,
+//					indexValueConstraintsFromEliminatee.toArray(new Term[indexValueConstraintsFromEliminatee.size()]));
+//			result = Util.and(script, intermediateResult, newConjunctsFromSelect);
+//		} else {
+//			assert quantifier == QuantifiedFormula.FORALL;
+//			final Term newConjunctsFromSelect =
+//					Util.or(mScript, SmtUtils.negateElementwise(mScript, indexValueConstraintsFromEliminatee)
+//							.toArray(new Term[indexValueConstraintsFromEliminatee.size()]));
+//			result = Util.or(script, intermediateResult, newConjunctsFromSelect);
+//		}
 
 		mMgdScript.getScript().echo(new QuotedObject("started simplification for array quantifier elimination"));
 		result = SmtUtils.simplify(mMgdScript, result, mServices, mSimplificationTechnique);
 		mMgdScript.getScript().echo(new QuotedObject("finished simplification for array quantifier elimination"));
 		newAuxVars.addAll(iav.getNewAuxVars());
 
+		
+//		final Pair<Term, Collection<TermVariable>> tmp = new ElimStorePlain(mScript, mMgdScript, mServices, mSimplificationTechnique).elimAll(Collections.singleton(inputeliminatee), inputterm);
+////		assert tmp.getFirst().equals(result) : "different";
+//		assert Util.checkSat(script, script.term("distinct", tmp.getFirst(), result)) != LBool.SAT;
 		return result;
 	}
 
