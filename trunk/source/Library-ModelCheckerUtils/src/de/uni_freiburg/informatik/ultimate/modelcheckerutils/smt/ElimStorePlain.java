@@ -92,6 +92,8 @@ public class ElimStorePlain {
 	}
 	
 	
+	
+	
 	public Pair<Term, Collection<TermVariable>> elimAll(final Collection<TermVariable> inputEliminatees, final Term inputTerm) {
 		
 		Collection<TermVariable> eliminatees = inputEliminatees;
@@ -245,6 +247,10 @@ public class ElimStorePlain {
 			lc.increment();
 		} while (!lc.isZero());
 		final Term result = SmtUtils.or(mScript, disjuncts);
+		if (Arrays.asList(result.getFreeVars()).contains(eliminatee)) {
+			throw new AssertionError("var is still there " + eliminatee + "  quantifier " + result + "  term size "
+					+ (new DagSizePrinter(term)) + "   " + term);
+		}
 		return new Pair<Term, Set<TermVariable>>(result, newAuxVars);
 		
 	}
