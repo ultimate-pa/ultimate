@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainHelpers;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainSymmetricPair;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
@@ -149,6 +150,9 @@ public class HeapSepPreAnalysis {
 
 	private HashRelation<Term, IcfgLocation> findArrayAccesses(CodeBlock edge) {
 		final HashRelation<Term, IcfgLocation> result = new HashRelation<>();
+		if (edge instanceof Summary && ((Summary) edge).calledProcedureHasImplementation()) {
+			return result;
+		}
 		
 		for (Entry<IProgramVar, TermVariable> en : edge.getTransformula().getInVars().entrySet()) {
 			IProgramVar pv = en.getKey();
