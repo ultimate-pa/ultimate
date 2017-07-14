@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.icfgtransformation;
 import java.util.ArrayList;
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
@@ -198,6 +199,10 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 		final String newIcfgIdentifier = "IcfgWithHeapSeparation";
 		final IcfgTransformer<INLOC, OUTLOC> icfgTransformer =
 				new IcfgTransformer<>(icfg, locFac, backtranslationTracker, outlocClass, newIcfgIdentifier, tftf);
+		
+//		mServices.getResultService().reportResult(Activator.PLUGIN_ID, tftf.getStatistics());
+		mServices.getResultService().reportResult(Activator.PLUGIN_ID, 
+				new StatisticsResult<>(Activator.PLUGIN_ID, "HeapSeparatorStatistics", tftf.getStatistics()));
 
 		return icfgTransformer.getResult();
 	}

@@ -23,10 +23,12 @@ public class DefaultEqualityAnalysisProvider<LOC, CFG> implements IEqualityAnaly
 		// No preprocessing necessary, "unknown" is always returned
 	}
 
+	/**
+	 * added by Alexander Nutz in order to comply with the updated interface, crashes
+	 */
 	@Override
 	public IEqualityProvidingState getEqualityProvidingStateForLocationSet(
 			Set<IcfgLocation> arrayGroupAccessLocations) {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException();
 	}
 }

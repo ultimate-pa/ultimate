@@ -72,13 +72,15 @@ public class NewArrayIdProvider {
 
 	private final ManagedScript mManagedScript;
 	private final IIcfgSymbolTable mOldSymbolTable;
+	private final HeapSeparatorBenchmark mStatistics;
 
 	public NewArrayIdProvider(final CfgSmtToolkit csToolkit, 
 			IEqualityAnalysisResultProvider<IcfgLocation, IIcfg<?>> equalityProvider, 
-			HeapSepPreAnalysis hspav) {
+			HeapSepPreAnalysis hspav, HeapSeparatorBenchmark statistics) {
 		mManagedScript = csToolkit.getManagedScript();
 		mOldSymbolTable = csToolkit.getSymbolTable();
 		mNewSymbolTable = new DefaultIcfgSymbolTable(csToolkit.getSymbolTable(), csToolkit.getProcedures());
+		mStatistics = statistics;
 		
 		processAbstractInterpretationResult(equalityProvider, hspav);
 	}
@@ -92,7 +94,6 @@ public class NewArrayIdProvider {
 	private void processAbstractInterpretationResult(
 			final IEqualityAnalysisResultProvider<IcfgLocation, IIcfg<?>> equalityProvider,
 			final HeapSepPreAnalysis hspav) {
-//		final VPDomain<IcfgEdge> vpDomain = (VPDomain<IcfgEdge>) equalityProvider.getUsedDomain();
 		
 		/*
 		 * compute which arrays are equated somewhere in the program and thus need the same partitioning
@@ -101,7 +102,6 @@ public class NewArrayIdProvider {
 		for (final Term array : hspav.getArrayToAccessLocations().getDomain()) {
 			arrayGroupingUf.findAndConstructEquivalenceClassIfNeeded(array);
 		}
-//		for (final VPDomainSymmetricPair<IProgramVarOrConst> pair : hspav.getArrayEqualities()) {
 		for (final VPDomainSymmetricPair<Term> pair : hspav.getArrayEqualities()) {
 			if (arrayGroupingUf.find(pair.getFirst()) == null) {
 				continue;
@@ -112,6 +112,9 @@ public class NewArrayIdProvider {
 			arrayGroupingUf.union(pair.getFirst(), pair.getSecond());
 		}
 		arrayGroupingUf.getAllEquivalenceClasses();
+
+		mStatistics.setNoArrays(hspav.getArrayToAccessLocations().getDomain().size());
+		mStatistics.setNoArrayGroups(arrayGroupingUf.getAllEquivalenceClasses().size());
 		
 		final HashRelation<Set<Term>, IcfgLocation> arrayGroupToAccessLocations = new HashRelation<>();
 		
@@ -123,31 +126,6 @@ public class NewArrayIdProvider {
 			}
 		}
 		
-//		/*
-//		 * Compute the mapping array to EqState: The HeapSepPreAnalysisVisitor can tell us which arrays are accessed at
-//		 * which locations. For each array take only the VPStates intro account that belong to a location directly
-//		 * before an access to that array. Those are disjoined.
-//		 */
-//		final Map<Set<Term>, EqState<IcfgEdge>> arrayGroupToVPState = new HashMap<>();
-//		for (final Set<Term> ec : arrayGroupingUf.getAllEquivalenceClasses()) {
-//			final Set<EqState<IcfgEdge>> statesForCurrentEc = new HashSet<>();
-//			for (final IcfgLocation loc : arrayGroupToAccessLocations.getImage(ec)) {
-//				final Set<EqState<IcfgEdge>> statesAtLoc = equalityProvider.getLoc2States().get(loc);
-//				if (statesAtLoc == null) {
-//					continue;
-//				}
-//				statesForCurrentEc.addAll(statesAtLoc);
-//			}
-//			
-//			EqState<IcfgEdge> disjoinedState;
-//			if (statesForCurrentEc.isEmpty()) {
-//				disjoinedState = vpDomain.getEqStateFactory().getTopState();
-//			} else {
-//				disjoinedState = vpDomain.getEqStateFactory().disjoinAll(statesForCurrentEc);
-//			}
-//			arrayGroupToVPState.put(ec, disjoinedState);
-//		}
-
 		final Map<Set<Term>, IEqualityProvidingState> arrayGroupToVPState = new HashMap<>();
 		for (final Set<Term> arrayGroup : arrayGroupingUf.getAllEquivalenceClasses()) {
 			final Set<IcfgLocation> arrayGroupAccessLocations = arrayGroupToAccessLocations.getImage(arrayGroup);
@@ -159,9 +137,6 @@ public class NewArrayIdProvider {
 		/*
 		 * Compute the actual partitioning for each array.
 		 */
-//		final VPDomainPreanalysis vpPreAnalysis =
-//				((VPDomain<IcfgEdge>) equalityProvider.getUsedDomain()).getPreAnalysis();
-//		final NewArrayIdProvider newArrayIdProvider = new NewArrayIdProvider(mCsToolkit);
 		for (final Entry<Set<Term>, IEqualityProvidingState> en : arrayGroupToVPState.entrySet()) {
 			final Set<Term> arrayGroup = en.getKey();
 			final IEqualityProvidingState state = en.getValue();
@@ -186,10 +161,11 @@ public class NewArrayIdProvider {
 				}
 			}
 			for (final Set<List<Term>> ec : uf.getAllEquivalenceClasses()) {
-//				newArrayIdProvider.registerEquivalenceClass(arrayGroup, ec);
 				registerEquivalenceClass(arrayGroup, ec);
+				mStatistics.incrementEquivalenceClassCounter();
 			}
 		}
+		
 	}	
 	
 
@@ -421,7 +397,7 @@ class PartitionInformation {
 		
 		sb.append(" array group: " + arrayIds);
 		
-		sb.append(" partitions: " + indexPartitions);
+		sb.append("#" + indexPartitions.size() + " partitions: " + indexPartitions);
 		sb.append("\n");
 		
 		return sb.toString();
