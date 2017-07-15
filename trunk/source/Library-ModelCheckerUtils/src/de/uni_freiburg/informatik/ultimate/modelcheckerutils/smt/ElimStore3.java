@@ -359,14 +359,10 @@ public class ElimStore3 {
 		mMgdScript.getScript().echo(new QuotedObject("finished simplification for array quantifier elimination"));
 		newAuxVars.addAll(iav.getNewAuxVars());
 
-		
-//		final Pair<Term, Collection<TermVariable>> tmp = new ElimStorePlain(mScript, mMgdScript, mServices, mSimplificationTechnique).elimAll(Collections.singleton(inputeliminatee), inputterm);
-////		assert tmp.getFirst().equals(result) : "different";
-//		assert Util.checkSat(script, script.term("distinct", tmp.getFirst(), result)) != LBool.SAT;
 		return result;
 	}
 
-	private Pair<List<ArrayIndex>, List<Term>> buildIndicesAndValues(final ManagedScript mgdScript,
+	public static Pair<List<ArrayIndex>, List<Term>> buildIndicesAndValues(final ManagedScript mgdScript,
 			final IndicesAndValues iav) {
 		final List<ArrayIndex> indices1 = new ArrayList<>();
 		final List<Term> values1 = new ArrayList<>();
@@ -382,7 +378,7 @@ public class ElimStore3 {
 		return result;
 	}
 
-	private ArrayList<Term> constructIndexValueConstraints(final Script script, final int quantifier,
+	public static ArrayList<Term> constructIndexValueConstraints(final Script script, final int quantifier,
 			final List<ArrayIndex> indices, final List<Term> values) {
 		final ArrayList<Term> indexValueConstraintsFromEliminatee;
 		final ArrayList<Term> indexValueConstraints = new ArrayList<>();
