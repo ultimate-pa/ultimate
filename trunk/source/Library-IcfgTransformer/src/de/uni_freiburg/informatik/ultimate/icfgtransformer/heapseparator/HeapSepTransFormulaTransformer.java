@@ -402,10 +402,12 @@ public class HeapSepTransFormulaTransformer implements ITransformulaTransformer 
 			List<Term> newEqualities = new ArrayList<>();
 			
 			final Term oldLhs = ae.getLhs();
-			final List<Term> newLhss = mNewArrayIdProvider.getAllNewArrayIds(oldLhs);
+			final List<Term> newLhss = mNewArrayIdProvider.getAllNewArrayIds(
+					VPDomainHelpers.normalizeTerm(oldLhs, tf, mMgdScript));
 
 			final Term oldRhs = ae.getRhs();
-			final List<Term> newRhss = mNewArrayIdProvider.getAllNewArrayIds(oldRhs);
+			final List<Term> newRhss = mNewArrayIdProvider.getAllNewArrayIds(
+					VPDomainHelpers.normalizeTerm(oldRhs, tf, mMgdScript));
 			
 			
 			assert newLhss.size() == newRhss.size();

@@ -347,7 +347,10 @@ class PartitionInformation {
 					indexPartitionToArrayToNewArrayId.put(indexPartition, 
 							((BoogieNonOldVar) arrayPv).getOldVar().getTerm(), 
 							bnovNew.getOldVar().getTerm());
+				} else {
+					freshVar = mNewSymbolTable.getProgramVar((TermVariable) alreadyConstructed);
 				}
+				
 			} else if (arrayPv instanceof BoogieOldVar) {
 				// the nonOldVar may have come up first..
 				Term alreadyConstructed = indexPartitionToArrayToNewArrayId.get(indexPartition, arrayTv);
@@ -366,6 +369,8 @@ class PartitionInformation {
 					indexPartitionToArrayToNewArrayId.put(indexPartition, 
 							((BoogieOldVar) arrayPv).getNonOldVar().getTerm(), 
 							bnovNew.getTerm());
+				} else {
+					freshVar = mNewSymbolTable.getProgramVar((TermVariable) alreadyConstructed);
 				}
 				assert freshVar != null;
 			} else if (arrayPv instanceof IntraproceduralReplacementVar) {
