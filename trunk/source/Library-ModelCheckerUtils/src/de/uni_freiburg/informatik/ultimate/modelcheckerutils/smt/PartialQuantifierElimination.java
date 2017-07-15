@@ -63,6 +63,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifi
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifierElimination.XnfUpd;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifierElimination.XnfUsr;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Try to eliminate existentially quantified variables in terms. Therefore we use that the term ∃v.v=c∧φ[v] is
@@ -72,8 +73,9 @@ public class PartialQuantifierElimination {
 	static final boolean USE_UPD = true;
 	static final boolean USE_IRD = true;
 	static final boolean USE_TIR = true;
+	static final boolean USE_SSD = false;
 	static final boolean USE_SOS = true;
-	static final boolean USE_USR = !true;
+	static final boolean USE_USR = false;
 	private static boolean mPushPull = true;
 
 	public static Term tryToEliminate(final IUltimateServiceProvider services, final ILogger logger,
@@ -325,6 +327,13 @@ public class PartialQuantifierElimination {
 			result = applyUnconnectedParameterDeletion(mgdScript, quantifier, eliminatees, services,
 					xnfConversionTechnique, script, result);
 		}
+		
+		if (USE_SSD) {
+			final Pair<Term, Collection<TermVariable>> esp = new ElimStorePlain(mgdScript, services, simplificationTechnique).elimAll(eliminatees, result);
+			result = esp.getFirst();
+			eliminatees.clear();
+			eliminatees.addAll(esp.getSecond());
+		}
 
 		if (eliminatees.isEmpty()) {
 			return result;
@@ -347,6 +356,7 @@ public class PartialQuantifierElimination {
 
 		// simplification
 		result = SmtUtils.simplify(mgdScript, result, services, simplificationTechnique);
+		
 
 		// (new SimplifyDDA(script)).getSimplifiedTerm(result);
 		eliminatees.retainAll(Arrays.asList(result.getFreeVars()));
