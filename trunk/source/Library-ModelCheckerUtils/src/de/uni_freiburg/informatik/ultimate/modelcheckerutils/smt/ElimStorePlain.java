@@ -100,7 +100,7 @@ public class ElimStorePlain {
 	
 	
 	
-	public Pair<Term, Collection<TermVariable>> elimAll(final Collection<TermVariable> inputEliminatees, final Term inputTerm) {
+	public Pair<Term, Collection<TermVariable>> elimAll(final Set<TermVariable> inputEliminatees, final Term inputTerm) {
 		
 		AfEliminationTask eliminationTask = new AfEliminationTask(inputEliminatees, inputTerm);
 		int numberOfRounds = 0;
@@ -150,7 +150,7 @@ public class ElimStorePlain {
 		final Term matrix = qs.getInnerTerm();
 		final List<QuantifiedVariables> qvs = qs.getQuantifierBlocks();
 
-		final Collection<TermVariable> eliminatees1;
+		final Set<TermVariable> eliminatees1;
 		if (qvs.size() == 0) {
 			eliminatees1 = Collections.emptySet();
 		} else if (qvs.size() == 1) {
@@ -543,16 +543,24 @@ public class ElimStorePlain {
 	 *
 	 */
 	private static class AfEliminationTask {
-		private final Collection<TermVariable> mEliminatees;
+		private final LinkedHashSet<TermVariable> mEliminatees;
 		private final Term mTerm;
-		public AfEliminationTask(final Collection<TermVariable> eliminatees, final Term term) {
+		
+		public AfEliminationTask(final Set<TermVariable> eliminatees, final Term term) {
 			super();
-			mEliminatees = eliminatees;
+			mEliminatees = new LinkedHashSet<>();
+			for (final TermVariable freeVar : term.getFreeVars()) {
+				if (eliminatees.contains(freeVar)) {
+					mEliminatees.add(freeVar);
+				}
+			}
 			mTerm = term;
 		}
-		public Collection<TermVariable> getEliminatees() {
-			return mEliminatees;
+		
+		public Set<TermVariable> getEliminatees() {
+			return Collections.unmodifiableSet(mEliminatees);
 		}
+		
 		public Term getTerm() {
 			return mTerm;
 		}
