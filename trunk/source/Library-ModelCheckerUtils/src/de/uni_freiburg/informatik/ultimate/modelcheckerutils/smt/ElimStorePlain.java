@@ -102,55 +102,78 @@ public class ElimStorePlain {
 	
 	public Pair<Term, Collection<TermVariable>> elimAll(final Collection<TermVariable> inputEliminatees, final Term inputTerm) {
 		
-		Collection<TermVariable> eliminatees = inputEliminatees;
-		Term term = inputTerm;
+		AfEliminationTask eliminationTask = new AfEliminationTask(inputEliminatees, inputTerm);
 		int numberOfRounds = 0;
 		while (true) {
-			final TreeRelation<Integer, TermVariable> tr = classifyEliminatees(eliminatees);
+			final TreeRelation<Integer, TermVariable> tr = classifyEliminatees(eliminationTask.getEliminatees());
 			final StringBuilder sb = new StringBuilder();
 			for (final Integer dim : tr.getDomain()) {
 				sb.append(tr.getImage(dim).size() + " variables of dimension " + dim + ", ");
 			}
 			mLogger.info("We have to eliminate " + sb.toString());
 			
-			eliminatees = new HashSet<>();
-			TermVariable thisIterationEliminatee = null;
-			for (final Integer dim : tr.getDomain()) {
-				for (final TermVariable var : tr.getImage(dim)) {
-					if (dim > 0 && thisIterationEliminatee == null) {
-						thisIterationEliminatee = var;
-					} else {
-						eliminatees.add(var);
-					}
-				}
-			}
-			if (thisIterationEliminatee == null) {
+			final LinkedHashSet<TermVariable> eliminatees = getArrayTvSmallDimensionsFirst(tr);
+			
+			
+			if (eliminatees.isEmpty()) {
 				// no array eliminatees left
 				break;
 			}
-			final Pair<Term, Set<TermVariable>> elimRes = elim1(thisIterationEliminatee, term);
-			term = elimRes.getFirst();
-			eliminatees.addAll(elimRes.getSecond());
-			final Term quantified = SmtUtils.quantifier(mScript, mQuantifier, eliminatees, term);
-			final Term pushed = new QuantifierPusher(mMgdScript, mServices, true, PqeTechniques.ALL_LOCAL).transform(quantified);
-			
-			final Term pnf = new PrenexNormalForm(mMgdScript).transform(pushed);
-			final QuantifierSequence qs = new QuantifierSequence(mMgdScript.getScript(), pnf);
-			final Term matrix = qs.getInnerTerm();
-			final List<QuantifiedVariables> qvs = qs.getQuantifierBlocks();
-			if (qvs.size() == 0) {
-				eliminatees = Collections.emptySet();
-			} else if (qvs.size() == 1) {
-				eliminatees = qvs.get(0).getVariables();
-			} else if (qvs.size() > 1) {
-				throw new UnsupportedOperationException("alternation not yet supported");
+			TermVariable thisIterationEliminatee;
+			{
+				final Iterator<TermVariable> it = eliminatees.iterator();
+				thisIterationEliminatee = it.next();
+				it.remove();
 			}
-			term = matrix;
+			
+			final AfEliminationTask elimRes = elim1(thisIterationEliminatee, eliminationTask.getTerm());
+			eliminatees.addAll(elimRes.getEliminatees());
+			eliminationTask = new AfEliminationTask(eliminatees, elimRes.getTerm());
+			eliminationTask = applyNonSddEliminations(eliminationTask);
+			
 			numberOfRounds++;
 		}
 		mLogger.info("Needed " + numberOfRounds + " rounds to eliminate " + inputEliminatees.size() + " variables");
 		// return term and variables that we could not eliminate
-		return new Pair<>(term, eliminatees);
+		return new Pair<>(eliminationTask.getTerm(), eliminationTask.getEliminatees());
+	}
+
+
+
+
+	private AfEliminationTask applyNonSddEliminations(final AfEliminationTask eliminationTask) throws AssertionError {
+		final Term quantified = SmtUtils.quantifier(mScript, mQuantifier, eliminationTask.getEliminatees(), eliminationTask.getTerm());
+		final Term pushed = new QuantifierPusher(mMgdScript, mServices, true, PqeTechniques.ALL_LOCAL).transform(quantified);
+
+		final Term pnf = new PrenexNormalForm(mMgdScript).transform(pushed);
+		final QuantifierSequence qs = new QuantifierSequence(mMgdScript.getScript(), pnf);
+		final Term matrix = qs.getInnerTerm();
+		final List<QuantifiedVariables> qvs = qs.getQuantifierBlocks();
+
+		final Collection<TermVariable> eliminatees1;
+		if (qvs.size() == 0) {
+			eliminatees1 = Collections.emptySet();
+		} else if (qvs.size() == 1) {
+			eliminatees1 = qvs.get(0).getVariables();
+		} else if (qvs.size() > 1) {
+			throw new UnsupportedOperationException("alternation not yet supported");
+		} else {
+			throw new AssertionError();
+		}
+		return new AfEliminationTask(eliminatees1, matrix);
+	}
+
+
+
+
+	private LinkedHashSet<TermVariable> getArrayTvSmallDimensionsFirst(final TreeRelation<Integer, TermVariable> tr) {
+		final LinkedHashSet<TermVariable> result = new LinkedHashSet<>();
+		for (final Integer dim : tr.getDomain()) {
+			if (dim != 0) {
+				result.addAll(tr.getImage(dim));
+			}
+		}
+		return result;
 	}
 
 
@@ -163,7 +186,7 @@ public class ElimStorePlain {
 		return tr;
 	}
 
-	public Pair<Term, Set<TermVariable>> elim1(final TermVariable eliminatee, final Term inputTerm) {
+	public AfEliminationTask elim1(final TermVariable eliminatee, final Term inputTerm) {
 		final List<MultiDimensionalStore> stores = extractStores(eliminatee, inputTerm);
 		if (stores.size() > 1) {
 			throw new AssertionError("not yet supported");
@@ -188,7 +211,7 @@ public class ElimStorePlain {
 				final Term replaced = subst.transform(inputTerm);
 				final Term result = SmtUtils.and(mScript, Arrays.asList(new Term[] { replaced, indexValueConstraints }));
 				assert !Arrays.asList(result.getFreeVars()).contains(eliminatee) : "var is still there";
-				return new Pair<Term, Set<TermVariable>>(result, iav.getNewAuxVars());
+				return new AfEliminationTask(iav.getNewAuxVars(), result);
 			} else {
 				throw new AssertionError("no case applies");
 			}
@@ -314,7 +337,7 @@ public class ElimStorePlain {
 			throw new AssertionError("var is still there " + eliminatee + "  quantifier " + result + "  term size "
 					+ (new DagSizePrinter(term)) + "   " + term);
 		}
-		return new Pair<Term, Set<TermVariable>>(result, newAuxVars);
+		return new AfEliminationTask(newAuxVars, result);
 		
 	}
 
@@ -509,6 +532,29 @@ public class ElimStorePlain {
 		@Override
 		public Iterator<Set<Doubleton<Term>>> iterator() {
 			return mResult.iterator();
+		}
+		
+		
+		
+	}
+	
+	/**
+	 * Alternation-free (quantifier) elimination task
+	 *
+	 */
+	private static class AfEliminationTask {
+		private final Collection<TermVariable> mEliminatees;
+		private final Term mTerm;
+		public AfEliminationTask(final Collection<TermVariable> eliminatees, final Term term) {
+			super();
+			mEliminatees = eliminatees;
+			mTerm = term;
+		}
+		public Collection<TermVariable> getEliminatees() {
+			return mEliminatees;
+		}
+		public Term getTerm() {
+			return mTerm;
 		}
 		
 		
