@@ -104,8 +104,15 @@ public class ElimStorePlain {
 		
 		Collection<TermVariable> eliminatees = inputEliminatees;
 		Term term = inputTerm;
+		int numberOfRounds = 0;
 		while (true) {
 			final TreeRelation<Integer, TermVariable> tr = classifyEliminatees(eliminatees);
+			final StringBuilder sb = new StringBuilder();
+			for (final Integer dim : tr.getDomain()) {
+				sb.append(tr.getImage(dim).size() + " variables of dimension " + dim + ", ");
+			}
+			mLogger.info("We have to eliminate " + sb.toString());
+			
 			eliminatees = new HashSet<>();
 			TermVariable thisIterationEliminatee = null;
 			for (final Integer dim : tr.getDomain()) {
@@ -139,8 +146,9 @@ public class ElimStorePlain {
 				throw new UnsupportedOperationException("alternation not yet supported");
 			}
 			term = matrix;
-
+			numberOfRounds++;
 		}
+		mLogger.info("Needed " + numberOfRounds + " rounds to eliminate " + inputEliminatees.size() + " variables");
 		// return term and variables that we could not eliminate
 		return new Pair<>(term, eliminatees);
 	}
@@ -167,7 +175,7 @@ public class ElimStorePlain {
 		final List<ApplicationTerm> selectTerms = extractSelects2(eliminatee, inputTerm);
 		
 		
-		if (stores.isEmpty()) {
+		if (false && stores.isEmpty()) {
 			if (!selectTerms.isEmpty()) {
 				final IndicesAndValues iav = new IndicesAndValues(mMgdScript, quantifier, eliminatee, inputTerm);
 				final Pair<List<ArrayIndex>, List<Term>> indicesAndValues = ElimStore3.buildIndicesAndValues(mMgdScript, iav);
@@ -186,11 +194,26 @@ public class ElimStorePlain {
 			}
 		}
 		
-		final MultiDimensionalStore store = stores.iterator().next();
-		final Term storeIndex = store.getIndex().get(0);
+		final Term storeTerm;
+		final Term storeIndex;
+		final Term storeValue;
+		if (stores.isEmpty()) {
+			storeTerm = null;
+			storeIndex = null;
+			storeValue = null;
+			mLogger.info("store-free iteration");
+		} else {
+			final MultiDimensionalStore store = stores.iterator().next();
+			storeTerm = store.getStoreTerm();
+			storeIndex = store.getIndex().get(0);
+			storeValue = ((ApplicationTerm) storeTerm).getParameters()[2];
+			mLogger.info("eliminating store to array of dimension " + new MultiDimensionalSort(eliminatee.getSort()).getDimension());
+		}
 		
 		final UnionFind<Term> indices = new UnionFind<>();
-		indices.findAndConstructEquivalenceClassIfNeeded(storeIndex);
+		if (!stores.isEmpty()) {
+			indices.findAndConstructEquivalenceClassIfNeeded(storeIndex);
+		}
 		for (final ApplicationTerm entry : selectTerms) {
 			indices.findAndConstructEquivalenceClassIfNeeded(getIndexOfSelect(entry));
 		}
@@ -206,7 +229,9 @@ public class ElimStorePlain {
 
 		final Map<Term, Term> indexMapping = new HashMap<>();
 		final List<Term> indexMappingDefinitions = new ArrayList<>();
-		constructIndexReplacementIfNecessary(eliminatee, newAuxVars, indexMapping, indexMappingDefinitions, storeIndex);
+		if (!stores.isEmpty()) {
+			constructIndexReplacementIfNecessary(eliminatee, newAuxVars, indexMapping, indexMappingDefinitions, storeIndex);
+		}
 //		if (indexMapping.containsKey(storeIndex)) {
 //			storeIndex = indexMapping.get(storeIndex);
 //		}
@@ -222,9 +247,11 @@ public class ElimStorePlain {
 		newAuxVars.add(newAuxArray) ;
 		
 		final List<Term> disjuncts = new ArrayList<>();
-		for (final Set<Doubleton<Term>> equalDoubletons : new CombinationIterator(indices, disjointIndices)) {
+		final CombinationIterator ci = new CombinationIterator(indices, disjointIndices);
+		mLogger.info("Considering " + ci.size() + " cases while eliminating array variable of dimension " + new MultiDimensionalSort(eliminatee.getSort()).getDimension());
+		for (final Set<Doubleton<Term>> equalDoubletons : ci) {
 			final Map<Term, Term> substitutionMapping = new HashMap<>();
-			substitutionMapping.put(store.getStoreTerm(), newAuxArray);
+			substitutionMapping.put(storeTerm, newAuxArray);
 			final List<Term> indexEqualityTerms = new ArrayList<>();
 			final List<Term> valueEqualityTerms = new ArrayList<>();
 			for (final Doubleton<Term> doubleton : CombinationIterator.buildListOfNonDisjointDoubletons(indices, disjointIndices)) {
@@ -245,9 +272,15 @@ public class ElimStorePlain {
 			
 			for (final ApplicationTerm selectTerm : selectTerms) {
 				final Term indexOfSelect = getIndexOfSelect(selectTerm); 
-				final boolean selectIndexEquivalentToStoreIndex = indices.find(indexOfSelect).equals(indices.find(storeIndex)) || 
+				final boolean selectIndexEquivalentToStoreIndex;
+				if (stores.isEmpty()) {
+					selectIndexEquivalentToStoreIndex = true;
+				} else {
+					selectIndexEquivalentToStoreIndex = 
+						indices.find(indexOfSelect).equals(indices.find(storeIndex)) || 
 						equalDoubletons.contains(new Doubleton<Term>(indexOfSelect, storeIndex)) ||  
 						equalDoubletons.contains(new Doubleton<Term>(storeIndex, indexOfSelect));
+				}
 				if (selectIndexEquivalentToStoreIndex) {
 					final Term oldCell = oldCellMapping.get(indexOfSelect);
 					assert oldCell != null;
@@ -259,13 +292,18 @@ public class ElimStorePlain {
 				}
 			}
 			
-			final Term newSelect = SmtUtils.binaryEquality(mScript, 
+			final Term storedValueInformation;
+			if (stores.isEmpty()) {
+				storedValueInformation = mScript.term("true");
+			} else {
+				storedValueInformation = SmtUtils.binaryEquality(mScript, 
 					mScript.term("select", newAuxArray, getNewIndex(storeIndex, indexMapping, eliminatee)), 
-					new SubstitutionWithLocalSimplification(mMgdScript, substitutionMapping).transform(store.getStoreTerm().getParameters()[2]));
+					new SubstitutionWithLocalSimplification(mMgdScript, substitutionMapping).transform(storeValue));
+			}
 			
 			Term disjuct = new SubstitutionWithLocalSimplification(mMgdScript, substitutionMapping).transform(term);
 			
-			disjuct = Util.and(mScript, SmtUtils.and(mScript, indexEqualityTerms), SmtUtils.and(mScript, valueEqualityTerms), disjuct, newSelect);
+			disjuct = Util.and(mScript, SmtUtils.and(mScript, indexEqualityTerms), SmtUtils.and(mScript, valueEqualityTerms), disjuct, storedValueInformation);
 			assert !Arrays.asList(disjuct.getFreeVars()).contains(eliminatee) : "var is still there: " + eliminatee;
 			disjuncts.add(disjuct);
 			
@@ -425,6 +463,10 @@ public class ElimStorePlain {
 				
 				lc.increment();
 			} while (!lc.isZero());
+		}
+		
+		public int size() {
+			return mResult.size();
 		}
 
 
