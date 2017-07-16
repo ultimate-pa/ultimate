@@ -260,7 +260,7 @@ public class ElimStorePlain {
 			}
 			
 			final Term newSelect = SmtUtils.binaryEquality(mScript, 
-					mScript.term("select", newAuxArray, storeIndex), 
+					mScript.term("select", newAuxArray, getNewIndex(storeIndex, indexMapping, eliminatee)), 
 					new SubstitutionWithLocalSimplification(mMgdScript, substitutionMapping).transform(store.getStoreTerm().getParameters()[2]));
 			
 			Term disjuct = new SubstitutionWithLocalSimplification(mMgdScript, substitutionMapping).transform(term);
