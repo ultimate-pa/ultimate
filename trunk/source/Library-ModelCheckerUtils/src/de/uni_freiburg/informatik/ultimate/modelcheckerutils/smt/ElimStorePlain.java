@@ -53,6 +53,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ElimStore3.IndicesAndValues;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayUpdate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayUpdate.ArrayUpdateExtractor;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSort;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalStore;
@@ -236,6 +238,10 @@ public class ElimStorePlain {
 		
 		final int quantifier = QuantifiedFormula.EXISTS;
 		
+		
+		checkForUnsupportedSelfUpdate(eliminatee, inputTerm, quantifier);
+		
+		
 		final List<ApplicationTerm> selectTerms = extractSelects2(eliminatee, inputTerm);
 		
 		
@@ -385,6 +391,24 @@ public class ElimStorePlain {
 		}
 		return new AfEliminationTask(newAuxVars, result);
 		
+	}
+
+
+
+
+	private void checkForUnsupportedSelfUpdate(final TermVariable eliminatee, final Term inputTerm,
+			final int quantifier) {
+		final Set<ApplicationTerm> equalities = new ApplicationTermFinder("=", false).findMatchingSubterms(inputTerm);
+		final ArrayUpdateExtractor aue = new ArrayUpdateExtractor(quantifier == QuantifiedFormula.FORALL, false,
+				equalities.toArray(new Term[equalities.size()]));
+		for (final ArrayUpdate au : aue.getArrayUpdates()) {
+			if (au.getNewArray().equals(eliminatee)) {
+				if (Arrays.asList(au.getMultiDimensionalStore().getStoreTerm().getFreeVars()).contains(eliminatee)) {
+					throw new UnsupportedOperationException("Want to eliminate " + eliminatee
+							+ " but encountered yet unsupported self-update " + au.getArrayUpdateTerm());
+				}
+			}
+		}
 	}
 
 
