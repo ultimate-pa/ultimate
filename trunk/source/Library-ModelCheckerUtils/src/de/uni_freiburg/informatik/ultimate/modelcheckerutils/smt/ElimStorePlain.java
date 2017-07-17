@@ -38,12 +38,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.Stack;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
@@ -102,40 +104,79 @@ public class ElimStorePlain {
 	
 	public Pair<Term, Collection<TermVariable>> elimAll(final Set<TermVariable> inputEliminatees, final Term inputTerm) {
 		
-		AfEliminationTask eliminationTask = new AfEliminationTask(inputEliminatees, inputTerm);
+		final Stack<AfEliminationTask> taskStack = new Stack();
+		final ArrayList<Term> resultDisjuncts = new ArrayList<>();
+		final Set<TermVariable> resultEliminatees = new LinkedHashSet<>();
+		{
+			final AfEliminationTask eliminationTask = new AfEliminationTask(inputEliminatees, inputTerm);
+			pushTaskOnStack(eliminationTask, taskStack);
+		}
 		int numberOfRounds = 0;
-		while (true) {
-			final TreeRelation<Integer, TermVariable> tr = classifyEliminatees(eliminationTask.getEliminatees());
-			final StringBuilder sb = new StringBuilder();
-			for (final Integer dim : tr.getDomain()) {
-				sb.append(tr.getImage(dim).size() + " variables of dimension " + dim + ", ");
-			}
-			mLogger.info("We have to eliminate " + sb.toString());
-			
-			final LinkedHashSet<TermVariable> eliminatees = getArrayTvSmallDimensionsFirst(tr);
+		while (!taskStack.isEmpty()) {
+			final AfEliminationTask currentEliminationTask = taskStack.pop();
+			final TreeRelation<Integer, TermVariable> tr = classifyEliminatees(currentEliminationTask.getEliminatees());
 			
 			
-			if (eliminatees.isEmpty()) {
+			final LinkedHashSet<TermVariable> arrayEliminatees = getArrayTvSmallDimensionsFirst(tr);
+			
+			
+			if (arrayEliminatees.isEmpty()) {
 				// no array eliminatees left
-				break;
-			}
-			TermVariable thisIterationEliminatee;
-			{
-				final Iterator<TermVariable> it = eliminatees.iterator();
-				thisIterationEliminatee = it.next();
-				it.remove();
-			}
+				resultDisjuncts.add(currentEliminationTask.getTerm());
+				resultEliminatees.addAll(currentEliminationTask.getEliminatees());
+			} else {
+				TermVariable thisIterationEliminatee;
+				{
+					final Iterator<TermVariable> it = arrayEliminatees.iterator();
+					thisIterationEliminatee = it.next();
+					it.remove();
+				}
 			
-			final AfEliminationTask elimRes = elim1(thisIterationEliminatee, eliminationTask.getTerm());
-			eliminatees.addAll(elimRes.getEliminatees());
-			eliminationTask = new AfEliminationTask(eliminatees, elimRes.getTerm());
-			eliminationTask = applyNonSddEliminations(eliminationTask);
-			
+				final AfEliminationTask ssdElimRes = elim1(thisIterationEliminatee, currentEliminationTask.getTerm());
+				arrayEliminatees.addAll(ssdElimRes.getEliminatees());
+				// also add non-array eliminatees
+				arrayEliminatees.addAll(tr.getImage(0));
+				final AfEliminationTask eliminationTask1 = new AfEliminationTask(arrayEliminatees, ssdElimRes.getTerm());
+				final AfEliminationTask eliminationTask2 = applyNonSddEliminations(eliminationTask1);
+				if (mLogger.isInfoEnabled()) {
+					mLogger.info("Start of round: " + printVarInfo(tr) + " End of round: " + 
+							printVarInfo(classifyEliminatees(eliminationTask2.getEliminatees())) + " and " + 
+							PartialQuantifierElimination.getXjunctsOuter(mQuantifier, eliminationTask2.getTerm()).length + " xjuncts.");
+				}
+				
+				pushTaskOnStack(eliminationTask2, taskStack);
+			}
 			numberOfRounds++;
 		}
 		mLogger.info("Needed " + numberOfRounds + " rounds to eliminate " + inputEliminatees.size() + " variables");
 		// return term and variables that we could not eliminate
-		return new Pair<>(eliminationTask.getTerm(), eliminationTask.getEliminatees());
+		return new Pair<>(PartialQuantifierElimination.applyCorrespondingFiniteConnective(mScript, mQuantifier, resultDisjuncts), resultEliminatees);
+	}
+
+
+
+
+	private String printVarInfo(final TreeRelation<Integer, TermVariable> tr) {
+		final StringBuilder sb = new StringBuilder();
+		for (final Integer dim : tr.getDomain()) {
+			sb.append(tr.getImage(dim).size() + " dim-" + dim + " vars, ");
+		}
+		return sb.toString();
+	}
+
+
+
+
+	private void pushTaskOnStack(final AfEliminationTask eliminationTask, final Stack<AfEliminationTask> taskStack) {
+		final Term term = eliminationTask.getTerm();
+		final Term[] disjuncts = PartialQuantifierElimination.getXjunctsOuter(mQuantifier, term);
+		if (disjuncts.length == 1) {
+			taskStack.push(eliminationTask);
+		} else {
+			for (final Term disjunct : disjuncts) {
+				taskStack.push(new AfEliminationTask(eliminationTask.getEliminatees(), disjunct));
+			}
+		}
 	}
 
 
@@ -328,7 +369,12 @@ public class ElimStorePlain {
 			
 			disjuct = Util.and(mScript, SmtUtils.and(mScript, indexEqualityTerms), SmtUtils.and(mScript, valueEqualityTerms), disjuct, storedValueInformation);
 			assert !Arrays.asList(disjuct.getFreeVars()).contains(eliminatee) : "var is still there: " + eliminatee;
-			disjuncts.add(disjuct);
+			final LBool sat = SmtUtils.checkSatTerm(mScript, disjuct);
+			if (sat == LBool.UNSAT) {
+				mLogger.info("saved disjunct");
+			} else {
+				disjuncts.add(disjuct);
+			}
 			
 		}
 
