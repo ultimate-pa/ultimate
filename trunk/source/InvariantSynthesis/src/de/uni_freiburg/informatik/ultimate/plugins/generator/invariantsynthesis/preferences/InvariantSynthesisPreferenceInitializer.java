@@ -37,6 +37,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.invariantsynthesis.
  */
 public class InvariantSynthesisPreferenceInitializer extends UltimatePreferenceInitializer {
 	
+	
+	public enum Invariant {
+		SAFETY, DANGER
+	}
+	
 	public enum IncreasingStrategy {
 		Conservative,
 		Medium,
@@ -49,6 +54,8 @@ public class InvariantSynthesisPreferenceInitializer extends UltimatePreferenceI
 	/*
 	 * labels for the different preferencess
 	 */
+	public static final String LABEL_KIND_INVARIANT = "Kind of invariant";
+	
 	public static final String LABEL_UNSAT_CORES = "Use unsat cores";
 	
 	public static final String LABEL_INITIAL_DISJUNCTS = "Initial disjuncts";
@@ -69,6 +76,7 @@ public class InvariantSynthesisPreferenceInitializer extends UltimatePreferenceI
 	/*
 	 * default values for the different preferences
 	 */
+	public static final Invariant DEF_KIND_INVARIANT = Invariant.SAFETY;
 	public static final boolean DEF_UNSAT_CORES = true;
 	public static final boolean DEF_NONLINEAR_CONSTRAINTS = false;
 	public static final boolean DEF_LARGE_BLOCK_ENCODING = true;
@@ -94,6 +102,7 @@ public class InvariantSynthesisPreferenceInitializer extends UltimatePreferenceI
 	@Override
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
 		return new UltimatePreferenceItem<?>[] {
+				new UltimatePreferenceItem<>(LABEL_KIND_INVARIANT, DEF_KIND_INVARIANT, PreferenceType.Combo, Invariant.values()),
 				new UltimatePreferenceItem<>(LABEL_UNSAT_CORES, DEF_UNSAT_CORES, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_NONLINEAR_CONSTRAINTS, DEF_NONLINEAR_CONSTRAINTS, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_LARGE_BLOCK_ENCODING, DEF_LARGE_BLOCK_ENCODING, PreferenceType.Boolean),

@@ -36,10 +36,10 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessInvariant;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.InvariantResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.PositiveResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ProcedureContractResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovabilityReason;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovableResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
@@ -65,6 +65,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.invariantsynthesis.preferences.InvariantSynthesisPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.invariantsynthesis.preferences.InvariantSynthesisPreferenceInitializer.IncreasingStrategy;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.invariantsynthesis.preferences.InvariantSynthesisPreferenceInitializer.Invariant;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.HoareAnnotation;
@@ -78,10 +79,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pa
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.DisjunctsWithBoundTemplateIncreasingDimensionsStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.ExponentialConjunctsTemplateIncreasingDimensionsStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.MediumTemplateIncreasingDimensionsStrategy;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.PathInvariantsStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.HoareAnnotationChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 
 public class InvariantSynthesisStarter {
@@ -113,27 +114,38 @@ public class InvariantSynthesisStarter {
 				icfg.getCfgSmtToolkit().getSymbolTable(), simplificationTechnique, xnfConversionTechnique);
 
 		final InvariantSynthesisSettings invSynthSettings = constructSettings(icfg.getIdentifier());
-		final CFGInvariantsGenerator cfgInvGenerator = new CFGInvariantsGenerator(icfg, services, storage,
-				predicateUnifier.getTruePredicate(), predicateUnifier.getFalsePredicate(), predicateFactory, predicateUnifier,
-				invSynthSettings, icfg.getCfgSmtToolkit());
-		final Map<IcfgLocation, IPredicate> invariants = cfgInvGenerator.synthesizeInvariants();
-		final PathInvariantsStatisticsGenerator statistics = cfgInvGenerator.getInvariantSynthesisStatistics();
-		if (invariants != null) {
-//			if (mLogger.isDebugEnabled()) {
-//				for (IcfgLocation loc : invariants.keySet()) {
-//					mLogger.debug(loc + ": " + invariants.get(loc));
-//				}
-//			}
-			for (final Entry<IcfgLocation, IPredicate> entry : invariants.entrySet()) {
-				final HoareAnnotation hoareAnnot = predicateFactory.getNewHoareAnnotation(entry.getKey(), icfg.getCfgSmtToolkit().getModifiableGlobalsTable());
-				hoareAnnot.annotate(entry.getKey());
-				hoareAnnot.addInvariant(entry.getValue());				
-			}
-			writeHoareAnnotationToLogger(icfg);
-			mOverallResult = Result.SAFE;
+		
+		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
+		final Invariant kindOfInvariant = prefs.getEnum(InvariantSynthesisPreferenceInitializer.LABEL_KIND_INVARIANT, InvariantSynthesisPreferenceInitializer.Invariant.class);
+		final IStatisticsDataProvider statistics;
+		if (kindOfInvariant == InvariantSynthesisPreferenceInitializer.Invariant.DANGER) {
+			// TODO: code for danger invariants here
+			statistics = null;
 		} else {
-			mOverallResult = Result.UNKNOWN;
+			assert kindOfInvariant == InvariantSynthesisPreferenceInitializer.Invariant.SAFETY;
+			final CFGInvariantsGenerator cfgInvGenerator = new CFGInvariantsGenerator(icfg, services, storage,
+					predicateUnifier.getTruePredicate(), predicateUnifier.getFalsePredicate(), predicateFactory, predicateUnifier,
+					invSynthSettings, icfg.getCfgSmtToolkit());
+			final Map<IcfgLocation, IPredicate> invariants = cfgInvGenerator.synthesizeInvariants();
+			statistics = cfgInvGenerator.getInvariantSynthesisStatistics();
+			if (invariants != null) {
+				//			if (mLogger.isDebugEnabled()) {
+				//				for (IcfgLocation loc : invariants.keySet()) {
+				//					mLogger.debug(loc + ": " + invariants.get(loc));
+				//				}
+				//			}
+				for (final Entry<IcfgLocation, IPredicate> entry : invariants.entrySet()) {
+					final HoareAnnotation hoareAnnot = predicateFactory.getNewHoareAnnotation(entry.getKey(), icfg.getCfgSmtToolkit().getModifiableGlobalsTable());
+					hoareAnnot.annotate(entry.getKey());
+					hoareAnnot.addInvariant(entry.getValue());				
+				}
+				writeHoareAnnotationToLogger(icfg);
+				mOverallResult = Result.SAFE;
+			} else {
+				mOverallResult = Result.UNKNOWN;
+			}
 		}
+		
 		
 		final Map<String, Set<IcfgLocation>> proc2errNodes = icfg.getProcedureErrorNodes();
 		final Collection<IcfgLocation> errNodesOfAllProc = new ArrayList<>();
