@@ -115,16 +115,21 @@ public class PartialQuantifierElimination {
 	 * disjunction.
 	 */
 	public static Term applyCorrespondingFiniteConnective(final Script script, final int quantifier,
-			final Term[] xjunctsOuter) {
+			final Collection<Term> xjunctsOuter) {
 		final Term result;
 		if (quantifier == QuantifiedFormula.EXISTS) {
-			result = Util.or(script, xjunctsOuter);
+			result = SmtUtils.or(script, xjunctsOuter);
 		} else if (quantifier == QuantifiedFormula.FORALL) {
-			result = Util.and(script, xjunctsOuter);
+			result = SmtUtils.and(script, xjunctsOuter);
 		} else {
 			throw new AssertionError("unknown quantifier");
 		}
 		return result;
+	}
+	
+	public static Term applyCorrespondingFiniteConnective(final Script script, final int quantifier,
+			final Term[] xjunctsOuter) {
+		return applyCorrespondingFiniteConnective(script, quantifier, Arrays.asList(xjunctsOuter));
 	}
 
 	/**
