@@ -148,6 +148,37 @@ public class PartialQuantifierElimination {
 		}
 		return result;
 	}
+	
+	public static Term applyDualFiniteConnective(final Script script, final int quantifier,
+			final Term... xjunctsInner) {
+		return applyDualFiniteConnective(script, quantifier, Arrays.asList(xjunctsInner));
+	}
+	
+
+	
+	public static Term equalityForExists(final Script script, final int quantifier, final Term lhs, final Term rhs) {
+		Term result;
+		if (quantifier == QuantifiedFormula.EXISTS) {
+			result = SmtUtils.binaryEquality(script, lhs, rhs);
+		} else if (quantifier == QuantifiedFormula.FORALL) {
+			result = SmtUtils.distinct(script, lhs, rhs);
+		} else {
+			throw new AssertionError("unknown quantifier");
+		}
+		return result;
+	}
+	
+	public static Term notEqualsForExists(final Script script, final int quantifier, final Term lhs, final Term rhs) {
+		Term result;
+		if (quantifier == QuantifiedFormula.EXISTS) {
+			result = SmtUtils.distinct(script, lhs, rhs);
+		} else if (quantifier == QuantifiedFormula.FORALL) {
+			result = SmtUtils.binaryEquality(script, lhs, rhs);
+		} else {
+			throw new AssertionError("unknown quantifier");
+		}
+		return result;
+	}
 
 	/**
 	 * Get all parameters of the outer operation of a XNF For the case of existential quantification: Get all disjuncts
@@ -334,7 +365,8 @@ public class PartialQuantifierElimination {
 		}
 		
 		if (USE_SSD) {
-			final Pair<Term, Collection<TermVariable>> esp = new ElimStorePlain(mgdScript, services, simplificationTechnique).elimAll(eliminatees, result);
+			final Pair<Term, Collection<TermVariable>> esp = new ElimStorePlain(mgdScript, services,
+					simplificationTechnique, quantifier).elimAll(eliminatees, result);
 			result = esp.getFirst();
 			eliminatees.clear();
 			eliminatees.addAll(esp.getSecond());
