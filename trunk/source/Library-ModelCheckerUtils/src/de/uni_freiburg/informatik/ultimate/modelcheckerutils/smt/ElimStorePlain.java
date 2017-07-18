@@ -45,10 +45,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ElimStore3.IndicesAndValues;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
@@ -91,9 +89,9 @@ public class ElimStorePlain {
 	private final static String s_AUX_VAR_ARRAYCELL = "arrayElimCell";
 
 	public ElimStorePlain(final ManagedScript mgdScript, final IUltimateServiceProvider services,
-			final SimplificationTechnique simplificationTechnique) {
+			final SimplificationTechnique simplificationTechnique, final int quantifier) {
 		super();
-		mQuantifier = QuantifiedFormula.EXISTS;
+		mQuantifier = quantifier;
 		mScript = mgdScript.getScript();
 		mMgdScript = mgdScript;
 		mServices = services;
@@ -256,7 +254,7 @@ public class ElimStorePlain {
 						indexValueConstraintsFromEliminatee);
 				final Substitution subst = new SubstitutionWithLocalSimplification(mMgdScript, iav.getMapping());
 				final Term replaced = subst.transform(inputTerm);
-				final Term result = SmtUtils.and(mScript, Arrays.asList(new Term[] { replaced, indexValueConstraints }));
+				final Term result = PartialQuantifierElimination.applyDualFiniteConnective(mScript, mQuantifier, Arrays.asList(new Term[] { replaced, indexValueConstraints }));
 				assert !Arrays.asList(result.getFreeVars()).contains(eliminatee) : "var is still there";
 				return new AfEliminationTask(iav.getNewAuxVars(), result);
 			} else {
@@ -288,6 +286,20 @@ public class ElimStorePlain {
 			indices.findAndConstructEquivalenceClassIfNeeded(getIndexOfSelect(entry));
 		}
 		final HashRelation<Term, Term> disjointIndices = new HashRelation<>();
+		final List<Term> indices1 = new ArrayList(indices.getAllRepresentatives());
+		for (int i = 0; i < indices1.size(); i++) {
+			for (int j = i + 1; j < indices1.size(); j++) {
+				final Term eq = SmtUtils.binaryEquality(mScript, indices1.get(i), indices1.get(j));
+				if (SmtUtils.isTrue(eq)) {
+					indices.union(indices1.get(i), indices1.get(j));
+				} else if (SmtUtils.isFalse(eq)) {
+					disjointIndices.addPair(indices1.get(i), indices1.get(j));
+					disjointIndices.addPair(indices1.get(j), indices1.get(i));
+				} else {
+					// do nothing 
+				}
+			}
+		}
 		
 		
 		final List<Term> oldCellDefinitions = new ArrayList<>();
@@ -309,8 +321,8 @@ public class ElimStorePlain {
 			final Term index = getIndexOfSelect(entry);
 			constructIndexReplacementIfNecessary(eliminatee, newAuxVars, indexMapping, indexMappingDefinitions, index);
 		}
-		final Term indexDefinitionsTerm = SmtUtils.and(mScript, indexMappingDefinitions);
-		final Term term = SmtUtils.and(mScript, Arrays.asList(new Term[]{indexDefinitionsTerm, inputTerm}));
+		final Term indexDefinitionsTerm = PartialQuantifierElimination.applyDualFiniteConnective(mScript, mQuantifier, indexMappingDefinitions);
+		final Term term = PartialQuantifierElimination.applyDualFiniteConnective(mScript, mQuantifier, Arrays.asList(new Term[]{indexDefinitionsTerm, inputTerm}));
 		
 		final TermVariable newAuxArray =
 				mMgdScript.constructFreshTermVariable(s_AUX_VAR_NEW_ARRAY, eliminatee.getSort());
@@ -327,15 +339,19 @@ public class ElimStorePlain {
 			for (final Doubleton<Term> doubleton : CombinationIterator.buildListOfNonDisjointDoubletons(indices, disjointIndices)) {
 				final Term indexEqualityTerm;
 				if (equalDoubletons.contains(doubleton)) {
-					indexEqualityTerm = SmtUtils.binaryEquality(mScript, getNewIndex(doubleton.getOneElement(), indexMapping, eliminatee), getNewIndex(doubleton.getOtherElement(), indexMapping, eliminatee));
+					indexEqualityTerm = PartialQuantifierElimination.equalityForExists(mScript, mQuantifier,
+							getNewIndex(doubleton.getOneElement(), indexMapping, eliminatee),
+							getNewIndex(doubleton.getOtherElement(), indexMapping, eliminatee));
 					final Term oneOldCellVariable = oldCellMapping.get(doubleton.getOneElement());
 					final Term otherOldCellVariable = oldCellMapping.get(doubleton.getOtherElement());
 					if (oneOldCellVariable != null && otherOldCellVariable != null) {
-						final Term valueEqualityTerm = SmtUtils.binaryEquality(mScript, oneOldCellVariable, otherOldCellVariable);
+						final Term valueEqualityTerm = PartialQuantifierElimination.equalityForExists(mScript, mQuantifier,oneOldCellVariable, otherOldCellVariable);
 						valueEqualityTerms.add(valueEqualityTerm);
 					}
 				} else {
-					indexEqualityTerm = SmtUtils.distinct(mScript, getNewIndex(doubleton.getOneElement(), indexMapping, eliminatee), getNewIndex(doubleton.getOtherElement(), indexMapping, eliminatee));
+					indexEqualityTerm = PartialQuantifierElimination.notEqualsForExists(mScript, mQuantifier,
+							getNewIndex(doubleton.getOneElement(), indexMapping, eliminatee),
+							getNewIndex(doubleton.getOtherElement(), indexMapping, eliminatee));
 				}
 				indexEqualityTerms.add(indexEqualityTerm);
 			}
@@ -364,27 +380,36 @@ public class ElimStorePlain {
 			
 			final Term storedValueInformation;
 			if (stores.isEmpty()) {
-				storedValueInformation = mScript.term("true");
+				if (mQuantifier == QuantifiedFormula.EXISTS) {
+					storedValueInformation = mScript.term("true");
+				} else if (mQuantifier == QuantifiedFormula.FORALL) {
+					storedValueInformation = mScript.term("false");
+				} else {
+					throw new AssertionError();
+				}
 			} else {
-				storedValueInformation = SmtUtils.binaryEquality(mScript, 
+				storedValueInformation = PartialQuantifierElimination.equalityForExists(mScript, mQuantifier,
 					mScript.term("select", newAuxArray, getNewIndex(storeIndex, indexMapping, eliminatee)), 
 					new SubstitutionWithLocalSimplification(mMgdScript, substitutionMapping).transform(storeValue));
 			}
 			
-			Term disjuct = new SubstitutionWithLocalSimplification(mMgdScript, substitutionMapping).transform(term);
+			final Term transformedTerm = new SubstitutionWithLocalSimplification(mMgdScript, substitutionMapping).transform(term);
+			final Term indexEqualityTerm = PartialQuantifierElimination.applyDualFiniteConnective(mScript, mQuantifier, indexEqualityTerms);
+			final Term valueEqualityTerm = PartialQuantifierElimination.applyDualFiniteConnective(mScript, mQuantifier, valueEqualityTerms);
 			
-			disjuct = Util.and(mScript, SmtUtils.and(mScript, indexEqualityTerms), SmtUtils.and(mScript, valueEqualityTerms), disjuct, storedValueInformation);
+			final Term disjuct = PartialQuantifierElimination.applyDualFiniteConnective(mScript, mQuantifier,
+					indexEqualityTerm, valueEqualityTerm, transformedTerm, storedValueInformation);
 			assert !Arrays.asList(disjuct.getFreeVars()).contains(eliminatee) : "var is still there: " + eliminatee;
-			final LBool sat = SmtUtils.checkSatTerm(mScript, disjuct);
-			if (sat == LBool.UNSAT) {
-				mLogger.info("saved disjunct");
-			} else {
+//			final LBool sat = SmtUtils.checkSatTerm(mScript, disjuct);
+//			if (sat == LBool.UNSAT) {
+//				mLogger.info("saved disjunct");
+//			} else {
 				disjuncts.add(disjuct);
-			}
+//			}
 			
 		}
 
-		final Term result = SmtUtils.or(mScript, disjuncts);
+		final Term result = PartialQuantifierElimination.applyCorrespondingFiniteConnective(mScript, mQuantifier, disjuncts);
 		if (Arrays.asList(result.getFreeVars()).contains(eliminatee)) {
 			throw new AssertionError("var is still there " + eliminatee + "  quantifier " + result + "  term size "
 					+ (new DagSizePrinter(term)) + "   " + term);
@@ -422,7 +447,7 @@ public class ElimStorePlain {
 					mMgdScript.constructFreshTermVariable(s_AUX_VAR_INDEX, index.getSort());
 			newAuxVars.add(newAuxIndex);
 			indexMapping.put(index, newAuxIndex);
-			indexMappingDefinitions.add(SmtUtils.binaryEquality(mScript, newAuxIndex, index));
+			indexMappingDefinitions.add(PartialQuantifierElimination.equalityForExists(mScript, mQuantifier, newAuxIndex, index));
 		}
 	}
 
