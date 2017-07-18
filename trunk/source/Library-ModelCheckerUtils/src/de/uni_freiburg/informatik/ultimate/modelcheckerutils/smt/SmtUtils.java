@@ -541,6 +541,8 @@ public final class SmtUtils {
 			if (sndbw != null) {
 				if (fstbw.equals(sndbw)) {
 					return script.term("true");
+				} else {
+					return script.term("false");
 				}
 			}
 		}
