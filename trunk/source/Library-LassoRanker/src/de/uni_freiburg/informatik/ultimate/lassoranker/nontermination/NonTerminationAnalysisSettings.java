@@ -75,11 +75,11 @@ public class NonTerminationAnalysisSettings implements Serializable, INonTermina
 		final StringBuilder sb = new StringBuilder();
 		sb.append("Nontermination analysis: ");
 		sb.append(mAnalysis);
-		sb.append("\nAllow bounded executions: ");
+		sb.append(" Allow bounded executions: ");
 		sb.append(mAllowBounded);
-		sb.append("\nNumber of generalized eigenvectors: ");
+		sb.append(" Number of generalized eigenvectors: ");
 		sb.append(mNumberOfGevs);
-		sb.append("\nNilpotent components: ");
+		sb.append(" Nilpotent components: ");
 		sb.append(mNilpotentComponents);
 		return sb.toString();
 	}
