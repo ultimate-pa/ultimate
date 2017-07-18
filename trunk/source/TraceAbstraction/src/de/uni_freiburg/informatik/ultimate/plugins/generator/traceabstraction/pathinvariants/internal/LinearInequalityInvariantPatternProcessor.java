@@ -1264,6 +1264,8 @@ public final class LinearInequalityInvariantPatternProcessor
 
 	@Override
 	public void initializeEntryAndExitPattern() {
+		// TODO 20170718 Matthias: Use precondition and postcondition  
+		
 		// entry invariant pattern should be equivalent to true, so we create an empty conjunction
 		final Collection<AbstractLinearInvariantPattern> emptyConjunction = Collections.emptyList();
 		mEntryInvariantPattern = Collections.singleton(emptyConjunction);
