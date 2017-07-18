@@ -53,7 +53,6 @@ import org.eclipse.cdt.internal.core.dom.parser.c.CASTFunctionCallExpression;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTFunctionDeclarator;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTFunctionDefinition;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTIfStatement;
-import org.eclipse.cdt.internal.core.dom.parser.c.CASTReturnStatement;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTSimpleDeclaration;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTTranslationUnit;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTWhileStatement;
@@ -205,8 +204,6 @@ public class CACSL2BoogieBacktranslator
 			final ILocation loc = ate.getTraceElement().getLocation();
 
 			if (loc instanceof CLocation) {
-				// i = findMergeSequence(programExecution, i, loc);
-
 				final CLocation cloc = (CLocation) loc;
 				if (cloc.ignoreDuringBacktranslation()) {
 					// we skip all clocs that can be ignored, i.e. things that
@@ -326,6 +323,10 @@ public class CACSL2BoogieBacktranslator
 				mServices);
 	}
 
+	/**
+	 * @return true if the supplied {@link AtomicTraceElement} is a havoc statement that havocs temporary variables.
+	 *         Expects that ate represents a havoc statement.
+	 */
 	private boolean checkTempHavoc(final AtomicTraceElement<BoogieASTNode> ate) {
 		final HavocStatement havoc = (HavocStatement) ate.getTraceElement();
 		final CheckForTempVars check = new CheckForTempVars();
@@ -374,8 +375,28 @@ public class CACSL2BoogieBacktranslator
 		return set;
 	}
 
+	/**
+	 * If we encounter a {@link CASTFunctionCallExpression} during backtranslation, we have to consider various special
+	 * cases. Sometimes we need to ignore it, sometimes we compress multiple statements to one.
+	 *
+	 * This function handles all these cases and returns the index the loop should increase and continue.
+	 *
+	 * @param programExecution
+	 *            The {@link IProgramExecution} that is translated
+	 * @param index
+	 *            The current index
+	 * @param fcall
+	 *            The {@link CASTFunctionCallExpression} at the current index
+	 * @param cloc
+	 *            The {@link CLocation} at the current index.
+	 * @param translatedAtomicTraceElements
+	 *            The already translated {@link AtomicTraceElement}s
+	 * @param translatedProgramStates
+	 *            The already translated {@link ProgramState}s
+	 * @return The index with which the translation loop should continue
+	 */
 	private int handleCASTFunctionCallExpression(final IProgramExecution<BoogieASTNode, Expression> programExecution,
-			final int i, final CASTFunctionCallExpression fcall, final CLocation cloc,
+			final int index, final CASTFunctionCallExpression fcall, final CLocation cloc,
 			final List<AtomicTraceElement<CACSLLocation>> translatedAtomicTraceElements,
 			final List<ProgramState<IASTExpression>> translatedProgramStates) {
 		// directly after the function call expression we find
@@ -383,56 +404,82 @@ public class CACSL2BoogieBacktranslator
 		// maps the input variable to a new local one (because boogie function
 		// params are immutable)
 		// we throw them away
-		final AtomicTraceElement<BoogieASTNode> origFuncCall = programExecution.getTraceElement(i);
+		final AtomicTraceElement<BoogieASTNode> currentATE = programExecution.getTraceElement(index);
+		final BoogieASTNode currentTraceElement = currentATE.getTraceElement();
 
-		if (!(origFuncCall.getTraceElement() instanceof CallStatement)) {
+		if (!(currentTraceElement instanceof CallStatement)) {
 			// this is some special case, e.g. an assert false or an havoc
-			if (origFuncCall.getTraceElement() instanceof AssertStatement) {
+			if (currentTraceElement instanceof AssertStatement) {
 				translatedAtomicTraceElements.add(new AtomicTraceElement<CACSLLocation>(cloc, cloc,
-						origFuncCall.getStepInfo(), origFuncCall.getRelevanceInformation()));
-				translatedProgramStates.add(translateProgramState(programExecution.getProgramState(i)));
-				return i;
-			} else if (origFuncCall.getTraceElement() instanceof HavocStatement) {
-				if (!checkTempHavoc(origFuncCall)) {
+						currentATE.getStepInfo(), currentATE.getRelevanceInformation()));
+				translatedProgramStates.add(translateProgramState(programExecution.getProgramState(index)));
+				return index;
+			} else if (currentTraceElement instanceof HavocStatement) {
+				if (!checkTempHavoc(currentATE)) {
 					translatedAtomicTraceElements.add(new AtomicTraceElement<CACSLLocation>(cloc, cloc,
-							origFuncCall.getStepInfo(), origFuncCall.getRelevanceInformation()));
-					translatedProgramStates.add(translateProgramState(programExecution.getProgramState(i)));
-					return i;
+							currentATE.getStepInfo(), currentATE.getRelevanceInformation()));
+					translatedProgramStates.add(translateProgramState(programExecution.getProgramState(index)));
+					return index;
 				}
 			}
 			// if this anything else we just throw it away
-			return i;
+			return index;
 		}
 
-		if (origFuncCall.hasStepInfo(StepInfo.NONE)) {
+		if (currentATE.hasStepInfo(StepInfo.NONE)) {
 			// this is some temp var stuff; we can safely ignore it
-			return i;
+			return index;
 		}
 
-		final EnumSet<StepInfo> stepInfo = origFuncCall.getStepInfo();
-		if (origFuncCall.hasStepInfo(StepInfo.PROC_RETURN)) {
+		if (index + 1 < programExecution.getLength()) {
+			// if the next ATE is a return, the called method does not have a body and we should compress it to an
+			// FCALL
+			int i = index + 1;
+			for (; index < programExecution.getLength(); ++i) {
+				final ILocation loc = programExecution.getTraceElement(i).getTraceElement().getLocation();
+				if (!(loc instanceof CLocation)) {
+					break;
+				}
+				final CLocation nextcloc = (CLocation) loc;
+				if (nextcloc.ignoreDuringBacktranslation()) {
+					continue;
+				}
+				if (nextcloc.getNode() instanceof CASTTranslationUnit) {
+					continue;
+				}
+				break;
+			}
+			final AtomicTraceElement<BoogieASTNode> nextATE = programExecution.getTraceElement(i);
+			if (nextATE.hasStepInfo(StepInfo.PROC_RETURN)) {
+				translatedAtomicTraceElements.add(new AtomicTraceElement<CACSLLocation>(cloc, cloc, StepInfo.FUNC_CALL,
+						currentATE.getRelevanceInformation(), currentATE.getPrecedingProcedure(),
+						currentATE.getPrecedingProcedure()));
+				translatedProgramStates.add(translateProgramState(programExecution.getProgramState(i)));
+				return i;
+			}
+		}
+
+		final EnumSet<StepInfo> stepInfo = currentATE.getStepInfo();
+		if (currentATE.hasStepInfo(StepInfo.PROC_RETURN)) {
 			// we have to modify the previous statement in the translated list s.t it is the actual return and remove
 			// the return stepinfo from this statement.
 			stepInfo.remove(StepInfo.PROC_RETURN);
 			final AtomicTraceElement<CACSLLocation> last =
 					translatedAtomicTraceElements.remove(translatedAtomicTraceElements.size() - 1);
-			final CLocation lastCloc = (CLocation) last.getTraceElement();
-			assert lastCloc
-					.getNode() instanceof CASTReturnStatement : "We assumed that the last statement before a artifical call statement is a C return statement";
 			final EnumSet<StepInfo> newStepInfo = EnumSet.copyOf(last.getStepInfo());
 			newStepInfo.remove(StepInfo.NONE);
 			newStepInfo.add(StepInfo.PROC_RETURN);
 			final AtomicTraceElement<CACSLLocation> newLast = new AtomicTraceElement<>(last.getTraceElement(),
-					last.getStep(), newStepInfo, last.getRelevanceInformation(), origFuncCall.getPrecedingProcedure(),
-					origFuncCall.getSucceedingProcedure());
+					last.getStep(), newStepInfo, last.getRelevanceInformation(), currentATE.getPrecedingProcedure(),
+					currentATE.getSucceedingProcedure());
 			translatedAtomicTraceElements.add(newLast);
 		}
 
 		translatedAtomicTraceElements
-				.add(new AtomicTraceElement<CACSLLocation>(cloc, cloc, stepInfo, origFuncCall.getRelevanceInformation(),
-						origFuncCall.getPrecedingProcedure(), origFuncCall.getSucceedingProcedure()));
-		translatedProgramStates.add(translateProgramState(programExecution.getProgramState(i)));
-		return i;
+				.add(new AtomicTraceElement<CACSLLocation>(cloc, cloc, stepInfo, currentATE.getRelevanceInformation(),
+						currentATE.getPrecedingProcedure(), currentATE.getSucceedingProcedure()));
+		translatedProgramStates.add(translateProgramState(programExecution.getProgramState(index)));
+		return index;
 	}
 
 	/**
