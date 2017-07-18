@@ -1,11 +1,8 @@
 //#Safe
 /*
- * test related to issue #206.
- * In this case that the assertion holds can be inferred from the fact that foo, 
- * by the modifies clause, does not modify a (and that x is  * not modified at 
- * all).
- *
- * author: Alexander Nutz
+ * Similar to mixedGlobalLocalSelectNonModifyingProcedure.bpl, but here the 
+ * modifies clause allows a to be modified by foo. Thus the analysis must 
+ * proved that it is not actually modified in order to prove the assertion.
  */
 
 var a : [int] int;
@@ -24,7 +21,7 @@ implementation main () {
 }
 
 procedure foo(y : int) returns (res : int);
-modifies;
+modifies a;
 
 implementation foo(y : int) returns (res : int) {
   res := y;
