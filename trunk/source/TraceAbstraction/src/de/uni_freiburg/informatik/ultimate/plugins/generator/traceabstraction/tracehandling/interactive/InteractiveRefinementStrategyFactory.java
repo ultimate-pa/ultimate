@@ -12,6 +12,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarAbsIntRunner;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PathProgramCache;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interactive.InteractiveCegar;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
@@ -30,9 +31,9 @@ public class InteractiveRefinementStrategyFactory<LETTER extends IIcfgTransition
 			final IToolchainStorage storage, final InteractiveCegar interactive,
 			final TAPreferences taPrefsForInterpolantConsolidation, final TaCheckAndRefinementPreferences<LETTER> prefs,
 			final CegarAbsIntRunner<LETTER> absIntRunner, final IIcfg<?> initialIcfg,
-			final PredicateFactory predicateFactory) {
+			final PredicateFactory predicateFactory, final PathProgramCache<LETTER> pathProgramCache) {
 		super(logger, services, storage, taPrefsForInterpolantConsolidation, prefs, absIntRunner, initialIcfg,
-				predicateFactory);
+				predicateFactory, pathProgramCache);
 		mInteractive = interactive;
 		assert mInteractive != null;
 		assert mInteractive.isInteractiveMode();

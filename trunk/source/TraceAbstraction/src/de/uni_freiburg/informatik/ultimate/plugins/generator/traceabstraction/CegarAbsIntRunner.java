@@ -113,26 +113,26 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 	private final CfgSmtToolkit mCsToolkit;
 	private final IIcfg<?> mRoot;
 
-	private final Set<Set<LETTER>> mKnownPathPrograms;
-
 	private final AbstractInterpretationMode mMode;
 	private final boolean mAlwaysRefine;
 	private final SimplificationTechnique mSimplificationTechnique;
 	private final XnfConversionTechnique mXnfConversionTechnique;
+	private final PathProgramCache<LETTER> mPathProgramCache;
 
 	private AbsIntCurrentIteration<?> mCurrentIteration;
 	private IPredicateUnifier mPredicateUnifierSmt;
 
 	public CegarAbsIntRunner(final IUltimateServiceProvider services, final CegarLoopStatisticsGenerator benchmark,
 			final IIcfg<?> root, final SimplificationTechnique simplificationTechnique,
-			final XnfConversionTechnique xnfConversionTechnique, final CfgSmtToolkit csToolkit) {
+			final XnfConversionTechnique xnfConversionTechnique, final CfgSmtToolkit csToolkit,
+			final PathProgramCache<LETTER> pathProgramCache) {
 		mCegarLoopBenchmark = benchmark;
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mSimplificationTechnique = simplificationTechnique;
 		mXnfConversionTechnique = xnfConversionTechnique;
 		mRoot = root;
-		mKnownPathPrograms = new HashSet<>();
+		mPathProgramCache = pathProgramCache;
 		mCsToolkit = csToolkit;
 
 		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
@@ -153,7 +153,8 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 	 * </ul>
 	 */
 	public void generateFixpoints(final IRun<LETTER, IPredicate, ?> currentCex,
-			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> currentAbstraction, final IPredicateUnifier unifier) {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> currentAbstraction,
+			final IPredicateUnifier unifier) {
 		assert currentCex != null : "Cannot run AI on empty counterexample";
 		assert currentAbstraction != null : "Cannot run AI on empty abstraction";
 
@@ -172,12 +173,12 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.AbstIntTime.toString());
 		try {
 
-			final Set<LETTER> pathProgramSet = convertCex2Set(currentCex);
-
-			if (!mKnownPathPrograms.add(pathProgramSet)) {
+			final int seen = mPathProgramCache.addRun(currentCex);
+			if (seen > 1) {
 				mLogger.info("Skipping current iteration for AI because we have already analyzed this path program");
 				return;
 			}
+			final Set<LETTER> pathProgramSet = currentCex.getWord().asSet();
 			if (!containsLoop(pathProgramSet)) {
 				mLogger.info("Skipping current iteration for AI because the path program does not contain any loops");
 				return;
@@ -314,16 +315,6 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 	private static UnsupportedOperationException createNoFixpointsException() {
 		return new UnsupportedOperationException(
 				"AbsInt can only provide a hoare triple checker if it generated fixpoints");
-	}
-
-	private Set<LETTER> convertCex2Set(final IRun<LETTER, IPredicate, ?> currentCex) {
-		final Set<LETTER> transitions = new HashSet<>();
-		// words count their states, so 0 is first state, length is last state
-		final int length = currentCex.getLength() - 1;
-		for (int i = 0; i < length; ++i) {
-			transitions.add(currentCex.getSymbol(i));
-		}
-		return transitions;
 	}
 
 	/**
