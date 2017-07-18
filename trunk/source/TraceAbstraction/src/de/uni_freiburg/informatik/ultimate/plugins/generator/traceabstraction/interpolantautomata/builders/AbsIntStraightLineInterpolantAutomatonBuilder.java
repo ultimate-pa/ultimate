@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.AbstractMultiState;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.DisjunctiveAbstractState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
@@ -232,14 +232,14 @@ public class AbsIntStraightLineInterpolantAutomatonBuilder<LETTER extends IIcfgT
 	private <STATE extends IAbstractState<STATE, IBoogieVar>> boolean isSound(final Set<STATE> previousStates,
 			final Triple<LETTER, IPredicate, Set<STATE>> hierarchicalPreState, final LETTER symbol,
 			final Set<STATE> postStates, final RcfgDebugHelper<STATE, LETTER, IBoogieVar, ?> debugHelper) {
-		final AbstractMultiState<STATE, IBoogieVar> hierPre;
+		final DisjunctiveAbstractState<STATE, IBoogieVar> hierPre;
 		if (hierarchicalPreState == null) {
 			hierPre = null;
 		} else {
-			hierPre = AbstractMultiState.createDisjunction(hierarchicalPreState.getThird());
+			hierPre = DisjunctiveAbstractState.createDisjunction(hierarchicalPreState.getThird());
 		}
-		return debugHelper.isPostSound(AbstractMultiState.createDisjunction(previousStates), hierPre,
-				AbstractMultiState.createDisjunction(postStates), symbol);
+		return debugHelper.isPostSound(DisjunctiveAbstractState.createDisjunction(previousStates), hierPre,
+				DisjunctiveAbstractState.createDisjunction(postStates), symbol);
 	}
 
 	private <STATE extends IAbstractState<STATE, IBoogieVar>> Triple<LETTER, IPredicate, Set<STATE>>

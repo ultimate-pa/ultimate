@@ -52,7 +52,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.AbstractMultiState;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.DisjunctiveAbstractState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
@@ -549,8 +549,8 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 				return mFalsePredicate;
 			}
 
-			final AbstractMultiState<STATE, IBoogieVar> disjunctiveState =
-					AbstractMultiState.createDisjunction(postStates);
+			final DisjunctiveAbstractState<STATE, IBoogieVar> disjunctiveState =
+					DisjunctiveAbstractState.createDisjunction(postStates);
 			final IPredicate unUnifiedPredicate =
 					mPredicateUnifierSmt.getPredicateFactory().newPredicate(disjunctiveState.getTerm(script));
 			final IPredicate disjunction = mPredicateUnifierAbsInt
@@ -571,8 +571,8 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 				return mFalsePredicate;
 			}
 			final BasicPredicateFactory predFac = mPredicateUnifierAbsInt.getPredicateFactory();
-			final AbstractMultiState<STATE, IBoogieVar> disjunctiveState =
-					AbstractMultiState.createDisjunction(postStates).compact();
+			final DisjunctiveAbstractState<STATE, IBoogieVar> disjunctiveState =
+					DisjunctiveAbstractState.createDisjunction(postStates).compact();
 			final IPredicate disjunction = predFac.newPredicate(disjunctiveState.getTerm(script));
 			return new AbsIntPredicate<>(disjunction, (STATE) disjunctiveState);
 		}
@@ -681,14 +681,14 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 				assert assertValidPredicate((AbsIntPredicate<?, ?>) unifiedPred) : "Created invalid predicate";
 				return unifiedPred;
 			}
-			final Set<AbstractMultiState<STATE, IBoogieVar>> multistates =
+			final Set<DisjunctiveAbstractState<STATE, IBoogieVar>> multistates =
 					minimalSubset.stream().map(a -> ((AbsIntPredicate<STATE, ?>) a).getAbstractStates())
-							.map(a -> AbstractMultiState.createDisjunction(a)).collect(Collectors.toSet());
-			final Set<AbstractMultiState<STATE, IBoogieVar>> synchronizedMultiStates =
+							.map(a -> DisjunctiveAbstractState.createDisjunction(a)).collect(Collectors.toSet());
+			final Set<DisjunctiveAbstractState<STATE, IBoogieVar>> synchronizedMultiStates =
 					AbsIntUtil.synchronizeVariables(multistates);
 			assert sameVars(synchronizedMultiStates.stream().flatMap(a -> a.getStates().stream())
 					.collect(Collectors.toSet())) : "Synchronize failed";
-			final AbstractMultiState<STATE, IBoogieVar> conjunction = synchronizedMultiStates.stream()
+			final DisjunctiveAbstractState<STATE, IBoogieVar> conjunction = synchronizedMultiStates.stream()
 					.reduce((a, b) -> a.intersect(b)).orElseThrow(() -> new AssertionError("No predicates given"));
 			final AbsIntPredicate<?, ?> rtr = new AbsIntPredicate<>(unifiedPred, conjunction);
 			assert assertValidPredicate(rtr) : "Created invalid predicate";
@@ -709,23 +709,23 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 			return rtr;
 		}
 
-		private AbstractMultiState<STATE, IBoogieVar> toDisjunctiveState(final Set<IPredicate> preds) {
+		private DisjunctiveAbstractState<STATE, IBoogieVar> toDisjunctiveState(final Set<IPredicate> preds) {
 			if (preds == null || preds.isEmpty()) {
-				return new AbstractMultiState<>();
+				return new DisjunctiveAbstractState<>();
 			}
 			final Set<STATE> allStates = new HashSet<>();
 			for (final IPredicate pred : preds) {
 				final Set<STATE> states = ((AbsIntPredicate<STATE, ?>) pred).getAbstractStates();
 				for (final STATE state : states) {
-					if (state instanceof AbstractMultiState<?, ?>) {
-						allStates.addAll(((AbstractMultiState) state).getStates());
+					if (state instanceof DisjunctiveAbstractState<?, ?>) {
+						allStates.addAll(((DisjunctiveAbstractState) state).getStates());
 					} else {
 						allStates.add(state);
 					}
 				}
 
 			}
-			return AbstractMultiState.createDisjunction(AbsIntUtil.synchronizeVariables(allStates));
+			return DisjunctiveAbstractState.createDisjunction(AbsIntUtil.synchronizeVariables(allStates));
 		}
 
 		private boolean sameVars(final Set<STATE> allStates) {

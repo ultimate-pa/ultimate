@@ -5,7 +5,7 @@ import java.util.function.Supplier;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.AbstractMultiState;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.DisjunctiveAbstractState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
@@ -54,8 +54,8 @@ public class RcfgDebugHelper<STATE extends IAbstractState<STATE, VARDECL>, ACTIO
 	}
 
 	@Override
-	public boolean isPostSound(final AbstractMultiState<STATE, VARDECL> preState,
-			final AbstractMultiState<STATE, VARDECL> hierPreState, final AbstractMultiState<STATE, VARDECL> postState,
+	public boolean isPostSound(final DisjunctiveAbstractState<STATE, VARDECL> preState,
+			final DisjunctiveAbstractState<STATE, VARDECL> hierPreState, final DisjunctiveAbstractState<STATE, VARDECL> postState,
 			final ACTION transition) {
 		final IPredicate pre = createPredicateFromState(preState);
 		final IPredicate post = createPredicateFromState(postState);
@@ -117,7 +117,7 @@ public class RcfgDebugHelper<STATE extends IAbstractState<STATE, VARDECL>, ACTIO
 		}
 	}
 
-	private IPredicate createPredicateFromState(final AbstractMultiState<STATE, VARDECL> state) {
+	private IPredicate createPredicateFromState(final DisjunctiveAbstractState<STATE, VARDECL> state) {
 		final Term acc = state.getTerm(mMgdScript.getScript());
 		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(acc, mMgdScript.getScript(), mSymbolTable);
 		return new AbsIntPredicate<>(new BasicPredicate(getIllegalPredicateId(), tvp.getProcedures(), acc,

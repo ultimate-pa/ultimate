@@ -28,7 +28,7 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm;
 
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.AbstractMultiState;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.DisjunctiveAbstractState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.AbstractCounterexample;
 
@@ -41,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 public interface IResultReporter<STATE extends IAbstractState<STATE, VARDECL>, ACTION, VARDECL, LOCATION> {
 	
 	void reportPossibleError(
-			AbstractCounterexample<AbstractMultiState<STATE, VARDECL>, ACTION, ?, LOCATION> cex);
+			AbstractCounterexample<DisjunctiveAbstractState<STATE, VARDECL>, ACTION, ?, LOCATION> cex);
 
 	void reportSafe(ACTION elem);
 

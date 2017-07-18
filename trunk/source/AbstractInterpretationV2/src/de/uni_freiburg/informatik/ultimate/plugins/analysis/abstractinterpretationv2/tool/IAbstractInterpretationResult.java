@@ -33,7 +33,7 @@ import java.util.Set;
 import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.AbstractMultiState;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.DisjunctiveAbstractState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IVariableProvider;
@@ -75,7 +75,7 @@ public interface IAbstractInterpretationResult<STATE extends IAbstractState<STAT
 	 *         counterexample does not contain the correct number of loop unrollings, but rather the number of loop
 	 *         unrollings until a fixpoint was computed.
 	 */
-	List<AbstractCounterexample<AbstractMultiState<STATE, VARDECL>, ACTION, VARDECL, LOCATION>>
+	List<AbstractCounterexample<DisjunctiveAbstractState<STATE, VARDECL>, ACTION, VARDECL, LOCATION>>
 			getCounterexamples();
 
 	/**

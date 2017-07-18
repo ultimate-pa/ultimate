@@ -1,6 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm;
 
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.AbstractMultiState;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.DisjunctiveAbstractState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
 
 /**
@@ -14,7 +14,7 @@ public interface IDebugHelper<STATE extends IAbstractState<STATE, VARDECL>, ACTI
 	/**
 	 * Check whether the Hoare triple {preState} {hierachicalPreState} transition {postState} holds.
 	 *
-	 * Note that {@link AbstractMultiState} is a disjunction of abstract states.
+	 * Note that {@link DisjunctiveAbstractState} is a disjunction of abstract states.
 	 *
 	 * @param preState
 	 *            The abstract pre state in the current scope.
@@ -26,7 +26,7 @@ public interface IDebugHelper<STATE extends IAbstractState<STATE, VARDECL>, ACTI
 	 *            The transition.
 	 * @return true iff the Hoare triple holds.
 	 */
-	boolean isPostSound(final AbstractMultiState<STATE, VARDECL> preState,
-			final AbstractMultiState<STATE, VARDECL> hierachicalPreState,
-			final AbstractMultiState<STATE, VARDECL> postState, final ACTION transition);
+	boolean isPostSound(final DisjunctiveAbstractState<STATE, VARDECL> preState,
+			final DisjunctiveAbstractState<STATE, VARDECL> hierachicalPreState,
+			final DisjunctiveAbstractState<STATE, VARDECL> postState, final ACTION transition);
 }

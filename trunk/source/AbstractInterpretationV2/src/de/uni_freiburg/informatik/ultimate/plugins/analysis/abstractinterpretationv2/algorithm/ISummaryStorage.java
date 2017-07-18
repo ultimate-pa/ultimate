@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm;
 
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.AbstractMultiState;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.DisjunctiveAbstractState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
 
 /**
@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractSta
  */
 public interface ISummaryStorage<STATE extends IAbstractState<STATE, VARDECL>, ACTION, VARDECL, LOCATION> {
 	
-	AbstractMultiState<STATE, VARDECL> getSummaryPostState(final ACTION summaryAction,
-			final AbstractMultiState<STATE, VARDECL> preCallState);
+	DisjunctiveAbstractState<STATE, VARDECL> getSummaryPostState(final ACTION summaryAction,
+			final DisjunctiveAbstractState<STATE, VARDECL> preCallState);
 
 }

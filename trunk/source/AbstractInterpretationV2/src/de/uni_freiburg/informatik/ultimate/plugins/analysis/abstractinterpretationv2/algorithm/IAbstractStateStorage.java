@@ -31,7 +31,7 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.AbstractMultiState;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.DisjunctiveAbstractState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
 
 /**
@@ -51,10 +51,10 @@ public interface IAbstractStateStorage<STATE extends IAbstractState<STATE, VARDE
 	/**
 	 * @param loc
 	 *            a location.
-	 * @return an {@link AbstractMultiState} that represents multiple abstract states that were saved at the given
+	 * @return an {@link DisjunctiveAbstractState} that represents multiple abstract states that were saved at the given
 	 *         location.
 	 */
-	AbstractMultiState<STATE, VARDECL> getAbstractState(LOC loc);
+	DisjunctiveAbstractState<STATE, VARDECL> getAbstractState(LOC loc);
 
 	/**
 	 * Save a new state to some location. If there is already a state, merge the new one with the old one according to
@@ -66,14 +66,14 @@ public interface IAbstractStateStorage<STATE extends IAbstractState<STATE, VARDE
 	 *            the state that should be saved.
 	 * @return The new state that is now saved at this location (i.e., either the given state or a merged state).
 	 */
-	AbstractMultiState<STATE, VARDECL> addAbstractState(LOC loc,
-			AbstractMultiState<STATE, VARDECL> state);
+	DisjunctiveAbstractState<STATE, VARDECL> addAbstractState(LOC loc,
+			DisjunctiveAbstractState<STATE, VARDECL> state);
 
 	IAbstractStateStorage<STATE, ACTION, VARDECL, LOC> createStorage(ACTION scope);
 
 	void scopeFixpointReached();
 
-	void saveSummarySubstituion(ACTION action, AbstractMultiState<STATE, VARDECL> summaryPostState,
+	void saveSummarySubstituion(ACTION action, DisjunctiveAbstractState<STATE, VARDECL> summaryPostState,
 			ACTION summaryAction);
 
 	/**
@@ -82,7 +82,7 @@ public interface IAbstractStateStorage<STATE extends IAbstractState<STATE, VARDE
 	 *
 	 * @return a map from location to term.
 	 */
-	Map<LOC, Set<AbstractMultiState<STATE, VARDECL>>> computeLoc2States();
+	Map<LOC, Set<DisjunctiveAbstractState<STATE, VARDECL>>> computeLoc2States();
 
 	/**
 	 * Get the set of abstract domain states that is saved at the target location of the given symbol in the context
