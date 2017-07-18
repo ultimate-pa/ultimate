@@ -55,8 +55,21 @@ public class AtomicTraceElement<TE> {
 	 *
 	 */
 	public enum StepInfo {
-		NONE("NONE"), CONDITION_EVAL_TRUE("COND TRUE"), CONDITION_EVAL_FALSE("COND FALSE"), PROC_CALL("CALL"),
-		PROC_RETURN("RET"), ARG_EVAL("ARG"), EXPR_EVAL("EXPR"), FUNC_CALL("FCALL");
+		NONE("NONE"),
+
+		CONDITION_EVAL_TRUE("COND TRUE"),
+
+		CONDITION_EVAL_FALSE("COND FALSE"),
+
+		PROC_CALL("CALL"),
+
+		PROC_RETURN("RET"),
+
+		ARG_EVAL("ARG"),
+
+		EXPR_EVAL("EXPR"),
+
+		FUNC_CALL("FCALL");
 
 		private final String mText;
 
