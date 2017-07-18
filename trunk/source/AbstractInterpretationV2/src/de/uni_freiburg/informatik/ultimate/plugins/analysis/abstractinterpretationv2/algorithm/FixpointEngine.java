@@ -247,7 +247,8 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, VARDECL>, ACTION
 			isHierachicalPostResultBottom(postState, currentItem);
 		}
 		assert postState != null;
-		assert assertIsPostSound(preState, currentAction, preStateWithFreshVariables, postState) : "Post is unsound";
+		assert assertIsPostSound(preState, currentAction, preStateWithFreshVariables, hierachicalPreState,
+				postState) : "Post is unsound";
 
 		// check if we enter or leave a scope and act accordingly (saving summaries, creating new scope storages, etc.)
 		postState = prepareScope(currentItem, postState);
@@ -257,6 +258,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, VARDECL>, ACTION
 
 	private boolean assertIsPostSound(final AbstractMultiState<STATE, VARDECL> preState, final ACTION currentAction,
 			final AbstractMultiState<STATE, VARDECL> preStateWithFreshVariables,
+			final AbstractMultiState<STATE, VARDECL> hierachicalPreState,
 			final AbstractMultiState<STATE, VARDECL> postState) {
 		final boolean rtr = mTransitionProvider.isSummaryWithImplementation(currentAction)
 				|| mDebugHelper.isPostSound(preState, preStateWithFreshVariables, postState, currentAction);
@@ -265,6 +267,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, VARDECL>, ACTION
 		}
 		mLogger.fatal("Post is unsound because the term-transformation of the following triple is not valid: {");
 		mLogger.fatal("PreBL : " + preState.toLogString());
+		mLogger.fatal("PreH  : " + hierachicalPreState.toLogString());
 		if (preState != preStateWithFreshVariables) {
 			mLogger.fatal("PreAL : " + preStateWithFreshVariables.toLogString());
 		}
