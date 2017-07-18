@@ -28,7 +28,6 @@
 package de.uni_freiburg.informatik.ultimate.core.model.translation;
 
 import java.util.EnumSet;
-import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.core.model.results.IRelevanceInformation;
 
@@ -162,10 +161,6 @@ public class AtomicTraceElement<TE> {
 		assert info != null;
 		assert toStringProvider != null;
 		assert !(info.size() > 1 && info.contains(StepInfo.NONE)) : "You cannot combine NONE with other values";
-		assert (!info.contains(StepInfo.PROC_CALL) && !info.contains(StepInfo.PROC_RETURN))
-				|| !Objects.equals(precedingProcedure,
-						succeedingProcedure) : "Call and return must have different procedure names";
-
 		mElement = element;
 		mStep = step;
 		mStepInfo = info;
