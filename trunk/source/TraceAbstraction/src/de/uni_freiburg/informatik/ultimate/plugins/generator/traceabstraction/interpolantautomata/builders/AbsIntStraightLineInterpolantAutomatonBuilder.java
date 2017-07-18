@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.AbstractMultiState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
@@ -111,8 +112,9 @@ public class AbsIntStraightLineInterpolantAutomatonBuilder<LETTER extends IIcfgT
 				new RcfgDebugHelper<>(mCsToolkit, mServices, mSymbolTable);
 		mLogger.info("Creating interpolant automaton from AI predicates (straight)");
 
-		final NestedWordAutomaton<LETTER, IPredicate> result = new NestedWordAutomaton<>(
-				new AutomataLibraryServices(mServices), oldAbstraction.getVpAlphabet(), oldAbstraction.getStateFactory());
+		final NestedWordAutomaton<LETTER, IPredicate> result =
+				new NestedWordAutomaton<>(new AutomataLibraryServices(mServices), oldAbstraction.getVpAlphabet(),
+						oldAbstraction.getStateFactory());
 
 		final NestedRun<LETTER, IPredicate> cex = (NestedRun<LETTER, IPredicate>) mCurrentCounterExample;
 		final Word<LETTER> word = cex.getWord();
@@ -212,7 +214,8 @@ public class AbsIntStraightLineInterpolantAutomatonBuilder<LETTER extends IIcfgT
 			for (final IPredicate finalState : result.getFinalStates()) {
 				oldAbstraction.getVpAlphabet().getInternalAlphabet()
 						.forEach(l -> result.addInternalTransition(finalState, l, finalState));
-				oldAbstraction.getVpAlphabet().getCallAlphabet().forEach(l -> result.addCallTransition(finalState, l, finalState));
+				oldAbstraction.getVpAlphabet().getCallAlphabet()
+						.forEach(l -> result.addCallTransition(finalState, l, finalState));
 				for (final LETTER returnSymbol : oldAbstraction.getVpAlphabet().getReturnAlphabet()) {
 					final IIcfgReturnTransition<?, ?> ret = (IIcfgReturnTransition<?, ?>) returnSymbol;
 					result.addReturnTransition(finalState, finalState, returnSymbol, finalState);
@@ -229,10 +232,14 @@ public class AbsIntStraightLineInterpolantAutomatonBuilder<LETTER extends IIcfgT
 	private <STATE extends IAbstractState<STATE, IBoogieVar>> boolean isSound(final Set<STATE> previousStates,
 			final Triple<LETTER, IPredicate, Set<STATE>> hierarchicalPreState, final LETTER symbol,
 			final Set<STATE> postStates, final RcfgDebugHelper<STATE, LETTER, IBoogieVar, ?> debugHelper) {
+		final AbstractMultiState<STATE, IBoogieVar> hierPre;
 		if (hierarchicalPreState == null) {
-			return debugHelper.isPostSound(previousStates, null, postStates, symbol);
+			hierPre = null;
+		} else {
+			hierPre = AbstractMultiState.createDisjunction(hierarchicalPreState.getThird());
 		}
-		return debugHelper.isPostSound(previousStates, hierarchicalPreState.getThird(), postStates, symbol);
+		return debugHelper.isPostSound(AbstractMultiState.createDisjunction(previousStates), hierPre,
+				AbstractMultiState.createDisjunction(postStates), symbol);
 	}
 
 	private <STATE extends IAbstractState<STATE, IBoogieVar>> Triple<LETTER, IPredicate, Set<STATE>>
