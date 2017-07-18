@@ -250,32 +250,29 @@ public class BoogiePreprocessorBacktranslator
 		if (!(input instanceof UnaryExpression)) {
 			// it is not even an unary expression, it surely evaluates to true
 			return StepInfo.CONDITION_EVAL_TRUE;
-		} else {
-			final UnaryExpression inputCond = (UnaryExpression) input;
-			if (inputCond.getOperator() != Operator.LOGICNEG) {
-				// it is an unaryCond, but its no negation, so it must be true
-				return StepInfo.CONDITION_EVAL_TRUE;
-			}
-			// now it gets interesting: it is a negation, but is the real
-			// condition also a negation?
-
-			if (!(output instanceof UnaryExpression)) {
-				// nope, so that means it is false
-				return StepInfo.CONDITION_EVAL_FALSE;
-			} else {
-				final UnaryExpression outputCond = (UnaryExpression) output;
-				if (inputCond.getOperator() != Operator.LOGICNEG) {
-					// it is an unaryCond, but its no negation, so it must be
-					// false
-					return StepInfo.CONDITION_EVAL_FALSE;
-				} else {
-					// both have outer unary expressions that are logicneg.
-					// now we recurse, because we already stripped the outer
-					// negations
-					return getStepInfoFromCondition(inputCond.getExpr(), outputCond.getExpr());
-				}
-			}
 		}
+		final UnaryExpression inputCond = (UnaryExpression) input;
+		if (inputCond.getOperator() != Operator.LOGICNEG) {
+			// it is an unaryCond, but its no negation, so it must be true
+			return StepInfo.CONDITION_EVAL_TRUE;
+		}
+		// now it gets interesting: it is a negation, but is the real
+		// condition also a negation?
+
+		if (!(output instanceof UnaryExpression)) {
+			// nope, so that means it is false
+			return StepInfo.CONDITION_EVAL_FALSE;
+		}
+		final UnaryExpression outputCond = (UnaryExpression) output;
+		if (inputCond.getOperator() != Operator.LOGICNEG) {
+			// it is an unaryCond, but its no negation, so it must be
+			// false
+			return StepInfo.CONDITION_EVAL_FALSE;
+		}
+		// both have outer unary expressions that are logicneg.
+		// now we recurse, because we already stripped the outer
+		// negations
+		return getStepInfoFromCondition(inputCond.getExpr(), outputCond.getExpr());
 	}
 
 	@Override
@@ -341,7 +338,7 @@ public class BoogiePreprocessorBacktranslator
 				new GenericResult(Activator.PLUGIN_ID, "Unfinished Backtranslation", message, Severity.WARNING));
 	}
 
-	private String printDebug(final BoogieASTNode node) {
+	private static String printDebug(final BoogieASTNode node) {
 		if (node instanceof Statement) {
 			return BoogiePrettyPrinter.print((Statement) node);
 		}
@@ -529,9 +526,8 @@ public class BoogiePreprocessorBacktranslator
 				if (ct.equals(ct.getUnderlyingType())) {
 					// this constructed type is a named type
 					return matchIdentifier(mappedLoc, list, inputExp);
-				} else {
-					return extractIdentifier(mappedLoc, list, inputExp, ct.getUnderlyingType());
 				}
+				return extractIdentifier(mappedLoc, list, inputExp, ct.getUnderlyingType());
 			} else if (type instanceof PrimitiveType) {
 				return matchIdentifier(mappedLoc, list, inputExp);
 			} else {
