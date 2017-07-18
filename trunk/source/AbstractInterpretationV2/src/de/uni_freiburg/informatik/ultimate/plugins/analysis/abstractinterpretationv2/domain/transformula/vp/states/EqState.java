@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNodeAndFunctionFactory;
 
 /**
- * 
+ *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  * @param <ACTION>
@@ -60,12 +60,12 @@ public class EqState<ACTION extends IIcfgTransition<IcfgLocation>>
 		implements IAbstractState<EqState<ACTION>, IProgramVarOrConst>, IEqualityProvidingState {
 
 	private static int sNextFreeId = 0;
-	
+
 	private final int mId;
 
 	/**
-	 * The variables and constants that this state has "for the abstract interpretation"/"as an IAbstractState".
-	 * Note that these should be related but need not be identical to mConstraint.getPvocs(..).
+	 * The variables and constants that this state has "for the abstract interpretation"/"as an IAbstractState". Note
+	 * that these should be related but need not be identical to mConstraint.getPvocs(..).
 	 */
 	private final Set<IProgramVarOrConst> mPvocs;
 
@@ -75,24 +75,21 @@ public class EqState<ACTION extends IIcfgTransition<IcfgLocation>>
 	private final EqStateFactory<ACTION> mFactory;
 
 	public EqState(final EqConstraint<ACTION, EqNode, EqFunction> constraint,
-			final EqNodeAndFunctionFactory eqNodeAndFunctionFactory, 
-			final EqStateFactory<ACTION> eqStateFactory,
+			final EqNodeAndFunctionFactory eqNodeAndFunctionFactory, final EqStateFactory<ACTION> eqStateFactory,
 			final Set<IProgramVarOrConst> variables) {
 		mId = sNextFreeId++;
 		assert sNextFreeId != Integer.MAX_VALUE;
 		mConstraint = constraint;
 		mFactory = eqStateFactory;
 		mPvocs = new HashSet<>(variables);
-		assert mPvocs.containsAll(constraint.getPvocs(mFactory.getSymbolTable())
-				.stream()
-				.filter(pvoc -> !(pvoc instanceof IProgramOldVar))
-				.filter(pvoc -> !(pvoc instanceof BoogieConst))
+		assert mPvocs.containsAll(constraint.getPvocs(mFactory.getSymbolTable()).stream()
+				.filter(pvoc -> !(pvoc instanceof IProgramOldVar)).filter(pvoc -> !(pvoc instanceof BoogieConst))
 				.collect(Collectors.toSet()));
 	}
 
 	@Override
 	public EqState<ACTION> addVariable(final IProgramVarOrConst variable) {
-		Set<IProgramVarOrConst> newPvocs = new HashSet<>(mPvocs);
+		final Set<IProgramVarOrConst> newPvocs = new HashSet<>(mPvocs);
 		newPvocs.add(variable);
 		return mFactory.getEqState(mConstraint, newPvocs);
 	}
@@ -104,7 +101,7 @@ public class EqState<ACTION extends IIcfgTransition<IcfgLocation>>
 
 	@Override
 	public EqState<ACTION> addVariables(final Collection<IProgramVarOrConst> variables) {
-		Set<IProgramVarOrConst> newPvocs = new HashSet<>(mPvocs);
+		final Set<IProgramVarOrConst> newPvocs = new HashSet<>(mPvocs);
 		newPvocs.addAll(variables);
 		return mFactory.getEqState(mConstraint, newPvocs);
 	}
@@ -142,12 +139,12 @@ public class EqState<ACTION extends IIcfgTransition<IcfgLocation>>
 	public EqState<ACTION> intersect(final EqState<ACTION> other) {
 		final EqConstraint<ACTION, EqNode, EqFunction> newConstraint =
 				mFactory.getEqConstraintFactory().conjoinFlat(this.getConstraint(), other.getConstraint());
-		
+
 		final Set<IProgramVarOrConst> newVariables = new HashSet<>();
 		newVariables.addAll(this.getVariables());
 		newVariables.addAll(other.getVariables());
 
-//		return mFactory.getEqState(newConstraint, newConstraint.getPvocs(mFactory.getSymbolTable()));
+		// return mFactory.getEqState(newConstraint, newConstraint.getPvocs(mFactory.getSymbolTable()));
 		return mFactory.getEqState(newConstraint, newVariables);
 	}
 
@@ -155,12 +152,12 @@ public class EqState<ACTION extends IIcfgTransition<IcfgLocation>>
 	public EqState<ACTION> union(final EqState<ACTION> other) {
 		final EqConstraint<ACTION, EqNode, EqFunction> newConstraint =
 				mFactory.getEqConstraintFactory().disjoinFlat(this.getConstraint(), other.getConstraint());
-		
+
 		final Set<IProgramVarOrConst> newVariables = new HashSet<>();
 		newVariables.addAll(this.getVariables());
 		newVariables.addAll(other.getVariables());
 
-//		return mFactory.getEqState(newConstraint, newConstraint.getPvocs(mFactory.getSymbolTable()));
+		// return mFactory.getEqState(newConstraint, newConstraint.getPvocs(mFactory.getSymbolTable()));
 		return mFactory.getEqState(newConstraint, newVariables);
 
 	}
@@ -177,14 +174,12 @@ public class EqState<ACTION extends IIcfgTransition<IcfgLocation>>
 
 	@Override
 	public boolean isEqualTo(final EqState<ACTION> other) {
-		return this.isSubsetOf(other) == SubsetResult.EQUAL ||
-				(this.isSubsetOf(other) == SubsetResult.NON_STRICT 
-					&& other.isSubsetOf(this) == SubsetResult.NON_STRICT);
+		return this.isSubsetOf(other) == SubsetResult.EQUAL || (this.isSubsetOf(other) == SubsetResult.NON_STRICT
+				&& other.isSubsetOf(this) == SubsetResult.NON_STRICT);
 	}
 
 	@Override
-	public SubsetResult
-			isSubsetOf(final EqState<ACTION> other) {
+	public SubsetResult isSubsetOf(final EqState<ACTION> other) {
 		if (mConstraint.isTop() && other.mConstraint.isTop()) {
 			return SubsetResult.EQUAL;
 		}
@@ -199,52 +194,51 @@ public class EqState<ACTION extends IIcfgTransition<IcfgLocation>>
 			// we know from the case above that !mConstraint.isTop()
 			return SubsetResult.STRICT;
 		}
-		
+
 		/*
-		 *  checking inclusion between states via inclusion check on the constraints 
-		 *   --> note the inversion constraints vs models!
+		 * checking inclusion between states via inclusion check on the constraints --> note the inversion constraints
+		 * vs models!
 		 */
-	
+
 		// supporting equalities should, here (because the other state is closed under transitivity etc..)
-		for (Entry<EqNode, EqNode> elEq : other.getConstraint().getSupportingElementEqualities()) { 
+		for (final Entry<EqNode, EqNode> elEq : other.getConstraint().getSupportingElementEqualities()) {
 			if (!mConstraint.areEqual(elEq.getKey(), elEq.getValue())) {
 				return SubsetResult.NONE;
 			}
 		}
-		
-		for (VPDomainSymmetricPair<EqNode> elDeq : other.getConstraint().getAllElementDisequalities()) {
+
+		for (final VPDomainSymmetricPair<EqNode> elDeq : other.getConstraint().getAllElementDisequalities()) {
 			if (!mConstraint.areUnequal(elDeq.getFirst(), elDeq.getSecond())) {
 				return SubsetResult.NONE;
 			}
 		}
-		
-		for (Entry<EqFunction, EqFunction> fnEq : other.getConstraint().getSupportingFunctionEqualities()) {
+
+		for (final Entry<EqFunction, EqFunction> fnEq : other.getConstraint().getSupportingFunctionEqualities()) {
 			if (!mConstraint.areEqual(fnEq.getKey(), fnEq.getValue())) {
 				return SubsetResult.NONE;
 			}
 		}
-		
-		for (VPDomainSymmetricPair<EqFunction> fnDeq : other.getConstraint().getAllFunctionDisequalities()) {
+
+		for (final VPDomainSymmetricPair<EqFunction> fnDeq : other.getConstraint().getAllFunctionDisequalities()) {
 			if (!mConstraint.areUnequal(fnDeq.getFirst(), fnDeq.getSecond())) {
 				return SubsetResult.NONE;
 			}
 		}
-		
-		
+
 		// TODO
-//		final EqConstraintFactory<ACTION, EqNode, EqFunction> constraintFactory = mFactory.getEqConstraintFactory();
-//		final EqDisjunctiveConstraint<ACTION, EqNode, EqFunction> intersectionWithComplement = 
-//				constraintFactory.conjoinDisjunctiveConstraints(
-//						toList(constraintFactory.getDisjunctiveConstraint(toList(mConstraint)), 
-//								constraintFactory.complement(other.getConstraint())));
-//		if (intersectionWithComplement.isBottom()) {
-//			return SubsetResult.
-//			
-//		}
-//		return null;
+		// final EqConstraintFactory<ACTION, EqNode, EqFunction> constraintFactory = mFactory.getEqConstraintFactory();
+		// final EqDisjunctiveConstraint<ACTION, EqNode, EqFunction> intersectionWithComplement =
+		// constraintFactory.conjoinDisjunctiveConstraints(
+		// toList(constraintFactory.getDisjunctiveConstraint(toList(mConstraint)),
+		// constraintFactory.complement(other.getConstraint())));
+		// if (intersectionWithComplement.isBottom()) {
+		// return SubsetResult.
+		//
+		// }
+		// return null;
 		return SubsetResult.NON_STRICT;
 	}
-	
+
 	@SafeVarargs
 	private static <E> List<E> toList(final E... elems) {
 		return Arrays.asList(elems);
@@ -262,10 +256,10 @@ public class EqState<ACTION extends IIcfgTransition<IcfgLocation>>
 
 	@Override
 	public String toLogString() {
-		return mConstraint.toString();
+		return mPvocs.toString() + " " + mConstraint.toString();
 	}
-	
-	@Override 
+
+	@Override
 	public String toString() {
 		return toLogString();
 	}
@@ -289,6 +283,7 @@ public class EqState<ACTION extends IIcfgTransition<IcfgLocation>>
 		return mConstraint.areUnequal(node1, node2);
 	}
 
+	@Override
 	public boolean areEqual(final Term term1, final Term term2) {
 		if (term1.getSort().isArraySort()) {
 			// array case
@@ -311,6 +306,7 @@ public class EqState<ACTION extends IIcfgTransition<IcfgLocation>>
 		return mConstraint.areEqual(node1, node2);
 	}
 
+	@Override
 	public boolean areUnequal(final Term term1, final Term term2) {
 		if (term1.getSort().isArraySort()) {
 			// array case
@@ -334,7 +330,7 @@ public class EqState<ACTION extends IIcfgTransition<IcfgLocation>>
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
 		}
@@ -349,15 +345,13 @@ public class EqState<ACTION extends IIcfgTransition<IcfgLocation>>
 
 	@Override
 	public int hashCode() {
-//		return super.hashCode();
+		// return super.hashCode();
 		return mId;
 	}
 
 	@Override
-	public IEqualityProvidingState union(IEqualityProvidingState other) {
+	public IEqualityProvidingState union(final IEqualityProvidingState other) {
 		return union((EqState<ACTION>) other);
 	}
-	
-	
 
 }
