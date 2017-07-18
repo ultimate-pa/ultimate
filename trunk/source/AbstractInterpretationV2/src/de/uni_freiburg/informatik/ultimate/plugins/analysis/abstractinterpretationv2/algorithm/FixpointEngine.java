@@ -261,7 +261,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, VARDECL>, ACTION
 			final AbstractMultiState<STATE, VARDECL> hierachicalPreState,
 			final AbstractMultiState<STATE, VARDECL> postState) {
 		final boolean rtr = mTransitionProvider.isSummaryWithImplementation(currentAction)
-				|| mDebugHelper.isPostSound(preState, preStateWithFreshVariables, postState, currentAction);
+				|| mDebugHelper.isPostSound(preState, hierachicalPreState, postState, currentAction);
 		if (rtr) {
 			return true;
 		}

@@ -1,7 +1,5 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg;
 
-import java.util.Collection;
-import java.util.Set;
 import java.util.function.Supplier;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -28,6 +26,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.IDebugHelper;
 
 /**
+ * Default implementation of {@link IDebugHelper}.
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
@@ -55,22 +54,13 @@ public class RcfgDebugHelper<STATE extends IAbstractState<STATE, VARDECL>, ACTIO
 	}
 
 	@Override
-	public boolean isPostSound(final AbstractMultiState<STATE, VARDECL> stateBeforeLeaving,
-			final AbstractMultiState<STATE, VARDECL> stateAfterLeaving,
-			final AbstractMultiState<STATE, VARDECL> postState, final ACTION transition) {
-		final IPredicate precond = createPredicateFromState(stateBeforeLeaving);
-		final IPredicate postcond = createPredicateFromState(postState);
-		final IPredicate hierPre = getHierachicalPre(transition, () -> createPredicateFromState(stateAfterLeaving));
-		return isPostSound(hierPre, transition, precond, postcond);
-	}
-
-	@Override
-	public boolean isPostSound(final Set<STATE> statesBeforeLeaving, final Set<STATE> stateAfterLeaving,
-			final Set<STATE> postStates, final ACTION transition) {
-		final IPredicate precond = createPredicateFromState(statesBeforeLeaving);
-		final IPredicate postcond = createPredicateFromState(postStates);
-		final IPredicate hierPre = getHierachicalPre(transition, () -> createPredicateFromState(stateAfterLeaving));
-		return isPostSound(hierPre, transition, precond, postcond);
+	public boolean isPostSound(final AbstractMultiState<STATE, VARDECL> preState,
+			final AbstractMultiState<STATE, VARDECL> hierPreState, final AbstractMultiState<STATE, VARDECL> postState,
+			final ACTION transition) {
+		final IPredicate pre = createPredicateFromState(preState);
+		final IPredicate post = createPredicateFromState(postState);
+		final IPredicate hierPre = getHierachicalPre(transition, () -> createPredicateFromState(hierPreState));
+		return isPostSound(hierPre, transition, pre, post);
 	}
 
 	private IPredicate getHierachicalPre(final ACTION transition, final Supplier<IPredicate> func) {
@@ -125,10 +115,6 @@ public class RcfgDebugHelper<STATE extends IAbstractState<STATE, VARDECL>, ACTIO
 		} else {
 			throw new UnsupportedOperationException("Cannot find transformula in " + action);
 		}
-	}
-
-	private IPredicate createPredicateFromState(final Collection<STATE> states) {
-		return createPredicateFromState(AbstractMultiState.createDisjunction(states));
 	}
 
 	private IPredicate createPredicateFromState(final AbstractMultiState<STATE, VARDECL> state) {
