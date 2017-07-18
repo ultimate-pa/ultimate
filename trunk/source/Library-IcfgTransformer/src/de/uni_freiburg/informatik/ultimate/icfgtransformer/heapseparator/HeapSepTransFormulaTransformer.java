@@ -120,10 +120,10 @@ public class HeapSepTransFormulaTransformer implements ITransformulaTransformer 
 	private UnmodifiableTransFormula splitArraysInTransFormula(final UnmodifiableTransFormula tf) {
 		mStatistics.incrementTransformulaCounter();
 
-		final NewTermVariableProvider newTvProvider = new NewTermVariableProvider();
+		final NewTermVariableProvider newTvProvider = new NewTermVariableProvider(tf);
 
-		final Map<IProgramVar, TermVariable> newInVars = new HashMap<>(tf.getInVars());
-		final Map<IProgramVar, TermVariable> newOutVars = new HashMap<>(tf.getOutVars());
+//		Map<IProgramVar, TermVariable> newInVars = new HashMap<>(tf.getInVars());
+//		Map<IProgramVar, TermVariable> newOutVars = new HashMap<>(tf.getOutVars());
 		
 		Term intermediateFormula = tf.getFormula();
 		
@@ -134,14 +134,20 @@ public class HeapSepTransFormulaTransformer implements ITransformulaTransformer 
 //		Map<Term, Term> substitutionSoFar = new HashMap<>();
 
 		mMgdScript.lock(this);
-		intermediateFormula = substituteArrayUpdates(tf, newInVars, newOutVars, intermediateFormula, newTvProvider);
+		intermediateFormula = substituteArrayUpdates(tf, intermediateFormula, newTvProvider);
+//		intermediateFormula = substituteArrayUpdates(tf, newInVars, newOutVars, intermediateFormula, newTvProvider);
 
-		intermediateFormula = substituteArrayEqualites(tf, newInVars, newOutVars, intermediateFormula, 
-				newTvProvider);
+//		intermediateFormula = substituteArrayEqualites(tf, newInVars, newOutVars, intermediateFormula, 
+		intermediateFormula = substituteArrayEqualites(tf, intermediateFormula, newTvProvider);
 
-		intermediateFormula = substituteRemainingStoresAndSelects(tf, newInVars, newOutVars, intermediateFormula,
-				newTvProvider);
+//		intermediateFormula = substituteRemainingStoresAndSelects(tf, newInVars, newOutVars, intermediateFormula,
+		intermediateFormula = substituteRemainingStoresAndSelects(tf, intermediateFormula, newTvProvider);
 		mMgdScript.unlock(this);
+		
+//		newInVars = newTvProvider.getNewInVars();
+//		newOutVars = newTvProvider.getNewInVars();
+//		newInVars.putAll(newTvProvider.getNewInVars());
+//		newOutVars.putAll(newTvProvider.getNewOutVars());
 		
 		boolean newEmptyNonTheoryConsts = false;
 		Set<IProgramConst> newNonTheoryConsts = null;
@@ -149,8 +155,10 @@ public class HeapSepTransFormulaTransformer implements ITransformulaTransformer 
 		Collection<TermVariable> newBranchEncoders = null; // TODO: deal with these for working LBE, right?..
 		boolean newEmptyAuxVars = false;
 		TransFormulaBuilder tfBuilder = new TransFormulaBuilder(
-				newInVars, 
-				newOutVars, 
+//				newInVars, 
+//				newOutVars, 
+				newTvProvider.getNewInVars(),
+				newTvProvider.getNewOutVars(),
 				newEmptyNonTheoryConsts, 
 				newNonTheoryConsts, 
 				newEmptyBranchEncoders, 
@@ -194,7 +202,7 @@ public class HeapSepTransFormulaTransformer implements ITransformulaTransformer 
 	 * @return
 	 */
 	private Term substituteRemainingStoresAndSelects(final UnmodifiableTransFormula tf,
-			final Map<IProgramVar, TermVariable> newInVars, final Map<IProgramVar, TermVariable> newOutVars,
+//			final Map<IProgramVar, TermVariable> newInVars, final Map<IProgramVar, TermVariable> newOutVars,
 			final Term intermediateFormula, final NewTermVariableProvider newTvProvider) {
 		final Map<Term, Term> substitutionMapPvoc = new HashMap<>();
 		
@@ -216,13 +224,15 @@ public class HeapSepTransFormulaTransformer implements ITransformulaTransformer 
 			final Term oldArray = VPDomainHelpers.normalizeTerm(getInnerMostArray(mds.getArray()), tf, mMgdScript);
 
 			final List<Term> pointers = mds.getIndex().stream()
-					.map(t -> VPDomainHelpers.normalizeTerm(t, newInVars, newOutVars, mMgdScript))
+//					.map(t -> VPDomainHelpers.normalizeTerm(t, newInVars, newOutVars, mMgdScript))
+					.map(t -> VPDomainHelpers.normalizeTerm(t, newTvProvider.getNewInVars(), 
+							newTvProvider.getNewOutVars(), mMgdScript))
 					.collect(Collectors.toList());
 	
 
 			Term newArray = mNewArrayIdProvider.getNewArrayId(oldArray, pointers);
 
-			updateMappingsForSubstitution(oldArray, newArray, newInVars, newOutVars, substitutionMapPvoc, tf);
+			updateMappingsForSubstitution(mds.getArray(), newArray, substitutionMapPvoc, newTvProvider, tf);
 		}
 		Term result = new Substitution(mMgdScript, substitutionMapPvoc).transform(intermediateFormula);	
 
@@ -285,7 +295,7 @@ public class HeapSepTransFormulaTransformer implements ITransformulaTransformer 
 	 * @return
 	 */
 	private Term substituteArrayUpdates(final UnmodifiableTransFormula tf,
-			final Map<IProgramVar, TermVariable> newInVars, final Map<IProgramVar, TermVariable> newOutVars,
+//			final Map<IProgramVar, TermVariable> newInVars, final Map<IProgramVar, TermVariable> newOutVars,
 			final Term formula, final NewTermVariableProvider newTvProvider) {
 		
 		/*
@@ -413,8 +423,8 @@ public class HeapSepTransFormulaTransformer implements ITransformulaTransformer 
 	}
 
 	private Term substituteArrayEqualites(final UnmodifiableTransFormula tf,
-			final Map<IProgramVar, TermVariable> newInVars, 
-			final Map<IProgramVar, TermVariable> newOutVars, 
+//			final Map<IProgramVar, TermVariable> newInVars, 
+//			final Map<IProgramVar, TermVariable> newOutVars, 
 			final Term intermediateFormula, 
 			final NewTermVariableProvider newTvProvider) {
 		final List<ArrayEquality> arrayEqualities = ArrayEquality.extractArrayEqualities(intermediateFormula);
@@ -457,92 +467,15 @@ public class HeapSepTransFormulaTransformer implements ITransformulaTransformer 
 				/*
 				 * update the new invar/outvar maps
 				 */
-				TermVariable newArrayLhs = null;
-				TermVariable newArrayRhs = null;
+				TermVariable newArrayLhs = newTvProvider.getOrConstructNewTermVariable(newLhsPvoc, 
+						ae.getLhsTermVariable(), tf);
+				TermVariable newArrayRhs = newTvProvider.getOrConstructNewTermVariable(newRhsPvoc, 
+						ae.getRhsTermVariable(), tf);
 
-//				// invars
-//				if (tf.getInVars().containsKey(oldLhsPvoc)) {
-//					// lhs is in invars
-//					newInVars.remove(oldLhsPvoc);
-//
-//					// do we have an entry for the new version in the new invars? if no, create one
-//					newArrayLhs = newInVars.get(newLhsPvoc);
-//					if (newArrayLhs == null) {
-//						newArrayLhs = mMgdScript.constructFreshCopy(ae.getLhsTermVariable());
-//						newInVars.put(newLhsPvoc, newArrayLhs);
-//					}
-//				}
-//				if (tf.getInVars().containsKey(oldRhsPvoc)) {
-//					// rhs is in invars
-//					newInVars.remove(oldRhsPvoc);
-//
-//					// do we have an entry for the new version in the new invars? if no, create one
-//					newArrayRhs = newInVars.get(newRhsPvoc);
-//					if (newArrayRhs == null) {
-//						newArrayRhs = mMgdScript.constructFreshCopy(ae.getRhsTermVariable());
-//						newInVars.put(newRhsPvoc, newArrayRhs);
-//					}
-//				}
-//				
-//				// outvars
-//				if (tf.getOutVars().containsKey(oldLhsPvoc)) {
-//					// lhs is in invars
-//					newOutVars.remove(oldLhsPvoc);
-//
-//					// do we have an entry for the new version in the new invars? if no, create one
-////					newArrayLhs = newOutVars.get(newLhsPvoc);
-//					if (newArrayLhs == null) {
-//						// the is variable only out, not in 
-//
-//						// check if we have it in new outvars, if not construct fresh
-//						newArrayLhs = newOutVars.get(newLhsPvoc);
-//						if (newArrayLhs == null) {
-//							newArrayLhs = mMgdScript.constructFreshCopy(ae.getLhsTermVariable());
-//						}
-//					}
-//					newOutVars.put(newLhsPvoc, newArrayLhs);
-//					//					if (!newOutVars.containsKey(newLhsPvoc)) {
-////						if (tf.getAssignedVars().contains(oldLhsPvoc)) {
-////							newArrayLhs = mMgdScript.constructFreshCopy(ae.getLhsTermVariable());
-////						} else  {
-////							// "through" case -- the variable is out, but not assigned
-////							assert newArrayLhs != null && newArrayLhs == newInVars.get(newLhsPvoc);
-////						}
-////						newOutVars.put(newLhsPvoc, newArrayLhs);
-////					}
-//				}
-//				if (tf.getOutVars().containsKey(oldRhsPvoc)) {
-//					// rhs is in invars
-//					newOutVars.remove(oldRhsPvoc);
-//
-//					// do we have an entry for the new version in the new invars? if no, create one
-//					if (newArrayRhs == null) {
-//						// the is variable only out, not in 
-//
-//						// check if we have it in new outvars, if not construct fresh
-//						newArrayRhs = newOutVars.get(newRhsPvoc);
-//						if (newArrayRhs == null) {
-//							newArrayRhs = mMgdScript.constructFreshCopy(ae.getRhsTermVariable());
-//						}
-//					}
-//					newOutVars.put(newRhsPvoc, newArrayRhs);
-//
-////					newArrayRhs = newOutVars.get(newRhsPvoc);
-////					if (newArrayRhs == null) {
-////						if (tf.getAssignedVars().contains(oldRhsPvoc)) {
-////							newArrayRhs = mMgdScript.constructFreshCopy(ae.getRhsTermVariable());
-////						} else  {
-////							// "through" case -- the variable is out, but not assigned
-////							assert newArrayRhs != null && newArrayRhs == newInVars.get(newRhsPvoc);
-////						}
-////						newOutVars.put(newRhsPvoc, newArrayRhs);
-////					}
-//				}
 				assert newArrayLhs != null && newArrayRhs != null;
 
 				final Term newEquality = mMgdScript.term(this, "=", newArrayLhs, newArrayRhs);
 				newEqualities.add(newEquality);
-
 
 //				updateNewInVarsAndNewOutVars(tf, newInVars, newOutVars, oldLhsPvoc, oldRhsPvoc, newLhsPvoc, newRhsPvoc, 
 //						newLhs, newRhs);
@@ -598,74 +531,61 @@ public class HeapSepTransFormulaTransformer implements ITransformulaTransformer 
 	 * @param substitutionMap
 	 * @param tf 
 	 */
-	private void updateMappingsForSubstitution(Term oldArrayTerm, Term newArrayTerm,
-			final Map<IProgramVar, TermVariable> newInVars,
-			final Map<IProgramVar, TermVariable> newOutVars,
-			final Map<Term, Term> substitutionMap, UnmodifiableTransFormula tf) {
-		if (oldArrayTerm instanceof TermVariable) {
+	private void updateMappingsForSubstitution(Term versionedTermInOrigTf, Term newArrayTerm,
+//			final Map<IProgramVar, TermVariable> newInVars,
+//			final Map<IProgramVar, TermVariable> newOutVars,
+			final Map<Term, Term> substitutionMap, 
+			final NewTermVariableProvider newTvProvider,
+			final UnmodifiableTransFormula tf) {
+		if (versionedTermInOrigTf instanceof TermVariable) {
 			assert newArrayTerm instanceof TermVariable;
 
-			final IProgramVar oldArray = mOldSymbolTable.getProgramVar((TermVariable) oldArrayTerm);
+//			final IProgramVar oldArray = mOldSymbolTable.getProgramVar((TermVariable) oldArrayTerm);
 			final IProgramVar newArray = mNewSymbolTable.getProgramVar((TermVariable) newArrayTerm);
 		
-			final TermVariable invOld = newInVars.get(oldArray);
-			final TermVariable outvOld = newOutVars.get(oldArray);
+//			final TermVariable invOld = newInVars.get(oldArray);
+//			final TermVariable outvOld = newOutVars.get(oldArray);
 			
-			final TermVariable invNew = newInVars.get(newArray);
-			final TermVariable outvNew = newOutVars.get(newArray);
+//			final TermVariable invNew = newInVars.get(newArray);
+//			final TermVariable outvNew = newOutVars.get(newArray);
 
 			
-			TermVariable versionedInTvNew = newInVars.get(newArray);
-			if (versionedInTvNew == null) {
-				versionedInTvNew = mMgdScript.constructFreshCopy((TermVariable) newArrayTerm);
-				newInVars.remove(oldArray);
-				newInVars.put((IProgramVar) newArray, versionedInTvNew);
-			}
-			TermVariable versionedInTvOld = tf.getInVars().get(oldArray);
-			substitutionMap.put(versionedInTvOld, versionedInTvNew);
-			
-			
-			TermVariable versionedOutTvNew = newOutVars.get(newArray);
-			if (versionedOutTvNew == null) {
-				if (tf.getAssignedVars().contains(oldArray)) {
-					versionedOutTvNew = mMgdScript.constructFreshCopy((TermVariable) newArrayTerm);
-				} else {
-					versionedOutTvNew = newInVars.get(newArray);
-					assert versionedOutTvNew != null;
-				}
-				newOutVars.remove(oldArray);
-				newOutVars.put((IProgramVar) newArray, versionedOutTvNew);
-			}
-			TermVariable versionedOutTvOld = tf.getOutVars().get(oldArray);
-			substitutionMap.put(versionedOutTvOld, versionedOutTvNew);
-	
-			
-//			TermVariable invNewTv = null;
-//			if (invOld != null) {
-//				invNewTv = mScript.constructFreshCopy((TermVariable) newArrayTerm);
+			TermVariable versionedInTvNew = newTvProvider.getOrConstructNewTermVariable(newArray, 
+					(TermVariable) versionedTermInOrigTf, tf);
+//			TermVariable versionedInTvNew = newInVars.get(newArray);
+//			if (versionedInTvNew == null) {
+//				versionedInTvNew = mMgdScript.constructFreshCopy((TermVariable) newArrayTerm);
 //				newInVars.remove(oldArray);
-//				newInVars.put((IProgramVar) newArray, invNewTv);
-//				substitutionMap.put(inv, invNewTv);
+//				newInVars.put((IProgramVar) newArray, versionedInTvNew);
 //			}
-//		
-//			if (outv != null) {
-//				TermVariable newTv;
-//				if (inv == outv) {
-//					newTv = invNewTv;
+//			TermVariable versionedInTvOld = tf.getInVars().get(oldArray);
+//			substitutionMap.put(versionedInTvOld, versionedInTvNew);
+			substitutionMap.put(versionedTermInOrigTf, versionedInTvNew);
+			
+			
+//			TermVariable versionedOutTvNew = newTvProvider.getOrConstructNewTermVariable(newArray, 
+//					(TermVariable) oldArrayTerm, tf);
+//			TermVariable versionedOutTvNew = newOutVars.get(newArray);
+//			if (versionedOutTvNew == null) {
+//				if (tf.getAssignedVars().contains(oldArray)) {
+//					versionedOutTvNew = mMgdScript.constructFreshCopy((TermVariable) newArrayTerm);
 //				} else {
-//					newTv = mScript.constructFreshCopy((TermVariable) newArrayTerm);
+//					versionedOutTvNew = newInVars.get(newArray);
+//					assert versionedOutTvNew != null;
 //				}
 //				newOutVars.remove(oldArray);
-//				newOutVars.put((IProgramVar) newArray, newTv);
-//				substitutionMap.put(outv, newTv);
+//				newOutVars.put((IProgramVar) newArray, versionedOutTvNew);
 //			}
-			
-		} else if (SmtUtils.isConstant(oldArrayTerm)) {
+//			TermVariable versionedOutTvOld = tf.getOutVars().get(oldArray);
+//			substitutionMap.put(versionedOutTvOld, versionedOutTvNew);
+
+		} else if (SmtUtils.isConstant(versionedTermInOrigTf)) {
 			/*
 			 * the array id is a constant (or literal)
 			 *  --> there are no changes to the invar/outvar mappings, only to the substitution
 			 */
-			substitutionMap.put(oldArrayTerm, newArrayTerm);
+			assert false : "check this case";
+			substitutionMap.put(versionedTermInOrigTf, newArrayTerm);
 		} else {
 			throw new AssertionError("did not see this case coming..");
 		}
@@ -799,8 +719,13 @@ public class HeapSepTransFormulaTransformer implements ITransformulaTransformer 
 		private final NestedMap2<IProgramVar, TermVariable, TermVariable> mNewPvocToVersionedTvToNewVersionedTv = 
 				new NestedMap2<>();
 		
-		private final Map<IProgramVar, TermVariable> mNewInVars = new HashMap<>();
-		private final Map<IProgramVar, TermVariable> mNewOutVars = new HashMap<>();
+		private final Map<IProgramVar, TermVariable> mNewInVars;
+		private final Map<IProgramVar, TermVariable> mNewOutVars;
+
+		public NewTermVariableProvider(UnmodifiableTransFormula tf) {
+			mNewInVars = new HashMap<>(tf.getInVars());
+			mNewOutVars = new HashMap<>(tf.getOutVars());
+		}
 
 		TermVariable getOrConstructNewTermVariable(IProgramVar newPvoc, TermVariable versionedTvInOrigTf, 
 				UnmodifiableTransFormula origTf) {
