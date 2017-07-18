@@ -226,26 +226,27 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, VARDECL>, ACTION
 		final DisjunctiveAbstractState<STATE, VARDECL> hierachicalPreState = currentItem.getHierachicalState();
 		final ACTION currentAction = currentItem.getAction();
 
-		// calculate the (abstract) effect of the current action by first
-		// declaring variables in the prestate, and then calculating their
-		// values
-		final DisjunctiveAbstractState<STATE, VARDECL> preStateWithFreshVariables =
-				preState.defineVariablesAfter(mVarProvider, currentAction, hierachicalPreState);
-
-		mResult.getBenchmark().addMaxVariables(preStateWithFreshVariables.getVariables().size());
-
+		// calculate the (abstract) effect of the current action
 		DisjunctiveAbstractState<STATE, VARDECL> postState;
-		if (preState == preStateWithFreshVariables) {
-			postState = preStateWithFreshVariables.apply(postOp, currentAction);
-		} else {
-			// a context switch happened
+		final DisjunctiveAbstractState<STATE, VARDECL> preStateWithFreshVariables;
+		if (mTransitionProvider.isEnteringScope(currentAction) || mTransitionProvider.isLeavingScope(currentAction)) {
+			// if we enter or leave a scope, we first declare variables in the prestate
+			preStateWithFreshVariables =
+					preState.defineVariablesAfter(mVarProvider, currentAction, hierachicalPreState);
+			mResult.getBenchmark().addMaxVariables(preStateWithFreshVariables.getVariables().size());
+
 			if (mUseHierachicalPre && mTransitionProvider.isLeavingScope(currentAction)) {
 				postState = hierachicalPreState.apply(postOp, preState, currentAction);
 			} else {
 				postState = preStateWithFreshVariables.apply(postOp, preState, currentAction);
 			}
 			isHierachicalPostResultBottom(postState, currentItem);
+
+		} else {
+			preStateWithFreshVariables = preState;
+			postState = preState.apply(postOp, currentAction);
 		}
+
 		assert postState != null;
 		assert assertIsPostSound(preState, currentAction, preStateWithFreshVariables, hierachicalPreState,
 				postState) : "Post is unsound";
@@ -256,8 +257,8 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, VARDECL>, ACTION
 		return postState;
 	}
 
-	private boolean assertIsPostSound(final DisjunctiveAbstractState<STATE, VARDECL> preState, final ACTION currentAction,
-			final DisjunctiveAbstractState<STATE, VARDECL> preStateWithFreshVariables,
+	private boolean assertIsPostSound(final DisjunctiveAbstractState<STATE, VARDECL> preState,
+			final ACTION currentAction, final DisjunctiveAbstractState<STATE, VARDECL> preStateWithFreshVariables,
 			final DisjunctiveAbstractState<STATE, VARDECL> hierachicalPreState,
 			final DisjunctiveAbstractState<STATE, VARDECL> postState) {
 		final boolean rtr = mTransitionProvider.isSummaryWithImplementation(currentAction)
@@ -372,7 +373,8 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, VARDECL>, ACTION
 	private WorklistItem<STATE, ACTION, VARDECL, LOC> createInitialWorklistItem(final ACTION elem) {
 		final STATE preState = mVarProvider.defineInitialVariables(elem, mDomain.createTopState());
 		assert preState != null;
-		final DisjunctiveAbstractState<STATE, VARDECL> preMultiState = new DisjunctiveAbstractState<>(mMaxParallelStates, preState);
+		final DisjunctiveAbstractState<STATE, VARDECL> preMultiState =
+				new DisjunctiveAbstractState<>(mMaxParallelStates, preState);
 		return new WorklistItem<>(preMultiState, elem, mStateStorage, mSummaryMap);
 	}
 
@@ -404,7 +406,8 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, VARDECL>, ACTION
 
 	private DisjunctiveAbstractState<STATE, VARDECL> widenIfNecessary(
 			final WorklistItem<STATE, ACTION, VARDECL, LOC> currentItem,
-			final DisjunctiveAbstractState<STATE, VARDECL> postState, final IAbstractStateBinaryOperator<STATE> wideningOp) {
+			final DisjunctiveAbstractState<STATE, VARDECL> postState,
+			final IAbstractStateBinaryOperator<STATE> wideningOp) {
 
 		final ACTION currentAction = currentItem.getAction();
 
@@ -453,7 +456,8 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, VARDECL>, ACTION
 	 *
 	 * @param postState
 	 */
-	private DisjunctiveAbstractState<STATE, VARDECL> prepareScope(final WorklistItem<STATE, ACTION, VARDECL, LOC> currentItem,
+	private DisjunctiveAbstractState<STATE, VARDECL> prepareScope(
+			final WorklistItem<STATE, ACTION, VARDECL, LOC> currentItem,
 			final DisjunctiveAbstractState<STATE, VARDECL> postState) {
 		final ACTION action = currentItem.getAction();
 		if (mTransitionProvider.isEnteringScope(action)) {
@@ -481,7 +485,8 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, VARDECL>, ACTION
 			getWidenStateAtScopeEntry(final WorklistItem<STATE, ACTION, VARDECL, LOC> currentItem) {
 		final ACTION currentAction = currentItem.getAction();
 
-		final Deque<Pair<ACTION, DisjunctiveAbstractState<STATE, VARDECL>>> scopeStack = currentItem.getScopeWideningStack();
+		final Deque<Pair<ACTION, DisjunctiveAbstractState<STATE, VARDECL>>> scopeStack =
+				currentItem.getScopeWideningStack();
 		// count all stack items that are there more than once and the current item
 		final Optional<Long> count = scopeStack.stream().map(a -> a.getFirst()).filter(a -> a != null)
 				.collect(Collectors.groupingBy(a -> a, Collectors.counting())).entrySet().stream()
@@ -584,7 +589,8 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, VARDECL>, ACTION
 		mLogger.debug(prefix + "After: " + LoggingHelper.getStateString(postStateAfterChange));
 	}
 
-	private StringBuilder getLogMessagePostIsBottom(final DisjunctiveAbstractState<STATE, VARDECL> pendingNewPostState) {
+	private StringBuilder
+			getLogMessagePostIsBottom(final DisjunctiveAbstractState<STATE, VARDECL> pendingNewPostState) {
 		return new StringBuilder().append(AbsIntPrefInitializer.INDENT)
 				.append(" Skipping all successors because post state [").append(pendingNewPostState.hashCode())
 				.append("] is bottom");
