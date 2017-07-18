@@ -65,7 +65,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.invariantsynthesis.preferences.InvariantSynthesisPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.invariantsynthesis.preferences.InvariantSynthesisPreferenceInitializer.IncreasingStrategy;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.invariantsynthesis.preferences.InvariantSynthesisPreferenceInitializer.Invariant;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.HoareAnnotation;
@@ -78,6 +77,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pa
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.DefaultTemplateIncreasingDimensionsStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.DisjunctsWithBoundTemplateIncreasingDimensionsStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.ExponentialConjunctsTemplateIncreasingDimensionsStrategy;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.KindOfInvariant;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.MediumTemplateIncreasingDimensionsStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.HoareAnnotationChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
@@ -116,13 +116,13 @@ public class InvariantSynthesisStarter {
 		final InvariantSynthesisSettings invSynthSettings = constructSettings(icfg.getIdentifier());
 		
 		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
-		final Invariant kindOfInvariant = prefs.getEnum(InvariantSynthesisPreferenceInitializer.LABEL_KIND_INVARIANT, InvariantSynthesisPreferenceInitializer.Invariant.class);
+		final KindOfInvariant kindOfInvariant = prefs.getEnum(InvariantSynthesisPreferenceInitializer.LABEL_KIND_INVARIANT, KindOfInvariant.class);
 		final IStatisticsDataProvider statistics;
-		if (kindOfInvariant == InvariantSynthesisPreferenceInitializer.Invariant.DANGER) {
+		if (kindOfInvariant == KindOfInvariant.DANGER) {
 			// TODO: code for danger invariants here
 			statistics = null;
 		} else {
-			assert kindOfInvariant == InvariantSynthesisPreferenceInitializer.Invariant.SAFETY;
+			assert kindOfInvariant == KindOfInvariant.SAFETY;
 			final CFGInvariantsGenerator cfgInvGenerator = new CFGInvariantsGenerator(icfg, services, storage,
 					predicateUnifier.getTruePredicate(), predicateUnifier.getFalsePredicate(), predicateFactory, predicateUnifier,
 					invSynthSettings, icfg.getCfgSmtToolkit());
