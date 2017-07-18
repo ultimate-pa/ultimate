@@ -1,3 +1,5 @@
+//#Safe
+
 var a : [int] int;
 
 procedure main ();
@@ -10,7 +12,7 @@ implementation main () {
   
   call y := foo(x);
 
-  assert a[x] == 3;
+  assert a[y] == 3;
 }
 
 procedure foo(y : int) returns (res : int);
