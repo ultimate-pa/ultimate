@@ -120,17 +120,27 @@ public class HeapSepTransFormulaTransformer implements ITransformulaTransformer 
 	private UnmodifiableTransFormula splitArraysInTransFormula(final UnmodifiableTransFormula tf) {
 		mStatistics.incrementTransformulaCounter();
 
+		final NewTermVariableProvider newTvProvider = new NewTermVariableProvider();
+
 		final Map<IProgramVar, TermVariable> newInVars = new HashMap<>(tf.getInVars());
 		final Map<IProgramVar, TermVariable> newOutVars = new HashMap<>(tf.getOutVars());
 		
 		Term intermediateFormula = tf.getFormula();
+		
+//		/*
+//		 *  we need this because the mapping oldTermVariable -> ProgramVar -> newTermVariables is sound
+//		 *  example: a := a becomes a_1 = a_2, where both that the same ProgramVar
+//		 */
+//		Map<Term, Term> substitutionSoFar = new HashMap<>();
 
 		mMgdScript.lock(this);
-		intermediateFormula = substituteArrayUpdates(tf, newInVars, newOutVars, intermediateFormula);
+		intermediateFormula = substituteArrayUpdates(tf, newInVars, newOutVars, intermediateFormula, newTvProvider);
 
-		intermediateFormula = substituteArrayEqualites(tf, newInVars, newOutVars, intermediateFormula);
+		intermediateFormula = substituteArrayEqualites(tf, newInVars, newOutVars, intermediateFormula, 
+				newTvProvider);
 
-		intermediateFormula = substituteRemainingStoresAndSelects(tf, newInVars, newOutVars, intermediateFormula);
+		intermediateFormula = substituteRemainingStoresAndSelects(tf, newInVars, newOutVars, intermediateFormula,
+				newTvProvider);
 		mMgdScript.unlock(this);
 		
 		boolean newEmptyNonTheoryConsts = false;
@@ -180,11 +190,12 @@ public class HeapSepTransFormulaTransformer implements ITransformulaTransformer 
 	 * @param newInVars
 	 * @param newOutVars
 	 * @param intermediateFormula
+	 * @param newTvProvider 
 	 * @return
 	 */
 	private Term substituteRemainingStoresAndSelects(final UnmodifiableTransFormula tf,
 			final Map<IProgramVar, TermVariable> newInVars, final Map<IProgramVar, TermVariable> newOutVars,
-			Term intermediateFormula) {
+			final Term intermediateFormula, final NewTermVariableProvider newTvProvider) {
 		final Map<Term, Term> substitutionMapPvoc = new HashMap<>();
 		
 		List<MultiDimensionalSelect> mdSelects = 
@@ -213,11 +224,11 @@ public class HeapSepTransFormulaTransformer implements ITransformulaTransformer 
 
 			updateMappingsForSubstitution(oldArray, newArray, newInVars, newOutVars, substitutionMapPvoc, tf);
 		}
-		intermediateFormula = new Substitution(mMgdScript, substitutionMapPvoc).transform(intermediateFormula);	
+		Term result = new Substitution(mMgdScript, substitutionMapPvoc).transform(intermediateFormula);	
 
 		final Map<Term, Term> substitutionMapPvoc2 = new HashMap<>();
 		final List<MultiDimensionalStore> mdStores = 
-				MultiDimensionalStore.extractArrayStoresShallow(intermediateFormula);
+				MultiDimensionalStore.extractArrayStoresShallow(result);
 		final List<MultiDimensionalStore> mdStoresInOriginalTf = 
 				MultiDimensionalStore.extractArrayStoresShallow(tf.getFormula());
 		for (MultiDimensionalStore mds : mdStores) {
@@ -243,8 +254,8 @@ public class HeapSepTransFormulaTransformer implements ITransformulaTransformer 
 //
 //			updateMappingsForSubstitution(oldArray, newArray, newInVars, newOutVars, substitutionMapPvoc2);
 		}
-		intermediateFormula = new Substitution(mMgdScript, substitutionMapPvoc2).transform(intermediateFormula);	
-		return intermediateFormula;
+		result = new Substitution(mMgdScript, substitutionMapPvoc2).transform(result);	
+		return result;
 	}
 
 
@@ -270,11 +281,12 @@ public class HeapSepTransFormulaTransformer implements ITransformulaTransformer 
 	 * @param newInVars
 	 * @param newOutVars
 	 * @param formula
+	 * @param newTvProvider 
 	 * @return
 	 */
 	private Term substituteArrayUpdates(final UnmodifiableTransFormula tf,
 			final Map<IProgramVar, TermVariable> newInVars, final Map<IProgramVar, TermVariable> newOutVars,
-			Term formula) {
+			final Term formula, final NewTermVariableProvider newTvProvider) {
 		
 		/*
 		 * algorithmic plan:
@@ -336,24 +348,45 @@ public class HeapSepTransFormulaTransformer implements ITransformulaTransformer 
 				final IProgramVar newArrayLhsPvoc = mNewSymbolTable.getProgramVar((TermVariable) newArrayLhsNorm);
 				final IProgramVar newArrayRhsVarPvoc = mNewSymbolTable.getProgramVar((TermVariable) newArrayRhsVarNorm);
 
-				TermVariable newArrayLhs = newOutVars.get(newArrayLhsPvoc);
-				if (newArrayLhs == null) {
-					newArrayLhs = mMgdScript.constructFreshCopy(au.getNewArray());
-					newOutVars.put(newArrayLhsPvoc, newArrayLhs);
-					newOutVars.remove(oldArrayLhsPvoc);
-				}
+				/*
+				 * update the new inVar/outVar maps
+				 */
 
-				TermVariable newArrayRhsVar = newInVars.get(newArrayRhsVarPvoc);
-				if (newArrayRhsVar == null) {
-					newArrayRhsVar = mMgdScript.constructFreshCopy(au.getNewArray());
-					newInVars.put(newArrayRhsVarPvoc, newArrayRhsVar);
-					newInVars.remove(oldArrayRhsVarPvoc);
-					
-					if (newOutVars.containsKey(oldArrayRhsVarPvoc)) {
-						newOutVars.remove(oldArrayRhsVarPvoc);
-						newOutVars.put(newArrayRhsVarPvoc, newArrayLhs);
-					}
-				}
+				/*
+				 *  check if we already have an entry for the new lhs, because we have an update we only check in 
+				 *  outVars
+				 */
+
+				TermVariable newArrayLhs = newTvProvider.getOrConstructNewTermVariable(newArrayLhsPvoc, 
+						au.getNewArray(), tf);
+//				TermVariable newArrayLhs = newOutVars.get(newArrayLhsPvoc);
+//				if (newArrayLhs == null) {
+//					// if we don't have an entry for the new array, make one
+//					newArrayLhs = mMgdScript.constructFreshCopy(au.getNewArray());
+//					newOutVars.put(newArrayLhsPvoc, newArrayLhs);
+//					newOutVars.remove(oldArrayLhsPvoc);
+//				}
+
+				/*
+				 *  check if we already have an entry for the new rhs, because we have an update we only check in 
+				 *  inVars --> the rhs may be only in (for instance a := a[i:=x]) or both in and out with the same 
+				 *   (for instance b := a[i:=x]) variables
+				 */
+				TermVariable newArrayRhsVar = newTvProvider.getOrConstructNewTermVariable(newArrayRhsVarPvoc, 
+						oldRhsVar, tf);
+//				TermVariable newArrayRhsVar = newInVars.get(newArrayRhsVarPvoc);
+//				if (newArrayRhsVar == null) {
+//					// if we don't have an entry for the new array, make one
+//					newArrayRhsVar = mMgdScript.constructFreshCopy(au.getNewArray());
+//					newInVars.put(newArrayRhsVarPvoc, newArrayRhsVar);
+//					newInVars.remove(oldArrayRhsVarPvoc);
+//					
+//					// if the variable is also out, we have to update the outVars, too
+//					if (newOutVars.containsKey(oldArrayRhsVarPvoc)) {
+//						newOutVars.remove(oldArrayRhsVarPvoc);
+//						newOutVars.put(newArrayRhsVarPvoc, newArrayLhs);
+//					}
+//				}
 				
 				if (newArrayLhs == null || newArrayRhsVar == null) {
 					assert !isArrayTracked(newArrayLhs, tf) 
@@ -361,7 +394,8 @@ public class HeapSepTransFormulaTransformer implements ITransformulaTransformer 
 					continue;
 				}
 				
-				final Term newArrayRhs = new Substitution(mMgdScript, Collections.singletonMap(oldRhsVar, newArrayRhsVar))
+				final Term newArrayRhs = new Substitution(mMgdScript, 
+						Collections.singletonMap(oldRhsVar, newArrayRhsVar))
 						.transform(rhsStoreTerm);
 
 				final Term newEquality = mMgdScript.term(this, "=", newArrayLhs, newArrayRhs);
@@ -381,7 +415,8 @@ public class HeapSepTransFormulaTransformer implements ITransformulaTransformer 
 	private Term substituteArrayEqualites(final UnmodifiableTransFormula tf,
 			final Map<IProgramVar, TermVariable> newInVars, 
 			final Map<IProgramVar, TermVariable> newOutVars, 
-			final Term intermediateFormula) {
+			final Term intermediateFormula, 
+			final NewTermVariableProvider newTvProvider) {
 		final List<ArrayEquality> arrayEqualities = ArrayEquality.extractArrayEqualities(intermediateFormula);
 		final Map<Term, Term> equalitySubstitution = new HashMap<>();
 //		mScript.lock(this);
@@ -401,25 +436,116 @@ public class HeapSepTransFormulaTransformer implements ITransformulaTransformer 
 			
 			List<Term> newEqualities = new ArrayList<>();
 			
-			final Term oldLhs = ae.getLhs();
-			final List<Term> newLhss = mNewArrayIdProvider.getAllNewArrayIds(
-					VPDomainHelpers.normalizeTerm(oldLhs, tf, mMgdScript));
+			final Term oldLhsNorm = VPDomainHelpers.normalizeTerm(ae.getLhs(), tf, mMgdScript);
+			final List<Term> newLhss = mNewArrayIdProvider.getAllNewArrayIds(oldLhsNorm);
 
-			final Term oldRhs = ae.getRhs();
-			final List<Term> newRhss = mNewArrayIdProvider.getAllNewArrayIds(
-					VPDomainHelpers.normalizeTerm(oldRhs, tf, mMgdScript));
+			final Term oldRhsNorm = VPDomainHelpers.normalizeTerm(ae.getRhs(), tf, mMgdScript);
+			final List<Term> newRhss = mNewArrayIdProvider.getAllNewArrayIds(oldRhsNorm);
+			
+			final IProgramVar oldLhsPvoc = mOldSymbolTable.getProgramVar((TermVariable) oldLhsNorm);
+			final IProgramVar oldRhsPvoc = mOldSymbolTable.getProgramVar((TermVariable) oldRhsNorm);
 			
 			
 			assert newLhss.size() == newRhss.size();
 			for (int i = 0; i < newLhss.size(); i++) {
 				final Term newLhs = newLhss.get(i);
 				final Term newRhs = newRhss.get(i);
-				final Term newEquality = mMgdScript.term(this, "=", newLhs, newRhs);
-				newEqualities.add(newEquality);
 				
-				// TODO
-//				updateNewInVarsAndNewOutVars(tf, newInVars, newOutVars, oldLhs, oldRhs, newLhs, newRhs);
+				final IProgramVar newLhsPvoc = mNewSymbolTable.getProgramVar((TermVariable) newLhs);
+				final IProgramVar newRhsPvoc = mNewSymbolTable.getProgramVar((TermVariable) newRhs);
+				
+				/*
+				 * update the new invar/outvar maps
+				 */
+				TermVariable newArrayLhs = null;
+				TermVariable newArrayRhs = null;
 
+//				// invars
+//				if (tf.getInVars().containsKey(oldLhsPvoc)) {
+//					// lhs is in invars
+//					newInVars.remove(oldLhsPvoc);
+//
+//					// do we have an entry for the new version in the new invars? if no, create one
+//					newArrayLhs = newInVars.get(newLhsPvoc);
+//					if (newArrayLhs == null) {
+//						newArrayLhs = mMgdScript.constructFreshCopy(ae.getLhsTermVariable());
+//						newInVars.put(newLhsPvoc, newArrayLhs);
+//					}
+//				}
+//				if (tf.getInVars().containsKey(oldRhsPvoc)) {
+//					// rhs is in invars
+//					newInVars.remove(oldRhsPvoc);
+//
+//					// do we have an entry for the new version in the new invars? if no, create one
+//					newArrayRhs = newInVars.get(newRhsPvoc);
+//					if (newArrayRhs == null) {
+//						newArrayRhs = mMgdScript.constructFreshCopy(ae.getRhsTermVariable());
+//						newInVars.put(newRhsPvoc, newArrayRhs);
+//					}
+//				}
+//				
+//				// outvars
+//				if (tf.getOutVars().containsKey(oldLhsPvoc)) {
+//					// lhs is in invars
+//					newOutVars.remove(oldLhsPvoc);
+//
+//					// do we have an entry for the new version in the new invars? if no, create one
+////					newArrayLhs = newOutVars.get(newLhsPvoc);
+//					if (newArrayLhs == null) {
+//						// the is variable only out, not in 
+//
+//						// check if we have it in new outvars, if not construct fresh
+//						newArrayLhs = newOutVars.get(newLhsPvoc);
+//						if (newArrayLhs == null) {
+//							newArrayLhs = mMgdScript.constructFreshCopy(ae.getLhsTermVariable());
+//						}
+//					}
+//					newOutVars.put(newLhsPvoc, newArrayLhs);
+//					//					if (!newOutVars.containsKey(newLhsPvoc)) {
+////						if (tf.getAssignedVars().contains(oldLhsPvoc)) {
+////							newArrayLhs = mMgdScript.constructFreshCopy(ae.getLhsTermVariable());
+////						} else  {
+////							// "through" case -- the variable is out, but not assigned
+////							assert newArrayLhs != null && newArrayLhs == newInVars.get(newLhsPvoc);
+////						}
+////						newOutVars.put(newLhsPvoc, newArrayLhs);
+////					}
+//				}
+//				if (tf.getOutVars().containsKey(oldRhsPvoc)) {
+//					// rhs is in invars
+//					newOutVars.remove(oldRhsPvoc);
+//
+//					// do we have an entry for the new version in the new invars? if no, create one
+//					if (newArrayRhs == null) {
+//						// the is variable only out, not in 
+//
+//						// check if we have it in new outvars, if not construct fresh
+//						newArrayRhs = newOutVars.get(newRhsPvoc);
+//						if (newArrayRhs == null) {
+//							newArrayRhs = mMgdScript.constructFreshCopy(ae.getRhsTermVariable());
+//						}
+//					}
+//					newOutVars.put(newRhsPvoc, newArrayRhs);
+//
+////					newArrayRhs = newOutVars.get(newRhsPvoc);
+////					if (newArrayRhs == null) {
+////						if (tf.getAssignedVars().contains(oldRhsPvoc)) {
+////							newArrayRhs = mMgdScript.constructFreshCopy(ae.getRhsTermVariable());
+////						} else  {
+////							// "through" case -- the variable is out, but not assigned
+////							assert newArrayRhs != null && newArrayRhs == newInVars.get(newRhsPvoc);
+////						}
+////						newOutVars.put(newRhsPvoc, newArrayRhs);
+////					}
+//				}
+				assert newArrayLhs != null && newArrayRhs != null;
+
+				final Term newEquality = mMgdScript.term(this, "=", newArrayLhs, newArrayRhs);
+				newEqualities.add(newEquality);
+
+
+//				updateNewInVarsAndNewOutVars(tf, newInVars, newOutVars, oldLhsPvoc, oldRhsPvoc, newLhsPvoc, newRhsPvoc, 
+//						newLhs, newRhs);
 			}
 			assert newEqualities.size() > 0;
 			final Term newConjunctionOfEquations = SmtUtils.and(mMgdScript.getScript(), newEqualities);
@@ -435,10 +561,11 @@ public class HeapSepTransFormulaTransformer implements ITransformulaTransformer 
 			final IProgramVar oldLhsPvoc, final IProgramVar oldRhsPvoc, 
 			final IProgramVar newLhsPvoc, final IProgramVar newRhsPvoc,
 			final Term newLhs, final Term newRhs) {
-//		if (tf.getInVars().containsKey(oldLhsPvoc)) {
-//			newInVars.remove(oldLhsPvoc);
-//			newInVars.put((IProgramVar) newLhsPvoc, (TermVariable) newLhs);
-//		}
+		assert oldLhsPvoc != null && oldRhsPvoc != null && newLhsPvoc != null && newRhsPvoc != null;
+		if (tf.getInVars().containsKey(oldLhsPvoc)) {
+			newInVars.remove(oldLhsPvoc);
+			newInVars.put((IProgramVar) newLhsPvoc, (TermVariable) newLhs);
+		}
 		if (tf.getInVars().containsKey(oldRhsPvoc)) {
 			newInVars.remove(oldRhsPvoc);
 			newInVars.put((IProgramVar) newRhsPvoc, (TermVariable) newRhs);
@@ -447,10 +574,10 @@ public class HeapSepTransFormulaTransformer implements ITransformulaTransformer 
 			newOutVars.remove(oldLhsPvoc);
 			newOutVars.put((IProgramVar) newLhsPvoc, (TermVariable) newLhs);
 		}
-//		if (tf.getOutVars().containsKey(oldRhsPvoc)) {
-//			newOutVars.remove(oldRhsPvoc);
-//			newOutVars.put((IProgramVar) newRhsPvoc, (TermVariable) newRhs);
-//		}
+		if (tf.getOutVars().containsKey(oldRhsPvoc)) {
+			newOutVars.remove(oldRhsPvoc);
+			newOutVars.put((IProgramVar) newRhsPvoc, (TermVariable) newRhs);
+		}
 	}
 
 
@@ -656,4 +783,50 @@ public class HeapSepTransFormulaTransformer implements ITransformulaTransformer 
 	public HeapSeparatorBenchmark getStatistics() {
 		return mStatistics;
 	}
+	
+
+	/**
+	 * Provides Terms that substitute the old array-representing Terms in the new TransFormulas we build.
+	 * 
+	 * We probably only need this for TermVariables because constants are much simpler to replace (because they don't have
+	 *  many versions within one TransFormula).
+	 * 
+	 * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
+	 *
+	 */
+	class NewTermVariableProvider {
+
+		private final NestedMap2<IProgramVar, TermVariable, TermVariable> mNewPvocToVersionedTvToNewVersionedTv = 
+				new NestedMap2<>();
+		
+		private final Map<IProgramVar, TermVariable> mNewInVars = new HashMap<>();
+		private final Map<IProgramVar, TermVariable> mNewOutVars = new HashMap<>();
+
+		TermVariable getOrConstructNewTermVariable(IProgramVar newPvoc, TermVariable versionedTvInOrigTf, 
+				UnmodifiableTransFormula origTf) {
+			TermVariable result = mNewPvocToVersionedTvToNewVersionedTv.get(newPvoc, versionedTvInOrigTf);
+			if (result == null) {
+				result = mMgdScript.constructFreshCopy(versionedTvInOrigTf);
+				mNewPvocToVersionedTvToNewVersionedTv.put(newPvoc, versionedTvInOrigTf, result);
+				
+				if (origTf.getInVars().values().contains(versionedTvInOrigTf)) {
+					mNewInVars.put(newPvoc, result);
+				}
+				if (origTf.getOutVars().values().contains(versionedTvInOrigTf)) {
+					mNewOutVars.put(newPvoc, result);
+				}
+			}
+			return result;
+		}
+
+		public Map<IProgramVar, TermVariable> getNewInVars() {
+			return mNewInVars;
+		}
+
+		public Map<IProgramVar, TermVariable> getNewOutVars() {
+			return mNewOutVars;
+		}
+	}
 }
+
+
