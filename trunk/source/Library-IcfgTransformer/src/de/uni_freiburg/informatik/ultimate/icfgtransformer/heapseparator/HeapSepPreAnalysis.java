@@ -73,10 +73,6 @@ public class HeapSepPreAnalysis {
 
 	private final ManagedScript mScript;
 
-//	private final IEqualityAnalysisResultProvider<IcfgLocation, IIcfg<?>> mEqualityProvider;
-
-//	private VPDomainPreanalysis mVpDomainPreAnalysis;
-
 	/**
 	 * The HeapSepPreAnalysisVisitor computes and provides the following information:
 	 *  - which arrays (base arrays, not store terms) are equated in the program
@@ -85,14 +81,10 @@ public class HeapSepPreAnalysis {
 	 * @param equalityProvider 
 	 */
 	public HeapSepPreAnalysis(ILogger logger, ManagedScript script) {
-//			IEqualityAnalysisResultProvider<IcfgLocation, IIcfg<?>> equalityProvider) {
-//		super(logger);
 		mArrayToAccessLocations = new HashRelation<>();
 		mArrayToAccessingIndices = new HashRelation<>();
 		mScript = script;
 		mArrayEqualities = new HashSet<>();
-//		mEqualityProvider = equalityProvider;
-//		mVpDomainPreAnalysis = domain.getPreAnalysis();
 	}
 
 	public void processEdge(IcfgEdge edge) {
