@@ -34,6 +34,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -67,6 +68,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.SymmetricHashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.TreeRelation;
 
 /**
@@ -329,14 +331,14 @@ public class ElimStorePlain {
 		newAuxVars.add(newAuxArray) ;
 		
 		final List<Term> disjuncts = new ArrayList<>();
-		final CombinationIterator ci = new CombinationIterator(indices, disjointIndices);
+		final CombinationIterator2 ci = new CombinationIterator2(indices, disjointIndices);
 		mLogger.info("Considering " + ci.size() + " cases while eliminating array variable of dimension " + new MultiDimensionalSort(eliminatee.getSort()).getDimension());
 		for (final Set<Doubleton<Term>> equalDoubletons : ci) {
 			final Map<Term, Term> substitutionMapping = new HashMap<>();
 			substitutionMapping.put(storeTerm, newAuxArray);
 			final List<Term> indexEqualityTerms = new ArrayList<>();
 			final List<Term> valueEqualityTerms = new ArrayList<>();
-			for (final Doubleton<Term> doubleton : CombinationIterator.buildListOfNonDisjointDoubletons(indices, disjointIndices)) {
+			for (final Doubleton<Term> doubleton : buildListOfNonDisjointDoubletons(indices, disjointIndices)) {
 				final Term indexEqualityTerm;
 				if (equalDoubletons.contains(doubleton)) {
 					indexEqualityTerm = PartialQuantifierElimination.equalityForExists(mScript, mQuantifier,
@@ -549,18 +551,45 @@ public class ElimStorePlain {
 	}
 	
 	
+	public static <E> boolean isClosedUnderTransitivity(final HashRelation<E, E> relation) {
+		for (final Entry<E, E> entry : relation.entrySet()) {
+			for (final E image : relation.getImage(entry.getValue())) {
+				if (!relation.containsPair(entry.getKey(), image)) {
+					return false;
+				}
+			}
+		}
+		return true;
+	}
+
+
+	public static List<Doubleton<Term>> buildListOfNonDisjointDoubletons(final UnionFind<Term> indices, 
+			final HashRelation<Term, Term> disjointIndices) {
+		final List<Doubleton<Term>> doubeltons = new ArrayList<>();
+		final List<Term> indexList = new ArrayList<Term>(indices.getAllRepresentatives());
+		for (int i = 0; i < indexList.size(); i++) {
+			for (int j = i+1; j < indexList.size(); j++) {
+				if (!disjointIndices.containsPair(indexList.get(i), indexList.get(j))) {
+					doubeltons.add(new Doubleton<Term>(indexList.get(i), indexList.get(j)));
+				}
+			}
+		}
+		return doubeltons;
+	}
+	
+	
 	private static class CombinationIterator implements Iterable<Set<Doubleton<Term>>> {
-		
+
 		private final List<Set<Doubleton<Term>>> mResult = new ArrayList<>();
-		
+
 		public CombinationIterator(final UnionFind<Term> indices, final HashRelation<Term, Term> disjointIndices) {
 			super();
 			final List<Doubleton<Term>> doubeltons = buildListOfNonDisjointDoubletons(indices, disjointIndices);
-			
+
 			final int[] numberOfValues = new int[doubeltons.size()];
 			Arrays.fill(numberOfValues, 2);
 			final LexicographicCounter lc = new LexicographicCounter(numberOfValues);
-			
+
 			do {
 				final HashRelation<Term, Term> relationCandidate = new HashRelation<>();
 				for (final Term index : indices.getAllRepresentatives()) {
@@ -578,60 +607,163 @@ public class ElimStorePlain {
 				if (isClosedUnderTransitivity(relationCandidate)) {
 					mResult.add(resultCandidate);
 				}
-				
+
 				lc.increment();
 			} while (!lc.isZero());
 		}
-		
+
 		public int size() {
 			return mResult.size();
 		}
-
-
-
-
-
-
-		public static <E> boolean isClosedUnderTransitivity(final HashRelation<E, E> relation) {
-			for (final Entry<E, E> entry : relation.entrySet()) {
-				for (final E image : relation.getImage(entry.getValue())) {
-					if (!relation.containsPair(entry.getKey(), image)) {
-						return false;
-					}
-				}
-			}
-			return true;
-		}
-
-
-
-
-
-
-		public static List<Doubleton<Term>> buildListOfNonDisjointDoubletons(final UnionFind<Term> indices, 
-				final HashRelation<Term, Term> disjointIndices) {
-			final List<Doubleton<Term>> doubeltons = new ArrayList<>();
-			final List<Term> indexList = new ArrayList<Term>(indices.getAllRepresentatives());
-			for (int i = 0; i < indexList.size(); i++) {
-				for (int j = i+1; j < indexList.size(); j++) {
-					if (!disjointIndices.containsPair(indexList.get(i), indexList.get(j))) {
-						doubeltons.add(new Doubleton<Term>(indexList.get(i), indexList.get(j)));
-					}
-				}
-			}
-			return doubeltons;
-		}
-		
-		
 
 		@Override
 		public Iterator<Set<Doubleton<Term>>> iterator() {
 			return mResult.iterator();
 		}
-		
-		
-		
+
 	}
+	
+	
+	private static class CombinationIterator2 implements Iterable<Set<Doubleton<Term>>> {
+
+		private final List<Set<Doubleton<Term>>> mResult = new ArrayList<>();
+		
+		private final LinkedList<Boolean> mStack = new LinkedList<>();
+		private SymmetricHashRelation<Term> mCurrentRelation;
+		private final List<Doubleton<Term>> mNonDisjointDoubletons;
+
+		private final HashRelation<Term, Term> mDisjointIndices;
+
+		public CombinationIterator2(final UnionFind<Term> indices, final HashRelation<Term, Term> disjointIndices) {
+			super();
+			mNonDisjointDoubletons = buildListOfNonDisjointDoubletons(indices, disjointIndices);
+			mDisjointIndices = disjointIndices;
+			mCurrentRelation = new SymmetricHashRelation<>();
+
+			while(true) {
+				if (mStack.size() == mNonDisjointDoubletons.size()) {
+					addRelationToResult();
+					if (mCurrentRelation.isEmpty()) {
+						break;
+					}
+				}
+				advance();
+			}
+			assert checkResultWithOldCombinationIterator(indices,
+					disjointIndices) : "result of CombinationIterator and CombinationIterator2 is different";
+		}
+
+		private boolean checkResultWithOldCombinationIterator(final UnionFind<Term> indices, final HashRelation<Term, Term> disjointIndices) {
+			final Set<Set<Doubleton<Term>>> newResult = new HashSet<>(mResult);
+			final Set<Set<Doubleton<Term>>> oldResult = new HashSet<>();
+			final CombinationIterator ci = new CombinationIterator(indices, disjointIndices);
+			for (final Set<Doubleton<Term>> e : ci) {
+				oldResult.add(e);
+			}
+			return newResult.equals(oldResult);
+		}
+
+		private void advance() {
+			if (mStack.size() == mNonDisjointDoubletons.size()) {
+				remove1true();
+				rebuildCurrentRelation();
+				tryToPush1False();
+			} else {
+				tryToPush1True();
+			}
+			
+		}
+
+		/**
+		 * Try to push 'false' on the stack. If the relation becomes 
+		 * inconsistent, backtrack to the last 'true' (i.e., remove elements
+		 * until we reached the last 'true', including the last 'true') and
+		 * push 'false'. Continue until we reached a consistent stack.
+		 * Note that there has is at least one consistent stack, namely the
+		 * one that contains only 'false' elements. 
+		 */
+		private void tryToPush1False() {
+			final Doubleton<Term> d = mNonDisjointDoubletons.get(mStack.size());
+			if (mCurrentRelation.containsPair(d.getOneElement(), d.getOtherElement())) {
+				// we cannot add false
+				remove1true();
+				rebuildCurrentRelation();
+				tryToPush1False();
+			} else {
+				mStack.add(false);
+			}
+		}
+
+		/**
+		 * Push 'true' on the stack. If the relation becomes inconsistent
+		 * remove the 'true' and call the {@link CombinationIterator2#tryToPush1False()}
+		 * method which iterates until it was able to push 'false' to the stack.
+		 */
+		private void tryToPush1True() {
+			final Doubleton<Term> d = mNonDisjointDoubletons.get(mStack.size());
+			if (mDisjointIndices.containsPair(d.getOneElement(), d.getOtherElement())) {
+				// we cannot add true
+			} else {
+				mStack.add(true);
+				mCurrentRelation.addPair(d.getOneElement(), d.getOtherElement());
+				final Set<Doubleton<Term>> newPairs = mCurrentRelation.makeTransitive();
+				final boolean containsDisjointPair = haveCommonElement(newPairs, mDisjointIndices);
+				if (containsDisjointPair) {
+					remove1true();
+					rebuildCurrentRelation();
+					tryToPush1False();
+				}
+			}
+		}
+
+		private static boolean haveCommonElement(final Set<Doubleton<Term>> pairs1, final HashRelation<Term, Term> pairs2) {
+			for (final Doubleton<Term> pairFrom1 : pairs1) {
+				if (pairs2.containsPair(pairFrom1.getOneElement(), pairFrom1.getOtherElement())) {
+					return true;
+				}
+			}
+			return false;
+		}
+
+		private void rebuildCurrentRelation() {
+			mCurrentRelation = new SymmetricHashRelation<>();
+			int offset = 0;
+			for (final Boolean bool : mStack) {
+				if (bool) {
+					final Doubleton<Term> doubleton = mNonDisjointDoubletons.get(offset);
+					mCurrentRelation.addPair(doubleton.getOneElement(), doubleton.getOtherElement());
+				}
+				offset++;
+			}
+		}
+
+		/**
+		 * Remove elements from the stack until one 'true' element was removed.
+		 */
+		private void remove1true() {
+			while (!mStack.peek()) {
+				mStack.pop();
+			}
+			mStack.pop();
+		}
+
+		private void addRelationToResult() {
+			mResult.add(mCurrentRelation.buildSetOfNonSymmetricDoubletons());
+		}
+
+		public int size() {
+			return mResult.size();
+		}
+
+		@Override
+		public Iterator<Set<Doubleton<Term>>> iterator() {
+			return mResult.iterator();
+		}
+
+	}
+	
+	
+	
 	
 	/**
 	 * Alternation-free (quantifier) elimination task
