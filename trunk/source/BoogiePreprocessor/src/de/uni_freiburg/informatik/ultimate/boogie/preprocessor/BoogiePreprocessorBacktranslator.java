@@ -53,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
+import de.uni_freiburg.informatik.ultimate.boogie.type.ArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.ConstructedType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
@@ -384,7 +385,8 @@ public class BoogiePreprocessorBacktranslator
 	}
 
 	/**
-	 * Backtranslate arbitrary Boogie expressions
+	 * Backtranslate arbitrary Boogie expressions that occur during
+	 * {@link BoogiePreprocessorBacktranslator#translateExpression(Expression)}.
 	 *
 	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
 	 */
@@ -524,11 +526,17 @@ public class BoogiePreprocessorBacktranslator
 			} else if (type instanceof ConstructedType) {
 				final ConstructedType ct = (ConstructedType) type;
 				if (ct.equals(ct.getUnderlyingType())) {
-					// this constructed type is a named type
+					// this constructed type is a named type;
+					if (ct.getClass() != ct.getUnderlyingType().getClass()) {
+						// Boogie types have a strange equals implementation, so we need to recheck the underlying type
+						return extractIdentifier(mappedLoc, list, inputExp, ct.getUnderlyingType());
+					}
 					return matchIdentifier(mappedLoc, list, inputExp);
 				}
 				return extractIdentifier(mappedLoc, list, inputExp, ct.getUnderlyingType());
 			} else if (type instanceof PrimitiveType) {
+				return matchIdentifier(mappedLoc, list, inputExp);
+			} else if (type instanceof ArrayType) {
 				return matchIdentifier(mappedLoc, list, inputExp);
 			} else {
 				reportUnfinishedBacktranslation("Unfinished Backtranslation: Type" + type + " of VarList "
