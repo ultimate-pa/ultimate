@@ -1221,7 +1221,7 @@ public class CACSL2BoogieBacktranslator
 		} else if (mBoogie2C.getTempVar2Obj().containsKey(boogieId)) {
 			final SFO.AUXVAR purpose = mBoogie2C.getTempVar2Obj().get(boogieId);
 			result = new TranslatedVariable(boogieId, null, VariableType.AUX);
-			reportUnfinishedBacktranslation("auxilliary boogie variable " + boogieId + "(" + purpose + ")");
+			reportUnfinishedBacktranslation("auxiliary boogie variable " + boogieId + "(" + purpose + ")");
 		} else if (boogieId.equals(SFO.VALID)) {
 			result = new TranslatedVariable("\\valid", null, VariableType.VALID);
 		} else {
