@@ -26,15 +26,17 @@
  */
 package de.uni_freiburg.informatik.ultimate.icfgtransformer;
 
-import java.util.ArrayDeque;
-import java.util.Deque;
-import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocationIterator;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  * A basic {@link IIcfgTransformer} that applies some {@link ITransformulaTransformer} to each transformula of an input
@@ -55,7 +57,7 @@ public class IcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgLoca
 
 	/**
 	 * Default constructor.
-	 * 
+	 *
 	 * @param originalIcfg
 	 *            an input {@link IIcfg}.
 	 * @param funLocFac
@@ -91,23 +93,26 @@ public class IcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgLoca
 	}
 
 	private void processLocations(final Set<INLOC> init, final TransformedIcfgBuilder<INLOC, OUTLOC> lst) {
-		final Deque<INLOC> open = new ArrayDeque<>(init);
-		final Set<INLOC> closed = new HashSet<>();
+		final IcfgLocationIterator<INLOC> iter = new IcfgLocationIterator<>(init);
 
-		while (!open.isEmpty()) {
-			final INLOC oldSource = open.removeFirst();
-			if (!closed.add(oldSource)) {
-				continue;
-			}
+		// we need to create new return transitions after new call transitions have been created
+		final List<Triple<OUTLOC, OUTLOC, IcfgEdge>> rtrTransitions = new ArrayList<>();
 
+		while (iter.hasNext()) {
+			final INLOC oldSource = iter.next();
 			final OUTLOC newSource = lst.createNewLocation(oldSource);
 			for (final IcfgEdge oldTransition : oldSource.getOutgoingEdges()) {
-				final INLOC oldTarget = (INLOC) oldTransition.getTarget();
-				open.add(oldTarget);
-				final OUTLOC newTarget = lst.createNewLocation(oldTarget);
-				lst.createNewTransition(newSource, newTarget, oldTransition);
+				@SuppressWarnings("unchecked")
+				final OUTLOC newTarget = lst.createNewLocation((INLOC) oldTransition.getTarget());
+				if (oldTransition instanceof IIcfgReturnTransition<?, ?>) {
+					rtrTransitions.add(new Triple<>(newSource, newTarget, oldTransition));
+				} else {
+					lst.createNewTransition(newSource, newTarget, oldTransition);
+				}
 			}
 		}
+
+		rtrTransitions.forEach(a -> lst.createNewTransition(a.getFirst(), a.getSecond(), a.getThird()));
 	}
 
 	@Override
