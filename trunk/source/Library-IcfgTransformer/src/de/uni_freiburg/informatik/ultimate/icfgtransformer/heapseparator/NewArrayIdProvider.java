@@ -398,11 +398,9 @@ class PartitionInformation {
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
 		
-		sb.append("PartitionInformation:\n");
+		sb.append(" --- PartitionInformation for array group: " + arrayIds + " --- \n");
 		
-		sb.append(" array group: " + arrayIds);
-		
-		sb.append(indexPartitions.size() + " partitions: " + indexPartitions);
+		sb.append(" " + indexPartitions.size() + " partitions: " + indexPartitions);
 		sb.append("\n");
 		
 		return sb.toString();

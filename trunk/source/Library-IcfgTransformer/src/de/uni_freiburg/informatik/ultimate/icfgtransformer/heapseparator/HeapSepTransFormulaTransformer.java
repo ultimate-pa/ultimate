@@ -209,7 +209,6 @@ public class HeapSepTransFormulaTransformer implements ITransformulaTransformer 
 			final Term oldArray = VPDomainHelpers.normalizeTerm(getInnerMostArray(mds.getArray()), tf, mMgdScript);
 
 			final List<Term> pointers = mds.getIndex().stream()
-//					.map(t -> VPDomainHelpers.normalizeTerm(t, newInVars, newOutVars, mMgdScript))
 					.map(t -> VPDomainHelpers.normalizeTerm(t, newTvProvider.getNewInVars(), 
 							newTvProvider.getNewOutVars(), mMgdScript))
 					.collect(Collectors.toList());
@@ -522,7 +521,6 @@ public class HeapSepTransFormulaTransformer implements ITransformulaTransformer 
 		 *  new array for which accessing expression
 		 */
 		mNewArrayIdProvider = 
-//				new NewArrayIdProvider(mCsToolkit, abstractInterpretationResult, heapSepPreanalysis);
 				new NewArrayIdProvider(mCsToolkit, mEqualityProvider, heapSepPreanalysis, mStatistics);
 		mNewSymbolTable = mNewArrayIdProvider.getNewSymbolTable();
 		
@@ -624,6 +622,18 @@ public class HeapSepTransFormulaTransformer implements ITransformulaTransformer 
 		public Map<IProgramVar, TermVariable> getNewOutVars() {
 			return mNewOutVars;
 		}
+	}
+
+
+	/**
+	 * Make a summary of what the HeapSeparator did, for reporting a GenericResult.
+	 * @return
+	 */
+	public String getHeapSeparationSummary() {
+		final StringBuilder sb = new StringBuilder();
+		sb.append("Heap separation summary: \n");
+		sb.append(mNewArrayIdProvider.toString());
+		return sb.toString();
 	}
 }
 

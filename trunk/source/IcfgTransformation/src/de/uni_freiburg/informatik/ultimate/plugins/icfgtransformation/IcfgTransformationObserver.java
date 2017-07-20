@@ -30,12 +30,14 @@ package de.uni_freiburg.informatik.ultimate.plugins.icfgtransformation;
 import java.util.ArrayList;
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.core.lib.results.GenericResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithSeverity.Severity;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IBacktranslationTracker;
@@ -188,7 +190,7 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 	}
 
 	private <INLOC extends IcfgLocation, OUTLOC extends IcfgLocation> IIcfg<OUTLOC> applyHeapSeparator(
-			final IIcfg<INLOC> icfg, final ILocationFactory<INLOC, OUTLOC> locFac, // TODO: omit unneeded fields here
+			final IIcfg<INLOC> icfg, final ILocationFactory<INLOC, OUTLOC> locFac,
 			final Class<OUTLOC> outlocClass, final IBacktranslationTracker backtranslationTracker,
 			final ReplacementVarFactory fac, final IUltimateServiceProvider services,
 			final IEqualityAnalysisResultProvider<IcfgLocation, IIcfg<?>> equalityProvider) {
@@ -196,11 +198,13 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 		final HeapSepTransFormulaTransformer tftf =
 				new HeapSepTransFormulaTransformer(icfg.getCfgSmtToolkit(), mServices, equalityProvider);
 
-		final String newIcfgIdentifier = "IcfgWithHeapSeparation";
 		final IcfgTransformer<INLOC, OUTLOC> icfgTransformer =
-				new IcfgTransformer<>(icfg, locFac, backtranslationTracker, outlocClass, newIcfgIdentifier, tftf);
+				new IcfgTransformer<>(icfg, locFac, backtranslationTracker, outlocClass, "IcfgWithHeapSeparation", 
+						tftf);
 		
-//		mServices.getResultService().reportResult(Activator.PLUGIN_ID, tftf.getStatistics());
+		mServices.getResultService().reportResult(Activator.PLUGIN_ID,
+				new GenericResult(Activator.PLUGIN_ID, "HeapSeparationSummary", tftf.getHeapSeparationSummary() , 
+						Severity.INFO));
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID, 
 				new StatisticsResult<>(Activator.PLUGIN_ID, "HeapSeparatorStatistics", tftf.getStatistics()));
 
