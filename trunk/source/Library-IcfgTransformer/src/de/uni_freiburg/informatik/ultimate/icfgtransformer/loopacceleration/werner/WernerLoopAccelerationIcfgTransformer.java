@@ -36,6 +36,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+
 import java.util.Objects;
 import java.util.Set;
 
@@ -48,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.icfgtransformer.TransformedIcfgBuilde
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.ExampleLoopAccelerationTransformulaTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
@@ -81,13 +83,12 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 
 public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgLocation> {
 	private final ILogger mLogger;
-	private final Deque<Loop> mLoopBodies;
+	private final Map<IcfgLocation, Loop> mLoopBodies;
 	private final LoopDetector<INLOC> mLoopDetector;
 	private final IIcfg<OUTLOC> mResult;
 	private final ManagedScript mScript;
 	private final IUltimateServiceProvider mServices;
 	private final IIcfgSymbolTable mOldSymbolTable;
-	private final Map<IcfgLocation, Loop> mLoopMapping;
 
 	private enum mDealingWithArraysTypes {
 		EXCEPTION, SKIP_LOOP;
@@ -118,7 +119,6 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 		mServices = services;
 		mLoopDetector = new LoopDetector<>(mLogger, origIcfg, mScript, mServices);
 		mOldSymbolTable = originalIcfg.getCfgSmtToolkit().getSymbolTable();
-		mLoopMapping = new HashMap<>();
 
 		// How to deal with Arrays in the loop:
 		mDealingWithArrays = mDealingWithArraysTypes.SKIP_LOOP;
@@ -134,76 +134,9 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 			final String newIcfgIdentifier, final ITransformulaTransformer transformer) {
 
 		transformer.preprocessIcfg(originalIcfg);
-		for (final Loop loop : mLoopBodies) {
 
-			final TermClassifier classifier = new TermClassifier();
-			classifier.checkTerm(loop.getFormula().getFormula());
-
-			if (classifier.hasArrays() && mDealingWithArrays.equals(mDealingWithArraysTypes.EXCEPTION)) {
-				mLogger.debug("LOOP HAS ARRAYS");
-				throw new IllegalArgumentException("Cannot deal with Arrays");
-			}
-
-			if (classifier.hasArrays() && mDealingWithArrays.equals(mDealingWithArraysTypes.SKIP_LOOP)) {
-				mLogger.debug("LOOP HAS ARRAYS");
-				continue;
-			}
-
-			final List<TermVariable> pathCounter = new ArrayList<>();
-
-			for (final Backbone backbone : loop.getBackbones()) {
-				final UnmodifiableTransFormula tf = (UnmodifiableTransFormula) backbone.getFormula();
-				final SimultaneousUpdate update = new SimultaneousUpdate(tf, mScript);
-
-				if (mLogger.isDebugEnabled()) {
-					mLogger.debug("UPDATED VARS: " + update.getUpdatedVars());
-				}
-
-				final SymbolicMemory symbolicMemory = new SymbolicMemory(mScript, mLogger, tf, mOldSymbolTable);
-				symbolicMemory.updateVars(update.getUpdatedVars());
-
-				final Term condition = symbolicMemory
-						.updateCondition(TransFormulaUtils.computeGuard(tf, mScript, mServices, mLogger));
-
-				final TermVariable backbonePathCounter = mScript.constructFreshTermVariable("kappa",
-						mScript.getScript().sort(SmtSortUtils.INT_SORT));
-
-				pathCounter.add(backbonePathCounter);
-				if (mLogger.isDebugEnabled()) {
-					mLogger.debug(backbonePathCounter);
-				}
-				backbone.setPathCounter(backbonePathCounter);
-				backbone.setCondition(condition);
-
-				if (mLogger.isDebugEnabled()) {
-					mLogger.debug("Backbone Condition: " + backbone.getCondition());
-				}
-				backbone.setSymbolicMemory(symbolicMemory);
-			}
-
-			final Map<TermVariable, TermVariable> newPathCounter = new HashMap<>();
-
-			for (int i = 0; i < pathCounter.size(); i++) {
-				final TermVariable newBackbonePathCounter = mScript.constructFreshTermVariable("tau",
-						mScript.getScript().sort(SmtSortUtils.INT_SORT));
-				newPathCounter.put(pathCounter.get(i), newBackbonePathCounter);
-			}
-			loop.addVar(pathCounter);
-			final List<TermVariable> newPathCounterVals = new ArrayList<>(newPathCounter.values());
-			loop.addVar(newPathCounterVals);
-
-			final IteratedSymbolicMemory iteratedSymbolicMemory = new IteratedSymbolicMemory(mScript, mLogger,
-					loop.getFormula(), mOldSymbolTable, loop, pathCounter, newPathCounter);
-
-			iteratedSymbolicMemory.updateMemory();
-			iteratedSymbolicMemory.updateCondition();
-			loop.setIteratedSymbolicMemory(iteratedSymbolicMemory);
-			mLoopMapping.put(loop.getLoophead(), loop);
-			if (mLogger.isDebugEnabled()) {
-				mLogger.debug(loop.getLoophead());
-				mLogger.debug(loop);
-				mLogger.debug("ABSTRACT PATH CONDITION: " + iteratedSymbolicMemory.getAbstractCondition());
-			}
+		for (Entry<IcfgLocation, Loop> entry : mLoopBodies.entrySet()) {
+			summarizeLoop(entry.getValue());
 		}
 
 		final BasicIcfg<OUTLOC> resultIcfg = new BasicIcfg<>(newIcfgIdentifier, originalIcfg.getCfgSmtToolkit(),
@@ -214,6 +147,99 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 		lst.finish();
 
 		return resultIcfg;
+	}
+
+	private void summarizeLoop(Loop loop) {
+
+		if (loop.isSummarized()) {
+			return;
+		}
+
+		final TermClassifier classifier = new TermClassifier();
+		classifier.checkTerm(loop.getFormula().getFormula());
+
+		if (classifier.hasArrays() && mDealingWithArrays.equals(mDealingWithArraysTypes.EXCEPTION)) {
+			mLogger.debug("LOOP HAS ARRAYS");
+			throw new IllegalArgumentException("Cannot deal with Arrays");
+		}
+
+		if (classifier.hasArrays() && mDealingWithArrays.equals(mDealingWithArraysTypes.SKIP_LOOP)) {
+			mLogger.debug("LOOP HAS ARRAYS");
+			return;
+		}
+
+		if (loop.isNested()) {
+			for (Loop nestedLoop : loop.getNestedLoops()) {
+				summarizeLoop(nestedLoop);
+			}
+			mLogger.debug("NESTED LOOPPATH: " + loop.getNestedLoops());
+		}
+
+		final List<TermVariable> pathCounter = new ArrayList<>();
+
+		for (final Backbone backbone : loop.getBackbones()) {
+			final UnmodifiableTransFormula tf = (UnmodifiableTransFormula) backbone.getFormula();
+			final SimultaneousUpdate update = new SimultaneousUpdate(tf, mScript);
+
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug("UPDATED VARS: " + update.getUpdatedVars());
+			}
+
+			final SymbolicMemory symbolicMemory = new SymbolicMemory(mScript, mLogger, tf, mOldSymbolTable);
+			symbolicMemory.updateVars(update.getUpdatedVars());
+
+			final Term condition = symbolicMemory
+					.updateCondition(TransFormulaUtils.computeGuard(tf, mScript, mServices, mLogger));
+
+			final TermVariable backbonePathCounter = mScript.constructFreshTermVariable("kappa",
+					mScript.getScript().sort(SmtSortUtils.INT_SORT));
+
+			pathCounter.add(backbonePathCounter);
+			backbone.setPathCounter(backbonePathCounter);
+			backbone.setCondition(condition);
+
+			if (backbone.getNestedLoops() != null && !backbone.getNestedLoops().isEmpty()) {
+				mLogger.debug("THIS BACKBONE IS NESTED: " + backbone.getNestedLoops());
+				mLogger.debug("MEMEORY BEFORE: " + symbolicMemory.getMemory());
+				for (Loop nestedLoop : backbone.getNestedLoops()) {
+					Term term = Util.and(mScript.getScript(), backbone.getCondition(), nestedLoop.getCondition());
+					backbone.setCondition(term);
+
+					symbolicMemory.updateVars(nestedLoop.getIteratedMemory().getIteratedMemory());
+				}
+				mLogger.debug("BACKBONES: " + loop.getBackbones());
+				mLogger.debug("NESTED BACKBONECONDITION: " + backbone.getCondition());
+				mLogger.debug("NEW NESTEDMEMORY " + symbolicMemory.getMemory());
+			}
+
+			backbone.setSymbolicMemory(symbolicMemory);
+		}
+
+		final Map<TermVariable, TermVariable> newPathCounter = new HashMap<>();
+
+		for (int i = 0; i < pathCounter.size(); i++) {
+			final TermVariable newBackbonePathCounter = mScript.constructFreshTermVariable("tau",
+					mScript.getScript().sort(SmtSortUtils.INT_SORT));
+			newPathCounter.put(pathCounter.get(i), newBackbonePathCounter);
+		}
+		loop.addVar(pathCounter);
+		final List<TermVariable> newPathCounterVals = new ArrayList<>(newPathCounter.values());
+		loop.addVar(newPathCounterVals);
+
+		final IteratedSymbolicMemory iteratedSymbolicMemory = new IteratedSymbolicMemory(mScript, mLogger,
+				loop.getFormula(), mOldSymbolTable, loop, pathCounter, newPathCounter);
+
+		iteratedSymbolicMemory.updateMemory();
+		iteratedSymbolicMemory.updateCondition();
+
+		loop.setCondition(iteratedSymbolicMemory.getAbstractCondition());
+		loop.setIteratedSymbolicMemory(iteratedSymbolicMemory);
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug(loop.getLoophead());
+			mLogger.debug(loop);
+			mLogger.debug("ABSTRACT PATH CONDITION: " + iteratedSymbolicMemory.getAbstractCondition());
+		}
+		loop.setSummarized();
 	}
 
 	private void processLocations(final Set<INLOC> init, final TransformedIcfgBuilder<INLOC, OUTLOC> lst) {
@@ -229,8 +255,8 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 
 			final OUTLOC newSource = lst.createNewLocation(oldSource);
 
-			if (mLoopMapping.containsKey(oldSource)) {
-				final Loop loop = mLoopMapping.get(oldSource);
+			if (mLoopBodies.containsKey(oldSource) && mLoopBodies.get(oldSource).getIteratedMemory() != null) {
+				final Loop loop = mLoopBodies.get(oldSource);
 
 				if (!loop.getErrorPaths().isEmpty()) {
 					mLogger.debug("LOOP WITH ERRORPATH");
@@ -255,6 +281,14 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 
 						for (final TermVariable var : loop.getVars()) {
 							tfb.addAuxVar(var);
+						}
+
+						if (loop.isNested()) {
+							for (Loop nestedLoop : loop.getNestedLoops()) {
+								for (TermVariable var : nestedLoop.getVars()) {
+									tfb.addAuxVar(var);
+								}
+							}
 						}
 
 						tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);

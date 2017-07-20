@@ -55,7 +55,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 public class IteratedSymbolicMemory extends SymbolicMemory {
 
 	private final Map<IProgramVar, Term> mIteratedMemory;
-	private final TransFormula mFormula;
 	private final Loop mLoop;
 	private final List<TermVariable> mPathCounters;
 	private final Map<TermVariable, TermVariable> mNewPathCounters;
@@ -88,8 +87,6 @@ public class IteratedSymbolicMemory extends SymbolicMemory {
 		mPathCounters = pathCounters;
 		mNewPathCounters = newPathCounter;
 		mAbstractPathCondition = mScript.getScript().term("true");
-		mFormula = tf;
-
 		for (final Entry<IProgramVar, Term> entry : mMemoryMapping.entrySet()) {
 			mIteratedMemory.put(entry.getKey(), null);
 		}
@@ -128,13 +125,6 @@ public class IteratedSymbolicMemory extends SymbolicMemory {
 					continue;
 				}
 
-				mLogger.debug("SYMBOLIC MEMORY: " + mMemoryMapping);
-				mLogger.debug("Symbol: " + mMemoryMapping.get(entry.getKey()));
-				mLogger.debug("FORMULA: " + mFormula);
-				mLogger.debug("ITERATED MEMORY: " + backbone.getSymbolicMemory().getMemory());
-				mLogger.debug("BackMem: " + memory);
-
-				// @Todo:
 				if (memory instanceof TermVariable || memory instanceof ConstantTerm) {
 					update = memory;
 					continue;
@@ -184,7 +174,6 @@ public class IteratedSymbolicMemory extends SymbolicMemory {
 					mLogger.debug("Assignment");
 				}
 
-				// TODO only allowed in one backbone
 				if (!Arrays.asList(((ApplicationTerm) memory).getParameters()).contains(symbol) && Arrays
 						.asList(((ApplicationTerm) memory).getParameters()).contains(backbone.getPathCounter())) {
 
@@ -221,19 +210,14 @@ public class IteratedSymbolicMemory extends SymbolicMemory {
 			final Map<Term, Term> mapping = new HashMap<>();
 			final ApplicationTerm appTerm = (ApplicationTerm) backbone.getCondition();
 
-			mLogger.debug("APPTERM: " + appTerm);
-
 			for (Term term : appTerm.getParameters()) {
 				mapping.putAll(termUnravel(term));
 			}
-
-			mLogger.debug("MAPPING: " + mapping);
 
 			Substitution sub = new Substitution(mScript, mapping);
 			Term newCondition = sub.transform(appTerm);
 			mapping.clear();
 
-			// TODO more than one pathcounter in condition
 			mapping.put(backbone.getPathCounter(), mNewPathCounters.get(backbone.getPathCounter()));
 
 			sub = new Substitution(mScript, mapping);
@@ -283,13 +267,9 @@ public class IteratedSymbolicMemory extends SymbolicMemory {
 
 			tFirstPart = mScript.getScript().term("=>", tFirstPart, tBackPart);
 
-			mLogger.debug("TEST: t1:" + t1 + " t2: " + t2 + " tFirstpart: " + tFirstPart + " tBackPart: " + tBackPart
-					+ " tBackPartAddtion: " + tBackPartAddition);
-
 			final TermVariable[] vars = { mNewPathCounters.get(backbone.getPathCounter()) };
 			final Term necessaryCondition = mScript.getScript().quantifier(QuantifiedFormula.FORALL, vars, tFirstPart);
 
-			mLogger.debug("FINAL CONDITION: " + necessaryCondition);
 			terms = Arrays.asList(mAbstractPathCondition, necessaryCondition);
 
 			mAbstractPathCondition = SmtUtils.and(mScript.getScript(), terms);
@@ -297,9 +277,14 @@ public class IteratedSymbolicMemory extends SymbolicMemory {
 	}
 
 	@Override
-	protected Map<Term, Term> termUnravel(final Term term) {
+	protected Map<Term, Term> termUnravel(Term term) {
 
 		final Map<Term, Term> result = new HashMap<>();
+
+		if (term instanceof QuantifiedFormula) {
+			return result;
+		}
+
 		if (term instanceof TermVariable) {
 			final TermVariable tv = (TermVariable) term;
 			for (Entry<IProgramVar, Term> entry : mMemoryMapping.entrySet()) {

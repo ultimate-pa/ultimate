@@ -28,8 +28,12 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.wer
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Deque;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 
@@ -58,9 +62,11 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 public class LoopDetector<INLOC extends IcfgLocation> {
 	private final ILogger mLogger;
 	private final ManagedScript mScript;
-	private final Deque<Loop> mLoopBodies;
+	private final Map<IcfgLocation, Loop> mLoopBodies;
 	private final IUltimateServiceProvider mServices;
 	private final Set<INLOC> mErrorLocations;
+	private final Set<INLOC> mLoopHeads;
+	private final Map<IcfgLocation, Loop> mNestedLoopHierachy;
 
 	/**
 	 * Loop Detector for retrieving loops in an {@link IIcfg}.
@@ -76,14 +82,20 @@ public class LoopDetector<INLOC extends IcfgLocation> {
 		mServices = services;
 		mScript = script;
 		mErrorLocations = IcfgUtils.getErrorLocations(originalIcfg);
+		mLoopHeads = originalIcfg.getLoopLocations();
+		mNestedLoopHierachy = new HashMap<>();
 		mLogger.debug("Loop detector constructed.");
 
-		mLoopBodies = getLoop(originalIcfg);
+		mLoopBodies = getLoop();
 
-		for (final Loop loop : mLoopBodies) {
-			final Deque<Backbone> backbones = getBackbonePath(loop.getPath());
+		for (Entry<IcfgLocation, Loop> entry : mLoopBodies.entrySet()) {
+			final Deque<Backbone> backbones = getBackbonePath(entry.getValue());
 			for (final Backbone backbone : backbones) {
-				loop.addBackbone(backbone);
+				entry.getValue().addBackbone(backbone);
+			}
+			if (mNestedLoopHierachy.containsKey(entry.getKey())) {
+				mNestedLoopHierachy.get(entry.getKey()).setNested();
+				mNestedLoopHierachy.get(entry.getKey()).addNestedLoop(entry.getValue());
 			}
 		}
 	}
@@ -94,14 +106,13 @@ public class LoopDetector<INLOC extends IcfgLocation> {
 	 * @param originalIcfg
 	 * @return
 	 */
-	private Deque<Loop> getLoop(final IIcfg<INLOC> originalIcfg) {
-		final Set<INLOC> loopHeads = originalIcfg.getLoopLocations();
-		final Deque<Loop> loopBodies = new ArrayDeque<>();
+	private Map<IcfgLocation, Loop> getLoop() {
+		final Map<IcfgLocation, Loop> loopBodies = new HashMap<>();
 
-		if (!loopHeads.isEmpty()) {
+		if (!mLoopHeads.isEmpty()) {
 			mLogger.debug("Loops found.");
 
-			for (final INLOC loopHead : loopHeads) {
+			for (final INLOC loopHead : mLoopHeads) {
 
 				final Loop loop = new Loop(loopHead);
 				final Deque<IcfgEdge> path = getPath(loopHead, loop, loopHead);
@@ -111,7 +122,7 @@ public class LoopDetector<INLOC extends IcfgLocation> {
 				loop.setFormula(tf);
 
 				mLogger.debug("LOOP: " + tf);
-				loopBodies.add(loop);
+				loopBodies.put(loopHead, loop);
 			}
 
 		} else {
@@ -125,6 +136,7 @@ public class LoopDetector<INLOC extends IcfgLocation> {
 	private Deque<IcfgEdge> getPath(final IcfgLocation start, final Loop loop, final IcfgLocation target) {
 		Deque<IcfgEdge> loopPath = new ArrayDeque<>();
 		final Deque<IcfgEdge> stack = new ArrayDeque<>();
+		final Deque<IcfgLocation> visited = new ArrayDeque<>();
 
 		stack.addAll(start.getOutgoingEdges());
 
@@ -139,16 +151,42 @@ public class LoopDetector<INLOC extends IcfgLocation> {
 				mErrorLocations.remove(edge.getTarget());
 				final Deque<IcfgEdge> errorPath = getPath(start, loop, edge.getTarget());
 				final TransFormula errorFormula = calculateFormula(errorPath);
-				final Backbone errorLocationPath = new Backbone(errorPath, errorFormula);
+				final Backbone errorLocationPath = new Backbone(errorPath, errorFormula,
+						Collections.emptyList());
 
 				loop.addErrorPath(edge.getTarget(), errorLocationPath);
 			}
 
-			if (findLoopHeader(newPath, start, target)) {
+			if (mLoopHeads.contains(edge.getTarget()) && !edge.getTarget().equals(loop.getLoophead())) {
+
+				if (mNestedLoopHierachy.containsKey(loop.getLoophead())
+						&& edge.getTarget().equals(mNestedLoopHierachy.get(loop.getLoophead()).getLoophead())) {
+					continue;
+				}
+
+				mLogger.debug("FOUND NESTED LOOPHEAD: " + edge.getTarget());
+				mNestedLoopHierachy.put(edge.getTarget(), loop);
+
+				for (IcfgEdge nestedLoopTransition : edge.getTarget().getOutgoingEdges()) {
+					final Deque<IcfgEdge> nestedLoopPath = new ArrayDeque<>(newPath);
+					nestedLoopPath.addLast(nestedLoopTransition);
+					if (!findLoopHeader(nestedLoopPath, edge.getTarget(), loop.getLoophead())) {
+						mLogger.debug("LOOPING PATH");
+					} else {
+						mLogger.debug("EXIT PATH");
+						loopPath = newPath;
+						stack.push(nestedLoopTransition);
+						break;
+					}
+				}
+				continue;
+			}
+
+			if (findLoopHeader(newPath, start, target) && !visited.contains(edge.getTarget())) {
 				loopPath = newPath;
+				visited.push(edge.getTarget());
 				if (!edge.getTarget().equals(target)) {
 					stack.addAll(edge.getTarget().getOutgoingEdges());
-					// TODO something for nested loops and more than one loop.
 				}
 			}
 		}
@@ -190,7 +228,8 @@ public class LoopDetector<INLOC extends IcfgLocation> {
 		return false;
 	}
 
-	private Deque<Backbone> getBackbonePath(final Deque<IcfgEdge> loopBody) {
+	private Deque<Backbone> getBackbonePath(final Loop loop) {
+		final Deque<IcfgEdge> loopBody = loop.getPath();
 		final Deque<Backbone> backbones = new ArrayDeque<>();
 		final IcfgLocation loopHead = loopBody.getFirst().getSource();
 		final IcfgEdge initialEdge = loopBody.getFirst();
@@ -201,15 +240,19 @@ public class LoopDetector<INLOC extends IcfgLocation> {
 		possibleBackbones.addFirst(first);
 
 		while (!possibleBackbones.isEmpty()) {
-
 			final Deque<IcfgLocation> visited = new ArrayDeque<>();
 			final Deque<IcfgEdge> backbone = possibleBackbones.pop();
+			final ArrayList<Loop> nestedLoops = new ArrayList<>();
 
 			while (!backbone.getLast().getTarget().equals(loopHead)
 					&& !visited.contains(backbone.getLast().getTarget())) {
 
 				final IcfgLocation target = backbone.getLast().getTarget();
 				visited.addLast(target);
+
+				if (mNestedLoopHierachy.containsKey(target)) {
+					nestedLoops.add(mLoopBodies.get(target));
+				}
 
 				// in case of multiple outgoing edges create more possible
 				// backbones.
@@ -227,7 +270,7 @@ public class LoopDetector<INLOC extends IcfgLocation> {
 
 			mLogger.debug("BACKBONE: " + tf);
 
-			final Backbone newBackbone = new Backbone(backbone, tf);
+			final Backbone newBackbone = new Backbone(backbone, tf, nestedLoops);
 			backbones.addLast(newBackbone);
 		}
 		return backbones;
@@ -250,7 +293,7 @@ public class LoopDetector<INLOC extends IcfgLocation> {
 	/**
 	 * Get Loop bodies of an {@link IIcfg}. As a Queue of loop datastructures
 	 */
-	public Deque<Loop> getLoopBodies() {
+	public Map<IcfgLocation, Loop> getLoopBodies() {
 		return mLoopBodies;
 	}
 }

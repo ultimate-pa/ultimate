@@ -26,6 +26,7 @@
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.werner;
 
 import java.util.Deque;
+import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -43,6 +44,7 @@ public class Backbone {
 
 	private final Deque<IcfgEdge> mPath;
 	private final TransFormula mFormula;
+	private final List<Loop> mNestedLoops;
 	private TermVariable mPathCounter;
 	private Term mCondition;
 	private SymbolicMemory mSymbolicMemory;
@@ -54,13 +56,17 @@ public class Backbone {
 	 *            The path of the backbone in the {@link IIcfg}.
 	 * @param tf
 	 *            The paths {@link TransFormula}.
+	 * 
+	 * @param nestedLoops
+	 *            Nested loops in the backbone
 	 */
-	public Backbone(final Deque<IcfgEdge> path, final TransFormula tf) {
+	public Backbone(final Deque<IcfgEdge> path, final TransFormula tf, final List<Loop> nestedLoops) {
 		mPath = path;
 		mFormula = tf;
 		mPathCounter = null;
 		mCondition = null;
 		mSymbolicMemory = null;
+		mNestedLoops = nestedLoops;
 	}
 
 	public void setPathCounter(final TermVariable pathCounter) {
@@ -108,6 +114,10 @@ public class Backbone {
 	 */
 	public Term getCondition() {
 		return mCondition;
+	}
+
+	public List<Loop> getNestedLoops() {
+		return mNestedLoops;
 	}
 
 	public SymbolicMemory getSymbolicMemory() {

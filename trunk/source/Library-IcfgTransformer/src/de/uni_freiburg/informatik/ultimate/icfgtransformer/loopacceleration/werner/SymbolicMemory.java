@@ -115,7 +115,6 @@ public class SymbolicMemory {
 			final Term t2 = sub.transform(t);
 			mMemoryMapping.replace(entry.getKey(), t2);
 		}
-		mLogger.debug("the Memory: " + mMemoryMapping.toString());
 	}
 
 	/**
@@ -127,21 +126,14 @@ public class SymbolicMemory {
 	 */
 	public Term updateCondition(final UnmodifiableTransFormula tf) {
 
-		mLogger.debug("TRAFO: " + tf);
-
 		final ApplicationTerm appTerm = (ApplicationTerm) tf.getFormula();
 		final Map<Term, Term> substitution = new HashMap<>();
 
 		substitution.putAll(termUnravel(appTerm, tf.getInVars()));
 
-		mLogger.debug("Sub: " + substitution);
-
 		final Substitution sub = new Substitution(mScript, substitution);
-		final Term t2 = sub.transform(tf.getFormula());
+		return sub.transform(tf.getFormula());
 
-		mLogger.debug("Condition: " + t2);
-
-		return t2;
 	}
 
 	/**
@@ -179,8 +171,6 @@ public class SymbolicMemory {
 	 * @return
 	 */
 	private Map<Term, Term> termUnravel(final Term term, final Map<IProgramVar, TermVariable> progVars) {
-
-		mLogger.debug("NEW TERM: " + term);
 
 		final Map<Term, Term> result = new HashMap<>();
 
@@ -240,7 +230,6 @@ public class SymbolicMemory {
 	 * 
 	 * @return The whole symbolic memory
 	 */
-
 	public Map<IProgramVar, Term> getMemory() {
 		return mMemoryMapping;
 	}

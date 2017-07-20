@@ -55,6 +55,9 @@ public class Loop {
 	private IteratedSymbolicMemory mIteratedMemory;
 	private List<TermVariable> mAuxVars;
 	private Map<IcfgLocation, Backbone> mErrorPaths;
+	private Boolean mHasNestedLoops;
+	private Deque<Loop> mNestedLoops;
+	private Boolean mIsSummarized;
 
 	/**
 	 * Construct a new loop.
@@ -71,6 +74,9 @@ public class Loop {
 		mIteratedMemory = null;
 		mAuxVars = new ArrayList<>();
 		mErrorPaths = new HashMap<>();
+		mHasNestedLoops = false;
+		mIsSummarized = false;
+		mNestedLoops = new ArrayDeque<>();
 	}
 
 	/**
@@ -127,6 +133,10 @@ public class Loop {
 		return mLoopHead;
 	}
 
+	public Deque<Loop> getNestedLoops() {
+		return mNestedLoops;
+	}
+
 	public void setPath(final Deque<IcfgEdge> path) {
 		mPath = path;
 	}
@@ -144,6 +154,16 @@ public class Loop {
 		mErrorPaths.put(errorLocation, errorPath);
 	}
 
+	/**
+	 * attach a nested loop
+	 * 
+	 * @param loop
+	 *            the nested loop
+	 */
+	public void addNestedLoop(final Loop loop) {
+		mNestedLoops.addLast(loop);
+	}
+
 	public void setFormula(final TransFormula tf) {
 		mFormula = tf;
 	}
@@ -154,6 +174,28 @@ public class Loop {
 
 	public void setIteratedSymbolicMemory(final IteratedSymbolicMemory memory) {
 		mIteratedMemory = memory;
+	}
+
+	public Boolean isNested() {
+		return mHasNestedLoops;
+	}
+
+	public Boolean isSummarized() {
+		return mIsSummarized;
+	}
+
+	/**
+	 * The Loop has nested Loops
+	 */
+	public void setNested() {
+		mHasNestedLoops = true;
+	}
+
+	/**
+	 * The loop has been summarized, there is a {@link IteratedSymbolicMemory}
+	 */
+	public void setSummarized() {
+		mIsSummarized = true;
 	}
 
 	/**
