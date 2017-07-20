@@ -33,8 +33,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Unm
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
 /**
- * A predicate formula representing a transition between two program points with
- * given invariant patterns.
+ * Represents a transition between two program points with given invariant 
+ * patterns.
  * 
  * If all InvariantTransitionPredicates of a program are fulfilled by an
  * assignment on variables within the invariant pattern, a valid invariant map
@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
  * @param <IPT>
  *            Invariant Pattern Type: Type used for invariant patterns
  */
-public class TransitionInvariantIngredients<IPT> {
+public class TransitionConstraintIngredients<IPT> {
 	private final IPT invStart;
 	private final IPT invEnd;
 	private final UnmodifiableTransFormula transition;
@@ -64,7 +64,7 @@ public class TransitionInvariantIngredients<IPT> {
 	 * @param transition
 	 *            the TransFormula describing the transition's behavior
 	 */
-	public TransitionInvariantIngredients(final IPT invStart, final IPT invEnd, IcfgLocation sourceLocation, IcfgLocation targetLocation,
+	public TransitionConstraintIngredients(final IPT invStart, final IPT invEnd, final IcfgLocation sourceLocation, final IcfgLocation targetLocation,
 			final Set<IProgramVar> varsForSourcePattern, final Set<IProgramVar> varsForTargetPattern, 
 			final UnmodifiableTransFormula transition) {
 		this.invStart = invStart;

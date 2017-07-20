@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
  * A processor for invariant patterns. The processor generates invariant
  * patterns for each {@link ControlFlowGraph.Location} in an
  * {@link ControlFlowGraph}, and solves the system of all corresponding
- * {@link TransitionInvariantIngredients}s.
+ * {@link TransitionConstraintIngredients}s.
  * 
  * For each round, methods are invoked in the following order:
  * <ol>
@@ -97,7 +97,7 @@ public interface IInvariantPatternProcessor<IPT> {
 
 	/**
 	 * Attempts to find a valid configuration (a satisfying assignment) for all pattern variables,
-	 * satisfying any of the given {@link TransitionInvariantIngredients}s (i.e. the constraints).
+	 * satisfying any of the given {@link TransitionConstraintIngredients}s (i.e. the constraints).
 	 * 
 	 * @param predicates
 	 *            the set of constraints for which a satisfying assignment is needed
@@ -108,7 +108,7 @@ public interface IInvariantPatternProcessor<IPT> {
 	 * LBool.UNSAT if the constraints are unsatisfiable, or LBool.UNKNOWN if the time out.
 	 */
 	public LBool checkForValidConfiguration(
-			final Collection<TransitionInvariantIngredients<IPT>> predicates,
+			final Collection<TransitionConstraintIngredients<IPT>> predicates,
 			final int round);
 	
 	/**
