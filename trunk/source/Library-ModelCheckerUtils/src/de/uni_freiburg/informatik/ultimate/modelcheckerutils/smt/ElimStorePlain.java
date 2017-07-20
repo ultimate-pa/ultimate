@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
@@ -150,7 +151,7 @@ public class ElimStorePlain {
 			}
 			numberOfRounds++;
 		}
-		mLogger.info("Needed " + numberOfRounds + " rounds to eliminate " + inputEliminatees.size() + " variables");
+		mLogger.info("Needed " + numberOfRounds + " rounds to eliminate " + inputEliminatees.size() + " variables, produced " + resultDisjuncts.size() + " xjuncts");
 		// return term and variables that we could not eliminate
 		return new Pair<>(PartialQuantifierElimination.applyCorrespondingFiniteConnective(mScript, mQuantifier, resultDisjuncts), resultEliminatees);
 	}
@@ -236,10 +237,7 @@ public class ElimStorePlain {
 		}
 		final List<MultiDimensionalSelect> selects = extractSelects(eliminatee, inputTerm);
 		
-		final int quantifier = QuantifiedFormula.EXISTS;
-		
-		
-		checkForUnsupportedSelfUpdate(eliminatee, inputTerm, quantifier);
+		checkForUnsupportedSelfUpdate(eliminatee, inputTerm, mQuantifier);
 		
 		
 		final List<ApplicationTerm> selectTerms = extractSelects2(eliminatee, inputTerm);
@@ -247,11 +245,11 @@ public class ElimStorePlain {
 		
 		if (false && stores.isEmpty()) {
 			if (!selectTerms.isEmpty()) {
-				final IndicesAndValues iav = new IndicesAndValues(mMgdScript, quantifier, eliminatee, inputTerm);
+				final IndicesAndValues iav = new IndicesAndValues(mMgdScript, mQuantifier, eliminatee, inputTerm);
 				final Pair<List<ArrayIndex>, List<Term>> indicesAndValues = ElimStore3.buildIndicesAndValues(mMgdScript, iav);
 
 				final ArrayList<Term> indexValueConstraintsFromEliminatee = ElimStore3.constructIndexValueConstraints(
-						mMgdScript.getScript(), quantifier, indicesAndValues.getFirst(), indicesAndValues.getSecond());
+						mMgdScript.getScript(), mQuantifier, indicesAndValues.getFirst(), indicesAndValues.getSecond());
 				final Term indexValueConstraints = PartialQuantifierElimination.applyDualFiniteConnective(mScript, mQuantifier,
 						indexValueConstraintsFromEliminatee);
 				final Substitution subst = new SubstitutionWithLocalSimplification(mMgdScript, iav.getMapping());
@@ -402,12 +400,14 @@ public class ElimStorePlain {
 			final Term disjuct = PartialQuantifierElimination.applyDualFiniteConnective(mScript, mQuantifier,
 					indexEqualityTerm, valueEqualityTerm, transformedTerm, storedValueInformation);
 			assert !Arrays.asList(disjuct.getFreeVars()).contains(eliminatee) : "var is still there: " + eliminatee;
-//			final LBool sat = SmtUtils.checkSatTerm(mScript, disjuct);
-//			if (sat == LBool.UNSAT) {
-//				mLogger.info("saved disjunct");
-//			} else {
-				disjuncts.add(disjuct);
-//			}
+			if (mQuantifier == QuantifiedFormula.EXISTS) {
+				final LBool sat = SmtUtils.checkSatTerm(mScript, disjuct);
+				if (sat == LBool.UNSAT) {
+					mLogger.info("saved disjunct");
+					continue;
+				}
+			}
+			disjuncts.add(disjuct);
 			
 		}
 
@@ -623,7 +623,11 @@ public class ElimStorePlain {
 
 	}
 	
-	
+	/**
+	 * TODO do not always rebuild relation, but store relation on stack
+	 * and make copy for modifications
+	 *
+	 */
 	private static class CombinationIterator2 implements Iterable<Set<Doubleton<Term>>> {
 
 		private final List<Set<Doubleton<Term>>> mResult = new ArrayList<>();
@@ -660,6 +664,8 @@ public class ElimStorePlain {
 			for (final Set<Doubleton<Term>> e : ci) {
 				oldResult.add(e);
 			}
+			assert newResult.equals(oldResult) : "result of CombinationIterator and CombinationIterator2 is different "
+					+ newResult.size() + " vs. " + oldResult.size();
 			return newResult.equals(oldResult);
 		}
 
@@ -735,16 +741,17 @@ public class ElimStorePlain {
 				}
 				offset++;
 			}
+			mCurrentRelation.makeTransitive();
 		}
 
 		/**
 		 * Remove elements from the stack until one 'true' element was removed.
 		 */
 		private void remove1true() {
-			while (!mStack.peek()) {
-				mStack.pop();
+			while (!mStack.peekLast()) {
+				mStack.removeLast();
 			}
-			mStack.pop();
+			mStack.removeLast();
 		}
 
 		private void addRelationToResult() {
