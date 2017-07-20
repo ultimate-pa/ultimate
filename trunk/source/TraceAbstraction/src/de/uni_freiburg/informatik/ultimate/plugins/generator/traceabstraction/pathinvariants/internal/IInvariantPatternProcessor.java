@@ -138,11 +138,6 @@ public interface IInvariantPatternProcessor<IPT> {
 	 */
 	public int getMaxRounds();
 	
-	/**
-	 * Sets the entry pattern to 'true' and the exit pattern to 'false'.
-	 */
-	public void initializeEntryAndExitPattern();
-
 	public IPT getEntryInvariantPattern();
 
 	public IPT getExitInvariantPattern();

@@ -63,10 +63,11 @@ public class LinearInequalityInvariantPatternProcessorFactory
 	protected final ILinearInequalityInvariantPatternStrategy<Collection<Collection<AbstractLinearInvariantPattern>>> strategy;
 	private final boolean mUseNonlinearConstraints;
 	private final boolean mUseUnsatCores;
+	private final boolean mSynthesizeEntryPattern;
 	private final Settings mSolverSettings;
 	private final IPredicate mAxioms;
-	private Map<IcfgLocation, UnmodifiableTransFormula> mLoc2underApprox;
-	private Map<IcfgLocation, UnmodifiableTransFormula> mLoc2overApprox;
+	private final Map<IcfgLocation, UnmodifiableTransFormula> mLoc2underApprox;
+	private final Map<IcfgLocation, UnmodifiableTransFormula> mLoc2overApprox;
 
 	/**
 	 * Constructs a new factory for {@link LinearInequalityInvariantPatternProcessor}s.
@@ -84,8 +85,11 @@ public class LinearInequalityInvariantPatternProcessorFactory
 	 * @param simplificationTechnique
 	 * @param xnfConversionTechnique
 	 * @param axioms
-	 * @param overapprox 
-	 * @param underapprox 
+	 * @param overapprox
+	 * @param underapprox
+	 * @param synthesizeEntryPattern
+	 *            true if the the pattern for the start location need to be synthesized (instead of being inferred from
+	 *            the precondition)
 	 */
 	public LinearInequalityInvariantPatternProcessorFactory(final IUltimateServiceProvider services,
 			final IToolchainStorage storage, final IPredicateUnifier predUnifier, final CfgSmtToolkit csToolkit,
@@ -93,8 +97,8 @@ public class LinearInequalityInvariantPatternProcessorFactory
 			final boolean useNonlinerConstraints, final boolean useUnsatCores,
 			final Settings solverSettings,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
-			final IPredicate axioms, final Map<IcfgLocation, UnmodifiableTransFormula> loc2underApprox, 
-			final Map<IcfgLocation, UnmodifiableTransFormula> loc2overApprox) {
+			final IPredicate axioms, final Map<IcfgLocation, UnmodifiableTransFormula> loc2underApprox,
+			final Map<IcfgLocation, UnmodifiableTransFormula> loc2overApprox, final boolean synthesizeEntryPattern) {
 		mServices = services;
 		mStorage = storage;
 		mSimplificationTechnique = simplificationTechnique;
@@ -105,6 +109,7 @@ public class LinearInequalityInvariantPatternProcessorFactory
 		this.strategy = strategy;
 		mUseNonlinearConstraints = useNonlinerConstraints;
 		mUseUnsatCores = useUnsatCores;
+		mSynthesizeEntryPattern = synthesizeEntryPattern;
 		mSolverSettings = solverSettings;
 		mLoc2underApprox = loc2underApprox;
 		mLoc2overApprox = loc2overApprox;
@@ -169,7 +174,7 @@ public class LinearInequalityInvariantPatternProcessorFactory
 			final IcfgLocation errorLocation) {
 		return new LinearInequalityInvariantPatternProcessor(mServices, mStorage, predUnifier, mCsToolkit, mAxioms,
 				produceSmtSolver(), locations, transitions, precondition, postcondition, startLocation, errorLocation,
-				strategy, mUseNonlinearConstraints, mUseUnsatCores, mSimplificationTechnique, mXnfConversionTechnique, 
-				mLoc2underApprox, mLoc2overApprox);
+				strategy, mUseNonlinearConstraints, mUseUnsatCores, mSimplificationTechnique, mXnfConversionTechnique,
+				mLoc2underApprox, mLoc2overApprox, mSynthesizeEntryPattern);
 	}
 }

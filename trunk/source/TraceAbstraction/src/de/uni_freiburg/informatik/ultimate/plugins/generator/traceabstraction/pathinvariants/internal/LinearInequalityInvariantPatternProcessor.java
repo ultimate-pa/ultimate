@@ -74,6 +74,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
@@ -130,12 +131,13 @@ public final class LinearInequalityInvariantPatternProcessor
 	private final LinearTransition mPostcondition;
 	private final CachedTransFormulaLinearizer mLinearizer;
 
-	private Collection<Collection<AbstractLinearInvariantPattern>> mEntryInvariantPattern;
-	private Collection<Collection<AbstractLinearInvariantPattern>> mExitInvariantPattern;
+	private final Collection<Collection<AbstractLinearInvariantPattern>> mEntryInvariantPattern;
+	private final Collection<Collection<AbstractLinearInvariantPattern>> mExitInvariantPattern;
 	private int mPrefixCounter;
 	private int mCurrentRound;
 	private final int mMaxRounds;
 	private final boolean mUseNonlinearConstraints;
+	private final boolean mSynthesizeEntryPattern;
 	/**
 	 * The simplification type that is used to simplify the values of templates coefficients/parameters.
 	 */
@@ -247,6 +249,9 @@ public final class LinearInequalityInvariantPatternProcessor
 	 * @param startLocation
 	 * @param overApprox
 	 * @param underApprox
+	 * @param synthesizeEntryPattern
+	 *            true if the the pattern for the start location need to be synthesized (instead of being inferred from
+	 *            the precondition)
 	 */
 	public LinearInequalityInvariantPatternProcessor(final IUltimateServiceProvider services,
 			final IToolchainStorage storage, final IPredicateUnifier predicateUnifier, final CfgSmtToolkit csToolkit,
@@ -257,7 +262,7 @@ public final class LinearInequalityInvariantPatternProcessor
 			final boolean useNonlinearConstraints, final boolean useUnsatCores,
 			final SimplificationTechnique simplicationTechnique, final XnfConversionTechnique xnfConversionTechnique,
 			final Map<IcfgLocation, UnmodifiableTransFormula> loc2underApprox,
-			final Map<IcfgLocation, UnmodifiableTransFormula> loc2overApprox) {
+			final Map<IcfgLocation, UnmodifiableTransFormula> loc2overApprox, final boolean synthesizeEntryPattern) {
 		super(predicateUnifier, csToolkit);
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
@@ -265,6 +270,7 @@ public final class LinearInequalityInvariantPatternProcessor
 		mStrategy = strategy;
 		mStartLocation = startLocation;
 		mErrorLocation = errorLocation;
+		mSynthesizeEntryPattern = synthesizeEntryPattern;
 
 		mLinearizer = new CachedTransFormulaLinearizer(services, csToolkit, axioms, storage, simplicationTechnique,
 				xnfConversionTechnique);
@@ -272,6 +278,12 @@ public final class LinearInequalityInvariantPatternProcessor
 				TransFormulaBuilder.constructTransFormulaFromPredicate(precondition, csToolkit.getManagedScript()));
 		mPostcondition = mLinearizer.linearize(
 				TransFormulaBuilder.constructTransFormulaFromPredicate(postcondition, csToolkit.getManagedScript()));
+
+		final ManagedScript script = new ManagedScript(mServices, mSolver);
+		mEntryInvariantPattern = convertTransFormulaToPatternsForLinearInequalities(
+				TransFormulaBuilder.constructTransFormulaFromPredicate(precondition, script));
+		mExitInvariantPattern = convertTransFormulaToPatternsForLinearInequalities(
+				TransFormulaBuilder.constructTransFormulaFromPredicate(postcondition, script));
 
 		mCurrentRound = 0;
 		mMaxRounds = strategy.getMaxRounds();
@@ -306,8 +318,6 @@ public final class LinearInequalityInvariantPatternProcessor
 		resetSettings();
 		// Reset statistics
 		resetStatistics();
-		mEntryInvariantPattern = null;
-		mExitInvariantPattern = null;
 		mPrefixCounter = 0;
 		mCurrentRound = round;
 		mAllPatternCoefficients = new HashSet<>();
@@ -1098,7 +1108,7 @@ public final class LinearInequalityInvariantPatternProcessor
 				if (CHANGE_ONLY_MOST_FREQUENT_LOC) {
 					final IcfgLocation freqLoc =
 							Collections.max(locs2Frequency.entrySet(), Map.Entry.comparingByValue()).getKey();
-					if ((freqLoc != mStartLocation) && (freqLoc != mErrorLocation)) {
+					if (((freqLoc != mStartLocation) || mSynthesizeEntryPattern) && (freqLoc != mErrorLocation)) {
 						mStrategy.changePatternSettingForLocation(freqLoc, mCurrentRound);
 						if (mLogger.isDebugEnabled()) {
 							mLogger.debug("changed setting for most freq. loc: " + freqLoc);
@@ -1106,7 +1116,7 @@ public final class LinearInequalityInvariantPatternProcessor
 					}
 				} else {
 					for (final IcfgLocation loc : locsInUnsatCore) {
-						if ((loc != mStartLocation) && (loc != mErrorLocation)) {
+						if (((loc != mStartLocation) || mSynthesizeEntryPattern) && (loc != mErrorLocation)) {
 							mStrategy.changePatternSettingForLocation(loc, mCurrentRound, locsInUnsatCore);
 							if (mLogger.isDebugEnabled()) {
 								mLogger.debug("changed setting for loc: " + loc);
@@ -1209,7 +1219,7 @@ public final class LinearInequalityInvariantPatternProcessor
 	public Collection<Collection<AbstractLinearInvariantPattern>>
 			getInvariantPatternForLocation(final IcfgLocation location, final int round) {
 
-		if (mStartLocation.equals(location)) {
+		if (mStartLocation.equals(location) && !mSynthesizeEntryPattern) {
 			assert mEntryInvariantPattern != null : "call initializeEntryAndExitPattern() before this";
 			return mEntryInvariantPattern;
 		} else if (mErrorLocation.equals(location)) {
@@ -1232,7 +1242,7 @@ public final class LinearInequalityInvariantPatternProcessor
 	public Collection<Collection<AbstractLinearInvariantPattern>>
 			getInvariantPatternForLocation(final IcfgLocation location, final int round, final Set<IProgramVar> vars) {
 
-		if (mStartLocation.equals(location)) {
+		if (mStartLocation.equals(location) && !mSynthesizeEntryPattern) {
 			assert mEntryInvariantPattern != null : "call initializeEntryAndExitPattern() before this";
 			return mEntryInvariantPattern;
 		} else if (mErrorLocation.equals(location)) {
@@ -1253,25 +1263,13 @@ public final class LinearInequalityInvariantPatternProcessor
 
 	@Override
 	public final Set<IProgramVar> getVariablesForInvariantPattern(final IcfgLocation location, final int round) {
-		if (mStartLocation.equals(location)) {
+		if (mStartLocation.equals(location) && !mSynthesizeEntryPattern) {
 			return Collections.emptySet();
 		} else if (mErrorLocation.equals(location)) {
 			return Collections.emptySet();
 		} else {
 			return mStrategy.getPatternVariablesForLocation(location, round);
 		}
-	}
-
-	@Override
-	public void initializeEntryAndExitPattern() {
-		// TODO 20170718 Matthias: Use precondition and postcondition  
-		
-		// entry invariant pattern should be equivalent to true, so we create an empty conjunction
-		final Collection<AbstractLinearInvariantPattern> emptyConjunction = Collections.emptyList();
-		mEntryInvariantPattern = Collections.singleton(emptyConjunction);
-
-		// exit pattern is equivalent to false, we create an empty disjunction
-		mExitInvariantPattern = Collections.emptyList();
 	}
 
 	@Override
