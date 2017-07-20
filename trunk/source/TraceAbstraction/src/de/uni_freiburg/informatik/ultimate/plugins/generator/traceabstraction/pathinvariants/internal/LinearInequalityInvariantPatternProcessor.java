@@ -641,14 +641,14 @@ public final class LinearInequalityInvariantPatternProcessor
 	}
 
 	/**
-	 * Generates a {@link Term} that is true iff the given {@link InvariantTransitionPredicate} holds.
+	 * Generates a {@link Term} that is true iff the given {@link TransitionInvariantIngredients} holds.
 	 *
 	 * @param predicate
 	 *            the predicate to build the term from
 	 * @return term true iff the given predicate holds
 	 */
 	private Term buildPredicateTerm(
-			final InvariantTransitionPredicate<Collection<Collection<AbstractLinearInvariantPattern>>> predicate,
+			final TransitionInvariantIngredients<Collection<Collection<AbstractLinearInvariantPattern>>> predicate,
 			final Map<IProgramVar, Term> programVarsRecentlyOccurred) {
 		if (mLogger.isDebugEnabled()) {
 			final String transformulaAsString = predicate.getTransition().toString();
@@ -864,7 +864,7 @@ public final class LinearInequalityInvariantPatternProcessor
 	 * @author Betim Musa (musab@informatik.uni-freiburg.de)
 	 */
 	private void generateAndAssertTerms(
-			final Collection<InvariantTransitionPredicate<Collection<Collection<AbstractLinearInvariantPattern>>>> predicates) {
+			final Collection<TransitionInvariantIngredients<Collection<Collection<AbstractLinearInvariantPattern>>>> predicates) {
 		/**
 		 * Maps program vars to their recent occurrence in the program
 		 */
@@ -874,7 +874,7 @@ public final class LinearInequalityInvariantPatternProcessor
 		mSolver.assertTerm(buildBackwardImplicationTerm(mPostcondition, mExitInvariantPattern, mErrorLocation,
 				programVarsRecentlyOccurred));
 
-		for (final InvariantTransitionPredicate<Collection<Collection<AbstractLinearInvariantPattern>>> predicate : predicates) {
+		for (final TransitionInvariantIngredients<Collection<Collection<AbstractLinearInvariantPattern>>> predicate : predicates) {
 			mSolver.assertTerm(buildPredicateTerm(predicate, programVarsRecentlyOccurred));
 
 		}
@@ -915,7 +915,7 @@ public final class LinearInequalityInvariantPatternProcessor
 	 * @author Betim Musa (musab@informatik.uni-freiburg.de)
 	 */
 	private void generateAndAnnotateAndAssertTerms(
-			final Collection<InvariantTransitionPredicate<Collection<Collection<AbstractLinearInvariantPattern>>>> predicates) {
+			final Collection<TransitionInvariantIngredients<Collection<Collection<AbstractLinearInvariantPattern>>>> predicates) {
 		/**
 		 * Maps program vars to their recent occurrence in the program
 		 */
@@ -928,7 +928,7 @@ public final class LinearInequalityInvariantPatternProcessor
 				mErrorLocation, programVarsRecentlyOccurred));
 
 		// Generate and assert terms for intermediate transitions
-		for (final InvariantTransitionPredicate<Collection<Collection<AbstractLinearInvariantPattern>>> predicate : predicates) {
+		for (final TransitionInvariantIngredients<Collection<Collection<AbstractLinearInvariantPattern>>> predicate : predicates) {
 			annotateAndAssertTermAndStoreMapping(buildPredicateTerm(predicate, programVarsRecentlyOccurred));
 			// final LBool smtResult = mSolver.checkSat();
 			// mLogger.info("Check-sat result: " + smtResult);
@@ -1000,7 +1000,7 @@ public final class LinearInequalityInvariantPatternProcessor
 	 */
 	@Override
 	public LBool checkForValidConfiguration(
-			final Collection<InvariantTransitionPredicate<Collection<Collection<AbstractLinearInvariantPattern>>>> predicates,
+			final Collection<TransitionInvariantIngredients<Collection<Collection<AbstractLinearInvariantPattern>>>> predicates,
 			final int round) {
 		mLogger.info("Start generating terms.");
 		final long startTimeConstraintsConstruction = System.nanoTime();

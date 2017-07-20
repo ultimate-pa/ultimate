@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
  * @param <IPT>
  *            Invariant Pattern Type: Type used for invariant patterns
  */
-public class InvariantTransitionPredicate<IPT> {
+public class TransitionInvariantIngredients<IPT> {
 	private final IPT invStart;
 	private final IPT invEnd;
 	private final UnmodifiableTransFormula transition;
@@ -64,7 +64,7 @@ public class InvariantTransitionPredicate<IPT> {
 	 * @param transition
 	 *            the TransFormula describing the transition's behavior
 	 */
-	public InvariantTransitionPredicate(final IPT invStart, final IPT invEnd, IcfgLocation sourceLocation, IcfgLocation targetLocation,
+	public TransitionInvariantIngredients(final IPT invStart, final IPT invEnd, IcfgLocation sourceLocation, IcfgLocation targetLocation,
 			final Set<IProgramVar> varsForSourcePattern, final Set<IProgramVar> varsForTargetPattern, 
 			final UnmodifiableTransFormula transition) {
 		this.invStart = invStart;

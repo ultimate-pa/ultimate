@@ -501,7 +501,7 @@ public final class CFGInvariantsGenerator {
 		final Map<IcfgLocation, IPT> locs2Patterns = new HashMap<IcfgLocation, IPT>(locationsAsList.size());
 		final Map<IcfgLocation, Set<IProgramVar>> locs2PatternVariables = new HashMap<IcfgLocation, Set<IProgramVar>>(locationsAsList.size());
 
-		final Collection<InvariantTransitionPredicate<IPT>> predicates = new ArrayList<InvariantTransitionPredicate<IPT>>(
+		final Collection<TransitionInvariantIngredients<IPT>> transitionInvariantIngredients = new ArrayList<TransitionInvariantIngredients<IPT>>(
 				transitions.size() + 2);
 
 		final Map<TermVariable, IProgramVar> smtVars2ProgramVars = new HashMap<>();
@@ -522,7 +522,7 @@ public final class CFGInvariantsGenerator {
 		if (useUnsatCore && INIT_USE_EMPTY_PATTERNS) {
 			// Execute pre-round with empty patterns for intermediate locations, so we can use the variables from the unsat core
 			final Map<IcfgLocation, IPredicate> resultFromPreRound = executePreRoundWithEmptyPatterns(processor, 0, varsFromUnsatCore, locs2Patterns, locs2PatternVariables,
-					predicates, smtVars2ProgramVars, startLocation, errorLocation, locationsAsList, transitions, allProgramVars,
+					transitionInvariantIngredients, smtVars2ProgramVars, startLocation, errorLocation, locationsAsList, transitions, allProgramVars,
 					pathprogramLocs2Predicates, usePredicates);
 			if (resultFromPreRound != null) {
 				return resultFromPreRound;
@@ -559,14 +559,14 @@ public final class CFGInvariantsGenerator {
 			mLogger.info("Built pattern map.");
 
 			// Build transition predicates
-			predicates.clear();
+			transitionInvariantIngredients.clear();
 			int sumOfTemplateConjuncts = 0;
 			int minimalTemplateSizeOfThisRound = Integer.MAX_VALUE;
 			int maximalTemplateSizeOfThisRound = 0;
 			for (final IcfgInternalTransition transition : transitions) {
 				final IPT invStart = locs2Patterns.get(transition.getSource());
 				final IPT invEnd = locs2Patterns.get(transition.getTarget());
-				predicates.add(new InvariantTransitionPredicate<IPT>(invStart, invEnd, transition.getSource(), transition.getTarget(), 
+				transitionInvariantIngredients.add(new TransitionInvariantIngredients<IPT>(invStart, invEnd, transition.getSource(), transition.getTarget(), 
 						locs2PatternVariables.get(transition.getSource()),
 						locs2PatternVariables.get(transition.getTarget()), transition.getTransformula()));
 				// Compute the benchmarks
@@ -584,7 +584,7 @@ public final class CFGInvariantsGenerator {
 					}
 				}
 			}
-			mLogger.info("Built " + predicates.size() + " predicates.");
+			mLogger.info("Built " + transitionInvariantIngredients.size() + " predicates.");
 
 			// Set statistics before check sat
 			prepareAndSetPathInvariantsStatisticsBeforeCheckSat(locationsAsList, startLocation, errorLocation, allProgramVars, locs2LiveVariables, 
@@ -592,7 +592,7 @@ public final class CFGInvariantsGenerator {
 
 
 			// Attempt to find a valid configuration
-			final LBool constraintsResult = processor.checkForValidConfiguration(predicates, round);
+			final LBool constraintsResult = processor.checkForValidConfiguration(transitionInvariantIngredients, round);
 
 			Set<IcfgLocation> locsInUnsatCore = null;
 			varsFromUnsatCore = null;
@@ -757,7 +757,7 @@ public final class CFGInvariantsGenerator {
 	 */
 	private <IPT> Map<IcfgLocation, IPredicate> executePreRoundWithEmptyPatterns(final IInvariantPatternProcessor<IPT> processor, int round, Set<IProgramVar> varsFromUnsatCore,
 			final Map<IcfgLocation, IPT> locs2Patterns, final Map<IcfgLocation, Set<IProgramVar>> locs2PatternVariables,
-			final Collection<InvariantTransitionPredicate<IPT>> predicates,
+			final Collection<TransitionInvariantIngredients<IPT>> transitionInvariantIngredients,
 			final Map<TermVariable, IProgramVar> smtVars2ProgramVars, final IcfgLocation startLocation, final IcfgLocation errorLocation, 
 			final List<IcfgLocation> locationsAsList, final List<IcfgInternalTransition> transitions, 
 			final Set<IProgramVar> allProgramVars,
@@ -793,18 +793,18 @@ public final class CFGInvariantsGenerator {
 		}
 
 		// Build transition predicates
-		predicates.clear();
+		transitionInvariantIngredients.clear();
 		for (final IcfgInternalTransition transition : transitions) {
 			final IPT invStart = locs2Patterns.get(transition.getSource());
 			final IPT invEnd = locs2Patterns.get(transition.getTarget());
-			predicates.add(new InvariantTransitionPredicate<IPT>(invStart, invEnd, transition.getSource(), transition.getTarget(), 
+			transitionInvariantIngredients.add(new TransitionInvariantIngredients<IPT>(invStart, invEnd, transition.getSource(), transition.getTarget(), 
 					locs2PatternVariables.get(transition.getSource()), locs2PatternVariables.get(transition.getTarget()),
 					transition.getTransformula()));
 		}
-		mLogger.info("Built " + predicates.size() + " transition predicates.");
+		mLogger.info("Built " + transitionInvariantIngredients.size() + " transition predicates.");
 
 		// Attempt to find a valid configuration
-		final LBool constraintsResult = processor.checkForValidConfiguration(predicates, round);
+		final LBool constraintsResult = processor.checkForValidConfiguration(transitionInvariantIngredients, round);
 		if (constraintsResult == LBool.SAT) {
 			mLogger.info("Found valid configuration in pre-round.");
 			final Map<IcfgLocation, IPredicate> result = new HashMap<IcfgLocation, IPredicate>(
