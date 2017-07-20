@@ -435,7 +435,7 @@ public class CACSL2BoogieBacktranslator
 			// if the next ATE is a return, the called method does not have a body and we should compress it to an
 			// FCALL
 			int i = index + 1;
-			for (; index < programExecution.getLength(); ++i) {
+			for (; i < programExecution.getLength(); ++i) {
 				final ILocation loc = programExecution.getTraceElement(i).getTraceElement().getLocation();
 				if (!(loc instanceof CLocation)) {
 					break;
@@ -449,13 +449,15 @@ public class CACSL2BoogieBacktranslator
 				}
 				break;
 			}
-			final AtomicTraceElement<BoogieASTNode> nextATE = programExecution.getTraceElement(i);
-			if (nextATE.hasStepInfo(StepInfo.PROC_RETURN)) {
-				translatedAtomicTraceElements.add(new AtomicTraceElement<CACSLLocation>(cloc, cloc, StepInfo.FUNC_CALL,
-						currentATE.getRelevanceInformation(), currentATE.getPrecedingProcedure(),
-						currentATE.getPrecedingProcedure()));
-				translatedProgramStates.add(translateProgramState(programExecution.getProgramState(i)));
-				return i;
+			if (i < programExecution.getLength()) {
+				final AtomicTraceElement<BoogieASTNode> nextATE = programExecution.getTraceElement(i);
+				if (nextATE.hasStepInfo(StepInfo.PROC_RETURN)) {
+					translatedAtomicTraceElements.add(new AtomicTraceElement<CACSLLocation>(cloc, cloc,
+							StepInfo.FUNC_CALL, currentATE.getRelevanceInformation(),
+							currentATE.getPrecedingProcedure(), currentATE.getPrecedingProcedure()));
+					translatedProgramStates.add(translateProgramState(programExecution.getProgramState(i)));
+					return i;
+				}
 			}
 		}
 
