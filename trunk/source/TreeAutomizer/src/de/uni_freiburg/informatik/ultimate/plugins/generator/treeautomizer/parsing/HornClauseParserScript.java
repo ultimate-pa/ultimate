@@ -191,6 +191,7 @@ public class HornClauseParserScript extends NoopScript {
 		if (t.getFunction().getName().equals("and")) {
 			// t = And (y1 y2 ... yn)
 			final HornClauseCobody tail = new HornClauseCobody();
+			/*
 			for (final Term literal : t.getParameters()) {
 				final ApplicationTerm par = (ApplicationTerm) literal;
 				if (mDeclaredPredicateSymbols.contains(par.getFunction().getName())) {
@@ -203,6 +204,9 @@ public class HornClauseParserScript extends NoopScript {
 					// yi = formula
 					tail.addTransitionFormula(par);
 				}
+			}*/
+			for (final Term literal : t.getParameters()) {
+				tail.mergeCobody(parseCobody(literal));
 			}
 			return tail;
 		}
@@ -278,7 +282,7 @@ public class HornClauseParserScript extends NoopScript {
 			final QuantifiedFormula thisTerm = (QuantifiedFormula) term;
 			if (thisTerm.getQuantifier() == FORALL) {
 				final HornClauseBody body = parseBody(thisTerm.getSubformula());
-				mCurrentHornClause.add(body.convertToHornClause(mBackendSmtSolver, mSymbolTable));
+				mCurrentHornClause.add(body.convertToHornClause(mBackendSmtSolver, mSymbolTable, getTheory()));
 				// System.err.println(mCurrentHornClause.get(mCurrentHornClause.size() - 1));
 			}
 		}
@@ -290,7 +294,7 @@ public class HornClauseParserScript extends NoopScript {
 				if (thisTerm.getQuantifier() == EXISTS) {
 					final HornClauseCobody cobody = parseCobody(thisTerm.getSubformula());
 					final HornClauseBody body = cobody.negate();
-					mCurrentHornClause.add(body.convertToHornClause(mBackendSmtSolver, mSymbolTable));
+					mCurrentHornClause.add(body.convertToHornClause(mBackendSmtSolver, mSymbolTable, getTheory()));
 					// System.err.println(mCurrentHornClause.get(mCurrentHornClause.size() - 1));
 				}
 			}
@@ -346,7 +350,7 @@ public class HornClauseParserScript extends NoopScript {
 		final Term result = super.term(funcname, indices, returnSort, params);
 
 		// if (SmtSortUtils.isBoolSort(returnSort)) {}
-		if (funcname.equals("=>")) {
+		if (funcname.equals("=>") || funcname.equals("and")) {
 			int i = 0;
 			i++;
 

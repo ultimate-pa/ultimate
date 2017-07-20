@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.pars
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -37,7 +38,7 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HCSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornClausePredicateSymbol;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -116,8 +117,10 @@ public class HornClauseCobody {
 	 * @param script
 	 * @return
 	 */
-	public Term getTransitionFormula(ManagedScript script) {
-		return Util.and(script.getScript(), mTransitions.toArray(new Term[mTransitions.size()]));
+	public Term getTransitionFormula(ManagedScript script, Theory theory) {
+		final Term[] transitions = mTransitions.toArray(new Term[mTransitions.size()]);
+		return theory.and(transitions);
+		//return Util.and(script.getScript(), transitions);
 	}
 	
 	List<HornClausePredicateSymbol> getPredicates(final HCSymbolTable symbolTable) {
