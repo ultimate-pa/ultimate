@@ -50,7 +50,7 @@ public class SymmetricHashRelation<E> extends HashRelation<E, E> {
 	@Override
 	public boolean addPair(final E domainElem, final E rangeElem) {
 		final boolean wasModified = super.addPair(domainElem, rangeElem);
-		super.addPair(rangeElem, rangeElem);
+		super.addPair(rangeElem, domainElem);
 		return wasModified;
 	}
 	
@@ -79,7 +79,7 @@ public class SymmetricHashRelation<E> extends HashRelation<E, E> {
 	public Set<Doubleton<E>> makeTransitive() {
 		final Set<Doubleton<E>> allAddedDoubletons = new HashSet<Doubleton<E>>();
 		Set<Doubleton<E>> recentlyAddedDoubletons = this.buildSetOfDoubletons();
-		while (recentlyAddedDoubletons.isEmpty()) {
+		while (!recentlyAddedDoubletons.isEmpty()) {
 			final Set<Doubleton<E>> newDoubletons = new HashSet<Doubleton<E>>();
 			for (final Doubleton<E> doubleton : recentlyAddedDoubletons) {
 				for (final E third : this.getImage(doubleton.getOneElement())) {
