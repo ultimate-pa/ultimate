@@ -1000,14 +1000,14 @@ public final class LinearInequalityInvariantPatternProcessor
 	 */
 	@Override
 	public LBool checkForValidConfiguration(
-			final Collection<TransitionConstraintIngredients<Collection<Collection<AbstractLinearInvariantPattern>>>> predicates,
+			final Collection<TransitionConstraintIngredients<Collection<Collection<AbstractLinearInvariantPattern>>>> transitionContaintigredients,
 			final int round) {
 		mLogger.info("Start generating terms.");
 		final long startTimeConstraintsConstruction = System.nanoTime();
 		if (!mUseUnsatCores) {
-			generateAndAssertTerms(predicates);
+			generateAndAssertTerms(transitionContaintigredients);
 		} else {
-			generateAndAnnotateAndAssertTerms(predicates);
+			generateAndAnnotateAndAssertTerms(transitionContaintigredients);
 		}
 		// Convert ns to ms
 		mConstraintsConstructionTime = (System.nanoTime() - startTimeConstraintsConstruction) / 1_000_000L;

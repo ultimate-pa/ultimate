@@ -99,7 +99,7 @@ public interface IInvariantPatternProcessor<IPT> {
 	 * Attempts to find a valid configuration (a satisfying assignment) for all pattern variables,
 	 * satisfying any of the given {@link TransitionConstraintIngredients}s (i.e. the constraints).
 	 * 
-	 * @param predicates
+	 * @param transitionContaintsIngredients
 	 *            the set of constraints for which a satisfying assignment is needed
 	 * @param round
 	 *            attempt number, initialized with 0 and increased on each
@@ -108,7 +108,7 @@ public interface IInvariantPatternProcessor<IPT> {
 	 * LBool.UNSAT if the constraints are unsatisfiable, or LBool.UNKNOWN if the time out.
 	 */
 	public LBool checkForValidConfiguration(
-			final Collection<TransitionConstraintIngredients<IPT>> predicates,
+			final Collection<TransitionConstraintIngredients<IPT>> transitionContaintsIngredients,
 			final int round);
 	
 	/**
