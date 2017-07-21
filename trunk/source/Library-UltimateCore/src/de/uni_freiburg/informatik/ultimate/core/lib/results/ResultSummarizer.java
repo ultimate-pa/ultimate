@@ -31,6 +31,7 @@ package de.uni_freiburg.informatik.ultimate.core.lib.results;
 import java.util.List;
 import java.util.Map;
 
+import de.uni_freiburg.informatik.ultimate.core.lib.results.AutomataScriptInterpreterOverallResult.OverallResult;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IResultService;
 
@@ -107,11 +108,33 @@ public final class ResultSummarizer {
 						toolchainResult = ToolchainResult.GENERICRESULT;
 						description = result.getShortDescription() + "  " + result.getLongDescription();
 					}
+				} else if (result instanceof AutomataScriptInterpreterOverallResult) {
+					final AutomataScriptInterpreterOverallResult autScriptInterpreterResult =
+							(AutomataScriptInterpreterOverallResult) result;
+					toolchainResult = translateAutomataScriptInterpreterOverallResult(
+							autScriptInterpreterResult.getOverallResult());
+					description = result.getLongDescription();
 				}
 			}
 		}
 		mSummary = toolchainResult;
 		mDescription = description;
+	}
+
+	private static ToolchainResult translateAutomataScriptInterpreterOverallResult(final OverallResult overallResult) {
+		switch (overallResult) {
+		case ALL_ASSERTIONS_HOLD:
+			return ToolchainResult.CORRECT;
+		case SOME_ASSERTION_FAILED:
+			return ToolchainResult.INCORRECT;
+		case TIMEOUT:
+			return ToolchainResult.TIMEOUT;
+		case EXCEPTION_OR_ERROR:
+		case NO_ASSERTION:
+		case OUT_OF_MEMORY:
+		default:
+			return ToolchainResult.NORESULT;
+		}
 	}
 
 	public ToolchainResult getResultSummary() {
@@ -140,15 +163,15 @@ public final class ResultSummarizer {
 		}
 	}
 
-	private String programCorrect() {
+	private static String programCorrect() {
 		return "RESULT: Ultimate proved your program to be correct!";
 	}
 
-	private String programIncorrect() {
+	private static String programIncorrect() {
 		return "RESULT: Ultimate proved your program to be incorrect!";
 	}
 
-	private String programUnknown(final String text) {
+	private static String programUnknown(final String text) {
 		return "RESULT: Ultimate could not prove your program: " + text;
 	}
 }
