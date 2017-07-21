@@ -47,7 +47,7 @@ import java.util.Set;
  * @param <LETTER> Symbols of the automaton
  * @param <STATE> States of the automaton.
  */
-public class TreeRun<LETTER, STATE> implements ITreeRun<LETTER, STATE> {
+public class TreeRun<LETTER extends IRankedLetter, STATE> implements ITreeRun<LETTER, STATE> {
 
 	/*
 	 * fields that determine the TreeRun

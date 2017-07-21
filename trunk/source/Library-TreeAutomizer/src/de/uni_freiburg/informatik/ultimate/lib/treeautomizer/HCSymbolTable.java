@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil;
+package de.uni_freiburg.informatik.ultimate.lib.treeautomizer;
 
 import java.math.BigInteger;
 import java.util.Arrays;

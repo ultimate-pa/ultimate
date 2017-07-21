@@ -33,7 +33,7 @@ package de.uni_freiburg.informatik.ultimate.automata.tree;
  * @param <LETTER> symbol
  * @param <STATE> state
  */
-public interface ITreeRun<LETTER, STATE> {
+public interface ITreeRun<LETTER extends IRankedLetter, STATE> {
 
 	/***
 	 * Get an automaton representation of the tree run.

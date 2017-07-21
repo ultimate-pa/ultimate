@@ -25,7 +25,7 @@
  * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil;
+package de.uni_freiburg.informatik.ultimate.lib.treeautomizer;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -35,40 +35,39 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 
 
 /**
- * TODO: rework comment
- * A HCVar for a set of HornClausese is what an IProgramVar is for a program.
- * A HCVar consists of an uninterpreted predicate symbol that occurs in the HornClause set together
- * with a position n identifying the n-th variable of that predicate.
- * 
+ *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  */
-public class HCOutVar implements IProgramVar, Comparable<HCOutVar> {
+public class HCInVar implements IProgramVar {
 
 	private static final long serialVersionUID = 4653727851496150630L;
 
-	private final TermVariable mTermVariable;
+	private final int mInPredPos;
 	private final int mArgumentPos;
-
+	
 	/**
 	 * The sort of the TermVariable and constants
 	 *  --> this is a field just because it is part of this HCOutVar's identity.
 	 */
 	private final Sort mSort;
+
 	
+	private final TermVariable mTermVariable;
 	private final ApplicationTerm mDefaultConstant;
 	private final ApplicationTerm mPrimedConstant;
 
 	private final String mGloballyUniqueId;
 	
-	public HCOutVar(int argPos, Sort sort, TermVariable v, 
+	public HCInVar(int inPredPos, int argPos, Sort sort, TermVariable v, 
 			ApplicationTerm defaultConstant, ApplicationTerm primedConstant) {
+		mInPredPos = inPredPos;
 		mArgumentPos = argPos;
 		mSort = sort;
 		mTermVariable = v;
 		mDefaultConstant = defaultConstant;
 		mPrimedConstant = primedConstant;
-		mGloballyUniqueId = String.format("HCVar_out_%d_%s", mArgumentPos, mSort);
+		mGloballyUniqueId = String.format("HCVar_In_%d_%d_%s", mInPredPos, mArgumentPos, mSort);
 	}
 
 	@Override
@@ -118,11 +117,22 @@ public class HCOutVar implements IProgramVar, Comparable<HCOutVar> {
 		return mTermVariable;
 	}
 
+	public int getInPredPos() {
+		return mInPredPos;
+	}
+
+	public int getArgumentPos() {
+		return mArgumentPos;
+	}
+
+	public Sort getSort() {
+		return mSort;
+	}
+
 	@Override
 	public int hashCode() {
 		return mGloballyUniqueId.hashCode();
 	}
-
 
 	@Override
 	public boolean equals(Object arg0) {
@@ -136,8 +146,11 @@ public class HCOutVar implements IProgramVar, Comparable<HCOutVar> {
 		if (!(arg0.getClass().equals(this.getClass()))) {
 			return false;
 		}
-		HCOutVar otherHcVar = (HCOutVar) arg0;
+		HCInVar otherHcVar = (HCInVar) arg0;
 		if (mSort.equals(otherHcVar.mSort)) {
+			return false;
+		}
+		if (mInPredPos != otherHcVar.mInPredPos) {
 			return false;
 		}
 		if (mArgumentPos != otherHcVar.mArgumentPos) {
@@ -145,19 +158,6 @@ public class HCOutVar implements IProgramVar, Comparable<HCOutVar> {
 		}
 		assert mGloballyUniqueId.equals(otherHcVar.mGloballyUniqueId);
 		return true;
-	}
-
-	public int getArgumentPos() {
-		return mArgumentPos;
-	}
-
-	public Sort getSort() {
-		return mSort;
-	}
-
-	@Override
-	public int compareTo(HCOutVar arg0) {
-		return this.mArgumentPos - arg0.mArgumentPos;
 	}
 
 

@@ -35,7 +35,6 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.tree.visualization.TreeAutomatonToUltimateModel;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornClause;
 
 /**
  * Interface to create a tree automaton
@@ -48,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornClause
  * @param <STATE>
  *            state
  */
-public interface ITreeAutomatonBU<LETTER, STATE> extends IAutomaton<LETTER, STATE> {
+public interface ITreeAutomatonBU<LETTER extends IRankedLetter, STATE> extends IAutomaton<LETTER, STATE> {
 
 	/**
 	 * @return a set of all the states in the automaton.

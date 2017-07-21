@@ -52,4 +52,3 @@ Export-Package: de.uni_freiburg.informatik.ultimate.automata,
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Bundle-ClassPath: src/de/uni_freiburg/informatik/ultimate/automata/petrinet/julian/petruchio/petruchio.jar,
  .
-Import-Package: de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil

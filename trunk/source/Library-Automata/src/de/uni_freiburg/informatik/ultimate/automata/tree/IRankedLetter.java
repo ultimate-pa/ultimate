@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2017 Alexander Nutz (nutz@informatik.uni-freiburg.de)
- * Copyright (C) 2014-2016 University of Freiburg
+ * Copyright (C) 2017 Mostafa M.A. (mostafa.amin93@gmail.com)
+ * Copyright (C) 2014-2017 University of Freiburg
  * 
  * This file is part of the ULTIMATE Automata Library.
  * 
@@ -24,17 +25,22 @@
  * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.automata.tree.visualization;
+package de.uni_freiburg.informatik.ultimate.automata.tree;
 
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.visualization.AutomatonState;
-import de.uni_freiburg.informatik.ultimate.automata.tree.IRankedLetter;
-import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomatonBU;
-import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+/**
+ * Represents a letter used in a ranked alphabet (typically used in a tree language). In particular such a letter has an 
+ * arity/rank.
+ * 
+ * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
+ *
+ */
+public interface IRankedLetter {
 
-public class TreeAutomatonToUltimateModel<LETTER extends IRankedLetter, STATE> {
-	public IElement transformToUltimateModel(final ITreeAutomatonBU<LETTER, STATE> ta) {
-		System.out.println("implement in TreeAutomatonToUltimateModel");
-		final AutomatonState graphroot = new AutomatonState("implement in TreeAutomatonToUltimateModel", false);
-		return graphroot;
-	}
+	/**
+	 * The rank of this letter, according to the ranked alphabet.
+	 * If this is -1, we were not able to determine a rank because the letter is not used in any rule.
+	 * @return
+	 */
+	int getRank();
+
 }

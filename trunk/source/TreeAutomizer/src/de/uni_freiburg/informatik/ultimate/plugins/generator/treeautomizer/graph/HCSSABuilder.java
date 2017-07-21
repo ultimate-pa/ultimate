@@ -37,14 +37,14 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeRun;
+import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HCInVar;
+import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HCOutVar;
+import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HornClause;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.MultiElementCounter;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HCInVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HCOutVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornClause;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -165,7 +165,7 @@ public class HCSSABuilder {
 		return mTreeRun.reconstructViaSubtrees(backVersionedInterpolantsMap);
 	}
 
-	private TreeRun<Term, IPredicate> buildNestedFormulaTree(final TreeRun<HornClause, IPredicate> tree,
+	private TreeRun<TermRankedLetter, IPredicate> buildNestedFormulaTree(final TreeRun<HornClause, IPredicate> tree,
 			int treeIdx, int childPos) {
 		
 		/*
@@ -181,7 +181,7 @@ public class HCSSABuilder {
 		/*
 		 * recursively descend into the tree run
 		 */
-		List<TreeRun<Term, IPredicate>> childTrees = new ArrayList<>();
+		List<TreeRun<TermRankedLetter, IPredicate>> childTrees = new ArrayList<>();
 		for (int i = 0; i < tree.getChildren().size(); i++) {
 			TreeRun<HornClause, IPredicate> child = tree.getChildren().get(i);
 			mCurrentTree = getOrConstructIndex(tree);
@@ -191,10 +191,12 @@ public class HCSSABuilder {
 		}
 		
 		if (childTrees.isEmpty()) {
-			childTrees = Collections.singletonList(new TreeRun<Term, IPredicate>(mPredicateUnifier.getTruePredicate()));
+			childTrees = Collections.singletonList(new TreeRun<TermRankedLetter, IPredicate>(
+					mPredicateUnifier.getTruePredicate()));
 		}
 
-		return new TreeRun<>(tree.getRoot(), vvRoot.getVersioneeredTerm(), childTrees);
+		return new TreeRun<>(tree.getRoot(), new TermRankedLetter(vvRoot.getVersioneeredTerm(), childTrees.size()), 
+				childTrees);
 	}
 
 	private HCSsa buildSSA() {
@@ -202,7 +204,7 @@ public class HCSSABuilder {
 		final VariableVersioneer vvPre = new VariableVersioneer(mPreCondition);
 		vvPre.versionPredicate(mCurrentTree);
 
-		final TreeRun<Term, IPredicate> tree = buildNestedFormulaTree((TreeRun<HornClause, IPredicate>) mTreeRun, 0, 0);
+		final TreeRun<TermRankedLetter, IPredicate> tree = buildNestedFormulaTree((TreeRun<HornClause, IPredicate>) mTreeRun, 0, 0);
 		mCurrentTree = 0;
 		final VariableVersioneer vvPost = new VariableVersioneer(mPostCondition);
 		vvPost.versionPredicate(mCurrentTree);

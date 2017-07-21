@@ -25,7 +25,7 @@
  * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil;
+package de.uni_freiburg.informatik.ultimate.lib.treeautomizer;
 
 import java.util.Collections;
 import java.util.List;

@@ -46,11 +46,12 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.alternating.AlternatingAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.alternating.BooleanExpression;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetJulian;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
+import de.uni_freiburg.informatik.ultimate.automata.tree.StringRankedLetter;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
@@ -105,6 +106,7 @@ public class AutomataDefinitionInterpreter {
 	private final IMessagePrinter mMessagePrinter;
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
+	private final Map<String, StringRankedLetter> mLetterToRank;
 	
 	/**
 	 * @param printer
@@ -120,6 +122,7 @@ public class AutomataDefinitionInterpreter {
 		mMessagePrinter = printer;
 		mLogger = logger;
 		mServices = services;
+		mLetterToRank = new HashMap<>();
 	}
 	
 	/**
@@ -192,12 +195,9 @@ public class AutomataDefinitionInterpreter {
 	public void interpret(final TreeAutomatonAST astNode) {
 		mErrorLocation = astNode.getLocation();
 		
-		final TreeAutomatonBU<String, String> treeAutomaton = new TreeAutomatonBU<>();
+		final TreeAutomatonBU<StringRankedLetter, String> treeAutomaton = new TreeAutomatonBU<>();
 		
-		for (final String ltr : astNode.getAlphabet()) {
-			treeAutomaton.addLetter(ltr);
-		}
-		
+	
 		for (final String s : astNode.getStates()) {
 			treeAutomaton.addState(s);
 		}
@@ -210,18 +210,52 @@ public class AutomataDefinitionInterpreter {
 			treeAutomaton.addFinalState(fs);
 		}
 		
+		final Map<String, StringRankedLetter> letterToRank = new HashMap<>();
+		
 		for (final TreeAutomatonTransitionAST trans : astNode.getTransitions()) {
 			if (trans.getSourceStates().isEmpty()) {
 				throw new UnsupportedOperationException("The TreeAutomaton format with initial states "
 						+ "(and implicit symbol ranks) does not allow nullary rules, i.e.,"
 						+ "rules where the source state list is empty");
 			}
+			
+			// determine the rank of the letter according to the rule's source states
+			final StringRankedLetter letter = 
+					getOrConstructStringRankedLetter(trans.getSymbol(), trans.getSourceStates().size());
+			
 			treeAutomaton.addRule(
-					new TreeAutomatonRule<>(trans.getSymbol(), trans.getSourceStates(), trans.getTargetState()));
+					new TreeAutomatonRule<>(letter, trans.getSourceStates(), trans.getTargetState()));
 		}
+		
+		for (final String ltr : astNode.getAlphabet()) {
+			final StringRankedLetter letter = letterToRank.get(ltr);
+			if (letter != null) {
+				treeAutomaton.addLetter(letter);
+			} else {
+				// letter is not used in any rule. Giving rank -1
+				treeAutomaton.addLetter(new StringRankedLetter(ltr, -1));
+			}
+		}
+	
 		mAutomata.put(astNode.getName(), treeAutomaton);
 	}
 	
+	private StringRankedLetter getStringRankedLetter(String symbol) {
+		return mLetterToRank.get(symbol);
+	}
+
+	private StringRankedLetter getOrConstructStringRankedLetter(String symbol, int letterRank) {
+		final String letterString = symbol;
+		assert mLetterToRank.get(letterString) == null || 
+				mLetterToRank.get(letterString).getRank() == letterRank : "we don't allow letter with more than one"
+						+ "rank, right?";
+		StringRankedLetter letter = mLetterToRank.get(letterString);
+		if (letter == null) {
+			letter = new StringRankedLetter(letterString, letterRank);
+		}
+		return letter;
+	}
+
 	/**
 	 * @param astNode
 	 *            AST node.
@@ -229,13 +263,13 @@ public class AutomataDefinitionInterpreter {
 	public void interpret(final TreeAutomatonRankedAST astNode) {
 		mErrorLocation = astNode.getLocation();
 		
-		final TreeAutomatonBU<String, String> treeAutomaton = new TreeAutomatonBU<>();
+		final TreeAutomatonBU<StringRankedLetter, String> treeAutomaton = new TreeAutomatonBU<>();
 		final String nullaryString = "elim0arySymbol_";
 		
 		final List<RankedAlphabetEntryAST> ra = astNode.getRankedAlphabet();
 		for (final RankedAlphabetEntryAST rae : ra) {
 			for (final String ltr : rae.getAlphabet()) {
-				treeAutomaton.addLetter(ltr);
+				treeAutomaton.addLetter(getOrConstructStringRankedLetter(ltr, Integer.parseInt(rae.getRank())));
 				if (Integer.parseInt(rae.getRank()) == 0) {
 					// our tree automata don't have 0-ary symbols right now
 					// (they use 1-ary, initial states, and adapted rules instead)
@@ -257,11 +291,12 @@ public class AutomataDefinitionInterpreter {
 		
 		for (final TreeAutomatonTransitionAST trans : astNode.getTransitions()) {
 			if (trans.getSourceStates().isEmpty()) {
-				treeAutomaton.addRule(new TreeAutomatonRule<>(trans.getSymbol(),
+				treeAutomaton.addRule(new TreeAutomatonRule<>(getStringRankedLetter(trans.getSymbol()),
 						Collections.singletonList(nullaryString + trans.getSymbol()), trans.getTargetState()));
 			} else {
 				treeAutomaton.addRule(
-						new TreeAutomatonRule<>(trans.getSymbol(), trans.getSourceStates(), trans.getTargetState()));
+						new TreeAutomatonRule<>(getStringRankedLetter(trans.getSymbol()), trans.getSourceStates(), 
+								trans.getTargetState()));
 			}
 		}
 		mAutomata.put(astNode.getName(), treeAutomaton);

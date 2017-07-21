@@ -1,0 +1,13 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Library-TreeAutomizer
+Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.lib.treeautomizer
+Bundle-Version: 0.1.19
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Bundle-ClassPath: .
+Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils;bundle-version="0.1.19",
+ de.uni_freiburg.informatik.ultimate.core;bundle-version="0.1.19",
+ de.uni_freiburg.informatik.ultimate.lib.util;bundle-version="0.1.19",
+ de.uni_freiburg.informatik.ultimate.lib.smtlib,
+ de.uni_freiburg.informatik.ultimate.lib.automata
+Export-Package: de.uni_freiburg.informatik.ultimate.lib.treeautomizer

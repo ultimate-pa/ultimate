@@ -34,7 +34,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap.KeySetView;
 
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
@@ -49,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * 
  * @author Mostafa M.A. (mostafa.amin93@gmail.com)
  */
-public class TreeAutomatonBU<LETTER, STATE> implements ITreeAutomatonBU<LETTER, STATE> {
+public class TreeAutomatonBU<LETTER extends IRankedLetter, STATE> implements ITreeAutomatonBU<LETTER, STATE> {
 
 	private final Map<List<STATE>, Map<LETTER, Collection<TreeAutomatonRule<LETTER, STATE>>>> mParentsMap;
 	private final Map<STATE, Map<LETTER, Collection<TreeAutomatonRule<LETTER, STATE>>>> mChildrenMap;

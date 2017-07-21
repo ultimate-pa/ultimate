@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.automata.tree.visualization;
 import java.io.PrintWriter;
 
 import de.uni_freiburg.informatik.ultimate.automata.GeneralAutomatonPrinter;
+import de.uni_freiburg.informatik.ultimate.automata.tree.IRankedLetter;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
 
 /**
@@ -41,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
  * @param <STATE>
  *            state type
  */
-public class TreeAutomatonWriter<LETTER, STATE> extends GeneralAutomatonPrinter {
+public class TreeAutomatonWriter<LETTER extends IRankedLetter, STATE> extends GeneralAutomatonPrinter {
 	private final TreeAutomatonBU<LETTER, STATE> mTreeAutomaton;
 
 	/**

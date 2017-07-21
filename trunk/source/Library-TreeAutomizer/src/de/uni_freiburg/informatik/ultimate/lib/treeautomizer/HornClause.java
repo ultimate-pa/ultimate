@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil;
+package de.uni_freiburg.informatik.ultimate.lib.treeautomizer;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.automata.tree.IRankedLetter;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -32,7 +33,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  */
-public class HornClause implements IInternalAction {
+public class HornClause implements IInternalAction, IRankedLetter {
 
 	// /**
 	// * Stores for each predicate symbol in the body and, every argument
@@ -228,14 +229,13 @@ public class HornClause implements IInternalAction {
 		return HornUtilConstants.HORNCLAUSEMETHODNAME;
 	}
 
-	// private final HCTransFormula mHcTransFormula;
-
 	public HCSymbolTable getHornClauseSymbolTable() {
 		return mHornClauseSymbolTable;
 	}
 
-	// public HCTransFormula getHcTransformula() {
-	// return mHcTransFormula;
-	// }
+	@Override
+	public int getRank() {
+		return mBodyPreds.size();
+	}
 
 }

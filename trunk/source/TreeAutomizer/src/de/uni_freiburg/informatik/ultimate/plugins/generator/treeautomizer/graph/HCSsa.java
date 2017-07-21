@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 public class HCSsa {
 
-	private final TreeRun<Term, IPredicate> mNestedFormulas;
+	private final TreeRun<TermRankedLetter, IPredicate> mNestedFormulas;
 	private final Term mPostCondition;
 	private final Term mPreCondition;
 	private final Map<Term, Integer> mCounters;
@@ -69,7 +69,7 @@ public class HCSsa {
 	 * @param counters
 	 *            A map of the counts of each Term.
 	 */
-	public HCSsa(final TreeRun<Term, IPredicate> nestedFormulas, final Term pre, final Term post) {
+	public HCSsa(final TreeRun<TermRankedLetter, IPredicate> nestedFormulas, final Term pre, final Term post) {
 		mNestedFormulas = nestedFormulas;
 		mPostCondition = post;
 		mPreCondition = pre;
@@ -123,24 +123,24 @@ public class HCSsa {
 		return mFlattenedTerms;
 	}
 
-	private Pair<List<Term>, List<Integer>> flatten(final TreeRun<Term, IPredicate> tree, int depth) {
+	private Pair<List<Term>, List<Integer>> flatten(final TreeRun<TermRankedLetter, IPredicate> tree, int depth) {
 		ArrayList<Term> res = new ArrayList<>();
 		ArrayList<Integer> resStartsOfSubtrees = new ArrayList<>();
 		for (int i = 0; i < tree.getChildren().size(); i++) {
-			TreeRun<Term, IPredicate> child = tree.getChildren().get(i);
+			TreeRun<TermRankedLetter, IPredicate> child = tree.getChildren().get(i);
 			Pair<List<Term>, List<Integer>> childRes = flatten(child, depth + i);
 			res.addAll(childRes.getFirst());
 			resStartsOfSubtrees.addAll(childRes.getSecond());
 		}
 		if (tree.getRootSymbol() != null) {
-			res.add(tree.getRootSymbol());
+			res.add(tree.getRootSymbol().getTerm());
 			resStartsOfSubtrees.add(depth);
-			this.getCounter(tree.getRootSymbol());
+			this.getCounter(tree.getRootSymbol().getTerm());
 		}
 		return new Pair<>(res, resStartsOfSubtrees);
 	}
 
-	public TreeRun<Term, IPredicate> getFormulasTree() {
+	public TreeRun<TermRankedLetter, IPredicate> getFormulasTree() {
 		return mNestedFormulas;
 	}
 

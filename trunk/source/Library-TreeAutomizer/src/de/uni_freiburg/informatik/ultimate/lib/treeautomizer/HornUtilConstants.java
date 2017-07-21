@@ -25,31 +25,27 @@
  * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil;
-
-import java.util.HashMap;
-
-import de.uni_freiburg.informatik.ultimate.logic.Term;
+package de.uni_freiburg.informatik.ultimate.lib.treeautomizer;
 
 /**
- * This class is the edge class in a Horn clause graph.
- * It represents a hyper edge that is labelled with a transition formula.
- * The hyper edge may have many sources but has only one target.
- * Additionally there has to be a mapping from the sources to the variables in the
- * transition formula.
  * 
- * (The source is a predicate symbol, so the mapping should say something like
- *  "The variable x in my formula is the i-th argument of the HornClausePredicateSymbol
- *   P that is the j-th source element of this hyper edge" or so..)
  * 
- * @author alex
+ * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  */
-public class HCGEdge {
+public final class HornUtilConstants {
 	
-	Term mFormula;
+	/**
+	 * A set of HornClauses does not have procedures. However, for fulfilling some interfaces we need
+	 * to give a procedure name.
+	 */
+	public static final String HORNCLAUSEMETHODNAME = "dummy-HornClauseMethod";
 
-	HashMap<HornClausePredicateSymbol, Object> mSources;
-	HornClausePredicateSymbol mTarget;
+	public static final String HORN_ANNOT_NAME = "HoRNClauses";
+
+	public static final String DONTCARE = "DontCare";
 	
+	private HornUtilConstants() {
+		// hides public constructor
+	}
 }

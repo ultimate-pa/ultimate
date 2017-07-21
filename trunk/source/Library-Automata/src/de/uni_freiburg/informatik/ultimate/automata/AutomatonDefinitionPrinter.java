@@ -53,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetJuli
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization.NetWriterToString;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization.NetWriterToStringWithUniqueNumber;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization.NetWriterUniqueId;
+import de.uni_freiburg.informatik.ultimate.automata.tree.IRankedLetter;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.visualization.TreeAutomatonWriter;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -308,12 +309,12 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 		} else if (automaton instanceof AlternatingAutomaton) {
 			printAlternatingAutomaton(name, (AlternatingAutomaton<LETTER, STATE>) automaton, format);
 		} else if (automaton instanceof TreeAutomatonBU<?, ?>) {
-			printTreeAutomaton(name, (TreeAutomatonBU<LETTER, STATE>) automaton, format);
+			printTreeAutomaton(name, (TreeAutomatonBU<?, STATE>) automaton, format);
 		}
 		mPrintWriter.close();
 	}
 
-	private void printTreeAutomaton(final String name, final TreeAutomatonBU<LETTER, STATE> automaton,
+	private void printTreeAutomaton(final String name, final TreeAutomatonBU<? extends IRankedLetter, STATE> automaton,
 			final Format format) {
 		switch (format) {
 			case ATS:
