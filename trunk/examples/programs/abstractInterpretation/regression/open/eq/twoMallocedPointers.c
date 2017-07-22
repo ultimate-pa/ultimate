@@ -12,8 +12,10 @@ int main() {
   *p = 6;
   *q = 5;
 
-  //@ assert p != q;
+  // array equality domain should be able to prove this safe
+  //@ assert p != q; 
 
   int v = *p;
+  // array equality domain should be able to prove this safe
   //@ assert v == 6;
 }
