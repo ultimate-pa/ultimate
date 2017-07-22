@@ -48,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.icfgtransformer.IcfgTransformerSequen
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.LocalTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.MapEliminationTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.HeapSepTransFormulaTransformer;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.StoreIndexExposer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.ExampleLoopAccelerationTransformulaTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.ahmed.AhmedLoopAccelerationIcfgTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.biesenbach.LoopDetectionBB;
@@ -195,20 +196,31 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 			final ReplacementVarFactory fac, final IUltimateServiceProvider services,
 			final IEqualityAnalysisResultProvider<IcfgLocation, IIcfg<?>> equalityProvider) {
 
-		final HeapSepTransFormulaTransformer tftf =
-				new HeapSepTransFormulaTransformer(icfg.getCfgSmtToolkit(), mServices, equalityProvider);
+		List<ITransformulaTransformer> transformers = new ArrayList<>();
+		
+		final StoreIndexExposer sie = new StoreIndexExposer(icfg.getCfgSmtToolkit().getManagedScript());
+		transformers.add(sie);
 
-		final IcfgTransformer<INLOC, OUTLOC> icfgTransformer =
-				new IcfgTransformer<>(icfg, locFac, backtranslationTracker, outlocClass, "IcfgWithHeapSeparation", 
-						tftf);
+		final HeapSepTransFormulaTransformer hstftf =
+				new HeapSepTransFormulaTransformer(icfg.getCfgSmtToolkit(), mServices, equalityProvider);
+		transformers.add(hstftf);
+		
+		final IcfgTransformerSequence<INLOC, OUTLOC> transformerSequence = new IcfgTransformerSequence<>(icfg, locFac, 
+				(ILocationFactory<OUTLOC, OUTLOC>) locFac, backtranslationTracker, outlocClass, 
+				icfg.getIdentifier() + "HeapSeparatorResult", transformers);
+
+//		final IcfgTransformer<INLOC, OUTLOC> icfgTransformer =
+//				new IcfgTransformer<>(icfg, locFac, backtranslationTracker, outlocClass, "IcfgWithHeapSeparation", 
+//						tftf);
 		
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID,
-				new GenericResult(Activator.PLUGIN_ID, "HeapSeparationSummary", tftf.getHeapSeparationSummary() , 
+				new GenericResult(Activator.PLUGIN_ID, "HeapSeparationSummary", hstftf.getHeapSeparationSummary() , 
 						Severity.INFO));
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID, 
-				new StatisticsResult<>(Activator.PLUGIN_ID, "HeapSeparatorStatistics", tftf.getStatistics()));
+				new StatisticsResult<>(Activator.PLUGIN_ID, "HeapSeparatorStatistics", hstftf.getStatistics()));
 
-		return icfgTransformer.getResult();
+//		return icfgTransformer.getResult();
+		return transformerSequence.getResult();
 	}
 
 	private <INLOC extends IcfgLocation, OUTLOC extends IcfgLocation> IIcfg<OUTLOC> applyLoopAccelerationAhmed(
