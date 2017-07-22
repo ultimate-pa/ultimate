@@ -11,24 +11,25 @@
  */
 #include <stdlib.h>
 
-int foo() {
+int * foo() {
   int* m1 =  malloc(4);
   *m1 = 5;
-  return *m1;
+  return m1;
 }
 
-int bar() {
+int * bar() {
   int* m2 =  malloc(4);
   *m2 = 7;
-  return *m2;
+  return m2;
 }
 
 int main() {
 
-  int i = foo();
-  int j = bar();
+  int * i = foo();
+  int * j = bar();
 
-  //@ assert i == 5;
+  int v = *i;
+  //@ assert v == 5;
 }
 
 
