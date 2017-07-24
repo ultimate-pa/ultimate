@@ -1,7 +1,7 @@
 #Fri Oct 03 12:44:52 EST 2014
 @de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker=0.0.1
-/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker/Nontermination\ analysis=Nonlinear
-/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker/Termination\ analysis=Nonlinear
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker/Nontermination\ analysis=NONLINEAR
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker/Termination\ analysis=NONLINEAR
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker=
 /instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker/Path\ of\ dumped\ script=/tmp/
 #

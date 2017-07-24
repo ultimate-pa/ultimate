@@ -26,4 +26,4 @@ file_export_version=3.0
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer=
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Compute\ Interpolants\ along\ a\ Counterexample=ForwardPredicates
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Use\ external\ solver\ (rank\ synthesis)=true
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Lasso\ Analysis=Nonlinear
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Lasso\ Analysis=NONLINEAR

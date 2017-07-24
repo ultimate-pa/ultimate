@@ -2,8 +2,8 @@
 file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker/Use\ external\ SMT\ solver=false
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker=
-/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker/Nontermination\ analysis=Nonlinear
-/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker/Termination\ analysis=Nonlinear
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker/Nontermination\ analysis=NONLINEAR
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker/Termination\ analysis=NONLINEAR
 @de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker=0.0.1
 /instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker/Only\ non-decreasing\ invariants=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker/Use\ external\ SMT\ solver=true

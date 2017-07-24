@@ -26,9 +26,9 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker/SMT\ solver\ command=z3 -smt2 -in SMTLIB2_COMPLIANT\=true -t\:10000
 /instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker/Path\ of\ dumped\ script=/tmp/
 /instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker/Use\ external\ SMT\ solver=false
-/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker/Nontermination\ analysis=Linear
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker/Nontermination\ analysis=LINEAR
 file_export_version=3.0
-/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker/Termination\ analysis=Linear
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker/Termination\ analysis=LINEAR
 /instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker/Nested\ template\ size=4
 /instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker/Multiphase\ template\ size=3
 /instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker/Simplify\ discovered\ termination\ arguments=false

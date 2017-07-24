@@ -30,7 +30,7 @@ file_export_version=3.0
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer=
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Compute\ Interpolants\ along\ a\ Counterexample=ForwardPredicates
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Use\ external\ solver\ (rank\ synthesis)=false
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Lasso\ Analysis=Linear_with_guesses
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Lasso\ Analysis=LINEAR_WITH_GUESSES
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Buchi\ interpolant\ automaton=StagedBlast
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Construct\ termination\ proof\ for\ TermComp=false
 #Wed Mar 19 04:15:41 CET 2014
