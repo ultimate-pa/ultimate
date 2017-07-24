@@ -14,5 +14,4 @@ echo "OLDSTRING: $1"
 echo "NEWSTRING: $2"
 #use comma as delimiter for sed because is hopefully does not occur in string
 find . -name "*.epf" -exec sed -i -e "s,${OLDSTRING},${NEWSTRING}," {} \;
-
-
+find ../../source/WebUltimateBridge/src/de/uni_freiburg/informatik/ultimate/webbridge/resources/settings/ -name "*.epf" -exec sed -i -e "s,${OLDSTRING},${NEWSTRING}," {} \;
