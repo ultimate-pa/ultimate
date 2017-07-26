@@ -48,7 +48,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDim
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainHelpers;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainSymmetricPair;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
@@ -88,26 +87,22 @@ public class HeapSepPreAnalysis {
 	}
 
 	public void processEdge(IcfgEdge edge) {
-		
-		if (edge instanceof CodeBlock) {
+		final UnmodifiableTransFormula tf = edge.getTransformula();
 
-			final UnmodifiableTransFormula tf = ((CodeBlock) edge).getTransformula();
+		final List<ArrayEquality> aeqs = ArrayEquality.extractArrayEqualities(tf.getFormula());
+		for (ArrayEquality aeq : aeqs) {
+			final Term first = VPDomainHelpers.normalizeTerm(aeq.getLhs(), tf, mScript);
+			final Term second = VPDomainHelpers.normalizeTerm(aeq.getRhs(), tf, mScript);
 
-			final List<ArrayEquality> aeqs = ArrayEquality.extractArrayEqualities(tf.getFormula());
-			for (ArrayEquality aeq : aeqs) {
-				final Term first = VPDomainHelpers.normalizeTerm(aeq.getLhs(), tf, mScript);
-				final Term second = VPDomainHelpers.normalizeTerm(aeq.getRhs(), tf, mScript);
-				
-				mArrayEqualities.add(new VPDomainSymmetricPair<Term>(first, second));
-			}
-
-			mArrayToAccessLocations.addAll(findArrayAccesses((CodeBlock) edge));
-			
-			mArrayToAccessingIndices.addAll(findAccessingIndices((CodeBlock) edge));
+			mArrayEqualities.add(new VPDomainSymmetricPair<Term>(first, second));
 		}
+
+		mArrayToAccessLocations.addAll(findArrayAccesses(edge));
+
+		mArrayToAccessingIndices.addAll(findAccessingIndices(edge));
 	}
 	
-	private HashRelation<Term, List<Term>> findAccessingIndices(CodeBlock edge) {
+	private HashRelation<Term, List<Term>> findAccessingIndices(IcfgEdge edge) {
 		
 		final UnmodifiableTransFormula tf = edge.getTransformula();
 		final HashRelation<Term, List<Term>> result = new HashRelation<>();
@@ -140,7 +135,7 @@ public class HeapSepPreAnalysis {
 		return result;
 	}
 
-	private HashRelation<Term, IcfgLocation> findArrayAccesses(CodeBlock edge) {
+	private HashRelation<Term, IcfgLocation> findArrayAccesses(IcfgEdge edge) {
 		final HashRelation<Term, IcfgLocation> result = new HashRelation<>();
 		if (edge instanceof Summary && ((Summary) edge).calledProcedureHasImplementation()) {
 			return result;
