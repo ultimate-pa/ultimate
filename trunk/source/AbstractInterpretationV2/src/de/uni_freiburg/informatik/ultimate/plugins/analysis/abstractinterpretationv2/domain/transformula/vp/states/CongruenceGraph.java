@@ -26,6 +26,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states;
 
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -695,5 +699,48 @@ public class CongruenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 
 	public boolean isEmpty() {
 		return getSupportingEqualities().isEmpty() && mDisequalities.isEmpty();
+	}
+
+	/**
+	 * like getAllEquivalenceClasses, but does not show singletons
+	 * @return
+	 */
+	public Collection<Set<Term>> getEquivalenceClasses() {
+		// don't show singleton equivalence classes
+		return getAllEquivalenceClasses().stream().filter(eqc -> eqc.size() > 1).collect(Collectors.toSet());
+	}
+
+	public Collection<Set<Term>> getAllEquivalenceClasses() {
+		final List<Set<Term>> result = new ArrayList<>();
+		final Set<NODE> visitedNodes = new HashSet<>();
+		for (NODE node : mNodeToEqGraphNode.keySet()) {
+			if (visitedNodes.contains(node)) {
+				continue;
+			}
+			final Set<NODE> eqClass = getEquivalenceClass(node);
+			visitedNodes.addAll(eqClass);
+			result.add(eqClass.stream().map(n -> n.getTerm()).collect(Collectors.toSet()));
+		}
+		return result;
+	}
+
+	private Set<NODE> getEquivalenceClass(NODE node) {
+		final Set<NODE> result = new HashSet<>();
+		final Set<NODE> visited = new HashSet<>();
+		final Deque<NODE> pending = new ArrayDeque<>();
+		pending.add(node);
+		while (!pending.isEmpty()) {
+			final NODE current = pending.pop();
+			visited.add(current);
+			result.add(current);
+			final NODE repr = mNodeToEqGraphNode.get(current).getRepresentative().getNode();
+			if (!visited.contains(repr)) {
+				pending.add(repr);
+			}
+			final List<NODE> revRepr = mNodeToEqGraphNode.get(current).getReverseRepresentative().stream()
+					.map(gn -> gn.getNode()).collect(Collectors.toList());
+			pending.addAll(revRepr.stream().filter(n -> !visited.contains(n)).collect(Collectors.toList()));
+		}
+		return result;
 	}
 }

@@ -256,7 +256,7 @@ public class EqState<ACTION extends IIcfgTransition<IcfgLocation>>
 
 	@Override
 	public String toLogString() {
-		return mPvocs.toString() + " " + mConstraint.toString();
+		return mPvocs.toString() + "\n" + mConstraint.toString();
 	}
 
 	@Override

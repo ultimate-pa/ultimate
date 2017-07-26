@@ -539,43 +539,79 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 
 	@Override
 	public String toString() {
-		// (adapted from getTerm())
-		final List<String> elementEqualities = getSupportingElementEqualities().entrySet().stream()
-				.map(en -> String.format("(%s = %s)", en.getKey().getTerm().toStringDirect(), 
-						en.getValue().getTerm().toStringDirect()))
-				.collect(Collectors.toList());
-		final List<String> elementDisequalities = getElementDisequalities().stream()
-				.map(pair -> String.format("(%s != %s)", pair.getFirst().getTerm().toStringDirect(), 
-						pair.getSecond().getTerm().toStringDirect()))
-				.collect(Collectors.toList());
-		final List<String> functionEqualities = getSupportingFunctionEqualities().entrySet().stream()
-				.map(en -> String.format("(%s = %s)", en.getKey().getTerm().toStringDirect(), 
-						en.getValue().getTerm().toStringDirect()))
-				.collect(Collectors.toList());
-		final List<String> functionDisequalities = getFunctionDisequalites().stream()
-				.map(pair -> String.format("(%s != %s)", pair.getFirst().getTerm().toStringDirect(), 
-						pair.getSecond().getTerm().toStringDirect()))
-				.collect(Collectors.toList());
+		// print equivalence classes? alternative: equalities based on graph edges
+		final boolean printAsEquivalenceClasses = true;
+		if (printAsEquivalenceClasses) {
+			final List<String> allPartitionsAndRepresentativeDisequalities = new ArrayList<>();
 
-		final List<String> allConjuncts = new ArrayList<>();
-		allConjuncts.addAll(elementEqualities);
-		allConjuncts.addAll(elementDisequalities);
-		allConjuncts.addAll(functionEqualities);
-		allConjuncts.addAll(functionDisequalities);
 
-		if (allConjuncts.isEmpty()) {
-			return "Top";
+			allPartitionsAndRepresentativeDisequalities.add("= (elem)");
+			allPartitionsAndRepresentativeDisequalities.add(
+					mElementCongruenceGraph.getEquivalenceClasses().stream()
+					.filter(eqc -> eqc.size() > 1).collect(Collectors.toList())
+					.toString());
+			
+			allPartitionsAndRepresentativeDisequalities.add("!= (elem)");
+			allPartitionsAndRepresentativeDisequalities.add(mElementCongruenceGraph.getDisequalities().toString());
+
+			allPartitionsAndRepresentativeDisequalities.add("= (array)");
+			allPartitionsAndRepresentativeDisequalities.add(
+					mFunctionEquivalenceGraph.getAllEquivalenceClasses().stream()
+					.filter(eqc -> eqc.size() > 1).collect(Collectors.toList())
+					.toString());
+
+			allPartitionsAndRepresentativeDisequalities.add("!= (array)");
+			allPartitionsAndRepresentativeDisequalities.add(
+					mFunctionEquivalenceGraph.getAllFunctionDisequalities().toString());
+
+			String sep = "";
+			final StringBuilder sb = new StringBuilder();
+			for (String s : allPartitionsAndRepresentativeDisequalities) {
+				sb.append(sep);
+				sep = "\n";
+				sb.append(s);
+			}
+
+			return sb.toString();
+		} else {
+			// (adapted from getTerm())
+			final List<String> elementEqualities = getSupportingElementEqualities().entrySet().stream()
+					.map(en -> String.format("(%s = %s)", en.getKey().getTerm().toStringDirect(), 
+							en.getValue().getTerm().toStringDirect()))
+					.collect(Collectors.toList());
+			final List<String> elementDisequalities = getElementDisequalities().stream()
+					.map(pair -> String.format("(%s != %s)", pair.getFirst().getTerm().toStringDirect(), 
+							pair.getSecond().getTerm().toStringDirect()))
+					.collect(Collectors.toList());
+			final List<String> functionEqualities = getSupportingFunctionEqualities().entrySet().stream()
+					.map(en -> String.format("(%s = %s)", en.getKey().getTerm().toStringDirect(), 
+							en.getValue().getTerm().toStringDirect()))
+					.collect(Collectors.toList());
+			final List<String> functionDisequalities = getFunctionDisequalites().stream()
+					.map(pair -> String.format("(%s != %s)", pair.getFirst().getTerm().toStringDirect(), 
+							pair.getSecond().getTerm().toStringDirect()))
+					.collect(Collectors.toList());
+
+			final List<String> allConjuncts = new ArrayList<>();
+			allConjuncts.addAll(elementEqualities);
+			allConjuncts.addAll(elementDisequalities);
+			allConjuncts.addAll(functionEqualities);
+			allConjuncts.addAll(functionDisequalities);
+
+			if (allConjuncts.isEmpty()) {
+				return "Top";
+			}
+
+			String sep = "";
+			final StringBuilder sb = new StringBuilder();
+			for (String s : allConjuncts) {
+				sb.append(sep);
+				sep = "\n";
+				sb.append(s);
+			}
+
+			return sb.toString();
 		}
-
-		String sep = "";
-		final StringBuilder sb = new StringBuilder();
-		for (String s : allConjuncts) {
-			sb.append(sep);
-			sep = "\n";
-			sb.append(s);
-		}
-
-		return sb.toString();
 	}
 
 	public boolean hasNode(NODE node) {
