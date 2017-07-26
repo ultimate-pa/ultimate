@@ -190,6 +190,7 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	private <INLOC extends IcfgLocation, OUTLOC extends IcfgLocation> IIcfg<OUTLOC> applyHeapSeparator(
 			final IIcfg<INLOC> icfg, final ILocationFactory<INLOC, OUTLOC> locFac,
 			final Class<OUTLOC> outlocClass, final IBacktranslationTracker backtranslationTracker,
@@ -198,7 +199,7 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 
 		List<ITransformulaTransformer> transformers = new ArrayList<>();
 		
-		final StoreIndexExposer sie = new StoreIndexExposer(icfg.getCfgSmtToolkit().getManagedScript());
+		final StoreIndexExposer sie = new StoreIndexExposer(icfg.getCfgSmtToolkit());
 		transformers.add(sie);
 
 		final HeapSepTransFormulaTransformer hstftf =
