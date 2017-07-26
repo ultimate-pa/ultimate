@@ -1,7 +1,8 @@
 /*
  * Copyright (C) 2015 Dirk Steinmetz
  * Copyright (C) 2017 Betim Musa
- * Copyright (C) 2015 University of Freiburg
+ * Copyright (C) 2017 Dennis Wölfing
+ * Copyright (C) 2015-2017 University of Freiburg
  *
  * This file is part of the ULTIMATE TraceAbstraction plug-in.
  *
@@ -309,8 +310,8 @@ public final class CFGInvariantsGenerator {
 
 		if (invSynthSettings.useAbstractInterpretation()) {
 			// TODO: Implement the computation of predicates via abstract interpretation
-//			pathprogramLocs2Predicates.putAll(extractAbstractInterpretationPredicates(mAbstractInterpretationResult,
-//					csToolkit.getManagedScript()));
+			// pathprogramLocs2Predicates.putAll(extractAbstractInterpretationPredicates(mAbstractInterpretationResult,
+			// csToolkit.getManagedScript()));
 		}
 		AbstractTemplateIncreasingDimensionsStrategy templateDimensionStrat = invSynthSettings.getTemplateDimensionsStrategy();
 		if (templateDimensionStrat == null) {
@@ -503,9 +504,6 @@ public final class CFGInvariantsGenerator {
 		final Map<IcfgLocation, IPT> locs2Patterns = new HashMap<IcfgLocation, IPT>(locationsAsList.size());
 		final Map<IcfgLocation, Set<IProgramVar>> locs2PatternVariables = new HashMap<IcfgLocation, Set<IProgramVar>>(locationsAsList.size());
 
-		final Collection<TransitionConstraintIngredients<IPT>> transitionConstraintIngredients = new ArrayList<TransitionConstraintIngredients<IPT>>(
-				transitions.size() + 2);
-
 		final Map<TermVariable, IProgramVar> smtVars2ProgramVars = new HashMap<>();
 		if (useUnsatCore) {
 			// Compute map smt-variables to program variables
@@ -523,9 +521,10 @@ public final class CFGInvariantsGenerator {
 		Set<IProgramVar> varsFromUnsatCore = new HashSet<>();
 		if (useUnsatCore && INIT_USE_EMPTY_PATTERNS) {
 			// Execute pre-round with empty patterns for intermediate locations, so we can use the variables from the unsat core
-			final Map<IcfgLocation, IPredicate> resultFromPreRound = executePreRoundWithEmptyPatterns(processor, 0, varsFromUnsatCore, locs2Patterns, locs2PatternVariables,
-					transitionConstraintIngredients, smtVars2ProgramVars, startLocation, errorLocation, locationsAsList, transitions, allProgramVars,
-					pathprogramLocs2Predicates, usePredicates);
+			final Map<IcfgLocation, IPredicate> resultFromPreRound =
+					executePreRoundWithEmptyPatterns(processor, 0, varsFromUnsatCore, locs2Patterns,
+							locs2PatternVariables, smtVars2ProgramVars, startLocation, errorLocation, locationsAsList,
+							transitions, allProgramVars, pathprogramLocs2Predicates, usePredicates);
 			if (resultFromPreRound != null) {
 				return resultFromPreRound;
 			}
@@ -559,32 +558,41 @@ public final class CFGInvariantsGenerator {
 			mLogger.info("Built pattern map.");
 
 			// Build transition predicates
-			transitionConstraintIngredients.clear();
+			final Collection<SuccessorConstraintIngredients<IPT>> successorConstraintIngredients =
+					new ArrayList<SuccessorConstraintIngredients<IPT>>(transitions.size() + 2);
 			int sumOfTemplateConjuncts = 0;
 			int minimalTemplateSizeOfThisRound = Integer.MAX_VALUE;
 			int maximalTemplateSizeOfThisRound = 0;
-			for (final IcfgInternalTransition transition : transitions) {
-				final IPT invStart = locs2Patterns.get(transition.getSource());
-				final IPT invEnd = locs2Patterns.get(transition.getTarget());
-				transitionConstraintIngredients.add(new TransitionConstraintIngredients<IPT>(invStart, invEnd, transition.getSource(), transition.getTarget(),
-						locs2PatternVariables.get(transition.getSource()),
-						locs2PatternVariables.get(transition.getTarget()), transition.getTransformula()));
-				// Compute the benchmarks
-				@SuppressWarnings("unchecked")
-				final int sizeOfTemplate2 = ((LinearInequalityInvariantPatternProcessor)processor).getTotalNumberOfConjunctsInPattern(
-						(Collection<Collection<AbstractLinearInvariantPattern>>) invEnd);
-				// Compute the total size of all non-trivial templates
-				sumOfTemplateConjuncts = sumOfTemplateConjuncts + sizeOfTemplate2;
-				if (transition.getTarget() != errorLocation) {
-					if (sizeOfTemplate2 < minimalTemplateSizeOfThisRound) {
-						minimalTemplateSizeOfThisRound = sizeOfTemplate2;
-					}
-					if (sizeOfTemplate2 > maximalTemplateSizeOfThisRound) {
-						maximalTemplateSizeOfThisRound = sizeOfTemplate2;
+			for (final IcfgLocation location : locationsAsList) {
+				final IPT invStart = locs2Patterns.get(location);
+				final Set<IProgramVar> startPatternVariables = locs2PatternVariables.get(location);
+				final SuccessorConstraintIngredients<IPT> successorConstraintIngredient =
+						new SuccessorConstraintIngredients<>(location, startPatternVariables, invStart);
+
+				for (final IcfgEdge transition : location.getOutgoingEdges()) {
+					final IPT invEnd = locs2Patterns.get(transition.getTarget());
+					final Set<IProgramVar> targetPatternVeriables = locs2PatternVariables.get(transition.getTarget());
+					successorConstraintIngredient.addTransition(transition, invEnd, targetPatternVeriables);
+
+					// Compute the benchmarks
+					@SuppressWarnings("unchecked")
+					final int sizeOfTemplate2 =
+					((LinearInequalityInvariantPatternProcessor) processor).getTotalNumberOfConjunctsInPattern(
+							(Collection<Collection<AbstractLinearInvariantPattern>>) invEnd);
+					// Compute the total size of all non-trivial templates
+					sumOfTemplateConjuncts = sumOfTemplateConjuncts + sizeOfTemplate2;
+					if (transition.getTarget() != errorLocation) {
+						if (sizeOfTemplate2 < minimalTemplateSizeOfThisRound) {
+							minimalTemplateSizeOfThisRound = sizeOfTemplate2;
+						}
+						if (sizeOfTemplate2 > maximalTemplateSizeOfThisRound) {
+							maximalTemplateSizeOfThisRound = sizeOfTemplate2;
+						}
 					}
 				}
+
+				successorConstraintIngredients.add(successorConstraintIngredient);
 			}
-			mLogger.info("Built " + transitionConstraintIngredients.size() + " predicates.");
 
 			// Set statistics before check sat
 			prepareAndSetPathInvariantsStatisticsBeforeCheckSat(locationsAsList, startLocation, errorLocation, allProgramVars, locs2LiveVariables,
@@ -592,7 +600,7 @@ public final class CFGInvariantsGenerator {
 
 
 			// Attempt to find a valid configuration
-			final LBool constraintsResult = processor.checkForValidConfiguration(transitionConstraintIngredients, round);
+			final LBool constraintsResult = processor.checkForValidConfiguration(successorConstraintIngredients, round);
 
 			Set<IcfgLocation> locsInUnsatCore = null;
 			varsFromUnsatCore = null;
@@ -737,18 +745,18 @@ public final class CFGInvariantsGenerator {
 			final Map<IcfgLocation, Set<IProgramVar>> locs2PatternVariables,
 			final Map<IcfgLocation, UnmodifiableTransFormula> pathprogramLocs2WP) {
 		mLogger.info("Add weakest precondition to invariant patterns.");
-			for (final Map.Entry<IcfgLocation, UnmodifiableTransFormula> entry : pathprogramLocs2WP.entrySet()) {
-				if (mLogger.isDebugEnabled()) {
-					mLogger.debug("Loc: " + entry.getKey() +  " WP: " + entry.getValue());
-				}
-				final IPT newPattern = processor.addTransFormulaToEachConjunctInPattern(patterns.get(entry.getKey()), entry.getValue());
-				patterns.put(entry.getKey(), newPattern);
-				final Set<IProgramVar> varsInWP = new HashSet<>(entry.getValue().getInVars().keySet());
-				varsInWP.addAll(entry.getValue().getOutVars().keySet());
-				// Add variables that are already assoc. with this location.
-				varsInWP.addAll(locs2PatternVariables.get(entry.getKey()));
-				locs2PatternVariables.put(entry.getKey(), varsInWP);
+		for (final Map.Entry<IcfgLocation, UnmodifiableTransFormula> entry : pathprogramLocs2WP.entrySet()) {
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug("Loc: " + entry.getKey() +  " WP: " + entry.getValue());
 			}
+			final IPT newPattern = processor.addTransFormulaToEachConjunctInPattern(patterns.get(entry.getKey()), entry.getValue());
+			patterns.put(entry.getKey(), newPattern);
+			final Set<IProgramVar> varsInWP = new HashSet<>(entry.getValue().getInVars().keySet());
+			varsInWP.addAll(entry.getValue().getOutVars().keySet());
+			// Add variables that are already assoc. with this location.
+			varsInWP.addAll(locs2PatternVariables.get(entry.getKey()));
+			locs2PatternVariables.put(entry.getKey(), varsInWP);
+		}
 	}
 
 	/**
@@ -758,7 +766,6 @@ public final class CFGInvariantsGenerator {
 	private <IPT> Map<IcfgLocation, IPredicate> executePreRoundWithEmptyPatterns(
 			final IInvariantPatternProcessor<IPT> processor, int round, Set<IProgramVar> varsFromUnsatCore,
 			final Map<IcfgLocation, IPT> locs2Patterns, final Map<IcfgLocation, Set<IProgramVar>> locs2PatternVariables,
-			final Collection<TransitionConstraintIngredients<IPT>> transitionConstraintIngredients,
 			final Map<TermVariable, IProgramVar> smtVars2ProgramVars, final IcfgLocation startLocation, final IcfgLocation errorLocation,
 			final List<IcfgLocation> locationsAsList, final List<IcfgInternalTransition> transitions,
 			final Set<IProgramVar> allProgramVars,
@@ -792,18 +799,25 @@ public final class CFGInvariantsGenerator {
 		}
 
 		// Build transition predicates
-		transitionConstraintIngredients.clear();
-		for (final IcfgInternalTransition transition : transitions) {
-			final IPT invStart = locs2Patterns.get(transition.getSource());
-			final IPT invEnd = locs2Patterns.get(transition.getTarget());
-			transitionConstraintIngredients.add(new TransitionConstraintIngredients<IPT>(invStart, invEnd, transition.getSource(), transition.getTarget(),
-					locs2PatternVariables.get(transition.getSource()), locs2PatternVariables.get(transition.getTarget()),
-					transition.getTransformula()));
+		final Collection<SuccessorConstraintIngredients<IPT>> successorConstraintIngredients =
+				new ArrayList<>(transitions.size() + 2);
+		for (final IcfgLocation location : locationsAsList) {
+			final IPT invStart = locs2Patterns.get(location);
+			final Set<IProgramVar> startPatternVariables = locs2PatternVariables.get(location);
+			final SuccessorConstraintIngredients<IPT> successorConstraintIngredient =
+					new SuccessorConstraintIngredients<>(location, startPatternVariables, invStart);
+
+			for (final IcfgEdge transition : location.getOutgoingEdges()) {
+				final IPT invEnd = locs2Patterns.get(transition.getTarget());
+				final Set<IProgramVar> targetPatternVeriables = locs2PatternVariables.get(transition.getTarget());
+				successorConstraintIngredient.addTransition(transition, invEnd, targetPatternVeriables);
+			}
+
+			successorConstraintIngredients.add(successorConstraintIngredient);
 		}
-		mLogger.info("Built " + transitionConstraintIngredients.size() + " transition predicates.");
 
 		// Attempt to find a valid configuration
-		final LBool constraintsResult = processor.checkForValidConfiguration(transitionConstraintIngredients, round);
+		final LBool constraintsResult = processor.checkForValidConfiguration(successorConstraintIngredients, round);
 		if (constraintsResult == LBool.SAT) {
 			mLogger.info("Found valid configuration in pre-round.");
 			final Map<IcfgLocation, IPredicate> result = new HashMap<IcfgLocation, IPredicate>(
@@ -869,11 +883,11 @@ public final class CFGInvariantsGenerator {
 		} else {
 			lbePathProgram = mPathProgram;
 		}
-//		BranchUnfoldIcfgTransformer buTransformer = null;
-//		if (true) {
-//			buTransformer = new BranchUnfoldIcfgTransformer(mServices, mPredicateFactory, mPredicateUnifier);
-//			lbePathProgram = buTransformer.transform(lbePathProgram);
-//		}
+		// BranchUnfoldIcfgTransformer buTransformer = null;
+		// if (true) {
+		// buTransformer = new BranchUnfoldIcfgTransformer(mServices, mPredicateFactory, mPredicateUnifier);
+		// lbePathProgram = buTransformer.transform(lbePathProgram);
+		// }
 
 		final int numLocsAfterLbe = getNumOfPPLocations(lbePathProgram);
 		mPathInvariantsStatistics.setNumOfPathProgramLocations(numLocsBeforeLbe, numLocsAfterLbe);
@@ -883,7 +897,7 @@ public final class CFGInvariantsGenerator {
 				mInvariantSynthesisSettings);
 
 		if (invariants != null) {
-//			invariants = buTransformer.transform(invariants);
+			// invariants = buTransformer.transform(invariants);
 			if (mApplyLargeBlockEncoding) {
 				invariants = lbeTransformer.transform(invariants);
 			}

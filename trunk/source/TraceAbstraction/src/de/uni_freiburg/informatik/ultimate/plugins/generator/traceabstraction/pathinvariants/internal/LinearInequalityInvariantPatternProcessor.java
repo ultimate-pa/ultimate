@@ -2,7 +2,8 @@
  * Copyright (C) 2015 David Zschocke
  * Copyright (C) 2015 Dirk Steinmetz
  * Copyright (C) 2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * Copyright (C) 2015 University of Freiburg
+ * Copyright (C) 2017 Dennis Wölfing
+ * Copyright (C) 2015-2017 University of Freiburg
  *
  * This file is part of the ULTIMATE TraceAbstraction plug-in.
  *
@@ -869,12 +870,12 @@ public final class LinearInequalityInvariantPatternProcessor
 	 * the invariant template. 2. Generate for each predicate in predicates a constraint. 3. Generate a constraint s.t.
 	 * the invariant template implies the post-condition.
 	 *
-	 * @param predicates
+	 * @param successorIngredients
 	 *            - represent the transitions of the path program
 	 * @author Betim Musa (musab@informatik.uni-freiburg.de)
 	 */
 	private void generateAndAssertTerms(
-			final Collection<TransitionConstraintIngredients<Collection<Collection<AbstractLinearInvariantPattern>>>> predicates) {
+			final Collection<SuccessorConstraintIngredients<Collection<Collection<AbstractLinearInvariantPattern>>>> successorIngredients) {
 		/**
 		 * Maps program vars to their recent occurrence in the program
 		 */
@@ -884,9 +885,12 @@ public final class LinearInequalityInvariantPatternProcessor
 		mSolver.assertTerm(buildBackwardImplicationTerm(mPostcondition, mExitInvariantPattern, mErrorLocation,
 				programVarsRecentlyOccurred));
 
-		for (final TransitionConstraintIngredients<Collection<Collection<AbstractLinearInvariantPattern>>> predicate : predicates) {
-			mSolver.assertTerm(buildPredicateTerm(predicate, programVarsRecentlyOccurred));
-
+		for (final SuccessorConstraintIngredients<Collection<Collection<AbstractLinearInvariantPattern>>> successorIngredient : successorIngredients) {
+			final Set<TransitionConstraintIngredients<Collection<Collection<AbstractLinearInvariantPattern>>>> transitionIngredients =
+					successorIngredient.buildTransitionConstraintIngredients();
+			for (final TransitionConstraintIngredients<Collection<Collection<AbstractLinearInvariantPattern>>> transitionIngredient : transitionIngredients) {
+				mSolver.assertTerm(buildPredicateTerm(transitionIngredient, programVarsRecentlyOccurred));
+			}
 		}
 	}
 
@@ -925,7 +929,7 @@ public final class LinearInequalityInvariantPatternProcessor
 	 * @author Betim Musa (musab@informatik.uni-freiburg.de)
 	 */
 	private void generateAndAnnotateAndAssertTerms(
-			final Collection<TransitionConstraintIngredients<Collection<Collection<AbstractLinearInvariantPattern>>>> predicates) {
+			final Collection<SuccessorConstraintIngredients<Collection<Collection<AbstractLinearInvariantPattern>>>> successorIngredients) {
 		/**
 		 * Maps program vars to their recent occurrence in the program
 		 */
@@ -938,10 +942,15 @@ public final class LinearInequalityInvariantPatternProcessor
 				mErrorLocation, programVarsRecentlyOccurred));
 
 		// Generate and assert terms for intermediate transitions
-		for (final TransitionConstraintIngredients<Collection<Collection<AbstractLinearInvariantPattern>>> predicate : predicates) {
-			annotateAndAssertTermAndStoreMapping(buildPredicateTerm(predicate, programVarsRecentlyOccurred));
-			// final LBool smtResult = mSolver.checkSat();
-			// mLogger.info("Check-sat result: " + smtResult);
+		for (final SuccessorConstraintIngredients<Collection<Collection<AbstractLinearInvariantPattern>>> successorIngredient : successorIngredients) {
+			final Set<TransitionConstraintIngredients<Collection<Collection<AbstractLinearInvariantPattern>>>> transitionIngredients =
+					successorIngredient.buildTransitionConstraintIngredients();
+			for (final TransitionConstraintIngredients<Collection<Collection<AbstractLinearInvariantPattern>>> transitionIngredient : transitionIngredients) {
+				annotateAndAssertTermAndStoreMapping(
+						buildPredicateTerm(transitionIngredient, programVarsRecentlyOccurred));
+				// final LBool smtResult = mSolver.checkSat();
+				// mLogger.info("Check-sat result: " + smtResult);
+			}
 		}
 	}
 
@@ -1010,14 +1019,14 @@ public final class LinearInequalityInvariantPatternProcessor
 	 */
 	@Override
 	public LBool checkForValidConfiguration(
-			final Collection<TransitionConstraintIngredients<Collection<Collection<AbstractLinearInvariantPattern>>>> transitionContaintigredients,
+			final Collection<SuccessorConstraintIngredients<Collection<Collection<AbstractLinearInvariantPattern>>>> successorContraintIngredients,
 			final int round) {
 		mLogger.info("Start generating terms.");
 		final long startTimeConstraintsConstruction = System.nanoTime();
 		if (!mUseUnsatCores) {
-			generateAndAssertTerms(transitionContaintigredients);
+			generateAndAssertTerms(successorContraintIngredients);
 		} else {
-			generateAndAnnotateAndAssertTerms(transitionContaintigredients);
+			generateAndAnnotateAndAssertTerms(successorContraintIngredients);
 		}
 		// Convert ns to ms
 		mConstraintsConstructionTime = (System.nanoTime() - startTimeConstraintsConstruction) / 1_000_000L;
