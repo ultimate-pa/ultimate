@@ -1,0 +1,28 @@
+// Author: Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+// Date: 2017-07-29
+//
+// In accpeting runs, we have to take the call selfloop at q1 four 
+// times until we can move to q2.
+
+assert(!isEmpty(nwa));
+
+NestedWordAutomaton nwa = (
+	callAlphabet = {"c" },
+	internalAlphabet = {},
+	returnAlphabet = {"r"},
+	states = {"q0" "q1" "q2" "q3" "q4" "q5"},
+	initialStates = {"q0"},
+	finalStates = {"q5"},
+	callTransitions = {
+		("q1" "c" "q1")
+	},
+	internalTransitions = {
+		("q0" "a" "q1")
+	},
+	returnTransitions = {
+		("q1" "q1" "r" "q2")
+		("q2" "q1" "r" "q3")
+		("q3" "q1" "r" "q4")
+		("q4" "q1" "r" "q5")
+	}
+);
