@@ -285,8 +285,13 @@ public class ElimStorePlain {
 		for (final ApplicationTerm entry : selectTerms) {
 			indices.findAndConstructEquivalenceClassIfNeeded(getIndexOfSelect(entry));
 		}
+		final Term[] dualFiniteJunctsArray = PartialQuantifierElimination.getXjunctsInner(mQuantifier, inputTerm);
+		//TODO: bring each in commuhash normal form
+		final Set<Term> dualFiniteJuncts = new HashSet<>(Arrays.asList(dualFiniteJunctsArray));
+		
+		
 		final HashRelation<Term, Term> disjointIndices = new HashRelation<>();
-		final List<Term> indices1 = new ArrayList(indices.getAllRepresentatives());
+		final List<Term> indices1 = new ArrayList<Term>(indices.getAllRepresentatives());
 		for (int i = 0; i < indices1.size(); i++) {
 			for (int j = i + 1; j < indices1.size(); j++) {
 				final Term eq = SmtUtils.binaryEquality(mScript, indices1.get(i), indices1.get(j));
@@ -296,7 +301,19 @@ public class ElimStorePlain {
 					disjointIndices.addPair(indices1.get(i), indices1.get(j));
 					disjointIndices.addPair(indices1.get(j), indices1.get(i));
 				} else {
-					// do nothing 
+					//TODO: bring eq in commuhash normal form
+					if (dualFiniteJuncts.contains(eq)) {
+						indices.union(indices1.get(i), indices1.get(j));
+						mLogger.info("found equality in dual finite juncts");
+					} else {
+						if (dualFiniteJuncts.contains(SmtUtils.not(mScript, eq))) {
+							disjointIndices.addPair(indices1.get(i), indices1.get(j));
+							disjointIndices.addPair(indices1.get(j), indices1.get(i));
+							mLogger.info("found not equals in dual finite juncts");
+						} else {
+							// do nothing
+						}
+					}
 				}
 			}
 		}
