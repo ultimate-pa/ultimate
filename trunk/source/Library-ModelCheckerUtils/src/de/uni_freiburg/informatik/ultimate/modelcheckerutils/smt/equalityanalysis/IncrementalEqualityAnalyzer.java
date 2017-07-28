@@ -26,81 +26,71 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis;
 
-import java.util.LinkedHashSet;
-import java.util.Set;
-
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.ReplacementVarFactory;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.EqualityAnalysisResult.Equality;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
 
 /**
- *
+ * Check equality for pairs of terms with respect to a given context.
+ * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
 public class IncrementalEqualityAnalyzer {
-	private final ILogger mLogger;
-	private final Term mTerm;
-	private final Script mScript;
-	private final IIcfgSymbolTable mSymbolTable;
-	private final ReplacementVarFactory mRepvarFactory;
-	private final ModifiableTransFormula mTransFormula;
-
-	private final Set<Doubleton<Term>> mDistinctDoubletons = new LinkedHashSet<>();
-	private final Set<Doubleton<Term>> mEqualDoubletons = new LinkedHashSet<>();
-	private final Set<Doubleton<Term>> mUnknownDoubletons = new LinkedHashSet<>();
-	/**
-	 * Doubletons that we do not check because they do not occur in the formula.
-	 */
-	private final Set<Doubleton<Term>> mIgnoredDoubletons = new LinkedHashSet<>();
-
-	private final EqualityAnalysisResult mInvariantEqualitiesBefore;
-	private final EqualityAnalysisResult mInvariantEqualitiesAfter;
-
-	private final boolean mUseArrayIndexSupportingInvariants = true;
 	
-	private final ManagedScript mMgdScript = null;
+	private final ManagedScript mMgdScript;
+	private final Term mContext;
+	private boolean mContextIsAsserted;
 
-	public IncrementalEqualityAnalyzer(final Term term, final Set<Doubleton<Term>> doubletons, final IIcfgSymbolTable symbolTable,
-			final ModifiableTransFormula tf, final EqualityAnalysisResult invariantEqualitiesBefore,
-			final EqualityAnalysisResult invariantEqualitiesAfter, final ILogger logger,
-			final ReplacementVarFactory replacementVarFactory, final ManagedScript mgdScript) {
+	
+	
+	public IncrementalEqualityAnalyzer(final ManagedScript mgdScript, final Term context) {
 		super();
-		mLogger = logger;
-		mTerm = term;
-		mSymbolTable = symbolTable;
-		mRepvarFactory = replacementVarFactory;
-		mScript = mgdScript.getScript();
-		mTransFormula = tf;
-		mInvariantEqualitiesBefore = invariantEqualitiesBefore;
-		mInvariantEqualitiesAfter = invariantEqualitiesAfter;
-		final Set<Doubleton<Term>> allDoubletons = doubletons;
-
-		final Term termWithAdditionalInvariants;
-
+		mMgdScript = mgdScript;
+		mContext = context;
+		mContextIsAsserted = false;
 	}
-	
-	
-	public void startAnalysis(final Term context) {
-		// TODO: do assert an locking on-demand
+
+	public void assertContext(final Term context) {
+		assert !mContextIsAsserted : "must not assert context twice";
 		mMgdScript.lock(this);
 		mMgdScript.push(this, 1);
 		mMgdScript.assertTerm(this, context);
+		mContextIsAsserted = true;
 	}
 	
+	
+	/**
+	 * This method does not use any efficient auxiliary methods to check
+	 * equality. We presume that was done in advance.
+	 */
 	public Equality checkEquality(final Term lhs, final Term rhs) {
+		if (!mContextIsAsserted) {
+			assertContext(mContext);
+		}
+		final Term eq = mMgdScript.term(this, "=", lhs, rhs);
 		mMgdScript.push(this, 1);
-		return null;
-		
+		mMgdScript.assertTerm(this, eq);
+		final LBool satWithEq = mMgdScript.checkSat(this);
+		mMgdScript.pop(this, 1);
+		if (satWithEq == LBool.UNSAT) {
+			return Equality.NOT_EQUAL;
+		} else {
+			final Term neq = mMgdScript.term(this, "not", eq);
+			mMgdScript.push(this, 1);
+			mMgdScript.assertTerm(this, neq);
+			final LBool satWithNeq = mMgdScript.checkSat(this);
+			mMgdScript.pop(this, 1);
+			if (satWithNeq == LBool.UNSAT) {
+				return Equality.NOT_EQUAL;
+			} else {
+				return Equality.UNKNOWN;
+			}
+		}
 	}
 	
 	
-	public void finishAnalysis() {
+	public void unlockSolver() {
 		mMgdScript.pop(this, 1);
 		mMgdScript.unlock(this);
 	}
