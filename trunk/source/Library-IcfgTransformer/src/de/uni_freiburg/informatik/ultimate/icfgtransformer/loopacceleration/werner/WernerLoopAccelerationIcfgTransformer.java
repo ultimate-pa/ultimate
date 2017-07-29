@@ -56,7 +56,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.SimultaneousUpdate;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
@@ -136,6 +135,9 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 		transformer.preprocessIcfg(originalIcfg);
 
 		for (Entry<IcfgLocation, Loop> entry : mLoopBodies.entrySet()) {
+			if (entry.getValue().getPath().isEmpty()) {
+				continue;
+			}
 			summarizeLoop(entry.getValue());
 		}
 
@@ -198,10 +200,13 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 			backbone.setPathCounter(backbonePathCounter);
 			backbone.setCondition(condition);
 
-			if (backbone.getNestedLoops() != null && !backbone.getNestedLoops().isEmpty()) {
+			if (backbone.isNested()) {
 				mLogger.debug("THIS BACKBONE IS NESTED: " + backbone.getNestedLoops());
 				mLogger.debug("MEMEORY BEFORE: " + symbolicMemory.getMemory());
 				for (Loop nestedLoop : backbone.getNestedLoops()) {
+					if (nestedLoop.getPath().isEmpty()) {
+						continue;
+					}
 					Term term = Util.and(mScript.getScript(), backbone.getCondition(), nestedLoop.getCondition());
 					backbone.setCondition(term);
 
@@ -272,10 +277,8 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 				for (final IcfgEdge oldTransition : oldSource.getOutgoingEdges()) {
 					if (loop.getPath().contains(oldTransition)) {
 						final OUTLOC newTarget = lst.createNewLocation(oldSource);
-						final TransFormula formula = loop.getFormula();
 						final TransFormulaBuilder tfb = new TransFormulaBuilder(loop.getIteratedMemory().getVars(),
-								loop.getIteratedMemory().getVars(), false, formula.getNonTheoryConsts(), true,
-								Collections.emptySet(), false);
+								loop.getIteratedMemory().getVars(), true, null, true, Collections.emptySet(), false);
 
 						tfb.setFormula(loop.getIteratedMemory().getAbstractCondition());
 

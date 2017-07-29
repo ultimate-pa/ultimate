@@ -48,6 +48,7 @@ public class Backbone {
 	private TermVariable mPathCounter;
 	private Term mCondition;
 	private SymbolicMemory mSymbolicMemory;
+	private Boolean mIsNested;
 
 	/**
 	 * Construct a new backbone for a loop
@@ -60,13 +61,15 @@ public class Backbone {
 	 * @param nestedLoops
 	 *            Nested loops in the backbone
 	 */
-	public Backbone(final Deque<IcfgEdge> path, final TransFormula tf, final List<Loop> nestedLoops) {
+	public Backbone(final Deque<IcfgEdge> path, final TransFormula tf, final List<Loop> nestedLoops,
+			final Boolean isNested) {
 		mPath = path;
 		mFormula = tf;
 		mPathCounter = null;
 		mCondition = null;
 		mSymbolicMemory = null;
 		mNestedLoops = nestedLoops;
+		mIsNested = isNested;
 	}
 
 	public void setPathCounter(final TermVariable pathCounter) {
@@ -122,6 +125,14 @@ public class Backbone {
 
 	public SymbolicMemory getSymbolicMemory() {
 		return mSymbolicMemory;
+	}
+
+	public Boolean isNested() {
+		return mIsNested;
+	}
+
+	public void setNested() {
+		mIsNested = true;
 	}
 
 	@Override

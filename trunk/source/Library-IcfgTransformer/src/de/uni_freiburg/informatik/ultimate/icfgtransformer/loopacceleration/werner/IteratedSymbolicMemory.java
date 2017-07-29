@@ -200,15 +200,21 @@ public class IteratedSymbolicMemory extends SymbolicMemory {
 
 			final List<TermVariable> freeVars = new ArrayList<>();
 			List<Term> terms;
+			Term condition = backbone.getCondition();
 
-			for (final TermVariable var : backbone.getCondition().getFreeVars()) {
+			for (final TermVariable var : condition.getFreeVars()) {
 				if (mPathCounters.contains(var)) {
 					freeVars.add(var);
 				}
 			}
 
+			if (condition instanceof QuantifiedFormula) {
+				condition = ((QuantifiedFormula) condition).getSubformula();
+			}
+
 			final Map<Term, Term> mapping = new HashMap<>();
-			final ApplicationTerm appTerm = (ApplicationTerm) backbone.getCondition();
+
+			final ApplicationTerm appTerm = (ApplicationTerm) condition;
 
 			for (Term term : appTerm.getParameters()) {
 				mapping.putAll(termUnravel(term));

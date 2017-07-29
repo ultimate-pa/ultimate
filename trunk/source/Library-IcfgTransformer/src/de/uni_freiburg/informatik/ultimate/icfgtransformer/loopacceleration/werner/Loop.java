@@ -51,6 +51,7 @@ public class Loop {
 	private Deque<Backbone> mBackbones;
 	private final IcfgLocation mLoopHead;
 	private TransFormula mFormula;
+	private Term mTerm;
 	private Term mCondition;
 	private IteratedSymbolicMemory mIteratedMemory;
 	private List<TermVariable> mAuxVars;
@@ -122,6 +123,10 @@ public class Loop {
 		return mIteratedMemory;
 	}
 
+	public Term getTerm() {
+		return mTerm;
+	}
+
 	public List<TermVariable> getVars() {
 		return mAuxVars;
 	}
@@ -189,6 +194,10 @@ public class Loop {
 	 */
 	public void setNested() {
 		mHasNestedLoops = true;
+	}
+
+	public void setTerm(Term term) {
+		mTerm = term;
 	}
 
 	/**
