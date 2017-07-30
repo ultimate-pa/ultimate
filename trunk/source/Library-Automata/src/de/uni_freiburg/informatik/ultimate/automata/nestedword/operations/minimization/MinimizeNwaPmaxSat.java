@@ -29,11 +29,10 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minim
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.function.BiPredicate;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
@@ -41,11 +40,6 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationStatistics;
 import de.uni_freiburg.informatik.ultimate.automata.StatisticsType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.NwaApproximateXsimulation.SimulationType;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.AbstractMaxSatSolver;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.IAssignmentCheckerAndGenerator;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.InteractiveMaxSatSolver;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.ScopedTransitivityGeneratorDoubleton;
 import de.uni_freiburg.informatik.ultimate.automata.util.ISetOfPairs;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.IPartition;
@@ -53,45 +47,27 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
 /**
- * Partial Max-SAT based minimization of NWA using {@link Doubleton}s (symmetric pairs) of states as variable type.
+ * Partial Max-SAT based minimization of NWA using {@link MergeDoubleton} as variable type. 
  * 
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * 
  * @param <LETTER>
  *            letter type
  * @param <STATE>
  *            state type
  * @see MinimizeNwaMaxSat2
  */
-public class MinimizeNwaPmaxSat<LETTER, STATE> extends MinimizeNwaMaxSat2<LETTER, STATE, Doubleton<STATE>> {
+
+public abstract class MinimizeNwaPmaxSat<LETTER, STATE> extends MinimizeNwaMaxSat2<LETTER, STATE, Doubleton<STATE>> {
 	@SuppressWarnings("rawtypes")
-	private static final Doubleton[] EMPTY_LITERALS = new Doubleton[0];
+	protected static final Doubleton[] EMPTY_LITERALS = new Doubleton[0];
 
-	private final Map<STATE, Set<STATE>> mState2EquivalenceClass;
-	private final Iterable<Set<STATE>> mInitialPartition;
-	private final int mLargestBlockInitialPartition;
-	private final int mInitialPartitionSize;
-	private final long mNumberOfInitialPairs;
-
-	/**
-	 * Constructor that should be called by the automata script interpreter.
-	 * 
-	 * @param services
-	 *            Ultimate services
-	 * @param stateFactory
-	 *            state factory
-	 * @param operand
-	 *            input nested word automaton
-	 * @throws AutomataOperationCanceledException
-	 *             thrown by cancel request
-	 */
-	public MinimizeNwaPmaxSat(final AutomataLibraryServices services,
-			final IMinimizationStateFactory<STATE> stateFactory, final IDoubleDeckerAutomaton<LETTER, STATE> operand)
-			throws AutomataOperationCanceledException {
-		this(services, stateFactory, operand,
-				new NwaApproximateBisimulation<>(services, operand, SimulationType.DIRECT).getResult(),
-				new Settings<STATE>().setLibraryMode(false));
-	}
+	protected final Map<STATE, Set<STATE>> mState2EquivalenceClass;
+	protected final Iterable<Set<STATE>> mInitialPartition;
+	protected final int mLargestBlockInitialPartition;
+	protected final int mInitialPartitionSize;
+	protected final long mNumberOfInitialPairs;
 
 	/**
 	 * Full constructor.
@@ -113,7 +89,8 @@ public class MinimizeNwaPmaxSat<LETTER, STATE> extends MinimizeNwaMaxSat2<LETTER
 	 * @throws AutomataOperationCanceledException
 	 *             thrown by cancel request
 	 */
-	public MinimizeNwaPmaxSat(final AutomataLibraryServices services,
+	
+	protected MinimizeNwaPmaxSat(final AutomataLibraryServices services,
 			final IMinimizationStateFactory<STATE> stateFactory, final IDoubleDeckerAutomaton<LETTER, STATE> operand,
 			final ISetOfPairs<STATE, Collection<Set<STATE>>> initialPartition, final Settings<STATE> settings)
 			throws AutomataOperationCanceledException {
@@ -139,7 +116,7 @@ public class MinimizeNwaPmaxSat<LETTER, STATE> extends MinimizeNwaMaxSat2<LETTER
 		mNumberOfInitialPairs = initialPairsSize;
 		mLogger.info("Initial partition has " + initialPartitionSize + " blocks, largest block has "
 				+ largestBlockInitialPartition + " states");
-
+		
 		run();
 
 		printExitMessage();
@@ -171,7 +148,7 @@ public class MinimizeNwaPmaxSat<LETTER, STATE> extends MinimizeNwaMaxSat2<LETTER
 					mNumberOfInitialPairs);
 		}
 	}
-
+	
 	@Override
 	protected void generateVariablesAndAcceptingConstraints() throws AutomataOperationCanceledException {
 		for (final Set<STATE> equivalenceClass : mInitialPartition) {
@@ -211,6 +188,7 @@ public class MinimizeNwaPmaxSat<LETTER, STATE> extends MinimizeNwaMaxSat2<LETTER
 			}
 		}
 	}
+	
 
 	@Override
 	protected void generateTransitionAndTransitivityConstraints(final boolean addTransitivityConstraints)
@@ -228,7 +206,7 @@ public class MinimizeNwaPmaxSat<LETTER, STATE> extends MinimizeNwaMaxSat2<LETTER
 			}
 		}
 	}
-
+	
 	private void generateTransitionConstraints(final STATE[] states, final int firstStateIndex) {
 		final STATE state1 = states[firstStateIndex];
 		final STATE[] downStates1 = getDownStatesArray(state1);
@@ -241,7 +219,7 @@ public class MinimizeNwaPmaxSat<LETTER, STATE> extends MinimizeNwaMaxSat2<LETTER
 		// add constraints for reflexive pairs; those are not considered above
 		generateTransitionConstraintsHelperReturnSameLinPred(state1, downStates1);
 	}
-
+	
 	@Override
 	protected boolean testOutgoingSymbols(final Set<LETTER> letters1, final Set<LETTER> letters2) {
 		return letters1.equals(letters2);
@@ -271,7 +249,7 @@ public class MinimizeNwaPmaxSat<LETTER, STATE> extends MinimizeNwaMaxSat2<LETTER
 		generateTransitionConstraintGeneralReturnHelperSymmetric(linPredPair, hierPredPair, succs1, succs2);
 	}
 
-	private void generateTransitivityConstraints(final STATE[] states) throws AutomataOperationCanceledException {
+	protected void generateTransitivityConstraints(final STATE[] states) throws AutomataOperationCanceledException {
 		for (int i = 0; i < states.length; i++) {
 			for (int j = 0; j < i; j++) {
 				for (int k = 0; k < j; k++) {
@@ -290,18 +268,6 @@ public class MinimizeNwaPmaxSat<LETTER, STATE> extends MinimizeNwaMaxSat2<LETTER
 	@Override
 	protected Doubleton<STATE>[] getEmptyVariableArray() {
 		return EMPTY_LITERALS;
-	}
-
-	@Override
-	@SuppressWarnings("squid:S1698")
-	protected boolean isInitialPair(final STATE state1, final STATE state2) {
-		// equality intended here
-		return mState2EquivalenceClass.get(state1) == mState2EquivalenceClass.get(state2);
-	}
-
-	@Override
-	protected boolean isInitialPair(final Doubleton<STATE> pair) {
-		return isInitialPair(pair.getOneElement(), pair.getOtherElement());
 	}
 
 	@Override
@@ -324,13 +290,17 @@ public class MinimizeNwaPmaxSat<LETTER, STATE> extends MinimizeNwaMaxSat2<LETTER
 		}
 		return resultingEquivalenceClasses;
 	}
+	
+	@Override
+	@SuppressWarnings("squid:S1698")
+	protected boolean isInitialPair(final STATE state1, final STATE state2) {
+		// equality intended here
+		return mState2EquivalenceClass.get(state1) == mState2EquivalenceClass.get(state2);
+	}
 
 	@Override
-	protected AbstractMaxSatSolver<Doubleton<STATE>> createTransitivitySolver() {
-		mTransitivityGenerator = new ScopedTransitivityGeneratorDoubleton<>(mSettings.isUsePathCompression());
-		final List<IAssignmentCheckerAndGenerator<Doubleton<STATE>>> assignmentCheckerAndGeneratorList =
-				new ArrayList<>();
-		assignmentCheckerAndGeneratorList.add(mTransitivityGenerator);
-		return new InteractiveMaxSatSolver<>(mServices, assignmentCheckerAndGeneratorList);
+	protected boolean isInitialPair(final Doubleton<STATE> pair) {
+		return isInitialPair(pair.getOneElement(), pair.getOtherElement());
 	}
 }
+
