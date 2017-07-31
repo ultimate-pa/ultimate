@@ -68,7 +68,7 @@ public class RcfgPreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final String DEF_ExtSolverCommand = Z3_DEFAULT;
 
 	public static final String LABEL_ExtSolverLogic = "Logic for external solver";
-	public static final String DEF_ExtSolverLogic = "AUFNIRA";
+	public static final String DEF_ExtSolverLogic = "ALL";
 
 	public static final String LABEL_CodeBlockSize = "Size of a code block";
 
