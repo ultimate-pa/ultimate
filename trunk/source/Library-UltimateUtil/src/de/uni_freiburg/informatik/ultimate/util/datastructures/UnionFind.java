@@ -34,6 +34,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 /**
@@ -56,6 +57,27 @@ public class UnionFind<E> implements IPartition<E> {
 	 * Maps an equivalence class to its representative.
 	 */
 	private final Map<Set<E>, E> mRepresentative = new HashMap<>();
+	
+	/**
+	 * Constructor for new (empty) data structure.
+	 */
+	public UnionFind() {
+		
+	}
+	
+	/**
+	 * Copy constructor.
+	 */
+	public UnionFind(final UnionFind<E> unionFind) {
+		for (final Entry<E, Set<E>> entry : unionFind.mEquivalenceClass.entrySet()) {
+			final E representative = entry.getKey();
+			final Set<E> equivalenceClassCopy = new HashSet<>(entry.getValue());
+			assert mRepresentative.get(equivalenceClassCopy) == representative : "inconsitent";
+			final Set<E> oldValue = this.mEquivalenceClass.put(representative, equivalenceClassCopy);
+			assert oldValue == null : "element was contained twice";
+			this.mRepresentative.put(equivalenceClassCopy, representative);
+		}
+	}
 
 	/**
 	 * @param elem
@@ -190,11 +212,11 @@ public class UnionFind<E> implements IPartition<E> {
 		return getAllEquivalenceClasses().iterator();
 	}
 	
-	public void remove(E element) {
+	public void remove(final E element) {
 		
 		if (mRepresentative.get(mEquivalenceClass.get(element)).equals(element)) {
 			// element is the representative of its equivalence class
-			Set<E> eqc = mEquivalenceClass.get(element);
+			final Set<E> eqc = mEquivalenceClass.get(element);
 			if (eqc.size() == 1) {
 				// element was alone in its equivalence class
 				mEquivalenceClass.remove(element);
@@ -203,7 +225,7 @@ public class UnionFind<E> implements IPartition<E> {
 				return;
 			} else {
 				// pick another element from the equivalence class, and make it the representative
-				Iterator<E> it = eqc.iterator();
+				final Iterator<E> it = eqc.iterator();
 				E other = it.next();
 				while (other.equals(element)) {
 					other = it.next();
@@ -212,15 +234,15 @@ public class UnionFind<E> implements IPartition<E> {
 			}
 		}
 		
-		Set<E> eqc = mEquivalenceClass.get(element);
-		HashSet<E> newEqc = new HashSet<>(eqc);
+		final Set<E> eqc = mEquivalenceClass.get(element);
+		final HashSet<E> newEqc = new HashSet<>(eqc);
 		newEqc.remove(element);
-		for (E eqcEl : newEqc) {
+		for (final E eqcEl : newEqc) {
 			mEquivalenceClass.put(eqcEl, newEqc);
 		}
 		mEquivalenceClass.remove(element);
 		
-		E rep = mRepresentative.get(eqc);
+		final E rep = mRepresentative.get(eqc);
 		mRepresentative.remove(eqc);
 		assert !rep.equals(element);
 		mRepresentative.put(newEqc, rep);
@@ -229,12 +251,12 @@ public class UnionFind<E> implements IPartition<E> {
 	}
 
 	private boolean areMembersConsistent() {
-		for (E el : mRepresentative.values()) {
+		for (final E el : mRepresentative.values()) {
 			if (!mEquivalenceClass.containsKey(el)) {
 				return false;
 			}
 		}
-		for (Set<E> eqc : mEquivalenceClass.values()) {
+		for (final Set<E> eqc : mEquivalenceClass.values()) {
 			if (!mRepresentative.containsKey(eqc)) {
 				return false;
 			}
@@ -244,7 +266,7 @@ public class UnionFind<E> implements IPartition<E> {
 //				return false;
 //			}
 //		}
-		for (Set<E> eqc : mRepresentative.keySet()) {
+		for (final Set<E> eqc : mRepresentative.keySet()) {
 			if (!mEquivalenceClass.values().contains(eqc)) {
 				return false;
 			}
