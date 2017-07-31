@@ -148,7 +148,8 @@ public class Minimize<LETTER extends IRankedLetter, STATE> implements IOperation
 	}
 
 	private ITreeAutomatonBU<LETTER, STATE> computeResult() {
-
+		//return removeUnreachables(mTreeAutomaton);
+		
 		DisjointSet<STATE> worklist = new DisjointSet<>(mTreeAutomaton.getStates());
 		STATE finalState = null;
 		STATE initState = null;
@@ -225,6 +226,7 @@ public class Minimize<LETTER extends IRankedLetter, STATE> implements IOperation
 					new TreeAutomatonRule<>(rule.getLetter(), src, minimize(worklist.getPartition(rule.getDest()))));
 		}
 		return removeUnreachables(res);
+		
 	}
 
 	private ITreeAutomatonBU<LETTER, STATE> removeUnreachables(final TreeAutomatonBU<LETTER, STATE> treeAutomaton) {

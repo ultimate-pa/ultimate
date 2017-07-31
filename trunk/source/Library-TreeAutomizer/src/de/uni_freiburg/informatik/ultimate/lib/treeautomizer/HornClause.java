@@ -235,7 +235,12 @@ public class HornClause implements IInternalAction, IRankedLetter {
 
 	@Override
 	public int getRank() {
-		return mBodyPreds.size();
+		if (mBodyPreds.isEmpty()) {//mTransitionFormula.getInVars().isEmpty()) {
+			// Initial state
+			return 1;
+		}
+		return mBodyPreds.size();// mTransitionFormula.getInVars().size();
+		//return mBodyPreds.size();
 	}
 
 }

@@ -68,7 +68,6 @@ public class CandidateRuleProvider {
 				}
 			}
 		}
-
 	}
 
 	public Iterable<TreeAutomatonRule<HornClause, IPredicate>> getCandidateRules() {

@@ -136,6 +136,10 @@ public class TreeAutomatonBU<LETTER extends IRankedLetter, STATE> implements ITr
 		final List<STATE> src = rule.getSource();
 
 		// f(q1,...,qn) -> q
+		assert letter.getRank() == rule.getSource().size();
+		if (letter.getRank() != rule.getSource().size()) {
+			System.err.println(letter + " " + rule);
+		}
 		addLetter(letter);
 		addState(dest);
 		for (final STATE state : src) {
@@ -198,6 +202,10 @@ public class TreeAutomatonBU<LETTER extends IRankedLetter, STATE> implements ITr
 	 * @param letter
 	 */
 	public void addLetter(final LETTER letter) {
+		assert letter.getRank() > 0;
+		if (letter.getRank() == 0) {
+			System.err.println(letter);
+		}
 		mAlphabet.add(letter);
 	}
 

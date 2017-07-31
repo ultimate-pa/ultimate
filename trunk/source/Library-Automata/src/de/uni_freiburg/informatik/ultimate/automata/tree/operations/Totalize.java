@@ -155,7 +155,8 @@ public class Totalize<LETTER extends IRankedLetter, STATE> extends GeneralOperat
 				continue;
 			}
 			*/
-			int arity;
+			int arity = sym.getRank();
+			/*
 			if (!arityMap.containsKey(sym)) {
 
 				Object symbol = sym;
@@ -171,6 +172,7 @@ public class Totalize<LETTER extends IRankedLetter, STATE> extends GeneralOperat
 			} else {
 				arity = arityMap.get(sym);
 			}
+			*/
 			for (final List<STATE> srcSt : combinations(arity)) {
 				final Iterable<STATE> st = mTreeAutomaton.getSuccessors(srcSt, sym);
 				if (arity >= 0 && st != null && !st.iterator().hasNext()) {

@@ -65,7 +65,8 @@ public class TreeAutomatonRule<LETTER extends IRankedLetter, STATE> {
 		return mDest;
 	}
 	public int getArity() {
-		return mSrc != null ? mSrc.size() : 0;
+		return mLetter.getRank();
+		//return mSrc != null ? mSrc.size() : 0;
 	}
 	@Override
 	public String toString() {

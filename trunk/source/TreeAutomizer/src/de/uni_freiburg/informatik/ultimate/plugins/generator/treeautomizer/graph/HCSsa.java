@@ -80,11 +80,16 @@ public class HCSsa {
 
 		final Pair<List<Term>, List<Integer>> flattenRes = flatten(mNestedFormulas, 0);
 		final List<Term> flattenedTermslist = flattenRes.getFirst();
-		final List<Integer> startsOfSubtrees = flattenRes.getSecond();
+		final List<Integer> depthOfSubtrees = flattenRes.getSecond();
 		mFlattenedTerms = flattenedTermslist.toArray(new Term[flattenedTermslist.size()]);
-		mStartsOfSubtrees = new int[startsOfSubtrees.size()];
-		for (int i = 0; i < startsOfSubtrees.size(); i++) {
-			mStartsOfSubtrees[i] = startsOfSubtrees.get(i);
+		mStartsOfSubtrees = new int[depthOfSubtrees.size()];
+		
+		final Map<Integer, Integer> startOfDepth = new HashMap<>();
+		for (int i = 0; i < depthOfSubtrees.size(); i++) {
+			if (!startOfDepth.containsKey(depthOfSubtrees.get(i))) {
+				startOfDepth.put(depthOfSubtrees.get(i), i);
+			}
+			mStartsOfSubtrees[i] = startOfDepth.get(depthOfSubtrees.get(i));
 		}
 		mCountersAreFinalized = true;
 	}
@@ -125,19 +130,19 @@ public class HCSsa {
 
 	private Pair<List<Term>, List<Integer>> flatten(final TreeRun<TermRankedLetter, IPredicate> tree, int depth) {
 		ArrayList<Term> res = new ArrayList<>();
-		ArrayList<Integer> resStartsOfSubtrees = new ArrayList<>();
+		ArrayList<Integer> resDepthOfSubtrees = new ArrayList<>();
 		for (int i = 0; i < tree.getChildren().size(); i++) {
 			TreeRun<TermRankedLetter, IPredicate> child = tree.getChildren().get(i);
 			Pair<List<Term>, List<Integer>> childRes = flatten(child, depth + i);
 			res.addAll(childRes.getFirst());
-			resStartsOfSubtrees.addAll(childRes.getSecond());
+			resDepthOfSubtrees.addAll(childRes.getSecond());
 		}
 		if (tree.getRootSymbol() != null) {
 			res.add(tree.getRootSymbol().getTerm());
-			resStartsOfSubtrees.add(depth);
+			resDepthOfSubtrees.add(depth);
 			this.getCounter(tree.getRootSymbol().getTerm());
 		}
-		return new Pair<>(res, resStartsOfSubtrees);
+		return new Pair<>(res, resDepthOfSubtrees);
 	}
 
 	public TreeRun<TermRankedLetter, IPredicate> getFormulasTree() {
