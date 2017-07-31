@@ -26,8 +26,16 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.EqualityAnalysisResult.Equality;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
@@ -41,6 +49,7 @@ public class IncrementalEqualityAnalyzer {
 	private final ManagedScript mMgdScript;
 	private final Term mContext;
 	private boolean mContextIsAsserted;
+	private Substitution mVar2ConstSubstitution;
 
 	
 	
@@ -55,8 +64,20 @@ public class IncrementalEqualityAnalyzer {
 		assert !mContextIsAsserted : "must not assert context twice";
 		mMgdScript.lock(this);
 		mMgdScript.push(this, 1);
-		mMgdScript.assertTerm(this, context);
+		mVar2ConstSubstitution = constructVar2ConstSubstitution(context);
+		mMgdScript.assertTerm(this, mVar2ConstSubstitution.transform(context));
 		mContextIsAsserted = true;
+	}
+
+	/**
+	 * Construct a substitution that replaces all free TermVariables of context
+	 * by constants and declares these constants.
+	 */
+	private Substitution constructVar2ConstSubstitution(final Term context) {
+		final Set<TermVariable> allTvs = new HashSet<>(Arrays.asList(context.getFreeVars()));
+		final Map<Term, Term> substitutionMapping = SmtUtils.termVariables2Constants(mMgdScript.getScript(), allTvs, true);
+		final Substitution subst = new Substitution(mMgdScript, substitutionMapping);
+		return subst;
 	}
 	
 	
@@ -70,7 +91,7 @@ public class IncrementalEqualityAnalyzer {
 		}
 		final Term eq = mMgdScript.term(this, "=", lhs, rhs);
 		mMgdScript.push(this, 1);
-		mMgdScript.assertTerm(this, eq);
+		mMgdScript.assertTerm(this, mVar2ConstSubstitution.transform(eq));
 		final LBool satWithEq = mMgdScript.checkSat(this);
 		mMgdScript.pop(this, 1);
 		if (satWithEq == LBool.UNSAT) {
@@ -78,7 +99,7 @@ public class IncrementalEqualityAnalyzer {
 		} else {
 			final Term neq = mMgdScript.term(this, "not", eq);
 			mMgdScript.push(this, 1);
-			mMgdScript.assertTerm(this, neq);
+			mMgdScript.assertTerm(this, mVar2ConstSubstitution.transform(neq));
 			final LBool satWithNeq = mMgdScript.checkSat(this);
 			mMgdScript.pop(this, 1);
 			if (satWithNeq == LBool.UNSAT) {
@@ -91,8 +112,12 @@ public class IncrementalEqualityAnalyzer {
 	
 	
 	public void unlockSolver() {
-		mMgdScript.pop(this, 1);
-		mMgdScript.unlock(this);
+		if (mContextIsAsserted) {
+			mMgdScript.pop(this, 1);
+			mMgdScript.unlock(this);
+		} else {
+			// We did not assert the context, hence we did not lock the solver.
+		}
 	}
 }
 
