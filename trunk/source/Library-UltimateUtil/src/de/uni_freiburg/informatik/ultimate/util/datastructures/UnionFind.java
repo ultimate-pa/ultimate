@@ -57,14 +57,14 @@ public class UnionFind<E> implements IPartition<E> {
 	 * Maps an equivalence class to its representative.
 	 */
 	private final Map<Set<E>, E> mRepresentative = new HashMap<>();
-	
+
 	/**
 	 * Constructor for new (empty) data structure.
 	 */
 	public UnionFind() {
-		
+
 	}
-	
+
 	/**
 	 * Copy constructor.
 	 */
@@ -141,7 +141,7 @@ public class UnionFind<E> implements IPartition<E> {
 
 	/**
 	 * Construct a new equivalence class that is a singleton and contains only element e.
-	 * 
+	 *
 	 * @param elem
 	 *            element
 	 */
@@ -163,7 +163,7 @@ public class UnionFind<E> implements IPartition<E> {
 	/**
 	 * Merge the equivalence classes of the elements e1 and e2. (e1 and e2 do not have to be the representatives of this
 	 * equivalence classes).
-	 * 
+	 *
 	 * @param elem1
 	 *            first element
 	 * @param elem2
@@ -184,7 +184,7 @@ public class UnionFind<E> implements IPartition<E> {
 
 	/**
 	 * Union operation for arbitrary number of arguments.
-	 * 
+	 *
 	 * @param elements
 	 *            elements
 	 */
@@ -211,9 +211,9 @@ public class UnionFind<E> implements IPartition<E> {
 	public Iterator<Set<E>> iterator() {
 		return getAllEquivalenceClasses().iterator();
 	}
-	
+
 	public void remove(final E element) {
-		
+
 		if (mRepresentative.get(mEquivalenceClass.get(element)).equals(element)) {
 			// element is the representative of its equivalence class
 			final Set<E> eqc = mEquivalenceClass.get(element);
@@ -223,17 +223,16 @@ public class UnionFind<E> implements IPartition<E> {
 				mRepresentative.remove(eqc);
 				assert areMembersConsistent();
 				return;
-			} else {
-				// pick another element from the equivalence class, and make it the representative
-				final Iterator<E> it = eqc.iterator();
-				E other = it.next();
-				while (other.equals(element)) {
-					other = it.next();
-				}
-				mRepresentative.put(eqc, other);
 			}
+			// pick another element from the equivalence class, and make it the representative
+			final Iterator<E> it = eqc.iterator();
+			E other = it.next();
+			while (other.equals(element)) {
+				other = it.next();
+			}
+			mRepresentative.put(eqc, other);
 		}
-		
+
 		final Set<E> eqc = mEquivalenceClass.get(element);
 		final HashSet<E> newEqc = new HashSet<>(eqc);
 		newEqc.remove(element);
@@ -241,12 +240,12 @@ public class UnionFind<E> implements IPartition<E> {
 			mEquivalenceClass.put(eqcEl, newEqc);
 		}
 		mEquivalenceClass.remove(element);
-		
+
 		final E rep = mRepresentative.get(eqc);
 		mRepresentative.remove(eqc);
 		assert !rep.equals(element);
 		mRepresentative.put(newEqc, rep);
-		
+
 		assert areMembersConsistent();
 	}
 
@@ -261,11 +260,11 @@ public class UnionFind<E> implements IPartition<E> {
 				return false;
 			}
 		}
-//		for (E el : mEquivalenceClass.keySet()) {
-//			if (!mRepresentative.values().contains(el)) {
-//				return false;
-//			}
-//		}
+		// for (E el : mEquivalenceClass.keySet()) {
+		// if (!mRepresentative.values().contains(el)) {
+		// return false;
+		// }
+		// }
 		for (final Set<E> eqc : mRepresentative.keySet()) {
 			if (!mEquivalenceClass.values().contains(eqc)) {
 				return false;
