@@ -103,7 +103,7 @@ public class IncrementalEqualityAnalyzer {
 			final LBool satWithNeq = mMgdScript.checkSat(this);
 			mMgdScript.pop(this, 1);
 			if (satWithNeq == LBool.UNSAT) {
-				return Equality.NOT_EQUAL;
+				return Equality.EQUAL;
 			} else {
 				return Equality.UNKNOWN;
 			}
