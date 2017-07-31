@@ -107,7 +107,7 @@ public class RcfgPreferenceInitializer extends UltimatePreferenceInitializer {
 						CodeBlockSize.values()),
 				new UltimatePreferenceItem<>(LABEL_RemoveGotoEdges, false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_Simplify, false, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_CNF, true, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_CNF, false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_SIMPLE_PARTIAL_SKOLEMIZATION, DEF_SIMPLE_PARTIAL_SKOLEMIZATION, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_DumpToFile, false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_DumpUnsatCoreTrackBenchmark, false, PreferenceType.Boolean),
