@@ -31,8 +31,6 @@ then
 else
 	PATH_TO_SOURCE="$1"
 fi
-echo $PATH_TO_SOURCE
-exit
 SETTINGS="/.settings"
 FILE="$SETTINGS/org.sonarlint.eclipse.core.prefs"
 
