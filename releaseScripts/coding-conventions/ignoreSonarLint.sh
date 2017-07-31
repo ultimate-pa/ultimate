@@ -15,14 +15,24 @@
 # -----------------------------------------------------------------------------
 #
 # Instructions:
-# Pass the path to Ultimate's 'source' folder to this script.
+# Just run the script without any parameters; the script assumes its relative
+# position to the 'source' folder in the repository.
+# Optionally you can pass the path to Ultimate's 'source' folder as a parameter.
 #
-# Example:
+# Examples:
+# ./ignoreSonarLint
 # ./ignoreSonarLint /home/johndoe/ultimate/trunk/source/
 #
 # -----------------------------------------------------------------------------
 
-PATH_TO_SOURCE=$1
+if [ -z "$1" ] ;
+then
+	PATH_TO_SOURCE="../../trunk/source/"
+else
+	PATH_TO_SOURCE="$1"
+fi
+echo $PATH_TO_SOURCE
+exit
 SETTINGS="/.settings"
 FILE="$SETTINGS/org.sonarlint.eclipse.core.prefs"
 
@@ -31,12 +41,13 @@ for FOLDER in $(find $PATH_TO_SOURCE -maxdepth 1 -mindepth 1 -type d); do
 	SHORT_NAME=$(basename "$FOLDER")
 	if [[ "${SHORT_NAME:0:1}" != "." ]] ;
 	then
-		if [[ -e "$FOLDER" ]] ;
+		SETTINGS_FOLDER="$FOLDER$SETTINGS"
+		if [[ -e "$SETTINGS_FOLDER" ]] ;
 		then
-			echo "folder $FOLDER already exists"
+			echo "folder $SETTINGS_FOLDER already exists"
 		else
-			echo "creating folder $FOLDER"
-			mkdir "$FOLDER$SETTINGS"
+			echo "creating folder $SETTINGS_FOLDER"
+			mkdir "$SETTINGS_FOLDER"
 		fi
 		if [[ -e "$FOLDER$FILE" ]] ;
 		then
