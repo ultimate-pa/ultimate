@@ -87,7 +87,7 @@ public class RcfgPreferenceInitializer extends UltimatePreferenceInitializer {
 	 * @see Statements2TransFormula#mSimplePartialSkolemization
 	 */
 	public static final String LABEL_SIMPLE_PARTIAL_SKOLEMIZATION = "Skolemize terms";
-	public static final boolean DEF_SIMPLE_PARTIAL_SKOLEMIZATION = false;
+	public static final boolean DEF_SIMPLE_PARTIAL_SKOLEMIZATION = true;
 
 	public RcfgPreferenceInitializer() {
 		super(Activator.PLUGIN_ID, Activator.PLUGIN_NAME);
