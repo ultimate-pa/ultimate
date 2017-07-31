@@ -77,7 +77,7 @@ public class ThreeValuedEquivalenceRelation<E> {
 		return getRepresentative(elem) == elem;
 	}
 	
-	public Equality checkEquality(final E elem1, final E elem2) {
+	public Equality getEquality(final E elem1, final E elem2) {
 		final E elem1Rep = mUnionFind.find(elem1);
 		if (elem1Rep == null) {
 			throw new IllegalArgumentException("Unknown element: " + elem1);
