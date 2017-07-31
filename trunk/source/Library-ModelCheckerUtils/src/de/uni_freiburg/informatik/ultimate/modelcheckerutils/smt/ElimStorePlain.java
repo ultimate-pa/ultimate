@@ -41,12 +41,14 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.Stack;
 
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
@@ -58,12 +60,17 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayUpd
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSort;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalStore;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.EqualityAnalysisResult.Equality;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.IncrementalEqualityAnalyzer;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.ThreeValuedEquivalenceRelation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.PrenexNormalForm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierPusher;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierPusher.PqeTechniques;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierSequence;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierSequence.QuantifiedVariables;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.util.ConstructionCache;
+import de.uni_freiburg.informatik.ultimate.util.ConstructionCache.IValueConstruction;
 import de.uni_freiburg.informatik.ultimate.util.LexicographicCounter;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
@@ -269,91 +276,64 @@ public class ElimStorePlain {
 			storeTerm = null;
 			storeIndex = null;
 			storeValue = null;
-			mLogger.info("store-free iteration");
+//			mLogger.info("store-free iteration");
 		} else {
 			final MultiDimensionalStore store = stores.iterator().next();
 			storeTerm = store.getStoreTerm();
 			storeIndex = store.getIndex().get(0);
 			storeValue = ((ApplicationTerm) storeTerm).getParameters()[2];
-			mLogger.info("eliminating store to array of dimension " + new MultiDimensionalSort(eliminatee.getSort()).getDimension());
+//			mLogger.info("eliminating store to array of dimension " + new MultiDimensionalSort(eliminatee.getSort()).getDimension());
 		}
 		
-		final UnionFind<Term> indices = new UnionFind<>();
+		final Set<Term> indices = new HashSet<>();
 		if (!stores.isEmpty()) {
-			indices.findAndConstructEquivalenceClassIfNeeded(storeIndex);
+			indices.add(storeIndex);
 		}
 		for (final ApplicationTerm entry : selectTerms) {
-			indices.findAndConstructEquivalenceClassIfNeeded(getIndexOfSelect(entry));
+			indices.add(getIndexOfSelect(entry));
 		}
-		final Term[] dualFiniteJunctsArray = PartialQuantifierElimination.getXjunctsInner(mQuantifier, inputTerm);
-		//TODO: bring each in commuhash normal form
-		final Set<Term> dualFiniteJuncts = new HashSet<>(Arrays.asList(dualFiniteJunctsArray));
+		final ThreeValuedEquivalenceRelation<Term> inputEqualityInformation = new ThreeValuedEquivalenceRelation<>();
+		final Pair<ThreeValuedEquivalenceRelation<Term>, List<Term>> analysisResult = analyzeIndexEqualities(indices, inputTerm, inputEqualityInformation);
+		final ThreeValuedEquivalenceRelation<Term> equalityInformation = analysisResult.getFirst();
 		
 		
-		final HashRelation<Term, Term> disjointIndices = new HashRelation<>();
-		final List<Term> indices1 = new ArrayList<Term>(indices.getAllRepresentatives());
-		for (int i = 0; i < indices1.size(); i++) {
-			for (int j = i + 1; j < indices1.size(); j++) {
-				final Term eq = SmtUtils.binaryEquality(mScript, indices1.get(i), indices1.get(j));
-				if (SmtUtils.isTrue(eq)) {
-					indices.union(indices1.get(i), indices1.get(j));
-				} else if (SmtUtils.isFalse(eq)) {
-					disjointIndices.addPair(indices1.get(i), indices1.get(j));
-					disjointIndices.addPair(indices1.get(j), indices1.get(i));
-				} else {
-					//TODO: bring eq in commuhash normal form
-					if (dualFiniteJuncts.contains(eq)) {
-						indices.union(indices1.get(i), indices1.get(j));
-						mLogger.info("found equality in dual finite juncts");
-					} else {
-						if (dualFiniteJuncts.contains(SmtUtils.not(mScript, eq))) {
-							disjointIndices.addPair(indices1.get(i), indices1.get(j));
-							disjointIndices.addPair(indices1.get(j), indices1.get(i));
-							mLogger.info("found not equals in dual finite juncts");
-						} else {
-							// do nothing
-						}
-					}
-				}
-			}
-		}
+		final Set<TermVariable> newAuxVars = new LinkedHashSet<>();
 		
-		
-		final List<Term> oldCellDefinitions = new ArrayList<>();
-		final Set<TermVariable> newAuxVars = new LinkedHashSet<>(); 
-		final Map<Term, TermVariable> oldCellMapping = constructOldCellValueMapping(selectTerms, indices, storeIndex, disjointIndices);
-		for (final Entry<Term, TermVariable> entry : oldCellMapping.entrySet()) {
+		final Sort valueSort = eliminatee.getSort().getArguments()[1];
+		final Map<Term, TermVariable> oldCellMapping = constructOldCellValueMapping(selectTerms, storeIndex, equalityInformation, valueSort);
+		for (final Entry<?, TermVariable> entry : oldCellMapping.entrySet()) {
 			newAuxVars.add(entry.getValue());
 		}
-
-		final Map<Term, Term> indexMapping = new HashMap<>();
+		
+		final Map<Term, TermVariable> indexMapping = constructIndexReplacementMapping(indices, eliminatee, equalityInformation);
 		final List<Term> indexMappingDefinitions = new ArrayList<>();
-		if (!stores.isEmpty()) {
-			constructIndexReplacementIfNecessary(eliminatee, newAuxVars, indexMapping, indexMappingDefinitions, storeIndex);
+		for (final Entry<Term, TermVariable> entry : indexMapping.entrySet()) {
+			indexMappingDefinitions.add(PartialQuantifierElimination.equalityForExists(mScript, mQuantifier, entry.getValue(), entry.getKey()));	
 		}
-//		if (indexMapping.containsKey(storeIndex)) {
-//			storeIndex = indexMapping.get(storeIndex);
-//		}
-		for (final ApplicationTerm entry : selectTerms) {
-			final Term index = getIndexOfSelect(entry);
-			constructIndexReplacementIfNecessary(eliminatee, newAuxVars, indexMapping, indexMappingDefinitions, index);
+		for (final Entry<?, TermVariable> entry : indexMapping.entrySet()) {
+			newAuxVars.add(entry.getValue());
 		}
+		
+		final Term notEqualsDetectedBySolver = PartialQuantifierElimination.applyDualFiniteConnective(mScript, mQuantifier, analysisResult.getSecond());
 		final Term indexDefinitionsTerm = PartialQuantifierElimination.applyDualFiniteConnective(mScript, mQuantifier, indexMappingDefinitions);
-		final Term term = PartialQuantifierElimination.applyDualFiniteConnective(mScript, mQuantifier, Arrays.asList(new Term[]{indexDefinitionsTerm, inputTerm}));
+		final Term term = PartialQuantifierElimination.applyDualFiniteConnective(mScript, mQuantifier,
+				Arrays.asList(new Term[] { indexDefinitionsTerm, inputTerm, notEqualsDetectedBySolver}));
 		
 		final TermVariable newAuxArray =
 				mMgdScript.constructFreshTermVariable(s_AUX_VAR_NEW_ARRAY, eliminatee.getSort());
 		newAuxVars.add(newAuxArray) ;
 		
 		final List<Term> disjuncts = new ArrayList<>();
-		final CombinationIterator2 ci = new CombinationIterator2(indices, disjointIndices);
-		mLogger.info("Considering " + ci.size() + " cases while eliminating array variable of dimension " + new MultiDimensionalSort(eliminatee.getSort()).getDimension());
+		final CombinationIterator2 ci = new CombinationIterator2(indices, equalityInformation);
+//		mLogger.info("Considering " + ci.size() + " cases while eliminating array variable of dimension " + new MultiDimensionalSort(eliminatee.getSort()).getDimension());
 		for (final Set<Doubleton<Term>> equalDoubletons : ci) {
 			final Map<Term, Term> substitutionMapping = new HashMap<>();
-			substitutionMapping.put(storeTerm, newAuxArray);
+			if (!stores.isEmpty()) {
+				substitutionMapping.put(storeTerm, newAuxArray);
+			}
 			final List<Term> indexEqualityTerms = new ArrayList<>();
 			final List<Term> valueEqualityTerms = new ArrayList<>();
-			for (final Doubleton<Term> doubleton : buildListOfNonDisjointDoubletons(indices, disjointIndices)) {
+			for (final Doubleton<Term> doubleton : buildListOfNonDisjointDoubletons(indices, equalityInformation)) {
 				final Term indexEqualityTerm;
 				if (equalDoubletons.contains(doubleton)) {
 					indexEqualityTerm = PartialQuantifierElimination.equalityForExists(mScript, mQuantifier,
@@ -380,13 +360,13 @@ public class ElimStorePlain {
 					selectIndexEquivalentToStoreIndex = true;
 				} else {
 					selectIndexEquivalentToStoreIndex = 
-						indices.find(indexOfSelect).equals(indices.find(storeIndex)) || 
+						(equalityInformation.getEquality(indexOfSelect, storeIndex) == Equality.EQUAL) || 
 						equalDoubletons.contains(new Doubleton<Term>(indexOfSelect, storeIndex)) ||  
 						equalDoubletons.contains(new Doubleton<Term>(storeIndex, indexOfSelect));
 				}
 				if (selectIndexEquivalentToStoreIndex) {
 					final Term oldCell = oldCellMapping.get(indexOfSelect);
-					assert oldCell != null;
+					assert oldCell != null : "no oldcell for " + indexOfSelect;
 					substitutionMapping.put(selectTerm, oldCell);
 				} else {
 					final Term newSelect = constructNewSelectWithPossiblyReplacedIndex(newAuxArray, selectTerm, indexMapping, eliminatee);
@@ -416,11 +396,16 @@ public class ElimStorePlain {
 			
 			final Term disjuct = PartialQuantifierElimination.applyDualFiniteConnective(mScript, mQuantifier,
 					indexEqualityTerm, valueEqualityTerm, transformedTerm, storedValueInformation);
-			assert !Arrays.asList(disjuct.getFreeVars()).contains(eliminatee) : "var is still there: " + eliminatee;
+			assert !Arrays.asList(disjuct.getFreeVars()).contains(eliminatee) : "var is still there: " + eliminatee
+					+ " term size " + new DagSizePrinter(disjuct);
 			if (mQuantifier == QuantifiedFormula.EXISTS) {
 				final LBool sat = SmtUtils.checkSatTerm(mScript, disjuct);
 				if (sat == LBool.UNSAT) {
 					mLogger.info("saved disjunct");
+					if (ci.size() == 1) {
+						final LBool inputsat = SmtUtils.checkSatTerm(mScript, inputTerm);
+						throw new AssertionError("input must have been unsat " + " term size " + new DagSizePrinter(inputTerm));
+					}
 					continue;
 				}
 			}
@@ -436,6 +421,75 @@ public class ElimStorePlain {
 		return new AfEliminationTask(newAuxVars, result);
 		
 	}
+
+
+
+
+	private Pair<ThreeValuedEquivalenceRelation<Term>, List<Term>> analyzeIndexEqualities(final Set<Term> indices,
+			final Term inputTerm, final ThreeValuedEquivalenceRelation<Term> inputTveR) {
+		final Term[] dualFiniteJunctsArray = PartialQuantifierElimination.getXjunctsInner(mQuantifier, inputTerm);
+		// TODO: bring each in commuhash normal form
+		final Set<Term> dualFiniteJuncts = new HashSet<>(Arrays.asList(dualFiniteJunctsArray));
+
+		final ThreeValuedEquivalenceRelation<Term> tver = new ThreeValuedEquivalenceRelation<>(inputTveR);
+		for (final Term index : indices) {
+			tver.addElement(index);
+		}
+
+		final List<Term> notEqualsDetectedViaSolver = new ArrayList<>();
+		final ArrayList<Term> indicesList = new ArrayList<Term>(indices);
+		// TODO: filter non-represenatives not only during iterations but also in advance
+		final IncrementalEqualityAnalyzer iea = new IncrementalEqualityAnalyzer(mMgdScript, inputTerm);
+		for (int i = 0; i < indicesList.size(); i++) {
+			if (!tver.isRepresentative(indicesList.get(i))) {
+				continue;
+			}
+			for (int j = i + 1; j < indicesList.size(); j++) {
+				if (!tver.isRepresentative(indicesList.get(j))) {
+					continue;
+				}
+				final Term eq = SmtUtils.binaryEquality(mScript, indicesList.get(i), indicesList.get(j));
+				if (SmtUtils.isTrue(eq)) {
+					tver.reportEquality(indicesList.get(i), indicesList.get(j));
+				} else if (SmtUtils.isFalse(eq)) {
+					tver.reportNotEquals(indicesList.get(i), indicesList.get(j));
+				} else {
+					// TODO: bring eq in commuhash normal form
+					if (dualFiniteJuncts.contains(eq)) {
+						tver.reportEquality(indicesList.get(i), indicesList.get(j));
+						mLogger.info("found equality in dual finite juncts");
+					} else {
+						if (dualFiniteJuncts.contains(SmtUtils.not(mScript, eq))) {
+							tver.reportNotEquals(indicesList.get(i), indicesList.get(j));
+							mLogger.info("found not equals in dual finite juncts");
+						} else {
+							final Equality isEqual = iea.checkEquality(indicesList.get(i), indicesList.get(j));
+							switch (isEqual) {
+							case EQUAL:
+								tver.reportEquality(indicesList.get(i), indicesList.get(j));
+								mLogger.info("detected equality via solver");
+								break;
+							case NOT_EQUAL:
+								tver.reportNotEquals(indicesList.get(i), indicesList.get(j));
+								mLogger.info("detected not equals via solver");
+								notEqualsDetectedViaSolver.add(SmtUtils.not(mScript, eq));
+								break;
+							case UNKNOWN:
+								// do nothing
+								break;
+							default:
+								throw new AssertionError();
+							}
+						}
+					}
+				}
+			}
+		}
+		iea.unlockSolver();
+		return new Pair<ThreeValuedEquivalenceRelation<Term>, List<Term>>(tver, notEqualsDetectedViaSolver);
+	}
+
+
 
 
 
@@ -456,7 +510,37 @@ public class ElimStorePlain {
 	}
 
 
+	/**
+	 * Let eliminatee be the array that is eliminated and (select eliminatee idx
+	 * v) a select term. If idx contains eliminatee, we have to replace idx by
+	 * an auxiliary variable. As an optimization, we only construct one
+	 * auxiliary variable for each equivalence class of indices.
+	 */
+	private Map<Term, TermVariable> constructIndexReplacementMapping(final Set<Term> indices,
+			final TermVariable eliminatee, final ThreeValuedEquivalenceRelation<Term> equalityInformation)
+			throws AssertionError {
+		final IValueConstruction<Term, TermVariable> valueConstruction = new IValueConstruction<Term, TermVariable>() {
 
+			@Override
+			public TermVariable constructValue(final Term index) {
+				final TermVariable indexReplacement = mMgdScript.constructFreshTermVariable(s_AUX_VAR_INDEX,
+						index.getSort());
+				return indexReplacement;
+			}
+
+		};
+		final ConstructionCache<Term, TermVariable> cc = new ConstructionCache<>(valueConstruction);
+		final Map<Term, TermVariable> indexReplacementMapping = new HashMap<>();
+		for (final Term index : indices) {
+			if (Arrays.asList(index.getFreeVars()).contains(eliminatee)) {
+				// need to replace index
+				final Term indexRepresentative = equalityInformation.getRepresentative(index);
+				final TermVariable indexReplacement = cc.getOrConstruct(indexRepresentative);
+				indexReplacementMapping.put(index, indexReplacement);
+			}
+		}
+		return indexReplacementMapping;
+	}
 
 	private void constructIndexReplacementIfNecessary(final TermVariable eliminatee, final Set<TermVariable> newAuxVars,
 			final Map<Term, Term> indexMapping, final List<Term> indexMappingDefinitions, final Term index) {
@@ -471,20 +555,14 @@ public class ElimStorePlain {
 	}
 
 	private Term constructNewSelectWithPossiblyReplacedIndex(final TermVariable newAuxArray,
-			final ApplicationTerm oldSelectTerm, final Map<Term, Term> indexMapping, final TermVariable eliminatee) {
-		final Term newIndex = getPossiblyReplacedIndex(oldSelectTerm, indexMapping, eliminatee);
+			final ApplicationTerm oldSelectTerm, final Map<Term, TermVariable> indexMapping, final TermVariable eliminatee) {
+		final Term newIndex = getNewIndex(getIndexOfSelect(oldSelectTerm), indexMapping, eliminatee);
 		final Term newSelect = mMgdScript.getScript().term("select", newAuxArray, newIndex);
 		return newSelect;
 	}
 
 
-
-
-	private Term getPossiblyReplacedIndex(final ApplicationTerm oldSelectTerm, final Map<Term, Term> indexMapping, final TermVariable eliminatee) {
-		return getNewIndex(getIndexOfSelect(oldSelectTerm), indexMapping, eliminatee);
-	}
-	
-	private Term getNewIndex(final Term originalIndex, final Map<Term, Term> indexMapping, final TermVariable eliminatee) {
+	private Term getNewIndex(final Term originalIndex, final Map<Term, TermVariable> indexMapping, final TermVariable eliminatee) {
 		final Term newIndex;
 		final Term replacementIndex = indexMapping.get(originalIndex);
 		if (replacementIndex == null) {
@@ -498,15 +576,37 @@ public class ElimStorePlain {
 	}
 	
 
-	private Map<Term, TermVariable> constructOldCellValueMapping(final List<ApplicationTerm> equivalentIndex,
-			final UnionFind<Term> indices, final Term storeIndex, final HashRelation<Term, Term> disjointIndices) throws AssertionError {
+	/**
+	 * Let eliminatee be the array that is eliminated and (select eliminatee idx v) a select term.
+	 * Construct mapping that assigns the select term an auxiliary variable
+	 * the represents this array cell.
+	 * If we know that the index of the store that we currently process is disjoint from idx,
+	 * we do not add the auxiliary variable (the new cell will have same value as old cell).
+	 * As an optimization, we only construct one auxiliary variable for each equivalence class of indices.
+	 */
+	private Map<Term, TermVariable> constructOldCellValueMapping(final List<ApplicationTerm> selectTerms,
+			final Term storeIndex, final ThreeValuedEquivalenceRelation<Term> equalityInformation, final Sort valueSort) {
+		final IValueConstruction<Term, TermVariable> valueConstruction = new IValueConstruction<Term, TermVariable>() {
+
+			@Override
+			public TermVariable constructValue(final Term index) {
+				final TermVariable oldCell = mMgdScript.constructFreshTermVariable(s_AUX_VAR_ARRAYCELL, valueSort);
+				return oldCell;
+			}
+
+		};
+		final ConstructionCache<Term, TermVariable> cc = new ConstructionCache<>(valueConstruction);
 		final Map<Term, TermVariable> oldCellMapping = new HashMap<>();
-		for (final ApplicationTerm selectTerm : equivalentIndex) {
+		for (final ApplicationTerm selectTerm : selectTerms) {
+			assert selectTerm.getSort().equals(valueSort);
 			final Term selectIndex = getIndexOfSelect(selectTerm);
-			if (disjointIndices.containsPair(selectIndex, storeIndex)) {
+			if ((storeIndex != null) && equalityInformation.getEquality(selectIndex, storeIndex) == Equality.NOT_EQUAL) {
 				// do nothing
 			} else {
-				constructAndAddOldCellValueTermVariable(oldCellMapping, selectTerm, indices);
+				final Term indexRepresentative = equalityInformation.getRepresentative(selectIndex);
+				final TermVariable oldCellVariable = cc
+						.getOrConstruct(indexRepresentative);
+				oldCellMapping.put(selectIndex, oldCellVariable);
 			}
 		}
 		return oldCellMapping;
@@ -533,6 +633,13 @@ public class ElimStorePlain {
 		assert (appTerm.getFunction().getName().equals("select")) : "no select";
 		return appTerm.getParameters()[1];
 	}
+	
+	private Term getArrayOfSelect(final ApplicationTerm appTerm) {
+		assert (appTerm.getParameters().length == 2) : "no select";
+		assert (appTerm.getFunction().getName().equals("select")) : "no select";
+		return appTerm.getParameters()[0];
+	}
+	
 
 	private List<MultiDimensionalStore> extractStores(final TermVariable eliminatee, final Term term) {
 		final List<MultiDimensionalStore> result = new ArrayList<>();
@@ -580,13 +687,20 @@ public class ElimStorePlain {
 	}
 
 
-	public static List<Doubleton<Term>> buildListOfNonDisjointDoubletons(final UnionFind<Term> indices, 
-			final HashRelation<Term, Term> disjointIndices) {
+	public static List<Doubleton<Term>> buildListOfNonDisjointDoubletons(final Collection<Term> indices, final ThreeValuedEquivalenceRelation<Term> equalityInformation) {
 		final List<Doubleton<Term>> doubeltons = new ArrayList<>();
-		final List<Term> indexList = new ArrayList<Term>(indices.getAllRepresentatives());
+		final List<Term> indexList = new ArrayList<>(indices);
 		for (int i = 0; i < indexList.size(); i++) {
+			if (!equalityInformation.isRepresentative(indexList.get(i))) {
+				continue;
+			}
 			for (int j = i+1; j < indexList.size(); j++) {
-				if (!disjointIndices.containsPair(indexList.get(i), indexList.get(j))) {
+				if (!equalityInformation.isRepresentative(indexList.get(j))) {
+					continue;
+				}
+				if (equalityInformation.getEquality(indexList.get(i), indexList.get(j)) == Equality.NOT_EQUAL) {
+					// do nothing
+				} else {
 					doubeltons.add(new Doubleton<Term>(indexList.get(i), indexList.get(j)));
 				}
 			}
@@ -595,22 +709,28 @@ public class ElimStorePlain {
 	}
 	
 	
-	private static class CombinationIterator implements Iterable<Set<Doubleton<Term>>> {
+	private class CombinationIterator implements Iterable<Set<Doubleton<Term>>> {
 
 		private final List<Set<Doubleton<Term>>> mResult = new ArrayList<>();
 
-		public CombinationIterator(final UnionFind<Term> indices, final HashRelation<Term, Term> disjointIndices) {
+		public CombinationIterator(final Collection<Term> indices, final ThreeValuedEquivalenceRelation<Term> equalityInformation) {
 			super();
-			final List<Doubleton<Term>> doubeltons = buildListOfNonDisjointDoubletons(indices, disjointIndices);
+			final List<Doubleton<Term>> doubeltons = buildListOfNonDisjointDoubletons(indices, equalityInformation);
 
 			final int[] numberOfValues = new int[doubeltons.size()];
 			Arrays.fill(numberOfValues, 2);
 			final LexicographicCounter lc = new LexicographicCounter(numberOfValues);
 
 			do {
+				if (!mServices.getProgressMonitorService().continueProcessing()) {
+					throw new ToolchainCanceledException(this.getClass(),
+							"iterating over LexicographicCounter " + lc);
+				}
 				final HashRelation<Term, Term> relationCandidate = new HashRelation<>();
-				for (final Term index : indices.getAllRepresentatives()) {
-					relationCandidate.addPair(index, index);
+				for (final Term index : indices) {
+					if (equalityInformation.isRepresentative(index)) {
+						relationCandidate.addPair(index, index);
+					}
 				}
 				final Set<Doubleton<Term>> resultCandidate = new HashSet<>();
 				for (int i = 0; i < doubeltons.size(); i++) {
@@ -645,20 +765,20 @@ public class ElimStorePlain {
 	 * and make copy for modifications
 	 *
 	 */
-	private static class CombinationIterator2 implements Iterable<Set<Doubleton<Term>>> {
+	private class CombinationIterator2 implements Iterable<Set<Doubleton<Term>>> {
 
 		private final List<Set<Doubleton<Term>>> mResult = new ArrayList<>();
 		
 		private final LinkedList<Boolean> mStack = new LinkedList<>();
 		private SymmetricHashRelation<Term> mCurrentRelation;
 		private final List<Doubleton<Term>> mNonDisjointDoubletons;
+		
+		private final ThreeValuedEquivalenceRelation<Term> mEqualityInformation;
 
-		private final HashRelation<Term, Term> mDisjointIndices;
-
-		public CombinationIterator2(final UnionFind<Term> indices, final HashRelation<Term, Term> disjointIndices) {
+		public CombinationIterator2(final Collection<Term> indices, final ThreeValuedEquivalenceRelation<Term> equalityInformation) {
 			super();
-			mNonDisjointDoubletons = buildListOfNonDisjointDoubletons(indices, disjointIndices);
-			mDisjointIndices = disjointIndices;
+			mNonDisjointDoubletons = buildListOfNonDisjointDoubletons(indices, equalityInformation);
+			mEqualityInformation = equalityInformation;
 			mCurrentRelation = new SymmetricHashRelation<>();
 
 			while(true) {
@@ -671,13 +791,13 @@ public class ElimStorePlain {
 				advance();
 			}
 			assert checkResultWithOldCombinationIterator(indices,
-					disjointIndices) : "result of CombinationIterator and CombinationIterator2 is different";
+					equalityInformation) : "result of CombinationIterator and CombinationIterator2 is different";
 		}
 
-		private boolean checkResultWithOldCombinationIterator(final UnionFind<Term> indices, final HashRelation<Term, Term> disjointIndices) {
+		private boolean checkResultWithOldCombinationIterator(final Collection<Term> indices, final ThreeValuedEquivalenceRelation<Term> equalityInformation) {
 			final Set<Set<Doubleton<Term>>> newResult = new HashSet<>(mResult);
 			final Set<Set<Doubleton<Term>>> oldResult = new HashSet<>();
-			final CombinationIterator ci = new CombinationIterator(indices, disjointIndices);
+			final CombinationIterator ci = new CombinationIterator(indices, equalityInformation);
 			for (final Set<Doubleton<Term>> e : ci) {
 				oldResult.add(e);
 			}
@@ -724,13 +844,13 @@ public class ElimStorePlain {
 		 */
 		private void tryToPush1True() {
 			final Doubleton<Term> d = mNonDisjointDoubletons.get(mStack.size());
-			if (mDisjointIndices.containsPair(d.getOneElement(), d.getOtherElement())) {
+			if (mEqualityInformation.getEquality(d.getOneElement(), d.getOtherElement()) == Equality.NOT_EQUAL) {
 				// we cannot add true
 			} else {
 				mStack.add(true);
 				mCurrentRelation.addPair(d.getOneElement(), d.getOtherElement());
 				final Set<Doubleton<Term>> newPairs = mCurrentRelation.makeTransitive();
-				final boolean containsDisjointPair = haveCommonElement(newPairs, mDisjointIndices);
+				final boolean containsDisjointPair = containsNotEqualsPair(newPairs);
 				if (containsDisjointPair) {
 					remove1true();
 					rebuildCurrentRelation();
@@ -739,9 +859,9 @@ public class ElimStorePlain {
 			}
 		}
 
-		private static boolean haveCommonElement(final Set<Doubleton<Term>> pairs1, final HashRelation<Term, Term> pairs2) {
+		private boolean containsNotEqualsPair(final Set<Doubleton<Term>> pairs1) {
 			for (final Doubleton<Term> pairFrom1 : pairs1) {
-				if (pairs2.containsPair(pairFrom1.getOneElement(), pairFrom1.getOtherElement())) {
+				if (mEqualityInformation.getEquality(pairFrom1.getOneElement(), pairFrom1.getOtherElement()) == Equality.NOT_EQUAL) {
 					return true;
 				}
 			}
