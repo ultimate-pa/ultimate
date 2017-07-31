@@ -65,6 +65,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
@@ -139,6 +140,7 @@ public final class LinearInequalityInvariantPatternProcessor
 	private final int mMaxRounds;
 	private final boolean mUseNonlinearConstraints;
 	private final boolean mSynthesizeEntryPattern;
+	private final KindOfInvariant mKindOfInvariant;
 	/**
 	 * The simplification type that is used to simplify the values of templates coefficients/parameters.
 	 */
@@ -253,6 +255,8 @@ public final class LinearInequalityInvariantPatternProcessor
 	 * @param synthesizeEntryPattern
 	 *            true if the the pattern for the start location need to be synthesized (instead of being inferred from
 	 *            the precondition)
+	 * @param kindOfInvariant
+	 *            the kind of invariant to be generated
 	 */
 	public LinearInequalityInvariantPatternProcessor(final IUltimateServiceProvider services,
 			final IToolchainStorage storage, final IPredicateUnifier predicateUnifier, final CfgSmtToolkit csToolkit,
@@ -263,7 +267,8 @@ public final class LinearInequalityInvariantPatternProcessor
 			final boolean useNonlinearConstraints, final boolean useUnsatCores,
 			final SimplificationTechnique simplicationTechnique, final XnfConversionTechnique xnfConversionTechnique,
 			final Map<IcfgLocation, UnmodifiableTransFormula> loc2underApprox,
-			final Map<IcfgLocation, UnmodifiableTransFormula> loc2overApprox, final boolean synthesizeEntryPattern) {
+			final Map<IcfgLocation, UnmodifiableTransFormula> loc2overApprox, final boolean synthesizeEntryPattern,
+			final KindOfInvariant kindOfInvariant) {
 		super(predicateUnifier, csToolkit);
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
@@ -272,6 +277,7 @@ public final class LinearInequalityInvariantPatternProcessor
 		mStartLocation = startLocation;
 		mErrorLocation = errorLocation;
 		mSynthesizeEntryPattern = synthesizeEntryPattern;
+		mKindOfInvariant = kindOfInvariant;
 
 		mLinearizer = new CachedTransFormulaLinearizer(services, csToolkit, axioms, storage, simplicationTechnique,
 				xnfConversionTechnique);
@@ -895,6 +901,44 @@ public final class LinearInequalityInvariantPatternProcessor
 	}
 
 	/**
+	 * Generates the constraints for danger invariants.
+	 *
+	 * @param successorIngredients
+	 *            the SuccessorConstraintIngredients
+	 */
+	private void generateAndAssertDangerTerms(
+			final Collection<SuccessorConstraintIngredients<Collection<Collection<AbstractLinearInvariantPattern>>>> successorIngredients) {
+		final Map<IProgramVar, Term> programVarsRecentlyOccurred = new HashMap<>();
+		mSolver.assertTerm(buildImplicationTerm(mPrecondition, mEntryInvariantPattern, mStartLocation,
+				programVarsRecentlyOccurred));
+		mSolver.assertTerm(buildBackwardImplicationTerm(mPostcondition, mExitInvariantPattern, mErrorLocation,
+				programVarsRecentlyOccurred));
+
+		for (final SuccessorConstraintIngredients<Collection<Collection<AbstractLinearInvariantPattern>>> ingredient : successorIngredients) {
+			final Collection<Collection<AbstractLinearInvariantPattern>> pattern = ingredient.getInvStart();
+			final Collection<Collection<LinearInequality>> patternDnf =
+					mapAndNegatePattern(mServices, pattern, programVarsRecentlyOccurred);
+			if (mStartLocation.equals(ingredient.getSourceLocation())) {
+				// Assert that the danger invariant is reachable from the initial states.
+				// TODO: Is this the correct way to transform a pattern into a term?
+
+				final Term term = transformNegatedConjunction(ConstraintsType.Normal, patternDnf);
+				assert term.getFreeVars().length == 0;
+				mSolver.assertTerm(term);
+			}
+			if (!mErrorLocation.equals(ingredient.getSourceLocation())) {
+				// Assert that a danger invariant is reachable in a successor state.
+				// TODO: How can we do logical operations (and, or, implication) on patterns?
+				for (final Map.Entry<IcfgEdge, Collection<Collection<AbstractLinearInvariantPattern>>> entry : ingredient
+						.getEdge2TargetInv().entrySet()) {
+					final Collection<Collection<LinearInequality>> targetDnf =
+							mapAndNegatePattern(mServices, entry.getValue(), programVarsRecentlyOccurred);
+				}
+			}
+		}
+	}
+
+	/**
 	 * Split the given term in its conjunctions, annotate and assert each conjunction one by one, and store the mapping
 	 * annotated term -> original term in a map.
 	 *
@@ -1019,15 +1063,21 @@ public final class LinearInequalityInvariantPatternProcessor
 	 */
 	@Override
 	public LBool checkForValidConfiguration(
-			final Collection<SuccessorConstraintIngredients<Collection<Collection<AbstractLinearInvariantPattern>>>> successorContraintIngredients,
+			final Collection<SuccessorConstraintIngredients<Collection<Collection<AbstractLinearInvariantPattern>>>> successorConstraintIngredients,
 			final int round) {
 		mLogger.info("Start generating terms.");
 		final long startTimeConstraintsConstruction = System.nanoTime();
-		if (!mUseUnsatCores) {
-			generateAndAssertTerms(successorContraintIngredients);
+		if (mKindOfInvariant == KindOfInvariant.SAFETY) {
+			if (!mUseUnsatCores) {
+				generateAndAssertTerms(successorConstraintIngredients);
+			} else {
+				generateAndAnnotateAndAssertTerms(successorConstraintIngredients);
+			}
 		} else {
-			generateAndAnnotateAndAssertTerms(successorContraintIngredients);
+			assert mKindOfInvariant == KindOfInvariant.DANGER;
+			generateAndAssertDangerTerms(successorConstraintIngredients);
 		}
+
 		// Convert ns to ms
 		mConstraintsConstructionTime = (System.nanoTime() - startTimeConstraintsConstruction) / 1_000_000L;
 		mLogger.info("Terms generated, checking SAT.");

@@ -148,6 +148,7 @@ public final class CFGInvariantsGenerator {
 	private final Map<Integer, PathInvariantsStatisticsGenerator> mRound2PathInvariantsStatistics;
 	private final InvariantSynthesisSettings mInvariantSynthesisSettings;
 	private final CfgSmtToolkit mCsToolKit;
+	private final KindOfInvariant mKindOfInvariant;
 	/**
 	 * Report a {@link StatisticsResult} for every round.
 	 */
@@ -167,15 +168,19 @@ public final class CFGInvariantsGenerator {
 	 * @param predicateUnifier
 	 * @param invariantSynthesisSettings
 	 * @param csToolkit
+	 * @param kindOfInvariant
+	 *            the kind of invariant to be generated
 	 */
 	public CFGInvariantsGenerator(final IIcfg<IcfgLocation> pathProgram, final IUltimateServiceProvider services,
 			final IToolchainStorage storage, final IPredicate precondition, final IPredicate postcondition,
 			final PredicateFactory predicateFactory, final IPredicateUnifier predicateUnifier,
-			final InvariantSynthesisSettings invariantSynthesisSettings, final CfgSmtToolkit csToolkit) {
+			final InvariantSynthesisSettings invariantSynthesisSettings, final CfgSmtToolkit csToolkit,
+			final KindOfInvariant kindOfInvariant) {
 		mStorage = storage;
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mCsToolKit = csToolkit;
+		mKindOfInvariant = kindOfInvariant;
 
 		mPredicateFactory = predicateFactory;
 		mPredicateUnifier = predicateUnifier;
@@ -207,6 +212,8 @@ public final class CFGInvariantsGenerator {
 	 * @param synthesizeEntryPattern
 	 *            true if the the pattern for the start location need to be synthesized (instead of being inferred from
 	 *            the precondition)
+	 * @param kindOfInvariant
+	 *            the kind of invariant to be generated
 	 * @return a default invariant pattern processor factory
 	 */
 	private static IInvariantPatternProcessorFactory<?> createDefaultFactory(final IUltimateServiceProvider services,
@@ -215,11 +222,13 @@ public final class CFGInvariantsGenerator {
 			final SimplificationTechnique simplicationTechnique, final XnfConversionTechnique xnfConversionTechnique,
 			final ILinearInequalityInvariantPatternStrategy<Collection<Collection<AbstractLinearInvariantPattern>>> strategy,
 			final Map<IcfgLocation, UnmodifiableTransFormula> loc2underApprox,
-			final Map<IcfgLocation, UnmodifiableTransFormula> loc2overApprox, final boolean synthesizeEntryPattern) {
+			final Map<IcfgLocation, UnmodifiableTransFormula> loc2overApprox, final boolean synthesizeEntryPattern,
+			final KindOfInvariant kindOfInvariant) {
 
 		return new LinearInequalityInvariantPatternProcessorFactory(services, storage, predicateUnifier, csToolkit,
-				strategy, useNonlinerConstraints, useVarsFromUnsatCore, solverSettings, simplicationTechnique, xnfConversionTechnique,
-				csToolkit.getAxioms(), loc2underApprox, loc2overApprox, synthesizeEntryPattern);
+				strategy, useNonlinerConstraints, useVarsFromUnsatCore, solverSettings, simplicationTechnique,
+				xnfConversionTechnique, csToolkit.getAxioms(), loc2underApprox, loc2overApprox, synthesizeEntryPattern,
+				kindOfInvariant);
 	}
 
 	/**
@@ -335,11 +344,11 @@ public final class CFGInvariantsGenerator {
 				strategy.setNumOfDisjunctsForLocation(entry.getKey(), maxDisjunctsMaxConjuncts.get(0));
 			}
 		}
-		final boolean synthesizeEntryPattern = false;
+		final boolean synthesizeEntryPattern = mKindOfInvariant == KindOfInvariant.DANGER;
 		final IInvariantPatternProcessorFactory<?> invPatternProcFactory = createDefaultFactory(mServices, mStorage,
 				mPredicateUnifier, csToolkit, invSynthSettings.useNonLinearConstraints(), invSynthSettings.useUnsatCores(),
 				invSynthSettings.getSolverSettings(), simplificationTechnique, xnfConversionTechnique,
-				strategy, loc2underApprox, loc2overApprox, synthesizeEntryPattern);
+				strategy, loc2underApprox, loc2overApprox, synthesizeEntryPattern, mKindOfInvariant);
 
 		final Map<IcfgLocation, IPredicate> invariants = generateInvariantsForTransitions(locationsAsList, transitionsAsList, mPrecondition,
 				mPostcondition, startLocation, errorLocation, invPatternProcFactory, invSynthSettings.useUnsatCores(),

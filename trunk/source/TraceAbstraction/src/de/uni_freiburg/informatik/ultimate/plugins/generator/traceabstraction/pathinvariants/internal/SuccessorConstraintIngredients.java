@@ -85,4 +85,24 @@ public class SuccessorConstraintIngredients<IPT> {
 		}
 		return result;
 	}
+
+	public IcfgLocation getSourceLocation() {
+		return mSourceLocation;
+	}
+
+	public Set<IProgramVar> getVariablesForSourcePattern() {
+		return mVariablesForSourcePattern;
+	}
+
+	public IPT getInvStart() {
+		return mInvStart;
+	}
+
+	public Map<IcfgEdge, IPT> getEdge2TargetInv() {
+		return mEdge2TargetInv;
+	}
+
+	public Map<IcfgEdge, Set<IProgramVar>> getEdge2VariablesForTargetPattern() {
+		return mEdge2VariablesForTargetPattern;
+	}
 }
