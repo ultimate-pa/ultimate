@@ -404,7 +404,9 @@ public class ElimStorePlain {
 					mLogger.info("saved disjunct");
 					if (ci.size() == 1) {
 						final LBool inputsat = SmtUtils.checkSatTerm(mScript, inputTerm);
-						throw new AssertionError("input must have been unsat " + " term size " + new DagSizePrinter(inputTerm));
+						if (inputsat == LBool.SAT) {
+							throw new AssertionError("input must have been unsat " + " term size " + new DagSizePrinter(inputTerm));
+						}
 					}
 					continue;
 				}
@@ -436,7 +438,7 @@ public class ElimStorePlain {
 			tver.addElement(index);
 		}
 
-		final List<Term> notEqualsDetectedViaSolver = new ArrayList<>();
+		final List<Term> relationsDetectedViaSolver = new ArrayList<>();
 		final ArrayList<Term> indicesList = new ArrayList<Term>(indices);
 		// TODO: filter non-represenatives not only during iterations but also in advance
 		final IncrementalEqualityAnalyzer iea = new IncrementalEqualityAnalyzer(mMgdScript, inputTerm);
@@ -467,12 +469,13 @@ public class ElimStorePlain {
 							switch (isEqual) {
 							case EQUAL:
 								tver.reportEquality(indicesList.get(i), indicesList.get(j));
+								relationsDetectedViaSolver.add(eq);
 								mLogger.info("detected equality via solver");
 								break;
 							case NOT_EQUAL:
 								tver.reportNotEquals(indicesList.get(i), indicesList.get(j));
 								mLogger.info("detected not equals via solver");
-								notEqualsDetectedViaSolver.add(SmtUtils.not(mScript, eq));
+								relationsDetectedViaSolver.add(SmtUtils.not(mScript, eq));
 								break;
 							case UNKNOWN:
 								// do nothing
@@ -486,7 +489,7 @@ public class ElimStorePlain {
 			}
 		}
 		iea.unlockSolver();
-		return new Pair<ThreeValuedEquivalenceRelation<Term>, List<Term>>(tver, notEqualsDetectedViaSolver);
+		return new Pair<ThreeValuedEquivalenceRelation<Term>, List<Term>>(tver, relationsDetectedViaSolver);
 	}
 
 
