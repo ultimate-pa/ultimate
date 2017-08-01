@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Library-UltimateModel
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.lib.ultimatemodel
-Bundle-Version: 0.1.19
+Bundle-Version: 0.1.20
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Export-Package: de.uni_freiburg.informatik.ultimate.core.model,
  de.uni_freiburg.informatik.ultimate.core.model.models,

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?pde version="3.5"?>
 
-<product name="ReqAnalyzer" uid="ReqAnalyzer" id="de.uni_freiburg.informatik.ultimate.core.CLI" application="de.uni_freiburg.informatik.ultimate.core.CoreRCP" version="0.1.19" useFeatures="true" includeLaunchers="true">
+<product name="ReqAnalyzer" uid="ReqAnalyzer" id="de.uni_freiburg.informatik.ultimate.core.CLI" application="de.uni_freiburg.informatik.ultimate.core.CoreRCP" version="0.1.20" useFeatures="true" includeLaunchers="true">
 
    <aboutInfo>
       <image path="icons/about.gif"/>
@@ -48,9 +48,9 @@
    </plugins>
 
    <features>
-      <feature id="BA_FeatureUltimateCommandLine" version="0.1.19"/>
-      <feature id="BA_FeatureDependenciesCommandlineE4" version="0.1.19"/>
-      <feature id="BA_FeatureUltimateCommon" version="0.1.19"/>
+      <feature id="BA_FeatureUltimateCommandLine" version="0.1.20"/>
+      <feature id="BA_FeatureDependenciesCommandlineE4" version="0.1.20"/>
+      <feature id="BA_FeatureUltimateCommon" version="0.1.20"/>
    </features>
 
    <configurations>

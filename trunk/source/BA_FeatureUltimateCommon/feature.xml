@@ -2,7 +2,7 @@
 <feature
       id="BA_FeatureUltimateCommon"
       label="BA_FeatureUltimateCommon"
-      version="0.1.19"
+      version="0.1.20"
       os="linux,win32,macosx"
       arch="x86,x86_64">
 
