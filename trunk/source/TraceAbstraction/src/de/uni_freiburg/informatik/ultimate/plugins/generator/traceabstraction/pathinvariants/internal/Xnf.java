@@ -29,17 +29,29 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.p
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 
 /**
- * Superclass for CNF and DNF. 
- * 
+ * Superclass for CNF and DNF.
+ *
  *
  * @param <E> type of the atoms
  */
 public abstract class Xnf<E> implements Collection<Collection<E>> {
-	
-	private final Collection<Collection<E>> mOuterJuncts = new ArrayList<>();
+	private final Collection<Collection<E>> mOuterJuncts;
+
+	public Xnf() {
+		mOuterJuncts = new ArrayList<>();
+	}
+
+	public Xnf(final int initialCapacity) {
+		mOuterJuncts = new ArrayList<>(initialCapacity);
+	}
+
+	public Xnf(final Collection<E> collection) {
+		mOuterJuncts = Collections.singleton(collection);
+	}
 
 	@Override
 	public boolean add(final Collection<E> e) {

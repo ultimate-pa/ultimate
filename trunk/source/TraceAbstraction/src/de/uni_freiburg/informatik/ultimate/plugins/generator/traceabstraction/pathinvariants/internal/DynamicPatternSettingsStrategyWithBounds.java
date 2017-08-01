@@ -1,6 +1,5 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -13,33 +12,36 @@ public class DynamicPatternSettingsStrategyWithBounds extends DynamicPatternSett
 	protected Map<IcfgLocation, Integer> mLoc2MaxNumOfConjuncts;
 	protected Map<IcfgLocation, Integer> mLoc2MaxNumOfDisjuncts;
 
-	public DynamicPatternSettingsStrategyWithBounds(final AbstractTemplateIncreasingDimensionsStrategy dimensionsStrat, int maxRounds, Set<IProgramVar> allProgramVariables, Map<IcfgLocation, Set<IProgramVar>> loc2LiveVariables,
-			boolean alwaysStrictAndNonStrictCopies, boolean useStrictInequalitiesAlternatingly) {
+	public DynamicPatternSettingsStrategyWithBounds(final AbstractTemplateIncreasingDimensionsStrategy dimensionsStrat,
+			final int maxRounds, final Set<IProgramVar> allProgramVariables,
+			final Map<IcfgLocation, Set<IProgramVar>> loc2LiveVariables, final boolean alwaysStrictAndNonStrictCopies,
+			final boolean useStrictInequalitiesAlternatingly) {
 		super(dimensionsStrat, maxRounds, allProgramVariables,
 				alwaysStrictAndNonStrictCopies, useStrictInequalitiesAlternatingly);
 		mLoc2MaxNumOfConjuncts = new HashMap<>();
 		mLoc2MaxNumOfDisjuncts = new HashMap<>();
 	}
-	
-	
-	
+
+
+
 	@Override
-	public void setNumOfConjunctsForLocation(final IcfgLocation location, int numOfConjuncts) {
+	public void setNumOfConjunctsForLocation(final IcfgLocation location, final int numOfConjuncts) {
 		mLoc2MaxNumOfConjuncts.put(location, numOfConjuncts);
 	}
-	
-	public void setNumOfDisjunctsForLocation(final IcfgLocation location, int numOfDisjuncts) {
+
+	@Override
+	public void setNumOfDisjunctsForLocation(final IcfgLocation location, final int numOfDisjuncts) {
 		mLoc2MaxNumOfDisjuncts.put(location, numOfDisjuncts);
 	}
-	
-	
+
+
 	@Override
-	public Collection<Collection<AbstractLinearInvariantPattern>> getInvariantPatternForLocation(IcfgLocation location,
-			int round, Script solver, String prefix) {
+	public Dnf<AbstractLinearInvariantPattern> getInvariantPatternForLocation(final IcfgLocation location,
+			final int round, final Script solver, final String prefix) {
 		PatternSetting ps;
 		if (!mLoc2PatternSetting.containsKey(location)) {
 			// Create new setting for this location
-			Set<IProgramVar> varsForThisPattern = getPatternVariablesInitially(location);
+			final Set<IProgramVar> varsForThisPattern = getPatternVariablesInitially(location);
 			int numOfConjuncts = super.mDimensionsStrategy.getInitialConjuncts();
 			int numOfDisjuncts = super.mDimensionsStrategy.getInitialDisjuncts();
 			if (mLoc2MaxNumOfConjuncts.containsKey(location)) {

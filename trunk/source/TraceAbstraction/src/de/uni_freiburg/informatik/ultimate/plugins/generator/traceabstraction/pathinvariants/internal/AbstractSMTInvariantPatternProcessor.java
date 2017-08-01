@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2015 Dirk Steinmetz
- * Copyright (C) 2015 University of Freiburg
+ * Copyright (C) 2017 Dennis Wölfing
+ * Copyright (C) 2015-2017 University of Freiburg
  *
  * This file is part of the ULTIMATE TraceAbstraction plug-in.
  *
@@ -132,9 +133,8 @@ public abstract class AbstractSMTInvariantPatternProcessor<IPT> implements IInva
 	 *            the type of the literals in the dnf
 	 * @return a new dnf equivalent to a /\ b
 	 */
-	protected static <E> Collection<Collection<E>> expandConjunctionSingle(final Collection<Collection<E>> a,
-			final Collection<Collection<E>> b) {
-		final Collection<Collection<E>> result = new ArrayList<>();
+	protected static <E> Dnf<E> expandConjunctionSingle(final Dnf<E> a, final Dnf<E> b) {
+		final Dnf<E> result = new Dnf<>();
 		for (final Collection<E> aItem : a) {
 			for (final Collection<E> bItem : b) {
 				final Collection<E> resultItem = new ArrayList<>();
@@ -156,11 +156,10 @@ public abstract class AbstractSMTInvariantPatternProcessor<IPT> implements IInva
 	 *            DNFs to conjunct together
 	 * @return DNF representing the conjunction of the DNFs provided, returns NULL if no DNFs were given.
 	 */
-	protected static <E> Collection<Collection<E>> expandConjunction(final IUltimateServiceProvider services,
-			final Collection<Collection<E>>... dnfs) {
+	protected static <E> Dnf<E> expandConjunction(final IUltimateServiceProvider services, final Dnf<E>... dnfs) {
 		boolean firstElement = true;
-		Collection<Collection<E>> expandedDnf = null;
-		for (final Collection<Collection<E>> currentDnf : dnfs) {
+		Dnf<E> expandedDnf = null;
+		for (final Dnf<E> currentDnf : dnfs) {
 			if (!services.getProgressMonitorService().continueProcessing()) {
 				throw new ToolchainCanceledException(AbstractSMTInvariantPatternProcessor.class,
 						"transforming conjunction of length " + dnfs.length + " to DNF");
@@ -187,21 +186,20 @@ public abstract class AbstractSMTInvariantPatternProcessor<IPT> implements IInva
 	 * @return a dnf (Collection of disjuncts consisting of conjuncts of linear inequalities), equivalent to the given
 	 *         cnf
 	 */
-	protected static <E> Collection<Collection<E>> expandCnfToDnf(final IUltimateServiceProvider services,
-			final Collection<Collection<E>> cnf) {
+	protected static <E> Dnf<E> expandCnfToDnf(final IUltimateServiceProvider services, final Cnf<E> cnf) {
 		if (cnf.isEmpty()) {
 			final Collection<E> empty = Collections.emptyList();
-			return Collections.singleton(empty);
+			return new Dnf<>(empty);
 		}
 		boolean firstElement = true;
-		Collection<Collection<E>> expandedDnf = null;
+		Dnf<E> expandedDnf = null;
 		for (final Collection<E> conjunct : cnf) {
 			if (!services.getProgressMonitorService().continueProcessing()) {
 				throw new ToolchainCanceledException(AbstractSMTInvariantPatternProcessor.class,
 						"transforming CNF with " + cnf.size() + "conjuncts to DNF");
 			}
 			if (firstElement) {
-				expandedDnf = new ArrayList<>();
+				expandedDnf = new Dnf<>();
 				for (final E e : conjunct) {
 					final Collection<E> conjunctSingleton = new ArrayList<>();
 					conjunctSingleton.add(e);
@@ -227,9 +225,9 @@ public abstract class AbstractSMTInvariantPatternProcessor<IPT> implements IInva
 	 *            : the type of Literals in the cnf/dnf
 	 * @return a new dnf equivalent to conjunct /\ dnf
 	 */
-	private static <E> Collection<Collection<E>> expandCnfToDnfSingle(final IUltimateServiceProvider services,
-			final Collection<Collection<E>> dnf, final Collection<E> conjunct) {
-		final Collection<Collection<E>> result = new ArrayList<>();
+	private static <E> Dnf<E> expandCnfToDnfSingle(final IUltimateServiceProvider services,
+			final Dnf<E> dnf, final Collection<E> conjunct) {
+		final Dnf<E> result = new Dnf<>();
 		for (final Collection<E> disjunct : dnf) {
 			for (final E item : conjunct) {
 				if (!services.getProgressMonitorService().continueProcessing()) {

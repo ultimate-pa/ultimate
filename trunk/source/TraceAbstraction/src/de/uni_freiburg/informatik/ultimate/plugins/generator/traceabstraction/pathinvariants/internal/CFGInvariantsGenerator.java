@@ -220,7 +220,7 @@ public final class CFGInvariantsGenerator {
 			final IToolchainStorage storage, final IPredicateUnifier predicateUnifier, final CfgSmtToolkit csToolkit,
 			final boolean useNonlinerConstraints, final boolean useVarsFromUnsatCore, final Settings solverSettings,
 			final SimplificationTechnique simplicationTechnique, final XnfConversionTechnique xnfConversionTechnique,
-			final ILinearInequalityInvariantPatternStrategy<Collection<Collection<AbstractLinearInvariantPattern>>> strategy,
+			final ILinearInequalityInvariantPatternStrategy<Dnf<AbstractLinearInvariantPattern>> strategy,
 			final Map<IcfgLocation, UnmodifiableTransFormula> loc2underApprox,
 			final Map<IcfgLocation, UnmodifiableTransFormula> loc2overApprox, final boolean synthesizeEntryPattern,
 			final KindOfInvariant kindOfInvariant) {
@@ -236,7 +236,7 @@ public final class CFGInvariantsGenerator {
 	 * as well as which information to use from previous attempts, a strategy has been developed.
 	 * @return a strategy on how to build templates and which variables to use
 	 */
-	private static ILinearInequalityInvariantPatternStrategy<Collection<Collection<AbstractLinearInvariantPattern>>>
+	private static ILinearInequalityInvariantPatternStrategy<Dnf<AbstractLinearInvariantPattern>>
 	getStrategy(final boolean useVarsFromUnsatCore, final boolean useLiveVars,
 			final Set<IProgramVar> allProgramVariables,
 			final Map<IcfgLocation, Set<IProgramVar>> locations2LiveVariables,
@@ -327,7 +327,7 @@ public final class CFGInvariantsGenerator {
 			templateDimensionStrat = new DefaultTemplateIncreasingDimensionsStrategy(1, 1, 1, 1);
 		}
 
-		final ILinearInequalityInvariantPatternStrategy<Collection<Collection<AbstractLinearInvariantPattern>>> strategy =
+		final ILinearInequalityInvariantPatternStrategy<Dnf<AbstractLinearInvariantPattern>> strategy =
 				getStrategy(invSynthSettings.useUnsatCores(), USE_LIVE_VARIABLES, allProgramVars, pathprogramLocs2LiveVars,
 						templateDimensionStrat);
 
@@ -585,9 +585,8 @@ public final class CFGInvariantsGenerator {
 
 					// Compute the benchmarks
 					@SuppressWarnings("unchecked")
-					final int sizeOfTemplate2 =
-					((LinearInequalityInvariantPatternProcessor) processor).getTotalNumberOfConjunctsInPattern(
-							(Collection<Collection<AbstractLinearInvariantPattern>>) invEnd);
+					final int sizeOfTemplate2 = ((LinearInequalityInvariantPatternProcessor) processor)
+							.getTotalNumberOfConjunctsInPattern((Dnf<AbstractLinearInvariantPattern>) invEnd);
 					// Compute the total size of all non-trivial templates
 					sumOfTemplateConjuncts = sumOfTemplateConjuncts + sizeOfTemplate2;
 					if (transition.getTarget() != errorLocation) {
