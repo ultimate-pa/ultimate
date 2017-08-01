@@ -60,8 +60,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierSequence;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Nnf;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Nnf.QuantifierHandling;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.NnfTransformer;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.NnfTransformer.QuantifierHandling;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -589,7 +589,7 @@ public class NestedInterpolantsBuilder {
 	 */
 	private Term instantiateArrayExt(final Term interpolantWithoutIndices) {
 		final Term nnf =
-				new Nnf(mMgdScriptCfg, mServices, QuantifierHandling.PULL).transform(interpolantWithoutIndices);
+				new NnfTransformer(mMgdScriptCfg, mServices, QuantifierHandling.PULL).transform(interpolantWithoutIndices);
 		// not needed, at the moment our NNF transformation also produces
 		// Term prenex = (new PrenexNormalForm(mCsToolkitPredicates.getScript(),
 		// mCsToolkitPredicates.getVariableManager())).transform(nnf);

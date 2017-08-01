@@ -56,9 +56,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.XJu
  * @author heizmann@informatik.uni-freiburg.de
  *
  */
-public abstract class Xnf extends Nnf {
+public abstract class XnfTransformer extends NnfTransformer {
 	
-	public Xnf(final ManagedScript script, final IUltimateServiceProvider services) {
+	public XnfTransformer(final ManagedScript script, final IUltimateServiceProvider services) {
 		super(script, services, QuantifierHandling.IS_ATOM);
 	}
 	

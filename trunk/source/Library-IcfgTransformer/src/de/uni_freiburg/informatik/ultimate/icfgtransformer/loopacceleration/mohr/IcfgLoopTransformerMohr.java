@@ -64,7 +64,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Dnf;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.DnfTransformer;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class IcfgLoopTransformerMohr<INLOC extends IcfgLocation, OUTLOC extends IcfgLocation>
@@ -249,7 +249,7 @@ public class IcfgLoopTransformerMohr<INLOC extends IcfgLocation, OUTLOC extends 
 	}
 
 	private Term[] toDnf(final Term term) {
-		final Dnf dnf = new Dnf(mManagedScript, mServices);
+		final DnfTransformer dnf = new DnfTransformer(mManagedScript, mServices);
 		final Term transFormedTerm = dnf.transform(term);
 		return SmtUtils.getDisjuncts(transFormedTerm);
 	}

@@ -55,7 +55,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
  *
  * @author heizmann@informatik.uni-freiburg.de
  */
-public class Nnf {
+public class NnfTransformer {
 
 	protected final Script mScript;
 	private static final String s_FreshVariableString = "nnf";
@@ -70,7 +70,7 @@ public class Nnf {
 
 	protected final QuantifierHandling mQuantifierHandling;
 
-	public Nnf(final ManagedScript mgdScript, final IUltimateServiceProvider services,
+	public NnfTransformer(final ManagedScript mgdScript, final IUltimateServiceProvider services,
 			final QuantifierHandling quantifierHandling) {
 		super();
 		mQuantifierHandling = quantifierHandling;

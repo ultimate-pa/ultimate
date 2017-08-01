@@ -48,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Dnf;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.DnfTransformer;
 
 /**
  * 
@@ -75,7 +75,7 @@ public class SMTTheoryTransitionRelationProvider {
 			return Collections.singleton(buildNewDisjunctTf(falseTerm, tf));
 		}
 		
-		final Term formulaInDNF = new Dnf(mMgdScript, mServices).transform(tf.getFormula());
+		final Term formulaInDNF = new DnfTransformer(mMgdScript, mServices).transform(tf.getFormula());
 		
 		final Term[] disjuncts = SmtUtils.getDisjuncts(formulaInDNF);
 		

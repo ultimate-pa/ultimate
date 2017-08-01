@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocationIterator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Dnf;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.DnfTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.BlockEncodingBacktranslator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 
@@ -82,7 +82,7 @@ public class SmallBlockEncoder extends BaseBlockEncoder<IcfgLocation> {
 		final CfgSmtToolkit toolkit = icfg.getCfgSmtToolkit();
 
 		final IcfgLocationIterator<IcfgLocation> iter = new IcfgLocationIterator<>(icfg);
-		final Dnf dnfTransformer = new Dnf(toolkit.getManagedScript(), mServices);
+		final DnfTransformer dnfTransformer = new DnfTransformer(toolkit.getManagedScript(), mServices);
 
 		final Set<IcfgEdge> toRemove = new HashSet<>();
 

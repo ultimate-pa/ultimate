@@ -54,8 +54,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.Qua
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierSequence;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierSequence.QuantifiedVariables;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Nnf;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Nnf.QuantifierHandling;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.NnfTransformer;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.NnfTransformer.QuantifierHandling;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifierElimination.XjunctPartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifierElimination.XnfDer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifierElimination.XnfIrd;
@@ -82,7 +82,7 @@ public class PartialQuantifierElimination {
 			final ManagedScript mgdScript, final Term term, final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique) {
 		final Term withoutIte = (new IteRemover(mgdScript)).transform(term);
-		final Term nnf = new Nnf(mgdScript, services, QuantifierHandling.KEEP).transform(withoutIte);
+		final Term nnf = new NnfTransformer(mgdScript, services, QuantifierHandling.KEEP).transform(withoutIte);
 		final Term pushed = new QuantifierPusher(mgdScript, services, true, PqeTechniques.ALL_LOCAL).transform(nnf);
 		final Term pnf = new PrenexNormalForm(mgdScript).transform(pushed);
 		final QuantifierSequence qs = new QuantifierSequence(mgdScript.getScript(), pnf);
@@ -275,7 +275,7 @@ public class PartialQuantifierElimination {
 			final Set<TermVariable> eliminatees, final Term term, final IUltimateServiceProvider services,
 			final ILogger logger) {
 		final Term withoutIte = (new IteRemover(mgdScript)).transform(term);
-		final Term nnf = new Nnf(mgdScript, services, QuantifierHandling.KEEP).transform(withoutIte);
+		final Term nnf = new NnfTransformer(mgdScript, services, QuantifierHandling.KEEP).transform(withoutIte);
 		final Term quantified = mgdScript.getScript().quantifier(quantifier,
 				eliminatees.toArray(new TermVariable[eliminatees.size()]), nnf);
 		final Term pushed =

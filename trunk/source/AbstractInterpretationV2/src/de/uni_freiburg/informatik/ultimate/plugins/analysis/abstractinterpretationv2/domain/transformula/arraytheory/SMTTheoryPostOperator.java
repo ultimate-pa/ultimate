@@ -53,7 +53,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Dnf;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.DnfTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateTransformer;
 
@@ -125,7 +125,7 @@ public class SMTTheoryPostOperator implements IAbstractPostOperator<SMTTheorySta
 		
 		// partial quantifier elimination may introduce disjunctions --> convert to DNF
 		final List<Term> dnfDisjuncts = Arrays.asList(SmtUtils.getDisjuncts(
-				new Dnf(mMgdScript, mServices).transform(eliminated)));
+				new DnfTransformer(mMgdScript, mServices).transform(eliminated)));
 
 		return dnfDisjuncts;
 	}

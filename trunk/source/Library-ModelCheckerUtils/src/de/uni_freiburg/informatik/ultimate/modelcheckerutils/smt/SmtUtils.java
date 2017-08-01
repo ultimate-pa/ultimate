@@ -65,10 +65,10 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.Aff
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineTermTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.NotAffineException;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Cnf;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Dnf;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Nnf;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Nnf.QuantifierHandling;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.CnfTransformer;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.DnfTransformer;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.NnfTransformer;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.NnfTransformer.QuantifierHandling;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 
@@ -1344,7 +1344,7 @@ public final class SmtUtils {
 			result = new SimplifyBdd(services, mgdScript).transformToDNF(term);
 			break;
 		case BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION:
-			result = new Dnf(mgdScript, services).transform(term);
+			result = new DnfTransformer(mgdScript, services).transform(term);
 			break;
 		default:
 			throw new AssertionError(ERROR_MESSAGE_UNKNOWN_ENUM_CONSTANT + xnfConversionTechnique);
@@ -1356,7 +1356,7 @@ public final class SmtUtils {
 	 * @return logically equivalent term in negation normal form (NNF)
 	 */
 	public static Term toNnf(final IUltimateServiceProvider services, final ManagedScript mgdScript, final Term term) {
-		return new Nnf(mgdScript, services, QuantifierHandling.PULL).transform(term);
+		return new NnfTransformer(mgdScript, services, QuantifierHandling.PULL).transform(term);
 	}
 
 	/**
@@ -1370,7 +1370,7 @@ public final class SmtUtils {
 			result = new SimplifyBdd(services, mgdScript).transformToCNF(term);
 			break;
 		case BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION:
-			result = new Cnf(mgdScript, services).transform(term);
+			result = new CnfTransformer(mgdScript, services).transform(term);
 			break;
 		default:
 			throw new AssertionError(ERROR_MESSAGE_UNKNOWN_ENUM_CONSTANT + xnfConversionTechnique);

@@ -45,8 +45,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.ExtendedSimplificationResult;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Nnf;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Nnf.QuantifierHandling;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.NnfTransformer;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.NnfTransformer.QuantifierHandling;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
@@ -135,7 +135,7 @@ public class HoareAnnotationComposer {
 				Term precondImpliesInvariant =
 						Util.implies(mCsToolkit.getManagedScript().getScript(), precond, entry.getValue());
 				if (AVOID_IMPLICATIONS) {
-					precondImpliesInvariant = new Nnf(mCsToolkit.getManagedScript(), mServices, QuantifierHandling.KEEP)
+					precondImpliesInvariant = new NnfTransformer(mCsToolkit.getManagedScript(), mServices, QuantifierHandling.KEEP)
 							.transform(precondImpliesInvariant);
 				}
 				conjuncts.add(precondImpliesInvariant);
