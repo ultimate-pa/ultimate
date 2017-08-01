@@ -24,12 +24,12 @@
 	<parent>
 		<artifactId>mavenparent</artifactId>
 		<groupId>de.uni_freiburg.informatik.ultimate</groupId>
-		<version>0.1.19</version>
+		<version>0.1.20</version>
 		<relativePath>../BA_MavenParentUltimate/pom.xml</relativePath>
 	</parent>
 
 	<artifactId>de.uni_freiburg.informatik.ultimate.lib.boogieast</artifactId>
-	<version>0.1.19</version>
+	<version>0.1.20</version>
 	<packaging>eclipse-plugin</packaging>
 
 	<build>

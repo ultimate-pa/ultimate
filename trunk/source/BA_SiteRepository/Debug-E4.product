@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?pde version="3.5"?>
 
-<product name="Ultimate-Debug" uid="Debug-E4" id="de.uni_freiburg.informatik.ultimate.core.Debug" application="de.uni_freiburg.informatik.ultimate.core.CoreRCP" version="0.1.19" useFeatures="true" includeLaunchers="true">
+<product name="Ultimate-Debug" uid="Debug-E4" id="de.uni_freiburg.informatik.ultimate.core.Debug" application="de.uni_freiburg.informatik.ultimate.core.CoreRCP" version="0.1.20" useFeatures="true" includeLaunchers="true">
 
    <aboutInfo>
       <image path="/CoreRCP/icons/about.gif"/>
@@ -42,9 +42,9 @@
    </plugins>
 
    <features>
-      <feature id="BA_FeatureUltimateDebug" version="0.1.19"/>
-      <feature id="BA_FeatureDependenciesDebugE4" version="0.1.19"/>
-      <feature id="BA_FeatureUltimateCommon" version="0.1.19"/>
+      <feature id="BA_FeatureUltimateDebug" version="0.1.20"/>
+      <feature id="BA_FeatureDependenciesDebugE4" version="0.1.20"/>
+      <feature id="BA_FeatureUltimateCommon" version="0.1.20"/>
    </features>
 
    <configurations>

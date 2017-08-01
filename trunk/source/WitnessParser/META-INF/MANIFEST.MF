@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: WitnessParser
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.witnessparser;singleton:=true
-Bundle-Version: 0.1.19
+Bundle-Version: 0.1.20
 Bundle-Activator: de.uni_freiburg.informatik.ultimate.witnessparser.Activator
 Require-Bundle: de.uni_freiburg.informatik.ultimate.core,
  edu.uci.ics.jung,
