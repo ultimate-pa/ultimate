@@ -134,7 +134,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final InterpolationTechnique DEF_INTERPOLANTS = InterpolationTechnique.ForwardPredicates;
 	public static final String DEF_ADDITIONAL_EDGES = VALUE_INTERPOLANT_AUTOMATON_CANONICAL;
 	public static final boolean DEF_DUMPAUTOMATA = false;
-	public static final Format DEF_AUTOMATAFORMAT = Format.ATS;
+	public static final Format DEF_AUTOMATAFORMAT = Format.ATS_NUMERATE;
 	public static final String DEF_DUMPPATH = ".";
 	public static final boolean DEF_DIFFERENCE_SENWA = false;
 	public static final boolean DEF_MINIMIZE = true;
