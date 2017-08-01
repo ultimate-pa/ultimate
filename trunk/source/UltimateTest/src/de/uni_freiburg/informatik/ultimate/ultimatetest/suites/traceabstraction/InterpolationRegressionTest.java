@@ -82,17 +82,21 @@ public class InterpolationRegressionTest extends AbstractTraceAbstractionTestSui
 	
 
 	private static final String[] SVCOMP_INTEGER_SETTINGS = {
-			"automizer/interpolationRegression/SpLv-LoopFreeBlock.epf",
-			"automizer/interpolationRegression/SpLv-SingleStatement.epf",
-			"automizer/interpolationRegression/WpLv-LoopFreeBlock.epf",
-			"automizer/interpolationRegression/WpLv-SingleStatement.epf",
+//			"automizer/interpolationRegression/SpLv-LoopFreeBlock.epf",
+			"automizer/interpolationRegression/IcSpLv-LoopFreeBlock.epf",
+//			"automizer/interpolationRegression/SpLv-SingleStatement.epf",
+//			"automizer/interpolationRegression/WpLv-LoopFreeBlock.epf",
+			"automizer/interpolationRegression/IcWpLv-LoopFreeBlock.epf",
+//			"automizer/interpolationRegression/WpLv-SingleStatement.epf",
 	};
 	
 	private static final String[] SVCOMP_BITVECTOR_SETTINGS = {
-			"automizer/interpolationRegression/SpLv-LoopFreeBlock-Bitvector.epf",
-			"automizer/interpolationRegression/SpLv-SingleStatement-Bitvector.epf",
-			"automizer/interpolationRegression/WpLv-LoopFreeBlock-Bitvector.epf",
-			"automizer/interpolationRegression/WpLv-SingleStatement-Bitvector.epf",
+//			"automizer/interpolationRegression/SpLv-LoopFreeBlock-Bitvector.epf",
+			"automizer/interpolationRegression/IcSpLv-LoopFreeBlock-Bitvector.epf",
+//			"automizer/interpolationRegression/SpLv-SingleStatement-Bitvector.epf",
+//			"automizer/interpolationRegression/WpLv-LoopFreeBlock-Bitvector.epf",
+			"automizer/interpolationRegression/IcWpLv-LoopFreeBlock-Bitvector.epf",
+//			"automizer/interpolationRegression/WpLv-SingleStatement-Bitvector.epf",
 		};
 	
 	private static final String[] ULTIMATE_REPOSITORY_BENCHMARKS = {
@@ -104,17 +108,21 @@ public class InterpolationRegressionTest extends AbstractTraceAbstractionTestSui
 		};
 	
 	private static final String[] ULTIMATE_REPOSITORY_INTEGER_SETTINGS = {
-			"automizer/interpolationRegression/SpLv-LoopFreeBlock-AlsoCheckMemoryLeak.epf",
-			"automizer/interpolationRegression/SpLv-SingleStatement-AlsoCheckMemoryLeak.epf",
-			"automizer/interpolationRegression/WpLv-LoopFreeBlock-AlsoCheckMemoryLeak.epf",
-			"automizer/interpolationRegression/WpLv-SingleStatement-AlsoCheckMemoryLeak.epf",
+//			"automizer/interpolationRegression/SpLv-LoopFreeBlock-AlsoCheckMemoryLeak.epf",
+			"automizer/interpolationRegression/IcSpLv-LoopFreeBlock-AlsoCheckMemoryLeak.epf",
+//			"automizer/interpolationRegression/SpLv-SingleStatement-AlsoCheckMemoryLeak.epf",
+//			"automizer/interpolationRegression/WpLv-LoopFreeBlock-AlsoCheckMemoryLeak.epf",
+			"automizer/interpolationRegression/IcWpLv-LoopFreeBlock-AlsoCheckMemoryLeak.epf",
+//			"automizer/interpolationRegression/WpLv-SingleStatement-AlsoCheckMemoryLeak.epf",
 	};
 	
 	private static final String[] ULTIMATE_REPOSITORY_BITVECTOR_SETTINGS = {
-			"automizer/interpolationRegression/SpLv-LoopFreeBlock-Bitvector-AlsoCheckMemoryLeak.epf",
-			"automizer/interpolationRegression/SpLv-SingleStatement-Bitvector-AlsoCheckMemoryLeak.epf",
-			"automizer/interpolationRegression/WpLv-LoopFreeBlock-Bitvector-AlsoCheckMemoryLeak.epf",
-			"automizer/interpolationRegression/WpLv-SingleStatement-Bitvector-AlsoCheckMemoryLeak.epf", 
+//			"automizer/interpolationRegression/SpLv-LoopFreeBlock-Bitvector-AlsoCheckMemoryLeak.epf",
+			"automizer/interpolationRegression/IcSpLv-LoopFreeBlock-Bitvector-AlsoCheckMemoryLeak.epf",
+//			"automizer/interpolationRegression/SpLv-SingleStatement-Bitvector-AlsoCheckMemoryLeak.epf",
+//			"automizer/interpolationRegression/WpLv-LoopFreeBlock-Bitvector-AlsoCheckMemoryLeak.epf",
+			"automizer/interpolationRegression/IcWpLv-LoopFreeBlock-Bitvector-AlsoCheckMemoryLeak.epf",
+//			"automizer/interpolationRegression/WpLv-SingleStatement-Bitvector-AlsoCheckMemoryLeak.epf", 
 	};
 
 	
