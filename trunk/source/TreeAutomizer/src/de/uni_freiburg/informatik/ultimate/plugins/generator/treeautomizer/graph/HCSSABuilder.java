@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.graph;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -35,6 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeRun;
 import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HCInVar;
@@ -376,6 +378,10 @@ public class HCSSABuilder {
 			final Term formula = subst.transform(t);
 			
 			final IPredicate unified = mPredicateUnifier.getOrConstructPredicate(formula);
+			assert new HashSet<>(Arrays.asList(unified.getFormula().getFreeVars()))
+				.equals(unified.getVars().stream().map(pv -> pv.getTermVariable()).collect(Collectors.toSet())) :
+					"the free variables in the predicate must match the programvars";
+			assert unified.getClosedFormula().getFreeVars().length == 0;
 			return unified;
 		}
 

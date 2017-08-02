@@ -10,6 +10,7 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.IRankedLetter;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
@@ -71,14 +72,14 @@ public class HornClause implements IInternalAction, IRankedLetter {
 	 *            HornClauseParserScript)
 	 * @param symbolTable
 	 * @param transitionFormula
-	 * @param head
+	 * @param headPred
 	 * @param headVars
 	 * @param bodyPreds
 	 * @param bodyPredToTermVariables
 	 */
 	public HornClause(final ManagedScript script, final HCSymbolTable symbolTable,
 			final Term transitionFormula,
-			final HornClausePredicateSymbol head, final List<TermVariable> headVars,
+			final HornClausePredicateSymbol headPred, final List<TermVariable> headVars,
 			final List<HornClausePredicateSymbol> bodyPreds, final List<List<TermVariable>> bodyPredToTermVariables, int version) {
 
 		TermTransferrer ttf = new TermTransferrer(script.getScript());
@@ -91,10 +92,13 @@ public class HornClause implements IInternalAction, IRankedLetter {
 		mBodyPredToTermVariables = bodyPredToTermVariables.stream()
 				.map(list -> list.stream().map(var -> (TermVariable) ttf.transform(var)).collect(Collectors.toList()))
 				.collect(Collectors.toList());
+		
+		// transfer the transition formula to the solver script
+		Term convertedFormula = ttf.transform(transitionFormula);
 
 		mHornClauseSymbolTable = symbolTable;
 		
-		mHeadPredicate = head;
+		mHeadPredicate = headPred;
 		mBodyPreds = bodyPreds;
 
 		mBodyPredToHCInVars = new ArrayList<>();
@@ -111,7 +115,9 @@ public class HornClause implements IInternalAction, IRankedLetter {
 			final Sort sort = tv.getSort();
 			final HCOutVar hcOutVar = symbolTable.getOrConstructHCOutVar(i, sort);
 			mHeadPredProgramVariables.add(hcOutVar);
-			outVars.put(hcOutVar, tv);
+//			if (Arrays.asList(convertedFormula.getFreeVars()).contains(tv)) {
+				outVars.put(hcOutVar, tv);
+//			}
 		}
 
 		final Map<IProgramVar, TermVariable> inVars = new HashMap<>();
@@ -124,12 +130,28 @@ public class HornClause implements IInternalAction, IRankedLetter {
 				final HCInVar hcInVar = symbolTable.getOrConstructHCInVar(i, j, sort);
 				mBodyPredToHCInVars.get(i).add(hcInVar);
 				mBodyPredToIProgramVar.get(i).add(hcInVar);
-				inVars.put(hcInVar, tv);
+//				if (Arrays.asList(convertedFormula.getFreeVars()).contains(tv)) {
+					inVars.put(hcInVar, tv);
+//				}
 			}
 		}
+		
+		script.lock(this);
+//		for (TermVariable hptv : mHeadPredTermVariables) {
+		for (int headPos = 0; headPos < mHeadPredTermVariables.size(); headPos++) {
+			for (int bodyOuterPos = 0; bodyOuterPos < mBodyPredToTermVariables.size(); bodyOuterPos++) {
+				for (int bodyInnerPos = 0; 
+						bodyInnerPos < mBodyPredToTermVariables.get(bodyOuterPos).size(); bodyInnerPos++) {
+					TermVariable tvHead = mHeadPredTermVariables.get(headPos);
+					TermVariable tvBody = mBodyPredToTermVariables.get(bodyOuterPos).get(bodyInnerPos);
+					if (tvHead == tvBody) {
+						convertedFormula = Util.and(script.getScript(), convertedFormula, script.term(this, "=", tvHead, tvBody));
+					}
+				}
+			}
+		}
+		script.unlock(this);
 
-		// transfer the transition formula to the solver script
-		final Term convertedFormula = ttf.transform(transitionFormula);
 
 		final TransFormulaBuilder tb = new TransFormulaBuilder(inVars, outVars, true, null, true, null, true);
 		tb.setFormula(convertedFormula);
@@ -204,6 +226,9 @@ public class HornClause implements IInternalAction, IRankedLetter {
 		//
 		// final String body = mHeadPredicate.getName() +
 		// mHeadPredTermVariables;
+		if (mTransitionFormula == null) {
+			return "unintialized HornClause";
+		}
 
 		return mTransitionFormula.getFormula().toString();
 		// return String.format("(%s) ^^ (%s) ~~> (%s) || in : %s || out : %s ",
