@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.test.mocks.ConsoleLogger;
 import de.uni_freiburg.informatik.ultimate.test.reporting.IIncrementalLog;
 import de.uni_freiburg.informatik.ultimate.test.reporting.ITestLogfile;
 import de.uni_freiburg.informatik.ultimate.test.reporting.ITestSummary;
-import de.uni_freiburg.informatik.ultimate.util.ExceptionUtils;
+import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 
 /**
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
@@ -130,7 +130,7 @@ public final class UltimateTestCase implements Comparable<UltimateTestCase> {
 			result = mDecider.getTestResult(mStarter.getServices(), e);
 			final ILogger logger = mStarter.getServices().getLoggingService().getLogger(UltimateStarter.class);
 			logger.fatal(String.format("There was an exception during the execution of Ultimate: %s%n%s", e,
-					ExceptionUtils.getStackTrace(e)));
+					CoreUtil.getStackTrace(e)));
 		} finally {
 			boolean success = false;
 
@@ -147,7 +147,7 @@ public final class UltimateTestCase implements Comparable<UltimateTestCase> {
 				final ILogger logger = mStarter.getServices().getLoggingService().getLogger(UltimateStarter.class);
 				logger.fatal(
 						String.format("There was an exception during the writing of summary or log information: %s%n%s",
-								ex, ExceptionUtils.getStackTrace(ex)));
+								ex, CoreUtil.getStackTrace(ex)));
 			}
 
 			mStarter.complete();

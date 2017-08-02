@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.test.reporting.IPreTestLog;
 import de.uni_freiburg.informatik.ultimate.test.reporting.ITestLogfile;
 import de.uni_freiburg.informatik.ultimate.test.reporting.ITestSummary;
 import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
-import de.uni_freiburg.informatik.ultimate.util.ExceptionUtils;
+import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 
 /**
  * 
@@ -133,7 +133,7 @@ public abstract class UltimateTestSuite {
 			TestUtil.writeNonIncrementalLog(nonIncrementalLog, mLogger);
 		} catch (final Throwable ex) {
 			mLogger.fatal(String.format("There was an exception during the writing of a summary: %s%n%s%n%s",
-					nonIncrementalLog.getClass(), ex, ExceptionUtils.getStackTrace(ex)));
+					nonIncrementalLog.getClass(), ex, CoreUtil.getStackTrace(ex)));
 		}
 	}
 

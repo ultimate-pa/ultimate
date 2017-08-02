@@ -54,7 +54,7 @@ import de.uni_freiburg.informatik.ultimate.test.decider.overallresult.SafetyChec
 import de.uni_freiburg.informatik.ultimate.test.decider.overallresult.TerminationAnalysisOverallResult;
 import de.uni_freiburg.informatik.ultimate.test.reporting.INonIncrementalLog;
 import de.uni_freiburg.informatik.ultimate.test.reporting.ITestLogfile;
-import de.uni_freiburg.informatik.ultimate.util.Utils;
+import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 
 /**
  *
@@ -454,8 +454,8 @@ public final class TestUtil {
 		final long heapMaxSize = Runtime.getRuntime().maxMemory();
 
 		logger.write(String.format("Statistics: heapSize=%s heapFreeSize=%s heapMaxSize=%s",
-				Utils.humanReadableByteCount(heapSize, true), Utils.humanReadableByteCount(heapFreeSize, true),
-				Utils.humanReadableByteCount(heapMaxSize, true)));
+				CoreUtil.humanReadableByteCount(heapSize, true), CoreUtil.humanReadableByteCount(heapFreeSize, true),
+				CoreUtil.humanReadableByteCount(heapMaxSize, true)));
 
 		logger.write("#################### END TEST RESULT ####################");
 	}

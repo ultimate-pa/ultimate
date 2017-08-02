@@ -50,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
-import de.uni_freiburg.informatik.ultimate.util.Utils;
+import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.HashedPriorityQueue;
 
 /**
@@ -83,7 +83,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 	public IsEmptyHeuristic(final AutomataLibraryServices services,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand)
 			throws AutomataOperationCanceledException {
-		this(services, operand, Utils.constructHashSet(operand.getInitialStates()), a -> false, a -> operand.isFinal(a),
+		this(services, operand, CoreUtil.constructHashSet(operand.getInitialStates()), a -> false, a -> operand.isFinal(a),
 				IHeuristic.getZeroHeuristic());
 	}
 
@@ -150,7 +150,9 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 				final RunningTaskInfo rti = new RunningTaskInfo(getClass(), taskDescription);
 				throw new AutomataOperationCanceledException(rti);
 			}
+			mLogger.info("----");
 			final Item current = worklist.poll();
+			mLogger.info("Cur " + current);
 			if (mIsGoalState.test(current.mTargetState)) {
 				return current.constructRun();
 			}
@@ -173,6 +175,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 				final boolean rem = worklist.remove(succ);
 				if (!rem && !closed.add(succ)) {
 					// if
+					mLogger.info("REM " + rem);
 					continue;
 				}
 				succ.setExpectedCostToTarget(expectedCost);
@@ -181,6 +184,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 				}
 				succ.setCostSoFar(costSoFar);
 				worklist.add(succ);
+				mLogger.info("Add " + succ);
 			}
 		}
 		return null;

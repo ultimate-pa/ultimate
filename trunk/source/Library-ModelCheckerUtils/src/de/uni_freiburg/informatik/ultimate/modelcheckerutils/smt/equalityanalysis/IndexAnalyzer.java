@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.EqualityAnalysisResult.Equality;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.util.Utils;
+import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
@@ -249,8 +249,8 @@ public class IndexAnalyzer {
 		mScript.echo(new QuotedObject("starting index analysis for TransFormula"));
 		mScript.push(1);
 		final Set<TermVariable> allTvs = new HashSet<>(Arrays.asList(termWithAdditionalInvariants.getFreeVars()));
-		allTvs.addAll(Utils.filter(mTransFormula.getInVarsReverseMapping().keySet(), TermVariable.class));
-		allTvs.addAll(Utils.filter(mTransFormula.getOutVarsReverseMapping().keySet(), TermVariable.class));
+		allTvs.addAll(CoreUtil.filter(mTransFormula.getInVarsReverseMapping().keySet(), TermVariable.class));
+		allTvs.addAll(CoreUtil.filter(mTransFormula.getOutVarsReverseMapping().keySet(), TermVariable.class));
 		final Map<Term, Term> substitutionMapping = SmtUtils.termVariables2Constants(mScript, allTvs, true);
 		final Substitution subst = new Substitution(mScript, substitutionMapping);
 		mScript.assertTerm(subst.transform(termWithAdditionalInvariants));

@@ -46,7 +46,7 @@ public class VMUtils {
 			sb.append(" * VM name: ").append(runtimeMxBean.getVmName()).append(br);
 			sb.append(" * VM vendor: ").append(runtimeMxBean.getVmVendor()).append(br);
 			sb.append(" * VM version: ").append(runtimeMxBean.getVmVersion()).append(br);
-			sb.append(" * VM arguments: ").append(Utils.join(runtimeMxBean.getInputArguments(), ",")).append(br);
+			sb.append(" * VM arguments: ").append(CoreUtil.join(runtimeMxBean.getInputArguments(), ",")).append(br);
 			sb.append(" * Spec name: ").append(runtimeMxBean.getSpecName()).append(br);
 			sb.append(" * Spec vendor: ").append(runtimeMxBean.getSpecVendor()).append(br);
 			sb.append(" * Spec version: ").append(runtimeMxBean.getSpecVersion()).append(br);

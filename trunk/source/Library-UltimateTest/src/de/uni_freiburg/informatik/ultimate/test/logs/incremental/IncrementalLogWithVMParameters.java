@@ -30,7 +30,7 @@ package de.uni_freiburg.informatik.ultimate.test.logs.incremental;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestSuite;
-import de.uni_freiburg.informatik.ultimate.util.Utils;
+import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.VMUtils;
 
 public class IncrementalLogWithVMParameters extends DefaultIncrementalLogfile {
@@ -66,7 +66,7 @@ public class IncrementalLogWithVMParameters extends DefaultIncrementalLogfile {
 			// add more stats here
 			sb.append(indent)
 					.append(String.format("Parameters: heapMaxSize=%s assertions=%s",
-							Utils.humanReadableByteCount(Runtime.getRuntime().maxMemory(), true),
+							CoreUtil.humanReadableByteCount(Runtime.getRuntime().maxMemory(), true),
 							VMUtils.areAssertionsEnabled()))
 					.append(de.uni_freiburg.informatik.ultimate.util.CoreUtil.getPlatformLineSeparator());
 			sb.append(indent).append(String.format("Test Suite Parameters: Timeout=%s s", mDeadline / 1000))

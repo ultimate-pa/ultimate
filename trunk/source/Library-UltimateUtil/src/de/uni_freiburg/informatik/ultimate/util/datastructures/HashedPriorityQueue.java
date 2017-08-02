@@ -34,7 +34,7 @@ import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.util.Utils;
+import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 
 /**
  * A {@link PriorityQueue} that additionally hashes its contents s.t. the {@link #contains(Object)} operation performs
@@ -112,7 +112,7 @@ public class HashedPriorityQueue<E> implements Queue<E>, Set<E>, Collection<E> {
 
 	@Override
 	public String toString() {
-		return Utils.join(mQueue, ", ");
+		return CoreUtil.join(mQueue, ", ");
 	}
 
 	@Override

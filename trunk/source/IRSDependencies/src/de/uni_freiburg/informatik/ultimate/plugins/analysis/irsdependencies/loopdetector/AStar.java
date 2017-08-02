@@ -41,7 +41,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
-import de.uni_freiburg.informatik.ultimate.util.Utils;
+import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.HashedPriorityQueue;
 
 /**
@@ -139,7 +139,7 @@ public class AStar<V, E> {
 				path = createPath(currentItem);
 				if (mLogger.isDebugEnabled()) {
 					mLogger.debug(String.format("Found path of length %s from source %s to target %s: %s", path.size(),
-							mStart, mTarget, Utils.join(path, ", ")));
+							mStart, mTarget, CoreUtil.join(path, ", ")));
 				}
 				break;
 			}

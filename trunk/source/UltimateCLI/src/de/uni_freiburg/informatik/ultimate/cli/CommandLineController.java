@@ -64,7 +64,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressMonitorService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
-import de.uni_freiburg.informatik.ultimate.util.Utils;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 
@@ -117,7 +116,7 @@ public class CommandLineController implements IController<RunDefinition> {
 		if (toolchainStageParams.isVersionRequested()) {
 			mLogger.info("Version is " + RcpUtils.getVersion(Activator.PLUGIN_ID));
 			mLogger.info(
-					"Maximal heap size is " + Utils.humanReadableByteCount(Runtime.getRuntime().maxMemory(), true));
+					"Maximal heap size is " + CoreUtil.humanReadableByteCount(Runtime.getRuntime().maxMemory(), true));
 			return IApplication.EXIT_OK;
 		}
 
