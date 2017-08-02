@@ -34,89 +34,78 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.EqualityAnalysisResult.Equality;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
- * Check equality for pairs of terms with respect to a given context.
+ * Check validity of an implication between two formulas
+ * antecedent ==> succedent
+ * The check is done incrementally in the sense that we can do it for
+ * several succedents.
+ * We presume that the succedent may have only variables that occurred in the
+ * antecedent (because we have to replace variables by fresh constants and
+ * these constants and determined when asserting the antecedent. 
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
-public class IncrementalEqualityAnalyzer {
+public class IncrementalImplicationChecker {
 	
 	private final ManagedScript mMgdScript;
-	private final Term mContext;
-	private boolean mContextIsAsserted;
+	private final Term mAntecedent;
+	private boolean mAntecedentIsAsserted;
 	private Substitution mVar2ConstSubstitution;
 
 	
 	
-	public IncrementalEqualityAnalyzer(final ManagedScript mgdScript, final Term context) {
+	public IncrementalImplicationChecker(final ManagedScript mgdScript, final Term antecedent) {
 		super();
 		mMgdScript = mgdScript;
-		mContext = context;
-		mContextIsAsserted = false;
+		mAntecedent = antecedent;
+		mAntecedentIsAsserted = false;
 	}
 
-	public void assertContext(final Term context) {
-		assert !mContextIsAsserted : "must not assert context twice";
+	public void assertAntecedent(final Term antecedent) {
+		assert !mAntecedentIsAsserted : "must not assert antecedent twice";
 		mMgdScript.lock(this);
 		mMgdScript.push(this, 1);
-		mVar2ConstSubstitution = constructVar2ConstSubstitution(context);
-		mMgdScript.assertTerm(this, mVar2ConstSubstitution.transform(context));
-		mContextIsAsserted = true;
+		mVar2ConstSubstitution = constructVar2ConstSubstitution(antecedent);
+		mMgdScript.assertTerm(this, mVar2ConstSubstitution.transform(antecedent));
+		mAntecedentIsAsserted = true;
 	}
 
 	/**
-	 * Construct a substitution that replaces all free TermVariables of context
+	 * Construct a substitution that replaces all free TermVariables of antecedent
 	 * by constants and declares these constants.
 	 */
-	private Substitution constructVar2ConstSubstitution(final Term context) {
-		final Set<TermVariable> allTvs = new HashSet<>(Arrays.asList(context.getFreeVars()));
+	private Substitution constructVar2ConstSubstitution(final Term term) {
+		final Set<TermVariable> allTvs = new HashSet<>(Arrays.asList(term.getFreeVars()));
 		final Map<Term, Term> substitutionMapping = SmtUtils.termVariables2Constants(mMgdScript.getScript(), allTvs, true);
 		final Substitution subst = new Substitution(mMgdScript, substitutionMapping);
 		return subst;
 	}
 	
 	
-	/**
-	 * This method does not use any efficient auxiliary methods to check
-	 * equality. We presume that was done in advance.
-	 */
-	public Equality checkEquality(final Term lhs, final Term rhs) {
-		if (!mContextIsAsserted) {
-			assertContext(mContext);
+	public Validity checkImplication(final Term succedent) {
+		if (!mAntecedentIsAsserted) {
+			assertAntecedent(mAntecedent);
 		}
-		final Term eq = mMgdScript.term(this, "=", lhs, rhs);
 		mMgdScript.push(this, 1);
-		mMgdScript.assertTerm(this, mVar2ConstSubstitution.transform(eq));
-		final LBool satWithEq = mMgdScript.checkSat(this);
+		mMgdScript.assertTerm(this, mVar2ConstSubstitution.transform(SmtUtils.not(mMgdScript.getScript(),succedent)));
+		final LBool isSat = mMgdScript.checkSat(this);
 		mMgdScript.pop(this, 1);
-		if (satWithEq == LBool.UNSAT) {
-			return Equality.NOT_EQUAL;
-		} else {
-			final Term neq = mMgdScript.term(this, "not", eq);
-			mMgdScript.push(this, 1);
-			mMgdScript.assertTerm(this, mVar2ConstSubstitution.transform(neq));
-			final LBool satWithNeq = mMgdScript.checkSat(this);
-			mMgdScript.pop(this, 1);
-			if (satWithNeq == LBool.UNSAT) {
-				return Equality.EQUAL;
-			} else {
-				return Equality.UNKNOWN;
-			}
-		}
+		return IHoareTripleChecker.convertLBool2Validity(isSat);
 	}
 	
 	
 	public void unlockSolver() {
-		if (mContextIsAsserted) {
+		if (mAntecedentIsAsserted) {
 			mMgdScript.pop(this, 1);
 			mMgdScript.unlock(this);
 		} else {
-			// We did not assert the context, hence we did not lock the solver.
+			// We did not assert the antecedent, hence we did not lock the solver.
 		}
 	}
 }

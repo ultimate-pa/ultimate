@@ -52,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ElimStore3.IndicesAndValues;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
@@ -61,7 +62,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDim
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSort;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalStore;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.EqualityAnalysisResult.Equality;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.IncrementalEqualityAnalyzer;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.IncrementalImplicationChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.ThreeValuedEquivalenceRelation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.PrenexNormalForm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierPusher;
@@ -441,7 +442,7 @@ public class ElimStorePlain {
 		final List<Term> relationsDetectedViaSolver = new ArrayList<>();
 		final ArrayList<Term> indicesList = new ArrayList<Term>(indices);
 		// TODO: filter non-represenatives not only during iterations but also in advance
-		final IncrementalEqualityAnalyzer iea = new IncrementalEqualityAnalyzer(mMgdScript, inputTerm);
+		final IncrementalImplicationChecker iea = new IncrementalImplicationChecker(mMgdScript, inputTerm);
 		for (int i = 0; i < indicesList.size(); i++) {
 			if (!tver.isRepresentative(indicesList.get(i))) {
 				continue;
@@ -461,27 +462,23 @@ public class ElimStorePlain {
 						tver.reportEquality(indicesList.get(i), indicesList.get(j));
 						mLogger.info("found equality in dual finite juncts");
 					} else {
-						if (dualFiniteJuncts.contains(SmtUtils.not(mScript, eq))) {
+						final Term neq = SmtUtils.not(mScript, eq);
+						if (dualFiniteJuncts.contains(neq)) {
 							tver.reportNotEquals(indicesList.get(i), indicesList.get(j));
 							mLogger.info("found not equals in dual finite juncts");
 						} else {
-							final Equality isEqual = iea.checkEquality(indicesList.get(i), indicesList.get(j));
-							switch (isEqual) {
-							case EQUAL:
+							final Validity isEqual = iea.checkImplication(eq);
+							if (isEqual == Validity.VALID) {
 								tver.reportEquality(indicesList.get(i), indicesList.get(j));
 								relationsDetectedViaSolver.add(eq);
 								mLogger.info("detected equality via solver");
-								break;
-							case NOT_EQUAL:
-								tver.reportNotEquals(indicesList.get(i), indicesList.get(j));
-								mLogger.info("detected not equals via solver");
-								relationsDetectedViaSolver.add(SmtUtils.not(mScript, eq));
-								break;
-							case UNKNOWN:
-								// do nothing
-								break;
-							default:
-								throw new AssertionError();
+							} else {
+								final Validity notEqualsHolds = iea.checkImplication(neq);
+								if (notEqualsHolds == Validity.VALID) {
+									tver.reportNotEquals(indicesList.get(i), indicesList.get(j));
+									mLogger.info("detected not equals via solver");
+									relationsDetectedViaSolver.add(neq);
+								}
 							}
 						}
 					}
