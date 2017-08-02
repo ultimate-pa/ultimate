@@ -40,6 +40,9 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineRelation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.BinaryEqualityRelation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.BinaryRelation.NoRelationOfThisKindException;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.BinaryRelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.NotAffineException;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
@@ -183,6 +186,31 @@ public class XnfIrd extends XjunctPartialQuantifierElimination {
 			}
 		}
 		return paramsWithoutTv.toArray(new Term[paramsWithoutTv.size()]);
+	}
+
+	/**
+	 * @return true iff oldParam is a not equals relation (resp. quality for universal quantifier)
+	 * such that one side is the variable tv and tv does not occur on the other side.
+	 */
+	private static boolean isAntiDer(final Term oldParam, final TermVariable tv, final int quantifier) {
+		BinaryEqualityRelation ber;
+		try {
+			ber = new BinaryEqualityRelation(oldParam);
+		} catch (final NoRelationOfThisKindException e) {
+			return false;
+		}
+		if ((quantifier == QuantifiedFormula.EXISTS && ber.getRelationSymbol() == RelationSymbol.DISTINCT)
+				|| quantifier == QuantifiedFormula.FORALL && ber.getRelationSymbol() == RelationSymbol.EQ) {
+			if ((ber.getLhs().equals(tv) && !Arrays.asList(ber.getRhs().getFreeVars()).contains(tv))
+					|| ber.getRhs().equals(tv) && !Arrays.asList(ber.getLhs().getFreeVars()).contains(tv)) {
+				// this is the antiDER case
+				return true;
+			} else {
+				return false;
+			}
+		} else {
+			return false;
+		}
 	}
 
 }
