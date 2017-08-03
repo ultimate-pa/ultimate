@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifierElimination;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -36,8 +37,10 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineRelation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.BinaryEqualityRelation;
@@ -81,7 +84,7 @@ public class XnfIrd extends XjunctPartialQuantifierElimination {
 				it.remove();
 				continue;
 			} else {
-				if (tv.getSort().isNumericSort()) {
+//				if (tv.getSort().isNumericSort()) {
 					final Term[] withoutTv = irdSimple(mScript, quantifier, result, tv, mLogger);
 					if (withoutTv != null) {
 						mLogger.debug(new DebugMessage("eliminated quantifier via IRD for {0}", tv));
@@ -90,10 +93,10 @@ public class XnfIrd extends XjunctPartialQuantifierElimination {
 					} else {
 						mLogger.debug(new DebugMessage("not eliminated quantifier via IRD for {0}", tv));
 					}
-				} else {
-					// ird is only applicable to variables of numeric sort
-					mLogger.debug(new DebugMessage("not eliminated quantifier via IRD for {0}", tv));
-				}
+//				} else {
+//					// ird is only applicable to variables of numeric sort
+//					mLogger.debug(new DebugMessage("not eliminated quantifier via IRD for {0}", tv));
+//				}
 			}
 		}
 		return result;
@@ -111,14 +114,30 @@ public class XnfIrd extends XjunctPartialQuantifierElimination {
 	 * @param logger
 	 */
 	public static Term[] irdSimple(final Script script, final int quantifier, final Term[] oldParams, final TermVariable tv, final ILogger logger) {
-		assert tv.getSort().isNumericSort() : "only applicable for numeric sorts";
+//		assert tv.getSort().isNumericSort() : "only applicable for numeric sorts";
 
 		final ArrayList<Term> paramsWithoutTv = new ArrayList<>();
 		int inequalitiesWithTv = 0;
+		int numberOfAntiDer = 0;
 		for (final Term oldParam : oldParams) {
 			if (!Arrays.asList(oldParam.getFreeVars()).contains(tv)) {
 				paramsWithoutTv.add(oldParam);
 			} else {
+				if (SmtSortUtils.isArraySort(tv.getSort()) || SmtSortUtils.isBoolSort(tv.getSort()) || SmtSortUtils.isFloatingpointSort(tv.getSort())) {
+					final boolean antiDer = isAntiDer(oldParam, tv, quantifier);
+					if (antiDer) {
+						numberOfAntiDer++;
+						continue;
+					} else {
+						return null;
+					}
+				}
+				
+				if (!SmtSortUtils.isNumericSort(tv.getSort()) && !SmtSortUtils.isBitvecSort(tv.getSort())) {
+					throw new UnsupportedOperationException("implement support for sort " + tv.getSort() + " in " + XnfIrd.class.getSimpleName());
+				}
+				
+				
 				AffineRelation affineRelation;
 				try {
 					affineRelation = new AffineRelation(script, oldParam);
@@ -152,6 +171,7 @@ public class XnfIrd extends XjunctPartialQuantifierElimination {
 						return null;
 					} else if (quantifier == QuantifiedFormula.FORALL) {
 						// we may drop this parameter
+						numberOfAntiDer++;
 					} else {
 						throw new AssertionError("unknown quantifier");
 					}
@@ -159,6 +179,7 @@ public class XnfIrd extends XjunctPartialQuantifierElimination {
 				case "distinct":
 					if (quantifier == QuantifiedFormula.EXISTS) {
 						// we may drop this parameter
+						numberOfAntiDer++;
 					} else if (quantifier == QuantifiedFormula.FORALL) {
 						// unable to eliminate quantifier
 						return null;
@@ -185,7 +206,39 @@ public class XnfIrd extends XjunctPartialQuantifierElimination {
 				}
 			}
 		}
+//		throw new AssertionError("ird ftw");
+		final float numberOfDomainElements = underapproximateNumberOfDomainElements(tv.getSort());
+		if (numberOfAntiDer >= numberOfDomainElements) {
+			return null;
+		}
 		return paramsWithoutTv.toArray(new Term[paramsWithoutTv.size()]);
+	}
+
+	
+	
+	private static float underapproximateNumberOfDomainElements(final Sort sort) {
+		if (SmtSortUtils.isBoolSort(sort)) {
+			return 2.0f;
+		} else if (SmtSortUtils.isNumericSort(sort)) {
+			return Float.POSITIVE_INFINITY;
+		} else if (SmtSortUtils.isBitvecSort(sort)) {
+			final BigInteger bitsize = sort.getRealSort().getIndices()[0];
+			return (float) Math.pow(2.0f, bitsize.doubleValue());
+		} else if (SmtSortUtils.isFloatingpointSort(sort)) {
+			final BigInteger[] indices = sort.getRealSort().getIndices();
+			final BigInteger bitsize = indices[0].add(indices[1]);
+			return (float) Math.pow(2.0f, bitsize.doubleValue());
+		} else if (SmtSortUtils.isArraySort(sort)) {
+			final Sort[] arg = sort.getRealSort().getArguments();
+			assert arg.length == 2;
+			final Sort indexSort = arg[0];
+			final Sort valueSort = arg[1];
+			return (float) Math.pow(underapproximateNumberOfDomainElements(indexSort),
+					underapproximateNumberOfDomainElements(valueSort));
+		} else {
+			// unknown sort, but contains at least one element
+			return 1.0f;
+		}
 	}
 
 	/**
