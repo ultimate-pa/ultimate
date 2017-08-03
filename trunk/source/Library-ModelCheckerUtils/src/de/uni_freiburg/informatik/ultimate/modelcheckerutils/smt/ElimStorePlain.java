@@ -207,6 +207,9 @@ public class ElimStorePlain {
 			eliminatees1 = Collections.emptySet();
 		} else if (qvs.size() == 1) {
 			eliminatees1 = qvs.get(0).getVariables();
+			if (qvs.get(0).getQuantifier() != mQuantifier) {
+				throw new UnsupportedOperationException("alternation not yet supported");
+			}
 		} else if (qvs.size() > 1) {
 			throw new UnsupportedOperationException("alternation not yet supported");
 		} else {
