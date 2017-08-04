@@ -1539,7 +1539,9 @@ public class CACSL2BoogieBacktranslator
 			final ILocation loc = originalExpression.getLoc();
 			if (loc instanceof CLocation) {
 				final CLocation cloc = (CLocation) loc;
-				return cloc.getNode().getRawSignature();
+				if (cloc.getNode() != null) {
+					return cloc.getNode().getRawSignature();
+				}
 			}
 			return name;
 		}
