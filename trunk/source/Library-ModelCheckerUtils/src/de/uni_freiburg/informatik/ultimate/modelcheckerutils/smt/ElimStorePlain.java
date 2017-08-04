@@ -246,12 +246,17 @@ public class ElimStorePlain {
 		if (stores.size() > 1) {
 			throw new AssertionError("not yet supported");
 		}
-		final List<MultiDimensionalSelect> selects = extractSelects(eliminatee, inputTerm);
-		
 		checkForUnsupportedSelfUpdate(eliminatee, inputTerm, mQuantifier);
 		
+		final Set<TermVariable> newAuxVars = new LinkedHashSet<>();
 		
-		final List<ApplicationTerm> selectTerms = extractSelects2(eliminatee, inputTerm);
+		final ArrayAntiDerKiller aadk = new ArrayAntiDerKiller(mMgdScript, eliminatee, mQuantifier);
+		final Term preprocessedInput = aadk.transform(inputTerm);
+		newAuxVars.addAll(aadk.getNewAuxVars());
+		
+		
+		
+		final List<ApplicationTerm> selectTerms = extractSelects2(eliminatee, preprocessedInput);
 		
 		
 		if (false && stores.isEmpty()) {
@@ -297,11 +302,11 @@ public class ElimStorePlain {
 			indices.add(getIndexOfSelect(entry));
 		}
 		final ThreeValuedEquivalenceRelation<Term> inputEqualityInformation = new ThreeValuedEquivalenceRelation<>();
-		final Pair<ThreeValuedEquivalenceRelation<Term>, List<Term>> analysisResult = analyzeIndexEqualities(indices, inputTerm, inputEqualityInformation);
+		final Pair<ThreeValuedEquivalenceRelation<Term>, List<Term>> analysisResult = analyzeIndexEqualities(indices, preprocessedInput, inputEqualityInformation);
 		final ThreeValuedEquivalenceRelation<Term> equalityInformation = analysisResult.getFirst();
 		
 		
-		final Set<TermVariable> newAuxVars = new LinkedHashSet<>();
+		
 		
 		final Sort valueSort = eliminatee.getSort().getArguments()[1];
 		final Map<Term, TermVariable> oldCellMapping = constructOldCellValueMapping(selectTerms, storeIndex, equalityInformation, valueSort);
@@ -321,7 +326,7 @@ public class ElimStorePlain {
 		final Term notEqualsDetectedBySolver = PartialQuantifierElimination.applyDualFiniteConnective(mScript, mQuantifier, analysisResult.getSecond());
 		final Term indexDefinitionsTerm = PartialQuantifierElimination.applyDualFiniteConnective(mScript, mQuantifier, indexMappingDefinitions);
 		final Term term = PartialQuantifierElimination.applyDualFiniteConnective(mScript, mQuantifier,
-				Arrays.asList(new Term[] { indexDefinitionsTerm, inputTerm, notEqualsDetectedBySolver}));
+				Arrays.asList(new Term[] { indexDefinitionsTerm, preprocessedInput, notEqualsDetectedBySolver}));
 		
 		final TermVariable newAuxArray =
 				mMgdScript.constructFreshTermVariable(s_AUX_VAR_NEW_ARRAY, eliminatee.getSort());
