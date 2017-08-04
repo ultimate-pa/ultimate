@@ -789,6 +789,16 @@ public final class Controller {
 
     de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Controller.Results getResultsOrThrow(
         java.lang.String key);
+
+    /**
+     * <code>optional string inputFileName = 2;</code>
+     */
+    java.lang.String getInputFileName();
+    /**
+     * <code>optional string inputFileName = 2;</code>
+     */
+    com.google.protobuf.ByteString
+        getInputFileNameBytes();
   }
   /**
    * Protobuf type {@code de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.ToolchainResults}
@@ -802,6 +812,7 @@ public final class Controller {
       super(builder);
     }
     private ToolchainResults() {
+      inputFileName_ = "";
     }
 
     @java.lang.Override
@@ -841,6 +852,12 @@ public final class Controller {
               results_.getMutableMap().put(results.getKey(), results.getValue());
               break;
             }
+            case 18: {
+              java.lang.String s = input.readStringRequireUtf8();
+
+              inputFileName_ = s;
+              break;
+            }
           }
         }
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
@@ -875,6 +892,7 @@ public final class Controller {
               de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Controller.ToolchainResults.class, de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Controller.ToolchainResults.Builder.class);
     }
 
+    private int bitField0_;
     public static final int RESULTS_FIELD_NUMBER = 1;
     private static final class ResultsDefaultEntryHolder {
       static final com.google.protobuf.MapEntry<
@@ -951,6 +969,40 @@ public final class Controller {
       return map.get(key);
     }
 
+    public static final int INPUTFILENAME_FIELD_NUMBER = 2;
+    private volatile java.lang.Object inputFileName_;
+    /**
+     * <code>optional string inputFileName = 2;</code>
+     */
+    public java.lang.String getInputFileName() {
+      java.lang.Object ref = inputFileName_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        inputFileName_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>optional string inputFileName = 2;</code>
+     */
+    public com.google.protobuf.ByteString
+        getInputFileNameBytes() {
+      java.lang.Object ref = inputFileName_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        inputFileName_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
@@ -972,6 +1024,9 @@ public final class Controller {
             .build();
         output.writeMessage(1, results);
       }
+      if (!getInputFileNameBytes().isEmpty()) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 2, inputFileName_);
+      }
     }
 
     public int getSerializedSize() {
@@ -988,6 +1043,9 @@ public final class Controller {
             .build();
         size += com.google.protobuf.CodedOutputStream
             .computeMessageSize(1, results);
+      }
+      if (!getInputFileNameBytes().isEmpty()) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, inputFileName_);
       }
       memoizedSize = size;
       return size;
@@ -1007,6 +1065,8 @@ public final class Controller {
       boolean result = true;
       result = result && internalGetResults().equals(
           other.internalGetResults());
+      result = result && getInputFileName()
+          .equals(other.getInputFileName());
       return result;
     }
 
@@ -1021,6 +1081,8 @@ public final class Controller {
         hash = (37 * hash) + RESULTS_FIELD_NUMBER;
         hash = (53 * hash) + internalGetResults().hashCode();
       }
+      hash = (37 * hash) + INPUTFILENAME_FIELD_NUMBER;
+      hash = (53 * hash) + getInputFileName().hashCode();
       hash = (29 * hash) + unknownFields.hashCode();
       memoizedHashCode = hash;
       return hash;
@@ -1162,6 +1224,8 @@ public final class Controller {
       public Builder clear() {
         super.clear();
         internalGetMutableResults().clear();
+        inputFileName_ = "";
+
         return this;
       }
 
@@ -1185,8 +1249,11 @@ public final class Controller {
       public de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Controller.ToolchainResults buildPartial() {
         de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Controller.ToolchainResults result = new de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Controller.ToolchainResults(this);
         int from_bitField0_ = bitField0_;
+        int to_bitField0_ = 0;
         result.results_ = internalGetResults();
         result.results_.makeImmutable();
+        result.inputFileName_ = inputFileName_;
+        result.bitField0_ = to_bitField0_;
         onBuilt();
         return result;
       }
@@ -1230,6 +1297,10 @@ public final class Controller {
         if (other == de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Controller.ToolchainResults.getDefaultInstance()) return this;
         internalGetMutableResults().mergeFrom(
             other.internalGetResults());
+        if (!other.getInputFileName().isEmpty()) {
+          inputFileName_ = other.inputFileName_;
+          onChanged();
+        }
         onChanged();
         return this;
       }
@@ -1373,6 +1444,75 @@ public final class Controller {
       public Builder putAllResults(
           java.util.Map<java.lang.String, de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Controller.Results> values) {
         getMutableResults().putAll(values);
+        return this;
+      }
+
+      private java.lang.Object inputFileName_ = "";
+      /**
+       * <code>optional string inputFileName = 2;</code>
+       */
+      public java.lang.String getInputFileName() {
+        java.lang.Object ref = inputFileName_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          inputFileName_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>optional string inputFileName = 2;</code>
+       */
+      public com.google.protobuf.ByteString
+          getInputFileNameBytes() {
+        java.lang.Object ref = inputFileName_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          inputFileName_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>optional string inputFileName = 2;</code>
+       */
+      public Builder setInputFileName(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  
+        inputFileName_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string inputFileName = 2;</code>
+       */
+      public Builder clearInputFileName() {
+        
+        inputFileName_ = getDefaultInstance().getInputFileName();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string inputFileName = 2;</code>
+       */
+      public Builder setInputFileNameBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+        
+        inputFileName_ = value;
+        onChanged();
         return this;
       }
       public final Builder setUnknownFields(
@@ -4066,27 +4206,28 @@ public final class Controller {
       "f\"\204\001\n\rResultSummary\022\023\n\013description\030\001 \001(\t" +
       "\022^\n\006result\030\002 \001(\0162N.de.uni_freiburg.infor" +
       "matik.ultimate.servercontroller.protobuf" +
-      ".ToolChainResult\"\371\001\n\020ToolchainResults\022m\n" +
+      ".ToolChainResult\"\220\002\n\020ToolchainResults\022m\n" +
       "\007results\030\001 \003(\0132\\.de.uni_freiburg.informa" +
       "tik.ultimate.servercontroller.protobuf.T" +
-      "oolchainResults.ResultsEntry\032v\n\014ResultsE" +
-      "ntry\022\013\n\003key\030\001 \001(\t\022U\n\005value\030\002 \001(\0132F.de.un",
-      "i_freiburg.informatik.ultimate.servercon" +
-      "troller.protobuf.Results:\0028\001\"a\n\007Results\022" +
-      "V\n\007results\030\001 \003(\0132E.de.uni_freiburg.infor" +
-      "matik.ultimate.servercontroller.protobuf" +
-      ".Result\"\277\001\n\006Result\022\016\n\006plugin\030\001 \001(\t\022Y\n\010lo" +
-      "cation\030\002 \001(\0132G.de.uni_freiburg.informati" +
-      "k.ultimate.servercontroller.protobuf.Loc" +
-      "ation\022\030\n\020shortDescription\030\003 \001(\t\022\027\n\017longD" +
-      "escription\030\004 \001(\t\022\027\n\017resultClassName\030\005 \001(" +
-      "\t\"b\n\010Location\022\020\n\010fileName\030\001 \001(\t\022\021\n\tstart",
-      "Line\030\002 \001(\005\022\017\n\007endLine\030\003 \001(\005\022\020\n\010startCol\030" +
-      "\004 \001(\005\022\016\n\006endCol\030\005 \001(\005*\205\001\n\017ToolChainResul" +
-      "t\022\021\n\rGENERICRESULT\020\000\022\025\n\010NORESULT\020\377\377\377\377\377\377\377" +
-      "\377\377\001\022\013\n\007CORRECT\020\001\022\016\n\nUNPROVABLE\020\002\022\013\n\007TIME" +
-      "OUT\020\003\022\r\n\tINCORRECT\020\004\022\017\n\013SYNTAXERROR\020\005B\014B" +
-      "\nControllerb\006proto3"
+      "oolchainResults.ResultsEntry\022\025\n\rinputFil" +
+      "eName\030\002 \001(\t\032v\n\014ResultsEntry\022\013\n\003key\030\001 \001(\t",
+      "\022U\n\005value\030\002 \001(\0132F.de.uni_freiburg.inform" +
+      "atik.ultimate.servercontroller.protobuf." +
+      "Results:\0028\001\"a\n\007Results\022V\n\007results\030\001 \003(\0132" +
+      "E.de.uni_freiburg.informatik.ultimate.se" +
+      "rvercontroller.protobuf.Result\"\277\001\n\006Resul" +
+      "t\022\016\n\006plugin\030\001 \001(\t\022Y\n\010location\030\002 \001(\0132G.de" +
+      ".uni_freiburg.informatik.ultimate.server" +
+      "controller.protobuf.Location\022\030\n\020shortDes" +
+      "cription\030\003 \001(\t\022\027\n\017longDescription\030\004 \001(\t\022" +
+      "\027\n\017resultClassName\030\005 \001(\t\"b\n\010Location\022\020\n\010",
+      "fileName\030\001 \001(\t\022\021\n\tstartLine\030\002 \001(\005\022\017\n\007end" +
+      "Line\030\003 \001(\005\022\020\n\010startCol\030\004 \001(\005\022\016\n\006endCol\030\005" +
+      " \001(\005*\205\001\n\017ToolChainResult\022\021\n\rGENERICRESUL" +
+      "T\020\000\022\025\n\010NORESULT\020\377\377\377\377\377\377\377\377\377\001\022\013\n\007CORRECT\020\001\022" +
+      "\016\n\nUNPROVABLE\020\002\022\013\n\007TIMEOUT\020\003\022\r\n\tINCORREC" +
+      "T\020\004\022\017\n\013SYNTAXERROR\020\005B\014B\nControllerb\006prot" +
+      "o3"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -4111,7 +4252,7 @@ public final class Controller {
     internal_static_de_uni_freiburg_informatik_ultimate_servercontroller_protobuf_ToolchainResults_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_de_uni_freiburg_informatik_ultimate_servercontroller_protobuf_ToolchainResults_descriptor,
-        new java.lang.String[] { "Results", });
+        new java.lang.String[] { "Results", "InputFileName", });
     internal_static_de_uni_freiburg_informatik_ultimate_servercontroller_protobuf_ToolchainResults_ResultsEntry_descriptor =
       internal_static_de_uni_freiburg_informatik_ultimate_servercontroller_protobuf_ToolchainResults_descriptor.getNestedTypes().get(0);
     internal_static_de_uni_freiburg_informatik_ultimate_servercontroller_protobuf_ToolchainResults_ResultsEntry_fieldAccessorTable = new

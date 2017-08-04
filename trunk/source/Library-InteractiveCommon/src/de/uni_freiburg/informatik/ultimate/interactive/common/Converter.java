@@ -61,6 +61,15 @@ public class Converter extends AbstractConverter<GeneratedMessageV3, Object> {
 		return Paths.get(base, path.getPieceList().toArray(new String[path.getPieceCount()]));
 	}
 
+	private static Path[] toPaths(final Common.FS.Paths paths) {
+		final Path[] result = new Path[paths.getPathsCount()];
+		for (int i = 0; i < paths.getPathsCount(); i++) {
+			final Common.FS.Path path = paths.getPaths(i);
+			result[i] = Paths.get(path.getPiece(0), path.getPieceList().stream().skip(1).toArray(String[]::new));
+		}
+		return result;
+	}
+
 	private Common.FS.Directory convertDirectory(final Path path, final PathFilter filter) {
 		if (!path.toFile().isDirectory())
 			throw new IllegalArgumentException(path.toString() + " is not a valid directory.");
@@ -136,6 +145,8 @@ public class Converter extends AbstractConverter<GeneratedMessageV3, Object> {
 		converterRegistry.registerBA(Common.FS.class, RootPath.class, this::convertBasePath);
 
 		converterRegistry.registerBA(Common.FS.Path.class, Path.class, Converter::convertPath);
+
+		converterRegistry.registerAB(Common.FS.Paths.class, Path[].class, Converter::toPaths);
 
 		converterRegistry.registerAB(Common.Confirm.class, Boolean.class, Converter::toBoolean);
 

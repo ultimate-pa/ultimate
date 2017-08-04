@@ -24,6 +24,10 @@ message FS {
 		repeated string piece = 1;
 	}
 
+	message Paths {
+		repeated Path paths = 1;
+	}
+
 	string tag = 1;
 	Directory base = 2;
 }

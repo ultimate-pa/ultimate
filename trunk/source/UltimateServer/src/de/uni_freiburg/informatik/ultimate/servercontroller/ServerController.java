@@ -37,6 +37,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -76,8 +78,8 @@ import de.uni_freiburg.informatik.ultimate.server.Client;
 import de.uni_freiburg.informatik.ultimate.server.IInteractiveServer;
 import de.uni_freiburg.informatik.ultimate.servercontroller.converter.ControllerConverter;
 import de.uni_freiburg.informatik.ultimate.servercontroller.protoserver.ProtoServer;
-import de.uni_freiburg.informatik.ultimate.servercontroller.util.CommandLineArgs;
 import de.uni_freiburg.informatik.ultimate.servercontroller.util.RcpUtils;
+import de.uni_freiburg.informatik.ultimate.servercontroller.util.cli.CommandLineArgs;
 
 /**
  * The {@link ServerController} class provides a user interface for Clients that can connect via TCP.
@@ -95,6 +97,8 @@ public class ServerController implements IController<RunDefinition> {
 	private IInteractive<Object> mCommonInterface;
 
 	private CommandLineArgs mCla;
+	protected final BlockingQueue<File> mInputFileQueue = new ArrayBlockingQueue<>(1000);
+	private File mCurrentInputFile;
 
 	private AbstractConverter.Initializer<GeneratedMessageV3> mConverterInitializer;
 	private int mListenTimeout;
@@ -126,24 +130,20 @@ public class ServerController implements IController<RunDefinition> {
 			return -1;
 		}
 
-		mServer = new ProtoServer(mLogger, mCla.getPort());
+		mServer = new ProtoServer(mLogger, mCla.Port.getValue());
 
 		// final File workingDir = RcpUtils.getWorkingDirectory();
 		final Map<File, IToolchainData<RunDefinition>> availableToolchains =
-				getAvailableToolchains(core, mCla.getToolchainDirPath());
-
-		// final File[] availableSettingsFiles = getAvailableSettingsFiles();
-
-		// final File[] availableInputFiles = getAvailableInputFiles();
+				getAvailableToolchains(core, mCla.Toolchain.getValue());
 
 		if (availableToolchains.isEmpty()) {
-			mLogger.fatal("No toolchains found in " + mCla.getToolchainDirPath());
+			mLogger.fatal("No toolchains found in " + mCla.Toolchain.getValue());
 			return -1;
 		}
 
-		mListenTimeout = mCla.getTimeout();
+		mListenTimeout = mCla.Timeout.getValue();
 
-		mLogger.debug("Starting Server on Port " + mCla.getPort());
+		mLogger.debug("Starting Server on Port " + mCla.Port.getValue());
 		mServer.start();
 
 		int result = IApplication.EXIT_OK;
@@ -192,16 +192,6 @@ public class ServerController implements IController<RunDefinition> {
 		return result;
 	}
 
-	/*
-	 * private File[] getAvailableSettingsFiles() { final File[] result = mCla.getSettingsFilePath().listFiles((file,
-	 * name) -> name.endsWith(".epf")); if (result.length == 0) { mLogger.error("No Settings files found in " +
-	 * mCla.getSettingsFilePath().getAbsolutePath()); return null; } return result; }
-	 * 
-	 * private File[] getAvailableInputFiles() { final File[] result = mCla.getInputDirPath().listFiles(f ->
-	 * f.isFile()); if (result.length == 0) { mLogger.error("No Input files found in " +
-	 * mCla.getInputDirPath().getAbsolutePath()); return null; } return result; }
-	 */
-
 	private void initWrapper(final ICore<RunDefinition> core,
 			final Map<File, IToolchainData<RunDefinition>> availableToolchains)
 			throws InterruptedException, ExecutionException, TimeoutException {
@@ -223,6 +213,8 @@ public class ServerController implements IController<RunDefinition> {
 		mCommonInterface = mConverterInitializer.getConvertedInteractiveInterface(commonConverter);
 
 		commonFuture.complete(mCommonInterface);
+		mCommonInterface.register(RootPath.class, this::sendInputRootPath);
+		mCommonInterface.register(Path[].class, this::handleIncomingInputPaths);
 
 		final List<File> tcFiles = new ArrayList<>(availableToolchains.keySet());
 
@@ -230,22 +222,33 @@ public class ServerController implements IController<RunDefinition> {
 			requestAndLoadSettings(core);
 			requestAndLoadToolchain(core, tcFiles);
 
-			final File[] inputFiles = requestInput();
+			if (mInputFileQueue.isEmpty())
+				mInputFileQueue.offer(requestInput());
 
-			if (!mCommonInterface.request(Boolean.class).get())
-				continue;
+			while (!mInputFileQueue.isEmpty()) {
+				if (mCla.ConfirmTC.getValue()) {
+					if (!mCommonInterface.request(Boolean.class, "Continue?:" + mInputFileQueue.peek().getName()).get())
+						continue;
+				}
 
-			execToolchain(core, inputFiles);
-			if (client.hasIOExceptionOccurred()) {
-				mLogger.info("Lost client connection before Toolchain was completed. Reinitializing.");
-				return;
+				mCurrentInputFile = mInputFileQueue.poll();
+				if (mCurrentInputFile == null)
+					break;
+
+				execToolchain(core, new File[] { mCurrentInputFile });
+				if (client.hasIOExceptionOccurred()) {
+					mLogger.info("Lost client connection before Toolchain was completed. Reinitializing.");
+					return;
+				}
+				if (client.waitForQuit().isDone()) {
+					mLogger.info("Client has quitted before Toolchain was completed. Reinitializing.");
+					return;
+				}
+				mLogger.info("Toolchain finished");
 			}
-			if (client.waitForQuit().isDone()) {
-				mLogger.info("Client has quitted before Toolchain was completed. Reinitializing.");
-				return;
-			}
-			mLogger.info("Toolchain finished");
-			if (!mCommonInterface.request(Boolean.class).get())
+			if (!mCommonInterface
+					.request(Boolean.class, "Input Files Processed:Ultimate has processed all input files. Continue?")
+					.get())
 				break;
 		}
 
@@ -271,8 +274,7 @@ public class ServerController implements IController<RunDefinition> {
 			throws InterruptedException, ExecutionException {
 		// TODO: allow custom settings for plugins chosen from toolchain (see cli controller)
 		final Path settingsFile = mCommonInterface
-				.request(Path.class, RootPath.newInstance(mCla.getSettingsFilePath().toPath(), "Settings", ".epf"))
-				.get();
+				.request(Path.class, RootPath.newInstance(mCla.Settings.getValue().toPath(), "Settings", ".epf")).get();
 		try {
 			core.resetPreferences();
 			core.loadPreferences(settingsFile.toFile().getAbsolutePath());
@@ -281,13 +283,26 @@ public class ServerController implements IController<RunDefinition> {
 		}
 	}
 
-	private File[] requestInput() throws InterruptedException, ExecutionException {
+	private File requestInput() throws InterruptedException, ExecutionException {
 		// final File inputFile = requestChoice(getAvailableInputFiles(), File::getName, "Pick an Input File");
-		final File inputFile = requestFile(mCla.getInputDirPath().toPath(), "Input");
+		final File inputFile = requestFile(mCla.Input.getValue().toPath(), "Input");
 
 		mCommonInterface.send(inputFile);
 
-		return new File[] { inputFile };
+		return inputFile;
+	}
+
+	private RootPath sendInputRootPath() {
+		return RootPath.newInstance(mCla.Input.getValue().toPath(), "Input");
+	}
+
+	private void handleIncomingInputPaths(final Path[] inputs) {
+		for (final Path input : inputs) {
+			if (!mInputFileQueue.offer(mCla.Input.getValue().toPath().resolve(input).toFile()))
+				break;
+			else
+				mLogger.info("Client added " + input.toString());
+		}
 	}
 
 	private File requestFile(final Path basePath, final String tag) throws InterruptedException, ExecutionException {
@@ -333,6 +348,7 @@ public class ServerController implements IController<RunDefinition> {
 		// final ResultSummarizer summarizer = new ResultSummarizer(results);
 		final ResultsWrapper wrapper = new ResultsWrapper();
 		wrapper.results = results;
+		wrapper.inputFile = mCurrentInputFile;
 
 		mInternalInterface.send(wrapper);
 	}
@@ -390,6 +406,7 @@ public class ServerController implements IController<RunDefinition> {
 	}
 
 	public static class ResultsWrapper {
+		public File inputFile;
 		public Map<String, List<IResult>> results;
 	}
 }

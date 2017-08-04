@@ -68,6 +68,7 @@ public class ControllerConverter extends AbstractConverter<GeneratedMessageV3, O
 		converterRegistry.registerBA(ToolchainResults.class, ResultsWrapper.class, rs -> {
 			final ToolchainResults.Builder builder = ToolchainResults.newBuilder();
 			rs.results.entrySet().stream().forEach(e -> builder.putResults(e.getKey(), convertResults(e.getValue())));
+			builder.setInputFileName(rs.inputFile.getName());
 			return builder.build();
 		});
 	}
