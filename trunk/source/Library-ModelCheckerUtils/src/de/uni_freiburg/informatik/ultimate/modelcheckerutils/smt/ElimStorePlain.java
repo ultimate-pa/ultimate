@@ -241,7 +241,7 @@ public class ElimStorePlain {
 
 		final Set<TermVariable> newAuxVars = new LinkedHashSet<>();
 
-		final ArrayAntiDerKiller aadk = new ArrayAntiDerKiller(mMgdScript, eliminatee, mQuantifier);
+		final ArrayEqualityExplicator aadk = new ArrayEqualityExplicator(mMgdScript, eliminatee, mQuantifier);
 		final Term preprocessedInput = aadk.transform(inputTerm);
 		newAuxVars.addAll(aadk.getNewAuxVars());
 
@@ -421,6 +421,21 @@ public class ElimStorePlain {
 					}
 					continue;
 				}
+			} else if (mQuantifier == QuantifiedFormula.FORALL) {
+				final LBool sat = SmtUtils.checkSatTerm(mScript, SmtUtils.not(mScript, disjuct));
+				if (sat == LBool.UNSAT) {
+					mLogger.info("saved conjunct");
+					if (ci.size() == 1) {
+						final LBool inputsat = SmtUtils.checkSatTerm(mScript, SmtUtils.not(mScript, inputTerm));
+						if (inputsat == LBool.SAT) {
+							throw new AssertionError(
+									"input must have been valid " + " term size " + new DagSizePrinter(inputTerm));
+						}
+					}
+					continue;
+				}
+			} else {
+				throw new AssertionError("unknown quantifier");
 			}
 			disjuncts.add(disjuct);
 

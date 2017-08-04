@@ -39,41 +39,37 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
- * TODO
- * 
+ * Preprocessing step for partial array quantifier elimination.
+ * If we have a term of the form
+ *     arr1 != arr2
+ * (the negation of the form where we can apply DER) we replace it by 
+ *     ∃ aux. arr1[aux] != arr2[aux]
+ * (Analogously for universal quantification.)
+ * Presumes that the input has NNF. Provides all auxiliary variables that 
+ * have been introduced.
  * @author Matthias Heizmann
  * 
  */
-public class ArrayAntiDerKiller extends TermTransformer {
-	
+public class ArrayEqualityExplicator extends TermTransformer {
+
 	private final static String AUX_VAR_PREFIX = "antiDerIndex";
-	
+
 	private final Script mScript;
 	private final ManagedScript mMgdScript;
 	private final TermVariable mEliminatee;
 	private final int mQuantifier;
 	private final List<TermVariable> mNewAuxVars = new ArrayList<>();
 
-	public ArrayAntiDerKiller(final ManagedScript mgdScript, final TermVariable eliminatee, final int quantifier) {
+	public ArrayEqualityExplicator(final ManagedScript mgdScript, final TermVariable eliminatee, final int quantifier) {
 		mScript = mgdScript.getScript();
 		mMgdScript = mgdScript;
 		mEliminatee = eliminatee;
 		mQuantifier = quantifier;
 	}
-	
-	
-	
-	
-	
 
 	public List<TermVariable> getNewAuxVars() {
 		return mNewAuxVars;
 	}
-
-
-
-
-
 
 	@Override
 	protected void convert(final Term term) {
@@ -98,7 +94,8 @@ public class ArrayAntiDerKiller extends TermTransformer {
 					}
 				}
 			} else if (fun.equals("distinct")) {
-//				throw new AssertionError("distinct should have been removed");
+				// TODO: do not allow distinct after our convention does not allow it nay more
+				// throw new AssertionError("distinct should have been removed");
 				if (appTerm.getParameters().length != 2) {
 					throw new UnsupportedOperationException("only binary equality supported");
 				}
@@ -147,22 +144,18 @@ public class ArrayAntiDerKiller extends TermTransformer {
 				}
 			}
 		}
-		
+
 		super.convert(term);
 	}
 
-
-
-
 	private Term constructElementwiseEquality(final Term lhsArray, final Term rhsArray) {
 		final Sort indexSort = mEliminatee.getSort().getArguments()[0];
-		final TermVariable auxIndex = mMgdScript.variable(AUX_VAR_PREFIX, indexSort);
+		final TermVariable auxIndex = mMgdScript.constructFreshTermVariable(AUX_VAR_PREFIX, indexSort);
 		mNewAuxVars.add(auxIndex);
 		final Term lhsSelect = mScript.term("select", lhsArray, auxIndex);
-		final Term rhsSelect = mScript.term("select", rhsArray, auxIndex); 
+		final Term rhsSelect = mScript.term("select", rhsArray, auxIndex);
 		final Term result = mScript.term("=", lhsSelect, rhsSelect);
 		return result;
 	}
-
 
 }
