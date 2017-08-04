@@ -29,7 +29,7 @@
 # Set this variable to either "false" or "true".
 # "false": Do not automatically analyze this plugin with SonarLint.
 # "true": Automatically analyze this plugin with SonarLint.
-ENABLE_ANALYSIS="false"
+ENABLE_ANALYSIS=""
 
 if [[ $ENABLE_ANALYSIS == "" ]] ;
 then
