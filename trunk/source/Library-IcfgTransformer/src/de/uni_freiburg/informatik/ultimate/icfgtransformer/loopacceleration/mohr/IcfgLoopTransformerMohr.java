@@ -36,6 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IBacktranslationTracker;
@@ -101,7 +102,11 @@ public class IcfgLoopTransformerMohr<INLOC extends IcfgLocation, OUTLOC extends 
 		transform(originalIcfg);
 		mTib.finish();
 		mResult = resultIcfg;
-		mLogger.debug(mResult);
+
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug(mResult);
+		}
+
 	}
 
 	@SuppressWarnings("unchecked")
@@ -119,12 +124,12 @@ public class IcfgLoopTransformerMohr<INLOC extends IcfgLocation, OUTLOC extends 
 				loopSummaries.put(loop.getHead(), transformLoop(loop));
 				loopExits.put(loop.getHead(), new HashSet<>());
 				for (final Pair<List<UnmodifiableTransFormula>, INLOC> exitPath : loop.getLoopExits()) {
-					final UnmodifiableTransFormula exitUtf = TransFormulaUtils.sequentialComposition(mLogger,
-							mServices, mManagedScript, false, false, false,
-							XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION,
-							SimplificationTechnique.SIMPLIFY_DDA, exitPath.getFirst());
+					final UnmodifiableTransFormula exitUtf =
+							TransFormulaUtils.sequentialComposition(mLogger, mServices, mManagedScript, false, false,
+									false, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION,
+									SimplificationTechnique.SIMPLIFY_DDA, exitPath.getFirst());
 					mLogger.info("Found exit path: " + exitUtf);
-					loopExits.get(loop.getHead()).add(new Pair<UnmodifiableTransFormula, INLOC>(exitUtf, exitPath.getSecond()));
+					loopExits.get(loop.getHead()).add(new Pair<>(exitUtf, exitPath.getSecond()));
 				}
 			}
 		}
@@ -152,15 +157,18 @@ public class IcfgLoopTransformerMohr<INLOC extends IcfgLocation, OUTLOC extends 
 							XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION,
 							SimplificationTechnique.SIMPLIFY_DDA, Arrays.asList(loopSummary, edge.getTransformula()));
 					mLogger.info("Loop Summary Transformula: " + utf);
-					final IcfgEdge e = mTib.createNewInternalTransition(newSource, newTarget, utf, mOverApproximation.get(node));
-
+					final IcfgEdge e =
+							mTib.createNewInternalTransition(newSource, newTarget, utf, mOverApproximation.get(node));
+					new Overapprox("Because of loop acceleration", null).annotate(e);
 					for (final Pair<UnmodifiableTransFormula, INLOC> exit : loopExits.get(node)) {
 						final OUTLOC exitTarget = mTib.createNewLocation(exit.getSecond());
-						final UnmodifiableTransFormula exitSummary = TransFormulaUtils.sequentialComposition(mLogger, mServices,
-								mManagedScript, false, false, false,
+						final UnmodifiableTransFormula exitSummary = TransFormulaUtils.sequentialComposition(mLogger,
+								mServices, mManagedScript, false, false, false,
 								XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION,
 								SimplificationTechnique.SIMPLIFY_DDA, Arrays.asList(loopSummary, exit.getFirst()));
-						mTib.createNewInternalTransition(newSource, exitTarget, exitSummary, mOverApproximation.get(node));
+						final IcfgEdge o = mTib.createNewInternalTransition(newSource, exitTarget, exitSummary,
+								mOverApproximation.get(node));
+						new Overapprox("Because of loop acceleration", null).annotate(o);
 					}
 
 				} else {
