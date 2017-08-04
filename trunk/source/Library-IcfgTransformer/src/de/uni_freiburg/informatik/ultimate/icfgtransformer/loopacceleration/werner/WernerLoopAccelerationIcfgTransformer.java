@@ -36,7 +36,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-
 import java.util.Objects;
 import java.util.Set;
 
@@ -60,15 +59,16 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Tra
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermClassifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
- * A basic IcfgTransformer that applies the
- * {@link ExampleLoopAccelerationTransformulaTransformer}, i.e., replaces all
- * transformulas of an {@link IIcfg} with a new instance. + First tries for loop
- * acceleration.
+ * A basic IcfgTransformer that applies the {@link ExampleLoopAccelerationTransformulaTransformer}, i.e., replaces all
+ * transformulas of an {@link IIcfg} with a new instance. + First tries for loop acceleration.
  *
  * @param <INLOC>
  *            The type of the locations of the old IIcfg.
@@ -89,11 +89,11 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 	private final IUltimateServiceProvider mServices;
 	private final IIcfgSymbolTable mOldSymbolTable;
 
-	private enum mDealingWithArraysTypes {
+	private enum DealingWithArraysTypes {
 		EXCEPTION, SKIP_LOOP;
 	}
 
-	private final mDealingWithArraysTypes mDealingWithArrays;
+	private final DealingWithArraysTypes mDealingWithArrays;
 
 	/**
 	 * Construct a new Loop Acceleration Icfg Transformer.
@@ -120,7 +120,7 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 		mOldSymbolTable = originalIcfg.getCfgSmtToolkit().getSymbolTable();
 
 		// How to deal with Arrays in the loop:
-		mDealingWithArrays = mDealingWithArraysTypes.SKIP_LOOP;
+		mDealingWithArrays = DealingWithArraysTypes.SKIP_LOOP;
 
 		mLoopBodies = mLoopDetector.getLoopBodies();
 
@@ -134,24 +134,24 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 
 		transformer.preprocessIcfg(originalIcfg);
 
-		for (Entry<IcfgLocation, Loop> entry : mLoopBodies.entrySet()) {
+		for (final Entry<IcfgLocation, Loop> entry : mLoopBodies.entrySet()) {
 			if (entry.getValue().getPath().isEmpty()) {
 				continue;
 			}
 			summarizeLoop(entry.getValue());
 		}
 
-		final BasicIcfg<OUTLOC> resultIcfg = new BasicIcfg<>(newIcfgIdentifier, originalIcfg.getCfgSmtToolkit(),
-				outLocationClass);
-		final TransformedIcfgBuilder<INLOC, OUTLOC> lst = new TransformedIcfgBuilder<>(funLocFac,
-				backtranslationTracker, transformer, originalIcfg, resultIcfg);
+		final BasicIcfg<OUTLOC> resultIcfg =
+				new BasicIcfg<>(newIcfgIdentifier, originalIcfg.getCfgSmtToolkit(), outLocationClass);
+		final TransformedIcfgBuilder<INLOC, OUTLOC> lst =
+				new TransformedIcfgBuilder<>(funLocFac, backtranslationTracker, transformer, originalIcfg, resultIcfg);
 		processLocations(originalIcfg.getInitialNodes(), lst);
 		lst.finish();
 
 		return resultIcfg;
 	}
 
-	private void summarizeLoop(Loop loop) {
+	private void summarizeLoop(final Loop loop) {
 
 		if (loop.isSummarized()) {
 			return;
@@ -160,18 +160,18 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 		final TermClassifier classifier = new TermClassifier();
 		classifier.checkTerm(loop.getFormula().getFormula());
 
-		if (classifier.hasArrays() && mDealingWithArrays.equals(mDealingWithArraysTypes.EXCEPTION)) {
+		if (classifier.hasArrays() && mDealingWithArrays.equals(DealingWithArraysTypes.EXCEPTION)) {
 			mLogger.debug("LOOP HAS ARRAYS");
 			throw new IllegalArgumentException("Cannot deal with Arrays");
 		}
 
-		if (classifier.hasArrays() && mDealingWithArrays.equals(mDealingWithArraysTypes.SKIP_LOOP)) {
+		if (classifier.hasArrays() && mDealingWithArrays.equals(DealingWithArraysTypes.SKIP_LOOP)) {
 			mLogger.debug("LOOP HAS ARRAYS");
 			return;
 		}
 
 		if (loop.isNested()) {
-			for (Loop nestedLoop : loop.getNestedLoops()) {
+			for (final Loop nestedLoop : loop.getNestedLoops()) {
 				summarizeLoop(nestedLoop);
 			}
 			mLogger.debug("NESTED LOOPPATH: " + loop.getNestedLoops());
@@ -190,11 +190,11 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 			final SymbolicMemory symbolicMemory = new SymbolicMemory(mScript, mLogger, tf, mOldSymbolTable);
 			symbolicMemory.updateVars(update.getUpdatedVars());
 
-			final Term condition = symbolicMemory
-					.updateCondition(TransFormulaUtils.computeGuard(tf, mScript, mServices, mLogger));
+			final Term condition =
+					symbolicMemory.updateCondition(TransFormulaUtils.computeGuard(tf, mScript, mServices, mLogger));
 
-			final TermVariable backbonePathCounter = mScript.constructFreshTermVariable("kappa",
-					mScript.getScript().sort(SmtSortUtils.INT_SORT));
+			final TermVariable backbonePathCounter =
+					mScript.constructFreshTermVariable("kappa", mScript.getScript().sort(SmtSortUtils.INT_SORT));
 
 			pathCounter.add(backbonePathCounter);
 			backbone.setPathCounter(backbonePathCounter);
@@ -203,11 +203,11 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 			if (backbone.isNested()) {
 				mLogger.debug("THIS BACKBONE IS NESTED: " + backbone.getNestedLoops());
 				mLogger.debug("MEMEORY BEFORE: " + symbolicMemory.getMemory());
-				for (Loop nestedLoop : backbone.getNestedLoops()) {
+				for (final Loop nestedLoop : backbone.getNestedLoops()) {
 					if (nestedLoop.getPath().isEmpty()) {
 						continue;
 					}
-					Term term = Util.and(mScript.getScript(), backbone.getCondition(), nestedLoop.getCondition());
+					final Term term = Util.and(mScript.getScript(), backbone.getCondition(), nestedLoop.getCondition());
 					backbone.setCondition(term);
 
 					symbolicMemory.updateVars(nestedLoop.getIteratedMemory().getIteratedMemory());
@@ -223,8 +223,8 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 		final Map<TermVariable, TermVariable> newPathCounter = new HashMap<>();
 
 		for (int i = 0; i < pathCounter.size(); i++) {
-			final TermVariable newBackbonePathCounter = mScript.constructFreshTermVariable("tau",
-					mScript.getScript().sort(SmtSortUtils.INT_SORT));
+			final TermVariable newBackbonePathCounter =
+					mScript.constructFreshTermVariable("tau", mScript.getScript().sort(SmtSortUtils.INT_SORT));
 			newPathCounter.put(pathCounter.get(i), newBackbonePathCounter);
 		}
 		loop.addVar(pathCounter);
@@ -280,15 +280,21 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 						final TransFormulaBuilder tfb = new TransFormulaBuilder(loop.getIteratedMemory().getVars(),
 								loop.getIteratedMemory().getVars(), true, null, true, Collections.emptySet(), false);
 
-						tfb.setFormula(loop.getIteratedMemory().getAbstractCondition());
+						final Term loopSummary = loop.getIteratedMemory().getAbstractCondition();
+
+						final Term simplifiedLoopSummary = PartialQuantifierElimination.tryToEliminate(mServices,
+								mLogger, mScript, loopSummary, SimplificationTechnique.SIMPLIFY_DDA,
+								XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+
+						tfb.setFormula(simplifiedLoopSummary);
 
 						for (final TermVariable var : loop.getVars()) {
 							tfb.addAuxVar(var);
 						}
 
 						if (loop.isNested()) {
-							for (Loop nestedLoop : loop.getNestedLoops()) {
-								for (TermVariable var : nestedLoop.getVars()) {
+							for (final Loop nestedLoop : loop.getNestedLoops()) {
+								for (final TermVariable var : nestedLoop.getVars()) {
 									tfb.addAuxVar(var);
 								}
 							}
