@@ -15,7 +15,7 @@
 /instance/UltimateCore/Log\ level\ for\ plugins=INFO
 /instance/UltimateCore/Logger\ pattern=[%d{ISO8601} %-5p L%-5.5L %20.20C{1}]\: %m%n
 /instance/UltimateCore/Name\ of\ the\ log\ file=ultimate.log
-/instance/UltimateCore/Repository\ directory=/tmp
+/instance/UltimateCore/Repository\ directory=C:/tmp
 /instance/UltimateCore/Root\ log\ level=DEBUG
 /instance/UltimateCore/Show\ long\ description\ of\ results=true
 /instance/UltimateCore/Show\ result\ in\ pop-up\ window\ after\ toolchain\ execution=false

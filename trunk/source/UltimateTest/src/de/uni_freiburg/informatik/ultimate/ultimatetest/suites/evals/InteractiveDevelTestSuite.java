@@ -35,8 +35,8 @@ import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
 import de.uni_freiburg.informatik.ultimate.test.decider.OverapproximatingSafetyCheckTestResultDecider;
 import de.uni_freiburg.informatik.ultimate.test.logs.summaries.ColumnDefinition;
-import de.uni_freiburg.informatik.ultimate.test.logs.summaries.ConversionContext;
 import de.uni_freiburg.informatik.ultimate.test.logs.summaries.ColumnDefinition.Aggregate;
+import de.uni_freiburg.informatik.ultimate.test.logs.summaries.ConversionContext;
 import de.uni_freiburg.informatik.ultimate.test.util.DirectoryFileEndingsPair;
 import de.uni_freiburg.informatik.ultimate.ultimatetest.suites.AbstractEvalTestSuite;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
@@ -54,58 +54,45 @@ public class InteractiveDevelTestSuite extends AbstractEvalTestSuite {
 //			new Triple<>("../Interactive/toolchains/AutomizerBpl.xml", BPL, "../Interactive/settings/64bit-Automizer_Parrot.epf"),
 
 			//### C
-			new Triple<>("../Interactive/toolchains/AutomizerC.xml", C, "../Interactive/settings/svcomp-Reach-64bit-Automizer_Default.epf"),
-			new Triple<>("../Interactive/toolchains/AutomizerC.xml", C, "../Interactive/settings/ResetSettingsFixed.epf"),
+			//new Triple<>("../Interactive/toolchains/AutomizerC.xml", C, "../Interactive/settings/svcomp-Reach-64bit-Automizer_Default.epf"),
+			//new Triple<>("../Interactive/toolchains/AutomizerC.xml", C, "../Interactive/settings/ResetSettingsFixed.epf"),
+			//new Triple<>("../Interactive/toolchains/AutomizerC.xml", C, "../Interactive/settings/ResetSettingsWolf.epf"),
+			//new Triple<>("../Interactive/toolchains/AutomizerC.xml", C, "../Interactive/settings/64bit-Automizer_Parrot.epf"),
 			new Triple<>("../Interactive/toolchains/AutomizerC.xml", C, "../Interactive/settings/ResetSettingsCamel.epf"),
-			new Triple<>("../Interactive/toolchains/AutomizerC.xml", C, "../Interactive/settings/ResetSettingsWolf.epf"),
-//			new Triple<>("../Interactive/toolchains/AutomizerC.xml", C, "../Interactive/settings/64bit-Automizer_Parrot.epf"),
+			
 	};
 
 	private static final String[] INPUT = new String[] {
-//			"examples/Interactive/input/",
-			"examples/Interactive/input/square_1_false-unreach-call.i",
-			"/examples/svcomp/floats-cdfpl/newton_1_8_false-unreach-call.i",
-			"/examples/svcomp/floats-cdfpl/square_4_true-unreach-call.i",
-			"/examples/svcomp/floats-cdfpl/newton_3_2_true-unreach-call.i",
-			"/examples/svcomp/floats-cdfpl/newton_2_3_true-unreach-call.i",
-			"/examples/svcomp/floats-cdfpl/newton_1_1_true-unreach-call.i",
-			"/examples/svcomp/floats-cdfpl/sine_1_false-unreach-call.i",
-			"/examples/svcomp/floats-cdfpl/sine_4_true-unreach-call.i",
-			"/examples/svcomp/floats-cdfpl/square_5_true-unreach-call.i",
-			"/examples/svcomp/floats-cdfpl/newton_2_1_true-unreach-call.i",
-			"/examples/svcomp/floats-cdfpl/newton_2_7_false-unreach-call.i",
-			"/examples/svcomp/floats-cdfpl/newton_3_6_false-unreach-call.i",
-			"/examples/svcomp/floats-cdfpl/sine_6_true-unreach-call.i",
-			"/examples/svcomp/floats-cdfpl/square_8_true-unreach-call.i",
-			"/examples/svcomp/floats-cdfpl/newton_1_5_false-unreach-call.i",
-			"/examples/svcomp/floats-cdfpl/sine_8_true-unreach-call.i",
-			"/examples/svcomp/floats-cdfpl/sine_2_false-unreach-call.i",
-			"/examples/svcomp/floats-cdfpl/newton_2_4_true-unreach-call.i",
-			"/examples/svcomp/floats-cdfpl/square_2_false-unreach-call.i",
-			"/examples/svcomp/floats-cdfpl/newton_3_5_true-unreach-call.i",
-			"/examples/svcomp/floats-cdfpl/newton_2_6_false-unreach-call.i",
-			"/examples/svcomp/floats-cdfpl/square_6_true-unreach-call.i",
-			"/examples/svcomp/floats-cdfpl/newton_2_8_false-unreach-call.i",
-			"/examples/svcomp/floats-cdfpl/square_7_true-unreach-call.i",
-			"/examples/svcomp/floats-cdfpl/newton_1_7_false-unreach-call.i",
-			"/examples/svcomp/floats-cdfpl/newton_3_4_true-unreach-call.i",
-			"/examples/svcomp/floats-cdfpl/sine_5_true-unreach-call.i",
-			"/examples/svcomp/floats-cdfpl/square_3_false-unreach-call.i",
-			"/examples/svcomp/floats-cdfpl/newton_1_6_false-unreach-call.i",
-			"/examples/svcomp/floats-cdfpl/newton_3_3_true-unreach-call.i",
-			"/examples/svcomp/floats-cdfpl/newton_1_4_false-unreach-call.i",
-			"/examples/svcomp/floats-cdfpl/newton_2_2_true-unreach-call.i",
-			"/examples/svcomp/floats-cdfpl/square_1_false-unreach-call.i",
-			"/examples/svcomp/floats-cdfpl/newton_3_7_false-unreach-call.i",
-			"/examples/svcomp/floats-cdfpl/sine_7_true-unreach-call.i",
-			"/examples/svcomp/floats-cdfpl/newton_1_2_true-unreach-call.i",
-			"/examples/svcomp/floats-cdfpl/newton_1_3_true-unreach-call.i",
-			"/examples/svcomp/floats-cdfpl/newton_2_5_true-unreach-call.i",
-			"/examples/svcomp/floats-cdfpl/newton_3_1_true-unreach-call.i",
-			"/examples/svcomp/floats-cdfpl/newton_3_8_false-unreach-call.i",
-			"/examples/svcomp/floats-cdfpl/sine_3_false-unreach-call.i",
-//			"examples/Interactive/input/float12_true-unreach-call.i",
-
+			"examples\\Interactive\\input\\CEXS_gauss\\Eval\\CEXS_loop_gauss_true-unreach-call\\CEXS_loop_gauss_true-unreach-call005.i",
+			"examples\\Interactive\\input\\CEXS_gauss\\Eval\\CEXS_loop_gauss_true-unreach-call\\CEXS_loop_gauss_true-unreach-call010.i",
+			"examples\\Interactive\\input\\CEXS_gauss\\Eval\\CEXS_loop_gauss_true-unreach-call\\CEXS_loop_gauss_true-unreach-call015.i",
+			"examples\\Interactive\\input\\CEXS_gauss\\Eval\\CEXS_loop_gauss_true-unreach-call\\CEXS_loop_gauss_true-unreach-call020.i",
+			"examples\\Interactive\\input\\CEXS_gauss\\Eval\\CEXS_loop_gauss_true-unreach-call\\CEXS_loop_gauss_true-unreach-call025.i",
+			"examples\\Interactive\\input\\CEXS_gauss\\Eval\\CEXS_loop_gauss_true-unreach-call\\CEXS_loop_gauss_true-unreach-call030.i",
+			"examples\\Interactive\\input\\CEXS_gauss\\Eval\\CEXS_loop_gauss_true-unreach-call\\CEXS_loop_gauss_true-unreach-call035.i",
+			"examples\\Interactive\\input\\CEXS_gauss\\Eval\\CEXS_loop_gauss_true-unreach-call\\CEXS_loop_gauss_true-unreach-call040.i",
+			"examples\\Interactive\\input\\CEXS_gauss\\Eval\\CEXS_loop_gauss_true-unreach-call\\CEXS_loop_gauss_true-unreach-call045.i",
+			"examples\\Interactive\\input\\CEXS_gauss\\Eval\\CEXS_loop_gauss_true-unreach-call\\CEXS_loop_gauss_true-unreach-call050.i",
+			"examples\\Interactive\\input\\CEXS_gauss\\Eval\\CEXS_loop_gauss_true-unreach-call\\CEXS_loop_gauss_true-unreach-call055.i",
+			"examples\\Interactive\\input\\CEXS_gauss\\Eval\\CEXS_loop_gauss_true-unreach-call\\CEXS_loop_gauss_true-unreach-call060.i",
+			"examples\\Interactive\\input\\CEXS_gauss\\Eval\\CEXS_loop_gauss_true-unreach-call\\CEXS_loop_gauss_true-unreach-call065.i",
+			"examples\\Interactive\\input\\CEXS_gauss\\Eval\\CEXS_loop_gauss_true-unreach-call\\CEXS_loop_gauss_true-unreach-call070.i",
+			"examples\\Interactive\\input\\CEXS_gauss\\Eval\\CEXS_loop_gauss_true-unreach-call\\CEXS_loop_gauss_true-unreach-call075.i",
+			"examples\\Interactive\\input\\CEXS_gauss\\Eval\\CEXS_loop_gauss_true-unreach-call\\CEXS_loop_gauss_true-unreach-call080.i",
+			"examples\\Interactive\\input\\CEXS_gauss\\Eval\\CEXS_loop_gauss_true-unreach-call\\CEXS_loop_gauss_true-unreach-call085.i",
+			"examples\\Interactive\\input\\CEXS_gauss\\Eval\\CEXS_loop_gauss_true-unreach-call\\CEXS_loop_gauss_true-unreach-call090.i",
+			"examples\\Interactive\\input\\CEXS_gauss\\Eval\\CEXS_loop_gauss_true-unreach-call\\CEXS_loop_gauss_true-unreach-call095.i",
+			"examples\\Interactive\\input\\CEXS_gauss\\Eval\\CEXS_loop_gauss_true-unreach-call\\CEXS_loop_gauss_true-unreach-call100.i",
+			"examples\\Interactive\\input\\CEXS_gauss\\Eval\\CEXS_loop_gauss_true-unreach-call\\CEXS_loop_gauss_true-unreach-call105.i",
+			"examples\\Interactive\\input\\CEXS_gauss\\Eval\\CEXS_loop_gauss_true-unreach-call\\CEXS_loop_gauss_true-unreach-call110.i",
+			"examples\\Interactive\\input\\CEXS_gauss\\Eval\\CEXS_loop_gauss_true-unreach-call\\CEXS_loop_gauss_true-unreach-call115.i",
+			"examples\\Interactive\\input\\CEXS_gauss\\Eval\\CEXS_loop_gauss_true-unreach-call\\CEXS_loop_gauss_true-unreach-call120.i",
+			"examples\\Interactive\\input\\CEXS_gauss\\Eval\\CEXS_loop_gauss_true-unreach-call\\CEXS_loop_gauss_true-unreach-call125.i",
+			"examples\\Interactive\\input\\CEXS_gauss\\Eval\\CEXS_loop_gauss_true-unreach-call\\CEXS_loop_gauss_true-unreach-call130.i",
+			"examples\\Interactive\\input\\CEXS_gauss\\Eval\\CEXS_loop_gauss_true-unreach-call\\CEXS_loop_gauss_true-unreach-call135.i",
+			"examples\\Interactive\\input\\CEXS_gauss\\Eval\\CEXS_loop_gauss_true-unreach-call\\CEXS_loop_gauss_true-unreach-call140.i",
+			"examples\\Interactive\\input\\CEXS_gauss\\Eval\\CEXS_loop_gauss_true-unreach-call\\CEXS_loop_gauss_true-unreach-call145.i",
+			"examples\\Interactive\\input\\CEXS_gauss\\Eval\\CEXS_loop_gauss_true-unreach-call\\CEXS_loop_gauss_true-unreach-call150.i",
 	};
 	// @formatter:on
 
@@ -113,7 +100,7 @@ public class InteractiveDevelTestSuite extends AbstractEvalTestSuite {
 	protected long getTimeout() {
 		// return 90 * 1000 * 1000;
 		// return 15 * 1000;
-		return 30 * 1000;
+		return 300 * 1000;
 		// return 15 * 60 * 1000;
 	}
 
