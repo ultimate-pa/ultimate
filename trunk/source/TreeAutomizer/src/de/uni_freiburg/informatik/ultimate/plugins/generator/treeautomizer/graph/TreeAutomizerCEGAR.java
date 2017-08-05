@@ -55,8 +55,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HCSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HornClause;
 import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HornClausePredicateSymbol;
-import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HornUtilConstants;
 import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HornClausePredicateSymbol.HornClauseFalsePredicateSymbol;
+import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HornUtilConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
@@ -252,7 +252,7 @@ public class TreeAutomizerCEGAR {
 	private LBool getCounterexampleFeasibility(final TreeRun<HornClause, IPredicate> counterexample,
 			final Object lockOwner) {
 		mChecker = new TreeChecker(counterexample, mBackendSmtSolverScript, mInitialPredicate, mFinalPredicate, mLogger,
-				mPredicateUnifier);
+				mPredicateUnifier, mSymbolTable);
 		return mChecker.checkTrace(lockOwner);
 	}
 

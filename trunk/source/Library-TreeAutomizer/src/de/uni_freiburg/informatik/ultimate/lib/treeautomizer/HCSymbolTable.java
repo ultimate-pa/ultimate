@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.lib.treeautomizer;
 
 import java.math.BigInteger;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -32,7 +33,7 @@ public class HCSymbolTable extends DefaultIcfgSymbolTable {
 	private HornClausePredicateSymbol mDontCareHornClausePredSym;
 	private HornClausePredicateSymbol mTrueHornClausePredSym;
 
-	private Map<TermVariable, ApplicationTerm> mTermVarToConst;
+	private final Map<TermVariable, ApplicationTerm> mTermVarToConst = new HashMap<>();
 
 
 	public HCSymbolTable(ManagedScript mgdScript) {
@@ -182,13 +183,21 @@ public class HCSymbolTable extends DefaultIcfgSymbolTable {
 	 */
 	public void registerTermVariable(TermVariable tv) {
 		assert tv == new TermTransferrer(mManagedScript.getScript()).transform(tv);
-		mManagedScript.lock(this);
-		final ApplicationTerm constant = ProgramVarUtils.constructDefaultConstant(mManagedScript, this, tv.getSort(), 
-				tv.getName());
-		mManagedScript.unlock(this);
-		mTermVarToConst.put(tv, constant);
+		if (!mTermVarToConst.containsKey(tv)) {
+			mManagedScript.lock(this);
+			final ApplicationTerm constant = ProgramVarUtils.constructDefaultConstant(mManagedScript, this, tv.getSort(), 
+					tv.getName());
+			mManagedScript.unlock(this);
+			mTermVarToConst.put(tv, constant);
+		}
 	}
 
+	/**
+	 * Every TermVariable that appears in a HornClause has a default constant associated with it, which is declared
+	 * up front. (used for hoare triple checks)
+	 * @param fv
+	 * @return
+	 */
 	public Term getConstForTermVar(TermVariable fv) {
 		final ApplicationTerm res = mTermVarToConst.get(fv);
 		assert res != null;
