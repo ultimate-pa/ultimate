@@ -1,3 +1,8 @@
+; 'reachable state space' seems to be:
+; R: {(n, 0) | n >= 0}, 
+; I: {(n+1, m) | (n, m) in R}, 
+; the 'assertion' excludes all states in I where n is three bigger than m 
+; --> this is unsat
 (set-logic HORN)
 
 (declare-fun I (Int Int) Bool)
