@@ -62,7 +62,7 @@ public class HCPredicateFactory extends PredicateFactory {
 	private HCPredicate mDontCarePredicate;
 	private HCPredicate mTruePredicate;
 	private HCPredicate mFalsePredicate;
-	private HCSymbolTable mSymbolTable;
+	private HCSymbolTable mHCSymbolTable;
 
 	/**
 	 * The constructor of HornClause Factory
@@ -77,7 +77,7 @@ public class HCPredicateFactory extends PredicateFactory {
 			SimplificationTechnique simplificationTechnique, XnfConversionTechnique xnfConversionTechnique) {
 		super(services, mgdScript, symbolTable, simplificationTechnique, xnfConversionTechnique);
 		mBackendSmtSolverScript = mgdScript;
-		mSymbolTable = symbolTable;
+		mHCSymbolTable = symbolTable;
 
 		mBackendSmtSolverScript.lock(this);
 		mDontCarePredicate = newPredicate(symbolTable.getDontCareHornClausePredicateSymbol(),
@@ -179,7 +179,7 @@ public class HCPredicateFactory extends PredicateFactory {
 			final Set<IProgramVar> hcOutVars = new HashSet<>();
 
 			for (int i = 0; i < variables.size(); i++) {
-				final HCOutVar hcOutVar = mSymbolTable.getOrConstructHCOutVar(i, variables.get(i).getSort());
+				final HCOutVar hcOutVar = mHCSymbolTable.getOrConstructHCOutVar(i, variables.get(i).getSort());
 				hcOutVars.add(hcOutVar);
 				normalizingSubstitution.put(variables.get(i), hcOutVar.getTermVariable());
 			}
