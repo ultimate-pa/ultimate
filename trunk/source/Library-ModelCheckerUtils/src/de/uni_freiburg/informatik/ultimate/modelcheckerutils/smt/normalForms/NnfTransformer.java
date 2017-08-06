@@ -152,7 +152,7 @@ public class NnfTransformer {
 					// we deliberately call convert() instead of super.convert()
 					// the argument of this call might have been simplified
 					// to a term whose function symbol is neither "and" nor "or"
-					convert(Util.or(mScript, negateAllButLast(params)));
+					convert(Util.or(mScript, negateAllButLast(mScript, params)));
 					return;
 				} else if (functionName.equals("=") && SmtUtils.firstParamIsBool(appTerm)) {
 					final Term[] params = appTerm.getParameters();
@@ -190,7 +190,7 @@ public class NnfTransformer {
 					final Term condTerm = params[0];
 					final Term ifTerm = params[1];
 					final Term elseTerm = params[2];
-					final Term result = convertIte(condTerm, ifTerm, elseTerm);
+					final Term result = convertIte(mScript, condTerm, ifTerm, elseTerm);
 					// we deliberately call convert() instead of super.convert()
 					// the argument of this call might have been simplified
 					// to a term whose function symbol is neither "and" nor "or"
@@ -253,157 +253,19 @@ public class NnfTransformer {
 			}
 		}
 
-		private Term convertIte(final Term condTerm, final Term ifTerm, final Term elseTerm) {
-			final Term condImpliesIf = Util.or(mScript, SmtUtils.not(mScript, condTerm), ifTerm);
-			final Term notCondImpliesElse = Util.or(mScript, condTerm, elseTerm);
-			final Term result = Util.and(mScript, condImpliesIf, notCondImpliesElse);
-			return result;
-		}
-
-		/**
-		 * A function is an xor if one of the following applies.
-		 * <ul>
-		 * <li>its functionName is <b>xor</b>
-		 * <li>its functionName is <b>distinct</b> and its parameters have Sort Bool.
-		 * </ul>
-		 */
-		private boolean isXor(final ApplicationTerm appTerm, final String functionName) {
-			return functionName.equals("xor") || functionName.equals("distinct") && SmtUtils.firstParamIsBool(appTerm);
-		}
 
 		private void convertNot(final Term notParam, final Term notTerm) {
 			assert SmtSortUtils.isBoolSort(notParam.getSort()) : "Input is not Bool";
-			if (notParam instanceof ApplicationTerm) {
-				final ApplicationTerm appTerm = (ApplicationTerm) notParam;
-				final String functionName = appTerm.getFunction().getName();
-				final Term[] params = appTerm.getParameters();
-				if (functionName.equals("and")) {
-					// we deliberately call convert() instead of super.convert()
-					// the argument of this call might have been simplified
-					// to a term whose function symbol is neither "and" nor "or"
-					convert(Util.or(mScript, negateTerms(params)));
-					return;
-				} else if (functionName.equals("or")) {
-					// we deliberately call convert() instead of super.convert()F
-					// the argument of this call might have been simplified
-					// to a term whose function symbol is neither "and" nor "or"
-					convert(Util.and(mScript, negateTerms(params)));
-					return;
-				} else if (functionName.equals("not")) {
-					assert appTerm.getParameters().length == 1;
-					final Term notnotParam = appTerm.getParameters()[0];
-					// we deliberately call convert() instead of super.convert()
-					// the argument of this call might have been simplified
-					// to a term whose function symbol is neither "and" nor "or"
-					convert(notnotParam);
-					return;
-				} else if (functionName.equals("=>")) {
-					// we deliberately call convert() instead of super.convert()
-					// the argument of this call might have been simplified
-					// to a term whose function symbol is neither "and" nor "or"
-					convert(Util.and(mScript, negateLast(params)));
-					return;
-				} else if (functionName.equals("=") && SmtUtils.firstParamIsBool(appTerm)) {
-					final Term[] notParams = appTerm.getParameters();
-					if (notParams.length > 2) {
-						final Term binarized = SmtUtils.binarize(mScript, appTerm);
-						// we deliberately call convert() instead of super.convert()
-						// the argument of this call might have been simplified
-						// to a term whose function symbol is neither "and" nor "or"
-						convert(SmtUtils.not(mScript, binarized));
-					} else {
-						assert notParams.length == 2;
-						// we deliberately call convert() instead of super.convert()
-						// the argument of this call might have been simplified
-						// to a term whose function symbol is neither "and" nor "or"
-						convert(SmtUtils.binaryBooleanNotEquals(mScript, notParams[0], notParams[1]));
-					}
-				} else if (isXor(appTerm, functionName)) {
-					final Term[] notParams = appTerm.getParameters();
-					if (notParams.length > 2) {
-						final Term binarized = SmtUtils.binarize(mScript, appTerm);
-						// we deliberately call convert() instead of super.convert()
-						// the argument of this call might have been simplified
-						// to a term whose function symbol is neither "and" nor "or"
-						convert(SmtUtils.not(mScript, binarized));
-					} else {
-						assert notParams.length == 2;
-						// we deliberately call convert() instead of super.convert()
-						// the argument of this call might have been simplified
-						// to a term whose function symbol is neither "and" nor "or"
-						convert(SmtUtils.binaryBooleanEquality(mScript, notParams[0], notParams[1]));
-					}
-				} else if (functionName.equals("ite") && SmtUtils.allParamsAreBool(appTerm)) {
-					final Term[] notParams = appTerm.getParameters();
-					assert params.length == 3;
-					final Term condTerm = notParams[0];
-					final Term ifTerm = notParams[1];
-					final Term elseTerm = notParams[2];
-					final Term convertedIte = convertIte(condTerm, ifTerm, elseTerm);
-					convertNot(convertedIte, SmtUtils.not(mScript, convertedIte));
-				} else {
-					// consider original term as atom
-					setResult(notTerm);
-					return;
-				}
-			} else if (notParam instanceof ConstantTerm) {
-				// consider term as atom
+			final Term pushed = pushNot1StepInside(mScript, notParam);
+			if (pushed == null) {
 				setResult(notTerm);
-			} else if (notParam instanceof TermVariable) {
-				// consider term as atom
-				setResult(notTerm);
-			} else if (notParam instanceof QuantifiedFormula) {
-				switch (mQuantifierHandling) {
-				case CRASH: {
-					throw new UnsupportedOperationException("quantifier handling set to " + mQuantifierHandling);
-				}
-				case IS_ATOM: {
-					// consider quantified formula as atom
-					setResult(notParam);
-					return;
-				}
-				case KEEP: {
-					final QuantifiedFormula qf = (QuantifiedFormula) notParam;
-					final int quantor = (qf.getQuantifier() + 1) % 2;
-					final TermVariable[] vars = qf.getVariables();
-					final Term body = SmtUtils.not(mScript, qf.getSubformula());
-					final Term negated = mScript.quantifier(quantor, vars, body);
-					super.convert(negated);
-					return;
-				}
-				case PULL: {
-					throw new UnsupportedOperationException("cannot pull quantifier from negated formula");
-				}
-				default:
-					throw new AssertionError("unknown quantifier handling");
-				}
 			} else {
-				throw new UnsupportedOperationException("Unsupported " + notParam.getClass());
+				// we deliberately call convert() instead of super.convert()
+				// the argument of this call might have been simplified
+				// to a term whose function symbol is neither "and" nor "or"
+				convert(pushed);
 			}
-		}
-
-		private Term[] negateTerms(final Term[] terms) {
-			final Term[] newTerms = new Term[terms.length];
-			for (int i = 0; i < terms.length; i++) {
-				newTerms[i] = SmtUtils.not(mScript, terms[i]);
-			}
-			return newTerms;
-		}
-
-		private Term[] negateLast(final Term[] terms) {
-			final Term[] newTerms = new Term[terms.length];
-			System.arraycopy(terms, 0, newTerms, 0, terms.length - 1);
-			newTerms[terms.length - 1] = SmtUtils.not(mScript, terms[terms.length - 1]);
-			return newTerms;
-		}
-
-		private Term[] negateAllButLast(final Term[] terms) {
-			final Term[] newTerms = new Term[terms.length];
-			for (int i = 0; i < terms.length - 1; i++) {
-				newTerms[i] = SmtUtils.not(mScript, terms[i]);
-			}
-			newTerms[terms.length - 1] = terms[terms.length - 1];
-			return newTerms;
+			return;
 		}
 
 		@Override
@@ -413,6 +275,107 @@ public class NnfTransformer {
 			setResult(simplified);
 		}
 
+	}
+	
+	
+	private static Term[] negateTerms(final Script script, final Term[] terms) {
+		final Term[] newTerms = new Term[terms.length];
+		for (int i = 0; i < terms.length; i++) {
+			newTerms[i] = SmtUtils.not(script, terms[i]);
+		}
+		return newTerms;
+	}
+
+	private static Term[] negateLast(final Script script, final Term[] terms) {
+		final Term[] newTerms = new Term[terms.length];
+		System.arraycopy(terms, 0, newTerms, 0, terms.length - 1);
+		newTerms[terms.length - 1] = SmtUtils.not(script, terms[terms.length - 1]);
+		return newTerms;
+	}
+
+	private static Term[] negateAllButLast(final Script script, final Term[] terms) {
+		final Term[] newTerms = new Term[terms.length];
+		for (int i = 0; i < terms.length - 1; i++) {
+			newTerms[i] = SmtUtils.not(script, terms[i]);
+		}
+		newTerms[terms.length - 1] = terms[terms.length - 1];
+		return newTerms;
+	}
+	
+	public static Term convertIte(final Script script, final Term condTerm, final Term ifTerm, final Term elseTerm) {
+		final Term condImpliesIf = Util.or(script, SmtUtils.not(script, condTerm), ifTerm);
+		final Term notCondImpliesElse = Util.or(script, condTerm, elseTerm);
+		final Term result = Util.and(script, condImpliesIf, notCondImpliesElse);
+		return result;
+	}
+	
+	/**
+	 * A function is an xor if one of the following applies.
+	 * <ul>
+	 * <li>its functionName is <b>xor</b>
+	 * <li>its functionName is <b>distinct</b> and its parameters have Sort Bool.
+	 * </ul>
+	 */
+	public static boolean isXor(final ApplicationTerm appTerm, final String functionName) {
+		return functionName.equals("xor") || functionName.equals("distinct") && SmtUtils.firstParamIsBool(appTerm);
+	}
+	
+	
+	public static Term pushNot1StepInside(final Script script, final Term notParam) {
+		if (notParam instanceof ApplicationTerm) {
+			final ApplicationTerm appTerm = (ApplicationTerm) notParam;
+			final String functionName = appTerm.getFunction().getName();
+			final Term[] params = appTerm.getParameters();
+			if (functionName.equals("and")) {
+				return Util.or(script, negateTerms(script, params));
+			} else if (functionName.equals("or")) {
+				return Util.and(script, negateTerms(script, params));
+			} else if (functionName.equals("not")) {
+				assert appTerm.getParameters().length == 1;
+				final Term notnotParam = appTerm.getParameters()[0];
+				return notnotParam;
+			} else if (functionName.equals("=>")) {
+				return Util.and(script, negateLast(script, params));
+			} else if (functionName.equals("=") && SmtUtils.firstParamIsBool(appTerm)) {
+				final Term[] notParams = appTerm.getParameters();
+				if (notParams.length > 2) {
+					final Term binarized = SmtUtils.binarize(script, appTerm);
+					return SmtUtils.not(script, binarized);
+				} else {
+					assert notParams.length == 2;
+					return SmtUtils.binaryBooleanNotEquals(script, notParams[0], notParams[1]);
+				}
+			} else if (isXor(appTerm, functionName)) {
+				final Term[] notParams = appTerm.getParameters();
+				if (notParams.length > 2) {
+					final Term binarized = SmtUtils.binarize(script, appTerm);
+					// we deliberately call convert() instead of super.convert()
+					// the argument of this call might have been simplified
+					// to a term whose function symbol is neither "and" nor "or"
+					return SmtUtils.not(script, binarized);
+				} else {
+					assert notParams.length == 2;
+					// we deliberately call convert() instead of super.convert()
+					// the argument of this call might have been simplified
+					// to a term whose function symbol is neither "and" nor "or"
+					return SmtUtils.binaryBooleanEquality(script, notParams[0], notParams[1]);
+				}
+			} else if (functionName.equals("ite") && SmtUtils.allParamsAreBool(appTerm)) {
+				final Term[] notParams = appTerm.getParameters();
+				assert params.length == 3;
+				final Term condTerm = notParams[0];
+				final Term ifTerm = notParams[1];
+				final Term elseTerm = notParams[2];
+				final Term convertedIte = convertIte(script, condTerm, ifTerm, elseTerm);
+				return SmtUtils.not(script, convertedIte);
+			} else {
+				// consider original term as atom
+				// nothing to push inside, return null;
+				return null;
+			}
+		} else {
+			return null;
+		}
 	}
 
 }
