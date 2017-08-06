@@ -145,7 +145,7 @@ public class ElimStorePlain {
 				arrayEliminatees.addAll(tr.getImage(0));
 				final AfEliminationTask eliminationTask1 =
 						new AfEliminationTask(arrayEliminatees, ssdElimRes.getTerm());
-				final AfEliminationTask eliminationTask2 = applyNonSddEliminations(eliminationTask1);
+				final AfEliminationTask eliminationTask2 = applyNonSddEliminations(eliminationTask1, PqeTechniques.ALL_LOCAL);
 				if (mLogger.isInfoEnabled()) {
 					mLogger.info("Start of round: " + printVarInfo(tr) + " End of round: "
 							+ printVarInfo(classifyEliminatees(eliminationTask2.getEliminatees())) + " and "
@@ -186,11 +186,11 @@ public class ElimStorePlain {
 		}
 	}
 
-	private AfEliminationTask applyNonSddEliminations(final AfEliminationTask eliminationTask) throws AssertionError {
+	private AfEliminationTask applyNonSddEliminations(final AfEliminationTask eliminationTask, final PqeTechniques techniques) throws AssertionError {
 		final Term quantified =
 				SmtUtils.quantifier(mScript, mQuantifier, eliminationTask.getEliminatees(), eliminationTask.getTerm());
 		final Term pushed =
-				new QuantifierPusher(mMgdScript, mServices, true, PqeTechniques.ALL_LOCAL).transform(quantified);
+				new QuantifierPusher(mMgdScript, mServices, true, techniques).transform(quantified);
 
 		final Term pnf = new PrenexNormalForm(mMgdScript).transform(pushed);
 		final QuantifierSequence qs = new QuantifierSequence(mMgdScript.getScript(), pnf);
@@ -237,13 +237,29 @@ public class ElimStorePlain {
 		if (stores.size() > 1) {
 			throw new AssertionError("not yet supported");
 		}
-		checkForUnsupportedSelfUpdate(eliminatee, inputTerm, mQuantifier);
+//		checkForUnsupportedSelfUpdate(eliminatee, inputTerm, mQuantifier);
 
 		final Set<TermVariable> newAuxVars = new LinkedHashSet<>();
+		final Term preprocessedInput;
+		
+		{
+			//anti-DER preprocessing
+			final ArrayEqualityExplicator aadk = new ArrayEqualityExplicator(mMgdScript, eliminatee, mQuantifier);
+			final Term antiDerPreprocessed = aadk.transform(inputTerm);
+			newAuxVars.addAll(aadk.getNewAuxVars());
+			final DerPreprocessor dp = new DerPreprocessor(mServices, mMgdScript, eliminatee, mQuantifier);
+			final Term withReplacement = dp.transform(antiDerPreprocessed);
+			newAuxVars.addAll(dp.getNewAuxVars());
+			final Term definitions = PartialQuantifierElimination.applyDualFiniteConnective(mScript, mQuantifier, dp.getAuxVarDefinitions());
+			preprocessedInput = PartialQuantifierElimination.applyDualFiniteConnective(mScript, mQuantifier, withReplacement, definitions);
+			if (dp.introducedDerPossibility()) {
+				// do DER
+				final AfEliminationTask afterDer = applyNonSddEliminations(new AfEliminationTask(Collections.singleton(eliminatee), preprocessedInput), PqeTechniques.ONLY_DER);
+				newAuxVars.addAll(afterDer.getEliminatees());
+				return new AfEliminationTask(newAuxVars, afterDer.getTerm());
+			} 
 
-		final ArrayEqualityExplicator aadk = new ArrayEqualityExplicator(mMgdScript, eliminatee, mQuantifier);
-		final Term preprocessedInput = aadk.transform(inputTerm);
-		newAuxVars.addAll(aadk.getNewAuxVars());
+		}
 
 		final List<ApplicationTerm> selectTerms = extractSelects2(eliminatee, preprocessedInput);
 
@@ -491,12 +507,19 @@ public class ElimStorePlain {
 							mLogger.info("found not equals in dual finite juncts");
 						} else {
 							final Validity isEqual = iea.checkImplication(eq);
+							if (isEqual == Validity.UNKNOWN && mLogger.isWarnEnabled()) {
+								mLogger.warn("solver failed to check if following equality is implied: " + eq);
+							}
 							if (isEqual == Validity.VALID) {
 								tver.reportEquality(indicesList.get(i), indicesList.get(j));
 								relationsDetectedViaSolver.add(eq);
 								mLogger.info("detected equality via solver");
 							} else {
 								final Validity notEqualsHolds = iea.checkImplication(neq);
+								if (notEqualsHolds == Validity.UNKNOWN && mLogger.isWarnEnabled()) {
+									mLogger.warn("solver failed to check if following not equals relation is implied: " + eq);
+								}
+
 								if (notEqualsHolds == Validity.VALID) {
 									tver.reportNotEquals(indicesList.get(i), indicesList.get(j));
 									mLogger.info("detected not equals via solver");

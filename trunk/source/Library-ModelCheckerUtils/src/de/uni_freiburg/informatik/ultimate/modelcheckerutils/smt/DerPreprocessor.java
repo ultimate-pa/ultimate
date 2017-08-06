@@ -27,48 +27,80 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.NnfTransformer;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.NnfTransformer.QuantifierHandling;
+import de.uni_freiburg.informatik.ultimate.util.ConstructionCache;
+import de.uni_freiburg.informatik.ultimate.util.ConstructionCache.IValueConstruction;
 
 /**
- * Preprocessing step for partial array quantifier elimination.
- * If we have a term of the form
- *     arr1 != arr2
- * (the negation of the form where we can apply DER) we replace it by 
- *     ∃ aux. arr1[aux] != arr2[aux]
- * (Analogously for universal quantification.)
- * Presumes that the input has NNF. Provides all auxiliary variables that 
- * have been introduced.
+ * Preprocessor for array partial quantifier elimination that handles
+ * DER-like cases.
+ *  
  * @author Matthias Heizmann
  * 
  */
-public class ArrayEqualityExplicator extends TermTransformer {
+public class DerPreprocessor extends TermTransformer {
 
-	private final static String AUX_VAR_PREFIX = "antiDerIndex";
+	private final static String AUX_VAR_PREFIX = "DerPreprocessor";
 
+	private final IUltimateServiceProvider mServices;
 	private final Script mScript;
 	private final ManagedScript mMgdScript;
 	private final TermVariable mEliminatee;
 	private final int mQuantifier;
 	private final List<TermVariable> mNewAuxVars = new ArrayList<>();
+	private final ConstructionCache<Term, TermVariable> mAuxVarCc;
+	private final List<Term> mAuxVarDefinitions = new ArrayList<>();
+	private boolean mIntroducedDerPossibility = false;
 
-	public ArrayEqualityExplicator(final ManagedScript mgdScript, final TermVariable eliminatee, final int quantifier) {
+	public DerPreprocessor(final IUltimateServiceProvider services, final ManagedScript mgdScript, final TermVariable eliminatee, final int quantifier) {
+		mServices = services;
 		mScript = mgdScript.getScript();
 		mMgdScript = mgdScript;
 		mEliminatee = eliminatee;
 		mQuantifier = quantifier;
+		final IValueConstruction<Term, TermVariable> valueConstruction = new IValueConstruction<Term, TermVariable>() {
+
+			@Override
+			public TermVariable constructValue(final Term term) {
+				final TermVariable auxVar = mMgdScript.constructFreshTermVariable(AUX_VAR_PREFIX, term.getSort());
+				Term definition = PartialQuantifierElimination.equalityForExists(mScript, mQuantifier, auxVar, term);
+				
+				//TODO: let Prenex transformer deal with non-NNF terms and remove the following line 
+				definition = new NnfTransformer(mMgdScript, mServices, QuantifierHandling.CRASH).transform(definition);
+				
+				mAuxVarDefinitions.add(definition);
+				mNewAuxVars.add(auxVar);
+				return auxVar;
+			}
+		};
+		mAuxVarCc = new ConstructionCache<>(valueConstruction);
 	}
 
 	public List<TermVariable> getNewAuxVars() {
 		return mNewAuxVars;
+	}
+	
+	
+	
+
+	public List<Term> getAuxVarDefinitions() {
+		return mAuxVarDefinitions;
+	}
+
+	public boolean introducedDerPossibility() {
+		return mIntroducedDerPossibility;
 	}
 
 	@Override
@@ -84,11 +116,10 @@ public class ArrayEqualityExplicator extends TermTransformer {
 				final Term rhs = appTerm.getParameters()[1];
 				if (lhs.equals(mEliminatee) || rhs.equals(mEliminatee)) {
 					if (mQuantifier == QuantifiedFormula.EXISTS) {
-						setResult(term);
+						final Term result = do1(lhs, rhs);
+						setResult(result);
 						return;
 					} else if (mQuantifier == QuantifiedFormula.FORALL) {
-						final Term elementwiseEquality = constructElementwiseEquality(lhs, rhs);
-						setResult(elementwiseEquality);
 						return;
 					} else {
 						throw new AssertionError("unknown quantifier");
@@ -104,12 +135,10 @@ public class ArrayEqualityExplicator extends TermTransformer {
 				final Term rhs = appTerm.getParameters()[1];
 				if (lhs.equals(mEliminatee) || rhs.equals(mEliminatee)) {
 					if (mQuantifier == QuantifiedFormula.EXISTS) {
-						final Term elementwiseEquality = constructElementwiseEquality(lhs, rhs);
-						final Term result = mScript.term("not", elementwiseEquality);
-						setResult(result);
 						return;
 					} else if (mQuantifier == QuantifiedFormula.FORALL) {
-						setResult(term);
+						final Term result = do1(lhs, rhs);
+						setResult(result);
 						return;
 					} else {
 						throw new AssertionError("unknown quantifier");
@@ -132,12 +161,10 @@ public class ArrayEqualityExplicator extends TermTransformer {
 						final Term rhs = appTermNot.getParameters()[1];
 						if (lhs.equals(mEliminatee) || rhs.equals(mEliminatee)) {
 							if (mQuantifier == QuantifiedFormula.EXISTS) {
-								final Term elementwiseEquality = constructElementwiseEquality(lhs, rhs);
-								final Term result = mScript.term("not", elementwiseEquality);
-								setResult(result);
 								return;
 							} else if (mQuantifier == QuantifiedFormula.FORALL) {
-								setResult(term);
+								final Term result = do1(lhs, rhs);
+								setResult(result);
 								return;
 							} else {
 								throw new AssertionError("unknown quantifier");
@@ -151,13 +178,58 @@ public class ArrayEqualityExplicator extends TermTransformer {
 		super.convert(term);
 	}
 
-	private Term constructElementwiseEquality(final Term lhsArray, final Term rhsArray) {
-		final Sort indexSort = mEliminatee.getSort().getArguments()[0];
-		final TermVariable auxIndex = mMgdScript.constructFreshTermVariable(AUX_VAR_PREFIX, indexSort);
-		mNewAuxVars.add(auxIndex);
-		final Term lhsSelect = mScript.term("select", lhsArray, auxIndex);
-		final Term rhsSelect = mScript.term("select", rhsArray, auxIndex);
-		final Term result = mScript.term("=", lhsSelect, rhsSelect);
+	private Term do1(final Term lhs, final Term rhs) {
+		if (lhs.equals(mEliminatee)) {
+			return do2(rhs);
+		} else if (rhs.equals(mEliminatee)) {
+			return do2(lhs);
+		} else {
+			throw new AssertionError("has to be on one side");
+		}
+	}
+
+	private Term do2(final Term otherSide) {
+		if (!(otherSide instanceof ApplicationTerm)) {
+			throw new IllegalArgumentException("expected store, got " + otherSide);
+		}
+		final ApplicationTerm appTerm = (ApplicationTerm) otherSide;
+		if (!appTerm.getFunction().getName().equals("store")) {
+			throw new IllegalArgumentException("expected store, got " + otherSide);
+		}
+		if (appTerm.getParameters().length != 3) {
+			throw new IllegalArgumentException("expected store, got " + otherSide);
+		}
+		return do3(appTerm.getParameters()[0], appTerm.getParameters()[1], appTerm.getParameters()[2]);
+		
+	}
+
+	private Term do3(final Term array, final Term index, final Term value) {
+		final Term newIndex;
+		if (Arrays.asList(index.getFreeVars()).contains(mEliminatee)) {
+			newIndex = mAuxVarCc.getOrConstruct(index);
+		} else {
+			newIndex = index;
+		}
+		final Term newValue;
+		if (Arrays.asList(value.getFreeVars()).contains(mEliminatee)) {
+			newValue = mAuxVarCc.getOrConstruct(value);
+		} else {
+			newValue = value;
+		}
+		Term result;
+		if (array.equals(mEliminatee)) {
+			// self-update
+			final Term select = mScript.term("select", array, newIndex);
+			result = PartialQuantifierElimination.equalityForExists(mScript, mQuantifier, select, newValue); 
+		} else {
+			if (newValue != value || newIndex != index) {
+				mIntroducedDerPossibility = true;
+			}
+			final Term store = mScript.term("store", array, newIndex, newValue);  
+			result = PartialQuantifierElimination.equalityForExists(mScript, mQuantifier, mEliminatee, store);
+		}
+		//TODO: let Prenex transformer deal with non-NNF terms and remove the following line 
+		result = new NnfTransformer(mMgdScript, mServices, QuantifierHandling.CRASH).transform(result);
 		return result;
 	}
 
