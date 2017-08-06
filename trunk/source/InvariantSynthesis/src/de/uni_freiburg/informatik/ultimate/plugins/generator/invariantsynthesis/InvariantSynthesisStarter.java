@@ -119,9 +119,21 @@ public class InvariantSynthesisStarter {
 		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 		final KindOfInvariant kindOfInvariant = prefs.getEnum(InvariantSynthesisPreferenceInitializer.LABEL_KIND_INVARIANT, KindOfInvariant.class);
 
+		IPredicate precondition;
+		IPredicate postcondition;
+
+		if (kindOfInvariant == KindOfInvariant.DANGER) {
+			precondition = predicateUnifier.getFalsePredicate();
+			postcondition = predicateUnifier.getTruePredicate();
+		} else {
+			assert kindOfInvariant == KindOfInvariant.SAFETY;
+			precondition = predicateUnifier.getTruePredicate();
+			postcondition = predicateUnifier.getFalsePredicate();
+		}
+
 		final CFGInvariantsGenerator cfgInvGenerator = new CFGInvariantsGenerator(icfg, services, storage,
-				predicateUnifier.getTruePredicate(), predicateUnifier.getFalsePredicate(), predicateFactory,
-				predicateUnifier, invSynthSettings, icfg.getCfgSmtToolkit(), kindOfInvariant);
+				precondition, postcondition, predicateFactory, predicateUnifier, invSynthSettings,
+				icfg.getCfgSmtToolkit(), kindOfInvariant);
 		final Map<IcfgLocation, IPredicate> invariants = cfgInvGenerator.synthesizeInvariants();
 		final IStatisticsDataProvider statistics = cfgInvGenerator.getInvariantSynthesisStatistics();
 		if (invariants != null) {

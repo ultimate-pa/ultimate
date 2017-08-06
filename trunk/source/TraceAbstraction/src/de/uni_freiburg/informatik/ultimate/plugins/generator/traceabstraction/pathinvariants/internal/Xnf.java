@@ -39,6 +39,7 @@ import java.util.Iterator;
  * @param <E> type of the atoms
  */
 public abstract class Xnf<E> implements Collection<Collection<E>> {
+
 	private final Collection<Collection<E>> mOuterJuncts;
 
 	public Xnf() {
@@ -128,5 +129,8 @@ public abstract class Xnf<E> implements Collection<Collection<E>> {
 		return mOuterJuncts.toArray(a);
 	}
 
-
+	@Override
+	public String toString() {
+		return mOuterJuncts.toString();
+	}
 }

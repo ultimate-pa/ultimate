@@ -568,7 +568,7 @@ public final class CFGInvariantsGenerator {
 
 			// Build transition predicates
 			final Collection<SuccessorConstraintIngredients<IPT>> successorConstraintIngredients =
-					new ArrayList<SuccessorConstraintIngredients<IPT>>(transitions.size() + 2);
+					new ArrayList<>(locationsAsList.size());
 			int sumOfTemplateConjuncts = 0;
 			int minimalTemplateSizeOfThisRound = Integer.MAX_VALUE;
 			int maximalTemplateSizeOfThisRound = 0;
@@ -808,7 +808,7 @@ public final class CFGInvariantsGenerator {
 
 		// Build transition predicates
 		final Collection<SuccessorConstraintIngredients<IPT>> successorConstraintIngredients =
-				new ArrayList<>(transitions.size() + 2);
+				new ArrayList<>(locationsAsList.size());
 		for (final IcfgLocation location : locationsAsList) {
 			final IPT invStart = locs2Patterns.get(location);
 			final Set<IProgramVar> startPatternVariables = locs2PatternVariables.get(location);

@@ -64,6 +64,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgInternalTransition;
@@ -712,17 +713,9 @@ public final class LinearInequalityInvariantPatternProcessor
 			// core
 			storeLinearInequalitiesToLocations(targetLocTemplateNegatedDNF, loc);
 		}
-		final Collection<List<LinearInequality>> transitionDNF_ = transition.getPolyhedra();
-		final Dnf<LinearInequality> transitionDNF = new Dnf<>();
-		for (final List<LinearInequality> list : transitionDNF_) {
-			final Collection<LinearInequality> newList = new ArrayList<>();
-			newList.addAll(list);
-			transitionDNF.add(newList);
-			// statistics section
-			mProgramSizeConjuncts += list.size();
-		}
-		if (transitionDNF_.size() > 1) {
-			mProgramSizeDisjuncts += transitionDNF_.size();
+		final Dnf<LinearInequality> transitionDNF = convertTransitionToPattern(transition);
+		if (transitionDNF.size() > 1) {
+			mProgramSizeDisjuncts += transitionDNF.size();
 		}
 		if (mUseUnsatCores) {
 			final List<IcfgLocation> locs = new ArrayList<>();
@@ -905,25 +898,64 @@ public final class LinearInequalityInvariantPatternProcessor
 				programVarsRecentlyOccurred));
 
 		for (final SuccessorConstraintIngredients<Dnf<AbstractLinearInvariantPattern>> ingredient : successorIngredients) {
-			final Dnf<AbstractLinearInvariantPattern> pattern = ingredient.getInvStart();
-			final Dnf<LinearInequality> patternDnf =
-					mapAndNegatePattern(mServices, pattern, programVarsRecentlyOccurred);
-			if (mStartLocation.equals(ingredient.getSourceLocation())) {
-				// Assert that the danger invariant is reachable from the initial states.
-				// TODO: Is this the correct way to transform a pattern into a term?
-
-				final Term term = transformNegatedConjunction(ConstraintsType.Normal, patternDnf);
-				assert term.getFreeVars().length == 0;
-				mSolver.assertTerm(term);
+			final Dnf<AbstractLinearInvariantPattern> sourceInvariantPattern = ingredient.getInvStart();
+			if (mErrorLocation.equals(ingredient.getSourceLocation())) {
+				continue;
 			}
-			if (!mErrorLocation.equals(ingredient.getSourceLocation())) {
+			if (!ingredient.getSourceLocation().getOutgoingEdges().isEmpty()) {
 				// Assert that a danger invariant is reachable in a successor state.
-				// TODO: How can we do logical operations (and, or, implication) on patterns?
+				Term constraint = mSolver.term("false");
 				for (final Map.Entry<IcfgEdge, Dnf<AbstractLinearInvariantPattern>> entry : ingredient
 						.getEdge2TargetInv().entrySet()) {
-					final Dnf<LinearInequality> targetDnf =
-							mapAndNegatePattern(mServices, entry.getValue(), programVarsRecentlyOccurred);
+					final UnmodifiableTransFormula tf = entry.getKey().getTransformula();
+
+					final LinearTransition transition = mLinearizer.linearize(tf);
+					final Map<IProgramVar, Term> unprimedMapping = new HashMap<>(transition.getInVars());
+					programVarsRecentlyOccurred.putAll(unprimedMapping);
+					completePatternVariablesMapping(unprimedMapping, ingredient.getVariablesForSourcePattern(),
+							programVarsRecentlyOccurred);
+
+					final Map<IProgramVar, Term> primedMapping = new HashMap<>(transition.getOutVars());
+					programVarsRecentlyOccurred.putAll(primedMapping);
+					completePatternVariablesMapping(primedMapping,
+							ingredient.getEdge2VariablesForTargetPattern().get(entry.getKey()),
+							programVarsRecentlyOccurred);
+
+					final Dnf<LinearInequality> negatedTargetInvariantDnf =
+							mapAndNegatePattern(mServices, entry.getValue(), primedMapping);
+					final Dnf<LinearInequality> sourceInvariantDnf =
+							mapPattern(sourceInvariantPattern, unprimedMapping);
+
+					final Dnf<LinearInequality> transitionDnf = convertTransitionToPattern(transition);
+					final Dnf<LinearInequality> negatedTransitionDnf =
+							negatePatternAndConvertToDNF(mServices, transitionDnf);
+
+					final Dnf<LinearInequality> disjunction = new Dnf<>();
+					disjunction.addAll(negatedTransitionDnf);
+					disjunction.addAll(negatedTargetInvariantDnf);
+
+					// TODO: This term is unsatisfiable whenever a TransFormula contains a variable.
+					final Term term =
+							transformNegatedConjunction(ConstraintsType.Normal, sourceInvariantDnf, disjunction);
+
+					constraint = Util.or(mSolver, constraint, term);
 				}
+
+				mLogger.debug("Asserting constraint: " + constraint);
+				mSolver.assertTerm(constraint);
+			} else {
+				final Dnf<LinearInequality> patternDnf =
+						mapPattern(sourceInvariantPattern, programVarsRecentlyOccurred);
+				final Term term = transformNegatedConjunction(ConstraintsType.Normal, patternDnf);
+				mSolver.assertTerm(term);
+			}
+
+			if (mStartLocation.equals(ingredient.getSourceLocation())) {
+				final Dnf<LinearInequality> negatedDnf =
+						mapAndNegatePattern(mServices, sourceInvariantPattern, programVarsRecentlyOccurred);
+				final Term invariantTerm = transformNegatedConjunction(ConstraintsType.Normal, negatedDnf);
+				mLogger.debug("Asserting constraint: " + invariantTerm);
+				mSolver.assertTerm(invariantTerm);
 			}
 		}
 	}
@@ -1421,6 +1453,25 @@ public final class LinearInequalityInvariantPatternProcessor
 			result.add(conjunctsFromTransFormula);
 		}
 		return result;
+	}
+
+	/**
+	 * Converts a linear transition into a pattern of linear inequalities.
+	 *
+	 * @param transition
+	 *            a linear transition
+	 * @return a pattern in DNF
+	 */
+	private Dnf<LinearInequality> convertTransitionToPattern(final LinearTransition transition) {
+		final Collection<List<LinearInequality>> transitionDNF_ = transition.getPolyhedra();
+		final Dnf<LinearInequality> transitionDNF = new Dnf<>();
+		for (final List<LinearInequality> list : transitionDNF_) {
+			final Collection<LinearInequality> newList = new ArrayList<>(list);
+			transitionDNF.add(newList);
+			// statistics section
+			mProgramSizeConjuncts += list.size();
+		}
+		return transitionDNF;
 	}
 
 	@Override
