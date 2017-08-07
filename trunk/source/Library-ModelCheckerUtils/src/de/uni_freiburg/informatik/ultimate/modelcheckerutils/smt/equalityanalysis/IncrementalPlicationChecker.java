@@ -51,33 +51,48 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
-public class IncrementalImplicationChecker {
+public class IncrementalPlicationChecker {
+	
+	public enum Plication { IMPLICATION, EXPLICATION };
 	
 	private final ManagedScript mMgdScript;
-	private final Term mAntecedent;
-	private boolean mAntecedentIsAsserted;
+	private final Term mLhs;
+	private boolean mLhsIsAsserted;
 	private Substitution mVar2ConstSubstitution;
+	private final Plication mPlication; 
 
 	
 	
-	public IncrementalImplicationChecker(final ManagedScript mgdScript, final Term antecedent) {
+	public IncrementalPlicationChecker(final Plication plication, final ManagedScript mgdScript, final Term lhs) {
 		super();
+		mPlication = plication;
 		mMgdScript = mgdScript;
-		mAntecedent = antecedent;
-		mAntecedentIsAsserted = false;
+		mLhs = lhs;
+		mLhsIsAsserted = false;
 	}
 
-	public void assertAntecedent(final Term antecedent) {
-		assert !mAntecedentIsAsserted : "must not assert antecedent twice";
+	public void assertLhs(final Term lhs) {
+		assert !mLhsIsAsserted : "must not assert lhs twice";
 		mMgdScript.lock(this);
 		mMgdScript.push(this, 1);
-		mVar2ConstSubstitution = constructVar2ConstSubstitution(antecedent);
-		mMgdScript.assertTerm(this, mVar2ConstSubstitution.transform(antecedent));
-		mAntecedentIsAsserted = true;
+		mVar2ConstSubstitution = constructVar2ConstSubstitution(lhs);
+		final Term assertTerm;
+		switch (mPlication) {
+		case EXPLICATION:
+			assertTerm = SmtUtils.not(mMgdScript.getScript(), lhs);
+			break;
+		case IMPLICATION:
+			assertTerm = lhs;
+			break;
+		default:
+			throw new AssertionError("unknown case");
+		}
+		mMgdScript.assertTerm(this, mVar2ConstSubstitution.transform(assertTerm));
+		mLhsIsAsserted = true;
 	}
 
 	/**
-	 * Construct a substitution that replaces all free TermVariables of antecedent
+	 * Construct a substitution that replaces all free TermVariables of lhs
 	 * by constants and declares these constants.
 	 */
 	private Substitution constructVar2ConstSubstitution(final Term term) {
@@ -88,12 +103,23 @@ public class IncrementalImplicationChecker {
 	}
 	
 	
-	public Validity checkImplication(final Term succedent) {
-		if (!mAntecedentIsAsserted) {
-			assertAntecedent(mAntecedent);
+	public Validity checkPlication(final Term rhs) {
+		if (!mLhsIsAsserted) {
+			assertLhs(mLhs);
 		}
 		mMgdScript.push(this, 1);
-		mMgdScript.assertTerm(this, mVar2ConstSubstitution.transform(SmtUtils.not(mMgdScript.getScript(),succedent)));
+		final Term assertTerm;
+		switch (mPlication) {
+		case EXPLICATION:
+			assertTerm = rhs;
+			break;
+		case IMPLICATION:
+			assertTerm = SmtUtils.not(mMgdScript.getScript(), rhs);
+			break;
+		default:
+			throw new AssertionError("unknown case");
+		}
+		mMgdScript.assertTerm(this, mVar2ConstSubstitution.transform(assertTerm));
 		final LBool isSat = mMgdScript.checkSat(this);
 		mMgdScript.pop(this, 1);
 		return IHoareTripleChecker.convertLBool2Validity(isSat);
@@ -101,11 +127,11 @@ public class IncrementalImplicationChecker {
 	
 	
 	public void unlockSolver() {
-		if (mAntecedentIsAsserted) {
+		if (mLhsIsAsserted) {
 			mMgdScript.pop(this, 1);
 			mMgdScript.unlock(this);
 		} else {
-			// We did not assert the antecedent, hence we did not lock the solver.
+			// We did not assert the lhs, hence we did not lock the solver.
 		}
 	}
 }

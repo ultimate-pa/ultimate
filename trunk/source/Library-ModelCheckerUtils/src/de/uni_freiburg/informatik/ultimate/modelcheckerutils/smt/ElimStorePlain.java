@@ -62,7 +62,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDim
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSort;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalStore;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.EqualityAnalysisResult.Equality;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.IncrementalImplicationChecker;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.IncrementalPlicationChecker;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.IncrementalPlicationChecker.Plication;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.ThreeValuedEquivalenceRelation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.PrenexNormalForm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierPusher;
@@ -343,7 +344,7 @@ public class ElimStorePlain {
 		newAuxVars.add(newAuxArray);
 
 		final List<Term> disjuncts = new ArrayList<>();
-		final CombinationIterator2 ci = new CombinationIterator2(indices, equalityInformation);
+		final CombinationIterator2 ci = new CombinationIterator2(indices, equalityInformation, new DefaultExternalOracle());
 		// mLogger.info("Considering " + ci.size() + " cases while eliminating array variable of dimension " + new
 		// MultiDimensionalSort(eliminatee.getSort()).getDimension());
 		for (final Set<Doubleton<Term>> equalDoubletons : ci) {
@@ -405,7 +406,7 @@ public class ElimStorePlain {
 				} else if (mQuantifier == QuantifiedFormula.FORALL) {
 					storedValueInformation = mScript.term("false");
 				} else {
-					throw new AssertionError();
+					throw new AssertionError("unknown quantifier");
 				}
 			} else {
 				storedValueInformation = PartialQuantifierElimination.equalityForExists(mScript, mQuantifier,
@@ -481,7 +482,15 @@ public class ElimStorePlain {
 		final List<Term> relationsDetectedViaSolver = new ArrayList<>();
 		final ArrayList<Term> indicesList = new ArrayList<>(indices);
 		// TODO: filter non-represenatives not only during iterations but also in advance
-		final IncrementalImplicationChecker iea = new IncrementalImplicationChecker(mMgdScript, inputTerm);
+		final Plication plication;
+		if (mQuantifier == QuantifiedFormula.EXISTS) {
+			plication = Plication.IMPLICATION;
+		} else if (mQuantifier == QuantifiedFormula.FORALL) {
+			plication = Plication.EXPLICATION;
+		} else {
+			throw new AssertionError("unknown quantifier");
+		}
+		final IncrementalPlicationChecker iea = new IncrementalPlicationChecker(plication, mMgdScript, inputTerm);
 		for (int i = 0; i < indicesList.size(); i++) {
 			if (!tver.isRepresentative(indicesList.get(i))) {
 				continue;
@@ -506,22 +515,38 @@ public class ElimStorePlain {
 							tver.reportNotEquals(indicesList.get(i), indicesList.get(j));
 							mLogger.info("found not equals in dual finite juncts");
 						} else {
-							final Validity isEqual = iea.checkImplication(eq);
+							final Validity isEqual = iea.checkPlication(eq);
 							if (isEqual == Validity.UNKNOWN && mLogger.isWarnEnabled()) {
 								mLogger.warn("solver failed to check if following equality is implied: " + eq);
 							}
 							if (isEqual == Validity.VALID) {
-								tver.reportEquality(indicesList.get(i), indicesList.get(j));
+								if (mQuantifier == QuantifiedFormula.EXISTS) {
+									tver.reportEquality(indicesList.get(i), indicesList.get(j));
+								} else if (mQuantifier == QuantifiedFormula.FORALL) {
+									tver.reportNotEquals(indicesList.get(i), indicesList.get(j));
+								} else {
+									throw new AssertionError("unknown quantifier");
+								}
+//								tver.reportEquality(indicesList.get(i), indicesList.get(j));
+//								tver.reportNotEquals(indicesList.get(i), indicesList.get(j));
 								relationsDetectedViaSolver.add(eq);
 								mLogger.info("detected equality via solver");
 							} else {
-								final Validity notEqualsHolds = iea.checkImplication(neq);
+								final Validity notEqualsHolds = iea.checkPlication(neq);
 								if (notEqualsHolds == Validity.UNKNOWN && mLogger.isWarnEnabled()) {
 									mLogger.warn("solver failed to check if following not equals relation is implied: " + eq);
 								}
 
 								if (notEqualsHolds == Validity.VALID) {
-									tver.reportNotEquals(indicesList.get(i), indicesList.get(j));
+									if (mQuantifier == QuantifiedFormula.EXISTS) {
+										tver.reportNotEquals(indicesList.get(i), indicesList.get(j));
+									} else if (mQuantifier == QuantifiedFormula.FORALL) {
+										tver.reportEquality(indicesList.get(i), indicesList.get(j));
+									} else {
+										throw new AssertionError("unknown quantifier");
+									}
+//									tver.reportNotEquals(indicesList.get(i), indicesList.get(j));
+//									tver.reportEquality(indicesList.get(i), indicesList.get(j));
 									mLogger.info("detected not equals via solver");
 									relationsDetectedViaSolver.add(neq);
 								}
@@ -808,12 +833,15 @@ public class ElimStorePlain {
 		private final List<Doubleton<Term>> mNonDisjointDoubletons;
 
 		private final ThreeValuedEquivalenceRelation<Term> mEqualityInformation;
+		private final ExternalOracle mExternalOracle;
 
 		public CombinationIterator2(final Collection<Term> indices,
-				final ThreeValuedEquivalenceRelation<Term> equalityInformation) {
+				final ThreeValuedEquivalenceRelation<Term> equalityInformation, 
+				final ExternalOracle externalOracle) {
 			super();
 			mNonDisjointDoubletons = buildListOfNonDisjointDoubletons(indices, equalityInformation);
 			mEqualityInformation = equalityInformation;
+			mExternalOracle = externalOracle;
 			mCurrentRelation = new SymmetricHashRelation<>();
 
 			while (true) {
@@ -885,7 +913,7 @@ public class ElimStorePlain {
 				mCurrentRelation.addPair(d.getOneElement(), d.getOtherElement());
 				final Set<Doubleton<Term>> newPairs = mCurrentRelation.makeTransitive();
 				final boolean containsDisjointPair = containsNotEqualsPair(newPairs);
-				if (containsDisjointPair) {
+				if (containsDisjointPair || !mExternalOracle.isConsistent(mStack, mNonDisjointDoubletons)) {
 					remove1true();
 					rebuildCurrentRelation();
 					tryToPush1False();
@@ -938,7 +966,22 @@ public class ElimStorePlain {
 		public Iterator<Set<Doubleton<Term>>> iterator() {
 			return mResult.iterator();
 		}
+		
+	}
+	
+	public abstract static class ExternalOracle {
+		
+		public abstract boolean isConsistent(LinkedList<Boolean> stack, List<Doubleton<Term>> nonDisjointDoubletons);
+		
+	}
+	
+	public static class DefaultExternalOracle extends ExternalOracle {
 
+		@Override
+		public boolean isConsistent(final LinkedList<Boolean> stack, final List<Doubleton<Term>> nonDisjointDoubletons) {
+			return true;
+		}
+		
 	}
 
 	/**
