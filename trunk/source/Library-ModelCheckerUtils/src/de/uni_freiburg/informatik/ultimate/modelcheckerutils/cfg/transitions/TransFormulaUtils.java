@@ -961,5 +961,36 @@ public final class TransFormulaUtils {
 		tfb.setInfeasibility(Infeasibility.UNPROVEABLE);
 		return tfb.finishConstruction(mgdScript);
 	}
+	
+	
+	/**
+	 * Construct a {@link UnmodifiableTransFormula} that represents the state
+	 * pairs that remain after we subtracted the input
+	 * {@link UnmodifiableTransFormula} from the set of all state pairs. Let
+	 * ρ_1,...,ρ_n be the transition relations that are represented by the input
+	 * transFormulas. The output of this method is a
+	 * {@link UnmodifiableTransFormula} that represents the transition relation
+	 * ρ_rem, where ρ_rem contains all state pairs (state without location,
+	 * maybe we should call it valuation pairs instead) that are not contained
+	 * in any of the ρ_i.
+	 * 
+	 * This method will not always work: in case the disjunction contains 
+	 * auxvars that cannot be eliminated this method will throw an Exception.
+	 * 
+	 * 
+	 * TODO 2017-08-07 Matthias: Get rid of serial number in parallel composition.
+	 * 
+	 * @param serialNumber Use a different number in each call. This is an ugly
+	 * workaround and will be removed in the future.
+	 */
+	public static UnmodifiableTransFormula constructRemainderTransition(final ILogger logger,
+			final IUltimateServiceProvider services, final int serialNumber, final ManagedScript mgdScript,
+			final UnmodifiableTransFormula... transFormulas) {
+		final UnmodifiableTransFormula disjunction = parallelComposition(logger, services, serialNumber, mgdScript, null,
+				false, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, transFormulas);
+		final UnmodifiableTransFormula negatedDisjunction = negate(disjunction, mgdScript, services, logger,
+				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, SimplificationTechnique.SIMPLIFY_DDA);
+		return negatedDisjunction;
+	}
 
 }
