@@ -157,10 +157,10 @@ public class HornClause implements IRankedLetter {
 
 	@Override
 	public int getRank() {
-		if (mBodyPreds.isEmpty()) {//mTransitionFormula.getInVars().isEmpty()) {
-			// Initial state
-			return 1;
-		}
+//		if (mBodyPreds.isEmpty()) {//mTransitionFormula.getInVars().isEmpty()) {
+//			// Initial state
+//			return 1;
+//		}
 		return mBodyPreds.size();// mTransitionFormula.getInVars().size();
 	}
 	public Term getFormula() {

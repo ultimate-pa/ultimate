@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.tree.operations;
 
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -126,9 +125,9 @@ public class Totalize<LETTER extends IRankedLetter, STATE> extends GeneralOperat
 			if (mTreeAutomaton.isFinalState(st)) {
 				res.addFinalState(st);
 			}
-			if (mTreeAutomaton.isInitialState(st)) {
-				res.addInitialState(st);
-			}
+//			if (mTreeAutomaton.isInitialState(st)) {
+//				res.addInitialState(st);
+//			}
 		}
 		final Map<LETTER, Integer> arityMap = new HashMap<>(); 
 		for (final TreeAutomatonRule<LETTER, STATE> rule : mTreeAutomaton.getRules()) {

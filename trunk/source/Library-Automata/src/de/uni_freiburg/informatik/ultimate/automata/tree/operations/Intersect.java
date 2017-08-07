@@ -164,9 +164,9 @@ public class Intersect<LETTER extends IRankedLetter, STATE> implements IOperatio
 			for (final STATE q2 : mPairsMap.get(q1).keySet()) {
 				final Pair<STATE, STATE> st = getPair(q1, q2);
 
-				if (mTreeA.isInitialState(q1) && mTreeB.isInitialState(q2)) {
-					res.addInitialState(st);
-				}
+//				if (mTreeA.isInitialState(q1) && mTreeB.isInitialState(q2)) {
+//					res.addInitialState(st);
+//				}
 
 				if (mTreeA.isFinalState(q1) && mTreeB.isFinalState(q2)) {
 					res.addFinalState(st);
@@ -186,9 +186,9 @@ public class Intersect<LETTER extends IRankedLetter, STATE> implements IOperatio
 
 		for (final Pair<STATE, STATE> state : res.getStates()) {
 			reducedResult.addState(reduceState(state));
-			if (res.isInitialState(state)) {
-				reducedResult.addInitialState(reduceState(state));
-			}
+//			if (res.isInitialState(state)) {
+//				reducedResult.addInitialState(reduceState(state));
+//			}
 			if (res.isFinalState(state)) {
 				reducedResult.addFinalState(reduceState(state));
 			}

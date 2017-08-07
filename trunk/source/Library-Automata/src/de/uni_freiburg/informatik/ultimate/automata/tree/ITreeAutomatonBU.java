@@ -54,10 +54,10 @@ public interface ITreeAutomatonBU<LETTER extends IRankedLetter, STATE> extends I
 	 */
 	Set<STATE> getStates();
 
-	/**
-	 * @return a set of all initial states in the automaton.
-	 */
-	Set<STATE> getInitialStates();
+//	/**
+//	 * @return a set of all initial states in the automaton.
+//	 */
+//	Set<STATE> getInitialStates();
 
 	/**
 	 * @param state
@@ -65,11 +65,11 @@ public interface ITreeAutomatonBU<LETTER extends IRankedLetter, STATE> extends I
 	 */
 	boolean isFinalState(final STATE state);
 
-	/**
-	 * @param state
-	 * @return true, if given state is initial.
-	 */
-	boolean isInitialState(final STATE state);
+//	/**
+//	 * @param state
+//	 * @return true, if given state is initial.
+//	 */
+//	boolean isInitialState(final STATE state);
 
 	/**
 	 * @param states

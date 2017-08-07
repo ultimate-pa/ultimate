@@ -162,13 +162,13 @@ public class Minimize<LETTER extends IRankedLetter, STATE> implements IOperation
 					// All final states are equivalent.
 					worklist.union(finalState, state);
 				}
-			} else if (mTreeAutomaton.isInitialState(state)) {
-				if (initState == null) {
-					initState = state;
-				} else {
-					// all initial states are equivalent
-					worklist.union(initState, state);
-				}
+//			} else if (mTreeAutomaton.isInitialState(state)) {
+//				if (initState == null) {
+//					initState = state;
+//				} else {
+//					// all initial states are equivalent
+//					worklist.union(initState, state);
+//				}
 			} else {
 				if (nonFinalState == null) {
 					nonFinalState = state;
@@ -211,9 +211,9 @@ public class Minimize<LETTER extends IRankedLetter, STATE> implements IOperation
 			if (mTreeAutomaton.isFinalState(st)) {
 				res.addFinalState(minimize(worklist.getPartition(st)));
 			}
-			if (mTreeAutomaton.isInitialState(st)) {
-				res.addInitialState(minimize(worklist.getPartition(st)));
-			}
+//			if (mTreeAutomaton.isInitialState(st)) {
+//				res.addInitialState(minimize(worklist.getPartition(st)));
+//			}
 		}
 
 		for (final TreeAutomatonRule<LETTER, STATE> rule : mTreeAutomaton.getRules()) {
@@ -234,9 +234,9 @@ public class Minimize<LETTER extends IRankedLetter, STATE> implements IOperation
 
 		final Set<STATE> worklist = new HashSet<>();
 
-		for (final STATE st : treeAutomaton.getInitialStates()) {
-			worklist.add(st);
-		}
+//		for (final STATE st : treeAutomaton.getInitialStates()) {
+//			worklist.add(st);
+//		}
 		final Set<STATE> oldWorklist = new HashSet<>();
 
 		do {
@@ -304,9 +304,9 @@ public class Minimize<LETTER extends IRankedLetter, STATE> implements IOperation
 				if (treeAutomaton.isFinalState(st)) {
 					res.addFinalState(st);
 				}
-				if (treeAutomaton.isInitialState(st)) {
-					res.addInitialState(st);
-				}
+//				if (treeAutomaton.isInitialState(st)) {
+//					res.addInitialState(st);
+//				}
 			}
 		}
 

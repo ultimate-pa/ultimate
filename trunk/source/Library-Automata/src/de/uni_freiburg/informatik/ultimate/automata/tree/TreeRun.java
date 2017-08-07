@@ -152,17 +152,17 @@ public class TreeRun<LETTER extends IRankedLetter, STATE> implements ITreeRun<LE
 		return mAllStates;
 	}
 	
-	private Collection<STATE> getInitialStates() {
-		final Set<STATE> res = new HashSet<>();
-		if (mChildren.isEmpty()) {
-			res.add(mState);
-		} else {
-			for (final TreeRun<LETTER, STATE> st : mChildren) {
-				res.addAll(st.getInitialStates());
-			}
-		}
-		return res;
-	}
+//	private Collection<STATE> getInitialStates() {
+//		final Set<STATE> res = new HashSet<>();
+//		if (mChildren.isEmpty()) {
+//			res.add(mState);
+//		} else {
+//			for (final TreeRun<LETTER, STATE> st : mChildren) {
+//				res.addAll(st.getInitialStates());
+//			}
+//		}
+//		return res;
+//	}
 	
 	@Override
 	public ITreeAutomatonBU<LETTER, STATE> getAutomaton() {
@@ -171,9 +171,9 @@ public class TreeRun<LETTER extends IRankedLetter, STATE> implements ITreeRun<LE
 		for (final STATE st : getStates()) {
 			treeAutomaton.addState(st);
 		}
-		for (final STATE st : getInitialStates()) {
-			treeAutomaton.addInitialState(st);
-		}
+//		for (final STATE st : getInitialStates()) {
+//			treeAutomaton.addInitialState(st);
+//		}
 		treeAutomaton.addFinalState(mState);
 		
 		for (final TreeAutomatonRule<LETTER, STATE> rule : getRules()) {
@@ -185,9 +185,9 @@ public class TreeRun<LETTER extends IRankedLetter, STATE> implements ITreeRun<LE
 
 	@Override
 	public Tree<LETTER> getTree() {
-		if (mChildren.isEmpty()) {
-			return null;
-		}
+//		if (mChildren.isEmpty()) {
+//			return null;
+//		}
 		final List<Tree<LETTER>> treeChildren = new ArrayList<>();
 		for (final TreeRun<LETTER, STATE> run : this.mChildren) {
 			treeChildren.add(run.getTree());
@@ -207,9 +207,9 @@ public class TreeRun<LETTER extends IRankedLetter, STATE> implements ITreeRun<LE
 	
 	@Override
 	public String toString() {
-		if (mChildren.isEmpty()) {
-			return mState.toString();
-		}
+//		if (mChildren.isEmpty()) {
+//			return mState.toString();
+//		}
 		final StringBuilder res = new StringBuilder();
 		for (final TreeRun<LETTER, STATE> st : mChildren) {
 			if (res.length() > 0) {

@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.automata.tree.operations;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -93,27 +94,43 @@ public class Accepts<LETTER extends IRankedLetter, STATE> implements IOperation<
 		return "Exit " + getOperationName();
 	}
 
+	/**
+	 * 
+	 * @param t a subtree
+	 * @return Set of states that the automaton may be in after reading subtree t
+	 */
 	private Set<STATE> checkTree(final Tree<LETTER> t) {
-		final Set<STATE> res = new HashSet<>();
-		final ArrayList<Set<STATE>> next = new ArrayList<>();
+		final ArrayList<Set<STATE>> statesReachableFromChildren = new ArrayList<>();
 		for (final Tree<LETTER> ch : t.getChildren()) {
-			next.add(checkTree(ch));
+			Set<STATE> childResult = checkTree(ch);
+			if (childResult.isEmpty()) {
+				// one of the child subtrees does not have a derivation -- we can reject right here
+				return Collections.emptySet();
+			}
+			statesReachableFromChildren.add(childResult);
 		}
-		final Iterable<TreeAutomatonRule<LETTER, STATE>> st = mTreeAutomaton.getRulesByLetter(t.getSymbol());
+		
+		final Iterable<TreeAutomatonRule<LETTER, STATE>> rulesForCurrentLetter = 
+				mTreeAutomaton.getRulesByLetter(t.getSymbol());
 
-		if (st == null) {
-			return res;
+		if (rulesForCurrentLetter == null) {
+			// there is no rule we can go on with from the current letter
+			return Collections.emptySet();
 		}
-		for (final TreeAutomatonRule<LETTER, STATE> rule : st) {
+
+		final Set<STATE> res = new HashSet<>();
+		for (final TreeAutomatonRule<LETTER, STATE> rule : rulesForCurrentLetter) {
+			assert rule.getArity() == statesReachableFromChildren.size();
 			boolean validDerivation = true;
-			for (int i = 0, k = 0; i < rule.getArity(); ++i) {
+			for (int i = 0; i < rule.getArity(); ++i) {
 				final STATE sr = rule.getSource().get(i);
-				if ((!next.isEmpty() || !mTreeAutomaton.isInitialState(sr))) {
-					if (k >= next.size() || !next.get(k++).contains(sr)) {
-						validDerivation = false;
-						break;
-					}
+//				if ((!statesReachableFromChildren.isEmpty() || !mTreeAutomaton.isInitialState(sr))) {
+//				if (k >= statesReachableFromChildren.size() || !statesReachableFromChildren.get(k++).contains(sr)) {
+				if (!statesReachableFromChildren.get(i).contains(sr)) {
+					validDerivation = false;
+					break;
 				}
+//				}
 			}
 			if (validDerivation) {
 				res.add(rule.getDest());

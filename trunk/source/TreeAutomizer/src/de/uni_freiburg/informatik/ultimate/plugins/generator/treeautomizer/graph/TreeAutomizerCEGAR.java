@@ -211,9 +211,9 @@ public class TreeAutomizerCEGAR {
 			for (final HornClausePredicateSymbol sym : clause.getBodyPredicates()) {
 				tail.add(mPredicateFactory.createTruePredicateWithLocation(sym));
 			}
-			if (tail.isEmpty()) {
-				tail.add(mInitialPredicate);
-			}
+//			if (tail.isEmpty()) {
+//				tail.add(mInitialPredicate);
+//			}
 			if (clause.getHeadPredicate() instanceof HornClauseFalsePredicateSymbol) {
 				mAbstraction.addRule(new TreeAutomatonRule<>(clause, tail, mFinalPredicate));
 			} else {
@@ -222,7 +222,7 @@ public class TreeAutomizerCEGAR {
 			}
 		}
 
-		mAbstraction.addInitialState(mInitialPredicate);
+//		mAbstraction.addInitialState(mInitialPredicate);
 		mAbstraction.addFinalState(mFinalPredicate);
 		for (final IPredicate state : mAbstraction.getStates()) {
 			mPredicateUnifier.getOrConstructPredicate(state.getFormula());

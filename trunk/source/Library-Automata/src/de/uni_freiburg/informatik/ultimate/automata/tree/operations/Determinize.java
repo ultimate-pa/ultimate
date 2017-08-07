@@ -113,9 +113,9 @@ public class Determinize<LETTER extends IRankedLetter, STATE> implements IOperat
 				for (final Set<STATE> sub : sSrc) {
 					final STATE state = reduceState(sub);
 					for (final STATE s : sub) {
-						if (mTreeAutomaton.isInitialState(s)) {
-							res.addInitialState(state);
-						}
+//						if (mTreeAutomaton.isInitialState(s)) {
+//							res.addInitialState(state);
+//						}
 						if (mTreeAutomaton.isFinalState(s)) {
 							res.addFinalState(state);
 						}
@@ -126,9 +126,9 @@ public class Determinize<LETTER extends IRankedLetter, STATE> implements IOperat
 					if (mTreeAutomaton.isFinalState(s)) {
 						res.addFinalState(dest);
 					}
-					if (mTreeAutomaton.isInitialState(s)) {
-						res.addInitialState(dest);
-					}
+//					if (mTreeAutomaton.isInitialState(s)) {
+//						res.addInitialState(dest);
+//					}
 				}
 			}
 		}
