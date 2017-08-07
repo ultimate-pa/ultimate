@@ -1,8 +1,9 @@
 ; 'reachable state space' seems to be:
 ; R: {(n, 0) | n >= 0}, 
-; I: {(n+1, m) | (n, m) in R}, 
-; the 'assertion' excludes all states in I where n is three bigger than m 
-; --> this is unsat
+; I: {(n+1, m) | (n, m) in R}, {(n+1, m+1) | (n, m) in I}, 
+; the 'assertion' prohibits all states in I where m is three bigger than n 
+; from the rules it follows that n is always bigger equal m, for any I(n, m)
+; --> sat
 (set-logic HORN)
 
 (declare-fun I (Int Int) Bool)
