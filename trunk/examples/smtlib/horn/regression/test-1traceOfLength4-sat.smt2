@@ -1,6 +1,7 @@
 ; status: sat (checked by z3)
 ; written on 27.03.2017
 ; for SSA construction debugging -- has only one trace of length 4
+(set-info :status sat)
 (set-logic HORN)
 
 (declare-fun I0_x (Int) Bool)

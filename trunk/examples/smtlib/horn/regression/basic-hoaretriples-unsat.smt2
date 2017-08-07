@@ -1,3 +1,4 @@
+(set-info :status unsat)
 (set-logic HORN)
 
 (declare-fun I (Int) Bool)

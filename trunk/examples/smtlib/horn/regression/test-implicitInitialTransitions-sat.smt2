@@ -2,6 +2,7 @@
 ; written on 27.03.2017
 ; currently, we say this set is sat without looking at any trace, because the "initial transitions" 
 ; don't have the form of an implication withough uninterpreted predicates in the body.
+(set-info :status sat)
 (set-logic HORN)
 
 (declare-fun I_x (Int) Bool)
