@@ -222,6 +222,7 @@ public class AutomataDefinitionInterpreter {
 			// determine the rank of the letter according to the rule's source states
 			final StringRankedLetter letter = 
 					getOrConstructStringRankedLetter(trans.getSymbol(), trans.getSourceStates().size());
+			letterToRank.put(trans.getSymbol(), letter);
 			
 			treeAutomaton.addRule(
 					new TreeAutomatonRule<>(letter, trans.getSourceStates(), trans.getTargetState()));
