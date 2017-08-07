@@ -1,47 +1,54 @@
+// Example that demonstrates how to use tree automata in AutomataScript
+// Authors: Mostafa Mahmoud Mohamed, Alexander Nutz
+// Date: 2017-08-07
 
-// Tree automaton that accepts lists of natural numbers in unary encoding
-TreeAutomaton taLists = (
+
+// Create a tree automaton via a constructor, assign it to the freshly declared
+// variable "taLists".
+// Intuitively, the new tree automaton accepts lists of natural numbers in 
+// unary encoding.
+// For example the list [0, 0, 1] would be represented as the tree 
+// (cons(elem("0"), cons(elem("0"), cons(elem(succ("0")), nil)))) 
+TreeAutomaton taLists = TreeAutomaton (
     alphabet = { nil "0" cons succ elem },
     states = { Node Num List "_" },
-    initialStates = { "_" },
     finalStates = { List },
     transitionTable = {
-        (("_") "0" Num)
         ((Node List) cons List)
-        (("_") nil List)
+        (() "0" Num)
+        (() nil List)
         ((Num) succ Num)
         ((Num) elem Node)
     }
 );
 
-// [0, 1]
+// Constructs a tree that represents the list "[0, 1]", and assigns it to a
+// variable called "list".
 Tree list = Tree[cons(elem("0"), cons(elem(succ("0")), nil))];
 
-// Good list
+// Check that taLists accepts list
 assert(accepts(taLists, list));
 
 // _____________________________________________________________________________
 
-
-
-// Tree automaton that accepts binary trees whose nodes contain natural numbers 
-// in unary encoding
-TreeAutomaton taBinaryTrees = (
+// Declare a second tree automaton that accepts binary trees whose nodes contain 
+// natural numbers in unary encoding
+TreeAutomaton taBinaryTrees = TreeAutomaton(
     alphabet = { nil "0" cons succ elem },
     states = { Node Num BinTree "_" },
-    initialStates = { "_" },
     finalStates = { BinTree },
     transitionTable = {
-        (("_") "0" Num)
+        (() "0" Num)
         ((Node BinTree BinTree) cons BinTree)
         ((Node BinTree) cons BinTree)
-        (("_") nil BinTree)
+        (() nil BinTree)
         ((Num) succ Num)
         ((Num) elem Node)
     }
 );
 
 
+// Declare a tree of the following shape
 //       1
 //     /   \
 //    0     -
@@ -49,19 +56,17 @@ TreeAutomaton taBinaryTrees = (
 //  -
 Tree binaryTree = Tree[cons(elem(succ("0")), cons(elem("0"), nil), nil)];
 
-// Good binary tree
+// Check that the automaton "taBinaryTrees" accepts the tree "binaryTree"
 assert(accepts(taBinaryTrees, binaryTree));
-
 
 // _____________________________________________________________________________
 
-
-// Check that our example list is also a binary tree
+// Check that the tree "list" from before is also a binary tree
 assert(accepts(taBinaryTrees, list));
 
 // Check that all lists accepted by tree automaton taLists are also accepted by 
 // tree automaton taBinaryTrees.
-// (checks set inclusion by reduction to emptiness, intersection and complement 
-//  operations)
-assert(TreeEmptinessCheck(Intersect(taLists, Complement(taBinaryTrees))));
+// Uses the Boolean language operations for complement, intersection, and 
+// check for emptiness.
+assert(treeEmptinessCheck(intersect(taLists, complement(taBinaryTrees))));
 
