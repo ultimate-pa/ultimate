@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
+import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -92,7 +93,9 @@ public class TreeAutomizerObserver implements IUnmanagedObserver {
 		
 		TreeAutomizerCEGAR cegar = new TreeAutomizerCEGAR(mServices, mToolchainStorage, annot, taPrefs, mLogger);
 		
-		cegar.iterate();
+		final IResult result = cegar.iterate();
+		
+		mServices.getResultService().reportResult(Activator.PLUGIN_ID, result);
 		
 		return false;
 	}

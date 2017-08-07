@@ -52,14 +52,10 @@ import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
  *
  * @param <OVERALL_RESULT>
  */
-public class KeywordBasedExpectedResultFinder<OVERALL_RESULT> implements IExpectedResultFinder<OVERALL_RESULT> {
+public class KeywordBasedExpectedResultFinder<OVERALL_RESULT> extends AbstractExpectedResultFinder<OVERALL_RESULT> {
 	private final Map<String, OVERALL_RESULT> mFilenameKeywords;
 	private final Map<String, OVERALL_RESULT> mPathKeywords;
 	private final Map<String, OVERALL_RESULT> mFirstlineKeywords;
-
-	OVERALL_RESULT mExpectedResult;
-	ExpectedResultFinderStatus mEvaluationStatus;
-	String mExpectedResultEvaluation;
 
 	public KeywordBasedExpectedResultFinder(final Map<String, OVERALL_RESULT> filenameKeywords,
 			final Map<String, OVERALL_RESULT> pathKeywords, final Map<String, OVERALL_RESULT> firstlineKeywords) {
@@ -122,19 +118,5 @@ public class KeywordBasedExpectedResultFinder<OVERALL_RESULT> implements IExpect
 		}
 	}
 
-	@Override
-	public String getExpectedResultFinderMessage() {
-		return mExpectedResultEvaluation;
-	}
-
-	@Override
-	public OVERALL_RESULT getExpectedResult() {
-		return mExpectedResult;
-	}
-
-	@Override
-	public ExpectedResultFinderStatus getExpectedResultFinderStatus() {
-		return mEvaluationStatus;
-	}
 
 }

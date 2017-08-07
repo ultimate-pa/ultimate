@@ -48,7 +48,11 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.operations.Intersect;
 import de.uni_freiburg.informatik.ultimate.automata.tree.operations.Minimize;
 import de.uni_freiburg.informatik.ultimate.automata.tree.operations.Totalize;
 import de.uni_freiburg.informatik.ultimate.automata.tree.operations.TreeEmptinessCheck;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.TimeoutResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.TreeAutomizerSatResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.TreeAutomizerUnsatResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -66,9 +70,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.Simpli
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.parsing.HornAnnot;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
@@ -156,7 +160,7 @@ public class TreeAutomizerCEGAR {
 	 *
 	 * @return Result: The result of the verification. SAFE, UNSAFE or UNKNOWN
 	 */
-	public Result iterate() throws AutomataLibraryException {
+	public  IResult iterate() throws AutomataLibraryException {
 		getInitialAbstraction();
 
 		mLogger.debug("Abstraction tree automaton before iteration #" + (mIteration + 1));
@@ -169,7 +173,7 @@ public class TreeAutomizerCEGAR {
 			final TreeRun<HornClause, IPredicate> counterExample = isAbstractionCorrect();
 			if (counterExample == null) {
 				mLogger.info("The horn clause set is SAT!!");
-				return Result.SAFE;
+				return new TreeAutomizerSatResult(Activator.PLUGIN_ID, "SAT", "The given horn clause set is SAT");
 			}
 
 			mBackendSmtSolverScript.lock(this);
@@ -181,8 +185,7 @@ public class TreeAutomizerCEGAR {
 				mLogger.info(counterExample.getTree());
 				mBackendSmtSolverScript.pop(this, 1);
 				mBackendSmtSolverScript.unlock(this);
-				return Result.UNSAFE;
-
+				return new TreeAutomizerUnsatResult(Activator.PLUGIN_ID, "UNSAT", "The given horn clause set is UNSAT");
 			}
 			mLogger.debug("Getting Interpolants...");
 			final Map<TreeRun<HornClause, IPredicate>, Term> interpolantsMap =
@@ -200,7 +203,7 @@ public class TreeAutomizerCEGAR {
 			mLogger.debug(mAbstraction);
 		}
 		mLogger.info("The program is not decieded...");
-		return Result.UNKNOWN;
+		return new TimeoutResult(Activator.PLUGIN_ID, "TreeAutomizer says UNKNOWN/TIMEOUT");
 	}
 
 	protected void getInitialAbstraction() throws AutomataLibraryException {
