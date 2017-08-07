@@ -140,6 +140,10 @@ public class HCSSABuilder {
 	private TreeRun<HornClause, IPredicate> buildBackVersionedTreeRunRec(TreeRun<HornClause, IPredicate> currentSubTree,
 			Map<TreeRun<HornClause, IPredicate>, Term> interpolantsMap) {
 		final TreeRun<HornClause, SsaInfo> currentSsaSubtree = mInputSubTreeToSsaSubtree.get(currentSubTree);
+		if (currentSsaSubtree == null) {
+			// we're at a leaf
+			return new TreeRun<>(mPredicateUnifier.getTruePredicate());
+		}
 		final Term currentInterpolantTermInSsa = interpolantsMap.get(currentSubTree);
 		final HornClause currentHornClause = currentSubTree.getRootSymbol();
 
@@ -193,12 +197,12 @@ public class HCSSABuilder {
 			subTreeRuns.add(subTreeRun);
 		}
 
-		final TreeRun<HornClause, SsaInfo> res;
 		if (subTreeRuns.isEmpty()) {
-			res = new TreeRun<>(ssaInfo);
-		} else {
-			res = new TreeRun<>(ssaInfo, currentHornClause, subTreeRuns);
+			subTreeRuns.add(new TreeRun<>(new SsaInfo()));
 		}
+			
+		final TreeRun<HornClause, SsaInfo> res;
+			res = new TreeRun<>(ssaInfo, currentHornClause, subTreeRuns);
 		mInputSubTreeToSsaSubtree.put(inputTreeRun, res);
 
 		return res;
@@ -273,6 +277,17 @@ class SsaInfo {
 	final Map<Term, Term> mBackSubstitution;
 	final Term mSsaFormula;
 	final List<List<ApplicationTerm>> mSubstitutionForBodyPred;
+	
+	/**
+	 * constructs an empty SSaInfo (its fields should not be accessed..
+	 */
+	public SsaInfo() {
+		mHornClause = null;
+		mSubstitution = null;
+		mBackSubstitution = null;
+		mSsaFormula = null;
+		mSubstitutionForBodyPred = null;
+	}
 
 	/**
 	 * 
