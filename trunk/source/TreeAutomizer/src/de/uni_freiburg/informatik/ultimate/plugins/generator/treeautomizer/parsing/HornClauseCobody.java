@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.pars
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -60,13 +59,17 @@ public class HornClauseCobody {
 
 	private final List<HornClausePredicateSymbol> mPredicateSymbols = new ArrayList<>();
 	private final List<List<TermVariable>> mPredicateSymbolToVariables = new ArrayList<>();
+	
+	private final HornClauseParserScript mParserScript;
 
 	/***
 	 * Constructor of the cobody of a horn statement.
+	 * @param parserScript 
 	 */
-	public HornClauseCobody() {
+	public HornClauseCobody(HornClauseParserScript parserScript) {
 		mPredicates = new ArrayList<>();
 		mTransitions = new HashSet<>();
+		mParserScript = parserScript;
 	}
 
 	/***
@@ -79,7 +82,7 @@ public class HornClauseCobody {
 	}
 
 	/***
-	 * Add a transition formula to the cobody.
+	 * Add a transition formula to the cobody (can be called several times, a conjunction will be built).
 	 * @param formula
 	 */
 	public void addTransitionFormula(Term formula) {
@@ -107,7 +110,7 @@ public class HornClauseCobody {
 	 */
 	public HornClauseBody negate() {
 		assert !mFinalized;
-		final HornClauseBody res = new HornClauseBody();
+		final HornClauseBody res = new HornClauseBody(mParserScript);
 		res.mergeCobody(this);
 		return res;
 	}
@@ -195,5 +198,10 @@ public class HornClauseCobody {
 			first = false;
 		}
 		return '(' + result.toString() + ')';
+	}
+
+	public void addToTransitionFormula(Term binaryEquality) {
+		// TODO Auto-generated method stub
+		
 	}
 }

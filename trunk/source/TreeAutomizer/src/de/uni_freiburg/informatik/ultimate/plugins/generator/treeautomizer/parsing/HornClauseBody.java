@@ -29,8 +29,10 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.pars
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HCSymbolTable;
@@ -40,6 +42,8 @@ import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
@@ -54,12 +58,14 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 public class HornClauseBody {
 	private final HornClauseCobody mCobody;
 	private ApplicationTerm mHead;
+	private final HornClauseParserScript mParserScript;
 
 	/***
 	 * Construct a Body of a Horn statement.
 	 */
-	public HornClauseBody() {
-		mCobody = new HornClauseCobody();
+	public HornClauseBody(HornClauseParserScript script) {
+		mCobody = new HornClauseCobody(script);
+		mParserScript = script;
 	}
 
 	/***
@@ -127,7 +133,21 @@ public class HornClauseBody {
 	 */
 	public boolean setHead(final ApplicationTerm literal) {
 		if (mHead == null) {
-			mHead = literal;
+			final Map<Term, Term> subs = new HashMap<>();
+			for (Term param : literal.getParameters()) {
+				if (param instanceof TermVariable) {
+					// variables are the standard case --> do nothing
+					continue;
+				}
+				if (subs.containsKey(param)) {
+					// already saw this parameter --> we already substitute it --> do nothing
+					continue;
+				}
+				final TermVariable freshTv = mParserScript.createFreshTermVariable("fresh", param.getSort());
+				subs.put(param, freshTv);
+				addTransitionFormula(SmtUtils.binaryEquality(mParserScript, param, freshTv));
+			}
+			mHead = (ApplicationTerm) new Substitution(mParserScript, subs).transform(literal);
 			return true;
 		} else {
 			return false;
@@ -143,7 +163,7 @@ public class HornClauseBody {
 	}
 
 	/***
-	 * Add the transition formula to the cobody.
+	 * Add the transition formula to the cobody (can be called several times).
 	 * @param formula
 	 */
 	public void addTransitionFormula(final Term formula) {
