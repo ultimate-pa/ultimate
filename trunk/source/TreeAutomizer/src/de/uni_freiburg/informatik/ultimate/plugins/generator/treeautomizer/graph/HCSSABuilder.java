@@ -270,6 +270,11 @@ public class HCSSABuilder {
 
 }
 
+/**
+ * Keeps the information about the SSA-substitution of one node in a TreeRun.
+ * 
+ * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
+ */
 class SsaInfo {
 
 	final HornClause mHornClause;

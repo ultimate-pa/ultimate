@@ -27,20 +27,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
  */
 public class HornClause implements IRankedLetter {
 
-	// /**
-	// * Stores for each predicate symbol in the body and, every argument
-	// position of the represented atom, which
-	// * TermVariable in the transition formula represents that argument in the
-	// represented atom.
-	// */
-	// private final Map<HornClausePredicateSymbol, List<TermVariable>>
-	// mBodyPredToTermVariables;
-
 	private final List<HornClausePredicateSymbol> mBodyPreds;
 
 	private final List<List<TermVariable>> mBodyPredToTermVariables;
-//	private final List<List<HCInVar>> mBodyPredToHCInVars;
-//	private List<List<IProgramVar>> mBodyPredToIProgramVar;
 
 	/**
 	 * Stores for the predicate symbol in the head at every argument position of
@@ -48,10 +37,7 @@ public class HornClause implements IRankedLetter {
 	 * represents that argument in the represented atom.
 	 */
 	private final List<TermVariable> mHeadPredTermVariables;
-//	private final List<IProgramVar> mHeadPredProgramVariables;
 	private final HornClausePredicateSymbol mHeadPredicate;
-
-//	private final UnmodifiableTransFormula mTransitionFormula;
 
 	private final HCSymbolTable mHornClauseSymbolTable;
 	
@@ -64,16 +50,16 @@ public class HornClause implements IRankedLetter {
 	 *            The script that will be used in TreeAutomizer (not the
 	 *            HornClauseParserScript)
 	 * @param symbolTable
-	 * @param transitionFormula
+	 * @param constraint
 	 * @param headPred
 	 * @param headVars
 	 * @param bodyPreds
 	 * @param bodyPredToTermVariables
 	 */
-	public HornClause(final ManagedScript script, final HCSymbolTable symbolTable,
-			final Term transitionFormula,
+	public HornClause(final ManagedScript script, final HCSymbolTable symbolTable, final Term constraint,
 			final HornClausePredicateSymbol headPred, final List<TermVariable> headVars,
-			final List<HornClausePredicateSymbol> bodyPreds, final List<List<TermVariable>> bodyPredToTermVariables, int version) {
+			final List<HornClausePredicateSymbol> bodyPreds, final List<List<TermVariable>> bodyPredToTermVariables, 
+			int version) {
 
 		mHornClauseSymbolTable = symbolTable;
 
@@ -89,8 +75,7 @@ public class HornClause implements IRankedLetter {
 				.collect(Collectors.toList());
 		
 		// transfer the transition formula to the solver script
-//		Term convertedFormula = ttf.transform(transitionFormula);
-		mFormula = ttf.transform(transitionFormula);
+		mFormula = ttf.transform(constraint);
 		
 		for (TermVariable fv : mFormula.getFreeVars()) {
 			mHornClauseSymbolTable.registerTermVariable(fv);
@@ -98,59 +83,8 @@ public class HornClause implements IRankedLetter {
 
 		mHeadPredicate = headPred;
 		mBodyPreds = bodyPreds;
-
-//		mBodyPredToHCInVars = new ArrayList<>();
-//		mBodyPredToIProgramVar = new ArrayList<>();
-
-//		mHeadPredProgramVariables = new ArrayList<>();
-
-//		/*
-//		 * build the TransFormula
-//		 */
-//		final Map<IProgramVar, TermVariable> outVars = new HashMap<>();
-//		for (int i = 0; i < mHeadPredTermVariables.size(); ++i) {
-//			final TermVariable tv = mHeadPredTermVariables.get(i);
-//			final Sort sort = tv.getSort();
-//			final HCOutVar hcOutVar = symbolTable.getOrConstructHCOutVar(i, sort);
-//			mHeadPredProgramVariables.add(hcOutVar);
-////			if (Arrays.asList(convertedFormula.getFreeVars()).contains(tv)) {
-//				outVars.put(hcOutVar, tv);
-////			}
-//		}
-//
-//		final Map<IProgramVar, TermVariable> inVars = new HashMap<>();
-//		for (int i = 0; i < mBodyPredToTermVariables.size(); i++) {
-//			mBodyPredToHCInVars.add(new ArrayList<>());
-//			mBodyPredToIProgramVar.add(new ArrayList<>());
-//			for (int j = 0; j < mBodyPredToTermVariables.get(i).size(); j++) {
-//				final TermVariable tv = mBodyPredToTermVariables.get(i).get(j);
-//				final Sort sort = tv.getSort();
-//				final HCInVar hcInVar = symbolTable.getOrConstructHCInVar(i, j, sort);
-//				mBodyPredToHCInVars.get(i).add(hcInVar);
-//				mBodyPredToIProgramVar.get(i).add(hcInVar);
-////				if (Arrays.asList(convertedFormula.getFreeVars()).contains(tv)) {
-//					inVars.put(hcInVar, tv);
-////				}
-//			}
-//		}
-		
-		// introduce "x = x" for any unchanged var x, i.e., a var that occurs in head and body..
-//		final Set<TermVariable> intersection = new HashSet<>();
-//		mBodyPredToTermVariables.stream().forEach(bptvList -> intersection.addAll(bptvList));
-//		intersection.retainAll(mHeadPredTermVariables);
-//		script.lock(this);
-//		for (TermVariable unchangedVar : intersection) {
-//			convertedFormula = Util.and(script.getScript(), convertedFormula, 
-//					script.term(this, "=", unchangedVar, unchangedVar));
-//		}
-//		script.unlock(this);
-
-
-//		final TransFormulaBuilder tb = new TransFormulaBuilder(inVars, outVars, true, null, true, null, true);
-//		tb.setFormula(convertedFormula);
-//		tb.setInfeasibility(Infeasibility.NOT_DETERMINED);
-//		mTransitionFormula = tb.finishConstruction(script);
 	}
+
 	public HornClause(final ManagedScript script, final HCSymbolTable symbolTable,
 			 final Term transitionFormula,
 			final HornClausePredicateSymbol head, final List<TermVariable> headVars,
@@ -158,19 +92,11 @@ public class HornClause implements IRankedLetter {
 		this(script, symbolTable, transitionFormula, head, headVars, bodyPreds, bodyPredToTermVariables, 0);
 	}
 
-//	@Override
-//	public UnmodifiableTransFormula getTransformula() {
-//		return mTransitionFormula;
-//		// assert false : "TODO : what?";
-//		// return null;
-//	}
-
 	public HornClausePredicateSymbol getHeadPredicate() {
 		return mHeadPredicate;
 	}
 
 	public List<HornClausePredicateSymbol> getBodyPredicates() {
-		// return mBodyPredToTermVariables.keySet();
 		return mBodyPreds;
 	}
 
@@ -190,21 +116,9 @@ public class HornClause implements IRankedLetter {
 		return Collections.unmodifiableList(mBodyPredToTermVariables);
 	}
 
-//	public List<HCInVar> getHCInVarsForPredPos(int predPos) {
-//		return mBodyPredToHCInVars.get(predPos);
-//	}
-
-//	public List<IProgramVar> getProgramVarsForPredPos(int predPos) {
-//		return mBodyPredToIProgramVar.get(predPos);
-//	}
-
 	public List<TermVariable> getTermVariablesForHeadPred() {
 		return mHeadPredTermVariables;
 	}
-
-//	public List<IProgramVar> getProgramVarsForHeadPred() {
-//		return mHeadPredProgramVariables;
-//	}
 
 	@Override
 	public String toString() {
@@ -237,22 +151,6 @@ public class HornClause implements IRankedLetter {
 		// return "HornClause TODO: better description"; //TODO
 	}
 
-//	/**
-//	 * This method is added only for fulfilling the IInternalAction interface.
-//	 */
-//	@Override
-//	public String getPrecedingProcedure() {
-//		return HornUtilConstants.HORNCLAUSEMETHODNAME;
-//	}
-
-//	/**
-//	 * This method is added only for fulfilling the IInternalAction interface.
-//	 */
-//	@Override
-//	public String getSucceedingProcedure() {
-//		return HornUtilConstants.HORNCLAUSEMETHODNAME;
-//	}
-
 	public HCSymbolTable getHornClauseSymbolTable() {
 		return mHornClauseSymbolTable;
 	}
@@ -264,7 +162,6 @@ public class HornClause implements IRankedLetter {
 			return 1;
 		}
 		return mBodyPreds.size();// mTransitionFormula.getInVars().size();
-		//return mBodyPreds.size();
 	}
 	public Term getFormula() {
 		return mFormula;

@@ -204,4 +204,8 @@ public class HCSymbolTable extends DefaultIcfgSymbolTable {
 		return res;
 	}
 
+	public boolean hasConstForTermVar(TermVariable fv) {
+		return mTermVarToConst.containsKey(fv);
+	}
+
 }
