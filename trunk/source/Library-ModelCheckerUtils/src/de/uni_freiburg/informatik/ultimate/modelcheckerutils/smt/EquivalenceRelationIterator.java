@@ -63,10 +63,10 @@ public class EquivalenceRelationIterator implements Iterable<Set<Doubleton<Term>
 	private final List<Doubleton<Term>> mNonDisjointDoubletons;
 
 	private final ThreeValuedEquivalenceRelation<Term> mEqualityInformation;
-	private final ExternalOracle mExternalOracle;
+	private final IExternalOracle mExternalOracle;
 
 	public EquivalenceRelationIterator(final IUltimateServiceProvider services,
-			final Collection<Term> indices, final ThreeValuedEquivalenceRelation<Term> equalityInformation, final ExternalOracle externalOracle) {
+			final Collection<Term> indices, final ThreeValuedEquivalenceRelation<Term> equalityInformation, final IExternalOracle externalOracle) {
 		super();
 		mServices = services;
 		mNonDisjointDoubletons = buildListOfNonDisjointDoubletons(indices, equalityInformation);
@@ -197,6 +197,11 @@ public class EquivalenceRelationIterator implements Iterable<Set<Doubleton<Term>
 	public Iterator<Set<Doubleton<Term>>> iterator() {
 		return mResult.iterator();
 	}
+	
+	
+	
+	
+	
 
 	static List<Doubleton<Term>> buildListOfNonDisjointDoubletons(final Collection<Term> indices,
 			final ThreeValuedEquivalenceRelation<Term> equalityInformation) {
@@ -219,23 +224,6 @@ public class EquivalenceRelationIterator implements Iterable<Set<Doubleton<Term>
 		}
 		return doubeltons;
 	}
-
-	public abstract static class ExternalOracle {
-
-		public abstract boolean isConsistent(LinkedList<Boolean> stack, List<Doubleton<Term>> nonDisjointDoubletons);
-
-	}
-
-	public static class DefaultExternalOracle extends ExternalOracle {
-
-		@Override
-		public boolean isConsistent(final LinkedList<Boolean> stack,
-				final List<Doubleton<Term>> nonDisjointDoubletons) {
-			return true;
-		}
-
-	}
-	
 	
 	private class EquivalenceRelationIterator2 implements Iterable<Set<Doubleton<Term>>> {
 
@@ -298,5 +286,24 @@ public class EquivalenceRelationIterator implements Iterable<Set<Doubleton<Term>
 		}
 		return true;
 	}
+
+	public interface IExternalOracle {
+
+		public abstract boolean isConsistent(LinkedList<Boolean> stack, List<Doubleton<Term>> nonDisjointDoubletons);
+
+	}
+
+	public static class DefaultExternalOracle implements IExternalOracle {
+
+		@Override
+		public boolean isConsistent(final LinkedList<Boolean> stack,
+				final List<Doubleton<Term>> nonDisjointDoubletons) {
+			return true;
+		}
+
+	}
+	
+	
+
 
 }
