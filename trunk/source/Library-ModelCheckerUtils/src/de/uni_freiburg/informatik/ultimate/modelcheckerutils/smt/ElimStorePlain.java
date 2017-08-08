@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -313,6 +314,16 @@ public class ElimStorePlain {
 		for (final ApplicationTerm entry : selectTerms) {
 			indices.add(getIndexOfSelect(entry));
 		}
+		final List<Term> sortedIndices = new ArrayList(indices);
+		final Comparator<Term> c = new Comparator<Term>() {
+
+			@Override
+			public int compare(final Term o1, final Term o2) {
+				return o2.getFreeVars().length - o1.getFreeVars().length;
+			}
+		};
+		Collections.sort(sortedIndices, c);
+		
 		final ThreeValuedEquivalenceRelation<Term> inputEqualityInformation = new ThreeValuedEquivalenceRelation<>();
 		final Pair<ThreeValuedEquivalenceRelation<Term>, List<Term>> analysisResult =
 				analyzeIndexEqualities(indices, preprocessedInput, inputEqualityInformation);
