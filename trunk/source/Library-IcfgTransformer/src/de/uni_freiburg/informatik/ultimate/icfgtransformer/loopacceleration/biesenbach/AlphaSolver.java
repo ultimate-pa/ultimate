@@ -33,10 +33,13 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
@@ -57,50 +60,94 @@ public class AlphaSolver<INLOC extends IcfgLocation> {
 	private List<Term> mVectorTerms;
 	private Map<IProgramVar, TermVariable[]> mAlphaMap;
 	private TermVariable[] mAlphaN = new TermVariable[2];
-	private Map<Term, Term> mAlphaDefaultConstant = new HashMap<>();;
+	private Map<Term, Term> mAlphaDefaultConstant = new HashMap<>();
+	private TermVariable mNVar;
+	private Term mFinalTerm;
+	private Map<Term,Term> mGuardSubstitute = new HashMap<>();
 
-	public AlphaSolver(final ILogger logger, UnmodifiableTransFormula originalTransFormula, 
-			Map<Integer, Map<Term, Term>> matrix, Map<Integer, Map<Term, Term>> lgs, ManagedScript mgScript){
-		mOriginalTransFormula = originalTransFormula;
+	public AlphaSolver(final ILogger logger, final IIcfg<INLOC> originalIcfg, 
+			Map<Integer, Map<Term, Term>> matrix, Map<Integer, Map<Term, Term>> lgs, IUltimateServiceProvider service){
+		CfgSmtToolkit cfgSmtToolkit = originalIcfg.getCfgSmtToolkit();
+		mMgScript = cfgSmtToolkit.getManagedScript();
+		mScript = mMgScript.getScript();
+		
+		mOriginalTransFormula = 
+				originalIcfg.getInitialNodes().iterator().next().getOutgoingEdges().iterator().next().getTransformula();
 		mLogger = logger;
-		mMatrix = matrix;
-		mLGS = lgs;
-		mMgScript = mgScript;
-		mScript = mgScript.getScript();
 		Set<IProgramVar> programVar = mOriginalTransFormula.getAssignedVars();
 		mProgramVar = programVar.toArray(new IProgramVar[programVar.size()]);
+		mMatrix = matrix;
+		mLGS = lgs;
 
 		mMgScript.lock(this);
 		
 		initAlphas();
 		
+		List<Term> finalTerms = new ArrayList<>();
 		for(IProgramVar pVar: mProgramVar){
 			mVectorTerms = new ArrayList<>();
 			lgsTermN0(pVar);
 			lgsTermN1(pVar);
 			lgsTermN2(pVar);
 			Term lgsTerm = mScript.term("and", mVectorTerms.toArray(new Term[mVectorTerms.size()]));
-			solveTerm(lgsTerm, pVar);
+			Term pVarTerm = solveTerm(lgsTerm, pVar);
+			finalTerms.add(pVarTerm);
 		}
+		mFinalTerm = mScript.term("and", finalTerms.toArray(new Term[finalTerms.size()]));
 		
 		mMgScript.unlock(this);
 	}
 
-	private LBool solveTerm(Term term, IProgramVar pVar) {		
+	private Term solveTerm(Term term, IProgramVar pVar) {
 		final Substitution sub = new Substitution(mMgScript, mAlphaDefaultConstant);
 		Term transformedTerm = sub.transform(term);
 		mScript.push(1);
 		final LBool result = checkSat(mScript, transformedTerm);
+		Term finalTerm = null;
 		try {
 			if (result == LBool.SAT) {							
 				Collection<Term> terms = mAlphaDefaultConstant.values();
 				final Map<Term, Term> termvar2value = SmtUtils.getValues(mScript, terms);
-				mLogger.info("solution for " + pVar + ": " + termvar2value);
+				
+				List<Term> multiplication = new ArrayList<>();
+				Term zero = mScript.decimal("0.0");
+				for(IProgramVar pV : mProgramVar){
+					if(!termvar2value.get(mAlphaDefaultConstant.get(mAlphaMap.get(pV)[0])).equals(zero)){
+						multiplication.add(mScript.term("*", termvar2value.get(mAlphaDefaultConstant.get(mAlphaMap.get(pV)[0])), 
+								mOriginalTransFormula.getInVars().get(pV)));
+					}
+					if(!termvar2value.get(mAlphaDefaultConstant.get(mAlphaMap.get(pV)[1])).equals(zero)){
+						multiplication.add(mScript.term("*", termvar2value.get(mAlphaDefaultConstant.get(mAlphaMap.get(pV)[1])),
+								mOriginalTransFormula.getInVars().get(pV), mNVar));
+					}
+				}
+				if(!termvar2value.get(mAlphaDefaultConstant.get(mAlphaN[0])).equals(zero)){
+					multiplication.add(mScript.term("*", termvar2value.get(mAlphaDefaultConstant.get(mAlphaN[0])), mNVar));
+				}
+				if(!termvar2value.get(mAlphaDefaultConstant.get(mAlphaN[1])).equals(zero)){
+						multiplication.add(mScript.term("*", termvar2value.get(mAlphaDefaultConstant.get(mAlphaN[1])), mNVar, mNVar));
+				}
+				Term addition = mScript.term("+", multiplication.toArray(new Term[multiplication.size()]));
+				finalTerm = mScript.term("=", mOriginalTransFormula.getOutVars().get(pVar), addition);
+				
+				mGuardSubstitute.put(mOriginalTransFormula.getInVars().get(pVar), mScript.term("to_int", addition));
 			}
 		} finally {
 			mScript.pop(1);
 		}
-		return result;
+		return finalTerm;
+	}
+	
+	public Term getResult(){
+		return mFinalTerm;
+	}
+	
+	public TermVariable getN(){
+		return mNVar;
+	}
+	
+	public Map<Term, Term> getGuardSubstitute(){
+		return mGuardSubstitute;
 	}
 
 	private static LBool checkSat(final Script script, Term term) {
@@ -124,12 +171,11 @@ public class AlphaSolver<INLOC extends IcfgLocation> {
 	}
 	
 	private void initAlphas(){
-		//TODO IProgramVar immer main_<name>?
 		mAlphaMap = new HashMap<>();
+		mNVar = mScript.variable("v_main_n", mScript.sort("Real"));
 		for(IProgramVar var : mProgramVar){
-			TermVariable alphaVar = mScript.variable("alpha" + var.toString().substring(4), mScript.sort("Int"));
-			TermVariable alphaVarN = mScript.variable("alpha" + var.toString().substring(4) + "n", mScript.sort("Int"));
-			
+			TermVariable alphaVar = mScript.variable("alpha" + var.toString().substring(4), mScript.sort("Real"));
+			TermVariable alphaVarN = mScript.variable("alpha" + var.toString().substring(4) + "n", mScript.sort("Real"));
 			TermVariable[] alphas = {alphaVar, alphaVarN};
 			mAlphaMap.put(var, alphas);
 			
@@ -138,8 +184,8 @@ public class AlphaSolver<INLOC extends IcfgLocation> {
 			mAlphaDefaultConstant.put(alphaVarN, 
 					ProgramVarUtils.constructDefaultConstant(mMgScript, this, alphaVarN.getSort(), alphaVarN.getName()));
 		}
-		mAlphaN[0] = mScript.variable("alpha_n", mScript.sort("Int"));
-		mAlphaN[1] = mScript.variable("alpha_nn", mScript.sort("Int"));
+		mAlphaN[0] = mScript.variable("alpha_n", mScript.sort("Real"));
+		mAlphaN[1] = mScript.variable("alpha_nn", mScript.sort("Real"));
 		mAlphaDefaultConstant.put(mAlphaN[0], 
 				ProgramVarUtils.constructDefaultConstant(mMgScript, this, mAlphaN[0].getSort(), mAlphaN[0].getName()));
 		mAlphaDefaultConstant.put(mAlphaN[1], 
@@ -147,8 +193,8 @@ public class AlphaSolver<INLOC extends IcfgLocation> {
 	}
 	
 	private void lgsTermN0(IProgramVar var){
-		Term one = mScript.numeral("1");
-		Term zero = mScript.numeral("0");
+		Term one = mScript.decimal("1.0");
+		Term zero = mScript.decimal("0.0");
 		for(IProgramVar vari : mProgramVar){
 			if(vari == var){
 				mVectorTerms.add(mScript.term("=", mScript.term("*", one,  mAlphaMap.get(vari)[0]), one));
@@ -163,13 +209,15 @@ public class AlphaSolver<INLOC extends IcfgLocation> {
 			Map<Term,Term> map = mMatrix.get(i);
 			List<Term> list = new ArrayList<>();
 			for(IProgramVar vari : mProgramVar){
-				list.add(mScript.term("*",  mAlphaMap.get(vari)[0], map.get(mOriginalTransFormula.getInVars().get(vari))));
-				list.add(mScript.term("*",  mAlphaMap.get(vari)[1], map.get(mOriginalTransFormula.getInVars().get(vari))));
+				list.add(mScript.term("*",  mAlphaMap.get(vari)[0], 
+						mScript.term("to_real", map.get(mOriginalTransFormula.getInVars().get(vari)))));
+				list.add(mScript.term("*",  mAlphaMap.get(vari)[1], 
+						mScript.term("to_real", map.get(mOriginalTransFormula.getInVars().get(vari)))));
 			}
 			list.add(mAlphaN[0]);
 			list.add(mAlphaN[1]);
 			mVectorTerms.add(mScript.term("=", mScript.term("+", list.toArray(new Term[mProgramVar.length])), 
-					mLGS.get(i).get(mOriginalTransFormula.getOutVars().get(var))));
+					mScript.term("to_real", mLGS.get(i).get(mOriginalTransFormula.getOutVars().get(var)))));
 		}
 	}
 	
@@ -178,13 +226,15 @@ public class AlphaSolver<INLOC extends IcfgLocation> {
 		Map<Term,Term> map = mMatrix.get(i);
 		List<Term> list = new ArrayList<>();
 		for(IProgramVar vari : mProgramVar){
-			list.add(mScript.term("*",  mAlphaMap.get(vari)[0], map.get(mOriginalTransFormula.getInVars().get(vari))));
-			list.add(mScript.term("*",  mAlphaMap.get(vari)[1], map.get(mOriginalTransFormula.getInVars().get(vari)), 
-					mScript.numeral("2")));
+			list.add(mScript.term("*",  mAlphaMap.get(vari)[0],
+					mScript.term("to_real", map.get(mOriginalTransFormula.getInVars().get(vari)))));
+			list.add(mScript.term("*",  mAlphaMap.get(vari)[1], 
+					mScript.term("to_real", map.get(mOriginalTransFormula.getInVars().get(vari))), 
+					mScript.decimal("2.0")));
 		}
-		list.add(mScript.term("*", mAlphaN[0], mScript.numeral("2")));
-		list.add(mScript.term("*", mAlphaN[1], mScript.numeral("4")));
+		list.add(mScript.term("*", mAlphaN[0], mScript.decimal("2.0")));
+		list.add(mScript.term("*", mAlphaN[1], mScript.decimal("4.0")));
 		mVectorTerms.add(mScript.term("=", mScript.term("+", list.toArray(new Term[mProgramVar.length])), 
-				mLGS.get(i).get(mOriginalTransFormula.getOutVars().get(var))));
+				mScript.term("to_real", mLGS.get(i).get(mOriginalTransFormula.getOutVars().get(var)))));
 	}
 }

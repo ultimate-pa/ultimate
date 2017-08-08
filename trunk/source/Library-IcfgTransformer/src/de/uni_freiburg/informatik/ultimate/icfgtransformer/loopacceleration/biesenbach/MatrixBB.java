@@ -33,6 +33,11 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
+/**
+ * Matrix to store vectors for {@link LoopAccelerationMatrix}
+ * 
+ * @author Ben Biesenbach (Ben.Biesenbach@gmx.de)
+ */
 public class MatrixBB {
 	
 	private Map<Integer, Map<Term, Term>> mMatrix = new HashMap<>();
@@ -40,6 +45,12 @@ public class MatrixBB {
 	private Map<IProgramVar, TermVariable> mInVars;
 	private ILogger mLogger;
 	
+	/**
+	 * Matrix to store vectors for {@link LoopAccelerationMatrix}
+	 * 
+	 * @param inVars
+	 * @param logger
+	 */
 	public MatrixBB(Map<IProgramVar, TermVariable> inVars, ILogger logger){
 		mLogger = logger;
 		mInVars = inVars;
