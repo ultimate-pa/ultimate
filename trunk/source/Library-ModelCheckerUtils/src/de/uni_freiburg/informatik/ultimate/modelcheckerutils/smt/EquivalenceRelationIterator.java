@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Symmetri
  *
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ TODO do not always rebuild relation, but store relation on stack and make copy for modifications
  *
  */
 public class EquivalenceRelationIterator<E> implements Iterable<Set<Doubleton<E>>> {
@@ -82,8 +83,8 @@ public class EquivalenceRelationIterator<E> implements Iterable<Set<Doubleton<E>
 			}
 			advance();
 		}
-		assert checkResultWithOldCombinationIterator(indices,
-				equalityInformation) : "result of CombinationIterator and CombinationIterator2 is different";
+//		assert checkResultWithOldCombinationIterator(indices,
+//				equalityInformation) : "result of CombinationIterator and CombinationIterator2 is different";
 	}
 
 	private boolean checkResultWithOldCombinationIterator(final Collection<E> indices,
@@ -223,6 +224,7 @@ public class EquivalenceRelationIterator<E> implements Iterable<Set<Doubleton<E>
 		}
 		return doubeltons;
 	}
+	
 	
 	private class EquivalenceRelationIterator2 implements Iterable<Set<Doubleton<E>>> {
 

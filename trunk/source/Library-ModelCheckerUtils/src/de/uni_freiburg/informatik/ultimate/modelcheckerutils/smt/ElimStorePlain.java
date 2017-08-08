@@ -35,6 +35,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -53,7 +54,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ElimStore3.IndicesAndValues;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.EquivalenceRelationIterator.DefaultExternalOracle;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.EquivalenceRelationIterator.IExternalOracle;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IncrementalPlicationChecker.Plication;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
@@ -355,9 +356,12 @@ public class ElimStorePlain {
 		newAuxVars.add(newAuxArray);
 
 		final List<Term> disjuncts = new ArrayList<>();
-		final EquivalenceRelationIterator<Term> ci = new EquivalenceRelationIterator<Term>(mServices, indices, equalityInformation, new DefaultExternalOracle());
+//		IExternalOracle<Term> orac = new DefaultExternalOracle();
+		final Orac orac = new Orac(preprocessedInput);
+		final EquivalenceRelationIterator<Term> ci = new EquivalenceRelationIterator<Term>(mServices, indices, equalityInformation, orac);
 		// mLogger.info("Considering " + ci.size() + " cases while eliminating array variable of dimension " + new
 		// MultiDimensionalSort(eliminatee.getSort()).getDimension());
+		orac.unlockSolver();
 		for (final Set<Doubleton<Term>> equalDoubletons : ci) {
 			final Map<Term, Term> substitutionMapping = new HashMap<>();
 			if (!stores.isEmpty()) {
@@ -772,11 +776,51 @@ public class ElimStorePlain {
 	}
 
 
+	private class Orac implements IExternalOracle<Term> {
+		
+		IncrementalPlicationChecker mIncrementalPlicationChecker;
+		
+		public Orac(final Term inputTerm) {
+			mIncrementalPlicationChecker = new IncrementalPlicationChecker(Plication.IMPLICATION, mMgdScript, inputTerm);
+		}
 
-	/**
-	 * TODO do not always rebuild relation, but store relation on stack and make copy for modifications
-	 *
-	 */
+		@Override
+		public boolean isConsistent(final LinkedList<Boolean> stack, final List<Doubleton<Term>> nonDisjointDoubletons) {
+			final List<Term> list = new ArrayList<>();
+			for (int i=0; i<stack.size(); i++) {
+				Term equality;
+				final Doubleton<Term> d = nonDisjointDoubletons.get(i);
+				if (stack.get(i)) {
+					equality = SmtUtils.binaryEquality(mScript, d.getOneElement(), d.getOtherElement());
+				} else {
+					equality = SmtUtils.distinct(mScript, d.getOneElement(), d.getOtherElement());
+				}
+				list.add(equality);
+			}
+			final Term conjunction = SmtUtils.and(mScript, list);
+			final LBool lbool = mIncrementalPlicationChecker.checkSat(conjunction);
+			mLogger.info("external oracle said: " + lbool);
+			switch (lbool) {
+			case SAT:
+				return true;
+			case UNKNOWN:
+				//TODO: use same as sat
+				throw new AssertionError("solver said unknown during conistency check");
+			case UNSAT:
+				return false;
+			default:
+				throw new AssertionError("unknown Lbool");
+			}
+		}
+
+		public void unlockSolver() {
+			mIncrementalPlicationChecker.unlockSolver();
+		}
+		
+		
+		
+	}
+
 
 
 	/**

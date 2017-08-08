@@ -123,6 +123,29 @@ public class IncrementalPlicationChecker {
 		return IHoareTripleChecker.convertLBool2Validity(isSat);
 	}
 	
+	public LBool checkSat(final Term additionalTerm) {
+		if (!mLhsIsAsserted) {
+			assertLhs(mLhs);
+		}
+		mMgdScript.push(this, 1);
+		final Term assertTerm;
+		switch (mPlication) {
+		case EXPLICATION:
+			assertTerm = additionalTerm;
+			break;
+		case IMPLICATION:
+			assertTerm = additionalTerm;
+//			assertTerm = SmtUtils.not(mMgdScript.getScript(), additionalTerm);
+			break;
+		default:
+			throw new AssertionError("unknown case");
+		}
+		mMgdScript.assertTerm(this, mVar2ConstSubstitution.transform(assertTerm));
+		final LBool isSat = mMgdScript.checkSat(this);
+		mMgdScript.pop(this, 1);
+		return isSat;
+	}
+	
 	
 	public void unlockSolver() {
 		if (mLhsIsAsserted) {
