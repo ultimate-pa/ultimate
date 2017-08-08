@@ -904,7 +904,7 @@ public final class LinearInequalityInvariantPatternProcessor
 			}
 			if (!ingredient.getSourceLocation().getOutgoingEdges().isEmpty()) {
 				// Assert that a danger invariant is reachable in a successor state.
-				Term constraint = mSolver.term("false");
+				Term constraint = mSolver.term("true");
 				for (final Map.Entry<IcfgEdge, Dnf<AbstractLinearInvariantPattern>> entry : ingredient
 						.getEdge2TargetInv().entrySet()) {
 					final UnmodifiableTransFormula tf = entry.getKey().getTransformula();
@@ -927,18 +927,11 @@ public final class LinearInequalityInvariantPatternProcessor
 							mapPattern(sourceInvariantPattern, unprimedMapping);
 
 					final Dnf<LinearInequality> transitionDnf = convertTransitionToPattern(transition);
-					final Dnf<LinearInequality> negatedTransitionDnf =
-							negatePatternAndConvertToDNF(mServices, transitionDnf);
 
-					final Dnf<LinearInequality> disjunction = new Dnf<>();
-					disjunction.addAll(negatedTransitionDnf);
-					disjunction.addAll(negatedTargetInvariantDnf);
+					final Term term = transformNegatedConjunction(ConstraintsType.Normal, sourceInvariantDnf,
+							transitionDnf, negatedTargetInvariantDnf);
 
-					// TODO: This term is unsatisfiable whenever a TransFormula contains a variable.
-					final Term term =
-							transformNegatedConjunction(ConstraintsType.Normal, sourceInvariantDnf, disjunction);
-
-					constraint = Util.or(mSolver, constraint, term);
+					constraint = Util.and(mSolver, constraint, term);
 				}
 
 				mLogger.debug("Asserting constraint: " + constraint);
@@ -951,6 +944,7 @@ public final class LinearInequalityInvariantPatternProcessor
 			}
 
 			if (mStartLocation.equals(ingredient.getSourceLocation())) {
+				// TODO: This should assert that the danger invariant holds in one initial state, not in all of them.
 				final Dnf<LinearInequality> negatedDnf =
 						mapAndNegatePattern(mServices, sourceInvariantPattern, programVarsRecentlyOccurred);
 				final Term invariantTerm = transformNegatedConjunction(ConstraintsType.Normal, negatedDnf);
