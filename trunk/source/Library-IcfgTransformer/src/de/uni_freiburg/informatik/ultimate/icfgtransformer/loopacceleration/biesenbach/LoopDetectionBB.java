@@ -55,6 +55,10 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Tra
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
@@ -72,15 +76,15 @@ public class LoopDetectionBB<INLOC extends IcfgLocation, OUTLOC extends IcfgLoca
 
 	private final ILogger mLogger;
 	private final Deque<IIcfg<OUTLOC>> mLoopIcfgs = new ArrayDeque<>();
-	private IUltimateServiceProvider mServices;
-	private ManagedScript mMgScript;
-	private INLOC mLoopHead;
-	private IIcfg<INLOC> mOriginalIcfg;
-	private ILocationFactory<INLOC, OUTLOC> mFunLocFac;
-	private IBacktranslationTracker mBacktranslationTracker;
-	private ITransformulaTransformer mTransformer;
-	private String mNewIcfgIdentifier;
-	private Class<OUTLOC> mOutLocationClass;
+	private final IUltimateServiceProvider mServices;
+	private final ManagedScript mMgScript;
+	private final INLOC mLoopHead;
+	private final IIcfg<INLOC> mOriginalIcfg;
+	private final ILocationFactory<INLOC, OUTLOC> mFunLocFac;
+	private final IBacktranslationTracker mBacktranslationTracker;
+	private final ITransformulaTransformer mTransformer;
+	private final String mNewIcfgIdentifier;
+	private final Class<OUTLOC> mOutLocationClass;
 
 	/**
 	 * Extracts the loops from an {@link IIcfg}.
@@ -99,16 +103,16 @@ public class LoopDetectionBB<INLOC extends IcfgLocation, OUTLOC extends IcfgLoca
 			final ILocationFactory<INLOC, OUTLOC> funLocFac, final String newIcfgIdentifier,
 			final ITransformulaTransformer transformer, final IBacktranslationTracker backtranslationTracker,
 			final IUltimateServiceProvider services) {
-		
+
 		mServices = services;
-		CfgSmtToolkit mCfgSmtToolkit = originalIcfg.getCfgSmtToolkit();
+		final CfgSmtToolkit mCfgSmtToolkit = originalIcfg.getCfgSmtToolkit();
 		mMgScript = mCfgSmtToolkit.getManagedScript();
 		mFunLocFac = funLocFac;
 		mBacktranslationTracker = backtranslationTracker;
 		mTransformer = transformer;
 		mNewIcfgIdentifier = newIcfgIdentifier;
 		mOutLocationClass = outLocationClass;
-		
+
 		final IIcfg<INLOC> origIcfg = Objects.requireNonNull(originalIcfg);
 		mLogger = Objects.requireNonNull(logger);
 		transformer.preprocessIcfg(origIcfg);
@@ -204,55 +208,66 @@ public class LoopDetectionBB<INLOC extends IcfgLocation, OUTLOC extends IcfgLoca
 		return mLoopIcfgs;
 	}
 
-	public IIcfg<OUTLOC> rejoin(Term result, TermVariable n, Map<Term, Term> guardSubstitute) {
-		Script script = mMgScript.getScript();
-		UnmodifiableTransFormula loopTransFormula = 
+	public IIcfg<OUTLOC> rejoin(final Term result, final TermVariable n, final Map<Term, Term> guardSubstitute) {
+		final Script script = mMgScript.getScript();
+		final UnmodifiableTransFormula loopTransFormula =
 				getLoop().getInitialNodes().iterator().next().getOutgoingEdges().iterator().next().getTransformula();
-		
-		//get LoopExit
+
+		// get LoopExit
 		UnmodifiableTransFormula exitTransformula = null;
 		for (final IcfgEdge transition : mLoopHead.getOutgoingEdges()) {
-			//TODO kann es mehrere geben?
-			if(!transition.getTarget().equals(mLoopHead)){
+			// TODO kann es mehrere geben?
+			if (!transition.getTarget().equals(mLoopHead)) {
 				exitTransformula = transition.getTransformula();
 			}
 		}
-		
-		//joint the TransFormula
-		Map<Term, Term> substitute = new HashMap<>();
-		Map<IProgramVar, TermVariable> outVars = new HashMap<>(exitTransformula.getOutVars());
-		for(IProgramVar var : loopTransFormula.getOutVars().keySet()){
-			if(exitTransformula.getInVars().containsKey(var)){
+
+		// joint the TransFormula
+		final Map<Term, Term> substitute = new HashMap<>();
+		final Map<IProgramVar, TermVariable> outVars = new HashMap<>(exitTransformula.getOutVars());
+		for (final IProgramVar var : loopTransFormula.getOutVars().keySet()) {
+			if (exitTransformula.getInVars().containsKey(var)) {
 				substitute.put(exitTransformula.getInVars().get(var), loopTransFormula.getOutVars().get(var));
-				if(exitTransformula.getInVars().get(var).equals(exitTransformula.getOutVars().get(var))){
+				if (exitTransformula.getInVars().get(var).equals(exitTransformula.getOutVars().get(var))) {
 					outVars.remove(var);
 					outVars.put(var, loopTransFormula.getOutVars().get(var));
 				}
-			}else{
+			} else {
 				outVars.put(var, loopTransFormula.getOutVars().get(var));
 			}
 		}
+
+		// TODO: Use these methods to quantify formulas and to try to eliminate quantifiers. The calls here are
+		// currently nonsense.
+		final Term quantifiedFormula = script.quantifier(Script.FORALL,
+				new TermVariable[] { script.variable("x", SmtSortUtils.getBoolSort(script)) },
+				loopTransFormula.getFormula());
+		final Term simplifiedFormula = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mMgScript,
+				quantifiedFormula, SimplificationTechnique.SIMPLIFY_DDA,
+				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+
 		final Substitution sub = new Substitution(mMgScript, substitute);
-		Term transformedExitFormula = sub.transform(exitTransformula.getFormula());
-		TransFormulaBuilder tfb = new TransFormulaBuilder(loopTransFormula.getInVars(),
-				outVars, false, loopTransFormula.getNonTheoryConsts(), true, null, false);
+		final Term transformedExitFormula = sub.transform(exitTransformula.getFormula());
+		final TransFormulaBuilder tfb = new TransFormulaBuilder(loopTransFormula.getInVars(), outVars, false,
+				loopTransFormula.getNonTheoryConsts(), true, null, false);
 		tfb.setFormula(script.term("and", transformedExitFormula, result));
 		tfb.addAuxVar(n);
 		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
-		UnmodifiableTransFormula loop = tfb.finishConstruction(mMgScript);
-		
-		//create icfg
+		final UnmodifiableTransFormula loop = tfb.finishConstruction(mMgScript);
+
+		// create icfg
 		mOriginalIcfg.getIdentifier();
 		final BasicIcfg<OUTLOC> resultIcfg =
 				new BasicIcfg<>(mNewIcfgIdentifier, mOriginalIcfg.getCfgSmtToolkit(), mOutLocationClass);
-		final TransformedIcfgBuilder<INLOC, OUTLOC> lst =
-				new TransformedIcfgBuilder<>(mFunLocFac, mBacktranslationTracker, mTransformer, mOriginalIcfg, resultIcfg);
+		final TransformedIcfgBuilder<INLOC, OUTLOC> lst = new TransformedIcfgBuilder<>(mFunLocFac,
+				mBacktranslationTracker, mTransformer, mOriginalIcfg, resultIcfg);
 		processLocations(mOriginalIcfg.getInitialNodes(), lst, loop);
 		lst.finish();
 		return resultIcfg;
 	}
 
-	private void processLocations(final Set<INLOC> init, final TransformedIcfgBuilder<INLOC, OUTLOC> lst, UnmodifiableTransFormula loop) {
+	private void processLocations(final Set<INLOC> init, final TransformedIcfgBuilder<INLOC, OUTLOC> lst,
+			final UnmodifiableTransFormula loop) {
 		final Deque<INLOC> open = new ArrayDeque<>(init);
 		final Set<INLOC> closed = new HashSet<>();
 
@@ -261,13 +276,13 @@ public class LoopDetectionBB<INLOC extends IcfgLocation, OUTLOC extends IcfgLoca
 			if (!closed.add(oldSource)) {
 				continue;
 			}
-			if(oldSource.equals(mLoopHead)){
+			if (oldSource.equals(mLoopHead)) {
 				final OUTLOC newSource = lst.createNewLocation(oldSource);
 				for (final IcfgEdge oldTransition : oldSource.getOutgoingEdges()) {
-					if(!oldTransition.getTarget().equals(mLoopHead)){
+					if (!oldTransition.getTarget().equals(mLoopHead)) {
 						final INLOC oldTarget = (INLOC) oldTransition.getTarget();
 						open.add(oldTarget);
-						final OUTLOC newTarget = lst.createNewLocation(oldTarget);					
+						final OUTLOC newTarget = lst.createNewLocation(oldTarget);
 						final IcfgInternalTransition newTransition = new IcfgInternalTransition(newSource, newTarget,
 								getPayloadIfAvailable(oldTransition), loop);
 						new Overapprox("loop acceleration: ... ", null).annotate(newTransition);
@@ -277,7 +292,7 @@ public class LoopDetectionBB<INLOC extends IcfgLocation, OUTLOC extends IcfgLoca
 						mLogger.info(newTransition.getTransformula());
 					}
 				}
-			}else{
+			} else {
 				final OUTLOC newSource = lst.createNewLocation(oldSource);
 				for (final IcfgEdge oldTransition : oldSource.getOutgoingEdges()) {
 					final INLOC oldTarget = (INLOC) oldTransition.getTarget();
@@ -288,7 +303,7 @@ public class LoopDetectionBB<INLOC extends IcfgLocation, OUTLOC extends IcfgLoca
 			}
 		}
 	}
-	
+
 	private static IPayload getPayloadIfAvailable(final IElement elem) {
 		if (elem == null) {
 			return null;
