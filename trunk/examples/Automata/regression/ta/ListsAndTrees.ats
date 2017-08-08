@@ -24,7 +24,7 @@ TreeAutomaton ta1 = TreeAutomaton (
     alphabet = { "0" succ nil cons elem },
     states = { Node Num List },
     finalStates = { List },
-    transiti`onTable = {
+    transitionTable = {
         ((Node List) cons List)
         (() "0" Num)
         (() nil List)
@@ -75,7 +75,7 @@ assert(accepts(ta2, t2));
 assert(accepts(ta2, t1));
 
 // Check that all lists accepted by tree automaton ta1 are also accepted by 
-// tree automaton ta2.Do this inclusion check via the operations 
+// tree automaton ta2. Do this inclusion check via the operations 
 // complement, intersect, and treeEmptinessCheck.
 assert(isEmpty(intersect(ta1, complement(ta2))));
 
