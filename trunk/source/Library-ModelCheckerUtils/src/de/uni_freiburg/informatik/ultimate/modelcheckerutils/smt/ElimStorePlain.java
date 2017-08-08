@@ -63,7 +63,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayUpd
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSort;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalStore;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.EqualityAnalysisResult.Equality;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.ThreeValuedEquivalenceRelation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.PrenexNormalForm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierPusher;
@@ -75,6 +74,7 @@ import de.uni_freiburg.informatik.ultimate.util.ConstructionCache;
 import de.uni_freiburg.informatik.ultimate.util.ConstructionCache.IValueConstruction;
 import de.uni_freiburg.informatik.ultimate.util.LexicographicCounter;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.Equality;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -784,11 +784,11 @@ public class ElimStorePlain {
 		return doubeltons;
 	}
 
-	private class CombinationIterator implements Iterable<Set<Doubleton<Term>>> {
+	private class EquivalenceRelationIterator implements Iterable<Set<Doubleton<Term>>> {
 
 		private final List<Set<Doubleton<Term>>> mResult = new ArrayList<>();
 
-		public CombinationIterator(final Collection<Term> indices,
+		public EquivalenceRelationIterator(final Collection<Term> indices,
 				final ThreeValuedEquivalenceRelation<Term> equalityInformation) {
 			super();
 			final List<Doubleton<Term>> doubeltons = buildListOfNonDisjointDoubletons(indices, equalityInformation);
@@ -876,7 +876,7 @@ public class ElimStorePlain {
 				final ThreeValuedEquivalenceRelation<Term> equalityInformation) {
 			final Set<Set<Doubleton<Term>>> newResult = new HashSet<>(mResult);
 			final Set<Set<Doubleton<Term>>> oldResult = new HashSet<>();
-			final CombinationIterator ci = new CombinationIterator(indices, equalityInformation);
+			final EquivalenceRelationIterator ci = new EquivalenceRelationIterator(indices, equalityInformation);
 			for (final Set<Doubleton<Term>> e : ci) {
 				oldResult.add(e);
 			}

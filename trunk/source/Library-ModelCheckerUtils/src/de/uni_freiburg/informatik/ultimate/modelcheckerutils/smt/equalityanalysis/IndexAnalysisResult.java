@@ -31,6 +31,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.Equality;
 
 public class IndexAnalysisResult extends EqualityAnalysisResult {
 	

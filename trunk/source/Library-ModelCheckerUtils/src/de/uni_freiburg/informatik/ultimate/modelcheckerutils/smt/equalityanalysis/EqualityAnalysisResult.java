@@ -35,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.Equality;
 
 /**
  * Result of a pairwise equality analysis for a set of Terms.
@@ -43,10 +44,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
  *
  */
 public class EqualityAnalysisResult {
-
-	public enum Equality {
-		EQUAL, NOT_EQUAL, UNKNOWN
-	}
 
 	private final Set<Doubleton<Term>> mEqualDoubletons;
 	private final Set<Doubleton<Term>> mDistinctDoubletons;
