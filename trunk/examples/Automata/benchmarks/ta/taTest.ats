@@ -49,7 +49,7 @@ TreeAutomaton taRefined = TreeAutomaton(
 	}
 );
 
-assert(treeEmptinessCheck(intersect(taCounterexample, taComplementedCExample)));
-assert(treeEmptinessCheck(intersect(taAbstraction, taComplementedCExample)));
-assert(treeEmptinessCheck(intersect(complement(intersect(taAbstraction, taComplementedCExample)), taRefined)));
-assert(treeEmptinessCheck(taRefined));
+assert(isEmpty(intersect(taCounterexample, taComplementedCExample)));
+assert(isEmpty(intersect(taAbstraction, taComplementedCExample)));
+assert(isEmpty(intersect(complement(intersect(taAbstraction, taComplementedCExample)), taRefined)));
+assert(isEmpty(taRefined));

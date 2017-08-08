@@ -23,5 +23,5 @@ TreeAutomaton taIntList = TreeAutomaton(
 );
 
 
-assert(treeEmptinessCheck(taIntNoList)); // Empty, can't derive any list
-assert(!treeEmptinessCheck(taIntList)); // Derives all lists of natural numbers
+assert(isEmpty(taIntNoList)); // Empty, can't derive any list
+assert(!isEmpty(taIntList)); // Derives all lists of natural numbers
