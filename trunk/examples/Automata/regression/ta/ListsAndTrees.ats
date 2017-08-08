@@ -1,0 +1,82 @@
+// Example that demonstrates how to use tree automata in this automata library.
+// Authors: Mostafa Mahmoud Mohamed, Alexander Nutz
+// Date: 2017-08-07
+// This is a copy of the webinterface example where we replaced all print 
+// commands by assert commands.
+
+
+// Declare a tree automaton called "ta1".
+// 
+// Intuitively, the trees accepted by this automaton represent 
+// lists of natural numbers, where the numbers are represented in a unary 
+// encoding. 
+// For example the list [0, 0, 1] is represented as the following tree.
+// (cons(
+//     elem("0"), 
+//     cons(
+//         elem("0"), 
+//         cons(
+//             elem(succ("0")), 
+//             nil)))) 
+//
+// This automaton is inspired by Example 1.1.4 of the textbook Comon et al. 
+// "Tree Automata Techniques and Applications".
+TreeAutomaton ta1 = TreeAutomaton (
+    alphabet = { "0" succ nil cons elem },
+    states = { Node Num List },
+    finalStates = { List },
+    transiti`onTable = {
+        ((Node List) cons List)
+        (() "0" Num)
+        (() nil List)
+        ((Num) succ Num)
+        ((Num) elem Node)
+    }
+);
+
+// Declare the list "[0, 1]".
+Tree t1 = Tree[cons(elem("0"), cons(elem(succ("0")), nil))];
+
+// Check that the automaton ta1 accepts the tree t1
+assert(accepts(ta1, t1));
+
+
+
+// Declare a tree automaton that accepts binary trees whose nodes contain 
+// natural numbers. Again we use a unary enconding for natural numbers.
+TreeAutomaton ta2 = TreeAutomaton(
+    alphabet = { "0" succ nil cons elem },
+    states = { Node Num BinTree },
+    finalStates = { BinTree },
+    transitionTable = {
+        (() "0" Num)
+        ((Node BinTree BinTree) cons BinTree)
+        ((Node BinTree) cons BinTree)
+        (() nil BinTree)
+        ((Num) succ Num)
+        ((Num) elem Node)
+    }
+);
+
+
+// Declare a tree of the following shape.
+//       1
+//     /   \
+//    0     -
+//   /
+//  -
+Tree t2 = Tree[cons(elem(succ("0")), cons(elem("0"), nil), nil)];
+
+// Check that the automaton ta2 accepts the tree t2
+assert(accepts(ta2, t2));
+
+
+
+// Check that the tree t1 is also a binary tree
+assert(accepts(ta2, t1));
+
+// Check that all lists accepted by tree automaton ta1 are also accepted by 
+// tree automaton ta2.Do this inclusion check via the operations 
+// complement, intersect, and treeEmptinessCheck.
+assert(treeEmptinessCheck(intersect(ta1, complement(ta2))));
+
