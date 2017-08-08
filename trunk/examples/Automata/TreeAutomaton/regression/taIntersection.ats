@@ -1,45 +1,42 @@
 
-TreeAutomaton taIntList = (
+TreeAutomaton taIntList = TreeAutomaton(
     alphabet = { nil "0" cons succ },
-    states = { Num List "_" },
-    initialStates = { "_" },
+    states = { Num List },
     finalStates = { List },
     transitionTable = {
         ((Num) succ Num)
-        (("_") "0" Num)
+        (() "0" Num)
         ((Num List) cons List)
-        (("_") nil List)
+        (() nil List)
     }
 );
 
 
-TreeAutomaton taEvenIntList = (
+TreeAutomaton taEvenIntList = TreeAutomaton(
     alphabet = { nil "0" cons succ },
-    states = { OddNum EvenNum List "_" },
-    initialStates = { "_" },
+    states = { OddNum EvenNum List },
     finalStates = { List },
     transitionTable = {
         ((OddNum) succ EvenNum)
         ((EvenNum) succ OddNum)
-        (("_") "0" EvenNum)
+        (() "0" EvenNum)
         ((EvenNum List) cons List)
-        (("_") nil List)
+        (() nil List)
     }
 );
 
 
-TreeAutomaton taMul3IntList = (
+TreeAutomaton taMul3IntList = TreeAutomaton(
     alphabet = { nil "0" cons succ },
-    states = { mod1 mod2 mod0 List "_" },
-    initialStates = { "_" },
+    states = { mod1 mod2 mod0 List },
     finalStates = { List },
     transitionTable = {
         ((mod2) succ mod0)
         ((mod1) succ mod2)
         ((mod0) succ mod1)
-        (("_") "0" mod0)
+        (() "0" mod0)
         ((mod0 List) cons List)
-        (("_") nil List)
+        (() nil List)
     }
 );
 
@@ -77,11 +74,11 @@ assert(accepts(taEvenIntList, listC));
 assert(!accepts(taEvenIntList, listD));
 assert(accepts(taEvenIntList, listE));
 // taEvenList accepts only lists of even numbers
-assert(!accepts(Intersect(taEvenIntList, taIntList), listA));
-assert(accepts(Intersect(taEvenIntList, taIntList), listB));
-assert(accepts(Intersect(taEvenIntList, taIntList), listC));
-assert(!accepts(Intersect(taEvenIntList, taIntList), listD));
-assert(accepts(Intersect(taEvenIntList, taIntList), listE));
+assert(!accepts(intersect(taEvenIntList, taIntList), listA));
+assert(accepts(intersect(taEvenIntList, taIntList), listB));
+assert(accepts(intersect(taEvenIntList, taIntList), listC));
+assert(!accepts(intersect(taEvenIntList, taIntList), listD));
+assert(accepts(intersect(taEvenIntList, taIntList), listE));
 
 
 // taMul3IntList accepts only lists of multiples of 3
@@ -91,16 +88,16 @@ assert(!accepts(taMul3IntList, listC));
 assert(accepts(taMul3IntList, listD));
 assert(accepts(taMul3IntList, listE));
 // taMul3IntList accepts only lists of multiples of 3
-assert(!accepts(Intersect(taIntList, taMul3IntList), listA));
-assert(!accepts(Intersect(taIntList, taMul3IntList), listB));
-assert(!accepts(Intersect(taIntList, taMul3IntList), listC));
-assert(accepts(Intersect(taIntList, taMul3IntList), listD));
-assert(accepts(Intersect(taIntList, taMul3IntList), listE));
+assert(!accepts(intersect(taIntList, taMul3IntList), listA));
+assert(!accepts(intersect(taIntList, taMul3IntList), listB));
+assert(!accepts(intersect(taIntList, taMul3IntList), listC));
+assert(accepts(intersect(taIntList, taMul3IntList), listD));
+assert(accepts(intersect(taIntList, taMul3IntList), listE));
 
 // Intersection of taMul3IntList and taEvenIntList accepts only lists of multiples of 6
-assert(!accepts(Intersect(taMul3IntList, taEvenIntList), listA));
-assert(!accepts(Intersect(taMul3IntList, taEvenIntList), listB));
-assert(!accepts(Intersect(taMul3IntList, taEvenIntList), listC));
-assert(!accepts(Intersect(taMul3IntList, taEvenIntList), listD));
-assert(accepts(Intersect(taMul3IntList, taEvenIntList), listE));
+assert(!accepts(intersect(taMul3IntList, taEvenIntList), listA));
+assert(!accepts(intersect(taMul3IntList, taEvenIntList), listB));
+assert(!accepts(intersect(taMul3IntList, taEvenIntList), listC));
+assert(!accepts(intersect(taMul3IntList, taEvenIntList), listD));
+assert(accepts(intersect(taMul3IntList, taEvenIntList), listE));
 

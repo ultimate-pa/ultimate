@@ -1,44 +1,41 @@
 
-TreeAutomaton taIntList = (
+TreeAutomaton taIntList = TreeAutomaton(
     alphabet = { nil "0" cons succ },
-    states = { Num List "_" },
-    initialStates = { "_" },
+    states = { Num List },
     finalStates = { List },
     transitionTable = {
         ((Num) succ Num)
-        (("_") "0" Num)
+        (() "0" Num)
         ((Num List) cons List)
-        (("_") nil List)
+        (() nil List)
     }
 );
 
-TreeAutomaton taEvenIntList = (
+TreeAutomaton taEvenIntList = TreeAutomaton(
     alphabet = { nil "0" cons succ },
-    states = { OddNum EvenNum List "_" },
-    initialStates = { "_" },
+    states = { OddNum EvenNum List },
     finalStates = { List },
     transitionTable = {
         ((OddNum) succ EvenNum)
         ((EvenNum) succ OddNum)
-        (("_") "0" EvenNum)
+        (() "0" EvenNum)
         ((EvenNum List) cons List)
-        (("_") nil List)
+        (() nil List)
     }
 );
 
 
-TreeAutomaton taMul3IntList = (
+TreeAutomaton taMul3IntList = TreeAutomaton(
     alphabet = { nil "0" cons succ },
-    states = { mod1 mod2 mod0 List "_" },
-    initialStates = { "_" },
+    states = { mod1 mod2 mod0 List },
     finalStates = { List },
     transitionTable = {
         ((mod2) succ mod0)
         ((mod1) succ mod2)
         ((mod0) succ mod1)
-        (("_") "0" mod0)
+        (() "0" mod0)
         ((mod0 List) cons List)
-        (("_") nil List)
+        (() nil List)
     }
 );
 
@@ -61,9 +58,9 @@ Tree listE = Tree [cons(succ(succ(succ(succ(succ(succ("0")))))),cons(succ(succ(s
 assert(!accepts(taIntList, list0));
 assert(!accepts(taEvenIntList, list0));
 assert(!accepts(taMul3IntList, list0));
-assert(!accepts(Minimize(taIntList), list0));
+assert(!accepts(minimize(taIntList), list0));
 assert(!accepts(taEvenIntList, list0));
-assert(!accepts(Minimize(taMul3IntList), list0));
+assert(!accepts(minimize(taMul3IntList), list0));
 
 // taIntList accepts all integer lists
 assert(accepts(taIntList, listA));
@@ -71,11 +68,11 @@ assert(accepts(taIntList, listB));
 assert(accepts(taIntList, listC));
 assert(accepts(taIntList, listD));
 assert(accepts(taIntList, listE));
-assert(accepts(Minimize(taIntList), listA));
-assert(accepts(Minimize(taIntList), listB));
-assert(accepts(Minimize(taIntList), listC));
-assert(accepts(Minimize(taIntList), listD));
-assert(accepts(Minimize(taIntList), listE));
+assert(accepts(minimize(taIntList), listA));
+assert(accepts(minimize(taIntList), listB));
+assert(accepts(minimize(taIntList), listC));
+assert(accepts(minimize(taIntList), listD));
+assert(accepts(minimize(taIntList), listE));
 
 // taEvenList accepts only lists of even numbers
 assert(!accepts(taEvenIntList, listA));
@@ -95,9 +92,9 @@ assert(!accepts(taMul3IntList, listB));
 assert(!accepts(taMul3IntList, listC));
 assert(accepts(taMul3IntList, listD));
 assert(accepts(taMul3IntList, listE));
-assert(!accepts(Minimize(taMul3IntList), listA));
-assert(!accepts(Minimize(taMul3IntList), listB));
-assert(!accepts(Minimize(taMul3IntList), listC));
-assert(accepts(Minimize(taMul3IntList), listD));
-assert(accepts(Minimize(taMul3IntList), listE));
+assert(!accepts(minimize(taMul3IntList), listA));
+assert(!accepts(minimize(taMul3IntList), listB));
+assert(!accepts(minimize(taMul3IntList), listC));
+assert(accepts(minimize(taMul3IntList), listD));
+assert(accepts(minimize(taMul3IntList), listE));
 

@@ -1,16 +1,15 @@
 
 
-TreeAutomaton taEvenIntList = (
+TreeAutomaton taEvenIntList = TreeAutomaton(
     alphabet = { nil "0" cons succ },
-    states = { OddNum EvenNum List "_" },
-    initialStates = { "_" },
+    states = { OddNum EvenNum List },
     finalStates = { List },
     transitionTable = {
         ((OddNum) succ EvenNum)
         ((EvenNum) succ OddNum)
-        (("_") "0" EvenNum)
+        (() "0" EvenNum)
         ((EvenNum List) cons List)
-        (("_") nil List)
+        (() nil List)
     }
 );
 

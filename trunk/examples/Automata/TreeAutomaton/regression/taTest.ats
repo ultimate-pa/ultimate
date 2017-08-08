@@ -1,59 +1,55 @@
-TreeAutomaton taAbstraction = (
+TreeAutomaton taAbstraction = TreeAutomaton(
 	alphabet = {"(= x 0)" "(< x 0)"},
-	states = {"#[False]@(false)" "#[True]@(true)" "#[I0_x]@(true)"},
-	initialStates = {"#[True]@(true)"},
+	states = {"#[False]@(false)" "#[I0_x]@(true)"},
 	finalStates = {"#[False]@(false)"},
 	transitionTable = {
-		(("#[True]@(true)") "(= x 0)" "#[I0_x]@(true)")
+		(() "(= x 0)" "#[I0_x]@(true)")
 		(("#[I0_x]@(true)") "(< x 0)" "#[False]@(false)")
 	}
 );
 
-TreeAutomaton taCounterexample = (
+TreeAutomaton taCounterexample = TreeAutomaton(
 	alphabet = {"(= x 0)" "(< x 0)"},
-	states = {"#[False]@(false)" "1#(<= 0 HcOutVar_0_Int)" "#[True]@(true)"},
-	initialStates = {"#[True]@(true)"},
+	states = {"#[False]@(false)" "1#(<= 0 HcOutVar_0_Int)" },
 	finalStates = {"#[False]@(false)"},
 	transitionTable = {
-		(("#[True]@(true)") "(= x 0)" "1#(<= 0 HcOutVar_0_Int)")
+		(() "(= x 0)" "1#(<= 0 HcOutVar_0_Int)")
 		(("1#(<= 0 HcOutVar_0_Int)") "(< x 0)" "#[False]@(false)")
 	}
 );
 
-TreeAutomaton taComplementedCExample = (
+TreeAutomaton taComplementedCExample = TreeAutomaton(
 	alphabet = {"(= x 0)" "(< x 0)"},
-	states = {"#[False]@(false)" "3#(<= 0 HcOutVar_0_Int)" "#[True]@(true)" "#[€]@(true)"},
-	initialStates = {"#[True]@(true)"},
+	states = {"#[False]@(false)" "3#(<= 0 HcOutVar_0_Int)" "#[€]@(true)"},
 	finalStates = {"3#(<= 0 HcOutVar_0_Int)" "#[True]@(true)" "#[€]@(true)"},
 	transitionTable = {
 		(("#[€]@(true)") "(= x 0)" "#[€]@(true)")
 		(("#[False]@(false)") "(= x 0)" "#[€]@(true)")
 		(("#[False]@(false)") "(< x 0)" "#[€]@(true)")
-		(("#[True]@(true)") "(< x 0)" "#[€]@(true)")
+		(() "(< x 0)" "#[€]@(true)")
 		(("3#(<= 0 HcOutVar_0_Int)") "(= x 0)" "#[€]@(true)")
-		(("#[True]@(true)") "(= x 0)" "3#(<= 0 HcOutVar_0_Int)")
+		(() "(= x 0)" "3#(<= 0 HcOutVar_0_Int)")
 		(("#[€]@(true)") "(< x 0)" "#[€]@(true)")
 		(("3#(<= 0 HcOutVar_0_Int)") "(< x 0)" "#[False]@(false)")
 	}
 );
 
-TreeAutomaton taRefined = (
+TreeAutomaton taRefined = TreeAutomaton(
 	alphabet = {"(= x 0)" "(< x 0)"},
-	states = {"#[False]@(false)" "#[I0_x]@(false)" "#[True]@(true)" "#[True]@((<= 0 HcOutVar_0_Int))" "#[I0_x]@(true)" "#[True]@(false)" "#[I0_x]@((<= 0 HcOutVar_0_Int))"},
-	initialStates = {"#[True]@(true)"},
+	states = {"#[False]@(false)" "#[I0_x]@(false)" "#[True]@((<= 0 HcOutVar_0_Int))" "#[I0_x]@(true)" "#[True]@(false)" "#[I0_x]@((<= 0 HcOutVar_0_Int))"},
 	finalStates = {"#[False]@(false)"},
 	transitionTable = {
 		(("#[True]@(false)") "(= x 0)" "#[I0_x]@(true)")
 		(("#[True]@((<= 0 HcOutVar_0_Int))") "(= x 0)" "#[I0_x]@(true)")
 		(("#[I0_x]@((<= 0 HcOutVar_0_Int))") "(< x 0)" "#[False]@(false)")
-		(("#[True]@(true)") "(= x 0)" "#[I0_x]@((<= 0 HcOutVar_0_Int))")
-		(("#[True]@(true)") "(= x 0)" "#[I0_x]@(true)")
+		(() "(= x 0)" "#[I0_x]@((<= 0 HcOutVar_0_Int))")
+		(() "(= x 0)" "#[I0_x]@(true)")
 		(("#[I0_x]@(false)") "(< x 0)" "#[False]@(false)")
 		(("#[I0_x]@(true)") "(< x 0)" "#[False]@(false)")
 	}
 );
 
-assert(TreeEmptinessCheck(Intersect(taCounterexample, taComplementedCExample)));
-assert(TreeEmptinessCheck(Intersect(taAbstraction, taComplementedCExample)));
-assert(TreeEmptinessCheck(Intersect(Complement(Intersect(taAbstraction, taComplementedCExample)), taRefined)));
-assert(TreeEmptinessCheck(taRefined));
+assert(treeEmptinessCheck(intersect(taCounterexample, taComplementedCExample)));
+assert(treeEmptinessCheck(intersect(taAbstraction, taComplementedCExample)));
+assert(treeEmptinessCheck(intersect(complement(intersect(taAbstraction, taComplementedCExample)), taRefined)));
+assert(treeEmptinessCheck(taRefined));

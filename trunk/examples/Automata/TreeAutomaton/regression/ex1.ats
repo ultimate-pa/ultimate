@@ -1,23 +1,21 @@
-TreeAutomaton ta730845 = (
+TreeAutomaton ta730845 = TreeAutomaton(
 	alphabet = {nil "0" cons},
-	states = {"[NAT, Bool]" "[_, _]" "[NatList, BoolList]"},
-	initialStates = {"[_, _]"},
+	states = {"[NAT, Bool]" "[NatList, BoolList]"},
 	finalStates = {"[NatList, BoolList]"},
 	transitionTable = {
-		(("[_, _]") "0" "[NAT, Bool]")
-		(("[_, _]") nil "[NatList, BoolList]")
+		(() "0" "[NAT, Bool]")
+		(() nil "[NatList, BoolList]")
 		(("[NAT, Bool]" "[NatList, BoolList]") cons "[NatList, BoolList]")
 	}
 );
 
-TreeAutomaton ta2 = (
+TreeAutomaton ta2 = TreeAutomaton(
 	alphabet = {f a b},
-	states = {q0 q1 q2 q3 qf},
-	initialStates = {q0},
+	states = {q1 q2 q3 qf},
 	finalStates = {qf},
 	transitionTable = {
-		((q0) a q1)
-		((q0) b q1)
+		(() a q1)
+		(() b q1)
 		((q1 q1) f qf)
 	}
 );
