@@ -35,14 +35,12 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.Stack;
 
-import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -55,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ElimStore3.IndicesAndValues;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.EquivalenceRelationIterator.DefaultExternalOracle;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IncrementalPlicationChecker.Plication;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
@@ -71,14 +70,11 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.Qua
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.ConstructionCache;
 import de.uni_freiburg.informatik.ultimate.util.ConstructionCache.IValueConstruction;
-import de.uni_freiburg.informatik.ultimate.util.LexicographicCounter;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.Equality;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ThreeValuedEquivalenceRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.SymmetricHashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.TreeRelation;
 
 /**
@@ -359,7 +355,7 @@ public class ElimStorePlain {
 		newAuxVars.add(newAuxArray);
 
 		final List<Term> disjuncts = new ArrayList<>();
-		final CombinationIterator2 ci = new CombinationIterator2(indices, equalityInformation, new DefaultExternalOracle());
+		final EquivalenceRelationIterator ci = new EquivalenceRelationIterator(mServices, indices, equalityInformation, new DefaultExternalOracle());
 		// mLogger.info("Considering " + ci.size() + " cases while eliminating array variable of dimension " + new
 		// MultiDimensionalSort(eliminatee.getSort()).getDimension());
 		for (final Set<Doubleton<Term>> equalDoubletons : ci) {
@@ -369,7 +365,7 @@ public class ElimStorePlain {
 			}
 			final List<Term> indexEqualityTerms = new ArrayList<>();
 			final List<Term> valueEqualityTerms = new ArrayList<>();
-			for (final Doubleton<Term> doubleton : buildListOfNonDisjointDoubletons(indices, equalityInformation)) {
+			for (final Doubleton<Term> doubleton : EquivalenceRelationIterator.buildListOfNonDisjointDoubletons(indices, equalityInformation)) {
 				final Term indexEqualityTerm;
 				if (equalDoubletons.contains(doubleton)) {
 					indexEqualityTerm = PartialQuantifierElimination.equalityForExists(mScript, mQuantifier,
@@ -751,18 +747,9 @@ public class ElimStorePlain {
 		return result;
 	}
 
-	public static <E> boolean isClosedUnderTransitivity(final HashRelation<E, E> relation) {
-		for (final Entry<E, E> entry : relation.entrySet()) {
-			for (final E image : relation.getImage(entry.getValue())) {
-				if (!relation.containsPair(entry.getKey(), image)) {
-					return false;
-				}
-			}
-		}
-		return true;
-	}
 
-	public static List<Doubleton<Term>> buildListOfNonDisjointDoubletons(final Collection<Term> indices,
+
+	private static List<Doubleton<Term>> buildListOfNonDisjointDoubletons(final Collection<Term> indices,
 			final ThreeValuedEquivalenceRelation<Term> equalityInformation) {
 		final List<Doubleton<Term>> doubeltons = new ArrayList<>();
 		final List<Term> indexList = new ArrayList<>(indices);
@@ -784,220 +771,13 @@ public class ElimStorePlain {
 		return doubeltons;
 	}
 
-	private class EquivalenceRelationIterator implements Iterable<Set<Doubleton<Term>>> {
 
-		private final List<Set<Doubleton<Term>>> mResult = new ArrayList<>();
-
-		public EquivalenceRelationIterator(final Collection<Term> indices,
-				final ThreeValuedEquivalenceRelation<Term> equalityInformation) {
-			super();
-			final List<Doubleton<Term>> doubeltons = buildListOfNonDisjointDoubletons(indices, equalityInformation);
-
-			final int[] numberOfValues = new int[doubeltons.size()];
-			Arrays.fill(numberOfValues, 2);
-			final LexicographicCounter lc = new LexicographicCounter(numberOfValues);
-
-			do {
-				if (!mServices.getProgressMonitorService().continueProcessing()) {
-					throw new ToolchainCanceledException(this.getClass(), "iterating over LexicographicCounter " + lc);
-				}
-				final HashRelation<Term, Term> relationCandidate = new HashRelation<>();
-				for (final Term index : indices) {
-					if (equalityInformation.isRepresentative(index)) {
-						relationCandidate.addPair(index, index);
-					}
-				}
-				final Set<Doubleton<Term>> resultCandidate = new HashSet<>();
-				for (int i = 0; i < doubeltons.size(); i++) {
-					if (lc.getCurrentValue()[i] == 1) {
-						final Doubleton<Term> doubleton = doubeltons.get(i);
-						relationCandidate.addPair(doubleton.getOneElement(), doubleton.getOtherElement());
-						relationCandidate.addPair(doubleton.getOtherElement(), doubleton.getOneElement());
-						resultCandidate.add(doubleton);
-					}
-				}
-				if (isClosedUnderTransitivity(relationCandidate)) {
-					mResult.add(resultCandidate);
-				}
-
-				lc.increment();
-			} while (!lc.isZero());
-		}
-
-		public int size() {
-			return mResult.size();
-		}
-
-		@Override
-		public Iterator<Set<Doubleton<Term>>> iterator() {
-			return mResult.iterator();
-		}
-
-	}
 
 	/**
 	 * TODO do not always rebuild relation, but store relation on stack and make copy for modifications
 	 *
 	 */
-	private class CombinationIterator2 implements Iterable<Set<Doubleton<Term>>> {
 
-		private final List<Set<Doubleton<Term>>> mResult = new ArrayList<>();
-
-		private final LinkedList<Boolean> mStack = new LinkedList<>();
-		private SymmetricHashRelation<Term> mCurrentRelation;
-		private final List<Doubleton<Term>> mNonDisjointDoubletons;
-
-		private final ThreeValuedEquivalenceRelation<Term> mEqualityInformation;
-		private final ExternalOracle mExternalOracle;
-
-		public CombinationIterator2(final Collection<Term> indices,
-				final ThreeValuedEquivalenceRelation<Term> equalityInformation, 
-				final ExternalOracle externalOracle) {
-			super();
-			mNonDisjointDoubletons = buildListOfNonDisjointDoubletons(indices, equalityInformation);
-			mEqualityInformation = equalityInformation;
-			mExternalOracle = externalOracle;
-			mCurrentRelation = new SymmetricHashRelation<>();
-
-			while (true) {
-				if (mStack.size() == mNonDisjointDoubletons.size()) {
-					addRelationToResult();
-					if (mCurrentRelation.isEmpty()) {
-						break;
-					}
-				}
-				advance();
-			}
-			assert checkResultWithOldCombinationIterator(indices,
-					equalityInformation) : "result of CombinationIterator and CombinationIterator2 is different";
-		}
-
-		private boolean checkResultWithOldCombinationIterator(final Collection<Term> indices,
-				final ThreeValuedEquivalenceRelation<Term> equalityInformation) {
-			final Set<Set<Doubleton<Term>>> newResult = new HashSet<>(mResult);
-			final Set<Set<Doubleton<Term>>> oldResult = new HashSet<>();
-			final EquivalenceRelationIterator ci = new EquivalenceRelationIterator(indices, equalityInformation);
-			for (final Set<Doubleton<Term>> e : ci) {
-				oldResult.add(e);
-			}
-			assert newResult.equals(oldResult) : "result of CombinationIterator and CombinationIterator2 is different "
-					+ newResult.size() + " vs. " + oldResult.size();
-			return newResult.equals(oldResult);
-		}
-
-		private void advance() {
-			if (mStack.size() == mNonDisjointDoubletons.size()) {
-				remove1true();
-				rebuildCurrentRelation();
-				tryToPush1False();
-			} else {
-				tryToPush1True();
-			}
-
-		}
-
-		/**
-		 * Try to push 'false' on the stack. If the relation becomes inconsistent, backtrack to the last 'true' (i.e.,
-		 * remove elements until we reached the last 'true', including the last 'true') and push 'false'. Continue until
-		 * we reached a consistent stack. Note that there has is at least one consistent stack, namely the one that
-		 * contains only 'false' elements.
-		 */
-		private void tryToPush1False() {
-			final Doubleton<Term> d = mNonDisjointDoubletons.get(mStack.size());
-			if (mCurrentRelation.containsPair(d.getOneElement(), d.getOtherElement())) {
-				// we cannot add false
-				remove1true();
-				rebuildCurrentRelation();
-				tryToPush1False();
-			} else {
-				mStack.add(false);
-			}
-		}
-
-		/**
-		 * Push 'true' on the stack. If the relation becomes inconsistent remove the 'true' and call the
-		 * {@link CombinationIterator2#tryToPush1False()} method which iterates until it was able to push 'false' to the
-		 * stack.
-		 */
-		private void tryToPush1True() {
-			final Doubleton<Term> d = mNonDisjointDoubletons.get(mStack.size());
-			if (mEqualityInformation.getEquality(d.getOneElement(), d.getOtherElement()) == Equality.NOT_EQUAL) {
-				// we cannot add true
-			} else {
-				mStack.add(true);
-				mCurrentRelation.addPair(d.getOneElement(), d.getOtherElement());
-				final Set<Doubleton<Term>> newPairs = mCurrentRelation.makeTransitive();
-				final boolean containsDisjointPair = containsNotEqualsPair(newPairs);
-				if (containsDisjointPair || !mExternalOracle.isConsistent(mStack, mNonDisjointDoubletons)) {
-					remove1true();
-					rebuildCurrentRelation();
-					tryToPush1False();
-				}
-			}
-		}
-
-		private boolean containsNotEqualsPair(final Set<Doubleton<Term>> pairs1) {
-			for (final Doubleton<Term> pairFrom1 : pairs1) {
-				if (mEqualityInformation.getEquality(pairFrom1.getOneElement(),
-						pairFrom1.getOtherElement()) == Equality.NOT_EQUAL) {
-					return true;
-				}
-			}
-			return false;
-		}
-
-		private void rebuildCurrentRelation() {
-			mCurrentRelation = new SymmetricHashRelation<>();
-			int offset = 0;
-			for (final Boolean bool : mStack) {
-				if (bool) {
-					final Doubleton<Term> doubleton = mNonDisjointDoubletons.get(offset);
-					mCurrentRelation.addPair(doubleton.getOneElement(), doubleton.getOtherElement());
-				}
-				offset++;
-			}
-			mCurrentRelation.makeTransitive();
-		}
-
-		/**
-		 * Remove elements from the stack until one 'true' element was removed.
-		 */
-		private void remove1true() {
-			while (!mStack.peekLast()) {
-				mStack.removeLast();
-			}
-			mStack.removeLast();
-		}
-
-		private void addRelationToResult() {
-			mResult.add(mCurrentRelation.buildSetOfNonSymmetricDoubletons());
-		}
-
-		public int size() {
-			return mResult.size();
-		}
-
-		@Override
-		public Iterator<Set<Doubleton<Term>>> iterator() {
-			return mResult.iterator();
-		}
-		
-	}
-	
-	public abstract static class ExternalOracle {
-		
-		public abstract boolean isConsistent(LinkedList<Boolean> stack, List<Doubleton<Term>> nonDisjointDoubletons);
-		
-	}
-	
-	public static class DefaultExternalOracle extends ExternalOracle {
-
-		@Override
-		public boolean isConsistent(final LinkedList<Boolean> stack, final List<Doubleton<Term>> nonDisjointDoubletons) {
-			return true;
-		}
-		
-	}
 
 	/**
 	 * Alternation-free (quantifier) elimination task
