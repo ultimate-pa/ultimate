@@ -355,7 +355,7 @@ public class ElimStorePlain {
 		newAuxVars.add(newAuxArray);
 
 		final List<Term> disjuncts = new ArrayList<>();
-		final EquivalenceRelationIterator ci = new EquivalenceRelationIterator(mServices, indices, equalityInformation, new DefaultExternalOracle());
+		final EquivalenceRelationIterator<Term> ci = new EquivalenceRelationIterator<Term>(mServices, indices, equalityInformation, new DefaultExternalOracle());
 		// mLogger.info("Considering " + ci.size() + " cases while eliminating array variable of dimension " + new
 		// MultiDimensionalSort(eliminatee.getSort()).getDimension());
 		for (final Set<Doubleton<Term>> equalDoubletons : ci) {
