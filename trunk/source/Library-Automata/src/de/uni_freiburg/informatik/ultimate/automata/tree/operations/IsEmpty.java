@@ -52,7 +52,7 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.TreeRun;
  * @param <STATE>
  *            state class of tree automaton.
  */
-public class TreeEmptinessCheck<LETTER extends IRankedLetter, STATE> implements IOperation<LETTER, STATE, IStateFactory<STATE>> {
+public class IsEmpty<LETTER extends IRankedLetter, STATE> implements IOperation<LETTER, STATE, IStateFactory<STATE>> {
 
 	private final ITreeAutomatonBU<LETTER, STATE> mTreeAutomaton;
 	protected final TreeRun<LETTER, STATE> mResultTreeRun;
@@ -62,7 +62,7 @@ public class TreeEmptinessCheck<LETTER extends IRankedLetter, STATE> implements 
 	 * @param services
 	 * @param tree
 	 */
-	public TreeEmptinessCheck(final AutomataLibraryServices services, final TreeAutomatonBU<LETTER, STATE> tree) {
+	public IsEmpty(final AutomataLibraryServices services, final TreeAutomatonBU<LETTER, STATE> tree) {
 		mTreeAutomaton = tree;
 		mResultTreeRun = computeResult();
 	}

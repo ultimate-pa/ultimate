@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.operations.Complement;
 import de.uni_freiburg.informatik.ultimate.automata.tree.operations.Intersect;
 import de.uni_freiburg.informatik.ultimate.automata.tree.operations.Minimize;
 import de.uni_freiburg.informatik.ultimate.automata.tree.operations.Totalize;
-import de.uni_freiburg.informatik.ultimate.automata.tree.operations.TreeEmptinessCheck;
+import de.uni_freiburg.informatik.ultimate.automata.tree.operations.IsEmpty;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TimeoutResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TreeAutomizerSatResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TreeAutomizerUnsatResult;
@@ -236,8 +236,8 @@ public class TreeAutomizerCEGAR {
 	}
 
 	private TreeRun<HornClause, IPredicate> isAbstractionCorrect() throws AutomataOperationCanceledException {
-		final TreeEmptinessCheck<HornClause, IPredicate> emptiness =
-				new TreeEmptinessCheck<>(mAutomataLibraryServices, mAbstraction);
+		final IsEmpty<HornClause, IPredicate> emptiness =
+				new IsEmpty<>(mAutomataLibraryServices, mAbstraction);
 
 		final TreeRun<HornClause, IPredicate> counterexample = emptiness.getTreeRun();
 
