@@ -124,8 +124,6 @@ public class Accepts<LETTER extends IRankedLetter, STATE> implements IOperation<
 			boolean validDerivation = true;
 			for (int i = 0; i < rule.getArity(); ++i) {
 				final STATE sr = rule.getSource().get(i);
-//				if ((!statesReachableFromChildren.isEmpty() || !mTreeAutomaton.isInitialState(sr))) {
-//				if (k >= statesReachableFromChildren.size() || !statesReachableFromChildren.get(k++).contains(sr)) {
 				if (!statesReachableFromChildren.get(i).contains(sr)) {
 					validDerivation = false;
 					break;

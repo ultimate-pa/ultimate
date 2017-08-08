@@ -57,7 +57,6 @@ public class TreeAutomatonBU<LETTER extends IRankedLetter, STATE> implements ITr
 	private final Set<TreeAutomatonRule<LETTER, STATE>> mRules;
 	private final Set<LETTER> mAlphabet;
 	private final Set<STATE> mFinalStates;
-//	private final Set<STATE> mInitalStates;
 	private final Set<STATE> mStates;
 
 	/**
@@ -72,7 +71,6 @@ public class TreeAutomatonBU<LETTER extends IRankedLetter, STATE> implements ITr
 		mRules = new HashSet<>();
 		mFinalStates = new HashSet<>();
 		mStates = new HashSet<>();
-//		mInitalStates = new HashSet<>();
 	}
 
 	private boolean ruleContains(final TreeAutomatonRule<LETTER, STATE> rule, final STATE st) {
@@ -118,7 +116,6 @@ public class TreeAutomatonBU<LETTER extends IRankedLetter, STATE> implements ITr
 		mRules.removeAll(badRules);
 		mStates.remove(st);
 		mFinalStates.remove(st);
-//		mInitalStates.remove(st);
 	}
 	/**
 	 * Add a rule to the automaton.
@@ -202,10 +199,6 @@ public class TreeAutomatonBU<LETTER extends IRankedLetter, STATE> implements ITr
 	 * @param letter
 	 */
 	public void addLetter(final LETTER letter) {
-//		assert letter.getRank() > 0;
-//		if (letter.getRank() == 0) {
-//			System.err.println(letter);
-//		}
 		mAlphabet.add(letter);
 	}
 
@@ -227,16 +220,6 @@ public class TreeAutomatonBU<LETTER extends IRankedLetter, STATE> implements ITr
 		mFinalStates.add(state);
 		addState(state);
 	}
-
-//	/***
-//	 * Add initial state.
-//	 * 
-//	 * @param state
-//	 */
-//	public void addInitialState(final STATE state) {
-//		mInitalStates.add(state);
-//		addState(state);
-//	}
 
 	/***
 	 * Get rules that use a specific character.
@@ -278,11 +261,6 @@ public class TreeAutomatonBU<LETTER extends IRankedLetter, STATE> implements ITr
 		return size() + " nodes";
 	}
 
-//	@Override
-//	public Set<STATE> getInitialStates() {
-//		return mInitalStates;
-//	}
-
 	public Set<STATE> getFinalStates() {
 		return mFinalStates;
 	}
@@ -296,11 +274,6 @@ public class TreeAutomatonBU<LETTER extends IRankedLetter, STATE> implements ITr
 	public boolean isFinalState(final STATE state) {
 		return mFinalStates.contains(state);
 	}
-
-//	@Override
-//	public boolean isInitialState(STATE state) {
-//		return mInitalStates.contains(state);
-//	}
 
 	@Override
 	public Iterable<TreeAutomatonRule<LETTER, STATE>> getRules() {
@@ -375,9 +348,6 @@ public class TreeAutomatonBU<LETTER extends IRankedLetter, STATE> implements ITr
 	private String stateString(STATE state) {
 		final StringBuilder res = new StringBuilder(state.toString());
 		res.append('"');
-//		if (mInitalStates.contains(state)) {
-//			res.append("_");
-//		}
 		if (isFinalState(state)) {
 			res.append("*");
 		}
@@ -412,9 +382,6 @@ public class TreeAutomatonBU<LETTER extends IRankedLetter, STATE> implements ITr
 			if (isFinalState(s)) {
 				res.addFinalState(mp.get(s));
 			}
-//			if (isInitialState(s)) {
-//				res.addInitialState(mp.get(s));
-//			}
 		}
 		for (final TreeAutomatonRule<LETTER, STATE> rule : mRules) {
 			final List<ST> src = new ArrayList<>();
@@ -449,16 +416,6 @@ public class TreeAutomatonBU<LETTER extends IRankedLetter, STATE> implements ITr
 			states.append(state);
 			states.append('"');
 		}
-
-//		final StringBuilder initialStates = new StringBuilder();
-//		for (final STATE state : this.mInitalStates) {
-//			if (initialStates.length() > 0) {
-//				initialStates.append(" ");
-//			}
-//			initialStates.append('"');
-//			initialStates.append(state);
-//			initialStates.append('"');
-//		}
 
 		final StringBuilder finalStates = new StringBuilder();
 		for (final STATE state : this.mFinalStates) {
@@ -496,12 +453,16 @@ public class TreeAutomatonBU<LETTER extends IRankedLetter, STATE> implements ITr
 			transitionTable.append(String.format("\t\t((%s) %s %s)", src, letter, dest));
 		}
 		return String.format(
-				"TreeAutomaton %s = {\n\talphabet = {%s},\n\tstates = {%s},"
-				//+ "\n\tinitialStates = {%s},"
-				+ "\n\tfinalStates = {%s},\n\ttransitionTable = {\n%s\n\t}\n}",
-				"ta" + hashCode() % 1000000, alphabet, states, 
-				//initialStates, 
-				finalStates, transitionTable);
-
+//				"TreeAutomaton %s = " +
+				 "TreeAutomaton(\n"
+				+ "\talphabet = {%s},\n"
+				+ "\tstates = {%s},\n"
+				+ "\tfinalStates = {%s},\n"
+				+ "\ttransitionTable = {\n%s\n\t}\n)",
+//				"ta" + hashCode() % 1000000, 
+				alphabet, 
+				states, 
+				finalStates, 
+				transitionTable);
 	}
 }

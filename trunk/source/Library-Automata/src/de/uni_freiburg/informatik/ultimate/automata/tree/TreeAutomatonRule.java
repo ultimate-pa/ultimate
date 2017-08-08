@@ -49,7 +49,6 @@ public class TreeAutomatonRule<LETTER extends IRankedLetter, STATE> {
 	 * @param dest
 	 */
 	public TreeAutomatonRule(LETTER letter, List<STATE> src, STATE dest) {
-//		assert !src.isEmpty();
 		this.mLetter = letter;
 		this.mSrc = src;
 		this.mDest = dest;
@@ -66,8 +65,8 @@ public class TreeAutomatonRule<LETTER extends IRankedLetter, STATE> {
 	}
 	public int getArity() {
 		return mLetter.getRank();
-		//return mSrc != null ? mSrc.size() : 0;
 	}
+	
 	@Override
 	public String toString() {
 		return "(" + mSrc.toString() + " ~~ " + mLetter.toString() + " ~~> " + mDest.toString() + ")";

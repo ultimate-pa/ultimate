@@ -89,14 +89,9 @@ public class IsEmpty<LETTER extends IRankedLetter, STATE> implements IOperation<
 		// maps a state s to a treeRun whose root can be labeled with s by mTreeAutomaton
 		final Map<STATE, TreeRun<LETTER, STATE>> soltree = new HashMap<>();
 
-//		for (final STATE init : mTreeAutomaton.getInitialStates()) {
-//			soltree.put(init, new TreeRun<LETTER, STATE>(init));
-//		}
 		for (final TreeAutomatonRule<LETTER, STATE> rule : mTreeAutomaton.getRules()) {
-//			boolean initialRules = true;
 
 			for (final STATE sourceState : rule.getSource()) {
-//				initialRules &= mTreeAutomaton.isInitialState(sourceState);
 
 				Collection<TreeAutomatonRule<LETTER, STATE>> sourceRules;
 				if (rulesBySource.containsKey(sourceState)) {
@@ -107,11 +102,8 @@ public class IsEmpty<LETTER extends IRankedLetter, STATE> implements IOperation<
 				}
 				sourceRules.add(rule);
 			}
-//			if (initialRules) {
 			if (rule.getSource().isEmpty()) {
-				/*
-				 *  a rule with an empty source list is an "initial rule"
-				 */
+				// a rule with an empty source list is an "initial rule"
 				worklist.add(rule);
 			}
 		}
