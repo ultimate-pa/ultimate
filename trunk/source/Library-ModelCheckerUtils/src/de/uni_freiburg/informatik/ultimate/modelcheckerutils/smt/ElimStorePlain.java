@@ -443,15 +443,17 @@ public class ElimStorePlain {
 			if (mQuantifier == QuantifiedFormula.EXISTS) {
 				final LBool sat = SmtUtils.checkSatTerm(mScript, disjuct);
 				if (sat == LBool.UNSAT) {
-					mLogger.info("saved disjunct");
-					if (ci.size() == 1) {
-						final LBool inputsat = SmtUtils.checkSatTerm(mScript, inputTerm);
-						if (inputsat == LBool.SAT) {
-							throw new AssertionError(
-									"input must have been unsat " + " term size " + new DagSizePrinter(inputTerm));
-						}
-					}
-					continue;
+					throw new AssertionError(
+							"saved disjunct " + " term size " + new DagSizePrinter(inputTerm));
+//					mLogger.info("saved disjunct");
+//					if (ci.size() == 1) {
+//						final LBool inputsat = SmtUtils.checkSatTerm(mScript, inputTerm);
+//						if (inputsat == LBool.SAT) {
+//							throw new AssertionError(
+//									"input must have been unsat " + " term size " + new DagSizePrinter(inputTerm));
+//						}
+//					}
+//					continue;
 				}
 			} else if (mQuantifier == QuantifiedFormula.FORALL) {
 				final LBool sat = SmtUtils.checkSatTerm(mScript, SmtUtils.not(mScript, disjuct));
