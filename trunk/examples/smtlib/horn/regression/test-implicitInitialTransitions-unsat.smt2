@@ -3,6 +3,7 @@
 ; currently, we say this set is sat without looking at any trace, because the "initial transitions" 
 ; don't have the form of an implication withough uninterpreted predicates in the body.
 ; author: nutz@informatik.uni-freiburg.de
+(set-info :status unsat)
 (set-logic HORN)
 
 (declare-fun I (Int) Bool)

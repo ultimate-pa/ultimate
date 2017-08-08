@@ -4,6 +4,7 @@
 ; the 'assertion' prohibits all states in I where m is three bigger than n 
 ; from the rules it follows that n is always bigger equal m, for any I(n, m)
 ; --> sat
+(set-info :status sat)
 (set-logic HORN)
 
 (declare-fun I (Int Int) Bool)
