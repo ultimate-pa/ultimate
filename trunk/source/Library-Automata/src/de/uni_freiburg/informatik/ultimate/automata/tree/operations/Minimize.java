@@ -117,9 +117,9 @@ public class Minimize<LETTER extends IRankedLetter, STATE> implements IOperation
 			}
 			final ArrayList<STATE> s = (ArrayList<STATE>) src.clone();
 			s.set(idx, s2);
-			// If we replace an occurance of s1 by s2 in the rule, and it still yields an equivalent destination
+			// If we replace an occurrence of s1 by s2 in the rule, and it still yields an equivalent destination
 			// Then we can replace s2 by s1 in this rule
-			// TODO(amin): Check if just one occurance or all of them is needed.
+			// TODO(amin): Check if just one occurrence or all of them is needed.
 			for (final STATE dest : mTreeAutomaton.getSuccessors(s, rule.getLetter())) {
 				if (worklist.equiv(dest, rule.getDest())) {
 					return true;
@@ -162,13 +162,6 @@ public class Minimize<LETTER extends IRankedLetter, STATE> implements IOperation
 					// All final states are equivalent.
 					worklist.union(finalState, state);
 				}
-//			} else if (mTreeAutomaton.isInitialState(state)) {
-//				if (initState == null) {
-//					initState = state;
-//				} else {
-//					// all initial states are equivalent
-//					worklist.union(initState, state);
-//				}
 			} else {
 				if (nonFinalState == null) {
 					nonFinalState = state;
@@ -211,9 +204,6 @@ public class Minimize<LETTER extends IRankedLetter, STATE> implements IOperation
 			if (mTreeAutomaton.isFinalState(st)) {
 				res.addFinalState(minimize(worklist.getPartition(st)));
 			}
-//			if (mTreeAutomaton.isInitialState(st)) {
-//				res.addInitialState(minimize(worklist.getPartition(st)));
-//			}
 		}
 
 		for (final TreeAutomatonRule<LETTER, STATE> rule : mTreeAutomaton.getRules()) {
@@ -234,9 +224,6 @@ public class Minimize<LETTER extends IRankedLetter, STATE> implements IOperation
 
 		final Set<STATE> worklist = new HashSet<>();
 
-//		for (final STATE st : treeAutomaton.getInitialStates()) {
-//			worklist.add(st);
-//		}
 		final Set<STATE> oldWorklist = new HashSet<>();
 
 		do {
@@ -304,9 +291,6 @@ public class Minimize<LETTER extends IRankedLetter, STATE> implements IOperation
 				if (treeAutomaton.isFinalState(st)) {
 					res.addFinalState(st);
 				}
-//				if (treeAutomaton.isInitialState(st)) {
-//					res.addInitialState(st);
-//				}
 			}
 		}
 

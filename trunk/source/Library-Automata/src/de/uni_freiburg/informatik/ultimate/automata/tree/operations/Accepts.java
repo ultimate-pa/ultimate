@@ -128,7 +128,6 @@ public class Accepts<LETTER extends IRankedLetter, STATE> implements IOperation<
 					validDerivation = false;
 					break;
 				}
-//				}
 			}
 			if (validDerivation) {
 				res.add(rule.getDest());
