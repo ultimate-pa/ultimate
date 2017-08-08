@@ -53,9 +53,15 @@ public class LoopAccelerationDevelTestsuite extends AbstractEvalTestSuite {
 	@SuppressWarnings("unchecked")
 	private static final Triple<String, String[], String>[] TOOLCHAINS = new Triple[] {
 
-			// BPL
-			// new Triple<>("AutomizerBplTransformed.xml", BPL,
+			new Triple<>("AutomizerBpl.xml", BPL, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_BB_Debug.epf"),
+			new Triple<>("AutomizerBplTransformed.xml", BPL,
+					"loopacceleration/svcomp-Reach-32bit-Automizer_Default_BB_Debug.epf"),
+
+			// new Triple<>("AutomizerCInline.xml", C,
 			// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_BB_Debug.epf"),
+			// new Triple<>("AutomizerCInlineTransformed.xml", BPL,
+			// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_BB_Debug.epf"),
+
 			// new Triple<>("AutomizerBplTransformed.xml", BPL,
 			// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Ahmed_Debug.epf"),
 
@@ -81,17 +87,17 @@ public class LoopAccelerationDevelTestsuite extends AbstractEvalTestSuite {
 			// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Woelfing.epf"),
 			//
 
-			new Triple<>("AutomizerBpl.xml", BPL, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Mohr.epf"),
-			new Triple<>("AutomizerBplTransformed.xml", BPL,
-					"loopacceleration/svcomp-Reach-32bit-Automizer_Default_Mohr.epf"),
-			new Triple<>("AutomizerCInline.xml", C, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Mohr.epf"),
-			new Triple<>("AutomizerCInlineTransformed.xml", C,
-					"loopacceleration/svcomp-Reach-32bit-Automizer_Default_Mohr.epf"),
+			// new Triple<>("AutomizerBpl.xml", BPL, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Mohr.epf"),
+			// new Triple<>("AutomizerBplTransformed.xml", BPL,
+			// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Mohr.epf"),
+			// new Triple<>("AutomizerCInline.xml", C,
+			// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Mohr.epf"),
+			// new Triple<>("AutomizerCInlineTransformed.xml", C,
+			// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Mohr.epf"),
 
 			// new Triple<>("AutomizerBplTransformed.xml", BPL,
 			// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Mohr_Debug.epf"),
 
-			// C
 			// new Triple<>("AutomizerCInline.xml", C,
 			// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Woelfing.epf"),
 			// new Triple<>("AutomizerCInlineTransformed.xml", C,
@@ -116,29 +122,29 @@ public class LoopAccelerationDevelTestsuite extends AbstractEvalTestSuite {
 	private static final String[] INPUT = new String[] {
 
 			// Normal regressions
-			// "examples/programs/loopAcceleration",
+			"examples/programs/loopAcceleration",
 
 			// Errors in LA Mohr sorted by priority
 
-			// Unsound
-			"examples/svcomp/loop-acceleration/nested_false-unreach-call1.i",
-
-			// AOOB
-			"examples/svcomp/loop-invgen/heapsort_true-unreach-call_true-termination.i",
-
-			// NPE
-			"examples/svcomp/loop-industry-pattern/mod3_true-unreach-call.c",
-
-			// Undeclared Function Symbol
-			"examples/svcomp/loop-lit/gcnr2008_false-unreach-call_false-termination.i",
-
-			// OOM
-			"examples/svcomp/loop-invgen/MADWiFi-encode_ie_ok_true-unreach-call_true-termination.i",
-			"examples/svcomp/loop-invgen/NetBSD_loop_true-unreach-call_true-termination.i",
-			"examples/svcomp/loop-invgen/apache-get-tag_true-unreach-call_true-termination.i",
-			"examples/svcomp/loop-invgen/id_trans_false-unreach-call_true-termination.i",
-			"examples/svcomp/loop-invgen/apache-escape-absolute_true-unreach-call_true-termination.i",
-			"examples/svcomp/loop-invgen/sendmail-close-angle_true-unreach-call_true-termination.i",
+			// // Unsound
+			// "examples/svcomp/loop-acceleration/nested_false-unreach-call1.i",
+			//
+			// // AOOB
+			// "examples/svcomp/loop-invgen/heapsort_true-unreach-call_true-termination.i",
+			//
+			// // NPE
+			// "examples/svcomp/loop-industry-pattern/mod3_true-unreach-call.c",
+			//
+			// // Undeclared Function Symbol
+			// "examples/svcomp/loop-lit/gcnr2008_false-unreach-call_false-termination.i",
+			//
+			// // OOM
+			// "examples/svcomp/loop-invgen/MADWiFi-encode_ie_ok_true-unreach-call_true-termination.i",
+			// "examples/svcomp/loop-invgen/NetBSD_loop_true-unreach-call_true-termination.i",
+			// "examples/svcomp/loop-invgen/apache-get-tag_true-unreach-call_true-termination.i",
+			// "examples/svcomp/loop-invgen/id_trans_false-unreach-call_true-termination.i",
+			// "examples/svcomp/loop-invgen/apache-escape-absolute_true-unreach-call_true-termination.i",
+			// "examples/svcomp/loop-invgen/sendmail-close-angle_true-unreach-call_true-termination.i",
 
 			// // Errors in LA Mohr not due to Mohr, but due to other bugs in Ultimate
 			// // Simultaneous Update (Mattias?)
@@ -221,6 +227,7 @@ public class LoopAccelerationDevelTestsuite extends AbstractEvalTestSuite {
 
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
+
 		for (final Triple<String, String[], String> triple : TOOLCHAINS) {
 			final DirectoryFileEndingsPair[] pairs = new DirectoryFileEndingsPair[INPUT.length];
 			for (int i = 0; i < INPUT.length; ++i) {

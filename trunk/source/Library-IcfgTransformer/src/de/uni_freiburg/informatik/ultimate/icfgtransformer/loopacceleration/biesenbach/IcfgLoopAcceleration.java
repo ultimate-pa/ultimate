@@ -50,17 +50,35 @@ public class IcfgLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends Icf
 
 	/**
 	 * Different options for the loop acceleration
-	 * 
+	 *
 	 * @author Ben Biesenbach (Ben.Biesenbach@gmx.de)
 	 *
 	 */
-	public enum LoopAccelerationOptions {THROW_EXEPTION, MARK_AS_OVERAPPROX, DO_NOT_ACCELERATE};
-	
-	private IIcfg<OUTLOC> mResultIcfg;
+	public enum LoopAccelerationOptions {
+		/**
+		 * If the {@link IIcfg} contains a loop that cannot be accelerated with a valid underapproximation, throw an
+		 * exception.
+		 */
+		THROW_EXEPTION,
+
+		/**
+		 * If the acceleration contains an overapproximation (i.e., some variables had to be overapproximated with *),
+		 * add the acceleration and mark it as overapproximation. If a loop can -- for some reason -- not be
+		 * accelerated, just ignore it with a warning.
+		 */
+		MARK_AS_OVERAPPROX,
+
+		/**
+		 * Only add an acceleration if it is a valid underapproximation and ignore all other loops.
+		 */
+		DO_NOT_ACCELERATE
+	}
+
+	private final IIcfg<OUTLOC> mResultIcfg;
 
 	/**
 	 * Default constructor.
-	 * 
+	 *
 	 * @param logger
 	 * @param originalIcfg
 	 * @param outLocationClass
@@ -72,35 +90,35 @@ public class IcfgLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends Icf
 	 * @param replacementVarFactory
 	 * @param option
 	 */
-	public IcfgLoopAcceleration(final ILogger logger, final IIcfg<INLOC> originalIcfg, 
-			final Class<OUTLOC> outLocationClass, final ILocationFactory<INLOC, OUTLOC> funLocFac, 
-			final String newIcfgIdentifier, final ITransformulaTransformer transformer, 
+	public IcfgLoopAcceleration(final ILogger logger, final IIcfg<INLOC> originalIcfg,
+			final Class<OUTLOC> outLocationClass, final ILocationFactory<INLOC, OUTLOC> funLocFac,
+			final String newIcfgIdentifier, final ITransformulaTransformer transformer,
 			final IBacktranslationTracker backtranslationTracker, final IUltimateServiceProvider services,
 			final LoopAccelerationOptions option) {
-		mResultIcfg = accelerat(logger,originalIcfg,outLocationClass,funLocFac,newIcfgIdentifier,transformer,
-				backtranslationTracker,services,option);
+		mResultIcfg = accelerat(logger, originalIcfg, outLocationClass, funLocFac, newIcfgIdentifier, transformer,
+				backtranslationTracker, services, option);
 	}
-	
+
 	@SuppressWarnings("unchecked")
-	private IIcfg<OUTLOC> accelerat(final ILogger logger, final IIcfg<INLOC> originalIcfg, 
-			final Class<OUTLOC> outLocationClass, final ILocationFactory<INLOC, OUTLOC> funLocFac, 
-			final String newIcfgIdentifier, final ITransformulaTransformer transformer, 
+	private IIcfg<OUTLOC> accelerat(final ILogger logger, final IIcfg<INLOC> originalIcfg,
+			final Class<OUTLOC> outLocationClass, final ILocationFactory<INLOC, OUTLOC> funLocFac,
+			final String newIcfgIdentifier, final ITransformulaTransformer transformer,
 			final IBacktranslationTracker backtranslationTracker, final IUltimateServiceProvider services,
-			final LoopAccelerationOptions option){
-		if(option.equals(LoopAccelerationOptions.DO_NOT_ACCELERATE)){
+			final LoopAccelerationOptions option) {
+		if (option.equals(LoopAccelerationOptions.DO_NOT_ACCELERATE)) {
 			return (IIcfg<OUTLOC>) originalIcfg;
 		}
-		//get the loop
-		LoopDetectionBB<INLOC, OUTLOC> loopDetection = new LoopDetectionBB<>(logger, originalIcfg, outLocationClass,
-				funLocFac, newIcfgIdentifier, transformer, backtranslationTracker, services);
-		IIcfg<OUTLOC> loop = loopDetection.getLoop();
-		
-		//create the matrix
+		// get the loop
+		final LoopDetectionBB<INLOC, OUTLOC> loopDetection = new LoopDetectionBB<>(logger, originalIcfg,
+				outLocationClass, funLocFac, newIcfgIdentifier, transformer, backtranslationTracker, services);
+		final IIcfg<OUTLOC> loop = loopDetection.getLoop();
+
+		// create the matrix
 		final MatrixBB matrix = new LoopAccelerationMatrix<>(logger, loop).getResult();
-		//calculate the alphas
-		AlphaSolver<INLOC> alphaSolver = new AlphaSolver<>(logger, (IIcfg<INLOC>) loop,
-				matrix.getMatrix(), matrix.getLGS(), services);
-		//add guard and final icfg
+		// calculate the alphas
+		final AlphaSolver<INLOC> alphaSolver =
+				new AlphaSolver<>(logger, (IIcfg<INLOC>) loop, matrix.getMatrix(), matrix.getLGS(), services);
+		// add guard and final icfg
 		return loopDetection.rejoin(alphaSolver.getResult(), alphaSolver.getN(), alphaSolver.getGuardSubstitute());
 	}
 

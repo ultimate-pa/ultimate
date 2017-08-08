@@ -31,6 +31,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePr
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.biesenbach.IcfgLoopAcceleration.LoopAccelerationOptions;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr.FastUPRTransformer.FastUPRReplacementMethod;
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtransformation.Activator;
 
@@ -50,6 +51,13 @@ public class IcfgTransformationPreferences extends UltimatePreferenceInitializer
 					+ "REPLACE_EXIT_EDGE replaces the exit edge with a merge of the loop edge and the exit edge "
 					+ "(unknown behavior for already transformed Icfg - "
 					+ "e.g. if the exit edge was already merged with other edges)";
+
+	public static final String LABEL_LA_BB_MODE = "Loopacceleration Biesenbach Mode";
+	private static final String DESC_LA_BB_MODE =
+			"THROW_EXEPTION throws an exception whenever a loop could not be accelerated with a valid "
+					+ "underapproximation, MARK_AS_OVERAPPROX allows underapproximations that contain overapproximations"
+					+ " of single variables and ignores all other not-accelerabe loops, and "
+					+ "DO_NOT_ACCELERATE only accelerates loops for which a valid underapproximation could be found. ";
 
 	public static final String LABEL_MAPELIM_ADD_INEQUALITIES = "Map elimination: also add inequalities";
 	private static final String DESC_MAPELIM_ADD_INEQUALITIES =
@@ -122,6 +130,8 @@ public class IcfgTransformationPreferences extends UltimatePreferenceInitializer
 						PreferenceType.Combo, TransformationTestType.values()),
 				new UltimatePreferenceItem<>(LABEL_FASTUPR_MODE, FastUPRReplacementMethod.REPLACE_EXIT_EDGE,
 						DESC_FASTUPR_MODE, PreferenceType.Combo, FastUPRReplacementMethod.values()),
+				new UltimatePreferenceItem<>(LABEL_LA_BB_MODE, LoopAccelerationOptions.MARK_AS_OVERAPPROX,
+						DESC_LA_BB_MODE, PreferenceType.Combo, LoopAccelerationOptions.values()),
 
 				new UltimatePreferenceItem<>(LABEL_MAPELIM_ADD_INEQUALITIES, false, DESC_MAPELIM_ADD_INEQUALITIES,
 						PreferenceType.Boolean),

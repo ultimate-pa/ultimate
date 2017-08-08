@@ -193,35 +193,34 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 
 	@SuppressWarnings("unchecked")
 	private <INLOC extends IcfgLocation, OUTLOC extends IcfgLocation> IIcfg<OUTLOC> applyHeapSeparator(
-			final IIcfg<INLOC> icfg, final ILocationFactory<INLOC, OUTLOC> locFac,
-			final Class<OUTLOC> outlocClass, final IBacktranslationTracker backtranslationTracker,
-			final ReplacementVarFactory fac, final IUltimateServiceProvider services,
+			final IIcfg<INLOC> icfg, final ILocationFactory<INLOC, OUTLOC> locFac, final Class<OUTLOC> outlocClass,
+			final IBacktranslationTracker backtranslationTracker, final ReplacementVarFactory fac,
+			final IUltimateServiceProvider services,
 			final IEqualityAnalysisResultProvider<IcfgLocation, IIcfg<?>> equalityProvider) {
 
-		List<ITransformulaTransformer> transformers = new ArrayList<>();
-		
+		final List<ITransformulaTransformer> transformers = new ArrayList<>();
+
 		final StoreIndexExposer sie = new StoreIndexExposer(icfg.getCfgSmtToolkit());
 		transformers.add(sie);
 
 		final HeapSepTransFormulaTransformer hstftf =
 				new HeapSepTransFormulaTransformer(icfg.getCfgSmtToolkit(), mServices, equalityProvider);
 		transformers.add(hstftf);
-		
-		final IcfgTransformerSequence<INLOC, OUTLOC> transformerSequence = new IcfgTransformerSequence<>(icfg, locFac, 
-				(ILocationFactory<OUTLOC, OUTLOC>) locFac, backtranslationTracker, outlocClass, 
+
+		final IcfgTransformerSequence<INLOC, OUTLOC> transformerSequence = new IcfgTransformerSequence<>(icfg, locFac,
+				(ILocationFactory<OUTLOC, OUTLOC>) locFac, backtranslationTracker, outlocClass,
 				icfg.getIdentifier() + "HeapSeparatorResult", transformers);
 
-//		final IcfgTransformer<INLOC, OUTLOC> icfgTransformer =
-//				new IcfgTransformer<>(icfg, locFac, backtranslationTracker, outlocClass, "IcfgWithHeapSeparation", 
-//						tftf);
-		
+		// final IcfgTransformer<INLOC, OUTLOC> icfgTransformer =
+		// new IcfgTransformer<>(icfg, locFac, backtranslationTracker, outlocClass, "IcfgWithHeapSeparation",
+		// tftf);
+
+		mServices.getResultService().reportResult(Activator.PLUGIN_ID, new GenericResult(Activator.PLUGIN_ID,
+				"HeapSeparationSummary", hstftf.getHeapSeparationSummary(), Severity.INFO));
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID,
-				new GenericResult(Activator.PLUGIN_ID, "HeapSeparationSummary", hstftf.getHeapSeparationSummary() , 
-						Severity.INFO));
-		mServices.getResultService().reportResult(Activator.PLUGIN_ID, 
 				new StatisticsResult<>(Activator.PLUGIN_ID, "HeapSeparatorStatistics", hstftf.getStatistics()));
 
-//		return icfgTransformer.getResult();
+		// return icfgTransformer.getResult();
 		return transformerSequence.getResult();
 	}
 
@@ -255,8 +254,10 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 			final IBacktranslationTracker backtranslationTracker, final ReplacementVarFactory fac) {
 		final ITransformulaTransformer transformer = new ExampleLoopAccelerationTransformulaTransformer(mLogger,
 				icfg.getCfgSmtToolkit().getManagedScript(), icfg.getCfgSmtToolkit().getSymbolTable(), fac);
+		final LoopAccelerationOptions options = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
+				.getEnum(IcfgTransformationPreferences.LABEL_LA_BB_MODE, LoopAccelerationOptions.class);
 		return new IcfgLoopAcceleration<>(mLogger, icfg, outlocClass, locFac, icfg.getIdentifier() + "IcfgDuplicate",
-				transformer, backtranslationTracker, mServices, LoopAccelerationOptions.MARK_AS_OVERAPPROX).getResult();
+				transformer, backtranslationTracker, mServices, options).getResult();
 	}
 
 	private <INLOC extends IcfgLocation, OUTLOC extends IcfgLocation> IIcfg<OUTLOC> applyLoopAccelerationFastUPR(
