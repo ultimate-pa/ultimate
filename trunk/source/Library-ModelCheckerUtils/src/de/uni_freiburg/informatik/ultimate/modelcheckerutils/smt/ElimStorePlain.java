@@ -54,6 +54,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ElimStore3.IndicesAndValues;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IncrementalPlicationChecker.Plication;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayUpdate;
@@ -62,8 +63,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDim
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSort;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalStore;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.EqualityAnalysisResult.Equality;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.IncrementalPlicationChecker;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.IncrementalPlicationChecker.Plication;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.ThreeValuedEquivalenceRelation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.PrenexNormalForm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierPusher;
@@ -260,6 +259,11 @@ public class ElimStorePlain {
 				return new AfEliminationTask(newAuxVars, afterDer.getTerm());
 			} 
 
+		}
+		if (preprocessedInput == inputTerm) {
+			mLogger.info("no preprocessing");
+		} else {
+			mLogger.info("some preprocessing");
 		}
 
 		final List<ApplicationTerm> selectTerms = extractSelects2(eliminatee, preprocessedInput);
