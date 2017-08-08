@@ -320,8 +320,7 @@ public class Minimize<LETTER extends IRankedLetter, STATE> implements IOperation
 
 	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
-		// TODO Auto-generated method stub
-		return false;
+		return true;
 	}
 
 	/***

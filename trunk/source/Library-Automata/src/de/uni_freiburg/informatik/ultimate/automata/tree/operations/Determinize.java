@@ -250,6 +250,6 @@ public class Determinize<LETTER extends IRankedLetter, STATE> implements IOperat
 
 	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
-		return false;
+		return true;
 	}
 }
