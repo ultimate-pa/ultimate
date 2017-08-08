@@ -1,0 +1,59 @@
+// Example that demonstrates how to use tree automata in this automata library.
+// Author: Alexander Nutz
+// Date: 2017-08-08
+
+
+// Declare a tree automaton called ta1
+// ta1 accepts binary trees where each each inner node is labelled with f and
+// each leaf is labelled a or b. Also the left subtree of any inner node 
+// consists of a leaf only.
+TreeAutomaton ta1 = TreeAutomaton (
+    alphabet = { a b f },
+    states = { q1 q2 },
+    finalStates = { q2 },
+    transitionTable = {
+        (() a q1)
+        (() a q2)
+        (() b q1)
+        (() b q2)
+        ((q1 q2) f q2)
+    }
+);
+
+// Declare a tree called t1
+Tree t1 = Tree[f(a , f(b , a))];
+
+// Check that the automaton ta1 accepts the tree t1
+print(accepts(ta1, t1));
+
+// Declare a tree automaton ta2.
+// ta2 accepts all binary trees where each each inner node is labelled with f 
+// and each leaf is labelled a or b.
+TreeAutomaton ta2 = TreeAutomaton (
+    alphabet = { a b f },
+    states = { q1 },
+    finalStates = { q1 },
+    transitionTable = {
+        (() a q1)
+        (() b q1)
+        ((q1 q1) f q1)
+    }
+);
+
+// Declare a tree called ta2
+Tree t2 = Tree[f(f(a, a), f(f(b, f(a, a)), b))];
+
+// Check that the automaton ta2 accepts the tree t2
+print(accepts(ta2, t2));
+
+// Check that ta2 also accepts t1
+print(accepts(ta2, t1));
+
+// Check that ta1 does not accept t2
+print(!accepts(ta1, t2));
+
+// Check that the language of t1 is a subset of the language of t2.Do this 
+// inclusion check via the operations complement, intersect, and 
+// isEmpty.
+print(isEmpty(intersect(ta1, complement(ta2))));
+
