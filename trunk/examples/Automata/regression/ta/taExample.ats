@@ -6,7 +6,8 @@
 // Create a tree automaton via a constructor, assign it to the freshly declared
 // variable "taLists".
 // Intuitively, the new tree automaton accepts lists of natural numbers in 
-// unary encoding.
+// unary encoding. This example is inspired by Comon et al "Tree Automata 
+// Techniques and Applications", Example 1.1.4
 // For example the list [0, 0, 1] would be represented as the tree 
 // (cons(elem("0"), cons(elem("0"), cons(elem(succ("0")), nil)))) 
 TreeAutomaton taLists = TreeAutomaton (
@@ -32,7 +33,7 @@ assert(accepts(taLists, list));
 // _____________________________________________________________________________
 
 // Declare a second tree automaton that accepts binary trees whose nodes contain 
-// natural numbers in unary encoding
+// natural numbers in unary encoding (like in the example above).
 TreeAutomaton taBinaryTrees = TreeAutomaton(
     alphabet = { nil "0" cons succ elem },
     states = { Node Num BinTree "_" },
