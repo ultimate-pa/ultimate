@@ -363,7 +363,7 @@ public class ElimStorePlain {
 			orac.unlockSolver();
 			return new AfEliminationTask(Collections.emptySet(), mMgdScript.getScript().term("false"));
 		}
-		final EquivalenceRelationIterator<Term> ci = new EquivalenceRelationIterator<Term>(mServices, indices, equalityInformation, orac);
+		final EquivalenceRelationIterator<Term> ci = new EquivalenceRelationIterator<Term>(mServices, sortedIndices, equalityInformation, orac);
 		// mLogger.info("Considering " + ci.size() + " cases while eliminating array variable of dimension " + new
 		// MultiDimensionalSort(eliminatee.getSort()).getDimension());
 		orac.unlockSolver();
