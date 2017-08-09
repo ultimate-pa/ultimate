@@ -979,16 +979,18 @@ public final class TransFormulaUtils {
 	 * 
 	 * 
 	 * TODO 2017-08-07 Matthias: Get rid of serial number in parallel composition.
+	 * TODO 2017-08-09 Matthias: Update Documentation to version with guards
 	 * 
 	 * @param serialNumber Use a different number in each call. This is an ugly
 	 * workaround and will be removed in the future.
 	 */
-	public static UnmodifiableTransFormula constructRemainderTransition(final ILogger logger,
+	public static UnmodifiableTransFormula constructRemainderGuard(final ILogger logger,
 			final IUltimateServiceProvider services, final int serialNumber, final ManagedScript mgdScript,
 			final UnmodifiableTransFormula... transFormulas) {
 		final UnmodifiableTransFormula disjunction = parallelComposition(logger, services, serialNumber, mgdScript, null,
 				false, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, transFormulas);
-		final UnmodifiableTransFormula negatedDisjunction = negate(disjunction, mgdScript, services, logger,
+		final UnmodifiableTransFormula guardOfDisjunction = computeGuard(disjunction, mgdScript, services, logger);
+		final UnmodifiableTransFormula negatedDisjunction = negate(guardOfDisjunction, mgdScript, services, logger,
 				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, SimplificationTechnique.SIMPLIFY_DDA);
 		return negatedDisjunction;
 	}
