@@ -39,7 +39,6 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.NwaApproximateSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.NwaApproximateXsimulation.SimulationType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingCallTransition;
@@ -105,6 +104,7 @@ public class NwaApproximateDelayedSimulation<LETTER, STATE> {
 
 		// FIXME somehow dead ends in the game graph have to be removed first
 		final ISetOfPairs<STATE, ?> ordinarySimulation = computeOrdinarySimulation();
+		mLogger.info("Simulation: \n" + ordinarySimulation);
 		mDuplicatorEventuallyAccepting = computeDuplicatorFollowing(ordinarySimulation);
 		mLogger.info("mDuplicatorEventuallyAccepting: \n" + mDuplicatorEventuallyAccepting);
 		mSpoilerWinningStates = computeSpoilerWinning(mDuplicatorEventuallyAccepting);
@@ -138,8 +138,7 @@ public class NwaApproximateDelayedSimulation<LETTER, STATE> {
 		pair: while (!visit.isEmpty()) {
 			final Pair<STATE, STATE> pair = visit.iterator().next();
 			visit.remove(pair);
-			assert !isMarked(pair, marked) : pair + " is already marked";
-
+			
 			letter: for (final Pair<STATE, LETTER> gameLetter : getOutgoingGameLetters(pair)) {
 				for (final Pair<STATE, STATE> succPair : getSuccessors(pair, gameLetter, ordinarySimulation)) {
 					//Either pair is marked and letter not a return symbol or letter is marked and states can be merged

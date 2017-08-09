@@ -181,36 +181,7 @@ public class MinimizeNwaPmaxSat<LETTER, STATE> extends MinimizeNwaMaxSat2<LETTER
 		}
 	}
 
-	private void generateVariablesHelper(final STATE[] states) {
-		if (states.length <= 1) {
-			return;
-		}
-
-		final BiPredicate<STATE, STATE> finalNonfinalConstraintPredicate =
-				mSettings.getFinalNonfinalConstraintPredicate();
-
-		for (int i = 0; i < states.length; i++) {
-			final STATE stateI = states[i];
-
-			// add to transitivity generator
-			if (mTransitivityGenerator != null) {
-				mTransitivityGenerator.addContent(stateI);
-			}
-
-			for (int j = 0; j < i; j++) {
-				final STATE stateJ = states[j];
-				final Doubleton<STATE> doubleton = new Doubleton<>(stateI, stateJ);
-				mStatePair2Var.put(stateI, stateJ, doubleton);
-				mStatePair2Var.put(stateJ, stateI, doubleton);
-				mSolver.addVariable(doubleton);
-
-				if (mOperand.isFinal(stateI) ^ mOperand.isFinal(stateJ)
-						&& finalNonfinalConstraintPredicate.test(stateI, stateJ)) {
-					setStatesDifferent(doubleton);
-				}
-			}
-		}
-	}
+	protected abstract void generateVariablesHelper(final STATE[] states);
 
 	@Override
 	protected void generateTransitionAndTransitivityConstraints(final boolean addTransitivityConstraints)

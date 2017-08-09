@@ -120,7 +120,7 @@ public abstract class MinimizeNwaCombinator<LETTER, STATE> extends AbstractMinim
 						ShrinkNwa.SUGGESTED_RANDOM_SPLIT_SIZE, false, 0, false, false, true, false);
 				break;
 			case NWA_MAX_SAT2:
-				mBackingMinimization = new MinimizeNwaPmaxSat<>(mServices, mStateFactory,
+				mBackingMinimization = new MinimizeNwaPmaxSatDirect<>(mServices, mStateFactory,
 						(IDoubleDeckerAutomaton<LETTER, STATE>) mOperand, (PartitionBackedSetOfPairs<STATE>) partition,
 						new MinimizeNwaMaxSat2.Settings<STATE>().setAddMapOldState2NewState(addMapOldState2newState)
 								.setLibraryMode(false));

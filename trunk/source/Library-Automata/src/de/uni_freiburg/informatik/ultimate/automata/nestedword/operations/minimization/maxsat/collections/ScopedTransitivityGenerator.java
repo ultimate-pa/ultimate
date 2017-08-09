@@ -324,7 +324,7 @@ public abstract class ScopedTransitivityGenerator<T, C> implements IAssignmentCh
 	 * @param <T>
 	 *            stack content type
 	 */
-	private static final class ScopeStack<T> {
+	public static final class ScopeStack<T> {
 		private final Deque<List<BridgeNode<T>>> mStack;
 
 		private final IBridgeAction<T> mRevertBridgeAction;
@@ -490,7 +490,7 @@ public abstract class ScopedTransitivityGenerator<T, C> implements IAssignmentCh
 	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
 	 */
 	@FunctionalInterface
-	private interface INodePredicate {
+	public interface INodePredicate {
 		boolean check(INode<?> node);
 	}
 
@@ -499,7 +499,7 @@ public abstract class ScopedTransitivityGenerator<T, C> implements IAssignmentCh
 	 * 
 	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
 	 */
-	private static final class TemporaryRootPredicate implements INodePredicate {
+	public static final class TemporaryRootPredicate implements INodePredicate {
 		@Override
 		public boolean check(final INode<?> node) {
 			return node.isRoot();
@@ -516,7 +516,7 @@ public abstract class ScopedTransitivityGenerator<T, C> implements IAssignmentCh
 	 * 
 	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
 	 */
-	private static final class PersistentRootPredicate implements INodePredicate {
+	public static final class PersistentRootPredicate implements INodePredicate {
 		@Override
 		public boolean check(final INode<?> node) {
 			return node.isTemporaryRootOrBridge();
@@ -535,7 +535,7 @@ public abstract class ScopedTransitivityGenerator<T, C> implements IAssignmentCh
 	 * @param <T>
 	 *            node type
 	 */
-	private interface INode<T> {
+	public interface INode<T> {
 		INode<T> getParent();
 
 		Iterable<INode<T>> getChildren();
@@ -552,7 +552,7 @@ public abstract class ScopedTransitivityGenerator<T, C> implements IAssignmentCh
 	 * @param <T>
 	 *            node type
 	 */
-	private static final class NormalNode<T> implements INode<T> {
+	public static final class NormalNode<T> implements INode<T> {
 		private INode<T> mParent;
 		private final T mContent;
 		private Set<INode<T>> mNormalChildren;

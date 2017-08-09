@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Remove
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.IMinimizationCheckResultStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.IMinimizationStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaPmaxSat;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaPmaxSatDirect;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.direct.nwa.ReduceNwaDirectSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.summarycomputationgraph.ReduceNwaDirectSimulationB;
 
@@ -77,7 +78,7 @@ public class DirectSimulationComparison<LETTER, STATE>
 		final IDoubleDeckerAutomaton<LETTER, STATE> dd = new RemoveDeadEnds<>(mServices, mOperand).getResult();
 		mOldSimulation = new ReduceNwaDirectSimulation<>(mServices, stateFactory, dd);
 		mNewSimulation = new ReduceNwaDirectSimulationB<>(mServices, stateFactory, dd);
-		mMaxSat = new MinimizeNwaPmaxSat<>(mServices, stateFactory, dd);
+		mMaxSat = new MinimizeNwaPmaxSatDirect<>(mServices, stateFactory, dd);
 	}
 
 	@Override
