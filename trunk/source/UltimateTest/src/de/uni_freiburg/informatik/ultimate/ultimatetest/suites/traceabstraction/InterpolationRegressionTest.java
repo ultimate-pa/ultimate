@@ -34,9 +34,7 @@ import java.util.Collection;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
-import de.uni_freiburg.informatik.ultimate.test.decider.SvcompReachTestResultDecider;
-import de.uni_freiburg.informatik.ultimate.test.util.DirectoryFileEndingsPair;
-import de.uni_freiburg.informatik.ultimate.test.util.UltimateRunDefinitionGenerator;
+import de.uni_freiburg.informatik.ultimate.test.decider.SafetyCheckTestResultDecider;
 
 /**
  * @author heizmann@informatik.uni-freiburg.de
@@ -47,7 +45,7 @@ public class InterpolationRegressionTest extends AbstractTraceAbstractionTestSui
 	
 	@Override
 	protected ITestResultDecider constructITestResultDecider(final UltimateRunDefinition urd) {
-		return new SvcompReachTestResultDecider(urd, true);
+		return new SafetyCheckTestResultDecider(urd, true);
 	}
 
 	/**
@@ -58,46 +56,6 @@ public class InterpolationRegressionTest extends AbstractTraceAbstractionTestSui
 		return 10 * 1000;
 	}
 
-
-	/** Limit the number of files per directory. */
-	private static final int FILES_PER_DIR_LIMIT = Integer.MAX_VALUE;
-	private static final int FILE_OFFSET = 0;
-
-	private static final String STANDARD_DOT_C_PATTERN = ".*_false-unreach-call.*\\.c|.*_true-unreach-call.*\\.c";
-	private static final String STANDARD_DOT_I_PATTERN = ".*_false-unreach-call.*\\.i|.*_true-unreach-call.*\\.i";
-
-	private static final String BITVECTOR_FOLDER_DOT_C_PATTERN =
-			".*_false-unreach-call.*\\.c|.*_true-unreach-call.*\\.c.cil.c";
-
-	// @formatter:off
-	private static final DirectoryFileEndingsPair[] SVCOMP_BENCHMARKS = {
-//		new DirectoryFileEndingsPair("examples/svcomp/bitvector/", new String[]{ STANDARD_DOT_I_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-//		new DirectoryFileEndingsPair("examples/svcomp/bitvector/", new String[]{ BITVECTOR_FOLDER_DOT_C_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-//		new DirectoryFileEndingsPair("examples/svcomp/bitvector-regression/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-//		new DirectoryFileEndingsPair("examples/svcomp/bitvector-loops/", new String[]{ STANDARD_DOT_I_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-//		new DirectoryFileEndingsPair("examples/svcomp/ldv-regression/", new String[]{ STANDARD_DOT_I_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-//		new DirectoryFileEndingsPair("examples/svcomp/recursive/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-//		new DirectoryFileEndingsPair("examples/svcomp/recursive-simple/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-	};
-	
-
-	private static final String[] SVCOMP_INTEGER_SETTINGS = {
-//			"automizer/interpolationRegression/SpLv-LoopFreeBlock.epf",
-			"automizer/interpolationRegression/IcSpLv-LoopFreeBlock.epf",
-//			"automizer/interpolationRegression/SpLv-SingleStatement.epf",
-//			"automizer/interpolationRegression/WpLv-LoopFreeBlock.epf",
-			"automizer/interpolationRegression/IcWpLv-LoopFreeBlock.epf",
-//			"automizer/interpolationRegression/WpLv-SingleStatement.epf",
-	};
-	
-	private static final String[] SVCOMP_BITVECTOR_SETTINGS = {
-//			"automizer/interpolationRegression/SpLv-LoopFreeBlock-Bitvector.epf",
-			"automizer/interpolationRegression/IcSpLv-LoopFreeBlock-Bitvector.epf",
-//			"automizer/interpolationRegression/SpLv-SingleStatement-Bitvector.epf",
-//			"automizer/interpolationRegression/WpLv-LoopFreeBlock-Bitvector.epf",
-			"automizer/interpolationRegression/IcWpLv-LoopFreeBlock-Bitvector.epf",
-//			"automizer/interpolationRegression/WpLv-SingleStatement-Bitvector.epf",
-		};
 	
 	private static final String[] ULTIMATE_REPOSITORY_BENCHMARKS = {
 //			"examples/programs/regression",
@@ -140,16 +98,6 @@ public class InterpolationRegressionTest extends AbstractTraceAbstractionTestSui
 
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
-		for (final DirectoryFileEndingsPair dfep : SVCOMP_BENCHMARKS) {
-			for (final String toolchain : C_TOOLCHAINS) {
-				addTestCase(UltimateRunDefinitionGenerator.getRunDefinitionsFromTrunkRegex(
-						new String[] { dfep.getDirectory() }, dfep.getFileEndings(), SVCOMP_INTEGER_SETTINGS, toolchain,
-						getTimeout(), dfep.getOffset(), dfep.getLimit()));
-				addTestCase(UltimateRunDefinitionGenerator.getRunDefinitionsFromTrunkRegex(
-						new String[] { dfep.getDirectory() }, dfep.getFileEndings(), SVCOMP_BITVECTOR_SETTINGS, toolchain,
-						getTimeout(), dfep.getOffset(), dfep.getLimit()));
-			}
-		}
 		for (final String toolchain : BOOGIE_TOOLCHAINS) {
 			for (final String setting : ULTIMATE_REPOSITORY_INTEGER_SETTINGS) {
 				addTestCase(toolchain, setting, ULTIMATE_REPOSITORY_BENCHMARKS, new String[] { ".bpl" });
