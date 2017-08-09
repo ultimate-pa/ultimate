@@ -358,6 +358,11 @@ public class ElimStorePlain {
 		final List<Term> disjuncts = new ArrayList<>();
 //		IExternalOracle<Term> orac = new DefaultExternalOracle();
 		final Orac orac = new Orac(preprocessedInput);
+		if (orac.mIncrementalPlicationChecker.checkSat(mMgdScript.getScript().term("true"))== LBool.UNSAT) {
+			mLogger.warn("input unsat");
+			orac.unlockSolver();
+			return new AfEliminationTask(Collections.emptySet(), mMgdScript.getScript().term("false"));
+		}
 		final EquivalenceRelationIterator<Term> ci = new EquivalenceRelationIterator<Term>(mServices, indices, equalityInformation, orac);
 		// mLogger.info("Considering " + ci.size() + " cases while eliminating array variable of dimension " + new
 		// MultiDimensionalSort(eliminatee.getSort()).getDimension());
@@ -801,7 +806,7 @@ public class ElimStorePlain {
 			}
 			final Term conjunction = SmtUtils.and(mScript, list);
 			final LBool lbool = mIncrementalPlicationChecker.checkSat(conjunction);
-			mLogger.info("external oracle said: " + lbool);
+			mLogger.info("external oracle said: " + lbool + " " + stack + (stack.size() == nonDisjointDoubletons.size() ? " full stack!" : ""));
 			switch (lbool) {
 			case SAT:
 				return true;

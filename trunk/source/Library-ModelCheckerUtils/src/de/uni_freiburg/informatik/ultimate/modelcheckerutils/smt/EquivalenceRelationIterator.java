@@ -81,7 +81,10 @@ public class EquivalenceRelationIterator<E> implements Iterable<Set<Doubleton<E>
 					break;
 				}
 			}
-			advance();
+			final boolean failedToPushOnEmptyStack = advance();
+			if (failedToPushOnEmptyStack) {
+				break;
+			}
 		}
 //		assert checkResultWithOldCombinationIterator(indices,
 //				equalityInformation) : "result of CombinationIterator and CombinationIterator2 is different";
@@ -100,13 +103,17 @@ public class EquivalenceRelationIterator<E> implements Iterable<Set<Doubleton<E>
 		return newResult.equals(oldResult);
 	}
 
-	private void advance() {
+	private boolean advance() {
 		if (mStack.size() == mNonDisjointDoubletons.size()) {
-			remove1true();
-			rebuildCurrentRelation();
-			tryToPush1False();
+			final boolean finished = remove1true();
+			if (finished) {
+				return true;
+			} else {
+				rebuildCurrentRelation();
+				return tryToPush1False();
+			}
 		} else {
-			tryToPush1True();
+			return tryToPush1True();
 		}
 
 	}
@@ -117,16 +124,39 @@ public class EquivalenceRelationIterator<E> implements Iterable<Set<Doubleton<E>
 	 * last 'true', including the last 'true') and push 'false'. Continue until
 	 * we reached a consistent stack. Note that there has is at least one
 	 * consistent stack, namely the one that contains only 'false' elements.
+	 * @return true iff we removed false and obtained an empty stack (which
+	 * means we are done because we tried all combinations).
 	 */
-	private void tryToPush1False() {
+	private boolean tryToPush1False() {
 		final Doubleton<E> d = mNonDisjointDoubletons.get(mStack.size());
 		if (mCurrentRelation.containsPair(d.getOneElement(), d.getOtherElement())) {
 			// we cannot add false
-			remove1true();
-			rebuildCurrentRelation();
-			tryToPush1False();
+			final boolean finished = remove1true();
+			if (finished) {
+				return true;
+			} else {
+				rebuildCurrentRelation();
+				return tryToPush1False();
+			}
 		} else {
 			mStack.add(false);
+			if (!mExternalOracle.isConsistent(mStack, mNonDisjointDoubletons)) {
+				// we cannot add false
+				mStack.removeLast();
+				if (mStack.isEmpty()) {
+					return true;
+				} else {
+					final boolean finished = remove1true();
+					if (finished) {
+						return true;
+					} else {
+						rebuildCurrentRelation();
+						return tryToPush1False();
+					}
+				}
+			} else {
+				return false;
+			}
 		}
 	}
 
@@ -134,20 +164,29 @@ public class EquivalenceRelationIterator<E> implements Iterable<Set<Doubleton<E>
 	 * Push 'true' on the stack. If the relation becomes inconsistent remove the
 	 * 'true' and call the {@link EquivalenceRelationIterator#tryToPush1False()}
 	 * method which iterates until it was able to push 'false' to the stack.
+	 * @return true iff we removed false and obtained an empty stack (which
+	 * means we are done because we tried all combinations).
 	 */
-	private void tryToPush1True() {
+	private boolean tryToPush1True() {
 		final Doubleton<E> d = mNonDisjointDoubletons.get(mStack.size());
 		if (mEqualityInformation.getEquality(d.getOneElement(), d.getOtherElement()) == Equality.NOT_EQUAL) {
 			// we cannot add true
+			return false;
 		} else {
 			mStack.add(true);
 			mCurrentRelation.addPair(d.getOneElement(), d.getOtherElement());
 			final Set<Doubleton<E>> newPairs = mCurrentRelation.makeTransitive();
 			final boolean containsDisjointPair = containsNotEqualsPair(newPairs);
 			if (containsDisjointPair || !mExternalOracle.isConsistent(mStack, mNonDisjointDoubletons)) {
-				remove1true();
-				rebuildCurrentRelation();
-				tryToPush1False();
+				final boolean finished = remove1true();
+				if (finished) {
+					return true;
+				} else {
+					rebuildCurrentRelation();
+					return tryToPush1False();
+				}
+			} else {
+				return false;
 			}
 		}
 	}
@@ -177,12 +216,18 @@ public class EquivalenceRelationIterator<E> implements Iterable<Set<Doubleton<E>
 
 	/**
 	 * Remove elements from the stack until one 'true' element was removed.
+	 * @return true iff we removed false and obtained an empty stack (which
+	 * means we are done because we tried all combinations).
 	 */
-	private void remove1true() {
+	private boolean remove1true() {
 		while (!mStack.peekLast()) {
 			mStack.removeLast();
+			if (mStack.isEmpty()) {
+				return true;
+			}
 		}
 		mStack.removeLast();
+		return false;
 	}
 
 	private void addRelationToResult() {

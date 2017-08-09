@@ -69,7 +69,7 @@ public class IncrementalPlicationChecker {
 		mLhsIsAsserted = false;
 	}
 
-	public void assertLhs(final Term lhs) {
+	private void assertLhs(final Term lhs) {
 		assert !mLhsIsAsserted : "must not assert lhs twice";
 		mMgdScript.lock(this);
 		mMgdScript.push(this, 1);
