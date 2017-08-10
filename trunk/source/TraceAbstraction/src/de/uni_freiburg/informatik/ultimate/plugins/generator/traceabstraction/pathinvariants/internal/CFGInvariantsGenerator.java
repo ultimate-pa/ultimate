@@ -288,7 +288,8 @@ public final class CFGInvariantsGenerator {
 				+ transitionsAsList.size() + " transitions.");
 		Map<IcfgLocation, Set<IProgramVar>> pathprogramLocs2LiveVars = null;
 
-		if (USE_LIVE_VARIABLES) {
+		final boolean useLiveVariables = USE_LIVE_VARIABLES && mKindOfInvariant != KindOfInvariant.DANGER;
+		if (useLiveVariables) {
 			pathprogramLocs2LiveVars = generateLiveVariables(pathProgram);
 			// At the initial location no variable is live
 			pathprogramLocs2LiveVars.put(startLocation, new HashSet<IProgramVar>());
@@ -328,8 +329,8 @@ public final class CFGInvariantsGenerator {
 		}
 
 		final ILinearInequalityInvariantPatternStrategy<Dnf<AbstractLinearInvariantPattern>> strategy =
-				getStrategy(invSynthSettings.useUnsatCores(), USE_LIVE_VARIABLES, allProgramVars, pathprogramLocs2LiveVars,
-						templateDimensionStrat);
+				getStrategy(invSynthSettings.useUnsatCores(), useLiveVariables, allProgramVars,
+						pathprogramLocs2LiveVars, templateDimensionStrat);
 
 		if (USE_UNDER_APPROX_FOR_MAX_CONJUNCTS) {
 			for (final Map.Entry<IcfgLocation, UnmodifiableTransFormula> entry : loc2underApprox.entrySet()) {

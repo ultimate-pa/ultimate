@@ -61,6 +61,7 @@ import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -937,6 +938,7 @@ public final class LinearInequalityInvariantPatternProcessor
 				mLogger.debug("Asserting constraint: " + constraint);
 				mSolver.assertTerm(constraint);
 			} else {
+				// In this case we assert that the danger invariant holds in all initial states.
 				final Dnf<LinearInequality> patternDnf =
 						mapPattern(sourceInvariantPattern, programVarsRecentlyOccurred);
 				final Term term = transformNegatedConjunction(ConstraintsType.Normal, patternDnf);
@@ -944,14 +946,67 @@ public final class LinearInequalityInvariantPatternProcessor
 			}
 
 			if (mStartLocation.equals(ingredient.getSourceLocation())) {
-				// TODO: This should assert that the danger invariant holds in one initial state, not in all of them.
-				final Dnf<LinearInequality> negatedDnf =
-						mapAndNegatePattern(mServices, sourceInvariantPattern, programVarsRecentlyOccurred);
-				final Term invariantTerm = transformNegatedConjunction(ConstraintsType.Normal, negatedDnf);
-				mLogger.debug("Asserting constraint: " + invariantTerm);
-				mSolver.assertTerm(invariantTerm);
+				final Term constraint;
+				if (mUseNonlinearConstraints) {
+					final Dnf<LinearInequality> sourceInvariantDnf =
+							mapPattern(sourceInvariantPattern, programVarsRecentlyOccurred);
+					Term disjunctTerm = mSolver.term("false");
+					final Set<String> constantNames = new HashSet<>();
+
+					// For each linear inequality replace all variables by constants. This might result in nonlinear
+					// terms so we can only do that if nonlinear constraints are enabled.
+					for (final Collection<LinearInequality> conjunct : sourceInvariantDnf) {
+						Term conjunctTerm = mSolver.term("true");
+						for (final LinearInequality linIneq : conjunct) {
+							final Term constantTerm = constructConstantTermForLinearInequality(linIneq, constantNames);
+							conjunctTerm = Util.and(mSolver, conjunctTerm, constantTerm);
+						}
+						disjunctTerm = Util.or(mSolver, conjunctTerm);
+					}
+
+					assert disjunctTerm.getFreeVars().length == 0;
+					constraint = disjunctTerm;
+				} else {
+					final Dnf<LinearInequality> negatedSourceInvariantDnf =
+							mapAndNegatePattern(mServices, sourceInvariantPattern, programVarsRecentlyOccurred);
+					constraint = transformNegatedConjunction(ConstraintsType.Normal, negatedSourceInvariantDnf);
+				}
+
+				mLogger.debug("Asserting constraint: " + constraint);
+				mSolver.assertTerm(constraint);
 			}
 		}
+	}
+
+	/**
+	 * Construct a a term for the given inequality where all variables are replaced by constants.
+	 *
+	 * @param linIneq
+	 *            the linear inequality
+	 * @param constantNames
+	 *            a set where constant names will be added to when new constants are introduced for variables
+	 * @return a (possibly nonlinear) term containing no variables
+	 */
+	private Term constructConstantTermForLinearInequality(final LinearInequality linIneq,
+			final Set<String> constantNames) {
+		final Sort sort = SmtSortUtils.getRealSort(mSolver);
+		final Term zero = Rational.ZERO.toTerm(sort);
+		Term term = zero;
+		for (final Term variable : linIneq.getVariables()) {
+			assert variable instanceof TermVariable;
+			final TermVariable termVar = (TermVariable) variable;
+			final String name = termVar.getName() + "_const_" + termVar.hashCode();
+			if (!constantNames.contains(name)) {
+				mSolver.declareFun(name, Script.EMPTY_SORT_ARRAY, sort);
+				constantNames.add(name);
+			}
+			final Term constant = mSolver.term(name);
+			term = mSolver.term("+", term,
+					mSolver.term("*", linIneq.getCoefficient(variable).asRealTerm(mSolver), constant));
+		}
+		term = mSolver.term("+", term, linIneq.getConstant().asRealTerm(mSolver));
+
+		return mSolver.term(linIneq.getInequalitySymbol(), term, zero);
 	}
 
 	/**
