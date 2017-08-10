@@ -56,6 +56,75 @@ public final class GetRandomNftaBU extends AGetRandomFtaBU {
 	 * different JVM cycles.
 	 */
 	private static final long DEFAULT_SEED = 0;
+
+	/**
+	 * Demo usage of the random generator. Also used for debugging purpose.
+	 * 
+	 * @param args
+	 *            Not supported
+	 * @throws AutomataOperationCanceledException
+	 *             If the operation was canceled, for example from the Ultimate
+	 *             framework.
+	 */
+	public static void main(final String[] args) throws AutomataOperationCanceledException {
+		// Dummy services
+		final AutomataLibraryServices services = new AutomataLibraryServices(new ToolchainStorage());
+
+		// Arguments for generation
+		final int numberOfStates = 10;
+		final int[] rankToNumberOfLetters = { 2, 1, 3 };
+		final double[] rankToTransitionDensity = { 0.1, 0.2, 0.5 };
+		final double acceptanceDensity = 0.2;
+
+		final GetRandomNftaBU getRandomTree = new GetRandomNftaBU(services, numberOfStates, rankToNumberOfLetters,
+				rankToTransitionDensity, acceptanceDensity);
+		final TreeAutomatonBU<StringRankedLetter, String> tree = getRandomTree.getResult();
+
+		// Output the generated tree
+		System.out.println(tree);
+	}
+
+	/**
+	 * Converts a given data structure listing transition densities into one holding
+	 * absolute values. The method is checked and does not allow overflows, see the
+	 * documentation section of the exceptions.
+	 * 
+	 * @param numberOfStates
+	 *            The number of states the automaton has
+	 * @param rankToTransitionDensity
+	 *            The data structure to convert. Each index stands for the rank of a
+	 *            letter. The value stored at an index represents the density
+	 *            {@code (0 <= x <= 1)} of transitions of that rank. The method
+	 *            needs to compute the upper bound of maximal possible transitions
+	 *            which is {@code states^(rank + 1)}. The computation is done exact
+	 *            thus if numbers are big the method will take long.
+	 * @return The converted data structure where each value lists the absolute
+	 *         number of transitions per letter instead of their densities.
+	 * @throws ArithmeticException
+	 *             If the computation of {@code states^(rank + 1)} does not fit into
+	 *             the size of an {@link Integer}.
+	 */
+	private static final int[] convertTransitionDensitiesToNumbers(final int numberOfStates,
+			final double[] rankToTransitionDensity) {
+		final int[] rankToNumberOfTransitionsPerLetter = new int[rankToTransitionDensity.length];
+		for (int rank = 0; rank < rankToTransitionDensity.length; rank++) {
+			// In the deterministic case transitions with the same letter and also the exact
+			// same source tuple are not allowed. That yields states^rank many source state
+			// combinations for each letter.
+			final BigInteger totalNumberOfTransitionsPerLetterExact = BigInteger.valueOf(numberOfStates).pow(rank + 1);
+			// This method checks for overflow and throws an exception if so
+			final int totalNumberOfTransitionsPerLetter = totalNumberOfTransitionsPerLetterExact.intValueExact();
+
+			final double transitionDensity = rankToTransitionDensity[rank];
+			final int numberOfTransitionsPerLetter = densityToAbsolute(transitionDensity,
+					totalNumberOfTransitionsPerLetter);
+
+			rankToNumberOfTransitionsPerLetter[rank] = numberOfTransitionsPerLetter;
+		}
+
+		return rankToNumberOfTransitionsPerLetter;
+	}
+
 	/**
 	 * If set then a method using transition densities instead of absolute amounts
 	 * was chosen. Each index stands for the rank of a letter. The value stored at
@@ -251,47 +320,6 @@ public final class GetRandomNftaBU extends AGetRandomFtaBU {
 		startGeneration();
 	}
 
-	/**
-	 * Converts a given data structure listing transition densities into one holding
-	 * absolute values. The method is checked and does not allow overflows, see the
-	 * documentation section of the exceptions.
-	 * 
-	 * @param numberOfStates
-	 *            The number of states the automaton has
-	 * @param rankToTransitionDensity
-	 *            The data structure to convert. Each index stands for the rank of a
-	 *            letter. The value stored at an index represents the density
-	 *            {@code (0 <= x <= 1)} of transitions of that rank. The method
-	 *            needs to compute the upper bound of maximal possible transitions
-	 *            which is {@code states^(rank + 1)}. The computation is done exact thus
-	 *            if numbers are big the method will take long.
-	 * @return The converted data structure where each value lists the absolute
-	 *         number of transitions per letter instead of their densities.
-	 * @throws ArithmeticException
-	 *             If the computation of {@code states^(rank + 1)} does not fit into the
-	 *             size of an {@link Integer}.
-	 */
-	private static final int[] convertTransitionDensitiesToNumbers(final int numberOfStates,
-			final double[] rankToTransitionDensity) {
-		final int[] rankToNumberOfTransitionsPerLetter = new int[rankToTransitionDensity.length];
-		for (int rank = 0; rank < rankToTransitionDensity.length; rank++) {
-			// In the deterministic case transitions with the same letter and also the exact
-			// same source tuple are not allowed. That yields states^rank many source state
-			// combinations for each letter.
-			final BigInteger totalNumberOfTransitionsPerLetterExact = BigInteger.valueOf(numberOfStates).pow(rank + 1);
-			// This method checks for overflow and throws an exception if so
-			final int totalNumberOfTransitionsPerLetter = totalNumberOfTransitionsPerLetterExact.intValueExact();
-
-			final double transitionDensity = rankToTransitionDensity[rank];
-			final int numberOfTransitionsPerLetter = densityToAbsolute(transitionDensity,
-					totalNumberOfTransitionsPerLetter);
-
-			rankToNumberOfTransitionsPerLetter[rank] = numberOfTransitionsPerLetter;
-		}
-
-		return rankToNumberOfTransitionsPerLetter;
-	}
-
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -316,32 +344,5 @@ public final class GetRandomNftaBU extends AGetRandomFtaBU {
 				throw new IllegalArgumentException("Illegal transition density.");
 			}
 		}
-	}
-
-	/**
-	 * Demo usage of the random generator. Also used for debugging purpose.
-	 * 
-	 * @param args
-	 *            Not supported
-	 * @throws AutomataOperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate
-	 *             framework.
-	 */
-	public static void main(final String[] args) throws AutomataOperationCanceledException {
-		// Dummy services
-		final AutomataLibraryServices services = new AutomataLibraryServices(new ToolchainStorage());
-
-		// Arguments for generation
-		final int numberOfStates = 10;
-		final int[] rankToNumberOfLetters = { 2, 1, 3 };
-		final double[] rankToTransitionDensity = { 0.1, 0.2, 0.5 };
-		final double acceptanceDensity = 0.2;
-
-		final GetRandomNftaBU getRandomTree = new GetRandomNftaBU(services, numberOfStates, rankToNumberOfLetters,
-				rankToTransitionDensity, acceptanceDensity);
-		final TreeAutomatonBU<StringRankedLetter, String> tree = getRandomTree.getResult();
-
-		// Output the generated tree
-		System.out.println(tree);
 	}
 }

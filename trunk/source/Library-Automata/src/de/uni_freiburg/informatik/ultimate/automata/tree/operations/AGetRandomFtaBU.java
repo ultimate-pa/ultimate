@@ -41,7 +41,6 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.tree.StringRankedLetter;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 
 /**
  * Creates a random deterministic or non-deterministic finite bottom-up tree
@@ -96,25 +95,21 @@ abstract class AGetRandomFtaBU extends GeneralOperation<StringRankedLetter, Stri
 	}
 
 	/**
+	 * The acceptance density {@code (0 <= x <= 1)}. If <tt>1</tt> then all states
+	 * are accepting, if <tt>0</tt> then no state is accepting.
+	 */
+	private final double mAcceptanceDensity;
+
+	/**
 	 * Whether the generator should only generate deterministic tree automata. If
 	 * <tt>true</tt> then only deterministic tree automata will get generated
 	 * whereas <tt>false</tt> can also lead to non-deterministic automata.
 	 */
 	private final boolean mGenerateOnlyDeterministic;
-
-	/**
-	 * The acceptance density {@code (0 <= x <= 1)}. If <tt>1</tt> then all states
-	 * are accepting, if <tt>0</tt> then no state is accepting.
-	 */
-	private final double mAcceptanceDensity;
 	/**
 	 * The number of states {@code (>= 0)}.
 	 */
 	private final int mNumberOfStates;
-	/**
-	 * Timer used for responding to timeouts and operation cancellation.
-	 */
-	private final IProgressAwareTimer mProgressAwareTimer;
 	/**
 	 * Each index stands for the rank of a letter. The value stored at an index
 	 * represents the amount of letters with that rank should be generated. Each
@@ -182,7 +177,6 @@ abstract class AGetRandomFtaBU extends GeneralOperation<StringRankedLetter, Stri
 			final int[] rankToNumberOfLetters, final int[] rankToNumberOfTransitionsPerLetter,
 			final double acceptanceDensity, final boolean generateOnlyDeterministic, final long seed) {
 		super(services);
-		this.mProgressAwareTimer = this.mServices.getProgressAwareTimer();
 
 		this.mNumberOfStates = numberOfStates;
 		this.mRankToNumberOfLetters = rankToNumberOfLetters;
@@ -191,19 +185,6 @@ abstract class AGetRandomFtaBU extends GeneralOperation<StringRankedLetter, Stri
 		this.mGenerateOnlyDeterministic = generateOnlyDeterministic;
 
 		this.mSeed = seed;
-	}
-
-	/**
-	 * Starts the generation of the random tree automaton. After the method has
-	 * terminated the result can be accessed by using {@link #getResult()}.
-	 * 
-	 * @throws AutomataOperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate
-	 *             framework.
-	 */
-	protected void startGeneration() throws AutomataOperationCanceledException {
-		checkInputValidity();
-		this.mResult = generateAutomaton(this.mSeed);
 	}
 
 	/*
@@ -232,6 +213,10 @@ abstract class AGetRandomFtaBU extends GeneralOperation<StringRankedLetter, Stri
 	 */
 	private void addStates(final TreeAutomatonBU<StringRankedLetter, String> result,
 			final String[] numberToStateRepresentation) {
+		if (this.mLogger.isDebugEnabled()) {
+			this.mLogger.debug("Starting to generate states");
+		}
+
 		final int numberOfAcceptingStates = densityToAbsolute(this.mAcceptanceDensity, this.mNumberOfStates);
 
 		// Generate all states
@@ -274,10 +259,18 @@ abstract class AGetRandomFtaBU extends GeneralOperation<StringRankedLetter, Stri
 	private void addTransitionsAndLetters(final TreeAutomatonBU<StringRankedLetter, String> result,
 			final String[] numberToStateRepresentation, final Random random)
 			throws IllegalStateException, AutomataOperationCanceledException {
+		if (this.mLogger.isDebugEnabled()) {
+			this.mLogger.debug("Starting to generate transitions and letters");
+		}
+
 		// Iterate all ranks and create transitions for each rank separately
 		final int highestRank = Math.min(this.mRankToNumberOfLetters.length,
 				this.mRankToNumberOfTransitionsPerLetter.length) - 1;
 		for (int rank = 0; rank <= highestRank; rank++) {
+			if (this.mLogger.isDebugEnabled()) {
+				this.mLogger.debug("Generating transitions and letters for rank " + rank);
+			}
+
 			final int numberOfLetters = this.mRankToNumberOfLetters[rank];
 			final int numberOfTransitionsPerLetter = this.mRankToNumberOfTransitionsPerLetter[rank];
 
@@ -357,7 +350,7 @@ abstract class AGetRandomFtaBU extends GeneralOperation<StringRankedLetter, Stri
 
 				// If operation was canceled, for example from the
 				// Ultimate framework
-				if (this.mProgressAwareTimer != null && !this.mProgressAwareTimer.continueProcessing()) {
+				if (isCancellationRequested()) {
 					this.mLogger.debug("Stopped at creating transitions for letters");
 					throw new AutomataOperationCanceledException(this.getClass());
 				}
@@ -428,6 +421,10 @@ abstract class AGetRandomFtaBU extends GeneralOperation<StringRankedLetter, Stri
 	 */
 	protected TreeAutomatonBU<StringRankedLetter, String> generateAutomaton(final long seed)
 			throws AutomataOperationCanceledException {
+		if (this.mLogger.isDebugEnabled()) {
+			this.mLogger.debug("Starting generation using the seed " + seed);
+		}
+
 		// Create the initial empty tree automaton
 		final TreeAutomatonBU<StringRankedLetter, String> result = new TreeAutomatonBU<>();
 
@@ -446,7 +443,7 @@ abstract class AGetRandomFtaBU extends GeneralOperation<StringRankedLetter, Stri
 
 		// If operation was canceled, for example from the
 		// Ultimate framework
-		if (this.mProgressAwareTimer != null && !this.mProgressAwareTimer.continueProcessing()) {
+		if (isCancellationRequested()) {
 			this.mLogger.debug("Stopped between creating states and transitions");
 			throw new AutomataOperationCanceledException(this.getClass());
 		}
@@ -454,5 +451,26 @@ abstract class AGetRandomFtaBU extends GeneralOperation<StringRankedLetter, Stri
 		addTransitionsAndLetters(result, numberToStateRepresentation, random);
 
 		return result;
+	}
+
+	/**
+	 * Starts the generation of the random tree automaton. After the method has
+	 * terminated the result can be accessed by using {@link #getResult()}.
+	 * 
+	 * @throws AutomataOperationCanceledException
+	 *             If the operation was canceled, for example from the Ultimate
+	 *             framework.
+	 */
+	protected void startGeneration() throws AutomataOperationCanceledException {
+		if (this.mLogger.isInfoEnabled()) {
+			this.mLogger.info(startMessage());
+		}
+
+		checkInputValidity();
+		this.mResult = generateAutomaton(this.mSeed);
+
+		if (this.mLogger.isInfoEnabled()) {
+			this.mLogger.info(exitMessage());
+		}
 	}
 }
