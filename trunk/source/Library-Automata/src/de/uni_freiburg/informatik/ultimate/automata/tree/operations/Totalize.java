@@ -196,7 +196,6 @@ public class Totalize<LETTER extends IRankedLetter, STATE> extends GeneralOperat
 
 	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
-		// TODO Auto-generated method stub
-		return false;
+		return true;
 	}
 }
