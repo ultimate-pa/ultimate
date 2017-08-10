@@ -35,9 +35,9 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.services.ToolchainStorage;
 
 /**
- * Creates a random deterministic finite bottom-up tree automaton (DFTA-BU)
- * using the helper class {@link AGetRandomFtaBU}. Note that the generation is
- * not uniform.
+ * Creates a random possibly non-deterministic finite bottom-up tree automaton
+ * (NFTA-BU) using the helper class {@link AGetRandomFtaBU}. Note that the
+ * generation is not uniform.
  * <p>
  * The algorithm is similar to the one described in<br>
  * <ul>
@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.core.coreplugin.services.ToolchainSto
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  */
-public final class GetRandomDftaBU extends AGetRandomFtaBU {
+public final class GetRandomNftaBU extends AGetRandomFtaBU {
 	/**
 	 * The default seed to use for generation. It is not indented to change thus the
 	 * result of using the default seed will always remain the same even in
@@ -65,11 +65,11 @@ public final class GetRandomDftaBU extends AGetRandomFtaBU {
 	private double[] mRankToTransitionDensity = null;
 
 	/**
-	 * Constructor of a deterministic finite tree automaton for the
+	 * Constructor of a non-deterministic finite tree automaton for the
 	 * {@code TestFileInterpreter}. This method uses a default seed that is not
 	 * indented to change thus the result of this method, for same arguments, will
 	 * always remain the same even in different JVM cycles. Use
-	 * {@link #GetRandomDftaBU(AutomataLibraryServices, int, int[], double[], double, long)}
+	 * {@link #GetRandomNftaBU(AutomataLibraryServices, int, int[], double[], double, long)}
 	 * if a seed should be specified.
 	 * 
 	 * @param services
@@ -91,10 +91,10 @@ public final class GetRandomDftaBU extends AGetRandomFtaBU {
 	 *            <code>rankToTransitionDensity[0]</code> should be set to a value
 	 *            greater than <tt>zero</tt>. Also note that if there are many
 	 *            states and ranks than a high density leads to an enormous amount
-	 *            of transitions. With a full density {@code states^rank}
+	 *            of transitions. With a full density {@code states^(rank + 1)}
 	 *            transitions will be created for each letter. In this case the
 	 *            other constructor
-	 *            {@link #GetRandomDftaBU(AutomataLibraryServices, int, int[], int[], double)}
+	 *            {@link #GetRandomNftaBU(AutomataLibraryServices, int, int[], int[], double)}
 	 *            may be more comfortable to use and also faster since this variant
 	 *            needs to compute that bounds.
 	 * @param acceptanceDensity
@@ -105,14 +105,14 @@ public final class GetRandomDftaBU extends AGetRandomFtaBU {
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public GetRandomDftaBU(final AutomataLibraryServices services, final int numberOfStates,
+	public GetRandomNftaBU(final AutomataLibraryServices services, final int numberOfStates,
 			final int[] rankToNumberOfLetters, final double[] rankToTransitionDensity, final double acceptanceDensity)
 			throws AutomataOperationCanceledException {
 		this(services, numberOfStates, rankToNumberOfLetters, rankToTransitionDensity, acceptanceDensity, DEFAULT_SEED);
 	}
 
 	/**
-	 * Constructor of a deterministic finite tree automaton for the
+	 * Constructor of a non-deterministic finite tree automaton for the
 	 * {@code TestFileInterpreter}.
 	 * 
 	 * @param services
@@ -134,10 +134,10 @@ public final class GetRandomDftaBU extends AGetRandomFtaBU {
 	 *            <code>rankToTransitionDensity[0]</code> should be set to a value
 	 *            greater than <tt>zero</tt>. Also note that if there are many
 	 *            states and ranks than a high density leads to an enormous amount
-	 *            of transitions. With a full density {@code states^rank}
+	 *            of transitions. With a full density {@code states^(rank + 1)}
 	 *            transitions will be created for each letter. In this case the
 	 *            other constructor
-	 *            {@link #GetRandomDftaBU(AutomataLibraryServices, int, int[], int[], double, long)}
+	 *            {@link #GetRandomNftaBU(AutomataLibraryServices, int, int[], int[], double, long)}
 	 *            may be more comfortable to use and also faster since this variant
 	 *            needs to compute that bounds.
 	 * @param acceptanceDensity
@@ -150,22 +150,22 @@ public final class GetRandomDftaBU extends AGetRandomFtaBU {
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public GetRandomDftaBU(final AutomataLibraryServices services, final int numberOfStates,
+	public GetRandomNftaBU(final AutomataLibraryServices services, final int numberOfStates,
 			final int[] rankToNumberOfLetters, final double[] rankToTransitionDensity, final double acceptanceDensity,
 			final long seed) throws AutomataOperationCanceledException {
 		super(services, numberOfStates, rankToNumberOfLetters,
-				convertTransitionDensitiesToNumbers(numberOfStates, rankToTransitionDensity), acceptanceDensity, true,
+				convertTransitionDensitiesToNumbers(numberOfStates, rankToTransitionDensity), acceptanceDensity, false,
 				seed);
 		this.mRankToTransitionDensity = rankToTransitionDensity;
 		startGeneration();
 	}
 
 	/**
-	 * Constructor of a deterministic finite tree automaton for the
+	 * Constructor of a non-deterministic finite tree automaton for the
 	 * {@code TestFileInterpreter}. This method uses a default seed that is not
 	 * indented to change thus the result of this method, for same arguments, will
 	 * always remain the same even in different JVM cycles. Use
-	 * {@link #GetRandomDftaBU(AutomataLibraryServices, int, int[], int[], double, long)}
+	 * {@link #GetRandomNftaBU(AutomataLibraryServices, int, int[], int[], double, long)}
 	 * if a seed should be specified.
 	 * 
 	 * @param services
@@ -187,10 +187,10 @@ public final class GetRandomDftaBU extends AGetRandomFtaBU {
 	 *            desired <code>rankToNumberOfTransitionsPerLetter[0]</code> should
 	 *            be set to a value greater than <tt>zero</tt>. Also note that the
 	 *            number must be below the maximal possible amount of transitions
-	 *            which is given by {@code states^rank}. For efficiency reasons this
-	 *            object will not check validity for those upper bounds. If setting
-	 *            higher values it is possible that this object never terminates the
-	 *            generation process.
+	 *            which is given by {@code states^(rank + 1)}. For efficiency
+	 *            reasons this object will not check validity for those upper
+	 *            bounds. If setting higher values it is possible that this object
+	 *            never terminates the generation process.
 	 * @param acceptanceDensity
 	 *            The acceptance density {@code (0 <= x <= 1)}. If <tt>1</tt> then
 	 *            all states are accepting, if <tt>0</tt> then no state is
@@ -199,7 +199,7 @@ public final class GetRandomDftaBU extends AGetRandomFtaBU {
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public GetRandomDftaBU(final AutomataLibraryServices services, final int numberOfStates,
+	public GetRandomNftaBU(final AutomataLibraryServices services, final int numberOfStates,
 			final int[] rankToNumberOfLetters, final int[] rankToNumberOfTransitionsPerLetter,
 			final double acceptanceDensity) throws AutomataOperationCanceledException {
 		this(services, numberOfStates, rankToNumberOfLetters, rankToNumberOfTransitionsPerLetter, acceptanceDensity,
@@ -207,7 +207,7 @@ public final class GetRandomDftaBU extends AGetRandomFtaBU {
 	}
 
 	/**
-	 * Constructor of a deterministic finite tree automaton for the
+	 * Constructor of a non-deterministic finite tree automaton for the
 	 * {@code TestFileInterpreter}.
 	 * 
 	 * @param services
@@ -229,7 +229,7 @@ public final class GetRandomDftaBU extends AGetRandomFtaBU {
 	 *            desired <code>rankToNumberOfTransitionsPerLetter[0]</code> should
 	 *            be set to a value greater than <tt>zero</tt>. Also note that the
 	 *            number must be below the maximal possible amount of transitions
-	 *            which is given by {@code states^rank}. For efficiency
+	 *            which is given by {@code states^(rank + 1)}. For efficiency
 	 *            reasons this object will not check validity for those upper
 	 *            bounds. If setting higher values it is possible that this object
 	 *            never terminates the generation process.
@@ -243,11 +243,11 @@ public final class GetRandomDftaBU extends AGetRandomFtaBU {
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public GetRandomDftaBU(final AutomataLibraryServices services, final int numberOfStates,
+	public GetRandomNftaBU(final AutomataLibraryServices services, final int numberOfStates,
 			final int[] rankToNumberOfLetters, final int[] rankToNumberOfTransitionsPerLetter,
 			final double acceptanceDensity, final long seed) throws AutomataOperationCanceledException {
 		super(services, numberOfStates, rankToNumberOfLetters, rankToNumberOfTransitionsPerLetter, acceptanceDensity,
-				true, seed);
+				false, seed);
 		startGeneration();
 	}
 
@@ -263,12 +263,12 @@ public final class GetRandomDftaBU extends AGetRandomFtaBU {
 	 *            letter. The value stored at an index represents the density
 	 *            {@code (0 <= x <= 1)} of transitions of that rank. The method
 	 *            needs to compute the upper bound of maximal possible transitions
-	 *            which is {@code states^rank}. The computation is done exact thus
+	 *            which is {@code states^(rank + 1)}. The computation is done exact thus
 	 *            if numbers are big the method will take long.
 	 * @return The converted data structure where each value lists the absolute
 	 *         number of transitions per letter instead of their densities.
 	 * @throws ArithmeticException
-	 *             If the computation of {@code states^rank} does not fit into the
+	 *             If the computation of {@code states^(rank + 1)} does not fit into the
 	 *             size of an {@link Integer}.
 	 */
 	private static final int[] convertTransitionDensitiesToNumbers(final int numberOfStates,
@@ -278,7 +278,7 @@ public final class GetRandomDftaBU extends AGetRandomFtaBU {
 			// In the deterministic case transitions with the same letter and also the exact
 			// same source tuple are not allowed. That yields states^rank many source state
 			// combinations for each letter.
-			final BigInteger totalNumberOfTransitionsPerLetterExact = BigInteger.valueOf(numberOfStates).pow(rank);
+			final BigInteger totalNumberOfTransitionsPerLetterExact = BigInteger.valueOf(numberOfStates).pow(rank + 1);
 			// This method checks for overflow and throws an exception if so
 			final int totalNumberOfTransitionsPerLetter = totalNumberOfTransitionsPerLetterExact.intValueExact();
 
@@ -317,28 +317,30 @@ public final class GetRandomDftaBU extends AGetRandomFtaBU {
 			}
 		}
 	}
-	
+
 	/**
 	 * Demo usage of the random generator. Also used for debugging purpose.
 	 * 
 	 * @param args
 	 *            Not supported
 	 * @throws AutomataOperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate framework.
+	 *             If the operation was canceled, for example from the Ultimate
+	 *             framework.
 	 */
 	public static void main(final String[] args) throws AutomataOperationCanceledException {
 		// Dummy services
 		final AutomataLibraryServices services = new AutomataLibraryServices(new ToolchainStorage());
-		
+
 		// Arguments for generation
 		final int numberOfStates = 10;
-		final int[] rankToNumberOfLetters = {2, 1, 3};
-		final int[] rankToNumberOfTransitionsPerLetter = {2, 5, 15};
+		final int[] rankToNumberOfLetters = { 2, 1, 3 };
+		final double[] rankToTransitionDensity = { 0.1, 0.2, 0.5 };
 		final double acceptanceDensity = 0.2;
-		
-		final GetRandomDftaBU getRandomTree = new GetRandomDftaBU(services, numberOfStates, rankToNumberOfLetters, rankToNumberOfTransitionsPerLetter, acceptanceDensity);
+
+		final GetRandomNftaBU getRandomTree = new GetRandomNftaBU(services, numberOfStates, rankToNumberOfLetters,
+				rankToTransitionDensity, acceptanceDensity);
 		final TreeAutomatonBU<StringRankedLetter, String> tree = getRandomTree.getResult();
-		
+
 		// Output the generated tree
 		System.out.println(tree);
 	}
