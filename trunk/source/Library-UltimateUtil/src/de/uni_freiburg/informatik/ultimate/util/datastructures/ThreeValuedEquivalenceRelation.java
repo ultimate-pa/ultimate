@@ -26,6 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.util.datastructures;
 
+import java.util.Map.Entry;
+
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
@@ -51,6 +53,7 @@ public class ThreeValuedEquivalenceRelation<E> {
 		this.mUnionFind = new UnionFind<>(tver.mUnionFind);
 		this.mDistinctElements = new HashRelation<>(tver.mDistinctElements);
 		this.mContainsContradiction = tver.mContainsContradiction;
+		assert disequalitiesOnlyContainRepresentatives();
 	}
 	
 	/**
@@ -89,6 +92,7 @@ public class ThreeValuedEquivalenceRelation<E> {
 			mDistinctElements.replaceRangeElement(oldRep1, oldRep2);
 			mDistinctElements.replaceDomainElement(oldRep1, oldRep2);
 		}
+		assert disequalitiesOnlyContainRepresentatives();
 	}
 	
 	public void reportNotEquals(final E elem1, final E elem2) {
@@ -104,6 +108,7 @@ public class ThreeValuedEquivalenceRelation<E> {
 		}
 		
 		mDistinctElements.addPair(rep1, rep2);
+		assert disequalitiesOnlyContainRepresentatives();
 	}
 	
 	public E getRepresentative(final E elem) {
@@ -141,6 +146,18 @@ public class ThreeValuedEquivalenceRelation<E> {
 		} else {
 			return Equality.UNKNOWN;
 		}
+	}
+	
+	private boolean disequalitiesOnlyContainRepresentatives() {
+		for (final Entry<E, E> en : mDistinctElements.entrySet()) {
+			if (en.getKey() != mUnionFind.find(en.getKey())) {
+				return false;
+			}
+			if (en.getValue() != mUnionFind.find(en.getValue())) {
+				return false;
+			}
+		}
+		return true;
 	}
 }
 
