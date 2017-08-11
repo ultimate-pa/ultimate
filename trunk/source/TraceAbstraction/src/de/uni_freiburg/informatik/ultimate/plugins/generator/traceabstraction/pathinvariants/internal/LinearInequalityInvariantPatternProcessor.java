@@ -139,6 +139,7 @@ public final class LinearInequalityInvariantPatternProcessor
 	private final Dnf<AbstractLinearInvariantPattern> mExitInvariantPattern;
 	private int mPrefixCounter;
 	private int mCurrentRound;
+	private int mSerialNumber;
 	private final int mMaxRounds;
 	private final boolean mUseNonlinearConstraints;
 	private final boolean mSynthesizeEntryPattern;
@@ -937,12 +938,6 @@ public final class LinearInequalityInvariantPatternProcessor
 
 				mLogger.debug("Asserting constraint: " + constraint);
 				mSolver.assertTerm(constraint);
-			} else {
-				// In this case we assert that the danger invariant holds in all initial states.
-				final Dnf<LinearInequality> patternDnf =
-						mapPattern(sourceInvariantPattern, programVarsRecentlyOccurred);
-				final Term term = transformNegatedConjunction(ConstraintsType.Normal, patternDnf);
-				mSolver.assertTerm(term);
 			}
 
 			if (mStartLocation.equals(ingredient.getSourceLocation())) {
@@ -967,6 +962,7 @@ public final class LinearInequalityInvariantPatternProcessor
 					assert disjunctTerm.getFreeVars().length == 0;
 					constraint = disjunctTerm;
 				} else {
+					// In this case we assert that the danger invariant holds in all initial states.
 					final Dnf<LinearInequality> negatedSourceInvariantDnf =
 							mapAndNegatePattern(mServices, sourceInvariantPattern, programVarsRecentlyOccurred);
 					constraint = transformNegatedConjunction(ConstraintsType.Normal, negatedSourceInvariantDnf);
@@ -975,6 +971,28 @@ public final class LinearInequalityInvariantPatternProcessor
 				mLogger.debug("Asserting constraint: " + constraint);
 				mSolver.assertTerm(constraint);
 			}
+
+			final Collection<UnmodifiableTransFormula> transFormulas = new ArrayList<>();
+			for (final IcfgEdge transition : ingredient.getEdge2TargetInv().keySet()) {
+				transFormulas.add(transition.getTransformula());
+			}
+
+			final UnmodifiableTransFormula remainderTransition =
+					TransFormulaUtils.constructRemainderGuard(mLogger, mServices, mSerialNumber,
+							mCsToolkit.getManagedScript(), transFormulas.toArray(new UnmodifiableTransFormula[0]));
+			mSerialNumber++;
+			final LinearTransition transition = mLinearizer.linearize(remainderTransition);
+			final Map<IProgramVar, Term> unprimedMapping = new HashMap<>(transition.getInVars());
+			programVarsRecentlyOccurred.putAll(unprimedMapping);
+			completePatternVariablesMapping(unprimedMapping, ingredient.getVariablesForSourcePattern(),
+					programVarsRecentlyOccurred);
+			final Dnf<LinearInequality> remainderDnf = convertTransitionToPattern(transition);
+			final Dnf<LinearInequality> sourceInvariantDnf = mapPattern(sourceInvariantPattern, unprimedMapping);
+			final Term constraint =
+					transformNegatedConjunction(ConstraintsType.Normal, sourceInvariantDnf, remainderDnf);
+
+			mLogger.debug("Asserting constraint: " + constraint);
+			mSolver.assertTerm(constraint);
 		}
 	}
 
@@ -997,6 +1015,7 @@ public final class LinearInequalityInvariantPatternProcessor
 			final TermVariable termVar = (TermVariable) variable;
 			final String name = termVar.getName() + "_const_" + termVar.hashCode();
 			if (!constantNames.contains(name)) {
+				// TODO: Constants should be of the same type as the variable but our solver does not allow that.
 				mSolver.declareFun(name, Script.EMPTY_SORT_ARRAY, sort);
 				constantNames.add(name);
 			}
