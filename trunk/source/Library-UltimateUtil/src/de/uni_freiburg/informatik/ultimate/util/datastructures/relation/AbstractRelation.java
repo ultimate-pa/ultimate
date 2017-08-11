@@ -116,6 +116,50 @@ public abstract class AbstractRelation<D, R, MAP extends Map<D, Set<R>>> impleme
 			removePair(en.getKey(), en.getValue());
 		}
 	}
+	
+	/**
+	 * Removes all pairs from this relation whose left entry equals the given key.
+	 * 
+	 * @param left
+	 */
+	public void removeDomainElement(D left) {
+		mMap.remove(left);
+	}
+	
+	/**
+	 * Replaces all occurrences of an element on the left hand side of a pair in this relation by some other element.
+	 * 
+	 * @param element
+	 * @param replacement
+	 */
+	public void replaceDomainElement(D element, D replacement) {
+		final Set<R> image = mMap.get(element);
+
+		if (image == null) {
+			// relation has no pair where element is left entry -- nothing to do
+			return;
+		}
+
+		for (R rangeElement : image) {
+			addPair(replacement, rangeElement);
+		}
+		removeDomainElement(element);
+	}
+	
+	/**
+	 * Replaces all occurrences of an element on the right hand side of a pair in this relation by some other element.
+	 * 
+	 * @param element
+	 * @param replacement
+	 */
+	public void replaceRangeElement(R element, R replacement) {
+		for (Entry<D, Set<R>> en : mMap.entrySet()) {
+			if (en.getValue().contains(element)) {
+				en.getValue().remove(element);
+				en.getValue().add(replacement);
+			}
+		}
+	}
 
 	/**
 	 * Add all elements contained in relation rel to this relation. Does not reuse sets of the relation rel but

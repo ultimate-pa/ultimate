@@ -39,17 +39,19 @@ public class ThreeValuedEquivalenceRelation<E> {
 	
 	private final UnionFind<E> mUnionFind;
 	private final HashRelation<E, E> mDistinctElements;
+	private boolean mContainsContradiction;
 	
 	public ThreeValuedEquivalenceRelation() {
 		mUnionFind = new UnionFind<>();
 		mDistinctElements = new HashRelation<>();
+		mContainsContradiction = false;
 	}
 	
 	public ThreeValuedEquivalenceRelation(final ThreeValuedEquivalenceRelation<E> tver) {
 		this.mUnionFind = new UnionFind<>(tver.mUnionFind);
 		this.mDistinctElements = new HashRelation<>(tver.mDistinctElements);
+		this.mContainsContradiction = tver.mContainsContradiction;
 	}
-	
 	
 	/**
 	 * @return true iff elem was not contained in relation before
@@ -60,11 +62,48 @@ public class ThreeValuedEquivalenceRelation<E> {
 	}
 	
 	public void reportEquality(final E elem1, final E elem2) {
+		assert !mContainsContradiction : "already in an inconsistent state, check for contradiction before calling "
+				+ "this";
+
+		final E oldRep1 = mUnionFind.findAndConstructEquivalenceClassIfNeeded(elem1);
+		final E oldRep2 = mUnionFind.findAndConstructEquivalenceClassIfNeeded(elem2);
+		
+		if (getEquality(elem1, elem2) == Equality.NOT_EQUAL) {
+			mContainsContradiction = true;
+			return;
+		}
+
 		mUnionFind.union(elem1, elem2);
+		
+		// we need to update the disequalities such that they still only talk about representatives
+		if (isRepresentative(oldRep1)) {
+			// elem1 has kept its representative, elem2 has a new representative now 
+			assert mUnionFind.find(elem2) == oldRep1;
+			
+			mDistinctElements.replaceRangeElement(oldRep2, oldRep1);
+			mDistinctElements.replaceDomainElement(oldRep2, oldRep1);
+		} else {
+			// elem2 has kept its representative, elem1 has a new representative now 
+			assert mUnionFind.find(elem1) == oldRep2;
+			
+			mDistinctElements.replaceRangeElement(oldRep1, oldRep2);
+			mDistinctElements.replaceDomainElement(oldRep1, oldRep2);
+		}
 	}
 	
 	public void reportNotEquals(final E elem1, final E elem2) {
-		mDistinctElements.addPair(elem1, elem2);
+		assert !mContainsContradiction : "already in an inconsistent state, check for contradiction before calling "
+				+ "this";
+
+		final E rep1 = mUnionFind.findAndConstructEquivalenceClassIfNeeded(elem1);
+		final E rep2 = mUnionFind.findAndConstructEquivalenceClassIfNeeded(elem2);
+
+		if (rep1 == rep2) {
+			mContainsContradiction = true;
+			return;
+		}
+		
+		mDistinctElements.addPair(rep1, rep2);
 	}
 	
 	public E getRepresentative(final E elem) {
@@ -75,7 +114,16 @@ public class ThreeValuedEquivalenceRelation<E> {
 		return getRepresentative(elem) == elem;
 	}
 	
+	/**
+	 * @return true iff the equalities and disequaleties that have been reported contain a contradiction
+	 */
+	public boolean containsContradiction() {
+		return mContainsContradiction;
+	}
+	
 	public Equality getEquality(final E elem1, final E elem2) {
+		assert !mContainsContradiction : "check for contradiction before calling this";
+		
 		final E elem1Rep = mUnionFind.find(elem1);
 		if (elem1Rep == null) {
 			throw new IllegalArgumentException("Unknown element: " + elem1);
@@ -84,15 +132,15 @@ public class ThreeValuedEquivalenceRelation<E> {
 		if (elem2Rep == null) {
 			throw new IllegalArgumentException("Unknown element: " + elem2);
 		}
+		
 		if (elem1Rep.equals(elem2Rep)) {
 			return Equality.EQUAL;
-		} else if (mDistinctElements.containsPair(elem1, elem2) || mDistinctElements.containsPair(elem2, elem1)) {
+		} else if (mDistinctElements.containsPair(elem1Rep, elem2Rep) 
+				|| mDistinctElements.containsPair(elem2Rep, elem1Rep)) {
 			return Equality.NOT_EQUAL;
 		} else {
 			return Equality.UNKNOWN;
 		}
 	}
-	
-	
 }
 
