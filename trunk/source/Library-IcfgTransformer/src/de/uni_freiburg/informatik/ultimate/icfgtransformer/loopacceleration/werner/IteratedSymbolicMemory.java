@@ -39,8 +39,7 @@ import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
@@ -52,13 +51,18 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
  * @author Jonas Werner (jonaswerner95@gmail.com)
  *
  */
-public class IteratedSymbolicMemory extends SymbolicMemory {
+public class IteratedSymbolicMemory {
 
 	private final Map<IProgramVar, Term> mIteratedMemory;
+	private final Map<IProgramVar, Term> mMemoryMapping;
+	private final Map<IProgramVar, TermVariable> mInVars;
+	private final Map<IProgramVar, TermVariable> mOutVars;
 	private final Loop mLoop;
 	private final List<TermVariable> mPathCounters;
 	private final Map<TermVariable, TermVariable> mNewPathCounters;
 	private Term mAbstractPathCondition;
+	private final ManagedScript mScript;
+	private final ILogger mLogger;
 
 	private enum mCaseType {
 		NOT_CHANGED, ADDITION, SUBTRACTION, CONSTANT_ASSIGNMENT, CONSTANT_ASSIGNMENT_PATHCOUNTER
@@ -78,19 +82,28 @@ public class IteratedSymbolicMemory extends SymbolicMemory {
 	 * @param newPathCounter
 	 *            mapping of {@link TermVariable} to new Path Counter Tau
 	 */
-	public IteratedSymbolicMemory(final ManagedScript script, final ILogger logger, final TransFormula tf,
-			final IIcfgSymbolTable oldSymbolTable, final Loop loop, final List<TermVariable> pathCounters,
-			final Map<TermVariable, TermVariable> newPathCounter) {
+	public IteratedSymbolicMemory(final ManagedScript script, final ILogger logger, final Loop loop,
+			final List<TermVariable> pathCounters, final Map<TermVariable, TermVariable> newPathCounter) {
 
-		super(script, logger, tf, oldSymbolTable);
+		mLogger = logger;
 		mIteratedMemory = new HashMap<>();
 		mPathCounters = pathCounters;
 		mNewPathCounters = newPathCounter;
+		mScript = script;
 		mAbstractPathCondition = mScript.getScript().term("true");
+		mLoop = loop;
+		mInVars = mLoop.getInVars();
+		mOutVars = mLoop.getOutVars();
+
+		mMemoryMapping = new HashMap<>();
+
+		for (final Entry<IProgramVar, TermVariable> entry : mInVars.entrySet()) {
+			mMemoryMapping.put(entry.getKey(), (TermVariable) entry.getValue());
+		}
+
 		for (final Entry<IProgramVar, Term> entry : mMemoryMapping.entrySet()) {
 			mIteratedMemory.put(entry.getKey(), null);
 		}
-		mLoop = loop;
 		mLogger.debug("Iterated Memory: " + mIteratedMemory);
 	}
 
@@ -104,7 +117,10 @@ public class IteratedSymbolicMemory extends SymbolicMemory {
 
 			final Term symbol = mMemoryMapping.get(entry.getKey());
 
+			mLogger.debug("MEMORY MAPPING: " + mMemoryMapping);
+
 			Term update = symbol;
+
 			mCaseType caseType = mCaseType.NOT_CHANGED;
 			mCaseType prevCase = mCaseType.NOT_CHANGED;
 
@@ -125,16 +141,14 @@ public class IteratedSymbolicMemory extends SymbolicMemory {
 					continue;
 				}
 
-				if (memory instanceof TermVariable || memory instanceof ConstantTerm) {
-					update = memory;
+				if (memory instanceof TermVariable) {
 					continue;
 				}
 
 				// Case 2.1: if the variable is changed from its symbol by
 				// adding
 				// a constant for each backbone.
-				if ("+".equals(((ApplicationTerm) memory).getFunction().getName())
-						&& Arrays.asList(((ApplicationTerm) memory).getParameters()).contains(symbol)) {
+				if ("+".equals(((ApplicationTerm) memory).getFunction().getName())) {
 
 					mLogger.debug("Addition");
 
@@ -149,8 +163,7 @@ public class IteratedSymbolicMemory extends SymbolicMemory {
 				// Case 2.2: if the variable is changed from its symbol by
 				// subtracting
 				// a constant for each backbone.
-				if ("-".equals(((ApplicationTerm) memory).getFunction().getName())
-						&& Arrays.asList(((ApplicationTerm) memory).getParameters()).contains(symbol)) {
+				if ("-".equals(((ApplicationTerm) memory).getFunction().getName())) {
 
 					mLogger.debug("Subtraction");
 
@@ -165,7 +178,7 @@ public class IteratedSymbolicMemory extends SymbolicMemory {
 				// Case 3:
 				// in each backbone the variable is either not changed or set to
 				// an expression,
-				if (!Arrays.asList(((ApplicationTerm) memory).getParameters()).contains(symbol)) {
+				if (memory instanceof ConstantTerm) {
 
 					update = memory;
 					prevCase = caseType;
@@ -186,7 +199,9 @@ public class IteratedSymbolicMemory extends SymbolicMemory {
 					final Substitution sub = new Substitution(mScript, mapping);
 					update = sub.transform(memory);
 				}
+				mLogger.debug("UPDATE: " + update);
 			}
+
 			mIteratedMemory.replace(entry.getKey(), update);
 		}
 		mLogger.debug("Iterated Memory: " + mIteratedMemory);
@@ -196,11 +211,12 @@ public class IteratedSymbolicMemory extends SymbolicMemory {
 	 * Compute the abstract condition using the {@link IteratedSymbolicMemory}
 	 */
 	public void updateCondition() {
+
 		for (final Backbone backbone : mLoop.getBackbones()) {
 
 			final List<TermVariable> freeVars = new ArrayList<>();
 			List<Term> terms;
-			Term condition = backbone.getCondition();
+			Term condition = backbone.getCondition().getFormula();
 
 			for (final TermVariable var : condition.getFreeVars()) {
 				if (mPathCounters.contains(var)) {
@@ -255,23 +271,21 @@ public class IteratedSymbolicMemory extends SymbolicMemory {
 						mScript.getScript().term("<=", mScript.getScript().numeral("0"), var));
 			}
 
-			terms = Arrays.asList(tBackPartAddition, newCondition);
-			tBackPart = SmtUtils.and(mScript.getScript(), terms);
+			tBackPart = Util.and(mScript.getScript(), tBackPartAddition, newCondition);
 
 			if (!freeVars.isEmpty()) {
 				tBackPartAddition = mScript.getScript().quantifier(QuantifiedFormula.EXISTS,
 						freeVars.toArray(new TermVariable[freeVars.size()]), tBackPartAddition);
 			}
 
-			terms = Arrays.asList(tBackPart, tBackPartAddition);
-			tBackPart = SmtUtils.and(mScript.getScript(), terms);
+			tBackPart = Util.and(mScript.getScript(), tBackPart, tBackPartAddition);
 
 			if (!tempNewPathCounters.isEmpty()) {
 				tBackPart = mScript.getScript().quantifier(QuantifiedFormula.EXISTS,
 						tempNewPathCounters.toArray(new TermVariable[tempNewPathCounters.size()]), tBackPart);
 			}
 
-			tFirstPart = mScript.getScript().term("=>", tFirstPart, tBackPart);
+			tFirstPart = Util.implies(mScript.getScript(), tFirstPart, tBackPart);
 
 			final TermVariable[] vars = { mNewPathCounters.get(backbone.getPathCounter()) };
 			final Term necessaryCondition = mScript.getScript().quantifier(QuantifiedFormula.FORALL, vars, tFirstPart);
@@ -282,8 +296,14 @@ public class IteratedSymbolicMemory extends SymbolicMemory {
 		}
 	}
 
-	@Override
-	protected Map<Term, Term> termUnravel(Term term) {
+	public Term updateBackboneTerm(final Backbone backbone) {
+		Term condition = backbone.getFormula().getFormula();
+		final Map<Term, Term> subMapping = termUnravel(condition);
+		final Substitution sub = new Substitution(mScript, subMapping);
+		return sub.transform(condition);
+	}
+
+	private Map<Term, Term> termUnravel(Term term) {
 
 		final Map<Term, Term> result = new HashMap<>();
 
@@ -294,6 +314,7 @@ public class IteratedSymbolicMemory extends SymbolicMemory {
 		if (term instanceof TermVariable) {
 			final TermVariable tv = (TermVariable) term;
 			for (Entry<IProgramVar, Term> entry : mMemoryMapping.entrySet()) {
+
 				if (tv.equals(entry.getValue())) {
 					result.put(term, mIteratedMemory.get(entry.getKey()));
 					break;

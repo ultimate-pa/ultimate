@@ -33,6 +33,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 
 /**
  * Backbone of a LoopBody
@@ -46,8 +47,9 @@ public class Backbone {
 	private final TransFormula mFormula;
 	private final List<Loop> mNestedLoops;
 	private TermVariable mPathCounter;
-	private Term mCondition;
+	private UnmodifiableTransFormula mCondition;
 	private SymbolicMemory mSymbolicMemory;
+	private Term mAbstractPathCondition;
 	private Boolean mIsNested;
 
 	/**
@@ -70,6 +72,7 @@ public class Backbone {
 		mSymbolicMemory = null;
 		mNestedLoops = nestedLoops;
 		mIsNested = isNested;
+		mAbstractPathCondition = null;
 	}
 
 	public void setPathCounter(final TermVariable pathCounter) {
@@ -82,12 +85,16 @@ public class Backbone {
 	 * @param condition
 	 *            the backbone's condition.
 	 */
-	public void setCondition(final Term condition) {
+	public void setCondition(final UnmodifiableTransFormula condition) {
 		mCondition = condition;
 	}
 
 	public void setSymbolicMemory(final SymbolicMemory memory) {
 		mSymbolicMemory = memory;
+	}
+
+	public void setAbstractPathCondition(final Term condition) {
+		mAbstractPathCondition = condition;
 	}
 
 	/**
@@ -115,7 +122,7 @@ public class Backbone {
 	/**
 	 * Returns the entry condition of the backbone.
 	 */
-	public Term getCondition() {
+	public UnmodifiableTransFormula getCondition() {
 		return mCondition;
 	}
 
@@ -125,6 +132,10 @@ public class Backbone {
 
 	public SymbolicMemory getSymbolicMemory() {
 		return mSymbolicMemory;
+	}
+
+	public Term getAbstractPathCondition() {
+		return mAbstractPathCondition;
 	}
 
 	public Boolean isNested() {

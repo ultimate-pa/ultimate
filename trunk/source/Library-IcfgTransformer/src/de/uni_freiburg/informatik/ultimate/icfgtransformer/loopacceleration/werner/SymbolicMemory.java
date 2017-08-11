@@ -37,7 +37,9 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -50,10 +52,12 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 
 public class SymbolicMemory {
 
-	protected final Map<IProgramVar, Term> mMemoryMapping;
-	protected final ManagedScript mScript;
-	protected final ILogger mLogger;
-	protected final IIcfgSymbolTable mOldSymbolTable;
+	private final Map<IProgramVar, Term> mMemoryMapping;
+	private final ManagedScript mScript;
+	private final ILogger mLogger;
+	private final IIcfgSymbolTable mOldSymbolTable;
+	private final Map<IProgramVar, TermVariable> mInVars;
+	private final Map<IProgramVar, TermVariable> mOutVars;
 
 	/**
 	 * Construct a new Symbolic Memory.
@@ -78,9 +82,13 @@ public class SymbolicMemory {
 		mScript = script;
 		mLogger = logger;
 		mOldSymbolTable = oldSymbolTable;
+		mInVars = tf.getInVars();
+		mOutVars = tf.getOutVars();
+		mMemoryMapping = new HashMap<>();
 
-		// set all variables to the InVars (symbols):
-		mMemoryMapping = calculateSymbolTable(tf);
+		for (final Entry<IProgramVar, TermVariable> entry : mInVars.entrySet()) {
+			mMemoryMapping.put(entry.getKey(), (TermVariable) entry.getValue());
+		}
 	}
 
 	/**
@@ -124,7 +132,7 @@ public class SymbolicMemory {
 	 * @param tf
 	 * @return
 	 */
-	public Term updateCondition(final UnmodifiableTransFormula tf) {
+	public UnmodifiableTransFormula updateCondition(final UnmodifiableTransFormula tf) {
 
 		final ApplicationTerm appTerm = (ApplicationTerm) tf.getFormula();
 		final Map<Term, Term> substitution = new HashMap<>();
@@ -132,7 +140,12 @@ public class SymbolicMemory {
 		substitution.putAll(termUnravel(appTerm, tf.getInVars()));
 
 		final Substitution sub = new Substitution(mScript, substitution);
-		return sub.transform(tf.getFormula());
+		final TransFormulaBuilder tfb = new TransFormulaBuilder(tf.getInVars(), tf.getOutVars(), true, null, true, null,
+				true);
+		tfb.setFormula(sub.transform(tf.getFormula()));
+		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
+
+		return tfb.finishConstruction(mScript);
 
 	}
 
@@ -197,20 +210,12 @@ public class SymbolicMemory {
 		return result;
 	}
 
-	/**
-	 * Calculate the symbols (initial values) of variables and map them to
-	 * ProgramVars.
-	 * 
-	 * @param tf
-	 *            the {@link TransFormula} whose symbols to compute
-	 * @return a mapping of program vars to their intitial values.
-	 */
-	public static Map<IProgramVar, Term> calculateSymbolTable(final TransFormula tf) {
-		final Map<IProgramVar, Term> result = new HashMap<>();
-		for (Entry<IProgramVar, TermVariable> entry : tf.getInVars().entrySet()) {
-			result.put(entry.getKey(), entry.getKey().getTermVariable());
-		}
-		return result;
+	public Map<IProgramVar, TermVariable> getInVars() {
+		return mInVars;
+	}
+
+	public Map<IProgramVar, TermVariable> getOutVars() {
+		return mOutVars;
 	}
 
 	/**

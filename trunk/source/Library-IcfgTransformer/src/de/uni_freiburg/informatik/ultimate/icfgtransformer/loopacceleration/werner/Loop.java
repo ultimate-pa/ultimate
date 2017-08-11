@@ -38,6 +38,8 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
 /**
  * A Loop
@@ -50,7 +52,6 @@ public class Loop {
 	private Deque<IcfgEdge> mPath;
 	private Deque<Backbone> mBackbones;
 	private final IcfgLocation mLoopHead;
-	private TransFormula mFormula;
 	private Term mTerm;
 	private Term mCondition;
 	private IteratedSymbolicMemory mIteratedMemory;
@@ -59,6 +60,10 @@ public class Loop {
 	private Boolean mHasNestedLoops;
 	private Deque<Loop> mNestedLoops;
 	private Boolean mIsSummarized;
+	private Map<IProgramVar, TermVariable> mInVars;
+	private Map<IProgramVar, TermVariable> mOutVars;
+	private UnmodifiableTransFormula mAcceleratedCondition;
+	private IcfgEdge mLoopExit;
 
 	/**
 	 * Construct a new loop.
@@ -70,7 +75,6 @@ public class Loop {
 		mPath = null;
 		mLoopHead = loopHead;
 		mBackbones = new ArrayDeque<>();
-		mFormula = null;
 		mCondition = null;
 		mIteratedMemory = null;
 		mAuxVars = new ArrayList<>();
@@ -78,6 +82,10 @@ public class Loop {
 		mHasNestedLoops = false;
 		mIsSummarized = false;
 		mNestedLoops = new ArrayDeque<>();
+		mInVars = new HashMap<>();
+		mOutVars = new HashMap<>();
+		mAcceleratedCondition = null;
+		mLoopExit = null;
 	}
 
 	/**
@@ -95,10 +103,6 @@ public class Loop {
 	 */
 	public Deque<IcfgEdge> getPath() {
 		return mPath;
-	}
-
-	public TransFormula getFormula() {
-		return mFormula;
 	}
 
 	/**
@@ -131,6 +135,18 @@ public class Loop {
 		return mAuxVars;
 	}
 
+	public Map<IProgramVar, TermVariable> getInVars() {
+		return mInVars;
+	}
+
+	public Map<IProgramVar, TermVariable> getOutVars() {
+		return mOutVars;
+	}
+
+	public IcfgEdge getLoopExit() {
+		return mLoopExit;
+	}
+
 	/**
 	 * Get the loophead as IcfgLocation
 	 */
@@ -142,8 +158,16 @@ public class Loop {
 		return mNestedLoops;
 	}
 
+	public UnmodifiableTransFormula getAcceleratedCondition() {
+		return mAcceleratedCondition;
+	}
+
 	public void setPath(final Deque<IcfgEdge> path) {
 		mPath = path;
+	}
+
+	public void setLoopExit(final IcfgEdge loopExit) {
+		mLoopExit = loopExit;
 	}
 
 	/**
@@ -169,16 +193,29 @@ public class Loop {
 		mNestedLoops.addLast(loop);
 	}
 
-	public void setFormula(final TransFormula tf) {
-		mFormula = tf;
-	}
+	/**
+	 * public void setFormula(final TransFormula tf) { mFormula = tf; mInVars =
+	 * tf.getInVars(); mOutVars = tf.getOutVars(); }
+	 */
 
 	public void setCondition(final Term condition) {
 		mCondition = condition;
 	}
 
+	public void setInVars(final Map<IProgramVar, TermVariable> inVars) {
+		mInVars = inVars;
+	}
+
+	public void setOutVars(final Map<IProgramVar, TermVariable> outVars) {
+		mOutVars = outVars;
+	}
+
 	public void setIteratedSymbolicMemory(final IteratedSymbolicMemory memory) {
 		mIteratedMemory = memory;
+	}
+
+	public void setAcceleratedCondition(final UnmodifiableTransFormula condition) {
+		mAcceleratedCondition = condition;
 	}
 
 	public Boolean isNested() {
