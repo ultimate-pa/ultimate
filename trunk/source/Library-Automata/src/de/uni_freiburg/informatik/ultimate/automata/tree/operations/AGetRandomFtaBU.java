@@ -99,7 +99,6 @@ abstract class AGetRandomFtaBU extends GeneralOperation<StringRankedLetter, Stri
 	 * are accepting, if <tt>0</tt> then no state is accepting.
 	 */
 	private final double mAcceptanceDensity;
-
 	/**
 	 * Whether the generator should only generate deterministic tree automata. If
 	 * <tt>true</tt> then only deterministic tree automata will get generated
@@ -116,14 +115,12 @@ abstract class AGetRandomFtaBU extends GeneralOperation<StringRankedLetter, Stri
 	 * value is {@code >= 0}.
 	 */
 	private final int[] mRankToNumberOfLetters;
-
 	/**
 	 * Each index stands for the rank of a letter. The value stored at an index
 	 * represents the amount of transitions per letter of that rank. The number of
 	 * transitions of nullary letters specify the amount of initial states.
 	 */
 	private final int[] mRankToNumberOfTransitionsPerLetter;
-
 	/**
 	 * The resulting tree automaton after generation.
 	 */
@@ -350,7 +347,7 @@ abstract class AGetRandomFtaBU extends GeneralOperation<StringRankedLetter, Stri
 
 				// If operation was canceled, for example from the
 				// Ultimate framework
-				if (isCancellationRequested()) {
+				if (this.mServices.getProgressAwareTimer() != null && isCancellationRequested()) {
 					this.mLogger.debug("Stopped at creating transitions for letters");
 					throw new AutomataOperationCanceledException(this.getClass());
 				}
@@ -443,7 +440,7 @@ abstract class AGetRandomFtaBU extends GeneralOperation<StringRankedLetter, Stri
 
 		// If operation was canceled, for example from the
 		// Ultimate framework
-		if (isCancellationRequested()) {
+		if (this.mServices.getProgressAwareTimer() != null && isCancellationRequested()) {
 			this.mLogger.debug("Stopped between creating states and transitions");
 			throw new AutomataOperationCanceledException(this.getClass());
 		}

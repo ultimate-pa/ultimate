@@ -62,7 +62,7 @@ public class IsEmpty<LETTER extends IRankedLetter, STATE> implements IOperation<
 	 * @param services
 	 * @param tree
 	 */
-	public IsEmpty(final AutomataLibraryServices services, final TreeAutomatonBU<LETTER, STATE> tree) {
+	public IsEmpty(final AutomataLibraryServices services, final ITreeAutomatonBU<LETTER, STATE> tree) {
 		mTreeAutomaton = tree;
 		mResultTreeRun = computeResult();
 	}
