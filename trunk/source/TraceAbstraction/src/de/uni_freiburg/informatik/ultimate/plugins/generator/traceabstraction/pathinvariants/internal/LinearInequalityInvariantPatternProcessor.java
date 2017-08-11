@@ -82,6 +82,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.ConstraintSynthesisUtils;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.ConstraintSynthesisUtils.Linearity;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 
 /**
@@ -1346,12 +1348,9 @@ public final class LinearInequalityInvariantPatternProcessor
 			mSolver.setOption(":produce-unsat-cores", true);
 		}
 
-		final Logics logic;
-		if (mUseNonlinearConstraints) {
-			logic = Logics.QF_NRA;
-		} else {
-			logic = Logics.QF_LRA;
-		}
+		final boolean useAlsoIntegers = (mKindOfInvariant == KindOfInvariant.DANGER);
+		final Linearity linearity = mUseNonlinearConstraints ? Linearity.NONLINEAR : Linearity.LINEAR;
+		final Logics logic = ConstraintSynthesisUtils.getLogic(linearity, useAlsoIntegers);
 		mSolver.setLogic(logic);
 	}
 

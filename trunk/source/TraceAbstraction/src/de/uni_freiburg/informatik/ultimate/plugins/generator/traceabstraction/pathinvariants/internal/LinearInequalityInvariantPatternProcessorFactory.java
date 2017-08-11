@@ -46,6 +46,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.S
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.ConstraintSynthesisUtils;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.ConstraintSynthesisUtils.Linearity;
 
 /**
  * Factory producing {@link LinearInequalityInvariantPatternProcessor}s.
@@ -138,12 +140,11 @@ public class LinearInequalityInvariantPatternProcessorFactory
 	 * @return SMT solver instance to use
 	 */
 	protected Script produceSmtSolver() {
-		final Logics logic;
-		if (mUseNonlinearConstraints) {
-			logic = Logics.QF_NRA;
-		} else {
-			logic = Logics.QF_LRA;
-		}
+		
+		final boolean useAlsoIntegers = (mKindOfInvariant == KindOfInvariant.DANGER);
+		final Linearity linearity = mUseNonlinearConstraints ? Linearity.NONLINEAR : Linearity.LINEAR;
+		final Logics logic = ConstraintSynthesisUtils.getLogic(linearity, useAlsoIntegers);
+		
 		Script script = SolverBuilder.buildAndInitializeSolver(mServices, mStorage, SolverMode.External_DefaultMode,
 				mSolverSettings, false, false, logic.toString(), "InvariantSynthesis");
 		script = new ScriptWithTermConstructionChecks(script);
