@@ -172,14 +172,20 @@ public class UnionFind<E> implements IPartition<E> {
 	public void union(final E elem1, final E elem2) {
 		final Set<E> set1 = mEquivalenceClass.get(elem1);
 		final Set<E> set2 = mEquivalenceClass.get(elem2);
-		final E set1rep = mRepresentative.get(set1);
-		mRepresentative.remove(set1);
-		mRepresentative.remove(set2);
-		set1.addAll(set2);
-		for (final E e : set2) {
-			mEquivalenceClass.put(e, set1);
+		
+		final boolean set1IsLarger = set1.size() > set2.size();
+		
+		final Set<E> largerSet = set1IsLarger ? set1 : set2;
+		final Set<E> smallerSet = set1IsLarger ? set2 : set1;
+
+		final E largerSetRep = mRepresentative.get(largerSet);
+		mRepresentative.remove(largerSet);
+		mRepresentative.remove(smallerSet);
+		largerSet.addAll(smallerSet);
+		for (final E e : smallerSet) {
+			mEquivalenceClass.put(e, largerSet);
 		}
-		mRepresentative.put(set1, set1rep);
+		mRepresentative.put(largerSet, largerSetRep);
 	}
 
 	/**
@@ -260,11 +266,6 @@ public class UnionFind<E> implements IPartition<E> {
 				return false;
 			}
 		}
-		// for (E el : mEquivalenceClass.keySet()) {
-		// if (!mRepresentative.values().contains(el)) {
-		// return false;
-		// }
-		// }
 		for (final Set<E> eqc : mRepresentative.keySet()) {
 			if (!mEquivalenceClass.values().contains(eqc)) {
 				return false;
