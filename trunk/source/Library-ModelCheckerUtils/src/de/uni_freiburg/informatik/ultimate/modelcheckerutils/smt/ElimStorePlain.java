@@ -858,5 +858,61 @@ public class ElimStorePlain {
 		}
 
 	}
+	
+	
+	public class ValueEqualityChecker {
+		TermVariable mEliminatee;
+		Term mStoreIndex;
+		Term mStoreValue;
+		ThreeValuedEquivalenceRelation<Term> mIndices;
+		ManagedScript mMgdScript;
+		IncrementalPlicationChecker mIncrementalPlicationChecker;
+		Map<Term, TermVariable> mOldCellMapping;
+		final List<Term> mValueEqualities = new ArrayList<>();
+		
+		
+		public boolean isDistinguishworthyIndexPair(final Term index1, final Term index2) {
+			final Term select1 = mMgdScript.getScript().term("select", mEliminatee, index1);
+			final Term select2 = mMgdScript.getScript().term("select", mEliminatee, index2);
+			final Term eq = SmtUtils.binaryBooleanEquality(mMgdScript.getScript(), select1, select2);
+			final Validity cellEqVal = mIncrementalPlicationChecker.checkPlication(eq);
+			if (cellEqVal == Validity.VALID) {
+				final boolean distinguishworthy1 = processStoreIndex(index1, index2, select2);
+				final boolean distinguishworthy2 = processStoreIndex(index2, index1, select1);
+				if (distinguishworthy1 && distinguishworthy2) {
+					return true;
+				} else {
+					final Term cellEq = SmtUtils.binaryBooleanEquality(mMgdScript.getScript(), mOldCellMapping.get(index1), mOldCellMapping.get(index2));
+					mValueEqualities.add(cellEq);
+					return false;
+				}
+			} else {
+				return true;
+			}
+		}
+
+
+		private boolean processStoreIndex(final Term storeIndexCandidate, final Term otherIndex, final Term otherSelect) {
+			if (isStoreIndex(storeIndexCandidate)) {
+				final Term storeEq = SmtUtils.binaryBooleanEquality(mMgdScript.getScript(), mStoreValue, otherSelect);
+				final Validity storeEqVal = mIncrementalPlicationChecker.checkPlication(storeEq);
+				if (storeEqVal == Validity.VALID) {
+					final Term storeCellEq = SmtUtils.binaryBooleanEquality(mMgdScript.getScript(), mStoreValue, mOldCellMapping.get(otherIndex));
+					mValueEqualities.add(storeCellEq);
+					return false;
+				} 
+			}
+			return true;
+		}
+		
+		
+		boolean isStoreIndex(final Term index1) {
+			if (mStoreIndex == null) {
+				return false;
+			} else {
+				return mIndices.getRepresentative(index1).equals(mIndices.getRepresentative(mStoreIndex));
+			}
+		}
+	}
 
 }
