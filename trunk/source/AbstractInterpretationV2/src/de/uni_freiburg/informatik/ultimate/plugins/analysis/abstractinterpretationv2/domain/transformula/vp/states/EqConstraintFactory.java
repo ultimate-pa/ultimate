@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
- * 
+ *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  * @param <ACTION>
@@ -59,8 +59,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  * @param <FUNCTION>
  */
 public class EqConstraintFactory<
-			ACTION extends IIcfgTransition<IcfgLocation>, 
-			NODE extends IEqNodeIdentifier<NODE, FUNCTION>, 
+			ACTION extends IIcfgTransition<IcfgLocation>,
+			NODE extends IEqNodeIdentifier<NODE, FUNCTION>,
 			FUNCTION extends IEqFunctionIdentifier<NODE, FUNCTION>> {
 
 	private final EqConstraint<ACTION, NODE, FUNCTION> mBottomConstraint;
@@ -71,11 +71,11 @@ public class EqConstraintFactory<
 
 	private final EqNodeAndFunctionFactory mEqNodeAndFunctionFactory;
 	private final VPDomainPreanalysis mPreanalysis;
-	
-	public EqConstraintFactory(EqNodeAndFunctionFactory eqNodeAndFunctionFactory, VPDomainPreanalysis preanalysis) {
+
+	public EqConstraintFactory(final EqNodeAndFunctionFactory eqNodeAndFunctionFactory, final VPDomainPreanalysis preanalysis) {
 		mBottomConstraint = new EqBottomConstraint<>(this);
 		mBottomConstraint.freeze();
-		
+
 		mEmptyConstraint = new EqConstraint<>(this);
 		mEmptyConstraint.freeze();
 
@@ -91,7 +91,7 @@ public class EqConstraintFactory<
 		return mBottomConstraint;
 	}
 
-	public EqConstraint<ACTION, NODE, FUNCTION> unfreeze(EqConstraint<ACTION, NODE, FUNCTION> constraint) {
+	public EqConstraint<ACTION, NODE, FUNCTION> unfreeze(final EqConstraint<ACTION, NODE, FUNCTION> constraint) {
 		assert constraint.isFrozen();
 		if (constraint.isBottom()) {
 			return constraint;
@@ -99,17 +99,17 @@ public class EqConstraintFactory<
 		return new EqConstraint<>(constraint);
 	}
 
-	public EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> 
-			getDisjunctiveConstraint(Collection<EqConstraint<ACTION, NODE, FUNCTION>> constraintList) {
+	public EqDisjunctiveConstraint<ACTION, NODE, FUNCTION>
+			getDisjunctiveConstraint(final Collection<EqConstraint<ACTION, NODE, FUNCTION>> constraintList) {
 		final Collection<EqConstraint<ACTION, NODE, FUNCTION>> bottomsFiltered = constraintList.stream()
 				.filter(cons -> !(cons instanceof EqBottomConstraint)).collect(Collectors.toSet());
 		return new EqDisjunctiveConstraint<ACTION, NODE, FUNCTION>(bottomsFiltered, this);
 	}
-	
-	
+
+
 	public EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> conjoin(
-			EqConstraint<ACTION, NODE, FUNCTION> conjunct1,
-			EqConstraint<ACTION, NODE, FUNCTION> conjunct2) {
+			final EqConstraint<ACTION, NODE, FUNCTION> conjunct1,
+			final EqConstraint<ACTION, NODE, FUNCTION> conjunct2) {
 		final List<EqConstraint<ACTION, NODE, FUNCTION>> conjuncts = new ArrayList<>();
 		conjuncts.add(conjunct1);
 		conjuncts.add(conjunct2);
@@ -117,52 +117,52 @@ public class EqConstraintFactory<
 	}
 
 	public EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> conjoin(
-			List<EqConstraint<ACTION, NODE, FUNCTION>> conjuncts) {
-		
-		EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> result = 
+			final List<EqConstraint<ACTION, NODE, FUNCTION>> conjuncts) {
+
+		EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> result =
 				getDisjunctiveConstraint(Collections.singleton(getEmptyConstraint()));
-		
-		for (EqConstraint<ACTION, NODE, FUNCTION> conjunct : conjuncts) {
-			
-			for (Entry<NODE, NODE> eq : conjunct.getSupportingElementEqualities().entrySet()) {
+
+		for (final EqConstraint<ACTION, NODE, FUNCTION> conjunct : conjuncts) {
+
+			for (final Entry<NODE, NODE> eq : conjunct.getSupportingElementEqualities().entrySet()) {
 				result = addEqualityFlat(eq.getKey(), eq.getValue(), result);
 			}
-			
-			for (VPDomainSymmetricPair<NODE> deq : conjunct.getElementDisequalities()) {
+
+			for (final VPDomainSymmetricPair<NODE> deq : conjunct.getElementDisequalities()) {
 				result = addDisequalityFlat(deq.getFirst(), deq.getSecond(), result);
 			}
-			
-			for (Entry<FUNCTION, FUNCTION> aEq : conjunct.getSupportingFunctionEqualities()) {
+
+			for (final Entry<FUNCTION, FUNCTION> aEq : conjunct.getSupportingFunctionEqualities()) {
 				result = addFunctionEqualityFlat(aEq.getKey(), aEq.getValue(), result);
 			}
-			
-			for (VPDomainSymmetricPair<FUNCTION> aDeq : conjunct.getFunctionDisequalites()) {
+
+			for (final VPDomainSymmetricPair<FUNCTION> aDeq : conjunct.getFunctionDisequalites()) {
 				result = addFunctionDisequalityFlat(aDeq.getFirst(), aDeq.getSecond(), result);
 			}
 		}
 		return result;
 	}
-	
+
 	public EqConstraint<ACTION, NODE, FUNCTION> conjoinFlat(
-			EqConstraint<ACTION, NODE, FUNCTION> constraint1,
-			EqConstraint<ACTION, NODE, FUNCTION> constraint2) {
+			final EqConstraint<ACTION, NODE, FUNCTION> constraint1,
+			final EqConstraint<ACTION, NODE, FUNCTION> constraint2) {
 		return conjoin(constraint1, constraint2).flatten();
 	}
 
 	/**
 	 * conjunction/intersection/join
-	 * 
+	 *
 	 * @param conjuncts
 	 * @return
 	 */
 	public EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> conjoinDisjunctiveConstraints(
-			List<EqDisjunctiveConstraint<ACTION, NODE, FUNCTION>> conjuncts) {
+			final List<EqDisjunctiveConstraint<ACTION, NODE, FUNCTION>> conjuncts) {
 		final List<Set<EqConstraint<ACTION, NODE, FUNCTION>>> listOfConstraintSets = conjuncts.stream()
 				.map(conjunct -> conjunct.getConstraints()).collect(Collectors.toList());
-	
-		final Set<List<EqConstraint<ACTION, NODE, FUNCTION>>> crossProduct = 
+
+		final Set<List<EqConstraint<ACTION, NODE, FUNCTION>>> crossProduct =
 				VPDomainHelpers.computeCrossProduct(listOfConstraintSets, mPreanalysis.getServices());
-		
+
 		if (crossProduct == null) {
 			if (!mPreanalysis.getServices().getProgressMonitorService().continueProcessing()) {
 				return getTopDisjunctiveConstraint();
@@ -170,20 +170,20 @@ public class EqConstraintFactory<
 				throw new AssertionError("cross product should only return null if there is a timeout");
 			}
 		}
-	
+
 		final Set<Set<EqConstraint<ACTION, NODE, FUNCTION>>> constraintSetSet = crossProduct.stream()
 				.map(constraintList -> (conjoin(constraintList).getConstraints()))
 				.collect(Collectors.toSet());
-	
+
 		final Set<EqConstraint<ACTION, NODE, FUNCTION>> constraintSetFlat = new HashSet<>();
 		constraintSetSet.stream().forEach(cs -> constraintSetFlat.addAll(cs));
-	
-	
+
+
 		return getDisjunctiveConstraint(constraintSetFlat);
 	}
-	
-	public EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> addFunctionDisequalityFlat(FUNCTION f1, FUNCTION f2,
-				EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> inputConstraint) {
+
+	public EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> addFunctionDisequalityFlat(final FUNCTION f1, final FUNCTION f2,
+				final EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> inputConstraint) {
 			if (f1 == f2 || f1.equals(f2)) {
 				return inputConstraint;
 			}
@@ -194,8 +194,8 @@ public class EqConstraintFactory<
 			return result;
 	}
 
-	public EqConstraint<ACTION, NODE, FUNCTION> addFunctionDisequalityFlat(FUNCTION func1, FUNCTION func2,
-			EqConstraint<ACTION, NODE, FUNCTION> originalState) {
+	public EqConstraint<ACTION, NODE, FUNCTION> addFunctionDisequalityFlat(final FUNCTION func1, final FUNCTION func2,
+			final EqConstraint<ACTION, NODE, FUNCTION> originalState) {
 		if (originalState.isBottom()) {
 //			factory.getBenchmark().stop(VPSFO.addEqualityClock);
 			return originalState;
@@ -205,30 +205,30 @@ public class EqConstraintFactory<
 //			factory.getBenchmark().stop(VPSFO.addEqualityClock);
 			return originalState;
 		}
-		
+
 		if (originalState.areUnequal(func1, func2)) {
 			// the given identifiers are already equal in the originalState
 			return originalState;
 		}
-		
+
 		if (originalState.areEqual(func1, func2)) {
 			return getBottomConstraint();
 		}
-		
+
 		final EqConstraint<ACTION, NODE, FUNCTION> funct1Added = addFunctionFlat(func1, originalState);
-		final EqConstraint<ACTION, NODE, FUNCTION> funct2Added = addFunctionFlat(func2, funct1Added);	
-		
+		final EqConstraint<ACTION, NODE, FUNCTION> funct2Added = addFunctionFlat(func2, funct1Added);
+
 		final EqConstraint<ACTION, NODE, FUNCTION> newConstraint = unfreeze(funct2Added);
 		newConstraint.addFunctionDisequality(func1, func2);
-		
+
 		// TODO propagations
-		
+
 		newConstraint.freeze();
 		return newConstraint;
 	}
 
 //	/**
-//	 * Checks if the arguments of the given EqFunctionNodes are all congruent. 
+//	 * Checks if the arguments of the given EqFunctionNodes are all congruent.
 //	 * (and only the arguments, for the standard congruence check from the congruence closure algorithm one will have to
 //	 *  compare the function symbol, additionally)
 //	 *
@@ -242,7 +242,7 @@ public class EqConstraintFactory<
 //		// assert fnNode1.getArgs().size() == fnNode2.getArgs().size();
 //		assert fnNode1.mNodeIdentifier.isFunction();
 //		assert fnNode2.mNodeIdentifier.isFunction();
-//		
+//
 //		for (int i = 0; i < fnNode1.getInitCcchild().size(); i++) {
 //			final EqGraphNode<NODEID, ARRAYID> fnNode1Arg = fnNode1.getInitCcchild().get(i);
 //			final EqGraphNode<NODEID, ARRAYID> fnNode2Arg = fnNode2.getInitCcchild().get(i);
@@ -252,9 +252,9 @@ public class EqConstraintFactory<
 //		}
 //		return true;
 //	}
-	
-	public EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> addFunctionEqualityFlat(FUNCTION f1, FUNCTION f2,
-				EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> inputConstraint) {
+
+	public EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> addFunctionEqualityFlat(final FUNCTION f1, final FUNCTION f2,
+				final EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> inputConstraint) {
 			if (f1 == f2 || f1.equals(f2)) {
 				return inputConstraint;
 			}
@@ -265,8 +265,8 @@ public class EqConstraintFactory<
 			return result;
 	}
 
-	public EqConstraint<ACTION, NODE, FUNCTION> addFunctionEqualityFlat(FUNCTION func1, FUNCTION func2,
-			EqConstraint<ACTION, NODE, FUNCTION> originalState) {
+	public EqConstraint<ACTION, NODE, FUNCTION> addFunctionEqualityFlat(final FUNCTION func1, final FUNCTION func2,
+			final EqConstraint<ACTION, NODE, FUNCTION> originalState) {
 		if (originalState.isBottom()) {
 //			factory.getBenchmark().stop(VPSFO.addEqualityClock);
 			return originalState;
@@ -276,43 +276,43 @@ public class EqConstraintFactory<
 //			factory.getBenchmark().stop(VPSFO.addEqualityClock);
 			return originalState;
 		}
-		
+
 		if (originalState.areEqual(func1, func2)) {
 			// the given identifiers are already equal in the originalState
 			return originalState;
 		}
-		
+
 		if (originalState.areUnequal(func1, func2)) {
 			return getBottomConstraint();
 		}
-		
+
 		final EqConstraint<ACTION, NODE, FUNCTION> funct1Added = addFunctionFlat(func1, originalState);
-		final EqConstraint<ACTION, NODE, FUNCTION> funct2Added = addFunctionFlat(func2, funct1Added);	
-		
+		final EqConstraint<ACTION, NODE, FUNCTION> funct2Added = addFunctionFlat(func2, funct1Added);
+
 		final EqConstraint<ACTION, NODE, FUNCTION> newConstraint = unfreeze(funct2Added);
 		newConstraint.addFunctionEqualityRaw(func1, func2);
 		newConstraint.freeze();
-		
+
 		// TODO propagations
 		EqConstraint<ACTION, NODE, FUNCTION> newConstraintWithPropagations = newConstraint;
-		
-		
+
+
 		final Set<NODE> chosenNodes = new HashSet<>();
 
 //		chosenNodes.addAll(newConstraintWithPropagations.getAllNodes());  --> too expensive
-		
+
 		// choose the nodes that we know something about
 
 //		for (Entry<NODE, NODE> eeq : newConstraintWithPropagations.getSupportingElementEqualities()) { --> too expensive
 //			chosenNodes.add(eeq.getKey());
 //			chosenNodes.add(eeq.getValue());
 //		}
-		
+
 //		for (VPDomainSymmetricPair<NODE> deq : newConstraintWithPropagations.getAllElementEqualities()) {--> too expensive
 //			chosenNodes.add(deq.getFirst());
 //			chosenNodes.add(deq.getSecond());
 //		}
-		
+
 		// also choose some subterms
 		final Set<NODE> allFunctionNodes = newConstraintWithPropagations.getAllNodes().stream()
 			.filter(node -> node.isFunction()).collect(Collectors.toSet());
@@ -327,10 +327,10 @@ public class EqConstraintFactory<
 //		chosenNodes.addAll(newConstraintWithPropagations.getAllFunctions().stream()
 //			.filter(f -> f.isStore())
 //			.map(f -> f.getStoreIndices().get(0)).collect(Collectors.toSet())); // TOD deal with multidim arrays
-		
+
 		assert func1.getArity() == func2.getArity();
-		
-		
+
+
 		/*
 		 * for each index t1 .. tn (that we chose before), we add the equality "func1(t1, ..., tn) = func2(1, ..., tn)"
 		 //* right now we are using the cross product of the chosen nodes here --> this might be expensive.. TODO
@@ -340,35 +340,35 @@ public class EqConstraintFactory<
 		for (int i = 0; i < func1.getArity(); i++) {
 			dimensionTimesChosenNodes.add(chosenNodes);
 		}
-		final Set<List<NODE>> chosenIndices = 
+		final Set<List<NODE>> chosenIndices =
 				VPDomainHelpers.computeCrossProduct(dimensionTimesChosenNodes, mPreanalysis.getServices());
-		
-		
+
+
 		final ManagedScript mgdScript = mEqNodeAndFunctionFactory.getScript();
-		for (List<NODE> cn : chosenIndices) {
+		for (final List<NODE> cn : chosenIndices) {
 			if (!mPreanalysis.getServices().getProgressMonitorService().continueProcessing()) {
 				mgdScript.unlock(this);
 				return newConstraintWithPropagations;
 			}
-			
+
 			assert cn.size() == func1.getArity();
-			
-			List<Term> cnTermList = cn.stream().map(n -> n.getTerm()).collect(Collectors.toList());
-			
+
+			final List<Term> cnTermList = cn.stream().map(n -> n.getTerm()).collect(Collectors.toList());
+
 			mgdScript.lock(this);
-			final Term func1AtIndexTerm = SmtUtils.multiDimensionalSelect(mgdScript.getScript(), 
+			final Term func1AtIndexTerm = SmtUtils.multiDimensionalSelect(mgdScript.getScript(),
 					func1.getTerm(), new ArrayIndex(cnTermList));
 			mgdScript.unlock(this);
 			final NODE func1AtIndex = (NODE) mEqNodeAndFunctionFactory.getOrConstructEqNode(func1AtIndexTerm);
 
 			mgdScript.lock(this);
-			final Term func2AtIndexTerm = SmtUtils.multiDimensionalSelect(mgdScript.getScript(), 
+			final Term func2AtIndexTerm = SmtUtils.multiDimensionalSelect(mgdScript.getScript(),
 					func2.getTerm(), new ArrayIndex(cnTermList));
 			mgdScript.unlock(this);
 			final NODE func2AtIndex = (NODE) mEqNodeAndFunctionFactory.getOrConstructEqNode(func2AtIndexTerm);
 			newConstraintWithPropagations = addEqualityFlat(func1AtIndex, func2AtIndex, newConstraintWithPropagations);
 		}
-		
+
 //		// TODO: which nodes to take here??
 //		final Set<NODE> nodesWithFunc1 = newConstraint.getAllNodes().stream()
 //			.filter(node -> ((node instanceof EqFunctionNode) && ((NODE) node).getFunction().equals(func1)))
@@ -376,13 +376,13 @@ public class EqConstraintFactory<
 //		final Set<NODE> nodesWithFunc2 = newConstraint.getAllNodes().stream()
 //			.filter(node -> ((node instanceof EqFunctionNode) && ((NODE) node).getFunction().equals(func2)))
 //			.collect(Collectors.toSet());
-//		
+//
 //		/*
-//		 * 
+//		 *
 //		 *  <li> for each node func1(t), we add the equality "func1(t) = func2(t)" and vice versa
-//		 *  <li> furthermore, if func1 has the form (store a i x), and the constraint says t != i, we add 
+//		 *  <li> furthermore, if func1 has the form (store a i x), and the constraint says t != i, we add
 //		 *     "a(t) = func2(t)" (??) EDIT: don't do that here, instead add (store a i x)[j] = a[j] in constraints where
-//		 *      i != j holds. (triggers: addFunction(store) and addDisequality 
+//		 *      i != j holds. (triggers: addFunction(store) and addDisequality
 //		 */
 //		final ManagedScript mgdScript = mEqNodeAndFunctionFactory.getScript();
 //		mgdScript.lock(this);
@@ -403,14 +403,14 @@ public class EqConstraintFactory<
 //			newConstraintWithPropagations = addEqualityFlat(func2Node, func1AtIndex, newConstraintWithPropagations);
 //		}
 //		mgdScript.unlock(this);
-	
+
 		return newConstraintWithPropagations;
 	}
 
 	public EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> disjoinDisjunctiveConstraints(
-			EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> disjunct1,
-			EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> disjunct2) {
-		final Set<EqConstraint<ACTION, NODE, FUNCTION>> allConjunctiveConstraints = new HashSet<>();			
+			final EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> disjunct1,
+			final EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> disjunct2) {
+		final Set<EqConstraint<ACTION, NODE, FUNCTION>> allConjunctiveConstraints = new HashSet<>();
 		allConjunctiveConstraints.addAll(disjunct1.getConstraints());
 		allConjunctiveConstraints.addAll(disjunct2.getConstraints());
 		return getDisjunctiveConstraint(allConjunctiveConstraints);
@@ -418,42 +418,42 @@ public class EqConstraintFactory<
 
 	/**
 	 * disjunction/union/meet
-	 * 
+	 *
 	 * @param disjuncts
 	 * @return
 	 */
 	public EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> disjoinDisjunctiveConstraints(
-			List<EqDisjunctiveConstraint<ACTION, NODE, FUNCTION>> disjuncts) {
-		
-		Set<EqConstraint<ACTION, NODE, FUNCTION>> allConjunctiveConstraints = new HashSet<>();			
-		for (EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> disjunct : disjuncts) {
+			final List<EqDisjunctiveConstraint<ACTION, NODE, FUNCTION>> disjuncts) {
+
+		final Set<EqConstraint<ACTION, NODE, FUNCTION>> allConjunctiveConstraints = new HashSet<>();
+		for (final EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> disjunct : disjuncts) {
 			allConjunctiveConstraints.addAll(disjunct.getConstraints());
 		}
 
 		return getDisjunctiveConstraint(allConjunctiveConstraints);
 	}
-	
+
 	/**
 	 * Disjoin two (conjunctive) EqConstraints without creating an EqDisjunctiveConstraint -- this operation may loose
 	 * information.
-	 * 
+	 *
 	 * Essentially, we only keep constraints that are present in both input constraints.
-	 * 
+	 *
 	 * @param constraint
 	 * @param constraint2
 	 * @return
 	 */
 	public EqConstraint<ACTION, NODE, FUNCTION> disjoinFlat(
-			EqConstraint<ACTION, NODE, FUNCTION> constraint1, 
-			EqConstraint<ACTION, NODE, FUNCTION> constraint2) {
+			final EqConstraint<ACTION, NODE, FUNCTION> constraint1,
+			final EqConstraint<ACTION, NODE, FUNCTION> constraint2) {
 		final List<EqConstraint<ACTION, NODE, FUNCTION>> disjuncts = new ArrayList<>();
 		disjuncts.add(constraint1);
 		disjuncts.add(constraint2);
 		return getDisjunctiveConstraint(disjuncts).flatten();
 	}
-	
-	public EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> addEqualityFlat(NODE node1, NODE node2,
-				EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> inputConstraint) {
+
+	public EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> addEqualityFlat(final NODE node1, final NODE node2,
+				final EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> inputConstraint) {
 			if (node1 == node2 || node1.equals(node2)) {
 				return inputConstraint;
 			}
@@ -464,9 +464,9 @@ public class EqConstraintFactory<
 			return result;
 	}
 
-	public EqConstraint<ACTION, NODE, FUNCTION> addEqualityFlat(NODE node1, NODE node2,
-			EqConstraint<ACTION, NODE, FUNCTION> originalState) {
-		
+	public EqConstraint<ACTION, NODE, FUNCTION> addEqualityFlat(final NODE node1, final NODE node2,
+			final EqConstraint<ACTION, NODE, FUNCTION> originalState) {
+
 //		factory.getBenchmark().unpause(VPSFO.addEqualityClock);
 //		if (factory.isDebugMode()) {
 //			factory.getLogger().debug("VPFactoryHelpers: addEquality(" + node1 + ", " + node2 + ", " + "..." + ")");
@@ -480,22 +480,22 @@ public class EqConstraintFactory<
 //			factory.getBenchmark().stop(VPSFO.addEqualityClock);
 			return originalState;
 		}
-		
+
 		if (originalState.areEqual(node1, node2)) {
 			// the given identifiers are already equal in the originalState
 			return originalState;
 		}
-		
+
 		if (originalState.areUnequal(node1, node2)) {
 			return getBottomConstraint();
 		}
 
-		
+
 		EqConstraint<ACTION, NODE, FUNCTION> nodesAdded = addNodeFlat(node1, originalState);
 		nodesAdded = addNodeFlat(node2, nodesAdded);
 
 		final EqConstraint<ACTION, NODE, FUNCTION> constraintAfterMerge = unfreeze(nodesAdded);
-		
+
 		final HashRelation<NODE, NODE> mergeHistory = constraintAfterMerge.merge(node1, node2);
 		constraintAfterMerge.freeze();
 		final boolean contradiction = constraintAfterMerge.checkForContradiction();
@@ -505,17 +505,14 @@ public class EqConstraintFactory<
 
 		/*
 		 * Propagate disequalites
-		 *  <li> the equality we have introduced may, together with preexisting disequalities, allow propagations of 
+		 *  <li> the equality we have introduced may, together with preexisting disequalities, allow propagations of
 		 *    disequalities (see the documentation of the propagateDisequalites method for details)
-		 *  <li> we need to account for every two equivalence classes that have been merge before, i.e. using the 
+		 *  <li> we need to account for every two equivalence classes that have been merged before, i.e. using the
 		 *    "mergeHistory".. (those may be much more that just node1, node2, because of equality propagation..)
-		 *  <li> Note that since all the propagate.. operations only introduce disequalities they don't interfere with
-		 *     each other. This means we can collect the results separately and join them into a disjunction afterwards.
-		 *      (therefore it is ok for propagateDisequalities to operate on an (conjunctive) EqConstraint only.)
 		 */
 		EqConstraint<ACTION, NODE, FUNCTION> resultConstraint = constraintAfterMerge;
-		for (Entry<NODE, NODE> pair : mergeHistory.entrySet()) {
-			
+		for (final Entry<NODE, NODE> pair : mergeHistory.entrySet()) {
+
 			for (final NODE other : constraintAfterMerge.getDisequalities(pair.getKey())) {
 				//			factory.getBenchmark().stop(VPSFO.addEqualityClock);
 				resultConstraint = propagateDisequalitesFlat(resultConstraint, pair.getKey(), other);
@@ -528,10 +525,10 @@ public class EqConstraintFactory<
 //		factory.getBenchmark().stop(VPSFO.addEqualityClock);
 		return resultConstraint;
 	}
-	
 
-	public EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> addDisequalityFlat(NODE node1, NODE node2,
-				EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> inputConstraint) {
+
+	public EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> addDisequalityFlat(final NODE node1, final NODE node2,
+				final EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> inputConstraint) {
 			if (node1 == node2 || node1.equals(node2)) {
 				return inputConstraint;
 			}
@@ -543,8 +540,8 @@ public class EqConstraintFactory<
 	}
 
 
-	
-	public EqConstraint<ACTION, NODE, FUNCTION> addDisequalityFlat(final NODE node1, final NODE node2, 
+
+	public EqConstraint<ACTION, NODE, FUNCTION> addDisequalityFlat(final NODE node1, final NODE node2,
 			final EqConstraint<ACTION, NODE, FUNCTION> originalState) {
 //		if (factory.isDebugMode()) {
 //			factory.getLogger().debug("VPFactoryHelpers: addDisEquality(..)");
@@ -552,7 +549,7 @@ public class EqConstraintFactory<
 		if (originalState.isBottom()) {
 			return originalState;
 		}
-		
+
 		if (originalState.areUnequal(node1, node2)) {
 			return originalState;
 		}
@@ -569,78 +566,78 @@ public class EqConstraintFactory<
 		 */
 		EqConstraint<ACTION, NODE, FUNCTION> nodesAdded = addNodeFlat(node1, originalState);
 		nodesAdded = addNodeFlat(node2, nodesAdded);
-		EqConstraint<ACTION, NODE, FUNCTION> unfrozen = unfreeze(nodesAdded);
+		final EqConstraint<ACTION, NODE, FUNCTION> unfrozen = unfreeze(nodesAdded);
 		unfrozen.addRawDisequality(node1, node2);
 		unfrozen.freeze();
 
 		/*
 		 * propagate disequality to children
 		 */
-		final EqConstraint<ACTION, NODE, FUNCTION> newConstraintWithBackwardCongruence = 
+		final EqConstraint<ACTION, NODE, FUNCTION> newConstraintWithBackwardCongruence =
 				propagateDisequalitesFlat(unfrozen, node1, node2);
-		
+
 		/*
 		 * adding a disequality may trigger the read-over-write axiom
 		 */
 		EqConstraint<ACTION, NODE, FUNCTION> newConstraintWithPropagations = newConstraintWithBackwardCongruence;
 		// TOOD: would getAllStoreFunctions be better?
-		for (FUNCTION func : newConstraintWithPropagations.getAllFunctions()) { 
+		for (final FUNCTION func : newConstraintWithPropagations.getAllFunctions()) {
 			newConstraintWithPropagations = propagateRowDeq(func, newConstraintWithPropagations);
 		}
 
 		assert newConstraintWithPropagations.allNodesAndEqgnMapAreConsistent();
 		return newConstraintWithPropagations;
 	}
-	
-	
-	public EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> addNode(NODE nodeToAdd, 
-			EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> constraint) {
+
+
+	public EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> addNode(final NODE nodeToAdd,
+			final EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> constraint) {
 
 		final Set<EqConstraint<ACTION, NODE, FUNCTION>> newConstraints = new HashSet<>();
 
-		for (EqConstraint<ACTION, NODE, FUNCTION> cons : constraint.getConstraints()) {
+		for (final EqConstraint<ACTION, NODE, FUNCTION> cons : constraint.getConstraints()) {
 			newConstraints.add(addNodeFlat(nodeToAdd, cons));
 		}
-		
+
 		return getDisjunctiveConstraint(newConstraints);
 	}
-	
+
 	/**
 	 * Adds the given node to the given constraint, returns the resulting constraint.
-	 * 
+	 *
 	 * Adding a node can have side effects, even though no (dis)equality constraint is added.
 	 * <ul> Reasons:
 	 *  <li> the constraint may have an array equality that, by extensionality, says something about the new node
 	 *  <li> .. other reasons?..
 	 * </ul>
-	 * 
-	 * 
+	 *
+	 *
 	 * @param nodeToAdd
 	 * @param constraint
 	 * @return
 	 */
 	@Deprecated
-	public EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> addNode(NODE nodeToAdd, 
-			EqConstraint<ACTION, NODE, FUNCTION> constraint) {
+	public EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> addNode(final NODE nodeToAdd,
+			final EqConstraint<ACTION, NODE, FUNCTION> constraint) {
 		return getDisjunctiveConstraint(Collections.singleton(addNodeFlat(nodeToAdd,constraint)));
-		
+
 	}
-	
-	public EqConstraint<ACTION, NODE, FUNCTION> addNodeFlat(NODE nodeToAdd, 
-			EqConstraint<ACTION, NODE, FUNCTION> constraint) {
+
+	public EqConstraint<ACTION, NODE, FUNCTION> addNodeFlat(final NODE nodeToAdd,
+			final EqConstraint<ACTION, NODE, FUNCTION> constraint) {
 		if (constraint.getAllNodes().contains(nodeToAdd)) {
 			return constraint;
 		}
-		
+
 		final EqConstraint<ACTION, NODE, FUNCTION> unf = unfreeze(constraint);
 		unf.addNodeRaw(nodeToAdd);
 		unf.freeze();
-		
+
 		// introduce disequalities if we have a literal TODO: disequality treatment might need reworking
 		EqConstraint<ACTION, NODE, FUNCTION> newConstraintWithPropagations = unf;
 		if (nodeToAdd.isLiteral()) {
-			for (NODE otherNode : newConstraintWithPropagations.getAllNodes()) {
-				if (otherNode.equals(nodeToAdd) 
+			for (final NODE otherNode : newConstraintWithPropagations.getAllNodes()) {
+				if (otherNode.equals(nodeToAdd)
 						|| !otherNode.isLiteral()
 						|| nodeToAdd.getTerm().getSort() != otherNode.getTerm().getSort()) {
 					continue;
@@ -648,16 +645,16 @@ public class EqConstraintFactory<
 				newConstraintWithPropagations = addDisequalityFlat(nodeToAdd, otherNode, newConstraintWithPropagations);
 			}
 		}
-		
+
 		assert newConstraintWithPropagations.allNodesAndEqgnMapAreConsistent();
 		return newConstraintWithPropagations;
 //		return unf;
 	}
-	
-	
-	private EqConstraint<ACTION, NODE, FUNCTION> addFunctionFlat(FUNCTION func,
-			EqConstraint<ACTION, NODE, FUNCTION> constraint) {
-		EqConstraint<ACTION, NODE, FUNCTION> newConstraint = unfreeze(constraint);
+
+
+	private EqConstraint<ACTION, NODE, FUNCTION> addFunctionFlat(final FUNCTION func,
+			final EqConstraint<ACTION, NODE, FUNCTION> constraint) {
+		final EqConstraint<ACTION, NODE, FUNCTION> newConstraint = unfreeze(constraint);
 		newConstraint.addFunctionRaw(func);
 		newConstraint.freeze();
 		// TODO propagations
@@ -667,21 +664,21 @@ public class EqConstraintFactory<
 		 *  propagate read-over-write (both cases)
 		 */
 		newConstraintWithPropagations = propagateIdx(func, newConstraintWithPropagations);
-		
+
 		newConstraintWithPropagations = propagateRowDeq(func, newConstraintWithPropagations);
-		
+
 		return newConstraintWithPropagations;
 	}
 
 	/**
 	 * Convenience function for propagateIdx, for the 'outermost' call.
-	 * 
+	 *
 	 * @param func
 	 * @param newConstraintWithPropagations
 	 * @return
 	 */
-	private EqConstraint<ACTION, NODE, FUNCTION> propagateIdx(FUNCTION func,
-			EqConstraint<ACTION, NODE, FUNCTION> newConstraintWithPropagations) {
+	private EqConstraint<ACTION, NODE, FUNCTION> propagateIdx(final FUNCTION func,
+			final EqConstraint<ACTION, NODE, FUNCTION> newConstraintWithPropagations) {
 		return propagateIdx(func, newConstraintWithPropagations, func, Collections.emptySet());
 	}
 
@@ -691,26 +688,26 @@ public class EqConstraintFactory<
 	 *
 	 * Simple form of the idx axiom: a[i:=v][i] == v
 	 * Nested case: a[j:=u][i:=v][i] == v, i != j --> a[j:=u][i:=v][j] == u  (more nestings: more constraints..)
-	 * 
+	 *
 	 * @param currentFunction current (store or non-store) function
 	 * @param orig the constraint before propagation
-	 * @param overAllStore the store term we want to talk about (relevant for the nested case, the store we called 
+	 * @param overAllStore the store term we want to talk about (relevant for the nested case, the store we called
 	 * 		propagateIdx the first time with)
 	 * @param storeIndicesOverwrittenSoFar the storeIndices that our current one must be different from in order to
-	 *     "write through" to the array of the overall store term (could be computed from currentFunction and 
+	 *     "write through" to the array of the overall store term (could be computed from currentFunction and
 	 *    	 overAllStore)
 	 * @return a constraint with added idx-propagations
 	 */
-	private EqConstraint<ACTION, NODE, FUNCTION> propagateIdx(FUNCTION currentFunction, 
-			EqConstraint<ACTION, NODE, FUNCTION> orig,
-			FUNCTION overAllStore,
-			Set<List<NODE>> storeIndicesOverwrittenSoFar) {
+	private EqConstraint<ACTION, NODE, FUNCTION> propagateIdx(final FUNCTION currentFunction,
+			final EqConstraint<ACTION, NODE, FUNCTION> orig,
+			final FUNCTION overAllStore,
+			final Set<List<NODE>> storeIndicesOverwrittenSoFar) {
 		if (!(currentFunction.isStore())) {
 			return orig;
 		}
 
 //		assert currentFunction.getStoreIndices().size() == 1 : "TODO: deal with multidimensional case";
-		
+
 		EqConstraint<ACTION, NODE, FUNCTION> newConstraint;
 		if (isIndexDifferentFromAllIndices(currentFunction.getStoreIndices(), storeIndicesOverwrittenSoFar, orig)) {
 			/*
@@ -719,25 +716,25 @@ public class EqConstraintFactory<
 			 */
 			final ManagedScript mgdScript = mEqNodeAndFunctionFactory.getScript();
 			mgdScript.lock(this);
-//			Term selectTerm = mgdScript.term(this, 
-//					"select", 
-//					overAllStore.getTerm(), 
+//			Term selectTerm = mgdScript.term(this,
+//					"select",
+//					overAllStore.getTerm(),
 //					currentFunction.getStoreIndices().iterator().next().getTerm());
 			final ArrayIndex index = new ArrayIndex(currentFunction.getStoreIndices().stream()
 					.map(node -> node.getTerm())
 					.collect(Collectors.toList()));
-			Term selectTerm = SmtUtils.multiDimensionalSelect(mgdScript.getScript(), overAllStore.getTerm(), index);
+			final Term selectTerm = SmtUtils.multiDimensionalSelect(mgdScript.getScript(), overAllStore.getTerm(), index);
 			mgdScript.unlock(this);
 
 			final NODE selectIdxNode = (NODE) mEqNodeAndFunctionFactory.getOrConstructEqNode(selectTerm);
-			final NODE storeValueNode = 
+			final NODE storeValueNode =
 					(NODE) mEqNodeAndFunctionFactory.getOrConstructEqNode(currentFunction.getValue().getTerm());
-		
+
 			newConstraint = addEqualityFlat(selectIdxNode, storeValueNode, orig);
 		} else {
 			newConstraint = orig;
 		}
-		
+
 		// also propagate for inner stores
 		if (currentFunction != overAllStore) {
 			newConstraint = propagateIdx(currentFunction, newConstraint);
@@ -750,16 +747,16 @@ public class EqConstraintFactory<
 
 	/**
 	 * Determines if the given constraint guarantees that index is different from all otherIndices.
-	 * 
+	 *
 	 * @param index
 	 * @param otherIndices
 	 * @param constraint
 	 * @return
 	 */
-	private boolean isIndexDifferentFromAllIndices(List<NODE> index,
-			Set<List<NODE>> otherIndices, EqConstraint<ACTION, NODE, FUNCTION> constraint) {
+	private boolean isIndexDifferentFromAllIndices(final List<NODE> index,
+			final Set<List<NODE>> otherIndices, final EqConstraint<ACTION, NODE, FUNCTION> constraint) {
 		boolean storeIndexDifferentFromAllOverwrittenOnes = true;
-		for (List<NODE> siosf : otherIndices) {
+		for (final List<NODE> siosf : otherIndices) {
 			boolean unEqualOnAtLeastOnePosition = false;
 			for (int storeIndexPosition = 0; storeIndexPosition < index.size(); storeIndexPosition++) {
 				if (constraint.areUnequal(index.get(storeIndexPosition), siosf.get(storeIndexPosition))) {
@@ -774,25 +771,25 @@ public class EqConstraintFactory<
 
 	/**
 	 * Add propagations that are made possible by the read-over-write array axiom (the 'disequality case')
-	 * 
+	 *
 	 * the row axiom: j != i -> a[i:=v][j] = a[j]
 	 *  nested case: k != i /\ k != j -> a[i:=v][j:=u][k] = a[k]
-	 * 
+	 *
 	 * @param func
 	 * @param inputConstraint
 	 * @return
 	 */
-	private EqConstraint<ACTION, NODE, FUNCTION> propagateRowDeq(FUNCTION func,
-			EqConstraint<ACTION, NODE, FUNCTION> inputConstraint) {
+	private EqConstraint<ACTION, NODE, FUNCTION> propagateRowDeq(final FUNCTION func,
+			final EqConstraint<ACTION, NODE, FUNCTION> inputConstraint) {
 		if (!func.isStore()) {
 			return inputConstraint;
 		}
-		
+
 		EqConstraint<ACTION, NODE, FUNCTION> newConstraint = inputConstraint;
 
 //		assert func.getStoreIndices().size() == 1 : "TODO: deal with multidimensional case";
 
-		for (List<NODE> indexUnequalToAllStoreIndices : 
+		for (final List<NODE> indexUnequalToAllStoreIndices :
 				getIndicesThatAreUnequalToAllStoreIndices(func, inputConstraint)) {
 			final ManagedScript mgdScript = mEqNodeAndFunctionFactory.getScript();
 			mgdScript.lock(this);
@@ -800,11 +797,11 @@ public class EqConstraintFactory<
 					indexUnequalToAllStoreIndices.stream()
 						.map(node -> node.getTerm())
 						.collect(Collectors.toList()));
-			final Term selectOverStoreTerm = SmtUtils.multiDimensionalSelect(mgdScript.getScript(), 
-					func.getTerm(), 
+			final Term selectOverStoreTerm = SmtUtils.multiDimensionalSelect(mgdScript.getScript(),
+					func.getTerm(),
 					unequalArrayIndex);
-			final Term selectInsideStoreTerm = SmtUtils.multiDimensionalSelect(mgdScript.getScript(), 
-					func.getInnerMostFunction().getTerm(), 
+			final Term selectInsideStoreTerm = SmtUtils.multiDimensionalSelect(mgdScript.getScript(),
+					func.getInnerMostFunction().getTerm(),
 					unequalArrayIndex);
 			mgdScript.unlock(this);
 			final NODE selectOverStoreNode = (NODE) mEqNodeAndFunctionFactory
@@ -818,34 +815,34 @@ public class EqConstraintFactory<
 	}
 
 	/**
-	 * 
+	 *
 	 * @param func
 	 * @param inputConstraint
 	 * @return
 	 */
-	private Set<List<NODE>> getIndicesThatAreUnequalToAllStoreIndices(FUNCTION func,
-			EqConstraint<ACTION, NODE, FUNCTION> inputConstraint) {
+	private Set<List<NODE>> getIndicesThatAreUnequalToAllStoreIndices(final FUNCTION func,
+			final EqConstraint<ACTION, NODE, FUNCTION> inputConstraint) {
 		assert func.isStore();
 		/*
 		 * the nodes over which we build our index set, i.e., resultOfThisMethod subseteq candidateNodes^n, where
 		 * n is the dimension of the store function func.
 		 */
 		final Set<NODE> candidateNodes = inputConstraint.getAllNodes(); //TODO: is this a smart choice?
-		
-		
-		List<ArrayIndex> nestedStoreIndices = new ArrayList<>();
+
+
+		final List<ArrayIndex> nestedStoreIndices = new ArrayList<>();
 		FUNCTION currentFunc = func;
 		while (currentFunc.isStore()) {
 			final MultiDimensionalStore mds = new MultiDimensionalStore(func.getTerm());
 			nestedStoreIndices.add(mds.getIndex());
 			currentFunc = currentFunc.getFunction();
 		}
-		
+
 		Set<List<NODE>> result = null;
 		/*
 		 * the indices we collect need to be different from _all_ nestedStoreIndices on _at least one_ position.
 		 */
-		for (ArrayIndex nestedStoreIndex : nestedStoreIndices) {
+		for (final ArrayIndex nestedStoreIndex : nestedStoreIndices) {
 
 			/*
 			 * at the end of the for loop below, this holds all the indices build from the candidateNodes that differ on
@@ -855,10 +852,10 @@ public class EqConstraintFactory<
 			Set<List<NODE>> currentNotYetUnequalIndices = new HashSet<>();
 
 			for (int indexPosition = 0; indexPosition < func.getStoreIndices().size(); indexPosition++) {
-				Set<List<NODE>> newUnequalIndices = new HashSet<>();
-				Set<List<NODE>> newNotYetUnequalIndices = new HashSet<>();
-				for (List<NODE> currentIndex : currentNotYetUnequalIndices) {
-					for (NODE candidateNode : candidateNodes) {
+				final Set<List<NODE>> newUnequalIndices = new HashSet<>();
+				final Set<List<NODE>> newNotYetUnequalIndices = new HashSet<>();
+				for (final List<NODE> currentIndex : currentNotYetUnequalIndices) {
+					for (final NODE candidateNode : candidateNodes) {
 						final ArrayList<NODE> newIndex = new ArrayList<>(currentIndex);
 						newIndex.add(candidateNode);
 
@@ -873,8 +870,8 @@ public class EqConstraintFactory<
 					}
 				}
 
-				for (List<NODE> currentIndex : currentUnequalIndices) {
-					for (NODE candidateNode : candidateNodes) {
+				for (final List<NODE> currentIndex : currentUnequalIndices) {
+					for (final NODE candidateNode : candidateNodes) {
 						final ArrayList newIndex = new ArrayList<>(currentIndex);
 						newIndex.add(candidateNode.getTerm());
 						newUnequalIndices.add(newIndex);
@@ -884,14 +881,14 @@ public class EqConstraintFactory<
 				currentUnequalIndices = newUnequalIndices;
 				currentNotYetUnequalIndices = newNotYetUnequalIndices;
 			}
-			
+
 			if (result == null) {
 				result = currentUnequalIndices;
 			} else {
 				result.retainAll(currentUnequalIndices);
 			}
 		}
-		
+
 		return result;
 	}
 
@@ -899,22 +896,22 @@ public class EqConstraintFactory<
 	 * Takes a preState and two representatives of different equivalence classes. Under the assumption that a
 	 * disequality between the equivalence classes has been introduced, propagates all the disequalities that follow
 	 * from that disequality.
-	 * 
-	 * Background: 
+	 *
+	 * Background:
 	 * <ul>
 	 *  <li> our disequality relation is stored as disequalities between equivalence classes
-	 *  <li> joining two equivalence may add implicit equalities that allow disequality propagation (via function 
+	 *  <li> joining two equivalence may add implicit equalities that allow disequality propagation (via function
 	 *      congruence)
 	 * </ul>
-	 * 
-	 * Furthermore, we store information about which arguments for any function node in each equivalence class are 
+	 *
+	 * Furthermore, we store information about which arguments for any function node in each equivalence class are
 	 *  present -- the "ccchild" field, which corresponds to the ccpar field from standard congruence closure.
 	 * <p>
 	 * This method is a helper that, for two representatives of equivalence classes in the inputState which we know to
-	 * be unequal in the inputState, checks if, because of merging the two states, any disequality propagations are 
+	 * be unequal in the inputState, checks if, because of merging the two states, any disequality propagations are
 	 * possible.
 	 * It returns a disjunction of states where all possible propagations have been done.
-	 * 
+	 *
 	 * Example:
 	 *  <li> preState:
 	 *   (i = f(y)) , (j != f(x)), (i = j)
@@ -929,7 +926,7 @@ public class EqConstraintFactory<
 	 * @return
 	 */
 	private EqConstraint<ACTION, NODE, FUNCTION> propagateDisequalitesFlat(
-			final EqConstraint<ACTION, NODE, FUNCTION> inputState, 
+			final EqConstraint<ACTION, NODE, FUNCTION> inputState,
 			final NODE representative1,
 			final NODE representative2) {
 
@@ -956,8 +953,8 @@ public class EqConstraintFactory<
 		return result;
 	}
 
-	private boolean allOthersAreEqual(List<NODE> argList1, List<NODE> argList2, int pos,
-			EqConstraint<ACTION, NODE, FUNCTION> inputState) {
+	private boolean allOthersAreEqual(final List<NODE> argList1, final List<NODE> argList2, final int pos,
+			final EqConstraint<ACTION, NODE, FUNCTION> inputState) {
 		assert argList1.size() == argList2.size();
 		for (int i = 0; i < argList1.size(); i++) {
 			if (i == pos) {
@@ -974,7 +971,7 @@ public class EqConstraintFactory<
 		return mEqStateFactory;
 	}
 
-	public void setEqStateFactory(EqStateFactory<ACTION> eqStateFactory) {
+	public void setEqStateFactory(final EqStateFactory<ACTION> eqStateFactory) {
 		mEqStateFactory = eqStateFactory;
 	}
 
