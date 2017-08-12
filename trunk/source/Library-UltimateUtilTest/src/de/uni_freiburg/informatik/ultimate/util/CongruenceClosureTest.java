@@ -2,19 +2,16 @@ package de.uni_freiburg.informatik.ultimate.util;
 
 import static org.junit.Assert.assertTrue;
 
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import org.junit.Test;
 
+import de.uni_freiburg.informatik.ultimate.util.datastructures.AbstractCCElementFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CongruenceClosure;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.Equality;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ICongruenceClosureElement;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
 public class CongruenceClosureTest {
 
@@ -270,45 +267,6 @@ public class CongruenceClosureTest {
 
 }
 
-abstract class AbstractCCElementFactory<
-		ELEM extends ICongruenceClosureElement<ELEM, FUNCTION>,
-//		FUNCTION extends ICongruenceClosureFunction,
-		FUNCTION,
-		CONTENT> {
-
-	Map<CONTENT, ELEM> mContentToBaseElem = new HashMap<>();
-	NestedMap2<FUNCTION, List<ELEM>, ELEM> mFunctionToArgsToFuncAppElem = new NestedMap2<>();
-
-	protected abstract ELEM newBaseElement(CONTENT c);
-	protected abstract ELEM newFuncAppElement(FUNCTION f, List<ELEM> args);
-
-	ELEM getBaseElement(final CONTENT content) {
-		ELEM be = mContentToBaseElem.get(content);
-		if (be == null) {
-			be = newBaseElement(content);
-			mContentToBaseElem.put(content, be);
-		}
-		return be;
-	}
-
-	ELEM getFuncAppElement(final FUNCTION func,  final ELEM... arguments) {
-		return getFuncAppElement(func, Arrays.asList(arguments));
-	}
-
-	ELEM getFuncAppElement(final FUNCTION func, final List<ELEM> arguments) {
-		ELEM fae = mFunctionToArgsToFuncAppElem.get(func, arguments);
-		if (fae == null) {
-			fae = newFuncAppElement(func, arguments);
-			mFunctionToArgsToFuncAppElem.put(func, arguments, fae);
-		}
-		for (final ELEM arg : arguments) {
-			arg.addParent(fae);
-		}
-		return fae;
-	}
-
-}
-
 class StringElementFactory extends AbstractCCElementFactory<StringCCElement, String, String> {
 
 	@Override
@@ -381,19 +339,3 @@ class StringCCElement implements ICongruenceClosureElement<StringCCElement, Stri
 		mParents.add(parent);
 	}
 }
-
-
-
-//class StringCCFunction implements ICongruenceClosureFunction {
-//
-//	final String mName;
-//
-//	public StringCCFunction(final String name) {
-//		mName = name;
-//	}
-//
-//	@Override
-//	public String toString() {
-//		return mName;
-//	}
-//}

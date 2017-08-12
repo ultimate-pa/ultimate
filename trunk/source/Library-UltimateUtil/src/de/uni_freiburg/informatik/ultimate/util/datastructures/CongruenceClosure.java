@@ -13,27 +13,20 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
-public class CongruenceClosure<
-		ELEM extends ICongruenceClosureElement<ELEM, FUNCTION>,
-//		FUNCAPPELEM extends ICongruenceClosureFunctionApplication<ELEM, FUNCAPPELEM, FUNCTION>,
-		FUNCTION> {
-//		FUNCTION extends ICongruenceClosureFunction> {
+/**
+ *
+ * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
+ *
+ * @param <ELEM>
+ * @param <FUNCTION>
+ */
+public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNCTION>, FUNCTION> {
 
 	private final ThreeValuedEquivalenceRelation<ELEM> mElementTVER;
-
 	private final ThreeValuedEquivalenceRelation<FUNCTION> mFunctionTVER;
 
-
-//	/**
-//	 * Contains for each function in the equivalence relation the representative of its equivalence class.
-//	 */
-//	private final Set<FUNCTION> mAllFunctionRepresentatives;
-
-
 	private final NestedMap2<FUNCTION, ELEM, Set<ELEM>> mFunctionToRepresentativeToCcPars;
-
 	private final NestedMap2<FUNCTION, ELEM, Set<List<ELEM>>> mFunctionToRepresentativeToCcChildren;
-
 	private final HashRelation<FUNCTION, ELEM> mFunctionToFuncApps;
 
 	public CongruenceClosure() {
@@ -42,7 +35,6 @@ public class CongruenceClosure<
 		mFunctionToRepresentativeToCcPars = new NestedMap2<>();
 		mFunctionToRepresentativeToCcChildren = new NestedMap2<>();
 		mFunctionToFuncApps = new HashRelation<>();
-//		mAllFunctionRepresentatives = new HashSet<>();
 	}
 
 	public void reportFunctionEquality(final FUNCTION f1, final FUNCTION f2) {
@@ -65,17 +57,6 @@ public class CongruenceClosure<
 				}
 			}
 		}
-
-		/*
-		 *  --> update mAllFunctionRepresentatives
-		 */
-//		if (newRep == f1OldRep) {
-//			mFunctionToRepresentativeToCcPars.get(f2OldRep)
-//			mFunctionToRepresentativeToCcPars.removeK1(f2OldRep);
-//		} else {
-//			assert newRep == f2OldRep;
-//		}
-
 	}
 	public void reportEquality(final ELEM e1, final ELEM e2) {
 		reportEqualityRec(e1, e2);
@@ -96,9 +77,7 @@ public class CongruenceClosure<
 
 		final ELEM newRep = mElementTVER.getRepresentative(e1);
 
-
 		// do forward congruence propagations
-//		for (final FUNCTION funcRep : mFunctionTVER.getAllRepresentatives()) {
 		for (final Set<FUNCTION> eqc : mFunctionTVER.getAllEquivalenceClasses()) {
 			for (final Pair<FUNCTION, FUNCTION> pair : getPairsFromSet(eqc, true, true)) {
 				final Set<ELEM> e1CcPars = mFunctionToRepresentativeToCcPars.get(pair.getFirst(), e1OldRep);
@@ -137,9 +116,6 @@ public class CongruenceClosure<
 			}
 		}
 
-
-
-
 		/*
 		 * do some more backward congruence propagations
 		 * example:
@@ -155,7 +131,6 @@ public class CongruenceClosure<
 		 */
 		propagateDisequalities(e1OldRep, e2OldRep);
 		propagateDisequalities(e2OldRep, e1OldRep);
-
 
 		// update ccpar and ccchild sets
 		for (final FUNCTION func : mFunctionTVER.getAllElements()) {
@@ -280,7 +255,6 @@ public class CongruenceClosure<
 				return false;
 			}
 		}
-
 		return true;
 	}
 
@@ -338,9 +312,6 @@ public class CongruenceClosure<
 		final boolean newlyAdded = mElementTVER.getRepresentative(elem) == null;
 		mElementTVER.addElement(elem);
 		if (newlyAdded) {
-//			for (final ELEM par : elem.getParents()) {
-//				addToCcPar(elem, par);
-//			}
 			if (elem.isFunctionApplication()) {
 				mFunctionToFuncApps.addPair(elem.getAppliedFunction(), elem);
 
@@ -496,6 +467,7 @@ public class CongruenceClosure<
 	}
 
 	/**
+	 * Check for some class invariants.
 	 *
 	 * @return
 	 */
@@ -503,9 +475,6 @@ public class CongruenceClosure<
 		// the first, second and third field of mRepresentativeToFunctionToCcPars must only contain representatives
 		// wrt. the underlying UnionFind
 		for (final Triple<FUNCTION, ELEM, Set<ELEM>> repFuncCcPars : mFunctionToRepresentativeToCcPars.entrySet()) {
-//			if (!mFunctionTVER.isRepresentative(repFuncCcPars.getFirst())) {
-//				return false;
-//			}
 			if (!mElementTVER.isRepresentative(repFuncCcPars.getSecond())) {
 				return false;
 			}
@@ -513,9 +482,6 @@ public class CongruenceClosure<
 
 		for (final Triple<FUNCTION, ELEM, Set<List<ELEM>>> repFuncCcChildren
 				: mFunctionToRepresentativeToCcChildren.entrySet()) {
-//			if (!mFunctionTVER.isRepresentative(repFuncCcChildren.getFirst())) {
-//				return false;
-//			}
 			if (!mElementTVER.isRepresentative(repFuncCcChildren.getSecond())) {
 				return false;
 			}
