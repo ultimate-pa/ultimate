@@ -226,18 +226,4 @@ public class NestedMap2<K1, K2, V> {
 		return mK1ToK2ToV.isEmpty();
 	}
 
-//	/**
-//	 * Replaces the map entry whose K1 is oldKey1, with a mapEntry whose K1 is newKey1
-//	 *
-//	 * @param oldKey1
-//	 * @param newKey1
-//	 */
-//	public void replaceK1(K1 oldKey1, K1 newKey1) {
-//		// TODO Auto-generated method stub
-//
-//	}
-
-	public void removeK1(final K1 k1) {
-		mK1ToK2ToV.remove(k1);
-	}
 }

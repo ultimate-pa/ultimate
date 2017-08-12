@@ -58,6 +58,10 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 			}
 		}
 	}
+	public void reportFunctionDisequality(final FUNCTION f1, final FUNCTION f2) {
+		mFunctionTVER.reportNotEquals(f1, f2);
+	}
+
 	public void reportEquality(final ELEM e1, final ELEM e2) {
 		reportEqualityRec(e1, e2);
 		assert sanityCheck();
@@ -117,16 +121,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 		}
 
 		/*
-		 * do some more backward congruence propagations
-		 * example:
-		 * <ul>
-		 *  <li> preState:
-		 *   (i = f(y)) , (j != f(x))
-		 *  <li> then introduce equality (i = j)
-		 *  <li> we should get the output state, i.e., we have to propagate an extra disequality on introducing the equality
-		 *   (i = f(y)) , (j != f(x)), (i = j), (x != y)
-		 * </ul>
-		 *
+		 * do some more backward congruence propagations (see method documentation)
 		 * we have two symmetric cases
 		 */
 		propagateDisequalities(e1OldRep, e2OldRep);
@@ -216,25 +211,6 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 		return mElementTVER.getEquivalenceClass(elem).stream()
 				.filter(el -> el.isFunctionApplication() && el.getAppliedFunction() == func)
 				.collect(Collectors.toSet());
-	}
-
-	static <E> Collection<Pair<E, E>> getPairsFromSet(final Set<E> set, final boolean returnReflexivePairs,
-			final boolean returnSymmetricPairs) {
-		final Collection<Pair<E, E>> result = new ArrayList<>();
-
-		final Iterator<E> it1 = set.iterator();
-		for (int i = 0; i < set.size(); i++) {
-			final E el1 = it1.next();
-			final Iterator<E> it2 = set.iterator();
-			for (int j = 0; (!returnSymmetricPairs && j <= i) || (returnSymmetricPairs && j < set.size()); j++) {
-				final E el2 = it2.next();
-				if (!returnReflexivePairs && j == i) {
-					continue;
-				}
-				result.add(new Pair<E, E>(el1, el2));
-			}
-		}
-		return result;
 	}
 
 	/**
@@ -379,10 +355,6 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 		return mElementTVER.getRepresentative(elem);
 	}
 
-	public void reportFunctionDisequality(final FUNCTION f1, final FUNCTION f2) {
-		mFunctionTVER.reportNotEquals(f1, f2);
-	}
-
 	public void reportDisequality(final ELEM e1, final ELEM e2) {
 		reportDisequalityRec(e1, e2);
 		assert sanityCheck();
@@ -403,16 +375,19 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 	 * @param e2
 	 */
 	private void doBackwardCongruencePropagations(final ELEM e1, final ELEM e2) {
-		for (final FUNCTION func : mFunctionTVER.getAllRepresentatives()) {
-			final Set<List<ELEM>> e1CcChildren = getCcChildren(func, e1);
-			final Set<List<ELEM>> e2CcChildren = getCcChildren(func, e2);
+		for (final Set<FUNCTION> eqc : mFunctionTVER.getAllEquivalenceClasses()) {
+			for (final Pair<FUNCTION, FUNCTION> pair : getPairsFromSet(eqc, true, true)) {
 
-			for (final List<ELEM> ccChildList1 : e1CcChildren) {
-				for (final List<ELEM> ccChildList2 : e2CcChildren) {
-					final int onlyUnconstrainedPos = getOnlyUnconstrainedPos(ccChildList1, ccChildList2);
-					if (onlyUnconstrainedPos != -1) {
-						reportDisequality(ccChildList1.get(onlyUnconstrainedPos),
-								ccChildList2.get(onlyUnconstrainedPos));
+				final Set<List<ELEM>> e1CcChildren = getCcChildren(pair.getFirst(), e1);
+				final Set<List<ELEM>> e2CcChildren = getCcChildren(pair.getSecond(), e2);
+
+				for (final List<ELEM> ccChildList1 : e1CcChildren) {
+					for (final List<ELEM> ccChildList2 : e2CcChildren) {
+						final int onlyUnconstrainedPos = getOnlyUnconstrainedPos(ccChildList1, ccChildList2);
+						if (onlyUnconstrainedPos != -1) {
+							reportDisequality(ccChildList1.get(onlyUnconstrainedPos),
+									ccChildList2.get(onlyUnconstrainedPos));
+						}
 					}
 				}
 			}
@@ -446,12 +421,35 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 		return result;
 	}
 
-	public void removeFunction(final FUNCTION f1) {
-		mFunctionTVER.removeElement(f1);
+	public void removeFunction(final FUNCTION func) {
+		// remove from the function equivalence relation
+		mFunctionTVER.removeElement(func);
+
+		// remove all elements that depend on the function
+		for (final ELEM funcApp : mFunctionToFuncApps.getImage(func)) {
+			removeElement(funcApp);
+		}
+
+		mFunctionToRepresentativeToCcPars.remove(func);
+		mFunctionToRepresentativeToCcChildren.remove(func);
+		mFunctionToFuncApps.removeDomainElement(func);
 	}
 
-	public void removeElement(final ELEM e1) {
-		mElementTVER.removeElement(e1);
+	public void removeElement(final ELEM elem) {
+		if (mElementTVER.isRepresentative(elem)) {
+			for (final FUNCTION func : mFunctionTVER.getAllElements()) {
+				mFunctionToRepresentativeToCcPars.get(func).remove(elem);
+				mFunctionToRepresentativeToCcChildren.get(func).remove(elem);
+			}
+		}
+		mFunctionToFuncApps.removeRangeElement(elem);
+
+		mElementTVER.removeElement(elem);
+
+		for (final ELEM parent : elem.getParents()) {
+			removeElement(parent);
+		}
+
 	}
 
 	public Equality getEqualityStatus(final ELEM elem1, final ELEM elem2) {
@@ -502,6 +500,25 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 		sb.append(mFunctionTVER);
 
 		return sb.toString();
+	}
+
+	static <E> Collection<Pair<E, E>> getPairsFromSet(final Set<E> set, final boolean returnReflexivePairs,
+			final boolean returnSymmetricPairs) {
+		final Collection<Pair<E, E>> result = new ArrayList<>();
+
+		final Iterator<E> it1 = set.iterator();
+		for (int i = 0; i < set.size(); i++) {
+			final E el1 = it1.next();
+			final Iterator<E> it2 = set.iterator();
+			for (int j = 0; (!returnSymmetricPairs && j <= i) || (returnSymmetricPairs && j < set.size()); j++) {
+				final E el2 = it2.next();
+				if (!returnReflexivePairs && j == i) {
+					continue;
+				}
+				result.add(new Pair<E, E>(el1, el2));
+			}
+		}
+		return result;
 	}
 
 }
