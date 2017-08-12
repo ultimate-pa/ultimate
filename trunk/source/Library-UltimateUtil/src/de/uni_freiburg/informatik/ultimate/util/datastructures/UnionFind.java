@@ -172,9 +172,9 @@ public class UnionFind<E> implements IPartition<E> {
 	public void union(final E elem1, final E elem2) {
 		final Set<E> set1 = mEquivalenceClass.get(elem1);
 		final Set<E> set2 = mEquivalenceClass.get(elem2);
-		
+
 		final boolean set1IsLarger = set1.size() > set2.size();
-		
+
 		final Set<E> largerSet = set1IsLarger ? set1 : set2;
 		final Set<E> smallerSet = set1IsLarger ? set2 : set1;
 
@@ -272,5 +272,9 @@ public class UnionFind<E> implements IPartition<E> {
 			}
 		}
 		return true;
+	}
+
+	public Set<E> getAllElements() {
+		return Collections.unmodifiableSet(mEquivalenceClass.keySet());
 	}
 }

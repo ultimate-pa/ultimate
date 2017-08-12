@@ -2,22 +2,22 @@
  * Copyright (C) 2014-2015 Jan Leike (leike@informatik.uni-freiburg.de)
  * Copyright (C) 2014-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2012-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Util Library.
- * 
+ *
  * The ULTIMATE Util Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Util Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Util Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Util Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -38,7 +38,7 @@ import java.util.function.Function;
 
 /**
  * TODO: comment
- * 
+ *
  * @author Matthias Heizmann
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
@@ -130,7 +130,7 @@ public class NestedMap2<K1, K2, V> {
 		return () -> new NestedIterator<Entry<K1, Map<K2, V>>, Entry<K2, V>, Triple<K1, K2, V>>(innerIterator,
 				nextOuterIteratorProvider, resultProvider);
 	}
-	
+
 	/**
 	 * @return all entries where first element is k1
 	 */
@@ -224,5 +224,20 @@ public class NestedMap2<K1, K2, V> {
 
 	public boolean isEmpty() {
 		return mK1ToK2ToV.isEmpty();
+	}
+
+//	/**
+//	 * Replaces the map entry whose K1 is oldKey1, with a mapEntry whose K1 is newKey1
+//	 *
+//	 * @param oldKey1
+//	 * @param newKey1
+//	 */
+//	public void replaceK1(K1 oldKey1, K1 newKey1) {
+//		// TODO Auto-generated method stub
+//
+//	}
+
+	public void removeK1(final K1 k1) {
+		mK1ToK2ToV.remove(k1);
 	}
 }
