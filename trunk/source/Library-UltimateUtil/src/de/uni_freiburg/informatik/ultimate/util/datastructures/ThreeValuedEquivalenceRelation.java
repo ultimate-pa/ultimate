@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.util.datastructures;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -221,6 +222,24 @@ public class ThreeValuedEquivalenceRelation<E> {
 
 	public Set<E> getAllElements() {
 		return mUnionFind.getAllElements();
+	}
+
+	public Set<E> getRepresentativesUnequalTo(final E elem) {
+		final Set<E> result = new HashSet<>();
+
+		result.addAll(mDistinctElements.getImage(elem));
+
+		for (final E domEl : mDistinctElements.getDomain()) {
+			if (mDistinctElements.getImage(domEl).contains(elem)) {
+				result.add(domEl);
+			}
+		}
+
+		return result;
+	}
+
+	public Set<E> getEquivalenceClass(final E elem) {
+		return mUnionFind.getEquivalenceClassMembers(elem);
 	}
 }
 

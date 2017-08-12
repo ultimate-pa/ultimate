@@ -195,6 +195,78 @@ public class CongruenceClosureTest {
 
 	}
 
+	/**
+	 * example:
+	 * <ul>
+	 *  <li> preState:
+	 *   (i = f(y)) , (j != f(x))
+	 *  <li> then introduce equality (i = j)
+	 *  <li> we should get the output state, i.e., we have to propagate an extra disequality on introducing the equality
+	 *   (i = f(y)) , (j != f(x)), (i = j), (x != y)
+	 * </ul>
+	 */
+	@Test
+	public void test5() {
+		final CongruenceClosure<StringCCElement, String> cc = new CongruenceClosure<>();
+
+		final StringElementFactory factory = new StringElementFactory();
+
+		final StringCCElement x = factory.getBaseElement("x");
+		cc.getRepresentativeAndAddElementIfNeeded(x);
+		final StringCCElement f_x = factory.getFuncAppElement("f", x);
+		cc.getRepresentativeAndAddElementIfNeeded(f_x);
+		final StringCCElement y = factory.getBaseElement("y");
+		cc.getRepresentativeAndAddElementIfNeeded(y);
+		final StringCCElement f_y = factory.getFuncAppElement("f", y);
+		cc.getRepresentativeAndAddElementIfNeeded(f_y);
+
+		final StringCCElement i = factory.getBaseElement("i");
+		cc.getRepresentativeAndAddElementIfNeeded(i);
+		final StringCCElement j = factory.getBaseElement("j");
+		cc.getRepresentativeAndAddElementIfNeeded(j);
+
+		cc.reportEquality(i, f_y);
+		cc.reportDisequality(j, f_x);
+		cc.reportEquality(i, j);
+
+		assertTrue(cc.getEqualityStatus(x, y) == Equality.NOT_EQUAL);
+
+	}
+
+	/**
+	 * say we knew before
+	 * f(x1, x2) != g(y1, y2), and f = g
+	 * now we are reporting x1 = y1
+	 * --> then we need to propagate  x2 != y2 now.
+	 */
+	@Test
+	public void test6() {
+		final CongruenceClosure<StringCCElement, String> cc = new CongruenceClosure<>();
+
+		final StringElementFactory factory = new StringElementFactory();
+
+		final StringCCElement x1 = factory.getBaseElement("x1");
+		cc.getRepresentativeAndAddElementIfNeeded(x1);
+		final StringCCElement x2 = factory.getBaseElement("x2");
+		cc.getRepresentativeAndAddElementIfNeeded(x2);
+		final StringCCElement y1 = factory.getBaseElement("y1");
+		cc.getRepresentativeAndAddElementIfNeeded(y1);
+		final StringCCElement y2 = factory.getBaseElement("y2");
+		cc.getRepresentativeAndAddElementIfNeeded(y2);
+
+		final StringCCElement f_x1_x2 = factory.getFuncAppElement("f", x1, x2);
+		cc.getRepresentativeAndAddElementIfNeeded(f_x1_x2);
+		final StringCCElement g_y1_y2 = factory.getFuncAppElement("g", y1, y2);
+		cc.getRepresentativeAndAddElementIfNeeded(g_y1_y2);
+
+
+		cc.reportDisequality(f_x1_x2, g_y1_y2);
+		cc.reportFunctionEquality("f", "g");
+
+		cc.reportEquality(x1, y1);
+
+		assertTrue(cc.getEqualityStatus(x2, y2) == Equality.NOT_EQUAL);
+	}
 
 }
 

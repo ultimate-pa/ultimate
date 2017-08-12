@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
@@ -108,11 +109,28 @@ public class CongruenceClosure<
 					continue;
 				}
 
-				// insert forward congruences
 				for (final ELEM ccpar1 : e1CcPars) {
 					for (final ELEM ccpar2 : e2CcPars) {
+						// insert forward congruence
 						if (argumentsAreCongruent(ccpar1, ccpar2)) {
 							reportEqualityRec(ccpar1, ccpar2);
+						}
+
+						/*
+						 * insert some backward congruences:
+						 *
+						 * say we knew before
+						 * f(x1, x2) != g(y1, y2), and f = g
+						 * now we are reporting x1 = y1
+						 * --> then we need to propagate  x2 != y2 now.
+						 */
+						if (getEqualityStatus(ccpar1, ccpar2) == Equality.NOT_EQUAL) {
+							final int onlyDifferentPos =
+									getOnlyUnconstrainedPos(ccpar1.getArguments(), ccpar2.getArguments());
+							if (onlyDifferentPos != -1) {
+								reportDisequalityRec(ccpar1.getArguments().get(onlyDifferentPos),
+										ccpar2.getArguments().get(onlyDifferentPos));
+							}
 						}
 					}
 				}
@@ -121,24 +139,23 @@ public class CongruenceClosure<
 
 
 
-		// do backward congruence propagations
-		for (final FUNCTION funcRep : mFunctionTVER.getAllRepresentatives()) {
-			final Set<List<ELEM>> e1CcChildren = mFunctionToRepresentativeToCcChildren.get(funcRep, e1OldRep);
-			final Set<List<ELEM>> e2CcChildren = mFunctionToRepresentativeToCcChildren.get(funcRep, e2OldRep);
 
-			if (e1CcChildren == null || e2CcChildren == null) {
-				// nothing to do
-				continue;
-			}
+		/*
+		 * do some more backward congruence propagations
+		 * example:
+		 * <ul>
+		 *  <li> preState:
+		 *   (i = f(y)) , (j != f(x))
+		 *  <li> then introduce equality (i = j)
+		 *  <li> we should get the output state, i.e., we have to propagate an extra disequality on introducing the equality
+		 *   (i = f(y)) , (j != f(x)), (i = j), (x != y)
+		 * </ul>
+		 *
+		 * we have two symmetric cases
+		 */
+		propagateDisequalities(e1OldRep, e2OldRep);
+		propagateDisequalities(e2OldRep, e1OldRep);
 
-			// insert backward congruences
-			for (final List<ELEM> ccpar1 : e1CcChildren) {
-				for (final List<ELEM> ccpar2 : e2CcChildren) {
-					// if all other arguments are equal, we can propagate a disequality
-					// TODO
-				}
-			}
-		}
 
 		// update ccpar and ccchild sets
 		for (final FUNCTION func : mFunctionTVER.getAllElements()) {
@@ -172,6 +189,58 @@ public class CongruenceClosure<
 				removeFromCcChildren(e1OldRep, func);
 			}
 		}
+	}
+
+	/**
+	 * This method is a helper that, for two representatives of equivalence classes checks if, because of merging the
+	 * two equivalence classes, any disequality propagations are possible.
+	 *
+	 * Example:
+	 *  <li> preState:
+	 *   (i = f(y)) , (j != f(x)), (i = j)
+	 *  <li> we just added an equality between i and j (did the merge operation)
+	 *  <li> one call of this method will be with (preState, i, f(x))
+	 *  <li> we will get the output state:
+	 *   (i = f(y)) , (j != f(x)), (i = j), (x != y)
+	 *
+	 * @param e1OldRep
+	 * @param e2OldRep
+	 */
+	private void propagateDisequalities(final ELEM e1OldRep, final ELEM e2OldRep) {
+		for (final ELEM repUnequalToE1 : mElementTVER.getRepresentativesUnequalTo(e1OldRep)) {
+			for (final Set<FUNCTION> eqc : mFunctionTVER.getAllEquivalenceClasses()) {
+				for (final Pair<FUNCTION, FUNCTION> pair : getPairsFromSet(eqc, true, true)) {
+					final Set<ELEM> funcApps1 =
+							getFunctionApplicationsInSameEquivalenceClass(pair.getFirst(), repUnequalToE1);
+					final Set<ELEM> funcApps2 =
+							getFunctionApplicationsInSameEquivalenceClass(pair.getSecond(), e2OldRep);
+
+					if (funcApps1 == null || funcApps2 == null) {
+						// nothing to do
+						continue;
+					}
+
+					for (final ELEM ccpar1 : funcApps1) {
+						for (final ELEM ccpar2 : funcApps2) {
+							final int onlyDifferentPos =
+									getOnlyUnconstrainedPos(ccpar1.getArguments(), ccpar2.getArguments());
+							if (onlyDifferentPos != -1) {
+								reportDisequalityRec(ccpar1.getArguments().get(onlyDifferentPos),
+										ccpar2.getArguments().get(onlyDifferentPos));
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+
+
+	private Set<ELEM> getFunctionApplicationsInSameEquivalenceClass(final FUNCTION func, final ELEM elem) {
+		return mElementTVER.getEquivalenceClass(elem).stream()
+				.filter(el -> el.isFunctionApplication() && el.getAppliedFunction() == func)
+				.collect(Collectors.toSet());
 	}
 
 	static <E> Collection<Pair<E, E>> getPairsFromSet(final Set<E> set, final boolean returnReflexivePairs,
@@ -250,7 +319,7 @@ public class CongruenceClosure<
 	}
 
 	/**
-	 * mFunctionToRepresentativeToCcPars only speaks about representatives.
+	 * mFunctionToRepresentativeToCcPars only speaks about representatives (in the second entry).
 	 * This is called when the given ELEM is no more a representative an thus its whole
 	 * entry in the nested map can be removed.
 	 *
@@ -339,14 +408,20 @@ public class CongruenceClosure<
 		return mElementTVER.getRepresentative(elem);
 	}
 
+	public void reportFunctionDisequality(final FUNCTION f1, final FUNCTION f2) {
+		mFunctionTVER.reportNotEquals(f1, f2);
+	}
+
 	public void reportDisequality(final ELEM e1, final ELEM e2) {
+		reportDisequalityRec(e1, e2);
+		assert sanityCheck();
+	}
+
+	public void reportDisequalityRec(final ELEM e1, final ELEM e2) {
 
 		mElementTVER.reportNotEquals(e1, e2);
 
 		doBackwardCongruencePropagations(e1, e2);
-
-		assert sanityCheck();
-
 	}
 
 	/**
