@@ -3,44 +3,43 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.ThreeValuedEquivalenceRelation;
 
 public class EqConstraintNew {
 
-	ThreeValuedEquivalenceRelation<E>
+//	ThreeValuedEquivalenceRelation<E>
 }
 
 abstract class EqTerm {
-	
-	private Term mTerm;
 
-	EqTerm(Term term) {
+	private final Term mTerm;
+
+	EqTerm(final Term term) {
 		mTerm = term;
 	}
 
 	Term getTerm() {
 		return mTerm;
 	}
-	
-	abstract EqTerm rename(Map<Term, Term> renaming);	
+
+	abstract EqTerm rename(Map<Term, Term> renaming);
 }
 
-abstract class EqElementTerm extends EqTerm {
-	
-}
-
-class EqSelectTerm extends EqElementTerm {
-	
-}
-
-class EqAtomicTerm extends EqElementTerm {
-
-}
-
-class EqNonAtomicTerm extends EqElementTerm {
-
-}
-
-class EqArrayTerm extends EqTerm {
-	
-}
+//abstract class EqElementTerm extends EqTerm {
+//
+//}
+//
+//class EqSelectTerm extends EqElementTerm {
+//
+//}
+//
+//class EqAtomicTerm extends EqElementTerm {
+//
+//}
+//
+//class EqNonAtomicTerm extends EqElementTerm {
+//
+//}
+//
+//class EqArrayTerm extends EqTerm {
+//
+//}
