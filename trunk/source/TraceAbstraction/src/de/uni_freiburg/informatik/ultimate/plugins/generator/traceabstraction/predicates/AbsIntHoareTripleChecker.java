@@ -66,6 +66,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
 import de.uni_freiburg.informatik.ultimate.util.InCaReCounter;
+import de.uni_freiburg.informatik.ultimate.util.SetOperations;
 
 /**
  * {@link IHoareTripleChecker} that performs hoare triple checks using an abstract post operator.
@@ -453,7 +454,7 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 		requiredVars.addAll(getVars(action));
 		requiredVars.addAll(succ.getVariables());
 		final Set<VARDECL> preVars = validPreState.getVariables();
-		final Set<VARDECL> toRemove = AbsIntUtil.difference(preVars, requiredVars);
+		final Set<VARDECL> toRemove = SetOperations.difference(preVars, requiredVars);
 
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug(String.format("Removing %s of %s vars", toRemove.size(), preVars.size()));

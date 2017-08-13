@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractDom
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
+import de.uni_freiburg.informatik.ultimate.util.SetOperations;
 
 /**
  * A state in the {@link CompoundDomain}.
@@ -323,7 +323,7 @@ public class CompoundDomainState implements IAbstractState<CompoundDomainState, 
 
 		final List<IAbstractState<?, IBoogieVar>> compactedSynchronizedStates = new ArrayList<>(numberOfStates);
 		for (final IAbstractState<?, IBoogieVar> compactedState : compactedStates) {
-			final Set<IBoogieVar> missing = AbsIntUtil.difference(vars, compactedState.getVariables());
+			final Set<IBoogieVar> missing = SetOperations.difference(vars, compactedState.getVariables());
 			if (missing.isEmpty()) {
 				compactedSynchronizedStates.add(compactedState);
 			} else {
