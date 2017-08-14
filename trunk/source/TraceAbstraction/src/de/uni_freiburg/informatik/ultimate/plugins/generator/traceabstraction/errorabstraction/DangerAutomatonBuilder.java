@@ -491,16 +491,7 @@ class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements IErro
 		return disjunctionProvider.getOrConstruct(new Pair<>(succInAbstraction, succDisjunctionInDanger));
 	}
 
-	private Term constructPreInternal(final ILogger logger, final PredicateFactory predicateFactory,
-			final CfgSmtToolkit csToolkit, final PredicateTransformer<Term, IPredicate, TransFormula> pt,
-			final TransFormula tf, final IPredicate succPred) {
-		final Term wp = pt.weakestPrecondition(predicateFactory.not(succPred), tf);
-		final Term wpLessQuantifiers = PartialQuantifierElimination.tryToEliminate(mServices, logger,
-				csToolkit.getManagedScript(), wp, SimplificationTechnique.SIMPLIFY_DDA,
-				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
-		final Term pre = SmtUtils.not(csToolkit.getManagedScript().getScript(), wpLessQuantifiers);
-		return pre;
-	}
+
 
 	private TracePredicates constructPredicates(final ILogger logger, final PredicateFactory predicateFactory,
 			final PredicateUnificationMechanism pum, final CfgSmtToolkit csToolkit,
