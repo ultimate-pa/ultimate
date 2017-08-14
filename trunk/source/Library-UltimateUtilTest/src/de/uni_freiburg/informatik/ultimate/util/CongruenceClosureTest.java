@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.util;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.util.HashSet;
@@ -264,6 +265,133 @@ public class CongruenceClosureTest {
 
 		assertTrue(cc.getEqualityStatus(x2, y2) == EqualityStatus.NOT_EQUAL);
 	}
+
+	/**
+	 * Tests what happens when we don't register all nodes up front (i.e. before the first report*-call).
+	 */
+	@Test
+	public void test7() {
+		final CongruenceClosure<StringCCElement, String> cc = new CongruenceClosure<>();
+
+		final StringElementFactory factory = new StringElementFactory();
+
+		final StringCCElement a = factory.getBaseElement("a");
+		final StringCCElement b = factory.getBaseElement("b");
+		final StringCCElement f_a = factory.getFuncAppElement("f", a);
+		final StringCCElement f_b = factory.getFuncAppElement("f", b);
+
+		cc.reportEquality(a, b);
+
+//		assertTrue(cc.getEqualityStatus(f_a, f_b) == EqualityStatus.EQUAL);
+
+		cc.reportDisequality(f_a, f_b);
+
+		assertTrue(cc.isInconsistent());
+
+	}
+
+	@Test
+	public void test7a() {
+		final CongruenceClosure<StringCCElement, String> cc = new CongruenceClosure<>();
+
+		final StringElementFactory factory = new StringElementFactory();
+
+		final StringCCElement a = factory.getBaseElement("a");
+		final StringCCElement b = factory.getBaseElement("b");
+		final StringCCElement f_a_b = factory.getFuncAppElement("f", a, b);
+		final StringCCElement g_b_a = factory.getFuncAppElement("g", b, a);
+
+		cc.reportEquality(a, b);
+
+		cc.reportFunctionEquality("f", "g");
+
+		cc.reportDisequality(f_a_b, g_b_a);
+
+		assertTrue(cc.isInconsistent());
+
+	}
+
+	/**
+	 * Test for debugging the congruence propagation done in CongruenceClosure.registerNewElement(..). Checks if the
+	 * argument order is accounted for.
+	 */
+	@Test
+	public void test7b() {
+		final CongruenceClosure<StringCCElement, String> cc = new CongruenceClosure<>();
+
+		final StringElementFactory factory = new StringElementFactory();
+
+		final StringCCElement a = factory.getBaseElement("a");
+		final StringCCElement b = factory.getBaseElement("b");
+		final StringCCElement i = factory.getBaseElement("i");
+		final StringCCElement j = factory.getBaseElement("j");
+
+		final StringCCElement f_a_i = factory.getFuncAppElement("f", a, i);
+		final StringCCElement g_j_b = factory.getFuncAppElement("g", j, b);
+
+		cc.reportEquality(a, b);
+		cc.reportEquality(i, j);
+
+		cc.reportFunctionEquality("f", "g");
+
+		/*
+		 * At this point we _cannot_ propagate "f(a,i) = g(j,b)" because of argument order. (We could propagate
+		 * f(a,i) = g(b,j)..)
+		 */
+		cc.reportDisequality(f_a_i, g_j_b);
+
+		assertFalse(cc.isInconsistent());
+	}
+
+
+	/**
+	 * Example from Jochen Hoenicke's Decision Procedures lecture.
+	 *
+	 */
+	@Test
+	public void test8() {
+		final CongruenceClosure<StringCCElement, String> cc = new CongruenceClosure<>();
+
+		final StringElementFactory factory = new StringElementFactory();
+
+		final StringCCElement a = factory.getBaseElement("a");
+		final StringCCElement b = factory.getBaseElement("b");
+
+		final StringCCElement f_a_b = factory.getFuncAppElement("f", a, b);
+
+		final StringCCElement f_f_a_b_b = factory.getFuncAppElement("f", f_a_b, b);
+
+		cc.reportEquality(f_a_b, a);
+		assertFalse(cc.isInconsistent());
+
+		cc.reportDisequality(f_f_a_b_b, a);
+		assertTrue(cc.isInconsistent());
+	}
+
+	/**
+	 * Example from Jochen Hoenicke's Decision Procedures lecture.
+	 */
+	@Test
+	public void test9() {
+		final CongruenceClosure<StringCCElement, String> cc = new CongruenceClosure<>();
+
+		final StringElementFactory factory = new StringElementFactory();
+
+		final StringCCElement a = factory.getBaseElement("a");
+		final StringCCElement f_a = factory.getFuncAppElement("f", a);
+		final StringCCElement f2_a = factory.getFuncAppElement("f", f_a);
+		final StringCCElement f3_a = factory.getFuncAppElement("f", f2_a);
+		final StringCCElement f4_a = factory.getFuncAppElement("f", f3_a);
+		final StringCCElement f5_a = factory.getFuncAppElement("f", f4_a);
+
+		cc.reportEquality(f3_a, a);
+		cc.reportEquality(f5_a, a);
+
+		cc.reportDisequality(f_a, a);
+		assertTrue(cc.isInconsistent());
+	}
+
+
 
 }
 

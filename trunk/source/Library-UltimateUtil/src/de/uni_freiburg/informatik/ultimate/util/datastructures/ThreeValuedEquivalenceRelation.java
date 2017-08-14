@@ -254,7 +254,7 @@ public class ThreeValuedEquivalenceRelation<E> {
 		sb.append(mDisequalities);
 		sb.append("\n");
 
-		sb.append("Containts contradiction: ");
+		sb.append("Is inconsistent: ");
 		sb.append(mIsInconsistent);
 
 		return sb.toString();
