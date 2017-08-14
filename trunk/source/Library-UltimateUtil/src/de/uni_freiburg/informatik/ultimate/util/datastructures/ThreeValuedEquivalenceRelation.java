@@ -43,27 +43,27 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 public class ThreeValuedEquivalenceRelation<E> {
 
 	private final UnionFind<E> mUnionFind;
-	private final HashRelation<E, E> mDistinctElements;
-	private boolean mContainsContradiction;
+	private final HashRelation<E, E> mDisequalities;
+	private boolean mIsInconsistent;
 
 	public ThreeValuedEquivalenceRelation() {
 		mUnionFind = new UnionFind<>();
-		mDistinctElements = new HashRelation<>();
-		mContainsContradiction = false;
+		mDisequalities = new HashRelation<>();
+		mIsInconsistent = false;
 	}
 
 	public ThreeValuedEquivalenceRelation(final ThreeValuedEquivalenceRelation<E> tver) {
 		this.mUnionFind = new UnionFind<>(tver.mUnionFind);
-		this.mDistinctElements = new HashRelation<>(tver.mDistinctElements);
-		this.mContainsContradiction = tver.mContainsContradiction;
+		this.mDisequalities = new HashRelation<>(tver.mDisequalities);
+		this.mIsInconsistent = tver.mIsInconsistent;
 		assert disequalitiesOnlyContainRepresentatives();
 	}
 
 	public ThreeValuedEquivalenceRelation(final UnionFind<E> newElemPartition,
 			final HashRelation<E, E> newElemDisequalities) {
 		mUnionFind = new UnionFind<>(newElemPartition);
-		mDistinctElements = new HashRelation<>(newElemDisequalities);
-		mContainsContradiction = false;
+		mDisequalities = new HashRelation<>(newElemDisequalities);
+		mIsInconsistent = false;
 		assert disequalitiesOnlyContainRepresentatives();
 	}
 
@@ -93,63 +93,91 @@ public class ThreeValuedEquivalenceRelation<E> {
 		final Set<E> equivalenceClass = mUnionFind.getEquivalenceClassMembers(elem);
 		if (equivalenceClass.isEmpty()) {
 			// elem was the only element in its equivalence class --> just remove it from disequalities
-			mDistinctElements.removeDomainElement(elem);
-			mDistinctElements.removeRangeElement(elem);
+			mDisequalities.removeDomainElement(elem);
+			mDisequalities.removeRangeElement(elem);
 		} else {
 			assert rep == elem;
 			// elem was the representative of its equivalence class, but not the only element
 			// --> replace it by the new representative in mDistinctElements
 			final E newRep = mUnionFind.find(equivalenceClass.iterator().next());
-			mDistinctElements.replaceDomainElement(elem, newRep);
-			mDistinctElements.replaceRangeElement(elem, newRep);
+			mDisequalities.replaceDomainElement(elem, newRep);
+			mDisequalities.replaceRangeElement(elem, newRep);
 		}
 	}
 
-	public void reportEquality(final E elem1, final E elem2) {
-		assert !mContainsContradiction : "already in an inconsistent state, check for contradiction before calling "
-				+ "this";
+	/**
+	 *
+	 * @param elem1
+	 * @param elem2
+	 * @return true iff the method call changed the state of this ThreeValuedEquivalenceRelation
+	 */
+	public boolean reportEquality(final E elem1, final E elem2) {
+		if (mIsInconsistent) {
+			throw new IllegalStateException();
+		}
 
 		final E oldRep1 = mUnionFind.findAndConstructEquivalenceClassIfNeeded(elem1);
 		final E oldRep2 = mUnionFind.findAndConstructEquivalenceClassIfNeeded(elem2);
 
-		if (getEquality(elem1, elem2) == Equality.NOT_EQUAL) {
-			mContainsContradiction = true;
-			return;
+		if (oldRep1 == oldRep2) {
+			// the elements already are in the same equivalence class, do nothing
+			return false;
+		}
+
+		if (getEqualityStatus(elem1, elem2) == EqualityStatus.NOT_EQUAL) {
+			mIsInconsistent = true;
+			return true;
 		}
 
 		mUnionFind.union(elem1, elem2);
 
-		// we need to update the disequalities such that they still only talk about representatives
+		/*
+		 * Because either oldRep1 or oldRep2 is no longer a representative now. By our convention, the element of the
+		 * relation mDisequalities may only be representatives. Thus we may have to update mDisequalities accordingly.
+		 */
 		if (isRepresentative(oldRep1)) {
 			// elem1 has kept its representative, elem2 has a new representative now
 			assert mUnionFind.find(elem2) == oldRep1;
 
-			mDistinctElements.replaceDomainElement(oldRep2, oldRep1);
-			mDistinctElements.replaceRangeElement(oldRep2, oldRep1);
+			mDisequalities.replaceDomainElement(oldRep2, oldRep1);
+			mDisequalities.replaceRangeElement(oldRep2, oldRep1);
 		} else {
 			// elem2 has kept its representative, elem1 has a new representative now
 			assert mUnionFind.find(elem1) == oldRep2;
 
-			mDistinctElements.replaceDomainElement(oldRep1, oldRep2);
-			mDistinctElements.replaceRangeElement(oldRep1, oldRep2);
+			mDisequalities.replaceDomainElement(oldRep1, oldRep2);
+			mDisequalities.replaceRangeElement(oldRep1, oldRep2);
 		}
 		assert disequalitiesOnlyContainRepresentatives();
+		return true;
 	}
 
-	public void reportNotEquals(final E elem1, final E elem2) {
-		assert !mContainsContradiction : "already in an inconsistent state, check for contradiction before calling "
-				+ "this";
+	/**
+	 *
+	 * @param elem1
+	 * @param elem2
+	 * @return true iff the method call changed the state of this ThreeValuedEquivalenceRelation
+	 */
+	public boolean reportDisequality(final E elem1, final E elem2) {
+		if (mIsInconsistent) {
+			throw new IllegalStateException();
+		}
 
 		final E rep1 = mUnionFind.findAndConstructEquivalenceClassIfNeeded(elem1);
 		final E rep2 = mUnionFind.findAndConstructEquivalenceClassIfNeeded(elem2);
 
-		if (rep1 == rep2) {
-			mContainsContradiction = true;
-			return;
+		if (getEqualityStatus(rep1, rep2) == EqualityStatus.NOT_EQUAL) {
+			return false;
 		}
 
-		mDistinctElements.addPair(rep1, rep2);
+		if (rep1 == rep2) {
+			mIsInconsistent = true;
+			return true;
+		}
+
+		mDisequalities.addPair(rep1, rep2);
 		assert disequalitiesOnlyContainRepresentatives();
+		return true;
 	}
 
 	public E getRepresentativeAndAddElementIfNeeded(final E elem) {
@@ -165,14 +193,16 @@ public class ThreeValuedEquivalenceRelation<E> {
 	}
 
 	/**
-	 * @return true iff the equalities and disequaleties that have been reported contain a contradiction
+	 * @return true iff the equalities and disequalities that have been reported are inconsistent
 	 */
-	public boolean containsContradiction() {
-		return mContainsContradiction;
+	public boolean isInconsistent() {
+		return mIsInconsistent;
 	}
 
-	public Equality getEquality(final E elem1, final E elem2) {
-		assert !mContainsContradiction : "check for contradiction before calling this";
+	public EqualityStatus getEqualityStatus(final E elem1, final E elem2) {
+		if (mIsInconsistent) {
+			throw new IllegalStateException();
+		}
 
 		final E elem1Rep = mUnionFind.find(elem1);
 		if (elem1Rep == null) {
@@ -184,17 +214,17 @@ public class ThreeValuedEquivalenceRelation<E> {
 		}
 
 		if (elem1Rep.equals(elem2Rep)) {
-			return Equality.EQUAL;
-		} else if (mDistinctElements.containsPair(elem1Rep, elem2Rep)
-				|| mDistinctElements.containsPair(elem2Rep, elem1Rep)) {
-			return Equality.NOT_EQUAL;
+			return EqualityStatus.EQUAL;
+		} else if (mDisequalities.containsPair(elem1Rep, elem2Rep)
+				|| mDisequalities.containsPair(elem2Rep, elem1Rep)) {
+			return EqualityStatus.NOT_EQUAL;
 		} else {
-			return Equality.UNKNOWN;
+			return EqualityStatus.UNKNOWN;
 		}
 	}
 
 	private boolean disequalitiesOnlyContainRepresentatives() {
-		for (final Entry<E, E> en : mDistinctElements.entrySet()) {
+		for (final Entry<E, E> en : mDisequalities.entrySet()) {
 			if (!isRepresentative(en.getKey())) {
 				return false;
 			}
@@ -221,11 +251,11 @@ public class ThreeValuedEquivalenceRelation<E> {
 		sb.append("\n");
 
 		sb.append("Non-Equivalences: ");
-		sb.append(mDistinctElements);
+		sb.append(mDisequalities);
 		sb.append("\n");
 
 		sb.append("Containts contradiction: ");
-		sb.append(mContainsContradiction);
+		sb.append(mIsInconsistent);
 
 		return sb.toString();
 	}
@@ -237,10 +267,10 @@ public class ThreeValuedEquivalenceRelation<E> {
 	public Set<E> getRepresentativesUnequalTo(final E elem) {
 		final Set<E> result = new HashSet<>();
 
-		result.addAll(mDistinctElements.getImage(elem));
+		result.addAll(mDisequalities.getImage(elem));
 
-		for (final E domEl : mDistinctElements.getDomain()) {
-			if (mDistinctElements.getImage(domEl).contains(elem)) {
+		for (final E domEl : mDisequalities.getDomain()) {
+			if (mDisequalities.getImage(domEl).contains(elem)) {
 				result.add(domEl);
 			}
 		}

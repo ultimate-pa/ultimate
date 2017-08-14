@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayEqu
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayUpdate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.IndexAnalysisResult;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.Equality;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.EqualityStatus;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 
 public class EquivalentCells {
@@ -84,7 +84,7 @@ public class EquivalentCells {
 			for (final ArrayIndex index : newInstance2Index2CellVariable.keySet()) {
 				final TermVariable newCellVariable = newInstance2Index2CellVariable.get(index);
 				final TermVariable oldCellVariable = oldInstance2Index2CellVariable.get(index);
-				final Equality indexEquality = mIndexAnalyzer.isEqual(index, updateIndex);
+				final EqualityStatus indexEquality = mIndexAnalyzer.isEqual(index, updateIndex);
 				switch (indexEquality) {
 				case EQUAL:
 					// do nothing
@@ -118,7 +118,7 @@ public class EquivalentCells {
 				for (int j = 0; j < i; j++) {
 					final List<Term> index1 = indices[i];
 					final List<Term> index2 = indices[j];
-					if (mIndexAnalyzer.isEqual(index1, index2) == Equality.EQUAL) {
+					if (mIndexAnalyzer.isEqual(index1, index2) == EqualityStatus.EQUAL) {
 						final TermVariable value1 = values[i];
 						final TermVariable value2 = values[j];
 						uf.union(value1, value2);

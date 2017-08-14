@@ -80,15 +80,12 @@ public class UnionFind<E> implements IPartition<E> {
 	}
 
 	/**
-	 * @param elem
-	 *            element
-	 * @return the representative of the equivalence class of element e.
+	 * @param elem element
+	 * @return the representative of the equivalence class of element elem. null if the given element is not in any
+	 * 				equivalence class
 	 */
 	public E find(final E elem) {
 		final Set<E> set = mEquivalenceClass.get(elem);
-		if (set == null) {
-			return null;
-		}
 		return mRepresentative.get(set);
 	}
 

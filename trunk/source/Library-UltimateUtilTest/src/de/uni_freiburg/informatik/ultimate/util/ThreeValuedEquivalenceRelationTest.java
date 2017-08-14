@@ -31,7 +31,7 @@ import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
-import de.uni_freiburg.informatik.ultimate.util.datastructures.Equality;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.EqualityStatus;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ThreeValuedEquivalenceRelation;
 
 
@@ -48,35 +48,35 @@ public class ThreeValuedEquivalenceRelationTest {
 		
 		tver1.reportEquality("x", "y");
 
-		assertFalse(tver1.containsContradiction());
+		assertFalse(tver1.isInconsistent());
 		
-		assertTrue(tver1.getEquality("x", "x") == Equality.EQUAL);
+		assertTrue(tver1.getEqualityStatus("x", "x") == EqualityStatus.EQUAL);
 
-		assertTrue(tver1.getEquality("x", "y") == Equality.EQUAL);
-		assertTrue(tver1.getEquality("y", "x") == Equality.EQUAL);
+		assertTrue(tver1.getEqualityStatus("x", "y") == EqualityStatus.EQUAL);
+		assertTrue(tver1.getEqualityStatus("y", "x") == EqualityStatus.EQUAL);
 		
-		tver1.reportNotEquals("x", "z");
+		tver1.reportDisequality("x", "z");
 
-		assertFalse(tver1.containsContradiction());
+		assertFalse(tver1.isInconsistent());
 
-		assertTrue(tver1.getEquality("x", "z") == Equality.NOT_EQUAL);
-		assertTrue(tver1.getEquality("z", "x") == Equality.NOT_EQUAL);
-		assertTrue(tver1.getEquality("y", "z") == Equality.NOT_EQUAL);
-		assertTrue(tver1.getEquality("z", "y") == Equality.NOT_EQUAL);
+		assertTrue(tver1.getEqualityStatus("x", "z") == EqualityStatus.NOT_EQUAL);
+		assertTrue(tver1.getEqualityStatus("z", "x") == EqualityStatus.NOT_EQUAL);
+		assertTrue(tver1.getEqualityStatus("y", "z") == EqualityStatus.NOT_EQUAL);
+		assertTrue(tver1.getEqualityStatus("z", "y") == EqualityStatus.NOT_EQUAL);
 	
 		tver1.reportEquality("a", "b");
 
-		assertTrue(tver1.getEquality("a", "x") == Equality.UNKNOWN);
+		assertTrue(tver1.getEqualityStatus("a", "x") == EqualityStatus.UNKNOWN);
 		
-		tver1.reportNotEquals("i", "j");
+		tver1.reportDisequality("i", "j");
 		
 		
-		assertTrue(tver1.getEquality("a", "i") == Equality.UNKNOWN);
-		assertTrue(tver1.getEquality("x", "i") == Equality.UNKNOWN);
+		assertTrue(tver1.getEqualityStatus("a", "i") == EqualityStatus.UNKNOWN);
+		assertTrue(tver1.getEqualityStatus("x", "i") == EqualityStatus.UNKNOWN);
 		
 		tver1.reportEquality("y", "z");
 		
-		assertTrue(tver1.containsContradiction());
+		assertTrue(tver1.isInconsistent());
 	
 		
 	}

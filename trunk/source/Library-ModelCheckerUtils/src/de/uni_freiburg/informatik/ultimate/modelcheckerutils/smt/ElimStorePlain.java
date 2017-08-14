@@ -72,7 +72,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 import de.uni_freiburg.informatik.ultimate.util.ConstructionCache;
 import de.uni_freiburg.informatik.ultimate.util.ConstructionCache.IValueConstruction;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.Equality;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.EqualityStatus;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ThreeValuedEquivalenceRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -402,7 +402,7 @@ public class ElimStorePlain {
 					selectIndexEquivalentToStoreIndex = true;
 				} else {
 					selectIndexEquivalentToStoreIndex =
-							(equalityInformation.getEquality(indexOfSelect, storeIndex) == Equality.EQUAL)
+							(equalityInformation.getEqualityStatus(indexOfSelect, storeIndex) == EqualityStatus.EQUAL)
 									|| equalDoubletons.contains(new Doubleton<>(indexOfSelect, storeIndex))
 									|| equalDoubletons.contains(new Doubleton<>(storeIndex, indexOfSelect));
 				}
@@ -525,7 +525,7 @@ public class ElimStorePlain {
 				if (SmtUtils.isTrue(eq)) {
 					tver.reportEquality(indicesList.get(i), indicesList.get(j));
 				} else if (SmtUtils.isFalse(eq)) {
-					tver.reportNotEquals(indicesList.get(i), indicesList.get(j));
+					tver.reportDisequality(indicesList.get(i), indicesList.get(j));
 				} else {
 					// TODO: bring eq in commuhash normal form
 					if (dualFiniteJuncts.contains(eq)) {
@@ -534,7 +534,7 @@ public class ElimStorePlain {
 					} else {
 						final Term neq = SmtUtils.not(mScript, eq);
 						if (dualFiniteJuncts.contains(neq)) {
-							tver.reportNotEquals(indicesList.get(i), indicesList.get(j));
+							tver.reportDisequality(indicesList.get(i), indicesList.get(j));
 							mLogger.info("found not equals in dual finite juncts");
 						} else {
 							final Validity isEqual = iea.checkPlication(eq);
@@ -545,7 +545,7 @@ public class ElimStorePlain {
 								if (mQuantifier == QuantifiedFormula.EXISTS) {
 									tver.reportEquality(indicesList.get(i), indicesList.get(j));
 								} else if (mQuantifier == QuantifiedFormula.FORALL) {
-									tver.reportNotEquals(indicesList.get(i), indicesList.get(j));
+									tver.reportDisequality(indicesList.get(i), indicesList.get(j));
 								} else {
 									throw new AssertionError("unknown quantifier");
 								}
@@ -561,7 +561,7 @@ public class ElimStorePlain {
 
 								if (notEqualsHolds == Validity.VALID) {
 									if (mQuantifier == QuantifiedFormula.EXISTS) {
-										tver.reportNotEquals(indicesList.get(i), indicesList.get(j));
+										tver.reportDisequality(indicesList.get(i), indicesList.get(j));
 									} else if (mQuantifier == QuantifiedFormula.FORALL) {
 										tver.reportEquality(indicesList.get(i), indicesList.get(j));
 									} else {
@@ -687,7 +687,7 @@ public class ElimStorePlain {
 			assert selectTerm.getSort().equals(valueSort);
 			final Term selectIndex = getIndexOfSelect(selectTerm);
 			if ((storeIndex != null)
-					&& equalityInformation.getEquality(selectIndex, storeIndex) == Equality.NOT_EQUAL) {
+					&& equalityInformation.getEqualityStatus(selectIndex, storeIndex) == EqualityStatus.NOT_EQUAL) {
 				// do nothing
 			} else {
 				final Term indexRepresentative = equalityInformation.getRepresentative(selectIndex);
@@ -772,7 +772,7 @@ public class ElimStorePlain {
 				if (!equalityInformation.isRepresentative(indexList.get(j))) {
 					continue;
 				}
-				if (equalityInformation.getEquality(indexList.get(i), indexList.get(j)) == Equality.NOT_EQUAL) {
+				if (equalityInformation.getEqualityStatus(indexList.get(i), indexList.get(j)) == EqualityStatus.NOT_EQUAL) {
 					// do nothing
 				} else {
 					doubeltons.add(new Doubleton<>(indexList.get(i), indexList.get(j)));

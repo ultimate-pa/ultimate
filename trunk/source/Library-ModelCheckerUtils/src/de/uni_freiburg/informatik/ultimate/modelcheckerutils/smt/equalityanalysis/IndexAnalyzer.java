@@ -50,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayInd
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.Equality;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.EqualityStatus;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
@@ -156,7 +156,7 @@ public class IndexAnalyzer {
 			final Set<Doubleton<Term>> equalDoubletons, final Set<Doubleton<Term>> distinctDoubletons,
 			final Set<Doubleton<Term>> furtherAnalysisRequired) throws AssertionError {
 		final Doubleton<Term> definingDoubleton = constructDefiningDoubleton(doubleton);
-		final Equality equalityStatus;
+		final EqualityStatus equalityStatus;
 		try {
 			equalityStatus = invariantEqualities.getEqualityStatus(definingDoubleton);
 		} catch (final IllegalArgumentException e) {

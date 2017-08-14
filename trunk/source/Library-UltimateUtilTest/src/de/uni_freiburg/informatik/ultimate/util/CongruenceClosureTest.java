@@ -10,7 +10,7 @@ import org.junit.Test;
 
 import de.uni_freiburg.informatik.ultimate.util.datastructures.AbstractCCElementFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CongruenceClosure;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.Equality;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.EqualityStatus;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ICongruenceClosureElement;
 
 public class CongruenceClosureTest {
@@ -46,33 +46,33 @@ public class CongruenceClosureTest {
 		cc.getRepresentativeAndAddElementIfNeeded(g_z);
 
 		// reflexivity
-		assertTrue(cc.getEqualityStatus(x, x) == Equality.EQUAL);
+		assertTrue(cc.getEqualityStatus(x, x) == EqualityStatus.EQUAL);
 
-		assertTrue(cc.getEqualityStatus(x, y) == Equality.UNKNOWN);
+		assertTrue(cc.getEqualityStatus(x, y) == EqualityStatus.UNKNOWN);
 
 		cc.reportEquality(x, z);
 
 		// symmetry
-		assertTrue(cc.getEqualityStatus(z, x) == Equality.EQUAL);
-		assertTrue(cc.getEqualityStatus(x, z) == Equality.EQUAL);
+		assertTrue(cc.getEqualityStatus(z, x) == EqualityStatus.EQUAL);
+		assertTrue(cc.getEqualityStatus(x, z) == EqualityStatus.EQUAL);
 
-		assertTrue(cc.getEqualityStatus(x, y) == Equality.UNKNOWN);
+		assertTrue(cc.getEqualityStatus(x, y) == EqualityStatus.UNKNOWN);
 
 		cc.reportEquality(x, y);
 
 		// transitivity
-		assertTrue(cc.getEqualityStatus(y, z) == Equality.EQUAL);
+		assertTrue(cc.getEqualityStatus(y, z) == EqualityStatus.EQUAL);
 
 		// congruence (forward)
-		assertTrue(cc.getEqualityStatus(f_x, f_y) == Equality.EQUAL);
-		assertTrue(cc.getEqualityStatus(f_x, f_z) == Equality.EQUAL);
+		assertTrue(cc.getEqualityStatus(f_x, f_y) == EqualityStatus.EQUAL);
+		assertTrue(cc.getEqualityStatus(f_x, f_z) == EqualityStatus.EQUAL);
 
 
-		assertTrue(cc.getEqualityStatus(f_x, g_x) == Equality.UNKNOWN);
+		assertTrue(cc.getEqualityStatus(f_x, g_x) == EqualityStatus.UNKNOWN);
 
 		cc.reportFunctionEquality("f", "g");
 
-		assertTrue(cc.getEqualityStatus(f_x, g_x) == Equality.EQUAL);
+		assertTrue(cc.getEqualityStatus(f_x, g_x) == EqualityStatus.EQUAL);
 	}
 
 	@Test
@@ -104,25 +104,25 @@ public class CongruenceClosureTest {
 
 		cc.reportEquality(x, z);
 
-		assertTrue(cc.getEqualityStatus(x, z) == Equality.EQUAL);
-		assertTrue(cc.getEqualityStatus(y, z) == Equality.UNKNOWN);
-		assertTrue(cc.getEqualityStatus(f_x, f_z) == Equality.EQUAL);
-		assertTrue(cc.getEqualityStatus(g_x, g_z) == Equality.EQUAL);
-		assertTrue(cc.getEqualityStatus(f_x, g_z) == Equality.UNKNOWN);
+		assertTrue(cc.getEqualityStatus(x, z) == EqualityStatus.EQUAL);
+		assertTrue(cc.getEqualityStatus(y, z) == EqualityStatus.UNKNOWN);
+		assertTrue(cc.getEqualityStatus(f_x, f_z) == EqualityStatus.EQUAL);
+		assertTrue(cc.getEqualityStatus(g_x, g_z) == EqualityStatus.EQUAL);
+		assertTrue(cc.getEqualityStatus(f_x, g_z) == EqualityStatus.UNKNOWN);
 
 		cc.reportEquality(f_y, z);
 
-		assertTrue(cc.getEqualityStatus(f_y, z) == Equality.EQUAL);
+		assertTrue(cc.getEqualityStatus(f_y, z) == EqualityStatus.EQUAL);
 
 		cc.reportEquality(f_x, g_z);
 
-		assertTrue(cc.getEqualityStatus(f_x, g_z) == Equality.EQUAL);
-		assertTrue(cc.getEqualityStatus(f_z, g_x) == Equality.EQUAL);
+		assertTrue(cc.getEqualityStatus(f_x, g_z) == EqualityStatus.EQUAL);
+		assertTrue(cc.getEqualityStatus(f_z, g_x) == EqualityStatus.EQUAL);
 
 		cc.reportEquality(x, y);
 
-		assertTrue(cc.getEqualityStatus(x, g_z) == Equality.EQUAL);
-		assertTrue(cc.getEqualityStatus(y, f_y) == Equality.EQUAL);
+		assertTrue(cc.getEqualityStatus(x, g_z) == EqualityStatus.EQUAL);
+		assertTrue(cc.getEqualityStatus(y, f_y) == EqualityStatus.EQUAL);
 	}
 
 
@@ -154,8 +154,8 @@ public class CongruenceClosureTest {
 		cc.getRepresentativeAndAddElementIfNeeded(g_z);
 
 		cc.reportDisequality(f_x, f_y);
-		assertTrue(cc.getEqualityStatus(f_x, f_y) == Equality.NOT_EQUAL);
-		assertTrue(cc.getEqualityStatus(x, y) == Equality.NOT_EQUAL);
+		assertTrue(cc.getEqualityStatus(f_x, f_y) == EqualityStatus.NOT_EQUAL);
+		assertTrue(cc.getEqualityStatus(x, y) == EqualityStatus.NOT_EQUAL);
 
 	}
 
@@ -187,8 +187,8 @@ public class CongruenceClosureTest {
 		cc.getRepresentativeAndAddElementIfNeeded(g_z);
 
 		cc.reportFunctionEquality("f", "g");
-		assertTrue(cc.getEqualityStatus(f_x, g_x) == Equality.EQUAL);
-		assertTrue(cc.getEqualityStatus(f_y, g_y) == Equality.EQUAL);
+		assertTrue(cc.getEqualityStatus(f_x, g_x) == EqualityStatus.EQUAL);
+		assertTrue(cc.getEqualityStatus(f_y, g_y) == EqualityStatus.EQUAL);
 
 	}
 
@@ -226,7 +226,7 @@ public class CongruenceClosureTest {
 		cc.reportDisequality(j, f_x);
 		cc.reportEquality(i, j);
 
-		assertTrue(cc.getEqualityStatus(x, y) == Equality.NOT_EQUAL);
+		assertTrue(cc.getEqualityStatus(x, y) == EqualityStatus.NOT_EQUAL);
 
 	}
 
@@ -262,7 +262,7 @@ public class CongruenceClosureTest {
 
 		cc.reportEquality(x1, y1);
 
-		assertTrue(cc.getEqualityStatus(x2, y2) == Equality.NOT_EQUAL);
+		assertTrue(cc.getEqualityStatus(x2, y2) == EqualityStatus.NOT_EQUAL);
 	}
 
 }

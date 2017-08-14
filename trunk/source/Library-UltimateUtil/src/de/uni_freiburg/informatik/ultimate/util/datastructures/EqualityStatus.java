@@ -26,6 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.util.datastructures;
 
-public enum Equality {
+public enum EqualityStatus {
 	EQUAL, NOT_EQUAL, UNKNOWN
 }

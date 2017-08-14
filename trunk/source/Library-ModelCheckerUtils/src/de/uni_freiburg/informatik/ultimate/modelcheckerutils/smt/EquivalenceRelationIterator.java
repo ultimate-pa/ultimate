@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceled
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.util.LexicographicCounter;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.Equality;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.EqualityStatus;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ThreeValuedEquivalenceRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.SymmetricHashRelation;
@@ -169,7 +169,7 @@ public class EquivalenceRelationIterator<E> implements Iterable<Set<Doubleton<E>
 	 */
 	private boolean tryToPush1True() {
 		final Doubleton<E> d = mNonDisjointDoubletons.get(mStack.size());
-		if (mEqualityInformation.getEquality(d.getOneElement(), d.getOtherElement()) == Equality.NOT_EQUAL) {
+		if (mEqualityInformation.getEqualityStatus(d.getOneElement(), d.getOtherElement()) == EqualityStatus.NOT_EQUAL) {
 			// we cannot add true
 			return false;
 		} else {
@@ -193,8 +193,8 @@ public class EquivalenceRelationIterator<E> implements Iterable<Set<Doubleton<E>
 
 	private boolean containsNotEqualsPair(final Set<Doubleton<E>> pairs1) {
 		for (final Doubleton<E> pairFrom1 : pairs1) {
-			if (mEqualityInformation.getEquality(pairFrom1.getOneElement(),
-					pairFrom1.getOtherElement()) == Equality.NOT_EQUAL) {
+			if (mEqualityInformation.getEqualityStatus(pairFrom1.getOneElement(),
+					pairFrom1.getOtherElement()) == EqualityStatus.NOT_EQUAL) {
 				return true;
 			}
 		}
@@ -260,7 +260,7 @@ public class EquivalenceRelationIterator<E> implements Iterable<Set<Doubleton<E>
 				if (!equalityInformation.isRepresentative(indexList.get(j))) {
 					continue;
 				}
-				if (equalityInformation.getEquality(indexList.get(i), indexList.get(j)) == Equality.NOT_EQUAL) {
+				if (equalityInformation.getEqualityStatus(indexList.get(i), indexList.get(j)) == EqualityStatus.NOT_EQUAL) {
 					// do nothing
 				} else {
 					doubeltons.add(new Doubleton<>(indexList.get(i), indexList.get(j)));
