@@ -1,35 +1,24 @@
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.BiPredicate;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.NwaApproximateSimulation;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.NwaApproximateXsimulation.SimulationType;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingCallTransition;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingInternalTransition;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingReturnTransition;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.util.ISetOfPairs;
-import de.uni_freiburg.informatik.ultimate.automata.util.MapBackedSetOfPairs;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.ScopedTransitivityGenerator.INode;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.ScopedTransitivityGenerator.INodePredicate;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.ScopedTransitivityGenerator.NormalNode;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.ScopedTransitivityGenerator.PersistentRootPredicate;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.ScopedTransitivityGenerator.ScopeStack;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.ScopedTransitivityGenerator.TemporaryRootPredicate;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 
 public class ScopedConsistencyGeneratorDelayedSimulation<T, LETTER, STATE> implements IAssignmentCheckerAndGenerator<T> {
@@ -63,31 +52,31 @@ public class ScopedConsistencyGeneratorDelayedSimulation<T, LETTER, STATE> imple
 	
 	@Override
 	public void addScope() {
-		
+		mStack.addScope();
 	}
 	
 	@Override
 	public void makeAssignmentsPersistent() {
-		
+		mStack.makeAllScopesPersistent();
 	}
 	
 	@Override
 	public void revertOneScope() {
-	
+		mStack.revertOneScope();
 	}
 	
 	@Override
-	public void addVariable(final T var) {
-		
+	public void addVariable(final T doubleton) {
+		assert mContent2node.containsKey(((Doubleton<STATE>) doubleton).getOneElement()) && mContent2node.containsKey(((Doubleton<STATE>) doubleton).getOtherElement());
 	}
 	
 	public void addContent(final STATE s) {
-		
+		mContent2node.put(s, new NormalNode<>(s));
 	}
 	
 	@Override
-	//TODO: Make output a list of the Spoiler Winnings & implement getFirst/Second
-	public Iterable<Pair<T, Boolean>> checkAssignment(final T pair, final boolean newStatus){
+	//Checks if the merge states overlap with the simulation results
+	public Iterable<Pair<T, Boolean>> checkAssignment(final T doubleton, final boolean newStatus){
 		
 		try {
 			updateWinningStates();
@@ -97,17 +86,36 @@ public class ScopedConsistencyGeneratorDelayedSimulation<T, LETTER, STATE> imple
 		}
 		
 		//Not very nice: explicit cast to pair type. Could be solved by using a Doubleton class version.
-		assert pair instanceof Pair<?, ?> : "Type error: pairs of states needed.";
+		assert doubleton instanceof Doubleton<?> : "Type error: pairs of states needed.";
+		STATE lhs = ((Doubleton<STATE>) doubleton).getOneElement();
+		STATE rhs = ((Doubleton<STATE>) doubleton).getOtherElement();
 		
 		//No need to do anything if the results match
-		if (newStatus && mSpoilerWinnings.containsPair(((Pair<STATE, STATE>) pair).getFirst(), ((Pair<STATE, STATE>) pair).getSecond()) ||
-				!newStatus && mDuplicatorWinnings.containsPair(((Pair<STATE, STATE>) pair).getFirst(), ((Pair<STATE, STATE>) pair).getSecond())) {
+		if (newStatus && mSpoilerWinnings.containsPair(lhs, rhs) ||
+				!newStatus && mDuplicatorWinnings.containsPair(lhs, rhs)) {
 			return Collections.emptySet();
 		}
-		
-		return Collections.emptySet();
+		//correct wrongly merge states
+		else if (newStatus && mDuplicatorWinnings.containsPair(lhs, rhs)) {
+			final Pair<T, Boolean> corrected = new Pair<T, Boolean>(doubleton, false);
+			List<Pair<T, Boolean>> result = new ArrayList<>();
+			result.add(corrected);
+			return result;
+		}
+		//here we can merge more
+		else if (!newStatus && mSpoilerWinnings.containsPair(lhs, rhs)) {
+			final Pair<T, Boolean> corrected = new Pair<T, Boolean>(doubleton, true);
+			List<Pair<T, Boolean>> result = new ArrayList<>();
+			result.add(corrected);
+			return result;
+		}
+		//TODO: How do we deal with the rest in a smart way?
+		else {
+			return Collections.emptySet();
+		}
 	}
 	
+	//Recomputes the winning states for Spoiler and Duplicator
 	protected void updateWinningStates() throws AutomataOperationCanceledException {
 		final BiPredicate<STATE, STATE> areStatesMerged = new BiPredicate<STATE, STATE>() {
 			@Override

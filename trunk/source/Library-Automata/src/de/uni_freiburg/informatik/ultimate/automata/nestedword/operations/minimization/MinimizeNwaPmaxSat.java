@@ -63,7 +63,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
  *            state type
  * @see MinimizeNwaMaxSat2
  */
-public class MinimizeNwaPmaxSat<LETTER, STATE> extends MinimizeNwaMaxSat2<LETTER, STATE, Doubleton<STATE>> {
+public abstract class MinimizeNwaPmaxSat<LETTER, STATE> extends MinimizeNwaMaxSat2<LETTER, STATE, Doubleton<STATE>> {
 	@SuppressWarnings("rawtypes")
 	private static final Doubleton[] EMPTY_LITERALS = new Doubleton[0];
 
@@ -297,11 +297,5 @@ public class MinimizeNwaPmaxSat<LETTER, STATE> extends MinimizeNwaMaxSat2<LETTER
 	}
 
 	@Override
-	protected AbstractMaxSatSolver<Doubleton<STATE>> createTransitivitySolver() {
-		mTransitivityGenerator = new ScopedTransitivityGeneratorDoubleton<>(mSettings.isUsePathCompression());
-		final List<IAssignmentCheckerAndGenerator<Doubleton<STATE>>> assignmentCheckerAndGeneratorList =
-				new ArrayList<>();
-		assignmentCheckerAndGeneratorList.add(mTransitivityGenerator);
-		return new InteractiveMaxSatSolver<>(mServices, assignmentCheckerAndGeneratorList);
-	}
+	protected abstract AbstractMaxSatSolver<Doubleton<STATE>> createTransitivitySolver();
 }
