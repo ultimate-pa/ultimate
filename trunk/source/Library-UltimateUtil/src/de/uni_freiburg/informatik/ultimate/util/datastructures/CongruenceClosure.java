@@ -44,25 +44,14 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 			final HashRelation<FUNCTION, FUNCTION> newFunctionDisequalities) {
 		mElementTVER = new ThreeValuedEquivalenceRelation<>(newElemPartition, newElemDisequalities);
 		mFunctionTVER = new ThreeValuedEquivalenceRelation<>(newFunctionPartition, newFunctionDisequalities);
+		mFunctionToRepresentativeToCcPars = new NestedMap2<>();
+		mFunctionToRepresentativeToCcChildren = new NestedMap2<>();
+		mFunctionToFuncApps = new HashRelation<>();
 
-		final Triple<NestedMap2<FUNCTION, ELEM, Set<ELEM>>,
-			NestedMap2<FUNCTION, ELEM, Set<List<ELEM>>>,
-			HashRelation<FUNCTION, ELEM>> init = computeMappingsFromTVERs(mElementTVER, mFunctionTVER);
-
-		mFunctionToRepresentativeToCcPars = init.getFirst();
-		mFunctionToRepresentativeToCcChildren = init.getSecond();
-		mFunctionToFuncApps = init.getThird();
-
-	}
-
-	private Triple<NestedMap2<FUNCTION, ELEM, Set<ELEM>>,
-				NestedMap2<FUNCTION, ELEM, Set<List<ELEM>>>,
-				HashRelation<FUNCTION, ELEM>> computeMappingsFromTVERs(
-						final ThreeValuedEquivalenceRelation<ELEM> elementTVER,
-						final ThreeValuedEquivalenceRelation<FUNCTION> functionTVER) {
-		// TODO Auto-generated method stub
-		assert false;
-		return null;
+		// set up the helper mappings
+		for (final ELEM elem : mElementTVER.getAllElements()) {
+			addMapEntriesForNewElement(elem);
+		}
 	}
 
 	public void reportFunctionEquality(final FUNCTION f1, final FUNCTION f2) {
@@ -76,10 +65,18 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 
 		mFunctionTVER.reportEquality(f1, f2);
 
-		final FUNCTION newRep = mFunctionTVER.getRepresentative(f1);
-
-		for (final ELEM funcApp1 : mFunctionToFuncApps.getImage(f1)) {
-			for (final ELEM funcApp2 : mFunctionToFuncApps.getImage(f2)) {
+		/*
+		 * congruence propagations:
+		 *  if we are adding f = g
+		 *  then we can propagate f(x) = g(x) for all nodes of that form we know.
+		 *
+		 *  uses optimization: don't iterate over all funcApps but only over representatives
+		 *  (would it make sense that mFunctionToFuncApps only holds representatives??..)
+		 */
+		for (final ELEM funcApp1 : mFunctionToFuncApps.getImage(f1)
+				.stream().map(fa -> mElementTVER.getRepresentative(fa)).collect(Collectors.toSet())) {
+			for (final ELEM funcApp2 : mFunctionToFuncApps.getImage(f2)
+					.stream().map(fa -> mElementTVER.getRepresentative(fa)).collect(Collectors.toSet())) {
 				if (argumentsAreCongruent(funcApp1, funcApp2)) {
 					reportEquality(funcApp1, funcApp2);
 				}
@@ -111,7 +108,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 
 		// do forward congruence propagations
 		for (final Set<FUNCTION> eqc : mFunctionTVER.getAllEquivalenceClasses()) {
-			for (final Pair<FUNCTION, FUNCTION> pair : getPairsFromSet(eqc, true, true)) {
+			for (final Pair<FUNCTION, FUNCTION> pair : getPairsFromCollection(eqc, true, true)) {
 				final Set<ELEM> e1CcPars = mFunctionToRepresentativeToCcPars.get(pair.getFirst(), e1OldRep);
 				final Set<ELEM> e2CcPars = mFunctionToRepresentativeToCcPars.get(pair.getSecond(), e2OldRep);
 
@@ -190,22 +187,29 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 	}
 
 	private boolean addElement(final ELEM elem) {
-		final boolean newlyAdded = mElementTVER.getRepresentative(elem) == null;
-		mElementTVER.addElement(elem);
+		final boolean newlyAdded = mElementTVER.addElement(elem);
 		if (newlyAdded) {
-			if (elem.isFunctionApplication()) {
-				mFunctionToFuncApps.addPair(elem.getAppliedFunction(), elem);
-
-				getRepresentativeAndAddFunctionIfNeeded(elem.getAppliedFunction());
-
-				addToCcChildren(elem, elem.getArguments());
-
-				for (final ELEM arg : elem.getArguments()) {
-					addToCcPar(arg, elem);
-				}
-			}
+			addMapEntriesForNewElement(elem);
 		}
 		return newlyAdded;
+	}
+
+	/**
+	 * Updates the helper mappings for ccpars, ccchildren, and function applications. When a new element is added.
+	 * @param elem
+	 */
+	private void addMapEntriesForNewElement(final ELEM elem) {
+		if (elem.isFunctionApplication()) {
+			mFunctionToFuncApps.addPair(elem.getAppliedFunction(), elem);
+
+			getRepresentativeAndAddFunctionIfNeeded(elem.getAppliedFunction());
+
+			addToCcChildren(elem, elem.getArguments());
+
+			for (final ELEM arg : elem.getArguments()) {
+				addToCcPar(arg, elem);
+			}
+		}
 	}
 
 	public FUNCTION getRepresentativeAndAddFunctionIfNeeded(final FUNCTION func) {
@@ -247,7 +251,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 	 */
 	private void doBackwardCongruencePropagations(final ELEM e1, final ELEM e2) {
 		for (final Set<FUNCTION> eqc : mFunctionTVER.getAllEquivalenceClasses()) {
-			for (final Pair<FUNCTION, FUNCTION> pair : getPairsFromSet(eqc, true, true)) {
+			for (final Pair<FUNCTION, FUNCTION> pair : getPairsFromCollection(eqc, true, true)) {
 
 				final Set<List<ELEM>> e1CcChildren = getCcChildren(pair.getFirst(), e1);
 				final Set<List<ELEM>> e2CcChildren = getCcChildren(pair.getSecond(), e2);
@@ -283,7 +287,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 	private void propagateDisequalities(final ELEM e1OldRep, final ELEM e2OldRep) {
 		for (final ELEM repUnequalToE1 : mElementTVER.getRepresentativesUnequalTo(e1OldRep)) {
 			for (final Set<FUNCTION> eqc : mFunctionTVER.getAllEquivalenceClasses()) {
-				for (final Pair<FUNCTION, FUNCTION> pair : getPairsFromSet(eqc, true, true)) {
+				for (final Pair<FUNCTION, FUNCTION> pair : getPairsFromCollection(eqc, true, true)) {
 					final Set<ELEM> funcApps1 =
 							getFunctionApplicationsInSameEquivalenceClass(pair.getFirst(), repUnequalToE1);
 					final Set<ELEM> funcApps2 =
@@ -353,31 +357,101 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 	}
 
 	public CongruenceClosure<ELEM, FUNCTION> join(final CongruenceClosure<ELEM, FUNCTION> other) {
-		final UnionFind<ELEM> newElemPartition = intersectPartitionBlocks(this.mElementTVER, other.mElementTVER);
-		final UnionFind<FUNCTION> newFunctionPartition = intersectPartitionBlocks(this.mFunctionTVER, other.mFunctionTVER);
+		return joinOrMeet(other, true);
+	}
 
-		// TODO: initialize correctly
-		assert false;
-		final HashRelation<ELEM, ELEM> newElemDisequalities = null;
-		final HashRelation<FUNCTION, FUNCTION> newFunctionDisequalities = null;
+	public CongruenceClosure<ELEM, FUNCTION> meet(final CongruenceClosure<ELEM, FUNCTION> other) {
+		return joinOrMeet(other, false);
+	}
+
+	/**
+	 *
+	 * @param other
+	 * @param join
+	 * @return
+	 */
+	private CongruenceClosure<ELEM, FUNCTION> joinOrMeet(final CongruenceClosure<ELEM, FUNCTION> other,
+			final boolean join) {
+		final UnionFind<ELEM> newElemPartition = xJoinPartitionBlocks(this.mElementTVER, other.mElementTVER, join);
+		final UnionFind<FUNCTION> newFunctionPartition = xJoinPartitionBlocks(this.mFunctionTVER,
+				other.mFunctionTVER, join);
+
+		if (!join) {
+			// We are computing the Meet. --> check for contradiction at this point
+		}
+
+		final HashRelation<ELEM, ELEM> newElemDisequalities = xJoinDisequalities(this.mElementTVER,
+				other.mElementTVER, newElemPartition, join);
+		final HashRelation<FUNCTION, FUNCTION> newFunctionDisequalities = xJoinDisequalities(this.mFunctionTVER,
+				other.mFunctionTVER, newFunctionPartition, join);
 
 		return new CongruenceClosure<>(newElemPartition, newFunctionPartition, newElemDisequalities,
 				newFunctionDisequalities);
 	}
 
-	private static <E> UnionFind<E> intersectPartitionBlocks(final ThreeValuedEquivalenceRelation<E> tver1,
-			final ThreeValuedEquivalenceRelation<E> tver2) {
-//		final Set<Set<E>> newElemPartition = new HashSet<>();
+
+	/**
+	 * Conjoin or disjoin two disequality relations.
+	 *
+	 * @param tver1
+	 * @param tver2
+	 * @param newElemPartition
+	 * @param conjoin conjoin or disjoin?
+	 * @return
+	 */
+	private static <E> HashRelation<E, E> xJoinDisequalities(final ThreeValuedEquivalenceRelation<E> tver1,
+			final ThreeValuedEquivalenceRelation<E> tver2, final UnionFind<E> newElemPartition, final boolean conjoin) {
+		final HashRelation<E, E> result = new HashRelation<>();
+		for (final Pair<E, E> pair : getPairsFromCollection(newElemPartition.getAllRepresentatives(),
+				false, false)) {
+			final boolean addDisequality;
+			if (conjoin) {
+				addDisequality = tver1.getEqualityStatus(pair.getFirst(), pair.getSecond()) == EqualityStatus.NOT_EQUAL
+						&& tver2.getEqualityStatus(pair.getFirst(), pair.getSecond()) == EqualityStatus.NOT_EQUAL;
+			} else {
+				addDisequality = tver1.getEqualityStatus(pair.getFirst(), pair.getSecond()) == EqualityStatus.NOT_EQUAL
+						|| tver2.getEqualityStatus(pair.getFirst(), pair.getSecond()) == EqualityStatus.NOT_EQUAL;
+			}
+			if (addDisequality) {
+				result.addPair(pair.getFirst(), pair.getSecond());
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * Conjoin (intersect) or disjoin (union) partition blocks from this and other according to the given flag
+	 *
+	 * @param tver1
+	 * @param tver2
+	 * @return
+	 */
+	private static <E> UnionFind<E> xJoinPartitionBlocks(final ThreeValuedEquivalenceRelation<E> tver1,
+			final ThreeValuedEquivalenceRelation<E> tver2, final boolean conjoin) {
 		final UnionFind<E> result = new UnionFind<>();
 		for (final E thisRep : concatenateCollections(
 				tver1.getAllRepresentatives(),
 				tver2.getAllRepresentatives())) {
 			final Set<E> thisEqc = tver1.getEquivalenceClass(thisRep);
 			final Set<E> otherEqc = tver2.getEquivalenceClass(thisRep);
-//			newElemPartition.add(SetOperations.intersect(thisEqc, otherEqc));
-			result.addEquivalenceClass(SetOperations.intersect(thisEqc, otherEqc));
+			if (conjoin) {
+				result.addEquivalenceClass(SetOperations.intersect(thisEqc, otherEqc));
+			} else {
+				result.addEquivalenceClass(SetOperations.union(thisEqc, otherEqc));
+			}
 		}
 		return result;
+	}
+
+	/**
+	 *
+	 *
+	 * @param other
+	 * @return true iff this CongruenceClosure is equally or more constraining, than the other given CongruenceClosure
+	 */
+	public boolean isStrongerThan(final CongruenceClosure<ELEM, FUNCTION> other) {
+		assert false;
+		return false;
 	}
 
 	/**
@@ -556,7 +630,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 		return sb.toString();
 	}
 
-	static <E> Collection<Pair<E, E>> getPairsFromSet(final Set<E> set, final boolean returnReflexivePairs,
+	static <E> Collection<Pair<E, E>> getPairsFromCollection(final Collection<E> set, final boolean returnReflexivePairs,
 			final boolean returnSymmetricPairs) {
 		final Collection<Pair<E, E>> result = new ArrayList<>();
 
