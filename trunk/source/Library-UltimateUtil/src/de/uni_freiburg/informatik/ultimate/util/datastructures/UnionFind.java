@@ -86,6 +86,9 @@ public class UnionFind<E> implements IPartition<E> {
 	 */
 	public E find(final E elem) {
 		final Set<E> set = mEquivalenceClass.get(elem);
+		if (set == null) {
+			return null;
+		}
 		return mRepresentative.get(set);
 	}
 
@@ -122,7 +125,7 @@ public class UnionFind<E> implements IPartition<E> {
 	 * @return collection of all elements e such that e is representative of an equivalence class.
 	 */
 	public Collection<E> getAllRepresentatives() {
-		return mRepresentative.values();
+		return Collections.unmodifiableCollection(mRepresentative.values());
 	}
 
 	/**
@@ -276,5 +279,25 @@ public class UnionFind<E> implements IPartition<E> {
 
 	public Set<E> getAllElements() {
 		return Collections.unmodifiableSet(mEquivalenceClass.keySet());
+	}
+
+	/**
+	 * Add a whole equivalence class at once to this UnionFind.
+	 *
+	 * Assumes none of the given elements is part of an existing equivalence class in this UnionFind instance.
+	 *
+	 * @param block
+	 */
+	public void addEquivalenceClass(final Set<E> originalBlock) {
+		assert !originalBlock.isEmpty();
+		final Set<E> block = new HashSet<>(originalBlock);
+
+		for (final E el : block) {
+			mEquivalenceClass.put(el, block);
+		}
+
+		final E rep = block.iterator().next();
+		assert mEquivalenceClass.get(rep) == null;
+		mRepresentative.put(block, rep);
 	}
 }

@@ -59,13 +59,23 @@ public class ThreeValuedEquivalenceRelation<E> {
 		assert disequalitiesOnlyContainRepresentatives();
 	}
 
+	public ThreeValuedEquivalenceRelation(final UnionFind<E> newElemPartition,
+			final HashRelation<E, E> newElemDisequalities) {
+		mUnionFind = new UnionFind<>(newElemPartition);
+		mDistinctElements = new HashRelation<>(newElemDisequalities);
+		mContainsContradiction = false;
+		assert disequalitiesOnlyContainRepresentatives();
+	}
+
 	/**
-	 * TODO (alex): the below comment is not consistent which what is actually returned
-	 * @return true iff elem was not contained in relation before
+	 * @return true iff elem was not contained in relation before (i.e. we made a change)
 	 */
 	public boolean addElement(final E elem) {
-		final E rep = mUnionFind.findAndConstructEquivalenceClassIfNeeded(elem);
-		return (rep != elem);
+		if (mUnionFind.find(elem) == null) {
+			mUnionFind.findAndConstructEquivalenceClassIfNeeded(elem);
+			return true;
+		}
+		return false;
 	}
 
 	public void removeElement(final E elem) {
