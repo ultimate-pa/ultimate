@@ -288,7 +288,7 @@ public final class AbsIntUtil {
 	 * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
 	 */
 	public static IBoogieVar createTemporaryIBoogieVar(final String identifier, final IBoogieType type) {
-		return new TemporaryBoogieVar(type, identifier);
+		return new FakeBoogieVar(type, identifier);
 	}
 
 	/**

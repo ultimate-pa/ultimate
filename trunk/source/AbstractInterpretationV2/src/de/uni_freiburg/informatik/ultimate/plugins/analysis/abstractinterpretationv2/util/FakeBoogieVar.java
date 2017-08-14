@@ -44,14 +44,14 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TypeSortTran
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public final class TemporaryBoogieVar implements IBoogieVar {
+public final class FakeBoogieVar implements IBoogieVar {
 
 	private static final Script SCRIPT_MOCK = new MockScript();
 
 	private final String mId;
 	private final Sort mSort;
 
-	public TemporaryBoogieVar(final IBoogieType type, final String identifier) {
+	public FakeBoogieVar(final IBoogieType type, final String identifier) {
 		mId = identifier;
 		mSort = new TypeSortTranslator(Collections.emptyList(), SCRIPT_MOCK, null).constructSort(type, a -> null);
 	}

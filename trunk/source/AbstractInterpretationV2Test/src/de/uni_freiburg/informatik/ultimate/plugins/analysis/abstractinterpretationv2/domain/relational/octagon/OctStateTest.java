@@ -4,16 +4,16 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.TemporaryBoogieVar;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.FakeBoogieVar;
 
 public class OctStateTest {
 
 	@Test
 	public void testIntersect() {
 
-		final TemporaryBoogieVar varA = new TemporaryBoogieVar(BoogieType.TYPE_INT, "a");
-		final TemporaryBoogieVar varB = new TemporaryBoogieVar(BoogieType.TYPE_INT, "b");
-		final TemporaryBoogieVar varC = new TemporaryBoogieVar(BoogieType.TYPE_INT, "c");
+		final FakeBoogieVar varA = new FakeBoogieVar(BoogieType.TYPE_INT, "a");
+		final FakeBoogieVar varB = new FakeBoogieVar(BoogieType.TYPE_INT, "b");
+		final FakeBoogieVar varC = new FakeBoogieVar(BoogieType.TYPE_INT, "c");
 
 		OctDomainState s1 = OctDomainState.createFreshState(a -> a.logStringHalfMatrix());
 		OctDomainState s2 = OctDomainState.createFreshState(a -> a.logStringHalfMatrix());
