@@ -16,11 +16,21 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
+ * Implementation of the congruence closure algorithm and data structure.
+ * Builds upon ThreeValuedEquivalenceRelation, and also uses a three valued logic (equal, not_equal, unknown).
+ *
+ * Provides operations for adding equality and disequality constraints both on elements and functions. Automatically
+ * closes under the congruence axioms with respect to all the known elements.
+ * Can propagate equalities and disequalities.
+ *
+ * Requires the ELEM type to implement the ICongruenceClosureElement interface. It is recommended to use a factory
+ * for constructing ELEM objects that extends AbstractCCElementFactory.
  *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
- * @param <ELEM>
- * @param <FUNCTION>
+ * @param <ELEM> The element type. Elements correspond to the "nodes" or terms in standard congruence closure
+ *   terminology. Elements can be constants or function applications.
+ * @param <FUNCTION> The function type. We allow equalities and disequalities between functions, too.
  */
 public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNCTION>, FUNCTION> {
 
@@ -195,8 +205,9 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 					continue;
 				}
 
-				for (final ELEM ccpar1 : e1CcPars) {
-					for (final ELEM ccpar2 : e2CcPars) {
+				// need to make copies because reportEqualityRec inside may modify the sets..
+				for (final ELEM ccpar1 : new HashSet<>(e1CcPars)) {
+					for (final ELEM ccpar2 : new HashSet<>(e2CcPars)) {
 						// insert forward congruence
 						if (argumentsAreCongruent(ccpar1, ccpar2)) {
 							reportEqualityRec(ccpar1, ccpar2);
