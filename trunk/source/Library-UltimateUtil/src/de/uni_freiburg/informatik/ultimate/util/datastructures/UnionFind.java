@@ -72,7 +72,8 @@ public class UnionFind<E> implements IPartition<E> {
 		for (final Entry<E, Set<E>> entry : unionFind.mEquivalenceClass.entrySet()) {
 			final E representative = entry.getKey();
 			final Set<E> equivalenceClassCopy = new HashSet<>(entry.getValue());
-			assert mRepresentative.get(equivalenceClassCopy) == representative : "inconsitent";
+			// alex: I commented this out as it does not make sense to me..
+//			assert mRepresentative.get(equivalenceClassCopy) == representative : "inconsistent";
 			final Set<E> oldValue = this.mEquivalenceClass.put(representative, equivalenceClassCopy);
 			assert oldValue == null : "element was contained twice";
 			this.mRepresentative.put(equivalenceClassCopy, representative);
@@ -294,7 +295,7 @@ public class UnionFind<E> implements IPartition<E> {
 		}
 
 		final E rep = block.iterator().next();
-		assert mEquivalenceClass.get(rep) == null;
+		assert mEquivalenceClass.get(rep) != null;
 		mRepresentative.put(block, rep);
 	}
 }

@@ -392,6 +392,116 @@ public class CongruenceClosureTest {
 	}
 
 
+	/**
+	 * Tests the (quasi-)lattice operations join, meet, isStrongerThan.
+	 * Only introduces equalities, no disequalities.
+	 */
+	@Test
+	public void testOperators1() {
+		final CongruenceClosure<StringCCElement, String> cc1 = new CongruenceClosure<>();
+		final CongruenceClosure<StringCCElement, String> cc2 = new CongruenceClosure<>();
+
+		final StringElementFactory factory = new StringElementFactory();
+
+		final StringCCElement a = factory.getBaseElement("a");
+		final StringCCElement b = factory.getBaseElement("b");
+
+		final StringCCElement i = factory.getBaseElement("i");
+		final StringCCElement j = factory.getBaseElement("j");
+
+		final StringCCElement x = factory.getBaseElement("x");
+		final StringCCElement y = factory.getBaseElement("y");
+
+		final StringCCElement f_a = factory.getFuncAppElement("f", a);
+		final StringCCElement f_f_a = factory.getFuncAppElement("f", f_a);
+		final StringCCElement f_b = factory.getFuncAppElement("f", b);
+		final StringCCElement f_f_b = factory.getFuncAppElement("f", f_b);
+
+
+		cc1.reportEquality(a, b);
+		cc1.reportEquality(f_f_a, j);
+		cc1.reportEquality(x, y);
+		cc1.reportEquality(i, j);
+		cc1.reportEquality(i, x);
+		cc1.getRepresentativeAndAddElementIfNeeded(f_f_b);
+		// state of cc1 should be {{a,b}, {f(a), f(b)}, {i,j,x,y,f(f(a)), f(f(b))}}
+		assertTrue(cc1.getEqualityStatus(a, b) == EqualityStatus.EQUAL);
+		assertTrue(cc1.getEqualityStatus(f_a, f_b) == EqualityStatus.EQUAL);
+		assertTrue(cc1.getEqualityStatus(i, f_f_b) == EqualityStatus.EQUAL);
+		assertTrue(cc1.getEqualityStatus(y, f_f_a) == EqualityStatus.EQUAL);
+		assertTrue(cc1.getEqualityStatus(y, j) == EqualityStatus.EQUAL);
+		assertTrue(cc1.getEqualityStatus(b, f_a) == EqualityStatus.UNKNOWN);
+		assertTrue(cc1.getEqualityStatus(a, f_a) == EqualityStatus.UNKNOWN);
+		assertTrue(cc1.getEqualityStatus(a, i) == EqualityStatus.UNKNOWN);
+		assertTrue(cc1.getEqualityStatus(a, f_f_a) == EqualityStatus.UNKNOWN);
+
+
+		cc2.reportEquality(i, x);
+		cc2.reportEquality(f_a, f_b);
+		cc2.reportEquality(f_f_a, b);
+		cc2.reportEquality(f_f_a, a);
+		// state of cc2 should be {{a, b, f(f(a))}, {i,x} {f(a), f(b)}} (the element f_f_b is not known to cc2)
+		assertTrue(cc2.getEqualityStatus(a, f_f_a) == EqualityStatus.EQUAL);
+		assertTrue(cc2.getEqualityStatus(b, f_f_a) == EqualityStatus.EQUAL);
+		assertTrue(cc2.getEqualityStatus(i, x) == EqualityStatus.EQUAL);
+		assertTrue(cc2.getEqualityStatus(f_a, f_b) == EqualityStatus.EQUAL);
+		assertTrue(cc2.getEqualityStatus(i, f_a) == EqualityStatus.UNKNOWN);
+		assertTrue(cc2.getEqualityStatus(a, i) == EqualityStatus.UNKNOWN);
+		assertTrue(cc2.getEqualityStatus(x, f_f_a) == EqualityStatus.UNKNOWN);
+
+
+		// cc1 and cc2 should be incomparable
+		assertFalse(cc1.isStrongerThan(cc2));
+		assertFalse(cc2.isStrongerThan(cc1));
+
+		final CongruenceClosure<StringCCElement, String> cc3 = cc1.join(cc2);
+		// state of cc3 should be {{a, b}, {i,x} {f(a), f(b)}, {f(f(a)), f(f(b))}}
+		assertTrue(cc3.getEqualityStatus(a, b) == EqualityStatus.EQUAL);
+		assertTrue(cc3.getEqualityStatus(i, x) == EqualityStatus.EQUAL);
+		assertTrue(cc3.getEqualityStatus(f_a, f_b) == EqualityStatus.EQUAL);
+		assertTrue(cc3.getEqualityStatus(f_f_a, f_f_b) == EqualityStatus.EQUAL);
+		assertTrue(cc3.getEqualityStatus(b, i) == EqualityStatus.UNKNOWN);
+		assertTrue(cc3.getEqualityStatus(f_a, x) == EqualityStatus.UNKNOWN);
+		assertTrue(cc3.getEqualityStatus(f_f_a, f_a) == EqualityStatus.UNKNOWN);
+		assertTrue(cc3.getEqualityStatus(f_f_a, x) == EqualityStatus.UNKNOWN);
+		assertTrue(cc3.getEqualityStatus(f_f_a, a) == EqualityStatus.UNKNOWN);
+
+		// cc3 should be strictly weaker than both cc1 and cc2
+		assertTrue(cc1.isStrongerThan(cc3));
+		assertFalse(cc3.isStrongerThan(cc1));
+		assertTrue(cc2.isStrongerThan(cc3));
+		assertFalse(cc3.isStrongerThan(cc2));
+
+		final CongruenceClosure<StringCCElement, String> cc4 = cc1.meet(cc2);
+		// state of cc4 should be {{a, b, i, j, x, y, f(f(a)), f(f(b))}, {f(a), f(b)}}
+		assertTrue(cc4.getEqualityStatus(a, b) == EqualityStatus.EQUAL);
+		assertTrue(cc4.getEqualityStatus(b, i) == EqualityStatus.EQUAL);
+		assertTrue(cc4.getEqualityStatus(i, j) == EqualityStatus.EQUAL);
+		assertTrue(cc4.getEqualityStatus(x, y) == EqualityStatus.EQUAL);
+		assertTrue(cc4.getEqualityStatus(y, f_f_a) == EqualityStatus.EQUAL);
+		assertTrue(cc4.getEqualityStatus(f_f_b, f_f_a) == EqualityStatus.EQUAL);
+		assertTrue(cc4.getEqualityStatus(f_b, f_a) == EqualityStatus.EQUAL);
+		assertTrue(cc4.getEqualityStatus(b, f_b) == EqualityStatus.UNKNOWN);
+
+
+
+		// cc3 should be strictly stronger than both cc1 and cc2
+		assertTrue(cc4.isStrongerThan(cc1));
+		assertFalse(cc1.isStrongerThan(cc4));
+		assertTrue(cc4.isStrongerThan(cc2));
+		assertFalse(cc2.isStrongerThan(cc4));
+	}
+
+	/**
+	 * Tests the (quasi-)lattice operations join, meet, isStrongerThan.
+	 * Tests the alignment of the known elements that has to happen before the operations.
+	 */
+	@Test
+	public void testOperators2() {
+
+	}
+
+
 
 }
 
