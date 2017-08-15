@@ -211,6 +211,23 @@ public class DisjunctiveAbstractState<STATE extends IAbstractState<STATE, VARDEC
 	}
 
 	@Override
+	public EvalResult evaluate(final Script script, final Term term) {
+		boolean allFalse = true;
+		for (final STATE state : mStates) {
+			final EvalResult result = state.evaluate(script, term);
+			if (result == EvalResult.TRUE) {
+				return result;
+			} else if (result == EvalResult.UNKNOWN) {
+				allFalse = false;
+			}
+		}
+		if (allFalse) {
+			return EvalResult.FALSE;
+		}
+		return EvalResult.UNKNOWN;
+	}
+
+	@Override
 	public Term getTerm(final Script script) {
 		return SmtUtils.or(script, mStates.stream().map(a -> a.getTerm(script)).collect(Collectors.toSet()));
 	}
