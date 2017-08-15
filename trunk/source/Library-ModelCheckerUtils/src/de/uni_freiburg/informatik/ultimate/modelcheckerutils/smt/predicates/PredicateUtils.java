@@ -1,27 +1,27 @@
 /*
  * Copyright (C) 2014-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2012-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE ModelCheckerUtils Library.
- * 
+ *
  * The ULTIMATE ModelCheckerUtils Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE ModelCheckerUtils Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE ModelCheckerUtils Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE ModelCheckerUtils Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates;
@@ -33,6 +33,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -50,12 +51,14 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 
 public class PredicateUtils {
-	
-	public enum FormulaSize { TREESIZE, DAGSIZE }; 
-	
+
+	public enum FormulaSize {
+		TREESIZE, DAGSIZE
+	}
+
 	/**
-	 * Returns the DAG size of the predicate's formula. 
-	 * (DAG size means that similar sub-formulas are counted only once.)
+	 * Returns the DAG size of the predicate's formula. (DAG size means that similar sub-formulas are counted only
+	 * once.)
 	 */
 	public static long computeDagSizeOfPredicate(final IPredicate p, final FormulaSize size) {
 		switch (size) {
@@ -67,7 +70,7 @@ public class PredicateUtils {
 			throw new AssertionError("unknown " + size);
 		}
 	}
-	
+
 	/**
 	 * Computes DAG size for an array of predicates.
 	 */
@@ -78,10 +81,10 @@ public class PredicateUtils {
 		}
 		return sizeOfPredicates;
 	}
-	
 
-	public static Term computeClosedFormula(final Term formula, final Set<IProgramVar> boogieVars, final Script script) {
-		final Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
+	public static Term computeClosedFormula(final Term formula, final Set<IProgramVar> boogieVars,
+			final Script script) {
+		final Map<Term, Term> substitutionMapping = new HashMap<>();
 		for (final IProgramVar bv : boogieVars) {
 			substitutionMapping.put(bv.getTermVariable(), bv.getDefaultConstant());
 		}
@@ -143,15 +146,17 @@ public class PredicateUtils {
 	 * non-oldVar! If oldVar is Integer.MIN_VALUE, we check
 	 * </ul>
 	 */
-	public static Term formulaWithIndexedVars(final IPredicate ps, final Set<IProgramVar> varsWithSpecialIdx, final int specialIdx,
-			final int defaultIdx, final int oldVarIdx, final Set<IProgramNonOldVar> modifiableGlobalsCallee, final int globSpecialIdx, final int globDefaultIdx,
-			final Map<String, Term> indexedConstants, final Script script, final Set<IProgramNonOldVar> modifiableGlobalsCaller) {
+	public static Term formulaWithIndexedVars(final IPredicate ps, final Set<IProgramVar> varsWithSpecialIdx,
+			final int specialIdx, final int defaultIdx, final int oldVarIdx,
+			final Set<IProgramNonOldVar> modifiableGlobalsCallee, final int globSpecialIdx, final int globDefaultIdx,
+			final Map<String, Term> indexedConstants, final Script script,
+			final Set<IProgramNonOldVar> modifiableGlobalsCaller) {
 		final Term psTerm = ps.getFormula();
 		if (ps.getVars() == null) {
 			return psTerm;
 		}
 
-		final Map<TermVariable, Term> substitution = new HashMap<TermVariable, Term>();
+		final Map<TermVariable, Term> substitution = new HashMap<>();
 
 		for (final IProgramVar var : ps.getVars()) {
 			Term cIndex;
@@ -186,9 +191,9 @@ public class PredicateUtils {
 		final TermVariable[] vars = new TermVariable[substitution.size()];
 		final Term[] values = new Term[substitution.size()];
 		int i = 0;
-		for (final TermVariable var : substitution.keySet()) {
-			vars[i] = var;
-			values[i] = substitution.get(var);
+		for (final Entry<TermVariable, Term> entry : substitution.entrySet()) {
+			vars[i] = entry.getKey();
+			values[i] = entry.getValue();
 			i++;
 		}
 		final Term result = script.let(vars, values, psTerm);
@@ -205,13 +210,14 @@ public class PredicateUtils {
 	 * <li>Each oldVar v is renamed to v_OLD.
 	 * </ul>
 	 */
-	public static Term formulaWithIndexedVars(final UnmodifiableTransFormula tf, final int idxInVar, final int idxOutVar, final Set<IProgramVar> assignedVars,
-			final Map<String, Term> indexedConstants, final Script script) {
+	public static Term formulaWithIndexedVars(final UnmodifiableTransFormula tf, final int idxInVar,
+			final int idxOutVar, final Set<IProgramVar> assignedVars, final Map<String, Term> indexedConstants,
+			final Script script) {
 		assert (assignedVars != null && assignedVars.isEmpty());
-		final Set<TermVariable> notYetSubst = new HashSet<TermVariable>();
+		final Set<TermVariable> notYetSubst = new HashSet<>();
 		notYetSubst.addAll(Arrays.asList(tf.getFormula().getFreeVars()));
 		Term fTrans = tf.getFormula();
-		final Map<TermVariable, IProgramVar> reverseMapping = new HashMap<TermVariable, IProgramVar>();
+		final Map<TermVariable, IProgramVar> reverseMapping = new HashMap<>();
 		for (final IProgramVar inVar : tf.getInVars().keySet()) {
 			final TermVariable tv = tf.getInVars().get(inVar);
 			reverseMapping.put(tv, inVar);
@@ -258,13 +264,14 @@ public class PredicateUtils {
 		return fTrans;
 	}
 
-	public static Term getIndexedConstant(final IProgramVar bv, final int index, final Map<String, Term> indexedConstants, final Script script) {
+	public static Term getIndexedConstant(final IProgramVar bv, final int index,
+			final Map<String, Term> indexedConstants, final Script script) {
 		return getIndexedConstant(bv.getGloballyUniqueId(), bv.getTermVariable().getSort(), index, indexedConstants,
 				script);
 	}
 
-	public static Term getIndexedConstant(final String id, final Sort sort, final int index, final Map<String, Term> indexedConstants,
-			final Script script) {
+	public static Term getIndexedConstant(final String id, final Sort sort, final int index,
+			final Map<String, Term> indexedConstants, final Script script) {
 		final String indexString = String.valueOf(index);
 		final String name = id + "_" + indexString;
 		Term constant = indexedConstants.get(name);
@@ -279,30 +286,28 @@ public class PredicateUtils {
 	}
 
 	public static LBool isInductiveHelper(final Script script, final IPredicate precond, final IPredicate postcond,
-			final UnmodifiableTransFormula tf, final Set<IProgramNonOldVar> modifiableGlobalsPred, final Set<IProgramNonOldVar> modifiableGlobalsSucc) {
+			final UnmodifiableTransFormula tf, final Set<IProgramNonOldVar> modifiableGlobalsPred,
+			final Set<IProgramNonOldVar> modifiableGlobalsSucc) {
 		script.push(1);
 
-		final List<Term> conjuncts = new ArrayList<Term>();
+		final List<Term> conjuncts = new ArrayList<>();
 		{
 			// add oldvar equalities for precond and tf
 			final Set<IProgramNonOldVar> unprimedOldVarEqualities = new HashSet<>();
 			final Set<IProgramNonOldVar> primedOldVarEqualities = new HashSet<>();
 
-			findNonModifiablesGlobals(precond.getVars(), modifiableGlobalsPred, Collections.emptySet(), unprimedOldVarEqualities,
-					primedOldVarEqualities);
-			findNonModifiablesGlobals(tf.getInVars().keySet(), modifiableGlobalsPred, Collections.emptySet(), unprimedOldVarEqualities,
-					primedOldVarEqualities);
+			findNonModifiablesGlobals(precond.getVars(), modifiableGlobalsPred, Collections.emptySet(),
+					unprimedOldVarEqualities, primedOldVarEqualities);
+			findNonModifiablesGlobals(tf.getInVars().keySet(), modifiableGlobalsPred, Collections.emptySet(),
+					unprimedOldVarEqualities, primedOldVarEqualities);
 			findNonModifiablesGlobals(tf.getOutVars().keySet(), modifiableGlobalsSucc, tf.getAssignedVars(),
 					unprimedOldVarEqualities, primedOldVarEqualities);
 
-			
 			for (final IProgramNonOldVar bv : unprimedOldVarEqualities) {
-				conjuncts.add(ModifiableGlobalsTable.constructConstantOldVarEquality(bv, false,
-						script));
+				conjuncts.add(ModifiableGlobalsTable.constructConstantOldVarEquality(bv, false, script));
 			}
 			for (final IProgramNonOldVar bv : primedOldVarEqualities) {
-				conjuncts.add(ModifiableGlobalsTable.constructConstantOldVarEquality(bv, true,
-						script));
+				conjuncts.add(ModifiableGlobalsTable.constructConstantOldVarEquality(bv, true, script));
 			}
 		}
 		{
@@ -312,7 +317,7 @@ public class PredicateUtils {
 			conjuncts.add(precondRenamed);
 		}
 		{
-			//add tf
+			// add tf
 			final Term tfRenamed = tf.getClosedFormula();
 			assert tfRenamed != null;
 			conjuncts.add(tfRenamed);
@@ -322,16 +327,14 @@ public class PredicateUtils {
 			// add oldvar equalities for postcond
 			final Set<IProgramNonOldVar> unprimedOldVarEqualities = new HashSet<>();
 			final Set<IProgramNonOldVar> primedOldVarEqualities = new HashSet<>();
-		
+
 			findNonModifiablesGlobals(postcond.getVars(), modifiableGlobalsSucc, tf.getAssignedVars(),
 					unprimedOldVarEqualities, primedOldVarEqualities);
 			for (final IProgramNonOldVar bv : unprimedOldVarEqualities) {
-				conjuncts.add(ModifiableGlobalsTable.constructConstantOldVarEquality(bv, false,
-						script));
+				conjuncts.add(ModifiableGlobalsTable.constructConstantOldVarEquality(bv, false, script));
 			}
 			for (final IProgramNonOldVar bv : primedOldVarEqualities) {
-				conjuncts.add(ModifiableGlobalsTable.constructConstantOldVarEquality(bv, true,
-						script));
+				conjuncts.add(ModifiableGlobalsTable.constructConstantOldVarEquality(bv, true, script));
 			}
 		}
 		{
@@ -348,15 +351,16 @@ public class PredicateUtils {
 	/**
 	 * Find all nonOldVars such that they are modifiable, their oldVar is in vars. Put the nonOldVar in
 	 * nonModifiableGlobalsPrimed if the corresponding oldVar is in primedRequired.
-	 * 
+	 *
 	 * @param vars
 	 * @param modifiableGlobalsPred
 	 * @param primedRequired
 	 * @param nonModifiableGlobalsUnprimed
 	 * @param nonModifiableGlobalsPrimed
 	 */
-	private static void findNonModifiablesGlobals(final Set<IProgramVar> vars, final Set<IProgramNonOldVar> modifiableGlobalsPred,
-			final Set<IProgramVar> primedRequired, final Set<IProgramNonOldVar> nonModifiableGlobalsUnprimed,
+	private static void findNonModifiablesGlobals(final Set<IProgramVar> vars,
+			final Set<IProgramNonOldVar> modifiableGlobalsPred, final Set<IProgramVar> primedRequired,
+			final Set<IProgramNonOldVar> nonModifiableGlobalsUnprimed,
 			final Set<IProgramNonOldVar> nonModifiableGlobalsPrimed) {
 		for (final IProgramVar bv : vars) {
 			if (bv instanceof IProgramOldVar) {
