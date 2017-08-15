@@ -140,8 +140,7 @@ public class SymbolicMemory {
 		substitution.putAll(termUnravel(appTerm, tf.getInVars()));
 
 		final Substitution sub = new Substitution(mScript, substitution);
-		final TransFormulaBuilder tfb = new TransFormulaBuilder(tf.getInVars(), tf.getOutVars(), true, null, true, null,
-				true);
+		final TransFormulaBuilder tfb = new TransFormulaBuilder(mInVars, mOutVars, true, null, true, null, true);
 		tfb.setFormula(sub.transform(tf.getFormula()));
 		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
 
@@ -154,7 +153,7 @@ public class SymbolicMemory {
 	 * @param appTerm
 	 * @return
 	 */
-	protected Map<Term, Term> termUnravel(final Term term) {
+	private Map<Term, Term> termUnravel(final Term term) {
 
 		final Map<Term, Term> result = new HashMap<>();
 
@@ -205,8 +204,6 @@ public class SymbolicMemory {
 		for (final Term subTerm : appTerm.getParameters()) {
 			result.putAll(termUnravel(subTerm, progVars));
 		}
-
-		mLogger.debug("RESULT: " + result);
 		return result;
 	}
 

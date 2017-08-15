@@ -101,7 +101,7 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 
 	/**
 	 * Construct a new Loop Acceleration Icfg Transformer.
-	 *
+	 * 
 	 * @param logger
 	 * @param originalIcfg
 	 * @param funLocFac
@@ -168,7 +168,6 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 			for (final Loop nestedLoop : loop.getNestedLoops()) {
 				summarizeLoop(nestedLoop);
 			}
-			mLogger.debug("NESTED LOOPPATH: " + loop.getNestedLoops());
 		}
 
 		for (final Backbone backbone : loop.getBackbones()) {
@@ -188,11 +187,6 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 			}
 
 			final SimultaneousUpdate update = new SimultaneousUpdate(tf, mScript);
-
-			if (mLogger.isDebugEnabled()) {
-				mLogger.debug("UPDATED VARS: " + update.getUpdatedVars());
-			}
-
 			final SymbolicMemory symbolicMemory = new SymbolicMemory(mScript, mLogger, tf, mOldSymbolTable);
 			symbolicMemory.updateVars(update.getUpdatedVars());
 
@@ -207,8 +201,6 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 			backbone.setCondition(condition);
 
 			if (backbone.isNested()) {
-				mLogger.debug("THIS BACKBONE IS NESTED: " + backbone.getNestedLoops());
-				mLogger.debug("MEMEORY BEFORE: " + symbolicMemory.getMemory());
 				for (final Loop nestedLoop : backbone.getNestedLoops()) {
 					if (nestedLoop.getPath().isEmpty()) {
 						continue;
@@ -224,10 +216,7 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 					backbone.setCondition(nestedCondition);
 					symbolicMemory.updateVars(nestedLoop.getIteratedMemory().getIteratedMemory());
 				}
-				mLogger.debug("BACKBONES: " + loop.getBackbones());
-				mLogger.debug("NESTED BACKBONECONDITION: " + backbone.getCondition());
 			}
-
 			backbone.setSymbolicMemory(symbolicMemory);
 		}
 
@@ -256,12 +245,6 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 		loop.setCondition(simplifiedLoopSummary);
 		loop.setIteratedSymbolicMemory(iteratedSymbolicMemory);
 
-		if (mLogger.isDebugEnabled()) {
-			mLogger.debug(loop.getLoophead());
-			mLogger.debug(loop);
-			mLogger.debug("ABSTRACT PATH CONDITION: " + loopSummary);
-		}
-
 		Term acceleratedLoopCondition = mScript.getScript().term("false");
 		for (final Backbone backbone : loop.getBackbones()) {
 
@@ -282,12 +265,8 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 					XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 
 			backbone.setAbstractPathCondition(simplifiedAbstractPathCondition);
-
 			acceleratedLoopCondition = Util.or(mScript.getScript(), acceleratedLoopCondition,
 					simplifiedAbstractPathCondition);
-
-			mLogger.debug("ABSTRACT PATH CONDITION FOR BACKBONE: " + backbone + " " + abstractPathCondition + " "
-					+ simplifiedAbstractPathCondition);
 		}
 
 		TransFormulaBuilder tfb = new TransFormulaBuilder(loop.getInVars(), loop.getOutVars(), true, null, true, null,
@@ -301,13 +280,13 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 		tf.add(loop.getLoopExit().getTransformula());
 
 		final UnmodifiableTransFormula acceleratedLoopSummary = TransFormulaUtils.sequentialComposition(mLogger,
-				mServices, mScript, true, true, false, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION,
-				SimplificationTechnique.SIMPLIFY_DDA, tf);
+				mServices, mScript, false, true, false, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION,
+				null, tf);
 
 		loop.setAcceleratedCondition(acceleratedLoopSummary);
 
 		loop.setSummarized();
-		mLogger.debug("DONE " + acceleratedLoopSummary);
+		mLogger.debug("DONE " + acceleratedLoopSummary.toString());
 	}
 
 	private void processLocations(final Set<INLOC> init, final TransformedIcfgBuilder<INLOC, OUTLOC> lst) {

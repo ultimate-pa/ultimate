@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Unm
 public class Backbone {
 
 	private final Deque<IcfgEdge> mPath;
-	private final TransFormula mFormula;
+	private TransFormula mFormula;
 	private final List<Loop> mNestedLoops;
 	private TermVariable mPathCounter;
 	private UnmodifiableTransFormula mCondition;
@@ -60,11 +60,14 @@ public class Backbone {
 	 * @param tf
 	 *            The paths {@link TransFormula}.
 	 * 
+	 * @param isNested
+	 * 
 	 * @param nestedLoops
 	 *            Nested loops in the backbone
+	 * 
 	 */
-	public Backbone(final Deque<IcfgEdge> path, final TransFormula tf, final List<Loop> nestedLoops,
-			final Boolean isNested) {
+	public Backbone(final Deque<IcfgEdge> path, final TransFormula tf, final Boolean isNested,
+			final List<Loop> nestedLoops) {
 		mPath = path;
 		mFormula = tf;
 		mPathCounter = null;
@@ -87,6 +90,10 @@ public class Backbone {
 	 */
 	public void setCondition(final UnmodifiableTransFormula condition) {
 		mCondition = condition;
+	}
+
+	public void setFormula(final TransFormula formula) {
+		mFormula = formula;
 	}
 
 	public void setSymbolicMemory(final SymbolicMemory memory) {
@@ -140,10 +147,6 @@ public class Backbone {
 
 	public Boolean isNested() {
 		return mIsNested;
-	}
-
-	public void setNested() {
-		mIsNested = true;
 	}
 
 	@Override

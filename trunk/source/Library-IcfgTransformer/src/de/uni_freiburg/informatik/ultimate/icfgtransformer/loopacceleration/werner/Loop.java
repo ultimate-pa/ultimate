@@ -248,6 +248,7 @@ public class Loop {
 	 * add a var
 	 * 
 	 * @param vars
+	 *            aux vars
 	 */
 	public void addVar(final List<TermVariable> vars) {
 		mAuxVars.addAll(vars);
@@ -261,7 +262,7 @@ public class Loop {
 	/**
 	 * Get the {@link Backbone}s as human readable Text.
 	 * 
-	 * @return
+	 * @return String representation of the backbone path
 	 */
 	public String backbonesToString() {
 		StringBuilder str = new StringBuilder();
