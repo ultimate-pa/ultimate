@@ -32,6 +32,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -125,6 +126,11 @@ public class DisjunctiveAbstractState<STATE extends IAbstractState<STATE, VARDEC
 			return Collections.emptySet();
 		}
 		return Collections.unmodifiableSet(mStates.iterator().next().getVariables());
+	}
+
+	@Override
+	public DisjunctiveAbstractState<STATE, VARDECL> renameVariables(final Map<VARDECL, VARDECL> old2newVars) {
+		return map(a -> a.renameVariables(old2newVars));
 	}
 
 	@Override
@@ -333,12 +339,13 @@ public class DisjunctiveAbstractState<STATE extends IAbstractState<STATE, VARDEC
 		return map(a -> varProvider.createValidPostOpStateBeforeLeaving(act, a));
 	}
 
-	public <ACTION> DisjunctiveAbstractState<STATE, VARDECL> apply(final IAbstractTransformer<STATE, ACTION, VARDECL> op,
-			final ACTION transition) {
+	public <ACTION> DisjunctiveAbstractState<STATE, VARDECL>
+			apply(final IAbstractTransformer<STATE, ACTION, VARDECL> op, final ACTION transition) {
 		return mapCollection(a -> op.apply(a, transition));
 	}
 
-	public <ACTION> DisjunctiveAbstractState<STATE, VARDECL> apply(final IAbstractPostOperator<STATE, ACTION, VARDECL> postOp,
+	public <ACTION> DisjunctiveAbstractState<STATE, VARDECL> apply(
+			final IAbstractPostOperator<STATE, ACTION, VARDECL> postOp,
 			final DisjunctiveAbstractState<STATE, VARDECL> multiStateBeforeLeaving, final ACTION transition) {
 		return crossProductCollection((a, b) -> postOp.apply(b, a, transition), multiStateBeforeLeaving, mMaxSize);
 	}
@@ -363,9 +370,10 @@ public class DisjunctiveAbstractState<STATE extends IAbstractState<STATE, VARDEC
 
 	/**
 	 * Create a new {@link DisjunctiveAbstractState} by applying some function to each pair of states from this
-	 * {@link DisjunctiveAbstractState} and some other {@link DisjunctiveAbstractState} (i.e., the first argument is a state from
-	 * this instance). If the resulting set of states does not differ from this state, return this state. If it differs,
-	 * create a new {@link DisjunctiveAbstractState} that retains as many as <code>maxSize</code> disjunctive states.
+	 * {@link DisjunctiveAbstractState} and some other {@link DisjunctiveAbstractState} (i.e., the first argument is a
+	 * state from this instance). If the resulting set of states does not differ from this state, return this state. If
+	 * it differs, create a new {@link DisjunctiveAbstractState} that retains as many as <code>maxSize</code>
+	 * disjunctive states.
 	 */
 	private DisjunctiveAbstractState<STATE, VARDECL> crossProduct(final BiFunction<STATE, STATE, STATE> funCreateState,
 			final DisjunctiveAbstractState<STATE, VARDECL> otherMultiState, final int maxSize) {
@@ -382,8 +390,8 @@ public class DisjunctiveAbstractState<STATE extends IAbstractState<STATE, VARDEC
 	}
 
 	/**
-	 * Same as {@link #crossProduct(BiFunction, DisjunctiveAbstractState, int)}, but the function creates a collection of
-	 * states.
+	 * Same as {@link #crossProduct(BiFunction, DisjunctiveAbstractState, int)}, but the function creates a collection
+	 * of states.
 	 */
 	private DisjunctiveAbstractState<STATE, VARDECL> crossProductCollection(
 			final BiFunction<STATE, STATE, Collection<STATE>> funCreateState,

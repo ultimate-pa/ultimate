@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -91,6 +92,12 @@ public class LiveVariableState<ACTION extends IAction>
 	public boolean containsVariable(final IProgramVarOrConst var) {
 		// we contain all the variables ;)
 		return true;
+	}
+
+	@Override
+	public LiveVariableState<ACTION> renameVariables(final Map<IProgramVarOrConst, IProgramVarOrConst> old2newVars) {
+		// we contain all the variables ;)
+		return this;
 	}
 
 	@Override

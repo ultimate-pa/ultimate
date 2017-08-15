@@ -29,6 +29,7 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
@@ -109,6 +110,29 @@ public interface IAbstractState<STATE extends IAbstractState<STATE, VARDECL>, VA
 	Set<VARDECL> getVariables();
 
 	/**
+	 * Create a new {@link IAbstractState} by renaming a variable.
+	 *
+	 * @param oldVar
+	 *            The old "name" of the variable. May not be null.
+	 * @param newVar
+	 *            The new "name" of the variable. May not be null.
+	 * @return A state that is equivalent to this one except for the renamed variable.
+	 */
+	default STATE renameVariable(final VARDECL oldVar, final VARDECL newVar) {
+		return renameVariables(Collections.singletonMap(oldVar, newVar));
+	}
+
+	/**
+	 * Create a new {@link IAbstractState} by renaming some variables.
+	 *
+	 * @param old2newVars
+	 *            A mapping from old variable names to new variable names. If the mapping maps some variable to null,
+	 *            this method should throw an exception.
+	 * @return A state that is equivalent to this one except for the renamed variables.
+	 */
+	STATE renameVariables(final Map<VARDECL, VARDECL> old2newVars);
+
+	/**
 	 * Create a new state that has all the variables and abstraction of this {@link IAbstractState} and of the
 	 * <code>dominator</code> (i.e., Var(return) = Var(this) &cup; Var(dominator)). If both states (this and dominator)
 	 * share variables, the abstraction of dominator should replace the abstraction of this state (e.g., if
@@ -180,7 +204,7 @@ public interface IAbstractState<STATE extends IAbstractState<STATE, VARDECL>, VA
 	/**
 	 * Return a compacted representation of the current {@link IAbstractState} where all variables are removed for which
 	 * no information is present (i.e., remove all "top" variables).
-	 * 
+	 *
 	 * @return A compacted {@link IAbstractState} that is equivalent to this state except for the tracked variables.
 	 */
 	STATE compact();

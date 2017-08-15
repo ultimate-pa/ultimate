@@ -338,4 +338,50 @@ public class DataflowState<ACTION extends IAction>
 		// dataflow states are always compact
 		return this;
 	}
+
+	@Override
+	public DataflowState<ACTION> renameVariables(final Map<IProgramVarOrConst, IProgramVarOrConst> old2newVars) {
+		if (old2newVars == null || old2newVars.isEmpty()) {
+			return this;
+		}
+		final Set<IProgramVarOrConst> vars = SetOperations.getFreshSet(mVars);
+		final Map<IProgramVarOrConst, Set<ACTION>> def = AbsIntUtil.getFreshMap(mDef);
+		final Map<IProgramVarOrConst, Set<ACTION>> use = AbsIntUtil.getFreshMap(mUse);
+		final Map<IProgramVarOrConst, Set<ACTION>> reachdef = AbsIntUtil.getFreshMap(mReachDef);
+		final Map<IProgramVarOrConst, Set<IcfgLocation>> noWrite = AbsIntUtil.getFreshMap(mNoWrite);
+
+		@SuppressWarnings("unchecked")
+		final Map<IProgramVarOrConst, Object>[] maps = new Map[] { def, use, reachdef, noWrite };
+
+		boolean isChanged = false;
+		for (final Entry<IProgramVarOrConst, IProgramVarOrConst> entry : old2newVars.entrySet()) {
+			final IProgramVarOrConst oldVar = entry.getKey();
+			final IProgramVarOrConst newVar = entry.getValue();
+
+			if (newVar == null) {
+				throw new IllegalArgumentException("Cannot rename " + oldVar + " to null");
+			}
+
+			if (oldVar == newVar) {
+				continue;
+			}
+
+			if (!vars.remove(oldVar)) {
+				continue;
+			}
+			isChanged = true;
+			vars.add(newVar);
+
+			for (final Map<IProgramVarOrConst, Object> map : maps) {
+				if (map.containsKey(oldVar)) {
+					final Object oldVal = map.remove(oldVar);
+					map.put(newVar, oldVal);
+				}
+			}
+		}
+		if (isChanged) {
+			return new DataflowState<>(vars, def, use, reachdef, noWrite);
+		}
+		return this;
+	}
 }

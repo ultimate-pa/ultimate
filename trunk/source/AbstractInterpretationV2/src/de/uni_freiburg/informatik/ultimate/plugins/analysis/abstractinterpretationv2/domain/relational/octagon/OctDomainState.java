@@ -54,7 +54,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.FixpointEngine;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.typeutils.TypeUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.TVBool;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -355,6 +354,53 @@ public final class OctDomainState implements IAbstractState<OctDomainState, IBoo
 			defragmentMap(newState.mMapNumericVarToIndex);
 		}
 		return newState;
+	}
+
+	@Override
+	public OctDomainState renameVariables(final Map<IBoogieVar, IBoogieVar> old2newVars) {
+		if (old2newVars == null || old2newVars.isEmpty()) {
+			return this;
+		}
+
+		boolean isChanged = false;
+		final OctDomainState newState = shallowCopy();
+		for (final Entry<IBoogieVar, IBoogieVar> entry : old2newVars.entrySet()) {
+			final IBoogieVar oldVar = entry.getKey();
+			final IBoogieVar newVar = entry.getValue();
+
+			if (newVar == null) {
+				throw new IllegalArgumentException("Cannot rename " + oldVar + " to null");
+			}
+
+			if (oldVar == newVar) {
+				continue;
+			}
+
+			if (!newState.mVariables.remove(oldVar)) {
+				continue;
+			}
+			isChanged = true;
+			unrefVariables(newState);
+			newState.mVariables.add(newVar);
+
+			if (newState.mMapNumericVarToIndex.containsKey(oldVar)) {
+				final Integer idx = newState.mMapNumericVarToIndex.remove(oldVar);
+				newState.mMapNumericVarToIndex.put(newVar, idx);
+				if (mNumericNonIntVars.contains(oldVar)) {
+					unrefOtherNumericNonIntVars(newState);
+					newState.mNumericNonIntVars.remove(oldVar);
+					newState.mNumericNonIntVars.add(newVar);
+				}
+			} else if (mBooleanAbstraction.containsKey(oldVar)) {
+				unrefOtherBooleanAbstraction(newState);
+				final BoolValue value = newState.mBooleanAbstraction.remove(oldVar);
+				newState.mBooleanAbstraction.put(newVar, value);
+			}
+		}
+		if (isChanged) {
+			return newState;
+		}
+		return this;
 	}
 
 	/**
@@ -1371,5 +1417,4 @@ public final class OctDomainState implements IAbstractState<OctDomainState, IBoo
 		}
 		return topVariables;
 	}
-
 }

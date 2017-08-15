@@ -31,6 +31,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -45,19 +46,20 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 
 /**
- * 
+ *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  */
 public class SMTTheoryState implements IAbstractState<SMTTheoryState, IProgramVarOrConst>, IEqualityProvidingState {
-	
+
 	private final IPredicate mPredicate;
-	
+
 	private final SMTTheoryStateFactoryAndPredicateHelper mFactory;
 
 	private final Set<IProgramVarOrConst> mPvocs;
-	
-	public SMTTheoryState(IPredicate predicate, Set<IProgramVarOrConst> variables, SMTTheoryStateFactoryAndPredicateHelper factory) {
+
+	public SMTTheoryState(final IPredicate predicate, final Set<IProgramVarOrConst> variables,
+			final SMTTheoryStateFactoryAndPredicateHelper factory) {
 		mPredicate = predicate;
 		mFactory = factory;
 		mPvocs = variables;
@@ -65,7 +67,7 @@ public class SMTTheoryState implements IAbstractState<SMTTheoryState, IProgramVa
 
 	@Override
 	public SMTTheoryState addVariable(final IProgramVarOrConst variable) {
-		Set<IProgramVarOrConst> newPvocs = new HashSet<>(mPvocs);
+		final Set<IProgramVarOrConst> newPvocs = new HashSet<>(mPvocs);
 		newPvocs.add(variable);
 		return mFactory.getOrConstructState(mPredicate, newPvocs);
 	}
@@ -77,7 +79,7 @@ public class SMTTheoryState implements IAbstractState<SMTTheoryState, IProgramVa
 
 	@Override
 	public SMTTheoryState addVariables(final Collection<IProgramVarOrConst> variables) {
-		Set<IProgramVarOrConst> newPvocs = new HashSet<>(mPvocs);
+		final Set<IProgramVarOrConst> newPvocs = new HashSet<>(mPvocs);
 		newPvocs.addAll(variables);
 		return mFactory.getOrConstructState(mPredicate, newPvocs);
 	}
@@ -86,17 +88,16 @@ public class SMTTheoryState implements IAbstractState<SMTTheoryState, IProgramVa
 	public SMTTheoryState removeVariables(final Collection<IProgramVarOrConst> variables) {
 		final Set<TermVariable> termVariablesFromPvocs =
 				variables.stream().map(pvoc -> (TermVariable) pvoc.getTerm()).collect(Collectors.toSet());
-		final IPredicate projectedPredicate =
-				mFactory.projectExistentially(termVariablesFromPvocs, mPredicate);
+		final IPredicate projectedPredicate = mFactory.projectExistentially(termVariablesFromPvocs, mPredicate);
 
 		final Set<IProgramVarOrConst> newVariables = new HashSet<>(mPvocs);
 		newVariables.removeAll(variables);
 
 		return mFactory.getOrConstructState(projectedPredicate, newVariables);
-	}	
+	}
 
 	@Override
-	public boolean containsVariable(IProgramVarOrConst var) {
+	public boolean containsVariable(final IProgramVarOrConst var) {
 		return mPvocs.contains(var);
 	}
 
@@ -106,18 +107,18 @@ public class SMTTheoryState implements IAbstractState<SMTTheoryState, IProgramVa
 	}
 
 	@Override
-	public SMTTheoryState patch(SMTTheoryState dominator) {
-		final SMTTheoryState newState = this.removeVariables(dominator.getVariables());
+	public SMTTheoryState patch(final SMTTheoryState dominator) {
+		final SMTTheoryState newState = removeVariables(dominator.getVariables());
 		return newState.intersect(dominator);
 	}
 
 	@Override
-	public SMTTheoryState intersect(SMTTheoryState other) {
+	public SMTTheoryState intersect(final SMTTheoryState other) {
 		return mFactory.conjoin(this, other);
 	}
 
 	@Override
-	public SMTTheoryState union(SMTTheoryState other) {
+	public SMTTheoryState union(final SMTTheoryState other) {
 		return mFactory.disjoinFlat(this, other);
 	}
 
@@ -132,14 +133,14 @@ public class SMTTheoryState implements IAbstractState<SMTTheoryState, IProgramVa
 	}
 
 	@Override
-	public boolean isEqualTo(SMTTheoryState other) {
-		return (this.isSubsetOf(other) == SubsetResult.NON_STRICT && other.isSubsetOf(this) == SubsetResult.NON_STRICT)
-				|| this.isSubsetOf(other) == SubsetResult.EQUAL;
+	public boolean isEqualTo(final SMTTheoryState other) {
+		return (isSubsetOf(other) == SubsetResult.NON_STRICT && other.isSubsetOf(this) == SubsetResult.NON_STRICT)
+				|| isSubsetOf(other) == SubsetResult.EQUAL;
 	}
 
 	@Override
-	public de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState.SubsetResult isSubsetOf(
-			SMTTheoryState other) {
+	public de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState.SubsetResult
+			isSubsetOf(final SMTTheoryState other) {
 		final boolean thisImpliesOther = mFactory.implies(this, other);
 		final boolean otherImpliesThis = mFactory.implies(other, this);
 
@@ -150,21 +151,21 @@ public class SMTTheoryState implements IAbstractState<SMTTheoryState, IProgramVa
 		if (thisImpliesOther) {
 			return SubsetResult.NON_STRICT;
 		}
-		
+
 		return SubsetResult.NONE;
 	}
 
 	@Override
 	public SMTTheoryState compact() {
 		final List<TermVariable> freeVars = Arrays.asList(mPredicate.getFormula().getFreeVars());
-		final Set<IProgramVarOrConst> newPvocs = mPvocs.stream()
-				.filter(pvoc -> (!(pvoc instanceof IProgramVar)) || freeVars.contains(pvoc.getTerm()))
-				.collect(Collectors.toSet());
+		final Set<IProgramVarOrConst> newPvocs =
+				mPvocs.stream().filter(pvoc -> (!(pvoc instanceof IProgramVar)) || freeVars.contains(pvoc.getTerm()))
+						.collect(Collectors.toSet());
 		return mFactory.getOrConstructState(mPredicate, newPvocs);
 	}
 
 	@Override
-	public Term getTerm(Script script) {
+	public Term getTerm(final Script script) {
 		return mPredicate.getFormula();
 	}
 
@@ -179,11 +180,11 @@ public class SMTTheoryState implements IAbstractState<SMTTheoryState, IProgramVa
 
 	/**
 	 * Checks if the given term is implied by this state.
-	 * 
+	 *
 	 * @param literalTerm
 	 * @return
 	 */
-	public boolean impliesLiteral(Term literalTerm) {
+	public boolean impliesLiteral(final Term literalTerm) {
 		return mFactory.impliesLiteral(this, literalTerm);
 	}
 
@@ -193,7 +194,7 @@ public class SMTTheoryState implements IAbstractState<SMTTheoryState, IProgramVa
 	}
 
 	@Override
-	public boolean areEqual(Term t1, Term t2) {
+	public boolean areEqual(final Term t1, final Term t2) {
 		final ManagedScript mgdScript = mFactory.getManagedScript();
 		mgdScript.lock(this);
 		final Term equalsTerm = mgdScript.term(this, "=", t1, t2);
@@ -202,7 +203,7 @@ public class SMTTheoryState implements IAbstractState<SMTTheoryState, IProgramVa
 	}
 
 	@Override
-	public boolean areUnequal(Term t1, Term t2) {
+	public boolean areUnequal(final Term t1, final Term t2) {
 		final ManagedScript mgdScript = mFactory.getManagedScript();
 		mgdScript.lock(this);
 		final Term unequalsTerm = mgdScript.term(this, "distinct", t1, t2);
@@ -211,7 +212,12 @@ public class SMTTheoryState implements IAbstractState<SMTTheoryState, IProgramVa
 	}
 
 	@Override
-	public IEqualityProvidingState union(IEqualityProvidingState other) {
+	public IEqualityProvidingState union(final IEqualityProvidingState other) {
 		return union((SMTTheoryState) other);
+	}
+
+	@Override
+	public SMTTheoryState renameVariables(final Map<IProgramVarOrConst, IProgramVarOrConst> old2newVars) {
+		throw new UnsupportedOperationException("not yet implemented");
 	}
 }

@@ -31,6 +31,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -122,6 +123,11 @@ public class EqState<ACTION extends IIcfgTransition<IcfgLocation>>
 	@Override
 	public boolean containsVariable(final IProgramVarOrConst var) {
 		return mPvocs.contains(var);
+	}
+
+	@Override
+	public EqState<ACTION> renameVariables(final Map<IProgramVarOrConst, IProgramVarOrConst> old2newVars) {
+		throw new UnsupportedOperationException("not yet implemented");
 	}
 
 	@Override

@@ -33,6 +33,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -140,6 +141,16 @@ public class CompoundDomainState implements IAbstractState<CompoundDomainState, 
 	@Override
 	public Set<IBoogieVar> getVariables() {
 		return mAbstractStates.get(0).getVariables();
+	}
+
+	@Override
+	public CompoundDomainState renameVariable(final IBoogieVar oldVar, final IBoogieVar newVar) {
+		return performStateOperation(state -> state.renameVariable(oldVar, newVar));
+	}
+
+	@Override
+	public CompoundDomainState renameVariables(final Map<IBoogieVar, IBoogieVar> old2newVars) {
+		return performStateOperation(state -> state.renameVariables(old2newVars));
 	}
 
 	@Override

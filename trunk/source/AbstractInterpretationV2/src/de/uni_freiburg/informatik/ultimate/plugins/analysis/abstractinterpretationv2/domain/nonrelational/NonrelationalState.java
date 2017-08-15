@@ -490,7 +490,9 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 	@Override
 	public STATE addVariable(final VARDECL variable) {
 		assert variable != null;
-		mLogger.debug("Adding boogievar " + LoggingHelper.getHashCodeString(variable) + " " + variable);
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("Adding boogievar " + LoggingHelper.getHashCodeString(variable) + " " + variable);
+		}
 		final STATE returnState = createCopy();
 		addVariableInternally(returnState, variable);
 		return returnState;
@@ -542,6 +544,55 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 		}
 
 		return createState(mLogger, newVarMap, newValMap, newBooleanValMap, mIsBottom == TVBool.FIXED);
+	}
+
+	@Override
+	public STATE renameVariables(final Map<VARDECL, VARDECL> old2newVars) {
+		if (old2newVars == null || old2newVars.isEmpty()) {
+			return getThis();
+		}
+
+		final STATE newState = createCopy();
+
+		final NonrelationalState<STATE, V, VARDECL> newNRState = newState;
+
+		boolean isChanged = false;
+		for (final Entry<VARDECL, VARDECL> entry : old2newVars.entrySet()) {
+			final VARDECL oldVar = entry.getKey();
+			final VARDECL newVar = entry.getValue();
+
+			if (newVar == null) {
+				throw new IllegalArgumentException("Cannot rename " + oldVar + " to null");
+			}
+
+			if (oldVar == newVar) {
+				continue;
+			}
+
+			if (!newNRState.mVariables.remove(oldVar)) {
+				// this state does not contain this variable
+				continue;
+			}
+			newNRState.addVariable(newVar);
+			isChanged = true;
+
+			if (newNRState.mValueMap.containsKey(oldVar)) {
+				assert !newNRState.mBooleanValuesMap.containsKey(oldVar);
+				final V oldVarValue = newNRState.mValueMap.remove(oldVar);
+				newNRState.mValueMap.put(newVar, oldVarValue);
+			} else if (newNRState.mBooleanValuesMap.containsKey(oldVar)) {
+				final BooleanValue oldVarValue = newNRState.mBooleanValuesMap.remove(oldVar);
+				newNRState.mBooleanValuesMap.put(newVar, oldVarValue);
+			} else {
+				throw new AssertionError(
+						"If var is known in this state is has to be either a number value or a boolean value");
+			}
+		}
+
+		if (isChanged) {
+			return newState;
+		}
+		return getThis();
 	}
 
 	@Override
