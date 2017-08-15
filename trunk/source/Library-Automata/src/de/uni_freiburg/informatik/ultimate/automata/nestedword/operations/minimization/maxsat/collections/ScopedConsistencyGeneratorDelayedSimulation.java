@@ -115,21 +115,34 @@ public class ScopedConsistencyGeneratorDelayedSimulation<T, LETTER, STATE> imple
 		}
 	}
 	
+	//TODO: find a way to tell the simulation the current standings. Maybe extend BiPredicate?
 	//Recomputes the winning states for Spoiler and Duplicator
 	protected void updateWinningStates() throws AutomataOperationCanceledException {
 		final BiPredicate<STATE, STATE> areStatesMerged = new BiPredicate<STATE, STATE>() {
+			
 			@Override
 			public boolean test(final STATE t, final STATE u) {
-				final NormalNode<STATE> root1 = find(mContent2node.get(t));
-				final NormalNode<STATE> root2 = find(mContent2node.get(u));
-				if (root1 == root2) {
-					return true;
+				return false;
+			};
+			
+			public boolean test(final STATE t, final STATE u, Map<STATE, NormalNode<STATE>> stateMap) {
+				
+				if(stateMap == null || stateMap.isEmpty()) {
+					return test(t, u);
 				}
 				else {
-					return false;
+					final NormalNode<STATE> root1 = find(mContent2node.get(t));
+					final NormalNode<STATE> root2 = find(mContent2node.get(u));
+					if (root1 == root2) {
+						return true;
+					}
+					else {
+						return false;
+					}
 				}
-			}
+			};
 		};
+		
 		NwaApproximateDelayedSimulation<LETTER,STATE> simulation = new NwaApproximateDelayedSimulation<LETTER, STATE>(mServices, mOperand, areStatesMerged);
 		mSpoilerWinnings = simulation.getSpoilerWinningStates();
 		mDuplicatorWinnings = simulation.getDuplicatorEventuallyAcceptingStates();
