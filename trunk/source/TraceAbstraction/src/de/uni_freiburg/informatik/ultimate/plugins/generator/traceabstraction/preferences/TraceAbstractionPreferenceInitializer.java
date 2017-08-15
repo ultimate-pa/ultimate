@@ -241,7 +241,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<>(LABEL_ABSINT_ALWAYS_REFINE, DEF_ABSINT_ALWAYS_REFINE,
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_ERROR_TRACE_RELEVANCE_ANALYSIS_NON_FLOW_SENSITIVE,
-						DEF_ERROR_TRACE_RELEVANCE_ANALYSIS_NON_FLOW_SENSITIVE, 
+						DEF_ERROR_TRACE_RELEVANCE_ANALYSIS_NON_FLOW_SENSITIVE,
 						TOOLTIP_ERROR_TRACE_RELEVANCE_ANALYSIS_NON_FLOW_SENSITIVE, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_ERROR_TRACE_RELEVANCE_ANALYSIS_FLOW_SENSITIVE,
 						DEF_ERROR_TRACE_RELEVANCE_ANALYSIS_FLOW_SENSITIVE, PreferenceType.Boolean),
@@ -292,10 +292,46 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	}
 
 	/**
-	 * Code block assertion order.
+	 * Code block assertion order. Determines in which order the different codeblocks of a trace are asserted during a
+	 * trace check.
 	 */
 	public enum AssertCodeBlockOrder {
-		NOT_INCREMENTALLY, OUTSIDE_LOOP_FIRST1, OUTSIDE_LOOP_FIRST2, INSIDE_LOOP_FIRST1, MIX_INSIDE_OUTSIDE,
+		/**
+		 * Assert all codeblocks at once.
+		 */
+		NOT_INCREMENTALLY,
+
+		/**
+		 * Assert in two steps. First, assert all codeblocks that do not occur in the first loop of the trace. Second,
+		 * assert the rest.
+		 */
+		OUTSIDE_LOOP_FIRST1,
+
+		/**
+		 * Assert codeblocks according to their "depth". Codeblocks outside of loops have depth 0, codeblocks within a
+		 * loop have depth i + 1 where i is the depth of the loop codeblock.
+		 *
+		 * Assert all codeblocks in the order of their depth starting with depth 0.
+		 */
+		OUTSIDE_LOOP_FIRST2,
+
+		/**
+		 * Similar to {@link AssertCodeBlockOrder#OUTSIDE_LOOP_FIRST2}, but in reverse order (start with the deepest
+		 * codeblocks).
+		 */
+		INSIDE_LOOP_FIRST1,
+
+		/**
+		 * Similar to {@link AssertCodeBlockOrder#OUTSIDE_LOOP_FIRST2} and
+		 * {@link AssertCodeBlockOrder#INSIDE_LOOP_FIRST1} in that it also uses the depth of a codeblock. This setting
+		 * alternates between depths, starting with depth 0, then asserting the maximal depth, then depth 1, etc.
+		 */
+		MIX_INSIDE_OUTSIDE,
+
+		/**
+		 * Assert in two steps: First terms with small constants (currently, terms that contain constants smaller than
+		 * 10), then the rest.
+		 */
 		TERMS_WITH_SMALL_CONSTANTS_FIRST
 	}
 
