@@ -205,9 +205,12 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 					continue;
 				}
 
+				final Set<ELEM> e1CcParsCopy = new HashSet<>(e1CcPars);
+				final Set<ELEM> e2CcParsCopy = new HashSet<>(e2CcPars);
+
 				// need to make copies because reportEqualityRec inside may modify the sets..
-				for (final ELEM ccpar1 : new HashSet<>(e1CcPars)) {
-					for (final ELEM ccpar2 : new HashSet<>(e2CcPars)) {
+				for (final ELEM ccpar1 : e1CcParsCopy) {
+					for (final ELEM ccpar2 : e2CcParsCopy) {
 						// insert forward congruence
 						if (argumentsAreCongruent(ccpar1, ccpar2)) {
 							reportEqualityRec(ccpar1, ccpar2);
