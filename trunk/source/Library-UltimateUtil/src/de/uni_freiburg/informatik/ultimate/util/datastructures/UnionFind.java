@@ -34,6 +34,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.util.SetOperations;
@@ -72,17 +73,20 @@ public class UnionFind<E> implements IPartition<E> {
 	 * Copy constructor.
 	 */
 	public UnionFind(final UnionFind<E> unionFind) {
-		mEquivalenceClass = new HashMap<>(unionFind.mEquivalenceClass);
-		mRepresentative = new HashMap<>(unionFind.mRepresentative);
-//		for (final Entry<E, Set<E>> entry : unionFind.mEquivalenceClass.entrySet()) {
-//			final E representative = entry.getKey();
-//			final Set<E> equivalenceClassCopy = new HashSet<>(entry.getValue());
-//			// alex: I commented this out as it does not make sense to me..
-////			assert mRepresentative.get(equivalenceClassCopy) == representative : "inconsistent";
-//			final Set<E> oldValue = this.mEquivalenceClass.put(representative, equivalenceClassCopy);
-//			assert oldValue == null : "element was contained twice";
-//			this.mRepresentative.put(equivalenceClassCopy, representative);
-//		}
+//		 make a deep copy of the two maps
+//		mEquivalenceClass = new HashMap<>(unionFind.mEquivalenceClass);
+//		mRepresentative = new HashMap<>(unionFind.mRepresentative);
+		mEquivalenceClass = new HashMap<>();
+		mRepresentative = new HashMap<>();
+		for (final Entry<E, Set<E>> entry : unionFind.mEquivalenceClass.entrySet()) {
+			final E representative = entry.getKey();
+			final Set<E> equivalenceClassCopy = new HashSet<>(entry.getValue());
+			// alex: I commented this out as it does not make sense to me..
+//			assert mRepresentative.get(equivalenceClassCopy) == representative : "inconsistent";
+			final Set<E> oldValue = this.mEquivalenceClass.put(representative, equivalenceClassCopy);
+			assert oldValue == null : "element was contained twice";
+			this.mRepresentative.put(equivalenceClassCopy, representative);
+		}
 	}
 
 	/**
