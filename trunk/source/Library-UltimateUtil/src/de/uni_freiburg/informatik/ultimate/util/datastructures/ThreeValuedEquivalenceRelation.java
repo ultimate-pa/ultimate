@@ -38,9 +38,11 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 /**
  * Memory efficient data structure that stores for a given equivalence relation
  * if pairs are in the relation, not in the relation, if the membership status
- * is unknown
+ * is unknown.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ *
+ * @param <E> type of the elements in the equivalence relation
  */
 public class ThreeValuedEquivalenceRelation<E> {
 

@@ -69,6 +69,8 @@ public class UnionFind<E> implements IPartition<E> {
 
 	/**
 	 * Copy constructor.
+	 *
+	 * @param unionFind the UnionFind instance to be copied
 	 */
 	public UnionFind(final UnionFind<E> unionFind) {
 		for (final Entry<Set<E>, E> entry : unionFind.mRepresentative.entrySet()) {
@@ -221,6 +223,12 @@ public class UnionFind<E> implements IPartition<E> {
 		return getAllEquivalenceClasses().iterator();
 	}
 
+	/**
+	 * Removes the given element from all the equivalence classes. If the element was a representative and was not the
+	 * only element of its equivalence class, another representative for is chosen for the new equivalence class.
+	 *
+	 * @param element element to be removed
+	 */
 	public void remove(final E element) {
 
 		if (mRepresentative.get(mEquivalenceClass.get(element)).equals(element)) {
@@ -259,8 +267,8 @@ public class UnionFind<E> implements IPartition<E> {
 	}
 
 	private boolean areMembersConsistent() {
-		for (final E el : mRepresentative.values()) {
-			if (!mEquivalenceClass.containsKey(el)) {
+		for (final E e : mRepresentative.values()) {
+			if (!mEquivalenceClass.containsKey(e)) {
 				return false;
 			}
 		}
@@ -286,14 +294,15 @@ public class UnionFind<E> implements IPartition<E> {
 	 *
 	 * Assumes none of the given elements is part of an existing equivalence class in this UnionFind instance.
 	 *
-	 * @param block
+	 * @param newBlock new equivalence class that is to be added to the equivalence relation
 	 */
-	public void addEquivalenceClass(final Set<E> originalBlock) {
-		assert !originalBlock.isEmpty();
-		final Set<E> block = new HashSet<>(originalBlock);
+	public void addEquivalenceClass(final Set<E> newBlock) {
+		assert SetOperations.intersect(newBlock, getAllElements()).isEmpty();
+		assert !newBlock.isEmpty();
+		final Set<E> block = new HashSet<>(newBlock);
 
-		for (final E el : block) {
-			mEquivalenceClass.put(el, block);
+		for (final E elem : block) {
+			mEquivalenceClass.put(elem, block);
 		}
 
 		final E rep = block.iterator().next();
@@ -302,6 +311,15 @@ public class UnionFind<E> implements IPartition<E> {
 	}
 
 
+	/**
+	 * Computes a new UnionFind instance whose partitions are the intersections of the given UnionFind instance's
+	 * equivalence classes. Only non-empty intersections are added to the new equivalence relation.
+	 *
+	 * @param <E> element type
+	 * @param uf1 instance to be intersected with uf2
+	 * @param uf2 instance to be intersected with uf1
+	 * @return UnionFind with intersected equivalence classes
+	 */
 	public static <E> UnionFind<E> intersectPartitionBlocks(final UnionFind<E> uf1, final UnionFind<E> uf2) {
 		final UnionFind<E> result = new UnionFind<>();
 		for (final Set<E> uf1Block : uf1.getAllEquivalenceClasses()) {
@@ -318,13 +336,22 @@ public class UnionFind<E> implements IPartition<E> {
 		return result;
 	}
 
-	public static <E> UnionFind<E> unionPartitionBlocks(final UnionFind<E> tver1, final UnionFind<E> tver2) {
+	/**
+	 * Computes a new UnionFind instance whose partitions are the unions of the given UnionFind instance's
+	 * equivalence classes.
+	 *
+	 * @param <E> element type
+	 * @param uf1 instance to be union'ed with uf2
+	 * @param uf2 instance to be union'ed with uf1
+	 * @return UnionFind with union'ed equivalence classes
+	 */
+	public static <E> UnionFind<E> unionPartitionBlocks(final UnionFind<E> uf1, final UnionFind<E> uf2) {
 		final UnionFind<E> result = new UnionFind<>();
-		final HashSet<E> todo = new HashSet<>(tver1.getAllElements());
+		final HashSet<E> todo = new HashSet<>(uf1.getAllElements());
 		while (!todo.isEmpty()) {
 			final E tver1El = todo.iterator().next();
-			final Set<E> newBlock = SetOperations.union(tver1.getEquivalenceClassMembers(tver1El),
-					tver2.getEquivalenceClassMembers(tver1El));
+			final Set<E> newBlock = SetOperations.union(uf1.getEquivalenceClassMembers(tver1El),
+					uf2.getEquivalenceClassMembers(tver1El));
 			result.addEquivalenceClass(newBlock);
 			todo.removeAll(newBlock);
 		}
