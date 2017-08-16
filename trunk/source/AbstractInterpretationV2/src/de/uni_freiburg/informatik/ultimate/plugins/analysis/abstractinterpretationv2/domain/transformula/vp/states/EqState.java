@@ -32,7 +32,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -46,7 +45,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.IEqualityProvidingState;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainSymmetricPair;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqFunction;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNode;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNodeAndFunctionFactory;
@@ -201,48 +199,54 @@ public class EqState<ACTION extends IIcfgTransition<IcfgLocation>>
 			return SubsetResult.STRICT;
 		}
 
-		/*
-		 * checking inclusion between states via inclusion check on the constraints --> note the inversion constraints
-		 * vs models!
-		 */
-
-		// supporting equalities should, here (because the other state is closed under transitivity etc..)
-		for (final Entry<EqNode, EqNode> elEq : other.getConstraint().getSupportingElementEqualities()) {
-			if (!mConstraint.areEqual(elEq.getKey(), elEq.getValue())) {
-				return SubsetResult.NONE;
-			}
+		if (this.mConstraint.isStrongerThan(other.mConstraint)) {
+			return SubsetResult.NON_STRICT;
+		} else {
+			return SubsetResult.NONE;
 		}
 
-		for (final VPDomainSymmetricPair<EqNode> elDeq : other.getConstraint().getAllElementDisequalities()) {
-			if (!mConstraint.areUnequal(elDeq.getFirst(), elDeq.getSecond())) {
-				return SubsetResult.NONE;
-			}
-		}
-
-		for (final Entry<EqFunction, EqFunction> fnEq : other.getConstraint().getSupportingFunctionEqualities()) {
-			if (!mConstraint.areEqual(fnEq.getKey(), fnEq.getValue())) {
-				return SubsetResult.NONE;
-			}
-		}
-
-		for (final VPDomainSymmetricPair<EqFunction> fnDeq : other.getConstraint().getAllFunctionDisequalities()) {
-			if (!mConstraint.areUnequal(fnDeq.getFirst(), fnDeq.getSecond())) {
-				return SubsetResult.NONE;
-			}
-		}
-
-		// TODO
-		// final EqConstraintFactory<ACTION, EqNode, EqFunction> constraintFactory = mFactory.getEqConstraintFactory();
-		// final EqDisjunctiveConstraint<ACTION, EqNode, EqFunction> intersectionWithComplement =
-		// constraintFactory.conjoinDisjunctiveConstraints(
-		// toList(constraintFactory.getDisjunctiveConstraint(toList(mConstraint)),
-		// constraintFactory.complement(other.getConstraint())));
-		// if (intersectionWithComplement.isBottom()) {
-		// return SubsetResult.
-		//
-		// }
-		// return null;
-		return SubsetResult.NON_STRICT;
+//		/*
+//		 * checking inclusion between states via inclusion check on the constraints --> note the inversion constraints
+//		 * vs models!
+//		 */
+//
+//		// supporting equalities should, here (because the other state is closed under transitivity etc..)
+//		for (final Entry<EqNode, EqNode> elEq : other.getConstraint().getSupportingElementEqualities()) {
+//			if (!mConstraint.areEqual(elEq.getKey(), elEq.getValue())) {
+//				return SubsetResult.NONE;
+//			}
+//		}
+//
+//		for (final VPDomainSymmetricPair<EqNode> elDeq : other.getConstraint().getAllElementDisequalities()) {
+//			if (!mConstraint.areUnequal(elDeq.getFirst(), elDeq.getSecond())) {
+//				return SubsetResult.NONE;
+//			}
+//		}
+//
+//		for (final Entry<EqFunction, EqFunction> fnEq : other.getConstraint().getSupportingFunctionEqualities()) {
+//			if (!mConstraint.areEqual(fnEq.getKey(), fnEq.getValue())) {
+//				return SubsetResult.NONE;
+//			}
+//		}
+//
+//		for (final VPDomainSymmetricPair<EqFunction> fnDeq : other.getConstraint().getAllFunctionDisequalities()) {
+//			if (!mConstraint.areUnequal(fnDeq.getFirst(), fnDeq.getSecond())) {
+//				return SubsetResult.NONE;
+//			}
+//		}
+//
+//		// TODO
+//		// final EqConstraintFactory<ACTION, EqNode, EqFunction> constraintFactory = mFactory.getEqConstraintFactory();
+//		// final EqDisjunctiveConstraint<ACTION, EqNode, EqFunction> intersectionWithComplement =
+//		// constraintFactory.conjoinDisjunctiveConstraints(
+//		// toList(constraintFactory.getDisjunctiveConstraint(toList(mConstraint)),
+//		// constraintFactory.complement(other.getConstraint())));
+//		// if (intersectionWithComplement.isBottom()) {
+//		// return SubsetResult.
+//		//
+//		// }
+//		// return null;
+//		return SubsetResult.NON_STRICT;
 	}
 
 	@SafeVarargs

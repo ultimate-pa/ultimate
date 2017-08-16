@@ -28,7 +28,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -39,7 +38,6 @@ import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -47,122 +45,68 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ConstantFinder;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.IEqNodeIdentifier;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainHelpers;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainSymmetricPair;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.IEqFunctionIdentifier;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.CongruenceClosure;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation3;
 
 /**
- * 
+ *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  * @param <ACTION>
  * @param <NODE>
  * @param <FUNCTION>
  */
-public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>, 
-		NODE extends IEqNodeIdentifier<NODE, FUNCTION>, 
+public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
+		NODE extends IEqNodeIdentifier<NODE, FUNCTION>,
 		FUNCTION extends IEqFunctionIdentifier<NODE, FUNCTION>> {
 
-	private boolean mIsFrozen = false;
-
-	CongruenceGraph<ACTION, NODE, FUNCTION> mElementCongruenceGraph;
-
-	ArrayEquivalenceGraph<ACTION, NODE, FUNCTION> mFunctionEquivalenceGraph;
-
-	private EqConstraintFactory<ACTION, NODE, FUNCTION> mFactory;
-
-	private boolean mIsVersioned;
+	private CongruenceClosure<NODE, FUNCTION> mPartialArrangement;
+	private WeakEquivalenceGraph mWeakEquivalenceGraph;
 
 	private Set<IProgramVar> mVariables;
 	private Set<IProgramVarOrConst> mPvocs;
+	private boolean mIsFrozen;
 
-	private Term mTerm;
-
-	/**
-	 * All (element) nodes that this constraint currently knows about
-	 */
-	private final Set<NODE> mNodes;
-
-	private final Set<FUNCTION> mFunctions;
+	private EqConstraintFactory<ACTION, NODE, FUNCTION> mFactory;
 
 	/**
 	 * Creates an empty constraint (i.e. it does not constrain anything, is
 	 * equivalent to "true")
-	 * 
+	 *
 	 * @param factory
 	 */
-	public EqConstraint(EqConstraintFactory<ACTION, NODE, FUNCTION> factory) {
-		mFactory = factory;
-
-		mNodes = new HashSet<>();
-		mFunctions = new HashSet<>();
-
-		mElementCongruenceGraph = new CongruenceGraph<>(this);
-		mFunctionEquivalenceGraph = new ArrayEquivalenceGraph<>(this);
-
+	public EqConstraint(final EqConstraintFactory<ACTION, NODE, FUNCTION> factory) {
 	}
 
 	/**
 	 * copy constructor
-	 * 
+	 *
 	 * @param constraint
 	 */
-	public EqConstraint(EqConstraint<ACTION, NODE, FUNCTION> constraint) {
-		mFactory = constraint.mFactory;
-		mNodes = new HashSet<>(constraint.mNodes);
-		mFunctions = new HashSet<>(constraint.mFunctions);
-
-		mElementCongruenceGraph = new CongruenceGraph<>(constraint.mElementCongruenceGraph, this);
-
-		// copy the union find containing array equalities
-		mFunctionEquivalenceGraph = new ArrayEquivalenceGraph<>(constraint.mFunctionEquivalenceGraph, this);
-
+	public EqConstraint(final EqConstraint<ACTION, NODE, FUNCTION> constraint) {
 	}
 
 	/**
-	 * 
+	 *
 	 * @param node1
 	 * @param node2
 	 * @return The merge history, i.e., all pairs of former representatives that
 	 *         have been merged by this merge operation
 	 */
-	public HashRelation<NODE, NODE> merge(NODE node1, NODE node2) {
-		return mElementCongruenceGraph.merge(node1, node2);
+	public HashRelation<NODE, NODE> merge(final NODE node1, final NODE node2) {
+		return null;
 	}
 
-	public void havoc(NODE node) {
-		assert !mIsFrozen;
-		if (!mNodes.contains(node) || isBottom()) {
-			assert VPDomainHelpers.constraintFreeOfVars(Arrays.asList(node.getTerm().getFreeVars()), 
-					this, 
-					mFactory.getEqNodeAndFunctionFactory().getScript().getScript()) : 
-						"resulting constraint still has at least one of the to-be-projected vars";
-			return;
-		}
-
-		mElementCongruenceGraph.havoc(node);
+	public void havoc(final NODE node) {
 	}
 
-	public void havocFunction(FUNCTION func) {
-		assert !mIsFrozen;
-
-		if (!mFunctions.contains(func) || isBottom()) {
-			return;
-		}
-
-		mFunctionEquivalenceGraph.havocFunction(func);
-		assert !getAllFunctions().contains(func);
+	public void havocFunction(final FUNCTION func) {
 	}
 
 	public void freeze() {
-		assert !mIsFrozen;
-		mIsFrozen = true;
-		mElementCongruenceGraph.freeze();
-		mFunctionEquivalenceGraph.freeze();
-		assert allNodesAndEqgnMapAreConsistent();
-		// mFunctionDisequalities =
-		// Collections.unmodifiableSet(mFunctionDisequalities);
 	}
 
 	public boolean isBottom() {
@@ -170,272 +114,178 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 	}
 
 	public Set<NODE> getAllNodes() {
-		return Collections.unmodifiableSet(mNodes);
+		return null;
 	}
 
-	// public void addNodes(Collection<NODE> allNodes) {
-	// mElementCongruenceGraph.addNodes(allNodes);
-	// }
-
 	public HashRelation<NODE, NODE> getSupportingElementEqualities() {
-		return mElementCongruenceGraph.getSupportingEqualities();
+		return null;
 	}
 
 	public Set<VPDomainSymmetricPair<NODE>> getElementDisequalities() {
-		return mElementCongruenceGraph.getDisequalities();
+		return null;
 	}
 
 	/**
 	 * "Raw" means here that the disequality is not yet normalized such that it
 	 * only speaks about equivalence representatives.
-	 * 
+	 *
 	 * @param first
 	 * @param second
 	 */
-	public void addRawDisequality(NODE first, NODE second) {
-		assert !mIsFrozen;
-		mElementCongruenceGraph.addDisequality(mElementCongruenceGraph.find(first),
-				mElementCongruenceGraph.find(second));
+	public void addRawDisequality(final NODE first, final NODE second) {
 	}
 
-	public HashRelation<FUNCTION, FUNCTION> getSupportingFunctionEqualities() {
-		/*
-		 * plan: for each equivalence class, iterate over the elements and
-		 * report an equality for each two consecutive elements
-		 */
-		HashRelation<FUNCTION, FUNCTION> result = new HashRelation<>();
-		for (Set<FUNCTION> eqClass : mFunctionEquivalenceGraph.getAllEquivalenceClasses()) {
-			FUNCTION lastElement;
-			FUNCTION currentElement = null;
-			for (FUNCTION el : eqClass) {
-				lastElement = currentElement;
-				currentElement = el;
-				if (lastElement != null) {
-					result.addPair(lastElement, currentElement);
-				}
-			}
-		}
-
-		return result;
+	public void addFunctionEqualityRaw(final FUNCTION func1, final FUNCTION func2) {
 	}
 
-	public void addFunctionEqualityRaw(FUNCTION func1, FUNCTION func2) {
-		assert !areUnequal(func1, func2) : "check before!?";
-		// mFunctionEquivalenceGraph.union(mFunctionEquivalenceGraph.findAndConstructEquivalenceClassIfNeeded(func1),
-		// mFunctionEquivalenceGraph.findAndConstructEquivalenceClassIfNeeded(func2));
-		mFunctionEquivalenceGraph.union(func1, func2);
-
-		// TODO: adding a function equality can have consequences for the
-		// elements --> implement
-
-		// nodesWithFunc.stream().forEach(node -> havoc(node));
-
-	}
-
-	public Set<VPDomainSymmetricPair<FUNCTION>> getFunctionDisequalites() {
-		return mFunctionEquivalenceGraph.getFunctionDisequalities();
-	}
-
-	public void addFunctionDisequality(FUNCTION first, FUNCTION second) {
-		// final FUNCTION firstRep = mFunctionEquivalenceGraph.find(first);
-		// final FUNCTION secondRep = mFunctionEquivalenceGraph.find(second);
-
-		// mFunctionDisequalities.add(new
-		// VPDomainSymmetricPair<FUNCTION>(firstRep, secondRep));
-		mFunctionEquivalenceGraph.addFunctionDisequality(first, second);
+	public void addFunctionDisequality(final FUNCTION first, final FUNCTION second) {
 	}
 
 	public boolean checkForContradiction() {
-		if (mElementCongruenceGraph.checkContradiction()) {
-			return true;
-		}
-		if (mFunctionEquivalenceGraph.checkContradiction()) {
-			return true;
-		}
-
+		assert false;
 		return false;
 	}
 
 	public boolean isFrozen() {
-		return mIsFrozen;
+		assert false;
+		return false;
 	}
 
 	/**
-	 * 
-	 * 
+	 *
+	 *
 	 * TDO: should we also remove the nodes that we project, here?? edit: yes,
 	 * havoc does remove the nodes
-	 * 
+	 *
 	 * @param varsToProjectAway
 	 * @return
 	 */
-	public EqConstraint<ACTION, NODE, FUNCTION> projectExistentially(Set<TermVariable> varsToProjectAway) {
-		final EqConstraint<ACTION, NODE, FUNCTION> unfrozen = mFactory.unfreeze(this);
-		
-		
-		varsToProjectAway.forEach(var -> unfrozen.havoc(var));
-		
-//		for (TermVariable var : varsToProjectAway) {
-//			unfrozen.havoc(var);
-//		}
-		unfrozen.freeze();
-		assert VPDomainHelpers.constraintFreeOfVars(varsToProjectAway, unfrozen, 
-				mFactory.getEqNodeAndFunctionFactory().getScript().getScript()) : 
-					"resulting constraint still has at least one of the to-be-projected vars";
-
-		return unfrozen;
+	public EqConstraint<ACTION, NODE, FUNCTION> projectExistentially(final Set<TermVariable> varsToProjectAway) {
+//		final EqConstraint<ACTION, NODE, FUNCTION> unfrozen = mFactory.unfreeze(this);
+//
+//
+//		varsToProjectAway.forEach(var -> unfrozen.havoc(var));
+//
+////		for (TermVariable var : varsToProjectAway) {
+////			unfrozen.havoc(var);
+////		}
+//		unfrozen.freeze();
+//		assert VPDomainHelpers.constraintFreeOfVars(varsToProjectAway, unfrozen,
+//				mFactory.getEqNodeAndFunctionFactory().getScript().getScript()) :
+//					"resulting constraint still has at least one of the to-be-projected vars";
+//
+//		return unfrozen;
+		return null;
 	}
 
 
-	private void havoc(TermVariable var) {
-		
-		final Set<NODE> nodesWithVar = getAllNodes().stream()
-				.filter(n -> Arrays.asList(n.getTerm().getFreeVars()).contains(var)).collect(Collectors.toSet());
-		final Set<FUNCTION> functionsWithVar = getAllFunctions().stream()
-				.filter(f -> Arrays.asList(f.getTerm().getFreeVars()).contains(var)).collect(Collectors.toSet());
-		
-		nodesWithVar.forEach(f -> havoc(f));
-		functionsWithVar.forEach(f -> havocFunction(f));
-		assert VPDomainHelpers.constraintFreeOfVars(Collections.singleton(var), this, 
-				mFactory.getEqNodeAndFunctionFactory().getScript().getScript()) : 
-					"resulting constraint still has at least one of the to-be-projected vars";
+	private void havoc(final TermVariable var) {
 	}
 
-	private FUNCTION getFunctionForTerm(Term var) {
-		return (FUNCTION) mFactory.getEqStateFactory().getEqNodeAndFunctionFactory().getExistingEqFunction(var);
+	private FUNCTION getFunctionForTerm(final Term var) {
+		return null;
 	}
 
-	private NODE getNodeForTerm(Term var) {
-		return (NODE) mFactory.getEqStateFactory().getEqNodeAndFunctionFactory().getExistingEqNode(var);
+	private NODE getNodeForTerm(final Term var) {
+		return null;
 	}
 
-	public void renameVariables(Map<Term, Term> substitutionMapping) {
-		assert !mIsFrozen;
-		
-		final Set<NODE> newNodes = mNodes.stream()
-				.map(node -> node.renameVariables(substitutionMapping)).collect(Collectors.toSet());
-		final Set<FUNCTION> newFunctions = mFunctions.stream()
-				.map(node -> node.renameVariables(substitutionMapping)).collect(Collectors.toSet());
-		
-		mNodes.clear();
-		mNodes.addAll(newNodes);
-		
-		mFunctions.clear();
-		mFunctions.addAll(newFunctions);
-
-		mElementCongruenceGraph.renameVariables(substitutionMapping);
-
-		mFunctionEquivalenceGraph.renameVariables(substitutionMapping);
+	public void renameVariables(final Map<Term, Term> substitutionMapping) {
 	}
 
 	/**
-	 * 
+	 *
 	 * @param node1
 	 * @param node2
 	 * @return true iff this constraint says "node1 and node2 must be equal"
 	 */
-	public boolean areEqual(NODE node1, NODE node2) {
-		final NODE find1 = mElementCongruenceGraph.find(node1);
-		final NODE find2 = mElementCongruenceGraph.find(node2);
-		if (find1 == null || find2 == null) {
-			// this constraint does not track at least one of the given nodes
-			return false;
-		}
-		return find1.equals(find2);
+	public boolean areEqual(final NODE node1, final NODE node2) {
+		assert false;
+		return false;
 	}
 
-	public HashRelation<FUNCTION, List<NODE>> getCCChild(NODE representative1) {
-		return mElementCongruenceGraph.getCCChild(representative1);
+	public HashRelation<FUNCTION, List<NODE>> getCCChild(final NODE representative1) {
+		return null;
 	}
 
 	/**
-	 * 
+	 *
 	 * @param node1
 	 * @param node2
 	 * @return true iff this constraint says "node1 and node2 must be unequal"
 	 */
-	public boolean areUnequal(NODE node1, NODE node2) {
-		final NODE find1 = mElementCongruenceGraph.find(node1);
-		final NODE find2 = mElementCongruenceGraph.find(node2);
-		if (find1 == null || find2 == null) {
-			// this constraint does not track at least one of the given nodes
-			return false;
-		}
-		final VPDomainSymmetricPair<NODE> representativePair = new VPDomainSymmetricPair<>(find1, find2);
-		return mElementCongruenceGraph.getDisequalities().contains(representativePair);
+	public boolean areUnequal(final NODE node1, final NODE node2) {
+		assert false;
+		return false;
 	}
 
 	/**
 	 * Returns all the equivalence representatives that the given node is
 	 * unequal to in this constraint.
 	 */
-	public Set<NODE> getDisequalities(NODE node) {
-		final Set<NODE> result = new HashSet<>();
-
-		final NODE nodeRep = mElementCongruenceGraph.find(node);
-		for (VPDomainSymmetricPair<NODE> deq : mElementCongruenceGraph.getDisequalities()) {
-			if (deq.contains(nodeRep)) {
-				result.add(deq.getOther(nodeRep));
-			}
-		}
-		return result;
+	public Set<NODE> getDisequalities(final NODE node) {
+		return null;
 	}
 
-	public Term getTerm(Script script) {
+	public Term getTerm(final Script script) {
 //		assert mIsFrozen : "not yet frozen, term may not be final..";
-		if (mTerm != null) {
-			return mTerm;
-		}
-		final List<Term> elementEqualities = getSupportingElementEqualities().entrySet().stream()
-				.map(en -> script.term("=", en.getKey().getTerm(), en.getValue().getTerm()))
-				.collect(Collectors.toList());
-		final List<Term> elementDisequalities = getElementDisequalities().stream()
-				.map(pair -> script.term("distinct", pair.getFirst().getTerm(), pair.getSecond().getTerm()))
-				.collect(Collectors.toList());
-		final List<Term> functionEqualities = getSupportingFunctionEqualities().entrySet().stream()
-				.map(en -> script.term("=", en.getKey().getTerm(), en.getValue().getTerm()))
-				.collect(Collectors.toList());
-		final List<Term> functionDisequalities = getFunctionDisequalites().stream()
-				.map(pair -> script.term("distinct", pair.getFirst().getTerm(), pair.getSecond().getTerm()))
-				.collect(Collectors.toList());
-
-		final List<Term> allConjuncts = new ArrayList<>();
-		allConjuncts.addAll(elementEqualities);
-		allConjuncts.addAll(elementDisequalities);
-		allConjuncts.addAll(functionEqualities);
-		allConjuncts.addAll(functionDisequalities);
-
-		final Term result= Util.and(script, allConjuncts.toArray(new Term[allConjuncts.size()]));
-		if (mIsFrozen) {
-			mTerm = result;
-		}
-		return result;
+//		if (mTerm != null) {
+//			return mTerm;
+//		}
+//		final List<Term> elementEqualities = getSupportingElementEqualities().entrySet().stream()
+//				.map(en -> script.term("=", en.getKey().getTerm(), en.getValue().getTerm()))
+//				.collect(Collectors.toList());
+//		final List<Term> elementDisequalities = getElementDisequalities().stream()
+//				.map(pair -> script.term("distinct", pair.getFirst().getTerm(), pair.getSecond().getTerm()))
+//				.collect(Collectors.toList());
+//		final List<Term> functionEqualities = getSupportingFunctionEqualities().entrySet().stream()
+//				.map(en -> script.term("=", en.getKey().getTerm(), en.getValue().getTerm()))
+//				.collect(Collectors.toList());
+//		final List<Term> functionDisequalities = getFunctionDisequalites().stream()
+//				.map(pair -> script.term("distinct", pair.getFirst().getTerm(), pair.getSecond().getTerm()))
+//				.collect(Collectors.toList());
+//
+//		final List<Term> allConjuncts = new ArrayList<>();
+//		allConjuncts.addAll(elementEqualities);
+//		allConjuncts.addAll(elementDisequalities);
+//		allConjuncts.addAll(functionEqualities);
+//		allConjuncts.addAll(functionDisequalities);
+//
+//		final Term result= Util.and(script, allConjuncts.toArray(new Term[allConjuncts.size()]));
+//		if (mIsFrozen) {
+//			mTerm = result;
+//		}
+//		return result;
+		return null;
 	}
 
-	public boolean areEqual(FUNCTION func1, FUNCTION func2) {
-		return mFunctionEquivalenceGraph.areEqual(func1, func2);
+	public boolean areEqual(final FUNCTION func1, final FUNCTION func2) {
+		assert false;
+		return false;
 	}
 
-	public boolean areUnequal(FUNCTION func1, FUNCTION func2) {
-		return mFunctionEquivalenceGraph.areUnequal(func1, func2);
+	public boolean areUnequal(final FUNCTION func1, final FUNCTION func2) {
+		assert false;
+		return false;
 	}
 
 	/**
 	 * This only really makes sense when this constraint is in a renaming state
 	 * such that the TermVariables are "normalized" to the TermVariables that
 	 * are associated to IProgramVars.
-	 * 
+	 *
 	 * I.e. when it is the constraint of a EqPredicate or an EqState
-	 * 
+	 *
 	 * @return
 	 */
-	public Set<IProgramVar> getVariables(IIcfgSymbolTable symbolTable) {
-		assert mIsFrozen;
+	public Set<IProgramVar> getVariables(final IIcfgSymbolTable symbolTable) {
 		if (mVariables == null) {
-			Set<TermVariable> allTvs = new HashSet<>();
-			mNodes.stream().forEach(node -> allTvs.addAll(Arrays.asList(node.getTerm().getFreeVars())));
+			final Set<TermVariable> allTvs = new HashSet<>();
+			mPartialArrangement.getAllElements().stream()
+				.forEach(node -> allTvs.addAll(Arrays.asList(node.getTerm().getFreeVars())));
 
-			mFunctions.stream().forEach(func -> allTvs.addAll(Arrays.asList(func.getTerm().getFreeVars())));
+			mPartialArrangement.getAllFunctions().stream()
+				.forEach(func -> allTvs.addAll(Arrays.asList(func.getTerm().getFreeVars())));
 
 			/*
 			 * note this will probably crash if this method is called on an
@@ -448,32 +298,32 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 	}
 
 	/**
-	 * Collects the Pvocs (IprogramVarOrConsts) that are mentioned in this EqConstraint by looking up the TermVariables 
-	 * and nullary ApplicationTerms in the symbol table. 
-	 * 
+	 * Collects the Pvocs (IprogramVarOrConsts) that are mentioned in this EqConstraint by looking up the TermVariables
+	 * and nullary ApplicationTerms in the symbol table.
+	 *
 	 * These Pvocs correspond to the Pvocs of the compacted version of an EqState that has this constraint, i.e.,
 	 * only Pvocs that are actually constrained by this constraint are mentioned.
-	 * 
+	 *
 	 * We expect this to only be called when this constraint is the constraint
 	 * of an EqState, thus we expect all TermVariables to correspond to an IProgramVar and all nullary ApplicationTerms
 	 * to correspond to a constant that is mentioned in the symbol table.
-	 * 
+	 *
 	 * @param symbolTable
-	 * 
+	 *
 	 * @return
 	 */
-	public Set<IProgramVarOrConst> getPvocs(IIcfgSymbolTable symbolTable) {
+	public Set<IProgramVarOrConst> getPvocs(final IIcfgSymbolTable symbolTable) {
 		assert mIsFrozen;
 		if (mPvocs == null) {
 			mPvocs = new HashSet<>();
 			mPvocs.addAll(getVariables(symbolTable));
 
 			final Set<ApplicationTerm> constants = new HashSet<>();
-			mNodes.stream()
+			mPartialArrangement.getAllElements().stream()
 					.forEach(node -> constants.addAll(new ConstantFinder().findConstants(node.getTerm(), false)));
 			// TODO do we need to find literals here, too?? (i.e. ConstantTerms)
 
-			mFunctions.stream()
+			mPartialArrangement.getAllFunctions().stream()
 					.forEach(func -> constants.addAll(new ConstantFinder().findConstants(func.getTerm(), false)));
 
 			mPvocs.addAll(constants.stream().map(c -> symbolTable.getProgramConst(c)).collect(Collectors.toSet()));
@@ -481,201 +331,186 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 		return mPvocs;
 	}
 
-	/**
-	 * all equalities that hold in this constraint (transitive, symmetric
-	 * closure)
-	 * 
-	 * @return
-	 */
-	public Set<VPDomainSymmetricPair<NODE>> getAllElementEqualities() {
-		final Set<VPDomainSymmetricPair<NODE>> result = new HashSet<>();
-		final List<NODE> allNodes = new ArrayList<>(getAllNodes());
-		for (int i = 0; i < allNodes.size(); i++) {
-			for (int j = 0; j < i; j++) {
-				if (areEqual(allNodes.get(i), allNodes.get(j))) {
-					result.add(new VPDomainSymmetricPair<NODE>(allNodes.get(i), allNodes.get(j)));
-				}
-			}
-		}
-		return result;
-	}
+//	/**
+//	 * all equalities that hold in this constraint (transitive, symmetric
+//	 * closure)
+//	 *
+//	 * @return
+//	 */
+//	public Set<VPDomainSymmetricPair<NODE>> getAllElementEqualities() {
+//		final Set<VPDomainSymmetricPair<NODE>> result = new HashSet<>();
+//		final List<NODE> allNodes = new ArrayList<>(getAllNodes());
+//		for (int i = 0; i < allNodes.size(); i++) {
+//			for (int j = 0; j < i; j++) {
+//				if (areEqual(allNodes.get(i), allNodes.get(j))) {
+//					result.add(new VPDomainSymmetricPair<NODE>(allNodes.get(i), allNodes.get(j)));
+//				}
+//			}
+//		}
+//		return result;
+//	}
+//
+//	/**
+//	 * (expensive)
+//	 * @return all disequalities (as symmetric pairs) that hold in this state, i.e., not only those over representatives
+//	 */
+//	public Set<VPDomainSymmetricPair<NODE>> getAllElementDisequalities() {
+//		final Set<VPDomainSymmetricPair<NODE>> result = new HashSet<>();
+//		final List<NODE> allNodes = new ArrayList<>(getAllNodes());
+//		for (int i = 0; i < allNodes.size(); i++) {
+//			for (int j = 0; j < i; j++) {
+//				if (areUnequal(allNodes.get(i), allNodes.get(j))) {
+//					result.add(new VPDomainSymmetricPair<NODE>(allNodes.get(i), allNodes.get(j)));
+//				}
+//			}
+//		}
+//		return result;
+//	}
 
-	/**
-	 * (expensive)
-	 * @return all disequalities (as symmetric pairs) that hold in this state, i.e., not only those over representatives
-	 */
-	public Set<VPDomainSymmetricPair<NODE>> getAllElementDisequalities() {
-		final Set<VPDomainSymmetricPair<NODE>> result = new HashSet<>();
-		final List<NODE> allNodes = new ArrayList<>(getAllNodes());
-		for (int i = 0; i < allNodes.size(); i++) {
-			for (int j = 0; j < i; j++) {
-				if (areUnequal(allNodes.get(i), allNodes.get(j))) {
-					result.add(new VPDomainSymmetricPair<NODE>(allNodes.get(i), allNodes.get(j)));
-				}
-			}
-		}
-		return result;
-	}
+//	/**
+//	 * retrieves all equalities between functions that we know hold
+//	 * more precise:
+//	 *  - is transitively closed
+//	 *  - symmetrically closed through use of VPDomainSymmetricPair
+//	 *  - does not explicitly account for reflexivity
+//	 * @return
+//	 */
+//	public Set<VPDomainSymmetricPair<FUNCTION>> getAllFunctionEqualities() {
+//		return mPartialArrangement.getFu
+//	}
 
-	/**
-	 * retrieves all equalities between functions that we know hold
-	 * more precise:
-	 *  - is transitively closed
-	 *  - symmetrically closed through use of VPDomainSymmetricPair
-	 *  - does not explicitly account for reflexivity
-	 * @return
-	 */
-	public Set<VPDomainSymmetricPair<FUNCTION>> getAllFunctionEqualities() {
-		return mFunctionEquivalenceGraph.getAllFunctionEqualities();
-	}
-
-	/**
-	 * analogue to getAllFunctionEqualities, i.e. _all_ disequalities, not only the disequalities over representatives
-	 * @return
-	 */
-	public Set<VPDomainSymmetricPair<FUNCTION>> getAllFunctionDisequalities() {
-		return mFunctionEquivalenceGraph.getAllFunctionDisequalities();
-	}
+//	/**
+//	 * analogue to getAllFunctionEqualities, i.e. _all_ disequalities, not only the disequalities over representatives
+//	 * @return
+//	 */
+//	public Set<VPDomainSymmetricPair<FUNCTION>> getAllFunctionDisequalities() {
+////		return mPartialArrangement.getFunctionDisequalities();
+//		return null;
+//	}
 
 	@Override
 	public String toString() {
-		// print equivalence classes? alternative: equalities based on graph edges
-		final boolean printAsEquivalenceClasses = true;
-		if (printAsEquivalenceClasses) {
-			final List<String> allPartitionsAndRepresentativeDisequalities = new ArrayList<>();
 
+		final List<String> allPartitionsAndRepresentativeDisequalities = new ArrayList<>();
 
-			allPartitionsAndRepresentativeDisequalities.add("= (elem)");
-			allPartitionsAndRepresentativeDisequalities.add(
-					mElementCongruenceGraph.getEquivalenceClasses().stream()
-					.filter(eqc -> eqc.size() > 1).collect(Collectors.toList())
-					.toString());
-			
-			allPartitionsAndRepresentativeDisequalities.add("!= (elem)");
-			allPartitionsAndRepresentativeDisequalities.add(mElementCongruenceGraph.getDisequalities().toString());
-
-			allPartitionsAndRepresentativeDisequalities.add("= (array)");
-			allPartitionsAndRepresentativeDisequalities.add(
-					mFunctionEquivalenceGraph.getAllEquivalenceClasses().stream()
-					.filter(eqc -> eqc.size() > 1).collect(Collectors.toList())
-					.toString());
-
-			allPartitionsAndRepresentativeDisequalities.add("!= (array)");
-			allPartitionsAndRepresentativeDisequalities.add(
-					mFunctionEquivalenceGraph.getAllFunctionDisequalities().toString());
-
-			String sep = "";
-			final StringBuilder sb = new StringBuilder();
-			for (String s : allPartitionsAndRepresentativeDisequalities) {
-				sb.append(sep);
-				sep = "\n";
-				sb.append(s);
-			}
-
-			return sb.toString();
-		} else {
-			// (adapted from getTerm())
-			final List<String> elementEqualities = getSupportingElementEqualities().entrySet().stream()
-					.map(en -> String.format("(%s = %s)", en.getKey().getTerm().toStringDirect(), 
-							en.getValue().getTerm().toStringDirect()))
-					.collect(Collectors.toList());
-			final List<String> elementDisequalities = getElementDisequalities().stream()
-					.map(pair -> String.format("(%s != %s)", pair.getFirst().getTerm().toStringDirect(), 
-							pair.getSecond().getTerm().toStringDirect()))
-					.collect(Collectors.toList());
-			final List<String> functionEqualities = getSupportingFunctionEqualities().entrySet().stream()
-					.map(en -> String.format("(%s = %s)", en.getKey().getTerm().toStringDirect(), 
-							en.getValue().getTerm().toStringDirect()))
-					.collect(Collectors.toList());
-			final List<String> functionDisequalities = getFunctionDisequalites().stream()
-					.map(pair -> String.format("(%s != %s)", pair.getFirst().getTerm().toStringDirect(), 
-							pair.getSecond().getTerm().toStringDirect()))
-					.collect(Collectors.toList());
-
-			final List<String> allConjuncts = new ArrayList<>();
-			allConjuncts.addAll(elementEqualities);
-			allConjuncts.addAll(elementDisequalities);
-			allConjuncts.addAll(functionEqualities);
-			allConjuncts.addAll(functionDisequalities);
-
-			if (allConjuncts.isEmpty()) {
-				return "Top";
-			}
-
-			String sep = "";
-			final StringBuilder sb = new StringBuilder();
-			for (String s : allConjuncts) {
-				sb.append(sep);
-				sep = "\n";
-				sb.append(s);
-			}
-
-			return sb.toString();
+		String sep = "";
+		final StringBuilder sb = new StringBuilder();
+		for (final String s : allPartitionsAndRepresentativeDisequalities) {
+			sb.append(sep);
+			sep = "\n";
+			sb.append(s);
 		}
+
+		return sb.toString();
+
 	}
 
-	public boolean hasNode(NODE node) {
-		return mNodes.contains(node);
+	public boolean hasNode(final NODE node) {
+		return mPartialArrangement.getAllElements().contains(node);
 	}
 
-	/**
-	 * Add a node to this constraint. Does not do any propagations that might be
-	 * a consequence of adding this node.
-	 * 
-	 * @param nodeToAdd
-	 */
-	public void addNodeRaw(NODE nodeToAdd) {
-		assert !mIsFrozen;
-		if (hasNode(nodeToAdd)) {
-			return;
-		}
-		mElementCongruenceGraph.addNode(nodeToAdd, null);
-	}
-
-	/**
-	 * called from ElementCongruenceGraph.havoc on every node that was havocced.
-	 * 
-	 * @param node
-	 */
-	public void removeNode(NODE node) {
-		assert !mIsFrozen;
-		mNodes.remove(node);
-	}
-
-	public void addFunctionRaw(FUNCTION func) {
-		assert !mIsFrozen;
-		mFunctions.add(func);
-		mFunctionEquivalenceGraph.addFunction(func);
-	}
+//	/**
+//	 * Add a node to this constraint. Does not do any propagations that might be
+//	 * a consequence of adding this node.
+//	 *
+//	 * @param nodeToAdd
+//	 */
+//	public void addNodeRaw(final NODE nodeToAdd) {
+//		assert !mIsFrozen;
+//		if (hasNode(nodeToAdd)) {
+//			return;
+//		}
+//		mPartialArrangement.getRepresentativeAndAddElementIfNeeded(nodeToAdd);
+//	}
+//
+//	public void addFunctionRaw(final FUNCTION func) {
+//		assert !mIsFrozen;
+//		mFunctions.add(func);
+//		mFunctionEquivalenceGraph.addFunction(func);
+//	}
 
 	public Set<FUNCTION> getAllFunctions() {
-		return Collections.unmodifiableSet(mFunctions);
-	}
-
-	/**
-	 * called from ElementCongruenceGraph.havoc on every node that was havocced.
-	 * 
-	 * @param node
-	 */
-	public void removeFunction(FUNCTION func) {
-		assert !mIsFrozen;
-		mFunctions.remove(func);
-	}
-	
-	boolean allNodesAndEqgnMapAreConsistent() {
-		return mElementCongruenceGraph.allNodesAndEqgnMapAreConsistent();
-	}
-
-	/**
-	 * only called from mElementCongruenceGraph
-	 * @param node
-	 */
-	public void addToAllNodes(NODE node) {
-		mNodes.add(node);
-		
+		return mPartialArrangement.getAllFunctions();
 	}
 
 	public boolean isTop() {
-		return mElementCongruenceGraph.isEmpty() && mFunctionEquivalenceGraph.isEmpty();
+		assert false;
+		return false;
+	}
+
+	public EqConstraint<ACTION, NODE, FUNCTION> join(final EqConstraint<ACTION, NODE, FUNCTION> other) {
+		final CongruenceClosure<NODE, FUNCTION> newPartialArrangement = this.mPartialArrangement.join(
+				other.mPartialArrangement);
+		final WeakEquivalenceGraph newWEGraph = mWeakEquivalenceGraph.join(other.mWeakEquivalenceGraph);
+		return mFactory.getEqConstraint(newPartialArrangement, newWEGraph);
+	}
+
+
+	class WeakEquivalenceGraph {
+
+		HashRelation3<FUNCTION, FUNCTION, CongruenceClosure<NODE, FUNCTION>> mWeakEquivalenceEdges =
+				new HashRelation3<>();
+
+		WeakEquivalenceGraph join(final WeakEquivalenceGraph other) {
+			return null;
+		}
+
+		WeakEquivalenceGraph meet(final WeakEquivalenceGraph other) {
+			return null;
+		}
+
+		public boolean isStrongerThan(final WeakEquivalenceGraph other) {
+			// TODO Auto-generated method stub
+			return false;
+		}
+
+	}
+
+
+	@Deprecated
+	public void removeFunction(final FUNCTION funcToBeHavocced) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Deprecated
+	public void removeNode(final NODE nodeToBeHavocced) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Deprecated
+	public void addToAllNodes(final NODE node) {
+		// TODO Auto-generated method stub
+
+	}
+
+	public void addNode(final NODE nodeToAdd) {
+		mPartialArrangement.getRepresentativeAndAddElementIfNeeded(nodeToAdd);
+	}
+
+	public void addFunction(final FUNCTION func) {
+		mPartialArrangement.getRepresentativeAndAddFunctionIfNeeded(func);
+
+	}
+
+	public EqConstraint<ACTION, NODE, FUNCTION> meet(final EqConstraint<ACTION, NODE, FUNCTION> constraint2) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	/**
+	 *
+	 * @param other
+	 * @return true iff this is more or equally constraining than other
+	 */
+	public boolean isStrongerThan(final EqConstraint<ACTION, NODE, FUNCTION> other) {
+		if (!mPartialArrangement.isStrongerThan(other.mPartialArrangement)) {
+			return false;
+		}
+		if (!mWeakEquivalenceGraph.isStrongerThan(other.mWeakEquivalenceGraph)) {
+			return false;
+		}
+		return true;
 	}
 }

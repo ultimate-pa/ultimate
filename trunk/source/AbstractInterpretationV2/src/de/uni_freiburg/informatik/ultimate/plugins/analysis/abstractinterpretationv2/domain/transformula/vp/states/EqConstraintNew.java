@@ -432,15 +432,3 @@ public class EqConstraintNew<ACTION extends IIcfgTransition<IcfgLocation>,
 
 	}
 }
-//class WeakEquivalenceEdge<//ACTION extends IIcfgTransition<IcfgLocation>,
-//		NODE extends IEqNodeIdentifier<NODE, FUNCTION>,
-//		FUNCTION extends IEqFunctionIdentifier<NODE, FUNCTION>> {
-//
-//	FUNCTION mFunction1;
-//	FUNCTION mFunction2;
-////	List<ThreeValuedEquivalenceRelation<NODE>> mStoreConstraints;
-//	List<CongruenceClosure<NODE, FUNCTION>> mStoreConstraints;
-//
-//
-//
-//}
