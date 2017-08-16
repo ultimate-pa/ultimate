@@ -34,8 +34,10 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
+
+import de.uni_freiburg.informatik.ultimate.util.SetOperations;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
  * Data structure that can be used to partition a set of elements {@code <E>}.
@@ -52,32 +54,35 @@ public class UnionFind<E> implements IPartition<E> {
 	/**
 	 * Maps an element to its equivalence class.
 	 */
-	private final Map<E, Set<E>> mEquivalenceClass = new HashMap<>();
+	private final Map<E, Set<E>> mEquivalenceClass;
 	/**
 	 * Maps an equivalence class to its representative.
 	 */
-	private final Map<Set<E>, E> mRepresentative = new HashMap<>();
+	private final Map<Set<E>, E> mRepresentative;
 
 	/**
 	 * Constructor for new (empty) data structure.
 	 */
 	public UnionFind() {
-
+		mEquivalenceClass = new HashMap<>();
+		mRepresentative = new HashMap<>();
 	}
 
 	/**
 	 * Copy constructor.
 	 */
 	public UnionFind(final UnionFind<E> unionFind) {
-		for (final Entry<E, Set<E>> entry : unionFind.mEquivalenceClass.entrySet()) {
-			final E representative = entry.getKey();
-			final Set<E> equivalenceClassCopy = new HashSet<>(entry.getValue());
-			// alex: I commented this out as it does not make sense to me..
-//			assert mRepresentative.get(equivalenceClassCopy) == representative : "inconsistent";
-			final Set<E> oldValue = this.mEquivalenceClass.put(representative, equivalenceClassCopy);
-			assert oldValue == null : "element was contained twice";
-			this.mRepresentative.put(equivalenceClassCopy, representative);
-		}
+		mEquivalenceClass = new HashMap<>(unionFind.mEquivalenceClass);
+		mRepresentative = new HashMap<>(unionFind.mRepresentative);
+//		for (final Entry<E, Set<E>> entry : unionFind.mEquivalenceClass.entrySet()) {
+//			final E representative = entry.getKey();
+//			final Set<E> equivalenceClassCopy = new HashSet<>(entry.getValue());
+//			// alex: I commented this out as it does not make sense to me..
+////			assert mRepresentative.get(equivalenceClassCopy) == representative : "inconsistent";
+//			final Set<E> oldValue = this.mEquivalenceClass.put(representative, equivalenceClassCopy);
+//			assert oldValue == null : "element was contained twice";
+//			this.mRepresentative.put(equivalenceClassCopy, representative);
+//		}
 	}
 
 	/**
@@ -297,5 +302,35 @@ public class UnionFind<E> implements IPartition<E> {
 		final E rep = block.iterator().next();
 		assert mEquivalenceClass.get(rep) != null;
 		mRepresentative.put(block, rep);
+	}
+
+
+	public static <E> UnionFind<E> intersectPartitionBlocks(final UnionFind<E> uf1, final UnionFind<E> uf2) {
+		final UnionFind<E> result = new UnionFind<>();
+		for (final Set<E> uf1Block : uf1.getAllEquivalenceClasses()) {
+			final HashRelation<E, E> uf2RepToSubblock = new HashRelation<>();
+
+			for (final E uf1El : uf1Block) {
+				final E uf2Rep = uf2.find(uf1El);
+				uf2RepToSubblock.addPair(uf2Rep, uf1El);
+			}
+
+			uf2RepToSubblock.getDomain().stream()
+			.forEach(u2rep -> result.addEquivalenceClass(uf2RepToSubblock.getImage(u2rep)));
+		}
+		return result;
+	}
+
+	public static <E> UnionFind<E> unionPartitionBlocks(final UnionFind<E> tver1, final UnionFind<E> tver2) {
+		final UnionFind<E> result = new UnionFind<>();
+		final HashSet<E> todo = new HashSet<>(tver1.getAllElements());
+		while (!todo.isEmpty()) {
+			final E tver1El = todo.iterator().next();
+			final Set<E> newBlock = SetOperations.union(tver1.getEquivalenceClassMembers(tver1El),
+					tver2.getEquivalenceClassMembers(tver1El));
+			result.addEquivalenceClass(newBlock);
+			todo.removeAll(newBlock);
+		}
+		return result;
 	}
 }
