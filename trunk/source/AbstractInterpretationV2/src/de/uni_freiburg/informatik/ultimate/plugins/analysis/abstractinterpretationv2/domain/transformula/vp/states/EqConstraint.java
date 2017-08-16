@@ -371,18 +371,17 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 
 
 	public EqConstraint<ACTION, NODE, FUNCTION> meet(final EqConstraint<ACTION, NODE, FUNCTION> other) {
-//		CongruenceClosure<NODE, FUNCTION> currentPartialArrangement = other.mPartialArrangement;
-		EqConstraint<ACTION, NODE, FUNCTION>.WeakEquivalenceGraph currentWeqGraph = other.mWeakEquivalenceGraph;
+		final EqConstraint<ACTION, NODE, FUNCTION>.WeakEquivalenceGraph currentWeqGraph = other.mWeakEquivalenceGraph;
 
-		final CongruenceClosure<NODE, FUNCTION> meetPartialArrangement =
+		CongruenceClosure<NODE, FUNCTION> meetPartialArrangement =
 				this.mPartialArrangement.meet(other.mPartialArrangement);
 		if (meetPartialArrangement.isInconsistent()) {
 			return mFactory.getBottomConstraint();
 		}
 
-		while (true) {
-			final EqConstraint<ACTION, NODE, FUNCTION>.WeakEquivalenceGraph weqMeet =
+		EqConstraint<ACTION, NODE, FUNCTION>.WeakEquivalenceGraph weqMeet =
 					mWeakEquivalenceGraph.meet(currentWeqGraph, meetPartialArrangement);
+		while (true) {
 
 			if (!weqMeet.hasArrayEqualities()) {
 				// no weak equivalence edges' label became inconsistent -- report result
@@ -398,10 +397,8 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 					return mFactory.getBottomConstraint();
 				}
 			}
-
-			mpaChangeTracker.reportChangesToWeakEquivalenceGraph(weqMeet);
-
-			currentWeqGraph = weqMeet;
+			weqMeet = mpaChangeTracker.reportChangesToWeakEquivalenceGraph(weqMeet);
+			meetPartialArrangement = new CongruenceClosure<>(mpaChangeTracker);
 		}
 	}
 
@@ -486,11 +483,15 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 		 * @param weakEquivalenceGraph
 		 */
 		public WeakEquivalenceGraph(final WeakEquivalenceGraph weakEquivalenceGraph) {
-			assert !weakEquivalenceGraph.hasArrayEqualities();
-			mArrayEqualties = null;
+			this(weakEquivalenceGraph, true);
+			assert weakEquivalenceGraph.mArrayEqualties == null;
+		}
+
+		WeakEquivalenceGraph(final WeakEquivalenceGraph weqMeet, final boolean forgetArrayEqualities) {
+			mArrayEqualties = forgetArrayEqualities ? null : new HashMap<>(weqMeet.mArrayEqualties);
 			mWeakEquivalenceEdges = new HashMap<>();
 			for (final Entry<Doubleton<FUNCTION>, WeakEquivalenceEdgeLabel> weqEdge
-					: weakEquivalenceGraph.mWeakEquivalenceEdges.entrySet()) {
+					: weqMeet.mWeakEquivalenceEdges.entrySet()) {
 				mWeakEquivalenceEdges.put(weqEdge.getKey(), new WeakEquivalenceEdgeLabel(weqEdge.getValue()));
 			}
 			assert sanityCheck();
@@ -621,15 +622,25 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 			super(originalCc);
 		}
 
-		public void reportChangesToWeakEquivalenceGraph(final WeakEquivalenceGraph weqMeet) {
-			mFreshElementDisequalities.stream().forEach(dton -> weqMeet.reportGroundDisequality(dton.getOneElement(),
+		/**
+		 * <li> make a copy of the input, reset the array equalities
+		 * <li> patch all (dis)equalities stored in this CCTracker into the new weqGraph
+		 * <li> return the new weqGraph (it may contain arrayEqualities again, but only fresh ones..)
+		 *
+		 * @param input
+		 * @return
+		 */
+		public WeakEquivalenceGraph reportChangesToWeakEquivalenceGraph(final WeakEquivalenceGraph input) {
+			final WeakEquivalenceGraph result = new WeakEquivalenceGraph(input, true);
+			mFreshElementDisequalities.stream().forEach(dton -> result.reportGroundDisequality(dton.getOneElement(),
 					dton.getOtherElement()));
-			mFreshElementEqualities.stream().forEach(dton -> weqMeet.reportGroundEquality(dton.getOneElement(),
+			mFreshElementEqualities.stream().forEach(dton -> result.reportGroundEquality(dton.getOneElement(),
 					dton.getOtherElement()));
-			mFreshFunctionDisequalities.stream().forEach(dton -> weqMeet.reportGroundFunctionDisequality(
+			mFreshFunctionDisequalities.stream().forEach(dton -> result.reportGroundFunctionDisequality(
 					dton.getOneElement(), dton.getOtherElement()));
-			mFreshFunctionEqualities.stream().forEach(dton -> weqMeet.reportGroundFunctionEquality(dton.getOneElement(),
+			mFreshFunctionEqualities.stream().forEach(dton -> result.reportGroundFunctionEquality(dton.getOneElement(),
 					dton.getOtherElement()));
+			return result;
 		}
 
 		@Override
