@@ -50,6 +50,21 @@ public class NestedMap2<K1, K2, V> {
 
 	private final Map<K1, Map<K2, V>> mK1ToK2ToV = new HashMap<>();
 
+	/**
+	 * Construct an empty NestedMap2
+	 */
+	public NestedMap2() {
+	}
+
+	/**
+	 * Copy constructor
+	 */
+	public NestedMap2(final NestedMap2<K1, K2, V> original) {
+		for (final K1 k1 : original.keySet()) {
+			mK1ToK2ToV.put(k1, new HashMap<>(original.get(k1)));
+		}
+	}
+
 	public V put(final K1 key1, final K2 key2, final V value) {
 		Map<K2, V> k2toV = mK1ToK2ToV.get(key1);
 		if (k2toV == null) {
@@ -211,16 +226,16 @@ public class NestedMap2<K1, K2, V> {
 		return true;
 	}
 
-	/**
-	 * Makes a deep copy of this NestedMap2. (but not the objects it holds) (added by Alexander Nutz)
-	 */
-	public NestedMap2<K1, K2, V> copy() {
-		final NestedMap2<K1, K2, V> result = new NestedMap2<>();
-		for (final K1 k1 : this.keySet()) {
-			result.mK1ToK2ToV.put(k1, new HashMap<>(this.get(k1)));
-		}
-		return result;
-	}
+//	/**
+//	 * Makes a deep copy of this NestedMap2. (but not the objects it holds) (added by Alexander Nutz)
+//	 */
+//	public NestedMap2<K1, K2, V> copy() {
+//		final NestedMap2<K1, K2, V> result = new NestedMap2<>();
+//		for (final K1 k1 : this.keySet()) {
+//			result.mK1ToK2ToV.put(k1, new HashMap<>(this.get(k1)));
+//		}
+//		return result;
+//	}
 
 	public boolean isEmpty() {
 		return mK1ToK2ToV.isEmpty();
