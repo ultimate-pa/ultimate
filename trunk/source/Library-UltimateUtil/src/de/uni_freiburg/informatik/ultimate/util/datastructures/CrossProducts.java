@@ -27,8 +27,12 @@
 package de.uni_freiburg.informatik.ultimate.util.datastructures;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
  *
@@ -36,9 +40,9 @@ import java.util.stream.Collectors;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public final class Permutation {
+public final class CrossProducts {
 
-	private Permutation() {
+	private CrossProducts() {
 		// do not instantiate utility class
 	}
 
@@ -160,5 +164,33 @@ public final class Permutation {
 				sublistHelper(result, input, output, i + 1, offsetOutput + 1);
 			}
 		}
+	}
+
+	/**
+	 * Computes the cross product of the given set with itself and returns it
+	 *
+	 * @param set
+	 * @param returnReflexivePairs
+	 * @param returnSymmetricPairs
+	 * @return
+	 */
+	static <E> HashRelation<E, E> binarySelectiveCrossProduct(final Collection<E> set,
+			final boolean returnReflexivePairs, final boolean returnSymmetricPairs) {
+		final HashRelation<E, E> result = new HashRelation<>();
+
+		final Iterator<E> it1 = set.iterator();
+		for (int i = 0; i < set.size(); i++) {
+			final E el1 = it1.next();
+			final Iterator<E> it2 = set.iterator();
+			final int bound = returnSymmetricPairs ? set.size() : i + 1;
+			for (int j = 0; j < bound; j++) {
+				if (j == i && !returnReflexivePairs) {
+					continue;
+				}
+				final E el2 = it2.next();
+				result.addPair(el1, el2);
+			}
+		}
+		return result;
 	}
 }

@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.Phase;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Transition;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.CDDTranslator;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.Permutation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.CrossProducts;
 
 public class ConditionGenerator {
 	private final Collection<String> mPrimedVars;
@@ -70,7 +70,7 @@ public class ConditionGenerator {
 			}
 		}
 
-		final List<int[]> phasePermutations = Permutation.crossProduct(phases);
+		final List<int[]> phasePermutations = CrossProducts.crossProduct(phases);
 		final List<Expression> conditions = new ArrayList<>();
 		for (final int[] vector : phasePermutations) {
 			assert (vector.length == automataPermutation.length);

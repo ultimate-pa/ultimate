@@ -79,7 +79,7 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.generator.ConditionGenerator;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.req2pea.ReqToPEA;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.ReqCheck.ReqSpec;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.Permutation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.CrossProducts;
 
 /**
  * This class translates a phase event automaton to an equivalent Boogie code.
@@ -736,7 +736,7 @@ public class Req2BoogieTranslator {
 		for (int i = 0; i < mAutomata.length; i++) {
 			automataIndices[i] = i;
 		}
-		for (final int[] subset : Permutation.subArrays(automataIndices, mCombinationNum)) {
+		for (final int[] subset : CrossProducts.subArrays(automataIndices, mCombinationNum)) {
 			final Statement assertStmt = genAssertRTInconsistency(subset, bl);
 			if (assertStmt != null) {
 				stmtList.add(assertStmt);
