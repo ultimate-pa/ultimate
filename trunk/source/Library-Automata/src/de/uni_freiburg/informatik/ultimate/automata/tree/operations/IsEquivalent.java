@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2014-2017 Daniel Tischner <zabuza.dev@gmail.com>
  * Copyright (C) 2009-2017 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -53,7 +53,7 @@ import de.uni_freiburg.informatik.ultimate.core.coreplugin.services.ToolchainSto
  * If the equivalence does not hold then {@link #getCounterexample()} offers
  * such a tree run that is not accepted by one automaton while accepted by the
  * other.
- * 
+ *
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  *
  * @param <LETTER>
@@ -65,7 +65,7 @@ public final class IsEquivalent<LETTER extends IRankedLetter, STATE>
 		extends GeneralOperation<LETTER, STATE, IStateFactory<STATE>> {
 	/**
 	 * Demo usage of the equivalence check. Also used for debugging purpose.
-	 * 
+	 *
 	 * @param args
 	 *            Not supported
 	 * @throws AutomataOperationCanceledException
@@ -78,9 +78,9 @@ public final class IsEquivalent<LETTER extends IRankedLetter, STATE>
 		final StringFactory factory = new StringFactory();
 
 		// Arguments for generation of a random tree automaton
-		final int numberOfStates = 5;
-		final int[] rankToNumberOfLetters = { 2, 0, 2 };
-		final int[] rankToNumberOfTransitionsPerLetter = { 2, 0, 1 };
+		final int numberOfStates = 10;
+		final int[] rankToNumberOfLetters = { 2, 0, 5, 5 };
+		final int[] rankToNumberOfTransitionsPerLetter = { 2, 0, 10, 10 };
 		final double acceptanceDensity = 0.2;
 
 		final GetRandomDftaBU getRandomTree = new GetRandomDftaBU(services, numberOfStates, rankToNumberOfLetters,
@@ -138,7 +138,7 @@ public final class IsEquivalent<LETTER extends IRankedLetter, STATE>
 	 * If the equivalence does not hold then {@link #getCounterexample()} offers
 	 * such a tree run that is not accepted by one automaton while accepted by the
 	 * other.
-	 * 
+	 *
 	 * @param <SF>
 	 *            The type of the state factory to use for intermediate methods,
 	 *            must provide methods for merging states, creating sink states and
@@ -177,7 +177,7 @@ public final class IsEquivalent<LETTER extends IRankedLetter, STATE>
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see de.uni_freiburg.informatik.ultimate.automata.IOperation#exitMessage()
 	 */
 	@Override
@@ -190,7 +190,7 @@ public final class IsEquivalent<LETTER extends IRankedLetter, STATE>
 	 * that acts as counterexample. This means that this tree run is accepted by one
 	 * of the two automata while not by the other. If the equivalence check holds
 	 * than this method does not provide such a tree run.
-	 * 
+	 *
 	 * @return A tree run that acts as counterexample for the equivalence, if
 	 *         present
 	 */
@@ -205,7 +205,7 @@ public final class IsEquivalent<LETTER extends IRankedLetter, STATE>
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see de.uni_freiburg.informatik.ultimate.automata.IOperation#getResult()
 	 */
 	@Override
@@ -218,7 +218,7 @@ public final class IsEquivalent<LETTER extends IRankedLetter, STATE>
 	 * both direction is computed. If the equivalence does not hold then
 	 * {@link #getCounterexample()} offers such a tree run that is not accepted by
 	 * one automaton while accepted by the other.
-	 * 
+	 *
 	 * @param <SF>
 	 *            The type of the state factory to use for intermediate methods,
 	 *            must provide methods for merging states, creating sink states and
@@ -265,7 +265,7 @@ public final class IsEquivalent<LETTER extends IRankedLetter, STATE>
 	 * Checks language inclusion in one direction, whether the language of the first
 	 * operand is included in the language of the second operand. If not then it
 	 * also sets a counterexample to the internal fields.
-	 * 
+	 *
 	 * @param <SF>
 	 *            The type of the state factory to use for intermediate methods,
 	 *            must provide methods for merging states, creating sink states and
