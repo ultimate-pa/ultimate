@@ -27,7 +27,9 @@
 package de.uni_freiburg.informatik.ultimate.util.datastructures;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -281,5 +283,69 @@ public class ThreeValuedEquivalenceRelation<E> {
 	public Set<E> getEquivalenceClass(final E elem) {
 		return mUnionFind.getEquivalenceClassMembers(elem);
 	}
+
+	public ThreeValuedEquivalenceRelation<E> join(final ThreeValuedEquivalenceRelation<E> other) {
+		final UnionFind<E> newPartition = UnionFind.intersectPartitionBlocks(this.mUnionFind, other.mUnionFind);
+		return new ThreeValuedEquivalenceRelation<>(
+				newPartition,
+				xJoinDisequalities(this, other, newPartition, true));
+	}
+
+	public ThreeValuedEquivalenceRelation<E> meet(final ThreeValuedEquivalenceRelation<E> other) {
+		final UnionFind<E> newPartition = UnionFind.unionPartitionBlocks(this.mUnionFind, other.mUnionFind);
+		return new ThreeValuedEquivalenceRelation<>(
+				newPartition,
+				xJoinDisequalities(this, other, newPartition, false));
+	}
+
+	/**
+	 * Conjoin or disjoin two disequality relations.
+	 *
+	 * @param tver1
+	 * @param tver2
+	 * @param newElemPartition
+	 * @param conjoin
+	 *            conjoin or disjoin?
+	 * @return
+	 */
+	private static <E> HashRelation<E, E> xJoinDisequalities(final ThreeValuedEquivalenceRelation<E> tver1,
+			final ThreeValuedEquivalenceRelation<E> tver2, final UnionFind<E> newElemPartition, final boolean conjoin) {
+		final HashRelation<E, E> result = new HashRelation<>();
+		for (final Entry<E, E> pair : CrossProducts.binarySelectiveCrossProduct(newElemPartition.getAllRepresentatives(),
+				false, false)) {
+			final boolean addDisequality;
+			if (conjoin) {
+				addDisequality = tver1.getEqualityStatus(pair.getKey(), pair.getValue()) == EqualityStatus.NOT_EQUAL
+						&& tver2.getEqualityStatus(pair.getKey(), pair.getValue()) == EqualityStatus.NOT_EQUAL;
+			} else {
+				addDisequality = tver1.getEqualityStatus(pair.getKey(), pair.getValue()) == EqualityStatus.NOT_EQUAL
+						|| tver2.getEqualityStatus(pair.getKey(), pair.getValue()) == EqualityStatus.NOT_EQUAL;
+			}
+			if (addDisequality) {
+				result.addPair(pair.getKey(), pair.getValue());
+			}
+		}
+		return result;
+	}
+
+	public Map<E, E> getSupportingEqualities() {
+		final Map<E, E> result = new HashMap<>();
+		for (final Set<E> eqc : mUnionFind.getAllEquivalenceClasses()) {
+			E lastElement = null;;
+			for (final E e : eqc) {
+				if (lastElement != null) {
+					result.put(e, lastElement);
+				}
+				lastElement = e;
+			}
+		}
+		return result;
+	}
+
+	public HashRelation<E, E> getDisequalities() {
+		// TODO: make a copy before returning or not? (safer but slower)
+		return new HashRelation<>(mDisequalities);
+	}
+
 }
 
