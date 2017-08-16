@@ -141,13 +141,19 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 		assert sanityCheck();
 	}
 
-	public void reportFunctionEquality(final FUNCTION f1, final FUNCTION f2) {
+	/**
+	 *
+	 * @param f1
+	 * @param f2
+	 * @return true iff the state of this CongruenceClosure instance has changed through this method call
+	 */
+	public boolean reportFunctionEquality(final FUNCTION f1, final FUNCTION f2) {
 		final FUNCTION f1OldRep = getRepresentativeAndAddFunctionIfNeeded(f1);
 		final FUNCTION f2OldRep = getRepresentativeAndAddFunctionIfNeeded(f2);
 
 		if (f1OldRep == f2OldRep) {
 			// already equal --> nothing to do
-			return;
+			return false;
 		}
 
 		mFunctionTVER.reportEquality(f1, f2);
@@ -170,85 +176,102 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 			}
 		}
 		updateInconsistencyStatus();
+		return true;
 	}
 
-	public void reportFunctionDisequality(final FUNCTION f1, final FUNCTION f2) {
-		mFunctionTVER.reportDisequality(f1, f2);
+	/**
+	 *
+	 * @param func1
+	 * @param func2
+	 * @return
+	 */
+	public boolean reportFunctionDisequality(final FUNCTION func1, final FUNCTION func2) {
+		if (getEqualityStatus(func1, func2) == EqualityStatus.NOT_EQUAL) {
+			return false;
+		}
+		mFunctionTVER.reportDisequality(func1, func2);
 		updateInconsistencyStatus();
+		return true;
 	}
 
-	public void reportEquality(final ELEM e1, final ELEM e2) {
+	public boolean reportEquality(final ELEM elem1, final ELEM elem2) {
 		if (mIsInconsistent) {
 			throw new IllegalStateException();
 		}
 
 		boolean freshElem = false;
-		freshElem |= addElement(e1);
-		freshElem |= addElement(e2);
+		freshElem |= addElement(elem1);
+		freshElem |= addElement(elem2);
 
-		if (!freshElem && getEqualityStatus(e1, e2) == EqualityStatus.EQUAL) {
+		if (!freshElem && getEqualityStatus(elem1, elem2) == EqualityStatus.EQUAL) {
 			// nothing to do
-			return;
+			return false;
 		}
-		if (!freshElem && getEqualityStatus(e1, e2) == EqualityStatus.NOT_EQUAL) {
+		if (!freshElem && getEqualityStatus(elem1, elem2) == EqualityStatus.NOT_EQUAL) {
 			mIsInconsistent = true;
-			return;
+			return true;
 		}
 
-		reportEqualityRec(e1, e2);
+		reportEqualityRec(elem1, elem2);
 		updateInconsistencyStatus();
 		assert sanityCheck();
+		return true;
 	}
 
-	public void reportDisequality(final ELEM e1, final ELEM e2) {
+	public boolean reportDisequality(final ELEM elem1, final ELEM elem2) {
 		if (mIsInconsistent) {
 			throw new IllegalStateException();
 		}
 
 		boolean freshElem = false;
-		freshElem |= addElement(e1);
-		freshElem |= addElement(e2);
+		freshElem |= addElement(elem1);
+		freshElem |= addElement(elem2);
 
-		if (!freshElem && getEqualityStatus(e1, e2) == EqualityStatus.NOT_EQUAL) {
+		if (!freshElem && getEqualityStatus(elem1, elem2) == EqualityStatus.NOT_EQUAL) {
 			// nothing to do
-			return;
+			return false;
 		}
-		if (!freshElem && getEqualityStatus(e1, e2) == EqualityStatus.EQUAL) {
+		if (!freshElem && getEqualityStatus(elem1, elem2) == EqualityStatus.EQUAL) {
 			mIsInconsistent = true;
-			return;
+			return true;
 		}
 
-		reportDisequalityRec(e1, e2);
+		reportDisequalityRec(elem1, elem2);
 		updateInconsistencyStatus();
 		assert sanityCheck();
+		return true;
 	}
 
-	private void reportDisequalityRec(final ELEM e1, final ELEM e2) {
-		mElementTVER.reportDisequality(e1, e2);
+	protected boolean reportDisequalityRec(final ELEM elem1, final ELEM elem2) {
+		if (mElementTVER.getEqualityStatus(elem1, elem2) == EqualityStatus.NOT_EQUAL) {
+			return false;
+		}
+		mElementTVER.reportDisequality(elem1, elem2);
 		if (mElementTVER.isInconsistent()) {
-			return;
+			return true;
 		}
-		doBackwardCongruencePropagations(e1, e2);
+		doBackwardCongruencePropagations(elem1, elem2);
+		return true;
 	}
 
-	private void reportEqualityRec(final ELEM e1, final ELEM e2) {
+	protected boolean reportEqualityRec(final ELEM elem1, final ELEM elem2) {
 
-		final ELEM e1OldRep = getRepresentativeAndAddElementIfNeeded(e1);
-		final ELEM e2OldRep = getRepresentativeAndAddElementIfNeeded(e2);
+		final ELEM e1OldRep = getRepresentativeAndAddElementIfNeeded(elem1);
+		final ELEM e2OldRep = getRepresentativeAndAddElementIfNeeded(elem2);
 
 		if (e1OldRep == e2OldRep) {
 			// already equal --> nothing to do
-			return;
+			return false;
 		}
 
-		mElementTVER.reportEquality(e1, e2);
+		mElementTVER.reportEquality(elem1, elem2);
 
-		final ELEM newRep = mElementTVER.getRepresentative(e1);
+		final ELEM newRep = mElementTVER.getRepresentative(elem1);
 
 		// do forward congruence propagations
 		for (final Set<FUNCTION> eqc : mFunctionTVER.getAllEquivalenceClasses()) {
-			for (final Entry<FUNCTION, FUNCTION> pair :
-					CrossProducts.binarySelectiveCrossProduct(eqc, true, true)) {
+			for (final Entry<FUNCTION, FUNCTION> pair
+					: CrossProducts.binarySelectiveCrossProduct(eqc, true, true)) {
 				final Set<ELEM> e1CcPars = mFunctionToRepresentativeToCcPars.get(pair.getKey(), e1OldRep);
 				final Set<ELEM> e2CcPars = mFunctionToRepresentativeToCcPars.get(pair.getValue(), e2OldRep);
 
@@ -327,6 +350,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 				removeFromCcChildren(e1OldRep, func);
 			}
 		}
+		return true;
 	}
 
 	/**
@@ -411,7 +435,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 				.collect(Collectors.toSet());
 	}
 
-	private void updateInconsistencyStatus() {
+	protected void updateInconsistencyStatus() {
 		mIsInconsistent |= mElementTVER.isInconsistent() || mFunctionTVER.isInconsistent();
 	}
 
@@ -950,6 +974,13 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 		final Collection<E> newCollection = new ArrayList<>(capacity);
 		newCollection.addAll(oldCollection);
 		return newCollection;
+	}
+
+	public boolean isTautological() {
+		if (isInconsistent()) {
+			return false;
+		}
+		return mElementTVER.isTautological() && mFunctionTVER.isTautological();
 	}
 
 }

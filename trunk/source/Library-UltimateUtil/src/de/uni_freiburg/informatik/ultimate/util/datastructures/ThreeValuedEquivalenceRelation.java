@@ -349,5 +349,14 @@ public class ThreeValuedEquivalenceRelation<E> {
 		return new HashRelation<>(mDisequalities);
 	}
 
+	/**
+	 *
+	 * @return true iff the equality relation represented by this constraint is empty, i.e., for any two elements e1, e2
+	 *    getEqualityStatus(e1, e2) returns UNKNOWN.
+	 */
+	public boolean isTautological() {
+		return getSupportingEqualities().isEmpty() && mDisequalities.isEmpty();
+	}
+
 }
 

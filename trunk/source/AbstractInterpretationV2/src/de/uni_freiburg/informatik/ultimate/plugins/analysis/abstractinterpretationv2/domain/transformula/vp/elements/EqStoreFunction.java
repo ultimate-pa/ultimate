@@ -31,18 +31,19 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
- * 
+ *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  */
+@Deprecated
 public class EqStoreFunction extends EqFunction {
 
 	private final EqFunction mFunction;
 	private final List<EqNode> mIndices;
 	private final EqNode mValue;
 
-	public EqStoreFunction(EqFunction function, List<EqNode> indices, EqNode value, Term term, 
-			EqNodeAndFunctionFactory factory) {
+	public EqStoreFunction(final EqFunction function, final List<EqNode> indices, final EqNode value, final Term term,
+			final EqNodeAndFunctionFactory factory) {
 		super(term, factory);
 		mFunction = function;
 		mIndices = indices;
@@ -56,7 +57,7 @@ public class EqStoreFunction extends EqFunction {
 	}
 
 	@Override
-	public boolean dependsOn(EqFunction f) {
+	public boolean dependsOn(final EqFunction f) {
 		if (this.equals(f)) {
 			return true;
 		}
@@ -66,6 +67,7 @@ public class EqStoreFunction extends EqFunction {
 		return mFunction.equals(f);
 	}
 
+	@Override
 	public EqFunction getFunction() {
 		return mFunction;
 	}
@@ -79,12 +81,12 @@ public class EqStoreFunction extends EqFunction {
 	public EqNode getValue() {
 		return mValue;
 	}
-	
+
 	@Override
 	public boolean isStore() {
 		return true;
 	}
-	
+
 	@Override
 	public EqFunction getInnerMostFunction() {
 		return mFunction.getInnerMostFunction();

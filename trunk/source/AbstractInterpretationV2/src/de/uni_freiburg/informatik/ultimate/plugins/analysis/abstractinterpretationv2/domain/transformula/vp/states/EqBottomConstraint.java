@@ -27,7 +27,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states;
 
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -40,9 +39,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.IEqNodeIdentifier;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainSymmetricPair;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.IEqFunctionIdentifier;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
  *
@@ -94,58 +91,8 @@ public class EqBottomConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 	 */
 
 	@Override
-	public HashRelation<NODE, NODE> merge(final NODE node1, final NODE node2) {
-		return new HashRelation<>();
-	}
-
-	@Override
-	public void havoc(final NODE node) {
-		// do nothing
-	}
-
-	@Override
-	public void havocFunction(final FUNCTION func) {
-		// do nothing
-	}
-
-	@Override
 	public Set<NODE> getAllNodes() {
 		return Collections.emptySet();
-	}
-
-	@Override
-	public HashRelation<NODE, NODE> getSupportingElementEqualities() {
-		return new HashRelation<>();
-	}
-
-	@Override
-	public Set<VPDomainSymmetricPair<NODE>> getElementDisequalities() {
-		return Collections.emptySet();
-	}
-
-	@Override
-	public void addRawDisequality(final NODE first, final NODE second) {
-		// do nothing
-	}
-
-//	@Override
-//	public HashRelation<FUNCTION, FUNCTION> getSupportingFunctionEqualities() {
-//		return new HashRelation<>();
-//	}
-
-	@Override
-	public void addFunctionEqualityRaw(final FUNCTION func1, final FUNCTION func2) {
-		// do nothing
-	}
-
-//	@Override
-//	public Set<VPDomainSymmetricPair<FUNCTION>> getFunctionDisequalites() {
-//		return Collections.emptySet();
-//	}
-
-	@Override
-	public void addFunctionDisequality(final FUNCTION first, final FUNCTION second) {
-		// do nothing
 	}
 
 	@Override
@@ -169,18 +116,8 @@ public class EqBottomConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 	}
 
 	@Override
-	public HashRelation<FUNCTION, List<NODE>> getCCChild(final NODE representative1) {
-		return new HashRelation<>();
-	}
-
-	@Override
 	public boolean areUnequal(final NODE node1, final NODE node2) {
 		return true;
-	}
-
-	@Override
-	public Set<NODE> getDisequalities(final NODE node) {
-		return Collections.emptySet();
 	}
 
 	@Override
@@ -203,45 +140,15 @@ public class EqBottomConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 		return Collections.emptySet();
 	}
 
-//	@Override
-//	public Set<VPDomainSymmetricPair<NODE>> getAllElementEqualities() {
-//		return Collections.emptySet();
-//	}
-//
-//	@Override
-//	public Set<VPDomainSymmetricPair<NODE>> getAllElementDisequalities() {
-//		return Collections.emptySet();
-//	}
-//
-//	@Override
-//	public Set<VPDomainSymmetricPair<FUNCTION>> getAllFunctionEqualities() {
-//		return Collections.emptySet();
-//	}
-//
-//	@Override
-//	public Set<VPDomainSymmetricPair<FUNCTION>> getAllFunctionDisequalities() {
-//		return Collections.emptySet();
-//	}
-
 	@Override
 	public boolean hasNode(final NODE node) {
 		return false; // TODO ??
 	}
 
-//	@Override
-//	public void addNodeRaw(final NODE nodeToAdd) {
-//		// do nothing
-//	}
-
 	@Override
 	public void removeNode(final NODE node) {
 		// do nothing
 	}
-
-//	@Override
-//	public void addFunctionRaw(final FUNCTION func) {
-//		// do nothing
-//	}
 
 	@Override
 	public Set<FUNCTION> getAllFunctions() {
@@ -253,11 +160,6 @@ public class EqBottomConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 		// do nothing
 	}
 
-//	@Override
-//	boolean allNodesAndEqgnMapAreConsistent() {
-//		return true;
-//	}
-
 	@Override
 	public void addToAllNodes(final NODE node) {
 		// do nothing
@@ -267,7 +169,5 @@ public class EqBottomConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 	public boolean isTop() {
 		return false;
 	}
-
-
 
 }

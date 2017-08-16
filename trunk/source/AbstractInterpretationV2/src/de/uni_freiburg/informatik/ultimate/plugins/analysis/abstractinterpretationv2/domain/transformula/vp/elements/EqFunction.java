@@ -35,14 +35,12 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSort;
 
 /**
- * 
+ *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  */
 public class EqFunction implements IEqFunctionIdentifier<EqNode, EqFunction> {
-	
-	
-	
+
 	@Deprecated
 	private IProgramVarOrConst mPvoc;
 
@@ -54,8 +52,8 @@ public class EqFunction implements IEqFunctionIdentifier<EqNode, EqFunction> {
 	private final EqNodeAndFunctionFactory mFactory;
 
 	private final int mArity;
-	
-	public EqFunction(Term term, EqNodeAndFunctionFactory factory) {
+
+	public EqFunction(final Term term, final EqNodeAndFunctionFactory factory) {
 		mTerm = term;
 		mFactory = factory;
 		assert mTerm.getSort().isArraySort();
@@ -71,7 +69,7 @@ public class EqFunction implements IEqFunctionIdentifier<EqNode, EqFunction> {
 		if (isGlobal()) {
 			return null;
 		}
-		
+
 		if (mPvoc instanceof IProgramVar) {
 			return ((IProgramVar) mPvoc).getProcedure();
 		}
@@ -88,7 +86,7 @@ public class EqFunction implements IEqFunctionIdentifier<EqNode, EqFunction> {
 	}
 
 	@Override
-	public EqFunction renameVariables(Map<Term, Term> substitutionMapping) {
+	public EqFunction renameVariables(final Map<Term, Term> substitutionMapping) {
 //		final Term renamed = substitutionMapping.get(mTerm);
 //		if (renamed == null) {
 //			return this;
@@ -111,38 +109,44 @@ public class EqFunction implements IEqFunctionIdentifier<EqNode, EqFunction> {
 	public int getArity() {
 		return mArity;
 	}
-	
+
 	@Override
 	public String toString() {
 		return mTerm.toString();
 	}
 
 	@Override
-	public boolean dependsOn(EqFunction f) {
+	@Deprecated
+	public boolean dependsOn(final EqFunction f) {
 		return this.equals(f);
 	}
 
 	@Override
+	@Deprecated
 	public boolean isStore() {
 		return false;
 	}
-	
+
 	@Override
+	@Deprecated
 	public EqFunction getFunction() {
 		throw new AssertionError("check isStore() first");
 	}
-	
+
 	@Override
+	@Deprecated
 	public List<EqNode> getStoreIndices() {
 		throw new AssertionError("check isStore() first");
 	}
 
 	@Override
+	@Deprecated
 	public EqNode getValue() {
 		throw new AssertionError("check isStore() first");
 	}
 
 	@Override
+	@Deprecated
 	public EqFunction getInnerMostFunction() {
 		return this;
 	}
