@@ -27,9 +27,6 @@ public class ScopedConsistencyGeneratorDelayedSimulation<T, LETTER, STATE> imple
 
 	private final ScopeStack<STATE> mStack;
 
-	private final TemporaryRootPredicate mTemporaryRootPredicate;
-	private final PersistentRootPredicate mPersistentRootPredicate;
-
 	private final boolean mCompressPaths;
 	
 	private ISetOfPairs<STATE, ?> mSpoilerWinnings;
@@ -41,8 +38,6 @@ public class ScopedConsistencyGeneratorDelayedSimulation<T, LETTER, STATE> imple
 	public ScopedConsistencyGeneratorDelayedSimulation(boolean compressPaths, final AutomataLibraryServices services, final INestedWordAutomaton<LETTER, STATE> operand) {
 		mContent2node = new HashMap<>();
 		mStack = new ScopeStack<>();
-		mTemporaryRootPredicate = new TemporaryRootPredicate();
-		mPersistentRootPredicate = new PersistentRootPredicate();
 		mCompressPaths = compressPaths;
 		mSpoilerWinnings = null;
 		mDuplicatorWinnings = null;
@@ -71,7 +66,7 @@ public class ScopedConsistencyGeneratorDelayedSimulation<T, LETTER, STATE> imple
 	}
 	
 	public void addContent(final STATE s) {
-		mContent2node.put(s, new NormalNode<>(s));
+		mContent2node.put(s, new NormalNode<STATE>(s));
 	}
 	
 	@Override
@@ -85,7 +80,7 @@ public class ScopedConsistencyGeneratorDelayedSimulation<T, LETTER, STATE> imple
 			e.printStackTrace();
 		}
 		
-		//Not very nice: explicit cast to pair type. Could be solved by using a Doubleton class version.
+		//TODO: Not very nice: explicit cast to pair type. Could be solved by using a Doubleton class version.
 		assert doubleton instanceof Doubleton<?> : "Type error: pairs of states needed.";
 		STATE lhs = ((Doubleton<STATE>) doubleton).getOneElement();
 		STATE rhs = ((Doubleton<STATE>) doubleton).getOtherElement();
@@ -118,64 +113,9 @@ public class ScopedConsistencyGeneratorDelayedSimulation<T, LETTER, STATE> imple
 	//TODO: find a way to tell the simulation the current standings. Maybe extend BiPredicate?
 	//Recomputes the winning states for Spoiler and Duplicator
 	protected void updateWinningStates() throws AutomataOperationCanceledException {
-		final BiPredicate<STATE, STATE> areStatesMerged = new BiPredicate<STATE, STATE>() {
-			
-			@Override
-			public boolean test(final STATE t, final STATE u) {
-				return false;
-			};
-			
-			public boolean test(final STATE t, final STATE u, Map<STATE, NormalNode<STATE>> stateMap) {
-				
-				if(stateMap == null || stateMap.isEmpty()) {
-					return test(t, u);
-				}
-				else {
-					final NormalNode<STATE> root1 = find(mContent2node.get(t));
-					final NormalNode<STATE> root2 = find(mContent2node.get(u));
-					if (root1 == root2) {
-						return true;
-					}
-					else {
-						return false;
-					}
-				}
-			};
-		};
-		
+		final BiPredicateStateMap<STATE> areStatesMerged = new BiPredicateStateMap<STATE>(mContent2node, mCompressPaths);
 		NwaApproximateDelayedSimulation<LETTER,STATE> simulation = new NwaApproximateDelayedSimulation<LETTER, STATE>(mServices, mOperand, areStatesMerged);
 		mSpoilerWinnings = simulation.getSpoilerWinningStates();
 		mDuplicatorWinnings = simulation.getDuplicatorEventuallyAcceptingStates();
 	}
-	
-	@SuppressWarnings("squid:S1698")
-	private NormalNode<STATE> find(final NormalNode<STATE> source) {
-		if (mCompressPaths) {
-			final NormalNode<STATE> persistentParent = findNextRoot(source, mPersistentRootPredicate);
-			if (source != persistentParent) {
-				// if the source is not the transitive persistent parent of its subtree, compress the path to this node
-				final INode<STATE> sourceDirectParent = source.getParent();
-				assert sourceDirectParent.getClass() == NormalNode.class : "";
-				// remove source from its direct parent's children
-				((NormalNode<STATE>) sourceDirectParent).removeNormalChild(source);
-				// set source's new parent to transitive parent
-				source.setParent(persistentParent);
-				// add source to transitive parent's children
-				persistentParent.addNormalChild(source);
-			}
-			return findNextRoot(persistentParent, mTemporaryRootPredicate);
-		}
-		return findNextRoot(source, mTemporaryRootPredicate);
-	}
-	
-	@SuppressWarnings("hiding")
-	private <INodePredicate> NormalNode<STATE> findNextRoot(final NormalNode<STATE> source, final INodePredicate predicate) {
-		INode<STATE> node = source;
-		while (!((de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.ScopedTransitivityGenerator.INodePredicate) predicate).check(node)) {
-			node = node.getParent();
-		}
-		assert node.getClass() == NormalNode.class : "Invalid tree root.";
-		return (NormalNode<STATE>) node;
-	}
-
 }

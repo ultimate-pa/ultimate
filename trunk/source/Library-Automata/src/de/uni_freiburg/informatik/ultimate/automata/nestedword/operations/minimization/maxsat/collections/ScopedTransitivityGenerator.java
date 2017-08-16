@@ -727,7 +727,7 @@ public abstract class ScopedTransitivityGenerator<T, C> implements IAssignmentCh
 	 * @param <T>
 	 *            node type
 	 */
-	private static final class BridgeNode<T> implements INode<T> {
+	public static final class BridgeNode<T> implements INode<T> {
 		private final NormalNode<T> mParent;
 		private final NormalNode<T> mChild;
 
