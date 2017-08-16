@@ -32,26 +32,30 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.IEqFunctionIdentifier;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ICongruenceClosureElement;
 
 /**
- * 
+ *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  * @param <NODE>
  * @param <FUNCTION>
  */
-public interface IEqNodeIdentifier<NODE extends IEqNodeIdentifier<NODE, FUNCTION>, 
-			FUNCTION extends IEqFunctionIdentifier<NODE, FUNCTION>> {
+public interface IEqNodeIdentifier<NODE extends IEqNodeIdentifier<NODE, FUNCTION>,
+			FUNCTION extends IEqFunctionIdentifier<NODE, FUNCTION>> extends ICongruenceClosureElement<NODE, FUNCTION> {
 
-	boolean isFunction();
+	@Override
+	boolean isFunctionApplication();
 
-	FUNCTION getFunction();
+	@Override
+	FUNCTION getAppliedFunction();
 
-	List<NODE> getArgs();
-	
+	@Override
+	List<NODE> getArguments();
+
 	boolean isLiteral();
-	
+
 	NODE renameVariables(Map<Term, Term> substitutionMapping);
-	
+
 	Term getTerm();
 }

@@ -3,9 +3,7 @@ package de.uni_freiburg.informatik.ultimate.util;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import org.junit.Test;
 
@@ -483,8 +481,6 @@ public class CongruenceClosureTest {
 		assertTrue(cc4.getEqualityStatus(f_b, f_a) == EqualityStatus.EQUAL);
 		assertTrue(cc4.getEqualityStatus(b, f_b) == EqualityStatus.UNKNOWN);
 
-
-
 		// cc3 should be strictly stronger than both cc1 and cc2
 		assertTrue(cc4.isStrongerThan(cc1));
 		assertFalse(cc1.isStrongerThan(cc4));
@@ -526,8 +522,6 @@ class StringCCElement implements ICongruenceClosureElement<StringCCElement, Stri
 	private final String mAppliedFunction;
 	private final List<StringCCElement> mArguments;
 
-	private final Set<StringCCElement> mParents = new HashSet<>();
-
 	public StringCCElement(final String name) {
 		mIsFunctionApplication = false;
 		mName = name;
@@ -540,12 +534,6 @@ class StringCCElement implements ICongruenceClosureElement<StringCCElement, Stri
 		mName = null;
 		mAppliedFunction = appliedFunction;
 		mArguments = arguments;
-	}
-
-
-	@Override
-	public Set<StringCCElement> getParents() {
-		return mParents;
 	}
 
 	@Override
@@ -572,8 +560,4 @@ class StringCCElement implements ICongruenceClosureElement<StringCCElement, Stri
 		}
 	}
 
-	@Override
-	public void addParent(final StringCCElement parent) {
-		mParents.add(parent);
-	}
 }

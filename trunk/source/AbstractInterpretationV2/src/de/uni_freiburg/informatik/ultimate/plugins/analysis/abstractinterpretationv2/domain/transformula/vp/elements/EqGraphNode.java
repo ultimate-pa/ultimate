@@ -82,9 +82,9 @@ public class EqGraphNode<NODE extends IEqNodeIdentifier<NODE, FUNCTION>,
 		mCcchild = new HashRelation<>();
 //		this.mInitCcpar = null;
 		mInitCcpar = new HashSet<>();
-		if (id.isFunction()) {
-			mInitCcchild = Collections.unmodifiableList(id.getArgs());
-			mCcchild.addPair(mNodeIdentifier.getFunction(), Collections.unmodifiableList(id.getArgs()));
+		if (id.isFunctionApplication()) {
+			mInitCcchild = Collections.unmodifiableList(id.getArguments());
+			mCcchild.addPair(mNodeIdentifier.getAppliedFunction(), Collections.unmodifiableList(id.getArguments()));
 		}
 	}
 	
@@ -125,8 +125,8 @@ public class EqGraphNode<NODE extends IEqNodeIdentifier<NODE, FUNCTION>,
 		/*
 		 * Only function node have initCcchild.
 		 */
-		if (mNodeIdentifier.isFunction()) {
-			mCcchild.addPair(mNodeIdentifier.getFunction(), mInitCcchild);
+		if (mNodeIdentifier.isFunctionApplication()) {
+			mCcchild.addPair(mNodeIdentifier.getAppliedFunction(), mInitCcchild);
 		}
 		
 		

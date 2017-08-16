@@ -315,8 +315,8 @@ public class EqConstraintFactory<
 
 		// also choose some subterms
 		final Set<NODE> allFunctionNodes = newConstraintWithPropagations.getAllNodes().stream()
-			.filter(node -> node.isFunction()).collect(Collectors.toSet());
-		allFunctionNodes.forEach(fnode -> chosenNodes.addAll(fnode.getArgs()));
+			.filter(node -> node.isFunctionApplication()).collect(Collectors.toSet());
+		allFunctionNodes.forEach(fnode -> chosenNodes.addAll(fnode.getArguments()));
 		final Set<FUNCTION> allStoreFunctions = newConstraintWithPropagations.getAllFunctions().stream()
 			.filter(func -> func.isStore()).collect(Collectors.toSet());
 		allStoreFunctions.forEach(sfunc -> chosenNodes.addAll(sfunc.getStoreIndices()));

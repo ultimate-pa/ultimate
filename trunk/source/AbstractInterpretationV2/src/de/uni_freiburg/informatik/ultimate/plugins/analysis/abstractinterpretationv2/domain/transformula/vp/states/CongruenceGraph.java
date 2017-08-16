@@ -201,11 +201,11 @@ public class CongruenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 	 * @return true if they are congruent
 	 */
 	protected boolean congruent(final EqGraphNode<NODE, FUNCTION> node1, final EqGraphNode<NODE, FUNCTION> node2) {
-		if (!(node1.mNodeIdentifier.isFunction()) || !(node2.mNodeIdentifier.isFunction())) {
+		if (!(node1.mNodeIdentifier.isFunctionApplication()) || !(node2.mNodeIdentifier.isFunctionApplication())) {
 			return false;
 		}
 
-		if (!(node1.mNodeIdentifier.getFunction().equals(node2.mNodeIdentifier.getFunction()))) {
+		if (!(node1.mNodeIdentifier.getAppliedFunction().equals(node2.mNodeIdentifier.getAppliedFunction()))) {
 			return false;
 		}
 //		return VPFactoryHelpers.congruentIgnoreFunctionSymbol(node1, node2);
@@ -513,15 +513,15 @@ public class CongruenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 	 * @param functionNode
 	 */
 	 private void restorePropagation(final NODE functionNode) {
-		 assert functionNode.isFunction();
+		 assert functionNode.isFunctionApplication();
 	
-		 NODE firstIndex = functionNode.getArgs().get(0);
+		 NODE firstIndex = functionNode.getArguments().get(0);
 		 
 		 EqGraphNode<NODE, FUNCTION> firstIndexGN = mNodeToEqGraphNode.get(firstIndex);
 
-		 final Set<NODE> fnNodesWithSameFunction = getFunctionNodesForFunctionSymbol(functionNode.getFunction());
+		 final Set<NODE> fnNodesWithSameFunction = getFunctionNodesForFunctionSymbol(functionNode.getAppliedFunction());
 		 for (final NODE fnNode : fnNodesWithSameFunction) {
-			 if (mNodeToEqGraphNode.get(fnNode.getArgs().get(0)).find().equals(firstIndexGN.find())) {
+			 if (mNodeToEqGraphNode.get(fnNode.getArguments().get(0)).find().equals(firstIndexGN.find())) {
 				 if (congruent(mNodeToEqGraphNode.get(fnNode), mNodeToEqGraphNode.get(functionNode))) {
 					 merge(fnNode, functionNode);
 				 }
@@ -532,7 +532,7 @@ public class CongruenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 	private Set<NODE> getFunctionNodesForFunctionSymbol(FUNCTION function) {
 		// TODO: cache?
 		return mNodeToEqGraphNode.keySet().stream()
-			.filter(node -> (node.isFunction() && node.getFunction().equals(function)))
+			.filter(node -> (node.isFunctionApplication() && node.getAppliedFunction().equals(function)))
 			.collect(Collectors.toSet());
 	}
 
@@ -613,8 +613,8 @@ public class CongruenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 			return;
 		}
 		
-		if (node.isFunction()) {
-			for (NODE child : node.getArgs()) {
+		if (node.isFunctionApplication()) {
+			for (NODE child : node.getArguments()) {
 				addNode(child, node);
 			}
 		}
@@ -658,7 +658,7 @@ public class CongruenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 
 		if (result == null) {
 			result = new EqGraphNode<>(node);
-			if (node.isFunction()) {
+			if (node.isFunctionApplication()) {
 				for (NODE child : result.getInitCcchild()) {
 					final EqGraphNode<NODE, FUNCTION> childEqgn = getOrConstructEqGraphNode(child, 
 							newNodeToEqGraphNodeMap);

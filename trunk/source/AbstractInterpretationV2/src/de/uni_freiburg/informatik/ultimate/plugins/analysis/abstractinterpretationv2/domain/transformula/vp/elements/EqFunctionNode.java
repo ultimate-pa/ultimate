@@ -53,12 +53,12 @@ public class EqFunctionNode extends EqNode {
 	}
 
 	@Override
-	public EqFunction getFunction() {
+	public EqFunction getAppliedFunction() {
 		return mFunction;
 	}
 
 	@Override
-	public List<EqNode> getArgs() {
+	public List<EqNode> getArguments() {
 		return mArgs;
 	}
 
@@ -73,7 +73,7 @@ public class EqFunctionNode extends EqNode {
 	}
 
 	@Override
-	public boolean isFunction() {
+	public boolean isFunctionApplication() {
 		return true;
 	}
 }

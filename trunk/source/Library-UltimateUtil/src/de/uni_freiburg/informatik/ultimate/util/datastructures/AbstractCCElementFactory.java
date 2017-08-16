@@ -35,9 +35,9 @@ public abstract class AbstractCCElementFactory<ELEM extends ICongruenceClosureEl
 			fae = newFuncAppElement(func, arguments);
 			mFunctionToArgsToFuncAppElem.put(func, arguments, fae);
 		}
-		for (final ELEM arg : arguments) {
-			arg.addParent(fae);
-		}
+//		for (final ELEM arg : arguments) {
+//			arg.addParent(fae);
+//		}
 		return fae;
 	}
 

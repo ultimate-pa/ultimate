@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 Yu-Wen Chen 
+ * Copyright (C) 2016 Yu-Wen Chen
  * Copyright (C) 2016 Alexander Nutz (nutz@informatik.uni-freiburg.de)
  * Copyright (C) 2016 University of Freiburg
  *
@@ -37,44 +37,49 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.IEqNodeIdentifier;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ICongruenceClosureElement;
 
 /**
- * 
+ *
  * @author Yu-Wen Chen (yuwenchen1105@gmail.com)
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  */
-public abstract class EqNode implements IEqNodeIdentifier<EqNode, EqFunction> {
-	
+public abstract class EqNode implements IEqNodeIdentifier<EqNode, EqFunction>,
+		ICongruenceClosureElement<EqNode, EqFunction> {
+
 	protected final EqNodeAndFunctionFactory mEqNodeFactory;
 
 	protected boolean mIsConstant;
 
-	private Set<EqNode> mParents = new HashSet<>();
+	private final Set<EqNode> mParents = new HashSet<>();
 
 	protected Term mTerm;
-	
-	public EqNode(Term term, EqNodeAndFunctionFactory eqNodeFactory) {
+
+	public EqNode(final Term term, final EqNodeAndFunctionFactory eqNodeFactory) {
 		mTerm = term;
 		mEqNodeFactory = eqNodeFactory;
 	}
 
+	@Override
 	public abstract boolean isLiteral();
 
 	public boolean isConstant() {
 		return mIsConstant;
 	}
-	
+
 	public Collection<TermVariable> getFreeVariables() {
 		return Arrays.asList(mTerm.getFreeVars());
 	}
 
+	@Override
 	public Term getTerm() {
 		return mTerm;
 	}
-	
-	public final EqNode renameVariables(Map<Term, Term> substitutionMapping) {
-		final Term substitutedTerm = 
+
+	@Override
+	public final EqNode renameVariables(final Map<Term, Term> substitutionMapping) {
+		final Term substitutedTerm =
 				new Substitution(mEqNodeFactory.mMgdScript, substitutionMapping).transform(getTerm());
 		return mEqNodeFactory.getOrConstructEqNode(substitutedTerm);
 	}

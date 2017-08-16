@@ -73,18 +73,18 @@ public class EqAtomicBaseNode extends EqNode {
 	}
 
 	@Override
-	public List<EqNode> getArgs() {
+	public List<EqNode> getArguments() {
 		assert false : "check for isFunction() first";
 		return null;
 	}
 	
 	@Override
-	public boolean isFunction() {
+	public boolean isFunctionApplication() {
 		return false;
 	}
 	
 	@Override
-	public EqFunction getFunction() {
+	public EqFunction getAppliedFunction() {
 		assert false : "check for isFunction() first";
 		return null;
 	}

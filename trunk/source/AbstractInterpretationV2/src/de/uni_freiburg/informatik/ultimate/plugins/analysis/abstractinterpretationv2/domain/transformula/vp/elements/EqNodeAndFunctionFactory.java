@@ -41,13 +41,14 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDim
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalStore;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainPreanalysis;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.AbstractCCElementFactory;
 
 /**
- * 
+ *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  */
-public class EqNodeAndFunctionFactory {
+public class EqNodeAndFunctionFactory extends AbstractCCElementFactory<EqNode, EqFunction, Term> {
 
 	ManagedScript mMgdScript;
 
@@ -57,7 +58,7 @@ public class EqNodeAndFunctionFactory {
 
 	private final VPDomainPreanalysis mPreAnalysis;
 
-	public EqNodeAndFunctionFactory(VPDomainPreanalysis preAnalysis, ManagedScript script) {
+	public EqNodeAndFunctionFactory(final VPDomainPreanalysis preAnalysis, final ManagedScript script) {
 		mPreAnalysis = preAnalysis;
 		mMgdScript = script;
 	}
@@ -66,7 +67,7 @@ public class EqNodeAndFunctionFactory {
 		return mMgdScript;
 	}
 
-	public EqNode getOrConstructEqNode(Term term) {
+	public EqNode getOrConstructEqNode(final Term term) {
 		if (term instanceof ApplicationTerm && ((ApplicationTerm) term).getParameters().length > 0) {
 			if ("select".equals(((ApplicationTerm) term).getFunction().getName())) {
 				return getOrConstructEqFunctionNode((ApplicationTerm) term);
@@ -86,7 +87,7 @@ public class EqNodeAndFunctionFactory {
 		}
 	}
 
-	private EqNode getOrConstructNonAtomicBaseNode(Term term) {
+	private EqNode getOrConstructNonAtomicBaseNode(final Term term) {
 		mMgdScript.lock(this);
 		final Term normalizedTerm = new CommuhashNormalForm(
 				mPreAnalysis.getServices(), mMgdScript.getScript()).transform(term);
@@ -97,10 +98,10 @@ public class EqNodeAndFunctionFactory {
 			mTermToEqNode.put(normalizedTerm, result);
 		}
 		assert result instanceof EqNonAtomicBaseNode;
-		return result;		
+		return result;
 	}
 
-	private EqNode getOrConstructEqFunctionNode(ApplicationTerm selectTerm) {
+	private EqNode getOrConstructEqFunctionNode(final ApplicationTerm selectTerm) {
 		EqNode result = mTermToEqNode.get(selectTerm);
 
 		if (result == null) {
@@ -109,7 +110,7 @@ public class EqNodeAndFunctionFactory {
 			final EqFunction function = getOrConstructEqFunction(mds.getArray());
 
 			final List<EqNode> args = new ArrayList<>();
-			for (Term index : mds.getIndex()) {
+			for (final Term index : mds.getIndex()) {
 				args.add(getOrConstructEqNode(index));
 			}
 
@@ -120,7 +121,7 @@ public class EqNodeAndFunctionFactory {
 		return result;
 	}
 
-	private EqNode getOrConstructEqAtomicBaseNode(Term term) {
+	private EqNode getOrConstructEqAtomicBaseNode(final Term term) {
 		EqNode result = mTermToEqNode.get(term);
 		if (result == null) {
 			result = new EqAtomicBaseNode(term, this);
@@ -131,7 +132,7 @@ public class EqNodeAndFunctionFactory {
 
 	}
 
-	public EqFunction getOrConstructEqFunction(Term term) {
+	public EqFunction getOrConstructEqFunction(final Term term) {
 		if (term instanceof ApplicationTerm && ((ApplicationTerm) term).getParameters().length > 0) {
 			if ("store".equals(((ApplicationTerm) term).getFunction().getName())) {
 				return getOrConstructEqStoreFunction((ApplicationTerm) term);
@@ -149,7 +150,7 @@ public class EqNodeAndFunctionFactory {
 		}
 	}
 
-	private EqFunction getOrConstructAtomicEqFunction(Term term) {
+	private EqFunction getOrConstructAtomicEqFunction(final Term term) {
 		assert !(term instanceof ApplicationTerm) || !"store".equals(((ApplicationTerm) term).getFunction().getName());
 		EqFunction result = mTermToEqFunction.get(term);
 		if (result == null) {
@@ -160,7 +161,7 @@ public class EqNodeAndFunctionFactory {
 		return result;
 	}
 
-	private EqFunction getOrConstructEqStoreFunction(ApplicationTerm storeTerm) {
+	private EqFunction getOrConstructEqStoreFunction(final ApplicationTerm storeTerm) {
 		assert "store".equals(storeTerm.getFunction().getName());
 		EqFunction result = mTermToEqFunction.get(storeTerm);
 		if (result == null) {
@@ -169,7 +170,7 @@ public class EqNodeAndFunctionFactory {
 			final EqFunction function = getOrConstructEqFunction(mds.getArray());
 
 			final List<EqNode> indices = new ArrayList<>();
-			for (Term index : mds.getIndex()) {
+			for (final Term index : mds.getIndex()) {
 				indices.add(getOrConstructEqNode(index));
 			}
 
@@ -181,17 +182,17 @@ public class EqNodeAndFunctionFactory {
 		return result;
 	}
 
-	public EqFunction constructRenamedEqFunction(EqFunction eqFunction, Map<Term, Term> substitutionMapping) {
+	public EqFunction constructRenamedEqFunction(final EqFunction eqFunction, final Map<Term, Term> substitutionMapping) {
 		final Term substitutedTerm = new Substitution(mMgdScript, substitutionMapping).transform(eqFunction.getTerm());
 		return getOrConstructEqFunction(substitutedTerm);
 	}
 
 	/**
-	 * 
+	 *
 	 * @param term
 	 * @return
 	 */
-	public EqNode getExistingEqNode(Term term) {
+	public EqNode getExistingEqNode(final Term term) {
 		final Term normalizedTerm;
 		if (term instanceof ApplicationTerm && ((ApplicationTerm) term).getParameters().length > 0) {
 			mMgdScript.lock(this);
@@ -205,12 +206,25 @@ public class EqNodeAndFunctionFactory {
 	}
 
 	/**
-	 * 
+	 *
 	 * @param term
 	 * @return
 	 */
-	public EqFunction getExistingEqFunction(Term term) {
+	public EqFunction getExistingEqFunction(final Term term) {
 		return mTermToEqFunction.get(term);
+	}
+
+	@Override
+	protected EqNode newBaseElement(final Term c) {
+		assert false;
+		return getOrConstructEqAtomicBaseNode(c);
+	}
+
+	@Override
+	protected EqNode newFuncAppElement(final EqFunction f, final List<EqNode> args) {
+//		return getOrConstructEqFunctionNode(selectTerm)
+		assert false;
+		return null;
 	}
 
 }
