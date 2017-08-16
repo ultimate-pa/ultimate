@@ -55,36 +55,29 @@ public class UnionFind<E> implements IPartition<E> {
 	/**
 	 * Maps an element to its equivalence class.
 	 */
-	private final Map<E, Set<E>> mEquivalenceClass;
+	private final Map<E, Set<E>> mEquivalenceClass = new HashMap<>();
 	/**
 	 * Maps an equivalence class to its representative.
 	 */
-	private final Map<Set<E>, E> mRepresentative;
+	private final Map<Set<E>, E> mRepresentative = new HashMap<>();
 
 	/**
 	 * Constructor for new (empty) data structure.
 	 */
 	public UnionFind() {
-		mEquivalenceClass = new HashMap<>();
-		mRepresentative = new HashMap<>();
 	}
 
 	/**
 	 * Copy constructor.
 	 */
 	public UnionFind(final UnionFind<E> unionFind) {
-//		 make a deep copy of the two maps
-//		mEquivalenceClass = new HashMap<>(unionFind.mEquivalenceClass);
-//		mRepresentative = new HashMap<>(unionFind.mRepresentative);
-		mEquivalenceClass = new HashMap<>();
-		mRepresentative = new HashMap<>();
-		for (final Entry<E, Set<E>> entry : unionFind.mEquivalenceClass.entrySet()) {
-			final E representative = entry.getKey();
-			final Set<E> equivalenceClassCopy = new HashSet<>(entry.getValue());
-			// alex: I commented this out as it does not make sense to me..
-//			assert mRepresentative.get(equivalenceClassCopy) == representative : "inconsistent";
-			final Set<E> oldValue = this.mEquivalenceClass.put(representative, equivalenceClassCopy);
-			assert oldValue == null : "element was contained twice";
+		for (final Entry<Set<E>, E> entry : unionFind.mRepresentative.entrySet()) {
+			final E representative = entry.getValue();
+			final Set<E> equivalenceClassCopy = new HashSet<>(entry.getKey());
+			for (final E equivalenceClassMember : equivalenceClassCopy) {
+				final Set<E> oldValue = this.mEquivalenceClass.put(equivalenceClassMember, equivalenceClassCopy);
+				assert oldValue == null : "element was contained twice";
+			}
 			this.mRepresentative.put(equivalenceClassCopy, representative);
 		}
 	}
