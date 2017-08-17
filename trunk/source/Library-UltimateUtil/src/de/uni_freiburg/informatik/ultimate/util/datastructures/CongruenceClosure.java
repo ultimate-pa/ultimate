@@ -11,7 +11,6 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import de.uni_freiburg.informatik.ultimate.util.SetOperations;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
@@ -993,11 +992,9 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 	 */
 	public void transformElementsAndFunctions(final Function<ELEM, ELEM> elemTransformer,
 			final Function<FUNCTION, FUNCTION> functionTransformer) {
-		assert SetOperations.intersect(getAllElements(),
-				getAllElements().stream().map(elemTransformer).collect(Collectors.toSet())).isEmpty() :
+		assert sanitizeTransformer(elemTransformer, getAllElements()) :
 					"we assume that the transformer does not produce elements that were in the relation before!";
-		assert SetOperations.intersect(getAllFunctions(),
-				getAllFunctions().stream().map(functionTransformer).collect(Collectors.toSet())).isEmpty() :
+		assert sanitizeTransformer(functionTransformer, getAllFunctions()) :
 					"we assume that the transformer does not produce elements that were in the relation before!";
 
 		mElementTVER.transformElements(elemTransformer);
@@ -1035,6 +1032,27 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 			mElementToParents.removePair(en.getKey(), en.getValue());
 			mElementToParents.addPair(elemTransformer.apply(en.getKey()), elemTransformer.apply(en.getValue()));
 		}
+	}
+
+	/**
+	 * We demand that if our transformer changes an element, it may not be in the original set of elements
+	 * @param elemTransformer
+	 * @param transformedSet
+	 * @return
+	 */
+	private static <E> boolean sanitizeTransformer(final Function<E, E> elemTransformer, final Set<E> inputSet) {
+		for (final E el :inputSet) {
+			final E transformed = elemTransformer.apply(el);
+			if (el.equals(transformed)) {
+				// nothing to check
+				continue;
+			}
+			if (inputSet.contains(transformed)) {
+				assert false;
+				return false;
+			}
+		}
+		return true;
 	}
 
 }

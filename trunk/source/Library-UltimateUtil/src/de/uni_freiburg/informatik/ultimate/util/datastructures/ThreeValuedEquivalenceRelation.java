@@ -33,9 +33,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
-import de.uni_freiburg.informatik.ultimate.util.SetOperations;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
@@ -87,6 +85,7 @@ public class ThreeValuedEquivalenceRelation<E> {
 
 	public void removeElement(final E elem) {
 		final E rep = mUnionFind.find(elem);
+		final Set<E> equivalenceClass = mUnionFind.getEquivalenceClassMembers(elem);
 		mUnionFind.remove(elem);
 
 		/*
@@ -97,7 +96,6 @@ public class ThreeValuedEquivalenceRelation<E> {
 			return;
 		}
 		// elem was the representative of its equivalence class --> we need to update mDistinctElements
-		final Set<E> equivalenceClass = mUnionFind.getEquivalenceClassMembers(elem);
 		if (equivalenceClass.isEmpty()) {
 			// elem was the only element in its equivalence class --> just remove it from disequalities
 			mDisequalities.removeDomainElement(elem);
@@ -362,9 +360,6 @@ public class ThreeValuedEquivalenceRelation<E> {
 	}
 
 	public void transformElements(final Function<E, E> transformer) {
-		assert SetOperations.intersect(getAllElements(),
-				getAllElements().stream().map(transformer).collect(Collectors.toSet())).isEmpty() :
-					"we assume that the transformer does not produce elements that were in the relation before!";
 		mUnionFind.transformElements(transformer);
 
 		final HashRelation<E, E> disequalitiesCopy = new HashRelation<>(mDisequalities);

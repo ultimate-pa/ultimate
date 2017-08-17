@@ -44,8 +44,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.IEqNodeIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainHelpers;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainPreanalysis;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqFunction;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNode;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNodeAndFunctionFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.IEqFunctionIdentifier;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CongruenceClosure;
@@ -415,6 +413,16 @@ public class EqConstraintFactory<
 ////		mgdScript.unlock(this);
 //
 //		return newConstraintWithPropagations;
+	}
+
+	public EqConstraint<ACTION, NODE, FUNCTION> addWeakEquivalence(final FUNCTION array1,
+			final FUNCTION array2, final List<NODE> storeIndex,
+			final EqConstraint<ACTION, NODE, FUNCTION> inputConstraint) {
+
+		final EqConstraint<ACTION, NODE, FUNCTION> newConstraint = unfreeze(inputConstraint);
+		newConstraint.reportWeakEquivalence(array1, array2, storeIndex);
+		newConstraint.freeze();
+		return newConstraint;
 	}
 
 	public EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> disjoinDisjunctiveConstraints(
@@ -910,15 +918,6 @@ public class EqConstraintFactory<
 	public EqConstraint<ACTION, NODE, FUNCTION> getEqConstraint(
 			final CongruenceClosure<NODE, FUNCTION> newPartialArrangement,
 			final EqConstraint<ACTION, NODE, FUNCTION>.WeakEquivalenceGraph newWEGraph) {
-		// TODO Auto-generated method stub
-		assert false;
-		return null;
-	}
-
-	public EqConstraint<ACTION, EqNode, EqFunction> addWeakEquivalence(final EqFunction baseArray, final EqFunction baseArray2,
-			final List<EqNode> storeIndex, final EqConstraint<ACTION, EqNode, EqFunction> emptyConstraint) {
-		// TODO Auto-generated method stub
-		assert false;
-		return null;
+		return new EqConstraint<>(newPartialArrangement, newWEGraph, this);
 	}
 }

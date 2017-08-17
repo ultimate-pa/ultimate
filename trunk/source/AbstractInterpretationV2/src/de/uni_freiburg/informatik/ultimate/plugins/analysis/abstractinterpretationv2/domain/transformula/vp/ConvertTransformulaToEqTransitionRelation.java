@@ -224,9 +224,6 @@ public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTrans
 					return;
 				}
 
-//				final EqFunction func1 = mEqNodeAndFunctionFactory.getOrConstructEqFunction(arg1);
-//				final EqFunction func2 = mEqNodeAndFunctionFactory.getOrConstructEqFunction(arg2);
-
 				MultiDimensionalStore mds;
 				EqFunction simpleArray;
 				EqFunction otherSimpleArray;
