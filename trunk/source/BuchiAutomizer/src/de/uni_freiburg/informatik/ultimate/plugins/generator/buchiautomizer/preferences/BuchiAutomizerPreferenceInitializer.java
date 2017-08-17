@@ -106,6 +106,9 @@ public class BuchiAutomizerPreferenceInitializer extends UltimatePreferenceIniti
 	public static final String LABEL_MAP_ELIMINATION_ONLY_INDICES_IN_FORMULAS =
 			"Add implications only for indices occuring in the current formula";
 	private static final boolean DEF_MAP_ELIMINATION_ONLY_INDICES_IN_FORMULAS = true;
+	public static final String LABEL_USE_LAZY_NCSB_ALGORITHM =
+			"Use lazy NCSB algorithm";
+	private static final boolean DEF_USE_LAZY_NCSB_ALGORITHM = false;
 
 	public BuchiAutomizerPreferenceInitializer() {
 		super(Activator.PLUGIN_ID, "Buchi Automizer (Termination Analysis)");
@@ -165,6 +168,9 @@ public class BuchiAutomizerPreferenceInitializer extends UltimatePreferenceIniti
 				new UltimatePreferenceItem<>(LABEL_MAP_ELIMINATION_ONLY_TRIVIAL_IMPLICATIONS_ARRAY_WRITE,
 						DEF_MAP_ELIMINATION_ONLY_TRIVIAL_IMPLICATIONS_ARRAY_WRITE, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_MAP_ELIMINATION_ONLY_INDICES_IN_FORMULAS,
-						DEF_MAP_ELIMINATION_ONLY_INDICES_IN_FORMULAS, PreferenceType.Boolean), };
+						DEF_MAP_ELIMINATION_ONLY_INDICES_IN_FORMULAS, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_USE_LAZY_NCSB_ALGORITHM,
+						DEF_USE_LAZY_NCSB_ALGORITHM, PreferenceType.Boolean) 
+				};
 	}
 }

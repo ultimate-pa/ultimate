@@ -107,6 +107,7 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 	private final Format mFormat;
 	private final InterpolationTechnique mInterpolation;
 	private BackwardCoveringInformation mBci;
+	private final boolean mUseLazyNcsb;
 	/**
 	 * Interpolant automaton of this iteration.
 	 */
@@ -121,7 +122,7 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 			final String dumpPath, final Format format, final InterpolationTechnique interpolation,
 			final IUltimateServiceProvider services, final ILogger logger,
 			final SimplificationTechnique simplificationTechnique,
-			final XnfConversionTechnique xnfConversionTechnique) {
+			final XnfConversionTechnique xnfConversionTechnique, final boolean useLazyNcsb) {
 		super();
 		mServices = services;
 		mLogger = logger;
@@ -138,6 +139,7 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 		mInterpolation = interpolation;
 		mSimplificationTechnique = simplificationTechnique;
 		mXnfConversionTechnique = xnfConversionTechnique;
+		mUseLazyNcsb = useLazyNcsb;
 	}
 
 	public INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> getInterpolAutomatonUsedInRefinement() {
