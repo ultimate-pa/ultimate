@@ -1,3 +1,4 @@
+//#termcomp16-someonesaidno
 /*
  * Program from the example depicted in the introduction of
  * 2014TACAS - Chen,Cook,Fuhs,Nimkar,O’Hearn - Proving Nontermination via Safety

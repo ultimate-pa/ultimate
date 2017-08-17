@@ -1,3 +1,4 @@
+//#termcomp16-someonesaidyes
 /*
  * Program from the example (without number) of
  * 2010CAV - Kroening,Sharygina,Tsitovich,Wintersteiger - Termination Analysis with Compositional Transition Invariants

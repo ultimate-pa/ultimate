@@ -1,3 +1,4 @@
+//#termcomp16-someonesaidyes
 /*
  * Program from Ex.2.3 of
  * 2010LMCS - Ben-Amram - Size-Change Termination, Monotonicity Constraints and Ranking Functions

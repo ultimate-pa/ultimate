@@ -1,3 +1,5 @@
+//#termcomp16-someonesaidyes
+//#termcomp16-someonesaidyes
 /*
  * gcd program (terminating) based on 
  * (Dershowitz, Lindenstrauss, Sagiv and Serebrenik, 2001)

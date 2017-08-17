@@ -1,3 +1,5 @@
+//#termcomp16-someonesaidyes
+//#termcomp16-someonesaidyes
 /* An example that looks simple, given to me by Genady Trifon
  * Date: 15.12.2013
  * Author: Amir Ben-Amram, amirben@cs.mta.ac.il

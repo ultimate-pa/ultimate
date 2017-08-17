@@ -1,3 +1,4 @@
+//#termcomp16-someonesaidyes
 /*
  * Program from Fig.2 of
  * 2004LICS - Podelski, Rybalchenko - Transition Invariants

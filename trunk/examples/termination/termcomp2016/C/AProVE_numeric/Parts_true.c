@@ -1,3 +1,4 @@
+//#termcomp16-someonesaidyes
 // public class Parts {
 
     // public static int parts(int p, int q) {

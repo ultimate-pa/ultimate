@@ -1,3 +1,4 @@
+//#termcomp16-someonesaidyes
 /*
  * Program from Fig.3 of
  * 2010SAS - Harris, Lal, Nori, Rajamani - AlternationforTermination

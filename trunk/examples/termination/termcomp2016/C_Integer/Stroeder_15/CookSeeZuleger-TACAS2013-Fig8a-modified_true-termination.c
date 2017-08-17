@@ -1,3 +1,4 @@
+//#termcomp16-someonesaidyes
 /*
  * Modified variant of the program depicted in Fig.8a of
  * 2013TACAS - Cook,See,Zuleger - Ramsey vs. Lexicographic Termination Proving

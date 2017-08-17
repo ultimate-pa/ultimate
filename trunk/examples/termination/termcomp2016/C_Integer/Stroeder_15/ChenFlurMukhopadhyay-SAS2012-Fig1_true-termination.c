@@ -1,3 +1,4 @@
+//#termcomp16-someonesaidyes
 /*
  * Program from Fig.1 of
  * 2012SAS - Chen,Flur,Mukhopadhyay - Termination Proofs for Linear Simple Loops

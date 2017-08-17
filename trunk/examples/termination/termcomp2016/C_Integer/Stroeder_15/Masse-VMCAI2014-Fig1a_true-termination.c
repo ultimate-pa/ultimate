@@ -1,3 +1,4 @@
+//#termcomp16-someonesaidyes
 /*
  * Program from Fig.1a of
  * 2014VMCAI - Massé - Policy Iteration-Based Conditional Termination and Ranking Functions

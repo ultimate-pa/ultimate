@@ -1,3 +1,6 @@
+//#termcomp16-someonesaidyes
+//#termcomp16-someonesaidyes
+//#termcomp16-someonesaidyes
 int main() {
     int i, j;
     int c = 0;

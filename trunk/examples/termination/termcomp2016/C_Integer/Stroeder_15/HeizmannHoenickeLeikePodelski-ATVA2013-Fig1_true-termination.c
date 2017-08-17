@@ -1,3 +1,4 @@
+//#termcomp16-someonesaidyes
 /*
  * Program from Figure 1 of
  * 2013ATVA - Heizmann, Hoenicke, Leike, Podelski - Linear Ranking for Linear Lasso Programs

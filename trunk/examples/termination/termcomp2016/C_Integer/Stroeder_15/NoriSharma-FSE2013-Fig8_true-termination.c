@@ -1,3 +1,4 @@
+//#termcomp16-someonesaidyes
 /*
  * Program from Fig.8 of
  * 2013FSE - Nori,Sharma - Termination Proofs from Tests

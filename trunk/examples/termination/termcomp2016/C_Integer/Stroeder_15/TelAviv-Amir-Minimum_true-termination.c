@@ -1,3 +1,5 @@
+//#termcomp16-someonesaidyes
+//#termcomp16-someonesaidyes
 /*
  * Terminating program that has no linear lexicographic ranking function.
  * The program chooses nondeterministically the variable x or y and assigns to

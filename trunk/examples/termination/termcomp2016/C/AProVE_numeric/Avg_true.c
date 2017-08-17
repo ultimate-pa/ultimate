@@ -1,3 +1,4 @@
+//#termcomp16-someonesaidyes
 // public class Avg {
 	// public static void main(String[] args) {
 		// int x, y;

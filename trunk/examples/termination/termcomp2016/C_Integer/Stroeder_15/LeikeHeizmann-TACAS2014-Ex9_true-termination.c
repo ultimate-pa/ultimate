@@ -1,3 +1,5 @@
+//#termcomp16-someonesaidyes
+//#termcomp16-someonesaidyes
 /*
  * Program from Example 9 of
  * 2014TACAS - Leike, Heizmann - Ranking Templates for Linear Loops

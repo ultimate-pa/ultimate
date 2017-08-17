@@ -1,3 +1,4 @@
+//#termcomp16-someonesaidyes
 // public class Et1 {
     // public static void main(String[] args) {
 		// Random.args = args;

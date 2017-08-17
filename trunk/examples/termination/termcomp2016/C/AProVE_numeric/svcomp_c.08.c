@@ -1,3 +1,5 @@
+//#termcomp16-someonesaidyes
+//#termcomp16-someonesaidyes
 extern int __VERIFIER_nondet_int(void);
 
 int test_fun(int i, int j)

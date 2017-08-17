@@ -1,3 +1,4 @@
+//#termcomp16-someonesaidyes
 /*
  * Recursive implementation multiplication by repeated addition
  * 

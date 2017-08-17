@@ -1,3 +1,4 @@
+//#termcomp16-someonesaidno
 /*
  * Program from Fig.2 of
  * 2013WST - Urban - Piecewise-Defined Ranking Functions
