@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
@@ -101,7 +102,7 @@ public class EqBottomConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 	}
 
 	@Override
-	public EqConstraint<ACTION, NODE, FUNCTION> projectExistentially(final Set<TermVariable> varsToProjectAway) {
+	public EqConstraint<ACTION, NODE, FUNCTION> projectExistentially(final Collection<TermVariable> varsToProjectAway) {
 		return this;
 	}
 
