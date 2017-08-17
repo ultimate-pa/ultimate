@@ -29,6 +29,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  * It is recommended to use a factory for constructing ELEM objects that extends
  * AbstractCCElementFactory.
  *
+ * TODO: can we make this more lightweight somehow? Maybe by initializing maps on demand? --> analyze..
+ *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  * @param <ELEM>
@@ -1053,6 +1055,14 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 			}
 		}
 		return true;
+	}
+
+	public boolean hasElement(final ELEM elem) {
+		return getAllElements().contains(elem);
+	}
+
+	public boolean hasFunction(final FUNCTION elem) {
+		return getAllFunctions().contains(elem);
 	}
 
 }
