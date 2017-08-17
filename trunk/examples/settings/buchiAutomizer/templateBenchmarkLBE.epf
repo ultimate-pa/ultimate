@@ -3,7 +3,7 @@
 file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Template\ benchmark\ mode=true
 @de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer=0.0.1
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Lasso\ Analysis=Nonlinear
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Lasso\ Analysis=NONLINEAR
 #Wed Feb 12 16:57:46 CET 2014
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator=
 file_export_version=3.0

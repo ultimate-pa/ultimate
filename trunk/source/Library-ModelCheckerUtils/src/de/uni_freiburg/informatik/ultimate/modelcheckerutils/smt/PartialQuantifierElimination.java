@@ -54,8 +54,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.Qua
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierSequence;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierSequence.QuantifiedVariables;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Nnf;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Nnf.QuantifierHandling;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.NnfTransformer;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.NnfTransformer.QuantifierHandling;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifierElimination.XjunctPartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifierElimination.XnfDer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifierElimination.XnfIrd;
@@ -63,6 +63,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifi
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifierElimination.XnfUpd;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifierElimination.XnfUsr;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Try to eliminate existentially quantified variables in terms. Therefore we use that the term ∃v.v=c∧φ[v] is
@@ -72,15 +73,16 @@ public class PartialQuantifierElimination {
 	static final boolean USE_UPD = true;
 	static final boolean USE_IRD = true;
 	static final boolean USE_TIR = true;
+	static final boolean USE_SSD = false;
 	static final boolean USE_SOS = true;
-	static final boolean USE_USR = !true;
+	static final boolean USE_USR = false;
 	private static boolean mPushPull = true;
 
 	public static Term tryToEliminate(final IUltimateServiceProvider services, final ILogger logger,
 			final ManagedScript mgdScript, final Term term, final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique) {
 		final Term withoutIte = (new IteRemover(mgdScript)).transform(term);
-		final Term nnf = new Nnf(mgdScript, services, QuantifierHandling.KEEP).transform(withoutIte);
+		final Term nnf = new NnfTransformer(mgdScript, services, QuantifierHandling.KEEP).transform(withoutIte);
 		final Term pushed = new QuantifierPusher(mgdScript, services, true, PqeTechniques.ALL_LOCAL).transform(nnf);
 		final Term pnf = new PrenexNormalForm(mgdScript).transform(pushed);
 		final QuantifierSequence qs = new QuantifierSequence(mgdScript.getScript(), pnf);
@@ -113,16 +115,21 @@ public class PartialQuantifierElimination {
 	 * disjunction.
 	 */
 	public static Term applyCorrespondingFiniteConnective(final Script script, final int quantifier,
-			final Term[] xjunctsOuter) {
+			final Collection<Term> xjunctsOuter) {
 		final Term result;
 		if (quantifier == QuantifiedFormula.EXISTS) {
-			result = Util.or(script, xjunctsOuter);
+			result = SmtUtils.or(script, xjunctsOuter);
 		} else if (quantifier == QuantifiedFormula.FORALL) {
-			result = Util.and(script, xjunctsOuter);
+			result = SmtUtils.and(script, xjunctsOuter);
 		} else {
 			throw new AssertionError("unknown quantifier");
 		}
 		return result;
+	}
+	
+	public static Term applyCorrespondingFiniteConnective(final Script script, final int quantifier,
+			final Term[] xjunctsOuter) {
+		return applyCorrespondingFiniteConnective(script, quantifier, Arrays.asList(xjunctsOuter));
 	}
 
 	/**
@@ -136,6 +143,37 @@ public class PartialQuantifierElimination {
 			result = SmtUtils.and(script, xjunctsInner);
 		} else if (quantifier == QuantifiedFormula.FORALL) {
 			result = SmtUtils.or(script, xjunctsInner);
+		} else {
+			throw new AssertionError("unknown quantifier");
+		}
+		return result;
+	}
+	
+	public static Term applyDualFiniteConnective(final Script script, final int quantifier,
+			final Term... xjunctsInner) {
+		return applyDualFiniteConnective(script, quantifier, Arrays.asList(xjunctsInner));
+	}
+	
+
+	
+	public static Term equalityForExists(final Script script, final int quantifier, final Term lhs, final Term rhs) {
+		Term result;
+		if (quantifier == QuantifiedFormula.EXISTS) {
+			result = SmtUtils.binaryEquality(script, lhs, rhs);
+		} else if (quantifier == QuantifiedFormula.FORALL) {
+			result = SmtUtils.distinct(script, lhs, rhs);
+		} else {
+			throw new AssertionError("unknown quantifier");
+		}
+		return result;
+	}
+	
+	public static Term notEqualsForExists(final Script script, final int quantifier, final Term lhs, final Term rhs) {
+		Term result;
+		if (quantifier == QuantifiedFormula.EXISTS) {
+			result = SmtUtils.distinct(script, lhs, rhs);
+		} else if (quantifier == QuantifiedFormula.FORALL) {
+			result = SmtUtils.binaryEquality(script, lhs, rhs);
 		} else {
 			throw new AssertionError("unknown quantifier");
 		}
@@ -237,7 +275,7 @@ public class PartialQuantifierElimination {
 			final Set<TermVariable> eliminatees, final Term term, final IUltimateServiceProvider services,
 			final ILogger logger) {
 		final Term withoutIte = (new IteRemover(mgdScript)).transform(term);
-		final Term nnf = new Nnf(mgdScript, services, QuantifierHandling.KEEP).transform(withoutIte);
+		final Term nnf = new NnfTransformer(mgdScript, services, QuantifierHandling.KEEP).transform(withoutIte);
 		final Term quantified = mgdScript.getScript().quantifier(quantifier,
 				eliminatees.toArray(new TermVariable[eliminatees.size()]), nnf);
 		final Term pushed =
@@ -325,6 +363,14 @@ public class PartialQuantifierElimination {
 			result = applyUnconnectedParameterDeletion(mgdScript, quantifier, eliminatees, services,
 					xnfConversionTechnique, script, result);
 		}
+		
+		if (USE_SSD) {
+			final Pair<Term, Collection<TermVariable>> esp = new ElimStorePlain(mgdScript, services,
+					simplificationTechnique, quantifier).elimAll(eliminatees, result);
+			result = esp.getFirst();
+			eliminatees.clear();
+			eliminatees.addAll(esp.getSecond());
+		}
 
 		if (eliminatees.isEmpty()) {
 			return result;
@@ -347,6 +393,7 @@ public class PartialQuantifierElimination {
 
 		// simplification
 		result = SmtUtils.simplify(mgdScript, result, services, simplificationTechnique);
+		
 
 		// (new SimplifyDDA(script)).getSimplifiedTerm(result);
 		eliminatees.retainAll(Arrays.asList(result.getFreeVars()));

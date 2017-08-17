@@ -71,12 +71,13 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoWord;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
+import de.uni_freiburg.informatik.ultimate.automata.tree.StringRankedLetter;
 import de.uni_freiburg.informatik.ultimate.automata.tree.Tree;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AutomataScriptInterpreterOverallResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AutomataScriptInterpreterOverallResult.OverallResult;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.GenericResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.GenericResultAtElement;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithSeverity.Severity;
@@ -626,7 +627,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 		return new NestedLassoWord<>(stem, loop);
 	}
 	
-	private static Tree<String> interpret(final TreeAST t) {
+	private static Tree<StringRankedLetter> interpret(final TreeAST t) {
 		return t.getTree();
 	}
 	

@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2016 Christian Schilling (schillic@informatik.uni-freiburg.de)
- * Copyright (C) 2016 University of Freiburg
+ * Copyright (C) 2017 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2016-2017 University of Freiburg
  *
  * This file is part of the ULTIMATE TraceAbstraction plug-in.
  *
@@ -26,45 +27,51 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PathProgramCache;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
-import de.uni_freiburg.informatik.ultimate.util.HistogramOfIterable;
 
 /**
- * Changes the assertion order based on the trace histogram to detect and reduce loop unwindings.
+ * Changes the assertion order based on the path program cache to detect and reduce loop unwindings.
  *
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
 public class AssertionOrderModulation<LETTER> {
 
-	private static final AssertCodeBlockOrder[] ASSERTION_ORDERS =
-			{ AssertCodeBlockOrder.NOT_INCREMENTALLY, AssertCodeBlockOrder.OUTSIDE_LOOP_FIRST1,
-					AssertCodeBlockOrder.INSIDE_LOOP_FIRST1, AssertCodeBlockOrder.MIX_INSIDE_OUTSIDE,
-					AssertCodeBlockOrder.OUTSIDE_LOOP_FIRST2, AssertCodeBlockOrder.TERMS_WITH_SMALL_CONSTANTS_FIRST };
+	private static final AssertCodeBlockOrder[] ASSERTION_ORDERS = {
 
-	private final List<HistogramOfIterable<LETTER>> mHistogramHistory;
-	private final Set<HistogramOfIterable<LETTER>> mAlreadySeen;
-	private int mCurrentIndex;
+			AssertCodeBlockOrder.NOT_INCREMENTALLY,
+
+			AssertCodeBlockOrder.OUTSIDE_LOOP_FIRST1,
+
+			AssertCodeBlockOrder.INSIDE_LOOP_FIRST1,
+
+			AssertCodeBlockOrder.MIX_INSIDE_OUTSIDE,
+
+			AssertCodeBlockOrder.OUTSIDE_LOOP_FIRST2,
+
+			AssertCodeBlockOrder.TERMS_WITH_SMALL_CONSTANTS_FIRST
+
+	};
 
 	private final ILogger mLogger;
+	private final PathProgramCache<LETTER> mPathProgramCache;
+
+	private int mCurrentIndex;
 
 	/**
 	 * Constructor.
 	 *
 	 * @param logger
 	 */
-	public AssertionOrderModulation(final ILogger logger) {
-		mHistogramHistory = new ArrayList<>();
-		mAlreadySeen = new HashSet<>();
+	public AssertionOrderModulation(final PathProgramCache<LETTER> pathProgramCache, final ILogger logger) {
+		mPathProgramCache = pathProgramCache;
 		mLogger = logger;
+		mCurrentIndex = 0;
 	}
 
 	/**
@@ -78,16 +85,24 @@ public class AssertionOrderModulation<LETTER> {
 	 */
 	public AssertCodeBlockOrder reportAndGet(final IRun<LETTER, IPredicate, ?> counterexample,
 			final InterpolationTechnique interpolationTechnique) {
-		final HistogramOfIterable<LETTER> traceHistogram = new HistogramOfIterable<>(counterexample.getWord());
-		return getOrderAndUpdateIndex(interpolationTechnique, traceHistogram);
+
+		final int count = mPathProgramCache.getPathProgramCount(counterexample);
+
+		final AssertCodeBlockOrder oldOrder = ASSERTION_ORDERS[mCurrentIndex];
+		mCurrentIndex = (count - 1) % ASSERTION_ORDERS.length;
+
+		final AssertCodeBlockOrder newOrder = getOrder(interpolationTechnique);
+
+		if (oldOrder != newOrder) {
+			mLogger.info("Changing assertion order to " + newOrder);
+		} else {
+			mLogger.info("Keeping assertion order " + newOrder);
+		}
+
+		return getOrder(interpolationTechnique);
 	}
 
-	/**
-	 * Get order for current histogram history.
-	 */
-	private AssertCodeBlockOrder getOrderAndUpdateIndex(final InterpolationTechnique interpolationTechnique,
-			final HistogramOfIterable<LETTER> traceHistogram) {
-
+	private AssertCodeBlockOrder getOrder(final InterpolationTechnique interpolationTechnique) {
 		if (interpolationTechnique == null) {
 			// if we do not compute interpolants, there is no need to assert incrementally
 			return AssertCodeBlockOrder.NOT_INCREMENTALLY;
@@ -103,66 +118,9 @@ public class AssertionOrderModulation<LETTER> {
 		case FPandBP:
 		case FPandBPonlyIfFpWasNotPerfect:
 		case PathInvariants:
-			final int oldIdx = mCurrentIndex;
-			final int newIdx = getNewIndex(traceHistogram);
-			final AssertCodeBlockOrder rtr = ASSERTION_ORDERS[newIdx];
-			if (oldIdx != newIdx) {
-				mLogger.info("Changing assertion order to " + rtr);
-			} else {
-				mLogger.info("Histogram is not repeating, keeping assertion order " + rtr);
-			}
-			if (mAlreadySeen.add(traceHistogram)) {
-				mHistogramHistory.add(traceHistogram);
-			}
-			return rtr;
+			return ASSERTION_ORDERS[mCurrentIndex];
 		default:
 			throw new IllegalArgumentException("Unknown interpolation technique: " + interpolationTechnique);
 		}
-	}
-
-	private int getNewIndex(final HistogramOfIterable<LETTER> traceHistogram) {
-		if (mHistogramHistory.isEmpty()) {
-			mCurrentIndex = getInitialAssertionOrderIndex(traceHistogram);
-		} else if (histogramRepeats(traceHistogram)) {
-			mCurrentIndex = getNextAssertionOrderIndex();
-		}
-		return mCurrentIndex;
-	}
-
-	private int getInitialAssertionOrderIndex(final HistogramOfIterable<LETTER> traceHistogram) {
-		// Current policy: We start with the first element in the array.
-		return 0;
-	}
-
-	private boolean histogramRepeats(final HistogramOfIterable<LETTER> traceHistogram) {
-		assert !mHistogramHistory.isEmpty();
-		/*
-		 * Current policy: The histogram repeats if the number of entries that occur more than once has increased wrt.
-		 * the previous iteration.
-		 */
-		final int sumOfPreviousRepeatingEntries =
-				getSumOfEntriesGreaterThanOne(mHistogramHistory.get(mHistogramHistory.size() - 1));
-		final int sumOfCurrentRepeatingEntries = getSumOfEntriesGreaterThanOne(traceHistogram);
-
-		return sumOfPreviousRepeatingEntries < sumOfCurrentRepeatingEntries;
-	}
-
-	private int getSumOfEntriesGreaterThanOne(final HistogramOfIterable<LETTER> histogram) {
-		int result = 0;
-		for (final int value : histogram.getVisualizationArray()) {
-			if (value > 1) {
-				result += value;
-			} else {
-				break;
-			}
-		}
-		return result;
-	}
-
-	private int getNextAssertionOrderIndex() {
-		/*
-		 * Current policy: The assertion order is just advanced.
-		 */
-		return (mCurrentIndex + 1) % ASSERTION_ORDERS.length;
 	}
 }

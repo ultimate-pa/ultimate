@@ -117,6 +117,7 @@ public class TermVariableRenamer {
 			final TermVariable oldVar = variableMapping.get(var);
 			final TermVariable newVar = getNewTermVariable(var, oldVar, prefix);
 			varAdder.addVar(var, newVar);
+			substitutionMapping.put(oldVar, newVar);
 		}
 		formula = (new Substitution(mScript, substitutionMapping)).transform(formula);
 		return formula;

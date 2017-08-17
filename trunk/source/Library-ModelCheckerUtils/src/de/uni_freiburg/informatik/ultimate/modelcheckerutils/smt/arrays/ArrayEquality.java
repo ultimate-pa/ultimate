@@ -66,7 +66,8 @@ public class ArrayEquality {
 		
 		
 		boolean isNotEqualsAppTerm = (appTerm.getFunction().getName().equals("not") 
-						&& ((ApplicationTerm) appTerm.getParameters()[0]).getFunction().getName().equals("="));
+				&& appTerm.getParameters()[0] instanceof ApplicationTerm
+				&& ((ApplicationTerm) appTerm.getParameters()[0]).getFunction().getName().equals("="));
 		boolean isDisEquality = appTerm.getFunction().getName().equals("distinct")
 				|| isNotEqualsAppTerm;
 

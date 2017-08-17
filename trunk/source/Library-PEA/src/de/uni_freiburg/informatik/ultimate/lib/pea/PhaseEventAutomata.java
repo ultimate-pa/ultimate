@@ -36,7 +36,7 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.regex.Pattern;
 
-import de.uni_freiburg.informatik.ultimate.lib.pea.reqCheck.PEAPhaseIndexMap;
+import de.uni_freiburg.informatik.ultimate.lib.pea.reqcheck.PEAPhaseIndexMap;
 import de.uni_freiburg.informatik.ultimate.lib.pea.util.SimpleSet;
 
 public class PhaseEventAutomata implements Comparable<Object> {

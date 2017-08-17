@@ -26,7 +26,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
+import java.util.function.BiPredicate;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
@@ -34,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAuto
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.IMinimizationStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaPmaxSat;
 import de.uni_freiburg.informatik.ultimate.automata.util.PartitionBackedSetOfPairs;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
 
 /**
  * Nested word automaton minimization using a partial Max-SAT reduction. The problem instance is solved using an
@@ -62,5 +66,46 @@ public class MinimizeNwaPmaxSatDimacs<LETTER, STATE> extends MinimizeNwaPmaxSat<
 		super(services, stateFactory, operand,
 				new PartitionBackedSetOfPairs<>(Collections.singleton(operand.getStates())),
 				new Settings<STATE>().setSolverModeExternal());
+	}
+	
+	@Override
+	protected void generateVariablesHelper(final STATE[] states) {
+		if (states.length <= 1) {
+			return;
+		}
+
+		final BiPredicate<STATE, STATE> finalNonfinalConstraintPredicate =
+				mSettings.getFinalNonfinalConstraintPredicate();
+
+		for (int i = 0; i < states.length; i++) {
+			final STATE stateI = states[i];
+
+			// add to transitivity generator
+			if (mTransitivityGenerator != null) {
+				mTransitivityGenerator.addContent(stateI);
+			}
+
+			for (int j = 0; j < i; j++) {
+				final STATE stateJ = states[j];
+				final Doubleton<STATE> doubleton = new Doubleton<>(stateI, stateJ);
+				mStatePair2Var.put(stateI, stateJ, doubleton);
+				mStatePair2Var.put(stateJ, stateI, doubleton);
+				mSolver.addVariable(doubleton);
+
+				if (mOperand.isFinal(stateI) ^ mOperand.isFinal(stateJ)
+						&& finalNonfinalConstraintPredicate.test(stateI, stateJ)) {
+					setStatesDifferent(doubleton);
+				}
+			}
+		}
+	}
+	
+	@Override
+	protected AbstractMaxSatSolver<Doubleton<STATE>> createTransitivitySolver() {
+		mTransitivityGenerator = new ScopedTransitivityGeneratorDoubleton<>(mSettings.isUsePathCompression());
+		final List<IAssignmentCheckerAndGenerator<Doubleton<STATE>>> assignmentCheckerAndGeneratorList =
+				new ArrayList<>();
+		assignmentCheckerAndGeneratorList.add(mTransitivityGenerator);
+		return new InteractiveMaxSatSolver<>(mServices, assignmentCheckerAndGeneratorList);
 	}
 }

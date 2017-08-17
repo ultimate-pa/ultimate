@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>de.uni_freiburg.informatik.ultimate</groupId>
 	<artifactId>mavenparent</artifactId>
-	<version>0.1.17</version>
+	<version>0.1.20</version>
 	<packaging>pom</packaging>
 
 	<name>Ultimate</name>
@@ -15,8 +15,8 @@
 	</scm>
 
 	<properties>
-		<ultimate-version>0.1.17</ultimate-version>
-	
+		<ultimate-version>0.1.20</ultimate-version>
+
 		<!-- maven plugin versions -->
 		<tycho-version>1.0.0</tycho-version>
 		<sonar-version>3.2</sonar-version>
@@ -143,7 +143,9 @@
 		<repository>
 			<id>eclipse-mars</id>
 			<layout>p2</layout>
-			<url>http://download.eclipse.org/releases/mars</url>
+			<url>https://monteverdi.informatik.uni-freiburg.de/nexus/content/repositories/eclipse-mars/</url>
+			<!-- Original URL is this: <url>http://download.eclipse.org/releases/mars</url> 
+				We use the above URL for proxying by monteverdi -->
 			<snapshots>
 				<enabled>false</enabled>
 			</snapshots>
@@ -151,7 +153,8 @@
 		<repository>
 			<id>javaxRepository</id>
 			<name>Java.net Repository for Maven</name>
-			<url>https://maven.java.net/content/repositories/releases/javax/</url>
+			<url>https://monteverdi.informatik.uni-freiburg.de/nexus/content/repositories/javaxRepository/</url>
+			<!-- The above URL proxies this url: <url>https://maven.java.net/content/repositories/releases/javax/</url> -->
 			<layout>default</layout>
 			<snapshots>
 				<enabled>false</enabled>
@@ -306,6 +309,7 @@
 		<module>../Library-InteractiveCommon</module>
 		<module>../Library-InteractiveTA</module>
 		<module>../Library-Server</module>
+		<module>../Library-TreeAutomizer</module>
 		<module>../UltimateServer</module>
 		<module>../IcfgTransformation</module>
 		<module>../BuchiProgramProduct</module>
@@ -322,7 +326,6 @@
 		<module>../WitnessPrinter</module>
 		<module>../SmtParser</module>
 		<module>../SyntaxChecker</module>
-		<module>../HeapSeparator</module>
 		<module>../TreeAutomizer</module>
 		<module>../UltimateDeltaDebugger</module>
 		<module>../InvariantSynthesis</module>
@@ -404,13 +407,15 @@
 				<module>../Library-IcfgTransformerTest</module>
 				<module>../Library-ModelCheckerUtilsTest</module>
 				<module>../Library-SMTLIBTest</module>
+				<module>../Library-srParseTest</module>
 				<module>../Library-UltimateTestTest</module>
 				<module>../Library-UltimateUtilTest</module>
 				<module>../SMTInterpolTest</module>
 				<module>../SMTSolverBridgeTest</module>
 				<module>../SpaceExParserTest</module>
 
-				<!-- UltimateRegressionTest contains system tests that are relatively fast -->
+				<!-- UltimateRegressionTest contains system tests that are relatively 
+					fast -->
 				<module>../UltimateRegressionTest</module>
 
 				<!-- UltimateTest contains system tests, but should not be run. It is 
@@ -497,13 +502,14 @@
 				<module>../Library-IcfgTransformerTest</module>
 				<module>../Library-ModelCheckerUtilsTest</module>
 				<module>../Library-SMTLIBTest</module>
+				<module>../Library-srParseTest</module>
 				<module>../Library-UltimateTestTest</module>
 				<module>../Library-UltimateUtilTest</module>
 				<module>../SMTInterpolTest</module>
 				<module>../SMTSolverBridgeTest</module>
 				<module>../SpaceExParserTest</module>
-				
-				
+
+
 			</modules>
 		</profile>
 
@@ -560,7 +566,7 @@
 			</build>
 
 			<modules>
-			<!-- modules containing test utilities -->
+				<!-- modules containing test utilities -->
 				<module>../Library-UltimateTest</module>
 
 				<!-- modules containing unit tests -->
@@ -571,13 +577,15 @@
 				<module>../Library-IcfgTransformerTest</module>
 				<module>../Library-ModelCheckerUtilsTest</module>
 				<module>../Library-SMTLIBTest</module>
+				<module>../Library-srParseTest</module>
 				<module>../Library-UltimateTestTest</module>
 				<module>../Library-UltimateUtilTest</module>
 				<module>../SMTInterpolTest</module>
 				<module>../SMTSolverBridgeTest</module>
 				<module>../SpaceExParserTest</module>
 
-				<!-- UltimateRegressionTest contains system tests that are relatively fast -->
+				<!-- UltimateRegressionTest contains system tests that are relatively 
+					fast -->
 				<module>../UltimateRegressionTest</module>
 
 				<!-- UltimateTest contains system tests, but should not be run. It is 

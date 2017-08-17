@@ -1,0 +1,100 @@
+
+TreeAutomaton taIntList = TreeAutomaton(
+    alphabet = { nil "0" cons succ },
+    states = { Num List },
+    finalStates = { List },
+    transitionTable = {
+        ((Num) succ Num)
+        (() "0" Num)
+        ((Num List) cons List)
+        (() nil List)
+    }
+);
+
+TreeAutomaton taEvenIntList = TreeAutomaton(
+    alphabet = { nil "0" cons succ },
+    states = { OddNum EvenNum List },
+    finalStates = { List },
+    transitionTable = {
+        ((OddNum) succ EvenNum)
+        ((EvenNum) succ OddNum)
+        (() "0" EvenNum)
+        ((EvenNum List) cons List)
+        (() nil List)
+    }
+);
+
+
+TreeAutomaton taMul3IntList = TreeAutomaton(
+    alphabet = { nil "0" cons succ },
+    states = { mod1 mod2 mod0 List },
+    finalStates = { List },
+    transitionTable = {
+        ((mod2) succ mod0)
+        ((mod1) succ mod2)
+        ((mod0) succ mod1)
+        (() "0" mod0)
+        ((mod0 List) cons List)
+        (() nil List)
+    }
+);
+
+
+// [[]]
+Tree list0 = Tree [cons(nil,nil)];
+// [2, 1]
+Tree listA = Tree [cons(succ(succ("0")),cons(succ("0"),nil))];
+// [2, 0]
+Tree listB = Tree [cons(succ(succ("0")),cons("0",nil))];
+// [2, 4]
+Tree listC = Tree [cons(succ(succ("0")),cons(succ(succ(succ(succ("0")))),nil))];
+// [3, 0]
+Tree listD = Tree [cons(succ(succ(succ("0"))),cons("0",nil))];
+// [6, 12]
+Tree listE = Tree [cons(succ(succ(succ(succ(succ(succ("0")))))),cons(succ(succ(succ(succ(succ(succ(succ(succ(succ(succ(succ(succ("0")))))))))))),nil))];
+
+
+// Not lists of integers
+assert(!accepts(taIntList, list0));
+assert(!accepts(taEvenIntList, list0));
+assert(!accepts(taMul3IntList, list0));
+assert(!accepts(minimize(taIntList), list0));
+assert(!accepts(taEvenIntList, list0));
+assert(!accepts(minimize(taMul3IntList), list0));
+
+// taIntList accepts all integer lists
+assert(accepts(taIntList, listA));
+assert(accepts(taIntList, listB));
+assert(accepts(taIntList, listC));
+assert(accepts(taIntList, listD));
+assert(accepts(taIntList, listE));
+assert(accepts(minimize(taIntList), listA));
+assert(accepts(minimize(taIntList), listB));
+assert(accepts(minimize(taIntList), listC));
+assert(accepts(minimize(taIntList), listD));
+assert(accepts(minimize(taIntList), listE));
+
+// taEvenList accepts only lists of even numbers
+assert(!accepts(taEvenIntList, listA));
+assert(accepts(taEvenIntList, listB));
+assert(accepts(taEvenIntList, listC));
+assert(!accepts(taEvenIntList, listD));
+assert(accepts(taEvenIntList, listE));
+assert(!accepts(taEvenIntList, listA));
+assert(accepts(taEvenIntList, listB));
+assert(accepts(taEvenIntList, listC));
+assert(!accepts(taEvenIntList, listD));
+assert(accepts(taEvenIntList, listE));
+
+// taMul3IntList accepts only lists of multiples of 3
+assert(!accepts(taMul3IntList, listA));
+assert(!accepts(taMul3IntList, listB));
+assert(!accepts(taMul3IntList, listC));
+assert(accepts(taMul3IntList, listD));
+assert(accepts(taMul3IntList, listE));
+assert(!accepts(minimize(taMul3IntList), listA));
+assert(!accepts(minimize(taMul3IntList), listB));
+assert(!accepts(minimize(taMul3IntList), listC));
+assert(accepts(minimize(taMul3IntList), listD));
+assert(accepts(minimize(taMul3IntList), listE));
+

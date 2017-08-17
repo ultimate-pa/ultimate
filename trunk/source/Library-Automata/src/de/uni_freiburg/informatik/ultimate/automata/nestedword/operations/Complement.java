@@ -130,7 +130,7 @@ public final class Complement<LETTER, STATE>
 	private NestedWordAutomatonReachableStates<LETTER, STATE> tryWithoutDeterminization()
 			throws AutomataOperationCanceledException {
 		assert mStateDeterminizer instanceof PowersetDeterminizer;
-		final TotalizeNwa<LETTER, STATE> totalized = new TotalizeNwa<>(mOperand, mStateFactory);
+		final TotalizeNwa<LETTER, STATE> totalized = new TotalizeNwa<>(mOperand, mStateFactory, true);
 		final ComplementDeterministicNwa<LETTER, STATE> complemented = new ComplementDeterministicNwa<>(totalized);
 		final NestedWordAutomatonReachableStates<LETTER, STATE> result =
 				new NestedWordAutomatonReachableStates<>(mServices, complemented);

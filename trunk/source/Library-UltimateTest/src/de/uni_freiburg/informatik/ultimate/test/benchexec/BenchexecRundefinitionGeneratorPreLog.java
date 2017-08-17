@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.test.benchexec.benchmark.Rundefinitio
 import de.uni_freiburg.informatik.ultimate.test.benchexec.benchmark.Tasks;
 import de.uni_freiburg.informatik.ultimate.test.reporting.BaseTestLogfile;
 import de.uni_freiburg.informatik.ultimate.test.reporting.IPreTestLog;
-import de.uni_freiburg.informatik.ultimate.util.Utils;
+import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -59,7 +59,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 public final class BenchexecRundefinitionGeneratorPreLog extends BaseTestLogfile implements IPreTestLog {
 
-	private static final String MAX_MEMORY = Utils.humanReadableByteCount(Runtime.getRuntime().maxMemory(), true);
+	private static final String MAX_MEMORY = CoreUtil.humanReadableByteCount(Runtime.getRuntime().maxMemory(), true);
 	private final static QName QNAME_INCLUDE = new QName("", "include");
 	private Benchmark mBenchexecBenchmark;
 

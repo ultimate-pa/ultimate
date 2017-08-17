@@ -180,7 +180,8 @@ public final class Term2Expression implements Serializable {
 		} else if ("ite".equals(symb.getName())) {
 			return new IfThenElseExpression(null, type, params[0], params[1], params[2]);
 		} else if (symb.isIntern()) {
-			if (symb.getParameterSorts().length > 0 && SmtSortUtils.isBitvecSort(symb.getParameterSorts()[0])
+			if (symb.getParameterSorts().length > 0 && 
+					(SmtSortUtils.isBitvecSort(symb.getParameterSorts()[0]) || SmtSortUtils.isFloatingpointSort(symb.getReturnSort()))
 					&& !"=".equals(symb.getName()) && !"distinct".equals(symb.getName())) {
 				if ("extract".equals(symb.getName())) {
 					return translateBitvectorAccess(type, term);

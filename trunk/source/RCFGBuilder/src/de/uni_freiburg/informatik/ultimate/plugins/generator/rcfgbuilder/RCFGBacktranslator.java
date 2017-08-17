@@ -137,10 +137,12 @@ public class RCFGBacktranslator
 		final IToString<BoogieASTNode> stringProvider = BoogiePrettyPrinter.getBoogieToStringprovider();
 		if (cb instanceof Call) {
 			final Statement st = ((Call) cb).getCallStatement();
-			trace.add(new AtomicTraceElement<>(st, st, StepInfo.PROC_CALL, stringProvider, relevanceInformation));
+			trace.add(new AtomicTraceElement<>(st, st, StepInfo.PROC_CALL, stringProvider, relevanceInformation,
+					cb.getPrecedingProcedure(), cb.getSucceedingProcedure()));
 		} else if (cb instanceof Return) {
 			final Statement st = ((Return) cb).getCallStatement();
-			trace.add(new AtomicTraceElement<>(st, st, StepInfo.PROC_RETURN, stringProvider, relevanceInformation));
+			trace.add(new AtomicTraceElement<>(st, st, StepInfo.PROC_RETURN, stringProvider, relevanceInformation,
+					cb.getPrecedingProcedure(), cb.getSucceedingProcedure()));
 		} else if (cb instanceof Summary) {
 			final Statement st = ((Summary) cb).getCallStatement();
 			// FIXME: Is summary call, return or something new?

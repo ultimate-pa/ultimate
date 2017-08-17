@@ -118,6 +118,7 @@ public class LassoRankerStarter {
 	private final SimplificationTechnique mSimplificationTechnique = SimplificationTechnique.SIMPLIFY_DDA;
 	private final XnfConversionTechnique mXnfConversionTechnique =
 			XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
+	private final RankVarConstructor mRankVarConstructor;
 
 	public LassoRankerStarter(final IIcfg<IcfgLocation> icfg, final IUltimateServiceProvider services,
 			final IToolchainStorage storage) throws IOException {
@@ -129,8 +130,10 @@ public class LassoRankerStarter {
 		// checkRCFGBuilderSettings();
 		final LassoRankerPreferences preferences = PreferencesInitializer.getLassoRankerPreferences(mServices);
 		mCsToolkit = mIcfg.getCfgSmtToolkit();
-		mPredicateFactory = new PredicateFactory(mServices, mCsToolkit.getManagedScript(), mCsToolkit.getSymbolTable(),
-				mSimplificationTechnique, mXnfConversionTechnique);
+		mRankVarConstructor = new RankVarConstructor(mIcfg.getCfgSmtToolkit());
+		mPredicateFactory = new PredicateFactory(mServices, mCsToolkit.getManagedScript(),
+				mRankVarConstructor.getCsToolkitWithRankVariables().getSymbolTable(), mSimplificationTechnique,
+				mXnfConversionTechnique);
 
 		AbstractLassoExtractor<IIcfgTransition<IcfgLocation>> lassoExtractor;
 		try {
@@ -365,9 +368,9 @@ public class LassoRankerStarter {
 	private boolean isTerminationArgumentCorrect(final TerminationArgument arg, final UnmodifiableTransFormula stemTF,
 			final UnmodifiableTransFormula loopTf) {
 
-		final RankVarConstructor rankVarConstructor = new RankVarConstructor(mIcfg.getCfgSmtToolkit());
-		final BinaryStatePredicateManager bspm = new BinaryStatePredicateManager(mCsToolkit, mPredicateFactory,
-				rankVarConstructor.getUnseededVariable(), rankVarConstructor.getOldRankVariables(), mServices,
+		
+		final BinaryStatePredicateManager bspm = new BinaryStatePredicateManager(mRankVarConstructor.getCsToolkitWithRankVariables(), mPredicateFactory,
+				mRankVarConstructor.getUnseededVariable(), mRankVarConstructor.getOldRankVariables(), mServices,
 				mSimplificationTechnique, mXnfConversionTechnique);
 		final Set<IProgramNonOldVar> modifiableGlobals =
 				mCsToolkit.getModifiableGlobalsTable().getModifiedBoogieVars(mHonda.getProcedure());

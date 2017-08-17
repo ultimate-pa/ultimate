@@ -52,13 +52,10 @@ import java.util.List;
  * The changes will allow the GraphType to remain a suitable key in the model managers in-memory map and its string
  * representation to be the key in the repository.
  *
- * @author dietsch
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
 public class ModelType implements Serializable {
 
-	/**
-	 * long serialVersionUID
-	 */
 	private static final long serialVersionUID = -2922069733243189149L;
 
 	private int mSize;
@@ -183,7 +180,7 @@ public class ModelType implements Serializable {
 	}
 
 	public boolean isFromSource() {
-		return (mIteration == 0);
+		return mIteration == 0;
 	}
 
 	public Type getType() {

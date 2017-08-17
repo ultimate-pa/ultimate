@@ -26,7 +26,6 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Logic\ for\ external\ solver=ALL
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Dump\ SMT\ script\ to\ file=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/To\ the\ following\ directory=./dump/
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Fake\ non-incremental\ script=true
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/SMT\ solver=External_DefaultMode
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Skolemize\ terms=true
 

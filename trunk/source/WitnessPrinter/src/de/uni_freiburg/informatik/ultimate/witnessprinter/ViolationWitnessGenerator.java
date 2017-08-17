@@ -28,6 +28,10 @@ package de.uni_freiburg.informatik.ultimate.witnessprinter;
 
 import java.io.IOException;
 import java.io.StringWriter;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.lang3.StringEscapeUtils;
 
@@ -87,8 +91,8 @@ public class ViolationWitnessGenerator<TE, E> extends BaseWitnessGenerator<TE, E
 		addEdgeData(graphWriter, "startline", null, GeneratedWitnessEdge<TE, E>::getStartLineNumber);
 		addEdgeData(graphWriter, "endline", null, GeneratedWitnessEdge<TE, E>::getEndLineNumber);
 		addEdgeData(graphWriter, "originfile", filename, GeneratedWitnessEdge<TE, E>::getOriginFileName);
-		addEdgeData(graphWriter, "enterFunction", null, edge -> null);
-		addEdgeData(graphWriter, "returnFrom", null, edge -> null);
+		addEdgeData(graphWriter, "enterFunction", null, GeneratedWitnessEdge<TE, E>::getEnterFunction);
+		addEdgeData(graphWriter, "returnFrom", null, GeneratedWitnessEdge<TE, E>::getReturnFunction);
 
 		addVertexData(graphWriter, "nodetype", "path", vertex -> null);
 		addVertexData(graphWriter, "entry", "false", vertex -> vertex.isEntry() ? "true" : null);
@@ -123,13 +127,13 @@ public class ViolationWitnessGenerator<TE, E> extends BaseWitnessGenerator<TE, E
 		GeneratedWitnessNode current = insertStartNodeAndDummyEdges(fac, graph, 0);
 		GeneratedWitnessNode next;
 
-		final int progExecLength = mProgramExecution.getLength();
+		final IProgramExecution<TE, E> reducedPe = reduceProgramExecution(mProgramExecution);
+
+		final int progExecLength = reducedPe.getLength();
 		for (int idx = 0; idx < progExecLength; ++idx) {
 
-			idx = collapseToSingleTraceElement(idx, mProgramExecution);
-
-			final AtomicTraceElement<TE> currentATE = mProgramExecution.getTraceElement(idx);
-			final ProgramState<E> currentState = mProgramExecution.getProgramState(idx);
+			final AtomicTraceElement<TE> currentATE = reducedPe.getTraceElement(idx);
+			final ProgramState<E> currentState = reducedPe.getProgramState(idx);
 			if (idx == progExecLength - 1) {
 				// the last node is the error location
 				next = fac.createErrorWitnessNode();
@@ -166,21 +170,89 @@ public class ViolationWitnessGenerator<TE, E> extends BaseWitnessGenerator<TE, E
 		return current;
 	}
 
-	private int collapseToSingleTraceElement(final int currentIdx, final IProgramExecution<TE, E> programExecution) {
-		int i = currentIdx;
-		for (; i < programExecution.getLength(); i++) {
-			final AtomicTraceElement<TE> currentATE = programExecution.getTraceElement(i);
-			final TE currentLoc = currentATE.getTraceElement();
-			for (int j = i; j < programExecution.getLength(); j++) {
-				final AtomicTraceElement<TE> nextATE = programExecution.getTraceElement(j);
-				final TE nextLoc = nextATE.getTraceElement();
+	private IProgramExecution<TE, E> reduceProgramExecution(final IProgramExecution<TE, E> origPe) {
+		final List<AtomicTraceElement<TE>> trace = new ArrayList<>();
+		final Map<Integer, ProgramState<E>> partialProgramStateMapping = new HashMap<>();
 
-				if (mStringProvider.getStartLineNumberFromStep(nextLoc) != mStringProvider
-						.getStartLineNumberFromStep(currentLoc)) {
-					return j - 1;
+		partialProgramStateMapping.put(-1, origPe.getInitialProgramState());
+
+		final int progExecLength = origPe.getLength();
+
+		int newIdx = 0;
+
+		for (int idx = 0; idx < progExecLength;) {
+			final int oldIdx = idx;
+			final AtomicTraceElement<TE> currentATE = origPe.getTraceElement(idx);
+			trace.add(currentATE);
+			partialProgramStateMapping.put(newIdx, origPe.getProgramState(idx));
+			newIdx++;
+			for (int j = idx + 1; j < progExecLength; ++j) {
+				final AtomicTraceElement<TE> nextATE = origPe.getTraceElement(j);
+				if (mStringProvider.getStartLineNumberFromStep(currentATE.getTraceElement()) != mStringProvider
+						.getStartLineNumberFromStep(nextATE.getTraceElement())) {
+					idx = j;
+					break;
 				}
 			}
+
+			if (oldIdx == idx) {
+				break;
+			}
 		}
-		return currentIdx;
+
+		return new ReducedProgramExecution<>(origPe, trace, partialProgramStateMapping);
 	}
+
+	private static final class ReducedProgramExecution<TE, E> implements IProgramExecution<TE, E> {
+
+		private final List<AtomicTraceElement<TE>> mTrace;
+		private final Map<Integer, ProgramState<E>> mPartialProgramStateMapping;
+		private final IProgramExecution<TE, E> mOriginalProgramExecution;
+
+		public ReducedProgramExecution(final IProgramExecution<TE, E> origPE, final List<AtomicTraceElement<TE>> trace,
+				final Map<Integer, ProgramState<E>> partialProgramStateMapping) {
+			mOriginalProgramExecution = origPE;
+			mTrace = trace;
+			mPartialProgramStateMapping = partialProgramStateMapping;
+		}
+
+		@Override
+		public int getLength() {
+			return mTrace.size();
+		}
+
+		@Override
+		public AtomicTraceElement<TE> getTraceElement(final int index) {
+			return mTrace.get(index);
+		}
+
+		@Override
+		public ProgramState<E> getProgramState(final int index) {
+			if (index < 0 || index >= mTrace.size()) {
+				throw new IllegalArgumentException("out of range");
+			}
+			return mPartialProgramStateMapping.get(index);
+		}
+
+		@Override
+		public ProgramState<E> getInitialProgramState() {
+			return mPartialProgramStateMapping.get(-1);
+		}
+
+		@Override
+		public Class<E> getExpressionClass() {
+			return mOriginalProgramExecution.getExpressionClass();
+		}
+
+		@Override
+		public Class<TE> getTraceElementClass() {
+			return mOriginalProgramExecution.getTraceElementClass();
+		}
+
+		@Override
+		public String getSVCOMPWitnessString() {
+			throw new UnsupportedOperationException();
+		}
+	}
+
 }

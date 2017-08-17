@@ -27,16 +27,13 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.IEqNodeIdentifier;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
@@ -51,7 +48,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  */
-public class EqGraphNode<NODE extends IEqNodeIdentifier<NODE, FUNCTION>, FUNCTION> {
+public class EqGraphNode<NODE extends IEqNodeIdentifier<NODE, FUNCTION>, 
+		FUNCTION extends IEqFunctionIdentifier<NODE, FUNCTION>> {
 
 	/**
 	 * identifies an EqGraphNode uniquely _within one state or transitionstate_
@@ -64,6 +62,11 @@ public class EqGraphNode<NODE extends IEqNodeIdentifier<NODE, FUNCTION>, FUNCTIO
 //	private HashRelation<FUNCTION, List<EqGraphNode<NODE, FUNCTION>>> mCcchild;
 	private HashRelation<FUNCTION, List<NODE>> mCcchild;
 
+//	private NODE mInitCcpar;
+	/**
+	 * the parents that this nodes has in the function application graph
+	 * example: we have nodes a[i], b[i], i; then initCcpar of i are the other two nodes
+	 */
 	private Set<NODE> mInitCcpar;
 //	private List<EqGraphNode<NODE, FUNCTION>> mInitCcchild;
 	private List<NODE> mInitCcchild;
@@ -71,47 +74,63 @@ public class EqGraphNode<NODE extends IEqNodeIdentifier<NODE, FUNCTION>, FUNCTIO
 	public EqGraphNode(NODE id) {
 		assert id != null;
 		
-		this.mNodeIdentifier = id;
-		this.mRepresentative = this;
-		this.mReverseRepresentative = new HashSet<>();
-		this.mCcpar = new HashSet<>();
-		this.mCcchild = new HashRelation<>();
-		this.mInitCcpar = null;
-		this.mInitCcchild = null;
-	}
-	
-	/**
-	 * This may only be called when all EqGraphNodes for the given state (and thus mapping form Eqnodes to EqGraphNodes)
-	 * have been created.
-	 * Then this method sets up initCCpar and initCcchild according to the mapping and the parent/argument information in
-	 * the EqNode
-	 * @param eqNodeToEqGraphNode
-	 */
-	public void setupNode() {
-		mInitCcpar = new HashSet<>(this.mCcpar);
-		mInitCcpar = Collections.unmodifiableSet(mInitCcpar);
-		
-		if (mNodeIdentifier.isFunction()) {
-			FUNCTION arrayId = mNodeIdentifier.getFunction();
-			assert this.mCcchild.getImage(arrayId).size() == 1;
-			mInitCcchild = new ArrayList<>(this.mCcchild.getImage(arrayId).iterator().next());
-			mInitCcchild = Collections.unmodifiableList(mInitCcchild);
+		mNodeIdentifier = id;
+		mRepresentative = this;
+		mReverseRepresentative = new HashSet<>();
+		mReverseRepresentative.add(this);
+		mCcpar = new HashSet<>();
+		mCcchild = new HashRelation<>();
+//		this.mInitCcpar = null;
+		mInitCcpar = new HashSet<>();
+		if (id.isFunctionApplication()) {
+			mInitCcchild = Collections.unmodifiableList(id.getArguments());
+			mCcchild.addPair(mNodeIdentifier.getAppliedFunction(), Collections.unmodifiableList(id.getArguments()));
 		}
 	}
+	
+//	/**
+//	 * This may only be called when all EqGraphNodes for the given state (and thus mapping form Eqnodes to EqGraphNodes)
+//	 * have been created.
+//	 * Then this method sets up initCCpar and initCcchild according to the mapping and the parent/argument information in
+//	 * the EqNode
+//	 * @param eqNodeToEqGraphNode
+//	 */
+//	public void setupNode() {
+//		mInitCcpar = new HashSet<>(this.mCcpar);
+//		mInitCcpar = Collections.unmodifiableSet(mInitCcpar);
+//		
+//		if (mNodeIdentifier.isFunction()) {
+//			FUNCTION arrayId = mNodeIdentifier.getFunction();
+//			assert this.mCcchild.getImage(arrayId).size() == 1;
+//			mInitCcchild = new ArrayList<>(this.mCcchild.getImage(arrayId).iterator().next());
+//			mInitCcchild = Collections.unmodifiableList(mInitCcchild);
+//		}
+//	}
 
 	public void setNodeToInitial() {
-		this.mRepresentative = this;
-		this.mReverseRepresentative.clear();
-		this.mCcpar.clear();
-		this.mCcpar.addAll(mInitCcpar);
+//		mRepresentative = this;
+//		mReverseRepresentative.clear();
+//		mReverseRepresentative.add(this);
+		
+		// do nothing to this.reverseRepresentative, because it is not really a property of this node (by convention)
+		
+		setRepresentative(this);
+		
+		
 
-		this.mCcchild = new HashRelation<>();
+		mCcpar.clear();
+		mCcpar.addAll(mInitCcpar);
+
+		mCcchild = new HashRelation<>();
 		/*
 		 * Only function node have initCcchild.
 		 */
-		if (mNodeIdentifier.isFunction()) {
-			this.mCcchild.addPair(mNodeIdentifier.getFunction(), mInitCcchild);
+		if (mNodeIdentifier.isFunctionApplication()) {
+			mCcchild.addPair(mNodeIdentifier.getAppliedFunction(), mInitCcchild);
 		}
+		
+		
+
 	}	
 	
 	public EqGraphNode<NODE, FUNCTION> find() {
@@ -171,32 +190,41 @@ public class EqGraphNode<NODE extends IEqNodeIdentifier<NODE, FUNCTION>, FUNCTIO
 	}
 
 	public void setRepresentative(EqGraphNode<NODE, FUNCTION> representative) {
-		this.mRepresentative = representative;
-		//TODO check
-        // if (eqNodes are identical) then (graphnodes must be identical)
-        assert this.mRepresentative.mNodeIdentifier != this.mNodeIdentifier || this.mRepresentative == this;
+		
+		EqGraphNode<NODE, FUNCTION> oldRepresentative = mRepresentative;
+		oldRepresentative.removeReverseRepresentative(this);
+
+		mRepresentative = representative;
+		representative.addToReverseRepresentative(this);
+
+        assert this.mRepresentative.mNodeIdentifier != this.mNodeIdentifier || this.mRepresentative == this
+        		: "if (eqNodes are identical) then (graphnodes must be identical)";
 	}
 
 	public Set<EqGraphNode<NODE, FUNCTION>> getReverseRepresentative() {
-		return mReverseRepresentative;
+		return Collections.unmodifiableSet(mReverseRepresentative);
 	}
 
-	public void setReverseRepresentative(Set<EqGraphNode<NODE, FUNCTION>> reverseRepresentative) {
-		this.mReverseRepresentative = reverseRepresentative;
-	}
+//	public void setReverseRepresentative(Set<EqGraphNode<NODE, FUNCTION>> reverseRepresentative) {
+//		this.mReverseRepresentative = reverseRepresentative;
+//	}
 
-	public void addToReverseRepresentative(EqGraphNode<NODE, FUNCTION> reverseRepresentative) {
+	private void addToReverseRepresentative(EqGraphNode<NODE, FUNCTION> reverseRepresentative) {
 		this.mReverseRepresentative.add(reverseRepresentative);
 	}
 
 //	public Set<EqGraphNode<NODE, FUNCTION>> getCcpar() {
 	public Set<NODE> getCcpar() {
-		return mCcpar;
+		return Collections.unmodifiableSet(mCcpar);
 	}
 
 //	public void setCcpar(Set<EqGraphNode<NODE, FUNCTION>> ccpar) {
 	public void setCcpar(Set<NODE> ccpar) {
 		this.mCcpar = ccpar;
+	}
+	
+	public void setCcchild(HashRelation<FUNCTION, List<NODE>> ccchild) {
+		this.mCcchild = ccchild;
 	}
 
 	public void addToCcpar(NODE ccpar) {
@@ -223,17 +251,23 @@ public class EqGraphNode<NODE extends IEqNodeIdentifier<NODE, FUNCTION>, FUNCTIO
 		}
 	}
 
+	/**
+	 * this is a set just for compatibility with "normal" ccPar, right? (EDIT no more.. EDIT no!, this must be a set!!
+	 *  see documentation of mInitCcpar)
+	 * @return
+	 */
+//	public NODE getInitCcpar() {
 	public Set<NODE> getInitCcpar() {
-		return mInitCcpar;
+		return Collections.unmodifiableSet(mInitCcpar);
 	}
 
 	public List<NODE> getInitCcchild() {
-		return mInitCcchild;
+		return Collections.unmodifiableList(mInitCcchild);
 	}
 
-	public void setInitCcchild(List<NODE> initCcchild) {
-		this.mInitCcchild = initCcchild;
-	}
+//	public void setInitCcchild(List<NODE> initCcchild) {
+//		this.mInitCcchild = initCcchild;
+//	}
 
 	public NODE getNode() {
 		return mNodeIdentifier;
@@ -272,8 +306,56 @@ public class EqGraphNode<NODE extends IEqNodeIdentifier<NODE, FUNCTION>, FUNCTIO
 		return sb.toString();
 	}
 
-	public EqGraphNode<NODE, FUNCTION> renameVariables(Map<Term, Term> substitutionMapping) {
-		// TODO Auto-generated method stub
-		return null;
+//	public EqGraphNode<NODE, FUNCTION> renameVariables(Map<Term, Term> substitutionMapping) {
+//		// TODO Auto-generated method stub
+//		return null;
+//	}
+
+//	public void setInitCcpar(NODE initCCpar) {
+////		assert mInitCcpar.isEmpty() : "init ccpar should never change, except from no parent to some parent";
+//		assert mInitCcpar == null : "init ccpar should never change, except from no parent to some parent";
+//		mInitCcpar = initCCpar;
+//	}
+
+	public void addToInitCcpar(NODE node) {
+		mInitCcpar.add(node);
+		mCcpar.add(node);
+	}
+
+	public void removeFromCcpar(Set<NODE> nodes) {
+		mCcpar.removeAll(nodes);
+	}
+
+	public void removeFromCcchild(HashRelation<FUNCTION, List<NODE>> ccchild) {
+		mCcchild.removeAllPairs(ccchild);
+	}
+
+	private void removeReverseRepresentative(EqGraphNode<NODE, FUNCTION> graphNodeForNodeToBeHavocced) {
+		assert mReverseRepresentative.contains(graphNodeForNodeToBeHavocced);
+		mReverseRepresentative.remove(graphNodeForNodeToBeHavocced);
+	}
+
+	/**
+	 * after havoccing a node, we have to make sure no other node still remembers it, in particular in its ccpar and 
+	 * ccchild fields..
+	 * 
+	 * @param nodeToBeHavocced
+	 * @return
+	 */
+	public void purgeNodeFromFields(NODE nodeToBeHavocced) {
+		mCcpar.remove(nodeToBeHavocced);
+//		for (Entry<FUNCTION, List<NODE>> en : mCcchild.entrySet()) {
+//			en.getValue().remove(nodeToBeHavocced);
+//		}
+//		mCcchild..entrySet().removeIf(en -> en.getValue().contains(nodeToBeHavocced));
+			
+		final HashRelation<FUNCTION, List<NODE>> newCchild = new HashRelation<>();
+		for (Entry<FUNCTION, List<NODE>> en : mCcchild.entrySet()) {
+			if (en.getValue().contains(nodeToBeHavocced)) {
+				continue;
+			}
+			newCchild.addPair(en.getKey(), en.getValue());
+		}
+		mCcchild = newCchild;
 	}
 }

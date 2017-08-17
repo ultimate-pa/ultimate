@@ -21,24 +21,24 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
  *
  */
 public class VarsInUnsatCoreStrategy extends LiveVariablesStrategy {
-	
-	private Map<IcfgLocation, Set<IProgramVar>> mLocations2PatternVariables;
-	
+
+	private final Map<IcfgLocation, Set<IProgramVar>> mLocations2PatternVariables;
+
 	public VarsInUnsatCoreStrategy(final AbstractTemplateIncreasingDimensionsStrategy dimensionsStrat,
-			int maxRounds, Set<IProgramVar> allProgramVariables,
-			Map<IcfgLocation, Set<IProgramVar>> locs2LiveVariables, boolean alwaysStrictAndNonStrictCopies,
-			boolean useStrictInequalitiesAlternatingly) {
+			final int maxRounds, final Set<IProgramVar> allProgramVariables,
+			final Map<IcfgLocation, Set<IProgramVar>> locs2LiveVariables, final boolean alwaysStrictAndNonStrictCopies,
+			final boolean useStrictInequalitiesAlternatingly) {
 		super(dimensionsStrat, maxRounds, allProgramVariables,
 				locs2LiveVariables, alwaysStrictAndNonStrictCopies, useStrictInequalitiesAlternatingly);
 		mLocations2PatternVariables = new HashMap<>();
 	}
 
 	@Override
-	public Collection<Collection<AbstractLinearInvariantPattern>> getInvariantPatternForLocation(IcfgLocation location,
-			int round, Script solver, String prefix, Set<IProgramVar> varsFromUnsatCore) {
+	public Dnf<AbstractLinearInvariantPattern> getInvariantPatternForLocation(final IcfgLocation location,
+			final int round, final Script solver, final String prefix, final Set<IProgramVar> varsFromUnsatCore) {
 		assert super.mLoc2PatternCoefficents != null : "Map mLoc2PatternCoefficents must not be null!";
-		Set<Term> patternCoefficients = new HashSet<>();
-		Set<IProgramVar> varsForThisPattern = new HashSet<>(getPatternVariablesForLocation(location, round));
+		final Set<Term> patternCoefficients = new HashSet<>();
+		final Set<IProgramVar> varsForThisPattern = new HashSet<>(getPatternVariablesForLocation(location, round));
 		if (!varsFromUnsatCore.containsAll(varsForThisPattern)) {
 			varsForThisPattern.addAll(varsFromUnsatCore);
 		}
@@ -46,7 +46,7 @@ public class VarsInUnsatCoreStrategy extends LiveVariablesStrategy {
 		mLocations2PatternVariables.put(location, varsForThisPattern);
 		final int[] dimensions = getDimensions(location, round);
 		// Build invariant pattern
-		final Collection<Collection<AbstractLinearInvariantPattern>> disjunction = new ArrayList<>(dimensions[0]);
+		final Dnf<AbstractLinearInvariantPattern> disjunction = new Dnf<>(dimensions[0]);
 		for (int i = 0; i < dimensions[0]; i++) {
 			final Collection<AbstractLinearInvariantPattern> conjunction = new ArrayList<>(
 					dimensions[1]);
@@ -54,9 +54,9 @@ public class VarsInUnsatCoreStrategy extends LiveVariablesStrategy {
 				boolean[] invariantPatternCopies = new boolean[] { false };
 				if (super.mUseStrictInequalitiesAlternatingly) {
 					// if it is an odd conjunct, then construct a strict inequality
-					if (j % 2 == 1) { 
+					if (j % 2 == 1) {
 						invariantPatternCopies = new boolean[] { true };
-					} 
+					}
 				}
 				if (mAlwaysStrictAndNonStrictCopies) {
 					invariantPatternCopies = new boolean[] { false, true };
@@ -76,7 +76,7 @@ public class VarsInUnsatCoreStrategy extends LiveVariablesStrategy {
 	}
 
 	@Override
-	public Set<IProgramVar> getPatternVariablesForLocation(IcfgLocation location, int round) {
+	public Set<IProgramVar> getPatternVariablesForLocation(final IcfgLocation location, final int round) {
 		if (mLocations2PatternVariables.containsKey(location)) {
 			return Collections.unmodifiableSet(mLocations2PatternVariables.get(location));
 		} else if (super.mLocations2LiveVariables != null) {

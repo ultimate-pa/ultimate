@@ -68,7 +68,7 @@ public class RcfgPreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final String DEF_ExtSolverCommand = Z3_DEFAULT;
 
 	public static final String LABEL_ExtSolverLogic = "Logic for external solver";
-	public static final String DEF_ExtSolverLogic = "AUFNIRA";
+	public static final String DEF_ExtSolverLogic = "ALL";
 
 	public static final String LABEL_CodeBlockSize = "Size of a code block";
 
@@ -87,7 +87,7 @@ public class RcfgPreferenceInitializer extends UltimatePreferenceInitializer {
 	 * @see Statements2TransFormula#mSimplePartialSkolemization
 	 */
 	public static final String LABEL_SIMPLE_PARTIAL_SKOLEMIZATION = "Skolemize terms";
-	public static final boolean DEF_SIMPLE_PARTIAL_SKOLEMIZATION = false;
+	public static final boolean DEF_SIMPLE_PARTIAL_SKOLEMIZATION = true;
 
 	public RcfgPreferenceInitializer() {
 		super(Activator.PLUGIN_ID, Activator.PLUGIN_NAME);
@@ -107,7 +107,7 @@ public class RcfgPreferenceInitializer extends UltimatePreferenceInitializer {
 						CodeBlockSize.values()),
 				new UltimatePreferenceItem<>(LABEL_RemoveGotoEdges, false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_Simplify, false, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_CNF, true, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_CNF, false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_SIMPLE_PARTIAL_SKOLEMIZATION, DEF_SIMPLE_PARTIAL_SKOLEMIZATION, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_DumpToFile, false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_DumpUnsatCoreTrackBenchmark, false, PreferenceType.Boolean),

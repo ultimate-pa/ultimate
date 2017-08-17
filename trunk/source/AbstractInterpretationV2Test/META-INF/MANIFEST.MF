@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: AbstractInterpretationV2Test
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.test
-Bundle-Version: 0.1.17
+Bundle-Version: 0.1.20
 Fragment-Host: de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Require-Bundle: de.uni_freiburg.informatik.ultimate.core,

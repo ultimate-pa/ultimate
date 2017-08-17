@@ -1,0 +1,6 @@
+// Author: Christian Schilling (schillic@informatik.uni-freiburg.de)
+// Date: 2017-06-23
+
+parseAutomata("../intersect/Intersect-Bug01.ats");
+
+assert(numberOfStates(union(nwa1,nwa2)) == 7);

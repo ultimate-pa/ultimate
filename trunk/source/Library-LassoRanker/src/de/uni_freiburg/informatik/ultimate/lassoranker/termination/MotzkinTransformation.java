@@ -332,6 +332,7 @@ public class MotzkinTransformation extends InstanceCounting {
 	 * Applies the transformation given by Motzkin's Transposition Theorem. Call this method after adding all
 	 * inequalities.
 	 *
+	 * TODO: fix documentation
 	 * @return a formula equivalent to the negated conjunction of the inequalities
 	 */
 	public Term transform(final Rational[] motzkinGuesses) {

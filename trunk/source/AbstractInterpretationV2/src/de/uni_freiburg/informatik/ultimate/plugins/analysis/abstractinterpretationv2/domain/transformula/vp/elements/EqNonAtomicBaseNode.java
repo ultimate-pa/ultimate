@@ -27,13 +27,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements;
 
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 
 /**
  *
@@ -41,9 +37,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
  */
 public class EqNonAtomicBaseNode extends EqNode {
 	
-	public EqNonAtomicBaseNode(Term t, boolean isGlobal, String procedure, EqNodeAndFunctionFactory eqNodeFactory) {
-		super(isGlobal, t.getFreeVars().length == 0, procedure, eqNodeFactory);
-		mTerm = t;
+	public EqNonAtomicBaseNode(Term term, EqNodeAndFunctionFactory eqNodeAndFunctionFactory) {
+		super(term, eqNodeAndFunctionFactory);
 	}
 
 	@Override
@@ -57,33 +52,18 @@ public class EqNonAtomicBaseNode extends EqNode {
 	}
 	
 	@Override
-	public boolean isFunction() {
+	public boolean isFunctionApplication() {
 		return false;
 	}
 
 	@Override
-	public EqFunction getFunction() {
+	public EqFunction getAppliedFunction() {
 		assert false : "check for isFunction() first";
 		return null;
 	}
-	
-	@Override
-	public Collection<EqFunction> getAllFunctions() {
-		return Collections.emptySet();
-	}
 
 	@Override
-	public EqNode renameVariables(Map<Term, Term> substitutionMapping) {
-		final Term substitutedTerm = new Substitution(mEqNodeFactory.getScript(), substitutionMapping)
-				.transform(getTerm());
-		if (substitutedTerm == getTerm()) {
-			return this;
-		}
-		return mEqNodeFactory.getOrConstructEqNonAtomicBaseNode(substitutedTerm, isGlobal(), getProcedure());
-	}
-
-	@Override
-	public List<EqNode> getArgs() {
+	public List<EqNode> getArguments() {
 		assert false : "check for isFunction() first";
 		return null;
 	}

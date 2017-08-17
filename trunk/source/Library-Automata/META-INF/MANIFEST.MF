@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Library-Automata
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.lib.automata
-Bundle-Version: 0.1.17
+Bundle-Version: 0.1.20
 Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.core,
  de.uni_freiburg.informatik.ultimate.smtinterpol,
@@ -274,4 +274,3 @@ Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Bundle-ClassPath: src/de/uni_freiburg/informatik/ultimate/automata/petrinet/julian/petruchio/petruchio.jar,
                   src/de/uni_freiburg/informatik/ultimate/automata/nestedword/operations/optncsb/trove-3.0.3.jar,
  .
-Import-Package: de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil

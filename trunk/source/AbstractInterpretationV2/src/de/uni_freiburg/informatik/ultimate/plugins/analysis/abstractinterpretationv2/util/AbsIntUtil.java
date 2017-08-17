@@ -35,7 +35,6 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -58,6 +57,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.util.SetOperations;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -136,34 +136,6 @@ public final class AbsIntUtil {
 
 	public static <K, V> Map<K, V> getFreshMap(final Map<K, V> oldMap) {
 		return getFreshMap(oldMap, oldMap.size());
-	}
-
-	public static <T> Set<T> getFreshSet(final Set<T> oldSet, final int capacity) {
-		final Set<T> rtr = new HashSet<>(capacity);
-		rtr.addAll(oldSet);
-		return rtr;
-	}
-
-	public static <T> Set<T> getFreshSet(final Set<T> oldSet) {
-		return getFreshSet(oldSet, oldSet.size());
-	}
-
-	public static <T> Set<T> union(final Set<T> a, final Set<T> b) {
-		final Set<T> rtr = getFreshSet(a, a.size() + b.size());
-		rtr.addAll(b);
-		return rtr;
-	}
-
-	public static <T> Set<T> intersect(final Set<T> a, final Set<T> b) {
-		final Set<T> rtr = getFreshSet(a, a.size());
-		rtr.retainAll(b);
-		return rtr;
-	}
-
-	public static <T> Set<T> difference(final Set<T> a, final Set<T> b) {
-		final Set<T> rtr = getFreshSet(a, a.size());
-		rtr.removeAll(b);
-		return rtr;
 	}
 
 	public static <T> ArrayList<T> singletonArrayList(final T value) {
@@ -316,7 +288,7 @@ public final class AbsIntUtil {
 	 * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
 	 */
 	public static IBoogieVar createTemporaryIBoogieVar(final String identifier, final IBoogieType type) {
-		return new TemporaryBoogieVar(type, identifier);
+		return new FakeBoogieVar(type, identifier);
 	}
 
 	/**
@@ -421,8 +393,8 @@ public final class AbsIntUtil {
 
 		final Set<VARDECL> definedVariables = state.getVariables();
 
-		final Set<VARDECL> toRemove = AbsIntUtil.difference(definedVariables, shouldVars);
-		final Set<VARDECL> toAdd = AbsIntUtil.difference(shouldVars, definedVariables);
+		final Set<VARDECL> toRemove = SetOperations.difference(definedVariables, shouldVars);
+		final Set<VARDECL> toAdd = SetOperations.difference(shouldVars, definedVariables);
 
 		if (toRemove.isEmpty() && toAdd.isEmpty()) {
 			return state;

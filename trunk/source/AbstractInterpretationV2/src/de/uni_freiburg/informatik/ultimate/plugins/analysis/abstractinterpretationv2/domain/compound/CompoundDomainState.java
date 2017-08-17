@@ -33,6 +33,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -44,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractDom
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
+import de.uni_freiburg.informatik.ultimate.util.SetOperations;
 
 /**
  * A state in the {@link CompoundDomain}.
@@ -140,6 +141,16 @@ public class CompoundDomainState implements IAbstractState<CompoundDomainState, 
 	@Override
 	public Set<IBoogieVar> getVariables() {
 		return mAbstractStates.get(0).getVariables();
+	}
+
+	@Override
+	public CompoundDomainState renameVariable(final IBoogieVar oldVar, final IBoogieVar newVar) {
+		return performStateOperation(state -> state.renameVariable(oldVar, newVar));
+	}
+
+	@Override
+	public CompoundDomainState renameVariables(final Map<IBoogieVar, IBoogieVar> old2newVars) {
+		return performStateOperation(state -> state.renameVariables(old2newVars));
 	}
 
 	@Override
@@ -258,6 +269,31 @@ public class CompoundDomainState implements IAbstractState<CompoundDomainState, 
 	}
 
 	@Override
+	public EvalResult evaluate(final Script script, final Term term) {
+		for (int i = 0; i < mAbstractStates.size(); i++) {
+			final EvalResult result = mAbstractStates.get(i).evaluate(script, term);
+			if (result != EvalResult.UNKNOWN) {
+				assert result == slowEvaluate(script, term);
+				return result;
+			}
+		}
+		return EvalResult.UNKNOWN;
+	}
+
+	private EvalResult slowEvaluate(final Script script, final Term term) {
+		EvalResult rtr = EvalResult.UNKNOWN;
+		for (int i = 0; i < mAbstractStates.size(); i++) {
+			final EvalResult result = mAbstractStates.get(i).evaluate(script, term);
+			if (rtr == EvalResult.UNKNOWN) {
+				rtr = result;
+			} else if (result != rtr) {
+				assert false : "One state said " + rtr + " another said " + result;
+			}
+		}
+		return rtr;
+	}
+
+	@Override
 	public String toString() {
 		return toLogString();
 	}
@@ -323,7 +359,7 @@ public class CompoundDomainState implements IAbstractState<CompoundDomainState, 
 
 		final List<IAbstractState<?, IBoogieVar>> compactedSynchronizedStates = new ArrayList<>(numberOfStates);
 		for (final IAbstractState<?, IBoogieVar> compactedState : compactedStates) {
-			final Set<IBoogieVar> missing = AbsIntUtil.difference(vars, compactedState.getVariables());
+			final Set<IBoogieVar> missing = SetOperations.difference(vars, compactedState.getVariables());
 			if (missing.isEmpty()) {
 				compactedSynchronizedStates.add(compactedState);
 			} else {

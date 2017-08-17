@@ -150,7 +150,7 @@ public class BasicPredicateFactory {
 	}
 
 	public IPredicate newBuchiPredicate(final Set<IPredicate> inputPreds) {
-		final Term conjunction = andTerm(inputPreds);
+		final Term conjunction = andTerm(inputPreds, SimplificationTechnique.NONE);
 		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(conjunction, mScript, mSymbolTable);
 		return new BuchiPredicate(constructFreshSerialNumber(), tvp.getProcedures(), tvp.getFormula(), tvp.getVars(),
 				tvp.getClosedFormula(), inputPreds);
@@ -159,9 +159,17 @@ public class BasicPredicateFactory {
 	public IPredicate and(final IPredicate... preds) {
 		return and(Arrays.asList(preds));
 	}
+	
+	public IPredicate and(final SimplificationTechnique st, final IPredicate... preds) {
+		return and(st, Arrays.asList(preds));
+	}
 
 	public IPredicate and(final Collection<IPredicate> preds) {
-		return newPredicate(andTerm(preds));
+		return newPredicate(andTerm(preds, SimplificationTechnique.NONE));
+	}
+	
+	public IPredicate and(final SimplificationTechnique st, final Collection<IPredicate> preds) {
+		return newPredicate(andTerm(preds, st));
 	}
 
 	public IPredicate or(final boolean withSimplifyDDA, final IPredicate... preds) {
@@ -190,13 +198,16 @@ public class BasicPredicateFactory {
 		return term;
 	}
 
-	private Term andTerm(final Collection<IPredicate> preds) {
+	private Term andTerm(final Collection<IPredicate> preds, final SimplificationTechnique st) {
 		Term term = mScript.term("true");
 		for (final IPredicate p : preds) {
 			if (isDontCare(p)) {
 				return mDontCareTerm;
 			}
 			term = Util.and(mScript, term, p.getFormula());
+		}
+		if (st != SimplificationTechnique.NONE) {
+			return SmtUtils.simplify(mMgdScript, term, mServices, st);
 		}
 		return term;
 	}

@@ -1,28 +1,63 @@
+/*
+ * Copyright (C) 2017 Alexander Nutz (nutz@informatik.uni-freiburg.de)
+ * Copyright (C) 2017 University of Freiburg
+ *
+ * This file is part of the ULTIMATE AbstractInterpretationV2 plug-in.
+ *
+ * The ULTIMATE AbstractInterpretationV2 plug-in is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * The ULTIMATE AbstractInterpretationV2 plug-in is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the ULTIMATE AbstractInterpretationV2 plug-in. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Additional permission under GNU GPL version 3 section 7:
+ * If you modify the ULTIMATE AbstractInterpretationV2 plug-in, or any covered work, by linking
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission
+ * to convey the resulting work.
+ */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements;
 
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.TransFormulaConverterCache;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainPreanalysis;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.EqConstraint;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.EqConstraintFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.EqDisjunctiveConstraint;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.EqOperationProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.EqPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.EqState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.EqTransitionRelation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 
+/**
+ * 
+ * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
+ *
+ * @param <ACTION>
+ */
 public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>> implements
 		IAbstractPostOperator<EqState<ACTION>, ACTION, IProgramVarOrConst> {
 	
@@ -34,7 +69,7 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>> implem
 			EqPredicate<ACTION>, 
 			EqTransitionRelation<ACTION>> mPredicateTransformer;
 	private final TransFormulaConverterCache<ACTION> mTransFormulaConverter;
-	private CfgSmtToolkit mCfgSmtToolkit;
+	private final CfgSmtToolkit mCfgSmtToolkit;
 	private final EqConstraintFactory<ACTION, EqNode, EqFunction> mEqConstraintFactory;
 	private final EqNodeAndFunctionFactory mEqNodeAndFunctionFactory;
 	private final VPDomainPreanalysis mPreAnalysis;
@@ -46,8 +81,9 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>> implem
 		mEqConstraintFactory = eqConstraintFactory;
 		mPreAnalysis = preAnalysis;
 		mMgdScript = preAnalysis.getManagedScript();
+		mCfgSmtToolkit = preAnalysis.getCfgSmtToolkit();
 
-		mOperationProvider = new EqOperationProvider<>();
+		mOperationProvider = new EqOperationProvider<>(eqConstraintFactory);
 
 		mPredicateTransformer = new PredicateTransformer<>(mMgdScript, mOperationProvider);	
 		mTransFormulaConverter = new TransFormulaConverterCache<ACTION>(mEqNodeAndFunctionFactory, 
@@ -56,22 +92,40 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>> implem
 
 	@Override
 	public List<EqState<ACTION>> apply(EqState<ACTION> oldstate, ACTION transition) {
+		if (!mPreAnalysis.getServices().getProgressMonitorService().continueProcessing()) {
+			return mEqConstraintFactory.getTopDisjunctiveConstraint().toEqStates(oldstate.getVariables());
+		}
 		
+		final EqTransitionRelation<ACTION> transitionRelation = 
+				mTransFormulaConverter.getEqTransitionRelationFromTransformula(transition.getTransformula());
 
 		final EqDisjunctiveConstraint<ACTION, EqNode, EqFunction> postConstraint = 
 				mPredicateTransformer.strongestPostcondition(
-						oldstate.toEqPredicate(), 
-						mTransFormulaConverter.getEqTransitionRelationFromTransformula(transition.getTransformula()));
-		return postConstraint.toEqStates();
+						oldstate.toEqPredicate(), transitionRelation);
+		final List<EqState<ACTION>> result = postConstraint.toEqStates(oldstate.getVariables());
+		assert result.stream().allMatch(state -> state.getVariables().containsAll(oldstate.getVariables()));
+		return result;
 	}
+
 	@Override
-	public List<EqState<ACTION>> apply(EqState<ACTION> stateBeforeLeaving, EqState<ACTION> stateAfterLeaving,
+	public List<EqState<ACTION>> apply(EqState<ACTION> stateBeforeLeaving, 
+			EqState<ACTION> hierarchicalPreOrStateAfterLeaving,
 			ACTION transition) {
-		if (transition instanceof Call) {
+		assert hierarchicalPreOrStateAfterLeaving.getVariables().containsAll(
+				mCfgSmtToolkit.getSymbolTable().getGlobals());
+		assert hierarchicalPreOrStateAfterLeaving.getVariables().containsAll(
+				mCfgSmtToolkit.getSymbolTable().getLocals(transition.getSucceedingProcedure()));
+
+		if (!mPreAnalysis.getServices().getProgressMonitorService().continueProcessing()) {
+			return mEqConstraintFactory.getTopDisjunctiveConstraint()
+					.toEqStates(hierarchicalPreOrStateAfterLeaving.getVariables());
+		}
+
+		if (transition instanceof ICallAction) {
 			final String calledProcedure = transition.getSucceedingProcedure();
 
 			final EqTransitionRelation<ACTION> localVarAssignments = mTransFormulaConverter
-					.getEqTransitionRelationFromTransformula(((Call) transition)
+					.getEqTransitionRelationFromTransformula(((ICallAction) transition)
 							.getLocalVarsAssignment());
 			final EqTransitionRelation<ACTION> globalVarAssignments = mTransFormulaConverter
 					.getEqTransitionRelationFromTransformula(
@@ -88,28 +142,37 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>> implem
 							stateBeforeLeaving.toEqPredicate(), 
 							localVarAssignments, globalVarAssignments, oldVarAssignments, 
 							modifiableGlobalsOfCalledProcedure);
-			return postConstraint.toEqStates();
-		} else if (transition instanceof Summary) {
-			return apply(stateBeforeLeaving, transition);
-		} else if (transition instanceof Return) {
+			final List<EqState<ACTION>> result = 
+					postConstraint.toEqStates(hierarchicalPreOrStateAfterLeaving.getVariables()); 
+			return result;
+//		} else if (transition instanceof Summary) {
+//			return apply(stateBeforeLeaving, transition);
+		} else if (transition instanceof IReturnAction) {
 
-			/*
-			 *  TODO: this is probably problematic because stateBeforeLeaving and stateAfterLeaving do not correspond
-			 *   exactly to returnPred and callPred.
-			 */
-			EqPredicate<ACTION> returnPred = stateBeforeLeaving.toEqPredicate();
-			EqPredicate<ACTION> callPred = stateAfterLeaving.toEqPredicate();
+			final EqPredicate<ACTION> returnPred = stateBeforeLeaving.toEqPredicate();
 
-			EqTransitionRelation<ACTION> returnTF = mTransFormulaConverter
-					.getEqTransitionRelationFromTransformula(((Return) transition).getAssignmentOfReturn());
-			EqTransitionRelation<ACTION> callTF = mTransFormulaConverter
+			Set<IProgramVar> oldVars = 
+					hierarchicalPreOrStateAfterLeaving.getConstraint().getVariables(
+							mCfgSmtToolkit.getSymbolTable()).stream().filter(var -> var.isOldvar()).collect(Collectors.toSet());
+			Set<TermVariable> ovTvs = oldVars.stream().map(ov -> ov.getTermVariable()).collect(Collectors.toSet());
+			EqConstraint<ACTION, EqNode, EqFunction> projectedCons = 
+					hierarchicalPreOrStateAfterLeaving.getConstraint().projectExistentially(ovTvs);
+			EqState<ACTION> hier = mEqConstraintFactory.getEqStateFactory().getEqState(projectedCons, hierarchicalPreOrStateAfterLeaving.getVariables());
+
+			final EqPredicate<ACTION> callPred = hier.toEqPredicate();
+//			final EqPredicate<ACTION> callPred = hierarchicalPreOrStateAfterLeaving.toEqPredicate();
+
+
+			final EqTransitionRelation<ACTION> returnTF = mTransFormulaConverter
+					.getEqTransitionRelationFromTransformula(((IReturnAction) transition).getAssignmentOfReturn());
+			final EqTransitionRelation<ACTION> callTF = mTransFormulaConverter
 					.getEqTransitionRelationFromTransformula(
-							((Return) transition).getLocalVarsAssignmentOfCall());
-			EqTransitionRelation<ACTION> oldVarAssignments = mTransFormulaConverter
+							((IReturnAction) transition).getLocalVarsAssignmentOfCall());
+			final EqTransitionRelation<ACTION> oldVarAssignments = mTransFormulaConverter
 					.getEqTransitionRelationFromTransformula(
 							mCfgSmtToolkit.getOldVarsAssignmentCache().getOldVarsAssignment(
 									transition.getPrecedingProcedure()));
-			Set<IProgramNonOldVar> modifiableGlobals = mCfgSmtToolkit.getModifiableGlobalsTable()
+			final Set<IProgramNonOldVar> modifiableGlobals = mCfgSmtToolkit.getModifiableGlobalsTable()
 					.getModifiedBoogieVars(transition.getPrecedingProcedure());
 
 			final EqDisjunctiveConstraint<ACTION, EqNode, EqFunction> postConstraint = 
@@ -120,10 +183,28 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>> implem
 							oldVarAssignments, 
 							modifiableGlobals);
 			
-			return postConstraint.toEqStates();
+			final List<EqState<ACTION>> result = 
+					postConstraint.toEqStates(hierarchicalPreOrStateAfterLeaving.getVariables());
+//			assert result.stream()
+//				.allMatch(state -> state.getVariables().containsAll(hierarchicalPreOrStateAfterLeaving.getVariables()));
+			return result;
 		} else {
 			throw new UnsupportedOperationException();
 		}
 	}
+
+//	/**
+//	 * copied with minimal modifications from AbstractMultiState..
+//	 * used only for assertions
+//	 * @param states
+//	 * @return
+//	 */
+//	private boolean haveSameVars(final Collection<EqState<ACTION>> states) {
+//		if (states.size() <= 1) {
+//			return true;
+//		}
+//		final Set<IProgramVarOrConst> firstVars = states.iterator().next().getVariables();
+//		return states.stream().allMatch(a -> firstVars.equals(a.getVariables()));
+//	}
 	
 }

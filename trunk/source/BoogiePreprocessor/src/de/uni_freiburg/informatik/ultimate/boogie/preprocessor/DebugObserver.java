@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE BoogiePreprocessor plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE BoogiePreprocessor plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE BoogiePreprocessor plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.boogie.preprocessor;
@@ -41,23 +41,28 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotat
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 
+/**
+ * 
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ *
+ */
 public class DebugObserver extends BaseObserver {
 
 	private final ILogger mLogger;
 
-	public DebugObserver(ILogger logger) {
+	public DebugObserver(final ILogger logger) {
 		mLogger = logger;
 	}
 
 	@Override
-	public boolean process(IElement root) throws Throwable {
+	public boolean process(final IElement root) throws Throwable {
 		if (root instanceof IWalkable) {
 			walkTree((IWalkable) root);
 		}
 		return false;
 	}
 
-	private void walkTree(IWalkable root) {
+	private void walkTree(final IWalkable root) {
 		final Queue<IWalkable> queue = new LinkedList<>();
 		final HashSet<IWalkable> processed = new HashSet<>();
 		queue.add(root);
@@ -79,7 +84,7 @@ public class DebugObserver extends BaseObserver {
 		}
 	}
 
-	private void checkNode(IWalkable node) {
+	private void checkNode(final IWalkable node) {
 		if (node.hasPayload()) {
 			final IPayload payload = node.getPayload();
 			if (payload.hasAnnotation()) {
@@ -90,7 +95,7 @@ public class DebugObserver extends BaseObserver {
 		}
 	}
 
-	private void checkAnnotations(IWalkable node, Collection<IAnnotations> annots) {
+	private void checkAnnotations(final IWalkable node, final Collection<IAnnotations> annots) {
 		for (final IAnnotations annot : annots) {
 			if (annot instanceof Overapprox) {
 				mLogger.info("Overapprox found");

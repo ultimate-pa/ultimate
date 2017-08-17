@@ -28,7 +28,6 @@ package de.uni_freiburg.informatik.ultimate.lib.pea;
 
 import java.util.HashMap;
 
-
 /**
  * TODO : Documentation hoenicke.
  *
@@ -36,96 +35,105 @@ import java.util.HashMap;
  *
  */
 public abstract class Decision implements Comparable {
-    @Override
+
+	@Override
 	public abstract int compareTo(Object o);
 
-    public boolean implies(Decision other, CDD[] childs, CDD[] ochilds) {
-        /* default implementation for boolean decisions */
-        for (int i = 0; i < childs.length; i++) {
+	public boolean implies(final Decision other, final CDD[] childs, final CDD[] ochilds) {
+		/* default implementation for boolean decisions */
+		for (int i = 0; i < childs.length; i++) {
 			if (!childs[i].implies(ochilds[i])) {
-                return false;
-            }
+				return false;
+			}
 		}
 
-        return true;
-    }
+		return true;
+	}
 
-    public CDD simplify(CDD[] childs) {
-        for (int i = 1; i < childs.length; i++) {
-            if (childs[i] != childs[0]) {
-                return CDD.create(this, childs);
-            }
-        }
+	public CDD simplify(final CDD[] childs) {
+		for (int i = 1; i < childs.length; i++) {
+			if (childs[i] != childs[0]) {
+				return CDD.create(this, childs);
+			}
+		}
 
-        return childs[0];
-    }
+		return childs[0];
+	}
 
-    public CDD and(Decision other, CDD[] childs, CDD[] ochilds) {
-    	return and(other, childs, ochilds, new HashMap<CDD, HashMap<CDD,CDD>>());
-    }
+	public CDD and(final Decision other, final CDD[] childs, final CDD[] ochilds) {
+		return and(other, childs, ochilds, new HashMap<CDD, HashMap<CDD, CDD>>());
+	}
 
-    public CDD and(Decision other, CDD[] childs, CDD[] ochilds, HashMap<CDD,HashMap<CDD,CDD>> cache) {
-        /* default implementation for boolean decisions */
-        final CDD[] nchilds = new CDD[childs.length];
+	public CDD and(final Decision other, final CDD[] childs, final CDD[] ochilds,
+			final HashMap<CDD, HashMap<CDD, CDD>> cache) {
+		/* default implementation for boolean decisions */
+		final CDD[] nchilds = new CDD[childs.length];
 
-        for (int i = 0; i < childs.length; i++) {
+		for (int i = 0; i < childs.length; i++) {
 			nchilds[i] = childs[i].and(ochilds[i], cache);
 		}
 
-        return simplify(nchilds);
-    }
+		return simplify(nchilds);
+	}
 
-    public CDD or(Decision other, CDD[] childs, CDD[] ochilds) {
-        /* default implementation for boolean decisions */
-        final CDD[] nchilds = new CDD[childs.length];
+	public CDD or(final Decision other, final CDD[] childs, final CDD[] ochilds) {
+		/* default implementation for boolean decisions */
+		final CDD[] nchilds = new CDD[childs.length];
 
-        for (int i = 0; i < childs.length; i++) {
+		for (int i = 0; i < childs.length; i++) {
 			nchilds[i] = childs[i].or(ochilds[i]);
 		}
 
-        return simplify(nchilds);
-    }
+		return simplify(nchilds);
+	}
 
-    public CDD assume(Decision other, CDD[] childs, CDD[] ochilds) {
-        /* default implementation for boolean decisions */
-        final CDD[] nchilds = new CDD[childs.length];
+	public CDD assume(final Decision other, final CDD[] childs, final CDD[] ochilds) {
+		/* default implementation for boolean decisions */
+		final CDD[] nchilds = new CDD[childs.length];
 
-        for (int i = 0; i < childs.length; i++) {
+		for (int i = 0; i < childs.length; i++) {
 			nchilds[i] = childs[i].assume(ochilds[i]);
 		}
 
-        return simplify(nchilds);
-    }
+		return simplify(nchilds);
+	}
 
-    /**
-     * Create a Decision where the variable names occur as primed versions.
-     * @return  the primed version of this Decision.
-     */
-    public abstract Decision prime();
+	/**
+	 * Create a Decision where the variable names occur as primed versions.
+	 *
+	 * @return the primed version of this Decision.
+	 */
+	public abstract Decision prime();
 
-    /**
-     * Create a Decision where primed variable names occur as unprimed versions.
-     * @return  the unprimed version of this Decision.
-     */
-    public abstract Decision unprime();
+	public abstract Decision prime(String ignore);
 
-    public abstract String toString(int child);
+	/**
+	 * Create a Decision where primed variable names occur as unprimed versions.
+	 *
+	 * @return the unprimed version of this Decision.
+	 */
+	public abstract Decision unprime();
 
-    public abstract String toSmtString(int child);
+	public abstract Decision unprime(String ignore);
 
-    public abstract String toTexString(int child);
+	public abstract String toString(int child);
 
-    public abstract String toUppaalString(int child);
+	public abstract String toSmtString(int child);
 
-    public abstract String toUppaalStringDOM(int child);
+	public abstract String toTexString(int child);
 
-    public abstract String getVar(); // sr 2010-07-29
+	public abstract String toUppaalString(int child);
 
-    public String getSafeVar() {
-        return "var_h_" + Math.abs(getVar().hashCode());
-    }
+	public abstract String toUppaalStringDOM(int child);
 
-    public String toSmtString(int child, int index) {
-        return toSmtString(child);
-    }
+	public abstract String getVar(); // sr 2010-07-29
+
+	public String getSafeVar() {
+		return "var_h_" + Math.abs(getVar().hashCode());
+	}
+
+	public String toSmtString(final int child, final int index) {
+		return toSmtString(child);
+	}
+
 }

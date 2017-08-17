@@ -1,43 +1,49 @@
 Further examples can be found in the following repositories.
+ * SVCOMP: https://github.com/dbeyer/sv-benchmarks
+ * ultimate-benchmarks: https://github.com/ultimate-pa/ultimate-benchmarks.git
 
-the SVCOMP repository has changed to https://github.com/dbeyer/sv-benchmarks
+Notes:
+ * Read the rest of the file before you start 
+ * You should clone in a different folder than the Ultimate folder.  
+ * You might want to do a sparse checkout for svcomp to avoid pulling unnecessary files 
+ * Because our tests expect the additional examples in a special place, you should symlink them. 
+   For Linux, use a symlink to map the folders to our examples folder: 
+   ln -s /storage/svcomp/c /storage/ultimate/trunk/examples/svcomp
+   ln -s /storage/ultimate-benchmarks /storage/ultimate/trunk/examples/ultbench
+   
+   For Windows, open "cmd" as Administrator and use mklink:
+   mklink /D Drive:\path\to\ultimate-repo\examples\svcomp Drive:\path\to\svcomp-repo\c
+   mklink /D F:\repos\ultimate\trunk\examples\ultbench F:\repos\ultimate-benchmarks
+ 
 
-
-As it is more complicated with git to checkout only parts of the repository
-(and because Dirks description on the SVCOMP mailinglist lacked some
-information), here a short introduction how I got the latest SVCOMP C
-benchmarks on monteverdi. I assume you want to make a fresh clone. 
-
-# create a directory
-mkdir svcomp
-# make it a fresh git repository
-git init
-# add the remote from which you want to pull later 
-git remote add origin https://github.com/dbeyer/sv-benchmarks
-
-# tell git that you want to use sparse checkouts
-git config core.sparsecheckout true
-# create a file that will describe what you want from the remote repo, e.g. by using touch 
-touch .git/info/sparse-checkout
-# say that you, e.g., only want the folder c/ containing the C benchmarks 
-echo c/ >> .git/info/sparse-checkout
-# get all your benchmarks without the history ("--depth=1")
-git pull origin master --depth=1
+Long paths with git and Windows 
+  * Windows does not support long paths, which may be a problem for various repositories you can clone here. 
+  * For Windows 10, you can enable long path support in git and in Windows itself
+    Open "Edit Group Policy"
+	Goto Computer Configuration -> Administrative Templates -> System -> Filesystem 
+	Set "Enable Win32 long paths" to Enabled 
+	Open "Git Bash" with Admin rights 
+	Run "git config --system core.longpaths true" 
+ 
+Sparse-checkout with git 
+  * We assume you want to make a fresh clone. 
+  * create a directory
+    mkdir svcomp
+  * make it a fresh git repository
+    git init
+  * add the remote from which you want to pull later 
+    git remote add origin https://github.com/dbeyer/sv-benchmarks
+  * tell git that you want to use sparse checkouts
+    git config core.sparsecheckout true
+  * create a file that will describe what you want from the remote repo, e.g. by using touch 
+    touch .git/info/sparse-checkout
+  * say that you, e.g., only want the folder c/ containing the C benchmarks 
+    echo c/ >> .git/info/sparse-checkout
+  * get all your benchmarks without the history ("--depth=1")
+    git pull origin master --depth=1
 
 The whole directory will then be approx. 5GB
 
 If you for some reason modify the sparse-checkout file, you have to run the
 following command (from your repo root) to inform git about your change: 
 git read-tree -mu HEAD
-
-Now, the sad part: git does not support any way of changing the folder
-structure. You end up with svcomp/c/... and no way to change this (if you
-want to pull). 
-But we need the examples in a special place, because our tests assume this. 
-
-I used a symlink on monteverdi to map svcomp to our examples folder, like
-so: 
-ln -s /storage/svcomp/c /storage/ultimate/trunk/examples/svcomp
-
-Under Windows, open "cmd" as Administrator and use mklink:
-mklink /D Drive:\path\to\ultimate-repo\examples\svcomp Drive:\path\to\svcomp-repo\c

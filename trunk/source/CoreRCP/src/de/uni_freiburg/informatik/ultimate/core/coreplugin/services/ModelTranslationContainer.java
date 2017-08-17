@@ -35,7 +35,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationS
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IBacktranslatedCFG;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.ITranslator;
-import de.uni_freiburg.informatik.ultimate.util.Utils;
+import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 
 /**
  *
@@ -257,6 +257,6 @@ class ModelTranslationContainer implements IBacktranslationService {
 
 	@Override
 	public String toString() {
-		return Utils.join(mTranslationSequence, ",");
+		return CoreUtil.join(mTranslationSequence, ",");
 	}
 }

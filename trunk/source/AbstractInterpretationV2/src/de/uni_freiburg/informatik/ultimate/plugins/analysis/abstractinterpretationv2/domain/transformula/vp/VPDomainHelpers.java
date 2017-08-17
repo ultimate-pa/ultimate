@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -36,17 +37,26 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalStore;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqFunction;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNode;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqGraphNode;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.IEqFunctionIdentifier;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.EqConstraint;
 
 /**
  *
@@ -72,6 +82,11 @@ public class VPDomainHelpers {
 		return result;
 	}
 	
+	public static Map<Term, Term> computeNormalizingSubstitution(final Map<IProgramVar, TermVariable> map1, 
+			final Map<IProgramVar, TermVariable> map2) {
+		return computeNormalizingSubstitution(computeProgramVarMappingFromInVarOutVarMappings(map1, map2));
+	}
+
 	public static Map<Term, Term> computeNormalizingSubstitution(final TransFormula tf) {
 		return computeNormalizingSubstitution(computeProgramVarMappingFromTransFormula(tf));
 	}
@@ -90,36 +105,6 @@ public class VPDomainHelpers {
 		}
 		return substitionMap;
 	}
-	
-//	public static <T extends IIcfgTransition<IcfgLocation>> boolean
-//			containsNoNullElement(final Collection<VPState<T>> states) {
-//		for (final VPState<T> state : states) {
-//			if (state == null) {
-//				return false;
-//			}
-//		}
-//		return true;
-//	}
-	
-//	public static <T extends IIcfgTransition<IcfgLocation>> boolean
-//			allStateBuildersHaveSameVariables(final Collection<VPStateBuilder<T>> resultStates) {
-//		final Set<VPState<T>> mapped =
-//				resultStates.stream().map(builder -> builder.build()).collect(Collectors.toSet());
-//		return allStatesHaveSameVariables(mapped);
-//	}
-	
-//	public static <T extends IIcfgTransition<IcfgLocation>> boolean
-//			allStatesHaveSameVariables(final Collection<VPState<T>> resultStates) {
-//		if (resultStates.isEmpty()) {
-//			return true;
-//		}
-//		boolean result = true;
-//		final Set<IProgramVarOrConst> sample = resultStates.iterator().next().getVariables();
-//		for (final VPState<?> rs : resultStates) {
-//			result &= sample.equals(rs.getVariables());
-//		}
-//		return result;
-//	}
 	
 	public static IProgramVar getProgramVar(final TermVariable newArray, final Map<IProgramVar, TermVariable> map) {
 		for (final Entry<IProgramVar, TermVariable> en : map.entrySet()) {
@@ -248,66 +233,25 @@ public class VPDomainHelpers {
 		return Collections.unmodifiableMap(result);
 	}
 
-//	public static <NODEID extends IEqNodeIdentifier<NODEID, ARRAYID>, ARRAYID> boolean
-//			disEqualitySetContainsOnlyRepresentatives(final Set<VPDomainSymmetricPair<NODEID>> disEqualitySet,
-//					final IVPStateOrTfState<NODEID, ARRAYID> state) {
-//		for (final VPDomainSymmetricPair<NODEID> pair : disEqualitySet) {
-//			final EqGraphNode<NODEID, ARRAYID> firstEgn = state.getEqGraphNode(pair.getFirst());
-//			if (firstEgn.getRepresentative() != firstEgn) {
-//				return false;
-//			}
-//			final EqGraphNode<NODEID, ARRAYID> secondEgn = state.getEqGraphNode(pair.getSecond());
-//			if (secondEgn.getRepresentative() != secondEgn) {
-//				return false;
-//			}
-//		}
-//		return true;
-//	}
-	
-//	public static <T extends IVPStateOrTfState<NODEID, ARRAYID>, NODEID extends IEqNodeIdentifier<NODEID, ARRAYID>, ARRAYID>
-//			boolean disEqualitySetContainsOnlyRepresentatives(final Set<VPDomainSymmetricPair<NODEID>> disEqualitySet,
-//					final IVPStateOrTfStateBuilder<T, NODEID, ARRAYID> builder) {
-//		for (final VPDomainSymmetricPair<NODEID> pair : disEqualitySet) {
-//			final EqGraphNode<NODEID, ARRAYID> firstEgn = builder.getEqGraphNode(pair.getFirst());
-//			if (firstEgn.getRepresentative() != firstEgn) {
-//				return false;
-//			}
-//			final EqGraphNode<NODEID, ARRAYID> secondEgn = builder.getEqGraphNode(pair.getSecond());
-//			if (secondEgn.getRepresentative() != secondEgn) {
-//				return false;
-//			}
-//		}
-//		return true;
-//	}
-
-//	public static <T extends IVPStateOrTfState<NODEID, ARRAYID>, NODEID extends IEqNodeIdentifier<NODEID, ARRAYID>, ARRAYID>
-//			boolean disEqualityRelationIrreflexive(final Set<VPDomainSymmetricPair<NODEID>> disEqualitySet,
-//					final IVPStateOrTfStateBuilder<T, NODEID, ARRAYID> builder) {
-//		for (final VPDomainSymmetricPair<NODEID> pair : disEqualitySet) {
-//			// both "==" and "equals" just to make sure..
-//			if (pair.getFirst() == pair.getSecond()) {
-//				return false;
-//			}
-//			if (pair.getFirst().equals(pair.getSecond())) {
-//				return false;
-//			}
-//		}
-//		return true;
-//	}
-	
 	/**
 	 * cross product computation
 	 *
 	 * @param
-	 * @return
+	 * @return the cross product, null if there was a timeout
 	 */
-	public static <T> Set<List<T>> computeCrossProduct(final List<Set<T>> nodesWithSideConditions) {
+	public static <T> Set<List<T>> computeCrossProduct(final List<Set<T>> nodesWithSideConditions,
+			IUltimateServiceProvider services) {
 		
 		Set<List<T>> result = new HashSet<>();
 		result.add(new ArrayList<>());
 		for (final Set<T> nwscs : nodesWithSideConditions) {
 			final Set<List<T>> newResult = new HashSet<>();
 			
+			// check timeout
+			if (!services.getProgressMonitorService().continueProcessing()) {
+				return null;
+			}
+
 			for (final List<T> index : result) {
 				for (final T nwsc : nwscs) {
 					final List<T> newIndex = new ArrayList<>(index);
@@ -327,41 +271,6 @@ public class VPDomainHelpers {
 		return projectToTerm(projectToVars(varMapping, projectionVars), projectionTerm);
 	}
 	
-//	public static <ACTION extends IIcfgTransition<IcfgLocation>, NODEID extends IEqNodeIdentifier<NODEID, ARRAYID>, ARRAYID>
-//			boolean isHavocced(final ARRAYID array, final IVPStateOrTfState<NODEID, ARRAYID> resultState) {
-//		// TODO: fix the other isHavocced before using this
-//		for (final EqGraphNode<NODEID, ARRAYID> node : resultState.getAllEqGraphNodes()) {
-//			if (!node.mNodeIdentifier.getAllFunctions().contains(array)) {
-//				continue;
-//			}
-//			if (!isHavocced(node.mNodeIdentifier, resultState)) {
-//				return false;
-//			}
-//			
-//		}
-//		return true;
-//	}
-
-//	public static <ACTION extends IIcfgTransition<IcfgLocation>, NODEID extends IEqNodeIdentifier<NODEID, ARRAYID>, ARRAYID>
-//			boolean isHavocced(final NODEID nodeId, final IVPStateOrTfState<NODEID, ARRAYID> resultState) {
-//		final EqGraphNode<NODEID, ARRAYID> node = resultState.getEqGraphNode(nodeId);
-//		/*
-//		 * the node that has been havocced --> must be its own representative --> its set of reverseRepresentatives must
-//		 * be empty --> may not appear in a disequality ... -except- if there is a reason for propagation somewhere else
-//		 * in the graph(!) --> TODO: either account for this or don't use this method
-//		 */
-//		if (node.getRepresentative() != node) {
-//			return false;
-//		}
-//		if (!node.getReverseRepresentative().isEmpty()) {
-//			return false;
-//		}
-//		if (!resultState.getDisequalities(node.mNodeIdentifier).isEmpty()) {
-//			return false;
-//		}
-//		return true;
-//	}
-	
 	public static <T> Set<T> intersect(Set<T> s1, Set<T> s2) {
 		final Set<T> result = new HashSet<>(s1);
 		result.retainAll(s2);
@@ -378,59 +287,68 @@ public class VPDomainHelpers {
 		return true;
 	}
 
-	/**
-	 * Used when constructing an EqFunctionNode.
-	 * Computes the procedure it is local to, from its constructor arguments, null if it is global.
-	 * 
-	 * @param function
-	 * @param args
-	 * @return
-	 */
-	public static String computeProcedure(EqFunction function, List<EqNode> args) {
-		String result = null;
-		
-		result = function.getProcedure();
-		
-		for (EqNode arg : args) {
-			String argProc = arg.getProcedure();
-			if (argProc != null) {
-				if (result == null) {
-					result = argProc;
-				} else {
-					assert result.equals(argProc);
-				}
-			}
+	public static <ACTION extends IIcfgTransition<IcfgLocation>, 
+		NODE extends IEqNodeIdentifier<NODE, FUNCTION>, 
+		FUNCTION extends IEqFunctionIdentifier<NODE, FUNCTION>> boolean 
+			constraintFreeOfVars(final Collection<TermVariable> varsToProjectAway,
+					final EqConstraint<ACTION, NODE, FUNCTION> unfrozen, 
+					final Script script) {
+		if (varsToProjectAway.isEmpty()) {
+			return true;
 		}
-		
-		return result;
+		if (varsToProjectAway.stream().map(tv -> 
+			unfrozen.getAllNodes().stream()
+				.anyMatch(node -> 
+					Arrays.asList(node.getTerm().getFreeVars()).contains(tv)))
+				.reduce((a, b) -> a || b)
+			.get()) {
+			return false;
+		}
+		if (varsToProjectAway.stream().map(tv -> 
+			unfrozen.getAllFunctions().stream()
+				.anyMatch(func -> 
+					Arrays.asList(func.getTerm().getFreeVars()).contains(tv)))
+				.reduce((a, b) -> a || b)
+			.get()) {
+			return false;
+		}
+		if (script != null && Arrays.asList(unfrozen.getTerm(script)
+				.getFreeVars()).stream().anyMatch(fv -> varsToProjectAway.contains(fv))) {
+			return false;
+		}
+		return true;
 	}
 
-//	/**
-//	 * eliminates all the bottom states, except if the set would be empty then. In that case, returns a singleton with
-//	 *  the bottom state.
-//	 * @param resultStates
-//	 * @return
-//	 */
-////	public static  <ACTION extends IIcfgTransition<IcfgLocation>> Set<VPState<ACTION>> 
-////	public static  <NODEID extends IEqNodeIdentifier<ARRAYID>, ARRAYID> Set<IVPStateOrTfState<NODEID, ARRAYID>> 
-//	public static  <T extends IVPStateOrTfState<NODEID, ARRAYID>, NODEID extends IEqNodeIdentifier<NODEID, ARRAYID>, ARRAYID> 
-//		Set<T> 
-//			eliminateBottomStates(Set<T> resultStates) {
-//		final Set<T> result = new HashSet<>();
-//		T bottom = null;
-//		for (T rs : resultStates) {
-//			if (rs.isBottom()) {
-//				bottom = rs;
-//			} else {
-//				result.add(rs);
-//			}
-//		}
-//		if (result.isEmpty()) {
-//			assert bottom != null;
-//			result.add(bottom);
-//		}
-//		return result;
-////		return resultStates.stream().filter(state -> !state.isBottom()).collect(Collectors.toSet());
-//	}
+	public static <NODE extends IEqNodeIdentifier<NODE, FUNCTION>, 
+		FUNCTION extends IEqFunctionIdentifier<NODE, FUNCTION>> boolean 
+			representativePointersAreConsistent(Collection<EqGraphNode<NODE, FUNCTION>> values) {
+		for (EqGraphNode<NODE, FUNCTION> eqgn : values) {
+			for (EqGraphNode<NODE, FUNCTION> rr : eqgn.getReverseRepresentative()) {
+				if (rr.getRepresentative() != eqgn) {
+					return false;
+				}
+			}
+			if (!eqgn.getRepresentative().getReverseRepresentative().contains(eqgn)) {
+				return false;
+			}
+		}
+		return true;
+	}
 
+	public static Term normalizeTerm(Term term, TransFormula tf, ManagedScript mgdScript) {
+		final Map<Term, Term> subs = computeNormalizingSubstitution(tf);
+		return new Substitution(mgdScript, subs).transform(term);
+	}
+
+	public static Term normalizeTerm(Term t, Map<IProgramVar, TermVariable> newInVars,
+			Map<IProgramVar, TermVariable> newOutVars, ManagedScript mgdScript) {
+		final Map<Term, Term> subs = computeNormalizingSubstitution(newInVars, newOutVars);
+		return new Substitution(mgdScript, subs).transform(t);
+	}
+
+	public static List<Term> normalizeArrayIndex(ArrayIndex index, TransFormula tf, ManagedScript script) {
+		return index.stream()
+				.map(t -> normalizeTerm(t, tf, script))
+				.collect(Collectors.toList());
+	}
 }

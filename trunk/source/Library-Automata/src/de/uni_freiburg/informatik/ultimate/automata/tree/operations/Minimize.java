@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.tree.IRankedLetter;
 import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
@@ -55,7 +56,7 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
  * @param <STATE>
  *            state of the tree automaton.
  */
-public class Minimize<LETTER, STATE> implements IOperation<LETTER, STATE, IStateFactory<STATE>> {
+public class Minimize<LETTER extends IRankedLetter, STATE> implements IOperation<LETTER, STATE, IStateFactory<STATE>> {
 
 	private final TreeAutomatonBU<LETTER, STATE> mTreeAutomaton;
 	private final IMergeStateFactory<STATE> mStateFactory;
@@ -116,9 +117,9 @@ public class Minimize<LETTER, STATE> implements IOperation<LETTER, STATE, IState
 			}
 			final ArrayList<STATE> s = (ArrayList<STATE>) src.clone();
 			s.set(idx, s2);
-			// If we replace an occurance of s1 by s2 in the rule, and it still yields an equivalent destination
+			// If we replace an occurrence of s1 by s2 in the rule, and it still yields an equivalent destination
 			// Then we can replace s2 by s1 in this rule
-			// TODO(amin): Check if just one occurance or all of them is needed.
+			// TODO(amin): Check if just one occurrence or all of them is needed.
 			for (final STATE dest : mTreeAutomaton.getSuccessors(s, rule.getLetter())) {
 				if (worklist.equiv(dest, rule.getDest())) {
 					return true;
@@ -147,7 +148,8 @@ public class Minimize<LETTER, STATE> implements IOperation<LETTER, STATE, IState
 	}
 
 	private ITreeAutomatonBU<LETTER, STATE> computeResult() {
-
+		//return removeUnreachables(mTreeAutomaton);
+		
 		DisjointSet<STATE> worklist = new DisjointSet<>(mTreeAutomaton.getStates());
 		STATE finalState = null;
 		STATE initState = null;
@@ -159,13 +161,6 @@ public class Minimize<LETTER, STATE> implements IOperation<LETTER, STATE, IState
 				} else {
 					// All final states are equivalent.
 					worklist.union(finalState, state);
-				}
-			} else if (mTreeAutomaton.isInitialState(state)) {
-				if (initState == null) {
-					initState = state;
-				} else {
-					// all initial states are equivalent
-					worklist.union(initState, state);
 				}
 			} else {
 				if (nonFinalState == null) {
@@ -209,9 +204,6 @@ public class Minimize<LETTER, STATE> implements IOperation<LETTER, STATE, IState
 			if (mTreeAutomaton.isFinalState(st)) {
 				res.addFinalState(minimize(worklist.getPartition(st)));
 			}
-			if (mTreeAutomaton.isInitialState(st)) {
-				res.addInitialState(minimize(worklist.getPartition(st)));
-			}
 		}
 
 		for (final TreeAutomatonRule<LETTER, STATE> rule : mTreeAutomaton.getRules()) {
@@ -224,6 +216,7 @@ public class Minimize<LETTER, STATE> implements IOperation<LETTER, STATE, IState
 					new TreeAutomatonRule<>(rule.getLetter(), src, minimize(worklist.getPartition(rule.getDest()))));
 		}
 		return removeUnreachables(res);
+		
 	}
 
 	private ITreeAutomatonBU<LETTER, STATE> removeUnreachables(final TreeAutomatonBU<LETTER, STATE> treeAutomaton) {
@@ -231,9 +224,6 @@ public class Minimize<LETTER, STATE> implements IOperation<LETTER, STATE, IState
 
 		final Set<STATE> worklist = new HashSet<>();
 
-		for (final STATE st : treeAutomaton.getInitialStates()) {
-			worklist.add(st);
-		}
 		final Set<STATE> oldWorklist = new HashSet<>();
 
 		do {
@@ -301,9 +291,6 @@ public class Minimize<LETTER, STATE> implements IOperation<LETTER, STATE, IState
 				if (treeAutomaton.isFinalState(st)) {
 					res.addFinalState(st);
 				}
-				if (treeAutomaton.isInitialState(st)) {
-					res.addInitialState(st);
-				}
 			}
 		}
 
@@ -317,8 +304,7 @@ public class Minimize<LETTER, STATE> implements IOperation<LETTER, STATE, IState
 
 	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
-		// TODO Auto-generated method stub
-		return false;
+		return true;
 	}
 
 	/***

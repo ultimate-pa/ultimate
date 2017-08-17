@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarAbsIntRunner;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PathProgramCache;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
@@ -86,7 +87,8 @@ public class RefinementStrategyFactory<LETTER extends IIcfgTransition<?>> {
 	public RefinementStrategyFactory(final ILogger logger, final IUltimateServiceProvider services,
 			final IToolchainStorage storage, final TAPreferences taPrefsForInterpolantConsolidation,
 			final TaCheckAndRefinementPreferences<LETTER> prefs, final CegarAbsIntRunner<LETTER> absIntRunner,
-			final IIcfg<?> initialIcfg, final PredicateFactory predicateFactory) {
+			final IIcfg<?> initialIcfg, final PredicateFactory predicateFactory,
+			final PathProgramCache<LETTER> pathProgramCache) {
 		mServices = services;
 		mStorage = storage;
 		mPrefsConsolidation = taPrefsForInterpolantConsolidation;
@@ -95,7 +97,7 @@ public class RefinementStrategyFactory<LETTER extends IIcfgTransition<?>> {
 		mLogger = logger;
 		mInitialIcfg = initialIcfg;
 		mPredicateFactory = predicateFactory;
-		mAssertionOrderModulation = new AssertionOrderModulation<>(logger);
+		mAssertionOrderModulation = new AssertionOrderModulation<>(pathProgramCache, logger);
 	}
 
 	protected PredicateUnifier getNewPredicateUnifier() {

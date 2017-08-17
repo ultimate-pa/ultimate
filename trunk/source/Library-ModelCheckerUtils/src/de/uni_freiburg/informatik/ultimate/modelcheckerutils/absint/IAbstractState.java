@@ -29,11 +29,14 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 
 /**
  * An abstract state is an abstraction of all program variables at a certain program location.
@@ -109,6 +112,29 @@ public interface IAbstractState<STATE extends IAbstractState<STATE, VARDECL>, VA
 	Set<VARDECL> getVariables();
 
 	/**
+	 * Create a new {@link IAbstractState} by renaming a variable.
+	 *
+	 * @param oldVar
+	 *            The old "name" of the variable. May not be null.
+	 * @param newVar
+	 *            The new "name" of the variable. May not be null.
+	 * @return A state that is equivalent to this one except for the renamed variable.
+	 */
+	default STATE renameVariable(final VARDECL oldVar, final VARDECL newVar) {
+		return renameVariables(Collections.singletonMap(oldVar, newVar));
+	}
+
+	/**
+	 * Create a new {@link IAbstractState} by renaming some variables.
+	 *
+	 * @param old2newVars
+	 *            A mapping from old variable names to new variable names. If the mapping maps some variable to null,
+	 *            this method should throw an exception.
+	 * @return A state that is equivalent to this one except for the renamed variables.
+	 */
+	STATE renameVariables(final Map<VARDECL, VARDECL> old2newVars);
+
+	/**
 	 * Create a new state that has all the variables and abstraction of this {@link IAbstractState} and of the
 	 * <code>dominator</code> (i.e., Var(return) = Var(this) &cup; Var(dominator)). If both states (this and dominator)
 	 * share variables, the abstraction of dominator should replace the abstraction of this state (e.g., if
@@ -178,9 +204,37 @@ public interface IAbstractState<STATE extends IAbstractState<STATE, VARDECL>, VA
 	SubsetResult isSubsetOf(final STATE other);
 
 	/**
+	 * Evaluate the supplied term under this {@link IAbstractState}.
+	 *
+	 * @param script
+	 *            A {@link Script} that can be used during evaluation.
+	 * @param term
+	 *            The {@link Term} that should be evaluated.
+	 *
+	 * @return {@link EvalResult#TRUE} if this state does not allow any valuation that makes the term equivalent to
+	 *         false, {@link EvalResult#FALSE} if this state does not allow any valuation that makes the term equivalent
+	 *         to true, and {@link EvalResult#UNKNOWN} otherwise. Note that in particular, an implementation that only
+	 *         returns {@link EvalResult#UNKNOWN} is sound.
+	 */
+	default EvalResult evaluate(final Script script, final Term term) {
+		final Term local = getTerm(script);
+		final Term notTerm = SmtUtils.not(script, term);
+		final LBool localImpliesTermResult = SmtUtils.checkSatTerm(script, SmtUtils.and(script, local, notTerm));
+		if (localImpliesTermResult == LBool.UNSAT) {
+			return EvalResult.TRUE;
+		}
+		final Term notLocal = SmtUtils.not(script, local);
+		final LBool termImpliesLocalResult = SmtUtils.checkSatTerm(script, SmtUtils.and(script, notLocal, term));
+		if (termImpliesLocalResult == LBool.UNSAT) {
+			return EvalResult.FALSE;
+		}
+		return EvalResult.UNKNOWN;
+	}
+
+	/**
 	 * Return a compacted representation of the current {@link IAbstractState} where all variables are removed for which
 	 * no information is present (i.e., remove all "top" variables).
-	 * 
+	 *
 	 * @return A compacted {@link IAbstractState} that is equivalent to this state except for the tracked variables.
 	 */
 	STATE compact();
@@ -201,6 +255,20 @@ public interface IAbstractState<STATE extends IAbstractState<STATE, VARDECL>, VA
 	 * @return A {@link String} representing this abstract state.
 	 */
 	String toLogString();
+
+	/**
+	 * The result of {@link IAbstractState#evaluate(Script, Term)}.
+	 *
+	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+	 *
+	 */
+	public enum EvalResult {
+		TRUE,
+
+		FALSE,
+
+		UNKNOWN
+	}
 
 	/**
 	 * The result of {@link IAbstractState#isSubsetOf(IAbstractState)}.

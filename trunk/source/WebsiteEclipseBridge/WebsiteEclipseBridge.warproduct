@@ -15,7 +15,7 @@
       <plugin id="de.uni_freiburg.informatik.ultimate.buchiprogramproduct"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.cdt.parser"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.core"/>
-      <plugin id="de.uni_freiburg.informatik.ultimate.heapseparator"/>
+      <plugin id="de.uni_freiburg.informatik.ultimate.interactive"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.lib.automata"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.lib.boogieast"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.lib.core"/>
@@ -109,7 +109,7 @@
       <plugin id="de.uni_freiburg.informatik.ultimate.buchiprogramproduct" autoStart="true" startLevel="0" />
       <plugin id="de.uni_freiburg.informatik.ultimate.cdt.parser" autoStart="true" startLevel="0" />
       <plugin id="de.uni_freiburg.informatik.ultimate.core" autoStart="true" startLevel="0" />
-      <plugin id="de.uni_freiburg.informatik.ultimate.heapseparator" autoStart="true" startLevel="0" />
+      <plugin id="de.uni_freiburg.informatik.ultimate.interactive" autoStart="true" startLevel="0" />
       <plugin id="de.uni_freiburg.informatik.ultimate.lib.automata" autoStart="true" startLevel="0" />
       <plugin id="de.uni_freiburg.informatik.ultimate.lib.boogieast" autoStart="true" startLevel="0" />
       <plugin id="de.uni_freiburg.informatik.ultimate.lib.core" autoStart="true" startLevel="0" />

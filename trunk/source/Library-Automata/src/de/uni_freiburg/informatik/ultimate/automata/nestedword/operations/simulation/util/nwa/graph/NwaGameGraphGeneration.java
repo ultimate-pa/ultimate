@@ -52,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Remove
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.IMinimizationStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaMaxSat2;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaPmaxSat;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaPmaxSatDirect;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.AGameGraph;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.ASimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.GameGraphChanges;
@@ -727,7 +728,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 			final BiPredicate<STATE, STATE> finalNonfinalConstraint = useFinalStateConstraints
 					? new MinimizeNwaMaxSat2.TrueBiPredicate<>()
 					: new MinimizeNwaMaxSat2.RelationBackedBiPredicate<>(new HashRelationBackedSetOfPairs<>());
-			final MinimizeNwaPmaxSat<LETTER, STATE> minimizer = new MinimizeNwaPmaxSat<>(mServices, stateFactory, mNwa,
+			final MinimizeNwaPmaxSat<LETTER, STATE> minimizer = new MinimizeNwaPmaxSatDirect<>(mServices, stateFactory, mNwa,
 					new PartitionBackedSetOfPairs<>(equivalenceClassesAsCollection),
 					new MinimizeNwaMaxSat2.Settings<STATE>()
 							.setFinalNonfinalConstraintPredicate(finalNonfinalConstraint));

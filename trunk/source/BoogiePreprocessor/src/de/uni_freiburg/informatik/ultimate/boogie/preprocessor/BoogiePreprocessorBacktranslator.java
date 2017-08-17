@@ -53,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
+import de.uni_freiburg.informatik.ultimate.boogie.type.ArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.ConstructedType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
@@ -194,14 +195,14 @@ public class BoogiePreprocessorBacktranslator
 				final AssumeStatement assumeStmt = (AssumeStatement) ate.getTraceElement();
 				final WhileStatement stmt = (WhileStatement) elem;
 				final StepInfo info = getStepInfoFromCondition(assumeStmt.getFormula(), stmt.getCondition());
-				atomicTrace.add(new AtomicTraceElement<BoogieASTNode>(stmt, stmt.getCondition(), info, stringProvider,
+				atomicTrace.add(new AtomicTraceElement<>(stmt, stmt.getCondition(), info, stringProvider,
 						ate.getRelevanceInformation()));
 
 			} else if (elem instanceof IfStatement) {
 				final AssumeStatement assumeStmt = (AssumeStatement) ate.getTraceElement();
 				final IfStatement stmt = (IfStatement) elem;
 				final StepInfo info = getStepInfoFromCondition(assumeStmt.getFormula(), stmt.getCondition());
-				atomicTrace.add(new AtomicTraceElement<BoogieASTNode>(stmt, stmt.getCondition(), info, stringProvider,
+				atomicTrace.add(new AtomicTraceElement<>(stmt, stmt.getCondition(), info, stringProvider,
 						ate.getRelevanceInformation()));
 
 			} else if (elem instanceof CallStatement) {
@@ -210,18 +211,17 @@ public class BoogiePreprocessorBacktranslator
 				// return), else its a procedure call with corresponding return
 
 				if (ate.hasStepInfo(StepInfo.NONE)) {
-					atomicTrace.add(new AtomicTraceElement<BoogieASTNode>(elem, elem, StepInfo.FUNC_CALL,
-							stringProvider, ate.getRelevanceInformation()));
-				} else {
-					atomicTrace.add(new AtomicTraceElement<BoogieASTNode>(elem, elem, ate.getStepInfo(), stringProvider,
+					atomicTrace.add(new AtomicTraceElement<>(elem, elem, StepInfo.FUNC_CALL, stringProvider,
 							ate.getRelevanceInformation()));
+				} else {
+					atomicTrace.add(new AtomicTraceElement<>(elem, elem, ate.getStepInfo(), stringProvider,
+							ate.getRelevanceInformation(), null, ((CallStatement) elem).getMethodName()));
 				}
 
 			} else {
 				// it could be that we missed some cases... revisit this if you
 				// suspect errors in the backtranslation
-				atomicTrace.add(
-						new AtomicTraceElement<BoogieASTNode>(elem, stringProvider, ate.getRelevanceInformation()));
+				atomicTrace.add(new AtomicTraceElement<>(elem, stringProvider, ate.getRelevanceInformation()));
 			}
 		}
 
@@ -251,32 +251,29 @@ public class BoogiePreprocessorBacktranslator
 		if (!(input instanceof UnaryExpression)) {
 			// it is not even an unary expression, it surely evaluates to true
 			return StepInfo.CONDITION_EVAL_TRUE;
-		} else {
-			final UnaryExpression inputCond = (UnaryExpression) input;
-			if (inputCond.getOperator() != Operator.LOGICNEG) {
-				// it is an unaryCond, but its no negation, so it must be true
-				return StepInfo.CONDITION_EVAL_TRUE;
-			}
-			// now it gets interesting: it is a negation, but is the real
-			// condition also a negation?
-
-			if (!(output instanceof UnaryExpression)) {
-				// nope, so that means it is false
-				return StepInfo.CONDITION_EVAL_FALSE;
-			} else {
-				final UnaryExpression outputCond = (UnaryExpression) output;
-				if (inputCond.getOperator() != Operator.LOGICNEG) {
-					// it is an unaryCond, but its no negation, so it must be
-					// false
-					return StepInfo.CONDITION_EVAL_FALSE;
-				} else {
-					// both have outer unary expressions that are logicneg.
-					// now we recurse, because we already stripped the outer
-					// negations
-					return getStepInfoFromCondition(inputCond.getExpr(), outputCond.getExpr());
-				}
-			}
 		}
+		final UnaryExpression inputCond = (UnaryExpression) input;
+		if (inputCond.getOperator() != Operator.LOGICNEG) {
+			// it is an unaryCond, but its no negation, so it must be true
+			return StepInfo.CONDITION_EVAL_TRUE;
+		}
+		// now it gets interesting: it is a negation, but is the real
+		// condition also a negation?
+
+		if (!(output instanceof UnaryExpression)) {
+			// nope, so that means it is false
+			return StepInfo.CONDITION_EVAL_FALSE;
+		}
+		final UnaryExpression outputCond = (UnaryExpression) output;
+		if (inputCond.getOperator() != Operator.LOGICNEG) {
+			// it is an unaryCond, but its no negation, so it must be
+			// false
+			return StepInfo.CONDITION_EVAL_FALSE;
+		}
+		// both have outer unary expressions that are logicneg.
+		// now we recurse, because we already stripped the outer
+		// negations
+		return getStepInfoFromCondition(inputCond.getExpr(), outputCond.getExpr());
 	}
 
 	@Override
@@ -328,8 +325,7 @@ public class BoogiePreprocessorBacktranslator
 			newTarget = createLabeledWitnessNode(oldTarget);
 			cache.put(oldTarget, newTarget);
 		}
-		final MultigraphEdge<String, BoogieASTNode> newEdge =
-				new MultigraphEdge<String, BoogieASTNode>(newSourceNode, newLabel, newTarget);
+		final MultigraphEdge<String, BoogieASTNode> newEdge = new MultigraphEdge<>(newSourceNode, newLabel, newTarget);
 		final ConditionAnnotation coan = ConditionAnnotation.getAnnotation(oldEdge.getLabel());
 		if (coan != null) {
 			coan.annotate(newEdge);
@@ -343,7 +339,7 @@ public class BoogiePreprocessorBacktranslator
 				new GenericResult(Activator.PLUGIN_ID, "Unfinished Backtranslation", message, Severity.WARNING));
 	}
 
-	private String printDebug(final BoogieASTNode node) {
+	private static String printDebug(final BoogieASTNode node) {
 		if (node instanceof Statement) {
 			return BoogiePrettyPrinter.print((Statement) node);
 		}
@@ -389,7 +385,8 @@ public class BoogiePreprocessorBacktranslator
 	}
 
 	/**
-	 * Backtranslate arbitrary Boogie expressions
+	 * Backtranslate arbitrary Boogie expressions that occur during
+	 * {@link BoogiePreprocessorBacktranslator#translateExpression(Expression)}.
 	 *
 	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
 	 */
@@ -529,12 +526,17 @@ public class BoogiePreprocessorBacktranslator
 			} else if (type instanceof ConstructedType) {
 				final ConstructedType ct = (ConstructedType) type;
 				if (ct.equals(ct.getUnderlyingType())) {
-					// this constructed type is a named type
+					// this constructed type is a named type;
+					if (ct.getClass() != ct.getUnderlyingType().getClass()) {
+						// Boogie types have a strange equals implementation, so we need to recheck the underlying type
+						return extractIdentifier(mappedLoc, list, inputExp, ct.getUnderlyingType());
+					}
 					return matchIdentifier(mappedLoc, list, inputExp);
-				} else {
-					return extractIdentifier(mappedLoc, list, inputExp, ct.getUnderlyingType());
 				}
+				return extractIdentifier(mappedLoc, list, inputExp, ct.getUnderlyingType());
 			} else if (type instanceof PrimitiveType) {
+				return matchIdentifier(mappedLoc, list, inputExp);
+			} else if (type instanceof ArrayType) {
 				return matchIdentifier(mappedLoc, list, inputExp);
 			} else {
 				reportUnfinishedBacktranslation("Unfinished Backtranslation: Type" + type + " of VarList "
@@ -548,7 +550,7 @@ public class BoogiePreprocessorBacktranslator
 				final IdentifierExpression inputExp) {
 			final String inputName = inputExp.getIdentifier();
 			for (final String name : list.getIdentifiers()) {
-				if (inputName.contains(name)) {
+				if (inputName.equals(name)) {
 					return new IdentifierExpression(mappedLoc, list.getType().getBoogieType(), name,
 							inputExp.getDeclarationInformation());
 				}
@@ -563,7 +565,7 @@ public class BoogiePreprocessorBacktranslator
 				// its the struct itself
 				final String inputName = inputExp.getIdentifier();
 				for (final String name : list.getIdentifiers()) {
-					if (inputName.contains(name)) {
+					if (inputName.equals(name)) {
 						return new IdentifierExpression(mappedLoc, type, name, inputExp.getDeclarationInformation());
 					}
 				}

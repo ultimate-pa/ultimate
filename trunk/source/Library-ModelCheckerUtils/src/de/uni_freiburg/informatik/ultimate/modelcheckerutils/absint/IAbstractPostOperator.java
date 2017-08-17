@@ -46,13 +46,17 @@ public interface IAbstractPostOperator<STATE extends IAbstractState<STATE, VARDE
 	 *
 	 * @param stateBeforeLeaving
 	 *            The abstract state in the old scope, i.e., the scope that we are leaving.
-	 * @param stateAfterLeaving
-	 *            The abstract state in the new scope, i.e., the scope that we are entering. This state has already all
-	 *            non-scope related variables set ({@link IAbstractState#patch(IAbstractState)} was already applied).
+	 * @param secondState
+	 *            Either the hierachical prestate or the state after leaving, depending on
+	 *            {@link IAbstractDomain#useHierachicalPre()}.
+	 *
+	 *            A state after leaving is the abstract state in the new scope, i.e., the scope that we are entering.
+	 *            This state has already all non-scope related variables set (
+	 *            {@link IAbstractState#patch(IAbstractState)} was already applied).
 	 * @param transition
 	 *            The transition that caused the scope change.
 	 * @return A new STATE that has the same variables as the old abstract state in the new scope and incorporates the
 	 *         effects of the taken transition.
 	 */
-	List<STATE> apply(STATE stateBeforeLeaving, STATE stateAfterLeaving, ACTION transition);
+	List<STATE> apply(STATE stateBeforeLeaving, STATE secondState, ACTION transition);
 }

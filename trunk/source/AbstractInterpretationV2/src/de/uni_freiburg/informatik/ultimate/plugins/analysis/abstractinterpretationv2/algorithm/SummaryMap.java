@@ -33,7 +33,7 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.AbstractMultiState;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.DisjunctiveAbstractState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState.SubsetResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
@@ -57,11 +57,11 @@ final class SummaryMap<STATE extends IAbstractState<STATE, VARDECL>, ACTION, VAR
 	}
 
 	@Override
-	public AbstractMultiState<STATE, VARDECL> getSummaryPostState(final ACTION summaryAction,
-			final AbstractMultiState<STATE, VARDECL> preCallState) {
+	public DisjunctiveAbstractState<STATE, VARDECL> getSummaryPostState(final ACTION summaryAction,
+			final DisjunctiveAbstractState<STATE, VARDECL> preCallState) {
 		final String procName = mTransProvider.getProcedureName(summaryAction);
 		final Set<Summary> summary = getSummary(procName);
-		final AbstractMultiState<STATE, VARDECL> rtr =
+		final DisjunctiveAbstractState<STATE, VARDECL> rtr =
 				summary.stream().filter(a -> preCallState.isSubsetOf(a.getCallPostState()) != SubsetResult.NONE)
 						.findAny().map(a -> a.getReturnPreState()).orElse(null);
 		return rtr;
@@ -74,8 +74,8 @@ final class SummaryMap<STATE extends IAbstractState<STATE, VARDECL>, ACTION, VAR
 	 * @param callStatement
 	 *            An action that leaves a scope
 	 */
-	void addSummary(final AbstractMultiState<STATE, VARDECL> callPostState,
-			final AbstractMultiState<STATE, VARDECL> returnPreState, final ACTION callStatement) {
+	void addSummary(final DisjunctiveAbstractState<STATE, VARDECL> callPostState,
+			final DisjunctiveAbstractState<STATE, VARDECL> returnPreState, final ACTION callStatement) {
 		// current is a call, but we have to find the summary
 		final String procName = mTransProvider.getProcedureName(callStatement);
 		final Set<Summary> oldSummaries = getSummary(procName);
@@ -91,17 +91,17 @@ final class SummaryMap<STATE extends IAbstractState<STATE, VARDECL>, ACTION, VAR
 	}
 
 	private Summary updateSummaries(final Set<Summary> oldSummaries,
-			final AbstractMultiState<STATE, VARDECL> callPostState,
-			final AbstractMultiState<STATE, VARDECL> returnPreState, final ACTION callStatement) {
+			final DisjunctiveAbstractState<STATE, VARDECL> callPostState,
+			final DisjunctiveAbstractState<STATE, VARDECL> returnPreState, final ACTION callStatement) {
 		final Iterator<Summary> iter = oldSummaries.iterator();
 		final Summary rtr;
 		while (iter.hasNext()) {
 			final Summary current = iter.next();
-			final AbstractMultiState<STATE, VARDECL> currentPre = current.getCallPostState();
-			final AbstractMultiState<STATE, VARDECL> currentPost = current.getReturnPreState();
+			final DisjunctiveAbstractState<STATE, VARDECL> currentPre = current.getCallPostState();
+			final DisjunctiveAbstractState<STATE, VARDECL> currentPost = current.getReturnPreState();
 			if (callPostState.isSubsetOf(currentPre) != SubsetResult.NONE) {
-				final AbstractMultiState<STATE, VARDECL> newCallPost = currentPre.union(callPostState);
-				final AbstractMultiState<STATE, VARDECL> newReturnPre = currentPost.union(returnPreState);
+				final DisjunctiveAbstractState<STATE, VARDECL> newCallPost = currentPre.union(callPostState);
+				final DisjunctiveAbstractState<STATE, VARDECL> newReturnPre = currentPost.union(returnPreState);
 				iter.remove();
 				rtr = new Summary(newCallPost, newReturnPre);
 				logCurrentSummaries("Del summary", callStatement, current);
@@ -145,20 +145,20 @@ final class SummaryMap<STATE extends IAbstractState<STATE, VARDECL>, ACTION, VAR
 	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
 	 */
 	private final class Summary {
-		private final AbstractMultiState<STATE, VARDECL> mCallPostState;
-		private final AbstractMultiState<STATE, VARDECL> mReturnPreState;
+		private final DisjunctiveAbstractState<STATE, VARDECL> mCallPostState;
+		private final DisjunctiveAbstractState<STATE, VARDECL> mReturnPreState;
 
-		private Summary(final AbstractMultiState<STATE, VARDECL> callPost,
-				final AbstractMultiState<STATE, VARDECL> returnPre) {
+		private Summary(final DisjunctiveAbstractState<STATE, VARDECL> callPost,
+				final DisjunctiveAbstractState<STATE, VARDECL> returnPre) {
 			mCallPostState = callPost;
 			mReturnPreState = returnPre;
 		}
 
-		AbstractMultiState<STATE, VARDECL> getReturnPreState() {
+		DisjunctiveAbstractState<STATE, VARDECL> getReturnPreState() {
 			return mReturnPreState;
 		}
 
-		AbstractMultiState<STATE, VARDECL> getCallPostState() {
+		DisjunctiveAbstractState<STATE, VARDECL> getCallPostState() {
 			return mCallPostState;
 		}
 

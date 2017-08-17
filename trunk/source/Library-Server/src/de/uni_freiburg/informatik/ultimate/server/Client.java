@@ -127,11 +127,13 @@ public abstract class Client<T> {
 			}
 			typeHandler = mHandlerRegistry.get(qTypeName);
 			if (data == null) {
+				mLogger.info("Answering Request for " + qTypeName + " from Client.");
 				mQueue.answer(msg, typeHandler.supply());
 			} else if (dataTypeUnregistered) {
 				warnUnregistered(typeName);
 				break;
 			} else {
+				mLogger.info("Answering Request for " + qTypeName + " with " + typeName + " data from Client.");
 				mQueue.answer(msg, typeHandler.supply(data));
 			}
 			break;

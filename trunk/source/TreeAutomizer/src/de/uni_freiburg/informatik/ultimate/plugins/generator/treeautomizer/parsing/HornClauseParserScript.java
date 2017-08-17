@@ -36,9 +36,13 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.Payload;
+import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HCSymbolTable;
+import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HornClause;
+import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HornUtilConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Assignments;
+import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Model;
 import de.uni_freiburg.informatik.ultimate.logic.NoopScript;
@@ -49,10 +53,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HCSymbolTable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornClause;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornUtilConstants;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
@@ -71,10 +73,12 @@ public class HornClauseParserScript extends NoopScript {
 	private final String mLogic;
 	private final Settings mSolverSettings;
 	private final HashSet<String> mDeclaredPredicateSymbols;
-	private final List<HornClause> mCurrentHornClause;
-	private final ArrayList<Term> mCurrentPredicateAtoms;
-	private final ArrayList<Term> mCurrentTransitionAtoms;
+	private final List<HornClause> mParsedHornClauses;
+//	private final ArrayList<Term> mCurrentPredicateAtoms;
+//	private final ArrayList<Term> mCurrentTransitionAtoms;
 	private final HCSymbolTable mSymbolTable;
+
+	private int mFreshVarCounter = 0;
 
 	public HornClauseParserScript(final ManagedScript smtSolverScript, final String logic, final Settings settings) {
 		mBackendSmtSolver = smtSolverScript;
@@ -83,19 +87,23 @@ public class HornClauseParserScript extends NoopScript {
 		setupBackendSolver();
 		mDeclaredPredicateSymbols = new HashSet<>();
 
-		mCurrentHornClause = new ArrayList<>();
-		mCurrentPredicateAtoms = new ArrayList<>();
-		mCurrentTransitionAtoms = new ArrayList<>();
+		mParsedHornClauses = new ArrayList<>();
+//		mCurrentPredicateAtoms = new ArrayList<>();
+//		mCurrentTransitionAtoms = new ArrayList<>();
 
 		mSymbolTable = new HCSymbolTable(mBackendSmtSolver);
 
+	}
+	
+	private boolean isUninterpretedPredicateSymbol(FunctionSymbol fs) {
+		return mDeclaredPredicateSymbols.contains(fs.getName());
 	}
 
 	public IElement getHornClauses() {
 		mSymbolTable.finishConstruction();
 
 		final Payload payload = new Payload();
-		final HornAnnot annot = new HornAnnot(mCurrentHornClause, mBackendSmtSolver, mSymbolTable);
+		final HornAnnot annot = new HornAnnot(mParsedHornClauses, mBackendSmtSolver, mSymbolTable);
 		payload.getAnnotations().put(HornUtilConstants.HORN_ANNOT_NAME, annot);
 
 		return new HornClauseAST(payload);
@@ -190,7 +198,8 @@ public class HornClauseParserScript extends NoopScript {
 
 		if (t.getFunction().getName().equals("and")) {
 			// t = And (y1 y2 ... yn)
-			final HornClauseCobody tail = new HornClauseCobody();
+			final HornClauseCobody tail = new HornClauseCobody(this);
+			/*
 			for (final Term literal : t.getParameters()) {
 				final ApplicationTerm par = (ApplicationTerm) literal;
 				if (mDeclaredPredicateSymbols.contains(par.getFunction().getName())) {
@@ -203,15 +212,20 @@ public class HornClauseParserScript extends NoopScript {
 					// yi = formula
 					tail.addTransitionFormula(par);
 				}
+			}*/
+			for (final Term literal : t.getParameters()) {
+				tail.mergeCobody(parseCobody(literal));
 			}
 			return tail;
 		}
-		final HornClauseCobody tail = new HornClauseCobody();
-		if (mDeclaredPredicateSymbols.contains(t.getFunction().getName())) {
+		final HornClauseCobody tail = new HornClauseCobody(this);
+//		if (mDeclaredPredicateSymbols.contains(t.getFunction().getName())) {
+		if (isUninterpretedPredicateSymbol(t.getFunction())) {
 			// yi = I
 			tail.addPredicate(t);
-		} else if (t.getFunction().getName().equals("not") && mDeclaredPredicateSymbols
-				.contains(((ApplicationTerm) t.getParameters()[0]).getFunction().getName())) {
+		} else if (t.getFunction().getName().equals("not") && 
+//				mDeclaredPredicateSymbols.contains(((ApplicationTerm) t.getParameters()[0]).getFunction().getName())) {
+				isUninterpretedPredicateSymbol((((ApplicationTerm) t.getParameters()[0]).getFunction()))) {
 			throw new SMTLIBException("The cobody has a negative predicate.");
 		} else {
 			// yi = formula
@@ -233,16 +247,18 @@ public class HornClauseParserScript extends NoopScript {
 		}
 		if (t.getFunction().getName().equals("or")) {
 			// t = Or (y1 ... yn)
-			final HornClauseBody head = new HornClauseBody();
+			final HornClauseBody head = new HornClauseBody(this);
 			for (final Term literal : t.getParameters()) {
 				final ApplicationTerm par = (ApplicationTerm) literal;
-				if (mDeclaredPredicateSymbols.contains(par.getFunction().getName())) {
+//				if (mDeclaredPredicateSymbols.contains(par.getFunction().getName())) {
+				if (isUninterpretedPredicateSymbol(par.getFunction())) {
 					// yi = I
 					if (!head.setHead(par)) {
 						throw new SMTLIBException("The head has more than a positive predicate symbol.");
 					}
-				} else if (par.getFunction().getName().equals("not") && mDeclaredPredicateSymbols
-						.contains(((ApplicationTerm) par.getParameters()[0]).getFunction().getName())) {
+				} else if (par.getFunction().getName().equals("not") && 
+//						mDeclaredPredicateSymbols.contains(((ApplicationTerm) par.getParameters()[0]).getFunction().getName())) {
+						isUninterpretedPredicateSymbol(((ApplicationTerm) par.getParameters()[0]).getFunction())) {
 					// yi = ~I
 					head.addPredicateToCobody((ApplicationTerm) par.getParameters()[0]);
 				} else {
@@ -254,51 +270,85 @@ public class HornClauseParserScript extends NoopScript {
 			}
 			return head;
 		}
-		final HornClauseBody head = new HornClauseBody();
-		if (mDeclaredPredicateSymbols.contains(t.getFunction().getName())) {
+		final HornClauseBody head = new HornClauseBody(this);
+//		if (mDeclaredPredicateSymbols.contains(t.getFunction().getName())) {
+		if (isUninterpretedPredicateSymbol(t.getFunction())) {
 			if (!head.setHead(t)) {
-				throw new SMTLIBException("The head has more than a positive predicate symbol.");
+				throw new SMTLIBException("The head has more than one positive predicate symbols.");
 			}
-		} else if (t.getFunction().getName().equals("not") && mDeclaredPredicateSymbols
-				.contains(((ApplicationTerm) t.getParameters()[0]).getFunction().getName())) {
+		} else if (t.getFunction().getName().equals("not") && 
+//				mDeclaredPredicateSymbols.contains(((ApplicationTerm) t.getParameters()[0]).getFunction().getName())) {
+				isUninterpretedPredicateSymbol(((ApplicationTerm) t.getParameters()[0]).getFunction())) {
 			head.addPredicateToCobody((ApplicationTerm) t.getParameters()[0]);
 		} else {
 			if (!t.equals(getTheory().mFalse)) {
 				head.addTransitionFormula(getTheory().not(t));
 			}
 		}
-
 		return head;
 	}
 
 	@Override
-	public LBool assertTerm(final Term term) throws SMTLIBException {
-		if (term instanceof QuantifiedFormula) {
-
+	public LBool assertTerm(final Term rawTerm) throws SMTLIBException {
+//		final Term term = normalizeAssertedTerm(rawTerm);
+		final Term term = rawTerm;
+		
+		if (term instanceof ApplicationTerm && !SmtUtils.isFunctionApplication(term, "not")) {
+			final HornClauseBody body = parseBody(term);
+			mParsedHornClauses.add(body.convertToHornClause(mBackendSmtSolver, mSymbolTable, getTheory()));
+		} else if (term instanceof QuantifiedFormula) {
 			final QuantifiedFormula thisTerm = (QuantifiedFormula) term;
 			if (thisTerm.getQuantifier() == FORALL) {
 				final HornClauseBody body = parseBody(thisTerm.getSubformula());
-				mCurrentHornClause.add(body.convertToHornClause(mBackendSmtSolver, mSymbolTable));
+				mParsedHornClauses.add(body.convertToHornClause(mBackendSmtSolver, mSymbolTable, getTheory()));
 				// System.err.println(mCurrentHornClause.get(mCurrentHornClause.size() - 1));
 			}
-		}
-
-		if (term instanceof ApplicationTerm && "not".equals(((ApplicationTerm) term).getFunction().getName())) {
+		} else if (SmtUtils.isFunctionApplication(term, "not")) {
 			final Term nested = ((ApplicationTerm) term).getParameters()[0];
 			if (nested instanceof QuantifiedFormula) {
 				final QuantifiedFormula thisTerm = (QuantifiedFormula) nested;
 				if (thisTerm.getQuantifier() == EXISTS) {
 					final HornClauseCobody cobody = parseCobody(thisTerm.getSubformula());
 					final HornClauseBody body = cobody.negate();
-					mCurrentHornClause.add(body.convertToHornClause(mBackendSmtSolver, mSymbolTable));
-					// System.err.println(mCurrentHornClause.get(mCurrentHornClause.size() - 1));
+					mParsedHornClauses.add(body.convertToHornClause(mBackendSmtSolver, mSymbolTable, getTheory()));
 				}
 			}
 		}
-		System.err.println("Parsed: " + mCurrentHornClause);
+		System.err.println("Parsed so far: " + mParsedHornClauses);
 		// for Horn clause solving we do no checks nothing until check-sat:
 		return LBool.UNKNOWN;
 	}
+
+//	/**
+//	 * Does some simple transformations towards the standard "constrained Horn clause" form.
+//	 * 
+//	 * @param term
+//	 * @return
+//	 */
+//	private Term normalizeAssertedTerm(Term term) {
+//		if (!(term instanceof QuantifiedFormula)) {
+//			if (!(term instanceof ApplicationTerm)) {
+//				throw new AssertionError("missing case??");
+//			}
+//			final ApplicationTerm at = (ApplicationTerm) term;
+//
+//			if (SmtUtils.isFunctionApplication(at, "=>")) {
+//				throw new AssertionError("missing case??");
+//			} else if (isUninterpretedPredicateSymbol(at.getFunction())) {
+//				
+//
+//				throw new AssertionError("missing case??");
+//			} else if (term instanceof ApplicationTerm) {
+//				
+//				
+//				throw new AssertionError("missing case??");
+//			} else {
+//				throw new AssertionError("missing case??");
+//			}
+//		} else {
+//			return term;
+//		}
+//	}
 
 	@Override
 	public LBool checkSat() {
@@ -340,24 +390,15 @@ public class HornClauseParserScript extends NoopScript {
 	@Override
 	public Term term(final String funcname, final BigInteger[] indices, final Sort returnSort, final Term... params)
 			throws SMTLIBException {
-		// System.err.println("(" + funcname + " " + termsToString(params) +
-		// ")");
 
 		final Term result = super.term(funcname, indices, returnSort, params);
+//
+//		if (mDeclaredPredicateSymbols.contains(funcname)) {
+//			mCurrentPredicateAtoms.add(result);
+//		} else {
+//			mCurrentTransitionAtoms.add(result);
+//		}
 
-		// if (SmtSortUtils.isBoolSort(returnSort)) {}
-		if (funcname.equals("=>")) {
-			int i = 0;
-			i++;
-
-		} else if (mDeclaredPredicateSymbols.contains(funcname)) {
-			mCurrentPredicateAtoms.add(result);
-
-		} else {
-			mCurrentTransitionAtoms.add(result);
-		}
-
-		// return mBackendSmtSolver.term(funcname, indices, returnSort, params);
 		return result;
 	}
 
@@ -555,5 +596,9 @@ public class HornClauseParserScript extends NoopScript {
 	public TermVariable variable(final String varname, final Sort sort) throws SMTLIBException {
 		// return mBackendSmtSolver.variable(varname, sort);
 		return super.variable(varname, sort);
+	}
+	
+	public TermVariable createFreshTermVariable(final String varname, final Sort sort) {
+		return variable("v_" + varname + "_" + mFreshVarCounter++, sort);
 	}
 }

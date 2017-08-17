@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
-import de.uni_freiburg.informatik.ultimate.util.Utils;
+import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 
 /**
  * Check emptiness and obtain an accepting run of a nested word automaton.
@@ -226,7 +226,7 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 	 */
 	public IsEmpty(final AutomataLibraryServices services, final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand,
 			final SearchStrategy strategy) throws AutomataOperationCanceledException {
-		this(services, operand, Utils.constructHashSet(operand.getInitialStates()), Collections.emptySet(), null, true,
+		this(services, operand, CoreUtil.constructHashSet(operand.getInitialStates()), Collections.emptySet(), null, true,
 				strategy);
 	}
 

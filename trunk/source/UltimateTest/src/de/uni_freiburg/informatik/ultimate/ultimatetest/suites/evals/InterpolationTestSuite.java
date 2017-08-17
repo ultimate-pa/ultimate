@@ -32,8 +32,8 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimate.test.logs.summaries.ColumnDefinition;
-import de.uni_freiburg.informatik.ultimate.test.logs.summaries.ConversionContext;
 import de.uni_freiburg.informatik.ultimate.test.logs.summaries.ColumnDefinition.Aggregate;
+import de.uni_freiburg.informatik.ultimate.test.logs.summaries.ConversionContext;
 import de.uni_freiburg.informatik.ultimate.test.util.DirectoryFileEndingsPair;
 import de.uni_freiburg.informatik.ultimate.ultimatetest.suites.AbstractEvalTestSuite;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -386,7 +386,6 @@ public abstract class InterpolationTestSuite extends AbstractEvalTestSuite {
 		rtr.add(getPair("examples/svcomp/ldv-validator-v0.8/", C));
 		rtr.add(getPair("examples/svcomp/ldv-linux-4.2-rc1/", C));
 		rtr.add(getPair("examples/svcomp/ldv-challenges/", C));
-		rtr.add(getPair("examples/svcomp/busybox-1.22.0/", I));
 		return rtr;
 	}
 	

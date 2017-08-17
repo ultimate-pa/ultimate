@@ -31,10 +31,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HornClausePredicateSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornClausePredicateSymbol;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
@@ -62,6 +62,10 @@ public class HCPredicate extends BasicPredicate {
 
 	protected HCPredicate(final HornClausePredicateSymbol programPoint, final int serialNumber, final Term term,
 			final Set<IProgramVar> vars, final Term closedFormula, final List<TermVariable> variables) {
+		this(programPoint, serialNumber, term, vars, closedFormula, variables, 0);
+	}
+	protected HCPredicate(final HornClausePredicateSymbol programPoint, final int serialNumber, final Term term,
+			final Set<IProgramVar> vars, final Term closedFormula, final List<TermVariable> variables, int dontCare) {
 		super(serialNumber, new String[0], term, vars, closedFormula);
 		mHcPredicateSymbols = Collections.singleton(programPoint);
 		mVariables = variables;
@@ -73,6 +77,7 @@ public class HCPredicate extends BasicPredicate {
 				closedFormula, variables);
 	}
 
+
 	protected HCPredicate(final Set<HornClausePredicateSymbol> programPoints, final int serialNumber, final Term term,
 			final Set<IProgramVar> vars, final Term closedFormula, final List<TermVariable> variables) {
 		super(serialNumber, new String[0], term, vars, closedFormula);
@@ -80,17 +85,21 @@ public class HCPredicate extends BasicPredicate {
 		mVariables = variables;
 	}
 
+	
+	//here
+	/*
 	protected HCPredicate(final Set<HornClausePredicateSymbol> programPoints, final Term term,
 			final Set<IProgramVar> vars, final Term closedFormula, final List<TermVariable> variables) {
 		this(programPoints, HashUtils.hashHsieh(SERIAL_HCPREDICATE, programPoints, term, variables), term, vars,
 				closedFormula, variables);
 	}
+	*/
 
 	@Override
 	public String toString() {
 		String result = "#";
 		result += mHcPredicateSymbols;
-		result += "@(" + mFormula.toString() + ")";
+		result += "@(" +  mFormula.toString() + ")";
 		return result;
 	}
 
@@ -102,7 +111,4 @@ public class HCPredicate extends BasicPredicate {
 		return mVariables;
 	}
 	
-//	public TermVariable getArgumentTermVariable(int argPos) {
-//		return mVariables.get(argPos);
-//	}
 }

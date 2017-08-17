@@ -58,7 +58,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
  */
 public class WolfRefinementStrategy<LETTER extends IIcfgTransition<?>>
 		extends MultiTrackTraceAbstractionRefinementStrategy<LETTER> {
-	public WolfRefinementStrategy(final ILogger logger, final TaCheckAndRefinementPreferences prefs,
+	public WolfRefinementStrategy(final ILogger logger, final TaCheckAndRefinementPreferences<LETTER> prefs,
 			final IUltimateServiceProvider services, final CfgSmtToolkit cfgSmtToolkit,
 			final PredicateFactory predicateFactory, final PredicateUnifier predicateUnifier,
 			final AssertionOrderModulation<LETTER> assertionOrderModulation,
@@ -72,8 +72,8 @@ public class WolfRefinementStrategy<LETTER extends IIcfgTransition<?>>
 	@Override
 	protected Iterator<Track> initializeInterpolationTechniquesList() {
 		final List<Track> list = new ArrayList<>(3);
-		final TermClassifier tc = TraceCheckerUtils.classifyTermsInTrace(mCounterexample.getWord(),
-				mCsToolkit.getAxioms());
+		final TermClassifier tc =
+				TraceCheckerUtils.classifyTermsInTrace(mCounterexample.getWord(), mCsToolkit.getAxioms());
 		if (tc.getOccuringSortNames().contains(SmtSortUtils.FLOATINGPOINT_SORT)) {
 			if (tc.getOccuringFunctionNames().contains(SmtUtils.FP_TO_IEEE_BV_EXTENSION)
 					|| !tc.getOccuringQuantifiers().isEmpty()) {

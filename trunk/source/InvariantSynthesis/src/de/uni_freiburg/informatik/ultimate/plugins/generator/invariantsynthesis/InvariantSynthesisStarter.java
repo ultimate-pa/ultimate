@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * Copyright (C) 2015 University of Freiburg
+ * Copyright (C) 2017 Dennis Wölfing
+ * Copyright (C) 2015-2017 University of Freiburg
  *
  * This file is part of the ULTIMATE InvariantSynthesis plug-in.
  *
@@ -36,10 +37,10 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessInvariant;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.InvariantResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.PositiveResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ProcedureContractResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovabilityReason;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovableResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
@@ -77,11 +78,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pa
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.DefaultTemplateIncreasingDimensionsStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.DisjunctsWithBoundTemplateIncreasingDimensionsStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.ExponentialConjunctsTemplateIncreasingDimensionsStrategy;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.KindOfInvariant;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.MediumTemplateIncreasingDimensionsStrategy;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.PathInvariantsStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.HoareAnnotationChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 
 public class InvariantSynthesisStarter {
@@ -103,7 +105,7 @@ public class InvariantSynthesisStarter {
 		mServices = services;
 		mToolchainStorage = storage;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		
+
 		final SimplificationTechnique simplificationTechnique = SimplificationTechnique.SIMPLIFY_DDA;
 		final XnfConversionTechnique xnfConversionTechnique = XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
 		final ManagedScript mgdScript = icfg.getCfgSmtToolkit().getManagedScript();
@@ -113,34 +115,57 @@ public class InvariantSynthesisStarter {
 				icfg.getCfgSmtToolkit().getSymbolTable(), simplificationTechnique, xnfConversionTechnique);
 
 		final InvariantSynthesisSettings invSynthSettings = constructSettings(icfg.getIdentifier());
+
+		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
+		final KindOfInvariant kindOfInvariant = prefs.getEnum(InvariantSynthesisPreferenceInitializer.LABEL_KIND_INVARIANT, KindOfInvariant.class);
+
+		IPredicate precondition;
+		IPredicate postcondition;
+
+		if (kindOfInvariant == KindOfInvariant.DANGER) {
+			precondition = predicateUnifier.getFalsePredicate();
+			postcondition = predicateUnifier.getTruePredicate();
+		} else {
+			assert kindOfInvariant == KindOfInvariant.SAFETY;
+			precondition = predicateUnifier.getTruePredicate();
+			postcondition = predicateUnifier.getFalsePredicate();
+		}
+
 		final CFGInvariantsGenerator cfgInvGenerator = new CFGInvariantsGenerator(icfg, services, storage,
-				predicateUnifier.getTruePredicate(), predicateUnifier.getFalsePredicate(), predicateFactory, predicateUnifier,
-				invSynthSettings, icfg.getCfgSmtToolkit());
+				precondition, postcondition, predicateFactory, predicateUnifier, invSynthSettings,
+				icfg.getCfgSmtToolkit(), kindOfInvariant);
 		final Map<IcfgLocation, IPredicate> invariants = cfgInvGenerator.synthesizeInvariants();
-		final PathInvariantsStatisticsGenerator statistics = cfgInvGenerator.getInvariantSynthesisStatistics();
+		final IStatisticsDataProvider statistics = cfgInvGenerator.getInvariantSynthesisStatistics();
 		if (invariants != null) {
-//			if (mLogger.isDebugEnabled()) {
-//				for (IcfgLocation loc : invariants.keySet()) {
-//					mLogger.debug(loc + ": " + invariants.get(loc));
-//				}
-//			}
-			for (final Entry<IcfgLocation, IPredicate> entry : invariants.entrySet()) {
-				final HoareAnnotation hoareAnnot = predicateFactory.getNewHoareAnnotation(entry.getKey(), icfg.getCfgSmtToolkit().getModifiableGlobalsTable());
-				hoareAnnot.annotate(entry.getKey());
-				hoareAnnot.addInvariant(entry.getValue());				
+			if (kindOfInvariant == KindOfInvariant.DANGER) {
+				mOverallResult = Result.UNSAFE;
+			} else {
+				assert kindOfInvariant == KindOfInvariant.SAFETY;
+
+				// if (mLogger.isDebugEnabled()) {
+				// for (IcfgLocation loc : invariants.keySet()) {
+				// mLogger.debug(loc + ": " + invariants.get(loc));
+				// }
+				// }
+				for (final Entry<IcfgLocation, IPredicate> entry : invariants.entrySet()) {
+					final HoareAnnotation hoareAnnot = predicateFactory.getNewHoareAnnotation(entry.getKey(),
+							icfg.getCfgSmtToolkit().getModifiableGlobalsTable());
+					hoareAnnot.annotate(entry.getKey());
+					hoareAnnot.addInvariant(entry.getValue());
+				}
+				writeHoareAnnotationToLogger(icfg);
+				mOverallResult = Result.SAFE;
 			}
-			writeHoareAnnotationToLogger(icfg);
-			mOverallResult = Result.SAFE;
 		} else {
 			mOverallResult = Result.UNKNOWN;
 		}
-		
+
 		final Map<String, Set<IcfgLocation>> proc2errNodes = icfg.getProcedureErrorNodes();
 		final Collection<IcfgLocation> errNodesOfAllProc = new ArrayList<>();
 		for (final Collection<IcfgLocation> errNodeOfProc : proc2errNodes.values()) {
 			errNodesOfAllProc.addAll(errNodeOfProc);
 		}
-		
+
 		if (mOverallResult == Result.SAFE) {
 			final String longDescription;
 			if (errNodesOfAllProc.isEmpty()) {
@@ -170,7 +195,8 @@ public class InvariantSynthesisStarter {
 			reportPositiveResults(errNodesOfAllProc);
 			break;
 		case UNSAFE:
-			throw new AssertionError(); 
+			reportDangerResults(invariants);
+			break;
 		case TIMEOUT:
 			throw new AssertionError();
 		case UNKNOWN:
@@ -186,7 +212,7 @@ public class InvariantSynthesisStarter {
 
 	private InvariantSynthesisSettings constructSettings(final String cfgIdentifier) {
 		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
-		
+
 		final boolean useNonlinearConstraints = prefs.getBoolean(InvariantSynthesisPreferenceInitializer.LABEL_NONLINEAR_CONSTRAINTS);
 		final boolean useExternalSolver = prefs.getBoolean(InvariantSynthesisPreferenceInitializer.LABEL_EXTERNAL_SMT_SOLVER);
 		final long timeoutSmtInterpol = prefs.getInt(InvariantSynthesisPreferenceInitializer.LABEL_SOLVER_TIMEOUT);
@@ -201,7 +227,7 @@ public class InvariantSynthesisStarter {
 			// solverCommand = "yices-smt2 --incremental";
 			commandExternalSolver = "z3 -smt2 -in SMTLIB2_COMPLIANT=true -t:" + externalSolverTimeout;
 		}
-		
+
 		// TODO 2017-05-01 Matthias: Add settings if used more often.
 		final boolean fakeNonIncrementalScript = false;
 		final boolean dumpSmtScriptToFile = false;
@@ -215,14 +241,14 @@ public class InvariantSynthesisStarter {
 		final boolean useLBE = prefs.getBoolean(InvariantSynthesisPreferenceInitializer.LABEL_LARGE_BLOCK_ENCODING);
 		final boolean useAbstractInterpretationPredicates = false;
 		final boolean useWPForPathInvariants = false;
-		
+
 		final int initialDisjuncts = prefs.getInt(InvariantSynthesisPreferenceInitializer.LABEL_INITIAL_DISJUNCTS);
 		final int disjunctsStep = prefs.getInt(InvariantSynthesisPreferenceInitializer.LABEL_STEP_DISJUNCTS);
 		final int initialConjuncts = prefs.getInt(InvariantSynthesisPreferenceInitializer.LABEL_INITIAL_CONJUNCTS);
 		final int conjunctsStep = prefs.getInt(InvariantSynthesisPreferenceInitializer.LABEL_STEP_CONJUNCTS);
-		
+
 		AbstractTemplateIncreasingDimensionsStrategy templateIncrDimensionsStrat = null;
-		final IncreasingStrategy incrStrat = prefs.getEnum(InvariantSynthesisPreferenceInitializer.LABEL_INCR_STRATEGY, 
+		final IncreasingStrategy incrStrat = prefs.getEnum(InvariantSynthesisPreferenceInitializer.LABEL_INCR_STRATEGY,
 				InvariantSynthesisPreferenceInitializer.DEF_INCR_STRATEGY, IncreasingStrategy.class);
 		if (incrStrat == IncreasingStrategy.Conservative) {
 			templateIncrDimensionsStrat = new ConservativeTemplateIncreasingDimensionsStrategy(initialDisjuncts, initialConjuncts, disjunctsStep, conjunctsStep);
@@ -239,8 +265,8 @@ public class InvariantSynthesisStarter {
 		} else {
 			templateIncrDimensionsStrat = new DefaultTemplateIncreasingDimensionsStrategy(initialDisjuncts, initialConjuncts, disjunctsStep, conjunctsStep);
 		}
-		
-		final InvariantSynthesisSettings invSynthSettings = new InvariantSynthesisSettings(solverSettings, templateIncrDimensionsStrat, 
+
+		final InvariantSynthesisSettings invSynthSettings = new InvariantSynthesisSettings(solverSettings, templateIncrDimensionsStrat,
 				useNonlinearConstraints, useUnsatCores, useAbstractInterpretationPredicates, useWPForPathInvariants, useLBE);
 		return invSynthSettings;
 	}
@@ -329,6 +355,10 @@ public class InvariantSynthesisStarter {
 			sb.append("(lines " + startLine + " " + endLine + ")");
 		}
 		return sb.toString();
+	}
+
+	private void reportDangerResults(final Map<IcfgLocation, IPredicate> invariants) {
+		mLogger.debug(invariants);
 	}
 
 	private void reportPositiveResults(final Collection<IcfgLocation> errorLocs) {

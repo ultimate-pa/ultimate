@@ -35,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.EqualityStatus;
 
 /**
  * Result of a pairwise equality analysis for a set of Terms.
@@ -43,10 +44,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
  *
  */
 public class EqualityAnalysisResult {
-
-	public enum Equality {
-		EQUAL, NOT_EQUAL, UNKNOWN
-	}
 
 	private final Set<Doubleton<Term>> mEqualDoubletons;
 	private final Set<Doubleton<Term>> mDistinctDoubletons;
@@ -131,13 +128,13 @@ public class EqualityAnalysisResult {
 	 * @throws IllegalArgumentException
 	 *             for Doubletons that were not analyzed
 	 */
-	public Equality getEqualityStatus(final Doubleton<Term> doubleton) {
+	public EqualityStatus getEqualityStatus(final Doubleton<Term> doubleton) {
 		if (mEqualDoubletons.contains(doubleton)) {
-			return Equality.EQUAL;
+			return EqualityStatus.EQUAL;
 		} else if (mDistinctDoubletons.contains(doubleton)) {
-			return Equality.NOT_EQUAL;
+			return EqualityStatus.NOT_EQUAL;
 		} else if (mUnknownDoubletons.contains(doubleton)) {
-			return Equality.UNKNOWN;
+			return EqualityStatus.UNKNOWN;
 		} else {
 			throw new IllegalArgumentException("unacquainted doublton " + doubleton);
 		}

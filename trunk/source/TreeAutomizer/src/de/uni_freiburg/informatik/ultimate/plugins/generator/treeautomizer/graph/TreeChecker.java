@@ -32,10 +32,11 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeRun;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HCSymbolTable;
+import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HornClause;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornClause;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
@@ -68,17 +69,18 @@ public class TreeChecker {
 	 * @param logger
 	 * @param predicateFactory
 	 * @param predicateUnifier
+	 * @param symbolTable 
 	 */
 	public TreeChecker(final TreeRun<HornClause, IPredicate> tree, final ManagedScript backendSmtSolverScript,
 			final HCPredicate preCondition, final HCPredicate postCondition, ILogger logger,
-			final PredicateUnifier predicateUnifier) {
+			final PredicateUnifier predicateUnifier, HCSymbolTable symbolTable) {
 		mTree = tree;
 		mBackendSmtSolverScript = backendSmtSolverScript;
 		mPostCondition = postCondition;
 		mPreCondition = preCondition;
 		mPredicateUnifier = predicateUnifier;
 		mSSABuilder = new HCSSABuilder(mTree, mPreCondition, mPostCondition, mBackendSmtSolverScript,
-				mPredicateUnifier);
+				mPredicateUnifier, symbolTable);
 
 		mLogger = logger;
 	}

@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.tree.IRankedLetter;
 import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
@@ -53,7 +54,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @param <STATE>
  *            state of the tree automatons.
  */
-public class Intersect<LETTER, STATE> implements IOperation<LETTER, STATE, IStateFactory<STATE>> {
+public class Intersect<LETTER extends IRankedLetter, STATE> implements IOperation<LETTER, STATE, IStateFactory<STATE>> {
 
 	private final ITreeAutomatonBU<LETTER, STATE> mTreeA;
 	private final ITreeAutomatonBU<LETTER, STATE> mTreeB;
@@ -163,10 +164,6 @@ public class Intersect<LETTER, STATE> implements IOperation<LETTER, STATE, IStat
 			for (final STATE q2 : mPairsMap.get(q1).keySet()) {
 				final Pair<STATE, STATE> st = getPair(q1, q2);
 
-				if (mTreeA.isInitialState(q1) && mTreeB.isInitialState(q2)) {
-					res.addInitialState(st);
-				}
-
 				if (mTreeA.isFinalState(q1) && mTreeB.isFinalState(q2)) {
 					res.addFinalState(st);
 				}
@@ -185,9 +182,6 @@ public class Intersect<LETTER, STATE> implements IOperation<LETTER, STATE, IStat
 
 		for (final Pair<STATE, STATE> state : res.getStates()) {
 			reducedResult.addState(reduceState(state));
-			if (res.isInitialState(state)) {
-				reducedResult.addInitialState(reduceState(state));
-			}
 			if (res.isFinalState(state)) {
 				reducedResult.addFinalState(reduceState(state));
 			}

@@ -64,6 +64,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.dataflow.DataflowState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.livevariable.LiveVariableDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.livevariable.LiveVariableState;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.arraytheory.SMTTheoryDomain;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.arraytheory.SMTTheoryState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.EqState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.initializer.FixpointEngineFutureParameterFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.initializer.FixpointEngineParameterFactory;
@@ -200,6 +202,25 @@ public final class AbstractInterpreter {
 						.setTimer(timer),
 				p -> new FixpointEngine<>(p));
 	}
+	
+	/**
+	 * so far, this is a copy of runFuture(..), except some parameters (e.g. abstract domain) are not taken from the
+	 * settings but hardcoded
+	 *
+	 * @param logger
+	 *
+	 */
+	public static IAbstractInterpretationResult<SMTTheoryState, IcfgEdge, IProgramVarOrConst, IcfgLocation>
+			runFutureSMTDomain(final IIcfg<?> root, final IProgressAwareTimer timer,
+					final IUltimateServiceProvider services, final boolean isSilent, final ILogger logger) {
+		final FixpointEngineParameters<SMTTheoryState, IcfgEdge, IProgramVarOrConst, IcfgLocation> params =
+				new FixpointEngineParameters<>(services, IProgramVarOrConst.class);
+		final IAbstractDomain<SMTTheoryState, IcfgEdge, IProgramVarOrConst> smtDomain =
+			new SMTTheoryDomain(services, root.getCfgSmtToolkit());
+		return runFuture(root, services, logger, isSilent, params.setDomain(smtDomain).setTimer(timer), 
+				p -> new FixpointEngine<>(p));
+	}
+	
 
 	public static IAbstractInterpretationResult<DataflowState<IcfgEdge>, IcfgEdge, IProgramVarOrConst, IcfgLocation>
 			runFutureDataflowDomain(final IIcfg<?> root, final IProgressAwareTimer timer,

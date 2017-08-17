@@ -51,6 +51,10 @@ public class PhaseSet {
 			exact.add(ph);
 		}
     }
+    
+    public ArrayList<DCPhase> getPhases(){
+    	return this.phases;
+    }
 
     public void addWaitingPhase(final DCPhase ph, final boolean isExact) {
         addPhase(ph, isExact);

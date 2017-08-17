@@ -64,6 +64,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 
 /**
  *
@@ -134,6 +135,9 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 		assert !mIsFinished;
 		final IcfgEdge newTransition;
 		if (oldTransition instanceof IIcfgInternalTransition) {
+			if (oldTransition instanceof Summary && ((Summary) oldTransition).calledProcedureHasImplementation()) {
+				return null;
+			}
 			newTransition =
 					createNewLocalTransition(newSource, newTarget, (IIcfgInternalTransition<INLOC>) oldTransition);
 		} else if (oldTransition instanceof IIcfgCallTransition) {

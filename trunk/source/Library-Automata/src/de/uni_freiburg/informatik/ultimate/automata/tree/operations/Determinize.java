@@ -38,9 +38,10 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.tree.IRankedLetter;
 import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
@@ -55,17 +56,17 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
  * @param <STATE>
  *            state of the tree automaton.
  */
-public class Determinize<LETTER, STATE> implements IOperation<LETTER, STATE, IStateFactory<STATE>> {
+public class Determinize<LETTER extends IRankedLetter, STATE> implements IOperation<LETTER, STATE, IStateFactory<STATE>> {
 
 	private final ITreeAutomatonBU<LETTER, STATE> mTreeAutomaton;
 	private final IMergeStateFactory<STATE> mStateFactoryMerge;
-	private final IEmptyStackStateFactory<STATE> mStateFactoryEmptyStack;
+	private final ISinkStateFactory<STATE> mStateFactoryEmptyStack;
 	private final Map<Set<STATE>, STATE> mReducedStates;
 
 	protected final ITreeAutomatonBU<LETTER, STATE> mResult;
 	private final AutomataLibraryServices mServices;
 
-	public <SF extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>> Determinize(
+	public <SF extends IMergeStateFactory<STATE> & ISinkStateFactory<STATE>> Determinize(
 			final AutomataLibraryServices services, final SF factory,
 			final ITreeAutomatonBU<LETTER, STATE> tree) {
 		mServices = services;
@@ -112,9 +113,6 @@ public class Determinize<LETTER, STATE> implements IOperation<LETTER, STATE, ISt
 				for (final Set<STATE> sub : sSrc) {
 					final STATE state = reduceState(sub);
 					for (final STATE s : sub) {
-						if (mTreeAutomaton.isInitialState(s)) {
-							res.addInitialState(state);
-						}
 						if (mTreeAutomaton.isFinalState(s)) {
 							res.addFinalState(state);
 						}
@@ -124,9 +122,6 @@ public class Determinize<LETTER, STATE> implements IOperation<LETTER, STATE, ISt
 				for (final STATE s : sDest) {
 					if (mTreeAutomaton.isFinalState(s)) {
 						res.addFinalState(dest);
-					}
-					if (mTreeAutomaton.isInitialState(s)) {
-						res.addInitialState(dest);
 					}
 				}
 			}
@@ -249,6 +244,6 @@ public class Determinize<LETTER, STATE> implements IOperation<LETTER, STATE, ISt
 
 	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
-		return false;
+		return true;
 	}
 }

@@ -53,7 +53,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IStorable;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
-import de.uni_freiburg.informatik.ultimate.util.ExceptionUtils;
 
 /**
  * A MonitoredProcess is a {@link Process} that will be terminated at the end of the toolchain from which it was
@@ -442,7 +441,7 @@ public final class MonitoredProcess implements IStorable {
 				}
 			} catch (final Throwable t) {
 				mLogger.fatal(String.format(getLogStringPrefix() + " Something unexpected happened: %s%n%s", t,
-						ExceptionUtils.getStackTrace(t)));
+						CoreUtil.getStackTrace(t)));
 			}
 
 			for (final InputStream stream : tobeclosed) {

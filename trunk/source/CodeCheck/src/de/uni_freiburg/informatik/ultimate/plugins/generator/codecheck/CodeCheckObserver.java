@@ -47,12 +47,12 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessInvariant;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.GenericResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.InvariantResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.PositiveResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultUtil;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TimeoutResultAtElement;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovabilityReason;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovableResult;
@@ -108,6 +108,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferenc
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferences.CodeCheckPreferenceInitializer.RedirectionStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgProgramExecution;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.CachingHoareTripleCheckerMap;
@@ -502,9 +503,9 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		Result overallResult = Result.UNKNOWN;
 		if (!verificationInterrupted) {
 			if (allSafe) {
-				overallResult = Result.CORRECT;
+				overallResult = Result.SAFE;
 			} else {
-				overallResult = Result.INCORRECT;
+				overallResult = Result.UNSAFE;
 			}
 		} else {
 			reportTimeoutResult(mErrNodesOfAllProc);
@@ -519,14 +520,14 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 
 		reportBenchmark(ccb);
 
-		if (overallResult == Result.CORRECT) {
+		if (overallResult == Result.SAFE) {
 			reportPositiveResults(mErrNodesOfAllProc);
 
 			if (OUTPUT_HOARE_ANNOTATION) {
 				createInvariantResults(procRootsToCheck, icfg, icfg.getCfgSmtToolkit(),
 						mServices.getBacktranslationService());
 			}
-		} else if (overallResult == Result.INCORRECT) {
+		} else if (overallResult == Result.UNSAFE) {
 			reportCounterexampleResult(realErrorProgramExecution);
 		} else {
 			final String shortDescription = "Unable to decide if program is safe!";
@@ -824,9 +825,5 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 	@Override
 	public boolean performedChanges() {
 		return false;
-	}
-
-	private enum Result {
-		CORRECT, TIMEOUT, MAXEDITERATIONS, UNKNOWN, INCORRECT
 	}
 }

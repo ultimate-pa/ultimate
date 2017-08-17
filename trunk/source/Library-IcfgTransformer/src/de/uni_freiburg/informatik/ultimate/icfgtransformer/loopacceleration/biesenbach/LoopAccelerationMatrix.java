@@ -36,6 +36,9 @@ import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.Model;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -46,8 +49,13 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicateFactory;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateTransformer;
 
 public class LoopAccelerationMatrix<INLOC extends IcfgLocation> {
 
@@ -73,17 +81,11 @@ public class LoopAccelerationMatrix<INLOC extends IcfgLocation> {
 		mMatrix = new MatrixBB(mOriginalTransFormula.getInVars(), logger);
 
 		fillMatrix();
-
-		mLogger.info("Formula: " + mOriginalTransFormula.getFormula());
-		mMatrix.print();
+		
 		mMgScript.pop(this, 1);
 		mMgScript.unlock(this);
-
-		// TODO geh�rt hier nicht rein
-		final AlphaSolver<INLOC> alphaSolver =
-				new AlphaSolver<>(logger, mOriginalTransFormula, mMatrix.getMatrix(), mMatrix.getLGS(), mMgScript);
 	}
-
+	
 	private void fillMatrix() {
 		// n = 1
 		boolean newVectorFound = true;
@@ -92,135 +94,135 @@ public class LoopAccelerationMatrix<INLOC extends IcfgLocation> {
 		for (int i = 0; i < matrixSize; i++) {
 			mOpenV.add(i);
 		}
-		if (!findInitVector()) {
+		if(!findInitVector()){
 			accelerationFailed();
 		}
 		while (newVectorFound && !mOpenV.isEmpty()) {
 			newVectorFound = false;
 			final List<Integer> open = new ArrayList<>();
 			for (final int vNumberOpen : mOpenV) {
-				final Map<Integer, Map<Term, Term>> matrix = new HashMap<>(mMatrix.getMatrix());
-				for (final Map<Term, Term> closedVector : matrix.values()) {
-					if (findVector(closedVector, vNumberOpen)) {
+				Map<Integer, Map<Term, Term>> matrix = new HashMap<>(mMatrix.getMatrix());
+				for (Map<Term, Term> closedVector : matrix.values()) {
+					if(findVector(closedVector, vNumberOpen)){
 						newVectorFound = true;
 						break;
+					}else{
+						open.add(vNumberOpen);
 					}
-					open.add(vNumberOpen);
 				}
 			}
 			mOpenV = open;
 		}
-		if (!find2nVector()) {
+		if(!find2nVector()){
 			accelerationFailed();
 		}
 	}
-
-	private void findSolution(final int index) {
+	
+	private void findSolution(int index){
 		final Script script = mMgScript.getScript();
-
-		final Map<Term, Term> vector = new HashMap<>(mMatrix.getMatrix().get(index));
-		final Substitution sub = new Substitution(mMgScript, vector);
-		final Term transformedTerm = sub.transform(mOriginalTransFormula.getFormula());
-		final Term closedFormula = UnmodifiableTransFormula.computeClosedFormula(transformedTerm,
+		
+		Map<Term, Term> vector = new HashMap<>(mMatrix.getMatrix().get(index));
+		final Substitution sub = new Substitution(mMgScript,vector);
+		Term transformedTerm = sub.transform(mOriginalTransFormula.getFormula());
+		Term closedFormula = UnmodifiableTransFormula.computeClosedFormula(transformedTerm,
 				mOriginalTransFormula.getInVars(), mOriginalTransFormula.getOutVars(), new HashSet<>(), mMgScript);
-
+		
 		script.push(1);
 
 		try {
 			final LBool result = checkSat(script, closedFormula);
 			if (result == LBool.SAT) {
-				final Collection<Term> terms = new ArrayList<>();
-				mOriginalTransFormula.getOutVars().entrySet()
-						.forEach(outvar -> terms.add(outvar.getKey().getPrimedConstant()));
+				Collection<Term> terms = new ArrayList<>();
+				mOriginalTransFormula.getOutVars().entrySet().forEach(outvar -> terms.add(outvar.getKey().getPrimedConstant()));
 				final Map<Term, Term> termvar2value = SmtUtils.getValues(script, terms);
-
-				final Map<Term, Term> m = new HashMap<>();
-				mOriginalTransFormula.getOutVars().entrySet().forEach(
-						outvar -> m.put(outvar.getValue(), termvar2value.get(outvar.getKey().getPrimedConstant())));
+				
+				Map<Term, Term> m = new HashMap<>();
+				mOriginalTransFormula.getOutVars().entrySet().forEach(outvar
+						-> m.put(outvar.getValue() , termvar2value.get(outvar.getKey().getPrimedConstant())));
 				mMatrix.setSolution(m, index);
 			}
 		} finally {
 			script.pop(1);
 		}
 	}
-
-	private boolean find2nVector() {
-
-		final Script script = mMgScript.getScript();
-
-		final Term ogTerm = mOriginalTransFormula.getFormula();
+	
+	private boolean find2nVector(){
+		
+		Script script = mMgScript.getScript();
+		
+		Term ogTerm = mOriginalTransFormula.getFormula();
 		mOriginalTransFormula.getAuxVars();
-
-		final Map<IProgramVar, TermVariable> newOutVars = new HashMap<>();
-		mOriginalTransFormula.getOutVars().entrySet().forEach(outvar -> newOutVars.put(outvar.getKey(),
-				script.variable(outvar.getValue().toString() + "_n", outvar.getValue().getSort())));
-
-		final Map<Term, Term> vector = new HashMap<>();
-		mOriginalTransFormula.getOutVars().entrySet()
-				.forEach(outvar -> vector.put(outvar.getValue(), newOutVars.get(outvar.getKey())));
-		mOriginalTransFormula.getInVars().entrySet()
-				.forEach(invar -> vector.put(invar.getValue(), mOriginalTransFormula.getOutVars().get(invar.getKey())));
-
-		final Substitution sub = new Substitution(mMgScript, vector);
-		final Term newTerm = sub.transform(mOriginalTransFormula.getFormula());
-
-		final Term fullTerm = script.term("and", ogTerm, newTerm);
-
-		final Term fullClosedFormula = UnmodifiableTransFormula.computeClosedFormula(fullTerm,
+		
+		Map<IProgramVar, TermVariable> newOutVars = new HashMap<>();
+		mOriginalTransFormula.getOutVars().entrySet().forEach(outvar 
+				-> newOutVars.put(outvar.getKey(), script.variable(outvar.getValue().toString() + "_n"
+						, outvar.getValue().getSort())));
+		
+		Map<Term, Term> vector = new HashMap<>();
+		mOriginalTransFormula.getOutVars().entrySet().forEach(outvar
+				-> vector.put(outvar.getValue(), newOutVars.get(outvar.getKey())));
+		mOriginalTransFormula.getInVars().entrySet().forEach(invar 
+				-> vector.put(invar.getValue(), mOriginalTransFormula.getOutVars().get(invar.getKey())));
+		
+		final Substitution sub = new Substitution(mMgScript,vector);
+		Term newTerm = sub.transform(mOriginalTransFormula.getFormula());
+		
+		Term fullTerm = script.term("and", ogTerm, newTerm);
+		
+		Term fullClosedFormula = UnmodifiableTransFormula.computeClosedFormula(fullTerm, 
 				mOriginalTransFormula.getInVars(), newOutVars, new HashSet<>(), mMgScript);
-
+		
 		script.push(1);
 		final LBool result = checkSat(script, fullClosedFormula);
 		try {
 			if (result == LBool.SAT) {
-				final Collection<Term> terms = new ArrayList<>();
-				mOriginalTransFormula.getInVars().entrySet()
-						.forEach(invar -> terms.add(invar.getKey().getDefaultConstant()));
+				Collection<Term> terms = new ArrayList<>();
+				mOriginalTransFormula.getInVars().entrySet().forEach(invar -> terms.add(invar.getKey().getDefaultConstant()));
 				final Map<Term, Term> termvar2value = SmtUtils.getValues(script, terms);
-				mMatrix.setVector(termver2valueTrasformer(termvar2value), mMatrixSize + 1);
+				mMatrix.setVector(termver2valueTrasformer(termvar2value), mMatrixSize + 1);			
 			}
 		} finally {
 			script.pop(1);
 		}
-
-		// find2nSolution
-		final Substitution subVar = new Substitution(mMgScript, mMatrix.getMatrix().get(mMatrixSize + 1));
-		final Term transformedFullTerm = subVar.transform(fullTerm);
-		final Term closedFullTerm = UnmodifiableTransFormula.computeClosedFormula(transformedFullTerm,
+		
+		//find2nSolution
+		final Substitution subVar = new Substitution(mMgScript,mMatrix.getMatrix().get(mMatrixSize + 1));
+		Term transformedFullTerm = subVar.transform(fullTerm);
+		Term closedFullTerm = UnmodifiableTransFormula.computeClosedFormula(transformedFullTerm,
 				mOriginalTransFormula.getInVars(), newOutVars, new HashSet<>(), mMgScript);
 		script.push(1);
 		try {
 			final LBool resultSolution = checkSat(script, closedFullTerm);
 			if (resultSolution == LBool.SAT) {
-				final Collection<Term> terms = new ArrayList<>();
+				Collection<Term> terms = new ArrayList<>();
 				newOutVars.entrySet().forEach(outvar -> terms.add(outvar.getKey().getPrimedConstant()));
 				final Map<Term, Term> termvar2value = SmtUtils.getValues(script, terms);
-
-				final Map<Term, Term> m = new HashMap<>();
-				mOriginalTransFormula.getOutVars().entrySet().forEach(
-						outvar -> m.put(outvar.getValue(), termvar2value.get(outvar.getKey().getPrimedConstant())));
-				mMatrix.setSolution(m, mMatrixSize + 1);
+				
+				Map<Term, Term> m = new HashMap<>();
+				mOriginalTransFormula.getOutVars().entrySet().forEach(outvar
+						-> m.put(outvar.getValue() , termvar2value.get(outvar.getKey().getPrimedConstant())));
+				mMatrix.setSolution(m, mMatrixSize + 1);				
 			}
 		} finally {
 			script.pop(1);
 		}
 		return result == LBool.SAT;
 	}
-
-	private boolean findVector(final Map<Term, Term> closedVector, final int vectorNumber) {
-		final Map<Term, Term> vector = new HashMap<>(closedVector);
+	
+	private boolean findVector(Map<Term, Term> closedVector, int vectorNumber) {
+		Map<Term, Term> vector = new HashMap<>(closedVector);
 		final Script script = mMgScript.getScript();
-
-		final Entry<IProgramVar, TermVariable> openVar =
-				mOriginalTransFormula.getInVars().entrySet().stream().collect(Collectors.toList()).get(vectorNumber);
+		
+		final Entry<IProgramVar, TermVariable> openVar = mOriginalTransFormula.getInVars().entrySet().stream().
+				collect(Collectors.toList()).get(vectorNumber);
 
 		vector.put(openVar.getValue(), openVar.getKey().getDefaultConstant());
-		final Substitution sub = new Substitution(mMgScript, vector);
+		final Substitution sub = new Substitution(mMgScript,vector);
 		Term transformedTerm = sub.transform(mOriginalTransFormula.getFormula());
-		transformedTerm = script.term("and", transformedTerm,
+		transformedTerm = script.term("and", transformedTerm, 
 				script.term("distinct", openVar.getKey().getDefaultConstant(), closedVector.get(openVar.getValue())));
 		script.push(1);
-
+		
 		// TODO muss result in try?
 		final LBool result = checkSat(script, transformedTerm);
 		try {
@@ -236,24 +238,24 @@ public class LoopAccelerationMatrix<INLOC extends IcfgLocation> {
 		}
 		return result == LBool.SAT;
 	}
-
-	private Map<Term, Term> termver2valueTrasformer(final Map<Term, Term> termvar2value) {
-		final Map<Term, Term> m = new HashMap<>();
+	
+	private Map<Term, Term> termver2valueTrasformer(Map<Term, Term> termvar2value){
+		Map<Term, Term> m = new HashMap<>();
 		mOriginalTransFormula.getInVars().entrySet()
-				.forEach(invar -> m.put(invar.getValue(), termvar2value.get(invar.getKey().getDefaultConstant())));
+		.forEach(invar -> m.put(invar.getValue() , termvar2value.get(invar.getKey().getDefaultConstant())));
 		return m;
 	}
-
+	
 	private boolean findInitVector() {
 		final Script script = mMgScript.getScript();
 		script.push(1);
 		final LBool result = checkSat(script, mOriginalTransFormula.getClosedFormula());
 		try {
 			if (result == LBool.SAT) {
-				final Collection<Term> terms = new ArrayList<>();
-				mOriginalTransFormula.getInVars().entrySet()
-						.forEach(invar -> terms.add(invar.getKey().getDefaultConstant()));
-				final Map<Term, Term> termvar2value = SmtUtils.getValues(script, terms);
+				Collection<Term> terms = new ArrayList<>();
+				mOriginalTransFormula.getInVars().entrySet().forEach(invar -> terms.add(invar.getKey().getDefaultConstant()));
+				final Map<Term, Term> termvar2value =
+						SmtUtils.getValues(script, terms);
 				mMatrix.setVector(termver2valueTrasformer(termvar2value), mMatrixSize);
 				findSolution(mMatrixSize);
 			}
@@ -263,27 +265,31 @@ public class LoopAccelerationMatrix<INLOC extends IcfgLocation> {
 		return result == LBool.SAT;
 	}
 
-	private static LBool checkSat(final Script script, final Term term) {
+	private static LBool checkSat(final Script script, Term term) {
 		final TermVariable[] vars = term.getFreeVars();
 		final Term[] values = new Term[vars.length];
 		for (int i = 0; i < vars.length; i++) {
 			values[i] = termVariable2constant(script, vars[i]);
 		}
-		final Term newTerm = script.let(vars, values, term);
+		Term newTerm = script.let(vars, values, term);
 		LBool result = script.assertTerm(newTerm);
 		if (result == LBool.UNKNOWN) {
 			result = script.checkSat();
 		}
 		return result;
 	}
-
+	
 	private static Term termVariable2constant(final Script script, final TermVariable tv) {
 		final String name = tv.getName() + "_const_" + tv.hashCode();
 		script.declareFun(name, Script.EMPTY_SORT_ARRAY, tv.getSort());
 		return script.term(name);
 	}
-
-	private void accelerationFailed() {
+	
+	private void accelerationFailed(){
 		mLogger.info("No acceleration found!");
+	}
+	
+	public MatrixBB getResult(){
+		return mMatrix;
 	}
 }

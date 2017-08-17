@@ -37,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.util.HashUtils;
  * @param <LETTER> Letters of the automaton.
  * @param <STATE> States of the automaton.
  */
-public class TreeAutomatonRule<LETTER, STATE> {
+public class TreeAutomatonRule<LETTER extends IRankedLetter, STATE> {
 	private final LETTER mLetter;
 	private final List<STATE> mSrc;
 	private final STATE mDest;
@@ -49,7 +49,6 @@ public class TreeAutomatonRule<LETTER, STATE> {
 	 * @param dest
 	 */
 	public TreeAutomatonRule(LETTER letter, List<STATE> src, STATE dest) {
-		assert !src.isEmpty();
 		this.mLetter = letter;
 		this.mSrc = src;
 		this.mDest = dest;
@@ -65,8 +64,9 @@ public class TreeAutomatonRule<LETTER, STATE> {
 		return mDest;
 	}
 	public int getArity() {
-		return mSrc != null ? mSrc.size() : 0;
+		return mLetter.getRank();
 	}
+	
 	@Override
 	public String toString() {
 		return "(" + mSrc.toString() + " ~~ " + mLetter.toString() + " ~~> " + mDest.toString() + ")";

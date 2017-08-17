@@ -204,8 +204,6 @@ public class CACSL2BoogieBacktranslator
 			final ILocation loc = ate.getTraceElement().getLocation();
 
 			if (loc instanceof CLocation) {
-				// i = findMergeSequence(programExecution, i, loc);
-
 				final CLocation cloc = (CLocation) loc;
 				if (cloc.ignoreDuringBacktranslation()) {
 					// we skip all clocs that can be ignored, i.e. things that
@@ -276,7 +274,8 @@ public class CACSL2BoogieBacktranslator
 						// we dont want to see no dirty temp havoc
 						continue;
 					}
-					newAte = new AtomicTraceElement<>(cloc, ate.getRelevanceInformation());
+					newAte = new AtomicTraceElement<>(cloc, cloc, ate.getStepInfo(), ate.getRelevanceInformation(),
+							ate.getPrecedingProcedure(), ate.getSucceedingProcedure());
 				}
 				if (newAte != null) {
 					translatedATEs.add(newAte);
@@ -324,6 +323,10 @@ public class CACSL2BoogieBacktranslator
 				mServices);
 	}
 
+	/**
+	 * @return true if the supplied {@link AtomicTraceElement} is a havoc statement that havocs temporary variables.
+	 *         Expects that ate represents a havoc statement.
+	 */
 	private boolean checkTempHavoc(final AtomicTraceElement<BoogieASTNode> ate) {
 		final HavocStatement havoc = (HavocStatement) ate.getTraceElement();
 		final CheckForTempVars check = new CheckForTempVars();
@@ -372,8 +375,28 @@ public class CACSL2BoogieBacktranslator
 		return set;
 	}
 
+	/**
+	 * If we encounter a {@link CASTFunctionCallExpression} during backtranslation, we have to consider various special
+	 * cases. Sometimes we need to ignore it, sometimes we compress multiple statements to one.
+	 *
+	 * This function handles all these cases and returns the index the loop should increase and continue.
+	 *
+	 * @param programExecution
+	 *            The {@link IProgramExecution} that is translated
+	 * @param index
+	 *            The current index
+	 * @param fcall
+	 *            The {@link CASTFunctionCallExpression} at the current index
+	 * @param cloc
+	 *            The {@link CLocation} at the current index.
+	 * @param translatedAtomicTraceElements
+	 *            The already translated {@link AtomicTraceElement}s
+	 * @param translatedProgramStates
+	 *            The already translated {@link ProgramState}s
+	 * @return The index with which the translation loop should continue
+	 */
 	private int handleCASTFunctionCallExpression(final IProgramExecution<BoogieASTNode, Expression> programExecution,
-			final int i, final CASTFunctionCallExpression fcall, final CLocation cloc,
+			final int index, final CASTFunctionCallExpression fcall, final CLocation cloc,
 			final List<AtomicTraceElement<CACSLLocation>> translatedAtomicTraceElements,
 			final List<ProgramState<IASTExpression>> translatedProgramStates) {
 		// directly after the function call expression we find
@@ -381,36 +404,84 @@ public class CACSL2BoogieBacktranslator
 		// maps the input variable to a new local one (because boogie function
 		// params are immutable)
 		// we throw them away
-		final AtomicTraceElement<BoogieASTNode> origFuncCall = programExecution.getTraceElement(i);
+		final AtomicTraceElement<BoogieASTNode> currentATE = programExecution.getTraceElement(index);
+		final BoogieASTNode currentTraceElement = currentATE.getTraceElement();
 
-		if (!(origFuncCall.getTraceElement() instanceof CallStatement)) {
+		if (!(currentTraceElement instanceof CallStatement)) {
 			// this is some special case, e.g. an assert false or an havoc
-			if (origFuncCall.getTraceElement() instanceof AssertStatement) {
+			if (currentTraceElement instanceof AssertStatement) {
 				translatedAtomicTraceElements.add(new AtomicTraceElement<CACSLLocation>(cloc, cloc,
-						origFuncCall.getStepInfo(), origFuncCall.getRelevanceInformation()));
-				translatedProgramStates.add(translateProgramState(programExecution.getProgramState(i)));
-				return i;
-			} else if (origFuncCall.getTraceElement() instanceof HavocStatement) {
-				if (!checkTempHavoc(origFuncCall)) {
+						currentATE.getStepInfo(), currentATE.getRelevanceInformation()));
+				translatedProgramStates.add(translateProgramState(programExecution.getProgramState(index)));
+				return index;
+			} else if (currentTraceElement instanceof HavocStatement) {
+				if (!checkTempHavoc(currentATE)) {
 					translatedAtomicTraceElements.add(new AtomicTraceElement<CACSLLocation>(cloc, cloc,
-							origFuncCall.getStepInfo(), origFuncCall.getRelevanceInformation()));
+							currentATE.getStepInfo(), currentATE.getRelevanceInformation()));
+					translatedProgramStates.add(translateProgramState(programExecution.getProgramState(index)));
+					return index;
+				}
+			}
+			// if this anything else we just throw it away
+			return index;
+		}
+
+		if (currentATE.hasStepInfo(StepInfo.NONE)) {
+			// this is some temp var stuff; we can safely ignore it
+			return index;
+		}
+
+		if (index + 1 < programExecution.getLength()) {
+			// if the next ATE is a return, the called method does not have a body and we should compress it to an
+			// FCALL
+			int i = index + 1;
+			for (; i < programExecution.getLength(); ++i) {
+				final ILocation loc = programExecution.getTraceElement(i).getTraceElement().getLocation();
+				if (!(loc instanceof CLocation)) {
+					break;
+				}
+				final CLocation nextcloc = (CLocation) loc;
+				if (nextcloc.ignoreDuringBacktranslation()) {
+					continue;
+				}
+				if (nextcloc.getNode() instanceof CASTTranslationUnit) {
+					continue;
+				}
+				break;
+			}
+			if (i < programExecution.getLength()) {
+				final AtomicTraceElement<BoogieASTNode> nextATE = programExecution.getTraceElement(i);
+				if (nextATE.hasStepInfo(StepInfo.PROC_RETURN)) {
+					translatedAtomicTraceElements.add(new AtomicTraceElement<CACSLLocation>(cloc, cloc,
+							StepInfo.FUNC_CALL, currentATE.getRelevanceInformation(),
+							currentATE.getPrecedingProcedure(), currentATE.getPrecedingProcedure()));
 					translatedProgramStates.add(translateProgramState(programExecution.getProgramState(i)));
 					return i;
 				}
 			}
-			// if this anything else we just throw it away
-			return i;
 		}
 
-		if (origFuncCall.hasStepInfo(StepInfo.NONE)) {
-			// this is some temp var stuff; we can safely ignore it
-			return i;
+		final EnumSet<StepInfo> stepInfo = currentATE.getStepInfo();
+		if (currentATE.hasStepInfo(StepInfo.PROC_RETURN)) {
+			// we have to modify the previous statement in the translated list s.t it is the actual return and remove
+			// the return stepinfo from this statement.
+			stepInfo.remove(StepInfo.PROC_RETURN);
+			final AtomicTraceElement<CACSLLocation> last =
+					translatedAtomicTraceElements.remove(translatedAtomicTraceElements.size() - 1);
+			final EnumSet<StepInfo> newStepInfo = EnumSet.copyOf(last.getStepInfo());
+			newStepInfo.remove(StepInfo.NONE);
+			newStepInfo.add(StepInfo.PROC_RETURN);
+			final AtomicTraceElement<CACSLLocation> newLast = new AtomicTraceElement<>(last.getTraceElement(),
+					last.getStep(), newStepInfo, last.getRelevanceInformation(), currentATE.getPrecedingProcedure(),
+					currentATE.getSucceedingProcedure());
+			translatedAtomicTraceElements.add(newLast);
 		}
 
-		translatedAtomicTraceElements.add(new AtomicTraceElement<CACSLLocation>(cloc, cloc, origFuncCall.getStepInfo(),
-				origFuncCall.getRelevanceInformation()));
-		translatedProgramStates.add(translateProgramState(programExecution.getProgramState(i)));
-		return i;
+		translatedAtomicTraceElements
+				.add(new AtomicTraceElement<CACSLLocation>(cloc, cloc, stepInfo, currentATE.getRelevanceInformation(),
+						currentATE.getPrecedingProcedure(), currentATE.getSucceedingProcedure()));
+		translatedProgramStates.add(translateProgramState(programExecution.getProgramState(index)));
+		return index;
 	}
 
 	/**
@@ -1135,38 +1206,37 @@ public class CACSL2BoogieBacktranslator
 	}
 
 	private TranslatedVariable translateIdentifierExpression(final IdentifierExpression expr) {
-		return translateBoogieIdentifier(expr.getIdentifier());
+		return translateBoogieIdentifier(expr, expr.getIdentifier());
 	}
 
-	private TranslatedVariable translateBoogieIdentifier(final String boogieId) {
+	private TranslatedVariable translateBoogieIdentifier(final IdentifierExpression expr, final String boogieId) {
 		final TranslatedVariable result;
 		if (boogieId.equals(SFO.RES)) {
-			result = new TranslatedVariable("\\result", null, VariableType.RESULT);
+			result = new TranslatedVariable(expr, "\\result", null, VariableType.RESULT);
 		} else if (mBoogie2C.getVar2CVar().containsKey(boogieId)) {
 			final Pair<String, CType> pair = mBoogie2C.getVar2CVar().get(boogieId);
-			result = new TranslatedVariable(pair.getFirst(), pair.getSecond(), VariableType.NORMAL);
+			result = new TranslatedVariable(expr, pair.getFirst(), pair.getSecond(), VariableType.NORMAL);
 		} else if (mBoogie2C.getInVar2CVar().containsKey(boogieId)) {
 			// invars can only occur in expressions as part of synthetic expressions, and then they represent oldvars
 			final Pair<String, CType> pair = mBoogie2C.getInVar2CVar().get(boogieId);
-			result = new TranslatedVariable(pair.getFirst(), pair.getSecond(), VariableType.INVAR);
+			result = new TranslatedVariable(expr, pair.getFirst(), pair.getSecond(), VariableType.INVAR);
 		} else if (mBoogie2C.getTempVar2Obj().containsKey(boogieId)) {
 			final SFO.AUXVAR purpose = mBoogie2C.getTempVar2Obj().get(boogieId);
-			result = new TranslatedVariable(boogieId, null, VariableType.AUX);
-			reportUnfinishedBacktranslation("auxilliary boogie variable " + boogieId + "(" + purpose + ")");
+			result = new TranslatedVariable(expr, boogieId, null, purpose);
 		} else if (boogieId.equals(SFO.VALID)) {
-			result = new TranslatedVariable("\\valid", null, VariableType.VALID);
+			result = new TranslatedVariable(expr, "\\valid", null, VariableType.VALID);
 		} else {
 			// if its base or offset, try again with them stripped
 			if (boogieId.endsWith(SFO.POINTER_BASE)) {
-				final TranslatedVariable base = translateBoogieIdentifier(
+				final TranslatedVariable base = translateBoogieIdentifier(expr,
 						boogieId.substring(0, boogieId.length() - SFO.POINTER_BASE.length() - 1));
-				result = new TranslatedVariable(base.getName(), base.getCType(), VariableType.POINTER_BASE);
+				result = new TranslatedVariable(expr, base.getName(), base.getCType(), VariableType.POINTER_BASE);
 			} else if (boogieId.endsWith(SFO.POINTER_OFFSET)) {
-				final TranslatedVariable offset = translateBoogieIdentifier(
+				final TranslatedVariable offset = translateBoogieIdentifier(expr,
 						boogieId.substring(0, boogieId.length() - SFO.POINTER_OFFSET.length() - 1));
-				result = new TranslatedVariable(offset.getName(), offset.getCType(), VariableType.POINTER_OFFSET);
+				result = new TranslatedVariable(expr, offset.getName(), offset.getCType(), VariableType.POINTER_OFFSET);
 			} else {
-				result = new TranslatedVariable(boogieId, null, VariableType.UNKNOWN);
+				result = new TranslatedVariable(expr, boogieId, null, VariableType.UNKNOWN);
 				reportUnfinishedBacktranslation("unknown boogie variable " + boogieId);
 			}
 		}
@@ -1282,7 +1352,8 @@ public class CACSL2BoogieBacktranslator
 					set.add(newSi);
 				}
 				return new AtomicTraceElement<>(current.getStep(), ate.getStep(), set,
-						mergeRelevaneInformation(ate.getRelevanceInformation(), current.getRelevanceInformation()));
+						mergeRelevaneInformation(ate.getRelevanceInformation(), current.getRelevanceInformation()),
+						ate.getPrecedingProcedure(), ate.getSucceedingProcedure());
 			}
 		}
 		return ate;
@@ -1437,12 +1508,42 @@ public class CACSL2BoogieBacktranslator
 		private final String mName;
 		private final CType mCType;
 		private final VariableType mVarType;
+		private final SFO.AUXVAR mPurpose;
+		private final IdentifierExpression mOriginalExpression;
 
-		public TranslatedVariable(final String name, final CType cType, final VariableType varType) {
+		public TranslatedVariable(final IdentifierExpression originalExpression, final String name, final CType cType,
+				final VariableType varType) {
 			super(null);
+			assert varType != VariableType.AUX : "You must supply a purpose for an auxvar";
+			mOriginalExpression = originalExpression;
 			mName = name;
 			mCType = cType;
 			mVarType = varType;
+			mPurpose = null;
+
+		}
+
+		public TranslatedVariable(final IdentifierExpression originalExpression, final String name, final CType cType,
+				final SFO.AUXVAR purpose) {
+			super(null);
+			mOriginalExpression = originalExpression;
+			mCType = cType;
+			mVarType = VariableType.AUX;
+			// if the variable is an aux variable, we just use the C function for which it was introduced and hope for
+			// the best
+			mName = getRealName(originalExpression, name);
+			mPurpose = purpose;
+		}
+
+		private static String getRealName(final IdentifierExpression originalExpression, final String name) {
+			final ILocation loc = originalExpression.getLoc();
+			if (loc instanceof CLocation) {
+				final CLocation cloc = (CLocation) loc;
+				if (cloc.getNode() != null) {
+					return cloc.getNode().getRawSignature();
+				}
+			}
+			return name;
 		}
 
 		public String getName() {
@@ -1455,6 +1556,14 @@ public class CACSL2BoogieBacktranslator
 
 		public VariableType getVarType() {
 			return mVarType;
+		}
+
+		public SFO.AUXVAR getPurpose() {
+			return mPurpose;
+		}
+
+		public IdentifierExpression getOriginalExpression() {
+			return mOriginalExpression;
 		}
 
 		@Override

@@ -28,26 +28,37 @@ package de.uni_freiburg.informatik.ultimate.pea2boogie.generator;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Phase;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Transition;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.CDDTranslator;
-import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.Translator;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.Permutation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.CrossProducts;
 
 public class ConditionGenerator {
-	public Translator translator;
+	private final Collection<String> mPrimedVars;
+	private final Expression mResult;
 
-	public Expression nonDLCGenerator(final PhaseEventAutomata[] automata, final int[] automataPermutation,
+	public ConditionGenerator(final Collection<String> primedVars, final PhaseEventAutomata[] automata,
+			final int[] automataPermutation, final String fileName, final BoogieLocation bl) {
+		mPrimedVars = primedVars;
+		mResult = nonDLCGenerator(automata, automataPermutation, fileName, bl);
+	}
+
+	public Expression getResult() {
+		return mResult;
+	}
+
+	private Expression nonDLCGenerator(final PhaseEventAutomata[] automata, final int[] automataPermutation,
 			final String fileName, final BoogieLocation bl) {
 		final int[][] phases = new int[automataPermutation.length][];
 		for (int i = 0; i < automataPermutation.length; i++) {
@@ -59,7 +70,7 @@ public class ConditionGenerator {
 			}
 		}
 
-		final List<int[]> phasePermutations = Permutation.crossProduct(phases);
+		final List<int[]> phasePermutations = CrossProducts.crossProduct(phases);
 		final List<Expression> conditions = new ArrayList<>();
 		for (final int[] vector : phasePermutations) {
 			assert (vector.length == automataPermutation.length);
@@ -77,7 +88,7 @@ public class ConditionGenerator {
 				cddOuter = cddOuter.and(cddInner);
 				impliesLHS.add(genPCCompEQ(automataPermutation[j], vector[j], fileName, bl));
 			}
-			final CDD cdd = new VarRemoval().excludeEventsAndPrimedVars(cddOuter, translator.primedVars);
+			final CDD cdd = new VarRemoval().excludeEventsAndPrimedVars(cddOuter, mPrimedVars);
 			if (cdd == CDD.TRUE) {
 				continue;
 			}
@@ -104,34 +115,11 @@ public class ConditionGenerator {
 		return result;
 	}
 
-	/*
-	 * public Expression nonDLCGeneratorToy (PhaseEventAutomata[] automata, String fileName, BoogieLocation bl) {
-	 * 
-	 * BoogieLocation blAssert = new BoogieLocation (fileName, 0, 0, 0, 0, bl);
-	 * 
-	 * Expression OrExprOuter = new BooleanLiteral(blAssert, false); Expression ANDExprInner = new
-	 * BooleanLiteral(blAssert, true); Expression ANDExprOuter = new BooleanLiteral(blAssert, true); CDD OrCDDInner =
-	 * CDD.FALSE; CDD AndCDDInner = CDD.TRUE;
-	 * 
-	 * for (int i = 0; i < automata.length; i++) { PhaseEventAutomata automaton = automata[i]; Phase[] phases =
-	 * automaton.getPhases(); for (int j = 0; j < phases.length; j++) { List<Transition> transitions =
-	 * phases[j].getTransitions(); for (int k = 0; k < transitions.size(); k++) { CDD cddInner = genPropsIntersection
-	 * (genGuardANDPrimedStInv(transitions.get(k)), genStrictInv(transitions.get(k))); OrCDDInner =
-	 * OrCDDInner.or(cddInner); } AndCDDInner = genPCCompEQ(i, j).and(OrCDDInner); OrCDDInner = CDD.FALSE; ANDExprInner
-	 * = new CDDTranslator().CDD_To_Boogie(AndCDDInner, fileName, blAssert); if (j == 0) { OrExprOuter = ANDExprInner; }
-	 * else { OrExprOuter = new BinaryExpression(bl, BinaryExpression.Operator.LOGICOR, ANDExprInner, OrExprOuter); } }
-	 * if (i == 0) { ANDExprOuter = OrExprOuter; } else { ANDExprOuter = new BinaryExpression(bl,
-	 * BinaryExpression.Operator.LOGICAND, OrExprOuter, ANDExprOuter); } } return ANDExprOuter; }
-	 */
-	public void setTranslator(final Translator translator) {
-		this.translator = translator;
-	}
-
-	public static CDD genIntersectionAll(final CDD cdd1, final CDD cdd2) {
+	private static CDD genIntersectionAll(final CDD cdd1, final CDD cdd2) {
 		return (cdd1.and(cdd2));
 	}
 
-	public static CDD genStrictInv(final Transition transition) {
+	private static CDD genStrictInv(final Transition transition) {
 		final Phase phase = transition.getDest();
 		final String[] resetVars = transition.getResets();
 		final List<String> resetList = Arrays.asList(resetVars);
@@ -139,7 +127,7 @@ public class ConditionGenerator {
 		return cdd;
 	}
 
-	public static CDD genGuardANDPrimedStInv(final Transition transition) {
+	private static CDD genGuardANDPrimedStInv(final Transition transition) {
 		final CDD guard = transition.getGuard();
 		final Phase phase = transition.getDest();
 		final CDD primedStInv = phase.getStateInvariant().prime();
@@ -148,7 +136,7 @@ public class ConditionGenerator {
 		return cdd;
 	}
 
-	public static Expression genPCCompEQ(final int autIndex, final int phaseIndex, final String fileName,
+	private static Expression genPCCompEQ(final int autIndex, final int phaseIndex, final String fileName,
 			final BoogieLocation bl) {
 		final IdentifierExpression identifier = new IdentifierExpression(bl, "pc" + autIndex);
 		final IntegerLiteral intLiteral = new IntegerLiteral(bl, Integer.toString(phaseIndex));

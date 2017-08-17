@@ -28,9 +28,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractDomain;
@@ -55,12 +52,11 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.Benchmark;
  *
  *
  * @author Yu-Wen Chen (yuwenchen1105@gmail.com)
+ * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  */
 public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 		implements IAbstractDomain<EqState<ACTION>, ACTION, IProgramVarOrConst> {
-//		implements IAbstractDomain<EqConstraint<ACTION, EqNode, EqFunction>, ACTION, IProgramVarOrConst> {
 
-//	private final VPPostOperator<ACTION> mPost;
 	private final EqPostOperator<ACTION> mPost;
 	private final VPMergeOperator mMerge;
 	private final ILogger mLogger;
@@ -68,7 +64,6 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 	private final ManagedScript mManagedScript;
 	private final VPDomainPreanalysis mPreAnalysis;
 	private final IIcfgSymbolTable mSymboltable;
-//	private final VPTfStateBuilderPreparer mTfPreparer;
 	private final boolean mDebugMode;
 
 	private final EqConstraintFactory<ACTION, EqNode, EqFunction> mEqConstraintFactory;
@@ -77,19 +72,17 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 
 	public VPDomain(final ILogger logger, final ManagedScript mgdScript, final IUltimateServiceProvider services,
 			final IIcfgSymbolTable symbolTable, final VPDomainPreanalysis preAnalysis) {
-//			final VPTfStateBuilderPreparer tfPreparer) {
 		assert mgdScript != null;
 		mLogger = logger;
 		mPreAnalysis = preAnalysis;
 		mManagedScript = mgdScript;
 		mMerge = new VPMergeOperator();
 		mSymboltable = symbolTable;
-//		mTfPreparer = tfPreparer;
-//		mPost = new VPPostOperator<>(script, services, this);
 		
 		mEqNodeAndFunctionFactory = new EqNodeAndFunctionFactory(preAnalysis, mgdScript);
-		mEqConstraintFactory = new EqConstraintFactory<>();
-		mEqStateFactory = new EqStateFactory<>(mEqNodeAndFunctionFactory, mEqConstraintFactory);
+		mEqConstraintFactory = new EqConstraintFactory<>(mEqNodeAndFunctionFactory, mPreAnalysis);
+		mEqStateFactory = new EqStateFactory<>(mEqNodeAndFunctionFactory, mEqConstraintFactory, symbolTable);
+		mEqConstraintFactory.setEqStateFactory(mEqStateFactory);
 
 		mPost = new EqPostOperator<>(mEqNodeAndFunctionFactory, mEqConstraintFactory, mPreAnalysis);
 
@@ -109,9 +102,7 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 	private final class VPMergeOperator implements IAbstractStateBinaryOperator<EqState<ACTION>> {
 		@Override
 		public EqState<ACTION> apply(final EqState<ACTION> first, final EqState<ACTION> second) {
-//			return VPFactoryHelpers.disjoin(first, second, getVpStateFactory());
-			assert false : "TODO"; // TODO
-			return null;
+			return first.union(second);
 		}
 	}
 
@@ -127,36 +118,12 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 		return mPreAnalysis;
 	}
 
-//	public EqStateFactory<ACTION> getVpStateFactory() {
-//		return mVpStateFactory;
-//	}
-
 	public IIcfgSymbolTable getSymbolTable() {
 		return mSymboltable;
 	}
 
-	public Set<EqNode> getLiteralEqNodes() {
-		// TODO only compute this once!
-		final Set<EqNode> literalSet = new HashSet<>();
-		for (final EqNode eqNode : mPreAnalysis.getAllEqNodes()) {
-			if (eqNode.isLiteral()) {
-				literalSet.add(eqNode);
-			}
-		}
-		return literalSet;
-	}
-
-//	public VPTfStateBuilderPreparer getTfPreparer() {
-//		return mTfPreparer;
-//	}
-
-//	public VpTfStateFactory getTfStateFactory() {
-//		return mTfStateFactory;
-//	}
-
 	@Override
 	public EqState<ACTION> createTopState() {
-//		return getVpStateFactory().createEmptyStateBuilder().build();
 		return mEqStateFactory.getTopState();
 	}
 
@@ -176,4 +143,11 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 	public EqStateFactory<ACTION> getEqStateFactory() {
 		return mEqStateFactory;
 	}
+
+	@Override
+	public boolean useHierachicalPre() {
+		return true;
+	}
+	
+	
 }

@@ -1,6 +1,5 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
@@ -40,7 +39,7 @@ public class LiveVariablesStrategy extends LocationDependentLinearInequalityInva
 	}
 
 	@Override
-	public Collection<Collection<AbstractLinearInvariantPattern>> getInvariantPatternForLocation(
+	public Dnf<AbstractLinearInvariantPattern> getInvariantPatternForLocation(
 			final IcfgLocation location, final int round, final Script solver, final String prefix,
 			final Set<IProgramVar> vars) {
 		throw new UnsupportedOperationException(
@@ -53,7 +52,7 @@ public class LiveVariablesStrategy extends LocationDependentLinearInequalityInva
 	}
 
 	@Override
-	public void changePatternSettingForLocation(IcfgLocation location, final int round , Set<IcfgLocation> locationsInUnsatCore) {
+	public void changePatternSettingForLocation(final IcfgLocation location, final int round , final Set<IcfgLocation> locationsInUnsatCore) {
 		throw new UnsupportedOperationException("LiveVariablesStrategy does not support dynamic setting changes.");
 	}
 

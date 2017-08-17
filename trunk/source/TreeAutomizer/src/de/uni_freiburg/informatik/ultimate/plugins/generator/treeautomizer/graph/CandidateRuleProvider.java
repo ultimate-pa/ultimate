@@ -27,13 +27,13 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.graph;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.HashSet;
+import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeRun;
+import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornClause;
+import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HornClause;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 
 /**
@@ -47,7 +47,7 @@ public class CandidateRuleProvider {
 	
 	
 	
-	private Iterable<TreeAutomatonRule<HornClause, IPredicate>> mCandidateRules;
+	private Set<TreeAutomatonRule<HornClause, IPredicate>> mCandidateRules;
 
 	/**
 	 * Triggers computation of candidate rules.
@@ -57,15 +57,17 @@ public class CandidateRuleProvider {
 	 * @param hcSymbolsToInterpolants 
 	 * @param alphabet 
 	 */
-	public CandidateRuleProvider(ITreeRun<HornClause, IPredicate> originalTreeRun, 
-			Map<IPredicate, IPredicate> hcSymbolsToInterpolants, List<HornClause> alphabet) {
-		mCandidateRules = new ArrayList<>();
+	public CandidateRuleProvider(ITreeAutomatonBU<HornClause, IPredicate> originalTreeRun, 
+			HCHoareTripleChecker hoareTripleChecker) {
+		mCandidateRules = new HashSet<>();
 		
-		for (HornClause letter : alphabet) {
-			
-			
+		for (final TreeAutomatonRule<HornClause, IPredicate> rule : originalTreeRun.getRules()) {
+			for (final IPredicate dest : originalTreeRun.getStates()) {
+				if (hoareTripleChecker.check(rule.getSource(), rule.getLetter(), dest) == Validity.VALID) {
+					mCandidateRules.add(new TreeAutomatonRule<HornClause, IPredicate>(rule.getLetter(), rule.getSource(), dest));
+				}
+			}
 		}
-
 	}
 
 	public Iterable<TreeAutomatonRule<HornClause, IPredicate>> getCandidateRules() {

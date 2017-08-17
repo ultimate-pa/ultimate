@@ -65,10 +65,10 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.Aff
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineTermTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.NotAffineException;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Cnf;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Dnf;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Nnf;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Nnf.QuantifierHandling;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.CnfTransformer;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.DnfTransformer;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.NnfTransformer;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.NnfTransformer.QuantifierHandling;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 
@@ -136,7 +136,7 @@ public final class SmtUtils {
 		} else if (overallTimeMs >= 100) {
 			logger.warn("Spent " + overallTimeMs + "ms on a formula simplification. DAG size of input: "
 					+ new DagSizePrinter(formula) + " DAG size of output " + new DagSizePrinter(simplified));
-			
+
 		}
 		return simplified;
 	}
@@ -496,6 +496,15 @@ public final class SmtUtils {
 	}
 
 	/**
+	 * Returns the negated equality (not ("=" lhs rhs)), or true resp. false if some simple checks detect validity or
+	 * unsatisfiablity of the equality. We deliberately do not return the "distinct" function from SMT-LIB. In Ultimate
+	 * we prefer explicit negations, because these can help us detect inconsitencies between terms syntactically.
+	 */
+	public static Term distinct(final Script script, final Term lhs, final Term rhs) {
+		return SmtUtils.not(script, binaryEquality(script, lhs, rhs));
+	}
+
+	/**
 	 * Returns the equality ("=" lhs rhs), but checks if one of the arguments is true/false and simplifies accordingly.
 	 */
 	private static Term booleanEquality(final Script script, final Term lhs, final Term rhs) {
@@ -511,10 +520,9 @@ public final class SmtUtils {
 			return script.term("=", lhs, rhs);
 		}
 	}
-	
+
 	/**
-	 * Returns the equality ("=" lhs rhs), for inputs of sort BitVec.
-	 * Simplifies if both inputs are literals.
+	 * Returns the equality ("=" lhs rhs), for inputs of sort BitVec. Simplifies if both inputs are literals.
 	 */
 	private static Term bitvectorEquality(final Script script, final Term lhs, final Term rhs) {
 		if (!SmtSortUtils.isBitvecSort(lhs.getSort())) {
@@ -530,15 +538,15 @@ public final class SmtUtils {
 				if (fstbw.equals(sndbw)) {
 					return script.term("true");
 				}
+				return script.term("false");
 			}
 		}
 		return script.term("=", lhs, rhs);
 	}
-	
-	
+
 	/**
-	 * Returns the equality ("=" lhs rhs), for inputs of numeric sort (int, real)
-	 * Simplifies if both inputs are literals.
+	 * Returns the equality ("=" lhs rhs), for inputs of numeric sort (int, real) Simplifies if both inputs are
+	 * literals.
 	 */
 	private static Term numericEquality(final Script script, final Term lhs, final Term rhs) {
 		if (!lhs.getSort().isNumericSort()) {
@@ -564,11 +572,10 @@ public final class SmtUtils {
 		}
 		if (lhsValue.equals(rhsValue)) {
 			return script.term("true");
-		} else {
-			return script.term("false");
 		}
+		return script.term("false");
 	}
-	
+
 	public static List<Term> substitutionElementwise(final List<Term> subtituents, final Substitution subst) {
 		final List<Term> result = new ArrayList<>();
 		for (int i = 0; i < subtituents.size(); i++) {
@@ -730,6 +737,10 @@ public final class SmtUtils {
 		return freeVars;
 	}
 
+	public static Term and(final Script script, final Term... terms) {
+		return Util.and(script, terms);
+	}
+
 	public static Term and(final Script script, final Collection<Term> terms) {
 		return Util.and(script, terms.toArray(new Term[terms.size()]));
 	}
@@ -873,7 +884,7 @@ public final class SmtUtils {
 			if (params.length != 2) {
 				throw new UnsupportedOperationException("not yet implemented");
 			}
-			result = SmtUtils.not(script, binaryEquality(script, params[0], params[1]));
+			result = SmtUtils.distinct(script, params[0], params[1]);
 			break;
 		case "=>":
 			result = Util.implies(script, params);
@@ -909,44 +920,44 @@ public final class SmtUtils {
 			}
 			result = comparison(script, funcname, params[0], params[1]);
 			break;
-		case "store": {
-			final Term array = params[0];
-			final Term idx = params[1];
-			final Term nestedIdx = getArrayStoreIdx(array);
-			if (nestedIdx != null) {
-				// Check for store-over-store
-				if (nestedIdx.equals(idx)) {
-					// Found store-over-store => ignore inner store
-					final ApplicationTerm appArray = (ApplicationTerm) array;
-					result = script.term(funcname,
-							appArray.getParameters()[0], params[1], params[2]);
-				} else {
-					result = script.term(funcname, indices, null, params);
-				} 
-			} else {
-				result = script.term(funcname, indices, null, params);
-			}
-			break;
-		}
-		case "select": {
-			final Term array = params[0];
-			final Term idx = params[1];
-			final Term nestedIdx = getArrayStoreIdx(array);
-			if (nestedIdx != null) {
-				// Check for store-over-store
-				if (nestedIdx.equals(idx)) {
-					// Found store-over-store => ignore inner store
-					final ApplicationTerm appArray = (ApplicationTerm) array;
-					// => transform into value
-					result = appArray.getParameters()[2];
-				} else {
-					result = script.term(funcname, indices, null, params);
-				} 
-			} else {
-				result = script.term(funcname, indices, null, params);
-			}
-			break;
-		}
+		// case "store": {
+		// final Term array = params[0];
+		// final Term idx = params[1];
+		// final Term nestedIdx = getArrayStoreIdx(array);
+		// if (nestedIdx != null) {
+		// // Check for store-over-store
+		// if (nestedIdx.equals(idx)) {
+		// // Found store-over-store => ignore inner store
+		// final ApplicationTerm appArray = (ApplicationTerm) array;
+		// result = script.term(funcname,
+		// appArray.getParameters()[0], params[1], params[2]);
+		// } else {
+		// result = script.term(funcname, indices, null, params);
+		// }
+		// } else {
+		// result = script.term(funcname, indices, null, params);
+		// }
+		// break;
+		// }
+		// case "select": {
+		// final Term array = params[0];
+		// final Term idx = params[1];
+		// final Term nestedIdx = getArrayStoreIdx(array);
+		// if (nestedIdx != null) {
+		// // Check for store-over-store
+		// if (nestedIdx.equals(idx)) {
+		// // Found store-over-store => ignore inner store
+		// final ApplicationTerm appArray = (ApplicationTerm) array;
+		// // => transform into value
+		// result = appArray.getParameters()[2];
+		// } else {
+		// result = script.term(funcname, indices, null, params);
+		// }
+		// } else {
+		// result = script.term(funcname, indices, null, params);
+		// }
+		// break;
+		// }
 		case "zero_extend":
 		case "extract":
 		case "bvsub":
@@ -982,16 +993,15 @@ public final class SmtUtils {
 		}
 		return result;
 	}
-	
+
 	/**
-	 * @return idx if array has form (store a idx v) return null if array has
-	 * a different form
+	 * @return idx if array has form (store a idx v) return null if array has a different form
 	 */
 	private final static Term getArrayStoreIdx(final Term array) {
 		if (array instanceof ApplicationTerm) {
 			final ApplicationTerm appArray = (ApplicationTerm) array;
 			final FunctionSymbol arrayFunc = appArray.getFunction();
-			if (arrayFunc.isIntern() &&	arrayFunc.getName().equals("store")) {
+			if (arrayFunc.isIntern() && arrayFunc.getName().equals("store")) {
 				// (store a i v)
 				return appArray.getParameters()[1];
 			}
@@ -1043,13 +1053,12 @@ public final class SmtUtils {
 				final BigInteger bigIntDivident = toInt(affineDivident.getConstant());
 				final BigInteger modulus = BoogieUtils.euclideanMod(bigIntDivident, bigIntDivisor);
 				return script.numeral(modulus);
+			}
+			final Term simplifiedNestedModulo = simplifyNestedModulo(script, divident, bigIntDivisor);
+			if (simplifiedNestedModulo == null) {
+				// no simplification was possible, continue
 			} else {
-				final Term simplifiedNestedModulo = simplifyNestedModulo(script, divident, bigIntDivisor);
-				if (simplifiedNestedModulo == null) {
-					// no simplification was possible, continue
-				} else {
-					return simplifiedNestedModulo;
-				}
+				return simplifiedNestedModulo;
 			}
 			final AffineTerm moduloApplied =
 					AffineTerm.applyModuloToAllCoefficients(script, affineDivident, bigIntDivisor);
@@ -1328,7 +1337,7 @@ public final class SmtUtils {
 			result = new SimplifyBdd(services, mgdScript).transformToDNF(term);
 			break;
 		case BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION:
-			result = new Dnf(mgdScript, services).transform(term);
+			result = new DnfTransformer(mgdScript, services).transform(term);
 			break;
 		default:
 			throw new AssertionError(ERROR_MESSAGE_UNKNOWN_ENUM_CONSTANT + xnfConversionTechnique);
@@ -1340,7 +1349,7 @@ public final class SmtUtils {
 	 * @return logically equivalent term in negation normal form (NNF)
 	 */
 	public static Term toNnf(final IUltimateServiceProvider services, final ManagedScript mgdScript, final Term term) {
-		return new Nnf(mgdScript, services, QuantifierHandling.PULL).transform(term);
+		return new NnfTransformer(mgdScript, services, QuantifierHandling.PULL).transform(term);
 	}
 
 	/**
@@ -1354,7 +1363,7 @@ public final class SmtUtils {
 			result = new SimplifyBdd(services, mgdScript).transformToCNF(term);
 			break;
 		case BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION:
-			result = new Cnf(mgdScript, services).transform(term);
+			result = new CnfTransformer(mgdScript, services).transform(term);
 			break;
 		default:
 			throw new AssertionError(ERROR_MESSAGE_UNKNOWN_ENUM_CONSTANT + xnfConversionTechnique);

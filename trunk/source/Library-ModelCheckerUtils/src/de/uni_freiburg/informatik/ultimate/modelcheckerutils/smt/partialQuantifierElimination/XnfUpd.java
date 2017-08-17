@@ -55,12 +55,12 @@ public class XnfUpd extends XjunctPartialQuantifierElimination {
 
 	@Override
 	public String getName() {
-		return "unimportant select removal";
+		return "unconnected parameter drop";
 	}
 
 	@Override
 	public String getAcronym() {
-		return "USR";
+		return "UPD";
 	}
 	
 	@Override

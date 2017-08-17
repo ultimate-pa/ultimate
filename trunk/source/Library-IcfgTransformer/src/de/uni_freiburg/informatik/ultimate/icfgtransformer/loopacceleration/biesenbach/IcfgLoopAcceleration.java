@@ -25,6 +25,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.biesenbach;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IBacktranslationTracker;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IIcfgTransformer;
@@ -33,18 +34,92 @@ import de.uni_freiburg.informatik.ultimate.icfgtransformer.ITransformulaTransfor
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 
+/**
+ * A {@link IIcfgTransformer} that accelerates the first loop if finds and creates a new accelerated {@link IIcfg}.
+ *
+ * @param <INLOC>
+ *            The type of the locations of the old IIcfg.
+ * @param <OUTLOC>
+ *            The type of the locations of the transformed IIcfg.
+ *
+ * @author Ben Biesenbach (Ben.Biesenbach@gmx.de)
+ *
+ */
 public class IcfgLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends IcfgLocation>
 		implements IIcfgTransformer<OUTLOC> {
 
+	/**
+	 * Different options for the loop acceleration
+	 *
+	 * @author Ben Biesenbach (Ben.Biesenbach@gmx.de)
+	 *
+	 */
+	public enum LoopAccelerationOptions {
+		/**
+		 * If the {@link IIcfg} contains a loop that cannot be accelerated with a valid underapproximation, throw an
+		 * exception.
+		 */
+		THROW_EXEPTION,
+
+		/**
+		 * If the acceleration contains an overapproximation (i.e., some variables had to be overapproximated with *),
+		 * add the acceleration and mark it as overapproximation. If a loop can -- for some reason -- not be
+		 * accelerated, just ignore it with a warning.
+		 */
+		MARK_AS_OVERAPPROX,
+
+		/**
+		 * Only add an acceleration if it is a valid underapproximation and ignore all other loops.
+		 */
+		DO_NOT_ACCELERATE
+	}
+
 	private final IIcfg<OUTLOC> mResultIcfg;
 
-	public IcfgLoopAcceleration(final IIcfg<INLOC> originalIcfg, final ILocationFactory<INLOC, OUTLOC> funLocFac,
-			final IBacktranslationTracker backtranslationTracker, final Class<OUTLOC> outLocationClass,
+	/**
+	 * Default constructor.
+	 *
+	 * @param logger
+	 * @param originalIcfg
+	 * @param outLocationClass
+	 * @param funLocFac
+	 * @param newIcfgIdentifier
+	 * @param transformer
+	 * @param backtranslationTracker
+	 * @param services
+	 * @param replacementVarFactory
+	 * @param option
+	 */
+	public IcfgLoopAcceleration(final ILogger logger, final IIcfg<INLOC> originalIcfg,
+			final Class<OUTLOC> outLocationClass, final ILocationFactory<INLOC, OUTLOC> funLocFac,
 			final String newIcfgIdentifier, final ITransformulaTransformer transformer,
-			final IUltimateServiceProvider services) {
+			final IBacktranslationTracker backtranslationTracker, final IUltimateServiceProvider services,
+			final LoopAccelerationOptions option) {
+		mResultIcfg = accelerat(logger, originalIcfg, outLocationClass, funLocFac, newIcfgIdentifier, transformer,
+				backtranslationTracker, services, option);
+	}
 
-		mResultIcfg = new LoopDetectionBB<INLOC, OUTLOC>(null, originalIcfg, outLocationClass, funLocFac,
-				newIcfgIdentifier, transformer, backtranslationTracker, services).getResult();
+	@SuppressWarnings("unchecked")
+	private IIcfg<OUTLOC> accelerat(final ILogger logger, final IIcfg<INLOC> originalIcfg,
+			final Class<OUTLOC> outLocationClass, final ILocationFactory<INLOC, OUTLOC> funLocFac,
+			final String newIcfgIdentifier, final ITransformulaTransformer transformer,
+			final IBacktranslationTracker backtranslationTracker, final IUltimateServiceProvider services,
+			final LoopAccelerationOptions option) {
+		if (option.equals(LoopAccelerationOptions.DO_NOT_ACCELERATE)) {
+			return (IIcfg<OUTLOC>) originalIcfg;
+		}
+		// get the loop
+		final LoopDetectionBB<INLOC, OUTLOC> loopDetection = new LoopDetectionBB<>(logger, originalIcfg,
+				outLocationClass, funLocFac, newIcfgIdentifier, transformer, backtranslationTracker, services);
+		final IIcfg<OUTLOC> loop = loopDetection.getLoop();
+
+		// create the matrix
+		final MatrixBB matrix = new LoopAccelerationMatrix<>(logger, loop).getResult();
+		// calculate the alphas
+		final AlphaSolver<INLOC> alphaSolver =
+				new AlphaSolver<>(logger, (IIcfg<INLOC>) loop, matrix.getMatrix(), matrix.getLGS(), services);
+		// add guard and final icfg
+		return loopDetection.rejoin(alphaSolver.getResult(), alphaSolver.getN(), alphaSolver.getGuardSubstitute());
 	}
 
 	@Override

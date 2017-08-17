@@ -47,7 +47,7 @@ import java.util.Set;
  * @param <LETTER> Symbols of the automaton
  * @param <STATE> States of the automaton.
  */
-public class TreeRun<LETTER, STATE> implements ITreeRun<LETTER, STATE> {
+public class TreeRun<LETTER extends IRankedLetter, STATE> implements ITreeRun<LETTER, STATE> {
 
 	/*
 	 * fields that determine the TreeRun
@@ -152,27 +152,12 @@ public class TreeRun<LETTER, STATE> implements ITreeRun<LETTER, STATE> {
 		return mAllStates;
 	}
 	
-	private Collection<STATE> getInitialStates() {
-		final Set<STATE> res = new HashSet<>();
-		if (mChildren.isEmpty()) {
-			res.add(mState);
-		} else {
-			for (final TreeRun<LETTER, STATE> st : mChildren) {
-				res.addAll(st.getInitialStates());
-			}
-		}
-		return res;
-	}
-	
 	@Override
 	public ITreeAutomatonBU<LETTER, STATE> getAutomaton() {
 		final TreeAutomatonBU<LETTER, STATE> treeAutomaton = new TreeAutomatonBU<>();
 		
 		for (final STATE st : getStates()) {
 			treeAutomaton.addState(st);
-		}
-		for (final STATE st : getInitialStates()) {
-			treeAutomaton.addInitialState(st);
 		}
 		treeAutomaton.addFinalState(mState);
 		
@@ -185,9 +170,6 @@ public class TreeRun<LETTER, STATE> implements ITreeRun<LETTER, STATE> {
 
 	@Override
 	public Tree<LETTER> getTree() {
-		if (mChildren.isEmpty()) {
-			return null;
-		}
 		final List<Tree<LETTER>> treeChildren = new ArrayList<>();
 		for (final TreeRun<LETTER, STATE> run : this.mChildren) {
 			treeChildren.add(run.getTree());
@@ -207,9 +189,6 @@ public class TreeRun<LETTER, STATE> implements ITreeRun<LETTER, STATE> {
 	
 	@Override
 	public String toString() {
-		if (mChildren.isEmpty()) {
-			return mState.toString();
-		}
 		final StringBuilder res = new StringBuilder();
 		for (final TreeRun<LETTER, STATE> st : mChildren) {
 			if (res.length() > 0) {
@@ -218,8 +197,7 @@ public class TreeRun<LETTER, STATE> implements ITreeRun<LETTER, STATE> {
 			res.append(st.toString());
 		}
 		if (res.length() > 0) {
-			res.append("(");
-			res.append(res);
+			res.insert(0, "(");
 			res.append(")");
 		}
 		return String.format("%s[%s]%s", mLetter, mState, res);

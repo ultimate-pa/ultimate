@@ -196,7 +196,7 @@ public class LoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC 
 				final OUTLOC newTarget = lst.createNewLocation(oldTarget);
 
 				if (mBackbones.containsKey(oldSource)) {
-					final IcfgEdge newTransition = getAcceleratedTransition(oldTransition, newSource, newTarget);
+					final IcfgEdge newTransition = addAcceleratedTransition(oldTransition, newSource, newTarget);
 					backtranslationTracker.rememberRelation(oldTransition, newTransition);
 				} else {
 					if (oldTransition instanceof IIcfgReturnTransition<?, ?>) {
@@ -231,7 +231,7 @@ public class LoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC 
 				final OUTLOC newSource = lst.createNewLocation(oldSource);
 				final OUTLOC newTarget = lst.createNewLocation(oldTarget);
 				if (i == 0) {
-					final IcfgEdge newTransition = getAcceleratedTransition(edge, newSource, newTarget);
+					final IcfgEdge newTransition = addAcceleratedTransition(edge, newSource, newTarget);
 					backtranslationTracker.rememberRelation(edge, newTransition);
 				} else {
 					lst.createNewTransition(newSource, newTarget, edge);
@@ -243,7 +243,7 @@ public class LoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC 
 		return resultIcfg;
 	}
 
-	private IcfgEdge getAcceleratedTransition(final IcfgEdge oldTransition, final OUTLOC newSource,
+	private IcfgEdge addAcceleratedTransition(final IcfgEdge oldTransition, final OUTLOC newSource,
 			final OUTLOC newTarget) {
 		final INLOC oldSource = (INLOC) oldTransition.getSource();
 		final IteratedSymbolicMemory iteratedSymbolicMemory = getIteratedSymbolicMemoryForLoop(oldSource);

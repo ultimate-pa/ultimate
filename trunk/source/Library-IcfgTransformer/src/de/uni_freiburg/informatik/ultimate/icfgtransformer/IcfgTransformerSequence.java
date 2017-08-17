@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.icfgtransformer;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Deque;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -36,8 +37,10 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  * A {@link IIcfgTransformer} that creates a new {@link IIcfg} with a sequence of {@link ITransformulaTransformer}. Each
@@ -61,7 +64,7 @@ public class IcfgTransformerSequence<INLOC extends IcfgLocation, OUTLOC extends 
 
 	/**
 	 * Default constructor.
-	 * 
+	 *
 	 * @param originalIcfg
 	 *            an input {@link IIcfg}.
 	 * @param funLocFacFirst
@@ -126,9 +129,10 @@ public class IcfgTransformerSequence<INLOC extends IcfgLocation, OUTLOC extends 
 
 	private static <IN extends IcfgLocation, OUT extends IcfgLocation> void processLocations(final Set<IN> init,
 			final TransformedIcfgBuilder<IN, OUT> lst) {
+
 		final Deque<IN> open = new ArrayDeque<>(init);
 		final Set<IN> closed = new HashSet<>();
-
+		final List<Triple<OUT, OUT, IcfgEdge>> later = new ArrayList<>();
 		while (!open.isEmpty()) {
 			final IN oldSource = open.removeFirst();
 			if (!closed.add(oldSource)) {
@@ -141,9 +145,16 @@ public class IcfgTransformerSequence<INLOC extends IcfgLocation, OUTLOC extends 
 				final IN oldTarget = (IN) oldTransition.getTarget();
 				open.add(oldTarget);
 				final OUT newTarget = lst.createNewLocation(oldTarget);
-				lst.createNewTransition(newSource, newTarget, oldTransition);
+				if (oldTransition instanceof IIcfgReturnTransition<?, ?>) {
+					later.add(new Triple<>(newSource, newTarget, oldTransition));
+				} else {
+					lst.createNewTransition(newSource, newTarget, oldTransition);
+				}
+
 			}
 		}
+
+		later.forEach(a -> lst.createNewTransition(a.getFirst(), a.getSecond(), a.getThird()));
 	}
 
 	private String getIdentifier(final Iterator<ITransformulaTransformer> iter, final int iteration) {

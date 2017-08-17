@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -39,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractSta
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
+import de.uni_freiburg.informatik.ultimate.util.SetOperations;
 
 /**
  *
@@ -94,6 +95,12 @@ public class LiveVariableState<ACTION extends IAction>
 	}
 
 	@Override
+	public LiveVariableState<ACTION> renameVariables(final Map<IProgramVarOrConst, IProgramVarOrConst> old2newVars) {
+		// we contain all the variables ;)
+		return this;
+	}
+
+	@Override
 	public LiveVariableState<ACTION> patch(final LiveVariableState<ACTION> dominator) {
 		return union(dominator);
 	}
@@ -127,7 +134,7 @@ public class LiveVariableState<ACTION extends IAction>
 
 	@Override
 	public LiveVariableState<ACTION> intersect(final LiveVariableState<ACTION> other) {
-		final Set<IProgramVarOrConst> intersection = AbsIntUtil.intersect(mLive, other.mLive);
+		final Set<IProgramVarOrConst> intersection = SetOperations.intersect(mLive, other.mLive);
 		if (intersection.equals(mLive)) {
 			return this;
 		} else if (intersection.equals(other.mLive)) {
@@ -138,7 +145,7 @@ public class LiveVariableState<ACTION extends IAction>
 
 	@Override
 	public LiveVariableState<ACTION> union(final LiveVariableState<ACTION> other) {
-		final Set<IProgramVarOrConst> union = AbsIntUtil.union(mLive, other.mLive);
+		final Set<IProgramVarOrConst> union = SetOperations.union(mLive, other.mLive);
 		if (union.equals(mLive)) {
 			return this;
 		} else if (union.equals(other.mLive)) {

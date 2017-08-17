@@ -1,7 +1,8 @@
 /*
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2010-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * Copyright (C) 2012-2015 University of Freiburg
+ * Copyright (C) 2017 Dennis Wölfing
+ * Copyright (C) 2012-2017 University of Freiburg
  *
  * This file is part of the ULTIMATE ModelCheckerUtils Library.
  *
@@ -112,7 +113,7 @@ public final class TransFormulaUtils {
 	 * @param tryAuxVarElimination Apply our partial quantifier elimination
 	 * and try to eliminate auxVars. This is a postprocessing that we apply to
 	 * the resulting formula which produces an equivalent formula with less
-	 * auxvars.   
+	 * auxvars.
 	 * @return the relational composition (concatenation) of transformula1 and transformula2
 	 */
 	public static UnmodifiableTransFormula sequentialComposition(final ILogger logger,
@@ -953,4 +954,43 @@ public final class TransFormulaUtils {
 		return (new Substitution(mgdScript, substitutionMapping)).transform(tf.getFormula());
 	}
 
+
+	public static UnmodifiableTransFormula constructHavoc(final TransFormula tf, final ManagedScript mgdScript) {
+		final TransFormulaBuilder tfb = new TransFormulaBuilder(tf.getInVars(), tf.getOutVars(), false,
+				tf.getNonTheoryConsts(), true, null, false);
+		tfb.setFormula(mgdScript.getScript().term("true"));
+		tfb.setInfeasibility(Infeasibility.UNPROVEABLE);
+		return tfb.finishConstruction(mgdScript);
+	}
+
+
+	/**
+	 * This method first computes the guards of the input {@link UnmodifiableTransFormula}s. It then returns a
+	 * {@link UnmodifiableTransFormula} that is satisfied for some input variables iff none of the guards is satisfied.
+	 * The output variables of the result are simply set to the input variables.
+	 *
+	 * This method will not always work: in case the disjunction contains auxvars that cannot be eliminated this method
+	 * will throw an Exception.
+	 *
+	 *
+	 * TODO 2017-08-07 Matthias: Get rid of serial number in parallel composition.
+	 *
+	 * @param logger
+	 * @param services
+	 * @param serialNumber
+	 *            Use a different number in each call. This is an ugly workaround and will be removed in the future.
+	 * @param mgdScript
+	 * @param transFormulas
+	 *            The other TransFormulas.
+	 * @return A TransFormula in guard form.
+	 */
+	public static UnmodifiableTransFormula constructRemainderGuard(final ILogger logger,
+			final IUltimateServiceProvider services, final int serialNumber, final ManagedScript mgdScript,
+			final UnmodifiableTransFormula... transFormulas) {
+		final UnmodifiableTransFormula disjunction = parallelComposition(logger, services, serialNumber, mgdScript, null,
+				false, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, transFormulas);
+		final UnmodifiableTransFormula guardOfDisjunction = computeGuard(disjunction, mgdScript, services, logger);
+		return negate(guardOfDisjunction, mgdScript, services, logger,
+				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, SimplificationTechnique.SIMPLIFY_DDA);
+	}
 }

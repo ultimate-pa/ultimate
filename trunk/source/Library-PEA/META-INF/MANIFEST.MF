@@ -6,16 +6,16 @@ Bundle-Version: 0.89.0
 Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  org.jdom,
  org.apache.xerces,
- net.sourceforge.czt
+ net.sourceforge.czt,
+ de.uni_freiburg.informatik.ultimate.boogie.preprocessor,
+ de.uni_freiburg.informatik.ultimate.lib.boogieast
 Export-Package: de.uni_freiburg.informatik.ultimate.lib.pea,
  de.uni_freiburg.informatik.ultimate.lib.pea.modelchecking,
- de.uni_freiburg.informatik.ultimate.lib.pea.modelchecking.CaseStudy,
  de.uni_freiburg.informatik.ultimate.lib.pea.modelchecking.armc,
- de.uni_freiburg.informatik.ultimate.lib.pea.modelchecking.example,
  de.uni_freiburg.informatik.ultimate.lib.pea.modelchecking.localize,
  de.uni_freiburg.informatik.ultimate.lib.pea.modelchecking.schemas,
- de.uni_freiburg.informatik.ultimate.lib.pea.reqCheck,
+ de.uni_freiburg.informatik.ultimate.lib.pea.reqcheck,
+ de.uni_freiburg.informatik.ultimate.lib.pea.test,
  de.uni_freiburg.informatik.ultimate.lib.pea.util,
- de.uni_freiburg.informatik.ultimate.lib.pea.util.z,
- de.uni_freiburg.informatik.ultimate.lib.pea.test
+ de.uni_freiburg.informatik.ultimate.lib.pea.util.z
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8

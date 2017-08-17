@@ -53,8 +53,8 @@ public class PredicateFactoryResultChecking implements ISenwaStateFactory<IPredi
 	private static final String STATE_LABEL =
 			"auxiliary predicate that should only be used while checking correctness of automata operations";
 	
-	public PredicateFactoryResultChecking(final PredicateFactory csToolkit) {
-		mPredicateFactory = csToolkit;
+	public PredicateFactoryResultChecking(final PredicateFactory predicateFactory) {
+		mPredicateFactory = predicateFactory;
 	}
 	
 	@Override

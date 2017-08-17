@@ -29,9 +29,10 @@ package de.uni_freiburg.informatik.ultimate.automata.tree.operations;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.tree.IRankedLetter;
 import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
 
@@ -45,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
  * @param <STATE>
  *            state of the tree automaton.
  */
-public class Complement<LETTER, STATE> implements IOperation<LETTER, STATE, IStateFactory<STATE>> {
+public class Complement<LETTER extends IRankedLetter, STATE> implements IOperation<LETTER, STATE, IStateFactory<STATE>> {
 
 	private final ITreeAutomatonBU<LETTER, STATE> mTreeAutomaton;
 
@@ -58,7 +59,7 @@ public class Complement<LETTER, STATE> implements IOperation<LETTER, STATE, ISta
 	 * @param factory
 	 * @param tree
 	 */
-	public <SF extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>> Complement(
+	public <SF extends IMergeStateFactory<STATE> & ISinkStateFactory<STATE>> Complement(
 			final AutomataLibraryServices services, final SF factory,
 			final ITreeAutomatonBU<LETTER, STATE> tree) {
 		mServices = services;
@@ -77,13 +78,14 @@ public class Complement<LETTER, STATE> implements IOperation<LETTER, STATE, ISta
 		return "Exiting complementing";
 	}
 
-	private <F extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>> ITreeAutomatonBU<LETTER, STATE>
+	private <F extends IMergeStateFactory<STATE> & ISinkStateFactory<STATE>> ITreeAutomatonBU<LETTER, STATE>
 			computeResult(final F stateFactory) {
 		final Determinize<LETTER, STATE> op = new Determinize<>(mServices, stateFactory, mTreeAutomaton);
 		final TreeAutomatonBU<LETTER, STATE> res = (TreeAutomatonBU<LETTER, STATE>) op.getResult();
 		res.complementFinals();
-		final Minimize<LETTER, STATE> mini = new Minimize<>(mServices, stateFactory, res);
-		return mini.getResult();
+		return res;
+		//final Minimize<LETTER, STATE> mini = new Minimize<>(mServices, stateFactory, res);
+		//return mini.getResult();
 	}
 
 	@Override

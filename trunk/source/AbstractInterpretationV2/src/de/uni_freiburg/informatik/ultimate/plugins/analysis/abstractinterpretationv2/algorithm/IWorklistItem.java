@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm;
 
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.AbstractMultiState;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.DisjunctiveAbstractState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
 
 /**
@@ -38,7 +38,7 @@ public interface IWorklistItem<STATE extends IAbstractState<STATE, VARDECL>, ACT
 
 	ACTION getAction();
 
-	AbstractMultiState<STATE, VARDECL> getState();
+	DisjunctiveAbstractState<STATE, VARDECL> getState();
 
 	IWorklistItem<STATE, ACTION, VARDECL, LOCATION> getPredecessor();
 }

@@ -21,7 +21,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
  *
  */
 public abstract class LocationDependentLinearInequalityInvariantPatternStrategy
-implements ILinearInequalityInvariantPatternStrategy<Collection<Collection<AbstractLinearInvariantPattern>>> {
+		implements ILinearInequalityInvariantPatternStrategy<Dnf<AbstractLinearInvariantPattern>> {
 
 	private final int maxRounds;
 	protected final Set<IProgramVar> mAllProgramVariables;
@@ -33,15 +33,15 @@ implements ILinearInequalityInvariantPatternStrategy<Collection<Collection<Abstr
 
 	/**
 	 * Generates a simple linear inequality invariant pattern strategy.
-	 * 
+	 *
 	 * @param maxRounds
 	 *            maximal number of rounds to be announced by
 	 *            {@link #getMaxRounds()}.
-	 * @param allProgramVariables 
+	 * @param allProgramVariables
 	 */
 	public LocationDependentLinearInequalityInvariantPatternStrategy(final AbstractTemplateIncreasingDimensionsStrategy dimensionsStrat,
-			final int maxRounds, Set<IProgramVar> allProgramVariables, boolean alwaysStrictAndNonStrictCopies,
-			boolean useStrictInequalitiesAlternatingly) {
+			final int maxRounds, final Set<IProgramVar> allProgramVariables, final boolean alwaysStrictAndNonStrictCopies,
+			final boolean useStrictInequalitiesAlternatingly) {
 		mDimensionsStrategy = dimensionsStrat;
 		this.maxRounds = maxRounds;
 		mAllProgramVariables = allProgramVariables;
@@ -51,11 +51,13 @@ implements ILinearInequalityInvariantPatternStrategy<Collection<Collection<Abstr
 		mUseStrictInequalitiesAlternatingly = useStrictInequalitiesAlternatingly;
 	}
 
-	public Collection<Collection<AbstractLinearInvariantPattern>> getInvariantPatternForLocation(IcfgLocation location, int round, Script solver, String prefix) {
+	@Override
+	public Dnf<AbstractLinearInvariantPattern> getInvariantPatternForLocation(final IcfgLocation location,
+			final int round, final Script solver, final String prefix) {
 		final int[] dimensions = getDimensions(location, round);
-		Set<Term> patternCoefficients = new HashSet<>();
+		final Set<Term> patternCoefficients = new HashSet<>();
 		// Build invariant pattern
-		final Collection<Collection<AbstractLinearInvariantPattern>> disjunction = new ArrayList<>(dimensions[0]);
+		final Dnf<AbstractLinearInvariantPattern> disjunction = new Dnf<>(dimensions[0]);
 		for (int i = 0; i < dimensions[0]; i++) {
 			final Collection<AbstractLinearInvariantPattern> conjunction = new ArrayList<>(
 					dimensions[1]);
@@ -63,9 +65,9 @@ implements ILinearInequalityInvariantPatternStrategy<Collection<Collection<Abstr
 				boolean[] invariantPatternCopies = new boolean[] { false };
 				if (mUseStrictInequalitiesAlternatingly) {
 					// if it is an odd conjunct, then construct a strict inequality
-					if (j % 2 == 1) { 
+					if (j % 2 == 1) {
 						invariantPatternCopies = new boolean[] { true };
-					} 
+					}
 				}
 				if (mAlwaysStrictAndNonStrictCopies) {
 					invariantPatternCopies = new boolean[] { false, true };
@@ -83,17 +85,18 @@ implements ILinearInequalityInvariantPatternStrategy<Collection<Collection<Abstr
 		mLoc2PatternCoefficents.put(location, patternCoefficients);
 		return disjunction;
 	}
-	
+
 	@Override
-	public void setNumOfConjunctsForLocation(final IcfgLocation location, int numOfConjuncts) {
+	public void setNumOfConjunctsForLocation(final IcfgLocation location, final int numOfConjuncts) {
 //		mLoc2MaxNumOfConjuncts.put(location, maxNumOfConjuncts);
 		throw new UnsupportedOperationException("not yet implemented");
 	}
-	
-	public void setNumOfDisjunctsForLocation(final IcfgLocation location, int numOfDisjuncts) {
+
+	@Override
+	public void setNumOfDisjunctsForLocation(final IcfgLocation location, final int numOfDisjuncts) {
 		throw new UnsupportedOperationException("not yet implemented");
 	}
-	
+
 
 
 	/**
@@ -108,10 +111,11 @@ implements ILinearInequalityInvariantPatternStrategy<Collection<Collection<Abstr
 	 * {@inheritDoc}
 	 */
 	@Override
-	public int[] getDimensions(IcfgLocation location, int round) {
+	public int[] getDimensions(final IcfgLocation location, final int round) {
 		return mDimensionsStrategy.getDimensions(location, round);
 	}
 
+	@Override
 	public void resetSettings() {
 		mPrefixCounter = 0;
 	}
@@ -121,7 +125,7 @@ implements ILinearInequalityInvariantPatternStrategy<Collection<Collection<Abstr
 	}
 
 	@Override
-	public Set<Term> getPatternCoefficientsForLocation(IcfgLocation location) {
+	public Set<Term> getPatternCoefficientsForLocation(final IcfgLocation location) {
 		assert mLoc2PatternCoefficents.containsKey(location) : "No coefficients available for the location: " + location;
 		return Collections.unmodifiableSet(mLoc2PatternCoefficents.get(location));
 	}

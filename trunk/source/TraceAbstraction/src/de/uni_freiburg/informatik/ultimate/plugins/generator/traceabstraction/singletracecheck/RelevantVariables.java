@@ -611,7 +611,7 @@ public class RelevantVariables {
 
 		final Set<IProgramVar> result = new HashSet<>();
 		for (final IProgramVar bv : returnPredRv) {
-			if (!returnTF.getAssignedVars().contains(bv) && !isHavoced(globalVarAssignment, oldVarAssignment, bv)) {
+			if (!returnTF.getAssignedVars().contains(bv) && !globalVarAssignment.getAssignedVars().contains(bv)) {
 				result.add(bv);
 			}
 		}
@@ -624,7 +624,7 @@ public class RelevantVariables {
 		// new
 		addAllNonModifiableGlobals(callPredRv, callee, result);
 		result.addAll(oldVarAssignment.getInVars().keySet());
-		assert result.equals(alternativeResult) : "notEqual";
+		assert result.equals(alternativeResult) : "inconsistent result of live variables analysis";
 		return alternativeResult;
 	}
 
