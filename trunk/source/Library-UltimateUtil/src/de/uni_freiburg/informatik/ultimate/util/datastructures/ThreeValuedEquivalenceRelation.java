@@ -32,7 +32,10 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.util.SetOperations;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
@@ -358,5 +361,17 @@ public class ThreeValuedEquivalenceRelation<E> {
 		return getSupportingEqualities().isEmpty() && mDisequalities.isEmpty();
 	}
 
+	public void transformElements(final Function<E, E> transformer) {
+		assert SetOperations.intersect(getAllElements(),
+				getAllElements().stream().map(transformer).collect(Collectors.toSet())).isEmpty() :
+					"we assume that the transformer does not produce elements that were in the relation before!";
+		mUnionFind.transformElements(transformer);
+
+		final HashRelation<E, E> disequalitiesCopy = new HashRelation<>(mDisequalities);
+		for (final Entry<E, E> pair : disequalitiesCopy) {
+			mDisequalities.removePair(pair.getKey(), pair.getValue());
+			mDisequalities.addPair(transformer.apply(pair.getKey()), transformer.apply(pair.getValue()));
+		}
+	}
 }
 

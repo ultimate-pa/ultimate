@@ -36,6 +36,8 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.util.SetOperations;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
@@ -356,5 +358,22 @@ public class UnionFind<E> implements IPartition<E> {
 			todo.removeAll(newBlock);
 		}
 		return result;
+	}
+
+	public void transformElements(final Function<E, E> elemTransformer) {
+		final HashMap<Set<E> ,E> representativeCopy = new HashMap<>(mRepresentative);
+		for (final Entry<Set<E>, E> entry : representativeCopy.entrySet()) {
+			for (final E oldElem : entry.getKey()) {
+				mEquivalenceClass.remove(oldElem);
+			}
+			mRepresentative.remove(entry.getKey());
+
+			final E newRep = elemTransformer.apply(entry.getValue());
+			final Set<E> newEqClass = entry.getKey().stream().map(elemTransformer).collect(Collectors.toSet());
+			for (final E newElem : newEqClass) {
+				mEquivalenceClass.put(newElem, newEqClass);
+			}
+			mRepresentative.put(newEqClass, newRep);
+		}
 	}
 }
