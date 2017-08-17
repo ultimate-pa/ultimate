@@ -96,10 +96,10 @@ public class EqBottomConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 		return Collections.emptySet();
 	}
 
-	@Override
-	public boolean checkForContradiction() {
-		return true;
-	}
+//	@Override
+//	public boolean checkForContradiction() {
+//		return true;
+//	}
 
 	@Override
 	public EqConstraint<ACTION, NODE, FUNCTION> projectExistentially(final Collection<TermVariable> varsToProjectAway) {
