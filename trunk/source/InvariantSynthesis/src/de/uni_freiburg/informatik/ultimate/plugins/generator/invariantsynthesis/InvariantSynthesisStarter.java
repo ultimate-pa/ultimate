@@ -58,6 +58,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgElement;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.dangerinvariants.DangerInvariantUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
@@ -138,7 +140,15 @@ public class InvariantSynthesisStarter {
 		final IStatisticsDataProvider statistics = cfgInvGenerator.getInvariantSynthesisStatistics();
 		if (invariants != null) {
 			if (kindOfInvariant == KindOfInvariant.DANGER) {
-				mOverallResult = Result.UNSAFE;
+				final Validity validity = DangerInvariantUtils.checkDangerInvariant(invariants, icfg, mgdScript,
+						mServices, predicateFactory, mLogger);
+				if (validity == Validity.VALID) {
+					mOverallResult = Result.UNSAFE;
+				} else {
+					mLogger.warn("Danger invariant could not be confirmed to be correct: " + validity);
+					mLogger.debug(invariants);
+					mOverallResult = Result.UNKNOWN;
+				}
 			} else {
 				assert kindOfInvariant == KindOfInvariant.SAFETY;
 
