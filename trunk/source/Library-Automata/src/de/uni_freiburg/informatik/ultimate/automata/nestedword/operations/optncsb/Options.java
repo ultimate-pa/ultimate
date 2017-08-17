@@ -29,6 +29,10 @@
 
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb;
 
+/**
+ * @author Yong Li (liyong@ios.ac.cn)
+ * */
+
 public class Options {
 	
 	public static int setChoice = 1;

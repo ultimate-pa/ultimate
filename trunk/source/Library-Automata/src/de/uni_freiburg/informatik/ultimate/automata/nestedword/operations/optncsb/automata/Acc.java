@@ -33,6 +33,10 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util.IntSet;
 
+/**
+ * @author Yong Li (liyong@ios.ac.cn)
+ * */
+
 public interface Acc {
 	
 	boolean isAccepted(IntSet set);

@@ -31,6 +31,10 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optnc
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.automata.IBuchi;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.automata.IState;
 
+/**
+ * @author Yong Li (liyong@ios.ac.cn)
+ * */
+
 public interface IStateComplement extends IState {
 	
 	IBuchi getOperand();

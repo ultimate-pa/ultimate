@@ -30,6 +30,10 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optnc
 
 import java.util.Iterator;
 
+/**
+ * @author Yong Li (liyong@ios.ac.cn)
+ * */
+
 public class PowerSet implements Iterator<IntSet> {
 	
 	private Iterator<IntSet> iterator;

@@ -31,6 +31,10 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optnc
 import java.util.BitSet;
 import java.util.Iterator;
 
+/**
+ * @author Yong Li (liyong@ios.ac.cn)
+ * */
+
 public class Valuation extends BitSet implements Comparable<Valuation>, Iterable<Integer> {
 
 	/**

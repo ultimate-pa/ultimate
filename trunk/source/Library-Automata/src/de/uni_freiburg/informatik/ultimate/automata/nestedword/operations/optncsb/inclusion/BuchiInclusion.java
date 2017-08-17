@@ -43,6 +43,9 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncs
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util.IntIterator;
 
+/**
+ * @author Yong Li (liyong@ios.ac.cn)
+ * */
 
 public abstract class BuchiInclusion implements IBuchiInclusion{
 	

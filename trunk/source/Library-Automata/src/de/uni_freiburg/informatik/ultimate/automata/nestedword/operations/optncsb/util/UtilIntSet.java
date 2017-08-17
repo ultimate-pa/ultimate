@@ -30,6 +30,10 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optnc
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.Options;
 
+/**
+ * @author Yong Li (liyong@ios.ac.cn)
+ * */
+
 public class UtilIntSet {
 	
 	private UtilIntSet() {

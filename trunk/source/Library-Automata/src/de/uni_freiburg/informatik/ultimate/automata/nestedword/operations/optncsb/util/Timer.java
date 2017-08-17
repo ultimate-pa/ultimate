@@ -29,6 +29,11 @@
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util;
 
 // TODO
+
+/**
+ * @author Yong Li (liyong@ios.ac.cn)
+ * */
+
 public class Timer {
 	
 	private long time;

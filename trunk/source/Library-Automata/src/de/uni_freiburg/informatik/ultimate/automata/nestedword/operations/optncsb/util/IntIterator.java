@@ -28,6 +28,10 @@
 
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util;
 
+/**
+ * @author Yong Li (liyong@ios.ac.cn)
+ * */
+
 public interface IntIterator {
 	
 	boolean hasNext();

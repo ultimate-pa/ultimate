@@ -37,6 +37,9 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util.IntSet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util.UtilIntSet;
 
+/**
+ * @author Yong Li (liyong@ios.ac.cn)
+ * */
 
 //TODO deal with automata with large alphabet
 public class StateGeneral implements IState, Comparable<StateGeneral> {

@@ -38,6 +38,10 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncs
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util.IntIterator;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util.IntSet;
 
+/**
+ * @author Yong Li (liyong@ios.ac.cn)
+ * */
+
 public class StateNWA<LETTER, STATE> extends StateGeneral {
 
 	private BuchiSimpleNWA<LETTER, STATE> mBuchi;

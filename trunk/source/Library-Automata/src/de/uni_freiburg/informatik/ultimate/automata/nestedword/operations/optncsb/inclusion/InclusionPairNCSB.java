@@ -32,6 +32,10 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncs
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.complement.StateNCSB;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util.IPair;
 
+/**
+ * @author Yong Li (liyong@ios.ac.cn)
+ * */
+
 public class InclusionPairNCSB implements IPair<Integer, StateNCSB>{
 	
 	private final int mFstStateId;

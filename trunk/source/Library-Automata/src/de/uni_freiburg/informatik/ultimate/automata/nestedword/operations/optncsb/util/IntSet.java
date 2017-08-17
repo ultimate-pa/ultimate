@@ -30,6 +30,10 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optnc
 
 // In order to keep the original code as much as possible, we
 // use the interface of BitSet
+/**
+ * @author Yong Li (liyong@ios.ac.cn)
+ * */
+
 public interface IntSet {
 	
 	IntSet clone();

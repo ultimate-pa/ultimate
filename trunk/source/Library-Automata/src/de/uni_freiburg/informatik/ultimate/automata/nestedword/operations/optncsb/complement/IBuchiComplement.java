@@ -33,6 +33,10 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optnc
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.automata.IBuchi;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util.IntSet;
 
+/**
+ * @author Yong Li (liyong@ios.ac.cn)
+ * */
+
 public interface IBuchiComplement extends IBuchi {
 	IBuchi getOperand();
 	void useOpTransition(int letter, IntSet states);

@@ -30,6 +30,10 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optnc
 
 import java.util.BitSet;
 
+/**
+ * @author Yong Li (liyong@ios.ac.cn)
+ * */
+
 public class IntArray implements Cloneable {
 	private int[] data;
 	private int size;

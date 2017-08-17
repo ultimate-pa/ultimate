@@ -37,6 +37,10 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncs
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util.IntSet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util.UtilIntSet;
 
+/**
+ * @author Yong Li (liyong@ios.ac.cn)
+ * */
+
 public interface IBuchi {
 	
 	Acc getAcceptance();

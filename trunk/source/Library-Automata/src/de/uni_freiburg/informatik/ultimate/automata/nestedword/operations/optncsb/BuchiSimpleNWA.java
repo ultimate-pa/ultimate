@@ -51,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 /**
  * @author Yong Li (liyong@ios.ac.cn)
  * */
+
 // TODO support on-demand exploration
 public class BuchiSimpleNWA<LETTER, STATE> extends BuchiGeneral {
 

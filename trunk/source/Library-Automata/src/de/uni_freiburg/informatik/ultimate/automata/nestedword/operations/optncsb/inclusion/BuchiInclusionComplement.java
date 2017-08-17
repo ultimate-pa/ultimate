@@ -49,6 +49,11 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncs
  * only valid for automata pair whose second element is an SDBA
  * make use of NCSB complementation
  * **/
+
+/**
+ * @author Yong Li (liyong@ios.ac.cn)
+ * */
+
 public class BuchiInclusionComplement extends BuchiInclusion {
 		
 	public BuchiInclusionComplement(IBuchi fstOp, IBuchi sndOp) {

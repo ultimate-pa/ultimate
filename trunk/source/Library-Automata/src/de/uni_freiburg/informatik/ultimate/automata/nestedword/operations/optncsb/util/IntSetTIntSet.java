@@ -33,6 +33,11 @@ import gnu.trove.iterator.TIntIterator;
 import gnu.trove.set.TIntSet;
 import gnu.trove.set.hash.TIntHashSet;
 
+
+/**
+ * @author Yong Li (liyong@ios.ac.cn)
+ * */
+
 public class IntSetTIntSet implements IntSet {
 	
 	private final TIntSet set;

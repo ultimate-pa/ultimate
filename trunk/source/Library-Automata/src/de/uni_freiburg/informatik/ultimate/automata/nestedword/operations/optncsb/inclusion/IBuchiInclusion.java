@@ -35,6 +35,10 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncs
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.complement.IBuchiComplement;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util.IPair;
 
+/**
+ * @author Yong Li (liyong@ios.ac.cn)
+ * */
+
 public interface IBuchiInclusion {
 	
 	IBuchi getFstBuchi();

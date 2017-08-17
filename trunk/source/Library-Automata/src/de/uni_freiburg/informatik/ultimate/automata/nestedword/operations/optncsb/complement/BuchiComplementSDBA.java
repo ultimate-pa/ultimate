@@ -47,6 +47,11 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncs
 /**
  * only valid for semi-deterministic Buchi automaton
  * */
+
+/**
+ * @author Yong Li (liyong@ios.ac.cn)
+ * */
+
 public class BuchiComplementSDBA extends BuchiGeneral implements IBuchiComplement {
 
 	private final IBuchi mOperand;

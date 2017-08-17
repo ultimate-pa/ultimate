@@ -31,6 +31,9 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optnc
 import java.util.Iterator;
 import java.util.TreeSet;
 
+/**
+ * @author Yong Li (liyong@ios.ac.cn)
+ * */
 
 public class IntSetTreeSet implements IntSet {
 	

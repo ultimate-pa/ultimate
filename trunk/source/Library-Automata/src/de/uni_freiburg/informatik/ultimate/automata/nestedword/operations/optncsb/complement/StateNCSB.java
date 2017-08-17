@@ -39,6 +39,10 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncs
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util.PowerSet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util.UtilIntSet;
 
+/**
+ * @author Yong Li (liyong@ios.ac.cn)
+ * */
+
 public class StateNCSB extends StateGeneral implements IStateComplement {
 
 
