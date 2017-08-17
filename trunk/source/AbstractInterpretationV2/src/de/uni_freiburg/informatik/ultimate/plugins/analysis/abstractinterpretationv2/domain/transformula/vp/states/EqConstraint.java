@@ -34,6 +34,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -116,6 +117,7 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 	}
 
 	public void freeze() {
+		assert !mIsFrozen;
 		mIsFrozen = true;
 	}
 
@@ -134,27 +136,32 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 	}
 
 	public void reportEquality(final NODE node1, final NODE node2) {
+		assert !mIsFrozen;
 		mPartialArrangement.reportEquality(node1, node2);
 		mWeakEquivalenceGraph.reportGroundEquality(node1, node2);
 	}
 
 	public void reportDisequality(final NODE node1, final NODE node2) {
+		assert !mIsFrozen;
 		mPartialArrangement.reportDisequality(node1, node2);
 		mWeakEquivalenceGraph.reportGroundDisequality(node1, node2);
 	}
 
 	public void reportFunctionEquality(final FUNCTION func1, final FUNCTION func2) {
+		assert !mIsFrozen;
 		mPartialArrangement.reportFunctionEquality(func1, func2);
 		mWeakEquivalenceGraph.reportGroundFunctionEquality(func1, func2);
 	}
 
 	public void reportFunctionDisequality(final FUNCTION func1, final FUNCTION func2) {
+		assert !mIsFrozen;
 		mPartialArrangement.reportFunctionDisequality(func1, func2);
 		mWeakEquivalenceGraph.reportGroundFunctionDisequality(func1, func2);
 	}
 
 	public void reportWeakEquivalence(final FUNCTION array1, final FUNCTION array2,
 			final List<NODE> storeIndex) {
+		assert !mIsFrozen;
 		mWeakEquivalenceGraph.reportWeakEquivalence(array1, array2, storeIndex);
 	}
 
@@ -194,6 +201,7 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 	}
 
 	private void havoc(final TermVariable var) {
+		assert !mIsFrozen;
 		for (final NODE elem : mPartialArrangement.getAllElements().stream()
 				.filter(e -> arrayContains(e.getTerm().getFreeVars(), var)).collect(Collectors.toList())) {
 			mPartialArrangement.removeElement(elem);
@@ -243,8 +251,12 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 	 * @return true iff this constraint says "node1 and node2 must be equal"
 	 */
 	public boolean areEqual(final NODE node1, final NODE node2) {
-		mPartialArrangement.getRepresentativeAndAddElementIfNeeded(node1);
-		mPartialArrangement.getRepresentativeAndAddElementIfNeeded(node2);
+		if (!mPartialArrangement.getAllElements().contains(node1)) {
+			return false;
+		}
+		if (!mPartialArrangement.getAllElements().contains(node1)) {
+			return false;
+		}
 		return mPartialArrangement.getEqualityStatus(node1, node2) == EqualityStatus.NOT_EQUAL;
 	}
 
@@ -255,8 +267,12 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 	 * @return true iff this constraint says "node1 and node2 must be unequal"
 	 */
 	public boolean areUnequal(final NODE node1, final NODE node2) {
-		mPartialArrangement.getRepresentativeAndAddElementIfNeeded(node1);
-		mPartialArrangement.getRepresentativeAndAddElementIfNeeded(node2);
+		if (!mPartialArrangement.getAllElements().contains(node1)) {
+			return false;
+		}
+		if (!mPartialArrangement.getAllElements().contains(node1)) {
+			return false;
+		}
 		return mPartialArrangement.getEqualityStatus(node1, node2) == EqualityStatus.NOT_EQUAL;
 	}
 
@@ -326,9 +342,9 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 		 * note this will probably crash if this method is called on an
 		 * EqConstraint that does not belong to a predicate or state
 		 */
-		mVariables = allTvs.stream().map(tv -> symbolTable.getProgramVar(tv)).collect(Collectors.toSet());
+		mVariables = allTvs.stream().map(symbolTable::getProgramVar).collect(Collectors.toSet());
 
-		assert !mVariables.stream().anyMatch(var -> var == null);
+		assert !mVariables.stream().anyMatch(Objects::isNull);
 		return mVariables;
 	}
 
@@ -365,7 +381,7 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 
 		mPvocs.addAll(constants.stream().map(c -> symbolTable.getProgramConst(c)).collect(Collectors.toSet()));
 
-		assert !mPvocs.stream().anyMatch(pvoc -> pvoc == null);
+		assert !mPvocs.stream().anyMatch(Objects::isNull);
 		return mPvocs;
 	}
 
@@ -474,27 +490,32 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 
 	@Deprecated
 	public void removeFunction(final FUNCTION funcToBeHavocced) {
+		assert !mIsFrozen;
 		// TODO Auto-generated method stub
 
 	}
 
 	@Deprecated
 	public void removeNode(final NODE nodeToBeHavocced) {
+		assert !mIsFrozen;
 		// TODO Auto-generated method stub
 
 	}
 
 	@Deprecated
 	public void addToAllNodes(final NODE node) {
+		assert !mIsFrozen;
 		// TODO Auto-generated method stub
 
 	}
 
 	public void addNode(final NODE nodeToAdd) {
+		assert !mIsFrozen;
 		mPartialArrangement.getRepresentativeAndAddElementIfNeeded(nodeToAdd);
 	}
 
 	public void addFunction(final FUNCTION func) {
+		assert !mIsFrozen;
 		mPartialArrangement.getRepresentativeAndAddFunctionIfNeeded(func);
 
 	}
