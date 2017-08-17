@@ -86,6 +86,9 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 	private Set<IProgramVarOrConst> mPvocs;
 	private Term mTerm;
 
+
+//	private final List<NODE> mDimensionToWeqVariableNode = new ArrayList<>();
+
 	/**
 	 * Creates an empty constraint (i.e. an EqConstraint that does not constrain anything, whose toTerm() will return
 	 * "true").
@@ -135,28 +138,44 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 		return mPartialArrangement.getAllElements();
 	}
 
-	public void reportEquality(final NODE node1, final NODE node2) {
+	public boolean reportEquality(final NODE node1, final NODE node2) {
 		assert !mIsFrozen;
-		mPartialArrangement.reportEquality(node1, node2);
-		mWeakEquivalenceGraph.reportGroundEquality(node1, node2);
+		final boolean paHasChanged = mPartialArrangement.reportEquality(node1, node2);
+		if (!paHasChanged) {
+			// if mPartialArrangement has not changed, we don't need to report to the weq graph
+			return false;
+		}
+		return mWeakEquivalenceGraph.reportGroundEquality(node1, node2);
 	}
 
-	public void reportDisequality(final NODE node1, final NODE node2) {
+	public boolean reportDisequality(final NODE node1, final NODE node2) {
 		assert !mIsFrozen;
-		mPartialArrangement.reportDisequality(node1, node2);
-		mWeakEquivalenceGraph.reportGroundDisequality(node1, node2);
+		final boolean paHasChanged = mPartialArrangement.reportDisequality(node1, node2);
+		if (!paHasChanged) {
+			// if mPartialArrangement has not changed, we don't need to report to the weq graph
+			return false;
+		}
+		return mWeakEquivalenceGraph.reportGroundDisequality(node1, node2);
 	}
 
-	public void reportFunctionEquality(final FUNCTION func1, final FUNCTION func2) {
+	public boolean reportFunctionEquality(final FUNCTION func1, final FUNCTION func2) {
 		assert !mIsFrozen;
-		mPartialArrangement.reportFunctionEquality(func1, func2);
-		mWeakEquivalenceGraph.reportGroundFunctionEquality(func1, func2);
+		final boolean paHasChanged = mPartialArrangement.reportFunctionEquality(func1, func2);
+		if (!paHasChanged) {
+			// if mPartialArrangement has not changed, we don't need to report to the weq graph
+			return false;
+		}
+		return mWeakEquivalenceGraph.reportGroundFunctionEquality(func1, func2);
 	}
 
-	public void reportFunctionDisequality(final FUNCTION func1, final FUNCTION func2) {
+	public boolean reportFunctionDisequality(final FUNCTION func1, final FUNCTION func2) {
 		assert !mIsFrozen;
-		mPartialArrangement.reportFunctionDisequality(func1, func2);
-		mWeakEquivalenceGraph.reportGroundFunctionDisequality(func1, func2);
+		final boolean paHasChanged = mPartialArrangement.reportFunctionDisequality(func1, func2);
+		if (!paHasChanged) {
+			// if mPartialArrangement has not changed, we don't need to report to the weq graph
+			return false;
+		}
+		return mWeakEquivalenceGraph.reportGroundFunctionDisequality(func1, func2);
 	}
 
 	public void reportWeakEquivalence(final FUNCTION array1, final FUNCTION array2,
@@ -181,13 +200,13 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 	/**
 	 *
 	 *
-	 * TDO: should we also remove the nodes that we project, here?? edit: yes,
-	 * havoc does remove the nodes
+	 * TODO: this method does not fit in well, as it is not in-place --> perhaps move to factory..
 	 *
 	 * @param varsToProjectAway
 	 * @return
 	 */
 	public EqConstraint<ACTION, NODE, FUNCTION> projectExistentially(final Collection<TermVariable> varsToProjectAway) {
+		assert mIsFrozen;
 		final EqConstraint<ACTION, NODE, FUNCTION> unfrozen = mFactory.unfreeze(this);
 
 		varsToProjectAway.forEach(unfrozen::havoc);
@@ -477,28 +496,6 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 		return true;
 	}
 
-
-	@Deprecated
-	public void removeFunction(final FUNCTION funcToBeHavocced) {
-		assert !mIsFrozen;
-		// TODO Auto-generated method stub
-
-	}
-
-	@Deprecated
-	public void removeNode(final NODE nodeToBeHavocced) {
-		assert !mIsFrozen;
-		// TODO Auto-generated method stub
-
-	}
-
-	@Deprecated
-	public void addToAllNodes(final NODE node) {
-		assert !mIsFrozen;
-		// TODO Auto-generated method stub
-
-	}
-
 	public void addNode(final NODE nodeToAdd) {
 		assert !mIsFrozen;
 		mPartialArrangement.getRepresentativeAndAddElementIfNeeded(nodeToAdd);
@@ -511,7 +508,10 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 	}
 
 	private NODE getWeqVariableNodeForDimension(final int dimensionNumber) {
-		assert false; //TODO
+//		NODE result = mDimensionToWeqVariableNode.get(dimensionNumber);
+//		if (result == null) {
+//			result = mFactory.getEqNodeAndFunctionFactory().getOrConstructEqNode(m)
+//		}
 		return null;
 	}
 
@@ -783,24 +783,27 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 			return true;
 		}
 
-		public void reportGroundEquality(final NODE node1, final NODE node2) {
+		public boolean reportGroundEquality(final NODE node1, final NODE node2) {
 			// TODO Auto-generated method stub
-
+			return false;
 		}
 
-		public void reportGroundDisequality(final NODE node1, final NODE node2) {
+		public boolean reportGroundDisequality(final NODE node1, final NODE node2) {
 			// TODO Auto-generated method stub
 
+			return false;
 		}
 
-		public void reportGroundFunctionEquality(final FUNCTION func1, final FUNCTION func2) {
+		public boolean reportGroundFunctionEquality(final FUNCTION func1, final FUNCTION func2) {
 			// TODO Auto-generated method stub
 
+			return false;
 		}
 
-		public void reportGroundFunctionDisequality(final FUNCTION func1, final FUNCTION func2) {
+		public boolean reportGroundFunctionDisequality(final FUNCTION func1, final FUNCTION func2) {
 			// TODO Auto-generated method stub
 
+			return false;
 		}
 
 		public List<Term> getWeakEquivalenceConstraintsAsTerms(final Script script) {

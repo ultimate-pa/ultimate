@@ -146,24 +146,10 @@ public class EqBottomConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 		return false; // TODO ??
 	}
 
-	@Override
-	public void removeNode(final NODE node) {
-		// do nothing
-	}
 
 	@Override
 	public Set<FUNCTION> getAllFunctions() {
 		return Collections.emptySet();
-	}
-
-	@Override
-	public void removeFunction(final FUNCTION func) {
-		// do nothing
-	}
-
-	@Override
-	public void addToAllNodes(final NODE node) {
-		// do nothing
 	}
 
 	@Override

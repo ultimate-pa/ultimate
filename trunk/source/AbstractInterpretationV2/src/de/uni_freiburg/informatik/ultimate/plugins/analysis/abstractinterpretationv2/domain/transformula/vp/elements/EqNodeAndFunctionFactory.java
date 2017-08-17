@@ -67,6 +67,7 @@ public class EqNodeAndFunctionFactory extends AbstractCCElementFactory<EqNode, E
 		return mMgdScript;
 	}
 
+
 	public EqNode getOrConstructEqNode(final Term term) {
 		if (term instanceof ApplicationTerm && ((ApplicationTerm) term).getParameters().length > 0) {
 			if ("select".equals(((ApplicationTerm) term).getFunction().getName())) {
