@@ -30,7 +30,9 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
@@ -44,6 +46,8 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalStore;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.NnfTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.NnfTransformer.QuantifierHandling;
@@ -54,24 +58,25 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.EqConstraintFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.EqDisjunctiveConstraint;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.EqTransitionRelation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
- * 
+ *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  * @param <ACTION>
  */
-public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTransition<IcfgLocation>> 
+public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTransition<IcfgLocation>>
 		extends NonRecursive {
 
 	private final TransFormula mTf;
 	private EqDisjunctiveConstraint<ACTION, EqNode, EqFunction> mResultConstraint;
-	
+
 	private final EqConstraintFactory<ACTION, EqNode, EqFunction> mEqConstraintFactory;
 	private final EqNodeAndFunctionFactory mEqNodeAndFunctionFactory;
 	private final ManagedScript mMgdScript;
 	private final IUltimateServiceProvider mServices;
-	
+
 	private final VPDomainPreanalysis mPreAnalysis;
 
 	/**
@@ -79,23 +84,23 @@ public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTrans
 	 */
 //	private final ArrayDeque<EqDisjunctiveConstraint<ACTION, EqNode, EqFunction>> mResultStack = new ArrayDeque<>();
 	private final ArrayDeque<EqDisjunctiveConstraint<ACTION, EqNode, EqFunction>> mResultStack = new ArrayDeque<>();
-	
-	public ConvertTransformulaToEqTransitionRelation(TransFormula tf, 
-			EqConstraintFactory<ACTION, EqNode, EqFunction> eqConstraintFactory, 
-			EqNodeAndFunctionFactory eqNodeAndFunctionFactory, VPDomainPreanalysis preAnalysis) {
+
+	public ConvertTransformulaToEqTransitionRelation(final TransFormula tf,
+			final EqConstraintFactory<ACTION, EqNode, EqFunction> eqConstraintFactory,
+			final EqNodeAndFunctionFactory eqNodeAndFunctionFactory, final VPDomainPreanalysis preAnalysis) {
 		mTf = tf;
 		mEqConstraintFactory = eqConstraintFactory;
 		mEqNodeAndFunctionFactory = eqNodeAndFunctionFactory;
-		
+
 		mPreAnalysis = preAnalysis;
 		mMgdScript = preAnalysis.getManagedScript();
 		mServices = preAnalysis.getServices();
-		
+
 		computeResult();
 	}
-	
+
 	private void computeResult() {
-		final Term transFormulaInNnf = 
+		final Term transFormulaInNnf =
 				new NnfTransformer(mMgdScript, mServices, QuantifierHandling.CRASH).transform(mTf.getFormula());
 		run(new ConvertTfToEqDisjConsWalker(transFormulaInNnf));
 		assert mResultStack.size() == 1;
@@ -106,15 +111,15 @@ public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTrans
 		assert mResultConstraint != null;
 		return new EqTransitionRelation<>(mResultConstraint, mTf);
 	}
-	
+
 	class ConvertTfToEqDisjConsWalker extends TermWalker {
 
-		public ConvertTfToEqDisjConsWalker(Term term) {
+		public ConvertTfToEqDisjConsWalker(final Term term) {
 			super(term);
 		}
 
 		@Override
-		public void walk(NonRecursive walker, ConstantTerm term) {
+		public void walk(final NonRecursive walker, final ConstantTerm term) {
 			if ("Bool".equals(term.getSort().getName())) {
 				assert false : "TODO: implement";
 			} else {
@@ -123,38 +128,38 @@ public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTrans
 		}
 
 		@Override
-		public void walk(NonRecursive walker, AnnotatedTerm term) {
+		public void walk(final NonRecursive walker, final AnnotatedTerm term) {
 			walker.enqueueWalker(new ConvertTfToEqDisjConsWalker(term.getSubterm()));
 		}
 
 		@Override
-		public void walk(NonRecursive walker, ApplicationTerm term) {
+		public void walk(final NonRecursive walker, final ApplicationTerm term) {
 			if ("=".equals(term.getFunction().getName())) {
 				handleXquality(term.getParameters()[0], term.getParameters()[1], true);
 			} else if ("distinct".equals(term.getFunction().getName())) {
 				handleXquality(term.getParameters()[0], term.getParameters()[1], false);
-			} else if ("not".equals(term.getFunction().getName()) 
+			} else if ("not".equals(term.getFunction().getName())
 							&& term.getParameters()[0] instanceof ApplicationTerm
 							&& "=".equals(((ApplicationTerm) term.getParameters()[0]).getFunction().getName())) {
 				final ApplicationTerm innerEqualsTerm = (ApplicationTerm) term.getParameters()[0];
 				handleXquality(innerEqualsTerm.getParameters()[0], innerEqualsTerm.getParameters()[1], false);
-			} else if ("not".equals(term.getFunction().getName()) 
+			} else if ("not".equals(term.getFunction().getName())
 							&& term.getParameters()[0] instanceof TermVariable) {
 				handleBooleanVariable((TermVariable) term.getParameters()[0], false);
 			} else if ("or".equals(term.getFunction().getName())) {
 				walker.enqueueWalker(new MakeDisjunctionWalker(term.getParameters().length));
 
-				for (Term param : term.getParameters()) {
+				for (final Term param : term.getParameters()) {
 					walker.enqueueWalker(new ConvertTfToEqDisjConsWalker(param));
 				}
-				
+
 			} else if ("and".equals(term.getFunction().getName())) {
 				walker.enqueueWalker(new MakeConjunctionWalker(term.getParameters().length));
 
-				for (Term param : term.getParameters()) {
+				for (final Term param : term.getParameters()) {
 					walker.enqueueWalker(new ConvertTfToEqDisjConsWalker(param));
 				}
-				
+
 
 			} else if ("false".equals(term.getFunction().getName())) {
 				mResultStack.push(mEqConstraintFactory.getDisjunctiveConstraint(
@@ -168,19 +173,19 @@ public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTrans
 				mResultStack.push(mEqConstraintFactory.getDisjunctiveConstraint(
 						Collections.singleton(mEqConstraintFactory.getEmptyConstraint())));
 			}
-			
+
 		}
 
-		private void handleBooleanVariable(TermVariable termVariable, boolean polarity) {
+		private void handleBooleanVariable(final TermVariable termVariable, final boolean polarity) {
 			assert "Bool".equals(termVariable.getSort().getName());
-			final EqConstraint<ACTION, EqNode, EqFunction> emptyConstraint = 
+			final EqConstraint<ACTION, EqNode, EqFunction> emptyConstraint =
 					mEqConstraintFactory.getEmptyConstraint();
 			final EqNode tvNode = mEqNodeAndFunctionFactory.getOrConstructEqNode(termVariable);
 			if (polarity) {
 				mMgdScript.lock(this);
 				final EqNode trueNode = mEqNodeAndFunctionFactory.getOrConstructEqNode(mMgdScript.term(this, "true"));
 				mMgdScript.unlock(this);
-				final EqConstraint<ACTION, EqNode, EqFunction> tvEqualsTrue = 
+				final EqConstraint<ACTION, EqNode, EqFunction> tvEqualsTrue =
 						mEqConstraintFactory.addEqualityFlat(tvNode, trueNode, emptyConstraint);
 				mResultStack.push(mEqConstraintFactory.getDisjunctiveConstraint(
 						Collections.singleton(tvEqualsTrue)));
@@ -188,62 +193,84 @@ public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTrans
 				mMgdScript.lock(this);
 				final EqNode falseNode = mEqNodeAndFunctionFactory.getOrConstructEqNode(mMgdScript.term(this, "false"));
 				mMgdScript.unlock(this);
-				final EqConstraint<ACTION, EqNode, EqFunction> tvEqualsTrue = 
+				final EqConstraint<ACTION, EqNode, EqFunction> tvEqualsTrue =
 						mEqConstraintFactory.addEqualityFlat(tvNode, falseNode, emptyConstraint);
 				mResultStack.push(mEqConstraintFactory.getDisjunctiveConstraint(
 						Collections.singleton(tvEqualsTrue)));
 			}
 		}
 
-		private void handleXquality(Term arg1, Term arg2, boolean polarity) {
-			
-			final EqConstraint<ACTION, EqNode, EqFunction> emptyConstraint = 
+		private void handleXquality(final Term arg1, final Term arg2, final boolean polarity) {
+
+			final EqConstraint<ACTION, EqNode, EqFunction> emptyConstraint =
 					mEqConstraintFactory.getEmptyConstraint();
-			final EqDisjunctiveConstraint<ACTION, EqNode, EqFunction> emptyDisjunctiveConstraint = 
+			final EqDisjunctiveConstraint<ACTION, EqNode, EqFunction> emptyDisjunctiveConstraint =
 					mEqConstraintFactory.getDisjunctiveConstraint(Collections.singleton(emptyConstraint));
-			
+
 			if (arg1.getSort().isArraySort()) {
 				// we have an array equality
-				
+
 				if (!isFunctionTracked(arg1) || !isFunctionTracked(arg2)) {
 					// we don't track both sides of the equation --> return an empty constraint
 					mResultStack.push(emptyDisjunctiveConstraint);
 					return;
 				}
-				
-				final EqFunction func1 = mEqNodeAndFunctionFactory.getOrConstructEqFunction(arg1);
-				final EqFunction func2 = mEqNodeAndFunctionFactory.getOrConstructEqFunction(arg2);
-				
-			
+
+//				final EqFunction func1 = mEqNodeAndFunctionFactory.getOrConstructEqFunction(arg1);
+//				final EqFunction func2 = mEqNodeAndFunctionFactory.getOrConstructEqFunction(arg2);
+
+				final StoreTermWrapper storeInfo1 = new StoreTermWrapper(arg1);
+				final StoreTermWrapper storeInfo2 = new StoreTermWrapper(arg2);
+
+				final Set<List<EqNode>> allStorePositions = new HashSet<>();
+				allStorePositions.addAll(storeInfo1.mStoreIndices);
+				allStorePositions.addAll(storeInfo2.mStoreIndices);
+
+
 				final EqConstraint<ACTION, EqNode, EqFunction> newConstraint;
 				if (polarity) {
-					newConstraint = 
-							mEqConstraintFactory.addFunctionEqualityFlat(func1, func2, emptyConstraint);
+					if (allStorePositions.isEmpty()) {
+						// we have a strong equivalence
+						newConstraint = mEqConstraintFactory.addFunctionEqualityFlat(storeInfo1.mBaseArray,
+								storeInfo2.mBaseArray, emptyConstraint);
+					} else {
+						// we have a weak equivalence
+						newConstraint = mEqConstraintFactory.addWeakEquivalence(storeInfo1.mBaseArray,
+								storeInfo2.mBaseArray, allStorePositions, emptyConstraint);
+						// TODO.. add element equalities
+
+					}
 				} else {
-					newConstraint = 
-							mEqConstraintFactory.addFunctionDisequalityFlat(func1, func2, emptyConstraint);
+					if (allStorePositions.isEmpty()) {
+						newConstraint = mEqConstraintFactory.addFunctionDisequalityFlat(storeInfo1.mBaseArray,
+								storeInfo2.mBaseArray, emptyConstraint);
+					} else {
+						assert false;
+						// TODO do something here, or not?..
+						newConstraint = emptyConstraint;
+					}
 				}
-				
+
 				mResultStack.push(mEqConstraintFactory.getDisjunctiveConstraint(Collections.singleton(newConstraint)));
 				return;
 			} else {
 				// we have an "normal", element equality
-				
+
 				if (!isElementTracked(arg1) || !isElementTracked(arg2)) {
 					// we don't track both sides of the equation --> return an empty constraint
 					mResultStack.push(emptyDisjunctiveConstraint);
 					return;
 				}
-				
+
 				final EqNode node1 = mEqNodeAndFunctionFactory.getOrConstructEqNode(arg1);
 				final EqNode node2 = mEqNodeAndFunctionFactory.getOrConstructEqNode(arg2);
-				
+
 				final EqConstraint<ACTION, EqNode, EqFunction> newConstraint;
 				if (polarity) {
-					newConstraint = 
+					newConstraint =
 							mEqConstraintFactory.addEqualityFlat(node1, node2, emptyConstraint);
 				} else {
-					newConstraint = 
+					newConstraint =
 							mEqConstraintFactory.addDisequalityFlat(node1, node2, emptyConstraint);
 				}
 				mResultStack.push(mEqConstraintFactory.getDisjunctiveConstraint(Collections.singleton(newConstraint)));
@@ -251,47 +278,101 @@ public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTrans
 			}
 		}
 
-		private boolean isElementTracked(Term term) {
+		private boolean isElementTracked(final Term term) {
 			return mPreAnalysis.isElementTracked(term, mTf);
 		}
 
-		private boolean isFunctionTracked(Term term) {
+		private boolean isFunctionTracked(final Term term) {
 			return mPreAnalysis.isArrayTracked(term, mTf.getInVars(), mTf.getOutVars());
 		}
 
 		@Override
-		public void walk(NonRecursive walker, LetTerm term) {
+		public void walk(final NonRecursive walker, final LetTerm term) {
 			assert false : "TODO unlet first (or implement let handling..)";
 		}
 
 		@Override
-		public void walk(NonRecursive walker, QuantifiedFormula term) {
+		public void walk(final NonRecursive walker, final QuantifiedFormula term) {
 			throw new UnsupportedOperationException("quantifiers in Transformulas are currently not supported in the"
 					+ " equality domain");
 		}
 
 		@Override
-		public void walk(NonRecursive walker, TermVariable term) {
+		public void walk(final NonRecursive walker, final TermVariable term) {
 			if ("Bool".equals(term.getSort().getName())) {
 				handleBooleanVariable(term, true);
 				return;
 			}
 			throw new AssertionError("we should have caught this before, right?");
 		}
+
+		class StoreTermWrapper {
+
+			Term mBaseArrayTerm;
+			EqFunction mBaseArray;
+
+			Pair<List<EqNode>, EqNode> mOutermostIndexToValue;
+
+//			List<Pair<ArrayIndex, Term>> mStorePositionToValueTerm = new HashMap<>();
+//			List<List<EqNode>, EqNode> mStorePositionToValue = new HashMap<>();
+
+			Set<List<EqNode>> mStoreIndices = new HashSet<>();
+
+			public StoreTermWrapper(final Term term) {
+//				assert SmtUtils.isFunctionApplication(term, "store");
+				processTerm(term);
+			}
+
+			boolean isSimple() {
+				return mOutermostIndexToValue == null;
+			}
+
+			private void processTerm(final Term term) {
+				Term currentTerm = term;
+				if (SmtUtils.isFunctionApplication(currentTerm, "store")) {
+					final MultiDimensionalStore mds = new MultiDimensionalStore(currentTerm);
+					final List<EqNode> arrayIndexAsEqNodeList = mds.getIndex().stream()
+								.map(mEqNodeAndFunctionFactory::getOrConstructEqNode)
+								.collect(Collectors.toList());
+					final EqNode value = mEqNodeAndFunctionFactory.getOrConstructEqNode(mds.getValue());
+					mOutermostIndexToValue = new Pair<List<EqNode>, EqNode>(arrayIndexAsEqNodeList, value);
+					mStoreIndices.add(arrayIndexAsEqNodeList);
+					currentTerm = mds.getArray();
+				}
+				while (true) {
+					if (!SmtUtils.isFunctionApplication(currentTerm, "store")) {
+						mBaseArrayTerm = currentTerm;
+						mBaseArray = mEqNodeAndFunctionFactory.getOrConstructEqFunction(currentTerm);
+						return;
+					}
+					final MultiDimensionalStore mds = new MultiDimensionalStore(currentTerm);
+
+//					mStorePositionToValueTerm, mds.getIndex(), mds.getValue());
+					final List<EqNode> arrayIndexAsEqNodeList = mds.getIndex().stream()
+								.map(mEqNodeAndFunctionFactory::getOrConstructEqNode)
+								.collect(Collectors.toList());
+					mStoreIndices.add(arrayIndexAsEqNodeList);
+//
+//							mEqNodeAndFunctionFactory.getOrConstructEqNode(mds.getValue()));
+
+					currentTerm = mds.getArray();
+				}
+			}
+		}
 	}
-	
+
 	class MakeDisjunctionWalker implements Walker {
 		/**
 		 * arity of the disjunction (i.e. how many elements to pop from result stack
 		 */
-		private int mArity;
+		private final int mArity;
 
-		public MakeDisjunctionWalker(int arity) {
+		public MakeDisjunctionWalker(final int arity) {
 			mArity = arity;
 		}
 
 		@Override
-		public void walk(NonRecursive engine) {
+		public void walk(final NonRecursive engine) {
 			final Set<EqConstraint<ACTION, EqNode, EqFunction>> allConjunctiveConstraints = new HashSet<>();
 			for (int i = 0; i < mArity; i++) {
 				allConjunctiveConstraints.addAll(mResultStack.pop().getConstraints());
@@ -299,19 +380,19 @@ public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTrans
 			mResultStack.push(mEqConstraintFactory.getDisjunctiveConstraint(allConjunctiveConstraints));
 		}
 	}
-	
+
 	class MakeConjunctionWalker implements Walker {
 		/**
 		 * arity of the disjunction (i.e. how many elements to pop from result stack
 		 */
-		private int mArity;
+		private final int mArity;
 
-		public MakeConjunctionWalker(int arity) {
+		public MakeConjunctionWalker(final int arity) {
 			mArity = arity;
 		}
 
 		@Override
-		public void walk(NonRecursive engine) {
+		public void walk(final NonRecursive engine) {
 			final ArrayList<EqDisjunctiveConstraint<ACTION, EqNode, EqFunction>> conjuncts = new ArrayList<>();
 			for (int i = 0; i < mArity; i++) {
 				conjuncts.add(mResultStack.pop());

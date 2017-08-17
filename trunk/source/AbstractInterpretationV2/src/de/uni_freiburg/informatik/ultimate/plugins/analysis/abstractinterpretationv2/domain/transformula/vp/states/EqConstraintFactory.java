@@ -44,6 +44,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.IEqNodeIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainHelpers;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainPreanalysis;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqFunction;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNode;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNodeAndFunctionFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.IEqFunctionIdentifier;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CongruenceClosure;
@@ -909,6 +911,14 @@ public class EqConstraintFactory<
 			final CongruenceClosure<NODE, FUNCTION> newPartialArrangement,
 			final EqConstraint<ACTION, NODE, FUNCTION>.WeakEquivalenceGraph newWEGraph) {
 		// TODO Auto-generated method stub
+		assert false;
+		return null;
+	}
+
+	public EqConstraint<ACTION, EqNode, EqFunction> addWeakEquivalence(final EqFunction baseArray, final EqFunction baseArray2,
+			final Set<List<EqNode>> allStorePositions, final EqConstraint<ACTION, EqNode, EqFunction> emptyConstraint) {
+		// TODO Auto-generated method stub
+		assert false;
 		return null;
 	}
 }
