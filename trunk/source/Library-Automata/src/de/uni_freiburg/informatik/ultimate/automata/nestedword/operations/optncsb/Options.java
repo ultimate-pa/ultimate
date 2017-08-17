@@ -2,6 +2,10 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optnc
 
 public class Options {
 	
-	public static int setChoice = 3;
+	public static int setChoice = 1;
+	
+	public static boolean optNCSB = true;
+	
+	public static boolean verbose = false;
 
 }

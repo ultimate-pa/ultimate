@@ -26,18 +26,24 @@
  */
 
 
-package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.antichain;
+package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb;
 
 import java.util.ArrayList;
-import java.util.BitSet;
+import java.util.Set;
 import java.util.HashMap;
-import java.util.LinkedList;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.automata.BuchiGeneral;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.automata.IState;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.automata.StateGeneral;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util.IntSet;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util.UtilIntSet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
+
 
 
 
@@ -45,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
  * @author Yong Li (liyong@ios.ac.cn)
  * */
 // TODO support on-demand exploration
-public class BuchiNCSB<LETTER, STATE> extends BuchiGeneral {
+public class BuchiSimpleNWA<LETTER, STATE> extends BuchiGeneral {
 
 	private final Map<LETTER, Integer> mLetterMap;
 	private final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mInnerBuchi;
@@ -54,7 +60,7 @@ public class BuchiNCSB<LETTER, STATE> extends BuchiGeneral {
 	private final List<STATE> mStateArr;
 	private final List<LETTER> mLetterArr;
 	
-	public BuchiNCSB(int alphabetSize, Map<LETTER, Integer> letterMap,
+	public BuchiSimpleNWA(int alphabetSize, Map<LETTER, Integer> letterMap,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> buchi) {
 		super(alphabetSize);
 		// TODO Auto-generated constructor stub
@@ -92,63 +98,26 @@ public class BuchiNCSB<LETTER, STATE> extends BuchiGeneral {
 			this.setInitial(state);
 		}
 	}
-
-	
-	private void computeStateSpace() {
-		// TODO Auto-generated method stub
-		Iterable<STATE> states = mInnerBuchi.getInitialStates();
-		LinkedList<IState> walkList = new LinkedList<>();
-		for(STATE s : states) {
-			IState state = getOrAddState(s);
-			this.setInitial(state);
-			walkList.add(state);
-			if(mInnerBuchi.isFinal(s)) this.setFinal(state);
-		}
-		
-		BitSet visited = new BitSet();
-		while(! walkList.isEmpty()) {
-			IState curr = walkList.removeFirst();
-			STATE s = mStateArr.get(curr.getId());
-			if(mInnerBuchi.isFinal(s)) this.setFinal(curr);
-			visited.set(curr.getId());
-			Iterable<OutgoingInternalTransition<LETTER, STATE>> transIter = mInnerBuchi.internalSuccessors(s);
-			for(OutgoingInternalTransition<LETTER, STATE> trans : transIter) {
-				IState succ = getOrAddState(trans.getSucc());
-				Integer letterId = mLetterMap.get(trans.getLetter()); 
-				curr.addSuccessor(letterId, succ.getId());
-				if(! visited.get(succ.getId())) {
-					walkList.addFirst(succ);
-				}
-			}
-		}
-		
-	}	
-	
-	// on-the-fly 
 	@Override
-	public BitSet getSuccessors(int state, int letter) {
-		IState currState = getState(state);
-		assert currState != null;
-		
-//		System.out.println("state " + state + " - " + letter + " ->");
-		if(currState.isLetterVisited(letter)) {
-			return currState.getSuccessors(letter);
-		}
+	public IState makeState(int id) {
+		// TODO Auto-generated method stub
+		return new StateNWA(this, id);
+	}
+	
+	
+	protected IntSet computeSuccessors(int state, int letter) {
 				
 		LETTER letterStr = mLetterArr.get(letter);
 		STATE currStateStr = mStateArr.get(state);
 		
-		BitSet succs = new BitSet();
+		IntSet succs = UtilIntSet.newIntSet();
 		Iterable<OutgoingInternalTransition<LETTER, STATE>> transIter = mInnerBuchi.internalSuccessors(currStateStr, letterStr);
 		for(OutgoingInternalTransition<LETTER, STATE> trans : transIter) {
 			IState succ = getOrAddState(trans.getSucc());
 			Integer letterId = mLetterMap.get(trans.getLetter());
 			assert letterId == letter;
-			// add states
-			currState.addSuccessor(letterId, succ.getId());
 			succs.set(succ.getId());
 		}
-//		System.out.println(" succs" + succs);
 
 		return succs;
 	}

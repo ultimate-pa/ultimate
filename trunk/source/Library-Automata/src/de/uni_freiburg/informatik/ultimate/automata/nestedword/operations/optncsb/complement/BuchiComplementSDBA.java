@@ -1,19 +1,19 @@
-package complement;
+package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.complement;
 
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.LinkedList;
 import java.util.List;
 
-import automata.BuchiGeneral;
-import automata.IBuchi;
-import automata.IState;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.automata.BuchiGeneral;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.automata.IBuchi;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.automata.IState;
 import gnu.trove.map.TObjectIntMap;
 import gnu.trove.map.hash.TObjectIntHashMap;
-import main.Options;
-import util.IntIterator;
-import util.IntSet;
-import util.UtilIntSet;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.Options;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util.IntIterator;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util.IntSet;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util.UtilIntSet;
 
 /**
  * only valid for semi-deterministic Buchi automaton

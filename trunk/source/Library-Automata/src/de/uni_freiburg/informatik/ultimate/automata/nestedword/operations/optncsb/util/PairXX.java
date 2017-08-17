@@ -1,4 +1,4 @@
-package util;
+package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util;
 
 public class PairXX<X> extends PairXY<X, X> {
 

@@ -1,14 +1,14 @@
-package complement;
+package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.complement;
 
-import automata.IBuchi;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.automata.IBuchi;
 
-import automata.StateGeneral;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.automata.StateGeneral;
 
-import main.Options;
-import util.IntIterator;
-import util.IntSet;
-import util.PowerSet;
-import util.UtilIntSet;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.Options;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util.IntIterator;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util.IntSet;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util.PowerSet;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util.UtilIntSet;
 
 public class StateNCSB extends StateGeneral implements IStateComplement {
 

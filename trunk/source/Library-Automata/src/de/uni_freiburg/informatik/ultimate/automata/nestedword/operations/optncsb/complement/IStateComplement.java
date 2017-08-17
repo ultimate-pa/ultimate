@@ -1,7 +1,7 @@
-package complement;
+package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.complement;
 
-import automata.IBuchi;
-import automata.IState;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.automata.IBuchi;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.automata.IState;
 
 public interface IStateComplement extends IState {
 	

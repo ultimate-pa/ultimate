@@ -1,12 +1,12 @@
-package automata;
+package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.automata;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import util.IntSet;
-import util.UtilIntSet;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util.IntSet;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util.UtilIntSet;
 
 
 //TODO deal with automata with large alphabet

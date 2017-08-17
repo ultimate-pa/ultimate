@@ -1,4 +1,5 @@
-package util;
+package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util;
+
 
 import gnu.trove.iterator.TIntIterator;
 import gnu.trove.set.TIntSet;

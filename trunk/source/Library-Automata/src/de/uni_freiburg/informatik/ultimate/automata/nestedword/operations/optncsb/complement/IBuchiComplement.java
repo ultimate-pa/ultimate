@@ -1,8 +1,8 @@
-package complement;
+package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.complement;
 
 
-import automata.IBuchi;
-import util.IntSet;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.automata.IBuchi;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util.IntSet;
 
 public interface IBuchiComplement extends IBuchi {
 	IBuchi getOperand();

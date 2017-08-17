@@ -1,4 +1,4 @@
-package util;
+package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util;
 
 import java.util.HashSet;
 import java.util.Iterator;

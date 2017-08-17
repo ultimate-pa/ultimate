@@ -1,12 +1,12 @@
-package automata;
+package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.automata;
 
 import java.io.PrintStream;
 import java.util.Collection;
 import java.util.LinkedList;
 
-import util.IntIterator;
-import util.IntSet;
-import util.UtilIntSet;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util.IntIterator;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util.IntSet;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util.UtilIntSet;
 
 public interface IBuchi {
 	
@@ -25,6 +25,8 @@ public interface IBuchi {
 	IntSet getInitialStates();
 
 	IntSet getFinalStates();
+	
+	IState makeState(int id);
 	
 	
 	default public boolean isInitial(IState s) {

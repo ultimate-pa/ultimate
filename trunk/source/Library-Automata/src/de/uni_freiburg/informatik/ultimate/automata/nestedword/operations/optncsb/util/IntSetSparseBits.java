@@ -1,5 +1,5 @@
-package util;
-
+package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util;
+/*
 import com.zaxxer.sparsebits.SparseBitSet;
 
 public class IntSetSparseBits implements IntSet {
@@ -156,3 +156,4 @@ public class IntSetSparseBits implements IntSet {
 	}
 
 }
+*/

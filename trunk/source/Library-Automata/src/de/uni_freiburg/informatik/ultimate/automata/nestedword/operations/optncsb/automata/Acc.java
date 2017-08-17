@@ -1,8 +1,8 @@
-package automata;
+package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.automata;
 
 import java.util.List;
 
-import util.IntSet;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util.IntSet;
 
 public interface Acc {
 	

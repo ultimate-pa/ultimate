@@ -1,4 +1,4 @@
-package automata;
+package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.automata;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -6,9 +6,9 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-import util.IntIterator;
-import util.IntSet;
-import util.UtilIntSet;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util.IntIterator;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util.IntSet;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util.UtilIntSet;
 
 public class BuchiGeneral implements IBuchi {
 
@@ -36,7 +36,7 @@ public class BuchiGeneral implements IBuchi {
 	@Override
 	public IState addState() {
 		int id = mStates.size();
-		mStates.add(new StateGeneral(id));
+		mStates.add(makeState(id));
 		return mStates.get(id);
 	}
 	
@@ -157,6 +157,12 @@ public class BuchiGeneral implements IBuchi {
             	}
             }
         }
+	}
+
+	@Override
+	public IState makeState(int id) {
+		// TODO Auto-generated method stub
+		return new StateGeneral(id);
 	}
 
 }

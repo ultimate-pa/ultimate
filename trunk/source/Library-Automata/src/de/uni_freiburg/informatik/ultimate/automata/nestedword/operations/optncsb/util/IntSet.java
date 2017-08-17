@@ -1,4 +1,4 @@
-package util;
+package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util;
 
 // In order to keep the original code as much as possible, we
 // use the interface of BitSet
