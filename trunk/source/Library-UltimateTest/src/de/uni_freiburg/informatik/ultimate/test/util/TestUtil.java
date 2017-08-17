@@ -589,6 +589,18 @@ public final class TestUtil {
 		map.put("#SyntaxError", TerminationAnalysisOverallResult.SYNTAX_ERROR);
 		return map;
 	}
+	
+	/**
+	 * Returns a map from keywords to verification results. We use keywords in the first line of files to specify
+	 * expected verification results. If a key of this map is a substring of the first line, the value of this map is
+	 * the expected verification result of a termination analysis.
+	 */
+	public static Map<String, TerminationAnalysisOverallResult> constructFirstlineKeywordMap_Termcomp2016() {
+		final Map<String, TerminationAnalysisOverallResult> map = new HashMap<>();
+		map.put("#termcomp16-someonesaidyes", TerminationAnalysisOverallResult.TERMINATING);
+		map.put("#termcomp16-someonesaidno", TerminationAnalysisOverallResult.NONTERMINATING);
+		return map;
+	}
 
 	/**
 	 * Returns the first line of File file as String.
