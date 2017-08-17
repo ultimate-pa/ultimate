@@ -37,7 +37,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
@@ -63,7 +62,9 @@ public class Loop {
 	private Map<IProgramVar, TermVariable> mInVars;
 	private Map<IProgramVar, TermVariable> mOutVars;
 	private UnmodifiableTransFormula mAcceleratedCondition;
-	private IcfgEdge mLoopExit;
+	private IcfgLocation mLoopExit;
+	private List<IcfgEdge> mExitTransitions;
+	private List<UnmodifiableTransFormula> mExitConditions;
 
 	/**
 	 * Construct a new loop.
@@ -86,6 +87,8 @@ public class Loop {
 		mOutVars = new HashMap<>();
 		mAcceleratedCondition = null;
 		mLoopExit = null;
+		mExitConditions = new ArrayList<>();
+		mExitTransitions = new ArrayList<>();
 	}
 
 	/**
@@ -143,8 +146,16 @@ public class Loop {
 		return mOutVars;
 	}
 
-	public IcfgEdge getLoopExit() {
+	public IcfgLocation getLoopExit() {
 		return mLoopExit;
+	}
+
+	public List<UnmodifiableTransFormula> getExitConditions() {
+		return mExitConditions;
+	}
+
+	public List<IcfgEdge> getExitTransitions() {
+		return mExitTransitions;
 	}
 
 	/**
@@ -166,8 +177,13 @@ public class Loop {
 		mPath = path;
 	}
 
-	public void setLoopExit(final IcfgEdge loopExit) {
-		mLoopExit = loopExit;
+	public void setLoopExit(final IcfgLocation icfgLocation) {
+		mLoopExit = icfgLocation;
+		mExitTransitions = icfgLocation.getIncomingEdges();
+	}
+
+	public void setExitConditions(final List<UnmodifiableTransFormula> exitConditions) {
+		mExitConditions = exitConditions;
 	}
 
 	/**

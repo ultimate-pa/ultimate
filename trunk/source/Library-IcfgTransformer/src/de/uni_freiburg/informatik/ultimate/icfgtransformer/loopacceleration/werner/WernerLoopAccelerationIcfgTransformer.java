@@ -206,9 +206,11 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 						continue;
 					}
 
+					// TODO something about nested loops with multiple exits,
+					// like breaks
 					final List<UnmodifiableTransFormula> tfs = new ArrayList<>();
 					tfs.add(backbone.getCondition());
-					tfs.add(nestedLoop.getAcceleratedCondition());
+					tfs.add(nestedLoop.getExitConditions().get(0));
 					final UnmodifiableTransFormula nestedCondition = TransFormulaUtils.sequentialComposition(mLogger,
 							mServices, mScript, true, true, false,
 							XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION,
@@ -275,13 +277,7 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 		tfb.setFormula(acceleratedLoopCondition);
 		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
 
-		final List<UnmodifiableTransFormula> tf = new ArrayList<>();
-		tf.add(tfb.finishConstruction(mScript));
-		tf.add(loop.getLoopExit().getTransformula());
-
-		final UnmodifiableTransFormula acceleratedLoopSummary = TransFormulaUtils.sequentialComposition(mLogger,
-				mServices, mScript, false, true, false, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION,
-				null, tf);
+		final UnmodifiableTransFormula acceleratedLoopSummary = tfb.finishConstruction(mScript);
 
 		loop.setAcceleratedCondition(acceleratedLoopSummary);
 
@@ -318,15 +314,20 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 
 				for (final IcfgEdge oldTransition : oldSource.getOutgoingEdges()) {
 
-					if (loop.getLoopExit().equals(oldTransition)) {
+					if (loop.getLoopExit().equals(oldTransition.getTarget())) {
 						final INLOC oldTarget = (INLOC) oldTransition.getTarget();
 						open.add(oldTarget);
 						continue;
 					}
 
 					if (loop.getPath().contains(oldTransition)) {
-						final OUTLOC newTarget = lst.createNewLocation((INLOC) loop.getLoopExit().getTarget());
+						final OUTLOC newTarget = lst.createNewLocation((INLOC) loop.getLoophead());
 						lst.createNewInternalTransition(newSource, newTarget, loop.getAcceleratedCondition(), true);
+						final OUTLOC loopExit = lst.createNewLocation((INLOC) loop.getLoopExit());
+						for (IcfgEdge exitTransition : loop.getExitTransitions()) {
+							lst.createNewInternalTransition(newSource, loopExit, exitTransition.getTransformula(),
+									true);
+						}
 
 					} else {
 						final INLOC oldTarget = (INLOC) oldTransition.getTarget();
