@@ -46,6 +46,7 @@ public class Svcomp17FoldersAutomizerTermination extends AbstractBuchiAutomizerT
 	/** Limit the number of files per directory. */
 //	private static int mFilesPerDirectoryLimit = Integer.MAX_VALUE;
 	 private static int mFilesPerDirectoryLimit = 20;
+	 private static final int FILE_OFFSET = 0;
 
 	// @formatter:off
 	private static final String STANDARD_DOT_C_PATTERN = ".*_false-termination.*\\.c|.*_true-termination.*\\.c";
@@ -55,39 +56,39 @@ public class Svcomp17FoldersAutomizerTermination extends AbstractBuchiAutomizerT
 	private static final DirectoryFileEndingsPair[] mDirectoryFileEndingsPairs = {
 		/***** Category 5. Termination *****/
 		/*** Subcategory  Termination-MainControlFlow ***/
-		new DirectoryFileEndingsPair("examples/svcomp/termination-crafted/", new String[]{ STANDARD_DOT_C_PATTERN }, mFilesPerDirectoryLimit),
-		new DirectoryFileEndingsPair("examples/svcomp/termination-crafted-lit/", new String[]{ STANDARD_DOT_C_PATTERN }, mFilesPerDirectoryLimit),
-		new DirectoryFileEndingsPair("examples/svcomp/termination-numeric/", new String[]{ STANDARD_DOT_C_PATTERN }, mFilesPerDirectoryLimit),
-		new DirectoryFileEndingsPair("examples/svcomp/termination-restricted-15/", new String[]{ STANDARD_DOT_C_PATTERN }, mFilesPerDirectoryLimit),
+		new DirectoryFileEndingsPair("examples/svcomp/termination-crafted/", new String[]{ STANDARD_DOT_C_PATTERN }, mFilesPerDirectoryLimit, FILE_OFFSET),
+		new DirectoryFileEndingsPair("examples/svcomp/termination-crafted-lit/", new String[]{ STANDARD_DOT_C_PATTERN }, mFilesPerDirectoryLimit, FILE_OFFSET),
+		new DirectoryFileEndingsPair("examples/svcomp/termination-numeric/", new String[]{ STANDARD_DOT_C_PATTERN }, mFilesPerDirectoryLimit, FILE_OFFSET),
+		new DirectoryFileEndingsPair("examples/svcomp/termination-restricted-15/", new String[]{ STANDARD_DOT_C_PATTERN }, mFilesPerDirectoryLimit, FILE_OFFSET),
 		
-		new DirectoryFileEndingsPair("examples/svcomp/termination-crafted-todo/", new String[]{ STANDARD_DOT_C_PATTERN }, mFilesPerDirectoryLimit),
-		new DirectoryFileEndingsPair("examples/svcomp/termination-crafted-lit-todo/", new String[]{ STANDARD_DOT_C_PATTERN }, mFilesPerDirectoryLimit),
-		new DirectoryFileEndingsPair("examples/svcomp/termination-numeric-todo/", new String[]{ STANDARD_DOT_C_PATTERN }, mFilesPerDirectoryLimit),
-		new DirectoryFileEndingsPair("examples/svcomp/termination-restricted-15-todo/", new String[]{ STANDARD_DOT_C_PATTERN }, mFilesPerDirectoryLimit),
+		new DirectoryFileEndingsPair("examples/svcomp/termination-crafted-todo/", new String[]{ STANDARD_DOT_C_PATTERN }, mFilesPerDirectoryLimit, FILE_OFFSET),
+		new DirectoryFileEndingsPair("examples/svcomp/termination-crafted-lit-todo/", new String[]{ STANDARD_DOT_C_PATTERN }, mFilesPerDirectoryLimit, FILE_OFFSET),
+		new DirectoryFileEndingsPair("examples/svcomp/termination-numeric-todo/", new String[]{ STANDARD_DOT_C_PATTERN }, mFilesPerDirectoryLimit, FILE_OFFSET),
+		new DirectoryFileEndingsPair("examples/svcomp/termination-restricted-15-todo/", new String[]{ STANDARD_DOT_C_PATTERN }, mFilesPerDirectoryLimit, FILE_OFFSET),
 		
 		
 		/*** Subcategory  Termination-MainHeap ***/
-		new DirectoryFileEndingsPair("examples/svcomp/termination-libowfat/", new String[]{ STANDARD_DOT_I_PATTERN }, mFilesPerDirectoryLimit),
-		new DirectoryFileEndingsPair("examples/svcomp/termination-memory-alloca/", new String[]{ STANDARD_DOT_I_PATTERN }, mFilesPerDirectoryLimit),
-		new DirectoryFileEndingsPair("examples/svcomp/termination-memory-linkedlists/", new String[]{ STANDARD_DOT_I_PATTERN }, mFilesPerDirectoryLimit),
-		new DirectoryFileEndingsPair("examples/svcomp/termination-15/", new String[]{ STANDARD_DOT_I_PATTERN }, mFilesPerDirectoryLimit),
-		new DirectoryFileEndingsPair("examples/svcomp/termination-recursive-malloc/", new String[]{ STANDARD_DOT_I_PATTERN }, mFilesPerDirectoryLimit),
+		new DirectoryFileEndingsPair("examples/svcomp/termination-libowfat/", new String[]{ STANDARD_DOT_I_PATTERN }, mFilesPerDirectoryLimit, FILE_OFFSET),
+		new DirectoryFileEndingsPair("examples/svcomp/termination-memory-alloca/", new String[]{ STANDARD_DOT_I_PATTERN }, mFilesPerDirectoryLimit, FILE_OFFSET),
+		new DirectoryFileEndingsPair("examples/svcomp/termination-memory-linkedlists/", new String[]{ STANDARD_DOT_I_PATTERN }, mFilesPerDirectoryLimit, FILE_OFFSET),
+		new DirectoryFileEndingsPair("examples/svcomp/termination-15/", new String[]{ STANDARD_DOT_I_PATTERN }, mFilesPerDirectoryLimit, FILE_OFFSET),
+		new DirectoryFileEndingsPair("examples/svcomp/termination-recursive-malloc/", new String[]{ STANDARD_DOT_I_PATTERN }, mFilesPerDirectoryLimit, FILE_OFFSET),
 
 		/*** Subcategory  Termination-Other ***/
-		new DirectoryFileEndingsPair("examples/svcomp/pthread-atomic/", new String[]{ STANDARD_DOT_I_PATTERN }, mFilesPerDirectoryLimit),
-		new DirectoryFileEndingsPair("examples/svcomp/ntdrivers-simplified/", new String[]{ STANDARD_DOT_C_PATTERN }, mFilesPerDirectoryLimit),
-		new DirectoryFileEndingsPair("examples/svcomp/ssh-simplified/", new String[]{ STANDARD_DOT_C_PATTERN }, mFilesPerDirectoryLimit),
-		new DirectoryFileEndingsPair("examples/svcomp/locks/", new String[]{ STANDARD_DOT_C_PATTERN }, mFilesPerDirectoryLimit),
-		new DirectoryFileEndingsPair("examples/svcomp/loops/", new String[]{ STANDARD_DOT_I_PATTERN }, mFilesPerDirectoryLimit),
-		new DirectoryFileEndingsPair("examples/svcomp/loop-acceleration/", new String[]{ STANDARD_DOT_I_PATTERN }, mFilesPerDirectoryLimit),
-		new DirectoryFileEndingsPair("examples/svcomp/loop-invgen/", new String[]{ STANDARD_DOT_I_PATTERN }, mFilesPerDirectoryLimit),
-		new DirectoryFileEndingsPair("examples/svcomp/loop-lit/", new String[]{ STANDARD_DOT_I_PATTERN }, mFilesPerDirectoryLimit),
-		new DirectoryFileEndingsPair("examples/svcomp/loop-new/", new String[]{ STANDARD_DOT_I_PATTERN }, mFilesPerDirectoryLimit),
-		new DirectoryFileEndingsPair("examples/svcomp/product-lines/", new String[]{ STANDARD_DOT_C_PATTERN }, mFilesPerDirectoryLimit),
-		new DirectoryFileEndingsPair("examples/svcomp/recursive/", new String[]{ STANDARD_DOT_C_PATTERN }, mFilesPerDirectoryLimit),
-		new DirectoryFileEndingsPair("examples/svcomp/recursive-simple/", new String[]{ STANDARD_DOT_C_PATTERN }, mFilesPerDirectoryLimit),
-		new DirectoryFileEndingsPair("examples/svcomp/systemc/", new String[]{ STANDARD_DOT_C_PATTERN }, mFilesPerDirectoryLimit),
-		new DirectoryFileEndingsPair("examples/svcomp/seq-mthreaded/", new String[]{ STANDARD_DOT_C_PATTERN }, mFilesPerDirectoryLimit),
+		new DirectoryFileEndingsPair("examples/svcomp/pthread-atomic/", new String[]{ STANDARD_DOT_I_PATTERN }, mFilesPerDirectoryLimit, FILE_OFFSET),
+		new DirectoryFileEndingsPair("examples/svcomp/ntdrivers-simplified/", new String[]{ STANDARD_DOT_C_PATTERN }, mFilesPerDirectoryLimit, FILE_OFFSET),
+		new DirectoryFileEndingsPair("examples/svcomp/ssh-simplified/", new String[]{ STANDARD_DOT_C_PATTERN }, mFilesPerDirectoryLimit, FILE_OFFSET),
+		new DirectoryFileEndingsPair("examples/svcomp/locks/", new String[]{ STANDARD_DOT_C_PATTERN }, mFilesPerDirectoryLimit, FILE_OFFSET),
+		new DirectoryFileEndingsPair("examples/svcomp/loops/", new String[]{ STANDARD_DOT_I_PATTERN }, mFilesPerDirectoryLimit, FILE_OFFSET),
+		new DirectoryFileEndingsPair("examples/svcomp/loop-acceleration/", new String[]{ STANDARD_DOT_I_PATTERN }, mFilesPerDirectoryLimit, FILE_OFFSET),
+		new DirectoryFileEndingsPair("examples/svcomp/loop-invgen/", new String[]{ STANDARD_DOT_I_PATTERN }, mFilesPerDirectoryLimit, FILE_OFFSET),
+		new DirectoryFileEndingsPair("examples/svcomp/loop-lit/", new String[]{ STANDARD_DOT_I_PATTERN }, mFilesPerDirectoryLimit, FILE_OFFSET),
+		new DirectoryFileEndingsPair("examples/svcomp/loop-new/", new String[]{ STANDARD_DOT_I_PATTERN }, mFilesPerDirectoryLimit, FILE_OFFSET),
+		new DirectoryFileEndingsPair("examples/svcomp/product-lines/", new String[]{ STANDARD_DOT_C_PATTERN }, mFilesPerDirectoryLimit, FILE_OFFSET),
+		new DirectoryFileEndingsPair("examples/svcomp/recursive/", new String[]{ STANDARD_DOT_C_PATTERN }, mFilesPerDirectoryLimit, FILE_OFFSET),
+		new DirectoryFileEndingsPair("examples/svcomp/recursive-simple/", new String[]{ STANDARD_DOT_C_PATTERN }, mFilesPerDirectoryLimit, FILE_OFFSET),
+		new DirectoryFileEndingsPair("examples/svcomp/systemc/", new String[]{ STANDARD_DOT_C_PATTERN }, mFilesPerDirectoryLimit, FILE_OFFSET),
+		new DirectoryFileEndingsPair("examples/svcomp/seq-mthreaded/", new String[]{ STANDARD_DOT_C_PATTERN }, mFilesPerDirectoryLimit, FILE_OFFSET),
 	};
 	
 
