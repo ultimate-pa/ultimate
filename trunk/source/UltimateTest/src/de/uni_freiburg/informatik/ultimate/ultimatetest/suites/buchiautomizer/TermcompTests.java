@@ -71,7 +71,8 @@ public class TermcompTests extends AbstractBuchiAutomizerTestSuite {
 	 * 
 	 */
 	private static final String[] mSettings = {
-		"buchiAutomizer/termcomp2016-Noproofs.epf",
+		"buchiAutomizer/termcomp2017-Noproofs.epf",
+//		"buchiAutomizer/termcomp2016-Noproofs.epf",
 //		"buchiAutomizer/termcomp2016.epf",
 //		"buchiAutomizer/termcomp2016-nonlinear.epf",
 //		"buchiAutomizer/termcomp2016-newMapElimination.epf",
