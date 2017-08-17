@@ -46,8 +46,9 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 /**
  * Buchi Complementation based on the algorithm proposed by Frantisek Blahoudek and Jan Stejcek. This complementation is
  * only sound for a special class of automata whose working title is TABA (termination analysis Büchi automata).
+ * But with simpler implementation in package optncsb
  * 
- * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @author Yong Li (liyong@ios.ac.cn)
  * @param <LETTER>
  *            letter type
  * @param <STATE>
@@ -78,8 +79,8 @@ public final class BuchiComplementNCSBSimple<LETTER, STATE> extends UnaryNwaOper
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(startMessage());
 		}
-		final BuchiComplementNCSBNwa<LETTER, STATE> onDemandComplement =
-				new BuchiComplementNCSBNwa<>(mServices, stateFactory, operand);
+		final BuchiComplementNCSBSimpleNwa<LETTER, STATE> onDemandComplement =
+				new BuchiComplementNCSBSimpleNwa<>(mServices, stateFactory, operand);
 		final NwaOutgoingLetterAndTransitionAdapter<LETTER, STATE> complemented =
 				new NwaOutgoingLetterAndTransitionAdapter<>(onDemandComplement);
 		mResult = new NestedWordAutomatonReachableStates<>(mServices, complemented);

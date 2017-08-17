@@ -33,12 +33,17 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationStatistics;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.BinaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.antichain.BuchiInclusion;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.antichain.BuchiNCSB;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.antichain.IBuchi;
+
+
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.BuchiSimpleNWA;
+
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.Options;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.automata.IBuchi;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.inclusion.BuchiInclusionComplement;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiComplementNcsbStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiIntersectStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
@@ -56,7 +61,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * @param <STATE>
  *            state type
  */
-public final class BuchiIsIncludedNCSBAntichain<LETTER, STATE> extends BinaryNwaOperation<LETTER, STATE, IStateFactory<STATE>> {
+public final class BuchiIsIncludedNCSBLazy<LETTER, STATE> extends BinaryNwaOperation<LETTER, STATE, IStateFactory<STATE>> {
 	private final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mFstOperand;
 	private final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mSndOperand;
 
@@ -78,7 +83,7 @@ public final class BuchiIsIncludedNCSBAntichain<LETTER, STATE> extends BinaryNwa
 	 * @throws AutomataLibraryException
 	 *             if construction fails
 	 */
-	public <FACTORY extends IBuchiIntersectStateFactory<STATE> & IBuchiComplementNcsbStateFactory<STATE>> BuchiIsIncludedNCSBAntichain(final AutomataLibraryServices services,
+	public <FACTORY extends IBuchiIntersectStateFactory<STATE> & IBuchiComplementNcsbStateFactory<STATE>> BuchiIsIncludedNCSBLazy(final AutomataLibraryServices services,
 			final FACTORY stateFactory,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> fstOperand,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> sndOperand) throws AutomataLibraryException {
@@ -100,11 +105,21 @@ public final class BuchiIsIncludedNCSBAntichain<LETTER, STATE> extends BinaryNwa
 			letterMap.put(letter, letterIndex);
 			letterIndex ++;
 		}
+		
+		Options.optNCSB = true;
 
-		IBuchi fstBuchi = new BuchiNCSB(letterMap.size(), letterMap, mFstOperand);
-		IBuchi sndBuchi = new BuchiNCSB(letterMap.size(), letterMap, mSndOperand);
-		BuchiInclusion checker = new BuchiInclusion(fstBuchi, sndBuchi);
-		mResult = checker.isIncluded();
+		IBuchi fstBuchi = new BuchiSimpleNWA(letterMap.size(), letterMap, mFstOperand);
+		IBuchi sndBuchi = new BuchiSimpleNWA(letterMap.size(), letterMap, mSndOperand);
+
+		//TODO should be able to terminate the procedure if time exceed the limit
+		BuchiInclusionComplement checker = new BuchiInclusionComplement(fstBuchi, sndBuchi);
+		mResult = checker.isIncluded(); //services
+		
+		if(mResult == null) {
+			throw new AutomataOperationCanceledException(getClass());
+		}
+		
+//		System.out.println(sndBuchi.toDot());
 		mCounterexample = null;
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(startMessage());

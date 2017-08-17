@@ -27,6 +27,7 @@ public class StateNWA<LETTER, STATE> extends StateGeneral {
 		return Collections.unmodifiableSet(mEnabledLetters);
 	}
 	
+	// support on-the-fly exploration
 	@Override
 	public IntSet getSuccessors(int letter) {
 		if(mEnabledLetters.contains(letter)) {

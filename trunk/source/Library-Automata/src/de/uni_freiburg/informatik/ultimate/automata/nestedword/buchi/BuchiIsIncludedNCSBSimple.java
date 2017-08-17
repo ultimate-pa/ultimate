@@ -37,9 +37,10 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationStatistics;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.BinaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.antichain.BuchiInclusionComplement;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.antichain.BuchiNCSB;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.antichain.IBuchi;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.BuchiSimpleNWA;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.Options;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.automata.IBuchi;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.inclusion.BuchiInclusionComplement;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiComplementNcsbStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiIntersectStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
@@ -102,9 +103,11 @@ public final class BuchiIsIncludedNCSBSimple<LETTER, STATE> extends BinaryNwaOpe
 			letterMap.put(letter, letterIndex);
 			letterIndex ++;
 		}
+		
+		Options.optNCSB = false;
 
-		IBuchi fstBuchi = new BuchiNCSB(letterMap.size(), letterMap, mFstOperand);
-		IBuchi sndBuchi = new BuchiNCSB(letterMap.size(), letterMap, mSndOperand);
+		IBuchi fstBuchi = new BuchiSimpleNWA(letterMap.size(), letterMap, mFstOperand);
+		IBuchi sndBuchi = new BuchiSimpleNWA(letterMap.size(), letterMap, mSndOperand);
 		
 //		if (!services.getProgressAwareTimer().continueProcessing()) {
 //			// TODO: Check if this has a performance impact
@@ -119,7 +122,7 @@ public final class BuchiIsIncludedNCSBSimple<LETTER, STATE> extends BinaryNwaOpe
 		
 		//TODO should be able to terminate the procedure if time exceed the limit
 		BuchiInclusionComplement checker = new BuchiInclusionComplement(fstBuchi, sndBuchi);
-		mResult = checker.isIncluded(services);
+		mResult = checker.isIncluded(); //services
 		
 		if(mResult == null) {
 			throw new AutomataOperationCanceledException(getClass());

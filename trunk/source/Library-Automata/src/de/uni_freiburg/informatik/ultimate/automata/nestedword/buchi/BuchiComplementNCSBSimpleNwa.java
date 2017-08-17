@@ -57,16 +57,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
  *            state type
  */
 public final class BuchiComplementNCSBSimpleNwa<LETTER, STATE> implements INwaSuccessorStateProvider<LETTER, STATE> {
-	private static final int MAGIC_RANK = 7777;
-	private static final int BARELY_COVERED_MAX_RANK = 3;
-	private static final Integer RANK_FINAL = Integer.valueOf(2);
-	private static final Integer RANK_NONFINAL = Integer.valueOf(3);
-
-	/**
-	 * Heuristic where we move to accepting sink already from states with nonempty difference C\F. Warning: yet this is
-	 * only implemented for internal transitions.
-	 */
-	private static final boolean EARLY_SINK_HEURISTIC = false;
 
 	private final AutomataLibraryServices mServices;
 	
@@ -76,19 +66,6 @@ public final class BuchiComplementNCSBSimpleNwa<LETTER, STATE> implements INwaSu
 
 	private final IBuchiComplementNcsbStateFactory<STATE> mStateFactory;
 
-	private final StateWithRankInfo<STATE> mEmptyStackStateWri;
-
-	/**
-	 * Maps NCSB state to its representative in the resulting automaton.
-	 */
-	private final Map<LevelRankingState<LETTER, STATE>, STATE> mDet2res = new HashMap<>();
-
-	/**
-	 * Maps a state in resulting automaton to the NCSB state for which it was created.
-	 */
-	private final Map<STATE, LevelRankingState<LETTER, STATE>> mRes2det = new HashMap<>();
-
-	private final BarelyCoveredLevelRankingsGenerator<LETTER, STATE> mBclrg;
 
 	/**
 	 * Constructor.
@@ -109,38 +86,18 @@ public final class BuchiComplementNCSBSimpleNwa<LETTER, STATE> implements INwaSu
 		mOperand = operand;
 		mStateFactory = stateFactory;
 		mSetOfStates = new SetOfStates<>(mStateFactory.createEmptyStackState());
-		mEmptyStackStateWri = new StateWithRankInfo<>(mSetOfStates.getEmptyStackState());
-		mBclrg = new BarelyCoveredLevelRankingsGenerator<>(mServices, mOperand, BARELY_COVERED_MAX_RANK, false, true,
-				false, false, false);
 		constructInitialState();
 	}
 
 	private void constructInitialState() {
-		final LevelRankingState<LETTER, STATE> lvlrk = new LevelRankingState<>(mOperand);
-		for (final STATE state : mOperand.getInitialStates()) {
-			if (mOperand.isFinal(state)) {
-				lvlrk.addRank(mEmptyStackStateWri, state, RANK_FINAL, true);
-			} else {
-				lvlrk.addRank(mEmptyStackStateWri, state, RANK_NONFINAL, false);
-			}
-		}
-		getOrAdd(true, lvlrk);
+
 	}
 
 	/**
 	 * Return state of result automaton that represents detState. If no such state was constructed yet, construct it.
 	 */
 	private STATE getOrAdd(final boolean isInitial, final LevelRankingState<LETTER, STATE> lvlrk) {
-		STATE resState = mDet2res.get(lvlrk);
-		if (resState == null) {
-			resState = mStateFactory.buchiComplementNcsb(lvlrk);
-			mDet2res.put(lvlrk, resState);
-			mRes2det.put(resState, lvlrk);
-			final boolean isFinal = !lvlrk.isNonAcceptingSink() && lvlrk.isOempty();
-			mSetOfStates.addState(isInitial, isFinal, resState);
-		} else {
-			assert !isInitial;
-		}
+		STATE resState = null;
 		return resState;
 	}
 
@@ -174,147 +131,6 @@ public final class BuchiComplementNCSBSimpleNwa<LETTER, STATE> implements INwaSu
 		return mSetOfStates.getEmptyStackState();
 	}
 
-
-	private LevelRankingConstraintDrdCheck<LETTER, STATE> computeSuccLevelRankingConstraint_Internal(final STATE state,
-			final LETTER letter) {
-		final LevelRankingState<LETTER, STATE> lvlrkState = mRes2det.get(state);
-		if (lvlrkState.isNonAcceptingSink()) {
-			return new LevelRankingConstraintDrdCheck<>();
-		}
-		final LevelRankingConstraintDrdCheck<LETTER, STATE> constraint =
-				new LevelRankingConstraintDrdCheck<>(mOperand, lvlrkState.isOempty(), MAGIC_RANK, true);
-		boolean transitionWouldAnnihilateEvenRank = false;
-		boolean somePredecessorHasRank1 = false;
-		for (final StateWithRankInfo<STATE> downState : lvlrkState.getDownStates()) {
-			for (final StateWithRankInfo<STATE> upState : lvlrkState.getUpStates(downState)) {
-				if (upState.getRank() == 1) {
-					somePredecessorHasRank1 = true;
-				}
-				boolean hasSuccessor = false;
-				for (final OutgoingInternalTransition<LETTER, STATE> trans : mOperand
-						.internalSuccessors(upState.getState(), letter)) {
-					hasSuccessor = true;
-					constraint.addConstraint(downState, trans.getSucc(), upState.getRank(), upState.isInO(),
-							mOperand.isFinal(upState.getState()));
-				}
-				if (transitionWouldAnnihilateEvenRank(downState, upState, hasSuccessor)) {
-					transitionWouldAnnihilateEvenRank = true;
-				}
-			}
-		}
-		if (returnEmptyLrConstraint(constraint, transitionWouldAnnihilateEvenRank, somePredecessorHasRank1)) {
-			return new LevelRankingConstraintDrdCheck<>();
-		}
-		return constraint;
-	}
-
-	private boolean returnEmptyLrConstraint(final LevelRankingConstraintDrdCheck<LETTER, STATE> constraint,
-			final boolean transitionWouldAnnihilateEvenRank, final boolean somePredecessorHasRank1) {
-		if (EARLY_SINK_HEURISTIC) {
-			if (transitionWouldAnnihilateEvenRank && !constraint.isEmpty()) {
-				return true;
-			}
-			if (somePredecessorHasRank1 && constraint.isEmpty()) {
-				return true;
-			}
-		} else {
-			if (transitionWouldAnnihilateEvenRank) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	// TODO Christian 2016-09-07: 'downState' is not used, a bug?
-	private boolean transitionWouldAnnihilateEvenRank(final StateWithRankInfo<STATE> downState,
-			final StateWithRankInfo<STATE> upState, final boolean hasSuccessor) {
-		return !hasSuccessor && !mOperand.isFinal(upState.getState()) && LevelRankingState.isEven(upState.getRank());
-	}
-
-	private LevelRankingConstraintDrdCheck<LETTER, STATE> computeSuccLevelRankingConstraint_Call(final STATE state,
-			final LETTER letter) {
-		final LevelRankingState<LETTER, STATE> lvlrkState = mRes2det.get(state);
-		if (lvlrkState.isNonAcceptingSink()) {
-			return new LevelRankingConstraintDrdCheck<>();
-		}
-		final LevelRankingConstraintDrdCheck<LETTER, STATE> constraint =
-				new LevelRankingConstraintDrdCheck<>(mOperand, lvlrkState.isOempty(), MAGIC_RANK, true);
-		for (final StateWithRankInfo<STATE> downState : lvlrkState.getDownStates()) {
-			for (final StateWithRankInfo<STATE> upState : lvlrkState.getUpStates(downState)) {
-				boolean hasSuccessor = false;
-				for (final OutgoingCallTransition<LETTER, STATE> trans : mOperand.callSuccessors(upState.getState(),
-						letter)) {
-					hasSuccessor = true;
-					constraint.addConstraint(upState, trans.getSucc(), upState.getRank(), upState.isInO(),
-							mOperand.isFinal(upState.getState()));
-				}
-				if (transitionWouldAnnihilateEvenRank(downState, upState, hasSuccessor)) {
-					return new LevelRankingConstraintDrdCheck<>();
-				}
-			}
-		}
-		return constraint;
-	}
-
-	private LevelRankingConstraintDrdCheck<LETTER, STATE> computeSuccLevelRankingConstraint_Return(final STATE state,
-			final STATE hier, final LETTER letter) {
-		final LevelRankingState<LETTER, STATE> lvlrkState = mRes2det.get(state);
-		if (lvlrkState.isNonAcceptingSink()) {
-			return new LevelRankingConstraintDrdCheck<>();
-		}
-		final LevelRankingState<LETTER, STATE> lvlrkHier = mRes2det.get(hier);
-		final LevelRankingConstraintDrdCheck<LETTER, STATE> constraint =
-				new LevelRankingConstraintDrdCheck<>(mOperand, lvlrkState.isOempty(), MAGIC_RANK, true);
-		for (final StateWithRankInfo<STATE> downHier : lvlrkHier.getDownStates()) {
-			for (final StateWithRankInfo<STATE> upHier : lvlrkHier.getUpStates(downHier)) {
-				if (!lvlrkState.getDownStates().contains(upHier)) {
-					continue;
-				}
-				final boolean transitionWouldAnnihilateEvenRank =
-						computeSuccLevelRankingConstraintReturnHelper(letter, lvlrkState, constraint, downHier, upHier);
-				if (transitionWouldAnnihilateEvenRank) {
-					return new LevelRankingConstraintDrdCheck<>();
-				}
-			}
-		}
-		return constraint;
-	}
-
-	private boolean computeSuccLevelRankingConstraintReturnHelper(final LETTER letter,
-			final LevelRankingState<LETTER, STATE> lvlrkState,
-			final LevelRankingConstraintDrdCheck<LETTER, STATE> constraint, final StateWithRankInfo<STATE> downHier,
-			final StateWithRankInfo<STATE> upHier) {
-		for (final StateWithRankInfo<STATE> upState : lvlrkState.getUpStates(upHier)) {
-			boolean hasSuccessor = false;
-			for (final OutgoingReturnTransition<LETTER, STATE> trans : mOperand.returnSuccessors(upState.getState(),
-					upHier.getState(), letter)) {
-				hasSuccessor = true;
-				constraint.addConstraint(downHier, trans.getSucc(), upState.getRank(), upState.isInO(),
-						mOperand.isFinal(upState.getState()));
-			}
-			if (transitionWouldAnnihilateEvenRank(downHier, upState, hasSuccessor)) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	private Collection<STATE> computeStates(final LevelRankingConstraintDrdCheck<LETTER, STATE> constraint) {
-		if (constraint.isTargetOfDelayedRankDecrease()) {
-			// in this case we do not want to have successor states
-			return Collections.emptyList();
-		}
-		final Collection<LevelRankingState<LETTER, STATE>> succLvls = mBclrg.generateLevelRankings(constraint, false);
-		final List<STATE> computedSuccs = new ArrayList<>();
-		for (final LevelRankingState<LETTER, STATE> succLvl : succLvls) {
-			final STATE resSucc = getOrAdd(false, succLvl);
-			computedSuccs.add(resSucc);
-		}
-		return computedSuccs;
-	}
-
-
-
 	@Override
 	public int size() {
 		return mSetOfStates.getStates().size();
@@ -328,26 +144,17 @@ public final class BuchiComplementNCSBSimpleNwa<LETTER, STATE> implements INwaSu
 
 	@Override
 	public Collection<STATE> internalSuccessors(final STATE state, final LETTER letter) {
-		final LevelRankingConstraintDrdCheck<LETTER, STATE> constraint =
-				computeSuccLevelRankingConstraint_Internal(state, letter);
-		final Collection<STATE> computedSuccs = computeStates(constraint);
-		return computedSuccs;
+		return null;
 	}
 
 	@Override
 	public Collection<STATE> callSuccessors(final STATE state, final LETTER letter) {
-		final LevelRankingConstraintDrdCheck<LETTER, STATE> constraint =
-				computeSuccLevelRankingConstraint_Call(state, letter);
-		final Collection<STATE> computedSuccs = computeStates(constraint);
-		return computedSuccs;
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public Collection<STATE> returnSuccessorsGivenHier(final STATE state, final STATE hier, final LETTER letter) {
-		final LevelRankingConstraintDrdCheck<LETTER, STATE> constraint =
-				computeSuccLevelRankingConstraint_Return(state, hier, letter);
-		final Collection<STATE> computedSuccs = computeStates(constraint);
-		return computedSuccs;
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
