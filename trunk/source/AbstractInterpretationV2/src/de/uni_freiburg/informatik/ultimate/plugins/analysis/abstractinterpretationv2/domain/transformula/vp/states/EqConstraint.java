@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -236,7 +237,7 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 				.map(pair -> script.term("distinct", pair.getKey().getTerm(), pair.getValue().getTerm()))
 				.collect(Collectors.toList());
 
-		final List<Term> weakEqConstraints = mWeakEquivalenceGraph.getWeakEquivalenceConstraintsAsTerms();
+		final List<Term> weakEqConstraints = mWeakEquivalenceGraph.getWeakEquivalenceConstraintsAsTerms(script);
 
 		final List<Term> allConjuncts = new ArrayList<>();
 		allConjuncts.addAll(elementEqualities);
@@ -446,6 +447,11 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 
 	}
 
+	private TermVariable getWeqVariableForDimension(final int dimensionNumber) {
+		assert false; //TODO
+		return null;
+	}
+
 
 	class WeakEquivalenceGraph {
 		private final Map<Doubleton<FUNCTION>, WeakEquivalenceEdgeLabel> mWeakEquivalenceEdges;
@@ -523,7 +529,70 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 
 		WeakEquivalenceGraph meet(final WeakEquivalenceGraph other,
 				final CongruenceClosure<NODE, FUNCTION> newPartialArrangement) {
-			return null;
+			final Map<Doubleton<FUNCTION>, WeakEquivalenceEdgeLabel> newWeakEquivalenceEdges = new HashMap<>();
+			final Map<FUNCTION, FUNCTION> newArrayEqualities = new HashMap<>();
+			/*
+			 * for clarity we distinguish three cases for any two nodes (n1, n2) in the weq-graph
+			 *  <li> there is an edge (n1, I, n2) in this but not in other
+			 *  <li> there is an edge  (n1, I, n2) in other but not in this
+			 *  <li> there are edges (n1, I, n2), (n1, I', n2) in both
+			 */
+			// case 1
+			for (final Entry<Doubleton<FUNCTION>, WeakEquivalenceEdgeLabel> thisWeqEdge
+					: this.mWeakEquivalenceEdges.entrySet()) {
+				final WeakEquivalenceEdgeLabel correspondingWeqEdgeInOther =
+						other.mWeakEquivalenceEdges.get(thisWeqEdge.getKey());
+				if (correspondingWeqEdgeInOther != null) {
+					// case 3 applies
+					continue;
+				}
+				final WeakEquivalenceEdgeLabel newEdgeLabel = thisWeqEdge.getValue();
+				if (newEdgeLabel.isInconsistentWith(newPartialArrangement)) {
+					// edge label became inconsistent -- add a strong equivalence instead of a weak one
+					newArrayEqualities.put(thisWeqEdge.getKey().getOneElement(),
+							thisWeqEdge.getKey().getOtherElement());
+					continue;
+				}
+				newWeakEquivalenceEdges.put(thisWeqEdge.getKey(), newEdgeLabel);
+			}
+			// case 2
+			for (final Entry<Doubleton<FUNCTION>, WeakEquivalenceEdgeLabel> otherWeqEdge
+					: other.mWeakEquivalenceEdges.entrySet()) {
+				final WeakEquivalenceEdgeLabel correspondingWeqEdgeInThis =
+						this.mWeakEquivalenceEdges.get(otherWeqEdge.getKey());
+				if (correspondingWeqEdgeInThis != null) {
+					// case 3 applies
+					continue;
+				}
+				final WeakEquivalenceEdgeLabel newEdgeLabel = otherWeqEdge.getValue();
+				if (newEdgeLabel.isInconsistentWith(newPartialArrangement)) {
+					// edge label became inconsistent -- add a strong equivalence instead of a weak one
+					newArrayEqualities.put(otherWeqEdge.getKey().getOneElement(),
+							otherWeqEdge.getKey().getOtherElement());
+					continue;
+				}
+				newWeakEquivalenceEdges.put(otherWeqEdge.getKey(), newEdgeLabel);
+
+			}
+			// case 3
+			for (final Entry<Doubleton<FUNCTION>, WeakEquivalenceEdgeLabel> thisWeqEdge
+					: this.mWeakEquivalenceEdges.entrySet()) {
+				final WeakEquivalenceEdgeLabel correspondingWeqEdgeInOther =
+						other.mWeakEquivalenceEdges.get(thisWeqEdge.getKey());
+				if (correspondingWeqEdgeInOther == null) {
+					// not case 3
+					continue;
+				}
+				final WeakEquivalenceEdgeLabel newEdgeLabel = thisWeqEdge.getValue().meet(correspondingWeqEdgeInOther);
+				if (newEdgeLabel.isInconsistentWith(newPartialArrangement)) {
+					// edge label became inconsistent -- add a strong equivalence instead of a weak one
+					newArrayEqualities.put(thisWeqEdge.getKey().getOneElement(),
+							thisWeqEdge.getKey().getOtherElement());
+					continue;
+				}
+				newWeakEquivalenceEdges.put(thisWeqEdge.getKey(), newEdgeLabel);
+			}
+			return new WeakEquivalenceGraph(newWeakEquivalenceEdges, newArrayEqualities);
 		}
 
 		boolean hasArrayEqualities() {
@@ -538,9 +607,57 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 			return mWeakEquivalenceEdges.isEmpty() && !hasArrayEqualities();
 		}
 
-		public boolean isStrongerThan(final WeakEquivalenceGraph other) {
-			// TODO Auto-generated method stub
+		/**
+		 *
+		 * @param func1 edge source (edge is symmetric)
+		 * @param func2 edge target (edge is symmetric)
+		 * @param nodes position where FUNCTIONs may differ
+		 * @return
+		 */
+		public boolean reportWeakEquivalence(final FUNCTION func1, final FUNCTION func2, final List<NODE> nodes) {
 			return false;
+		}
+
+		/**
+		 *
+		 * @param func1 edge source (edge is symmetric)
+		 * @param func2 edge target (edge is symmetric)
+		 * @param partialArrangements partial arrangement describing where FUNCTIONs may differ
+		 * @return
+		 */
+		public boolean reportWeakEquivalence(final FUNCTION func1, final FUNCTION func2,
+				final CongruenceClosure<NODE, FUNCTION>... partialArrangements) {
+			return false;
+		}
+
+		/**
+		 *
+		 * @param func1 edge source (edge is symmetric)
+		 * @param func2 edge target (edge is symmetric)
+		 * @param partialArrangements disjunction of partial arrangement describing where FUNCTIONs may differ
+		 * @return
+		 */
+		public boolean reportWeakEquivalence(final FUNCTION func1, final FUNCTION func2,
+				final Collection<CongruenceClosure<NODE, FUNCTION>>... partialArrangements) {
+			return false;
+		}
+
+
+		public boolean isStrongerThan(final WeakEquivalenceGraph other) {
+			for (final Entry<Doubleton<FUNCTION>, WeakEquivalenceEdgeLabel> otherWeqEdgeAndLabel
+					: other.mWeakEquivalenceEdges.entrySet()) {
+				final WeakEquivalenceEdgeLabel correspondingWeqEdgeInThis =
+						this.mWeakEquivalenceEdges.get(otherWeqEdgeAndLabel.getKey());
+				if (correspondingWeqEdgeInThis == null) {
+					// "other" has an edge that "this" does not -- this cannot be stronger
+					return false;
+				}
+				// if the this-edge is strictly weaker than the other-edge, we have a counterexample
+				if (!correspondingWeqEdgeInThis.isStrongerThan(otherWeqEdgeAndLabel.getValue())) {
+					return false;
+				}
+			}
+			return true;
 		}
 
 		public void reportGroundEquality(final NODE node1, final NODE node2) {
@@ -563,7 +680,7 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 
 		}
 
-		public List<Term> getWeakEquivalenceConstraintsAsTerms() {
+		public List<Term> getWeakEquivalenceConstraintsAsTerms(final Script script) {
 			// TODO Auto-generated method stub
 			return null;
 		}
@@ -583,10 +700,25 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 				}
 			}
 
+			/*
+			 * check completeness of the graph ("triangle inequation")
+			 */
+
 			return true;
 		}
 
+		/**
+		 * Represents an edge label in the weak equivalence graph.
+		 * An edge label connects two arrays of the same arity(dimensionality) #a.
+		 * An edge label is a tuple of length #a.
+		 * Each tuple element is a set of partial arrangements. The free variables in the partial arrangements are the
+		 * variables of the EqConstraint together with #a special variables that are implicitly universally quantified
+		 * and range over the array positions.
+		 *
+		 */
 		class WeakEquivalenceEdgeLabel {
+
+			int mArityOfArrays;
 
 			List<List<CongruenceClosure<NODE, FUNCTION>>> mLabel;
 
@@ -598,6 +730,23 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 			public WeakEquivalenceEdgeLabel(
 					final EqConstraint<ACTION, NODE, FUNCTION>.WeakEquivalenceGraph.WeakEquivalenceEdgeLabel value) {
 				// TODO Auto-generated constructor stub
+			}
+
+			public boolean isInconsistentWith(final CongruenceClosure<NODE, FUNCTION> newPartialArrangement) {
+				// TODO Auto-generated method stub
+				return false;
+			}
+
+			public EqConstraint<ACTION, NODE, FUNCTION>.WeakEquivalenceGraph.WeakEquivalenceEdgeLabel meet(
+					final EqConstraint<ACTION, NODE, FUNCTION>.WeakEquivalenceGraph.WeakEquivalenceEdgeLabel correspondingWeqEdgeInOther) {
+				// TODO Auto-generated method stub
+				return null;
+			}
+
+			public boolean isStrongerThan(
+					final EqConstraint<ACTION, NODE, FUNCTION>.WeakEquivalenceGraph.WeakEquivalenceEdgeLabel value) {
+				// TODO Auto-generated method stub
+				return false;
 			}
 
 			public WeakEquivalenceEdgeLabel union(final WeakEquivalenceEdgeLabel correspondingWeqEdgeInOther) {
