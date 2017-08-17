@@ -916,7 +916,7 @@ public class EqConstraintFactory<
 	}
 
 	public EqConstraint<ACTION, EqNode, EqFunction> addWeakEquivalence(final EqFunction baseArray, final EqFunction baseArray2,
-			final Set<List<EqNode>> allStorePositions, final EqConstraint<ACTION, EqNode, EqFunction> emptyConstraint) {
+			final List<EqNode> storeIndex, final EqConstraint<ACTION, EqNode, EqFunction> emptyConstraint) {
 		// TODO Auto-generated method stub
 		assert false;
 		return null;

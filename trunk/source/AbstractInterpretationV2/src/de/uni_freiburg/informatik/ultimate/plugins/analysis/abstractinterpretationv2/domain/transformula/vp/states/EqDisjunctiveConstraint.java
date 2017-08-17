@@ -87,7 +87,8 @@ public class EqDisjunctiveConstraint<
 	}
 
 
-	public EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> projectExistentially(final Set<TermVariable> varsToProjectAway) {
+	public EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> projectExistentially(
+			final Collection<TermVariable> varsToProjectAway) {
 		return mFactory.getDisjunctiveConstraint(
 				mConstraints.stream()
 					.map(conjConstraint -> conjConstraint.projectExistentially(varsToProjectAway))

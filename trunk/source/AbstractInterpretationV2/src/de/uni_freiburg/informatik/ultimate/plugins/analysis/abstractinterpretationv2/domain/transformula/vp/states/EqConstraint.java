@@ -177,7 +177,7 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 	 * @param varsToProjectAway
 	 * @return
 	 */
-	public EqConstraint<ACTION, NODE, FUNCTION> projectExistentially(final Set<TermVariable> varsToProjectAway) {
+	public EqConstraint<ACTION, NODE, FUNCTION> projectExistentially(final Collection<TermVariable> varsToProjectAway) {
 //		final EqConstraint<ACTION, NODE, FUNCTION> unfrozen = mFactory.unfreeze(this);
 //
 //
