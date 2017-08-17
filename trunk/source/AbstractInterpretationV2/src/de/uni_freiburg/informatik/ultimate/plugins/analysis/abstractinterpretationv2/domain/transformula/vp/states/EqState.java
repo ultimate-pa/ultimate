@@ -68,7 +68,6 @@ public class EqState<ACTION extends IIcfgTransition<IcfgLocation>>
 	 */
 	private final Set<IProgramVarOrConst> mPvocs;
 
-	// private final EqDisjunctiveConstraint<ACTION, EqNode, EqFunction> mConstraint;
 	private final EqConstraint<ACTION, EqNode, EqFunction> mConstraint;
 
 	private final EqStateFactory<ACTION> mFactory;
@@ -204,49 +203,6 @@ public class EqState<ACTION extends IIcfgTransition<IcfgLocation>>
 		} else {
 			return SubsetResult.NONE;
 		}
-
-//		/*
-//		 * checking inclusion between states via inclusion check on the constraints --> note the inversion constraints
-//		 * vs models!
-//		 */
-//
-//		// supporting equalities should, here (because the other state is closed under transitivity etc..)
-//		for (final Entry<EqNode, EqNode> elEq : other.getConstraint().getSupportingElementEqualities()) {
-//			if (!mConstraint.areEqual(elEq.getKey(), elEq.getValue())) {
-//				return SubsetResult.NONE;
-//			}
-//		}
-//
-//		for (final VPDomainSymmetricPair<EqNode> elDeq : other.getConstraint().getAllElementDisequalities()) {
-//			if (!mConstraint.areUnequal(elDeq.getFirst(), elDeq.getSecond())) {
-//				return SubsetResult.NONE;
-//			}
-//		}
-//
-//		for (final Entry<EqFunction, EqFunction> fnEq : other.getConstraint().getSupportingFunctionEqualities()) {
-//			if (!mConstraint.areEqual(fnEq.getKey(), fnEq.getValue())) {
-//				return SubsetResult.NONE;
-//			}
-//		}
-//
-//		for (final VPDomainSymmetricPair<EqFunction> fnDeq : other.getConstraint().getAllFunctionDisequalities()) {
-//			if (!mConstraint.areUnequal(fnDeq.getFirst(), fnDeq.getSecond())) {
-//				return SubsetResult.NONE;
-//			}
-//		}
-//
-//		// TODO
-//		// final EqConstraintFactory<ACTION, EqNode, EqFunction> constraintFactory = mFactory.getEqConstraintFactory();
-//		// final EqDisjunctiveConstraint<ACTION, EqNode, EqFunction> intersectionWithComplement =
-//		// constraintFactory.conjoinDisjunctiveConstraints(
-//		// toList(constraintFactory.getDisjunctiveConstraint(toList(mConstraint)),
-//		// constraintFactory.complement(other.getConstraint())));
-//		// if (intersectionWithComplement.isBottom()) {
-//		// return SubsetResult.
-//		//
-//		// }
-//		// return null;
-//		return SubsetResult.NON_STRICT;
 	}
 
 	@SafeVarargs

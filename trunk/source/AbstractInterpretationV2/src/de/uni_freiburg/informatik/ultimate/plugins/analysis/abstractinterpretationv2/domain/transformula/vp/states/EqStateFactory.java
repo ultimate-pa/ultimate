@@ -41,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.IEqFunctionIdentifier;
 
 /**
- * 
+ *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  * @param <ACTION>
@@ -52,17 +52,17 @@ public class EqStateFactory<ACTION extends IIcfgTransition<IcfgLocation>> {
 	private final EqConstraintFactory<ACTION, EqNode, EqFunction> mEqConstraintFactory;
 	private final IIcfgSymbolTable mSymbolTable;
 	private EqState<ACTION> mTopStateWithEmptyPvocs;
-	
-	public EqStateFactory(EqNodeAndFunctionFactory eqNodeAndFunctionFactory, 
-			EqConstraintFactory<ACTION, EqNode, EqFunction> eqConstraintFactory,
-			IIcfgSymbolTable symbolTable) {
+
+	public EqStateFactory(final EqNodeAndFunctionFactory eqNodeAndFunctionFactory,
+			final EqConstraintFactory<ACTION, EqNode, EqFunction> eqConstraintFactory,
+			final IIcfgSymbolTable symbolTable) {
 		mEqNodeAndFunctionFactory = eqNodeAndFunctionFactory;
 		mEqConstraintFactory = eqConstraintFactory;
 		mSymbolTable = symbolTable;
 	}
 
-	public EqState<ACTION> disjoinAll(Set<EqState<ACTION>> statesForCurrentEc) {
-		final EqDisjunctiveConstraint<ACTION, EqNode, EqFunction> disjunctiveConstraint = 
+	public EqState<ACTION> disjoinAll(final Set<EqState<ACTION>> statesForCurrentEc) {
+		final EqDisjunctiveConstraint<ACTION, EqNode, EqFunction> disjunctiveConstraint =
 				mEqConstraintFactory.getDisjunctiveConstraint(
 						statesForCurrentEc.stream()
 								.map(state -> state.getConstraint())
@@ -82,12 +82,11 @@ public class EqStateFactory<ACTION extends IIcfgTransition<IcfgLocation>> {
 		return mEqNodeAndFunctionFactory;
 	}
 
-//	public EqState<ACTION> getEqState(EqDisjunctiveConstraint<ACTION, EqNode, EqFunction> projectedConstraint,
-	public <NODE extends IEqNodeIdentifier<NODE, FUNCTION>, FUNCTION extends IEqFunctionIdentifier<NODE, FUNCTION>> 
-		EqState<ACTION> getEqState(EqConstraint<ACTION, NODE, FUNCTION> constraint,
-				Set<IProgramVarOrConst> variables) {
+	public <NODE extends IEqNodeIdentifier<NODE, FUNCTION>, FUNCTION extends IEqFunctionIdentifier<NODE, FUNCTION>>
+		EqState<ACTION> getEqState(final EqConstraint<ACTION, NODE, FUNCTION> constraint,
+				final Set<IProgramVarOrConst> variables) {
 		// TODO something smarter
-		return new EqState<>((EqConstraint<ACTION, EqNode, EqFunction>) constraint, 
+		return new EqState<>((EqConstraint<ACTION, EqNode, EqFunction>) constraint,
 				mEqNodeAndFunctionFactory, this, variables);
 	}
 
@@ -98,5 +97,5 @@ public class EqStateFactory<ACTION extends IIcfgTransition<IcfgLocation>> {
 	public IIcfgSymbolTable getSymbolTable() {
 		return mSymbolTable;
 	}
-	
+
 }
