@@ -81,6 +81,6 @@ public abstract class EqNode implements IEqNodeIdentifier<EqNode, EqFunction>,
 	public final EqNode renameVariables(final Map<Term, Term> substitutionMapping) {
 		final Term substitutedTerm =
 				new Substitution(mEqNodeFactory.mMgdScript, substitutionMapping).transform(getTerm());
-		return mEqNodeFactory.getOrConstructEqNode(substitutedTerm);
+		return mEqNodeFactory.getOrConstructNode(substitutedTerm);
 	}
 }

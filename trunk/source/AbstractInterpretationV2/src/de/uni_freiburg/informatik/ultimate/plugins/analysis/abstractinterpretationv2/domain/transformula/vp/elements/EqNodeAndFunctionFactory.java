@@ -41,14 +41,13 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDim
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalStore;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainPreanalysis;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.AbstractCCElementFactory;
 
 /**
  *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  */
-public class EqNodeAndFunctionFactory extends AbstractCCElementFactory<EqNode, EqFunction, Term> {
+public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqNode, EqFunction, Term> {
 
 	ManagedScript mMgdScript;
 
@@ -68,7 +67,8 @@ public class EqNodeAndFunctionFactory extends AbstractCCElementFactory<EqNode, E
 	}
 
 
-	public EqNode getOrConstructEqNode(final Term term) {
+	@Override
+	public EqNode getOrConstructNode(final Term term) {
 		if (term instanceof ApplicationTerm && ((ApplicationTerm) term).getParameters().length > 0) {
 			if ("select".equals(((ApplicationTerm) term).getFunction().getName())) {
 				return getOrConstructEqFunctionNode((ApplicationTerm) term);
@@ -108,11 +108,11 @@ public class EqNodeAndFunctionFactory extends AbstractCCElementFactory<EqNode, E
 		if (result == null) {
 			final MultiDimensionalSelect mds = new MultiDimensionalSelect(selectTerm);
 
-			final EqFunction function = getOrConstructEqFunction(mds.getArray());
+			final EqFunction function = getOrConstructFunction(mds.getArray());
 
 			final List<EqNode> args = new ArrayList<>();
 			for (final Term index : mds.getIndex()) {
-				args.add(getOrConstructEqNode(index));
+				args.add(getOrConstructNode(index));
 			}
 
 			result = new EqFunctionNode(function, args, selectTerm, this);
@@ -133,7 +133,8 @@ public class EqNodeAndFunctionFactory extends AbstractCCElementFactory<EqNode, E
 
 	}
 
-	public EqFunction getOrConstructEqFunction(final Term term) {
+	@Override
+	public EqFunction getOrConstructFunction(final Term term) {
 		if (term instanceof ApplicationTerm && ((ApplicationTerm) term).getParameters().length > 0) {
 			if ("store".equals(((ApplicationTerm) term).getFunction().getName())) {
 				return getOrConstructEqStoreFunction((ApplicationTerm) term);
@@ -168,14 +169,14 @@ public class EqNodeAndFunctionFactory extends AbstractCCElementFactory<EqNode, E
 		if (result == null) {
 			final MultiDimensionalStore mds = new MultiDimensionalStore(storeTerm);
 
-			final EqFunction function = getOrConstructEqFunction(mds.getArray());
+			final EqFunction function = getOrConstructFunction(mds.getArray());
 
 			final List<EqNode> indices = new ArrayList<>();
 			for (final Term index : mds.getIndex()) {
-				indices.add(getOrConstructEqNode(index));
+				indices.add(getOrConstructNode(index));
 			}
 
-			final EqNode value = getOrConstructEqNode(mds.getValue());
+			final EqNode value = getOrConstructNode(mds.getValue());
 
 			result = new EqStoreFunction(function, indices, value, storeTerm, this);
 			mTermToEqFunction.put(storeTerm, result);
@@ -185,7 +186,7 @@ public class EqNodeAndFunctionFactory extends AbstractCCElementFactory<EqNode, E
 
 	public EqFunction constructRenamedEqFunction(final EqFunction eqFunction, final Map<Term, Term> substitutionMapping) {
 		final Term substitutedTerm = new Substitution(mMgdScript, substitutionMapping).transform(eqFunction.getTerm());
-		return getOrConstructEqFunction(substitutedTerm);
+		return getOrConstructFunction(substitutedTerm);
 	}
 
 	/**
@@ -193,7 +194,8 @@ public class EqNodeAndFunctionFactory extends AbstractCCElementFactory<EqNode, E
 	 * @param term
 	 * @return
 	 */
-	public EqNode getExistingEqNode(final Term term) {
+	@Override
+	public EqNode getExistingNode(final Term term) {
 		final Term normalizedTerm;
 		if (term instanceof ApplicationTerm && ((ApplicationTerm) term).getParameters().length > 0) {
 			mMgdScript.lock(this);
@@ -211,7 +213,8 @@ public class EqNodeAndFunctionFactory extends AbstractCCElementFactory<EqNode, E
 	 * @param term
 	 * @return
 	 */
-	public EqFunction getExistingEqFunction(final Term term) {
+	@Override
+	public EqFunction getExistingFunction(final Term term) {
 		return mTermToEqFunction.get(term);
 	}
 

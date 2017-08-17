@@ -158,8 +158,7 @@ public class FixpointEngineParameterFactory {
 		preAnalysis.postProcess();
 //		final VPTfStateBuilderPreparer tfPreparer =
 //				new VPTfStateBuilderPreparer(preAnalysis, mRoot, logger);
-		return new VPDomain<>(logger, mRoot.getCfgSmtToolkit().getManagedScript(), mServices,
-				mRoot.getCfgSmtToolkit().getSymbolTable(), preAnalysis);
+		return new VPDomain<>(logger, mServices, mRoot.getCfgSmtToolkit(), preAnalysis);
 	}
 
 	private IAbstractDomain<?, IcfgEdge, IBoogieVar> selectDomain() {

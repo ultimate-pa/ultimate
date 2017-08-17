@@ -188,10 +188,10 @@ public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTrans
 			assert "Bool".equals(termVariable.getSort().getName());
 			final EqConstraint<ACTION, EqNode, EqFunction> emptyConstraint =
 					mEqConstraintFactory.getEmptyConstraint();
-			final EqNode tvNode = mEqNodeAndFunctionFactory.getOrConstructEqNode(termVariable);
+			final EqNode tvNode = mEqNodeAndFunctionFactory.getOrConstructNode(termVariable);
 			if (polarity) {
 				mMgdScript.lock(this);
-				final EqNode trueNode = mEqNodeAndFunctionFactory.getOrConstructEqNode(mMgdScript.term(this, "true"));
+				final EqNode trueNode = mEqNodeAndFunctionFactory.getOrConstructNode(mMgdScript.term(this, "true"));
 				mMgdScript.unlock(this);
 				final EqConstraint<ACTION, EqNode, EqFunction> tvEqualsTrue =
 						mEqConstraintFactory.addEqualityFlat(tvNode, trueNode, emptyConstraint);
@@ -199,7 +199,7 @@ public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTrans
 						Collections.singleton(tvEqualsTrue)));
 			} else {
 				mMgdScript.lock(this);
-				final EqNode falseNode = mEqNodeAndFunctionFactory.getOrConstructEqNode(mMgdScript.term(this, "false"));
+				final EqNode falseNode = mEqNodeAndFunctionFactory.getOrConstructNode(mMgdScript.term(this, "false"));
 				mMgdScript.unlock(this);
 				final EqConstraint<ACTION, EqNode, EqFunction> tvEqualsTrue =
 						mEqConstraintFactory.addEqualityFlat(tvNode, falseNode, emptyConstraint);
@@ -231,19 +231,19 @@ public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTrans
 				if (SmtUtils.isFunctionApplication(arg1, "store")) {
 					assert !SmtUtils.isFunctionApplication(arg2, "store");
 					mds = new MultiDimensionalStore(arg1);
-					simpleArray = mEqNodeAndFunctionFactory.getOrConstructEqFunction(arg2);
+					simpleArray = mEqNodeAndFunctionFactory.getOrConstructFunction(arg2);
 					assert !SmtUtils.isFunctionApplication(mds.getArray(), "store");
-					otherSimpleArray = mEqNodeAndFunctionFactory.getOrConstructEqFunction(mds.getArray());
+					otherSimpleArray = mEqNodeAndFunctionFactory.getOrConstructFunction(mds.getArray());
 				} else if (SmtUtils.isFunctionApplication(arg2, "store")) {
 					assert !SmtUtils.isFunctionApplication(arg1, "store");
 					mds = new MultiDimensionalStore(arg2);
-					simpleArray = mEqNodeAndFunctionFactory.getOrConstructEqFunction(arg1);
+					simpleArray = mEqNodeAndFunctionFactory.getOrConstructFunction(arg1);
 					assert !SmtUtils.isFunctionApplication(mds.getArray(), "store");
-					otherSimpleArray = mEqNodeAndFunctionFactory.getOrConstructEqFunction(mds.getArray());
+					otherSimpleArray = mEqNodeAndFunctionFactory.getOrConstructFunction(mds.getArray());
 				} else {
 					mds = null;
-					simpleArray = mEqNodeAndFunctionFactory.getOrConstructEqFunction(arg1);
-					otherSimpleArray = mEqNodeAndFunctionFactory.getOrConstructEqFunction(arg2);
+					simpleArray = mEqNodeAndFunctionFactory.getOrConstructFunction(arg1);
+					otherSimpleArray = mEqNodeAndFunctionFactory.getOrConstructFunction(arg2);
 				}
 
 
@@ -257,9 +257,9 @@ public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTrans
 					} else {
 
 						final List<EqNode> storeIndex = mds.getIndex().stream()
-								.map(mEqNodeAndFunctionFactory::getOrConstructEqNode)
+								.map(mEqNodeAndFunctionFactory::getOrConstructNode)
 								.collect(Collectors.toList());
-						final EqNode storeValue = mEqNodeAndFunctionFactory.getOrConstructEqNode(mds.getValue());
+						final EqNode storeValue = mEqNodeAndFunctionFactory.getOrConstructNode(mds.getValue());
 
 						// we have a weak equivalence ..
 						final EqConstraint<ACTION, EqNode, EqFunction> intermediateConstraint =
@@ -268,7 +268,7 @@ public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTrans
 						// .. and an equality on the stored position
 						final Term selectTerm = SmtUtils.multiDimensionalSelect(mMgdScript.getScript(),
 								simpleArray.getTerm(), mds.getIndex());
-						final EqNode selectEqNode = mEqNodeAndFunctionFactory.getOrConstructEqNode(selectTerm);
+						final EqNode selectEqNode = mEqNodeAndFunctionFactory.getOrConstructNode(selectTerm);
 						newConstraint = mEqConstraintFactory.addEqualityFlat(selectEqNode, storeValue,
 								intermediateConstraint);
 					}
@@ -294,8 +294,8 @@ public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTrans
 					return;
 				}
 
-				final EqNode node1 = mEqNodeAndFunctionFactory.getOrConstructEqNode(arg1);
-				final EqNode node2 = mEqNodeAndFunctionFactory.getOrConstructEqNode(arg2);
+				final EqNode node1 = mEqNodeAndFunctionFactory.getOrConstructNode(arg1);
+				final EqNode node2 = mEqNodeAndFunctionFactory.getOrConstructNode(arg2);
 
 				final EqConstraint<ACTION, EqNode, EqFunction> newConstraint;
 				if (polarity) {

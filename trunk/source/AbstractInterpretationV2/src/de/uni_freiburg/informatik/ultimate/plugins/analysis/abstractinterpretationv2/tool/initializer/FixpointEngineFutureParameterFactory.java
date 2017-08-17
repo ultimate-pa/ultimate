@@ -168,8 +168,7 @@ public class FixpointEngineFutureParameterFactory {
 		preAnalysis.postProcess();
 //		final VPTfStateBuilderPreparer tfPreparer =
 //				new VPTfStateBuilderPreparer(preAnalysis, root, logger);
-		return new VPDomain<>(logger, root.getCfgSmtToolkit().getManagedScript(), services,
-				root.getCfgSmtToolkit().getSymbolTable(), preAnalysis);
+		return new VPDomain<>(logger, services, root.getCfgSmtToolkit(), preAnalysis);
 	}
 
 	private static String getFailureString(final String selectedDomain) {

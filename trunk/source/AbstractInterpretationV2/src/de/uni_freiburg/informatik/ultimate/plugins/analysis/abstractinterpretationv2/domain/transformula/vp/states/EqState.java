@@ -254,8 +254,8 @@ public class EqState<ACTION extends IIcfgTransition<IcfgLocation>>
 		if (term1.getSort().isArraySort()) {
 			// array case
 			assert term2.getSort().isArraySort();
-			final EqFunction node1 = mFactory.getEqNodeAndFunctionFactory().getExistingEqFunction(term1);
-			final EqFunction node2 = mFactory.getEqNodeAndFunctionFactory().getExistingEqFunction(term2);
+			final EqFunction node1 = mFactory.getEqNodeAndFunctionFactory().getExistingFunction(term1);
+			final EqFunction node2 = mFactory.getEqNodeAndFunctionFactory().getExistingFunction(term2);
 			if (node1 == null || node2 == null) {
 				// we did not track at least one of the nodes
 				return false;
@@ -263,8 +263,8 @@ public class EqState<ACTION extends IIcfgTransition<IcfgLocation>>
 			return mConstraint.areEqual(node1, node2);
 		}
 		// element case
-		final EqNode node1 = mFactory.getEqNodeAndFunctionFactory().getExistingEqNode(term1);
-		final EqNode node2 = mFactory.getEqNodeAndFunctionFactory().getExistingEqNode(term2);
+		final EqNode node1 = mFactory.getEqNodeAndFunctionFactory().getExistingNode(term1);
+		final EqNode node2 = mFactory.getEqNodeAndFunctionFactory().getExistingNode(term2);
 		if (node1 == null || node2 == null) {
 			// we did not track at least one of the nodes
 			return false;
@@ -277,8 +277,8 @@ public class EqState<ACTION extends IIcfgTransition<IcfgLocation>>
 		if (term1.getSort().isArraySort()) {
 			// array case
 			assert term2.getSort().isArraySort();
-			final EqFunction func1 = mFactory.getEqNodeAndFunctionFactory().getExistingEqFunction(term1);
-			final EqFunction func2 = mFactory.getEqNodeAndFunctionFactory().getExistingEqFunction(term2);
+			final EqFunction func1 = mFactory.getEqNodeAndFunctionFactory().getExistingFunction(term1);
+			final EqFunction func2 = mFactory.getEqNodeAndFunctionFactory().getExistingFunction(term2);
 			if (func1 == null || func2 == null) {
 				// we did not track at least one of the nodes
 				return false;
@@ -286,8 +286,8 @@ public class EqState<ACTION extends IIcfgTransition<IcfgLocation>>
 			return mConstraint.areUnequal(func1, func2);
 		}
 		// element case
-		final EqNode node1 = mFactory.getEqNodeAndFunctionFactory().getExistingEqNode(term1);
-		final EqNode node2 = mFactory.getEqNodeAndFunctionFactory().getExistingEqNode(term2);
+		final EqNode node1 = mFactory.getEqNodeAndFunctionFactory().getExistingNode(term1);
+		final EqNode node2 = mFactory.getEqNodeAndFunctionFactory().getExistingNode(term2);
 		if (node1 == null || node2 == null) {
 			// we did not track at least one of the nodes
 			return false;

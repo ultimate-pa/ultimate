@@ -33,6 +33,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractStateBinaryOperator;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -69,19 +70,22 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 	private final EqConstraintFactory<ACTION, EqNode, EqFunction> mEqConstraintFactory;
 	private final EqNodeAndFunctionFactory mEqNodeAndFunctionFactory;
 	private final EqStateFactory<ACTION> mEqStateFactory;
+	private final CfgSmtToolkit mCsToolkit;
+	private final IUltimateServiceProvider mServices;
 
-	public VPDomain(final ILogger logger, final ManagedScript mgdScript, final IUltimateServiceProvider services,
-			final IIcfgSymbolTable symbolTable, final VPDomainPreanalysis preAnalysis) {
-		assert mgdScript != null;
+	public VPDomain(final ILogger logger, final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
+			 final VPDomainPreanalysis preAnalysis) {
 		mLogger = logger;
 		mPreAnalysis = preAnalysis;
-		mManagedScript = mgdScript;
+		mManagedScript = csToolkit.getManagedScript();
 		mMerge = new VPMergeOperator();
-		mSymboltable = symbolTable;
-		
-		mEqNodeAndFunctionFactory = new EqNodeAndFunctionFactory(preAnalysis, mgdScript);
-		mEqConstraintFactory = new EqConstraintFactory<>(mEqNodeAndFunctionFactory, mPreAnalysis);
-		mEqStateFactory = new EqStateFactory<>(mEqNodeAndFunctionFactory, mEqConstraintFactory, symbolTable);
+		mSymboltable = csToolkit.getSymbolTable();
+		mCsToolkit = csToolkit;
+		mServices = services;
+
+		mEqNodeAndFunctionFactory = new EqNodeAndFunctionFactory(preAnalysis, mManagedScript);
+		mEqConstraintFactory = new EqConstraintFactory<>(mEqNodeAndFunctionFactory, mServices, mCsToolkit);
+		mEqStateFactory = new EqStateFactory<>(mEqNodeAndFunctionFactory, mEqConstraintFactory, mSymboltable);
 		mEqConstraintFactory.setEqStateFactory(mEqStateFactory);
 
 		mPost = new EqPostOperator<>(mEqNodeAndFunctionFactory, mEqConstraintFactory, mPreAnalysis);
@@ -148,6 +152,6 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 	public boolean useHierachicalPre() {
 		return true;
 	}
-	
-	
+
+
 }

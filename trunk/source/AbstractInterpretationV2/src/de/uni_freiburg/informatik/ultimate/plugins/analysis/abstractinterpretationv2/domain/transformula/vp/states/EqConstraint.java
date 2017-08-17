@@ -213,7 +213,7 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 
 		unfrozen.freeze();
 		assert VPDomainHelpers.constraintFreeOfVars(varsToProjectAway, unfrozen,
-				mFactory.getEqNodeAndFunctionFactory().getScript().getScript()) :
+				mFactory.getMgdScript().getScript()) :
 					"resulting constraint still has at least one of the to-be-projected vars";
 
 		return unfrozen;
@@ -512,6 +512,7 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 //		if (result == null) {
 //			result = mFactory.getEqNodeAndFunctionFactory().getOrConstructEqNode(m)
 //		}
+//		mFactory.getEqNodeAndFunctionFactory()
 		return null;
 	}
 
