@@ -63,7 +63,7 @@ public final class BuchiDifferenceNCSBLazy<LETTER, STATE> extends AbstractBuchiD
 	 * @throws AutomataLibraryException
 	 *             if construction fails
 	 */
-	public <SF extends IBuchiComplementNcsbSimpleStateFactory<STATE> & IBuchiIntersectStateFactory<STATE> & IEmptyStackStateFactory<STATE>> BuchiDifferenceNCSBLazy(
+	public <SF extends IBuchiComplementNcsbStateFactory<STATE> & IBuchiIntersectStateFactory<STATE> & IEmptyStackStateFactory<STATE>> BuchiDifferenceNCSBLazy(
 			final AutomataLibraryServices services, final SF stateFactory,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> fstOperand,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> sndOperand) throws AutomataLibraryException {
@@ -78,7 +78,7 @@ public final class BuchiDifferenceNCSBLazy<LETTER, STATE> extends AbstractBuchiD
 		}
 	}
 
-	private <SF extends IBuchiComplementNcsbSimpleStateFactory<STATE> & IBuchiIntersectStateFactory<STATE> & IEmptyStackStateFactory<STATE>>
+	private <SF extends IBuchiComplementNcsbStateFactory<STATE> & IBuchiIntersectStateFactory<STATE> & IEmptyStackStateFactory<STATE>>
 			void constructResult(final SF stateFactory) throws AutomataLibraryException {
 		final BuchiComplementNCSBLazyNwa<LETTER, STATE> onDemandComplemented = new BuchiComplementNCSBLazyNwa<>(mServices, stateFactory, mSndOperand);
 		mSndComplemented = new NwaOutgoingLetterAndTransitionAdapter<LETTER, STATE>(onDemandComplemented);

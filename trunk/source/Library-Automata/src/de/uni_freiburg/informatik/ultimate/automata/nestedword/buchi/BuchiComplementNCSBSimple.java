@@ -72,7 +72,7 @@ public final class BuchiComplementNCSBSimple<LETTER, STATE> extends UnaryNwaOper
 	 *             if operation was canceled
 	 */
 	public BuchiComplementNCSBSimple(final AutomataLibraryServices services,
-			final IBuchiComplementNcsbSimpleStateFactory<STATE> stateFactory,
+			final IBuchiComplementNcsbStateFactory<STATE> stateFactory,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;

@@ -61,7 +61,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 public final class BuchiComplementNCSBLazyNwa<LETTER, STATE> extends BuchiComplementNCSBSimpleNwa<LETTER, STATE> {
 
 	public BuchiComplementNCSBLazyNwa(AutomataLibraryServices services,
-			IBuchiComplementNcsbSimpleStateFactory<STATE> stateFactory,
+			IBuchiComplementNcsbStateFactory<STATE> stateFactory,
 			INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		super(services, stateFactory, operand);
 		Options.optNCSB = true;

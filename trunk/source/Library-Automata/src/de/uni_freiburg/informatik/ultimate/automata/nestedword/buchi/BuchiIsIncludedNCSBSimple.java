@@ -84,7 +84,7 @@ public final class BuchiIsIncludedNCSBSimple<LETTER, STATE> extends BinaryNwaOpe
 	 * @throws AutomataLibraryException
 	 *             if construction fails
 	 */
-	public <FACTORY extends IBuchiIntersectStateFactory<STATE> & IBuchiComplementNcsbSimpleStateFactory<STATE>> BuchiIsIncludedNCSBSimple(final AutomataLibraryServices services,
+	public <FACTORY extends IBuchiIntersectStateFactory<STATE> & IBuchiComplementNcsbStateFactory<STATE>> BuchiIsIncludedNCSBSimple(final AutomataLibraryServices services,
 			final FACTORY stateFactory,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> fstOperand,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> sndOperand) throws AutomataLibraryException {

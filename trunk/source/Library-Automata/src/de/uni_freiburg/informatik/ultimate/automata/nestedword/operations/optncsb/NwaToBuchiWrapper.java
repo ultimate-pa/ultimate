@@ -100,6 +100,7 @@ public class NwaToBuchiWrapper<LETTER, STATE> extends BuchiGeneral {
 			this.setInitial(state);
 		}
 	}
+	
 	@Override
 	public IState makeState(int id) {
 		return new StateNWA<LETTER, STATE>(this, id);
@@ -121,6 +122,14 @@ public class NwaToBuchiWrapper<LETTER, STATE> extends BuchiGeneral {
 		}
 
 		return succs;
+	}
+	
+	public STATE getNwaSTATE(int sid) {
+		return mStateArr.get(sid);
+	}
+	
+	public LETTER getNwaLETTER(int aid) {
+		return mLetterArr.get(aid);
 	}
 	
 	

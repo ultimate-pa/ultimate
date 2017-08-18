@@ -56,16 +56,16 @@ public class BuchiComplementSDBA extends BuchiGeneral implements IBuchiComplemen
 
 	private final IBuchi mOperand;
 	
-	private final List<IntSet> mOpTransUsed;
+//	private final List<IntSet> mOpTransUsed;
 	
 	public BuchiComplementSDBA(IBuchi buchi) {
 		super(buchi.getAlphabetSize());
 		// TODO Auto-generated constructor stub
 		this.mOperand = buchi;
-		this.mOpTransUsed = new ArrayList<>();
-		for(int i = 0; i < mOperand.getAlphabetSize(); i ++) {
-			this.mOpTransUsed.add(UtilIntSet.newIntSet());
-		}
+//		this.mOpTransUsed = new ArrayList<>();
+//		for(int i = 0; i < mOperand.getAlphabetSize(); i ++) {
+//			this.mOpTransUsed.add(UtilIntSet.newIntSet());
+//		}
 		computeInitialStates();
 	}
 	
@@ -84,6 +84,9 @@ public class BuchiComplementSDBA extends BuchiGeneral implements IBuchiComplemen
 		mState2Int.put(state, id);
 	}
 	
+	public StateNCSB getNCSBState(int id) {
+		return (StateNCSB) getState(id);
+	}
 
 	protected StateNCSB addState(IntSet N, IntSet C, IntSet S, IntSet B) {
 		
@@ -107,7 +110,6 @@ public class BuchiComplementSDBA extends BuchiGeneral implements IBuchiComplemen
 
 	@Override
 	public IBuchi getOperand() {
-		// TODO Auto-generated method stub
 		return mOperand;
 	}
 	
@@ -151,26 +153,26 @@ public class BuchiComplementSDBA extends BuchiGeneral implements IBuchiComplemen
 	}
 
 
-	@Override
-	public void useOpTransition(int letter, IntSet states) {
-		// TODO Auto-generated method stub
-		this.mOpTransUsed.get(letter).or(states);
-	}
-
-
-	@Override
-	public int getNumUsedOpTransition() {
-		// TODO Auto-generated method stub
-		int num = 0;
-		for(int i = 0; i < mOpTransUsed.size(); i ++) {
-			IntSet sources = mOpTransUsed.get(i);
-			IntIterator iter = sources.iterator();
-			while(iter.hasNext()) {
-				num += mOperand.getState(iter.next()).getSuccessors(i).cardinality();
-			}
-		}
-		return num;
-	}
+//	@Override
+//	public void useOpTransition(int letter, IntSet states) {
+//		// TODO Auto-generated method stub
+////		this.mOpTransUsed.get(letter).or(states);
+//	}
+//
+//
+//	@Override
+//	public int getNumUsedOpTransition() {
+//		// TODO Auto-generated method stub
+//		int num = 0;
+////		for(int i = 0; i < mOpTransUsed.size(); i ++) {
+////			IntSet sources = mOpTransUsed.get(i);
+////			IntIterator iter = sources.iterator();
+////			while(iter.hasNext()) {
+////				num += mOperand.getState(iter.next()).getSuccessors(i).cardinality();
+////			}
+////		}
+//		return num;
+//	}
 	
 	
 }

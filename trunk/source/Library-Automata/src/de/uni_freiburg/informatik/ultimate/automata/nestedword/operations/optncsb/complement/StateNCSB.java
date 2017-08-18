@@ -196,7 +196,7 @@ public class StateNCSB extends StateGeneral implements IStateComplement {
 		IntSet currSSet =  mSSet.clone();
 		IntSet currBSet =  mBSet.clone();
 		/*
-		 * If q in C\F, then tr(q, a) is not empty
+		 * If q in C\F, then tr(q, a) is not empty, currently C\F will not be changed
 		 */
 		IntSet F = mOperand.getFinalStates();
 		IntSet cMinusF =  currCSet.clone();
@@ -216,18 +216,18 @@ public class StateNCSB extends StateGeneral implements IStateComplement {
 		IntSet BSuccs = mOperand.getSuccessors(currBSet, letter);
 		
 		// record used transition (NOT necessary in complement)
-		mComplement.useOpTransition(letter, currNSet);
-		mComplement.useOpTransition(letter, currCSet);
-		mComplement.useOpTransition(letter, currSSet);
+//		mComplement.useOpTransition(letter, currNSet);
+//		mComplement.useOpTransition(letter, currCSet);
+//		mComplement.useOpTransition(letter, currSSet);
 		/* ------------------------------------------------*/
-		
+		F = mOperand.getFinalStates();
 		// N successors
 		IntSet Np =  NSuccs.clone();
 				
 		Np.andNot(F);            // remove final states
 		Np.andNot(CSuccs);       // remove successors of C, the final states of NSuccs are in CSuccs 
 		Np.andNot(SSuccs);       // remove successors of S
-		
+
 		// C successors
 		IntSet Cp =  CSuccs.clone();
 		IntSet nInterF =  NSuccs.clone();
@@ -302,7 +302,7 @@ public class StateNCSB extends StateGeneral implements IStateComplement {
 		IntSet currSSet =  mSSet.clone();
 		IntSet currBSet =  mBSet.clone();
 		/*
-		 * If q in B\F, then tr(q, a) is not empty
+		 * If q in B\F, then tr(q, a) is not empty, currently B\F will not be changed
 		 */
 		IntSet F = mOperand.getFinalStates();
 		IntSet bMinusF =  currBSet.clone();
@@ -322,11 +322,11 @@ public class StateNCSB extends StateGeneral implements IStateComplement {
 		IntSet BSuccs = mOperand.getSuccessors(currBSet, letter);
 		
 		// record used transition (NOT necessary in complement)
-		mComplement.useOpTransition(letter, currNSet);
-		mComplement.useOpTransition(letter, currCSet);
-		mComplement.useOpTransition(letter, currSSet);
+//		mComplement.useOpTransition(letter, currNSet);
+//		mComplement.useOpTransition(letter, currCSet);
+//		mComplement.useOpTransition(letter, currSSet);
 		/* ------------------------------------------------*/
-		
+		F = mOperand.getFinalStates();
 		boolean bIsEmpty = currBSet.isEmpty();
 		// N successors
 		IntSet Np =  NSuccs.clone();

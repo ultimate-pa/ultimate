@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncs
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.automata.IBuchi;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.automata.IState;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.complement.BuchiComplementSDBA;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.complement.StateNCSB;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util.IntIterator;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util.IntSet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
@@ -72,7 +73,9 @@ public class BuchiComplementNCSBSimpleNwa<LETTER, STATE> implements INwaSuccesso
 
 	private final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mOperand;
 
-	private final IBuchiComplementNcsbSimpleStateFactory<STATE> mStateFactory;
+	private final IBuchiComplementNcsbStateFactory<STATE> mStateFactory;
+	
+	private final StateWithRankInfo<STATE> mEmptyStackStateWri;
 
 	private final BuchiComplementSDBA mComplementBuchi; 
 //	private final Map<Integer, LETTER> mIdLetterMap;
@@ -80,6 +83,9 @@ public class BuchiComplementNCSBSimpleNwa<LETTER, STATE> implements INwaSuccesso
 	private final Map<Integer, STATE> mIdStateMap;
 	private final Map<STATE, Integer> mStateIdMap;
 
+	private final NwaToBuchiWrapper<LETTER, STATE> mOperandBuchi;
+	private final Map<LevelRankingState<LETTER, STATE>, STATE> mDet2res = new HashMap<>();
+	private final Map<Integer, LevelRankingState<LETTER, STATE>> mInt2LevelRanks = new HashMap<>();
 	/**
 	 * Constructor.
 	 * 
@@ -93,7 +99,7 @@ public class BuchiComplementNCSBSimpleNwa<LETTER, STATE> implements INwaSuccesso
 	 *             if operation was canceled
 	 */
 	public BuchiComplementNCSBSimpleNwa(final AutomataLibraryServices services,
-			final IBuchiComplementNcsbSimpleStateFactory<STATE> stateFactory,
+			final IBuchiComplementNcsbStateFactory<STATE> stateFactory,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		mServices = services;
 		mOperand = operand;
@@ -109,11 +115,14 @@ public class BuchiComplementNCSBSimpleNwa<LETTER, STATE> implements INwaSuccesso
 			mLetterIdMap.put(letter, id);
 			id ++;
 		}
-		IBuchi op = new NwaToBuchiWrapper<LETTER, STATE>(mLetterIdMap.size(), mLetterIdMap, operand);
-		mComplementBuchi = new BuchiComplementSDBA(op);
+		mEmptyStackStateWri = new StateWithRankInfo<>(mSetOfStates.getEmptyStackState());
+		mOperandBuchi = new NwaToBuchiWrapper<LETTER, STATE>(mLetterIdMap.size(), mLetterIdMap, operand);
+		mComplementBuchi = new BuchiComplementSDBA(mOperandBuchi);
 		constructInitialState();
 		Options.optNCSB = false;
 	}
+	
+	
 
 	private void constructInitialState() {
 		IntSet initials = mComplementBuchi.getInitialStates();
@@ -123,6 +132,58 @@ public class BuchiComplementNCSBSimpleNwa<LETTER, STATE> implements INwaSuccesso
 			getOrAdd(true, sId);
 		}
 	}
+	
+	protected STATE getRelatedSTATE(int sId) {
+		LevelRankingState<LETTER, STATE> lvlrk = constructLevelRankingState(sId);
+		STATE resState = mStateFactory.buchiComplementNcsb(lvlrk);
+		mDet2res.put(lvlrk, resState);
+		return resState;
+	}
+	
+	protected LevelRankingState<LETTER, STATE> constructLevelRankingState(int sid) {
+		LevelRankingState<LETTER, STATE> lvlrk = mInt2LevelRanks.get(sid);
+		if(lvlrk != null) return lvlrk;
+		
+		StateNCSB state = mComplementBuchi.getNCSBState(sid);
+
+		lvlrk = new LevelRankingState<>(mOperand);
+		IntSet B = state.getBSet();
+		// N
+		IntSet temp = state.getNSet();
+		IntIterator iterSet = temp.iterator();
+		while(iterSet.hasNext()) {
+			int n = iterSet.next();
+			lvlrk.addRank(mEmptyStackStateWri, mOperandBuchi.getNwaSTATE(n), 3, false);
+		}
+		// C\B
+		temp = state.getCSet();
+		temp.andNot(B);
+		iterSet = temp.iterator();
+		while (iterSet.hasNext()) {
+			int n = iterSet.next();
+			lvlrk.addRank(mEmptyStackStateWri, mOperandBuchi.getNwaSTATE(n), 2, false);
+		}
+		// C/\ B
+		temp = state.getCSet();
+		temp.and(B);
+		iterSet = temp.iterator();
+		while (iterSet.hasNext()) {
+			int n = iterSet.next();
+			lvlrk.addRank(mEmptyStackStateWri, mOperandBuchi.getNwaSTATE(n), 2, true);
+		}
+		// S
+		temp = state.getSSet();
+		iterSet = temp.iterator();
+		while (iterSet.hasNext()) {
+			int n = iterSet.next();
+			lvlrk.addRank(mEmptyStackStateWri, mOperandBuchi.getNwaSTATE(n), 1, false);
+		}
+		
+		return lvlrk;
+	}
+	
+	
+	
 
 	/**
 	 * Return state of result automaton that represents detState. If no such state was constructed yet, construct it.
@@ -130,7 +191,7 @@ public class BuchiComplementNCSBSimpleNwa<LETTER, STATE> implements INwaSuccesso
 	private STATE getOrAdd(final boolean isInitial, int sId) {
 		STATE resState = mIdStateMap.get(sId);
 		if (resState == null) {
-			resState = mStateFactory.buchiComplementNcsbSimple(sId);
+			resState = getRelatedSTATE(sId);
 			mIdStateMap.put(sId, resState);
 			mStateIdMap.put(resState, sId);
 			mSetOfStates.addState(isInitial, mComplementBuchi.isFinal(sId), resState);

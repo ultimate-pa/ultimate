@@ -84,7 +84,7 @@ public final class BuchiIsIncludedNCSBLazy<LETTER, STATE> extends BinaryNwaOpera
 	 * @throws AutomataLibraryException
 	 *             if construction fails
 	 */
-	public <FACTORY extends IBuchiIntersectStateFactory<STATE> & IBuchiComplementNcsbSimpleStateFactory<STATE>> BuchiIsIncludedNCSBLazy(final AutomataLibraryServices services,
+	public <FACTORY extends IBuchiIntersectStateFactory<STATE> & IBuchiComplementNcsbStateFactory<STATE>> BuchiIsIncludedNCSBLazy(final AutomataLibraryServices services,
 			final FACTORY stateFactory,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> fstOperand,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> sndOperand) throws AutomataLibraryException {

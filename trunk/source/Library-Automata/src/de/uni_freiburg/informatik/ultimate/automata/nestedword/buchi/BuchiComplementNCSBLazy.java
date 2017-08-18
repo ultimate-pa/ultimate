@@ -71,7 +71,7 @@ public final class BuchiComplementNCSBLazy<LETTER, STATE> extends UnaryNwaOperat
 	 *             if operation was canceled
 	 */
 	public BuchiComplementNCSBLazy(final AutomataLibraryServices services,
-			final IBuchiComplementNcsbSimpleStateFactory<STATE> stateFactory,
+			final IBuchiComplementNcsbStateFactory<STATE> stateFactory,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;
