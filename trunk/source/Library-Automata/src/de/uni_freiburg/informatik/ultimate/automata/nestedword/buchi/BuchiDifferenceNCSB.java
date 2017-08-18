@@ -82,9 +82,4 @@ public final class BuchiDifferenceNCSB<LETTER, STATE> extends AbstractBuchiDiffe
 		constructDifferenceFromComplement(stateFactory);
 	}
 
-
-	@Override
-	public INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> getSndComplemented() {
-		return mSndComplemented;
-	}
 }

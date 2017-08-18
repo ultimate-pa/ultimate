@@ -30,7 +30,6 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NwaOutgoingLetterAndTransitionAdapter;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiComplementNcsbSimpleStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiComplementNcsbStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiIntersectStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
@@ -46,7 +45,6 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStat
  *            state type
  */
 public final class BuchiDifferenceNCSBSimple<LETTER, STATE> extends AbstractBuchiDifference<LETTER, STATE> {
-	private INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mSndComplemented;
 
 	/**
 	 * Constructor.
@@ -84,8 +82,4 @@ public final class BuchiDifferenceNCSBSimple<LETTER, STATE> extends AbstractBuch
 		constructDifferenceFromComplement(stateFactory);
 	}
 
-	@Override
-	public INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> getSndComplemented() {
-		return mSndComplemented;
-	}
 }
