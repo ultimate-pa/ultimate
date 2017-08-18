@@ -44,8 +44,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimi
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaMaxSat2;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaMaxSat2.Settings;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaPmaxSat;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaPmaxSatAsymmetric;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaPmaxSatDirect;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaPmaxSatDirectBi;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.NwaApproximateBisimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.NwaApproximateSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.NwaApproximateXsimulation.SimulationType;
@@ -321,7 +321,7 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends AbstractMi
 				simulationToEquivalenceRelation(operand, simulationInfoProvider, graph);
 
 		final Settings<STATE> settings = getPmaxSatSettings(simulationInfoProvider);
-		final MinimizeNwaPmaxSat<LETTER, STATE> maxSatMinimizer = new MinimizeNwaPmaxSatDirect<>(mServices, stateFactory,
+		final MinimizeNwaPmaxSat<LETTER, STATE> maxSatMinimizer = new MinimizeNwaPmaxSatDirectBi<>(mServices, stateFactory,
 				mOperand, new PartitionBackedSetOfPairs<>(equivalenceRelation.getAllEquivalenceClasses()), settings);
 		return new Pair<>(maxSatMinimizer.getResult(), maxSatMinimizer);
 	}
@@ -334,7 +334,7 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends AbstractMi
 		readoutSimulationRelation(graph, simulationInfoProvider, operand, simRelation);
 
 		final Settings<STATE> settings = getPmaxSatSettings(simulationInfoProvider);
-		final MinimizeNwaPmaxSatAsymmetric<LETTER, STATE> maxSatMinimizer = new MinimizeNwaPmaxSatAsymmetric<>(
+		final MinimizeNwaPmaxSatDirect<LETTER, STATE> maxSatMinimizer = new MinimizeNwaPmaxSatDirect<>(
 				mServices, stateFactory, mOperand, simRelation.getRelation(), settings);
 		return new Pair<>(maxSatMinimizer.getResult(), maxSatMinimizer);
 	}

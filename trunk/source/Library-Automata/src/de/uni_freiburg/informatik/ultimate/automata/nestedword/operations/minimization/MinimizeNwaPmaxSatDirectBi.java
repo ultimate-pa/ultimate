@@ -1,3 +1,30 @@
+/*
+ * Copyright (C) 2017 Christian Schilling (schillic@informatik.uni-freiburg.de)
+ * Copyright (C) 2017 University of Freiburg
+ * 
+ * This file is part of the ULTIMATE Automata Library.
+ * 
+ * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
+ * 
+ * Additional permission under GNU GPL version 3 section 7:
+ * If you modify the ULTIMATE Automata Library, or any covered work, by linking
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
+ * to convey the resulting work.
+ */
+
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization;
 
 import java.util.ArrayList;
@@ -8,21 +35,24 @@ import java.util.function.BiPredicate;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationStatistics;
+import de.uni_freiburg.informatik.ultimate.automata.StatisticsType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.NwaApproximateXsimulation.SimulationType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.AbstractMaxSatSolver;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.IAssignmentCheckerAndGenerator;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.InteractiveMaxSatSolver;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.ScopedConsistencyGeneratorDelayedSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.ScopedTransitivityGeneratorDoubleton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.VariableFactory.MergeDoubleton;
 import de.uni_freiburg.informatik.ultimate.automata.util.ISetOfPairs;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
 
-
 /**
  * Partial Max-SAT based minimization of NWA using {@link MergeDoubleton} as variable type. 
- * Minimization is done using delayed simulation.
+ * Minimization is done using direct simulation.
+ * 
+ * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * 
  * @param <LETTER>
  *            letter type
@@ -31,9 +61,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
  * @see MinimizeNwaMaxSat2
  */
 
-public class MinimizeNwaPmaxSatDelayed<LETTER, STATE> extends MinimizeNwaPmaxSat<LETTER, STATE>{
-	
-	protected ScopedConsistencyGeneratorDelayedSimulation<Doubleton<STATE>, LETTER, STATE> mConsistencyGenerator;
+
+public class MinimizeNwaPmaxSatDirectBi<LETTER, STATE> extends MinimizeNwaPmaxSat<LETTER, STATE>{
+
 
 	/**
 	 * Constructor that should be called by the automata script interpreter.
@@ -48,7 +78,7 @@ public class MinimizeNwaPmaxSatDelayed<LETTER, STATE> extends MinimizeNwaPmaxSat
 	 *             thrown by cancel request
 	 */
 	
-	public MinimizeNwaPmaxSatDelayed(final AutomataLibraryServices services,
+	public MinimizeNwaPmaxSatDirectBi(final AutomataLibraryServices services,
 			final IMinimizationStateFactory<STATE> stateFactory, final IDoubleDeckerAutomaton<LETTER, STATE> operand)
 			throws AutomataOperationCanceledException {
 				this(services, stateFactory, operand, new NwaApproximateBisimulation<>(services, operand, SimulationType.DIRECT).getResult(), new Settings<STATE>().setLibraryMode(false));
@@ -75,7 +105,7 @@ public class MinimizeNwaPmaxSatDelayed<LETTER, STATE> extends MinimizeNwaPmaxSat
 	 *             thrown by cancel request
 	 */
 	
-	public MinimizeNwaPmaxSatDelayed(final AutomataLibraryServices services,
+	public MinimizeNwaPmaxSatDirectBi(final AutomataLibraryServices services,
 			final IMinimizationStateFactory<STATE> stateFactory, final IDoubleDeckerAutomaton<LETTER, STATE> operand,
 			final ISetOfPairs<STATE, Collection<Set<STATE>>> initialPartition, final Settings<STATE> settings)
 			throws AutomataOperationCanceledException {
@@ -98,11 +128,6 @@ public class MinimizeNwaPmaxSatDelayed<LETTER, STATE> extends MinimizeNwaPmaxSat
 			if (mTransitivityGenerator != null) {
 				mTransitivityGenerator.addContent(stateI);
 			}
-			
-			// add to consistency generator
-			if (mConsistencyGenerator != null) {
-				mConsistencyGenerator.addContent(stateI);
-			}
 
 			for (int j = 0; j < i; j++) {
 				final STATE stateJ = states[j];
@@ -122,12 +147,9 @@ public class MinimizeNwaPmaxSatDelayed<LETTER, STATE> extends MinimizeNwaPmaxSat
 	@Override
 	protected AbstractMaxSatSolver<Doubleton<STATE>> createTransitivitySolver() {
 		mTransitivityGenerator = new ScopedTransitivityGeneratorDoubleton<>(mSettings.isUsePathCompression());
-		mConsistencyGenerator = new ScopedConsistencyGeneratorDelayedSimulation<Doubleton<STATE>, LETTER, STATE>(mSettings.isUsePathCompression(), mServices, mOperand);
 		final List<IAssignmentCheckerAndGenerator<Doubleton<STATE>>> assignmentCheckerAndGeneratorList =
 				new ArrayList<>();
 		assignmentCheckerAndGeneratorList.add(mTransitivityGenerator);
-		assignmentCheckerAndGeneratorList.add(mConsistencyGenerator);
 		return new InteractiveMaxSatSolver<>(mServices, assignmentCheckerAndGeneratorList);
 	}
-
 }

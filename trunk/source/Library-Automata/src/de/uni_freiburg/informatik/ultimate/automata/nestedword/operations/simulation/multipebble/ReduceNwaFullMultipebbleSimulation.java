@@ -40,8 +40,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimi
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.IMinimizationStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaMaxSat2;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaPmaxSat;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaPmaxSatAsymmetric;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaPmaxSatDirect;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaPmaxSatDirectBi;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.NwaApproximateBisimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.NwaApproximateSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.NwaApproximateXsimulation.SimulationType;
@@ -162,13 +162,13 @@ public abstract class ReduceNwaFullMultipebbleSimulation<LETTER, STATE, GS exten
 
 				switch (mMetriePostprocessing) {
 					case ASYM:
-						maxSatMinimizer = new MinimizeNwaPmaxSatAsymmetric<>(mServices, stateFactory, mOperand,
+						maxSatMinimizer = new MinimizeNwaPmaxSatDirect<>(mServices, stateFactory, mOperand,
 								readoutExactSimulationRelation(initialPairs, gsm, simRes.getFirst(), gameFactory)
 										.getRelation(),
 								settings);
 						break;
 					case SYM:
-						maxSatMinimizer = new MinimizeNwaPmaxSatDirect<>(mServices, stateFactory, mOperand,
+						maxSatMinimizer = new MinimizeNwaPmaxSatDirectBi<>(mServices, stateFactory, mOperand,
 								readoutSymmetricCoreOfSimulationRelation(initialPairs, gsm, simRes.getFirst(),
 										gameFactory),
 								settings);

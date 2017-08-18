@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Analyz
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.IMinimizationStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaMaxSat2;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaPmaxSat;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaPmaxSatDirect;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaPmaxSatDirectBi;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeSevpa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.NwaApproximateBisimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.NwaApproximateXsimulation.SimulationType;
@@ -209,7 +209,7 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 				setExternalOverallTime(System.currentTimeMillis() - startTime);
 			} else if (type.equals(SimulationOrMinimizationType.EXT_MINIMIZENWAMAXSAT)) {
 				final long startTime = System.currentTimeMillis();
-				method = new MinimizeNwaPmaxSatDirect<>(services, stateFactory, operand,
+				method = new MinimizeNwaPmaxSatDirectBi<>(services, stateFactory, operand,
 						new PartitionBackedSetOfPairs<>(possibleEquivalenceClasses),
 						new MinimizeNwaMaxSat2.Settings<STATE>().setLibraryMode(false));
 				setExternalOverallTime(System.currentTimeMillis() - startTime);

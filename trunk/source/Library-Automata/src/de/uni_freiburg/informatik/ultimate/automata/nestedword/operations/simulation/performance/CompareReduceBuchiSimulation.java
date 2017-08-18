@@ -54,7 +54,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Remove
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.IMinimizationStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaPmaxSat;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaPmaxSatDirect;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaPmaxSatDirectBi;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeSevpa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.ShrinkNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.ASimulation;
@@ -713,7 +713,7 @@ public class CompareReduceBuchiSimulation<LETTER, STATE>
 					operandAsNwa = new RemoveUnreachable<>(services, operand).getResult();
 				}
 				final long startTime = System.currentTimeMillis();
-				method = new MinimizeNwaPmaxSatDirect<>(mServices, stateFactory, operandAsNwa);
+				method = new MinimizeNwaPmaxSatDirectBi<>(mServices, stateFactory, operandAsNwa);
 				mExternalOverallTime = System.currentTimeMillis() - startTime;
 			}
 		} catch (final AutomataOperationCanceledException e) {

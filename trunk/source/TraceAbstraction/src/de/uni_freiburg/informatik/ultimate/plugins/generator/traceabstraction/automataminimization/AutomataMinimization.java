@@ -52,7 +52,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimi
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaOverapproximation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaPattern;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaPmaxSat;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaPmaxSatDirect;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaPmaxSatDirectBi;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeSevpa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.ShrinkNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.arrays.MinimizeNwaMaxSAT;
@@ -257,7 +257,7 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate, LETTER> {
 			MinimizationResult localResult = null;
 			try {
 				localResult = new MinimizationResult(true, true,
-						new MinimizeNwaPmaxSatDirect<>(autServicesWithTimeout, predicateFactoryRefinement,
+						new MinimizeNwaPmaxSatDirectBi<>(autServicesWithTimeout, predicateFactoryRefinement,
 								(IDoubleDeckerAutomaton<LETTER, IPredicate>) operand, partition,
 								new MinimizeNwaMaxSat2.Settings<IPredicate>()
 								.setAddMapOldState2NewState(computeOldState2NewStateMapping).setLibraryMode(false)));

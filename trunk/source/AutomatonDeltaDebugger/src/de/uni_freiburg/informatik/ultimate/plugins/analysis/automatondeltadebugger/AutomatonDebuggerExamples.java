@@ -37,8 +37,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Remove
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaOverapproximation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaPmaxSat;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaPmaxSatAsymmetric;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaPmaxSatDirect;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaPmaxSatDirectBi;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.ShrinkNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.arrays.MinimizeNwaMaxSAT;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.delayed.BuchiReduce;
@@ -279,7 +279,7 @@ public class AutomatonDebuggerExamples {
 			final INestedWordAutomaton<String, String> automaton, final StringFactory factory) throws Throwable {
 		final IDoubleDeckerAutomaton<String, String> preprocessed =
 				new RemoveDeadEnds<>(mServices, automaton).getResult();
-		return new MinimizeNwaPmaxSatDirect<>(mServices, factory, preprocessed);
+		return new MinimizeNwaPmaxSatDirectBi<>(mServices, factory, preprocessed);
 	}
 
 	/**
@@ -487,7 +487,7 @@ public class AutomatonDebuggerExamples {
 	 *            The automaton.
 	 * @param factory
 	 *            state factory
-	 * @return new {@link MinimizeNwaPmaxSatAsymmetric} instance
+	 * @return new {@link MinimizeNwaPmaxSatDirect} instance
 	 * @throws Throwable
 	 *             when error occurs
 	 */
@@ -495,7 +495,7 @@ public class AutomatonDebuggerExamples {
 			final INestedWordAutomaton<String, String> automaton, final StringFactory factory) throws Throwable {
 		final IDoubleDeckerAutomaton<String, String> preprocessed =
 				new RemoveDeadEnds<>(mServices, automaton).getResult();
-		return new MinimizeNwaPmaxSatAsymmetric<>(mServices, factory, preprocessed);
+		return new MinimizeNwaPmaxSatDirect<>(mServices, factory, preprocessed);
 	}
 
 	/**
