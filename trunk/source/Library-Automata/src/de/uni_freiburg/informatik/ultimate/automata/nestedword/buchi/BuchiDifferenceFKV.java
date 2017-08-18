@@ -132,8 +132,5 @@ public final class BuchiDifferenceFKV<LETTER, STATE> extends AbstractBuchiDiffer
 				+ mOnDemandComplemented.getHighesRank();
 	}
 
-	@Override
-	public INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> getSndComplemented() {
-		return mSndComplemented;
-	}
+
 }
