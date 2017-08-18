@@ -380,6 +380,9 @@ public class AutomataDefinitionInterpreter {
 			for (final String succRaw : entry.getValue()) {
 				final String succ = unifyIfNeeded(succRaw, mUnifyStates);
 				final String letter = unifyIfNeeded(entry.getKey().right, mUnifyLettersInternal);
+				if (!internalAlphabet.contains(letter)) {
+					throw new IllegalArgumentException("Letter " + letter + " not in internal alphabet");
+				}
 				nw.addInternalTransition(pred, letter, succ);
 			}
 		}
@@ -389,6 +392,9 @@ public class AutomataDefinitionInterpreter {
 			for (final String succRaw : entry.getValue()) {
 				final String succ = unifyIfNeeded(succRaw, mUnifyStates);
 				final String letter = unifyIfNeeded(entry.getKey().right, mUnifyLettersCall);
+				if (!callAlphabet.contains(letter)) {
+					throw new IllegalArgumentException("Letter " + letter + " not in call alphabet");
+				}
 				nw.addCallTransition(pred, letter, succ);
 			}
 		}
@@ -400,6 +406,9 @@ public class AutomataDefinitionInterpreter {
 				for (final Entry<String, Set<String>> entry : nwa.getReturnTransitions().get(linPred).get(hierPred)
 						.entrySet()) {
 					final String letter = unifyIfNeeded(entry.getKey(), mUnifyLettersReturn);
+					if (!returnAlphabet.contains(letter)) {
+						throw new IllegalArgumentException("Letter " + letter + " not in return alphabet");
+					}
 					for (final String succRaw : entry.getValue()) {
 						final String succ = unifyIfNeeded(succRaw, mUnifyStates);
 						nw.addReturnTransition(linPred, hierPred, letter, succ);
