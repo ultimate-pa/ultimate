@@ -67,6 +67,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.Simpli
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.BuchiAutomizerPreferenceInitializer.BuchiComplementationConstruction;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.BuchiAutomizerPreferenceInitializer.NcsbImplementation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryRefinement;
@@ -107,7 +108,7 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 	private final Format mFormat;
 	private final InterpolationTechnique mInterpolation;
 	private BackwardCoveringInformation mBci;
-	private final boolean mUseLazyNcsb;
+	private final NcsbImplementation mNcsbImplementation;
 	/**
 	 * Interpolant automaton of this iteration.
 	 */
@@ -122,7 +123,7 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 			final String dumpPath, final Format format, final InterpolationTechnique interpolation,
 			final IUltimateServiceProvider services, final ILogger logger,
 			final SimplificationTechnique simplificationTechnique,
-			final XnfConversionTechnique xnfConversionTechnique, final boolean useLazyNcsb) {
+			final XnfConversionTechnique xnfConversionTechnique, final NcsbImplementation ncsbImplementation) {
 		super();
 		mServices = services;
 		mLogger = logger;
@@ -139,7 +140,7 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 		mInterpolation = interpolation;
 		mSimplificationTechnique = simplificationTechnique;
 		mXnfConversionTechnique = xnfConversionTechnique;
-		mUseLazyNcsb = useLazyNcsb;
+		mNcsbImplementation = ncsbImplementation;
 	}
 
 	public INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> getInterpolAutomatonUsedInRefinement() {
