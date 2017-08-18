@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.AbstractBuchiDifference;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiAccepts;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiComplementFKV;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiDifferenceFKV;
@@ -432,9 +433,25 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 			final BuchiInterpolantAutomatonConstructionStyle setting,
 			final BuchiCegarLoopBenchmarkGenerator benchmarkGenerator) throws AutomataLibraryException {
 		INestedWordAutomaton<LETTER, IPredicate> newAbstraction;
-		final BuchiDifferenceNCSB<LETTER, IPredicate> diff =
-				new BuchiDifferenceNCSB<>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement,
-						abstraction, mInterpolAutomatonUsedInRefinement);
+		final AbstractBuchiDifference<LETTER, IPredicate> diff;
+		switch (mNcsbImplementation) {
+		case INTSET:
+//			diff = new BuchiDifferenceNCSBSimple<LETTER, IPredicate>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement,
+//					abstraction, mInterpolAutomatonUsedInRefinement);
+			diff = null;
+			break;
+		case INTSET_LAZY:
+//			diff = new BuchiDifferenceNCSBLazy<LETTER, IPredicate>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement,
+//					abstraction, mInterpolAutomatonUsedInRefinement);
+			diff = null;
+			break;
+		case ORIGINAL:
+			diff = new BuchiDifferenceNCSB<>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement,
+					abstraction, mInterpolAutomatonUsedInRefinement);
+			break;
+		default:
+			throw new AssertionError("illegal value");
+		}
 		finishComputation(mInterpolAutomatonUsedInRefinement, setting);
 		benchmarkGenerator.reportHighestRank(3);
 		assert diff.checkResult(mStateFactoryInterpolAutom);
