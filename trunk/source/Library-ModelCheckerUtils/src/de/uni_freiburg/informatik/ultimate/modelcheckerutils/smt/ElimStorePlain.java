@@ -914,5 +914,69 @@ public class ElimStorePlain {
 			}
 		}
 	}
+	
+	
+	public static Term constructIndexValueConnection(final ArrayList<Term> indicesList, 
+			final ThreeValuedEquivalenceRelation<Term> indexEqualityInformation, 
+			final ManagedScript mgdScript, 
+			final Map<Term, Term> rawIndex2replacedIndex, 
+			final Map<Term, Term> index2value, final TermVariable eliminatee, final int quantifier) {
+		final List<Term> resultConjuncts = new ArrayList<Term>();
+		for (int i = 0; i < indicesList.size(); i++) {
+			if (!indexEqualityInformation.isRepresentative(indicesList.get(i))) {
+				continue;
+			}
+			for (int j = i + 1; j < indicesList.size(); j++) {
+				if (!indexEqualityInformation.isRepresentative(indicesList.get(j))) {
+					continue;
+				}
+				final Term index1 = indicesList.get(i);
+				final Term index2 = indicesList.get(j);
+				final Term indexEqualityTerm;
+				final EqualityStatus eqStatus = indexEqualityInformation.getEqualityStatus(index1, index2);
+				switch (eqStatus) {
+				case EQUAL:
+					indexEqualityTerm = mgdScript.getScript().term("true");
+					break;
+				case NOT_EQUAL:
+					indexEqualityTerm = mgdScript.getScript().term("false");
+					break;
+				case UNKNOWN:
+					final Term replacementIndex1 = rawIndex2replacedIndex.get(index1);
+					assert !occursIn(eliminatee, replacementIndex1) : "var is still there";
+					final Term replacementIndex2 = rawIndex2replacedIndex.get(index2);
+					assert !occursIn(eliminatee, replacementIndex2) : "var is still there";
+					indexEqualityTerm = SmtUtils.binaryEquality(mgdScript.getScript(), 
+							replacementIndex1, replacementIndex2);
+					break;
+				default:
+					throw new AssertionError();
+				}
+				final Term value1 = index2value.get(index1);
+				assert !occursIn(eliminatee, value1) : "var is still there";
+				final Term value2 = index2value.get(index2);
+				assert !occursIn(eliminatee, value2) : "var is still there";
+				final Term valueEqualityTerm = SmtUtils.binaryEquality(mgdScript.getScript(), value1, value2);
+				final Term implication = SmtUtils.or(mgdScript.getScript(),
+						SmtUtils.not(mgdScript.getScript(), indexEqualityTerm), valueEqualityTerm);
+				resultConjuncts.add(implication);
+			}
+		}
+		final Term resultConjunction = SmtUtils.and(mgdScript.getScript(), resultConjuncts);
+		if (quantifier == QuantifiedFormula.EXISTS) {
+			return resultConjunction;
+		} else if (quantifier == QuantifiedFormula.FORALL) {
+			return SmtUtils.not(mgdScript.getScript(), resultConjunction);
+		} else {
+			throw new AssertionError("unknown quantifier");
+		}
+		
+	}
+	
+	public static boolean occursIn(final TermVariable tv, final Term term) {
+		return Arrays.asList(term.getFreeVars()).contains(tv);
+	}
+	
+	
 
 }
