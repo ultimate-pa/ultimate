@@ -49,7 +49,6 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStat
  */
 public final class BuchiDifferenceFKV<LETTER, STATE> extends AbstractBuchiDifference<LETTER, STATE> {
 	private BuchiComplementFKVNwa<LETTER, STATE> mOnDemandComplemented;
-	private INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mSndComplemented;
 
 	/**
 	 * Constructor which creates a PowersetDeterminizer.
