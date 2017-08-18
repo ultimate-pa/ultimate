@@ -2,11 +2,11 @@
 //
 // Reduced version of MinimizeSevpa_Bug07.
 // Reduced by Christian Schilling on 2017-03-16.
-// Revealed a soundness bug in MinimizeNwaPmaxSatAsymmetric for return transitions.
+// Revealed a soundness bug in MinimizeNwaPmaxSatDirect for return transitions.
 
 NestedWordAutomaton preprocessed = removeUnreachable(nwa);
 
-print(minimizeNwaPmaxSatAsymmetric(preprocessed));
+print(minimizeNwaPmaxSatDirect(preprocessed));
 
 NestedWordAutomaton nwa = (
 	callAlphabet = {"c" },

@@ -15,27 +15,27 @@ NestedWordAutomaton preprocessed = removeUnreachable(nwa);
 int minimizeSevpaSize = numberOfStates(minimizeSevpa(preprocessed));
 int shrinkNwaSize = numberOfStates(shrinkNwa(preprocessed));
 int minimizeNwaPmaxSatDirectSize = numberOfStates(minimizeNwaPmaxSatDirect(preprocessed));
-int minimizeNwaPmaxSatAsymmetricSize = numberOfStates(minimizeNwaPmaxSatAsymmetric(preprocessed));
+int minimizeNwaPmaxSatDirectSize = numberOfStates(minimizeNwaPmaxSatDirect(preprocessed));
 int reduceNwaDirectSimulationSize = numberOfStates(reduceNwaDirectSimulation(preprocessed));
 int reduceNwaDirectSimulationBSize = numberOfStates(reduceNwaDirectSimulationB(preprocessed));
 int reduceNwaDirectFullMultipebbleSimulationSize = numberOfStates(reduceNwaDirectFullMultipebbleSimulation(preprocessed));
 // int reduceNwaDelayedSimulationSize = numberOfStates(reduceNwaDelayedSimulation(preprocessed));
 // int reduceNwaDelayedSimulationBSize = numberOfStates(reduceNwaDelayedSimulationB(preprocessed));
 // int reduceNwaDelayedFullMultipebbleSimulationSize = numberOfStates(reduceNwaDelayedFullMultipebbleSimulation(preprocessed));
-int minimizeNwaPmaxSatDelayedSize = numberOfStates(minimizeNwaPmaxSatDelayed(preprocessed));
+int minimizeNwaPmaxSatDelayedBiSize = numberOfStates(minimizeNwaPmaxSatDelayedBi(preprocessed));
 
 assert(minimizeSevpaSize == 10);
 assert(shrinkNwaSize == 8);
 assert(minimizeNwaPmaxSatDirectSize == 8);
-assert(minimizeNwaPmaxSatAsymmetricSize == 8);
+assert(minimizeNwaPmaxSatDirectSize == 8);
 assert(reduceNwaDirectSimulationSize == 8);
 assert(reduceNwaDirectSimulationBSize == 8);
 assert(reduceNwaDirectFullMultipebbleSimulationSize == 8);
 // assert(reduceNwaDelayedSimulationSize == 5);
 // assert(reduceNwaDelayedSimulationBSize == 5);
 // assert(reduceNwaDelayedFullMultipebbleSimulationSize == 5);
-assert(minimizeNwaPmaxSatDelayedSize == 5);
-print(minimizeNwaPmaxSatDelayedSize);
+assert(minimizeNwaPmaxSatDelayedBiSize == 5);
+print(minimizeNwaPmaxSatDelayedBiSize);
 
 NestedWordAutomaton nwa = (
 	callAlphabet = {"c"},

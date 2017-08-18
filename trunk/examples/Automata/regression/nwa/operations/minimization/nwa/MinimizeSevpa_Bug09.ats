@@ -8,8 +8,8 @@ NestedWordAutomaton preprocessed = removeUnreachable(nwa);
 
 int minimizeSevpaSize = numberOfStates(minimizeSevpa(preprocessed));
 int shrinkNwaSize = numberOfStates(shrinkNwa(preprocessed));
-int minimizeNwaPmaxSatSize = numberOfStates(minimizeNwaPmaxSat(preprocessed));
-int minimizeNwaPmaxSatAsymmetricSize = numberOfStates(minimizeNwaPmaxSatAsymmetric(preprocessed));
+int minimizeNwaPmaxSatDirectBiSize = numberOfStates(minimizeNwaPmaxSatDirectBi(preprocessed));
+int minimizeNwaPmaxSatDirectSize = numberOfStates(minimizeNwaPmaxSatDirect(preprocessed));
 int reduceNwaDirectSimulationSize = numberOfStates(reduceNwaDirectSimulation(preprocessed));
 int reduceNwaDirectSimulationBSize = numberOfStates(reduceNwaDirectSimulationB(preprocessed));
 int reduceNwaDirectFullMultipebbleSimulationSize = numberOfStates(reduceNwaDirectFullMultipebbleSimulation(preprocessed));
@@ -19,8 +19,8 @@ int reduceNwaDirectFullMultipebbleSimulationSize = numberOfStates(reduceNwaDirec
 
 assert(minimizeSevpaSize == 62);
 assert(shrinkNwaSize == 58);
-assert(minimizeNwaPmaxSatSize == 57);
-assert(minimizeNwaPmaxSatAsymmetricSize == 61);
+assert(minimizeNwaPmaxSatDirectBiSize == 57);
+assert(minimizeNwaPmaxSatDirectSize == 61);
 assert(reduceNwaDirectSimulationSize == 57);
 assert(reduceNwaDirectSimulationBSize == 61);
 assert(reduceNwaDirectFullMultipebbleSimulationSize == 61);
