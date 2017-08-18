@@ -37,9 +37,10 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiIntersect
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 
 /**
- * Buchi difference "<tt>NCSB</tt>".
+ * Buchi difference "<tt>NCSBLazy</tt>".
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @author Yong Li (liyong@ios.ac.cn)
  * @param <LETTER>
  *            letter type
  * @param <STATE>
