@@ -1,3 +1,5 @@
+//#termcomp16-someonesaidyes
+//#termcomp16-someonesaidyes
 /*
  * Program from Fig.1a of
  * 2006CAV - Gopan,Reps - Lookahead Widening

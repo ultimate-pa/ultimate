@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
@@ -28,6 +29,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  * It is recommended to use a factory for constructing ELEM objects that extends
  * AbstractCCElementFactory.
  *
+ * TODO: can we make this more lightweight somehow? Maybe by initializing maps on demand? --> analyze..
+ *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  * @param <ELEM>
@@ -46,13 +49,12 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 	private final NestedMap2<FUNCTION, ELEM, Set<ELEM>> mFunctionToRepresentativeToCcPars;
 	private final NestedMap2<FUNCTION, ELEM, Set<List<ELEM>>> mFunctionToRepresentativeToCcChildren;
 	private final HashRelation<FUNCTION, ELEM> mFunctionToFuncApps;
-	private boolean mIsInconsistent;
 	/**
 	 * stores all known parents for an element -- used for remove method to also remove dependent elements
 	 * (might be used for other dependencies, too..
 	 */
 	private final HashRelation<ELEM, ELEM> mElementToParents;
-
+	private boolean mIsInconsistent;
 	/**
 	 * Constructs CongruenceClosure instance without any equalities or
 	 * disequalities.
@@ -981,6 +983,86 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 			return false;
 		}
 		return mElementTVER.isTautological() && mFunctionTVER.isTautological();
+	}
+
+	/**
+	 * Replaces all ELEMs and FUNCTIONs with transformed versions in place.
+	 * The transformation is done by the given Functions.
+	 *
+	 * @param elemTransformer
+	 * @param functionTransformer
+	 */
+	public void transformElementsAndFunctions(final Function<ELEM, ELEM> elemTransformer,
+			final Function<FUNCTION, FUNCTION> functionTransformer) {
+		assert sanitizeTransformer(elemTransformer, getAllElements()) :
+					"we assume that the transformer does not produce elements that were in the relation before!";
+		assert sanitizeTransformer(functionTransformer, getAllFunctions()) :
+					"we assume that the transformer does not produce elements that were in the relation before!";
+
+		mElementTVER.transformElements(elemTransformer);
+		mFunctionTVER.transformElements(functionTransformer);
+
+		final NestedMap2<FUNCTION, ELEM, Set<ELEM>> ccparsCopy = new NestedMap2<>(mFunctionToRepresentativeToCcPars);
+		for (final Triple<FUNCTION, ELEM, Set<ELEM>> triple : ccparsCopy.entrySet()) {
+			mFunctionToRepresentativeToCcPars.remove(triple.getFirst(), triple.getSecond());
+			mFunctionToRepresentativeToCcPars.put(functionTransformer.apply(triple.getFirst()),
+					elemTransformer.apply(triple.getSecond()),
+					triple.getThird().stream().map(elemTransformer).collect(Collectors.toSet()));
+		}
+
+
+		final NestedMap2<FUNCTION, ELEM, Set<List<ELEM>>> ccChildrenCopy =
+				new NestedMap2<>(mFunctionToRepresentativeToCcChildren);
+		for (final Triple<FUNCTION, ELEM, Set<List<ELEM>>> triple : ccChildrenCopy.entrySet()) {
+			mFunctionToRepresentativeToCcChildren.remove(triple.getFirst(), triple.getSecond());
+			mFunctionToRepresentativeToCcChildren.put(functionTransformer.apply(triple.getFirst()),
+					elemTransformer.apply(triple.getSecond()),
+					triple.getThird().stream()
+						.map(list ->
+							list.stream().map(elemTransformer).collect(Collectors.toList()))
+						.collect(Collectors.toSet()));
+		}
+
+		final HashRelation<FUNCTION, ELEM> ftfaCopy = new HashRelation<>(mFunctionToFuncApps);
+		for (final Entry<FUNCTION, ELEM> en : ftfaCopy.entrySet()) {
+			mFunctionToFuncApps.removePair(en.getKey(), en.getValue());
+			mFunctionToFuncApps.addPair(functionTransformer.apply(en.getKey()), elemTransformer.apply(en.getValue()));
+		}
+
+		final HashRelation<ELEM, ELEM> etpCopy = new HashRelation<>(mElementToParents);
+		for (final Entry<ELEM, ELEM> en : etpCopy.entrySet()) {
+			mElementToParents.removePair(en.getKey(), en.getValue());
+			mElementToParents.addPair(elemTransformer.apply(en.getKey()), elemTransformer.apply(en.getValue()));
+		}
+	}
+
+	/**
+	 * We demand that if our transformer changes an element, it may not be in the original set of elements
+	 * @param elemTransformer
+	 * @param transformedSet
+	 * @return
+	 */
+	private static <E> boolean sanitizeTransformer(final Function<E, E> elemTransformer, final Set<E> inputSet) {
+		for (final E el :inputSet) {
+			final E transformed = elemTransformer.apply(el);
+			if (el.equals(transformed)) {
+				// nothing to check
+				continue;
+			}
+			if (inputSet.contains(transformed)) {
+				assert false;
+				return false;
+			}
+		}
+		return true;
+	}
+
+	public boolean hasElement(final ELEM elem) {
+		return getAllElements().contains(elem);
+	}
+
+	public boolean hasFunction(final FUNCTION elem) {
+		return getAllFunctions().contains(elem);
 	}
 
 }

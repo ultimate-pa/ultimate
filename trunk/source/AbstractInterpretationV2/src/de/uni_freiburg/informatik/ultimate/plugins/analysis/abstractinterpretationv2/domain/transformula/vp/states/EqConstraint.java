@@ -34,6 +34,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -49,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ConstantFinder;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.IEqNodeIdentifier;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainHelpers;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.IEqFunctionIdentifier;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CongruenceClosure;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
@@ -69,6 +71,9 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 	private final CongruenceClosure<NODE, FUNCTION> mPartialArrangement;
 	private final WeakEquivalenceGraph mWeakEquivalenceGraph;
 
+	private boolean mIsFrozen;
+
+	private final EqConstraintFactory<ACTION, NODE, FUNCTION> mFactory;
 	/**
 	 * The IProgramVars whose getTermVariable()-value is used in a NODE inside this constraint;
 	 * computed lazily by getVariables.
@@ -79,11 +84,10 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 	 * getTermVariable.
 	 */
 	private Set<IProgramVarOrConst> mPvocs;
-
-	private boolean mIsFrozen;
-
-	private final EqConstraintFactory<ACTION, NODE, FUNCTION> mFactory;
 	private Term mTerm;
+
+
+//	private final List<NODE> mDimensionToWeqVariableNode = new ArrayList<>();
 
 	/**
 	 * Creates an empty constraint (i.e. an EqConstraint that does not constrain anything, whose toTerm() will return
@@ -94,6 +98,13 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 	public EqConstraint(final EqConstraintFactory<ACTION, NODE, FUNCTION> factory) {
 		mPartialArrangement = new CongruenceClosure<>();
 		mWeakEquivalenceGraph = new WeakEquivalenceGraph();
+		mFactory = factory;
+	}
+
+	public EqConstraint(final CongruenceClosure<NODE, FUNCTION> cClosure, final WeakEquivalenceGraph weqGraph,
+			final EqConstraintFactory<ACTION, NODE, FUNCTION> factory) {
+		mPartialArrangement = new CongruenceClosure<>(cClosure);
+		mWeakEquivalenceGraph = new WeakEquivalenceGraph(weqGraph);
 		mFactory = factory;
 	}
 
@@ -109,6 +120,7 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 	}
 
 	public void freeze() {
+		assert !mIsFrozen;
 		mIsFrozen = true;
 	}
 
@@ -118,7 +130,6 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 	 * @return
 	 */
 	public boolean isBottom() {
-		// TODO make
 		assert !mPartialArrangement.isInconsistent();
 		return false;
 	}
@@ -127,42 +138,60 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 		return mPartialArrangement.getAllElements();
 	}
 
-//	public HashRelation<NODE, NODE> getSupportingElementEqualities() {
-//		return null;
-//	}
-//
-//	public Set<VPDomainSymmetricPair<NODE>> getElementDisequalities() {
-//		return null;
-//	}
-
-	public void reportEquality(final NODE node1, final NODE node2) {
-		mPartialArrangement.reportEquality(node1, node2);
-		mWeakEquivalenceGraph.reportGroundEquality(node1, node2);
-	}
-
-	public void reportDisequality(final NODE node1, final NODE node2) {
-		mPartialArrangement.reportDisequality(node1, node2);
-		mWeakEquivalenceGraph.reportGroundDisequality(node1, node2);
-	}
-
-	public void reportFunctionEquality(final FUNCTION func1, final FUNCTION func2) {
-		mPartialArrangement.reportFunctionEquality(func1, func2);
-		mWeakEquivalenceGraph.reportGroundFunctionEquality(func1, func2);
-	}
-
-	public void reportFunctionDisequality(final FUNCTION func1, final FUNCTION func2) {
-		mPartialArrangement.reportFunctionDisequality(func1, func2);
-		mWeakEquivalenceGraph.reportGroundFunctionDisequality(func1, func2);
-	}
-
-	public boolean checkForContradiction() {
-		if (mPartialArrangement.isInconsistent()) {
-			return true;
+	public boolean reportEquality(final NODE node1, final NODE node2) {
+		assert !mIsFrozen;
+		final boolean paHasChanged = mPartialArrangement.reportEquality(node1, node2);
+		if (!paHasChanged) {
+			// if mPartialArrangement has not changed, we don't need to report to the weq graph
+			return false;
 		}
-		// TODO..
-		assert false;
-		return false;
+		return mWeakEquivalenceGraph.reportGroundEquality(node1, node2);
 	}
+
+	public boolean reportDisequality(final NODE node1, final NODE node2) {
+		assert !mIsFrozen;
+		final boolean paHasChanged = mPartialArrangement.reportDisequality(node1, node2);
+		if (!paHasChanged) {
+			// if mPartialArrangement has not changed, we don't need to report to the weq graph
+			return false;
+		}
+		return mWeakEquivalenceGraph.reportGroundDisequality(node1, node2);
+	}
+
+	public boolean reportFunctionEquality(final FUNCTION func1, final FUNCTION func2) {
+		assert !mIsFrozen;
+		final boolean paHasChanged = mPartialArrangement.reportFunctionEquality(func1, func2);
+		if (!paHasChanged) {
+			// if mPartialArrangement has not changed, we don't need to report to the weq graph
+			return false;
+		}
+		return mWeakEquivalenceGraph.reportGroundFunctionEquality(func1, func2);
+	}
+
+	public boolean reportFunctionDisequality(final FUNCTION func1, final FUNCTION func2) {
+		assert !mIsFrozen;
+		final boolean paHasChanged = mPartialArrangement.reportFunctionDisequality(func1, func2);
+		if (!paHasChanged) {
+			// if mPartialArrangement has not changed, we don't need to report to the weq graph
+			return false;
+		}
+		return mWeakEquivalenceGraph.reportGroundFunctionDisequality(func1, func2);
+	}
+
+	public void reportWeakEquivalence(final FUNCTION array1, final FUNCTION array2,
+			final List<NODE> storeIndex) {
+		assert !mIsFrozen;
+		mWeakEquivalenceGraph.reportWeakEquivalence(array1, array2, storeIndex);
+	}
+
+//	public boolean checkForContradiction() {
+//		if (mPartialArrangement.isInconsistent()) {
+//			return true;
+//		}
+//		TODO..
+//		assert false;
+//		return false;
+//	}
 
 	public boolean isFrozen() {
 		return mIsFrozen;
@@ -171,41 +200,74 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 	/**
 	 *
 	 *
-	 * TDO: should we also remove the nodes that we project, here?? edit: yes,
-	 * havoc does remove the nodes
+	 * TODO: this method does not fit in well, as it is not in-place --> perhaps move to factory..
 	 *
 	 * @param varsToProjectAway
 	 * @return
 	 */
-	public EqConstraint<ACTION, NODE, FUNCTION> projectExistentially(final Set<TermVariable> varsToProjectAway) {
-//		final EqConstraint<ACTION, NODE, FUNCTION> unfrozen = mFactory.unfreeze(this);
-//
-//
-//		varsToProjectAway.forEach(var -> unfrozen.havoc(var));
-//
-////		for (TermVariable var : varsToProjectAway) {
-////			unfrozen.havoc(var);
-////		}
-//		unfrozen.freeze();
-//		assert VPDomainHelpers.constraintFreeOfVars(varsToProjectAway, unfrozen,
-//				mFactory.getEqNodeAndFunctionFactory().getScript().getScript()) :
-//					"resulting constraint still has at least one of the to-be-projected vars";
-//
-//		return unfrozen;
-		return null;
+	public EqConstraint<ACTION, NODE, FUNCTION> projectExistentially(final Collection<TermVariable> varsToProjectAway) {
+		assert mIsFrozen;
+		final EqConstraint<ACTION, NODE, FUNCTION> unfrozen = mFactory.unfreeze(this);
+
+		varsToProjectAway.forEach(unfrozen::havoc);
+
+		unfrozen.freeze();
+		assert VPDomainHelpers.constraintFreeOfVars(varsToProjectAway, unfrozen,
+				mFactory.getMgdScript().getScript()) :
+					"resulting constraint still has at least one of the to-be-projected vars";
+
+		return unfrozen;
+	}
+
+	private void havoc(final TermVariable var) {
+		assert !mIsFrozen;
+		for (final NODE elem : mPartialArrangement.getAllElements().stream()
+				.filter(e -> arrayContains(e.getTerm().getFreeVars(), var)).collect(Collectors.toList())) {
+			mPartialArrangement.removeElement(elem);
+			mWeakEquivalenceGraph.projectElement(elem);
+		}
+		for (final FUNCTION func : mPartialArrangement.getAllFunctions().stream()
+				.filter(f -> arrayContains(f.getTerm().getFreeVars(), var)).collect(Collectors.toList())) {
+			mPartialArrangement.removeFunction(func);
+			mWeakEquivalenceGraph.projectFunction(func);
+		}
+	}
+
+	private <E, F extends E> boolean arrayContains(final E[] freeVars, final F var) {
+		for (int i = 0; i < freeVars.length; i++) {
+			if (freeVars[i].equals(var)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	public void renameVariables(final Map<Term, Term> substitutionMapping) {
-		// TODO
+		assert !mIsFrozen;
+		mPartialArrangement.transformElementsAndFunctions(
+				node -> node.renameVariables(substitutionMapping),
+				function -> function.renameVariables(substitutionMapping));
+		mWeakEquivalenceGraph.renameVariables(substitutionMapping);
+		resetCachingFields();
+	}
+
+	private void resetCachingFields() {
+		mVariables = null;
+		mPvocs = null;
+		mTerm = null;
 	}
 
 	/**
 	 *
 	 * @param node1
 	 * @param node2
-	 * @return true iff this constraint says "node1 and node2 must be equal"
+	 * @return true iff this constraint implies that node1 and node2 are equal
 	 */
 	public boolean areEqual(final NODE node1, final NODE node2) {
+		if (!mPartialArrangement.hasElement(node1)
+		 || !mPartialArrangement.hasElement(node2)) {
+			return false;
+		}
 		return mPartialArrangement.getEqualityStatus(node1, node2) == EqualityStatus.NOT_EQUAL;
 	}
 
@@ -213,9 +275,13 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 	 *
 	 * @param node1
 	 * @param node2
-	 * @return true iff this constraint says "node1 and node2 must be unequal"
+	 * @return true iff this constraint implies that node1 and node2 are unequal
 	 */
 	public boolean areUnequal(final NODE node1, final NODE node2) {
+		if (!mPartialArrangement.hasElement(node1)
+		 || !mPartialArrangement.hasElement(node2)) {
+			return false;
+		}
 		return mPartialArrangement.getEqualityStatus(node1, node2) == EqualityStatus.NOT_EQUAL;
 	}
 
@@ -271,21 +337,23 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 	 * @return
 	 */
 	public Set<IProgramVar> getVariables(final IIcfgSymbolTable symbolTable) {
-		if (mVariables == null) {
-			final Set<TermVariable> allTvs = new HashSet<>();
-			mPartialArrangement.getAllElements().stream()
-				.forEach(node -> allTvs.addAll(Arrays.asList(node.getTerm().getFreeVars())));
-
-			mPartialArrangement.getAllFunctions().stream()
-				.forEach(func -> allTvs.addAll(Arrays.asList(func.getTerm().getFreeVars())));
-
-			/*
-			 * note this will probably crash if this method is called on an
-			 * EqConstraint that does not belong to a predicate or state
-			 */
-			mVariables = allTvs.stream().map(tv -> symbolTable.getProgramVar(tv)).collect(Collectors.toSet());
+		if (mVariables != null) {
+			return mVariables;
 		}
+		final Set<TermVariable> allTvs = new HashSet<>();
+		mPartialArrangement.getAllElements().stream()
+		.forEach(node -> allTvs.addAll(Arrays.asList(node.getTerm().getFreeVars())));
 
+		mPartialArrangement.getAllFunctions().stream()
+		.forEach(func -> allTvs.addAll(Arrays.asList(func.getTerm().getFreeVars())));
+
+		/*
+		 * note this will probably crash if this method is called on an
+		 * EqConstraint that does not belong to a predicate or state
+		 */
+		mVariables = allTvs.stream().map(symbolTable::getProgramVar).collect(Collectors.toSet());
+
+		assert !mVariables.stream().anyMatch(Objects::isNull);
 		return mVariables;
 	}
 
@@ -306,20 +374,23 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 	 */
 	public Set<IProgramVarOrConst> getPvocs(final IIcfgSymbolTable symbolTable) {
 		assert mIsFrozen;
-		if (mPvocs == null) {
-			mPvocs = new HashSet<>();
-			mPvocs.addAll(getVariables(symbolTable));
-
-			final Set<ApplicationTerm> constants = new HashSet<>();
-			mPartialArrangement.getAllElements().stream()
-					.forEach(node -> constants.addAll(new ConstantFinder().findConstants(node.getTerm(), false)));
-			// TODO do we need to find literals here, too?? (i.e. ConstantTerms)
-
-			mPartialArrangement.getAllFunctions().stream()
-					.forEach(func -> constants.addAll(new ConstantFinder().findConstants(func.getTerm(), false)));
-
-			mPvocs.addAll(constants.stream().map(c -> symbolTable.getProgramConst(c)).collect(Collectors.toSet()));
+		if (mPvocs != null) {
+			return mPvocs;
 		}
+		mPvocs = new HashSet<>();
+		mPvocs.addAll(getVariables(symbolTable));
+
+		final Set<ApplicationTerm> constants = new HashSet<>();
+		mPartialArrangement.getAllElements().stream()
+		.forEach(node -> constants.addAll(new ConstantFinder().findConstants(node.getTerm(), false)));
+		// TODO do we need to find literals here, too?? (i.e. ConstantTerms)
+
+		mPartialArrangement.getAllFunctions().stream()
+			.forEach(func -> constants.addAll(new ConstantFinder().findConstants(func.getTerm(), false)));
+
+		mPvocs.addAll(constants.stream().map(c -> symbolTable.getProgramConst(c)).collect(Collectors.toSet()));
+
+		assert !mPvocs.stream().anyMatch(Objects::isNull);
 		return mPvocs;
 	}
 
@@ -328,6 +399,7 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 		final StringBuilder sb = new StringBuilder();
 		sb.append("Partial arrangement:\n");
 		sb.append(mPartialArrangement.toString());
+		sb.append("\n");
 		sb.append("Weak equivalences:\n");
 		sb.append(mWeakEquivalenceGraph.toString());
 		return sb.toString();
@@ -367,7 +439,9 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 				other.mPartialArrangement);
 		final WeakEquivalenceGraph newWEGraph = mWeakEquivalenceGraph.join(other.mWeakEquivalenceGraph,
 				newPartialArrangement);
-		return mFactory.getEqConstraint(newPartialArrangement, newWEGraph);
+		final EqConstraint<ACTION, NODE, FUNCTION> res = mFactory.getEqConstraint(newPartialArrangement, newWEGraph);
+		res.freeze();
+		return res;
 	}
 
 
@@ -386,7 +460,10 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 
 			if (!weqMeet.hasArrayEqualities()) {
 				// no weak equivalence edges' label became inconsistent -- report result
-				return mFactory.getEqConstraint(meetPartialArrangement, weqMeet);
+				final EqConstraint<ACTION, NODE, FUNCTION> res =
+						mFactory.getEqConstraint(meetPartialArrangement, weqMeet);
+				res.freeze();
+				return res;
 			}
 
 			final CongruenceClosureChangeTracker mpaChangeTracker =
@@ -419,32 +496,24 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 		return true;
 	}
 
-
-	@Deprecated
-	public void removeFunction(final FUNCTION funcToBeHavocced) {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Deprecated
-	public void removeNode(final NODE nodeToBeHavocced) {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Deprecated
-	public void addToAllNodes(final NODE node) {
-		// TODO Auto-generated method stub
-
-	}
-
 	public void addNode(final NODE nodeToAdd) {
+		assert !mIsFrozen;
 		mPartialArrangement.getRepresentativeAndAddElementIfNeeded(nodeToAdd);
 	}
 
 	public void addFunction(final FUNCTION func) {
+		assert !mIsFrozen;
 		mPartialArrangement.getRepresentativeAndAddFunctionIfNeeded(func);
 
+	}
+
+	private NODE getWeqVariableNodeForDimension(final int dimensionNumber) {
+//		NODE result = mDimensionToWeqVariableNode.get(dimensionNumber);
+//		if (result == null) {
+//			result = mFactory.getEqNodeAndFunctionFactory().getOrConstructEqNode(m)
+//		}
+//		mFactory.getEqNodeAndFunctionFactory()
+		return null;
 	}
 
 	private TermVariable getWeqVariableForDimension(final int dimensionNumber) {
@@ -464,6 +533,32 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 			mWeakEquivalenceEdges = new HashMap<>();
 			mArrayEqualties = null;
 			assert sanityCheck();
+		}
+
+		public void projectFunction(final FUNCTION func) {
+			for (final Entry<Doubleton<FUNCTION>, WeakEquivalenceEdgeLabel> en : mWeakEquivalenceEdges.entrySet()) {
+				en.getValue().projectFunction(func);
+			}
+		}
+
+		public void projectElement(final NODE elem) {
+			for (final Entry<Doubleton<FUNCTION>, WeakEquivalenceEdgeLabel> en : mWeakEquivalenceEdges.entrySet()) {
+				en.getValue().projectElement(elem);
+			}
+		}
+
+		public void renameVariables(final Map<Term, Term> substitutionMapping) {
+			final HashMap<Doubleton<FUNCTION>, WeakEquivalenceEdgeLabel> weqEdgesCopy =
+					new HashMap<>(mWeakEquivalenceEdges);
+			for (final Entry<Doubleton<FUNCTION>, WeakEquivalenceEdgeLabel> en : weqEdgesCopy.entrySet()) {
+				mWeakEquivalenceEdges.remove(en.getKey());
+
+				final Doubleton<FUNCTION> newDton = new Doubleton<>(
+						en.getKey().getOneElement().renameVariables(substitutionMapping),
+						en.getKey().getOtherElement().renameVariables(substitutionMapping));
+				en.getValue().renameVariables(substitutionMapping); //TODO : is doing it in-place a smart choice??
+				mWeakEquivalenceEdges.put(newDton, en.getValue());
+			}
 		}
 
 		public Map<FUNCTION, FUNCTION> getArrayEqualities() {
@@ -615,7 +710,36 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 		 * @return
 		 */
 		public boolean reportWeakEquivalence(final FUNCTION func1, final FUNCTION func2, final List<NODE> nodes) {
-			return false;
+			assert func1.getArity() == func2.getArity();
+			final Doubleton<FUNCTION> sourceAndTarget = new Doubleton<FUNCTION>(func1, func2);
+			WeakEquivalenceEdgeLabel edgeLabel = mWeakEquivalenceEdges.get(sourceAndTarget);
+			if (edgeLabel == null) {
+				edgeLabel = new WeakEquivalenceEdgeLabel(func1.getArity());
+				mWeakEquivalenceEdges.put(sourceAndTarget, edgeLabel);
+			}
+			final List<CongruenceClosure<NODE, FUNCTION>> newConstraint = computeWeqConstraintForIndex(nodes);
+			final boolean stateChanged = edgeLabel.addConstraint(newConstraint);
+			return stateChanged;
+		}
+
+		/**
+		 * Given a (multidimensional) index, compute the corresponding annotation for a weak equivalence edge.
+		 *
+		 * Example:
+		 * for (i1, .., in), this should return (q1 = i1, ..., qn = in) as a list of CongruenceClosures.
+		 *  (where qi is the variable returned by getWeqVariableForDimension(i))
+		 *
+		 * @param nodes
+		 * @return
+		 */
+		private List<CongruenceClosure<NODE, FUNCTION>> computeWeqConstraintForIndex(final List<NODE> nodes) {
+			final List<CongruenceClosure<NODE, FUNCTION>> result = new ArrayList<>(nodes.size());
+			for (int i = 0; i < nodes.size(); i++) {
+				final CongruenceClosure<NODE, FUNCTION> newCC = new CongruenceClosure<>();
+				newCC.reportEquality(getWeqVariableNodeForDimension(i), nodes.get(i));
+				result.add(newCC);
+			}
+			return result;
 		}
 
 		/**
@@ -660,32 +784,55 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 			return true;
 		}
 
-		public void reportGroundEquality(final NODE node1, final NODE node2) {
+		public boolean reportGroundEquality(final NODE node1, final NODE node2) {
 			// TODO Auto-generated method stub
-
+			return false;
 		}
 
-		public void reportGroundDisequality(final NODE node1, final NODE node2) {
+		public boolean reportGroundDisequality(final NODE node1, final NODE node2) {
 			// TODO Auto-generated method stub
 
+			return false;
 		}
 
-		public void reportGroundFunctionEquality(final FUNCTION func1, final FUNCTION func2) {
+		public boolean reportGroundFunctionEquality(final FUNCTION func1, final FUNCTION func2) {
 			// TODO Auto-generated method stub
 
+			return false;
 		}
 
-		public void reportGroundFunctionDisequality(final FUNCTION func1, final FUNCTION func2) {
+		public boolean reportGroundFunctionDisequality(final FUNCTION func1, final FUNCTION func2) {
 			// TODO Auto-generated method stub
 
+			return false;
 		}
 
 		public List<Term> getWeakEquivalenceConstraintsAsTerms(final Script script) {
 			// TODO Auto-generated method stub
-			return null;
+			return new ArrayList<>();
 		}
 
 		boolean sanityCheck() {
+			/*
+			 * check that no weak equivalence edge contains an ELEM or FUNCTION that is not known to mPartialArrangement
+			 * or is one of the special quantified variables from getVariableForDimension(..).
+			 */
+			for (final Entry<Doubleton<FUNCTION>, WeakEquivalenceEdgeLabel> edge : mWeakEquivalenceEdges.entrySet()) {
+				if (!mPartialArrangement.hasFunction(edge.getKey().getOneElement())
+						|| !mPartialArrangement.hasFunction(edge.getKey().getOtherElement())) {
+					assert false;
+					return false;
+				}
+				if (!mPartialArrangement.getAllElements().containsAll(edge.getValue().getAppearingNodes())) {
+					assert false;
+					return false;
+				}
+				if (!mPartialArrangement.getAllFunctions().containsAll(edge.getValue().getAppearingFunctions())) {
+					assert false;
+					return false;
+				}
+			}
+
 			/*
 			 * Check that all the edges are between equivalence classes of mPartialArrangement
 			 */
@@ -701,7 +848,7 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 			}
 
 			/*
-			 * check completeness of the graph ("triangle inequation")
+			 * check completeness of the graph ("triangle inequality")
 			 */
 
 			return true;
@@ -723,6 +870,25 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 			List<List<CongruenceClosure<NODE, FUNCTION>>> mLabel;
 
 			/**
+			 * Constructs an empty edge. (labelled ("true", ..., "true"))
+			 */
+			public WeakEquivalenceEdgeLabel(final int arity) {
+				mArityOfArrays = arity;
+				mLabel = new ArrayList<>();
+				final List<CongruenceClosure<NODE, FUNCTION>> dimensionLabels = new ArrayList<>(arity);
+				mLabel.add(dimensionLabels);
+				for (int i = 0; i < arity; i++) {
+					dimensionLabels.add(new CongruenceClosure<>());
+				}
+			}
+
+			public boolean addConstraint(final List<CongruenceClosure<NODE, FUNCTION>> newConstraint) {
+				// TODO Auto-generated method stub
+
+				return false;
+			}
+
+			/**
 			 * Copy constructor.
 			 *
 			 * @param value
@@ -730,6 +896,31 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 			public WeakEquivalenceEdgeLabel(
 					final EqConstraint<ACTION, NODE, FUNCTION>.WeakEquivalenceGraph.WeakEquivalenceEdgeLabel value) {
 				// TODO Auto-generated constructor stub
+			}
+
+			public void renameVariables(final Map<Term, Term> substitutionMapping) {
+				for (final List<CongruenceClosure<NODE, FUNCTION>> disjunct : mLabel) {
+					for (final CongruenceClosure<NODE, FUNCTION> dimensionEntry : disjunct) {
+						dimensionEntry.transformElementsAndFunctions(node -> node.renameVariables(substitutionMapping),
+								func -> func.renameVariables(substitutionMapping));
+
+					}
+				}
+			}
+
+			/**
+			 * Returns all NODEs that are used in this WeqEdgeLabel.
+			 * Not including the special quantified variable's nodes.
+			 * @return
+			 */
+			public Set<NODE> getAppearingNodes() {
+				// TODO Auto-generated method stub
+				return null;
+			}
+
+			public Set<FUNCTION> getAppearingFunctions() {
+				// TODO Auto-generated method stub
+				return null;
 			}
 
 			public boolean isInconsistentWith(final CongruenceClosure<NODE, FUNCTION> newPartialArrangement) {
@@ -752,6 +943,17 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 			public WeakEquivalenceEdgeLabel union(final WeakEquivalenceEdgeLabel correspondingWeqEdgeInOther) {
 				// TODO Auto-generated method stub
 				return null;
+			}
+
+
+			public void projectElement(final NODE elem) {
+				// TODO Auto-generated method stub
+
+			}
+
+			public void projectFunction(final FUNCTION elem) {
+				// TODO Auto-generated method stub
+
 			}
 		}
 

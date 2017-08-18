@@ -1,3 +1,4 @@
+//#termcomp16-someonesaidno
 /*
  * Program from Example 5 of
  * 2014WST - Leike, Heizmann - Geometric Series as Nontermination Arguments for Linear Lasso Programs

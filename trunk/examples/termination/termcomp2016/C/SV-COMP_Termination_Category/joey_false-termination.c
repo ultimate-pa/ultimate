@@ -1,3 +1,4 @@
+//#termcomp16-someonesaidno
 /* A non-terminating example, given to me by Joey Feldberg
  * Date: 15.12.2013
  * Author: Amir Ben-Amram, amirben@cs.mta.ac.il

@@ -1,3 +1,4 @@
+//#termcomp16-someonesaidyes
 extern int __VERIFIER_nondet_int();
 int rec1(int i);
 int rec2(int j);

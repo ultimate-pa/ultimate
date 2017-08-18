@@ -1,3 +1,4 @@
+//#termcomp16-someonesaidyes
 /*
  * Program from Fig.1 of
  * 2001TACAS - Colon,Sipma - Synthesis of Linear Ranking Functions

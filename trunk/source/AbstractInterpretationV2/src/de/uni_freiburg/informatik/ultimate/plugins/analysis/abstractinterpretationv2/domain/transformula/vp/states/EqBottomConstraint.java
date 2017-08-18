@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
@@ -95,13 +96,13 @@ public class EqBottomConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 		return Collections.emptySet();
 	}
 
-	@Override
-	public boolean checkForContradiction() {
-		return true;
-	}
+//	@Override
+//	public boolean checkForContradiction() {
+//		return true;
+//	}
 
 	@Override
-	public EqConstraint<ACTION, NODE, FUNCTION> projectExistentially(final Set<TermVariable> varsToProjectAway) {
+	public EqConstraint<ACTION, NODE, FUNCTION> projectExistentially(final Collection<TermVariable> varsToProjectAway) {
 		return this;
 	}
 
@@ -145,24 +146,10 @@ public class EqBottomConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 		return false; // TODO ??
 	}
 
-	@Override
-	public void removeNode(final NODE node) {
-		// do nothing
-	}
 
 	@Override
 	public Set<FUNCTION> getAllFunctions() {
 		return Collections.emptySet();
-	}
-
-	@Override
-	public void removeFunction(final FUNCTION func) {
-		// do nothing
-	}
-
-	@Override
-	public void addToAllNodes(final NODE node) {
-		// do nothing
 	}
 
 	@Override

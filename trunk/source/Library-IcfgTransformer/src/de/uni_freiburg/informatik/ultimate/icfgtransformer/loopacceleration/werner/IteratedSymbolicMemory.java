@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
@@ -285,8 +286,12 @@ public class IteratedSymbolicMemory {
 			final TermVariable[] vars = { mNewPathCounters.get(backbone.getPathCounter()) };
 			final Term necessaryCondition = mScript.getScript().quantifier(QuantifiedFormula.FORALL, vars, tFirstPart);
 
-			mAbstractPathCondition = mScript.getScript().term("and", mAbstractPathCondition, necessaryCondition);
+			// mAbstractPathCondition = mScript.getScript().term("and",
+			// mAbstractPathCondition, necessaryCondition);
+			mAbstractPathCondition = SmtUtils.and(mScript.getScript(),
+					Arrays.asList(mAbstractPathCondition, necessaryCondition));
 		}
+		mLogger.debug("ITERATEDSYMBOLIC MEMORY: " + mAbstractPathCondition);
 	}
 
 	/**

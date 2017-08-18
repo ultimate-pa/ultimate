@@ -32,6 +32,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
@@ -84,6 +85,7 @@ public class ThreeValuedEquivalenceRelation<E> {
 
 	public void removeElement(final E elem) {
 		final E rep = mUnionFind.find(elem);
+		final Set<E> equivalenceClass = mUnionFind.getEquivalenceClassMembers(elem);
 		mUnionFind.remove(elem);
 
 		/*
@@ -94,7 +96,6 @@ public class ThreeValuedEquivalenceRelation<E> {
 			return;
 		}
 		// elem was the representative of its equivalence class --> we need to update mDistinctElements
-		final Set<E> equivalenceClass = mUnionFind.getEquivalenceClassMembers(elem);
 		if (equivalenceClass.isEmpty()) {
 			// elem was the only element in its equivalence class --> just remove it from disequalities
 			mDisequalities.removeDomainElement(elem);
@@ -358,5 +359,14 @@ public class ThreeValuedEquivalenceRelation<E> {
 		return getSupportingEqualities().isEmpty() && mDisequalities.isEmpty();
 	}
 
+	public void transformElements(final Function<E, E> transformer) {
+		mUnionFind.transformElements(transformer);
+
+		final HashRelation<E, E> disequalitiesCopy = new HashRelation<>(mDisequalities);
+		for (final Entry<E, E> pair : disequalitiesCopy) {
+			mDisequalities.removePair(pair.getKey(), pair.getValue());
+			mDisequalities.addPair(transformer.apply(pair.getKey()), transformer.apply(pair.getValue()));
+		}
+	}
 }
 

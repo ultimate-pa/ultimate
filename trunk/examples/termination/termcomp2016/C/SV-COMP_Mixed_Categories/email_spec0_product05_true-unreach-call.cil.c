@@ -1,3 +1,4 @@
+//#termcomp16-someonesaidyes
 extern void __VERIFIER_error() __attribute__ ((__noreturn__));
 
 extern int __VERIFIER_nondet_int(void);

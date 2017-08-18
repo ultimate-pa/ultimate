@@ -1,3 +1,4 @@
+//#termcomp16-someonesaidyes
 /*
  * Program used in the experimental evaluation of the following paper.
  * 2008ESOP - Chawdhary,Cook,Gulwani,Sagiv,Yang - Ranking Abstractions

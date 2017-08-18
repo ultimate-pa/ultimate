@@ -31,14 +31,21 @@ package de.uni_freiburg.informatik.ultimate.ultimatetest.suites.buchiautomizer;
 
 import java.util.Collection;
 
+import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
+import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
+import de.uni_freiburg.informatik.ultimate.test.decider.TermcompTestResultDecider;
 
 /**
  * @author heizmann@informatik.uni-freiburg.de
  *
  */
-public class TermcompTests extends
-		AbstractBuchiAutomizerTestSuite {
+public class TermcompTests extends AbstractBuchiAutomizerTestSuite {
+	
+	@Override
+	public ITestResultDecider constructITestResultDecider(final UltimateRunDefinition ultimateRunDefinition) {
+		return new TermcompTestResultDecider(ultimateRunDefinition, false);
+	}
 	
 	
 	private static final String[] mUltimateRepository = {
@@ -64,9 +71,11 @@ public class TermcompTests extends
 	 * 
 	 */
 	private static final String[] mSettings = {
-		"buchiAutomizer/termcomp2016.epf",
-		"buchiAutomizer/termcomp2016-nonlinear.epf",
-		"buchiAutomizer/termcomp2016-newMapElimination.epf",
+		"buchiAutomizer/termcomp2017-Noproofs.epf",
+//		"buchiAutomizer/termcomp2016-Noproofs.epf",
+//		"buchiAutomizer/termcomp2016.epf",
+//		"buchiAutomizer/termcomp2016-nonlinear.epf",
+//		"buchiAutomizer/termcomp2016-newMapElimination.epf",
 	};
 	
 	

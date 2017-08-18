@@ -105,10 +105,11 @@ public class LoopDetector<INLOC extends IcfgLocation> {
 				continue;
 			}
 
-			// Assuming there is only one loopexit
+			// Assuming there is only one loopexitnode
 			for (IcfgEdge edge : entry.getKey().getOutgoingEdges()) {
 				if (!loop.getPath().contains(edge)) {
-					loop.setLoopExit(edge);
+					mLogger.debug("found LoopExit");
+					loop.setLoopExit(edge.getTarget());
 				}
 			}
 

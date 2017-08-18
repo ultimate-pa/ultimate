@@ -1,3 +1,4 @@
+//#termcomp16-someonesaidyes
 /*
  * Date: 17.12.2013
  * Author: Thomas Ströder

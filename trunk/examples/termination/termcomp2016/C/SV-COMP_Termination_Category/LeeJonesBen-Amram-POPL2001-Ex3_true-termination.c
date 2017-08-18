@@ -1,3 +1,4 @@
+//#termcomp16-someonesaidyes
 /*
  * Program from Ex.3 of
  * 2001POPL - Lee,Jones,Ben-Amram - The size-change principle for program termination
