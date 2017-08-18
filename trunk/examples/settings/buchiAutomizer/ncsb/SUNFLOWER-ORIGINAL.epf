@@ -47,6 +47,7 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Dump\ SMT\ script\ to\ file=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/To\ the\ following\ directory=/mnt/storage/ultimate/dump/smtConstraints
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/NCSB\ implementation=ORIGINAL
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Buchi\ interpolant\ automaton\ construction\ strategy=SUNFLOWER
 
 
 
