@@ -44,7 +44,6 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStat
  *            state type
  */
 public final class BuchiDifferenceNCSB<LETTER, STATE> extends AbstractBuchiDifference<LETTER, STATE> {
-	private INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mSndComplemented;
 
 	/**
 	 * Constructor.
