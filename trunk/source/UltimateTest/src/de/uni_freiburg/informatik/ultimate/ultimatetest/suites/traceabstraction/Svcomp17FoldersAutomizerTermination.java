@@ -110,7 +110,6 @@ public class Svcomp17FoldersAutomizerTermination extends AbstractBuchiAutomizerT
 	 */
 	private static final String[] mSettings = { 
 			"svcomp2017/automizer/svcomp-Termination-32bit-Automizer_Default.epf",
-			"buchiAutomizer/svcomp-Termination-32bit-Automizer_Default-LazyNcsb.epf"
 			
 //			"buchiAutomizer/biaConstructionStrategy/svcomp-Termination-64bit-Automizer_Default-ASTER.epf",
 //			"buchiAutomizer/biaConstructionStrategy/svcomp-Termination-64bit-Automizer_Default-DANDELION.epf",

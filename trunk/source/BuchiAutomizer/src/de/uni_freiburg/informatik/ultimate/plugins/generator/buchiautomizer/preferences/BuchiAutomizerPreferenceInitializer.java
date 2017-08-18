@@ -46,6 +46,10 @@ public class BuchiAutomizerPreferenceInitializer extends UltimatePreferenceIniti
 	public enum BuchiComplementationConstruction {
 		Ncsb, Elastic, HeiMat2, TightRO, TightBasic, TightHighEven
 	}
+	
+	public enum NcsbImplementation {
+		ORIGINAL, INTSET, INTSET_LAZY 
+	}
 
 
 	public static final String LABEL_IGNORE_DOWN_STATES = "Ignore down states";
@@ -106,9 +110,8 @@ public class BuchiAutomizerPreferenceInitializer extends UltimatePreferenceIniti
 	public static final String LABEL_MAP_ELIMINATION_ONLY_INDICES_IN_FORMULAS =
 			"Add implications only for indices occuring in the current formula";
 	private static final boolean DEF_MAP_ELIMINATION_ONLY_INDICES_IN_FORMULAS = true;
-	public static final String LABEL_USE_LAZY_NCSB_ALGORITHM =
-			"Use lazy NCSB algorithm";
-	private static final boolean DEF_USE_LAZY_NCSB_ALGORITHM = false;
+	public static final String LABEL_NCSB_IMPLEMENTATION = "NCSB implementation";
+	private static final NcsbImplementation DEF_NCSB_IMPLEMENTATION = NcsbImplementation.ORIGINAL;
 
 	public BuchiAutomizerPreferenceInitializer() {
 		super(Activator.PLUGIN_ID, "Buchi Automizer (Termination Analysis)");
@@ -169,8 +172,8 @@ public class BuchiAutomizerPreferenceInitializer extends UltimatePreferenceIniti
 						DEF_MAP_ELIMINATION_ONLY_TRIVIAL_IMPLICATIONS_ARRAY_WRITE, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_MAP_ELIMINATION_ONLY_INDICES_IN_FORMULAS,
 						DEF_MAP_ELIMINATION_ONLY_INDICES_IN_FORMULAS, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_USE_LAZY_NCSB_ALGORITHM,
-						DEF_USE_LAZY_NCSB_ALGORITHM, PreferenceType.Boolean) 
+				new UltimatePreferenceItem<>(LABEL_NCSB_IMPLEMENTATION,
+						DEF_NCSB_IMPLEMENTATION, PreferenceType.Combo, NcsbImplementation.values()) 
 				};
 	}
 }

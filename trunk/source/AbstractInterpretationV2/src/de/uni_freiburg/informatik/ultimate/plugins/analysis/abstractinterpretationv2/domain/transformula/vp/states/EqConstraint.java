@@ -40,6 +40,7 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
@@ -87,7 +88,7 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 	private Term mTerm;
 
 
-//	private final List<NODE> mDimensionToWeqVariableNode = new ArrayList<>();
+	private final Map<Sort, List<NODE>> mDimensionToWeqVariableNode = new HashMap<>();
 
 	/**
 	 * Creates an empty constraint (i.e. an EqConstraint that does not constrain anything, whose toTerm() will return
@@ -507,18 +508,22 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 
 	}
 
-	private NODE getWeqVariableNodeForDimension(final int dimensionNumber) {
-//		NODE result = mDimensionToWeqVariableNode.get(dimensionNumber);
-//		if (result == null) {
-//			result = mFactory.getEqNodeAndFunctionFactory().getOrConstructEqNode(m)
-//		}
-//		mFactory.getEqNodeAndFunctionFactory()
-		return null;
+	private NODE getWeqVariableNodeForDimension(final int dimensionNumber, final Sort sort) {
+		List<NODE> dimensionToNode = mDimensionToWeqVariableNode.get(sort);
+		if (dimensionToNode == null) {
+			dimensionToNode = new ArrayList<>(5);
+			mDimensionToWeqVariableNode.put(sort, dimensionToNode);
+		}
+		NODE result = dimensionToNode.get(dimensionNumber);
+		if (result == null) {
+			final TermVariable tv = mFactory.getMgdScript().constructFreshTermVariable("weq" + dimensionNumber, sort);
+			result = mFactory.getEqNodeAndFunctionFactory().getOrConstructNode(tv);
+		}
+		return result;
 	}
 
-	private TermVariable getWeqVariableForDimension(final int dimensionNumber) {
-		assert false; //TODO
-		return null;
+	private TermVariable getWeqVariableForDimension(final int dimensionNumber, final Sort sort) {
+		return (TermVariable) getWeqVariableNodeForDimension(dimensionNumber, sort).getTerm();
 	}
 
 
@@ -735,8 +740,9 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 		private List<CongruenceClosure<NODE, FUNCTION>> computeWeqConstraintForIndex(final List<NODE> nodes) {
 			final List<CongruenceClosure<NODE, FUNCTION>> result = new ArrayList<>(nodes.size());
 			for (int i = 0; i < nodes.size(); i++) {
+				final NODE ithNode = nodes.get(i);
 				final CongruenceClosure<NODE, FUNCTION> newCC = new CongruenceClosure<>();
-				newCC.reportEquality(getWeqVariableNodeForDimension(i), nodes.get(i));
+				newCC.reportEquality(getWeqVariableNodeForDimension(i, ithNode.getTerm().getSort()), ithNode);
 				result.add(newCC);
 			}
 			return result;
