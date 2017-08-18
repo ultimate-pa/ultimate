@@ -8,8 +8,8 @@ assert(!isEmpty(nwa));
 
 NestedWordAutomaton nwa = (
 	callAlphabet = {"c" },
-	internalAlphabet = {},
-	returnAlphabet = {"r"},
+	internalAlphabet = {"a" },
+	returnAlphabet = {"r" },
 	states = {"q0" "q1" "q2" "q3" "q4" "q5"},
 	initialStates = {"q0"},
 	finalStates = {"q5"},
