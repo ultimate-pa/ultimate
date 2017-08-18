@@ -28,7 +28,6 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NwaOutgoingLetterAndTransitionAdapter;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.MultiOptimizationLevelRankingGenerator.FkvOptimization;
@@ -122,11 +121,6 @@ public final class BuchiDifferenceFKV<LETTER, STATE> extends AbstractBuchiDiffer
 
 	public int getHighestRank() {
 		return mOnDemandComplemented.getHighesRank();
-	}
-
-	@Override
-	public INestedWordAutomaton<LETTER, STATE> getResult() {
-		return mResult;
 	}
 
 	@Override
