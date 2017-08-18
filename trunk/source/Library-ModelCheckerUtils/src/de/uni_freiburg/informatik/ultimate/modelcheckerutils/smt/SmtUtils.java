@@ -744,6 +744,10 @@ public final class SmtUtils {
 	public static Term and(final Script script, final Collection<Term> terms) {
 		return Util.and(script, terms.toArray(new Term[terms.size()]));
 	}
+	
+	public static Term or(final Script script, final Term... terms) {
+		return Util.or(script, terms);
+	}
 
 	public static Term or(final Script script, final Collection<Term> terms) {
 		return Util.or(script, terms.toArray(new Term[terms.size()]));
