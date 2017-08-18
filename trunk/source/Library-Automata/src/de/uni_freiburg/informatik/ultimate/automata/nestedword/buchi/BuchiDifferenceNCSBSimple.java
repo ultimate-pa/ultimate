@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NwaOutgoingLetterAndTransitionAdapter;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiComplementNcsbStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiIntersectStateFactory;
@@ -65,6 +66,10 @@ public final class BuchiDifferenceNCSBSimple<LETTER, STATE> extends AbstractBuch
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> fstOperand,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> sndOperand) throws AutomataLibraryException {
 		super(services, fstOperand, sndOperand);
+		
+		if (!NestedWordAutomataUtils.isFiniteAutomaton(sndOperand)) {
+			throw new UnsupportedOperationException("Calls and returns are not yet supported.");
+		}
 
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(startMessage());
