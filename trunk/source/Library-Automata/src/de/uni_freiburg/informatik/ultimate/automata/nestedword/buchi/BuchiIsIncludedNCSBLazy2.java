@@ -37,15 +37,16 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationStatistics;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.BinaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
+
+
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.NwaToBuchiWrapper;
+
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.Options;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.automata.IBuchi;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.inclusion.BuchiInclusionComplement;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiComplementNcsbSimpleStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiComplementNcsbStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiIntersectStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
-import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 
 /**
  * Operation that checks if the language of the first Buchi automaton is included in the language of the second Buchi
@@ -60,9 +61,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
  * @param <STATE>
  *            state type
  */
-public final class BuchiIsIncludedNCSBLazy<LETTER, STATE> extends BinaryNwaOperation<LETTER, STATE, IStateFactory<STATE>> {
-
-
+public final class BuchiIsIncludedNCSBLazy2<LETTER, STATE> extends BinaryNwaOperation<LETTER, STATE, IStateFactory<STATE>> {
 	private final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mFstOperand;
 	private final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mSndOperand;
 
@@ -84,26 +83,47 @@ public final class BuchiIsIncludedNCSBLazy<LETTER, STATE> extends BinaryNwaOpera
 	 * @throws AutomataLibraryException
 	 *             if construction fails
 	 */
-	public <FACTORY extends IBuchiIntersectStateFactory<STATE> & IBuchiComplementNcsbSimpleStateFactory<STATE>> BuchiIsIncludedNCSBLazy(final AutomataLibraryServices services,
+	public <FACTORY extends IBuchiIntersectStateFactory<STATE> & IBuchiComplementNcsbStateFactory<STATE>> BuchiIsIncludedNCSBLazy2(final AutomataLibraryServices services,
 			final FACTORY stateFactory,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> fstOperand,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> sndOperand) throws AutomataLibraryException {
 		super(services);
 		mFstOperand = fstOperand;
 		mSndOperand = sndOperand;
+		
+		int letterIndex = 0;
+		Map<LETTER, Integer> letterMap = new HashMap<>();
+ 		Set<LETTER> letters = new HashSet<>();
+		for(LETTER letter : mFstOperand.getAlphabet()) {
+			letterMap.put(letter, letterIndex);
+			letters.add(letter);
+			letterIndex ++;
+		}
+		
+		for(LETTER letter : mSndOperand.getAlphabet()) {
+			if(letters.contains(letter)) continue;
+			letterMap.put(letter, letterIndex);
+			letterIndex ++;
+		}
+		
+		Options.optNCSB = true;
 
+		IBuchi fstBuchi = new NwaToBuchiWrapper(letterMap.size(), letterMap, mFstOperand);
+		IBuchi sndBuchi = new NwaToBuchiWrapper(letterMap.size(), letterMap, mSndOperand);
+
+		//TODO should be able to terminate the procedure if time exceed the limit
+		BuchiInclusionComplement checker = new BuchiInclusionComplement(fstBuchi, sndBuchi);
+		mResult = checker.isIncluded(); //services
+		
+		if(mResult == null) {
+			throw new AutomataOperationCanceledException(getClass());
+		}
+		
+//		System.out.println(sndBuchi.toDot());
+		mCounterexample = null;
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(startMessage());
 		}
-
-		final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> sndComplement =
-				(new BuchiComplementNCSBLazy<LETTER, STATE>(mServices, stateFactory, mSndOperand)).getResult();
-		final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> difference =
-				(new BuchiIntersectDD<>(mServices, stateFactory, mFstOperand, sndComplement, true)).getResult();
-		final BuchiIsEmpty<LETTER, STATE> emptinessCheck = new BuchiIsEmpty<>(mServices, difference);
-
-		mResult = emptinessCheck.getResult();
-		mCounterexample = emptinessCheck.getAcceptingNestedLassoRun();
 
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(exitMessage());

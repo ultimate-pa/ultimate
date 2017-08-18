@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NwaOutgoingLetterAndTransitionAdapter;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiComplementNcsbSimpleStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiComplementNcsbStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
@@ -70,7 +71,7 @@ public final class BuchiComplementNCSBLazy<LETTER, STATE> extends UnaryNwaOperat
 	 *             if operation was canceled
 	 */
 	public BuchiComplementNCSBLazy(final AutomataLibraryServices services,
-			final IBuchiComplementNcsbStateFactory<STATE> stateFactory,
+			final IBuchiComplementNcsbSimpleStateFactory<STATE> stateFactory,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;
@@ -78,8 +79,8 @@ public final class BuchiComplementNCSBLazy<LETTER, STATE> extends UnaryNwaOperat
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(startMessage());
 		}
-		final BuchiComplementNCSBNwa<LETTER, STATE> onDemandComplement =
-				new BuchiComplementNCSBNwa<>(mServices, stateFactory, operand);
+		final BuchiComplementNCSBLazyNwa<LETTER, STATE> onDemandComplement =
+				new BuchiComplementNCSBLazyNwa<>(mServices, stateFactory, operand);
 		final NwaOutgoingLetterAndTransitionAdapter<LETTER, STATE> complemented =
 				new NwaOutgoingLetterAndTransitionAdapter<>(onDemandComplement);
 		mResult = new NestedWordAutomatonReachableStates<>(mServices, complemented);

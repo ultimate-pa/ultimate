@@ -30,7 +30,7 @@
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb;
 
 import java.util.ArrayList;
-import java.util.Set;
+
 import java.util.HashMap;
 
 import java.util.List;
@@ -40,7 +40,7 @@ import java.util.Map.Entry;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.automata.BuchiGeneral;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.automata.IState;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.automata.StateGeneral;
+
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util.IntSet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util.UtilIntSet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
@@ -53,7 +53,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
  * */
 
 // TODO support on-demand exploration
-public class BuchiSimpleNWA<LETTER, STATE> extends BuchiGeneral {
+public class NwaToBuchiWrapper<LETTER, STATE> extends BuchiGeneral {
 
 	private final Map<LETTER, Integer> mLetterMap;
 	private final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mInnerBuchi;
@@ -62,7 +62,7 @@ public class BuchiSimpleNWA<LETTER, STATE> extends BuchiGeneral {
 	private final List<STATE> mStateArr;
 	private final List<LETTER> mLetterArr;
 	
-	public BuchiSimpleNWA(int alphabetSize, Map<LETTER, Integer> letterMap,
+	public NwaToBuchiWrapper(int alphabetSize, Map<LETTER, Integer> letterMap,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> buchi) {
 		super(alphabetSize);
 		// TODO Auto-generated constructor stub
@@ -102,8 +102,7 @@ public class BuchiSimpleNWA<LETTER, STATE> extends BuchiGeneral {
 	}
 	@Override
 	public IState makeState(int id) {
-		// TODO Auto-generated method stub
-		return new StateNWA(this, id);
+		return new StateNWA<LETTER, STATE>(this, id);
 	}
 	
 	

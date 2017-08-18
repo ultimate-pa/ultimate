@@ -44,11 +44,11 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncs
 
 public class StateNWA<LETTER, STATE> extends StateGeneral {
 
-	private BuchiSimpleNWA<LETTER, STATE> mBuchi;
+	private NwaToBuchiWrapper<LETTER, STATE> mBuchi;
 	
 	private Set<Integer> mEnabledLetters;
 	
-	public StateNWA(BuchiSimpleNWA<LETTER, STATE> buchi, int id) {
+	public StateNWA(NwaToBuchiWrapper<LETTER, STATE> buchi, int id) {
 		super(id);
 		this.mBuchi = buchi;
 		this.mEnabledLetters = new HashSet<>();

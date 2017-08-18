@@ -55,7 +55,8 @@ public class StringFactory implements ISenwaStateFactory<String>, IBlackWhiteSta
 		IFinitePrefix2PetriNetStateFactory<String>, IBuchiComplementDeterministicStateFactory<String>,
 		IBuchiComplementNcsbStateFactory<String>, IBuchiComplementSvwStateFactory<String>,
 		IPetriNet2FiniteAutomatonStateFactory<String>, IIncrementalInclusionStateFactory<String>,
-		IMinimizationStateFactory<String>, IMinimizationCheckResultStateFactory<String>, IUnionStateFactory<String> {
+		IMinimizationStateFactory<String>, IMinimizationCheckResultStateFactory<String>, IUnionStateFactory<String>, 
+        IBuchiComplementNcsbSimpleStateFactory<String> {
 
 	public static final String INFINITY = "∞";
 	private static final String EMPTY_STRING = "";
@@ -363,5 +364,13 @@ public class StringFactory implements ISenwaStateFactory<String>, IBlackWhiteSta
 		if (upState.isInO()) {
 			listB.add(new Pair<>(downState, upState.getState()));
 		}
+	}
+
+	/**
+	 * @author Yong Li (liyong@ios.ac.cn)
+	 * */
+	@Override
+	public String buchiComplementNcsbSimple(int id) {
+		return "s" + id;
 	}
 }
