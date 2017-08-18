@@ -297,7 +297,7 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 			mTermcompProofBenchmark = null;
 		}
 
-		final boolean useLazyNcsb = baPref.getBoolean(BuchiAutomizerPreferenceInitializer.LABEL_USE_LAZY_NCSB_ALGORITHM);
+		final boolean useLazyNcsb = baPref.getBoolean(BuchiAutomizerPreferenceInitializer.LABEL_NCSB_IMPLEMENTATION);
 		mRefineBuchi = new RefineBuchi<>(mIcfg, mCsToolkitWithRankVars, predicateFactory, mPref.dumpAutomata(),
 				mDifference, mDefaultStateFactory, mStateFactoryForRefinement, mUseDoubleDeckers, mPref.dumpPath(),
 				mPref.getAutomataFormat(), mInterpolation, mServices, mLogger, mSimplificationTechnique,
