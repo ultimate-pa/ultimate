@@ -1,4 +1,3 @@
-//#termcomp16-someonesaidyes
 //#termcomp16-someonesaidno
 typedef enum {false,true} bool;
 
