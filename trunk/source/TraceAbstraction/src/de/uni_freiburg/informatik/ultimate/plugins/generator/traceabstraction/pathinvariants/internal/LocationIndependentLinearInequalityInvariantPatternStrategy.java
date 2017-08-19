@@ -36,6 +36,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
@@ -170,4 +171,9 @@ public abstract class LocationIndependentLinearInequalityInvariantPatternStrateg
 		return Integer.toString(mPrefixCounter++);
 	}
 
+	@Override
+	public Dnf<AbstractLinearInvariantPattern> getPatternForTransition(final IcfgEdge transition, final int round,
+			final Script solver, final String prefix) {
+		throw new UnsupportedOperationException();
+	}
 }

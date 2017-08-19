@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2015 Dirk Steinmetz
- * Copyright (C) 2015 University of Freiburg
+ * Copyright (C) 2017 Dennis Wölfing
+ * Copyright (C) 2015-2017 University of Freiburg
  *
  * This file is part of the ULTIMATE TraceAbstraction plug-in.
  *
@@ -30,6 +31,7 @@ import java.util.Collection;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
@@ -88,6 +90,19 @@ public interface IInvariantPatternProcessor<IPT> {
 	 */
 	public IPT getInvariantPatternForLocation(final IcfgLocation location,
 			final int round, Set<IProgramVar> vars);
+
+	/**
+	 * Returns a pattern for the given transition.
+	 *
+	 * @param transition
+	 *            the transition to generate patterns for
+	 * @param round
+	 *            attempt number, initialized with 0 and increased on each attempt; see {@link #getMaxRounds()}
+	 * @return an invariant pattern
+	 * @throws UnsupportedOperationException
+	 *             when patterns for transitions are not supported.
+	 */
+	IPT getPatternForTransition(final IcfgEdge transition, final int round);
 
 	/**
 	 * Returns an empty invariant pattern that is equivalent to 'true'.

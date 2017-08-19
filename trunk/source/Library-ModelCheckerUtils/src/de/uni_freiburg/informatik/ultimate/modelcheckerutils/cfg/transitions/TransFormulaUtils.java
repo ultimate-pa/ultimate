@@ -954,7 +954,6 @@ public final class TransFormulaUtils {
 		return (new Substitution(mgdScript, substitutionMapping)).transform(tf.getFormula());
 	}
 
-
 	public static UnmodifiableTransFormula constructHavoc(final TransFormula tf, final ManagedScript mgdScript) {
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(tf.getInVars(), tf.getOutVars(), false,
 				tf.getNonTheoryConsts(), true, null, false);
@@ -992,5 +991,36 @@ public final class TransFormulaUtils {
 		final UnmodifiableTransFormula guardOfDisjunction = computeGuard(disjunction, mgdScript, services, logger);
 		return negate(guardOfDisjunction, mgdScript, services, logger,
 				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, SimplificationTechnique.SIMPLIFY_DDA);
+	}
+
+	/**
+	 * Substitutes TermVariables in the given TransFormula by other given TermVariables.
+	 *
+	 * @param tf
+	 *            The TransFormula
+	 * @param mgdScript
+	 *            A ManagedScript
+	 * @param mapping
+	 *            A map from the to be replaced variables to their replacements.
+	 * @return A new UnmodifiableTransFormula where the variables have been substituted.
+	 */
+	public static UnmodifiableTransFormula substituteTermVars(final TransFormula tf, final ManagedScript mgdScript,
+			final Map<TermVariable, TermVariable> mapping) {
+		final Map<IProgramVar, TermVariable> inVars = tf.getInVars().entrySet().stream()
+				.collect(Collectors.toMap(Entry::getKey, e -> mapping.getOrDefault(e.getValue(), e.getValue())));
+		final Map<IProgramVar, TermVariable> outVars = tf.getOutVars().entrySet().stream()
+				.collect(Collectors.toMap(Entry::getKey, e -> mapping.getOrDefault(e.getValue(), e.getValue())));
+		final Set<TermVariable> auxVars = new HashSet<>();
+		for (final TermVariable auxVar : tf.getAuxVars()) {
+			auxVars.add(mapping.getOrDefault(auxVar, auxVar));
+		}
+
+		final Map<Term, Term> substitutionMapping = new HashMap<>(mapping);
+		final Term term = new Substitution(mgdScript, substitutionMapping).transform(tf.getFormula());
+		final TransFormulaBuilder builder = new TransFormulaBuilder(inVars, outVars, true, null, true, null, false);
+		builder.setFormula(term);
+		builder.setInfeasibility(Infeasibility.NOT_DETERMINED);
+		builder.addAuxVarsButRenameToFreshCopies(auxVars, mgdScript);
+		return builder.finishConstruction(mgdScript);
 	}
 }
