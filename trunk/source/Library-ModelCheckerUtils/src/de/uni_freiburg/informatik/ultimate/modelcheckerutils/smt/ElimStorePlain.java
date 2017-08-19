@@ -354,7 +354,21 @@ public class ElimStorePlain {
 		final TermVariable newAuxArray =
 				mMgdScript.constructFreshTermVariable(s_AUX_VAR_NEW_ARRAY, eliminatee.getSort());
 		newAuxVars.add(newAuxArray);
-
+		
+		final IncrementalPlicationChecker iplc = new IncrementalPlicationChecker(Plication.IMPLICATION, mMgdScript, inputTerm);
+		final List<Doubleton<Term>> uknowns = EquivalenceRelationIterator.buildListOfNonDisjointDoubletons(indices, equalityInformation);
+		final ValueEqualityChecker vec = new ValueEqualityChecker(eliminatee, storeIndex, storeValue, equalityInformation, mMgdScript, 
+				iplc, oldCellMapping);
+		final List<Doubleton<Term>> relevant = new ArrayList<>();
+		for (final Doubleton<Term> unk : uknowns) {
+			final boolean dist = vec.isDistinguishworthyIndexPair(unk.getOneElement(), unk.getOtherElement());
+			if (dist) {
+				relevant.add(unk);
+			}
+		}
+		iplc.unlockSolver();
+		
+		
 		final List<Term> disjuncts = new ArrayList<>();
 //		IExternalOracle<Term> orac = new DefaultExternalOracle();
 		final Orac orac = new Orac(preprocessedInput);
@@ -363,7 +377,7 @@ public class ElimStorePlain {
 			orac.unlockSolver();
 			return new AfEliminationTask(Collections.emptySet(), mMgdScript.getScript().term("false"));
 		}
-		final EquivalenceRelationIterator<Term> ci = new EquivalenceRelationIterator<Term>(mServices, sortedIndices, equalityInformation, orac);
+		final EquivalenceRelationIterator<Term> ci = new EquivalenceRelationIterator<Term>(mServices, sortedIndices, equalityInformation, orac, relevant);
 		// mLogger.info("Considering " + ci.size() + " cases while eliminating array variable of dimension " + new
 		// MultiDimensionalSort(eliminatee.getSort()).getDimension());
 		orac.unlockSolver();
@@ -374,7 +388,7 @@ public class ElimStorePlain {
 			}
 			final List<Term> indexEqualityTerms = new ArrayList<>();
 			final List<Term> valueEqualityTerms = new ArrayList<>();
-			for (final Doubleton<Term> doubleton : EquivalenceRelationIterator.buildListOfNonDisjointDoubletons(indices, equalityInformation)) {
+			for (final Doubleton<Term> doubleton : relevant) {
 				final Term indexEqualityTerm;
 				if (equalDoubletons.contains(doubleton)) {
 					indexEqualityTerm = PartialQuantifierElimination.equalityForExists(mScript, mQuantifier,
@@ -440,9 +454,11 @@ public class ElimStorePlain {
 					PartialQuantifierElimination.applyDualFiniteConnective(mScript, mQuantifier, indexEqualityTerms);
 			final Term valueEqualityTerm =
 					PartialQuantifierElimination.applyDualFiniteConnective(mScript, mQuantifier, valueEqualityTerms);
+			final Term valueEqualityTerm2 =
+					PartialQuantifierElimination.applyDualFiniteConnective(mScript, mQuantifier, vec.getValueEqualities());
 
 			final Term disjuct = PartialQuantifierElimination.applyDualFiniteConnective(mScript, mQuantifier,
-					indexEqualityTerm, valueEqualityTerm, transformedTerm, storedValueInformation);
+					indexEqualityTerm, valueEqualityTerm, transformedTerm, storedValueInformation, valueEqualityTerm2);
 			assert !Arrays.asList(disjuct.getFreeVars()).contains(eliminatee) : "var is still there: " + eliminatee
 					+ " term size " + new DagSizePrinter(disjuct);
 			if (mQuantifier == QuantifiedFormula.EXISTS) {
@@ -861,20 +877,36 @@ public class ElimStorePlain {
 	
 	
 	public class ValueEqualityChecker {
-		TermVariable mEliminatee;
-		Term mStoreIndex;
-		Term mStoreValue;
-		ThreeValuedEquivalenceRelation<Term> mIndices;
-		ManagedScript mMgdScript;
-		IncrementalPlicationChecker mIncrementalPlicationChecker;
-		Map<Term, TermVariable> mOldCellMapping;
+		final TermVariable mEliminatee;
+		final Term mStoreIndex;
+		final Term mStoreValue;
+		final ThreeValuedEquivalenceRelation<Term> mIndices;
+		final ManagedScript mMgdScript;
+		final IncrementalPlicationChecker mIncrementalPlicationChecker;
+		final Map<Term, TermVariable> mOldCellMapping;
 		final List<Term> mValueEqualities = new ArrayList<>();
 		
 		
+		
+		
+		public ValueEqualityChecker(final TermVariable eliminatee, final Term storeIndex, final Term storeValue,
+				final ThreeValuedEquivalenceRelation<Term> indices, final ManagedScript mgdScript,
+				final IncrementalPlicationChecker incrementalPlicationChecker, final Map<Term, TermVariable> oldCellMapping) {
+			super();
+			mEliminatee = eliminatee;
+			mStoreIndex = storeIndex;
+			mStoreValue = storeValue;
+			mIndices = indices;
+			mMgdScript = mgdScript;
+			mIncrementalPlicationChecker = incrementalPlicationChecker;
+			mOldCellMapping = oldCellMapping;
+		}
+
+
 		public boolean isDistinguishworthyIndexPair(final Term index1, final Term index2) {
 			final Term select1 = mMgdScript.getScript().term("select", mEliminatee, index1);
 			final Term select2 = mMgdScript.getScript().term("select", mEliminatee, index2);
-			final Term eq = SmtUtils.binaryBooleanEquality(mMgdScript.getScript(), select1, select2);
+			final Term eq = SmtUtils.binaryEquality(mMgdScript.getScript(), select1, select2);
 			final Validity cellEqVal = mIncrementalPlicationChecker.checkPlication(eq);
 			if (cellEqVal == Validity.VALID) {
 				final boolean distinguishworthy1 = processStoreIndex(index1, index2, select2);
@@ -882,7 +914,7 @@ public class ElimStorePlain {
 				if (distinguishworthy1 && distinguishworthy2) {
 					return true;
 				} else {
-					final Term cellEq = SmtUtils.binaryBooleanEquality(mMgdScript.getScript(), mOldCellMapping.get(index1), mOldCellMapping.get(index2));
+					final Term cellEq = SmtUtils.binaryEquality(mMgdScript.getScript(), mOldCellMapping.get(index1), mOldCellMapping.get(index2));
 					mValueEqualities.add(cellEq);
 					return false;
 				}
@@ -900,9 +932,12 @@ public class ElimStorePlain {
 					final Term storeCellEq = SmtUtils.binaryBooleanEquality(mMgdScript.getScript(), mStoreValue, mOldCellMapping.get(otherIndex));
 					mValueEqualities.add(storeCellEq);
 					return false;
-				} 
+				} else {
+					return true;					
+				}
+			} else {
+				return false;
 			}
-			return true;
 		}
 		
 		
@@ -913,6 +948,13 @@ public class ElimStorePlain {
 				return mIndices.getRepresentative(index1).equals(mIndices.getRepresentative(mStoreIndex));
 			}
 		}
+
+
+		public List<Term> getValueEqualities() {
+			return mValueEqualities;
+		}
+		
+		
 	}
 	
 	
@@ -978,5 +1020,4 @@ public class ElimStorePlain {
 	}
 	
 	
-
 }
