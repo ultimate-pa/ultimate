@@ -31,6 +31,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
@@ -89,6 +90,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.CounterexampleSearchStrategy;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.FloydHoareAutomataReuse;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.HoareAnnotationPositions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
@@ -152,6 +154,8 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 
 	private final ErrorGeneralizationEngine<LETTER> mErrorGeneralizationEngine;
 	private final PathProgramCache<LETTER> mPathProgramCache;
+	private final boolean mStoreFloydHoareAutomata;
+	private final List<AbstractInterpolantAutomaton<LETTER>> mFloydHoareAutomata = new ArrayList<>();
 
 	public BasicCegarLoop(final String name, final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit,
 			final PredicateFactory predicateFactory, final TAPreferences taPrefs,
@@ -184,6 +188,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		} else {
 			mHoareAnnotationLocations = Collections.emptySet();
 		}
+		mStoreFloydHoareAutomata = (taPrefs.getFloydHoareAutomataReuse() != FloydHoareAutomataReuse.NONE);
 		mErrorGeneralizationEngine = new ErrorGeneralizationEngine<>(services);
 		mHaf = new HoareAnnotationFragments<>(mLogger, mHoareAnnotationLocations, mPref.getHoareAnnotationPositions());
 		mStateFactoryForRefinement = new PredicateFactoryRefinement(mServices, super.mCsToolkit.getManagedScript(),
@@ -458,9 +463,16 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 			exploitSigmaStarConcatOfIa = !mComputeHoareAnnotation;
 			subtrahendBeforeEnhancement = mInterpolAutomaton;
 			enhanceMode = mPref.interpolantAutomatonEnhancement();
-			subtrahend = enhanceMode == InterpolantAutomatonEnhancement.NONE ? subtrahendBeforeEnhancement
-					: constructInterpolantAutomatonForOnDemandEnhancement(subtrahendBeforeEnhancement, predicateUnifier,
-							htc, enhanceMode);
+			if (enhanceMode == InterpolantAutomatonEnhancement.NONE) {
+				subtrahend = subtrahendBeforeEnhancement;
+			} else {
+				final AbstractInterpolantAutomaton<LETTER> ia = constructInterpolantAutomatonForOnDemandEnhancement(
+						subtrahendBeforeEnhancement, predicateUnifier, htc, enhanceMode);
+				subtrahend = ia;
+				if (mStoreFloydHoareAutomata) {
+					mFloydHoareAutomata.add(ia);
+				}
+			}
 		}
 
 		computeAutomataDifference(minuend, subtrahend, subtrahendBeforeEnhancement, predicateUnifier,
@@ -626,7 +638,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		mLogger.fatal("--");
 	}
 
-	private INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate>
+	private AbstractInterpolantAutomaton<LETTER>
 			constructInterpolantAutomatonForOnDemandEnhancement(
 					final NestedWordAutomaton<LETTER, IPredicate> inputInterpolantAutomaton,
 					final IPredicateUnifier predicateUnifier, final IHoareTripleChecker htc,
@@ -857,4 +869,14 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 			throw new IllegalArgumentException();
 		}
 	}
+
+	public List<AbstractInterpolantAutomaton<LETTER>> getFloydHoareAutomata() {
+		if (mStoreFloydHoareAutomata) {
+			return mFloydHoareAutomata;
+		} else {
+			throw new IllegalStateException("Floyd-Hoare automata have not been stored");
+		}
+	}
+	
+	
 }
