@@ -466,23 +466,7 @@ public final class LinearInequalityInvariantPatternProcessor
 		// This is the trivial algorithm (expanding). Feel free to optimize ;)
 		// 1. map Pattern, result is dnf
 		final Dnf<LinearInequality> mappedPattern = mapPattern(pattern, mapping);
-		// 2. negate every LinearInequality, result is a cnf
-		final Cnf<LinearInequality> cnfAfterNegation = new Cnf<>(mappedPattern.size());
-		for (final Collection<LinearInequality> conjunct : mappedPattern) {
-			final Collection<LinearInequality> disjunctWithNegatedLinearInequalities = new ArrayList<>(conjunct.size());
-			for (final LinearInequality li : conjunct) {
-				// copy original linear inequality
-				final LinearInequality negatedLi = new LinearInequality(li);
-				negatedLi.negate();
-				disjunctWithNegatedLinearInequalities.add(negatedLi);
-			}
-			cnfAfterNegation.add(disjunctWithNegatedLinearInequalities);
-		}
-		// 3. expand the cnf to get a dnf
-		final Dnf<LinearInequality> mappedAndNegatedPattern = expandCnfToDnf(services, cnfAfterNegation);
-		assert mappedAndNegatedPattern != null;
-		// 4. return the resulting dnf as the solution
-		return mappedAndNegatedPattern;
+		return negatePatternAndConvertToDNF(services, mappedPattern);
 	}
 
 	/**
