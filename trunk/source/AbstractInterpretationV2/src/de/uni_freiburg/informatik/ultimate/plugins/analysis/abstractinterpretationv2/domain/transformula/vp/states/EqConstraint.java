@@ -39,6 +39,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -50,12 +51,16 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ConstantFinder;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSort;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.IEqNodeIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainHelpers;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.IEqFunctionIdentifier;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CongruenceClosure;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.EqualityStatus;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
 /**
  *
@@ -88,7 +93,7 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 	private Term mTerm;
 
 
-	private final Map<Sort, List<NODE>> mDimensionToWeqVariableNode = new HashMap<>();
+	private final NestedMap2<Sort, Integer, NODE> mDimensionToWeqVariableNode = new NestedMap2<>();
 
 	/**
 	 * Creates an empty constraint (i.e. an EqConstraint that does not constrain anything, whose toTerm() will return
@@ -201,7 +206,8 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 	/**
 	 *
 	 *
-	 * TODO: this method does not fit in well, as it is not in-place --> perhaps move to factory..
+	 * TODO: this method does not fit in well, as it is not in-place but returns a fresh EqConstraint
+	 *   --> perhaps move to factory..
 	 *
 	 * @param varsToProjectAway
 	 * @return
@@ -291,32 +297,44 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 		if (mTerm != null) {
 			return mTerm;
 		}
-		final List<Term> elementEqualities = mPartialArrangement.getSupportingElementEqualities().entrySet().stream()
-				.map(en -> script.term("=", en.getKey().getTerm(), en.getValue().getTerm()))
-				.collect(Collectors.toList());
-		final List<Term> elementDisequalities = mPartialArrangement.getElementDisequalities().entrySet().stream()
-				.map(pair -> script.term("distinct", pair.getKey().getTerm(), pair.getValue().getTerm()))
-				.collect(Collectors.toList());
-		final List<Term> functionEqualities = mPartialArrangement.getSupportingFunctionEqualities().entrySet().stream()
-				.map(en -> script.term("=", en.getKey().getTerm(), en.getValue().getTerm()))
-				.collect(Collectors.toList());
-		final List<Term> functionDisequalities = mPartialArrangement.getFunctionDisequalities().entrySet().stream()
-				.map(pair -> script.term("distinct", pair.getKey().getTerm(), pair.getValue().getTerm()))
-				.collect(Collectors.toList());
+
+
+		final CongruenceClosure<NODE, FUNCTION> pa = mPartialArrangement;
+
+		final List<Term> allConjuncts =  new ArrayList<>();
+		allConjuncts.addAll(partialArrangementToCube(script, pa));
 
 		final List<Term> weakEqConstraints = mWeakEquivalenceGraph.getWeakEquivalenceConstraintsAsTerms(script);
-
-		final List<Term> allConjuncts = new ArrayList<>();
-		allConjuncts.addAll(elementEqualities);
-		allConjuncts.addAll(elementDisequalities);
-		allConjuncts.addAll(functionEqualities);
-		allConjuncts.addAll(functionDisequalities);
 		allConjuncts.addAll(weakEqConstraints);
 
 		final Term result= Util.and(script, allConjuncts.toArray(new Term[allConjuncts.size()]));
 		if (mIsFrozen) {
 			mTerm = result;
 		}
+		return result;
+	}
+
+	private List<Term> partialArrangementToCube(final Script script, final CongruenceClosure<NODE, FUNCTION> pa) {
+
+		final List<Term> elementEqualities = pa.getSupportingElementEqualities().entrySet().stream()
+				.map(en -> script.term("=", en.getKey().getTerm(), en.getValue().getTerm()))
+				.collect(Collectors.toList());
+		final List<Term> elementDisequalities = pa.getElementDisequalities().entrySet().stream()
+				.map(pair -> script.term("distinct", pair.getKey().getTerm(), pair.getValue().getTerm()))
+				.collect(Collectors.toList());
+		final List<Term> functionEqualities = pa.getSupportingFunctionEqualities().entrySet().stream()
+				.map(en -> script.term("=", en.getKey().getTerm(), en.getValue().getTerm()))
+				.collect(Collectors.toList());
+		final List<Term> functionDisequalities = pa.getFunctionDisequalities().entrySet().stream()
+				.map(pair -> script.term("distinct", pair.getKey().getTerm(), pair.getValue().getTerm()))
+				.collect(Collectors.toList());
+
+		final List<Term> result = new ArrayList<>(elementEqualities.size() + elementDisequalities.size()
+			+ functionEqualities.size() + functionDisequalities.size());
+		result.addAll(elementEqualities);
+		result.addAll(elementDisequalities);
+		result.addAll(functionEqualities);
+		result.addAll(functionDisequalities);
 		return result;
 	}
 
@@ -509,15 +527,11 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 	}
 
 	private NODE getWeqVariableNodeForDimension(final int dimensionNumber, final Sort sort) {
-		List<NODE> dimensionToNode = mDimensionToWeqVariableNode.get(sort);
-		if (dimensionToNode == null) {
-			dimensionToNode = new ArrayList<>(5);
-			mDimensionToWeqVariableNode.put(sort, dimensionToNode);
-		}
-		NODE result = dimensionToNode.get(dimensionNumber);
+		NODE result = mDimensionToWeqVariableNode.get(sort, dimensionNumber);
 		if (result == null) {
 			final TermVariable tv = mFactory.getMgdScript().constructFreshTermVariable("weq" + dimensionNumber, sort);
 			result = mFactory.getEqNodeAndFunctionFactory().getOrConstructNode(tv);
+			mDimensionToWeqVariableNode.put(sort, dimensionNumber, result);
 		}
 		return result;
 	}
@@ -813,10 +827,64 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 			return false;
 		}
 
+		/**
+		 * Computes an implicitly conjunctive list of weak equivalence constraints. Each element in the list is the
+		 * constrained induced by one weak equivalence edge in this weq graph.
+		 *
+		 * @param script
+		 * @return
+		 */
 		public List<Term> getWeakEquivalenceConstraintsAsTerms(final Script script) {
-			// TODO Auto-generated method stub
-			return new ArrayList<>();
+			assert mArrayEqualties == null || mArrayEqualties.isEmpty();
+			final List<Term> result = new ArrayList<>();
+			for (final Entry<Doubleton<FUNCTION>, WeakEquivalenceEdgeLabel> edge : mWeakEquivalenceEdges.entrySet()) {
+				final List<Term> dnfAsCubeList = new ArrayList<>();
+				dnfAsCubeList.addAll(edge.getValue().toDNF(script));
+
+				final Term arrayEquation = computeArrayEquation(script, edge.getKey().getOneElement(),
+						edge.getKey().getOtherElement());
+				dnfAsCubeList.add(arrayEquation);
+
+				final Term edgeFormula = SmtUtils.quantifier(script, QuantifiedFormula.FORALL,
+						computeWeqIndicesForArray(edge.getKey().getOneElement()), SmtUtils.or(script, dnfAsCubeList));
+				result.add(edgeFormula);
+			}
+			return result;
 		}
+
+		/**
+		 * For the two given arrays a, b, this computes an equation a[q1, .., qn] = b[q1, ..,qn] where qi are the
+		 * implicitly quantified variables of our weak equivalences (managed by getWeqVariables for dimension).
+		 * Uses the array's multidimensional sort to get the right variables.
+		 *
+		 * @param script
+		 * @param array1
+		 * @param array2
+		 * @return
+		 */
+		private Term computeArrayEquation(final Script script, final FUNCTION array1, final FUNCTION array2) {
+			assert new MultiDimensionalSort(array1.getTerm().getSort())
+				.equals(new MultiDimensionalSort(array2.getTerm().getSort()));
+			final List<Term> indexEntries = computeWeqIndicesForArray(array1).stream().map(tv -> (Term) tv)
+					.collect(Collectors.toList());
+			final ArrayIndex index = new ArrayIndex(indexEntries);
+
+			final Term select1 = SmtUtils.multiDimensionalSelect(script, array1.getTerm(), index);
+			final Term select2 = SmtUtils.multiDimensionalSelect(script, array2.getTerm(), index);
+
+			return SmtUtils.binaryEquality(script, select1, select2);
+		}
+
+		private List<TermVariable> computeWeqIndicesForArray(final FUNCTION array1) {
+			final MultiDimensionalSort mdSort = new MultiDimensionalSort(array1.getTerm().getSort());
+
+			final List<TermVariable> indexEntries = new ArrayList<>();
+			for (int i = 0; i < array1.getArity(); i++) {
+				indexEntries.add(getWeqVariableForDimension(i, mdSort.getIndexSorts().get(i)));
+			}
+			return indexEntries;
+		}
+
 
 		boolean sanityCheck() {
 			/*
@@ -886,6 +954,28 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 				for (int i = 0; i < arity; i++) {
 					dimensionLabels.add(new CongruenceClosure<>());
 				}
+			}
+
+			/**
+			 * Computes a DNF from this label as a List of conjunctive Terms.
+			 *    The disjunction has the form \/_dim \/_s pa_dim_s
+			 *    I.e. it has two range dimensions:
+			 *  the array's dimensions and for each of these a list of partial arrangements (like qi = x \/ qi = y)
+			 *
+			 * @param script
+			 * @return a DNF as a List of conjunctive Terms.
+			 */
+			public List<Term> toDNF(final Script script) {
+				final List<Term> result = new ArrayList<>();
+				for (int i = 0; i < mArityOfArrays; i++) {
+					final List<CongruenceClosure<NODE, FUNCTION>> dimensionPas = mLabel.get(i);
+					for (final CongruenceClosure<NODE, FUNCTION> cc : dimensionPas) {
+						final List<Term> cube = partialArrangementToCube(script, cc);
+						final Term cubeTerm = SmtUtils.and(script, cube);
+						result.add(cubeTerm);
+					}
+				}
+				return result;
 			}
 
 			public boolean addConstraint(final List<CongruenceClosure<NODE, FUNCTION>> newConstraint) {
