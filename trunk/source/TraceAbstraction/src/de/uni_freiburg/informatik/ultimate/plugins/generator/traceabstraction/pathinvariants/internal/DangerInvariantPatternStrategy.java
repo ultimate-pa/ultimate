@@ -80,7 +80,7 @@ public class DangerInvariantPatternStrategy extends LocationIndependentLinearIne
 		final Collection<AbstractLinearInvariantPattern> conjuncts = new ArrayList<>();
 		for (final IProgramVar havocedVar : havocedVars) {
 			final LinearTransitionPattern pattern1 = new LinearTransitionPattern(solver, inVars.keySet(),
-					Collections.singleton(havocedVar), prefix, false);
+					Collections.singleton(havocedVar), prefix + "_" + newPrefix(), false);
 			final LinearTransitionPattern pattern2 = pattern1.getPatternWithNegatedCoefficients(solver);
 			conjuncts.add(pattern1);
 			conjuncts.add(pattern2);
