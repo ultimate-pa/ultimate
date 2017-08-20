@@ -39,6 +39,7 @@ public class EagerReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends Basi
 	protected void getInitialAbstraction() throws AutomataLibraryException {
 		super.getInitialAbstraction();
 		
+		mLogger.info("Reusing " + mInputFloydHoareAutomata.size() + " Floyd-Hoare automata.");
 		for (final AbstractInterpolantAutomaton<LETTER> ai : mInputFloydHoareAutomata) {
 			ai.switchToOnDemandConstructionMode();
 			final PowersetDeterminizer<LETTER, IPredicate> psd =
