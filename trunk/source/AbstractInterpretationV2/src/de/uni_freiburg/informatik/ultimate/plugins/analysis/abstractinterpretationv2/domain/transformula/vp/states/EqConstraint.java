@@ -467,13 +467,13 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 	public EqConstraint<ACTION, NODE, FUNCTION> meet(final EqConstraint<ACTION, NODE, FUNCTION> other) {
 		final EqConstraint<ACTION, NODE, FUNCTION>.WeakEquivalenceGraph currentWeqGraph = other.mWeakEquivalenceGraph;
 
-		CongruenceClosure<NODE, FUNCTION> meetPartialArrangement =
+		final CongruenceClosure<NODE, FUNCTION> meetPartialArrangement =
 				this.mPartialArrangement.meet(other.mPartialArrangement);
 		if (meetPartialArrangement.isInconsistent()) {
 			return mFactory.getBottomConstraint();
 		}
 
-		EqConstraint<ACTION, NODE, FUNCTION>.WeakEquivalenceGraph weqMeet =
+		final EqConstraint<ACTION, NODE, FUNCTION>.WeakEquivalenceGraph weqMeet =
 					mWeakEquivalenceGraph.meet(currentWeqGraph, meetPartialArrangement);
 		while (true) {
 
@@ -485,17 +485,24 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 				return res;
 			}
 
-			final CongruenceClosureChangeTracker mpaChangeTracker =
-					new CongruenceClosureChangeTracker(meetPartialArrangement);
-			for (final Entry<FUNCTION, FUNCTION> aeq : weqMeet.getArrayEqualities().entrySet()) {
-				mpaChangeTracker.reportFunctionEquality(aeq.getKey(), aeq.getValue());
 
-				if (mpaChangeTracker.isBecameInconsistent()) {
-					return mFactory.getBottomConstraint();
-				}
+			for (final Entry<FUNCTION, FUNCTION> aeq : weqMeet.getArrayEqualities().entrySet()) {
+				meetPartialArrangement.reportFunctionEquality(aeq.getKey(), aeq.getValue());
+
 			}
-			weqMeet = mpaChangeTracker.reportChangesToWeakEquivalenceGraph(weqMeet);
-			meetPartialArrangement = new CongruenceClosure<>(mpaChangeTracker);
+			mWeakEquivalenceGraph.applyChangesInGroundPartialArrangement();
+
+//			final CongruenceClosureChangeTracker mpaChangeTracker =
+//					new CongruenceClosureChangeTracker(meetPartialArrangement);
+//			for (final Entry<FUNCTION, FUNCTION> aeq : weqMeet.getArrayEqualities().entrySet()) {
+//				mpaChangeTracker.reportFunctionEquality(aeq.getKey(), aeq.getValue());
+//
+//				if (mpaChangeTracker.isBecameInconsistent()) {
+//					return mFactory.getBottomConstraint();
+//				}
+//			}
+//			weqMeet = mpaChangeTracker.reportChangesToWeakEquivalenceGraph(weqMeet);
+//			meetPartialArrangement = new CongruenceClosure<>(mpaChangeTracker);
 		}
 	}
 
@@ -543,15 +550,31 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 
 	class WeakEquivalenceGraph {
 		private final Map<Doubleton<FUNCTION>, WeakEquivalenceEdgeLabel> mWeakEquivalenceEdges;
-		private final Map<FUNCTION, FUNCTION> mArrayEqualties;
+		private final Map<FUNCTION, FUNCTION> mArrayEqualities;
 
 		/**
 		 * Constructs an empty WeakEquivalenceGraph
 		 */
 		public WeakEquivalenceGraph() {
 			mWeakEquivalenceEdges = new HashMap<>();
-			mArrayEqualties = null;
+			mArrayEqualities = new HashMap<>();
 			assert sanityCheck();
+		}
+
+		/**
+		 * Checks if any weak equivalence-edge label is inconsistent with the current mPartialArrangment.
+		 * If so, it removes the edge and adds an array equality.
+		 */
+		public void applyChangesInGroundPartialArrangement() {
+			assert mArrayEqualities.isEmpty();
+			final HashMap<Doubleton<FUNCTION>, WeakEquivalenceEdgeLabel> edgesCopy =
+					new HashMap<>(mWeakEquivalenceEdges);
+			for (final Entry<Doubleton<FUNCTION>, WeakEquivalenceEdgeLabel> edge : edgesCopy.entrySet()) {
+				if (edge.getValue().isInconsistentWith(mPartialArrangement)) {
+					mWeakEquivalenceEdges.remove(edge.getKey());
+					mArrayEqualities.put(edge.getKey().getOneElement(), edge.getKey().getOtherElement());
+				}
+			}
 		}
 
 		public void projectFunction(final FUNCTION func) {
@@ -582,7 +605,7 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 
 		public Map<FUNCTION, FUNCTION> getArrayEqualities() {
 			assert hasArrayEqualities();
-			return mArrayEqualties;
+			return mArrayEqualities;
 		}
 
 		/**
@@ -595,7 +618,7 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 		private WeakEquivalenceGraph(final Map<Doubleton<FUNCTION>, WeakEquivalenceEdgeLabel> weakEquivalenceEdges,
 				final Map<FUNCTION, FUNCTION> arrayEqualities) {
 			mWeakEquivalenceEdges = weakEquivalenceEdges;
-			mArrayEqualties = arrayEqualities;
+			mArrayEqualities = arrayEqualities;
 		}
 
 		/**
@@ -604,11 +627,11 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 		 */
 		public WeakEquivalenceGraph(final WeakEquivalenceGraph weakEquivalenceGraph) {
 			this(weakEquivalenceGraph, true);
-			assert weakEquivalenceGraph.mArrayEqualties == null;
+			assert weakEquivalenceGraph.mArrayEqualities == null;
 		}
 
 		WeakEquivalenceGraph(final WeakEquivalenceGraph weqMeet, final boolean forgetArrayEqualities) {
-			mArrayEqualties = forgetArrayEqualities ? null : new HashMap<>(weqMeet.mArrayEqualties);
+			mArrayEqualities = forgetArrayEqualities ? new HashMap<>() : new HashMap<>(weqMeet.mArrayEqualities);
 			mWeakEquivalenceEdges = new HashMap<>();
 			for (final Entry<Doubleton<FUNCTION>, WeakEquivalenceEdgeLabel> weqEdge
 					: weqMeet.mWeakEquivalenceEdges.entrySet()) {
@@ -710,7 +733,7 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 		}
 
 		boolean hasArrayEqualities() {
-			return mArrayEqualties != null;
+			return !mArrayEqualities.isEmpty();
 		}
 
 		/**
@@ -804,29 +827,6 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 			return true;
 		}
 
-		public boolean reportGroundEquality(final NODE node1, final NODE node2) {
-			// TODO Auto-generated method stub
-			return false;
-		}
-
-		public boolean reportGroundDisequality(final NODE node1, final NODE node2) {
-			// TODO Auto-generated method stub
-
-			return false;
-		}
-
-		public boolean reportGroundFunctionEquality(final FUNCTION func1, final FUNCTION func2) {
-			// TODO Auto-generated method stub
-
-			return false;
-		}
-
-		public boolean reportGroundFunctionDisequality(final FUNCTION func1, final FUNCTION func2) {
-			// TODO Auto-generated method stub
-
-			return false;
-		}
-
 		/**
 		 * Computes an implicitly conjunctive list of weak equivalence constraints. Each element in the list is the
 		 * constrained induced by one weak equivalence edge in this weq graph.
@@ -835,7 +835,7 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 		 * @return
 		 */
 		public List<Term> getWeakEquivalenceConstraintsAsTerms(final Script script) {
-			assert mArrayEqualties == null || mArrayEqualties.isEmpty();
+			assert mArrayEqualities == null || mArrayEqualities.isEmpty();
 			final List<Term> result = new ArrayList<>();
 			for (final Entry<Doubleton<FUNCTION>, WeakEquivalenceEdgeLabel> edge : mWeakEquivalenceEdges.entrySet()) {
 				final List<Term> dnfAsCubeList = new ArrayList<>();
@@ -1067,27 +1067,6 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 
 		public CongruenceClosureChangeTracker(final CongruenceClosure<NODE, FUNCTION> originalCc) {
 			super(originalCc);
-		}
-
-		/**
-		 * <li> make a copy of the input, reset the array equalities
-		 * <li> patch all (dis)equalities stored in this CCTracker into the new weqGraph
-		 * <li> return the new weqGraph (it may contain arrayEqualities again, but only fresh ones..)
-		 *
-		 * @param input
-		 * @return
-		 */
-		public WeakEquivalenceGraph reportChangesToWeakEquivalenceGraph(final WeakEquivalenceGraph input) {
-			final WeakEquivalenceGraph result = new WeakEquivalenceGraph(input, true);
-			mFreshElementDisequalities.stream().forEach(dton -> result.reportGroundDisequality(dton.getOneElement(),
-					dton.getOtherElement()));
-			mFreshElementEqualities.stream().forEach(dton -> result.reportGroundEquality(dton.getOneElement(),
-					dton.getOtherElement()));
-			mFreshFunctionDisequalities.stream().forEach(dton -> result.reportGroundFunctionDisequality(
-					dton.getOneElement(), dton.getOtherElement()));
-			mFreshFunctionEqualities.stream().forEach(dton -> result.reportGroundFunctionEquality(dton.getOneElement(),
-					dton.getOtherElement()));
-			return result;
 		}
 
 		@Override
