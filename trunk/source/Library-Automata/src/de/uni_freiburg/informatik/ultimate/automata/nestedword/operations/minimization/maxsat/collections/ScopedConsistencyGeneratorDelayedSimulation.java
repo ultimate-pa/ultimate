@@ -85,19 +85,11 @@ public class ScopedConsistencyGeneratorDelayedSimulation<T, LETTER, STATE> imple
 		STATE lhs = ((Doubleton<STATE>) doubleton).getOneElement();
 		STATE rhs = ((Doubleton<STATE>) doubleton).getOtherElement();
 		
-		//No need to do anything if the results match
-		if (newStatus && mSpoilerWinnings.containsPair(lhs, rhs) ||
-				!newStatus && mDuplicatorWinnings.containsPair(lhs, rhs)) {
+		//These are okay the way they are
+		if (newStatus && mSpoilerWinnings.containsPair(lhs, rhs) || !newStatus && mDuplicatorWinnings.containsPair(lhs, rhs)) {
 			return Collections.emptySet();
 		}
-		//correct wrongly merge states
-		else if (newStatus && mDuplicatorWinnings.containsPair(lhs, rhs)) {
-			final Pair<T, Boolean> corrected = new Pair<T, Boolean>(doubleton, false);
-			List<Pair<T, Boolean>> result = new ArrayList<>();
-			result.add(corrected);
-			return result;
-		}
-		//here we can merge more
+		//Try to merge more? Leads to backtracking...
 		else if (!newStatus && mSpoilerWinnings.containsPair(lhs, rhs)) {
 			final Pair<T, Boolean> corrected = new Pair<T, Boolean>(doubleton, true);
 			List<Pair<T, Boolean>> result = new ArrayList<>();
@@ -110,7 +102,6 @@ public class ScopedConsistencyGeneratorDelayedSimulation<T, LETTER, STATE> imple
 		}
 	}
 	
-	//TODO: find a way to tell the simulation the current standings. Maybe extend BiPredicate?
 	//Recomputes the winning states for Spoiler and Duplicator
 	protected void updateWinningStates() throws AutomataOperationCanceledException {
 		final BiPredicateStateMap<STATE> areStatesMerged = new BiPredicateStateMap<STATE>(mContent2node, mCompressPaths);

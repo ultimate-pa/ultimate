@@ -13,6 +13,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimi
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.AbstractMaxSatSolver;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.IAssignmentCheckerAndGenerator;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.InteractiveMaxSatSolver;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.NwaApproximateDelayedSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.ScopedConsistencyGeneratorDelayedSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.ScopedTransitivityGeneratorDoubleton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.VariableFactory.MergeDoubleton;
@@ -80,6 +81,11 @@ public class MinimizeNwaPmaxSatDelayedBi<LETTER, STATE> extends MinimizeNwaPmaxS
 			final ISetOfPairs<STATE, Collection<Set<STATE>>> initialPartition, final Settings<STATE> settings)
 			throws AutomataOperationCanceledException {
 			super(services, stateFactory, operand, initialPartition, settings);
+			mSettings.setUseInternalCallConstraints(false);
+	}
+	
+	private void setVariableTrue(final Doubleton<STATE> pair) {
+		mSolver.addClause(null, (Doubleton<STATE>[]) new Object[] { pair });
 	}
 	
 	@Override
@@ -88,34 +94,47 @@ public class MinimizeNwaPmaxSatDelayedBi<LETTER, STATE> extends MinimizeNwaPmaxS
 			return;
 		}
 
-		final BiPredicate<STATE, STATE> finalNonfinalConstraintPredicate =
-				mSettings.getFinalNonfinalConstraintPredicate();
-
-		for (int i = 0; i < states.length; i++) {
-			final STATE stateI = states[i];
-
-			// add to transitivity generator
-			if (mTransitivityGenerator != null) {
-				mTransitivityGenerator.addContent(stateI);
+		final BiPredicate<STATE, STATE> nothingMergedYet = new BiPredicate<STATE, STATE>() {
+			
+			public boolean test(STATE t, STATE u) {
+				return false;
 			}
 			
-			// add to consistency generator
-			if (mConsistencyGenerator != null) {
-				mConsistencyGenerator.addContent(stateI);
-			}
+		};
+		
+		final ISetOfPairs<STATE, ?> spoilerWinnings;
+		try {
+			NwaApproximateDelayedSimulation<LETTER,STATE> simulation = new NwaApproximateDelayedSimulation<LETTER, STATE>(mServices, mOperand, nothingMergedYet);
+			spoilerWinnings = simulation.getSpoilerWinningStates();
 
-			for (int j = 0; j < i; j++) {
-				final STATE stateJ = states[j];
-				final Doubleton<STATE> doubleton = new Doubleton<>(stateI, stateJ);
-				mStatePair2Var.put(stateI, stateJ, doubleton);
-				mStatePair2Var.put(stateJ, stateI, doubleton);
-				mSolver.addVariable(doubleton);
+			for (int i = 0; i < states.length; i++) {
+				final STATE stateI = states[i];
 
-				if (mOperand.isFinal(stateI) ^ mOperand.isFinal(stateJ)
-						&& finalNonfinalConstraintPredicate.test(stateI, stateJ)) {
-					setStatesDifferent(doubleton);
+				// add to transitivity generator
+				if (mTransitivityGenerator != null) {
+					mTransitivityGenerator.addContent(stateI);
+				}
+			
+				// add to consistency generator
+				if (mConsistencyGenerator != null) {
+					mConsistencyGenerator.addContent(stateI);
+				}
+
+				for (int j = 0; j < i; j++) {
+					final STATE stateJ = states[j];
+					final Doubleton<STATE> doubleton = new Doubleton<>(stateI, stateJ);
+					mStatePair2Var.put(stateI, stateJ, doubleton);
+					mStatePair2Var.put(stateJ, stateI, doubleton);
+					mSolver.addVariable(doubleton);
+				
+					if(spoilerWinnings.containsPair(stateI, stateJ) || spoilerWinnings.containsPair(stateJ, stateI)) {
+						setVariableTrue(doubleton);
+					}
 				}
 			}
+		} catch (AutomataOperationCanceledException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 	}
 	
@@ -125,8 +144,8 @@ public class MinimizeNwaPmaxSatDelayedBi<LETTER, STATE> extends MinimizeNwaPmaxS
 		mConsistencyGenerator = new ScopedConsistencyGeneratorDelayedSimulation<Doubleton<STATE>, LETTER, STATE>(mSettings.isUsePathCompression(), mServices, mOperand);
 		final List<IAssignmentCheckerAndGenerator<Doubleton<STATE>>> assignmentCheckerAndGeneratorList =
 				new ArrayList<>();
-		assignmentCheckerAndGeneratorList.add(mTransitivityGenerator);
 		assignmentCheckerAndGeneratorList.add(mConsistencyGenerator);
+		assignmentCheckerAndGeneratorList.add(mTransitivityGenerator);
 		return new InteractiveMaxSatSolver<>(mServices, assignmentCheckerAndGeneratorList);
 	}
 
