@@ -48,8 +48,9 @@ public class MinimizeStatesSingleEdgeSingleNode extends BaseMinimizeStates {
 
 	public MinimizeStatesSingleEdgeSingleNode(final IcfgEdgeBuilder edgeBuilder,
 			final IUltimateServiceProvider services, final BlockEncodingBacktranslator backtranslator,
-			final BiPredicate<IIcfg<?>, IcfgLocation> funIsAccepting, final ILogger logger) {
-		super(edgeBuilder, services, backtranslator, funIsAccepting, logger);
+			final BiPredicate<IIcfg<?>, IcfgLocation> funIsAccepting, final ILogger logger,
+			final boolean ignoreBlowup) {
+		super(edgeBuilder, services, backtranslator, funIsAccepting, logger, ignoreBlowup);
 	}
 
 	@Override
