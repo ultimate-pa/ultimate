@@ -942,10 +942,10 @@ public class ElimStorePlain {
 
 		private boolean processStoreIndex(final Term storeIndexCandidate, final Term otherIndex, final Term otherSelect) {
 			if (isStoreIndex(storeIndexCandidate)) {
-				final Term storeEq = SmtUtils.binaryBooleanEquality(mMgdScript.getScript(), mStoreValue, otherSelect);
+				final Term storeEq = SmtUtils.binaryEquality(mMgdScript.getScript(), mStoreValue, otherSelect);
 				final Validity storeEqVal = mIncrementalPlicationChecker.checkPlication(storeEq);
 				if (storeEqVal == Validity.VALID) {
-					final Term storeCellEq = SmtUtils.binaryBooleanEquality(mMgdScript.getScript(), mStoreValue, mOldCellMapping.get(otherIndex));
+					final Term storeCellEq = SmtUtils.binaryEquality(mMgdScript.getScript(), mStoreValue, mOldCellMapping.get(otherIndex));
 					mValueEqualities.add(storeCellEq);
 					return false;
 				} else {
