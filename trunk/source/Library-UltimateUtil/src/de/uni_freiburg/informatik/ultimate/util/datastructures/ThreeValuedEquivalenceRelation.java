@@ -104,7 +104,7 @@ public class ThreeValuedEquivalenceRelation<E> {
 			assert rep == elem;
 			// elem was the representative of its equivalence class, but not the only element
 			// --> replace it by the new representative in mDistinctElements
-			final E newRep = mUnionFind.find(equivalenceClass.iterator().next());
+			final E newRep = equivalenceClass.iterator().next();
 			mDisequalities.replaceDomainElement(elem, newRep);
 			mDisequalities.replaceRangeElement(elem, newRep);
 		}

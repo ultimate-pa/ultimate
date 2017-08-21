@@ -164,14 +164,16 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 		 * congruence propagations: if we are adding f = g then we can propagate f(x) =
 		 * g(x) for all nodes of that form we know.
 		 *
-		 * uses optimization: don't iterate over all funcApps but only over
-		 * representatives (would it make sense that mFunctionToFuncApps only holds
-		 * representatives??..)
 		 */
-		for (final ELEM funcApp1 : mFunctionToFuncApps.getImage(f1).stream()
-				.map(fa -> mElementTVER.getRepresentative(fa)).collect(Collectors.toSet())) {
-			for (final ELEM funcApp2 : mFunctionToFuncApps.getImage(f2).stream()
-					.map(fa -> mElementTVER.getRepresentative(fa)).collect(Collectors.toSet())) {
+//		for (final ELEM funcApp1 : mFunctionToFuncApps.getImage(f1).stream()
+//				.map(fa -> mElementTVER.getRepresentative(fa)).collect(Collectors.toSet())) {
+//			for (final ELEM funcApp2 : mFunctionToFuncApps.getImage(f2).stream()
+//					.map(fa -> mElementTVER.getRepresentative(fa)).collect(Collectors.toSet())) {
+		for (final ELEM funcApp1 : mFunctionToFuncApps.getImage(f1)) {
+			for (final ELEM funcApp2 : mFunctionToFuncApps.getImage(f2)) {
+				if (funcApp1 == funcApp2) {
+					continue;
+				}
 				if (argumentsAreCongruent(funcApp1, funcApp2)) {
 					reportEquality(funcApp1, funcApp2);
 				}
