@@ -1,7 +1,7 @@
 //#Safe
 /*
  * Author: Yu-Wen Chen
- * Note: The result of this test is not manually verified. DD just added the missing header based on some Ultimate results. 
+ *  annotations correctness checked via Automizer Webinterface (Alexander Nutz)
  * 
  */
 
