@@ -382,7 +382,45 @@ public class ElimStorePlain {
 				rawIndex2replacedIndex.put(selectIndex, selectIndex);
 			}
 		}
-		constructCongruenceConstraints((ArrayList<Term>) selectIndices, equalityInformation, mMgdScript, rawIndex2replacedIndex, oldCellMapping, eliminatee, mQuantifier, storeIndex, newAuxArray, storeValue);
+		
+		if (true) {
+			final Map<Term, Term> substitutionMapping = new HashMap<>();
+			if (!stores.isEmpty()) {
+				substitutionMapping.put(storeTerm, newAuxArray);
+			}
+			for (final Term selectIndex : selectIndices) {
+				final Term select = mMgdScript.getScript().term("select", eliminatee, selectIndex);
+				if (oldCellMapping.containsKey(selectIndex)) {
+					substitutionMapping.put(select, oldCellMapping.get(selectIndex));
+				} else {
+					final Term newSelect = mMgdScript.getScript().term("select", newAuxArray, selectIndex);
+					substitutionMapping.put(select, newSelect);
+				}
+			}
+			
+			
+			final Term storeValueRep;
+			if (storeValue == null) {
+				storeValueRep = null;
+			} else {
+				storeValueRep = new SubstitutionWithLocalSimplification(mMgdScript, substitutionMapping).transform(storeValue);
+			}
+			final Term cc = constructCongruenceConstraints((ArrayList<Term>) selectIndices, equalityInformation,
+					mMgdScript, rawIndex2replacedIndex, oldCellMapping, eliminatee, mQuantifier, storeIndex,
+					newAuxArray, storeValueRep);
+			
+			final Term transformedTerm =
+					new SubstitutionWithLocalSimplification(mMgdScript, substitutionMapping).transform(term);
+			final Term valueEqualityTerm2 =
+					PartialQuantifierElimination.applyDualFiniteConnective(mScript, mQuantifier, vec.getValueEqualities());
+			final Term storedValueInformation = constructStoredValueInformation(eliminatee, stores, storeIndex,
+					storeValue, indexMapping, newAuxArray, substitutionMapping);
+			final Term res = PartialQuantifierElimination.applyDualFiniteConnective(mScript, mQuantifier,
+					transformedTerm, valueEqualityTerm2, storedValueInformation, cc);
+			assert !Arrays.asList(res.getFreeVars()).contains(eliminatee) : "var is still there: " + eliminatee
+					+ " term size " + new DagSizePrinter(res);
+			return new AfEliminationTask(newAuxVars, res);
+		}
 		
 		
 		final List<Term> disjuncts = new ArrayList<>();
@@ -449,20 +487,8 @@ public class ElimStorePlain {
 				}
 			}
 
-			final Term storedValueInformation;
-			if (stores.isEmpty()) {
-				if (mQuantifier == QuantifiedFormula.EXISTS) {
-					storedValueInformation = mScript.term("true");
-				} else if (mQuantifier == QuantifiedFormula.FORALL) {
-					storedValueInformation = mScript.term("false");
-				} else {
-					throw new AssertionError("unknown quantifier");
-				}
-			} else {
-				storedValueInformation = PartialQuantifierElimination.equalityForExists(mScript, mQuantifier,
-						mScript.term("select", newAuxArray, getNewIndex(storeIndex, indexMapping, eliminatee)),
-						new SubstitutionWithLocalSimplification(mMgdScript, substitutionMapping).transform(storeValue));
-			}
+			final Term storedValueInformation = constructStoredValueInformation(eliminatee, stores, storeIndex,
+					storeValue, indexMapping, newAuxArray, substitutionMapping);
 
 			final Term transformedTerm =
 					new SubstitutionWithLocalSimplification(mMgdScript, substitutionMapping).transform(term);
@@ -520,6 +546,27 @@ public class ElimStorePlain {
 		}
 		return new AfEliminationTask(newAuxVars, result);
 
+	}
+
+	private Term constructStoredValueInformation(final TermVariable eliminatee,
+			final List<MultiDimensionalStore> stores, final Term storeIndex, final Term storeValue,
+			final Map<Term, TermVariable> indexMapping, final TermVariable newAuxArray,
+			final Map<Term, Term> substitutionMapping) throws AssertionError {
+		final Term storedValueInformation;
+		if (stores.isEmpty()) {
+			if (mQuantifier == QuantifiedFormula.EXISTS) {
+				storedValueInformation = mScript.term("true");
+			} else if (mQuantifier == QuantifiedFormula.FORALL) {
+				storedValueInformation = mScript.term("false");
+			} else {
+				throw new AssertionError("unknown quantifier");
+			}
+		} else {
+			storedValueInformation = PartialQuantifierElimination.equalityForExists(mScript, mQuantifier,
+					mScript.term("select", newAuxArray, getNewIndex(storeIndex, indexMapping, eliminatee)),
+					new SubstitutionWithLocalSimplification(mMgdScript, substitutionMapping).transform(storeValue));
+		}
+		return storedValueInformation;
 	}
 
 	private Pair<ThreeValuedEquivalenceRelation<Term>, List<Term>> analyzeIndexEqualities(final Set<Term> indices,
