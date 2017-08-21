@@ -650,20 +650,30 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 		final CongruenceClosure<ELEM, FUNCTION> otherAligned = other.alignElements(this);
 
 		for (final Entry<ELEM, ELEM> eq : otherAligned.getSupportingElementEqualities().entrySet()) {
+			if (thisAligned.isInconsistent()) {
+				return new CongruenceClosure<>(true);
+			}
 			thisAligned.reportEquality(eq.getKey(), eq.getValue());
 		}
 		for (final Entry<FUNCTION, FUNCTION> eq : otherAligned.getSupportingFunctionEqualities().entrySet()) {
+			if (thisAligned.isInconsistent()) {
+				return new CongruenceClosure<>(true);
+			}
 			thisAligned.reportFunctionEquality(eq.getKey(), eq.getValue());
 		}
 		for (final Entry<ELEM, ELEM> deq : otherAligned.getElementDisequalities()) {
+			if (thisAligned.isInconsistent()) {
+				return new CongruenceClosure<>(true);
+			}
 			thisAligned.reportDisequality(deq.getKey(), deq.getValue());
 		}
 		for (final Entry<FUNCTION, FUNCTION> deq : otherAligned.getFunctionDisequalities()) {
+			if (thisAligned.isInconsistent()) {
+				return new CongruenceClosure<>(true);
+			}
 			thisAligned.reportFunctionDisequality(deq.getKey(), deq.getValue());
 		}
-		if (thisAligned.isInconsistent()) {
-			return new CongruenceClosure<>(true);
-		}
+
 		return thisAligned;
 	}
 

@@ -610,8 +610,13 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 		}
 
 		public void projectFunction(final FUNCTION func) {
-			for (final Entry<Doubleton<FUNCTION>, WeakEquivalenceEdgeLabel> en : mWeakEquivalenceEdges.entrySet()) {
-				en.getValue().projectFunction(func);
+			final Map<Doubleton<FUNCTION>, WeakEquivalenceEdgeLabel> edgesCopy = new HashMap<>(mWeakEquivalenceEdges);
+			for (final Entry<Doubleton<FUNCTION>, WeakEquivalenceEdgeLabel> en : edgesCopy.entrySet()) {
+				if (en.getKey().getOneElement().equals(func) || en.getKey().getOtherElement().equals(func)) {
+					mWeakEquivalenceEdges.remove(en.getKey());
+				} else {
+					en.getValue().projectFunction(func);
+				}
 			}
 		}
 

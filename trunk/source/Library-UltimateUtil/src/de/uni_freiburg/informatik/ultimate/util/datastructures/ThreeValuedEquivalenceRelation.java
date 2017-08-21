@@ -61,7 +61,7 @@ public class ThreeValuedEquivalenceRelation<E> {
 		this.mUnionFind = new UnionFind<>(tver.mUnionFind);
 		this.mDisequalities = new HashRelation<>(tver.mDisequalities);
 		this.mIsInconsistent = tver.mIsInconsistent;
-		assert disequalitiesOnlyContainRepresentatives();
+		assert sanityCheck();
 	}
 
 	public ThreeValuedEquivalenceRelation(final UnionFind<E> newElemPartition,
@@ -69,7 +69,7 @@ public class ThreeValuedEquivalenceRelation<E> {
 		mUnionFind = new UnionFind<>(newElemPartition);
 		mDisequalities = new HashRelation<>(newElemDisequalities);
 		mIsInconsistent = false;
-		assert disequalitiesOnlyContainRepresentatives();
+		assert sanityCheck();
 	}
 
 	/**
@@ -108,6 +108,7 @@ public class ThreeValuedEquivalenceRelation<E> {
 			mDisequalities.replaceDomainElement(elem, newRep);
 			mDisequalities.replaceRangeElement(elem, newRep);
 		}
+		assert sanityCheck();
 	}
 
 	/**
@@ -153,7 +154,7 @@ public class ThreeValuedEquivalenceRelation<E> {
 			mDisequalities.replaceDomainElement(oldRep1, oldRep2);
 			mDisequalities.replaceRangeElement(oldRep1, oldRep2);
 		}
-		assert disequalitiesOnlyContainRepresentatives();
+		assert sanityCheck();
 		return true;
 	}
 
@@ -181,7 +182,7 @@ public class ThreeValuedEquivalenceRelation<E> {
 		}
 
 		mDisequalities.addPair(rep1, rep2);
-		assert disequalitiesOnlyContainRepresentatives();
+		assert sanityCheck();
 		return true;
 	}
 
@@ -228,7 +229,24 @@ public class ThreeValuedEquivalenceRelation<E> {
 		}
 	}
 
-	private boolean disequalitiesOnlyContainRepresentatives() {
+	/**
+	 *
+	 * TODO: note that this sanity check currently forbids null entries for the relation -- if we want null entries, we
+	 *  have to revise this.
+	 *
+	 * @return true iff sanity check is passed
+	 */
+	private boolean sanityCheck() {
+		// mDisequalities may not contain null entries
+		for (final Entry<E, E> en : mDisequalities.entrySet()) {
+			if (en.getKey() == null) {
+				return false;
+			}
+			if (en.getValue() == null) {
+				return false;
+			}
+		}
+		// disequalites only contain representatives
 		for (final Entry<E, E> en : mDisequalities.entrySet()) {
 			if (!isRepresentative(en.getKey())) {
 				return false;
@@ -346,6 +364,7 @@ public class ThreeValuedEquivalenceRelation<E> {
 	}
 
 	public HashRelation<E, E> getDisequalities() {
+		assert !mDisequalities.entrySet().stream().anyMatch(pr -> pr.getValue() == null);
 		// TODO: make a copy before returning or not? (safer but slower)
 		return new HashRelation<>(mDisequalities);
 	}
@@ -367,6 +386,7 @@ public class ThreeValuedEquivalenceRelation<E> {
 			mDisequalities.removePair(pair.getKey(), pair.getValue());
 			mDisequalities.addPair(transformer.apply(pair.getKey()), transformer.apply(pair.getValue()));
 		}
+		assert sanityCheck();
 	}
 }
 
