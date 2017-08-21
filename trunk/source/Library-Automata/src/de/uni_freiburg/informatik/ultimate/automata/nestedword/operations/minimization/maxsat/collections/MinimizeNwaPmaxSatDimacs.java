@@ -28,16 +28,21 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minim
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.BiPredicate;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.IMinimizationStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaPmaxSat;
 import de.uni_freiburg.informatik.ultimate.automata.util.PartitionBackedSetOfPairs;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Nested word automaton minimization using a partial Max-SAT reduction. The problem instance is solved using an
@@ -50,6 +55,13 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
  *            state type
  */
 public class MinimizeNwaPmaxSatDimacs<LETTER, STATE> extends MinimizeNwaPmaxSat<LETTER, STATE> {
+
+	private final Iterable<Set<STATE>> mInitialPartition;
+	private final int mLargestBlockInitialPartition;
+	private final int mInitialPartitionSize;
+	private final long mNumberOfInitialPairs;
+	private final Map<STATE, Set<STATE>> mState2EquivalenceClass;
+
 	/**
 	 * @param services
 	 *            Ultimate services.
@@ -64,8 +76,71 @@ public class MinimizeNwaPmaxSatDimacs<LETTER, STATE> extends MinimizeNwaPmaxSat<
 			final IMinimizationStateFactory<STATE> stateFactory, final IDoubleDeckerAutomaton<LETTER, STATE> operand)
 			throws AutomataOperationCanceledException {
 		super(services, stateFactory, operand,
-				new PartitionBackedSetOfPairs<>(Collections.singleton(operand.getStates())),
 				new Settings<STATE>().setSolverModeExternal());
+		
+		printStartMessage(); 
+		
+		mInitialPartition = Collections.singleton(operand.getStates());
+		mState2EquivalenceClass = new HashMap<>();
+		int largestBlockInitialPartition = 0;
+		int initialPartitionSize = 0;
+		long initialPairsSize = 0;
+		for (final Set<STATE> block : mInitialPartition) {
+			for (final STATE state : block) {
+				mState2EquivalenceClass.put(state, block);
+			}
+			largestBlockInitialPartition = Math.max(largestBlockInitialPartition, block.size());
+			initialPairsSize += ((long) block.size()) * ((long) block.size()) - block.size();
+			++initialPartitionSize;
+		}
+		mLargestBlockInitialPartition = largestBlockInitialPartition;
+		mInitialPartitionSize = initialPartitionSize;
+		mNumberOfInitialPairs = initialPairsSize;
+		mLogger.info("Initial partition has " + initialPartitionSize + " blocks, largest block has "
+				+ largestBlockInitialPartition + " states");
+
+		run();
+
+		printExitMessage();
+	}
+	
+	@Override
+	protected String createTaskDescription() {
+		return NestedWordAutomataUtils.generateGenericMinimizationRunningTaskDescription(getOperationName(), mOperand,
+				mInitialPartitionSize, mLargestBlockInitialPartition);
+	}
+	
+	@Override
+	protected void generateVariablesAndAcceptingConstraints() throws AutomataOperationCanceledException {
+		for (final Set<STATE> equivalenceClass : mInitialPartition) {
+			final STATE[] states = constructStateArray(equivalenceClass);
+			generateVariablesHelper(states);
+			checkTimeout(GENERATING_VARIABLES);
+		}
+	}
+
+	@Override
+	protected void generateTransitionAndTransitivityConstraints(final boolean addTransitivityConstraints)
+			throws AutomataOperationCanceledException {
+		for (final Set<STATE> equivalenceClass : mInitialPartition) {
+			final STATE[] states = constructStateArray(equivalenceClass);
+
+			for (int i = 0; i < states.length; i++) {
+				generateTransitionConstraints(states, i);
+				checkTimeout(ADDING_TRANSITION_CONSTRAINTS);
+			}
+
+			if (addTransitivityConstraints) {
+				generateTransitivityConstraints(states);
+			}
+		}
+	}
+	
+	@Override
+	@SuppressWarnings("squid:S1698")
+	protected boolean isInitialPair(final STATE state1, final STATE state2) {
+		// equality intended here
+		return mState2EquivalenceClass.get(state1) == mState2EquivalenceClass.get(state2);
 	}
 	
 	@Override
@@ -108,4 +183,5 @@ public class MinimizeNwaPmaxSatDimacs<LETTER, STATE> extends MinimizeNwaPmaxSat<
 		assignmentCheckerAndGeneratorList.add(mTransitivityGenerator);
 		return new InteractiveMaxSatSolver<>(mServices, assignmentCheckerAndGeneratorList);
 	}
+
 }

@@ -29,7 +29,9 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minim
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.BiPredicate;
 
@@ -63,6 +65,12 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
 
 
 public class MinimizeNwaPmaxSatDirectBi<LETTER, STATE> extends MinimizeNwaPmaxSat<LETTER, STATE>{
+
+	private final Iterable<Set<STATE>> mInitialPartition;
+	private final int mLargestBlockInitialPartition;
+	private final int mInitialPartitionSize;
+	private final long mNumberOfInitialPairs;
+	private final Map<STATE, Set<STATE>> mState2EquivalenceClass;
 
 
 	/**
@@ -109,7 +117,93 @@ public class MinimizeNwaPmaxSatDirectBi<LETTER, STATE> extends MinimizeNwaPmaxSa
 			final IMinimizationStateFactory<STATE> stateFactory, final IDoubleDeckerAutomaton<LETTER, STATE> operand,
 			final ISetOfPairs<STATE, Collection<Set<STATE>>> initialPartition, final Settings<STATE> settings)
 			throws AutomataOperationCanceledException {
-			super(services, stateFactory, operand, initialPartition, settings);
+			super(services, stateFactory, operand, settings);
+			
+			printStartMessage(); 
+			
+			mInitialPartition = initialPartition.getRelation();
+			mState2EquivalenceClass = new HashMap<>();
+			int largestBlockInitialPartition = 0;
+			int initialPartitionSize = 0;
+			long initialPairsSize = 0;
+			for (final Set<STATE> block : mInitialPartition) {
+				for (final STATE state : block) {
+					mState2EquivalenceClass.put(state, block);
+				}
+				largestBlockInitialPartition = Math.max(largestBlockInitialPartition, block.size());
+				initialPairsSize += ((long) block.size()) * ((long) block.size()) - block.size();
+				++initialPartitionSize;
+			}
+			mLargestBlockInitialPartition = largestBlockInitialPartition;
+			mInitialPartitionSize = initialPartitionSize;
+			mNumberOfInitialPairs = initialPairsSize;
+			mLogger.info("Initial partition has " + initialPartitionSize + " blocks, largest block has "
+					+ largestBlockInitialPartition + " states");
+
+			run();
+
+			printExitMessage();
+
+	}
+	
+	@Override
+	protected String createTaskDescription() {
+		return NestedWordAutomataUtils.generateGenericMinimizationRunningTaskDescription(getOperationName(), mOperand,
+				mInitialPartitionSize, mLargestBlockInitialPartition);
+	}
+
+	@Override
+	public void addStatistics(final AutomataOperationStatistics statistics) {
+		super.addStatistics(statistics);
+
+		if (mLargestBlockInitialPartition != 0) {
+			statistics.addKeyValuePair(mSettings.getLibraryMode()
+					? StatisticsType.SIZE_MAXIMAL_INITIAL_BLOCK_PMAXSAT
+					: StatisticsType.SIZE_MAXIMAL_INITIAL_BLOCK, mLargestBlockInitialPartition);
+			statistics.addKeyValuePair(
+					mSettings.getLibraryMode()
+							? StatisticsType.SIZE_INITIAL_PARTITION_PMAXSAT
+							: StatisticsType.SIZE_INITIAL_PARTITION,
+					mInitialPartitionSize);
+			statistics.addKeyValuePair(
+					mSettings.getLibraryMode()
+							? StatisticsType.NUMBER_INITIAL_PAIRS_PMAXSAT
+							: StatisticsType.NUMBER_INITIAL_PAIRS,
+					mNumberOfInitialPairs);
+		}
+	}
+	
+	@Override
+	protected void generateVariablesAndAcceptingConstraints() throws AutomataOperationCanceledException {
+		for (final Set<STATE> equivalenceClass : mInitialPartition) {
+			final STATE[] states = constructStateArray(equivalenceClass);
+			generateVariablesHelper(states);
+			checkTimeout(GENERATING_VARIABLES);
+		}
+	}
+
+	@Override
+	protected void generateTransitionAndTransitivityConstraints(final boolean addTransitivityConstraints)
+			throws AutomataOperationCanceledException {
+		for (final Set<STATE> equivalenceClass : mInitialPartition) {
+			final STATE[] states = constructStateArray(equivalenceClass);
+
+			for (int i = 0; i < states.length; i++) {
+				generateTransitionConstraints(states, i);
+				checkTimeout(ADDING_TRANSITION_CONSTRAINTS);
+			}
+
+			if (addTransitivityConstraints) {
+				generateTransitivityConstraints(states);
+			}
+		}
+	}
+	
+	@Override
+	@SuppressWarnings("squid:S1698")
+	protected boolean isInitialPair(final STATE state1, final STATE state2) {
+		// equality intended here
+		return mState2EquivalenceClass.get(state1) == mState2EquivalenceClass.get(state2);
 	}
 	
 	@Override

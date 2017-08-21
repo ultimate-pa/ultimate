@@ -121,7 +121,7 @@ public class NwaApproximateDelayedSimulation<LETTER, STATE> {
 		return mSpoilerWinningStates;
 	}
 
-	private MapBackedSetOfPairs<STATE> computeOrdinarySimulation() throws AutomataOperationCanceledException {
+	public MapBackedSetOfPairs<STATE> computeOrdinarySimulation() throws AutomataOperationCanceledException {
 		return new NwaApproximateSimulation<>(mServices, mOperand, SimulationType.ORDINARY).getResult();
 	}
 

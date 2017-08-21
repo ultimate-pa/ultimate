@@ -735,7 +735,7 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 	 * Tells the solver that two states are different.
 	 */
 	@SuppressWarnings("unchecked")
-	private void setVariableFalse(final T pair) {
+	protected void setVariableFalse(final T pair) {
 		mSolver.addHornClause((T[]) new Object[] { pair }, null);
 	}
 
