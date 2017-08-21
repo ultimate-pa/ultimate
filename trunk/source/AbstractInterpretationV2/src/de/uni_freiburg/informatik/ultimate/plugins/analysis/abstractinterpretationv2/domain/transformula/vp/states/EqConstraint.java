@@ -321,6 +321,22 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 		return mPartialArrangement.getEqualityStatus(node1, node2) == EqualityStatus.NOT_EQUAL;
 	}
 
+	public boolean areEqual(final FUNCTION func1, final FUNCTION func2) {
+		if (!mPartialArrangement.hasFunction(func1)
+		 || !mPartialArrangement.hasFunction(func2)) {
+			return false;
+		}
+		return mPartialArrangement.getEqualityStatus(func1, func2) == EqualityStatus.NOT_EQUAL;
+	}
+
+	public boolean areUnequal(final FUNCTION func1, final FUNCTION func2) {
+		if (!mPartialArrangement.hasFunction(func1)
+		 || !mPartialArrangement.hasFunction(func2)) {
+			return false;
+		}
+		return mPartialArrangement.getEqualityStatus(func1, func2) == EqualityStatus.EQUAL;
+	}
+
 	public Term getTerm(final Script script) {
 		assert mIsFrozen : "not yet frozen, term may not be final..";
 		if (mTerm != null) {
@@ -365,14 +381,6 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 		result.addAll(functionEqualities);
 		result.addAll(functionDisequalities);
 		return result;
-	}
-
-	public boolean areEqual(final FUNCTION func1, final FUNCTION func2) {
-		return mPartialArrangement.getEqualityStatus(func1, func2) == EqualityStatus.NOT_EQUAL;
-	}
-
-	public boolean areUnequal(final FUNCTION func1, final FUNCTION func2) {
-		return mPartialArrangement.getEqualityStatus(func1, func2) == EqualityStatus.EQUAL;
 	}
 
 	/**
@@ -546,7 +554,6 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 	public void addFunction(final FUNCTION func) {
 		assert !mIsFrozen;
 		mPartialArrangement.getRepresentativeAndAddFunctionIfNeeded(func);
-
 	}
 
 	private NODE getWeqVariableNodeForDimension(final int dimensionNumber, final Sort sort) {

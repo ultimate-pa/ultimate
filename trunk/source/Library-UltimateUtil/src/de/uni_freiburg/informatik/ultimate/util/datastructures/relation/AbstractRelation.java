@@ -152,6 +152,7 @@ public abstract class AbstractRelation<D, R, MAP extends Map<D, Set<R>>> impleme
 	 * @param replacement
 	 */
 	public void replaceDomainElement(final D element, final D replacement) {
+		assert replacement != null;
 		final Set<R> image = mMap.get(element);
 
 		if (image == null) {

@@ -26,12 +26,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements;
 
-import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSort;
 
 /**
@@ -41,13 +38,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDim
  */
 public class EqFunction implements IEqFunctionIdentifier<EqNode, EqFunction> {
 
-	@Deprecated
-	private IProgramVarOrConst mPvoc;
 
 	private final Term mTerm;
-
-	@Deprecated
-	private boolean mIsVersioned;
 
 	private final EqNodeAndFunctionFactory mFactory;
 
@@ -60,25 +52,6 @@ public class EqFunction implements IEqFunctionIdentifier<EqNode, EqFunction> {
 //		mArity = mTerm.getSort().getArguments().length - 1;
 		mArity = new MultiDimensionalSort(mTerm.getSort()).getDimension();
 	}
-
-	public boolean isGlobal() {
-		return mPvoc.isGlobal();
-	}
-
-	public String getProcedure() {
-		if (isGlobal()) {
-			return null;
-		}
-
-		if (mPvoc instanceof IProgramVar) {
-			return ((IProgramVar) mPvoc).getProcedure();
-		}
-
-		assert false : "how to determine the procedure of a non-global constant?? -- if that makes sense..";
-		return null;
-	}
-
-
 
 	@Override
 	public Term getTerm() {
@@ -95,10 +68,6 @@ public class EqFunction implements IEqFunctionIdentifier<EqNode, EqFunction> {
 		return mFactory.constructRenamedEqFunction(this, substitutionMapping);
 	}
 
-	public IProgramVarOrConst getPvoc() {
-		return mPvoc;
-	}
-
 	public String getFunctionName() {
 //		assert false : "what's the right string here?";
 //		return mPvoc.toString();
@@ -113,42 +82,6 @@ public class EqFunction implements IEqFunctionIdentifier<EqNode, EqFunction> {
 	@Override
 	public String toString() {
 		return mTerm.toString();
-	}
-
-	@Override
-	@Deprecated
-	public boolean dependsOn(final EqFunction f) {
-		return this.equals(f);
-	}
-
-	@Override
-	@Deprecated
-	public boolean isStore() {
-		return false;
-	}
-
-	@Override
-	@Deprecated
-	public EqFunction getFunction() {
-		throw new AssertionError("check isStore() first");
-	}
-
-	@Override
-	@Deprecated
-	public List<EqNode> getStoreIndices() {
-		throw new AssertionError("check isStore() first");
-	}
-
-	@Override
-	@Deprecated
-	public EqNode getValue() {
-		throw new AssertionError("check isStore() first");
-	}
-
-	@Override
-	@Deprecated
-	public EqFunction getInnerMostFunction() {
-		return this;
 	}
 
 }
