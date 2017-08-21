@@ -85,7 +85,7 @@ public class ThreeValuedEquivalenceRelation<E> {
 
 	public void removeElement(final E elem) {
 		final E rep = mUnionFind.find(elem);
-		final Set<E> equivalenceClass = mUnionFind.getEquivalenceClassMembers(elem);
+		final Set<E> equivalenceClassCopy = new HashSet<>(mUnionFind.getEquivalenceClassMembers(elem));
 		mUnionFind.remove(elem);
 
 		/*
@@ -96,7 +96,8 @@ public class ThreeValuedEquivalenceRelation<E> {
 			return;
 		}
 		// elem was the representative of its equivalence class --> we need to update mDistinctElements
-		if (equivalenceClass.isEmpty()) {
+		equivalenceClassCopy.remove(elem);
+		if (equivalenceClassCopy.isEmpty()) {
 			// elem was the only element in its equivalence class --> just remove it from disequalities
 			mDisequalities.removeDomainElement(elem);
 			mDisequalities.removeRangeElement(elem);
@@ -104,7 +105,8 @@ public class ThreeValuedEquivalenceRelation<E> {
 			assert rep == elem;
 			// elem was the representative of its equivalence class, but not the only element
 			// --> replace it by the new representative in mDistinctElements
-			final E newRep = equivalenceClass.iterator().next();
+			final E newRep = mUnionFind.find(equivalenceClassCopy.iterator().next());
+			assert newRep != null;
 			mDisequalities.replaceDomainElement(elem, newRep);
 			mDisequalities.replaceRangeElement(elem, newRep);
 		}
