@@ -65,11 +65,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  *
  */
 public class VPDomainHelpers {
-	
+
 	public static Map<TermVariable, IProgramVar> computeProgramVarMappingFromTransFormula(final TransFormula tf) {
 		return computeProgramVarMappingFromInVarOutVarMappings(tf.getInVars(), tf.getOutVars());
 	}
-	
+
 	public static Map<TermVariable, IProgramVar> computeProgramVarMappingFromInVarOutVarMappings(
 			final Map<IProgramVar, TermVariable> map1, final Map<IProgramVar, TermVariable> map2) {
 		final Map<TermVariable, IProgramVar> result = new HashMap<>();
@@ -81,8 +81,8 @@ public class VPDomainHelpers {
 		}
 		return result;
 	}
-	
-	public static Map<Term, Term> computeNormalizingSubstitution(final Map<IProgramVar, TermVariable> map1, 
+
+	public static Map<Term, Term> computeNormalizingSubstitution(final Map<IProgramVar, TermVariable> map1,
 			final Map<IProgramVar, TermVariable> map2) {
 		return computeNormalizingSubstitution(computeProgramVarMappingFromInVarOutVarMappings(map1, map2));
 	}
@@ -90,7 +90,7 @@ public class VPDomainHelpers {
 	public static Map<Term, Term> computeNormalizingSubstitution(final TransFormula tf) {
 		return computeNormalizingSubstitution(computeProgramVarMappingFromTransFormula(tf));
 	}
-	
+
 	/**
 	 * compute a substitution mapping that translates the TermVariables in a Term to the corresponding default
 	 * TermVariable of a IProgramVar. (TODO: not so happy with everything that is connected to this..)
@@ -105,7 +105,7 @@ public class VPDomainHelpers {
 		}
 		return substitionMap;
 	}
-	
+
 	public static IProgramVar getProgramVar(final TermVariable newArray, final Map<IProgramVar, TermVariable> map) {
 		for (final Entry<IProgramVar, TermVariable> en : map.entrySet()) {
 			if (en.getValue() == newArray) {
@@ -114,7 +114,7 @@ public class VPDomainHelpers {
 		}
 		return null;
 	}
-	
+
 	/**
 	 * Only keeps those entries in the given map whose value is a free variable in the given Term.
 	 */
@@ -156,7 +156,7 @@ public class VPDomainHelpers {
 			return null;
 		}
 	}
-	
+
 	public static Map<IProgramVar, TermVariable> projectToVars(final Map<IProgramVar, TermVariable> toBeProjected,
 			final Set<IProgramVar> projection) {
 		final Map<IProgramVar, TermVariable> result = new HashMap<>();
@@ -167,7 +167,7 @@ public class VPDomainHelpers {
 		}
 		return result;
 	}
-	
+
 	public static InOutStatusOfStateId getInOutStatusOfPvoc(final IProgramVarOrConst function, final TransFormula tf) {
 		InOutStatusOfStateId functionInOutStatus;
 		if (function instanceof IProgramVarOrConst) {
@@ -182,14 +182,14 @@ public class VPDomainHelpers {
 	/**
 	 * For a given IProgramVar pv and a TransFormula tf, computes whether pv is only an InVar, only an outVar, an update
 	 * or a through (e.g. used in an assume) or does not occur in tf.
-	 * 
+	 *
 	 * @param pvoc
 	 * @param tf
 	 */
 	public static InOutStatusOfStateId computeInOutStatus(final IProgramVar pv, final TransFormula tf) {
 		final boolean isIn = tf.getInVars().containsKey(pv);
 		final boolean isOut = tf.getOutVars().containsKey(pv);
-		
+
 		if (isIn && isOut) {
 			if (tf.getInVars().get(pv) == tf.getOutVars().get(pv)) {
 				return InOutStatusOfStateId.THROUGH;
@@ -208,14 +208,14 @@ public class VPDomainHelpers {
 
 	/**
 	 * in out status of a node identifier in a "normal" state (not transition state)
-	 * 
+	 *
 	 * @author alex
 	 *
 	 */
 	public enum InOutStatusOfStateId {
 		IN, OUT, THROUGH, UPDATE, NONE;
 	}
-	
+
 	/**
 	 * Returns a map that is same as the given map except that, if present, the given IProgramVar's entry has been
 	 * removed.
@@ -240,13 +240,13 @@ public class VPDomainHelpers {
 	 * @return the cross product, null if there was a timeout
 	 */
 	public static <T> Set<List<T>> computeCrossProduct(final List<Set<T>> nodesWithSideConditions,
-			IUltimateServiceProvider services) {
-		
+			final IUltimateServiceProvider services) {
+
 		Set<List<T>> result = new HashSet<>();
 		result.add(new ArrayList<>());
 		for (final Set<T> nwscs : nodesWithSideConditions) {
 			final Set<List<T>> newResult = new HashSet<>();
-			
+
 			// check timeout
 			if (!services.getProgressMonitorService().continueProcessing()) {
 				return null;
@@ -265,21 +265,21 @@ public class VPDomainHelpers {
 		}
 		return result;
 	}
-	
+
 	public static Map<IProgramVar, TermVariable> projectToTermAndVars(final Map<IProgramVar, TermVariable> varMapping,
 			final Term projectionTerm, final Set<IProgramVar> projectionVars) {
 		return projectToTerm(projectToVars(varMapping, projectionVars), projectionTerm);
 	}
-	
-	public static <T> Set<T> intersect(Set<T> s1, Set<T> s2) {
+
+	public static <T> Set<T> intersect(final Set<T> s1, final Set<T> s2) {
 		final Set<T> result = new HashSet<>(s1);
 		result.retainAll(s2);
 		return Collections.unmodifiableSet(result);
 	}
 
-	public static <K, V> boolean imageIsNeverNull(Map<K, V> map) {
-		for (Entry<K, V> en : map.entrySet()) {
-			
+	public static <K, V> boolean imageIsNeverNull(final Map<K, V> map) {
+		for (final Entry<K, V> en : map.entrySet()) {
+
 			if (en.getValue() == null) {
 				return false;
 			}
@@ -287,43 +287,46 @@ public class VPDomainHelpers {
 		return true;
 	}
 
-	public static <ACTION extends IIcfgTransition<IcfgLocation>, 
-		NODE extends IEqNodeIdentifier<NODE, FUNCTION>, 
-		FUNCTION extends IEqFunctionIdentifier<NODE, FUNCTION>> boolean 
+	public static <ACTION extends IIcfgTransition<IcfgLocation>,
+		NODE extends IEqNodeIdentifier<NODE, FUNCTION>,
+		FUNCTION extends IEqFunctionIdentifier<NODE, FUNCTION>> boolean
 			constraintFreeOfVars(final Collection<TermVariable> varsToProjectAway,
-					final EqConstraint<ACTION, NODE, FUNCTION> unfrozen, 
+					final EqConstraint<ACTION, NODE, FUNCTION> unfrozen,
 					final Script script) {
 		if (varsToProjectAway.isEmpty()) {
 			return true;
 		}
-		if (varsToProjectAway.stream().map(tv -> 
+		if (varsToProjectAway.stream().map(tv ->
 			unfrozen.getAllNodes().stream()
-				.anyMatch(node -> 
+				.anyMatch(node ->
 					Arrays.asList(node.getTerm().getFreeVars()).contains(tv)))
 				.reduce((a, b) -> a || b)
 			.get()) {
+			assert false;
 			return false;
 		}
-		if (varsToProjectAway.stream().map(tv -> 
+		if (varsToProjectAway.stream().map(tv ->
 			unfrozen.getAllFunctions().stream()
-				.anyMatch(func -> 
+				.anyMatch(func ->
 					Arrays.asList(func.getTerm().getFreeVars()).contains(tv)))
 				.reduce((a, b) -> a || b)
 			.get()) {
+			assert false;
 			return false;
 		}
 		if (script != null && Arrays.asList(unfrozen.getTerm(script)
 				.getFreeVars()).stream().anyMatch(fv -> varsToProjectAway.contains(fv))) {
+			assert false;
 			return false;
 		}
 		return true;
 	}
 
-	public static <NODE extends IEqNodeIdentifier<NODE, FUNCTION>, 
-		FUNCTION extends IEqFunctionIdentifier<NODE, FUNCTION>> boolean 
-			representativePointersAreConsistent(Collection<EqGraphNode<NODE, FUNCTION>> values) {
-		for (EqGraphNode<NODE, FUNCTION> eqgn : values) {
-			for (EqGraphNode<NODE, FUNCTION> rr : eqgn.getReverseRepresentative()) {
+	public static <NODE extends IEqNodeIdentifier<NODE, FUNCTION>,
+		FUNCTION extends IEqFunctionIdentifier<NODE, FUNCTION>> boolean
+			representativePointersAreConsistent(final Collection<EqGraphNode<NODE, FUNCTION>> values) {
+		for (final EqGraphNode<NODE, FUNCTION> eqgn : values) {
+			for (final EqGraphNode<NODE, FUNCTION> rr : eqgn.getReverseRepresentative()) {
 				if (rr.getRepresentative() != eqgn) {
 					return false;
 				}
@@ -335,18 +338,18 @@ public class VPDomainHelpers {
 		return true;
 	}
 
-	public static Term normalizeTerm(Term term, TransFormula tf, ManagedScript mgdScript) {
+	public static Term normalizeTerm(final Term term, final TransFormula tf, final ManagedScript mgdScript) {
 		final Map<Term, Term> subs = computeNormalizingSubstitution(tf);
 		return new Substitution(mgdScript, subs).transform(term);
 	}
 
-	public static Term normalizeTerm(Term t, Map<IProgramVar, TermVariable> newInVars,
-			Map<IProgramVar, TermVariable> newOutVars, ManagedScript mgdScript) {
+	public static Term normalizeTerm(final Term t, final Map<IProgramVar, TermVariable> newInVars,
+			final Map<IProgramVar, TermVariable> newOutVars, final ManagedScript mgdScript) {
 		final Map<Term, Term> subs = computeNormalizingSubstitution(newInVars, newOutVars);
 		return new Substitution(mgdScript, subs).transform(t);
 	}
 
-	public static List<Term> normalizeArrayIndex(ArrayIndex index, TransFormula tf, ManagedScript script) {
+	public static List<Term> normalizeArrayIndex(final ArrayIndex index, final TransFormula tf, final ManagedScript script) {
 		return index.stream()
 				.map(t -> normalizeTerm(t, tf, script))
 				.collect(Collectors.toList());

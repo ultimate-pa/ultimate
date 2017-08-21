@@ -542,7 +542,11 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 
 	}
 
-	public void removeFunction(final FUNCTION func) {
+	public boolean removeFunction(final FUNCTION func) {
+		if (!hasFunction(func)) {
+			return false;
+		}
+
 		// remove from the function equivalence relation
 		mFunctionTVER.removeElement(func);
 
@@ -554,9 +558,14 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 		mFunctionToRepresentativeToCcPars.remove(func);
 		mFunctionToRepresentativeToCcChildren.remove(func);
 		mFunctionToFuncApps.removeDomainElement(func);
+		return true;
 	}
 
-	public void removeElement(final ELEM elem) {
+	public boolean removeElement(final ELEM elem) {
+		if (!hasElement(elem)) {
+			return false;
+		}
+
 		if (mElementTVER.isRepresentative(elem)) {
 			for (final FUNCTION func : mFunctionTVER.getAllElements()) {
 				mFunctionToRepresentativeToCcPars.get(func).remove(elem);
@@ -570,7 +579,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 		for (final ELEM parent : mElementToParents.getImage(elem)) {
 			removeElement(parent);
 		}
-
+		return true;
 	}
 
 	public CongruenceClosure<ELEM, FUNCTION> join(final CongruenceClosure<ELEM, FUNCTION> other) {
@@ -1064,5 +1073,18 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 	public boolean hasFunction(final FUNCTION elem) {
 		return getAllFunctions().contains(elem);
 	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		// TODO Auto-generated method stub
+		return super.equals(obj);
+	}
+
+	@Override
+	public int hashCode() {
+		// TODO Auto-generated method stub
+		return super.hashCode();
+	}
+
 
 }
