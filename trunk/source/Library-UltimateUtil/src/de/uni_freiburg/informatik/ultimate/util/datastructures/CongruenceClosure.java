@@ -570,8 +570,14 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 
 		if (mElementTVER.isRepresentative(elem)) {
 			for (final FUNCTION func : mFunctionTVER.getAllElements()) {
-				mFunctionToRepresentativeToCcPars.get(func).remove(elem);
-				mFunctionToRepresentativeToCcChildren.get(func).remove(elem);
+				final Map<ELEM, Set<ELEM>> ccpars = mFunctionToRepresentativeToCcPars.get(func);
+				if (ccpars != null) {
+					ccpars.remove(elem);
+				}
+				final Map<ELEM, Set<List<ELEM>>> ccchildren = mFunctionToRepresentativeToCcChildren.get(func);
+				if (ccchildren != null) {
+					ccchildren.remove(elem);
+				}
 			}
 		}
 		mFunctionToFuncApps.removeRangeElement(elem);
