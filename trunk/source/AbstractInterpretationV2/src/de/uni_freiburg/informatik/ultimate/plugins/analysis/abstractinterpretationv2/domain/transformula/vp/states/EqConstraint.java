@@ -265,10 +265,12 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 
 	private void havoc(final TermVariable var) {
 		assert !mIsFrozen;
+		final CongruenceClosure<NODE, FUNCTION> oldGroundPartialArrangement =
+				new CongruenceClosure<>(mPartialArrangement);
 		for (final NODE elem : mPartialArrangement.getAllElements().stream()
 				.filter(e -> arrayContains(e.getTerm().getFreeVars(), var)).collect(Collectors.toList())) {
 			mPartialArrangement.removeElement(elem);
-			mWeakEquivalenceGraph.projectElement(elem);
+//			mWeakEquivalenceGraph.projectElement(elem, oldGroundPartialArrangement.projectToElement(elem));//TODO
 		}
 		for (final FUNCTION func : mPartialArrangement.getAllFunctions().stream()
 				.filter(f -> arrayContains(f.getTerm().getFreeVars(), var)).collect(Collectors.toList())) {
@@ -614,7 +616,7 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 			assert sanityCheck();
 		}
 
-		public void projectElement(final NODE elem) {
+		public void projectElement(final NODE elem, final CongruenceClosure<NODE, FUNCTION> groundPaProjectedToElem) {
 			for (final Entry<Doubleton<FUNCTION>, WeakEquivalenceEdgeLabel> en : mWeakEquivalenceEdges.entrySet()) {
 				en.getValue().projectElement(elem);
 			}
@@ -791,7 +793,7 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 				edgeLabel = new WeakEquivalenceEdgeLabel(func1.getArity());
 				mWeakEquivalenceEdges.put(sourceAndTarget, edgeLabel);
 			}
-			final List<CongruenceClosure<NODE, FUNCTION>> newConstraint = computeWeqConstraintForIndex(nodes);
+			final CongruenceClosure<NODE, FUNCTION> newConstraint = computeWeqConstraintForIndex(nodes);
 			final boolean stateChanged = edgeLabel.addConstraint(newConstraint);
 			assert sanityCheck();
 			return stateChanged;
@@ -807,13 +809,11 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 		 * @param nodes
 		 * @return
 		 */
-		private List<CongruenceClosure<NODE, FUNCTION>> computeWeqConstraintForIndex(final List<NODE> nodes) {
-			final List<CongruenceClosure<NODE, FUNCTION>> result = new ArrayList<>(nodes.size());
+		private CongruenceClosure<NODE, FUNCTION> computeWeqConstraintForIndex(final List<NODE> nodes) {
+			final CongruenceClosure<NODE, FUNCTION> result = new CongruenceClosure<>();
 			for (int i = 0; i < nodes.size(); i++) {
 				final NODE ithNode = nodes.get(i);
-				final CongruenceClosure<NODE, FUNCTION> newCC = new CongruenceClosure<>();
-				newCC.reportEquality(mFactory.getWeqVariableNodeForDimension(i, ithNode.getTerm().getSort()), ithNode);
-				result.add(newCC);
+				result.reportEquality(mFactory.getWeqVariableNodeForDimension(i, ithNode.getTerm().getSort()), ithNode);
 			}
 			return result;
 		}
@@ -983,19 +983,15 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 
 			private final int mArityOfArrays;
 
-			private final List<List<CongruenceClosure<NODE, FUNCTION>>> mLabel;
+			private final List<CongruenceClosure<NODE, FUNCTION>> mLabel;
 
 			/**
-			 * Constructs an empty edge. (labeled ("true", ..., "true"))
+			 * Constructs an empty edge. (labeled "true")
 			 */
 			public WeakEquivalenceEdgeLabel(final int arity) {
 				mArityOfArrays = arity;
 				mLabel = new ArrayList<>();
-				final List<CongruenceClosure<NODE, FUNCTION>> dimensionLabels = new ArrayList<>(arity);
-				mLabel.add(dimensionLabels);
-				for (int i = 0; i < arity; i++) {
-					dimensionLabels.add(new CongruenceClosure<>());
-				}
+				mLabel.add(new CongruenceClosure<>());
 			}
 
 			/**
@@ -1006,16 +1002,12 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 			public WeakEquivalenceEdgeLabel(final WeakEquivalenceEdgeLabel value) {
 				mArityOfArrays = value.mArityOfArrays;
 				mLabel = new ArrayList<>(value.mLabel.size());
-				for (final List<CongruenceClosure<NODE, FUNCTION>> dimLabels : value.mLabel) {
-					final ArrayList<CongruenceClosure<NODE, FUNCTION>> newDimlabels = new ArrayList<>(dimLabels.size());
-					mLabel.add(newDimlabels);
-					for (final CongruenceClosure<NODE, FUNCTION> pa : dimLabels) {
-						newDimlabels.add(new CongruenceClosure<>(pa));
-					}
+				for (final CongruenceClosure<NODE, FUNCTION> pa : value.mLabel) {
+					mLabel.add(new CongruenceClosure<>(pa));
 				}
 			}
 
-			public WeakEquivalenceEdgeLabel(final List<List<CongruenceClosure<NODE, FUNCTION>>> newLabelContents,
+			public WeakEquivalenceEdgeLabel(final List<CongruenceClosure<NODE, FUNCTION>> newLabelContents,
 					final int arityOfArrays) {
 				mArityOfArrays = arityOfArrays;
 				mLabel = newLabelContents;
@@ -1023,22 +1015,17 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 
 			/**
 			 * Computes a DNF from this label as a List of conjunctive Terms.
-			 *    The disjunction has the form \/_dim \/_s pa_dim_s
-			 *    I.e. it has two range dimensions:
-			 *  the array's dimensions and for each of these a list of partial arrangements (like qi = x \/ qi = y)
+			 *    The disjunction has the form \/_i pa_i
 			 *
 			 * @param script
 			 * @return a DNF as a List of conjunctive Terms.
 			 */
 			public List<Term> toDNF(final Script script) {
 				final List<Term> result = new ArrayList<>();
-				for (int i = 0; i < mArityOfArrays; i++) {
-					final List<CongruenceClosure<NODE, FUNCTION>> dimensionPas = mLabel.get(i);
-					for (final CongruenceClosure<NODE, FUNCTION> cc : dimensionPas) {
+				for (final CongruenceClosure<NODE, FUNCTION> cc : mLabel) {
 						final List<Term> cube = partialArrangementToCube(script, cc);
 						final Term cubeTerm = SmtUtils.and(script, cube);
 						result.add(cubeTerm);
-					}
 				}
 				return result;
 			}
@@ -1050,25 +1037,21 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 			 *
 			 *  (we conjoin the new constraint, thus have to meet every element in the dimension's set)
 			 * @param newConstraint
-			 * @return
+			 * @return true iff the operation made a change
 			 */
-			public boolean addConstraint(final List<CongruenceClosure<NODE, FUNCTION>> newConstraint) {
-				for (int dim = 0; dim < mArityOfArrays; dim++) {
-					final List<CongruenceClosure<NODE, FUNCTION>> newLabel = new ArrayList<>();
-					for (final CongruenceClosure<NODE, FUNCTION> pa : mLabel.get(dim)) {
-						newLabel.add(pa.meet(newConstraint.get(dim)));
-					}
-					mLabel.set(dim, newLabel);
+			public boolean addConstraint(final CongruenceClosure<NODE, FUNCTION> newConstraint) {
+				// TODO is it worth it to check, if the state has changed by this operation??
+				final boolean stateChanged = true;
+				for (int i = 0; i < mLabel.size(); i++) {
+					mLabel.set(i, mLabel.get(i).meet(newConstraint));
 				}
-				return false;
+				return stateChanged;
 			}
 
 			public void renameVariables(final Map<Term, Term> substitutionMapping) {
-				for (final List<CongruenceClosure<NODE, FUNCTION>> disjunct : mLabel) {
-					for (final CongruenceClosure<NODE, FUNCTION> dimensionEntry : disjunct) {
-						dimensionEntry.transformElementsAndFunctions(node -> node.renameVariables(substitutionMapping),
-								func -> func.renameVariables(substitutionMapping));
-					}
+				for (final CongruenceClosure<NODE, FUNCTION> dimensionEntry : mLabel) {
+					dimensionEntry.transformElementsAndFunctions(node -> node.renameVariables(substitutionMapping),
+							func -> func.renameVariables(substitutionMapping));
 				}
 			}
 
@@ -1079,44 +1062,39 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 			 */
 			public Set<NODE> getAppearingNodes() {
 				final Set<NODE> res = new HashSet<>();
-				mLabel.forEach(dim -> dim.forEach(pa -> res.addAll(pa.getAllElements())));
+				mLabel.forEach(pa -> res.addAll(pa.getAllElements()));
 				return res;
 			}
 
 			public Set<FUNCTION> getAppearingFunctions() {
 				final Set<FUNCTION> res = new HashSet<>();
-				mLabel.forEach(dim -> dim.forEach(pa -> res.addAll(pa.getAllFunctions())));
+				mLabel.forEach(pa -> res.addAll(pa.getAllFunctions()));
 				return res;
 			}
 
 			public boolean isInconsistentWith(final CongruenceClosure<NODE, FUNCTION> newPartialArrangement) {
-				// algorithmic notice: it's all a big disjunction, so we just have to look for one consistent disjunct..
-				for (int dim = 0; dim < mArityOfArrays; dim++) {
-					for (final CongruenceClosure<NODE, FUNCTION> pa : mLabel.get(dim)) {
-						if (!pa.meet(mPartialArrangement).isInconsistent()) {
-							return false;
-						}
+				// one consistent disjunct is a counterexample to inconsistency..
+				for (final CongruenceClosure<NODE, FUNCTION> pa : mLabel) {
+					if (!pa.meet(mPartialArrangement).isInconsistent()) {
+						return false;
 					}
 				}
 				return true;
 			}
 
 			public WeakEquivalenceEdgeLabel meet(final WeakEquivalenceEdgeLabel correspondingWeqEdgeInOther) {
-				final List<List<CongruenceClosure<NODE, FUNCTION>>> newLabelContents = new ArrayList<>();
-				for (int dim = 0; dim < mArityOfArrays; dim++) {
-					final ArrayList<CongruenceClosure<NODE, FUNCTION>> newLabelForDim = new ArrayList<>();
-					newLabelContents.add(newLabelForDim);
+				final ArrayList<CongruenceClosure<NODE, FUNCTION>> newLabelContent = new ArrayList<>();
 
-					final List<List<CongruenceClosure<NODE, FUNCTION>>> li = new ArrayList<>(2);
-					li.add(mLabel.get(dim));
-					li.add(correspondingWeqEdgeInOther.mLabel.get(dim));
-					final List<List<CongruenceClosure<NODE, FUNCTION>>> cp = CrossProducts.crossProduct(li);
-					for (final List<CongruenceClosure<NODE, FUNCTION>> pair : cp) {
-						assert pair.size() == 2;
-						newLabelForDim.add(pair.get(0).meet(pair.get(1)));
-					}
+				final List<List<CongruenceClosure<NODE, FUNCTION>>> li = new ArrayList<>(2);
+				li.add(mLabel);
+				li.add(correspondingWeqEdgeInOther.mLabel);
+				final List<List<CongruenceClosure<NODE, FUNCTION>>> cp = CrossProducts.crossProduct(li);
+
+				for (final List<CongruenceClosure<NODE, FUNCTION>> pair : cp) {
+					assert pair.size() == 2;
+					newLabelContent.add(pair.get(0).meet(pair.get(1)));
 				}
-				return new WeakEquivalenceEdgeLabel(newLabelContents, mArityOfArrays);
+				return new WeakEquivalenceEdgeLabel(newLabelContent, mArityOfArrays);
 			}
 
 			/**
@@ -1127,18 +1105,16 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 			 * @return
 			 */
 			public boolean isStrongerThan(final WeakEquivalenceEdgeLabel other) {
-				for (int dim = 0; dim < mArityOfArrays; dim++) {
-					for (final CongruenceClosure<NODE, FUNCTION> paThis : mLabel.get(dim)) {
-						boolean existsWeaker = false;
-						for (final CongruenceClosure<NODE, FUNCTION> paOther : other.mLabel.get(dim)) {
-							if (paThis.isStrongerThan(paOther)) {
-								existsWeaker = true;
-								break;
-							}
+				for (final CongruenceClosure<NODE, FUNCTION> paThis : mLabel) {
+					boolean existsWeaker = false;
+					for (final CongruenceClosure<NODE, FUNCTION> paOther : other.mLabel) {
+						if (paThis.isStrongerThan(paOther)) {
+							existsWeaker = true;
+							break;
 						}
-						if (!existsWeaker) {
-							return false;
-						}
+					}
+					if (!existsWeaker) {
+						return false;
 					}
 				}
 				return true;
@@ -1151,24 +1127,20 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 			 * @return
 			 */
 			public WeakEquivalenceEdgeLabel union(final WeakEquivalenceEdgeLabel other) {
-				final List<List<CongruenceClosure<NODE, FUNCTION>>> newLabelContents = new ArrayList<>();
-				for (int dim = 0; dim < mArityOfArrays; dim++) {
-					// using a set to eliminate duplicates
-					final Set<CongruenceClosure<NODE, FUNCTION>> newPasForDimension = new HashSet<>();
-					newPasForDimension.addAll(this.mLabel.get(dim));
-					newPasForDimension.addAll(other.mLabel.get(dim));
-					newLabelContents.add(new ArrayList<>(newPasForDimension));
-				}
-				return new WeakEquivalenceEdgeLabel(newLabelContents, mArityOfArrays);
+				// using a set to eliminate duplicates
+				final Set<CongruenceClosure<NODE, FUNCTION>> newPasForDimension = new HashSet<>();
+				newPasForDimension.addAll(this.mLabel);
+				newPasForDimension.addAll(other.mLabel);
+				return new WeakEquivalenceEdgeLabel(new ArrayList<>(newPasForDimension), mArityOfArrays);
 			}
 
 
 			public void projectElement(final NODE elem) {
-				mLabel.forEach(dim -> dim.forEach(pa -> pa.removeElement(elem)));
+				mLabel.forEach(pa -> pa.removeElement(elem));
 			}
 
 			public void projectFunction(final FUNCTION func) {
-				mLabel.forEach(dim -> dim.forEach(pa -> pa.removeFunction(func)));
+				mLabel.forEach(pa -> pa.removeFunction(func));
 			}
 
 			@Override

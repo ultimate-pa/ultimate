@@ -108,6 +108,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 	}
 
 
+	// deprecated because other constructors are used instead -- try using others before reactivating this
+	@Deprecated
 	public CongruenceClosure(final UnionFind<ELEM> newElemPartition, final UnionFind<FUNCTION> newFunctionPartition,
 			final HashRelation<ELEM, ELEM> newElemDisequalities,
 			final HashRelation<FUNCTION, FUNCTION> newFunctionDisequalities) {
@@ -1103,6 +1105,20 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 		// TODO Auto-generated method stub
 		return super.hashCode();
 	}
+
+//	/**
+//	 * Returns a new CongruenceClosure which contains only those constraints in this CongruenceClosure that constrain
+//	 *  the given element.
+//	 * @param elem
+//	 * @return
+//	 */
+//	public CongruenceClosure<ELEM, FUNCTION> projectToElement(final ELEM elem) {
+//		final ThreeValuedEquivalenceRelation<ELEM> newElemPartition;
+//		final ThreeValuedEquivalenceRelation<FUNCTION> newFunctionPartition =
+//				new ThreeValuedEquivalenceRelation<>(this.mFunctionTVER);
+//		// TODO Auto-generated method stub
+//		return new CongruenceClosure<>(newElemPartition, newFunctionPartition);
+//	}
 
 
 }
