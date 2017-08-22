@@ -54,7 +54,6 @@ public class EqDisjunctiveConstraint<
 				ACTION extends IIcfgTransition<IcfgLocation>,
 				NODE extends IEqNodeIdentifier<NODE, FUNCTION>,
 				FUNCTION extends IEqFunctionIdentifier<NODE, FUNCTION>>  {
-//     			 	extends AbstractMultiState<EqConstraint<ACTION, NODE, FUNCTION>, IProgramVarOrConst>{
 
 	Set<EqConstraint<ACTION, NODE, FUNCTION>> mConstraints;
 
@@ -71,7 +70,6 @@ public class EqDisjunctiveConstraint<
 	}
 
 	public boolean isBottom() {
-//		return mConstraints.stream().map(conjConstraint -> conjConstraint.isBottom()).reduce((a, b) -> a && b).get();
 		return mConstraints.isEmpty();
 	}
 
@@ -126,12 +124,7 @@ public class EqDisjunctiveConstraint<
 //		 *  disjunct-state/constraint talks about.
 		  // EDIT: the variables are now determined externally (by the oldstate of the post operator..)
 //		 */
-//		final IIcfgSymbolTable symbolTable = mFactory.getEqStateFactory().getSymbolTable();
-//		final Set<IProgramVarOrConst> allVariables = new HashSet<>();
-//		mConstraints.stream().forEach(cons -> allVariables.addAll(cons.getPvocs(symbolTable)));
-
 		return mConstraints.stream()
-//			.map(cons -> mFactory.getEqStateFactory().getEqState(cons, allVariables))
 			.map(cons -> mFactory.getEqStateFactory().getEqState(cons, variablesThatTheFrameworkLikesToSee))
 			.collect(Collectors.toList());
 	}
@@ -166,46 +159,6 @@ public class EqDisjunctiveConstraint<
 		if (mConstraints.isEmpty()) {
 			return "EmptyDisjunction/False";
 		}
-
-//		final StringBuilder sb = new StringBuilder();
-//		for (EqConstraint<ACTION, NODE, FUNCTION> c : mConstraints) {
-//			sb.append(str)
-//		}
 		return "\\/ " + mConstraints.toString();
 	}
-
-//	/**
-//	 * Only does the cast, other than that just calls @see AbstractMultistate.union
-//	 *
-//	 */
-//	@Override
-//	public EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> union(
-//			AbstractMultiState<EqConstraint<ACTION, NODE, FUNCTION>, IProgramVarOrConst> other) {
-//		assert other instanceof EqDisjunctiveConstraint;
-//		return (EqDisjunctiveConstraint<ACTION, NODE, FUNCTION>) super.union(other);
-//	}
-
-
-
-//	/**
-//	 * Create a new {@link AbstractMultiState} by applying some function to each pair of states from this
-//	 * {@link AbstractMultiState} and some other {@link AbstractMultiState} (i.e., the first argument is a state from
-//	 * this instance). If the resulting set of states does not differ from this state, return this state. If it differs,
-//	 * create a new {@link AbstractMultiState} that retains as many as <code>maxSize</code> disjunctive states.
-//	 */
-//	private AbstractMultiState<STATE, VARDECL> crossProduct(final BiFunction<STATE, STATE, STATE> funCreateState,
-//			final AbstractMultiState<STATE, VARDECL> otherMultiState, final int maxSize) {
-//		final Set<STATE> newSet = newSet(mStates.size() * otherMultiState.mStates.size());
-//		for (final STATE localState : mStates) {
-//			for (final STATE otherState : otherMultiState.mStates) {
-//				newSet.add(funCreateState.apply(localState, otherState));
-//			}
-//		}
-//		if (newSet.equals(mStates)) {
-//			return this;
-//		}
-//		return new AbstractMultiState<>(maxSize, getMaximalElements(newSet));
-//	}
-
-
 }

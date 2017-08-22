@@ -145,8 +145,6 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>> implem
 			final List<EqState<ACTION>> result =
 					postConstraint.toEqStates(hierarchicalPreOrStateAfterLeaving.getVariables());
 			return result;
-//		} else if (transition instanceof Summary) {
-//			return apply(stateBeforeLeaving, transition);
 		} else if (transition instanceof IReturnAction) {
 
 			final EqPredicate<ACTION> returnPred = stateBeforeLeaving.toEqPredicate();
@@ -160,8 +158,6 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>> implem
 			final EqState<ACTION> hier = mEqConstraintFactory.getEqStateFactory().getEqState(projectedCons, hierarchicalPreOrStateAfterLeaving.getVariables());
 
 			final EqPredicate<ACTION> callPred = hier.toEqPredicate();
-//			final EqPredicate<ACTION> callPred = hierarchicalPreOrStateAfterLeaving.toEqPredicate();
-
 
 			final EqTransitionRelation<ACTION> returnTF = mTransFormulaConverter
 					.getEqTransitionRelationFromTransformula(((IReturnAction) transition).getAssignmentOfReturn());
@@ -192,19 +188,4 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>> implem
 			throw new UnsupportedOperationException();
 		}
 	}
-
-//	/**
-//	 * copied with minimal modifications from AbstractMultiState..
-//	 * used only for assertions
-//	 * @param states
-//	 * @return
-//	 */
-//	private boolean haveSameVars(final Collection<EqState<ACTION>> states) {
-//		if (states.size() <= 1) {
-//			return true;
-//		}
-//		final Set<IProgramVarOrConst> firstVars = states.iterator().next().getVariables();
-//		return states.stream().allMatch(a -> firstVars.equals(a.getVariables()));
-//	}
-
 }
