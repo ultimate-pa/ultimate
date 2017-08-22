@@ -1041,7 +1041,7 @@ public class ElimStorePlain {
 				final Term replacementSelectIndex = rawIndex2replacedIndex.get(selectIndex);
 				assert !occursIn(eliminatee, replacementSelectIndex) : "var is still there";
 				final Term indexEquality = PartialQuantifierElimination.equalityForExists(mgdScript.getScript(), quantifier, replacementStoreIndex, replacementSelectIndex);
-				final Term newSelect = mgdScript.getScript().term("select", newAuxArray, replacementStoreIndex);
+				final Term newSelect = mgdScript.getScript().term("select", newAuxArray, replacementSelectIndex);
 				final Term newValueInCell = PartialQuantifierElimination.equalityForExists(mgdScript.getScript(), quantifier, newSelect, newValue);
 				final Term indexValueConnection = constructIndexValueConnection(selectIndices, indexEqualityInformation, mgdScript,
 						rawIndex2replacedIndex, index2value, eliminatee, quantifier, selectIndex);
