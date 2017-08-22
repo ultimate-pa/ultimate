@@ -1337,8 +1337,9 @@ public final class LinearInequalityInvariantPatternProcessor
 			mSolver.setOption(":produce-unsat-cores", true);
 		}
 
+		final boolean useAlsoIntegers = mKindOfInvariant == KindOfInvariant.DANGER;
 		final Linearity linearity = mUseNonlinearConstraints ? Linearity.NONLINEAR : Linearity.LINEAR;
-		final Logics logic = ConstraintSynthesisUtils.getLogic(linearity, false);
+		final Logics logic = ConstraintSynthesisUtils.getLogic(linearity, useAlsoIntegers);
 		mSolver.setLogic(logic);
 	}
 

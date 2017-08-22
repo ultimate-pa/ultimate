@@ -140,8 +140,9 @@ public class LinearInequalityInvariantPatternProcessorFactory
 	 * @return SMT solver instance to use
 	 */
 	protected Script produceSmtSolver() {
+		final boolean useAlsoIntegers = mKindOfInvariant == KindOfInvariant.DANGER;
 		final Linearity linearity = mUseNonlinearConstraints ? Linearity.NONLINEAR : Linearity.LINEAR;
-		final Logics logic = ConstraintSynthesisUtils.getLogic(linearity, false);
+		final Logics logic = ConstraintSynthesisUtils.getLogic(linearity, useAlsoIntegers);
 
 		Script script = SolverBuilder.buildAndInitializeSolver(mServices, mStorage, SolverMode.External_DefaultMode,
 				mSolverSettings, false, false, logic.toString(), "InvariantSynthesis");

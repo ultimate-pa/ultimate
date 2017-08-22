@@ -2,27 +2,27 @@
  * Copyright (C) 2015 Jan Leike (leike@informatik.uni-freiburg.de)
  * Copyright (C) 2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE LassoRanker Library.
- * 
+ *
  * The ULTIMATE LassoRanker Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE LassoRanker Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE LassoRanker Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE LassoRanker Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE LassoRanker Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE LassoRanker Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.lassoranker;
@@ -54,28 +54,28 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 
 /**
- * Class that provides static methods for the extraction of a satisfying 
+ * Class that provides static methods for the extraction of a satisfying
  * model from an SMT solver.
- * @author Jan Leike 
+ * @author Jan Leike
  * @author Matthias Heizmann
  *
  */
 public class ModelExtractionUtils {
-	
+
 	public static final long s_randomSeed = 80085;
 
 	protected static final int s_numof_simultaneous_simplification_tests = 4;
-	
+
 	/**
 	 * Convert a constant term retrieved from a model valuation to a Rational
-	 * 
+	 *
 	 * @param t
 	 *            a term containing only +, -, *, / and numerals
 	 * @return the rational represented by the term
 	 * @throws TermException
 	 *             if an error occurred while parsing the term
 	 */
-	public static Rational const2Rational(Term t) throws TermException {
+	public static Rational const2Rational(final Term t) throws TermException {
 		if (t instanceof ApplicationTerm) {
 			final ApplicationTerm appt = (ApplicationTerm) t;
 			if (appt.getFunction().getName().equals("+")) {
@@ -123,7 +123,7 @@ public class ModelExtractionUtils {
 	/**
 	 * Extract a valuation from a script and convert ConstantTerms into
 	 * Rationals
-	 * 
+	 *
 	 * @param script
 	 * 			SMT script whose corresponding solver is in a state where
 	 * 			checkSat() was called and the result was SAT.
@@ -134,7 +134,8 @@ public class ModelExtractionUtils {
 	 * @throws TermException
 	 *             if valuation generation or conversion fails
 	 */
-	public static Map<Term, Rational> getValuation(Script script, Collection<Term> coefficients) throws TermException {
+	public static Map<Term, Rational> getValuation(final Script script, final Collection<Term> coefficients)
+			throws TermException {
 		// assert mscript.checkSat() == LBool.SAT;
 		final Map<Term, Rational> result = new LinkedHashMap<Term, Rational>();
 		if (!coefficients.isEmpty()) {
@@ -145,14 +146,14 @@ public class ModelExtractionUtils {
 		}
 		return result;
 	}
-	
-	
+
+
 	/**
 	 * Tries to simplify a satisfying assignment by assigning zeros to
 	 * variables. Gets stuck in local optima.
-	 * 
+	 *
 	 * The procedure works according to this principle:
-	 * 
+	 *
 	 * <pre>
 	 * random.shuffle(variables)
 	 * for v in variables:
@@ -170,7 +171,7 @@ public class ModelExtractionUtils {
 	 * @return the number of pops required on mscript
 	 */
 	@Deprecated
-	protected int simplifyAssignment(Script script, ArrayList<Term> variables, ILogger logger) {
+	protected int simplifyAssignment(final Script script, final ArrayList<Term> variables, final ILogger logger) {
 		// Shuffle the variable list for better effect
 		final Random rnd = new Random(s_randomSeed);
 		Collections.shuffle(variables, rnd);
@@ -198,11 +199,11 @@ public class ModelExtractionUtils {
 		logger.info("Simplification made " + checkSat_calls + " calls to the SMT solver.");
 		return pops;
 	}
-	
+
 	/**
 	 * Tries to simplify a satisfying assignment by assigning zeros to
 	 * variables. Gets stuck in local optima.
-	 * 
+	 *
 	 * This is a more efficient version
 	 * @param script
 	 * 			SMT script whose corresponding solver is in a state where
@@ -212,15 +213,14 @@ public class ModelExtractionUtils {
 	 *            the list of variables that can be set to 0
 	 * @param logger
 	 * 			ILogger to which we write information about the simplification.
-	 * @param services 
+	 * @param services
 	 * @return an assignment with (hopefully) many zeros
 	 * @throws TermException
 	 *             if model extraction fails
 	 */
-	public static Map<Term, Rational> getSimplifiedAssignment(Script script, 
-			Collection<Term> variables, ILogger logger, IUltimateServiceProvider services) throws TermException {
+	public static Map<Term, Rational> getSimplifiedAssignment(final Script script, final Collection<Term> variables,
+			final ILogger logger, final IUltimateServiceProvider services) throws TermException {
 		final Random rnd = new Random(s_randomSeed);
-		final Term zero = script.numeral("0");
 		Map<Term, Rational> val = getValuation(script, variables);
 
 		final Set<Term> zero_vars = new HashSet<Term>(); // set of variables fixed to
@@ -246,7 +246,7 @@ public class ModelExtractionUtils {
 			}
 			script.push(1);
 			for (final Term var : zero_vars) {
-				script.assertTerm(script.term("=", var, zero));
+				script.assertTerm(script.term("=", var, Rational.ZERO.toTerm(var.getSort())));
 			}
 			for (int i = 0; i < 10; ++i) { // 10 is a good number
 				final List<Term> vars = new ArrayList<Term>(not_zero_vars);
@@ -255,7 +255,7 @@ public class ModelExtractionUtils {
 
 				final Term[] disj = new Term[s_numof_simultaneous_simplification_tests];
 				for (int j = 0; j < s_numof_simultaneous_simplification_tests; ++j) {
-					disj[j] = script.term("=", vars.get(j), zero);
+					disj[j] = script.term("=", vars.get(j), Rational.ZERO.toTerm(vars.get(j).getSort()));
 				}
 				script.assertTerm(Util.or(script, disj));
 			}
@@ -291,12 +291,12 @@ public class ModelExtractionUtils {
 
 		return val;
 	}
-	
-	
+
+
 	/**
 	 * Tries to simplify a satisfying assignment by assigning zeros to
 	 * variables. Gets stuck in local optima.
-	 * 
+	 *
 	 * This is a more efficient version
 	 * @param script
 	 * 			SMT script whose corresponding solver is in a state where
@@ -306,28 +306,27 @@ public class ModelExtractionUtils {
 	 *            the list of variables that can be set to 0
 	 * @param logger
 	 * 			ILogger to which we write information about the simplification.
-	 * @param services 
+	 * @param services
 	 * @return an assignment with (hopefully) many zeros
 	 * @throws TermException
 	 *             if model extraction fails
 	 */
-	public static Map<Term, Rational> getSimplifiedAssignment_TwoMode(Script script, 
-			Collection<Term> coefficients, ILogger logger, IUltimateServiceProvider services) throws TermException {
-		final Term zero = script.numeral("0");
-
+	public static Map<Term, Rational> getSimplifiedAssignment_TwoMode(final Script script,
+			final Collection<Term> coefficients, final ILogger logger, final IUltimateServiceProvider services)
+			throws TermException {
 		final Set<Term> alreadyZero = new HashSet<Term>(); // variables fixed to 0
 		final Set<Term> zeroCandidates = new HashSet<Term>(coefficients); // variables that might be fixed to 0
 		final Set<Term> neverZero = new HashSet<Term>(); // variables that will never become 0
 		final Map<Term, Rational> finalValuation = new HashMap<Term, Rational>(getValuation(script, coefficients));
-		
+
 		{
 			final List<Term> notYetAssertedZeros = findNewZeros(finalValuation, alreadyZero, zeroCandidates);
 			for (final Term var : notYetAssertedZeros) {
-				script.assertTerm(script.term("=", var, zero));
+				script.assertTerm(script.term("=", var, Rational.ZERO.toTerm(var.getSort())));
 			}
 		}
 		final int variablesInitiallySetToZero = alreadyZero.size();
-		
+
 		boolean conjunctiveMode = false;
 		double subsetSizeBonusFactor = 1.0;
 		int pushWithoutPop = 0;
@@ -338,7 +337,7 @@ public class ModelExtractionUtils {
 				throw new ToolchainCanceledException(ModelExtractionUtils.class,
 						"simplifying assignment for " + coefficients.size() + "variables");
 			}
-			
+
 			final int subsetSize = computeSubsetSize(zeroCandidates.size(), subsetSizeBonusFactor);
 			final List<Term> subset = getSubset(subsetSize, zeroCandidates);
 			final Term[] equalsZeroTerms = constructEqualsZeroTerms(script, subset);
@@ -427,11 +426,11 @@ public class ModelExtractionUtils {
 					}
 				}
 			}
-			
+
 			if (newPartialValuation != null) {
 				final List<Term> notYetAssertedZeros = findNewZeros(finalValuation, alreadyZero, zeroCandidates);
 				for (final Term var : notYetAssertedZeros) {
-					script.assertTerm(script.term("=", var, zero));
+					script.assertTerm(script.term("=", var, Rational.ZERO.toTerm(var.getSort())));
 				}
 			}
 		}
@@ -442,30 +441,30 @@ public class ModelExtractionUtils {
 
 		// Send stats to the logger
 		logger.info("Simplification made " + checkSatCalls + " calls to the SMT solver.");
-		logger.info(variablesInitiallySetToZero + " out of " + finalValuation.size()  + 
-				" variables were initially zero. Simplification set additionally " + 
+		logger.info(variablesInitiallySetToZero + " out of " + finalValuation.size()  +
+				" variables were initially zero. Simplification set additionally " +
 				(alreadyZero.size() - variablesInitiallySetToZero) + " variables to zero.");
 		assert alreadyZero.size() + neverZero.size() == finalValuation.size() : "wrong number of variables";
 		return finalValuation;
 	}
-	
-	private static Map<Term, Rational> getValuation2(Script script,
-			Set<Term> zeroCandidates, Set<Term> neverZero) throws TermException {
+
+	private static Map<Term, Rational> getValuation2(final Script script,
+			final Set<Term> zeroCandidates, final Set<Term> neverZero) throws TermException {
 		final List<Term> vars = new ArrayList<>(zeroCandidates.size() + neverZero.size());
 		vars.addAll(zeroCandidates);
 		vars.addAll(neverZero);
 		return getValuation(script, vars);
 	}
 
-	private static int computeSubsetSize(int zeroCandidates, double subsetSizeBonusFactor) {
+	private static int computeSubsetSize(final int zeroCandidates, final double subsetSizeBonusFactor) {
 		return (int) Math.ceil(zeroCandidates * subsetSizeBonusFactor / 4.0);
 	}
-	
+
 	/**
 	 * Return subset with n elements. If n is greater then set.size() the
 	 * return only set.size() elements.
 	 */
-	private static <E> List<E> getSubset(int n, Set<E> set) {
+	private static <E> List<E> getSubset(final int n, final Set<E> set) {
 		final ArrayList<E> result = new ArrayList<E>();
 		final int subsetSize = Math.min(n, set.size());
 		final Iterator<E> it = set.iterator();
@@ -475,16 +474,16 @@ public class ModelExtractionUtils {
 		return result;
 	}
 
-	
+
 	/**
 	 * Rreturn the equality (= t 0) for each t in set.
 	 */
-	private static Term[] constructEqualsZeroTerms(Script script, List<Term> set) {
+	private static Term[] constructEqualsZeroTerms(final Script script, final List<Term> set) {
 		final Term[] result = new Term[set.size()];
 		final Iterator<Term> it = set.iterator();
 		for (int i=0; i<set.size(); i++) {
 			final Term term = it.next();
-			result[i] = script.term("=",term, script.numeral("0"));
+			result[i] = script.term("=", term, Rational.ZERO.toTerm(term.getSort()));
 		}
 		return result;
 	}
@@ -494,8 +493,8 @@ public class ModelExtractionUtils {
 	 * If yes, move the variable from the Set zeroCandidates to the set
 	 * alreadyZero. Return all variables that were moved.
 	 */
-	private static List<Term> findNewZeros(Map<Term, Rational> val,
-			Set<Term> alreadyZero, Set<Term> zeroCandidates) {
+	private static List<Term> findNewZeros(final Map<Term, Rational> val,
+			final Set<Term> alreadyZero, final Set<Term> zeroCandidates) {
 		final List<Term> newlyBecomeZero = new ArrayList<Term>();
 		final Iterator<Term> it = zeroCandidates.iterator();
 		while (it.hasNext()) {
@@ -509,7 +508,6 @@ public class ModelExtractionUtils {
 		}
 		return newlyBecomeZero;
 	}
-	
 
 
 }

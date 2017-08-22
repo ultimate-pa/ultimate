@@ -84,8 +84,12 @@ public class DangerInvariantPatternStrategy extends LocationIndependentLinearIne
 			final LinearTransitionPattern pattern2 = pattern1.getPatternWithNegatedCoefficients(solver);
 			conjuncts.add(pattern1);
 			conjuncts.add(pattern2);
-			final Term coefficient = pattern1.getCoefficientForOutVar(havocedVar);
-			solver.assertTerm(solver.term(">", coefficient, Rational.ZERO.toTerm(solver.sort(SmtSortUtils.REAL_SORT))));
+			final Term primedCoefficient = pattern1.getCoefficientForOutVar(havocedVar);
+			solver.assertTerm(
+					solver.term("=", primedCoefficient, Rational.ONE.toTerm(solver.sort(SmtSortUtils.REAL_SORT))));
+			for (final Term coefficient : pattern1.getCoefficients()) {
+				solver.assertTerm(solver.term("is_int", coefficient));
+			}
 		}
 
 		return new Dnf<>(conjuncts);

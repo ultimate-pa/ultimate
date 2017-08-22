@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lassoranker.termination;
 
-import java.math.BigInteger;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -225,7 +225,7 @@ public class MotzkinTransformation extends InstanceCounting {
 				mCoefficients[i] = coefficient;
 				mMotzkinCoefficients2LinearInequalities.put(motzkinCoefficientName, li);
 			} else {
-				mCoefficients[i] = mScript.numeral(BigInteger.ONE);
+				mCoefficients[i] = mScript.decimal(BigDecimal.ONE);
 			}
 		}
 	}
