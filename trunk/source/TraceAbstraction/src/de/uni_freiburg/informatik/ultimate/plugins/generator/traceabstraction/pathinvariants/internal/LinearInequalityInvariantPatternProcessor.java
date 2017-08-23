@@ -1003,8 +1003,25 @@ public final class LinearInequalityInvariantPatternProcessor
 								SimplificationTechnique.SIMPLIFY_DDA);
 				final LinearTransition linearTransition = mLinearizer.linearize(negatedGuard);
 				final Dnf<LinearInequality> negatedTransitionDnf = convertTransitionToPattern(linearTransition);
+
+				final Dnf<AbstractLinearInvariantPattern> transitionPattern =
+						ingredient.getEdge2Pattern().get(transition);
+				final Dnf<LinearInequality> mappedTransitionPattern = new Dnf<>();
+				for (final Collection<AbstractLinearInvariantPattern> patternConjunction : transitionPattern) {
+					final Collection<LinearInequality> conjuncts = new ArrayList<>();
+					for (final AbstractLinearInvariantPattern pattern : patternConjunction) {
+						assert pattern instanceof LinearTransitionPattern;
+						final LinearTransitionPattern transPattern = (LinearTransitionPattern) pattern;
+						if (!transPattern.containsOutVars()) {
+							conjuncts.add(transPattern.getLinearInequality(unprimedMapping));
+						}
+					}
+					mappedTransitionPattern.add(conjuncts);
+				}
+
 				final Dnf<LinearInequality> disjunction = new Dnf<>();
 				disjunction.addAll(negatedTransitionDnf);
+				disjunction.addAll(negatePatternAndConvertToDNF(mServices, mappedTransitionPattern));
 				conjunction.add(disjunction);
 			}
 
