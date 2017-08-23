@@ -209,7 +209,7 @@ public class ThreeValuedEquivalenceRelation<E> {
 
 	public EqualityStatus getEqualityStatus(final E elem1, final E elem2) {
 		if (mIsInconsistent) {
-			throw new IllegalStateException();
+			throw new IllegalStateException("Cannot get equality status from inconsistent " + this.getClass().getSimpleName());
 		}
 
 		final E elem1Rep = mUnionFind.find(elem1);
