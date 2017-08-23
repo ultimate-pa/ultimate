@@ -1109,12 +1109,12 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 	/**
 	 * Returns a new CongruenceClosure which contains only those constraints in this CongruenceClosure that constrain
 	 *  the given element.
-	 * @param elem
+	 * @param set
 	 * @return
 	 */
-	public CongruenceClosure<ELEM, FUNCTION> projectToElement(final ELEM elem) {
+	public CongruenceClosure<ELEM, FUNCTION> projectToElements(final Set<ELEM> set) {
 		final ThreeValuedEquivalenceRelation<ELEM> newElemPartition =
-				this.mElementTVER.projectToConstraintsWith(elem);
+				this.mElementTVER.projectToConstraintsWith(set);
 		final ThreeValuedEquivalenceRelation<FUNCTION> newFunctionPartition =
 				new ThreeValuedEquivalenceRelation<>(this.mFunctionTVER);
 		return new CongruenceClosure<>(newElemPartition, newFunctionPartition);

@@ -38,6 +38,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -635,15 +636,26 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 				if (en.getKey().getOneElement().equals(func) || en.getKey().getOtherElement().equals(func)) {
 					mWeakEquivalenceEdges.remove(en.getKey());
 				} else {
-					en.getValue().projectFunction(func);
+					en.getValue().projectFunction(func, groundPartialArrangement);
 				}
 			}
 			assert sanityCheck();
 		}
 
+		/**
+		 * Project the given element from all weak equivalence edges.
+		 * We aim to keep information about the projected element from the ground partial arrangement. We take the
+		 * following steps to compute the new edge labels.
+		 *  <li> compute the meet with the ground partial arrangement
+		 *  <li> project out the variable to be projected elem
+		 *  <li> project out all constraints that do not contain a weq-variable
+		 *
+		 * @param elem
+		 * @param groundPartialArrangement
+		 */
 		public void projectElement(final NODE elem, final CongruenceClosure<NODE, FUNCTION> groundPartialArrangement) {
 			for (final Entry<Doubleton<FUNCTION>, WeakEquivalenceEdgeLabel> en : mWeakEquivalenceEdges.entrySet()) {
-				en.getValue().projectElement(elem);
+				en.getValue().projectElement(elem, groundPartialArrangement);
 			}
 			assert sanityCheck();
 		}
@@ -1163,7 +1175,7 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 			 * @return
 			 */
 			public WeakEquivalenceEdgeLabel union(final WeakEquivalenceEdgeLabel other) {
-				// using a set to eliminate duplicates
+				// using a set to eliminate duplicates -- TODO: we could use isStrongerThan for further minimization
 				final Set<CongruenceClosure<NODE, FUNCTION>> newPasForDimension = new HashSet<>();
 				newPasForDimension.addAll(this.mLabel);
 				newPasForDimension.addAll(other.mLabel);
@@ -1172,13 +1184,41 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 			}
 
 
-			public void projectElement(final NODE elem) {
-				mLabel.forEach(pa -> pa.removeElement(elem));
+			/**
+			 *  <li> compute the meet with the ground partial arrangement
+			 *  <li> project out the variable to be projected elem
+			 *  <li> project out all constraints that do not contain a weq-variable
+			 *
+			 * @param elem
+			 * @param groundPartialArrangement
+			 */
+			public void projectElement(final NODE elem,
+					final CongruenceClosure<NODE, FUNCTION> groundPartialArrangement) {
+				projectHelper(cc -> cc.removeElement(elem), groundPartialArrangement);
+//				for (int i = 0; i < mLabel.size(); i++) {
+//					final CongruenceClosure<NODE, FUNCTION> meet = mLabel.get(i).meet(groundPartialArrangement);
+//					meet.removeElement(elem);
+//					final CongruenceClosure<NODE, FUNCTION> newPa = meet.projectToElements(mFactory.getAllWeqNodes());
+//					mLabel.set(i, newPa);
+//				}
 			}
 
-			public void projectFunction(final FUNCTION func) {
-				mLabel.forEach(pa -> pa.removeFunction(func));
+			public void projectFunction(final FUNCTION func,
+					final CongruenceClosure<NODE, FUNCTION> groundPartialArrangement) {
+				projectHelper(cc -> cc.removeFunction(func), groundPartialArrangement);
 			}
+
+
+			private void projectHelper(final Consumer<CongruenceClosure<NODE, FUNCTION>> remove,
+					final CongruenceClosure<NODE, FUNCTION> groundPartialArrangement) {
+				for (int i = 0; i < mLabel.size(); i++) {
+					final CongruenceClosure<NODE, FUNCTION> meet = mLabel.get(i).meet(groundPartialArrangement);
+					remove.accept(meet);
+					final CongruenceClosure<NODE, FUNCTION> newPa = meet.projectToElements(mFactory.getAllWeqNodes());
+					mLabel.set(i, newPa);
+				}
+			}
+
 
 			@Override
 			public String toString() {
@@ -1297,6 +1337,9 @@ class FloydWarshall<VERTEX, EDGELABEL> {
 	private final List<VERTEX> mVertices;
 
 	/**
+	 *
+	 * TODO: repeated application of Dijkstra's algorithm would probably be faster.. as we don't have negative edge
+	 * weights.
 	 *
 	 * @param smallerThan partial order operator (non-strict)
 	 * @param plus

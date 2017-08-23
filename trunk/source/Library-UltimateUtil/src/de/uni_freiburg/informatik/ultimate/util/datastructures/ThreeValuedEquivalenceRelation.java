@@ -398,22 +398,23 @@ public class ThreeValuedEquivalenceRelation<E> {
 	 * @param elem the element whose constraints are to be kept
 	 * @return a new, projected ThreeValuedEquivalenceRelation
 	 */
-	public ThreeValuedEquivalenceRelation<E> projectToConstraintsWith(final E elem) {
+	public ThreeValuedEquivalenceRelation<E> projectToConstraintsWith(final Set<E> elems) {
 		final UnionFind<E> newUf = new UnionFind<>();
-		final Set<E> elemEqc = mUnionFind.getEquivalenceClassMembers(elem);
-		newUf.addEquivalenceClass(elemEqc);
-
+		for (final E elem : elems) {
+			if (newUf.find(elem) != null) {
+				// already constructed current elem's equivalence class
+				continue;
+			}
+			final Set<E> elemEqc = mUnionFind.getEquivalenceClassMembers(elem);
+			newUf.addEquivalenceClass(elemEqc);
+		}
 		final HashRelation<E, E> newDisequalities = new HashRelation<>();
 		for (final Entry<E, E> deq : mDisequalities.entrySet()) {
-			if (deq.getKey().equals(elem)) {
-				newDisequalities.addPair(deq.getKey(), deq.getValue());
-				newUf.findAndConstructEquivalenceClassIfNeeded(deq.getValue());
-			} else if (deq.getValue().equals(elem)) {
-				newDisequalities.addPair(deq.getKey(), deq.getValue());
-				newUf.findAndConstructEquivalenceClassIfNeeded(deq.getKey());
+			if (elems.contains(deq.getKey()) || elems.contains(deq.getValue())) {
+				newDisequalities.addPair(newUf.findAndConstructEquivalenceClassIfNeeded(deq.getKey()),
+						newUf.findAndConstructEquivalenceClassIfNeeded(deq.getValue()));
 			}
 		}
-
 		return new ThreeValuedEquivalenceRelation<>(newUf, newDisequalities);
 	}
 }
