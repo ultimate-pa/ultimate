@@ -268,8 +268,24 @@ public class ThreeValuedEquivalenceRelation<E> {
 		return mUnionFind.getAllEquivalenceClasses();
 	}
 
+	/**
+	 * Returns a String representation of this equivalence relation.
+	 * Represents it by the partition and the list of disequalities.
+	 * Exceptions:
+	 *  <li> If this is tautological (i.e. the partition only contains singletons and the set of disequalities is
+	 * 	 empty), this is represented by "True".
+	 *  <li> If this is inconsistent (i.e., the partition and the disequalities contradict), this is represented by
+	 * 	 "False".
+	 */
 	@Override
 	public String toString() {
+		if (isTautological()) {
+			return "True";
+		}
+		if (isInconsistent()) {
+			return "False";
+		}
+
 		final StringBuilder sb = new StringBuilder();
 		sb.append("Equivalences: ");
 		sb.append(mUnionFind);
@@ -277,10 +293,6 @@ public class ThreeValuedEquivalenceRelation<E> {
 
 		sb.append("Non-Equivalences: ");
 		sb.append(mDisequalities);
-		sb.append("\n");
-
-		sb.append("Is inconsistent: ");
-		sb.append(mIsInconsistent);
 
 		return sb.toString();
 	}
