@@ -64,10 +64,10 @@ public class ThreeValuedEquivalenceRelation<E> {
 		assert sanityCheck();
 	}
 
-	public ThreeValuedEquivalenceRelation(final UnionFind<E> newElemPartition,
-			final HashRelation<E, E> newElemDisequalities) {
-		mUnionFind = new UnionFind<>(newElemPartition);
-		mDisequalities = new HashRelation<>(newElemDisequalities);
+	public ThreeValuedEquivalenceRelation(final UnionFind<E> newPartition,
+			final HashRelation<E, E> newDisequalities) {
+		mUnionFind = new UnionFind<>(newPartition);
+		mDisequalities = new HashRelation<>(newDisequalities);
 		mIsInconsistent = false;
 		assert sanityCheck();
 	}
@@ -389,6 +389,32 @@ public class ThreeValuedEquivalenceRelation<E> {
 			mDisequalities.addPair(transformer.apply(pair.getKey()), transformer.apply(pair.getValue()));
 		}
 		assert sanityCheck();
+	}
+
+	/**
+	 * Computes a ThreeValuedEquivalenceRelation that has the same constraints as this except all those constraints
+	 * that don't refer to the given element, those are left out.
+	 *
+	 * @param elem the element whose constraints are to be kept
+	 * @return a new, projected ThreeValuedEquivalenceRelation
+	 */
+	public ThreeValuedEquivalenceRelation<E> projectToConstraintsWith(final E elem) {
+		final UnionFind<E> newUf = new UnionFind<>();
+		final Set<E> elemEqc = mUnionFind.getEquivalenceClassMembers(elem);
+		newUf.addEquivalenceClass(elemEqc);
+
+		final HashRelation<E, E> newDisequalities = new HashRelation<>();
+		for (final Entry<E, E> deq : mDisequalities.entrySet()) {
+			if (deq.getKey().equals(elem)) {
+				newDisequalities.addPair(deq.getKey(), deq.getValue());
+				newUf.findAndConstructEquivalenceClassIfNeeded(deq.getValue());
+			} else if (deq.getValue().equals(elem)) {
+				newDisequalities.addPair(deq.getKey(), deq.getValue());
+				newUf.findAndConstructEquivalenceClassIfNeeded(deq.getKey());
+			}
+		}
+
+		return new ThreeValuedEquivalenceRelation<>(newUf, newDisequalities);
 	}
 }
 

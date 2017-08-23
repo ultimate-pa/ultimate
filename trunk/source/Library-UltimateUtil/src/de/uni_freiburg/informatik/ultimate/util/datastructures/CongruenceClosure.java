@@ -1106,19 +1106,19 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 		return super.hashCode();
 	}
 
-//	/**
-//	 * Returns a new CongruenceClosure which contains only those constraints in this CongruenceClosure that constrain
-//	 *  the given element.
-//	 * @param elem
-//	 * @return
-//	 */
-//	public CongruenceClosure<ELEM, FUNCTION> projectToElement(final ELEM elem) {
-//		final ThreeValuedEquivalenceRelation<ELEM> newElemPartition;
-//		final ThreeValuedEquivalenceRelation<FUNCTION> newFunctionPartition =
-//				new ThreeValuedEquivalenceRelation<>(this.mFunctionTVER);
-//		// TODO Auto-generated method stub
-//		return new CongruenceClosure<>(newElemPartition, newFunctionPartition);
-//	}
+	/**
+	 * Returns a new CongruenceClosure which contains only those constraints in this CongruenceClosure that constrain
+	 *  the given element.
+	 * @param elem
+	 * @return
+	 */
+	public CongruenceClosure<ELEM, FUNCTION> projectToElement(final ELEM elem) {
+		final ThreeValuedEquivalenceRelation<ELEM> newElemPartition =
+				this.mElementTVER.projectToConstraintsWith(elem);
+		final ThreeValuedEquivalenceRelation<FUNCTION> newFunctionPartition =
+				new ThreeValuedEquivalenceRelation<>(this.mFunctionTVER);
+		return new CongruenceClosure<>(newElemPartition, newFunctionPartition);
+	}
 
 
 }
