@@ -109,7 +109,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 		mIsInconsistent = false;
 
 		// initialize the helper mappings according to mElementTVER
-		for (final ELEM elem : mElementTVER.getAllElements()) {
+		for (final ELEM elem : new HashSet<>(mElementTVER.getAllElements())) {
 			registerNewElement(elem);
 		}
 		assert sanityCheck();
