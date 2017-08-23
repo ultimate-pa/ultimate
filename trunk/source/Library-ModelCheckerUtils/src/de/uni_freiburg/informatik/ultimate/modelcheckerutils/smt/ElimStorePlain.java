@@ -339,15 +339,6 @@ public class ElimStorePlain {
 		final ThreeValuedEquivalenceRelation<Term> equalityInformation = analysisResult.getFirst();
 
 		final Sort valueSort = eliminatee.getSort().getArguments()[1];
-		//TODO: if index is different from store index, then oldcell should be
-		// represented as 
-		// final Term newSelect = mgdScript.getScript().term("select", newAuxArray, replacementSelectIndex);
-		// (hence we need to change computation order -- index mapping first)
-		final Map<Term, TermVariable> oldCellMapping = constructOldCellValueMapping(selectTerms, storeIndex,
-				equalityInformation, valueSort, selectIndices.contains(storeIndex));
-		for (final Entry<?, TermVariable> entry : oldCellMapping.entrySet()) {
-			newAuxVars.add(entry.getValue());
-		}
 
 		final Map<Term, TermVariable> indexMapping =
 				constructIndexReplacementMapping(indices, eliminatee, equalityInformation);
@@ -371,6 +362,29 @@ public class ElimStorePlain {
 				mMgdScript.constructFreshTermVariable(s_AUX_VAR_NEW_ARRAY, eliminatee.getSort());
 		newAuxVars.add(newAuxArray);
 		
+		final Map<Term, Term> rawIndex2replacedIndex = new HashMap<>();
+		for (final Term selectIndex : indices) {
+			if (indexMapping.containsKey(selectIndex)) {
+				rawIndex2replacedIndex.put(selectIndex, indexMapping.get(selectIndex));
+			} else {
+				rawIndex2replacedIndex.put(selectIndex, selectIndex);
+			}
+		}
+		
+		//TODO: if index is different from store index, then oldcell should be
+		// represented as 
+		// final Term newSelect = mgdScript.getScript().term("select", newAuxArray, replacementSelectIndex);
+		// (hence we need to change computation order -- index mapping first)
+		final Map<Term, Term> oldCellMapping = constructOldCellValueMapping(selectTerms, storeIndex,
+				equalityInformation, valueSort, selectIndices.contains(storeIndex), newAuxArray, rawIndex2replacedIndex);
+		for (final Entry<?, Term> entry : oldCellMapping.entrySet()) {
+			if (entry.getValue() instanceof TermVariable) {
+				newAuxVars.add((TermVariable) entry.getValue());
+			}
+		}
+
+		
+		
 		final IncrementalPlicationChecker iplc = new IncrementalPlicationChecker(Plication.IMPLICATION, mMgdScript, inputTerm);
 		final List<Doubleton<Term>> uknowns = EquivalenceRelationIterator.buildListOfNonDisjointDoubletons(indices, equalityInformation);
 		final ValueEqualityChecker vec = new ValueEqualityChecker(eliminatee, storeIndex, storeValue, equalityInformation, mMgdScript, 
@@ -385,14 +399,7 @@ public class ElimStorePlain {
 		iplc.unlockSolver();
 		
 		
-		final Map<Term, Term> rawIndex2replacedIndex = new HashMap<>();
-		for (final Term selectIndex : indices) {
-			if (indexMapping.containsKey(selectIndex)) {
-				rawIndex2replacedIndex.put(selectIndex, indexMapping.get(selectIndex));
-			} else {
-				rawIndex2replacedIndex.put(selectIndex, selectIndex);
-			}
-		}
+
 		
 		if (true) {
 			final Map<Term, Term> substitutionMapping = new HashMap<>();
@@ -766,10 +773,11 @@ public class ElimStorePlain {
 	 * the store that we currently process is disjoint from idx, we do not add the auxiliary variable (the new cell will
 	 * have same value as old cell). As an optimization, we only construct one auxiliary variable for each equivalence
 	 * class of indices.
+	 * @param newAuxArray 
 	 */
-	private Map<Term, TermVariable> constructOldCellValueMapping(final List<ApplicationTerm> selectTerms,
+	private Map<Term, Term> constructOldCellValueMapping(final List<ApplicationTerm> selectTerms,
 			final Term storeIndex, final ThreeValuedEquivalenceRelation<Term> equalityInformation,
-			final Sort valueSort, final boolean storeIndexIsAlsoSelectIndex) {
+			final Sort valueSort, final boolean storeIndexIsAlsoSelectIndex, final Term newAuxArray, final Map<Term, Term> rawIndex2replacedIndex) {
 		final IValueConstruction<Term, TermVariable> valueConstruction = new IValueConstruction<Term, TermVariable>() {
 
 			@Override
@@ -780,13 +788,20 @@ public class ElimStorePlain {
 
 		};
 		final ConstructionCache<Term, TermVariable> cc = new ConstructionCache<>(valueConstruction);
-		final Map<Term, TermVariable> oldCellMapping = new HashMap<>();
+		final Map<Term, Term> oldCellMapping = new HashMap<>();
 		for (final ApplicationTerm selectTerm : selectTerms) {
 			assert selectTerm.getSort().equals(valueSort);
 			final Term selectIndex = getIndexOfSelect(selectTerm);
-			if ((storeIndex != null) && !storeIndexIsAlsoSelectIndex
+			if ((storeIndex != null)
 					&& equalityInformation.getEqualityStatus(selectIndex, storeIndex) == EqualityStatus.NOT_EQUAL) {
-				// do nothing
+				if (storeIndexIsAlsoSelectIndex) {
+					
+					final Term replacementSelectIndex = rawIndex2replacedIndex.get(selectIndex);
+					final Term newSelect = mMgdScript.getScript().term("select", newAuxArray, replacementSelectIndex);
+					oldCellMapping.put(selectIndex, newSelect);
+				} else {
+					// do nothing
+				}
 			} else {
 				final Term indexRepresentative = equalityInformation.getRepresentative(selectIndex);
 				final TermVariable oldCellVariable = cc.getOrConstruct(indexRepresentative);
@@ -965,7 +980,7 @@ public class ElimStorePlain {
 		final ThreeValuedEquivalenceRelation<Term> mIndices;
 		final ManagedScript mMgdScript;
 		final IncrementalPlicationChecker mIncrementalPlicationChecker;
-		final Map<Term, TermVariable> mOldCellMapping;
+		final Map<Term, Term> mOldCellMapping;
 		final List<Term> mValueEqualities = new ArrayList<>();
 		
 		
@@ -973,7 +988,7 @@ public class ElimStorePlain {
 		
 		public ValueEqualityChecker(final TermVariable eliminatee, final Term storeIndex, final Term storeValue,
 				final ThreeValuedEquivalenceRelation<Term> indices, final ManagedScript mgdScript,
-				final IncrementalPlicationChecker incrementalPlicationChecker, final Map<Term, TermVariable> oldCellMapping) {
+				final IncrementalPlicationChecker incrementalPlicationChecker, final Map<Term, Term> oldCellMapping) {
 			super();
 			mEliminatee = eliminatee;
 			mStoreIndex = storeIndex;
