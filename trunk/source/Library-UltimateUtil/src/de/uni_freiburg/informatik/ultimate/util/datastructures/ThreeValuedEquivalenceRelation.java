@@ -117,7 +117,7 @@ public class ThreeValuedEquivalenceRelation<E> {
 	 *
 	 * @param elem1
 	 * @param elem2
-	 * @return true iff the method call changed the state of this ThreeValuedEquivalenceRelation
+	 * @return true iff this data structure did not already store the equality of the specified pair
 	 */
 	public boolean reportEquality(final E elem1, final E elem2) {
 		if (mIsInconsistent) {
@@ -164,7 +164,7 @@ public class ThreeValuedEquivalenceRelation<E> {
 	 *
 	 * @param elem1
 	 * @param elem2
-	 * @return true iff the method call changed the state of this ThreeValuedEquivalenceRelation
+	 * @return true iff this data structure did not already store the disequality of the specified pair
 	 */
 	public boolean reportDisequality(final E elem1, final E elem2) {
 		if (mIsInconsistent) {
