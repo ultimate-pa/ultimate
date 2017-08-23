@@ -234,7 +234,7 @@ public class InvariantSynthesisStarter {
 			commandExternalSolver = "z3 -smt2 -in SMTLIB2_COMPLIANT=true -t:" + externalSolverTimeout;
 			// solverCommand = "z3 -smt2 -in SMTLIB2_COMPLIANT=true -t:1000";
 		} else {
-			// solverCommand = "yices-smt2 --incremental";
+			// commandExternalSolver = "yices-smt2 --incremental -t " + timeoutSmtInterpol;
 			commandExternalSolver = "z3 -smt2 -in SMTLIB2_COMPLIANT=true -t:" + externalSolverTimeout;
 		}
 

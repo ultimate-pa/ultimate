@@ -55,6 +55,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	 */
 	public static final String LABEL_INTERPROCEDUTAL = "Interprocedural analysis (Nested Interpolants)";
 	public static final String LABEL_ALL_ERRORS_AT_ONCE = "Stop after first violation was found";
+	public static final String LABEL_FLOYD_HOARE_AUTOMATA_REUSE = "Reuse of Floyd-Hoare automata";
 	public static final String LABEL_ITERATIONS = "Iterations until the model checker surrenders";
 	public static final String LABEL_ARTIFACT = "Kind of artifact that is visualized";
 	public static final String LABEL_WATCHITERATION = "Number of iteration whose artifact is visualized";
@@ -123,6 +124,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	 * default values for the different preferences
 	 */
 	public static final boolean DEF_INTERPROCEDUTAL = true;
+	public static final FloydHoareAutomataReuse DEF_FLOYD_HOARE_AUTOMATA_REUSE = FloydHoareAutomataReuse.NONE;
 	public static final int DEF_ITERATIONS = 1_000_000;
 	public static final String DEF_ARTIFACT = VALUE_RCFG;
 	public static final int DEF_WATCHITERATION = 1_000_000;
@@ -175,6 +177,10 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 		return new UltimatePreferenceItem<?>[] {
 				new UltimatePreferenceItem<>(LABEL_INTERPROCEDUTAL, DEF_INTERPROCEDUTAL, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_ALL_ERRORS_AT_ONCE, DEF_ALL_ERRORS_AT_ONCE, PreferenceType.Boolean),
+				
+				new UltimatePreferenceItem<>(LABEL_FLOYD_HOARE_AUTOMATA_REUSE, DEF_FLOYD_HOARE_AUTOMATA_REUSE, PreferenceType.Combo,
+						FloydHoareAutomataReuse.values()),
+				
 				new UltimatePreferenceItem<>(LABEL_ITERATIONS, DEF_ITERATIONS, PreferenceType.Integer,
 						new IUltimatePreferenceItemValidator.IntegerValidator(0, 1_000_000)),
 				new UltimatePreferenceItem<>(LABEL_ARTIFACT, Artifact.RCFG, PreferenceType.Combo, Artifact.values()),
@@ -441,5 +447,29 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 		 * Throw all exceptions.
 		 */
 		ALL
+	}
+	
+	/**
+	 * Reuse Floyd-Hoare that were built for one error location for succeeding 
+	 * error locations. 
+	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+	 *
+	 */
+	public enum FloydHoareAutomataReuse {
+		/**
+		 * No reuse.
+		 */
+		NONE,
+		/**
+		 * Take initially the difference of the control flow graph and
+		 * all yet constructed Floyd-Hoare automata. Extend the
+		 * Floyd-Hoare automata on-demand (while difference is constructed
+		 * by new edges).
+		 */
+		EAGER,
+		/**
+		 * Not yet defined...
+		 */
+		LAZY_IN_ORDER,
 	}
 }

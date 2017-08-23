@@ -38,7 +38,6 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.CommuhashNormalForm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalStore;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainPreanalysis;
 
@@ -137,7 +136,7 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 	public EqFunction getOrConstructFunction(final Term term) {
 		if (term instanceof ApplicationTerm && ((ApplicationTerm) term).getParameters().length > 0) {
 			if ("store".equals(((ApplicationTerm) term).getFunction().getName())) {
-				return getOrConstructEqStoreFunction((ApplicationTerm) term);
+				throw new UnsupportedOperationException();
 			} else {
 				throw new UnsupportedOperationException();
 			}
@@ -158,28 +157,6 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 		if (result == null) {
 			result = new EqFunction(term, this);
 			mTermToEqFunction.put(term, result);
-		}
-		assert !(result instanceof EqStoreFunction);
-		return result;
-	}
-
-	private EqFunction getOrConstructEqStoreFunction(final ApplicationTerm storeTerm) {
-		assert "store".equals(storeTerm.getFunction().getName());
-		EqFunction result = mTermToEqFunction.get(storeTerm);
-		if (result == null) {
-			final MultiDimensionalStore mds = new MultiDimensionalStore(storeTerm);
-
-			final EqFunction function = getOrConstructFunction(mds.getArray());
-
-			final List<EqNode> indices = new ArrayList<>();
-			for (final Term index : mds.getIndex()) {
-				indices.add(getOrConstructNode(index));
-			}
-
-			final EqNode value = getOrConstructNode(mds.getValue());
-
-			result = new EqStoreFunction(function, indices, value, storeTerm, this);
-			mTermToEqFunction.put(storeTerm, result);
 		}
 		return result;
 	}

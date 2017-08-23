@@ -237,10 +237,16 @@ public final class CFGInvariantsGenerator {
 	 * @return a strategy on how to build templates and which variables to use
 	 */
 	private static ILinearInequalityInvariantPatternStrategy<Dnf<AbstractLinearInvariantPattern>>
-	getStrategy(final boolean useVarsFromUnsatCore, final boolean useLiveVars,
-			final Set<IProgramVar> allProgramVariables,
-			final Map<IcfgLocation, Set<IProgramVar>> locations2LiveVariables,
-			final AbstractTemplateIncreasingDimensionsStrategy dimensionsStrategy) {
+			getStrategy(final boolean useVarsFromUnsatCore, final boolean useLiveVars,
+					final Set<IProgramVar> allProgramVariables,
+					final Map<IcfgLocation, Set<IProgramVar>> locations2LiveVariables,
+					final AbstractTemplateIncreasingDimensionsStrategy dimensionsStrategy,
+					final KindOfInvariant kindOfInvariant) {
+		if (kindOfInvariant == KindOfInvariant.DANGER) {
+			return new DangerInvariantPatternStrategy(dimensionsStrategy, MAX_ROUNDS, allProgramVariables,
+					allProgramVariables, ALWAYS_STRICT_AND_NON_STRICT_COPIES, USE_STRICT_INEQUALITIES_ALTERNATINGLY);
+		}
+		assert kindOfInvariant == KindOfInvariant.SAFETY;
 		if (useVarsFromUnsatCore) {
 			if (USE_UNSAT_CORES_FOR_DYNAMIC_PATTERN_CHANGES) {
 				if (USE_DYNAMIC_PATTERN_WITH_BOUNDS) {
@@ -330,7 +336,7 @@ public final class CFGInvariantsGenerator {
 
 		final ILinearInequalityInvariantPatternStrategy<Dnf<AbstractLinearInvariantPattern>> strategy =
 				getStrategy(invSynthSettings.useUnsatCores(), useLiveVariables, allProgramVars,
-						pathprogramLocs2LiveVars, templateDimensionStrat);
+						pathprogramLocs2LiveVars, templateDimensionStrat, mKindOfInvariant);
 
 		if (USE_UNDER_APPROX_FOR_MAX_CONJUNCTS) {
 			for (final Map.Entry<IcfgLocation, UnmodifiableTransFormula> entry : loc2underApprox.entrySet()) {
@@ -581,8 +587,14 @@ public final class CFGInvariantsGenerator {
 
 				for (final IcfgEdge transition : location.getOutgoingEdges()) {
 					final IPT invEnd = locs2Patterns.get(transition.getTarget());
-					final Set<IProgramVar> targetPatternVeriables = locs2PatternVariables.get(transition.getTarget());
-					successorConstraintIngredient.addTransition(transition, invEnd, targetPatternVeriables);
+					final Set<IProgramVar> targetPatternVariables = locs2PatternVariables.get(transition.getTarget());
+					if (mKindOfInvariant == KindOfInvariant.DANGER) {
+						final IPT transitionPattern = processor.getPatternForTransition(transition, round);
+						successorConstraintIngredient.addTransition(transition, invEnd, targetPatternVariables,
+								transitionPattern);
+					} else {
+						successorConstraintIngredient.addTransition(transition, invEnd, targetPatternVariables);
+					}
 
 					// Compute the benchmarks
 					@SuppressWarnings("unchecked")
@@ -818,8 +830,8 @@ public final class CFGInvariantsGenerator {
 
 			for (final IcfgEdge transition : location.getOutgoingEdges()) {
 				final IPT invEnd = locs2Patterns.get(transition.getTarget());
-				final Set<IProgramVar> targetPatternVeriables = locs2PatternVariables.get(transition.getTarget());
-				successorConstraintIngredient.addTransition(transition, invEnd, targetPatternVeriables);
+				final Set<IProgramVar> targetPatternVariables = locs2PatternVariables.get(transition.getTarget());
+				successorConstraintIngredient.addTransition(transition, invEnd, targetPatternVariables);
 			}
 
 			successorConstraintIngredients.add(successorConstraintIngredient);

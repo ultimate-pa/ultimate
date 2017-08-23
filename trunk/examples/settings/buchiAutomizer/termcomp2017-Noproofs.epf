@@ -8,6 +8,7 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Convert\ code\ blocks\ to\ CNF=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Dump\ SMT\ script\ to\ file=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/To\ the\ following\ directory=/home/matthias/ultimate/dump
+
 #Fri Apr 03 17:28:56 CEST 2015
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding=
 file_export_version=3.0
@@ -15,6 +16,23 @@ file_export_version=3.0
 @de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding=0.0.1
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding/Minimize\ Call\ and\ Return\ Edges=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding/Strategy\ for\ the\ edge\ rating=DISJUNCTIVE_RATING
+
+@de.uni_freiburg.informatik.ultimate.plugins.blockencoding=0.1.8
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.blockencoding=
+/instance/de.uni_freiburg.informatik.ultimate.plugins.blockencoding/Use\ SBE=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.blockencoding/Apply\ optimizations\ until\ nothing\ changes=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.blockencoding/Rewrite\ not-equals=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.blockencoding/Create\ parallel\ compositions\ if\ possible=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.blockencoding/Remove\ sink\ states=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.blockencoding/Iterate\ optimizations\ for\ n\ times\ (<\=0\ means\ until\ nothing\ changes)=0
+/instance/de.uni_freiburg.informatik.ultimate.plugins.blockencoding/Simplify\ transitions=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.blockencoding/Create\ interprocedural\ compositions=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.blockencoding/Remove\ infeasible\ edges=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.blockencoding/Maximize\ final\ states=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.blockencoding/Minimize\ states\ even\ if\ more\ edges\ are\ added\ than\ removed.=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.blockencoding/Minimize\ states\ using\ LBE\ with\ the\ strategy=SINGLE
+
+
 #Mon Jul 27 00:24:14 CEST 2015
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Check\ division\ by\ zero=IGNORE
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/How\ to\ treat\ unsigned\ ints\ differently\ from\ normal\ ones=IGNORE
@@ -35,12 +53,12 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Rank\ analysis=LINEAR_WITH_GUESSES
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Command\ for\ external\ solver\ (GNTA\ synthesis)=z3 SMTLIB2_COMPLIANT\=true -memory\:4560 -smt2 -in -t\:12000
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Construct\ termination\ proof\ for\ TermComp=false
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Automata\ minimization=MinimizeSevpa
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Use\ old\ map\ elimination=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Add\ inequalities\ as\ additional\ conjuncts\ to\ the\ transformula=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Use\ only\ trivial\ implications\ for\ index\ assignments=true
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Use\ only\ trivial\ implications\ for\ array\ writes=true
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Add\ implications\ only\ for\ indices\ occuring\ in\ the\ current\ formula=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Buchi\ interpolant\ automaton\ construction\ strategy=DANDELION
 #Wed Mar 19 04:15:41 CET 2014
 file_export_version=3.0
 \!/instance/UltimateCore=
@@ -53,9 +71,4 @@ file_export_version=3.0
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction=
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Compute\ Hoare\ Annotation\ of\ negated\ interpolant\ automaton,\ abstraction\ and\ CFG=true
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Positions\ where\ we\ compute\ the\ Hoare\ Annotation=LoopsAndPotentialCycles
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Compute\ Interpolants\ along\ a\ Counterexample=FPandBP
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Interpolant\ automaton=TWOTRACK
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Interpolant\ automaton\ enhancement=PREDICATE_ABSTRACTION_CANNIBALIZE
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Use\ separate\ solver\ for\ trace\ checks=true
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/SMT\ solver=External_ModelsAndUnsatCoreMode
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Command\ for\ external\ solver=z3 SMTLIB2_COMPLIANT\=true -smt2 -in
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Trace\ refinement\ strategy=CAMEL

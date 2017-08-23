@@ -1,10 +1,9 @@
-//#Safe
+//#Unsafe
 /*
  * Author: Yu-Wen Chen
- * Note: The result of this test is not manually verified. DD just added the missing header based on some Ultimate results. 
+ * unsafe (according to Automizer web interface, relabeled on 21.8.2017 by nutz)
  * 
  */
-
 procedure Easy() {
 	var x, y, z, i, j, k: int;
 	var a, b, c : [int] int;

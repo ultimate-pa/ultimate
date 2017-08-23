@@ -51,8 +51,8 @@ public class MinimizeStatesMultiEdgeSingleNode extends BaseMinimizeStates {
 
 	public MinimizeStatesMultiEdgeSingleNode(final IcfgEdgeBuilder edgeBuilder, final IUltimateServiceProvider services,
 			final BlockEncodingBacktranslator backtranslator, final BiPredicate<IIcfg<?>, IcfgLocation> funIsAccepting,
-			final ILogger logger) {
-		super(edgeBuilder, services, backtranslator, funIsAccepting, logger);
+			final ILogger logger, final boolean ignoreBlowup) {
+		super(edgeBuilder, services, backtranslator, funIsAccepting, logger, ignoreBlowup);
 	}
 
 	@Override
@@ -111,7 +111,8 @@ public class MinimizeStatesMultiEdgeSingleNode extends BaseMinimizeStates {
 		int newEdges = 0;
 		for (final IcfgEdge predEdge : predEdges) {
 			for (final IcfgEdge succEdge : succEdges) {
-				final IcfgEdge seqComp = getEdgeBuilder().constructSequentialComposition(pred, succ, predEdge, succEdge);
+				final IcfgEdge seqComp =
+						getEdgeBuilder().constructSequentialComposition(pred, succ, predEdge, succEdge);
 				rememberEdgeMapping(seqComp, predEdge);
 				rememberEdgeMapping(seqComp, succEdge);
 				newEdges++;

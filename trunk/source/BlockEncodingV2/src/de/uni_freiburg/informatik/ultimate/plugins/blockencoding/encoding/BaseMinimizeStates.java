@@ -45,9 +45,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.BlockEncodingBacktranslator;
-import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.preferences.BlockEncodingPreferences;
 
 /**
  * Base class for encoder that try to minimize the nodes/states/locations of an RCFG.
@@ -63,10 +61,10 @@ public abstract class BaseMinimizeStates extends BaseBlockEncoder<IcfgLocation> 
 
 	public BaseMinimizeStates(final IcfgEdgeBuilder edgeBuilder, final IUltimateServiceProvider services,
 			final BlockEncodingBacktranslator backtranslator,
-			final BiPredicate<IIcfg<?>, IcfgLocation> funHasToBePreserved, final ILogger logger) {
+			final BiPredicate<IIcfg<?>, IcfgLocation> funHasToBePreserved, final ILogger logger,
+			final boolean ignoreBlowup) {
 		super(logger, services, backtranslator);
-		mIgnoreBlowup = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
-				.getBoolean(BlockEncodingPreferences.FXP_MINIMIZE_STATES_IGNORE_BLOWUP);
+		mIgnoreBlowup = ignoreBlowup;
 		mFunHasToBePreserved = funHasToBePreserved;
 		mEdgeBuilder = edgeBuilder;
 	}

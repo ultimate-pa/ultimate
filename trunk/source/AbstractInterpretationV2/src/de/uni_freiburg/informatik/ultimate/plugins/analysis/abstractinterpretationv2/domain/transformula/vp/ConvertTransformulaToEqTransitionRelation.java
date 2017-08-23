@@ -387,6 +387,14 @@ public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTrans
 	 * Right now the result is not equivalent. However it is equivalent to the original when conjoined with the
 	 * equalities from getReplacementEquations.
 	 *
+	 * removes the following from the formula
+	 * <ul>
+	 *  <li> store chains, i.e., every (store s i x) where s is another store term is eliminated
+	 *  <li> stores on both sides of an equality, for example the term (= (store a i x) (store b j y)) would be
+	 *     transformed such that it contains at most one store
+	 *  <li> stores inside selects, for example (select (store a i x) j) would be transformed
+	 * </ul>
+	 *
 	 * TODO polish -- could be done nicer, probably
 	 * TODO cannot yet eliminate equations that have a store term on both sides
 	 *
@@ -415,6 +423,15 @@ public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTrans
 			if (SmtUtils.isFunctionApplication(term, "store")) {
 				enqueueWalker(new SquishStoreWalker((ApplicationTerm) term));
 				pushTerms(((ApplicationTerm) term).getParameters());
+			} else if (SmtUtils.isFunctionApplication(term, "select")) {
+				enqueueWalker(new SquishStoreInsideSelectWalker());
+				pushTerms(((ApplicationTerm) term).getParameters());
+			} else if (SmtUtils.isFunctionApplication(term, "=")
+					&& SmtUtils.isFunctionApplication(((ApplicationTerm) term).getParameters()[0], "store")
+					&& SmtUtils.isFunctionApplication(((ApplicationTerm) term).getParameters()[1], "store")) {
+				enqueueWalker(new SquishFirstOfTwoArgumentStoresWalker((ApplicationTerm) term));
+				assert ((ApplicationTerm) term).getParameters().length == 2;
+				pushTerms(((ApplicationTerm) term).getParameters());
 			} else {
 				super.convert(term);
 			}
@@ -430,10 +447,70 @@ public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTrans
 			mReplacementEquations.add(replacementEquation);
 		}
 
+		/**
+		 * only used to make getConverted visible to the walker.
+		 *
+		 * @param oldArgs
+		 * @return
+		 */
 		Term[] myGetConverted(final Term[] oldArgs) {
 			return getConverted(oldArgs);
 		}
 
+
+		class SquishFirstOfTwoArgumentStoresWalker implements Walker {
+
+			private final ApplicationTerm mAppTerm;
+
+			public SquishFirstOfTwoArgumentStoresWalker(final ApplicationTerm term) {
+				mAppTerm = term;
+				assert term.getParameters().length == 2;
+			}
+
+			@Override
+			public void walk(final NonRecursive engine) {
+
+				final Term arg2 = getConverted();
+				final Term arg1 = getConverted();
+				assert SmtUtils.isFunctionApplication(arg1, "store");
+				assert SmtUtils.isFunctionApplication(arg2, "store");
+
+				final Term innerStoreTerm = arg1;
+				final TermVariable replacmentTv = getReplacementTv(innerStoreTerm.getSort());
+				final Term replacementEquation = SmtUtils.binaryEquality(mScript, replacmentTv, innerStoreTerm);
+				addReplacementEquation(replacementEquation);
+				setResult(mScript.term(mAppTerm.getFunction().getName(), replacmentTv, arg2));
+			}
+
+		}
+
+		/**
+		 * removes stores inside selects
+		 */
+		class SquishStoreInsideSelectWalker implements Walker {
+
+			@Override
+			public void walk(final NonRecursive engine) {
+
+				final Term arg2 = getConverted();
+				final Term arg1 = getConverted();
+
+				if (SmtUtils.isFunctionApplication(arg1, "store")) {
+					final Term innerStoreTerm = arg1;
+					final TermVariable replacmentTv = getReplacementTv(innerStoreTerm.getSort());
+					final Term replacementEquation = SmtUtils.binaryEquality(mScript, replacmentTv, innerStoreTerm);
+					addReplacementEquation(replacementEquation);
+					setResult(mScript.term("select", replacmentTv, arg2));
+				} else {
+					setResult(mScript.term("select", arg1, arg2));
+				}
+			}
+
+		}
+
+		/**
+		 * removes store chains
+		 */
 		class SquishStoreWalker implements Walker {
 			/** the application term to convert. */
 			private final ApplicationTerm mAppTerm;
@@ -456,6 +533,8 @@ public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTrans
 					addReplacementEquation(replacementEquation);
 					setResult(mScript.term("store", replacmentTv, newArgs[1], newArgs[2]));
 				} else {
+					// the array argument of the store that we enqueued this walker for is a variable
+					// --> we do no further transformation
 					setResult(mScript.term("store", newArgs[0], newArgs[1], newArgs[2]));
 				}
 			}

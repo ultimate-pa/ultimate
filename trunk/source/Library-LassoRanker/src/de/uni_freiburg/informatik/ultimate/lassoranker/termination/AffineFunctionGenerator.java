@@ -1,7 +1,8 @@
 /*
  * Copyright (C) 2014-2015 Jan Leike (leike@informatik.uni-freiburg.de)
  * Copyright (C) 2014-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * Copyright (C) 2012-2015 University of Freiburg
+ * Copyright (C) 2017 Dennis Wölfing
+ * Copyright (C) 2012-2017 University of Freiburg
  *
  * This file is part of the ULTIMATE LassoRanker Library.
  *
@@ -31,6 +32,7 @@ import java.io.Serializable;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -69,6 +71,11 @@ public class AffineFunctionGenerator implements Serializable {
 	 */
 	private static String coeffName(final String prefix, final IProgramVar var) {
 		return prefix + "_" + SmtUtils.removeSmtQuoteCharacters(var.getGloballyUniqueId());
+	}
+
+	private AffineFunctionGenerator(final Term constant, final Map<IProgramVar, Term> coefficients) {
+		mConstant = constant;
+		mCoefficients = coefficients;
 	}
 
 	/**
@@ -154,6 +161,17 @@ public class AffineFunctionGenerator implements Serializable {
 	}
 
 	/**
+	 * Gets the coefficient for a given program variable.
+	 *
+	 * @param var
+	 *            a IProgramVar
+	 * @return the coefficient for the given program variable
+	 */
+	public Term getCoefficient(final IProgramVar var) {
+		return mCoefficients.get(var);
+	}
+
+	/**
 	 * @return All coefficients (including the constant) of the affine function. Each coefficient is represented as an
 	 *         SMT variable.
 	 */
@@ -230,5 +248,21 @@ public class AffineFunctionGenerator implements Serializable {
 			}
 		}
 		return f;
+	}
+
+	/**
+	 * Creates a AffineFunctionGenerator that produces a LinearInequality where all coefficients are negated.
+	 *
+	 * @param script
+	 *            a script to transform terms
+	 * @return a new AffineFunctionGenerator instance
+	 */
+	public AffineFunctionGenerator getGeneratorWithNegatedCoefficients(final Script script) {
+		final Term constant = script.term("-", mConstant);
+		final Map<IProgramVar, Term> coefficients = new HashMap<>(mCoefficients.size());
+		for (final Map.Entry<IProgramVar, Term> entry : mCoefficients.entrySet()) {
+			coefficients.put(entry.getKey(), script.term("-", entry.getValue()));
+		}
+		return new AffineFunctionGenerator(constant, coefficients);
 	}
 }

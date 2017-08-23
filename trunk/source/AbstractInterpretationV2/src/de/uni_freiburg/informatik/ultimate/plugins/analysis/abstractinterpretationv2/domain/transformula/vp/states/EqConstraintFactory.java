@@ -35,7 +35,9 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -45,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.AbstractNodeAndFunctionFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.IEqFunctionIdentifier;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CongruenceClosure;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
 /**
  *
@@ -71,6 +74,9 @@ public class EqConstraintFactory<
 
 	private final CfgSmtToolkit mCsToolkit;
 
+
+	private final NestedMap2<Sort, Integer, NODE> mDimensionToWeqVariableNode;
+
 	public EqConstraintFactory(final AbstractNodeAndFunctionFactory<NODE, FUNCTION, Term> eqNodeAndFunctionFactory,
 			final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit) {
 		mBottomConstraint = new EqBottomConstraint<>(this);
@@ -82,6 +88,8 @@ public class EqConstraintFactory<
 		mServices = services;
 		mCsToolkit = csToolkit;
 		mEqNodeAndFunctionFactory = eqNodeAndFunctionFactory;
+
+		mDimensionToWeqVariableNode = new NestedMap2<>();
 	}
 
 	public EqConstraint<ACTION, NODE, FUNCTION> getEmptyConstraint() {
@@ -181,9 +189,7 @@ public class EqConstraintFactory<
 
 		final EqConstraint<ACTION, NODE, FUNCTION> newConstraint = unfreeze(funct2Added);
 		newConstraint.reportFunctionDisequality(func1, func2);
-
-		// TODO propagations
-
+		newConstraint.saturate();
 		newConstraint.freeze();
 		return newConstraint;
 	}
@@ -214,6 +220,7 @@ public class EqConstraintFactory<
 
 		final EqConstraint<ACTION, NODE, FUNCTION> newConstraint = unfreeze(funct2Added);
 		newConstraint.reportFunctionEquality(func1, func2);
+		newConstraint.saturate();
 		newConstraint.freeze();
 		return newConstraint;
 	}
@@ -224,6 +231,7 @@ public class EqConstraintFactory<
 
 		final EqConstraint<ACTION, NODE, FUNCTION> newConstraint = unfreeze(inputConstraint);
 		newConstraint.reportWeakEquivalence(array1, array2, storeIndex);
+		newConstraint.saturate();
 		newConstraint.freeze();
 		return newConstraint;
 	}
@@ -301,6 +309,7 @@ public class EqConstraintFactory<
 
 		final EqConstraint<ACTION, NODE, FUNCTION> unfrozen = unfreeze(originalState);
 		unfrozen.reportEquality(node1, node2);
+		unfrozen.saturate();
 		unfrozen.freeze();
 		return unfrozen;
 	}
@@ -328,6 +337,7 @@ public class EqConstraintFactory<
 
 		final EqConstraint<ACTION, NODE, FUNCTION> unfrozen = unfreeze(originalState);
 		unfrozen.reportDisequality(node1, node2);
+		unfrozen.saturate();
 		unfrozen.freeze();
 		return unfrozen;
 	}
@@ -382,6 +392,33 @@ public class EqConstraintFactory<
 		return mEqNodeAndFunctionFactory;
 	}
 
+	public NODE getWeqVariableNodeForDimension(final int dimensionNumber, final Sort sort) {
+		NODE result = mDimensionToWeqVariableNode.get(sort, dimensionNumber);
+		if (result == null) {
+			final TermVariable tv = getMgdScript().constructFreshTermVariable("weq" + dimensionNumber, sort);
+			result = getEqNodeAndFunctionFactory().getOrConstructNode(tv);
+			mDimensionToWeqVariableNode.put(sort, dimensionNumber, result);
+		}
+		return result;
+	}
+
+	public TermVariable getWeqVariableForDimension(final int dimensionNumber, final Sort sort) {
+		return (TermVariable) getWeqVariableNodeForDimension(dimensionNumber, sort).getTerm();
+	}
+
+
+	public Set<TermVariable> getAllWeqVariables() {
+		final Set<TermVariable> result = new HashSet<>();
+		mDimensionToWeqVariableNode.entrySet().forEach(en -> result.add((TermVariable) en.getThird().getTerm()));
+		return result;
+	}
+
+	public Set<NODE> getAllWeqNodes() {
+		final Set<NODE> result = new HashSet<>();
+		mDimensionToWeqVariableNode.entrySet().forEach(en -> result.add(en.getThird()));
+		return result;
+	}
+
 	public EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> getTopDisjunctiveConstraint() {
 		return getDisjunctiveConstraint(Collections.singleton(getEmptyConstraint()));
 	}
@@ -394,5 +431,10 @@ public class EqConstraintFactory<
 
 	public ManagedScript getMgdScript() {
 		return mCsToolkit.getManagedScript();
+	}
+
+	@Override
+	public String toString() {
+		return this.getClass().getSimpleName();
 	}
 }

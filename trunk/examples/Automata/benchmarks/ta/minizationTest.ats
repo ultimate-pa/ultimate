@@ -17,6 +17,7 @@ TreeAutomaton ta = TreeAutomaton (
      ((q2 q4) a q5)
     }
  );
+print(ta);
   
 TreeAutomaton ta1 = minimize(ta);
 print(ta1);

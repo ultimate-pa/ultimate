@@ -48,6 +48,7 @@ public class SuccessorConstraintIngredients<IPT> {
 	private final Set<IProgramVar> mVariablesForSourcePattern;
 	private final IPT mInvStart;
 
+	private final Map<IcfgEdge, IPT> mEdge2Pattern;
 	private final Map<IcfgEdge, IPT> mEdge2TargetInv;
 	private final Map<IcfgEdge, Set<IProgramVar>> mEdge2VariablesForTargetPattern;
 
@@ -57,6 +58,7 @@ public class SuccessorConstraintIngredients<IPT> {
 		mSourceLocation = sourceLocation;
 		mVariablesForSourcePattern = variablesForSourcePattern;
 		mInvStart = invStart;
+		mEdge2Pattern = new HashMap<>();
 		mEdge2TargetInv = new HashMap<>();
 		mEdge2VariablesForTargetPattern = new HashMap<>();
 	}
@@ -73,6 +75,12 @@ public class SuccessorConstraintIngredients<IPT> {
 		if (oldVars != null) {
 			throw new IllegalArgumentException("vars already added " + icfgEdge);
 		}
+	}
+
+	public void addTransition(final IcfgEdge icfgEdge, final IPT ipt, final Set<IProgramVar> varsTargetPattern,
+			final IPT transitionPattern) {
+		addTransition(icfgEdge, ipt, varsTargetPattern);
+		mEdge2Pattern.put(icfgEdge, transitionPattern);
 	}
 
 	public Set<TransitionConstraintIngredients<IPT>> buildTransitionConstraintIngredients() {
@@ -96,6 +104,10 @@ public class SuccessorConstraintIngredients<IPT> {
 
 	public IPT getInvStart() {
 		return mInvStart;
+	}
+
+	public Map<IcfgEdge, IPT> getEdge2Pattern() {
+		return mEdge2Pattern;
 	}
 
 	public Map<IcfgEdge, IPT> getEdge2TargetInv() {

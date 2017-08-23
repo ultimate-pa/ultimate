@@ -66,10 +66,10 @@ public class EquivalenceRelationIterator<E> implements Iterable<Set<Doubleton<E>
 	private final IExternalOracle<E> mExternalOracle;
 
 	public EquivalenceRelationIterator(final IUltimateServiceProvider services,
-			final Collection<E> indices, final ThreeValuedEquivalenceRelation<E> equalityInformation, final IExternalOracle<E> externalOracle) {
+			final Collection<E> indices, final ThreeValuedEquivalenceRelation<E> equalityInformation, final IExternalOracle<E> externalOracle, final List<Doubleton<E>> relevant) {
 		super();
 		mServices = services;
-		mNonDisjointDoubletons = buildListOfNonDisjointDoubletons(indices, equalityInformation);
+		mNonDisjointDoubletons = relevant;
 		mEqualityInformation = equalityInformation;
 		mExternalOracle = externalOracle;
 		mCurrentRelation = new SymmetricHashRelation<>();
@@ -88,6 +88,12 @@ public class EquivalenceRelationIterator<E> implements Iterable<Set<Doubleton<E>
 		}
 //		assert checkResultWithOldCombinationIterator(indices,
 //				equalityInformation) : "result of CombinationIterator and CombinationIterator2 is different";
+	}
+	
+	public EquivalenceRelationIterator(final IUltimateServiceProvider services,
+			final Collection<E> indices, final ThreeValuedEquivalenceRelation<E> equalityInformation, final IExternalOracle<E> externalOracle) {
+		this(services, indices, equalityInformation, externalOracle, buildListOfNonDisjointDoubletons(indices, equalityInformation));
+
 	}
 
 	private boolean checkResultWithOldCombinationIterator(final Collection<E> indices,

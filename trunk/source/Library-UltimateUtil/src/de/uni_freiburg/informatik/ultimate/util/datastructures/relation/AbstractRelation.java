@@ -124,6 +124,7 @@ public abstract class AbstractRelation<D, R, MAP extends Map<D, Set<R>>> impleme
 	 */
 	public void removeDomainElement(final D left) {
 		mMap.remove(left);
+		assert sanityCheck();
 	}
 
 	/**
@@ -132,9 +133,15 @@ public abstract class AbstractRelation<D, R, MAP extends Map<D, Set<R>>> impleme
 	 * @param elem
 	 */
 	public void removeRangeElement(final R elem) {
-		for (final Entry<D, Set<R>> en : mMap.entrySet()) {
+		final MAP mapCopy = newMap();
+		mapCopy.putAll(mMap);
+		for (final Entry<D, Set<R>> en : mapCopy.entrySet()) {
 			en.getValue().remove(elem);
+			if (en.getValue().isEmpty()) {
+				mMap.remove(en.getKey());
+			}
 		}
+		assert sanityCheck();
 	}
 
 
@@ -145,6 +152,7 @@ public abstract class AbstractRelation<D, R, MAP extends Map<D, Set<R>>> impleme
 	 * @param replacement
 	 */
 	public void replaceDomainElement(final D element, final D replacement) {
+		assert replacement != null;
 		final Set<R> image = mMap.get(element);
 
 		if (image == null) {
@@ -156,6 +164,7 @@ public abstract class AbstractRelation<D, R, MAP extends Map<D, Set<R>>> impleme
 			addPair(replacement, rangeElement);
 		}
 		removeDomainElement(element);
+		assert sanityCheck();
 	}
 
 	/**
@@ -171,6 +180,7 @@ public abstract class AbstractRelation<D, R, MAP extends Map<D, Set<R>>> impleme
 				en.getValue().add(replacement);
 			}
 		}
+		assert sanityCheck();
 	}
 
 	/**
@@ -282,6 +292,21 @@ public abstract class AbstractRelation<D, R, MAP extends Map<D, Set<R>>> impleme
 			}
 		} else if (!mMap.equals(other.mMap)) {
 			return false;
+		}
+		return true;
+	}
+
+	private boolean sanityCheck() {
+		for (final Entry<D, Set<R>> en : this.mMap.entrySet()) {
+			if (en.getKey() == null) {
+				return false;
+			}
+			if (en.getValue() == null) {
+				return false;
+			}
+			if (en.getValue().isEmpty()) {
+				return false;
+			}
 		}
 		return true;
 	}

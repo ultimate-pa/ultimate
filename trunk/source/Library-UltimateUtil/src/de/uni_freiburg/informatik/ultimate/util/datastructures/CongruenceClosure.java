@@ -108,6 +108,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 	}
 
 
+	// deprecated because other constructors are used instead -- try using others before reactivating this
+	@Deprecated
 	public CongruenceClosure(final UnionFind<ELEM> newElemPartition, final UnionFind<FUNCTION> newFunctionPartition,
 			final HashRelation<ELEM, ELEM> newElemDisequalities,
 			final HashRelation<FUNCTION, FUNCTION> newFunctionDisequalities) {
@@ -164,14 +166,16 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 		 * congruence propagations: if we are adding f = g then we can propagate f(x) =
 		 * g(x) for all nodes of that form we know.
 		 *
-		 * uses optimization: don't iterate over all funcApps but only over
-		 * representatives (would it make sense that mFunctionToFuncApps only holds
-		 * representatives??..)
 		 */
-		for (final ELEM funcApp1 : mFunctionToFuncApps.getImage(f1).stream()
-				.map(fa -> mElementTVER.getRepresentative(fa)).collect(Collectors.toSet())) {
-			for (final ELEM funcApp2 : mFunctionToFuncApps.getImage(f2).stream()
-					.map(fa -> mElementTVER.getRepresentative(fa)).collect(Collectors.toSet())) {
+//		for (final ELEM funcApp1 : mFunctionToFuncApps.getImage(f1).stream()
+//				.map(fa -> mElementTVER.getRepresentative(fa)).collect(Collectors.toSet())) {
+//			for (final ELEM funcApp2 : mFunctionToFuncApps.getImage(f2).stream()
+//					.map(fa -> mElementTVER.getRepresentative(fa)).collect(Collectors.toSet())) {
+		for (final ELEM funcApp1 : mFunctionToFuncApps.getImage(f1)) {
+			for (final ELEM funcApp2 : mFunctionToFuncApps.getImage(f2)) {
+				if (funcApp1 == funcApp2) {
+					continue;
+				}
 				if (argumentsAreCongruent(funcApp1, funcApp2)) {
 					reportEquality(funcApp1, funcApp2);
 				}
@@ -542,7 +546,11 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 
 	}
 
-	public void removeFunction(final FUNCTION func) {
+	public boolean removeFunction(final FUNCTION func) {
+		if (!hasFunction(func)) {
+			return false;
+		}
+
 		// remove from the function equivalence relation
 		mFunctionTVER.removeElement(func);
 
@@ -554,13 +562,24 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 		mFunctionToRepresentativeToCcPars.remove(func);
 		mFunctionToRepresentativeToCcChildren.remove(func);
 		mFunctionToFuncApps.removeDomainElement(func);
+		return true;
 	}
 
-	public void removeElement(final ELEM elem) {
+	public boolean removeElement(final ELEM elem) {
+		if (!hasElement(elem)) {
+			return false;
+		}
+
 		if (mElementTVER.isRepresentative(elem)) {
 			for (final FUNCTION func : mFunctionTVER.getAllElements()) {
-				mFunctionToRepresentativeToCcPars.get(func).remove(elem);
-				mFunctionToRepresentativeToCcChildren.get(func).remove(elem);
+				final Map<ELEM, Set<ELEM>> ccpars = mFunctionToRepresentativeToCcPars.get(func);
+				if (ccpars != null) {
+					ccpars.remove(elem);
+				}
+				final Map<ELEM, Set<List<ELEM>>> ccchildren = mFunctionToRepresentativeToCcChildren.get(func);
+				if (ccchildren != null) {
+					ccchildren.remove(elem);
+				}
 			}
 		}
 		mFunctionToFuncApps.removeRangeElement(elem);
@@ -570,7 +589,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 		for (final ELEM parent : mElementToParents.getImage(elem)) {
 			removeElement(parent);
 		}
-
+		return true;
 	}
 
 	public CongruenceClosure<ELEM, FUNCTION> join(final CongruenceClosure<ELEM, FUNCTION> other) {
@@ -641,20 +660,30 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 		final CongruenceClosure<ELEM, FUNCTION> otherAligned = other.alignElements(this);
 
 		for (final Entry<ELEM, ELEM> eq : otherAligned.getSupportingElementEqualities().entrySet()) {
+			if (thisAligned.isInconsistent()) {
+				return new CongruenceClosure<>(true);
+			}
 			thisAligned.reportEquality(eq.getKey(), eq.getValue());
 		}
 		for (final Entry<FUNCTION, FUNCTION> eq : otherAligned.getSupportingFunctionEqualities().entrySet()) {
+			if (thisAligned.isInconsistent()) {
+				return new CongruenceClosure<>(true);
+			}
 			thisAligned.reportFunctionEquality(eq.getKey(), eq.getValue());
 		}
 		for (final Entry<ELEM, ELEM> deq : otherAligned.getElementDisequalities()) {
+			if (thisAligned.isInconsistent()) {
+				return new CongruenceClosure<>(true);
+			}
 			thisAligned.reportDisequality(deq.getKey(), deq.getValue());
 		}
 		for (final Entry<FUNCTION, FUNCTION> deq : otherAligned.getFunctionDisequalities()) {
+			if (thisAligned.isInconsistent()) {
+				return new CongruenceClosure<>(true);
+			}
 			thisAligned.reportFunctionDisequality(deq.getKey(), deq.getValue());
 		}
-		if (thisAligned.isInconsistent()) {
-			return new CongruenceClosure<>(true);
-		}
+
 		return thisAligned;
 	}
 
@@ -1064,5 +1093,32 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 	public boolean hasFunction(final FUNCTION elem) {
 		return getAllFunctions().contains(elem);
 	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		// TODO Auto-generated method stub
+		return super.equals(obj);
+	}
+
+	@Override
+	public int hashCode() {
+		// TODO Auto-generated method stub
+		return super.hashCode();
+	}
+
+//	/**
+//	 * Returns a new CongruenceClosure which contains only those constraints in this CongruenceClosure that constrain
+//	 *  the given element.
+//	 * @param elem
+//	 * @return
+//	 */
+//	public CongruenceClosure<ELEM, FUNCTION> projectToElement(final ELEM elem) {
+//		final ThreeValuedEquivalenceRelation<ELEM> newElemPartition;
+//		final ThreeValuedEquivalenceRelation<FUNCTION> newFunctionPartition =
+//				new ThreeValuedEquivalenceRelation<>(this.mFunctionTVER);
+//		// TODO Auto-generated method stub
+//		return new CongruenceClosure<>(newElemPartition, newFunctionPartition);
+//	}
+
 
 }

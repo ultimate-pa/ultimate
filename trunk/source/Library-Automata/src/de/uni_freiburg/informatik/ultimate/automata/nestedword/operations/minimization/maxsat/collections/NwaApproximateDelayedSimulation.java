@@ -113,35 +113,6 @@ public class NwaApproximateDelayedSimulation<LETTER, STATE> {
 		mLogger.info("mSpoilerWinningStates: \n" + mSpoilerWinningStates);
 	}
 	
-	/**
-	 * Constructor to be used with the MaxSat Solver
-	 * @param services
-	 *            Ultimate services.
-	 * @param operand
-	 *            operand
-	 * @param areStatesMerged
-	 *            predicate expressing whether two states/stack symbols are merged
-	 * @throws AutomataOperationCanceledException
-	 *             if operation is canceled
-	 */
-	public NwaApproximateDelayedSimulation(final AutomataLibraryServices services,
-			final INestedWordAutomaton<LETTER, STATE> operand, final Map<STATE, NormalNode<STATE>> mergeStatus, final BiPredicate<STATE, STATE> areStatesMerged)
-			throws AutomataOperationCanceledException {
-		mServices = services;
-		mLogger = services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
-		mOperand = operand;
-		mAreStatesMerged = areStatesMerged;
-
-		// FIXME somehow dead ends in the game graph have to be removed first
-		final ISetOfPairs<STATE, ?> ordinarySimulation = computeOrdinarySimulation();
-		mLogger.info("Simulation: \n" + ordinarySimulation);
-		mDuplicatorEventuallyAccepting = computeDuplicatorFollowing(ordinarySimulation);
-		mLogger.info("mDuplicatorEventuallyAccepting: \n" + mDuplicatorEventuallyAccepting);
-		mSpoilerWinningStates = computeSpoilerWinning(mDuplicatorEventuallyAccepting);
-		mLogger.info("mSpoilerWinningStates: \n" + mSpoilerWinningStates);
-		mMergeStatus = mergeStatus;
-	}
-	
 	public ISetOfPairs<STATE, ?> getDuplicatorEventuallyAcceptingStates() {
 		return mDuplicatorEventuallyAccepting;
 	}

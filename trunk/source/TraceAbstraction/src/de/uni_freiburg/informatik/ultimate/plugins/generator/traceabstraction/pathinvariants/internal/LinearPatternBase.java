@@ -2,27 +2,27 @@
  * Copyright (C) 2015 David Zschocke
  * Copyright (C) 2015 Dirk Steinmetz
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE TraceAbstraction plug-in.
- * 
+ *
  * The ULTIMATE TraceAbstraction plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE TraceAbstraction plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE TraceAbstraction plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE TraceAbstraction plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal;
@@ -46,10 +46,10 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
  */
 public class LinearPatternBase extends AbstractLinearInvariantPattern {
 
-	
+
 	/**
 	 * Creates a new linear inequality over a given set of {@link IProgramVar}s.
-	 * 
+	 *
 	 * @param solver
 	 *            the solver to generate new function symbols in (for
 	 *            coefficients and constant term)
@@ -67,15 +67,17 @@ public class LinearPatternBase extends AbstractLinearInvariantPattern {
 			final boolean strict) {
 		super(solver, variables, prefix, strict);
 	}
-	
 
+	protected LinearPatternBase() {
+
+	}
 
 	/**
 	 * Returns a linear inequality corresponding to this part of the invariant,
 	 * when applied to a given {@link IProgramVar}-Mapping (that is, a map assigning
 	 * a {@link Term} to each {@link IProgramVar} within the inequality represented
 	 * by this class).
-	 * 
+	 *
 	 * @param map
 	 *            mapping to {@link Terms} to be used within the
 	 *            {@link LinearInequality} generated
@@ -83,19 +85,18 @@ public class LinearPatternBase extends AbstractLinearInvariantPattern {
 	 *         by this class, where each {@link IProgramVar} is replaced according
 	 *         to the given mapping
 	 */
+	@Override
 	public LinearInequality getLinearInequality(final Map<IProgramVar, Term> map) {
 		assert (map.keySet().containsAll(mVariablesOfThisPattern)) : "The given map does not contain an entry for each variable of this pattern";
-		Map<IProgramVar, Term> vars2TermsForThisPattern = new HashMap<>(mVariablesOfThisPattern.size());
-		for (IProgramVar var : mVariablesOfThisPattern) {
+		final Map<IProgramVar, Term> vars2TermsForThisPattern = new HashMap<>(mVariablesOfThisPattern.size());
+		for (final IProgramVar var : mVariablesOfThisPattern) {
 			vars2TermsForThisPattern.put(var, map.get(var));
 		}
 		final LinearInequality inequality = mFunctionGenerator.generate(vars2TermsForThisPattern);
 		inequality.setStrict(mStrictInequality);
 		return inequality;
 	}
-	
 
-	
 	/**
 	 * Returns the affine function \sumi a_ix_i corresponding to the
 	 * linear inequality \sumi a_ix_i < b (for strict linear inequalities)
@@ -106,6 +107,7 @@ public class LinearPatternBase extends AbstractLinearInvariantPattern {
 	 * to use to valuate variables
 	 * @return the valuated affine function corresponding to this LinearInequality
 	 */
+	@Override
 	public AffineFunction getAffineFunction(final Map<Term, Rational> valuation){
 		return mFunctionGenerator.extractAffineFunction(valuation);
 	}
