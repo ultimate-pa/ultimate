@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -800,21 +801,31 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 				}
 				newWeakEquivalenceEdges.put(thisWeqEdge.getKey(), newEdgeLabel);
 			}
-			return new WeakEquivalenceGraph(newWeakEquivalenceEdges, newArrayEqualities);
+			final WeakEquivalenceGraph result = new WeakEquivalenceGraph(newWeakEquivalenceEdges, newArrayEqualities);
+			result.close();
+			return result;
 		}
 
 		boolean hasArrayEqualities() {
 			return !mArrayEqualities.isEmpty();
 		}
 
-		private void close() {
+		/**
+		 *
+		 * @return true iff this operation performed any changes on this weq graph
+		 */
+		private boolean close() {
+			if (mWeakEquivalenceEdges.isEmpty()) {
+				return false;
+			}
 			final FloydWarshall<FUNCTION, WeakEquivalenceEdgeLabel> fw =
 					new FloydWarshall<>(WeakEquivalenceEdgeLabel::isStrongerThan,
 							WeakEquivalenceEdgeLabel::union,
-							new WeakEquivalenceEdgeLabel(0),  // TODO replace "0"
+							new WeakEquivalenceEdgeLabel(),
 							mWeakEquivalenceEdges,
 							(final WeakEquivalenceEdgeLabel lab) -> new WeakEquivalenceEdgeLabel(lab));
 			mWeakEquivalenceEdges = fw.getResult();
+			return fw.performedChanges();
 		}
 
 		/**
@@ -837,7 +848,8 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 			final Doubleton<FUNCTION> sourceAndTarget = new Doubleton<FUNCTION>(func1, func2);
 			WeakEquivalenceEdgeLabel edgeLabel = mWeakEquivalenceEdges.get(sourceAndTarget);
 			if (edgeLabel == null) {
-				edgeLabel = new WeakEquivalenceEdgeLabel(func1.getArity());
+//				edgeLabel = new WeakEquivalenceEdgeLabel(func1.getArity());
+				edgeLabel = new WeakEquivalenceEdgeLabel();
 				mWeakEquivalenceEdges.put(sourceAndTarget, edgeLabel);
 			}
 			final CongruenceClosure<NODE, FUNCTION> newConstraint = computeWeqConstraintForIndex(nodes);
@@ -973,6 +985,8 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 
 
 		boolean sanityCheck() {
+
+
 			assert mFactory != null : "factory is needed for the sanity check..";
 			/*
 			 * check that no weak equivalence edge contains an ELEM or FUNCTION that is not known to mPartialArrangement
@@ -1014,6 +1028,13 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 			 * check completeness of the graph ("triangle inequality")
 			 */
 
+
+			// is closed/triangle inequation holds
+			if (close()) {
+				assert false;
+				return false;
+			}
+
 			return true;
 		}
 
@@ -1035,10 +1056,12 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 			/**
 			 * Constructs an empty edge. (labeled "true")
 			 */
-			public WeakEquivalenceEdgeLabel(final int arity) {
+//			public WeakEquivalenceEdgeLabel(final int arity) {
+			public WeakEquivalenceEdgeLabel() {
 //				mArityOfArrays = arity;
 				mLabel = new ArrayList<>();
 				mLabel.add(new CongruenceClosure<>());
+				assert sanityCheck();
 			}
 
 			/**
@@ -1052,12 +1075,28 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 				for (final CongruenceClosure<NODE, FUNCTION> pa : value.mLabel) {
 					mLabel.add(new CongruenceClosure<>(pa));
 				}
+				assert sanityCheck();
 			}
 
 			public WeakEquivalenceEdgeLabel(final List<CongruenceClosure<NODE, FUNCTION>> newLabelContents) {
 //					final int arityOfArrays) {
 //				mArityOfArrays = arityOfArrays;
-				mLabel = newLabelContents;
+
+				// a "true" edge corresponds to a non-existing edge --> should we filter that case??
+//				assert !newLabelContents.stream().anyMatch(pa -> pa.isTautological()) : "catch this outside, right?..";
+
+				// make a copy of the list, filter out false disjuncts
+				List<CongruenceClosure<NODE, FUNCTION>> newLabel = new ArrayList<>(newLabelContents).stream()
+						.filter(pa -> !pa.isInconsistent()).collect(Collectors.toList());
+
+				// if there is any true disjunct, it will annihilate all the others
+				if (newLabel.stream().anyMatch(pa -> pa.isTautological())) {
+					newLabel = Collections.singletonList(new CongruenceClosure<>());
+				}
+
+				mLabel = newLabel;
+
+				assert sanityCheck();
 			}
 
 			/**
@@ -1224,6 +1263,21 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 			public String toString() {
 				return mLabel.toString();
 			}
+
+			private boolean sanityCheck() {
+				if (mLabel.stream().anyMatch(pa -> pa.isTautological()) && mLabel.size() != 1) {
+					assert false : "missing normalization: if there is one 'true' disjunct, we can drop"
+							+ "all other disjuncts";
+					return false;
+				}
+
+				if (mLabel.stream().anyMatch(pa -> pa.isInconsistent())) {
+					assert false : "missing normalization: contains 'false' disjuncts";
+					return false;
+				}
+
+				return true;
+			}
 		}
 
 	}
@@ -1335,6 +1389,7 @@ class FloydWarshall<VERTEX, EDGELABEL> {
 
 	private final Map<Doubleton<VERTEX>, EDGELABEL> mDist;
 	private final List<VERTEX> mVertices;
+	private boolean mPerformedChanges;
 
 	/**
 	 *
@@ -1356,6 +1411,7 @@ class FloydWarshall<VERTEX, EDGELABEL> {
 		mPlus = plus;
 		mNullLabel = nullLabel;
 		mInputGraph = graph;
+		mPerformedChanges = false;
 
 		// initialize with a deep copy of the graph
 		mDist = new HashMap<>();
@@ -1370,13 +1426,17 @@ class FloydWarshall<VERTEX, EDGELABEL> {
 		run();
 	}
 
+	public boolean performedChanges() {
+		return mPerformedChanges;
+	}
+
 	/**
 	 * execute the main loop of the Floyd-Warshall algorithm
 	 */
 	private void run() {
 		for (int i = 0; i < mVertices.size(); i++) {
-			for (int j = 0; j < mVertices.size(); j++) {
-				for (int k = 0; k < mVertices.size(); k++) {
+			for (int j = 0; j < i; j++) {
+				for (int k = 0; k < mVertices.size() && k != i && k != j; k++) {
 					final EDGELABEL distIj = getDist(i, j);
 					final EDGELABEL distIk = getDist(i, k);
 					final EDGELABEL distKj = getDist(k, j);
@@ -1384,6 +1444,7 @@ class FloydWarshall<VERTEX, EDGELABEL> {
 
 					if (!mSmallerThan.test(distIj, ikPlusKj)) {
 						mDist.put(new Doubleton<>(mVertices.get(i), mVertices.get(j)), ikPlusKj);
+						mPerformedChanges = true;
 					}
 				}
 			}

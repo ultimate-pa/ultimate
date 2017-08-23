@@ -555,7 +555,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 		mFunctionTVER.removeElement(func);
 
 		// remove all elements that depend on the function
-		for (final ELEM funcApp : mFunctionToFuncApps.getImage(func)) {
+		final Set<ELEM> funcAppsWithFuncCopy = new HashSet<>(mFunctionToFuncApps.getImage(func));
+		for (final ELEM funcApp : funcAppsWithFuncCopy) {
 			removeElement(funcApp);
 		}
 
@@ -976,6 +977,13 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 
 	@Override
 	public String toString() {
+		if (isTautological()) {
+			return "True";
+		}
+		if (isInconsistent()) {
+			return "False";
+		}
+
 		final StringBuilder sb = new StringBuilder();
 
 		sb.append("Element equivalences:");
