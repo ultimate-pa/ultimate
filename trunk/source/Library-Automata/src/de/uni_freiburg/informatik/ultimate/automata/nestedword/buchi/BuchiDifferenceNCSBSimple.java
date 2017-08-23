@@ -1,4 +1,5 @@
 /*
+ * Copyright (C) 2017 Yong Li (liyong@ios.ac.cn)
  * Copyright (C) 2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
  * 
@@ -38,7 +39,6 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStat
 /**
  * Buchi difference "<tt>NCSBSimple</tt>".
  * 
- * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Yong Li (liyong@ios.ac.cn)
  * @param <LETTER>
  *            letter type
