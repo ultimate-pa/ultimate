@@ -36,6 +36,9 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.BiFunction;
+import java.util.function.BiPredicate;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -265,18 +268,39 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 
 	private void havoc(final TermVariable var) {
 		assert !mIsFrozen;
-		final CongruenceClosure<NODE, FUNCTION> oldGroundPartialArrangement =
-				new CongruenceClosure<>(mPartialArrangement);
-		for (final NODE elem : mPartialArrangement.getAllElements().stream()
-				.filter(e -> arrayContains(e.getTerm().getFreeVars(), var)).collect(Collectors.toList())) {
-			mPartialArrangement.removeElement(elem);
+
+		if (var.getSort().isArraySort()) {
+			// havoccing an array
+			final FUNCTION functionToHavoc = mFactory.getEqNodeAndFunctionFactory().getExistingFunction(var);
+
+			// making a copy of the ground partial arrangement here, just to be safe..
+			mWeakEquivalenceGraph.projectFunction(functionToHavoc, new CongruenceClosure<>(mPartialArrangement));
+
+			mPartialArrangement.removeFunction(functionToHavoc);
+
+		} else {
+			// havoccing an element
+			final NODE nodeToHavoc = mFactory.getEqNodeAndFunctionFactory().getExistingNode(var);
+
+			// making a copy of the ground partial arrangement here, just to be safe..
+			mWeakEquivalenceGraph.projectElement(nodeToHavoc, new CongruenceClosure<>(mPartialArrangement));
+
+			mPartialArrangement.removeElement(nodeToHavoc);
+		}
+
+
+//		final CongruenceClosure<NODE, FUNCTION> oldGroundPartialArrangement =
+//				new CongruenceClosure<>(mPartialArrangement);
+//		for (final NODE elem : mPartialArrangement.getAllElements().stream()
+//				.filter(e -> arrayContains(e.getTerm().getFreeVars(), var)).collect(Collectors.toList())) {
+//			mPartialArrangement.removeElement(elem);
 //			mWeakEquivalenceGraph.projectElement(elem, oldGroundPartialArrangement.projectToElement(elem));//TODO
-		}
-		for (final FUNCTION func : mPartialArrangement.getAllFunctions().stream()
-				.filter(f -> arrayContains(f.getTerm().getFreeVars(), var)).collect(Collectors.toList())) {
-			mPartialArrangement.removeFunction(func);
-			mWeakEquivalenceGraph.projectFunction(func);
-		}
+//		}
+//		for (final FUNCTION func : mPartialArrangement.getAllFunctions().stream()
+//				.filter(f -> arrayContains(f.getTerm().getFreeVars(), var)).collect(Collectors.toList())) {
+//			mPartialArrangement.removeFunction(func);
+//			mWeakEquivalenceGraph.projectFunction(func);
+//		}
 	}
 
 	private <E, F extends E> boolean arrayContains(final E[] freeVars, final F var) {
@@ -571,7 +595,8 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 
 
 	class WeakEquivalenceGraph {
-		private final Map<Doubleton<FUNCTION>, WeakEquivalenceEdgeLabel> mWeakEquivalenceEdges;
+		private Map<Doubleton<FUNCTION>, WeakEquivalenceEdgeLabel> mWeakEquivalenceEdges;
+
 		private final Map<FUNCTION, FUNCTION> mArrayEqualities;
 
 		/**
@@ -604,7 +629,7 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 			return madeChanges;
 		}
 
-		public void projectFunction(final FUNCTION func) {
+		public void projectFunction(final FUNCTION func, final CongruenceClosure<NODE, FUNCTION> groundPartialArrangement) {
 			final Map<Doubleton<FUNCTION>, WeakEquivalenceEdgeLabel> edgesCopy = new HashMap<>(mWeakEquivalenceEdges);
 			for (final Entry<Doubleton<FUNCTION>, WeakEquivalenceEdgeLabel> en : edgesCopy.entrySet()) {
 				if (en.getKey().getOneElement().equals(func) || en.getKey().getOtherElement().equals(func)) {
@@ -616,7 +641,7 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 			assert sanityCheck();
 		}
 
-		public void projectElement(final NODE elem, final CongruenceClosure<NODE, FUNCTION> groundPaProjectedToElem) {
+		public void projectElement(final NODE elem, final CongruenceClosure<NODE, FUNCTION> groundPartialArrangement) {
 			for (final Entry<Doubleton<FUNCTION>, WeakEquivalenceEdgeLabel> en : mWeakEquivalenceEdges.entrySet()) {
 				en.getValue().projectElement(elem);
 			}
@@ -768,6 +793,16 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 
 		boolean hasArrayEqualities() {
 			return !mArrayEqualities.isEmpty();
+		}
+
+		private void close() {
+			final FloydWarshall<FUNCTION, WeakEquivalenceEdgeLabel> fw =
+					new FloydWarshall<>(WeakEquivalenceEdgeLabel::isStrongerThan,
+							WeakEquivalenceEdgeLabel::union,
+							new WeakEquivalenceEdgeLabel(0),  // TODO replace "0"
+							mWeakEquivalenceEdges,
+							(final WeakEquivalenceEdgeLabel lab) -> new WeakEquivalenceEdgeLabel(lab));
+			mWeakEquivalenceEdges = fw.getResult();
 		}
 
 		/**
@@ -981,7 +1016,7 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 		 */
 		class WeakEquivalenceEdgeLabel {
 
-			private final int mArityOfArrays;
+//			private final int mArityOfArrays;
 
 			private final List<CongruenceClosure<NODE, FUNCTION>> mLabel;
 
@@ -989,7 +1024,7 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 			 * Constructs an empty edge. (labeled "true")
 			 */
 			public WeakEquivalenceEdgeLabel(final int arity) {
-				mArityOfArrays = arity;
+//				mArityOfArrays = arity;
 				mLabel = new ArrayList<>();
 				mLabel.add(new CongruenceClosure<>());
 			}
@@ -1000,16 +1035,16 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 			 * @param value
 			 */
 			public WeakEquivalenceEdgeLabel(final WeakEquivalenceEdgeLabel value) {
-				mArityOfArrays = value.mArityOfArrays;
+//				mArityOfArrays = value.mArityOfArrays;
 				mLabel = new ArrayList<>(value.mLabel.size());
 				for (final CongruenceClosure<NODE, FUNCTION> pa : value.mLabel) {
 					mLabel.add(new CongruenceClosure<>(pa));
 				}
 			}
 
-			public WeakEquivalenceEdgeLabel(final List<CongruenceClosure<NODE, FUNCTION>> newLabelContents,
-					final int arityOfArrays) {
-				mArityOfArrays = arityOfArrays;
+			public WeakEquivalenceEdgeLabel(final List<CongruenceClosure<NODE, FUNCTION>> newLabelContents) {
+//					final int arityOfArrays) {
+//				mArityOfArrays = arityOfArrays;
 				mLabel = newLabelContents;
 			}
 
@@ -1094,7 +1129,8 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 					assert pair.size() == 2;
 					newLabelContent.add(pair.get(0).meet(pair.get(1)));
 				}
-				return new WeakEquivalenceEdgeLabel(newLabelContent, mArityOfArrays);
+				return new WeakEquivalenceEdgeLabel(newLabelContent);
+//				return new WeakEquivalenceEdgeLabel(newLabelContent, mArityOfArrays);
 			}
 
 			/**
@@ -1131,7 +1167,8 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 				final Set<CongruenceClosure<NODE, FUNCTION>> newPasForDimension = new HashSet<>();
 				newPasForDimension.addAll(this.mLabel);
 				newPasForDimension.addAll(other.mLabel);
-				return new WeakEquivalenceEdgeLabel(new ArrayList<>(newPasForDimension), mArityOfArrays);
+//				return new WeakEquivalenceEdgeLabel(new ArrayList<>(newPasForDimension), mArityOfArrays);
+				return new WeakEquivalenceEdgeLabel(new ArrayList<>(newPasForDimension));
 			}
 
 
@@ -1246,5 +1283,79 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 		}
 
 
+	}
+}
+
+class FloydWarshall<VERTEX, EDGELABEL> {
+
+	private final BiPredicate<EDGELABEL, EDGELABEL> mSmallerThan;
+	private final BiFunction<EDGELABEL, EDGELABEL, EDGELABEL> mPlus;
+	private final EDGELABEL mNullLabel;
+	private final Map<Doubleton<VERTEX>, EDGELABEL> mInputGraph;
+
+	private final Map<Doubleton<VERTEX>, EDGELABEL> mDist;
+	private final List<VERTEX> mVertices;
+
+	/**
+	 *
+	 * @param smallerThan partial order operator (non-strict)
+	 * @param plus
+	 * @param nullLabel
+	 * @param graph
+	 * @param labelCloner
+	 */
+	public FloydWarshall(final BiPredicate<EDGELABEL, EDGELABEL> smallerThan,
+			final BiFunction<EDGELABEL, EDGELABEL, EDGELABEL> plus,
+			final EDGELABEL nullLabel,
+			final Map<Doubleton<VERTEX>, EDGELABEL> graph,
+			final Function<EDGELABEL, EDGELABEL> labelCloner) {
+		mSmallerThan = smallerThan;
+		mPlus = plus;
+		mNullLabel = nullLabel;
+		mInputGraph = graph;
+
+		// initialize with a deep copy of the graph
+		mDist = new HashMap<>();
+		final HashSet<VERTEX> verticeSet = new HashSet<>();
+		for (final Entry<Doubleton<VERTEX>, EDGELABEL> en : graph.entrySet()) {
+			verticeSet.add(en.getKey().getOneElement());
+			verticeSet.add(en.getKey().getOtherElement());
+			mDist.put(en.getKey(), labelCloner.apply(en.getValue()));
+		}
+		mVertices = new ArrayList<>(verticeSet);
+
+		run();
+	}
+
+	/**
+	 * execute the main loop of the Floyd-Warshall algorithm
+	 */
+	private void run() {
+		for (int i = 0; i < mVertices.size(); i++) {
+			for (int j = 0; j < mVertices.size(); j++) {
+				for (int k = 0; k < mVertices.size(); k++) {
+					final EDGELABEL distIj = getDist(i, j);
+					final EDGELABEL distIk = getDist(i, k);
+					final EDGELABEL distKj = getDist(k, j);
+					final EDGELABEL ikPlusKj = mPlus.apply(distIk, distKj);
+
+					if (!mSmallerThan.test(distIj, ikPlusKj)) {
+						mDist.put(new Doubleton<>(mVertices.get(i), mVertices.get(j)), ikPlusKj);
+					}
+				}
+			}
+		}
+	}
+
+	private EDGELABEL getDist(final int i, final int j) {
+		EDGELABEL res = mDist.get(new Doubleton<>(mVertices.get(i), mVertices.get(j)));
+		if (res == null) {
+			res = mNullLabel;
+		}
+		return res;
+	}
+
+	public Map<Doubleton<VERTEX>, EDGELABEL> getResult() {
+		return mDist;
 	}
 }
