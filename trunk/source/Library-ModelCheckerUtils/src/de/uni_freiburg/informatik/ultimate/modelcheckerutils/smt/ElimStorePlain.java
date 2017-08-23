@@ -263,6 +263,13 @@ public class ElimStorePlain {
 		} else {
 			mLogger.info("some preprocessing");
 		}
+		final Orac oracB = new Orac(preprocessedInput);
+		if (oracB.mIncrementalPlicationChecker.checkSat(mMgdScript.getScript().term("true"))== LBool.UNSAT) {
+			mLogger.warn("input unsat");
+			oracB.unlockSolver();
+			return new AfEliminationTask(Collections.emptySet(), mMgdScript.getScript().term("false"));
+		}
+		oracB.unlockSolver();
 
 		final List<ApplicationTerm> selectTerms = extractSelects2(eliminatee, preprocessedInput);
 
@@ -332,8 +339,12 @@ public class ElimStorePlain {
 		final ThreeValuedEquivalenceRelation<Term> equalityInformation = analysisResult.getFirst();
 
 		final Sort valueSort = eliminatee.getSort().getArguments()[1];
-		final Map<Term, TermVariable> oldCellMapping =
-				constructOldCellValueMapping(selectTerms, storeIndex, equalityInformation, valueSort);
+		//TODO: if index is different from store index, then oldcell should be
+		// represented as 
+		// final Term newSelect = mgdScript.getScript().term("select", newAuxArray, replacementSelectIndex);
+		// (hence we need to change computation order -- index mapping first)
+		final Map<Term, TermVariable> oldCellMapping = constructOldCellValueMapping(selectTerms, storeIndex,
+				equalityInformation, valueSort, selectIndices.contains(storeIndex));
 		for (final Entry<?, TermVariable> entry : oldCellMapping.entrySet()) {
 			newAuxVars.add(entry.getValue());
 		}
@@ -603,17 +614,21 @@ public class ElimStorePlain {
 				final Term eq = SmtUtils.binaryEquality(mScript, indicesList.get(i), indicesList.get(j));
 				if (SmtUtils.isTrue(eq)) {
 					tver.reportEquality(indicesList.get(i), indicesList.get(j));
+					assert !tver.isInconsistent() : "inconsistent equality information";
 				} else if (SmtUtils.isFalse(eq)) {
 					tver.reportDisequality(indicesList.get(i), indicesList.get(j));
+					assert !tver.isInconsistent() : "inconsistent equality information";
 				} else {
 					// TODO: bring eq in commuhash normal form
 					if (dualFiniteJuncts.contains(eq)) {
 						tver.reportEquality(indicesList.get(i), indicesList.get(j));
+						assert !tver.isInconsistent() : "inconsistent equality information";
 						mLogger.info("found equality in dual finite juncts");
 					} else {
 						final Term neq = SmtUtils.not(mScript, eq);
 						if (dualFiniteJuncts.contains(neq)) {
 							tver.reportDisequality(indicesList.get(i), indicesList.get(j));
+							assert !tver.isInconsistent() : "inconsistent equality information";
 							mLogger.info("found not equals in dual finite juncts");
 						} else {
 							final Validity isEqual = iea.checkPlication(eq);
@@ -623,8 +638,10 @@ public class ElimStorePlain {
 							if (isEqual == Validity.VALID) {
 								if (mQuantifier == QuantifiedFormula.EXISTS) {
 									tver.reportEquality(indicesList.get(i), indicesList.get(j));
+									assert !tver.isInconsistent() : "inconsistent equality information";
 								} else if (mQuantifier == QuantifiedFormula.FORALL) {
 									tver.reportDisequality(indicesList.get(i), indicesList.get(j));
+									assert !tver.isInconsistent() : "inconsistent equality information";
 								} else {
 									throw new AssertionError("unknown quantifier");
 								}
@@ -641,8 +658,10 @@ public class ElimStorePlain {
 								if (notEqualsHolds == Validity.VALID) {
 									if (mQuantifier == QuantifiedFormula.EXISTS) {
 										tver.reportDisequality(indicesList.get(i), indicesList.get(j));
+										assert !tver.isInconsistent() : "inconsistent equality information";
 									} else if (mQuantifier == QuantifiedFormula.FORALL) {
 										tver.reportEquality(indicesList.get(i), indicesList.get(j));
+										assert !tver.isInconsistent() : "inconsistent equality information";
 									} else {
 										throw new AssertionError("unknown quantifier");
 									}
@@ -750,7 +769,7 @@ public class ElimStorePlain {
 	 */
 	private Map<Term, TermVariable> constructOldCellValueMapping(final List<ApplicationTerm> selectTerms,
 			final Term storeIndex, final ThreeValuedEquivalenceRelation<Term> equalityInformation,
-			final Sort valueSort) {
+			final Sort valueSort, final boolean storeIndexIsAlsoSelectIndex) {
 		final IValueConstruction<Term, TermVariable> valueConstruction = new IValueConstruction<Term, TermVariable>() {
 
 			@Override
@@ -765,7 +784,7 @@ public class ElimStorePlain {
 		for (final ApplicationTerm selectTerm : selectTerms) {
 			assert selectTerm.getSort().equals(valueSort);
 			final Term selectIndex = getIndexOfSelect(selectTerm);
-			if ((storeIndex != null)
+			if ((storeIndex != null) && !storeIndexIsAlsoSelectIndex
 					&& equalityInformation.getEqualityStatus(selectIndex, storeIndex) == EqualityStatus.NOT_EQUAL) {
 				// do nothing
 			} else {
