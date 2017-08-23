@@ -46,6 +46,14 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 	private final ThreeValuedEquivalenceRelation<ELEM> mElementTVER;
 	private final ThreeValuedEquivalenceRelation<FUNCTION> mFunctionTVER;
 
+	/**
+	 * conventions:
+	 * <li> function f (first index) is not a representative, every function known to mFunctionTVER can have an entry here
+	 * <li> representative r (second index) is a representative of an equivalence class in mElemenTVER
+	 * <li> the result set, ccpars, contains nodes that are an f-parent of a node in r's equivalence class.
+	 * <p>
+	 * usage of this map: reportEqualityRec, together with argumentsAreCongruent
+	 */
 	private final NestedMap2<FUNCTION, ELEM, Set<ELEM>> mFunctionToRepresentativeToCcPars;
 	private final NestedMap2<FUNCTION, ELEM, Set<List<ELEM>>> mFunctionToRepresentativeToCcChildren;
 	private final HashRelation<FUNCTION, ELEM> mFunctionToFuncApps;
@@ -108,26 +116,26 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 	}
 
 
-	// deprecated because other constructors are used instead -- try using others before reactivating this
-	@Deprecated
-	public CongruenceClosure(final UnionFind<ELEM> newElemPartition, final UnionFind<FUNCTION> newFunctionPartition,
-			final HashRelation<ELEM, ELEM> newElemDisequalities,
-			final HashRelation<FUNCTION, FUNCTION> newFunctionDisequalities) {
-		mElementTVER = new ThreeValuedEquivalenceRelation<>(newElemPartition, newElemDisequalities);
-		mFunctionTVER = new ThreeValuedEquivalenceRelation<>(newFunctionPartition, newFunctionDisequalities);
-		mFunctionToRepresentativeToCcPars = new NestedMap2<>();
-		mFunctionToRepresentativeToCcChildren = new NestedMap2<>();
-		mFunctionToFuncApps = new HashRelation<>();
-		mElementToParents = new HashRelation<>();
-		assert !mElementTVER.isInconsistent() && !mFunctionTVER.isInconsistent();
-		mIsInconsistent = false;
-
-		// initialize the helper mappings according to mElementTVER
-		for (final ELEM elem : mElementTVER.getAllElements()) {
-			registerNewElement(elem);
-		}
-		assert sanityCheck();
-	}
+//	// deprecated because other constructors are used instead -- try using others before reactivating this
+//	@Deprecated
+//	public CongruenceClosure(final UnionFind<ELEM> newElemPartition, final UnionFind<FUNCTION> newFunctionPartition,
+//			final HashRelation<ELEM, ELEM> newElemDisequalities,
+//			final HashRelation<FUNCTION, FUNCTION> newFunctionDisequalities) {
+//		mElementTVER = new ThreeValuedEquivalenceRelation<>(newElemPartition, newElemDisequalities);
+//		mFunctionTVER = new ThreeValuedEquivalenceRelation<>(newFunctionPartition, newFunctionDisequalities);
+//		mFunctionToRepresentativeToCcPars = new NestedMap2<>();
+//		mFunctionToRepresentativeToCcChildren = new NestedMap2<>();
+//		mFunctionToFuncApps = new HashRelation<>();
+//		mElementToParents = new HashRelation<>();
+//		assert !mElementTVER.isInconsistent() && !mFunctionTVER.isInconsistent();
+//		mIsInconsistent = false;
+//
+//		// initialize the helper mappings according to mElementTVER
+//		for (final ELEM elem : mElementTVER.getAllElements()) {
+//			registerNewElement(elem);
+//		}
+//		assert sanityCheck();
+//	}
 
 
 	/**
@@ -276,10 +284,10 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 
 		// do forward congruence propagations
 		for (final Set<FUNCTION> eqc : mFunctionTVER.getAllEquivalenceClasses()) {
-			for (final Entry<FUNCTION, FUNCTION> pair
+			for (final Entry<FUNCTION, FUNCTION> funcPair
 					: CrossProducts.binarySelectiveCrossProduct(eqc, true, true)) {
-				final Set<ELEM> e1CcPars = mFunctionToRepresentativeToCcPars.get(pair.getKey(), e1OldRep);
-				final Set<ELEM> e2CcPars = mFunctionToRepresentativeToCcPars.get(pair.getValue(), e2OldRep);
+				final Set<ELEM> e1CcPars = getCcPars(funcPair.getKey(), e1OldRep);
+				final Set<ELEM> e2CcPars = getCcPars(funcPair.getValue(), e2OldRep);
 
 				if (e1CcPars == null || e2CcPars == null) {
 					// nothing to do
@@ -300,8 +308,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 						/*
 						 * insert some backward congruences:
 						 *
-						 * say we knew before f(x1, x2) != g(y1, y2), and f = g now we are reporting x1
-						 * = y1 --> then we need to propagate x2 != y2 now.
+						 * say we knew before f(x1, x2) != g(y1, y2), and f = g. now we are reporting x1 = y1
+						 *  --> then we need to propagate x2 != y2 now.
 						 */
 						if (getEqualityStatus(ccpar1, ccpar2) == EqualityStatus.NOT_EQUAL) {
 							final int onlyDifferentPos = getOnlyUnconstrainedPos(ccpar1.getArguments(),
@@ -325,8 +333,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 
 		// update ccpar and ccchild sets
 		for (final FUNCTION func : mFunctionTVER.getAllElements()) {
-			final Set<ELEM> e1CcPars = mFunctionToRepresentativeToCcPars.get(func, e1OldRep);
-			final Set<ELEM> e2CcPars = mFunctionToRepresentativeToCcPars.get(func, e2OldRep);
+			final Set<ELEM> e1CcPars = getCcPars(func, e1OldRep);
+			final Set<ELEM> e2CcPars = getCcPars(func, e2OldRep);
 
 			final Set<List<ELEM>> e1CcChildren = mFunctionToRepresentativeToCcChildren.get(func, e1OldRep);
 			final Set<List<ELEM>> e2CcChildren = mFunctionToRepresentativeToCcChildren.get(func, e2OldRep);
@@ -417,6 +425,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 				}
 			}
 		}
+		assert sanityCheck();
 	}
 
 	/**
@@ -841,7 +850,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 	 * @param funcApp
 	 */
 	private void addToCcPar(final ELEM elem, final ELEM funcApp) {
-		final ELEM funcAppRep = getRepresentativeElement(funcApp);
+//		final ELEM funcAppRep = getRepresentativeElement(funcApp);
 		// final FUNCTION funcRep =
 		// getRepresentativeFunction(funcApp.getAppliedFunction());
 		final FUNCTION func = funcApp.getAppliedFunction();
@@ -852,7 +861,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 			ccpars = new HashSet<>();
 			mFunctionToRepresentativeToCcPars.put(func, elemRep, ccpars);
 		}
-		ccpars.add(funcAppRep);
+		ccpars.add(funcApp);
 	}
 
 	private void addToCcChildren(final ELEM elem, final List<ELEM> arguments) {
@@ -894,8 +903,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 	}
 
 	/**
-	 * Retrieves the ccpar map for the given function and element (both must be
-	 * representatives) Creates one if there is none..
+	 * Retrieves the ccpar map for the given function and element. Creates one if there is none..
 	 *
 	 * @param funcRep
 	 * @param newRep
@@ -931,6 +939,19 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 				assert false;
 				return false;
 			}
+
+			// every element in the ccpars set must be a function application of the function that the ccpars set is for
+			if (repFuncCcPars.getThird().stream()
+					.anyMatch(elem -> (!elem.isFunctionApplication()
+							|| !elem.getAppliedFunction().equals(repFuncCcPars.getFirst())))) {
+				assert false;
+				return false;
+			}
+
+//			if (repFuncCcPars.getThird().stream().anyMatch(elem -> !mElementTVER.isRepresentative(elem))) {
+//				assert false;
+//				return false;
+//			}
 		}
 
 		for (final Triple<FUNCTION, ELEM, Set<List<ELEM>>> repFuncCcChildren : mFunctionToRepresentativeToCcChildren
