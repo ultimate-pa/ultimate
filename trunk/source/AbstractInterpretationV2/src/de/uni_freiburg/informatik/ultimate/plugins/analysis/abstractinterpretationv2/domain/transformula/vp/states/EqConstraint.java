@@ -538,7 +538,7 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 
 
 	public EqConstraint<ACTION, NODE, FUNCTION> meet(final EqConstraint<ACTION, NODE, FUNCTION> other) {
-		final EqConstraint<ACTION, NODE, FUNCTION>.WeakEquivalenceGraph currentWeqGraph = other.mWeakEquivalenceGraph;
+		final WeakEquivalenceGraph currentWeqGraph = other.mWeakEquivalenceGraph;
 
 		final CongruenceClosure<NODE, FUNCTION> meetPartialArrangement =
 				this.mPartialArrangement.meet(other.mPartialArrangement);
@@ -1434,9 +1434,15 @@ class FloydWarshall<VERTEX, EDGELABEL> {
 	 * execute the main loop of the Floyd-Warshall algorithm
 	 */
 	private void run() {
-		for (int i = 0; i < mVertices.size(); i++) {
-			for (int j = 0; j < i; j++) {
-				for (int k = 0; k < mVertices.size() && k != i && k != j; k++) {
+		for (int k = 0; k < mVertices.size(); k++) {
+			for (int i = 0; i < mVertices.size(); i++) {
+				if (i == k) {
+					continue;
+				}
+				for (int j = 0; j < mVertices.size(); j++) {
+					if (j == i || j == k) {
+						continue;
+					}
 					final EDGELABEL distIj = getDist(i, j);
 					final EDGELABEL distIk = getDist(i, k);
 					final EDGELABEL distKj = getDist(k, j);
