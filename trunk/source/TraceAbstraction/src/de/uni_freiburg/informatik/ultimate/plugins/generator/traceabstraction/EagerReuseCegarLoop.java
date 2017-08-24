@@ -33,6 +33,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Difference;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsIncluded;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.IOpWithDelayedDeadEndRemoval;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
@@ -56,11 +57,19 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
  */
 public class EagerReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCegarLoop<LETTER> {
 
-	
-	private final List<AbstractInterpolantAutomaton<LETTER>> mInputFloydHoareAutomata;
-	
+
 	private enum MinimizeInitially { NEVER, AFTER_EACH_DIFFERENCE, ONCE_AT_END };
 	private final MinimizeInitially mMinimize = MinimizeInitially.AFTER_EACH_DIFFERENCE;
+	
+	private final List<AbstractInterpolantAutomaton<LETTER>> mInputFloydHoareAutomata;
+
+	/**
+	 * The following can be costly. Enable only for debugging or analyzing our
+	 * algorithm 
+	 */
+	private static final boolean IDENTIFY_USELESS_FLOYDHOARE_AUTOMATA = false;
+
+	
 
 	public EagerReuseCegarLoop(final String name, final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit,
 			final PredicateFactory predicateFactory, final TAPreferences taPrefs, final Collection<? extends IcfgLocation> errorLocs,
@@ -102,6 +111,19 @@ public class EagerReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends Basi
 				if (mComputeHoareAnnotation) {
 					mHaf.addDeadEndDoubleDeckers(diff);
 				}
+			}
+			if (IDENTIFY_USELESS_FLOYDHOARE_AUTOMATA) {
+				final AutomataLibraryServices als = new AutomataLibraryServices(mServices);
+				final Boolean noTraceExcluded = new IsIncluded<>(als, mPredicateFactoryResultChecking,
+						(INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate>) mAbstraction, diff.getResult())
+								.getResult();
+				if (noTraceExcluded) {
+					mLogger.warn("Floyd-Hoare automaton" + i
+							+ " did not remove an error trace from abstraction and was hence useless for this error location.");
+				} else {
+					mLogger.info("Floyd-Hoare automaton" + i + " removed at least one error trace from the abstraction.");
+				}
+				
 			}
 			mAbstraction = diff.getResult();
 			
