@@ -43,7 +43,9 @@ public class EagerReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends Basi
 		super.getInitialAbstraction();
 		
 		mLogger.info("Reusing " + mInputFloydHoareAutomata.size() + " Floyd-Hoare automata.");
-		for (final AbstractInterpolantAutomaton<LETTER> ai : mInputFloydHoareAutomata) {
+		for (int i=0; i<mInputFloydHoareAutomata.size(); i++) {
+			final AbstractInterpolantAutomaton<LETTER> ai = mInputFloydHoareAutomata.get(i);
+			final int internalTransitionsBeforeDifference = ai.computeNumberOfInternalTransitions();
 			ai.switchToOnDemandConstructionMode();
 			final PowersetDeterminizer<LETTER, IPredicate> psd =
 					new PowersetDeterminizer<>(ai, true, mPredicateFactoryInterpolantAutomata);
@@ -54,7 +56,10 @@ public class EagerReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends Basi
 					(INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate>) mAbstraction, ai, psd,
 					explointSigmaStarConcatOfIA);
 			ai.switchToReadonlyMode();
-			
+			final int internalTransitionsAfterDifference = ai.computeNumberOfInternalTransitions();
+			mLogger.info("Floyd-Hoare automaton" + i + " had " + internalTransitionsAfterDifference + 
+					" internal transitions before reuse, on-demand computation of difference added " + 
+					(internalTransitionsAfterDifference - internalTransitionsBeforeDifference) + " more.");
 			if (REMOVE_DEAD_ENDS) {
 				if (mComputeHoareAnnotation) {
 					final Difference<LETTER, IPredicate> difference = (Difference<LETTER, IPredicate>) diff;
