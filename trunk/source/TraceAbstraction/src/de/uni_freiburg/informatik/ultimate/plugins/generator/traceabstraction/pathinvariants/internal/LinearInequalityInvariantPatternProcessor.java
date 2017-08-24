@@ -499,7 +499,7 @@ public final class LinearInequalityInvariantPatternProcessor
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug("Transforming conjunct " + conjunct);
 			}
-			final MotzkinTransformation transformation = new MotzkinTransformation(mSolver, analysisType, !false);
+			final MotzkinTransformation transformation = new MotzkinTransformation(mServices, mSolver, analysisType, !false);
 			transformation.addInequalities(conjunct);
 			resultTerms.add(transformation.transform(new Rational[0]));
 			mMotzkinCoefficients2LinearInequalities.putAll(transformation.getMotzkinCoefficients2LinearInequalities());

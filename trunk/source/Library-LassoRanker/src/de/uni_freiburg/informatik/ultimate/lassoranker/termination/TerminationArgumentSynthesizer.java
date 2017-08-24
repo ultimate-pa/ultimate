@@ -156,7 +156,7 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 			solverMode = SolverMode.External_ModelsMode;
 		}
 		final String solverId = "TerminationArgumentSynthesis solver ";
-		return SolverBuilder.buildAndInitializeSolver(mservices, mstorage, solverMode, settings, false, false, null,
+		return SolverBuilder.buildAndInitializeSolver(mServices, mstorage, solverMode, settings, false, false, null,
 				solverId);
 	}
 
@@ -241,7 +241,7 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 			++j;
 			for (int m = 0; m < templateConstraints.size(); ++m) {
 				final MotzkinTransformation motzkin =
-						new MotzkinTransformation(mScript, mSettings.getAnalysis(), mPreferences.isAnnotateTerms());
+						new MotzkinTransformation(mServices, mScript, mSettings.getAnalysis(), mPreferences.isAnnotateTerms());
 				motzkin.mAnnotation = annotations.get(m) + " " + j;
 				motzkin.addInequalities(loopConj);
 				motzkin.addInequalities(templateConstraints.get(m));
@@ -277,7 +277,7 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 			for (final List<LinearInequality> stemConj : stem.getPolyhedra()) {
 				++j;
 				final MotzkinTransformation motzkin =
-						new MotzkinTransformation(mScript, mSettings.getAnalysis(), mPreferences.isAnnotateTerms());
+						new MotzkinTransformation(mServices, mScript, mSettings.getAnalysis(), mPreferences.isAnnotateTerms());
 				motzkin.mAnnotation = "invariant " + i + " initiation " + j;
 				motzkin.addInequalities(stemConj);
 				final LinearInequality li = sig.generate(stem.getOutVars());
@@ -292,7 +292,7 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 			for (final List<LinearInequality> loopConj : loop.getPolyhedra()) {
 				++j;
 				final MotzkinTransformation motzkin =
-						new MotzkinTransformation(mScript, mSettings.getAnalysis(), mPreferences.isAnnotateTerms());
+						new MotzkinTransformation(mServices, mScript, mSettings.getAnalysis(), mPreferences.isAnnotateTerms());
 				motzkin.mAnnotation = "invariant " + i + " consecution " + j;
 				motzkin.addInequalities(loopConj);
 				motzkin.addInequality(sig.generate(loop.getInVars())); // si(x)
@@ -390,7 +390,7 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 			});
 		} else if (mSettings.isOverapproximateStem()) {
 			mLogger.info("Overapproximating stem...");
-			final StemOverapproximator so = new StemOverapproximator(mPreferences, mservices, mstorage);
+			final StemOverapproximator so = new StemOverapproximator(mPreferences, mServices, mstorage);
 			final int stematoms = stem.getNumInequalities();
 			stem = so.overapproximate(stem);
 			mLogger.info("Reduced " + stematoms + " stem atoms to " + stem.getNumInequalities() + ".");
@@ -419,7 +419,7 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 			Map<Term, Rational> val;
 			if (mSettings.isSimplifyTerminationArgument()) {
 				mLogger.info("Found a termination argument, trying to simplify.");
-				val = ModelExtractionUtils.getSimplifiedAssignment_TwoMode(mScript, coefficients, mLogger, mservices);
+				val = ModelExtractionUtils.getSimplifiedAssignment_TwoMode(mScript, coefficients, mLogger, mServices);
 			} else {
 				val = ModelExtractionUtils.getValuation(mScript, coefficients);
 			}
@@ -433,7 +433,7 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 			// Simplify supporting invariants
 			if (mSettings.isSimplifySupportingInvariants()) {
 				final SupportingInvariantSimplifier tas =
-						new SupportingInvariantSimplifier(mPreferences, mservices, mstorage);
+						new SupportingInvariantSimplifier(mPreferences, mServices, mstorage);
 				mLogger.info("Simplifying supporting invariants...");
 				final int before = msupporting_invariants.size();
 				msupporting_invariants = tas.simplify(msupporting_invariants);
