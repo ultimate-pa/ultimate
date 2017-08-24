@@ -66,6 +66,12 @@ public class EagerReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends Basi
 				}
 			}
 			mAbstraction = diff.getResult();
+			
+			if (mAbstraction.size() == 0) {
+				// stop to compute differences if abstraction is already empty
+				break;
+			}
+			
 			if (mMinimize == MinimizeInitially.AFTER_EACH_DIFFERENCE) {
 				minimizeAbstractionIfEnabled();
 			}
