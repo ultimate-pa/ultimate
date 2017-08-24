@@ -102,6 +102,11 @@ public final class LinearInequalityInvariantPatternProcessor
 	public enum SimplificationType {
 		NO_SIMPLIFICATION, SIMPLE, TWO_MODE
 	}
+	
+	/**
+	 * Produce transformed terms that are annotated with debugging information.
+	 */
+	private static final boolean ANNOTATE_TERMS_FOR_DEBUGGING = false;
 
 	private static final String PREFIX = "lp_";
 	private static final String PREFIX_SEPARATOR = "_";
@@ -499,7 +504,8 @@ public final class LinearInequalityInvariantPatternProcessor
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug("Transforming conjunct " + conjunct);
 			}
-			final MotzkinTransformation transformation = new MotzkinTransformation(mServices, mSolver, analysisType, !false);
+			final MotzkinTransformation transformation = new MotzkinTransformation(mServices, mSolver, analysisType,
+					ANNOTATE_TERMS_FOR_DEBUGGING);
 			transformation.addInequalities(conjunct);
 			resultTerms.add(transformation.transform(new Rational[0]));
 			mMotzkinCoefficients2LinearInequalities.putAll(transformation.getMotzkinCoefficients2LinearInequalities());
