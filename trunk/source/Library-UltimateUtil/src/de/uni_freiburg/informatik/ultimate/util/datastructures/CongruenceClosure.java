@@ -603,8 +603,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 	}
 
 	public CongruenceClosure<ELEM, FUNCTION> join(final CongruenceClosure<ELEM, FUNCTION> other) {
-		final CongruenceClosure<ELEM, FUNCTION> thisAligned = this.alignElements(other);
-		final CongruenceClosure<ELEM, FUNCTION> otherAligned = other.alignElements(this);
+		final CongruenceClosure<ELEM, FUNCTION> thisAligned = this.alignElementsAndFunctions(other);
+		final CongruenceClosure<ELEM, FUNCTION> otherAligned = other.alignElementsAndFunctions(this);
 
 		final ThreeValuedEquivalenceRelation<ELEM> newElemTver = thisAligned.mElementTVER
 				.join(otherAligned.mElementTVER);
@@ -619,7 +619,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 	 * @param other
 	 * @return
 	 */
-	private CongruenceClosure<ELEM, FUNCTION> alignElements(final CongruenceClosure<ELEM, FUNCTION> other) {
+	private CongruenceClosure<ELEM, FUNCTION> alignElementsAndFunctions(final CongruenceClosure<ELEM, FUNCTION> other) {
 		final CongruenceClosure<ELEM, FUNCTION> result = new CongruenceClosure<>(this);
 		assert result.sanityCheck();
 
@@ -666,8 +666,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 	}
 
 	private CongruenceClosure<ELEM, FUNCTION> naiveMeet(final CongruenceClosure<ELEM, FUNCTION> other) {
-		final CongruenceClosure<ELEM, FUNCTION> thisAligned = this.alignElements(other);
-		final CongruenceClosure<ELEM, FUNCTION> otherAligned = other.alignElements(this);
+		final CongruenceClosure<ELEM, FUNCTION> thisAligned = this.alignElementsAndFunctions(other);
+		final CongruenceClosure<ELEM, FUNCTION> otherAligned = other.alignElementsAndFunctions(this);
 
 		for (final Entry<ELEM, ELEM> eq : otherAligned.getSupportingElementEqualities().entrySet()) {
 			if (thisAligned.isInconsistent()) {
@@ -704,15 +704,25 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 	 *         the other given CongruenceClosure
 	 */
 	public boolean isStrongerThan(final CongruenceClosure<ELEM, FUNCTION> other) {
-		final CongruenceClosure<ELEM, FUNCTION> thisAligned = this.alignElements(other);
-		final CongruenceClosure<ELEM, FUNCTION> otherAligned = other.alignElements(this);
-		/*
-		 * We check for each equivalence representative in "other" if its equivalence
-		 * class is a subset of the equivalence class of the representative in "this".
-		 *
-		 * (going through the representatives in "this" would be unsound because we
-		 * might not see all relevant equivalence classes in "other")
-		 */
+		final CongruenceClosure<ELEM, FUNCTION> thisAligned = this.alignElementsAndFunctions(other);
+		final CongruenceClosure<ELEM, FUNCTION> otherAligned = other.alignElementsAndFunctions(this);
+		return checkIsStrongerThan(thisAligned, otherAligned);
+	}
+
+	/**
+	 * We check for each equivalence representative in "other" if its equivalence
+	 * class is a subset of the equivalence class of the representative in "this".
+	 *
+	 * (going through the representatives in "this" would be unsound because we
+	 * might not see all relevant equivalence classes in "other")
+	 *
+	 * assumes that this and other have the same elements and functions
+	 */
+	private boolean checkIsStrongerThan(final CongruenceClosure<ELEM, FUNCTION> thisAligned,
+			final CongruenceClosure<ELEM, FUNCTION> otherAligned) {
+		assert thisAligned.getAllElements().equals(otherAligned.getAllElements());
+		assert thisAligned.getAllFunctions().equals(otherAligned.getAllFunctions());
+
 		if (!isPartitionStronger(thisAligned.mElementTVER, otherAligned.mElementTVER)) {
 			return false;
 		}
@@ -730,6 +740,12 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 			return false;
 		}
 		return true;
+	}
+
+	public boolean isEquivalent(final CongruenceClosure<ELEM, FUNCTION> other) {
+		final CongruenceClosure<ELEM, FUNCTION> thisAligned = this.alignElementsAndFunctions(other);
+		final CongruenceClosure<ELEM, FUNCTION> otherAligned = other.alignElementsAndFunctions(this);
+		return checkIsStrongerThan(thisAligned, otherAligned) && checkIsStrongerThan(otherAligned, thisAligned);
 	}
 
 	private static <E> boolean areDisequalitiesStrongerThan(final ThreeValuedEquivalenceRelation<E> thisTVER,

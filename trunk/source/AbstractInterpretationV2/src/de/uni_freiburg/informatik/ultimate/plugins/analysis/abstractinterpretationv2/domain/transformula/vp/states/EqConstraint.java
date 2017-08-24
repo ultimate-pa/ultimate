@@ -32,6 +32,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -558,7 +559,6 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 				return res;
 			}
 
-
 			for (final Entry<FUNCTION, FUNCTION> aeq : weqMeet.getArrayEqualities().entrySet()) {
 				meetPartialArrangement.reportFunctionEquality(aeq.getKey(), aeq.getValue());
 			}
@@ -611,8 +611,10 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 		}
 
 		/**
-		 * Checks if any weak equivalence-edge label is inconsistent with the current mPartialArrangment.
+		 * Checks if any weak equivalence-edge label is inconsistent with the current mPartialArrangement.
 		 * If so, it removes the edge and adds an array equality.
+		 *
+		 * TODO: rework
 		 *
 		 * @return true iff weak equivalence graph changed during this operation
 		 */
@@ -1049,18 +1051,17 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 		 */
 		class WeakEquivalenceEdgeLabel {
 
-//			private final int mArityOfArrays;
-
 			private final List<CongruenceClosure<NODE, FUNCTION>> mLabel;
+			private final List<CongruenceClosure<NODE, FUNCTION>> mLabelWithGroundPa;
 
 			/**
 			 * Constructs an empty edge. (labeled "true")
 			 */
-//			public WeakEquivalenceEdgeLabel(final int arity) {
 			public WeakEquivalenceEdgeLabel() {
-//				mArityOfArrays = arity;
 				mLabel = new ArrayList<>();
 				mLabel.add(new CongruenceClosure<>());
+				mLabelWithGroundPa = new ArrayList<>();
+				mLabelWithGroundPa.add(new CongruenceClosure<>(mPartialArrangement));
 				assert sanityCheck();
 			}
 
@@ -1072,19 +1073,33 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 			public WeakEquivalenceEdgeLabel(final WeakEquivalenceEdgeLabel value) {
 //				mArityOfArrays = value.mArityOfArrays;
 				mLabel = new ArrayList<>(value.mLabel.size());
-				for (final CongruenceClosure<NODE, FUNCTION> pa : value.mLabel) {
-					mLabel.add(new CongruenceClosure<>(pa));
+				mLabelWithGroundPa = new ArrayList<>();
+//				for (final CongruenceClosure<NODE, FUNCTION> pa : value.mLabel) {
+				for (int i = 0; i < value.mLabel.size(); i++) {
+					mLabel.add(new CongruenceClosure<>(value.mLabel.get(i)));
+					mLabelWithGroundPa.add(new CongruenceClosure<>(value.mLabelWithGroundPa.get(i)));
 				}
 				assert sanityCheck();
 			}
 
-			public WeakEquivalenceEdgeLabel(final List<CongruenceClosure<NODE, FUNCTION>> newLabelContents) {
-//					final int arityOfArrays) {
-//				mArityOfArrays = arityOfArrays;
+			/**
+			 * Construct a weak equivalence edge from a list of label contents.
+			 *
+			 * Does some simplifications.
+			 *
+			 * @param newLabelContents
+			 */
+			public WeakEquivalenceEdgeLabel(final List<CongruenceClosure<NODE, FUNCTION>> newLabelContents,
+					final List<CongruenceClosure<NODE, FUNCTION>> newLabelWgpaContents) {
 
-				// a "true" edge corresponds to a non-existing edge --> should we filter that case??
-//				assert !newLabelContents.stream().anyMatch(pa -> pa.isTautological()) : "catch this outside, right?..";
+				mLabel = newLabelContents;
+				mLabelWithGroundPa = newLabelWgpaContents;
 
+				assert sanityCheck();
+			}
+
+			private List<CongruenceClosure<NODE, FUNCTION>> simplifyPaDisjunction(
+					final List<CongruenceClosure<NODE, FUNCTION>> newLabelContents) {
 				// make a copy of the list, filter out false disjuncts
 				List<CongruenceClosure<NODE, FUNCTION>> newLabel = new ArrayList<>(newLabelContents).stream()
 						.filter(pa -> !pa.isInconsistent()).collect(Collectors.toList());
@@ -1093,10 +1108,7 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 				if (newLabel.stream().anyMatch(pa -> pa.isTautological())) {
 					newLabel = Collections.singletonList(new CongruenceClosure<>());
 				}
-
-				mLabel = newLabel;
-
-				assert sanityCheck();
+				return newLabel;
 			}
 
 			/**
@@ -1180,8 +1192,13 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 					assert pair.size() == 2;
 					newLabelContent.add(pair.get(0).meet(pair.get(1)));
 				}
-				return new WeakEquivalenceEdgeLabel(newLabelContent);
-//				return new WeakEquivalenceEdgeLabel(newLabelContent, mArityOfArrays);
+
+				final List<CongruenceClosure<NODE, FUNCTION>> newLabel = simplifyPaDisjunction(newLabelContent);
+
+				final List<CongruenceClosure<NODE, FUNCTION>> newLabelWgpa = newLabel.stream()
+						.map(pa -> pa.meet(mPartialArrangement)).collect(Collectors.toList());
+
+				return new WeakEquivalenceEdgeLabel(newLabel, newLabelWgpa);
 			}
 
 			/**
@@ -1215,11 +1232,18 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 			 */
 			public WeakEquivalenceEdgeLabel union(final WeakEquivalenceEdgeLabel other) {
 				// using a set to eliminate duplicates -- TODO: we could use isStrongerThan for further minimization
-				final Set<CongruenceClosure<NODE, FUNCTION>> newPasForDimension = new HashSet<>();
+				// using a LinkedHashSet to keep the ordering that aligns edge labels and their version that includes
+				//   the ground partial arrangement..
+				final Set<CongruenceClosure<NODE, FUNCTION>> newPasForDimension = new LinkedHashSet<>();
 				newPasForDimension.addAll(this.mLabel);
 				newPasForDimension.addAll(other.mLabel);
+				final Set<CongruenceClosure<NODE, FUNCTION>> newPasWgpaForDimension = new LinkedHashSet<>();
+				newPasWgpaForDimension.addAll(this.mLabelWithGroundPa);
+				newPasWgpaForDimension.addAll(other.mLabelWithGroundPa);
+
 //				return new WeakEquivalenceEdgeLabel(new ArrayList<>(newPasForDimension), mArityOfArrays);
-				return new WeakEquivalenceEdgeLabel(new ArrayList<>(newPasForDimension));
+				return new WeakEquivalenceEdgeLabel(new ArrayList<>(newPasForDimension),
+						new ArrayList<>(newPasWgpaForDimension));
 			}
 
 
@@ -1265,6 +1289,19 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 			}
 
 			private boolean sanityCheck() {
+				if (mLabel.size() != mLabelWithGroundPa.size()) {
+					assert false;
+					return false;
+				}
+
+				for (int i = 0; i < mLabel.size(); i++) {
+					final CongruenceClosure<NODE, FUNCTION> labelGpaMeet = mLabel.get(i).meet(mPartialArrangement);
+					if (!labelGpaMeet.isEquivalent(mLabelWithGroundPa.get(i))) {
+						assert false;
+						return false;
+					}
+				}
+
 				if (mLabel.stream().anyMatch(pa -> pa.isTautological()) && mLabel.size() != 1) {
 					assert false : "missing normalization: if there is one 'true' disjunct, we can drop"
 							+ "all other disjuncts";
@@ -1380,6 +1417,18 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 	}
 }
 
+/**
+ * Implementation of the Floyd-Warshall algorithm. Takes an undirected weighted graph as input, together with an
+ * ordering of the edge weights and a "plus" operation for the edge weights.
+ *
+ * Returns (via getResult) a version of the graph where the triangle inequality holds (edge weights have been lowered
+ * if necessary).
+ *
+ * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
+ *
+ * @param <VERTEX>
+ * @param <EDGELABEL>
+ */
 class FloydWarshall<VERTEX, EDGELABEL> {
 
 	private final BiPredicate<EDGELABEL, EDGELABEL> mSmallerThan;
@@ -1393,8 +1442,6 @@ class FloydWarshall<VERTEX, EDGELABEL> {
 
 	/**
 	 *
-	 * TODO: repeated application of Dijkstra's algorithm would probably be faster.. as we don't have negative edge
-	 * weights.
 	 *
 	 * @param smallerThan partial order operator (non-strict)
 	 * @param plus
