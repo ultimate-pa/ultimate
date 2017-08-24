@@ -25,6 +25,9 @@ public class EagerReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends Basi
 
 	
 	private final List<AbstractInterpolantAutomaton<LETTER>> mInputFloydHoareAutomata;
+	
+	private enum MinimizeInitially { NEVER, AFTER_EACH_DIFFERENCE, ONCE_AT_END };
+	private final MinimizeInitially mMinimize = MinimizeInitially.AFTER_EACH_DIFFERENCE;
 
 	public EagerReuseCegarLoop(final String name, final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit,
 			final PredicateFactory predicateFactory, final TAPreferences taPrefs, final Collection<? extends IcfgLocation> errorLocs,
@@ -63,6 +66,12 @@ public class EagerReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends Basi
 				}
 			}
 			mAbstraction = diff.getResult();
+			if (mMinimize == MinimizeInitially.AFTER_EACH_DIFFERENCE) {
+				minimizeAbstractionIfEnabled();
+			}
+		}
+		if (mMinimize == MinimizeInitially.ONCE_AT_END) {
+			minimizeAbstractionIfEnabled();
 		}
 	}
 	
