@@ -231,9 +231,13 @@ public class ElimStorePlain {
 	}
 
 	public AfEliminationTask elim1(final TermVariable eliminatee, final Term inputTerm) {
+		final Term[] xjunctsOuter = PartialQuantifierElimination.getXjunctsOuter(mQuantifier, inputTerm);
+		if (xjunctsOuter.length > 1) {
+			throw new AssertionError("several disjuncts! " + inputTerm);
+		}
 		final List<MultiDimensionalStore> stores = extractStores(eliminatee, inputTerm);
 		if (stores.size() > 1) {
-			throw new AssertionError("not yet supported");
+			throw new AssertionError("not yet supported: multiple stores " + inputTerm);
 		}
 //		checkForUnsupportedSelfUpdate(eliminatee, inputTerm, mQuantifier);
 
@@ -340,15 +344,14 @@ public class ElimStorePlain {
 
 		final Sort valueSort = eliminatee.getSort().getArguments()[1];
 
+		
+		final AuxVarConstructor auxVarConstructor = new AuxVarConstructor();
 		final Map<Term, TermVariable> indexMapping =
-				constructIndexReplacementMapping(indices, eliminatee, equalityInformation);
+				constructIndexReplacementMapping(indices, eliminatee, equalityInformation, auxVarConstructor);
 		final List<Term> indexMappingDefinitions = new ArrayList<>();
 		for (final Entry<Term, TermVariable> entry : indexMapping.entrySet()) {
 			indexMappingDefinitions.add(PartialQuantifierElimination.equalityForExists(mScript, mQuantifier,
 					entry.getValue(), entry.getKey()));
-		}
-		for (final Entry<?, TermVariable> entry : indexMapping.entrySet()) {
-			newAuxVars.add(entry.getValue());
 		}
 
 		final Term notEqualsDetectedBySolver = PartialQuantifierElimination.applyDualFiniteConnective(mScript,
@@ -359,8 +362,7 @@ public class ElimStorePlain {
 				Arrays.asList(new Term[] { indexDefinitionsTerm, preprocessedInput, notEqualsDetectedBySolver }));
 
 		final TermVariable newAuxArray =
-				mMgdScript.constructFreshTermVariable(s_AUX_VAR_NEW_ARRAY, eliminatee.getSort());
-		newAuxVars.add(newAuxArray);
+				auxVarConstructor.constructAuxVar(s_AUX_VAR_NEW_ARRAY, eliminatee.getSort());
 		
 		final Map<Term, Term> rawIndex2replacedIndex = new HashMap<>();
 		for (final Term selectIndex : indices) {
@@ -376,13 +378,8 @@ public class ElimStorePlain {
 		// final Term newSelect = mgdScript.getScript().term("select", newAuxArray, replacementSelectIndex);
 		// (hence we need to change computation order -- index mapping first)
 		final Map<Term, Term> oldCellMapping = constructOldCellValueMapping(selectTerms, storeIndex,
-				equalityInformation, valueSort, selectIndices.contains(storeIndex), newAuxArray, rawIndex2replacedIndex);
-		for (final Entry<?, Term> entry : oldCellMapping.entrySet()) {
-			if (entry.getValue() instanceof TermVariable) {
-				newAuxVars.add((TermVariable) entry.getValue());
-			}
-		}
-
+				equalityInformation, valueSort, selectIndices.contains(storeIndex), newAuxArray, rawIndex2replacedIndex, auxVarConstructor);
+		newAuxVars.addAll(auxVarConstructor.getConstructedAuxVars());
 		
 		
 		final IncrementalPlicationChecker iplc = new IncrementalPlicationChecker(Plication.IMPLICATION, mMgdScript, inputTerm);
@@ -706,16 +703,17 @@ public class ElimStorePlain {
 	 * Let eliminatee be the array that is eliminated and (select eliminatee idx v) a select term. If idx contains
 	 * eliminatee, we have to replace idx by an auxiliary variable. As an optimization, we only construct one auxiliary
 	 * variable for each equivalence class of indices.
+	 * @param auxVarConstructor 
 	 */
 	private Map<Term, TermVariable> constructIndexReplacementMapping(final Set<Term> indices,
-			final TermVariable eliminatee, final ThreeValuedEquivalenceRelation<Term> equalityInformation)
+			final TermVariable eliminatee, final ThreeValuedEquivalenceRelation<Term> equalityInformation, final AuxVarConstructor auxVarConstructor)
 			throws AssertionError {
 		final IValueConstruction<Term, TermVariable> valueConstruction = new IValueConstruction<Term, TermVariable>() {
 
 			@Override
 			public TermVariable constructValue(final Term index) {
-				final TermVariable indexReplacement =
-						mMgdScript.constructFreshTermVariable(s_AUX_VAR_INDEX, index.getSort());
+				final TermVariable indexReplacement = 
+						auxVarConstructor.constructAuxVar(s_AUX_VAR_INDEX, index.getSort());
 				return indexReplacement;
 			}
 
@@ -774,15 +772,17 @@ public class ElimStorePlain {
 	 * have same value as old cell). As an optimization, we only construct one auxiliary variable for each equivalence
 	 * class of indices.
 	 * @param newAuxArray 
+	 * @param auxVarConstructor 
 	 */
-	private Map<Term, Term> constructOldCellValueMapping(final List<ApplicationTerm> selectTerms,
-			final Term storeIndex, final ThreeValuedEquivalenceRelation<Term> equalityInformation,
-			final Sort valueSort, final boolean storeIndexIsAlsoSelectIndex, final Term newAuxArray, final Map<Term, Term> rawIndex2replacedIndex) {
+	private Map<Term, Term> constructOldCellValueMapping(final List<ApplicationTerm> selectTerms, final Term storeIndex,
+			final ThreeValuedEquivalenceRelation<Term> equalityInformation, final Sort valueSort,
+			final boolean storeIndexIsAlsoSelectIndex, final Term newAuxArray,
+			final Map<Term, Term> rawIndex2replacedIndex, final AuxVarConstructor auxVarConstructor) {
 		final IValueConstruction<Term, TermVariable> valueConstruction = new IValueConstruction<Term, TermVariable>() {
 
 			@Override
 			public TermVariable constructValue(final Term index) {
-				final TermVariable oldCell = mMgdScript.constructFreshTermVariable(s_AUX_VAR_ARRAYCELL, valueSort);
+				final TermVariable oldCell = auxVarConstructor.constructAuxVar(s_AUX_VAR_ARRAYCELL, valueSort);
 				return oldCell;
 			}
 
@@ -1176,6 +1176,21 @@ public class ElimStorePlain {
 		return Arrays.asList(term.getFreeVars()).contains(tv);
 	}
 	
+	
+	private class AuxVarConstructor {
+		private final Set<TermVariable> mConstructedAuxVars = new HashSet<>();
+
+		public TermVariable constructAuxVar(final String purpose, final Sort sort) {
+			final TermVariable auxVar = mMgdScript.constructFreshTermVariable(purpose, sort);
+			mConstructedAuxVars.add(auxVar);
+			return auxVar;
+		}
+
+		public Set<TermVariable> getConstructedAuxVars() {
+			return mConstructedAuxVars;
+		}
+		
+	}	
 	
 }
 
