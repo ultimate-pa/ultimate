@@ -46,7 +46,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainHelpers;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.AbstractNodeAndFunctionFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.IEqFunctionIdentifier;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.CongruenceClosure;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
 /**
@@ -424,9 +423,9 @@ public class EqConstraintFactory<
 	}
 
 	public EqConstraint<ACTION, NODE, FUNCTION> getEqConstraint(
-			final CongruenceClosure<NODE, FUNCTION> newPartialArrangement,
-			final EqConstraint<ACTION, NODE, FUNCTION>.WeakEquivalenceGraph newWEGraph) {
-		return new EqConstraint<>(newPartialArrangement, newWEGraph, this);
+			final WeqCongruenceClosure<ACTION, NODE, FUNCTION> newPartialArrangement) {
+//			final WeakEquivalenceGraph<ACTION, NODE, FUNCTION> newWEGraph) {
+		return new EqConstraint<>(newPartialArrangement, this);
 	}
 
 	public ManagedScript getMgdScript() {
