@@ -171,6 +171,8 @@ public class RCFGBacktranslator
 				final CodeBlock someBranch = bi2cb.entrySet().iterator().next().getValue();
 				addCodeBlock(someBranch, trace, branchEncoders, relevanceInformation);
 				final ILocation loc = ILocation.getAnnotation(cb.getSource());
+				mLogger.warn("You are using large block encoding together with an algorithm for which the "
+						+ "backtranslation into program statements is not yet implemented.");
 				if (loc == null) {
 					mLogger.error("unable to determine which branch was taken, unable to determine the location");
 				} else {
