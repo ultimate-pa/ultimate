@@ -239,17 +239,11 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 		if (var.getSort().isArraySort()) {
 			// havoccing an array
 			final FUNCTION functionToHavoc = mFactory.getEqNodeAndFunctionFactory().getExistingFunction(var);
-
-			mPartialArrangement.havocFunction(functionToHavoc);
-
-
+			mPartialArrangement.removeFunction(functionToHavoc);
 		} else {
 			// havoccing an element
 			final NODE nodeToHavoc = mFactory.getEqNodeAndFunctionFactory().getExistingNode(var);
-
-
-			mPartialArrangement.havocElement(nodeToHavoc);
-
+			mPartialArrangement.removeElement(nodeToHavoc);
 		}
 	}
 
@@ -606,7 +600,6 @@ class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>,
 
 	private final WeakEquivalenceGraph<ACTION, NODE, FUNCTION> mWeakEquivalenceGraph;
 
-//	public WeqCongruenceClosure(final WeakEquivalenceGraph<ACTION, NODE, FUNCTION> weqGraph) {
 	public WeqCongruenceClosure(final EqConstraintFactory<ACTION, NODE, FUNCTION> factory) {
 		super();
 		mWeakEquivalenceGraph = new WeakEquivalenceGraph<>(factory);
@@ -633,19 +626,7 @@ class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>,
 	}
 
 
-	public void havocElement(final NODE nodeToHavoc) {
-		// making a copy of the ground partial arrangement here, just to be safe..
-		mWeakEquivalenceGraph.projectElement(nodeToHavoc, new WeqCongruenceClosure<>(this));
-
-		removeElement(nodeToHavoc);
-	}
-
-
 	public void havocFunction(final FUNCTION functionToHavoc) {
-		// making a copy of the ground partial arrangement here, just to be safe..
-		mWeakEquivalenceGraph.projectFunction(functionToHavoc, new WeqCongruenceClosure<>(this));
-
-		removeFunction(functionToHavoc);
 	}
 
 
@@ -727,6 +708,26 @@ class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>,
 			return false;
 		}
 		return true;
+	}
+
+
+
+	@Override
+	public boolean removeFunction(final FUNCTION func) {
+		// making a copy of the ground partial arrangement here, just to be safe..
+		mWeakEquivalenceGraph.projectFunction(func, new WeqCongruenceClosure<>(this));
+
+		return super.removeFunction(func);
+	}
+
+
+	@Override
+	public boolean removeElement(final NODE elem) {
+		// making a copy of the ground partial arrangement here, just to be safe..
+		mWeakEquivalenceGraph.projectElement(elem, new WeqCongruenceClosure<>(this));
+
+		return super.removeElement(elem);
+
 	}
 
 

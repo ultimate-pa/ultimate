@@ -386,7 +386,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 	 *
 	 * @param elem
 	 */
-	private void registerNewElement(final ELEM elem) {
+	protected void registerNewElement(final ELEM elem) {
 		if (elem.isFunctionApplication()) {
 			mFunctionToFuncApps.addPair(elem.getAppliedFunction(), elem);
 
