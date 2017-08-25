@@ -807,7 +807,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 	 * @return true iff each two argument elements at the same position in the
 	 *         argument list are equal according to the current state of mElemenTVER
 	 */
-	private boolean argumentsAreCongruent(final ELEM funcApp1, final ELEM funcApp2) {
+	public boolean argumentsAreCongruent(final ELEM funcApp1, final ELEM funcApp2) {
 		assert funcApp1.isFunctionApplication() && funcApp2.isFunctionApplication();
 		assert mFunctionTVER.getEqualityStatus(funcApp1.getAppliedFunction(),
 				funcApp2.getAppliedFunction()) == EqualityStatus.EQUAL;
@@ -925,7 +925,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 	 * @param newRep
 	 * @return
 	 */
-	private Set<ELEM> getCcPars(final FUNCTION funcRep, final ELEM newRep) {
+	public Set<ELEM> getCcPars(final FUNCTION funcRep, final ELEM newRep) {
 		Set<ELEM> res = mFunctionToRepresentativeToCcPars.get(funcRep, newRep);
 		if (res == null) {
 			res = new HashSet<>();

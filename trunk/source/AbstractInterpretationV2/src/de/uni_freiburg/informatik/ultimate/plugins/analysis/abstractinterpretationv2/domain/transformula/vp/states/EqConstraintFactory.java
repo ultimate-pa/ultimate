@@ -189,7 +189,7 @@ public class EqConstraintFactory<
 
 		final EqConstraint<ACTION, NODE, FUNCTION> newConstraint = unfreeze(funct2Added);
 		newConstraint.reportFunctionDisequality(func1, func2);
-		newConstraint.saturate();
+//		newConstraint.saturate();
 		newConstraint.freeze();
 		return newConstraint;
 	}
@@ -220,7 +220,7 @@ public class EqConstraintFactory<
 
 		final EqConstraint<ACTION, NODE, FUNCTION> newConstraint = unfreeze(funct2Added);
 		newConstraint.reportFunctionEquality(func1, func2);
-		newConstraint.saturate();
+//		newConstraint.saturate();
 		newConstraint.freeze();
 		return newConstraint;
 	}
@@ -231,7 +231,7 @@ public class EqConstraintFactory<
 
 		final EqConstraint<ACTION, NODE, FUNCTION> newConstraint = unfreeze(inputConstraint);
 		newConstraint.reportWeakEquivalence(array1, array2, storeIndex);
-		newConstraint.saturate();
+//		newConstraint.saturate();
 		newConstraint.freeze();
 		return newConstraint;
 	}
@@ -309,7 +309,7 @@ public class EqConstraintFactory<
 
 		final EqConstraint<ACTION, NODE, FUNCTION> unfrozen = unfreeze(originalState);
 		unfrozen.reportEquality(node1, node2);
-		unfrozen.saturate();
+//		unfrozen.saturate();
 		unfrozen.freeze();
 		return unfrozen;
 	}
@@ -337,7 +337,7 @@ public class EqConstraintFactory<
 
 		final EqConstraint<ACTION, NODE, FUNCTION> unfrozen = unfreeze(originalState);
 		unfrozen.reportDisequality(node1, node2);
-		unfrozen.saturate();
+//		unfrozen.saturate();
 		unfrozen.freeze();
 		return unfrozen;
 	}
