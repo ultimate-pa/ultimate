@@ -211,6 +211,12 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 	private final boolean mUseDoubleDeckers;
 	private final BuchiComplementationConstruction mComplementationConstruction;
 
+	/**
+	 * Construct a termination proof in the form that is required for the
+	 * Termination Competition.
+	 * http://termination-portal.org/wiki/Termination_Competition
+	 * This proof is finally print in the console output and can be huge.
+	 */
 	private final boolean mConstructTermcompProof;
 	private final TermcompProofBenchmark mTermcompProofBenchmark;
 
@@ -612,6 +618,20 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 		// lassoChecker.getBinaryStatePredicateManager().getUnseededVariable(),
 		// lassoChecker.getBinaryStatePredicateManager().getOldRankVariables(),
 		// mRootAnnot.getCfgSmtToolkit().getModifiableGlobals(), mRootAnnot.getBoogie2SMT());
+		
+		/*
+		 * Iterate through a sequence of BuchiInterpolantAutomatonConstructionStyles
+		 * Each construction style defines how an interpolant automaton is constructed.
+		 * Constructions that provide simpler (less nondeterministic) automata should come first.
+		 * In each iteration we compute the difference which causes an on-demand construciton of
+		 * the automaton and evaluate the automaton afterwards.
+		 * If the automaton is "good" we keep the difference and continued with the termination
+		 * analysis. If the automaton is "bad" we construct the next automaton.
+		 * Currently an automaton is "good" iff the counterexample of the current CEGAR iteration
+		 * is accepted by the automaton (otherwise the counterexample would not be excluded and
+		 * we might get it again in the next iteration of the CEGAR loop).
+		 * 
+		 */
 		for (final BuchiInterpolantAutomatonConstructionStyle constructionStyle : mBiaConstructionStyleSequence) {
 			assert automatonUsesISLPredicates(mAbstraction) : "used wrong StateFactory";
 			INestedWordAutomaton<LETTER, IPredicate> newAbstraction = null;
