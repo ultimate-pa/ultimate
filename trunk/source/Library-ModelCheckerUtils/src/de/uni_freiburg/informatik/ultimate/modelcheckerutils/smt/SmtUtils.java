@@ -490,6 +490,8 @@ public final class SmtUtils {
 			return booleanEquality(script, lhs, rhs);
 		} else if (SmtSortUtils.isBitvecSort(lhs.getSort())) {
 			return bitvectorEquality(script, lhs, rhs);
+		} else if (SmtSortUtils.isArraySort(lhs.getSort())) {
+			return arrayEquality(script, lhs, rhs);
 		} else {
 			return script.term("=", lhs, rhs);
 		}
@@ -574,6 +576,48 @@ public final class SmtUtils {
 			return script.term("true");
 		}
 		return script.term("false");
+	}
+	
+	/**
+	 * Returns the equality ("=" lhs rhs), for inputs of array sort. 
+	 * If the term if of the form ("=" a ("store" a k v)) it is simplified to
+	 * ("=" ("select" a k) v).
+	 * Rationale: the latter term is simpler than the first term for our algorithms
+	 */
+	private static Term arrayEquality(final Script script, final Term lhs, final Term rhs) {
+		if (!lhs.getSort().isArraySort()) {
+			throw new UnsupportedOperationException("need array sort");
+		}
+		if (!rhs.getSort().isArraySort()) {
+			throw new UnsupportedOperationException("need array sort");
+		}
+		if (lhs instanceof ApplicationTerm) {
+			final ApplicationTerm appLhs = (ApplicationTerm) lhs;
+			if (appLhs.getFunction().getName().equals("store")) {
+				if (appLhs.getParameters()[0] == rhs) {
+					return setArrayCellValue(script, appLhs.getParameters()[0], appLhs.getParameters()[1],
+							appLhs.getParameters()[2]);
+				}
+			}
+		}
+		if (rhs instanceof ApplicationTerm) {
+			final ApplicationTerm appRhs = (ApplicationTerm) rhs;
+			if (appRhs.getFunction().getName().equals("store")) {
+				if (appRhs.getParameters()[0] == lhs) {
+					return setArrayCellValue(script, appRhs.getParameters()[0], appRhs.getParameters()[1],
+							appRhs.getParameters()[2]);
+				}
+			}
+		}
+		return script.term("=", lhs, rhs);
+	}
+
+	/**
+	 * @return ("=" ("select" array index) value)
+	 */
+	private static Term setArrayCellValue(final Script script, final Term array, final Term index, final Term value) {
+		final Term select = script.term("select", array, index);
+		return SmtUtils.binaryEquality(script, select, value);
 	}
 
 	public static List<Term> substitutionElementwise(final List<Term> subtituents, final Substitution subst) {
