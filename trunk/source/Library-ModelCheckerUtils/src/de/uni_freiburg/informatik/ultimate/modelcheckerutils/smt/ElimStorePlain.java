@@ -358,7 +358,7 @@ public class ElimStorePlain {
 		final Term term = PartialQuantifierElimination.applyDualFiniteConnective(mScript, mQuantifier,
 				Arrays.asList(new Term[] { indexDefinitionsTerm, preprocessedInput, notEqualsDetectedBySolver }));
 
-		final TermVariable newAuxArray =
+		final Term newArray =
 				auxVarConstructor.constructAuxVar(s_AUX_VAR_NEW_ARRAY, eliminatee.getSort());
 		
 		final Map<Term, Term> rawIndex2replacedIndex = new HashMap<>();
@@ -375,7 +375,7 @@ public class ElimStorePlain {
 		// final Term newSelect = mgdScript.getScript().term("select", newAuxArray, replacementSelectIndex);
 		// (hence we need to change computation order -- index mapping first)
 		final Map<Term, Term> oldCellMapping = constructOldCellValueMapping(selectTerms, storeIndex,
-				equalityInformation, valueSort, selectIndices.contains(storeIndex), newAuxArray, rawIndex2replacedIndex, auxVarConstructor, preprocessedInput, eliminatee);
+				equalityInformation, valueSort, selectIndices.contains(storeIndex), newArray, rawIndex2replacedIndex, auxVarConstructor, preprocessedInput, eliminatee);
 		newAuxVars.addAll(auxVarConstructor.getConstructedAuxVars());
 		
 		
@@ -398,14 +398,14 @@ public class ElimStorePlain {
 		if (true) {
 			final Map<Term, Term> substitutionMapping = new HashMap<>();
 			if (!stores.isEmpty()) {
-				substitutionMapping.put(storeTerm, newAuxArray);
+				substitutionMapping.put(storeTerm, newArray);
 			}
 			for (final Term selectIndex : selectIndices) {
 				final Term select = mMgdScript.getScript().term("select", eliminatee, selectIndex);
 				if (oldCellMapping.containsKey(selectIndex)) {
 					substitutionMapping.put(select, oldCellMapping.get(selectIndex));
 				} else {
-					final Term newSelect = mMgdScript.getScript().term("select", newAuxArray, selectIndex);
+					final Term newSelect = mMgdScript.getScript().term("select", newArray, selectIndex);
 					substitutionMapping.put(select, newSelect);
 				}
 			}
@@ -419,14 +419,14 @@ public class ElimStorePlain {
 			}
 			final Term cc = constructCongruenceConstraints((ArrayList<Term>) selectIndices, equalityInformation,
 					mMgdScript, rawIndex2replacedIndex, oldCellMapping, eliminatee, mQuantifier, storeIndex,
-					newAuxArray, storeValueRep);
+					newArray, storeValueRep);
 			
 			final Term transformedTerm =
 					new SubstitutionWithLocalSimplification(mMgdScript, substitutionMapping).transform(term);
 			final Term valueEqualityTerm2 =
 					PartialQuantifierElimination.applyDualFiniteConnective(mScript, mQuantifier, vec.getValueEqualities());
 			final Term storedValueInformation = constructStoredValueInformation(eliminatee, stores, storeIndex,
-					storeValue, indexMapping, newAuxArray, substitutionMapping);
+					storeValue, indexMapping, newArray, substitutionMapping);
 			final Term res = PartialQuantifierElimination.applyDualFiniteConnective(mScript, mQuantifier,
 					transformedTerm, valueEqualityTerm2, storedValueInformation, cc);
 			assert !Arrays.asList(res.getFreeVars()).contains(eliminatee) : "var is still there: " + eliminatee
@@ -450,7 +450,7 @@ public class ElimStorePlain {
 		for (final Set<Doubleton<Term>> equalDoubletons : ci) {
 			final Map<Term, Term> substitutionMapping = new HashMap<>();
 			if (!stores.isEmpty()) {
-				substitutionMapping.put(storeTerm, newAuxArray);
+				substitutionMapping.put(storeTerm, newArray);
 			}
 			final List<Term> indexEqualityTerms = new ArrayList<>();
 			final List<Term> valueEqualityTerms = new ArrayList<>();
@@ -491,7 +491,7 @@ public class ElimStorePlain {
 					assert oldCell != null : "no oldcell for " + indexOfSelect;
 					substitutionMapping.put(selectTerm, oldCell);
 				} else {
-					final Term newSelect = constructNewSelectWithPossiblyReplacedIndex(newAuxArray, selectTerm,
+					final Term newSelect = constructNewSelectWithPossiblyReplacedIndex(newArray, selectTerm,
 							indexMapping, eliminatee);
 					assert !Arrays.asList(newSelect.getFreeVars()).contains(eliminatee) : "var is still there: "
 							+ eliminatee;
@@ -500,7 +500,7 @@ public class ElimStorePlain {
 			}
 
 			final Term storedValueInformation = constructStoredValueInformation(eliminatee, stores, storeIndex,
-					storeValue, indexMapping, newAuxArray, substitutionMapping);
+					storeValue, indexMapping, newArray, substitutionMapping);
 
 			final Term transformedTerm =
 					new SubstitutionWithLocalSimplification(mMgdScript, substitutionMapping).transform(term);
@@ -562,7 +562,7 @@ public class ElimStorePlain {
 
 	private Term constructStoredValueInformation(final TermVariable eliminatee,
 			final List<MultiDimensionalStore> stores, final Term storeIndex, final Term storeValue,
-			final Map<Term, Term> indexMapping, final TermVariable newAuxArray,
+			final Map<Term, Term> indexMapping, final Term newArray,
 			final Map<Term, Term> substitutionMapping) throws AssertionError {
 		final Term storedValueInformation;
 		if (stores.isEmpty()) {
@@ -575,7 +575,7 @@ public class ElimStorePlain {
 			}
 		} else {
 			storedValueInformation = PartialQuantifierElimination.equalityForExists(mScript, mQuantifier,
-					mScript.term("select", newAuxArray, getNewIndex(storeIndex, indexMapping, eliminatee)),
+					mScript.term("select", newArray, getNewIndex(storeIndex, indexMapping, eliminatee)),
 					new SubstitutionWithLocalSimplification(mMgdScript, substitutionMapping).transform(storeValue));
 		}
 		return storedValueInformation;
@@ -740,11 +740,11 @@ public class ElimStorePlain {
 		}
 	}
 
-	private Term constructNewSelectWithPossiblyReplacedIndex(final TermVariable newAuxArray,
+	private Term constructNewSelectWithPossiblyReplacedIndex(final Term newArray,
 			final ApplicationTerm oldSelectTerm, final Map<Term, Term> indexMapping,
 			final TermVariable eliminatee) {
 		final Term newIndex = getNewIndex(getIndexOfSelect(oldSelectTerm), indexMapping, eliminatee);
-		final Term newSelect = mMgdScript.getScript().term("select", newAuxArray, newIndex);
+		final Term newSelect = mMgdScript.getScript().term("select", newArray, newIndex);
 		return newSelect;
 	}
 
