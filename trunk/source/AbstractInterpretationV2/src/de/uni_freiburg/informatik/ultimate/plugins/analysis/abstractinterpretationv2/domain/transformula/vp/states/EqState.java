@@ -109,7 +109,7 @@ public class EqState<ACTION extends IIcfgTransition<IcfgLocation>>
 		final Set<TermVariable> termVariablesFromPvocs =
 				variables.stream().map(pvoc -> (TermVariable) pvoc.getTerm()).collect(Collectors.toSet());
 		final EqConstraint<ACTION, EqNode, EqFunction> projectedConstraint =
-				mConstraint.projectExistentially(termVariablesFromPvocs);
+				mFactory.getEqConstraintFactory().projectExistentially(termVariablesFromPvocs, mConstraint);
 
 		final Set<IProgramVarOrConst> newVariables = new HashSet<>(mPvocs);
 		newVariables.removeAll(variables);

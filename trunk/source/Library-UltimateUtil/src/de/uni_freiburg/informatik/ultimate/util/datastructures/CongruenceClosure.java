@@ -43,8 +43,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  */
 public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNCTION>, FUNCTION> {
 
-	private final ThreeValuedEquivalenceRelation<ELEM> mElementTVER;
-	private final ThreeValuedEquivalenceRelation<FUNCTION> mFunctionTVER;
+	protected final ThreeValuedEquivalenceRelation<ELEM> mElementTVER;
+	protected final ThreeValuedEquivalenceRelation<FUNCTION> mFunctionTVER;
 
 	/**
 	 * conventions:
@@ -437,7 +437,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 	 * @param i
 	 * @return
 	 */
-	private Set<ELEM> getCcParsForArgumentPosition(final FUNCTION func, final ELEM elem, final int i) {
+	protected Set<ELEM> getCcParsForArgumentPosition(final FUNCTION func, final ELEM elem, final int i) {
 		/*
 		 * we take the ccpars from elem's equivalence class, but we filter, such that we only keep those ccpars that
 		 * have an element of the equivalence class at argument position i.

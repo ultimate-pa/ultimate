@@ -379,6 +379,40 @@ public class EqConstraintFactory<
 		return newConstraintWithPropagations;
 	}
 
+
+	/**
+	 *
+	 *
+	 * TODO: this method does not fit in well, as it is not in-place but returns a fresh EqConstraint
+	 *   --> perhaps move to factory..
+	 *
+	 * @param varsToProjectAway
+	 * @return
+	 */
+	public EqConstraint<ACTION, NODE, FUNCTION> projectExistentially(final Collection<TermVariable> varsToProjectAway,
+			final EqConstraint<ACTION, NODE, FUNCTION> original) {
+		assert original.isFrozen();
+		final EqConstraint<ACTION, NODE, FUNCTION> unfrozen = unfreeze(original);
+
+		for (final TermVariable var : varsToProjectAway) {
+			if (var.getSort().isArraySort()) {
+				// havoccing an array
+				final FUNCTION functionToHavoc = getEqNodeAndFunctionFactory().getExistingFunction(var);
+				unfrozen.removeFunction(functionToHavoc);
+			} else {
+				// havoccing an element
+				final NODE nodeToHavoc = getEqNodeAndFunctionFactory().getExistingNode(var);
+				unfrozen.removeElement(nodeToHavoc);
+			}
+		}
+
+		unfrozen.freeze();
+		assert VPDomainHelpers.constraintFreeOfVars(varsToProjectAway, unfrozen, getMgdScript().getScript()) :
+					"resulting constraint still has at least one of the to-be-projected vars";
+
+		return unfrozen;
+	}
+
 	public EqStateFactory<ACTION> getEqStateFactory() {
 		return mEqStateFactory;
 	}

@@ -57,8 +57,10 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		 * @param factory
 		 * @param eqConstraint TODO
 		 */
-		public WeakEquivalenceGraph(final EqConstraintFactory<ACTION, NODE, FUNCTION> factory) {
+		public WeakEquivalenceGraph(final WeqCongruenceClosure<ACTION, NODE, FUNCTION> pArr,
+				final EqConstraintFactory<ACTION, NODE, FUNCTION> factory) {
 //			mEqConstraint = eqConstraint;
+			mPartialArrangement = pArr;
 			mWeakEquivalenceEdges = new HashMap<>();
 			mArrayEqualities = new HashRelation<>();
 			assert factory != null;
@@ -83,8 +85,10 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		 * @param eqConstraint TODO
 		 */
 		private WeakEquivalenceGraph(//final EqConstraint<ACTION, NODE, FUNCTION> eqConstraint,
+				final WeqCongruenceClosure<ACTION, NODE, FUNCTION> pArr,
 				final Map<Doubleton<FUNCTION>, WeakEquivalenceEdgeLabel> weakEquivalenceEdges,
-				final HashRelation<FUNCTION, FUNCTION> arrayEqualities, final EqConstraintFactory<ACTION, NODE, FUNCTION> factory) {
+				final HashRelation<FUNCTION, FUNCTION> arrayEqualities,
+				final EqConstraintFactory<ACTION, NODE, FUNCTION> factory) {
 //			mEqConstraint = eqConstraint;
 			mWeakEquivalenceEdges = weakEquivalenceEdges;
 			mArrayEqualities = arrayEqualities;
@@ -99,16 +103,20 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		 * @param eqConstraint TODO
 		 */
 		public WeakEquivalenceGraph(//final EqConstraint<ACTION, NODE, FUNCTION> eqConstraint,
+				final WeqCongruenceClosure<ACTION, NODE, FUNCTION> pArr,
 				final WeakEquivalenceGraph<ACTION, NODE, FUNCTION> weakEquivalenceGraph) {
 //				final EqConstraintFactory<ACTION, NODE, FUNCTION> factory) {
 //			this(mEqConstraint, weakEquivalenceGraph, true);
-			this(weakEquivalenceGraph, true);
+			this(pArr, weakEquivalenceGraph, true);
 			assert weakEquivalenceGraph.mArrayEqualities.isEmpty();
 		}
 
-		WeakEquivalenceGraph(final WeakEquivalenceGraph<ACTION, NODE, FUNCTION> weqMeet,
+		WeakEquivalenceGraph(
+				final WeqCongruenceClosure<ACTION, NODE, FUNCTION> pArr,
+				final WeakEquivalenceGraph<ACTION, NODE, FUNCTION> weqMeet,
 				final boolean forgetArrayEqualities) {
 //			mEqConstraint = eqConstraint;
+			mPartialArrangement = pArr;
 			mArrayEqualities = forgetArrayEqualities ?
 					new HashRelation<>() :
 						new HashRelation<>(weqMeet.mArrayEqualities);
@@ -121,9 +129,9 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 			assert sanityCheck();
 		}
 
-		void setGroundPartialArrangement(final WeqCongruenceClosure gpa) {
-			mPartialArrangement = gpa;
-		}
+//		void setGroundPartialArrangement(final WeqCongruenceClosure gpa) {
+//			mPartialArrangement = gpa;
+//		}
 
 		/**
 		 * Called when an equality "node1 = node2" has just been reported.
@@ -281,8 +289,7 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		 * 		weq graph have to be between the new equivalence representatives TODO
 		 * @return
 		 */
-		WeakEquivalenceGraph<ACTION, NODE, FUNCTION> join(final WeakEquivalenceGraph<ACTION, NODE, FUNCTION> other,
-				final CongruenceClosure<NODE, FUNCTION> newPartialArrangement) {
+		WeakEquivalenceGraph<ACTION, NODE, FUNCTION> join(final WeakEquivalenceGraph<ACTION, NODE, FUNCTION> other) {
 			final Map<Doubleton<FUNCTION>, WeakEquivalenceEdgeLabel> newWeakEquivalenceEdges = new HashMap<>();
 			for (final Entry<Doubleton<FUNCTION>, WeakEquivalenceEdgeLabel> thisWeqEdge
 					: this.mWeakEquivalenceEdges.entrySet()) {
@@ -295,7 +302,7 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 						thisWeqEdge.getValue().union(correspondingWeqEdgeInOther));
 
 			}
-			return new WeakEquivalenceGraph<ACTION, NODE, FUNCTION>(newWeakEquivalenceEdges, null, mFactory);
+			return new WeakEquivalenceGraph<ACTION, NODE, FUNCTION>(null, newWeakEquivalenceEdges, new HashRelation<>(), mFactory);
 		}
 
 		WeakEquivalenceGraph<ACTION, NODE, FUNCTION> meet(final WeakEquivalenceGraph<ACTION, NODE, FUNCTION> other,
@@ -364,7 +371,7 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 				newWeakEquivalenceEdges.put(thisWeqEdge.getKey(), newEdgeLabel);
 			}
 			final WeakEquivalenceGraph<ACTION, NODE, FUNCTION> result =
-					new WeakEquivalenceGraph<ACTION, NODE, FUNCTION>(newWeakEquivalenceEdges, newArrayEqualities,
+					new WeakEquivalenceGraph<ACTION, NODE, FUNCTION>(null, newWeakEquivalenceEdges, newArrayEqualities,
 							mFactory);
 			result.close();
 			return result;
@@ -929,7 +936,8 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 				for (int i = 0; i < mLabel.size(); i++) {
 					final CongruenceClosure<NODE, FUNCTION> meet = mLabel.get(i).meet(groundPartialArrangement);
 					remove.accept(meet);
-					final CongruenceClosure<NODE, FUNCTION> newPa = meet.projectToElements(WeakEquivalenceGraph.this.mFactory.getAllWeqNodes());
+					mLabelWithGroundPa.set(i, meet);
+					final CongruenceClosure<NODE, FUNCTION> newPa = meet.projectToElements(mFactory.getAllWeqNodes());
 					mLabel.set(i, newPa);
 				}
 			}
@@ -969,6 +977,19 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 
 				return true;
 			}
+		}
+
+		public  Map<FUNCTION, WeakEquivalenceEdgeLabel> getAdjacentWeqEdges(final FUNCTION appliedFunction) {
+			final Map<FUNCTION, WeakEquivalenceEdgeLabel> result = new HashMap<>();
+			for (final Entry<Doubleton<FUNCTION>, WeakEquivalenceEdgeLabel> en : mWeakEquivalenceEdges.entrySet()) {
+				if (en.getKey().getOneElement().equals(appliedFunction)) {
+					result.put(en.getKey().getOtherElement(), en.getValue());
+				}
+				if (en.getKey().getOtherElement().equals(appliedFunction)) {
+					result.put(en.getKey().getOneElement(), en.getValue());
+				}
+			}
+			return result;
 		}
 
 	}

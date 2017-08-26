@@ -89,7 +89,7 @@ public class EqDisjunctiveConstraint<
 			final Collection<TermVariable> varsToProjectAway) {
 		return mFactory.getDisjunctiveConstraint(
 				mConstraints.stream()
-					.map(conjConstraint -> conjConstraint.projectExistentially(varsToProjectAway))
+					.map(conjConstraint -> mFactory.projectExistentially(varsToProjectAway, conjConstraint))
 					.collect(Collectors.toSet()));
 	}
 

@@ -28,7 +28,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -47,7 +46,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ConstantFinder;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.IEqNodeIdentifier;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainHelpers;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.IEqFunctionIdentifier;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CongruenceClosure;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.EqualityStatus;
@@ -92,19 +90,13 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 	 */
 	public EqConstraint(final EqConstraintFactory<ACTION, NODE, FUNCTION> factory) {
 		mFactory = factory;
-//		mWeakEquivalenceGraph = new WeakEquivalenceGraph<ACTION, NODE, FUNCTION>(factory);
 		mPartialArrangement = new WeqCongruenceClosure<>(factory);
-//		mWeakEquivalenceGraph.setGroundPartialArrangement(mPartialArrangement);
 	}
 
 	public EqConstraint(final WeqCongruenceClosure<ACTION, NODE, FUNCTION> cClosure,
-//			final WeakEquivalenceGraph<ACTION, NODE, FUNCTION> weqGraph,
 			final EqConstraintFactory<ACTION, NODE, FUNCTION> factory) {
 		mFactory = factory;
-//		assert !weqGraph.hasArrayEqualities();
-//		mWeakEquivalenceGraph = new WeakEquivalenceGraph<ACTION, NODE, FUNCTION>(weqGraph, factory);
-		mPartialArrangement = new WeqCongruenceClosure<>(cClosure);//, mWeakEquivalenceGraph);
-//		mWeakEquivalenceGraph.setGroundPartialArrangement(mPartialArrangement);
+		mPartialArrangement = new WeqCongruenceClosure<>(cClosure);
 	}
 
 	/**
@@ -114,10 +106,7 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 	 */
 	public EqConstraint(final EqConstraint<ACTION, NODE, FUNCTION> constraint) {
 		mFactory = constraint.mFactory;
-//		mWeakEquivalenceGraph = new WeakEquivalenceGraph<ACTION, NODE, FUNCTION>(constraint.mWeakEquivalenceGraph,
-//				mFactory);
 		mPartialArrangement = new WeqCongruenceClosure<>(constraint.mPartialArrangement);
-//		mWeakEquivalenceGraph.setGroundPartialArrangement(mPartialArrangement);
 	}
 
 	public void freeze() {
@@ -143,15 +132,6 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 		assert !mIsFrozen;
 
 		return mPartialArrangement.reportEquality(node1, node2);
-//		boolean madeChanges = false;
-//
-//		madeChanges |= mPartialArrangement.reportEquality(node1, node2);
-//		if (!madeChanges) {
-//			// if mPartialArrangement has not changed, we don't need to report to the weq graph
-//			return false;
-//		}
-//
-//		return true;
 	}
 
 
@@ -160,91 +140,33 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 		assert !mIsFrozen;
 		final boolean paHasChanged = mPartialArrangement.reportDisequality(node1, node2);
 		return paHasChanged;
-//		if (!paHasChanged) {
-//			// if mPartialArrangement has not changed, we don't need to report to the weq graph
-//			return false;
-//		}
-//		mWeakEquivalenceGraph.reportChangeInGroundPartialArrangement(
-//				(final CongruenceClosure<NODE, FUNCTION> cc) -> cc.reportDisequality(node1, node2));
-//		return true;
 	}
 
 	public boolean reportFunctionEquality(final FUNCTION func1, final FUNCTION func2) {
 		assert !mIsFrozen;
 		final boolean paHasChanged = mPartialArrangement.reportFunctionEquality(func1, func2);
 		return paHasChanged;
-//		if (!paHasChanged) {
-//			// if mPartialArrangement has not changed, we don't need to report to the weq graph
-//			return false;
-//		}
-//		mWeakEquivalenceGraph.reportChangeInGroundPartialArrangement(
-//				(final CongruenceClosure<NODE, FUNCTION> cc) -> cc.reportFunctionEquality(func1, func2));
-//		return true;
 	}
 
 	public boolean reportFunctionDisequality(final FUNCTION func1, final FUNCTION func2) {
 		assert !mIsFrozen;
 		final boolean paHasChanged = mPartialArrangement.reportFunctionDisequality(func1, func2);
 		return paHasChanged;
-//		if (!paHasChanged) {
-//			// if mPartialArrangement has not changed, we don't need to report to the weq graph
-//			return false;
-//		}
-//		mWeakEquivalenceGraph.reportChangeInGroundPartialArrangement(
-//				(final CongruenceClosure<NODE, FUNCTION> cc) -> cc.reportFunctionDisequality(func1, func2));
-//		return true;
 	}
 
 	public void reportWeakEquivalence(final FUNCTION array1, final FUNCTION array2,
 			final List<NODE> storeIndex) {
 		assert !mIsFrozen;
 		mPartialArrangement.reportWeakEquivalence(array1, array2, storeIndex);
-
-
 	}
 
 	public boolean isFrozen() {
 		return mIsFrozen;
 	}
 
-	/**
-	 *
-	 *
-	 * TODO: this method does not fit in well, as it is not in-place but returns a fresh EqConstraint
-	 *   --> perhaps move to factory..
-	 *
-	 * @param varsToProjectAway
-	 * @return
-	 */
-	public EqConstraint<ACTION, NODE, FUNCTION> projectExistentially(final Collection<TermVariable> varsToProjectAway) {
-		assert mIsFrozen;
-		final EqConstraint<ACTION, NODE, FUNCTION> unfrozen = mFactory.unfreeze(this);
 
-		varsToProjectAway.forEach(unfrozen::havoc);
 
-		unfrozen.freeze();
-		assert VPDomainHelpers.constraintFreeOfVars(varsToProjectAway, unfrozen,
-				mFactory.getMgdScript().getScript()) :
-					"resulting constraint still has at least one of the to-be-projected vars";
-
-		return unfrozen;
-	}
-
-	private void havoc(final TermVariable var) {
-		assert !mIsFrozen;
-
-		if (var.getSort().isArraySort()) {
-			// havoccing an array
-			final FUNCTION functionToHavoc = mFactory.getEqNodeAndFunctionFactory().getExistingFunction(var);
-			mPartialArrangement.removeFunction(functionToHavoc);
-		} else {
-			// havoccing an element
-			final NODE nodeToHavoc = mFactory.getEqNodeAndFunctionFactory().getExistingNode(var);
-			mPartialArrangement.removeElement(nodeToHavoc);
-		}
-	}
-
-	private <E, F extends E> boolean arrayContains(final E[] freeVars, final F var) {
+	private static <E, F extends E> boolean arrayContains(final E[] freeVars, final F var) {
 		for (int i = 0; i < freeVars.length; i++) {
 			if (freeVars[i].equals(var)) {
 				return true;
@@ -255,10 +177,8 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 
 	public void renameVariables(final Map<Term, Term> substitutionMapping) {
 		assert !mIsFrozen;
-
 		mPartialArrangement.renameVariables(substitutionMapping);
-
-				resetCachingFields();
+		resetCachingFields();
 	}
 
 	private void resetCachingFields() {
@@ -278,7 +198,7 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 		 || !mPartialArrangement.hasElement(node2)) {
 			return false;
 		}
-		return mPartialArrangement.getEqualityStatus(node1, node2) == EqualityStatus.NOT_EQUAL;
+		return mPartialArrangement.getEqualityStatus(node1, node2) == EqualityStatus.EQUAL;
 	}
 
 	/**
@@ -300,7 +220,7 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 		 || !mPartialArrangement.hasFunction(func2)) {
 			return false;
 		}
-		return mPartialArrangement.getEqualityStatus(func1, func2) == EqualityStatus.NOT_EQUAL;
+		return mPartialArrangement.getEqualityStatus(func1, func2) == EqualityStatus.EQUAL;
 	}
 
 	public boolean areUnequal(final FUNCTION func1, final FUNCTION func2) {
@@ -308,7 +228,7 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 		 || !mPartialArrangement.hasFunction(func2)) {
 			return false;
 		}
-		return mPartialArrangement.getEqualityStatus(func1, func2) == EqualityStatus.EQUAL;
+		return mPartialArrangement.getEqualityStatus(func1, func2) == EqualityStatus.NOT_EQUAL;
 	}
 
 	public Term getTerm(final Script script) {
@@ -322,21 +242,6 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 			mTerm = result;
 		}
 		return result;
-
-
-//		final CongruenceClosure<NODE, FUNCTION> pa = mPartialArrangement;
-//
-//		final List<Term> allConjuncts =  new ArrayList<>();
-//		allConjuncts.addAll(partialArrangementToCube(script, pa));
-//
-//		final List<Term> weakEqConstraints = mWeakEquivalenceGraph.getWeakEquivalenceConstraintsAsTerms(script);
-//		allConjuncts.addAll(weakEqConstraints);
-//
-//		final Term result= Util.and(script, allConjuncts.toArray(new Term[allConjuncts.size()]));
-//		if (mIsFrozen) {
-//			mTerm = result;
-//		}
-//		return result;
 	}
 
 	static <NODE extends IEqNodeIdentifier<NODE, FUNCTION>, FUNCTION extends IEqFunctionIdentifier<NODE, FUNCTION>>
@@ -434,24 +339,6 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 	@Override
 	public String toString() {
 		return mPartialArrangement.toString();
-//		final StringBuilder sb = new StringBuilder();
-//		sb.append("Partial arrangement:\n");
-//		sb.append(mPartialArrangement.toString());
-//		sb.append("\n");
-//		sb.append("Weak equivalences:\n");
-//		sb.append(mWeakEquivalenceGraph.toString());
-//		return sb.toString();
-
-//		final List<String> allPartitionsAndRepresentativeDisequalities = new ArrayList<>();
-//		String sep = "";
-//		final StringBuilder sb = new StringBuilder();
-//		for (final String s : allPartitionsAndRepresentativeDisequalities) {
-//			sb.append(sep);
-//			sep = "\n";
-//			sb.append(s);
-//		}
-//
-//		return sb.toString();
 	}
 
 	public boolean hasNode(final NODE node) {
@@ -464,21 +351,11 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 
 	public boolean isTop() {
 		return mPartialArrangement.isTautological();
-//		if (!mPartialArrangement.isTautological()) {
-//			return false;
-//		}
-//		if (!mWeakEquivalenceGraph.isEmpty()) {
-//			return false;
-//		}
-//		return true;
 	}
 
 	public EqConstraint<ACTION, NODE, FUNCTION> join(final EqConstraint<ACTION, NODE, FUNCTION> other) {
 		final WeqCongruenceClosure<ACTION, NODE, FUNCTION> newPartialArrangement = this.mPartialArrangement.join(
 				other.mPartialArrangement);
-//		final WeakEquivalenceGraph<ACTION, NODE, FUNCTION> newWEGraph = mWeakEquivalenceGraph.join(other.mWeakEquivalenceGraph,
-//				newPartialArrangement);
-//		final EqConstraint<ACTION, NODE, FUNCTION> res = mFactory.getEqConstraint(newPartialArrangement, newWEGraph);
 		final EqConstraint<ACTION, NODE, FUNCTION> res = mFactory.getEqConstraint(newPartialArrangement);
 		res.freeze();
 		return res;
@@ -553,6 +430,13 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 		mPartialArrangement.getRepresentativeAndAddFunctionIfNeeded(func);
 	}
 
+	public void removeFunction(final FUNCTION functionToHavoc) {
+		mPartialArrangement.removeFunction(functionToHavoc);
+	}
+
+	public void removeElement(final NODE elemToHavoc) {
+		mPartialArrangement.removeElement(elemToHavoc);
+	}
 
 
 
