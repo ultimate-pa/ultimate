@@ -111,24 +111,24 @@ public class ElimStorePlain {
 	public Pair<Term, Collection<TermVariable>> elimAll(final Set<TermVariable> inputEliminatees,
 			final Term inputTerm) {
 
-		final Stack<AfEliminationTask> taskStack = new Stack<AfEliminationTask>();
+		final Stack<EliminationTask> taskStack = new Stack<EliminationTask>();
 		final ArrayList<Term> resultDisjuncts = new ArrayList<>();
 		final Set<TermVariable> resultEliminatees = new LinkedHashSet<>();
 		{
-			final AfEliminationTask eliminationTask = new AfEliminationTask(inputEliminatees, inputTerm);
+			final EliminationTask eliminationTask = new EliminationTask(mQuantifier, inputEliminatees, inputTerm);
 			pushTaskOnStack(eliminationTask, taskStack);
 		}
 		int numberOfRounds = 0;
 		while (!taskStack.isEmpty()) {
-			final AfEliminationTask currentEliminationTask = taskStack.pop();
-			final TreeRelation<Integer, TermVariable> tr = classifyEliminatees(currentEliminationTask.getEliminatees());
+			final EliminationTask currentETask = taskStack.pop();
+			final TreeRelation<Integer, TermVariable> tr = classifyEliminatees(currentETask.getEliminatees());
 
 			final LinkedHashSet<TermVariable> arrayEliminatees = getArrayTvSmallDimensionsFirst(tr);
 
 			if (arrayEliminatees.isEmpty()) {
 				// no array eliminatees left
-				resultDisjuncts.add(currentEliminationTask.getTerm());
-				resultEliminatees.addAll(currentEliminationTask.getEliminatees());
+				resultDisjuncts.add(currentETask.getTerm());
+				resultEliminatees.addAll(currentETask.getEliminatees());
 			} else {
 				TermVariable thisIterationEliminatee;
 				{
@@ -137,13 +137,13 @@ public class ElimStorePlain {
 					it.remove();
 				}
 
-				final AfEliminationTask ssdElimRes = elim1(thisIterationEliminatee, currentEliminationTask.getTerm());
+				final EliminationTask ssdElimRes = elim1(currentETask.getQuantifier(), thisIterationEliminatee, currentETask.getTerm());
 				arrayEliminatees.addAll(ssdElimRes.getEliminatees());
 				// also add non-array eliminatees
 				arrayEliminatees.addAll(tr.getImage(0));
-				final AfEliminationTask eliminationTask1 =
-						new AfEliminationTask(arrayEliminatees, ssdElimRes.getTerm());
-				final AfEliminationTask eliminationTask2 = applyNonSddEliminations(eliminationTask1, PqeTechniques.ALL_LOCAL);
+				final EliminationTask eliminationTask1 =
+						new EliminationTask(ssdElimRes.getQuantifier(), arrayEliminatees, ssdElimRes.getTerm());
+				final EliminationTask eliminationTask2 = applyNonSddEliminations(eliminationTask1, PqeTechniques.ALL_LOCAL);
 				if (mLogger.isInfoEnabled()) {
 					mLogger.info("Start of round: " + printVarInfo(tr) + " End of round: "
 							+ printVarInfo(classifyEliminatees(eliminationTask2.getEliminatees())) + " and "
@@ -172,21 +172,21 @@ public class ElimStorePlain {
 		return sb.toString();
 	}
 
-	private void pushTaskOnStack(final AfEliminationTask eliminationTask, final Stack<AfEliminationTask> taskStack) {
-		final Term term = eliminationTask.getTerm();
+	private void pushTaskOnStack(final EliminationTask eTask, final Stack<EliminationTask> taskStack) {
+		final Term term = eTask.getTerm();
 		final Term[] disjuncts = PartialQuantifierElimination.getXjunctsOuter(mQuantifier, term);
 		if (disjuncts.length == 1) {
-			taskStack.push(eliminationTask);
+			taskStack.push(eTask);
 		} else {
 			for (final Term disjunct : disjuncts) {
-				taskStack.push(new AfEliminationTask(eliminationTask.getEliminatees(), disjunct));
+				taskStack.push(new EliminationTask(eTask.getQuantifier(), eTask.getEliminatees(), disjunct));
 			}
 		}
 	}
 
-	private AfEliminationTask applyNonSddEliminations(final AfEliminationTask eliminationTask, final PqeTechniques techniques) throws AssertionError {
+	private EliminationTask applyNonSddEliminations(final EliminationTask eTask, final PqeTechniques techniques) throws AssertionError {
 		final Term quantified =
-				SmtUtils.quantifier(mScript, mQuantifier, eliminationTask.getEliminatees(), eliminationTask.getTerm());
+				SmtUtils.quantifier(mScript, mQuantifier, eTask.getEliminatees(), eTask.getTerm());
 		final Term pushed =
 				new QuantifierPusher(mMgdScript, mServices, true, techniques).transform(quantified);
 
@@ -208,7 +208,7 @@ public class ElimStorePlain {
 		} else {
 			throw new AssertionError();
 		}
-		return new AfEliminationTask(eliminatees1, matrix);
+		return new EliminationTask(eTask.getQuantifier(), eliminatees1, matrix);
 	}
 
 	private LinkedHashSet<TermVariable> getArrayTvSmallDimensionsFirst(final TreeRelation<Integer, TermVariable> tr) {
@@ -230,7 +230,7 @@ public class ElimStorePlain {
 		return tr;
 	}
 
-	public AfEliminationTask elim1(final TermVariable eliminatee, final Term inputTerm) {
+	public EliminationTask elim1(final int quantifier, final TermVariable eliminatee, final Term inputTerm) {
 		final Term[] xjunctsOuter = PartialQuantifierElimination.getXjunctsOuter(mQuantifier, inputTerm);
 		if (xjunctsOuter.length > 1) {
 			throw new AssertionError("several disjuncts! " + inputTerm);
@@ -256,9 +256,9 @@ public class ElimStorePlain {
 			preprocessedInput = PartialQuantifierElimination.applyDualFiniteConnective(mScript, mQuantifier, withReplacement, definitions);
 			if (dp.introducedDerPossibility()) {
 				// do DER
-				final AfEliminationTask afterDer = applyNonSddEliminations(new AfEliminationTask(Collections.singleton(eliminatee), preprocessedInput), PqeTechniques.ONLY_DER);
+				final EliminationTask afterDer = applyNonSddEliminations(new EliminationTask(quantifier, Collections.singleton(eliminatee), preprocessedInput), PqeTechniques.ONLY_DER);
 				newAuxVars.addAll(afterDer.getEliminatees());
-				return new AfEliminationTask(newAuxVars, afterDer.getTerm());
+				return new EliminationTask(quantifier, newAuxVars, afterDer.getTerm());
 			} 
 
 		}
@@ -271,7 +271,7 @@ public class ElimStorePlain {
 		if (oracB.mIncrementalPlicationChecker.checkSat(mMgdScript.getScript().term("true"))== LBool.UNSAT) {
 			mLogger.warn("input unsat");
 			oracB.unlockSolver();
-			return new AfEliminationTask(Collections.emptySet(), mMgdScript.getScript().term("false"));
+			return new EliminationTask(quantifier, Collections.emptySet(), mMgdScript.getScript().term("false"));
 		}
 		oracB.unlockSolver();
 
@@ -292,7 +292,7 @@ public class ElimStorePlain {
 				final Term result = PartialQuantifierElimination.applyDualFiniteConnective(mScript, mQuantifier,
 						Arrays.asList(new Term[] { replaced, indexValueConstraints }));
 				assert !Arrays.asList(result.getFreeVars()).contains(eliminatee) : "var is still there";
-				return new AfEliminationTask(iav.getNewAuxVars(), result);
+				return new EliminationTask(quantifier, iav.getNewAuxVars(), result);
 			} else {
 				throw new AssertionError("no case applies");
 			}
@@ -431,7 +431,7 @@ public class ElimStorePlain {
 					transformedTerm, valueEqualityTerm2, storedValueInformation, cc);
 			assert !Arrays.asList(res.getFreeVars()).contains(eliminatee) : "var is still there: " + eliminatee
 					+ " term size " + new DagSizePrinter(res);
-			return new AfEliminationTask(newAuxVars, res);
+			return new EliminationTask(quantifier, newAuxVars, res);
 		}
 		
 		
@@ -441,7 +441,7 @@ public class ElimStorePlain {
 		if (orac.mIncrementalPlicationChecker.checkSat(mMgdScript.getScript().term("true"))== LBool.UNSAT) {
 			mLogger.warn("input unsat");
 			orac.unlockSolver();
-			return new AfEliminationTask(Collections.emptySet(), mMgdScript.getScript().term("false"));
+			return new EliminationTask(quantifier, Collections.emptySet(), mMgdScript.getScript().term("false"));
 		}
 		final EquivalenceRelationIterator<Term> ci = new EquivalenceRelationIterator<Term>(mServices, sortedIndices, equalityInformation, orac, relevant);
 		// mLogger.info("Considering " + ci.size() + " cases while eliminating array variable of dimension " + new
@@ -556,7 +556,7 @@ public class ElimStorePlain {
 			throw new AssertionError("var is still there " + eliminatee + "  quantifier " + result + "  term size "
 					+ (new DagSizePrinter(term)) + "   " + term);
 		}
-		return new AfEliminationTask(newAuxVars, result);
+		return new EliminationTask(quantifier, newAuxVars, result);
 
 	}
 
@@ -948,36 +948,6 @@ public class ElimStorePlain {
 
 
 
-	/**
-	 * Alternation-free (quantifier) elimination task
-	 *
-	 */
-	private static class AfEliminationTask {
-		private final LinkedHashSet<TermVariable> mEliminatees;
-		private final Term mTerm;
-
-		public AfEliminationTask(final Set<TermVariable> eliminatees, final Term term) {
-			super();
-			mEliminatees = new LinkedHashSet<>();
-			for (final TermVariable freeVar : term.getFreeVars()) {
-				if (eliminatees.contains(freeVar)) {
-					mEliminatees.add(freeVar);
-				}
-			}
-			mTerm = term;
-		}
-
-		public Set<TermVariable> getEliminatees() {
-			return Collections.unmodifiableSet(mEliminatees);
-		}
-
-		public Term getTerm() {
-			return mTerm;
-		}
-
-	}
-	
-	
 	public class ValueEqualityChecker {
 		final TermVariable mEliminatee;
 		final Term mStoreIndex;
