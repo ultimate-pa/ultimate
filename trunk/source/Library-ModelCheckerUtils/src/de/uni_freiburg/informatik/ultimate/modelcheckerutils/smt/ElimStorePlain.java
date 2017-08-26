@@ -346,9 +346,9 @@ public class ElimStorePlain {
 
 		
 		final AuxVarConstructor auxVarConstructor = new AuxVarConstructor();
-		final IndexMappingProvider imp = new IndexMappingProvider(indices, eliminatee, equalityInformation, auxVarConstructor);
+		final IndexMappingProvider imp = new IndexMappingProvider(indices, eliminatee, equalityInformation, auxVarConstructor, preprocessedInput);
 		
-		final Map<Term, TermVariable> indexMapping = imp.getIndexReplacementMapping();
+		final Map<Term, Term> indexMapping = imp.getIndexReplacementMapping();
 		final List<Term> indexMappingDefinitions = imp.getIndexMappingDefinitions();
 
 		final Term notEqualsDetectedBySolver = PartialQuantifierElimination.applyDualFiniteConnective(mScript,
@@ -375,7 +375,7 @@ public class ElimStorePlain {
 		// final Term newSelect = mgdScript.getScript().term("select", newAuxArray, replacementSelectIndex);
 		// (hence we need to change computation order -- index mapping first)
 		final Map<Term, Term> oldCellMapping = constructOldCellValueMapping(selectTerms, storeIndex,
-				equalityInformation, valueSort, selectIndices.contains(storeIndex), newAuxArray, rawIndex2replacedIndex, auxVarConstructor);
+				equalityInformation, valueSort, selectIndices.contains(storeIndex), newAuxArray, rawIndex2replacedIndex, auxVarConstructor, preprocessedInput, eliminatee);
 		newAuxVars.addAll(auxVarConstructor.getConstructedAuxVars());
 		
 		
@@ -562,7 +562,7 @@ public class ElimStorePlain {
 
 	private Term constructStoredValueInformation(final TermVariable eliminatee,
 			final List<MultiDimensionalStore> stores, final Term storeIndex, final Term storeValue,
-			final Map<Term, TermVariable> indexMapping, final TermVariable newAuxArray,
+			final Map<Term, Term> indexMapping, final TermVariable newAuxArray,
 			final Map<Term, Term> substitutionMapping) throws AssertionError {
 		final Term storedValueInformation;
 		if (stores.isEmpty()) {
@@ -741,14 +741,14 @@ public class ElimStorePlain {
 	}
 
 	private Term constructNewSelectWithPossiblyReplacedIndex(final TermVariable newAuxArray,
-			final ApplicationTerm oldSelectTerm, final Map<Term, TermVariable> indexMapping,
+			final ApplicationTerm oldSelectTerm, final Map<Term, Term> indexMapping,
 			final TermVariable eliminatee) {
 		final Term newIndex = getNewIndex(getIndexOfSelect(oldSelectTerm), indexMapping, eliminatee);
 		final Term newSelect = mMgdScript.getScript().term("select", newAuxArray, newIndex);
 		return newSelect;
 	}
 
-	private Term getNewIndex(final Term originalIndex, final Map<Term, TermVariable> indexMapping,
+	private Term getNewIndex(final Term originalIndex, final Map<Term, Term> indexMapping,
 			final TermVariable eliminatee) {
 		final Term newIndex;
 		final Term replacementIndex = indexMapping.get(originalIndex);
@@ -770,11 +770,13 @@ public class ElimStorePlain {
 	 * class of indices.
 	 * @param newAuxArray 
 	 * @param auxVarConstructor 
+	 * @param preprocessedInput 
+	 * @param eliminatee 
 	 */
 	private Map<Term, Term> constructOldCellValueMapping(final List<ApplicationTerm> selectTerms, final Term storeIndex,
 			final ThreeValuedEquivalenceRelation<Term> equalityInformation, final Sort valueSort,
 			final boolean storeIndexIsAlsoSelectIndex, final Term newAuxArray,
-			final Map<Term, Term> rawIndex2replacedIndex, final AuxVarConstructor auxVarConstructor) {
+			final Map<Term, Term> rawIndex2replacedIndex, final AuxVarConstructor auxVarConstructor, final Term preprocessedInput, final TermVariable eliminatee) {
 		final IValueConstruction<Term, TermVariable> valueConstruction = new IValueConstruction<Term, TermVariable>() {
 
 			@Override
@@ -785,6 +787,7 @@ public class ElimStorePlain {
 
 		};
 		final ConstructionCache<Term, TermVariable> cc = new ConstructionCache<>(valueConstruction);
+		final EqProvider eqProvider = new EqProvider(preprocessedInput, eliminatee);
 		final Map<Term, Term> oldCellMapping = new HashMap<>();
 		for (final ApplicationTerm selectTerm : selectTerms) {
 			assert selectTerm.getSort().equals(valueSort);
@@ -800,9 +803,14 @@ public class ElimStorePlain {
 					// do nothing
 				}
 			} else {
-				final Term indexRepresentative = equalityInformation.getRepresentative(selectIndex);
-				final TermVariable oldCellVariable = cc.getOrConstruct(indexRepresentative);
-				oldCellMapping.put(selectIndex, oldCellVariable);
+				final Term eqTerm = eqProvider.getEqTerm(selectTerm);
+				if (eqTerm != null) {
+					oldCellMapping.put(selectIndex, eqTerm);
+				} else {
+					final Term indexRepresentative = equalityInformation.getRepresentative(selectIndex);
+					final TermVariable oldCellVariable = cc.getOrConstruct(indexRepresentative);
+					oldCellMapping.put(selectIndex, oldCellVariable);
+				}
 			}
 		}
 		return oldCellMapping;
@@ -1217,12 +1225,13 @@ public class ElimStorePlain {
 	 */
 	private class IndexMappingProvider {
 		
-		private final Map<Term, TermVariable> mIndexReplacementMapping = new HashMap<>();
+		private final Map<Term, Term> mIndexReplacementMapping = new HashMap<>();
 		private final List<Term> mIndexMappingDefinitions = new ArrayList<>();
 
 		public IndexMappingProvider(final Set<Term> indices, final TermVariable eliminatee,
 				final ThreeValuedEquivalenceRelation<Term> equalityInformation,
-				final AuxVarConstructor auxVarConstructor) {
+				final AuxVarConstructor auxVarConstructor, final Term preprocessedInput) {
+			final EqProvider eqProvider = new EqProvider(preprocessedInput, eliminatee);
 			
 			final IValueConstruction<Term, TermVariable> valueConstruction = new IValueConstruction<Term, TermVariable>() {
 
@@ -1238,16 +1247,23 @@ public class ElimStorePlain {
 			for (final Term index : indices) {
 				if (Arrays.asList(index.getFreeVars()).contains(eliminatee)) {
 					// need to replace index
-					final Term indexRepresentative = equalityInformation.getRepresentative(index);
-					final TermVariable indexReplacement = cc.getOrConstruct(indexRepresentative);
-					mIndexReplacementMapping.put(index, indexReplacement);
-					mIndexMappingDefinitions.add(PartialQuantifierElimination.equalityForExists(mScript, mQuantifier,
-							indexReplacement, index));
+					// first try to find equivalent term
+					final Term eqTerm = eqProvider.getEqTerm(index);
+					if (eqTerm != null) {
+						mIndexReplacementMapping.put(index, eqTerm);
+					} else {
+						// need to introduce auxiliary variable
+						final Term indexRepresentative = equalityInformation.getRepresentative(index);
+						final TermVariable indexReplacement = cc.getOrConstruct(indexRepresentative);
+						mIndexReplacementMapping.put(index, indexReplacement);
+						mIndexMappingDefinitions.add(PartialQuantifierElimination.equalityForExists(mScript, mQuantifier,
+								indexReplacement, index));
+					}
 				}
 			}
 		}
 
-		public Map<Term, TermVariable> getIndexReplacementMapping() {
+		public Map<Term, Term> getIndexReplacementMapping() {
 			return mIndexReplacementMapping;
 		}
 
