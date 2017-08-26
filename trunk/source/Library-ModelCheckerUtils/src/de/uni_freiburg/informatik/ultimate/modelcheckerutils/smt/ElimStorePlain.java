@@ -38,7 +38,6 @@ import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.Stack;
 
@@ -69,6 +68,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.Qua
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierSequence;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierSequence.QuantifiedVariables;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifierElimination.EqualityInformation;
 import de.uni_freiburg.informatik.ultimate.util.ConstructionCache;
 import de.uni_freiburg.informatik.ultimate.util.ConstructionCache.IValueConstruction;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
@@ -93,9 +93,9 @@ public class ElimStorePlain {
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private final SimplificationTechnique mSimplificationTechnique;
-	private final static String s_AUX_VAR_NEW_ARRAY = "arrayElimArr";
-	private final static String s_AUX_VAR_INDEX = "arrayElimIndex";
-	private final static String s_AUX_VAR_ARRAYCELL = "arrayElimCell";
+	private static final String s_AUX_VAR_NEW_ARRAY = "arrayElimArr";
+	private static final String s_AUX_VAR_INDEX = "arrayElimIndex";
+	private static final String s_AUX_VAR_ARRAYCELL = "arrayElimCell";
 
 	public ElimStorePlain(final ManagedScript mgdScript, final IUltimateServiceProvider services,
 			final SimplificationTechnique simplificationTechnique, final int quantifier) {
@@ -346,13 +346,10 @@ public class ElimStorePlain {
 
 		
 		final AuxVarConstructor auxVarConstructor = new AuxVarConstructor();
-		final Map<Term, TermVariable> indexMapping =
-				constructIndexReplacementMapping(indices, eliminatee, equalityInformation, auxVarConstructor);
-		final List<Term> indexMappingDefinitions = new ArrayList<>();
-		for (final Entry<Term, TermVariable> entry : indexMapping.entrySet()) {
-			indexMappingDefinitions.add(PartialQuantifierElimination.equalityForExists(mScript, mQuantifier,
-					entry.getValue(), entry.getKey()));
-		}
+		final IndexMappingProvider imp = new IndexMappingProvider(indices, eliminatee, equalityInformation, auxVarConstructor);
+		
+		final Map<Term, TermVariable> indexMapping = imp.getIndexReplacementMapping();
+		final List<Term> indexMappingDefinitions = imp.getIndexMappingDefinitions();
 
 		final Term notEqualsDetectedBySolver = PartialQuantifierElimination.applyDualFiniteConnective(mScript,
 				mQuantifier, analysisResult.getSecond());
@@ -1190,7 +1187,75 @@ public class ElimStorePlain {
 			return mConstructedAuxVars;
 		}
 		
-	}	
+	}
+	
+	
+	private class EqProvider {
+		private final Term[] mContext;
+		private final TermVariable mEliminatee;
+		
+		public EqProvider(final Term inputTerm, final TermVariable eliminatee) {
+			mContext = PartialQuantifierElimination.getXjunctsInner(mQuantifier, inputTerm);
+			mEliminatee = eliminatee;
+		}
+		
+		public Term getEqTerm(final Term term) {
+			final EqualityInformation eqInfo = EqualityInformation.getEqinfo(mScript, term, mContext, mEliminatee, mQuantifier);
+			if (eqInfo == null) {
+				return null;
+			} else {
+				return eqInfo.getTerm();
+			}
+		}
+	}
+	
+	
+	/**
+	 * Let eliminatee be the array that is eliminated and (select eliminatee idx v) a select term. If idx contains
+	 * eliminatee, we have to replace idx by an auxiliary variable. As an optimization, we only construct one auxiliary
+	 * variable for each equivalence class of indices.
+	 */
+	private class IndexMappingProvider {
+		
+		private final Map<Term, TermVariable> mIndexReplacementMapping = new HashMap<>();
+		private final List<Term> mIndexMappingDefinitions = new ArrayList<>();
+
+		public IndexMappingProvider(final Set<Term> indices, final TermVariable eliminatee,
+				final ThreeValuedEquivalenceRelation<Term> equalityInformation,
+				final AuxVarConstructor auxVarConstructor) {
+			
+			final IValueConstruction<Term, TermVariable> valueConstruction = new IValueConstruction<Term, TermVariable>() {
+
+				@Override
+				public TermVariable constructValue(final Term index) {
+					final TermVariable indexReplacement = 
+							auxVarConstructor.constructAuxVar(s_AUX_VAR_INDEX, index.getSort());
+					return indexReplacement;
+				}
+
+			};
+			final ConstructionCache<Term, TermVariable> cc = new ConstructionCache<>(valueConstruction);
+			for (final Term index : indices) {
+				if (Arrays.asList(index.getFreeVars()).contains(eliminatee)) {
+					// need to replace index
+					final Term indexRepresentative = equalityInformation.getRepresentative(index);
+					final TermVariable indexReplacement = cc.getOrConstruct(indexRepresentative);
+					mIndexReplacementMapping.put(index, indexReplacement);
+					mIndexMappingDefinitions.add(PartialQuantifierElimination.equalityForExists(mScript, mQuantifier,
+							indexReplacement, index));
+				}
+			}
+		}
+
+		public Map<Term, TermVariable> getIndexReplacementMapping() {
+			return mIndexReplacementMapping;
+		}
+
+		public List<Term> getIndexMappingDefinitions() {
+			return mIndexMappingDefinitions;
+		}
+		
+	}
 	
 }
 
