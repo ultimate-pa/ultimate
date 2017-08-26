@@ -111,7 +111,7 @@ public class ElimStorePlain {
 	public Pair<Term, Collection<TermVariable>> elimAll(final Set<TermVariable> inputEliminatees,
 			final Term inputTerm) {
 
-		final Stack<AfEliminationTask> taskStack = new Stack();
+		final Stack<AfEliminationTask> taskStack = new Stack<AfEliminationTask>();
 		final ArrayList<Term> resultDisjuncts = new ArrayList<>();
 		final Set<TermVariable> resultEliminatees = new LinkedHashSet<>();
 		{
