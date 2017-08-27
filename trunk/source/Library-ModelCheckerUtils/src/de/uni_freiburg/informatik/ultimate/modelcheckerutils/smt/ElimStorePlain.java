@@ -371,8 +371,12 @@ public class ElimStorePlain {
 		// represented as 
 		// final Term newSelect = mgdScript.getScript().term("select", newAuxArray, replacementSelectIndex);
 		// (hence we need to change computation order -- index mapping first)
-		final Map<Term, Term> oldCellMapping = constructOldCellValueMapping(selectTerms, storeIndex,
-				equalityInformation, valueSort, selectIndices.contains(storeIndex), newArray, rawIndex2replacedIndex,
+		final Set<Term> selectIndexRepresentatives = new HashSet<>();
+		for (final Term selectIndex : selectIndicesSet) {
+			selectIndexRepresentatives.add(equalityInformation.getRepresentative(selectIndex));
+		}
+		final Map<Term, Term> oldCellMapping = constructOldCellValueMapping(selectIndexRepresentatives, storeIndex,
+				equalityInformation, valueSort, selectIndexRepresentatives.contains(equalityInformation.getRepresentative(storeIndex)), newArray, rawIndex2replacedIndex,
 				auxVarConstructor, preprocessedInput, eliminatee, quantifier);
 		newAuxVars.addAll(auxVarConstructor.getConstructedAuxVars());
 		
@@ -398,12 +402,13 @@ public class ElimStorePlain {
 				substitutionMapping.put(storeTerm, newArray);
 			}
 			for (final Term selectIndex : selectIndices) {
-				final Term select = mMgdScript.getScript().term("select", eliminatee, selectIndex);
-				if (oldCellMapping.containsKey(selectIndex)) {
-					substitutionMapping.put(select, oldCellMapping.get(selectIndex));
+				final Term oldSelect = mMgdScript.getScript().term("select", eliminatee, selectIndex);
+				final Term indexRepresentative = equalityInformation.getRepresentative(selectIndex);
+				if (oldCellMapping.containsKey(indexRepresentative)) {
+					substitutionMapping.put(oldSelect, oldCellMapping.get(indexRepresentative));
 				} else {
-					final Term newSelect = mMgdScript.getScript().term("select", newArray, selectIndex);
-					substitutionMapping.put(select, newSelect);
+					final Term newSelect = mMgdScript.getScript().term("select", newArray, indexRepresentative);
+					substitutionMapping.put(oldSelect, newSelect);
 				}
 			}
 			
@@ -771,7 +776,7 @@ public class ElimStorePlain {
 	 * @param eliminatee 
 	 * @param quantifier 
 	 */
-	private Map<Term, Term> constructOldCellValueMapping(final List<ApplicationTerm> selectTerms, final Term storeIndex,
+	private Map<Term, Term> constructOldCellValueMapping(final Set<Term> selectIndexRepresentatives, final Term storeIndex,
 			final ThreeValuedEquivalenceRelation<Term> equalityInformation, final Sort valueSort,
 			final boolean storeIndexIsAlsoSelectIndex, final Term newAuxArray,
 			final Map<Term, Term> rawIndex2replacedIndex, final AuxVarConstructor auxVarConstructor,
@@ -788,27 +793,25 @@ public class ElimStorePlain {
 		final ConstructionCache<Term, TermVariable> cc = new ConstructionCache<>(valueConstruction);
 		final EqProvider eqProvider = new EqProvider(preprocessedInput, eliminatee, quantifier);
 		final Map<Term, Term> oldCellMapping = new HashMap<>();
-		for (final ApplicationTerm selectTerm : selectTerms) {
-			assert selectTerm.getSort().equals(valueSort);
-			final Term selectIndex = getIndexOfSelect(selectTerm);
+		for (final Term selectIndexRepresentative: selectIndexRepresentatives) {
 			if ((storeIndex != null)
-					&& equalityInformation.getEqualityStatus(selectIndex, storeIndex) == EqualityStatus.NOT_EQUAL) {
+					&& equalityInformation.getEqualityStatus(selectIndexRepresentative, storeIndex) == EqualityStatus.NOT_EQUAL) {
 				if (storeIndexIsAlsoSelectIndex) {
 					
-					final Term replacementSelectIndex = rawIndex2replacedIndex.get(selectIndex);
+					final Term replacementSelectIndex = rawIndex2replacedIndex.get(selectIndexRepresentative);
 					final Term newSelect = mMgdScript.getScript().term("select", newAuxArray, replacementSelectIndex);
-					oldCellMapping.put(selectIndex, newSelect);
+					oldCellMapping.put(selectIndexRepresentative, newSelect);
 				} else {
 					// do nothing
 				}
 			} else {
-				final Term eqTerm = eqProvider.getEqTerm(selectTerm);
+				final Term oldSelectTerm = mMgdScript.getScript().term("select", newAuxArray, selectIndexRepresentative);
+				final Term eqTerm = eqProvider.getEqTerm(oldSelectTerm);
 				if (eqTerm != null) {
-					oldCellMapping.put(selectIndex, eqTerm);
+					oldCellMapping.put(selectIndexRepresentative, eqTerm);
 				} else {
-					final Term indexRepresentative = equalityInformation.getRepresentative(selectIndex);
-					final TermVariable oldCellVariable = cc.getOrConstruct(indexRepresentative);
-					oldCellMapping.put(selectIndex, oldCellVariable);
+					final TermVariable oldCellVariable = cc.getOrConstruct(selectIndexRepresentative);
+					oldCellMapping.put(selectIndexRepresentative, oldCellVariable);
 				}
 			}
 		}
