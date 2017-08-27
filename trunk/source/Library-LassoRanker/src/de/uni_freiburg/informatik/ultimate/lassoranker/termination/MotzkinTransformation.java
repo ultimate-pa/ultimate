@@ -396,6 +396,11 @@ public class MotzkinTransformation extends InstanceCounting {
 					disjunction.add(doTransform(fixedCoefficients, vars));
 				} else {
 					while (cases[numfixedCoeffs - 1] < motzkinGuesses.length) {
+						if (!mServices.getProgressMonitorService().continueProcessing()) {
+							throw new ToolchainCanceledException(this.getClass(),
+									"approximative transformation where we make " + motzkinGuesses.length
+											+ " guesses");
+						}
 						// Update the coefficients array
 						for (int j = 0; j < numfixedCoeffs; ++j) {
 							fixedCoefficients[fixedIndices[j]] = motzkinCoeffs[cases[j]];
