@@ -448,7 +448,7 @@ public class MotzkinTransformation extends InstanceCounting {
 				}
 			}
 		} else {
-			assert false;
+			throw new AssertionError("Illegal enum value " + mAnalysisType);
 		}
 		Term t = Util.and(mScript, conjunction.toArray(new Term[conjunction.size()]));
 
