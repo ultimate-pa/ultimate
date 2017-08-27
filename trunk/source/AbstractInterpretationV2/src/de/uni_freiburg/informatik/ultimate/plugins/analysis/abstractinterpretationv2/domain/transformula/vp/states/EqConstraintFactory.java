@@ -382,10 +382,6 @@ public class EqConstraintFactory<
 
 	/**
 	 *
-	 *
-	 * TODO: this method does not fit in well, as it is not in-place but returns a fresh EqConstraint
-	 *   --> perhaps move to factory..
-	 *
 	 * @param varsToProjectAway
 	 * @return
 	 */
@@ -458,7 +454,9 @@ public class EqConstraintFactory<
 
 	public EqConstraint<ACTION, NODE, FUNCTION> getEqConstraint(
 			final WeqCongruenceClosure<ACTION, NODE, FUNCTION> newPartialArrangement) {
-//			final WeakEquivalenceGraph<ACTION, NODE, FUNCTION> newWEGraph) {
+		if (newPartialArrangement.isInconsistent()) {
+			return getBottomConstraint();
+		}
 		return new EqConstraint<>(newPartialArrangement, this);
 	}
 

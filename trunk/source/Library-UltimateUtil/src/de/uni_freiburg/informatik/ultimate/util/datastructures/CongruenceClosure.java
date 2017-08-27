@@ -143,6 +143,9 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 	 * @param original
 	 */
 	public CongruenceClosure(final CongruenceClosure<ELEM, FUNCTION> original) {
+		if (original.isInconsistent()) {
+			throw new IllegalArgumentException("use other constructor!");
+		}
 		mElementTVER = new ThreeValuedEquivalenceRelation<>(original.mElementTVER);
 		mFunctionTVER = new ThreeValuedEquivalenceRelation<>(original.mFunctionTVER);
 		mFunctionToRepresentativeToCcPars = new NestedMap2<>(original.mFunctionToRepresentativeToCcPars);

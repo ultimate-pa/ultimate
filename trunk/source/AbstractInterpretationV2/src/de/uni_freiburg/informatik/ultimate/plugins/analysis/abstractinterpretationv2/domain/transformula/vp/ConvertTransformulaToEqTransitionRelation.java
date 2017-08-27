@@ -29,8 +29,10 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -42,14 +44,17 @@ import de.uni_freiburg.informatik.ultimate.logic.LetTerm;
 import de.uni_freiburg.informatik.ultimate.logic.NonRecursive;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalStore;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.NnfTransformer;
@@ -113,6 +118,35 @@ public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTrans
 		assert mResultStack.size() == 1;
 		final EqDisjunctiveConstraint<ACTION, EqNode, EqFunction> processedTf = mResultStack.pop();
 		mResultConstraint = processedTf.projectExistentially(scs.getReplacementTermVariables());
+
+		assert transformulaImpliesResultConstraint();
+	}
+
+	private boolean transformulaImpliesResultConstraint() {
+		mMgdScript.lock(this);
+		mMgdScript.push(this, 1);
+		final Map<Term, Term> sub = new HashMap<>();
+		for (final TermVariable tv : mTf.getFormula().getFreeVars()) {
+
+			final String constName = "tf2EqTR_" + tv.getName();
+			mMgdScript.declareFun(this, constName, new Sort[0], tv.getSort());
+			sub.put(tv, mMgdScript.term(this, constName));
+		}
+
+		final Substitution substitution = new Substitution(mMgdScript, sub);
+		final Term tfSubs = substitution.transform(mTf.getFormula());
+		mMgdScript.assertTerm(this, tfSubs);
+		final Term eqConsSubs = Util.not(mMgdScript.getScript(),
+				substitution.transform(mResultConstraint.getTerm(mMgdScript.getScript())));
+		mMgdScript.assertTerm(this, eqConsSubs);
+
+		final LBool result = mMgdScript.checkSat(this);
+		mMgdScript.pop(this, 1);
+		mMgdScript.unlock(this);
+		if (result != LBool.UNSAT) {
+			assert false;
+		}
+		return result == LBool.UNSAT;
 	}
 
 	public EqTransitionRelation<ACTION> getResult() {

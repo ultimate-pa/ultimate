@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.IEqNodeIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.IEqFunctionIdentifier;
 
@@ -134,8 +135,9 @@ public class EqDisjunctiveConstraint<
 	}
 
 	public Term getTerm(final Script script) {
-		final List<Term> disjuncts = mConstraints.stream().map(cons -> cons.getTerm(script)).collect(Collectors.toList());
-		return script.term("or", disjuncts.toArray(new Term[disjuncts.size()]));
+		final List<Term> disjuncts = mConstraints.stream()
+				.map(cons -> cons.getTerm(script)).collect(Collectors.toList());
+		return SmtUtils.or(script, disjuncts);
 	}
 
 	public boolean areEqual(final NODE node1, final NODE node2) {

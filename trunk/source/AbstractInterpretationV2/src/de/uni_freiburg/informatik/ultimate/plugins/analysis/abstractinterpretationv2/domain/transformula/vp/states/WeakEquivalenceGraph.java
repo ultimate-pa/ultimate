@@ -715,7 +715,7 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 				mLabel.clear();
 				mLabelWithGroundPa.clear();
 
-				for (int i = 0; i < mLabel.size(); i++) {
+				for (int i = 0; i < labelCopy.size(); i++) {
 					final CongruenceClosure<NODE, FUNCTION> currentLabelWgpa = labelWgpaCopy.get(i);
 					final boolean res = reportX.test(currentLabelWgpa);
 
@@ -740,7 +740,7 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 					}
 				}
 
-				assert sanityCheck();
+//				assert sanityCheck();
 				if (allPasBecameInconsistent) {
 					/*
 					 *  the whole label became inconsistent

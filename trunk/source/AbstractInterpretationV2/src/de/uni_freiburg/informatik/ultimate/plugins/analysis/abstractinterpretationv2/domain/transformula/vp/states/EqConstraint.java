@@ -110,7 +110,7 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 	}
 
 	public void freeze() {
-		assert !mIsFrozen;
+//		assert !mIsFrozen;
 		mIsFrozen = true;
 	}
 
@@ -354,6 +354,18 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 	}
 
 	public EqConstraint<ACTION, NODE, FUNCTION> join(final EqConstraint<ACTION, NODE, FUNCTION> other) {
+		if (this.isBottom()) {
+			return other;
+		}
+		if (other.isBottom()) {
+			return this;
+		}
+		if (this.isTop()) {
+			return this;
+		}
+		if (other.isTop()) {
+			return other;
+		}
 		final WeqCongruenceClosure<ACTION, NODE, FUNCTION> newPartialArrangement = this.mPartialArrangement.join(
 				other.mPartialArrangement);
 		final EqConstraint<ACTION, NODE, FUNCTION> res = mFactory.getEqConstraint(newPartialArrangement);
@@ -361,9 +373,19 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 		return res;
 	}
 
-
 	public EqConstraint<ACTION, NODE, FUNCTION> meet(final EqConstraint<ACTION, NODE, FUNCTION> other) {
-
+		if (this.isBottom()) {
+			return this;
+		}
+		if (other.isBottom()) {
+			return other;
+		}
+		if (this.isTop()) {
+			return other;
+		}
+		if (other.isTop()) {
+			return this;
+		}
 
 		final WeqCongruenceClosure<ACTION, NODE, FUNCTION> newPa = mPartialArrangement.meet(other.mPartialArrangement);
 

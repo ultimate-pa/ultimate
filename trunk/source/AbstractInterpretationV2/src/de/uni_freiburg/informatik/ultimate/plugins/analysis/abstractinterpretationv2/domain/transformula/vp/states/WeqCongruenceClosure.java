@@ -29,6 +29,15 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>,
 		mWeakEquivalenceGraph = new WeakEquivalenceGraph<>(this, factory);
 	}
 
+	public WeqCongruenceClosure(final boolean isInconsistent) {
+		super(true);
+		if (!isInconsistent) {
+			throw new IllegalArgumentException("use other constructor!");
+		}
+		mWeakEquivalenceGraph = null;
+	}
+
+
 
 	/**
 		 *
@@ -38,6 +47,9 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>,
 		public WeqCongruenceClosure(final CongruenceClosure<NODE, FUNCTION> original,
 				final WeakEquivalenceGraph<ACTION, NODE, FUNCTION> weqGraph) {
 			super(original);
+			if (original.isInconsistent()) {
+				throw new IllegalArgumentException("use other constructor!");
+			}
 	//		mWeakEquivalenceGraph = weqGraph;
 			// we need a fresh instance here, because we cannot set the link in the weq graph to the right cc instance..
 			mWeakEquivalenceGraph = new WeakEquivalenceGraph<>(this, weqGraph);
@@ -89,6 +101,13 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>,
 	@Override
 	protected boolean reportEqualityRec(final NODE node1, final NODE node2) {
 		boolean madeChanges = false;
+
+		madeChanges |= super.reportEqualityRec(node1, node2);
+
+		if (!madeChanges) {
+			return false;
+		}
+
 		// congruence closure-like checks for weak equivalence:
 		final Set<Doubleton<NODE>> propagatedEqualitiesFromWeqEdges =
 				mWeakEquivalenceGraph.getWeakCongruencePropagations(node1, node2);
@@ -104,7 +123,6 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>,
 			reportFunctionEquality(aeq.getKey(), aeq.getValue());
 		}
 
-		madeChanges |= super.reportEqualityRec(node1, node2);
 		return madeChanges;
 	}
 
@@ -224,11 +242,17 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>,
 				(WeqCongruenceClosure<ACTION, NODE, FUNCTION>) otherCC;
 
 		final CongruenceClosure<NODE, FUNCTION> gPaMeet = super.meet(otherCC);
+		if (gPaMeet.isInconsistent()) {
+				return new WeqCongruenceClosure<>(true);
+		}
 
 		final WeakEquivalenceGraph<ACTION, NODE, FUNCTION> weqMeet =
 				mWeakEquivalenceGraph.meet(other.mWeakEquivalenceGraph, gPaMeet);
 
 		while (weqMeet.hasArrayEqualities()) {
+			if (gPaMeet.isInconsistent()) {
+				return new WeqCongruenceClosure<>(true);
+			}
 			final Entry<FUNCTION, FUNCTION> aeq = weqMeet.pollArrayEquality();
 			gPaMeet.reportFunctionEquality(aeq.getKey(), aeq.getValue());
 			weqMeet.reportChangeInGroundPartialArrangement((final CongruenceClosure<NODE, FUNCTION> cc)
@@ -238,6 +262,12 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>,
 	}
 
 	@Override public String toString() {
+		if (isTautological()) {
+			return "True";
+		}
+		if (isInconsistent()) {
+			return "False";
+		}
 		final StringBuilder sb = new StringBuilder();
 		sb.append("Partial arrangement:\n");
 		sb.append(super.toString());
