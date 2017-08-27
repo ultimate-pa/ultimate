@@ -31,6 +31,7 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
@@ -61,13 +62,9 @@ public class EliminationTask {
 		mTerm = term;
 	}
 	
-	
-
 	public int getQuantifier() {
 		return mQuantifier;
 	}
-
-
 
 	public Set<TermVariable> getEliminatees() {
 		return Collections.unmodifiableSet(mEliminatees);
@@ -75,6 +72,14 @@ public class EliminationTask {
 
 	public Term getTerm() {
 		return mTerm;
+	}
+	
+	public Term toTerm(final Script script) {
+		if (mEliminatees.isEmpty()) {
+			return mTerm;
+		} else {
+			return script.quantifier(mQuantifier, mEliminatees.toArray(new TermVariable[mEliminatees.size()]), mTerm);
+		}
 	}
 
 }
