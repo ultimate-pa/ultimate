@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.p
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -175,9 +176,9 @@ public class LinearInequalityInvariantPatternProcessorFactory
 	public IInvariantPatternProcessor<Dnf<AbstractLinearInvariantPattern>> produce(
 			final List<IcfgLocation> locations, final List<IcfgInternalTransition> transitions,
 			final IPredicate precondition, final IPredicate postcondition, final IcfgLocation startLocation,
-			final IcfgLocation errorLocation) {
+			final Set<IcfgLocation> errorLocations) {
 		return new LinearInequalityInvariantPatternProcessor(mServices, mStorage, predUnifier, mCsToolkit, mAxioms,
-				produceSmtSolver(), locations, transitions, precondition, postcondition, startLocation, errorLocation,
+				produceSmtSolver(), locations, transitions, precondition, postcondition, startLocation, errorLocations,
 				mStrategy, mUseNonlinearConstraints, mUseUnsatCores, mSimplificationTechnique, mXnfConversionTechnique,
 				mLoc2underApprox, mLoc2overApprox, mSynthesizeEntryPattern, mKindOfInvariant);
 	}

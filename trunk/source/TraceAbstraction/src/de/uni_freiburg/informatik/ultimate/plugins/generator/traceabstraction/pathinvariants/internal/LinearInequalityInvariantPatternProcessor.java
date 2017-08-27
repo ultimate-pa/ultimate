@@ -102,7 +102,7 @@ public final class LinearInequalityInvariantPatternProcessor
 	public enum SimplificationType {
 		NO_SIMPLIFICATION, SIMPLE, TWO_MODE
 	}
-	
+
 	/**
 	 * Produce transformed terms that are annotated with debugging information.
 	 */
@@ -157,7 +157,7 @@ public final class LinearInequalityInvariantPatternProcessor
 
 	private Collection<TermVariable> mVarsFromUnsatCore;
 	private final IcfgLocation mStartLocation;
-	private final IcfgLocation mErrorLocation;
+	private final Set<IcfgLocation> mErrorLocations;
 
 	private static final boolean CHANGE_ONLY_MOST_FREQUENT_LOC = false;
 	private static final boolean ADD_ONLY_SUCC_LOC_TO_UNSAT_CORE = false;
@@ -257,8 +257,9 @@ public final class LinearInequalityInvariantPatternProcessor
 	 * @param simplicationTechnique
 	 * @param xnfConversionTechnique
 	 * @param axioms
-	 * @param errorLocation
 	 * @param startLocation
+	 * @param errorLocations
+	 *            a set of error locations
 	 * @param overApprox
 	 * @param underApprox
 	 * @param synthesizeEntryPattern
@@ -271,7 +272,7 @@ public final class LinearInequalityInvariantPatternProcessor
 			final IToolchainStorage storage, final IPredicateUnifier predicateUnifier, final CfgSmtToolkit csToolkit,
 			final IPredicate axioms, final Script solver, final List<IcfgLocation> locations,
 			final List<IcfgInternalTransition> transitions, final IPredicate precondition,
-			final IPredicate postcondition, final IcfgLocation startLocation, final IcfgLocation errorLocation,
+			final IPredicate postcondition, final IcfgLocation startLocation, final Set<IcfgLocation> errorLocations,
 			final ILinearInequalityInvariantPatternStrategy<Dnf<AbstractLinearInvariantPattern>> strategy,
 			final boolean useNonlinearConstraints, final boolean useUnsatCores,
 			final SimplificationTechnique simplicationTechnique, final XnfConversionTechnique xnfConversionTechnique,
@@ -284,7 +285,7 @@ public final class LinearInequalityInvariantPatternProcessor
 		mSolver = solver;
 		mStrategy = strategy;
 		mStartLocation = startLocation;
-		mErrorLocation = errorLocation;
+		mErrorLocations = errorLocations;
 		mSynthesizeEntryPattern = synthesizeEntryPattern;
 		mKindOfInvariant = kindOfInvariant;
 
@@ -753,7 +754,7 @@ public final class LinearInequalityInvariantPatternProcessor
 		if (USE_UNDER_APPROX_AS_ADDITIONAL_CONSTRAINT && mCurrentRound >= 0) {
 			final IcfgLocation loc = predicate.getTargetLocation();
 			// Add constraint SP_i ==> IT_i
-			if (loc != mErrorLocation && mLoc2UnderApproximation.containsKey(loc)) {
+			if (!mErrorLocations.contains(loc) && mLoc2UnderApproximation.containsKey(loc)) {
 				final Dnf<AbstractLinearInvariantPattern> spTemplate =
 						convertTransFormulaToPatternsForLinearInequalities(mLoc2UnderApproximation.get(loc));
 				final Set<IProgramVar> varsForPattern = extractVarsFromPattern(spTemplate);
@@ -783,7 +784,7 @@ public final class LinearInequalityInvariantPatternProcessor
 		if (USE_OVER_APPROX_AS_ADDITIONAL_CONSTRAINT && mCurrentRound >= 0) {
 			final IcfgLocation loc = predicate.getTargetLocation();
 			// Add constraint IT_i ==> WP_i
-			if (loc != mErrorLocation && mLoc2OverApproximation.containsKey(loc)) {
+			if (!mErrorLocations.contains(loc) && mLoc2OverApproximation.containsKey(loc)) {
 				// First, negate predicate WP
 				final UnmodifiableTransFormula negatedWp =
 						TransFormulaUtils.negate(mLoc2OverApproximation.get(loc), super.mCsToolkit.getManagedScript(),
@@ -890,8 +891,10 @@ public final class LinearInequalityInvariantPatternProcessor
 		final Map<IProgramVar, Term> programVarsRecentlyOccurred = new HashMap<>();
 		mSolver.assertTerm(buildImplicationTerm(mPrecondition, mEntryInvariantPattern, mStartLocation,
 				programVarsRecentlyOccurred));
-		mSolver.assertTerm(buildBackwardImplicationTerm(mPostcondition, mExitInvariantPattern, mErrorLocation,
-				programVarsRecentlyOccurred));
+		for (final IcfgLocation errorLocation : mErrorLocations) {
+			mSolver.assertTerm(buildBackwardImplicationTerm(mPostcondition, mExitInvariantPattern, errorLocation,
+					programVarsRecentlyOccurred));
+		}
 
 		for (final SuccessorConstraintIngredients<Dnf<AbstractLinearInvariantPattern>> successorIngredient : successorIngredients) {
 			final Set<TransitionConstraintIngredients<Dnf<AbstractLinearInvariantPattern>>> transitionIngredients =
@@ -913,12 +916,14 @@ public final class LinearInequalityInvariantPatternProcessor
 		final Map<IProgramVar, Term> programVarsRecentlyOccurred = new HashMap<>();
 		mSolver.assertTerm(buildImplicationTerm(mPrecondition, mEntryInvariantPattern, mStartLocation,
 				programVarsRecentlyOccurred));
-		mSolver.assertTerm(buildBackwardImplicationTerm(mPostcondition, mExitInvariantPattern, mErrorLocation,
-				programVarsRecentlyOccurred));
+		for (final IcfgLocation errorLocation : mErrorLocations) {
+			mSolver.assertTerm(buildBackwardImplicationTerm(mPostcondition, mExitInvariantPattern, errorLocation,
+					programVarsRecentlyOccurred));
+		}
 
 		for (final SuccessorConstraintIngredients<Dnf<AbstractLinearInvariantPattern>> ingredient : successorIngredients) {
 			final Dnf<AbstractLinearInvariantPattern> sourceInvariantPattern = ingredient.getInvStart();
-			if (mErrorLocation.equals(ingredient.getSourceLocation())) {
+			if (mErrorLocations.contains(ingredient.getSourceLocation())) {
 				continue;
 			}
 			if (!ingredient.getSourceLocation().getOutgoingEdges().isEmpty()) {
@@ -1086,8 +1091,10 @@ public final class LinearInequalityInvariantPatternProcessor
 		annotateAndAssertTermAndStoreMapping(buildImplicationTerm(mPrecondition, mEntryInvariantPattern, mStartLocation,
 				programVarsRecentlyOccurred));
 		// Generate and assert term for post-condition
-		annotateAndAssertTermAndStoreMapping(buildBackwardImplicationTerm(mPostcondition, mExitInvariantPattern,
-				mErrorLocation, programVarsRecentlyOccurred));
+		for (final IcfgLocation errorLocation : mErrorLocations) {
+			annotateAndAssertTermAndStoreMapping(buildBackwardImplicationTerm(mPostcondition, mExitInvariantPattern,
+					errorLocation, programVarsRecentlyOccurred));
+		}
 
 		// Generate and assert terms for intermediate transitions
 		for (final SuccessorConstraintIngredients<Dnf<AbstractLinearInvariantPattern>> successorIngredient : successorIngredients) {
@@ -1271,7 +1278,8 @@ public final class LinearInequalityInvariantPatternProcessor
 				if (CHANGE_ONLY_MOST_FREQUENT_LOC) {
 					final IcfgLocation freqLoc =
 							Collections.max(locs2Frequency.entrySet(), Map.Entry.comparingByValue()).getKey();
-					if (((freqLoc != mStartLocation) || mSynthesizeEntryPattern) && (freqLoc != mErrorLocation)) {
+					if (((freqLoc != mStartLocation) || mSynthesizeEntryPattern)
+							&& !mErrorLocations.contains(freqLoc)) {
 						mStrategy.changePatternSettingForLocation(freqLoc, mCurrentRound);
 						if (mLogger.isDebugEnabled()) {
 							mLogger.debug("changed setting for most freq. loc: " + freqLoc);
@@ -1279,7 +1287,7 @@ public final class LinearInequalityInvariantPatternProcessor
 					}
 				} else {
 					for (final IcfgLocation loc : locsInUnsatCore) {
-						if (((loc != mStartLocation) || mSynthesizeEntryPattern) && (loc != mErrorLocation)) {
+						if (((loc != mStartLocation) || mSynthesizeEntryPattern) && !mErrorLocations.contains(loc)) {
 							mStrategy.changePatternSettingForLocation(loc, mCurrentRound, locsInUnsatCore);
 							if (mLogger.isDebugEnabled()) {
 								mLogger.debug("changed setting for loc: " + loc);
@@ -1387,7 +1395,7 @@ public final class LinearInequalityInvariantPatternProcessor
 		if (mStartLocation.equals(location) && !mSynthesizeEntryPattern) {
 			assert mEntryInvariantPattern != null : "call initializeEntryAndExitPattern() before this";
 			return mEntryInvariantPattern;
-		} else if (mErrorLocation.equals(location)) {
+		} else if (mErrorLocations.contains(location)) {
 			assert mExitInvariantPattern != null : "call initializeEntryAndExitPattern() before this";
 			return mExitInvariantPattern;
 		} else {
@@ -1410,7 +1418,7 @@ public final class LinearInequalityInvariantPatternProcessor
 		if (mStartLocation.equals(location) && !mSynthesizeEntryPattern) {
 			assert mEntryInvariantPattern != null : "call initializeEntryAndExitPattern() before this";
 			return mEntryInvariantPattern;
-		} else if (mErrorLocation.equals(location)) {
+		} else if (mErrorLocations.contains(location)) {
 			assert mExitInvariantPattern != null : "call initializeEntryAndExitPattern() before this";
 			return mExitInvariantPattern;
 		} else {
@@ -1430,7 +1438,7 @@ public final class LinearInequalityInvariantPatternProcessor
 	public final Set<IProgramVar> getVariablesForInvariantPattern(final IcfgLocation location, final int round) {
 		if (mStartLocation.equals(location) && !mSynthesizeEntryPattern) {
 			return Collections.emptySet();
-		} else if (mErrorLocation.equals(location)) {
+		} else if (mErrorLocations.contains(location)) {
 			return Collections.emptySet();
 		} else {
 			return mStrategy.getPatternVariablesForLocation(location, round);

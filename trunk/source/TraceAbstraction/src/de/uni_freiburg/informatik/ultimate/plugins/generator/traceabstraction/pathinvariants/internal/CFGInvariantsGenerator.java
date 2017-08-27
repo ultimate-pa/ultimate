@@ -283,7 +283,7 @@ public final class CFGInvariantsGenerator {
 			final InvariantSynthesisSettings invSynthSettings) {
 
 		final IcfgLocation startLocation = new ArrayList<>(pathProgram.getInitialNodes()).get(0);
-		final IcfgLocation errorLocation = extractErrorLocationFromPathProgram(pathProgram);
+		final Set<IcfgLocation> errorLocations = IcfgUtils.getErrorLocations(pathProgram);
 		final List<IcfgLocation> locationsAsList = new ArrayList<>();
 		final List<IcfgInternalTransition> transitionsAsList = new ArrayList<>();
 		final Set<IProgramVar> allProgramVars = new HashSet<>();
@@ -357,9 +357,9 @@ public final class CFGInvariantsGenerator {
 				invSynthSettings.getSolverSettings(), simplificationTechnique, xnfConversionTechnique,
 				strategy, loc2underApprox, loc2overApprox, synthesizeEntryPattern, mKindOfInvariant);
 
-		final Map<IcfgLocation, IPredicate> invariants = generateInvariantsForTransitions(locationsAsList, transitionsAsList, mPrecondition,
-				mPostcondition, startLocation, errorLocation, invPatternProcFactory, invSynthSettings.useUnsatCores(),
-				allProgramVars, pathprogramLocs2LiveVars, pathprogramLocs2Predicates,
+		final Map<IcfgLocation, IPredicate> invariants = generateInvariantsForTransitions(locationsAsList,
+				transitionsAsList, mPrecondition, mPostcondition, startLocation, errorLocations, invPatternProcFactory,
+				invSynthSettings.useUnsatCores(), allProgramVars, pathprogramLocs2LiveVars, pathprogramLocs2Predicates,
 				invSynthSettings.useWeakestPrecondition() || invSynthSettings.useAbstractInterpretation());
 
 		return invariants;
@@ -382,15 +382,6 @@ public final class CFGInvariantsGenerator {
 		}
 		return result;
 	}
-
-	private static IcfgLocation extractErrorLocationFromPathProgram(final IIcfg<IcfgLocation> pathProgram) {
-		final Set<IcfgLocation> errorLocs = IcfgUtils.getErrorLocations(pathProgram);
-		if (errorLocs.size() != 1) {
-			throw new UnsupportedOperationException("CFGInvariantsGenerator currently supports CFGs with only one error location");
-		}
-		return errorLocs.iterator().next();
-	}
-
 
 	private static Map<IcfgLocation, UnmodifiableTransFormula> convertHashRelation(
 			final HashRelation<IcfgLocation, IPredicate> loc2SetOfPreds, final ManagedScript managedScript) {
@@ -506,13 +497,13 @@ public final class CFGInvariantsGenerator {
 	 *         patterns up to its final run.
 	 */
 	private <IPT> Map<IcfgLocation, IPredicate> generateInvariantsForTransitions(final List<IcfgLocation> locationsAsList,
-			final List<IcfgInternalTransition> transitions,
-			final IPredicate precondition, final IPredicate postcondition, final IcfgLocation startLocation, final IcfgLocation errorLocation,
+			final List<IcfgInternalTransition> transitions, final IPredicate precondition,
+			final IPredicate postcondition, final IcfgLocation startLocation, final Set<IcfgLocation> errorLocations,
 			final IInvariantPatternProcessorFactory<IPT> invPatternProcFactory, final boolean useUnsatCore,
 			final Set<IProgramVar> allProgramVars, final Map<IcfgLocation, Set<IProgramVar>> locs2LiveVariables,
 			final Map<IcfgLocation, UnmodifiableTransFormula> pathprogramLocs2Predicates, final boolean usePredicates) {
-		final IInvariantPatternProcessor<IPT> processor = invPatternProcFactory.produce(locationsAsList, transitions, precondition,
-				postcondition, startLocation, errorLocation);
+		final IInvariantPatternProcessor<IPT> processor = invPatternProcFactory.produce(locationsAsList, transitions,
+				precondition, postcondition, startLocation, errorLocations);
 		mLogger.info("(Path)program has " + locationsAsList.size() + " locations");
 		// Set statistics data
 		mPathInvariantsStatistics.setNumOfVars(allProgramVars.size());
@@ -539,7 +530,7 @@ public final class CFGInvariantsGenerator {
 			// Execute pre-round with empty patterns for intermediate locations, so we can use the variables from the unsat core
 			final Map<IcfgLocation, IPredicate> resultFromPreRound =
 					executePreRoundWithEmptyPatterns(processor, 0, varsFromUnsatCore, locs2Patterns,
-							locs2PatternVariables, smtVars2ProgramVars, startLocation, errorLocation, locationsAsList,
+							locs2PatternVariables, smtVars2ProgramVars, startLocation, errorLocations, locationsAsList,
 							transitions, allProgramVars, pathprogramLocs2Predicates, usePredicates);
 			if (resultFromPreRound != null) {
 				return resultFromPreRound;
@@ -602,7 +593,7 @@ public final class CFGInvariantsGenerator {
 							.getTotalNumberOfConjunctsInPattern((Dnf<AbstractLinearInvariantPattern>) invEnd);
 					// Compute the total size of all non-trivial templates
 					sumOfTemplateConjuncts = sumOfTemplateConjuncts + sizeOfTemplate2;
-					if (transition.getTarget() != errorLocation) {
+					if (!errorLocations.contains(transition.getTarget())) {
 						if (sizeOfTemplate2 < minimalTemplateSizeOfThisRound) {
 							minimalTemplateSizeOfThisRound = sizeOfTemplate2;
 						}
@@ -616,8 +607,9 @@ public final class CFGInvariantsGenerator {
 			}
 
 			// Set statistics before check sat
-			prepareAndSetPathInvariantsStatisticsBeforeCheckSat(locationsAsList, startLocation, errorLocation, allProgramVars, locs2LiveVariables,
-					sumOfTemplateConjuncts, minimalTemplateSizeOfThisRound, maximalTemplateSizeOfThisRound, round);
+			prepareAndSetPathInvariantsStatisticsBeforeCheckSat(locationsAsList, startLocation, errorLocations,
+					allProgramVars, locs2LiveVariables, sumOfTemplateConjuncts, minimalTemplateSizeOfThisRound,
+					maximalTemplateSizeOfThisRound, round);
 
 
 			// Attempt to find a valid configuration
@@ -659,8 +651,8 @@ public final class CFGInvariantsGenerator {
 			}
 			// Set statistics after check sat
 			final Map<LinearInequalityPatternProcessorStatistics, Object> stats = ((LinearInequalityInvariantPatternProcessor)processor).getStatistics();
-			prepareAndSetPathInvariantsStatisticsAfterCheckSat(locationsAsList, locsInUnsatCore, startLocation, errorLocation, allProgramVars,
-					varsFromUnsatCore,  round, constraintsResult.toString(), stats);
+			prepareAndSetPathInvariantsStatisticsAfterCheckSat(locationsAsList, locsInUnsatCore, startLocation,
+					errorLocations, allProgramVars, varsFromUnsatCore, round, constraintsResult.toString(), stats);
 
 			if (TEMPLATE_STATISTICS_MODE) {
 				final StatisticsData stat = new StatisticsData();
@@ -711,14 +703,15 @@ public final class CFGInvariantsGenerator {
 		return mPathInvariantsStatistics;
 	}
 
-	private void prepareAndSetPathInvariantsStatisticsBeforeCheckSat(final List<IcfgLocation> locationsAsList, final IcfgLocation startLoc, final IcfgLocation errorLoc, final Set<IProgramVar> allProgramVars,
+	private void prepareAndSetPathInvariantsStatisticsBeforeCheckSat(final List<IcfgLocation> locationsAsList,
+			final IcfgLocation startLoc, final Set<IcfgLocation> errorLocs, final Set<IProgramVar> allProgramVars,
 			final Map<IcfgLocation, Set<IProgramVar>> locs2LiveVariables, final int numOfTemplateInequalitiesForThisRound,
 			final int minimalTemplateSizeOfThisRound, final int maximalTemplateSizeOfThisRound,
 			final int round) {
 		final int sumOfVarsPerLoc = allProgramVars.size() * (locationsAsList.size() - 2);
 		int numOfNonLiveVariables = 0;
 		for (final IcfgLocation loc : locationsAsList) {
-			if (loc != startLoc && loc != errorLoc) {
+			if (loc != startLoc && !errorLocs.contains(loc)) {
 				if (locs2LiveVariables != null) {
 					if (locs2LiveVariables.containsKey(loc)) {
 						numOfNonLiveVariables += allProgramVars.size() - locs2LiveVariables.get(loc).size();
@@ -739,7 +732,9 @@ public final class CFGInvariantsGenerator {
 		mRound2PathInvariantsStatistics.put(round, pathInvariantsStatisticsForThisRound);
 	}
 
-	private void prepareAndSetPathInvariantsStatisticsAfterCheckSat(final List<IcfgLocation> locationsAsList, final Set<IcfgLocation> locationsInUnsatCore, final IcfgLocation startLoc, final IcfgLocation errorLoc, final Set<IProgramVar> allProgramVars,
+	private void prepareAndSetPathInvariantsStatisticsAfterCheckSat(final List<IcfgLocation> locationsAsList,
+			final Set<IcfgLocation> locationsInUnsatCore, final IcfgLocation startLoc,
+			final Set<IcfgLocation> errorLocs, final Set<IProgramVar> allProgramVars,
 			final Set<IProgramVar> varsFromUnsatCore,  final int round, final String constraintsResult,
 			final Map<LinearInequalityPatternProcessorStatistics, Object> linearInequalityStatistics) {
 		int numOfNonUnsatCoreVars = 0;
@@ -748,7 +743,7 @@ public final class CFGInvariantsGenerator {
 			numOfNonUnsatCoreLocs = locationsAsList.size() - locationsInUnsatCore.size();
 		}
 		for (final IcfgLocation loc : locationsAsList) {
-			if (loc != startLoc && loc != errorLoc) {
+			if (loc != startLoc && !errorLocs.contains(loc)) {
 				if (varsFromUnsatCore != null) {
 					numOfNonUnsatCoreVars += allProgramVars.size() - varsFromUnsatCore.size();
 				}
@@ -787,9 +782,9 @@ public final class CFGInvariantsGenerator {
 	private <IPT> Map<IcfgLocation, IPredicate> executePreRoundWithEmptyPatterns(
 			final IInvariantPatternProcessor<IPT> processor, int round, Set<IProgramVar> varsFromUnsatCore,
 			final Map<IcfgLocation, IPT> locs2Patterns, final Map<IcfgLocation, Set<IProgramVar>> locs2PatternVariables,
-			final Map<TermVariable, IProgramVar> smtVars2ProgramVars, final IcfgLocation startLocation, final IcfgLocation errorLocation,
-			final List<IcfgLocation> locationsAsList, final List<IcfgInternalTransition> transitions,
-			final Set<IProgramVar> allProgramVars,
+			final Map<TermVariable, IProgramVar> smtVars2ProgramVars, final IcfgLocation startLocation,
+			final Set<IcfgLocation> errorLocations, final List<IcfgLocation> locationsAsList,
+			final List<IcfgInternalTransition> transitions, final Set<IProgramVar> allProgramVars,
 			final Map<IcfgLocation, UnmodifiableTransFormula> pathprogramLocs2Predicates, final boolean usePredicates) {
 		// Start round 0 (because it's the round with empty pattern for each location)
 		round = 0;
@@ -804,7 +799,7 @@ public final class CFGInvariantsGenerator {
 			final IPT invPattern;
 			if (location.equals(startLocation)) {
 				invPattern = processor.getEntryInvariantPattern();
-			} else if (location.equals(errorLocation)) {
+			} else if (errorLocations.contains(location)) {
 				invPattern = processor.getExitInvariantPattern();
 			} else {
 				// Use for intermediate locations an empty pattern
@@ -914,8 +909,8 @@ public final class CFGInvariantsGenerator {
 		mPathInvariantsStatistics.setNumOfPathProgramLocations(numLocsBeforeLbe, numLocsAfterLbe);
 
 		Map<IcfgLocation, IPredicate> invariants = generateInvariantsForPathProgram(lbePathProgram, SimplificationTechnique.SIMPLIFY_DDA,
-				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, mCsToolKit,
-				mInvariantSynthesisSettings);
+						XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, mCsToolKit,
+						mInvariantSynthesisSettings);
 
 		if (invariants != null) {
 			// invariants = buTransformer.transform(invariants);
