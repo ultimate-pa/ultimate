@@ -155,8 +155,9 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>,
 
 	@Override
 	public boolean removeFunction(final FUNCTION func) {
-		// making a copy of the ground partial arrangement here, just to be safe..
-		mWeakEquivalenceGraph.projectFunction(func, new WeqCongruenceClosure<>(this));
+		final CongruenceClosure<NODE,FUNCTION> copy = new CongruenceClosure<>(this);
+		copy.removeFunction(func);
+		mWeakEquivalenceGraph.projectFunction(func, copy);
 
 		return super.removeFunction(func);
 	}
@@ -164,8 +165,9 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>,
 
 	@Override
 	public boolean removeElement(final NODE elem) {
-		// making a copy of the ground partial arrangement here, just to be safe..
-		mWeakEquivalenceGraph.projectElement(elem, new WeqCongruenceClosure<>(this));
+		final CongruenceClosure<NODE,FUNCTION> copy = new CongruenceClosure<>(this);
+		copy.removeElement(elem);
+		mWeakEquivalenceGraph.projectElement(elem, copy);
 
 		return super.removeElement(elem);
 
