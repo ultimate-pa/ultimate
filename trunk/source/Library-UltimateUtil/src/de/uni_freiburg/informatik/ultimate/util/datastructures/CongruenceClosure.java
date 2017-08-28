@@ -289,8 +289,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 		for (final Set<FUNCTION> eqc : mFunctionTVER.getAllEquivalenceClasses()) {
 			for (final Entry<FUNCTION, FUNCTION> funcPair
 					: CrossProducts.binarySelectiveCrossProduct(eqc, true, true)) {
-				final Set<ELEM> e1CcPars = getCcPars(funcPair.getKey(), e1OldRep);
-				final Set<ELEM> e2CcPars = getCcPars(funcPair.getValue(), e2OldRep);
+				final Set<ELEM> e1CcPars = getCcPars(funcPair.getKey(), e1OldRep, true);
+				final Set<ELEM> e2CcPars = getCcPars(funcPair.getValue(), e2OldRep, true);
 
 				if (e1CcPars == null || e2CcPars == null) {
 					// nothing to do
@@ -336,15 +336,15 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 
 		// update ccpar and ccchild sets
 		for (final FUNCTION func : mFunctionTVER.getAllElements()) {
-			final Set<ELEM> e1CcPars = getCcPars(func, e1OldRep);
-			final Set<ELEM> e2CcPars = getCcPars(func, e2OldRep);
+			final Set<ELEM> e1CcPars = getCcPars(func, e1OldRep, true);
+			final Set<ELEM> e2CcPars = getCcPars(func, e2OldRep, true);
 
 			final Set<List<ELEM>> e1CcChildren = mFunctionToRepresentativeToCcChildren.get(func, e1OldRep);
 			final Set<List<ELEM>> e2CcChildren = mFunctionToRepresentativeToCcChildren.get(func, e2OldRep);
 
-			// update CcPars -- add the elements in-place according to which element is the
+			// update CcPars and ccChildren -- add the elements in-place according to which element is the
 			// new representative
-			final Set<ELEM> newCcPars = getCcPars(func, newRep);
+			final Set<ELEM> newCcPars = getCcPars(func, newRep, false);
 			final Set<List<ELEM>> newCcChildren = getCcChildren(func, newRep);
 			if (newRep == e1OldRep) {
 				if (e2CcPars != null) {
@@ -881,6 +881,23 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 			mFunctionToRepresentativeToCcPars.put(func, elemRep, ccpars);
 		}
 		ccpars.add(funcApp);
+		assert ccparsFunctionMatchesFuncApps();
+	}
+
+	private boolean ccparsFunctionMatchesFuncApps() {
+		for (final Triple<FUNCTION, ELEM, Set<ELEM>> triple : mFunctionToRepresentativeToCcPars.entrySet()) {
+			for (final ELEM setElem : triple.getThird()) {
+				if (!setElem.isFunctionApplication()) {
+					assert false;
+					return false;
+				}
+				if (!setElem.getAppliedFunction().equals(triple.getFirst())) {
+					assert false;
+					return false;
+				}
+			}
+		}
+		return true;
 	}
 
 	private void addToCcChildren(final ELEM elem, final List<ELEM> arguments) {
@@ -924,15 +941,21 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 	/**
 	 * Retrieves the ccpar map for the given function and element. Creates one if there is none..
 	 *
-	 * @param funcRep
+	 * Note that this method can introduce new entries at the "second" position of the ccpars nested map, this may
+	 * violate our invariant that that position only contains representatives. This may be done temporarily, in that
+	 * case the flag should be used, otherwise an assertion checks that newRep is a representative.
+	 *
+	 * @param func
 	 * @param newRep
+	 * @param allowNonrepElem
 	 * @return
 	 */
-	public Set<ELEM> getCcPars(final FUNCTION funcRep, final ELEM newRep) {
-		Set<ELEM> res = mFunctionToRepresentativeToCcPars.get(funcRep, newRep);
+	public Set<ELEM> getCcPars(final FUNCTION func, final ELEM newRep, final boolean allowNonrepElem) {
+		assert mElementTVER.isRepresentative(newRep) || allowNonrepElem;
+		Set<ELEM> res = mFunctionToRepresentativeToCcPars.get(func, newRep);
 		if (res == null) {
 			res = new HashSet<>();
-			mFunctionToRepresentativeToCcPars.put(funcRep, newRep, res);
+			mFunctionToRepresentativeToCcPars.put(func, newRep, res);
 		}
 		return res;
 	}

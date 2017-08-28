@@ -164,8 +164,8 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 				final NODE node2, final WeakEquivalenceEdgeLabel label, final CongruenceClosure<NODE, FUNCTION> pa) {
 			final Set<Doubleton<NODE>> newEqualitiesToBePropagated = new HashSet<>();
 
-			final Set<NODE> e1CcParsA = pa.getCcPars(func1, node1);
-			final Set<NODE> e2CcParsA = pa.getCcPars(func2, node2);
+			final Set<NODE> e1CcParsA = pa.getCcPars(func1, mPartialArrangement.getRepresentativeElement(node1), false);
+			final Set<NODE> e2CcParsA = pa.getCcPars(func2, mPartialArrangement.getRepresentativeElement(node2), false);
 
 			if (e1CcParsA == null || e2CcParsA == null) {
 				// nothing to do
@@ -801,8 +801,12 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 			}
 
 			public void renameVariables(final Map<Term, Term> substitutionMapping) {
-				for (final CongruenceClosure<NODE, FUNCTION> dimensionEntry : mLabel) {
-					dimensionEntry.transformElementsAndFunctions(node -> node.renameVariables(substitutionMapping),
+//				for (final CongruenceClosure<NODE, FUNCTION> dimensionEntry : mLabel) {
+				for (int i = 0; i < mLabel.size(); i++) {
+					mLabel.get(i).transformElementsAndFunctions(node -> node.renameVariables(substitutionMapping),
+							func -> func.renameVariables(substitutionMapping));
+					mLabelWithGroundPa.get(i)
+						.transformElementsAndFunctions(node -> node.renameVariables(substitutionMapping),
 							func -> func.renameVariables(substitutionMapping));
 				}
 				assert sanityCheck();
