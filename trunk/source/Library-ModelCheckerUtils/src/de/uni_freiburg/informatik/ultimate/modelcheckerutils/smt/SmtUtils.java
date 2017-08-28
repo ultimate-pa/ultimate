@@ -38,6 +38,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -796,6 +797,120 @@ public final class SmtUtils {
 	public static Term or(final Script script, final Collection<Term> terms) {
 		return Util.or(script, terms.toArray(new Term[terms.size()]));
 	}
+	
+	public static Term and_NewVersion(final Script script, final Collection<Term> terms) {
+		final Set<Term> resultJuncts = new HashSet<>();
+		final Set<Term> negativeJuncts = new HashSet<>();
+		final String connective = "and";
+		final Predicate<Term> isNeutral = (x -> SmtUtils.isTrue(x));
+		final Predicate<Term> isAbsorbing = (x -> SmtUtils.isFalse(x));
+		final boolean resultIsAbsorbingElement = recursiveAndOrSimplificationHelper(script, connective, isNeutral,
+				isAbsorbing, terms, resultJuncts, negativeJuncts);
+		if (resultIsAbsorbingElement) {
+			return script.term("false");
+		} else {
+			if (resultJuncts.isEmpty()) {
+				return script.term("true");
+			} else if (resultJuncts.size() == 1) {
+				return resultJuncts.iterator().next();
+			} else {
+				return script.term(connective, resultJuncts.toArray(new Term[resultJuncts.size()]));
+			}
+		}
+	}
+	
+	public static Term or_NewVersion(final Script script, final Collection<Term> terms) {
+		final Set<Term> resultJuncts = new HashSet<>();
+		final Set<Term> negativeJuncts = new HashSet<>();
+		final String connective = "or";
+		final Predicate<Term> isNeutral = (x -> SmtUtils.isFalse(x));
+		final Predicate<Term> isAbsorbing = (x -> SmtUtils.isTrue(x));
+		final boolean resultIsAbsorbingElement = recursiveAndOrSimplificationHelper(script, connective, isNeutral,
+				isAbsorbing, terms, resultJuncts, negativeJuncts);
+		if (resultIsAbsorbingElement) {
+			return script.term("true");
+		} else {
+			if (resultJuncts.isEmpty()) {
+				return script.term("false");
+			} else if (resultJuncts.size() == 1) {
+				return resultJuncts.iterator().next();
+			} else {
+				return script.term(connective, resultJuncts.toArray(new Term[resultJuncts.size()]));
+			}
+		}
+	}
+
+	/**
+	 * Auxiliary method for constructing simplified versions of conjunctions and disjunctions.
+	 * Does the following simplications
+	 * <ul>
+	 *   <li> if some junct is neutral element, we can omit it
+	 *   (e.g., we can drop "true" from conjunctions)
+	 *   <li> if some junct is absorbing element, result is equivalent to absorbing element
+	 *   (e.g., "x=0 /\ false" is equivalent to "false")
+	 *   <li> if some junct is has the same connective, we can flatten it
+	 *   (e.g., "((A /\ B) /\ C)" is equivalent to "(A /\ B /\ C)")
+	 *   <li> if some junct and its negation occur, the result is equivalent to the absorbing element
+	 *   (e.g., "A /\ (not A)" is equivalent to "false")
+	 *   <li> if some junct occurs twice we can drop one occurrence.
+	 *   (e.g., "A /\ A" is equivalent to "A")
+	 * </ul>
+	 * @param connective either "and" or "or"
+	 * @param isNeutral {@link Predicate} that is true iff input is the neutral element wrt. the connective
+	 * 			("true" is neutral for "and", "false" is neutral for "or")
+	 * @param isAbsorbing {@link Predicate} that is true iff input is the absorbing element wrt. the connective
+	 * 			("false" is absorbing for "and", "true" is absorbing for "or")
+	 * @param inputJuncts disjuncts or conjuncts that are the input to this simplification
+	 * @param resultJuncts disjuncts or conjuncts that will belong to the final output
+	 * @param negatedJuncts arguments of juncts whose connective is "not"
+	 * @return true iff we detected that the result is equivalent to the absorbing element of the connective
+	 */
+	private static boolean recursiveAndOrSimplificationHelper(final Script script, final String connective,
+			final Predicate<Term> isNeutral, final Predicate<Term> isAbsorbing, final Collection<Term> inputJuncts,
+			final Set<Term> resultJuncts, final Set<Term> negatedJuncts) {
+		for (final Term junct : inputJuncts) {
+			if (isNeutral.test(junct)) {
+				// do nothing, junct will not contribute to result
+				continue;
+			} else if (isAbsorbing.test(junct)) {
+				// result will be equivalent to absorbing element
+				return true;
+			} else {
+				if (junct instanceof ApplicationTerm) {
+					final ApplicationTerm appTerm = (ApplicationTerm) junct;
+					if (appTerm.getFunction().getName().equals(connective)) {
+						// current junct has same connective as result
+						// descend recusively to check and add its subjuncts
+						final boolean resultIsAbsorbingElement = recursiveAndOrSimplificationHelper(script, connective,
+								isNeutral, isAbsorbing, Arrays.asList(appTerm.getParameters()), resultJuncts, negatedJuncts);
+						if (resultIsAbsorbingElement) {
+							return true;
+						} else {
+							// the recursive all added all subjuncts,
+							// no need to add the junct itself
+							continue;
+						}
+					} else if (appTerm.getFunction().getName().equals("not")) {
+						if (resultJuncts.contains(appTerm.getParameters()[0])) {
+							// we already have the argument of this not term in the resultJuncts, 
+							// hence the result will be equivalent to the absorbing element
+							return true;
+						} else {
+							negatedJuncts.add(appTerm.getParameters()[0]);
+						}
+					}
+				} 
+			}
+			if (negatedJuncts.contains(junct)) {
+				// we already have the negation of this junct in the resultJuncts, 
+				// hence the result will be equivalent to the absorbing element
+				return true;
+			} else {
+				resultJuncts.add(junct);
+			}
+		}
+		return false;
+	}
 
 	/**
 	 * @return term that is equivalent to lhs <= rhs
@@ -911,10 +1026,10 @@ public final class SmtUtils {
 		final Term result;
 		switch (funcname) {
 		case "and":
-			result = Util.and(script, params);
+			result = SmtUtils.and(script, params);
 			break;
 		case "or":
-			result = Util.or(script, params);
+			result = SmtUtils.or(script, params);
 			break;
 		case "not":
 			if (params.length != 1) {
