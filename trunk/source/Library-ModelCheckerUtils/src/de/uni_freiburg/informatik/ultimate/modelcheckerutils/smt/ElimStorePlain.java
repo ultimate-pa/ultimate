@@ -429,10 +429,11 @@ public class ElimStorePlain {
 					PartialQuantifierElimination.applyDualFiniteConnective(mScript, quantifier, vec.getValueEqualities());
 			final Term storedValueInformation = constructStoredValueInformation(quantifier, eliminatee, stores, storeIndex,
 					storeValue, indexMapping, newArray, substitutionMapping);
-			final Term res = PartialQuantifierElimination.applyDualFiniteConnective(mScript, quantifier,
+			Term res = PartialQuantifierElimination.applyDualFiniteConnective(mScript, quantifier,
 					transformedTerm, valueEqualityTerm2, storedValueInformation, cc);
 			assert !Arrays.asList(res.getFreeVars()).contains(eliminatee) : "var is still there: " + eliminatee
 					+ " term size " + new DagSizePrinter(res);
+			res = SmtUtils.simplify(mMgdScript, res, mServices, mSimplificationTechnique);
 			return new EliminationTask(quantifier, newAuxVars, res);
 		}
 		
