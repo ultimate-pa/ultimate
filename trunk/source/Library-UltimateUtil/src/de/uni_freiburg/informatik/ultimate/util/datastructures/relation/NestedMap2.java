@@ -179,6 +179,17 @@ public class NestedMap2<K1, K2, V> {
 		return k2ToV.remove(k2);
 	}
 
+	/**
+	 * Removes all triples from the given map whose second entry equals the given argument.
+	 *
+	 * @param k2
+	 */
+	public void removeK2(final K2 k2) {
+		for (final K1 k1 : mK1ToK2ToV.keySet()) {
+			mK1ToK2ToV.get(k1).remove(k2);
+		}
+	}
+
 	@Override
 	public String toString() {
 		return mK1ToK2ToV.toString();
@@ -226,19 +237,7 @@ public class NestedMap2<K1, K2, V> {
 		return true;
 	}
 
-//	/**
-//	 * Makes a deep copy of this NestedMap2. (but not the objects it holds) (added by Alexander Nutz)
-//	 */
-//	public NestedMap2<K1, K2, V> copy() {
-//		final NestedMap2<K1, K2, V> result = new NestedMap2<>();
-//		for (final K1 k1 : this.keySet()) {
-//			result.mK1ToK2ToV.put(k1, new HashMap<>(this.get(k1)));
-//		}
-//		return result;
-//	}
-
 	public boolean isEmpty() {
 		return mK1ToK2ToV.isEmpty();
 	}
-
 }
