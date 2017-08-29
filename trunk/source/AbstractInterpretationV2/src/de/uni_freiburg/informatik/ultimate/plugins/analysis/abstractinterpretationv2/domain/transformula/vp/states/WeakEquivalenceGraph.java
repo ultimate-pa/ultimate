@@ -250,8 +250,25 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 					en.getValue().projectFunction(func, groundPartialArrangement);
 				}
 			}
+			assert projectedFunctionIsFullyGone(func);
 			assert sanityCheck();
 		}
+
+		private boolean projectedFunctionIsFullyGone(final FUNCTION func) {
+			for (final Entry<Doubleton<FUNCTION>, WeakEquivalenceEdgeLabel> edge : mWeakEquivalenceEdges.entrySet()) {
+				if (edge.getKey().getOneElement().equals(func) || edge.getKey().getOtherElement().equals(func)) {
+					assert false;
+					return false;
+				}
+				if (edge.getValue().getAppearingFunctions().contains(func)) {
+					assert false;
+					return false;
+				}
+			}
+			return true;
+		}
+
+
 
 		/**
 		 * Project the given element from all weak equivalence edges.
@@ -1040,6 +1057,18 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 
 			private boolean sanityCheckAfterProject(final FUNCTION func,
 					final CongruenceClosure<NODE, FUNCTION> groundPartialArrangement) {
+
+				for (int i = 0; i < mLabel.size(); i++) {
+					if (mLabel.get(i).hasFunction(func)) {
+						assert false;
+						return false;
+					}
+					if (mLabelWithGroundPa.get(i).hasFunction(func)) {
+						assert false;
+						return false;
+					}
+				}
+
 				final CongruenceClosure<NODE, FUNCTION> copy = new CongruenceClosure<>(groundPartialArrangement);
 				copy.removeFunction(func);
 				return sanityCheck(copy);

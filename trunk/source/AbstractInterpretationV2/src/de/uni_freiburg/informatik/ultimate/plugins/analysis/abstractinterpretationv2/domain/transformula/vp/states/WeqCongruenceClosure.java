@@ -80,6 +80,24 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>,
 			return result;
 	}
 
+	@Override
+	protected CongruenceClosure<NODE, FUNCTION> alignElementsAndFunctions(
+			final CongruenceClosure<NODE, FUNCTION> otherCC) {
+		if (!(otherCC instanceof WeqCongruenceClosure)) {
+			return super.alignElementsAndFunctions(otherCC);
+		}
+		final WeqCongruenceClosure<ACTION, NODE, FUNCTION> other =
+				(WeqCongruenceClosure<ACTION, NODE, FUNCTION>) otherCC;
+
+		final WeqCongruenceClosure<ACTION, NODE, FUNCTION> result = new WeqCongruenceClosure<>(this);
+		assert result.sanityCheck();
+
+		other.getAllElements().stream().forEach(elem -> result.addElement(elem));
+		other.getAllFunctions().stream().forEach(func -> result.mFunctionTVER.addElement(func));
+
+		assert result.sanityCheck();
+		return result;
+	}
 
 	public void renameVariables(final Map<Term, Term> substitutionMapping) {
 		transformElementsAndFunctions(

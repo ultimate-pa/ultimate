@@ -375,7 +375,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 	 * @param elem
 	 * @return true iff the element was not known to this CongruenceClosure before
 	 */
-	private boolean addElement(final ELEM elem) {
+	protected boolean addElement(final ELEM elem) {
 		final boolean newlyAdded = mElementTVER.addElement(elem);
 		if (newlyAdded) {
 			registerNewElement(elem);
@@ -706,7 +706,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 	 * @param other
 	 * @return
 	 */
-	private CongruenceClosure<ELEM, FUNCTION> alignElementsAndFunctions(final CongruenceClosure<ELEM, FUNCTION> other) {
+	protected CongruenceClosure<ELEM, FUNCTION> alignElementsAndFunctions(final CongruenceClosure<ELEM, FUNCTION> other) {
 		final CongruenceClosure<ELEM, FUNCTION> result = new CongruenceClosure<>(this);
 		assert result.sanityCheck();
 
@@ -1065,7 +1065,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 	 *
 	 * @return
 	 */
-	private boolean sanityCheck() {
+	protected boolean sanityCheck() {
 		for (final Triple<FUNCTION, ELEM, Set<ELEM>> repFuncCcPars : mFunctionToRepresentativeToCcPars.entrySet()) {
 			if (!mElementTVER.isRepresentative(repFuncCcPars.getSecond())) {
 				assert false;
