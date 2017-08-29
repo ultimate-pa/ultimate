@@ -120,6 +120,7 @@ public class BuchiComplementNCSBSimpleNwa2<LETTER, STATE> implements INwaSuccess
 		mLetterIdMap = new HashMap<>();
 		// call alphabet
 		VpAlphabet<LETTER> vp = operand.getVpAlphabet();
+		System.out.println("IdMap:\n" + vp.toString());
 		IntSet callAlphabet = UtilIntSet.newIntSet();
 		for(LETTER letter : vp.getCallAlphabet()) {
 			mLetterIdMap.put(letter, id);
@@ -128,16 +129,25 @@ public class BuchiComplementNCSBSimpleNwa2<LETTER, STATE> implements INwaSuccess
 		}
 		IntSet internalAlphabet = UtilIntSet.newIntSet();
 		for(LETTER letter : vp.getInternalAlphabet()) {
+			if(mLetterIdMap.containsKey(letter)) {
+				internalAlphabet.set(mLetterIdMap.get(letter));
+				continue;
+			}
 			mLetterIdMap.put(letter, id);
 			internalAlphabet.set(id);
 			id ++;
 		}
 		IntSet returnAlphabet = UtilIntSet.newIntSet();
 		for(LETTER letter : vp.getReturnAlphabet()) {
+			if(mLetterIdMap.containsKey(letter)) {
+				returnAlphabet.set(mLetterIdMap.get(letter));
+				continue;
+			}
 			mLetterIdMap.put(letter, id);
 			returnAlphabet.set(id);
 			id ++;
 		}
+		System.out.println("IdMap:\n" + mLetterIdMap.toString());
 		mEmptyStackStateWri = new StateWithRankInfo<>(mSetOfStates.getEmptyStackState());
 		mOperandBuchi = new NwaToBuchiWrapper2<LETTER, STATE>(callAlphabet, internalAlphabet, returnAlphabet, mLetterIdMap, operand);
 		mComplementBuchi = new BuchiNwaComplementSDBA(mOperandBuchi);
@@ -189,7 +199,7 @@ public class BuchiComplementNCSBSimpleNwa2<LETTER, STATE> implements INwaSuccess
 			lvlrk.addRank(getStackState(downState), mOperandBuchi.getNwaSTATE(upState), 3, false);
 		}
 		// C\B
-		temp = state.getCSet();
+		temp = state.copyCSet();
 		temp.andNot(B);
 		iterSet = temp.iterator();
 		while (iterSet.hasNext()) {
@@ -199,7 +209,7 @@ public class BuchiComplementNCSBSimpleNwa2<LETTER, STATE> implements INwaSuccess
 			lvlrk.addRank(getStackState(downState), mOperandBuchi.getNwaSTATE(upState), 2, false);
 		}
 		// C/\ B
-		temp = state.getCSet();
+		temp = state.copyCSet();
 		temp.and(B);
 		iterSet = temp.iterator();
 		while (iterSet.hasNext()) {
