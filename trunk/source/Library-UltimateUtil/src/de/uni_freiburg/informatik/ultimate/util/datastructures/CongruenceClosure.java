@@ -563,14 +563,15 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 			return false;
 		}
 
-		// remove from the function equivalence relation
-		mFunctionTVER.removeElement(func);
 
 		// remove all elements that depend on the function
 		final Set<ELEM> funcAppsWithFuncCopy = new HashSet<>(mFunctionToFuncApps.getImage(func));
 		for (final ELEM funcApp : funcAppsWithFuncCopy) {
 			removeElement(funcApp);
 		}
+
+		// remove from the function equivalence relation
+		mFunctionTVER.removeElement(func);
 
 		mFunctionToRepresentativeToCcPars.remove(func);
 		mFunctionToRepresentativeToCcChildren.remove(func);

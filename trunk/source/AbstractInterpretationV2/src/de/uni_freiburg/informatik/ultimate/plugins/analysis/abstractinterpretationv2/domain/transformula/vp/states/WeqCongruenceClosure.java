@@ -176,10 +176,23 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>,
 		final CongruenceClosure<NODE,FUNCTION> copy = new CongruenceClosure<>(this);
 		copy.removeFunction(func);
 		mWeakEquivalenceGraph.projectFunction(func, copy);
-
+		assert projectedFunctionIsGoneFromWeqGraph(func, mWeakEquivalenceGraph);
 		return super.removeFunction(func);
 	}
 
+
+	private boolean projectedFunctionIsGoneFromWeqGraph(final FUNCTION func,
+			final WeakEquivalenceGraph<ACTION, NODE, FUNCTION> weakEquivalenceGraph) {
+		for (final Entry<Doubleton<FUNCTION>,
+				WeakEquivalenceGraph<ACTION, NODE, FUNCTION>.WeakEquivalenceEdgeLabel> edge :
+					weakEquivalenceGraph.getEdges().entrySet()) {
+			if (edge.getValue().getAppearingFunctions().contains(func)) {
+				assert false;
+				return false;
+			}
+		}
+		return true;
+	}
 
 	@Override
 	public boolean removeElement(final NODE elem) {

@@ -1105,4 +1105,8 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 			return result;
 		}
 
+		public  Map<Doubleton<FUNCTION>, WeakEquivalenceEdgeLabel> getEdges() {
+			return Collections.unmodifiableMap(mWeakEquivalenceEdges);
+		}
+
 	}
