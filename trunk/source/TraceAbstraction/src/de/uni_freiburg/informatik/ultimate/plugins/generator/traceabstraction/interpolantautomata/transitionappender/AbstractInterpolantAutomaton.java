@@ -303,6 +303,10 @@ public abstract class AbstractInterpolantAutomaton<LETTER> implements INwaOutgoi
 		}
 		return "automaton under construction";
 	}
+	
+	public int computeNumberOfInternalTransitions() {
+		return mAlreadyConstructedAutomaton.computeNumberOfInternalTransitions();
+	}
 
 	/**
 	 * Abstract class for successor computation. Subclasses are the successor computations for internal, call, and

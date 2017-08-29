@@ -167,12 +167,16 @@ public final class CrossProducts {
 	}
 
 	/**
-	 * Computes the cross product of the given set with itself and returns it
+	 * Computes the cross product of the given set with itself and returns it.
+	 * Can be parameterized in two ways:
+	 *  <li> to return only one of the "symmetric" pairs (i.e. for any two elements a, b only include either (a,b) or
+	 *     (b,a) in the result).
+	 *  <li> to return "reflexive" pairs or not, i.e., pairs of the form (a,a) can be omitted
 	 *
-	 * @param set
-	 * @param returnReflexivePairs
-	 * @param returnSymmetricPairs
-	 * @return
+	 * @param set the result (if the two next parameters are false) is a HashRelation containing "set x set"
+	 * @param returnReflexivePairs include reflexive pairs in the result
+	 * @param returnSymmetricPairs include both versions of two symmetric pairs in the result
+	 * @return a HashRelation with the cross product (possibly restricted according to the two flags)
 	 */
 	static <E> HashRelation<E, E> binarySelectiveCrossProduct(final Collection<E> set,
 			final boolean returnReflexivePairs, final boolean returnSymmetricPairs) {

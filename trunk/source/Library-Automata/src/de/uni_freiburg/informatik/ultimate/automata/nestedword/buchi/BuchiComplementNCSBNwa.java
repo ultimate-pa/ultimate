@@ -50,6 +50,14 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
  * Buchi Complementation based on the algorithm proposed by Frantisek Blahoudek and Jan Stejcek. This complementation is
  * only sound for a special class of automata whose working title is <i>TABA</i> (termination analysis Büchi automata).
  * 
+ * TODO: More documentation.
+ * Ranks and inO information translate to the NCSB quadruple as follows.
+ * state has rank 3 == state is in N
+ * state has rank 2 == state is in C
+ * state has rank 1 == state is in S
+ * state is in O == state is in B
+ * 
+ * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
  *            letter type

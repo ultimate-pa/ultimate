@@ -670,4 +670,8 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INwaOutgoingLett
 		return (new AutomatonDefinitionPrinter<String, String>(mServices, "nwa", Format.ATS, this))
 				.getDefinitionAsString();
 	}
+	
+	public int computeNumberOfInternalTransitions() {
+		return mInternalOut.size();
+	}
 }

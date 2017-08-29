@@ -88,6 +88,10 @@ public class LinearTransitionPattern extends LinearPatternBase {
 		mInToOutVars = inToOutVariables;
 	}
 
+	public boolean containsOutVars() {
+		return !mInToOutVars.isEmpty();
+	}
+
 	public Term getCoefficientForOutVar(final IProgramVar var) {
 		return mFunctionGenerator.getCoefficient(mInToOutVars.get(var));
 	}

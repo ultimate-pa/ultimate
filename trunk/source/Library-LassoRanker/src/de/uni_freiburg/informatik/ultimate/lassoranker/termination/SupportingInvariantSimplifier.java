@@ -64,6 +64,8 @@ class SupportingInvariantSimplifier {
 	 */
 	private Script mScript;
 
+	private final IUltimateServiceProvider mServices;
+
 	/**
 	 * Create a new TerminationArgumentSimplifier
 	 *
@@ -73,6 +75,7 @@ class SupportingInvariantSimplifier {
 	 */
 	public SupportingInvariantSimplifier(final ILassoRankerPreferences preferences,
 			final IUltimateServiceProvider services, final IToolchainStorage storage) throws IOException {
+		mServices = services;
 		mAnnotateTerms = preferences.isAnnotateTerms();
 
 		// Create a new QF_LRA script
@@ -112,7 +115,7 @@ class SupportingInvariantSimplifier {
 		for (final SupportingInvariant si : sis) {
 			mScript.push(1);
 			final MotzkinTransformation motzkin =
-					new MotzkinTransformation(mScript, AnalysisType.LINEAR, mAnnotateTerms);
+					new MotzkinTransformation(mServices, mScript, AnalysisType.LINEAR, mAnnotateTerms);
 			final LinearInequality li = SI2LI(si);
 			li.negate();
 			motzkin.addInequality(li);

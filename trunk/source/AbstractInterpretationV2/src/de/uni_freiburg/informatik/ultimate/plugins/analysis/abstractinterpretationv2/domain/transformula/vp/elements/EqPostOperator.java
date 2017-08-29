@@ -154,8 +154,10 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>> implem
 							mCfgSmtToolkit.getSymbolTable()).stream().filter(var -> var.isOldvar()).collect(Collectors.toSet());
 			final Set<TermVariable> ovTvs = oldVars.stream().map(ov -> ov.getTermVariable()).collect(Collectors.toSet());
 			final EqConstraint<ACTION, EqNode, EqFunction> projectedCons =
-					hierarchicalPreOrStateAfterLeaving.getConstraint().projectExistentially(ovTvs);
-			final EqState<ACTION> hier = mEqConstraintFactory.getEqStateFactory().getEqState(projectedCons, hierarchicalPreOrStateAfterLeaving.getVariables());
+					mEqConstraintFactory.projectExistentially(ovTvs,
+							hierarchicalPreOrStateAfterLeaving.getConstraint());
+			final EqState<ACTION> hier = mEqConstraintFactory.getEqStateFactory()
+					.getEqState(projectedCons, hierarchicalPreOrStateAfterLeaving.getVariables());
 
 			final EqPredicate<ACTION> callPred = hier.toEqPredicate();
 

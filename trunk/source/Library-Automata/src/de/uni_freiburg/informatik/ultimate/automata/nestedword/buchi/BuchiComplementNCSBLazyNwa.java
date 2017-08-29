@@ -1,4 +1,5 @@
 /*
+ * Copyright (C) 2017 Yong Li (liyong@ios.ac.cn)
  * Copyright (C) 2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
  * 
@@ -49,10 +50,10 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 
 /**
- * Buchi Complementation based on the algorithm proposed by Frantisek Blahoudek and Jan Stejcek. This complementation is
+ * Optimized Buchi Complementation. This complementation is
  * only sound for a special class of automata whose working title is <i>TABA</i> (termination analysis Büchi automata).
  * 
- * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @author Yong Li (liyong@ios.ac.cn)
  * @param <LETTER>
  *            letter type
  * @param <STATE>

@@ -688,7 +688,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 				cannibalize);
 	}
 
-	private void minimizeAbstractionIfEnabled()
+	protected void minimizeAbstractionIfEnabled()
 			throws AutomataOperationCanceledException, AutomataLibraryException, AssertionError {
 		final Minimization minimization = mPref.getMinimization();
 		switch (minimization) {

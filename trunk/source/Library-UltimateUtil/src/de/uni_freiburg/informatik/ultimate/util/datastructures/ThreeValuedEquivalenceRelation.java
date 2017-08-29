@@ -64,10 +64,10 @@ public class ThreeValuedEquivalenceRelation<E> {
 		assert sanityCheck();
 	}
 
-	public ThreeValuedEquivalenceRelation(final UnionFind<E> newElemPartition,
-			final HashRelation<E, E> newElemDisequalities) {
-		mUnionFind = new UnionFind<>(newElemPartition);
-		mDisequalities = new HashRelation<>(newElemDisequalities);
+	public ThreeValuedEquivalenceRelation(final UnionFind<E> newPartition,
+			final HashRelation<E, E> newDisequalities) {
+		mUnionFind = new UnionFind<>(newPartition);
+		mDisequalities = new HashRelation<>(newDisequalities);
 		mIsInconsistent = false;
 		assert sanityCheck();
 	}
@@ -117,7 +117,7 @@ public class ThreeValuedEquivalenceRelation<E> {
 	 *
 	 * @param elem1
 	 * @param elem2
-	 * @return true iff the method call changed the state of this ThreeValuedEquivalenceRelation
+	 * @return true iff this data structure did not already store the equality of the specified pair
 	 */
 	public boolean reportEquality(final E elem1, final E elem2) {
 		if (mIsInconsistent) {
@@ -164,7 +164,7 @@ public class ThreeValuedEquivalenceRelation<E> {
 	 *
 	 * @param elem1
 	 * @param elem2
-	 * @return true iff the method call changed the state of this ThreeValuedEquivalenceRelation
+	 * @return true iff this data structure did not already store the disequality of the specified pair
 	 */
 	public boolean reportDisequality(final E elem1, final E elem2) {
 		if (mIsInconsistent) {
@@ -209,7 +209,7 @@ public class ThreeValuedEquivalenceRelation<E> {
 
 	public EqualityStatus getEqualityStatus(final E elem1, final E elem2) {
 		if (mIsInconsistent) {
-			throw new IllegalStateException();
+			throw new IllegalStateException("Cannot get equality status from inconsistent " + this.getClass().getSimpleName());
 		}
 
 		final E elem1Rep = mUnionFind.find(elem1);
@@ -268,8 +268,24 @@ public class ThreeValuedEquivalenceRelation<E> {
 		return mUnionFind.getAllEquivalenceClasses();
 	}
 
+	/**
+	 * Returns a String representation of this equivalence relation.
+	 * Represents it by the partition and the list of disequalities.
+	 * Exceptions:
+	 *  <li> If this is tautological (i.e. the partition only contains singletons and the set of disequalities is
+	 * 	 empty), this is represented by "True".
+	 *  <li> If this is inconsistent (i.e., the partition and the disequalities contradict), this is represented by
+	 * 	 "False".
+	 */
 	@Override
 	public String toString() {
+		if (isTautological()) {
+			return "True";
+		}
+		if (isInconsistent()) {
+			return "False";
+		}
+
 		final StringBuilder sb = new StringBuilder();
 		sb.append("Equivalences: ");
 		sb.append(mUnionFind);
@@ -277,10 +293,6 @@ public class ThreeValuedEquivalenceRelation<E> {
 
 		sb.append("Non-Equivalences: ");
 		sb.append(mDisequalities);
-		sb.append("\n");
-
-		sb.append("Is inconsistent: ");
-		sb.append(mIsInconsistent);
 
 		return sb.toString();
 	}
@@ -389,6 +401,33 @@ public class ThreeValuedEquivalenceRelation<E> {
 			mDisequalities.addPair(transformer.apply(pair.getKey()), transformer.apply(pair.getValue()));
 		}
 		assert sanityCheck();
+	}
+
+	/**
+	 * Computes a ThreeValuedEquivalenceRelation that has the same constraints as this except all those constraints
+	 * that don't refer to the given element, those are left out.
+	 *
+	 * @param elem the element whose constraints are to be kept
+	 * @return a new, projected ThreeValuedEquivalenceRelation
+	 */
+	public ThreeValuedEquivalenceRelation<E> projectToConstraintsWith(final Set<E> elems) {
+		final UnionFind<E> newUf = new UnionFind<>();
+		for (final E elem : elems) {
+			if (newUf.find(elem) != null) {
+				// already constructed current elem's equivalence class
+				continue;
+			}
+			final Set<E> elemEqc = mUnionFind.getEquivalenceClassMembers(elem);
+			newUf.addEquivalenceClass(elemEqc);
+		}
+		final HashRelation<E, E> newDisequalities = new HashRelation<>();
+		for (final Entry<E, E> deq : mDisequalities.entrySet()) {
+			if (elems.contains(deq.getKey()) || elems.contains(deq.getValue())) {
+				newDisequalities.addPair(newUf.findAndConstructEquivalenceClassIfNeeded(deq.getKey()),
+						newUf.findAndConstructEquivalenceClassIfNeeded(deq.getValue()));
+			}
+		}
+		return new ThreeValuedEquivalenceRelation<>(newUf, newDisequalities);
 	}
 }
 

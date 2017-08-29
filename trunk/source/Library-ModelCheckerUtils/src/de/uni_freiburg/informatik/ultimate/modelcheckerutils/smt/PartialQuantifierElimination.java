@@ -63,7 +63,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifi
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifierElimination.XnfUpd;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifierElimination.XnfUsr;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Try to eliminate existentially quantified variables in terms. Therefore we use that the term ∃v.v=c∧φ[v] is
@@ -365,11 +364,11 @@ public class PartialQuantifierElimination {
 		}
 		
 		if (USE_SSD) {
-			final Pair<Term, Collection<TermVariable>> esp = new ElimStorePlain(mgdScript, services,
-					simplificationTechnique, quantifier).elimAll(eliminatees, result);
-			result = esp.getFirst();
+			final EliminationTask esp = new ElimStorePlain(mgdScript, services,
+					simplificationTechnique, quantifier).elimAll(new EliminationTask(quantifier, eliminatees, result));
+			result = esp.getTerm();
 			eliminatees.clear();
-			eliminatees.addAll(esp.getSecond());
+			eliminatees.addAll(esp.getEliminatees());
 		}
 
 		if (eliminatees.isEmpty()) {

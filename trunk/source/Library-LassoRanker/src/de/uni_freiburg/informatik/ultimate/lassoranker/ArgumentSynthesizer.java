@@ -85,7 +85,7 @@ public abstract class ArgumentSynthesizer implements Closeable {
 	 */
 	private boolean mclosed = false;
 
-	protected IUltimateServiceProvider mservices;
+	protected IUltimateServiceProvider mServices;
 	protected IToolchainStorage mstorage;
 
 	/**
@@ -106,7 +106,7 @@ public abstract class ArgumentSynthesizer implements Closeable {
 		mLogger = services.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
 		mPreferences = preferences;
 		mlasso = lasso;
-		mservices = services;
+		mServices = services;
 		mstorage = storage;
 		mScript = constructScript(mPreferences, constaintsName);
 	}

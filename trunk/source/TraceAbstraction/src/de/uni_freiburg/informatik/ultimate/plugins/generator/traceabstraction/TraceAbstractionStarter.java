@@ -131,6 +131,7 @@ public class TraceAbstractionStarter {
 		for (final Collection<IcfgLocation> errNodeOfProc : proc2errNodes.values()) {
 			errNodesOfAllProc.addAll(errNodeOfProc);
 		}
+		mLogger.info("Appying trace abstraction to program that has " + errNodesOfAllProc.size() + " error locations.");
 
 		mOverallResult = Result.SAFE;
 		mArtifact = null;

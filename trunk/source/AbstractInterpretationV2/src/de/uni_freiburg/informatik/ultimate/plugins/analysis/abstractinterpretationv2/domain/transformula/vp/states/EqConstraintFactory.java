@@ -46,7 +46,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainHelpers;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.AbstractNodeAndFunctionFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.IEqFunctionIdentifier;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.CongruenceClosure;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
 /**
@@ -189,7 +188,7 @@ public class EqConstraintFactory<
 
 		final EqConstraint<ACTION, NODE, FUNCTION> newConstraint = unfreeze(funct2Added);
 		newConstraint.reportFunctionDisequality(func1, func2);
-		newConstraint.saturate();
+//		newConstraint.saturate();
 		newConstraint.freeze();
 		return newConstraint;
 	}
@@ -220,7 +219,7 @@ public class EqConstraintFactory<
 
 		final EqConstraint<ACTION, NODE, FUNCTION> newConstraint = unfreeze(funct2Added);
 		newConstraint.reportFunctionEquality(func1, func2);
-		newConstraint.saturate();
+//		newConstraint.saturate();
 		newConstraint.freeze();
 		return newConstraint;
 	}
@@ -231,7 +230,7 @@ public class EqConstraintFactory<
 
 		final EqConstraint<ACTION, NODE, FUNCTION> newConstraint = unfreeze(inputConstraint);
 		newConstraint.reportWeakEquivalence(array1, array2, storeIndex);
-		newConstraint.saturate();
+//		newConstraint.saturate();
 		newConstraint.freeze();
 		return newConstraint;
 	}
@@ -309,7 +308,7 @@ public class EqConstraintFactory<
 
 		final EqConstraint<ACTION, NODE, FUNCTION> unfrozen = unfreeze(originalState);
 		unfrozen.reportEquality(node1, node2);
-		unfrozen.saturate();
+//		unfrozen.saturate();
 		unfrozen.freeze();
 		return unfrozen;
 	}
@@ -337,7 +336,7 @@ public class EqConstraintFactory<
 
 		final EqConstraint<ACTION, NODE, FUNCTION> unfrozen = unfreeze(originalState);
 		unfrozen.reportDisequality(node1, node2);
-		unfrozen.saturate();
+//		unfrozen.saturate();
 		unfrozen.freeze();
 		return unfrozen;
 	}
@@ -378,6 +377,36 @@ public class EqConstraintFactory<
 		final EqConstraint<ACTION, NODE, FUNCTION> newConstraintWithPropagations = newConstraint;
 
 		return newConstraintWithPropagations;
+	}
+
+
+	/**
+	 *
+	 * @param varsToProjectAway
+	 * @return
+	 */
+	public EqConstraint<ACTION, NODE, FUNCTION> projectExistentially(final Collection<TermVariable> varsToProjectAway,
+			final EqConstraint<ACTION, NODE, FUNCTION> original) {
+		assert original.isFrozen();
+		final EqConstraint<ACTION, NODE, FUNCTION> unfrozen = unfreeze(original);
+
+		for (final TermVariable var : varsToProjectAway) {
+			if (var.getSort().isArraySort()) {
+				// havoccing an array
+				final FUNCTION functionToHavoc = getEqNodeAndFunctionFactory().getExistingFunction(var);
+				unfrozen.removeFunction(functionToHavoc);
+			} else {
+				// havoccing an element
+				final NODE nodeToHavoc = getEqNodeAndFunctionFactory().getExistingNode(var);
+				unfrozen.removeElement(nodeToHavoc);
+			}
+		}
+
+		unfrozen.freeze();
+		assert VPDomainHelpers.constraintFreeOfVars(varsToProjectAway, unfrozen, getMgdScript().getScript()) :
+					"resulting constraint still has at least one of the to-be-projected vars";
+
+		return unfrozen;
 	}
 
 	public EqStateFactory<ACTION> getEqStateFactory() {
@@ -424,9 +453,11 @@ public class EqConstraintFactory<
 	}
 
 	public EqConstraint<ACTION, NODE, FUNCTION> getEqConstraint(
-			final CongruenceClosure<NODE, FUNCTION> newPartialArrangement,
-			final EqConstraint<ACTION, NODE, FUNCTION>.WeakEquivalenceGraph newWEGraph) {
-		return new EqConstraint<>(newPartialArrangement, newWEGraph, this);
+			final WeqCongruenceClosure<ACTION, NODE, FUNCTION> newPartialArrangement) {
+		if (newPartialArrangement.isInconsistent()) {
+			return getBottomConstraint();
+		}
+		return new EqConstraint<>(newPartialArrangement, this);
 	}
 
 	public ManagedScript getMgdScript() {

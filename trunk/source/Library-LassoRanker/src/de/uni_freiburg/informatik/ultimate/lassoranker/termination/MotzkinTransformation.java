@@ -34,6 +34,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lassoranker.AffineTerm;
 import de.uni_freiburg.informatik.ultimate.lassoranker.AnalysisType;
 import de.uni_freiburg.informatik.ultimate.lassoranker.InstanceCounting;
@@ -128,13 +130,14 @@ public class MotzkinTransformation extends InstanceCounting {
 	 * relationship.
 	 */
 	private final Map<String, LinearInequality> mMotzkinCoefficients2LinearInequalities;
+	
+	private final IUltimateServiceProvider mServices;
 
 	/**
 	 * Construct the MotzkinApplication object with a script instance.
 	 *
 	 * After filling all the public attributes, transform() can be called, returning the formula transformed according
 	 * to Motzkin's Transposition Theorem.
-	 *
 	 * @param script
 	 *            The SMTLib script
 	 * @param linear
@@ -143,7 +146,9 @@ public class MotzkinTransformation extends InstanceCounting {
 	 *            annotate the transformed term? (This can be helpful if you read the SMT script while debugging.)
 	 *
 	 */
-	public MotzkinTransformation(final Script script, final AnalysisType terminationAnalysis, final boolean annotate) {
+	public MotzkinTransformation(final IUltimateServiceProvider services, final Script script,
+			final AnalysisType terminationAnalysis, final boolean annotate) {
+		mServices = services;
 		mScript = script;
 		mInequalities = new ArrayList<>();
 		mAnnotateTerms = annotate;
@@ -391,6 +396,11 @@ public class MotzkinTransformation extends InstanceCounting {
 					disjunction.add(doTransform(fixedCoefficients, vars));
 				} else {
 					while (cases[numfixedCoeffs - 1] < motzkinGuesses.length) {
+						if (!mServices.getProgressMonitorService().continueProcessing()) {
+							throw new ToolchainCanceledException(this.getClass(),
+									"approximative transformation where we make " + motzkinGuesses.length
+											+ " guesses");
+						}
 						// Update the coefficients array
 						for (int j = 0; j < numfixedCoeffs; ++j) {
 							fixedCoefficients[fixedIndices[j]] = motzkinCoeffs[cases[j]];
@@ -417,6 +427,11 @@ public class MotzkinTransformation extends InstanceCounting {
 
 				final List<Term> disjunction = new ArrayList<>();
 				for (int i = 0; i < (1 << numfixedCoeffs); ++i) {
+					if (!mServices.getProgressMonitorService().continueProcessing()) {
+						throw new ToolchainCanceledException(this.getClass(),
+								"approximative transformation where we fixed " + (1 << numfixedCoeffs)
+										+ " coefficients");
+					}
 					// Update the coefficients array
 					for (int j = 0; j < numfixedCoeffs; ++j) {
 						fixedCoefficients[fixedIndices[j]] = (i & (1 << j)) == 0 ? zero : one;
@@ -438,7 +453,7 @@ public class MotzkinTransformation extends InstanceCounting {
 				}
 			}
 		} else {
-			assert false;
+			throw new AssertionError("Illegal enum value " + mAnalysisType);
 		}
 		Term t = Util.and(mScript, conjunction.toArray(new Term[conjunction.size()]));
 

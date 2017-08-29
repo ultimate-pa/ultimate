@@ -77,6 +77,8 @@ class StemOverapproximator {
 	 */
 	private Script mScript;
 
+	private final IUltimateServiceProvider mServices;
+
 	/**
 	 * Create a new StemOverapproximator
 	 *
@@ -86,6 +88,7 @@ class StemOverapproximator {
 	 */
 	public StemOverapproximator(final ILassoRankerPreferences preferences, final IUltimateServiceProvider services,
 			final IToolchainStorage storage) throws IOException {
+		mServices = services;
 		mAnnotateTerms = preferences.isAnnotateTerms();
 
 		// Create a new QF_LRA script
@@ -125,7 +128,7 @@ class StemOverapproximator {
 			mScript.push(1);
 			for (final List<LinearInequality> polyhedron : stem.getPolyhedra()) {
 				final MotzkinTransformation motzkin =
-						new MotzkinTransformation(mScript, AnalysisType.LINEAR, mAnnotateTerms);
+						new MotzkinTransformation(mServices, mScript, AnalysisType.LINEAR, mAnnotateTerms);
 				motzkin.addInequalities(polyhedron);
 				final LinearInequality li = new LinearInequality(candidate_li);
 				li.negate();
