@@ -66,6 +66,7 @@ public final class BuchiComplementNCSBLazyNwa2<LETTER, STATE> extends BuchiCompl
 			INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		super(services, stateFactory, operand);
 		Options.optNCSB = true;
+		Options.optBeqC = false;
 	}
 
 }

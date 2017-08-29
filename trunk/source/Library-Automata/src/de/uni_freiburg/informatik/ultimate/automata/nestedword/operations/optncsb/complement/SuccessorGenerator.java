@@ -119,10 +119,13 @@ class SuccessorGenerator {
 				// as usual S and C
 				CP = mVPrime.clone();
 				CP.andNot(Sextra); // C' get extra
-				BP = CP;
-				// following is d(C) /\ C'
-//				BP = mSuccNCSB.copyCSet(); 
-//				BP.andNot(Sextra);   // B'= d(C) /\ C'
+				if(Options.optBeqC) {
+					BP = CP;   // B' = C'
+				}else {
+					// following is d(C) /\ C'
+					BP = mSuccNCSB.copyCSet(); 
+					BP.andNot(Sextra);   // B'= d(C) /\ C'	
+				}
 				SP.or(Sextra); // S'=d(S)\/(V'\C')
 			}else {
 				// B is not empty
