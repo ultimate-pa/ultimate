@@ -150,7 +150,7 @@ public final class SmtUtils {
 		final long sizeAfter = new DAGSize().treesize(simplified);
 		final long endTime = System.nanoTime();
 		final ExtendedSimplificationResult result =
-				new ExtendedSimplificationResult(simplified, endTime - startTime, sizeBefore - sizeAfter);
+				new ExtendedSimplificationResult(simplified, endTime - startTime, sizeBefore - sizeAfter, ((double) sizeAfter) / sizeBefore * 100);
 		return result;
 	}
 
@@ -158,13 +158,15 @@ public final class SmtUtils {
 		private final Term mSimplifiedTerm;
 		private final long mSimplificationTimeNano;
 		private final long mReductionOfTreeSize;
+		private final double mReductionRatioInPercent;
 
 		public ExtendedSimplificationResult(final Term simplifiedTerm, final long simplificationTimeNano,
-				final long reductionOfTreeSize) {
+				final long reductionOfTreeSize, final double reductionRatioPercent) {
 			super();
 			mSimplifiedTerm = simplifiedTerm;
 			mSimplificationTimeNano = simplificationTimeNano;
 			mReductionOfTreeSize = reductionOfTreeSize;
+			mReductionRatioInPercent = reductionRatioPercent;
 		}
 
 		public Term getSimplifiedTerm() {
@@ -178,6 +180,12 @@ public final class SmtUtils {
 		public long getReductionOfTreeSize() {
 			return mReductionOfTreeSize;
 		}
+
+		public double getReductionRatioInPercent() {
+			return mReductionRatioInPercent;
+		}
+		
+		
 
 	}
 
