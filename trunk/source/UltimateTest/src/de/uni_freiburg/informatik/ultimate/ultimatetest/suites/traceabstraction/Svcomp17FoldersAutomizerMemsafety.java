@@ -55,7 +55,7 @@ public class Svcomp17FoldersAutomizerMemsafety extends AbstractTraceAbstractionT
 
 	// @formatter:off
 	private static final DirectoryFileEndingsPair[] BENCHMARKS_32BIT = {
-		/***** Category 1. MemSafety *****/
+		/***** Category 2. MemSafety *****/
 		/*** Subcategory    MemSafety-Arrays ***/
 		new DirectoryFileEndingsPair("examples/svcomp/array-memsafety/", new String[]{ STANDARD_DOT_I_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 		new DirectoryFileEndingsPair("examples/svcomp/array-examples/", new String[]{ STANDARD_DOT_I_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
