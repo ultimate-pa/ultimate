@@ -79,8 +79,43 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.TreeRelation;
 
 /**
+ * Let aElim be the array variable that we want to eliminate.
+ * We presume that there is only one term of the form (store aElim storeIndex newValue),
+ * for some index element storeIndex and some value element newValue.
  *
- *
+ * The basic idea is the following.
+ * Let Idx be the set of all indices of select terms that have aElim as (first) argument.
+ * We introduce
+ * <ul>
+ * <li> a new array variable aNew that represents the store term
+ * <li> a new value variable oldCell_i for each i∈Idx that represents the value of the
+ * array cell before the update.
+ * </ul>
+ * We replace
+ * <ul>
+ * <li> (store aElim storeIndex newValue) by aNew, and
+ * <li> (select aElim i) by oldCell_i for each i∈Idx.
+ * </ul>
+ * Furthermore, we add the following conjuncts for each i∈Idx. 
+ * (i == storeIndex) ==> (aNew[i] == newValue && ∀k∈Idx. i == k ==> oldCell_i == oldCell_k)
+ * (i != storeIndex) ==> (aNew[i] == oldCell_i)
+ * 
+ * Optimizations:
+ * Optim1: We check equality and disequality for each pair of indices and evaluate
+ * (dis)equalities in the formula above directly. Each equality/disequality
+ * that is not valid (i.e. only true in this context) has to be added as an additional conjunct.
+ * Optim2: We do not work with all indices but build equivalence classes and work only with
+ * the representatives. (We introduce only one oldCell variable for each equivalence class)
+ * Optim3: For each index i that is disjoint for the store index we do not introduce
+ * the variable oldCell_i, but use aNew[i] instead.
+ * Optim4: For each i∈Idx we check the context if we find some term tEq that is
+ * equivalent to oldCell_i. In case we found some we use tEq instead of oldCell_i.
+ * Optim5: (Only sound in combination with Optim3. For each pair i,k∈Idx that 
+ * are both disjoint from storeIndex, we can drop the 
+ * "i == k ==> oldCell_i == oldCell_k" term. Rationale: we use aNew[i] and aNew[k] 
+ * instead of oldCell_i and oldCell_k, hence the congruence information is already 
+ * given implicitly.
+ * 
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
@@ -375,6 +410,15 @@ public class ElimStorePlain {
 		for (final Term selectIndex : selectIndicesSet) {
 			selectIndexRepresentatives.add(equalityInformation.getRepresentative(selectIndex));
 		}
+		if (storeIndex == null) {
+			mLogger.info("no store index");
+		} else {
+			mLogger.info("one store index");
+		}
+		mLogger.info(selectIndices.size() + " select indices");
+		mLogger.info(selectIndexRepresentatives.size() + " select index equivalence classes");
+		mLogger.info(equalityInformation.getDisequalities().size() + " disjoint index pairs");
+		
 		final Map<Term, Term> oldCellMapping = constructOldCellValueMapping(selectIndexRepresentatives, storeIndex,
 				equalityInformation, valueSort, selectIndexRepresentatives.contains(equalityInformation.getRepresentative(storeIndex)), newArray, rawIndex2replacedIndex,
 				auxVarConstructor, preprocessedInput, eliminatee, quantifier);
@@ -806,7 +850,7 @@ public class ElimStorePlain {
 					// do nothing
 				}
 			} else {
-				final Term oldSelectTerm = mMgdScript.getScript().term("select", newAuxArray, selectIndexRepresentative);
+				final Term oldSelectTerm = mMgdScript.getScript().term("select", eliminatee, selectIndexRepresentative);
 				final Term eqTerm = eqProvider.getEqTerm(oldSelectTerm);
 				if (eqTerm != null) {
 					oldCellMapping.put(selectIndexRepresentative, eqTerm);
