@@ -67,9 +67,9 @@ public final class BuchiDifferenceNCSBSimple2<LETTER, STATE> extends AbstractBuc
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> sndOperand) throws AutomataLibraryException {
 		super(services, fstOperand, sndOperand);
 		
-		if (!NestedWordAutomataUtils.isFiniteAutomaton(sndOperand)) {
-			throw new UnsupportedOperationException("Calls and returns are not yet supported.");
-		}
+//		if (!NestedWordAutomataUtils.isFiniteAutomaton(sndOperand)) {
+//			throw new UnsupportedOperationException("Calls and returns are not yet supported.");
+//		}
 
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(startMessage());
