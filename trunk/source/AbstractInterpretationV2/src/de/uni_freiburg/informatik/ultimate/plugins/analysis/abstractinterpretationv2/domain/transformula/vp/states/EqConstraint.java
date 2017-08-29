@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -458,6 +459,19 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 
 	public void removeElement(final NODE elemToHavoc) {
 		mPartialArrangement.removeElement(elemToHavoc);
+	}
+
+	public Collection<TermVariable> getAllTermVariables() {
+		final Set<TermVariable> result = new HashSet<>();
+		result.addAll(getAllNodes().stream()
+			.filter(node -> node.getTerm() instanceof TermVariable)
+			.map(node -> ((TermVariable) node.getTerm()))
+			.collect(Collectors.toList()));
+		result.addAll(getAllFunctions().stream()
+			.filter(func -> func.getTerm() instanceof TermVariable)
+			.map(func -> ((TermVariable) func.getTerm()))
+			.collect(Collectors.toList()));
+		return result;
 	}
 
 

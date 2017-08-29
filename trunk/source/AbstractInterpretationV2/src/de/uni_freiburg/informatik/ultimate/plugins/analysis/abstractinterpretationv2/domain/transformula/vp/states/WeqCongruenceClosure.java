@@ -177,7 +177,25 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>,
 		copy.removeFunction(func);
 		mWeakEquivalenceGraph.projectFunction(func, copy);
 		assert projectedFunctionIsGoneFromWeqGraph(func, mWeakEquivalenceGraph);
-		return super.removeFunction(func);
+
+		/*
+		 * the following code is c/p'ed from super.removeFunction, with one marked exception (see below)
+		 */
+
+		// remove all elements that depend on the function
+		final Set<NODE> funcAppsWithFuncCopy = new HashSet<>(mFunctionToFuncApps.getImage(func));
+		for (final NODE funcApp : funcAppsWithFuncCopy) {
+			// change from original: (added second argument)
+			removeElement(funcApp, copy);
+		}
+
+		// remove from the function equivalence relation
+		mFunctionTVER.removeElement(func);
+
+		mFunctionToRepresentativeToCcPars.remove(func);
+		mFunctionToRepresentativeToCcChildren.remove(func);
+		mFunctionToFuncApps.removeDomainElement(func);
+		return true;
 	}
 
 
@@ -194,11 +212,10 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>,
 		return true;
 	}
 
-	@Override
-	public boolean removeElement(final NODE elem) {
-		final CongruenceClosure<NODE,FUNCTION> copy = new CongruenceClosure<>(this);
-		copy.removeElement(elem);
-		mWeakEquivalenceGraph.projectElement(elem, copy);
+	public boolean removeElement(final NODE elem, final CongruenceClosure<NODE, FUNCTION> copy2) {
+//		final CongruenceClosure<NODE,FUNCTION> copy = new CongruenceClosure<>(this);
+//		copy.removeElement(elem);
+		mWeakEquivalenceGraph.projectElement(elem, copy2);
 
 		return super.removeElement(elem);
 

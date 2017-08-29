@@ -354,4 +354,13 @@ public class VPDomainHelpers {
 				.map(t -> normalizeTerm(t, tf, script))
 				.collect(Collectors.toList());
 	}
+
+	public static <T> boolean arrayContains(final T[] array, final T elem) {
+		for (final T t : array) {
+			if (t.equals(elem)) {
+				return true;
+			}
+		}
+		return false;
+	}
 }

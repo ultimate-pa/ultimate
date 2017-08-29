@@ -192,7 +192,12 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 	 */
 	@Override
 	public EqFunction getExistingFunction(final Term term) {
-		return mTermToEqFunction.get(term);
+		final EqFunction res = mTermToEqFunction.get(term);
+		if (res == null) {
+			throw new IllegalArgumentException("this method expects that the given term is already known to this "
+					+ "factory");
+		}
+		return res;
 	}
 
 	@Override

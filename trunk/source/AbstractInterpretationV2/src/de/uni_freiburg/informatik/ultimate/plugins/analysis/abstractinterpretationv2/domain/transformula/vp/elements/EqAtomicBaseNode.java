@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 Yu-Wen Chen 
+ * Copyright (C) 2016 Yu-Wen Chen
  * Copyright (C) 2016 Alexander Nutz (nutz@informatik.uni-freiburg.de)
  * Copyright (C) 2016 University of Freiburg
  *
@@ -37,17 +37,17 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 
 /**
- * 
+ *
  * @author Yu-Wen Chen (yuwenchen1105@gmail.com)
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  */
 public class EqAtomicBaseNode extends EqNode {
-	
+
 	private final boolean mIsLiteral;
 	private final Set<EqNonAtomicBaseNode> mDependentNonAtomicNodes = new HashSet<>();
 
-	public EqAtomicBaseNode(Term term, EqNodeAndFunctionFactory eqNodeAndFunctionFactory) {
+	public EqAtomicBaseNode(final Term term, final EqNodeAndFunctionFactory eqNodeAndFunctionFactory) {
 		super(term, eqNodeAndFunctionFactory);
 		mIsLiteral = term instanceof ConstantTerm
 				|| SmtUtils.isTrue(term)
@@ -64,7 +64,7 @@ public class EqAtomicBaseNode extends EqNode {
 		return mIsLiteral;
 	}
 
-	public void addDependentNonAtomicBaseNode(EqNonAtomicBaseNode node) {
+	public void addDependentNonAtomicBaseNode(final EqNonAtomicBaseNode node) {
 		mDependentNonAtomicNodes.add(node);
 	}
 
@@ -74,18 +74,16 @@ public class EqAtomicBaseNode extends EqNode {
 
 	@Override
 	public List<EqNode> getArguments() {
-		assert false : "check for isFunction() first";
-		return null;
+		throw new IllegalStateException("check for isFunctionApplication() first");
 	}
-	
+
 	@Override
 	public boolean isFunctionApplication() {
 		return false;
 	}
-	
+
 	@Override
 	public EqFunction getAppliedFunction() {
-		assert false : "check for isFunction() first";
-		return null;
+		throw new IllegalStateException("check for isFunctionApplication() first");
 	}
 }

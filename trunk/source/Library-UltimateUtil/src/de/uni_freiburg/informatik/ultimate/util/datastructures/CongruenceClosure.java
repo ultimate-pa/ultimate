@@ -54,9 +54,9 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 	 * <p>
 	 * usage of this map: reportEqualityRec, together with argumentsAreCongruent
 	 */
-	private final NestedMap2<FUNCTION, ELEM, Set<ELEM>> mFunctionToRepresentativeToCcPars;
-	private final NestedMap2<FUNCTION, ELEM, Set<List<ELEM>>> mFunctionToRepresentativeToCcChildren;
-	private final HashRelation<FUNCTION, ELEM> mFunctionToFuncApps;
+	protected final NestedMap2<FUNCTION, ELEM, Set<ELEM>> mFunctionToRepresentativeToCcPars;
+	protected final NestedMap2<FUNCTION, ELEM, Set<List<ELEM>>> mFunctionToRepresentativeToCcChildren;
+	protected final HashRelation<FUNCTION, ELEM> mFunctionToFuncApps;
 	/**
 	 * stores all known parents for an element -- used for remove method to also remove dependent elements
 	 * (might be used for other dependencies, too..
@@ -604,7 +604,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 		 * recursive call: if an element is removed, all the function applications that have it as an argument are
 		 * removed, too
 		 */
-		for (final ELEM parent : mElementToParents.getImage(elem)) {
+		for (final ELEM parent : new HashSet<>(mElementToParents.getImage(elem))) {
 			removeElement(parent);
 		}
 

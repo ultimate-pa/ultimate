@@ -391,6 +391,10 @@ public class EqConstraintFactory<
 		final EqConstraint<ACTION, NODE, FUNCTION> unfrozen = unfreeze(original);
 
 		for (final TermVariable var : varsToProjectAway) {
+			if (!unfrozen.getAllTermVariables().contains(var)) {
+				// nothing to do
+				continue;
+			}
 			if (var.getSort().isArraySort()) {
 				// havoccing an array
 				final FUNCTION functionToHavoc = getEqNodeAndFunctionFactory().getExistingFunction(var);
