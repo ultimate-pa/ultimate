@@ -48,7 +48,7 @@ public class BuchiAutomizerPreferenceInitializer extends UltimatePreferenceIniti
 	}
 	
 	public enum NcsbImplementation {
-		ORIGINAL, INTSET, INTSET_LAZY 
+		ORIGINAL, INTSET, INTSET_LAZY, INTSET_LAZY2
 	}
 
 

@@ -44,9 +44,9 @@ import de.uni_freiburg.informatik.ultimate.ultimatetest.suites.buchiautomizer.Ab
 public class TerminationNcsbComparison extends AbstractBuchiAutomizerTestSuite {
 
 	/** Limit the number of files per directory. */
-//	private static int mFilesPerDirectoryLimit = Integer.MAX_VALUE;
-	 private static int mFilesPerDirectoryLimit = 20;
-	 private static final int FILE_OFFSET = 0;
+	private static int mFilesPerDirectoryLimit = Integer.MAX_VALUE;
+//	 private static int mFilesPerDirectoryLimit = 5;
+	 private static final int FILE_OFFSET = 1;
 
 	// @formatter:off
 	private static final String STANDARD_DOT_C_PATTERN = ".*_false-termination.*\\.c|.*_true-termination.*\\.c";
@@ -110,6 +110,7 @@ public class TerminationNcsbComparison extends AbstractBuchiAutomizerTestSuite {
 	 */
 	private static final String[] mSettings = { 
 			"buchiAutomizer/ncsb/SUNFLOWER-INTSET_LAZY.epf",
+			"buchiAutomizer/ncsb/SUNFLOWER-INTSET_LAZY2.epf",
 			"buchiAutomizer/ncsb/SUNFLOWER-INTSET.epf",
 			"buchiAutomizer/ncsb/SUNFLOWER-ORIGINAL.epf",
 	};
