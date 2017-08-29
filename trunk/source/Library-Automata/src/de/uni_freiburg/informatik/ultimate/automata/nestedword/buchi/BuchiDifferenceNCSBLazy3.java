@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStat
  * @param <STATE>
  *            state type
  */
-public final class BuchiDifferenceNCSBLazy2<LETTER, STATE> extends AbstractBuchiDifference<LETTER, STATE> {
+public final class BuchiDifferenceNCSBLazy3<LETTER, STATE> extends AbstractBuchiDifference<LETTER, STATE> {
 
 
 	/**
@@ -62,7 +62,7 @@ public final class BuchiDifferenceNCSBLazy2<LETTER, STATE> extends AbstractBuchi
 	 * @throws AutomataLibraryException
 	 *             if construction fails
 	 */
-	public <SF extends IBuchiComplementNcsbStateFactory<STATE> & IBuchiIntersectStateFactory<STATE> & IEmptyStackStateFactory<STATE>> BuchiDifferenceNCSBLazy2(
+	public <SF extends IBuchiComplementNcsbStateFactory<STATE> & IBuchiIntersectStateFactory<STATE> & IEmptyStackStateFactory<STATE>> BuchiDifferenceNCSBLazy3(
 			final AutomataLibraryServices services, final SF stateFactory,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> fstOperand,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> sndOperand) throws AutomataLibraryException {
@@ -79,7 +79,7 @@ public final class BuchiDifferenceNCSBLazy2<LETTER, STATE> extends AbstractBuchi
 
 	private <SF extends IBuchiComplementNcsbStateFactory<STATE> & IBuchiIntersectStateFactory<STATE> & IEmptyStackStateFactory<STATE>>
 			void constructResult(final SF stateFactory) throws AutomataLibraryException {
-		final BuchiComplementNCSBLazyNwa2<LETTER, STATE> onDemandComplemented = new BuchiComplementNCSBLazyNwa2<>(mServices, stateFactory, mSndOperand);
+		final BuchiComplementNCSBLazyNwa3<LETTER, STATE> onDemandComplemented = new BuchiComplementNCSBLazyNwa3<>(mServices, stateFactory, mSndOperand);
 		mSndComplemented = new NwaOutgoingLetterAndTransitionAdapter<LETTER, STATE>(onDemandComplemented);
 		constructDifferenceFromComplement(stateFactory);
 	}

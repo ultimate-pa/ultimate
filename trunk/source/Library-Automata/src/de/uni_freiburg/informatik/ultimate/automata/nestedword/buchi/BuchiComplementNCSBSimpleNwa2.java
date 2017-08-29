@@ -120,7 +120,7 @@ public class BuchiComplementNCSBSimpleNwa2<LETTER, STATE> implements INwaSuccess
 		mLetterIdMap = new HashMap<>();
 		// call alphabet
 		VpAlphabet<LETTER> vp = operand.getVpAlphabet();
-		System.out.println("IdMap:\n" + vp.toString());
+
 		IntSet callAlphabet = UtilIntSet.newIntSet();
 		for(LETTER letter : vp.getCallAlphabet()) {
 			mLetterIdMap.put(letter, id);
