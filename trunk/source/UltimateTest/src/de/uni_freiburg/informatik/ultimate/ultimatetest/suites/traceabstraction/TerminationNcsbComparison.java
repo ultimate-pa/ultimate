@@ -45,7 +45,7 @@ public class TerminationNcsbComparison extends AbstractBuchiAutomizerTestSuite {
 
 	/** Limit the number of files per directory. */
 //	private static int mFilesPerDirectoryLimit = Integer.MAX_VALUE;
-	 private static int mFilesPerDirectoryLimit = 20;
+	 private static int mFilesPerDirectoryLimit = 5;
 	 private static final int FILE_OFFSET = 0;
 
 	// @formatter:off
@@ -56,39 +56,41 @@ public class TerminationNcsbComparison extends AbstractBuchiAutomizerTestSuite {
 	private static final DirectoryFileEndingsPair[] mDirectoryFileEndingsPairs = {
 		/***** Category 5. Termination *****/
 		/*** Subcategory  Termination-MainControlFlow ***/
-		new DirectoryFileEndingsPair("examples/svcomp/termination-crafted/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET, mFilesPerDirectoryLimit),
-		new DirectoryFileEndingsPair("examples/svcomp/termination-crafted-lit/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET, mFilesPerDirectoryLimit),
-		new DirectoryFileEndingsPair("examples/svcomp/termination-numeric/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET, mFilesPerDirectoryLimit),
-		new DirectoryFileEndingsPair("examples/svcomp/termination-restricted-15/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET, mFilesPerDirectoryLimit),
-		
-		new DirectoryFileEndingsPair("examples/svcomp/termination-crafted-todo/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET, mFilesPerDirectoryLimit),
-		new DirectoryFileEndingsPair("examples/svcomp/termination-crafted-lit-todo/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET, mFilesPerDirectoryLimit),
-		new DirectoryFileEndingsPair("examples/svcomp/termination-numeric-todo/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET, mFilesPerDirectoryLimit),
-		new DirectoryFileEndingsPair("examples/svcomp/termination-restricted-15-todo/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET, mFilesPerDirectoryLimit),
-		
-		
-		/*** Subcategory  Termination-MainHeap ***/
-		new DirectoryFileEndingsPair("examples/svcomp/termination-libowfat/", new String[]{ STANDARD_DOT_I_PATTERN }, FILE_OFFSET, mFilesPerDirectoryLimit),
-		new DirectoryFileEndingsPair("examples/svcomp/termination-memory-alloca/", new String[]{ STANDARD_DOT_I_PATTERN }, FILE_OFFSET, mFilesPerDirectoryLimit),
-		new DirectoryFileEndingsPair("examples/svcomp/termination-memory-linkedlists/", new String[]{ STANDARD_DOT_I_PATTERN }, FILE_OFFSET, mFilesPerDirectoryLimit),
-		new DirectoryFileEndingsPair("examples/svcomp/termination-15/", new String[]{ STANDARD_DOT_I_PATTERN }, FILE_OFFSET, mFilesPerDirectoryLimit),
-		new DirectoryFileEndingsPair("examples/svcomp/termination-recursive-malloc/", new String[]{ STANDARD_DOT_I_PATTERN }, FILE_OFFSET, mFilesPerDirectoryLimit),
+//		new DirectoryFileEndingsPair("examples/svcomp/test/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET, mFilesPerDirectoryLimit),
+//		new DirectoryFileEndingsPair("examples/svcomp/c/termination-crafted/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET, mFilesPerDirectoryLimit),
+//		new DirectoryFileEndingsPair("examples/svcomp/c/termination-crafted-lit/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET, mFilesPerDirectoryLimit),
+//		new DirectoryFileEndingsPair("examples/svcomp/c/termination-numeric/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET, mFilesPerDirectoryLimit),
+//		new DirectoryFileEndingsPair("examples/svcomp/c/termination-restricted-15/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET, mFilesPerDirectoryLimit),
+//		
+//		new DirectoryFileEndingsPair("examples/svcomp/c/termination-crafted-todo/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET, mFilesPerDirectoryLimit),
+//		new DirectoryFileEndingsPair("examples/svcomp/c/termination-crafted-lit-todo/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET, mFilesPerDirectoryLimit),
+//		new DirectoryFileEndingsPair("examples/svcomp/c/termination-numeric-todo/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET, mFilesPerDirectoryLimit),
+//		new DirectoryFileEndingsPair("examples/svcomp/c/termination-restricted-15-todo/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET, mFilesPerDirectoryLimit),
+//		
+//		
+//		/*** Subcategory  Termination-MainHeap ***/
+//		new DirectoryFileEndingsPair("examples/svcomp/test/", new String[]{ STANDARD_DOT_I_PATTERN }, FILE_OFFSET, mFilesPerDirectoryLimit),
+//		new DirectoryFileEndingsPair("examples/svcomp/c/termination-libowfat/", new String[]{ STANDARD_DOT_I_PATTERN }, FILE_OFFSET, mFilesPerDirectoryLimit),
+//		new DirectoryFileEndingsPair("examples/svcomp/c/termination-memory-alloca/", new String[]{ STANDARD_DOT_I_PATTERN }, FILE_OFFSET, mFilesPerDirectoryLimit),
+//		new DirectoryFileEndingsPair("examples/svcomp/c/termination-memory-linkedlists/", new String[]{ STANDARD_DOT_I_PATTERN }, FILE_OFFSET, mFilesPerDirectoryLimit),
+//		new DirectoryFileEndingsPair("examples/svcomp/c/termination-15/", new String[]{ STANDARD_DOT_I_PATTERN }, FILE_OFFSET, mFilesPerDirectoryLimit),
+//		new DirectoryFileEndingsPair("examples/svcomp/c/termination-recursive-malloc/", new String[]{ STANDARD_DOT_I_PATTERN }, FILE_OFFSET, mFilesPerDirectoryLimit),
 
-		/*** Subcategory  Termination-Other ***/
-		new DirectoryFileEndingsPair("examples/svcomp/pthread-atomic/", new String[]{ STANDARD_DOT_I_PATTERN }, FILE_OFFSET, mFilesPerDirectoryLimit),
-		new DirectoryFileEndingsPair("examples/svcomp/ntdrivers-simplified/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET, mFilesPerDirectoryLimit),
-		new DirectoryFileEndingsPair("examples/svcomp/ssh-simplified/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET, mFilesPerDirectoryLimit),
-		new DirectoryFileEndingsPair("examples/svcomp/locks/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET, mFilesPerDirectoryLimit),
-		new DirectoryFileEndingsPair("examples/svcomp/loops/", new String[]{ STANDARD_DOT_I_PATTERN }, FILE_OFFSET, mFilesPerDirectoryLimit),
-		new DirectoryFileEndingsPair("examples/svcomp/loop-acceleration/", new String[]{ STANDARD_DOT_I_PATTERN }, FILE_OFFSET, mFilesPerDirectoryLimit),
-		new DirectoryFileEndingsPair("examples/svcomp/loop-invgen/", new String[]{ STANDARD_DOT_I_PATTERN }, FILE_OFFSET, mFilesPerDirectoryLimit),
-		new DirectoryFileEndingsPair("examples/svcomp/loop-lit/", new String[]{ STANDARD_DOT_I_PATTERN }, FILE_OFFSET, mFilesPerDirectoryLimit),
-		new DirectoryFileEndingsPair("examples/svcomp/loop-new/", new String[]{ STANDARD_DOT_I_PATTERN }, FILE_OFFSET, mFilesPerDirectoryLimit),
-		new DirectoryFileEndingsPair("examples/svcomp/product-lines/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET, mFilesPerDirectoryLimit),
-		new DirectoryFileEndingsPair("examples/svcomp/recursive/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET, mFilesPerDirectoryLimit),
-		new DirectoryFileEndingsPair("examples/svcomp/recursive-simple/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET, mFilesPerDirectoryLimit),
-		new DirectoryFileEndingsPair("examples/svcomp/systemc/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET, mFilesPerDirectoryLimit),
-		new DirectoryFileEndingsPair("examples/svcomp/seq-mthreaded/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET, mFilesPerDirectoryLimit),
+//		/*** Subcategory  Termination-Other ***/
+//		new DirectoryFileEndingsPair("examples/c/svcomp/pthread-atomic/", new String[]{ STANDARD_DOT_I_PATTERN }, FILE_OFFSET, mFilesPerDirectoryLimit),
+//		new DirectoryFileEndingsPair("examples/c/svcomp/ntdrivers-simplified/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET, mFilesPerDirectoryLimit),
+//		new DirectoryFileEndingsPair("examples/c/svcomp/ssh-simplified/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET, mFilesPerDirectoryLimit),
+//		new DirectoryFileEndingsPair("examples/c/svcomp/locks/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET, mFilesPerDirectoryLimit),
+//		new DirectoryFileEndingsPair("examples/c/svcomp/loops/", new String[]{ STANDARD_DOT_I_PATTERN }, FILE_OFFSET, mFilesPerDirectoryLimit),
+//		new DirectoryFileEndingsPair("examples/c/svcomp/loop-acceleration/", new String[]{ STANDARD_DOT_I_PATTERN }, FILE_OFFSET, mFilesPerDirectoryLimit),
+//		new DirectoryFileEndingsPair("examples/c/svcomp/loop-invgen/", new String[]{ STANDARD_DOT_I_PATTERN }, FILE_OFFSET, mFilesPerDirectoryLimit),
+//		new DirectoryFileEndingsPair("examples/c/svcomp/loop-lit/", new String[]{ STANDARD_DOT_I_PATTERN }, FILE_OFFSET, mFilesPerDirectoryLimit),
+//		new DirectoryFileEndingsPair("examples/c/svcomp/loop-new/", new String[]{ STANDARD_DOT_I_PATTERN }, FILE_OFFSET, mFilesPerDirectoryLimit),
+//		new DirectoryFileEndingsPair("examples/c/svcomp/product-lines/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET, mFilesPerDirectoryLimit),
+//		new DirectoryFileEndingsPair("examples/c/svcomp/recursive/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET, mFilesPerDirectoryLimit),
+		new DirectoryFileEndingsPair("examples/svcomp/c/recursive-simple/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET, mFilesPerDirectoryLimit),
+//		new DirectoryFileEndingsPair("examples/c/svcomp/systemc/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET, mFilesPerDirectoryLimit),
+//		new DirectoryFileEndingsPair("examples/c/svcomp/seq-mthreaded/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET, mFilesPerDirectoryLimit),
 };
 	
 
@@ -99,7 +101,7 @@ public class TerminationNcsbComparison extends AbstractBuchiAutomizerTestSuite {
 	 */
 	@Override
 	public long getTimeout() {
-		return 60 * 1000;
+		return 900 * 1000;
 	}
 
 	/**
@@ -109,9 +111,10 @@ public class TerminationNcsbComparison extends AbstractBuchiAutomizerTestSuite {
 	 * 
 	 */
 	private static final String[] mSettings = { 
-			"buchiAutomizer/ncsb/SUNFLOWER-INTSET_LAZY.epf",
-			"buchiAutomizer/ncsb/SUNFLOWER-INTSET.epf",
-			"buchiAutomizer/ncsb/SUNFLOWER-ORIGINAL.epf",
+//			"buchiAutomizer/ncsb/SUNFLOWER-ORIGINAL.epf",
+//			"buchiAutomizer/ncsb/SUNFLOWER-INTSET_LAZY.epf",
+			"buchiAutomizer/ncsb/SUNFLOWER-INTSET_LAZY2.epf",
+//			"buchiAutomizer/ncsb/SUNFLOWER-INTSET.epf"
 	};
 
 	private static final String[] mCToolchains = {
