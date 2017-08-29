@@ -320,8 +320,8 @@ public final class BuchiComplementNCSBNwa<LETTER, STATE> implements INwaSuccesso
 	}
 
 	private Collection<STATE> computeStates(final LevelRankingConstraintDrdCheck<LETTER, STATE> constraint) {
-		/**
-		 * This method is used to check the condition of the fourth bullet in the
+		/*
+		 * This check reflects the fourth bullet in the
 		 * construction of the transition relation of the complement automaton
 		 * (lines 10 and 11 on page 7 of the paper).
 		 * 
@@ -331,7 +331,7 @@ public final class BuchiComplementNCSBNwa<LETTER, STATE> implements INwaSuccesso
 		 * However, if one predecessor in C is not an accepting state, we
 		 * already track a run in which this state was already moved to S
 		 * (at some point in time where this run left an accepting state).
-		 * Hence this transition is superficial. 
+		 * Hence these transitions are superficial. 
 		 */
 		if (constraint.isTargetOfDelayedRankDecrease()) {
 			// in this case we do not want to have successor states
