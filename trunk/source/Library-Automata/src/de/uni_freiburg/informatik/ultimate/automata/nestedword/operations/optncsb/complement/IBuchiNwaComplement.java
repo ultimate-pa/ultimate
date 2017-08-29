@@ -26,32 +26,19 @@
  * to convey the resulting work.
  */
 
-package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util;
+
+package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.complement;
+
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.automata.IBuchiNwa;
 
 /**
- * @author Yong Li (liyong@ios.ac.cn)
+ * @author Yong Li
  * */
 
-public class PairXX<X> extends PairXY<X, X> {
-
-	public PairXX(X x, X y) {
-		super(x, y);
-		// TODO Auto-generated constructor stub
-	}
+public interface IBuchiNwaComplement extends IBuchiNwa {
+	IBuchiNwa getOperand();
 	
-	@Override
-	public boolean equals(Object o) {
-		if(this == o) return true;
-		if(!(o instanceof PairXX)) return false;
-		PairXX other = (PairXX)o;
- 		return getFstElement().equals(other.getFstElement())
-			&& getSndElement().equals(other.getSndElement());
-	}
+	DoubleDecker getDoubleDecker(int id);
 	
-    @Override
-    public int hashCode(){
-      return getFstElement().hashCode() + 31 * getSndElement().hashCode();
-    }   
-
-
+	int getDoubleDeckerId(DoubleDecker decker);
 }

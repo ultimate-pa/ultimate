@@ -26,32 +26,55 @@
  * to convey the resulting work.
  */
 
-package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util;
+
+package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.complement;
+
 
 /**
- * @author Yong Li (liyong@ios.ac.cn)
+ * @author Yong Li
  * */
 
-public class PairXX<X> extends PairXY<X, X> {
-
-	public PairXX(X x, X y) {
-		super(x, y);
-		// TODO Auto-generated constructor stub
+public class DoubleDecker {
+	
+	private int mDownState;
+	private int mUpState;
+		
+	public DoubleDecker(int down, int up) {
+		this.mDownState = down;
+		this.mUpState = up;
+	}
+	
+	public int getDownState() {
+		return mDownState;
+	}
+	
+	public int getUpState() {
+		return mUpState;
 	}
 	
 	@Override
-	public boolean equals(Object o) {
-		if(this == o) return true;
-		if(!(o instanceof PairXX)) return false;
-		PairXX other = (PairXX)o;
- 		return getFstElement().equals(other.getFstElement())
-			&& getSndElement().equals(other.getSndElement());
+	public boolean equals(Object other) {
+		if(this == other) return true;
+		if(! (other instanceof DoubleDecker)) {
+			return false;
+		}
+		DoubleDecker otherDecker = (DoubleDecker)other;
+		return this.mDownState == otherDecker.mDownState
+			&& this.mUpState == otherDecker.mUpState;
 	}
 	
-    @Override
-    public int hashCode(){
-      return getFstElement().hashCode() + 31 * getSndElement().hashCode();
-    }   
-
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+        int result = 1;
+        result = prime * result + this.mDownState;
+        result = prime * result + this.mUpState;
+        return result;
+	}
+	
+	@Override
+	public String toString() {
+		return "<down:" + this.mDownState + ", up:" +this.mUpState + ">"; 
+	}
 
 }

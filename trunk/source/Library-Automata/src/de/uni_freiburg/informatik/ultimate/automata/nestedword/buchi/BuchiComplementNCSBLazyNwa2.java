@@ -1,4 +1,5 @@
 /*
+ * Copyright (C) 2017 Yong Li (liyong@ios.ac.cn)
  * Copyright (C) 2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
  * 
@@ -49,23 +50,22 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 
 /**
- * Buchi Complementation based on the algorithm proposed by Frantisek Blahoudek and Jan Stejcek. This complementation is
+ * Optimized Buchi Complementation. This complementation is
  * only sound for a special class of automata whose working title is <i>TABA</i> (termination analysis Büchi automata).
  * 
- * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @author Yong Li (liyong@ios.ac.cn)
  * @param <LETTER>
  *            letter type
  * @param <STATE>
  *            state type
  */
-public final class BuchiComplementNCSBLazyNwa2<LETTER, STATE> extends BuchiComplementNCSBSimpleNwa<LETTER, STATE> {
+public final class BuchiComplementNCSBLazyNwa2<LETTER, STATE> extends BuchiComplementNCSBSimpleNwa2<LETTER, STATE> {
 
 	public BuchiComplementNCSBLazyNwa2(AutomataLibraryServices services,
 			IBuchiComplementNcsbStateFactory<STATE> stateFactory,
 			INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		super(services, stateFactory, operand);
 		Options.optNCSB = true;
-		Options.optBeqC = true;
 	}
 
 }

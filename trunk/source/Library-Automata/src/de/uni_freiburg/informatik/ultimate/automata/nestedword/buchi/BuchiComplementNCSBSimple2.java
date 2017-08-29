@@ -1,8 +1,5 @@
 /*
-<<<<<<< HEAD
-=======
  * Copyright (C) 2017 Yong Li (liyong@ios.ac.cn)
->>>>>>> 72c139c716fa03cb20ca032f94e62b8d3a4870f2
  * Copyright (C) 2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
  * 
@@ -51,14 +48,15 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 /**
  * Buchi Complementation based on the algorithm proposed by Frantisek Blahoudek and Jan Stejcek. This complementation is
  * only sound for a special class of automata whose working title is TABA (termination analysis Büchi automata).
+ * But with simpler implementation in package optncsb
  * 
- * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @author Yong Li (liyong@ios.ac.cn)
  * @param <LETTER>
  *            letter type
  * @param <STATE>
  *            state type
  */
-public final class BuchiComplementNCSBLazy2<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, IStateFactory<STATE>> {
+public final class BuchiComplementNCSBSimple2<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, IStateFactory<STATE>> {
 	private final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mOperand;
 	private final NestedWordAutomatonReachableStates<LETTER, STATE> mResult;
 
@@ -74,7 +72,7 @@ public final class BuchiComplementNCSBLazy2<LETTER, STATE> extends UnaryNwaOpera
 	 * @throws AutomataOperationCanceledException
 	 *             if operation was canceled
 	 */
-	public BuchiComplementNCSBLazy2(final AutomataLibraryServices services,
+	public BuchiComplementNCSBSimple2(final AutomataLibraryServices services,
 			final IBuchiComplementNcsbStateFactory<STATE> stateFactory,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		super(services);
@@ -83,8 +81,8 @@ public final class BuchiComplementNCSBLazy2<LETTER, STATE> extends UnaryNwaOpera
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(startMessage());
 		}
-		final BuchiComplementNCSBLazyNwa2<LETTER, STATE> onDemandComplement =
-				new BuchiComplementNCSBLazyNwa2<>(mServices, stateFactory, operand);
+		final BuchiComplementNCSBSimpleNwa2<LETTER, STATE> onDemandComplement =
+				new BuchiComplementNCSBSimpleNwa2<>(mServices, stateFactory, operand);
 		final NwaOutgoingLetterAndTransitionAdapter<LETTER, STATE> complemented =
 				new NwaOutgoingLetterAndTransitionAdapter<>(onDemandComplement);
 		mResult = new NestedWordAutomatonReachableStates<>(mServices, complemented);
@@ -183,7 +181,7 @@ public final class BuchiComplementNCSBLazy2<LETTER, STATE> extends UnaryNwaOpera
 
 		result.addKeyValuePair(StatisticsType.STATES_INPUT, inputSize);
 		result.addKeyValuePair(StatisticsType.STATES_OUTPUT, outputSize);
-		
+
 		return result;
 	}
 }

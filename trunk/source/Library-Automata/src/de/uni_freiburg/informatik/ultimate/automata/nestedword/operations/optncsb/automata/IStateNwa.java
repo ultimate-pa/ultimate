@@ -26,32 +26,51 @@
  * to convey the resulting work.
  */
 
-package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util;
+
+package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.automata;
+
+
+import java.util.Set;
+
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util.IntSet;
+
 
 /**
- * @author Yong Li (liyong@ios.ac.cn)
+ * State interface of nested word automata
+ * 
+ * @author Yong Li
  * */
-
-public class PairXX<X> extends PairXY<X, X> {
-
-	public PairXX(X x, X y) {
-		super(x, y);
-		// TODO Auto-generated constructor stub
-	}
+public interface IStateNwa {
 	
-	@Override
-	public boolean equals(Object o) {
-		if(this == o) return true;
-		if(!(o instanceof PairXX)) return false;
-		PairXX other = (PairXX)o;
- 		return getFstElement().equals(other.getFstElement())
-			&& getSndElement().equals(other.getSndElement());
-	}
-	
-    @Override
-    public int hashCode(){
-      return getFstElement().hashCode() + 31 * getSndElement().hashCode();
-    }   
+	int getId();
 
+	// setters
+	void addSuccessorInternal(int letter, int state);
+	
+	void addSuccessorCall(int letter, int state);
+	
+	void addSuccessorReturn(int hier, int letter, int state);
+
+	// getters
+	IntSet getSuccessorsInternal(int letter);
+	
+	IntSet getSuccessorsCall(int letter);
+	
+	IntSet getSuccessorsReturn(int hier, int letter);
+	
+	Set<Integer> getEnabledLettersInternal();
+	
+	Set<Integer> getEnabledLettersCall();
+	
+	Set<Integer> getEnabledLettersReturn();
+	
+	Set<Integer> getEnabledHiersReturn(int letter);
+
+	// ----- general requirements
+	boolean equals(Object otherState);
+	
+	int hashCode();
+	
+	String toString();
 
 }

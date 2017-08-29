@@ -26,32 +26,38 @@
  * to convey the resulting work.
  */
 
-package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util;
+
+package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.automata;
+
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util.IntSet;
 
 /**
- * @author Yong Li (liyong@ios.ac.cn)
+ * @author Yong Li
  * */
+public class AccBuchi implements Acc {
 
-public class PairXX<X> extends PairXY<X, X> {
-
-	public PairXX(X x, X y) {
-		super(x, y);
-		// TODO Auto-generated constructor stub
+	private final IntSet mFinalStates;
+	private final List<IntSet> mAccList;
+	
+	public AccBuchi(IntSet finalStates) {
+		this.mFinalStates = finalStates;
+		this.mAccList = new ArrayList<>();
+		mAccList.add(mFinalStates);
 	}
 	
 	@Override
-	public boolean equals(Object o) {
-		if(this == o) return true;
-		if(!(o instanceof PairXX)) return false;
-		PairXX other = (PairXX)o;
- 		return getFstElement().equals(other.getFstElement())
-			&& getSndElement().equals(other.getSndElement());
+	public boolean isAccepted(IntSet set) {
+		return mFinalStates.overlap(set);
 	}
-	
-    @Override
-    public int hashCode(){
-      return getFstElement().hashCode() + 31 * getSndElement().hashCode();
-    }   
 
+	@Override
+	public List<IntSet> getAccs() {
+		return Collections.unmodifiableList(mAccList);
+	}
 
 }

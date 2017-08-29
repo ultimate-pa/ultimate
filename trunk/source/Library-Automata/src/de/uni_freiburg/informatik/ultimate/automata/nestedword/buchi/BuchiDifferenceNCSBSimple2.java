@@ -1,8 +1,5 @@
 /*
-<<<<<<< HEAD
-=======
  * Copyright (C) 2017 Yong Li (liyong@ios.ac.cn)
->>>>>>> 72c139c716fa03cb20ca032f94e62b8d3a4870f2
  * Copyright (C) 2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
  * 
@@ -40,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiIntersect
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 
 /**
- * Buchi difference "<tt>NCSBLazy</tt>".
+ * Buchi difference "<tt>NCSBSimple</tt>".
  * 
  * @author Yong Li (liyong@ios.ac.cn)
  * @param <LETTER>
@@ -48,8 +45,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStat
  * @param <STATE>
  *            state type
  */
-public final class BuchiDifferenceNCSBLazy2<LETTER, STATE> extends AbstractBuchiDifference<LETTER, STATE> {
-
+public final class BuchiDifferenceNCSBSimple2<LETTER, STATE> extends AbstractBuchiDifference<LETTER, STATE> {
 
 	/**
 	 * Constructor.
@@ -65,12 +61,16 @@ public final class BuchiDifferenceNCSBLazy2<LETTER, STATE> extends AbstractBuchi
 	 * @throws AutomataLibraryException
 	 *             if construction fails
 	 */
-	public <SF extends IBuchiComplementNcsbStateFactory<STATE> & IBuchiIntersectStateFactory<STATE> & IEmptyStackStateFactory<STATE>> BuchiDifferenceNCSBLazy2(
+	public <SF extends IBuchiComplementNcsbStateFactory<STATE> & IBuchiIntersectStateFactory<STATE> & IEmptyStackStateFactory<STATE>> BuchiDifferenceNCSBSimple2(
 			final AutomataLibraryServices services, final SF stateFactory,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> fstOperand,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> sndOperand) throws AutomataLibraryException {
 		super(services, fstOperand, sndOperand);
 		
+//		if (!NestedWordAutomataUtils.isFiniteAutomaton(sndOperand)) {
+//			throw new UnsupportedOperationException("Calls and returns are not yet supported.");
+//		}
+
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(startMessage());
 		}
@@ -82,7 +82,7 @@ public final class BuchiDifferenceNCSBLazy2<LETTER, STATE> extends AbstractBuchi
 
 	private <SF extends IBuchiComplementNcsbStateFactory<STATE> & IBuchiIntersectStateFactory<STATE> & IEmptyStackStateFactory<STATE>>
 			void constructResult(final SF stateFactory) throws AutomataLibraryException {
-		final BuchiComplementNCSBLazyNwa2<LETTER, STATE> onDemandComplemented = new BuchiComplementNCSBLazyNwa2<>(mServices, stateFactory, mSndOperand);
+		final BuchiComplementNCSBSimpleNwa2<LETTER, STATE> onDemandComplemented = new BuchiComplementNCSBSimpleNwa2<>(mServices, stateFactory, mSndOperand);
 		mSndComplemented = new NwaOutgoingLetterAndTransitionAdapter<LETTER, STATE>(onDemandComplemented);
 		constructDifferenceFromComplement(stateFactory);
 	}
