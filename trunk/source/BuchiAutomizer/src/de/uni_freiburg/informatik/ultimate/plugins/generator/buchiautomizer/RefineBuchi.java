@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiComple
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiDifferenceFKV;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiDifferenceNCSB;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiDifferenceNCSBLazy;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiDifferenceNCSBLazy2;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiDifferenceNCSBSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiIntersect;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.MultiOptimizationLevelRankingGenerator.FkvOptimization;
@@ -443,6 +444,10 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 			break;
 		case INTSET_LAZY:
 			diff = new BuchiDifferenceNCSBLazy<LETTER, IPredicate>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement,
+					abstraction, mInterpolAutomatonUsedInRefinement);
+			break;
+		case INTSET_LAZY2:
+			diff = new BuchiDifferenceNCSBLazy2<LETTER, IPredicate>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement,
 					abstraction, mInterpolAutomatonUsedInRefinement);
 			break;
 		case ORIGINAL:

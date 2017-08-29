@@ -1,5 +1,8 @@
 /*
+<<<<<<< HEAD
+=======
  * Copyright (C) 2017 Yong Li (liyong@ios.ac.cn)
+>>>>>>> 72c139c716fa03cb20ca032f94e62b8d3a4870f2
  * Copyright (C) 2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
  * 
@@ -180,7 +183,7 @@ public final class BuchiComplementNCSBLazy2<LETTER, STATE> extends UnaryNwaOpera
 
 		result.addKeyValuePair(StatisticsType.STATES_INPUT, inputSize);
 		result.addKeyValuePair(StatisticsType.STATES_OUTPUT, outputSize);
-
+		
 		return result;
 	}
 }

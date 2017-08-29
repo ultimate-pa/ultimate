@@ -1,5 +1,8 @@
 /*
+<<<<<<< HEAD
+=======
  * Copyright (C) 2017 Yong Li (liyong@ios.ac.cn)
+>>>>>>> 72c139c716fa03cb20ca032f94e62b8d3a4870f2
  * Copyright (C) 2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
  * 
@@ -67,10 +70,6 @@ public final class BuchiDifferenceNCSBLazy2<LETTER, STATE> extends AbstractBuchi
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> fstOperand,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> sndOperand) throws AutomataLibraryException {
 		super(services, fstOperand, sndOperand);
-
-//		if (!NestedWordAutomataUtils.isFiniteAutomaton(sndOperand)) {
-//			throw new UnsupportedOperationException("Calls and returns are not yet supported.");
-//		}
 		
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(startMessage());

@@ -38,7 +38,9 @@ public class Options {
 	public static int setChoice = 1;
 	
 	public static boolean optNCSB = true;
-	
+
+	public static boolean optBeqC = false;
+
 	public static boolean verbose = false;
 
 }
