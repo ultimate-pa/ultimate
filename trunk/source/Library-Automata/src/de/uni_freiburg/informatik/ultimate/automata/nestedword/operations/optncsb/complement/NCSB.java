@@ -35,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncs
 
 /**
  * NCSB tuple 
+ * @author Yong Li
  * */
 public class NCSB {
 	

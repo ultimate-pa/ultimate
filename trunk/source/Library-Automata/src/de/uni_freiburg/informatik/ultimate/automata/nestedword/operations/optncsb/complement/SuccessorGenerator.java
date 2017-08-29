@@ -33,6 +33,10 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncs
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util.IntSet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util.PowerSet;
 
+
+/**
+ * @author Yong Li
+ * */
 class SuccessorGenerator {
 	
 	private final NCSB mCurrNCSB;

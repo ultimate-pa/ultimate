@@ -47,7 +47,9 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncs
 import gnu.trove.map.TObjectIntMap;
 import gnu.trove.map.hash.TObjectIntHashMap;
 
-
+/**
+ * @author Yong Li
+ * */
 
 public class BuchiNwaComplementSDBA extends BuchiNwa implements IBuchiNwaComplement {
 
@@ -83,13 +85,18 @@ public class BuchiNwaComplementSDBA extends BuchiNwa implements IBuchiNwaComplem
 		mState2Int.put(state, id);
 	}
 	
+	@Override
+	public StateNwaNCSB getState(int id) {
+		return (StateNwaNCSB) super.getState(id);
+	}
+	
 	protected StateNwaNCSB addState(NCSB ncsb) {
 		
 		StateNwaNCSB state = new StateNwaNCSB(this, 0);
 		state.setNCSB(ncsb);
 		
 		if(mState2Int.containsKey(state)) {
-			return (StateNwaNCSB) getState(mState2Int.get(state));
+			return getState(mState2Int.get(state));
 		}else {
 			int index = getStateSize();
 			StateNwaNCSB newState = new StateNwaNCSB(this, index);
@@ -127,7 +134,7 @@ public class BuchiNwaComplementSDBA extends BuchiNwa implements IBuchiNwaComplem
 		return id;
 	}
 	
-	protected int getEmptyDownState() {
+	public int getEmptyDownState() {
 		return EMPTY_DOWN;
 	}
 	
@@ -144,11 +151,11 @@ public class BuchiNwaComplementSDBA extends BuchiNwa implements IBuchiNwaComplem
 		return result;
 	}
 	
-	protected int getUpState(int decker) {
+	public int getUpState(int decker) {
 		return getDoubleDecker(decker).getUpState();
 	}
 	
-	protected int getDownState(int decker) {
+	public int getDownState(int decker) {
 		return getDoubleDecker(decker).getDownState();
 	}
 	

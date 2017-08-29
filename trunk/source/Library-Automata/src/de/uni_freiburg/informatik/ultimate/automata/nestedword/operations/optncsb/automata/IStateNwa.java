@@ -37,6 +37,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncs
 
 /**
  * State interface of nested word automata
+ * 
+ * @author Yong Li
  * */
 public interface IStateNwa {
 	

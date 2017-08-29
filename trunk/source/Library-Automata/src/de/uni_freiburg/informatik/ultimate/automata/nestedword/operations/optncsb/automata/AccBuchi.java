@@ -36,7 +36,9 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util.IntSet;
 
-
+/**
+ * @author Yong Li
+ * */
 public class AccBuchi implements Acc {
 
 	private final IntSet mFinalStates;

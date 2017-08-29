@@ -42,6 +42,9 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncs
 import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
 
+/**
+ * @author Yong Li
+ * */
 
 public class StateNwaNCSB extends StateNwa implements IStateNwaComplement {
 	

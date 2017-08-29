@@ -42,6 +42,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncs
 
 /**
  * State class for Buchi Nested Word Automata
+ * 
+ * @author Yong Li
  * */
 public class StateNwa implements IStateNwa, Comparable<StateNwa> {
 	

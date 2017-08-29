@@ -30,6 +30,10 @@
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.complement;
 
 
+/**
+ * @author Yong Li
+ * */
+
 public class DoubleDecker {
 	
 	private int mDownState;

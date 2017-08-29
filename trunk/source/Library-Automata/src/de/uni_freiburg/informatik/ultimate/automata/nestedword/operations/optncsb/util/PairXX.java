@@ -41,15 +41,16 @@ public class PairXX<X> extends PairXY<X, X> {
 	
 	@Override
 	public boolean equals(Object o) {
-		if(!(o instanceof IPair)) return false;
-		IPair other = (IPair)o;
+		if(this == o) return true;
+		if(!(o instanceof PairXX)) return false;
+		PairXX other = (PairXX)o;
  		return getFstElement().equals(other.getFstElement())
 			&& getSndElement().equals(other.getSndElement());
 	}
 	
     @Override
     public int hashCode(){
-      return getFstElement().hashCode() + 31*getSndElement().hashCode();
+      return getFstElement().hashCode() + 31 * getSndElement().hashCode();
     }   
 
 

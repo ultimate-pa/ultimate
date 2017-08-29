@@ -37,6 +37,9 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util.IntSet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util.UtilIntSet;
 
+/**
+ * @author Yong Li
+ * */
 
 public class BuchiNwa implements IBuchiNwa {
 	
