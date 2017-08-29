@@ -71,7 +71,7 @@ public class StateNWA2<LETTER, STATE> extends StateNwa {
 	@Override
 	public IntSet getSuccessorsCall(int letter) {
 		if(super.getEnabledLettersCall().contains(letter)) {
-			return super.getSuccessorsInternal(letter);
+			return super.getSuccessorsCall(letter);
 		}else {
 			IntSet succs = mBuchi.computeSuccessorsCall(getId(), letter);
 			IntIterator iter = succs.iterator();
