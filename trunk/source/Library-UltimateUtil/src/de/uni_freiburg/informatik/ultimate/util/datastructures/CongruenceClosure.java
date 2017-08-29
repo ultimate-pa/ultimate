@@ -375,7 +375,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 	 * @param elem
 	 * @return true iff the element was not known to this CongruenceClosure before
 	 */
-	private boolean addElement(final ELEM elem) {
+	protected boolean addElement(final ELEM elem) {
 		final boolean newlyAdded = mElementTVER.addElement(elem);
 		if (newlyAdded) {
 			registerNewElement(elem);
@@ -599,9 +599,93 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 
 		mElementTVER.removeElement(elem);
 
+		/*
+		 * recursive call: if an element is removed, all the function applications that have it as an argument are
+		 * removed, too
+		 */
 		for (final ELEM parent : mElementToParents.getImage(elem)) {
 			removeElement(parent);
 		}
+
+		/*
+		 * clean up auxiliary maps
+		 */
+		mElementToParents.removeDomainElement(elem);
+		mElementToParents.removeRangeElement(elem);
+
+		mFunctionToRepresentativeToCcChildren.removeK2(elem);
+		final NestedMap2<FUNCTION, ELEM, Set<List<ELEM>>> ccchildrencpy =
+				new NestedMap2<>(mFunctionToRepresentativeToCcChildren);
+		for (final FUNCTION func : ccchildrencpy.keySet()) {
+			for (final ELEM rep : ccchildrencpy.get(func).keySet()) {
+				final Set<List<ELEM>> lists = mFunctionToRepresentativeToCcChildren.get(func, rep);
+				final Set<List<ELEM>> listscpy = new HashSet<>(lists);
+				for (final List<ELEM> list : listscpy) {
+					if (list.contains(elem)) {
+						lists.remove(list);
+					}
+				}
+			}
+		}
+
+		mFunctionToRepresentativeToCcPars.removeK2(elem);
+		final NestedMap2<FUNCTION, ELEM, Set<ELEM>> ccparscpy = new NestedMap2<>(mFunctionToRepresentativeToCcPars);
+		for (final FUNCTION func : ccparscpy.keySet()) {
+			for (final ELEM rep : ccparscpy.get(func).keySet()) {
+				mFunctionToRepresentativeToCcPars.get(func, rep).remove(elem);
+			}
+		}
+
+		assert elementIsFullyRemoved(elem);
+		return true;
+	}
+
+	/**
+	 * Checks  for any remainig entries of elem, does not look for subterms.
+	 * @param elem
+	 * @return
+	 */
+	private boolean elementIsFullyRemoved(final ELEM elem) {
+		if (mElementTVER.getRepresentative(elem) != null) {
+			assert false;
+			return false;
+		}
+		for (final Entry<FUNCTION, ELEM> en : mFunctionToFuncApps.entrySet()) {
+			if (en.getValue().equals(elem)) {
+				assert false;
+				return false;
+			}
+		}
+
+		for (final Entry<ELEM, ELEM> en : mElementToParents) {
+			if (en.getKey().equals(elem) || en.getValue().equals(elem)) {
+				assert false;
+				return false;
+			}
+		}
+
+		for (final Triple<FUNCTION, ELEM, Set<List<ELEM>>> en : mFunctionToRepresentativeToCcChildren.entrySet()) {
+			if (en.getSecond().equals(elem)) {
+				assert false;
+				return false;
+			}
+			if (en.getThird().stream().anyMatch(list -> list.contains(elem))) {
+				assert false;
+				return false;
+			}
+		}
+
+		for (final Triple<FUNCTION, ELEM, Set<ELEM>> en : mFunctionToRepresentativeToCcPars.entrySet()) {
+			if (en.getSecond().equals(elem)) {
+				assert false;
+				return false;
+			}
+			if (en.getThird().contains(elem)) {
+				assert false;
+				return false;
+			}
+		}
+
 		return true;
 	}
 
@@ -622,7 +706,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 	 * @param other
 	 * @return
 	 */
-	private CongruenceClosure<ELEM, FUNCTION> alignElementsAndFunctions(final CongruenceClosure<ELEM, FUNCTION> other) {
+	protected CongruenceClosure<ELEM, FUNCTION> alignElementsAndFunctions(final CongruenceClosure<ELEM, FUNCTION> other) {
 		final CongruenceClosure<ELEM, FUNCTION> result = new CongruenceClosure<>(this);
 		assert result.sanityCheck();
 
@@ -633,6 +717,12 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 		return result;
 	}
 
+	/**
+	 * Returns a new CongruenceClosure instance that is the meet of "this" and "other".
+	 *
+	 * @param other
+	 * @return
+	 */
 	public CongruenceClosure<ELEM, FUNCTION> meet(final CongruenceClosure<ELEM, FUNCTION> other) {
 
 		return naiveMeet(other);
@@ -975,7 +1065,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 	 *
 	 * @return
 	 */
-	private boolean sanityCheck() {
+	protected boolean sanityCheck() {
 		for (final Triple<FUNCTION, ELEM, Set<ELEM>> repFuncCcPars : mFunctionToRepresentativeToCcPars.entrySet()) {
 			if (!mElementTVER.isRepresentative(repFuncCcPars.getSecond())) {
 				assert false;

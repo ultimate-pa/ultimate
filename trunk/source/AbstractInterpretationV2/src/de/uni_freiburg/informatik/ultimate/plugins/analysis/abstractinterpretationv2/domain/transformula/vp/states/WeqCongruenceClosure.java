@@ -80,6 +80,24 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>,
 			return result;
 	}
 
+	@Override
+	protected CongruenceClosure<NODE, FUNCTION> alignElementsAndFunctions(
+			final CongruenceClosure<NODE, FUNCTION> otherCC) {
+		if (!(otherCC instanceof WeqCongruenceClosure)) {
+			return super.alignElementsAndFunctions(otherCC);
+		}
+		final WeqCongruenceClosure<ACTION, NODE, FUNCTION> other =
+				(WeqCongruenceClosure<ACTION, NODE, FUNCTION>) otherCC;
+
+		final WeqCongruenceClosure<ACTION, NODE, FUNCTION> result = new WeqCongruenceClosure<>(this);
+		assert result.sanityCheck();
+
+		other.getAllElements().stream().forEach(elem -> result.addElement(elem));
+		other.getAllFunctions().stream().forEach(func -> result.mFunctionTVER.addElement(func));
+
+		assert result.sanityCheck();
+		return result;
+	}
 
 	public void renameVariables(final Map<Term, Term> substitutionMapping) {
 		transformElementsAndFunctions(
@@ -155,8 +173,9 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>,
 
 	@Override
 	public boolean removeFunction(final FUNCTION func) {
-		// making a copy of the ground partial arrangement here, just to be safe..
-		mWeakEquivalenceGraph.projectFunction(func, new WeqCongruenceClosure<>(this));
+		final CongruenceClosure<NODE,FUNCTION> copy = new CongruenceClosure<>(this);
+		copy.removeFunction(func);
+		mWeakEquivalenceGraph.projectFunction(func, copy);
 
 		return super.removeFunction(func);
 	}
@@ -164,8 +183,9 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>,
 
 	@Override
 	public boolean removeElement(final NODE elem) {
-		// making a copy of the ground partial arrangement here, just to be safe..
-		mWeakEquivalenceGraph.projectElement(elem, new WeqCongruenceClosure<>(this));
+		final CongruenceClosure<NODE,FUNCTION> copy = new CongruenceClosure<>(this);
+		copy.removeElement(elem);
+		mWeakEquivalenceGraph.projectElement(elem, copy);
 
 		return super.removeElement(elem);
 
