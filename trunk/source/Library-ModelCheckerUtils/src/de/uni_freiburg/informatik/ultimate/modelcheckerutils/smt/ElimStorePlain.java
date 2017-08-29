@@ -97,25 +97,32 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.TreeRela
  * <li>(store aElim storeIndex newValue) by aNew, and
  * <li>(select aElim i) by oldCell_i for each i∈Idx.
  * </ul>
- * Furthermore, we add the following conjuncts for each i∈Idx. (i == storeIndex)
- * ==> (aNew[i] == newValue && ∀k∈Idx. i == k ==> oldCell_i == oldCell_k) (i !=
- * storeIndex) ==> (aNew[i] == oldCell_i)
+ * Furthermore, we add the following conjuncts for each i∈Idx. 
+ * <ul>
+ * <li> (i == storeIndex)==> (aNew[i] == newValue && ∀k∈Idx. i == k ==> oldCell_i == oldCell_k) 
+ * <li> (i != storeIndex) ==> (aNew[i] == oldCell_i)
+ * </ul>
  * 
- * Optimizations: Optim1: We check equality and disequality for each pair of
+ * Optimizations: 
+ * <ul>
+ * <li> Optim1: We check equality and disequality for each pair of
  * indices and evaluate (dis)equalities in the formula above directly. Each
  * equality/disequality that is not valid (i.e. only true in this context) has
- * to be added as an additional conjunct. Optim2: We do not work with all
+ * to be added as an additional conjunct.
+ * <li> Optim2: We do not work with all
  * indices but build equivalence classes and work only with the representatives.
- * (We introduce only one oldCell variable for each equivalence class) Optim3:
- * For each index i that is disjoint for the store index we do not introduce the
- * variable oldCell_i, but use aNew[i] instead. Optim4: For each i∈Idx we check
+ * (We introduce only one oldCell variable for each equivalence class) 
+ * <li> Optim3: For each index i that is disjoint for the store index we do not introduce the
+ * variable oldCell_i, but use aNew[i] instead. 
+ * <li> Optim4: For each i∈Idx we check
  * the context if we find some term tEq that is equivalent to oldCell_i. In case
- * we found some we use tEq instead of oldCell_i. Optim5: (Only sound in
+ * we found some we use tEq instead of oldCell_i. 
+ * <li> Optim5: (Only sound in
  * combination with Optim3. For each pair i,k∈Idx that are both disjoint from
  * storeIndex, we can drop the "i == k ==> oldCell_i == oldCell_k" term.
  * Rationale: we use aNew[i] and aNew[k] instead of oldCell_i and oldCell_k,
  * hence the congruence information is already given implicitly.
- * 
+ * </ul>
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
