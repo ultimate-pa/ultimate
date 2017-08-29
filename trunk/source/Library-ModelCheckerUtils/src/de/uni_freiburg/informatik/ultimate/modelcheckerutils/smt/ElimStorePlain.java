@@ -55,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareT
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ElimStore3.IndicesAndValues;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.EquivalenceRelationIterator.IExternalOracle;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IncrementalPlicationChecker.Plication;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.ExtendedSimplificationResult;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayUpdate;
@@ -69,6 +70,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.Qua
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierSequence.QuantifiedVariables;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifierElimination.EqualityInformation;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 import de.uni_freiburg.informatik.ultimate.util.ConstructionCache;
 import de.uni_freiburg.informatik.ultimate.util.ConstructionCache.IValueConstruction;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
@@ -79,42 +81,40 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.TreeRelation;
 
 /**
- * Let aElim be the array variable that we want to eliminate.
- * We presume that there is only one term of the form (store aElim storeIndex newValue),
- * for some index element storeIndex and some value element newValue.
+ * Let aElim be the array variable that we want to eliminate. We presume that
+ * there is only one term of the form (store aElim storeIndex newValue), for
+ * some index element storeIndex and some value element newValue.
  *
- * The basic idea is the following.
- * Let Idx be the set of all indices of select terms that have aElim as (first) argument.
- * We introduce
+ * The basic idea is the following. Let Idx be the set of all indices of select
+ * terms that have aElim as (first) argument. We introduce
  * <ul>
- * <li> a new array variable aNew that represents the store term
- * <li> a new value variable oldCell_i for each i∈Idx that represents the value of the
- * array cell before the update.
+ * <li>a new array variable aNew that represents the store term
+ * <li>a new value variable oldCell_i for each i∈Idx that represents the value
+ * of the array cell before the update.
  * </ul>
  * We replace
  * <ul>
- * <li> (store aElim storeIndex newValue) by aNew, and
- * <li> (select aElim i) by oldCell_i for each i∈Idx.
+ * <li>(store aElim storeIndex newValue) by aNew, and
+ * <li>(select aElim i) by oldCell_i for each i∈Idx.
  * </ul>
- * Furthermore, we add the following conjuncts for each i∈Idx. 
- * (i == storeIndex) ==> (aNew[i] == newValue && ∀k∈Idx. i == k ==> oldCell_i == oldCell_k)
- * (i != storeIndex) ==> (aNew[i] == oldCell_i)
+ * Furthermore, we add the following conjuncts for each i∈Idx. (i == storeIndex)
+ * ==> (aNew[i] == newValue && ∀k∈Idx. i == k ==> oldCell_i == oldCell_k) (i !=
+ * storeIndex) ==> (aNew[i] == oldCell_i)
  * 
- * Optimizations:
- * Optim1: We check equality and disequality for each pair of indices and evaluate
- * (dis)equalities in the formula above directly. Each equality/disequality
- * that is not valid (i.e. only true in this context) has to be added as an additional conjunct.
- * Optim2: We do not work with all indices but build equivalence classes and work only with
- * the representatives. (We introduce only one oldCell variable for each equivalence class)
- * Optim3: For each index i that is disjoint for the store index we do not introduce
- * the variable oldCell_i, but use aNew[i] instead.
- * Optim4: For each i∈Idx we check the context if we find some term tEq that is
- * equivalent to oldCell_i. In case we found some we use tEq instead of oldCell_i.
- * Optim5: (Only sound in combination with Optim3. For each pair i,k∈Idx that 
- * are both disjoint from storeIndex, we can drop the 
- * "i == k ==> oldCell_i == oldCell_k" term. Rationale: we use aNew[i] and aNew[k] 
- * instead of oldCell_i and oldCell_k, hence the congruence information is already 
- * given implicitly.
+ * Optimizations: Optim1: We check equality and disequality for each pair of
+ * indices and evaluate (dis)equalities in the formula above directly. Each
+ * equality/disequality that is not valid (i.e. only true in this context) has
+ * to be added as an additional conjunct. Optim2: We do not work with all
+ * indices but build equivalence classes and work only with the representatives.
+ * (We introduce only one oldCell variable for each equivalence class) Optim3:
+ * For each index i that is disjoint for the store index we do not introduce the
+ * variable oldCell_i, but use aNew[i] instead. Optim4: For each i∈Idx we check
+ * the context if we find some term tEq that is equivalent to oldCell_i. In case
+ * we found some we use tEq instead of oldCell_i. Optim5: (Only sound in
+ * combination with Optim3. For each pair i,k∈Idx that are both disjoint from
+ * storeIndex, we can drop the "i == k ==> oldCell_i == oldCell_k" term.
+ * Rationale: we use aNew[i] and aNew[k] instead of oldCell_i and oldCell_k,
+ * hence the congruence information is already given implicitly.
  * 
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
@@ -147,7 +147,8 @@ public class ElimStorePlain {
 		final ArrayList<Term> resultDisjuncts = new ArrayList<>();
 		final Set<TermVariable> resultEliminatees = new LinkedHashSet<>();
 		{
-			final EliminationTask eliminationTask = new EliminationTask(eTask.getQuantifier(), eTask.getEliminatees(), eTask.getTerm());
+			final EliminationTask eliminationTask = new EliminationTask(eTask.getQuantifier(), eTask.getEliminatees(),
+					eTask.getTerm());
 			pushTaskOnStack(eliminationTask, taskStack);
 		}
 		int numberOfRounds = 0;
@@ -169,13 +170,15 @@ public class ElimStorePlain {
 					it.remove();
 				}
 
-				final EliminationTask ssdElimRes = elim1(currentETask.getQuantifier(), thisIterationEliminatee, currentETask.getTerm());
+				final EliminationTask ssdElimRes = elim1(currentETask.getQuantifier(), thisIterationEliminatee,
+						currentETask.getTerm());
 				arrayEliminatees.addAll(ssdElimRes.getEliminatees());
 				// also add non-array eliminatees
 				arrayEliminatees.addAll(tr.getImage(0));
-				final EliminationTask eliminationTask1 =
-						new EliminationTask(ssdElimRes.getQuantifier(), arrayEliminatees, ssdElimRes.getTerm());
-				final EliminationTask eliminationTask2 = applyNonSddEliminations(eliminationTask1, PqeTechniques.ALL_LOCAL);
+				final EliminationTask eliminationTask1 = new EliminationTask(ssdElimRes.getQuantifier(),
+						arrayEliminatees, ssdElimRes.getTerm());
+				final EliminationTask eliminationTask2 = applyNonSddEliminations(eliminationTask1,
+						PqeTechniques.ALL_LOCAL);
 				if (mLogger.isInfoEnabled()) {
 					mLogger.info("Start of round: " + printVarInfo(tr) + " End of round: "
 							+ printVarInfo(classifyEliminatees(eliminationTask2.getEliminatees())) + " and "
@@ -191,9 +194,8 @@ public class ElimStorePlain {
 		mLogger.info("Needed " + numberOfRounds + " rounds to eliminate " + eTask.getEliminatees().size()
 				+ " variables, produced " + resultDisjuncts.size() + " xjuncts");
 		// return term and variables that we could not eliminate
-		return new EliminationTask(eTask.getQuantifier(),
-				resultEliminatees,
-				PartialQuantifierElimination.applyCorrespondingFiniteConnective(mScript, eTask.getQuantifier(), resultDisjuncts));
+		return new EliminationTask(eTask.getQuantifier(), resultEliminatees, PartialQuantifierElimination
+				.applyCorrespondingFiniteConnective(mScript, eTask.getQuantifier(), resultDisjuncts));
 	}
 
 	private String printVarInfo(final TreeRelation<Integer, TermVariable> tr) {
@@ -216,11 +218,11 @@ public class ElimStorePlain {
 		}
 	}
 
-	private EliminationTask applyNonSddEliminations(final EliminationTask eTask, final PqeTechniques techniques) throws AssertionError {
-		final Term quantified =
-				SmtUtils.quantifier(mScript, eTask.getQuantifier(), eTask.getEliminatees(), eTask.getTerm());
-		final Term pushed =
-				new QuantifierPusher(mMgdScript, mServices, true, techniques).transform(quantified);
+	private EliminationTask applyNonSddEliminations(final EliminationTask eTask, final PqeTechniques techniques)
+			throws AssertionError {
+		final Term quantified = SmtUtils.quantifier(mScript, eTask.getQuantifier(), eTask.getEliminatees(),
+				eTask.getTerm());
+		final Term pushed = new QuantifierPusher(mMgdScript, mServices, true, techniques).transform(quantified);
 
 		final Term pnf = new PrenexNormalForm(mMgdScript).transform(pushed);
 		final QuantifierSequence qs = new QuantifierSequence(mMgdScript.getScript(), pnf);
@@ -294,11 +296,7 @@ public class ElimStorePlain {
 			} 
 
 		}
-		if (preprocessedInput == inputTerm) {
-			mLogger.info("no preprocessing");
-		} else {
-			mLogger.info("some preprocessing");
-		}
+
 		final Orac oracB = new Orac(preprocessedInput);
 		if (oracB.mIncrementalPlicationChecker.checkSat(mMgdScript.getScript().term("true"))== LBool.UNSAT) {
 			mLogger.warn("input unsat");
@@ -390,9 +388,20 @@ public class ElimStorePlain {
 		final Term term = PartialQuantifierElimination.applyDualFiniteConnective(mScript, quantifier,
 				Arrays.asList(new Term[] { indexDefinitionsTerm, preprocessedInput, notEqualsDetectedBySolver }));
 
-		final Term newArray =
-				auxVarConstructor.constructAuxVar(s_AUX_VAR_NEW_ARRAY, eliminatee.getSort());
-		
+		final Term newArray;
+		{
+			if (storeIndex == null) {
+				newArray = null;
+			} else {
+				final EqProvider eqProvider = new EqProvider(preprocessedInput, eliminatee, quantifier);
+				final Term eqArray = eqProvider.getEqTerm(storeTerm);
+				if (eqArray != null) {
+					newArray = eqArray;
+				} else {
+					newArray = auxVarConstructor.constructAuxVar(s_AUX_VAR_NEW_ARRAY, eliminatee.getSort());
+				}
+			}
+		}
 		final Map<Term, Term> rawIndex2replacedIndex = new HashMap<>();
 		for (final Term selectIndex : indices) {
 			if (indexMapping.containsKey(selectIndex)) {
@@ -410,14 +419,8 @@ public class ElimStorePlain {
 		for (final Term selectIndex : selectIndicesSet) {
 			selectIndexRepresentatives.add(equalityInformation.getRepresentative(selectIndex));
 		}
-		if (storeIndex == null) {
-			mLogger.info("no store index");
-		} else {
-			mLogger.info("one store index");
-		}
-		mLogger.info(selectIndices.size() + " select indices");
-		mLogger.info(selectIndexRepresentatives.size() + " select index equivalence classes");
-		mLogger.info(equalityInformation.getDisequalities().size() + " disjoint index pairs");
+
+
 		
 		final Map<Term, Term> oldCellMapping = constructOldCellValueMapping(selectIndexRepresentatives, storeIndex,
 				equalityInformation, valueSort, selectIndexRepresentatives.contains(equalityInformation.getRepresentative(storeIndex)), newArray, rawIndex2replacedIndex,
@@ -477,7 +480,38 @@ public class ElimStorePlain {
 					transformedTerm, valueEqualityTerm2, storedValueInformation, cc);
 			assert !Arrays.asList(res.getFreeVars()).contains(eliminatee) : "var is still there: " + eliminatee
 					+ " term size " + new DagSizePrinter(res);
-			res = SmtUtils.simplify(mMgdScript, res, mServices, mSimplificationTechnique);
+			{
+				final StringBuilder sb = new StringBuilder();
+				sb.append("Elim1");
+				if (inputTerm == preprocessedInput) {
+					sb.append(" did not use preprocessing");
+				} else {
+					sb.append(" applied some preprocessing");
+				}
+				final int dim = new MultiDimensionalSort(eliminatee.getSort()).getDimension();
+				sb.append(" eliminated variable of array dimension " + dim);
+				if (storeIndex == null) {
+					sb.append(", no store index");
+				} else {
+					sb.append(", one store index");
+				}
+				sb.append(", " + selectIndices.size() + " select indices");
+				sb.append(", " + selectIndexRepresentatives.size() + " select index equivalence classes");
+				final int indexPairs = (selectIndexRepresentatives.size() * selectIndexRepresentatives.size()
+						- selectIndexRepresentatives.size()) / 2;
+				sb.append(String.format(", %d disjoint index pairs (out of %d index pairs)",
+						equalityInformation.getDisequalities().size(), indexPairs));
+				sb.append(String.format(", introduced %d new quantified variables", newAuxVars.size()));
+				sb.append(String.format(", treesize of input %d treesize of output %d",
+						new DAGSize().treesize(inputTerm), new DAGSize().treesize(res)));
+				mLogger.info(sb.toString());
+			}
+			final Term nonsimpl = res;
+			final ExtendedSimplificationResult sws = SmtUtils.simplifyWithStatistics(mMgdScript, res, mServices, mSimplificationTechnique);
+			res = sws.getSimplifiedTerm();
+			mLogger.info(String.format("treesize reduction %d that is %2.1f percent of original size",
+					sws.getReductionOfTreeSize(), sws.getReductionRatioInPercent()));
+			mLogger.info("treesize after simplification " + new DAGSize().treesize(res));
 			return new EliminationTask(quantifier, newAuxVars, res);
 		}
 		
@@ -609,8 +643,8 @@ public class ElimStorePlain {
 
 	private Term constructStoredValueInformation(final int quantifier, final TermVariable eliminatee,
 			final List<MultiDimensionalStore> stores, final Term storeIndex, final Term storeValue,
-			final Map<Term, Term> indexMapping, final Term newArray,
-			final Map<Term, Term> substitutionMapping) throws AssertionError {
+			final Map<Term, Term> indexMapping, final Term newArray, final Map<Term, Term> substitutionMapping)
+			throws AssertionError {
 		final Term storedValueInformation;
 		if (stores.isEmpty()) {
 			if (quantifier == QuantifiedFormula.EXISTS) {
@@ -628,8 +662,8 @@ public class ElimStorePlain {
 		return storedValueInformation;
 	}
 
-	private Pair<ThreeValuedEquivalenceRelation<Term>, List<Term>> analyzeIndexEqualities(final int mQuantifier, final Set<Term> indices,
-			final Term inputTerm, final ThreeValuedEquivalenceRelation<Term> inputTveR) {
+	private Pair<ThreeValuedEquivalenceRelation<Term>, List<Term>> analyzeIndexEqualities(final int mQuantifier,
+			final Set<Term> indices, final Term inputTerm, final ThreeValuedEquivalenceRelation<Term> inputTveR) {
 		final Term[] dualFiniteJunctsArray = PartialQuantifierElimination.getXjunctsInner(mQuantifier, inputTerm);
 		// TODO: bring each in commuhash normal form
 		final Set<Term> dualFiniteJuncts = new HashSet<>(Arrays.asList(dualFiniteJunctsArray));
@@ -641,7 +675,8 @@ public class ElimStorePlain {
 
 		final List<Term> relationsDetectedViaSolver = new ArrayList<>();
 		final ArrayList<Term> indicesList = new ArrayList<>(indices);
-		// TODO: filter non-represenatives not only during iterations but also in advance
+		// TODO: filter non-represenatives not only during iterations but also
+		// in advance
 		final Plication plication;
 		if (mQuantifier == QuantifiedFormula.EXISTS) {
 			plication = Plication.IMPLICATION;
@@ -693,14 +728,17 @@ public class ElimStorePlain {
 								} else {
 									throw new AssertionError("unknown quantifier");
 								}
-//								tver.reportEquality(indicesList.get(i), indicesList.get(j));
-//								tver.reportNotEquals(indicesList.get(i), indicesList.get(j));
+								// tver.reportEquality(indicesList.get(i),
+								// indicesList.get(j));
+								// tver.reportNotEquals(indicesList.get(i),
+								// indicesList.get(j));
 								relationsDetectedViaSolver.add(eq);
 								mLogger.info("detected equality via solver");
 							} else {
 								final Validity notEqualsHolds = iea.checkPlication(neq);
 								if (notEqualsHolds == Validity.UNKNOWN && mLogger.isWarnEnabled()) {
-									mLogger.warn("solver failed to check if following not equals relation is implied: " + eq);
+									mLogger.warn("solver failed to check if following not equals relation is implied: "
+											+ eq);
 								}
 
 								if (notEqualsHolds == Validity.VALID) {
@@ -713,8 +751,10 @@ public class ElimStorePlain {
 									} else {
 										throw new AssertionError("unknown quantifier");
 									}
-//									tver.reportNotEquals(indicesList.get(i), indicesList.get(j));
-//									tver.reportEquality(indicesList.get(i), indicesList.get(j));
+									// tver.reportNotEquals(indicesList.get(i),
+									// indicesList.get(j));
+									// tver.reportEquality(indicesList.get(i),
+									// indicesList.get(j));
 									mLogger.info("detected not equals via solver");
 									relationsDetectedViaSolver.add(neq);
 								}
@@ -744,20 +784,22 @@ public class ElimStorePlain {
 	}
 
 	/**
-	 * Let eliminatee be the array that is eliminated and (select eliminatee idx v) a select term. If idx contains
-	 * eliminatee, we have to replace idx by an auxiliary variable. As an optimization, we only construct one auxiliary
-	 * variable for each equivalence class of indices.
-	 * @param auxVarConstructor 
+	 * Let eliminatee be the array that is eliminated and (select eliminatee idx
+	 * v) a select term. If idx contains eliminatee, we have to replace idx by
+	 * an auxiliary variable. As an optimization, we only construct one
+	 * auxiliary variable for each equivalence class of indices.
+	 * 
+	 * @param auxVarConstructor
 	 */
 	private Map<Term, TermVariable> constructIndexReplacementMapping(final Set<Term> indices,
-			final TermVariable eliminatee, final ThreeValuedEquivalenceRelation<Term> equalityInformation, final AuxVarConstructor auxVarConstructor)
-			throws AssertionError {
+			final TermVariable eliminatee, final ThreeValuedEquivalenceRelation<Term> equalityInformation,
+			final AuxVarConstructor auxVarConstructor) throws AssertionError {
 		final IValueConstruction<Term, TermVariable> valueConstruction = new IValueConstruction<Term, TermVariable>() {
 
 			@Override
 			public TermVariable constructValue(final Term index) {
-				final TermVariable indexReplacement = 
-						auxVarConstructor.constructAuxVar(s_AUX_VAR_INDEX, index.getSort());
+				final TermVariable indexReplacement = auxVarConstructor.constructAuxVar(s_AUX_VAR_INDEX,
+						index.getSort());
 				return indexReplacement;
 			}
 
@@ -775,8 +817,9 @@ public class ElimStorePlain {
 		return indexReplacementMapping;
 	}
 
-	private void constructIndexReplacementIfNecessary(final int quantifier, final TermVariable eliminatee, final Set<TermVariable> newAuxVars,
-			final Map<Term, Term> indexMapping, final List<Term> indexMappingDefinitions, final Term index) {
+	private void constructIndexReplacementIfNecessary(final int quantifier, final TermVariable eliminatee,
+			final Set<TermVariable> newAuxVars, final Map<Term, Term> indexMapping,
+			final List<Term> indexMappingDefinitions, final Term index) {
 		if (Arrays.asList(index.getFreeVars()).contains(eliminatee)) {
 			// need to replace index
 			final TermVariable newAuxIndex = mMgdScript.constructFreshTermVariable(s_AUX_VAR_INDEX, index.getSort());
@@ -787,9 +830,8 @@ public class ElimStorePlain {
 		}
 	}
 
-	private Term constructNewSelectWithPossiblyReplacedIndex(final Term newArray,
-			final ApplicationTerm oldSelectTerm, final Map<Term, Term> indexMapping,
-			final TermVariable eliminatee) {
+	private Term constructNewSelectWithPossiblyReplacedIndex(final Term newArray, final ApplicationTerm oldSelectTerm,
+			final Map<Term, Term> indexMapping, final TermVariable eliminatee) {
 		final Term newIndex = getNewIndex(getIndexOfSelect(oldSelectTerm), indexMapping, eliminatee);
 		final Term newSelect = mMgdScript.getScript().term("select", newArray, newIndex);
 		return newSelect;
@@ -810,19 +852,22 @@ public class ElimStorePlain {
 	}
 
 	/**
-	 * Let eliminatee be the array that is eliminated and (select eliminatee idx v) a select term. Construct mapping
-	 * that assigns the select term an auxiliary variable the represents this array cell. If we know that the index of
-	 * the store that we currently process is disjoint from idx, we do not add the auxiliary variable (the new cell will
-	 * have same value as old cell). As an optimization, we only construct one auxiliary variable for each equivalence
-	 * class of indices.
-	 * @param newAuxArray 
-	 * @param auxVarConstructor 
-	 * @param preprocessedInput 
-	 * @param eliminatee 
-	 * @param quantifier 
+	 * Let eliminatee be the array that is eliminated and (select eliminatee idx
+	 * v) a select term. Construct mapping that assigns the select term an
+	 * auxiliary variable the represents this array cell. If we know that the
+	 * index of the store that we currently process is disjoint from idx, we do
+	 * not add the auxiliary variable (the new cell will have same value as old
+	 * cell). As an optimization, we only construct one auxiliary variable for
+	 * each equivalence class of indices.
+	 * 
+	 * @param newAuxArray
+	 * @param auxVarConstructor
+	 * @param preprocessedInput
+	 * @param eliminatee
+	 * @param quantifier
 	 */
-	private Map<Term, Term> constructOldCellValueMapping(final Set<Term> selectIndexRepresentatives, final Term storeIndex,
-			final ThreeValuedEquivalenceRelation<Term> equalityInformation, final Sort valueSort,
+	private Map<Term, Term> constructOldCellValueMapping(final Set<Term> selectIndexRepresentatives,
+			final Term storeIndex, final ThreeValuedEquivalenceRelation<Term> equalityInformation, final Sort valueSort,
 			final boolean storeIndexIsAlsoSelectIndex, final Term newAuxArray,
 			final Map<Term, Term> rawIndex2replacedIndex, final AuxVarConstructor auxVarConstructor,
 			final Term preprocessedInput, final TermVariable eliminatee, final int quantifier) {
@@ -838,11 +883,11 @@ public class ElimStorePlain {
 		final ConstructionCache<Term, TermVariable> cc = new ConstructionCache<>(valueConstruction);
 		final EqProvider eqProvider = new EqProvider(preprocessedInput, eliminatee, quantifier);
 		final Map<Term, Term> oldCellMapping = new HashMap<>();
-		for (final Term selectIndexRepresentative: selectIndexRepresentatives) {
-			if ((storeIndex != null)
-					&& equalityInformation.getEqualityStatus(selectIndexRepresentative, storeIndex) == EqualityStatus.NOT_EQUAL) {
+		for (final Term selectIndexRepresentative : selectIndexRepresentatives) {
+			if ((storeIndex != null) && equalityInformation.getEqualityStatus(selectIndexRepresentative,
+					storeIndex) == EqualityStatus.NOT_EQUAL) {
 				if (storeIndexIsAlsoSelectIndex) {
-					
+
 					final Term replacementSelectIndex = rawIndex2replacedIndex.get(selectIndexRepresentative);
 					final Term newSelect = mMgdScript.getScript().term("select", newAuxArray, replacementSelectIndex);
 					oldCellMapping.put(selectIndexRepresentative, newSelect);
@@ -923,8 +968,6 @@ public class ElimStorePlain {
 		return result;
 	}
 
-
-
 	private static List<Doubleton<Term>> buildListOfNonDisjointDoubletons(final Collection<Term> indices,
 			final ThreeValuedEquivalenceRelation<Term> equalityInformation) {
 		final List<Doubleton<Term>> doubeltons = new ArrayList<>();
@@ -937,7 +980,8 @@ public class ElimStorePlain {
 				if (!equalityInformation.isRepresentative(indexList.get(j))) {
 					continue;
 				}
-				if (equalityInformation.getEqualityStatus(indexList.get(i), indexList.get(j)) == EqualityStatus.NOT_EQUAL) {
+				if (equalityInformation.getEqualityStatus(indexList.get(i),
+						indexList.get(j)) == EqualityStatus.NOT_EQUAL) {
 					// do nothing
 				} else {
 					doubeltons.add(new Doubleton<>(indexList.get(i), indexList.get(j)));
@@ -947,19 +991,20 @@ public class ElimStorePlain {
 		return doubeltons;
 	}
 
-
 	private class Orac implements IExternalOracle<Term> {
-		
+
 		IncrementalPlicationChecker mIncrementalPlicationChecker;
-		
+
 		public Orac(final Term inputTerm) {
-			mIncrementalPlicationChecker = new IncrementalPlicationChecker(Plication.IMPLICATION, mMgdScript, inputTerm);
+			mIncrementalPlicationChecker = new IncrementalPlicationChecker(Plication.IMPLICATION, mMgdScript,
+					inputTerm);
 		}
 
 		@Override
-		public boolean isConsistent(final LinkedList<Boolean> stack, final List<Doubleton<Term>> nonDisjointDoubletons) {
+		public boolean isConsistent(final LinkedList<Boolean> stack,
+				final List<Doubleton<Term>> nonDisjointDoubletons) {
 			final List<Term> list = new ArrayList<>();
-			for (int i=0; i<stack.size(); i++) {
+			for (int i = 0; i < stack.size(); i++) {
 				Term equality;
 				final Doubleton<Term> d = nonDisjointDoubletons.get(i);
 				if (stack.get(i)) {
@@ -971,12 +1016,13 @@ public class ElimStorePlain {
 			}
 			final Term conjunction = SmtUtils.and(mScript, list);
 			final LBool lbool = mIncrementalPlicationChecker.checkSat(conjunction);
-			mLogger.info("external oracle said: " + lbool + " " + stack + (stack.size() == nonDisjointDoubletons.size() ? " full stack!" : ""));
+			mLogger.info("external oracle said: " + lbool + " " + stack
+					+ (stack.size() == nonDisjointDoubletons.size() ? " full stack!" : ""));
 			switch (lbool) {
 			case SAT:
 				return true;
 			case UNKNOWN:
-				//TODO: use same as sat
+				// TODO: use same as sat
 				throw new AssertionError("solver said unknown during conistency check");
 			case UNSAT:
 				return false;
@@ -988,12 +1034,8 @@ public class ElimStorePlain {
 		public void unlockSolver() {
 			mIncrementalPlicationChecker.unlockSolver();
 		}
-		
-		
-		
+
 	}
-
-
 
 	public class ValueEqualityChecker {
 		final TermVariable mEliminatee;
@@ -1004,10 +1046,7 @@ public class ElimStorePlain {
 		final IncrementalPlicationChecker mIncrementalPlicationChecker;
 		final Map<Term, Term> mOldCellMapping;
 		final List<Term> mValueEqualities = new ArrayList<>();
-		
-		
-		
-		
+
 		public ValueEqualityChecker(final TermVariable eliminatee, final Term storeIndex, final Term storeValue,
 				final ThreeValuedEquivalenceRelation<Term> indices, final ManagedScript mgdScript,
 				final IncrementalPlicationChecker incrementalPlicationChecker, final Map<Term, Term> oldCellMapping) {
@@ -1021,7 +1060,6 @@ public class ElimStorePlain {
 			mOldCellMapping = oldCellMapping;
 		}
 
-
 		public boolean isDistinguishworthyIndexPair(final Term index1, final Term index2) {
 			final Term select1 = mMgdScript.getScript().term("select", mEliminatee, index1);
 			final Term select2 = mMgdScript.getScript().term("select", mEliminatee, index2);
@@ -1033,7 +1071,8 @@ public class ElimStorePlain {
 				if (distinguishworthy1 && distinguishworthy2) {
 					return true;
 				} else {
-					final Term cellEq = SmtUtils.binaryEquality(mMgdScript.getScript(), mOldCellMapping.get(index1), mOldCellMapping.get(index2));
+					final Term cellEq = SmtUtils.binaryEquality(mMgdScript.getScript(), mOldCellMapping.get(index1),
+							mOldCellMapping.get(index2));
 					mValueEqualities.add(cellEq);
 					return false;
 				}
@@ -1042,24 +1081,24 @@ public class ElimStorePlain {
 			}
 		}
 
-
-		private boolean processStoreIndex(final Term storeIndexCandidate, final Term otherIndex, final Term otherSelect) {
+		private boolean processStoreIndex(final Term storeIndexCandidate, final Term otherIndex,
+				final Term otherSelect) {
 			if (isStoreIndex(storeIndexCandidate)) {
 				final Term storeEq = SmtUtils.binaryEquality(mMgdScript.getScript(), mStoreValue, otherSelect);
 				final Validity storeEqVal = mIncrementalPlicationChecker.checkPlication(storeEq);
 				if (storeEqVal == Validity.VALID) {
-					final Term storeCellEq = SmtUtils.binaryEquality(mMgdScript.getScript(), mStoreValue, mOldCellMapping.get(otherIndex));
+					final Term storeCellEq = SmtUtils.binaryEquality(mMgdScript.getScript(), mStoreValue,
+							mOldCellMapping.get(otherIndex));
 					mValueEqualities.add(storeCellEq);
 					return false;
 				} else {
-					return true;					
+					return true;
 				}
 			} else {
 				return false;
 			}
 		}
-		
-		
+
 		boolean isStoreIndex(final Term index1) {
 			if (mStoreIndex == null) {
 				return false;
@@ -1068,19 +1107,17 @@ public class ElimStorePlain {
 			}
 		}
 
-
 		public List<Term> getValueEqualities() {
 			return mValueEqualities;
 		}
-		
-		
+
 	}
-	
-	public static Term constructCongruenceConstraints(final ArrayList<Term> selectIndices, 
-			final ThreeValuedEquivalenceRelation<Term> indexEqualityInformation, 
-			final ManagedScript mgdScript, 
-			final Map<Term, Term> rawIndex2replacedIndex, 
-			final Map<Term, ? extends Term> index2value, final TermVariable eliminatee, final int quantifier, final Term storeIndex, final Term newAuxArray, final Term newValue) {
+
+	public static Term constructCongruenceConstraints(final ArrayList<Term> selectIndices,
+			final ThreeValuedEquivalenceRelation<Term> indexEqualityInformation, final ManagedScript mgdScript,
+			final Map<Term, Term> rawIndex2replacedIndex, final Map<Term, ? extends Term> index2value,
+			final TermVariable eliminatee, final int quantifier, final Term storeIndex, final Term newAuxArray,
+			final Term newValue) {
 		final List<Term> resultConjuncts = new ArrayList<Term>();
 		for (int j = 0; j < selectIndices.size(); j++) {
 			if (!indexEqualityInformation.isRepresentative(selectIndices.get(j))) {
@@ -1096,11 +1133,13 @@ public class ElimStorePlain {
 				assert !occursIn(eliminatee, replacementStoreIndex) : "var is still there";
 				final Term replacementSelectIndex = rawIndex2replacedIndex.get(selectIndex);
 				assert !occursIn(eliminatee, replacementSelectIndex) : "var is still there";
-				final Term indexEquality = PartialQuantifierElimination.equalityForExists(mgdScript.getScript(), quantifier, replacementStoreIndex, replacementSelectIndex);
+				final Term indexEquality = PartialQuantifierElimination.equalityForExists(mgdScript.getScript(),
+						quantifier, replacementStoreIndex, replacementSelectIndex);
 				final Term newSelect = mgdScript.getScript().term("select", newAuxArray, replacementSelectIndex);
-				final Term newValueInCell = PartialQuantifierElimination.equalityForExists(mgdScript.getScript(), quantifier, newSelect, newValue);
-				final Term indexValueConnection = constructIndexValueConnection(selectIndices, indexEqualityInformation, mgdScript,
-						rawIndex2replacedIndex, index2value, eliminatee, quantifier, selectIndex);
+				final Term newValueInCell = PartialQuantifierElimination.equalityForExists(mgdScript.getScript(),
+						quantifier, newSelect, newValue);
+				final Term indexValueConnection = constructIndexValueConnection(selectIndices, indexEqualityInformation,
+						mgdScript, rawIndex2replacedIndex, index2value, eliminatee, quantifier, selectIndex);
 				final EqualityStatus eqStatus = indexEqualityInformation.getEqualityStatus(storeIndex, selectIndex);
 				switch (eqStatus) {
 				case EQUAL:
@@ -1110,17 +1149,17 @@ public class ElimStorePlain {
 				case NOT_EQUAL:
 					// case handled via substitution
 					continue;
-				case UNKNOWN:
-				{
+				case UNKNOWN: {
 					final Term succedent = SmtUtils.and(mgdScript.getScript(), newValueInCell, indexValueConnection);
 					final Term negatedAntecedent = SmtUtils.not(mgdScript.getScript(), indexEquality);
 					positiveCase = SmtUtils.or(mgdScript.getScript(), negatedAntecedent, succedent);
 				}
-				final Term oldCellValue = index2value.get(selectIndex);
-				final Term oldValueInCell = PartialQuantifierElimination.equalityForExists(mgdScript.getScript(), quantifier, newSelect, oldCellValue);
-				final Term negatedAntecedent = indexEquality;
-				final Term negativeCase = SmtUtils.or(mgdScript.getScript(), negatedAntecedent, oldValueInCell);
-				resultConjuncts.add(negativeCase);
+					final Term oldCellValue = index2value.get(selectIndex);
+					final Term oldValueInCell = PartialQuantifierElimination.equalityForExists(mgdScript.getScript(),
+							quantifier, newSelect, oldCellValue);
+					final Term negatedAntecedent = indexEquality;
+					final Term negativeCase = SmtUtils.or(mgdScript.getScript(), negatedAntecedent, oldValueInCell);
+					resultConjuncts.add(negativeCase);
 					break;
 				default:
 					throw new AssertionError();
@@ -1133,56 +1172,54 @@ public class ElimStorePlain {
 		return resultConjunction;
 
 	}
-	
-	
-	public static Term constructIndexValueConnection(final ArrayList<Term> selectIndices, 
-			final ThreeValuedEquivalenceRelation<Term> indexEqualityInformation, 
-			final ManagedScript mgdScript, 
-			final Map<Term, Term> rawIndex2replacedIndex, 
-			final Map<Term, ? extends Term> index2value, final TermVariable eliminatee, final int quantifier, final Term index) {
-		final List<Term> resultConjuncts = new ArrayList<Term>();
-			for (int j = 0; j < selectIndices.size(); j++) {
-				if (!indexEqualityInformation.isRepresentative(selectIndices.get(j))) {
-					continue;
-				}
-				final Term index2 = selectIndices.get(j);
-				if (index == index2) {
-					continue;
-				}
 
-				final Term indexEqualityTerm;
-				final EqualityStatus eqStatus = indexEqualityInformation.getEqualityStatus(index, index2);
-				switch (eqStatus) {
-				case EQUAL:
-					indexEqualityTerm = mgdScript.getScript().term("true");
-					break;
-				case NOT_EQUAL:
-					indexEqualityTerm = mgdScript.getScript().term("false");
-					break;
-				case UNKNOWN:
-					final Term replacementIndex1 = rawIndex2replacedIndex.get(index);
-					assert !occursIn(eliminatee, replacementIndex1) : "var is still there";
-					final Term replacementIndex2 = rawIndex2replacedIndex.get(index2);
-					assert !occursIn(eliminatee, replacementIndex2) : "var is still there";
-					indexEqualityTerm = SmtUtils.binaryEquality(mgdScript.getScript(), 
-							replacementIndex1, replacementIndex2);
-					break;
-				default:
-					throw new AssertionError();
-				}
-				if (SmtUtils.isFalse(indexEqualityTerm)) {
-					// conjunct will become true
-					continue;
-				}
-				final Term value1 = index2value.get(index);
-				assert !occursIn(eliminatee, value1) : "var is still there";
-				final Term value2 = index2value.get(index2);
-				assert !occursIn(eliminatee, value2) : "var is still there";
-				final Term valueEqualityTerm = SmtUtils.binaryEquality(mgdScript.getScript(), value1, value2);
-				final Term implication = SmtUtils.or(mgdScript.getScript(),
-						SmtUtils.not(mgdScript.getScript(), indexEqualityTerm), valueEqualityTerm);
-				resultConjuncts.add(implication);
+	public static Term constructIndexValueConnection(final ArrayList<Term> selectIndices,
+			final ThreeValuedEquivalenceRelation<Term> indexEqualityInformation, final ManagedScript mgdScript,
+			final Map<Term, Term> rawIndex2replacedIndex, final Map<Term, ? extends Term> index2value,
+			final TermVariable eliminatee, final int quantifier, final Term index) {
+		final List<Term> resultConjuncts = new ArrayList<Term>();
+		for (int j = 0; j < selectIndices.size(); j++) {
+			if (!indexEqualityInformation.isRepresentative(selectIndices.get(j))) {
+				continue;
 			}
+			final Term index2 = selectIndices.get(j);
+			if (index == index2) {
+				continue;
+			}
+
+			final Term indexEqualityTerm;
+			final EqualityStatus eqStatus = indexEqualityInformation.getEqualityStatus(index, index2);
+			switch (eqStatus) {
+			case EQUAL:
+				indexEqualityTerm = mgdScript.getScript().term("true");
+				break;
+			case NOT_EQUAL:
+				indexEqualityTerm = mgdScript.getScript().term("false");
+				break;
+			case UNKNOWN:
+				final Term replacementIndex1 = rawIndex2replacedIndex.get(index);
+				assert !occursIn(eliminatee, replacementIndex1) : "var is still there";
+				final Term replacementIndex2 = rawIndex2replacedIndex.get(index2);
+				assert !occursIn(eliminatee, replacementIndex2) : "var is still there";
+				indexEqualityTerm = SmtUtils.binaryEquality(mgdScript.getScript(), replacementIndex1,
+						replacementIndex2);
+				break;
+			default:
+				throw new AssertionError();
+			}
+			if (SmtUtils.isFalse(indexEqualityTerm)) {
+				// conjunct will become true
+				continue;
+			}
+			final Term value1 = index2value.get(index);
+			assert !occursIn(eliminatee, value1) : "var is still there";
+			final Term value2 = index2value.get(index2);
+			assert !occursIn(eliminatee, value2) : "var is still there";
+			final Term valueEqualityTerm = SmtUtils.binaryEquality(mgdScript.getScript(), value1, value2);
+			final Term implication = SmtUtils.or(mgdScript.getScript(),
+					SmtUtils.not(mgdScript.getScript(), indexEqualityTerm), valueEqualityTerm);
+			resultConjuncts.add(implication);
+		}
 		final Term resultConjunction = SmtUtils.and(mgdScript.getScript(), resultConjuncts);
 		if (quantifier == QuantifiedFormula.EXISTS) {
 			return resultConjunction;
@@ -1191,14 +1228,13 @@ public class ElimStorePlain {
 		} else {
 			throw new AssertionError("unknown quantifier");
 		}
-		
+
 	}
-	
+
 	public static boolean occursIn(final TermVariable tv, final Term term) {
 		return Arrays.asList(term.getFreeVars()).contains(tv);
 	}
-	
-	
+
 	private class AuxVarConstructor {
 		private final Set<TermVariable> mConstructedAuxVars = new HashSet<>();
 
@@ -1211,23 +1247,23 @@ public class ElimStorePlain {
 		public Set<TermVariable> getConstructedAuxVars() {
 			return mConstructedAuxVars;
 		}
-		
+
 	}
-	
-	
+
 	private class EqProvider {
 		private final Term[] mContext;
 		private final TermVariable mEliminatee;
 		private final int mQuantifier;
-		
+
 		public EqProvider(final Term inputTerm, final TermVariable eliminatee, final int quantifier) {
 			mContext = PartialQuantifierElimination.getXjunctsInner(quantifier, inputTerm);
 			mEliminatee = eliminatee;
 			mQuantifier = quantifier;
 		}
-		
+
 		public Term getEqTerm(final Term term) {
-			final EqualityInformation eqInfo = EqualityInformation.getEqinfo(mScript, term, mContext, mEliminatee, mQuantifier);
+			final EqualityInformation eqInfo = EqualityInformation.getEqinfo(mScript, term, mContext, mEliminatee,
+					mQuantifier);
 			if (eqInfo == null) {
 				return null;
 			} else {
@@ -1235,15 +1271,15 @@ public class ElimStorePlain {
 			}
 		}
 	}
-	
-	
+
 	/**
-	 * Let eliminatee be the array that is eliminated and (select eliminatee idx v) a select term. If idx contains
-	 * eliminatee, we have to replace idx by an auxiliary variable. As an optimization, we only construct one auxiliary
-	 * variable for each equivalence class of indices.
+	 * Let eliminatee be the array that is eliminated and (select eliminatee idx
+	 * v) a select term. If idx contains eliminatee, we have to replace idx by
+	 * an auxiliary variable. As an optimization, we only construct one
+	 * auxiliary variable for each equivalence class of indices.
 	 */
 	private class IndexMappingProvider {
-		
+
 		private final Map<Term, Term> mIndexReplacementMapping = new HashMap<>();
 		private final List<Term> mIndexMappingDefinitions = new ArrayList<>();
 
@@ -1251,13 +1287,13 @@ public class ElimStorePlain {
 				final ThreeValuedEquivalenceRelation<Term> equalityInformation,
 				final AuxVarConstructor auxVarConstructor, final Term preprocessedInput, final int quantifier) {
 			final EqProvider eqProvider = new EqProvider(preprocessedInput, eliminatee, quantifier);
-			
+
 			final IValueConstruction<Term, TermVariable> valueConstruction = new IValueConstruction<Term, TermVariable>() {
 
 				@Override
 				public TermVariable constructValue(final Term index) {
-					final TermVariable indexReplacement = 
-							auxVarConstructor.constructAuxVar(s_AUX_VAR_INDEX, index.getSort());
+					final TermVariable indexReplacement = auxVarConstructor.constructAuxVar(s_AUX_VAR_INDEX,
+							index.getSort());
 					return indexReplacement;
 				}
 
@@ -1289,14 +1325,12 @@ public class ElimStorePlain {
 		public List<Term> getIndexMappingDefinitions() {
 			return mIndexMappingDefinitions;
 		}
-		
+
 	}
-	
+
 }
 
-
-
 // similar
-// (i == storeIdx) ==> (a[i] == newValue && forall k. i == k ==> oldCell_i == oldCell_k)
+// (i == storeIdx) ==> (a[i] == newValue && forall k. i == k ==> oldCell_i ==
+// oldCell_k)
 // (i != storeIdx) ==> (a[i] == oldCell_i
-
