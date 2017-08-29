@@ -127,6 +127,17 @@ public class SymbolicMemory {
 	 * @param st
 	 */
 	public void updateInc(final IProgramVar variable, final Term value, final IIcfgSymbolTable st) {
+		if (((ApplicationTerm) value).getParameters().length <= 1) {
+			if (((ApplicationTerm) value).getFunction().toString().equals("-")) {
+				// if value update is x = -x, we treat it as a constant
+				updateConst(variable, value, st);
+				return;
+			} else {
+				// if value update is x = x, there is nothing to do..
+				// to prevent a crash in insertPathCounter(..) we just return
+				return;
+			}
+		}
 		updateInOutVars(variable, st, value.getFreeVars());
 		final Substitution varRepl = new Substitution(mManagedScript, mReplaceInV);
 		final Term repValue = varRepl.transform(value);
@@ -181,8 +192,9 @@ public class SymbolicMemory {
 			case CONSTANT_WITH_SINGLE_PATHCOUNTER:
 				if (!repValue.equals(mSymbolicMemory.get(variable).get(0))) {
 					updateUndefined(variable, st);
+				} else {
+					mUpdateTypeMap.put(variable, UpdateType.CONSTANT);
 				}
-				mUpdateTypeMap.put(variable, UpdateType.CONSTANT);
 				break;
 			case UNDEFINED:
 				break;
@@ -448,6 +460,12 @@ public class SymbolicMemory {
 		return result;
 	}
 
+	/** Return a term which describes the total value of the incrementation/decrementation
+	 * @param t				inc-/decrementing describing term
+	 * @param pathCounter	current pathCounter
+	 * @param assignedVar	inc-/decremented variable
+	 * @return
+	 */
 	private Term insertPathCounter(final ApplicationTerm t, final TermVariable pathCounter,
 			final TermVariable assignedVar) {
 		final List<Term> incValue = new ArrayList<>();
