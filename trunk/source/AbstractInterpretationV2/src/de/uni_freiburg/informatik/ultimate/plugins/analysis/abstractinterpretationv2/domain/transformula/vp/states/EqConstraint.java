@@ -283,12 +283,7 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 		if (mVariables != null) {
 			return mVariables;
 		}
-		final Set<TermVariable> allTvs = new HashSet<>();
-		mPartialArrangement.getAllElements().stream()
-		.forEach(node -> allTvs.addAll(Arrays.asList(node.getTerm().getFreeVars())));
-
-		mPartialArrangement.getAllFunctions().stream()
-		.forEach(func -> allTvs.addAll(Arrays.asList(func.getTerm().getFreeVars())));
+		final Collection<TermVariable> allTvs = getAllTermVariables();
 
 		/*
 		 * note this will probably crash if this method is called on an
@@ -461,17 +456,34 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 		mPartialArrangement.removeElement(elemToHavoc);
 	}
 
+	/**
+	 *
+	 * @return
+	 *
+	 */
 	public Collection<TermVariable> getAllTermVariables() {
-		final Set<TermVariable> result = new HashSet<>();
-		result.addAll(getAllNodes().stream()
-			.filter(node -> node.getTerm() instanceof TermVariable)
-			.map(node -> ((TermVariable) node.getTerm()))
-			.collect(Collectors.toList()));
-		result.addAll(getAllFunctions().stream()
-			.filter(func -> func.getTerm() instanceof TermVariable)
-			.map(func -> ((TermVariable) func.getTerm()))
-			.collect(Collectors.toList()));
-		return result;
+		final Set<TermVariable> allTvs = new HashSet<>();
+		mPartialArrangement.getAllElements().stream()
+			.forEach(node -> allTvs.addAll(Arrays.asList(node.getTerm().getFreeVars())));
+
+		mPartialArrangement.getAllFunctions().stream()
+			.forEach(func -> allTvs.addAll(Arrays.asList(func.getTerm().getFreeVars())));
+		return allTvs;
+//		final Set<TermVariable> result = new HashSet<>();
+//		result.addAll(getAllNodes().stream()
+//			.filter(node -> node.getTerm() instanceof TermVariable)
+//			.map(node -> ((TermVariable) node.getTerm()))
+//			.collect(Collectors.toList()));
+//		result.addAll(getAllFunctions().stream()
+//			.filter(func -> func.getTerm() instanceof TermVariable)
+//			.map(func -> ((TermVariable) func.getTerm()))
+//			.collect(Collectors.toList()));
+//		return result;
+	}
+
+	boolean sanityCheck() {
+		return mPartialArrangement.sanityCheck();
+
 	}
 
 

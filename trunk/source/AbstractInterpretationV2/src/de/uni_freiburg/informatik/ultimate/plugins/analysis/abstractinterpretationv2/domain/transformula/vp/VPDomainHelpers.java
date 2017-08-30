@@ -299,7 +299,8 @@ public class VPDomainHelpers {
 		if (varsToProjectAway.stream().map(tv ->
 			unfrozen.getAllNodes().stream()
 				.anyMatch(node ->
-					Arrays.asList(node.getTerm().getFreeVars()).contains(tv)))
+					VPDomainHelpers.arrayContains(node.getTerm().getFreeVars(), tv)))
+//					Arrays.asList(node.getTerm().getFreeVars()).contains(tv)))
 				.reduce((a, b) -> a || b)
 			.get()) {
 			assert false;

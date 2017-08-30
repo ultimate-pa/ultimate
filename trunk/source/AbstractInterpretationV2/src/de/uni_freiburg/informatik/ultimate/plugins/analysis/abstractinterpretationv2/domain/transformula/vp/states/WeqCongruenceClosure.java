@@ -173,6 +173,9 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>,
 
 	@Override
 	public boolean removeFunction(final FUNCTION func) {
+		if (!hasFunction(func)) {
+			return false;
+		}
 		final CongruenceClosure<NODE,FUNCTION> copy = new CongruenceClosure<>(this);
 		copy.removeFunction(func);
 		mWeakEquivalenceGraph.projectFunction(func, copy);
@@ -187,6 +190,7 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>,
 		for (final NODE funcApp : funcAppsWithFuncCopy) {
 			// change from original: (added second argument)
 			removeElement(funcApp, copy);
+			assert projectedFunctionIsGoneFromWeqGraph(func, mWeakEquivalenceGraph);
 		}
 
 		// remove from the function equivalence relation
@@ -195,9 +199,23 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>,
 		mFunctionToRepresentativeToCcPars.remove(func);
 		mFunctionToRepresentativeToCcChildren.remove(func);
 		mFunctionToFuncApps.removeDomainElement(func);
+		assert projectedFunctionIsGoneFromWeqGraph(func, mWeakEquivalenceGraph);
+		assert sanityCheck();
 		return true;
 	}
 
+
+
+
+	@Override
+	public boolean removeElement(final NODE elem) {
+		if (!hasElement(elem)) {
+			return false;
+		}
+		final CongruenceClosure<NODE,FUNCTION> copy = new CongruenceClosure<>(this);
+		copy.removeElement(elem);
+		return removeElement(elem, copy);
+	}
 
 	private boolean projectedFunctionIsGoneFromWeqGraph(final FUNCTION func,
 			final WeakEquivalenceGraph<ACTION, NODE, FUNCTION> weakEquivalenceGraph) {
@@ -213,12 +231,14 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>,
 	}
 
 	public boolean removeElement(final NODE elem, final CongruenceClosure<NODE, FUNCTION> copy2) {
+		if (!hasElement(elem)) {
+			return false;
+		}
 //		final CongruenceClosure<NODE,FUNCTION> copy = new CongruenceClosure<>(this);
 //		copy.removeElement(elem);
 		mWeakEquivalenceGraph.projectElement(elem, copy2);
 
 		return super.removeElement(elem);
-
 	}
 
 
@@ -309,6 +329,15 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>,
 						-> cc.reportFunctionEquality(aeq.getKey(), aeq.getValue()));
 		}
 		return new WeqCongruenceClosure<>(gPaMeet, weqMeet);
+	}
+
+	@Override
+	public boolean sanityCheck() {
+		boolean res = super.sanityCheck();
+		if (mWeakEquivalenceGraph != null) {
+			res &= mWeakEquivalenceGraph.sanityCheck();
+		}
+		return res;
 	}
 
 	@Override public String toString() {
