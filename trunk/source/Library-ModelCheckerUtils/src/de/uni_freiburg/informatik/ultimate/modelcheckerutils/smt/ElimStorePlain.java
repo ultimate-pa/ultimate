@@ -482,7 +482,7 @@ public class ElimStorePlain {
 					newArray, storeValueRep);
 			}
 			final Term cc = constructIndexValueConnection((ArrayList<Term>) selectIndexRepresentatives, equalityInformation, mMgdScript,
-					rawIndex2replacedIndex, oldCellMapping, eliminatee, quantifier);
+					rawIndex2replacedIndex, oldCellMapping, eliminatee, quantifier, storeIndex);
 			
 			final Term transformedTerm =
 					new SubstitutionWithLocalSimplification(mMgdScript, substitutionMapping).transform(term);
@@ -1183,49 +1183,59 @@ public class ElimStorePlain {
 	public static Term constructIndexValueConnection(final ArrayList<Term> selectIndices,
 			final ThreeValuedEquivalenceRelation<Term> indexEqualityInformation, final ManagedScript mgdScript,
 			final Map<Term, Term> rawIndex2replacedIndex, final Map<Term, ? extends Term> index2value,
-			final TermVariable eliminatee, final int quantifier) {
+			final TermVariable eliminatee, final int quantifier, final Term storeIndex) {
 		final List<Term> resultConjuncts = new ArrayList<Term>();
 		for (int i = 0; i < selectIndices.size(); i++) {
-		for (int j = i+1; j < selectIndices.size(); j++) {
-			if (!indexEqualityInformation.isRepresentative(selectIndices.get(j))) {
-				throw new AssertionError("representatives only");
-			}
-			final Term index1 = selectIndices.get(i);
-			final Term index2 = selectIndices.get(j);
+			for (int j = i+1; j < selectIndices.size(); j++) {
+				if (!indexEqualityInformation.isRepresentative(selectIndices.get(j))) {
+					throw new AssertionError("representatives only");
+				}
+				final Term index1 = selectIndices.get(i);
+				final Term index2 = selectIndices.get(j);
 
-			final Term indexEqualityTerm;
-			final EqualityStatus eqStatus = indexEqualityInformation.getEqualityStatus(index1, index2);
-			switch (eqStatus) {
-			case EQUAL:
-				indexEqualityTerm = mgdScript.getScript().term("true");
-				break;
-			case NOT_EQUAL:
-				indexEqualityTerm = mgdScript.getScript().term("false");
-				break;
-			case UNKNOWN:
-				final Term replacementIndex1 = rawIndex2replacedIndex.get(index1);
-				assert !occursIn(eliminatee, replacementIndex1) : "var is still there";
-				final Term replacementIndex2 = rawIndex2replacedIndex.get(index2);
-				assert !occursIn(eliminatee, replacementIndex2) : "var is still there";
-				indexEqualityTerm = SmtUtils.binaryEquality(mgdScript.getScript(), replacementIndex1,
-						replacementIndex2);
-				break;
-			default:
-				throw new AssertionError();
+				if (storeIndex != null && 
+						indexEqualityInformation.getEqualityStatus(index1, storeIndex) == EqualityStatus.NOT_EQUAL &&
+						indexEqualityInformation.getEqualityStatus(index2, storeIndex) == EqualityStatus.NOT_EQUAL) {
+					// If both indices are different from the store index we can
+					// omit this conjunct. The corresponding old values of the array
+					// will be represented by the new array, hence the congruence
+					// information is already provided by the array theory.
+					continue;
+				}
+
+				final Term indexEqualityTerm;
+				final EqualityStatus eqStatus = indexEqualityInformation.getEqualityStatus(index1, index2);
+				switch (eqStatus) {
+				case EQUAL:
+					indexEqualityTerm = mgdScript.getScript().term("true");
+					break;
+				case NOT_EQUAL:
+					indexEqualityTerm = mgdScript.getScript().term("false");
+					break;
+				case UNKNOWN:
+					final Term replacementIndex1 = rawIndex2replacedIndex.get(index1);
+					assert !occursIn(eliminatee, replacementIndex1) : "var is still there";
+					final Term replacementIndex2 = rawIndex2replacedIndex.get(index2);
+					assert !occursIn(eliminatee, replacementIndex2) : "var is still there";
+					indexEqualityTerm = SmtUtils.binaryEquality(mgdScript.getScript(), replacementIndex1,
+							replacementIndex2);
+					break;
+				default:
+					throw new AssertionError();
+				}
+				if (SmtUtils.isFalse(indexEqualityTerm)) {
+					// conjunct will become true
+					continue;
+				}
+				final Term value1 = index2value.get(index1);
+				assert !occursIn(eliminatee, value1) : "var is still there";
+				final Term value2 = index2value.get(index2);
+				assert !occursIn(eliminatee, value2) : "var is still there";
+				final Term valueEqualityTerm = SmtUtils.binaryEquality(mgdScript.getScript(), value1, value2);
+				final Term implication = SmtUtils.or(mgdScript.getScript(),
+						SmtUtils.not(mgdScript.getScript(), indexEqualityTerm), valueEqualityTerm);
+				resultConjuncts.add(implication);
 			}
-			if (SmtUtils.isFalse(indexEqualityTerm)) {
-				// conjunct will become true
-				continue;
-			}
-			final Term value1 = index2value.get(index1);
-			assert !occursIn(eliminatee, value1) : "var is still there";
-			final Term value2 = index2value.get(index2);
-			assert !occursIn(eliminatee, value2) : "var is still there";
-			final Term valueEqualityTerm = SmtUtils.binaryEquality(mgdScript.getScript(), value1, value2);
-			final Term implication = SmtUtils.or(mgdScript.getScript(),
-					SmtUtils.not(mgdScript.getScript(), indexEqualityTerm), valueEqualityTerm);
-			resultConjuncts.add(implication);
-		}
 		}
 		final Term resultConjunction = SmtUtils.and(mgdScript.getScript(), resultConjuncts);
 		if (quantifier == QuantifiedFormula.EXISTS) {
