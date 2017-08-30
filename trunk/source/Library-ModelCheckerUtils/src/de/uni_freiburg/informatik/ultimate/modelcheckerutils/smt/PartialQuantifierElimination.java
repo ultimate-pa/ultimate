@@ -72,7 +72,7 @@ public class PartialQuantifierElimination {
 	static final boolean USE_UPD = true;
 	static final boolean USE_IRD = true;
 	static final boolean USE_TIR = true;
-	static final boolean USE_SSD = !false;
+	static final boolean USE_SSD = false;
 	static final boolean USE_SOS = true;
 	static final boolean USE_USR = false;
 	private static boolean mPushPull = true;
