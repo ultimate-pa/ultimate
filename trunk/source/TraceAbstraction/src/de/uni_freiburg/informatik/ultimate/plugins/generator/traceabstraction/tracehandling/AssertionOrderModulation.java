@@ -48,15 +48,13 @@ public class AssertionOrderModulation<LETTER> {
 
 			AssertCodeBlockOrder.OUTSIDE_LOOP_FIRST1,
 
-			AssertCodeBlockOrder.INSIDE_LOOP_FIRST1,
-
-			AssertCodeBlockOrder.MIX_INSIDE_OUTSIDE,
-
 			AssertCodeBlockOrder.OUTSIDE_LOOP_FIRST2,
 
-			AssertCodeBlockOrder.TERMS_WITH_SMALL_CONSTANTS_FIRST
+			AssertCodeBlockOrder.TERMS_WITH_SMALL_CONSTANTS_FIRST,
 
-	};
+			AssertCodeBlockOrder.INSIDE_LOOP_FIRST1,
+
+			AssertCodeBlockOrder.MIX_INSIDE_OUTSIDE, };
 
 	private final ILogger mLogger;
 	private final PathProgramCache<LETTER> mPathProgramCache;
