@@ -211,13 +211,8 @@ public class AffineRelation {
 		}
 	}
 
-	/**
-	 * Returns the name of the function symbol which is one of the following {=, <=, >=, <, >, distinct }.
-	 *
-	 * @return
-	 */
-	public String getFunctionSymbolName() {
-		return mRelationSymbol.toString();
+	public RelationSymbol getRelationSymbol() {
+		return mRelationSymbol;
 	}
 
 	/**

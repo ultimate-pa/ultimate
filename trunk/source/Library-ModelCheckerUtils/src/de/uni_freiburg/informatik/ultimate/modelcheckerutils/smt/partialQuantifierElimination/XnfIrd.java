@@ -163,9 +163,9 @@ public class XnfIrd extends XjunctPartialQuantifierElimination {
 					// unable to eliminate quantifier
 					return null;
 				}
-				final String functionSymbol = affineRelation.getFunctionSymbolName();
-				switch (functionSymbol) {
-				case "=":
+				final RelationSymbol relationSymbol = affineRelation.getRelationSymbol();
+				switch (relationSymbol) {
+				case EQ:
 					if (quantifier == QuantifiedFormula.EXISTS) {
 						// unable to eliminate quantifier
 						return null;
@@ -176,7 +176,7 @@ public class XnfIrd extends XjunctPartialQuantifierElimination {
 						throw new AssertionError("unknown quantifier");
 					}
 					break;
-				case "distinct":
+				case DISTINCT:
 					if (quantifier == QuantifiedFormula.EXISTS) {
 						// we may drop this parameter
 						numberOfAntiDer++;
@@ -187,10 +187,10 @@ public class XnfIrd extends XjunctPartialQuantifierElimination {
 						throw new AssertionError("unknown quantifier");
 					}
 					break;
-				case ">":
-				case ">=":
-				case "<":
-				case "<=":
+				case GREATER:
+				case GEQ:
+				case LESS:
+				case LEQ:
 					if (inequalitiesWithTv > 0) {
 						// unable to eliminate quantifier, we may drop at most
 						// one inequality
