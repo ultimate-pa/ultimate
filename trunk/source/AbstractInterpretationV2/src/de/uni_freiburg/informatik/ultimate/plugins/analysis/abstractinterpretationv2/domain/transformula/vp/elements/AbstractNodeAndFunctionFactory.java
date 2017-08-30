@@ -10,7 +10,6 @@ public abstract class AbstractNodeAndFunctionFactory<
 		CONTENT>
 			extends AbstractCCElementFactory<NODE, FUNCTION, CONTENT> {
 
-
 	public abstract NODE getOrConstructNode(CONTENT c);
 
 	public abstract FUNCTION getOrConstructFunction(Term term);
@@ -19,3 +18,4 @@ public abstract class AbstractNodeAndFunctionFactory<
 
 	public abstract NODE getExistingNode(Term term);
 }
+

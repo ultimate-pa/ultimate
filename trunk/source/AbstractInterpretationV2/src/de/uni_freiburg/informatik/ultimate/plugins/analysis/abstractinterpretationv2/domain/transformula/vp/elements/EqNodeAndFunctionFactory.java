@@ -30,13 +30,16 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.CommuhashNormalForm;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainPreanalysis;
@@ -94,7 +97,8 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 		mMgdScript.unlock(this);
 		EqNode result = mTermToEqNode.get(normalizedTerm);
 		if (result == null) {
-			result = new EqNonAtomicBaseNode(normalizedTerm, this);
+//			result = new EqNonAtomicBaseNode(normalizedTerm, this);
+			result = getBaseElement(normalizedTerm);
 			mTermToEqNode.put(normalizedTerm, result);
 		}
 		assert result instanceof EqNonAtomicBaseNode;
@@ -114,17 +118,20 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 				args.add(getOrConstructNode(index));
 			}
 
-			result = new EqFunctionNode(function, args, selectTerm, this);
+//			result = new EqFunctionNode(function, args, selectTerm, this);
+			result = super.getFuncAppElement(function, args);
 			mTermToEqNode.put(selectTerm, result);
 		}
 		assert result instanceof EqFunctionNode;
+		assert result.getTerm() == selectTerm;
 		return result;
 	}
 
 	private EqNode getOrConstructEqAtomicBaseNode(final Term term) {
 		EqNode result = mTermToEqNode.get(term);
 		if (result == null) {
-			result = new EqAtomicBaseNode(term, this);
+//			result = new EqAtomicBaseNode(term, this);
+			result = getBaseElement(term);
 			mTermToEqNode.put(term, result);
 		}
 		assert result instanceof EqAtomicBaseNode;
@@ -174,7 +181,7 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 	@Override
 	public EqNode getExistingNode(final Term term) {
 		final Term normalizedTerm;
-		if (term instanceof ApplicationTerm && ((ApplicationTerm) term).getParameters().length > 0) {
+		if (term instanceof ApplicationTerm && !SmtUtils.isConstant(term)) {
 			mMgdScript.lock(this);
 			normalizedTerm = new CommuhashNormalForm(
 					mPreAnalysis.getServices(), mMgdScript.getScript()).transform(term);
@@ -202,15 +209,26 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 
 	@Override
 	protected EqNode newBaseElement(final Term c) {
-		assert false;
-		return getOrConstructEqAtomicBaseNode(c);
+		assert SmtUtils.isConstant(c) || c instanceof TermVariable || c instanceof ConstantTerm;
+		return new EqAtomicBaseNode(c, this);
+//		assert false;
+//		return getOrConstructEqAtomicBaseNode(c);
 	}
 
 	@Override
-	protected EqNode newFuncAppElement(final EqFunction f, final List<EqNode> args) {
-//		return getOrConstructEqFunctionNode(selectTerm)
-		assert false;
-		return null;
+	protected EqNode newFuncAppElement(final EqFunction func, final List<EqNode> args) {
+		mMgdScript.lock(this);
+//		final Term[] argTerms = args.stream().map(node -> node.getTerm()).collect(Collectors.toList())
+//				.toArray(new Term[args.size()]);
+//		final ApplicationTerm selectTerm = (ApplicationTerm) mMgdScript.term(this, f.getFunctionName(), argTerms);
+		final ArrayIndex ai = new ArrayIndex(args.stream().map(node -> node.getTerm()).collect(Collectors.toList()));
+		final Term selectTerm = SmtUtils.multiDimensionalSelect(mMgdScript.getScript(), func.getTerm(), ai);
+		mMgdScript.unlock(this);
+		return new EqFunctionNode(func, args, selectTerm, this);
+//		return getExistingNode(selectTerm);
+//		return getOrConstructEqFunctionNode(selectTerm);
+//		assert false;
+//		return null;
 	}
 
 }

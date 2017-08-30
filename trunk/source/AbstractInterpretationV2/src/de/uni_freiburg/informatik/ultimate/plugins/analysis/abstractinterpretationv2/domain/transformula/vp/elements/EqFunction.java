@@ -68,6 +68,7 @@ public class EqFunction implements IEqFunctionIdentifier<EqNode, EqFunction> {
 		return mFactory.constructRenamedEqFunction(this, substitutionMapping);
 	}
 
+	@Override
 	public String getFunctionName() {
 //		assert false : "what's the right string here?";
 //		return mPvoc.toString();
