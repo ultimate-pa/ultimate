@@ -1,0 +1,48 @@
+// Small example that shows that there is a problem if we do
+// not move from C to S for emtpy B.
+// If we forget to do so, the following transition is missing.
+// 		("({},{q2,q4},{},{q2})" "a" "({},{},{q5},{})")
+//
+// Author: heizmann@informatik.uni-freiburg.de
+// Date: 2017-08-30
+
+NestedWordAutomaton complementNCSB3 = buchiComplementNCSBLazy3(nwa);
+print(numberOfStates(complementNCSB3));
+assert(numberOfStates(complementNCSB3) == 10);
+print(complementNCSB3);
+
+NestedWordAutomaton complementNCSB = buchiComplementNCSB(nwa);
+print(numberOfStates(complementNCSB));
+assert(numberOfStates(complementNCSB) == 10);
+print(complementNCSB);
+
+NestedWordAutomaton complementHeiMat2 = buchiComplementFKV(nwa, "HEIMAT2", 77);
+print(numberOfStates(complementHeiMat2));
+assert(numberOfStates(complementHeiMat2) == 9);
+print(complementHeiMat2);
+
+NestedWordAutomaton complementElastic = buchiComplementFKV(nwa, "ELASTIC", 77);
+print(numberOfStates(complementElastic));
+assert(numberOfStates(complementElastic) == 9);
+print(complementElastic);
+
+
+
+
+NestedWordAutomaton nwa = (
+	callAlphabet = { },
+	internalAlphabet = {a b},
+	returnAlphabet = { },
+	states = {q0 q1 q2 q3 q4 q5},
+	initialStates = {q0},
+	finalStates = {q1 q2 q4},
+	callTransitions = { },
+	internalTransitions = { 
+		(q0 a q0) 
+		(q0 a q1) 
+        (q0 b q4)
+        (q1 b q2)
+		(q4 a q5) 
+	}, 
+	returnTransitions = { }
+);
