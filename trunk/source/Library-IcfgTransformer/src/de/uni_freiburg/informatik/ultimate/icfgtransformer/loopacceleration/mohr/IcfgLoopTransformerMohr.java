@@ -48,7 +48,6 @@ import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
@@ -233,7 +232,7 @@ public class IcfgLoopTransformerMohr<INLOC extends IcfgLocation, OUTLOC extends 
 			pathTerms.add(varUpdate);
 		}
 		pathTerms.add(symbolicMemory.getKappaMin());
-		final Term loopSummary = Util.and(mManagedScript.getScript(), pathTerms.toArray(new Term[pathTerms.size()]));
+		final Term loopSummary = SmtUtils.and(mManagedScript.getScript(), pathTerms.toArray(new Term[pathTerms.size()]));
 
 		final Map<IProgramVar, TermVariable> inVars = symbolicMemory.getInVars();
 		final Map<IProgramVar, TermVariable> outVars = symbolicMemory.getOutVars();

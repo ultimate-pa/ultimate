@@ -37,7 +37,6 @@ import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
@@ -163,7 +162,7 @@ public class EquivalentCells {
 				conjuncts.add(binarized);
 			}
 		}
-		return Util.and(mScript, conjuncts.toArray(new Term[conjuncts.size()]));
+		return SmtUtils.and(mScript, conjuncts.toArray(new Term[conjuncts.size()]));
 	}
 
 	private Map<TermVariable, TermVariable> computeRepresentatives(final UnionFind<TermVariable> uf) {

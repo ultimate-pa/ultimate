@@ -120,8 +120,8 @@ public class PredicateUtils {
 	// //We want to return true if (fState1 && fTrans)-> fState2 is valid
 	// //This is the case if (fState1 && fTrans && !fState2) is unsatisfiable
 	// Term f = SmtUtils.not(boogie2smt.getScript(),ps2renamed);
-	// f = Util.and(boogie2smt.getScript(),fTrans,f);
-	// f = Util.and(boogie2smt.getScript(),ps1renamed, f);
+	// f = SmtUtils.and(boogie2smt.getScript(),fTrans,f);
+	// f = SmtUtils.and(boogie2smt.getScript(),ps1renamed, f);
 	//
 	//// f = new FormulaUnLet().unlet(f);
 	// boogie2smt.getScript().assertTerm(f);

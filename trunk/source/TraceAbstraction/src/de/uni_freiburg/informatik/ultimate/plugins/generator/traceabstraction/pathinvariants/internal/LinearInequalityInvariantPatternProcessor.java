@@ -64,7 +64,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgInternalTransition;
@@ -959,7 +958,7 @@ public final class LinearInequalityInvariantPatternProcessor
 					final Term term = transformNegatedConjunction(ConstraintsType.Normal, sourceInvariantDnf,
 							transitionDnf, transitionPatternDnf, negatedTargetInvariantDnf);
 
-					constraint = Util.and(mSolver, constraint, term);
+					constraint = SmtUtils.and(mSolver, constraint, term);
 				}
 
 				mLogger.debug("Asserting constraint: " + constraint);

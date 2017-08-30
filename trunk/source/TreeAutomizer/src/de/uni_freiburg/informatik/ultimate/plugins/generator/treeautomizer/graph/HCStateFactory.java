@@ -32,18 +32,15 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
-import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HCSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HornClausePredicateSymbol;
-import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HornClausePredicateSymbol.HornClauseDontCareSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.logic.simplification.SimplifyDDA;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 
@@ -96,7 +93,7 @@ public class HCStateFactory implements IMergeStateFactory<IPredicate>, IIntersec
 		state1PredSymbols.addAll(((HCPredicate) state1).getHcPredicateSymbols());
 
 		final Term conjoinedFormula = mSimplifier.getSimplifiedTerm(
-				Util.and(mBackendSmtSolverScript.getScript(), state1.getFormula(), state2.getFormula()));
+				SmtUtils.and(mBackendSmtSolverScript.getScript(), state1.getFormula(), state2.getFormula()));
 
 		final Set<IPredicate> ps = new HashSet<>();
 		ps.add(state1);
@@ -128,7 +125,7 @@ public class HCStateFactory implements IMergeStateFactory<IPredicate>, IIntersec
 				varsForHcPred = ((HCPredicate) pred).getSignature();
 			}
 			mergedFormula = mSimplifier
-					.getSimplifiedTerm(Util.or(mBackendSmtSolverScript.getScript(), mergedFormula, pred.getFormula()));
+					.getSimplifiedTerm(SmtUtils.or(mBackendSmtSolverScript.getScript(), mergedFormula, pred.getFormula()));
 		}
 		if (mergedLocations.isEmpty()) {
 			return mPredicateFactory.newPredicate(mergedFormula);

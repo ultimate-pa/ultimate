@@ -198,7 +198,7 @@ public final class TransFormulaUtils {
 			final Term updatedFormula =
 					new SubstitutionWithLocalSimplification(mgdScript, substitutionMapping).transform(originalFormula);
 			nonTheoryConsts.addAll(transFormula.get(i).getNonTheoryConsts());
-			formula = Util.and(script, formula, updatedFormula);
+			formula = SmtUtils.and(script, formula, updatedFormula);
 		}
 
 		formula = new FormulaUnLet().unlet(formula);
@@ -222,7 +222,7 @@ public final class TransFormulaUtils {
 			formula = eliminated;
 		} else {
 			final XnfDer xnfDer = new XnfDer(mgdScript, services);
-			formula = Util.and(script,
+			formula = SmtUtils.and(script,
 					xnfDer.tryToEliminate(QuantifiedFormula.EXISTS, SmtUtils.getConjuncts(formula), auxVars));
 		}
 		if (simplify) {
@@ -380,7 +380,7 @@ public final class TransFormulaUtils {
 					assert termInVar != null;
 					assert termOutVar != null;
 					final Term equality = mgdScript.getScript().term("=", termInVar, termOutVar);
-					renamedFormulas[i] = Util.and(mgdScript.getScript(), renamedFormulas[i], equality);
+					renamedFormulas[i] = SmtUtils.and(mgdScript.getScript(), renamedFormulas[i], equality);
 				}
 			}
 
@@ -391,11 +391,11 @@ public final class TransFormulaUtils {
 
 		Term resultFormula;
 		if (useBranchEncoders) {
-			resultFormula = Util.and(mgdScript.getScript(), renamedFormulas);
-			final Term atLeastOneBranchTaken = Util.or(mgdScript.getScript(), branchIndicators);
-			resultFormula = Util.and(mgdScript.getScript(), resultFormula, atLeastOneBranchTaken);
+			resultFormula = SmtUtils.and(mgdScript.getScript(), renamedFormulas);
+			final Term atLeastOneBranchTaken = SmtUtils.or(mgdScript.getScript(), branchIndicators);
+			resultFormula = SmtUtils.and(mgdScript.getScript(), resultFormula, atLeastOneBranchTaken);
 		} else {
-			resultFormula = Util.or(mgdScript.getScript(), renamedFormulas);
+			resultFormula = SmtUtils.or(mgdScript.getScript(), renamedFormulas);
 		}
 		final LBool termSat = Util.checkSat(mgdScript.getScript(), resultFormula);
 		Infeasibility inFeasibility;

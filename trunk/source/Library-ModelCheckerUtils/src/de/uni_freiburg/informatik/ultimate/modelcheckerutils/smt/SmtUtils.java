@@ -242,7 +242,7 @@ public final class SmtUtils {
 				conjuncts.add(script.term(functionName, params[i], params[j]));
 			}
 		}
-		return Util.and(script, conjuncts.toArray(new Term[conjuncts.size()]));
+		return SmtUtils.and(script, conjuncts.toArray(new Term[conjuncts.size()]));
 	}
 
 	public static boolean firstParamIsBool(final ApplicationTerm term) {
@@ -261,9 +261,9 @@ public final class SmtUtils {
 	public static Term binaryBooleanEquality(final Script script, final Term lhs, final Term rhs) {
 		assert SmtSortUtils.isBoolSort(lhs.getSort());
 		assert SmtSortUtils.isBoolSort(rhs.getSort());
-		final Term bothTrue = Util.and(script, lhs, rhs);
-		final Term bothFalse = Util.and(script, SmtUtils.not(script, lhs), SmtUtils.not(script, rhs));
-		return Util.or(script, bothTrue, bothFalse);
+		final Term bothTrue = SmtUtils.and(script, lhs, rhs);
+		final Term bothFalse = SmtUtils.and(script, SmtUtils.not(script, lhs), SmtUtils.not(script, rhs));
+		return SmtUtils.or(script, bothTrue, bothFalse);
 	}
 
 	/**
@@ -273,9 +273,9 @@ public final class SmtUtils {
 	public static Term binaryBooleanNotEquals(final Script script, final Term lhs, final Term rhs) {
 		assert SmtSortUtils.isBoolSort(lhs.getSort());
 		assert SmtSortUtils.isBoolSort(rhs.getSort());
-		final Term oneIsTrue = Util.or(script, lhs, rhs);
-		final Term oneIsFalse = Util.or(script, SmtUtils.not(script, lhs), SmtUtils.not(script, rhs));
-		return Util.and(script, oneIsTrue, oneIsFalse);
+		final Term oneIsTrue = SmtUtils.or(script, lhs, rhs);
+		final Term oneIsFalse = SmtUtils.or(script, SmtUtils.not(script, lhs), SmtUtils.not(script, rhs));
+		return SmtUtils.and(script, oneIsTrue, oneIsFalse);
 	}
 
 	/**
@@ -344,7 +344,7 @@ public final class SmtUtils {
 		for (int i = 0; i < lhs.size(); i++) {
 			equalities[i] = binaryEquality(script, lhs.get(i), rhs.get(i));
 		}
-		return Util.and(script, equalities);
+		return SmtUtils.and(script, equalities);
 	}
 
 	/**
@@ -355,7 +355,7 @@ public final class SmtUtils {
 		assert index1.size() == index2.size();
 		final Term lhs = pairwiseEquality(script, index1, index2);
 		final Term rhs = binaryEquality(script, value1, value2);
-		return Util.or(script, not(script, lhs), rhs);
+		return SmtUtils.or(script, not(script, lhs), rhs);
 	}
 
 	/**

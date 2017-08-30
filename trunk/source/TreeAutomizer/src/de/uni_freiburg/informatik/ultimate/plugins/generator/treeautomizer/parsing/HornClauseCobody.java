@@ -123,7 +123,7 @@ public class HornClauseCobody {
 	public Term getTransitionFormula(ManagedScript script, Theory theory) {
 		final Term[] transitions = mTransitions.toArray(new Term[mTransitions.size()]);
 		return theory.and(transitions);
-		//return Util.and(script.getScript(), transitions);
+		//return SmtUtils.and(script.getScript(), transitions);
 	}
 	
 	List<HornClausePredicateSymbol> getPredicates(final HCSymbolTable symbolTable) {

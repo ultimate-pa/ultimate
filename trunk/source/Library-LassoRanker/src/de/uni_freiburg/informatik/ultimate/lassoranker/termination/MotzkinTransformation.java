@@ -45,7 +45,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SMTPrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
@@ -328,8 +327,8 @@ public class MotzkinTransformation extends InstanceCounting {
 			final Term nonClassical = mScript.term(">", SmtUtils.sum(mScript, SmtSortUtils.getRealSort(mScript),
 					summands.toArray(new Term[summands.size()])), mScript.decimal("0"));
 
-			conjunction.add(Util.or(mScript, classical, nonClassical));
-			return Util.and(mScript, conjunction.toArray(new Term[conjunction.size()]));
+			conjunction.add(SmtUtils.or(mScript, classical, nonClassical));
+			return SmtUtils.and(mScript, conjunction.toArray(new Term[conjunction.size()]));
 		}
 	}
 
@@ -419,7 +418,7 @@ public class MotzkinTransformation extends InstanceCounting {
 						}
 					}
 				}
-				conjunction.add(Util.or(mScript, disjunction.toArray(new Term[disjunction.size()])));
+				conjunction.add(SmtUtils.or(mScript, disjunction.toArray(new Term[disjunction.size()])));
 			} else {
 				// Fixed values
 				final Term zero = mScript.decimal("0");
@@ -438,7 +437,7 @@ public class MotzkinTransformation extends InstanceCounting {
 					}
 					disjunction.add(doTransform(fixedCoefficients, vars));
 				}
-				conjunction.add(Util.or(mScript, disjunction.toArray(new Term[disjunction.size()])));
+				conjunction.add(SmtUtils.or(mScript, disjunction.toArray(new Term[disjunction.size()])));
 			}
 		} else if (mAnalysisType == AnalysisType.NONLINEAR) {
 			conjunction.add(doTransform(mCoefficients, vars));
@@ -448,14 +447,14 @@ public class MotzkinTransformation extends InstanceCounting {
 				final LinearInequality li = mInequalities.get(i);
 				if (li.mMotzkinCoefficient == PossibleMotzkinCoefficients.ZERO_AND_ONE) {
 					// Fixing Motzkin coefficient to { 0, 1 }
-					conjunction.add(Util.or(mScript, mScript.term("=", mCoefficients[i], mScript.decimal("0")),
+					conjunction.add(SmtUtils.or(mScript, mScript.term("=", mCoefficients[i], mScript.decimal("0")),
 							mScript.term("=", mCoefficients[i], mScript.decimal("1"))));
 				}
 			}
 		} else {
 			throw new AssertionError("Illegal enum value " + mAnalysisType);
 		}
-		Term t = Util.and(mScript, conjunction.toArray(new Term[conjunction.size()]));
+		Term t = SmtUtils.and(mScript, conjunction.toArray(new Term[conjunction.size()]));
 
 		// Possibly annotate the term
 		if (mAnnotateTerms && mAnnotation != null) {

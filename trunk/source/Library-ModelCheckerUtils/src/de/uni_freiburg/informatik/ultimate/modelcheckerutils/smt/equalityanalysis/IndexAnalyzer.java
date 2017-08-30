@@ -39,7 +39,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.ReplacementVarFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
@@ -108,7 +107,7 @@ public class IndexAnalyzer {
 					mTransFormula, equalitiesOriginal, mSymbolTable, mRepvarFactory);
 			final Term notequalsRenamed = ModifiableTransFormulaUtils.translateTermVariablesToInVars(mScript,
 					mTransFormula, notequalsOriginal, mSymbolTable, mRepvarFactory);
-			termWithAdditionalInvariants = Util.and(mScript, mTerm, equalitiesRenamed, notequalsRenamed);
+			termWithAdditionalInvariants = SmtUtils.and(mScript, mTerm, equalitiesRenamed, notequalsRenamed);
 		} else {
 			termWithAdditionalInvariants = mTerm;
 		}

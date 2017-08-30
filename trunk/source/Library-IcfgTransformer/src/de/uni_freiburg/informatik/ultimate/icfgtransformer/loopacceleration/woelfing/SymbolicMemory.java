@@ -32,9 +32,9 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
@@ -147,7 +147,7 @@ public class SymbolicMemory {
 		Term term = mScript.getScript().term("true");
 
 		for (final Map.Entry<TermVariable, Term> entry : mVariableTerms.entrySet()) {
-			term = Util.and(mScript.getScript(), term, mScript.getScript().term("=", entry.getKey(), entry.getValue()));
+			term = SmtUtils.and(mScript.getScript(), term, mScript.getScript().term("=", entry.getKey(), entry.getValue()));
 		}
 
 		return term;

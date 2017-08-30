@@ -267,14 +267,14 @@ public class IteratedSymbolicMemory {
 						mScript.getScript().term("<=", mScript.getScript().numeral("0"), var));
 			}
 
-			tBackPart = Util.and(mScript.getScript(), tBackPartAddition, newCondition);
+			tBackPart = SmtUtils.and(mScript.getScript(), tBackPartAddition, newCondition);
 
 			if (!freeVars.isEmpty()) {
 				tBackPartAddition = mScript.getScript().quantifier(QuantifiedFormula.EXISTS,
 						freeVars.toArray(new TermVariable[freeVars.size()]), tBackPartAddition);
 			}
 
-			tBackPart = Util.and(mScript.getScript(), tBackPart, tBackPartAddition);
+			tBackPart = SmtUtils.and(mScript.getScript(), tBackPart, tBackPartAddition);
 
 			if (!tempNewPathCounters.isEmpty()) {
 				tBackPart = mScript.getScript().quantifier(QuantifiedFormula.EXISTS,

@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTabl
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
@@ -109,11 +110,11 @@ public class SymbolicMemory {
 		mKappas.add(k);
 		final TermVariable t = mManagedScript.variable("tau" + mCurrentPath, mManagedScript.getScript().sort("Int"));
 		mKappa2Tau.put(k, t);
-		final Term range = Util.and(mManagedScript.getScript(),
+		final Term range = SmtUtils.and(mManagedScript.getScript(),
 				mManagedScript.getScript().term("<=", Rational.ZERO.toTerm(mManagedScript.getScript().sort("Int")), t),
 				mManagedScript.getScript().term("<", t, k));
 		mRangeTerms.add(range);
-		final Term rangeEx = Util.and(mManagedScript.getScript(),
+		final Term rangeEx = SmtUtils.and(mManagedScript.getScript(),
 				mManagedScript.getScript().term("<=", Rational.ZERO.toTerm(mManagedScript.getScript().sort("Int")), t),
 				mManagedScript.getScript().term("<=", t, k));
 		mRangeExTerms.add(rangeEx);
@@ -284,7 +285,7 @@ public class SymbolicMemory {
 		}
 
 		conjTerms.add(cleanReplacedGuard);
-		final Term formulaTerm = Util.and(mManagedScript.getScript(), conjTerms.toArray(new Term[conjTerms.size()]));
+		final Term formulaTerm = SmtUtils.and(mManagedScript.getScript(), conjTerms.toArray(new Term[conjTerms.size()]));
 		final Term ex = mCurrentPath > 0
 				? mManagedScript.getScript().quantifier(QuantifiedFormula.EXISTS, exitsTaus, formulaTerm) : formulaTerm;
 		final TermVariable[] allTaus = new TermVariable[1];
@@ -309,7 +310,7 @@ public class SymbolicMemory {
 		final Map<Term, Term> tau2Kappa = new HashMap<>();
 		mKappa2Tau.forEach((k,v) -> tau2Kappa.put(v, k));
 
-		final Term result = Util.and(mManagedScript.getScript(), terms.toArray(new Term[terms.size()]));
+		final Term result = SmtUtils.and(mManagedScript.getScript(), terms.toArray(new Term[terms.size()]));
 		return new Substitution(mManagedScript, tau2Kappa).transform(result);
 	}
 

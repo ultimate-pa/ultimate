@@ -39,7 +39,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
-import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
@@ -190,7 +189,7 @@ public class BasicPredicateFactory {
 			if (isDontCare(p)) {
 				return mDontCareTerm;
 			}
-			term = Util.or(mScript, term, p.getFormula());
+			term = SmtUtils.or(mScript, term, p.getFormula());
 		}
 		if (withSimplifyDDA) {
 			term = SmtUtils.simplify(mMgdScript, term, mServices, mSimplificationTechnique);
@@ -204,7 +203,7 @@ public class BasicPredicateFactory {
 			if (isDontCare(p)) {
 				return mDontCareTerm;
 			}
-			term = Util.and(mScript, term, p.getFormula());
+			term = SmtUtils.and(mScript, term, p.getFormula());
 		}
 		if (st != SimplificationTechnique.NONE) {
 			return SmtUtils.simplify(mMgdScript, term, mServices, st);

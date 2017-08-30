@@ -210,21 +210,21 @@ public class ModuloNeighborTransformation extends TransitionPreprocessor {
 				{
 					final Map<Term, Term> substitutionMapping = Collections
 							.singletonMap(someModuloTermWithConstantDivisor, constructInRangeResult(dividend));
-					final Term case1 = Util.and(script, constructInRangeBounds(script, dividend, divisor),
+					final Term case1 = SmtUtils.and(script, constructInRangeBounds(script, dividend, divisor),
 							new SubstitutionWithLocalSimplification(mgdScript, substitutionMapping).transform(term));
 					cases.add(case1);
 				}
 				{
 					final Map<Term, Term> substitutionMapping = Collections.singletonMap(
 							someModuloTermWithConstantDivisor, constructLeftIntervalResult(script, dividend, divisor));
-					final Term case2 = Util.and(script, constructLeftIntervalBounds(script, dividend, divisor),
+					final Term case2 = SmtUtils.and(script, constructLeftIntervalBounds(script, dividend, divisor),
 							new SubstitutionWithLocalSimplification(mgdScript, substitutionMapping).transform(term));
 					cases.add(case2);
 				}
 				{
 					final Map<Term, Term> substitutionMapping = Collections.singletonMap(
 							someModuloTermWithConstantDivisor, constructRightIntervalResult(script, dividend, divisor));
-					final Term case3 = Util.and(script, constructRightIntervalBounds(script, dividend, divisor),
+					final Term case3 = SmtUtils.and(script, constructRightIntervalBounds(script, dividend, divisor),
 							new SubstitutionWithLocalSimplification(mgdScript, substitutionMapping).transform(term));
 					cases.add(case3);
 				}
@@ -232,7 +232,7 @@ public class ModuloNeighborTransformation extends TransitionPreprocessor {
 					final Map<Term, Term> substitutionMapping = Collections.singletonMap(
 							someModuloTermWithConstantDivisor,
 							constructNoNeighborIntervalResult(script, dividend, divisor));
-					final Term case4 = Util.and(script, constructNoNeighborIntervalBounds(script, dividend, divisor),
+					final Term case4 = SmtUtils.and(script, constructNoNeighborIntervalBounds(script, dividend, divisor),
 							new SubstitutionWithLocalSimplification(mgdScript, substitutionMapping).transform(term));
 					cases.add(case4);
 				}

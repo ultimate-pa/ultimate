@@ -40,7 +40,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
@@ -118,7 +117,7 @@ public class HCHoareTripleChecker {
 		for (int i = 0; i < pre.size(); i++) {
 			final Term preCondConjunct = unify(pre.get(i), hornClause.getTermVariablesForPredPos(i));
 			final Term closedPreCondConjunct = close(preCondConjunct, mSymbolTable);
-			preConditionFormula = Util.and(mManagedScript.getScript(), preConditionFormula, closedPreCondConjunct);
+			preConditionFormula = SmtUtils.and(mManagedScript.getScript(), preConditionFormula, closedPreCondConjunct);
 		}
 		mManagedScript.assertTerm(this, preConditionFormula);
 
