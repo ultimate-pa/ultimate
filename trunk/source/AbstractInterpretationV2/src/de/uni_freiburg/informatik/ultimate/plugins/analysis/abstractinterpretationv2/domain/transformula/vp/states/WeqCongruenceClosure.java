@@ -230,15 +230,28 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>,
 		return true;
 	}
 
-	public boolean removeElement(final NODE elem, final CongruenceClosure<NODE, FUNCTION> copy2) {
+	public boolean removeElement(final NODE elem, final CongruenceClosure<NODE, FUNCTION> copy) {
 		if (!hasElement(elem)) {
 			return false;
 		}
-//		final CongruenceClosure<NODE,FUNCTION> copy = new CongruenceClosure<>(this);
-//		copy.removeElement(elem);
-		mWeakEquivalenceGraph.projectElement(elem, copy2);
+		mWeakEquivalenceGraph.projectElement(elem, copy);
 
-		return super.removeElement(elem);
+		super.purgeElem(elem);
+
+		/*
+		 * recursive call: if an element is removed, all the function applications that have it as an argument are
+		 * removed, too
+		 */
+		for (final NODE parent : new HashSet<>(mElementToParents.getImage(elem))) {
+			removeElement(parent, copy); // change
+		}
+		mElementToParents.removeDomainElement(elem);
+		mElementToParents.removeRangeElement(elem);
+
+		assert elementIsFullyRemoved(elem);
+		return true;
+
+
 	}
 
 

@@ -61,7 +61,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 	 * stores all known parents for an element -- used for remove method to also remove dependent elements
 	 * (might be used for other dependencies, too..
 	 */
-	private final HashRelation<ELEM, ELEM> mElementToParents;
+	protected final HashRelation<ELEM, ELEM> mElementToParents;
 	private boolean mIsInconsistent;
 	/**
 	 * Constructs CongruenceClosure instance without any equalities or
@@ -587,6 +587,23 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 			return false;
 		}
 
+		purgeElem(elem);
+
+		/*
+		 * recursive call: if an element is removed, all the function applications that have it as an argument are
+		 * removed, too
+		 */
+		for (final ELEM parent : new HashSet<>(mElementToParents.getImage(elem))) {
+			removeElement(parent);
+		}
+		mElementToParents.removeDomainElement(elem);
+		mElementToParents.removeRangeElement(elem);
+
+		assert elementIsFullyRemoved(elem);
+		return true;
+	}
+
+	protected void purgeElem(final ELEM elem) {
 		final boolean elemWasRepresentative = mElementTVER.isRepresentative(elem);
 		final ELEM newRep = mElementTVER.removeElement(elem);
 
@@ -631,19 +648,6 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 		}
 
 		mFunctionToFuncApps.removeRangeElement(elem);
-
-		/*
-		 * recursive call: if an element is removed, all the function applications that have it as an argument are
-		 * removed, too
-		 */
-		for (final ELEM parent : new HashSet<>(mElementToParents.getImage(elem))) {
-			removeElement(parent);
-		}
-		mElementToParents.removeDomainElement(elem);
-		mElementToParents.removeRangeElement(elem);
-
-		assert elementIsFullyRemoved(elem);
-		return true;
 	}
 
 	/**
@@ -651,7 +655,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 	 * @param elem
 	 * @return
 	 */
-	private boolean elementIsFullyRemoved(final ELEM elem) {
+	protected boolean elementIsFullyRemoved(final ELEM elem) {
 		if (mElementTVER.getRepresentative(elem) != null) {
 			assert false;
 			return false;
