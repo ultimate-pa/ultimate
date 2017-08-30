@@ -6,8 +6,8 @@
 
 procedure foo() {
 	var a, b, c : [int] int;
-	var i, x, y : [int] int;
+	var i, x, y : int;
 	a := b[i:=x];
-	asume a[i] == b[i];
+	assume a[i] == b[i];
 	assert a == b;
 }
