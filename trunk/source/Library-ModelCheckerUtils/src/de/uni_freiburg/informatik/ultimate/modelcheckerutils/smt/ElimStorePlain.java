@@ -359,8 +359,15 @@ public class ElimStorePlain {
 			indices.add(storeIndex);
 		}
 		for (final ApplicationTerm entry : selectTerms) {
-			indices.add(getIndexOfSelect(entry));
-			selectIndicesSet.add(getIndexOfSelect(entry));
+			final Term index = getIndexOfSelect(entry);
+			indices.add(index);
+			selectIndicesSet.add(index);
+			final Pair<Set<Term>, Set<Term>> indexEqual = EqualityInformation.getEqTerms(mScript, index,
+					PartialQuantifierElimination.getXjunctsInner(quantifier, preprocessedInput), eliminatee);
+			final Pair<Set<Term>, Set<Term>> valueEqual = EqualityInformation.getEqTerms(mScript, entry,
+					PartialQuantifierElimination.getXjunctsInner(quantifier, preprocessedInput), eliminatee);
+			indexEqual.toString();
+
 		}
 		final List<Term> selectIndices = new ArrayList<>(selectIndicesSet);
 		
