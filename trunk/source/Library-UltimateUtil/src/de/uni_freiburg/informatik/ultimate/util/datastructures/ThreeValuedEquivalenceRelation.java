@@ -133,8 +133,14 @@ public class ThreeValuedEquivalenceRelation<E> {
 			throw new IllegalStateException();
 		}
 
-		final E oldRep1 = mUnionFind.findAndConstructEquivalenceClassIfNeeded(elem1);
-		final E oldRep2 = mUnionFind.findAndConstructEquivalenceClassIfNeeded(elem2);
+		final E oldRep1 = mUnionFind.find(elem1);
+		if (oldRep1 == null) {
+			throw new IllegalArgumentException("unknown element " + elem1);
+		}
+		final E oldRep2 = mUnionFind.find(elem2);
+		if (oldRep2 == null) {
+			throw new IllegalArgumentException("unknown element " + elem2);
+		}
 
 		if (oldRep1 == oldRep2) {
 			// the elements already are in the same equivalence class, do nothing
@@ -180,8 +186,14 @@ public class ThreeValuedEquivalenceRelation<E> {
 			throw new IllegalStateException();
 		}
 
-		final E rep1 = mUnionFind.findAndConstructEquivalenceClassIfNeeded(elem1);
-		final E rep2 = mUnionFind.findAndConstructEquivalenceClassIfNeeded(elem2);
+		final E rep1 = mUnionFind.find(elem1);
+		if (rep1 == null) {
+			throw new IllegalArgumentException("unknown element " + elem1);
+		}
+		final E rep2 = mUnionFind.find(elem2);
+		if (rep2 == null) {
+			throw new IllegalArgumentException("unknown element " + elem2);
+		}
 
 		if (getEqualityStatus(rep1, rep2) == EqualityStatus.NOT_EQUAL) {
 			return false;
