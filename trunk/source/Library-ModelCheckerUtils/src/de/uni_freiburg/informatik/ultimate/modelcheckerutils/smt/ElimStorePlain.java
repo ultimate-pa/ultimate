@@ -478,20 +478,13 @@ public class ElimStorePlain {
 			}
 		}
 
-
-		final Term storeValueRep;
-		if (storeValue == null) {
-			storeValueRep = null;
-		} else {
-			storeValueRep = new SubstitutionWithLocalSimplification(mMgdScript, substitutionMapping).transform(storeValue);
-		}
 		final Term wc;
 		if (storeIndex == null) {
 			wc = mMgdScript.getScript().term("true");
 		} else {
 			wc = constructWriteConstraints((ArrayList<Term>) selectIndexRepresentatives, equalityInformation,
 					mMgdScript, indexMapping, oldCellMapping, eliminatee, quantifier, storeIndexRepresentative,
-					newArray, storeValueRep);
+					newArray, storeValue, substitutionMapping);
 		}
 		final Term cc = constructIndexValueConnection((ArrayList<Term>) selectIndexRepresentatives, equalityInformation, mMgdScript,
 				indexMapping, oldCellMapping, eliminatee, quantifier, storeIndex);
@@ -815,7 +808,7 @@ public class ElimStorePlain {
 //					// do nothing
 //				}
 			} else {
-				final Term oldSelectRep = findOldSelectRepresentative(equalityInformation, eliminatee,
+				final Term oldSelectRep = findOldSelectRepresentative(mMgdScript, equalityInformation, eliminatee,
 						selectIndexRepresentative);
 				final Term eqTerm = findNiceReplacementForRepresentative(oldSelectRep, eliminatee, equalityInformation);
 				if (eqTerm != null) {
@@ -829,10 +822,10 @@ public class ElimStorePlain {
 		return oldCellMapping;
 	}
 
-	private Term findOldSelectRepresentative(final ThreeValuedEquivalenceRelation<Term> equalityInformation,
+	private static Term findOldSelectRepresentative(final ManagedScript mgdScript, final ThreeValuedEquivalenceRelation<Term> equalityInformation,
 			final TermVariable eliminatee, final Term selectIndexRepresentative) {
 		for (final Term indexEquivalent : equalityInformation.getEquivalenceClass(selectIndexRepresentative)) {
-			final Term oldSelectTerm = mMgdScript.getScript().term("select", eliminatee, indexEquivalent);
+			final Term oldSelectTerm = mgdScript.getScript().term("select", eliminatee, indexEquivalent);
 			final Term oldSelectRep = equalityInformation.getRepresentative(oldSelectTerm);
 			if (oldSelectRep != null) {
 				return oldSelectRep;
@@ -1050,7 +1043,7 @@ public class ElimStorePlain {
 			final ThreeValuedEquivalenceRelation<Term> equalityInformation, final ManagedScript mgdScript,
 			final Map<Term, Term> rawIndex2replacedIndex, final Map<Term, ? extends Term> index2value,
 			final TermVariable eliminatee, final int quantifier, final Term storeIndex, final Term newAuxArray,
-			final Term newValue) {
+			final Term storeValue, final Map<Term, Term> substitutionMapping) {
 		final List<Term> resultConjuncts = new ArrayList<Term>();
 		for (final Term selectIndexRepresentative : selectIndexRepresentatives) {
 			assert equalityInformation.isRepresentative(selectIndexRepresentative) : "no representative: " + selectIndexRepresentative;
@@ -1061,8 +1054,9 @@ public class ElimStorePlain {
 			final Term indexEquality = PartialQuantifierElimination.equalityForExists(mgdScript.getScript(),
 					quantifier, replacementStoreIndex, replacementSelectIndex);
 			final Term newSelect = mgdScript.getScript().term("select", newAuxArray, replacementSelectIndex);
+			final Term storeValueReplacement = new SubstitutionWithLocalSimplification(mgdScript, substitutionMapping).transform(storeValue);
 			final Term newValueInCell = PartialQuantifierElimination.equalityForExists(mgdScript.getScript(),
-					quantifier, newSelect, newValue);
+					quantifier, newSelect, storeValueReplacement);
 			final EqualityStatus eqStatus = equalityInformation.getEqualityStatus(storeIndex, selectIndexRepresentative);
 			switch (eqStatus) {
 			case EQUAL:
@@ -1072,6 +1066,12 @@ public class ElimStorePlain {
 				// case handled via substitution
 				continue;
 			case UNKNOWN: {
+				final Term oldSelectRepresentative = findOldSelectRepresentative(mgdScript, equalityInformation, eliminatee, selectIndexRepresentative);
+				if (equalityInformation.getEqualityStatus(oldSelectRepresentative, storeValue) == EqualityStatus.EQUAL) {
+					resultConjuncts.add(newValueInCell);
+					continue;
+				}
+				
 				final Term succedent = newValueInCell;
 				final Term negatedAntecedent = SmtUtils.not(mgdScript.getScript(), indexEquality);
 				final Term positiveCase = SmtUtils.or(mgdScript.getScript(), negatedAntecedent, succedent);
