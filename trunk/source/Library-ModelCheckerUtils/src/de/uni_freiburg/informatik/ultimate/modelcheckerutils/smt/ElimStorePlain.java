@@ -358,17 +358,18 @@ public class ElimStorePlain {
 		if (!stores.isEmpty()) {
 			indices.add(storeIndex);
 		}
-		for (final ApplicationTerm entry : selectTerms) {
-			final Term index = getIndexOfSelect(entry);
-			indices.add(index);
-			selectIndicesSet.add(index);
-			final Pair<Set<Term>, Set<Term>> indexEqual = EqualityInformation.getEqTerms(mScript, index,
-					PartialQuantifierElimination.getXjunctsInner(quantifier, preprocessedInput), eliminatee);
-			final Pair<Set<Term>, Set<Term>> valueEqual = EqualityInformation.getEqTerms(mScript, entry,
-					PartialQuantifierElimination.getXjunctsInner(quantifier, preprocessedInput), eliminatee);
-			indexEqual.toString();
-
+		
+		final ThreeValuedEquivalenceRelation<Term> newEqualityInformation = collectComplimentaryEqualityInformation(
+				quantifier, preprocessedInput, selectTerms, storeTerm, storeIndex, storeValue);
+		
+		for (final ApplicationTerm selectTerm : selectTerms) {
+			final Term selectIndex = getIndexOfSelect(selectTerm);
+			indices.add(selectIndex);
+			selectIndicesSet.add(selectIndex);
 		}
+		
+		
+		newEqualityInformation.toString();
 		final List<Term> selectIndices = new ArrayList<>(selectIndicesSet);
 		
 		final List<Term> sortedIndices = new ArrayList<>(indices);
@@ -660,6 +661,45 @@ public class ElimStorePlain {
 		}
 		return new EliminationTask(quantifier, newAuxVars, result);
 
+	}
+
+	private ThreeValuedEquivalenceRelation<Term> collectComplimentaryEqualityInformation(final int quantifier,
+			final Term preprocessedInput, final List<ApplicationTerm> selectTerms, final Term storeTerm,
+			final Term storeIndex, final Term storeValue) {
+		final ThreeValuedEquivalenceRelation<Term> newEqualityInformation = new ThreeValuedEquivalenceRelation<>();
+		final Term[] context = PartialQuantifierElimination.getXjunctsInner(quantifier, preprocessedInput);
+		for (final ApplicationTerm selectTerm : selectTerms) {
+			final Term selectIndex = getIndexOfSelect(selectTerm);
+			addComplimentaryEqualityInformation(context, selectIndex, newEqualityInformation);
+			addComplimentaryEqualityInformation(context, selectTerm, newEqualityInformation);
+		}
+		if (storeTerm != null) {
+			addComplimentaryEqualityInformation(context, storeIndex, newEqualityInformation);
+			addComplimentaryEqualityInformation(context, storeValue, newEqualityInformation);
+		}
+		return newEqualityInformation;
+	}
+
+	/**
+	 * Add equality information for term that are obtained from context by
+	 * only looking at (dis)eqality terms. Add only the infor
+	 * @param context
+	 * @param forbiddenTerm
+	 * @param term
+	 * @param equalityInformation
+	 */
+	private void addComplimentaryEqualityInformation(final Term[] context,
+			final Term term, final ThreeValuedEquivalenceRelation<Term> equalityInformation) {
+		equalityInformation.addElement(term);
+		final Pair<Set<Term>, Set<Term>> indexEqual = EqualityInformation.getEqTerms(mScript, term, context, null);
+		for (final Term equal : indexEqual.getFirst()) {
+			equalityInformation.addElement(equal);
+			equalityInformation.reportEquality(term, equal);
+		}
+		for (final Term disequal : indexEqual.getSecond()) {
+			equalityInformation.addElement(disequal);
+			equalityInformation.reportDisequality(term, disequal);
+		}
 	}
 
 	private Term constructStoredValueInformation(final int quantifier, final TermVariable eliminatee,
