@@ -499,7 +499,8 @@ public final class LinearInequalityInvariantPatternProcessor
 				mMotzkinCoefficients2LinearInequalities.keySet().size();
 		// Apply Motzkin and generate the conjunction of the resulting Terms
 		final Collection<Term> resultTerms = new ArrayList<>(conjunctionDNF.size());
-		final AnalysisType analysisType = mUseNonlinearConstraints ? AnalysisType.NONLINEAR : AnalysisType.LINEAR;
+		final AnalysisType analysisType = mUseNonlinearConstraints ? AnalysisType.NONLINEAR
+				: (mKindOfInvariant == KindOfInvariant.DANGER ? AnalysisType.LINEAR_WITH_GUESSES : AnalysisType.LINEAR);
 		for (final Collection<LinearInequality> conjunct : conjunctionDNF) {
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug("Transforming conjunct " + conjunct);
