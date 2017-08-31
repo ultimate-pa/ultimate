@@ -382,9 +382,8 @@ public class ElimStorePlain {
 		};
 		Collections.sort(sortedIndices, c);
 		
-		final ThreeValuedEquivalenceRelation<Term> inputEqualityInformation = new ThreeValuedEquivalenceRelation<>();
 		final Pair<ThreeValuedEquivalenceRelation<Term>, List<Term>> analysisResult =
-				analyzeIndexEqualities(quantifier, indices, preprocessedInput, inputEqualityInformation);
+				analyzeIndexEqualities(quantifier, indices, preprocessedInput, newEqualityInformation);
 		final ThreeValuedEquivalenceRelation<Term> equalityInformation = analysisResult.getFirst();
 
 		final Sort valueSort = eliminatee.getSort().getArguments()[1];
@@ -599,9 +598,6 @@ public class ElimStorePlain {
 
 	private Pair<ThreeValuedEquivalenceRelation<Term>, List<Term>> analyzeIndexEqualities(final int mQuantifier,
 			final Set<Term> indices, final Term inputTerm, final ThreeValuedEquivalenceRelation<Term> inputTveR) {
-		final Term[] dualFiniteJunctsArray = PartialQuantifierElimination.getXjunctsInner(mQuantifier, inputTerm);
-		// TODO: bring each in commuhash normal form
-		final Set<Term> dualFiniteJuncts = new HashSet<>(Arrays.asList(dualFiniteJunctsArray));
 
 		final ThreeValuedEquivalenceRelation<Term> tver = new ThreeValuedEquivalenceRelation<>(inputTveR);
 		for (final Term index : indices) {
@@ -610,8 +606,6 @@ public class ElimStorePlain {
 
 		final List<Term> relationsDetectedViaSolver = new ArrayList<>();
 		final ArrayList<Term> indicesList = new ArrayList<>(indices);
-		// TODO: filter non-represenatives not only during iterations but also
-		// in advance
 		final Plication plication;
 		if (mQuantifier == QuantifiedFormula.EXISTS) {
 			plication = Plication.IMPLICATION;
@@ -621,79 +615,63 @@ public class ElimStorePlain {
 			throw new AssertionError("unknown quantifier");
 		}
 		final IncrementalPlicationChecker iea = new IncrementalPlicationChecker(plication, mMgdScript, inputTerm);
+		
 		for (int i = 0; i < indicesList.size(); i++) {
-			if (!tver.isRepresentative(indicesList.get(i))) {
-				continue;
-			}
 			for (int j = i + 1; j < indicesList.size(); j++) {
-				if (!tver.isRepresentative(indicesList.get(j))) {
+				//TODO: try to obtain equal term with few variables
+				final Term index1 = indicesList.get(i);
+				final Term index2 = indicesList.get(j);
+				if (tver.getEqualityStatus(index1, index2) != EqualityStatus.UNKNOWN) {
+					// result already known we do not have to check
 					continue;
+					// TODO: for some the solver result might have been unknown
+					// we should avoid to these are checked again
 				}
-				final Term eq = SmtUtils.binaryEquality(mScript, indicesList.get(i), indicesList.get(j));
+				
+				final Term eq = SmtUtils.binaryEquality(mScript, index1, index2);
 				if (SmtUtils.isTrue(eq)) {
-					tver.reportEquality(indicesList.get(i), indicesList.get(j));
+					tver.reportEquality(index1, index2);
 					assert !tver.isInconsistent() : "inconsistent equality information";
 				} else if (SmtUtils.isFalse(eq)) {
-					tver.reportDisequality(indicesList.get(i), indicesList.get(j));
+					tver.reportDisequality(index1, index2);
 					assert !tver.isInconsistent() : "inconsistent equality information";
 				} else {
-					// TODO: bring eq in commuhash normal form
-					if (dualFiniteJuncts.contains(eq)) {
-						tver.reportEquality(indicesList.get(i), indicesList.get(j));
-						assert !tver.isInconsistent() : "inconsistent equality information";
-						mLogger.info("found equality in dual finite juncts");
-					} else {
-						final Term neq = SmtUtils.not(mScript, eq);
-						if (dualFiniteJuncts.contains(neq)) {
-							tver.reportDisequality(indicesList.get(i), indicesList.get(j));
+					final Term neq = SmtUtils.not(mScript, eq);
+					final Validity isEqual = iea.checkPlication(eq);
+					if (isEqual == Validity.UNKNOWN && mLogger.isWarnEnabled()) {
+						mLogger.warn("solver failed to check if following equality is implied: " + eq);
+					}
+					if (isEqual == Validity.VALID) {
+						if (mQuantifier == QuantifiedFormula.EXISTS) {
+							tver.reportEquality(index1, index2);
 							assert !tver.isInconsistent() : "inconsistent equality information";
-							mLogger.info("found not equals in dual finite juncts");
+						} else if (mQuantifier == QuantifiedFormula.FORALL) {
+							tver.reportDisequality(index1, index2);
+							assert !tver.isInconsistent() : "inconsistent equality information";
 						} else {
-							final Validity isEqual = iea.checkPlication(eq);
-							if (isEqual == Validity.UNKNOWN && mLogger.isWarnEnabled()) {
-								mLogger.warn("solver failed to check if following equality is implied: " + eq);
-							}
-							if (isEqual == Validity.VALID) {
-								if (mQuantifier == QuantifiedFormula.EXISTS) {
-									tver.reportEquality(indicesList.get(i), indicesList.get(j));
-									assert !tver.isInconsistent() : "inconsistent equality information";
-								} else if (mQuantifier == QuantifiedFormula.FORALL) {
-									tver.reportDisequality(indicesList.get(i), indicesList.get(j));
-									assert !tver.isInconsistent() : "inconsistent equality information";
-								} else {
-									throw new AssertionError("unknown quantifier");
-								}
-								// tver.reportEquality(indicesList.get(i),
-								// indicesList.get(j));
-								// tver.reportNotEquals(indicesList.get(i),
-								// indicesList.get(j));
-								relationsDetectedViaSolver.add(eq);
-								mLogger.info("detected equality via solver");
-							} else {
-								final Validity notEqualsHolds = iea.checkPlication(neq);
-								if (notEqualsHolds == Validity.UNKNOWN && mLogger.isWarnEnabled()) {
-									mLogger.warn("solver failed to check if following not equals relation is implied: "
-											+ eq);
-								}
+							throw new AssertionError("unknown quantifier");
+						}
+						relationsDetectedViaSolver.add(eq);
+						mLogger.info("detected equality via solver");
+					} else {
+						final Validity notEqualsHolds = iea.checkPlication(neq);
+						if (notEqualsHolds == Validity.UNKNOWN && mLogger.isWarnEnabled()) {
+							mLogger.warn("solver failed to check if following not equals relation is implied: "
+									+ eq);
+						}
 
-								if (notEqualsHolds == Validity.VALID) {
-									if (mQuantifier == QuantifiedFormula.EXISTS) {
-										tver.reportDisequality(indicesList.get(i), indicesList.get(j));
-										assert !tver.isInconsistent() : "inconsistent equality information";
-									} else if (mQuantifier == QuantifiedFormula.FORALL) {
-										tver.reportEquality(indicesList.get(i), indicesList.get(j));
-										assert !tver.isInconsistent() : "inconsistent equality information";
-									} else {
-										throw new AssertionError("unknown quantifier");
-									}
-									// tver.reportNotEquals(indicesList.get(i),
-									// indicesList.get(j));
-									// tver.reportEquality(indicesList.get(i),
-									// indicesList.get(j));
-									mLogger.info("detected not equals via solver");
-									relationsDetectedViaSolver.add(neq);
-								}
+						if (notEqualsHolds == Validity.VALID) {
+							if (mQuantifier == QuantifiedFormula.EXISTS) {
+								tver.reportDisequality(index1, index2);
+								assert !tver.isInconsistent() : "inconsistent equality information";
+							} else if (mQuantifier == QuantifiedFormula.FORALL) {
+								tver.reportEquality(index1, index2);
+								assert !tver.isInconsistent() : "inconsistent equality information";
+							} else {
+								throw new AssertionError("unknown quantifier");
 							}
+							mLogger.info("detected not equals via solver");
+							relationsDetectedViaSolver.add(neq);
 						}
 					}
 				}
