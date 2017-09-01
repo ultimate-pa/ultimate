@@ -397,6 +397,10 @@ public class ElimStorePlain {
 			final Term selectIndexRepresentative = equalityInformation.getRepresentative(selectIndex);
 			selectIndexRepresentatives.add(selectIndexRepresentative);
 			allIndexRepresentatives.add(selectIndexRepresentative);
+			final Term oldSelect = constructOldSelectTerm(mMgdScript, eliminatee, selectIndex);
+			final Term oldSelectForRep = constructOldSelectTerm(mMgdScript, eliminatee, selectIndexRepresentative);
+			equalityInformation.addElement(oldSelectForRep);
+			equalityInformation.reportEquality(oldSelectForRep, oldSelect);
 		}
 		Term storeIndexRepresentative;
 		if (storeIndex == null) {
@@ -526,6 +530,11 @@ public class ElimStorePlain {
 			mLogger.info(sb.toString());
 		}
 		final Term nonsimpl = res;
+		final ExtendedSimplificationResult swss = SmtUtils.simplifyWithStatistics(mMgdScript, res, mServices, SimplificationTechnique.SIMPLIFY_QUICK);
+		final Term ress = swss.getSimplifiedTerm();
+		mLogger.info(String.format("quick treesize reduction %d that is %2.1f percent of original size",
+				swss.getReductionOfTreeSize(), swss.getReductionRatioInPercent()));
+		
 		final ExtendedSimplificationResult sws = SmtUtils.simplifyWithStatistics(mMgdScript, res, mServices, mSimplificationTechnique);
 		res = sws.getSimplifiedTerm();
 		mLogger.info(String.format("treesize reduction %d that is %2.1f percent of original size",
@@ -794,7 +803,6 @@ public class ElimStorePlain {
 
 		};
 		final ConstructionCache<Term, TermVariable> cc = new ConstructionCache<>(valueConstruction);
-		final EqProvider eqProvider = new EqProvider(preprocessedInput, eliminatee, quantifier);
 		final Map<Term, Term> oldCellMapping = new HashMap<>();
 		for (final Term selectIndexRepresentative : selectIndexRepresentatives) {
 			if ((storeIndex != null) && equalityInformation.getEqualityStatus(selectIndexRepresentative,
@@ -808,9 +816,9 @@ public class ElimStorePlain {
 //					// do nothing
 //				}
 			} else {
-				final Term oldSelectRep = findOldSelectRepresentative(mMgdScript, equalityInformation, eliminatee,
-						selectIndexRepresentative);
-				final Term eqTerm = findNiceReplacementForRepresentative(oldSelectRep, eliminatee, equalityInformation);
+				final Term oldSelect = constructOldSelectTerm(mMgdScript, eliminatee, selectIndexRepresentative);
+				final Term oldSelectRepresentative = equalityInformation.getRepresentative(oldSelect);
+				final Term eqTerm = findNiceReplacementForRepresentative(oldSelectRepresentative, eliminatee, equalityInformation);
 				if (eqTerm != null) {
 					oldCellMapping.put(selectIndexRepresentative, eqTerm);
 				} else {
@@ -820,18 +828,6 @@ public class ElimStorePlain {
 			}
 		}
 		return oldCellMapping;
-	}
-
-	private static Term findOldSelectRepresentative(final ManagedScript mgdScript, final ThreeValuedEquivalenceRelation<Term> equalityInformation,
-			final TermVariable eliminatee, final Term selectIndexRepresentative) {
-		for (final Term indexEquivalent : equalityInformation.getEquivalenceClass(selectIndexRepresentative)) {
-			final Term oldSelectTerm = mgdScript.getScript().term("select", eliminatee, indexEquivalent);
-			final Term oldSelectRep = equalityInformation.getRepresentative(oldSelectTerm);
-			if (oldSelectRep != null) {
-				return oldSelectRep;
-			}
-		}
-		throw new AssertionError("Did not find oldSelectRep for " + selectIndexRepresentative);
 	}
 
 	private void constructAndAddOldCellValueTermVariable(final Map<Term, TermVariable> oldCellMapping,
@@ -1057,8 +1053,8 @@ public class ElimStorePlain {
 			final Term storeValueReplacement = new SubstitutionWithLocalSimplification(mgdScript, substitutionMapping).transform(storeValue);
 			final Term newValueInCell = PartialQuantifierElimination.equalityForExists(mgdScript.getScript(),
 					quantifier, newSelect, storeValueReplacement);
-			final EqualityStatus eqStatus = equalityInformation.getEqualityStatus(storeIndex, selectIndexRepresentative);
-			switch (eqStatus) {
+			final EqualityStatus indexEqStatus = equalityInformation.getEqualityStatus(storeIndex, selectIndexRepresentative);
+			switch (indexEqStatus) {
 			case EQUAL:
 				resultConjuncts.add(newValueInCell);
 				continue;
@@ -1066,8 +1062,8 @@ public class ElimStorePlain {
 				// case handled via substitution
 				continue;
 			case UNKNOWN: {
-				final Term oldSelectRepresentative = findOldSelectRepresentative(mgdScript, equalityInformation, eliminatee, selectIndexRepresentative);
-				if (equalityInformation.getEqualityStatus(oldSelectRepresentative, storeValue) == EqualityStatus.EQUAL) {
+				final Term oldSelect = constructOldSelectTerm(mgdScript, eliminatee, selectIndexRepresentative);
+				if (equalityInformation.getEqualityStatus(oldSelect, storeValue) == EqualityStatus.EQUAL) {
 					resultConjuncts.add(newValueInCell);
 					continue;
 				}
@@ -1098,7 +1094,7 @@ public class ElimStorePlain {
 
 	public static Term constructIndexValueConnection(final ArrayList<Term> selectIndices,
 			final ThreeValuedEquivalenceRelation<Term> indexEqualityInformation, final ManagedScript mgdScript,
-			final Map<Term, Term> rawIndex2replacedIndex, final Map<Term, ? extends Term> index2value,
+			final Map<Term, Term> representative2replacement, final Map<Term, ? extends Term> index2value,
 			final TermVariable eliminatee, final int quantifier, final Term storeIndex) {
 		final List<Term> resultConjuncts = new ArrayList<Term>();
 		for (int i = 0; i < selectIndices.size(); i++) {
@@ -1129,9 +1125,9 @@ public class ElimStorePlain {
 					indexEqualityTerm = mgdScript.getScript().term("false");
 					break;
 				case UNKNOWN:
-					final Term replacementIndex1 = rawIndex2replacedIndex.get(index1);
+					final Term replacementIndex1 = representative2replacement.get(index1);
 					assert !occursIn(eliminatee, replacementIndex1) : "var is still there";
-					final Term replacementIndex2 = rawIndex2replacedIndex.get(index2);
+					final Term replacementIndex2 = representative2replacement.get(index2);
 					assert !occursIn(eliminatee, replacementIndex2) : "var is still there";
 					indexEqualityTerm = SmtUtils.binaryEquality(mgdScript.getScript(), replacementIndex1,
 							replacementIndex2);
@@ -1143,11 +1139,31 @@ public class ElimStorePlain {
 					// conjunct will become true
 					continue;
 				}
-				final Term value1 = index2value.get(index1);
-				assert !occursIn(eliminatee, value1) : "var is still there";
-				final Term value2 = index2value.get(index2);
-				assert !occursIn(eliminatee, value2) : "var is still there";
-				final Term valueEqualityTerm = SmtUtils.binaryEquality(mgdScript.getScript(), value1, value2);
+				
+				final Term valueEqualityTerm;
+				final Term oldSelect1 = constructOldSelectTerm(mgdScript, eliminatee, index1);
+				final Term oldSelect2 = constructOldSelectTerm(mgdScript, eliminatee, index2);
+				final EqualityStatus valueEqualityStatus = indexEqualityInformation.getEqualityStatus(oldSelect1, oldSelect2);
+				switch (valueEqualityStatus) {
+				case EQUAL:
+					valueEqualityTerm = mgdScript.getScript().term("true");
+					break;
+				case NOT_EQUAL:
+					valueEqualityTerm = mgdScript.getScript().term("false");
+					break;
+				case UNKNOWN:
+				{
+					final Term value1 = index2value.get(index1);
+					assert !occursIn(eliminatee, value1) : "var is still there";
+					final Term value2 = index2value.get(index2);
+					assert !occursIn(eliminatee, value2) : "var is still there";
+					valueEqualityTerm = SmtUtils.binaryEquality(mgdScript.getScript(), value1, value2);
+				}
+					break;
+				default:
+					throw new AssertionError();
+				
+				}
 				final Term implication = SmtUtils.or(mgdScript.getScript(),
 						SmtUtils.not(mgdScript.getScript(), indexEqualityTerm), valueEqualityTerm);
 				resultConjuncts.add(implication);
@@ -1162,6 +1178,10 @@ public class ElimStorePlain {
 			throw new AssertionError("unknown quantifier");
 		}
 
+	}
+	
+	private static Term constructOldSelectTerm(final ManagedScript mgdScript, final TermVariable eliminatee, final Term index) {
+		return mgdScript.getScript().term("select", eliminatee, index);
 	}
 
 	public static boolean occursIn(final TermVariable tv, final Term term) {
@@ -1216,7 +1236,7 @@ public class ElimStorePlain {
 		private final Map<Term, Term> mIndexReplacementMapping = new HashMap<>();
 		private final List<Term> mIndexMappingDefinitions = new ArrayList<>();
 
-		public IndexMappingProvider(final List<Term> indices, final TermVariable eliminatee,
+		public IndexMappingProvider(final List<Term> indexRepresentatives, final TermVariable eliminatee,
 				final ThreeValuedEquivalenceRelation<Term> equalityInformation,
 				final AuxVarConstructor auxVarConstructor, final int quantifier) {
 
@@ -1231,7 +1251,7 @@ public class ElimStorePlain {
 
 			};
 			final ConstructionCache<Term, TermVariable> cc = new ConstructionCache<>(valueConstruction);
-			for (final Term index : indices) {
+			for (final Term index : indexRepresentatives) {
 				final Term eqTerm = findNiceReplacementForRepresentative(index, eliminatee, equalityInformation);
 				if (eqTerm != null) {
 					mIndexReplacementMapping.put(index, eqTerm);
