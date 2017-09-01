@@ -77,7 +77,7 @@ public class CommuhashUtils {
 		}
 	}
 
-	public static Term[] sortByHashCode(final Term[] params) {
+	public static Term[] sortByHashCode(final Term... params) {
 		final Term[] sortedParams = params.clone();
 		Arrays.sort(sortedParams, HASH_BASED_COMPERATOR);
 		return sortedParams;
