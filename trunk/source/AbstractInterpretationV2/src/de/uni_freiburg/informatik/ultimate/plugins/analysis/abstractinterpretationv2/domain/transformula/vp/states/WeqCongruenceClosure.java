@@ -24,10 +24,11 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>,
 		extends CongruenceClosure<NODE, FUNCTION> {
 
 	private final WeakEquivalenceGraph<ACTION, NODE, FUNCTION> mWeakEquivalenceGraph;
-	private EqConstraintFactory<ACTION, NODE, FUNCTION> mFactory;
+	private final EqConstraintFactory<ACTION, NODE, FUNCTION> mFactory;
 
 	public WeqCongruenceClosure(final EqConstraintFactory<ACTION, NODE, FUNCTION> factory) {
 		super();
+		assert factory != null;
 		mWeakEquivalenceGraph = new WeakEquivalenceGraph<>(this, factory);
 		mFactory = factory;
 	}
@@ -45,6 +46,7 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>,
 	public WeqCongruenceClosure(final CongruenceClosure<NODE, FUNCTION> original,
 			final EqConstraintFactory<ACTION, NODE, FUNCTION> factory) {
 		super(original);
+		assert factory != null;
 		mWeakEquivalenceGraph = new WeakEquivalenceGraph<>(this, factory);
 		mFactory = factory;
 	}
@@ -55,14 +57,17 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>,
 	 * @param original
 	 */
 	public WeqCongruenceClosure(final CongruenceClosure<NODE, FUNCTION> original,
-			final WeakEquivalenceGraph<ACTION, NODE, FUNCTION> weqGraph) {
+			final WeakEquivalenceGraph<ACTION, NODE, FUNCTION> weqGraph,
+			final EqConstraintFactory<ACTION, NODE, FUNCTION> factory) {
 		super(original);
+		assert factory != null;
 		if (original.isInconsistent()) {
 			throw new IllegalArgumentException("use other constructor!");
 		}
 		//		mWeakEquivalenceGraph = weqGraph;
 		// we need a fresh instance here, because we cannot set the link in the weq graph to the right cc instance..
 		mWeakEquivalenceGraph = new WeakEquivalenceGraph<>(this, weqGraph);
+		mFactory = factory;
 	}
 
 
@@ -75,6 +80,8 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>,
 		//			final WeakEquivalenceGraph<ACTION, NODE, FUNCTION> weqGraph) {
 		super(original);
 		//		assert original.mWeakEquivalenceGraph == weqGraph : "?";
+		assert original.mFactory != null;
+		mFactory = original.mFactory;
 		mWeakEquivalenceGraph = new WeakEquivalenceGraph<>(this, original.mWeakEquivalenceGraph);
 	}
 
@@ -228,7 +235,7 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>,
 	protected boolean reportDisequalityRec(final NODE elem1, final NODE elem2) {
 		boolean madeChanges = false;
 
-		madeChanges |= super.reportDisequality(elem1, elem2);
+		madeChanges |= super.reportDisequalityRec(elem1, elem2);
 
 		if (!madeChanges) {
 			return false;
@@ -458,7 +465,8 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>,
 		final WeqCongruenceClosure<ACTION, NODE, FUNCTION> other =
 				(WeqCongruenceClosure<ACTION, NODE, FUNCTION>) otherCC;
 
-		return new WeqCongruenceClosure<>(super.join(other), mWeakEquivalenceGraph.join(other.mWeakEquivalenceGraph));
+		return new WeqCongruenceClosure<>(super.join(other), mWeakEquivalenceGraph.join(other.mWeakEquivalenceGraph),
+				mFactory);
 	}
 
 	@Override

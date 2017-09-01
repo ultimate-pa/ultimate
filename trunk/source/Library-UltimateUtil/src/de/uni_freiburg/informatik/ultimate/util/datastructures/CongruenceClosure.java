@@ -717,6 +717,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 	 * @return
 	 */
 	protected CongruenceClosure<ELEM, FUNCTION> alignElementsAndFunctions(final CongruenceClosure<ELEM, FUNCTION> other) {
+		assert this.sanityCheck();
 		final CongruenceClosure<ELEM, FUNCTION> result = new CongruenceClosure<>(this);
 		assert result.sanityCheck();
 
@@ -734,8 +735,12 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 	 * @return
 	 */
 	public CongruenceClosure<ELEM, FUNCTION> meet(final CongruenceClosure<ELEM, FUNCTION> other) {
+		assert this.sanityCheck();
+		assert other.sanityCheck();
 
-		return naiveMeet(other);
+		final CongruenceClosure<ELEM, FUNCTION> result = naiveMeet(other);
+		assert result.sanityCheck();
+		return result;
 
 //		final ThreeValuedEquivalenceRelation<ELEM> newElemTver = this.mElementTVER.meet(other.mElementTVER);
 //		if (newElemTver.isInconsistent()) {
@@ -1076,6 +1081,10 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 	 * @return
 	 */
 	protected boolean sanityCheck() {
+		if (this.isInconsistent()) {
+			return true;
+		}
+
 		for (final Triple<FUNCTION, ELEM, Set<ELEM>> repFuncCcPars : mFunctionToRepresentativeToCcPars.entrySet()) {
 			if (!mElementTVER.isRepresentative(repFuncCcPars.getSecond())) {
 				assert false;
