@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.invariantsynthesis
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -37,6 +38,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessInvariant;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.DangerInvariantResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.InvariantResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.PositiveResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ProcedureContractResult;
@@ -205,7 +207,7 @@ public class InvariantSynthesisStarter {
 			reportPositiveResults(errNodesOfAllProc);
 			break;
 		case UNSAFE:
-			reportDangerResults(invariants);
+			reportDangerResults(invariants, IcfgUtils.getErrorLocations(icfg), mServices.getBacktranslationService());
 			break;
 		case TIMEOUT:
 			throw new AssertionError();
@@ -367,8 +369,13 @@ public class InvariantSynthesisStarter {
 		return sb.toString();
 	}
 
-	private void reportDangerResults(final Map<IcfgLocation, IPredicate> invariants) {
-		mLogger.debug(invariants);
+	private void reportDangerResults(final Map<IcfgLocation, IPredicate> invariants,
+			final Set<IcfgLocation> errorLocations, final IBacktranslationService backtranslator) {
+		final Map<IcfgLocation, Term> map = new HashMap<>();
+		for (final Map.Entry<IcfgLocation, IPredicate> entry : invariants.entrySet()) {
+			map.put(entry.getKey(), entry.getValue().getFormula());
+		}
+		reportResult(new DangerInvariantResult<>(Activator.PLUGIN_NAME, map, errorLocations, backtranslator));
 	}
 
 	private void reportPositiveResults(final Collection<IcfgLocation> errorLocs) {
