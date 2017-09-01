@@ -1291,5 +1291,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 		return new CongruenceClosure<>(newElemPartition, newFunctionPartition);
 	}
 
-
+	public Collection<ELEM> getAllElementRepresentatives() {
+		return mElementTVER.getAllRepresentatives();
+	}
 }
