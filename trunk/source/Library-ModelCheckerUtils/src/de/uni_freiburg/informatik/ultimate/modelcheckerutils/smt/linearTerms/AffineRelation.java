@@ -298,8 +298,10 @@ public class AffineRelation {
 			final Rational newConstant = mAffineTerm.getConstant().div(termsCoeff);
 			if (newConstant.isIntegral() && newConstant.isRational()
 					|| SmtSortUtils.isRealSort(mAffineTerm.getSort())) {
-				final Rational negated = newConstant.negate();
-				rhsSummands.add(SmtUtils.rational2Term(script, negated, mAffineTerm.getSort()));
+				if (!newConstant.equals(Rational.ZERO)) {
+					final Rational negated = newConstant.negate();
+					rhsSummands.add(SmtUtils.rational2Term(script, negated, mAffineTerm.getSort()));
+				}
 			} else {
 				throw new NotAffineException(
 						"No affine representation " + "where desired variable is on left hand side");
