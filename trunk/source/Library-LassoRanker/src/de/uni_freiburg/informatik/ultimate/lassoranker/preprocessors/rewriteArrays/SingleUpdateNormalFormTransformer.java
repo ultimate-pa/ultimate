@@ -37,7 +37,6 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.MultiElementCounter;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.ReplacementVarFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
@@ -179,7 +178,7 @@ public class SingleUpdateNormalFormTransformer {
 	private MultiDimensionalStore getNonUpdateStore(Term term) {
 		final Term[] conjuncts = SmtUtils.getConjuncts(term);
 		final ArrayUpdateExtractor aue = new ArrayUpdateExtractor(false, true, conjuncts);
-		Term remainder = Util.and(mScript, aue.getRemainingTerms().toArray(new Term[0]));
+		Term remainder = SmtUtils.and(mScript, aue.getRemainingTerms().toArray(new Term[0]));
 		remainder = (new Substitution(mScript, aue.getStore2TermVariable())).transform(remainder);
 		final List<MultiDimensionalStore> mdStores = MultiDimensionalStore.extractArrayStoresDeep(remainder);
 		if (mdStores.isEmpty()) {
@@ -196,7 +195,7 @@ public class SingleUpdateNormalFormTransformer {
 //		Map<Term, Term> substitutionMapping = 
 //				Collections.singletonMap((Term) arraryStore.getStoreTerm(), (Term) auxArray);
 //		Term newTerm = (new SafeSubstitution(mScript, substitutionMapping)).transform(term);
-//		return Util.and(mScript, newTerm, mScript.term("=", auxArray, arraryStore.getStoreTerm()));
+//		return SmtUtils.and(mScript, newTerm, mScript.term("=", auxArray, arraryStore.getStoreTerm()));
 //	}
 
 	public List<ArrayUpdate> getArrayUpdates() {
@@ -204,7 +203,7 @@ public class SingleUpdateNormalFormTransformer {
 	}
 
 	public Term getRemainderTerm() {
-		return Util.and(mScript, mRemainderTerms.toArray(new Term[mRemainderTerms.size()]));
+		return SmtUtils.and(mScript, mRemainderTerms.toArray(new Term[mRemainderTerms.size()]));
 	}
 	
 	public Set<TermVariable> getAuxVars() {

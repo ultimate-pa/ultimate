@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 
 /**
  * Class that provides static methods for the extraction of a satisfying
@@ -257,7 +257,7 @@ public class ModelExtractionUtils {
 				for (int j = 0; j < s_numof_simultaneous_simplification_tests; ++j) {
 					disj[j] = script.term("=", vars.get(j), Rational.ZERO.toTerm(vars.get(j).getSort()));
 				}
-				script.assertTerm(Util.or(script, disj));
+				script.assertTerm(SmtUtils.or(script, disj));
 			}
 			++checkSat_calls;
 			final LBool sat = script.checkSat();
@@ -376,7 +376,7 @@ public class ModelExtractionUtils {
 			} else {
 				// size > 1
 				if (conjunctiveMode) {
-					final Term conjunction = Util.and(script, equalsZeroTerms);
+					final Term conjunction = SmtUtils.and(script, equalsZeroTerms);
 					script.assertTerm(conjunction);
 					final LBool sat = script.checkSat();
 					checkSatCalls++;
@@ -400,7 +400,7 @@ public class ModelExtractionUtils {
 					}
 				} else {
 					// disjunctive mode
-					final Term disjunction = Util.or(script, equalsZeroTerms);
+					final Term disjunction = SmtUtils.or(script, equalsZeroTerms);
 					script.assertTerm(disjunction);
 					final LBool sat = script.checkSat();
 					checkSatCalls++;

@@ -92,8 +92,8 @@ public class IteRemover extends NonCoreBooleanSubTermTransformer {
 			replacedWithElse = (new SubstitutionWithLocalSimplification(mScript, substitutionMapping)).transform(term);
 		}
 		final Term withoutThisIte =
-				Util.or(mScript.getScript(), Util.and(mScript.getScript(), condition, replacedWithIf),
-						Util.and(mScript.getScript(), SmtUtils.not(mScript.getScript(), condition), replacedWithElse));
+				SmtUtils.or(mScript.getScript(), SmtUtils.and(mScript.getScript(), condition, replacedWithIf),
+						SmtUtils.and(mScript.getScript(), SmtUtils.not(mScript.getScript(), condition), replacedWithElse));
 		return withoutThisIte;
 	}
 

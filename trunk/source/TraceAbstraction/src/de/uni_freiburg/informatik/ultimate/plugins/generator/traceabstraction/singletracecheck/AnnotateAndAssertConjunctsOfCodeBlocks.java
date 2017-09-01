@@ -36,9 +36,7 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.BitvectorUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.BinaryNumericRelation;
@@ -142,7 +140,7 @@ public class AnnotateAndAssertConjunctsOfCodeBlocks extends AnnotateAndAssertCod
 				annotatedTermsCounter = annotatedTermsCounter + 1;
 			}
 		}
-		return Util.and(mScript, annotatedConjuncts.toArray(new Term[annotatedConjuncts.size()]));
+		return SmtUtils.and(mScript, annotatedConjuncts.toArray(new Term[annotatedConjuncts.size()]));
 	}
 	
 	

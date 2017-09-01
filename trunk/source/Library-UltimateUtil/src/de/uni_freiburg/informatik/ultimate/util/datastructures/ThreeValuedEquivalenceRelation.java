@@ -83,7 +83,13 @@ public class ThreeValuedEquivalenceRelation<E> {
 		return false;
 	}
 
-	public void removeElement(final E elem) {
+	/**
+	 *
+	 * @param elem
+	 * @return the representative of elem's equivalence class after removal of elem, null if it was the only element of
+	 * 		its equivalence class
+	 */
+	public E removeElement(final E elem) {
 		final E rep = mUnionFind.find(elem);
 		final Set<E> equivalenceClassCopy = new HashSet<>(mUnionFind.getEquivalenceClassMembers(elem));
 		mUnionFind.remove(elem);
@@ -93,7 +99,7 @@ public class ThreeValuedEquivalenceRelation<E> {
 		 */
 		if (rep != elem) {
 			// elem was not the representative of its equivalence class --> nothing to do for disequalities
-			return;
+			return rep;
 		}
 		// elem was the representative of its equivalence class --> we need to update mDistinctElements
 		equivalenceClassCopy.remove(elem);
@@ -101,6 +107,8 @@ public class ThreeValuedEquivalenceRelation<E> {
 			// elem was the only element in its equivalence class --> just remove it from disequalities
 			mDisequalities.removeDomainElement(elem);
 			mDisequalities.removeRangeElement(elem);
+			assert sanityCheck();
+			return null;
 		} else {
 			assert rep == elem;
 			// elem was the representative of its equivalence class, but not the only element
@@ -109,8 +117,9 @@ public class ThreeValuedEquivalenceRelation<E> {
 			assert newRep != null;
 			mDisequalities.replaceDomainElement(elem, newRep);
 			mDisequalities.replaceRangeElement(elem, newRep);
+			assert sanityCheck();
+			return newRep;
 		}
-		assert sanityCheck();
 	}
 
 	/**
@@ -124,8 +133,14 @@ public class ThreeValuedEquivalenceRelation<E> {
 			throw new IllegalStateException();
 		}
 
-		final E oldRep1 = mUnionFind.findAndConstructEquivalenceClassIfNeeded(elem1);
-		final E oldRep2 = mUnionFind.findAndConstructEquivalenceClassIfNeeded(elem2);
+		final E oldRep1 = mUnionFind.find(elem1);
+		if (oldRep1 == null) {
+			throw new IllegalArgumentException("unknown element " + elem1);
+		}
+		final E oldRep2 = mUnionFind.find(elem2);
+		if (oldRep2 == null) {
+			throw new IllegalArgumentException("unknown element " + elem2);
+		}
 
 		if (oldRep1 == oldRep2) {
 			// the elements already are in the same equivalence class, do nothing
@@ -171,8 +186,14 @@ public class ThreeValuedEquivalenceRelation<E> {
 			throw new IllegalStateException();
 		}
 
-		final E rep1 = mUnionFind.findAndConstructEquivalenceClassIfNeeded(elem1);
-		final E rep2 = mUnionFind.findAndConstructEquivalenceClassIfNeeded(elem2);
+		final E rep1 = mUnionFind.find(elem1);
+		if (rep1 == null) {
+			throw new IllegalArgumentException("unknown element " + elem1);
+		}
+		final E rep2 = mUnionFind.find(elem2);
+		if (rep2 == null) {
+			throw new IllegalArgumentException("unknown element " + elem2);
+		}
 
 		if (getEqualityStatus(rep1, rep2) == EqualityStatus.NOT_EQUAL) {
 			return false;

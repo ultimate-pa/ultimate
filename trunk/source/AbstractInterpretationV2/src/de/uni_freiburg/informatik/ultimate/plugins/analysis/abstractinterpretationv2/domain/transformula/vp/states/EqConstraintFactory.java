@@ -388,17 +388,30 @@ public class EqConstraintFactory<
 	public EqConstraint<ACTION, NODE, FUNCTION> projectExistentially(final Collection<TermVariable> varsToProjectAway,
 			final EqConstraint<ACTION, NODE, FUNCTION> original) {
 		assert original.isFrozen();
+		assert original.sanityCheck();
 		final EqConstraint<ACTION, NODE, FUNCTION> unfrozen = unfreeze(original);
 
+		final Collection<TermVariable> allTvs = original.getAllTermVariables();
+//				unfrozen.getVariables(mCsToolkit.getSymbolTable()).stream()
+//				.map(pv -> pv.getTermVariable())
+//				.collect(Collectors.toSet());
+
 		for (final TermVariable var : varsToProjectAway) {
+//			if (!unfrozen.getAllTermVariables().contains(var)) {
+			if (!allTvs.contains(var)) {
+				// nothing to do
+				continue;
+			}
 			if (var.getSort().isArraySort()) {
 				// havoccing an array
 				final FUNCTION functionToHavoc = getEqNodeAndFunctionFactory().getExistingFunction(var);
 				unfrozen.removeFunction(functionToHavoc);
+				assert unfrozen.sanityCheck();
 			} else {
 				// havoccing an element
 				final NODE nodeToHavoc = getEqNodeAndFunctionFactory().getExistingNode(var);
 				unfrozen.removeElement(nodeToHavoc);
+				assert unfrozen.sanityCheck();
 			}
 		}
 

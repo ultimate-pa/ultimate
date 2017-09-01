@@ -40,9 +40,9 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
@@ -193,7 +193,7 @@ public class IteratedSymbolicMemory extends SymbolicMemory {
 
 			for (final TermVariable loopCounter : constantLoopCounters) {
 				final Term term = mScript.getScript().term(">", loopCounter, zeroTerm);
-				condition = Util.or(mScript.getScript(), condition, term);
+				condition = SmtUtils.or(mScript.getScript(), condition, term);
 			}
 
 			if (result == null) {

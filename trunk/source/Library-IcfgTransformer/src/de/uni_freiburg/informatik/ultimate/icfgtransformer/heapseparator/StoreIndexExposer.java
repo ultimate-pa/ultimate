@@ -10,7 +10,6 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ITransformulaTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
@@ -79,7 +78,7 @@ public class StoreIndexExposer implements ITransformulaTransformer {
 				 * construct the nondeterministic update "freezeIndex' = freezeIndex \/ freezeIndex' = storeIndex"
 				 */
 				indexUpdates.add(
-						Util.or(mMgdScript.getScript(), 
+						SmtUtils.or(mMgdScript.getScript(), 
 //								mMgdScript.term(this, "=", updatedFreezeIndexTv, inputFreezeIndexTv),
 								mMgdScript.term(this, "=", updatedFreezeIndexTv,storeIndex.get(i)))
 								);

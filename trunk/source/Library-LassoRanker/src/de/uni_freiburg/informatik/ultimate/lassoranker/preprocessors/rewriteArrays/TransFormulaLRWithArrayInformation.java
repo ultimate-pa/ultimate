@@ -47,7 +47,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.ReplacementVarFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.ReplacementVarUtils;
@@ -166,7 +165,7 @@ public class TransFormulaLRWithArrayInformation {
 				final Term[] conjuncts = SmtUtils.getConjuncts(disjuncts[i]);
 				final ArrayEqualityExtractor aee = new ArrayEqualityExtractor(conjuncts);
 				mArrayEqualities.add(aee.getArrayEqualities());
-				sunfts[i] = new SingleUpdateNormalFormTransformer(Util.and(mScript.getScript(), aee
+				sunfts[i] = new SingleUpdateNormalFormTransformer(SmtUtils.and(mScript.getScript(), aee
 						.getRemainingTerms().toArray(new Term[0])), mScript.getScript(), favg);
 				mArrayUpdates.add(sunfts[i].getArrayUpdates());
 				sunnf[i] = sunfts[i].getRemainderTerm();

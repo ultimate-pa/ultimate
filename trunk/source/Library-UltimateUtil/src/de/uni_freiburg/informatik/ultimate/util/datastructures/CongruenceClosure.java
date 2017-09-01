@@ -54,14 +54,14 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 	 * <p>
 	 * usage of this map: reportEqualityRec, together with argumentsAreCongruent
 	 */
-	private final NestedMap2<FUNCTION, ELEM, Set<ELEM>> mFunctionToRepresentativeToCcPars;
-	private final NestedMap2<FUNCTION, ELEM, Set<List<ELEM>>> mFunctionToRepresentativeToCcChildren;
-	private final HashRelation<FUNCTION, ELEM> mFunctionToFuncApps;
+	protected final NestedMap2<FUNCTION, ELEM, Set<ELEM>> mFunctionToRepresentativeToCcPars;
+	protected final NestedMap2<FUNCTION, ELEM, Set<List<ELEM>>> mFunctionToRepresentativeToCcChildren;
+	protected final HashRelation<FUNCTION, ELEM> mFunctionToFuncApps;
 	/**
 	 * stores all known parents for an element -- used for remove method to also remove dependent elements
 	 * (might be used for other dependencies, too..
 	 */
-	private final HashRelation<ELEM, ELEM> mElementToParents;
+	protected final HashRelation<ELEM, ELEM> mElementToParents;
 	private boolean mIsInconsistent;
 	/**
 	 * Constructs CongruenceClosure instance without any equalities or
@@ -563,14 +563,15 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 			return false;
 		}
 
-		// remove from the function equivalence relation
-		mFunctionTVER.removeElement(func);
 
 		// remove all elements that depend on the function
 		final Set<ELEM> funcAppsWithFuncCopy = new HashSet<>(mFunctionToFuncApps.getImage(func));
 		for (final ELEM funcApp : funcAppsWithFuncCopy) {
 			removeElement(funcApp);
 		}
+
+		// remove from the function equivalence relation
+		mFunctionTVER.removeElement(func);
 
 		mFunctionToRepresentativeToCcPars.remove(func);
 		mFunctionToRepresentativeToCcChildren.remove(func);
@@ -579,41 +580,53 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 	}
 
 	public boolean removeElement(final ELEM elem) {
+		if (mIsInconsistent) {
+			throw new IllegalStateException();
+		}
 		if (!hasElement(elem)) {
 			return false;
 		}
 
-		if (mElementTVER.isRepresentative(elem)) {
-			for (final FUNCTION func : mFunctionTVER.getAllElements()) {
-				final Map<ELEM, Set<ELEM>> ccpars = mFunctionToRepresentativeToCcPars.get(func);
-				if (ccpars != null) {
-					ccpars.remove(elem);
-				}
-				final Map<ELEM, Set<List<ELEM>>> ccchildren = mFunctionToRepresentativeToCcChildren.get(func);
-				if (ccchildren != null) {
-					ccchildren.remove(elem);
-				}
-			}
-		}
-		mFunctionToFuncApps.removeRangeElement(elem);
-
-		mElementTVER.removeElement(elem);
+		purgeElem(elem);
 
 		/*
 		 * recursive call: if an element is removed, all the function applications that have it as an argument are
 		 * removed, too
 		 */
-		for (final ELEM parent : mElementToParents.getImage(elem)) {
+		for (final ELEM parent : new HashSet<>(mElementToParents.getImage(elem))) {
 			removeElement(parent);
 		}
-
-		/*
-		 * clean up auxiliary maps
-		 */
 		mElementToParents.removeDomainElement(elem);
 		mElementToParents.removeRangeElement(elem);
 
-		mFunctionToRepresentativeToCcChildren.removeK2(elem);
+		assert elementIsFullyRemoved(elem);
+		return true;
+	}
+
+	protected void purgeElem(final ELEM elem) {
+		final boolean elemWasRepresentative = mElementTVER.isRepresentative(elem);
+		final ELEM newRep = mElementTVER.removeElement(elem);
+
+		/*
+		 * deal with the maps that may only have elem representatives as entries
+		 */
+		if (newRep == null) {
+			// elem was the only element of its equivalence class
+			mFunctionToRepresentativeToCcPars.removeK2(elem);
+			mFunctionToRepresentativeToCcChildren.removeK2(elem);
+
+		} else if (elemWasRepresentative) {
+			// elem was the representative, and not the only element of its equivalence class
+			mFunctionToRepresentativeToCcPars.replaceK2(elem, newRep, false);
+			mFunctionToRepresentativeToCcChildren.replaceK2(elem, newRep, false);
+		} else {
+			// elem was not the representative of its equivalence class
+
+		}
+
+		/*
+		 * clean the entries that not only store representatives
+		 */
 		final NestedMap2<FUNCTION, ELEM, Set<List<ELEM>>> ccchildrencpy =
 				new NestedMap2<>(mFunctionToRepresentativeToCcChildren);
 		for (final FUNCTION func : ccchildrencpy.keySet()) {
@@ -627,8 +640,6 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 				}
 			}
 		}
-
-		mFunctionToRepresentativeToCcPars.removeK2(elem);
 		final NestedMap2<FUNCTION, ELEM, Set<ELEM>> ccparscpy = new NestedMap2<>(mFunctionToRepresentativeToCcPars);
 		for (final FUNCTION func : ccparscpy.keySet()) {
 			for (final ELEM rep : ccparscpy.get(func).keySet()) {
@@ -636,8 +647,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 			}
 		}
 
-		assert elementIsFullyRemoved(elem);
-		return true;
+		mFunctionToFuncApps.removeRangeElement(elem);
 	}
 
 	/**
@@ -645,7 +655,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 	 * @param elem
 	 * @return
 	 */
-	private boolean elementIsFullyRemoved(final ELEM elem) {
+	protected boolean elementIsFullyRemoved(final ELEM elem) {
 		if (mElementTVER.getRepresentative(elem) != null) {
 			assert false;
 			return false;

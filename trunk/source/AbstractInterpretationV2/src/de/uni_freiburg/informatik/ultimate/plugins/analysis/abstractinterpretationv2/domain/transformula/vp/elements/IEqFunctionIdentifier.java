@@ -47,4 +47,6 @@ public interface IEqFunctionIdentifier<NODE extends IEqNodeIdentifier<NODE, FUNC
 
 	Term getTerm();
 
+	String getFunctionName();
+
 }

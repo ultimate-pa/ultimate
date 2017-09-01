@@ -44,7 +44,6 @@ import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.ReplacementVarFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.ReplacementVarUtils;
@@ -227,9 +226,9 @@ public class TransFormulaLRWithArrayCells {
 			conjuncts[4] = mSelect2CellVariable[i].transform(SmtUtils.and(mScript.getScript(),
 					mIndexAnalysisResult.constructListOfEqualities(mScript.getScript())));
 			disjunctsWithUpdateConstraints[i] =
-					mSelect2CellVariable[i].transform(Util.and(mScript.getScript(), conjuncts));
+					mSelect2CellVariable[i].transform(SmtUtils.and(mScript.getScript(), conjuncts));
 		}
-		final Term resultDisjuntion = Util.or(mScript.getScript(), disjunctsWithUpdateConstraints);
+		final Term resultDisjuntion = SmtUtils.or(mScript.getScript(), disjunctsWithUpdateConstraints);
 		final HashSet<TermVariable> auxVars = new HashSet<>(cvb.getAuxVars());
 		
 		Term result = //resultDisjuntion;
@@ -405,7 +404,7 @@ public class TransFormulaLRWithArrayCells {
 			conjuncts[offset] = SmtUtils.binaryEquality(mScript.getScript(), oldCellVariable, newCellVariable);
 			offset++;
 		}
-		return Util.and(mScript.getScript(), conjuncts);
+		return SmtUtils.and(mScript.getScript(), conjuncts);
 	}
 	
 	private Term buildArrayUpdateConstraints(final List<ArrayUpdate> arrayUpdates,
@@ -419,7 +418,7 @@ public class TransFormulaLRWithArrayCells {
 							au.getValue(), select2CellVariable, equivalentCells);
 			offset++;
 		}
-		final Term result = Util.and(mScript.getScript(), conjuncts);
+		final Term result = SmtUtils.and(mScript.getScript(), conjuncts);
 		assert (new ApplicationTermFinder("select", true)).findMatchingSubterms(result)
 				.isEmpty() : "contains select terms";
 		return result;
@@ -450,14 +449,14 @@ public class TransFormulaLRWithArrayCells {
 					SmtUtils.binaryEquality(mScript.getScript(), newCellVariable, oldCellVariable);
 			final Term indexIsNotUpdateIndex = SmtUtils.not(mScript.getScript(), indexIsUpdateIndex);
 			final Term indexIsUpdateIndexImpliesUpdateData =
-					Util.or(mScript.getScript(), indexIsNotUpdateIndex, newDataIsUpdateData);
+					SmtUtils.or(mScript.getScript(), indexIsNotUpdateIndex, newDataIsUpdateData);
 			final Term indexIsNotUpdateIndexImpliesOldData =
-					Util.or(mScript.getScript(), indexIsUpdateIndex, newDateIsOldData);
-			conjuncts[offset] = Util.and(mScript.getScript(), indexIsUpdateIndexImpliesUpdateData,
+					SmtUtils.or(mScript.getScript(), indexIsUpdateIndex, newDateIsOldData);
+			conjuncts[offset] = SmtUtils.and(mScript.getScript(), indexIsUpdateIndexImpliesUpdateData,
 					indexIsNotUpdateIndexImpliesOldData);
 			offset++;
 		}
-		return Util.and(mScript.getScript(), conjuncts);
+		return SmtUtils.and(mScript.getScript(), conjuncts);
 	}
 	
 	private Map<ArrayIndex, TermVariable>
@@ -484,7 +483,7 @@ public class TransFormulaLRWithArrayCells {
 			conjuncts[offset] = buildIndexValueConstraints(indices2values, select2CellVariable, equivalentCells);
 			offset++;
 		}
-		return Util.and(mScript.getScript(), conjuncts);
+		return SmtUtils.and(mScript.getScript(), conjuncts);
 	}
 	
 	private Term buildIndexValueConstraints(final Map<ArrayIndex, TermVariable> indices2values,
@@ -513,7 +512,7 @@ public class TransFormulaLRWithArrayCells {
 				k++;
 			}
 		}
-		final Term result = Util.and(mScript.getScript(), conjuncts);
+		final Term result = SmtUtils.and(mScript.getScript(), conjuncts);
 		return result;
 	}
 	
@@ -522,7 +521,7 @@ public class TransFormulaLRWithArrayCells {
 			final Substitution select2CellVariable) {
 		final Term indexEquality = pairwiseEqualityExploitDoubletons(index1, index2, select2CellVariable);
 		final Term valueEquality = SmtUtils.binaryEquality(mScript.getScript(), value1, value2);
-		return Util.or(mScript.getScript(), SmtUtils.not(mScript.getScript(), indexEquality), valueEquality);
+		return SmtUtils.or(mScript.getScript(), SmtUtils.not(mScript.getScript(), indexEquality), valueEquality);
 	}
 	
 	Term pairwiseEqualityExploitDoubletons(final ArrayIndex index1, final ArrayIndex index2,
@@ -545,7 +544,7 @@ public class TransFormulaLRWithArrayCells {
 				throw new AssertionError("unknown doubleton");
 			}
 		}
-		return Util.and(mScript.getScript(), conjuncts);
+		return SmtUtils.and(mScript.getScript(), conjuncts);
 	}
 	
 	/**

@@ -64,7 +64,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgInternalTransition;
@@ -500,7 +499,8 @@ public final class LinearInequalityInvariantPatternProcessor
 				mMotzkinCoefficients2LinearInequalities.keySet().size();
 		// Apply Motzkin and generate the conjunction of the resulting Terms
 		final Collection<Term> resultTerms = new ArrayList<>(conjunctionDNF.size());
-		final AnalysisType analysisType = mUseNonlinearConstraints ? AnalysisType.NONLINEAR : AnalysisType.LINEAR;
+		final AnalysisType analysisType = mUseNonlinearConstraints ? AnalysisType.NONLINEAR
+				: (mKindOfInvariant == KindOfInvariant.DANGER ? AnalysisType.LINEAR_WITH_GUESSES : AnalysisType.LINEAR);
 		for (final Collection<LinearInequality> conjunct : conjunctionDNF) {
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug("Transforming conjunct " + conjunct);
@@ -959,7 +959,7 @@ public final class LinearInequalityInvariantPatternProcessor
 					final Term term = transformNegatedConjunction(ConstraintsType.Normal, sourceInvariantDnf,
 							transitionDnf, transitionPatternDnf, negatedTargetInvariantDnf);
 
-					constraint = Util.and(mSolver, constraint, term);
+					constraint = SmtUtils.and(mSolver, constraint, term);
 				}
 
 				mLogger.debug("Asserting constraint: " + constraint);

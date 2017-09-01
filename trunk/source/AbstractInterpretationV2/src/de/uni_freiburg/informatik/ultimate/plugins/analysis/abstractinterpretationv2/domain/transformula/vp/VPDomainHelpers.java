@@ -299,7 +299,8 @@ public class VPDomainHelpers {
 		if (varsToProjectAway.stream().map(tv ->
 			unfrozen.getAllNodes().stream()
 				.anyMatch(node ->
-					Arrays.asList(node.getTerm().getFreeVars()).contains(tv)))
+					VPDomainHelpers.arrayContains(node.getTerm().getFreeVars(), tv)))
+//					Arrays.asList(node.getTerm().getFreeVars()).contains(tv)))
 				.reduce((a, b) -> a || b)
 			.get()) {
 			assert false;
@@ -353,5 +354,14 @@ public class VPDomainHelpers {
 		return index.stream()
 				.map(t -> normalizeTerm(t, tf, script))
 				.collect(Collectors.toList());
+	}
+
+	public static <T> boolean arrayContains(final T[] array, final T elem) {
+		for (final T t : array) {
+			if (t.equals(elem)) {
+				return true;
+			}
+		}
+		return false;
 	}
 }

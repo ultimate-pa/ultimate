@@ -40,7 +40,6 @@ import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -172,9 +171,9 @@ public class QuantifierSequence {
 		}
 		final Term resultInnerTerm;
 		if (functionSymbolName.equals("and")) {
-			resultInnerTerm = Util.and(mgdScript.getScript(), innerTerms);
+			resultInnerTerm = SmtUtils.and(mgdScript.getScript(), innerTerms);
 		} else if (functionSymbolName.equals("or")) {
-			resultInnerTerm = Util.or(mgdScript.getScript(), innerTerms);
+			resultInnerTerm = SmtUtils.or(mgdScript.getScript(), innerTerms);
 		} else {
 			throw new IllegalArgumentException("unsupported " + functionSymbolName);
 		}

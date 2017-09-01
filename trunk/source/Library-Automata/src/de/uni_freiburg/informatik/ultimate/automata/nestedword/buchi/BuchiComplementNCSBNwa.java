@@ -47,9 +47,12 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 
 /**
- * Buchi Complementation based on the algorithm proposed by Frantisek Blahoudek and Jan Stejcek. This complementation is
- * only sound for a special class of automata whose working title is <i>TABA</i> (termination analysis Büchi automata).
+ * Implements the following paper.
+ * 2017TACAS - Blahoudek,Heizmann,Schewe,Strejček,Tsai - Complementing Semi-deterministic Büchi Automata
  * 
+ * If we mention line numbers, we refer to numbers used in the orginal publication.
+ * https://link.springer.com/chapter/10.1007/978-3-662-49674-9_49
+
  * TODO: More documentation.
  * Ranks and inO information translate to the NCSB quadruple as follows.
  * state has rank 3 == state is in N
@@ -205,7 +208,7 @@ public final class BuchiComplementNCSBNwa<LETTER, STATE> implements INwaSuccesso
 					constraint.addConstraint(downState, trans.getSucc(), upState.getRank(), upState.isInO(),
 							mOperand.isFinal(upState.getState()));
 				}
-				if (transitionWouldAnnihilateEvenRank(downState, upState, hasSuccessor)) {
+				if (transitionWouldAnnihilateEvenRank(upState, hasSuccessor)) {
 					transitionWouldAnnihilateEvenRank = true;
 				}
 			}
@@ -233,9 +236,18 @@ public final class BuchiComplementNCSBNwa<LETTER, STATE> implements INwaSuccesso
 		return false;
 	}
 
-	// TODO Christian 2016-09-07: 'downState' is not used, a bug?
-	private boolean transitionWouldAnnihilateEvenRank(final StateWithRankInfo<STATE> downState,
-			final StateWithRankInfo<STATE> upState, final boolean hasSuccessor) {
+	/**
+	 * This method is used to check the condition of the fifth bullet in the
+	 * construction of the transition relation of the complement automaton
+	 * (lines 12 and 13 on page 7 of the paper).
+	 * If a state (here upState) is in the set C (i.e. has an even rank in our
+	 * encoding), is not final (which would have enforced membership in C),
+	 * and does not have a successor an outgoing transition would be 
+	 * superficial. This is because in our construction we already track
+	 * a run in which we moved the state to the set S earlier. 
+	 */
+	private boolean transitionWouldAnnihilateEvenRank(final StateWithRankInfo<STATE> upState,
+			final boolean hasSuccessor) {
 		return !hasSuccessor && !mOperand.isFinal(upState.getState()) && LevelRankingState.isEven(upState.getRank());
 	}
 
@@ -256,7 +268,7 @@ public final class BuchiComplementNCSBNwa<LETTER, STATE> implements INwaSuccesso
 					constraint.addConstraint(upState, trans.getSucc(), upState.getRank(), upState.isInO(),
 							mOperand.isFinal(upState.getState()));
 				}
-				if (transitionWouldAnnihilateEvenRank(downState, upState, hasSuccessor)) {
+				if (transitionWouldAnnihilateEvenRank(upState, hasSuccessor)) {
 					return new LevelRankingConstraintDrdCheck<>();
 				}
 			}
@@ -300,7 +312,7 @@ public final class BuchiComplementNCSBNwa<LETTER, STATE> implements INwaSuccesso
 				constraint.addConstraint(downHier, trans.getSucc(), upState.getRank(), upState.isInO(),
 						mOperand.isFinal(upState.getState()));
 			}
-			if (transitionWouldAnnihilateEvenRank(downHier, upState, hasSuccessor)) {
+			if (transitionWouldAnnihilateEvenRank(upState, hasSuccessor)) {
 				return true;
 			}
 		}
@@ -308,6 +320,19 @@ public final class BuchiComplementNCSBNwa<LETTER, STATE> implements INwaSuccesso
 	}
 
 	private Collection<STATE> computeStates(final LevelRankingConstraintDrdCheck<LETTER, STATE> constraint) {
+		/*
+		 * This check reflects the fourth bullet in the
+		 * construction of the transition relation of the complement automaton
+		 * (lines 10 and 11 on page 7 of the paper).
+		 * 
+		 * If we have a state that has predecessors in the set C and 
+		 * predecessors in the set S, the state needs to be in S 
+		 * (because we must not go back from S to C).
+		 * However, if one predecessor in C is not an accepting state, we
+		 * already track a run in which this state was already moved to S
+		 * (at some point in time where this run left an accepting state).
+		 * Hence these transitions are superficial. 
+		 */
 		if (constraint.isTargetOfDelayedRankDecrease()) {
 			// in this case we do not want to have successor states
 			return Collections.emptyList();

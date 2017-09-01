@@ -847,7 +847,7 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 				// its a normal interval
 				final Term upper = script.term("<=", var, mUpper.getTerm(sort, script));
 				final Term lower = script.term(">=", var, mLower.getTerm(sort, script));
-				// return Util.and(script, lower, upper);
+				// return SmtUtils.and(script, lower, upper);
 				return script.term("and", lower, upper);
 			}
 		}

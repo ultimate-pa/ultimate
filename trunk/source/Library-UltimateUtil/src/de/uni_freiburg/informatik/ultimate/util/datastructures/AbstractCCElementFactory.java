@@ -17,8 +17,15 @@ public abstract class AbstractCCElementFactory<ELEM extends ICongruenceClosureEl
 	protected abstract ELEM newFuncAppElement(FUNCTION f, List<ELEM> args);
 
 	public ELEM getBaseElement(final CONTENT content) {
+		return getBaseElement(content, false);
+	}
+
+	public ELEM getBaseElement(final CONTENT content, final boolean forceExisting) {
 		ELEM be = mContentToBaseElem.get(content);
 		if (be == null) {
+			if (forceExisting) {
+				throw new IllegalStateException();
+			}
 			be = newBaseElement(content);
 			mContentToBaseElem.put(content, be);
 		}
@@ -30,8 +37,15 @@ public abstract class AbstractCCElementFactory<ELEM extends ICongruenceClosureEl
 	}
 
 	public ELEM getFuncAppElement(final FUNCTION func, final List<ELEM> arguments) {
+		return getFuncAppElement(func, arguments, false);
+	}
+
+	public ELEM getFuncAppElement(final FUNCTION func, final List<ELEM> arguments, final boolean forceExisting) {
 		ELEM fae = mFunctionToArgsToFuncAppElem.get(func, arguments);
 		if (fae == null) {
+			if (forceExisting) {
+				throw new IllegalStateException();
+			}
 			fae = newFuncAppElement(func, arguments);
 			mFunctionToArgsToFuncAppElem.put(func, arguments, fae);
 		}
@@ -39,6 +53,14 @@ public abstract class AbstractCCElementFactory<ELEM extends ICongruenceClosureEl
 //			arg.addParent(fae);
 //		}
 		return fae;
+	}
+
+	public boolean hasBaseElement(final CONTENT cont) {
+		return mContentToBaseElem.get(cont) != null;
+	}
+
+	public boolean hasFuncAppElement(final FUNCTION func, final List<ELEM> elems) {
+		return mFunctionToArgsToFuncAppElem.get(func, elems) != null;
 	}
 
 }

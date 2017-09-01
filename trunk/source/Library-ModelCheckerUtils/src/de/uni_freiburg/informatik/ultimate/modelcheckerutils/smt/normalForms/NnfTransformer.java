@@ -123,7 +123,7 @@ public class NnfTransformer {
 				final ApplicationTerm appTerm = (ApplicationTerm) term;
 				final String functionName = appTerm.getFunction().getName();
 				if (functionName.equals("and")) {
-					final Term flattened = Util.and(mScript, appTerm.getParameters());
+					final Term flattened = SmtUtils.and(mScript, appTerm.getParameters());
 					if (SmtUtils.isFunctionApplication(flattened, "and")) {
 						super.convert(flattened);
 					} else {
@@ -133,7 +133,7 @@ public class NnfTransformer {
 					}
 					return;
 				} else if (functionName.equals("or")) {
-					final Term flattened = Util.or(mScript, appTerm.getParameters());
+					final Term flattened = SmtUtils.or(mScript, appTerm.getParameters());
 					if (SmtUtils.isFunctionApplication(flattened, "or")) {
 						super.convert(flattened);
 					} else {
@@ -152,7 +152,7 @@ public class NnfTransformer {
 					// we deliberately call convert() instead of super.convert()
 					// the argument of this call might have been simplified
 					// to a term whose function symbol is neither "and" nor "or"
-					convert(Util.or(mScript, negateAllButLast(mScript, params)));
+					convert(SmtUtils.or(mScript, negateAllButLast(mScript, params)));
 					return;
 				} else if (functionName.equals("=") && SmtUtils.firstParamIsBool(appTerm)) {
 					final Term[] params = appTerm.getParameters();
@@ -303,9 +303,9 @@ public class NnfTransformer {
 	}
 	
 	public static Term convertIte(final Script script, final Term condTerm, final Term ifTerm, final Term elseTerm) {
-		final Term condImpliesIf = Util.or(script, SmtUtils.not(script, condTerm), ifTerm);
-		final Term notCondImpliesElse = Util.or(script, condTerm, elseTerm);
-		final Term result = Util.and(script, condImpliesIf, notCondImpliesElse);
+		final Term condImpliesIf = SmtUtils.or(script, SmtUtils.not(script, condTerm), ifTerm);
+		final Term notCondImpliesElse = SmtUtils.or(script, condTerm, elseTerm);
+		final Term result = SmtUtils.and(script, condImpliesIf, notCondImpliesElse);
 		return result;
 	}
 	
@@ -327,15 +327,15 @@ public class NnfTransformer {
 			final String functionName = appTerm.getFunction().getName();
 			final Term[] params = appTerm.getParameters();
 			if (functionName.equals("and")) {
-				return Util.or(script, negateTerms(script, params));
+				return SmtUtils.or(script, negateTerms(script, params));
 			} else if (functionName.equals("or")) {
-				return Util.and(script, negateTerms(script, params));
+				return SmtUtils.and(script, negateTerms(script, params));
 			} else if (functionName.equals("not")) {
 				assert appTerm.getParameters().length == 1;
 				final Term notnotParam = appTerm.getParameters()[0];
 				return notnotParam;
 			} else if (functionName.equals("=>")) {
-				return Util.and(script, negateLast(script, params));
+				return SmtUtils.and(script, negateLast(script, params));
 			} else if (functionName.equals("=") && SmtUtils.firstParamIsBool(appTerm)) {
 				final Term[] notParams = appTerm.getParameters();
 				if (notParams.length > 2) {

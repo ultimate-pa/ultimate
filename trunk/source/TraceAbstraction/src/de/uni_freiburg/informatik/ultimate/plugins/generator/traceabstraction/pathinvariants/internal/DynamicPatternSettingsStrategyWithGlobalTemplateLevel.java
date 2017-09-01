@@ -2,9 +2,10 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.p
 
 import java.util.Map;
 import java.util.Set;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
+
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * This strategy maintains a global template level and increases it if it is reached by all locations.

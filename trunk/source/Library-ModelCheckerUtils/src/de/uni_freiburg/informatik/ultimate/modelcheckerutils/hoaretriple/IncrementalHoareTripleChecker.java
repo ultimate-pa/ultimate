@@ -39,7 +39,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.GlobalBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalsTable;
@@ -275,7 +274,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
 				mManagedScript, this);
 		if (!oldVarEqualities.isEmpty()) {
 			Term nonModOldVarsEquality =
-					Util.and(mManagedScript.getScript(), oldVarEqualities.toArray(new Term[oldVarEqualities.size()]));
+					SmtUtils.and(mManagedScript.getScript(), oldVarEqualities.toArray(new Term[oldVarEqualities.size()]));
 			if (mUseNamedTerms) {
 				final Annotation annot = new Annotation(ANNOT_NAMED, ID_PRECONDITION_NON_MOD_GLOBAL_EQUALITY);
 				nonModOldVarsEquality = mManagedScript.annotate(this, nonModOldVarsEquality, annot);

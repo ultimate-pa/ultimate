@@ -34,12 +34,12 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
@@ -118,7 +118,7 @@ public class OldVarsAssignmentCache {
 			tfb.addOutVar(modifiableGlobal, tvIn);
 			tfb.addOutVar(oldVarOfModifiable, tvOut);
 			final Term assignment = mMgdScript.getScript().term("=", tvOut, tvIn);
-			glob2oldFormula = Util.and(mMgdScript.getScript(), glob2oldFormula, assignment);
+			glob2oldFormula = SmtUtils.and(mMgdScript.getScript(), glob2oldFormula, assignment);
 		}
 		tfb.setFormula(glob2oldFormula);
 		tfb.setInfeasibility(Infeasibility.UNPROVEABLE);
@@ -147,7 +147,7 @@ public class OldVarsAssignmentCache {
 				tfb.addOutVar(oldVarOfModifiable, tvIn);
 				tfb.addOutVar(modifiableGlobal, tvOut);
 				final Term assignment = mMgdScript.getScript().term("=", tvOut, tvIn);
-				old2globFormula = Util.and(mMgdScript.getScript(), old2globFormula, assignment);
+				old2globFormula = SmtUtils.and(mMgdScript.getScript(), old2globFormula, assignment);
 			}			
 		}
 		tfb.setFormula(old2globFormula);

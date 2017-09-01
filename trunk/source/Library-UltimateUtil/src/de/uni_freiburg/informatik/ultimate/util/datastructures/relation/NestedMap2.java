@@ -190,6 +190,24 @@ public class NestedMap2<K1, K2, V> {
 		}
 	}
 
+	public void replaceK2(final K2 k2orig, final K2 k2new, final boolean allowThatNewK2isAlreadyPresent) {
+		if (allowThatNewK2isAlreadyPresent) {
+			throw new UnsupportedOperationException("implement this?");
+		}
+		for (final K1 k1 : mK1ToK2ToV.keySet()) {
+			final Map<K2, V> innerMap = mK1ToK2ToV.get(k1);
+			final V k2Contents = innerMap.get(k2orig);
+			if (k2Contents == null) {
+				continue;
+			}
+			if (innerMap.containsKey(k2new)) {
+				throw new IllegalStateException();
+			}
+			innerMap.put(k2new, k2Contents);
+			innerMap.remove(k2orig);
+		}
+	}
+
 	@Override
 	public String toString() {
 		return mK1ToK2ToV.toString();

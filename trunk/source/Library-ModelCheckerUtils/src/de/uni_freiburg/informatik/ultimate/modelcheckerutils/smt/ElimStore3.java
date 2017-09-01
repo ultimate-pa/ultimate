@@ -44,7 +44,6 @@ import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
@@ -199,10 +198,10 @@ public class ElimStore3 {
 			}
 
 			if (quantifier == QuantifiedFormula.EXISTS) {
-				othersT = Util.and(mScript, others.toArray(new Term[others.size()]));
+				othersT = SmtUtils.and(mScript, others.toArray(new Term[others.size()]));
 			} else {
 				assert quantifier == QuantifiedFormula.FORALL;
-				othersT = Util.or(mScript, others.toArray(new Term[others.size()]));
+				othersT = SmtUtils.or(mScript, others.toArray(new Term[others.size()]));
 			}
 
 			if ((store != null || update != null) && (writeInto == null && writtenFrom == null)) {
@@ -216,10 +215,10 @@ public class ElimStore3 {
 				Term auxTerm = subst.transform(term);
 				final Term auxVarDef = mScript.term("=", auxArray, store.getStoreTerm());
 				if (quantifier == QuantifiedFormula.EXISTS) {
-					auxTerm = Util.and(mScript, auxTerm, auxVarDef);
+					auxTerm = SmtUtils.and(mScript, auxTerm, auxVarDef);
 				} else {
 					assert quantifier == QuantifiedFormula.FORALL;
-					auxTerm = Util.or(mScript, auxTerm, SmtUtils.not(mScript, auxVarDef));
+					auxTerm = SmtUtils.or(mScript, auxTerm, SmtUtils.not(mScript, auxVarDef));
 				}
 				final Set<TermVariable> auxAuxVars = new HashSet<>();
 				final Term auxRes = elim(quantifier, eliminatee, auxTerm, newAuxVars);
@@ -302,13 +301,13 @@ public class ElimStore3 {
 
 			if (quantifier == QuantifiedFormula.EXISTS) {
 				final Term additionalConjuncts =
-						Util.and(script, additionalConjuncs.toArray(new Term[additionalConjuncs.size()]));
-				intermediateResult = Util.and(script, intermediateResult, additionalConjuncts);
+						SmtUtils.and(script, additionalConjuncs.toArray(new Term[additionalConjuncs.size()]));
+				intermediateResult = SmtUtils.and(script, intermediateResult, additionalConjuncts);
 			} else {
 				assert quantifier == QuantifiedFormula.FORALL;
-				final Term additionalConjuncts = Util.or(script, SmtUtils.negateElementwise(mScript, additionalConjuncs)
+				final Term additionalConjuncts = SmtUtils.or(script, SmtUtils.negateElementwise(mScript, additionalConjuncs)
 						.toArray(new Term[additionalConjuncs.size()]));
-				intermediateResult = Util.or(script, intermediateResult, additionalConjuncts);
+				intermediateResult = SmtUtils.or(script, intermediateResult, additionalConjuncts);
 			}
 
 			if (writtenFromSubst != null) {
@@ -343,15 +342,15 @@ public class ElimStore3 {
 
 		Term result = PartialQuantifierElimination.applyDualFiniteConnective(mScript, mQuantifier, Arrays.asList(new Term[] {result1, intermediateResult})) ;
 //		if (quantifier == QuantifiedFormula.EXISTS) {
-//			final Term newConjunctsFromSelect = Util.and(mScript,
+//			final Term newConjunctsFromSelect = SmtUtils.and(mScript,
 //					indexValueConstraintsFromEliminatee.toArray(new Term[indexValueConstraintsFromEliminatee.size()]));
-//			result = Util.and(script, intermediateResult, newConjunctsFromSelect);
+//			result = SmtUtils.and(script, intermediateResult, newConjunctsFromSelect);
 //		} else {
 //			assert quantifier == QuantifiedFormula.FORALL;
 //			final Term newConjunctsFromSelect =
-//					Util.or(mScript, SmtUtils.negateElementwise(mScript, indexValueConstraintsFromEliminatee)
+//					SmtUtils.or(mScript, SmtUtils.negateElementwise(mScript, indexValueConstraintsFromEliminatee)
 //							.toArray(new Term[indexValueConstraintsFromEliminatee.size()]));
-//			result = Util.or(script, intermediateResult, newConjunctsFromSelect);
+//			result = SmtUtils.or(script, intermediateResult, newConjunctsFromSelect);
 //		}
 
 		mMgdScript.getScript().echo(new QuotedObject("started simplification for array quantifier elimination"));
@@ -438,9 +437,9 @@ public class ElimStore3 {
 	// for (int i = othersPosition; i < othersIndices.length; i++) {
 	// ArrayIndex othersIndex = othersIndices[i];
 	// assert ourIndex.size() == othersIndex.size();
-	// Term indexEquality = Util.and(script, buildPairwiseEquality(ourIndex, othersIndices[i], null, script));
+	// Term indexEquality = SmtUtils.and(script, buildPairwiseEquality(ourIndex, othersIndices[i], null, script));
 	// Term valueEquality = SmtUtils.binaryEquality(script, ourValue, othersValues[i]);
-	// Term conjunct = Util.or(script, SmtUtils.not(script, indexEquality), valueEquality);
+	// Term conjunct = SmtUtils.or(script, SmtUtils.not(script, indexEquality), valueEquality);
 	// if (quantifier == QuantifiedFormula.EXISTS) {
 	// additionalConjuncs.add(conjunct);
 	// } else {
@@ -450,10 +449,10 @@ public class ElimStore3 {
 	// }
 	// Term result;
 	// if (quantifier == QuantifiedFormula.EXISTS) {
-	// result = Util.and(script, additionalConjuncs.toArray(new Term[additionalConjuncs.size()]));
+	// result = SmtUtils.and(script, additionalConjuncs.toArray(new Term[additionalConjuncs.size()]));
 	// } else {
 	// assert quantifier == QuantifiedFormula.FORALL;
-	// result = Util.or(script, additionalConjuncs.toArray(new Term[additionalConjuncs.size()]));
+	// result = SmtUtils.or(script, additionalConjuncs.toArray(new Term[additionalConjuncs.size()]));
 	// }
 	//
 	//
@@ -551,7 +550,7 @@ public class ElimStore3 {
 			mfstValue = fstValue;
 			msndValue = sndValue;
 			mSelectConnection = selectConnection;
-			mIndexEquality = Util.and(mScript, SmtUtils.pairwiseEquality(mScript, fstIndex, sndIndex));
+			mIndexEquality = SmtUtils.and(mScript, SmtUtils.pairwiseEquality(mScript, fstIndex, sndIndex));
 			mValueEquality = SmtUtils.binaryEquality(mScript, fstValue, sndValue);
 		}
 
@@ -581,7 +580,7 @@ public class ElimStore3 {
 			if (mSelectConnection) {
 				indexTerm = SmtUtils.not(mScript, indexTerm);
 			}
-			return Util.or(mScript, indexTerm, mValueEquality);
+			return SmtUtils.or(mScript, indexTerm, mValueEquality);
 
 		}
 	}

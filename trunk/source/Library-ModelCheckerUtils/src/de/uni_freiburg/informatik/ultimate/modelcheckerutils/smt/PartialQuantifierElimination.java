@@ -707,9 +707,9 @@ public class PartialQuantifierElimination {
 	// logger.debug(new DebugMessage("eliminated quantifier via UPD for {0}", removeableTvs));
 	// Term result;
 	// if (quantifier == QuantifiedFormula.EXISTS) {
-	// result = Util.and(script, unremoveableTerms.toArray(new Term[unremoveableTerms.size()]));
+	// result = SmtUtils.and(script, unremoveableTerms.toArray(new Term[unremoveableTerms.size()]));
 	// } else if (quantifier == QuantifiedFormula.FORALL) {
-	// result = Util.or(script, unremoveableTerms.toArray(new Term[unremoveableTerms.size()]));
+	// result = SmtUtils.or(script, unremoveableTerms.toArray(new Term[unremoveableTerms.size()]));
 	// } else {
 	// throw new AssertionError("unknown quantifier");
 	// }
@@ -725,7 +725,7 @@ public class PartialQuantifierElimination {
 	public static Term isSuperfluousConjunction(final Script script, final Set<Term> terms,
 			final Set<TermVariable> connectedVars, final Set<TermVariable> quantifiedVars) {
 		if (quantifiedVars.containsAll(connectedVars)) {
-			final Term conjunction = Util.and(script, terms.toArray(new Term[terms.size()]));
+			final Term conjunction = SmtUtils.and(script, terms.toArray(new Term[terms.size()]));
 			final LBool isSat = Util.checkSat(script, conjunction);
 			if (isSat == LBool.SAT) {
 				return script.term("true");
@@ -744,7 +744,7 @@ public class PartialQuantifierElimination {
 	public static Term isSuperfluousDisjunction(final Script script, final Set<Term> terms,
 			final Set<TermVariable> connectedVars, final Set<TermVariable> quantifiedVars) {
 		if (quantifiedVars.containsAll(connectedVars)) {
-			final Term disjunction = Util.or(script, terms.toArray(new Term[terms.size()]));
+			final Term disjunction = SmtUtils.or(script, terms.toArray(new Term[terms.size()]));
 			final LBool isSat = Util.checkSat(script, SmtUtils.not(script, disjunction));
 			if (isSat == LBool.SAT) {
 				return script.term("false");
@@ -897,7 +897,7 @@ public class PartialQuantifierElimination {
 	// resultParams.add(oldParam);
 	// }
 	// }
-	// return Util.and(script, resultParams.toArray(new Term[resultParams.size()]));
+	// return SmtUtils.and(script, resultParams.toArray(new Term[resultParams.size()]));
 	// }
 
 	/**
