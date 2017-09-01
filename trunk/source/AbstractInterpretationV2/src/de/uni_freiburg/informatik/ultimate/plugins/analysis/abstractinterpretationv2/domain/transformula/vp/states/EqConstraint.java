@@ -80,6 +80,7 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 	 */
 	private Set<IProgramVarOrConst> mPvocs;
 	private Term mTerm;
+	private boolean mIsInconsistent;
 
 
 
@@ -111,6 +112,7 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 	}
 
 	public void freeze() {
+		assert !isInconsistent() : "use EqBottomConstraint instead!!";
 //		assert !mIsFrozen;
 		mIsFrozen = true;
 	}
@@ -121,6 +123,8 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 	 * @return
 	 */
 	public boolean isBottom() {
+		assert !mIsInconsistent : "this should only be called on EqConstraints that are either consistent or an "
+				+ "instance of EqBottomConstraint";
 		assert !mPartialArrangement.isInconsistent();
 		return false;
 	}
@@ -130,6 +134,7 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 	}
 
 	public boolean reportEquality(final NODE node1, final NODE node2) {
+		assert !mIsInconsistent;
 		assert !mIsFrozen;
 
 		return mPartialArrangement.reportEquality(node1, node2);
@@ -138,18 +143,21 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 
 
 	public boolean reportDisequality(final NODE node1, final NODE node2) {
+		assert !mIsInconsistent;
 		assert !mIsFrozen;
 		final boolean paHasChanged = mPartialArrangement.reportDisequality(node1, node2);
 		return paHasChanged;
 	}
 
 	public boolean reportFunctionEquality(final FUNCTION func1, final FUNCTION func2) {
+		assert !mIsInconsistent;
 		assert !mIsFrozen;
 		final boolean paHasChanged = mPartialArrangement.reportFunctionEquality(func1, func2);
 		return paHasChanged;
 	}
 
 	public boolean reportFunctionDisequality(final FUNCTION func1, final FUNCTION func2) {
+		assert !mIsInconsistent;
 		assert !mIsFrozen;
 		final boolean paHasChanged = mPartialArrangement.reportFunctionDisequality(func1, func2);
 		return paHasChanged;
@@ -157,14 +165,23 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 
 	public void reportWeakEquivalence(final FUNCTION array1, final FUNCTION array2,
 			final List<NODE> storeIndex) {
+		assert !mIsInconsistent;
 		assert !mIsFrozen;
 		mPartialArrangement.reportWeakEquivalence(array1, array2, storeIndex);
+		if (mPartialArrangement.isInconsistent()) {
+			mIsInconsistent = true;
+		}
 	}
 
 	public boolean isFrozen() {
+		assert !mIsFrozen || !mIsInconsistent : "an inconsistent constraint that is not EqBottomConstraint should "
+				+ "never be frozen.";
 		return mIsFrozen;
 	}
 
+	public boolean isInconsistent() {
+		return mIsInconsistent;
+	}
 
 
 	private static <E, F extends E> boolean arrayContains(final E[] freeVars, final F var) {

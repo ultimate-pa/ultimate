@@ -74,14 +74,12 @@ public class EqBottomConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 
 	@Override
 	public void freeze() {
-		// TODO Auto-generated method stub
-		super.freeze();
+		// do nothing;
 	}
 
 	@Override
 	public boolean isFrozen() {
-		// TODO Auto-generated method stub
-		return super.isFrozen();
+		return true;
 	}
 
 	////////////////////////////////////////////////////////////////////////

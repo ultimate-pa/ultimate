@@ -189,6 +189,9 @@ public class EqConstraintFactory<
 		final EqConstraint<ACTION, NODE, FUNCTION> newConstraint = unfreeze(funct2Added);
 		newConstraint.reportFunctionDisequality(func1, func2);
 //		newConstraint.saturate();
+		if (newConstraint.isInconsistent()) {
+			return mBottomConstraint;
+		}
 		newConstraint.freeze();
 		return newConstraint;
 	}
@@ -220,6 +223,9 @@ public class EqConstraintFactory<
 		final EqConstraint<ACTION, NODE, FUNCTION> newConstraint = unfreeze(funct2Added);
 		newConstraint.reportFunctionEquality(func1, func2);
 //		newConstraint.saturate();
+		if (newConstraint.isInconsistent()) {
+			return mBottomConstraint;
+		}
 		newConstraint.freeze();
 		return newConstraint;
 	}
@@ -231,6 +237,9 @@ public class EqConstraintFactory<
 		final EqConstraint<ACTION, NODE, FUNCTION> newConstraint = unfreeze(inputConstraint);
 		newConstraint.reportWeakEquivalence(array1, array2, storeIndex);
 //		newConstraint.saturate();
+		if (newConstraint.isInconsistent()) {
+			return mBottomConstraint;
+		}
 		newConstraint.freeze();
 		return newConstraint;
 	}
@@ -309,6 +318,9 @@ public class EqConstraintFactory<
 		final EqConstraint<ACTION, NODE, FUNCTION> unfrozen = unfreeze(originalState);
 		unfrozen.reportEquality(node1, node2);
 //		unfrozen.saturate();
+		if (unfrozen.isInconsistent()) {
+			return mBottomConstraint;
+		}
 		unfrozen.freeze();
 		return unfrozen;
 	}
@@ -336,7 +348,9 @@ public class EqConstraintFactory<
 
 		final EqConstraint<ACTION, NODE, FUNCTION> unfrozen = unfreeze(originalState);
 		unfrozen.reportDisequality(node1, node2);
-//		unfrozen.saturate();
+		if (unfrozen.isInconsistent()) {
+			return mBottomConstraint;
+		}
 		unfrozen.freeze();
 		return unfrozen;
 	}
@@ -389,6 +403,9 @@ public class EqConstraintFactory<
 			final EqConstraint<ACTION, NODE, FUNCTION> original) {
 		assert original.isFrozen();
 		assert original.sanityCheck();
+		if (original.isBottom()) {
+			return original;
+		}
 		final EqConstraint<ACTION, NODE, FUNCTION> unfrozen = unfreeze(original);
 
 		final Collection<TermVariable> allTvs = original.getAllTermVariables();
