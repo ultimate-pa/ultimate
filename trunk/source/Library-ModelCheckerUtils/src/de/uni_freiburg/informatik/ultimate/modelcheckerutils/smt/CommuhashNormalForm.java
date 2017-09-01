@@ -28,7 +28,6 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 
 import java.math.BigInteger;
 import java.util.Arrays;
-import java.util.Comparator;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -93,28 +92,13 @@ public class CommuhashNormalForm {
 		return result;
 	}
 	
-	
-	private boolean isKnownToBeCommutative(final String applicationString) {
-		switch (applicationString) {
-		case "and":
-		case "or":
-		case "=":
-		case "distinct":
-		case "+":
-		case "*":
-			return true;
-		default:
-			return false;
-		}
-	}
-
 	private class CommuhashNormalFormHelper extends TermTransformer {
 
 		@Override
 		public void convertApplicationTerm(final ApplicationTerm appTerm, final Term[] newArgs) {
 			final String funcname = appTerm.getFunction().getApplicationString();
-			if (isKnownToBeCommutative(funcname)) {
-				final Term simplified = constructTermWithSortedParams(
+			if (CommuhashUtils.isKnownToBeCommutative(funcname)) {
+				final Term simplified = constructlocallySimplifiedTermWithSortedParams(
 						funcname, appTerm.getSort().getIndices(), newArgs);
 				setResult(simplified);
 			} else {
@@ -138,22 +122,10 @@ public class CommuhashNormalForm {
 			final Term pnf = affRel.positiveNormalForm(mScript);
 			return pnf;
 		}
-
-		private Term[] sortByHashCode(final Term[] params) {
-			final Term[] sortedParams = params.clone();
-			final Comparator<Term> hashBasedComperator = new Comparator<Term>() {
-				@Override
-				public int compare(final Term arg0, final Term arg1) {
-					return Integer.compare(arg0.hashCode(), arg1.hashCode());
-				}
-			};
-			Arrays.sort(sortedParams, hashBasedComperator);
-			return sortedParams;
-		}
 		
-		private Term constructTermWithSortedParams(final String funcname, 
+		private Term constructlocallySimplifiedTermWithSortedParams(final String funcname, 
 									final BigInteger[] indices, final Term[] params) {
-			final Term[] sortedParams = sortByHashCode(params);
+			final Term[] sortedParams = CommuhashUtils.sortByHashCode(params);
 			final Term simplified = SmtUtils.termWithLocalSimplification(
 					mScript, funcname, indices, sortedParams);
 			return simplified;
