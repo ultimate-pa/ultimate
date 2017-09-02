@@ -337,10 +337,10 @@ public class ElimStore3 {
 
 			indexValueConstraintsFromEliminatee = constructIndexValueConstraints(script, quantifier, indices, values);
 		}
-		final Term result1 = PartialQuantifierElimination.applyDualFiniteConnective(mScript, mQuantifier, indexValueConstraintsFromEliminatee);
+		final Term result1 = QuantifierUtils.applyDualFiniteConnective(mScript, mQuantifier, indexValueConstraintsFromEliminatee);
 		assert !Arrays.asList(result1.getFreeVars()).contains(eliminatee) : "var is still there";
 
-		Term result = PartialQuantifierElimination.applyDualFiniteConnective(mScript, mQuantifier, Arrays.asList(new Term[] {result1, intermediateResult})) ;
+		Term result = QuantifierUtils.applyDualFiniteConnective(mScript, mQuantifier, Arrays.asList(new Term[] {result1, intermediateResult})) ;
 //		if (quantifier == QuantifiedFormula.EXISTS) {
 //			final Term newConjunctsFromSelect = SmtUtils.and(mScript,
 //					indexValueConstraintsFromEliminatee.toArray(new Term[indexValueConstraintsFromEliminatee.size()]));

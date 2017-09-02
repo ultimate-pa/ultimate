@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -212,7 +213,7 @@ public class QuantifierPusher extends TermTransformer {
 		final Set<TermVariable> eliminatees = new HashSet<>(Arrays.asList(quantifiedFormula.getVariables()));
 		{
 			
-			final Term[] dualFiniteParams = PartialQuantifierElimination.getXjunctsInner(quantifier, appTerm);
+			final Term[] dualFiniteParams = QuantifierUtils.getXjunctsInner(quantifier, appTerm);
 			final Term eliminationResult = applyEliminationTechniques(quantifier, eliminatees, dualFiniteParams);
 			if (eliminationResult == null) {
 				// nothing was removed
@@ -240,7 +241,7 @@ public class QuantifierPusher extends TermTransformer {
 
 	private Term applyDistributivityAndPush(final int quantifier, final Set<TermVariable> eliminatees,
 			final Term[] dualFiniteParams, final int i) {
-		final Term[] correspondingFiniteParams = PartialQuantifierElimination.getXjunctsOuter(quantifier, dualFiniteParams[i]);
+		final Term[] correspondingFiniteParams = QuantifierUtils.getXjunctsOuter(quantifier, dualFiniteParams[i]);
 		final List<Term> otherDualFiniteParams = new ArrayList<>(dualFiniteParams.length - 1);
 		for (int j=0; j<dualFiniteParams.length; j++) {
 			if (j != i) {
@@ -253,11 +254,11 @@ public class QuantifierPusher extends TermTransformer {
 			final List<Term> resultInnerParams = new ArrayList<>();
 			resultInnerParams.add(cfp);
 			resultInnerParams.addAll(otherDualFiniteParams);
-			resultOuterParams[offset] = PartialQuantifierElimination.applyDualFiniteConnective(mScript, quantifier, resultInnerParams);
+			resultOuterParams[offset] = QuantifierUtils.applyDualFiniteConnective(mScript, quantifier, resultInnerParams);
 			resultOuterParams[offset] = SmtUtils.quantifier(mScript, quantifier, eliminatees, resultOuterParams[offset]);
 			offset++;
 		}
-		final Term result = PartialQuantifierElimination.applyCorrespondingFiniteConnective(mScript, quantifier, resultOuterParams);
+		final Term result = QuantifierUtils.applyCorrespondingFiniteConnective(mScript, quantifier, resultOuterParams);
 		return result;
 	}
 
@@ -291,7 +292,7 @@ public class QuantifierPusher extends TermTransformer {
 		for (final XjunctPartialQuantifierElimination technique : elimtechniques) {
 			// nothing was removed in last iteration, continue with original params
 			final Term[] elimResulDualFiniteParams = technique.tryToEliminate(quantifier, dualFiniteParams, eliminatees);
-			final Term result = PartialQuantifierElimination.applyDualFiniteConnective(
+			final Term result = QuantifierUtils.applyDualFiniteConnective(
 					mScript, quantifier, Arrays.asList(elimResulDualFiniteParams));
 			final Set<TermVariable> eliminateesAfterwards = PartialQuantifierElimination.constructNewEliminatees(result, eliminatees);
 			if (eliminateesAfterwards.isEmpty()) {
