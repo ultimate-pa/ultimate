@@ -89,7 +89,10 @@ public class QuantifierUtils {
 		return applyDualFiniteConnective(script, quantifier, Arrays.asList(xjunctsInner));
 	}
 
-	public static Term equalityForExists(final Script script, final int quantifier, final Term lhs, final Term rhs) {
+	/**
+	 * Apply equals if quantifier is existential and not equals if quantifier is universal.
+	 */
+	public static Term applyDerOperator(final Script script, final int quantifier, final Term lhs, final Term rhs) {
 		Term result;
 		if (quantifier == QuantifiedFormula.EXISTS) {
 			result = SmtUtils.binaryEquality(script, lhs, rhs);
@@ -101,7 +104,10 @@ public class QuantifierUtils {
 		return result;
 	}
 
-	public static Term notEqualsForExists(final Script script, final int quantifier, final Term lhs, final Term rhs) {
+	/**
+	 * Apply not equals if quantifier is existential and equals if quantifier is universal.
+	 */
+	public static Term applyAntiDerOperator(final Script script, final int quantifier, final Term lhs, final Term rhs) {
 		Term result;
 		if (quantifier == QuantifiedFormula.EXISTS) {
 			result = SmtUtils.distinct(script, lhs, rhs);
@@ -144,6 +150,28 @@ public class QuantifierUtils {
 		}
 		return xjunctsOuter;
 	}
+	
+	
+	public static Term getNeutralElement(final Script script, final int quantifier) {
+		if (quantifier == QuantifiedFormula.EXISTS) {
+			return script.term("false");
+		} else if (quantifier == QuantifiedFormula.FORALL) {
+			return script.term("true");
+		} else {
+			throw new AssertionError("unknown quantifier");
+		}
+	}
+	
+	public static Term getAbsorbingElement(final Script script, final int quantifier) {
+		if (quantifier == QuantifiedFormula.EXISTS) {
+			return script.term("true");
+		} else if (quantifier == QuantifiedFormula.FORALL) {
+			return script.term("false");
+		} else {
+			throw new AssertionError("unknown quantifier");
+		}
+	}
+
 	
 	
 }

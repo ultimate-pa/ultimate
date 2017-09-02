@@ -598,7 +598,7 @@ public class ElimStorePlain {
 			}
 		} else {
 			final Term replacementIndex = indexMapping.get(storeIndex);
-			storedValueInformation = QuantifierUtils.equalityForExists(mScript, quantifier,
+			storedValueInformation = QuantifierUtils.applyDerOperator(mScript, quantifier,
 					mScript.term("select", newArray, replacementIndex),
 					new SubstitutionWithLocalSimplification(mMgdScript, substitutionMapping).transform(storeValue));
 		}
@@ -777,7 +777,7 @@ public class ElimStorePlain {
 			newAuxVars.add(newAuxIndex);
 			indexMapping.put(index, newAuxIndex);
 			indexMappingDefinitions
-					.add(QuantifierUtils.equalityForExists(mScript, quantifier, newAuxIndex, index));
+					.add(QuantifierUtils.applyDerOperator(mScript, quantifier, newAuxIndex, index));
 		}
 	}
 
@@ -1076,11 +1076,11 @@ public class ElimStorePlain {
 			assert !occursIn(eliminatee, replacementStoreIndex) : "var is still there";
 			final Term replacementSelectIndex = rawIndex2replacedIndex.get(selectIndexRepresentative);
 			assert !occursIn(eliminatee, replacementSelectIndex) : "var is still there";
-			final Term indexEquality = QuantifierUtils.equalityForExists(mgdScript.getScript(),
+			final Term indexEquality = QuantifierUtils.applyDerOperator(mgdScript.getScript(),
 					quantifier, replacementStoreIndex, replacementSelectIndex);
 			final Term newSelect = mgdScript.getScript().term("select", newAuxArray, replacementSelectIndex);
 			final Term storeValueReplacement = new SubstitutionWithLocalSimplification(mgdScript, substitutionMapping).transform(storeValue);
-			final Term newValueInCell = QuantifierUtils.equalityForExists(mgdScript.getScript(),
+			final Term newValueInCell = QuantifierUtils.applyDerOperator(mgdScript.getScript(),
 					quantifier, newSelect, storeValueReplacement);
 			final EqualityStatus indexEqStatus = equalityInformation.getEqualityStatus(storeIndex, selectIndexRepresentative);
 			switch (indexEqStatus) {
@@ -1104,7 +1104,7 @@ public class ElimStorePlain {
 			}
 			{
 				final Term oldCellValue = index2value.get(selectIndexRepresentative);
-				final Term oldValueInCell = QuantifierUtils.equalityForExists(mgdScript.getScript(),
+				final Term oldValueInCell = QuantifierUtils.applyDerOperator(mgdScript.getScript(),
 						quantifier, newSelect, oldCellValue);
 				final Term negatedAntecedent = indexEquality;
 				final Term negativeCase = SmtUtils.or(mgdScript.getScript(), negatedAntecedent, oldValueInCell);
@@ -1289,7 +1289,7 @@ public class ElimStorePlain {
 					final Term indexRepresentative = equalityInformation.getRepresentative(index);
 					final TermVariable indexReplacement = cc.getOrConstruct(indexRepresentative);
 					mIndexReplacementMapping.put(index, indexReplacement);
-					mIndexMappingDefinitions.add(QuantifierUtils.equalityForExists(mScript, quantifier,
+					mIndexMappingDefinitions.add(QuantifierUtils.applyDerOperator(mScript, quantifier,
 							indexReplacement, index));
 				}
 			}

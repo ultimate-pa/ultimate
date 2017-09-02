@@ -75,7 +75,7 @@ public class DerPreprocessor extends TermTransformer {
 			@Override
 			public TermVariable constructValue(final Term term) {
 				final TermVariable auxVar = mMgdScript.constructFreshTermVariable(AUX_VAR_PREFIX, term.getSort());
-				Term definition = QuantifierUtils.equalityForExists(mScript, mQuantifier, auxVar, term);
+				Term definition = QuantifierUtils.applyDerOperator(mScript, mQuantifier, auxVar, term);
 				
 				//TODO: let Prenex transformer deal with non-NNF terms and remove the following line 
 				definition = new NnfTransformer(mMgdScript, mServices, QuantifierHandling.CRASH).transform(definition);
@@ -220,13 +220,13 @@ public class DerPreprocessor extends TermTransformer {
 		if (array.equals(mEliminatee)) {
 			// self-update
 			final Term select = mScript.term("select", array, newIndex);
-			result = QuantifierUtils.equalityForExists(mScript, mQuantifier, select, newValue); 
+			result = QuantifierUtils.applyDerOperator(mScript, mQuantifier, select, newValue); 
 		} else {
 			if (newValue != value || newIndex != index) {
 				mIntroducedDerPossibility = true;
 			}
 			final Term store = mScript.term("store", array, newIndex, newValue);  
-			result = QuantifierUtils.equalityForExists(mScript, mQuantifier, mEliminatee, store);
+			result = QuantifierUtils.applyDerOperator(mScript, mQuantifier, mEliminatee, store);
 		}
 		//TODO: let Prenex transformer deal with non-NNF terms and remove the following line 
 		result = new NnfTransformer(mMgdScript, mServices, QuantifierHandling.CRASH).transform(result);
