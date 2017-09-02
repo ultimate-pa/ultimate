@@ -263,7 +263,7 @@ public class PartialQuantifierElimination {
 		
 		if (USE_SSD) {
 			final EliminationTask esp = new ElimStorePlain(mgdScript, services,
-					simplificationTechnique, quantifier).elimAll(new EliminationTask(quantifier, eliminatees, result));
+					simplificationTechnique).elimAll(new EliminationTask(quantifier, eliminatees, result));
 			result = esp.getTerm();
 			eliminatees.clear();
 			eliminatees.addAll(esp.getEliminatees());
