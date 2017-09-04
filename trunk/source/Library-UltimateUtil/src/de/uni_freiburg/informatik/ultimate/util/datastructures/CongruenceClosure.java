@@ -193,6 +193,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 			}
 		}
 		updateInconsistencyStatus();
+		assert sanityCheck();
 		return true;
 	}
 
@@ -253,13 +254,14 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 			return true;
 		}
 
-		reportDisequalityRec(elem1, elem2);
+		reportDisequalityRec(elem1, elem2, mFunctionToRepresentativeToCcChildren);
 		updateInconsistencyStatus();
 		assert sanityCheck();
 		return true;
 	}
 
-	protected boolean reportDisequalityRec(final ELEM elem1, final ELEM elem2) {
+	protected boolean reportDisequalityRec(final ELEM elem1, final ELEM elem2,
+			final NestedMap2<FUNCTION, ELEM, Set<List<ELEM>>> oldCcChild) {
 		if (mElementTVER.getEqualityStatus(elem1, elem2) == EqualityStatus.NOT_EQUAL) {
 			return false;
 		}
@@ -267,7 +269,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 		if (mElementTVER.isInconsistent()) {
 			return true;
 		}
-		doBackwardCongruencePropagations(elem1, elem2);
+		doBackwardCongruencePropagations(elem1, elem2, oldCcChild);
 		return true;
 	}
 
@@ -281,16 +283,30 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 			return false;
 		}
 
+		// merge the equivalence classes
 		mElementTVER.reportEquality(elem1, elem2);
 
 		final ELEM newRep = mElementTVER.getRepresentative(elem1);
+
+
+		/*
+		 * make copies of the ccpar and ccchild maps -- we need the old versions for congruence propagations
+		 * (but we dont want to update after the propagations because this would hinder us from doing a lot of sanity
+		 *   checks)
+		 */
+		final NestedMap2<FUNCTION, ELEM, Set<ELEM>> oldCcPar = ccparDeepCopy(mFunctionToRepresentativeToCcPars);
+		final NestedMap2<FUNCTION, ELEM, Set<List<ELEM>>> oldCcChild =
+				ccchildDeepCopy(mFunctionToRepresentativeToCcChildren);
+
+		// update ccpar and ccchild sets
+		updateCcparAndCcChildren(e1OldRep, e2OldRep, newRep);
 
 		// do forward congruence propagations
 		for (final Set<FUNCTION> eqc : mFunctionTVER.getAllEquivalenceClasses()) {
 			for (final Entry<FUNCTION, FUNCTION> funcPair
 					: CrossProducts.binarySelectiveCrossProduct(eqc, true, true)) {
-				final Set<ELEM> e1CcPars = getCcPars(funcPair.getKey(), e1OldRep, true);
-				final Set<ELEM> e2CcPars = getCcPars(funcPair.getValue(), e2OldRep, true);
+				final Set<ELEM> e1CcPars = getCcPars(funcPair.getKey(), e1OldRep, oldCcPar);
+				final Set<ELEM> e2CcPars = getCcPars(funcPair.getValue(), e2OldRep, oldCcPar);
 
 				if (e1CcPars == null || e2CcPars == null) {
 					// nothing to do
@@ -319,7 +335,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 									ccpar2.getArguments());
 							if (onlyDifferentPos != -1) {
 								reportDisequalityRec(ccpar1.getArguments().get(onlyDifferentPos),
-										ccpar2.getArguments().get(onlyDifferentPos));
+										ccpar2.getArguments().get(onlyDifferentPos),
+										oldCcChild);
 							}
 						}
 					}
@@ -331,10 +348,22 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 		 * do some more backward congruence propagations (see method documentation) we
 		 * have two symmetric cases
 		 */
-		propagateDisequalities(e1OldRep, e2OldRep);
-		propagateDisequalities(e2OldRep, e1OldRep);
+		propagateDisequalities(e1OldRep, e2OldRep, oldCcChild);
+		propagateDisequalities(e2OldRep, e1OldRep, oldCcChild);
 
-		// update ccpar and ccchild sets
+
+		return true;
+	}
+
+	/**
+	 * Called when element equivalence classes have been merged, and we therefore need to update the maps that have
+	 * entries that need to be representatives (currently the maps for ccpars and ccchildren)
+	 *
+	 * @param e1OldRep
+	 * @param e2OldRep
+	 * @param newRep
+	 */
+	private void updateCcparAndCcChildren(final ELEM e1OldRep, final ELEM e2OldRep, final ELEM newRep) {
 		for (final FUNCTION func : mFunctionTVER.getAllElements()) {
 			final Set<ELEM> e1CcPars = getCcPars(func, e1OldRep, true);
 			final Set<ELEM> e2CcPars = getCcPars(func, e2OldRep, true);
@@ -344,7 +373,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 
 			// update CcPars and ccChildren -- add the elements in-place according to which element is the
 			// new representative
-			final Set<ELEM> newCcPars = getCcPars(func, newRep, false);
+			final Set<ELEM> newCcPars = getCcPars(func, newRep);
 			final Set<List<ELEM>> newCcChildren = getCcChildren(func, newRep);
 			if (newRep == e1OldRep) {
 				if (e2CcPars != null) {
@@ -367,7 +396,33 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 				removeFromCcChildren(e1OldRep, func);
 			}
 		}
-		return true;
+	}
+
+	private NestedMap2<FUNCTION, ELEM, Set<List<ELEM>>> ccchildDeepCopy(
+			final NestedMap2<FUNCTION, ELEM, Set<List<ELEM>>> functionToRepresentativeToCcChildren) {
+		final NestedMap2<FUNCTION, ELEM, Set<List<ELEM>>> result = new NestedMap2<>();
+		for (final FUNCTION func : functionToRepresentativeToCcChildren.keySet()) {
+			for (final ELEM rep : functionToRepresentativeToCcChildren.get(func).keySet()) {
+				final HashSet<List<ELEM>> newSet = new HashSet<>();
+				result.put(func, rep, newSet);
+				for (final List<ELEM> ccchild : functionToRepresentativeToCcChildren.get(func, rep)) {
+					newSet.add(new ArrayList<>(ccchild));
+				}
+			}
+		}
+		return result;
+	}
+
+	private NestedMap2<FUNCTION, ELEM, Set<ELEM>> ccparDeepCopy(
+			final NestedMap2<FUNCTION, ELEM, Set<ELEM>> functionToRepresentativeToCcPars) {
+		final NestedMap2<FUNCTION, ELEM, Set<ELEM>> result = new NestedMap2<>();
+		for (final FUNCTION func : functionToRepresentativeToCcPars.keySet()) {
+			for (final ELEM rep : functionToRepresentativeToCcPars.get(func).keySet()) {
+				final HashSet<ELEM> newset = new HashSet<>(functionToRepresentativeToCcPars.get(func, rep));
+				result.put(func, rep, newset);
+			}
+		}
+		return result;
 	}
 
 	/**
@@ -464,21 +519,25 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 	 *
 	 * @param e1
 	 * @param e2
+	 * @param oldCcChild
 	 */
-	private void doBackwardCongruencePropagations(final ELEM e1, final ELEM e2) {
+	private void doBackwardCongruencePropagations(final ELEM e1, final ELEM e2,
+			final NestedMap2<FUNCTION, ELEM, Set<List<ELEM>>> oldCcChild) {
 		for (final Set<FUNCTION> eqc : mFunctionTVER.getAllEquivalenceClasses()) {
 			for (final Entry<FUNCTION, FUNCTION> pair :
 					CrossProducts.binarySelectiveCrossProduct(eqc, true, true).entrySet()) {
 
-				final Set<List<ELEM>> e1CcChildren = getCcChildren(pair.getKey(), e1);
-				final Set<List<ELEM>> e2CcChildren = getCcChildren(pair.getValue(), e2);
+				final Set<List<ELEM>> e1CcChildren = getCcChildren(pair.getKey(), mElementTVER.getRepresentative(e1),
+						oldCcChild);
+				final Set<List<ELEM>> e2CcChildren = getCcChildren(pair.getValue(), mElementTVER.getRepresentative(e2),
+						oldCcChild);
 
 				for (final List<ELEM> ccChildList1 : e1CcChildren) {
 					for (final List<ELEM> ccChildList2 : e2CcChildren) {
 						final int onlyUnconstrainedPos = getOnlyUnconstrainedPos(ccChildList1, ccChildList2);
 						if (onlyUnconstrainedPos != -1) {
-							reportDisequality(ccChildList1.get(onlyUnconstrainedPos),
-									ccChildList2.get(onlyUnconstrainedPos));
+							reportDisequalityRec(ccChildList1.get(onlyUnconstrainedPos),
+									ccChildList2.get(onlyUnconstrainedPos), oldCcChild);
 						}
 					}
 				}
@@ -499,8 +558,10 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 	 *
 	 * @param e1OldRep
 	 * @param e2OldRep
+	 * @param oldCcChild
 	 */
-	private void propagateDisequalities(final ELEM e1OldRep, final ELEM e2OldRep) {
+	private void propagateDisequalities(final ELEM e1OldRep, final ELEM e2OldRep,
+			final NestedMap2<FUNCTION, ELEM, Set<List<ELEM>>> oldCcChild) {
 		for (final ELEM repUnequalToE1 : mElementTVER.getRepresentativesUnequalTo(e1OldRep)) {
 			for (final Set<FUNCTION> eqc : mFunctionTVER.getAllEquivalenceClasses()) {
 				for (final Entry<FUNCTION, FUNCTION> pair :
@@ -521,7 +582,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 									ccpar2.getArguments());
 							if (onlyDifferentPos != -1) {
 								reportDisequalityRec(ccpar1.getArguments().get(onlyDifferentPos),
-										ccpar2.getArguments().get(onlyDifferentPos));
+										ccpar2.getArguments().get(onlyDifferentPos),
+										oldCcChild);
 							}
 						}
 					}
@@ -1043,6 +1105,23 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 		mFunctionToRepresentativeToCcChildren.remove(func, elem);
 	}
 
+
+	public Set<ELEM> getCcPars(final FUNCTION func, final ELEM newRep) {
+		return getCcPars(func, newRep, false);
+	}
+
+
+	private static <ELEM, FUNCTION> Set<ELEM> getCcPars(final FUNCTION func, final ELEM newRep,
+			final NestedMap2<FUNCTION, ELEM, Set<ELEM>> oldCcPar) {
+		Set<ELEM> res = oldCcPar.get(func, newRep);
+		if (res == null) {
+			res = new HashSet<>();
+			oldCcPar.put(func, newRep, res);
+		}
+		return res;
+
+	}
+
 	/**
 	 * Retrieves the ccpar map for the given function and element. Creates one if there is none..
 	 *
@@ -1055,8 +1134,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 	 * @param allowNonrepElem
 	 * @return
 	 */
-	public Set<ELEM> getCcPars(final FUNCTION func, final ELEM newRep, final boolean allowNonrepElem) {
-		assert mElementTVER.isRepresentative(newRep) || allowNonrepElem;
+	private Set<ELEM> getCcPars(final FUNCTION func, final ELEM newRep, final boolean allowNonRepresentatives) {
+		assert mElementTVER.isRepresentative(newRep) || allowNonRepresentatives;
 		Set<ELEM> res = mFunctionToRepresentativeToCcPars.get(func, newRep);
 		if (res == null) {
 			res = new HashSet<>();
@@ -1065,12 +1144,24 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 		return res;
 	}
 
-	private Set<List<ELEM>> getCcChildren(final FUNCTION funcRep, final ELEM el) {
-		final ELEM rep = mElementTVER.getRepresentative(el);
-		Set<List<ELEM>> res = mFunctionToRepresentativeToCcChildren.get(funcRep, rep);
+//	private static <ELEM, FUNCTION> Set<List<ELEM>> getCcChildren(final FUNCTION func, final ELEM rep,
+	private Set<List<ELEM>> getCcChildren(final FUNCTION func, final ELEM rep,
+			final NestedMap2<FUNCTION, ELEM, Set<List<ELEM>>> oldCcChild) {
+		assert mElementTVER.isRepresentative(rep);
+		Set<List<ELEM>> res = oldCcChild.get(func, rep);
 		if (res == null) {
 			res = new HashSet<>();
-			mFunctionToRepresentativeToCcChildren.put(funcRep, rep, res);
+			oldCcChild.put(func, rep, res);
+		}
+		return res;
+	}
+
+	private Set<List<ELEM>> getCcChildren(final FUNCTION func, final ELEM el) {
+		final ELEM rep = mElementTVER.getRepresentative(el);
+		Set<List<ELEM>> res = mFunctionToRepresentativeToCcChildren.get(func, rep);
+		if (res == null) {
+			res = new HashSet<>();
+			mFunctionToRepresentativeToCcChildren.put(func, rep, res);
 		}
 		return res;
 	}

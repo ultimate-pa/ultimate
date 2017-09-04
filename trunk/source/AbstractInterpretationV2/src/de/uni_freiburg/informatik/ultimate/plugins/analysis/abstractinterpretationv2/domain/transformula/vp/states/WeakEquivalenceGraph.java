@@ -149,8 +149,8 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 			final CongruenceClosure<NODE, FUNCTION> pa) {
 		final Set<Doubleton<NODE>> newEqualitiesToBePropagated = new HashSet<>();
 
-		final Set<NODE> e1CcParsA = pa.getCcPars(func1, mPartialArrangement.getRepresentativeElement(node1), false);
-		final Set<NODE> e2CcParsA = pa.getCcPars(func2, mPartialArrangement.getRepresentativeElement(node2), false);
+		final Set<NODE> e1CcParsA = pa.getCcPars(func1, mPartialArrangement.getRepresentativeElement(node1));
+		final Set<NODE> e2CcParsA = pa.getCcPars(func2, mPartialArrangement.getRepresentativeElement(node2));
 
 		if (e1CcParsA == null || e2CcParsA == null) {
 			// nothing to do
@@ -193,6 +193,7 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 
 	public boolean reportChangeInGroundPartialArrangement(final Predicate<CongruenceClosure<NODE, FUNCTION>> action) {
 		assert this.sanityCheck();
+		assert mPartialArrangement.sanityCheck();
 		boolean madeChanges = false;
 		final Map<Doubleton<FUNCTION>, WeakEquivalenceEdgeLabel> weqCopy = new HashMap<>(mWeakEquivalenceEdges);
 		for (final Entry<Doubleton<FUNCTION>, WeakEquivalenceEdgeLabel> edge : weqCopy.entrySet())  {
@@ -207,6 +208,7 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 				// TODO is the madeChanges flag worth this effort?.. should we just always say "true"?..
 				madeChanges |= !newLabel.isStrongerThan(edge.getValue()) || !edge.getValue().isStrongerThan(newLabel);
 			}
+			assert mPartialArrangement.sanityCheck();
 		}
 		assert sanityCheck();
 		return madeChanges;

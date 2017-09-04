@@ -17,6 +17,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.IEqFunctionIdentifier;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CongruenceClosure;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
 public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>,
 			NODE extends IEqNodeIdentifier<NODE, FUNCTION>,
@@ -160,6 +161,7 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>,
 		boolean madeChanges = false;
 
 		madeChanges |= super.reportEqualityRec(node1, node2);
+		assert sanityCheck();
 
 		if (!madeChanges) {
 			return false;
@@ -175,6 +177,7 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>,
 		for (final Doubleton<NODE> eq : propagatedEqualitiesFromWeqEdges) {
 			this.reportEquality(eq.getOneElement(), eq.getOtherElement());
 		}
+		assert sanityCheck();
 
 		// should we do this for every equality or only the ones reported on EqConstraint level??
 		reportGpaChangeToWeqGraphAndPropagateArrayEqualities(
@@ -219,6 +222,7 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>,
 		boolean madeChanges = false;
 
 		madeChanges |= super.reportDisequality(elem1, elem2);
+		assert sanityCheck();
 
 		if (!madeChanges) {
 			return false;
@@ -232,10 +236,12 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>,
 
 
 	@Override
-	protected boolean reportDisequalityRec(final NODE elem1, final NODE elem2) {
+	protected boolean reportDisequalityRec(final NODE elem1, final NODE elem2,
+			final NestedMap2<FUNCTION, NODE, Set<List<NODE>>> oldCcChild) {
 		boolean madeChanges = false;
 
-		madeChanges |= super.reportDisequalityRec(elem1, elem2);
+		madeChanges |= super.reportDisequalityRec(elem1, elem2, oldCcChild);
+//		assert sanityCheck();
 
 		if (!madeChanges) {
 			return false;
@@ -253,6 +259,7 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>,
 		boolean madeChanges = false;
 
 		madeChanges |= super.reportFunctionEquality(func1, func2);
+		assert sanityCheck();
 
 		if (!madeChanges) {
 			return false;
@@ -268,6 +275,7 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>,
 		boolean madeChanges = false;
 
 		madeChanges |= super.reportFunctionDisequality(func1, func2);
+		assert sanityCheck();
 
 		if (!madeChanges) {
 			return false;
@@ -293,6 +301,7 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>,
 		assert !mWeakEquivalenceGraph.hasArrayEqualities();
 		madeChanges |= mWeakEquivalenceGraph.reportChangeInGroundPartialArrangement(reporter);
 		reportAllArrayEqualitiesFromWeqGraph();
+		assert sanityCheck();
 		return madeChanges;
 	}
 
