@@ -264,6 +264,15 @@ public class PartialQuantifierElimination {
 		if (USE_SSD) {
 			final EliminationTask esp = new ElimStorePlain(mgdScript, services,
 					simplificationTechnique).elimAll(new EliminationTask(quantifier, eliminatees, result));
+			{
+				final EliminationTask sosResult = applyStoreOverSelect(mgdScript, quantifier, eliminatees, services, logger,
+						simplificationTechnique, script, result);
+				final Term espTerm = esp.toTerm(script);
+				final Term sosTerm = sosResult.toTerm(script);
+				assert Util.checkSat(script,
+						script.term("distinct", espTerm, sosTerm)) != LBool.SAT : "Array QEs differ. Esp: " + espTerm
+								+ " Sos:" + sosTerm;
+			}
 			result = esp.getTerm();
 			eliminatees.clear();
 			eliminatees.addAll(esp.getEliminatees());
@@ -275,11 +284,12 @@ public class PartialQuantifierElimination {
 		final boolean sosChangedTerm;
 		// apply Store Over Select
 		if (USE_SOS) {
-			final Term[] newParams = applyStoreOverSelect(mgdScript, quantifier, eliminatees, services, logger,
+			final EliminationTask sosResult = applyStoreOverSelect(mgdScript, quantifier, eliminatees, services, logger,
 					simplificationTechnique, script, result);
-			final Term termAfterSOS = QuantifierUtils.applyCorrespondingFiniteConnective(script, quantifier, newParams);
-			sosChangedTerm = (result != termAfterSOS);
-			result = termAfterSOS;
+			eliminatees.retainAll(sosResult.getEliminatees());
+			eliminatees.addAll(sosResult.getEliminatees());
+			sosChangedTerm = (result != sosResult.getTerm());
+			result = sosResult.getTerm();
 		} else {
 			sosChangedTerm = false;
 		}
@@ -356,7 +366,7 @@ public class PartialQuantifierElimination {
 		return termAfterUPD;
 	}
 
-	private static Term[] applyStoreOverSelect(final ManagedScript mgdScript, final int quantifier,
+	private static EliminationTask applyStoreOverSelect(final ManagedScript mgdScript, final int quantifier,
 			final Set<TermVariable> eliminatees, final IUltimateServiceProvider services, final ILogger logger,
 			final SimplificationTechnique simplificationTechnique, final Script script, final Term resultOld) {
 		final Set<TermVariable> remainingAndNewAfterSOS = new HashSet<>();
@@ -368,9 +378,8 @@ public class PartialQuantifierElimination {
 					simplificationTechnique);
 			remainingAndNewAfterSOS.addAll(eliminateesSOS);
 		}
-		eliminatees.retainAll(remainingAndNewAfterSOS);
-		eliminatees.addAll(remainingAndNewAfterSOS);
-		return newParams;
+		final Term termAfterSOS = QuantifierUtils.applyCorrespondingFiniteConnective(script, quantifier, newParams);
+		return new EliminationTask(quantifier, remainingAndNewAfterSOS, termAfterSOS);
 	}
 
 	private static Term applyUsr(final ManagedScript mgdScript, final int quantifier,
