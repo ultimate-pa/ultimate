@@ -465,9 +465,8 @@ public class Elim1Store {
 
 
 		private Pair<ThreeValuedEquivalenceRelation<Term>, List<Term>> analyzeIndexEqualities(final int mQuantifier,
-				final Set<Term> selectIndices, final Term storeIndex, final Term storeValue, final Term preprocessedInput, final ThreeValuedEquivalenceRelation<Term> inputTveR, final TermVariable eliminatee) {
+				final Set<Term> selectIndices, final Term storeIndex, final Term storeValue, final Term preprocessedInput, final ThreeValuedEquivalenceRelation<Term> tver, final TermVariable eliminatee) {
 		
-			final ThreeValuedEquivalenceRelation<Term> tver = new ThreeValuedEquivalenceRelation<>(inputTveR);
 		
 			final List<Term> relationsDetectedViaSolver = new ArrayList<>();
 			final ArrayList<Term> allIndicesList = new ArrayList<>(selectIndices);
@@ -670,7 +669,7 @@ public class Elim1Store {
 						assert !occursIn(eliminatee, replacementIndex1) : "var is still there";
 						final Term replacementIndex2 = representative2replacement.get(index2);
 						assert !occursIn(eliminatee, replacementIndex2) : "var is still there";
-						indexEqualityTerm = SmtUtils.binaryEquality(mgdScript.getScript(), replacementIndex1,
+						indexEqualityTerm = QuantifierUtils.applyDerOperator(mgdScript.getScript(), quantifier, replacementIndex1,
 								replacementIndex2);
 						break;
 					default:
@@ -698,7 +697,7 @@ public class Elim1Store {
 						assert !occursIn(eliminatee, value1) : "var is still there";
 						final Term value2 = index2value.get(index2);
 						assert !occursIn(eliminatee, value2) : "var is still there";
-						valueEqualityTerm = SmtUtils.binaryEquality(mgdScript.getScript(), value1, value2);
+						valueEqualityTerm = QuantifierUtils.applyDerOperator(mgdScript.getScript(), quantifier, value1, value2);
 					}
 						break;
 					default:
