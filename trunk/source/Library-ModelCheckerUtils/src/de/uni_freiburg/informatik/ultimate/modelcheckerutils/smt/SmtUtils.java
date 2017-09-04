@@ -502,7 +502,7 @@ public final class SmtUtils {
 		} else if (SmtSortUtils.isArraySort(lhs.getSort())) {
 			return arrayEquality(script, lhs, rhs);
 		} else {
-			return script.term("=", lhs, rhs);
+			return script.term("=", CommuhashUtils.sortByHashCode(lhs, rhs));
 		}
 	}
 
@@ -528,7 +528,7 @@ public final class SmtUtils {
 		} else if (isFalse(rhs)) {
 			return SmtUtils.not(script, lhs);
 		} else {
-			return script.term("=", lhs, rhs);
+			return script.term("=", CommuhashUtils.sortByHashCode(lhs, rhs));
 		}
 	}
 
@@ -552,7 +552,7 @@ public final class SmtUtils {
 				return script.term("false");
 			}
 		}
-		return script.term("=", lhs, rhs);
+		return script.term("=", CommuhashUtils.sortByHashCode(lhs, rhs));
 	}
 
 	/**
@@ -567,10 +567,10 @@ public final class SmtUtils {
 			throw new UnsupportedOperationException("need numeric sort");
 		}
 		if (!(lhs instanceof ConstantTerm)) {
-			return script.term("=", lhs, rhs);
+			return script.term("=", CommuhashUtils.sortByHashCode(lhs, rhs));
 		}
 		if (!(rhs instanceof ConstantTerm)) {
-			return script.term("=", lhs, rhs);
+			return script.term("=", CommuhashUtils.sortByHashCode(lhs, rhs));
 		}
 		final ConstantTerm lhsConst = (ConstantTerm) lhs;
 		final ConstantTerm rhsConst = (ConstantTerm) rhs;
@@ -618,7 +618,7 @@ public final class SmtUtils {
 				}
 			}
 		}
-		return script.term("=", lhs, rhs);
+		return script.term("=", CommuhashUtils.sortByHashCode(lhs, rhs));
 	}
 
 	/**
