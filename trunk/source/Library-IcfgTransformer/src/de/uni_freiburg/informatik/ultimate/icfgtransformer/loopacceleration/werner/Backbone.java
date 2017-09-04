@@ -44,8 +44,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Unm
 public class Backbone {
 
 	private final Deque<IcfgEdge> mPath;
-	private TransFormula mFormula;
 	private final List<Loop> mNestedLoops;
+	private TransFormula mFormula;
 	private TermVariable mPathCounter;
 	private UnmodifiableTransFormula mCondition;
 	private SymbolicMemory mSymbolicMemory;
@@ -61,6 +61,7 @@ public class Backbone {
 	 *            The paths {@link TransFormula}.
 	 * 
 	 * @param isNested
+	 *            does the backbone contain other loopheads
 	 * 
 	 * @param nestedLoops
 	 *            Nested loops in the backbone

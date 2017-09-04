@@ -48,11 +48,10 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 
 public class Loop {
 
+	private final IcfgLocation mLoopHead;
+	private Term mCondition;
 	private Deque<IcfgEdge> mPath;
 	private Deque<Backbone> mBackbones;
-	private final IcfgLocation mLoopHead;
-	private Term mTerm;
-	private Term mCondition;
 	private IteratedSymbolicMemory mIteratedMemory;
 	private List<TermVariable> mAuxVars;
 	private Map<IcfgLocation, Backbone> mErrorPaths;
@@ -61,7 +60,6 @@ public class Loop {
 	private Boolean mIsSummarized;
 	private Map<IProgramVar, TermVariable> mInVars;
 	private Map<IProgramVar, TermVariable> mOutVars;
-	private UnmodifiableTransFormula mAcceleratedCondition;
 	private IcfgLocation mLoopExit;
 	private List<IcfgEdge> mExitTransitions;
 	private List<UnmodifiableTransFormula> mExitConditions;
@@ -85,7 +83,6 @@ public class Loop {
 		mNestedLoops = new ArrayDeque<>();
 		mInVars = new HashMap<>();
 		mOutVars = new HashMap<>();
-		mAcceleratedCondition = null;
 		mLoopExit = null;
 		mExitConditions = new ArrayList<>();
 		mExitTransitions = new ArrayList<>();
@@ -130,10 +127,6 @@ public class Loop {
 		return mIteratedMemory;
 	}
 
-	public Term getTerm() {
-		return mTerm;
-	}
-
 	public List<TermVariable> getVars() {
 		return mAuxVars;
 	}
@@ -168,22 +161,26 @@ public class Loop {
 	public Deque<Loop> getNestedLoops() {
 		return mNestedLoops;
 	}
-
-	public UnmodifiableTransFormula getAcceleratedCondition() {
-		return mAcceleratedCondition;
-	}
-
 	public void setPath(final Deque<IcfgEdge> path) {
 		mPath = path;
 	}
 
 	public void setLoopExit(final IcfgLocation icfgLocation) {
 		mLoopExit = icfgLocation;
-		mExitTransitions = icfgLocation.getIncomingEdges();
+		for (final IcfgEdge trans : icfgLocation.getIncomingEdges()) {
+			final IcfgLocation source = trans.getSource();
+			for (final IcfgEdge out : source.getOutgoingEdges()) {
+				if (mPath.contains(out)) {
+					mExitTransitions.add(trans);
+					break;
+				}
+			}
+
+		}
 	}
 
-	public void setExitConditions(final List<UnmodifiableTransFormula> exitConditions) {
-		mExitConditions = exitConditions;
+	public void addExitCondition(final UnmodifiableTransFormula exitCondition) {
+		mExitConditions.add(exitCondition);
 	}
 
 	/**
@@ -197,6 +194,10 @@ public class Loop {
 	 */
 	public void addErrorPath(final IcfgLocation errorLocation, final Backbone errorPath) {
 		mErrorPaths.put(errorLocation, errorPath);
+	}
+	
+	public void replaceErrorPath(final IcfgLocation errorLocation, final Backbone newErrorPath) {
+		mErrorPaths.replace(errorLocation, newErrorPath);
 	}
 
 	/**
@@ -230,10 +231,6 @@ public class Loop {
 		mIteratedMemory = memory;
 	}
 
-	public void setAcceleratedCondition(final UnmodifiableTransFormula condition) {
-		mAcceleratedCondition = condition;
-	}
-
 	public Boolean isNested() {
 		return mHasNestedLoops;
 	}
@@ -247,10 +244,6 @@ public class Loop {
 	 */
 	public void setNested() {
 		mHasNestedLoops = true;
-	}
-
-	public void setTerm(Term term) {
-		mTerm = term;
 	}
 
 	/**

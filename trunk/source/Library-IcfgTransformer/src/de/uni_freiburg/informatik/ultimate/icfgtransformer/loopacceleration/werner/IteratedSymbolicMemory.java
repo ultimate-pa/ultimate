@@ -61,9 +61,9 @@ public class IteratedSymbolicMemory {
 	private final Loop mLoop;
 	private final List<TermVariable> mPathCounters;
 	private final Map<TermVariable, TermVariable> mNewPathCounters;
-	private Term mAbstractPathCondition;
 	private final ManagedScript mScript;
 	private final ILogger mLogger;
+	private Term mAbstractPathCondition;
 
 	private enum mCaseType {
 		NOT_CHANGED, ADDITION, SUBTRACTION, CONSTANT_ASSIGNMENT, CONSTANT_ASSIGNMENT_PATHCOUNTER
@@ -285,9 +285,6 @@ public class IteratedSymbolicMemory {
 
 			final TermVariable[] vars = { mNewPathCounters.get(backbone.getPathCounter()) };
 			final Term necessaryCondition = mScript.getScript().quantifier(QuantifiedFormula.FORALL, vars, tFirstPart);
-
-			// mAbstractPathCondition = mScript.getScript().term("and",
-			// mAbstractPathCondition, necessaryCondition);
 			mAbstractPathCondition = SmtUtils.and(mScript.getScript(),
 					Arrays.asList(mAbstractPathCondition, necessaryCondition));
 		}
@@ -334,6 +331,21 @@ public class IteratedSymbolicMemory {
 		}
 		return result;
 	}
+	
+	/**
+	 * update the backbones {@link TransFormula} with the new iterated values.
+	 * 
+	 * @param backbone
+	 *            the backbone to be updated
+	 * @return term with updated values
+	 */
+	public Term updateBackboneTerm(final TransFormula tf) {
+		Term condition = tf.getFormula();
+		final Map<Term, Term> subMapping = termUnravel(condition);
+		final Substitution sub = new Substitution(mScript, subMapping);
+		return sub.transform(condition);
+	}
+
 
 	/**
 	 * Get the iterated memory mapping

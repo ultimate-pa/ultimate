@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.wer
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -54,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.SimultaneousUpdate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
@@ -171,6 +173,9 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 		}
 
 		for (final Backbone backbone : loop.getBackbones()) {
+
+			backbone.setFormula(mLoopDetector.updateVars(backbone.getFormula(), loop.getInVars(), loop.getOutVars()));
+
 			final UnmodifiableTransFormula tf = (UnmodifiableTransFormula) backbone.getFormula();
 
 			final TermClassifier classifier = new TermClassifier();
@@ -202,7 +207,7 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 
 			if (backbone.isNested()) {
 				for (final Loop nestedLoop : backbone.getNestedLoops()) {
-					if (nestedLoop.getPath().isEmpty()) {
+					if (nestedLoop.getPath().isEmpty() || nestedLoop.getExitConditions().isEmpty()) {
 						continue;
 					}
 
@@ -277,12 +282,43 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 		tfb.setFormula(acceleratedLoopCondition);
 		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
 
-		final UnmodifiableTransFormula acceleratedLoopSummary = tfb.finishConstruction(mScript);
+		UnmodifiableTransFormula acceleratedLoopSummary = tfb.finishConstruction(mScript);
 
-		loop.setAcceleratedCondition(acceleratedLoopSummary);
+		for (final IcfgEdge exitTransition : loop.getExitTransitions()) {
+			loop.addExitCondition(TransFormulaUtils.sequentialComposition(mLogger, mServices, mScript, false, true,
+					false, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION,
+					SimplificationTechnique.SIMPLIFY_DDA,
+					Arrays.asList(acceleratedLoopSummary, exitTransition.getTransformula())));
+		}
 
+		for (final Entry<IcfgLocation, Backbone> errorPath : loop.getErrorPaths().entrySet()) {
+
+			final TransFormula errorTf = mLoopDetector.updateVars(errorPath.getValue().getFormula(), loop.getInVars(),
+					loop.getOutVars());
+			Term errorTerm = iteratedSymbolicMemory.updateBackboneTerm(errorTf);
+
+			for (final TermVariable pathCounter : mPathCounter) {
+				final Term t = mScript.getScript().term("<=", mScript.getScript().numeral("0"), pathCounter);
+				errorTerm = mScript.getScript().term("and", t, errorTerm);
+			}
+
+			errorTerm = mScript.getScript().quantifier(QuantifiedFormula.EXISTS,
+					mPathCounter.toArray(new TermVariable[mPathCounter.size()]), errorTerm);
+
+			TransFormulaBuilder tfb1 = new TransFormulaBuilder(loop.getInVars(), loop.getOutVars(), true, null, true,
+					null, true);
+
+			tfb1.setFormula(PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mScript, errorTerm,
+					SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION));
+
+			tfb1.setInfeasibility(Infeasibility.NOT_DETERMINED);
+
+			final Backbone newErrorPath = new Backbone(errorPath.getValue().getPath(), tfb1.finishConstruction(mScript),
+					false, null);
+			loop.replaceErrorPath(errorPath.getKey(), newErrorPath);
+
+		}
 		loop.setSummarized();
-		mLogger.debug("DONE " + acceleratedLoopSummary.toString());
 	}
 
 	private void processLocations(final Set<INLOC> init, final TransformedIcfgBuilder<INLOC, OUTLOC> lst) {
@@ -321,12 +357,11 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 					}
 
 					if (loop.getPath().contains(oldTransition)) {
-						final OUTLOC newTarget = lst.createNewLocation((INLOC) loop.getLoophead());
-						lst.createNewInternalTransition(newSource, newTarget, loop.getAcceleratedCondition(), true);
+
 						final OUTLOC loopExit = lst.createNewLocation((INLOC) loop.getLoopExit());
-						for (IcfgEdge exitTransition : loop.getExitTransitions()) {
-							lst.createNewInternalTransition(newSource, loopExit, exitTransition.getTransformula(),
-									true);
+
+						for (UnmodifiableTransFormula exitTransition : loop.getExitConditions()) {
+							lst.createNewInternalTransition(newSource, loopExit, exitTransition, true);
 						}
 
 					} else {

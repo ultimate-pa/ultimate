@@ -74,8 +74,6 @@ public class LoopDetector<INLOC extends IcfgLocation> {
 	private final Set<INLOC> mErrorLocations;
 	private final Set<INLOC> mLoopHeads;
 	private final Map<IcfgLocation, Loop> mNestedLoopHierachy;
-	private Map<IProgramVar, TermVariable> mInVars;
-	private Map<IProgramVar, TermVariable> mOutVars;
 
 	/**
 	 * Loop Detector for retrieving loops in an {@link IIcfg}.
@@ -94,8 +92,6 @@ public class LoopDetector<INLOC extends IcfgLocation> {
 		mLoopHeads = originalIcfg.getLoopLocations();
 		mNestedLoopHierachy = new HashMap<>();
 		mLoopBodies = getLoop();
-		mInVars = new HashMap<>();
-		mOutVars = new HashMap<>();
 
 		for (Entry<IcfgLocation, Loop> entry : mLoopBodies.entrySet()) {
 
@@ -123,13 +119,8 @@ public class LoopDetector<INLOC extends IcfgLocation> {
 				loop.addBackbone(backbone);
 			}
 
-			mInVars = loopFormula.getInVars();
-			mOutVars = loopFormula.getOutVars();
-			for (final Backbone backbone : loop.getBackbones()) {
-				backbone.setFormula(updateVars(backbone.getFormula(), mInVars, mOutVars));
-			}
-			loop.setInVars(mInVars);
-			loop.setOutVars(mOutVars);
+			loop.setInVars(loopFormula.getInVars());
+			loop.setOutVars(loopFormula.getOutVars());
 
 			if (mNestedLoopHierachy.containsKey(entry.getKey())) {
 				mNestedLoopHierachy.get(entry.getKey()).setNested();
@@ -184,6 +175,10 @@ public class LoopDetector<INLOC extends IcfgLocation> {
 				loop.addErrorPath(edge.getTarget(), errorLocationPath);
 			}
 
+			if (!findLoopHeader(newPath, start, target)) {
+				continue;
+			}
+
 			if (mLoopHeads.contains(edge.getTarget()) && !edge.getTarget().equals(loop.getLoophead())) {
 
 				if (mNestedLoopHierachy.containsKey(loop.getLoophead())
@@ -208,12 +203,11 @@ public class LoopDetector<INLOC extends IcfgLocation> {
 				continue;
 			}
 
-			if (findLoopHeader(newPath, start, target)) {
-				loopPath = newPath;
-				if (!edge.getTarget().equals(target)) {
-					stack.addAll(edge.getTarget().getOutgoingEdges());
-				}
+			loopPath = newPath;
+			if (!edge.getTarget().equals(target)) {
+				stack.addAll(edge.getTarget().getOutgoingEdges());
 			}
+
 		}
 		return loopPath;
 	}
@@ -310,8 +304,16 @@ public class LoopDetector<INLOC extends IcfgLocation> {
 		return backbones;
 	}
 
-	private TransFormula updateVars(final TransFormula tf, Map<IProgramVar, TermVariable> inVars,
-			Map<IProgramVar, TermVariable> outVars) {
+	/**
+	 * unify the vars
+	 * 
+	 * @param tf
+	 * @param inVars
+	 * @param outVars
+	 * @return Transformula with unified var names
+	 */
+	public TransFormula updateVars(final TransFormula tf, final Map<IProgramVar, TermVariable> inVars,
+			final Map<IProgramVar, TermVariable> outVars) {
 		if (SmtUtils.isFalse(tf.getFormula())) {
 			return tf;
 		}
