@@ -428,6 +428,7 @@ public class TreeAutomatonBU<LETTER extends IRankedLetter, STATE> implements ITr
 		}
 
 		final StringBuilder transitionTable = new StringBuilder();
+	
 		for (final TreeAutomatonRule<LETTER, STATE> rule : getRules()) {
 			if (transitionTable.length() > 0) {
 				transitionTable.append("\n");

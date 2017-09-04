@@ -26,6 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.tree.operations;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Optional;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -39,6 +41,8 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
 import de.uni_freiburg.informatik.ultimate.automata.tree.IRankedLetter;
 import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.StringRankedLetter;
+import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
+import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeRun;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.services.ToolchainStorage;
 
@@ -78,22 +82,20 @@ public final class IsEquivalent<LETTER extends IRankedLetter, STATE>
 		final StringFactory factory = new StringFactory();
 
 		// Arguments for generation of a random tree automaton
-		final int numberOfStates = 10;
-		final int[] rankToNumberOfLetters = { 2, 0, 5, 5 };
-		final int[] rankToNumberOfTransitionsPerLetter = { 2, 0, 10, 10 };
+		final int numberOfStates = 4;
+		final int[] rankToNumberOfLetters = { 2, 0, 1, 2 };
+		final int[] rankToNumberOfTransitionsPerLetter = { 2, 0, 5, 5 };
 		final double acceptanceDensity = 0.2;
 
 		final GetRandomDftaBU getRandomTree = new GetRandomDftaBU(services, numberOfStates, rankToNumberOfLetters,
 				rankToNumberOfTransitionsPerLetter, acceptanceDensity);
 		final ITreeAutomatonBU<StringRankedLetter, String> firstTree = getRandomTree.getResult();
+
 		final ITreeAutomatonBU<StringRankedLetter, String> secondTree = new Minimize<>(services, factory, firstTree)
 				.getResult();
-		System.out.println(firstTree);
-		System.out.println(secondTree);
-
-		// Check if the tree is equivalent to itself
 		final IsEquivalent<StringRankedLetter, String> isEquivalent = new IsEquivalent<>(services, factory, firstTree,
 				secondTree);
+		
 		if (isEquivalent.getResult().booleanValue()) {
 			System.out.println("Is equivalent.");
 		} else {

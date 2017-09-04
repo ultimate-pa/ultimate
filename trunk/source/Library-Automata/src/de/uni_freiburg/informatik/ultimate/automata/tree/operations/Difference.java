@@ -26,6 +26,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.tree.operations;
 
+import java.util.Collection;
+import java.util.HashSet;
+
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
@@ -72,8 +75,8 @@ public final class Difference<LETTER extends IRankedLetter, STATE>
 	 * 
 	 * @param <SF>
 	 *            The type of the state factory to use for intermediate methods,
-	 *            must provide methods for merging states, creating sink states and
-	 *            intersecting states.
+	 *            must provide methods for merging states, creating sink states
+	 *            and intersecting states.
 	 * @param services
 	 *            Ultimate services
 	 * @param factory
@@ -89,7 +92,7 @@ public final class Difference<LETTER extends IRankedLetter, STATE>
 	public <SF extends IMergeStateFactory<STATE> & ISinkStateFactory<STATE> & IIntersectionStateFactory<STATE>> Difference(
 			final AutomataLibraryServices services, final SF factory,
 			final ITreeAutomatonBU<LETTER, STATE> firstOperand, final ITreeAutomatonBU<LETTER, STATE> secondOperand)
-			throws AutomataOperationCanceledException {
+					throws AutomataOperationCanceledException {
 		super(services);
 
 		this.mFirstOperand = firstOperand;
@@ -127,8 +130,8 @@ public final class Difference<LETTER extends IRankedLetter, STATE>
 	 * 
 	 * @param <SF>
 	 *            The type of the state factory to use for intermediate methods,
-	 *            must provide methods for merging states, creating sink states and
-	 *            intersecting states.
+	 *            must provide methods for merging states, creating sink states
+	 *            and intersecting states.
 	 * @param factory
 	 *            The state factory to use for intermediate methods
 	 * @return The difference of the two given tree automata
@@ -143,8 +146,12 @@ public final class Difference<LETTER extends IRankedLetter, STATE>
 		if (this.mLogger.isDebugEnabled()) {
 			this.mLogger.debug("Starting to compute complement(second).");
 		}
+		final Collection<LETTER> alphabet = new HashSet<>();
+		alphabet.addAll(this.mFirstOperand.getAlphabet());
+		alphabet.addAll(this.mSecondOperand.getAlphabet());
+
 		final ITreeAutomatonBU<LETTER, STATE> secondOperandComplemented = new Complement<>(this.mServices, factory,
-				this.mSecondOperand).getResult();
+				this.mSecondOperand, alphabet).getResult();
 
 		// If operation was canceled, for example from the
 		// Ultimate framework

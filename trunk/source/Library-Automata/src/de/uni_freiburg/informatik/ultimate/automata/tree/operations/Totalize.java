@@ -27,8 +27,11 @@
 package de.uni_freiburg.informatik.ultimate.automata.tree.operations;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -37,21 +40,27 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
 import de.uni_freiburg.informatik.ultimate.automata.tree.IRankedLetter;
 import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomatonBU;
+import de.uni_freiburg.informatik.ultimate.automata.tree.StringRankedLetter;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.services.ToolchainStorage;
 
 /**
  * Totalize TreeAutomaton operation
+ * 
  * @author Mostafa M.A. (mostafa.amin93@gmail.com)
  *
  * @param <LETTER>
  * @param <STATE>
  */
-public class Totalize<LETTER extends IRankedLetter, STATE> extends GeneralOperation<LETTER, STATE, IStateFactory<STATE>> implements IOperation<LETTER, STATE, IStateFactory<STATE>> {
+public class Totalize<LETTER extends IRankedLetter, STATE> extends GeneralOperation<LETTER, STATE, IStateFactory<STATE>>
+		implements IOperation<LETTER, STATE, IStateFactory<STATE>> {
 
 	private final ITreeAutomatonBU<LETTER, STATE> mTreeAutomaton;
 	private final ISinkStateFactory<STATE> mStateFactory;
@@ -61,34 +70,63 @@ public class Totalize<LETTER extends IRankedLetter, STATE> extends GeneralOperat
 
 	private final STATE mDummyState;
 	private final Set<STATE> mStates;
-	
+	private final Collection<LETTER> mAlphabet;
 
 	/***
 	 * Totalize operation constructor
+	 * 
 	 * @param services
 	 * @param factory
 	 * @param tree
 	 */
-	public Totalize(final AutomataLibraryServices services, final ISinkStateFactory<STATE> factory,
-			final ITreeAutomatonBU<LETTER, STATE> tree) {
+	public <SF extends IMergeStateFactory<STATE> & ISinkStateFactory<STATE>> Totalize(
+			final AutomataLibraryServices services, final SF factory, final ITreeAutomatonBU<LETTER, STATE> tree) {
 		super(services);
-		mTreeAutomaton = tree;
+		mTreeAutomaton = new Determinize<>(services, factory, tree).getResult();
 		mStateFactory = factory;
 		mMemCombinations = new HashMap<>();
 		mDummyState = mStateFactory.createSinkStateContent();
 		mStates = new HashSet<>();
 		mStates.add(mDummyState);
-		mStates.addAll(tree.getStates());
-		
-		mResult = computeResult();
+		mStates.addAll(mTreeAutomaton.getStates());
+		mAlphabet = new HashSet<>();
+		mAlphabet.addAll(tree.getAlphabet());
+		mResult = computeTotalize();
 	}
 
 	/***
-	 * Combinations of states of size siz
+	 * Totalize operation constructor
+	 * 
+	 * @param services
+	 * @param factory
+	 * @param tree The given tree automaton
+	 * @param alphabet The given extra alphabet to include while totalization
+	 */
+	public <SF extends IMergeStateFactory<STATE> & ISinkStateFactory<STATE>> Totalize(
+			final AutomataLibraryServices services, final SF factory, final ITreeAutomatonBU<LETTER, STATE> tree,
+			final Collection<LETTER> alphabet) {
+		super(services);
+		mTreeAutomaton = new Determinize<>(services, factory, tree).getResult();
+		mStateFactory = factory;
+		mMemCombinations = new HashMap<>();
+		mDummyState = mStateFactory.createSinkStateContent();
+		mStates = new HashSet<>();
+		mStates.add(mDummyState);
+		mStates.addAll(mTreeAutomaton.getStates());
+		mAlphabet = new HashSet<>();
+		mAlphabet.addAll(alphabet);
+		mAlphabet.addAll(tree.getAlphabet());
+		//((TreeAutomatonBU<LETTER, STATE>) mTreeAutomaton).extendAlphabet(mAlphabet);
+		mResult = computeTotalize();
+	}
+
+	/***
+	 * All possible Combinations of states of a given size
+	 * 
 	 * @param siz
 	 * @return
 	 */
-	public List<List<STATE>> combinations(final int siz) {
+	private List<List<STATE>> combinations(final int siz) {
 		if (mMemCombinations.containsKey(siz)) {
 			return mMemCombinations.get(siz);
 		}
@@ -114,64 +152,35 @@ public class Totalize<LETTER extends IRankedLetter, STATE> extends GeneralOperat
 
 	/***
 	 * Compute the totalization result.
+	 * 
 	 * @return
 	 */
-	public TreeAutomatonBU<LETTER, STATE> computeResult() {
+	private TreeAutomatonBU<LETTER, STATE> computeTotalize() {
 		final TreeAutomatonBU<LETTER, STATE> res = new TreeAutomatonBU<>();
 
 		res.extendAlphabet(mTreeAutomaton.getAlphabet());
+		res.extendAlphabet(mAlphabet);
 		for (final STATE st : mStates) {
 			res.addState(st);
 			if (mTreeAutomaton.isFinalState(st)) {
 				res.addFinalState(st);
 			}
 		}
-		final Map<LETTER, Integer> arityMap = new HashMap<>(); 
 		for (final TreeAutomatonRule<LETTER, STATE> rule : mTreeAutomaton.getRules()) {
 			res.addRule(rule);
 			for (final List<STATE> srcSt : combinations(rule.getArity())) {
 				final Iterable<STATE> st = mTreeAutomaton.getSuccessors(srcSt, rule.getLetter());
-				if (st != null && !st.iterator().hasNext()) {
+				if (st == null || !st.iterator().hasNext()) {
 					res.addRule(new TreeAutomatonRule<>(rule.getLetter(), srcSt, mDummyState));
 				}
 			}
-			arityMap.put(rule.getLetter(), rule.getArity());
+			assert rule.getLetter().getRank() == rule.getArity();
 		}
-		for (final LETTER sym : mTreeAutomaton.getAlphabet()) {
-			/*
-			Object symbol = sym;
-			Method getAr = null;
-			int arity;
-			try {
-				getAr = sym.getClass().getMethod("getHeadPredicate");
-				symbol = getAr.invoke(symbol);
-				getAr = symbol.getClass().getMethod("getArity");
-				arity = (int) getAr.invoke(symbol);
-			} catch (final Exception e) {
-				continue;
-			}
-			*/
+		for (final LETTER sym : mAlphabet) {
 			int arity = sym.getRank();
-			/*
-			if (!arityMap.containsKey(sym)) {
-
-				Object symbol = sym;
-				Method getAr = null;
-				try {
-					getAr = sym.getClass().getMethod("getHeadPredicate");
-					symbol = getAr.invoke(symbol);
-					getAr = symbol.getClass().getMethod("getArity");
-					arity = (int) getAr.invoke(symbol);
-				} catch (final Exception e) {
-					continue;
-				}
-			} else {
-				arity = arityMap.get(sym);
-			}
-			*/
 			for (final List<STATE> srcSt : combinations(arity)) {
 				final Iterable<STATE> st = mTreeAutomaton.getSuccessors(srcSt, sym);
-				if (arity >= 0 && st != null && !st.iterator().hasNext()) {
+				if (st == null || !st.iterator().hasNext()) {
 					res.addRule(new TreeAutomatonRule<>(sym, srcSt, mDummyState));
 				}
 			}

@@ -38,7 +38,6 @@ import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.tree.IRankedLetter;
 import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomatonBU;
-import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeRun;
 
@@ -112,12 +111,12 @@ public class IsEmpty<LETTER extends IRankedLetter, STATE> implements IOperation<
 			final TreeAutomatonRule<LETTER, STATE> rule = worklist.poll();
 			final STATE dest = rule.getDest();
 
-			final List<TreeRun<LETTER, STATE>> subTrees = new LinkedList<>();
 			if (soltree.containsKey(dest)) {
 				// Already computed.
 				continue;
 			}
 
+			final List<TreeRun<LETTER, STATE>> subTrees = new LinkedList<>();
 			boolean allMarked = true;
 			for (final STATE q : rule.getSource()) {
 				if (!soltree.containsKey(q)) {
@@ -153,7 +152,6 @@ public class IsEmpty<LETTER extends IRankedLetter, STATE> implements IOperation<
 
 	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
-		// TODO implement a meaningful check
 		return true;
 	}
 }

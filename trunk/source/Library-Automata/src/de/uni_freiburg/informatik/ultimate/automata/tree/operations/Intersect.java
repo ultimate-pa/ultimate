@@ -35,6 +35,7 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
@@ -54,7 +55,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @param <STATE>
  *            state of the tree automatons.
  */
-public class Intersect<LETTER extends IRankedLetter, STATE> implements IOperation<LETTER, STATE, IStateFactory<STATE>> {
+public class Intersect<LETTER extends IRankedLetter, STATE>
+		extends GeneralOperation<LETTER, STATE, IStateFactory<STATE>>
+		implements IOperation<LETTER, STATE, IStateFactory<STATE>> {
 
 	private final ITreeAutomatonBU<LETTER, STATE> mTreeA;
 	private final ITreeAutomatonBU<LETTER, STATE> mTreeB;
@@ -66,8 +69,9 @@ public class Intersect<LETTER extends IRankedLetter, STATE> implements IOperatio
 
 	/**
 	 * 
-	 * NOTE: because of a convention in TestFileInterpreter, if an argument for the operation is a StateFactory, it must
-	 * be the first argument same for Services, both: first services then StateFactory
+	 * NOTE: because of a convention in TestFileInterpreter, if an argument for
+	 * the operation is a StateFactory, it must be the first argument same for
+	 * Services, both: first services then StateFactory
 	 * 
 	 * @param services
 	 * @param factory
@@ -76,6 +80,7 @@ public class Intersect<LETTER extends IRankedLetter, STATE> implements IOperatio
 	 */
 	public Intersect(final AutomataLibraryServices services, final IIntersectionStateFactory<STATE> factory,
 			final ITreeAutomatonBU<LETTER, STATE> t1, final ITreeAutomatonBU<LETTER, STATE> t2) {
+		super(services);
 		mReducedStates = new HashMap<>();
 		mPairsMap = new HashMap<>();
 
@@ -197,7 +202,6 @@ public class Intersect<LETTER extends IRankedLetter, STATE> implements IOperatio
 
 	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
-		// TODO: implement a meaningful check
 		return true;
 	}
 }

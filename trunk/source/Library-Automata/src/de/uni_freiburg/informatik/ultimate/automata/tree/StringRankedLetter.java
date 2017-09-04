@@ -17,7 +17,8 @@ public class StringRankedLetter implements IRankedLetter {
 
 	@Override
 	public String toString() {
-		return mString + " (#" + mRank + ")";
+		return "#" + mRank + ":" + mString;
+		//return mString + " (#" + mRank + ")";
 	}
 
 	@Override
