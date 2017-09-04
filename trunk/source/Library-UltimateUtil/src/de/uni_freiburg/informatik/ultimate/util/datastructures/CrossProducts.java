@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  *
  * @author Jochen Hoenicke (hoenicke@informatik.uni-freiburg.de)
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  */
 public final class CrossProducts {
@@ -178,7 +179,7 @@ public final class CrossProducts {
 	 * @param returnSymmetricPairs include both versions of two symmetric pairs in the result
 	 * @return a HashRelation with the cross product (possibly restricted according to the two flags)
 	 */
-	static <E> HashRelation<E, E> binarySelectiveCrossProduct(final Collection<E> set,
+	public static <E> HashRelation<E, E> binarySelectiveCrossProduct(final Collection<E> set,
 			final boolean returnReflexivePairs, final boolean returnSymmetricPairs) {
 		final HashRelation<E, E> result = new HashRelation<>();
 

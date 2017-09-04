@@ -383,7 +383,7 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 	 *
 	 * @return true iff this operation performed any changes on this weq graph
 	 */
-	private boolean close() {
+	boolean close() {
 		if (mWeakEquivalenceEdges.isEmpty()) {
 			return false;
 		}

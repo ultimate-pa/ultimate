@@ -16,6 +16,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.IEqNodeIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.IEqFunctionIdentifier;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CongruenceClosure;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.CrossProducts;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
@@ -149,16 +150,20 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>,
 	}
 
 
-	private void reportWeakEquivalence(final Doubleton<FUNCTION> key,
+	private void addWeakEquivalence(final Doubleton<FUNCTION> key,
 				final WeakEquivalenceGraph<ACTION, NODE, FUNCTION>.WeakEquivalenceEdgeLabel value) {
 	//		mWeakEquivalenceGraph.getEdges().entrySet().iterator().next().getValue(
 	//				.reportWeakEquivalence(key, value);
 		mWeakEquivalenceGraph.reportWeakEquivalence(key, value);
+		reportAllArrayEqualitiesFromWeqGraph();
 	}
 
 	@Override
 	protected boolean reportEqualityRec(final NODE node1, final NODE node2) {
 		boolean madeChanges = false;
+
+		final NestedMap2<FUNCTION, NODE, Set<List<NODE>>> oldCcChild =
+				ccchildDeepCopy(mFunctionToRepresentativeToCcChildren);
 
 		madeChanges |= super.reportEqualityRec(node1, node2);
 		assert sanityCheck();
@@ -188,17 +193,31 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>,
  		 *  We view an equality a[i] = b[i] as a weak equivalence a --q!=i-- b --> update the corresponding weq edge
 		 *  accordingly, or introduce one.
 		 */
-		if (node1.isFunctionApplication() && node2.isFunctionApplication()
-				&& !node1.getAppliedFunction().equals(node2.getAppliedFunction())) {
-//			 && mWeakEquivalenceGraph.hasWeqEdgeForFunctions(node1.getAppliedFunction(), node2.getAppliedFunction())) {
-			if (argumentsAreCongruent(node1, node2, false)) {
-				/*
-				 * That the arguments are congruent will always be the case when this reportEqualityRec-call came from
-				 * a congruence propagation, but we need to check it here, because the equality may have been added
-				 * directly.
-				 */
-				mWeakEquivalenceGraph.strengthenEdgeWithExceptedPoint(node1.getAppliedFunction(),
-						node2.getAppliedFunction(), node1.getArguments());
+//		if (node1.isFunctionApplication() && node2.isFunctionApplication()
+//				&& !node1.getAppliedFunction().equals(node2.getAppliedFunction())) {
+////			 && mWeakEquivalenceGraph.hasWeqEdgeForFunctions(node1.getAppliedFunction(), node2.getAppliedFunction())) {
+		for (final Entry<FUNCTION, FUNCTION> funcPair :
+			CrossProducts.binarySelectiveCrossProduct(mFunctionTVER.getAllElements(), false, false).entrySet()) {
+
+			final Set<List<NODE>> ccchildren1 = getCcChildren(funcPair.getKey(), node1, oldCcChild, true);
+			final Set<List<NODE>> ccchildren2 = getCcChildren(funcPair.getKey(), node2, oldCcChild, true);
+
+			for (final List<NODE> ccc1 : ccchildren1) {
+				for (final List<NODE> ccc2 : ccchildren2) {
+
+					//			if (argumentsAreCongruent(node1, node2, false)) {
+					if (argumentsAreCongruent(ccc1, ccc2)) {
+						/*
+						 * That the arguments are congruent will always be the case when this reportEqualityRec-call
+						 * came from a congruence propagation, but we need to check it here, because the equality may
+						 * have been added directly.
+						 */
+//						mWeakEquivalenceGraph.strengthenEdgeWithExceptedPoint(node1.getAppliedFunction(),
+//								node2.getAppliedFunction(), node1.getArguments());
+						mWeakEquivalenceGraph.strengthenEdgeWithExceptedPoint(funcPair.getKey(), funcPair.getValue(),
+								ccc1);
+					}
+				}
 			}
 		}
 		reportAllArrayEqualitiesFromWeqGraph();
@@ -522,15 +541,15 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>,
 		for (final Entry<Doubleton<FUNCTION>,
 				WeakEquivalenceGraph<ACTION, NODE, FUNCTION>.WeakEquivalenceEdgeLabel> edge :
 			this.mWeakEquivalenceGraph.getEdges().entrySet()) {
-			newWeqCc.reportWeakEquivalence(edge.getKey(), edge.getValue());
+			newWeqCc.addWeakEquivalence(edge.getKey(), edge.getValue());
 		}
 		// report all weq edges from other
 		for (final Entry<Doubleton<FUNCTION>,
 				WeakEquivalenceGraph<ACTION, NODE, FUNCTION>.WeakEquivalenceEdgeLabel> edge :
 			other.mWeakEquivalenceGraph.getEdges().entrySet()) {
-			newWeqCc.reportWeakEquivalence(edge.getKey(), edge.getValue());
+			newWeqCc.addWeakEquivalence(edge.getKey(), edge.getValue());
 		}
-		newWeqCc.reportAllArrayEqualitiesFromWeqGraph();
+		newWeqCc.mWeakEquivalenceGraph.close();
 		if (newWeqCc.isInconsistent()) {
 			return new WeqCongruenceClosure<>(true);
 		}

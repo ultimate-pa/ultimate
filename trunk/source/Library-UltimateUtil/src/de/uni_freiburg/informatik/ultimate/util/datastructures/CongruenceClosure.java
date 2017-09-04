@@ -402,7 +402,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 		}
 	}
 
-	private NestedMap2<FUNCTION, ELEM, Set<List<ELEM>>> ccchildDeepCopy(
+	protected NestedMap2<FUNCTION, ELEM, Set<List<ELEM>>> ccchildDeepCopy(
 			final NestedMap2<FUNCTION, ELEM, Set<List<ELEM>>> functionToRepresentativeToCcChildren) {
 		final NestedMap2<FUNCTION, ELEM, Set<List<ELEM>>> result = new NestedMap2<>();
 		for (final FUNCTION func : functionToRepresentativeToCcChildren.keySet()) {
@@ -999,9 +999,12 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 				funcApp2.getAppliedFunction()) == EqualityStatus.EQUAL;
 		assert funcApp1.getArguments().size() == funcApp2.getArguments().size();
 
-		for (int i = 0; i < funcApp1.getArguments().size(); i++) {
-			if (mElementTVER.getEqualityStatus(funcApp1.getArguments().get(i),
-					funcApp2.getArguments().get(i)) != EqualityStatus.EQUAL) {
+		return argumentsAreCongruent(funcApp1.getArguments(), funcApp2.getArguments());
+	}
+
+	protected boolean argumentsAreCongruent(final List<ELEM> argList1, final List<ELEM> argList2) {
+		for (int i = 0; i < argList1.size(); i++) {
+			if (mElementTVER.getEqualityStatus(argList1.get(i), argList2.get(i)) != EqualityStatus.EQUAL) {
 				return false;
 			}
 		}
@@ -1160,10 +1163,15 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 		return res;
 	}
 
-//	private static <ELEM, FUNCTION> Set<List<ELEM>> getCcChildren(final FUNCTION func, final ELEM rep,
-	private Set<List<ELEM>> getCcChildren(final FUNCTION func, final ELEM rep,
+	protected Set<List<ELEM>> getCcChildren(final FUNCTION func, final ELEM rep,
 			final NestedMap2<FUNCTION, ELEM, Set<List<ELEM>>> oldCcChild) {
-		assert mElementTVER.isRepresentative(rep);
+		return getCcChildren(func, rep, oldCcChild, false);
+	}
+
+//	private static <ELEM, FUNCTION> Set<List<ELEM>> getCcChildren(final FUNCTION func, final ELEM rep,
+	protected Set<List<ELEM>> getCcChildren(final FUNCTION func, final ELEM rep,
+			final NestedMap2<FUNCTION, ELEM, Set<List<ELEM>>> oldCcChild, final boolean allowNonRepresentatives) {
+		assert allowNonRepresentatives || mElementTVER.isRepresentative(rep);
 		Set<List<ELEM>> res = oldCcChild.get(func, rep);
 		if (res == null) {
 			res = new HashSet<>();
