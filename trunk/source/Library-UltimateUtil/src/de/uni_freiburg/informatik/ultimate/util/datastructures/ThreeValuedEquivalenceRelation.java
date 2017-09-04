@@ -438,6 +438,10 @@ public class ThreeValuedEquivalenceRelation<E> {
 				// already constructed current elem's equivalence class
 				continue;
 			}
+			if (mUnionFind.find(elem) == null) {
+				// the current elem has never been added to this TVER; don't add it to the new TVER either
+				continue;
+			}
 			final Set<E> elemEqc = mUnionFind.getEquivalenceClassMembers(elem);
 			newUf.addEquivalenceClass(elemEqc);
 		}

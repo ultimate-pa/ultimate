@@ -164,6 +164,8 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>,
 
 		final NestedMap2<FUNCTION, NODE, Set<List<NODE>>> oldCcChild =
 				ccchildDeepCopy(mFunctionToRepresentativeToCcChildren);
+		final NODE oldRep1 = mElementTVER.getRepresentative(node1);
+		final NODE oldRep2 = mElementTVER.getRepresentative(node2);
 
 		madeChanges |= super.reportEqualityRec(node1, node2);
 		assert sanityCheck();
@@ -197,10 +199,10 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>,
 //				&& !node1.getAppliedFunction().equals(node2.getAppliedFunction())) {
 ////			 && mWeakEquivalenceGraph.hasWeqEdgeForFunctions(node1.getAppliedFunction(), node2.getAppliedFunction())) {
 		for (final Entry<FUNCTION, FUNCTION> funcPair :
-			CrossProducts.binarySelectiveCrossProduct(mFunctionTVER.getAllElements(), false, false).entrySet()) {
+			CrossProducts.binarySelectiveCrossProduct(mFunctionTVER.getAllElements(), false, true).entrySet()) {
 
-			final Set<List<NODE>> ccchildren1 = getCcChildren(funcPair.getKey(), node1, oldCcChild, true);
-			final Set<List<NODE>> ccchildren2 = getCcChildren(funcPair.getKey(), node2, oldCcChild, true);
+			final Set<List<NODE>> ccchildren1 = getCcChildren(funcPair.getKey(), oldRep1, oldCcChild, true);
+			final Set<List<NODE>> ccchildren2 = getCcChildren(funcPair.getValue(), oldRep2, oldCcChild, true);
 
 			for (final List<NODE> ccc1 : ccchildren1) {
 				for (final List<NODE> ccc2 : ccchildren2) {
@@ -535,21 +537,29 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>,
 		 * strategy: conjoin all weq edges of otherCC to a copy of this's weq graph
 		 */
 		// construct a weqCc with an empty weq graph and gpaMeet as gpa
-		final WeqCongruenceClosure<ACTION, NODE, FUNCTION> newWeqCc = new WeqCongruenceClosure<>(gPaMeet, mFactory);
+//		final WeqCongruenceClosure<ACTION, NODE, FUNCTION> newWeqCc = new WeqCongruenceClosure<>(gPaMeet, mFactory);
+		//		// report all weq edges from this
+//		for (final Entry<Doubleton<FUNCTION>,
+//				WeakEquivalenceGraph<ACTION, NODE, FUNCTION>.WeakEquivalenceEdgeLabel> edge :
+//			this.mWeakEquivalenceGraph.getEdges().entrySet()) {
+//			newWeqCc.addWeakEquivalence(edge.getKey(), edge.getValue());
+//		}
 
-		// report all weq edges from this
-		for (final Entry<Doubleton<FUNCTION>,
-				WeakEquivalenceGraph<ACTION, NODE, FUNCTION>.WeakEquivalenceEdgeLabel> edge :
-			this.mWeakEquivalenceGraph.getEdges().entrySet()) {
-			newWeqCc.addWeakEquivalence(edge.getKey(), edge.getValue());
-		}
+		// EDIT: gPaMeet should already be a WeqCC
+		final WeqCongruenceClosure<ACTION, NODE, FUNCTION> newWeqCc =
+				(WeqCongruenceClosure<ACTION, NODE, FUNCTION>) gPaMeet;
+
+
 		// report all weq edges from other
 		for (final Entry<Doubleton<FUNCTION>,
 				WeakEquivalenceGraph<ACTION, NODE, FUNCTION>.WeakEquivalenceEdgeLabel> edge :
 			other.mWeakEquivalenceGraph.getEdges().entrySet()) {
 			newWeqCc.addWeakEquivalence(edge.getKey(), edge.getValue());
 		}
+
 		newWeqCc.mWeakEquivalenceGraph.close();
+		newWeqCc.reportAllArrayEqualitiesFromWeqGraph();
+
 		if (newWeqCc.isInconsistent()) {
 			return new WeqCongruenceClosure<>(true);
 		}
