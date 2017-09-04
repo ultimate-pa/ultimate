@@ -34,6 +34,7 @@ class FloydWarshall<VERTEX, EDGELABEL> {
 	private final Map<Doubleton<VERTEX>, EDGELABEL> mDist;
 	private final List<VERTEX> mVertices;
 	private boolean mPerformedChanges;
+	private final BiFunction<EDGELABEL, EDGELABEL, EDGELABEL> mMeet;
 
 	/**
 	 *
@@ -46,11 +47,13 @@ class FloydWarshall<VERTEX, EDGELABEL> {
 	 */
 	public FloydWarshall(final BiPredicate<EDGELABEL, EDGELABEL> smallerThan,
 			final BiFunction<EDGELABEL, EDGELABEL, EDGELABEL> plus,
+			final BiFunction<EDGELABEL, EDGELABEL, EDGELABEL> meet,
 			final EDGELABEL nullLabel,
 			final Map<Doubleton<VERTEX>, EDGELABEL> graph,
 			final Function<EDGELABEL, EDGELABEL> labelCloner) {
 		mSmallerThan = smallerThan;
 		mPlus = plus;
+		mMeet = meet;
 		mNullLabel = nullLabel;
 		mInputGraph = graph;
 		mPerformedChanges = false;
@@ -91,7 +94,8 @@ class FloydWarshall<VERTEX, EDGELABEL> {
 					final EDGELABEL ikPlusKj = mPlus.apply(distIk, distKj);
 
 					if (!mSmallerThan.test(distIj, ikPlusKj)) {
-						mDist.put(new Doubleton<>(mVertices.get(i), mVertices.get(j)), ikPlusKj);
+						final EDGELABEL ikPlusKjMeetIj = mMeet.apply(ikPlusKj, distIj);
+						mDist.put(new Doubleton<>(mVertices.get(i), mVertices.get(j)), ikPlusKjMeetIj);
 						mPerformedChanges = true;
 					}
 				}

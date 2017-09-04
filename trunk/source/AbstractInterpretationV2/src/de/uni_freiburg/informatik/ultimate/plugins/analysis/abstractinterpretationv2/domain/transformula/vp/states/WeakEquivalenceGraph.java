@@ -302,6 +302,7 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		return result;
 	}
 
+	@Deprecated
 	WeakEquivalenceGraph<ACTION, NODE, FUNCTION> meet(final WeakEquivalenceGraph<ACTION, NODE, FUNCTION> other,
 			final CongruenceClosure<NODE, FUNCTION> newPartialArrangement) {
 		final Map<Doubleton<FUNCTION>, WeakEquivalenceEdgeLabel> newWeakEquivalenceEdges = new HashMap<>();
@@ -390,11 +391,24 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		final FloydWarshall<FUNCTION, WeakEquivalenceEdgeLabel> fw =
 				new FloydWarshall<>(WeakEquivalenceEdgeLabel::isStrongerThan,
 						WeakEquivalenceEdgeLabel::union,
+						WeakEquivalenceEdgeLabel::meet,
 						new WeakEquivalenceEdgeLabel(),
 						mWeakEquivalenceEdges,
 						WeakEquivalenceEdgeLabel::new);
-		mWeakEquivalenceEdges = fw.getResult();
-		return fw.performedChanges();
+//		mWeakEquivalenceEdges = fw.getResult();
+		if (!fw.performedChanges()) {
+			return false;
+		}
+
+		mWeakEquivalenceEdges = new HashMap<>();
+		for (final Entry<Doubleton<FUNCTION>, WeakEquivalenceEdgeLabel> edge : fw.getResult().entrySet()) {
+			if (edge.getValue().isInconsistent()) {
+				mArrayEqualities.addPair(edge.getKey().getOneElement(), edge.getKey().getOtherElement());
+				continue;
+			}
+			mWeakEquivalenceEdges.put(edge.getKey(), edge.getValue());
+		}
+		return true;
 	}
 
 	/**
@@ -481,7 +495,18 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 
 	@Override
 	public String toString() {
-		return mWeakEquivalenceEdges.toString();
+//		return mWeakEquivalenceEdges.toString();
+		final StringBuilder sb = new StringBuilder();
+
+		for (final Entry<Doubleton<FUNCTION>, WeakEquivalenceGraph<ACTION, NODE, FUNCTION>.WeakEquivalenceEdgeLabel> weq :
+			mWeakEquivalenceEdges.entrySet()) {
+			sb.append(weq.getKey());
+			sb.append("\n");
+			sb.append(weq.getValue());
+			sb.append("\n");
+		}
+
+		return sb.toString();
 	}
 
 	boolean sanityCheck() {
@@ -850,6 +875,12 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 //					final CongruenceClosure<NODE, FUNCTION> currentLabelWgpa = mCcManager.getMeet(labelCopy.get(i),
 					final CongruenceClosure<NODE, FUNCTION> currentPaWgpa = mCcManager.getMeet(mLabel.get(i),
 							mPartialArrangement);
+
+					if (currentPaWgpa.isInconsistent()) {
+						// label element became inconsistent, don't add it to the new label
+						continue;
+					}
+
 					final boolean change = reportX.test(currentPaWgpa);
 
 					if (!change) {
@@ -867,13 +898,9 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 						continue;
 					}
 
-					if (currentPaWgpa.isInconsistent()) {
-						// label became inconsistent,
-					} else {
-//						allPasBecameInconsistent &= false;
-//						mLabel.add(labelCopy.get(i));
-						newLabel.add(currentPaWgpa.projectToElements(mFactory.getAllWeqNodes()));
-					}
+					// add the strengthened version as the new label element
+					newLabel.add(currentPaWgpa.projectToElements(mFactory.getAllWeqNodes()));
+
 					assert mPartialArrangement.sanityCheck();
 					assert WeakEquivalenceGraph.this.sanityCheck();
 				}
@@ -1100,11 +1127,24 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 			private void projectHelper(final Consumer<CongruenceClosure<NODE, FUNCTION>> remove,
 					final CongruenceClosure<NODE, FUNCTION> groundPartialArrangement) {
 				for (int i = 0; i < mLabel.size(); i++) {
+					if (mLabel.get(i).isTautological()) {
+						// leave label as it is (namely "true") at current position
+						continue;
+					}
 					final CongruenceClosure<NODE, FUNCTION>	meet = mCcManager.getMeet(mLabel.get(i), groundPartialArrangement);
 					remove.accept(meet);
 					final CongruenceClosure<NODE, FUNCTION> newPa = meet.projectToElements(mFactory.getAllWeqNodes());
 					mLabel.set(i, newPa);
 				}
+			}
+
+			private boolean isTautological() {
+				for (final CongruenceClosure<NODE, FUNCTION> l : mLabel) {
+					if (!l.isTautological()) {
+						return false;
+					}
+				}
+				return true;
 			}
 
 
