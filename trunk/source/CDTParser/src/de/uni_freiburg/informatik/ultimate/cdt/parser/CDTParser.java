@@ -56,9 +56,14 @@ import org.eclipse.cdt.core.dom.parser.c.GCCParserExtensionConfiguration;
 import org.eclipse.cdt.core.dom.parser.c.GCCScannerExtensionConfiguration;
 import org.eclipse.cdt.core.index.IIndex;
 import org.eclipse.cdt.core.index.IIndexManager;
+import org.eclipse.cdt.core.model.CModelException;
 import org.eclipse.cdt.core.model.CoreModel;
+import org.eclipse.cdt.core.model.ICContainer;
+import org.eclipse.cdt.core.model.ICElement;
 import org.eclipse.cdt.core.model.ICElementVisitor;
 import org.eclipse.cdt.core.model.ICProject;
+import org.eclipse.cdt.core.model.IPathEntry;
+import org.eclipse.cdt.core.model.ISourceRoot;
 import org.eclipse.cdt.core.model.ITranslationUnit;
 import org.eclipse.cdt.core.parser.DefaultLogService;
 import org.eclipse.cdt.core.parser.FileContent;
@@ -160,7 +165,8 @@ public class CDTParser implements ISource {
 
 		performCDTProjectOperations(files);
 
-		// throw new UnsupportedOperationException("Cannot parse multiple C files");
+		// throw new UnsupportedOperationException("Cannot parse multiple C
+		// files");
 		return null;
 
 	}
@@ -175,7 +181,8 @@ public class CDTParser implements ISource {
 		final IFolder sourceFolder = mCdtProject.getFolder("src");
 		sourceFolder.create(true, true, NULL_MONITOR);
 		final ICSourceEntry entrySrc = new CSourceEntry(sourceFolder, null, ICSettingEntry.RESOLVED);
-		// CDataUtil.createEntry(CDataUtil., String name, String value, IPath[] exclusionPatterns, int flags)
+		// CDataUtil.createEntry(CDataUtil., String name, String value, IPath[]
+		// exclusionPatterns, int flags)
 		// CDataUtil
 		// entrySrc.
 		for (final File file : files) {
@@ -184,7 +191,42 @@ public class CDTParser implements ISource {
 
 		final CoreModel model = CoreModel.getDefault();
 		final ICProject icdtProject = model.create(mCdtProject);
+		//icdtProject.setRawPathEntries(new IPathEntry[] { CoreModel.newSourceEntry(mCdtProject.getFullPath()) }, NULL_MONITOR);
 		return icdtProject;
+	}
+
+	public static List<ITranslationUnit> getProjectTranslationUnits(ICProject cproject) {
+		List<ITranslationUnit> tuList = new ArrayList<ITranslationUnit>();
+
+		// get source folders
+		try {
+			for (ISourceRoot sourceRoot : cproject.getSourceRoots()) {
+				// get all elements
+				for (ICElement element : sourceRoot.getChildren()) {
+					// if it is a container (i.e., a source folder)
+					if (element.getElementType() == ICElement.C_CCONTAINER) {
+						recursiveContainerTraversal((ICContainer) element, tuList);
+					} else {
+						ITranslationUnit tu = (ITranslationUnit) element;
+						tuList.add(tu);
+					}
+				}
+			}
+		} catch (CModelException e) {
+			e.printStackTrace();
+		}
+		return tuList;
+	}
+
+	private static void recursiveContainerTraversal(ICContainer container, List<ITranslationUnit> tuList)
+			throws CModelException {
+		for (ICContainer inContainer : container.getCContainers()) {
+			recursiveContainerTraversal(inContainer, tuList);
+		}
+
+		for (ITranslationUnit tu : container.getTranslationUnits()) {
+			tuList.add(tu);
+		}
 	}
 
 	private void performCDTProjectOperations(final File[] files)
@@ -200,6 +242,8 @@ public class CDTParser implements ISource {
 		final Collection<ITranslationUnit> headers = new HashSet<>();
 		final ICElementVisitor visitor = new TranslationUnitCollector(sources, headers, NULL_MONITOR);
 		icdtProject.accept(visitor);
+		
+		List<ITranslationUnit> listTu = getProjectTranslationUnits(icdtProject);
 
 		mLogger.info("IsIndexed: " + isIndexed);
 	}
@@ -218,9 +262,10 @@ public class CDTParser implements ISource {
 			mLogger.debug("INCLUDE-PATHS:" + path);
 			includePaths = path.split(";");
 			/*
-			 * If there are some paths specified we have to use the this deprecated code. In the used Version of
-			 * EclipseCDT (see CDTLibrary) there is no other way in doing this, maybe in further versions this will be
-			 * improved.
+			 * If there are some paths specified we have to use the this
+			 * deprecated code. In the used Version of EclipseCDT (see
+			 * CDTLibrary) there is no other way in doing this, maybe in further
+			 * versions this will be improved.
 			 */
 			includeProvider = IncludeFileContentProvider.adapt(new StandaloneIndexerFallbackReaderFactory());
 		} else {
@@ -318,12 +363,19 @@ public class CDTParser implements ISource {
 		IndexerPreferences.set(project, IndexerPreferences.KEY_INDEX_ALL_FILES, IPDOMManager.ID_FAST_INDEXER);
 
 		final IProjectDescription prjDescription = workspace.newProjectDescription(projectName);
-
+		
 		project = cdtCorePlugin.createCDTProject(prjDescription, project, NULL_MONITOR);
+		project.open(null);
+		
+		CoreModel.getDefault().create(project).setRawPathEntries(new IPathEntry[] {
+                CoreModel.newSourceEntry(project.getFullPath())
+}, NULL_MONITOR);
+
+		
 		waitForProjectRefreshToFinish();
 		// Assert.assertNotNull(project);
 
-		project.open(null);
+		
 
 		// Assert.assertTrue(project.isOpen());
 
@@ -362,8 +414,9 @@ public class CDTParser implements ISource {
 	}
 
 	/**
-	 * Creates new folder from project root. The folder name can include relative path as a part of the name.
-	 * Nonexistent parent directories are being created.
+	 * Creates new folder from project root. The folder name can include
+	 * relative path as a part of the name. Nonexistent parent directories are
+	 * being created.
 	 *
 	 * @param project
 	 *            - project where to create the folder.
