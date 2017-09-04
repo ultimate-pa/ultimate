@@ -3,7 +3,7 @@ if [ ! "$1" ]; then
     echo "First argument has to be the file that we analyze"
     exit
 fi
-./../Ultimate/Ultimate -tc ./../AutomizerAndBuchiAutomizerCInlineWithBlockEncoding.xml -s ./../termcomp2017-NontrivialArrayWrites.epf -data "$TMPDIR" -i "$1" &> output.txt
+./../Ultimate/Ultimate -tc ./../AutomizerAndBuchiAutomizerCInlineWithBlockEncoding.xml -s ./../termcomp2017-NontrivialArrayWrites.epf -i "$1" &> output.txt
 
 RESULT_NOTMEMSAFE=`cat output.txt | grep "CounterExampleResult"`
 RESULT_PROVEN_TERMINATION=`cat output.txt | grep "Buchi Automizer proved that your program is terminating"`
