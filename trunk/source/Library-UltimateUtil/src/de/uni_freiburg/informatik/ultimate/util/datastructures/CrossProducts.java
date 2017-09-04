@@ -190,6 +190,7 @@ public final class CrossProducts {
 			final int bound = returnSymmetricPairs ? set.size() : i + 1;
 			for (int j = 0; j < bound; j++) {
 				if (j == i && !returnReflexivePairs) {
+					it2.next();
 					continue;
 				}
 				final E el2 = it2.next();
