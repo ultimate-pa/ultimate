@@ -209,7 +209,8 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 
 	@Override
 	protected EqNode newBaseElement(final Term c) {
-		assert SmtUtils.isConstant(c) || c instanceof TermVariable || c instanceof ConstantTerm;
+		assert SmtUtils.isTrue(c) || SmtUtils.isFalse(c) || SmtUtils.isConstant(c) || c instanceof TermVariable
+			|| c instanceof ConstantTerm;
 		return new EqAtomicBaseNode(c, this);
 //		assert false;
 //		return getOrConstructEqAtomicBaseNode(c);

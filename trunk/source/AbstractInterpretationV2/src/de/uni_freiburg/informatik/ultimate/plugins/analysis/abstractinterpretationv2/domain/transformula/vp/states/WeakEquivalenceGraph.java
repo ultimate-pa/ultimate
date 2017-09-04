@@ -600,7 +600,7 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		final List<CongruenceClosure<NODE, FUNCTION>> paList = new ArrayList<>();
 		for (int dim = 0; dim < arguments.size(); dim++) {
 			final NODE currentArg = arguments.get(dim);
-			final CongruenceClosure<NODE, FUNCTION> eqCC = mCcManager.getSingleEqualityCc(
+			final CongruenceClosure<NODE, FUNCTION> eqCC = mCcManager.getSingleDisequalityCc(
 					mFactory.getWeqVariableNodeForDimension(dim, currentArg.getTerm().getSort()),
 					currentArg);
 			paList.add(eqCC);
@@ -613,6 +613,7 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 
 	private void strengthenEdgeLabelAndPropagateIfPossible(final Doubleton<FUNCTION> sourceAndTarget,
 			final List<CongruenceClosure<NODE, FUNCTION>> paList) {
+		assert !sourceAndTarget.getOneElement().equals(sourceAndTarget.getOtherElement());
 		WeakEquivalenceEdgeLabel oldLabel = mWeakEquivalenceEdges.get(sourceAndTarget);
 		if (oldLabel == null) {
 			oldLabel = new WeakEquivalenceEdgeLabel();
@@ -791,14 +792,18 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 			public boolean impliesEqualityOnThatPosition(final List<NODE> arguments) {
 				for (int i = 0; i < mLabel.size(); i++) {
 					//					final CongruenceClosure<NODE, FUNCTION> copy = new CongruenceClosure<>(mLabelWithGroundPa.get(i));
-					final CongruenceClosure<NODE, FUNCTION> copy = new CongruenceClosure<>(mCcManager.getMeet(mLabel.get(i), mPartialArrangement));
+					final CongruenceClosure<NODE, FUNCTION> copy = mCcManager.makeCopy(
+							mCcManager.getMeet(mLabel.get(i), mPartialArrangement));
 					for (int j = 0; j < arguments.size(); j++) {
-						final NODE argJ = arguments.get(j);
-						final NODE weqVar = WeakEquivalenceGraph.this.mFactory.getWeqVariableNodeForDimension(j, argJ.getTerm().getSort());
-						copy.reportEquality(weqVar, argJ);
 						if (copy.isInconsistent()) {
 							break;
 						}
+						final NODE argJ = arguments.get(j);
+						final NODE weqVar = WeakEquivalenceGraph.this.mFactory.getWeqVariableNodeForDimension(j, argJ.getTerm().getSort());
+						copy.reportEquality(weqVar, argJ);
+//						if (copy.isInconsistent()) {
+//							break;
+//						}
 					}
 
 					if (copy.isInconsistent()) {
@@ -902,6 +907,7 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 				if (newLabel.stream().anyMatch(pa -> pa.isTautological())) {
 					newLabel = Collections.singletonList(new CongruenceClosure<>());
 				}
+
 				return newLabel;
 			}
 
@@ -1108,11 +1114,6 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 			}
 
 			private boolean sanityCheck() {
-				if (mLabel.size() == 0) {
-					assert false;
-					return false;
-				}
-
 				return sanityCheck(mPartialArrangement);
 			}
 
@@ -1174,6 +1175,19 @@ class CCManager<NODE extends IEqNodeIdentifier<NODE, FUNCTION>,
 		 */
 		final CongruenceClosure<NODE, FUNCTION> result = cc1.meet(cc2);
 		return result;
+	}
+
+	public CongruenceClosure<NODE, FUNCTION> getSingleDisequalityCc(final NODE elem1, final NODE elem2) {
+		final CongruenceClosure<NODE, FUNCTION> newCC = new CongruenceClosure<>();
+		newCC.reportDisequality(elem1, elem2);
+		return newCC;
+	}
+
+	public CongruenceClosure<NODE, FUNCTION> makeCopy(final CongruenceClosure<NODE, FUNCTION> meet) {
+		if (meet.isInconsistent()) {
+			return meet;
+		}
+		return new CongruenceClosure<>(meet);
 	}
 
 	public CongruenceClosure<NODE, FUNCTION> getSingleEqualityCc(final NODE elem1,

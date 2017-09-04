@@ -152,7 +152,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 		mFunctionToRepresentativeToCcChildren = new NestedMap2<>(original.mFunctionToRepresentativeToCcChildren);
 		mFunctionToFuncApps = new HashRelation<>(original.mFunctionToFuncApps);
 		mElementToParents = new HashRelation<>(original.mElementToParents);
-		mIsInconsistent = original.mIsInconsistent;
+		assert !original.mIsInconsistent;
+		mIsInconsistent = false;
 		assert sanityCheck();
 	}
 
@@ -172,6 +173,11 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 		}
 
 		mFunctionTVER.reportEquality(f1, f2);
+		updateInconsistencyStatus();
+		if (isInconsistent()) {
+			// no need to propagate anything if this is already inconsistent
+			return true;
+		}
 
 		/*
 		 * congruence propagations: if we are adding f = g then we can propagate f(x) =
@@ -209,6 +215,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 		}
 		mFunctionTVER.reportDisequality(func1, func2);
 		updateInconsistencyStatus();
+		assert sanityCheck();
 		return true;
 	}
 
@@ -249,13 +256,9 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 			// nothing to do
 			return false;
 		}
-		if (!freshElem && getEqualityStatus(elem1, elem2) == EqualityStatus.EQUAL) {
-			mIsInconsistent = true;
-			return true;
-		}
 
 		reportDisequalityRec(elem1, elem2, mFunctionToRepresentativeToCcChildren);
-		updateInconsistencyStatus();
+//		updateInconsistencyStatus();
 		assert sanityCheck();
 		return true;
 	}
@@ -267,6 +270,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 		}
 		mElementTVER.reportDisequality(elem1, elem2);
 		if (mElementTVER.isInconsistent()) {
+			updateInconsistencyStatus();
 			return true;
 		}
 		doBackwardCongruencePropagations(elem1, elem2, oldCcChild);
@@ -800,7 +804,14 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 		assert this.sanityCheck();
 		assert other.sanityCheck();
 
+		if (this.isInconsistent() || other.isInconsistent()) {
+			return new CongruenceClosure<>(true);
+		}
+
 		final CongruenceClosure<ELEM, FUNCTION> result = naiveMeet(other);
+		if (result.isInconsistent()) {
+			return new CongruenceClosure<>(true);
+		}
 		assert result.sanityCheck();
 		return result;
 
@@ -984,8 +995,6 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 	public boolean argumentsAreCongruent(final ELEM funcApp1, final ELEM funcApp2,
 			final boolean forceThatFunctionsAreEqual) {
 		assert funcApp1.isFunctionApplication() && funcApp2.isFunctionApplication();
-		assert mFunctionTVER.getEqualityStatus(funcApp1.getAppliedFunction(),
-				funcApp2.getAppliedFunction()) != EqualityStatus.NOT_EQUAL;
 		assert !forceThatFunctionsAreEqual || mFunctionTVER.getEqualityStatus(funcApp1.getAppliedFunction(),
 				funcApp2.getAppliedFunction()) == EqualityStatus.EQUAL;
 		assert funcApp1.getArguments().size() == funcApp2.getArguments().size();
@@ -1180,8 +1189,26 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 	 */
 	protected boolean sanityCheck() {
 		if (this.isInconsistent()) {
+			if (mElementTVER != null) {
+				// transitory CClosure instance which will later be replaced by the "bottom" variant
+				if (!mElementTVER.isInconsistent() && !mFunctionTVER.isInconsistent()) {
+					assert false;
+					return false;
+				}
+			}
 			return true;
 		}
+
+		if (mElementTVER.isInconsistent()) {
+					assert false;
+					return false;
+		}
+
+		if (mFunctionTVER.isInconsistent()) {
+					assert false;
+					return false;
+		}
+
 
 		for (final Triple<FUNCTION, ELEM, Set<ELEM>> repFuncCcPars : mFunctionToRepresentativeToCcPars.entrySet()) {
 			if (!mElementTVER.isRepresentative(repFuncCcPars.getSecond())) {

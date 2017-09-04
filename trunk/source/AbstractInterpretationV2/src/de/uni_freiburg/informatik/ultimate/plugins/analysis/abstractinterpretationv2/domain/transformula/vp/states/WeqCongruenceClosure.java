@@ -189,7 +189,8 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>,
 		 *  accordingly, or introduce one.
 		 */
 		if (node1.isFunctionApplication() && node2.isFunctionApplication()
-			 && mWeakEquivalenceGraph.hasWeqEdgeForFunctions(node1.getAppliedFunction(), node2.getAppliedFunction())) {
+				&& !node1.getAppliedFunction().equals(node2.getAppliedFunction())) {
+//			 && mWeakEquivalenceGraph.hasWeqEdgeForFunctions(node1.getAppliedFunction(), node2.getAppliedFunction())) {
 			if (argumentsAreCongruent(node1, node2, false)) {
 				/*
 				 * That the arguments are congruent will always be the case when this reportEqualityRec-call came from
@@ -228,6 +229,11 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>,
 			return false;
 		}
 
+		if (isInconsistent()) {
+			// no need for further propagations
+			return true;
+		}
+
 		reportGpaChangeToWeqGraphAndPropagateArrayEqualities(
 				(final CongruenceClosure<NODE, FUNCTION> cc) -> cc.reportDisequality(elem1, elem2));
 
@@ -245,6 +251,10 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>,
 
 		if (!madeChanges) {
 			return false;
+		}
+
+		if (isInconsistent()) {
+			return true;
 		}
 
 		// TODO might be optimized perhaps, because reportDisequality does the following call, too..
@@ -265,6 +275,11 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>,
 			return false;
 		}
 
+		if (isInconsistent()) {
+			// no need for further propagations
+			return true;
+		}
+
 		reportGpaChangeToWeqGraphAndPropagateArrayEqualities(
 				(final CongruenceClosure<NODE, FUNCTION> cc) -> cc.reportFunctionEquality(func1, func2));
 		return true;
@@ -279,6 +294,11 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>,
 
 		if (!madeChanges) {
 			return false;
+		}
+
+		if (isInconsistent()) {
+			// no need for further propagations
+			return true;
 		}
 
 		reportGpaChangeToWeqGraphAndPropagateArrayEqualities(
