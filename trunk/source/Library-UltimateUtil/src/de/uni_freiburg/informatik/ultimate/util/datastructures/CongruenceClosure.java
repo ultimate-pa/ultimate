@@ -968,18 +968,25 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 		return mIsInconsistent;
 	}
 
+	public boolean argumentsAreCongruent(final ELEM funcApp1, final ELEM funcApp2) {
+		return argumentsAreCongruent(funcApp1, funcApp2, true);
+	}
+
 	/**
 	 *
-	 * @param funcApp1
-	 *            function application element
-	 * @param funcApp2
-	 *            function application element
+	 * @param funcApp1 function application element
+	 * @param funcApp2 function application element
+	 * @param forceThatFunctionsAreEqual true iff we expect that the given functions are equal according to the current
+	 * 		state
 	 * @return true iff each two argument elements at the same position in the
 	 *         argument list are equal according to the current state of mElemenTVER
 	 */
-	public boolean argumentsAreCongruent(final ELEM funcApp1, final ELEM funcApp2) {
+	public boolean argumentsAreCongruent(final ELEM funcApp1, final ELEM funcApp2,
+			final boolean forceThatFunctionsAreEqual) {
 		assert funcApp1.isFunctionApplication() && funcApp2.isFunctionApplication();
 		assert mFunctionTVER.getEqualityStatus(funcApp1.getAppliedFunction(),
+				funcApp2.getAppliedFunction()) != EqualityStatus.NOT_EQUAL;
+		assert !forceThatFunctionsAreEqual || mFunctionTVER.getEqualityStatus(funcApp1.getAppliedFunction(),
 				funcApp2.getAppliedFunction()) == EqualityStatus.EQUAL;
 		assert funcApp1.getArguments().size() == funcApp2.getArguments().size();
 

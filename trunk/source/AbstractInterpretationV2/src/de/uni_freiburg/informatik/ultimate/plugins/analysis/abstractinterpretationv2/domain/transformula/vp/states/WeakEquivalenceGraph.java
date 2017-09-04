@@ -164,7 +164,7 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 			for (final NODE ccpar2 : e2CcParsCopy) {
 				assert ccpar2.isFunctionApplication();
 
-				if (!pa.argumentsAreCongruent(ccpar1, ccpar2)) {
+				if (!pa.argumentsAreCongruent(ccpar1, ccpar2, false)) {
 					// no propagation because the arguments are not congruent
 					continue;
 				}

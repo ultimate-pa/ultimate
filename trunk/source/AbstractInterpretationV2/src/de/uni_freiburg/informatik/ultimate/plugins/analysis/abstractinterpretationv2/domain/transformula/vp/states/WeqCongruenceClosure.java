@@ -190,7 +190,7 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>,
 		 */
 		if (node1.isFunctionApplication() && node2.isFunctionApplication()
 			 && mWeakEquivalenceGraph.hasWeqEdgeForFunctions(node1.getAppliedFunction(), node2.getAppliedFunction())) {
-			if (argumentsAreCongruent(node1, node2)) {
+			if (argumentsAreCongruent(node1, node2, false)) {
 				/*
 				 * That the arguments are congruent will always be the case when this reportEqualityRec-call came from
 				 * a congruence propagation, but we need to check it here, because the equality may have been added

@@ -1,10 +1,13 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states;
 
 import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CongruenceClosure;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ICongruenceClosureElement;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
 class CongruenceClosureChangeTracker<ACTION,
 			NODE extends ICongruenceClosureElement<NODE, FUNCTION>,
@@ -58,7 +61,8 @@ class CongruenceClosureChangeTracker<ACTION,
 	}
 
 	@Override
-	protected boolean reportDisequalityRec(final NODE elem1, final NODE elem2) {
+	protected boolean reportDisequalityRec(final NODE elem1, final NODE elem2,
+			final NestedMap2<FUNCTION, NODE, Set<List<NODE>>> oldCcChild) {
 		final boolean madeChange = super.reportDisequality(elem1, elem2);
 		if (madeChange) {
 			mFreshElementDisequalities.add(new Doubleton<NODE>(elem1, elem2));
