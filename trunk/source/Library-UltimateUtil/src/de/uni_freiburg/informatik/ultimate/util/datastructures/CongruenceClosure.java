@@ -625,6 +625,9 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 	}
 
 	public boolean removeFunction(final FUNCTION func) {
+		if (mIsInconsistent) {
+			throw new IllegalStateException();
+		}
 		if (!hasFunction(func)) {
 			return false;
 		}
