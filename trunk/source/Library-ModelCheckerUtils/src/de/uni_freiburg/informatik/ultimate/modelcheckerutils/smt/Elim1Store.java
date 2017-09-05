@@ -710,7 +710,7 @@ public class Elim1Store {
 								SmtUtils.not(mgdScript.getScript(), indexEqualityTerm), valueEqualityTerm);
 					} else if (quantifier == QuantifiedFormula.FORALL) {
 						implication = SmtUtils.and(mgdScript.getScript(),
-								indexEqualityTerm, SmtUtils.not(mgdScript.getScript(), valueEqualityTerm));
+								SmtUtils.not(mgdScript.getScript(), indexEqualityTerm), valueEqualityTerm);
 					} else {
 						throw new AssertionError("unknown quantifier");
 					}
