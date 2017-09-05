@@ -130,6 +130,7 @@ public class Elim1Store {
 	private final ManagedScript mMgdScript;
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
+	private final boolean EXTENDED_RESULT_CHECK = false;
 
 
 	public Elim1Store(final ManagedScript mgdScript, final IUltimateServiceProvider services,
@@ -355,7 +356,11 @@ public class Elim1Store {
 		mLogger.info(String.format("treesize reduction %d that is %2.1f percent of original size",
 				sws.getReductionOfTreeSize(), sws.getReductionRatioInPercent()));
 		mLogger.info("treesize after simplification " + new DAGSize().treesize(res));
-		return new EliminationTask(quantifier, newAuxVars, res);
+		final EliminationTask resultEt = new EliminationTask(quantifier, newAuxVars, res);
+		assert !EXTENDED_RESULT_CHECK  || EliminationTask.areDistinct(mMgdScript.getScript(), resultEt, new EliminationTask(quantifier,
+				Collections.singleton(eliminatee), inputTerm)) != LBool.SAT : "Bug array QE Input: " + inputTerm
+						+ " Result:" + resultEt;
+		return resultEt;
 
 	}
 
@@ -757,7 +762,8 @@ public class Elim1Store {
 					
 					final Term succedent = newValueInCell;
 					final Term negatedAntecedent = SmtUtils.not(mgdScript.getScript(), indexEquality);
-					final Term positiveCase = SmtUtils.or(mgdScript.getScript(), negatedAntecedent, succedent);
+				final Term positiveCase = QuantifierUtils.applyCorrespondingFiniteConnective(mgdScript.getScript(),
+						quantifier, negatedAntecedent, succedent);
 					resultConjuncts2cases.add(positiveCase);
 				}
 				{
@@ -765,7 +771,8 @@ public class Elim1Store {
 					final Term oldValueInCell = QuantifierUtils.applyDerOperator(mgdScript.getScript(),
 							quantifier, newSelect, oldCellValue);
 					final Term negatedAntecedent = indexEquality;
-					final Term negativeCase = SmtUtils.or(mgdScript.getScript(), negatedAntecedent, oldValueInCell);
+				final Term negativeCase = QuantifierUtils.applyCorrespondingFiniteConnective(mgdScript.getScript(),
+						quantifier, negatedAntecedent, oldValueInCell);
 					resultConjuncts2cases.add(negativeCase);
 					break;
 				}
