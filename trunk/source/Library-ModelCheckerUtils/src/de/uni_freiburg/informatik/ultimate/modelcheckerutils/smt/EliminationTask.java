@@ -32,8 +32,10 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.logic.Util;
 
 
 /**
@@ -88,6 +90,18 @@ public class EliminationTask {
 		final String quantifier = (getQuantifier() == QuantifiedFormula.EXISTS ? "∃" : "∀");
 		final String vars = getEliminatees().toString();
 		return quantifier + " " + vars + ". " + getTerm();
+	}
+	
+
+	/**
+	 * Check if the terms of two {@link EliminationTasks} can be disjoint.
+	 * Return sat if disjoint, unsat if equivalent.
+	 */
+	public static LBool areDistinct(final Script script, final EliminationTask et1, final EliminationTask et2) {
+		final Term espTerm = et1.toTerm(script);
+		final Term sosTerm = et2.toTerm(script);
+		final LBool sat = Util.checkSat(script, script.term("distinct", espTerm, sosTerm));
+		return sat;
 	}
 
 }
