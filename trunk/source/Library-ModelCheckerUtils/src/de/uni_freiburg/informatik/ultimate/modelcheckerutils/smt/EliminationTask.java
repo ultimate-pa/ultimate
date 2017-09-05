@@ -81,5 +81,13 @@ public class EliminationTask {
 			return script.quantifier(mQuantifier, mEliminatees.toArray(new TermVariable[mEliminatees.size()]), mTerm);
 		}
 	}
+	
+	
+	@Override
+	public String toString() {
+		final String quantifier = (getQuantifier() == QuantifiedFormula.EXISTS ? "∃" : "∀");
+		final String vars = getEliminatees().toString();
+		return quantifier + " " + vars + ". " + getTerm();
+	}
 
 }
