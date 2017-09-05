@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeRun;
 import de.uni_freiburg.informatik.ultimate.automata.tree.operations.Accepts;
 import de.uni_freiburg.informatik.ultimate.automata.tree.operations.Complement;
+import de.uni_freiburg.informatik.ultimate.automata.tree.operations.Difference;
 import de.uni_freiburg.informatik.ultimate.automata.tree.operations.Intersect;
 import de.uni_freiburg.informatik.ultimate.automata.tree.operations.IsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.tree.operations.Minimize;
@@ -132,7 +133,7 @@ public class TreeAutomizerCEGAR {
 		mIteration = 0;
 
 		mAutomataLibraryServices = new AutomataLibraryServices(services);
-		
+
 		mServices = services;
 
 		mPredicateFactory = new HCPredicateFactory(services, mBackendSmtSolverScript, mSymbolTable,
@@ -147,8 +148,8 @@ public class TreeAutomizerCEGAR {
 				mSymbolTable, mInitialPredicate, Collections.singleton(HornUtilConstants.HORNCLAUSEMETHODNAME));
 		mPredicateUnifier = new PredicateUnifier(services, mBackendSmtSolverScript, mPredicateFactory, mSymbolTable,
 				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BDD_BASED, mInitialPredicate);
-		mHoareTripleChecker =
-				new HCHoareTripleChecker(mPredicateUnifier, mCfgSmtToolkit, mPredicateFactory, mSymbolTable);
+		mHoareTripleChecker = new HCHoareTripleChecker(mPredicateUnifier, mCfgSmtToolkit, mPredicateFactory,
+				mSymbolTable);
 
 		mPredicateUnifier.getOrConstructPredicate(mInitialPredicate.getFormula());
 		mPredicateUnifier.getOrConstructPredicate(mFinalPredicate.getFormula());
@@ -160,14 +161,14 @@ public class TreeAutomizerCEGAR {
 	 *
 	 * @return Result: The result of the verification. SAFE, UNSAFE or UNKNOWN
 	 */
-	public  IResult iterate() throws AutomataLibraryException {
+	public IResult iterate() throws AutomataLibraryException {
 		getInitialAbstraction();
 
 		mLogger.debug("Abstraction tree automaton before iteration #" + (mIteration + 1));
 		mLogger.debug(mAbstraction);
 		final int mITERATIONS = 10;
-		
-		while (mServices.getProgressMonitorService().continueProcessing() 
+
+		while (mServices.getProgressMonitorService().continueProcessing()
 				&& (mITERATIONS == -1 || mIteration < mITERATIONS)) {
 			mLogger.debug("Iteration #" + (mIteration + 1));
 			final TreeRun<HornClause, IPredicate> counterExample = isAbstractionCorrect();
@@ -188,8 +189,8 @@ public class TreeAutomizerCEGAR {
 				return new TreeAutomizerUnsatResult(Activator.PLUGIN_ID, "UNSAT", "The given horn clause set is UNSAT");
 			}
 			mLogger.debug("Getting Interpolants...");
-			final Map<TreeRun<HornClause, IPredicate>, Term> interpolantsMap =
-					retrieveInterpolantsMap(mChecker.getSSA(), counterExample);
+			final Map<TreeRun<HornClause, IPredicate>, Term> interpolantsMap = retrieveInterpolantsMap(
+					mChecker.getSSA(), counterExample);
 			mBackendSmtSolverScript.pop(this, 1);
 			mBackendSmtSolverScript.unlock(this);
 
@@ -214,9 +215,6 @@ public class TreeAutomizerCEGAR {
 			for (final HornClausePredicateSymbol sym : clause.getBodyPredicates()) {
 				tail.add(mPredicateFactory.createTruePredicateWithLocation(sym));
 			}
-//			if (tail.isEmpty()) {
-//				tail.add(mInitialPredicate);
-//			}
 			if (clause.getHeadPredicate() instanceof HornClauseFalsePredicateSymbol) {
 				mAbstraction.addRule(new TreeAutomatonRule<>(clause, tail, mFinalPredicate));
 			} else {
@@ -225,7 +223,6 @@ public class TreeAutomizerCEGAR {
 			}
 		}
 
-//		mAbstraction.addInitialState(mInitialPredicate);
 		mAbstraction.addFinalState(mFinalPredicate);
 		for (final IPredicate state : mAbstraction.getStates()) {
 			mPredicateUnifier.getOrConstructPredicate(state.getFormula());
@@ -236,8 +233,7 @@ public class TreeAutomizerCEGAR {
 	}
 
 	private TreeRun<HornClause, IPredicate> isAbstractionCorrect() throws AutomataOperationCanceledException {
-		final IsEmpty<HornClause, IPredicate> emptiness =
-				new IsEmpty<>(mAutomataLibraryServices, mAbstraction);
+		final IsEmpty<HornClause, IPredicate> emptiness = new IsEmpty<>(mAutomataLibraryServices, mAbstraction);
 
 		final TreeRun<HornClause, IPredicate> counterexample = emptiness.getTreeRun();
 
@@ -261,10 +257,10 @@ public class TreeAutomizerCEGAR {
 
 	protected void constructInterpolantAutomaton(final TreeRun<HornClause, IPredicate> counterexample,
 			final Map<TreeRun<HornClause, IPredicate>, Term> interpolantsMapSsaVersioned)
-			throws AutomataOperationCanceledException {
+					throws AutomataOperationCanceledException {
 
-		final TreeRun<HornClause, IPredicate> treeRunWithInterpolants =
-				mChecker.annotateTreeRunWithInterpolants(interpolantsMapSsaVersioned);
+		final TreeRun<HornClause, IPredicate> treeRunWithInterpolants = mChecker
+				.annotateTreeRunWithInterpolants(interpolantsMapSsaVersioned);
 
 		mInterpolAutomaton = treeRunWithInterpolants.getAutomaton();
 		for (final IPredicate p : mInterpolAutomaton.getStates()) {
@@ -279,7 +275,8 @@ public class TreeAutomizerCEGAR {
 	}
 
 	/**
-	 * Checks if all rules in the given (interpolant-)automaton correspond to a valid Hoare triple.
+	 * Checks if all rules in the given (interpolant-)automaton correspond to a
+	 * valid Hoare triple.
 	 *
 	 * @param automaton
 	 * @return boolean if all the rules are inductive.
@@ -315,17 +312,27 @@ public class TreeAutomizerCEGAR {
 	}
 
 	protected boolean refineAbstraction() throws AutomataLibraryException {
-		final ITreeAutomatonBU<HornClause, IPredicate> cCounterExample =
-				(new Complement<>(mAutomataLibraryServices, mStateFactory, getCounterExample()))
-						.getResult();
+
+		/*
+		final ITreeAutomatonBU<HornClause, IPredicate> cCounterExample = (new Complement<>(mAutomataLibraryServices,
+				mStateFactory, getCounterExample())).getResult();
 		mLogger.debug("Complemented counter example automaton:");
 		mLogger.debug(cCounterExample);
 
 		assert !(new Accepts<>(mAutomataLibraryServices, cCounterExample, mCounterExample).getResult());
-
-		mAbstraction = (TreeAutomatonBU<HornClause, IPredicate>) (new Intersect<>(
-				mAutomataLibraryServices, mStateFactory, mAbstraction, cCounterExample)).getResult();
+		mAbstraction = (TreeAutomatonBU<HornClause, IPredicate>) (new Intersect<>(mAutomataLibraryServices,
+				mStateFactory, mAbstraction, cCounterExample)).getResult();
 		mLogger.debug(String.format("Size before totalize %d states, %d rules.", mAbstraction.getStates().size(),
+				((Set<TreeAutomatonRule<HornClause, IPredicate>>) mAbstraction.getRules()).size()));
+		mAbstraction = (TreeAutomatonBU<HornClause, IPredicate>) (new Totalize<>(mAutomataLibraryServices,
+				mStateFactory, mAbstraction)).getResult();
+		mLogger.debug(String.format("Size after totalize %d states, %d rules.", mAbstraction.getStates().size(),
+				((Set<TreeAutomatonRule<HornClause, IPredicate>>) mAbstraction.getRules()).size()));
+		*/
+		
+		mAbstraction = (TreeAutomatonBU<HornClause, IPredicate>) (new Difference<HornClause, IPredicate>(
+				mAutomataLibraryServices, mStateFactory, mAbstraction, getCounterExample()).getResult());
+		mLogger.debug(String.format("Size before minimize %d states, %d rules.", mAbstraction.getStates().size(),
 				((Set<TreeAutomatonRule<HornClause, IPredicate>>) mAbstraction.getRules()).size()));
 
 		final Set<IPredicate> states = new HashSet<>();
@@ -336,14 +343,8 @@ public class TreeAutomizerCEGAR {
 				mAbstraction.removeState(pred);
 			}
 		}
-
-		mAbstraction = (TreeAutomatonBU<HornClause, IPredicate>) (new Totalize<>(
-				mAutomataLibraryServices, mStateFactory, mAbstraction)).getResult();
-		mLogger.debug(String.format("Size after totalize %d states, %d rules.", mAbstraction.getStates().size(),
-				((Set<TreeAutomatonRule<HornClause, IPredicate>>) mAbstraction.getRules()).size()));
-
-		mAbstraction = (TreeAutomatonBU<HornClause, IPredicate>) (new Minimize<>(
-				mAutomataLibraryServices, mStateFactory, mAbstraction)).getResult();
+		mAbstraction = (TreeAutomatonBU<HornClause, IPredicate>) (new Minimize<>(mAutomataLibraryServices,
+				mStateFactory, mAbstraction)).getResult();
 		mLogger.debug(String.format("Size after minimize %d states, %d rules.", mAbstraction.getStates().size(),
 				((Set<TreeAutomatonRule<HornClause, IPredicate>>) mAbstraction.getRules()).size()));
 
@@ -376,15 +377,16 @@ public class TreeAutomizerCEGAR {
 		return interpolantsMap;
 	}
 
-	private static List<TreeRun<HornClause, IPredicate>>
-			computeSubtreesInPostOrder(final TreeRun<HornClause, IPredicate> root) {
+	private static List<TreeRun<HornClause, IPredicate>> computeSubtreesInPostOrder(
+			final TreeRun<HornClause, IPredicate> root) {
 		final List<TreeRun<HornClause, IPredicate>> result = new ArrayList<>();
 
 		for (final TreeRun<HornClause, IPredicate> ch : root.getChildren()) {
 			result.addAll(computeSubtreesInPostOrder(ch));
 		}
 
-		// need to make an exception for the leafs (related to the fact that our tree automata have initial states)
+		// need to make an exception for the leafs (related to the fact that our
+		// tree automata have initial states)
 		if (root.getRootSymbol() != null) {
 			result.add(root);
 		}

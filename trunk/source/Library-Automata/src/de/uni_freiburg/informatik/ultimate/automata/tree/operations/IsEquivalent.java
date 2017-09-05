@@ -26,13 +26,13 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.tree.operations;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Optional;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
+import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
@@ -41,8 +41,6 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
 import de.uni_freiburg.informatik.ultimate.automata.tree.IRankedLetter;
 import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.StringRankedLetter;
-import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
-import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeRun;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.services.ToolchainStorage;
 
@@ -66,7 +64,8 @@ import de.uni_freiburg.informatik.ultimate.core.coreplugin.services.ToolchainSto
  *            The type of the states of the tree automata
  */
 public final class IsEquivalent<LETTER extends IRankedLetter, STATE>
-		extends GeneralOperation<LETTER, STATE, IStateFactory<STATE>> {
+		extends GeneralOperation<LETTER, STATE, IStateFactory<STATE>>
+		implements IOperation<LETTER, STATE, IStateFactory<STATE>> {
 	/**
 	 * Demo usage of the equivalence check. Also used for debugging purpose.
 	 *
@@ -95,7 +94,7 @@ public final class IsEquivalent<LETTER extends IRankedLetter, STATE>
 				.getResult();
 		final IsEquivalent<StringRankedLetter, String> isEquivalent = new IsEquivalent<>(services, factory, firstTree,
 				secondTree);
-		
+
 		if (isEquivalent.getResult().booleanValue()) {
 			System.out.println("Is equivalent.");
 		} else {
@@ -105,9 +104,9 @@ public final class IsEquivalent<LETTER extends IRankedLetter, STATE>
 	}
 
 	/**
-	 * If the equivalence does not hold then this field holds a tree run that acts
-	 * as counterexample to the equivalence. This means it represents a run that is
-	 * accepted by one of the operands but not by the other.
+	 * If the equivalence does not hold then this field holds a tree run that
+	 * acts as counterexample to the equivalence. This means it represents a run
+	 * that is accepted by one of the operands but not by the other.
 	 */
 	private TreeRun<LETTER, STATE> mCounterexample;
 	/**
@@ -119,8 +118,8 @@ public final class IsEquivalent<LETTER extends IRankedLetter, STATE>
 	 */
 	private final ITreeAutomatonBU<LETTER, STATE> mFirstOperand;
 	/**
-	 * The result of the equivalence check, <tt>true</tt> if the languages of both
-	 * operands are equivalent, <tt>false</tt> otherwise.
+	 * The result of the equivalence check, <tt>true</tt> if the languages of
+	 * both operands are equivalent, <tt>false</tt> otherwise.
 	 */
 	private final Boolean mResult;
 
@@ -133,18 +132,18 @@ public final class IsEquivalent<LETTER extends IRankedLetter, STATE>
 	 * Computes if the languages of two given bottom-up tree automata are
 	 * equivalent.<br>
 	 * <br>
-	 * This means that the result is <tt>true</tt> if all accepted runs of the of
-	 * one automaton are also accepted by the other automaton and vice versa, else
-	 * it is <tt>false</tt>.<br>
+	 * This means that the result is <tt>true</tt> if all accepted runs of the
+	 * of one automaton are also accepted by the other automaton and vice versa,
+	 * else it is <tt>false</tt>.<br>
 	 * <br>
 	 * If the equivalence does not hold then {@link #getCounterexample()} offers
-	 * such a tree run that is not accepted by one automaton while accepted by the
-	 * other.
+	 * such a tree run that is not accepted by one automaton while accepted by
+	 * the other.
 	 *
 	 * @param <SF>
 	 *            The type of the state factory to use for intermediate methods,
-	 *            must provide methods for merging states, creating sink states and
-	 *            intersecting states.
+	 *            must provide methods for merging states, creating sink states
+	 *            and intersecting states.
 	 * @param services
 	 *            Ultimate services
 	 * @param factory
@@ -160,7 +159,7 @@ public final class IsEquivalent<LETTER extends IRankedLetter, STATE>
 	public <SF extends IMergeStateFactory<STATE> & ISinkStateFactory<STATE> & IIntersectionStateFactory<STATE>> IsEquivalent(
 			final AutomataLibraryServices services, final SF factory,
 			final ITreeAutomatonBU<LETTER, STATE> firstOperand, final ITreeAutomatonBU<LETTER, STATE> secondOperand)
-			throws AutomataOperationCanceledException {
+					throws AutomataOperationCanceledException {
 		super(services);
 
 		this.mFirstOperand = firstOperand;
@@ -180,7 +179,8 @@ public final class IsEquivalent<LETTER extends IRankedLetter, STATE>
 	/*
 	 * (non-Javadoc)
 	 *
-	 * @see de.uni_freiburg.informatik.ultimate.automata.IOperation#exitMessage()
+	 * @see
+	 * de.uni_freiburg.informatik.ultimate.automata.IOperation#exitMessage()
 	 */
 	@Override
 	public String exitMessage() {
@@ -189,9 +189,9 @@ public final class IsEquivalent<LETTER extends IRankedLetter, STATE>
 
 	/**
 	 * If the equivalence check does not hold then this method offers a tree run
-	 * that acts as counterexample. This means that this tree run is accepted by one
-	 * of the two automata while not by the other. If the equivalence check holds
-	 * than this method does not provide such a tree run.
+	 * that acts as counterexample. This means that this tree run is accepted by
+	 * one of the two automata while not by the other. If the equivalence check
+	 * holds than this method does not provide such a tree run.
 	 *
 	 * @return A tree run that acts as counterexample for the equivalence, if
 	 *         present
@@ -216,15 +216,15 @@ public final class IsEquivalent<LETTER extends IRankedLetter, STATE>
 	}
 
 	/**
-	 * Checks if the two given tree automata are equivalent. Therefore inclusion in
-	 * both direction is computed. If the equivalence does not hold then
-	 * {@link #getCounterexample()} offers such a tree run that is not accepted by
-	 * one automaton while accepted by the other.
+	 * Checks if the two given tree automata are equivalent. Therefore inclusion
+	 * in both direction is computed. If the equivalence does not hold then
+	 * {@link #getCounterexample()} offers such a tree run that is not accepted
+	 * by one automaton while accepted by the other.
 	 *
 	 * @param <SF>
 	 *            The type of the state factory to use for intermediate methods,
-	 *            must provide methods for merging states, creating sink states and
-	 *            intersecting states.
+	 *            must provide methods for merging states, creating sink states
+	 *            and intersecting states.
 	 * @param factory
 	 *            The state factory to use for intermediate methods.
 	 * @return <tt>True</tt> if both automata are equivalent, <tt>false</tt>
@@ -264,22 +264,22 @@ public final class IsEquivalent<LETTER extends IRankedLetter, STATE>
 	}
 
 	/**
-	 * Checks language inclusion in one direction, whether the language of the first
-	 * operand is included in the language of the second operand. If not then it
-	 * also sets a counterexample to the internal fields.
+	 * Checks language inclusion in one direction, whether the language of the
+	 * first operand is included in the language of the second operand. If not
+	 * then it also sets a counterexample to the internal fields.
 	 *
 	 * @param <SF>
 	 *            The type of the state factory to use for intermediate methods,
-	 *            must provide methods for merging states, creating sink states and
-	 *            intersecting states.
+	 *            must provide methods for merging states, creating sink states
+	 *            and intersecting states.
 	 * @param factory
 	 *            The state factory to use for intermediate methods.
 	 * @param firstOperand
 	 *            The first operand for the inclusion check
 	 * @param secondOperand
 	 *            The second operand for the inclusion check
-	 * @return <tt>True</tt> if the language of the first automaton is included in
-	 *         the language of the second automaton, <tt>false</tt> otherwise
+	 * @return <tt>True</tt> if the language of the first automaton is included
+	 *         in the language of the second automaton, <tt>false</tt> otherwise
 	 * @throws AutomataOperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
@@ -297,4 +297,8 @@ public final class IsEquivalent<LETTER extends IRankedLetter, STATE>
 		return true;
 	}
 
+	@Override
+	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
+		return true;
+	}
 }

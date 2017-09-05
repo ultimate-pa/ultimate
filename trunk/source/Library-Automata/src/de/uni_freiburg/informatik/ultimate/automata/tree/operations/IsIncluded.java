@@ -28,9 +28,11 @@ package de.uni_freiburg.informatik.ultimate.automata.tree.operations;
 
 import java.util.Optional;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
+import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
@@ -59,7 +61,8 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.TreeRun;
  *            The type of the states of the tree automata
  */
 public final class IsIncluded<LETTER extends IRankedLetter, STATE>
-		extends GeneralOperation<LETTER, STATE, IStateFactory<STATE>> {
+		extends GeneralOperation<LETTER, STATE, IStateFactory<STATE>>
+		implements IOperation<LETTER, STATE, IStateFactory<STATE>> {
 	/**
 	 * If the inclusion does not hold then this field holds a tree run that acts as
 	 * counterexample to the inclusion. This means it represents a run that is
@@ -176,6 +179,11 @@ public final class IsIncluded<LETTER extends IRankedLetter, STATE>
 	@Override
 	public Boolean getResult() {
 		return this.mResult;
+	}
+
+	@Override
+	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
+		return true;
 	}
 
 }

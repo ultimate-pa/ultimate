@@ -29,9 +29,11 @@ package de.uni_freiburg.informatik.ultimate.automata.tree.operations;
 import java.util.Collection;
 import java.util.HashSet;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
+import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
@@ -53,7 +55,8 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomatonBU;
  *            The type of the states of the tree automata
  */
 public final class Difference<LETTER extends IRankedLetter, STATE>
-		extends GeneralOperation<LETTER, STATE, IStateFactory<STATE>> {
+		extends GeneralOperation<LETTER, STATE, IStateFactory<STATE>> 
+		implements IOperation<LETTER, STATE, IStateFactory<STATE>> {
 	/**
 	 * The first operand for the difference operation.
 	 */
@@ -165,5 +168,11 @@ public final class Difference<LETTER extends IRankedLetter, STATE>
 			this.mLogger.debug("Starting to compute intersect(first, secondComplemented).");
 		}
 		return new Intersect<>(this.mServices, factory, this.mFirstOperand, secondOperandComplemented).getResult();
+	}
+	
+
+	@Override
+	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
+		return true;
 	}
 }

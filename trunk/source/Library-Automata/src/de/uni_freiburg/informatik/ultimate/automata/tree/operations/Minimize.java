@@ -32,8 +32,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.NoSuchElementException;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
@@ -41,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.tree.IRankedLetter;
 import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomatonBU;
@@ -75,10 +74,10 @@ public class Minimize<LETTER extends IRankedLetter, STATE> extends GeneralOperat
 	 * @param factory
 	 * @param tree
 	 */
-	public Minimize(final AutomataLibraryServices services, final IMergeStateFactory<STATE> factory,
-			final ITreeAutomatonBU<LETTER, STATE> tree) {
+	public <SF extends IMergeStateFactory<STATE> & ISinkStateFactory<STATE>> Minimize(
+			final AutomataLibraryServices services, final SF factory, final ITreeAutomatonBU<LETTER, STATE> tree) {
 		super(services);
-		mTreeAutomaton = (TreeAutomatonBU<LETTER, STATE>) tree;
+		mTreeAutomaton = (TreeAutomatonBU<LETTER, STATE>) new Totalize<LETTER, STATE>(services, factory, tree).getResult();
 		mStateFactory = factory;
 		mMinimizedStates = new HashMap<>();
 		mResult = computeResult();
@@ -224,7 +223,7 @@ public class Minimize<LETTER extends IRankedLetter, STATE> extends GeneralOperat
 					new TreeAutomatonRule<>(rule.getLetter(), src, minimize(worklist.getPartition(rule.getDest()))));
 		}
 		return res;
-		//return removeUnreachables(res);
+		// return removeUnreachables(res);
 
 	}
 

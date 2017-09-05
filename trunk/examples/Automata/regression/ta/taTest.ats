@@ -10,9 +10,11 @@ TreeAutomaton test = TreeAutomaton(
         (() "b" "q3")
         (("q4" "q4") "F" "q1")
         (("q3" "q1") "G" "q0")
-        (("q3" "q1" "q4" "q2" "q0") H "q0")
+        (("q3" "q1" "q4" "q2") H "q0")
     }
 );
 
 
+assert(isEquivalent(test, test));
 assert(isEquivalent(test, determinize(test)));
+// assert(isEquivalent(test, minimize(test)));
