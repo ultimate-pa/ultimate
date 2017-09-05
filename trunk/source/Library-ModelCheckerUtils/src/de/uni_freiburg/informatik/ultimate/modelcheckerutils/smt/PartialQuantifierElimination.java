@@ -62,6 +62,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifi
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifierElimination.XnfTir;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifierElimination.XnfUpd;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifierElimination.XnfUsr;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 
 /**
@@ -76,6 +77,7 @@ public class PartialQuantifierElimination {
 	static final boolean USE_SOS = true;
 	static final boolean USE_USR = false;
 	private static boolean mPushPull = true;
+	private final static boolean EXTENDED_RESULT_CHECK = false;
 
 	public static Term tryToEliminate(final IUltimateServiceProvider services, final ILogger logger,
 			final ManagedScript mgdScript, final Term term, final SimplificationTechnique simplificationTechnique,
@@ -265,13 +267,13 @@ public class PartialQuantifierElimination {
 			final EliminationTask esp = new ElimStorePlain(mgdScript, services,
 					simplificationTechnique).elimAll(new EliminationTask(quantifier, eliminatees, result));
 			{
-				final EliminationTask sosResult = applyStoreOverSelect(mgdScript, quantifier, eliminatees, services, logger,
-						simplificationTechnique, script, result);
-				final Term espTerm = esp.toTerm(script);
-				final Term sosTerm = sosResult.toTerm(script);
-				assert Util.checkSat(script,
-						script.term("distinct", espTerm, sosTerm)) != LBool.SAT : "Array QEs differ. Esp: " + espTerm
-								+ " Sos:" + sosTerm;
+				final EliminationTask sosResult = applyStoreOverSelect(mgdScript, quantifier, eliminatees, services,
+						logger, simplificationTechnique, script, result);
+				assert !EXTENDED_RESULT_CHECK || EliminationTask.areDistinct(script, esp, sosResult) != LBool.SAT : "Array QEs differ. Esp: "
+						+ esp + " Sos:" + sosResult;
+				final long espTreeSize = new DAGSize().treesize(esp.getTerm());
+				final long sosTreeSize = new DAGSize().treesize(sosResult.getTerm());
+				assert espTreeSize <= sosTreeSize : "unexpected size! esp:" + espTreeSize + " sos" + sosTreeSize;
 			}
 			result = esp.getTerm();
 			eliminatees.clear();
@@ -328,6 +330,7 @@ public class PartialQuantifierElimination {
 
 		return result;
 	}
+
 
 	private static Term applyInfinityRestrictorDrop(final ManagedScript mgdScript, final int quantifier,
 			final Set<TermVariable> eliminatees, final IUltimateServiceProvider services, final Script script,
