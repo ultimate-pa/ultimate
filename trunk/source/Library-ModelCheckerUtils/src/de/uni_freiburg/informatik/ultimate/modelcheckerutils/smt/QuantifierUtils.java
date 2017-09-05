@@ -63,7 +63,7 @@ public class QuantifierUtils {
 	}
 
 	public static Term applyCorrespondingFiniteConnective(final Script script, final int quantifier,
-			final Term[] xjunctsOuter) {
+			final Term... xjunctsOuter) {
 		return applyCorrespondingFiniteConnective(script, quantifier, Arrays.asList(xjunctsOuter));
 	}
 
@@ -171,6 +171,8 @@ public class QuantifierUtils {
 			throw new AssertionError("unknown quantifier");
 		}
 	}
+
+
 
 	
 	
