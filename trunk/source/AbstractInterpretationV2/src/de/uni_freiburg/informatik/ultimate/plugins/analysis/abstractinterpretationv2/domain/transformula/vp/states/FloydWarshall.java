@@ -29,7 +29,6 @@ class FloydWarshall<VERTEX, EDGELABEL> {
 	private final BiPredicate<EDGELABEL, EDGELABEL> mSmallerThan;
 	private final BiFunction<EDGELABEL, EDGELABEL, EDGELABEL> mPlus;
 	private final EDGELABEL mNullLabel;
-	private final Map<Doubleton<VERTEX>, EDGELABEL> mInputGraph;
 
 	private final Map<Doubleton<VERTEX>, EDGELABEL> mDist;
 	private final List<VERTEX> mVertices;
@@ -55,10 +54,9 @@ class FloydWarshall<VERTEX, EDGELABEL> {
 		mPlus = plus;
 		mMeet = meet;
 		mNullLabel = nullLabel;
-		mInputGraph = graph;
 		mPerformedChanges = false;
 
-		// initialize with a deep copy of the graph
+		// initialize with a deep copy of the input graph
 		mDist = new HashMap<>();
 		final HashSet<VERTEX> verticeSet = new HashSet<>();
 		for (final Entry<Doubleton<VERTEX>, EDGELABEL> en : graph.entrySet()) {

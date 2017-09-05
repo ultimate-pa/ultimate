@@ -64,7 +64,6 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 		FUNCTION extends IEqFunctionIdentifier<NODE, FUNCTION>> {
 
 	private final WeqCongruenceClosure<ACTION, NODE, FUNCTION> mPartialArrangement;
-//	private final WeakEquivalenceGraph<ACTION, NODE, FUNCTION> mWeakEquivalenceGraph;
 
 	private boolean mIsFrozen;
 
@@ -405,44 +404,6 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 		final EqConstraint<ACTION, NODE, FUNCTION> res = mFactory.getEqConstraint(newPa);
 		res.freeze();
 		return res;
-
-//		final WeakEquivalenceGraph<ACTION, NODE, FUNCTION> currentWeqGraph = other.mWeakEquivalenceGraph;
-//
-//		final WeqCongruenceClosure<ACTION, NODE, FUNCTION> meetPartialArrangement =
-//				this.mPartialArrangement.meet(other.mPartialArrangement);
-//		if (meetPartialArrangement.isInconsistent()) {
-//			return mFactory.getBottomConstraint();
-//		}
-//
-//		final WeakEquivalenceGraph<ACTION, NODE, FUNCTION> weqMeet =
-//					mWeakEquivalenceGraph.meet(currentWeqGraph, meetPartialArrangement);
-//		assert !weqMeet.hasArrayEqualities();
-//
-//		final EqConstraint<ACTION, NODE, FUNCTION> res = mFactory.getEqConstraint(meetPartialArrangement, weqMeet);
-//		res.freeze();
-//		return res;
-
-		/////////////////
-
-//		while (weqMeet.hasArrayEqualities()) {
-//			Entry<FUNCTION, FUNCTION> aeq = weqMeet.pollArrayEquality();
-//			meetPartialArrangement.reportFunctionEquality(f1, f2)
-//		}
-//		while (true) {
-//
-//			if (!weqMeet.hasArrayEqualities()) {
-//				// no weak equivalence edges' label became inconsistent -- report result
-//				final EqConstraint<ACTION, NODE, FUNCTION> res =
-//						mFactory.getEqConstraint(meetPartialArrangement, weqMeet);
-//				res.freeze();
-//				return res;
-//			}
-//
-//			for (final Entry<FUNCTION, FUNCTION> aeq : weqMeet.getArrayEqualities().entrySet()) {
-//				meetPartialArrangement.reportFunctionEquality(aeq.getKey(), aeq.getValue());
-//			}
-//			mWeakEquivalenceGraph.applyChangesInGroundPartialArrangement();
-//		}
 	}
 
 
@@ -486,56 +447,11 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 		mPartialArrangement.getAllFunctions().stream()
 			.forEach(func -> allTvs.addAll(Arrays.asList(func.getTerm().getFreeVars())));
 		return allTvs;
-//		final Set<TermVariable> result = new HashSet<>();
-//		result.addAll(getAllNodes().stream()
-//			.filter(node -> node.getTerm() instanceof TermVariable)
-//			.map(node -> ((TermVariable) node.getTerm()))
-//			.collect(Collectors.toList()));
-//		result.addAll(getAllFunctions().stream()
-//			.filter(func -> func.getTerm() instanceof TermVariable)
-//			.map(func -> ((TermVariable) func.getTerm()))
-//			.collect(Collectors.toList()));
-//		return result;
 	}
 
 	boolean sanityCheck() {
 		return mPartialArrangement.sanityCheck();
 
 	}
-
-
-
-
-//	void saturate() {
-//
-//		final boolean changedWeqGraph = mWeakEquivalenceGraph.applyChangesInGroundPartialArrangement();
-//		if (!changedWeqGraph) {
-//			// nothing to do
-//			return;
-//		}
-//
-//		while (true) {
-//			if (!mWeakEquivalenceGraph.hasArrayEqualities()) {
-//				// no weak equivalence edges' label became inconsistent (anymor), we are done
-//				// the result is true because the partial arrangement has changed
-//				assert sanityCheck();
-//				return;
-//			}
-//
-//
-//			for (final Entry<FUNCTION, FUNCTION> aeq : mWeakEquivalenceGraph.getArrayEqualities().entrySet()) {
-//				mPartialArrangement.reportFunctionEquality(aeq.getKey(), aeq.getValue());
-//			}
-//			mWeakEquivalenceGraph.applyChangesInGroundPartialArrangement();
-//		}
-//	}
-
-//	private boolean sanityCheck() {
-//		if (!mWeakEquivalenceGraph.sanityCheck()) {
-//			return false;
-//		}
-//		return true;
-//	}
-
 }
 

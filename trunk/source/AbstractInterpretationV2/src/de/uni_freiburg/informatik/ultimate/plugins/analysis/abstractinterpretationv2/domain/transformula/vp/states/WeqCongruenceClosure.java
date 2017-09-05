@@ -66,7 +66,6 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>,
 		if (original.isInconsistent()) {
 			throw new IllegalArgumentException("use other constructor!");
 		}
-		//		mWeakEquivalenceGraph = weqGraph;
 		// we need a fresh instance here, because we cannot set the link in the weq graph to the right cc instance..
 		mWeakEquivalenceGraph = new WeakEquivalenceGraph<>(this, weqGraph);
 		mFactory = factory;
@@ -79,9 +78,7 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>,
 	 * @param original
 	 */
 	public WeqCongruenceClosure(final WeqCongruenceClosure<ACTION, NODE, FUNCTION> original) {
-		//			final WeakEquivalenceGraph<ACTION, NODE, FUNCTION> weqGraph) {
 		super(original);
-		//		assert original.mWeakEquivalenceGraph == weqGraph : "?";
 		assert original.mFactory != null;
 		mFactory = original.mFactory;
 		mWeakEquivalenceGraph = new WeakEquivalenceGraph<>(this, original.mWeakEquivalenceGraph);
@@ -132,19 +129,6 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>,
 		getRepresentativeAndAddFunctionIfNeeded(array1);
 		getRepresentativeAndAddFunctionIfNeeded(array2);
 
-//		final AbstractNodeAndFunctionFactory<NODE, FUNCTION, Term> nodeFac =
-//				mWeakEquivalenceGraph.mFactory.getEqNodeAndFunctionFactory();
-//
-//		if (nodeFac.hasFuncAppElement(array1, storeIndex)
-//				&& nodeFac.hasFuncAppElement(array2, storeIndex)) {
-//			final NODE funcAppNode1 = nodeFac.getFuncAppElement(array1, storeIndex, true);
-//			final NODE funcAppNode2 = nodeFac.getFuncAppElement(array2, storeIndex, true);
-//
-//			if (getEqualityStatus(funcAppNode1, funcAppNode2) == EqualityStatus.EQUAL) {
-//				reportFunctionEquality(array1, array2);
-//				return;
-//			}
-//		}
 		mWeakEquivalenceGraph.reportWeakEquivalence(array1, array2, storeIndex);
 		reportAllArrayEqualitiesFromWeqGraph();
 	}
@@ -152,8 +136,6 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>,
 
 	private void addWeakEquivalence(final Doubleton<FUNCTION> key,
 				final WeakEquivalenceGraph<ACTION, NODE, FUNCTION>.WeakEquivalenceEdgeLabel value) {
-	//		mWeakEquivalenceGraph.getEdges().entrySet().iterator().next().getValue(
-	//				.reportWeakEquivalence(key, value);
 		mWeakEquivalenceGraph.reportWeakEquivalence(key, value);
 		reportAllArrayEqualitiesFromWeqGraph();
 	}
@@ -195,9 +177,6 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>,
  		 *  We view an equality a[i] = b[i] as a weak equivalence a --q!=i-- b --> update the corresponding weq edge
 		 *  accordingly, or introduce one.
 		 */
-//		if (node1.isFunctionApplication() && node2.isFunctionApplication()
-//				&& !node1.getAppliedFunction().equals(node2.getAppliedFunction())) {
-////			 && mWeakEquivalenceGraph.hasWeqEdgeForFunctions(node1.getAppliedFunction(), node2.getAppliedFunction())) {
 		for (final Entry<FUNCTION, FUNCTION> funcPair :
 			CrossProducts.binarySelectiveCrossProduct(mFunctionTVER.getAllElements(), false, true).entrySet()) {
 
@@ -206,16 +185,12 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>,
 
 			for (final List<NODE> ccc1 : ccchildren1) {
 				for (final List<NODE> ccc2 : ccchildren2) {
-
-					//			if (argumentsAreCongruent(node1, node2, false)) {
 					if (argumentsAreCongruent(ccc1, ccc2)) {
 						/*
 						 * That the arguments are congruent will always be the case when this reportEqualityRec-call
 						 * came from a congruence propagation, but we need to check it here, because the equality may
 						 * have been added directly.
 						 */
-//						mWeakEquivalenceGraph.strengthenEdgeWithExceptedPoint(node1.getAppliedFunction(),
-//								node2.getAppliedFunction(), node1.getArguments());
 						mWeakEquivalenceGraph.strengthenEdgeWithExceptedPoint(funcPair.getKey(), funcPair.getValue(),
 								ccc1);
 					}
@@ -268,7 +243,6 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>,
 		boolean madeChanges = false;
 
 		madeChanges |= super.reportDisequalityRec(elem1, elem2, oldCcChild);
-//		assert sanityCheck();
 
 		if (!madeChanges) {
 			return false;
@@ -452,8 +426,6 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>,
 
 		assert elementIsFullyRemoved(elem);
 		return true;
-
-
 	}
 
 
@@ -501,7 +473,6 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>,
 				if (edge.getValue().impliesEqualityOnThatPosition(elem.getArguments())) {
 					reportEquality(elem, c);
 				}
-
 			}
 		}
 	}
@@ -536,16 +507,7 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>,
 		/*
 		 * strategy: conjoin all weq edges of otherCC to a copy of this's weq graph
 		 */
-		// construct a weqCc with an empty weq graph and gpaMeet as gpa
-//		final WeqCongruenceClosure<ACTION, NODE, FUNCTION> newWeqCc = new WeqCongruenceClosure<>(gPaMeet, mFactory);
-		//		// report all weq edges from this
-//		for (final Entry<Doubleton<FUNCTION>,
-//				WeakEquivalenceGraph<ACTION, NODE, FUNCTION>.WeakEquivalenceEdgeLabel> edge :
-//			this.mWeakEquivalenceGraph.getEdges().entrySet()) {
-//			newWeqCc.addWeakEquivalence(edge.getKey(), edge.getValue());
-//		}
 
-		// EDIT: gPaMeet should already be a WeqCC
 		final WeqCongruenceClosure<ACTION, NODE, FUNCTION> newWeqCc =
 				(WeqCongruenceClosure<ACTION, NODE, FUNCTION>) gPaMeet;
 
@@ -564,45 +526,6 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>,
 			return new WeqCongruenceClosure<>(true);
 		}
 		return newWeqCc;
-
-
-		////////////////// old /////////////
-//		// construct a weqCc with an empty weq graph and gpaMeet as gpa
-//		final WeqCongruenceClosure<ACTION, NODE, FUNCTION> newWeqCc = new WeqCongruenceClosure<>(gPaMeet, mFactory);
-
-//		/*
-//		 * construct weqMeet as the "meet" of the weak equivalence edgs of both weqCcs. Note that this does not account
-//		 * for any interplay with the gpa.
-//		 * --> strategy: report them one by one to the gpaMeet
-//		 */
-//		final WeakEquivalenceGraph<ACTION, NODE, FUNCTION> weqMeet =
-//				mWeakEquivalenceGraph.meet(other.mWeakEquivalenceGraph, gPaMeet);
-//		for (final Entry<Doubleton<FUNCTION>,
-//				WeakEquivalenceGraph<ACTION, NODE, FUNCTION>.WeakEquivalenceEdgeLabel> edge :
-//					weqMeet.getEdges().entrySet()) {
-//			newWeqCc.reportWeakEquivalence(edge.getKey(), edge.getValue());
-//		}
-//		newWeqCc.reportAllArrayEqualitiesFromWeqGraph();
-//		if (newWeqCc.isInconsistent()) {
-//			return new WeqCongruenceClosure<>(true);
-//		}
-//		return newWeqCc;
-
-///////////	//////////////////	// old:
-//		final WeakEquivalenceGraph<ACTION, NODE, FUNCTION> weqMeet =
-//				mWeakEquivalenceGraph.meet(other.mWeakEquivalenceGraph, gPaMeet);
-
-
-//		while (weqMeet.hasArrayEqualities()) {
-//			if (gPaMeet.isInconsistent()) {
-//				return new WeqCongruenceClosure<>(true);
-//			}
-//			final Entry<FUNCTION, FUNCTION> aeq = weqMeet.pollArrayEquality();
-//			gPaMeet.reportFunctionEquality(aeq.getKey(), aeq.getValue());
-//			weqMeet.reportChangeInGroundPartialArrangement((final CongruenceClosure<NODE, FUNCTION> cc)
-//						-> cc.reportFunctionEquality(aeq.getKey(), aeq.getValue()));
-//		}
-//		return new WeqCongruenceClosure<>(gPaMeet, weqMeet);
 	}
 
 	@Override
@@ -629,7 +552,4 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>,
 		sb.append(mWeakEquivalenceGraph.toString());
 		return sb.toString();
 	}
-
-
-
 }
