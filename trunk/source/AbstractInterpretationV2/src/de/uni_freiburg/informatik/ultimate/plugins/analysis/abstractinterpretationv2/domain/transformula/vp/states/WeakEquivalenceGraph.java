@@ -695,12 +695,14 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		/**
 		 * Copy constructor.
 		 *
-		 * @param value
+		 * @param original
 		 */
-		public WeakEquivalenceEdgeLabel(final WeakEquivalenceEdgeLabel value) {
-			mLabel = new ArrayList<>(value.mLabel.size());
-			for (int i = 0; i < value.mLabel.size(); i++) {
-				mLabel.add(new CongruenceClosure<>(value.mLabel.get(i)));
+		public WeakEquivalenceEdgeLabel(final WeakEquivalenceEdgeLabel original) {
+			mLabel = new ArrayList<>(original.getLabel().size());
+			for (int i = 0; i < original.getLabel().size(); i++) {
+				assert! original.getLabel().get(i).isInconsistent();
+				assert! original.getLabel().get(i).isTautological();
+				mLabel.add(new CongruenceClosure<>(original.getLabel().get(i)));
 			}
 			assert sanityCheck();
 		}
@@ -948,10 +950,6 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 				final CongruenceClosure<NODE, FUNCTION> groundPartialArrangement) {
 			final List<CongruenceClosure<NODE, FUNCTION>> newLabelContents = new ArrayList<>();
 			for (int i = 0; i < getLabel().size(); i++) {
-				if (getLabel().get(i).isTautological()) {
-					// leave label element as it is (namely "true") at current position
-					continue;
-				}
 				final CongruenceClosure<NODE, FUNCTION>	meet = mCcManager.getMeet(mLabel.get(i), groundPartialArrangement);
 				if (meet.isInconsistent()) {
 					/* label element is inconsistent with the current gpa
