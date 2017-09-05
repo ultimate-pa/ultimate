@@ -130,7 +130,7 @@ public class Elim1Store {
 	private final ManagedScript mMgdScript;
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
-	private final boolean EXTENDED_RESULT_CHECK = false;
+	private static final boolean EXTENDED_RESULT_CHECK = false;
 
 
 	public Elim1Store(final ManagedScript mgdScript, final IUltimateServiceProvider services,
