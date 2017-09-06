@@ -76,6 +76,8 @@ public class EqConstraintFactory<
 
 	private final NestedMap2<Sort, Integer, NODE> mDimensionToWeqVariableNode;
 
+	private final LiteralManager<NODE, FUNCTION> mLiteralManager;
+
 	public EqConstraintFactory(final AbstractNodeAndFunctionFactory<NODE, FUNCTION, Term> eqNodeAndFunctionFactory,
 			final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit) {
 		mBottomConstraint = new EqBottomConstraint<>(this);
@@ -89,6 +91,8 @@ public class EqConstraintFactory<
 		mEqNodeAndFunctionFactory = eqNodeAndFunctionFactory;
 
 		mDimensionToWeqVariableNode = new NestedMap2<>();
+
+		mLiteralManager = new LiteralManager<>();
 	}
 
 	public EqConstraint<ACTION, NODE, FUNCTION> getEmptyConstraint() {
@@ -497,5 +501,9 @@ public class EqConstraintFactory<
 	@Override
 	public String toString() {
 		return this.getClass().getSimpleName();
+	}
+
+	public LiteralManager<NODE, FUNCTION> getLiteralManager() {
+		return mLiteralManager;
 	}
 }
