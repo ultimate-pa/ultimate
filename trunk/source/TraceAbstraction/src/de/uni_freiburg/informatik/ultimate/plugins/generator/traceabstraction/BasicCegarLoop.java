@@ -31,7 +31,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
@@ -155,7 +155,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 	private final ErrorGeneralizationEngine<LETTER> mErrorGeneralizationEngine;
 	private final PathProgramCache<LETTER> mPathProgramCache;
 	private final boolean mStoreFloydHoareAutomata;
-	private final List<AbstractInterpolantAutomaton<LETTER>> mFloydHoareAutomata = new ArrayList<>();
+	private final LinkedHashSet<AbstractInterpolantAutomaton<LETTER>> mFloydHoareAutomata = new LinkedHashSet<>();
 
 	public BasicCegarLoop(final String name, final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit,
 			final PredicateFactory predicateFactory, final TAPreferences taPrefs,
@@ -870,7 +870,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		}
 	}
 
-	public List<AbstractInterpolantAutomaton<LETTER>> getFloydHoareAutomata() {
+	public LinkedHashSet<AbstractInterpolantAutomaton<LETTER>> getFloydHoareAutomata() {
 		if (mStoreFloydHoareAutomata) {
 			return mFloydHoareAutomata;
 		} else {
