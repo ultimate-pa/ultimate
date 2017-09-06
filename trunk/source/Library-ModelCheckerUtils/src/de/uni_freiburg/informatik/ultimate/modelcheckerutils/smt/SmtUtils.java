@@ -457,11 +457,51 @@ public final class SmtUtils {
 		}
 		return affine.toTerm(script);
 	}
+	
+	/**
+	 * Return product, in affine representation if possible.
+	 *
+	 * @param funcname
+	 *            either "*" or "bvmul".
+	 */
+	public static Term mul(final Script script, final String funcname, final Term... factors) {
+		assert "*".equals(funcname) || "bvmul".equals(funcname);
+		final Term product = script.term(funcname, factors);
+		final AffineTerm affine = (AffineTerm) new AffineTermTransformer(script).transform(product);
+		if (affine.isErrorTerm()) {
+			return product;
+		}
+		return affine.toTerm(script);
+	}
+	
+	public static Term minus(final Script script, final Term... operands) {
+		if (operands.length <= 1) {
+			throw new UnsupportedOperationException("use neg for unary minus");
+		} else {
+			final Term[] newOperands = new Term[operands.length];
+			newOperands[0] = operands[0];
+			for (int i=1; i<operands.length; i++) {
+				newOperands[i] = neg(script, operands[i]);
+			}
+			String funcname;
+			final Sort sort = operands[0].getSort();
+			if (SmtSortUtils.isNumericSort(sort)) {
+				funcname = "+";
+			} else if (SmtSortUtils.isBitvecSort(sort)) {
+				funcname = "bvadd";
+			} else {
+				throw new UnsupportedOperationException("unsupported sort " + sort);
+			}
+			return sum(script, funcname, newOperands);
+		}
+		
+	}
 
 	/**
 	 * Return term that represents negation (unary minus).
 	 */
-	public static Term neg(final Script script, final Sort sort, final Term operand) {
+	public static Term neg(final Script script, final Term operand) {
+		final Sort sort = operand.getSort();
 		assert SmtSortUtils.isNumericSort(sort) || SmtSortUtils.isBitvecSort(sort);
 		if (SmtSortUtils.isNumericSort(sort)) {
 			return script.term("-", operand);
@@ -1070,6 +1110,18 @@ public final class SmtUtils {
 		case "bvadd":
 			result = SmtUtils.sum(script, funcname, params);
 			break;
+		case "-":
+		case "bvminus":
+			if (params.length == 1) {
+				result = SmtUtils.neg(script, params[0]);
+			} else {
+				result = SmtUtils.minus(script, params);
+			}
+			break;
+		case "*":
+		case "bvmul":
+			result = SmtUtils.mul(script, funcname, params);
+			break;
 		case "div":
 			if (params.length != 2) {
 				throw new IllegalArgumentException("no div");
@@ -1132,7 +1184,7 @@ public final class SmtUtils {
 		case "zero_extend":
 		case "extract":
 		case "bvsub":
-		case "bvmul":
+//		case "bvmul":
 		case "bvudiv":
 		case "bvurem":
 		case "bvsdiv":
