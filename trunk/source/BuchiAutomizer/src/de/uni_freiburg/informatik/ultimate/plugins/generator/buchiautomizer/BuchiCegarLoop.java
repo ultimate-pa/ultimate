@@ -721,6 +721,26 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 		}
 	}
 
+	
+	/**
+	 * Do a refinement (i.e., replace mAbstraction by a new difference) for the 
+	 * case where we detected that a finite prefix of the lasso-shaped
+	 * counterexample is infeasible.
+	 * In this case the module (i.e., the subtrahend of the difference) will
+	 * be a weak Büchi automaton (Büchi automaton where set of final states is
+	 * a trap). In fact, the module will have only a single accepting state
+	 * that is labeled with "false" and that has a self-loop for every letter.
+	 * 
+	 * In this case we construct the module with the same algorithm that we
+	 * use in our safety analysis (there the Floyd-Hoare automata also have a
+	 * single accepting state that is labeled with "false" and that has a 
+	 * self-loop for every letter).
+	 * "Coincidentally" is holds that for these kind of automata the 
+	 * powerset-based complementation of finite automata is also sound for 
+	 * Büchi automata, hence we use a difference operation that is based on
+	 * this rather inexpensive complementation algorithm.
+	 *  
+	 */
 	private void refineFinite(final LassoChecker<LETTER> lassoChecker) throws AutomataOperationCanceledException {
 		mBenchmarkGenerator.start(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
 		final InterpolatingTraceChecker traceChecker;
