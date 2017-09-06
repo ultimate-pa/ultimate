@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -409,6 +410,53 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>,
 		if (!hasFunction(func)) {
 			return false;
 		}
+
+		/*
+		 * When removing this function we will also remove all function nodes that depend on it. In this first step
+		 * we attempt to conserve information about those nodes if possible by adding nodes with other functions but the
+		 * same arguments.
+		 *
+		 * Conditions to add a node b[i1, ..., in]:
+		 *  (a is the function we are about to remove)
+		 * <li> a[i1, ..., in] is present in this weqCc and is part of a non-tautological constraint
+		 * <li> the current weqCc allows us to conclude a[i1, .., in] = b[i1, ..,in]
+		 *   that is the case if one of the following conditions holds
+		 * <li> the strong equivalence a = b is implied by this weqCc (it is enough to propagate for one other function
+		 *   in the equivalence class of a)
+		 * <li> there is a weak equivalence edge between a and b, and it allows weak congruence propagation of the above
+		 *  equality
+		 */
+		final Set<NODE> constrainedFuncAppNodes = mFunctionToFuncApps.getImage(func).stream()
+				.filter(this::isConstrained).collect(Collectors.toSet());
+
+		// is func equal to some other function?
+		final Optional<FUNCTION> equalFuncOpt = mFunctionTVER.getEquivalenceClass(func).stream()
+				.filter(f -> !f.equals(func)).findAny();
+		final FUNCTION equalFunc = equalFuncOpt.isPresent() ? equalFuncOpt.get() : null;
+
+		for (final NODE fan : constrainedFuncAppNodes) {
+			if (equalFunc != null) {
+				final NODE nodeWithEqualFunc = mFactory.getEqNodeAndFunctionFactory()
+						.getFuncAppElement(equalFunc, fan.getArguments());
+				addElement(nodeWithEqualFunc);
+			}
+
+			for (final Entry<FUNCTION, WeakEquivalenceGraph<ACTION, NODE, FUNCTION>.WeakEquivalenceEdgeLabel> weqEdge
+					:
+						mWeakEquivalenceGraph.getAdjacentWeqEdges(func).entrySet()) {
+				if (weqEdge.getValue().impliesEqualityOnThatPosition(fan.getArguments())) {
+					final NODE nodeWithWequalFunc = mFactory.getEqNodeAndFunctionFactory()
+						.getFuncAppElement(weqEdge.getKey(), fan.getArguments());
+					addElement(nodeWithWequalFunc);
+				}
+			}
+		}
+
+
+		/*
+		 * Project func from the weak equivalence graph.
+		 * We need to make a copy of the ground partial arrangement, because ..
+		 */
 		final CongruenceClosure<NODE,FUNCTION> copy = new CongruenceClosure<>(this);
 		copy.removeFunction(func);
 		mWeakEquivalenceGraph.projectFunction(func, copy);
@@ -487,6 +535,16 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>,
 		return true;
 	}
 
+	@Override
+	public boolean isConstrained(final NODE elem) {
+		if (super.isConstrained(elem)) {
+			return true;
+		}
+		if (mWeakEquivalenceGraph.isConstrained(elem)) {
+			return true;
+		}
+		return false;
+	}
 
 	@Override
 	protected void registerNewElement(final NODE elem) {

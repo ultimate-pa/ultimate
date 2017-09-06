@@ -454,5 +454,32 @@ public class ThreeValuedEquivalenceRelation<E> {
 		}
 		return new ThreeValuedEquivalenceRelation<>(newUf, newDisequalities);
 	}
+
+	/**
+	 * We call an element constrained iff this TVER puts any non-tautological constraint on it.
+	 * In particular, the element e is constrained if both of the following conditions hold
+	 * <li> e is the only member of its equivalence class
+	 * <li> e does not appear in a disequality
+	 *
+	 * @param elem the element to check
+	 * @return true iff elem is constrained by this
+	 */
+	public boolean isConstrained(final E elem) {
+		if (mUnionFind.find(elem) == null) {
+			throw new IllegalArgumentException();
+		}
+		if (getEquivalenceClass(elem).size() > 1) {
+			return true;
+		}
+		if (mDisequalities.getImage(elem).size() > 0) {
+			return true;
+		}
+		for (final Entry<E, E> en : mDisequalities.entrySet()) {
+			if (en.getValue().equals(elem)) {
+				return true;
+			}
+		}
+		return false;
+	}
 }
 

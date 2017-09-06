@@ -1347,6 +1347,36 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 		return getAllFunctions().contains(elem);
 	}
 
+	/**
+	 * We call a node constrained iff this CongruenceClosure puts any non-tautological constraint on it.
+	 * In particular, the node elem is constrained if both of the following conditions hold
+	 * <li> elem is the only member of its equivalence class
+	 * <li> elem does not appear in a disequality
+	 *
+	 * @param elem
+	 * @return true
+	 */
+	public boolean isConstrained(final ELEM elem) {
+		if (!hasElement(elem)) {
+			return false;
+		}
+		return mElementTVER.isConstrained(elem);
+	}
+
+	/**
+	 * We call a function constrained iff this CongruenceClosure puts any non-tautological constraint on it.
+	 *
+	 * @param func
+	 * @return true
+	 */
+	public boolean isConstrained(final FUNCTION func) {
+		if (!hasFunction(func)) {
+			return false;
+		}
+		return mFunctionTVER.isConstrained(func);
+	}
+
+
 	@Override
 	public boolean equals(final Object obj) {
 		// TODO Auto-generated method stub

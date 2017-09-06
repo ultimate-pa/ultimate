@@ -214,6 +214,17 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		return madeChanges;
 	}
 
+	/**
+	 * Project the given function (array) from this weq graph.
+	 * <li> remove edges that are adjacent to the given function
+	 * <li> project the function from all the labels of the remaining edges
+	 * <li> additionally, at the first step try to carry over information via weak congruence to other arrays by
+	 * 		introducing fresh terms
+	 *
+	 * @param func function (array) to be projected
+	 * @param groundPartialArrangement the gpa that should be assumed for the projection (might be different from
+	 * 		mPartialArrangement, or mPartialArrangement might be null..)
+	 */
 	public void projectFunction(final FUNCTION func, final CongruenceClosure<NODE, FUNCTION> groundPartialArrangement) {
 		final Map<Doubleton<FUNCTION>, WeakEquivalenceEdgeLabel> edgesCopy = new HashMap<>(mWeakEquivalenceEdges);
 		for (final Entry<Doubleton<FUNCTION>, WeakEquivalenceEdgeLabel> en : edgesCopy.entrySet()) {
@@ -669,6 +680,15 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		return newLabel;
 	}
 
+	public boolean isConstrained(final NODE elem) {
+		for (final Entry<Doubleton<FUNCTION>, WeakEquivalenceEdgeLabel> edge : mWeakEquivalenceEdges.entrySet()) {
+			if (edge.getValue().isConstrained(elem)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	/**
 	 * Represents an edge label in the weak equivalence graph.
 	 * An edge label connects two arrays of the same arity(dimensionality) #a.
@@ -690,6 +710,10 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 			mLabel = new ArrayList<>();
 			mLabel.add(new CongruenceClosure<>());
 			assert sanityCheck();
+		}
+
+		public boolean isConstrained(final NODE elem) {
+			return mLabel.stream().anyMatch(l -> l.isConstrained(elem));
 		}
 
 		/**
