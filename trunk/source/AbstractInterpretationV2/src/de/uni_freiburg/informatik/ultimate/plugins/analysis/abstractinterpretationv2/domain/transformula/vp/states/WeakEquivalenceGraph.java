@@ -946,6 +946,15 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		}
 
 
+		/**
+		 * proceeds in three steps for each label element of this weq label :
+		 *  <li> constructs the meet of the element with the ground partial arrangement (gpa)
+		 *  <li> applies the given removal method on that meet
+		 *  <li> projects away the constraints in the resulting element that do not contain one of the weq-variables
+		 *
+		 * @param remove
+		 * @param groundPartialArrangement
+		 */
 		private void projectHelper(final Consumer<CongruenceClosure<NODE, FUNCTION>> remove,
 				final CongruenceClosure<NODE, FUNCTION> groundPartialArrangement) {
 			final List<CongruenceClosure<NODE, FUNCTION>> newLabelContents = new ArrayList<>();
