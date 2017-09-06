@@ -33,7 +33,6 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -50,7 +49,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.EquivalenceRelationIterator.IExternalOracle;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IncrementalPlicationChecker.Plication;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.ExtendedSimplificationResult;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
@@ -61,7 +59,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifi
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 import de.uni_freiburg.informatik.ultimate.util.ConstructionCache;
 import de.uni_freiburg.informatik.ultimate.util.ConstructionCache.IValueConstruction;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.EqualityStatus;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ThreeValuedEquivalenceRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -177,14 +174,6 @@ public class Elim1Store {
 
 		}
 
-		final Orac oracB = new Orac(preprocessedInput);
-		if (oracB.mIncrementalPlicationChecker.checkSat(mMgdScript.getScript().term("true"))== LBool.UNSAT) {
-			mLogger.warn("input unsat");
-			oracB.unlockSolver();
-			return new EliminationTask(quantifier, Collections.emptySet(), mMgdScript.getScript().term("false"));
-		}
-		oracB.unlockSolver();
-
 
 		final List<ApplicationTerm> selectTerms = extractArrayReads(eliminatee, preprocessedInput);
 
@@ -214,6 +203,11 @@ public class Elim1Store {
 
 		final Pair<ThreeValuedEquivalenceRelation<Term>, List<Term>> analysisResult =
 				analyzeIndexEqualities(quantifier, selectIndices, storeIndex, storeValue, preprocessedInput, equalityInformation, eliminatee);
+		if (analysisResult == null) {
+			final Term absobingElement = QuantifierUtils.getNeutralElement(mScript, quantifier);
+			mLogger.warn("Array PQE input equivalent to " + absobingElement);
+			return new EliminationTask(quantifier, Collections.emptySet(), absobingElement);
+		}
 
 		final List<Term> selectIndexRepresentatives = new ArrayList<>();
 		final List<Term> allIndexRepresentatives = new ArrayList<>();
@@ -487,6 +481,12 @@ public class Elim1Store {
 				throw new AssertionError("unknown quantifier");
 			}
 			final IncrementalPlicationChecker iea = new IncrementalPlicationChecker(plication, mMgdScript, preprocessedInput);
+			final Term absorbingElement = QuantifierUtils.getNeutralElement(mScript, mQuantifier);
+			final Validity validity = iea.checkPlication(absorbingElement);
+			if (validity == Validity.VALID) {
+				iea.unlockSolver();
+				return null;
+			}
 			
 			for (int i = 0; i < allIndicesList.size(); i++) {
 				for (int j = i + 1; j < allIndicesList.size(); j++) {
@@ -871,51 +871,6 @@ public class Elim1Store {
 
 		}
 
-		private class Orac implements IExternalOracle<Term> {
-
-			IncrementalPlicationChecker mIncrementalPlicationChecker;
-
-			public Orac(final Term inputTerm) {
-				mIncrementalPlicationChecker = new IncrementalPlicationChecker(Plication.IMPLICATION, mMgdScript,
-						inputTerm);
-			}
-
-			@Override
-			public boolean isConsistent(final LinkedList<Boolean> stack,
-					final List<Doubleton<Term>> nonDisjointDoubletons) {
-				final List<Term> list = new ArrayList<>();
-				for (int i = 0; i < stack.size(); i++) {
-					Term equality;
-					final Doubleton<Term> d = nonDisjointDoubletons.get(i);
-					if (stack.get(i)) {
-						equality = SmtUtils.binaryEquality(mScript, d.getOneElement(), d.getOtherElement());
-					} else {
-						equality = SmtUtils.distinct(mScript, d.getOneElement(), d.getOtherElement());
-					}
-					list.add(equality);
-				}
-				final Term conjunction = SmtUtils.and(mScript, list);
-				final LBool lbool = mIncrementalPlicationChecker.checkSat(conjunction);
-				mLogger.info("external oracle said: " + lbool + " " + stack
-						+ (stack.size() == nonDisjointDoubletons.size() ? " full stack!" : ""));
-				switch (lbool) {
-				case SAT:
-					return true;
-				case UNKNOWN:
-					// TODO: use same as sat
-					throw new AssertionError("solver said unknown during conistency check");
-				case UNSAT:
-					return false;
-				default:
-					throw new AssertionError("unknown Lbool");
-				}
-			}
-
-			public void unlockSolver() {
-				mIncrementalPlicationChecker.unlockSolver();
-			}
-
-		}
 
 		public class ValueEqualityChecker {
 			final TermVariable mEliminatee;
