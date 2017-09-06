@@ -738,7 +738,6 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 
 		public boolean impliesEqualityOnThatPosition(final List<NODE> arguments) {
 			for (int i = 0; i < getLabel().size(); i++) {
-				//					final CongruenceClosure<NODE, FUNCTION> copy = new CongruenceClosure<>(mLabelWithGroundPa.get(i));
 				final CongruenceClosure<NODE, FUNCTION> copy = mCcManager.makeCopy(
 						mCcManager.getMeet(getLabel().get(i), mPartialArrangement));
 				for (int j = 0; j < arguments.size(); j++) {

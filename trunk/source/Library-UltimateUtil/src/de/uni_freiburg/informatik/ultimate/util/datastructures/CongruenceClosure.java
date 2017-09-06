@@ -81,7 +81,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 	 * Constructs CongruenceClosure instance that is in an inconsistent state from
 	 * the beginning.
 	 *
-	 * @param isInconsistent
+	 * @param isInconsistent dummy parameter separating this constructor from the one for the empty CongruenceClosure;
+	 * 	  	must always be "true".
 	 */
 	public CongruenceClosure(final boolean isInconsistent) {
 		if (!isInconsistent) {
@@ -116,8 +117,9 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 	}
 
 	/**
-	 * copy constructor
-	 * @param original
+	 * Copy constructor.
+	 *
+	 * @param original the CC to copy
 	 */
 	public CongruenceClosure(final CongruenceClosure<ELEM, FUNCTION> original) {
 		if (original.isInconsistent()) {
@@ -136,20 +138,20 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 
 	/**
 	 *
-	 * @param f1
-	 * @param f2
+	 * @param func1
+	 * @param func2
 	 * @return true iff the state of this CongruenceClosure instance has changed through this method call
 	 */
-	public boolean reportFunctionEquality(final FUNCTION f1, final FUNCTION f2) {
-		final FUNCTION f1OldRep = getRepresentativeAndAddFunctionIfNeeded(f1);
-		final FUNCTION f2OldRep = getRepresentativeAndAddFunctionIfNeeded(f2);
+	public boolean reportFunctionEquality(final FUNCTION func1, final FUNCTION func2) {
+		final FUNCTION f1OldRep = getRepresentativeAndAddFunctionIfNeeded(func1);
+		final FUNCTION f2OldRep = getRepresentativeAndAddFunctionIfNeeded(func2);
 
 		if (f1OldRep == f2OldRep) {
 			// already equal --> nothing to do
 			return false;
 		}
 
-		mFunctionTVER.reportEquality(f1, f2);
+		mFunctionTVER.reportEquality(func1, func2);
 		updateInconsistencyStatus();
 		if (isInconsistent()) {
 			// no need to propagate anything if this is already inconsistent
@@ -161,8 +163,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 		 * g(x) for all nodes of that form we know.
 		 *
 		 */
-		for (final ELEM funcApp1 : mFunctionToFuncApps.getImage(f1)) {
-			for (final ELEM funcApp2 : mFunctionToFuncApps.getImage(f2)) {
+		for (final ELEM funcApp1 : mFunctionToFuncApps.getImage(func1)) {
+			for (final ELEM funcApp2 : mFunctionToFuncApps.getImage(func2)) {
 				if (funcApp1 == funcApp2) {
 					continue;
 				}
@@ -500,7 +502,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 	private void doBackwardCongruencePropagations(final ELEM e1, final ELEM e2,
 			final NestedMap2<FUNCTION, ELEM, Set<List<ELEM>>> oldCcChild) {
 		for (final Set<FUNCTION> eqc : mFunctionTVER.getAllEquivalenceClasses()) {
-			for (final Entry<FUNCTION, FUNCTION> pair :
+			for (final Entry<FUNCTION, FUNCTION> pair
+					:
 					CrossProducts.binarySelectiveCrossProduct(eqc, true, true).entrySet()) {
 
 				final Set<List<ELEM>> e1CcChildren = getCcChildren(pair.getKey(), mElementTVER.getRepresentative(e1),
@@ -540,7 +543,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 			final NestedMap2<FUNCTION, ELEM, Set<List<ELEM>>> oldCcChild) {
 		for (final ELEM repUnequalToE1 : mElementTVER.getRepresentativesUnequalTo(e1OldRep)) {
 			for (final Set<FUNCTION> eqc : mFunctionTVER.getAllEquivalenceClasses()) {
-				for (final Entry<FUNCTION, FUNCTION> pair :
+				for (final Entry<FUNCTION, FUNCTION> pair
+						:
 						CrossProducts.binarySelectiveCrossProduct(eqc, true, true).entrySet()) {
 					final Set<ELEM> funcApps1 = getFunctionApplicationsInSameEquivalenceClass(pair.getKey(),
 							repUnequalToE1);
@@ -1272,10 +1276,10 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 	 */
 	public void transformElementsAndFunctions(final Function<ELEM, ELEM> elemTransformer,
 			final Function<FUNCTION, FUNCTION> functionTransformer) {
-		assert sanitizeTransformer(elemTransformer, getAllElements()) :
-					"we assume that the transformer does not produce elements that were in the relation before!";
-		assert sanitizeTransformer(functionTransformer, getAllFunctions()) :
-					"we assume that the transformer does not produce elements that were in the relation before!";
+		assert sanitizeTransformer(elemTransformer, getAllElements()) : "we assume that the transformer does not "
+				+ "produce elements that were in the relation before!";
+		assert sanitizeTransformer(functionTransformer, getAllFunctions()) : "we assume that the transformer does not "
+				+ "produce elements that were in the relation before!";
 
 		mElementTVER.transformElements(elemTransformer);
 		mFunctionTVER.transformElements(functionTransformer);
