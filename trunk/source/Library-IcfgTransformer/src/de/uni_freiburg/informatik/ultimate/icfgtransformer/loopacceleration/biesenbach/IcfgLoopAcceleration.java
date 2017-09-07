@@ -31,8 +31,12 @@ import de.uni_freiburg.informatik.ultimate.icfgtransformer.IBacktranslationTrack
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IIcfgTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ILocationFactory;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ITransformulaTransformer;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
  * A {@link IIcfgTransformer} that accelerates the first loop if finds and creates a new accelerated {@link IIcfg}.
@@ -74,7 +78,7 @@ public class IcfgLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends Icf
 		DO_NOT_ACCELERATE
 	}
 
-	private final IIcfg<OUTLOC> mResultIcfg;
+	private IIcfg<OUTLOC> mResultIcfg;
 
 	/**
 	 * Default constructor.
@@ -95,31 +99,39 @@ public class IcfgLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends Icf
 			final String newIcfgIdentifier, final ITransformulaTransformer transformer,
 			final IBacktranslationTracker backtranslationTracker, final IUltimateServiceProvider services,
 			final LoopAccelerationOptions option) {
-		mResultIcfg = accelerat(logger, originalIcfg, outLocationClass, funLocFac, newIcfgIdentifier, transformer,
-				backtranslationTracker, services, option);
-	}
 
+		if(option.equals(LoopAccelerationOptions.MARK_AS_OVERAPPROX)){
+			mResultIcfg = accelerat(logger, originalIcfg, outLocationClass, funLocFac, newIcfgIdentifier, transformer, backtranslationTracker, services, option);
+		}else{
+			mResultIcfg =  (IIcfg<OUTLOC>) originalIcfg;
+		}
+	}
+	
 	@SuppressWarnings("unchecked")
 	private IIcfg<OUTLOC> accelerat(final ILogger logger, final IIcfg<INLOC> originalIcfg,
 			final Class<OUTLOC> outLocationClass, final ILocationFactory<INLOC, OUTLOC> funLocFac,
 			final String newIcfgIdentifier, final ITransformulaTransformer transformer,
 			final IBacktranslationTracker backtranslationTracker, final IUltimateServiceProvider services,
 			final LoopAccelerationOptions option) {
-		if (option.equals(LoopAccelerationOptions.DO_NOT_ACCELERATE)) {
+		
+		ManagedScript mMgScript = originalIcfg.getCfgSmtToolkit().getManagedScript();
+		
+		// get the loops
+		final LoopExtraction<INLOC, OUTLOC> loopExtraction = new LoopExtraction<>(logger, originalIcfg,
+				outLocationClass, funLocFac, newIcfgIdentifier, transformer, backtranslationTracker, services);
+		if(loopExtraction.getLoopTransFormulas().isEmpty()){
+			//no loop found
 			return (IIcfg<OUTLOC>) originalIcfg;
 		}
-		// get the loop
-		final LoopDetectionBB<INLOC, OUTLOC> loopDetection = new LoopDetectionBB<>(logger, originalIcfg,
-				outLocationClass, funLocFac, newIcfgIdentifier, transformer, backtranslationTracker, services);
-		final IIcfg<OUTLOC> loop = loopDetection.getLoop();
-
+		final SimpleLoop loop = loopExtraction.getLoopTransFormulas().getFirst();
 		// create the matrix
-		final MatrixBB matrix = new LoopAccelerationMatrix<>(logger, loop).getResult();
+		final MatrixBB matrix = new LoopAccelerationMatrix<>(logger, loop.mLoopTransFormula, mMgScript).getResult();
 		// calculate the alphas
 		final AlphaSolver<INLOC> alphaSolver =
-				new AlphaSolver<>(logger, (IIcfg<INLOC>) loop, matrix.getMatrix(), matrix.getLGS(), services);
+				new AlphaSolver<>(logger, loop.mLoopTransFormula, mMgScript, matrix.getMatrix(), matrix.getLGS(), services);
+		logger.debug("Accelerated-Loop: " + alphaSolver.getResult());
 		// add guard and final icfg
-		return loopDetection.rejoin(alphaSolver.getResult(), alphaSolver.getN(), alphaSolver.getGuardSubstitute());
+		return  loopExtraction.rejoin(loop, alphaSolver.getResult(), alphaSolver.getValues(), alphaSolver.getN());
 	}
 
 	@Override
