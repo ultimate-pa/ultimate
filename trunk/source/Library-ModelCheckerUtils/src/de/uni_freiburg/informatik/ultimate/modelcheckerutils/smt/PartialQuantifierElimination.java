@@ -267,13 +267,27 @@ public class PartialQuantifierElimination {
 			final EliminationTask esp = new ElimStorePlain(mgdScript, services,
 					simplificationTechnique).elimAll(new EliminationTask(quantifier, eliminatees, result));
 			{
+				final EliminationTask espNegated;
+				{
+					final int quantifierNegated = (quantifier * -1) + 1;
+					final Term negatedInput = new NnfTransformer(mgdScript, services, QuantifierHandling.CRASH)
+							.transform(SmtUtils.not(mgdScript.getScript(), result));
+					espNegated = new ElimStorePlain(mgdScript, services,
+						simplificationTechnique).elimAll(new EliminationTask(quantifierNegated, eliminatees, negatedInput));
+					espNegated.toString();
+					if (esp.getEliminatees().size() != espNegated.getEliminatees().size()) {
+						throw new AssertionError("different number of auxVars: esp " + esp.getEliminatees().size()
+								+ " nesp " + espNegated.getEliminatees().size() + "Input: " + result);
+					}
+				}
+				
 				final EliminationTask sosResult = applyStoreOverSelect(mgdScript, quantifier, eliminatees, services,
 						logger, simplificationTechnique, script, result);
 				assert !EXTENDED_RESULT_CHECK || EliminationTask.areDistinct(script, esp, sosResult) != LBool.SAT : "Array QEs differ. Esp: "
 						+ esp + " Sos:" + sosResult;
 				final long espTreeSize = new DAGSize().treesize(esp.getTerm());
 				final long sosTreeSize = new DAGSize().treesize(sosResult.getTerm());
-				assert espTreeSize <= sosTreeSize : "unexpected size! esp:" + espTreeSize + " sos" + sosTreeSize;
+//				assert espTreeSize <= sosTreeSize : "unexpected size! esp:" + espTreeSize + " sos" + sosTreeSize;
 			}
 			result = esp.getTerm();
 			eliminatees.clear();
