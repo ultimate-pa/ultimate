@@ -724,8 +724,8 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		public WeakEquivalenceEdgeLabel(final WeakEquivalenceEdgeLabel original) {
 			mLabel = new ArrayList<>(original.getLabel().size());
 			for (int i = 0; i < original.getLabel().size(); i++) {
-				assert! original.getLabel().get(i).isInconsistent();
-				assert! original.getLabel().get(i).isTautological();
+				assert !original.getLabel().get(i).isInconsistent();
+				assert !original.getLabel().get(i).isTautological() || original.getLabel().size() == 1;
 				mLabel.add(new CongruenceClosure<>(original.getLabel().get(i)));
 			}
 			assert sanityCheck();
