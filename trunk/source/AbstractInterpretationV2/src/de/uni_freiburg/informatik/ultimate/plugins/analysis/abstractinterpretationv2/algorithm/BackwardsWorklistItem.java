@@ -33,7 +33,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Optional;
 
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.AbstractMultiState;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.DisjunctiveAbstractState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractTransformer;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 final class BackwardsWorklistItem<STATE extends IAbstractState<STATE, VARDECL>, ACTION, VARDECL, LOC>
 		implements IWorklistItem<STATE, ACTION, VARDECL, LOC> {
 
-	private final AbstractMultiState<STATE, VARDECL> mState;
+	private final DisjunctiveAbstractState<STATE, VARDECL> mState;
 	private final ACTION mAction;
 
 	private final BackwardsWorklistItem<STATE, ACTION, VARDECL, LOC> mPredecessor;
@@ -64,7 +64,7 @@ final class BackwardsWorklistItem<STATE extends IAbstractState<STATE, VARDECL>, 
 	 * @param globalStorage
 	 * @param summaryMap
 	 */
-	BackwardsWorklistItem(final AbstractMultiState<STATE, VARDECL> pre, final ACTION action,
+	BackwardsWorklistItem(final DisjunctiveAbstractState<STATE, VARDECL> pre, final ACTION action,
 			final IAbstractStateStorage<STATE, ACTION, VARDECL, LOC> globalStorage,
 			final SummaryMap<STATE, ACTION, VARDECL, LOC> summaryMap) {
 		mState = pre;
@@ -83,7 +83,7 @@ final class BackwardsWorklistItem<STATE extends IAbstractState<STATE, VARDECL>, 
 	 * @param action
 	 * @param oldItem
 	 */
-	BackwardsWorklistItem(final AbstractMultiState<STATE, VARDECL> pre, final ACTION action,
+	BackwardsWorklistItem(final DisjunctiveAbstractState<STATE, VARDECL> pre, final ACTION action,
 			final BackwardsWorklistItem<STATE, ACTION, VARDECL, LOC> oldItem) {
 		mState = pre;
 		mAction = action;
@@ -99,11 +99,11 @@ final class BackwardsWorklistItem<STATE extends IAbstractState<STATE, VARDECL>, 
 	}
 
 	@Override
-	public AbstractMultiState<STATE, VARDECL> getState() {
+	public DisjunctiveAbstractState<STATE, VARDECL> getState() {
 		return mState;
 	}
 
-	AbstractMultiState<STATE, VARDECL> getHierachicalState() {
+	DisjunctiveAbstractState<STATE, VARDECL> getHierachicalState() {
 		return mCurrentScope.getScopeHierState();
 	}
 
@@ -111,7 +111,7 @@ final class BackwardsWorklistItem<STATE extends IAbstractState<STATE, VARDECL>, 
 		return mCurrentScope.getAction();
 	}
 
-	private Map<LOC, Pair<Integer, AbstractMultiState<STATE, VARDECL>>> getLoopPairs() {
+	private Map<LOC, Pair<Integer, DisjunctiveAbstractState<STATE, VARDECL>>> getLoopPairs() {
 		return mCurrentScope.getLoopPairs();
 	}
 
@@ -121,7 +121,7 @@ final class BackwardsWorklistItem<STATE extends IAbstractState<STATE, VARDECL>, 
 	 * @param scope
 	 * @param postState
 	 */
-	void addScope(final ACTION scope, final AbstractMultiState<STATE, VARDECL> postCallState) {
+	void addScope(final ACTION scope, final DisjunctiveAbstractState<STATE, VARDECL> postCallState) {
 		assert scope != null;
 		final ScopeStackItem newScopeStack =
 				new ScopeStackItem(scope, mState, postCallState, getCurrentStorage().createStorage(scope));
@@ -137,7 +137,7 @@ final class BackwardsWorklistItem<STATE extends IAbstractState<STATE, VARDECL>, 
 	 *            The post state after leaving the current scope.
 	 * @return The scope that left.
 	 */
-	ACTION removeCurrentScope(final AbstractMultiState<STATE, VARDECL> preReturnState) {
+	ACTION removeCurrentScope(final DisjunctiveAbstractState<STATE, VARDECL> preReturnState) {
 		final ScopeStackItem currentScopeItem = removeCurrentScopeWithoutSummary();
 		if (currentScopeItem == null) {
 			// happens when we leave the global scope
@@ -149,8 +149,8 @@ final class BackwardsWorklistItem<STATE extends IAbstractState<STATE, VARDECL>, 
 		return currentScopeItem.getAction();
 	}
 
-	AbstractMultiState<STATE, VARDECL> getSummaryPostState(final ACTION summary,
-			final AbstractMultiState<STATE, VARDECL> preState) {
+	DisjunctiveAbstractState<STATE, VARDECL> getSummaryPostState(final ACTION summary,
+			final DisjunctiveAbstractState<STATE, VARDECL> preState) {
 		return mSummaryMap.getSummaryPostState(summary, preState);
 	}
 
@@ -186,8 +186,8 @@ final class BackwardsWorklistItem<STATE extends IAbstractState<STATE, VARDECL>, 
 		return rtr;
 	}
 
-	Deque<Pair<ACTION, AbstractMultiState<STATE, VARDECL>>> getScopeWideningStack() {
-		final Deque<Pair<ACTION, AbstractMultiState<STATE, VARDECL>>> rtr = new ArrayDeque<>();
+	Deque<Pair<ACTION, DisjunctiveAbstractState<STATE, VARDECL>>> getScopeWideningStack() {
+		final Deque<Pair<ACTION, DisjunctiveAbstractState<STATE, VARDECL>>> rtr = new ArrayDeque<>();
 		final Iterator<ScopeStackItem> scopeIter = mScopes.descendingIterator();
 		while (scopeIter.hasNext()) {
 			final ScopeStackItem current = scopeIter.next();
@@ -197,9 +197,9 @@ final class BackwardsWorklistItem<STATE extends IAbstractState<STATE, VARDECL>, 
 	}
 
 	int enterLoop(final LOC loopHead) {
-		final AbstractMultiState<STATE, VARDECL> prestate = getState();
-		final Pair<Integer, AbstractMultiState<STATE, VARDECL>> loopPair = getLoopPairs().get(loopHead);
-		final Pair<Integer, AbstractMultiState<STATE, VARDECL>> newLoopPair;
+		final DisjunctiveAbstractState<STATE, VARDECL> prestate = getState();
+		final Pair<Integer, DisjunctiveAbstractState<STATE, VARDECL>> loopPair = getLoopPairs().get(loopHead);
+		final Pair<Integer, DisjunctiveAbstractState<STATE, VARDECL>> newLoopPair;
 		if (loopPair == null) {
 			newLoopPair = new Pair<>(0, prestate);
 		} else {
@@ -209,7 +209,7 @@ final class BackwardsWorklistItem<STATE extends IAbstractState<STATE, VARDECL>, 
 		return newLoopPair.getFirst();
 	}
 
-	Pair<Integer, AbstractMultiState<STATE, VARDECL>> getLoopPair(final LOC loopHead) {
+	Pair<Integer, DisjunctiveAbstractState<STATE, VARDECL>> getLoopPair(final LOC loopHead) {
 		return getLoopPairs().get(loopHead);
 	}
 
@@ -250,13 +250,13 @@ final class BackwardsWorklistItem<STATE extends IAbstractState<STATE, VARDECL>, 
 	 */
 	private final class ScopeStackItem {
 		private final ACTION mScope;
-		private final AbstractMultiState<STATE, VARDECL> mScopeHierachicalPreState;
-		private final AbstractMultiState<STATE, VARDECL> mScopeFirstState;
+		private final DisjunctiveAbstractState<STATE, VARDECL> mScopeHierachicalPreState;
+		private final DisjunctiveAbstractState<STATE, VARDECL> mScopeFirstState;
 		private final IAbstractStateStorage<STATE, ACTION, VARDECL, LOC> mStorage;
-		private final Map<LOC, Pair<Integer, AbstractMultiState<STATE, VARDECL>>> mLoopPairs;
+		private final Map<LOC, Pair<Integer, DisjunctiveAbstractState<STATE, VARDECL>>> mLoopPairs;
 
-		private ScopeStackItem(final ACTION action, final AbstractMultiState<STATE, VARDECL> hierPre,
-				final AbstractMultiState<STATE, VARDECL> scopeFirst,
+		private ScopeStackItem(final ACTION action, final DisjunctiveAbstractState<STATE, VARDECL> hierPre,
+				final DisjunctiveAbstractState<STATE, VARDECL> scopeFirst,
 				final IAbstractStateStorage<STATE, ACTION, VARDECL, LOC> storage) {
 			mScope = action;
 			mScopeHierachicalPreState = hierPre;
@@ -272,7 +272,7 @@ final class BackwardsWorklistItem<STATE extends IAbstractState<STATE, VARDECL>, 
 		 * @param pre
 		 */
 		private ScopeStackItem(final IAbstractStateStorage<STATE, ACTION, VARDECL, LOC> storage,
-				final AbstractMultiState<STATE, VARDECL> pre) {
+				final DisjunctiveAbstractState<STATE, VARDECL> pre) {
 			this(null, pre, pre, storage);
 		}
 
@@ -280,11 +280,11 @@ final class BackwardsWorklistItem<STATE extends IAbstractState<STATE, VARDECL>, 
 			return mScope;
 		}
 
-		AbstractMultiState<STATE, VARDECL> getScopeHierState() {
+		DisjunctiveAbstractState<STATE, VARDECL> getScopeHierState() {
 			return mScopeHierachicalPreState;
 		}
 
-		AbstractMultiState<STATE, VARDECL> getScopeOldState() {
+		DisjunctiveAbstractState<STATE, VARDECL> getScopeOldState() {
 			return mScopeFirstState;
 		}
 
@@ -292,7 +292,7 @@ final class BackwardsWorklistItem<STATE extends IAbstractState<STATE, VARDECL>, 
 			return mStorage;
 		}
 
-		Map<LOC, Pair<Integer, AbstractMultiState<STATE, VARDECL>>> getLoopPairs() {
+		Map<LOC, Pair<Integer, DisjunctiveAbstractState<STATE, VARDECL>>> getLoopPairs() {
 			return mLoopPairs;
 		}
 	}

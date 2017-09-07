@@ -35,7 +35,7 @@ import java.util.Collection;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
-import de.uni_freiburg.informatik.ultimate.test.decider.SvcompMemsafetyTestResultDecider;
+import de.uni_freiburg.informatik.ultimate.test.decider.NoErrorTestResultDecider;
 import de.uni_freiburg.informatik.ultimate.test.util.DirectoryFileEndingsPair;
 
 /**
@@ -46,8 +46,9 @@ public class PathInvariantsTest extends	AbstractTraceAbstractionTestSuite {
 	
 	@Override
 	public ITestResultDecider constructITestResultDecider(final UltimateRunDefinition ultimateRunDefinition) {
+		return new NoErrorTestResultDecider(ultimateRunDefinition);
 //		return new SomeVerificationResultTestResultDecider(ultimateRunDefinition);
-		return new SvcompMemsafetyTestResultDecider(ultimateRunDefinition, true);
+//		return new SvcompMemsafetyTestResultDecider(ultimateRunDefinition, true);
 	}
 	
 	/**

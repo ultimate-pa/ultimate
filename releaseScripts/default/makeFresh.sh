@@ -23,15 +23,15 @@ else
 	CURRENTUSER="$1"
 fi
 
-echo "Enter password for user ${CURRENTUSER} on ${DEPLOY_SERVER}:" 
-read -s -p "Password: " SSHPASS
-echo 
-export SSHPASS
-sshpass -e ssh -oHostKeyAlgorithms=+ssh-dss $CURRENTUSER@$DEPLOY_SERVER "( test -e ${FILE} || touch ${FILE} ) && test -w ${FILE} && /usr/bin/rm ${FILE}"
-if [ ! $? -eq 0 ]; then 
-	echo "Something is wrong with your write permissions to ${DEPLOY_DIR}, fix it before continuing"
-	exit 1
-fi
+#echo "Enter password for user ${CURRENTUSER} on ${DEPLOY_SERVER}:" 
+#read -s -p "Password: " SSHPASS
+#echo 
+#export SSHPASS
+#sshpass -e ssh -oHostKeyAlgorithms=+ssh-dss $CURRENTUSER@$DEPLOY_SERVER "( test -e ${FILE} || touch ${FILE} ) && test -w ${FILE} && /usr/bin/rm ${FILE}"
+#if [ ! $? -eq 0 ]; then 
+#	echo "Something is wrong with your write permissions to ${DEPLOY_DIR}, fix it before continuing"
+#	exit 1
+#fi
 
 pushd ../../trunk/source/BA_MavenParentUltimate/ > /dev/null
 exitOnFail mvn clean install -Pmaterialize

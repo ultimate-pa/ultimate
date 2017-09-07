@@ -33,7 +33,7 @@ import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.IMinimizationCheckResultStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.IMinimizationStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaPmaxSatAsymmetric;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaPmaxSatDirect;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.delayed.BuchiReduce;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.delayed.nwa.ReduceNwaDelayedSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.direct.MinimizeDfaSimulation;
@@ -82,8 +82,8 @@ public class CompareSimulations<LETTER, STATE>
 				new ReduceNwaDirectSimulationB<>(services, stateFactory, operand);
 		final ReduceNwaDirectFullMultipebbleSimulation<LETTER, STATE> reduceNwaDirectFullMultipebbleSimulation =
 				new ReduceNwaDirectFullMultipebbleSimulation<>(services, stateFactory, operand);
-		final MinimizeNwaPmaxSatAsymmetric<LETTER, STATE> minimizeNwaPmaxSatAsymmetric =
-				new MinimizeNwaPmaxSatAsymmetric<>(services, stateFactory, operand);
+		final MinimizeNwaPmaxSatDirect<LETTER, STATE> minimizeNwaPmaxSatAsymmetric =
+				new MinimizeNwaPmaxSatDirect<>(services, stateFactory, operand);
 
 		final BuchiReduce<LETTER, STATE> buchiReduce = new BuchiReduce<>(services, stateFactory, operand);
 		final ReduceNwaDelayedSimulation<LETTER, STATE> reduceNwaDelayedSimulation =

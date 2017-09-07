@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.test.logs.summaries;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
-import de.uni_freiburg.informatik.ultimate.util.Utils;
+import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 
 /**
  * 
@@ -151,7 +151,7 @@ public final class ConversionContext {
 		}
 
 		try {
-			return Utils.humanReadableNumber(current.longValue());
+			return CoreUtil.humanReadableNumber(current.longValue());
 		} catch (final Exception ex) {
 			return "NaN";
 		}

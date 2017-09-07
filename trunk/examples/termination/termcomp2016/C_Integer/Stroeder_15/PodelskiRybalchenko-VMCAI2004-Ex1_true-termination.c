@@ -1,3 +1,4 @@
+//#termcomp16-someonesaidyes
 /*
  * Program from Ex.1 of
  * 2004VMCAI - Podelski,Rybalchenko - A complete method for the synthesis of linear ranking functions

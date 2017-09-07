@@ -54,7 +54,7 @@ import de.uni_freiburg.informatik.ultimate.test.decider.overallresult.SafetyChec
 import de.uni_freiburg.informatik.ultimate.test.decider.overallresult.TerminationAnalysisOverallResult;
 import de.uni_freiburg.informatik.ultimate.test.reporting.INonIncrementalLog;
 import de.uni_freiburg.informatik.ultimate.test.reporting.ITestLogfile;
-import de.uni_freiburg.informatik.ultimate.util.Utils;
+import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 
 /**
  *
@@ -454,8 +454,8 @@ public final class TestUtil {
 		final long heapMaxSize = Runtime.getRuntime().maxMemory();
 
 		logger.write(String.format("Statistics: heapSize=%s heapFreeSize=%s heapMaxSize=%s",
-				Utils.humanReadableByteCount(heapSize, true), Utils.humanReadableByteCount(heapFreeSize, true),
-				Utils.humanReadableByteCount(heapMaxSize, true)));
+				CoreUtil.humanReadableByteCount(heapSize, true), CoreUtil.humanReadableByteCount(heapFreeSize, true),
+				CoreUtil.humanReadableByteCount(heapMaxSize, true)));
 
 		logger.write("#################### END TEST RESULT ####################");
 	}
@@ -589,6 +589,18 @@ public final class TestUtil {
 		map.put("#SyntaxError", TerminationAnalysisOverallResult.SYNTAX_ERROR);
 		return map;
 	}
+	
+	/**
+	 * Returns a map from keywords to verification results. We use keywords in the first line of files to specify
+	 * expected verification results. If a key of this map is a substring of the first line, the value of this map is
+	 * the expected verification result of a termination analysis.
+	 */
+	public static Map<String, TerminationAnalysisOverallResult> constructFirstlineKeywordMap_Termcomp2016() {
+		final Map<String, TerminationAnalysisOverallResult> map = new HashMap<>();
+		map.put("#termcomp16-someonesaidyes", TerminationAnalysisOverallResult.TERMINATING);
+		map.put("#termcomp16-someonesaidno", TerminationAnalysisOverallResult.NONTERMINATING);
+		return map;
+	}
 
 	/**
 	 * Returns the first line of File file as String.
@@ -605,6 +617,34 @@ public final class TestUtil {
 		}
 		return line;
 	}
+	
+	/**
+	 * Returns the line of File file that starts with "(set-info :status", or null if there is no such line
+	 */
+	public static String extractSMTLibStatusInfo(final File file) {
+		BufferedReader br;
+		String line = null;
+		try {
+			br = new BufferedReader(new FileReader(file));
+			while (true) {
+				line = br.readLine();
+				if (line.trim().startsWith("(set-info :status")) {
+					// found the status
+					br.close();
+					break;
+				}
+				if (line.trim().startsWith("(assert")) {
+					// found an assert before the status information --> file does not seem to contain status info
+					br.close();
+					return null;
+				}
+			}
+		} catch (final IOException e) {
+			throw new AssertionError("unable to read file " + file);
+		}
+		return line;
+	}
+	
 
 	/**
 	 * Returns an absolute path to the SVCOMP root directory specified by the Maven variable "svcompdir". If there is no

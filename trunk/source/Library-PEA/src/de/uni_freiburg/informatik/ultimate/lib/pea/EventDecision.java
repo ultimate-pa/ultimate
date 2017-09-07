@@ -26,6 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.pea;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 
@@ -135,6 +137,17 @@ public class EventDecision extends Decision {
     public Decision unprime() {
         return this;
     }
+    
+    @Override
+    public Decision prime(String ignore) {
+        return this;
+    }
+
+    @Override
+    public Decision unprime(String ignore) {
+        return this;
+    }
+
 
     @Override
     public String toTexString(final int child) {

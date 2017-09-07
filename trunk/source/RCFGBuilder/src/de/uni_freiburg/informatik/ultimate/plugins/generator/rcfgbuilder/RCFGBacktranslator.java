@@ -137,10 +137,12 @@ public class RCFGBacktranslator
 		final IToString<BoogieASTNode> stringProvider = BoogiePrettyPrinter.getBoogieToStringprovider();
 		if (cb instanceof Call) {
 			final Statement st = ((Call) cb).getCallStatement();
-			trace.add(new AtomicTraceElement<>(st, st, StepInfo.PROC_CALL, stringProvider, relevanceInformation));
+			trace.add(new AtomicTraceElement<>(st, st, StepInfo.PROC_CALL, stringProvider, relevanceInformation,
+					cb.getPrecedingProcedure(), cb.getSucceedingProcedure()));
 		} else if (cb instanceof Return) {
 			final Statement st = ((Return) cb).getCallStatement();
-			trace.add(new AtomicTraceElement<>(st, st, StepInfo.PROC_RETURN, stringProvider, relevanceInformation));
+			trace.add(new AtomicTraceElement<>(st, st, StepInfo.PROC_RETURN, stringProvider, relevanceInformation,
+					cb.getPrecedingProcedure(), cb.getSucceedingProcedure()));
 		} else if (cb instanceof Summary) {
 			final Statement st = ((Summary) cb).getCallStatement();
 			// FIXME: Is summary call, return or something new?
@@ -169,6 +171,8 @@ public class RCFGBacktranslator
 				final CodeBlock someBranch = bi2cb.entrySet().iterator().next().getValue();
 				addCodeBlock(someBranch, trace, branchEncoders, relevanceInformation);
 				final ILocation loc = ILocation.getAnnotation(cb.getSource());
+				mLogger.warn("You are using large block encoding together with an algorithm for which the "
+						+ "backtranslation into program statements is not yet implemented.");
 				if (loc == null) {
 					mLogger.error("unable to determine which branch was taken, unable to determine the location");
 				} else {

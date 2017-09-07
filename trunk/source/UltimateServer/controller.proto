@@ -12,6 +12,7 @@ message ResultSummary {
 
 message ToolchainResults {
 	map < string, Results > results = 1;
+	string inputFileName = 2;
 }
 
 message Results {

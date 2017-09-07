@@ -35,7 +35,6 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.tree.visualization.TreeAutomatonToUltimateModel;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornClause;
 
 /**
  * Interface to create a tree automaton
@@ -48,17 +47,17 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornClause
  * @param <STATE>
  *            state
  */
-public interface ITreeAutomatonBU<LETTER, STATE> extends IAutomaton<LETTER, STATE> {
+public interface ITreeAutomatonBU<LETTER extends IRankedLetter, STATE> extends IAutomaton<LETTER, STATE> {
 
 	/**
 	 * @return a set of all the states in the automaton.
 	 */
 	Set<STATE> getStates();
 
-	/**
-	 * @return a set of all initial states in the automaton.
-	 */
-	Set<STATE> getInitialStates();
+//	/**
+//	 * @return a set of all initial states in the automaton.
+//	 */
+//	Set<STATE> getInitialStates();
 
 	/**
 	 * @param state
@@ -66,11 +65,11 @@ public interface ITreeAutomatonBU<LETTER, STATE> extends IAutomaton<LETTER, STAT
 	 */
 	boolean isFinalState(final STATE state);
 
-	/**
-	 * @param state
-	 * @return true, if given state is initial.
-	 */
-	boolean isInitialState(final STATE state);
+//	/**
+//	 * @param state
+//	 * @return true, if given state is initial.
+//	 */
+//	boolean isInitialState(final STATE state);
 
 	/**
 	 * @param states

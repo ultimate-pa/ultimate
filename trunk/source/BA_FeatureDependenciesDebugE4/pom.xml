@@ -4,11 +4,11 @@
   	<parent>
 		<artifactId>mavenparent</artifactId>
 		<groupId>de.uni_freiburg.informatik.ultimate</groupId>
-		<version>0.1.17</version>
+		<version>0.1.20</version>
 		<relativePath>../BA_MavenParentUltimate/pom.xml</relativePath>
 	</parent>
   
   <artifactId>BA_FeatureDependenciesDebugE4</artifactId>
-  <version>0.1.17</version>
+  <version>0.1.20</version>
   <packaging>eclipse-feature</packaging>
 </project>

@@ -45,10 +45,10 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiClosureNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiIsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoRun;
@@ -86,6 +86,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.Lass
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoChecker.TraceCheckResult;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.BuchiAutomizerPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.BuchiAutomizerPreferenceInitializer.BuchiComplementationConstruction;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.BuchiAutomizerPreferenceInitializer.NcsbImplementation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CFG2NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
@@ -210,6 +211,12 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 	private final boolean mUseDoubleDeckers;
 	private final BuchiComplementationConstruction mComplementationConstruction;
 
+	/**
+	 * Construct a termination proof in the form that is required for the
+	 * Termination Competition.
+	 * http://termination-portal.org/wiki/Termination_Competition
+	 * This proof is finally print in the console output and can be huge.
+	 */
 	private final boolean mConstructTermcompProof;
 	private final TermcompProofBenchmark mTermcompProofBenchmark;
 
@@ -297,10 +304,12 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 			mTermcompProofBenchmark = null;
 		}
 
+		final NcsbImplementation ncsbImplemntation = baPref
+				.getEnum(BuchiAutomizerPreferenceInitializer.LABEL_NCSB_IMPLEMENTATION, NcsbImplementation.class);
 		mRefineBuchi = new RefineBuchi<>(mIcfg, mCsToolkitWithRankVars, predicateFactory, mPref.dumpAutomata(),
 				mDifference, mDefaultStateFactory, mStateFactoryForRefinement, mUseDoubleDeckers, mPref.dumpPath(),
 				mPref.getAutomataFormat(), mInterpolation, mServices, mLogger, mSimplificationTechnique,
-				mXnfConversionTechnique);
+				mXnfConversionTechnique, ncsbImplemntation);
 		final BuchiInterpolantAutomatonConstructionStrategy biaConstructionStrategy =
 				baPref.getEnum(BuchiAutomizerPreferenceInitializer.LABEL_BIA_CONSTRUCTION_STRATEGY,
 						BuchiInterpolantAutomatonConstructionStrategy.class);
@@ -609,6 +618,20 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 		// lassoChecker.getBinaryStatePredicateManager().getUnseededVariable(),
 		// lassoChecker.getBinaryStatePredicateManager().getOldRankVariables(),
 		// mRootAnnot.getCfgSmtToolkit().getModifiableGlobals(), mRootAnnot.getBoogie2SMT());
+		
+		/*
+		 * Iterate through a sequence of BuchiInterpolantAutomatonConstructionStyles
+		 * Each construction style defines how an interpolant automaton is constructed.
+		 * Constructions that provide simpler (less nondeterministic) automata should come first.
+		 * In each iteration we compute the difference which causes an on-demand construciton of
+		 * the automaton and evaluate the automaton afterwards.
+		 * If the automaton is "good" we keep the difference and continued with the termination
+		 * analysis. If the automaton is "bad" we construct the next automaton.
+		 * Currently an automaton is "good" iff the counterexample of the current CEGAR iteration
+		 * is accepted by the automaton (otherwise the counterexample would not be excluded and
+		 * we might get it again in the next iteration of the CEGAR loop).
+		 * 
+		 */
 		for (final BuchiInterpolantAutomatonConstructionStyle constructionStyle : mBiaConstructionStyleSequence) {
 			assert automatonUsesISLPredicates(mAbstraction) : "used wrong StateFactory";
 			INestedWordAutomaton<LETTER, IPredicate> newAbstraction = null;
@@ -698,6 +721,26 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 		}
 	}
 
+	
+	/**
+	 * Do a refinement (i.e., replace mAbstraction by a new difference) for the 
+	 * case where we detected that a finite prefix of the lasso-shaped
+	 * counterexample is infeasible.
+	 * In this case the module (i.e., the subtrahend of the difference) will
+	 * be a weak Büchi automaton (Büchi automaton where set of final states is
+	 * a trap). In fact, the module will have only a single accepting state
+	 * that is labeled with "false" and that has a self-loop for every letter.
+	 * 
+	 * In this case we construct the module with the same algorithm that we
+	 * use in our safety analysis (there the Floyd-Hoare automata also have a
+	 * single accepting state that is labeled with "false" and that has a 
+	 * self-loop for every letter).
+	 * "Coincidentally" is holds that for these kind of automata the 
+	 * powerset-based complementation of finite automata is also sound for 
+	 * Büchi automata, hence we use a difference operation that is based on
+	 * this rather inexpensive complementation algorithm.
+	 *  
+	 */
 	private void refineFinite(final LassoChecker<LETTER> lassoChecker) throws AutomataOperationCanceledException {
 		mBenchmarkGenerator.start(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
 		final InterpolatingTraceChecker traceChecker;

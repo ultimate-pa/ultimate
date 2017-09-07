@@ -1,0 +1,23 @@
+/*
+ * the given Tree Automaton should be minimized to an automaton with two states and two rules only.
+ * Currently (16.8.2017), minimization returns an essentially unchanged automaton.
+ * author: nutz@informatik.uni-freiburg.de
+ */
+
+TreeAutomaton ta = TreeAutomaton (
+   alphabet = {a c b},
+   states = {q1 q2 q3 q4 q5 q6},
+     finalStates = {q5 q6},
+   transitionTable = {
+     (() c q1)
+     (() c q3)
+     (() c q2)
+     (() c q4)
+     ((q3 q1) a q6)
+     ((q2 q4) a q5)
+    }
+ );
+print(ta);
+  
+TreeAutomaton ta1 = minimize(ta);
+print(ta1);

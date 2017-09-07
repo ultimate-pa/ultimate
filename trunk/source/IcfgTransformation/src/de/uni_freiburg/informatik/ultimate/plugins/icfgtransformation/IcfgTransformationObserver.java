@@ -30,11 +30,14 @@ package de.uni_freiburg.informatik.ultimate.plugins.icfgtransformation;
 import java.util.ArrayList;
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.core.lib.results.GenericResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithSeverity.Severity;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IBacktranslationTracker;
@@ -44,9 +47,12 @@ import de.uni_freiburg.informatik.ultimate.icfgtransformer.IcfgTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IcfgTransformerSequence;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.LocalTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.MapEliminationTransformer;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.HeapSepTransFormulaTransformer;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.StoreIndexExposer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.ExampleLoopAccelerationTransformulaTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.ahmed.AhmedLoopAccelerationIcfgTransformer;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.biesenbach.LoopDetectionBB;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.biesenbach.IcfgLoopAcceleration;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.biesenbach.IcfgLoopAcceleration.LoopAccelerationOptions;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr.FastUPRTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr.FastUPRTransformer.FastUPRReplacementMethod;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.mohr.IcfgLoopTransformerMohr;
@@ -166,16 +172,56 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 			return applyLoopAccelerationWerner(icfg, locFac, outlocClass, backtranslationTracker, fac);
 		case LOOP_ACCELERATION_AHMED:
 			return applyLoopAccelerationAhmed(icfg, locFac, outlocClass, backtranslationTracker, fac);
-		case MAP_ELIMINATION:
-			return applyMapElimination(icfg, locFac, outlocClass, backtranslationTracker, fac);
+		case MAP_ELIMINATION_NO_EQUALITY:
+			return applyMapElimination(icfg, locFac, outlocClass, backtranslationTracker, fac,
+					new DefaultEqualityAnalysisProvider<>());
+		case MAP_ELIMINATION_EQUALITY:
+			return applyMapElimination(icfg, locFac, outlocClass, backtranslationTracker, fac,
+					new AbsIntEqualityProvider(mServices));
 		case REMOVE_DIV_MOD:
 			return applyRemoveDivMod(icfg, locFac, outlocClass, backtranslationTracker, fac);
 		case MODULO_NEIGHBOR:
 			return applyModuloNeighbor(icfg, locFac, outlocClass, backtranslationTracker, fac, mServices);
+		case HEAP_SEPARATOR:
+			return applyHeapSeparator(icfg, locFac, outlocClass, backtranslationTracker, fac, mServices,
+					new AbsIntEqualityProvider(mServices));
 
 		default:
 			throw new UnsupportedOperationException("Unknown transformation type: " + transformation);
 		}
+	}
+
+	@SuppressWarnings("unchecked")
+	private <INLOC extends IcfgLocation, OUTLOC extends IcfgLocation> IIcfg<OUTLOC> applyHeapSeparator(
+			final IIcfg<INLOC> icfg, final ILocationFactory<INLOC, OUTLOC> locFac, final Class<OUTLOC> outlocClass,
+			final IBacktranslationTracker backtranslationTracker, final ReplacementVarFactory fac,
+			final IUltimateServiceProvider services,
+			final IEqualityAnalysisResultProvider<IcfgLocation, IIcfg<?>> equalityProvider) {
+
+		final List<ITransformulaTransformer> transformers = new ArrayList<>();
+
+		final StoreIndexExposer sie = new StoreIndexExposer(icfg.getCfgSmtToolkit());
+		transformers.add(sie);
+
+		final HeapSepTransFormulaTransformer hstftf =
+				new HeapSepTransFormulaTransformer(icfg.getCfgSmtToolkit(), mServices, equalityProvider);
+		transformers.add(hstftf);
+
+		final IcfgTransformerSequence<INLOC, OUTLOC> transformerSequence = new IcfgTransformerSequence<>(icfg, locFac,
+				(ILocationFactory<OUTLOC, OUTLOC>) locFac, backtranslationTracker, outlocClass,
+				icfg.getIdentifier() + "HeapSeparatorResult", transformers);
+
+		// final IcfgTransformer<INLOC, OUTLOC> icfgTransformer =
+		// new IcfgTransformer<>(icfg, locFac, backtranslationTracker, outlocClass, "IcfgWithHeapSeparation",
+		// tftf);
+
+		mServices.getResultService().reportResult(Activator.PLUGIN_ID, new GenericResult(Activator.PLUGIN_ID,
+				"HeapSeparationSummary", hstftf.getHeapSeparationSummary(), Severity.INFO));
+		mServices.getResultService().reportResult(Activator.PLUGIN_ID,
+				new StatisticsResult<>(Activator.PLUGIN_ID, "HeapSeparatorStatistics", hstftf.getStatistics()));
+
+		// return icfgTransformer.getResult();
+		return transformerSequence.getResult();
 	}
 
 	private <INLOC extends IcfgLocation, OUTLOC extends IcfgLocation> IIcfg<OUTLOC> applyLoopAccelerationAhmed(
@@ -208,8 +254,10 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 			final IBacktranslationTracker backtranslationTracker, final ReplacementVarFactory fac) {
 		final ITransformulaTransformer transformer = new ExampleLoopAccelerationTransformulaTransformer(mLogger,
 				icfg.getCfgSmtToolkit().getManagedScript(), icfg.getCfgSmtToolkit().getSymbolTable(), fac);
-		return new LoopDetectionBB<>(mLogger, icfg, outlocClass, locFac, icfg.getIdentifier() + "IcfgDuplicate",
-				transformer, backtranslationTracker, mServices).getResult();
+		final LoopAccelerationOptions options = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
+				.getEnum(IcfgTransformationPreferences.LABEL_LA_BB_MODE, LoopAccelerationOptions.class);
+		return new IcfgLoopAcceleration<>(mLogger, icfg, outlocClass, locFac, icfg.getIdentifier() + "IcfgDuplicate",
+				transformer, backtranslationTracker, mServices, options).getResult();
 	}
 
 	private <INLOC extends IcfgLocation, OUTLOC extends IcfgLocation> IIcfg<OUTLOC> applyLoopAccelerationFastUPR(
@@ -275,20 +323,32 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 	@SuppressWarnings("unchecked")
 	private <INLOC extends IcfgLocation, OUTLOC extends IcfgLocation> IIcfg<OUTLOC> applyMapElimination(
 			final IIcfg<INLOC> icfg, final ILocationFactory<INLOC, OUTLOC> locFac, final Class<OUTLOC> outlocClass,
-			final IBacktranslationTracker backtranslationTracker, final ReplacementVarFactory fac) {
+			final IBacktranslationTracker backtranslationTracker, final ReplacementVarFactory fac,
+			final IEqualityAnalysisResultProvider<IcfgLocation, IIcfg<?>> equalityProvider) {
 
 		final List<ITransformulaTransformer> transformers = new ArrayList<>();
 		transformers.add(new LocalTransformer(new DNF(mServices, mXnfConversionTechnique),
 				icfg.getCfgSmtToolkit().getManagedScript(), fac));
-		final IEqualityAnalysisResultProvider<IcfgLocation, IIcfg<?>> equalityProvider =
-				new DefaultEqualityAnalysisProvider<>();
-		final MapEliminationSettings settings =
-				new MapEliminationSettings(false, true, true, true, mSimplificationTechnique, mXnfConversionTechnique);
+		final MapEliminationSettings settings = getMapElimSettings();
 		transformers.add(new MapEliminationTransformer(mServices, mLogger, icfg.getCfgSmtToolkit().getManagedScript(),
 				icfg.getCfgSmtToolkit().getSymbolTable(), fac, settings, equalityProvider));
 		return new IcfgTransformerSequence<>(icfg, locFac, (ILocationFactory<OUTLOC, OUTLOC>) locFac,
 				backtranslationTracker, outlocClass, icfg.getIdentifier() + "IcfgWithMapElim", transformers)
 						.getResult();
+	}
+
+	private MapEliminationSettings getMapElimSettings() {
+		final IPreferenceProvider ups = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
+		final boolean addInequalities = ups.getBoolean(IcfgTransformationPreferences.LABEL_MAPELIM_ADD_INEQUALITIES);
+		final boolean onlyTrivialImplicationsForModifiedArguments = ups
+				.getBoolean(IcfgTransformationPreferences.LABEL_MAPELIM_ONLY_TRIVIAL_IMPLICATIONS_MODIFIED_ARGUMENTS);
+		final boolean onlyTrivialImplicationsArrayWrite =
+				ups.getBoolean(IcfgTransformationPreferences.LABEL_MAPELIM_ONLY_TRIVIAL_IMPLICATIONS_ARRAY_WRITE);
+		final boolean onlyArgumentsInFormula =
+				ups.getBoolean(IcfgTransformationPreferences.LABEL_MAPELIM_ONLY_ARGUMENTS_IN_FORMULA);
+		return new MapEliminationSettings(addInequalities, onlyTrivialImplicationsForModifiedArguments,
+				onlyTrivialImplicationsArrayWrite, onlyArgumentsInFormula, mSimplificationTechnique,
+				mXnfConversionTechnique);
 	}
 
 	private static ILocationFactory<BoogieIcfgLocation, BoogieIcfgLocation> createBoogieLocationFactory() {

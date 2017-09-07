@@ -1,3 +1,5 @@
+//#termcomp16-someonesaidyes
+//#termcomp16-someonesaidyes
 int fermat (void) {
     const int MAX = 1000;
     int a = 1, b = 1, c = 1;

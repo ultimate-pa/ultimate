@@ -434,7 +434,7 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 			final Set<STATE> succs1, final Set<STATE> succs2);
 
 	/**
-	 * NOTE: This method can also be used in {@link MinimizeNwaPmaxSatAsymmetric} because it is necessary for
+	 * NOTE: This method can also be used in {@link MinimizeNwaPmaxSatDirect} because it is necessary for
 	 * correctness.
 	 */
 	protected final void generateTransitionConstraintGeneralReturnHelperSymmetric(final T linPredPair,

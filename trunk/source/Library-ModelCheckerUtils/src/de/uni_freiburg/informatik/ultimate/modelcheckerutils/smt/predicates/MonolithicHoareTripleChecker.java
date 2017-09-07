@@ -34,7 +34,6 @@ import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
@@ -268,8 +267,8 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 		// We want to return true if (fState1 && fTrans)-> fState2 is valid
 		// This is the case if (fState1 && fTrans && !fState2) is unsatisfiable
 		Term f = SmtUtils.not(mManagedScript.getScript(), ps2renamed);
-		f = Util.and(mManagedScript.getScript(), fTrans, f);
-		f = Util.and(mManagedScript.getScript(), ps1renamed, f);
+		f = SmtUtils.and(mManagedScript.getScript(), fTrans, f);
+		f = SmtUtils.and(mManagedScript.getScript(), ps1renamed, f);
 
 		final LBool result = checkSatisfiable(f);
 		mIndexedConstants = null;
@@ -358,10 +357,10 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 		// We want to return true if (fState1 && fTrans)-> fState2 is valid
 		// This is the case if (fState1 && fTrans && !fState2) is unsatisfiable
 		Term f = SmtUtils.not(mManagedScript.getScript(), ps2renamed);
-		f = Util.and(mManagedScript.getScript(), fReturn, f);
-		f = Util.and(mManagedScript.getScript(), ps1renamed, f);
-		f = Util.and(mManagedScript.getScript(), fCall, f);
-		f = Util.and(mManagedScript.getScript(), pskrenamed, f);
+		f = SmtUtils.and(mManagedScript.getScript(), fReturn, f);
+		f = SmtUtils.and(mManagedScript.getScript(), ps1renamed, f);
+		f = SmtUtils.and(mManagedScript.getScript(), fCall, f);
+		f = SmtUtils.and(mManagedScript.getScript(), pskrenamed, f);
 
 		final LBool result = checkSatisfiable(f);
 		mManagedScript.getScript().pop(1);

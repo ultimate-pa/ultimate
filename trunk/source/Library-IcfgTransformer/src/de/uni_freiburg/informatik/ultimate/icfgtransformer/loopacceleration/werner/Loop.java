@@ -29,13 +29,16 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.wer
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
 /**
  * A Loop
@@ -45,33 +48,44 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Tra
 
 public class Loop {
 
-	private final Deque<IcfgEdge> mPath;
-	private Deque<Backbone> mBackbones;
 	private final IcfgLocation mLoopHead;
-	private final TransFormula mFormula;
 	private Term mCondition;
+	private Deque<IcfgEdge> mPath;
+	private Deque<Backbone> mBackbones;
 	private IteratedSymbolicMemory mIteratedMemory;
 	private List<TermVariable> mAuxVars;
+	private Map<IcfgLocation, Backbone> mErrorPaths;
+	private Boolean mHasNestedLoops;
+	private Deque<Loop> mNestedLoops;
+	private Boolean mIsSummarized;
+	private Map<IProgramVar, TermVariable> mInVars;
+	private Map<IProgramVar, TermVariable> mOutVars;
+	private IcfgLocation mLoopExit;
+	private List<IcfgEdge> mExitTransitions;
+	private List<UnmodifiableTransFormula> mExitConditions;
 
 	/**
 	 * Construct a new loop.
 	 * 
-	 * @param path
-	 *            The loop's path in the ICFG.
-	 * 
 	 * @param loopHead
 	 *            The loop entry node.
-	 * @param tf
-	 *            the loops {@link TransFormula}
 	 */
-	public Loop(final Deque<IcfgEdge> path, final IcfgLocation loopHead, final TransFormula tf) {
-		mPath = path;
+	public Loop(final IcfgLocation loopHead) {
+		mPath = null;
 		mLoopHead = loopHead;
 		mBackbones = new ArrayDeque<>();
-		mFormula = tf;
 		mCondition = null;
 		mIteratedMemory = null;
 		mAuxVars = new ArrayList<>();
+		mErrorPaths = new HashMap<>();
+		mHasNestedLoops = false;
+		mIsSummarized = false;
+		mNestedLoops = new ArrayDeque<>();
+		mInVars = new HashMap<>();
+		mOutVars = new HashMap<>();
+		mLoopExit = null;
+		mExitConditions = new ArrayList<>();
+		mExitTransitions = new ArrayList<>();
 	}
 
 	/**
@@ -91,10 +105,6 @@ public class Loop {
 		return mPath;
 	}
 
-	public TransFormula getFormula() {
-		return mFormula;
-	}
-
 	/**
 	 * Get the loops backbones as IcfgEdges
 	 */
@@ -109,12 +119,36 @@ public class Loop {
 		return mCondition;
 	}
 
+	public Map<IcfgLocation, Backbone> getErrorPaths() {
+		return mErrorPaths;
+	}
+
 	public IteratedSymbolicMemory getIteratedMemory() {
 		return mIteratedMemory;
 	}
 
 	public List<TermVariable> getVars() {
 		return mAuxVars;
+	}
+
+	public Map<IProgramVar, TermVariable> getInVars() {
+		return mInVars;
+	}
+
+	public Map<IProgramVar, TermVariable> getOutVars() {
+		return mOutVars;
+	}
+
+	public IcfgLocation getLoopExit() {
+		return mLoopExit;
+	}
+
+	public List<UnmodifiableTransFormula> getExitConditions() {
+		return mExitConditions;
+	}
+
+	public List<IcfgEdge> getExitTransitions() {
+		return mExitTransitions;
 	}
 
 	/**
@@ -124,19 +158,108 @@ public class Loop {
 		return mLoopHead;
 	}
 
-	public void setCondition(Term condition) {
+	public Deque<Loop> getNestedLoops() {
+		return mNestedLoops;
+	}
+	public void setPath(final Deque<IcfgEdge> path) {
+		mPath = path;
+	}
+
+	public void setLoopExit(final IcfgLocation icfgLocation) {
+		mLoopExit = icfgLocation;
+		for (final IcfgEdge trans : icfgLocation.getIncomingEdges()) {
+			final IcfgLocation source = trans.getSource();
+			for (final IcfgEdge out : source.getOutgoingEdges()) {
+				if (mPath.contains(out)) {
+					mExitTransitions.add(trans);
+					break;
+				}
+			}
+
+		}
+	}
+
+	public void addExitCondition(final UnmodifiableTransFormula exitCondition) {
+		mExitConditions.add(exitCondition);
+	}
+
+	/**
+	 * If there is an Assertion in the Loop, add it here
+	 * 
+	 * @param errorLocation
+	 *            The Error {@link IcfgLocation}
+	 * 
+	 * @param errorPath
+	 *            The Errorpath in form of a {@link Backbone}
+	 */
+	public void addErrorPath(final IcfgLocation errorLocation, final Backbone errorPath) {
+		mErrorPaths.put(errorLocation, errorPath);
+	}
+	
+	public void replaceErrorPath(final IcfgLocation errorLocation, final Backbone newErrorPath) {
+		mErrorPaths.replace(errorLocation, newErrorPath);
+	}
+
+	/**
+	 * attach a nested loop
+	 * 
+	 * @param loop
+	 *            the nested loop
+	 */
+	public void addNestedLoop(final Loop loop) {
+		mNestedLoops.addLast(loop);
+	}
+
+	/**
+	 * public void setFormula(final TransFormula tf) { mFormula = tf; mInVars =
+	 * tf.getInVars(); mOutVars = tf.getOutVars(); }
+	 */
+
+	public void setCondition(final Term condition) {
 		mCondition = condition;
 	}
 
-	public void setIteratedSymbolicMemory(IteratedSymbolicMemory memory) {
+	public void setInVars(final Map<IProgramVar, TermVariable> inVars) {
+		mInVars = inVars;
+	}
+
+	public void setOutVars(final Map<IProgramVar, TermVariable> outVars) {
+		mOutVars = outVars;
+	}
+
+	public void setIteratedSymbolicMemory(final IteratedSymbolicMemory memory) {
 		mIteratedMemory = memory;
 	}
-	
+
+	public Boolean isNested() {
+		return mHasNestedLoops;
+	}
+
+	public Boolean isSummarized() {
+		return mIsSummarized;
+	}
+
+	/**
+	 * The Loop has nested Loops
+	 */
+	public void setNested() {
+		mHasNestedLoops = true;
+	}
+
+	/**
+	 * The loop has been summarized, there is a {@link IteratedSymbolicMemory}
+	 */
+	public void setSummarized() {
+		mIsSummarized = true;
+	}
+
 	/**
 	 * add a var
+	 * 
 	 * @param vars
+	 *            aux vars
 	 */
-	public void addVar(List<TermVariable> vars) {
+	public void addVar(final List<TermVariable> vars) {
 		mAuxVars.addAll(vars);
 	}
 
@@ -148,7 +271,7 @@ public class Loop {
 	/**
 	 * Get the {@link Backbone}s as human readable Text.
 	 * 
-	 * @return
+	 * @return String representation of the backbone path
 	 */
 	public String backbonesToString() {
 		StringBuilder str = new StringBuilder();

@@ -4,16 +4,16 @@ int removeDeadEnds = numberOfStates(nwa);
 int shrinkNwa = numberOfStates(shrinkNwa(nwa));
 int minimizeSevpa = numberOfStates(minimizeSevpa(nwa));
 int minimizeNwaMaxSat = numberOfStates(minimizeNwaMaxSat(nwa));
-int minimizeNwaPmaxSat = numberOfStates(minimizeNwaPmaxSat(nwa));
-int minimizeNwaPmaxSatAsymmetric = numberOfStates(minimizeNwaPmaxSatAsymmetric(nwa));
+int minimizeNwaPmaxSatDirectBi = numberOfStates(minimizeNwaPmaxSatDirectBi(nwa));
+int minimizeNwaPmaxSatDirect = numberOfStates(minimizeNwaPmaxSatDirect(nwa));
 int reduceNwaDirectSimulationB = numberOfStates(ReduceNwaDirectSimulationB(nwa));
 
 print(removeDeadEnds);
 print(shrinkNwa);
 print(minimizeSevpa);
 print(minimizeNwaMaxSat);
-print(minimizeNwaPmaxSat);
-print(minimizeNwaPmaxSatAsymmetric);
+print(minimizeNwaPmaxSatDirectBi);
+print(minimizeNwaPmaxSatDirect);
 print(reduceNwaDirectSimulationB);
 
 NestedWordAutomaton nwaUnprocessed = (

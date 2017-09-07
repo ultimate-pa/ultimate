@@ -3,6 +3,7 @@
 	<name>Library-PEA</name>
 	<comment></comment>
 	<projects>
+		<project>CoreRCP</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

@@ -28,7 +28,6 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NwaOutgoingLetterAndTransitionAdapter;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.MultiOptimizationLevelRankingGenerator.FkvOptimization;
@@ -50,7 +49,6 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStat
  */
 public final class BuchiDifferenceFKV<LETTER, STATE> extends AbstractBuchiDifference<LETTER, STATE> {
 	private BuchiComplementFKVNwa<LETTER, STATE> mOnDemandComplemented;
-	private INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mSndComplemented;
 
 	/**
 	 * Constructor which creates a PowersetDeterminizer.
@@ -125,11 +123,6 @@ public final class BuchiDifferenceFKV<LETTER, STATE> extends AbstractBuchiDiffer
 	}
 
 	@Override
-	public INestedWordAutomaton<LETTER, STATE> getResult() {
-		return mResult;
-	}
-
-	@Override
 	public String exitMessage() {
 		return "Finished " + getOperationName() + ". First operand " + mFstOperand.sizeInformation() + " Second operand "
 				+ mSndOperand.sizeInformation() + " Result " + mResult.sizeInformation() + " Complement of second has "
@@ -138,8 +131,5 @@ public final class BuchiDifferenceFKV<LETTER, STATE> extends AbstractBuchiDiffer
 				+ mOnDemandComplemented.getHighesRank();
 	}
 
-	@Override
-	public INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> getSndComplemented() {
-		return mSndComplemented;
-	}
+
 }

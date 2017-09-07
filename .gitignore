@@ -1,5 +1,7 @@
 /trunk/examples/svcomp
 /trunk/examples/svcomp/*
+/trunk/examples/ultbench
+/trunk/examples/ultbench/*
 **/.metadata/*
 **/.settings/*
 **/target/*

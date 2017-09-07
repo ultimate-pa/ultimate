@@ -624,7 +624,7 @@ public class RelevantVariables {
 		// new
 		addAllNonModifiableGlobals(callPredRv, callee, result);
 		result.addAll(oldVarAssignment.getInVars().keySet());
-		assert result.equals(alternativeResult) : "notEqual";
+		assert result.equals(alternativeResult) : "inconsistent result of live variables analysis";
 		return alternativeResult;
 	}
 

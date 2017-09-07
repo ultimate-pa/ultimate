@@ -33,9 +33,9 @@ import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeRun;
+import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HornClause;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -47,9 +47,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 public class HCSsa {
 
-	private final TreeRun<Term, IPredicate> mNestedFormulas;
-	private final Term mPostCondition;
-	private final Term mPreCondition;
+//	private final TreeRun<TermRankedLetter, IPredicate> mNestedFormulas;
+	private final TreeRun<HornClause, SsaInfo> mNestedFormulas;
 	private final Map<Term, Integer> mCounters;
 	private final Map<Term, Term> mTermToAssertion;
 
@@ -69,10 +68,9 @@ public class HCSsa {
 	 * @param counters
 	 *            A map of the counts of each Term.
 	 */
-	public HCSsa(final TreeRun<Term, IPredicate> nestedFormulas, final Term pre, final Term post) {
+//	public HCSsa(final TreeRun<TermRankedLetter, IPredicate> nestedFormulas, final Term pre, final Term post) {
+	public HCSsa(final TreeRun<HornClause, SsaInfo> nestedFormulas) {
 		mNestedFormulas = nestedFormulas;
-		mPostCondition = post;
-		mPreCondition = pre;
 
 		mCounters = new HashMap<>();
 		mCountersAreFinalized = false;
@@ -80,11 +78,16 @@ public class HCSsa {
 
 		final Pair<List<Term>, List<Integer>> flattenRes = flatten(mNestedFormulas, 0);
 		final List<Term> flattenedTermslist = flattenRes.getFirst();
-		final List<Integer> startsOfSubtrees = flattenRes.getSecond();
+		final List<Integer> depthOfSubtrees = flattenRes.getSecond();
 		mFlattenedTerms = flattenedTermslist.toArray(new Term[flattenedTermslist.size()]);
-		mStartsOfSubtrees = new int[startsOfSubtrees.size()];
-		for (int i = 0; i < startsOfSubtrees.size(); i++) {
-			mStartsOfSubtrees[i] = startsOfSubtrees.get(i);
+		mStartsOfSubtrees = new int[depthOfSubtrees.size()];
+		
+		final Map<Integer, Integer> startOfDepth = new HashMap<>();
+		for (int i = 0; i < depthOfSubtrees.size(); i++) {
+			if (!startOfDepth.containsKey(depthOfSubtrees.get(i))) {
+				startOfDepth.put(depthOfSubtrees.get(i), i);
+			}
+			mStartsOfSubtrees[i] = startOfDepth.get(depthOfSubtrees.get(i));
 		}
 		mCountersAreFinalized = true;
 	}
@@ -123,24 +126,27 @@ public class HCSsa {
 		return mFlattenedTerms;
 	}
 
-	private Pair<List<Term>, List<Integer>> flatten(final TreeRun<Term, IPredicate> tree, int depth) {
+//	private Pair<List<Term>, List<Integer>> flatten(final TreeRun<TermRankedLetter, IPredicate> tree, int depth) {
+	private Pair<List<Term>, List<Integer>> flatten(final TreeRun<HornClause, SsaInfo> tree, int depth) {
 		ArrayList<Term> res = new ArrayList<>();
-		ArrayList<Integer> resStartsOfSubtrees = new ArrayList<>();
+		ArrayList<Integer> resDepthOfSubtrees = new ArrayList<>();
 		for (int i = 0; i < tree.getChildren().size(); i++) {
-			TreeRun<Term, IPredicate> child = tree.getChildren().get(i);
+			TreeRun<HornClause, SsaInfo> child = tree.getChildren().get(i);
 			Pair<List<Term>, List<Integer>> childRes = flatten(child, depth + i);
 			res.addAll(childRes.getFirst());
-			resStartsOfSubtrees.addAll(childRes.getSecond());
+			resDepthOfSubtrees.addAll(childRes.getSecond());
 		}
 		if (tree.getRootSymbol() != null) {
-			res.add(tree.getRootSymbol());
-			resStartsOfSubtrees.add(depth);
-			this.getCounter(tree.getRootSymbol());
+//			res.add(tree.getRootSymbol().getTerm());
+			res.add(tree.getRoot().mSsaFormula);
+			resDepthOfSubtrees.add(depth);
+//			this.getCounter(tree.getRootSymbol().getTerm());
+			this.getCounter(tree.getRoot().mSsaFormula);
 		}
-		return new Pair<>(res, resStartsOfSubtrees);
+		return new Pair<>(res, resDepthOfSubtrees);
 	}
 
-	public TreeRun<Term, IPredicate> getFormulasTree() {
+	public TreeRun<HornClause, SsaInfo> getFormulasTree() {
 		return mNestedFormulas;
 	}
 

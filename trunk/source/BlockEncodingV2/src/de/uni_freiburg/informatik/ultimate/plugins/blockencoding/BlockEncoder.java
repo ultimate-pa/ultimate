@@ -86,7 +86,7 @@ public final class BlockEncoder {
 
 	/**
 	 * Create a {@link BlockEncoder} for the BlockEncoding plugin.
-	 * 
+	 *
 	 * @param logger
 	 *            The logger to use.
 	 * @param services
@@ -112,7 +112,7 @@ public final class BlockEncoder {
 	/**
 	 * Create a {@link BlockEncoder} instance for usage from anywhere. Does not register its backtranslation and does
 	 * create the necessary data structures for itself.
-	 * 
+	 *
 	 * @param logger
 	 *            The logger we should use.
 	 * @param services
@@ -155,11 +155,14 @@ public final class BlockEncoder {
 		int maxIters = ups.getInt(BlockEncodingPreferences.FXP_MAX_ITERATIONS) - 1;
 		if (maxIters < 0) {
 			maxIters = -1;
+		} else {
+			mLogger.info(String.format("Using %s=%s", BlockEncodingPreferences.FXP_MAX_ITERATIONS, maxIters + 1));
 		}
 
 		mIterationResult = node;
 		final List<Supplier<IEncoder<IcfgLocation>>> encoderProviders = getEncoderProviders(ups, node);
 		final boolean optimizeUntilFixpoint = ups.getBoolean(BlockEncodingPreferences.FXP_UNTIL_FIXPOINT);
+		mLogger.info(String.format("Using %s=%s", BlockEncodingPreferences.FXP_UNTIL_FIXPOINT, optimizeUntilFixpoint));
 		int i = 1;
 
 		if (mLogger.isDebugEnabled()) {
@@ -167,11 +170,13 @@ public final class BlockEncoder {
 		}
 
 		if (ups.getBoolean(BlockEncodingPreferences.PRE_REWRITENOTEQUALS)) {
+			mLogger.info("Using " + BlockEncodingPreferences.PRE_REWRITENOTEQUALS);
 			mIterationResult =
 					new RewriteNotEquals(mEdgeBuilder, mServices, mBacktranslator, mLogger).getResult(mIterationResult);
 		}
 
 		if (ups.getBoolean(BlockEncodingPreferences.PRE_SBE)) {
+			mLogger.info("Using " + BlockEncodingPreferences.PRE_SBE);
 			mIterationResult = new SmallBlockEncoder(mEdgeBuilder, mServices, mBacktranslator, mLogger)
 					.getResult(mIterationResult);
 		}
@@ -209,11 +214,13 @@ public final class BlockEncoder {
 		}
 
 		if (ups.getBoolean(BlockEncodingPreferences.POST_USE_PARALLEL_COMPOSITION)) {
+			mLogger.info(String.format("Using %s", BlockEncodingPreferences.POST_USE_PARALLEL_COMPOSITION));
 			mIterationResult =
 					new ParallelComposer(mEdgeBuilder, mServices, mBacktranslator, mLogger).getResult(mIterationResult);
 		}
 
 		if (ups.getBoolean(BlockEncodingPreferences.POST_SIMPLIFY_TRANSITIONS)) {
+			mLogger.info(String.format("Using %s", BlockEncodingPreferences.POST_SIMPLIFY_TRANSITIONS));
 			mIterationResult =
 					new Simplifier(mEdgeBuilder, mServices, mBacktranslator, mLogger).getResult(mIterationResult);
 		}
@@ -228,30 +235,37 @@ public final class BlockEncoder {
 		// note that the order is important
 
 		if (ups.getBoolean(BlockEncodingPreferences.FXP_REMOVE_INFEASIBLE_EDGES)) {
+			mLogger.info("Using " + BlockEncodingPreferences.FXP_REMOVE_INFEASIBLE_EDGES);
 			rtr.add(() -> new RemoveInfeasibleEdges(mServices, mBacktranslator, mLogger));
 		}
 
 		if (ups.getBoolean(BlockEncodingPreferences.FXP_MAXIMIZE_FINAL_STATES)) {
+			mLogger.info("Using " + BlockEncodingPreferences.FXP_MAXIMIZE_FINAL_STATES);
 			rtr.add(() -> new MaximizeFinalStates(mServices, BlockEncoder::markBuchiProgramAccepting,
 					BlockEncoder::isBuchiProgramAccepting, mBacktranslator, mLogger));
 		}
 
+		final boolean ignoreBlowup = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
+				.getBoolean(BlockEncodingPreferences.FXP_MINIMIZE_STATES_IGNORE_BLOWUP);
+		mLogger.info(
+				String.format("Using %s=%s", BlockEncodingPreferences.FXP_MINIMIZE_STATES_IGNORE_BLOWUP, ignoreBlowup));
+
 		final MinimizeStates minimizeStates =
 				ups.getEnum(BlockEncodingPreferences.FXP_MINIMIZE_STATES, MinimizeStates.class);
 		if (minimizeStates != MinimizeStates.NONE) {
+			mLogger.info(String.format("Using %s=%s", BlockEncodingPreferences.FXP_MINIMIZE_STATES, minimizeStates));
 			switch (minimizeStates) {
 			case SINGLE:
-
 				rtr.add(() -> new MinimizeStatesSingleEdgeSingleNode(mEdgeBuilder, mServices, mBacktranslator,
-						BlockEncoder::hasToBePreserved, mLogger));
+						BlockEncoder::hasToBePreserved, mLogger, ignoreBlowup));
 				break;
 			case SINGLE_NODE_MULTI_EDGE:
 				rtr.add(() -> new MinimizeStatesMultiEdgeSingleNode(mEdgeBuilder, mServices, mBacktranslator,
-						BlockEncoder::hasToBePreserved, mLogger));
+						BlockEncoder::hasToBePreserved, mLogger, ignoreBlowup));
 				break;
 			case MULTI:
 				rtr.add(() -> new MinimizeStatesMultiEdgeMultiNode(mEdgeBuilder, mServices, mBacktranslator,
-						BlockEncoder::hasToBePreserved, mLogger));
+						BlockEncoder::hasToBePreserved, mLogger, ignoreBlowup));
 				break;
 			default:
 				throw new IllegalArgumentException(minimizeStates + " is an unknown enum value!");
@@ -259,6 +273,7 @@ public final class BlockEncoder {
 		}
 
 		if (ups.getBoolean(BlockEncodingPreferences.FXP_REMOVE_SINK_STATES)) {
+			mLogger.info("Using " + BlockEncodingPreferences.FXP_REMOVE_SINK_STATES);
 			rtr.add(() -> new RemoveSinkStates(mServices, BlockEncoder::hasToBePreserved, mBacktranslator, mLogger));
 		}
 

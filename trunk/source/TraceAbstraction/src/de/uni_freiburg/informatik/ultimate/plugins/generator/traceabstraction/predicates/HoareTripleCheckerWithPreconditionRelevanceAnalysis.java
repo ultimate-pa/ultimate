@@ -36,7 +36,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
@@ -44,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IRetu
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -84,9 +84,10 @@ public class HoareTripleCheckerWithPreconditionRelevanceAnalysis extends Increme
 			final String predProc = mAssertedAction.getPrecedingProcedure();
 			final Set<IProgramNonOldVar> modifiableGlobals = mModifiableGlobalVariableManager.getModifiedBoogieVars(predProc);
 			
-			final Collection<Term> oldVarEqualities = constructNonModOldVarsEquality(vars, modifiableGlobals);
+		final Collection<Term> oldVarEqualities = constructNonModOldVarsEquality(vars, modifiableGlobals,
+				mManagedScript, this);
 			if (!oldVarEqualities.isEmpty()) {
-				Term nonModOldVarsEquality = Util.and(mManagedScript.getScript(), oldVarEqualities.toArray(new Term[oldVarEqualities.size()]));
+				Term nonModOldVarsEquality = SmtUtils.and(mManagedScript.getScript(), oldVarEqualities.toArray(new Term[oldVarEqualities.size()]));
 				if (mUseNamedTerms) {
 					final Annotation annot = new Annotation(":named", ID_PRECONDITION_NON_MOD_GLOBAL_EQUALITY);
 					nonModOldVarsEquality = mManagedScript.annotate(this, nonModOldVarsEquality, annot);

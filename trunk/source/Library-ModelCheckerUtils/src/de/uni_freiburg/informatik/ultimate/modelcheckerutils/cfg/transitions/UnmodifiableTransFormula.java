@@ -47,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ProgramVarUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ConstantFinder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
@@ -167,7 +168,8 @@ public class UnmodifiableTransFormula extends TransFormula implements Serializab
 			substitutionMapping.put(outTermVar, outVar.getPrimedConstant());
 		}
 		for (final TermVariable auxVarTv : auxVars) {
-			final Term auxVarConst = SmtUtils.termVariable2constant(script.getScript(), auxVarTv, true);
+//			final Term auxVarConst = SmtUtils.termVariable2constant(script.getScript(), auxVarTv, true);
+			final Term auxVarConst = ProgramVarUtils.constructConstantForAuxVar(script, auxVarTv);
 			substitutionMapping.put(auxVarTv, auxVarConst);
 		}
 		final Term closedTerm = new Substitution(script, substitutionMapping).transform(formula);

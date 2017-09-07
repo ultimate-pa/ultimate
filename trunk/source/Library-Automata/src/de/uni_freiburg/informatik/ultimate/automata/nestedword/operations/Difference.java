@@ -87,7 +87,6 @@ public final class Difference<LETTER, STATE> extends BinaryNwaOperation<LETTER, 
 			mLogger.info(startMessage());
 		}
 
-		// TODO Christian 2016-09-04: The parameter finalIsTrap is always 'false'.
 		computeDifference(stateFactory, finalIsTrap);
 
 		if (mLogger.isInfoEnabled()) {
@@ -128,7 +127,7 @@ public final class Difference<LETTER, STATE> extends BinaryNwaOperation<LETTER, 
 				mLogger.info("Subtrahend was not deterministic. Computing result with determinization.");
 			}
 		} else if (mStateDeterminizer instanceof PowersetDeterminizer) {
-			final TotalizeNwa<LETTER, STATE> sndTotalized = new TotalizeNwa<>(mSndOperand, mStateFactory);
+			final TotalizeNwa<LETTER, STATE> sndTotalized = new TotalizeNwa<>(mSndOperand, mStateFactory, true);
 			
 			final ComplementDeterministicNwa<LETTER, STATE> sndComplemented =
 					new ComplementDeterministicNwa<>(sndTotalized);
@@ -162,7 +161,7 @@ public final class Difference<LETTER, STATE> extends BinaryNwaOperation<LETTER, 
 	private boolean hasSeveralInitialStates(final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> automaton) {
 		final Iterator<STATE> iterator = automaton.getInitialStates().iterator();
 		if (!iterator.hasNext()) {
-			// No initial state. E.g., the empty automaton does not have an initial state. 
+			// No initial state. E.g., the empty automaton does not have an initial state.
 			return false;
 		} else {
 			iterator.next();

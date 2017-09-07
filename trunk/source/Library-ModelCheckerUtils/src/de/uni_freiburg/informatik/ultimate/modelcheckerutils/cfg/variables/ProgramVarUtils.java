@@ -87,6 +87,26 @@ public class ProgramVarUtils {
 		return defaultConstant;
 	}
 	
+	/**
+	 * Construct constant for an aux var.
+	 * (The default constant is used to represent the aux var in the closed formulas
+	 * of {@link TransFormula}s.
+	 * @param script {@link ManagedScript} for which constant is constructed.
+	 */
+	public static ApplicationTerm constructConstantForAuxVar(final ManagedScript script, final TermVariable auxVar) {
+		ApplicationTerm defaultConstant;
+		{
+			
+			final String defaultConstantName = "c_aux_" + auxVar.getName();
+			final Object lockOwner = auxVar;
+			script.lock(lockOwner);
+			script.declareFun(lockOwner, defaultConstantName, new Sort[0], auxVar.getSort());
+			defaultConstant = (ApplicationTerm) script.term(lockOwner, defaultConstantName);
+			script.unlock(lockOwner);
+		}
+		return defaultConstant;
+	}
+	
 	
 	public static Set<IProgramNonOldVar> extractNonOldVars(final Term term, final IIcfgSymbolTable symbolTable) {
 		final Set<IProgramNonOldVar> result = new HashSet<>();

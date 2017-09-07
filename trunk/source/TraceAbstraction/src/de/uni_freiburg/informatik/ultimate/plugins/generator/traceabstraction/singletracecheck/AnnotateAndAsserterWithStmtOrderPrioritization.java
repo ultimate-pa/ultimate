@@ -197,7 +197,8 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 			// First, annotate and assert the statements, which doesn't occur within a loop
 			buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(mTrace, callPositions, pendingReturnPositions,
 					stmtsOutsideOfLoop);
-
+			
+			mLogger.info("Assert order " + mAssertCodeBlocksOrder + " issued a check-sat command");
 			mSatisfiable = mMgdScriptTc.getScript().checkSat();
 			// Report benchmarks
 			mTcbg.reportnewCheckSat();
@@ -210,6 +211,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 						stmtsWithinLoop);
 				assert callPositions.containsAll(mTrace.getCallPositions());
 				assert mTrace.getCallPositions().containsAll(callPositions);
+				mLogger.info("Assert order " + mAssertCodeBlocksOrder + " issued a check-sat command");
 				mSatisfiable = mMgdScriptTc.getScript().checkSat();
 				// Report benchmarks
 				mTcbg.reportnewCheckSat();
@@ -249,6 +251,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 		for (final Integer key : keysInSortedOrder) {
 			buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(trace, callPositions, pendingReturnPositions,
 					depth2Statements.get(key));
+			mLogger.info("Assert order " + mAssertCodeBlocksOrder + " issued a check-sat command");
 			sat = mMgdScriptTc.getScript().checkSat();
 			// Report benchmarks
 			mTcbg.reportnewCheckSat();
@@ -272,6 +275,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 		for (final Integer key : keysInDescendingOrder) {
 			buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(trace, callPositions, pendingReturnPositions,
 					depth2Statements.get(key));
+			mLogger.info("Assert order " + mAssertCodeBlocksOrder + " issued a check-sat command");
 			sat = mMgdScriptTc.getScript().checkSat();
 			// Report benchmarks
 			mTcbg.reportnewCheckSat();
@@ -303,6 +307,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 			removeFirst = !removeFirst;
 			buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(trace, callPositions, pendingReturnPositions,
 					depth2Statements.get(currentDepth));
+			mLogger.info("Assert order " + mAssertCodeBlocksOrder + " issued a check-sat command");
 			sat = mMgdScriptTc.getScript().checkSat();
 			// Report benchmarks
 			mTcbg.reportnewCheckSat();

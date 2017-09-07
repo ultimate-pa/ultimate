@@ -55,6 +55,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	 */
 	public static final String LABEL_INTERPROCEDUTAL = "Interprocedural analysis (Nested Interpolants)";
 	public static final String LABEL_ALL_ERRORS_AT_ONCE = "Stop after first violation was found";
+	public static final String LABEL_FLOYD_HOARE_AUTOMATA_REUSE = "Reuse of Floyd-Hoare automata";
 	public static final String LABEL_ITERATIONS = "Iterations until the model checker surrenders";
 	public static final String LABEL_ARTIFACT = "Kind of artifact that is visualized";
 	public static final String LABEL_WATCHITERATION = "Number of iteration whose artifact is visualized";
@@ -90,7 +91,9 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_ABSINT_MODE = "Abstract interpretation Mode";
 	public static final String LABEL_ABSINT_ALWAYS_REFINE = "Refine always when using abstract interpretation";
 	public static final String LABEL_ERROR_TRACE_RELEVANCE_ANALYSIS_NON_FLOW_SENSITIVE =
-			"Non-flow-sensitive error trace relevance analysis";
+			"Highlight relevant statements in error traces";
+	public static final String TOOLTIP_ERROR_TRACE_RELEVANCE_ANALYSIS_NON_FLOW_SENSITIVE =
+			"Analyse error traces and identify relevant statements. Warning: For programs with floats, arrays, or pointers this analysis may take a significant amount of time.";
 	public static final String LABEL_ERROR_TRACE_RELEVANCE_ANALYSIS_FLOW_SENSITIVE =
 			"Flow-sensitive error trace relevance analysis";
 	public static final String LABEL_SIMPLIFICATION_TECHNIQUE = "Simplification technique";
@@ -121,6 +124,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	 * default values for the different preferences
 	 */
 	public static final boolean DEF_INTERPROCEDUTAL = true;
+	public static final FloydHoareAutomataReuse DEF_FLOYD_HOARE_AUTOMATA_REUSE = FloydHoareAutomataReuse.NONE;
 	public static final int DEF_ITERATIONS = 1_000_000;
 	public static final String DEF_ARTIFACT = VALUE_RCFG;
 	public static final int DEF_WATCHITERATION = 1_000_000;
@@ -132,7 +136,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final InterpolationTechnique DEF_INTERPOLANTS = InterpolationTechnique.ForwardPredicates;
 	public static final String DEF_ADDITIONAL_EDGES = VALUE_INTERPOLANT_AUTOMATON_CANONICAL;
 	public static final boolean DEF_DUMPAUTOMATA = false;
-	public static final Format DEF_AUTOMATAFORMAT = Format.ATS;
+	public static final Format DEF_AUTOMATAFORMAT = Format.ATS_NUMERATE;
 	public static final String DEF_DUMPPATH = ".";
 	public static final boolean DEF_DIFFERENCE_SENWA = false;
 	public static final boolean DEF_MINIMIZE = true;
@@ -173,6 +177,10 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 		return new UltimatePreferenceItem<?>[] {
 				new UltimatePreferenceItem<>(LABEL_INTERPROCEDUTAL, DEF_INTERPROCEDUTAL, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_ALL_ERRORS_AT_ONCE, DEF_ALL_ERRORS_AT_ONCE, PreferenceType.Boolean),
+				
+				new UltimatePreferenceItem<>(LABEL_FLOYD_HOARE_AUTOMATA_REUSE, DEF_FLOYD_HOARE_AUTOMATA_REUSE, PreferenceType.Combo,
+						FloydHoareAutomataReuse.values()),
+				
 				new UltimatePreferenceItem<>(LABEL_ITERATIONS, DEF_ITERATIONS, PreferenceType.Integer,
 						new IUltimatePreferenceItemValidator.IntegerValidator(0, 1_000_000)),
 				new UltimatePreferenceItem<>(LABEL_ARTIFACT, Artifact.RCFG, PreferenceType.Combo, Artifact.values()),
@@ -239,7 +247,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<>(LABEL_ABSINT_ALWAYS_REFINE, DEF_ABSINT_ALWAYS_REFINE,
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_ERROR_TRACE_RELEVANCE_ANALYSIS_NON_FLOW_SENSITIVE,
-						DEF_ERROR_TRACE_RELEVANCE_ANALYSIS_NON_FLOW_SENSITIVE, PreferenceType.Boolean),
+						DEF_ERROR_TRACE_RELEVANCE_ANALYSIS_NON_FLOW_SENSITIVE,
+						TOOLTIP_ERROR_TRACE_RELEVANCE_ANALYSIS_NON_FLOW_SENSITIVE, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_ERROR_TRACE_RELEVANCE_ANALYSIS_FLOW_SENSITIVE,
 						DEF_ERROR_TRACE_RELEVANCE_ANALYSIS_FLOW_SENSITIVE, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_SIMPLIFICATION_TECHNIQUE, DEF_SIMPLIFICATION_TECHNIQUE,
@@ -289,10 +298,46 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	}
 
 	/**
-	 * Code block assertion order.
+	 * Code block assertion order. Determines in which order the different codeblocks of a trace are asserted during a
+	 * trace check.
 	 */
 	public enum AssertCodeBlockOrder {
-		NOT_INCREMENTALLY, OUTSIDE_LOOP_FIRST1, OUTSIDE_LOOP_FIRST2, INSIDE_LOOP_FIRST1, MIX_INSIDE_OUTSIDE,
+		/**
+		 * Assert all codeblocks at once.
+		 */
+		NOT_INCREMENTALLY,
+
+		/**
+		 * Assert in two steps. First, assert all codeblocks that do not occur in the first loop of the trace. Second,
+		 * assert the rest.
+		 */
+		OUTSIDE_LOOP_FIRST1,
+
+		/**
+		 * Assert codeblocks according to their "depth". Codeblocks outside of loops have depth 0, codeblocks within a
+		 * loop have depth i + 1 where i is the depth of the loop codeblock.
+		 *
+		 * Assert all codeblocks in the order of their depth starting with depth 0.
+		 */
+		OUTSIDE_LOOP_FIRST2,
+
+		/**
+		 * Similar to {@link AssertCodeBlockOrder#OUTSIDE_LOOP_FIRST2}, but in reverse order (start with the deepest
+		 * codeblocks).
+		 */
+		INSIDE_LOOP_FIRST1,
+
+		/**
+		 * Similar to {@link AssertCodeBlockOrder#OUTSIDE_LOOP_FIRST2} and
+		 * {@link AssertCodeBlockOrder#INSIDE_LOOP_FIRST1} in that it also uses the depth of a codeblock. This setting
+		 * alternates between depths, starting with depth 0, then asserting the maximal depth, then depth 1, etc.
+		 */
+		MIX_INSIDE_OUTSIDE,
+
+		/**
+		 * Assert in two steps: First terms with small constants (currently, terms that contain constants smaller than
+		 * 10), then the rest.
+		 */
 		TERMS_WITH_SMALL_CONSTANTS_FIRST
 	}
 
@@ -402,5 +447,29 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 		 * Throw all exceptions.
 		 */
 		ALL
+	}
+	
+	/**
+	 * Reuse Floyd-Hoare that were built for one error location for succeeding 
+	 * error locations. 
+	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+	 *
+	 */
+	public enum FloydHoareAutomataReuse {
+		/**
+		 * No reuse.
+		 */
+		NONE,
+		/**
+		 * Take initially the difference of the control flow graph and
+		 * all yet constructed Floyd-Hoare automata. Extend the
+		 * Floyd-Hoare automata on-demand (while difference is constructed
+		 * by new edges).
+		 */
+		EAGER,
+		/**
+		 * Not yet defined...
+		 */
+		LAZY_IN_ORDER,
 	}
 }

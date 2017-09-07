@@ -34,12 +34,12 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HCSymbolTable;
+import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HornClausePredicateSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.logic.Util;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HCSymbolTable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornClausePredicateSymbol;
+import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
@@ -59,13 +59,17 @@ public class HornClauseCobody {
 
 	private final List<HornClausePredicateSymbol> mPredicateSymbols = new ArrayList<>();
 	private final List<List<TermVariable>> mPredicateSymbolToVariables = new ArrayList<>();
+	
+	private final HornClauseParserScript mParserScript;
 
 	/***
 	 * Constructor of the cobody of a horn statement.
+	 * @param parserScript 
 	 */
-	public HornClauseCobody() {
+	public HornClauseCobody(HornClauseParserScript parserScript) {
 		mPredicates = new ArrayList<>();
 		mTransitions = new HashSet<>();
+		mParserScript = parserScript;
 	}
 
 	/***
@@ -78,7 +82,7 @@ public class HornClauseCobody {
 	}
 
 	/***
-	 * Add a transition formula to the cobody.
+	 * Add a transition formula to the cobody (can be called several times, a conjunction will be built).
 	 * @param formula
 	 */
 	public void addTransitionFormula(Term formula) {
@@ -106,7 +110,7 @@ public class HornClauseCobody {
 	 */
 	public HornClauseBody negate() {
 		assert !mFinalized;
-		final HornClauseBody res = new HornClauseBody();
+		final HornClauseBody res = new HornClauseBody(mParserScript);
 		res.mergeCobody(this);
 		return res;
 	}
@@ -116,8 +120,10 @@ public class HornClauseCobody {
 	 * @param script
 	 * @return
 	 */
-	public Term getTransitionFormula(ManagedScript script) {
-		return Util.and(script.getScript(), mTransitions.toArray(new Term[mTransitions.size()]));
+	public Term getTransitionFormula(ManagedScript script, Theory theory) {
+		final Term[] transitions = mTransitions.toArray(new Term[mTransitions.size()]);
+		return theory.and(transitions);
+		//return SmtUtils.and(script.getScript(), transitions);
 	}
 	
 	List<HornClausePredicateSymbol> getPredicates(final HCSymbolTable symbolTable) {
@@ -192,5 +198,10 @@ public class HornClauseCobody {
 			first = false;
 		}
 		return '(' + result.toString() + ')';
+	}
+
+	public void addToTransitionFormula(Term binaryEquality) {
+		// TODO Auto-generated method stub
+		
 	}
 }

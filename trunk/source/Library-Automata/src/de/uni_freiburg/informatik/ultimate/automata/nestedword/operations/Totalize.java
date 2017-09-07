@@ -70,7 +70,7 @@ public final class Totalize<LETTER, STATE> extends UnaryNwaOperation<LETTER, STA
 			mLogger.info(startMessage());
 		}
 
-		final TotalizeNwa<LETTER, STATE> totalized = new TotalizeNwa<>(operand, stateFactory);
+		final TotalizeNwa<LETTER, STATE> totalized = new TotalizeNwa<>(operand, stateFactory, false);
 		mResult = new NestedWordAutomatonReachableStates<>(mServices, totalized);
 
 		if (mLogger.isInfoEnabled()) {

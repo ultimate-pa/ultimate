@@ -1,0 +1,50 @@
+// Testfile dumped by Ultimate at 2017/03/04 18:19:22
+//
+// Reduced by Christian Schilling on 2017-03-15.
+// Revealed that MinimizeNwaPmaxSatDirect actually performed bisimulation.
+// Also has different number of states for different simulation operations.
+
+NestedWordAutomaton preprocessed = removeUnreachable(nwa);
+
+int minimizeSevpaSize = numberOfStates(minimizeSevpa(preprocessed));
+int shrinkNwaSize = numberOfStates(shrinkNwa(preprocessed));
+int minimizeNwaPmaxSatDirectBiSize = numberOfStates(minimizeNwaPmaxSatDirectBi(preprocessed));
+int minimizeNwaPmaxSatDirectSize = numberOfStates(minimizeNwaPmaxSatDirect(preprocessed));
+int minimizeDfaSimulationSize = numberOfStates(minimizeDfaSimulation(preprocessed));
+int reduceNwaDirectSimulationSize = numberOfStates(reduceNwaDirectSimulation(preprocessed));
+int reduceNwaDirectSimulationBSize = numberOfStates(reduceNwaDirectSimulationB(preprocessed));
+int reduceNwaDirectFullMultipebbleSimulationSize = numberOfStates(reduceNwaDirectFullMultipebbleSimulation(preprocessed));
+int buchiReduceSize = numberOfStates(buchiReduce(preprocessed));
+int reduceNwaDelayedSimulationSize = numberOfStates(reduceNwaDelayedSimulation(preprocessed));
+int reduceNwaDelayedSimulationBSize = numberOfStates(reduceNwaDelayedSimulationB(preprocessed));
+// int reduceNwaDelayedFullMultipebbleSimulationSize = numberOfStates(reduceNwaDelayedFullMultipebbleSimulation(preprocessed));
+int reduceBuchiFairDirectSimulationSize = numberOfStates(reduceBuchiFairDirectSimulation(preprocessed));
+int reduceBuchiFairSimulationSize = numberOfStates(reduceBuchiFairSimulation(preprocessed));
+
+assert(minimizeSevpaSize == 4);
+assert(shrinkNwaSize == 4);
+assert(minimizeNwaPmaxSatDirectBiSize == 4);
+assert(minimizeNwaPmaxSatDirectSize == 3);
+assert(minimizeDfaSimulationSize == 4);
+assert(reduceNwaDirectSimulationSize == 4);
+assert(reduceNwaDirectSimulationBSize == 3);
+assert(reduceNwaDirectFullMultipebbleSimulationSize == 3);
+assert(buchiReduceSize == 3);
+assert(reduceNwaDelayedSimulationSize == 4);
+assert(reduceNwaDelayedSimulationBSize == 3);
+// assert(reduceNwaDelayedFullMultipebbleSimulationSize == 4);
+assert(reduceBuchiFairDirectSimulationSize == 3);
+assert(reduceBuchiFairSimulationSize == 3);
+
+FiniteAutomaton nwa = (
+	alphabet = {"a" "b"},
+	states = {"q_1" "q_2" "q_3" "q_4"},
+	initialStates = {"q_1" "q_2"},
+	finalStates = {"q_1" "q_2" "q_3" "q_4"},
+	transitions = {
+		("q_1" "a" "q_3")
+		("q_1" "a" "q_4")
+		("q_2" "a" "q_4")
+		("q_4" "b" "q_3")
+	}
+);

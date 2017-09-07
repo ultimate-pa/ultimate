@@ -66,6 +66,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Unm
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
@@ -196,7 +197,7 @@ public class LoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC 
 				final OUTLOC newTarget = lst.createNewLocation(oldTarget);
 
 				if (mBackbones.containsKey(oldSource)) {
-					final IcfgEdge newTransition = getAcceleratedTransition(oldTransition, newSource, newTarget);
+					final IcfgEdge newTransition = addAcceleratedTransition(oldTransition, newSource, newTarget);
 					backtranslationTracker.rememberRelation(oldTransition, newTransition);
 				} else {
 					if (oldTransition instanceof IIcfgReturnTransition<?, ?>) {
@@ -231,7 +232,7 @@ public class LoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC 
 				final OUTLOC newSource = lst.createNewLocation(oldSource);
 				final OUTLOC newTarget = lst.createNewLocation(oldTarget);
 				if (i == 0) {
-					final IcfgEdge newTransition = getAcceleratedTransition(edge, newSource, newTarget);
+					final IcfgEdge newTransition = addAcceleratedTransition(edge, newSource, newTarget);
 					backtranslationTracker.rememberRelation(edge, newTransition);
 				} else {
 					lst.createNewTransition(newSource, newTarget, edge);
@@ -243,7 +244,7 @@ public class LoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC 
 		return resultIcfg;
 	}
 
-	private IcfgEdge getAcceleratedTransition(final IcfgEdge oldTransition, final OUTLOC newSource,
+	private IcfgEdge addAcceleratedTransition(final IcfgEdge oldTransition, final OUTLOC newSource,
 			final OUTLOC newTarget) {
 		final INLOC oldSource = (INLOC) oldTransition.getSource();
 		final IteratedSymbolicMemory iteratedSymbolicMemory = getIteratedSymbolicMemoryForLoop(oldSource);
@@ -478,10 +479,10 @@ public class LoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC 
 				quantifiers.add(loopIterators.get(j));
 
 				final Term iteratorCondition =
-						Util.and(mScript.getScript(), mScript.getScript().term("<=", zeroTerm, loopIterators.get(j)),
+						SmtUtils.and(mScript.getScript(), mScript.getScript().term("<=", zeroTerm, loopIterators.get(j)),
 								mScript.getScript().term("<=", loopIterators.get(j), loopCounters.get(j)));
 
-				term = Util.and(mScript.getScript(), iteratorCondition, term);
+				term = SmtUtils.and(mScript.getScript(), iteratorCondition, term);
 			}
 
 			if (!quantifiers.isEmpty()) {
@@ -489,7 +490,7 @@ public class LoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC 
 			}
 
 			final Term iteratorCondition =
-					Util.and(mScript.getScript(), mScript.getScript().term("<=", zeroTerm, loopIterators.get(i)),
+					SmtUtils.and(mScript.getScript(), mScript.getScript().term("<=", zeroTerm, loopIterators.get(i)),
 							mScript.getScript().term("<", loopIterators.get(i), loopCounters.get(i)));
 			term = Util.implies(mScript.getScript(), iteratorCondition, term);
 			term = mScript.getScript().quantifier(Script.FORALL, new TermVariable[] { loopIterators.get(i) }, term);
@@ -499,14 +500,14 @@ public class LoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC 
 			terms[i] = term;
 		}
 
-		Term resultTerm = Util.and(mScript.getScript(), terms);
+		Term resultTerm = SmtUtils.and(mScript.getScript(), terms);
 
 		for (int i = 0; i < numLoops; i++) {
-			resultTerm = Util.and(mScript.getScript(), resultTerm,
+			resultTerm = SmtUtils.and(mScript.getScript(), resultTerm,
 					mScript.getScript().term(">=", loopCounters.get(i), zeroTerm));
 		}
 
-		resultTerm = Util.and(mScript.getScript(), resultTerm, iteratedSymbolicMemory.toTerm());
+		resultTerm = SmtUtils.and(mScript.getScript(), resultTerm, iteratedSymbolicMemory.toTerm());
 
 		resultTerm = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mScript, resultTerm,
 				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);

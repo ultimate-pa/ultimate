@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
+import de.uni_freiburg.informatik.ultimate.util.SetOperations;
 
 /**
  *
@@ -84,7 +85,7 @@ public class DataflowState<ACTION extends IAction>
 		if (mVars.contains(variable)) {
 			return this;
 		}
-		final Set<IProgramVarOrConst> vars = AbsIntUtil.getFreshSet(mVars, mVars.size() + 1);
+		final Set<IProgramVarOrConst> vars = SetOperations.getFreshSet(mVars, mVars.size() + 1);
 		vars.add(variable);
 		return new DataflowState<>(vars, mDef, mUse, mReachDef, mNoWrite);
 	}
@@ -94,7 +95,7 @@ public class DataflowState<ACTION extends IAction>
 		if (!mVars.contains(variable)) {
 			return this;
 		}
-		final Set<IProgramVarOrConst> vars = AbsIntUtil.getFreshSet(mVars);
+		final Set<IProgramVarOrConst> vars = SetOperations.getFreshSet(mVars);
 		vars.remove(variable);
 		final Map<IProgramVarOrConst, Set<ACTION>> def = AbsIntUtil.getFreshMap(mDef);
 		def.remove(variable);
@@ -112,7 +113,7 @@ public class DataflowState<ACTION extends IAction>
 		if (variables == null || variables.isEmpty()) {
 			return this;
 		}
-		final Set<IProgramVarOrConst> vars = AbsIntUtil.getFreshSet(mVars, mVars.size() + variables.size());
+		final Set<IProgramVarOrConst> vars = SetOperations.getFreshSet(mVars, mVars.size() + variables.size());
 		vars.addAll(variables);
 		return new DataflowState<>(vars, mDef, mUse, mReachDef, mNoWrite);
 	}
@@ -122,7 +123,7 @@ public class DataflowState<ACTION extends IAction>
 		if (variables == null || variables.isEmpty()) {
 			return this;
 		}
-		final Set<IProgramVarOrConst> vars = AbsIntUtil.getFreshSet(mVars);
+		final Set<IProgramVarOrConst> vars = SetOperations.getFreshSet(mVars);
 		final Map<IProgramVarOrConst, Set<ACTION>> def = AbsIntUtil.getFreshMap(mDef);
 		final Map<IProgramVarOrConst, Set<ACTION>> use = AbsIntUtil.getFreshMap(mUse);
 		final Map<IProgramVarOrConst, Set<ACTION>> reachdef = AbsIntUtil.getFreshMap(mReachDef);
@@ -279,7 +280,7 @@ public class DataflowState<ACTION extends IAction>
 			throw new UnsupportedOperationException("Cannot create union of two incompatible dataflow states");
 		}
 
-		final Set<IProgramVarOrConst> vars = AbsIntUtil.getFreshSet(mVars);
+		final Set<IProgramVarOrConst> vars = SetOperations.getFreshSet(mVars);
 		final Map<IProgramVarOrConst, Set<ACTION>> def = AbsIntUtil.getFreshMap(mDef);
 		final Map<IProgramVarOrConst, Set<ACTION>> use = AbsIntUtil.getFreshMap(mUse);
 		final Map<IProgramVarOrConst, Set<ACTION>> reachdef = AbsIntUtil.getFreshMap(mReachDef);
@@ -335,6 +336,52 @@ public class DataflowState<ACTION extends IAction>
 	@Override
 	public DataflowState<ACTION> compact() {
 		// dataflow states are always compact
+		return this;
+	}
+
+	@Override
+	public DataflowState<ACTION> renameVariables(final Map<IProgramVarOrConst, IProgramVarOrConst> old2newVars) {
+		if (old2newVars == null || old2newVars.isEmpty()) {
+			return this;
+		}
+		final Set<IProgramVarOrConst> vars = SetOperations.getFreshSet(mVars);
+		final Map<IProgramVarOrConst, Set<ACTION>> def = AbsIntUtil.getFreshMap(mDef);
+		final Map<IProgramVarOrConst, Set<ACTION>> use = AbsIntUtil.getFreshMap(mUse);
+		final Map<IProgramVarOrConst, Set<ACTION>> reachdef = AbsIntUtil.getFreshMap(mReachDef);
+		final Map<IProgramVarOrConst, Set<IcfgLocation>> noWrite = AbsIntUtil.getFreshMap(mNoWrite);
+
+		@SuppressWarnings("unchecked")
+		final Map<IProgramVarOrConst, Object>[] maps = new Map[] { def, use, reachdef, noWrite };
+
+		boolean isChanged = false;
+		for (final Entry<IProgramVarOrConst, IProgramVarOrConst> entry : old2newVars.entrySet()) {
+			final IProgramVarOrConst oldVar = entry.getKey();
+			final IProgramVarOrConst newVar = entry.getValue();
+
+			if (newVar == null) {
+				throw new IllegalArgumentException("Cannot rename " + oldVar + " to null");
+			}
+
+			if (oldVar == newVar) {
+				continue;
+			}
+
+			if (!vars.remove(oldVar)) {
+				continue;
+			}
+			isChanged = true;
+			vars.add(newVar);
+
+			for (final Map<IProgramVarOrConst, Object> map : maps) {
+				if (map.containsKey(oldVar)) {
+					final Object oldVal = map.remove(oldVar);
+					map.put(newVar, oldVal);
+				}
+			}
+		}
+		if (isChanged) {
+			return new DataflowState<>(vars, def, use, reachdef, noWrite);
+		}
 		return this;
 	}
 }

@@ -49,7 +49,7 @@ file_export_version=3.0
 
 #Sun Mar 19 00:13:42 CET 2017
 file_export_version=3.0
-/instance/de.uni_freiburg.informatik.ultimate.plugins.icfgtransformation/TransformationType=MAP_ELIMINATION
+/instance/de.uni_freiburg.informatik.ultimate.plugins.icfgtransformation/TransformationType=MAP_ELIMINATION_NO_EQUALITY
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.icfgtransformation=
 @de.uni_freiburg.informatik.ultimate.plugins.icfgtransformation=0.1.9
 

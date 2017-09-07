@@ -40,10 +40,15 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.AbstractBuchiDifference;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiAccepts;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiComplementFKV;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiDifferenceFKV;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiDifferenceNCSB;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiDifferenceNCSBLazy;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiDifferenceNCSBLazy2;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiDifferenceNCSBLazy3;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiDifferenceNCSBSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiIntersect;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.MultiOptimizationLevelRankingGenerator.FkvOptimization;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoRun;
@@ -67,6 +72,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.Simpli
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.BuchiAutomizerPreferenceInitializer.BuchiComplementationConstruction;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.BuchiAutomizerPreferenceInitializer.NcsbImplementation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryRefinement;
@@ -107,6 +113,7 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 	private final Format mFormat;
 	private final InterpolationTechnique mInterpolation;
 	private BackwardCoveringInformation mBci;
+	private final NcsbImplementation mNcsbImplementation;
 	/**
 	 * Interpolant automaton of this iteration.
 	 */
@@ -121,7 +128,7 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 			final String dumpPath, final Format format, final InterpolationTechnique interpolation,
 			final IUltimateServiceProvider services, final ILogger logger,
 			final SimplificationTechnique simplificationTechnique,
-			final XnfConversionTechnique xnfConversionTechnique) {
+			final XnfConversionTechnique xnfConversionTechnique, final NcsbImplementation ncsbImplementation) {
 		super();
 		mServices = services;
 		mLogger = logger;
@@ -138,6 +145,7 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 		mInterpolation = interpolation;
 		mSimplificationTechnique = simplificationTechnique;
 		mXnfConversionTechnique = xnfConversionTechnique;
+		mNcsbImplementation = ncsbImplementation;
 	}
 
 	public INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> getInterpolAutomatonUsedInRefinement() {
@@ -429,9 +437,31 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 			final BuchiInterpolantAutomatonConstructionStyle setting,
 			final BuchiCegarLoopBenchmarkGenerator benchmarkGenerator) throws AutomataLibraryException {
 		INestedWordAutomaton<LETTER, IPredicate> newAbstraction;
-		final BuchiDifferenceNCSB<LETTER, IPredicate> diff =
-				new BuchiDifferenceNCSB<>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement,
-						abstraction, mInterpolAutomatonUsedInRefinement);
+		final AbstractBuchiDifference<LETTER, IPredicate> diff;
+		switch (mNcsbImplementation) {
+		case INTSET:
+			diff = new BuchiDifferenceNCSBSimple<LETTER, IPredicate>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement,
+					abstraction, mInterpolAutomatonUsedInRefinement);
+			break;
+		case INTSET_LAZY:
+			diff = new BuchiDifferenceNCSBLazy<LETTER, IPredicate>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement,
+					abstraction, mInterpolAutomatonUsedInRefinement);
+			break;
+		case INTSET_LAZY2:
+			diff = new BuchiDifferenceNCSBLazy2<LETTER, IPredicate>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement,
+					abstraction, mInterpolAutomatonUsedInRefinement);
+			break;
+		case INTSET_LAZY3:
+			diff = new BuchiDifferenceNCSBLazy3<LETTER, IPredicate>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement,
+					abstraction, mInterpolAutomatonUsedInRefinement);
+			break;
+		case ORIGINAL:
+			diff = new BuchiDifferenceNCSB<>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement,
+					abstraction, mInterpolAutomatonUsedInRefinement);
+			break;
+		default:
+			throw new AssertionError("illegal value");
+		}
 		finishComputation(mInterpolAutomatonUsedInRefinement, setting);
 		benchmarkGenerator.reportHighestRank(3);
 		assert diff.checkResult(mStateFactoryInterpolAutom);

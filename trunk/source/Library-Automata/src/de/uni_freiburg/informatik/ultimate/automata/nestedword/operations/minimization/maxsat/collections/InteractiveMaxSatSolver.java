@@ -99,7 +99,6 @@ public class InteractiveMaxSatSolver<T> extends GeneralMaxSatSolver<T> {
 					// do not check transitivity for this variable, we have already done that
 					super.setVariable(var, true);
 					break;
-
 				default:
 					throw new IllegalArgumentException("Unknown variable status.");
 			}

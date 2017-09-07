@@ -77,8 +77,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.Simpli
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierSequence;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierSequence.QuantifiedVariables;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Nnf;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Nnf.QuantifierHandling;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.NnfTransformer;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.NnfTransformer.QuantifierHandling;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifierElimination.XnfDer;
 
 /**
@@ -292,7 +292,7 @@ public class Statements2TransFormula {
 			final Term rhsTerm = tlres.getTerm();
 			final Term eq = mScript.term("=", tv, rhsTerm);
 
-			mAssumes = Util.and(mScript, eq, mAssumes);
+			mAssumes = SmtUtils.and(mScript, eq, mAssumes);
 			if (s_ComputeAsserts) {
 				mAsserts = Util.implies(mScript, eq, mAsserts);
 			}
@@ -321,7 +321,7 @@ public class Statements2TransFormula {
 		mOverapproximations.putAll(tlres.getOverappoximations());
 		final Term f = tlres.getTerm();
 
-		mAssumes = Util.and(mScript, f, mAssumes);
+		mAssumes = SmtUtils.and(mScript, f, mAssumes);
 		if (s_ComputeAsserts) {
 			mAsserts = Util.implies(mScript, f, mAsserts);
 		}
@@ -335,8 +335,8 @@ public class Statements2TransFormula {
 			mOverapproximations.putAll(tlres.getOverappoximations());
 			final Term f = tlres.getTerm();
 
-			mAssumes = Util.and(mScript, f, mAssumes);
-			mAsserts = Util.and(mScript, f, mAsserts);
+			mAssumes = SmtUtils.and(mScript, f, mAssumes);
+			mAsserts = SmtUtils.and(mScript, f, mAsserts);
 			assert assertTermContainsNoNull(mAssumes);
 		} else {
 			throw new AssertionError(s_ComputeAssertsNotAvailable);
@@ -432,12 +432,12 @@ public class Statements2TransFormula {
 				mAuxVars.addAll(tlres.getAuxiliaryVars());
 				mOverapproximations.putAll(tlres.getOverappoximations());
 				final Term f = tlres.getTerm();
-				mAssumes = Util.and(mScript, f, mAssumes);
+				mAssumes = SmtUtils.and(mScript, f, mAssumes);
 				if (s_ComputeAsserts) {
 					if (spec.isFree()) {
 						mAsserts = Util.implies(mScript, f, mAsserts);
 					} else {
-						mAsserts = Util.and(mScript, f, mAsserts);
+						mAsserts = SmtUtils.and(mScript, f, mAsserts);
 					}
 				}
 			}
@@ -454,12 +454,12 @@ public class Statements2TransFormula {
 				mAuxVars.addAll(tlres.getAuxiliaryVars());
 				mOverapproximations.putAll(tlres.getOverappoximations());
 				final Term f = tlres.getTerm();
-				mAssumes = Util.and(mScript, f, mAssumes);
+				mAssumes = SmtUtils.and(mScript, f, mAssumes);
 				if (s_ComputeAsserts) {
 					if (spec.isFree()) {
 						mAsserts = Util.implies(mScript, f, mAsserts);
 					} else {
-						mAsserts = Util.and(mScript, f, mAsserts);
+						mAsserts = SmtUtils.and(mScript, f, mAsserts);
 					}
 				}
 			}
@@ -653,7 +653,7 @@ public class Statements2TransFormula {
 	 */
 	private Term eliminateAuxVars(final Term input, final Set<TermVariable> auxVars) {
 		final XnfDer xnfDer = new XnfDer(mMgdScript, mServices);
-		final Term result = Util.and(mScript,
+		final Term result = SmtUtils.and(mScript,
 				xnfDer.tryToEliminate(QuantifiedFormula.EXISTS, SmtUtils.getConjuncts(input), auxVars));
 		return result;
 	}
@@ -668,7 +668,7 @@ public class Statements2TransFormula {
 	 * block is removed.
 	 */
 	private Term skolemize(final Term input, final Set<TermVariable> auxVars) {
-		final Term pnf = new Nnf(mMgdScript, mServices, QuantifierHandling.PULL).transform(input);
+		final Term pnf = new NnfTransformer(mMgdScript, mServices, QuantifierHandling.PULL).transform(input);
 //		2017-04-14 Matthias: I presume that PNF transformer is not needed since NNF transformation
 //		with QuantifierHandling.PULL will also produce PNF.
 //		final Term pnf = new PrenexNormalForm(mMgdScript).transform(nnf);
@@ -745,7 +745,7 @@ public class Statements2TransFormula {
 			}
 		}
 		assert st.getArguments().length == offset;
-		mAssumes = Util.and(mScript, assignments);
+		mAssumes = SmtUtils.and(mScript, assignments);
 		return getTransFormula(false, true, simplicationTechnique);
 	}
 
@@ -781,7 +781,7 @@ public class Statements2TransFormula {
 			}
 		}
 		assert st.getLhs().length == offset;
-		mAssumes = Util.and(mScript, assignments);
+		mAssumes = SmtUtils.and(mScript, assignments);
 		return getTransFormula(false, true, simplicationTechnique);
 	}
 

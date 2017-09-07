@@ -4,7 +4,7 @@
    <extension
          point="de.uni_freiburg.informatik.ultimate.ep.source">
       <impl
-            class="de.uni_freiburg.informatik.ultimate.pea2boogie.main.PeaToBoogie">
+            class="de.uni_freiburg.informatik.ultimate.pea2boogie.PeaToBoogie">
       </impl>
    </extension>
 

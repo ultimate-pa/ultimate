@@ -34,7 +34,7 @@ import java.util.List;
  * @author mostafa.amin93@gmail.com, grugelt@uni-freiburg.de
  * @param <LETTER> symbol
  */
-public class Tree<LETTER> {
+public class Tree<LETTER extends IRankedLetter> {
 
 	private final List<Tree<LETTER>> children;
 	private final LETTER symbol;

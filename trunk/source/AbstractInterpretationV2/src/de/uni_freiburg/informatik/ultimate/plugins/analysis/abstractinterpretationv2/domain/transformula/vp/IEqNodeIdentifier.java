@@ -27,31 +27,35 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.IEqFunctionIdentifier;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ICongruenceClosureElement;
 
 /**
- * 
- * @author Alexander Nutz
  *
- * @param <ARRAYID>
+ * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
+ *
+ * @param <NODE>
+ * @param <FUNCTION>
  */
-public interface IEqNodeIdentifier<NODE, FUNCTION> {
-	 //extends IEqNodeIdentifier<NODE, FUNCTION>
-	boolean isFunction();
+public interface IEqNodeIdentifier<NODE extends IEqNodeIdentifier<NODE, FUNCTION>,
+			FUNCTION extends IEqFunctionIdentifier<NODE, FUNCTION>> extends ICongruenceClosureElement<NODE, FUNCTION> {
 
-	FUNCTION getFunction();
+	@Override
+	boolean isFunctionApplication();
 
-	List<NODE> getArgs();
-	
-	Collection<FUNCTION> getAllFunctions();
-	
+	@Override
+	FUNCTION getAppliedFunction();
+
+	@Override
+	List<NODE> getArguments();
+
 	boolean isLiteral();
-	
+
 	NODE renameVariables(Map<Term, Term> substitutionMapping);
-	
+
 	Term getTerm();
 }

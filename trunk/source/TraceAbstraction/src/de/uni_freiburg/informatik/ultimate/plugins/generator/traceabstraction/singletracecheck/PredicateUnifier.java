@@ -66,7 +66,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.Bin
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.PrenexNormalForm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierSequence;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Cnf;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.CnfTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateCoverageChecker;
@@ -483,7 +483,7 @@ public class PredicateUnifier implements IPredicateUnifier {
 	@Override
 	public Set<IPredicate> cannibalize(final boolean splitNumericEqualities, final Term term) {
 		final Set<IPredicate> result = new HashSet<>();
-		final Term cnf = new Cnf(mMgnScript, mServices).transform(term);
+		final Term cnf = new CnfTransformer(mMgnScript, mServices).transform(term);
 		Term[] conjuncts;
 		if (splitNumericEqualities) {
 			conjuncts = splitNumericEqualities(SmtUtils.getConjuncts(cnf));

@@ -38,6 +38,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -65,10 +66,10 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.Aff
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineTermTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.NotAffineException;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Cnf;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Dnf;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Nnf;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Nnf.QuantifierHandling;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.CnfTransformer;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.DnfTransformer;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.NnfTransformer;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.NnfTransformer.QuantifierHandling;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 
@@ -136,7 +137,7 @@ public final class SmtUtils {
 		} else if (overallTimeMs >= 100) {
 			logger.warn("Spent " + overallTimeMs + "ms on a formula simplification. DAG size of input: "
 					+ new DagSizePrinter(formula) + " DAG size of output " + new DagSizePrinter(simplified));
-			
+
 		}
 		return simplified;
 	}
@@ -149,7 +150,7 @@ public final class SmtUtils {
 		final long sizeAfter = new DAGSize().treesize(simplified);
 		final long endTime = System.nanoTime();
 		final ExtendedSimplificationResult result =
-				new ExtendedSimplificationResult(simplified, endTime - startTime, sizeBefore - sizeAfter);
+				new ExtendedSimplificationResult(simplified, endTime - startTime, sizeBefore - sizeAfter, ((double) sizeAfter) / sizeBefore * 100);
 		return result;
 	}
 
@@ -157,13 +158,15 @@ public final class SmtUtils {
 		private final Term mSimplifiedTerm;
 		private final long mSimplificationTimeNano;
 		private final long mReductionOfTreeSize;
+		private final double mReductionRatioInPercent;
 
 		public ExtendedSimplificationResult(final Term simplifiedTerm, final long simplificationTimeNano,
-				final long reductionOfTreeSize) {
+				final long reductionOfTreeSize, final double reductionRatioPercent) {
 			super();
 			mSimplifiedTerm = simplifiedTerm;
 			mSimplificationTimeNano = simplificationTimeNano;
 			mReductionOfTreeSize = reductionOfTreeSize;
+			mReductionRatioInPercent = reductionRatioPercent;
 		}
 
 		public Term getSimplifiedTerm() {
@@ -177,6 +180,12 @@ public final class SmtUtils {
 		public long getReductionOfTreeSize() {
 			return mReductionOfTreeSize;
 		}
+
+		public double getReductionRatioInPercent() {
+			return mReductionRatioInPercent;
+		}
+		
+		
 
 	}
 
@@ -233,7 +242,7 @@ public final class SmtUtils {
 				conjuncts.add(script.term(functionName, params[i], params[j]));
 			}
 		}
-		return Util.and(script, conjuncts.toArray(new Term[conjuncts.size()]));
+		return SmtUtils.and(script, conjuncts.toArray(new Term[conjuncts.size()]));
 	}
 
 	public static boolean firstParamIsBool(final ApplicationTerm term) {
@@ -252,9 +261,9 @@ public final class SmtUtils {
 	public static Term binaryBooleanEquality(final Script script, final Term lhs, final Term rhs) {
 		assert SmtSortUtils.isBoolSort(lhs.getSort());
 		assert SmtSortUtils.isBoolSort(rhs.getSort());
-		final Term bothTrue = Util.and(script, lhs, rhs);
-		final Term bothFalse = Util.and(script, SmtUtils.not(script, lhs), SmtUtils.not(script, rhs));
-		return Util.or(script, bothTrue, bothFalse);
+		final Term bothTrue = SmtUtils.and(script, lhs, rhs);
+		final Term bothFalse = SmtUtils.and(script, SmtUtils.not(script, lhs), SmtUtils.not(script, rhs));
+		return SmtUtils.or(script, bothTrue, bothFalse);
 	}
 
 	/**
@@ -264,9 +273,9 @@ public final class SmtUtils {
 	public static Term binaryBooleanNotEquals(final Script script, final Term lhs, final Term rhs) {
 		assert SmtSortUtils.isBoolSort(lhs.getSort());
 		assert SmtSortUtils.isBoolSort(rhs.getSort());
-		final Term oneIsTrue = Util.or(script, lhs, rhs);
-		final Term oneIsFalse = Util.or(script, SmtUtils.not(script, lhs), SmtUtils.not(script, rhs));
-		return Util.and(script, oneIsTrue, oneIsFalse);
+		final Term oneIsTrue = SmtUtils.or(script, lhs, rhs);
+		final Term oneIsFalse = SmtUtils.or(script, SmtUtils.not(script, lhs), SmtUtils.not(script, rhs));
+		return SmtUtils.and(script, oneIsTrue, oneIsFalse);
 	}
 
 	/**
@@ -335,7 +344,7 @@ public final class SmtUtils {
 		for (int i = 0; i < lhs.size(); i++) {
 			equalities[i] = binaryEquality(script, lhs.get(i), rhs.get(i));
 		}
-		return Util.and(script, equalities);
+		return SmtUtils.and(script, equalities);
 	}
 
 	/**
@@ -346,7 +355,7 @@ public final class SmtUtils {
 		assert index1.size() == index2.size();
 		final Term lhs = pairwiseEquality(script, index1, index2);
 		final Term rhs = binaryEquality(script, value1, value2);
-		return Util.or(script, not(script, lhs), rhs);
+		return SmtUtils.or(script, not(script, lhs), rhs);
 	}
 
 	/**
@@ -448,11 +457,51 @@ public final class SmtUtils {
 		}
 		return affine.toTerm(script);
 	}
+	
+	/**
+	 * Return product, in affine representation if possible.
+	 *
+	 * @param funcname
+	 *            either "*" or "bvmul".
+	 */
+	public static Term mul(final Script script, final String funcname, final Term... factors) {
+		assert "*".equals(funcname) || "bvmul".equals(funcname);
+		final Term product = script.term(funcname, factors);
+		final AffineTerm affine = (AffineTerm) new AffineTermTransformer(script).transform(product);
+		if (affine.isErrorTerm()) {
+			return product;
+		}
+		return affine.toTerm(script);
+	}
+	
+	public static Term minus(final Script script, final Term... operands) {
+		if (operands.length <= 1) {
+			throw new UnsupportedOperationException("use neg for unary minus");
+		} else {
+			final Term[] newOperands = new Term[operands.length];
+			newOperands[0] = operands[0];
+			for (int i=1; i<operands.length; i++) {
+				newOperands[i] = neg(script, operands[i]);
+			}
+			String funcname;
+			final Sort sort = operands[0].getSort();
+			if (SmtSortUtils.isNumericSort(sort)) {
+				funcname = "+";
+			} else if (SmtSortUtils.isBitvecSort(sort)) {
+				funcname = "bvadd";
+			} else {
+				throw new UnsupportedOperationException("unsupported sort " + sort);
+			}
+			return sum(script, funcname, newOperands);
+		}
+		
+	}
 
 	/**
 	 * Return term that represents negation (unary minus).
 	 */
-	public static Term neg(final Script script, final Sort sort, final Term operand) {
+	public static Term neg(final Script script, final Term operand) {
+		final Sort sort = operand.getSort();
 		assert SmtSortUtils.isNumericSort(sort) || SmtSortUtils.isBitvecSort(sort);
 		if (SmtSortUtils.isNumericSort(sort)) {
 			return script.term("-", operand);
@@ -490,9 +539,20 @@ public final class SmtUtils {
 			return booleanEquality(script, lhs, rhs);
 		} else if (SmtSortUtils.isBitvecSort(lhs.getSort())) {
 			return bitvectorEquality(script, lhs, rhs);
+		} else if (SmtSortUtils.isArraySort(lhs.getSort())) {
+			return arrayEquality(script, lhs, rhs);
 		} else {
-			return script.term("=", lhs, rhs);
+			return script.term("=", CommuhashUtils.sortByHashCode(lhs, rhs));
 		}
+	}
+
+	/**
+	 * Returns the negated equality (not ("=" lhs rhs)), or true resp. false if some simple checks detect validity or
+	 * unsatisfiablity of the equality. We deliberately do not return the "distinct" function from SMT-LIB. In Ultimate
+	 * we prefer explicit negations, because these can help us detect inconsitencies between terms syntactically.
+	 */
+	public static Term distinct(final Script script, final Term lhs, final Term rhs) {
+		return SmtUtils.not(script, binaryEquality(script, lhs, rhs));
 	}
 
 	/**
@@ -508,13 +568,12 @@ public final class SmtUtils {
 		} else if (isFalse(rhs)) {
 			return SmtUtils.not(script, lhs);
 		} else {
-			return script.term("=", lhs, rhs);
+			return script.term("=", CommuhashUtils.sortByHashCode(lhs, rhs));
 		}
 	}
-	
+
 	/**
-	 * Returns the equality ("=" lhs rhs), for inputs of sort BitVec.
-	 * Simplifies if both inputs are literals.
+	 * Returns the equality ("=" lhs rhs), for inputs of sort BitVec. Simplifies if both inputs are literals.
 	 */
 	private static Term bitvectorEquality(final Script script, final Term lhs, final Term rhs) {
 		if (!SmtSortUtils.isBitvecSort(lhs.getSort())) {
@@ -530,15 +589,15 @@ public final class SmtUtils {
 				if (fstbw.equals(sndbw)) {
 					return script.term("true");
 				}
+				return script.term("false");
 			}
 		}
-		return script.term("=", lhs, rhs);
+		return script.term("=", CommuhashUtils.sortByHashCode(lhs, rhs));
 	}
-	
-	
+
 	/**
-	 * Returns the equality ("=" lhs rhs), for inputs of numeric sort (int, real)
-	 * Simplifies if both inputs are literals.
+	 * Returns the equality ("=" lhs rhs), for inputs of numeric sort (int, real) Simplifies if both inputs are
+	 * literals.
 	 */
 	private static Term numericEquality(final Script script, final Term lhs, final Term rhs) {
 		if (!lhs.getSort().isNumericSort()) {
@@ -548,10 +607,10 @@ public final class SmtUtils {
 			throw new UnsupportedOperationException("need numeric sort");
 		}
 		if (!(lhs instanceof ConstantTerm)) {
-			return script.term("=", lhs, rhs);
+			return script.term("=", CommuhashUtils.sortByHashCode(lhs, rhs));
 		}
 		if (!(rhs instanceof ConstantTerm)) {
-			return script.term("=", lhs, rhs);
+			return script.term("=", CommuhashUtils.sortByHashCode(lhs, rhs));
 		}
 		final ConstantTerm lhsConst = (ConstantTerm) lhs;
 		final ConstantTerm rhsConst = (ConstantTerm) rhs;
@@ -564,11 +623,52 @@ public final class SmtUtils {
 		}
 		if (lhsValue.equals(rhsValue)) {
 			return script.term("true");
-		} else {
-			return script.term("false");
 		}
+		return script.term("false");
 	}
 	
+	/**
+	 * Returns the equality ("=" lhs rhs), for inputs of array sort. 
+	 * If the term if of the form ("=" a ("store" a k v)) it is simplified to
+	 * ("=" ("select" a k) v).
+	 * Rationale: the latter term is simpler than the first term for our algorithms
+	 */
+	private static Term arrayEquality(final Script script, final Term lhs, final Term rhs) {
+		if (!lhs.getSort().isArraySort()) {
+			throw new UnsupportedOperationException("need array sort");
+		}
+		if (!rhs.getSort().isArraySort()) {
+			throw new UnsupportedOperationException("need array sort");
+		}
+		if (lhs instanceof ApplicationTerm) {
+			final ApplicationTerm appLhs = (ApplicationTerm) lhs;
+			if (appLhs.getFunction().getName().equals("store")) {
+				if (appLhs.getParameters()[0] == rhs) {
+					return setArrayCellValue(script, appLhs.getParameters()[0], appLhs.getParameters()[1],
+							appLhs.getParameters()[2]);
+				}
+			}
+		}
+		if (rhs instanceof ApplicationTerm) {
+			final ApplicationTerm appRhs = (ApplicationTerm) rhs;
+			if (appRhs.getFunction().getName().equals("store")) {
+				if (appRhs.getParameters()[0] == lhs) {
+					return setArrayCellValue(script, appRhs.getParameters()[0], appRhs.getParameters()[1],
+							appRhs.getParameters()[2]);
+				}
+			}
+		}
+		return script.term("=", CommuhashUtils.sortByHashCode(lhs, rhs));
+	}
+
+	/**
+	 * @return ("=" ("select" array index) value)
+	 */
+	private static Term setArrayCellValue(final Script script, final Term array, final Term index, final Term value) {
+		final Term select = script.term("select", array, index);
+		return SmtUtils.binaryEquality(script, select, value);
+	}
+
 	public static List<Term> substitutionElementwise(final List<Term> subtituents, final Substitution subst) {
 		final List<Term> result = new ArrayList<>();
 		for (int i = 0; i < subtituents.size(); i++) {
@@ -730,12 +830,134 @@ public final class SmtUtils {
 		return freeVars;
 	}
 
+	public static Term and(final Script script, final Term... terms) {
+		return Util.and(script, terms);
+	}
+
 	public static Term and(final Script script, final Collection<Term> terms) {
 		return Util.and(script, terms.toArray(new Term[terms.size()]));
+	}
+	
+	public static Term or(final Script script, final Term... terms) {
+		return Util.or(script, terms);
 	}
 
 	public static Term or(final Script script, final Collection<Term> terms) {
 		return Util.or(script, terms.toArray(new Term[terms.size()]));
+	}
+	
+	public static Term and_NewVersion(final Script script, final Collection<Term> terms) {
+		final Set<Term> resultJuncts = new HashSet<>();
+		final Set<Term> negativeJuncts = new HashSet<>();
+		final String connective = "and";
+		final Predicate<Term> isNeutral = (x -> SmtUtils.isTrue(x));
+		final Predicate<Term> isAbsorbing = (x -> SmtUtils.isFalse(x));
+		final boolean resultIsAbsorbingElement = recursiveAndOrSimplificationHelper(script, connective, isNeutral,
+				isAbsorbing, terms, resultJuncts, negativeJuncts);
+		if (resultIsAbsorbingElement) {
+			return script.term("false");
+		} else {
+			if (resultJuncts.isEmpty()) {
+				return script.term("true");
+			} else if (resultJuncts.size() == 1) {
+				return resultJuncts.iterator().next();
+			} else {
+				return script.term(connective, resultJuncts.toArray(new Term[resultJuncts.size()]));
+			}
+		}
+	}
+	
+	public static Term or_NewVersion(final Script script, final Collection<Term> terms) {
+		final Set<Term> resultJuncts = new HashSet<>();
+		final Set<Term> negativeJuncts = new HashSet<>();
+		final String connective = "or";
+		final Predicate<Term> isNeutral = (x -> SmtUtils.isFalse(x));
+		final Predicate<Term> isAbsorbing = (x -> SmtUtils.isTrue(x));
+		final boolean resultIsAbsorbingElement = recursiveAndOrSimplificationHelper(script, connective, isNeutral,
+				isAbsorbing, terms, resultJuncts, negativeJuncts);
+		if (resultIsAbsorbingElement) {
+			return script.term("true");
+		} else {
+			if (resultJuncts.isEmpty()) {
+				return script.term("false");
+			} else if (resultJuncts.size() == 1) {
+				return resultJuncts.iterator().next();
+			} else {
+				return script.term(connective, resultJuncts.toArray(new Term[resultJuncts.size()]));
+			}
+		}
+	}
+
+	/**
+	 * Auxiliary method for constructing simplified versions of conjunctions and disjunctions.
+	 * Does the following simplications
+	 * <ul>
+	 *   <li> if some junct is neutral element, we can omit it
+	 *   (e.g., we can drop "true" from conjunctions)
+	 *   <li> if some junct is absorbing element, result is equivalent to absorbing element
+	 *   (e.g., "x=0 /\ false" is equivalent to "false")
+	 *   <li> if some junct is has the same connective, we can flatten it
+	 *   (e.g., "((A /\ B) /\ C)" is equivalent to "(A /\ B /\ C)")
+	 *   <li> if some junct and its negation occur, the result is equivalent to the absorbing element
+	 *   (e.g., "A /\ (not A)" is equivalent to "false")
+	 *   <li> if some junct occurs twice we can drop one occurrence.
+	 *   (e.g., "A /\ A" is equivalent to "A")
+	 * </ul>
+	 * @param connective either "and" or "or"
+	 * @param isNeutral {@link Predicate} that is true iff input is the neutral element wrt. the connective
+	 * 			("true" is neutral for "and", "false" is neutral for "or")
+	 * @param isAbsorbing {@link Predicate} that is true iff input is the absorbing element wrt. the connective
+	 * 			("false" is absorbing for "and", "true" is absorbing for "or")
+	 * @param inputJuncts disjuncts or conjuncts that are the input to this simplification
+	 * @param resultJuncts disjuncts or conjuncts that will belong to the final output
+	 * @param negatedJuncts arguments of juncts whose connective is "not"
+	 * @return true iff we detected that the result is equivalent to the absorbing element of the connective
+	 */
+	private static boolean recursiveAndOrSimplificationHelper(final Script script, final String connective,
+			final Predicate<Term> isNeutral, final Predicate<Term> isAbsorbing, final Collection<Term> inputJuncts,
+			final Set<Term> resultJuncts, final Set<Term> negatedJuncts) {
+		for (final Term junct : inputJuncts) {
+			if (isNeutral.test(junct)) {
+				// do nothing, junct will not contribute to result
+				continue;
+			} else if (isAbsorbing.test(junct)) {
+				// result will be equivalent to absorbing element
+				return true;
+			} else {
+				if (junct instanceof ApplicationTerm) {
+					final ApplicationTerm appTerm = (ApplicationTerm) junct;
+					if (appTerm.getFunction().getName().equals(connective)) {
+						// current junct has same connective as result
+						// descend recusively to check and add its subjuncts
+						final boolean resultIsAbsorbingElement = recursiveAndOrSimplificationHelper(script, connective,
+								isNeutral, isAbsorbing, Arrays.asList(appTerm.getParameters()), resultJuncts, negatedJuncts);
+						if (resultIsAbsorbingElement) {
+							return true;
+						} else {
+							// the recursive all added all subjuncts,
+							// no need to add the junct itself
+							continue;
+						}
+					} else if (appTerm.getFunction().getName().equals("not")) {
+						if (resultJuncts.contains(appTerm.getParameters()[0])) {
+							// we already have the argument of this not term in the resultJuncts, 
+							// hence the result will be equivalent to the absorbing element
+							return true;
+						} else {
+							negatedJuncts.add(appTerm.getParameters()[0]);
+						}
+					}
+				} 
+			}
+			if (negatedJuncts.contains(junct)) {
+				// we already have the negation of this junct in the resultJuncts, 
+				// hence the result will be equivalent to the absorbing element
+				return true;
+			} else {
+				resultJuncts.add(junct);
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -852,10 +1074,10 @@ public final class SmtUtils {
 		final Term result;
 		switch (funcname) {
 		case "and":
-			result = Util.and(script, params);
+			result = SmtUtils.and(script, params);
 			break;
 		case "or":
-			result = Util.or(script, params);
+			result = SmtUtils.or(script, params);
 			break;
 		case "not":
 			if (params.length != 1) {
@@ -873,7 +1095,7 @@ public final class SmtUtils {
 			if (params.length != 2) {
 				throw new UnsupportedOperationException("not yet implemented");
 			}
-			result = SmtUtils.not(script, binaryEquality(script, params[0], params[1]));
+			result = SmtUtils.distinct(script, params[0], params[1]);
 			break;
 		case "=>":
 			result = Util.implies(script, params);
@@ -887,6 +1109,18 @@ public final class SmtUtils {
 		case "+":
 		case "bvadd":
 			result = SmtUtils.sum(script, funcname, params);
+			break;
+		case "-":
+		case "bvminus":
+			if (params.length == 1) {
+				result = SmtUtils.neg(script, params[0]);
+			} else {
+				result = SmtUtils.minus(script, params);
+			}
+			break;
+		case "*":
+		case "bvmul":
+			result = SmtUtils.mul(script, funcname, params);
 			break;
 		case "div":
 			if (params.length != 2) {
@@ -909,48 +1143,48 @@ public final class SmtUtils {
 			}
 			result = comparison(script, funcname, params[0], params[1]);
 			break;
-		case "store": {
-			final Term array = params[0];
-			final Term idx = params[1];
-			final Term nestedIdx = getArrayStoreIdx(array);
-			if (nestedIdx != null) {
-				// Check for store-over-store
-				if (nestedIdx.equals(idx)) {
-					// Found store-over-store => ignore inner store
-					final ApplicationTerm appArray = (ApplicationTerm) array;
-					result = script.term(funcname,
-							appArray.getParameters()[0], params[1], params[2]);
-				} else {
-					result = script.term(funcname, indices, null, params);
-				} 
-			} else {
-				result = script.term(funcname, indices, null, params);
-			}
-			break;
-		}
-		case "select": {
-			final Term array = params[0];
-			final Term idx = params[1];
-			final Term nestedIdx = getArrayStoreIdx(array);
-			if (nestedIdx != null) {
-				// Check for store-over-store
-				if (nestedIdx.equals(idx)) {
-					// Found store-over-store => ignore inner store
-					final ApplicationTerm appArray = (ApplicationTerm) array;
-					// => transform into value
-					result = appArray.getParameters()[2];
-				} else {
-					result = script.term(funcname, indices, null, params);
-				} 
-			} else {
-				result = script.term(funcname, indices, null, params);
-			}
-			break;
-		}
+		// case "store": {
+		// final Term array = params[0];
+		// final Term idx = params[1];
+		// final Term nestedIdx = getArrayStoreIdx(array);
+		// if (nestedIdx != null) {
+		// // Check for store-over-store
+		// if (nestedIdx.equals(idx)) {
+		// // Found store-over-store => ignore inner store
+		// final ApplicationTerm appArray = (ApplicationTerm) array;
+		// result = script.term(funcname,
+		// appArray.getParameters()[0], params[1], params[2]);
+		// } else {
+		// result = script.term(funcname, indices, null, params);
+		// }
+		// } else {
+		// result = script.term(funcname, indices, null, params);
+		// }
+		// break;
+		// }
+		// case "select": {
+		// final Term array = params[0];
+		// final Term idx = params[1];
+		// final Term nestedIdx = getArrayStoreIdx(array);
+		// if (nestedIdx != null) {
+		// // Check for store-over-store
+		// if (nestedIdx.equals(idx)) {
+		// // Found store-over-store => ignore inner store
+		// final ApplicationTerm appArray = (ApplicationTerm) array;
+		// // => transform into value
+		// result = appArray.getParameters()[2];
+		// } else {
+		// result = script.term(funcname, indices, null, params);
+		// }
+		// } else {
+		// result = script.term(funcname, indices, null, params);
+		// }
+		// break;
+		// }
 		case "zero_extend":
 		case "extract":
 		case "bvsub":
-		case "bvmul":
+//		case "bvmul":
 		case "bvudiv":
 		case "bvurem":
 		case "bvsdiv":
@@ -982,16 +1216,15 @@ public final class SmtUtils {
 		}
 		return result;
 	}
-	
+
 	/**
-	 * @return idx if array has form (store a idx v) return null if array has
-	 * a different form
+	 * @return idx if array has form (store a idx v) return null if array has a different form
 	 */
 	private final static Term getArrayStoreIdx(final Term array) {
 		if (array instanceof ApplicationTerm) {
 			final ApplicationTerm appArray = (ApplicationTerm) array;
 			final FunctionSymbol arrayFunc = appArray.getFunction();
-			if (arrayFunc.isIntern() &&	arrayFunc.getName().equals("store")) {
+			if (arrayFunc.isIntern() && arrayFunc.getName().equals("store")) {
 				// (store a i v)
 				return appArray.getParameters()[1];
 			}
@@ -1043,13 +1276,12 @@ public final class SmtUtils {
 				final BigInteger bigIntDivident = toInt(affineDivident.getConstant());
 				final BigInteger modulus = BoogieUtils.euclideanMod(bigIntDivident, bigIntDivisor);
 				return script.numeral(modulus);
+			}
+			final Term simplifiedNestedModulo = simplifyNestedModulo(script, divident, bigIntDivisor);
+			if (simplifiedNestedModulo == null) {
+				// no simplification was possible, continue
 			} else {
-				final Term simplifiedNestedModulo = simplifyNestedModulo(script, divident, bigIntDivisor);
-				if (simplifiedNestedModulo == null) {
-					// no simplification was possible, continue
-				} else {
-					return simplifiedNestedModulo;
-				}
+				return simplifiedNestedModulo;
 			}
 			final AffineTerm moduloApplied =
 					AffineTerm.applyModuloToAllCoefficients(script, affineDivident, bigIntDivisor);
@@ -1328,7 +1560,7 @@ public final class SmtUtils {
 			result = new SimplifyBdd(services, mgdScript).transformToDNF(term);
 			break;
 		case BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION:
-			result = new Dnf(mgdScript, services).transform(term);
+			result = new DnfTransformer(mgdScript, services).transform(term);
 			break;
 		default:
 			throw new AssertionError(ERROR_MESSAGE_UNKNOWN_ENUM_CONSTANT + xnfConversionTechnique);
@@ -1340,7 +1572,7 @@ public final class SmtUtils {
 	 * @return logically equivalent term in negation normal form (NNF)
 	 */
 	public static Term toNnf(final IUltimateServiceProvider services, final ManagedScript mgdScript, final Term term) {
-		return new Nnf(mgdScript, services, QuantifierHandling.PULL).transform(term);
+		return new NnfTransformer(mgdScript, services, QuantifierHandling.PULL).transform(term);
 	}
 
 	/**
@@ -1354,7 +1586,7 @@ public final class SmtUtils {
 			result = new SimplifyBdd(services, mgdScript).transformToCNF(term);
 			break;
 		case BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION:
-			result = new Cnf(mgdScript, services).transform(term);
+			result = new CnfTransformer(mgdScript, services).transform(term);
 			break;
 		default:
 			throw new AssertionError(ERROR_MESSAGE_UNKNOWN_ENUM_CONSTANT + xnfConversionTechnique);

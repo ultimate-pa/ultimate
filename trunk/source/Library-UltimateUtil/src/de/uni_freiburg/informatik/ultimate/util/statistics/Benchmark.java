@@ -37,7 +37,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.util.Utils;
+import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.SimpleCsvProvider;
@@ -421,32 +421,32 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 				final String heapPrefix = memoryDelta < 0 ? "-" : "";
 				memoryDelta = Math.abs(memoryDelta);
 				sb.append(String.format(" Allocated memory was %s in the beginning and %s in the end (delta: %s%s).",
-						Utils.humanReadableByteCount(mStartMemorySizeBytes, true),
-						Utils.humanReadableByteCount(mStopMemorySizeBytes, true), heapPrefix,
-						Utils.humanReadableByteCount(memoryDelta, true)));
+						CoreUtil.humanReadableByteCount(mStartMemorySizeBytes, true),
+						CoreUtil.humanReadableByteCount(mStopMemorySizeBytes, true), heapPrefix,
+						CoreUtil.humanReadableByteCount(memoryDelta, true)));
 			} else {
 				sb.append(String.format(" Allocated memory is still %s.",
-						Utils.humanReadableByteCount(mStartMemorySizeBytes, true)));
+						CoreUtil.humanReadableByteCount(mStartMemorySizeBytes, true)));
 			}
 
 			if (freeMemoryDelta != 0) {
 				sb.append(String.format(" Free memory was %s in the beginning and %s in the end (delta: %s%s).",
-						Utils.humanReadableByteCount(mStartMemoryFreeSizeBytes, true),
-						Utils.humanReadableByteCount(mStopMemoryFreeSizeBytes, true), freeMemoryDeltaPrefix,
-						Utils.humanReadableByteCount(freeMemoryDelta, true)));
+						CoreUtil.humanReadableByteCount(mStartMemoryFreeSizeBytes, true),
+						CoreUtil.humanReadableByteCount(mStopMemoryFreeSizeBytes, true), freeMemoryDeltaPrefix,
+						CoreUtil.humanReadableByteCount(freeMemoryDelta, true)));
 			} else {
 				sb.append(String.format(" Free memory is still %s.",
-						Utils.humanReadableByteCount(mStartMemoryFreeSizeBytes, true)));
+						CoreUtil.humanReadableByteCount(mStartMemoryFreeSizeBytes, true)));
 			}
 
 			if (peakMemoryDelta != 0) {
 				sb.append(String.format(" Peak memory consumption was %s%s.", peakMemoryDeltaPrefix,
-						Utils.humanReadableByteCount(peakMemoryDelta, true)));
+						CoreUtil.humanReadableByteCount(peakMemoryDelta, true)));
 			} else {
 				sb.append(" There was no memory consumed.");
 			}
 
-			sb.append(String.format(" Max. memory is %s.", Utils.humanReadableByteCount(mMaxMemorySizeBytes, true)));
+			sb.append(String.format(" Max. memory is %s.", CoreUtil.humanReadableByteCount(mMaxMemorySizeBytes, true)));
 			return sb.toString();
 
 		}

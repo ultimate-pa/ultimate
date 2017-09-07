@@ -1,3 +1,4 @@
+//#termcomp16-someonesaidyes
 /*
  * Program from Fig.1 of
  * 2013CAV - Brockschmidt,Cook,Fuhs - Better termination proving through cooperation

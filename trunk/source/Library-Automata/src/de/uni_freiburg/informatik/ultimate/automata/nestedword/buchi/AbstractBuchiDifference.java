@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.BinaryNwaOperation;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
@@ -55,6 +56,7 @@ public abstract class AbstractBuchiDifference<LETTER, STATE>
 		extends BinaryNwaOperation<LETTER, STATE, IStateFactory<STATE>> {
 	protected final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mFstOperand;
 	protected final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mSndOperand;
+	protected INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mSndComplemented;
 	protected BuchiIntersectNwa<LETTER, STATE> mIntersect;
 	protected NestedWordAutomatonReachableStates<LETTER, STATE> mResult;
 
@@ -77,11 +79,6 @@ public abstract class AbstractBuchiDifference<LETTER, STATE>
 	}
 
 	/**
-	 * @return The second operand complemented.
-	 */
-	public abstract INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> getSndComplemented();
-
-	/**
 	 * Constructs the difference using the complement of the second operand.
 	 * 
 	 * @throws AutomataLibraryException
@@ -101,13 +98,22 @@ public abstract class AbstractBuchiDifference<LETTER, STATE>
 	}
 
 	@Override
-	public INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> getFirstOperand() {
+	public final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> getFirstOperand() {
 		return mFstOperand;
 	}
 
 	@Override
-	public INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> getSecondOperand() {
+	public final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> getSecondOperand() {
 		return mSndOperand;
+	}
+	
+	public final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> getSndComplemented() {
+		return mSndComplemented;
+	}
+	
+	@Override
+	public INestedWordAutomaton<LETTER, STATE> getResult() {
+		return mResult;
 	}
 
 	@Override

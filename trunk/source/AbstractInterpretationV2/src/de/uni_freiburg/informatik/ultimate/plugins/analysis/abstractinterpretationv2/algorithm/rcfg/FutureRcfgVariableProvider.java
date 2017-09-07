@@ -47,8 +47,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 
 /**
  *
@@ -82,9 +80,9 @@ public class FutureRcfgVariableProvider<STATE extends IAbstractState<STATE, IPro
 
 	@Override
 	public STATE defineVariablesAfter(final ACTION action, final STATE localPreState, final STATE hierachicalPreState) {
-		if (action instanceof Call) {
+		if (action instanceof ICallAction) {
 			return defineVariablesAfterCall(action, localPreState);
-		} else if (action instanceof Return) {
+		} else if (action instanceof IReturnAction) {
 			return defineVariablesAfterReturn(action, localPreState, hierachicalPreState);
 		} else {
 			// nothing changes

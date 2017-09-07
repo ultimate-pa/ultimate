@@ -1,3 +1,4 @@
+//#termcomp16-someonesaidyes
 /*
  * Program used in the experimental evaluation of the following paper.
  * 2010SAS - Alias,Darte,Feautrier,Gonnord, Multi-dimensional Rankings, Program Termination, and Complexity Bounds of Flowchart Programs

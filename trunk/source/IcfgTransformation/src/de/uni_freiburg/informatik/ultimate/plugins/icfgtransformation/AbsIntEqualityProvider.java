@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.EqualityAnalysisResult;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.IEqualityAnalysisResultProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.EqState;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.IEqualityProvidingState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.AbstractInterpreter;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.IAbstractInterpretationResult;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
@@ -54,7 +54,9 @@ public class AbsIntEqualityProvider implements IEqualityAnalysisResultProvider<I
 
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
-	private Map<IcfgLocation, Set<EqState<IcfgEdge>>> mLoc2States;
+	private Map<IcfgLocation, Set<IEqualityProvidingState>> mLoc2States;
+	
+	private boolean mPreprocessed;
 
 	public AbsIntEqualityProvider(final IUltimateServiceProvider services) {
 		mServices = services;
@@ -64,15 +66,23 @@ public class AbsIntEqualityProvider implements IEqualityAnalysisResultProvider<I
 	@Override
 	public void preprocess(final IIcfg<?> icfg) {
 		final IProgressAwareTimer timer = mServices.getProgressMonitorService();
-		final IAbstractInterpretationResult<EqState<IcfgEdge>, IcfgEdge, IProgramVarOrConst, IcfgLocation> absIntResult =
-				AbstractInterpreter.runFutureEqualityDomain(icfg, timer, mServices, false, mLogger);
-		mLoc2States = absIntResult.getLoc2States();
+		
+		final IAbstractInterpretationResult<? extends IEqualityProvidingState, 
+				IcfgEdge, IProgramVarOrConst, IcfgLocation> absIntResult =
+//				AbstractInterpreter.runFutureSMTDomain(icfg, timer, mServices, true, mLogger);
+				AbstractInterpreter.runFutureEqualityDomain(icfg, timer, mServices, true, mLogger);
+		final Map<IcfgLocation, ?> loc2states = absIntResult.getLoc2States();
+		mLoc2States = (Map<IcfgLocation, Set<IEqualityProvidingState>>) loc2states;
+		assert mLoc2States != null : "There was no AbsInt result";
+		assert !mPreprocessed;
+		mPreprocessed = true;
 	}
 
 	@Override
 	public EqualityAnalysisResult getAnalysisResult(final IcfgLocation location,
 			final Set<Doubleton<Term>> doubletons) {
-		final Set<EqState<IcfgEdge>> states = mLoc2States.get(location);
+		assert mPreprocessed;
+		final Set<IEqualityProvidingState> states = mLoc2States.get(location);
 		if (states == null) {
 			return new EqualityAnalysisResult(doubletons);
 		}
@@ -92,6 +102,24 @@ public class AbsIntEqualityProvider implements IEqualityAnalysisResultProvider<I
 			}
 		}
 		return new EqualityAnalysisResult(equal, distinct, unknown);
+	}
+
+	@Override
+	public IEqualityProvidingState getEqualityProvidingStateForLocationSet(
+			final Set<IcfgLocation> locSet) {
+		assert mPreprocessed;
+		IEqualityProvidingState result = null;
+
+		for (IcfgLocation loc : locSet) {
+			if (!mLoc2States.containsKey(loc)) {
+				continue;
+			}
+			final IEqualityProvidingState unionStateForCurrentLoc = 
+					mLoc2States.get(loc).stream().reduce((s1, s2) -> s1.union(s2)).get();
+			result = result == null ? unionStateForCurrentLoc : result.union(unionStateForCurrentLoc);
+		}
+
+		return result;
 	}
 
 }

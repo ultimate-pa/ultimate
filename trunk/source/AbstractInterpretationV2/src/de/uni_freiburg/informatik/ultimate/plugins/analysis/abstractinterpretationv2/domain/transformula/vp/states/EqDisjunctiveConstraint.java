@@ -1,3 +1,29 @@
+/*
+ * Copyright (C) 2017 Alexander Nutz (nutz@informatik.uni-freiburg.de)
+ * Copyright (C) 2017 University of Freiburg
+ *
+ * This file is part of the ULTIMATE AbstractInterpretationV2 plug-in.
+ *
+ * The ULTIMATE AbstractInterpretationV2 plug-in is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * The ULTIMATE AbstractInterpretationV2 plug-in is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the ULTIMATE AbstractInterpretationV2 plug-in. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Additional permission under GNU GPL version 3 section 7:
+ * If you modify the ULTIMATE AbstractInterpretationV2 plug-in, or any covered work, by linking
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission
+ * to convey the resulting work.
+ */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states;
 
 import java.util.Collection;
@@ -10,41 +36,47 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.IEqNodeIdentifier;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainSymmetricPair;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.IEqFunctionIdentifier;
 
+/**
+ *
+ * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
+ *
+ * @param <ACTION>
+ * @param <NODE>
+ * @param <FUNCTION>
+ */
 public class EqDisjunctiveConstraint<
-				ACTION extends IIcfgTransition<IcfgLocation>, 
-				NODE extends IEqNodeIdentifier<NODE, FUNCTION>, 
-				FUNCTION extends IEqFunctionIdentifier<FUNCTION>>  {
-//     			 	extends AbstractMultiState<EqConstraint<ACTION, NODE, FUNCTION>, IProgramVarOrConst>{
+				ACTION extends IIcfgTransition<IcfgLocation>,
+				NODE extends IEqNodeIdentifier<NODE, FUNCTION>,
+				FUNCTION extends IEqFunctionIdentifier<NODE, FUNCTION>>  {
 
 	Set<EqConstraint<ACTION, NODE, FUNCTION>> mConstraints;
 
 	private final EqConstraintFactory<ACTION, NODE, FUNCTION> mFactory;
 
-	public EqDisjunctiveConstraint(Collection<EqConstraint<ACTION, NODE, FUNCTION>> constraintList, 
-			EqConstraintFactory<ACTION, NODE, FUNCTION> factory) {
-		assert !constraintList.stream().filter(cons -> (cons instanceof EqBottomConstraint)).findAny().isPresent() 
+	public EqDisjunctiveConstraint(final Collection<EqConstraint<ACTION, NODE, FUNCTION>> constraintList,
+			final EqConstraintFactory<ACTION, NODE, FUNCTION> factory) {
+		assert !constraintList.stream().filter(cons -> (cons instanceof EqBottomConstraint)).findAny().isPresent()
 		  : "we filter out EqBottomConstraints up front, right? (could also do it here..)";
-		assert !constraintList.stream().filter(cons -> !cons.isFrozen()).findAny().isPresent() 
+		assert !constraintList.stream().filter(cons -> !cons.isFrozen()).findAny().isPresent()
 		  : "all the constraints inside a disjunctive constraint should be frozen";
 		mConstraints = new HashSet<>(constraintList);
 		mFactory = factory;
 	}
 
 	public boolean isBottom() {
-//		return mConstraints.stream().map(conjConstraint -> conjConstraint.isBottom()).reduce((a, b) -> a && b).get();
 		return mConstraints.isEmpty();
 	}
 
-	public EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> renameVariables(Map<Term, Term> substitutionMapping) {
+	public EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> renameVariables(final Map<Term, Term> substitutionMapping) {
 		final Collection<EqConstraint<ACTION, NODE, FUNCTION>> constraintList = new HashSet<>();
-		for (EqConstraint<ACTION, NODE, FUNCTION> constraint : mConstraints) {
+		for (final EqConstraint<ACTION, NODE, FUNCTION> constraint : mConstraints) {
 			final EqConstraint<ACTION, NODE, FUNCTION> newConstraint = mFactory.unfreeze(constraint);
 			newConstraint.renameVariables(substitutionMapping);
 			newConstraint.freeze();
@@ -54,10 +86,11 @@ public class EqDisjunctiveConstraint<
 	}
 
 
-	public EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> projectExistentially(Set<TermVariable> varsToProjectAway) {
+	public EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> projectExistentially(
+			final Collection<TermVariable> varsToProjectAway) {
 		return mFactory.getDisjunctiveConstraint(
 				mConstraints.stream()
-					.map(conjConstraint -> conjConstraint.projectExistentially(varsToProjectAway))
+					.map(conjConstraint -> mFactory.projectExistentially(varsToProjectAway, conjConstraint))
 					.collect(Collectors.toSet()));
 	}
 
@@ -70,70 +103,30 @@ public class EqDisjunctiveConstraint<
 	 * @return
 	 */
 	public EqConstraint<ACTION, NODE, FUNCTION> flatten() {
-		
-		Set<VPDomainSymmetricPair<NODE>> elementEqualities = null;
-		Set<VPDomainSymmetricPair<NODE>> elementDisequalities = null;
-		Set<VPDomainSymmetricPair<FUNCTION>> functionEqualities = null;
-		Set<VPDomainSymmetricPair<FUNCTION>> functionDisequalities = null;
-
-		for (EqConstraint<ACTION, NODE, FUNCTION> constraint : mConstraints) {
-
-			final Set<VPDomainSymmetricPair<NODE>> currentElementEqualities = constraint.getAllElementEqualities();
-			if (elementEqualities == null) {
-				elementEqualities = currentElementEqualities;
-			} else {
-				elementEqualities.retainAll(currentElementEqualities);
-			}
-			
-			final Set<VPDomainSymmetricPair<NODE>> currentElementDisequalities = 
-					constraint.getAllElementDisequalities();
-			if (elementDisequalities == null) {
-				elementDisequalities = currentElementDisequalities;
-			} else {
-				elementDisequalities.retainAll(currentElementDisequalities);
-			}
-			
-			final Set<VPDomainSymmetricPair<FUNCTION>> currentFunctionEqualities = constraint.getAllFunctionEqualities();
-			if (functionEqualities == null) {
-				functionEqualities = currentFunctionEqualities;
-			} else {
-				functionEqualities.retainAll(currentFunctionEqualities);
-			}
-			
-			final Set<VPDomainSymmetricPair<FUNCTION>> currentFunctionDisequalities = 
-					constraint.getAllFunctionDisequalities();
-			if (functionDisequalities == null) {
-				functionDisequalities = currentFunctionDisequalities;
-			} else {
-				functionDisequalities.retainAll(currentFunctionDisequalities);
-			}
+		if (mConstraints.size() == 0) {
+			return mFactory.getBottomConstraint();
 		}
-		
-		EqConstraint<ACTION, NODE, FUNCTION> newConstraint = mFactory.getEmptyConstraint();
-		
-		for (VPDomainSymmetricPair<NODE> elEq : elementEqualities) {
-			newConstraint = mFactory.addEqualityFlat(elEq.getFirst(), elEq.getSecond(), newConstraint);
+		if (mConstraints.size() == 1) {
+			return mConstraints.iterator().next();
 		}
-		for (VPDomainSymmetricPair<NODE> elDeq : elementDisequalities) {
-			newConstraint = mFactory.addDisequalityFlat(elDeq.getFirst(), elDeq.getSecond(), newConstraint);
-		}
-		for (VPDomainSymmetricPair<FUNCTION> fnEq : functionEqualities) {
-			newConstraint = mFactory.addFunctionEqualityFlat(fnEq.getFirst(), fnEq.getSecond(), newConstraint);
-		}
-		for (VPDomainSymmetricPair<FUNCTION> fnDeq : functionDisequalities) {
-			newConstraint = mFactory.addFunctionDisequalityFlat(fnDeq.getFirst(), fnDeq.getSecond(), newConstraint);
-		}
-		
-		return newConstraint;
+		return mConstraints.stream().reduce((c1, c2) -> c1.join(c2)).get();
 	}
 
-	public List<EqState<ACTION>> toEqStates() {
-//		EqConstraint<ACTION, NODE, FUNCTION> cons = mConstraints.iterator().next();
-//		Object st = mEqConstraintFactory.getEqStateFactory().getEqState(cons, cons.getPvocs());
-		final IIcfgSymbolTable symbolTable = mFactory.getEqStateFactory().getSymbolTable();
+	/**
+	 * Convert this EqDisjunctiveConstraints to a corresponding set of EqStates. (Assumes that all the TermVariables
+	 *  and nullary ApplicationTerms in this.mConstraints have a symbol table entry.)
+	 * @param variablesThatTheFrameworkLikesToSee
+	 * @return
+	 */
+	public List<EqState<ACTION>> toEqStates(final Set<IProgramVarOrConst> variablesThatTheFrameworkLikesToSee) {
+//		/*
+//		 *  The AbstractInterpretation framework demands that all EqStates here have the same Pvocs
+//		 *  Thus we set the Pvocs of all the disjunct-states to be the union of the pvocs that each
+//		 *  disjunct-state/constraint talks about.
+		  // EDIT: the variables are now determined externally (by the oldstate of the post operator..)
+//		 */
 		return mConstraints.stream()
-			.map(cons -> mFactory.getEqStateFactory().getEqState(cons, 
-					cons.getPvocs(symbolTable)))
+			.map(cons -> mFactory.getEqStateFactory().getEqState(cons, variablesThatTheFrameworkLikesToSee))
 			.collect(Collectors.toList());
 	}
 
@@ -141,72 +134,33 @@ public class EqDisjunctiveConstraint<
 		return mConstraints.isEmpty();
 	}
 
-	public Term getTerm(Script script) {
-		List<Term> disjuncts = mConstraints.stream().map(cons -> cons.getTerm(script)).collect(Collectors.toList());
-		return script.term("or", disjuncts.toArray(new Term[disjuncts.size()]));
+	public Term getTerm(final Script script) {
+		final List<Term> disjuncts = mConstraints.stream()
+				.map(cons -> cons.getTerm(script)).collect(Collectors.toList());
+		return SmtUtils.or(script, disjuncts);
 	}
 
-	public boolean areEqual(NODE node1, NODE node2) {
+	public boolean areEqual(final NODE node1, final NODE node2) {
 		return mConstraints.stream().map(cons -> cons.areEqual(node1, node2)).reduce((a, b) -> (a || b)).get();
 	}
 
-	public boolean areUnequal(NODE node1, NODE node2) {
+	public boolean areUnequal(final NODE node1, final NODE node2) {
 		return mConstraints.stream().map(cons -> cons.areUnequal(node1, node2)).reduce((a, b) -> (a || b)).get();
 	}
 
-	public boolean areEqual(FUNCTION func1, FUNCTION func2) {
+	public boolean areEqual(final FUNCTION func1, final FUNCTION func2) {
 		return mConstraints.stream().map(cons -> cons.areEqual(func1, func2)).reduce((a, b) -> (a || b)).get();
 	}
 
-	public boolean areUnequal(FUNCTION func1, FUNCTION func2) {
+	public boolean areUnequal(final FUNCTION func1, final FUNCTION func2) {
 		return mConstraints.stream().map(cons -> cons.areUnequal(func1, func2)).reduce((a, b) -> (a || b)).get();
 	}
-	
+
 	@Override
 	public String toString() {
 		if (mConstraints.isEmpty()) {
 			return "EmptyDisjunction/False";
 		}
-		
-//		final StringBuilder sb = new StringBuilder();
-//		for (EqConstraint<ACTION, NODE, FUNCTION> c : mConstraints) {
-//			sb.append(str)
-//		}
 		return "\\/ " + mConstraints.toString();
 	}
-
-//	/**
-//	 * Only does the cast, other than that just calls @see AbstractMultistate.union
-//	 * 
-//	 */
-//	@Override
-//	public EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> union(
-//			AbstractMultiState<EqConstraint<ACTION, NODE, FUNCTION>, IProgramVarOrConst> other) {
-//		assert other instanceof EqDisjunctiveConstraint;
-//		return (EqDisjunctiveConstraint<ACTION, NODE, FUNCTION>) super.union(other);
-//	}
-	
-	
-	
-//	/**
-//	 * Create a new {@link AbstractMultiState} by applying some function to each pair of states from this
-//	 * {@link AbstractMultiState} and some other {@link AbstractMultiState} (i.e., the first argument is a state from
-//	 * this instance). If the resulting set of states does not differ from this state, return this state. If it differs,
-//	 * create a new {@link AbstractMultiState} that retains as many as <code>maxSize</code> disjunctive states.
-//	 */
-//	private AbstractMultiState<STATE, VARDECL> crossProduct(final BiFunction<STATE, STATE, STATE> funCreateState,
-//			final AbstractMultiState<STATE, VARDECL> otherMultiState, final int maxSize) {
-//		final Set<STATE> newSet = newSet(mStates.size() * otherMultiState.mStates.size());
-//		for (final STATE localState : mStates) {
-//			for (final STATE otherState : otherMultiState.mStates) {
-//				newSet.add(funCreateState.apply(localState, otherState));
-//			}
-//		}
-//		if (newSet.equals(mStates)) {
-//			return this;
-//		}
-//		return new AbstractMultiState<>(maxSize, getMaximalElements(newSet));
-//	}
-	
-	
 }

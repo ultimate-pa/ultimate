@@ -63,7 +63,8 @@ public abstract class BasicToolchainJob extends Job {
 		/**
 		 * Run old toolchain on new input files
 		 */
-		@Deprecated KEEP_TOOLCHAIN,
+		@Deprecated
+		KEEP_TOOLCHAIN,
 	}
 
 	protected ChainMode mJobMode;

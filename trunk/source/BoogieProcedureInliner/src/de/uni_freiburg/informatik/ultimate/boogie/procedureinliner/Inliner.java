@@ -1,27 +1,27 @@
 /*
  * Copyright (C) 2015 Claus Schaetzle (schaetzc@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE BoogieProcedureInliner plug-in.
- * 
+ *
  * The ULTIMATE BoogieProcedureInliner plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE BoogieProcedureInliner plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE BoogieProcedureInliner plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE BoogieProcedureInliner plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE BoogieProcedureInliner plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE BoogieProcedureInliner plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.boogie.procedureinliner;
@@ -55,7 +55,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 
 /**
  * Observer, which builds a call graph, sets inline flags of procedures and inlines the flagged procedures.
- * 
+ *
  * @author schaetzc@informatik.uni-freiburg.de
  */
 public class Inliner implements IUnmanagedObserver {
@@ -76,7 +76,7 @@ public class Inliner implements IUnmanagedObserver {
 
 	/**
 	 * Creates a new observer, which inlines Boogie procedures.
-	 * 
+	 *
 	 * @param services
 	 *            Service provider.
 	 */
@@ -89,8 +89,8 @@ public class Inliner implements IUnmanagedObserver {
 	}
 
 	@Override
-	public void init(ModelType modelType, int currentModelIndex, int numberOfModels) {
-		mNewProceduresWithBody = new HashMap<String, Procedure>();
+	public void init(final ModelType modelType, final int currentModelIndex, final int numberOfModels) {
+		mNewProceduresWithBody = new HashMap<>();
 	}
 
 	@Override
@@ -104,7 +104,7 @@ public class Inliner implements IUnmanagedObserver {
 	}
 
 	@Override
-	public boolean process(IElement root) throws Throwable {
+	public boolean process(final IElement root) throws Throwable {
 		if (!mProgressMonitorService.continueProcessing()) {
 			return false;
 		} else if (root instanceof Unit) {
@@ -127,7 +127,8 @@ public class Inliner implements IUnmanagedObserver {
 		final InlinerStatistic inlinerStat = new InlinerStatistic(mCallGraph);
 		for (final CallGraphNode proc : proceduresToBeProcessed()) {
 			if (proc.hasInlineFlags()) { // implies that the procedure is implemented
-				final InlineVersionTransformer transformer = new InlineVersionTransformer(mServices, globalMgr, inlinerStat);
+				final InlineVersionTransformer transformer =
+						new InlineVersionTransformer(mServices, globalMgr, inlinerStat);
 				mNewProceduresWithBody.put(proc.getId(), transformer.inlineCallsInside(proc));
 				mBacktranslator.addBacktranslation(transformer);
 			}
@@ -149,7 +150,7 @@ public class Inliner implements IUnmanagedObserver {
 	 * <p>
 	 * Note that some of the procedures might be unimplemented or have no inline flags. In this case, the don't have to
 	 * be processed.
-	 * 
+	 *
 	 * @return Procedures to be processed by the InlineVersionTransformer.
 	 */
 	private Collection<CallGraphNode> proceduresToBeProcessed() {
@@ -179,7 +180,7 @@ public class Inliner implements IUnmanagedObserver {
 		}
 	}
 
-	private Collection<String> missingEntryProcedures(Collection<String> procedureIds) {
+	private Collection<String> missingEntryProcedures(final Collection<String> procedureIds) {
 		final Collection<String> missingEntryProcedures = new ArrayList<>();
 		for (final String procedureId : procedureIds) {
 			if (!mCallGraph.containsKey(procedureId)) {
@@ -192,7 +193,7 @@ public class Inliner implements IUnmanagedObserver {
 	private Collection<CallGraphNode> entryAndReEntryProcedures(Collection<String> entryProcedures) {
 		final NodeLabeler labeler = new NodeLabeler(entryProcedures);
 		entryProcedures = labeler.label(mCallGraph);
-		final Set<CallGraphNode> proceduresToBeProcessed = new HashSet<CallGraphNode>();
+		final Set<CallGraphNode> proceduresToBeProcessed = new HashSet<>();
 		for (final String procId : entryProcedures) {
 			final CallGraphNode proc = mCallGraph.get(procId);
 			proceduresToBeProcessed.add(proc);

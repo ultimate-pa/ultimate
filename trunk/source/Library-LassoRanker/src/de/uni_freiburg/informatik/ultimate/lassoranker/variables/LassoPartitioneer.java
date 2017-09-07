@@ -37,7 +37,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.NonTheorySymbol;
@@ -205,7 +204,7 @@ public class LassoPartitioneer {
 	private ModifiableTransFormula constructTransFormulaLR(
 			final Part part, final Set<Term> equivalentConjuncts, final Set<NonTheorySymbol<?>> equivalentVariablesWithoutConjunct) {
 		ModifiableTransFormula transformulaLR;
-		final Term formula = Util.and(mMgdScript.getScript(), equivalentConjuncts.toArray(new Term[equivalentConjuncts.size()]));
+		final Term formula = SmtUtils.and(mMgdScript.getScript(), equivalentConjuncts.toArray(new Term[equivalentConjuncts.size()]));
 		transformulaLR = new ModifiableTransFormula(formula);
 		for (final NonTheorySymbol<?> symbol : NonTheorySymbol.extractNonTheorySymbols(formula)) {
 			addInOuAuxVar(part, transformulaLR, symbol);
@@ -219,7 +218,7 @@ public class LassoPartitioneer {
 	private ModifiableTransFormula constructTransFormulaLR(
 			final Part part, final List<Term> conjunctsWithoutSymbols) {
 		ModifiableTransFormula transformulaLR;
-		final Term formula = Util.and(mMgdScript.getScript(), conjunctsWithoutSymbols.toArray(new Term[conjunctsWithoutSymbols.size()]));
+		final Term formula = SmtUtils.and(mMgdScript.getScript(), conjunctsWithoutSymbols.toArray(new Term[conjunctsWithoutSymbols.size()]));
 		transformulaLR = new ModifiableTransFormula(formula);
 		return transformulaLR;
 	}

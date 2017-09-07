@@ -40,11 +40,46 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 public class BuchiAutomizerPreferenceInitializer extends UltimatePreferenceInitializer {
 
 	public enum BuchiInterpolantAutomaton {
-		LassoAutomaton, EagerNondeterminism, ScroogeNondeterminism, Deterministic, Staged, TwoStage
+		/**
+		 * Only the lasso, considered as an automaton.
+		 */
+		LassoAutomaton, 
+		/**
+		 * Use predicate obtained for the lasso. Add as many edge as possible.
+		 * Resulting automaton is in general not semideterministic and
+		 * the complementation is very costly.
+		 */
+		EagerNondeterminism, 
+		/**
+		 * Automaton that is mainly deterministic but can have some
+		 * nondeterministic transitions.
+		 * (Does not guarantee that automaton is semideterministic
+		 */
+		ScroogeNondeterminism, 
+		/**
+		 * Automaton that is deterministic. 
+		 * As we know from Büchi, there are
+		 * omega-regular languages that are not accepted by any deterministic
+		 * Büchi automaton.
+		 * Practical experience shows that we sometimes need such languages
+		 * in the termination analysis. Hence using only deterministic
+		 * automata is not sufficient. 
+		 */
+		Deterministic, 
+		/**
+		 * Try different automata iteratively. Start with less nondeterministic
+		 * automata, increase amount of nondeterminism until an appropriate
+		 * automaton was found.
+		 */
+		Staged, 
 	}
 
 	public enum BuchiComplementationConstruction {
 		Ncsb, Elastic, HeiMat2, TightRO, TightBasic, TightHighEven
+	}
+	
+	public enum NcsbImplementation {
+		ORIGINAL, INTSET, INTSET_LAZY, INTSET_LAZY2, INTSET_LAZY3
 	}
 
 
@@ -106,6 +141,8 @@ public class BuchiAutomizerPreferenceInitializer extends UltimatePreferenceIniti
 	public static final String LABEL_MAP_ELIMINATION_ONLY_INDICES_IN_FORMULAS =
 			"Add implications only for indices occuring in the current formula";
 	private static final boolean DEF_MAP_ELIMINATION_ONLY_INDICES_IN_FORMULAS = true;
+	public static final String LABEL_NCSB_IMPLEMENTATION = "NCSB implementation";
+	private static final NcsbImplementation DEF_NCSB_IMPLEMENTATION = NcsbImplementation.ORIGINAL;
 
 	public BuchiAutomizerPreferenceInitializer() {
 		super(Activator.PLUGIN_ID, "Buchi Automizer (Termination Analysis)");
@@ -165,6 +202,9 @@ public class BuchiAutomizerPreferenceInitializer extends UltimatePreferenceIniti
 				new UltimatePreferenceItem<>(LABEL_MAP_ELIMINATION_ONLY_TRIVIAL_IMPLICATIONS_ARRAY_WRITE,
 						DEF_MAP_ELIMINATION_ONLY_TRIVIAL_IMPLICATIONS_ARRAY_WRITE, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_MAP_ELIMINATION_ONLY_INDICES_IN_FORMULAS,
-						DEF_MAP_ELIMINATION_ONLY_INDICES_IN_FORMULAS, PreferenceType.Boolean), };
+						DEF_MAP_ELIMINATION_ONLY_INDICES_IN_FORMULAS, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_NCSB_IMPLEMENTATION,
+						DEF_NCSB_IMPLEMENTATION, PreferenceType.Combo, NcsbImplementation.values()) 
+				};
 	}
 }

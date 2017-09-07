@@ -125,6 +125,9 @@ public class BarelyCoveredLevelRankingsGenerator<LETTER, STATE>
 
 	private boolean complicatedCondition(final LevelRankingConstraintDrdCheck<LETTER, STATE> constraint,
 			final DoubleDecker<StateWithRankInfo<STATE>> doubleDecker) {
+			final boolean cond3 = condition3(constraint, doubleDecker);
+			final boolean cond2 = condition2(constraint, doubleDecker);
+			final boolean evenRankAndNotFinal = evenRankAndNotFinal(constraint, doubleDecker);
 		return evenRankAndNotFinal(constraint, doubleDecker) && condition2(constraint, doubleDecker)
 				&& condition3(constraint, doubleDecker);
 	}

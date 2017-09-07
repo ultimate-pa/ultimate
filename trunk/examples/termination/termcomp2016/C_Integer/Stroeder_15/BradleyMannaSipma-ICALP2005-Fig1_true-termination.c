@@ -1,3 +1,4 @@
+//#termcomp16-someonesaidyes
 /*
  * Program from Fig.1 of
  * 2005ICALP - Bradley,Manna,Sipma - The Polyranking Principle

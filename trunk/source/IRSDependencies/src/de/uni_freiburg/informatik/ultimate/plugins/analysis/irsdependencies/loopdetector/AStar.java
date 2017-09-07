@@ -1,27 +1,27 @@
 /*
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE IRSDependencies plug-in.
- * 
+ *
  * The ULTIMATE IRSDependencies plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE IRSDependencies plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE IRSDependencies plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE IRSDependencies plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE IRSDependencies plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE IRSDependencies plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.loopdetector;
@@ -41,16 +41,17 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
-import de.uni_freiburg.informatik.ultimate.util.Utils;
+import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.HashedPriorityQueue;
 
 /**
- * Executes a search on an arbitrary graph using an implementation of A*. Finds
- * a path according to a given heuristic from start to target if one exists.
- * 
+ * Executes a search on an arbitrary graph using an implementation of A*. Finds a path according to a given heuristic
+ * from start to target if one exists.
+ *
  * You can specify edges that should be ignored during the search.
- * 
+ *
  * @author dietsch@informatik.uni-freiburg.de
- * 
+ *
  */
 public class AStar<V, E> {
 
@@ -64,17 +65,18 @@ public class AStar<V, E> {
 	private final IGraph<V, E> mGraph;
 	private final IProgressAwareTimer mTimer;
 
-	public AStar(final ILogger logger, final V start, final V target, final IHeuristic<V, E> heuristic, final IGraph<V, E> graph, final IProgressAwareTimer timer) {
-		this(logger, start, target, heuristic, graph, new NoEdgeDenier<E>(),timer);
+	public AStar(final ILogger logger, final V start, final V target, final IHeuristic<V, E> heuristic,
+			final IGraph<V, E> graph, final IProgressAwareTimer timer) {
+		this(logger, start, target, heuristic, graph, new NoEdgeDenier<E>(), timer);
 	}
 
-	public AStar(final ILogger logger, final V start, final V target, final IHeuristic<V, E> heuristic, final IGraph<V, E> graph,
-			final Collection<E> forbiddenEdges, final IProgressAwareTimer timer) {
-		this(logger, start, target, heuristic, graph, new CollectionEdgeDenier<>(forbiddenEdges),timer);
+	public AStar(final ILogger logger, final V start, final V target, final IHeuristic<V, E> heuristic,
+			final IGraph<V, E> graph, final Collection<E> forbiddenEdges, final IProgressAwareTimer timer) {
+		this(logger, start, target, heuristic, graph, new CollectionEdgeDenier<>(forbiddenEdges), timer);
 	}
 
-	public AStar(final ILogger logger, final V start, final V target, final IHeuristic<V, E> heuristic, final IGraph<V, E> graph,
-			final IEdgeDenier<E> edgeDenier, final IProgressAwareTimer timer) {
+	public AStar(final ILogger logger, final V start, final V target, final IHeuristic<V, E> heuristic,
+			final IGraph<V, E> graph, final IEdgeDenier<E> edgeDenier, final IProgressAwareTimer timer) {
 		mLogger = logger;
 		mHeuristic = heuristic;
 		mStart = start;
@@ -109,14 +111,13 @@ public class AStar<V, E> {
 	}
 
 	private List<E> astar(final OpenItem<V, E> initialOpenItem) {
-		final FasterPriorityQueue<OpenItem<V, E>> open = new FasterPriorityQueue<OpenItem<V, E>>(
-				new Comparator<OpenItem<V, E>>() {
-					@Override
-					public int compare(final OpenItem<V, E> o1, final OpenItem<V, E> o2) {
-						return Integer.compare(o1.getAnnotation().getExpectedCostToTarget(),
-								o2.getAnnotation().getExpectedCostToTarget());
-					}
-				});
+		final HashedPriorityQueue<OpenItem<V, E>> open = new HashedPriorityQueue<>(new Comparator<OpenItem<V, E>>() {
+			@Override
+			public int compare(final OpenItem<V, E> o1, final OpenItem<V, E> o2) {
+				return Integer.compare(o1.getAnnotation().getExpectedCostToTarget(),
+						o2.getAnnotation().getExpectedCostToTarget());
+			}
+		});
 
 		// we want to allow that we find paths from start to target when start
 		// == target
@@ -138,7 +139,7 @@ public class AStar<V, E> {
 				path = createPath(currentItem);
 				if (mLogger.isDebugEnabled()) {
 					mLogger.debug(String.format("Found path of length %s from source %s to target %s: %s", path.size(),
-							mStart, mTarget, Utils.join(path, ", ")));
+							mStart, mTarget, CoreUtil.join(path, ", ")));
 				}
 				break;
 			}
@@ -151,13 +152,13 @@ public class AStar<V, E> {
 	}
 
 	private void checkTimeout() {
-		if(!mTimer.continueProcessing()){
+		if (!mTimer.continueProcessing()) {
 			mLogger.warn("Received timeout, aborting AStar engine");
 			throw new ToolchainCanceledException(getClass());
 		}
 	}
 
-	private void expandNode(final OpenItem<V, E> currentItem, final FasterPriorityQueue<OpenItem<V, E>> open) {
+	private void expandNode(final OpenItem<V, E> currentItem, final HashedPriorityQueue<OpenItem<V, E>> open) {
 		final V currentNode = currentItem.getNode();
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("Expanding " + currentNode);
@@ -215,7 +216,7 @@ public class AStar<V, E> {
 	private List<E> createPath(final OpenItem<V, E> currentItem) {
 		assert currentItem.getNode() == mTarget;
 		final AStar<V, E>.BackpointerIterator iter = new BackpointerIterator(currentItem.getAnnotation());
-		final List<E> rtr = new ArrayList<E>();
+		final List<E> rtr = new ArrayList<>();
 		while (iter.hasNext()) {
 			rtr.add(iter.next());
 		}
@@ -230,7 +231,7 @@ public class AStar<V, E> {
 			final V source = mGraph.getSource(successor);
 			map.put(source, new AstarAnnotation<E>());
 			map.put(target, new AstarAnnotation<E>());
-			return new OpenItem<V, E>(target, map);
+			return new OpenItem<>(target, map);
 		}
 
 		final OpenItem<V, E> rtr = new OpenItem<>(target, current);
@@ -246,7 +247,7 @@ public class AStar<V, E> {
 		}
 		AstarAnnotation<E> annot = rtr.getAnnotations().get(target);
 		if (annot == null) {
-			annot = new AstarAnnotation<E>();
+			annot = new AstarAnnotation<>();
 			rtr.getAnnotations().put(target, annot);
 		}
 		return rtr;
@@ -255,7 +256,7 @@ public class AStar<V, E> {
 	private OpenItem<V, E> createInitialSuccessorItem(final V initialNode) {
 		final Map<V, AstarAnnotation<E>> map = new HashMap<>();
 		map.put(initialNode, new AstarAnnotation<E>());
-		return new OpenItem<V, E>(initialNode, map);
+		return new OpenItem<>(initialNode, map);
 	}
 
 	private static final class NoEdgeDenier<E> implements IEdgeDenier<E> {
@@ -272,7 +273,7 @@ public class AStar<V, E> {
 
 		private BackpointerIterator(final AstarAnnotation<E> currentAnnotation) {
 			mAnnotation = currentAnnotation;
-			mClosed = new HashSet<AstarAnnotation<E>>();
+			mClosed = new HashSet<>();
 		}
 
 		@Override

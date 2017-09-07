@@ -31,6 +31,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.EqualityStatus;
 
 public class IndexAnalysisResult extends EqualityAnalysisResult {
 	
@@ -49,7 +50,7 @@ public class IndexAnalysisResult extends EqualityAnalysisResult {
 		mIgnoredDoubletons = ignoredDoubletons;
 	}
 	
-	public Equality isEqual(List<Term> index1, List<Term> index2) {
+	public EqualityStatus isEqual(List<Term> index1, List<Term> index2) {
 		assert index1.size() == index2.size();
 		boolean oneEntryWasUnknown = false;
 		for (int i=0; i<index1.size(); i++) {
@@ -57,7 +58,7 @@ public class IndexAnalysisResult extends EqualityAnalysisResult {
 				continue;
 			}
 			if (isDistinctDoubleton(index1.get(i), index2.get(i))) {
-				return Equality.NOT_EQUAL;
+				return EqualityStatus.NOT_EQUAL;
 			}
 			if (isUnknownDoubleton(index1.get(i), index2.get(i))) {
 				oneEntryWasUnknown = true;
@@ -68,9 +69,9 @@ public class IndexAnalysisResult extends EqualityAnalysisResult {
 			}
 		}
 		if (oneEntryWasUnknown) {
-			return Equality.UNKNOWN;
+			return EqualityStatus.UNKNOWN;
 		} else {
-			return Equality.EQUAL;
+			return EqualityStatus.EQUAL;
 		}
 	}
 	

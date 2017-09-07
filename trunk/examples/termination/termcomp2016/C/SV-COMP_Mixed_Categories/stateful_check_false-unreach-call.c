@@ -1,3 +1,4 @@
+//#termcomp16-someonesaidno
 extern void __VERIFIER_error() __attribute__ ((__noreturn__));
 
 void __blast_assert(void) {

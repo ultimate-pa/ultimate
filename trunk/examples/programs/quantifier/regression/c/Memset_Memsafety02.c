@@ -5,7 +5,7 @@
 #include <stdlib.h>
 
 int nonmain() {
-  int *jp = malloc(3 * sizeof(int) + 1);
+  int *jp = malloc(3 * sizeof(int) - 1);
 
   *jp = 4;
 

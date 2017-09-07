@@ -34,7 +34,13 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+import de.uni_freiburg.informatik.ultimate.util.SetOperations;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
  * Data structure that can be used to partition a set of elements {@code <E>}.
@@ -58,9 +64,32 @@ public class UnionFind<E> implements IPartition<E> {
 	private final Map<Set<E>, E> mRepresentative = new HashMap<>();
 
 	/**
-	 * @param elem
-	 *            element
-	 * @return the representative of the equivalence class of element e.
+	 * Constructor for new (empty) data structure.
+	 */
+	public UnionFind() {
+	}
+
+	/**
+	 * Copy constructor.
+	 *
+	 * @param unionFind the UnionFind instance to be copied
+	 */
+	public UnionFind(final UnionFind<E> unionFind) {
+		for (final Entry<Set<E>, E> entry : unionFind.mRepresentative.entrySet()) {
+			final E representative = entry.getValue();
+			final Set<E> equivalenceClassCopy = new HashSet<>(entry.getKey());
+			for (final E equivalenceClassMember : equivalenceClassCopy) {
+				final Set<E> oldValue = this.mEquivalenceClass.put(equivalenceClassMember, equivalenceClassCopy);
+				assert oldValue == null : "element was contained twice";
+			}
+			this.mRepresentative.put(equivalenceClassCopy, representative);
+		}
+	}
+
+	/**
+	 * @param elem element
+	 * @return the representative of the equivalence class of element elem. null if the given element is not in any
+	 * 				equivalence class
 	 */
 	public E find(final E elem) {
 		final Set<E> set = mEquivalenceClass.get(elem);
@@ -100,7 +129,7 @@ public class UnionFind<E> implements IPartition<E> {
 	 * @return collection of all elements e such that e is representative of an equivalence class.
 	 */
 	public Collection<E> getAllRepresentatives() {
-		return mRepresentative.values();
+		return Collections.unmodifiableCollection(mRepresentative.values());
 	}
 
 	/**
@@ -119,7 +148,7 @@ public class UnionFind<E> implements IPartition<E> {
 
 	/**
 	 * Construct a new equivalence class that is a singleton and contains only element e.
-	 * 
+	 *
 	 * @param elem
 	 *            element
 	 */
@@ -141,7 +170,7 @@ public class UnionFind<E> implements IPartition<E> {
 	/**
 	 * Merge the equivalence classes of the elements e1 and e2. (e1 and e2 do not have to be the representatives of this
 	 * equivalence classes).
-	 * 
+	 *
 	 * @param elem1
 	 *            first element
 	 * @param elem2
@@ -150,19 +179,25 @@ public class UnionFind<E> implements IPartition<E> {
 	public void union(final E elem1, final E elem2) {
 		final Set<E> set1 = mEquivalenceClass.get(elem1);
 		final Set<E> set2 = mEquivalenceClass.get(elem2);
-		final E set1rep = mRepresentative.get(set1);
-		mRepresentative.remove(set1);
-		mRepresentative.remove(set2);
-		set1.addAll(set2);
-		for (final E e : set2) {
-			mEquivalenceClass.put(e, set1);
+
+		final boolean set1IsLarger = set1.size() > set2.size();
+
+		final Set<E> largerSet = set1IsLarger ? set1 : set2;
+		final Set<E> smallerSet = set1IsLarger ? set2 : set1;
+
+		final E largerSetRep = mRepresentative.get(largerSet);
+		mRepresentative.remove(largerSet);
+		mRepresentative.remove(smallerSet);
+		largerSet.addAll(smallerSet);
+		for (final E e : smallerSet) {
+			mEquivalenceClass.put(e, largerSet);
 		}
-		mRepresentative.put(set1, set1rep);
+		mRepresentative.put(largerSet, largerSetRep);
 	}
 
 	/**
 	 * Union operation for arbitrary number of arguments.
-	 * 
+	 *
 	 * @param elements
 	 *            elements
 	 */
@@ -188,5 +223,157 @@ public class UnionFind<E> implements IPartition<E> {
 	@Override
 	public Iterator<Set<E>> iterator() {
 		return getAllEquivalenceClasses().iterator();
+	}
+
+	/**
+	 * Removes the given element from all the equivalence classes. If the element was a representative and was not the
+	 * only element of its equivalence class, another representative for is chosen for the new equivalence class.
+	 *
+	 * @param element element to be removed
+	 */
+	public void remove(final E element) {
+
+		if (mRepresentative.get(mEquivalenceClass.get(element)).equals(element)) {
+			// element is the representative of its equivalence class
+			final Set<E> eqc = mEquivalenceClass.get(element);
+			if (eqc.size() == 1) {
+				// element was alone in its equivalence class
+				mEquivalenceClass.remove(element);
+				mRepresentative.remove(eqc);
+				assert areMembersConsistent();
+				return;
+			}
+			// pick another element from the equivalence class, and make it the representative
+			final Iterator<E> it = eqc.iterator();
+			E other = it.next();
+			while (other.equals(element)) {
+				other = it.next();
+			}
+			mRepresentative.put(eqc, other);
+		}
+
+		final Set<E> eqc = mEquivalenceClass.get(element);
+		final HashSet<E> newEqc = new HashSet<>(eqc);
+		newEqc.remove(element);
+		for (final E eqcEl : newEqc) {
+			mEquivalenceClass.put(eqcEl, newEqc);
+		}
+		mEquivalenceClass.remove(element);
+
+		final E rep = mRepresentative.get(eqc);
+		mRepresentative.remove(eqc);
+		assert !rep.equals(element);
+		mRepresentative.put(newEqc, rep);
+
+		assert areMembersConsistent();
+	}
+
+	private boolean areMembersConsistent() {
+		for (final E e : mRepresentative.values()) {
+			if (!mEquivalenceClass.containsKey(e)) {
+				return false;
+			}
+		}
+		for (final Set<E> eqc : mEquivalenceClass.values()) {
+			if (!mRepresentative.containsKey(eqc)) {
+				return false;
+			}
+		}
+		for (final Set<E> eqc : mRepresentative.keySet()) {
+			if (!mEquivalenceClass.values().contains(eqc)) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	public Set<E> getAllElements() {
+		return Collections.unmodifiableSet(mEquivalenceClass.keySet());
+	}
+
+	/**
+	 * Add a whole equivalence class at once to this UnionFind.
+	 *
+	 * Assumes none of the given elements is part of an existing equivalence class in this UnionFind instance.
+	 *
+	 * @param newBlock new equivalence class that is to be added to the equivalence relation
+	 */
+	public void addEquivalenceClass(final Set<E> newBlock) {
+		assert SetOperations.intersect(newBlock, getAllElements()).isEmpty();
+		assert !newBlock.isEmpty();
+		final Set<E> block = new HashSet<>(newBlock);
+
+		for (final E elem : block) {
+			mEquivalenceClass.put(elem, block);
+		}
+
+		final E rep = block.iterator().next();
+		assert mEquivalenceClass.get(rep) != null;
+		mRepresentative.put(block, rep);
+	}
+
+
+	/**
+	 * Computes a new UnionFind instance whose partitions are the intersections of the given UnionFind instance's
+	 * equivalence classes. Only non-empty intersections are added to the new equivalence relation.
+	 *
+	 * @param <E> element type
+	 * @param uf1 instance to be intersected with uf2
+	 * @param uf2 instance to be intersected with uf1
+	 * @return UnionFind with intersected equivalence classes
+	 */
+	public static <E> UnionFind<E> intersectPartitionBlocks(final UnionFind<E> uf1, final UnionFind<E> uf2) {
+		final UnionFind<E> result = new UnionFind<>();
+		for (final Set<E> uf1Block : uf1.getAllEquivalenceClasses()) {
+			final HashRelation<E, E> uf2RepToSubblock = new HashRelation<>();
+
+			for (final E uf1El : uf1Block) {
+				final E uf2Rep = uf2.find(uf1El);
+				uf2RepToSubblock.addPair(uf2Rep, uf1El);
+			}
+
+			uf2RepToSubblock.getDomain().stream()
+			.forEach(u2rep -> result.addEquivalenceClass(uf2RepToSubblock.getImage(u2rep)));
+		}
+		return result;
+	}
+
+	/**
+	 * Computes a new UnionFind instance whose partitions are the unions of the given UnionFind instance's
+	 * equivalence classes.
+	 *
+	 * @param <E> element type
+	 * @param uf1 instance to be union'ed with uf2
+	 * @param uf2 instance to be union'ed with uf1
+	 * @return UnionFind with union'ed equivalence classes
+	 */
+	public static <E> UnionFind<E> unionPartitionBlocks(final UnionFind<E> uf1, final UnionFind<E> uf2) {
+		final UnionFind<E> result = new UnionFind<>();
+		final HashSet<E> todo = new HashSet<>(uf1.getAllElements());
+		while (!todo.isEmpty()) {
+			final E tver1El = todo.iterator().next();
+			final Set<E> newBlock = SetOperations.union(uf1.getEquivalenceClassMembers(tver1El),
+					uf2.getEquivalenceClassMembers(tver1El));
+			result.addEquivalenceClass(newBlock);
+			todo.removeAll(newBlock);
+		}
+		return result;
+	}
+
+	public void transformElements(final Function<E, E> elemTransformer) {
+		final HashMap<Set<E> ,E> representativeCopy = new HashMap<>(mRepresentative);
+		for (final Entry<Set<E>, E> entry : representativeCopy.entrySet()) {
+			for (final E oldElem : entry.getKey()) {
+				mEquivalenceClass.remove(oldElem);
+			}
+			mRepresentative.remove(entry.getKey());
+
+			final E newRep = elemTransformer.apply(entry.getValue());
+			final Set<E> newEqClass = entry.getKey().stream().map(elemTransformer).collect(Collectors.toSet());
+			for (final E newElem : newEqClass) {
+				mEquivalenceClass.put(newElem, newEqClass);
+			}
+			mRepresentative.put(newEqClass, newRep);
+		}
 	}
 }

@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Library-IcfgTransformer
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.lib.icfgtransformer
-Bundle-Version: 0.1.17
+Bundle-Version: 0.1.20
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils,
  de.uni_freiburg.informatik.ultimate.lib.ultimatemodel,
@@ -12,6 +12,7 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils,
  de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder,
  de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2 
 Export-Package: de.uni_freiburg.informatik.ultimate.icfgtransformer,
+ de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator,
  de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration,
  de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.ahmed,
  de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.biesenbach,

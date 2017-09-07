@@ -30,6 +30,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.automata.tree.StringRankedLetter;
 import de.uni_freiburg.informatik.ultimate.automata.tree.Tree;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AtsASTNode;
@@ -63,9 +64,10 @@ public class TreeAST extends AtsASTNode {
 		return mArguments;
 	}
 
-	public Tree<String> getTree() {
-		final List<Tree<String>> childTrees = mArguments.stream().map(ta -> ta.getTree()).collect(Collectors.toList());
-		return new Tree<>(mSymbol.toString(), childTrees);
+	public Tree<StringRankedLetter> getTree() {
+		final List<Tree<StringRankedLetter>> childTrees = 
+				mArguments.stream().map(ta -> ta.getTree()).collect(Collectors.toList());
+		return new Tree<>(new StringRankedLetter(mSymbol.toString(), childTrees.size()), childTrees);
 	}
 	
 	@Override

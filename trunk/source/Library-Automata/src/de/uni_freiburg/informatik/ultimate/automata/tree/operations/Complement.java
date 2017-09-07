@@ -26,12 +26,17 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.tree.operations;
 
+import java.util.Collection;
+import java.util.HashSet;
+
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.tree.IRankedLetter;
 import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
 
@@ -45,25 +50,45 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
  * @param <STATE>
  *            state of the tree automaton.
  */
-public class Complement<LETTER, STATE> implements IOperation<LETTER, STATE, IStateFactory<STATE>> {
+public class Complement<LETTER extends IRankedLetter, STATE>
+		extends GeneralOperation<LETTER, STATE, IStateFactory<STATE>>
+		implements IOperation<LETTER, STATE, IStateFactory<STATE>> {
 
 	private final ITreeAutomatonBU<LETTER, STATE> mTreeAutomaton;
 
 	protected final ITreeAutomatonBU<LETTER, STATE> mResult;
-	private final AutomataLibraryServices mServices;
+	private final Collection<LETTER> mAlphabet;
 
 	/***
 	 * Constructor of the complement operator
+	 * 
 	 * @param services
 	 * @param factory
 	 * @param tree
 	 */
-	public <SF extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>> Complement(
-			final AutomataLibraryServices services, final SF factory,
-			final ITreeAutomatonBU<LETTER, STATE> tree) {
-		mServices = services;
-		mTreeAutomaton = tree;
+	public <SF extends IMergeStateFactory<STATE> & ISinkStateFactory<STATE>> Complement(
+			final AutomataLibraryServices services, final SF factory, final ITreeAutomatonBU<LETTER, STATE> tree) {
+		super(services);
+		mAlphabet = new HashSet<>();
+		mTreeAutomaton = new Totalize<>(mServices, factory, tree).getResult();
 
+		mResult = computeResult(factory);
+	}
+
+	/***
+	 * Constructor of the complement operator
+	 * 
+	 * @param services
+	 * @param factory
+	 * @param tree
+	 */
+	public <SF extends IMergeStateFactory<STATE> & ISinkStateFactory<STATE>> Complement(
+			final AutomataLibraryServices services, final SF factory, final ITreeAutomatonBU<LETTER, STATE> tree,
+			final Collection<LETTER> alphabet) {
+		super(services);
+		mAlphabet = new HashSet<>();
+		mAlphabet.addAll(alphabet);
+		mTreeAutomaton = new Totalize<>(mServices, factory, tree, alphabet).getResult();
 		mResult = computeResult(factory);
 	}
 
@@ -77,13 +102,10 @@ public class Complement<LETTER, STATE> implements IOperation<LETTER, STATE, ISta
 		return "Exiting complementing";
 	}
 
-	private <F extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>> ITreeAutomatonBU<LETTER, STATE>
-			computeResult(final F stateFactory) {
-		final Determinize<LETTER, STATE> op = new Determinize<>(mServices, stateFactory, mTreeAutomaton);
-		final TreeAutomatonBU<LETTER, STATE> res = (TreeAutomatonBU<LETTER, STATE>) op.getResult();
-		res.complementFinals();
-		final Minimize<LETTER, STATE> mini = new Minimize<>(mServices, stateFactory, res);
-		return mini.getResult();
+	private <F extends IMergeStateFactory<STATE> & ISinkStateFactory<STATE>> ITreeAutomatonBU<LETTER, STATE> computeResult(
+			final F stateFactory) {
+		((TreeAutomatonBU<LETTER, STATE>) mTreeAutomaton).complementFinals();
+		return mTreeAutomaton;
 	}
 
 	@Override
@@ -93,7 +115,6 @@ public class Complement<LETTER, STATE> implements IOperation<LETTER, STATE, ISta
 
 	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
-		// TODO implement a meaningful check
 		return true;
 	}
 }

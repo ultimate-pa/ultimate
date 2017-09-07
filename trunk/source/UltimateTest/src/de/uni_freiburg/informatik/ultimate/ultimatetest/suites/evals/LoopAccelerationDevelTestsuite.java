@@ -53,16 +53,22 @@ public class LoopAccelerationDevelTestsuite extends AbstractEvalTestSuite {
 	@SuppressWarnings("unchecked")
 	private static final Triple<String, String[], String>[] TOOLCHAINS = new Triple[] {
 
-			// BPL
-			// new Triple<>("AutomizerBplTransformed.xml", BPL,
+			new Triple<>("AutomizerBpl.xml", BPL, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_BB_Debug.epf"),
+			new Triple<>("AutomizerBplTransformed.xml", BPL,
+					"loopacceleration/svcomp-Reach-32bit-Automizer_Default_BB_Debug.epf"),
+
+			// new Triple<>("AutomizerCInline.xml", C,
 			// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_BB_Debug.epf"),
+			// new Triple<>("AutomizerCInlineTransformed.xml", BPL,
+			// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_BB_Debug.epf"),
+
 			// new Triple<>("AutomizerBplTransformed.xml", BPL,
 			// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Ahmed_Debug.epf"),
 
-			new Triple<>("AutomizerBpl.xml", BPL,
-					"loopacceleration/svcomp-Reach-32bit-Automizer_Default_Werner_Debug.epf"),
-			new Triple<>("AutomizerBplTransformed.xml", BPL,
-					"loopacceleration/svcomp-Reach-32bit-Automizer_Default_Werner_Debug.epf"),
+			// new Triple<>("AutomizerBpl.xml", BPL,
+			// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Werner_Debug.epf"),
+			// new Triple<>("AutomizerBplTransformed.xml", BPL,
+			// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Werner_Debug.epf"),
 
 			// new Triple<>("AutomizerBplTransformed.xml", BPL,
 			// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_FastUpr_EE.epf"),
@@ -77,20 +83,25 @@ public class LoopAccelerationDevelTestsuite extends AbstractEvalTestSuite {
 			//
 			// new Triple<>("AutomizerBplTransformed.xml", BPL,
 			// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Woelfing_Debug.epf"),
-			// new Triple<>("AutomizerBplTransformed.xml", BPL,
+			// // new Triple<>("AutomizerBplTransformed.xml", BPL,
 			// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Woelfing.epf"),
 			//
+
 			// new Triple<>("AutomizerBpl.xml", BPL, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Mohr.epf"),
 			// new Triple<>("AutomizerBplTransformed.xml", BPL,
 			// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Mohr.epf"),
+			// new Triple<>("AutomizerCInline.xml", C,
+			// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Mohr.epf"),
+			// new Triple<>("AutomizerCInlineTransformed.xml", C,
+			// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Mohr.epf"),
+
 			// new Triple<>("AutomizerBplTransformed.xml", BPL,
 			// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Mohr_Debug.epf"),
 
-			// C
-			//new Triple<>("AutomizerCInline.xml", C,
-			//"loopacceleration/svcomp-Reach-32bit-Automizer_Default_Woelfing.epf"),
-			//new Triple<>("AutomizerCInlineTransformed.xml", C,
-			//"loopacceleration/svcomp-Reach-32bit-Automizer_Default_Woelfing.epf"),
+			// new Triple<>("AutomizerCInline.xml", C,
+			// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Woelfing.epf"),
+			// new Triple<>("AutomizerCInlineTransformed.xml", C,
+			// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Woelfing.epf"),
 			//
 			// new Triple<>("AutomizerCInlineTransformed.xml", C,
 			// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_FastUpr_EE.epf"),
@@ -99,45 +110,75 @@ public class LoopAccelerationDevelTestsuite extends AbstractEvalTestSuite {
 			// new Triple<>("AutomizerCInline.xml", C,
 			// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_FastUpr_EE.epf"),
 
-			new Triple<>("AutomizerCInlineTransformed.xml", C,
-					"loopacceleration/svcomp-Reach-32bit-Automizer_Default_FastUpr_noMod_EE.epf"),
-			new Triple<>("AutomizerCInlineTransformed.xml", C,
-					"loopacceleration/svcomp-Reach-32bit-Automizer_Default_FastUpr_noMod_LE.epf"),
-			new Triple<>("AutomizerCInline.xml", C,
-					"loopacceleration/svcomp-Reach-32bit-Automizer_Default_FastUpr_noMod_EE.epf"),
+			// new Triple<>("AutomizerCInlineTransformed.xml", C,
+			// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_FastUpr_noMod_EE.epf"),
+			// new Triple<>("AutomizerCInlineTransformed.xml", C,
+			// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_FastUpr_noMod_LE.epf"),
+			// new Triple<>("AutomizerCInline.xml", C,
+			// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_FastUpr_noMod_EE.epf"),
 
 	};
 
 	private static final String[] INPUT = new String[] {
 
 			// Normal regressions
-			// "examples/programs/loopAcceleration",
-			// "examples/programs/loopAcceleration/twoLoops.bpl",
-			//			"examples/svcomp/loop-acceleration/const_true-unreach-call1.i",
-			//			"examples/svcomp/loop-acceleration/const_false-unreach-call1.i",
-			// "examples/svcomp/loops/sum03_true-unreach-call_false-termination.i",
-			// "examples/programs/loopAcceleration/loopAccelerationFastUPR/OctagonTest_Default.bpl",
-			// "examples/programs/loopAcceleration/loopAccelerationBB/loop1.bpl",
+			"examples/programs/loopAcceleration",
 
-			// Errors in Woelfing
-			// "examples/svcomp/loop-lit/cggmp2005_true-unreach-call_true-termination.c.i",
-			// "examples/svcomp/loops/for_bounded_loop1_false-unreach-call_true-termination.i",
-			// "examples/svcomp/loop-invgen/SpamAssassin-loop_true-unreach-call_false-termination.i",
-			// "examples/svcomp/loops/while_infinite_loop_4_false-unreach-call_true-termination.i",
-			// "examples/svcomp/loops/for_infinite_loop_2_true-unreach-call_false-termination.i",
+			// Errors in LA Mohr sorted by priority
 
-			// example: cannot handle arrays
-			// "examples/svcomp/bitvector-loops/verisec_sendmail__tTflag_arr_one_loop_false-unreach-call.i",
-
-			// errors in FastUPR
-			// "examples/svcomp/loop-industry-pattern/nested_true-unreach-call.c"
+			// // Unsound
+			// "examples/svcomp/loop-acceleration/nested_false-unreach-call1.i",
+			//
+			// // AOOB
+			// "examples/svcomp/loop-invgen/heapsort_true-unreach-call_true-termination.i",
+			//
+			// // NPE
+			// "examples/svcomp/loop-industry-pattern/mod3_true-unreach-call.c",
+			//
+			// // Undeclared Function Symbol
+			// "examples/svcomp/loop-lit/gcnr2008_false-unreach-call_false-termination.i",
+			//
+			// // OOM
+			// "examples/svcomp/loop-invgen/MADWiFi-encode_ie_ok_true-unreach-call_true-termination.i",
 			// "examples/svcomp/loop-invgen/NetBSD_loop_true-unreach-call_true-termination.i",
+			// "examples/svcomp/loop-invgen/apache-get-tag_true-unreach-call_true-termination.i",
+			// "examples/svcomp/loop-invgen/id_trans_false-unreach-call_true-termination.i",
+			// "examples/svcomp/loop-invgen/apache-escape-absolute_true-unreach-call_true-termination.i",
+			// "examples/svcomp/loop-invgen/sendmail-close-angle_true-unreach-call_true-termination.i",
 
-			// unsafe expected safe
-			"examples/svcomp/loop-acceleration/functions_true-unreach-call1_true-termination.i",
-			//			"examples/svcomp/loops/linear_sea.ch_true-unreach-call.i",
-			//			"examples/svcomp/loops/nec40_true-unreach-call_true-termination.i",
-			//			"examples/svcomp/loops/while_infinite_loop_3_true-unreach-call_false-termination.i",
+			// // Errors in LA Mohr not due to Mohr, but due to other bugs in Ultimate
+			// // Simultaneous Update (Mattias?)
+			// "examples/svcomp/loops/for_infinite_loop_1_true-unreach-call_false-termination.i",
+			// "examples/svcomp/loops/for_infinite_loop_2_true-unreach-call_false-termination.i",
+			// "examples/svcomp/loops/while_infinite_loop_3_true-unreach-call_false-termination.i",
+			// "examples/svcomp/loops/sum03_true-unreach-call_false-termination.i",
+			// "examples/svcomp/loop-invgen/down_true-unreach-call_true-termination.i",
+			// "examples/svcomp/loop-invgen/half_2_true-unreach-call_true-termination.i",
+			// "examples/svcomp/loops/sum03_false-unreach-call_true-termination.i",
+			// "examples/svcomp/loop-acceleration/functions_false-unreach-call1_true-termination.i",
+			// "examples/svcomp/loop-lit/css2003_true-unreach-call_true-termination.c.i",
+			// "examples/svcomp/loop-new/count_by_1_variant_true-unreach-call_true-termination.i",
+			// "examples/svcomp/loop-invgen/fragtest_simple_true-unreach-call_true-termination.i",
+			// "examples/svcomp/loop-invgen/up_true-unreach-call_true-termination.i",
+			// "examples/svcomp/loops/while_infinite_loop_4_false-unreach-call_true-termination.i",
+			// "examples/svcomp/loop-acceleration/functions_true-unreach-call1_true-termination.i",
+			// "examples/svcomp/loop-invgen/seq_true-unreach-call_true-termination.i",
+			// "examples/svcomp/loops/while_infinite_loop_1_true-unreach-call_false-termination.i",
+			// "examples/svcomp/loops/while_infinite_loop_2_true-unreach-call_false-termination.i",
+			// "examples/svcomp/loop-invgen/large_const_true-unreach-call_true-termination.i",
+			//
+			// // C Trans
+			// "examples/svcomp/loops/bubble_sort_false-unreach-call.i",
+			// "examples/svcomp/loop-industry-pattern/aiob_1_true-unreach-call.c",
+			// "examples/svcomp/loop-industry-pattern/aiob_2_true-unreach-call.c",
+			// "examples/svcomp/loop-industry-pattern/aiob_3_true-unreach-call.c",
+			// "examples/svcomp/loop-industry-pattern/aiob_4_true-unreach-call.c",
+			// "examples/svcomp/loop-industry-pattern/ofuf_1_true-unreach-call.c",
+			// "examples/svcomp/loop-industry-pattern/ofuf_2_true-unreach-call.c",
+			// "examples/svcomp/loop-industry-pattern/ofuf_3_true-unreach-call.c",
+			// "examples/svcomp/loop-industry-pattern/ofuf_4_true-unreach-call.c",
+			// "examples/svcomp/loop-industry-pattern/ofuf_5_true-unreach-call.c",
+			// "examples/svcomp/loops/lu.cmp_true-unreach-call.i", "examples/svcomp/loops/ludcmp_false-unreach-call.i",
 
 	};
 
@@ -186,6 +227,7 @@ public class LoopAccelerationDevelTestsuite extends AbstractEvalTestSuite {
 
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
+
 		for (final Triple<String, String[], String> triple : TOOLCHAINS) {
 			final DirectoryFileEndingsPair[] pairs = new DirectoryFileEndingsPair[INPUT.length];
 			for (int i = 0; i < INPUT.length; ++i) {

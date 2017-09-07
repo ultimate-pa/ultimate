@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInte
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
+import de.uni_freiburg.informatik.ultimate.util.SetOperations;
 
 /**
  *
@@ -55,7 +55,7 @@ public class LiveVariablePreOperator<ACTION extends IAction>
 		final Set<IProgramVarOrConst> kill = new HashSet<>(tf.getOutVars().keySet());
 
 		final Set<IProgramVarOrConst> newLive =
-				AbsIntUtil.union(gen, AbsIntUtil.difference(oldstate.getLiveVariables(), kill));
+				SetOperations.union(gen, SetOperations.difference(oldstate.getLiveVariables(), kill));
 		return Collections.singletonList(new LiveVariableState<>(newLive));
 	}
 

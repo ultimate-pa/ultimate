@@ -55,12 +55,12 @@ public class XnfUpd extends XjunctPartialQuantifierElimination {
 
 	@Override
 	public String getName() {
-		return "unimportant select removal";
+		return "unconnected parameter drop";
 	}
 
 	@Override
 	public String getAcronym() {
-		return "USR";
+		return "UPD";
 	}
 	
 	@Override
@@ -191,7 +191,7 @@ public class XnfUpd extends XjunctPartialQuantifierElimination {
 	public static Term isSuperfluousConjunction(final Script script, final Set<Term> terms, final Set<TermVariable> connectedVars,
 			final Set<TermVariable> quantifiedVars) {
 		if (quantifiedVars.containsAll(connectedVars)) {
-			final Term conjunction = Util.and(script, terms.toArray(new Term[terms.size()]));
+			final Term conjunction = SmtUtils.and(script, terms.toArray(new Term[terms.size()]));
 			final LBool isSat = Util.checkSat(script, conjunction);
 			if (isSat == LBool.SAT) {
 				return script.term("true");
@@ -212,7 +212,7 @@ public class XnfUpd extends XjunctPartialQuantifierElimination {
 	public static Term isSuperfluousDisjunction(final Script script, final Set<Term> terms, final Set<TermVariable> connectedVars,
 			final Set<TermVariable> quantifiedVars) {
 		if (quantifiedVars.containsAll(connectedVars)) {
-			final Term disjunction = Util.or(script, terms.toArray(new Term[terms.size()]));
+			final Term disjunction = SmtUtils.or(script, terms.toArray(new Term[terms.size()]));
 			final LBool isSat = Util.checkSat(script, SmtUtils.not(script, disjunction));
 			if (isSat == LBool.SAT) {
 				return script.term("false");

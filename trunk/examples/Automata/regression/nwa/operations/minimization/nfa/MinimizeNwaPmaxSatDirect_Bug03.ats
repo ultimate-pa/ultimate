@@ -1,0 +1,38 @@
+// Testfile dumped by Ultimate at 2012/10/13 16:45:45
+//
+// Reduced version of MinimizeSevpa_Bug10.
+// Reduced by Christian Schilling on 2017-03-16.
+// Revealed a soundness bug in MinimizeNwaPmaxSatDirect for return transitions.
+
+NestedWordAutomaton preprocessed = removeUnreachable(nwa);
+
+print(minimizeNwaPmaxSatDirect(preprocessed));
+
+NestedWordAutomaton nwa = (
+	callAlphabet = {"c1" "c2" },
+	internalAlphabet = {"a1" "a2" "a3" "a4" "a5" "a6" "a7" },
+	returnAlphabet = {"r2" "r3" "r4" "r5" "r1" },
+	states = {"q_1" "qF_1" "q_3" "q_2" "q_5" "q_4" "q_7" "q_10" "q_6" "q_9" "q_8" },
+	initialStates = {"q_1" },
+	finalStates = {"qF_1" },
+	callTransitions = {
+		("q_1" "c1" "q_2")
+		("q_5" "c2" "q_2")
+		("q_10" "c2" "q_2")
+	},
+	internalTransitions = {
+		("q_2" "a1" "q_3")
+		("q_2" "a2" "q_7")
+		("q_4" "a5" "q_10")
+		("q_4" "a6" "q_6")
+		("q_6" "a4" "qF_1")
+		("q_9" "a4" "qF_1")
+		("q_8" "a6" "q_9")
+	},
+	returnTransitions = {
+		("q_3" "q_1" "r1" "q_5")
+		("q_2" "q_1" "r1" "q_4")
+		("q_7" "q_5" "r3" "q_8")
+		("q_7" "q_10" "r3" "q_4")
+	}
+);

@@ -1,0 +1,8 @@
+After "d", it is always the case that "x" holds.
+After "I_a", it is always the case that "b" holds.
+After "I_a && I_f", it is always the case that "x" holds.
+After "b && I_di", it is always the case that "d" holds.
+After "b && I_ci", it is always the case that "c" holds.
+After "c", it is always the case that "e" holds.
+
+Globally, it is never the case that "x && e" holds.

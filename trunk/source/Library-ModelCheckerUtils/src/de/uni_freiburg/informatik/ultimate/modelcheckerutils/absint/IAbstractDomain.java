@@ -61,4 +61,16 @@ public interface IAbstractDomain<STATE extends IAbstractState<STATE, VARDECL>, A
 	default IAbstractTransformer<STATE, ACTION, VARDECL> getPreOperator() {
 		throw new UnsupportedOperationException("This domain does not support the pre operator");
 	}
+
+	/**
+	 * This setting defines whether {@link IAbstractPostOperator#apply(IAbstractState, IAbstractState, Object)} is
+	 * called with a <tt>stateAfterLeaving</tt> or with a <tt>hierachical pre state</tt> as second argument if the
+	 * transition is leaving a scope.
+	 *
+	 * @return true iff {@link IAbstractPostOperator#apply(IAbstractState, IAbstractState, Object)} of this domain uses
+	 *         an <tt>hierachical pre state</tt> as second argument, false if it uses an <tt>stateAfterLeaving</tt>.
+	 */
+	default boolean useHierachicalPre() {
+		return false;
+	}
 }

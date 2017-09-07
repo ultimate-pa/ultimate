@@ -10,6 +10,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdgeIterator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -62,19 +63,31 @@ public class MapEliminationTransformer implements ITransformulaTransformer {
 		final IcfgEdgeIterator iter = new IcfgEdgeIterator(icfg);
 		while (iter.hasNext()) {
 			final IIcfgTransition<?> transition = iter.next();
-			final TransFormula transformula = IcfgUtils.getTransformula(transition);
 			final IcfgLocation sourceLocation = transition.getSource();
 			final IcfgLocation targetLocation = transition.getTarget();
-			final ModifiableTransFormula modifiable =
-					ModifiableTransFormulaUtils.buildTransFormula(transformula, mReplacementVarFactory, mManagedScript);
-			mTransFormulas.put(transformula, modifiable);
-			mSourceLocations.put(transformula, sourceLocation);
-			mTargetLocations.put(transformula, targetLocation);
+			if (transition instanceof IIcfgReturnTransition<?, ?>) {
+				final IIcfgReturnTransition<?, ?> retTrans = (IIcfgReturnTransition<?, ?>) transition;
+				saveTransformula(retTrans.getAssignmentOfReturn(), sourceLocation, targetLocation);
+				saveTransformula(retTrans.getLocalVarsAssignmentOfCall(), sourceLocation, targetLocation);
+			} else {
+				final TransFormula transformula = IcfgUtils.getTransformula(transition);
+				saveTransformula(transformula, sourceLocation, targetLocation);
+			}
+
 		}
 		mMapEliminator = new MapEliminator(mServices, mLogger, mManagedScript, mSymbolTable, mReplacementVarFactory,
 				mTransFormulas.values(), mSettings);
 		// TODO: This is only necessary, if the icfg contains maps
 		mEqualityProvider.preprocess(icfg);
+	}
+
+	private void saveTransformula(final TransFormula transformula, final IcfgLocation sourceLocation,
+			final IcfgLocation targetLocation) {
+		final ModifiableTransFormula modifiable =
+				ModifiableTransFormulaUtils.buildTransFormula(transformula, mReplacementVarFactory, mManagedScript);
+		mTransFormulas.put(transformula, modifiable);
+		mSourceLocations.put(transformula, sourceLocation);
+		mTargetLocations.put(transformula, targetLocation);
 	}
 
 	@Override

@@ -31,11 +31,19 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
+import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
+import de.uni_freiburg.informatik.ultimate.test.decider.SvcompReachTestResultDecider;
 import de.uni_freiburg.informatik.ultimate.test.util.DirectoryFileEndingsPair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class InterpolationTestSuiteInteger extends InterpolationTestSuite {
+	
+	@Override
+	protected ITestResultDecider constructITestResultDecider(final UltimateRunDefinition ultimateRunDefinition) {
+		return new SvcompReachTestResultDecider(ultimateRunDefinition, false);
+	}
 
 	@Override
 	protected List<DirectoryFileEndingsPair> getDirectories() {

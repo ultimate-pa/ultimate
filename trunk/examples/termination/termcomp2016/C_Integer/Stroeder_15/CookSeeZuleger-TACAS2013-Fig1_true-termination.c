@@ -1,3 +1,5 @@
+//#termcomp16-someonesaidyes
+//#termcomp16-someonesaidyes
 /*
  * Program from Fig.3 of
  * 2013TACAS - Cook,See,Zuleger - Ramsey vs. Lexicographic Termination Proving

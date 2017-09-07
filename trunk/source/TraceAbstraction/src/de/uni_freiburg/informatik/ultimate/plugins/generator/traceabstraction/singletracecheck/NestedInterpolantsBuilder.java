@@ -54,14 +54,15 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IActi
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ApplicationTermFinder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierSequence;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Nnf;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Nnf.QuantifierHandling;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.NnfTransformer;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.NnfTransformer.QuantifierHandling;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -257,13 +258,13 @@ public class NestedInterpolantsBuilder {
 					interpolInputPositionOfReturn++;
 				}
 			}
-			interpolInput[interpolInputPositionOfReturn] = Util.and(mMgdScriptTc.getScript(),
+			interpolInput[interpolInputPositionOfReturn] = SmtUtils.and(mMgdScriptTc.getScript(),
 					interpolInput[interpolInputPositionOfReturn], mAnnotSSA.getPrecondition());
 		} else {
-			interpolInput[0] = Util.and(mMgdScriptTc.getScript(), interpolInput[0], mAnnotSSA.getPrecondition());
+			interpolInput[0] = SmtUtils.and(mMgdScriptTc.getScript(), interpolInput[0], mAnnotSSA.getPrecondition());
 		}
 		// add negated postcondition to last term
-		interpolInput[interpolInput.length - 1] = Util.and(mMgdScriptTc.getScript(),
+		interpolInput[interpolInput.length - 1] = SmtUtils.and(mMgdScriptTc.getScript(),
 				interpolInput[interpolInput.length - 1], mAnnotSSA.getPostcondition());
 
 		final int[] startOfSubtree = integerListToIntArray(mTreeStructure);
@@ -316,7 +317,7 @@ public class NestedInterpolantsBuilder {
 
 	private void addToLastInterpolInputFormula(final Term term) {
 		final int lastPosition = mInterpolInput.size() - 1;
-		final Term newFormula = Util.and(mMgdScriptTc.getScript(), mInterpolInput.get(lastPosition), term);
+		final Term newFormula = SmtUtils.and(mMgdScriptTc.getScript(), mInterpolInput.get(lastPosition), term);
 		assert newFormula != null : "newFormula must be != null";
 		mInterpolInput.set(lastPosition, newFormula);
 	}
@@ -419,7 +420,7 @@ public class NestedInterpolantsBuilder {
 	// for (int i=k+1; i<= endPos; i++) {
 	// Term iFormu = getFormulaforPos(i);
 	// if (mTrace.isPendingCall(i)) {
-	// interproceduralLinkPendingCalls = Util.and(mScript,
+	// interproceduralLinkPendingCalls = SmtUtils.and(mScript,
 	// interproceduralLinkPendingCalls,
 	// mAnnotSSA.getTerms()[i]);
 	// }
@@ -430,7 +431,7 @@ public class NestedInterpolantsBuilder {
 	// }
 	// else {
 	// Term jFormu = interpolProb.get(j);
-	// interpolProb.set(j,Util.and(mScript,jFormu,iFormu));
+	// interpolProb.set(j,SmtUtils.and(mScript,jFormu,iFormu));
 	// }
 	// }
 	// Term lastTerm = interpolProb.get(j);
@@ -438,23 +439,23 @@ public class NestedInterpolantsBuilder {
 	// if (k !=0 ) {
 	// for (int i = 0; i<k; i++) {
 	// if (mTrace.isPendingCall(i)) {
-	// interproceduralLinkPendingCalls = Util.and(mScript,
+	// interproceduralLinkPendingCalls = SmtUtils.and(mScript,
 	// interproceduralLinkPendingCalls,
 	// mAnnotSSA.getTerms()[i]);
 	// }
-	// lastTerm = Util.and(mScript,lastTerm, getFormulaforPos(i));
+	// lastTerm = SmtUtils.and(mScript,lastTerm, getFormulaforPos(i));
 	// }
 	// for (int i=endPos+1; i<mAnnotSSA.length(); i++) {
 	// if (mTrace.isPendingCall(i)) {
-	// interproceduralLinkPendingCalls = Util.and(mScript,
+	// interproceduralLinkPendingCalls = SmtUtils.and(mScript,
 	// interproceduralLinkPendingCalls,
 	// mAnnotSSA.getTerms()[i]);
 	// }
-	// lastTerm = Util.and(mScript,lastTerm, getFormulaforPos(i));
+	// lastTerm = SmtUtils.and(mScript,lastTerm, getFormulaforPos(i));
 	// }
 	// }
 	// else {
-	// lastTerm = Util.and(mScript,lastTerm, interproceduralLinkPendingCalls);
+	// lastTerm = SmtUtils.and(mScript,lastTerm, interproceduralLinkPendingCalls);
 	// }
 	// interpolProb.set(j,lastTerm);
 	// assert (interpolProb.size()-1 == indexTranslation.size());
@@ -497,7 +498,7 @@ public class NestedInterpolantsBuilder {
 	// } else if (mTrace.isReturnPosition(i)) {
 	// iFormu = mAnnotSSA.getTerms()[i];
 	// int callPos = mTrace.getCallPosition(i);
-	// Util.and(mScript, iFormu, mAnnotSSA.getTerms()[callPos]);
+	// SmtUtils.and(mScript, iFormu, mAnnotSSA.getTerms()[callPos]);
 	// } else {
 	// throw new AssertionError();
 	// }
@@ -589,7 +590,7 @@ public class NestedInterpolantsBuilder {
 	 */
 	private Term instantiateArrayExt(final Term interpolantWithoutIndices) {
 		final Term nnf =
-				new Nnf(mMgdScriptCfg, mServices, QuantifierHandling.PULL).transform(interpolantWithoutIndices);
+				new NnfTransformer(mMgdScriptCfg, mServices, QuantifierHandling.PULL).transform(interpolantWithoutIndices);
 		// not needed, at the moment our NNF transformation also produces
 		// Term prenex = (new PrenexNormalForm(mCsToolkitPredicates.getScript(),
 		// mCsToolkitPredicates.getVariableManager())).transform(nnf);
@@ -615,7 +616,7 @@ public class NestedInterpolantsBuilder {
 			offset++;
 		}
 		Term result = new Substitution(mMgdScriptCfg.getScript(), substitutionMapping).transform(matrix);
-		result = Util.and(mMgdScriptCfg.getScript(), result, Util.and(mMgdScriptCfg.getScript(), implications));
+		result = SmtUtils.and(mMgdScriptCfg.getScript(), result, SmtUtils.and(mMgdScriptCfg.getScript(), implications));
 		result = mMgdScriptCfg.getScript().quantifier(QuantifiedFormula.EXISTS, replacingTermVariable, result);
 		result = QuantifierSequence.prependQuantifierSequence(mMgdScriptCfg.getScript(), qs.getQuantifierBlocks(),
 				result);

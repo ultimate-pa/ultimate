@@ -1,0 +1,55 @@
+TreeAutomaton taAbstraction = TreeAutomaton(
+	alphabet = {"(= x 0)" "(< x 0)"},
+	states = {"#[False]@(false)" "#[I0_x]@(true)"},
+	finalStates = {"#[False]@(false)"},
+	transitionTable = {
+		(() "(= x 0)" "#[I0_x]@(true)")
+		(("#[I0_x]@(true)") "(< x 0)" "#[False]@(false)")
+	}
+);
+
+TreeAutomaton taCounterexample = TreeAutomaton(
+	alphabet = {"(= x 0)" "(< x 0)"},
+	states = {"#[False]@(false)" "1#(<= 0 HcOutVar_0_Int)" },
+	finalStates = {"#[False]@(false)"},
+	transitionTable = {
+		(() "(= x 0)" "1#(<= 0 HcOutVar_0_Int)")
+		(("1#(<= 0 HcOutVar_0_Int)") "(< x 0)" "#[False]@(false)")
+	}
+);
+
+TreeAutomaton taComplementedCExample = TreeAutomaton(
+	alphabet = {"(= x 0)" "(< x 0)"},
+	states = {"#[False]@(false)" "3#(<= 0 HcOutVar_0_Int)" "#[€]@(true)"},
+	finalStates = {"3#(<= 0 HcOutVar_0_Int)" "#[True]@(true)" "#[€]@(true)"},
+	transitionTable = {
+		(("#[€]@(true)") "(= x 0)" "#[€]@(true)")
+		(("#[False]@(false)") "(= x 0)" "#[€]@(true)")
+		(("#[False]@(false)") "(< x 0)" "#[€]@(true)")
+		(() "(< x 0)" "#[€]@(true)")
+		(("3#(<= 0 HcOutVar_0_Int)") "(= x 0)" "#[€]@(true)")
+		(() "(= x 0)" "3#(<= 0 HcOutVar_0_Int)")
+		(("#[€]@(true)") "(< x 0)" "#[€]@(true)")
+		(("3#(<= 0 HcOutVar_0_Int)") "(< x 0)" "#[False]@(false)")
+	}
+);
+
+TreeAutomaton taRefined = TreeAutomaton(
+	alphabet = {"(= x 0)" "(< x 0)"},
+	states = {"#[False]@(false)" "#[I0_x]@(false)" "#[True]@((<= 0 HcOutVar_0_Int))" "#[I0_x]@(true)" "#[True]@(false)" "#[I0_x]@((<= 0 HcOutVar_0_Int))"},
+	finalStates = {"#[False]@(false)"},
+	transitionTable = {
+		(("#[True]@(false)") "(= x 0)" "#[I0_x]@(true)")
+		(("#[True]@((<= 0 HcOutVar_0_Int))") "(= x 0)" "#[I0_x]@(true)")
+		(("#[I0_x]@((<= 0 HcOutVar_0_Int))") "(< x 0)" "#[False]@(false)")
+		(() "(= x 0)" "#[I0_x]@((<= 0 HcOutVar_0_Int))")
+		(() "(= x 0)" "#[I0_x]@(true)")
+		(("#[I0_x]@(false)") "(< x 0)" "#[False]@(false)")
+		(("#[I0_x]@(true)") "(< x 0)" "#[False]@(false)")
+	}
+);
+
+assert(isEmpty(intersect(taCounterexample, taComplementedCExample)));
+assert(isEmpty(intersect(taAbstraction, taComplementedCExample)));
+assert(isEmpty(intersect(complement(intersect(taAbstraction, taComplementedCExample)), taRefined)));
+assert(isEmpty(taRefined));

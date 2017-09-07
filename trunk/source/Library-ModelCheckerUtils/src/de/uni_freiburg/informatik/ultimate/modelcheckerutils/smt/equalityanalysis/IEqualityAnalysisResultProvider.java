@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalys
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
 
 /**
@@ -42,5 +43,7 @@ public interface IEqualityAnalysisResultProvider<LOC, CFG> {
 	EqualityAnalysisResult getAnalysisResult(LOC location, Set<Doubleton<Term>> doubletons);
 
 	void preprocess(CFG cfg);
+
+	IEqualityProvidingState getEqualityProvidingStateForLocationSet(Set<IcfgLocation> arrayGroupAccessLocations);
 
 }

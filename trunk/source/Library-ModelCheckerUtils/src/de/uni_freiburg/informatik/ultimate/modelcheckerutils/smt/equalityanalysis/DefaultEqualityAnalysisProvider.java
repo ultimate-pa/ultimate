@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalys
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
 
 /**
@@ -20,5 +21,14 @@ public class DefaultEqualityAnalysisProvider<LOC, CFG> implements IEqualityAnaly
 	@Override
 	public void preprocess(final CFG cfg) {
 		// No preprocessing necessary, "unknown" is always returned
+	}
+
+	/**
+	 * added by Alexander Nutz in order to comply with the updated interface, crashes
+	 */
+	@Override
+	public IEqualityProvidingState getEqualityProvidingStateForLocationSet(
+			Set<IcfgLocation> arrayGroupAccessLocations) {
+		throw new UnsupportedOperationException();
 	}
 }

@@ -1272,17 +1272,16 @@ ta_definition ::= ta_definition_ranked:tadr
                   ;
                   
 ta_definition_implicit ::=  variable_identifier:id EQ 
+                       TREE_AUTOMATON
                        LPAREN:l
                           alphabet:alpha COMMA
                           states:states COMMA
-                          initial_states:initial COMMA
                           final_states:fin_states COMMA
                           ta_transitions:transitions 
                         RPAREN:r
                         {: TreeAutomatonAST ta = new TreeAutomatonAST(getLocation(l$, r$), id);
                           ta.setAlphabet(alpha.getIdentifierList());
                           ta.setStates(states.getIdentifierList());
-                          ta.setInitialStates(initial.getIdentifierList());
                           ta.setFinalStates(fin_states.getIdentifierList());
                           ta.setTransitions(transitions.getTransitions());
                           m_varDeclarations.put(id, TreeAutomatonAST.class);

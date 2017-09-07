@@ -87,6 +87,21 @@ public interface IHoareTripleChecker extends ILockHolderWithVoluntaryLockRelease
 			throw new AssertionError();
 		}
 	}
+	
+	static LBool convertValidity2Lbool(final Validity validity) {
+		switch (validity) {
+		case INVALID:
+			return LBool.SAT;
+		case NOT_CHECKED:
+			throw new AssertionError();
+		case UNKNOWN:
+			return LBool.UNKNOWN;
+		case VALID:
+			return LBool.UNSAT;
+		default:
+			throw new AssertionError();
+		}
+	}
 
 	public enum HoareTripleCheckerStatisticsDefinitions implements IStatisticsElement {
 

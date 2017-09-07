@@ -2,7 +2,7 @@
 <feature
       id="BA_FeatureUltimateCommon"
       label="BA_FeatureUltimateCommon"
-      version="0.1.17"
+      version="0.1.20"
       os="linux,win32,macosx"
       arch="x86,x86_64">
 
@@ -368,13 +368,6 @@
 
    <plugin
          id="org.ojalgo"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
-         id="de.uni_freiburg.informatik.ultimate.heapseparator"
          download-size="0"
          install-size="0"
          version="0.0.0"

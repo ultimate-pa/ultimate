@@ -52,9 +52,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  */
 public class CoverageAnalysis<CL> {
 
-	public static final Function<Object, Function<Object, Object>> DEFAULT_AGGREGATION = x -> y -> {
-		return new BackwardCoveringInformation((BackwardCoveringInformation) x, (BackwardCoveringInformation) y);
-	};
+	public static final Function<Object, Function<Object, Object>> DEFAULT_AGGREGATION =
+			x -> y -> new BackwardCoveringInformation((BackwardCoveringInformation) x, (BackwardCoveringInformation) y);
 
 	protected final IUltimateServiceProvider mServices;
 
@@ -133,8 +132,8 @@ public class CoverageAnalysis<CL> {
 		postprocess();
 
 		mLogger.info("Checked inductivity of " + (mUnsat + mSat + mUnknown + mTrivial + mNotchecked) + " backedges. "
-				+ mUnsat + " proven. " + mSat + " refuted. " + mUnknown + " times theorem prover too weak." + mTrivial
-				+ " trivial." + mNotchecked + " not checked.");
+				+ mUnsat + " proven. " + mSat + " refuted. " + mUnknown + " times theorem prover too weak. " + mTrivial
+				+ " trivial. " + mNotchecked + " not checked.");
 
 	}
 

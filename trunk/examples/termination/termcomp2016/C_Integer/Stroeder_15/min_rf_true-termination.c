@@ -1,3 +1,5 @@
+//#termcomp16-someonesaidyes
+//#termcomp16-someonesaidyes
 /* 
  * Terminating program which has a r.f. based on minimum
  *

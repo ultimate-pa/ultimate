@@ -2887,6 +2887,741 @@ public final class Common {
 
     }
 
+    public interface PathsOrBuilder extends
+        // @@protoc_insertion_point(interface_extends:de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Paths)
+        com.google.protobuf.MessageOrBuilder {
+
+      /**
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Path paths = 1;</code>
+       */
+      java.util.List<de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Path> 
+          getPathsList();
+      /**
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Path paths = 1;</code>
+       */
+      de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Path getPaths(int index);
+      /**
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Path paths = 1;</code>
+       */
+      int getPathsCount();
+      /**
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Path paths = 1;</code>
+       */
+      java.util.List<? extends de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.PathOrBuilder> 
+          getPathsOrBuilderList();
+      /**
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Path paths = 1;</code>
+       */
+      de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.PathOrBuilder getPathsOrBuilder(
+          int index);
+    }
+    /**
+     * Protobuf type {@code de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Paths}
+     */
+    public  static final class Paths extends
+        com.google.protobuf.GeneratedMessageV3 implements
+        // @@protoc_insertion_point(message_implements:de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Paths)
+        PathsOrBuilder {
+      // Use Paths.newBuilder() to construct.
+      private Paths(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+        super(builder);
+      }
+      private Paths() {
+        paths_ = java.util.Collections.emptyList();
+      }
+
+      @java.lang.Override
+      public final com.google.protobuf.UnknownFieldSet
+      getUnknownFields() {
+        return com.google.protobuf.UnknownFieldSet.getDefaultInstance();
+      }
+      private Paths(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        this();
+        int mutable_bitField0_ = 0;
+        try {
+          boolean done = false;
+          while (!done) {
+            int tag = input.readTag();
+            switch (tag) {
+              case 0:
+                done = true;
+                break;
+              default: {
+                if (!input.skipField(tag)) {
+                  done = true;
+                }
+                break;
+              }
+              case 10: {
+                if (!((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
+                  paths_ = new java.util.ArrayList<de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Path>();
+                  mutable_bitField0_ |= 0x00000001;
+                }
+                paths_.add(
+                    input.readMessage(de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Path.parser(), extensionRegistry));
+                break;
+              }
+            }
+          }
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.setUnfinishedMessage(this);
+        } catch (java.io.IOException e) {
+          throw new com.google.protobuf.InvalidProtocolBufferException(
+              e).setUnfinishedMessage(this);
+        } finally {
+          if (((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
+            paths_ = java.util.Collections.unmodifiableList(paths_);
+          }
+          makeExtensionsImmutable();
+        }
+      }
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.internal_static_de_uni_freiburg_informatik_ultimate_interactive_common_protobuf_FS_Paths_descriptor;
+      }
+
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.internal_static_de_uni_freiburg_informatik_ultimate_interactive_common_protobuf_FS_Paths_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Paths.class, de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Paths.Builder.class);
+      }
+
+      public static final int PATHS_FIELD_NUMBER = 1;
+      private java.util.List<de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Path> paths_;
+      /**
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Path paths = 1;</code>
+       */
+      public java.util.List<de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Path> getPathsList() {
+        return paths_;
+      }
+      /**
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Path paths = 1;</code>
+       */
+      public java.util.List<? extends de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.PathOrBuilder> 
+          getPathsOrBuilderList() {
+        return paths_;
+      }
+      /**
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Path paths = 1;</code>
+       */
+      public int getPathsCount() {
+        return paths_.size();
+      }
+      /**
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Path paths = 1;</code>
+       */
+      public de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Path getPaths(int index) {
+        return paths_.get(index);
+      }
+      /**
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Path paths = 1;</code>
+       */
+      public de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.PathOrBuilder getPathsOrBuilder(
+          int index) {
+        return paths_.get(index);
+      }
+
+      private byte memoizedIsInitialized = -1;
+      public final boolean isInitialized() {
+        byte isInitialized = memoizedIsInitialized;
+        if (isInitialized == 1) return true;
+        if (isInitialized == 0) return false;
+
+        memoizedIsInitialized = 1;
+        return true;
+      }
+
+      public void writeTo(com.google.protobuf.CodedOutputStream output)
+                          throws java.io.IOException {
+        for (int i = 0; i < paths_.size(); i++) {
+          output.writeMessage(1, paths_.get(i));
+        }
+      }
+
+      public int getSerializedSize() {
+        int size = memoizedSize;
+        if (size != -1) return size;
+
+        size = 0;
+        for (int i = 0; i < paths_.size(); i++) {
+          size += com.google.protobuf.CodedOutputStream
+            .computeMessageSize(1, paths_.get(i));
+        }
+        memoizedSize = size;
+        return size;
+      }
+
+      private static final long serialVersionUID = 0L;
+      @java.lang.Override
+      public boolean equals(final java.lang.Object obj) {
+        if (obj == this) {
+         return true;
+        }
+        if (!(obj instanceof de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Paths)) {
+          return super.equals(obj);
+        }
+        de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Paths other = (de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Paths) obj;
+
+        boolean result = true;
+        result = result && getPathsList()
+            .equals(other.getPathsList());
+        return result;
+      }
+
+      @java.lang.Override
+      public int hashCode() {
+        if (memoizedHashCode != 0) {
+          return memoizedHashCode;
+        }
+        int hash = 41;
+        hash = (19 * hash) + getDescriptorForType().hashCode();
+        if (getPathsCount() > 0) {
+          hash = (37 * hash) + PATHS_FIELD_NUMBER;
+          hash = (53 * hash) + getPathsList().hashCode();
+        }
+        hash = (29 * hash) + unknownFields.hashCode();
+        memoizedHashCode = hash;
+        return hash;
+      }
+
+      public static de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Paths parseFrom(
+          com.google.protobuf.ByteString data)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return PARSER.parseFrom(data);
+      }
+      public static de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Paths parseFrom(
+          com.google.protobuf.ByteString data,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return PARSER.parseFrom(data, extensionRegistry);
+      }
+      public static de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Paths parseFrom(byte[] data)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return PARSER.parseFrom(data);
+      }
+      public static de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Paths parseFrom(
+          byte[] data,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return PARSER.parseFrom(data, extensionRegistry);
+      }
+      public static de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Paths parseFrom(java.io.InputStream input)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessageV3
+            .parseWithIOException(PARSER, input);
+      }
+      public static de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Paths parseFrom(
+          java.io.InputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessageV3
+            .parseWithIOException(PARSER, input, extensionRegistry);
+      }
+      public static de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Paths parseDelimitedFrom(java.io.InputStream input)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessageV3
+            .parseDelimitedWithIOException(PARSER, input);
+      }
+      public static de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Paths parseDelimitedFrom(
+          java.io.InputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessageV3
+            .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+      }
+      public static de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Paths parseFrom(
+          com.google.protobuf.CodedInputStream input)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessageV3
+            .parseWithIOException(PARSER, input);
+      }
+      public static de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Paths parseFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessageV3
+            .parseWithIOException(PARSER, input, extensionRegistry);
+      }
+
+      public Builder newBuilderForType() { return newBuilder(); }
+      public static Builder newBuilder() {
+        return DEFAULT_INSTANCE.toBuilder();
+      }
+      public static Builder newBuilder(de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Paths prototype) {
+        return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+      }
+      public Builder toBuilder() {
+        return this == DEFAULT_INSTANCE
+            ? new Builder() : new Builder().mergeFrom(this);
+      }
+
+      @java.lang.Override
+      protected Builder newBuilderForType(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        Builder builder = new Builder(parent);
+        return builder;
+      }
+      /**
+       * Protobuf type {@code de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Paths}
+       */
+      public static final class Builder extends
+          com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+          // @@protoc_insertion_point(builder_implements:de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Paths)
+          de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.PathsOrBuilder {
+        public static final com.google.protobuf.Descriptors.Descriptor
+            getDescriptor() {
+          return de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.internal_static_de_uni_freiburg_informatik_ultimate_interactive_common_protobuf_FS_Paths_descriptor;
+        }
+
+        protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+            internalGetFieldAccessorTable() {
+          return de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.internal_static_de_uni_freiburg_informatik_ultimate_interactive_common_protobuf_FS_Paths_fieldAccessorTable
+              .ensureFieldAccessorsInitialized(
+                  de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Paths.class, de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Paths.Builder.class);
+        }
+
+        // Construct using de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Paths.newBuilder()
+        private Builder() {
+          maybeForceBuilderInitialization();
+        }
+
+        private Builder(
+            com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+          super(parent);
+          maybeForceBuilderInitialization();
+        }
+        private void maybeForceBuilderInitialization() {
+          if (com.google.protobuf.GeneratedMessageV3
+                  .alwaysUseFieldBuilders) {
+            getPathsFieldBuilder();
+          }
+        }
+        public Builder clear() {
+          super.clear();
+          if (pathsBuilder_ == null) {
+            paths_ = java.util.Collections.emptyList();
+            bitField0_ = (bitField0_ & ~0x00000001);
+          } else {
+            pathsBuilder_.clear();
+          }
+          return this;
+        }
+
+        public com.google.protobuf.Descriptors.Descriptor
+            getDescriptorForType() {
+          return de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.internal_static_de_uni_freiburg_informatik_ultimate_interactive_common_protobuf_FS_Paths_descriptor;
+        }
+
+        public de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Paths getDefaultInstanceForType() {
+          return de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Paths.getDefaultInstance();
+        }
+
+        public de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Paths build() {
+          de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Paths result = buildPartial();
+          if (!result.isInitialized()) {
+            throw newUninitializedMessageException(result);
+          }
+          return result;
+        }
+
+        public de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Paths buildPartial() {
+          de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Paths result = new de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Paths(this);
+          int from_bitField0_ = bitField0_;
+          if (pathsBuilder_ == null) {
+            if (((bitField0_ & 0x00000001) == 0x00000001)) {
+              paths_ = java.util.Collections.unmodifiableList(paths_);
+              bitField0_ = (bitField0_ & ~0x00000001);
+            }
+            result.paths_ = paths_;
+          } else {
+            result.paths_ = pathsBuilder_.build();
+          }
+          onBuilt();
+          return result;
+        }
+
+        public Builder clone() {
+          return (Builder) super.clone();
+        }
+        public Builder setField(
+            com.google.protobuf.Descriptors.FieldDescriptor field,
+            Object value) {
+          return (Builder) super.setField(field, value);
+        }
+        public Builder clearField(
+            com.google.protobuf.Descriptors.FieldDescriptor field) {
+          return (Builder) super.clearField(field);
+        }
+        public Builder clearOneof(
+            com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+          return (Builder) super.clearOneof(oneof);
+        }
+        public Builder setRepeatedField(
+            com.google.protobuf.Descriptors.FieldDescriptor field,
+            int index, Object value) {
+          return (Builder) super.setRepeatedField(field, index, value);
+        }
+        public Builder addRepeatedField(
+            com.google.protobuf.Descriptors.FieldDescriptor field,
+            Object value) {
+          return (Builder) super.addRepeatedField(field, value);
+        }
+        public Builder mergeFrom(com.google.protobuf.Message other) {
+          if (other instanceof de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Paths) {
+            return mergeFrom((de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Paths)other);
+          } else {
+            super.mergeFrom(other);
+            return this;
+          }
+        }
+
+        public Builder mergeFrom(de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Paths other) {
+          if (other == de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Paths.getDefaultInstance()) return this;
+          if (pathsBuilder_ == null) {
+            if (!other.paths_.isEmpty()) {
+              if (paths_.isEmpty()) {
+                paths_ = other.paths_;
+                bitField0_ = (bitField0_ & ~0x00000001);
+              } else {
+                ensurePathsIsMutable();
+                paths_.addAll(other.paths_);
+              }
+              onChanged();
+            }
+          } else {
+            if (!other.paths_.isEmpty()) {
+              if (pathsBuilder_.isEmpty()) {
+                pathsBuilder_.dispose();
+                pathsBuilder_ = null;
+                paths_ = other.paths_;
+                bitField0_ = (bitField0_ & ~0x00000001);
+                pathsBuilder_ = 
+                  com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
+                     getPathsFieldBuilder() : null;
+              } else {
+                pathsBuilder_.addAllMessages(other.paths_);
+              }
+            }
+          }
+          onChanged();
+          return this;
+        }
+
+        public final boolean isInitialized() {
+          return true;
+        }
+
+        public Builder mergeFrom(
+            com.google.protobuf.CodedInputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws java.io.IOException {
+          de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Paths parsedMessage = null;
+          try {
+            parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+          } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+            parsedMessage = (de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Paths) e.getUnfinishedMessage();
+            throw e.unwrapIOException();
+          } finally {
+            if (parsedMessage != null) {
+              mergeFrom(parsedMessage);
+            }
+          }
+          return this;
+        }
+        private int bitField0_;
+
+        private java.util.List<de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Path> paths_ =
+          java.util.Collections.emptyList();
+        private void ensurePathsIsMutable() {
+          if (!((bitField0_ & 0x00000001) == 0x00000001)) {
+            paths_ = new java.util.ArrayList<de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Path>(paths_);
+            bitField0_ |= 0x00000001;
+           }
+        }
+
+        private com.google.protobuf.RepeatedFieldBuilderV3<
+            de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Path, de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Path.Builder, de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.PathOrBuilder> pathsBuilder_;
+
+        /**
+         * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Path paths = 1;</code>
+         */
+        public java.util.List<de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Path> getPathsList() {
+          if (pathsBuilder_ == null) {
+            return java.util.Collections.unmodifiableList(paths_);
+          } else {
+            return pathsBuilder_.getMessageList();
+          }
+        }
+        /**
+         * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Path paths = 1;</code>
+         */
+        public int getPathsCount() {
+          if (pathsBuilder_ == null) {
+            return paths_.size();
+          } else {
+            return pathsBuilder_.getCount();
+          }
+        }
+        /**
+         * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Path paths = 1;</code>
+         */
+        public de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Path getPaths(int index) {
+          if (pathsBuilder_ == null) {
+            return paths_.get(index);
+          } else {
+            return pathsBuilder_.getMessage(index);
+          }
+        }
+        /**
+         * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Path paths = 1;</code>
+         */
+        public Builder setPaths(
+            int index, de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Path value) {
+          if (pathsBuilder_ == null) {
+            if (value == null) {
+              throw new NullPointerException();
+            }
+            ensurePathsIsMutable();
+            paths_.set(index, value);
+            onChanged();
+          } else {
+            pathsBuilder_.setMessage(index, value);
+          }
+          return this;
+        }
+        /**
+         * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Path paths = 1;</code>
+         */
+        public Builder setPaths(
+            int index, de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Path.Builder builderForValue) {
+          if (pathsBuilder_ == null) {
+            ensurePathsIsMutable();
+            paths_.set(index, builderForValue.build());
+            onChanged();
+          } else {
+            pathsBuilder_.setMessage(index, builderForValue.build());
+          }
+          return this;
+        }
+        /**
+         * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Path paths = 1;</code>
+         */
+        public Builder addPaths(de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Path value) {
+          if (pathsBuilder_ == null) {
+            if (value == null) {
+              throw new NullPointerException();
+            }
+            ensurePathsIsMutable();
+            paths_.add(value);
+            onChanged();
+          } else {
+            pathsBuilder_.addMessage(value);
+          }
+          return this;
+        }
+        /**
+         * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Path paths = 1;</code>
+         */
+        public Builder addPaths(
+            int index, de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Path value) {
+          if (pathsBuilder_ == null) {
+            if (value == null) {
+              throw new NullPointerException();
+            }
+            ensurePathsIsMutable();
+            paths_.add(index, value);
+            onChanged();
+          } else {
+            pathsBuilder_.addMessage(index, value);
+          }
+          return this;
+        }
+        /**
+         * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Path paths = 1;</code>
+         */
+        public Builder addPaths(
+            de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Path.Builder builderForValue) {
+          if (pathsBuilder_ == null) {
+            ensurePathsIsMutable();
+            paths_.add(builderForValue.build());
+            onChanged();
+          } else {
+            pathsBuilder_.addMessage(builderForValue.build());
+          }
+          return this;
+        }
+        /**
+         * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Path paths = 1;</code>
+         */
+        public Builder addPaths(
+            int index, de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Path.Builder builderForValue) {
+          if (pathsBuilder_ == null) {
+            ensurePathsIsMutable();
+            paths_.add(index, builderForValue.build());
+            onChanged();
+          } else {
+            pathsBuilder_.addMessage(index, builderForValue.build());
+          }
+          return this;
+        }
+        /**
+         * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Path paths = 1;</code>
+         */
+        public Builder addAllPaths(
+            java.lang.Iterable<? extends de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Path> values) {
+          if (pathsBuilder_ == null) {
+            ensurePathsIsMutable();
+            com.google.protobuf.AbstractMessageLite.Builder.addAll(
+                values, paths_);
+            onChanged();
+          } else {
+            pathsBuilder_.addAllMessages(values);
+          }
+          return this;
+        }
+        /**
+         * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Path paths = 1;</code>
+         */
+        public Builder clearPaths() {
+          if (pathsBuilder_ == null) {
+            paths_ = java.util.Collections.emptyList();
+            bitField0_ = (bitField0_ & ~0x00000001);
+            onChanged();
+          } else {
+            pathsBuilder_.clear();
+          }
+          return this;
+        }
+        /**
+         * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Path paths = 1;</code>
+         */
+        public Builder removePaths(int index) {
+          if (pathsBuilder_ == null) {
+            ensurePathsIsMutable();
+            paths_.remove(index);
+            onChanged();
+          } else {
+            pathsBuilder_.remove(index);
+          }
+          return this;
+        }
+        /**
+         * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Path paths = 1;</code>
+         */
+        public de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Path.Builder getPathsBuilder(
+            int index) {
+          return getPathsFieldBuilder().getBuilder(index);
+        }
+        /**
+         * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Path paths = 1;</code>
+         */
+        public de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.PathOrBuilder getPathsOrBuilder(
+            int index) {
+          if (pathsBuilder_ == null) {
+            return paths_.get(index);  } else {
+            return pathsBuilder_.getMessageOrBuilder(index);
+          }
+        }
+        /**
+         * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Path paths = 1;</code>
+         */
+        public java.util.List<? extends de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.PathOrBuilder> 
+             getPathsOrBuilderList() {
+          if (pathsBuilder_ != null) {
+            return pathsBuilder_.getMessageOrBuilderList();
+          } else {
+            return java.util.Collections.unmodifiableList(paths_);
+          }
+        }
+        /**
+         * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Path paths = 1;</code>
+         */
+        public de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Path.Builder addPathsBuilder() {
+          return getPathsFieldBuilder().addBuilder(
+              de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Path.getDefaultInstance());
+        }
+        /**
+         * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Path paths = 1;</code>
+         */
+        public de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Path.Builder addPathsBuilder(
+            int index) {
+          return getPathsFieldBuilder().addBuilder(
+              index, de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Path.getDefaultInstance());
+        }
+        /**
+         * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Path paths = 1;</code>
+         */
+        public java.util.List<de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Path.Builder> 
+             getPathsBuilderList() {
+          return getPathsFieldBuilder().getBuilderList();
+        }
+        private com.google.protobuf.RepeatedFieldBuilderV3<
+            de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Path, de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Path.Builder, de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.PathOrBuilder> 
+            getPathsFieldBuilder() {
+          if (pathsBuilder_ == null) {
+            pathsBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
+                de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Path, de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Path.Builder, de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.PathOrBuilder>(
+                    paths_,
+                    ((bitField0_ & 0x00000001) == 0x00000001),
+                    getParentForChildren(),
+                    isClean());
+            paths_ = null;
+          }
+          return pathsBuilder_;
+        }
+        public final Builder setUnknownFields(
+            final com.google.protobuf.UnknownFieldSet unknownFields) {
+          return this;
+        }
+
+        public final Builder mergeUnknownFields(
+            final com.google.protobuf.UnknownFieldSet unknownFields) {
+          return this;
+        }
+
+
+        // @@protoc_insertion_point(builder_scope:de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Paths)
+      }
+
+      // @@protoc_insertion_point(class_scope:de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Paths)
+      private static final de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Paths DEFAULT_INSTANCE;
+      static {
+        DEFAULT_INSTANCE = new de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Paths();
+      }
+
+      public static de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Paths getDefaultInstance() {
+        return DEFAULT_INSTANCE;
+      }
+
+      private static final com.google.protobuf.Parser<Paths>
+          PARSER = new com.google.protobuf.AbstractParser<Paths>() {
+        public Paths parsePartialFrom(
+            com.google.protobuf.CodedInputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+            return new Paths(input, extensionRegistry);
+        }
+      };
+
+      public static com.google.protobuf.Parser<Paths> parser() {
+        return PARSER;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Parser<Paths> getParserForType() {
+        return PARSER;
+      }
+
+      public de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Paths getDefaultInstanceForType() {
+        return DEFAULT_INSTANCE;
+      }
+
+    }
+
     public static final int TAG_FIELD_NUMBER = 1;
     private volatile java.lang.Object tag_;
     /**
@@ -7823,6 +8558,11 @@ public final class Common {
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_de_uni_freiburg_informatik_ultimate_interactive_common_protobuf_FS_Path_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_de_uni_freiburg_informatik_ultimate_interactive_common_protobuf_FS_Paths_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_de_uni_freiburg_informatik_ultimate_interactive_common_protobuf_FS_Paths_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_de_uni_freiburg_informatik_ultimate_interactive_common_protobuf_Choice_descriptor;
   private static final 
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
@@ -7864,25 +8604,28 @@ public final class Common {
       "\n\014common.proto\022?de.uni_freiburg.informat" +
       "ik.ultimate.interactive.common.protobuf\"" +
       "B\n\004File\022\021\n\tfile_name\030\001 \001(\t\022\017\n\007content\030\002 " +
-      "\001(\t\032\026\n\007Request\022\013\n\003ext\030\001 \001(\t\"\225\002\n\002FS\022\013\n\003ta" +
+      "\001(\t\032\026\n\007Request\022\013\n\003ext\030\001 \001(\t\"\367\002\n\002FS\022\013\n\003ta" +
       "g\030\001 \001(\t\022[\n\004base\030\002 \001(\0132M.de.uni_freiburg." +
       "informatik.ultimate.interactive.common.p" +
       "rotobuf.FS.Directory\032\215\001\n\tDirectory\022\014\n\004na" +
       "me\030\001 \001(\t\022\r\n\005files\030\002 \003(\t\022c\n\014subdirectory\030" +
       "\003 \003(\0132M.de.uni_freiburg.informatik.ultim" +
       "ate.interactive.common.protobuf.FS.Direc",
-      "tory\032\025\n\004Path\022\r\n\005piece\030\001 \003(\t\"S\n\006Choice\022\r\n" +
-      "\005index\030\001 \001(\005\032:\n\007Request\022\r\n\005title\030\001 \001(\t\022\020" +
-      "\n\010subtitle\030\002 \001(\t\022\016\n\006choice\030\003 \003(\t\"\224\001\n\tExc" +
-      "eption\022\r\n\005class\030\001 \001(\t\022\017\n\007message\030\002 \001(\t\022g" +
-      "\n\013stack_trace\030\003 \003(\0132R.de.uni_freiburg.in" +
-      "formatik.ultimate.interactive.common.pro" +
-      "tobuf.StackTraceElement\"i\n\021StackTraceEle" +
-      "ment\022\027\n\017declaring_class\030\001 \001(\t\022\023\n\013method_" +
-      "name\030\002 \001(\t\022\021\n\tfile_name\030\003 \001(\t\022\023\n\013line_nu" +
-      "mber\030\004 \001(\005\"8\n\007Message\022\r\n\005title\030\001 \001(\t\022\020\n\010",
-      "subtitle\030\002 \001(\t\022\014\n\004text\030\003 \001(\t\"\025\n\007Confirm\022" +
-      "\n\n\002ok\030\001 \001(\010B\010B\006Commonb\006proto3"
+      "tory\032\025\n\004Path\022\r\n\005piece\030\001 \003(\t\032`\n\005Paths\022W\n\005" +
+      "paths\030\001 \003(\0132H.de.uni_freiburg.informatik" +
+      ".ultimate.interactive.common.protobuf.FS" +
+      ".Path\"S\n\006Choice\022\r\n\005index\030\001 \001(\005\032:\n\007Reques" +
+      "t\022\r\n\005title\030\001 \001(\t\022\020\n\010subtitle\030\002 \001(\t\022\016\n\006ch" +
+      "oice\030\003 \003(\t\"\224\001\n\tException\022\r\n\005class\030\001 \001(\t\022" +
+      "\017\n\007message\030\002 \001(\t\022g\n\013stack_trace\030\003 \003(\0132R." +
+      "de.uni_freiburg.informatik.ultimate.inte" +
+      "ractive.common.protobuf.StackTraceElemen" +
+      "t\"i\n\021StackTraceElement\022\027\n\017declaring_clas",
+      "s\030\001 \001(\t\022\023\n\013method_name\030\002 \001(\t\022\021\n\tfile_nam" +
+      "e\030\003 \001(\t\022\023\n\013line_number\030\004 \001(\005\"8\n\007Message\022" +
+      "\r\n\005title\030\001 \001(\t\022\020\n\010subtitle\030\002 \001(\t\022\014\n\004text" +
+      "\030\003 \001(\t\"\025\n\007Confirm\022\n\n\002ok\030\001 \001(\010B\010B\006Commonb" +
+      "\006proto3"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -7926,6 +8669,12 @@ public final class Common {
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_de_uni_freiburg_informatik_ultimate_interactive_common_protobuf_FS_Path_descriptor,
         new java.lang.String[] { "Piece", });
+    internal_static_de_uni_freiburg_informatik_ultimate_interactive_common_protobuf_FS_Paths_descriptor =
+      internal_static_de_uni_freiburg_informatik_ultimate_interactive_common_protobuf_FS_descriptor.getNestedTypes().get(2);
+    internal_static_de_uni_freiburg_informatik_ultimate_interactive_common_protobuf_FS_Paths_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_de_uni_freiburg_informatik_ultimate_interactive_common_protobuf_FS_Paths_descriptor,
+        new java.lang.String[] { "Paths", });
     internal_static_de_uni_freiburg_informatik_ultimate_interactive_common_protobuf_Choice_descriptor =
       getDescriptor().getMessageTypes().get(2);
     internal_static_de_uni_freiburg_informatik_ultimate_interactive_common_protobuf_Choice_fieldAccessorTable = new

@@ -1,0 +1,20 @@
+
+TreeAutomaton test = TreeAutomaton(
+    alphabet = {"a" "b" "F" "H" "G" },
+    states = {"q1" "q2" "q3" "q4" "q0" },
+    finalStates = { "q0" },
+    transitionTable = {
+        (() "a" "q2")
+        (() "b" "q0")
+        (() "a" "q4")
+        (() "b" "q3")
+        (("q4" "q4") "F" "q1")
+        (("q3" "q1") "G" "q0")
+        (("q3" "q1" "q4" "q2") H "q0")
+    }
+);
+
+
+assert(isEquivalent(test, test));
+assert(isEquivalent(test, determinize(test)));
+// assert(isEquivalent(test, minimize(test)));

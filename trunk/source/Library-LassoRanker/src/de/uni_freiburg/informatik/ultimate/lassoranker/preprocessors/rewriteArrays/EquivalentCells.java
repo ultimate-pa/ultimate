@@ -37,7 +37,6 @@ import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
@@ -45,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayEqu
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayUpdate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.IndexAnalysisResult;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.EqualityAnalysisResult.Equality;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.EqualityStatus;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 
 public class EquivalentCells {
@@ -84,7 +83,7 @@ public class EquivalentCells {
 			for (final ArrayIndex index : newInstance2Index2CellVariable.keySet()) {
 				final TermVariable newCellVariable = newInstance2Index2CellVariable.get(index);
 				final TermVariable oldCellVariable = oldInstance2Index2CellVariable.get(index);
-				final Equality indexEquality = mIndexAnalyzer.isEqual(index, updateIndex);
+				final EqualityStatus indexEquality = mIndexAnalyzer.isEqual(index, updateIndex);
 				switch (indexEquality) {
 				case EQUAL:
 					// do nothing
@@ -118,7 +117,7 @@ public class EquivalentCells {
 				for (int j = 0; j < i; j++) {
 					final List<Term> index1 = indices[i];
 					final List<Term> index2 = indices[j];
-					if (mIndexAnalyzer.isEqual(index1, index2) == Equality.EQUAL) {
+					if (mIndexAnalyzer.isEqual(index1, index2) == EqualityStatus.EQUAL) {
 						final TermVariable value1 = values[i];
 						final TermVariable value2 = values[j];
 						uf.union(value1, value2);
@@ -163,7 +162,7 @@ public class EquivalentCells {
 				conjuncts.add(binarized);
 			}
 		}
-		return Util.and(mScript, conjuncts.toArray(new Term[conjuncts.size()]));
+		return SmtUtils.and(mScript, conjuncts.toArray(new Term[conjuncts.size()]));
 	}
 
 	private Map<TermVariable, TermVariable> computeRepresentatives(final UnionFind<TermVariable> uf) {

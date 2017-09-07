@@ -130,12 +130,18 @@ public class GeneratedWitnessEdge<TE, E> {
 		if (!hasStep()) {
 			return null;
 		}
+		if (mATE.hasStepInfo(StepInfo.PROC_CALL)) {
+			return mATE.getSucceedingProcedure();
+		}
 		return null;
 	}
 
 	public String getReturnFunction() {
 		if (!hasStep()) {
 			return null;
+		}
+		if (mATE.hasStepInfo(StepInfo.PROC_RETURN)) {
+			return mATE.getSucceedingProcedure();
 		}
 		return null;
 	}

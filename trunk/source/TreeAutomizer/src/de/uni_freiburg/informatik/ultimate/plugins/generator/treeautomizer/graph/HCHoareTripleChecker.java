@@ -27,29 +27,24 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.graph;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.TreeSet;
-import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
+import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HCOutVar;
+import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HCSymbolTable;
+import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HornClause;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HCOutVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HCSymbolTable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornClause;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
@@ -73,10 +68,11 @@ public class HCHoareTripleChecker {
 	private final CfgSmtToolkit mCfgSmtToolkit;
 	private final ManagedScript mManagedScript;
 	private final HCSymbolTable mSymbolTable;
+	private int mFreshConstantCounter;
 	
 	/**
 	 * Constructor of HCHoareTripleChecker
-	 * @param predicateUnifier Unifer for the predicates.
+	 * @param predicateUnifier Unifier for the predicates.
 	 * @param cfgSmtToolkit 
 	 * */
 	public HCHoareTripleChecker(final PredicateUnifier predicateUnifier, final CfgSmtToolkit cfgSmtToolkit,
@@ -102,6 +98,7 @@ public class HCHoareTripleChecker {
 	public Validity check(List<IPredicate> preOld, HornClause hornClause, IPredicate succ) {
 		/*
 		 * sanitize pre
+		 * -> for example if the HornClause not have any body predicates, just take "true" as precondition
 		 */
 		final List<IPredicate> pre;
 		if (hornClause.getBodyPredicates().size() == 0) {
@@ -112,43 +109,25 @@ public class HCHoareTripleChecker {
 			pre = preOld;
 		}
 		
-		
-		assert pre.size() == hornClause.getNoBodyPredicates() : "The number of preconditions must match the number of "
-				+ "uninterpreted predicates in the Horn clause's body!";
-		
 		mManagedScript.lock(this);
 		mManagedScript.push(this, 1);
 		
-		/*
-		 * Compute the precondition
-		 *  - substitute the predicate formulas of the "pre" predicates
-		 *  - conjoin the substituted predicates
-		 */
-		final Term[] substitutedPredicateFormulas = new Term[pre.size()];
-		for (int predPos = 0; predPos < hornClause.getNoBodyPredicates(); predPos++) {
-			assert pre.get(predPos).getVars().size() == hornClause.getBodyPredicates().get(predPos).getArity();
-			final IPredicate currentPrePred = pre.get(predPos);
-
-			final Term substitutedFormula = substitutePredicateFormula(currentPrePred, 
-					hornClause.getProgramVarsForPredPos(predPos));
-			assert substitutedFormula != null;
-			assert substitutedFormula.getFreeVars().length == 0 : "formula should have been closed by substitution";
-			substitutedPredicateFormulas[predPos] = substitutedFormula;
+		Term preConditionFormula = mManagedScript.term(this, "true");
+		
+		for (int i = 0; i < pre.size(); i++) {
+			final Term preCondConjunct = unify(pre.get(i), hornClause.getTermVariablesForPredPos(i));
+			final Term closedPreCondConjunct = close(preCondConjunct, mSymbolTable);
+			preConditionFormula = SmtUtils.and(mManagedScript.getScript(), preConditionFormula, closedPreCondConjunct);
 		}
-		
-		final Term preConditionFormula = Util.and(mManagedScript.getScript(), substitutedPredicateFormulas);
-		assert preConditionFormula.getFreeVars().length == 0 : "formula should have been closed by substitution";
-		
-		/*
-		 * Compute the postcondition
-		 */
-		final Term postConditionFormula = substitutePredicateFormula(succ, hornClause.getProgramVarsForHeadPred());
-		assert postConditionFormula.getFreeVars().length == 0 : "formula should have been closed by substitution";
-		final Term negatedPostConditionFormula = Util.not(mManagedScript.getScript(), postConditionFormula);
-
 		mManagedScript.assertTerm(this, preConditionFormula);
-		mManagedScript.assertTerm(this, closeHcTransFormula(hornClause.getTransformula()));
-		mManagedScript.assertTerm(this, negatedPostConditionFormula);
+
+		final Term closedConstraint = close(hornClause.getFormula(), mSymbolTable);
+		mManagedScript.assertTerm(this, closedConstraint);
+
+		final Term negatedPostConditionFormula = SmtUtils.not(mManagedScript.getScript(),
+				unify(succ, hornClause.getTermVariablesForHeadPred()));
+		final Term closedNegatedPostConditionFormula = close(negatedPostConditionFormula, mSymbolTable);
+		mManagedScript.assertTerm(this, closedNegatedPostConditionFormula);
 		
 		final LBool satResult = mManagedScript.checkSat(this);
 		
@@ -158,17 +137,47 @@ public class HCHoareTripleChecker {
 	}
 
 
-	private Term closeHcTransFormula(UnmodifiableTransFormula transformula) {
-		Map<Term, Term> substitution = new HashMap<>();
-		for (Entry<IProgramVar, TermVariable> en : transformula.getInVars().entrySet()) {
-			substitution.put(en.getValue(), en.getKey().getDefaultConstant());
+	private Term close(Term term, HCSymbolTable symbolTable) {
+		final Map<Term, Term> substitution = new HashMap<>();
+		
+		for (TermVariable fv : term.getFreeVars()) {
+			if (symbolTable.hasConstForTermVar(fv)) {
+				// the variable occurs in one of the input hornClauses --> we already have a constant declared for it
+				substitution.put(fv, symbolTable.getConstForTermVar(fv));
+			} else {
+				/*
+				 *  the variable was introduced at unification because we could not match all positions (because the
+				 *  predicate symbol in the Horn clause has lower arity than the current pre/postcondition predicate)
+				 */
+				final String freshConstantName = "c_" + fv.toString().substring(2, fv.toString().length()) + "_" +
+						+ mFreshConstantCounter++;
+				mManagedScript.declareFun(this, freshConstantName, new Sort[0], fv.getSort());
+				substitution.put(fv, mManagedScript.term(this, freshConstantName));
+			}
 		}
-		for (Entry<IProgramVar, TermVariable> en : transformula.getOutVars().entrySet()) {
-			substitution.put(en.getValue(), en.getKey().getDefaultConstant());
-		}
-		return new Substitution(mManagedScript, substitution).transform(transformula.getFormula());
+		
+		return new Substitution(mManagedScript, substitution).transform(term);
 	}
 
+
+	private Term unify(IPredicate iPredicate, List<TermVariable> termVariablesForPredPos) {
+		final Map<Term, Term> substitution = new HashMap<>();
+		for (IProgramVar pvar : iPredicate.getVars()) {
+			final HCOutVar hcvar = (HCOutVar) pvar;
+
+			if (termVariablesForPredPos.size() > hcvar.getArgumentPos()) {
+				substitution.put(hcvar.getTermVariable(), termVariablesForPredPos.get(hcvar.getArgumentPos()));
+			} else {
+				/*
+				 *  the predicate we want to unify with has less arguments than the hornClause's head predicate
+				 *   --> introduce a fresh variable
+				 */
+				substitution.put(hcvar.getTermVariable(), 
+						mManagedScript.constructFreshTermVariable("any", hcvar.getSort()));
+			}
+		}
+		return new Substitution(mManagedScript, substitution).transform(iPredicate.getFormula());
+	}
 
 	/**
 	 * Substitute the formula of an IPredicate over HCOutVars through a given list of ProgramVariabls (appearing in a
@@ -181,27 +190,44 @@ public class HCHoareTripleChecker {
 	 */
 	private Term substitutePredicateFormula(final IPredicate predicate, final List<IProgramVar> programVars) {
 		int predicateArity = programVars.size();
-		final List<HCOutVar> sortedHCOutVars = sortHCOutVars(predicate.getVars());
-		assert sortedHCOutVars.size() == predicateArity;
+		final Map<Integer, HCOutVar> sortedHCOutVars = sortHCOutVars(predicate);//predicate.getVars());
+//		assert programVars.size() >= predicate.getVars().size();
 
 		final Map<Term, Term> substitution = new HashMap<>();
 		for (int argPos = 0; argPos < predicateArity; argPos++) {
-			substitution.put(
-					sortedHCOutVars.get(argPos).getTermVariable(), 
-					programVars.get(argPos).getDefaultConstant());
+			final HCOutVar predVarAtArgPos = sortedHCOutVars.get(argPos);
+			if (predVarAtArgPos != null) {
+				substitution.put(
+//						sortedHCOutVars.get(argPos).getTermVariable(), 
+						predVarAtArgPos.getTermVariable(), 
+						programVars.get(argPos).getDefaultConstant());
+			}
 		}
-		final Term substitutedFormula = 
+		Term substitutedFormula = 
 				new Substitution(mManagedScript, substitution).transform(predicate.getFormula());
+		
+		substitutedFormula = replaceFreeVarsWithFreshConstants(substitutedFormula);
+		
 		return substitutedFormula;
 	}
 
-
-	private List<HCOutVar> sortHCOutVars(Set<IProgramVar> vars) {
-		TreeSet<HCOutVar> treeSet = new TreeSet<>();
-		treeSet.addAll(vars.stream().map(v -> ((HCOutVar) v)).collect(Collectors.toSet()));
-		return new ArrayList<HCOutVar>(treeSet);
+	private Term replaceFreeVarsWithFreshConstants(Term formula) {
+		final Map<Term, Term> substitution = new HashMap<>();
+		for (TermVariable fv : formula.getFreeVars()) {
+			substitution.put(fv, 
+					SmtUtils.buildNewConstant(mManagedScript.getScript(), fv.getName(), fv.getSort().getName()));
+		}
+		return new Substitution(mManagedScript, substitution).transform(formula);
 	}
 
+	private Map<Integer, HCOutVar> sortHCOutVars(IPredicate pred) {
+		Map<Integer, HCOutVar> result = new HashMap<>();
+		for (IProgramVar var : pred.getVars()) {
+			final HCOutVar hcOutVar = (HCOutVar) var;
+			result.put(hcOutVar.getArgumentPos(), hcOutVar);
+		}
+		return result;
+	}
 
 	public Validity check(TreeAutomatonRule<HornClause, IPredicate> rule) {
 		return check(rule.getSource(), rule.getLetter(), rule.getDest());

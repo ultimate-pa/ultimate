@@ -1,3 +1,4 @@
+//#termcomp16-someonesaidyes
 extern void __VERIFIER_error();
 
 void f(int);

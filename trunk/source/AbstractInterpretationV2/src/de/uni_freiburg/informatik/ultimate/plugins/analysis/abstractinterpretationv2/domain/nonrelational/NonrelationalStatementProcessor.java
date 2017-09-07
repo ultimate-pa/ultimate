@@ -81,7 +81,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalDomainState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.typeutils.TypeUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.Permutation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.CrossProducts;
 
 /**
  * Processes Boogie {@link Statement}s and returns a new {@link IntervalDomainState} for the given statement.
@@ -263,7 +263,7 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 
 		// now patch each of the results in the old state
 		// each of the lists contains the result of one assignment; the end result has to be the cartesian product
-		final List<List<STATE>> stateList = Permutation.crossProduct(multiAssignmentResults);
+		final List<List<STATE>> stateList = CrossProducts.crossProduct(multiAssignmentResults);
 		stateList.stream().map(stateAsList -> stateAsList.stream().reduce((a, b) -> a.patch(b)))
 				.forEach(a -> mReturnState.add(mOldState.patch(a.get())));
 	}

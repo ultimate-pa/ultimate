@@ -1,3 +1,5 @@
+//#termcomp16-someonesaidyes
+//#termcomp16-someonesaidyes
 /*
  * Program from Table 1 of
  * 2006FLOPS - James Avery - Size-Change Termination and Bound Analysis

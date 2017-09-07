@@ -1,3 +1,4 @@
+//#termcomp16-someonesaidyes
 extern int __VERIFIER_nondet_int();
 extern void __VERIFIER_error();
 

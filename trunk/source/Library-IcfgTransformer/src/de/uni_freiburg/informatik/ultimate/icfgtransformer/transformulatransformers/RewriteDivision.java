@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.ReplacementVarFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
@@ -119,8 +120,8 @@ public class RewriteDivision extends TransformerPreprocessor {
 
 		// Add auxTerms to the transition
 		final Term formula = new_tf.getFormula();
-		final Term auxTerms = Util.and(script.getScript(), mAuxTerms.toArray(new Term[mAuxTerms.size()]));
-		new_tf.setFormula(Util.and(script.getScript(), formula, auxTerms));
+		final Term auxTerms = SmtUtils.and(script.getScript(), mAuxTerms.toArray(new Term[mAuxTerms.size()]));
+		new_tf.setFormula(SmtUtils.and(script.getScript(), formula, auxTerms));
 		new_tf.addAuxVars(mAuxVars.keySet());
 
 		return new_tf;
@@ -131,7 +132,7 @@ public class RewriteDivision extends TransformerPreprocessor {
 			final ModifiableTransFormula newTF) {
 		final Term old_term = oldTF.getFormula();
 		final Term old_termwith_def =
-				Util.and(script, old_term, Util.and(script, mAuxTerms.toArray(new Term[mAuxTerms.size()])));
+				SmtUtils.and(script, old_term, SmtUtils.and(script, mAuxTerms.toArray(new Term[mAuxTerms.size()])));
 		final Term new_term = newTF.getFormula();
 		final boolean fail1 = CHECK_RESULT && isIncorrect(script, old_termwith_def, new_term);
 		final boolean fail2 =
@@ -238,9 +239,9 @@ public class RewriteDivision extends TransformerPreprocessor {
 			final Term upperBoundNegDivisor = mScript.term("-", strictUpperBoundNegDivisor, one);
 			final Term isUpperBoundPosDivisor = mScript.term("<=", dividend, upperBoundPosDivisor);
 			final Term isUpperBoundNegDivisor = mScript.term("<=", dividend, upperBoundNegDivisor);
-			disjuncts[0] = Util.and(mScript, divisorIsPositive, isLowerBound, isUpperBoundPosDivisor);
-			disjuncts[1] = Util.and(mScript, divisorIsNegative, isLowerBound, isUpperBoundNegDivisor);
-			return Util.or(mScript, disjuncts);
+			disjuncts[0] = SmtUtils.and(mScript, divisorIsPositive, isLowerBound, isUpperBoundPosDivisor);
+			disjuncts[1] = SmtUtils.and(mScript, divisorIsNegative, isLowerBound, isUpperBoundNegDivisor);
+			return SmtUtils.or(mScript, disjuncts);
 		}
 
 		/**
@@ -272,9 +273,9 @@ public class RewriteDivision extends TransformerPreprocessor {
 			final Term isUpperBoundNegDivisor = mScript.term("<=", remainderAuxVar, upperBoundNegDivisor);
 			final Term equality = mScript.term("=", dividend,
 					mScript.term("+", mScript.term("*", quotientAuxVar, divisor), remainderAuxVar));
-			disjuncts[0] = Util.and(mScript, divisorIsPositive, isLowerBound, isUpperBoundPosDivisor, equality);
-			disjuncts[1] = Util.and(mScript, divisorIsNegative, isLowerBound, isUpperBoundNegDivisor, equality);
-			return Util.or(mScript, disjuncts);
+			disjuncts[0] = SmtUtils.and(mScript, divisorIsPositive, isLowerBound, isUpperBoundPosDivisor, equality);
+			disjuncts[1] = SmtUtils.and(mScript, divisorIsNegative, isLowerBound, isUpperBoundNegDivisor, equality);
+			return SmtUtils.or(mScript, disjuncts);
 		}
 	}
 }

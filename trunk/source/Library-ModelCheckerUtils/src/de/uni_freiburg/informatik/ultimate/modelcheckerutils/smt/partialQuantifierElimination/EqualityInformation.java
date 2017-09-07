@@ -26,6 +26,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifierElimination;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -34,7 +37,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ContainsSubterm
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineRelation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.BinaryEqualityRelation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.BinaryRelation.NoRelationOfThisKindException;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.BinaryRelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.NotAffineException;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 
 /**
@@ -46,13 +51,17 @@ public class EqualityInformation {
 	private final int mIndex;
 	private final Term mGivenTerm;
 	private final Term mEqualTerm;
+	private final RelationSymbol mRelationSymbol;
 
-	public EqualityInformation(int index, Term givenTerm, Term equalTerm) {
+	public EqualityInformation(final int index, final Term givenTerm, final Term equalTerm,
+			final RelationSymbol relationSymbol) {
 		mIndex = index;
 		mGivenTerm = givenTerm;
 		mEqualTerm = equalTerm;
+		mRelationSymbol = relationSymbol;
 	}
 
+	@Deprecated
 	public int getIndex() {
 		return mIndex;
 	}
@@ -65,6 +74,10 @@ public class EqualityInformation {
 		return mEqualTerm;
 	}
 	
+	public RelationSymbol getRelation() {
+		return mRelationSymbol;
+	}
+	
 	
 	/**
 	 * Check all terms in context if they are an equality of the form givenTerm
@@ -72,8 +85,8 @@ public class EqualityInformation {
 	 * the case return corresponding equality information, otherwise return
 	 * null. If forbiddenTerm is null all subterms in t are allowed.
 	 */
-	public static EqualityInformation getEqinfo(Script script, Term givenTerm, Term[] context, Term forbiddenTerm,
-			int quantifier) {
+	public static EqualityInformation getEqinfo(final Script script, final Term givenTerm, final Term[] context, final Term forbiddenTerm,
+			final int quantifier) {
 		final BinaryEqualityRelation[] binaryRelations = new BinaryEqualityRelation[context.length];
 
 		// stage 1: check if there is an "=" or "distinct" term where the
@@ -88,27 +101,20 @@ public class EqualityInformation {
 				continue;
 			}
 
-			if (binaryRelations[i].getRelationSymbol().toString().equals("=") && quantifier == QuantifiedFormula.FORALL) {
+			if (binaryRelations[i].getRelationSymbol().equals(RelationSymbol.EQ)
+					&& quantifier == QuantifiedFormula.FORALL) {
 				binaryRelations[i] = null;
 				continue;
-			} else if (binaryRelations[i].getRelationSymbol().toString().equals("distinct")
+			} else if (binaryRelations[i].getRelationSymbol().equals(RelationSymbol.DISTINCT)
 					&& quantifier == QuantifiedFormula.EXISTS) {
 				binaryRelations[i] = null;
 				continue;
 			}
 
-			final Term lhs = binaryRelations[i].getLhs();
-			final Term rhs = binaryRelations[i].getRhs();
-
-			if (lhs.equals(givenTerm) && !isSubterm(givenTerm, rhs)) {
-				if (forbiddenTerm == null || !isSubterm(forbiddenTerm, rhs)) {
-					return new EqualityInformation(i, givenTerm, rhs);
-				}
-			}
-			if (rhs.equals(givenTerm) && !isSubterm(givenTerm, lhs)) {
-				if (forbiddenTerm == null || !isSubterm(forbiddenTerm, lhs)) {
-					return new EqualityInformation(i, givenTerm, lhs);
-				}
+			final BinaryEqualityRelation ber = binaryRelations[i];
+			final EqualityInformation eqInfo = getEqinfo(givenTerm, ber, forbiddenTerm, i);
+			if (eqInfo != null) {
+				return eqInfo;
 			}
 		}
 		// stage 2: also rewrite linear terms if necessary to get givenTerm
@@ -124,25 +130,9 @@ public class EqualityInformation {
 				} catch (final NotAffineException e1) {
 					continue;
 				}
-				if (affRel.isVariable(givenTerm)) {
-					Term equalTerm;
-					try {
-						final ApplicationTerm equality = affRel.onLeftHandSideOnly(script, givenTerm);
-						equalTerm = equality.getParameters()[1];
-					} catch (final NotAffineException e) {
-						// no representation where var is on lhs
-						continue;
-					}
-					if (isSubterm(givenTerm, equalTerm)) {
-						// this case occurs e.g. if the given term also occurs
-						// in some select term
-						continue;
-					}
-					if (forbiddenTerm != null && isSubterm(forbiddenTerm, equalTerm)) {
-						continue;
-					} else {
-						return new EqualityInformation(i, givenTerm, equalTerm);
-					}
+				final EqualityInformation eqInfo = getEqinfo(script, givenTerm, affRel, forbiddenTerm, i);
+				if (eqInfo != null) {
+					return eqInfo;
 				}
 			}
 		}
@@ -151,10 +141,86 @@ public class EqualityInformation {
 	}
 	
 	
+	public static EqualityInformation getEqinfo(final Script script, final Term givenTerm, final AffineRelation affRel, final Term forbiddenTerm, final int i) {
+		if (affRel.isVariable(givenTerm)) {
+			Term equalTerm;
+			try {
+				final ApplicationTerm equality = affRel.onLeftHandSideOnly(script, givenTerm);
+				equalTerm = equality.getParameters()[1];
+			} catch (final NotAffineException e) {
+				// no representation where var is on lhs
+				return null;
+			}
+			if (isSubterm(givenTerm, equalTerm)) {
+				// this case occurs e.g. if the given term also occurs
+				// in some select term
+				return null;
+			}
+			if (forbiddenTerm != null && isSubterm(forbiddenTerm, equalTerm)) {
+				return null;
+			} else {
+				return new EqualityInformation(i, givenTerm, equalTerm, affRel.getRelationSymbol());
+			}
+		} else {
+			return null;
+		}
+	}
+	
+	public static EqualityInformation getEqinfo(final Term givenTerm, final BinaryEqualityRelation ber, final Term forbiddenTerm, final int i) {
+		final Term lhs = ber.getLhs();
+		final Term rhs = ber.getRhs();
+
+		if (lhs.equals(givenTerm) && !isSubterm(givenTerm, rhs)) {
+			if (forbiddenTerm == null || !isSubterm(forbiddenTerm, rhs)) {
+				return new EqualityInformation(i, givenTerm, rhs, ber.getRelationSymbol());
+			}
+		}
+		if (rhs.equals(givenTerm) && !isSubterm(givenTerm, lhs)) {
+			if (forbiddenTerm == null || !isSubterm(forbiddenTerm, lhs)) {
+				return new EqualityInformation(i, givenTerm, lhs, ber.getRelationSymbol());
+			}
+		}
+		return null;
+	}
+	
+	public static Pair<Set<Term>, Set<Term>> getEqTerms(final Script script, final Term givenTerm, final Term[] context, final Term forbiddenTerm) {
+		final Set<Term> equivalentTerms = new HashSet<>();
+		final Set<Term> disjointTerms = new HashSet<>();
+		for (int i = 0; i < context.length; i++) {
+			AffineRelation affRel;
+			try {
+				affRel = new AffineRelation(script, context[i]);
+			} catch (final NotAffineException e1) {
+				continue;
+			}
+			final EqualityInformation eqInfo = getEqinfo(script, givenTerm, affRel, forbiddenTerm, i);
+			if (eqInfo != null) {
+				switch (eqInfo.getRelation()) {
+				case DISTINCT:
+					disjointTerms.add(eqInfo.getTerm());
+					break;
+				case EQ:
+					equivalentTerms.add(eqInfo.getTerm());
+					break;
+				case GEQ:
+				case GREATER:
+				case LEQ:
+				case LESS:
+					// do nothing
+					break;
+				default:
+					throw new AssertionError();
+				}
+			}
+		}
+		return new Pair<Set<Term>, Set<Term>>(equivalentTerms, disjointTerms);
+		
+	}
+	
 	/**
 	 * Returns true if subterm is a subterm of term.
 	 */
-	private static boolean isSubterm(Term subterm, Term term) {
+	private static boolean isSubterm(final Term subterm, final Term term) {
 		return (new ContainsSubterm(subterm)).containsSubterm(term);
 	}
 

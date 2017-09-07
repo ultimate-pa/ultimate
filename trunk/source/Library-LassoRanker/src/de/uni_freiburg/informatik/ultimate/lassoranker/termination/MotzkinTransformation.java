@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lassoranker.termination;
 
-import java.math.BigInteger;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -34,6 +34,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lassoranker.AffineTerm;
 import de.uni_freiburg.informatik.ultimate.lassoranker.AnalysisType;
 import de.uni_freiburg.informatik.ultimate.lassoranker.InstanceCounting;
@@ -43,7 +45,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SMTPrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
@@ -128,13 +129,14 @@ public class MotzkinTransformation extends InstanceCounting {
 	 * relationship.
 	 */
 	private final Map<String, LinearInequality> mMotzkinCoefficients2LinearInequalities;
+	
+	private final IUltimateServiceProvider mServices;
 
 	/**
 	 * Construct the MotzkinApplication object with a script instance.
 	 *
 	 * After filling all the public attributes, transform() can be called, returning the formula transformed according
 	 * to Motzkin's Transposition Theorem.
-	 *
 	 * @param script
 	 *            The SMTLib script
 	 * @param linear
@@ -143,7 +145,9 @@ public class MotzkinTransformation extends InstanceCounting {
 	 *            annotate the transformed term? (This can be helpful if you read the SMT script while debugging.)
 	 *
 	 */
-	public MotzkinTransformation(final Script script, final AnalysisType terminationAnalysis, final boolean annotate) {
+	public MotzkinTransformation(final IUltimateServiceProvider services, final Script script,
+			final AnalysisType terminationAnalysis, final boolean annotate) {
+		mServices = services;
 		mScript = script;
 		mInequalities = new ArrayList<>();
 		mAnnotateTerms = annotate;
@@ -225,7 +229,7 @@ public class MotzkinTransformation extends InstanceCounting {
 				mCoefficients[i] = coefficient;
 				mMotzkinCoefficients2LinearInequalities.put(motzkinCoefficientName, li);
 			} else {
-				mCoefficients[i] = mScript.numeral(BigInteger.ONE);
+				mCoefficients[i] = mScript.decimal(BigDecimal.ONE);
 			}
 		}
 	}
@@ -323,8 +327,8 @@ public class MotzkinTransformation extends InstanceCounting {
 			final Term nonClassical = mScript.term(">", SmtUtils.sum(mScript, SmtSortUtils.getRealSort(mScript),
 					summands.toArray(new Term[summands.size()])), mScript.decimal("0"));
 
-			conjunction.add(Util.or(mScript, classical, nonClassical));
-			return Util.and(mScript, conjunction.toArray(new Term[conjunction.size()]));
+			conjunction.add(SmtUtils.or(mScript, classical, nonClassical));
+			return SmtUtils.and(mScript, conjunction.toArray(new Term[conjunction.size()]));
 		}
 	}
 
@@ -332,6 +336,7 @@ public class MotzkinTransformation extends InstanceCounting {
 	 * Applies the transformation given by Motzkin's Transposition Theorem. Call this method after adding all
 	 * inequalities.
 	 *
+	 * TODO: fix documentation
 	 * @return a formula equivalent to the negated conjunction of the inequalities
 	 */
 	public Term transform(final Rational[] motzkinGuesses) {
@@ -390,6 +395,11 @@ public class MotzkinTransformation extends InstanceCounting {
 					disjunction.add(doTransform(fixedCoefficients, vars));
 				} else {
 					while (cases[numfixedCoeffs - 1] < motzkinGuesses.length) {
+						if (!mServices.getProgressMonitorService().continueProcessing()) {
+							throw new ToolchainCanceledException(this.getClass(),
+									"approximative transformation where we make " + motzkinGuesses.length
+											+ " guesses");
+						}
 						// Update the coefficients array
 						for (int j = 0; j < numfixedCoeffs; ++j) {
 							fixedCoefficients[fixedIndices[j]] = motzkinCoeffs[cases[j]];
@@ -408,7 +418,7 @@ public class MotzkinTransformation extends InstanceCounting {
 						}
 					}
 				}
-				conjunction.add(Util.or(mScript, disjunction.toArray(new Term[disjunction.size()])));
+				conjunction.add(SmtUtils.or(mScript, disjunction.toArray(new Term[disjunction.size()])));
 			} else {
 				// Fixed values
 				final Term zero = mScript.decimal("0");
@@ -416,13 +426,18 @@ public class MotzkinTransformation extends InstanceCounting {
 
 				final List<Term> disjunction = new ArrayList<>();
 				for (int i = 0; i < (1 << numfixedCoeffs); ++i) {
+					if (!mServices.getProgressMonitorService().continueProcessing()) {
+						throw new ToolchainCanceledException(this.getClass(),
+								"approximative transformation where we fixed " + (1 << numfixedCoeffs)
+										+ " coefficients");
+					}
 					// Update the coefficients array
 					for (int j = 0; j < numfixedCoeffs; ++j) {
 						fixedCoefficients[fixedIndices[j]] = (i & (1 << j)) == 0 ? zero : one;
 					}
 					disjunction.add(doTransform(fixedCoefficients, vars));
 				}
-				conjunction.add(Util.or(mScript, disjunction.toArray(new Term[disjunction.size()])));
+				conjunction.add(SmtUtils.or(mScript, disjunction.toArray(new Term[disjunction.size()])));
 			}
 		} else if (mAnalysisType == AnalysisType.NONLINEAR) {
 			conjunction.add(doTransform(mCoefficients, vars));
@@ -432,14 +447,14 @@ public class MotzkinTransformation extends InstanceCounting {
 				final LinearInequality li = mInequalities.get(i);
 				if (li.mMotzkinCoefficient == PossibleMotzkinCoefficients.ZERO_AND_ONE) {
 					// Fixing Motzkin coefficient to { 0, 1 }
-					conjunction.add(Util.or(mScript, mScript.term("=", mCoefficients[i], mScript.decimal("0")),
+					conjunction.add(SmtUtils.or(mScript, mScript.term("=", mCoefficients[i], mScript.decimal("0")),
 							mScript.term("=", mCoefficients[i], mScript.decimal("1"))));
 				}
 			}
 		} else {
-			assert false;
+			throw new AssertionError("Illegal enum value " + mAnalysisType);
 		}
-		Term t = Util.and(mScript, conjunction.toArray(new Term[conjunction.size()]));
+		Term t = SmtUtils.and(mScript, conjunction.toArray(new Term[conjunction.size()]));
 
 		// Possibly annotate the term
 		if (mAnnotateTerms && mAnnotation != null) {

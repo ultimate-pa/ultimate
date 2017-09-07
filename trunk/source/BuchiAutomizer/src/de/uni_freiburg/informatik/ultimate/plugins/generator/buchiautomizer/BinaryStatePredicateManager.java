@@ -48,7 +48,6 @@ import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
@@ -494,7 +493,7 @@ public class BinaryStatePredicateManager {
 
 		Term equality = mScript.term(symbol, oldRankVariable.getTermVariable(), rfTerm);
 		if (addGeq0) {
-			equality = Util.and(mScript, equality, getRankGeq0(oldRankVariable));
+			equality = SmtUtils.and(mScript, equality, getRankGeq0(oldRankVariable));
 		}
 
 		final IPredicate result = mPredicateFactory.newPredicate(equality);

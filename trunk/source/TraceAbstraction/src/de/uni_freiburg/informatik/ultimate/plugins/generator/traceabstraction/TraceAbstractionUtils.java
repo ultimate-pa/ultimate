@@ -44,7 +44,6 @@ import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalsTable;
@@ -149,7 +148,7 @@ public class TraceAbstractionUtils {
 			final TermVariable tv = bv.getTermVariable();
 			final TermVariable tvOld = bvOld.getTermVariable();
 			final Term equality = script.term("=", tv, tvOld);
-			term = Util.and(script, term, equality);
+			term = SmtUtils.and(script, term, equality);
 		}
 		final String[] procs = new String[0];
 		final TermVarsProc result =

@@ -34,7 +34,6 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.ReplacementVarFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
@@ -85,9 +84,9 @@ public class AddAxioms extends TransitionPreprocessor {
 			tf.addOutVar(repVar, repVar.getTermVariable());
 			substitutionMapping.put(constVar, repVar.getTermVariable());
 		}
-		final Term axioms = new Substitution(script, substitutionMapping).transform(Util.and(script.getScript(), mAxioms));
+		final Term axioms = new Substitution(script, substitutionMapping).transform(SmtUtils.and(script.getScript(), mAxioms));
 		Term formula = tf.getFormula();
-		formula = Util.and(script.getScript(), formula, axioms);
+		formula = SmtUtils.and(script.getScript(), formula, axioms);
 		tf.setFormula(formula);
 		return tf;
 	}

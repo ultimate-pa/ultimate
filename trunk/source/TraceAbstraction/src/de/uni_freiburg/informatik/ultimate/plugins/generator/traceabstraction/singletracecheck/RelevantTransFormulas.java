@@ -37,7 +37,6 @@ import java.util.SortedMap;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.OldVarsAssignmentCache;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
@@ -278,7 +277,7 @@ public class RelevantTransFormulas extends NestedFormulas<UnmodifiableTransFormu
 			final Term[] conjunctsInUnsatCore) {
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, false, null, false, null, false);
 
-		final Term formula = Util.and(mScript.getScript(), conjunctsInUnsatCore);
+		final Term formula = SmtUtils.and(mScript.getScript(), conjunctsInUnsatCore);
 		final Set<TermVariable> freeVars = new HashSet<>();
 		Collections.addAll(freeVars, formula.getFreeVars());
 		for (final IProgramVar bv : tf.getInVars().keySet()) {

@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -41,12 +42,12 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessInvariant;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.InvariantResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.PositiveResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ProcedureContractResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultUtil;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TimeoutResultAtElement;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovabilityReason;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovableResult;
@@ -70,10 +71,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Boo
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.HoareAnnotationChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.FloydHoareAutomataReuse;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.LanguageOperation;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
@@ -93,6 +96,8 @@ public class TraceAbstractionStarter {
 	private IElement mRootOfNewModel;
 	private Result mOverallResult;
 	private IElement mArtifact;
+	
+	private final List<AbstractInterpolantAutomaton<IIcfgTransition<?>>> mFloydHoareAutomata = new ArrayList<>();
 
 	public TraceAbstractionStarter(final IUltimateServiceProvider services, final IToolchainStorage storage,
 			final IIcfg<IcfgLocation> rcfgRootNode,
@@ -106,6 +111,9 @@ public class TraceAbstractionStarter {
 	private void runCegarLoops(final IIcfg<IcfgLocation> icfg,
 			final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> witnessAutomaton) {
 		final TAPreferences taPrefs = new TAPreferences(mServices);
+		if (taPrefs.getFloydHoareAutomataReuse() != FloydHoareAutomataReuse.NONE && taPrefs.allErrorLocsAtOnce()) {
+			throw new IllegalStateException("Incompatible settings: no reuse possible if you check all error locations at once.");
+		}
 
 		String settings = "Automizer settings:";
 		settings += " Hoare:" + taPrefs.computeHoareAnnotation();
@@ -124,6 +132,7 @@ public class TraceAbstractionStarter {
 		for (final Collection<IcfgLocation> errNodeOfProc : proc2errNodes.values()) {
 			errNodesOfAllProc.addAll(errNodeOfProc);
 		}
+		mLogger.info("Appying trace abstraction to program that has " + errNodesOfAllProc.size() + " error locations.");
 
 		mOverallResult = Result.SAFE;
 		mArtifact = null;
@@ -273,12 +282,16 @@ public class TraceAbstractionStarter {
 			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
 			final TraceAbstractionBenchmarks taBenchmark, final Collection<IcfgLocation> errorLocs,
 			final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> witnessAutomaton) {
-		final BasicCegarLoop<?> basicCegarLoop =
+		final BasicCegarLoop<? extends IIcfgTransition<?>> basicCegarLoop =
 				constructCegarLoop(name, root, taPrefs, csToolkit, predicateFactory, taBenchmark, errorLocs);
 		basicCegarLoop.setWitnessAutomaton(witnessAutomaton);
 
 		final Result result = basicCegarLoop.iterate();
 		basicCegarLoop.finish();
+		if (taPrefs.getFloydHoareAutomataReuse() != FloydHoareAutomataReuse.NONE) {
+			final LinkedHashSet<?> fhs = basicCegarLoop.getFloydHoareAutomata();
+			mFloydHoareAutomata.addAll((LinkedHashSet<AbstractInterpolantAutomaton<IIcfgTransition<?>>>) fhs);
+		}
 
 		mOverallResult = computeOverallResult(errorLocs, basicCegarLoop, result);
 
@@ -310,18 +323,35 @@ public class TraceAbstractionStarter {
 			final TraceAbstractionBenchmarks taBenchmark, final Collection<IcfgLocation> errorLocs) {
 		final LanguageOperation languageOperation = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getEnum(TraceAbstractionPreferenceInitializer.LABEL_LANGUAGE_OPERATION, LanguageOperation.class);
+		
+		BasicCegarLoop<IIcfgTransition<?>> result;
 		if (languageOperation == LanguageOperation.DIFFERENCE) {
 			if (taPrefs.interpolantAutomaton() == InterpolantAutomaton.TOTALINTERPOLATION) {
-				return new CegarLoopSWBnonRecursive<>(name, root, csToolkit, predicateFactory, taBenchmark, taPrefs,
+				result = new CegarLoopSWBnonRecursive<>(name, root, csToolkit, predicateFactory, taBenchmark, taPrefs,
 						errorLocs, taPrefs.interpolation(), taPrefs.computeHoareAnnotation(), mServices,
 						mToolchainStorage);
+			} else {
+				switch (taPrefs.getFloydHoareAutomataReuse()) {
+				case EAGER:
+					result = new EagerReuseCegarLoop<>(name, root, csToolkit, predicateFactory, taPrefs, errorLocs,
+							taPrefs.interpolation(), taPrefs.computeHoareAnnotation(), mServices, mToolchainStorage, mFloydHoareAutomata);
+					break;
+				case LAZY_IN_ORDER:
+					throw new UnsupportedOperationException("not yet implemented");
+				case NONE:
+					result = new BasicCegarLoop<>(name, root, csToolkit, predicateFactory, taPrefs, errorLocs,
+							taPrefs.interpolation(), taPrefs.computeHoareAnnotation(), mServices, mToolchainStorage);
+					break;
+				default:
+					throw new AssertionError();
+				}
 			}
-			return new BasicCegarLoop<>(name, root, csToolkit, predicateFactory, taPrefs, errorLocs,
-					taPrefs.interpolation(), taPrefs.computeHoareAnnotation(), mServices, mToolchainStorage);
-		}
-		return new IncrementalInclusionCegarLoop<>(name, root, csToolkit, predicateFactory, taPrefs, errorLocs,
+		} else {
+			result = new IncrementalInclusionCegarLoop<>(name, root, csToolkit, predicateFactory, taPrefs, errorLocs,
 				taPrefs.interpolation(), taPrefs.computeHoareAnnotation(), mServices, mToolchainStorage,
 				languageOperation);
+		}
+		return result;
 	}
 
 	private Result computeOverallResult(final Collection<IcfgLocation> errorLocs,

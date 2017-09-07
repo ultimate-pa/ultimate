@@ -37,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.util.HashUtils;
  * @param <LETTER> Letters of the automaton.
  * @param <STATE> States of the automaton.
  */
-public class TreeAutomatonRule<LETTER, STATE> {
+public class TreeAutomatonRule<LETTER extends IRankedLetter, STATE> {
 	private final LETTER mLetter;
 	private final List<STATE> mSrc;
 	private final STATE mDest;
@@ -49,7 +49,7 @@ public class TreeAutomatonRule<LETTER, STATE> {
 	 * @param dest
 	 */
 	public TreeAutomatonRule(LETTER letter, List<STATE> src, STATE dest) {
-		assert !src.isEmpty();
+		// assert letter.getRank() == src.size();
 		this.mLetter = letter;
 		this.mSrc = src;
 		this.mDest = dest;
@@ -65,17 +65,20 @@ public class TreeAutomatonRule<LETTER, STATE> {
 		return mDest;
 	}
 	public int getArity() {
-		return mSrc != null ? mSrc.size() : 0;
+		return mLetter.getRank();
 	}
+	
 	@Override
 	public String toString() {
 		return "(" + mSrc.toString() + " ~~ " + mLetter.toString() + " ~~> " + mDest.toString() + ")";
 	}
+	
 	@Override
 	public boolean equals(Object x) {
 		if (!(x instanceof TreeAutomatonRule)) {
 			return false;
 		}
+		@SuppressWarnings("unchecked")
 		final TreeAutomatonRule<LETTER, STATE> t = (TreeAutomatonRule<LETTER, STATE>) x;
 		if (!mDest.equals(t.mDest) || !mLetter.equals(t.mLetter) || t.mSrc.size() != mSrc.size()) {
 			return false;

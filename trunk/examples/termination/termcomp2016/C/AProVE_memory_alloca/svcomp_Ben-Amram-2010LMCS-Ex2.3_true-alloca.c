@@ -1,3 +1,4 @@
+//#termcomp16-someonesaidyes
 #include <stdlib.h>
 
 /*

@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2014-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Util Library.
- * 
+ *
  * The ULTIMATE Util Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Util Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Util Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Util Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -45,7 +45,7 @@ import java.util.Set;
  * <li>the set of all range elements for a given domain element.
  * </ul>
  * This is an abstract class that does not define which Map data structure is used.
- * 
+ *
  * @author Matthias Heizmann
  * @param <D>
  *            Type of the elements that are in the domain of the relation.
@@ -62,7 +62,7 @@ public abstract class AbstractRelation<D, R, MAP extends Map<D, Set<R>>> impleme
 	public AbstractRelation() {
 		mMap = newMap();
 	}
-	
+
 	public AbstractRelation(final AbstractRelation<D, R, ?> rel) {
 		this();
 		this.addAll(rel);
@@ -74,7 +74,7 @@ public abstract class AbstractRelation<D, R, MAP extends Map<D, Set<R>>> impleme
 
 	/**
 	 * Add a pair (domainElem, rangeElem) to the relation.
-	 * 
+	 *
 	 * @return if this relation did not already contain the specified pair.
 	 */
 	public boolean addPair(final D domainElem, final R rangeElem) {
@@ -88,7 +88,7 @@ public abstract class AbstractRelation<D, R, MAP extends Map<D, Set<R>>> impleme
 
 	/**
 	 * Remove the pair (domainElem, rangeElem) from the relation.
-	 * 
+	 *
 	 * @return true if the set contained the specified pair.
 	 */
 	public boolean removePair(final D domainElem, final R rangeElem) {
@@ -104,17 +104,83 @@ public abstract class AbstractRelation<D, R, MAP extends Map<D, Set<R>>> impleme
 		}
 		return result;
 	}
-	
+
 	/**
 	 * Removes all pairs from the given relation from this relation.
 	 * (i.e., subtracts the argument relation from this one)
-	 * 
+	 *
 	 * @param rel relation to subtract from this one
 	 */
 	public void removeAllPairs(final AbstractRelation<D, R, ?> rel) {
 		for (final Entry<D, R> en : rel.entrySet()) {
 			removePair(en.getKey(), en.getValue());
 		}
+	}
+
+	/**
+	 * Removes all pairs from this relation whose left entry equals the given key.
+	 *
+	 * @param left
+	 */
+	public void removeDomainElement(final D left) {
+		mMap.remove(left);
+		assert sanityCheck();
+	}
+
+	/**
+	 * Removes all pairs from this relation whose right entry equals the given key.
+	 *
+	 * @param elem
+	 */
+	public void removeRangeElement(final R elem) {
+		final MAP mapCopy = newMap();
+		mapCopy.putAll(mMap);
+		for (final Entry<D, Set<R>> en : mapCopy.entrySet()) {
+			en.getValue().remove(elem);
+			if (en.getValue().isEmpty()) {
+				mMap.remove(en.getKey());
+			}
+		}
+		assert sanityCheck();
+	}
+
+
+	/**
+	 * Replaces all occurrences of an element on the left hand side of a pair in this relation by some other element.
+	 *
+	 * @param element
+	 * @param replacement
+	 */
+	public void replaceDomainElement(final D element, final D replacement) {
+		assert replacement != null;
+		final Set<R> image = mMap.get(element);
+
+		if (image == null) {
+			// relation has no pair where element is left entry -- nothing to do
+			return;
+		}
+
+		for (final R rangeElement : image) {
+			addPair(replacement, rangeElement);
+		}
+		removeDomainElement(element);
+		assert sanityCheck();
+	}
+
+	/**
+	 * Replaces all occurrences of an element on the right hand side of a pair in this relation by some other element.
+	 *
+	 * @param element
+	 * @param replacement
+	 */
+	public void replaceRangeElement(final R element, final R replacement) {
+		for (final Entry<D, Set<R>> en : mMap.entrySet()) {
+			if (en.getValue().contains(element)) {
+				en.getValue().remove(element);
+				en.getValue().add(replacement);
+			}
+		}
+		assert sanityCheck();
 	}
 
 	/**
@@ -230,11 +296,26 @@ public abstract class AbstractRelation<D, R, MAP extends Map<D, Set<R>>> impleme
 		return true;
 	}
 
+	private boolean sanityCheck() {
+		for (final Entry<D, Set<R>> en : this.mMap.entrySet()) {
+			if (en.getKey() == null) {
+				return false;
+			}
+			if (en.getValue() == null) {
+				return false;
+			}
+			if (en.getValue().isEmpty()) {
+				return false;
+			}
+		}
+		return true;
+	}
+
 	/**
 	 * Returns a Set view of the pairs contained in this relation. The set is backed by the relation, so changes to the
 	 * map are reflected in the set, and vice-versa. TODO 2016-05-26 Matthias: This method was implemented accidentally
 	 * and is not yet used and was not testet. Remove this warning once this method was tested.
-	 * 
+	 *
 	 * @return a set view of the pairs contained in this relation
 	 */
 	public Set<Map.Entry<D, R>> entrySet() {

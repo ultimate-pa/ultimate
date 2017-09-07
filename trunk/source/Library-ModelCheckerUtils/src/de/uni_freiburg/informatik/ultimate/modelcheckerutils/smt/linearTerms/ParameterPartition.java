@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
@@ -74,7 +74,7 @@ public class ParameterPartition {
 		if (!connective.equals(SmtUtils.getCorrespondingFiniteConnective(SmtUtils.getOtherQuantifier(quantifier)))) {
 			throw new IllegalArgumentException("expecting and for exists and or for all");
 		}
-		final Term[] params = PartialQuantifierElimination.getXjunctsInner(quantifier, appTerm);
+		final Term[] params = QuantifierUtils.getXjunctsInner(quantifier, appTerm);
 		final Set<TermVariable> quantifiedVars = new HashSet<>(Arrays.asList(quantifiedFormula.getVariables()));
 		
 		final HashRelation<TermVariable, Term> quantifiedVars2param = new HashRelation<>();
@@ -103,12 +103,12 @@ public class ParameterPartition {
 				for (final Term term : equivalenceClass) {
 					quantifiedVarsInClass.addAll(param2quantifiedVars.getImage(term));
 				}
-				final Term connectedEquivalenceClass = PartialQuantifierElimination.applyDualFiniteConnective(
+				final Term connectedEquivalenceClass = QuantifierUtils.applyDualFiniteConnective(
 						script, quantifier, equivalenceClass);
 				final Term quantified = SmtUtils.quantifier(script, quantifier, quantifiedVarsInClass, connectedEquivalenceClass);
 				resultParams.add(quantified);
 			}
-			mTermWithPushedQuantifier = PartialQuantifierElimination.applyDualFiniteConnective(script, quantifier, resultParams);
+			mTermWithPushedQuantifier = QuantifierUtils.applyDualFiniteConnective(script, quantifier, resultParams);
 		}
 		
 		

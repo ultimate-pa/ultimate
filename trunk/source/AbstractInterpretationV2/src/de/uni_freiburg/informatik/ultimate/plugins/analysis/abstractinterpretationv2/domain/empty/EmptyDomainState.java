@@ -30,6 +30,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -257,6 +259,39 @@ public final class EmptyDomainState<VARDECL> implements IAbstractState<EmptyDoma
 	@Override
 	public EmptyDomainState<VARDECL> compact() {
 		// empty states are always compact
+		return this;
+	}
+
+	@Override
+	public EmptyDomainState<VARDECL> renameVariables(final Map<VARDECL, VARDECL> old2newVars) {
+		if (old2newVars == null || old2newVars.isEmpty()) {
+			return this;
+		}
+
+		boolean isChanged = false;
+		final Set<VARDECL> newVars = new HashSet<>(mVarDecls);
+		for (final Entry<VARDECL, VARDECL> entry : old2newVars.entrySet()) {
+			final VARDECL oldVar = entry.getKey();
+			final VARDECL newVar = entry.getValue();
+
+			if (newVar == null) {
+				throw new IllegalArgumentException("Cannot rename " + oldVar + " to null");
+			}
+
+			if (oldVar == newVar) {
+				continue;
+			}
+
+			if (!newVars.remove(oldVar)) {
+				continue;
+			}
+			isChanged = true;
+			newVars.add(newVar);
+		}
+
+		if (isChanged) {
+			return new EmptyDomainState<>(newVars);
+		}
 		return this;
 	}
 }

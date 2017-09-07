@@ -1,3 +1,4 @@
+//#termcomp16-someonesaidyes
 //#terminating
 /*
  * Program from Fig.7b of

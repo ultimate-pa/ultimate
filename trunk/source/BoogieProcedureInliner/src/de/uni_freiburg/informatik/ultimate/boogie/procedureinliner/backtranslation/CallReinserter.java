@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2015 Claus Schaetzle (schaetzc@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE BoogieProcedureInliner plug-in.
- * 
+ *
  * The ULTIMATE BoogieProcedureInliner plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE BoogieProcedureInliner plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE BoogieProcedureInliner plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE BoogieProcedureInliner plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceEle
 /**
  * Analyzes a trace from an inlined Boogie program and offers calls/returns to be inserted before a new inlined call
  * begins/ends.
- * 
+ *
  * @author schaetzc@informatik.uni-freiburg.de
  */
 public class CallReinserter {
@@ -63,7 +63,7 @@ public class CallReinserter {
 
 	/**
 	 * Needs to be called for every trace element and in the order of the trace to work correctly.
-	 * 
+	 *
 	 * @param curTraceElem
 	 *            Current trace element.
 	 * @param curBackTrans
@@ -135,18 +135,18 @@ public class CallReinserter {
 
 	private static AtomicTraceElement<BoogieASTNode> makeAtomicCall(final CallStatement originalCall) {
 		return new AtomicTraceElement<>(originalCall, originalCall, StepInfo.PROC_CALL,
-				BoogiePrettyPrinter.getBoogieToStringprovider(), null);
+				BoogiePrettyPrinter.getBoogieToStringprovider(), null, null, originalCall.getMethodName());
 	}
 
 	private static AtomicTraceElement<BoogieASTNode> makeAtomicReturn(final CallStatement originalReturn) {
 		return new AtomicTraceElement<>(originalReturn, originalReturn, StepInfo.PROC_RETURN,
-				BoogiePrettyPrinter.getBoogieToStringprovider(), null);
+				BoogiePrettyPrinter.getBoogieToStringprovider(), null, originalReturn.getMethodName(), null);
 	}
 
 	/**
 	 * Creates the set of procedures (more specifically, their identifiers), that where called but didn't return yet.
 	 * Note that non-inlined calls aren't included.
-	 * 
+	 *
 	 * @return Set of unreturned inlined procedures.
 	 */
 	public Set<String> unreturnedInlinedProcedures() {

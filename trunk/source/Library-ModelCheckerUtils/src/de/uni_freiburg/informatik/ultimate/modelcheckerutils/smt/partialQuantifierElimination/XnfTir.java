@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
@@ -89,7 +89,7 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 	@Override
 	public Term[] tryToEliminate(final int quantifier, final Term[] inputConjuncts,
 			final Set<TermVariable> eliminatees) {
-		final Term inputConjunction = PartialQuantifierElimination.applyDualFiniteConnective(mScript, quantifier,
+		final Term inputConjunction = QuantifierUtils.applyDualFiniteConnective(mScript, quantifier,
 				Arrays.asList(inputConjuncts));
 		List<Term> currentDisjuncts = new ArrayList<>(Arrays.asList(inputConjunction));
 		final Iterator<TermVariable> it = eliminatees.iterator();
@@ -121,13 +121,13 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 		}
 		final Term[] resultDisjuncts = currentDisjuncts.toArray(new Term[currentDisjuncts.size()]);
 		final Term resultDisjunction =
-				PartialQuantifierElimination.applyCorrespondingFiniteConnective(mScript, quantifier, resultDisjuncts);
+				QuantifierUtils.applyCorrespondingFiniteConnective(mScript, quantifier, resultDisjuncts);
 		return new Term[] { resultDisjunction };
 	}
 
 	private List<Term> tryToEliminateSingleDisjuct(final int quantifier, final Term disjunct,
 			final TermVariable eliminatee) {
-		final Term[] conjuncts = PartialQuantifierElimination.getXjunctsInner(quantifier, disjunct);
+		final Term[] conjuncts = QuantifierUtils.getXjunctsInner(quantifier, disjunct);
 		final List<Term> result = tryToEliminateConjuncts(quantifier, conjuncts, eliminatee);
 		// Following lines used for debugging - remove them
 		// Term term = SmtUtils.or(mScript, (Collection<Term>) result);
@@ -230,12 +230,12 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 		final List<Term> resultDisjunctions;
 		if (antiDer.isEmpty()) {
 			resultDisjunctions = new ArrayList<>();
-			final Term tmp = PartialQuantifierElimination.applyDualFiniteConnective(mScript, quantifier, resultAtoms);
+			final Term tmp = QuantifierUtils.applyDualFiniteConnective(mScript, quantifier, resultAtoms);
 			assert !Arrays.asList(tmp.getFreeVars()).contains(eliminatee) : "not eliminated";
 			resultDisjunctions.add(tmp);
 		} else {
 			resultAtoms.add(bi.computeAdDisjunction());
-			final Term tmp = PartialQuantifierElimination.applyDualFiniteConnective(mScript, quantifier, resultAtoms);
+			final Term tmp = QuantifierUtils.applyDualFiniteConnective(mScript, quantifier, resultAtoms);
 			Term disjunction;
 			if (quantifier == QuantifiedFormula.EXISTS) {
 				disjunction = SmtUtils.toDnf(mServices, mMgdScript, tmp, mXnfConversionTechnique);
@@ -245,7 +245,7 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 				throw new AssertionError("unknown quantifier");
 			}
 			assert !Arrays.asList(disjunction.getFreeVars()).contains(eliminatee) : "not eliminated";
-			resultDisjunctions = Arrays.asList(PartialQuantifierElimination.getXjunctsOuter(quantifier, disjunction));
+			resultDisjunctions = Arrays.asList(QuantifierUtils.getXjunctsOuter(quantifier, disjunction));
 		}
 		return resultDisjunctions;
 	}
@@ -358,13 +358,13 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 					}
 				}
 				resultXJuncts
-						.add(PartialQuantifierElimination.applyDualFiniteConnective(mScript, mQuantifier, resultAtoms));
+						.add(QuantifierUtils.applyDualFiniteConnective(mScript, mQuantifier, resultAtoms));
 				if (!mServices.getProgressMonitorService().continueProcessing()) {
 					throw new ToolchainCanceledException(this.getClass(),
 							"building " + Math.pow(2, mAntiDer.size()) + " xjuncts");
 				}
 			}
-			return PartialQuantifierElimination.applyCorrespondingFiniteConnective(mScript, mQuantifier,
+			return QuantifierUtils.applyCorrespondingFiniteConnective(mScript, mQuantifier,
 					resultXJuncts.toArray(new Term[resultXJuncts.size()]));
 		}
 
