@@ -86,6 +86,9 @@ public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTrans
 
 	private final VPDomainPreanalysis mPreAnalysis;
 
+	private final Term mTrueTerm;
+	private final Term mFalseTerm;
+
 	/**
 	 * stores intermediate results of the "recursion"
 	 */
@@ -101,6 +104,11 @@ public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTrans
 		mPreAnalysis = preAnalysis;
 		mMgdScript = preAnalysis.getManagedScript();
 		mServices = preAnalysis.getServices();
+
+		mMgdScript.lock(this);
+		mTrueTerm = mMgdScript.term(this, "true");
+		mFalseTerm = mMgdScript.term(this, "false");
+		mMgdScript.unlock(this);
 
 		computeResult();
 	}
@@ -157,6 +165,7 @@ public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTrans
 	}
 
 	class ConvertTfToEqDisjConsWalker extends TermWalker {
+
 
 		public ConvertTfToEqDisjConsWalker(final Term term) {
 			super(term);
@@ -224,17 +233,13 @@ public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTrans
 					mEqConstraintFactory.getEmptyConstraint();
 			final EqNode tvNode = mEqNodeAndFunctionFactory.getOrConstructNode(term);
 			if (polarity) {
-				mMgdScript.lock(this);
-				final EqNode trueNode = mEqNodeAndFunctionFactory.getOrConstructNode(mMgdScript.term(this, "true"));
-				mMgdScript.unlock(this);
+				final EqNode trueNode = mEqNodeAndFunctionFactory.getOrConstructNode(mTrueTerm);
 				final EqConstraint<ACTION, EqNode, EqFunction> tvEqualsTrue =
 						mEqConstraintFactory.addEqualityFlat(tvNode, trueNode, emptyConstraint);
 				mResultStack.push(mEqConstraintFactory.getDisjunctiveConstraint(
 						Collections.singleton(tvEqualsTrue)));
 			} else {
-				mMgdScript.lock(this);
-				final EqNode falseNode = mEqNodeAndFunctionFactory.getOrConstructNode(mMgdScript.term(this, "false"));
-				mMgdScript.unlock(this);
+				final EqNode falseNode = mEqNodeAndFunctionFactory.getOrConstructNode(mFalseTerm);
 				final EqConstraint<ACTION, EqNode, EqFunction> tvEqualsFalse =
 						mEqConstraintFactory.addEqualityFlat(tvNode, falseNode, emptyConstraint);
 				mResultStack.push(mEqConstraintFactory.getDisjunctiveConstraint(

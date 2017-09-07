@@ -139,6 +139,10 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 	}
 
 	private Term normalizeTerm(final Term term) {
+		if (term instanceof TermVariable) {
+			return term;
+		}
+
 		mMgdScript.lock(this);
 		final AffineTerm affineTerm = (AffineTerm) new AffineTermTransformer(mMgdScript.getScript()).transform(term);
 		mMgdScript.unlock(this);
