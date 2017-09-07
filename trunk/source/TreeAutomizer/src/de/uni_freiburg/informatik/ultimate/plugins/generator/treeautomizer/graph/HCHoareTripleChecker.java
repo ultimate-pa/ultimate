@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
 import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HCOutVar;
 import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HCSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HornClause;
+import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -112,6 +113,8 @@ public class HCHoareTripleChecker {
 		mManagedScript.lock(this);
 		mManagedScript.push(this, 1);
 
+		mManagedScript.echo(this, new QuotedObject("starting Hoare triple check"));
+
 		Term preConditionFormula = mManagedScript.term(this, "true");
 
 		for (int i = 0; i < pre.size(); i++) {
@@ -131,6 +134,7 @@ public class HCHoareTripleChecker {
 
 		final LBool satResult = mManagedScript.checkSat(this);
 
+		mManagedScript.echo(this, new QuotedObject("finishing Hoare triple check"));
 		mManagedScript.pop(this, 1);
 		mManagedScript.unlock(this);
 		return IHoareTripleChecker.convertLBool2Validity(satResult);

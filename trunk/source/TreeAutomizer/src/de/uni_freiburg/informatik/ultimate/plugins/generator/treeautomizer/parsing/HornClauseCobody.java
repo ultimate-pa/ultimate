@@ -37,16 +37,16 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HCSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HornClausePredicateSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.logic.Theory;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 
 /**
  * Body of a Horn clause according to our grammar for Horn clauses in SMTLib2.
  * Once the Horn clause is fixed (we make no more derivations in the grammar), we also call this the body of the Horn
  * clause.
- * 
+ *
  * @author Mostafa M.A. (mostafa.amin93@gmail.com)
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
@@ -54,19 +54,19 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 public class HornClauseCobody {
 	private final Set<Term> mTransitions;
 	private final List<ApplicationTerm> mPredicates;
-	
+
 	private boolean mFinalized = false;
 
 	private final List<HornClausePredicateSymbol> mPredicateSymbols = new ArrayList<>();
 	private final List<List<TermVariable>> mPredicateSymbolToVariables = new ArrayList<>();
-	
+
 	private final HornClauseParserScript mParserScript;
 
 	/***
 	 * Constructor of the cobody of a horn statement.
-	 * @param parserScript 
+	 * @param parserScript
 	 */
-	public HornClauseCobody(HornClauseParserScript parserScript) {
+	public HornClauseCobody(final HornClauseParserScript parserScript) {
 		mPredicates = new ArrayList<>();
 		mTransitions = new HashSet<>();
 		mParserScript = parserScript;
@@ -76,7 +76,7 @@ public class HornClauseCobody {
 	 * Add a literal predicate to the cobody.
 	 * @param literal
 	 */
-	public void addPredicate(ApplicationTerm literal) {
+	public void addPredicate(final ApplicationTerm literal) {
 		assert !mFinalized;
 		mPredicates.add(literal);
 	}
@@ -85,7 +85,7 @@ public class HornClauseCobody {
 	 * Add a transition formula to the cobody (can be called several times, a conjunction will be built).
 	 * @param formula
 	 */
-	public void addTransitionFormula(Term formula) {
+	public void addTransitionFormula(final Term formula) {
 		assert !mFinalized;
 		mTransitions.add(formula);
 	}
@@ -94,7 +94,7 @@ public class HornClauseCobody {
 	 * Merge with a different cobody, the results is stored in @this.
 	 * @param cobody
 	 */
-	public void mergeCobody(HornClauseCobody cobody) {
+	public void mergeCobody(final HornClauseCobody cobody) {
 		assert !mFinalized;
 		for (final ApplicationTerm predicate : cobody.mPredicates) {
 			addPredicate(predicate);
@@ -120,12 +120,12 @@ public class HornClauseCobody {
 	 * @param script
 	 * @return
 	 */
-	public Term getTransitionFormula(ManagedScript script, Theory theory) {
+	public Term getTransitionFormula(final Script parserScript) {
 		final Term[] transitions = mTransitions.toArray(new Term[mTransitions.size()]);
-		return theory.and(transitions);
-		//return SmtUtils.and(script.getScript(), transitions);
+//		return theory.and(transitions);
+		return SmtUtils.and(parserScript, transitions);
 	}
-	
+
 	List<HornClausePredicateSymbol> getPredicates(final HCSymbolTable symbolTable) {
 		computePredicates(symbolTable);
 
@@ -149,19 +149,19 @@ public class HornClauseCobody {
 //			}
 //
 //			res.put(symbolTable.getOrConstructHornClausePredicateSymbol(
-//						predicate.getFunction().getName(), predicate.getFunction().getParameterSorts()), 
+//						predicate.getFunction().getName(), predicate.getFunction().getParameterSorts()),
 //					vars);
 //		}
 //		return res;
 	}
-	
-	private void computePredicates(HCSymbolTable symbolTable) {
+
+	private void computePredicates(final HCSymbolTable symbolTable) {
 		if (mFinalized) {
 			// already did this before
 			return;
 		}
-		
-		for (ApplicationTerm pred : mPredicates) {
+
+		for (final ApplicationTerm pred : mPredicates) {
 			final HornClausePredicateSymbol bodySymbol = symbolTable.getOrConstructHornClausePredicateSymbol(
 					pred.getFunction().getName(), pred.getFunction().getParameterSorts());
 			mPredicateSymbols.add(bodySymbol);
@@ -179,13 +179,13 @@ public class HornClauseCobody {
 
 	@Override
 	public String toString() {
-		StringBuilder result = new StringBuilder("");
-		
+		final StringBuilder result = new StringBuilder("");
+
 		boolean first = true;
 		for (final ApplicationTerm t : mPredicates) {
 			if (!first) {
 				result.append(" && ");
-				
+
 			}
 			result.append(t.toString());
 			first = false;
@@ -200,8 +200,8 @@ public class HornClauseCobody {
 		return '(' + result.toString() + ')';
 	}
 
-	public void addToTransitionFormula(Term binaryEquality) {
+	public void addToTransitionFormula(final Term binaryEquality) {
 		// TODO Auto-generated method stub
-		
+
 	}
 }
