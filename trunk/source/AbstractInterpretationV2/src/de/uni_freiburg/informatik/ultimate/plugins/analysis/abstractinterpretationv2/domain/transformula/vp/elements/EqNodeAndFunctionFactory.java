@@ -92,10 +92,7 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 	}
 
 	private EqNode getOrConstructNonAtomicBaseNode(final Term term) {
-		mMgdScript.lock(this);
-		final Term normalizedTerm = new CommuhashNormalForm(
-				mPreAnalysis.getServices(), mMgdScript.getScript()).transform(term);
-		mMgdScript.unlock(this);
+		final Term normalizedTerm = normalizeTerm(term);
 		EqNode result = mTermToEqNode.get(normalizedTerm);
 		if (result == null) {
 			result = getBaseElement(normalizedTerm);
@@ -127,14 +124,29 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 	}
 
 	private EqNode getOrConstructEqAtomicBaseNode(final Term term) {
-		EqNode result = mTermToEqNode.get(term);
+
+		final Term normalizedTerm = normalizeTerm(term);
+
+		EqNode result = mTermToEqNode.get(normalizedTerm);
 		if (result == null) {
-			result = getBaseElement(term);
-			mTermToEqNode.put(term, result);
+
+			result = getBaseElement(normalizedTerm);
+			mTermToEqNode.put(normalizedTerm, result);
 		}
 		assert result instanceof EqAtomicBaseNode;
 		return result;
 
+	}
+
+	private Term normalizeTerm(final Term term) {
+		mMgdScript.lock(this);
+		final AffineTerm affineTerm = (AffineTerm) new AffineTermTransformer(mMgdScript.getScript()).transform(term);
+		mMgdScript.unlock(this);
+
+		if (affineTerm.isErrorTerm()) {
+			return new CommuhashNormalForm(mPreAnalysis.getServices(), mMgdScript.getScript()).transform(term);
+		}
+		return affineTerm.toTerm(mMgdScript.getScript());
 	}
 
 	@Override
@@ -172,16 +184,16 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 	 */
 	@Override
 	public EqNode getExistingNode(final Term term) {
-		final Term normalizedTerm;
-		if (term instanceof ApplicationTerm && !SmtUtils.isConstant(term)) {
-			mMgdScript.lock(this);
-			normalizedTerm = new CommuhashNormalForm(
-					mPreAnalysis.getServices(), mMgdScript.getScript()).transform(term);
-			mMgdScript.unlock(this);
-		} else {
-			normalizedTerm = term;
-		}
-		return mTermToEqNode.get(normalizedTerm);
+//		final Term normalizedTerm;
+//		if (term instanceof ApplicationTerm && !SmtUtils.isConstant(term)) {
+//			mMgdScript.lock(this);
+//			normalizedTerm = new CommuhashNormalForm(
+//					mPreAnalysis.getServices(), mMgdScript.getScript()).transform(term);
+//			mMgdScript.unlock(this);
+//		} else {
+//			normalizedTerm = term;
+//		}
+		return mTermToEqNode.get(normalizeTerm(term));
 	}
 
 	/**
