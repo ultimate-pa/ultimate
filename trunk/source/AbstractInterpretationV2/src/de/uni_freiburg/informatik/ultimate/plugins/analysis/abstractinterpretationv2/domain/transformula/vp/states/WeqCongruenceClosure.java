@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -21,6 +22,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CongruenceClosure;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CrossProducts;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
 public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>,
@@ -34,6 +36,8 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>,
 	private final LiteralManager<NODE, FUNCTION> mLiteralManager;
 	private final Collection<NODE> mAllLiterals;
 
+	private final HashRelation<NODE, NODE> mNodeToDependents;
+
 	/**
 	 * Create an empty ("True"/unconstrained) WeqCC.
 	 *
@@ -46,6 +50,7 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>,
 		mFactory = factory;
 		mLiteralManager = mFactory.getLiteralManager();
 		mAllLiterals = new HashSet<>();
+		mNodeToDependents = new HashRelation<>();
 	}
 
 	/**
@@ -62,6 +67,7 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>,
 		mFactory = null;
 		mLiteralManager = null;
 		mAllLiterals = null;
+		mNodeToDependents = null;
 	}
 
 
@@ -82,6 +88,9 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>,
 		mAllLiterals = original.getAllElementRepresentatives().stream()
 				.filter(elem -> mLiteralManager.isLiteral(elem))
 				.collect(Collectors.toCollection(HashSet::new));
+
+		mNodeToDependents = new HashRelation<>();
+		initializeNodeToDependents(original);
 	}
 
 	/**
@@ -105,6 +114,8 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>,
 		mAllLiterals = original.getAllElementRepresentatives().stream()
 				.filter(elem -> mLiteralManager.isLiteral(elem))
 				.collect(Collectors.toCollection(HashSet::new));
+		mNodeToDependents = new HashRelation<>();
+		initializeNodeToDependents(original);
 	}
 
 
@@ -120,8 +131,20 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>,
 		mLiteralManager = mFactory.getLiteralManager();
 		mWeakEquivalenceGraph = new WeakEquivalenceGraph<>(this, original.mWeakEquivalenceGraph);
 		mAllLiterals = new HashSet<>(original.mAllLiterals);
+		mNodeToDependents = new HashRelation<>(original.mNodeToDependents);
 	}
 
+
+	private void initializeNodeToDependents(final CongruenceClosure<NODE, FUNCTION> original) {
+		for (final NODE e : original.getAllElements()) {
+			if (!e.isDependent()) {
+				continue;
+			}
+			for (final NODE supp : e.getSupporters()) {
+				mNodeToDependents.addPair(supp, e);
+			}
+		}
+	}
 
 	public Term getTerm(final Script script) {
 		final List<Term> allConjuncts =  new ArrayList<>();
@@ -490,7 +513,7 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>,
 
 	@Override
 	public boolean removeElement(final NODE elem) {
-		if (!hasElement(elem)) {
+		if (!hasElement(elem) && mNodeToDependents.getImage(elem).isEmpty()) {
 			return false;
 		}
 		final CongruenceClosure<NODE,FUNCTION> copy = new CongruenceClosure<>(this);
@@ -512,24 +535,30 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>,
 	}
 
 	private boolean removeElement(final NODE elem, final CongruenceClosure<NODE, FUNCTION> copy) {
-		if (!hasElement(elem)) {
-			return false;
+		if (hasElement(elem)) {
+			mWeakEquivalenceGraph.projectElement(elem, copy);
+
+			super.purgeElem(elem);
+
+			/*
+			 * recursive calls: if an element is removed, all the function applications that have it as an argument, and all
+			 * the dependent elements are removed, too
+			 */
+			for (final NODE parent : new HashSet<>(mElementToParents.getImage(elem))) {
+				removeElement(parent, copy);
+			}
+			mElementToParents.removeDomainElement(elem);
+			mElementToParents.removeRangeElement(elem);
+
+			mAllLiterals.remove(elem);
 		}
-		mWeakEquivalenceGraph.projectElement(elem, copy);
 
-		super.purgeElem(elem);
-
-		/*
-		 * recursive call: if an element is removed, all the function applications that have it as an argument are
-		 * removed, too
-		 */
-		for (final NODE parent : new HashSet<>(mElementToParents.getImage(elem))) {
-			removeElement(parent, copy); // change
+		for (final NODE dependent : new HashSet<>(mNodeToDependents.getImage(elem))) {
+			removeElement(dependent, copy);
 		}
-		mElementToParents.removeDomainElement(elem);
-		mElementToParents.removeRangeElement(elem);
+		mNodeToDependents.removeDomainElement(elem);
+		mNodeToDependents.removeRangeElement(elem);
 
-		mAllLiterals.remove(elem);
 
 		assert elementIsFullyRemoved(elem);
 		return true;
@@ -549,6 +578,12 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>,
 	@Override
 	protected void registerNewElement(final NODE elem) {
 		super.registerNewElement(elem);
+
+		if (elem.isDependent()) {
+			for (final NODE supp : elem.getSupporters()) {
+				mNodeToDependents.addPair(supp, elem);
+			}
+		}
 
 		if (!elem.isFunctionApplication()) {
 			// nothing to do
@@ -594,6 +629,29 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>,
 		}
 	}
 
+
+	@Override
+	public void transformElementsAndFunctions(final Function<NODE, NODE> elemTransformer,
+			final Function<FUNCTION, FUNCTION> functionTransformer) {
+		super.transformElementsAndFunctions(elemTransformer, functionTransformer);
+
+		for (final Entry<NODE, NODE> en : new HashRelation<>(mNodeToDependents).entrySet()) {
+			mNodeToDependents.removePair(en.getKey(), en.getValue());
+			mNodeToDependents.addPair(elemTransformer.apply(en.getKey()), elemTransformer.apply(en.getValue()));
+		}
+	}
+
+
+	@Override
+	protected boolean elementIsFullyRemoved(final NODE elem) {
+		for (final Entry<NODE, NODE> en : mNodeToDependents.entrySet()) {
+			if (en.getKey().equals(elem) || en.getValue().equals(elem)) {
+				assert false;
+				return false;
+			}
+		}
+		return super.elementIsFullyRemoved(elem);
+	}
 
 	@Override
 	public WeqCongruenceClosure<ACTION, NODE, FUNCTION> join(final CongruenceClosure<NODE, FUNCTION> otherCC) {

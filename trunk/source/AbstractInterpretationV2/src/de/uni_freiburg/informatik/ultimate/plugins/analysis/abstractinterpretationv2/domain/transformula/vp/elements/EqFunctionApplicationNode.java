@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 Yu-Wen Chen 
+ * Copyright (C) 2016 Yu-Wen Chen
  * Copyright (C) 2016 Alexander Nutz (nutz@informatik.uni-freiburg.de)
  * Copyright (C) 2016 University of Freiburg
  *
@@ -33,21 +33,22 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
- * 
+ *
  * @author Yu-Wen Chen (yuwenchen1105@gmail.com)
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  */
-public class EqFunctionNode extends EqNode {
-	
+public class EqFunctionApplicationNode extends EqNode {
+
 	private final EqFunction mFunction;
 	private final List<EqNode> mArgs;
 
-	public EqFunctionNode(EqFunction function, List<EqNode> args, Term term, EqNodeAndFunctionFactory eqNodeFactory) {
+	public EqFunctionApplicationNode(final EqFunction function, final List<EqNode> args, final Term term,
+			final EqNodeAndFunctionFactory eqNodeFactory) {
 		super(term, eqNodeFactory);
 		assert args.size() == function.getArity();
 		assert args.size() > 0;
-		
+
 		mFunction = function;
 		mArgs = Collections.unmodifiableList(args);
 	}
@@ -62,10 +63,11 @@ public class EqFunctionNode extends EqNode {
 		return mArgs;
 	}
 
+	@Override
 	public String toString() {
 		return mFunction.toString() + mArgs.toString();
 	}
-	
+
 	@Override
 	public boolean isLiteral() {
 		// a function node is never a literal

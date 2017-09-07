@@ -27,6 +27,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -36,9 +38,15 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  */
 public class EqNonAtomicBaseNode extends EqNode {
-	
-	public EqNonAtomicBaseNode(Term term, EqNodeAndFunctionFactory eqNodeAndFunctionFactory) {
+
+	private final Collection<EqNode> mSupporters;
+
+	public EqNonAtomicBaseNode(final Term term, final Collection<EqNode> supporters,
+			final EqNodeAndFunctionFactory eqNodeAndFunctionFactory) {
 		super(term, eqNodeAndFunctionFactory);
+		assert !supporters.isEmpty();
+		assert supporters.stream().allMatch(n -> n instanceof EqAtomicBaseNode);
+		mSupporters = Collections.unmodifiableCollection(supporters);
 	}
 
 	@Override
@@ -50,7 +58,7 @@ public class EqNonAtomicBaseNode extends EqNode {
 	public String toString() {
 		return mTerm.toString();
 	}
-	
+
 	@Override
 	public boolean isFunctionApplication() {
 		return false;
@@ -66,5 +74,15 @@ public class EqNonAtomicBaseNode extends EqNode {
 	public List<EqNode> getArguments() {
 		assert false : "check for isFunction() first";
 		return null;
+	}
+
+	@Override
+	public boolean isDependent() {
+		return true;
+	}
+
+	@Override
+	public Collection<EqNode> getSupporters() {
+		return mSupporters;
 	}
 }

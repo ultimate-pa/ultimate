@@ -27,12 +27,14 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.CommuhashNormalForm;
@@ -40,6 +42,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineTerm;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineTermTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainPreanalysis;
 
@@ -70,14 +74,8 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 
 	@Override
 	public EqNode getOrConstructNode(final Term term) {
-		if (term instanceof ApplicationTerm && ((ApplicationTerm) term).getParameters().length > 0) {
-			if ("select".equals(((ApplicationTerm) term).getFunction().getName())) {
-				return getOrConstructEqFunctionNode((ApplicationTerm) term);
-			} else if (((ApplicationTerm) term).getFunction().isIntern()) {
-				return getOrConstructNonAtomicBaseNode(term);
-			} else {
-				throw new UnsupportedOperationException();
-			}
+		if (SmtUtils.isFunctionApplication(term, "select")) {
+			return getOrConstructEqFunctionNode((ApplicationTerm) term);
 		} else if (isAtomic(term)) {
 			return getOrConstructEqAtomicBaseNode(term);
 		} else {
@@ -123,7 +121,7 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 			result = super.getFuncAppElement(function, args);
 			mTermToEqNode.put(selectTerm, result);
 		}
-		assert result instanceof EqFunctionNode;
+		assert result instanceof EqFunctionApplicationNode;
 		assert result.getTerm() == selectTerm;
 		return result;
 	}
@@ -207,13 +205,58 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 //			|| term instanceof ConstantTerm;
 		if (isAtomic(term)) {
 			// term has no dependencies on other terms --> use an EqAtomicBaseNode
-			return new EqAtomicBaseNode(term, this);
+			return new EqAtomicBaseNode(term, isTermALiteral(term), this);
 		} else {
-			return new EqNonAtomicBaseNode(term, this);
+			assert term.getFreeVars().length > 0;
+			final Collection<EqNode> supporters = new ArrayList<>();
+			for (final TermVariable fv : term.getFreeVars()) {
+				supporters.add(getOrConstructNode(fv));
+			}
+			return new EqNonAtomicBaseNode(term, supporters, this);
 		}
 	}
 
 	/**
+	 * Checks if the given term is a literal.
+	 * Examples of literals (sometimes called constants, but we have other uses for that word) are:
+	 *  1, 2, -1, true, false, 1bv16 (bitvector constant/literal)
+	 *
+	 * The defining trait of literals for our purposes is that two different literals always have a different value,
+	 * too.
+	 *
+	 * @param term
+	 * @return
+	 */
+	private boolean isTermALiteral(final Term term) {
+		if (term instanceof TermVariable) {
+			return false;
+		}
+		if (SmtUtils.isTrue(term) || SmtUtils.isFalse(term)) {
+			return true;
+		}
+		if (term instanceof ConstantTerm) {
+			return true;
+		}
+
+		mMgdScript.lock(this);
+		final AffineTerm affineTerm = (AffineTerm) new AffineTermTransformer(mMgdScript.getScript()).transform(term);
+		mMgdScript.unlock(this);
+
+		if (affineTerm.isErrorTerm()) {
+			return false;
+		}
+
+		if (affineTerm.isConstant()) {
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * We call a Term atomic here if it is either a TermVariable, or does not contain any TermVariables.
+	 * (this has nothing to do with Boolean atoms)
+	 *
+	 * Explanation:
 	 * Atomic in this sense means dependency-free.
 	 * I.e.: if we havoc some other term (a TermVariable), can we guarantee that this term is not concerned by that.
 	 *
@@ -230,7 +273,7 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 		final ArrayIndex ai = new ArrayIndex(args.stream().map(node -> node.getTerm()).collect(Collectors.toList()));
 		final Term selectTerm = SmtUtils.multiDimensionalSelect(mMgdScript.getScript(), func.getTerm(), ai);
 		mMgdScript.unlock(this);
-		return new EqFunctionNode(func, args, selectTerm, this);
+		return new EqFunctionApplicationNode(func, args, selectTerm, this);
 	}
 
 }

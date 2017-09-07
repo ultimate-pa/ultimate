@@ -27,6 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -52,6 +53,15 @@ public interface IEqNodeIdentifier<NODE extends IEqNodeIdentifier<NODE, FUNCTION
 
 	@Override
 	List<NODE> getArguments();
+
+	boolean isDependent();
+
+	/**
+	 * Should only be called if this id is a dependent id. Returns all supporters of this id.
+	 * A supporter is an id that a dependent id depends on.
+	 * @return
+	 */
+	Collection<NODE> getSupporters();
 
 	boolean isLiteral();
 
