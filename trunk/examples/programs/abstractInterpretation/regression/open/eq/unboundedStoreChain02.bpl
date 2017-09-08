@@ -1,4 +1,4 @@
-
+//#Safe
 procedure bla ();
 
 implementation bla () {
