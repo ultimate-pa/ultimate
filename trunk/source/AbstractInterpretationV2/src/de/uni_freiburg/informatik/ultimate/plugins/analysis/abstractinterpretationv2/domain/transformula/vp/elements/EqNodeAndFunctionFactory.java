@@ -119,11 +119,12 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 			mTermToEqNode.put(selectTerm, result);
 		}
 		assert result instanceof EqFunctionApplicationNode;
-		assert result.getTerm() == selectTerm;
+//		assert result.getTerm() == selectTerm;
 		return result;
 	}
 
 	private EqNode getOrConstructEqAtomicBaseNode(final Term term) {
+		assert !term.getSort().isArraySort();
 
 		final Term normalizedTerm = normalizeTerm(term);
 
@@ -224,11 +225,16 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 			return new EqAtomicBaseNode(term, isTermALiteral(term), this);
 		} else {
 			assert term.getFreeVars().length > 0;
-			final Collection<EqNode> supporters = new ArrayList<>();
+			final Collection<EqNode> supportingNodes = new ArrayList<>();
+			final Collection<EqFunction> supportingFunctions = new ArrayList<>();
 			for (final TermVariable fv : term.getFreeVars()) {
-				supporters.add(getOrConstructNode(fv));
+				if (fv.getSort().isArraySort()) {
+					supportingFunctions.add(getOrConstructFunction(fv));
+				} else {
+					supportingNodes.add(getOrConstructNode(fv));
+				}
 			}
-			return new EqNonAtomicBaseNode(term, supporters, this);
+			return new EqNonAtomicBaseNode(term, supportingNodes, supportingFunctions, this);
 		}
 	}
 

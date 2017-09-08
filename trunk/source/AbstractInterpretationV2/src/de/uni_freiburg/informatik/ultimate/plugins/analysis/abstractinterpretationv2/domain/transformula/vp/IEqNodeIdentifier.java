@@ -61,11 +61,14 @@ public interface IEqNodeIdentifier<NODE extends IEqNodeIdentifier<NODE, FUNCTION
 	 * A supporter is an id that a dependent id depends on.
 	 * @return
 	 */
-	Collection<NODE> getSupporters();
+	Collection<NODE> getSupportingNodes();
+
+	Collection<FUNCTION> getSupportingFunctions();
 
 	boolean isLiteral();
 
 	NODE renameVariables(Map<Term, Term> substitutionMapping);
 
 	Term getTerm();
+
 }

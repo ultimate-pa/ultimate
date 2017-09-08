@@ -982,6 +982,12 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 				final CongruenceClosure<NODE, FUNCTION> groundPartialArrangement) {
 			final List<CongruenceClosure<NODE, FUNCTION>> newLabelContents = new ArrayList<>();
 			for (int i = 0; i < getLabel().size(); i++) {
+				if (mLabel.get(i).isTautological()) {
+					// we have one "true" disjunct --> the whole disjunction is tautological
+					mLabel.clear();
+					mLabel.add(new CongruenceClosure<>());
+					return;
+				}
 				final CongruenceClosure<NODE, FUNCTION>	meet = mCcManager.getMeet(mLabel.get(i), groundPartialArrangement);
 				if (meet.isInconsistent()) {
 					/* label element is inconsistent with the current gpa
@@ -990,6 +996,8 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 					continue;
 				}
 				if (meet.isTautological()) {
+					assert false : "this should never happen because if the meet is tautological then mLabel.get(i)"
+							+ "is, too, right?";
 					// we have one "true" disjunct --> the whole disjunction is tautological
 					mLabel.clear();
 					mLabel.add(new CongruenceClosure<>());

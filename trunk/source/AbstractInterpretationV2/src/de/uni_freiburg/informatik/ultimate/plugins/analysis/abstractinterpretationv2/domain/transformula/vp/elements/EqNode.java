@@ -91,8 +91,15 @@ public abstract class EqNode implements IEqNodeIdentifier<EqNode, EqFunction>,
 	}
 
 	@Override
-	public Collection<EqNode> getSupporters() {
+	public Collection<EqNode> getSupportingNodes() {
 		// this is the default case NonAtomicBaseNode must override this
 		throw new UnsupportedOperationException("check isDependent first");
 	}
+
+	@Override
+	public Collection<EqFunction> getSupportingFunctions() {
+		// this is the default case NonAtomicBaseNode must override this
+		throw new UnsupportedOperationException("check isDependent first");
+	}
+
 }

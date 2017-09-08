@@ -36,7 +36,7 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>,
 	private final LiteralManager<NODE, FUNCTION> mLiteralManager;
 	private final Collection<NODE> mAllLiterals;
 
-	private final HashRelation<NODE, NODE> mNodeToDependents;
+	private final HashRelation<Object, NODE> mNodeToDependents;
 
 	/**
 	 * Create an empty ("True"/unconstrained) WeqCC.
@@ -140,7 +140,10 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>,
 			if (!e.isDependent()) {
 				continue;
 			}
-			for (final NODE supp : e.getSupporters()) {
+			for (final NODE supp : e.getSupportingNodes()) {
+				mNodeToDependents.addPair(supp, e);
+			}
+			for (final FUNCTION supp : e.getSupportingFunctions()) {
 				mNodeToDependents.addPair(supp, e);
 			}
 		}
@@ -496,6 +499,11 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>,
 			removeElement(funcApp, copy);
 			assert projectedFunctionIsGoneFromWeqGraph(func, mWeakEquivalenceGraph);
 		}
+		for (final NODE dependent : new HashSet<>(mNodeToDependents.getImage(func))) {
+			removeElement(dependent, copy);
+		}
+		mNodeToDependents.removeDomainElement(func);
+
 
 		// remove from the function equivalence relation
 		mFunctionTVER.removeElement(func);
@@ -580,7 +588,10 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>,
 		super.registerNewElement(elem);
 
 		if (elem.isDependent()) {
-			for (final NODE supp : elem.getSupporters()) {
+			for (final NODE supp : elem.getSupportingNodes()) {
+				mNodeToDependents.addPair(supp, elem);
+			}
+			for (final FUNCTION supp : elem.getSupportingFunctions()) {
 				mNodeToDependents.addPair(supp, elem);
 			}
 		}
@@ -635,16 +646,23 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>,
 			final Function<FUNCTION, FUNCTION> functionTransformer) {
 		super.transformElementsAndFunctions(elemTransformer, functionTransformer);
 
-		for (final Entry<NODE, NODE> en : new HashRelation<>(mNodeToDependents).entrySet()) {
+		for (final Entry<Object, NODE> en : new HashRelation<>(mNodeToDependents).entrySet()) {
 			mNodeToDependents.removePair(en.getKey(), en.getValue());
-			mNodeToDependents.addPair(elemTransformer.apply(en.getKey()), elemTransformer.apply(en.getValue()));
+			if (en.getKey() instanceof IEqNodeIdentifier<?, ?>) {
+				mNodeToDependents.addPair(elemTransformer.apply((NODE) en.getKey()),
+						elemTransformer.apply(en.getValue()));
+			} else if (en.getKey() instanceof IEqFunctionIdentifier<?, ?>) {
+				mNodeToDependents.addPair(functionTransformer.apply((FUNCTION) en.getKey()),
+						elemTransformer.apply(en.getValue()));
+			} else {
+				throw new AssertionError();
+			}
 		}
 	}
 
-
 	@Override
 	protected boolean elementIsFullyRemoved(final NODE elem) {
-		for (final Entry<NODE, NODE> en : mNodeToDependents.entrySet()) {
+		for (final Entry<Object, NODE> en : mNodeToDependents.entrySet()) {
 			if (en.getKey().equals(elem) || en.getValue().equals(elem)) {
 				assert false;
 				return false;
