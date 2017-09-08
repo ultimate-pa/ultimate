@@ -41,26 +41,30 @@ import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Scanner;
 import java.util.stream.Collectors;
 
 import org.eclipse.cdt.core.CCorePlugin;
 import org.eclipse.cdt.core.dom.IPDOMManager;
+import org.eclipse.cdt.core.dom.ast.ASTVisitor;
+import org.eclipse.cdt.core.dom.ast.IASTDeclaration;
+import org.eclipse.cdt.core.dom.ast.IASTDeclarator;
+import org.eclipse.cdt.core.dom.ast.IASTFunctionDeclarator;
+import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
+import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 import org.eclipse.cdt.core.dom.parser.c.GCCParserExtensionConfiguration;
 import org.eclipse.cdt.core.dom.parser.c.GCCScannerExtensionConfiguration;
-import org.eclipse.cdt.core.index.IIndex;
 import org.eclipse.cdt.core.index.IIndexManager;
 import org.eclipse.cdt.core.model.CModelException;
 import org.eclipse.cdt.core.model.CoreModel;
 import org.eclipse.cdt.core.model.ICContainer;
 import org.eclipse.cdt.core.model.ICElement;
-import org.eclipse.cdt.core.model.ICElementVisitor;
 import org.eclipse.cdt.core.model.ICProject;
 import org.eclipse.cdt.core.model.IPathEntry;
 import org.eclipse.cdt.core.model.ISourceRoot;
@@ -76,11 +80,11 @@ import org.eclipse.cdt.core.parser.ScannerInfo;
 import org.eclipse.cdt.core.settings.model.CSourceEntry;
 import org.eclipse.cdt.core.settings.model.ICSettingEntry;
 import org.eclipse.cdt.core.settings.model.ICSourceEntry;
+import org.eclipse.cdt.internal.core.dom.parser.c.CASTSimpleDeclaration;
 import org.eclipse.cdt.internal.core.dom.parser.c.GNUCSourceParser;
 import org.eclipse.cdt.internal.core.indexer.StandaloneIndexerFallbackReaderFactory;
 import org.eclipse.cdt.internal.core.parser.scanner.CPreprocessor;
 import org.eclipse.cdt.internal.core.pdom.indexer.IndexerPreferences;
-import org.eclipse.cdt.internal.core.pdom.indexer.TranslationUnitCollector;
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
@@ -191,40 +195,41 @@ public class CDTParser implements ISource {
 
 		final CoreModel model = CoreModel.getDefault();
 		final ICProject icdtProject = model.create(mCdtProject);
-		//icdtProject.setRawPathEntries(new IPathEntry[] { CoreModel.newSourceEntry(mCdtProject.getFullPath()) }, NULL_MONITOR);
+		// icdtProject.setRawPathEntries(new IPathEntry[] { CoreModel.newSourceEntry(mCdtProject.getFullPath()) },
+		// NULL_MONITOR);
 		return icdtProject;
 	}
 
-	public static List<ITranslationUnit> getProjectTranslationUnits(ICProject cproject) {
-		List<ITranslationUnit> tuList = new ArrayList<ITranslationUnit>();
+	public static List<ITranslationUnit> getProjectTranslationUnits(final ICProject cproject) {
+		final List<ITranslationUnit> tuList = new ArrayList<>();
 
 		// get source folders
 		try {
-			for (ISourceRoot sourceRoot : cproject.getSourceRoots()) {
+			for (final ISourceRoot sourceRoot : cproject.getSourceRoots()) {
 				// get all elements
-				for (ICElement element : sourceRoot.getChildren()) {
+				for (final ICElement element : sourceRoot.getChildren()) {
 					// if it is a container (i.e., a source folder)
 					if (element.getElementType() == ICElement.C_CCONTAINER) {
 						recursiveContainerTraversal((ICContainer) element, tuList);
 					} else {
-						ITranslationUnit tu = (ITranslationUnit) element;
+						final ITranslationUnit tu = (ITranslationUnit) element;
 						tuList.add(tu);
 					}
 				}
 			}
-		} catch (CModelException e) {
+		} catch (final CModelException e) {
 			e.printStackTrace();
 		}
 		return tuList;
 	}
 
-	private static void recursiveContainerTraversal(ICContainer container, List<ITranslationUnit> tuList)
+	private static void recursiveContainerTraversal(final ICContainer container, final List<ITranslationUnit> tuList)
 			throws CModelException {
-		for (ICContainer inContainer : container.getCContainers()) {
+		for (final ICContainer inContainer : container.getCContainers()) {
 			recursiveContainerTraversal(inContainer, tuList);
 		}
 
-		for (ITranslationUnit tu : container.getTranslationUnits()) {
+		for (final ITranslationUnit tu : container.getTranslationUnits()) {
 			tuList.add(tu);
 		}
 	}
@@ -237,13 +242,16 @@ public class CDTParser implements ISource {
 
 		final IIndexManager indexManager = CCorePlugin.getIndexManager();
 		final boolean isIndexed = indexManager.isProjectIndexed(icdtProject);
-		final IIndex index = indexManager.getIndex(icdtProject);
-		final Collection<ITranslationUnit> sources = new HashSet<>();
-		final Collection<ITranslationUnit> headers = new HashSet<>();
-		final ICElementVisitor visitor = new TranslationUnitCollector(sources, headers, NULL_MONITOR);
-		icdtProject.accept(visitor);
-		
-		List<ITranslationUnit> listTu = getProjectTranslationUnits(icdtProject);
+		final List<ITranslationUnit> listTu = getProjectTranslationUnits(icdtProject);
+
+		final FunctionTableBuilderDuplicate visitor = new FunctionTableBuilderDuplicate();
+		for (final ITranslationUnit tu : listTu) {
+			final IASTTranslationUnit actualTU = tu.getAST();
+			actualTU.accept(visitor);
+		}
+		for (final Entry<String, IASTNode> entry : visitor.getFunctionTable().entrySet()) {
+			mLogger.info(entry.getKey() + ": " + entry.getValue().getRawSignature());
+		}
 
 		mLogger.info("IsIndexed: " + isIndexed);
 	}
@@ -262,10 +270,9 @@ public class CDTParser implements ISource {
 			mLogger.debug("INCLUDE-PATHS:" + path);
 			includePaths = path.split(";");
 			/*
-			 * If there are some paths specified we have to use the this
-			 * deprecated code. In the used Version of EclipseCDT (see
-			 * CDTLibrary) there is no other way in doing this, maybe in further
-			 * versions this will be improved.
+			 * If there are some paths specified we have to use the this deprecated code. In the used Version of
+			 * EclipseCDT (see CDTLibrary) there is no other way in doing this, maybe in further versions this will be
+			 * improved.
 			 */
 			includeProvider = IncludeFileContentProvider.adapt(new StandaloneIndexerFallbackReaderFactory());
 		} else {
@@ -363,19 +370,15 @@ public class CDTParser implements ISource {
 		IndexerPreferences.set(project, IndexerPreferences.KEY_INDEX_ALL_FILES, IPDOMManager.ID_FAST_INDEXER);
 
 		final IProjectDescription prjDescription = workspace.newProjectDescription(projectName);
-		
+
 		project = cdtCorePlugin.createCDTProject(prjDescription, project, NULL_MONITOR);
 		project.open(null);
-		
-		CoreModel.getDefault().create(project).setRawPathEntries(new IPathEntry[] {
-                CoreModel.newSourceEntry(project.getFullPath())
-}, NULL_MONITOR);
 
-		
+		CoreModel.getDefault().create(project)
+				.setRawPathEntries(new IPathEntry[] { CoreModel.newSourceEntry(project.getFullPath()) }, NULL_MONITOR);
+
 		waitForProjectRefreshToFinish();
 		// Assert.assertNotNull(project);
-
-		
 
 		// Assert.assertTrue(project.isOpen());
 
@@ -414,9 +417,8 @@ public class CDTParser implements ISource {
 	}
 
 	/**
-	 * Creates new folder from project root. The folder name can include
-	 * relative path as a part of the name. Nonexistent parent directories are
-	 * being created.
+	 * Creates new folder from project root. The folder name can include relative path as a part of the name.
+	 * Nonexistent parent directories are being created.
 	 *
 	 * @param project
 	 *            - project where to create the folder.
@@ -436,5 +438,56 @@ public class CDTParser implements ISource {
 			}
 		}
 		return (IFolder) folder;
+	}
+
+	/**
+	 * I copied this over from CACSL2BoogieTranslator and renamed it (from FunctionTableBuilder) for testing purposes.
+	 *
+	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+	 *
+	 */
+	private final static class FunctionTableBuilderDuplicate extends ASTVisitor {
+
+		private final LinkedHashMap<String, IASTNode> mFunMap;
+
+		public FunctionTableBuilderDuplicate() {
+			shouldVisitDeclarations = true;
+			mFunMap = new LinkedHashMap<>();
+		}
+
+		@Override
+		public int visit(final IASTDeclaration declaration) {
+			if (!(declaration.getParent() instanceof IASTTranslationUnit)) {
+				return super.visit(declaration);
+			}
+			if (declaration instanceof CASTSimpleDeclaration) {
+				final CASTSimpleDeclaration cd = (CASTSimpleDeclaration) declaration;
+				for (final IASTDeclarator d : cd.getDeclarators()) {
+					final String key = d.getName().toString();
+					if (d instanceof IASTFunctionDeclarator) {
+						// we only update the table with a declaration, if there is no entry for that name yet.
+						// otherwise we might only keep the declaration and omit the implementation from
+						// reachableDeclarations.
+						if (!mFunMap.containsKey(key)) {
+							mFunMap.put(key, d);
+						}
+					}
+
+				}
+
+			} else if (declaration instanceof IASTFunctionDefinition) {
+				IASTDeclarator possiblyNestedDeclarator = ((IASTFunctionDefinition) declaration).getDeclarator();
+				while (possiblyNestedDeclarator.getNestedDeclarator() != null) {
+					possiblyNestedDeclarator = possiblyNestedDeclarator.getNestedDeclarator();
+				}
+				final String nameOfInnermostDeclarator = possiblyNestedDeclarator.getName().toString();
+				mFunMap.put(nameOfInnermostDeclarator, declaration);
+			}
+			return super.visit(declaration);
+		}
+
+		LinkedHashMap<String, IASTNode> getFunctionTable() {
+			return mFunMap;
+		}
 	}
 }
