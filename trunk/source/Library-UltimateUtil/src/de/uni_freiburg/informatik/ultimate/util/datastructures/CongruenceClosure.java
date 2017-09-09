@@ -143,11 +143,13 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 	 * @return true iff the state of this CongruenceClosure instance has changed through this method call
 	 */
 	public boolean reportFunctionEquality(final FUNCTION func1, final FUNCTION func2) {
-		final FUNCTION f1OldRep = getRepresentativeAndAddFunctionIfNeeded(func1);
-		final FUNCTION f2OldRep = getRepresentativeAndAddFunctionIfNeeded(func2);
+		boolean freshFunc = false;
+		freshFunc |= addFunction(func1);
+		freshFunc |= addFunction(func2);
 
-		if (f1OldRep == f2OldRep) {
+		if (getEqualityStatus(func1, func2) == EqualityStatus.EQUAL) {
 			// already equal --> nothing to do
+			assert !freshFunc;
 			return false;
 		}
 
@@ -176,6 +178,18 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 		updateInconsistencyStatus();
 		assert sanityCheck();
 		return true;
+	}
+
+	protected boolean addFunction(final FUNCTION func) {
+		if (hasFunction(func)) {
+			return false;
+		}
+		registerFunction(func);
+		return true;
+	}
+
+	protected void registerFunction(final FUNCTION func) {
+		mFunctionTVER.addElement(func);
 	}
 
 	/**
@@ -420,45 +434,52 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 	 * Updates the helper mappings for ccpars, ccchildren, and function
 	 * applications. When a new element is added.
 	 *
+	 * Assumes that the element has been added to mElementTVER by addElement(elem), but was not present before that call
+	 * to addElement(..).
+	 *
 	 * @param elem
 	 */
 	protected void registerNewElement(final ELEM elem) {
-		if (elem.isFunctionApplication()) {
-			mFunctionToFuncApps.addPair(elem.getAppliedFunction(), elem);
+		if (!elem.isFunctionApplication()) {
+			// nothing to do
+			assert mElementTVER.getRepresentative(elem) != null : "this method assumes that elem has been added "
+					+ "already";
+			return;
+		}
 
-			getRepresentativeAndAddFunctionIfNeeded(elem.getAppliedFunction());
+		mFunctionToFuncApps.addPair(elem.getAppliedFunction(), elem);
+		getRepresentativeAndAddFunctionIfNeeded(elem.getAppliedFunction());
 
-			addToCcChildren(elem, elem.getArguments());
+		addToCcChildren(elem, elem.getArguments());
 
-			for (final ELEM arg : elem.getArguments()) {
-				addElement(arg);
-				addToCcPar(arg, elem);
-				mElementToParents.addPair(arg, elem);
+		for (final ELEM arg : elem.getArguments()) {
+			addElement(arg);
+			addToCcPar(arg, elem);
+			mElementToParents.addPair(arg, elem);
+		}
+
+		/*
+		 * As the new element is a function application, we might be able to infer
+		 * equalities for it through congruence.
+		 */
+		for (final FUNCTION equivalentFunction : mFunctionTVER.getEquivalenceClass(elem.getAppliedFunction())) {
+			Set<ELEM> candidateSet = null;
+
+			for (int i = 0; i < elem.getArguments().size(); i++) {
+				final ELEM argRep = mElementTVER.getRepresentative(elem.getArguments().get(i));
+				final Set<ELEM> newCandidates = getCcParsForArgumentPosition(equivalentFunction, argRep, i);
+				if (candidateSet == null) {
+					candidateSet = new HashSet<>(newCandidates);
+				} else {
+					candidateSet.retainAll(newCandidates);
+				}
 			}
 
-			/*
-			 * As the new element is a function application, we might be able to infer
-			 * equalities for it through congruence.
-			 */
-			for (final FUNCTION equivalentFunction : mFunctionTVER.getEquivalenceClass(elem.getAppliedFunction())) {
-				Set<ELEM> candidateSet = null;
-
-				for (int i = 0; i < elem.getArguments().size(); i++) {
-					final ELEM argRep = mElementTVER.getRepresentative(elem.getArguments().get(i));
-					final Set<ELEM> newCandidates = getCcParsForArgumentPosition(equivalentFunction, argRep, i);
-					if (candidateSet == null) {
-						candidateSet = new HashSet<>(newCandidates);
-					} else {
-						candidateSet.retainAll(newCandidates);
-					}
+			for (final ELEM c : candidateSet) {
+				if (c == elem) {
+					continue;
 				}
-
-				for (final ELEM c : candidateSet) {
-					if (c == elem) {
-						continue;
-					}
-					reportEquality(elem, c);
-				}
+				reportEquality(elem, c);
 			}
 		}
 		assert sanityCheck();
