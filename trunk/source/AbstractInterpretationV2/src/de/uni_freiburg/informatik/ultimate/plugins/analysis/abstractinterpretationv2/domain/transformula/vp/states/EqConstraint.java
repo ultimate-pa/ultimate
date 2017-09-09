@@ -423,7 +423,7 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 
 	public void addFunction(final FUNCTION func) {
 		assert !mIsFrozen;
-		mPartialArrangement.getRepresentativeAndAddFunctionIfNeeded(func);
+		mPartialArrangement.addFunction(func);
 	}
 
 	public void removeFunction(final FUNCTION functionToHavoc) {

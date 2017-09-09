@@ -180,16 +180,17 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 		return true;
 	}
 
-	protected boolean addFunction(final FUNCTION func) {
-		if (hasFunction(func)) {
+	public boolean addFunction(final FUNCTION func) {
+		final boolean newlyAdded = mFunctionTVER.addElement(func);
+		if (!newlyAdded) {
 			return false;
 		}
-		registerFunction(func);
+		registerNewFunction(func);
 		return true;
 	}
 
-	protected void registerFunction(final FUNCTION func) {
-		mFunctionTVER.addElement(func);
+	protected void registerNewFunction(final FUNCTION func) {
+		// nothing, yet..
 	}
 
 	/**
@@ -448,12 +449,11 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 		}
 
 		mFunctionToFuncApps.addPair(elem.getAppliedFunction(), elem);
-		getRepresentativeAndAddFunctionIfNeeded(elem.getAppliedFunction());
+		addFunction(elem.getAppliedFunction());
 
 		addToCcChildren(elem, elem.getArguments());
 
-		for (final ELEM arg : elem.getArguments()) {
-			addElement(arg);
+		for (final ELEM arg : elem.getArguments()) {			addElement(arg);
 			addToCcPar(arg, elem);
 			mElementToParents.addPair(arg, elem);
 		}
@@ -482,6 +482,9 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 				reportEquality(elem, c);
 			}
 		}
+
+
+
 		assert sanityCheck();
 	}
 
@@ -594,7 +597,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 	}
 
 	public FUNCTION getRepresentativeAndAddFunctionIfNeeded(final FUNCTION func) {
-		return mFunctionTVER.getRepresentativeAndAddElementIfNeeded(func);
+		addFunction(func);
+		return mFunctionTVER.getRepresentative(func);
 	}
 
 	public ELEM getRepresentativeAndAddElementIfNeeded(final ELEM elem) {
@@ -788,7 +792,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 		assert result.sanityCheck();
 
 		other.getAllElements().stream().forEach(elem -> result.addElement(elem));
-		other.getAllFunctions().stream().forEach(func -> result.mFunctionTVER.addElement(func));
+		other.getAllFunctions().stream().forEach(func -> result.addFunction(func));
 
 		assert result.sanityCheck();
 		return result;

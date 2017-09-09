@@ -193,7 +193,7 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>,
 		assert result.sanityCheck();
 
 		other.getAllElements().stream().forEach(elem -> result.addElement(elem));
-		other.getAllFunctions().stream().forEach(func -> result.mFunctionTVER.addElement(func));
+		other.getAllFunctions().stream().forEach(func -> result.addFunction(func));
 
 		assert result.sanityCheck();
 		return result;
@@ -210,8 +210,8 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>,
 		for (final NODE storeIndexNode : storeIndex) {
 			getRepresentativeAndAddElementIfNeeded(storeIndexNode);
 		}
-		getRepresentativeAndAddFunctionIfNeeded(array1);
-		getRepresentativeAndAddFunctionIfNeeded(array2);
+		addFunction(array1);
+		addFunction(array2);
 
 		mWeakEquivalenceGraph.reportWeakEquivalence(array1, array2, storeIndex);
 		reportAllArrayEqualitiesFromWeqGraph();
