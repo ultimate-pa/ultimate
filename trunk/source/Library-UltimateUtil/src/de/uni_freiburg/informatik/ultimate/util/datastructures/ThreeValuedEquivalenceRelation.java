@@ -213,6 +213,13 @@ public class ThreeValuedEquivalenceRelation<E> {
 		return mUnionFind.findAndConstructEquivalenceClassIfNeeded(elem);
 	}
 
+	/**
+	 * Returns the representative of the given element's equivalence class.
+	 * Returns null if the given element has not been added yet.
+	 *
+	 * @param elem element to get the representative for
+	 * @return representative or null
+	 */
 	public E getRepresentative(final E elem) {
 		return mUnionFind.find(elem);
 	}

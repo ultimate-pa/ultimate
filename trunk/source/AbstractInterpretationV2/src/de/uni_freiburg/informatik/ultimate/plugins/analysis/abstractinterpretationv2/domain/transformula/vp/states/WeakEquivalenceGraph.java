@@ -453,8 +453,7 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		 * or is one of the special quantified variables from getVariableForDimension(..).
 		 */
 		if (mPartialArrangement != null) {
-			for (final Entry<Doubleton<FUNCTION>, WeakEquivalenceEdgeLabel> edge :
-				mWeakEquivalenceEdges.entrySet()) {
+			for (final Entry<Doubleton<FUNCTION>, WeakEquivalenceEdgeLabel> edge : mWeakEquivalenceEdges.entrySet()) {
 				if (!mPartialArrangement.hasFunction(edge.getKey().getOneElement())
 						|| !mPartialArrangement.hasFunction(edge.getKey().getOtherElement())) {
 					assert false;
@@ -470,6 +469,19 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 					assert false;
 					return false;
 				}
+			}
+		}
+
+		/*
+		 * check that the edges only connect compatible arrays
+		 *  compatible means having the same Sort, in particular: dimensionality
+		 */
+		for (final Entry<Doubleton<FUNCTION>, WeakEquivalenceEdgeLabel> edge : mWeakEquivalenceEdges.entrySet()) {
+			final FUNCTION source = edge.getKey().getOneElement();
+			final FUNCTION target = edge.getKey().getOtherElement();
+			if (!source.getTerm().getSort().equals(target.getTerm().getSort())) {
+					assert false;
+					return false;
 			}
 		}
 
@@ -618,6 +630,7 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 	 * @param nodes position where FUNCTIONs may differ
 	 */
 	public void reportWeakEquivalence(final FUNCTION func1, final FUNCTION func2, final List<NODE> nodes) {
+		assert func1.getTerm().getSort().equals(func2.getTerm().getSort());
 		assert func1.getArity() == func2.getArity();
 
 		final Doubleton<FUNCTION> sourceAndTarget = new Doubleton<>(func1, func2);
@@ -641,6 +654,7 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 	 */
 	public void reportWeakEquivalence(final Doubleton<FUNCTION> key,
 			final WeakEquivalenceGraph<ACTION, NODE, FUNCTION>.WeakEquivalenceEdgeLabel value) {
+		assert key.getOneElement().getTerm().getSort().equals(key.getOtherElement().getTerm().getSort());
 		strengthenEdgeLabelAndPropagateIfPossible(key, value.getLabel());
 	}
 
