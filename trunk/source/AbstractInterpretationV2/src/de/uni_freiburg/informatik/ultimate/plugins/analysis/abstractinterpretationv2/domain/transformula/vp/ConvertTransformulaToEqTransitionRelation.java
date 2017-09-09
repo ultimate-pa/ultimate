@@ -28,11 +28,13 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -66,6 +68,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.EqConstraintFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.EqDisjunctiveConstraint;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.EqTransitionRelation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.BidirectionalMap;
 
 /**
  *
@@ -446,15 +449,20 @@ public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTrans
 
 		private final List<Term> mReplacementEquations = new ArrayList<>();
 
-		private final List<TermVariable> mReplacementTermVariables = new ArrayList<>();
+//		private final BidirectionalMap<TermVariable, Term> mReplacementTvToReplacedTerm = new BidirectionalMap<>();
+		private final Map<Term, TermVariable> mReplacedTermToReplacementTv = new BidirectionalMap<>();
 
-
-		public List<Term> getReplacementEquations() {
-			return mReplacementEquations;
+		public Collection<Term> getReplacementEquations() {
+			final Collection<Term> result = new ArrayList<>();
+			for (final Entry<Term, TermVariable> en : mReplacedTermToReplacementTv.entrySet()) {
+				final Term replacementEquation = SmtUtils.binaryEquality(mScript, en.getValue(), en.getKey());
+				result.add(replacementEquation);
+			}
+			return result;
 		}
 
-		public List<TermVariable> getReplacementTermVariables() {
-			return mReplacementTermVariables;
+		public Collection<TermVariable> getReplacementTermVariables() {
+			return new ArrayList<>(mReplacedTermToReplacementTv.values());
 		}
 
 		@Override
@@ -476,14 +484,13 @@ public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTrans
 			}
 		}
 
-		private TermVariable getReplacementTv(final Sort sort) {
-			final TermVariable res = mMgdScript.constructFreshTermVariable("rep", sort);
-			mReplacementTermVariables.add(res);
+		private TermVariable getReplacementTv(final Term term) {
+			TermVariable res = mReplacedTermToReplacementTv.get(term);
+			if (res == null) {
+				res = mMgdScript.constructFreshTermVariable("rep", term.getSort());
+				mReplacedTermToReplacementTv.put(term, res);
+			}
 			return res;
-		}
-
-		private void addReplacementEquation(final Term replacementEquation) {
-			mReplacementEquations.add(replacementEquation);
 		}
 
 		/**
@@ -492,10 +499,9 @@ public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTrans
 		 * @param oldArgs
 		 * @return
 		 */
-		Term[] myGetConverted(final Term[] oldArgs) {
+		Term[] getConvertedArray(final Term[] oldArgs) {
 			return getConverted(oldArgs);
 		}
-
 
 		class SquishFirstOfTwoArgumentStoresWalker implements Walker {
 
@@ -515,9 +521,7 @@ public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTrans
 				assert SmtUtils.isFunctionApplication(arg2, "store");
 
 				final Term innerStoreTerm = arg1;
-				final TermVariable replacmentTv = getReplacementTv(innerStoreTerm.getSort());
-				final Term replacementEquation = SmtUtils.binaryEquality(mScript, replacmentTv, innerStoreTerm);
-				addReplacementEquation(replacementEquation);
+				final TermVariable replacmentTv = getReplacementTv(innerStoreTerm);
 				setResult(mScript.term(mAppTerm.getFunction().getName(), replacmentTv, arg2));
 			}
 
@@ -536,9 +540,7 @@ public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTrans
 
 				if (SmtUtils.isFunctionApplication(arg1, "store")) {
 					final Term innerStoreTerm = arg1;
-					final TermVariable replacmentTv = getReplacementTv(innerStoreTerm.getSort());
-					final Term replacementEquation = SmtUtils.binaryEquality(mScript, replacmentTv, innerStoreTerm);
-					addReplacementEquation(replacementEquation);
+					final TermVariable replacmentTv = getReplacementTv(innerStoreTerm);
 					setResult(mScript.term("select", replacmentTv, arg2));
 				} else {
 					setResult(mScript.term("select", arg1, arg2));
@@ -563,13 +565,11 @@ public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTrans
 				final StoreChainSquisher transformer = (StoreChainSquisher) engine;
 				/* collect args and check if they have been changed */
 				final Term[] oldArgs = mAppTerm.getParameters();
-				final Term[] newArgs = transformer.myGetConverted(oldArgs);
+				final Term[] newArgs = transformer.getConvertedArray(oldArgs);
 				assert newArgs.length == 3;
 				if (SmtUtils.isFunctionApplication(newArgs[0], "store")) {
 					final Term innerStoreTerm = newArgs[0];
-					final TermVariable replacmentTv = getReplacementTv(innerStoreTerm.getSort());
-					final Term replacementEquation = SmtUtils.binaryEquality(mScript, replacmentTv, innerStoreTerm);
-					addReplacementEquation(replacementEquation);
+					final TermVariable replacmentTv = getReplacementTv(innerStoreTerm);
 					setResult(mScript.term("store", replacmentTv, newArgs[1], newArgs[2]));
 				} else {
 					// the array argument of the store that we enqueued this walker for is a variable
@@ -578,15 +578,11 @@ public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTrans
 				}
 			}
 
-
-
 			@Override
 			public String toString() {
 				return "StoreTermSquisher: " + mReplacementEquations;
 			}
 
 		}
-
-
 	}
 }
