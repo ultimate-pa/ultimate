@@ -264,6 +264,11 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>,
 		for (final Entry<FUNCTION, FUNCTION> funcPair :
 			CrossProducts.binarySelectiveCrossProduct(mFunctionTVER.getAllElements(), false, true).entrySet()) {
 
+			if (!funcPair.getKey().getSort().equals(funcPair.getValue().getSort())) {
+				// sorts don't match -- functions cannot be weakly equivalent
+				continue;
+			}
+
 			final Set<List<NODE>> ccchildren1 = getCcChildren(funcPair.getKey(), oldRep1, oldCcChild, true);
 			final Set<List<NODE>> ccchildren2 = getCcChildren(funcPair.getValue(), oldRep2, oldCcChild, true);
 

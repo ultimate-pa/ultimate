@@ -43,14 +43,14 @@ public class EqFunction implements IEqFunctionIdentifier<EqNode, EqFunction> {
 
 	private final EqNodeAndFunctionFactory mFactory;
 
-	private final int mArity;
+	private final MultiDimensionalSort mSort;
 
 	public EqFunction(final Term term, final EqNodeAndFunctionFactory factory) {
 		mTerm = term;
 		mFactory = factory;
 		assert mTerm.getSort().isArraySort();
 //		mArity = mTerm.getSort().getArguments().length - 1;
-		mArity = new MultiDimensionalSort(mTerm.getSort()).getDimension();
+		mSort = new MultiDimensionalSort(mTerm.getSort());
 	}
 
 	@Override
@@ -77,12 +77,17 @@ public class EqFunction implements IEqFunctionIdentifier<EqNode, EqFunction> {
 
 	@Override
 	public int getArity() {
-		return mArity;
+		return mSort.getDimension();
 	}
 
 	@Override
 	public String toString() {
 		return mTerm.toString();
+	}
+
+	@Override
+	public MultiDimensionalSort getSort() {
+		return mSort;
 	}
 
 }
