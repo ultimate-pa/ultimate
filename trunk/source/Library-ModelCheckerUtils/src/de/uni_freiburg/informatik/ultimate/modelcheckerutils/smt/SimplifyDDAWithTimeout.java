@@ -52,6 +52,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Map.Entry;
+
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
@@ -130,10 +135,15 @@ public class SimplifyDDAWithTimeout extends SimplifyDDA {
 		Term term = inputTerm;
 		mScript.echo(new QuotedObject("Begin Simplifier"));
 		mScript.push(1);
-		final TermVariable[] vars = term.getFreeVars();
-		final Term[] values = new Term[vars.length];
-		for (int i = 0; i < vars.length; i++) {
-			values[i] = termVariable2constant(mScript, vars[i]);
+		final Collection<TermVariable> freeVars = Arrays.asList(inputTerm.getFreeVars());
+		final Map<TermVariable, Term> substitutionMapping = SmtUtils.termVariables2Constants(mScript, freeVars, true);
+		final TermVariable[] vars = new TermVariable[substitutionMapping.size()];
+		final Term[] values = new Term[substitutionMapping.size()];
+		int offset = 0;
+		for (final Entry<TermVariable, Term> entry : substitutionMapping.entrySet()) {
+			vars[offset] = entry.getKey();
+			values[offset] = entry.getValue();
+			offset++;
 		}
 		term = mScript.let(vars, values, term);
 
