@@ -1,0 +1,218 @@
+/* ==================================
+   C program
+   ==================================*/
+
+extern int nd ();
+extern void __CRAB_assert(int);
+
+int x = 5;
+int y = 3;
+
+void foo ()
+{
+  x++;
+}
+
+void bar ()
+{
+  y++;
+}
+
+int a[10];
+
+int main ()
+{
+  int i;
+  foo ();
+  for (i=0;i<10;i++)
+  {
+    if (nd ())
+      a[i] =y;
+    else 
+      a[i] =x;
+  }
+  bar ();
+  int res = a[i-1];
+  __CRAB_assert(res >= 0 && res <= 6);
+  return res;
+}
+
+/* ===================================
+   LLVM bitecode
+   ===================================*/
+
+; ModuleID = '/var/folders/rd/wyr_48nj7qj5jy6nx62ftjlm0000gq/T/crabllvm-4Povii/test-arr-4.pp.bc'
+target datalayout = "e-m:o-p:32:32-f64:32:64-f80:128-n8:16:32-S128"
+target triple = "i386-apple-macosx10.11.0"
+
+@x = internal unnamed_addr global i32 5, align 4
+@y = internal unnamed_addr global i32 3, align 4
+@a = internal unnamed_addr global [10 x i32] zeroinitializer, align 4
+
+; Function Attrs: nounwind ssp
+define internal fastcc void @foo() #0 {
+_1:
+  %_2 = load i32* @x, align 4
+  %_store = add nsw i32 %_2, 1
+  store i32 %_store, i32* @x, align 4
+  ret void
+}
+
+; Function Attrs: nounwind ssp
+define internal fastcc void @bar() #0 {
+_1:
+  %_2 = load i32* @y, align 4
+  %_store = add nsw i32 %_2, 1
+  store i32 %_store, i32* @y, align 4
+  ret void
+}
+
+; Function Attrs: nounwind ssp
+define i32 @main() #0 {
+_call:
+  call void @verifier.int_initializer(i32* @x, i32 5)
+  call void @verifier.int_initializer(i32* @y, i32 3)
+  call void @verifier.zero_initializer.1([10 x i32]* @a)
+  call fastcc void @foo()
+  br label %_i.0
+
+_i.0:                                             ; preds = %_14, %_call
+  %i.0 = phi i32 [ 0, %_call ], [ %_br3, %_14 ]
+  %_br = icmp slt i32 %i.0, 10
+  br i1 %_br, label %_4, label %PHILowerICmp
+
+_4:                                               ; preds = %_i.0
+  %_5 = bitcast i32 (...)* @nd to i32 ()*
+  %_6 = call i32 %_5() #3
+  %_br1 = icmp eq i32 %_6, 0
+  br i1 %_br1, label %_11, label %_8
+
+_8:                                               ; preds = %_4
+  %_9 = load i32* @y, align 4
+  %_store = getelementptr inbounds [10 x i32]* @a, i32 0, i32 %i.0
+  store i32 %_9, i32* %_store, align 4
+  br label %_14
+
+_11:                                              ; preds = %_4
+  %_12 = load i32* @x, align 4
+  %_store2 = getelementptr inbounds [10 x i32]* @a, i32 0, i32 %i.0
+  store i32 %_12, i32* %_store2, align 4
+  br label %_14
+
+_14:                                              ; preds = %_11, %_8
+  %_br3 = add nsw i32 %i.0, 1
+  br label %_i.0
+
+PHILowerICmp:                                     ; preds = %_i.0
+  %i.0.lcssa = phi i32 [ %i.0, %_i.0 ]
+  call fastcc void @bar()
+  %_16 = add nsw i32 %i.0.lcssa, -1
+  %_17 = getelementptr inbounds [10 x i32]* @a, i32 0, i32 %_16
+  %_check_SGE_0 = load i32* %_17, align 4
+  %check_SGE_0 = icmp sle i32 0, %_check_SGE_0
+  %_19 = icmp slt i32 %_check_SGE_0, 7
+  %_20 = select i1 %check_SGE_0, i1 %_19, i1 true
+  %_call4 = zext i1 %_20 to i32
+  call void @__CRAB_assert(i32 %_call4) #3
+  ret i32 %_check_SGE_0
+}
+
+declare i32 @nd(...) #1
+
+declare void @__CRAB_assert(i32) #1
+
+; Function Attrs: readnone
+declare void @verifier.int_initializer(i32*, i32) #2
+
+; Function Attrs: readnone
+declare void @verifier.zero_initializer.1([10 x i32]*) #2
+
+attributes #0 = { nounwind ssp "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "no-frame-pointer-elim-non-leaf" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "stack-protector-buffer-size"="8" "unsafe-fp-math"="false" "use-soft-float"="false" }
+attributes #1 = { "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "no-frame-pointer-elim-non-leaf" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "stack-protector-buffer-size"="8" "unsafe-fp-math"="false" "use-soft-float"="false" }
+attributes #2 = { readnone }
+attributes #3 = { nounwind }
+
+!llvm.module.flags = !{!0}
+!llvm.ident = !{!1}
+
+!0 = !{i32 1, !"PIC Level", i32 2}
+!1 = !{!"clang version 3.6.0 (tags/RELEASE_360/final)"}
+
+/* =====================================
+   side-effect-free translation from LLVM bitcode
+   =====================================*/
+
+(@V_3:arr_int,@V_7:arr_int,@V_9:arr_int) declare foo(@V_5:arr_int,@V_6:arr_int,@V_8:arr_int)
+_1:
+  @V_9 = @V_8;
+  @V_7 = @V_6;
+  @V_3 = @V_5;
+  _2 = array_read(@V_3,x);
+  _store = _2+1;
+  array_write(@V_3,x,_store);
+--> []
+
+(@V_3:arr_int,@V_7:arr_int,@V_9:arr_int) declare bar(@V_14:arr_int,@V_15:arr_int,@V_16:arr_int)
+_1:
+  @V_9 = @V_16;
+  @V_7 = @V_15;
+  @V_3 = @V_14;
+  _2 = array_read(@V_7,y);
+  _store = _2+1;
+  array_write(@V_7,y,_store);
+--> []
+
+_check_SGE_0:int declare main()
+_call:
+  assume (forall l in [0,0] % 4 :: @V_3[l]=5);
+  assume (forall l in [0,0] % 4 :: @V_7[l]=3);
+  assume (forall l in [0,36] % 4 :: @V_9[l]=0);
+  (@V_3,@V_7,@V_9)= call foo(@V_3:arr_int,@V_7:arr_int,@V_9:arr_int);
+  i.0 = 0;
+--> [_i.0;]
+_i.0:
+--> [__@bb_1;__@bb_2;]
+__@bb_1:
+  assume (i.0 <= 9);
+--> [_4;]
+_4:
+  _6 =* ;
+--> [__@bb_3;__@bb_4;]
+__@bb_3:
+  assume (_6 = 0);
+--> [_11;]
+_11:
+  _12 = array_read(@V_3,x);
+  _store2 = a + 4*i.0;
+  array_write(@V_9,_store2,_12);
+--> [_14;]
+_14:
+  _br3 = i.0+1;
+  i.0 = _br3;
+--> [_i.0;]
+__@bb_4:
+  assume (_6 != 0);
+--> [_8;]
+_8:
+  _9 = array_read(@V_7,y);
+  _store = a + 4*i.0;
+  array_write(@V_9,_store,_9);
+--> [_14;]
+__@bb_2:
+  assume (-i.0 <= -10);
+  i.0.lcssa = i.0;
+--> [PHILowerICmp;]
+PHILowerICmp:
+  (@V_3,@V_7,@V_9)= call bar(@V_3:arr_int,@V_7:arr_int,@V_9:arr_int);
+  _16 = i.0.lcssa+-1;
+  _17 = a + 4*_16;
+  _check_SGE_0 = array_read(@V_9,_17);
+  check_SGE_0 = (-_check_SGE_0 <= 0);
+  _19 = (_check_SGE_0 <= 6);
+  @V_33 = true ;
+  _20 = ite(check_SGE_0,_19,@V_33);
+  zext _20:1 to _call4:32;
+  assert (-_call4 <= -1);
+  return _check_SGE_0;
+--> []
+

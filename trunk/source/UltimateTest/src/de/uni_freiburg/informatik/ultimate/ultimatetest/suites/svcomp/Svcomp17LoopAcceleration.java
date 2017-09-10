@@ -121,10 +121,15 @@ public class Svcomp17LoopAcceleration extends AbstractSVCOMPTestSuite {
 		// rtr.add(getTestDefinitionFromExamples(set, "AutomizerCInlineTransformed.xml",
 		// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_FastUpr_noMod_LE.epf", timeout, limit));
 
+		// rtr.add(getTestDefinitionFromExamples(set, "AutomizerCInline.xml",
+		// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Mohr.epf", timeout, limit));
+		// rtr.add(getTestDefinitionFromExamples(set, "AutomizerCInlineTransformed.xml",
+		// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Mohr.epf", timeout, limit));
+
 		rtr.add(getTestDefinitionFromExamples(set, "AutomizerCInline.xml",
-				"loopacceleration/svcomp-Reach-32bit-Automizer_Default_Mohr.epf", timeout, limit));
+				"loopacceleration/svcomp-Reach-32bit-Automizer_Default_Werner.epf", timeout, limit));
 		rtr.add(getTestDefinitionFromExamples(set, "AutomizerCInlineTransformed.xml",
-				"loopacceleration/svcomp-Reach-32bit-Automizer_Default_Mohr.epf", timeout, limit));
+				"loopacceleration/svcomp-Reach-32bit-Automizer_Default_Werner.epf", timeout, limit));
 
 		return rtr;
 	}

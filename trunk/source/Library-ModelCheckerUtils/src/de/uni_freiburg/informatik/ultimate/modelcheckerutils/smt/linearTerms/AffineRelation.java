@@ -331,7 +331,7 @@ public class AffineRelation {
 		if (rational.equals(Rational.ONE)) {
 			return term;
 		} else if (rational.equals(Rational.MONE)) {
-			return SmtUtils.neg(script, term.getSort(), term);
+			return SmtUtils.neg(script, term);
 		} else {
 			final Term coefficient = SmtUtils.rational2Term(script, rational, term.getSort());
 			return SmtUtils.mul(script, term.getSort(), coefficient, term);

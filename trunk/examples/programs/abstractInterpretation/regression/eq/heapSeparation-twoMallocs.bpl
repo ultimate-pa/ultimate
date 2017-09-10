@@ -1,3 +1,4 @@
+//#Safe
 var #valid : [int] int;
 
 var #memory_int : [int] int;

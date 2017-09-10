@@ -81,7 +81,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 	 * Constructs CongruenceClosure instance that is in an inconsistent state from
 	 * the beginning.
 	 *
-	 * @param isInconsistent
+	 * @param isInconsistent dummy parameter separating this constructor from the one for the empty CongruenceClosure;
+	 * 	  	must always be "true".
 	 */
 	public CongruenceClosure(final boolean isInconsistent) {
 		if (!isInconsistent) {
@@ -116,8 +117,9 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 	}
 
 	/**
-	 * copy constructor
-	 * @param original
+	 * Copy constructor.
+	 *
+	 * @param original the CC to copy
 	 */
 	public CongruenceClosure(final CongruenceClosure<ELEM, FUNCTION> original) {
 		if (original.isInconsistent()) {
@@ -136,20 +138,22 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 
 	/**
 	 *
-	 * @param f1
-	 * @param f2
+	 * @param func1
+	 * @param func2
 	 * @return true iff the state of this CongruenceClosure instance has changed through this method call
 	 */
-	public boolean reportFunctionEquality(final FUNCTION f1, final FUNCTION f2) {
-		final FUNCTION f1OldRep = getRepresentativeAndAddFunctionIfNeeded(f1);
-		final FUNCTION f2OldRep = getRepresentativeAndAddFunctionIfNeeded(f2);
+	public boolean reportFunctionEquality(final FUNCTION func1, final FUNCTION func2) {
+		boolean freshFunc = false;
+		freshFunc |= addFunction(func1);
+		freshFunc |= addFunction(func2);
 
-		if (f1OldRep == f2OldRep) {
+		if (getEqualityStatus(func1, func2) == EqualityStatus.EQUAL) {
 			// already equal --> nothing to do
+			assert !freshFunc;
 			return false;
 		}
 
-		mFunctionTVER.reportEquality(f1, f2);
+		mFunctionTVER.reportEquality(func1, func2);
 		updateInconsistencyStatus();
 		if (isInconsistent()) {
 			// no need to propagate anything if this is already inconsistent
@@ -161,8 +165,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 		 * g(x) for all nodes of that form we know.
 		 *
 		 */
-		for (final ELEM funcApp1 : mFunctionToFuncApps.getImage(f1)) {
-			for (final ELEM funcApp2 : mFunctionToFuncApps.getImage(f2)) {
+		for (final ELEM funcApp1 : mFunctionToFuncApps.getImage(func1)) {
+			for (final ELEM funcApp2 : mFunctionToFuncApps.getImage(func2)) {
 				if (funcApp1 == funcApp2) {
 					continue;
 				}
@@ -174,6 +178,18 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 		updateInconsistencyStatus();
 		assert sanityCheck();
 		return true;
+	}
+
+	protected boolean addFunction(final FUNCTION func) {
+		if (hasFunction(func)) {
+			return false;
+		}
+		registerFunction(func);
+		return true;
+	}
+
+	protected void registerFunction(final FUNCTION func) {
+		mFunctionTVER.addElement(func);
 	}
 
 	/**
@@ -418,45 +434,52 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 	 * Updates the helper mappings for ccpars, ccchildren, and function
 	 * applications. When a new element is added.
 	 *
+	 * Assumes that the element has been added to mElementTVER by addElement(elem), but was not present before that call
+	 * to addElement(..).
+	 *
 	 * @param elem
 	 */
 	protected void registerNewElement(final ELEM elem) {
-		if (elem.isFunctionApplication()) {
-			mFunctionToFuncApps.addPair(elem.getAppliedFunction(), elem);
+		if (!elem.isFunctionApplication()) {
+			// nothing to do
+			assert mElementTVER.getRepresentative(elem) != null : "this method assumes that elem has been added "
+					+ "already";
+			return;
+		}
 
-			getRepresentativeAndAddFunctionIfNeeded(elem.getAppliedFunction());
+		mFunctionToFuncApps.addPair(elem.getAppliedFunction(), elem);
+		getRepresentativeAndAddFunctionIfNeeded(elem.getAppliedFunction());
 
-			addToCcChildren(elem, elem.getArguments());
+		addToCcChildren(elem, elem.getArguments());
 
-			for (final ELEM arg : elem.getArguments()) {
-				addElement(arg);
-				addToCcPar(arg, elem);
-				mElementToParents.addPair(arg, elem);
+		for (final ELEM arg : elem.getArguments()) {
+			addElement(arg);
+			addToCcPar(arg, elem);
+			mElementToParents.addPair(arg, elem);
+		}
+
+		/*
+		 * As the new element is a function application, we might be able to infer
+		 * equalities for it through congruence.
+		 */
+		for (final FUNCTION equivalentFunction : mFunctionTVER.getEquivalenceClass(elem.getAppliedFunction())) {
+			Set<ELEM> candidateSet = null;
+
+			for (int i = 0; i < elem.getArguments().size(); i++) {
+				final ELEM argRep = mElementTVER.getRepresentative(elem.getArguments().get(i));
+				final Set<ELEM> newCandidates = getCcParsForArgumentPosition(equivalentFunction, argRep, i);
+				if (candidateSet == null) {
+					candidateSet = new HashSet<>(newCandidates);
+				} else {
+					candidateSet.retainAll(newCandidates);
+				}
 			}
 
-			/*
-			 * As the new element is a function application, we might be able to infer
-			 * equalities for it through congruence.
-			 */
-			for (final FUNCTION equivalentFunction : mFunctionTVER.getEquivalenceClass(elem.getAppliedFunction())) {
-				Set<ELEM> candidateSet = null;
-
-				for (int i = 0; i < elem.getArguments().size(); i++) {
-					final ELEM argRep = mElementTVER.getRepresentative(elem.getArguments().get(i));
-					final Set<ELEM> newCandidates = getCcParsForArgumentPosition(equivalentFunction, argRep, i);
-					if (candidateSet == null) {
-						candidateSet = new HashSet<>(newCandidates);
-					} else {
-						candidateSet.retainAll(newCandidates);
-					}
+			for (final ELEM c : candidateSet) {
+				if (c == elem) {
+					continue;
 				}
-
-				for (final ELEM c : candidateSet) {
-					if (c == elem) {
-						continue;
-					}
-					reportEquality(elem, c);
-				}
+				reportEquality(elem, c);
 			}
 		}
 		assert sanityCheck();
@@ -500,7 +523,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 	private void doBackwardCongruencePropagations(final ELEM e1, final ELEM e2,
 			final NestedMap2<FUNCTION, ELEM, Set<List<ELEM>>> oldCcChild) {
 		for (final Set<FUNCTION> eqc : mFunctionTVER.getAllEquivalenceClasses()) {
-			for (final Entry<FUNCTION, FUNCTION> pair :
+			for (final Entry<FUNCTION, FUNCTION> pair
+					:
 					CrossProducts.binarySelectiveCrossProduct(eqc, true, true).entrySet()) {
 
 				final Set<List<ELEM>> e1CcChildren = getCcChildren(pair.getKey(), mElementTVER.getRepresentative(e1),
@@ -540,7 +564,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 			final NestedMap2<FUNCTION, ELEM, Set<List<ELEM>>> oldCcChild) {
 		for (final ELEM repUnequalToE1 : mElementTVER.getRepresentativesUnequalTo(e1OldRep)) {
 			for (final Set<FUNCTION> eqc : mFunctionTVER.getAllEquivalenceClasses()) {
-				for (final Entry<FUNCTION, FUNCTION> pair :
+				for (final Entry<FUNCTION, FUNCTION> pair
+						:
 						CrossProducts.binarySelectiveCrossProduct(eqc, true, true).entrySet()) {
 					final Set<ELEM> funcApps1 = getFunctionApplicationsInSameEquivalenceClass(pair.getKey(),
 							repUnequalToE1);
@@ -1272,10 +1297,10 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 	 */
 	public void transformElementsAndFunctions(final Function<ELEM, ELEM> elemTransformer,
 			final Function<FUNCTION, FUNCTION> functionTransformer) {
-		assert sanitizeTransformer(elemTransformer, getAllElements()) :
-					"we assume that the transformer does not produce elements that were in the relation before!";
-		assert sanitizeTransformer(functionTransformer, getAllFunctions()) :
-					"we assume that the transformer does not produce elements that were in the relation before!";
+		assert sanitizeTransformer(elemTransformer, getAllElements()) : "we assume that the transformer does not "
+				+ "produce elements that were in the relation before!";
+		assert sanitizeTransformer(functionTransformer, getAllFunctions()) : "we assume that the transformer does not "
+				+ "produce elements that were in the relation before!";
 
 		mElementTVER.transformElements(elemTransformer);
 		mFunctionTVER.transformElements(functionTransformer);
@@ -1342,6 +1367,36 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 	public boolean hasFunction(final FUNCTION elem) {
 		return getAllFunctions().contains(elem);
 	}
+
+	/**
+	 * We call a node constrained iff this CongruenceClosure puts any non-tautological constraint on it.
+	 * In particular, the node elem is constrained if both of the following conditions hold
+	 * <li> elem is the only member of its equivalence class
+	 * <li> elem does not appear in a disequality
+	 *
+	 * @param elem
+	 * @return true
+	 */
+	public boolean isConstrained(final ELEM elem) {
+		if (!hasElement(elem)) {
+			return false;
+		}
+		return mElementTVER.isConstrained(elem);
+	}
+
+	/**
+	 * We call a function constrained iff this CongruenceClosure puts any non-tautological constraint on it.
+	 *
+	 * @param func
+	 * @return true
+	 */
+	public boolean isConstrained(final FUNCTION func) {
+		if (!hasFunction(func)) {
+			return false;
+		}
+		return mFunctionTVER.isConstrained(func);
+	}
+
 
 	@Override
 	public boolean equals(final Object obj) {

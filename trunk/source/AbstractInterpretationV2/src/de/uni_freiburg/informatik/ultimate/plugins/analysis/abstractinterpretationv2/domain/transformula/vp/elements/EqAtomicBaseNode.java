@@ -32,9 +32,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 
 /**
  *
@@ -47,11 +45,12 @@ public class EqAtomicBaseNode extends EqNode {
 	private final boolean mIsLiteral;
 	private final Set<EqNonAtomicBaseNode> mDependentNonAtomicNodes = new HashSet<>();
 
-	public EqAtomicBaseNode(final Term term, final EqNodeAndFunctionFactory eqNodeAndFunctionFactory) {
+	public EqAtomicBaseNode(final Term term, final boolean isLiteral, final EqNodeAndFunctionFactory eqNodeAndFunctionFactory) {
 		super(term, eqNodeAndFunctionFactory);
-		mIsLiteral = term instanceof ConstantTerm
-				|| SmtUtils.isTrue(term)
-				|| SmtUtils.isFalse(term);
+//		mIsLiteral = term instanceof ConstantTerm
+//				|| SmtUtils.isTrue(term)
+//				|| SmtUtils.isFalse(term);
+		mIsLiteral = isLiteral;
 	}
 
 	@Override

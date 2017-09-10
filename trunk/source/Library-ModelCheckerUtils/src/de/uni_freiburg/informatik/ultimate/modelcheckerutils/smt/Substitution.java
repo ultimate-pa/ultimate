@@ -62,7 +62,7 @@ public class Substitution extends TermTransformer {
 	protected final ManagedScript mMgdScript;
 	private final ScopedHashMap<Term, Term> mScopedSubstitutionMapping;
 
-	public Substitution(final Script script, final Map<Term, Term> substitutionMapping) {
+	public Substitution(final Script script, final Map<? extends Term, ? extends Term> substitutionMapping) {
 		super();
 		mMgdScript = null;
 		mScript = script;
@@ -70,7 +70,7 @@ public class Substitution extends TermTransformer {
 		mScopedSubstitutionMapping.putAll(substitutionMapping);
 	}
 
-	public Substitution(final ManagedScript mgdScript, final Map<Term, Term> substitutionMapping) {
+	public Substitution(final ManagedScript mgdScript, final Map<? extends Term, ? extends Term> substitutionMapping) {
 		super();
 		mMgdScript = mgdScript;
 		mScript = mgdScript.getScript();

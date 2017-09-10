@@ -127,7 +127,9 @@ public class Elim1Store {
 	private final ManagedScript mMgdScript;
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
-	private static final boolean EXTENDED_RESULT_CHECK = false;
+	private static final boolean DEBUG_EXTENDED_RESULT_CHECK = false;
+	private static final boolean APPLY_RESULT_SIMPLIFICATION = false;
+	private static final boolean DEBUG_CRASH_ON_LARGE_SIMPLIFICATION_POTENTIAL = false;
 
 
 	public Elim1Store(final ManagedScript mgdScript, final IUltimateServiceProvider services,
@@ -304,14 +306,14 @@ public class Elim1Store {
 				new SubstitutionWithLocalSimplification(mMgdScript, substitutionMapping).transform(intermediateTerm);
 		final Term storedValueInformation = constructStoredValueInformation(quantifier, eliminatee, stores, storeIndexRepresentative,
 				storeValue, indexMapping, newArray, substitutionMapping);
-		Term res = QuantifierUtils.applyDualFiniteConnective(mScript, quantifier,
+		Term result = QuantifierUtils.applyDualFiniteConnective(mScript, quantifier,
 				transformedTerm, storedValueInformation, singleCaseTerm);
 		if (!doubleCaseJuncts.isEmpty()) {
 			final Term doubleCaseTerm = QuantifierUtils.applyDualFiniteConnective(mScript, quantifier, doubleCaseJuncts);
-			res = QuantifierUtils.applyDualFiniteConnective(mScript, quantifier, res, doubleCaseTerm);
+			result = QuantifierUtils.applyDualFiniteConnective(mScript, quantifier, result, doubleCaseTerm);
 		}
-		assert !Arrays.asList(res.getFreeVars()).contains(eliminatee) : "var is still there: " + eliminatee
-		+ " term size " + new DagSizePrinter(res);
+		assert !Arrays.asList(result.getFreeVars()).contains(eliminatee) : "var is still there: " + eliminatee
+		+ " term size " + new DagSizePrinter(result);
 		{
 			final StringBuilder sb = new StringBuilder();
 			sb.append("Elim1");
@@ -336,22 +338,34 @@ public class Elim1Store {
 			sb.append(String.format(", introduced %d new quantified variables", newAuxVars.size()));
 			sb.append(String.format(", introduced %d case distinctions", doubleCaseJuncts.size()));
 			sb.append(String.format(", treesize of input %d treesize of output %d",
-					new DAGSize().treesize(inputTerm), new DAGSize().treesize(res)));
+					new DAGSize().treesize(inputTerm), new DAGSize().treesize(result)));
 			mLogger.info(sb.toString());
 		}
-		final Term nonsimpl = res;
-		final ExtendedSimplificationResult swss = SmtUtils.simplifyWithStatistics(mMgdScript, res, mServices, SimplificationTechnique.SIMPLIFY_QUICK);
-		final Term ress = swss.getSimplifiedTerm();
-		mLogger.info(String.format("quick treesize reduction %d that is %2.1f percent of original size",
-				swss.getReductionOfTreeSize(), swss.getReductionRatioInPercent()));
-
-		final ExtendedSimplificationResult sws = SmtUtils.simplifyWithStatistics(mMgdScript, res, mServices, SimplificationTechnique.SIMPLIFY_DDA);
-		res = sws.getSimplifiedTerm();
-		mLogger.info(String.format("treesize reduction %d that is %2.1f percent of original size",
-				sws.getReductionOfTreeSize(), sws.getReductionRatioInPercent()));
-		mLogger.info("treesize after simplification " + new DAGSize().treesize(res));
-		final EliminationTask resultEt = new EliminationTask(quantifier, newAuxVars, res);
-		assert !EXTENDED_RESULT_CHECK  || EliminationTask.areDistinct(mMgdScript.getScript(), resultEt, new EliminationTask(quantifier,
+		final EliminationTask resultEt;
+		if (APPLY_RESULT_SIMPLIFICATION) {
+			if (DEBUG_CRASH_ON_LARGE_SIMPLIFICATION_POTENTIAL) {
+				final ExtendedSimplificationResult esrQuick = SmtUtils.simplifyWithStatistics(mMgdScript, result, mServices, SimplificationTechnique.SIMPLIFY_QUICK);
+				mLogger.info(String.format("quick treesize reduction %d that is %2.1f percent of original size",
+						esrQuick.getReductionOfTreeSize(), esrQuick.getReductionRatioInPercent()));
+				if (esrQuick.getReductionRatioInPercent() < 70) {
+					throw new AssertionError("Reduction: " + esrQuick.getReductionRatioInPercent() + " Input: " + preprocessedInput);
+				}
+			}
+			final ExtendedSimplificationResult esr = SmtUtils.simplifyWithStatistics(mMgdScript, result, mServices, SimplificationTechnique.SIMPLIFY_DDA);
+			final Term simplified = esr.getSimplifiedTerm();
+			final String sizeMessage = String.format("treesize reduction %d that is %2.1f percent of original size",
+					esr.getReductionOfTreeSize(), esr.getReductionRatioInPercent());
+			if (esr.getReductionRatioInPercent() <= 70) {
+				mLogger.info(sizeMessage);				
+			} else {
+				mLogger.info(sizeMessage);
+			}
+			mLogger.info("treesize after simplification " + new DAGSize().treesize(simplified));
+			resultEt = new EliminationTask(quantifier, newAuxVars, simplified);
+		} else {
+			resultEt = new EliminationTask(quantifier, newAuxVars, result);
+		}
+		assert !DEBUG_EXTENDED_RESULT_CHECK  || EliminationTask.areDistinct(mMgdScript.getScript(), resultEt, new EliminationTask(quantifier,
 				Collections.singleton(eliminatee), inputTerm)) != LBool.SAT : "Bug array QE Input: " + inputTerm
 						+ " Result:" + resultEt;
 		return resultEt;

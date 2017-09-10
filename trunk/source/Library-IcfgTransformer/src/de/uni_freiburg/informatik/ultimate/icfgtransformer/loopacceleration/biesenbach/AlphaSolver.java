@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Unm
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ProgramVarUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
@@ -63,17 +64,15 @@ public class AlphaSolver<INLOC extends IcfgLocation> {
 	private final Map<Term, Term> mAlphaDefaultConstant = new HashMap<>();
 	private TermVariable mNVar;
 	private Term mFinalTerm;
-	private final Map<Term, Term> mGuardSubstitute = new HashMap<>();
+	private Map<IProgramVar, Term> mValues = new HashMap<>();
 
-	public AlphaSolver(final ILogger logger, final IIcfg<INLOC> originalIcfg,
+	public AlphaSolver(final ILogger logger, final UnmodifiableTransFormula loopTransFormula, final ManagedScript script,
 			final Map<Integer, Map<Term, Term>> matrix, final Map<Integer, Map<Term, Term>> lgs,
 			final IUltimateServiceProvider service) {
-		final CfgSmtToolkit cfgSmtToolkit = originalIcfg.getCfgSmtToolkit();
-		mMgScript = cfgSmtToolkit.getManagedScript();
+		mMgScript = script;
 		mScript = mMgScript.getScript();
 
-		mOriginalTransFormula =
-				originalIcfg.getInitialNodes().iterator().next().getOutgoingEdges().iterator().next().getTransformula();
+		mOriginalTransFormula = loopTransFormula;
 		mLogger = logger;
 		final Set<IProgramVar> programVar = mOriginalTransFormula.getAssignedVars();
 		mProgramVar = programVar.toArray(new IProgramVar[programVar.size()]);
@@ -115,38 +114,68 @@ public class AlphaSolver<INLOC extends IcfgLocation> {
 			if (result == LBool.SAT) {
 				final Collection<Term> terms = mAlphaDefaultConstant.values();
 				final Map<Term, Term> termvar2value = SmtUtils.getValues(mScript, terms);
-
-				final List<Term> multiplication = new ArrayList<>();
 				final Term zero = mScript.decimal("0.0");
+				
+				// v and v*n
+				final List<Term> multiplication = new ArrayList<>();
 				for (final IProgramVar pV : mProgramVar) {
 					if (!termvar2value.get(mAlphaDefaultConstant.get(mAlphaMap.get(pV)[0])).equals(zero)) {
 						multiplication.add(
-								mScript.term("*", termvar2value.get(mAlphaDefaultConstant.get(mAlphaMap.get(pV)[0])),
+								mScript.term("*", toInt(termvar2value.get(mAlphaDefaultConstant.get(mAlphaMap.get(pV)[0]))),
 										mOriginalTransFormula.getInVars().get(pV)));
 					}
 					if (!termvar2value.get(mAlphaDefaultConstant.get(mAlphaMap.get(pV)[1])).equals(zero)) {
 						multiplication.add(
-								mScript.term("*", termvar2value.get(mAlphaDefaultConstant.get(mAlphaMap.get(pV)[1])),
+								mScript.term("*", toInt(termvar2value.get(mAlphaDefaultConstant.get(mAlphaMap.get(pV)[1]))),
 										mOriginalTransFormula.getInVars().get(pV), mNVar));
 					}
 				}
+				final Term addition;
+				//TODO multiplication.size() == 0
+				if(multiplication.size() == 1){
+					addition = multiplication.get(0);
+				}else{
+					addition = mScript.term("+", multiplication.toArray(new Term[multiplication.size()]));
+				}
+				// n and n*n
+				final List<Term> multiplicationN = new ArrayList<>();
 				if (!termvar2value.get(mAlphaDefaultConstant.get(mAlphaN[0])).equals(zero)) {
-					multiplication
-							.add(mScript.term("*", termvar2value.get(mAlphaDefaultConstant.get(mAlphaN[0])), mNVar));
+					multiplicationN
+							.add(mScript.term("*", termvar2value.get(mAlphaDefaultConstant.get(mAlphaN[0])), mScript.term("to_real", mNVar)));
 				}
 				if (!termvar2value.get(mAlphaDefaultConstant.get(mAlphaN[1])).equals(zero)) {
-					multiplication.add(
-							mScript.term("*", termvar2value.get(mAlphaDefaultConstant.get(mAlphaN[1])), mNVar, mNVar));
+					multiplicationN.add(
+							mScript.term("*", termvar2value.get(mAlphaDefaultConstant.get(mAlphaN[1])), mScript.term("to_real", mNVar), mScript.term("to_real", mNVar)));
 				}
-				final Term addition = mScript.term("+", multiplication.toArray(new Term[multiplication.size()]));
-				finalTerm = mScript.term("=", mOriginalTransFormula.getOutVars().get(pVar), addition);
-
-				mGuardSubstitute.put(mOriginalTransFormula.getInVars().get(pVar), mScript.term("to_int", addition));
+				final Term additionN;
+				//TODO multiplication.size() == 0
+				if(multiplicationN.size() == 1){
+					additionN = mScript.term("to_int", multiplicationN.get(0));
+				}else{
+					additionN = mScript.term("to_int", mScript.term("+", multiplicationN.toArray(new Term[multiplicationN.size()])));
+				}
+				finalTerm = mScript.term("=", mOriginalTransFormula.getOutVars().get(pVar), mScript.term("+", addition, additionN));
+				mValues.put(pVar, mScript.term("+", addition, additionN));
 			}
 		} finally {
 			mScript.pop(1);
 		}
 		return finalTerm;
+	}
+	
+	private Term toInt(Term real){
+		String r = real.toString();
+		if(r.endsWith(".0")){
+			return mScript.numeral(r.substring(0, r.length() -2));
+		}else if(r.endsWith(".0)")){
+			return mScript.term("-", mScript.numeral(r.substring(3, r.length() -3)));
+		}else{
+			throw new IllegalArgumentException();
+		}
+	}
+	
+	public Map<IProgramVar, Term> getValues(){
+		return mValues;
 	}
 
 	public Term getResult() {
@@ -155,10 +184,6 @@ public class AlphaSolver<INLOC extends IcfgLocation> {
 
 	public TermVariable getN() {
 		return mNVar;
-	}
-
-	public Map<Term, Term> getGuardSubstitute() {
-		return mGuardSubstitute;
 	}
 
 	private static LBool checkSat(final Script script, final Term term) {
@@ -183,7 +208,7 @@ public class AlphaSolver<INLOC extends IcfgLocation> {
 
 	private void initAlphas() {
 		mAlphaMap = new HashMap<>();
-		mNVar = mScript.variable("v_main_n", mScript.sort("Real"));
+		mNVar = mScript.variable("n", mScript.sort("Int"));
 		for (final IProgramVar var : mProgramVar) {
 			final TermVariable alphaVar = mScript.variable("alpha" + var.toString().substring(4), mScript.sort("Real"));
 			final TermVariable alphaVarN =

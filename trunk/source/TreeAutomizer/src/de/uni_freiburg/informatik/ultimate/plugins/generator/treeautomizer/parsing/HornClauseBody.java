@@ -39,9 +39,9 @@ import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HCSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HornClause;
 import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HornClausePredicateSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -50,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
  * Body of a Horn clause according to our grammar for Horn clauses in SMTLib2.
  * Confusing terminology-warning:
  * Once the Horn clause is fixed (we make no more derivations in the grammar), we also call this the head.
- * 
+ *
  * @author Mostafa M.A. (mostafa.amin93@gmail.com)
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
@@ -63,7 +63,7 @@ public class HornClauseBody {
 	/***
 	 * Construct a Body of a Horn statement.
 	 */
-	public HornClauseBody(HornClauseParserScript script) {
+	public HornClauseBody(final HornClauseParserScript script) {
 		mCobody = new HornClauseCobody(script);
 		mParserScript = script;
 	}
@@ -82,20 +82,21 @@ public class HornClauseBody {
 	 * @param symbolTable
 	 * @return
 	 */
-	public HornClause convertToHornClause(final ManagedScript script, final HCSymbolTable symbolTable, final Theory theory) {
+	public HornClause convertToHornClause(final ManagedScript script, final HCSymbolTable symbolTable,
+			final Script parserScript) {
 //		assert tt.size() <= 1;
 //		final Map<HornClausePredicateSymbol, List<TermVariable>> tt = getBodyPredicateToVars(symbolTable);
 //		final HornClausePredicateSymbol bodySymbol = tt.keySet().iterator().hasNext() ? tt.keySet().iterator().next()
 //				: symbolTable.getFalseHornClausePredicateSymbol();
-		
+
 		/*
 		 * Collect the predicate symbol and the arguments of the body predicate from the Term mHead
-		 *  right now we assume that 
+		 *  right now we assume that
 		 *   - all parameters of the head predicate are variables
 		 *   - all parameters of the head predicate are pairwise different (i.e. there are no repeated variables)
 		 *   TODO: lift this assumption by introducing equalities
 		 */
-		final HornClausePredicateSymbol bodySymbol; 
+		final HornClausePredicateSymbol bodySymbol;
 		final List<TermVariable> bodyVars;
 		if (mHead != null) {
 			bodySymbol = symbolTable.getOrConstructHornClausePredicateSymbol(
@@ -115,11 +116,11 @@ public class HornClauseBody {
 
 
 
-		List<HornClausePredicateSymbol> cobodySymbols = mCobody.getPredicates(symbolTable);
-		List<List<TermVariable>> cobobodyVars = mCobody.getPredicateToVars(symbolTable);
-		
+		final List<HornClausePredicateSymbol> cobodySymbols = mCobody.getPredicates(symbolTable);
+		final List<List<TermVariable>> cobobodyVars = mCobody.getPredicateToVars(symbolTable);
+
 		return new HornClause(script, symbolTable,
-				getTransitionFormula(script, theory),
+				getTransitionFormula(parserScript),
 				bodySymbol,
 				bodyVars,
 				cobodySymbols,
@@ -134,7 +135,7 @@ public class HornClauseBody {
 	public boolean setHead(final ApplicationTerm literal) {
 		if (mHead == null) {
 			final Map<Term, Term> subs = new HashMap<>();
-			for (Term param : literal.getParameters()) {
+			for (final Term param : literal.getParameters()) {
 				if (param instanceof TermVariable) {
 					// variables are the standard case --> do nothing
 					continue;
@@ -186,16 +187,16 @@ public class HornClauseBody {
 //			}
 //
 //			res.put(symbolTable.getOrConstructHornClausePredicateSymbol(
-//						mHead.getFunction().getName(), mHead.getFunction().getParameterSorts()), 
+//						mHead.getFunction().getName(), mHead.getFunction().getParameterSorts()),
 //					vars);
 //		}
 //		return res;
 //	}
-	
-	
+
+
 
 //	/***
-//	 * Get the cobody 
+//	 * Get the cobody
 //	 * @param symbolTable
 //	 * @return
 //	 */
@@ -209,7 +210,7 @@ public class HornClauseBody {
 	 * @param script
 	 * @return
 	 */
-	public Term getTransitionFormula(ManagedScript script, Theory theory) {
-		return mCobody.getTransitionFormula(script, theory);
+	public Term getTransitionFormula(final Script parserScript) {
+		return mCobody.getTransitionFormula(parserScript);
 	}
 }

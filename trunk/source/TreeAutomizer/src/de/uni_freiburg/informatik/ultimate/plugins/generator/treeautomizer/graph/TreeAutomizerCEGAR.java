@@ -43,12 +43,9 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeRun;
 import de.uni_freiburg.informatik.ultimate.automata.tree.operations.Accepts;
-import de.uni_freiburg.informatik.ultimate.automata.tree.operations.Complement;
 import de.uni_freiburg.informatik.ultimate.automata.tree.operations.Difference;
-import de.uni_freiburg.informatik.ultimate.automata.tree.operations.Intersect;
 import de.uni_freiburg.informatik.ultimate.automata.tree.operations.IsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.tree.operations.Minimize;
-import de.uni_freiburg.informatik.ultimate.automata.tree.operations.Totalize;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TimeoutResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TreeAutomizerSatResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TreeAutomizerUnsatResult;
@@ -110,7 +107,7 @@ public class TreeAutomizerCEGAR {
 
 	private final List<HornClause> mAlphabet;
 	private TreeRun<HornClause, IPredicate> mCounterExample;
-	private IUltimateServiceProvider mServices;
+	private final IUltimateServiceProvider mServices;
 
 	/**
 	 * Constructor for TreeAutomizer CEGAR
@@ -329,7 +326,7 @@ public class TreeAutomizerCEGAR {
 		mLogger.debug(String.format("Size after totalize %d states, %d rules.", mAbstraction.getStates().size(),
 				((Set<TreeAutomatonRule<HornClause, IPredicate>>) mAbstraction.getRules()).size()));
 		*/
-		
+
 		mAbstraction = (TreeAutomatonBU<HornClause, IPredicate>) (new Difference<HornClause, IPredicate>(
 				mAutomataLibraryServices, mStateFactory, mAbstraction, getCounterExample()).getResult());
 		mLogger.debug(String.format("Size before minimize %d states, %d rules.", mAbstraction.getStates().size(),

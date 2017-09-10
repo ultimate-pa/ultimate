@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -41,6 +42,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineTerm;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineTermTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainPreanalysis;
 
@@ -71,33 +74,27 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 
 	@Override
 	public EqNode getOrConstructNode(final Term term) {
-		if (term instanceof ApplicationTerm && ((ApplicationTerm) term).getParameters().length > 0) {
-			if ("select".equals(((ApplicationTerm) term).getFunction().getName())) {
-				return getOrConstructEqFunctionNode((ApplicationTerm) term);
-			} else if (((ApplicationTerm) term).getFunction().isIntern()) {
-				return getOrConstructNonAtomicBaseNode(term);
-			} else {
-				throw new UnsupportedOperationException();
-			}
-		} else if (term instanceof ApplicationTerm && ((ApplicationTerm) term).getParameters().length == 0) {
-			return getOrConstructEqAtomicBaseNode(term);
-		} else if (term instanceof TermVariable) {
-			return getOrConstructEqAtomicBaseNode(term);
-		} else if (term instanceof ConstantTerm) {
+		if (SmtUtils.isFunctionApplication(term, "select")) {
+			return getOrConstructEqFunctionNode((ApplicationTerm) term);
+		} else if (isAtomic(term)) {
 			return getOrConstructEqAtomicBaseNode(term);
 		} else {
-			throw new UnsupportedOperationException();
+			return getOrConstructNonAtomicBaseNode(term);
+//		} else if (term instanceof ApplicationTerm && ((ApplicationTerm) term).getParameters().length == 0) {
+//			return getOrConstructEqAtomicBaseNode(term);
+//		} else if (term instanceof TermVariable) {
+//			return getOrConstructEqAtomicBaseNode(term);
+//		} else if (term instanceof ConstantTerm) {
+//			return getOrConstructEqAtomicBaseNode(term);
+//		} else {
+//			throw new UnsupportedOperationException();
 		}
 	}
 
 	private EqNode getOrConstructNonAtomicBaseNode(final Term term) {
-		mMgdScript.lock(this);
-		final Term normalizedTerm = new CommuhashNormalForm(
-				mPreAnalysis.getServices(), mMgdScript.getScript()).transform(term);
-		mMgdScript.unlock(this);
+		final Term normalizedTerm = normalizeTerm(term);
 		EqNode result = mTermToEqNode.get(normalizedTerm);
 		if (result == null) {
-//			result = new EqNonAtomicBaseNode(normalizedTerm, this);
 			result = getBaseElement(normalizedTerm);
 			mTermToEqNode.put(normalizedTerm, result);
 		}
@@ -118,25 +115,43 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 				args.add(getOrConstructNode(index));
 			}
 
-//			result = new EqFunctionNode(function, args, selectTerm, this);
 			result = super.getFuncAppElement(function, args);
 			mTermToEqNode.put(selectTerm, result);
 		}
-		assert result instanceof EqFunctionNode;
-		assert result.getTerm() == selectTerm;
+		assert result instanceof EqFunctionApplicationNode;
+//		assert result.getTerm() == selectTerm;
 		return result;
 	}
 
 	private EqNode getOrConstructEqAtomicBaseNode(final Term term) {
-		EqNode result = mTermToEqNode.get(term);
+		assert !term.getSort().isArraySort();
+
+		final Term normalizedTerm = normalizeTerm(term);
+
+		EqNode result = mTermToEqNode.get(normalizedTerm);
 		if (result == null) {
-//			result = new EqAtomicBaseNode(term, this);
-			result = getBaseElement(term);
-			mTermToEqNode.put(term, result);
+
+			result = getBaseElement(normalizedTerm);
+			mTermToEqNode.put(normalizedTerm, result);
 		}
 		assert result instanceof EqAtomicBaseNode;
 		return result;
 
+	}
+
+	private Term normalizeTerm(final Term term) {
+		if (term instanceof TermVariable) {
+			return term;
+		}
+
+		mMgdScript.lock(this);
+		final AffineTerm affineTerm = (AffineTerm) new AffineTermTransformer(mMgdScript.getScript()).transform(term);
+		mMgdScript.unlock(this);
+
+		if (affineTerm.isErrorTerm()) {
+			return new CommuhashNormalForm(mPreAnalysis.getServices(), mMgdScript.getScript()).transform(term);
+		}
+		return affineTerm.toTerm(mMgdScript.getScript());
 	}
 
 	@Override
@@ -147,14 +162,8 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 			} else {
 				throw new UnsupportedOperationException();
 			}
-		} else if (term instanceof ApplicationTerm && ((ApplicationTerm) term).getParameters().length == 0) {
-			return getOrConstructAtomicEqFunction(term);
-		} else if (term instanceof TermVariable) {
-			return getOrConstructAtomicEqFunction(term);
-		} else if (term instanceof ConstantTerm) {
-			return getOrConstructAtomicEqFunction(term);
 		} else {
-			throw new UnsupportedOperationException();
+			return getOrConstructAtomicEqFunction(term);
 		}
 	}
 
@@ -180,16 +189,16 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 	 */
 	@Override
 	public EqNode getExistingNode(final Term term) {
-		final Term normalizedTerm;
-		if (term instanceof ApplicationTerm && !SmtUtils.isConstant(term)) {
-			mMgdScript.lock(this);
-			normalizedTerm = new CommuhashNormalForm(
-					mPreAnalysis.getServices(), mMgdScript.getScript()).transform(term);
-			mMgdScript.unlock(this);
-		} else {
-			normalizedTerm = term;
-		}
-		return mTermToEqNode.get(normalizedTerm);
+//		final Term normalizedTerm;
+//		if (term instanceof ApplicationTerm && !SmtUtils.isConstant(term)) {
+//			mMgdScript.lock(this);
+//			normalizedTerm = new CommuhashNormalForm(
+//					mPreAnalysis.getServices(), mMgdScript.getScript()).transform(term);
+//			mMgdScript.unlock(this);
+//		} else {
+//			normalizedTerm = term;
+//		}
+		return mTermToEqNode.get(normalizeTerm(term));
 	}
 
 	/**
@@ -208,28 +217,85 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 	}
 
 	@Override
-	protected EqNode newBaseElement(final Term c) {
-		assert SmtUtils.isTrue(c) || SmtUtils.isFalse(c) || SmtUtils.isConstant(c) || c instanceof TermVariable
-			|| c instanceof ConstantTerm;
-		return new EqAtomicBaseNode(c, this);
-//		assert false;
-//		return getOrConstructEqAtomicBaseNode(c);
+	protected EqNode newBaseElement(final Term term) {
+//		assert SmtUtils.isTrue(term) || SmtUtils.isFalse(term) || SmtUtils.isConstant(term) || term instanceof TermVariable
+//			|| term instanceof ConstantTerm;
+		if (isAtomic(term)) {
+			// term has no dependencies on other terms --> use an EqAtomicBaseNode
+			return new EqAtomicBaseNode(term, isTermALiteral(term), this);
+		} else {
+			assert term.getFreeVars().length > 0;
+			final Collection<EqNode> supportingNodes = new ArrayList<>();
+			final Collection<EqFunction> supportingFunctions = new ArrayList<>();
+			for (final TermVariable fv : term.getFreeVars()) {
+				if (fv.getSort().isArraySort()) {
+					supportingFunctions.add(getOrConstructFunction(fv));
+				} else {
+					supportingNodes.add(getOrConstructNode(fv));
+				}
+			}
+			return new EqNonAtomicBaseNode(term, supportingNodes, supportingFunctions, this);
+		}
+	}
+
+	/**
+	 * Checks if the given term is a literal.
+	 * Examples of literals (sometimes called constants, but we have other uses for that word) are:
+	 *  1, 2, -1, true, false, 1bv16 (bitvector constant/literal)
+	 *
+	 * The defining trait of literals for our purposes is that two different literals always have a different value,
+	 * too.
+	 *
+	 * @param term
+	 * @return
+	 */
+	private boolean isTermALiteral(final Term term) {
+		if (term instanceof TermVariable) {
+			return false;
+		}
+		if (SmtUtils.isTrue(term) || SmtUtils.isFalse(term)) {
+			return true;
+		}
+		if (term instanceof ConstantTerm) {
+			return true;
+		}
+
+		mMgdScript.lock(this);
+		final AffineTerm affineTerm = (AffineTerm) new AffineTermTransformer(mMgdScript.getScript()).transform(term);
+		mMgdScript.unlock(this);
+
+		if (affineTerm.isErrorTerm()) {
+			return false;
+		}
+
+		if (affineTerm.isConstant()) {
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * We call a Term atomic here if it is either a TermVariable, or does not contain any TermVariables.
+	 * (this has nothing to do with Boolean atoms)
+	 *
+	 * Explanation:
+	 * Atomic in this sense means dependency-free.
+	 * I.e.: if we havoc some other term (a TermVariable), can we guarantee that this term is not concerned by that.
+	 *
+	 * @param term
+	 * @return
+	 */
+	private boolean isAtomic(final Term term) {
+		return term instanceof TermVariable || term.getFreeVars().length == 0;
 	}
 
 	@Override
 	protected EqNode newFuncAppElement(final EqFunction func, final List<EqNode> args) {
 		mMgdScript.lock(this);
-//		final Term[] argTerms = args.stream().map(node -> node.getTerm()).collect(Collectors.toList())
-//				.toArray(new Term[args.size()]);
-//		final ApplicationTerm selectTerm = (ApplicationTerm) mMgdScript.term(this, f.getFunctionName(), argTerms);
 		final ArrayIndex ai = new ArrayIndex(args.stream().map(node -> node.getTerm()).collect(Collectors.toList()));
 		final Term selectTerm = SmtUtils.multiDimensionalSelect(mMgdScript.getScript(), func.getTerm(), ai);
 		mMgdScript.unlock(this);
-		return new EqFunctionNode(func, args, selectTerm, this);
-//		return getExistingNode(selectTerm);
-//		return getOrConstructEqFunctionNode(selectTerm);
-//		assert false;
-//		return null;
+		return new EqFunctionApplicationNode(func, args, selectTerm, this);
 	}
 
 }

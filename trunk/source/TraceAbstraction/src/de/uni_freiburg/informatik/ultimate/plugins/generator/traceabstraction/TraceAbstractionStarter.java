@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -288,8 +289,8 @@ public class TraceAbstractionStarter {
 		final Result result = basicCegarLoop.iterate();
 		basicCegarLoop.finish();
 		if (taPrefs.getFloydHoareAutomataReuse() != FloydHoareAutomataReuse.NONE) {
-			final List<?> fhs = basicCegarLoop.getFloydHoareAutomata();
-			mFloydHoareAutomata.addAll((Collection<? extends AbstractInterpolantAutomaton<IIcfgTransition<?>>>) fhs);
+			final LinkedHashSet<?> fhs = basicCegarLoop.getFloydHoareAutomata();
+			mFloydHoareAutomata.addAll((LinkedHashSet<AbstractInterpolantAutomaton<IIcfgTransition<?>>>) fhs);
 		}
 
 		mOverallResult = computeOverallResult(errorLocs, basicCegarLoop, result);

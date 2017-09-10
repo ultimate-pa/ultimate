@@ -83,4 +83,23 @@ public abstract class EqNode implements IEqNodeIdentifier<EqNode, EqFunction>,
 				new Substitution(mEqNodeFactory.mMgdScript, substitutionMapping).transform(getTerm());
 		return mEqNodeFactory.getOrConstructNode(substitutedTerm);
 	}
+
+	@Override
+	public boolean isDependent() {
+		// this is the default case NonAtomicBaseNode must override this
+		return false;
+	}
+
+	@Override
+	public Collection<EqNode> getSupportingNodes() {
+		// this is the default case NonAtomicBaseNode must override this
+		throw new UnsupportedOperationException("check isDependent first");
+	}
+
+	@Override
+	public Collection<EqFunction> getSupportingFunctions() {
+		// this is the default case NonAtomicBaseNode must override this
+		throw new UnsupportedOperationException("check isDependent first");
+	}
+
 }

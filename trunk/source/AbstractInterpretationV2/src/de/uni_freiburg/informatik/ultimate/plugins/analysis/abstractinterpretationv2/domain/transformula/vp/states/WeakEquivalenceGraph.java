@@ -214,6 +214,17 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		return madeChanges;
 	}
 
+	/**
+	 * Project the given function (array) from this weq graph.
+	 * <li> remove edges that are adjacent to the given function
+	 * <li> project the function from all the labels of the remaining edges
+	 * <li> additionally, at the first step try to carry over information via weak congruence to other arrays by
+	 * 		introducing fresh terms
+	 *
+	 * @param func function (array) to be projected
+	 * @param groundPartialArrangement the gpa that should be assumed for the projection (might be different from
+	 * 		mPartialArrangement, or mPartialArrangement might be null..)
+	 */
 	public void projectFunction(final FUNCTION func, final CongruenceClosure<NODE, FUNCTION> groundPartialArrangement) {
 		final Map<Doubleton<FUNCTION>, WeakEquivalenceEdgeLabel> edgesCopy = new HashMap<>(mWeakEquivalenceEdges);
 		for (final Entry<Doubleton<FUNCTION>, WeakEquivalenceEdgeLabel> en : edgesCopy.entrySet()) {
@@ -442,8 +453,7 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		 * or is one of the special quantified variables from getVariableForDimension(..).
 		 */
 		if (mPartialArrangement != null) {
-			for (final Entry<Doubleton<FUNCTION>, WeakEquivalenceEdgeLabel> edge :
-				mWeakEquivalenceEdges.entrySet()) {
+			for (final Entry<Doubleton<FUNCTION>, WeakEquivalenceEdgeLabel> edge : mWeakEquivalenceEdges.entrySet()) {
 				if (!mPartialArrangement.hasFunction(edge.getKey().getOneElement())
 						|| !mPartialArrangement.hasFunction(edge.getKey().getOtherElement())) {
 					assert false;
@@ -459,6 +469,19 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 					assert false;
 					return false;
 				}
+			}
+		}
+
+		/*
+		 * check that the edges only connect compatible arrays
+		 *  compatible means having the same Sort, in particular: dimensionality
+		 */
+		for (final Entry<Doubleton<FUNCTION>, WeakEquivalenceEdgeLabel> edge : mWeakEquivalenceEdges.entrySet()) {
+			final FUNCTION source = edge.getKey().getOneElement();
+			final FUNCTION target = edge.getKey().getOtherElement();
+			if (!source.getTerm().getSort().equals(target.getTerm().getSort())) {
+					assert false;
+					return false;
 			}
 		}
 
@@ -607,6 +630,7 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 	 * @param nodes position where FUNCTIONs may differ
 	 */
 	public void reportWeakEquivalence(final FUNCTION func1, final FUNCTION func2, final List<NODE> nodes) {
+		assert func1.getTerm().getSort().equals(func2.getTerm().getSort());
 		assert func1.getArity() == func2.getArity();
 
 		final Doubleton<FUNCTION> sourceAndTarget = new Doubleton<>(func1, func2);
@@ -630,6 +654,7 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 	 */
 	public void reportWeakEquivalence(final Doubleton<FUNCTION> key,
 			final WeakEquivalenceGraph<ACTION, NODE, FUNCTION>.WeakEquivalenceEdgeLabel value) {
+		assert key.getOneElement().getTerm().getSort().equals(key.getOtherElement().getTerm().getSort());
 		strengthenEdgeLabelAndPropagateIfPossible(key, value.getLabel());
 	}
 
@@ -669,6 +694,15 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		return newLabel;
 	}
 
+	public boolean isConstrained(final NODE elem) {
+		for (final Entry<Doubleton<FUNCTION>, WeakEquivalenceEdgeLabel> edge : mWeakEquivalenceEdges.entrySet()) {
+			if (edge.getValue().isConstrained(elem)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	/**
 	 * Represents an edge label in the weak equivalence graph.
 	 * An edge label connects two arrays of the same arity(dimensionality) #a.
@@ -692,6 +726,10 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 			assert sanityCheck();
 		}
 
+		public boolean isConstrained(final NODE elem) {
+			return mLabel.stream().anyMatch(l -> l.isConstrained(elem));
+		}
+
 		/**
 		 * Copy constructor.
 		 *
@@ -700,8 +738,8 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		public WeakEquivalenceEdgeLabel(final WeakEquivalenceEdgeLabel original) {
 			mLabel = new ArrayList<>(original.getLabel().size());
 			for (int i = 0; i < original.getLabel().size(); i++) {
-				assert! original.getLabel().get(i).isInconsistent();
-				assert! original.getLabel().get(i).isTautological();
+				assert !original.getLabel().get(i).isInconsistent();
+				assert !original.getLabel().get(i).isTautological() || original.getLabel().size() == 1;
 				mLabel.add(new CongruenceClosure<>(original.getLabel().get(i)));
 			}
 			assert sanityCheck();
@@ -738,7 +776,6 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 
 		public boolean impliesEqualityOnThatPosition(final List<NODE> arguments) {
 			for (int i = 0; i < getLabel().size(); i++) {
-				//					final CongruenceClosure<NODE, FUNCTION> copy = new CongruenceClosure<>(mLabelWithGroundPa.get(i));
 				final CongruenceClosure<NODE, FUNCTION> copy = mCcManager.makeCopy(
 						mCcManager.getMeet(getLabel().get(i), mPartialArrangement));
 				for (int j = 0; j < arguments.size(); j++) {
@@ -946,10 +983,25 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		}
 
 
+		/**
+		 * proceeds in three steps for each label element of this weq label :
+		 *  <li> constructs the meet of the element with the ground partial arrangement (gpa)
+		 *  <li> applies the given removal method on that meet
+		 *  <li> projects away the constraints in the resulting element that do not contain one of the weq-variables
+		 *
+		 * @param remove
+		 * @param groundPartialArrangement
+		 */
 		private void projectHelper(final Consumer<CongruenceClosure<NODE, FUNCTION>> remove,
 				final CongruenceClosure<NODE, FUNCTION> groundPartialArrangement) {
 			final List<CongruenceClosure<NODE, FUNCTION>> newLabelContents = new ArrayList<>();
 			for (int i = 0; i < getLabel().size(); i++) {
+				if (mLabel.get(i).isTautological()) {
+					// we have one "true" disjunct --> the whole disjunction is tautological
+					mLabel.clear();
+					mLabel.add(new CongruenceClosure<>());
+					return;
+				}
 				final CongruenceClosure<NODE, FUNCTION>	meet = mCcManager.getMeet(mLabel.get(i), groundPartialArrangement);
 				if (meet.isInconsistent()) {
 					/* label element is inconsistent with the current gpa
@@ -958,6 +1010,8 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 					continue;
 				}
 				if (meet.isTautological()) {
+					assert false : "this should never happen because if the meet is tautological then mLabel.get(i)"
+							+ "is, too, right?";
 					// we have one "true" disjunct --> the whole disjunction is tautological
 					mLabel.clear();
 					mLabel.add(new CongruenceClosure<>());
