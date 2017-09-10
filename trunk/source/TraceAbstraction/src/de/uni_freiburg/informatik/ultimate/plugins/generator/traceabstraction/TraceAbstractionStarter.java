@@ -336,7 +336,9 @@ public class TraceAbstractionStarter {
 							taPrefs.interpolation(), taPrefs.computeHoareAnnotation(), mServices, mToolchainStorage, mFloydHoareAutomata);
 					break;
 				case LAZY_IN_ORDER:
-					throw new UnsupportedOperationException("not yet implemented");
+					result = new LazyReuseCegarLoop<>(name, root, csToolkit, predicateFactory, taPrefs, errorLocs,
+							taPrefs.interpolation(), taPrefs.computeHoareAnnotation(), mServices, mToolchainStorage, mFloydHoareAutomata);
+					break;
 				case NONE:
 					result = new BasicCegarLoop<>(name, root, csToolkit, predicateFactory, taPrefs, errorLocs,
 							taPrefs.interpolation(), taPrefs.computeHoareAnnotation(), mServices, mToolchainStorage);
