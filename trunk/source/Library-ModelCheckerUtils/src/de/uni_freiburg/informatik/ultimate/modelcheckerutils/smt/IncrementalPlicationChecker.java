@@ -95,7 +95,7 @@ public class IncrementalPlicationChecker {
 	 */
 	private Substitution constructVar2ConstSubstitution(final Term term) {
 		final Set<TermVariable> allTvs = new HashSet<>(Arrays.asList(term.getFreeVars()));
-		final Map<Term, Term> substitutionMapping = SmtUtils.termVariables2Constants(mMgdScript.getScript(), allTvs, true);
+		final Map<TermVariable, Term> substitutionMapping = SmtUtils.termVariables2Constants(mMgdScript.getScript(), allTvs, true);
 		final Substitution subst = new Substitution(mMgdScript, substitutionMapping);
 		return subst;
 	}

@@ -141,6 +141,7 @@ public final class SmtUtils {
 		}
 		return simplified;
 	}
+	
 
 	public static ExtendedSimplificationResult simplifyWithStatistics(final ManagedScript script, final Term formula,
 			final IUltimateServiceProvider services, final SimplificationTechnique simplificationTechnique) {
@@ -686,9 +687,9 @@ public final class SmtUtils {
 		return result;
 	}
 
-	public static Map<Term, Term> termVariables2Constants(final Script script,
+	public static Map<TermVariable, Term> termVariables2Constants(final Script script,
 			final Collection<TermVariable> termVariables, final boolean declareConstants) {
-		final Map<Term, Term> mapping = new HashMap<>();
+		final Map<TermVariable, Term> mapping = new HashMap<>();
 		for (final TermVariable tv : termVariables) {
 			final Term constant = termVariable2constant(script, tv, declareConstants);
 			mapping.put(tv, constant);

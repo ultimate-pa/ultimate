@@ -250,7 +250,7 @@ public class IndexAnalyzer {
 		final Set<TermVariable> allTvs = new HashSet<>(Arrays.asList(termWithAdditionalInvariants.getFreeVars()));
 		allTvs.addAll(CoreUtil.filter(mTransFormula.getInVarsReverseMapping().keySet(), TermVariable.class));
 		allTvs.addAll(CoreUtil.filter(mTransFormula.getOutVarsReverseMapping().keySet(), TermVariable.class));
-		final Map<Term, Term> substitutionMapping = SmtUtils.termVariables2Constants(mScript, allTvs, true);
+		final Map<TermVariable, Term> substitutionMapping = SmtUtils.termVariables2Constants(mScript, allTvs, true);
 		final Substitution subst = new Substitution(mScript, substitutionMapping);
 		mScript.assertTerm(subst.transform(termWithAdditionalInvariants));
 		for (final Doubleton<Term> doubleton : doubletons) {
