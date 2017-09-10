@@ -51,7 +51,10 @@ public class DangerInvariantsTest extends AbstractTraceAbstractionTestSuite {
 			// "examples/ultimate-benchmarks/pathprograms/20170417-DifficultReach/ModNeigh-MapElim",
 	};
 
-	private static final String[] mSettings = { "automizer/dangerInvariants/dangerInvariants.epf" };
+	private static final String[] mSettings = {
+			"automizer/dangerInvariants/dangerInvariants.epf",
+			// "automizer/dangerInvariants/dangerInvariants_Nonlinear.epf",
+	};
 
 	@Override
 	public long getTimeout() {

@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -50,11 +51,14 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
  * @author Dennis Wölfing
  */
 public class DangerInvariantPatternStrategy extends LocationIndependentLinearInequalityInvariantPatternStrategy {
+	private final Map<IcfgEdge, Set<Term>> mIntegerCoefficients;
+
 	public DangerInvariantPatternStrategy(final AbstractTemplateIncreasingDimensionsStrategy dimensionsStrat,
 			final int maxRounds, final Set<IProgramVar> allProgramVariables, final Set<IProgramVar> patternVariables,
 			final boolean alwaysStrictAndNonStrictCopies, final boolean useStrictInequalitiesAlternatingly) {
 		super(dimensionsStrat, maxRounds, allProgramVariables, patternVariables, alwaysStrictAndNonStrictCopies,
 				useStrictInequalitiesAlternatingly);
+		mIntegerCoefficients = new HashMap<>();
 	}
 
 	@Override
@@ -65,6 +69,8 @@ public class DangerInvariantPatternStrategy extends LocationIndependentLinearIne
 	@Override
 	public Dnf<AbstractLinearInvariantPattern> getPatternForTransition(final IcfgEdge transition, final int round,
 			final Script solver, final String prefix) {
+		mIntegerCoefficients.put(transition, new HashSet<>());
+
 		final TransFormula tf = transition.getTransformula();
 		final Map<IProgramVar, TermVariable> inVars = tf.getInVars();
 		final Map<IProgramVar, TermVariable> outVars = tf.getOutVars();
@@ -93,10 +99,15 @@ public class DangerInvariantPatternStrategy extends LocationIndependentLinearIne
 			solver.assertTerm(
 					solver.term("=", primedCoefficient, Rational.ONE.toTerm(solver.sort(SmtSortUtils.REAL_SORT))));
 			for (final Term coefficient : pattern1.getCoefficients()) {
-				solver.assertTerm(solver.term("is_int", coefficient));
+				mIntegerCoefficients.get(transition).add(coefficient);
 			}
 		}
 
 		return new Dnf<>(conjuncts);
+	}
+
+	@Override
+	public Set<Term> getIntegerCoefficientsForTransition(final IcfgEdge transition) {
+		return Collections.unmodifiableSet(mIntegerCoefficients.get(transition));
 	}
 }

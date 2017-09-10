@@ -136,4 +136,9 @@ public abstract class LocationDependentLinearInequalityInvariantPatternStrategy
 			final Script solver, final String prefix) {
 		throw new UnsupportedOperationException();
 	}
+
+	@Override
+	public Set<Term> getIntegerCoefficientsForTransition(final IcfgEdge transition) {
+		throw new UnsupportedOperationException();
+	}
 }
