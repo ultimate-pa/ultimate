@@ -236,4 +236,8 @@ public class HCHoareTripleChecker {
 	public Validity check(final TreeAutomatonRule<HornClause, IPredicate> rule) {
 		return check(rule.getSource(), rule.getLetter(), rule.getDest());
 	}
+
+	public IPredicate getFalsePredicate() {
+		return mPredicateUnifier.getFalsePredicate();
+	}
 }

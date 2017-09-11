@@ -28,7 +28,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.parsing;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -89,6 +88,16 @@ public class HornClauseBody {
 //		final HornClausePredicateSymbol bodySymbol = tt.keySet().iterator().hasNext() ? tt.keySet().iterator().next()
 //				: symbolTable.getFalseHornClausePredicateSymbol();
 
+		final List<HornClausePredicateSymbol> cobodySymbols = mCobody.getPredicates(symbolTable);
+		final List<List<TermVariable>> cobobodyVars = mCobody.getPredicateToVars(symbolTable);
+
+		if (mHead == null) {
+			return new HornClause(script, symbolTable,
+				getTransitionFormula(parserScript),
+				cobodySymbols,
+				cobobodyVars);
+		}
+
 		/*
 		 * Collect the predicate symbol and the arguments of the body predicate from the Term mHead
 		 *  right now we assume that
@@ -96,28 +105,14 @@ public class HornClauseBody {
 		 *   - all parameters of the head predicate are pairwise different (i.e. there are no repeated variables)
 		 *   TODO: lift this assumption by introducing equalities
 		 */
-		final HornClausePredicateSymbol bodySymbol;
-		final List<TermVariable> bodyVars;
-		if (mHead != null) {
-			bodySymbol = symbolTable.getOrConstructHornClausePredicateSymbol(
+		final HornClausePredicateSymbol bodySymbol = symbolTable.getOrConstructHornClausePredicateSymbol(
 				mHead.getFunction().getName(), mHead.getFunction().getParameterSorts());
-			final List<TermVariable> parameterTermVariables = Arrays.asList(mHead.getParameters()).stream()
-					.map(t -> (TermVariable) t)
-					.collect(Collectors.toList());
-			assert parameterTermVariables.size() == new HashSet<>(parameterTermVariables).size() : "TODO: eliminate "
-					+ "duplicate arguments";
-			bodyVars = parameterTermVariables;
-		} else {
-			// if there is no explicit head symbol, then it is implicitly false (the neutral element wrt. disjunction)
-			bodySymbol = symbolTable.getFalseHornClausePredicateSymbol();
-			bodyVars = Collections.emptyList();
-		}
-
-
-
-
-		final List<HornClausePredicateSymbol> cobodySymbols = mCobody.getPredicates(symbolTable);
-		final List<List<TermVariable>> cobobodyVars = mCobody.getPredicateToVars(symbolTable);
+		final List<TermVariable> parameterTermVariables = Arrays.asList(mHead.getParameters()).stream()
+				.map(t -> (TermVariable) t)
+				.collect(Collectors.toList());
+		assert parameterTermVariables.size() == new HashSet<>(parameterTermVariables).size() : "TODO: eliminate "
+				+ "duplicate arguments";
+		final List<TermVariable> bodyVars = parameterTermVariables;
 
 		return new HornClause(script, symbolTable,
 				getTransitionFormula(parserScript),
