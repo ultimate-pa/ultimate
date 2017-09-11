@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE BoogiePreprocessor plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE BoogiePreprocessor plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE BoogiePreprocessor plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.boogie.preferences;
@@ -35,8 +35,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePrefer
  * 
  * This class loads preference default values before they are needed
  * 
- * contributes to ep: org.eclipse.core.runtime.preferences.initializer see the
- * plugin.xml
+ * contributes to ep: org.eclipse.core.runtime.preferences.initializer see the plugin.xml
  * 
  * @author dietsch
  * 
@@ -44,7 +43,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePrefer
 public class PreferenceInitializer extends UltimatePreferenceInitializer {
 
 	public static final String LABEL_SHOWALLANNOTATIONS = "Show all Annotations";
-	
+	public static final String LABEL_EMIT_BACKTRANSLATION_WARNINGS = "Show backtranslation warnings";
+
 	public PreferenceInitializer() {
 		super(Activator.PLUGIN_ID, Activator.PLUGIN_NAME);
 	}
@@ -52,7 +52,10 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 	@Override
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
 
-		return new UltimatePreferenceItem<?>[] { new UltimatePreferenceItem<Boolean>(
-				LABEL_SHOWALLANNOTATIONS, false, PreferenceType.Boolean) };
+		return new UltimatePreferenceItem<?>[] {
+				new UltimatePreferenceItem<>(LABEL_SHOWALLANNOTATIONS, false, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_EMIT_BACKTRANSLATION_WARNINGS, true, PreferenceType.Boolean)
+
+		};
 	}
 }

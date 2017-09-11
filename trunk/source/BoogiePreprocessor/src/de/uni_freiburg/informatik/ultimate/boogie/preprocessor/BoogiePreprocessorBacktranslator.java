@@ -52,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
+import de.uni_freiburg.informatik.ultimate.boogie.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.boogie.type.ArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
@@ -334,6 +335,11 @@ public class BoogiePreprocessorBacktranslator
 	}
 
 	private void reportUnfinishedBacktranslation(final String message) {
+		final boolean isEnabled = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
+				.getBoolean(PreferenceInitializer.LABEL_EMIT_BACKTRANSLATION_WARNINGS);
+		if (!isEnabled) {
+			return;
+		}
 		mLogger.warn(message);
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID,
 				new GenericResult(Activator.PLUGIN_ID, "Unfinished Backtranslation", message, Severity.WARNING));
