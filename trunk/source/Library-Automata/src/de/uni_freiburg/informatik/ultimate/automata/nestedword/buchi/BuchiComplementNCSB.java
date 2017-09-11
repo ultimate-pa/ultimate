@@ -57,21 +57,11 @@ public final class BuchiComplementNCSB<LETTER, STATE> extends UnaryNwaOperation<
 	private final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mOperand;
 	private final NestedWordAutomatonReachableStates<LETTER, STATE> mResult;
 
-	/**
-	 * Constructor.
-	 * 
-	 * @param services
-	 *            Ultimate services
-	 * @param stateFactory
-	 *            state factory
-	 * @param operand
-	 *            operand
-	 * @throws AutomataOperationCanceledException
-	 *             if operation was canceled
-	 */
+
 	public BuchiComplementNCSB(final AutomataLibraryServices services,
 			final IBuchiComplementNcsbStateFactory<STATE> stateFactory,
-			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand) throws AutomataOperationCanceledException {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand,
+			final boolean lazySOptimization) throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;
 
@@ -79,13 +69,20 @@ public final class BuchiComplementNCSB<LETTER, STATE> extends UnaryNwaOperation<
 			mLogger.info(startMessage());
 		}
 		final BuchiComplementNCSBNwa<LETTER, STATE> onDemandComplement =
-				new BuchiComplementNCSBNwa<>(mServices, stateFactory, operand);
+				new BuchiComplementNCSBNwa<>(mServices, stateFactory, operand, lazySOptimization);
 		final NwaOutgoingLetterAndTransitionAdapter<LETTER, STATE> complemented =
 				new NwaOutgoingLetterAndTransitionAdapter<>(onDemandComplement);
 		mResult = new NestedWordAutomatonReachableStates<>(mServices, complemented);
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(exitMessage());
 		}
+	}
+	
+	public BuchiComplementNCSB(final AutomataLibraryServices services,
+			final IBuchiComplementNcsbStateFactory<STATE> stateFactory,
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand)
+			throws AutomataOperationCanceledException {
+		this(services, stateFactory, operand, false);
 	}
 
 	@Override

@@ -115,13 +115,13 @@ public final class BuchiComplementNCSBNwa<LETTER, STATE> implements INwaSuccesso
 	 */
 	public BuchiComplementNCSBNwa(final AutomataLibraryServices services,
 			final IBuchiComplementNcsbStateFactory<STATE> stateFactory,
-			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand) throws AutomataOperationCanceledException {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand,
+			final boolean lazySOptimization) throws AutomataOperationCanceledException {
 		mServices = services;
 		mOperand = operand;
 		mStateFactory = stateFactory;
 		mSetOfStates = new SetOfStates<>(mStateFactory.createEmptyStackState());
 		mEmptyStackStateWri = new StateWithRankInfo<>(mSetOfStates.getEmptyStackState());
-		final boolean lazySOptimization = false;
 		mBclrg = new BarelyCoveredLevelRankingsGenerator<>(mServices, mOperand, BARELY_COVERED_MAX_RANK, false, true,
 				false, false, false, lazySOptimization);
 		constructInitialState();
