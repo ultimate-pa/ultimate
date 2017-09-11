@@ -152,7 +152,7 @@ public class HCSSABuilder {
 				.transform(currentInterpolantTermInSsa);
 
 		final Map<Term, Term> hcvarSubstitution = new HashMap<>();
-		for (int i = 0; i < currentHornClause.getHeadPredicate().getArity(); i++) {
+		for (int i = 0; !currentHornClause.isHeadFalse() &&  i < currentHornClause.getHeadPredicate().getArity(); i++) {
 			final TermVariable tvInHc = currentHornClause.getTermVariablesForHeadPred().get(i);
 			hcvarSubstitution.put(tvInHc, mSymbolTable.getOrConstructHCOutVar(i, tvInHc.getSort()).getTermVariable());
 		}

@@ -57,7 +57,7 @@ public class HornClause implements IRankedLetter {
 	 */
 	public HornClause(final ManagedScript script, final HCSymbolTable symbolTable, final Term constraint,
 			final List<HornClausePredicateSymbol> bodyPreds, final List<List<TermVariable>> bodyPredToTermVariables) {
-		this(script, symbolTable, constraint, null, Collections.emptyList(), bodyPreds, bodyPredToTermVariables);
+		this(script, symbolTable, constraint, null, Collections.emptyList(), bodyPreds, bodyPredToTermVariables, false);
 	}
 
 	public HornClause(final ManagedScript script, final HCSymbolTable symbolTable, final Term constraint,

@@ -57,7 +57,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HCSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HornClause;
 import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HornClausePredicateSymbol;
-import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HornClausePredicateSymbol.HornClauseFalsePredicateSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HornUtilConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -212,7 +211,7 @@ public class TreeAutomizerCEGAR {
 			for (final HornClausePredicateSymbol sym : clause.getBodyPredicates()) {
 				tail.add(mPredicateFactory.createTruePredicateWithLocation(sym));
 			}
-			if (clause.getHeadPredicate() instanceof HornClauseFalsePredicateSymbol) {
+			if (clause.isHeadFalse()) {
 				mAbstraction.addRule(new TreeAutomatonRule<>(clause, tail, mFinalPredicate));
 			} else {
 				mAbstraction.addRule(new TreeAutomatonRule<>(clause, tail,
