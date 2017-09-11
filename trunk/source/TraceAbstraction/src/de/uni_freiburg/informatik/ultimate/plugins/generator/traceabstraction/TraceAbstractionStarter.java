@@ -125,7 +125,7 @@ public class TraceAbstractionStarter {
 		final CfgSmtToolkit csToolkit = icfg.getCfgSmtToolkit();
 		final PredicateFactory predicateFactory = new PredicateFactory(mServices, csToolkit.getManagedScript(),
 				csToolkit.getSymbolTable(), taPrefs.getSimplificationTechnique(), taPrefs.getXnfConversionTechnique());
-		final TraceAbstractionBenchmarks traceAbstractionBenchmark = new TraceAbstractionBenchmarks(icfg);
+		TraceAbstractionBenchmarks traceAbstractionBenchmark = new TraceAbstractionBenchmarks(icfg);
 
 		final Map<String, Set<IcfgLocation>> proc2errNodes = icfg.getProcedureErrorNodes();
 		final Collection<IcfgLocation> errNodesOfAllProc = new ArrayList<>();
@@ -149,6 +149,8 @@ public class TraceAbstractionStarter {
 				mServices.getProgressMonitorService().setSubtask(errorLoc.toString());
 				iterate(name, icfg, taPrefs, csToolkit, predicateFactory, traceAbstractionBenchmark, errorLocs,
 						witnessAutomaton);
+				reportBenchmarkForErrLocation(traceAbstractionBenchmark,errorLoc.toString());
+				traceAbstractionBenchmark = new TraceAbstractionBenchmarks(icfg);
 			}
 		}
 		logNumberOfWitnessInvariants(errNodesOfAllProc);
@@ -174,7 +176,9 @@ public class TraceAbstractionStarter {
 			createInvariantResults(icfg, csToolkit, backTranslatorService);
 			createProcedureContractResults(icfg, backTranslatorService);
 		}
-		reportBenchmark(traceAbstractionBenchmark);
+		if (taPrefs.allErrorLocsAtOnce()) {
+			reportBenchmark(traceAbstractionBenchmark);
+		}
 		switch (mOverallResult) {
 		case SAFE:
 		case UNSAFE:
@@ -455,6 +459,12 @@ public class TraceAbstractionStarter {
 
 	private <T> void reportBenchmark(final ICsvProviderProvider<T> benchmark) {
 		final String shortDescription = "Ultimate Automizer benchmark data";
+		final StatisticsResult<T> res = new StatisticsResult<>(Activator.PLUGIN_NAME, shortDescription, benchmark);
+		reportResult(res);
+	}
+	
+	private <T> void reportBenchmarkForErrLocation(final ICsvProviderProvider<T> benchmark, String errLocDescription) {
+		final String shortDescription = "Ultimate Automizer benchmark data for error location: " + errLocDescription;
 		final StatisticsResult<T> res = new StatisticsResult<>(Activator.PLUGIN_NAME, shortDescription, benchmark);
 		reportResult(res);
 	}
