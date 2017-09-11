@@ -82,29 +82,29 @@ function FSUB32(bv32, bv32) : bv32;
 
 function UI32_TO_FP32(bv32) : bv32;
 
-function {:bvbuiltin "bvadd"} BV32_ADD(bv32, bv32) : bv32;
+function {:builtin "bvadd"} BV32_ADD(bv32, bv32) : bv32;
 
-function {:bvbuiltin "bvand"} BV32_AND(bv32, bv32) : bv32;
+function {:builtin "bvand"} BV32_AND(bv32, bv32) : bv32;
 
-function {:bvbuiltin "bvlshr"} BV32_LSHR(bv32, bv32) : bv32;
+function {:builtin "bvlshr"} BV32_LSHR(bv32, bv32) : bv32;
 
-function {:bvbuiltin "bvmul"} BV32_MUL(bv32, bv32) : bv32;
+function {:builtin "bvmul"} BV32_MUL(bv32, bv32) : bv32;
 
-function {:bvbuiltin "bvsdiv"} BV32_SDIV(bv32, bv32) : bv32;
+function {:builtin "bvsdiv"} BV32_SDIV(bv32, bv32) : bv32;
 
-function {:bvbuiltin "bvshl"} BV32_SHL(bv32, bv32) : bv32;
+function {:builtin "bvshl"} BV32_SHL(bv32, bv32) : bv32;
 
-function {:bvbuiltin "bvsub"} BV32_SUB(bv32, bv32) : bv32;
+function {:builtin "bvsub"} BV32_SUB(bv32, bv32) : bv32;
 
-function {:bvbuiltin "bvudiv"} BV32_UDIV(bv32, bv32) : bv32;
+function {:builtin "bvudiv"} BV32_UDIV(bv32, bv32) : bv32;
 
-function {:bvbuiltin "bvuge"} BV32_UGE(bv32, bv32) : bool;
+function {:builtin "bvuge"} BV32_UGE(bv32, bv32) : bool;
 
-function {:bvbuiltin "bvugt"} BV32_UGT(bv32, bv32) : bool;
+function {:builtin "bvugt"} BV32_UGT(bv32, bv32) : bool;
 
-function {:bvbuiltin "bvult"} BV32_ULT(bv32, bv32) : bool;
+function {:builtin "bvult"} BV32_ULT(bv32, bv32) : bool;
 
-function {:bvbuiltin "bvxor"} BV1_XOR(bv1, bv1) : bv1;
+function {:builtin "bvxor"} BV1_XOR(bv1, bv1) : bv1;
 
 procedure {:source_name "dwtHaar1D"} {:kernel} ULTIMATE.start($tLevels: bv32, $signalLength: bv32, $levelsDone: bv32, $mLevels: bv32);
   requires  (if $signalLength == 1024bv32 then 1bv1 else 0bv1) != 0bv1;
@@ -273,16 +273,16 @@ implementation {:source_name "dwtHaar1D"} {:kernel} ULTIMATE.start($tLevels: bv3
     assert {:tag "groupSharedArraysDisjointAcrossGroups"} _WRITE_HAS_OCCURRED_$$sharedArray ==> group_id_x$1 == group_id_x$2 && group_id_y$1 == group_id_y$2 && group_id_z$1 == group_id_z$2;
     assert {:tag "groupSharedArraysDisjointAcrossGroups"} _READ_HAS_OCCURRED_$$sharedArray ==> group_id_x$1 == group_id_x$2 && group_id_y$1 == group_id_y$2 && group_id_z$1 == group_id_z$2;
     assert {:block_sourceloc} {:sourceloc_num 14} true;
-    assert {:originated_from_invariant} {:sourceloc_num 15} {:thread 1} (if $activeThreads.0 == BV32_SDIV(BV32_SHL(1bv32, BV32_AND(BV32_SUB($cond, $i.0), 31bv32)), 2bv32) then 1bv1 else 0bv1) != 0bv1;
-    assert {:originated_from_invariant} {:sourceloc_num 16} {:thread 1} (if BV32_ULT(v0$1, $activeThreads.0) ==> $midOutPos.0$1 == BV32_LSHR(BV32_UDIV($signalLength, 2bv32), BV32_AND($i.0, 31bv32)) then 1bv1 else 0bv1) != 0bv1;
-    assert {:originated_from_invariant} {:sourceloc_num 16} {:thread 2} (if BV32_ULT(v0$2, $activeThreads.0) ==> $midOutPos.0$2 == BV32_LSHR(BV32_UDIV($signalLength, 2bv32), BV32_AND($i.0, 31bv32)) then 1bv1 else 0bv1) != 0bv1;
-    assert {:originated_from_invariant} {:sourceloc_num 17} {:thread 1} (if _WRITE_HAS_OCCURRED_$$coefsSignal ==> BV32_UGE(BV32_UDIV(BV32_MUL(4bv32, _WATCHED_OFFSET), 4bv32), BV32_ADD(BV32_ADD(BV32_SHL($midOutPos.0$1, 1bv32), BV32_MUL(v1$1, BV32_SHL($activeThreads.0, 1bv32))), v0$1)) then 1bv1 else 0bv1) != 0bv1;
-    assert {:originated_from_invariant} {:sourceloc_num 18} {:thread 1} (if BV32_UGE(v0$1, 16bv32) ==> _WRITE_HAS_OCCURRED_$$coefsSignal ==> BV32_UGE(BV32_UDIV(BV32_MUL(4bv32, _WATCHED_OFFSET), 4bv32), BV32_ADD(BV32_ADD(512bv32, BV32_MUL(v1$1, 32bv32)), v0$1)) then 1bv1 else 0bv1) != 0bv1;
-    assert {:originated_from_invariant} {:sourceloc_num 19} {:thread 1} (if BV32_UGE(v0$1, 8bv32) ==> _WRITE_HAS_OCCURRED_$$coefsSignal ==> BV32_UGE(BV32_UDIV(BV32_MUL(4bv32, _WATCHED_OFFSET), 4bv32), BV32_ADD(BV32_ADD(256bv32, BV32_MUL(v1$1, 16bv32)), v0$1)) then 1bv1 else 0bv1) != 0bv1;
-    assert {:originated_from_invariant} {:sourceloc_num 20} {:thread 1} (if BV32_UGE(v0$1, 4bv32) ==> _WRITE_HAS_OCCURRED_$$coefsSignal ==> BV32_UGE(BV32_UDIV(BV32_MUL(4bv32, _WATCHED_OFFSET), 4bv32), BV32_ADD(BV32_ADD(128bv32, BV32_MUL(v1$1, 8bv32)), v0$1)) then 1bv1 else 0bv1) != 0bv1;
-    assert {:originated_from_invariant} {:sourceloc_num 21} {:thread 1} (if BV32_UGE(v0$1, 2bv32) ==> _WRITE_HAS_OCCURRED_$$coefsSignal ==> BV32_UGE(BV32_UDIV(BV32_MUL(4bv32, _WATCHED_OFFSET), 4bv32), BV32_ADD(BV32_ADD(64bv32, BV32_MUL(v1$1, 4bv32)), v0$1)) then 1bv1 else 0bv1) != 0bv1;
-    assert {:originated_from_invariant} {:sourceloc_num 22} {:thread 1} (if BV32_UGE(v0$1, 1bv32) ==> _WRITE_HAS_OCCURRED_$$coefsSignal ==> BV32_UGE(BV32_UDIV(BV32_MUL(4bv32, _WATCHED_OFFSET), 4bv32), BV32_ADD(BV32_ADD(32bv32, BV32_MUL(v1$1, 2bv32)), v0$1)) then 1bv1 else 0bv1) != 0bv1;
-    assert {:originated_from_invariant} {:sourceloc_num 23} {:thread 1} (if BV32_UGE(v0$1, BV32_SDIV(BV32_SHL(1bv32, BV32_AND($cond, 31bv32)), 2bv32)) ==> BV1_XOR((if _WRITE_HAS_OCCURRED_$$coefsSignal then 1bv1 else 0bv1), 1bv1) == 1bv1 then 1bv1 else 0bv1) != 0bv1;
+    //assert {:originated_from_invariant} {:sourceloc_num 15} {:thread 1} (if $activeThreads.0 == BV32_SDIV(BV32_SHL(1bv32, BV32_AND(BV32_SUB($cond, $i.0), 31bv32)), 2bv32) then 1bv1 else 0bv1) != 0bv1;
+    //assert {:originated_from_invariant} {:sourceloc_num 16} {:thread 1} (if BV32_ULT(v0$1, $activeThreads.0) ==> $midOutPos.0$1 == BV32_LSHR(BV32_UDIV($signalLength, 2bv32), BV32_AND($i.0, 31bv32)) then 1bv1 else 0bv1) != 0bv1;
+    //assert {:originated_from_invariant} {:sourceloc_num 16} {:thread 2} (if BV32_ULT(v0$2, $activeThreads.0) ==> $midOutPos.0$2 == BV32_LSHR(BV32_UDIV($signalLength, 2bv32), BV32_AND($i.0, 31bv32)) then 1bv1 else 0bv1) != 0bv1;
+    //assert {:originated_from_invariant} {:sourceloc_num 17} {:thread 1} (if _WRITE_HAS_OCCURRED_$$coefsSignal ==> BV32_UGE(BV32_UDIV(BV32_MUL(4bv32, _WATCHED_OFFSET), 4bv32), BV32_ADD(BV32_ADD(BV32_SHL($midOutPos.0$1, 1bv32), BV32_MUL(v1$1, BV32_SHL($activeThreads.0, 1bv32))), v0$1)) then 1bv1 else 0bv1) != 0bv1;
+    //assert {:originated_from_invariant} {:sourceloc_num 18} {:thread 1} (if BV32_UGE(v0$1, 16bv32) ==> _WRITE_HAS_OCCURRED_$$coefsSignal ==> BV32_UGE(BV32_UDIV(BV32_MUL(4bv32, _WATCHED_OFFSET), 4bv32), BV32_ADD(BV32_ADD(512bv32, BV32_MUL(v1$1, 32bv32)), v0$1)) then 1bv1 else 0bv1) != 0bv1;
+    //assert {:originated_from_invariant} {:sourceloc_num 19} {:thread 1} (if BV32_UGE(v0$1, 8bv32) ==> _WRITE_HAS_OCCURRED_$$coefsSignal ==> BV32_UGE(BV32_UDIV(BV32_MUL(4bv32, _WATCHED_OFFSET), 4bv32), BV32_ADD(BV32_ADD(256bv32, BV32_MUL(v1$1, 16bv32)), v0$1)) then 1bv1 else 0bv1) != 0bv1;
+    //assert {:originated_from_invariant} {:sourceloc_num 20} {:thread 1} (if BV32_UGE(v0$1, 4bv32) ==> _WRITE_HAS_OCCURRED_$$coefsSignal ==> BV32_UGE(BV32_UDIV(BV32_MUL(4bv32, _WATCHED_OFFSET), 4bv32), BV32_ADD(BV32_ADD(128bv32, BV32_MUL(v1$1, 8bv32)), v0$1)) then 1bv1 else 0bv1) != 0bv1;
+    //assert {:originated_from_invariant} {:sourceloc_num 21} {:thread 1} (if BV32_UGE(v0$1, 2bv32) ==> _WRITE_HAS_OCCURRED_$$coefsSignal ==> BV32_UGE(BV32_UDIV(BV32_MUL(4bv32, _WATCHED_OFFSET), 4bv32), BV32_ADD(BV32_ADD(64bv32, BV32_MUL(v1$1, 4bv32)), v0$1)) then 1bv1 else 0bv1) != 0bv1;
+    //assert {:originated_from_invariant} {:sourceloc_num 22} {:thread 1} (if BV32_UGE(v0$1, 1bv32) ==> _WRITE_HAS_OCCURRED_$$coefsSignal ==> BV32_UGE(BV32_UDIV(BV32_MUL(4bv32, _WATCHED_OFFSET), 4bv32), BV32_ADD(BV32_ADD(32bv32, BV32_MUL(v1$1, 2bv32)), v0$1)) then 1bv1 else 0bv1) != 0bv1;
+    //assert {:originated_from_invariant} {:sourceloc_num 23} {:thread 1} (if BV32_UGE(v0$1, BV32_SDIV(BV32_SHL(1bv32, BV32_AND($cond, 31bv32)), 2bv32)) ==> BV1_XOR((if _WRITE_HAS_OCCURRED_$$coefsSignal then 1bv1 else 0bv1), 1bv1) == 1bv1 then 1bv1 else 0bv1) != 0bv1;
     v11 := BV32_ULT($i.0, $cond);
     p0$1 := false;
     p0$2 := false;
@@ -998,8 +998,8 @@ implementation {:inline 1} $bugle_barrier_duplicated_2($0: bv1, $1: bv1)
 
 
 
-function {:bvbuiltin "bvsgt"} BV32_SGT(bv32, bv32) : bool;
+function {:builtin "bvsgt"} BV32_SGT(bv32, bv32) : bool;
 
-function {:bvbuiltin "bvsge"} BV32_SGE(bv32, bv32) : bool;
+function {:builtin "bvsge"} BV32_SGE(bv32, bv32) : bool;
 
-function {:bvbuiltin "bvslt"} BV32_SLT(bv32, bv32) : bool;
+function {:builtin "bvslt"} BV32_SLT(bv32, bv32) : bool;

@@ -88,13 +88,13 @@ function FSQRT32(bv32) : bv32;
 
 function FSUB32(bv32, bv32) : bv32;
 
-function {:bvbuiltin "bvadd"} BV32_ADD(bv32, bv32) : bv32;
+function {:builtin "bvadd"} BV32_ADD(bv32, bv32) : bv32;
 
-function {:bvbuiltin "bvmul"} BV32_MUL(bv32, bv32) : bv32;
+function {:builtin "bvmul"} BV32_MUL(bv32, bv32) : bv32;
 
-function {:bvbuiltin "bvudiv"} BV32_UDIV(bv32, bv32) : bv32;
+function {:builtin "bvudiv"} BV32_UDIV(bv32, bv32) : bv32;
 
-function {:bvbuiltin "bvult"} BV32_ULT(bv32, bv32) : bool;
+function {:builtin "bvult"} BV32_ULT(bv32, bv32) : bool;
 
 procedure {:source_name "nbody_sim"} {:kernel} ULTIMATE.start($numBodies: bv32, $deltaTime: bv32, $epsSqr: bv32);
   requires !_READ_HAS_OCCURRED_$$pos && !_WRITE_HAS_OCCURRED_$$pos && !_ATOMIC_HAS_OCCURRED_$$pos;
@@ -1009,8 +1009,8 @@ implementation {:inline 1} $bugle_barrier_duplicated_1($0: bv1, $1: bv1)
 
 
 
-function {:bvbuiltin "bvsgt"} BV32_SGT(bv32, bv32) : bool;
+function {:builtin "bvsgt"} BV32_SGT(bv32, bv32) : bool;
 
-function {:bvbuiltin "bvsge"} BV32_SGE(bv32, bv32) : bool;
+function {:builtin "bvsge"} BV32_SGE(bv32, bv32) : bool;
 
-function {:bvbuiltin "bvslt"} BV32_SLT(bv32, bv32) : bool;
+function {:builtin "bvslt"} BV32_SLT(bv32, bv32) : bool;
