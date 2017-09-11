@@ -46,10 +46,10 @@ import de.uni_freiburg.informatik.ultimate.test.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimate.test.decider.AutomataScriptTestResultDecider;
 import de.uni_freiburg.informatik.ultimate.test.logs.summaries.AutomataScriptTestSummary;
 import de.uni_freiburg.informatik.ultimate.test.logs.summaries.ColumnDefinition;
+import de.uni_freiburg.informatik.ultimate.test.logs.summaries.ColumnDefinition.Aggregate;
 import de.uni_freiburg.informatik.ultimate.test.logs.summaries.ConversionContext;
 import de.uni_freiburg.informatik.ultimate.test.logs.summaries.CsvConcatenator;
 import de.uni_freiburg.informatik.ultimate.test.logs.summaries.LatexOverviewSummary;
-import de.uni_freiburg.informatik.ultimate.test.logs.summaries.ColumnDefinition.Aggregate;
 import de.uni_freiburg.informatik.ultimate.test.reporting.IIncrementalLog;
 import de.uni_freiburg.informatik.ultimate.test.reporting.ITestSummary;
 import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
@@ -77,13 +77,19 @@ public class BuchiComplementationTestSuite extends UltimateTestSuite {
 			
 			// TODO: find some better folder
 			"examples/Automata/regression/nwa/operations/buchiComplement/ba",
+			
+//			"examples/automata-benchmarks/2016TACAS-Complementing_Semi-deterministic_Buchi_Automata"
 	};
 	
 	private static final String[] mFileEndings = { ".ats" };
 
 	private static final String[] SETTINGS = {
-			"AutomataScript/buchiComplementation/buchiComplementFKV.epf",
 			"AutomataScript/buchiComplementation/buchiComplementNCSB.epf",
+			"AutomataScript/buchiComplementation/buchiComplementNCSBLazyS.epf",
+			"AutomataScript/buchiComplementation/buchiComplementNCSBLazy.epf",
+			"AutomataScript/buchiComplementation/buchiComplementNCSBLazy2.epf",
+			"AutomataScript/buchiComplementation/buchiComplementNCSBLazy3.epf",
+			"AutomataScript/buchiComplementation/buchiComplementFKV.epf",
 			"AutomataScript/buchiComplementation/buchiComplementSVW.epf",
 			};
 
