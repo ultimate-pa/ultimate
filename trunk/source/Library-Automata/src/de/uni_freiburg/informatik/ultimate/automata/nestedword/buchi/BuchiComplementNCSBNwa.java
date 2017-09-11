@@ -121,8 +121,9 @@ public final class BuchiComplementNCSBNwa<LETTER, STATE> implements INwaSuccesso
 		mStateFactory = stateFactory;
 		mSetOfStates = new SetOfStates<>(mStateFactory.createEmptyStackState());
 		mEmptyStackStateWri = new StateWithRankInfo<>(mSetOfStates.getEmptyStackState());
+		final boolean lazySOptimization = false;
 		mBclrg = new BarelyCoveredLevelRankingsGenerator<>(mServices, mOperand, BARELY_COVERED_MAX_RANK, false, true,
-				false, false, false);
+				false, false, false, lazySOptimization);
 		constructInitialState();
 	}
 

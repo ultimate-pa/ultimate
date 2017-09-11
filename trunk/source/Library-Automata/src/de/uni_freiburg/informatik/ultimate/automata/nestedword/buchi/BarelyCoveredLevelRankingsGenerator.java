@@ -57,6 +57,7 @@ public class BarelyCoveredLevelRankingsGenerator<LETTER, STATE>
 	private final boolean mRestrictToElasticLevelRankings;
 	private final boolean mVoluntaryDecreaseOnlyForStatesInO;
 	private final boolean mAllowDelayedRankDecrease;
+	private final boolean mLazySOptimization;
 
 	/**
 	 * Constructor.
@@ -82,13 +83,14 @@ public class BarelyCoveredLevelRankingsGenerator<LETTER, STATE>
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand, final int userDefinedMaxRank,
 			final boolean allowRankZero, final boolean allowEmptyLevelRanking,
 			final boolean restrictToElasticLevelRankings, final boolean voluntaryDecreaseOnlyForStatesInO,
-			final boolean allowDelayedRankDecrease) {
+			final boolean allowDelayedRankDecrease, final boolean lazySOptimization) {
 		super(services, operand, userDefinedMaxRank);
 		mAllowRankZero = allowRankZero;
 		mAllowEmptyLevelRanking = allowEmptyLevelRanking;
 		mRestrictToElasticLevelRankings = restrictToElasticLevelRankings;
 		mVoluntaryDecreaseOnlyForStatesInO = voluntaryDecreaseOnlyForStatesInO;
 		mAllowDelayedRankDecrease = allowDelayedRankDecrease;
+		mLazySOptimization = lazySOptimization;
 	}
 
 	@Override
@@ -117,11 +119,15 @@ public class BarelyCoveredLevelRankingsGenerator<LETTER, STATE>
 			final Set<DoubleDecker<StateWithRankInfo<STATE>>> subset = it.next();
 			final LevelRankingState<LETTER, STATE> succCandidate = computeLevelRanking(constraint, subset);
 			if ((succCandidate != null) && (!mRestrictToElasticLevelRankings || succCandidate.isElastic())) {
-				succLvls.add(succCandidate);
+				if (!mLazySOptimization || succCandidate.isLazyS(doubleDeckersEligibleForVoluntaryDecrease, constraint)) {
+					succLvls.add(succCandidate);
+				}
 			}
 		}
 		return succLvls;
 	}
+
+
 
 	private boolean complicatedCondition(final LevelRankingConstraintDrdCheck<LETTER, STATE> constraint,
 			final DoubleDecker<StateWithRankInfo<STATE>> doubleDecker) {

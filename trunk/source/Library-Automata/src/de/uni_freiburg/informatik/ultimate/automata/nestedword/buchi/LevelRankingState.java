@@ -33,6 +33,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDecker;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 
 /**
@@ -349,5 +350,20 @@ public class LevelRankingState<LETTER, STATE> implements IFkvState<LETTER, STATE
 
 	public boolean isNonAcceptingSink() {
 		return mLevelRanking == null;
+	}
+	
+	public boolean isLazyS(final Set<DoubleDecker<StateWithRankInfo<STATE>>> doubleDeckersEligibleForVoluntaryDecrease,
+			final LevelRankingConstraintDrdCheck<LETTER, STATE> lrc) {
+		if (isOempty()) {
+			return true;
+		} else {
+			for (final DoubleDecker<StateWithRankInfo<STATE>> dd : doubleDeckersEligibleForVoluntaryDecrease) {
+				if (isOdd(mLevelRanking.get(dd.getDown()).get(dd.getUp().getState()))
+						&& !lrc.inO(dd.getDown(), dd.getUp().getState())) {
+					return false;
+				}
+			}
+		}
+		return true;
 	}
 }
