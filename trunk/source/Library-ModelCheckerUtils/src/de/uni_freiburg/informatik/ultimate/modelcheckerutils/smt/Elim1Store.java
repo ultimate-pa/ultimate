@@ -128,6 +128,7 @@ public class Elim1Store {
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private static final boolean DEBUG_EXTENDED_RESULT_CHECK = false;
+	private static final boolean APPLY_DOUBLE_CASE_SIMPLIFICATION = true;
 	private static final boolean APPLY_RESULT_SIMPLIFICATION = false;
 	private static final boolean DEBUG_CRASH_ON_LARGE_SIMPLIFICATION_POTENTIAL = false;
 
@@ -292,8 +293,9 @@ public class Elim1Store {
 					mMgdScript, indexMapping, oldCellMapping, eliminatee, quantifier, storeIndexRepresentative,
 					newArray, storeValue, substitutionMapping);
 		}
-		final Pair<List<Term>, List<Term>> cc = constructIndexValueConnection((ArrayList<Term>) selectIndexRepresentatives, equalityInformation, mMgdScript,
-				indexMapping, oldCellMapping, eliminatee, quantifier, storeIndex);
+		final Pair<List<Term>, List<Term>> cc = constructIndexValueConnection(
+				(ArrayList<Term>) selectIndexRepresentatives, equalityInformation, mMgdScript, indexMapping,
+				oldCellMapping, eliminatee, quantifier, storeIndex);
 		final List<Term> singleCaseJuncts = new ArrayList<>();
 		final List<Term> doubleCaseJuncts = new ArrayList<>();
 		singleCaseJuncts.addAll(wc.getFirst());
@@ -310,7 +312,15 @@ public class Elim1Store {
 				transformedTerm, storedValueInformation, singleCaseTerm);
 		if (!doubleCaseJuncts.isEmpty()) {
 			final Term doubleCaseTerm = QuantifierUtils.applyDualFiniteConnective(mScript, quantifier, doubleCaseJuncts);
-			result = QuantifierUtils.applyDualFiniteConnective(mScript, quantifier, result, doubleCaseTerm);
+			final Term doubleCaseTermMod; 
+			if (APPLY_DOUBLE_CASE_SIMPLIFICATION) {
+				final boolean contextIsDisjunctive = (quantifier == QuantifiedFormula.FORALL);
+				doubleCaseTermMod = new SimplifyDDAWithTimeout(mScript, false, mServices, result, contextIsDisjunctive)
+						.getSimplifiedTerm(doubleCaseTerm);
+			} else {
+				doubleCaseTermMod = doubleCaseTerm;
+			}
+			result = QuantifierUtils.applyDualFiniteConnective(mScript, quantifier, result, doubleCaseTermMod);
 		}
 		assert !Arrays.asList(result.getFreeVars()).contains(eliminatee) : "var is still there: " + eliminatee
 		+ " term size " + new DagSizePrinter(result);
