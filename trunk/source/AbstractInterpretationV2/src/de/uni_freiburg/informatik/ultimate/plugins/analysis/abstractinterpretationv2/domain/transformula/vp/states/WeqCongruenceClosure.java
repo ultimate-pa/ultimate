@@ -451,6 +451,7 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>,
 		 *  (a is the function we are about to remove)
 		 * <li> a[i1, ..., in] is present in this weqCc and is part of a non-tautological constraint
 		 * <li> the current weqCc allows us to conclude a[i1, .., in] = b[i1, ..,in]
+		 *  <p>
 		 *   that is the case if one of the following conditions holds
 		 * <li> the strong equivalence a = b is implied by this weqCc (it is enough to propagate for one other function
 		 *   in the equivalence class of a)

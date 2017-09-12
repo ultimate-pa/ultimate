@@ -427,18 +427,17 @@ public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTrans
 	 * (Multidimensional store terms count as one application.)
 	 *
 	 * Right now the result is not equivalent. However it is equivalent to the original when conjoined with the
-	 * equalities from getReplacementEquations.
+	 * equalities from getReplacementEquations, and the replacement variables are existentially quantified.
 	 *
 	 * removes the following from the formula
 	 * <ul>
 	 *  <li> store chains, i.e., every (store s i x) where s is another store term is eliminated
+	 *  <li> multidimensional stores, explicit or not, i.e., every (store s i x) where x is another store term is
+	 *  	eliminated
 	 *  <li> stores on both sides of an equality, for example the term (= (store a i x) (store b j y)) would be
 	 *     transformed such that it contains at most one store
 	 *  <li> stores inside selects, for example (select (store a i x) j) would be transformed
 	 * </ul>
-	 *
-	 * TODO polish -- could be done nicer, probably
-	 * TODO cannot yet eliminate equations that have a store term on both sides
 	 *
 	 * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
 	 *
@@ -484,6 +483,17 @@ public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTrans
 			}
 		}
 
+		/**
+		 * Obtains the replacement TermVariable for the given term.
+		 *
+		 * If the same term has been replaced before, the same variable is returned.
+		 *
+		 * The map that is used to manage the replacement variables will also be used to return the of equations between
+		 * the replacement variables and their corresponding terms.
+		 *
+		 * @param term
+		 * @return
+		 */
 		private TermVariable getReplacementTv(final Term term) {
 			TermVariable res = mReplacedTermToReplacementTv.get(term);
 			if (res == null) {
@@ -567,15 +577,35 @@ public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTrans
 				final Term[] oldArgs = mAppTerm.getParameters();
 				final Term[] newArgs = transformer.getConvertedArray(oldArgs);
 				assert newArgs.length == 3;
+
+//				final Term innerStoreAtArrayPosition;
+//				final Term innerStoreAtValuePosition;
+
+				final Term replacedArray;
 				if (SmtUtils.isFunctionApplication(newArgs[0], "store")) {
-					final Term innerStoreTerm = newArgs[0];
-					final TermVariable replacmentTv = getReplacementTv(innerStoreTerm);
-					setResult(mScript.term("store", replacmentTv, newArgs[1], newArgs[2]));
+					replacedArray =  getReplacementTv(newArgs[0]);
 				} else {
-					// the array argument of the store that we enqueued this walker for is a variable
-					// --> we do no further transformation
-					setResult(mScript.term("store", newArgs[0], newArgs[1], newArgs[2]));
+					replacedArray = newArgs[0];
 				}
+
+				final Term replacedValue;
+				if (SmtUtils.isFunctionApplication(newArgs[2], "store")) {
+					replacedValue =  getReplacementTv(newArgs[2]);
+				} else {
+					replacedValue = newArgs[2];
+				}
+
+				setResult(mScript.term("store", replacedArray, newArgs[1], replacedValue));
+
+//				if (SmtUtils.isFunctionApplication(newArgs[0], "store")) {
+//					final Term innerStoreTerm = newArgs[0];
+//					final TermVariable replacmentTv = getReplacementTv(innerStoreTerm);
+//					setResult(mScript.term("store", replacmentTv, newArgs[1], newArgs[2]));
+//				} else {
+//					// the array argument of the store that we enqueued this walker for is a variable
+//					// --> we do no further transformation
+//					setResult(mScript.term("store", newArgs[0], newArgs[1], newArgs[2]));
+//				}
 			}
 
 			@Override
