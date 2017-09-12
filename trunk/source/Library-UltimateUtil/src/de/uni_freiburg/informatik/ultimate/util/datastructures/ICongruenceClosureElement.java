@@ -2,11 +2,13 @@ package de.uni_freiburg.informatik.ultimate.util.datastructures;
 
 import java.util.List;
 
-public interface ICongruenceClosureElement<ELEM extends ICongruenceClosureElement<ELEM, FUNCTION>, FUNCTION> {
+public interface ICongruenceClosureElement<ELEM extends ICongruenceClosureElement<ELEM>> {
+
+	boolean isFunction();
 
 	boolean isFunctionApplication();
 
-	FUNCTION getAppliedFunction();
+	ELEM getAppliedFunction();
 
 	List<ELEM> getArguments();
 
