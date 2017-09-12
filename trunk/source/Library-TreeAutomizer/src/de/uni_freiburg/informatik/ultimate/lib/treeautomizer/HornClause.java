@@ -108,6 +108,8 @@ public class HornClause implements IRankedLetter {
 		for (final TermVariable fv : mFormula.getFreeVars()) {
 			mHornClauseSymbolTable.registerTermVariable(fv);
 		}
+		mHeadPredTermVariables.forEach(mHornClauseSymbolTable::registerTermVariable);
+		mBodyPredToTermVariables.forEach(tvs -> tvs.forEach(mHornClauseSymbolTable::registerTermVariable));
 
 		mHeadIsFalse = headPred == null;
 		mHeadPredicate = headPred;

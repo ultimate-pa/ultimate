@@ -41,7 +41,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
@@ -49,7 +48,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.MonolithicHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 
 /**
@@ -63,26 +61,29 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  */
 public class HCHoareTripleChecker {
 
-	private final IHoareTripleChecker mHoareTripleChecker;
+//	private final IHoareTripleChecker mHoareTripleChecker;
 	private final PredicateUnifier mPredicateUnifier;
 	private final HCPredicateFactory mPredicateFactory;
-	private final CfgSmtToolkit mCfgSmtToolkit;
+//	private final CfgSmtToolkit mCfgSmtToolkit;
 	private final ManagedScript mManagedScript;
 	private final HCSymbolTable mSymbolTable;
 	private int mFreshConstantCounter;
+	private final Map<TermVariable, Term> mTvToExtraVar = new HashMap<>();
 
 	/**
 	 * Constructor of HCHoareTripleChecker
 	 * @param predicateUnifier Unifier for the predicates.
 	 * @param cfgSmtToolkit
 	 * */
-	public HCHoareTripleChecker(final PredicateUnifier predicateUnifier, final CfgSmtToolkit cfgSmtToolkit,
+	public HCHoareTripleChecker(final PredicateUnifier predicateUnifier, //final CfgSmtToolkit cfgSmtToolkit,
+			final ManagedScript mgdScript,
 			final HCPredicateFactory predicateFactory, final HCSymbolTable symbolTable) {
 		mPredicateUnifier = predicateUnifier;
-		mHoareTripleChecker = new MonolithicHoareTripleChecker(cfgSmtToolkit);
+//		mHoareTripleChecker = new MonolithicHoareTripleChecker(cfgSmtToolkit);
 		mPredicateFactory = predicateFactory;
-		mCfgSmtToolkit = cfgSmtToolkit;
-		mManagedScript = cfgSmtToolkit.getManagedScript();
+//		mCfgSmtToolkit = cfgSmtToolkit;
+//		mManagedScript = cfgSmtToolkit.getManagedScript();
+		mManagedScript = mgdScript;
 		mSymbolTable = symbolTable;
 	}
 
@@ -153,14 +154,23 @@ public class HCHoareTripleChecker {
 				 *  the variable was introduced at unification because we could not match all positions (because the
 				 *  predicate symbol in the Horn clause has lower arity than the current pre/postcondition predicate)
 				 */
-				final String freshConstantName = "c_" + fv.toString() /*.substring(2, fv.toString().length())*/ + "_" +
-						+ mFreshConstantCounter++;
-				mManagedScript.declareFun(this, freshConstantName, new Sort[0], fv.getSort());
-				substitution.put(fv, mManagedScript.term(this, freshConstantName));
+				substitution.put(fv, getExtraVar(fv));
 			}
 		}
 
 		return new Substitution(mManagedScript, substitution).transform(term);
+	}
+
+	private Term  getExtraVar(final TermVariable tv) {
+		Term result = mTvToExtraVar.get(tv);
+		if (result == null) {
+			final String freshConstantName = "c_any_" + tv.toString() /*.substring(2, fv.toString().length())*/ + "_" +
+					+ mFreshConstantCounter++;
+			mManagedScript.declareFun(this, freshConstantName, new Sort[0], tv.getSort());
+			result =  mManagedScript.term(this, freshConstantName);
+			mTvToExtraVar.put(tv, result);
+		}
+		return result;
 	}
 
 

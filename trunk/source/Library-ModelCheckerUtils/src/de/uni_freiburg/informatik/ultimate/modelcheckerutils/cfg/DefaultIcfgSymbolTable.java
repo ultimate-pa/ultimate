@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 
 /**
  * Default implementation of an {@link IIcfgSymbolTable}
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
@@ -56,11 +56,11 @@ public class DefaultIcfgSymbolTable implements IIcfgSymbolTable {
 	protected final Map<TermVariable, IProgramVar> mTermVariable2ProgramVar = new HashMap<>();
 	protected final Map<ApplicationTerm, IProgramConst> mAppTerm2ProgramConst = new HashMap<>();
 
-	private final Set<IProgramNonOldVar> mGlobals = new HashSet<>();
-	private final Set<IProgramConst> mConstants = new HashSet<>();
-	private final HashRelation<String, ILocalProgramVar> mLocals = new HashRelation<>();
+	protected final Set<IProgramNonOldVar> mGlobals = new HashSet<>();
+	protected final Set<IProgramConst> mConstants = new HashSet<>();
+	protected final HashRelation<String, ILocalProgramVar> mLocals = new HashRelation<>();
 
-	private boolean mConstructionFinished = false;
+	protected boolean mConstructionFinished = false;
 
 	/**
 	 * Constructor for empty symbol table.
