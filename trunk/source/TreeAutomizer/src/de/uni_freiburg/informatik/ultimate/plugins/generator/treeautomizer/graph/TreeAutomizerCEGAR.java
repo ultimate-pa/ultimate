@@ -166,6 +166,12 @@ public class TreeAutomizerCEGAR {
 			final TreeRun<HornClause, IPredicate> counterExample = isAbstractionCorrect();
 			if (counterExample == null) {
 				mLogger.info("The horn clause set is SAT!!");
+
+				mLogger.info("states of the final abstraction: (i.e., the model for the uninterpreted predicates)");
+				for (final IPredicate state : mAbstraction.getStates()) {
+					mLogger.info(state.toString());
+				}
+
 				return new TreeAutomizerSatResult(Activator.PLUGIN_ID, "SAT", "The given horn clause set is SAT");
 			}
 
