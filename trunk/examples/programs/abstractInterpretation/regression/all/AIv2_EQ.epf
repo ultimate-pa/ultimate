@@ -17,7 +17,7 @@ file_export_version=3.0
 file_export_version=3.0
 #Fri Sep 08 22:39:43 CEST 2017
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2=
-/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2/Abstract\ domain=VPDomain
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2/Abstract\ domain\ for\ RCFG-of-the-future=VPDomain
 /instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2/Use\ the\ RCFG-of-the-future\ interface=true
 @de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2=0.1.20
 file_export_version=3.0

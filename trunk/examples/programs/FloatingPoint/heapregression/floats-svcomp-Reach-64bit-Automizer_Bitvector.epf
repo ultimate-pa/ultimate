@@ -57,6 +57,7 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2/Interval\ Widening\ operator=IntervalLiteralWideningOperator
 /instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2/Congruence\ Widening\ operator=CongruenceMergeOperator
 /instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2/Abstract\ domain=EmptyDomain
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2/Abstract\ domain\ for\ RCFG-of-the-future=EmptyDomain
 /instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2/Create\ assumptions\ of\ other\ states\ before\ post=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2/Number\ type=BigDecimal
 /instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2/Check\ feasibility\ of\ abstract\ posts\ with\ an\ SMT\ solver=false

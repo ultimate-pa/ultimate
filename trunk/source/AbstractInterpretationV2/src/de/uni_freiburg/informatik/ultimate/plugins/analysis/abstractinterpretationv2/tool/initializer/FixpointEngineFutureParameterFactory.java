@@ -129,7 +129,7 @@ public class FixpointEngineFutureParameterFactory {
 	public <STATE extends IAbstractState<STATE, IProgramVarOrConst>>
 			IAbstractDomain<STATE, IcfgEdge, IProgramVarOrConst> selectDomainFutureCfg() {
 		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
-		final String selectedDomain = prefs.getString(AbsIntPrefInitializer.LABEL_ABSTRACT_DOMAIN);
+		final String selectedDomain = prefs.getString(AbsIntPrefInitializer.LABEL_ABSTRACT_DOMAIN_FUTURE);
 		final ILogger logger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		return selectDomainFutureCfg(selectedDomain, logger, mRoot, mServices);
 	}
@@ -145,7 +145,8 @@ public class FixpointEngineFutureParameterFactory {
 		} else if (VPDomain.class.getSimpleName().equals(domainName)) {
 			return (IAbstractDomain<STATE, IcfgEdge, IProgramVarOrConst>) createEqualityDomain(logger, root, services);
 		} else if (SMTTheoryDomain.class.getSimpleName().equals(domainName)) {
-			return (IAbstractDomain<STATE, IcfgEdge, IProgramVarOrConst>) new SMTTheoryDomain(services, root.getCfgSmtToolkit());
+			return (IAbstractDomain<STATE, IcfgEdge, IProgramVarOrConst>) new SMTTheoryDomain(services,
+					root.getCfgSmtToolkit());
 		} else if (LiveVariableDomain.class.getSimpleName().equals(domainName)) {
 			return (IAbstractDomain<STATE, IcfgEdge, IProgramVarOrConst>) new LiveVariableDomain<IcfgEdge>(logger);
 		} else if (de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.nonrelational.interval.IntervalDomain.class
@@ -166,13 +167,13 @@ public class FixpointEngineFutureParameterFactory {
 			final IUltimateServiceProvider services) {
 		final VPDomainPreanalysis preAnalysis = new VPDomainPreanalysis(root, logger, services);
 		preAnalysis.postProcess();
-//		final VPTfStateBuilderPreparer tfPreparer =
-//				new VPTfStateBuilderPreparer(preAnalysis, root, logger);
+		// final VPTfStateBuilderPreparer tfPreparer =
+		// new VPTfStateBuilderPreparer(preAnalysis, root, logger);
 		return new VPDomain<>(logger, services, root.getCfgSmtToolkit(), preAnalysis);
 	}
 
 	private static String getFailureString(final String selectedDomain) {
-		return "The value \"" + selectedDomain + "\" of preference \"" + AbsIntPrefInitializer.LABEL_ABSTRACT_DOMAIN
-				+ "\" was not considered before! ";
+		return "The value \"" + selectedDomain + "\" of preference \""
+				+ AbsIntPrefInitializer.LABEL_ABSTRACT_DOMAIN_FUTURE + "\" was not considered before! ";
 	}
 }

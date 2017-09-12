@@ -63,8 +63,10 @@ public class AbsIntPrefInitializer extends UltimatePreferenceInitializer {
 
 	public static final String[] VALUES_ABSTRACT_DOMAIN = new String[] { EmptyDomain.class.getSimpleName(),
 			SignDomain.class.getSimpleName(), IntervalDomain.class.getSimpleName(), OctagonDomain.class.getSimpleName(),
-			VPDomain.class.getSimpleName(), CongruenceDomain.class.getSimpleName(),
-			CompoundDomain.class.getSimpleName(), DataflowDomain.class.getSimpleName(),
+			CongruenceDomain.class.getSimpleName(), CompoundDomain.class.getSimpleName() };
+
+	public static final String[] VALUES_ABSTRACT_DOMAIN_FUTURE = new String[] { EmptyDomain.class.getSimpleName(),
+			VPDomain.class.getSimpleName(), DataflowDomain.class.getSimpleName(),
 			LiveVariableDomain.class.getSimpleName(), SMTTheoryDomain.class.getSimpleName() };
 
 	public static final String LABEL_ITERATIONS_UNTIL_WIDENING = "Minimum iterations before widening";
@@ -72,6 +74,9 @@ public class AbsIntPrefInitializer extends UltimatePreferenceInitializer {
 	public static final String LABEL_DESCRIPTION_ABSTRACT_DOMAIN =
 			"Settings for the abstract domain to use. Select the Abstract domain to use here.\n\nChange the settings for each abstract domain in the corresponding sub-page.";
 	public static final String LABEL_ABSTRACT_DOMAIN = "Abstract domain";
+	public static final String LABEL_DESCRIPTION_ABSTRACT_DOMAIN_FUTURE =
+			"Settings for the abstract domain to be used when analyzing a program with the RCFG-of-the-future interface.";
+	public static final String LABEL_ABSTRACT_DOMAIN_FUTURE = "Abstract domain for RCFG-of-the-future";
 
 	public static final String LABEL_RUN_AS_PRE_ANALYSIS = "Run as pre-analysis";
 	public static final String TOOLTIP_RUN_AS_PRE_ANALYSIS =
@@ -81,6 +86,7 @@ public class AbsIntPrefInitializer extends UltimatePreferenceInitializer {
 	public static final int DEF_STATES_UNTIL_MERGE = 2;
 	public static final boolean DEF_RUN_AS_PRE_ANALYSIS = false;
 	public static final String DEF_ABSTRACT_DOMAIN = VALUES_ABSTRACT_DOMAIN[0];
+	public static final String DEF_ABSTRACT_DOMAIN_FUTURE = VALUES_ABSTRACT_DOMAIN_FUTURE[0];
 
 	public static final String INDENT = "   ";
 	public static final String DINDENT = INDENT + INDENT;
@@ -114,6 +120,10 @@ public class AbsIntPrefInitializer extends UltimatePreferenceInitializer {
 				new UltimatePreferenceItem<String>(LABEL_DESCRIPTION_ABSTRACT_DOMAIN, null, PreferenceType.Label));
 		abstractDomainContainer.addItem(new UltimatePreferenceItem<>(LABEL_ABSTRACT_DOMAIN, DEF_ABSTRACT_DOMAIN,
 				PreferenceType.Combo, VALUES_ABSTRACT_DOMAIN));
+		abstractDomainContainer.addItem(new UltimatePreferenceItem<String>(LABEL_DESCRIPTION_ABSTRACT_DOMAIN_FUTURE,
+				null, PreferenceType.Label));
+		abstractDomainContainer.addItem(new UltimatePreferenceItem<>(LABEL_ABSTRACT_DOMAIN_FUTURE,
+				DEF_ABSTRACT_DOMAIN_FUTURE, PreferenceType.Combo, VALUES_ABSTRACT_DOMAIN_FUTURE));
 
 		// Interval Domain
 		abstractDomainContainer.addAbstractItems(IntervalDomainPreferences.getPreferences());
