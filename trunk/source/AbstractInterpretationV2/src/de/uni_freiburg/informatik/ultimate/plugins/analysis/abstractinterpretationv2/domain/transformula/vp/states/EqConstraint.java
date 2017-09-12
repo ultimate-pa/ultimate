@@ -47,7 +47,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ConstantFinder;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.IEqNodeIdentifier;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.IEqFunctionIdentifier;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CongruenceClosure;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.EqualityStatus;
 
@@ -60,14 +59,14 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.EqualityStatus;
  * @param <FUNCTION>
  */
 public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
-		NODE extends IEqNodeIdentifier<NODE, FUNCTION>,
-		FUNCTION extends IEqFunctionIdentifier<NODE, FUNCTION>> {
+		NODE extends IEqNodeIdentifier<NODE>> {
+//		FUNCTION extends IEqFunctionIdentifier<NODE, FUNCTION>> {
 
-	private final WeqCongruenceClosure<ACTION, NODE, FUNCTION> mPartialArrangement;
+	private final WeqCongruenceClosure<ACTION, NODE> mPartialArrangement;
 
 	private boolean mIsFrozen;
 
-	final EqConstraintFactory<ACTION, NODE, FUNCTION> mFactory;
+	final EqConstraintFactory<ACTION, NODE> mFactory;
 	/**
 	 * The IProgramVars whose getTermVariable()-value is used in a NODE inside this constraint;
 	 * computed lazily by getVariables.
@@ -89,13 +88,13 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 	 *
 	 * @param factory
 	 */
-	public EqConstraint(final EqConstraintFactory<ACTION, NODE, FUNCTION> factory) {
+	public EqConstraint(final EqConstraintFactory<ACTION, NODE> factory) {
 		mFactory = factory;
 		mPartialArrangement = new WeqCongruenceClosure<>(factory);
 	}
 
-	public EqConstraint(final WeqCongruenceClosure<ACTION, NODE, FUNCTION> cClosure,
-			final EqConstraintFactory<ACTION, NODE, FUNCTION> factory) {
+	public EqConstraint(final WeqCongruenceClosure<ACTION, NODE> cClosure,
+			final EqConstraintFactory<ACTION, NODE> factory) {
 		mFactory = factory;
 		mPartialArrangement = new WeqCongruenceClosure<>(cClosure);
 	}
@@ -105,7 +104,7 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 	 *
 	 * @param constraint
 	 */
-	public EqConstraint(final EqConstraint<ACTION, NODE, FUNCTION> constraint) {
+	public EqConstraint(final EqConstraint<ACTION, NODE> constraint) {
 		mFactory = constraint.mFactory;
 		mPartialArrangement = new WeqCongruenceClosure<>(constraint.mPartialArrangement);
 	}
@@ -148,21 +147,21 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 		return paHasChanged;
 	}
 
-	public boolean reportFunctionEquality(final FUNCTION func1, final FUNCTION func2) {
-		assert !mIsInconsistent;
-		assert !mIsFrozen;
-		final boolean paHasChanged = mPartialArrangement.reportFunctionEquality(func1, func2);
-		return paHasChanged;
-	}
+//	public boolean reportFunctionEquality(final FUNCTION func1, final FUNCTION func2) {
+//		assert !mIsInconsistent;
+//		assert !mIsFrozen;
+//		final boolean paHasChanged = mPartialArrangement.reportFunctionEquality(func1, func2);
+//		return paHasChanged;
+//	}
+//
+//	public boolean reportFunctionDisequality(final FUNCTION func1, final FUNCTION func2) {
+//		assert !mIsInconsistent;
+//		assert !mIsFrozen;
+//		final boolean paHasChanged = mPartialArrangement.reportFunctionDisequality(func1, func2);
+//		return paHasChanged;
+//	}
 
-	public boolean reportFunctionDisequality(final FUNCTION func1, final FUNCTION func2) {
-		assert !mIsInconsistent;
-		assert !mIsFrozen;
-		final boolean paHasChanged = mPartialArrangement.reportFunctionDisequality(func1, func2);
-		return paHasChanged;
-	}
-
-	public void reportWeakEquivalence(final FUNCTION array1, final FUNCTION array2,
+	public void reportWeakEquivalence(final NODE array1, final NODE array2,
 			final List<NODE> storeIndex) {
 		assert !mIsInconsistent;
 		assert !mIsFrozen;
@@ -232,21 +231,21 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 		return mPartialArrangement.getEqualityStatus(node1, node2) == EqualityStatus.NOT_EQUAL;
 	}
 
-	public boolean areEqual(final FUNCTION func1, final FUNCTION func2) {
-		if (!mPartialArrangement.hasFunction(func1)
-		 || !mPartialArrangement.hasFunction(func2)) {
-			return false;
-		}
-		return mPartialArrangement.getEqualityStatus(func1, func2) == EqualityStatus.EQUAL;
-	}
-
-	public boolean areUnequal(final FUNCTION func1, final FUNCTION func2) {
-		if (!mPartialArrangement.hasFunction(func1)
-		 || !mPartialArrangement.hasFunction(func2)) {
-			return false;
-		}
-		return mPartialArrangement.getEqualityStatus(func1, func2) == EqualityStatus.NOT_EQUAL;
-	}
+//	public boolean areEqual(final FUNCTION func1, final FUNCTION func2) {
+//		if (!mPartialArrangement.hasFunction(func1)
+//		 || !mPartialArrangement.hasFunction(func2)) {
+//			return false;
+//		}
+//		return mPartialArrangement.getEqualityStatus(func1, func2) == EqualityStatus.EQUAL;
+//	}
+//
+//	public boolean areUnequal(final FUNCTION func1, final FUNCTION func2) {
+//		if (!mPartialArrangement.hasFunction(func1)
+//		 || !mPartialArrangement.hasFunction(func2)) {
+//			return false;
+//		}
+//		return mPartialArrangement.getEqualityStatus(func1, func2) == EqualityStatus.NOT_EQUAL;
+//	}
 
 	public Term getTerm(final Script script) {
 		assert mIsFrozen : "not yet frozen, term may not be final..";
@@ -261,8 +260,8 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 		return result;
 	}
 
-	static <NODE extends IEqNodeIdentifier<NODE, FUNCTION>, FUNCTION extends IEqFunctionIdentifier<NODE, FUNCTION>>
-		List<Term> partialArrangementToCube(final Script script, final CongruenceClosure<NODE, FUNCTION> pa) {
+	static <NODE extends IEqNodeIdentifier<NODE>>
+		List<Term> partialArrangementToCube(final Script script, final CongruenceClosure<NODE> pa) {
 
 		final List<Term> elementEqualities = pa.getSupportingElementEqualities().entrySet().stream()
 				.map(en -> script.term("=", en.getKey().getTerm(), en.getValue().getTerm()))
@@ -270,19 +269,20 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 		final List<Term> elementDisequalities = pa.getElementDisequalities().entrySet().stream()
 				.map(pair -> script.term("distinct", pair.getKey().getTerm(), pair.getValue().getTerm()))
 				.collect(Collectors.toList());
-		final List<Term> functionEqualities = pa.getSupportingFunctionEqualities().entrySet().stream()
-				.map(en -> script.term("=", en.getKey().getTerm(), en.getValue().getTerm()))
-				.collect(Collectors.toList());
-		final List<Term> functionDisequalities = pa.getFunctionDisequalities().entrySet().stream()
-				.map(pair -> script.term("distinct", pair.getKey().getTerm(), pair.getValue().getTerm()))
-				.collect(Collectors.toList());
+//		final List<Term> functionEqualities = pa.getSupportingFunctionEqualities().entrySet().stream()
+//				.map(en -> script.term("=", en.getKey().getTerm(), en.getValue().getTerm()))
+//				.collect(Collectors.toList());
+//		final List<Term> functionDisequalities = pa.getFunctionDisequalities().entrySet().stream()
+//				.map(pair -> script.term("distinct", pair.getKey().getTerm(), pair.getValue().getTerm()))
+//				.collect(Collectors.toList());
 
 		final List<Term> result = new ArrayList<>(elementEqualities.size() + elementDisequalities.size()
-			+ functionEqualities.size() + functionDisequalities.size());
+//			+ functionEqualities.size() + functionDisequalities.size());
+				);
 		result.addAll(elementEqualities);
 		result.addAll(elementDisequalities);
-		result.addAll(functionEqualities);
-		result.addAll(functionDisequalities);
+//		result.addAll(functionEqualities);
+//		result.addAll(functionDisequalities);
 		return result;
 	}
 
@@ -357,7 +357,7 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 		return mPartialArrangement.getAllElements().contains(node);
 	}
 
-	public Set<FUNCTION> getAllFunctions() {
+	public Set<NODE> getAllFunctions() {
 		return mPartialArrangement.getAllFunctions();
 	}
 
@@ -365,7 +365,7 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 		return mPartialArrangement.isTautological();
 	}
 
-	public EqConstraint<ACTION, NODE, FUNCTION> join(final EqConstraint<ACTION, NODE, FUNCTION> other) {
+	public EqConstraint<ACTION, NODE> join(final EqConstraint<ACTION, NODE> other) {
 		if (this.isBottom()) {
 			return other;
 		}
@@ -378,14 +378,14 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 		if (other.isTop()) {
 			return other;
 		}
-		final WeqCongruenceClosure<ACTION, NODE, FUNCTION> newPartialArrangement = this.mPartialArrangement.join(
+		final WeqCongruenceClosure<ACTION, NODE> newPartialArrangement = this.mPartialArrangement.join(
 				other.mPartialArrangement);
-		final EqConstraint<ACTION, NODE, FUNCTION> res = mFactory.getEqConstraint(newPartialArrangement);
+		final EqConstraint<ACTION, NODE> res = mFactory.getEqConstraint(newPartialArrangement);
 		res.freeze();
 		return res;
 	}
 
-	public EqConstraint<ACTION, NODE, FUNCTION> meet(final EqConstraint<ACTION, NODE, FUNCTION> other) {
+	public EqConstraint<ACTION, NODE> meet(final EqConstraint<ACTION, NODE> other) {
 		if (this.isBottom()) {
 			return this;
 		}
@@ -399,9 +399,9 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 			return this;
 		}
 
-		final WeqCongruenceClosure<ACTION, NODE, FUNCTION> newPa = mPartialArrangement.meet(other.mPartialArrangement);
+		final WeqCongruenceClosure<ACTION, NODE> newPa = mPartialArrangement.meet(other.mPartialArrangement);
 
-		final EqConstraint<ACTION, NODE, FUNCTION> res = mFactory.getEqConstraint(newPa);
+		final EqConstraint<ACTION, NODE> res = mFactory.getEqConstraint(newPa);
 		res.freeze();
 		return res;
 	}
@@ -412,7 +412,7 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 	 * @param other
 	 * @return true iff this is more or equally constraining than other
 	 */
-	public boolean isStrongerThan(final EqConstraint<ACTION, NODE, FUNCTION> other) {
+	public boolean isStrongerThan(final EqConstraint<ACTION, NODE> other) {
 		return mPartialArrangement.isStrongerThan(other.mPartialArrangement);
 	}
 
@@ -421,14 +421,14 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 		mPartialArrangement.getRepresentativeAndAddElementIfNeeded(nodeToAdd);
 	}
 
-	public void addFunction(final FUNCTION func) {
-		assert !mIsFrozen;
-		mPartialArrangement.addFunction(func);
-	}
-
-	public void removeFunction(final FUNCTION functionToHavoc) {
-		mPartialArrangement.removeFunction(functionToHavoc);
-	}
+//	public void addFunction(final FUNCTION func) {
+//		assert !mIsFrozen;
+//		mPartialArrangement.addFunction(func);
+//	}
+//
+//	public void removeFunction(final FUNCTION functionToHavoc) {
+//		mPartialArrangement.removeFunction(functionToHavoc);
+//	}
 
 	public void removeElement(final NODE elemToHavoc) {
 		mPartialArrangement.removeElement(elemToHavoc);

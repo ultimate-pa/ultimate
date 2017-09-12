@@ -38,7 +38,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.IEqNodeIdentifier;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.IEqFunctionIdentifier;
 
 /**
  *
@@ -48,12 +47,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @param <NODE>
  * @param <FUNCTION>
  */
-public class EqBottomConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
-		NODE extends IEqNodeIdentifier<NODE, FUNCTION>,
-		FUNCTION extends IEqFunctionIdentifier<NODE, FUNCTION>>
-	extends EqConstraint<ACTION, NODE, FUNCTION> {
+public class EqBottomConstraint<ACTION extends IIcfgTransition<IcfgLocation>, NODE extends IEqNodeIdentifier<NODE>>
+	extends EqConstraint<ACTION, NODE> {
 
-	public EqBottomConstraint(final EqConstraintFactory<ACTION, NODE, FUNCTION> factory) {
+	public EqBottomConstraint(final EqConstraintFactory<ACTION, NODE> factory) {
 		super(factory);
 	}
 
@@ -107,15 +104,15 @@ public class EqBottomConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 		return true;
 	}
 
-	@Override
-	public boolean areEqual(final FUNCTION func1, final FUNCTION func2) {
-		return true;
-	}
-
-	@Override
-	public boolean areUnequal(final FUNCTION func1, final FUNCTION func2) {
-		return true;
-	}
+//	@Override
+//	public boolean areEqual(final FUNCTION func1, final FUNCTION func2) {
+//		return true;
+//	}
+//
+//	@Override
+//	public boolean areUnequal(final FUNCTION func1, final FUNCTION func2) {
+//		return true;
+//	}
 
 	@Override
 	public Set<IProgramVar> getVariables(final IIcfgSymbolTable symbolTable) {
@@ -134,7 +131,7 @@ public class EqBottomConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 
 
 	@Override
-	public Set<FUNCTION> getAllFunctions() {
+	public Set<NODE> getAllFunctions() {
 		return Collections.emptySet();
 	}
 

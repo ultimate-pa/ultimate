@@ -26,68 +26,63 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements;
 
-import java.util.Map;
-
-import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSort;
-
-/**
- *
- * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
- *
- */
-public class EqFunction implements IEqFunctionIdentifier<EqNode, EqFunction> {
-
-
-	private final Term mTerm;
-
-	private final EqNodeAndFunctionFactory mFactory;
-
-	private final MultiDimensionalSort mSort;
-
-	public EqFunction(final Term term, final EqNodeAndFunctionFactory factory) {
-		mTerm = term;
-		mFactory = factory;
-		assert mTerm.getSort().isArraySort();
-//		mArity = mTerm.getSort().getArguments().length - 1;
-		mSort = new MultiDimensionalSort(mTerm.getSort());
-	}
-
-	@Override
-	public Term getTerm() {
-		return mTerm;
-	}
-
-	@Override
-	public EqFunction renameVariables(final Map<Term, Term> substitutionMapping) {
-//		final Term renamed = substitutionMapping.get(mTerm);
-//		if (renamed == null) {
-//			return this;
-//		}
-//		return mFactory.getOrConstructEqFunction(mPvoc, renamed);
-		return mFactory.constructRenamedEqFunction(this, substitutionMapping);
-	}
-
-	@Override
-	public String getFunctionName() {
-//		assert false : "what's the right string here?";
-//		return mPvoc.toString();
-		return mTerm.toString();
-	}
-
-	@Override
-	public int getArity() {
-		return mSort.getDimension();
-	}
-
-	@Override
-	public String toString() {
-		return mTerm.toString();
-	}
-
-	@Override
-	public MultiDimensionalSort getSort() {
-		return mSort;
-	}
-
-}
+///**
+// *
+// * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
+// *
+// */
+//public class EqFunction implements IEqFunctionIdentifier<EqNode, EqFunction> {
+//
+//
+//	private final Term mTerm;
+//
+//	private final EqNodeAndFunctionFactory mFactory;
+//
+//	private final MultiDimensionalSort mSort;
+//
+//	public EqFunction(final Term term, final EqNodeAndFunctionFactory factory) {
+//		mTerm = term;
+//		mFactory = factory;
+//		assert mTerm.getSort().isArraySort();
+////		mArity = mTerm.getSort().getArguments().length - 1;
+//		mSort = new MultiDimensionalSort(mTerm.getSort());
+//	}
+//
+//	@Override
+//	public Term getTerm() {
+//		return mTerm;
+//	}
+//
+//	@Override
+//	public EqFunction renameVariables(final Map<Term, Term> substitutionMapping) {
+////		final Term renamed = substitutionMapping.get(mTerm);
+////		if (renamed == null) {
+////			return this;
+////		}
+////		return mFactory.getOrConstructEqFunction(mPvoc, renamed);
+//		return mFactory.constructRenamedEqFunction(this, substitutionMapping);
+//	}
+//
+//	@Override
+//	public String getFunctionName() {
+////		assert false : "what's the right string here?";
+////		return mPvoc.toString();
+//		return mTerm.toString();
+//	}
+//
+//	@Override
+//	public int getArity() {
+//		return mSort.getDimension();
+//	}
+//
+//	@Override
+//	public String toString() {
+//		return mTerm.toString();
+//	}
+//
+//	@Override
+//	public MultiDimensionalSort getSort() {
+//		return mSort;
+//	}
+//
+//}

@@ -32,7 +32,7 @@ import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.IEqFunctionIdentifier;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSort;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ICongruenceClosureElement;
 
 /**
@@ -42,14 +42,13 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ICongruenceClosur
  * @param <NODE>
  * @param <FUNCTION>
  */
-public interface IEqNodeIdentifier<NODE extends IEqNodeIdentifier<NODE, FUNCTION>,
-			FUNCTION extends IEqFunctionIdentifier<NODE, FUNCTION>> extends ICongruenceClosureElement<NODE, FUNCTION> {
+public interface IEqNodeIdentifier<NODE extends IEqNodeIdentifier<NODE>> extends ICongruenceClosureElement<NODE> {
 
 	@Override
 	boolean isFunctionApplication();
 
 	@Override
-	FUNCTION getAppliedFunction();
+	NODE getAppliedFunction();
 
 	@Override
 	List<NODE> getArguments();
@@ -63,12 +62,25 @@ public interface IEqNodeIdentifier<NODE extends IEqNodeIdentifier<NODE, FUNCTION
 	 */
 	Collection<NODE> getSupportingNodes();
 
-	Collection<FUNCTION> getSupportingFunctions();
+//	Collection<NODE> getSupportingFunctions();
 
 	boolean isLiteral();
 
 	NODE renameVariables(Map<Term, Term> substitutionMapping);
 
 	Term getTerm();
+
+	/*
+	 * methods specific to the isFunction case
+	 */
+
+	@Override
+	boolean isFunction();
+
+	int getArity();
+
+	String getFunctionName();
+
+	MultiDimensionalSort getSort();
 
 }

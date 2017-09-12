@@ -22,7 +22,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSort;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.IEqNodeIdentifier;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.IEqFunctionIdentifier;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CongruenceClosure;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CrossProducts;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
@@ -36,29 +35,28 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  *
  */
 public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
-			NODE extends IEqNodeIdentifier<NODE, FUNCTION>,
-			FUNCTION extends IEqFunctionIdentifier<NODE, FUNCTION>> {
+			NODE extends IEqNodeIdentifier<NODE>> {
 
-	CCManager<NODE, FUNCTION> mCcManager = new CCManager<>();
+	CCManager<NODE> mCcManager = new CCManager<>();
 
-	EqConstraintFactory<ACTION, NODE, FUNCTION> mFactory;
+	EqConstraintFactory<ACTION, NODE> mFactory;
 
-	private Map<Doubleton<FUNCTION>, WeakEquivalenceEdgeLabel> mWeakEquivalenceEdges;
+	private Map<Doubleton<NODE>, WeakEquivalenceEdgeLabel> mWeakEquivalenceEdges;
 
-	private final HashRelation<FUNCTION, FUNCTION> mArrayEqualities;
+	private final HashRelation<NODE, NODE> mArrayEqualities;
 
 	/**
 	 * The WeqCongruenceClosure that this weq graph is part of. This may be null, if we use this weq graph as an
 	 * intermediate, for example during a join or meet operation.
 	 */
-	private WeqCongruenceClosure<ACTION, NODE, FUNCTION> mPartialArrangement;
+	private WeqCongruenceClosure<ACTION, NODE> mPartialArrangement;
 
 	/**
 	 * Constructs an empty WeakEquivalenceGraph
 	 * @param factory
 	 */
-	public WeakEquivalenceGraph(final WeqCongruenceClosure<ACTION, NODE, FUNCTION> pArr,
-			final EqConstraintFactory<ACTION, NODE, FUNCTION> factory) {
+	public WeakEquivalenceGraph(final WeqCongruenceClosure<ACTION, NODE> pArr,
+			final EqConstraintFactory<ACTION, NODE> factory) {
 		mPartialArrangement = pArr;
 		mWeakEquivalenceEdges = new HashMap<>();
 		mArrayEqualities = new HashRelation<>();
@@ -76,10 +74,10 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 	 * @param factory
 	 */
 	private WeakEquivalenceGraph(
-			final WeqCongruenceClosure<ACTION, NODE, FUNCTION> pArr,
-			final Map<Doubleton<FUNCTION>, WeakEquivalenceEdgeLabel> weakEquivalenceEdges,
-			final HashRelation<FUNCTION, FUNCTION> arrayEqualities,
-			final EqConstraintFactory<ACTION, NODE, FUNCTION> factory) {
+			final WeqCongruenceClosure<ACTION, NODE> pArr,
+			final Map<Doubleton<NODE>, WeakEquivalenceEdgeLabel> weakEquivalenceEdges,
+			final HashRelation<NODE, NODE> arrayEqualities,
+			final EqConstraintFactory<ACTION, NODE> factory) {
 		mWeakEquivalenceEdges = weakEquivalenceEdges;
 		mArrayEqualities = arrayEqualities;
 		assert factory != null;
@@ -92,24 +90,24 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 	 * @param weakEquivalenceGraph
 	 * @param factory
 	 */
-	public WeakEquivalenceGraph(//final EqConstraint<ACTION, NODE, FUNCTION> eqConstraint,
-			final WeqCongruenceClosure<ACTION, NODE, FUNCTION> pArr,
-			final WeakEquivalenceGraph<ACTION, NODE, FUNCTION> weakEquivalenceGraph) {
+	public WeakEquivalenceGraph(//final EqConstraint<ACTION, NODE> eqConstraint,
+			final WeqCongruenceClosure<ACTION, NODE> pArr,
+			final WeakEquivalenceGraph<ACTION, NODE> weakEquivalenceGraph) {
 		this(pArr, weakEquivalenceGraph, true);
 		assert weakEquivalenceGraph.mArrayEqualities.isEmpty();
 		assert sanityCheck();
 	}
 
 	WeakEquivalenceGraph(
-			final WeqCongruenceClosure<ACTION, NODE, FUNCTION> pArr,
-			final WeakEquivalenceGraph<ACTION, NODE, FUNCTION> weqMeet,
+			final WeqCongruenceClosure<ACTION, NODE> pArr,
+			final WeakEquivalenceGraph<ACTION, NODE> weqMeet,
 			final boolean forgetArrayEqualities) {
 		mPartialArrangement = pArr;
 		mArrayEqualities = forgetArrayEqualities ?
 				new HashRelation<>() :
 					new HashRelation<>(weqMeet.mArrayEqualities);
 		mWeakEquivalenceEdges = new HashMap<>();
-		for (final Entry<Doubleton<FUNCTION>, WeakEquivalenceEdgeLabel> weqEdge
+		for (final Entry<Doubleton<NODE>, WeakEquivalenceEdgeLabel> weqEdge
 				: weqMeet.mWeakEquivalenceEdges.entrySet()) {
 			mWeakEquivalenceEdges.put(weqEdge.getKey(), new WeakEquivalenceEdgeLabel(weqEdge.getValue()));
 		}
@@ -146,7 +144,7 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 
 	private Set<Doubleton<NODE>> congruencePropagationHelper(final FUNCTION func1, final FUNCTION func2,
 			final NODE node1, final NODE node2, final WeakEquivalenceEdgeLabel label,
-			final CongruenceClosure<NODE, FUNCTION> pa) {
+			final CongruenceClosure<NODE> pa) {
 		final Set<Doubleton<NODE>> newEqualitiesToBePropagated = new HashSet<>();
 
 		final Set<NODE> e1CcParsA = pa.getCcPars(func1, mPartialArrangement.getRepresentativeElement(node1));
@@ -225,7 +223,7 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 	 * @param groundPartialArrangement the gpa that should be assumed for the projection (might be different from
 	 * 		mPartialArrangement, or mPartialArrangement might be null..)
 	 */
-	public void projectFunction(final FUNCTION func, final CongruenceClosure<NODE, FUNCTION> groundPartialArrangement) {
+	public void projectFunction(final FUNCTION func, final CongruenceClosure<NODE> groundPartialArrangement) {
 		final Map<Doubleton<FUNCTION>, WeakEquivalenceEdgeLabel> edgesCopy = new HashMap<>(mWeakEquivalenceEdges);
 		for (final Entry<Doubleton<FUNCTION>, WeakEquivalenceEdgeLabel> en : edgesCopy.entrySet()) {
 			if (en.getKey().getOneElement().equals(func) || en.getKey().getOtherElement().equals(func)) {
@@ -265,7 +263,7 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 	 * @param elem
 	 * @param groundPartialArrangement
 	 */
-	public void projectElement(final NODE elem, final CongruenceClosure<NODE, FUNCTION> groundPartialArrangement) {
+	public void projectElement(final NODE elem, final CongruenceClosure<NODE> groundPartialArrangement) {
 		for (final Entry<Doubleton<FUNCTION>, WeakEquivalenceEdgeLabel> en : mWeakEquivalenceEdges.entrySet()) {
 			en.getValue().projectElement(elem, groundPartialArrangement);
 		}
@@ -294,7 +292,7 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 	 * 		weq graph have to be between the new equivalence representatives TODO
 	 * @return
 	 */
-	WeakEquivalenceGraph<ACTION, NODE, FUNCTION> join(final WeakEquivalenceGraph<ACTION, NODE, FUNCTION> other) {
+	WeakEquivalenceGraph<ACTION, NODE> join(final WeakEquivalenceGraph<ACTION, NODE> other) {
 		final Map<Doubleton<FUNCTION>, WeakEquivalenceEdgeLabel> newWeakEquivalenceEdges = new HashMap<>();
 		for (final Entry<Doubleton<FUNCTION>, WeakEquivalenceEdgeLabel> thisWeqEdge
 				: this.mWeakEquivalenceEdges.entrySet()) {
@@ -307,7 +305,7 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 					thisWeqEdge.getValue().union(correspondingWeqEdgeInOther));
 
 		}
-		final WeakEquivalenceGraph<ACTION, NODE, FUNCTION> result = new WeakEquivalenceGraph<>(null,
+		final WeakEquivalenceGraph<ACTION, NODE> result = new WeakEquivalenceGraph<>(null,
 				newWeakEquivalenceEdges, new HashRelation<>(), mFactory);
 		assert result.sanityCheck();
 		return result;
@@ -356,7 +354,7 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		return mWeakEquivalenceEdges.isEmpty() && !hasArrayEqualities();
 	}
 
-	public boolean isStrongerThan(final WeakEquivalenceGraph<ACTION, NODE, FUNCTION> other) {
+	public boolean isStrongerThan(final WeakEquivalenceGraph<ACTION, NODE> other) {
 		for (final Entry<Doubleton<FUNCTION>, WeakEquivalenceEdgeLabel> otherWeqEdgeAndLabel
 				: other.mWeakEquivalenceEdges.entrySet()) {
 			final WeakEquivalenceEdgeLabel correspondingWeqEdgeInThis =
@@ -434,7 +432,7 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
 
-		for (final Entry<Doubleton<FUNCTION>, WeakEquivalenceGraph<ACTION, NODE, FUNCTION>.WeakEquivalenceEdgeLabel> weq :
+		for (final Entry<Doubleton<FUNCTION>, WeakEquivalenceGraph<ACTION, NODE>.WeakEquivalenceEdgeLabel> weq :
 			mWeakEquivalenceEdges.entrySet()) {
 			sb.append(weq.getKey());
 			sb.append("\n");
@@ -570,10 +568,10 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 			final List<NODE> arguments) {
 		final Doubleton<FUNCTION> sourceAndTarget = new Doubleton<>(func1, func2);
 
-		final List<CongruenceClosure<NODE, FUNCTION>> paList = new ArrayList<>();
+		final List<CongruenceClosure<NODE>> paList = new ArrayList<>();
 		for (int dim = 0; dim < arguments.size(); dim++) {
 			final NODE currentArg = arguments.get(dim);
-			final CongruenceClosure<NODE, FUNCTION> eqCC = mCcManager.getSingleDisequalityCc(
+			final CongruenceClosure<NODE> eqCC = mCcManager.getSingleDisequalityCc(
 					mFactory.getWeqVariableNodeForDimension(dim, currentArg.getTerm().getSort()),
 					currentArg);
 			paList.add(eqCC);
@@ -584,8 +582,8 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 
 
 
-	private void strengthenEdgeLabelAndPropagateIfPossible(final Doubleton<FUNCTION> sourceAndTarget,
-			final List<CongruenceClosure<NODE, FUNCTION>> paList) {
+	private void strengthenEdgeLabelAndPropagateIfPossible(final Doubleton<NODE> sourceAndTarget,
+			final List<CongruenceClosure<NODE>> paList) {
 		assert !sourceAndTarget.getOneElement().equals(sourceAndTarget.getOtherElement());
 		WeakEquivalenceEdgeLabel oldLabel = mWeakEquivalenceEdges.get(sourceAndTarget);
 		if (oldLabel == null) {
@@ -629,12 +627,12 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 	 * @param func2 edge target (edge is symmetric)
 	 * @param nodes position where FUNCTIONs may differ
 	 */
-	public void reportWeakEquivalence(final FUNCTION func1, final FUNCTION func2, final List<NODE> nodes) {
+	public void reportWeakEquivalence(final NODE func1, final NODE func2, final List<NODE> nodes) {
 		assert func1.getTerm().getSort().equals(func2.getTerm().getSort());
 		assert func1.getArity() == func2.getArity();
 
-		final Doubleton<FUNCTION> sourceAndTarget = new Doubleton<>(func1, func2);
-		final CongruenceClosure<NODE, FUNCTION> newConstraint = computeWeqConstraintForIndex(nodes);
+		final Doubleton<NODE> sourceAndTarget = new Doubleton<>(func1, func2);
+		final CongruenceClosure<NODE> newConstraint = computeWeqConstraintForIndex(nodes);
 
 		strengthenEdgeLabelAndPropagateIfPossible(sourceAndTarget, Collections.singletonList(newConstraint));
 	}
@@ -653,7 +651,7 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 	 * @param value
 	 */
 	public void reportWeakEquivalence(final Doubleton<FUNCTION> key,
-			final WeakEquivalenceGraph<ACTION, NODE, FUNCTION>.WeakEquivalenceEdgeLabel value) {
+			final WeakEquivalenceGraph<ACTION, NODE>.WeakEquivalenceEdgeLabel value) {
 		assert key.getOneElement().getTerm().getSort().equals(key.getOtherElement().getTerm().getSort());
 		strengthenEdgeLabelAndPropagateIfPossible(key, value.getLabel());
 	}
@@ -670,8 +668,8 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 	 * @param nodes
 	 * @return
 	 */
-	private CongruenceClosure<NODE, FUNCTION> computeWeqConstraintForIndex(final List<NODE> nodes) {
-		final CongruenceClosure<NODE, FUNCTION> result = new CongruenceClosure<>();
+	private CongruenceClosure<NODE> computeWeqConstraintForIndex(final List<NODE> nodes) {
+		final CongruenceClosure<NODE> result = new CongruenceClosure<>();
 		for (int i = 0; i < nodes.size(); i++) {
 			final NODE ithNode = nodes.get(i);
 			result.reportEquality(mFactory.getWeqVariableNodeForDimension(i, ithNode.getTerm().getSort()), ithNode);
@@ -679,11 +677,11 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		return result;
 	}
 
-	private static <NODE extends ICongruenceClosureElement<NODE, FUNCTION>, FUNCTION>
-		List<CongruenceClosure<NODE, FUNCTION>> simplifyPaDisjunction(
-			final List<CongruenceClosure<NODE, FUNCTION>> newLabelContents) {
+	private static <NODE extends ICongruenceClosureElement<NODE>, FUNCTION>
+		List<CongruenceClosure<NODE>> simplifyPaDisjunction(
+			final List<CongruenceClosure<NODE>> newLabelContents) {
 		// make a copy of the list, filter out false disjuncts
-		List<CongruenceClosure<NODE, FUNCTION>> newLabel = new ArrayList<>(newLabelContents).stream()
+		List<CongruenceClosure<NODE>> newLabel = new ArrayList<>(newLabelContents).stream()
 				.filter(pa -> !pa.isInconsistent()).collect(Collectors.toList());
 
 		// if there is any true disjunct, it will annihilate all the others
@@ -714,8 +712,8 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 	 */
 	class WeakEquivalenceEdgeLabel {
 
-		private final List<CongruenceClosure<NODE, FUNCTION>> mLabel;
-		//			private final List<CongruenceClosure<NODE, FUNCTION>> mLabelWithGroundPa;
+		private final List<CongruenceClosure<NODE>> mLabel;
+		//			private final List<CongruenceClosure<NODE>> mLabelWithGroundPa;
 
 		/**
 		 * Constructs an empty edge. (labeled "true")
@@ -752,17 +750,17 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		 *
 		 * @param newLabelContents
 		 */
-		public WeakEquivalenceEdgeLabel(final List<CongruenceClosure<NODE, FUNCTION>> newLabelContents) {
+		public WeakEquivalenceEdgeLabel(final List<CongruenceClosure<NODE>> newLabelContents) {
 			mLabel = simplifyPaDisjunction(newLabelContents);
 			assert sanityCheck();
 		}
 
-		public List<CongruenceClosure<NODE, FUNCTION>> getLabel() {
+		public List<CongruenceClosure<NODE>> getLabel() {
 			return Collections.unmodifiableList(mLabel);
 		}
 
 		public boolean isInconsistent() {
-			for (final CongruenceClosure<NODE, FUNCTION> pa : getLabel()) {
+			for (final CongruenceClosure<NODE> pa : getLabel()) {
 				if (!pa.isInconsistent()) {
 					// we found one consistent disjunct --> this label is consistent
 					return false;
@@ -776,7 +774,7 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 
 		public boolean impliesEqualityOnThatPosition(final List<NODE> arguments) {
 			for (int i = 0; i < getLabel().size(); i++) {
-				final CongruenceClosure<NODE, FUNCTION> copy = mCcManager.makeCopy(
+				final CongruenceClosure<NODE> copy = mCcManager.makeCopy(
 						mCcManager.getMeet(getLabel().get(i), mPartialArrangement));
 				for (int j = 0; j < arguments.size(); j++) {
 					if (copy.isInconsistent()) {
@@ -815,16 +813,16 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		 * @return a fresh, updated WeqLabel, null if the label became inconsistent
 		 */
 		public WeakEquivalenceEdgeLabel reportChangeInGroundPartialArrangement(
-				final Predicate<CongruenceClosure<NODE, FUNCTION>> reportX) {
+				final Predicate<CongruenceClosure<NODE>> reportX) {
 			assert WeakEquivalenceGraph.this.sanityCheck();
 			assert mPartialArrangement.sanityCheck();
 
 
-			final List<CongruenceClosure<NODE, FUNCTION>> newLabel = new ArrayList<>();
+			final List<CongruenceClosure<NODE>> newLabel = new ArrayList<>();
 
 			for (int i = 0; i < getLabel().size(); i++) {
 				assert mPartialArrangement.sanityCheck();
-				final CongruenceClosure<NODE, FUNCTION> currentPaWgpa = mCcManager.getMeet(getLabel().get(i),
+				final CongruenceClosure<NODE> currentPaWgpa = mCcManager.getMeet(getLabel().get(i),
 						mPartialArrangement);
 
 				if (currentPaWgpa.isInconsistent()) {
@@ -864,7 +862,7 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		 */
 		public List<Term> toDNF(final Script script) {
 			final List<Term> result = new ArrayList<>();
-			for (final CongruenceClosure<NODE, FUNCTION> cc : mLabel) {
+			for (final CongruenceClosure<NODE> cc : mLabel) {
 				final List<Term> cube = EqConstraint.partialArrangementToCube(script, cc);
 				final Term cubeTerm = SmtUtils.and(script, cube);
 				result.add(cubeTerm);
@@ -902,20 +900,20 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 			return meet(otherLabel.getLabel());
 		}
 
-		private WeakEquivalenceEdgeLabel meet(final List<CongruenceClosure<NODE, FUNCTION>> paList) {
-			final List<CongruenceClosure<NODE, FUNCTION>> newLabelContent = new ArrayList<>();
+		private WeakEquivalenceEdgeLabel meet(final List<CongruenceClosure<NODE>> paList) {
+			final List<CongruenceClosure<NODE>> newLabelContent = new ArrayList<>();
 
-			final List<List<CongruenceClosure<NODE, FUNCTION>>> li = new ArrayList<>(2);
+			final List<List<CongruenceClosure<NODE>>> li = new ArrayList<>(2);
 			li.add(getLabel());
 			li.add(paList);
-			final List<List<CongruenceClosure<NODE, FUNCTION>>> cp = CrossProducts.crossProduct(li);
+			final List<List<CongruenceClosure<NODE>>> cp = CrossProducts.crossProduct(li);
 
-			for (final List<CongruenceClosure<NODE, FUNCTION>> pair : cp) {
+			for (final List<CongruenceClosure<NODE>> pair : cp) {
 				assert pair.size() == 2;
 				newLabelContent.add(pair.get(0).meet(pair.get(1)));
 			}
 
-			final List<CongruenceClosure<NODE, FUNCTION>> newLabel = simplifyPaDisjunction(newLabelContent);
+			final List<CongruenceClosure<NODE>> newLabel = simplifyPaDisjunction(newLabelContent);
 
 			final WeakEquivalenceEdgeLabel result =
 					new WeakEquivalenceEdgeLabel(newLabel);
@@ -931,9 +929,9 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		 * @return
 		 */
 		public boolean isStrongerThan(final WeakEquivalenceEdgeLabel other) {
-			for (final CongruenceClosure<NODE, FUNCTION> paThis : getLabel()) {
+			for (final CongruenceClosure<NODE> paThis : getLabel()) {
 				boolean existsWeaker = false;
-				for (final CongruenceClosure<NODE, FUNCTION> paOther : other.getLabel()) {
+				for (final CongruenceClosure<NODE> paOther : other.getLabel()) {
 					if (paThis.isStrongerThan(paOther)) {
 						existsWeaker = true;
 						break;
@@ -953,7 +951,7 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		 * @return
 		 */
 		public WeakEquivalenceEdgeLabel union(final WeakEquivalenceEdgeLabel other) {
-			final List<CongruenceClosure<NODE, FUNCTION>> unionList = new ArrayList<>(
+			final List<CongruenceClosure<NODE>> unionList = new ArrayList<>(
 					mLabel.size() + other.getLabel().size());
 			unionList.addAll(mLabel);
 			unionList.addAll(other.getLabel());
@@ -971,13 +969,13 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		 * @param groundPartialArrangement
 		 */
 		public void projectElement(final NODE elem,
-				final CongruenceClosure<NODE, FUNCTION> groundPartialArrangement) {
+				final CongruenceClosure<NODE> groundPartialArrangement) {
 			projectHelper(cc -> cc.removeElement(elem), groundPartialArrangement);
 			assert sanityCheckAfterProject(elem, groundPartialArrangement);
 		}
 
 		public void projectFunction(final FUNCTION func,
-				final CongruenceClosure<NODE, FUNCTION> groundPartialArrangement) {
+				final CongruenceClosure<NODE> groundPartialArrangement) {
 			projectHelper(cc -> cc.removeFunction(func), groundPartialArrangement);
 			assert sanityCheckAfterProject(func, groundPartialArrangement);
 		}
@@ -992,9 +990,9 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		 * @param remove
 		 * @param groundPartialArrangement
 		 */
-		private void projectHelper(final Consumer<CongruenceClosure<NODE, FUNCTION>> remove,
-				final CongruenceClosure<NODE, FUNCTION> groundPartialArrangement) {
-			final List<CongruenceClosure<NODE, FUNCTION>> newLabelContents = new ArrayList<>();
+		private void projectHelper(final Consumer<CongruenceClosure<NODE>> remove,
+				final CongruenceClosure<NODE> groundPartialArrangement) {
+			final List<CongruenceClosure<NODE>> newLabelContents = new ArrayList<>();
 			for (int i = 0; i < getLabel().size(); i++) {
 				if (mLabel.get(i).isTautological()) {
 					// we have one "true" disjunct --> the whole disjunction is tautological
@@ -1002,7 +1000,7 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 					mLabel.add(new CongruenceClosure<>());
 					return;
 				}
-				final CongruenceClosure<NODE, FUNCTION>	meet = mCcManager.getMeet(mLabel.get(i), groundPartialArrangement);
+				final CongruenceClosure<NODE>	meet = mCcManager.getMeet(mLabel.get(i), groundPartialArrangement);
 				if (meet.isInconsistent()) {
 					/* label element is inconsistent with the current gpa
 					 * --> omit it from the new label
@@ -1018,7 +1016,7 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 					return;
 				}
 				remove.accept(meet);
-				final CongruenceClosure<NODE, FUNCTION> newPa = meet.projectToElements(mFactory.getAllWeqNodes());
+				final CongruenceClosure<NODE> newPa = meet.projectToElements(mFactory.getAllWeqNodes());
 				newLabelContents.add(newPa);
 			}
 			mLabel.clear();
@@ -1026,7 +1024,7 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		}
 
 		private boolean isTautological() {
-			for (final CongruenceClosure<NODE, FUNCTION> l : getLabel()) {
+			for (final CongruenceClosure<NODE> l : getLabel()) {
 				if (l.isTautological()) {
 					return true;
 				}
@@ -1044,7 +1042,7 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 			return sanityCheck(mPartialArrangement);
 		}
 
-		private boolean sanityCheck(final CongruenceClosure<NODE, FUNCTION> groundPartialArrangement) {
+		private boolean sanityCheck(final CongruenceClosure<NODE> groundPartialArrangement) {
 
 			if (mLabel.stream().anyMatch(pa -> pa.isTautological()) && mLabel.size() != 1) {
 				assert false : "missing normalization: if there is one 'true' disjunct, we can drop"
@@ -1061,9 +1059,9 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		}
 
 		private boolean sanityCheckAfterProject(final FUNCTION func,
-				final CongruenceClosure<NODE, FUNCTION> groundPartialArrangement) {
+				final CongruenceClosure<NODE> groundPartialArrangement) {
 
-			final CongruenceClosure<NODE, FUNCTION> copy = new CongruenceClosure<>(groundPartialArrangement);
+			final CongruenceClosure<NODE> copy = new CongruenceClosure<>(groundPartialArrangement);
 			copy.removeFunction(func);
 			return sanityCheck(copy);
 
@@ -1079,8 +1077,8 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		 * @return
 		 */
 		private boolean sanityCheckAfterProject(final NODE elem,
-				final CongruenceClosure<NODE, FUNCTION> groundPartialArrangement) {
-			final CongruenceClosure<NODE, FUNCTION> copy = new CongruenceClosure<>(groundPartialArrangement);
+				final CongruenceClosure<NODE> groundPartialArrangement) {
+			final CongruenceClosure<NODE> copy = new CongruenceClosure<>(groundPartialArrangement);
 			copy.removeElement(elem);
 			return sanityCheck(copy);
 		}
@@ -1089,10 +1087,9 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 
 
 
-class CCManager<NODE extends IEqNodeIdentifier<NODE, FUNCTION>,
-FUNCTION extends IEqFunctionIdentifier<NODE, FUNCTION>> {
-	CongruenceClosure<NODE, FUNCTION> getMeet(final CongruenceClosure<NODE, FUNCTION> cc1,
-			final CongruenceClosure<NODE, FUNCTION> cc2) {
+class CCManager<NODE extends IEqNodeIdentifier<NODE>> {
+	CongruenceClosure<NODE> getMeet(final CongruenceClosure<NODE> cc1,
+			final CongruenceClosure<NODE> cc2) {
 		/*
 		 *  TODO: something smarter
 		 *   ideas:
@@ -1100,26 +1097,26 @@ FUNCTION extends IEqFunctionIdentifier<NODE, FUNCTION>> {
 		 *    - updating meets alongside inputs (something that updates the cache on a report equality on the ground pa)
 		 *
 		 */
-		final CongruenceClosure<NODE, FUNCTION> result = cc1.meet(cc2);
+		final CongruenceClosure<NODE> result = cc1.meet(cc2);
 		return result;
 	}
 
-	public CongruenceClosure<NODE, FUNCTION> getSingleDisequalityCc(final NODE elem1, final NODE elem2) {
-		final CongruenceClosure<NODE, FUNCTION> newCC = new CongruenceClosure<>();
+	public CongruenceClosure<NODE> getSingleDisequalityCc(final NODE elem1, final NODE elem2) {
+		final CongruenceClosure<NODE> newCC = new CongruenceClosure<>();
 		newCC.reportDisequality(elem1, elem2);
 		return newCC;
 	}
 
-	public CongruenceClosure<NODE, FUNCTION> makeCopy(final CongruenceClosure<NODE, FUNCTION> meet) {
+	public CongruenceClosure<NODE> makeCopy(final CongruenceClosure<NODE> meet) {
 		if (meet.isInconsistent()) {
 			return meet;
 		}
 		return new CongruenceClosure<>(meet);
 	}
 
-	public CongruenceClosure<NODE, FUNCTION> getSingleEqualityCc(final NODE elem1,
+	public CongruenceClosure<NODE> getSingleEqualityCc(final NODE elem1,
 			final NODE  elem2) {
-		final CongruenceClosure<NODE, FUNCTION> newCC = new CongruenceClosure<>();
+		final CongruenceClosure<NODE> newCC = new CongruenceClosure<>();
 		newCC.reportEquality(elem1, elem2);
 		return newCC;
 	}

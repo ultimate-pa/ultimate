@@ -52,7 +52,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  */
-public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqNode, EqFunction, Term> {
+public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqNode, Term> {
 
 	ManagedScript mMgdScript;
 

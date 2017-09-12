@@ -41,7 +41,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.IEqNodeIdentifier;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.IEqFunctionIdentifier;
 
 /**
  *
@@ -53,15 +52,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  */
 public class EqDisjunctiveConstraint<
 				ACTION extends IIcfgTransition<IcfgLocation>,
-				NODE extends IEqNodeIdentifier<NODE, FUNCTION>,
-				FUNCTION extends IEqFunctionIdentifier<NODE, FUNCTION>>  {
+				NODE extends IEqNodeIdentifier<NODE>>  {
 
-	Set<EqConstraint<ACTION, NODE, FUNCTION>> mConstraints;
+	Set<EqConstraint<ACTION, NODE>> mConstraints;
 
-	private final EqConstraintFactory<ACTION, NODE, FUNCTION> mFactory;
+	private final EqConstraintFactory<ACTION, NODE> mFactory;
 
-	public EqDisjunctiveConstraint(final Collection<EqConstraint<ACTION, NODE, FUNCTION>> constraintList,
-			final EqConstraintFactory<ACTION, NODE, FUNCTION> factory) {
+	public EqDisjunctiveConstraint(final Collection<EqConstraint<ACTION, NODE>> constraintList,
+			final EqConstraintFactory<ACTION, NODE> factory) {
 		assert !constraintList.stream().filter(cons -> (cons instanceof EqBottomConstraint)).findAny().isPresent()
 		  : "we filter out EqBottomConstraints up front, right? (could also do it here..)";
 		assert !constraintList.stream().filter(cons -> !cons.isFrozen()).findAny().isPresent()
@@ -74,10 +72,10 @@ public class EqDisjunctiveConstraint<
 		return mConstraints.isEmpty();
 	}
 
-	public EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> renameVariables(final Map<Term, Term> substitutionMapping) {
-		final Collection<EqConstraint<ACTION, NODE, FUNCTION>> constraintList = new HashSet<>();
-		for (final EqConstraint<ACTION, NODE, FUNCTION> constraint : mConstraints) {
-			final EqConstraint<ACTION, NODE, FUNCTION> newConstraint = mFactory.unfreeze(constraint);
+	public EqDisjunctiveConstraint<ACTION, NODE> renameVariables(final Map<Term, Term> substitutionMapping) {
+		final Collection<EqConstraint<ACTION, NODE>> constraintList = new HashSet<>();
+		for (final EqConstraint<ACTION, NODE> constraint : mConstraints) {
+			final EqConstraint<ACTION, NODE> newConstraint = mFactory.unfreeze(constraint);
 			newConstraint.renameVariables(substitutionMapping);
 			newConstraint.freeze();
 			constraintList.add(newConstraint);
@@ -86,7 +84,7 @@ public class EqDisjunctiveConstraint<
 	}
 
 
-	public EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> projectExistentially(
+	public EqDisjunctiveConstraint<ACTION, NODE> projectExistentially(
 			final Collection<TermVariable> varsToProjectAway) {
 		return mFactory.getDisjunctiveConstraint(
 				mConstraints.stream()
@@ -94,7 +92,7 @@ public class EqDisjunctiveConstraint<
 					.collect(Collectors.toSet()));
 	}
 
-	public Set<EqConstraint<ACTION, NODE, FUNCTION>> getConstraints() {
+	public Set<EqConstraint<ACTION, NODE>> getConstraints() {
 		return mConstraints;
 	}
 
@@ -102,7 +100,7 @@ public class EqDisjunctiveConstraint<
 	 * Return the strongest conjunctive EqConstraint that is implied by all elements of mConstraints.
 	 * @return
 	 */
-	public EqConstraint<ACTION, NODE, FUNCTION> flatten() {
+	public EqConstraint<ACTION, NODE> flatten() {
 		if (mConstraints.size() == 0) {
 			return mFactory.getBottomConstraint();
 		}

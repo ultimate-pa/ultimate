@@ -26,29 +26,23 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements;
 
-import java.util.Map;
-
-import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSort;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.IEqNodeIdentifier;
-
-/**
- *
- * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
- *
- * @param <NODE>
- * @param <FUNCTION>
- */
-public interface IEqFunctionIdentifier<NODE extends IEqNodeIdentifier<NODE, FUNCTION>,
-	FUNCTION extends IEqFunctionIdentifier<NODE, FUNCTION>> {
-
-	FUNCTION renameVariables(Map<Term, Term> substitutionMapping);
-
-	int getArity();
-
-	Term getTerm();
-
-	String getFunctionName();
-
-	MultiDimensionalSort getSort();
-}
+///**
+// *
+// * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
+// *
+// * @param <NODE>
+// * @param <FUNCTION>
+// */
+//public interface IEqFunctionIdentifier<NODE extends IEqNodeIdentifier<NODE, FUNCTION>,
+//	FUNCTION extends IEqFunctionIdentifier<NODE, FUNCTION>> {
+//
+//	FUNCTION renameVariables(Map<Term, Term> substitutionMapping);
+//
+//	int getArity();
+//
+//	Term getTerm();
+//
+//	String getFunctionName();
+//
+//	MultiDimensionalSort getSort();
+//}

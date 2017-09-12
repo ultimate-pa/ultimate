@@ -4,10 +4,8 @@ import java.util.Collection;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.IEqNodeIdentifier;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.IEqFunctionIdentifier;
 
-public class LiteralManager<NODE extends IEqNodeIdentifier<NODE, FUNCTION>,
-			FUNCTION extends IEqFunctionIdentifier<NODE, FUNCTION>> {
+public class LiteralManager<NODE extends IEqNodeIdentifier<NODE>> {
 
 	public boolean isLiteral(final NODE elem) {
 		return elem.isLiteral();

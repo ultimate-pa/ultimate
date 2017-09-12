@@ -36,6 +36,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSort;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.IEqNodeIdentifier;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ICongruenceClosureElement;
 
@@ -45,8 +46,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ICongruenceClosur
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  */
-public abstract class EqNode implements IEqNodeIdentifier<EqNode, EqFunction>,
-		ICongruenceClosureElement<EqNode, EqFunction> {
+public abstract class EqNode implements IEqNodeIdentifier<EqNode>, ICongruenceClosureElement<EqNode> {
 
 	protected final EqNodeAndFunctionFactory mEqNodeFactory;
 
@@ -56,9 +56,13 @@ public abstract class EqNode implements IEqNodeIdentifier<EqNode, EqFunction>,
 
 	protected Term mTerm;
 
+	private final MultiDimensionalSort mMdSort;
+
 	public EqNode(final Term term, final EqNodeAndFunctionFactory eqNodeFactory) {
 		mTerm = term;
 		mEqNodeFactory = eqNodeFactory;
+
+		mMdSort = term.getSort().isArraySort() ? new MultiDimensionalSort(mTerm.getSort()) : null;
 	}
 
 	@Override
@@ -96,10 +100,41 @@ public abstract class EqNode implements IEqNodeIdentifier<EqNode, EqFunction>,
 		throw new UnsupportedOperationException("check isDependent first");
 	}
 
+//	@Override
+//	public Collection<EqFunction> getSupportingFunctions() {
+//		// this is the default case NonAtomicBaseNode must override this
+//		throw new UnsupportedOperationException("check isDependent first");
+//	}
+
+
+
 	@Override
-	public Collection<EqFunction> getSupportingFunctions() {
-		// this is the default case NonAtomicBaseNode must override this
-		throw new UnsupportedOperationException("check isDependent first");
+	public String getFunctionName() {
+		assert isFunction();
+//		assert false : "what's the right string here?";
+//		return mPvoc.toString();
+		return mTerm.toString();
 	}
 
+	@Override
+	public boolean isFunction() {
+		return mMdSort != null;
+	}
+
+	@Override
+	public int getArity() {
+		assert isFunction();
+		return mMdSort.getDimension();
+	}
+
+	@Override
+	public String toString() {
+		return mTerm.toString();
+	}
+
+	@Override
+	public MultiDimensionalSort getSort() {
+		assert isFunction();
+		return mMdSort;
+	}
 }

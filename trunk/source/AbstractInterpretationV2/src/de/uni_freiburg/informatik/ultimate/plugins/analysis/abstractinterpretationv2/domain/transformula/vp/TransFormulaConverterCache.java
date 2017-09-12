@@ -39,32 +39,32 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.EqTransitionRelation;
 
 /**
- * 
+ *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  * @param <ACTION>
  */
 public class TransFormulaConverterCache<ACTION extends IIcfgTransition<IcfgLocation>> {
 
-	private EqConstraintFactory<ACTION, EqNode, EqFunction> mEqConstraintFactory;
-	private EqNodeAndFunctionFactory mEqNodeAndFunctionFactory;
-	
+	private EqConstraintFactory<ACTION, EqNode> mEqConstraintFactory;
+	private final EqNodeAndFunctionFactory mEqNodeAndFunctionFactory;
+
 	private final Map<TransFormula, EqTransitionRelation<ACTION>> mTransformulaToEqTransitionRelationCache =
 			new HashMap<>();
 	private final VPDomainPreanalysis mPreAnalysis;
-	
-	public TransFormulaConverterCache(EqNodeAndFunctionFactory eqNodeAndFunctionFactory, 
-			EqConstraintFactory<ACTION, EqNode, EqFunction> eqConstraintFactory, VPDomainPreanalysis preAnalysis) {
-		
+
+	public TransFormulaConverterCache(final EqNodeAndFunctionFactory eqNodeAndFunctionFactory,
+			final EqConstraintFactory<ACTION, EqNode, EqFunction> eqConstraintFactory, final VPDomainPreanalysis preAnalysis) {
+
 		mEqNodeAndFunctionFactory = eqNodeAndFunctionFactory;
 		mEqConstraintFactory = eqConstraintFactory;
 		mPreAnalysis = preAnalysis;
 	}
 
-	public EqTransitionRelation<ACTION> getEqTransitionRelationFromTransformula(TransFormula tf) {
+	public EqTransitionRelation<ACTION> getEqTransitionRelationFromTransformula(final TransFormula tf) {
 		EqTransitionRelation<ACTION> result = mTransformulaToEqTransitionRelationCache.get(tf);
 		if (result == null) {
-			result = new ConvertTransformulaToEqTransitionRelation<ACTION>(tf, 
+			result = new ConvertTransformulaToEqTransitionRelation<ACTION>(tf,
 					mEqConstraintFactory, mEqNodeAndFunctionFactory, mPreAnalysis)
 				.getResult();
 			mTransformulaToEqTransitionRelationCache.put(tf, result);
