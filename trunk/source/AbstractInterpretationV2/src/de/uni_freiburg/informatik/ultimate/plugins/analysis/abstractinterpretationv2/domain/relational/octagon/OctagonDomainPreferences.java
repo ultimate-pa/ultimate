@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePrefer
  * 
  * @author schaetzc@informatik.uni-freiburg.de
  */
-public class OctPreferences {
+public class OctagonDomainPreferences {
 
 	public static enum WideningOperator {
 		SIMPLE, EXPONENTIAL, LITERAL;
