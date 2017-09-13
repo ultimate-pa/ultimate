@@ -5,6 +5,8 @@
 ALLOWED_LABELS=(
 "Safe"
 "Unsafe"
+"Terminating"
+"Nonterminating"
 )
 
 infile="$1"
