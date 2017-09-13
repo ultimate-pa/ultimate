@@ -198,6 +198,12 @@ public class Elim1Store {
 
 		final ThreeValuedEquivalenceRelation<Term> equalityInformation = collectComplimentaryEqualityInformation(
 				mMgdScript.getScript(), quantifier, preprocessedInput, selectTerms, storeTerm, storeIndex, storeValue);
+		if (equalityInformation == null) {
+			final Term absobingElement = QuantifierUtils.getNeutralElement(mScript, quantifier);
+			mLogger.warn("Array PQE input equivalent to " + absobingElement);
+			return new EliminationTask(quantifier, Collections.emptySet(), absobingElement);
+		}
+		
 
 		for (final ApplicationTerm selectTerm : selectTerms) {
 			final Term selectIndex = getIndexOfSelect(selectTerm);
@@ -567,15 +573,12 @@ public class Elim1Store {
 
 		/**
 		 * Add equality information for term that are obtained from context by
-		 * only looking at (dis)eqality terms. Add only the infor
-		 * @param quantifier 
-		 * @param context
-		 * @param forbiddenTerm
-		 * @param term
-		 * @param equalityInformation
+		 * only looking at (dis)eqality terms.
+		 * @return 
+		 * @return true if an inconsitency was detected 
 		 */
-		private static void addComplimentaryEqualityInformation(final Script script, final int quantifier, final Term[] context,
-				final Term term, final ThreeValuedEquivalenceRelation<Term> equalityInformation) {
+	private static boolean addComplimentaryEqualityInformation(final Script script, final int quantifier,
+			final Term[] context, final Term term, final ThreeValuedEquivalenceRelation<Term> equalityInformation) {
 			equalityInformation.addElement(term);
 			final Pair<Set<Term>, Set<Term>> indexEqual = EqualityInformation.getEqTerms(script, term, context, null);
 			Set<Term> derTerms;
@@ -592,11 +595,18 @@ public class Elim1Store {
 			for (final Term equal : derTerms) {
 				equalityInformation.addElement(equal);
 				equalityInformation.reportEquality(term, equal);
+				if (equalityInformation.isInconsistent()) {
+					return true;
+				}
 			}
 			for (final Term disequal : antiDerTerms) {
 				equalityInformation.addElement(disequal);
 				equalityInformation.reportDisequality(term, disequal);
+				if (equalityInformation.isInconsistent()) {
+					return true;
+				}
 			}
+			return false;
 		}
 
 
@@ -605,14 +615,29 @@ public class Elim1Store {
 				final Term storeIndex, final Term storeValue) {
 			final ThreeValuedEquivalenceRelation<Term> equalityInformation = new ThreeValuedEquivalenceRelation<>();
 			final Term[] context = QuantifierUtils.getXjunctsInner(quantifier, preprocessedInput);
+			boolean inconsistencyDetected = false;
 			for (final ApplicationTerm selectTerm : selectTerms) {
 				final Term selectIndex = getIndexOfSelect(selectTerm);
-				addComplimentaryEqualityInformation(script, quantifier, context, selectIndex, equalityInformation);
-				addComplimentaryEqualityInformation(script, quantifier, context, selectTerm, equalityInformation);
+				inconsistencyDetected |= addComplimentaryEqualityInformation(script, quantifier, context, selectIndex, equalityInformation);
+				if (inconsistencyDetected) {
+					return null;
+				}
+				inconsistencyDetected |= addComplimentaryEqualityInformation(script, quantifier, context, selectTerm, equalityInformation);
+				if (inconsistencyDetected) {
+					return null;
+				}
+
 			}
 			if (storeTerm != null) {
-				addComplimentaryEqualityInformation(script, quantifier, context, storeIndex, equalityInformation);
-				addComplimentaryEqualityInformation(script, quantifier, context, storeValue, equalityInformation);
+				inconsistencyDetected |= addComplimentaryEqualityInformation(script, quantifier, context, storeIndex, equalityInformation);
+				if (inconsistencyDetected) {
+					return null;
+				}
+
+				inconsistencyDetected |= addComplimentaryEqualityInformation(script, quantifier, context, storeValue, equalityInformation);
+				if (inconsistencyDetected) {
+					return null;
+				}
 			}
 			return equalityInformation;
 		}
