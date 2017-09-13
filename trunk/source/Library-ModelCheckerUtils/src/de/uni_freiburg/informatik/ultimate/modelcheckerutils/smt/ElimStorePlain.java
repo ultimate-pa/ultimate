@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSort;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.PrenexNormalForm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierPusher;
@@ -158,6 +159,7 @@ public class ElimStorePlain {
 							+ QuantifierUtils.getXjunctsOuter(eTask.getQuantifier(), eliminationTask2.getTerm()).length
 							+ " xjuncts.");
 				}
+				assert (!maxSizeIncrease(tr, classifyEliminatees(eliminationTask2.getEliminatees()))) : "number of max-dim elements increased!";
 
 				pushTaskOnStack(eliminationTask2, taskStack);
 			}
@@ -192,8 +194,11 @@ public class ElimStorePlain {
 
 	public static EliminationTask applyNonSddEliminations(final IUltimateServiceProvider services,
 			final ManagedScript mgdScript, final EliminationTask eTask, final PqeTechniques techniques) {
+		
+		final Term xnf = QuantifierUtils.transformToXnf(services, mgdScript.getScript(), eTask.getQuantifier(),
+				mgdScript, eTask.getTerm(), XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 		final Term quantified = SmtUtils.quantifier(mgdScript.getScript(), eTask.getQuantifier(),
-				eTask.getEliminatees(), eTask.getTerm());
+				eTask.getEliminatees(), xnf);
 		final Term pushed = new QuantifierPusher(mgdScript, services, true, techniques).transform(quantified);
 
 		final Term pnf = new PrenexNormalForm(mgdScript).transform(pushed);
@@ -227,13 +232,35 @@ public class ElimStorePlain {
 		return result;
 	}
 
-	private TreeRelation<Integer, TermVariable> classifyEliminatees(final Collection<TermVariable> eliminatees) {
+	private static TreeRelation<Integer, TermVariable> classifyEliminatees(final Collection<TermVariable> eliminatees) {
 		final TreeRelation<Integer, TermVariable> tr = new TreeRelation<>();
 		for (final TermVariable eliminatee : eliminatees) {
 			final MultiDimensionalSort mds = new MultiDimensionalSort(eliminatee.getSort());
 			tr.addPair(mds.getDimension(), eliminatee);
 		}
 		return tr;
+	}
+	
+	
+	private static boolean maxSizeIncrease(final TreeRelation<Integer, TermVariable> tr1, final TreeRelation<Integer, TermVariable> tr2) {
+		if (tr2.isEmpty()) {
+			return false;
+		}
+		final int tr1max = tr1.descendingDomain().first();
+		final int tr2max = tr2.descendingDomain().first();
+		final int max = Math.max(tr1max, tr2max);
+		final Set<TermVariable> maxElemsTr1 = tr1.getImage(max);
+		final Set<TermVariable> maxElemsTr2 = tr2.getImage(max);
+		if (maxElemsTr1 == null) {
+			assert maxElemsTr2 != null;
+			return true;
+		}
+		if (maxElemsTr2 == null) {
+			assert maxElemsTr1 != null;
+			return false;
+		}
+		return maxElemsTr2.size() > maxElemsTr1.size();
+		
 	}
 
 }

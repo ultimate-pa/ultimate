@@ -207,7 +207,7 @@ public class PartialQuantifierElimination {
 
 		// transform to DNF (resp. CNF)
 		result = (new IteRemover(mgdScript)).transform(term);
-		result = transformToXnf(services, script, quantifier, mgdScript, result, xnfConversionTechnique);
+		result = QuantifierUtils.transformToXnf(services, script, quantifier, mgdScript, result, xnfConversionTechnique);
 		// if (result instanceof QuantifiedFormula) {
 		// QuantifiedFormula qf = (QuantifiedFormula) result;
 		// if (qf.getQuantifier() != quantifier) {
@@ -422,19 +422,6 @@ public class PartialQuantifierElimination {
 		return termAfterUsr;
 	}
 
-	private static Term transformToXnf(final IUltimateServiceProvider services, final Script script,
-			final int quantifier, final ManagedScript freshTermVariableConstructor, Term term,
-			final XnfConversionTechnique xnfConversionTechnique) throws AssertionError {
-		if (quantifier == QuantifiedFormula.EXISTS) {
-			term = SmtUtils.toDnf(services, freshTermVariableConstructor, term, xnfConversionTechnique);
-		} else if (quantifier == QuantifiedFormula.FORALL) {
-			term = SmtUtils.toCnf(services, freshTermVariableConstructor, term, xnfConversionTechnique);
-		} else {
-			throw new AssertionError("unknown quantifier");
-		}
-		return term;
-	}
-
 	private static Term applyEliminationOuter(final Script script, final int quantifier,
 			final Set<TermVariable> eliminatees, final Term term, final XjunctPartialQuantifierElimination elimination,
 			final IUltimateServiceProvider services, final ManagedScript freshTermVariableConstructor,
@@ -469,7 +456,7 @@ public class PartialQuantifierElimination {
 		remainingEliminatees.retainAll(Arrays.asList(result.getFreeVars()));
 		eliminatees.retainAll(remainingEliminatees);
 		if (!elimination.resultIsXjunction()) {
-			result = transformToXnf(services, script, quantifier, freshTermVariableConstructor, result,
+			result = QuantifierUtils.transformToXnf(services, script, quantifier, freshTermVariableConstructor, result,
 					xnfConversionTechnique);
 		}
 		return result;
