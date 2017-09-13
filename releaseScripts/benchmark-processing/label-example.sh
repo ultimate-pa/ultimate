@@ -33,7 +33,7 @@ function processFileContent(){
 			echo "Already labeled with ${keyword} (label is ${current})"
 			return 0
 		fi
-		sed -i "1s/.*/\/\/${current:2}#${keyword}/" "${file}"
+		sed -i "1s/.*/\/\/${current:2} #${keyword}/" "${file}"
 	else
 		sed -i "1s/^/\/\/#${keyword}\n/" "${file}"
 	fi
