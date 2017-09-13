@@ -62,7 +62,7 @@ public abstract class EqNode implements IEqNodeIdentifier<EqNode>, ICongruenceCl
 		mTerm = term;
 		mEqNodeFactory = eqNodeFactory;
 
-		mMdSort = term.getSort().isArraySort() ? new MultiDimensionalSort(mTerm.getSort()) : null;
+		mMdSort = mEqNodeFactory.isFunction(term) ? new MultiDimensionalSort(mTerm.getSort()) : null;
 	}
 
 	@Override

@@ -750,8 +750,10 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 	 * removing dependent elements, and spare the data structures that are needed for those calls.
 	 *
 	 * @param elem
+	 * @return the representative after removal of the equivalence where elem was in, null if elem was alone in its
+	 * 	equivalence class
 	 */
-	protected void purgeElem(final ELEM elem) {
+	protected ELEM purgeElem(final ELEM elem) {
 		final boolean elemWasRepresentative = mElementTVER.isRepresentative(elem);
 		final ELEM newRep = mElementTVER.removeElement(elem);
 
@@ -796,6 +798,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		}
 
 		mFunctionToFuncApps.removeRangeElement(elem);
+
+		return newRep;
 	}
 
 	/**

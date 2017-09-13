@@ -40,10 +40,10 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  */
 public class EqFunctionApplicationNode extends EqNode {
 
-	private final EqFunction mFunction;
+	private final EqNode mFunction;
 	private final List<EqNode> mArgs;
 
-	public EqFunctionApplicationNode(final EqFunction function, final List<EqNode> args, final Term term,
+	public EqFunctionApplicationNode(final EqNode function, final List<EqNode> args, final Term term,
 			final EqNodeAndFunctionFactory eqNodeFactory) {
 		super(term, eqNodeFactory);
 		assert args.size() == function.getArity();
@@ -54,7 +54,7 @@ public class EqFunctionApplicationNode extends EqNode {
 	}
 
 	@Override
-	public EqFunction getAppliedFunction() {
+	public EqNode getAppliedFunction() {
 		return mFunction;
 	}
 

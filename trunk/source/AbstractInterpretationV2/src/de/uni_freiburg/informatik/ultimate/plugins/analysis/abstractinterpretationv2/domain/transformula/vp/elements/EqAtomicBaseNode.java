@@ -82,7 +82,7 @@ public class EqAtomicBaseNode extends EqNode {
 	}
 
 	@Override
-	public EqFunction getAppliedFunction() {
+	public EqNode getAppliedFunction() {
 		throw new IllegalStateException("check for isFunctionApplication() first");
 	}
 }

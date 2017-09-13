@@ -6,7 +6,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -18,7 +17,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.IEqNodeIdentifier;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.IEqFunctionIdentifier;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CongruenceClosure;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CrossProducts;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
@@ -191,7 +189,7 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 		assert result.sanityCheck();
 
 		other.getAllElements().stream().forEach(elem -> result.addElement(elem));
-		other.getAllFunctions().stream().forEach(func -> result.addFunction(func));
+//		other.getAllFunctions().stream().forEach(func -> result.addFunction(func));
 
 		assert result.sanityCheck();
 		return result;
@@ -204,11 +202,14 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 		mWeakEquivalenceGraph.renameVariables(substitutionMapping);
 	}
 
-	public void reportWeakEquivalence(final NODE array1, final NODE array2, final List<NODE> storeIndex) {
+//	public void reportWeakEquivalence(final NODE array1, final NODE array2, final List<NODE> storeIndex) {
+	public void reportWeakEquivalence(final NODE array1, final NODE array2, final NODE storeIndex) {
 		assert array1.isFunction() && array2.isFunction();
-		for (final NODE storeIndexNode : storeIndex) {
-			getRepresentativeAndAddElementIfNeeded(storeIndexNode);
-		}
+//		for (final NODE storeIndexNode : storeIndex) {
+//			getRepresentativeAndAddElementIfNeeded(storeIndexNode);
+//		}
+		getRepresentativeAndAddElementIfNeeded(storeIndex);
+
 //		addFunction(array1);
 //		addFunction(array2);
 		addElement(array1);
@@ -219,7 +220,7 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 	}
 
 
-	private void addWeakEquivalence(final Doubleton<FUNCTION> key,
+	private void addWeakEquivalence(final Doubleton<NODE> key,
 				final WeakEquivalenceGraph<ACTION, NODE>.WeakEquivalenceEdgeLabel value) {
 		mWeakEquivalenceGraph.reportWeakEquivalence(key, value);
 		reportAllArrayEqualitiesFromWeqGraph();
@@ -229,7 +230,7 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 	protected boolean reportEqualityRec(final NODE node1, final NODE node2) {
 		boolean madeChanges = false;
 
-		final NestedMap2<FUNCTION, NODE, Set<List<NODE>>> oldCcChild =
+		final NestedMap2<NODE, NODE, Set<List<NODE>>> oldCcChild =
 				ccchildDeepCopy(mFunctionToRepresentativeToCcChildren);
 		final NODE oldRep1 = mElementTVER.getRepresentative(node1);
 		final NODE oldRep2 = mElementTVER.getRepresentative(node2);
@@ -262,8 +263,8 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
  		 *  We view an equality a[i] = b[i] as a weak equivalence a --q!=i-- b --> update the corresponding weq edge
 		 *  accordingly, or introduce one.
 		 */
-		for (final Entry<FUNCTION, FUNCTION> funcPair :
-			CrossProducts.binarySelectiveCrossProduct(mFunctionTVER.getAllElements(), false, true).entrySet()) {
+		for (final Entry<NODE, NODE> funcPair :
+			getFunctionPairsWithMatchingType()) {
 
 			if (!funcPair.getKey().getSort().equals(funcPair.getValue().getSort())) {
 				// sorts don't match -- functions cannot be weakly equivalent
@@ -292,10 +293,16 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 		return true;
 	}
 
+	private Set<Entry<NODE, NODE>> getFunctionPairsWithMatchingType() {
+		return CrossProducts.binarySelectiveCrossProduct(getAllFunctions(), false, true).entrySet().stream()
+			.filter(en -> en.getKey().getTerm().getSort().equals(en.getValue().getTerm().getSort()))
+			.collect(Collectors.toSet());
+	}
+
 	private void reportAllArrayEqualitiesFromWeqGraph() {
 		while (mWeakEquivalenceGraph.hasArrayEqualities()) {
-			final Entry<FUNCTION, FUNCTION> aeq = mWeakEquivalenceGraph.pollArrayEquality();
-			reportFunctionEquality(aeq.getKey(), aeq.getValue());
+			final Entry<NODE, NODE> aeq = mWeakEquivalenceGraph.pollArrayEquality();
+			reportEquality(aeq.getKey(), aeq.getValue());
 			if (isInconsistent()) {
 				return;
 			}
@@ -329,7 +336,7 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 
 	@Override
 	protected boolean reportDisequalityRec(final NODE elem1, final NODE elem2,
-			final NestedMap2<FUNCTION, NODE, Set<List<NODE>>> oldCcChild) {
+			final NestedMap2<NODE, NODE, Set<List<NODE>>> oldCcChild) {
 		boolean madeChanges = false;
 
 		madeChanges |= super.reportDisequalityRec(elem1, elem2, oldCcChild);
@@ -349,49 +356,47 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 		return true;
 	}
 
-	@Override
-	public boolean reportFunctionEquality(final FUNCTION func1, final FUNCTION func2) {
-		boolean madeChanges = false;
+//	@Override
+//	public boolean reportFunctionEquality(final FUNCTION func1, final FUNCTION func2) {
+//		boolean madeChanges = false;
+//
+//		madeChanges |= super.reportFunctionEquality(func1, func2);
+//		assert sanityCheck();
+//
+//		if (!madeChanges) {
+//			return false;
+//		}
+//
+//		if (isInconsistent()) {
+//			// no need for further propagations
+//			return true;
+//		}
+//
+//		reportGpaChangeToWeqGraphAndPropagateArrayEqualities(
+//				(final CongruenceClosure<NODE> cc) -> cc.reportFunctionEquality(func1, func2));
+//		return true;
+//	}
 
-		madeChanges |= super.reportFunctionEquality(func1, func2);
-		assert sanityCheck();
-
-		if (!madeChanges) {
-			return false;
-		}
-
-		if (isInconsistent()) {
-			// no need for further propagations
-			return true;
-		}
-
-		reportGpaChangeToWeqGraphAndPropagateArrayEqualities(
-				(final CongruenceClosure<NODE> cc) -> cc.reportFunctionEquality(func1, func2));
-		return true;
-	}
-
-	@Override
-	public boolean reportFunctionDisequality(final FUNCTION func1, final FUNCTION func2) {
-		boolean madeChanges = false;
-
-		madeChanges |= super.reportFunctionDisequality(func1, func2);
-		assert sanityCheck();
-
-		if (!madeChanges) {
-			return false;
-		}
-
-		if (isInconsistent()) {
-			// no need for further propagations
-			return true;
-		}
-
-		reportGpaChangeToWeqGraphAndPropagateArrayEqualities(
-				(final CongruenceClosure<NODE> cc) -> cc.reportFunctionDisequality(func1, func2));
-		return true;
-
-
-	}
+//	@Override
+//	public boolean reportFunctionDisequality(final FUNCTION func1, final FUNCTION func2) {
+//		boolean madeChanges = false;
+//
+//		madeChanges |= super.reportFunctionDisequality(func1, func2);
+//		assert sanityCheck();
+//
+//		if (!madeChanges) {
+//			return false;
+//		}
+//
+//		if (isInconsistent()) {
+//			// no need for further propagations
+//			return true;
+//		}
+//
+//		reportGpaChangeToWeqGraphAndPropagateArrayEqualities(
+//				(final CongruenceClosure<NODE> cc) -> cc.reportFunctionDisequality(func1, func2));
+//		return true;
+//	}
 
 	/**
 	 * Updates the weq-graph wrt. a change in the ground partial arrangement.
@@ -419,7 +424,7 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 
 	@Override
 	public boolean isStrongerThan(final CongruenceClosure<NODE> other) {
-		if (!(other instanceof WeqCongruenceClosure<?, ?, ?>)) {
+		if (!(other instanceof WeqCongruenceClosure<?, ?>)) {
 			throw new IllegalArgumentException();
 		}
 		if (!super.isStrongerThan(other)) {
@@ -437,91 +442,91 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 
 
 
-	@Override
-	public boolean removeFunction(final FUNCTION func) {
-		if (!hasFunction(func)) {
-			return false;
-		}
-
-		/*
-		 * When removing this function we will also remove all function nodes that depend on it. In this first step
-		 * we attempt to conserve information about those nodes if possible by adding nodes with other functions but the
-		 * same arguments.
-		 *
-		 * Conditions to add a node b[i1, ..., in]:
-		 *  (a is the function we are about to remove)
-		 * <li> a[i1, ..., in] is present in this weqCc and is part of a non-tautological constraint
-		 * <li> the current weqCc allows us to conclude a[i1, .., in] = b[i1, ..,in]
-		 *  <p>
-		 *   that is the case if one of the following conditions holds
-		 * <li> the strong equivalence a = b is implied by this weqCc (it is enough to propagate for one other function
-		 *   in the equivalence class of a)
-		 * <li> there is a weak equivalence edge between a and b, and it allows weak congruence propagation of the above
-		 *  equality
-		 */
-		final Set<NODE> constrainedFuncAppNodes = mFunctionToFuncApps.getImage(func).stream()
-				.filter(this::isConstrained).collect(Collectors.toSet());
-
-		// is func equal to some other function?
-		final Optional<FUNCTION> equalFuncOpt = mFunctionTVER.getEquivalenceClass(func).stream()
-				.filter(f -> !f.equals(func)).findAny();
-		final FUNCTION equalFunc = equalFuncOpt.isPresent() ? equalFuncOpt.get() : null;
-
-		for (final NODE fan : constrainedFuncAppNodes) {
-			if (equalFunc != null) {
-				final NODE nodeWithEqualFunc = mFactory.getEqNodeAndFunctionFactory()
-						.getFuncAppElement(equalFunc, fan.getArguments());
-				addElement(nodeWithEqualFunc);
-			}
-
-			for (final Entry<FUNCTION, WeakEquivalenceGraph<ACTION, NODE>.WeakEquivalenceEdgeLabel> weqEdge
-					:
-						mWeakEquivalenceGraph.getAdjacentWeqEdges(func).entrySet()) {
-				if (weqEdge.getValue().impliesEqualityOnThatPosition(fan.getArguments())) {
-					final NODE nodeWithWequalFunc = mFactory.getEqNodeAndFunctionFactory()
-						.getFuncAppElement(weqEdge.getKey(), fan.getArguments());
-					addElement(nodeWithWequalFunc);
-				}
-			}
-		}
-
-
-		/*
-		 * Project func from the weak equivalence graph.
-		 * We need to make a copy of the ground partial arrangement, because ..
-		 */
-		final CongruenceClosure<NODE,FUNCTION> copy = new CongruenceClosure<>(this);
-		copy.removeFunction(func);
-		mWeakEquivalenceGraph.projectFunction(func, copy);
-		assert projectedFunctionIsGoneFromWeqGraph(func, mWeakEquivalenceGraph);
-
-		/*
-		 * the following code is c/p'ed from super.removeFunction, with one marked exception (see below)
-		 */
-
-		// remove all elements that depend on the function
-		final Set<NODE> funcAppsWithFuncCopy = new HashSet<>(mFunctionToFuncApps.getImage(func));
-		for (final NODE funcApp : funcAppsWithFuncCopy) {
-			// change from original: (added second argument)
-			removeElement(funcApp, copy);
-			assert projectedFunctionIsGoneFromWeqGraph(func, mWeakEquivalenceGraph);
-		}
-		for (final NODE dependent : new HashSet<>(mNodeToDependents.getImage(func))) {
-			removeElement(dependent, copy);
-		}
-		mNodeToDependents.removeDomainElement(func);
-
-
-		// remove from the function equivalence relation
-		mFunctionTVER.removeElement(func);
-
-		mFunctionToRepresentativeToCcPars.remove(func);
-		mFunctionToRepresentativeToCcChildren.remove(func);
-		mFunctionToFuncApps.removeDomainElement(func);
-		assert projectedFunctionIsGoneFromWeqGraph(func, mWeakEquivalenceGraph);
-		assert sanityCheck();
-		return true;
-	}
+//	@Override
+//	public boolean removeFunction(final FUNCTION func) {
+//		if (!hasFunction(func)) {
+//			return false;
+//		}
+//
+//		/*
+//		 * When removing this function we will also remove all function nodes that depend on it. In this first step
+//		 * we attempt to conserve information about those nodes if possible by adding nodes with other functions but the
+//		 * same arguments.
+//		 *
+//		 * Conditions to add a node b[i1, ..., in]:
+//		 *  (a is the function we are about to remove)
+//		 * <li> a[i1, ..., in] is present in this weqCc and is part of a non-tautological constraint
+//		 * <li> the current weqCc allows us to conclude a[i1, .., in] = b[i1, ..,in]
+//		 *  <p>
+//		 *   that is the case if one of the following conditions holds
+//		 * <li> the strong equivalence a = b is implied by this weqCc (it is enough to propagate for one other function
+//		 *   in the equivalence class of a)
+//		 * <li> there is a weak equivalence edge between a and b, and it allows weak congruence propagation of the above
+//		 *  equality
+//		 */
+//		final Set<NODE> constrainedFuncAppNodes = mFunctionToFuncApps.getImage(func).stream()
+//				.filter(this::isConstrained).collect(Collectors.toSet());
+//
+//		// is func equal to some other function?
+//		final Optional<FUNCTION> equalFuncOpt = mFunctionTVER.getEquivalenceClass(func).stream()
+//				.filter(f -> !f.equals(func)).findAny();
+//		final FUNCTION equalFunc = equalFuncOpt.isPresent() ? equalFuncOpt.get() : null;
+//
+//		for (final NODE fan : constrainedFuncAppNodes) {
+//			if (equalFunc != null) {
+//				final NODE nodeWithEqualFunc = mFactory.getEqNodeAndFunctionFactory()
+//						.getFuncAppElement(equalFunc, fan.getArguments());
+//				addElement(nodeWithEqualFunc);
+//			}
+//
+//			for (final Entry<FUNCTION, WeakEquivalenceGraph<ACTION, NODE>.WeakEquivalenceEdgeLabel> weqEdge
+//					:
+//						mWeakEquivalenceGraph.getAdjacentWeqEdges(func).entrySet()) {
+//				if (weqEdge.getValue().impliesEqualityOnThatPosition(fan.getArguments())) {
+//					final NODE nodeWithWequalFunc = mFactory.getEqNodeAndFunctionFactory()
+//						.getFuncAppElement(weqEdge.getKey(), fan.getArguments());
+//					addElement(nodeWithWequalFunc);
+//				}
+//			}
+//		}
+//
+//
+//		/*
+//		 * Project func from the weak equivalence graph.
+//		 * We need to make a copy of the ground partial arrangement, because ..
+//		 */
+//		final CongruenceClosure<NODE,FUNCTION> copy = new CongruenceClosure<>(this);
+//		copy.removeFunction(func);
+//		mWeakEquivalenceGraph.projectFunction(func, copy);
+//		assert projectedFunctionIsGoneFromWeqGraph(func, mWeakEquivalenceGraph);
+//
+//		/*
+//		 * the following code is c/p'ed from super.removeFunction, with one marked exception (see below)
+//		 */
+//
+//		// remove all elements that depend on the function
+//		final Set<NODE> funcAppsWithFuncCopy = new HashSet<>(mFunctionToFuncApps.getImage(func));
+//		for (final NODE funcApp : funcAppsWithFuncCopy) {
+//			// change from original: (added second argument)
+//			removeElement(funcApp, copy);
+//			assert projectedFunctionIsGoneFromWeqGraph(func, mWeakEquivalenceGraph);
+//		}
+//		for (final NODE dependent : new HashSet<>(mNodeToDependents.getImage(func))) {
+//			removeElement(dependent, copy);
+//		}
+//		mNodeToDependents.removeDomainElement(func);
+//
+//
+//		// remove from the function equivalence relation
+//		mFunctionTVER.removeElement(func);
+//
+//		mFunctionToRepresentativeToCcPars.remove(func);
+//		mFunctionToRepresentativeToCcChildren.remove(func);
+//		mFunctionToFuncApps.removeDomainElement(func);
+//		assert projectedFunctionIsGoneFromWeqGraph(func, mWeakEquivalenceGraph);
+//		assert sanityCheck();
+//		return true;
+//	}
 
 
 
@@ -531,14 +536,14 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 		if (!hasElement(elem) && mNodeToDependents.getImage(elem).isEmpty()) {
 			return false;
 		}
-		final CongruenceClosure<NODE,FUNCTION> copy = new CongruenceClosure<>(this);
+		final CongruenceClosure<NODE> copy = new CongruenceClosure<>(this);
 		copy.removeElement(elem);
 		return removeElement(elem, copy);
 	}
 
-	private boolean projectedFunctionIsGoneFromWeqGraph(final FUNCTION func,
+	private boolean projectedFunctionIsGoneFromWeqGraph(final NODE func,
 			final WeakEquivalenceGraph<ACTION, NODE> weakEquivalenceGraph) {
-		for (final Entry<Doubleton<FUNCTION>,
+		for (final Entry<Doubleton<NODE>,
 				WeakEquivalenceGraph<ACTION, NODE>.WeakEquivalenceEdgeLabel> edge :
 					weakEquivalenceGraph.getEdges().entrySet()) {
 			if (edge.getValue().getAppearingFunctions().contains(func)) {
@@ -553,7 +558,7 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 		if (hasElement(elem)) {
 			mWeakEquivalenceGraph.projectElement(elem, copy);
 
-			super.purgeElem(elem);
+			final NODE newRep = super.purgeElem(elem);
 
 			/*
 			 * recursive calls: if an element is removed, all the function applications that have it as an argument, and all
@@ -564,6 +569,86 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 			}
 			mElementToParents.removeDomainElement(elem);
 			mElementToParents.removeRangeElement(elem);
+
+			if (elem.isFunction()) {
+				/*
+				 * When removing this function we will also remove all function nodes that depend on it. In this first
+				 * step we attempt to conserve information about those nodes if possible by adding nodes with other
+				 * functions but the same arguments.
+				 *
+				 * Conditions to add a node b[i1, ..., in]:
+				 *  (a is the function we are about to remove)
+				 * <li> a[i1, ..., in] is present in this weqCc and is part of a non-tautological constraint
+				 * <li> the current weqCc allows us to conclude a[i1, .., in] = b[i1, ..,in]
+				 *  <p>
+				 *   that is the case if one of the following conditions holds
+				 * <li> the strong equivalence a = b is implied by this weqCc (it is enough to propagate for one other
+				 * 	function in the equivalence class of a)
+				 * <li> there is a weak equivalence edge between a and b, and it allows weak congruence propagation of
+				 *	 the above equality
+				 */
+				final Set<NODE> constrainedFuncAppNodes = mFunctionToFuncApps.getImage(elem).stream()
+						.filter(this::isConstrained).collect(Collectors.toSet());
+
+				// is func equal to some other function?
+//				final Optional<NODE> equalFuncOpt = mFunctionTVER.getEquivalenceClass(func).stream()
+//						.filter(f -> !f.equals(func)).findAny();
+				final NODE equalFunc = newRep;
+
+				for (final NODE fan : constrainedFuncAppNodes) {
+					if (equalFunc != null) {
+						final NODE nodeWithEqualFunc = mFactory.getEqNodeAndFunctionFactory()
+								.getFuncAppElementDetermineIsFunctionYourself(equalFunc, fan.getArguments());
+						addElement(nodeWithEqualFunc);
+					}
+
+					for (final Entry<NODE, WeakEquivalenceGraph<ACTION, NODE>.WeakEquivalenceEdgeLabel> weqEdge
+							:
+								mWeakEquivalenceGraph.getAdjacentWeqEdges(elem).entrySet()) {
+						if (weqEdge.getValue().impliesEqualityOnThatPosition(fan.getArguments())) {
+							final NODE nodeWithWequalFunc = mFactory.getEqNodeAndFunctionFactory()
+									.getFuncAppElementDetermineIsFunctionYourself(weqEdge.getKey(), fan.getArguments());
+							addElement(nodeWithWequalFunc);
+						}
+					}
+				}
+
+
+				/*
+				 * Project func from the weak equivalence graph.
+				 * We need to make a copy of the ground partial arrangement, because ..
+				 */
+//				final CongruenceClosure<NODE> copy = new CongruenceClosure<>(this);
+//				copy.removeFunction(func);
+				mWeakEquivalenceGraph.projectFunction(elem, copy);
+				assert projectedFunctionIsGoneFromWeqGraph(elem, mWeakEquivalenceGraph);
+
+				/*
+				 * the following code is c/p'ed from super.removeFunction, with one marked exception (see below)
+				 */
+
+				// remove all elements that depend on the function
+				final Set<NODE> funcAppsWithFuncCopy = new HashSet<>(mFunctionToFuncApps.getImage(elem));
+				for (final NODE funcApp : funcAppsWithFuncCopy) {
+					// change from original: (added second argument)
+					removeElement(funcApp, copy);
+					assert projectedFunctionIsGoneFromWeqGraph(funcApp, mWeakEquivalenceGraph);
+				}
+				for (final NODE dependent : new HashSet<>(mNodeToDependents.getImage(elem))) {
+					removeElement(dependent, copy);
+				}
+				mNodeToDependents.removeDomainElement(elem);
+
+
+//				// remove from the function equivalence relation
+//				mFunctionTVER.removeElement(func);
+
+				mFunctionToRepresentativeToCcPars.remove(elem);
+				mFunctionToRepresentativeToCcChildren.remove(elem);
+				mFunctionToFuncApps.removeDomainElement(elem);
+				assert projectedFunctionIsGoneFromWeqGraph(elem, mWeakEquivalenceGraph);
+
+			}
 
 			mAllLiterals.remove(elem);
 		}
@@ -598,9 +683,9 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 			for (final NODE supp : elem.getSupportingNodes()) {
 				mNodeToDependents.addPair(supp, elem);
 			}
-			for (final FUNCTION supp : elem.getSupportingFunctions()) {
-				mNodeToDependents.addPair(supp, elem);
-			}
+//			for (final FUNCTION supp : elem.getSupportingFunctions()) {
+//				mNodeToDependents.addPair(supp, elem);
+//			}
 		}
 
 		if (!elem.isFunctionApplication()) {
@@ -612,7 +697,7 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 		 * As the new element is a function application, we might be able to infer equalities for it through weak
 		 * equivalence.
 		 */
-		for (final Entry<FUNCTION, WeakEquivalenceGraph<ACTION, NODE>.WeakEquivalenceEdgeLabel> edge :
+		for (final Entry<NODE, WeakEquivalenceGraph<ACTION, NODE>.WeakEquivalenceEdgeLabel> edge :
 				mWeakEquivalenceGraph.getAdjacentWeqEdges(elem.getAppliedFunction()).entrySet()) {
 			Set<NODE> candidateSet = null;
 
@@ -650,17 +735,17 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 
 	@Override
 	public void transformElementsAndFunctions(final Function<NODE, NODE> elemTransformer,
-			final Function<FUNCTION, FUNCTION> functionTransformer) {
+			final Function<NODE, NODE> functionTransformer) {
 		super.transformElementsAndFunctions(elemTransformer, functionTransformer);
 
 		for (final Entry<Object, NODE> en : new HashRelation<>(mNodeToDependents).entrySet()) {
 			mNodeToDependents.removePair(en.getKey(), en.getValue());
-			if (en.getKey() instanceof IEqNodeIdentifier<?, ?>) {
+			if (en.getKey() instanceof IEqNodeIdentifier<?>) {
 				mNodeToDependents.addPair(elemTransformer.apply((NODE) en.getKey()),
 						elemTransformer.apply(en.getValue()));
-			} else if (en.getKey() instanceof IEqFunctionIdentifier<?, ?>) {
-				mNodeToDependents.addPair(functionTransformer.apply((FUNCTION) en.getKey()),
-						elemTransformer.apply(en.getValue()));
+//			} else if (en.getKey() instanceof IEqFunctionIdentifier<?, ?>) {
+//				mNodeToDependents.addPair(functionTransformer.apply((FUNCTION) en.getKey()),
+//						elemTransformer.apply(en.getValue()));
 			} else {
 				throw new AssertionError();
 			}
@@ -713,9 +798,9 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 				(WeqCongruenceClosure<ACTION, NODE>) other;
 
 		// report all weq edges from other
-		for (final Entry<Doubleton<FUNCTION>,
-				WeakEquivalenceGraph<ACTION, NODE>.WeakEquivalenceEdgeLabel> edge :
-			otherWeqCc.mWeakEquivalenceGraph.getEdges().entrySet()) {
+		for (final Entry<Doubleton<NODE>, WeakEquivalenceGraph<ACTION, NODE>.WeakEquivalenceEdgeLabel> edge
+				:
+					otherWeqCc.mWeakEquivalenceGraph.getEdges().entrySet()) {
 			newWeqCc.addWeakEquivalence(edge.getKey(), edge.getValue());
 		}
 

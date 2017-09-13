@@ -39,7 +39,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.CommuhashNormalForm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineTerm;
@@ -58,7 +57,7 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 
 	private final Map<Term, EqNode> mTermToEqNode = new HashMap<>();
 
-	private final Map<Term, EqFunction> mTermToEqFunction = new HashMap<>();
+//	private final Map<Term, EqFunction> mTermToEqFunction = new HashMap<>();
 
 	private final VPDomainPreanalysis mPreAnalysis;
 
@@ -95,7 +94,11 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 		final Term normalizedTerm = normalizeTerm(term);
 		EqNode result = mTermToEqNode.get(normalizedTerm);
 		if (result == null) {
-			result = getBaseElement(normalizedTerm);
+			if (isFunction(normalizedTerm)) {
+				result = getFunctionBaseElement(normalizedTerm);
+			} else {
+				result = getNonFunctionBaseElement(normalizedTerm);
+			}
 			mTermToEqNode.put(normalizedTerm, result);
 		}
 		assert result instanceof EqNonAtomicBaseNode;
@@ -108,14 +111,20 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 		if (result == null) {
 			final MultiDimensionalSelect mds = new MultiDimensionalSelect(selectTerm);
 
-			final EqFunction function = getOrConstructFunction(mds.getArray());
+//			final EqFunction function = getOrConstructFunction(mds.getArray());
+			final EqNode function = getOrConstructNode(mds.getArray());
+			assert function.isFunction();
 
 			final List<EqNode> args = new ArrayList<>();
 			for (final Term index : mds.getIndex()) {
 				args.add(getOrConstructNode(index));
 			}
 
-			result = super.getFuncAppElement(function, args);
+			if (isFunction(selectTerm)) {
+				result = super.getFunctionFuncAppElement(function, args);
+			} else {
+				result = super.getNonFunctionFuncAppElement(function, args);
+			}
 			mTermToEqNode.put(selectTerm, result);
 		}
 		assert result instanceof EqFunctionApplicationNode;
@@ -131,7 +140,11 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 		EqNode result = mTermToEqNode.get(normalizedTerm);
 		if (result == null) {
 
-			result = getBaseElement(normalizedTerm);
+			if (isFunction(term)) {
+				result = getFunctionBaseElement(normalizedTerm);
+			} else {
+				result = getNonFunctionBaseElement(normalizedTerm);
+			}
 			mTermToEqNode.put(normalizedTerm, result);
 		}
 		assert result instanceof EqAtomicBaseNode;
@@ -154,33 +167,33 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 		return affineTerm.toTerm(mMgdScript.getScript());
 	}
 
-	@Override
-	public EqFunction getOrConstructFunction(final Term term) {
-		if (term instanceof ApplicationTerm && ((ApplicationTerm) term).getParameters().length > 0) {
-			if ("store".equals(((ApplicationTerm) term).getFunction().getName())) {
-				throw new UnsupportedOperationException();
-			} else {
-				throw new UnsupportedOperationException();
-			}
-		} else {
-			return getOrConstructAtomicEqFunction(term);
-		}
-	}
+//	@Override
+//	public EqFunction getOrConstructFunction(final Term term) {
+//		if (term instanceof ApplicationTerm && ((ApplicationTerm) term).getParameters().length > 0) {
+//			if ("store".equals(((ApplicationTerm) term).getFunction().getName())) {
+//				throw new UnsupportedOperationException();
+//			} else {
+//				throw new UnsupportedOperationException();
+//			}
+//		} else {
+//			return getOrConstructAtomicEqFunction(term);
+//		}
+//	}
 
-	private EqFunction getOrConstructAtomicEqFunction(final Term term) {
-		assert !(term instanceof ApplicationTerm) || !"store".equals(((ApplicationTerm) term).getFunction().getName());
-		EqFunction result = mTermToEqFunction.get(term);
-		if (result == null) {
-			result = new EqFunction(term, this);
-			mTermToEqFunction.put(term, result);
-		}
-		return result;
-	}
-
-	public EqFunction constructRenamedEqFunction(final EqFunction eqFunction, final Map<Term, Term> substitutionMapping) {
-		final Term substitutedTerm = new Substitution(mMgdScript, substitutionMapping).transform(eqFunction.getTerm());
-		return getOrConstructFunction(substitutedTerm);
-	}
+//	private EqFunction getOrConstructAtomicEqFunction(final Term term) {
+//		assert !(term instanceof ApplicationTerm) || !"store".equals(((ApplicationTerm) term).getFunction().getName());
+//		EqFunction result = mTermToEqFunction.get(term);
+//		if (result == null) {
+//			result = new EqFunction(term, this);
+//			mTermToEqFunction.put(term, result);
+//		}
+//		return result;
+//	}
+//
+//	public EqFunction constructRenamedEqFunction(final EqFunction eqFunction, final Map<Term, Term> substitutionMapping) {
+//		final Term substitutedTerm = new Substitution(mMgdScript, substitutionMapping).transform(eqFunction.getTerm());
+//		return getOrConstructFunction(substitutedTerm);
+//	}
 
 	/**
 	 *
@@ -201,42 +214,20 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 		return mTermToEqNode.get(normalizeTerm(term));
 	}
 
-	/**
-	 *
-	 * @param term
-	 * @return
-	 */
-	@Override
-	public EqFunction getExistingFunction(final Term term) {
-		final EqFunction res = mTermToEqFunction.get(term);
-		if (res == null) {
-			throw new IllegalArgumentException("this method expects that the given term is already known to this "
-					+ "factory");
-		}
-		return res;
-	}
-
-	@Override
-	protected EqNode newBaseElement(final Term term) {
-//		assert SmtUtils.isTrue(term) || SmtUtils.isFalse(term) || SmtUtils.isConstant(term) || term instanceof TermVariable
-//			|| term instanceof ConstantTerm;
-		if (isAtomic(term)) {
-			// term has no dependencies on other terms --> use an EqAtomicBaseNode
-			return new EqAtomicBaseNode(term, isTermALiteral(term), this);
-		} else {
-			assert term.getFreeVars().length > 0;
-			final Collection<EqNode> supportingNodes = new ArrayList<>();
-			final Collection<EqFunction> supportingFunctions = new ArrayList<>();
-			for (final TermVariable fv : term.getFreeVars()) {
-				if (fv.getSort().isArraySort()) {
-					supportingFunctions.add(getOrConstructFunction(fv));
-				} else {
-					supportingNodes.add(getOrConstructNode(fv));
-				}
-			}
-			return new EqNonAtomicBaseNode(term, supportingNodes, supportingFunctions, this);
-		}
-	}
+//	/**
+//	 *
+//	 * @param term
+//	 * @return
+//	 */
+//	@Override
+//	public EqFunction getExistingFunction(final Term term) {
+//		final EqFunction res = mTermToEqFunction.get(term);
+//		if (res == null) {
+//			throw new IllegalArgumentException("this method expects that the given term is already known to this "
+//					+ "factory");
+//		}
+//		return res;
+//	}
 
 	/**
 	 * Checks if the given term is a literal.
@@ -290,12 +281,52 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 	}
 
 	@Override
-	protected EqNode newFuncAppElement(final EqFunction func, final List<EqNode> args) {
+		protected EqNode newBaseElement(final Term term, final boolean isFunction) {
+	//		assert SmtUtils.isTrue(term) || SmtUtils.isFalse(term) || SmtUtils.isConstant(term) || term instanceof TermVariable
+	//			|| term instanceof ConstantTerm;
+		assert isFunction(term) == isFunction;
+
+		if (isAtomic(term)) {
+			// term has no dependencies on other terms --> use an EqAtomicBaseNode
+			return new EqAtomicBaseNode(term, isTermALiteral(term), this);
+		} else {
+			assert term.getFreeVars().length > 0;
+			final Collection<EqNode> supportingNodes = new ArrayList<>();
+			for (final TermVariable fv : term.getFreeVars()) {
+				supportingNodes.add(getOrConstructNode(fv));
+			}
+			return new EqNonAtomicBaseNode(term, supportingNodes, this);
+		}
+	}
+
+	@Override
+	protected EqNode newFuncAppElement(final EqNode func, final List<EqNode> args, final boolean isFunction) {
+		final Term selectTerm = buildSelectTerm(func, args);
+		assert isFunction(selectTerm) == isFunction;
+		return new EqFunctionApplicationNode(func, args, selectTerm, this);
+	}
+
+	private Term buildSelectTerm(final EqNode func, final List<EqNode> args) {
 		mMgdScript.lock(this);
 		final ArrayIndex ai = new ArrayIndex(args.stream().map(node -> node.getTerm()).collect(Collectors.toList()));
 		final Term selectTerm = SmtUtils.multiDimensionalSelect(mMgdScript.getScript(), func.getTerm(), ai);
 		mMgdScript.unlock(this);
-		return new EqFunctionApplicationNode(func, args, selectTerm, this);
+		return selectTerm;
+	}
+
+	/**
+	 * Determines if a given term should get a node with or without the isFunction flag set.
+	 *
+	 * @param term
+	 * @return
+	 */
+	boolean isFunction(final Term term) {
+		return term.getSort().isArraySort();
+	}
+
+	@Override
+	public EqNode getFuncAppElementDetermineIsFunctionYourself(final EqNode func, final List<EqNode> arguments) {
+		return getOrConstructNode(buildSelectTerm(func, arguments));
 	}
 
 }

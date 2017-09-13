@@ -36,28 +36,27 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ITr
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqFunction;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNode;
 
 /**
- * 
+ *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  * @param <ACTION>
  */
 public class EqTransitionRelation<ACTION extends IIcfgTransition<IcfgLocation>>  implements ITransitionRelation {
-	
+
 
 	private final TransFormula mTf;
-	private final EqDisjunctiveConstraint<ACTION, EqNode, EqFunction> mConstraint;
+	private final EqDisjunctiveConstraint<ACTION, EqNode> mConstraint;
 
-	public EqTransitionRelation(EqDisjunctiveConstraint<ACTION, EqNode, EqFunction> constraint, TransFormula tf) {
-		/* 
-		 * an EqTransitionRelation inherits all the ITransitionRelation-properties from the TransFormula it was 
+	public EqTransitionRelation(final EqDisjunctiveConstraint<ACTION, EqNode> constraint, final TransFormula tf) {
+		/*
+		 * an EqTransitionRelation inherits all the ITransitionRelation-properties from the TransFormula it was
 		 * constructed from (see corresponding getters..)
 		 */
 		mTf = tf;
-		
+
 		mConstraint = constraint;
 	}
 
@@ -82,12 +81,12 @@ public class EqTransitionRelation<ACTION extends IIcfgTransition<IcfgLocation>> 
 	}
 
 	@Override
-	public boolean isHavocedOut(IProgramVar bv) {
+	public boolean isHavocedOut(final IProgramVar bv) {
 		return mTf.isHavocedOut(bv);
 	}
 
 	@Override
-	public boolean isHavocedIn(IProgramVar bv) {
+	public boolean isHavocedIn(final IProgramVar bv) {
 		return mTf.isHavocedIn(bv);
 	}
 
@@ -96,10 +95,10 @@ public class EqTransitionRelation<ACTION extends IIcfgTransition<IcfgLocation>> 
 		return mTf.getAuxVars();
 	}
 
-	public EqDisjunctiveConstraint<ACTION, EqNode, EqFunction> getEqConstraint() {
+	public EqDisjunctiveConstraint<ACTION, EqNode> getEqConstraint() {
 		return mConstraint;
 	}
-	
+
 	@Override
 	public String toString() {
 		return "EqTransRel: " + mConstraint.toString();

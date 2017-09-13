@@ -162,7 +162,8 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 //	}
 
 	public void reportWeakEquivalence(final NODE array1, final NODE array2,
-			final List<NODE> storeIndex) {
+			final NODE storeIndex) {
+//			final List<NODE> storeIndex) {
 		assert !mIsInconsistent;
 		assert !mIsFrozen;
 		mPartialArrangement.reportWeakEquivalence(array1, array2, storeIndex);

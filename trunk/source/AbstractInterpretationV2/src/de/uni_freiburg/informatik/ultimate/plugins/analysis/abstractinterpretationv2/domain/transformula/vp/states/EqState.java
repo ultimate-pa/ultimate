@@ -45,7 +45,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.IEqualityProvidingState;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqFunction;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNode;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNodeAndFunctionFactory;
 
@@ -68,11 +67,11 @@ public class EqState<ACTION extends IIcfgTransition<IcfgLocation>>
 	 */
 	private final Set<IProgramVarOrConst> mPvocs;
 
-	private final EqConstraint<ACTION, EqNode, EqFunction> mConstraint;
+	private final EqConstraint<ACTION, EqNode> mConstraint;
 
 	private final EqStateFactory<ACTION> mFactory;
 
-	public EqState(final EqConstraint<ACTION, EqNode, EqFunction> constraint,
+	public EqState(final EqConstraint<ACTION, EqNode> constraint,
 			final EqNodeAndFunctionFactory eqNodeAndFunctionFactory, final EqStateFactory<ACTION> eqStateFactory,
 			final Set<IProgramVarOrConst> variables) {
 		mId = sNextFreeId++;
@@ -108,7 +107,7 @@ public class EqState<ACTION extends IIcfgTransition<IcfgLocation>>
 	public EqState<ACTION> removeVariables(final Collection<IProgramVarOrConst> variables) {
 		final Set<TermVariable> termVariablesFromPvocs =
 				variables.stream().map(pvoc -> (TermVariable) pvoc.getTerm()).collect(Collectors.toSet());
-		final EqConstraint<ACTION, EqNode, EqFunction> projectedConstraint =
+		final EqConstraint<ACTION, EqNode> projectedConstraint =
 				mFactory.getEqConstraintFactory().projectExistentially(termVariablesFromPvocs, mConstraint);
 
 		final Set<IProgramVarOrConst> newVariables = new HashSet<>(mPvocs);
@@ -140,7 +139,7 @@ public class EqState<ACTION extends IIcfgTransition<IcfgLocation>>
 
 	@Override
 	public EqState<ACTION> intersect(final EqState<ACTION> other) {
-		final EqConstraint<ACTION, EqNode, EqFunction> newConstraint =
+		final EqConstraint<ACTION, EqNode> newConstraint =
 				mFactory.getEqConstraintFactory().conjoinFlat(this.getConstraint(), other.getConstraint());
 
 		final Set<IProgramVarOrConst> newVariables = new HashSet<>();
@@ -153,7 +152,7 @@ public class EqState<ACTION extends IIcfgTransition<IcfgLocation>>
 
 	@Override
 	public EqState<ACTION> union(final EqState<ACTION> other) {
-		final EqConstraint<ACTION, EqNode, EqFunction> newConstraint =
+		final EqConstraint<ACTION, EqNode> newConstraint =
 				mFactory.getEqConstraintFactory().disjoinFlat(this.getConstraint(), other.getConstraint());
 
 		final Set<IProgramVarOrConst> newVariables = new HashSet<>();
@@ -230,7 +229,7 @@ public class EqState<ACTION extends IIcfgTransition<IcfgLocation>>
 		return toLogString();
 	}
 
-	public EqConstraint<ACTION, EqNode, EqFunction> getConstraint() {
+	public EqConstraint<ACTION, EqNode> getConstraint() {
 		return mConstraint;
 	}
 
@@ -251,18 +250,18 @@ public class EqState<ACTION extends IIcfgTransition<IcfgLocation>>
 
 	@Override
 	public boolean areEqual(final Term term1, final Term term2) {
-		if (term1.getSort().isArraySort()) {
-			// array case
-			assert term2.getSort().isArraySort();
-			final EqFunction node1 = mFactory.getEqNodeAndFunctionFactory().getExistingFunction(term1);
-			final EqFunction node2 = mFactory.getEqNodeAndFunctionFactory().getExistingFunction(term2);
-			if (node1 == null || node2 == null) {
-				// we did not track at least one of the nodes
-				return false;
-			}
-			return mConstraint.areEqual(node1, node2);
-		}
-		// element case
+//		if (term1.getSort().isArraySort()) {
+//			// array case
+//			assert term2.getSort().isArraySort();
+//			final EqFunction node1 = mFactory.getEqNodeAndFunctionFactory().getExistingFunction(term1);
+//			final EqFunction node2 = mFactory.getEqNodeAndFunctionFactory().getExistingFunction(term2);
+//			if (node1 == null || node2 == null) {
+//				// we did not track at least one of the nodes
+//				return false;
+//			}
+//			return mConstraint.areEqual(node1, node2);
+//		}
+//		// element case
 		final EqNode node1 = mFactory.getEqNodeAndFunctionFactory().getExistingNode(term1);
 		final EqNode node2 = mFactory.getEqNodeAndFunctionFactory().getExistingNode(term2);
 		if (node1 == null || node2 == null) {
@@ -274,18 +273,18 @@ public class EqState<ACTION extends IIcfgTransition<IcfgLocation>>
 
 	@Override
 	public boolean areUnequal(final Term term1, final Term term2) {
-		if (term1.getSort().isArraySort()) {
-			// array case
-			assert term2.getSort().isArraySort();
-			final EqFunction func1 = mFactory.getEqNodeAndFunctionFactory().getExistingFunction(term1);
-			final EqFunction func2 = mFactory.getEqNodeAndFunctionFactory().getExistingFunction(term2);
-			if (func1 == null || func2 == null) {
-				// we did not track at least one of the nodes
-				return false;
-			}
-			return mConstraint.areUnequal(func1, func2);
-		}
-		// element case
+//		if (term1.getSort().isArraySort()) {
+//			// array case
+//			assert term2.getSort().isArraySort();
+//			final EqFunction func1 = mFactory.getEqNodeAndFunctionFactory().getExistingFunction(term1);
+//			final EqFunction func2 = mFactory.getEqNodeAndFunctionFactory().getExistingFunction(term2);
+//			if (func1 == null || func2 == null) {
+//				// we did not track at least one of the nodes
+//				return false;
+//			}
+//			return mConstraint.areUnequal(func1, func2);
+//		}
+//		// element case
 		final EqNode node1 = mFactory.getEqNodeAndFunctionFactory().getExistingNode(term1);
 		final EqNode node2 = mFactory.getEqNodeAndFunctionFactory().getExistingNode(term2);
 		if (node1 == null || node2 == null) {

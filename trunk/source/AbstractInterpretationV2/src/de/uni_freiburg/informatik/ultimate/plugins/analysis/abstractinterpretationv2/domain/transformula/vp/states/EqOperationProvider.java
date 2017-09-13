@@ -35,7 +35,6 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IDomainSpecificOperationProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqFunction;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNode;
 
 /**
@@ -50,38 +49,38 @@ public class EqOperationProvider<ACTION extends IIcfgTransition<IcfgLocation>> i
  			EqPredicate<ACTION>,
  			EqTransitionRelation<ACTION>> {
 
-	private final EqConstraintFactory<ACTION, EqNode, EqFunction> mEqConstraintFactory;
+	private final EqConstraintFactory<ACTION, EqNode> mEqConstraintFactory;
 
-	public EqOperationProvider(EqConstraintFactory<ACTION, EqNode, EqFunction> eqConstraintFactory) {
+	public EqOperationProvider(final EqConstraintFactory<ACTION, EqNode> eqConstraintFactory) {
 		mEqConstraintFactory = eqConstraintFactory;
 	}
 
 	@Override
-	public EqDisjunctiveConstraint<ACTION, EqNode, EqFunction> getConstraint(final EqPredicate<ACTION> p) {
+	public EqDisjunctiveConstraint<ACTION, EqNode> getConstraint(final EqPredicate<ACTION> p) {
 		return p.getEqConstraint();
 	}
 
 	@Override
-	public boolean isConstaintUnsatisfiable(EqDisjunctiveConstraint<ACTION, EqNode, EqFunction> constraint) {
+	public boolean isConstaintUnsatisfiable(final EqDisjunctiveConstraint<ACTION, EqNode> constraint) {
 		return constraint.isBottom();
 	}
 
 	@Override
-	public EqDisjunctiveConstraint<ACTION, EqNode, EqFunction> getConstaintFromTransitionRelation(
+	public EqDisjunctiveConstraint<ACTION, EqNode> getConstaintFromTransitionRelation(
 			final EqTransitionRelation<ACTION> transRel) {
 		return transRel.getEqConstraint();
 	}
 
 	@Override
-	public EqDisjunctiveConstraint<ACTION, EqNode, EqFunction> renameVariables(
+	public EqDisjunctiveConstraint<ACTION, EqNode> renameVariables(
 			final Map<Term, Term> substitutionMapping,
-			EqDisjunctiveConstraint<ACTION, EqNode, EqFunction> constraint) {
+			final EqDisjunctiveConstraint<ACTION, EqNode> constraint) {
 		return constraint.renameVariables(substitutionMapping);
 	}
 
 	@Override
-	public EqDisjunctiveConstraint<ACTION, EqNode, EqFunction> constructConjunction(
-			List<EqDisjunctiveConstraint<ACTION, EqNode, EqFunction>> conjuncts) {
+	public EqDisjunctiveConstraint<ACTION, EqNode> constructConjunction(
+			final List<EqDisjunctiveConstraint<ACTION, EqNode>> conjuncts) {
 		return mEqConstraintFactory.conjoinDisjunctiveConstraints(conjuncts);
 	}
 
@@ -89,33 +88,33 @@ public class EqOperationProvider<ACTION extends IIcfgTransition<IcfgLocation>> i
 
 
 	@Override
-	public EqDisjunctiveConstraint<ACTION, EqNode, EqFunction> projectExistentially(final Set<TermVariable> varsToProjectAway,
-			EqDisjunctiveConstraint<ACTION, EqNode, EqFunction> constraint) {
+	public EqDisjunctiveConstraint<ACTION, EqNode> projectExistentially(final Set<TermVariable> varsToProjectAway,
+			final EqDisjunctiveConstraint<ACTION, EqNode> constraint) {
 		return constraint.projectExistentially(varsToProjectAway);
 	}
 
 
 	@Override
-	public boolean isConstaintValid(EqDisjunctiveConstraint<ACTION, EqNode, EqFunction> constraint) {
+	public boolean isConstaintValid(final EqDisjunctiveConstraint<ACTION, EqNode> constraint) {
 		// TODO Auto-generated method stub
 		return false;
 	}
 
 	@Override
-	public EqDisjunctiveConstraint<ACTION, EqNode, EqFunction> constructDisjunction(
-			List<EqDisjunctiveConstraint<ACTION, EqNode, EqFunction>> disjuncts) {
+	public EqDisjunctiveConstraint<ACTION, EqNode> constructDisjunction(
+			final List<EqDisjunctiveConstraint<ACTION, EqNode>> disjuncts) {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public EqDisjunctiveConstraint<ACTION, EqNode, EqFunction> constructNegation(
-			EqDisjunctiveConstraint<ACTION, EqNode, EqFunction> operand) {
+	public EqDisjunctiveConstraint<ACTION, EqNode> constructNegation(
+			final EqDisjunctiveConstraint<ACTION, EqNode> operand) {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public EqDisjunctiveConstraint<ACTION, EqNode, EqFunction> projectUniversally(final Set<TermVariable> varsToProjectAway,
-			EqDisjunctiveConstraint<ACTION, EqNode, EqFunction> constraint) {
+	public EqDisjunctiveConstraint<ACTION, EqNode> projectUniversally(final Set<TermVariable> varsToProjectAway,
+			final EqDisjunctiveConstraint<ACTION, EqNode> constraint) {
 		throw new UnsupportedOperationException();
 	}
 

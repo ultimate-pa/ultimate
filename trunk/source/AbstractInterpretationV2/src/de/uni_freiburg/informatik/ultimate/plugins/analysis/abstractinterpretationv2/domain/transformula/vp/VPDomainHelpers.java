@@ -54,8 +54,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayInd
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalStore;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqGraphNode;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.IEqFunctionIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.EqConstraint;
 
 /**
@@ -288,10 +286,9 @@ public class VPDomainHelpers {
 	}
 
 	public static <ACTION extends IIcfgTransition<IcfgLocation>,
-		NODE extends IEqNodeIdentifier<NODE, FUNCTION>,
-		FUNCTION extends IEqFunctionIdentifier<NODE, FUNCTION>> boolean
+		NODE extends IEqNodeIdentifier<NODE>> boolean
 			constraintFreeOfVars(final Collection<TermVariable> varsToProjectAway,
-					final EqConstraint<ACTION, NODE, FUNCTION> unfrozen,
+					final EqConstraint<ACTION, NODE> unfrozen,
 					final Script script) {
 		if (varsToProjectAway.isEmpty()) {
 			return true;
@@ -323,21 +320,21 @@ public class VPDomainHelpers {
 		return true;
 	}
 
-	public static <NODE extends IEqNodeIdentifier<NODE, FUNCTION>,
-		FUNCTION extends IEqFunctionIdentifier<NODE, FUNCTION>> boolean
-			representativePointersAreConsistent(final Collection<EqGraphNode<NODE, FUNCTION>> values) {
-		for (final EqGraphNode<NODE, FUNCTION> eqgn : values) {
-			for (final EqGraphNode<NODE, FUNCTION> rr : eqgn.getReverseRepresentative()) {
-				if (rr.getRepresentative() != eqgn) {
-					return false;
-				}
-			}
-			if (!eqgn.getRepresentative().getReverseRepresentative().contains(eqgn)) {
-				return false;
-			}
-		}
-		return true;
-	}
+//	public static <NODE extends IEqNodeIdentifier<NODE, FUNCTION>,
+//		FUNCTION extends IEqFunctionIdentifier<NODE, FUNCTION>> boolean
+//			representativePointersAreConsistent(final Collection<EqGraphNode<NODE, FUNCTION>> values) {
+//		for (final EqGraphNode<NODE, FUNCTION> eqgn : values) {
+//			for (final EqGraphNode<NODE, FUNCTION> rr : eqgn.getReverseRepresentative()) {
+//				if (rr.getRepresentative() != eqgn) {
+//					return false;
+//				}
+//			}
+//			if (!eqgn.getRepresentative().getReverseRepresentative().contains(eqgn)) {
+//				return false;
+//			}
+//		}
+//		return true;
+//	}
 
 	public static Term normalizeTerm(final Term term, final TransFormula tf, final ManagedScript mgdScript) {
 		final Map<Term, Term> subs = computeNormalizingSubstitution(tf);
@@ -363,5 +360,17 @@ public class VPDomainHelpers {
 			}
 		}
 		return false;
+	}
+
+	public static <NODE extends IEqNodeIdentifier<NODE>> boolean haveSameType(final NODE func1, final NODE func2) {
+		if (func1.isFunction() != func2.isFunction()) {
+			assert false;
+			return false;
+		}
+		if (func1.getTerm().getSort() != func2.getTerm().getSort()) {
+			assert false;
+			return false;
+		}
+		return true;
 	}
 }

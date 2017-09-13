@@ -146,13 +146,13 @@ public class EqDisjunctiveConstraint<
 		return mConstraints.stream().map(cons -> cons.areUnequal(node1, node2)).reduce((a, b) -> (a || b)).get();
 	}
 
-	public boolean areEqual(final FUNCTION func1, final FUNCTION func2) {
-		return mConstraints.stream().map(cons -> cons.areEqual(func1, func2)).reduce((a, b) -> (a || b)).get();
-	}
-
-	public boolean areUnequal(final FUNCTION func1, final FUNCTION func2) {
-		return mConstraints.stream().map(cons -> cons.areUnequal(func1, func2)).reduce((a, b) -> (a || b)).get();
-	}
+//	public boolean areEqual(final FUNCTION func1, final FUNCTION func2) {
+//		return mConstraints.stream().map(cons -> cons.areEqual(func1, func2)).reduce((a, b) -> (a || b)).get();
+//	}
+//
+//	public boolean areUnequal(final FUNCTION func1, final FUNCTION func2) {
+//		return mConstraints.stream().map(cons -> cons.areUnequal(func1, func2)).reduce((a, b) -> (a || b)).get();
+//	}
 
 	@Override
 	public String toString() {

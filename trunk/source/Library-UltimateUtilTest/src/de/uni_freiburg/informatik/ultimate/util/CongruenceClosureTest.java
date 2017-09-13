@@ -646,6 +646,12 @@ class StringElementFactory extends AbstractCCElementFactory<StringCCElement, Str
 		return new StringCCElement(f, args, isFunction);
 	}
 
+	@Override
+	public StringCCElement getFuncAppElementDetermineIsFunctionYourself(final StringCCElement func,
+			final List<StringCCElement> arguments) {
+		throw new UnsupportedOperationException();
+	}
+
 }
 
 class StringCCElement implements ICongruenceClosureElement<StringCCElement>{

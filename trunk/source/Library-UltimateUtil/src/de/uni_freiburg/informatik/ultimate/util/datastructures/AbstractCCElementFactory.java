@@ -64,6 +64,8 @@ public abstract class AbstractCCElementFactory<ELEM extends ICongruenceClosureEl
 	}
 
 
+	public abstract ELEM getFuncAppElementDetermineIsFunctionYourself(final ELEM func,
+			final List<ELEM> arguments);
 
 	private ELEM getFuncAppElement(final ELEM func, final List<ELEM> arguments, final boolean isFunction,
 			final boolean forceExisting) {

@@ -150,89 +150,91 @@ public class EqConstraintFactory<ACTION extends IIcfgTransition<IcfgLocation>, N
 		return getDisjunctiveConstraint(constraintList);
 	}
 
-	public EqDisjunctiveConstraint<ACTION, NODE> addFunctionDisequalityFlat(final FUNCTION f1, final FUNCTION f2,
-				final EqDisjunctiveConstraint<ACTION, NODE> inputConstraint) {
-			if (f1 == f2 || f1.equals(f2)) {
-				return inputConstraint;
-			}
-			final EqDisjunctiveConstraint<ACTION, NODE> result = getDisjunctiveConstraint(
-					inputConstraint.getConstraints().stream()
-						.map(cons -> addFunctionDisequalityFlat(f1, f2, cons))
-						.collect(Collectors.toSet()));
-			return result;
-	}
+//	public EqDisjunctiveConstraint<ACTION, NODE> addFunctionDisequalityFlat(final NODE f1, final NODE f2,
+//				final EqDisjunctiveConstraint<ACTION, NODE> inputConstraint) {
+//			if (f1 == f2 || f1.equals(f2)) {
+//				return inputConstraint;
+//			}
+//			final EqDisjunctiveConstraint<ACTION, NODE> result = getDisjunctiveConstraint(
+//					inputConstraint.getConstraints().stream()
+//						.map(cons -> addFunctionDisequalityFlat(f1, f2, cons))
+//						.collect(Collectors.toSet()));
+//			return result;
+//	}
 
-	public EqConstraint<ACTION, NODE> addFunctionDisequalityFlat(final FUNCTION func1, final FUNCTION func2,
-			final EqConstraint<ACTION, NODE> originalState) {
-		if (originalState.isBottom()) {
-//			factory.getBenchmark().stop(VPSFO.addEqualityClock);
-			return originalState;
-		}
+//	public EqConstraint<ACTION, NODE> addFunctionDisequalityFlat(final NODE func1, final NODE func2,
+//			final EqConstraint<ACTION, NODE> originalState) {
+//		if (originalState.isBottom()) {
+////			factory.getBenchmark().stop(VPSFO.addEqualityClock);
+//			return originalState;
+//		}
+//
+//		if (func1 == func2 || func1.equals(func2)) {
+////			factory.getBenchmark().stop(VPSFO.addEqualityClock);
+//			return originalState;
+//		}
+//
+//		if (originalState.areUnequal(func1, func2)) {
+//			// the given identifiers are already equal in the originalState
+//			return originalState;
+//		}
+//
+//		if (originalState.areEqual(func1, func2)) {
+//			return getBottomConstraint();
+//		}
+//
+//		final EqConstraint<ACTION, NODE> funct1Added = addFunctionFlat(func1, originalState);
+//		final EqConstraint<ACTION, NODE> funct2Added = addFunctionFlat(func2, funct1Added);
+//
+//		final EqConstraint<ACTION, NODE> newConstraint = unfreeze(funct2Added);
+//		newConstraint.reportFunctionDisequality(func1, func2);
+////		newConstraint.saturate();
+//		if (newConstraint.isInconsistent()) {
+//			return mBottomConstraint;
+//		}
+//		newConstraint.freeze();
+//		return newConstraint;
+//	}
 
-		if (func1 == func2 || func1.equals(func2)) {
-//			factory.getBenchmark().stop(VPSFO.addEqualityClock);
-			return originalState;
-		}
+//	public EqConstraint<ACTION, NODE> addFunctionEqualityFlat(final FUNCTION func1, final FUNCTION func2,
+//			final EqConstraint<ACTION, NODE> originalState) {
+//		if (originalState.isBottom()) {
+////			factory.getBenchmark().stop(VPSFO.addEqualityClock);
+//			return originalState;
+//		}
+//
+//		if (func1 == func2 || func1.equals(func2)) {
+////			factory.getBenchmark().stop(VPSFO.addEqualityClock);
+//			return originalState;
+//		}
+//
+//		if (originalState.areEqual(func1, func2)) {
+//			// the given identifiers are already equal in the originalState
+//			return originalState;
+//		}
+//
+//		if (originalState.areUnequal(func1, func2)) {
+//			return getBottomConstraint();
+//		}
+//
+//		final EqConstraint<ACTION, NODE> funct1Added = addFunctionFlat(func1, originalState);
+//		final EqConstraint<ACTION, NODE> funct2Added = addFunctionFlat(func2, funct1Added);
+//
+//		final EqConstraint<ACTION, NODE> newConstraint = unfreeze(funct2Added);
+//		newConstraint.reportFunctionEquality(func1, func2);
+////		newConstraint.saturate();
+//		if (newConstraint.isInconsistent()) {
+//			return mBottomConstraint;
+//		}
+//		newConstraint.freeze();
+//		return newConstraint;
+//	}
 
-		if (originalState.areUnequal(func1, func2)) {
-			// the given identifiers are already equal in the originalState
-			return originalState;
-		}
-
-		if (originalState.areEqual(func1, func2)) {
-			return getBottomConstraint();
-		}
-
-		final EqConstraint<ACTION, NODE> funct1Added = addFunctionFlat(func1, originalState);
-		final EqConstraint<ACTION, NODE> funct2Added = addFunctionFlat(func2, funct1Added);
-
-		final EqConstraint<ACTION, NODE> newConstraint = unfreeze(funct2Added);
-		newConstraint.reportFunctionDisequality(func1, func2);
-//		newConstraint.saturate();
-		if (newConstraint.isInconsistent()) {
-			return mBottomConstraint;
-		}
-		newConstraint.freeze();
-		return newConstraint;
-	}
-
-	public EqConstraint<ACTION, NODE> addFunctionEqualityFlat(final FUNCTION func1, final FUNCTION func2,
-			final EqConstraint<ACTION, NODE> originalState) {
-		if (originalState.isBottom()) {
-//			factory.getBenchmark().stop(VPSFO.addEqualityClock);
-			return originalState;
-		}
-
-		if (func1 == func2 || func1.equals(func2)) {
-//			factory.getBenchmark().stop(VPSFO.addEqualityClock);
-			return originalState;
-		}
-
-		if (originalState.areEqual(func1, func2)) {
-			// the given identifiers are already equal in the originalState
-			return originalState;
-		}
-
-		if (originalState.areUnequal(func1, func2)) {
-			return getBottomConstraint();
-		}
-
-		final EqConstraint<ACTION, NODE> funct1Added = addFunctionFlat(func1, originalState);
-		final EqConstraint<ACTION, NODE> funct2Added = addFunctionFlat(func2, funct1Added);
-
-		final EqConstraint<ACTION, NODE> newConstraint = unfreeze(funct2Added);
-		newConstraint.reportFunctionEquality(func1, func2);
-//		newConstraint.saturate();
-		if (newConstraint.isInconsistent()) {
-			return mBottomConstraint;
-		}
-		newConstraint.freeze();
-		return newConstraint;
-	}
-
-	public EqConstraint<ACTION, NODE> addWeakEquivalence(final FUNCTION array1,
-			final FUNCTION array2, final List<NODE> storeIndex,
+	public EqConstraint<ACTION, NODE> addWeakEquivalence(final NODE array1,
+//			final NODE array2, final List<NODE> storeIndex,
+			final NODE array2, final NODE storeIndex,
 			final EqConstraint<ACTION, NODE> inputConstraint) {
+		assert VPDomainHelpers.haveSameType(array1, array2);
 
 		final EqConstraint<ACTION, NODE> newConstraint = unfreeze(inputConstraint);
 		newConstraint.reportWeakEquivalence(array1, array2, storeIndex);
@@ -382,16 +384,16 @@ public class EqConstraintFactory<ACTION extends IIcfgTransition<IcfgLocation>, N
 	}
 
 
-	private EqConstraint<ACTION, NODE> addFunctionFlat(final FUNCTION func,
-			final EqConstraint<ACTION, NODE> constraint) {
-		final EqConstraint<ACTION, NODE> newConstraint = unfreeze(constraint);
-		newConstraint.addFunction(func);
-		newConstraint.freeze();
-		// TODO propagations
-		final EqConstraint<ACTION, NODE> newConstraintWithPropagations = newConstraint;
-
-		return newConstraintWithPropagations;
-	}
+//	private EqConstraint<ACTION, NODE> addFunctionFlat(final FUNCTION func,
+//			final EqConstraint<ACTION, NODE> constraint) {
+//		final EqConstraint<ACTION, NODE> newConstraint = unfreeze(constraint);
+//		newConstraint.addFunction(func);
+//		newConstraint.freeze();
+//		// TODO propagations
+//		final EqConstraint<ACTION, NODE> newConstraintWithPropagations = newConstraint;
+//
+//		return newConstraintWithPropagations;
+//	}
 
 
 	/**
@@ -419,17 +421,17 @@ public class EqConstraintFactory<ACTION extends IIcfgTransition<IcfgLocation>, N
 				// nothing to do
 				continue;
 			}
-			if (var.getSort().isArraySort()) {
-				// havoccing an array
-				final FUNCTION functionToHavoc = getEqNodeAndFunctionFactory().getExistingFunction(var);
-				unfrozen.removeFunction(functionToHavoc);
-				assert unfrozen.sanityCheck();
-			} else {
+//			if (var.getSort().isArraySort()) {
+//				// havoccing an array
+//				final FUNCTION functionToHavoc = getEqNodeAndFunctionFactory().getExistingFunction(var);
+//				unfrozen.removeFunction(functionToHavoc);
+//				assert unfrozen.sanityCheck();
+//			} else {
 				// havoccing an element
 				final NODE nodeToHavoc = getEqNodeAndFunctionFactory().getExistingNode(var);
 				unfrozen.removeElement(nodeToHavoc);
 				assert unfrozen.sanityCheck();
-			}
+//			}
 		}
 
 		unfrozen.freeze();

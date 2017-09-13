@@ -40,15 +40,15 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 public class EqNonAtomicBaseNode extends EqNode {
 
 	private final Collection<EqNode> mSupportingNodes;
-	private final Collection<EqFunction> mSupportingFunctions;
+//	private final Collection<EqFunction> mSupportingFunctions;
 
 	public EqNonAtomicBaseNode(final Term term, final Collection<EqNode> supportingNodes,
-			final Collection<EqFunction> supportingFunctions, final EqNodeAndFunctionFactory eqNodeAndFunctionFactory) {
+			final EqNodeAndFunctionFactory eqNodeAndFunctionFactory) {
 		super(term, eqNodeAndFunctionFactory);
 		assert !supportingNodes.isEmpty();
 		assert supportingNodes.stream().allMatch(n -> n instanceof EqAtomicBaseNode);
 		mSupportingNodes = Collections.unmodifiableCollection(supportingNodes);
-		mSupportingFunctions = Collections.unmodifiableCollection(supportingFunctions);
+//		mSupportingFunctions = Collections.unmodifiableCollection(supportingFunctions);
 	}
 
 	@Override
@@ -67,7 +67,7 @@ public class EqNonAtomicBaseNode extends EqNode {
 	}
 
 	@Override
-	public EqFunction getAppliedFunction() {
+	public EqNode getAppliedFunction() {
 		assert false : "check for isFunction() first";
 		return null;
 	}
@@ -88,8 +88,8 @@ public class EqNonAtomicBaseNode extends EqNode {
 		return mSupportingNodes;
 	}
 
-	@Override
-	public Collection<EqFunction> getSupportingFunctions() {
-		return mSupportingFunctions;
-	}
+//	@Override
+//	public Collection<EqFunction> getSupportingFunctions() {
+//		return mSupportingFunctions;
+//	}
 }
