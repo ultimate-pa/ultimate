@@ -141,7 +141,6 @@ public final class SmtUtils {
 		}
 		return simplified;
 	}
-	
 
 	public static ExtendedSimplificationResult simplifyWithStatistics(final ManagedScript script, final Term formula,
 			final IUltimateServiceProvider services, final SimplificationTechnique simplificationTechnique) {
@@ -150,8 +149,8 @@ public final class SmtUtils {
 		final Term simplified = simplify(script, formula, services, simplificationTechnique);
 		final long sizeAfter = new DAGSize().treesize(simplified);
 		final long endTime = System.nanoTime();
-		final ExtendedSimplificationResult result =
-				new ExtendedSimplificationResult(simplified, endTime - startTime, sizeBefore - sizeAfter, ((double) sizeAfter) / sizeBefore * 100);
+		final ExtendedSimplificationResult result = new ExtendedSimplificationResult(simplified, endTime - startTime,
+				sizeBefore - sizeAfter, ((double) sizeAfter) / sizeBefore * 100);
 		return result;
 	}
 
@@ -185,8 +184,6 @@ public final class SmtUtils {
 		public double getReductionRatioInPercent() {
 			return mReductionRatioInPercent;
 		}
-		
-		
 
 	}
 
@@ -458,7 +455,7 @@ public final class SmtUtils {
 		}
 		return affine.toTerm(script);
 	}
-	
+
 	/**
 	 * Return product, in affine representation if possible.
 	 *
@@ -474,28 +471,27 @@ public final class SmtUtils {
 		}
 		return affine.toTerm(script);
 	}
-	
+
 	public static Term minus(final Script script, final Term... operands) {
 		if (operands.length <= 1) {
 			throw new UnsupportedOperationException("use neg for unary minus");
-		} else {
-			final Term[] newOperands = new Term[operands.length];
-			newOperands[0] = operands[0];
-			for (int i=1; i<operands.length; i++) {
-				newOperands[i] = neg(script, operands[i]);
-			}
-			String funcname;
-			final Sort sort = operands[0].getSort();
-			if (SmtSortUtils.isNumericSort(sort)) {
-				funcname = "+";
-			} else if (SmtSortUtils.isBitvecSort(sort)) {
-				funcname = "bvadd";
-			} else {
-				throw new UnsupportedOperationException("unsupported sort " + sort);
-			}
-			return sum(script, funcname, newOperands);
 		}
-		
+		final Term[] newOperands = new Term[operands.length];
+		newOperands[0] = operands[0];
+		for (int i = 1; i < operands.length; i++) {
+			newOperands[i] = neg(script, operands[i]);
+		}
+		String funcname;
+		final Sort sort = operands[0].getSort();
+		if (SmtSortUtils.isNumericSort(sort)) {
+			funcname = "+";
+		} else if (SmtSortUtils.isBitvecSort(sort)) {
+			funcname = "bvadd";
+		} else {
+			throw new UnsupportedOperationException("unsupported sort " + sort);
+		}
+		return sum(script, funcname, newOperands);
+
 	}
 
 	/**
@@ -627,12 +623,11 @@ public final class SmtUtils {
 		}
 		return script.term("false");
 	}
-	
+
 	/**
-	 * Returns the equality ("=" lhs rhs), for inputs of array sort. 
-	 * If the term if of the form ("=" a ("store" a k v)) it is simplified to
-	 * ("=" ("select" a k) v).
-	 * Rationale: the latter term is simpler than the first term for our algorithms
+	 * Returns the equality ("=" lhs rhs), for inputs of array sort. If the term if of the form ("=" a ("store" a k v))
+	 * it is simplified to ("=" ("select" a k) v). Rationale: the latter term is simpler than the first term for our
+	 * algorithms
 	 */
 	private static Term arrayEquality(final Script script, final Term lhs, final Term rhs) {
 		if (!lhs.getSort().isArraySort()) {
@@ -838,7 +833,7 @@ public final class SmtUtils {
 	public static Term and(final Script script, final Collection<Term> terms) {
 		return Util.and(script, terms.toArray(new Term[terms.size()]));
 	}
-	
+
 	public static Term or(final Script script, final Term... terms) {
 		return Util.or(script, terms);
 	}
@@ -846,7 +841,7 @@ public final class SmtUtils {
 	public static Term or(final Script script, final Collection<Term> terms) {
 		return Util.or(script, terms.toArray(new Term[terms.size()]));
 	}
-	
+
 	public static Term and_NewVersion(final Script script, final Collection<Term> terms) {
 		final Set<Term> resultJuncts = new HashSet<>();
 		final Set<Term> negativeJuncts = new HashSet<>();
@@ -857,17 +852,16 @@ public final class SmtUtils {
 				isAbsorbing, terms, resultJuncts, negativeJuncts);
 		if (resultIsAbsorbingElement) {
 			return script.term("false");
+		}
+		if (resultJuncts.isEmpty()) {
+			return script.term("true");
+		} else if (resultJuncts.size() == 1) {
+			return resultJuncts.iterator().next();
 		} else {
-			if (resultJuncts.isEmpty()) {
-				return script.term("true");
-			} else if (resultJuncts.size() == 1) {
-				return resultJuncts.iterator().next();
-			} else {
-				return script.term(connective, resultJuncts.toArray(new Term[resultJuncts.size()]));
-			}
+			return script.term(connective, resultJuncts.toArray(new Term[resultJuncts.size()]));
 		}
 	}
-	
+
 	public static Term or_NewVersion(final Script script, final Collection<Term> terms) {
 		final Set<Term> resultJuncts = new HashSet<>();
 		final Set<Term> negativeJuncts = new HashSet<>();
@@ -878,40 +872,44 @@ public final class SmtUtils {
 				isAbsorbing, terms, resultJuncts, negativeJuncts);
 		if (resultIsAbsorbingElement) {
 			return script.term("true");
+		}
+		if (resultJuncts.isEmpty()) {
+			return script.term("false");
+		} else if (resultJuncts.size() == 1) {
+			return resultJuncts.iterator().next();
 		} else {
-			if (resultJuncts.isEmpty()) {
-				return script.term("false");
-			} else if (resultJuncts.size() == 1) {
-				return resultJuncts.iterator().next();
-			} else {
-				return script.term(connective, resultJuncts.toArray(new Term[resultJuncts.size()]));
-			}
+			return script.term(connective, resultJuncts.toArray(new Term[resultJuncts.size()]));
 		}
 	}
 
 	/**
-	 * Auxiliary method for constructing simplified versions of conjunctions and disjunctions.
-	 * Does the following simplications
+	 * Auxiliary method for constructing simplified versions of conjunctions and disjunctions. Does the following
+	 * simplications
 	 * <ul>
-	 *   <li> if some junct is neutral element, we can omit it
-	 *   (e.g., we can drop "true" from conjunctions)
-	 *   <li> if some junct is absorbing element, result is equivalent to absorbing element
-	 *   (e.g., "x=0 /\ false" is equivalent to "false")
-	 *   <li> if some junct is has the same connective, we can flatten it
-	 *   (e.g., "((A /\ B) /\ C)" is equivalent to "(A /\ B /\ C)")
-	 *   <li> if some junct and its negation occur, the result is equivalent to the absorbing element
-	 *   (e.g., "A /\ (not A)" is equivalent to "false")
-	 *   <li> if some junct occurs twice we can drop one occurrence.
-	 *   (e.g., "A /\ A" is equivalent to "A")
+	 * <li>if some junct is neutral element, we can omit it (e.g., we can drop "true" from conjunctions)
+	 * <li>if some junct is absorbing element, result is equivalent to absorbing element (e.g., "x=0 /\ false" is
+	 * equivalent to "false")
+	 * <li>if some junct is has the same connective, we can flatten it (e.g., "((A /\ B) /\ C)" is equivalent to "(A /\
+	 * B /\ C)")
+	 * <li>if some junct and its negation occur, the result is equivalent to the absorbing element (e.g., "A /\ (not A)"
+	 * is equivalent to "false")
+	 * <li>if some junct occurs twice we can drop one occurrence. (e.g., "A /\ A" is equivalent to "A")
 	 * </ul>
-	 * @param connective either "and" or "or"
-	 * @param isNeutral {@link Predicate} that is true iff input is the neutral element wrt. the connective
-	 * 			("true" is neutral for "and", "false" is neutral for "or")
-	 * @param isAbsorbing {@link Predicate} that is true iff input is the absorbing element wrt. the connective
-	 * 			("false" is absorbing for "and", "true" is absorbing for "or")
-	 * @param inputJuncts disjuncts or conjuncts that are the input to this simplification
-	 * @param resultJuncts disjuncts or conjuncts that will belong to the final output
-	 * @param negatedJuncts arguments of juncts whose connective is "not"
+	 *
+	 * @param connective
+	 *            either "and" or "or"
+	 * @param isNeutral
+	 *            {@link Predicate} that is true iff input is the neutral element wrt. the connective ("true" is neutral
+	 *            for "and", "false" is neutral for "or")
+	 * @param isAbsorbing
+	 *            {@link Predicate} that is true iff input is the absorbing element wrt. the connective ("false" is
+	 *            absorbing for "and", "true" is absorbing for "or")
+	 * @param inputJuncts
+	 *            disjuncts or conjuncts that are the input to this simplification
+	 * @param resultJuncts
+	 *            disjuncts or conjuncts that will belong to the final output
+	 * @param negatedJuncts
+	 *            arguments of juncts whose connective is "not"
 	 * @return true iff we detected that the result is equivalent to the absorbing element of the connective
 	 */
 	private static boolean recursiveAndOrSimplificationHelper(final Script script, final String connective,
@@ -930,33 +928,31 @@ public final class SmtUtils {
 					if (appTerm.getFunction().getName().equals(connective)) {
 						// current junct has same connective as result
 						// descend recusively to check and add its subjuncts
-						final boolean resultIsAbsorbingElement = recursiveAndOrSimplificationHelper(script, connective,
-								isNeutral, isAbsorbing, Arrays.asList(appTerm.getParameters()), resultJuncts, negatedJuncts);
+						final boolean resultIsAbsorbingElement =
+								recursiveAndOrSimplificationHelper(script, connective, isNeutral, isAbsorbing,
+										Arrays.asList(appTerm.getParameters()), resultJuncts, negatedJuncts);
 						if (resultIsAbsorbingElement) {
 							return true;
-						} else {
-							// the recursive all added all subjuncts,
-							// no need to add the junct itself
-							continue;
 						}
+						// the recursive all added all subjuncts,
+						// no need to add the junct itself
+						continue;
 					} else if (appTerm.getFunction().getName().equals("not")) {
 						if (resultJuncts.contains(appTerm.getParameters()[0])) {
-							// we already have the argument of this not term in the resultJuncts, 
+							// we already have the argument of this not term in the resultJuncts,
 							// hence the result will be equivalent to the absorbing element
 							return true;
-						} else {
-							negatedJuncts.add(appTerm.getParameters()[0]);
 						}
+						negatedJuncts.add(appTerm.getParameters()[0]);
 					}
-				} 
+				}
 			}
 			if (negatedJuncts.contains(junct)) {
-				// we already have the negation of this junct in the resultJuncts, 
+				// we already have the negation of this junct in the resultJuncts,
 				// hence the result will be equivalent to the absorbing element
 				return true;
-			} else {
-				resultJuncts.add(junct);
 			}
+			resultJuncts.add(junct);
 		}
 		return false;
 	}
@@ -1185,7 +1181,7 @@ public final class SmtUtils {
 		case "zero_extend":
 		case "extract":
 		case "bvsub":
-//		case "bvmul":
+			// case "bvmul":
 		case "bvudiv":
 		case "bvurem":
 		case "bvsdiv":
