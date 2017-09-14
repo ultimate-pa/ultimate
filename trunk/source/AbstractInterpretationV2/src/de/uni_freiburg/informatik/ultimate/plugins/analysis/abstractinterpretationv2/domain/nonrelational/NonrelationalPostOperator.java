@@ -56,9 +56,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Expression2Term.IIdentifierTranslator;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieSymbolTableVariableProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgInternalTransition;
@@ -90,17 +90,17 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 	private final NonrelationalStatementProcessor<STATE, V> mStatementProcessor;
 	private final BoogieSymbolTable mSymbolTable;
 	private final int mParallelStates;
-	private final Boogie2SmtSymbolTable mBoogie2SmtSymbolTable;
+	private final IBoogieSymbolTableVariableProvider mBoogie2SmtSymbolTable;
 	private final Boogie2SMT mBoogie2Smt;
 	private final CallInfoCache mCallInfoCache;
 
 	protected NonrelationalPostOperator(final ILogger logger, final BoogieSymbolTable symbolTable,
-			final Boogie2SmtSymbolTable bpl2smtSymbolTable,
+			final IBoogieSymbolTableVariableProvider bpl2SmtSymbolTable,
 			final NonrelationalStatementProcessor<STATE, V> statementProcessor, final int parallelStates,
 			final Boogie2SMT boogie2Smt, final CfgSmtToolkit cfgSmtToolki) {
 		mLogger = logger;
 		mStatementExtractor = new RcfgStatementExtractor();
-		mBoogie2SmtSymbolTable = bpl2smtSymbolTable;
+		mBoogie2SmtSymbolTable = bpl2SmtSymbolTable;
 		mStatementProcessor = statementProcessor;
 		mSymbolTable = symbolTable;
 		mParallelStates = parallelStates;

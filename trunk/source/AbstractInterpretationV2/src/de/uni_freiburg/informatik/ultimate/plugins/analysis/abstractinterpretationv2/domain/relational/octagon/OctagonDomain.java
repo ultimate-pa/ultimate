@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractStateBinaryOperator;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieSymbolTableVariableProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
@@ -161,7 +161,8 @@ public class OctagonDomain implements IAbstractDomain<OctDomainState, IcfgEdge, 
 	 */
 	private Supplier<IAbstractPostOperator<OctDomainState, IcfgEdge, IBoogieVar>>
 			makePostOperatorFactory(final IPreferenceProvider ups) {
-		final Boogie2SmtSymbolTable bpl2smtSymbolTable = mBoogieIcfg.getBoogie2SMT().getBoogie2SmtSymbolTable();
+		final IBoogieSymbolTableVariableProvider bpl2smtSymbolTable =
+				mBoogieIcfg.getBoogie2SMT().getBoogie2SmtSymbolTable();
 		final int maxParallelStates = ups.getInt(AbsIntPrefInitializer.LABEL_MAX_PARALLEL_STATES);
 		final boolean fallbackAssignIntervalProjection =
 				ups.getBoolean(OctagonDomainPreferences.FALLBACK_ASSIGN_INTERVAL_PROJECTION);

@@ -44,9 +44,9 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPostOperator;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieSymbolTableVariableProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
@@ -69,24 +69,24 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Ic
 	private final ExpressionTransformer mExprTransformer;
 	private final OctStatementProcessor mStatementProcessor;
 	private final OctAssumeProcessor mAssumeProcessor;
-	private final Boogie2SmtSymbolTable mBpl2SmtTable;
+	private final IBoogieSymbolTableVariableProvider mBpl2SmtTable;
 	private final CallInfoCache mCallInfoCache;
 
 	public OctPostOperator(final ILogger logger, final BoogieSymbolTable symbolTable, final CfgSmtToolkit cfgSmtToolkit,
 			final int maxParallelStates, final boolean fallbackAssignIntervalProjection,
-			final Boogie2SmtSymbolTable bpl2smtTable) {
+			final IBoogieSymbolTableVariableProvider bpl2smtSymbolTable) {
 		if (maxParallelStates < 1) {
 			throw new IllegalArgumentException("MaxParallelStates needs to be > 0, was " + maxParallelStates);
 		}
 
 		mLogger = logger;
 		mSymbolTable = symbolTable;
-		mBpl2SmtTable = bpl2smtTable;
+		mBpl2SmtTable = bpl2smtSymbolTable;
 		mMaxParallelStates = maxParallelStates;
 		mFallbackAssignIntervalProjection = fallbackAssignIntervalProjection;
 
 		mHavocBundler = new HavocBundler();
-		mExprTransformer = new ExpressionTransformer(bpl2smtTable);
+		mExprTransformer = new ExpressionTransformer(bpl2smtSymbolTable);
 		mStatementProcessor = new OctStatementProcessor(this);
 		mAssumeProcessor = new OctAssumeProcessor(this);
 		mCallInfoCache = new CallInfoCache(cfgSmtToolkit, symbolTable);
@@ -166,7 +166,7 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Ic
 		return mAssumeProcessor;
 	}
 
-	public Boogie2SmtSymbolTable getBoogie2SmtSymbolTable() {
+	public IBoogieSymbolTableVariableProvider getBoogie2SmtSymbolTable() {
 		return mBpl2SmtTable;
 	}
 

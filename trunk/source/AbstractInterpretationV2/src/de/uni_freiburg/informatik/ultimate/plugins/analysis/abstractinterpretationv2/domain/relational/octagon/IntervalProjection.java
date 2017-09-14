@@ -37,8 +37,8 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieSymbolTableVariableProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalDomainValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalValue;
@@ -52,10 +52,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  */
 public class IntervalProjection {
 
-	private final Boogie2SmtSymbolTable mBpl2smtSymbolTable;
+	private final IBoogieSymbolTableVariableProvider mBpl2smtSymbolTable;
 
-	public IntervalProjection(final Boogie2SmtSymbolTable bpl2smtSymbolTable) {
-		mBpl2smtSymbolTable = bpl2smtSymbolTable;
+	public IntervalProjection(final IBoogieSymbolTableVariableProvider iBoogieSymbolTableVariableProvider) {
+		mBpl2smtSymbolTable = iBoogieSymbolTableVariableProvider;
 	}
 
 	/**

@@ -31,7 +31,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieSymbolTableVariableProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalStatementProcessor;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorFactory;
@@ -46,12 +46,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  */
 public class SignDomainStatementProcessor
 		extends NonrelationalStatementProcessor<SignDomainState<IBoogieVar>, SignDomainValue> {
-	
+
 	protected SignDomainStatementProcessor(final ILogger logger, final BoogieSymbolTable symbolTable,
-			final Boogie2SmtSymbolTable bpl2smtTable, final int maxParallelStates) {
-		super(logger, symbolTable, bpl2smtTable, maxParallelStates);
+			final IBoogieSymbolTableVariableProvider mIcfgSymbolTable, final int maxParallelStates) {
+		super(logger, symbolTable, mIcfgSymbolTable, maxParallelStates);
 	}
-	
+
 	@Override
 	protected IEvaluatorFactory<SignDomainValue, SignDomainState<IBoogieVar>, IBoogieVar>
 			createEvaluatorFactory(final int maxParallelStates) {

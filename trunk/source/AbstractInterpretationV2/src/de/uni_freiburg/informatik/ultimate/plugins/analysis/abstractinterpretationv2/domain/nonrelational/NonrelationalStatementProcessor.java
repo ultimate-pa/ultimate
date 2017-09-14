@@ -69,8 +69,8 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieNonOldVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieSymbolTableVariableProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.ExpressionEvaluator;
@@ -92,7 +92,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.CrossProducts;
 public abstract class NonrelationalStatementProcessor<STATE extends NonrelationalState<STATE, V, IBoogieVar>, V extends INonrelationalValue<V>>
 		extends BoogieVisitor {
 
-	private final Boogie2SmtSymbolTable mBoogie2SmtSymbolTable;
+	private final IBoogieSymbolTableVariableProvider mBoogie2SmtSymbolTable;
 	private final BoogieSymbolTable mSymbolTable;
 	private final ILogger mLogger;
 	private final IEvaluatorFactory<V, STATE, IBoogieVar> mEvaluatorFactory;
@@ -108,7 +108,7 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 	private boolean mOldScope;
 
 	protected NonrelationalStatementProcessor(final ILogger logger, final BoogieSymbolTable boogieSymbolTable,
-			final Boogie2SmtSymbolTable bpl2SmtTable, final int maxParallelStates) {
+			final IBoogieSymbolTableVariableProvider bpl2SmtTable, final int maxParallelStates) {
 		mBoogie2SmtSymbolTable = bpl2SmtTable;
 		mSymbolTable = boogieSymbolTable;
 		mOldScope = false;

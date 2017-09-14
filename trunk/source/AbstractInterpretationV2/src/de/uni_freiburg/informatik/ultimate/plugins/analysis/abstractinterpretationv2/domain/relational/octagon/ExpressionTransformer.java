@@ -41,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression.Operator;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieSymbolTableVariableProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.typeutils.TypeUtils;
 
@@ -71,13 +71,13 @@ public class ExpressionTransformer {
 	 */
 	private final Map<Expression, IfExpressionTree> mCacheRemoveIfExpr;
 
-	private final Boogie2SmtSymbolTable mBpl2SmtSymbolTable;
+	private final IBoogieSymbolTableVariableProvider mBpl2SmtSymbolTable;
 
-	ExpressionTransformer(final Boogie2SmtSymbolTable symbolTable) {
+	ExpressionTransformer(final IBoogieSymbolTableVariableProvider bpl2smtSymbolTable) {
 		mCacheRemoveIfExpr = new HashMap<>();
 		mCacheLogicNeg = new HashMap<>();
 		mCacheAffineExpr = new HashMap<>();
-		mBpl2SmtSymbolTable = symbolTable;
+		mBpl2SmtSymbolTable = bpl2smtSymbolTable;
 	}
 
 	/**

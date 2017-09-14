@@ -35,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractDom
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieSymbolTableVariableProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
@@ -55,7 +56,7 @@ public class SignDomain implements IAbstractDomain<SignDomainState<IBoogieVar>, 
 
 	private IAbstractPostOperator<SignDomainState<IBoogieVar>, IcfgEdge, IBoogieVar> mPostOperator;
 	private final BoogieSymbolTable mSymbolTable;
-	private final Boogie2SmtSymbolTable mIcfgSymbolTable;
+	private final IBoogieSymbolTableVariableProvider mIcfgSymbolTable;
 
 	public SignDomain(final IUltimateServiceProvider services, final IIcfg<?> icfg,
 			final BoogieSymbolTable symbolTable) {

@@ -37,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractStateBinaryOperator;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieSymbolTableVariableProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
@@ -115,7 +115,8 @@ public class IntervalDomain implements IAbstractDomain<IntervalDomainState<IBoog
 	@Override
 	public IAbstractPostOperator<IntervalDomainState<IBoogieVar>, IcfgEdge, IBoogieVar> getPostOperator() {
 		if (mPostOperator == null) {
-			final Boogie2SmtSymbolTable bpl2SmtSymbolTable = mRootAnnotation.getBoogie2SMT().getBoogie2SmtSymbolTable();
+			final IBoogieSymbolTableVariableProvider bpl2SmtSymbolTable =
+					mRootAnnotation.getBoogie2SMT().getBoogie2SmtSymbolTable();
 			final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 			final int maxParallelStates = prefs.getInt(AbsIntPrefInitializer.LABEL_MAX_PARALLEL_STATES);
 			mPostOperator = new IntervalPostOperator(mLogger, mSymbolTable, bpl2SmtSymbolTable, maxParallelStates,
