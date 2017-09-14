@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
@@ -57,34 +58,37 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-@SuppressWarnings({ "rawtypes", "unchecked" })
-public class PoormanAbstractState implements IAbstractState<PoormanAbstractState, IProgramVarOrConst> {
+public class PoormanAbstractState<BACKING extends IAbstractState<BACKING, IBoogieVar>>
+		implements IAbstractState<PoormanAbstractState<BACKING>, IProgramVarOrConst> {
 
 	private static int sId;
 
 	private final IUltimateServiceProvider mServices;
-	private final IAbstractDomain mBoogieVarBackingDomain;
+	private final IAbstractDomain<BACKING, IcfgEdge, IBoogieVar> mBoogieVarBackingDomain;
 	private final int mId;
 
-	private IAbstractState<? extends IAbstractState<?, IBoogieVar>, IBoogieVar> mBackingState;
+	private BACKING mBackingState;
 
 	private Map<IProgramVarOrConst, IBoogieVar> mProgramToBoogieVar;
 
-	public PoormanAbstractState(final IUltimateServiceProvider services, final IAbstractDomain boogieVarBackingDomain) {
+	public PoormanAbstractState(final IUltimateServiceProvider services,
+			final IAbstractDomain<BACKING, IcfgEdge, IBoogieVar> boogieVarBackingDomain) {
 		this(services, boogieVarBackingDomain, Collections.emptyMap());
 	}
 
-	public PoormanAbstractState(final IUltimateServiceProvider services, final IAbstractDomain boogieVarBackingDomain,
-			final boolean isBottom) {
+	public PoormanAbstractState(final IUltimateServiceProvider services,
+			final IAbstractDomain<BACKING, IcfgEdge, IBoogieVar> boogieVarBackingDomain, final boolean isBottom) {
 		this(services, boogieVarBackingDomain, Collections.emptyMap(), isBottom);
 	}
 
-	public PoormanAbstractState(final IUltimateServiceProvider services, final IAbstractDomain boogieVarBackingDomain,
+	public PoormanAbstractState(final IUltimateServiceProvider services,
+			final IAbstractDomain<BACKING, IcfgEdge, IBoogieVar> boogieVarBackingDomain,
 			final Map<IProgramVarOrConst, IBoogieVar> variablesMap) {
 		this(services, boogieVarBackingDomain, variablesMap, false);
 	}
 
-	public PoormanAbstractState(final IUltimateServiceProvider services, final IAbstractDomain boogieVarBackingDomain,
+	public PoormanAbstractState(final IUltimateServiceProvider services,
+			final IAbstractDomain<BACKING, IcfgEdge, IBoogieVar> boogieVarBackingDomain,
 			final Map<IProgramVarOrConst, IBoogieVar> variablesMap, final boolean isBottom) {
 		mId = sId++;
 		mServices = services;
@@ -98,9 +102,9 @@ public class PoormanAbstractState implements IAbstractState<PoormanAbstractState
 	}
 
 	@Override
-	public PoormanAbstractState addVariable(final IProgramVarOrConst variable) {
-		final PoormanAbstractState newState =
-				new PoormanAbstractState(mServices, mBoogieVarBackingDomain, new HashMap<>(mProgramToBoogieVar));
+	public PoormanAbstractState<BACKING> addVariable(final IProgramVarOrConst variable) {
+		final PoormanAbstractState<BACKING> newState =
+				new PoormanAbstractState<>(mServices, mBoogieVarBackingDomain, new HashMap<>(mProgramToBoogieVar));
 
 		if (newState.mProgramToBoogieVar.put(variable, getBoogieVar(variable)) != null) {
 			throw new UnsupportedOperationException("Variable " + variable + " already present.");
@@ -112,9 +116,9 @@ public class PoormanAbstractState implements IAbstractState<PoormanAbstractState
 	}
 
 	@Override
-	public PoormanAbstractState removeVariable(final IProgramVarOrConst variable) {
-		final PoormanAbstractState newState =
-				new PoormanAbstractState(mServices, mBoogieVarBackingDomain, new HashMap<>(mProgramToBoogieVar));
+	public PoormanAbstractState<BACKING> removeVariable(final IProgramVarOrConst variable) {
+		final PoormanAbstractState<BACKING> newState =
+				new PoormanAbstractState<>(mServices, mBoogieVarBackingDomain, new HashMap<>(mProgramToBoogieVar));
 
 		final IBoogieVar boogieVar = newState.mProgramToBoogieVar.remove(variable);
 		if (boogieVar == null) {
@@ -127,9 +131,9 @@ public class PoormanAbstractState implements IAbstractState<PoormanAbstractState
 	}
 
 	@Override
-	public PoormanAbstractState addVariables(final Collection<IProgramVarOrConst> variables) {
-		final PoormanAbstractState newState =
-				new PoormanAbstractState(mServices, mBoogieVarBackingDomain, new HashMap<>(mProgramToBoogieVar));
+	public PoormanAbstractState<BACKING> addVariables(final Collection<IProgramVarOrConst> variables) {
+		final PoormanAbstractState<BACKING> newState =
+				new PoormanAbstractState<>(mServices, mBoogieVarBackingDomain, new HashMap<>(mProgramToBoogieVar));
 
 		for (final IProgramVarOrConst var : variables) {
 			if (newState.mProgramToBoogieVar.put(var, getBoogieVar(var)) != null) {
@@ -148,9 +152,9 @@ public class PoormanAbstractState implements IAbstractState<PoormanAbstractState
 	}
 
 	@Override
-	public PoormanAbstractState removeVariables(final Collection<IProgramVarOrConst> variables) {
-		final PoormanAbstractState newState =
-				new PoormanAbstractState(mServices, mBoogieVarBackingDomain, new HashMap<>(mProgramToBoogieVar));
+	public PoormanAbstractState<BACKING> removeVariables(final Collection<IProgramVarOrConst> variables) {
+		final PoormanAbstractState<BACKING> newState =
+				new PoormanAbstractState<>(mServices, mBoogieVarBackingDomain, new HashMap<>(mProgramToBoogieVar));
 
 		final Collection<IBoogieVar> boogieVars = new HashSet<>();
 		for (final IProgramVarOrConst var : variables) {
@@ -179,9 +183,10 @@ public class PoormanAbstractState implements IAbstractState<PoormanAbstractState
 	}
 
 	@Override
-	public PoormanAbstractState renameVariables(final Map<IProgramVarOrConst, IProgramVarOrConst> old2newVars) {
-		final PoormanAbstractState newState =
-				new PoormanAbstractState(mServices, mBoogieVarBackingDomain, new HashMap<>(mProgramToBoogieVar));
+	public PoormanAbstractState<BACKING>
+			renameVariables(final Map<IProgramVarOrConst, IProgramVarOrConst> old2newVars) {
+		final PoormanAbstractState<BACKING> newState =
+				new PoormanAbstractState<>(mServices, mBoogieVarBackingDomain, new HashMap<>(mProgramToBoogieVar));
 
 		if (old2newVars.values().stream().anyMatch(newName -> newState.mProgramToBoogieVar.containsKey(newName))) {
 			throw new UnsupportedOperationException("Cannot rename variables, variable name already present.");
@@ -206,9 +211,9 @@ public class PoormanAbstractState implements IAbstractState<PoormanAbstractState
 	}
 
 	@Override
-	public PoormanAbstractState patch(final PoormanAbstractState dominator) {
-		final PoormanAbstractState newState =
-				new PoormanAbstractState(mServices, mBoogieVarBackingDomain, new HashMap<>(mProgramToBoogieVar));
+	public PoormanAbstractState<BACKING> patch(final PoormanAbstractState<BACKING> dominator) {
+		final PoormanAbstractState<BACKING> newState =
+				new PoormanAbstractState<>(mServices, mBoogieVarBackingDomain, new HashMap<>(mProgramToBoogieVar));
 
 		final Map<IProgramVarOrConst, IBoogieVar> varsToAdd = new HashMap<>();
 
@@ -221,16 +226,13 @@ public class PoormanAbstractState implements IAbstractState<PoormanAbstractState
 			}
 		}
 
-		final IAbstractState typefreeCurrentState = mBackingState;
-		final IAbstractState typefreeDominatorState = dominator.mBackingState;
-
-		newState.mBackingState = typefreeCurrentState.patch(typefreeDominatorState);
+		newState.mBackingState = mBackingState.patch(dominator.mBackingState);
 
 		return newState;
 	}
 
 	@Override
-	public PoormanAbstractState intersect(final PoormanAbstractState other) {
+	public PoormanAbstractState<BACKING> intersect(final PoormanAbstractState<BACKING> other) {
 		if (mProgramToBoogieVar.size() != other.mProgramToBoogieVar.size()) {
 			throw new UnsupportedOperationException("Variables are not the same.");
 		}
@@ -247,18 +249,16 @@ public class PoormanAbstractState implements IAbstractState<PoormanAbstractState
 			throw new UnsupportedOperationException("Variable mapping is invalid for intersection.");
 		}
 
-		final PoormanAbstractState newState =
-				new PoormanAbstractState(mServices, mBoogieVarBackingDomain, new HashMap<>(mProgramToBoogieVar));
+		final PoormanAbstractState<BACKING> newState =
+				new PoormanAbstractState<>(mServices, mBoogieVarBackingDomain, new HashMap<>(mProgramToBoogieVar));
 
-		final IAbstractState typefreeBackingState = mBackingState;
-		final IAbstractState typefreeOtherBackingState = other.mBackingState;
-		newState.mBackingState = typefreeBackingState.intersect(typefreeOtherBackingState);
+		newState.mBackingState = mBackingState.intersect(other.mBackingState);
 
 		return newState;
 	}
 
 	@Override
-	public PoormanAbstractState union(final PoormanAbstractState other) {
+	public PoormanAbstractState<BACKING> union(final PoormanAbstractState<BACKING> other) {
 		if (mProgramToBoogieVar.size() != other.mProgramToBoogieVar.size()) {
 			throw new UnsupportedOperationException("Variables are not the same.");
 		}
@@ -275,13 +275,10 @@ public class PoormanAbstractState implements IAbstractState<PoormanAbstractState
 			throw new UnsupportedOperationException("Variable mapping is invalid for intersection.");
 		}
 
-		final PoormanAbstractState newState =
-				new PoormanAbstractState(mServices, mBoogieVarBackingDomain, new HashMap<>(mProgramToBoogieVar));
+		final PoormanAbstractState<BACKING> newState =
+				new PoormanAbstractState<>(mServices, mBoogieVarBackingDomain, new HashMap<>(mProgramToBoogieVar));
 
-		final IAbstractState typefreeBackingState = mBackingState;
-		final IAbstractState typefreeOtherBackingState = other.mBackingState;
-
-		newState.mBackingState = typefreeBackingState.union(typefreeOtherBackingState);
+		newState.mBackingState = mBackingState.union(other.mBackingState);
 
 		return newState;
 	}
@@ -297,24 +294,20 @@ public class PoormanAbstractState implements IAbstractState<PoormanAbstractState
 	}
 
 	@Override
-	public boolean isEqualTo(final PoormanAbstractState other) {
-		final IAbstractState typefreeState = mBackingState;
-		final IAbstractState typefreeOtherState = other.mBackingState;
-		return typefreeState.isEqualTo(typefreeOtherState);
+	public boolean isEqualTo(final PoormanAbstractState<BACKING> other) {
+		return mBackingState.isEqualTo(other.mBackingState);
 	}
 
 	@Override
-	public SubsetResult isSubsetOf(final PoormanAbstractState other) {
-		final IAbstractState typefreeBackingState = mBackingState;
-		final IAbstractState typefreeOtherBackingState = other.mBackingState;
-		return typefreeBackingState.isSubsetOf(typefreeOtherBackingState);
+	public SubsetResult isSubsetOf(final PoormanAbstractState<BACKING> other) {
+		return mBackingState.isSubsetOf(other.mBackingState);
 	}
 
 	@Override
-	public PoormanAbstractState compact() {
+	public PoormanAbstractState<BACKING> compact() {
 
-		final PoormanAbstractState newState =
-				new PoormanAbstractState(mServices, mBoogieVarBackingDomain, new HashMap<>(mProgramToBoogieVar));
+		final PoormanAbstractState<BACKING> newState =
+				new PoormanAbstractState<>(mServices, mBoogieVarBackingDomain, new HashMap<>(mProgramToBoogieVar));
 
 		newState.mBackingState = mBackingState.compact();
 
@@ -344,6 +337,11 @@ public class PoormanAbstractState implements IAbstractState<PoormanAbstractState
 		sb.append(this.getClass().getSimpleName()).append(": ").append(mBackingState.toLogString());
 
 		return sb.toString();
+	}
+
+	@Override
+	public String toString() {
+		return toLogString();
 	}
 
 	@Override
@@ -386,5 +384,9 @@ public class PoormanAbstractState implements IAbstractState<PoormanAbstractState
 				return getGloballyUniqueId();
 			}
 		};
+	}
+
+	protected BACKING getBackingState() {
+		return mBackingState;
 	}
 }

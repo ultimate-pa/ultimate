@@ -28,6 +28,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.dataflow.DataflowDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.livevariable.LiveVariableDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.arraytheory.SMTTheoryDomain;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.poorman.PoormanAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainPreanalysis;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
@@ -149,6 +150,8 @@ public class FixpointEngineFutureParameterFactory {
 				.getSimpleName().equals(domainName)) {
 			return (IAbstractDomain<STATE, IcfgEdge>) new de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.nonrelational.interval.IntervalDomain(
 					logger, new LiteralCollection(Collections.emptySet()), services);
+		} else if (PoormanAbstractDomain.class.getSimpleName().equals(domainName)) {
+			return (IAbstractDomain<STATE, IcfgEdge, IProgramVarOrConst>) new PoormanAbstractDomain(services, root);
 		}
 		throw new UnsupportedOperationException(getFailureString(domainName));
 	}
