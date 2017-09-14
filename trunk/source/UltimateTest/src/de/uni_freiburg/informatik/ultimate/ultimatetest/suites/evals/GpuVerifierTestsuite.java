@@ -33,7 +33,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Ce
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
-import de.uni_freiburg.informatik.ultimate.test.decider.TranslationTestResultDecider;
+import de.uni_freiburg.informatik.ultimate.test.decider.SafetyCheckTestResultDecider;
 import de.uni_freiburg.informatik.ultimate.test.logs.summaries.ColumnDefinition;
 import de.uni_freiburg.informatik.ultimate.test.logs.summaries.ColumnDefinition.Aggregate;
 import de.uni_freiburg.informatik.ultimate.test.logs.summaries.ConversionContext;
@@ -52,9 +52,9 @@ public class GpuVerifierTestsuite extends AbstractEvalTestSuite {
 	@SuppressWarnings("unchecked")
 	private static final Triple<String, String[], String>[] TOOLCHAINS = new Triple[] {
 
-			new Triple<>("BoogiePreprocessing.xml", BPL,
-					"default/automizer/svcomp-Reach-32bit-Automizer_Bitvector.epf"),
-			// new Triple<>("AutomizerBpl", BPL, "default/automizer/svcomp-Reach-32bit-Automizer_Bitvector.epf"),
+			// new Triple<>("BoogiePreprocessing.xml", BPL,
+			// "default/automizer/svcomp-Reach-32bit-Automizer_Bitvector.epf"),
+			new Triple<>("AutomizerBplModSet.xml", BPL, "default/automizer/svcomp-Reach-32bit-Automizer_Bitvector.epf"),
 
 	};
 
@@ -67,14 +67,14 @@ public class GpuVerifierTestsuite extends AbstractEvalTestSuite {
 	@Override
 	protected long getTimeout() {
 		// timeout in ms
-		return 30 * 1000;
+		return 60 * 1000;
 	}
 
 	@Override
 	public ITestResultDecider constructITestResultDecider(final UltimateRunDefinition urd) {
 		// boolean param decides whether timeouts/unknowns are fails (false) or success (true)
-		return new TranslationTestResultDecider(urd.selectPrimaryInputFile());
-		// return new SafetyCheckTestResultDecider(urd, false);
+		// return new TranslationTestResultDecider(urd.selectPrimaryInputFile());
+		return new SafetyCheckTestResultDecider(urd, false);
 	}
 
 	@Override
