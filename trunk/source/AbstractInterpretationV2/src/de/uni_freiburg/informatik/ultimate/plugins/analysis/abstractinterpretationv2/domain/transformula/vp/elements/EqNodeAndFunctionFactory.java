@@ -133,7 +133,7 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 	}
 
 	private EqNode getOrConstructEqAtomicBaseNode(final Term term) {
-		assert !term.getSort().isArraySort();
+//		assert !term.getSort().isArraySort();
 
 		final Term normalizedTerm = normalizeTerm(term);
 

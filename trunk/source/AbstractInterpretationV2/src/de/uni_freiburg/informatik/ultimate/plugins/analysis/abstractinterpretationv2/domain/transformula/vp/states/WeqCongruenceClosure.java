@@ -643,6 +643,7 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 //				// remove from the function equivalence relation
 //				mFunctionTVER.removeElement(func);
 
+				mAllFunctions.remove(elem);
 				mFunctionToRepresentativeToCcPars.remove(elem);
 				mFunctionToRepresentativeToCcChildren.remove(elem);
 				mFunctionToFuncApps.removeDomainElement(elem);

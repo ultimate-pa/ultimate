@@ -322,8 +322,10 @@ public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTrans
 						// .. and an equality on the stored position
 //						final Term selectTerm = SmtUtils.multiDimensionalSelect(mMgdScript.getScript(),
 //								simpleArray.getTerm(), mds.getIndex());
+						mMgdScript.lock(this);
 						final Term selectTerm = mMgdScript.term(this, "select", simpleArray.getTerm(),
 								storeTerm.getParameters()[1]);
+						mMgdScript.unlock(this);
 						final EqNode selectEqNode = mEqNodeAndFunctionFactory.getOrConstructNode(selectTerm);
 						newConstraint = mEqConstraintFactory.addEqualityFlat(selectEqNode, storeValue,
 								intermediateConstraint);

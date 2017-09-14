@@ -63,7 +63,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 
 	private boolean mIsInconsistent;
 
-	private final Set<ELEM> mAllFunctions;
+	protected final Set<ELEM> mAllFunctions;
 
 
 	/**
@@ -736,6 +736,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 				removeElement(funcApp);
 			}
 
+			mAllFunctions.remove(elem);
 			mFunctionToRepresentativeToCcPars.remove(elem);
 			mFunctionToRepresentativeToCcChildren.remove(elem);
 			mFunctionToFuncApps.removeDomainElement(elem);
@@ -1444,6 +1445,11 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		for (final Entry<ELEM, ELEM> en : etpCopy.entrySet()) {
 			mElementToParents.removePair(en.getKey(), en.getValue());
 			mElementToParents.addPair(elemTransformer.apply(en.getKey()), elemTransformer.apply(en.getValue()));
+		}
+
+		for (final ELEM func : new HashSet<>(mAllFunctions)) {
+			mAllFunctions.remove(func);
+			mAllFunctions.add(functionTransformer.apply(func));
 		}
 	}
 
