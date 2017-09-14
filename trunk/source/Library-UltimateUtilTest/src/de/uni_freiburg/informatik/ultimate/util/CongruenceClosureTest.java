@@ -717,4 +717,9 @@ class StringCCElement implements ICongruenceClosureElement<StringCCElement>{
 		return mIsFunction;
 	}
 
+	@Override
+	public boolean hasSameTypeAs(final StringCCElement other) {
+		// TODO: maybe track function sorts..
+		return true;
+	}
 }

@@ -6,6 +6,8 @@ public interface ICongruenceClosureElement<ELEM extends ICongruenceClosureElemen
 
 	boolean isFunction();
 
+	boolean hasSameTypeAs(ELEM other);
+
 	boolean isFunctionApplication();
 
 	ELEM getAppliedFunction();

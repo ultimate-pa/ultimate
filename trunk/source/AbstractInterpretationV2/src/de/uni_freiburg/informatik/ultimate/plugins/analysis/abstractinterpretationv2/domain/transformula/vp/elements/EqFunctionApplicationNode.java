@@ -46,7 +46,7 @@ public class EqFunctionApplicationNode extends EqNode {
 	public EqFunctionApplicationNode(final EqNode function, final List<EqNode> args, final Term term,
 			final EqNodeAndFunctionFactory eqNodeFactory) {
 		super(term, eqNodeFactory);
-		assert args.size() == function.getArity();
+//		assert args.size() == function.getArity();
 		assert args.size() > 0;
 
 		mFunction = function;

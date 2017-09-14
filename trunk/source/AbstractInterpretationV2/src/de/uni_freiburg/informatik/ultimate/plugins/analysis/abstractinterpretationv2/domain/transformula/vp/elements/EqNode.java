@@ -137,4 +137,9 @@ public abstract class EqNode implements IEqNodeIdentifier<EqNode>, ICongruenceCl
 		assert isFunction();
 		return mMdSort;
 	}
+
+	@Override
+	public boolean hasSameTypeAs(final EqNode other) {
+		return mTerm.getSort().equals(other.mTerm.getSort());
+	}
 }

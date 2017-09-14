@@ -272,6 +272,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 	}
 
 	protected boolean reportEqualityRec(final ELEM elem1, final ELEM elem2) {
+		assert elem1.hasSameTypeAs(elem2);
 
 		final ELEM e1OldRep = getRepresentativeAndAddElementIfNeeded(elem1);
 		final ELEM e2OldRep = getRepresentativeAndAddElementIfNeeded(elem2);
@@ -304,8 +305,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 				:
 			mAllFunctions.stream().map(mElementTVER::getEquivalenceClass).collect(Collectors.toSet())) {
 
-			for (final Entry<ELEM, ELEM> funcPair
-					: CrossProducts.binarySelectiveCrossProduct(eqc, true, true)) {
+			for (final Entry<ELEM, ELEM> funcPair : getPairsWithMatchingType(eqc, true, true)) {
+//					: CrossProducts.binarySelectiveCrossProduct(eqc, true, true)) {
 				final Set<ELEM> e1CcPars = getCcPars(funcPair.getKey(), e1OldRep, oldCcPar);
 				final Set<ELEM> e2CcPars = getCcPars(funcPair.getValue(), e2OldRep, oldCcPar);
 
@@ -507,6 +508,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 					candidateSet.retainAll(newCandidates);
 				}
 			}
+			candidateSet = candidateSet.stream().filter(c -> c.hasSameTypeAs(elem)).collect(Collectors.toSet());
 
 			for (final ELEM c : candidateSet) {
 				if (c == elem) {
@@ -580,9 +582,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 				:
 			mAllFunctions.stream().map(mElementTVER::getEquivalenceClass).collect(Collectors.toSet())) {
 
-			for (final Entry<ELEM, ELEM> pair
-					:
-					CrossProducts.binarySelectiveCrossProduct(eqc, true, true).entrySet()) {
+			for (final Entry<ELEM, ELEM> pair : getPairsWithMatchingType(eqc, true, true)) {
+//					CrossProducts.binarySelectiveCrossProduct(eqc, true, true).entrySet()) {
 
 				final Set<List<ELEM>> e1CcChildren = getCcChildren(pair.getKey(), mElementTVER.getRepresentative(e1),
 						oldCcChild);
@@ -623,9 +624,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 			for (final Set<ELEM> eqc
 					:
 						mAllFunctions.stream().map(mElementTVER::getEquivalenceClass).collect(Collectors.toSet())) {
-				for (final Entry<ELEM, ELEM> pair
-						:
-						CrossProducts.binarySelectiveCrossProduct(eqc, true, true).entrySet()) {
+				for (final Entry<ELEM, ELEM> pair : getPairsWithMatchingType(eqc, true, true)) {
+//						CrossProducts.binarySelectiveCrossProduct(eqc, true, true).entrySet()) {
 					final Set<ELEM> funcApps1 = getFunctionApplicationsInSameEquivalenceClass(pair.getKey(),
 							repUnequalToE1);
 					final Set<ELEM> funcApps2 = getFunctionApplicationsInSameEquivalenceClass(pair.getValue(),
@@ -1037,6 +1037,14 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		return Collections.unmodifiableSet(mAllFunctions);
 	}
 
+	protected Set<Entry<ELEM, ELEM>> getPairsWithMatchingType(final Set<ELEM> baseSet,
+			final boolean getReflexive, final boolean getSymmetric) {
+		return CrossProducts.binarySelectiveCrossProduct(baseSet, getReflexive, getSymmetric)
+				.entrySet().stream()
+				.filter(en -> en.getKey().hasSameTypeAs(en.getValue()))
+				.collect(Collectors.toSet());
+	}
+
 	public boolean isInconsistent() {
 		return mIsInconsistent;
 	}
@@ -1059,7 +1067,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		assert funcApp1.isFunctionApplication() && funcApp2.isFunctionApplication();
 		assert !forceThatFunctionsAreEqual || mElementTVER.getEqualityStatus(funcApp1.getAppliedFunction(),
 				funcApp2.getAppliedFunction()) == EqualityStatus.EQUAL;
-		assert funcApp1.getArguments().size() == funcApp2.getArguments().size();
+//		assert funcApp1.getArguments().size() == funcApp2.getArguments().size();
+		assert funcApp1.hasSameTypeAs(funcApp2);
 
 		return argumentsAreCongruent(funcApp1.getArguments(), funcApp2.getArguments());
 	}
@@ -1270,10 +1279,26 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 					return false;
 		}
 
-//		if (mFunctionTVER.isInconsistent()) {
-//					assert false;
-//					return false;
-//		}
+		/*
+		 * check that all elements that are related are of the same type
+		 * while same type means here:
+		 *  - for funcApps: same number of arguments
+		 *  -
+		 */
+		for (final ELEM e1 : getAllElements()) {
+			for (final ELEM e2 : mElementTVER.getEquivalenceClass(e1)) {
+				if (!e1.hasSameTypeAs(e2)) {
+					assert false;
+					return false;
+				}
+			}
+		}
+		for (final Entry<ELEM, ELEM> deq : mElementTVER.getDisequalities()) {
+			if (!deq.getKey().hasSameTypeAs(deq.getValue())) {
+				assert false;
+				return false;
+			}
+		}
 
 		/*
 		 * check that all elements in mAllFunctions are indeed functions
@@ -1321,10 +1346,6 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 				assert false;
 				return false;
 			}
-//			if (mFunctionTVER.isInconsistent()) {
-//				assert false;
-//				return false;
-//			}
 			if (mElementTVER == null) {
 				assert false;
 				return false;
@@ -1333,6 +1354,23 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 
 		return true;
 	}
+
+//	protected boolean haveSameType(final ELEM e1, final ELEM e2) {
+//		// nonsense:..
+////		if (e1.isFunctionApplication()) {
+////			if (!e2.isFunctionApplication()) {
+////				return false;
+////			}
+////
+////			if (e1.getArguments().size() != e2.getArguments().size()) {
+////				return false;
+////			}
+////		}
+//		if (e1.isFunction() != e2.isFunction()) {
+//				return false;
+//		}
+//		return true;
+//	}
 
 	public Map<ELEM, ELEM> getSupportingElementEqualities() {
 		return mElementTVER.getSupportingEqualities();

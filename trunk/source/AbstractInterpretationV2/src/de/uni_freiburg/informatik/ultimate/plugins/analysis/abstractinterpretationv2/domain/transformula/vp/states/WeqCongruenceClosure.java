@@ -18,7 +18,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.IEqNodeIdentifier;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CongruenceClosure;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.CrossProducts;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
@@ -228,6 +227,7 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 
 	@Override
 	protected boolean reportEqualityRec(final NODE node1, final NODE node2) {
+		assert node1.hasSameTypeAs(node2);
 		boolean madeChanges = false;
 
 		final NestedMap2<NODE, NODE, Set<List<NODE>>> oldCcChild =
@@ -263,8 +263,7 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
  		 *  We view an equality a[i] = b[i] as a weak equivalence a --q!=i-- b --> update the corresponding weq edge
 		 *  accordingly, or introduce one.
 		 */
-		for (final Entry<NODE, NODE> funcPair :
-			getFunctionPairsWithMatchingType()) {
+		for (final Entry<NODE, NODE> funcPair : getPairsWithMatchingType(mAllFunctions, false, true)) {
 
 			if (!funcPair.getKey().getSort().equals(funcPair.getValue().getSort())) {
 				// sorts don't match -- functions cannot be weakly equivalent
@@ -293,11 +292,12 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 		return true;
 	}
 
-	private Set<Entry<NODE, NODE>> getFunctionPairsWithMatchingType() {
-		return CrossProducts.binarySelectiveCrossProduct(getAllFunctions(), false, true).entrySet().stream()
-			.filter(en -> en.getKey().getTerm().getSort().equals(en.getValue().getTerm().getSort()))
-			.collect(Collectors.toSet());
-	}
+//	@Override
+//	protected Set<Entry<NODE, NODE>> getFunctionPairsWithMatchingType() {
+//		return CrossProducts.binarySelectiveCrossProduct(getAllFunctions(), false, true).entrySet().stream()
+//			.filter(en -> en.getKey().getTerm().getSort().equals(en.getValue().getTerm().getSort()))
+//			.collect(Collectors.toSet());
+//	}
 
 	private void reportAllArrayEqualitiesFromWeqGraph() {
 		while (mWeakEquivalenceGraph.hasArrayEqualities()) {
@@ -822,6 +822,14 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 		}
 		return res;
 	}
+
+//	@Override
+//	protected boolean haveSameType(final NODE e1, final NODE e2) {
+//		if (!e1.getTerm().getSort().equals(e2.getTerm().getSort())) {
+//			return false;
+//		}
+//		return super.haveSameType(e1, e2);
+//	}
 
 	@Override public String toString() {
 		if (isTautological()) {

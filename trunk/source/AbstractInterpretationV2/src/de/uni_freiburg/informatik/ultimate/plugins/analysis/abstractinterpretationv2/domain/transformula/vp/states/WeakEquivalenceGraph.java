@@ -479,7 +479,7 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		for (final Entry<Doubleton<NODE>, WeakEquivalenceEdgeLabel> edge : mWeakEquivalenceEdges.entrySet()) {
 			final NODE source = edge.getKey().getOneElement();
 			final NODE target = edge.getKey().getOtherElement();
-			if (!source.getTerm().getSort().equals(target.getTerm().getSort())) {
+			if (!source.hasSameTypeAs(target)) {
 					assert false;
 					return false;
 			}
@@ -1023,8 +1023,15 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 				}
 				remove.accept(meet);
 				final CongruenceClosure<NODE> newPa = meet.projectToElements(mFactory.getAllWeqNodes());
+				if (newPa.isTautological()) {
+					// we have one "true" disjunct --> the whole disjunction is tautological
+					mLabel.clear();
+					mLabel.add(new CongruenceClosure<>());
+					return;
+				}
 				newLabelContents.add(newPa);
 			}
+			assert newLabelContents.size() <= 1 || !newLabelContents.stream().anyMatch(c -> c.isTautological());
 			mLabel.clear();
 			mLabel.addAll(newLabelContents);
 		}

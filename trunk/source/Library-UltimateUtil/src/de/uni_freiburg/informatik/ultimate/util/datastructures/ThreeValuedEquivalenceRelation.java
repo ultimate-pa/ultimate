@@ -374,8 +374,8 @@ public class ThreeValuedEquivalenceRelation<E> {
 	private static <E> HashRelation<E, E> xJoinDisequalities(final ThreeValuedEquivalenceRelation<E> tver1,
 			final ThreeValuedEquivalenceRelation<E> tver2, final UnionFind<E> newElemPartition, final boolean conjoin) {
 		final HashRelation<E, E> result = new HashRelation<>();
-		for (final Entry<E, E> pair : CrossProducts.binarySelectiveCrossProduct(newElemPartition.getAllRepresentatives(),
-				false, false)) {
+		for (final Entry<E, E> pair :
+			CrossProducts.binarySelectiveCrossProduct(newElemPartition.getAllRepresentatives(), false, false)) {
 			final boolean addDisequality;
 			if (conjoin) {
 				addDisequality = tver1.getEqualityStatus(pair.getKey(), pair.getValue()) == EqualityStatus.NOT_EQUAL
