@@ -69,7 +69,7 @@ public class BuchiComplementationTestSuite extends UltimateTestSuite {
 
 	private static final String TOOLCHAIN = "examples/toolchains/AutomataScriptInterpreter.xml";
 	private static final File TOOLCHAIN_FILE = new File(TestUtil.getPathFromTrunk(TOOLCHAIN));
-	private static int sTimeout = 10 * 1_000;
+	private static int sTimeout = Integer.MAX_VALUE;//10 * 1_000;
 	private static final String[] mDirectories = {
 //			"examples/Automata/regression/nwa/operations/minimization",
 //			"examples/Automata/benchmarks/nwa/operations/minimization",
@@ -79,6 +79,7 @@ public class BuchiComplementationTestSuite extends UltimateTestSuite {
 			"examples/Automata/regression/nwa/operations/buchiComplement/ba",
 			
 //			"examples/automata-benchmarks/2016TACAS-Complementing_Semi-deterministic_Buchi_Automata"
+
 	};
 	
 	private static final String[] mFileEndings = { ".ats" };
@@ -106,9 +107,11 @@ public class BuchiComplementationTestSuite extends UltimateTestSuite {
 	private static final Set<String> INTERESTING_COLUMNS_AS_SET = new HashSet<>(Arrays.asList(INTERESTING_COLUMNS));
 
 	private static final Object[] INTERESTING_OPERATIONS = {
-			"buchiComplementFKV",
+//			"buchiComplementFKV",
 			"buchiComplementNCSB",
-			"buchiComplementSVW",
+			"buchiComplementNCSBSimple2",
+			"buchiComplementNCSBLazy2",
+//			"buchiComplementSVW",
 	};
 	
 	private static final Set<Object> INTERESTING_OPERATIONS_AS_SET =

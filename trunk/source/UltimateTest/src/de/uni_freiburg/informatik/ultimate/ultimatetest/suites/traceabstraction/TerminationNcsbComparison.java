@@ -46,6 +46,7 @@ public class TerminationNcsbComparison extends AbstractBuchiAutomizerTestSuite {
 	/** Limit the number of files per directory. */
 
 	private static int mFilesPerDirectoryLimit = Integer.MAX_VALUE;
+
 //	 private static int mFilesPerDirectoryLimit = 1;
 	 private static final int FILE_OFFSET = 0;
     private static final boolean runOnlySelectedExample=true;

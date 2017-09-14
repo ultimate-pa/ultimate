@@ -45,7 +45,7 @@ public class Svcomp17FoldersAutomizerTermination extends AbstractBuchiAutomizerT
 
 	/** Limit the number of files per directory. */
 //	private static int mFilesPerDirectoryLimit = Integer.MAX_VALUE;
-	 private static int mFilesPerDirectoryLimit = 1;
+	 private static int mFilesPerDirectoryLimit = 20;
 	 private static final int FILE_OFFSET = 10;
 
 	// @formatter:off
@@ -56,10 +56,13 @@ public class Svcomp17FoldersAutomizerTermination extends AbstractBuchiAutomizerT
 	private static final DirectoryFileEndingsPair[] mDirectoryFileEndingsPairs = {
 		/***** Category 5. Termination *****/
 		/*** Subcategory  Termination-MainControlFlow ***/
-		new DirectoryFileEndingsPair("examples/svcomp/c/locks/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET, mFilesPerDirectoryLimit),
-//		new DirectoryFileEndingsPair("examples/svcomp/termination-crafted-lit/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET, mFilesPerDirectoryLimit),
-//		new DirectoryFileEndingsPair("examples/svcomp/termination-numeric/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET, mFilesPerDirectoryLimit),
-//		new DirectoryFileEndingsPair("examples/svcomp/termination-restricted-15/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET, mFilesPerDirectoryLimit),
+		new DirectoryFileEndingsPair("examples/svcomp/test2/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET, mFilesPerDirectoryLimit),
+
+//		new DirectoryFileEndingsPair("examples/svcomp/c/locks/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET, mFilesPerDirectoryLimit),
+//		new DirectoryFileEndingsPair("examples/svcomp/c/termination-crafted/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET, mFilesPerDirectoryLimit),
+//		new DirectoryFileEndingsPair("examples/svcomp/c/termination-crafted-lit/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET, mFilesPerDirectoryLimit),
+//		new DirectoryFileEndingsPair("examples/svcomp/c/termination-numeric/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET, mFilesPerDirectoryLimit),
+//		new DirectoryFileEndingsPair("examples/svcomp/c/termination-restricted-15/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET, mFilesPerDirectoryLimit),
 //		
 //		new DirectoryFileEndingsPair("examples/svcomp/termination-crafted-todo/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET, mFilesPerDirectoryLimit),
 //		new DirectoryFileEndingsPair("examples/svcomp/termination-crafted-lit-todo/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET, mFilesPerDirectoryLimit),
@@ -127,10 +130,10 @@ public class Svcomp17FoldersAutomizerTermination extends AbstractBuchiAutomizerT
 
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
-		int n = 0;
+//		int n = 0;
 		for (final DirectoryFileEndingsPair dfep : mDirectoryFileEndingsPairs) {
-			n ++;
-			if(n > 10) break;
+//			n ++;
+//			if(n > 10) break;
 			for (final String toolchain : mCToolchains) {
 				addTestCase(UltimateRunDefinitionGenerator.getRunDefinitionsFromTrunkRegex(
 						new String[] { dfep.getDirectory() }, dfep.getFileEndings(), mSettings, toolchain, getTimeout(),

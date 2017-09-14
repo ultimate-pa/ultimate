@@ -68,9 +68,9 @@ public class Svcomp17AutomizerTerminationTestSuite extends AbstractSVCOMPTestSui
 //		Termination-Other.set
 		//@formatter:on
 
-		rtr.addAll(getForAll("Termination-MainControlFlow", 9999));
-		rtr.addAll(getForAll("Termination-MainHeap", 9999));
-		rtr.addAll(getForAll("Termination-Other", 9999));
+		rtr.addAll(getForAll("Termination-MainControlFlow", 999));
+		rtr.addAll(getForAll("Termination-MainHeap", 999));
+		rtr.addAll(getForAll("Termination-Other", 999));
 		return rtr;
 	}
 	

@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -40,7 +39,6 @@ import de.uni_freiburg.informatik.ultimate.automata.SetOfStates;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaSuccessorStateProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.NwaToBuchiWrapper;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.NwaToBuchiWrapper2;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.Options;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.automata.IBuchi;
@@ -145,6 +143,7 @@ public class BuchiComplementNCSBSimpleNwa2<LETTER, STATE> implements INwaSuccess
 		mComplementBuchi = new BuchiNwaComplementSDBA(mOperandBuchi);
 		constructInitialState();
 		Options.optNCSB = false;
+		Options.optBeqC = true;
 	}
 	
 	
