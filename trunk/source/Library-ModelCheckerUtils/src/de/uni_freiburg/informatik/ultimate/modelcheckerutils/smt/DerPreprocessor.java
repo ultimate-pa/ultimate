@@ -37,6 +37,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArraySelect;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayStore;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.NnfTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.NnfTransformer.QuantifierHandling;
@@ -44,15 +46,34 @@ import de.uni_freiburg.informatik.ultimate.util.ConstructionCache;
 import de.uni_freiburg.informatik.ultimate.util.ConstructionCache.IValueConstruction;
 
 /**
- * Preprocessor for array partial quantifier elimination that handles
- * DER-like cases.
- *  
- * @author Matthias Heizmann
+ * Preprocessor for array partial quantifier elimination that handles the
+ * following DER-like cases.
+ * 
+ * Let's assume that arr is the variable that we want to eliminate.
+ * 
+ * The term (= arr (store b k v)) is replaced by (= (select arr k') v') if
+ * arr==b and replaced by (= arr (store b k' v') if arr!=b. The term (= arr
+ * (select b k) is replaced by (= arr (select b k'). In all cases k'==k (resp.
+ * v'==v) if arr is not a subterm of arr. In case arr is a subterm of k, we k'
+ * is a fresh variable and we set mIntroducedDerPossibility to true.
+ * 
+ * The result should be used as follows. If mIntroducedDerPossibility == false
+ * the result can be used directly. The variable might still be there but the
+ * annoying DER term is gone (sef-update case only)> If
+ * mIntroducedDerPossibility == false we introduced a equality (resp.
+ * disequality for universal quantification) that allow us the eliminate arr via
+ * the DER quantifier elimination technique. (Apply DER for the variable arr
+ * only!). However, we also introduced auxiliary variables that have to be
+ * quantified and we introduced additional conjuncts (resp. disjuncts for
+ * universal quantification) of the form k'=k that have to be merged to the
+ * operand term of the quantifier elimination.
+ * 
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * 
  */
 public class DerPreprocessor extends TermTransformer {
 
-	private final static String AUX_VAR_PREFIX = "DerPreprocessor";
+	private static final String AUX_VAR_PREFIX = "DerPreprocessor";
 
 	private final IUltimateServiceProvider mServices;
 	private final Script mScript;
@@ -64,7 +85,8 @@ public class DerPreprocessor extends TermTransformer {
 	private final List<Term> mAuxVarDefinitions = new ArrayList<>();
 	private boolean mIntroducedDerPossibility = false;
 
-	public DerPreprocessor(final IUltimateServiceProvider services, final ManagedScript mgdScript, final TermVariable eliminatee, final int quantifier) {
+	public DerPreprocessor(final IUltimateServiceProvider services, final ManagedScript mgdScript,
+			final TermVariable eliminatee, final int quantifier) {
 		mServices = services;
 		mScript = mgdScript.getScript();
 		mMgdScript = mgdScript;
@@ -76,10 +98,11 @@ public class DerPreprocessor extends TermTransformer {
 			public TermVariable constructValue(final Term term) {
 				final TermVariable auxVar = mMgdScript.constructFreshTermVariable(AUX_VAR_PREFIX, term.getSort());
 				Term definition = QuantifierUtils.applyDerOperator(mScript, mQuantifier, auxVar, term);
-				
-				//TODO: let Prenex transformer deal with non-NNF terms and remove the following line 
+
+				// TODO: let Prenex transformer deal with non-NNF terms and
+				// remove the following line
 				definition = new NnfTransformer(mMgdScript, mServices, QuantifierHandling.CRASH).transform(definition);
-				
+
 				mAuxVarDefinitions.add(definition);
 				mNewAuxVars.add(auxVar);
 				return auxVar;
@@ -91,9 +114,6 @@ public class DerPreprocessor extends TermTransformer {
 	public List<TermVariable> getNewAuxVars() {
 		return mNewAuxVars;
 	}
-	
-	
-	
 
 	public List<Term> getAuxVarDefinitions() {
 		return mAuxVarDefinitions;
@@ -116,7 +136,7 @@ public class DerPreprocessor extends TermTransformer {
 				final Term rhs = appTerm.getParameters()[1];
 				if (lhs.equals(mEliminatee) || rhs.equals(mEliminatee)) {
 					if (mQuantifier == QuantifiedFormula.EXISTS) {
-						final Term result = do1(lhs, rhs);
+						final Term result = constructReplacement(lhs, rhs);
 						setResult(result);
 						return;
 					} else if (mQuantifier == QuantifiedFormula.FORALL) {
@@ -126,8 +146,10 @@ public class DerPreprocessor extends TermTransformer {
 					}
 				}
 			} else if (fun.equals("distinct")) {
-				// TODO: do not allow distinct after our convention does not allow it nay more
-				// throw new AssertionError("distinct should have been removed");
+				// TODO: do not allow distinct after our convention does not
+				// allow it nay more
+				// throw new AssertionError("distinct should have been
+				// removed");
 				if (appTerm.getParameters().length != 2) {
 					throw new UnsupportedOperationException("only binary equality supported");
 				}
@@ -137,7 +159,7 @@ public class DerPreprocessor extends TermTransformer {
 					if (mQuantifier == QuantifiedFormula.EXISTS) {
 						return;
 					} else if (mQuantifier == QuantifiedFormula.FORALL) {
-						final Term result = do1(lhs, rhs);
+						final Term result = constructReplacement(lhs, rhs);
 						setResult(result);
 						return;
 					} else {
@@ -163,7 +185,7 @@ public class DerPreprocessor extends TermTransformer {
 							if (mQuantifier == QuantifiedFormula.EXISTS) {
 								return;
 							} else if (mQuantifier == QuantifiedFormula.FORALL) {
-								final Term result = do1(lhs, rhs);
+								final Term result = constructReplacement(lhs, rhs);
 								setResult(result);
 								return;
 							} else {
@@ -178,32 +200,30 @@ public class DerPreprocessor extends TermTransformer {
 		super.convert(term);
 	}
 
-	private Term do1(final Term lhs, final Term rhs) {
+	private Term constructReplacement(final Term lhs, final Term rhs) {
 		if (lhs.equals(mEliminatee)) {
-			return do2(rhs);
+			return constructReplacement(rhs);
 		} else if (rhs.equals(mEliminatee)) {
-			return do2(lhs);
+			return constructReplacement(lhs);
 		} else {
 			throw new AssertionError("has to be on one side");
 		}
 	}
 
-	private Term do2(final Term otherSide) {
-		if (!(otherSide instanceof ApplicationTerm)) {
-			throw new IllegalArgumentException("expected store, got " + otherSide);
+	private Term constructReplacement(final Term otherSide) {
+		final ArrayStore arrayStore = ArrayStore.convert(otherSide);
+		if (arrayStore != null) {
+			return constructReplacementForStoreCase(arrayStore.getArray(), arrayStore.getIndex(),
+					arrayStore.getValue());
 		}
-		final ApplicationTerm appTerm = (ApplicationTerm) otherSide;
-		if (!appTerm.getFunction().getName().equals("store")) {
-			throw new IllegalArgumentException("expected store, got " + otherSide);
+		final ArraySelect arraySelect = ArraySelect.convert(otherSide);
+		if (arraySelect != null) {
+			return constructReplacementForSelectCase(arraySelect.getArray(), arraySelect.getIndex());
 		}
-		if (appTerm.getParameters().length != 3) {
-			throw new IllegalArgumentException("expected store, got " + otherSide);
-		}
-		return do3(appTerm.getParameters()[0], appTerm.getParameters()[1], appTerm.getParameters()[2]);
-		
+		throw new UnsupportedOperationException("DerPreprocessor supports only store and select, but not " + otherSide);
 	}
 
-	private Term do3(final Term array, final Term index, final Term value) {
+	private Term constructReplacementForStoreCase(final Term array, final Term index, final Term value) {
 		final Term newIndex;
 		if (Arrays.asList(index.getFreeVars()).contains(mEliminatee)) {
 			newIndex = mAuxVarCc.getOrConstruct(index);
@@ -220,15 +240,36 @@ public class DerPreprocessor extends TermTransformer {
 		if (array.equals(mEliminatee)) {
 			// self-update
 			final Term select = mScript.term("select", array, newIndex);
-			result = QuantifierUtils.applyDerOperator(mScript, mQuantifier, select, newValue); 
+			result = QuantifierUtils.applyDerOperator(mScript, mQuantifier, select, newValue);
 		} else {
 			if (newValue != value || newIndex != index) {
 				mIntroducedDerPossibility = true;
 			}
-			final Term store = mScript.term("store", array, newIndex, newValue);  
+			final Term store = mScript.term("store", array, newIndex, newValue);
 			result = QuantifierUtils.applyDerOperator(mScript, mQuantifier, mEliminatee, store);
 		}
-		//TODO: let Prenex transformer deal with non-NNF terms and remove the following line 
+		// TODO: let Prenex transformer deal with non-NNF terms and remove the
+		// following line
+		result = new NnfTransformer(mMgdScript, mServices, QuantifierHandling.CRASH).transform(result);
+		return result;
+	}
+
+	private Term constructReplacementForSelectCase(final Term array, final Term index) {
+		final Term newIndex;
+		if (Arrays.asList(index.getFreeVars()).contains(mEliminatee)) {
+			newIndex = mAuxVarCc.getOrConstruct(index);
+		} else {
+			newIndex = index;
+		}
+		Term result;
+		if (newIndex != index) {
+			mIntroducedDerPossibility = true;
+		}
+		final Term store = mScript.term("select", array, newIndex);
+		result = QuantifierUtils.applyDerOperator(mScript, mQuantifier, mEliminatee, store);
+
+		// TODO: let Prenex transformer deal with non-NNF terms and remove the
+		// following line
 		result = new NnfTransformer(mMgdScript, mServices, QuantifierHandling.CRASH).transform(result);
 		return result;
 	}
