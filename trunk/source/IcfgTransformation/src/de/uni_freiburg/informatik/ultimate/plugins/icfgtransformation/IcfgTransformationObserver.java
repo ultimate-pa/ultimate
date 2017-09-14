@@ -57,6 +57,7 @@ import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fast
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr.FastUPRTransformer.FastUPRReplacementMethod;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.mohr.IcfgLoopTransformerMohr;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.werner.WernerLoopAccelerationIcfgTransformer;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.werner.WernerLoopAccelerationIcfgTransformer.DealingWithArraysTypes;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.woelfing.LoopAccelerationIcfgTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.DNF;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.ModuloNeighborTransformation;
@@ -276,8 +277,10 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 			final IBacktranslationTracker backtranslationTracker, final ReplacementVarFactory fac) {
 		final ITransformulaTransformer transformer = new ExampleLoopAccelerationTransformulaTransformer(mLogger,
 				icfg.getCfgSmtToolkit().getManagedScript(), icfg.getCfgSmtToolkit().getSymbolTable(), fac);
+		final DealingWithArraysTypes options = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
+				.getEnum(IcfgTransformationPreferences.LABEL_LA_WERNER_MODE, DealingWithArraysTypes.class);
 		return new WernerLoopAccelerationIcfgTransformer<>(mLogger, icfg, locFac, backtranslationTracker, outlocClass,
-				icfg.getIdentifier() + "IcfgDuplicate", transformer, mServices).getResult();
+				icfg.getIdentifier() + "IcfgDuplicate", transformer, mServices, options).getResult();
 	}
 
 	private <INLOC extends IcfgLocation, OUTLOC extends IcfgLocation> IIcfg<OUTLOC> applyLoopAccelerationEx(
