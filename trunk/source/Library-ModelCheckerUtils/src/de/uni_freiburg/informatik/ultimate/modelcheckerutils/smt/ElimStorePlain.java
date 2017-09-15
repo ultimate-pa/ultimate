@@ -159,7 +159,7 @@ public class ElimStorePlain {
 							+ QuantifierUtils.getXjunctsOuter(eTask.getQuantifier(), eliminationTask2.getTerm()).length
 							+ " xjuncts.");
 				}
-				assert (!maxSizeIncrease(tr, classifyEliminatees(eliminationTask2.getEliminatees()))) : "number of max-dim elements increased!";
+//				assert (!maxSizeIncrease(tr, classifyEliminatees(eliminationTask2.getEliminatees()))) : "number of max-dim elements increased!";
 
 				pushTaskOnStack(eliminationTask2, taskStack);
 			}

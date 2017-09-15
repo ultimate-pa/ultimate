@@ -67,7 +67,7 @@ public class QuantifierSequence {
 		while(innerTerm instanceof QuantifiedFormula) {
 			final QuantifiedFormula qf = (QuantifiedFormula) innerTerm;
 			final Set<TermVariable> variables = SmtUtils.filterToVarsThatOccurFreelyInTerm(
-					Arrays.asList(qf.getVariables()), qf.getSubformula());
+					new HashSet<TermVariable>(Arrays.asList(qf.getVariables())), qf.getSubformula());
 			if (!variables.isEmpty()) {
 				final int quantifier = qf.getQuantifier();
 				if (mQuantifierBlocks.isEmpty() || mQuantifierBlocks.get(mQuantifierBlocks.size()-1).getQuantifier() != quantifier) {

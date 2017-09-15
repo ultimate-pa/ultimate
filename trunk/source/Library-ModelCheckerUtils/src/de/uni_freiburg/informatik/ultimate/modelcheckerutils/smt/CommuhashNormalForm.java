@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 
 import java.math.BigInteger;
 import java.util.Arrays;
+import java.util.HashSet;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -37,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineRelation;
@@ -134,7 +136,7 @@ public class CommuhashNormalForm {
 		@Override
 		public void postConvertQuantifier(final QuantifiedFormula old, final Term newBody) {
 			final Term result = SmtUtils.quantifier(mScript, 
-					old.getQuantifier(), Arrays.asList(old.getVariables()), newBody);
+					old.getQuantifier(), new HashSet<TermVariable>(Arrays.asList(old.getVariables())), newBody);
 			setResult(result);
 		}
 		

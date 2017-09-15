@@ -542,7 +542,7 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 			dnfAsCubeList.add(arrayEquation);
 
 			final Term edgeFormula = SmtUtils.quantifier(script, QuantifiedFormula.FORALL,
-					computeWeqIndicesForArray(edge.getKey().getOneElement()), SmtUtils.or(script, dnfAsCubeList));
+					new HashSet<TermVariable>(computeWeqIndicesForArray(edge.getKey().getOneElement())), SmtUtils.or(script, dnfAsCubeList));
 			result.add(edgeFormula);
 		}
 		return result;

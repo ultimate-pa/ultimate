@@ -1455,7 +1455,7 @@ public final class SmtUtils {
 	 * Returns quantified formula. Drops quantifiers for variables that do not occur in formula. If subformula is
 	 * quantified formula with same quantifier both are merged.
 	 */
-	public static Term quantifier(final Script script, final int quantifier, final Collection<TermVariable> vars,
+	public static Term quantifier(final Script script, final int quantifier, final Set<TermVariable> vars,
 			final Term body) {
 		if (vars.isEmpty()) {
 			return body;
@@ -1479,7 +1479,7 @@ public final class SmtUtils {
 	/**
 	 * Returns a new {@link Set} that contains all variables that are contained in vars and occur freely in term.
 	 */
-	public static Set<TermVariable> filterToVarsThatOccurFreelyInTerm(final Collection<TermVariable> vars,
+	public static Set<TermVariable> filterToVarsThatOccurFreelyInTerm(final Set<TermVariable> vars,
 			final Term term) {
 		final HashSet<TermVariable> result = new HashSet<>();
 		for (final TermVariable tv : Arrays.asList(term.getFreeVars())) {
