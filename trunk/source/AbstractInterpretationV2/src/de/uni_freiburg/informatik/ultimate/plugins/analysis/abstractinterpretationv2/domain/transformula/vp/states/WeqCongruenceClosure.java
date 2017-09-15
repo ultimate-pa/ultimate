@@ -250,18 +250,16 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 		/*
 		 * propagations according to the roweq rule:
 		 */
-//		// congruence closure-like checks for weak equivalence:
-		final Set<Doubleton<NODE>> propagatedEqualitiesFromWeqEdges =
-				mWeakEquivalenceGraph.getWeakCongruencePropagationsOnReportEquality(node1, node2);
-		for (final Doubleton<NODE> eq : propagatedEqualitiesFromWeqEdges) {
-			this.reportEquality(eq.getOneElement(), eq.getOtherElement());
+		final HashRelation<NODE, NODE> propagatedEqualitiesFromWeqEdges =
+				mWeakEquivalenceGraph.applyRoweqPropagationsOnReportEquality(node1, node2);
+		for (final Entry<NODE, NODE> eq : propagatedEqualitiesFromWeqEdges.entrySet()) {
+			this.reportEquality(eq.getKey(), eq.getValue());
 		}
 		assert sanityCheck();
 
 		/*
 		 * propagations according to the ext rule:
 		 */
-		// should we do this for every equality or only the ones reported on EqConstraint level??
 		reportGpaChangeToWeqGraphAndPropagateArrayEqualities(
 				(final CongruenceClosure<NODE> cc) -> cc.reportEquality(node1, node2));
 
@@ -274,11 +272,6 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 		 */
 		for (final Entry<NODE, NODE> funcPair : getPairsWithMatchingType(mAllFunctions, false, true)) {
 			assert funcPair.getKey().getSort().equals(funcPair.getValue().getSort());
-
-//			if (!funcPair.getKey().getSort().equals(funcPair.getValue().getSort())) {
-//				// sorts don't match -- functions cannot be weakly equivalent
-//				continue;
-//			}
 
 			final Set<List<NODE>> ccchildren1 = getCcChildren(funcPair.getKey(), oldRep1, oldCcChild, true);
 			final Set<List<NODE>> ccchildren2 = getCcChildren(funcPair.getValue(), oldRep2, oldCcChild, true);

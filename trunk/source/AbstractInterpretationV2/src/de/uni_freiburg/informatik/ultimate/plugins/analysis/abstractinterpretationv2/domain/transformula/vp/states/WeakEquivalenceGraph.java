@@ -133,8 +133,9 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 	 * @return set of equalities that can be propagated (design decision: let modifications of the ground partial
 	 * 		arrangement be done "outside", in the WeqCongruenceClosure instance)
 	 */
-	public  Set<Doubleton<NODE>> getWeakCongruencePropagationsOnReportEquality(final NODE node1, final NODE node2) {
-		final Set<Doubleton<NODE>> equalitiesToBePropagated = new HashSet<>();
+	public  HashRelation<NODE, NODE> applyRoweqPropagationsOnReportEquality(final NODE node1, final NODE node2) {
+		assert !hasArrayEqualities();
+		final HashRelation<NODE, NODE> equalitiesToBePropagated = new HashRelation<>();
 
 		final Set<NODE> ccpars1 = mPartialArrangement.getCcParsForNode(node1);
 		final Set<NODE> ccpars2 = mPartialArrangement.getCcParsForNode(node2);
@@ -190,10 +191,22 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 							prefix1,
 							getAllWeqVarsNodeForFunction(funcAppPrefix1));
 
-					// replace the old with the new label
-					replaceEdgeLabel(funcAppPrefix1, funcAppPrefix2, newEdgeLabel);
+					if (newEdgeLabel.isInconsistent()) {
+						equalitiesToBePropagated.addPair(funcAppPrefix1, funcAppPrefix2);
+					} else {
+						// replace the old with the new label
+						replaceEdgeLabel(funcAppPrefix1, funcAppPrefix2, newEdgeLabel);
+					}
 				}
 			}
+		}
+
+		/*
+		 *  as we have strengthened some edges, we need to run floyd warshall..
+		 */
+		close();
+		if (hasArrayEqualities()) {
+			equalitiesToBePropagated.addAll(mArrayEqualities);
 		}
 
 //		final Map<NODE, Set<NODE>> ccpars1 = mPartialArrangement.getCcParsForNode(node1);
