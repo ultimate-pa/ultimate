@@ -48,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.spaceex.util.HybridTranslator
  *
  */
 public class SpaceExPreferenceManager {
-	
+
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private final String mModelFilename;
@@ -65,13 +65,13 @@ public class SpaceExPreferenceManager {
 	private boolean mDumpMainTrackBenchmark;
 	private String mLogicForExternalSolver;
 	private Settings mSolverSettings;
-	
+
 	public SpaceExPreferenceManager(final IUltimateServiceProvider services, final ILogger logger,
 			final File spaceExFile) throws Exception {
 		mServices = services;
 		mLogger = logger;
 		final IPreferenceProvider preferenceProvider = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
-		mModelFilename = spaceExFile.getAbsolutePath();
+		mModelFilename = spaceExFile.getName();
 		// get TA settings
 		getTraceAbstractionPreferences();
 		String configfile =
@@ -87,7 +87,7 @@ public class SpaceExPreferenceManager {
 			initializeConfigParsing(configfile);
 		}
 	}
-	
+
 	private void initializeConfigParsing(final String configfile) throws Exception {
 		final File config = new File(configfile);
 		if (config.exists() && !config.isDirectory()) {
@@ -95,9 +95,9 @@ public class SpaceExPreferenceManager {
 		} else {
 			mLogger.info("no configfile with the name " + configfile + " exists");
 		}
-		
+
 	}
-	
+
 	// function that get the settings of the TraceAbstraction in order to create the correct solver.
 	private void getTraceAbstractionPreferences() {
 		final String TRACE_ABSTRACTION_PLUGIN_ID =
@@ -107,28 +107,28 @@ public class SpaceExPreferenceManager {
 		mSolverMode = traceAbstractionPreferences.getEnum(RcfgPreferenceInitializer.LABEL_Solver, SolverMode.class);
 		mFakeNonIncrementalScript = mServices.getPreferenceProvider(TRACE_ABSTRACTION_PLUGIN_ID)
 				.getBoolean(RcfgPreferenceInitializer.LABEL_FakeNonIncrementalScript);
-		
+
 		mDumpSmtScriptToFile = mServices.getPreferenceProvider(TRACE_ABSTRACTION_PLUGIN_ID)
 				.getBoolean(RcfgPreferenceInitializer.LABEL_DumpToFile);
 		mPathOfDumpedScript = mServices.getPreferenceProvider(TRACE_ABSTRACTION_PLUGIN_ID)
 				.getString(RcfgPreferenceInitializer.LABEL_Path);
-		
+
 		mCommandExternalSolver = mServices.getPreferenceProvider(TRACE_ABSTRACTION_PLUGIN_ID)
 				.getString(RcfgPreferenceInitializer.LABEL_ExtSolverCommand);
-		
+
 		mDumpUsatCoreTrackBenchmark = mServices.getPreferenceProvider(TRACE_ABSTRACTION_PLUGIN_ID)
 				.getBoolean(RcfgPreferenceInitializer.LABEL_DumpUnsatCoreTrackBenchmark);
-		
+
 		mDumpMainTrackBenchmark = mServices.getPreferenceProvider(TRACE_ABSTRACTION_PLUGIN_ID)
 				.getBoolean(RcfgPreferenceInitializer.LABEL_DumpMainTrackBenchmark);
-		
+
 		mLogicForExternalSolver = mServices.getPreferenceProvider(TRACE_ABSTRACTION_PLUGIN_ID)
 				.getString(RcfgPreferenceInitializer.LABEL_ExtSolverLogic);
 		mSolverSettings = SolverBuilder.constructSolverSettings(mModelFilename, mSolverMode, mFakeNonIncrementalScript,
 				mCommandExternalSolver, mDumpSmtScriptToFile, mPathOfDumpedScript);
-		
+
 	}
-	
+
 	private void parseConfigFile(final File configfile) throws Exception {
 		mLogger.info("Parsing configfile: " + configfile);
 		final long startTime = System.nanoTime();
@@ -146,57 +146,53 @@ public class SpaceExPreferenceManager {
 		final long estimatedTime = System.nanoTime() - startTime;
 		mLogger.info("Parsing configfile done in " + estimatedTime / (float) 1000000 + " milliseconds");
 	}
-	
+
 	public String getSystem() {
 		return mSystem;
 	}
-	
-	public String getFileName() {
-		return mModelFilename;
-	}
-	
+
 	public SolverMode getSolverMode() {
 		return mSolverMode;
 	}
-	
+
 	public boolean isFakeNonIncrementalScript() {
 		return mFakeNonIncrementalScript;
 	}
-	
+
 	public boolean isDumpSmtScriptToFile() {
 		return mDumpSmtScriptToFile;
 	}
-	
+
 	public String getPathOfDumpedScript() {
 		return mPathOfDumpedScript;
 	}
-	
+
 	public String getCommandExternalSolver() {
 		return mCommandExternalSolver;
 	}
-	
+
 	public boolean isDumpUsatCoreTrackBenchmark() {
 		return mDumpUsatCoreTrackBenchmark;
 	}
-	
+
 	public boolean isDumpMainTrackBenchmark() {
 		return mDumpMainTrackBenchmark;
 	}
-	
+
 	public String getLogicForExternalSolver() {
 		return mLogicForExternalSolver;
 	}
-	
+
 	public Settings getSolverSettings() {
 		return mSolverSettings;
 	}
-	
+
 	public String getInitially() {
 		return mInitially;
 	}
-	
+
 	public String getForbidden() {
 		return mForbidden;
 	}
-	
+
 }
