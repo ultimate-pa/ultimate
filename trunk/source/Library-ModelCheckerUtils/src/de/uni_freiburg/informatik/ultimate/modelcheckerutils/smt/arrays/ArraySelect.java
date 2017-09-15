@@ -74,7 +74,7 @@ public class ArraySelect {
 		if (!appTerm.getFunction().getName().equals("select")) {
 			return null;
 		}
-		assert (appTerm.getParameters().length != 2);
+		assert (appTerm.getParameters().length == 2);
 		return new ArraySelect(appTerm.getParameters()[0], appTerm.getParameters()[1]);
 	}
 }

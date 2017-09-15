@@ -80,7 +80,7 @@ public class ArrayStore {
 		if (!appTerm.getFunction().getName().equals("store")) {
 			return null;
 		}
-		assert (appTerm.getParameters().length != 3);
+		assert (appTerm.getParameters().length == 3);
 		return new ArrayStore(appTerm.getParameters()[0], appTerm.getParameters()[1], appTerm.getParameters()[2]);
 	}
 }
