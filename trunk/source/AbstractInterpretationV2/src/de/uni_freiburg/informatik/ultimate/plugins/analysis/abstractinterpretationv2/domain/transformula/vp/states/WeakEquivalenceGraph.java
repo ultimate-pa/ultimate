@@ -131,11 +131,12 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 	 * @param node1
 	 * @param node2
 	 * @return set of equalities that can be propagated (design decision: let modifications of the ground partial
-	 * 		arrangement be done "outside", in the WeqCongruenceClosure instance)
+	 * 		arrangement be done "outside", in the WeqCongruenceClosure instance) EDIT: no more..
 	 */
-	public  HashRelation<NODE, NODE> applyRoweqPropagationsOnReportEquality(final NODE node1, final NODE node2) {
+//	public  HashRelation<NODE, NODE> applyRoweqPropagationsOnReportEquality(final NODE node1, final NODE node2) {
+	public  void applyRoweqPropagationsOnReportEquality(final NODE node1, final NODE node2) {
 		assert !hasArrayEqualities();
-		final HashRelation<NODE, NODE> equalitiesToBePropagated = new HashRelation<>();
+//		final HashRelation<NODE, NODE> equalitiesToBePropagated = new HashRelation<>();
 
 		final Set<NODE> ccpars1 = mPartialArrangement.getCcParsForNode(node1);
 		final Set<NODE> ccpars2 = mPartialArrangement.getCcParsForNode(node2);
@@ -192,7 +193,9 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 							getAllWeqVarsNodeForFunction(funcAppPrefix1));
 
 					if (newEdgeLabel.isInconsistent()) {
-						equalitiesToBePropagated.addPair(funcAppPrefix1, funcAppPrefix2);
+//						equalitiesToBePropagated.addPair(funcAppPrefix1, funcAppPrefix2);
+						removeEdgeLabel(funcAppPrefix1, funcAppPrefix2);
+						mArrayEqualities.addPair(funcAppPrefix1, funcAppPrefix2);
 					} else {
 						// replace the old with the new label
 						replaceEdgeLabel(funcAppPrefix1, funcAppPrefix2, newEdgeLabel);
@@ -205,9 +208,9 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		 *  as we have strengthened some edges, we need to run floyd warshall..
 		 */
 		close();
-		if (hasArrayEqualities()) {
-			equalitiesToBePropagated.addAll(mArrayEqualities);
-		}
+//		if (hasArrayEqualities()) {
+//			equalitiesToBePropagated.addAll(mArrayEqualities);
+//		}
 
 //		final Map<NODE, Set<NODE>> ccpars1 = mPartialArrangement.getCcParsForNode(node1);
 //		final Map<NODE, Set<NODE>> ccpars2 = mPartialArrangement.getCcParsForNode(node2);
@@ -222,7 +225,11 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 //			equalitiesToBePropagated.addAll(
 //					congruencePropagationHelper(func2, func1, node1, node2, edge.getValue(), mPartialArrangement));
 //		}
-		return equalitiesToBePropagated;
+//		return equalitiesToBePropagated;
+	}
+
+	private void removeEdgeLabel(final NODE func1, final NODE func2) {
+		mWeakEquivalenceEdges.remove(new Doubleton<NODE>(func1, func2));
 	}
 
 	private void replaceEdgeLabel(final NODE func1, final NODE func2,

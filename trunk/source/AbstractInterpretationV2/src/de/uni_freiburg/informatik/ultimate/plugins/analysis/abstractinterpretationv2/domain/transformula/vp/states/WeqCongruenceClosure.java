@@ -250,11 +250,12 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 		/*
 		 * propagations according to the roweq rule:
 		 */
-		final HashRelation<NODE, NODE> propagatedEqualitiesFromWeqEdges =
-				mWeakEquivalenceGraph.applyRoweqPropagationsOnReportEquality(node1, node2);
-		for (final Entry<NODE, NODE> eq : propagatedEqualitiesFromWeqEdges.entrySet()) {
-			this.reportEquality(eq.getKey(), eq.getValue());
-		}
+//		final HashRelation<NODE, NODE> propagatedEqualitiesFromWeqEdges =
+		mWeakEquivalenceGraph.applyRoweqPropagationsOnReportEquality(node1, node2);
+		reportAllArrayEqualitiesFromWeqGraph();
+//		for (final Entry<NODE, NODE> eq : propagatedEqualitiesFromWeqEdges.entrySet()) {
+//			this.reportEquality(eq.getKey(), eq.getValue());
+//		}
 		assert sanityCheck();
 
 		/*
