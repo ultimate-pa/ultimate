@@ -31,8 +31,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSort;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ICongruenceClosureElement;
 
 /**
@@ -81,6 +81,6 @@ public interface IEqNodeIdentifier<NODE extends IEqNodeIdentifier<NODE>> extends
 
 	String getFunctionName();
 
-	MultiDimensionalSort getSort();
+	Sort getSort();
 
 }

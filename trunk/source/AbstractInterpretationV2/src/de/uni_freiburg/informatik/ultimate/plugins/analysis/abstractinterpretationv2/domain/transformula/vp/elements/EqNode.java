@@ -33,6 +33,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
@@ -133,9 +134,10 @@ public abstract class EqNode implements IEqNodeIdentifier<EqNode>, ICongruenceCl
 	}
 
 	@Override
-	public MultiDimensionalSort getSort() {
+	public Sort getSort() {
 		assert isFunction();
-		return mMdSort;
+		return mTerm.getSort();
+//		return mMdSort;
 	}
 
 	@Override

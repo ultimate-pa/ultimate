@@ -1070,10 +1070,10 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 //		assert funcApp1.getArguments().size() == funcApp2.getArguments().size();
 		assert funcApp1.hasSameTypeAs(funcApp2);
 
-		return argumentsAreCongruent(funcApp1.getArguments(), funcApp2.getArguments());
+		return vectorsAreCongruent(funcApp1.getArguments(), funcApp2.getArguments());
 	}
 
-	protected boolean argumentsAreCongruent(final List<ELEM> argList1, final List<ELEM> argList2) {
+	public boolean vectorsAreCongruent(final List<ELEM> argList1, final List<ELEM> argList2) {
 		for (int i = 0; i < argList1.size(); i++) {
 			if (mElementTVER.getEqualityStatus(argList1.get(i), argList2.get(i)) != EqualityStatus.EQUAL) {
 				return false;

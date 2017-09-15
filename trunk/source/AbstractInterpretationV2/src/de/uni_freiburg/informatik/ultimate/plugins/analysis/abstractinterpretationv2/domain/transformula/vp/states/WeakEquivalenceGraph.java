@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
@@ -22,7 +23,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSort;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.IEqNodeIdentifier;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainHelpers;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.AbstractNodeAndFunctionFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CongruenceClosure;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CrossProducts;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
@@ -38,9 +39,10 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 			NODE extends IEqNodeIdentifier<NODE>> {
 
-	CCManager<NODE> mCcManager = new CCManager<>();
+	private final CCManager<NODE> mCcManager = new CCManager<>();
 
-	EqConstraintFactory<ACTION, NODE> mFactory;
+	private final EqConstraintFactory<ACTION, NODE> mFactory;
+	private final AbstractNodeAndFunctionFactory<NODE, Term> mNodeAndFunctionFactory;
 
 	private Map<Doubleton<NODE>, WeakEquivalenceEdgeLabel> mWeakEquivalenceEdges;
 
@@ -51,6 +53,7 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 	 * intermediate, for example during a join or meet operation.
 	 */
 	private WeqCongruenceClosure<ACTION, NODE> mPartialArrangement;
+
 
 	/**
 	 * Constructs an empty WeakEquivalenceGraph
@@ -63,6 +66,7 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		mArrayEqualities = new HashRelation<>();
 		assert factory != null;
 		mFactory = factory;
+		mNodeAndFunctionFactory = mFactory.getEqNodeAndFunctionFactory();
 		assert sanityCheck();
 	}
 
@@ -83,6 +87,7 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		mArrayEqualities = arrayEqualities;
 		assert factory != null;
 		mFactory = factory;
+		mNodeAndFunctionFactory = mFactory.getEqNodeAndFunctionFactory();
 		assert sanityCheck();
 	}
 
@@ -113,6 +118,7 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 			mWeakEquivalenceEdges.put(weqEdge.getKey(), new WeakEquivalenceEdgeLabel(weqEdge.getValue()));
 		}
 		mFactory = weqMeet.mFactory;
+		mNodeAndFunctionFactory = mFactory.getEqNodeAndFunctionFactory();
 		assert sanityCheck();
 	}
 
@@ -127,21 +133,140 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 	 * @return set of equalities that can be propagated (design decision: let modifications of the ground partial
 	 * 		arrangement be done "outside", in the WeqCongruenceClosure instance)
 	 */
-	public  Set<Doubleton<NODE>> getWeakCongruencePropagations(final NODE node1, final NODE node2) {
+	public  Set<Doubleton<NODE>> getWeakCongruencePropagationsOnReportEquality(final NODE node1, final NODE node2) {
 		final Set<Doubleton<NODE>> equalitiesToBePropagated = new HashSet<>();
 
-		for (final Entry<Doubleton<NODE>, WeakEquivalenceEdgeLabel> edge : mWeakEquivalenceEdges.entrySet()) {
+		final Set<NODE> ccpars1 = mPartialArrangement.getCcParsForNode(node1);
+		final Set<NODE> ccpars2 = mPartialArrangement.getCcParsForNode(node2);
 
-			final NODE func1 = edge.getKey().getOneElement();
-			final NODE func2 = edge.getKey().getOtherElement();
-			assert func1.isFunction() && func2.isFunction() && VPDomainHelpers.haveSameType(func1, func2);
+		for (final NODE ccp1 : ccpars1) {
+			for (final NODE ccp2 : ccpars2) {
+				final NODE funcApp1 = ccp1.getAppliedFunction();
+				final NODE funcApp2 = ccp2.getAppliedFunction();
 
-			equalitiesToBePropagated.addAll(
-					congruencePropagationHelper(func1, func2, node1, node2, edge.getValue(), mPartialArrangement));
-			equalitiesToBePropagated.addAll(
-					congruencePropagationHelper(func2, func1, node1, node2, edge.getValue(), mPartialArrangement));
+				assert funcApp1.getArity() == funcApp2.getArity();
+
+				/*
+				 * if the arrays have dimension 4, we have to try prefixes of the argument vectors up to size 4
+				 * e.g. a[i1], a[i1, i2], a[i1,i2,i3] etc.
+				 */
+				for (int dim = 1; dim <= funcApp1.getArity(); dim++) {
+					final List<NODE> prefix1 = funcApp1.getArguments().subList(0, dim);
+					final List<NODE> prefix2 = funcApp1.getArguments().subList(0, dim);
+
+					if (!mPartialArrangement.vectorsAreCongruent(prefix1, prefix2)) {
+						continue;
+					}
+					/*
+					 * args1, args2 (= the current index vector prefixes) are congruent
+					 *
+					 * <li> do we have nodes for the current index vector prefixes?
+					 * <li> is there a non-tautological edge for the current index vector prefixes?
+					 */
+					if (!mNodeAndFunctionFactory.hasFuncAppElement(funcApp1, prefix1)
+							|| !mNodeAndFunctionFactory.hasFuncAppElement(funcApp2, prefix2)) {
+						continue;
+					}
+
+					final NODE funcAppPrefix1 =
+							mNodeAndFunctionFactory.getFuncAppElementDetermineIsFunctionYourself(funcApp1, prefix1);
+					final NODE funcAppPrefix2 =
+							mNodeAndFunctionFactory.getFuncAppElementDetermineIsFunctionYourself(funcApp2, prefix2);
+
+					if (!hasWeqNonTautologicalEdgeForFunctions(funcAppPrefix1, funcAppPrefix2)) {
+						continue;
+					}
+
+					/*
+					 * project the edge label to the current index vector prefix (choose either, as they are congruent)
+					 * i.e. let edgelabel = Phi, first dim weqvars = q, args1 = i compute
+					 *   project_q(Phi /\ q = i), then decrease the weqvar indices in the resulting formula by dim
+					 *   -> that is the new edge label Phi', for funcApp[args1] -- -- funcApp[args2]
+					 *   if there already was one, strengthen it..
+					 */
+
+					final WeakEquivalenceEdgeLabel newEdgeLabel = projectToPrefix(
+							getWeqEdgeLabel(funcAppPrefix1, funcAppPrefix2),
+							prefix1,
+							getAllWeqVarsNodeForFunction(funcAppPrefix1));
+
+					// replace the old with the new label
+					replaceEdgeLabel(funcAppPrefix1, funcAppPrefix2, newEdgeLabel);
+				}
+			}
 		}
+
+//		final Map<NODE, Set<NODE>> ccpars1 = mPartialArrangement.getCcParsForNode(node1);
+//		final Map<NODE, Set<NODE>> ccpars2 = mPartialArrangement.getCcParsForNode(node2);
+//		for (final Entry<Doubleton<NODE>, WeakEquivalenceEdgeLabel> edge : mWeakEquivalenceEdges.entrySet()) {
+//
+//			final NODE func1 = edge.getKey().getOneElement();
+//			final NODE func2 = edge.getKey().getOtherElement();
+//			assert func1.isFunction() && func2.isFunction() && VPDomainHelpers.haveSameType(func1, func2);
+//
+//			equalitiesToBePropagated.addAll(
+//					congruencePropagationHelper(func1, func2, node1, node2, edge.getValue(), mPartialArrangement));
+//			equalitiesToBePropagated.addAll(
+//					congruencePropagationHelper(func2, func1, node1, node2, edge.getValue(), mPartialArrangement));
+//		}
 		return equalitiesToBePropagated;
+	}
+
+	private void replaceEdgeLabel(final NODE func1, final NODE func2,
+			final WeakEquivalenceGraph<ACTION, NODE>.WeakEquivalenceEdgeLabel newEdgeLabel) {
+		mWeakEquivalenceEdges.put(new Doubleton<NODE>(func1, func2), newEdgeLabel);
+	}
+
+	private List<NODE> getAllWeqVarsNodeForFunction(final NODE func) {
+		assert func.getSort().isArraySort();
+		final List<NODE> result = new ArrayList<>(func.getArity());
+		final List<Sort> indexSorts = new MultiDimensionalSort(func.getSort()).getIndexSorts();
+		for (int i = 0; i < func.getArity(); i++) {
+			result.add(mFactory.getWeqVariableNodeForDimension(i, indexSorts.get(i)));
+		}
+		return result;
+	}
+
+	/**
+	 *   project_q(Phi /\ q = i), then decrease the weqvar indices in the resulting formula by dim
+	 *
+	 * @param originalEdgeLabel
+	 * @param prefix1
+	 * @return
+	 */
+	private WeakEquivalenceGraph<ACTION, NODE>.WeakEquivalenceEdgeLabel projectToPrefix(
+			final WeakEquivalenceGraph<ACTION, NODE>.WeakEquivalenceEdgeLabel originalEdgeLabel,
+			final List<NODE> prefix1,
+			final List<NODE> weqVarsForThisEdge) {
+		final int dim = prefix1.size();
+
+		final List<NODE> firstDimWeqVarNodes = new ArrayList<>(dim);
+		for (int i = 0; i < dim; i++) {
+			firstDimWeqVarNodes.add(mFactory.getWeqVariableNodeForDimension(i, prefix1.get(i).getSort()));
+		}
+
+		final CongruenceClosure<NODE> qEqualsI = new CongruenceClosure<>();
+		for (int i = 0; i < dim; i++) {
+			qEqualsI.reportEquality(firstDimWeqVarNodes.get(i), prefix1.get(i));
+		}
+
+		final WeakEquivalenceGraph<ACTION, NODE>.WeakEquivalenceEdgeLabel copy =
+				new WeakEquivalenceEdgeLabel(originalEdgeLabel);
+		final WeakEquivalenceGraph<ACTION, NODE>.WeakEquivalenceEdgeLabel meet =
+				copy.meet(Collections.singletonList(qEqualsI));
+
+		for (int i = 0; i < dim; i++) {
+			meet.projectElement(firstDimWeqVarNodes.get(i), mPartialArrangement);
+		}
+
+		meet.inOrDecreaseWeqVarIndices(-dim, weqVarsForThisEdge);
+
+		return meet;
+	}
+
+	private Object getAllWeqVarsNodeForEdge() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 	private Set<Doubleton<NODE>> congruencePropagationHelper(final NODE func1, final NODE func2,
@@ -149,8 +274,8 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 			final CongruenceClosure<NODE> pa) {
 		final Set<Doubleton<NODE>> newEqualitiesToBePropagated = new HashSet<>();
 
-		final Set<NODE> e1CcParsA = pa.getCcPars(func1, mPartialArrangement.getRepresentativeElement(node1));
-		final Set<NODE> e2CcParsA = pa.getCcPars(func2, mPartialArrangement.getRepresentativeElement(node2));
+		final Set<NODE> e1CcParsA = pa.getCcPars(func1, pa.getRepresentativeElement(node1));
+		final Set<NODE> e2CcParsA = pa.getCcPars(func2, pa.getRepresentativeElement(node2));
 
 		if (e1CcParsA == null || e2CcParsA == null) {
 			// nothing to do
@@ -180,6 +305,11 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 			}
 		}
 		return newEqualitiesToBePropagated;
+	}
+
+	private WeakEquivalenceGraph<ACTION, NODE>.WeakEquivalenceEdgeLabel getWeqEdgeLabel(final NODE func1,
+			final NODE func2) {
+		return mWeakEquivalenceEdges.get(new Doubleton(func1, func2));
 	}
 
 	public  Entry<NODE, NODE> pollArrayEquality() {
@@ -550,7 +680,7 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 	 * @param func2
 	 * @return true iff this WeakEquivalenceGraph has an edge between func1 and func2.
 	 */
-	public boolean hasWeqEdgeForFunctions(final NODE func1, final NODE func2) {
+	public boolean hasWeqNonTautologicalEdgeForFunctions(final NODE func1, final NODE func2) {
 		return mWeakEquivalenceEdges.keySet().contains(new Doubleton<NODE>(func1, func2));
 	}
 
@@ -727,6 +857,28 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 			mLabel = new ArrayList<>();
 			mLabel.add(new CongruenceClosure<>());
 			assert sanityCheck();
+		}
+
+		/**
+		 *
+		 *
+		 * @param inOrDecrease how much to shift (negative value for decrease)
+		 * @param weqVarsForThisEdge this edgeLabel does not know the function signature of its source and target;
+		 *     thus we pass a list of weqVars that belongs to that signature (those are the ones to be shifted..)
+		 *     they must be in correct order of dimensions according to source/target
+		 */
+		public void inOrDecreaseWeqVarIndices(final int inOrDecrease, final List<NODE> weqVarsForThisEdge) {
+			final Map<Term, Term> substitutionMapping = new HashMap<>();
+			for (int i = 0; i < weqVarsForThisEdge.size(); i++) {
+				final NODE nodeI = weqVarsForThisEdge.get(i);
+				final int newDim = i - inOrDecrease;
+				// the others (newDim <0) should have been projected out of the formula before.. (in the calling method)
+				if (newDim >= 0) {
+					substitutionMapping.put(nodeI.getTerm(),
+							mFactory.getWeqVariableForDimension(newDim, nodeI.getSort()));
+				}
+			}
+			renameVariables(substitutionMapping);
 		}
 
 		public boolean isConstrained(final NODE elem) {
