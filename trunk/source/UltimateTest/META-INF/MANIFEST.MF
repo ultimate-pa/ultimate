@@ -31,4 +31,5 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter,
  de.uni_freiburg.informatik.ultimate.boogie.procedureinliner,
  de.uni_freiburg.informatik.ultimate.plugins.generator.invariantsynthesis,
- de.uni_freiburg.informatik.ultimate.plugins.icfgtransformation
+ de.uni_freiburg.informatik.ultimate.plugins.icfgtransformation,
+ de.uni_freiburg.informatik.ultimate.plugins.generator.modsetannotator
