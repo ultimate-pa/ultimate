@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType.Type;
@@ -39,7 +40,11 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter.AutomataDefinitionInterpreter;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.witnesschecking.WitnessModelToAutomatonTransformer;
+import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AutomataTestFileAST;
+import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AutomatonAST;
+import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.NestedwordAutomatonAST;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdge;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 
@@ -54,6 +59,7 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 	private final List<IIcfg<?>> mIcfgs;
 	private IElement mRootOfNewModel;
 	private WitnessNode mWitnessNode;
+	private final List<AutomataTestFileAST> mAutomataTestFileAsts;
 	private boolean mLastModel;
 	private final IToolchainStorage mStorage;
 	private ModelType mCurrentGraphType;
@@ -64,6 +70,7 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mLastModel = false;
 		mIcfgs = new ArrayList<>();
+		mAutomataTestFileAsts = new ArrayList<>();
 	}
 
 	@Override
@@ -77,6 +84,9 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 			} else {
 				throw new UnsupportedOperationException("two witness models");
 			}
+		}
+		if (root instanceof AutomataTestFileAST) {
+			mAutomataTestFileAsts.add((AutomataTestFileAST) root);
 		}
 		return false;
 	}
@@ -101,10 +111,32 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 						"Found a witness automaton. I will only consider traces that are accepted by the witness automaton");
 				witnessAutomaton = new WitnessModelToAutomatonTransformer(mWitnessNode, mServices).getResult();
 			}
+			final List<NestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile = constructRawNestedWordAutomata(mAutomataTestFileAsts);
+			
 			final TraceAbstractionStarter tas =
-					new TraceAbstractionStarter(mServices, mStorage, rcfgRootNode, witnessAutomaton);
+					new TraceAbstractionStarter(mServices, mStorage, rcfgRootNode, witnessAutomaton, rawFloydHoareAutomataFromFile);
 			mRootOfNewModel = tas.getRootOfNewModel();
 		}
+	}
+
+	private List<NestedWordAutomaton<String, String>> constructRawNestedWordAutomata(
+			final List<AutomataTestFileAST> automataTestFileAsts) {
+		final List<NestedWordAutomaton<String, String>> result = new ArrayList<>();
+		for (final AutomataTestFileAST automataTestFileAst : automataTestFileAsts) {
+			final List<AutomatonAST> automataDefinitions = automataTestFileAst.getAutomataDefinitions().getListOfAutomataDefinitions();
+			for (final AutomatonAST automatonDefinition : automataDefinitions) {
+				if (automatonDefinition instanceof NestedwordAutomatonAST) {
+					final NestedWordAutomaton<String, String> nwa = AutomataDefinitionInterpreter
+							.constructNestedWordAutomaton((NestedwordAutomatonAST) automatonDefinition, mServices);
+					result.add(nwa);
+				} else {
+					throw new UnsupportedOperationException(
+							"Reading " + automatonDefinition.getClass().getSimpleName() + " not yet supported");
+				}
+			}
+			
+		}
+		return result;
 	}
 
 	/**

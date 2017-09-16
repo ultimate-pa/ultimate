@@ -31,7 +31,9 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Difference;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsIncluded;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
@@ -61,7 +63,8 @@ public class EagerReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends Basi
 	private enum MinimizeInitially { NEVER, AFTER_EACH_DIFFERENCE, ONCE_AT_END };
 	private final MinimizeInitially mMinimize = MinimizeInitially.AFTER_EACH_DIFFERENCE;
 	
-	private final List<AbstractInterpolantAutomaton<LETTER>> mInputFloydHoareAutomata;
+	private final List<AbstractInterpolantAutomaton<LETTER>> mFloydHoareAutomataFromOtherErrorLocations;
+	private final List<NestedWordAutomaton<String, String>> mRawFloydHoareAutomataFromFile;
 
 	/**
 	 * The following can be costly. Enable only for debugging or analyzing our
@@ -74,19 +77,24 @@ public class EagerReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends Basi
 	public EagerReuseCegarLoop(final String name, final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit,
 			final PredicateFactory predicateFactory, final TAPreferences taPrefs, final Collection<? extends IcfgLocation> errorLocs,
 			final InterpolationTechnique interpolation, final boolean computeHoareAnnotation, final IUltimateServiceProvider services,
-			final IToolchainStorage storage, final List<AbstractInterpolantAutomaton<LETTER>> inputFloydHoareAutomata) {
+			final IToolchainStorage storage, final List<AbstractInterpolantAutomaton<LETTER>> floydHoareAutomataFromOtherLocations, 
+			final List<NestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile) {
 		super(name, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, interpolation, computeHoareAnnotation, services,
 				storage);
-		mInputFloydHoareAutomata = inputFloydHoareAutomata;
+		mFloydHoareAutomataFromOtherErrorLocations = floydHoareAutomataFromOtherLocations;
+		mRawFloydHoareAutomataFromFile = rawFloydHoareAutomataFromFile;
 	}
 
 	@Override
 	protected void getInitialAbstraction() throws AutomataLibraryException {
 		super.getInitialAbstraction();
 		
-		mLogger.info("Reusing " + mInputFloydHoareAutomata.size() + " Floyd-Hoare automata.");
-		for (int i=0; i<mInputFloydHoareAutomata.size(); i++) {
-			final AbstractInterpolantAutomaton<LETTER> ai = mInputFloydHoareAutomata.get(i);
+		final List<INestedWordAutomaton<LETTER, IPredicate>> floydHoareAutomataFromFiles = interpretAutomata(
+				mRawFloydHoareAutomataFromFile, (INestedWordAutomaton<LETTER, IPredicate>) mAbstraction, mCsToolkit, mPredicateFactoryInterpolantAutomata);
+		
+		mLogger.info("Reusing " + mFloydHoareAutomataFromOtherErrorLocations.size() + " Floyd-Hoare automata.");
+		for (int i=0; i<mFloydHoareAutomataFromOtherErrorLocations.size(); i++) {
+			final AbstractInterpolantAutomaton<LETTER> ai = mFloydHoareAutomataFromOtherErrorLocations.get(i);
 			final int internalTransitionsBeforeDifference = ai.computeNumberOfInternalTransitions();
 			ai.switchToOnDemandConstructionMode();
 			final PowersetDeterminizer<LETTER, IPredicate> psd =
@@ -139,6 +147,17 @@ public class EagerReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends Basi
 		if (mMinimize == MinimizeInitially.ONCE_AT_END) {
 			minimizeAbstractionIfEnabled();
 		}
+	}
+
+	private List<INestedWordAutomaton<LETTER, IPredicate>> interpretAutomata(
+			final List<NestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile,
+			final INestedWordAutomaton<LETTER, IPredicate> abstraction, final CfgSmtToolkit csToolkit,
+			final PredicateFactoryForInterpolantAutomata predicateFactoryInterpolantAutomata) {
+		// Let us do whatever we can to
+		// 1. match the letters of the rawFloydHoareAutomataFromFile with the letters of the abstraction
+		// 2. transform their states into IPredicates
+		// (note that 1. is sufficient if we do not want to extend the automata)
+		return null;
 	}
 	
 	
