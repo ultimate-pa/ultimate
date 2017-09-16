@@ -44,6 +44,7 @@ public class DangerInvariantsTest extends AbstractTraceAbstractionTestSuite {
 
 	private static final String[] mPrograms = {
 			"examples/programs/dangerInvariants",
+			// "examples/programs/regression",
 			// "examples/ultimate-benchmarks/pathprograms/20170417-DifficultOverflow/MapElim",
 			// "examples/ultimate-benchmarks/pathprograms/20170417-DifficultOverflow/ModNeigh-MapElim",
 			// "examples/ultimate-benchmarks/pathprograms/20170417-DifficultReach/MapElim",

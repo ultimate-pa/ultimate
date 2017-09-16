@@ -162,7 +162,7 @@ public final class LinearInequalityInvariantPatternProcessor
 	private static final boolean ADD_ONLY_SUCC_LOC_TO_UNSAT_CORE = false;
 	private static boolean USE_UNDER_APPROX_AS_ADDITIONAL_CONSTRAINT = true;
 	private static boolean USE_OVER_APPROX_AS_ADDITIONAL_CONSTRAINT = true;
-	private static final boolean ASSERT_INTEGER_COEFFICIENTS = true;
+	private static final boolean ASSERT_INTEGER_COEFFICIENTS = false;
 
 	/**
 	 * Contains all coefficients of all patterns from the current round.
@@ -1176,7 +1176,6 @@ public final class LinearInequalityInvariantPatternProcessor
 	/**
 	 * {@inheritDoc}
 	 */
-	@SuppressWarnings("unused")
 	@Override
 	public LBool checkForValidConfiguration(
 			final Collection<SuccessorConstraintIngredients<Dnf<AbstractLinearInvariantPattern>>> successorConstraintIngredients,
@@ -1316,11 +1315,9 @@ public final class LinearInequalityInvariantPatternProcessor
 						mIntegerCoefficients, mLogger, mServices);
 				for (final Map.Entry<Term, Rational> entry : valuation.entrySet()) {
 					final Rational value = entry.getValue();
-					if (!value.isIntegral()) {
-						final Term coefficient = entry.getKey();
-						// We try to use the ceiled value if the value is not integral
-						mSolver.assertTerm(mSolver.term("=", coefficient, value.ceil().toTerm(coefficient.getSort())));
-					}
+					final Term coefficient = entry.getKey();
+					// We try to use the ceiled value if the value is not integral
+					mSolver.assertTerm(mSolver.term("=", coefficient, value.ceil().toTerm(coefficient.getSort())));
 				}
 				return mSolver.checkSat();
 			} catch (final TermException e) {
