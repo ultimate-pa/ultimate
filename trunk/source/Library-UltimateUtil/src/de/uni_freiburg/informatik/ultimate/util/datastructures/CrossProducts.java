@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
@@ -63,6 +64,31 @@ public final class CrossProducts {
 	public static List<int[]> crossProduct(final int[][] input) {
 		final List<int[]> result = new ArrayList<>();
 		crossProductHelper(result, input, new int[input.length], 0);
+		return result;
+	}
+
+	/**
+	 * TODO: not so nice because of code redundancy, but I don't know an easy way to
+	 *
+	 * @param input
+	 * @return
+	 */
+	public static <T> List<List<T>> crossProductOfSets(final List<Set<T>> input) {
+		List<List<T>> result = new ArrayList<>();
+		result.add(new ArrayList<>());
+		for (final Set<T> nwscs : input) {
+			final List<List<T>> newResult = new ArrayList<>();
+
+			for (final List<T> index : result) {
+				for (final T nwsc : nwscs) {
+					final List<T> newIndex = new ArrayList<>(index);
+					newIndex.add(nwsc);
+
+					newResult.add(newIndex);
+				}
+			}
+			result = newResult;
+		}
 		return result;
 	}
 
