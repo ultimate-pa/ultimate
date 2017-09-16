@@ -315,6 +315,13 @@ public class AutomataDefinitionInterpreter {
 	public void interpret(final NestedwordAutomatonAST nwa) {
 		mErrorLocation = nwa.getLocation();
 
+		final NestedWordAutomaton<String, String> nw = constructNestedWordAutomaton(nwa, mServices);
+
+		mAutomata.put(nwa.getName(), nw);
+	}
+
+	public static NestedWordAutomaton<String, String> constructNestedWordAutomaton(final NestedwordAutomatonAST nwa,
+			final IUltimateServiceProvider services) {
 		// check that the initial/final states exist
 		final Set<String> allStates = new HashSet<>(nwa.getStates());
 		final List<String> initStates = nwa.getInitialStates();
@@ -363,7 +370,7 @@ public class AutomataDefinitionInterpreter {
 			}
 		}
 
-		final NestedWordAutomaton<String, String> nw = new NestedWordAutomaton<>(new AutomataLibraryServices(mServices),
+		final NestedWordAutomaton<String, String> nw = new NestedWordAutomaton<>(new AutomataLibraryServices(services),
 				new VpAlphabet<String>(internalAlphabet, callAlphabet, returnAlphabet), new StringFactory());
 
 		// add the states
@@ -416,8 +423,7 @@ public class AutomataDefinitionInterpreter {
 				}
 			}
 		}
-
-		mAutomata.put(nwa.getName(), nw);
+		return nw;
 	}
 
 	/**
