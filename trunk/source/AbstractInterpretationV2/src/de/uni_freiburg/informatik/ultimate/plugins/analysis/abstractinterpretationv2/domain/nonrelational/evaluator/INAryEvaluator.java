@@ -35,9 +35,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractSta
  *
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  */
-public interface INAryEvaluator<VALUE, STATE extends IAbstractState<STATE, VARDECL>, VARDECL>
-		extends IEvaluator<VALUE, STATE, VARDECL> {
-	
+public interface INAryEvaluator<VALUE, STATE extends IAbstractState<STATE>> extends IEvaluator<VALUE, STATE> {
+
 	/**
 	 * Sets the operator of the evaluator. Note that for some evaluators, the operator cannot be set.
 	 *

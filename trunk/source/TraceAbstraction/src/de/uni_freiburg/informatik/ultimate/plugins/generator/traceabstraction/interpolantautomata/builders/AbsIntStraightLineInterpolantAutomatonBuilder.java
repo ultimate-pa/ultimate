@@ -45,13 +45,13 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.DisjunctiveAbstractState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
@@ -86,7 +86,7 @@ public class AbsIntStraightLineInterpolantAutomatonBuilder<LETTER extends IIcfgT
 
 	public AbsIntStraightLineInterpolantAutomatonBuilder(final IUltimateServiceProvider services,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> oldAbstraction,
-			final IAbstractInterpretationResult<?, LETTER, IBoogieVar, ?> aiResult, final IPredicateUnifier predUnifier,
+			final IAbstractInterpretationResult<?, LETTER, ?> aiResult, final IPredicateUnifier predUnifier,
 			final CfgSmtToolkit csToolkit, final IRun<LETTER, IPredicate, ?> currentCounterExample,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
 			final IIcfgSymbolTable symbolTable) {
@@ -103,12 +103,11 @@ public class AbsIntStraightLineInterpolantAutomatonBuilder<LETTER extends IIcfgT
 		return mResult;
 	}
 
-	private <STATE extends IAbstractState<STATE, IBoogieVar>> NestedWordAutomaton<LETTER, IPredicate>
-			constructAutomaton(final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> oldAbstraction,
-					final IAbstractInterpretationResult<STATE, LETTER, IBoogieVar, ?> aiResult,
-					final IPredicateUnifier predicateUnifier) {
+	private <STATE extends IAbstractState<STATE>> NestedWordAutomaton<LETTER, IPredicate> constructAutomaton(
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> oldAbstraction,
+			final IAbstractInterpretationResult<STATE, LETTER, ?> aiResult, final IPredicateUnifier predicateUnifier) {
 
-		final RcfgDebugHelper<STATE, LETTER, IBoogieVar, ?> debugHelper =
+		final RcfgDebugHelper<STATE, LETTER, IProgramVarOrConst, ?> debugHelper =
 				new RcfgDebugHelper<>(mCsToolkit, mServices, mSymbolTable);
 		mLogger.info("Creating interpolant automaton from AI predicates (straight)");
 
@@ -207,7 +206,7 @@ public class AbsIntStraightLineInterpolantAutomatonBuilder<LETTER extends IIcfgT
 		return result;
 	}
 
-	private <STATE extends IAbstractState<STATE, IBoogieVar>> void addSelfLoops(
+	private <STATE extends IAbstractState<STATE>> void addSelfLoops(
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> oldAbstraction,
 			final NestedWordAutomaton<LETTER, IPredicate> result, final TripleStack<STATE> callStack) {
 		if (!result.getFinalStates().isEmpty()) {
@@ -229,10 +228,10 @@ public class AbsIntStraightLineInterpolantAutomatonBuilder<LETTER extends IIcfgT
 		}
 	}
 
-	private <STATE extends IAbstractState<STATE, IBoogieVar>> boolean isSound(final Set<STATE> previousStates,
+	private <STATE extends IAbstractState<STATE>> boolean isSound(final Set<STATE> previousStates,
 			final Triple<LETTER, IPredicate, Set<STATE>> hierarchicalPreState, final LETTER symbol,
-			final Set<STATE> postStates, final RcfgDebugHelper<STATE, LETTER, IBoogieVar, ?> debugHelper) {
-		final DisjunctiveAbstractState<STATE, IBoogieVar> hierPre;
+			final Set<STATE> postStates, final RcfgDebugHelper<STATE, LETTER, IProgramVarOrConst, ?> debugHelper) {
+		final DisjunctiveAbstractState<STATE> hierPre;
 		if (hierarchicalPreState == null) {
 			hierPre = null;
 		} else {
@@ -242,9 +241,9 @@ public class AbsIntStraightLineInterpolantAutomatonBuilder<LETTER extends IIcfgT
 				DisjunctiveAbstractState.createDisjunction(postStates), symbol);
 	}
 
-	private <STATE extends IAbstractState<STATE, IBoogieVar>> Triple<LETTER, IPredicate, Set<STATE>>
-			getHierachicalPreState(final LETTER symbol, final IPredicate previous, final Set<STATE> previousStates,
-					final TripleStack<STATE> callStack) {
+	private <STATE extends IAbstractState<STATE>> Triple<LETTER, IPredicate, Set<STATE>> getHierachicalPreState(
+			final LETTER symbol, final IPredicate previous, final Set<STATE> previousStates,
+			final TripleStack<STATE> callStack) {
 		final Triple<LETTER, IPredicate, Set<STATE>> hierarchicalPreState;
 		if (symbol instanceof ICallAction) {
 			hierarchicalPreState = new Triple<>(symbol, previous, previousStates);
@@ -258,9 +257,9 @@ public class AbsIntStraightLineInterpolantAutomatonBuilder<LETTER extends IIcfgT
 		return hierarchicalPreState;
 	}
 
-	private <STATE extends IAbstractState<STATE, IBoogieVar>> void writeTransitionAddLog(final int i,
-			final LETTER symbol, final Set<STATE> nextStates, final IPredicate source,
-			final IPredicate hierarchicalPreState, final IPredicate target) {
+	private <STATE extends IAbstractState<STATE>> void writeTransitionAddLog(final int i, final LETTER symbol,
+			final Set<STATE> nextStates, final IPredicate source, final IPredicate hierarchicalPreState,
+			final IPredicate target) {
 		final String divider = "------------------------------------------------";
 		if (i == 0) {
 			mLogger.debug(divider);
@@ -285,7 +284,7 @@ public class AbsIntStraightLineInterpolantAutomatonBuilder<LETTER extends IIcfgT
 		mLogger.debug(divider);
 	}
 
-	private final class TripleStack<STATE extends IAbstractState<STATE, IBoogieVar>>
+	private final class TripleStack<STATE extends IAbstractState<STATE>>
 			implements Iterable<Triple<LETTER, IPredicate, Set<STATE>>> {
 		private final Deque<LETTER> mCalls;
 		private final Deque<IPredicate> mPredicates;

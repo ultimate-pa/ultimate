@@ -37,9 +37,9 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieSymbolTableVariableProvider;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalDomainValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.typeutils.TypeUtils;
@@ -69,7 +69,7 @@ public class IntervalProjection {
 	 *            Octagon abstract states to be updated -- will be modified in-place.
 	 * @return Updated states in the same list.
 	 */
-	public List<OctDomainState> assignNumericVarWithoutIfs(final IBoogieVar var, final Expression rhs,
+	public List<OctDomainState> assignNumericVarWithoutIfs(final IProgramVarOrConst var, final Expression rhs,
 			List<OctDomainState> oldStates) {
 
 		oldStates = OctPostOperator.removeBottomStates(oldStates);
@@ -91,7 +91,7 @@ public class IntervalProjection {
 	 *            Octagon abstract states to be updated -- will be modified in-place.
 	 * @return Updated states in the same list.
 	 */
-	public List<OctDomainState> assignNumericVarAffine(final IBoogieVar var, final AffineExpression rhs,
+	public List<OctDomainState> assignNumericVarAffine(final IProgramVarOrConst var, final AffineExpression rhs,
 			List<OctDomainState> oldStates) {
 
 		oldStates = OctPostOperator.removeBottomStates(oldStates);
@@ -124,7 +124,7 @@ public class IntervalProjection {
 
 		} else if (expr instanceof IdentifierExpression) {
 			final IdentifierExpression iexpr = ((IdentifierExpression) expr);
-			final BoogieVar var =
+			final IProgramVar var =
 					mBpl2smtSymbolTable.getBoogieVar(iexpr.getIdentifier(), iexpr.getDeclarationInformation(), false);
 			assert var != null;
 			final OctInterval octInterval = state.projectToInterval(var);
@@ -177,7 +177,7 @@ public class IntervalProjection {
 	 */
 	public IntervalDomainValue projectAffineExpr(final AffineExpression expr, final OctDomainState state) {
 		IntervalDomainValue resultInterval = new IntervalDomainValue(0, 0);
-		for (final Entry<IBoogieVar, BigDecimal> summand : expr.getCoefficients().entrySet()) {
+		for (final Entry<IProgramVarOrConst, BigDecimal> summand : expr.getCoefficients().entrySet()) {
 			final IntervalDomainValue varValue = state.projectToInterval(summand.getKey()).toIvlInterval();
 			final IntervalValue factor = new IntervalValue(summand.getValue());
 			resultInterval = resultInterval.add(varValue.multiply(new IntervalDomainValue(factor, factor)));

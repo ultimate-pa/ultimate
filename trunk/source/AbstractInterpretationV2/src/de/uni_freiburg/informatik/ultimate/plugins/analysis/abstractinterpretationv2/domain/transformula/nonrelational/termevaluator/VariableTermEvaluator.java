@@ -51,9 +51,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public class VariableTermEvaluator<VALUE extends INonrelationalValue<VALUE>, STATE extends NonrelationalState<STATE, VALUE, IProgramVarOrConst>>
-		implements ITermEvaluator<VALUE, STATE, IProgramVarOrConst> {
-	
+public class VariableTermEvaluator<VALUE extends INonrelationalValue<VALUE>, STATE extends NonrelationalState<STATE, VALUE>>
+		implements ITermEvaluator<VALUE, STATE> {
+
 	private final String mVariable;
 	private final Set<String> mVariableNames;
 	private final Sort mSort;
@@ -131,7 +131,7 @@ public class VariableTermEvaluator<VALUE extends INonrelationalValue<VALUE>, STA
 	}
 
 	@Override
-	public void addSubEvaluator(final ITermEvaluator<VALUE, STATE, IProgramVarOrConst> evaluator) {
+	public void addSubEvaluator(final ITermEvaluator<VALUE, STATE> evaluator) {
 		throw new UnsupportedOperationException("Cannot add sub evaluator to variable term evaluators.");
 	}
 

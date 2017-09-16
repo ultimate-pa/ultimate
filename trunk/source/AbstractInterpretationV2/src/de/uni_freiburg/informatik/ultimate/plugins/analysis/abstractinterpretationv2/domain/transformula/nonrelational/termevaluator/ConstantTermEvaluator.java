@@ -36,18 +36,15 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractSta
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalEvaluationResult;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorUtils.EvaluatorType;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
 
-public class ConstantTermEvaluator<VALUE extends INonrelationalValue<VALUE>, STATE extends IAbstractState<STATE, VARDECL>, VARDECL>
-		implements ITermEvaluator<VALUE, STATE, VARDECL> {
+public class ConstantTermEvaluator<VALUE extends INonrelationalValue<VALUE>, STATE extends IAbstractState<STATE>>
+		implements ITermEvaluator<VALUE, STATE> {
 
 	private final VALUE mValue;
-	private final EvaluatorType mType;
 
-	public ConstantTermEvaluator(final VALUE value, final EvaluatorType type) {
+	public ConstantTermEvaluator(final VALUE value) {
 		mValue = value;
-		mType = type;
 	}
 
 	@Override
@@ -64,7 +61,7 @@ public class ConstantTermEvaluator<VALUE extends INonrelationalValue<VALUE>, STA
 	}
 
 	@Override
-	public void addSubEvaluator(final ITermEvaluator<VALUE, STATE, VARDECL> evaluator) {
+	public void addSubEvaluator(final ITermEvaluator<VALUE, STATE> evaluator) {
 		throw new UnsupportedOperationException("Cannot add a sub evaluator to a constant term evaluator.");
 	}
 

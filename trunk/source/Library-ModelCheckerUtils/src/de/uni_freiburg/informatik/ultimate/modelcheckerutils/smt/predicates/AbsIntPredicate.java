@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractSta
  * @param <ACTION>
  * @param <VARDECL>
  */
-public class AbsIntPredicate<STATE extends IAbstractState<STATE, VARDECL>, VARDECL> extends BasicPredicate {
+public class AbsIntPredicate<STATE extends IAbstractState<STATE>> extends BasicPredicate {
 
 	private static final long serialVersionUID = 1L;
 
@@ -67,7 +67,7 @@ public class AbsIntPredicate<STATE extends IAbstractState<STATE, VARDECL>, VARDE
 		mAbstractStates = Objects.requireNonNull(abstractState);
 		mPredicate = Objects.requireNonNull(classicPredicate);
 		assert !mAbstractStates.isEmpty();
-		assert !(mPredicate instanceof AbsIntPredicate<?, ?>);
+		assert !(mPredicate instanceof AbsIntPredicate<?>);
 	}
 
 	@Visualizable

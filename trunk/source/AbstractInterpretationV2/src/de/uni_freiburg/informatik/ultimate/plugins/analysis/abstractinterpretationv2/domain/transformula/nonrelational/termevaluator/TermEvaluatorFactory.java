@@ -28,27 +28,23 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.nonrelational.termevaluator;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.util.function.Supplier;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValueFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorLogger;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorUtils.EvaluatorType;
 
-public class TermEvaluatorFactory<VALUE extends INonrelationalValue<VALUE>, STATE extends NonrelationalState<STATE, VALUE, IProgramVarOrConst>>
-		implements ITermEvaluatorFactory<VALUE, STATE, IProgramVarOrConst> {
-	
+public class TermEvaluatorFactory<VALUE extends INonrelationalValue<VALUE>, STATE extends NonrelationalState<STATE, VALUE>>
+		implements ITermEvaluatorFactory<VALUE, STATE> {
+
 	private final Function<Object, VALUE> mConstantValueExpressionEvaluatorCreator;
 	private final int mMaxParallelStates;
 	private final INonrelationalValueFactory<VALUE> mNonrelationalValueFactory;
 	private final EvaluatorLogger mEvaluatorLogger;
-	
+
 	public TermEvaluatorFactory(final ILogger logger, final int maxParallelStates,
 			final Function<Object, VALUE> constantValueEvaluatorCreator,
 			final INonrelationalValueFactory<VALUE> nonrelationalValueFactory) {
@@ -57,44 +53,30 @@ public class TermEvaluatorFactory<VALUE extends INonrelationalValue<VALUE>, STAT
 		mNonrelationalValueFactory = nonrelationalValueFactory;
 		mEvaluatorLogger = new EvaluatorLogger(logger);
 	}
-	
+
 	@Override
-	public INaryTermEvaluator<VALUE, STATE, IProgramVarOrConst> createApplicationTerm(final int arity,
-			final String operator, final INonrelationalValueFactory<VALUE> nonrelationalValueFactory,
+	public INaryTermEvaluator<VALUE, STATE> createApplicationTerm(final int arity, final String operator,
+			final INonrelationalValueFactory<VALUE> nonrelationalValueFactory,
 			final Supplier<STATE> bottomStateSupplier) {
 		assert arity >= 0;
 		assert operator != null;
 		return new ApplicationTermEvaluator<>(mEvaluatorLogger, arity, operator, mMaxParallelStates,
 				nonrelationalValueFactory, bottomStateSupplier);
 	}
-	
-	@Override
-	public ITermEvaluator<VALUE, STATE, IProgramVarOrConst> createConstantValueEvaluator(final Object value) {
-		assert value != null;
-		
-		final EvaluatorType evaluatorType;
-		if (value instanceof BigInteger) {
-			evaluatorType = EvaluatorType.INTEGER;
-		} else if (value instanceof BigDecimal) {
-			evaluatorType = EvaluatorType.REAL;
-		} else if (value instanceof Boolean) {
-			evaluatorType = EvaluatorType.BOOL;
-		} else {
-			throw new IllegalArgumentException("Unknown type: " + value.getClass().getSimpleName());
-		}
 
-		return new ConstantTermEvaluator<VALUE, STATE, IProgramVarOrConst>(
-				mConstantValueExpressionEvaluatorCreator.apply(value), evaluatorType);
+	@Override
+	public ITermEvaluator<VALUE, STATE> createConstantValueEvaluator(final Object value) {
+		assert value != null;
+		return new ConstantTermEvaluator<>(mConstantValueExpressionEvaluatorCreator.apply(value));
 	}
-	
+
 	@FunctionalInterface
 	public interface Function<NAMETYPE, VALUETYPE> {
 		public VALUETYPE apply(final NAMETYPE name);
 	}
-	
+
 	@Override
-	public ITermEvaluator<VALUE, STATE, IProgramVarOrConst> createVariableTermEvaluator(final String variable,
-			final Sort sort) {
+	public ITermEvaluator<VALUE, STATE> createVariableTermEvaluator(final String variable, final Sort sort) {
 		return new VariableTermEvaluator<>(variable, sort, mNonrelationalValueFactory);
 	}
 }

@@ -40,9 +40,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractDom
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieSymbolTableVariableProvider;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RCFGLiteralCollector;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon.OctagonDomainPreferences.LogMessageFormatting;
@@ -61,14 +61,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Boo
  *
  * @author schaetzc@informatik.uni-freiburg.de
  */
-public class OctagonDomain implements IAbstractDomain<OctDomainState, IcfgEdge, IBoogieVar> {
+public class OctagonDomain implements IAbstractDomain<OctDomainState, IcfgEdge> {
 
 	private final BoogieSymbolTable mSymbolTable;
 	private final ILogger mLogger;
 	private final LiteralCollectorFactory mLiteralCollectorFactory;
 	private final Function<Boolean, OctDomainState> mOctDomainStateFactory;
 	private final Supplier<IAbstractStateBinaryOperator<OctDomainState>> mWideningOperatorFactory;
-	private final Supplier<IAbstractPostOperator<OctDomainState, IcfgEdge, IBoogieVar>> mPostOperatorFactory;
+	private final Supplier<IAbstractPostOperator<OctDomainState, IcfgEdge>> mPostOperatorFactory;
 	private final BoogieIcfgContainer mBoogieIcfg;
 	private final IIcfg<?> mIcfg;
 
@@ -159,7 +159,7 @@ public class OctagonDomain implements IAbstractDomain<OctDomainState, IcfgEdge, 
 	 *            Preferences
 	 * @return Factory for creating widening operators
 	 */
-	private Supplier<IAbstractPostOperator<OctDomainState, IcfgEdge, IBoogieVar>>
+	private Supplier<IAbstractPostOperator<OctDomainState, IcfgEdge>>
 			makePostOperatorFactory(final IPreferenceProvider ups) {
 		final IBoogieSymbolTableVariableProvider bpl2smtSymbolTable =
 				mBoogieIcfg.getBoogie2SMT().getBoogie2SmtSymbolTable();
@@ -201,7 +201,7 @@ public class OctagonDomain implements IAbstractDomain<OctDomainState, IcfgEdge, 
 	}
 
 	@Override
-	public IAbstractPostOperator<OctDomainState, IcfgEdge, IBoogieVar> getPostOperator() {
+	public IAbstractPostOperator<OctDomainState, IcfgEdge> getPostOperator() {
 		return mPostOperatorFactory.get();
 	}
 

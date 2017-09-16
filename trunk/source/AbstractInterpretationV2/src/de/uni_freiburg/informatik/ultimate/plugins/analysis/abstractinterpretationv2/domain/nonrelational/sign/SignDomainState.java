@@ -33,6 +33,7 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.sign.SignDomainValue.SignValues;
@@ -50,38 +51,38 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  *
  * @param <ACTION>
  *            Any action.
- * @param <IBoogieVar>
+ * @param <IProgramVar>
  *            Any variable declaration.
  */
-public class SignDomainState<VARDECL> extends NonrelationalState<SignDomainState<VARDECL>, SignDomainValue, VARDECL> {
+public class SignDomainState extends NonrelationalState<SignDomainState, SignDomainValue> {
 
 	protected SignDomainState(final ILogger logger, final boolean isBottom) {
 		super(logger, isBottom);
 	}
 
-	protected SignDomainState(final ILogger logger, final Set<VARDECL> variables,
-			final Map<VARDECL, SignDomainValue> valuesMap, final Map<VARDECL, BooleanValue> booleanValuesMap,
-			final boolean isBottom) {
+	protected SignDomainState(final ILogger logger, final Set<IProgramVarOrConst> variables,
+			final Map<IProgramVarOrConst, SignDomainValue> valuesMap,
+			final Map<IProgramVarOrConst, BooleanValue> booleanValuesMap, final boolean isBottom) {
 		super(logger, variables, valuesMap, booleanValuesMap, isBottom);
 	}
 
-	protected SignDomainState(final ILogger logger, final Set<VARDECL> variables,
-			final Map<VARDECL, SignDomainValue> valuesMap, final Map<VARDECL, BooleanValue> booleanValuesMap,
-			final TVBool isBottom) {
+	protected SignDomainState(final ILogger logger, final Set<IProgramVarOrConst> variables,
+			final Map<IProgramVarOrConst, SignDomainValue> valuesMap,
+			final Map<IProgramVarOrConst, BooleanValue> booleanValuesMap, final TVBool isBottom) {
 		super(logger, variables, valuesMap, booleanValuesMap, isBottom);
 	}
 
 	@Override
-	protected SignDomainState<VARDECL> createCopy() {
-		return new SignDomainState<>(getLogger(), getVariables(), new HashMap<>(getVar2ValueNonrelational()),
+	protected SignDomainState createCopy() {
+		return new SignDomainState(getLogger(), getVariables(), new HashMap<>(getVar2ValueNonrelational()),
 				new HashMap<>(getVar2ValueBoolean()), getBottomFlag());
 	}
 
 	@Override
-	protected SignDomainState<VARDECL> createState(final ILogger logger, final Set<VARDECL> newVarMap,
-			final Map<VARDECL, SignDomainValue> newValMap, final Map<VARDECL, BooleanValue> newBooleanValMap,
-			final boolean isBottom) {
-		return new SignDomainState<>(logger, newVarMap, newValMap, newBooleanValMap, isBottom);
+	protected SignDomainState createState(final ILogger logger, final Set<IProgramVarOrConst> newVarMap,
+			final Map<IProgramVarOrConst, SignDomainValue> newValMap,
+			final Map<IProgramVarOrConst, BooleanValue> newBooleanValMap, final boolean isBottom) {
+		return new SignDomainState(logger, newVarMap, newValMap, newBooleanValMap, isBottom);
 	}
 
 	@Override
@@ -100,7 +101,7 @@ public class SignDomainState<VARDECL> extends NonrelationalState<SignDomainState
 	}
 
 	@Override
-	protected SignDomainState<VARDECL> getThis() {
+	protected SignDomainState getThis() {
 		return this;
 	}
 

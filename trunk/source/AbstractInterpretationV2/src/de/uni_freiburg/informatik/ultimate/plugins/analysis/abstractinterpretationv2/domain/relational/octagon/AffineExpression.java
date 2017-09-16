@@ -39,7 +39,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.BiFunction;
 
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
 
 /**
@@ -59,7 +59,7 @@ public class AffineExpression {
 	 * Map from the variables of this affine expression to their coefficients. Variables with coefficient zero are not
 	 * stored.
 	 */
-	private final Map<IBoogieVar, BigDecimal> mCoefficients;
+	private final Map<IProgramVarOrConst, BigDecimal> mCoefficients;
 
 	/**
 	 * The constant summand of this affine expression.
@@ -75,7 +75,7 @@ public class AffineExpression {
 	 * @param constant
 	 *            Constant of summand of the affine expression.
 	 */
-	public AffineExpression(final Map<IBoogieVar, BigDecimal> coefficients, final BigDecimal constant) {
+	public AffineExpression(final Map<IProgramVarOrConst, BigDecimal> coefficients, final BigDecimal constant) {
 		assert coefficients != null && constant != null;
 		mCoefficients = coefficients;
 		mConstant = constant;
@@ -117,7 +117,7 @@ public class AffineExpression {
 	 *
 	 * @return Map from variables to their coefficients.
 	 */
-	public Map<IBoogieVar, BigDecimal> getCoefficients() {
+	public Map<IProgramVarOrConst, BigDecimal> getCoefficients() {
 		return Collections.unmodifiableMap(mCoefficients);
 	}
 
@@ -129,7 +129,7 @@ public class AffineExpression {
 	 *            Name of a variable.
 	 * @return Coefficient of the given variable.
 	 */
-	public BigDecimal getCoefficient(final IBoogieVar var) {
+	public BigDecimal getCoefficient(final IProgramVarOrConst var) {
 		final BigDecimal factor = mCoefficients.get(var);
 		return (factor == null) ? BigDecimal.ZERO : factor;
 	}
@@ -188,7 +188,7 @@ public class AffineExpression {
 				return null; // TODO switch from BigDecimal to rational numbers
 			}
 			// compute unit coefficients (recall: coefficients in AffineExpression are always != 0)
-			final Map<IBoogieVar, BigDecimal> unitCoefficients = new HashMap<>();
+			final Map<IProgramVarOrConst, BigDecimal> unitCoefficients = new HashMap<>();
 			mCoefficients.forEach((var, coeff) -> unitCoefficients.put(var,
 					coeff.signum() > 0 ? BigDecimal.ONE : AbsIntUtil.MINUS_ONE));
 			//
@@ -223,7 +223,7 @@ public class AffineExpression {
 		if (mCoefficients.size() != 1) {
 			return null;
 		}
-		final Entry<IBoogieVar, BigDecimal> entry = mCoefficients.entrySet().iterator().next();
+		final Entry<IProgramVarOrConst, BigDecimal> entry = mCoefficients.entrySet().iterator().next();
 		if (entry.getValue().abs().compareTo(BigDecimal.ONE) != 0) {
 			return null;
 		}
@@ -246,7 +246,7 @@ public class AffineExpression {
 		if (distinctVars < 1 || distinctVars > 2) {
 			return null;
 		}
-		final List<IBoogieVar> vars = new ArrayList<>(distinctVars);
+		final List<IProgramVarOrConst> vars = new ArrayList<>(distinctVars);
 		final List<BigDecimal> coefficients = new ArrayList<>(distinctVars);
 		mCoefficients.entrySet().forEach(entry -> {
 			vars.add(entry.getKey());
@@ -285,10 +285,10 @@ public class AffineExpression {
 	public AffineExpression add(final AffineExpression summand) {
 		final AffineExpression sum = new AffineExpression();
 		sum.mConstant = mConstant.add(summand.mConstant);
-		final Set<IBoogieVar> vars = new HashSet<>();
+		final Set<IProgramVarOrConst> vars = new HashSet<>();
 		vars.addAll(mCoefficients.keySet());
 		vars.addAll(summand.mCoefficients.keySet());
-		for (final IBoogieVar v : vars) {
+		for (final IProgramVarOrConst v : vars) {
 			final BigDecimal sumFactor = getCoefficient(v).add(summand.getCoefficient(v));
 			sum.mCoefficients.put(v, sumFactor);
 		}
@@ -315,7 +315,7 @@ public class AffineExpression {
 	public AffineExpression negate() {
 		final AffineExpression negation = new AffineExpression();
 		negation.mConstant = mConstant.negate();
-		for (final Entry<IBoogieVar, BigDecimal> entry : mCoefficients.entrySet()) {
+		for (final Entry<IProgramVarOrConst, BigDecimal> entry : mCoefficients.entrySet()) {
 			negation.mCoefficients.put(entry.getKey(), entry.getValue().negate());
 		}
 		return negation;
@@ -346,7 +346,7 @@ public class AffineExpression {
 		}
 		final AffineExpression product = new AffineExpression();
 		product.mConstant = affineFactor.mConstant.multiply(constantFactor.mConstant);
-		for (final Entry<IBoogieVar, BigDecimal> entry : affineFactor.mCoefficients.entrySet()) {
+		for (final Entry<IProgramVarOrConst, BigDecimal> entry : affineFactor.mCoefficients.entrySet()) {
 			final BigDecimal newCoefficent = entry.getValue().multiply(constantFactor.mConstant);
 			product.mCoefficients.put(entry.getKey(), newCoefficent);
 		}
@@ -400,7 +400,7 @@ public class AffineExpression {
 				integerDivison ? AbsIntUtil::exactDivison : BigDecimal::divide;
 		final AffineExpression quotient = new AffineExpression();
 		quotient.mConstant = divOp.apply(mConstant, divisor);
-		for (final Entry<IBoogieVar, BigDecimal> entry : mCoefficients.entrySet()) {
+		for (final Entry<IProgramVarOrConst, BigDecimal> entry : mCoefficients.entrySet()) {
 			final BigDecimal newCoefficent = divOp.apply(entry.getValue(), divisor);
 			quotient.mCoefficients.put(entry.getKey(), newCoefficent);
 		}
@@ -442,10 +442,10 @@ public class AffineExpression {
 		if (mConstant.compareTo(other.mConstant) != 0) {
 			return false;
 		}
-		final Set<IBoogieVar> vars = new HashSet<>();
+		final Set<IProgramVarOrConst> vars = new HashSet<>();
 		vars.addAll(mCoefficients.keySet());
 		vars.addAll(other.mCoefficients.keySet());
-		for (final IBoogieVar v : vars) {
+		for (final IProgramVarOrConst v : vars) {
 			final BigDecimal coeff = getCoefficient(v);
 			final BigDecimal otherCoeff = other.getCoefficient(v);
 			if (coeff.compareTo(otherCoeff) != 0) {
@@ -458,7 +458,7 @@ public class AffineExpression {
 	@Override
 	public String toString() {
 		final StringBuilder strBuilder = new StringBuilder();
-		for (final Entry<IBoogieVar, BigDecimal> entry : mCoefficients.entrySet()) {
+		for (final Entry<IProgramVarOrConst, BigDecimal> entry : mCoefficients.entrySet()) {
 			strBuilder.append(entry.getValue());
 			// multiplication dot
 			strBuilder.append('\u22C5');
@@ -471,14 +471,14 @@ public class AffineExpression {
 
 	/** @see AffineExpression#getOneVarForm() */
 	public static class OneVarForm {
-		public IBoogieVar var;
+		public IProgramVarOrConst var;
 		public boolean negVar;
 		public OctValue constant;
 	}
 
 	/** @see AffineExpression#getTwoVarForm() */
 	public static class TwoVarForm {
-		public IBoogieVar var1, var2;
+		public IProgramVarOrConst var1, var2;
 		public boolean negVar2, negVar1;
 		public OctValue constant;
 	}

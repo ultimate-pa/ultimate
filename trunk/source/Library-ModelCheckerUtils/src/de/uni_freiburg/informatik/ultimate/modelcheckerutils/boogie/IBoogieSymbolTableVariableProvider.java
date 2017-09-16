@@ -28,6 +28,8 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie;
 
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
 /**
  * Provides BoogieVars from BoogieSymbolTables. This is mainly used in abstract interpretation's abstract domains.
@@ -49,7 +51,7 @@ public interface IBoogieSymbolTableVariableProvider {
 	 *            otherwise.
 	 * @return The corresponding {@link BoogieVar}.
 	 */
-	BoogieVar getBoogieVar(final String varId, final DeclarationInformation declarationInformation,
+	IProgramVar getBoogieVar(final String varId, final DeclarationInformation declarationInformation,
 			final boolean inOldContext);
 
 	/**
@@ -64,7 +66,7 @@ public interface IBoogieSymbolTableVariableProvider {
 	 *            otherwise.
 	 * @return The corresponding {@link BoogieVar}.
 	 */
-	BoogieVar getBoogieVar(final String varId, final String procedure, final boolean isInParam);
+	IProgramVar getBoogieVar(final String varId, final String procedure, final boolean isInParam);
 
 	/**
 	 * Returns a {@link BoogieConst} for a given contant name.
@@ -73,5 +75,5 @@ public interface IBoogieSymbolTableVariableProvider {
 	 *            The name of the constant.
 	 * @return The corresponding {@link BoogieConst}.
 	 */
-	BoogieConst getBoogieConst(final String constId);
+	IProgramConst getBoogieConst(final String constId);
 }

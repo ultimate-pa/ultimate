@@ -33,11 +33,11 @@ import java.util.Deque;
 
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
 
-public class TermExpressionEvaluator<VALUE, STATE extends IAbstractState<STATE, VARDECL>, VARDECL> {
-	
-	private final Deque<ITermEvaluator<VALUE, STATE, VARDECL>> mEvaluators;
-	private ITermEvaluator<VALUE, STATE, VARDECL> mRootEvaluator;
-	
+public class TermExpressionEvaluator<VALUE, STATE extends IAbstractState<STATE>> {
+
+	private final Deque<ITermEvaluator<VALUE, STATE>> mEvaluators;
+	private ITermEvaluator<VALUE, STATE> mRootEvaluator;
+
 	/**
 	 * The default constructor.
 	 */
@@ -54,8 +54,8 @@ public class TermExpressionEvaluator<VALUE, STATE extends IAbstractState<STATE, 
 	 *
 	 * @param evaluator
 	 */
-	public void addEvaluator(final ITermEvaluator<VALUE, STATE, VARDECL> evaluator) {
-		
+	public void addEvaluator(final ITermEvaluator<VALUE, STATE> evaluator) {
+
 		if (mEvaluators.isEmpty()) {
 			if (mRootEvaluator != null) {
 				throw new IllegalStateException("The root evaluator is not empty. Cannot add new root evaluator.");
@@ -81,14 +81,14 @@ public class TermExpressionEvaluator<VALUE, STATE extends IAbstractState<STATE, 
 			}
 		}
 	}
-	
+
 	/**
 	 * @return The root evaluator of the evaluator tree.
 	 */
-	public ITermEvaluator<VALUE, STATE, VARDECL> getRootEvaluator() {
+	public ITermEvaluator<VALUE, STATE> getRootEvaluator() {
 		return mRootEvaluator;
 	}
-	
+
 	/**
 	 * @return <code>true</code> if there are no evaluators present in the {@link TermExpressionEvaluator},
 	 *         <code>false</code> otherwise.
@@ -96,7 +96,7 @@ public class TermExpressionEvaluator<VALUE, STATE extends IAbstractState<STATE, 
 	public boolean isEmpty() {
 		return mEvaluators.isEmpty();
 	}
-	
+
 	/**
 	 * @return <code>true</code> if all evaluators in the {@link TermExpressionEvaluator} are fully built and the
 	 *         expression evaluator has a root node, <code>false</code> otherwise.
@@ -104,17 +104,17 @@ public class TermExpressionEvaluator<VALUE, STATE extends IAbstractState<STATE, 
 	public boolean isFinished() {
 		return isEmpty() && (mRootEvaluator != null);
 	}
-	
+
 	@Override
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
-		
+
 		sb.append(mRootEvaluator);
-		
+
 		if (!mEvaluators.isEmpty()) {
 			sb.append(", Stack: ").append(mEvaluators);
 		}
-		
+
 		return sb.toString();
 	}
 }

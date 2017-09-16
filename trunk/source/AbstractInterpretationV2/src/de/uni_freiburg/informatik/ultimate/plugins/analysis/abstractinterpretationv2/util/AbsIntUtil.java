@@ -49,10 +49,10 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieConst;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
@@ -276,18 +276,18 @@ public final class AbsIntUtil {
 	}
 
 	/**
-	 * Creates a dummy {@link IBoogieVar} from a given type. This method is used to give generated temporary variables a
-	 * boogie type.
+	 * Creates a dummy {@link IProgramVar} from a given type. This method is used to give generated temporary variables
+	 * a boogie type.
 	 *
 	 * @param identifier
 	 *            the identifier of the variable
 	 * @param type
 	 *            the type of the variable
-	 * @return {@link IBoogieVar} according to the given identifier and {@link IBoogieType}
+	 * @return {@link IProgramVar} according to the given identifier and {@link IBoogieType}
 	 *
 	 * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
 	 */
-	public static IBoogieVar createTemporaryIBoogieVar(final String identifier, final IBoogieType type) {
+	public static IProgramVar createTemporaryIBoogieVar(final String identifier, final IBoogieType type) {
 		return new FakeBoogieVar(type, identifier);
 	}
 
@@ -318,17 +318,17 @@ public final class AbsIntUtil {
 		}
 	}
 
-	public static boolean isOldVar(final IBoogieVar ibv) {
+	public static boolean isOldVar(final IProgramVarOrConst ibv) {
 		return ibv instanceof IProgramOldVar;
 	}
 
-	public static boolean isGlobal(final IBoogieVar ibv) {
+	public static boolean isGlobal(final IProgramVarOrConst ibv) {
 		if (ibv instanceof IProgramVar) {
-			return ((IProgramVar) ibv).isGlobal();
+			return ibv.isGlobal();
 		} else if (ibv instanceof BoogieConst) {
 			return true;
 		} else {
-			throw new AssertionError("Unknown IBoogieVar type: " + ibv.getClass().getName());
+			throw new AssertionError("Unknown IProgramVar type: " + ibv.getClass().getName());
 		}
 	}
 
@@ -362,7 +362,7 @@ public final class AbsIntUtil {
 		throw new IllegalArgumentException("Cannot extract BoogieIcfgContainer from IICFG");
 	}
 
-	public static <STATE extends IAbstractState<STATE, VARDECL>, VARDECL> STATE
+	public static <STATE extends IAbstractState<STATE>> STATE
 			synchronizeVariables(final STATE template, final STATE toSynchronize) {
 		if (toSynchronize == null) {
 			return null;
@@ -375,7 +375,7 @@ public final class AbsIntUtil {
 		return rtr;
 	}
 
-	public static <STATE extends IAbstractState<STATE, VARDECL>, VARDECL> Set<STATE>
+	public static <STATE extends IAbstractState<STATE>> Set<STATE>
 			synchronizeVariables(final Set<STATE> states) {
 		if (states == null) {
 			return null;
@@ -383,18 +383,18 @@ public final class AbsIntUtil {
 		if (states.size() < 2) {
 			return states;
 		}
-		final Set<VARDECL> allVars =
+		final Set<IProgramVarOrConst> allVars =
 				states.stream().flatMap(a -> a.getVariables().stream()).collect(Collectors.toSet());
 		return states.stream().map(a -> synchronizeVariables(a, allVars)).collect(Collectors.toSet());
 	}
 
-	public static <STATE extends IAbstractState<STATE, VARDECL>, VARDECL> STATE synchronizeVariables(final STATE state,
-			final Set<VARDECL> shouldVars) {
+	public static <STATE extends IAbstractState<STATE>> STATE
+			synchronizeVariables(final STATE state, final Set<IProgramVarOrConst> shouldVars) {
 
-		final Set<VARDECL> definedVariables = state.getVariables();
+		final Set<IProgramVarOrConst> definedVariables = state.getVariables();
 
-		final Set<VARDECL> toRemove = SetOperations.difference(definedVariables, shouldVars);
-		final Set<VARDECL> toAdd = SetOperations.difference(shouldVars, definedVariables);
+		final Set<IProgramVarOrConst> toRemove = SetOperations.difference(definedVariables, shouldVars);
+		final Set<IProgramVarOrConst> toAdd = SetOperations.difference(shouldVars, definedVariables);
 
 		if (toRemove.isEmpty() && toAdd.isEmpty()) {
 			return state;

@@ -48,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.util.SetOperations;
  *
  */
 public class LiveVariableState<ACTION extends IAction>
-		implements IAbstractState<LiveVariableState<ACTION>, IProgramVarOrConst> {
+		implements IAbstractState<LiveVariableState<ACTION>> {
 
 	private static int sId;
 	private final int mId;

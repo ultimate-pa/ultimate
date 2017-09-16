@@ -2,22 +2,22 @@
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2014-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2012-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE ModelCheckerUtils Library.
- * 
+ *
  * The ULTIMATE ModelCheckerUtils Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE ModelCheckerUtils Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE ModelCheckerUtils Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE ModelCheckerUtils Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -84,13 +84,13 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifi
 /**
  * Translates statements into TransFormulas. The resulting TransFormula encodes the transition relation of the
  * statements as SMT formula.
- * 
+ *
  * Idea of underlying algorithm: Starts at the end of the statement sequence take current variables as outVars and then
  * computes the inVars by traversing the sequence of statements backwards and computing some kind of weakest
  * precondition.
- * 
+ *
  * @author Matthias Heizmann
- * 
+ *
  */
 public class Statements2TransFormula {
 
@@ -101,13 +101,10 @@ public class Statements2TransFormula {
 	private final static boolean s_ComputeAsserts = false;
 	private final static String s_ComputeAssertsNotAvailable = "computation of asserts not available";
 	/**
-	 * Try to replace existential quantification by auxiliary variables.
-	 * Therefore we bring all terms in prenex normal form (PNF). If the first
-	 * quantifier is ∃ we remove it and add the corresponding variables as
-	 * auxiliary variables.
-	 * Currently our PNF transformation involves a transformation in
-	 * negation normal (NNF), hence this skolemization causes also e.g., the
-	 * transformation of all Boolean ITE terms. 
+	 * Try to replace existential quantification by auxiliary variables. Therefore we bring all terms in prenex normal
+	 * form (PNF). If the first quantifier is ∃ we remove it and add the corresponding variables as auxiliary variables.
+	 * Currently our PNF transformation involves a transformation in negation normal (NNF), hence this skolemization
+	 * causes also e.g., the transformation of all Boolean ITE terms.
 	 */
 	private final boolean mSimplePartialSkolemization;
 
@@ -144,7 +141,7 @@ public class Statements2TransFormula {
 
 	/**
 	 * Initialize fields to allow construction of a new TransFormula
-	 * 
+	 *
 	 * @param procId
 	 */
 	private void initialize(final String procId) {
@@ -643,9 +640,9 @@ public class Statements2TransFormula {
 	 * Eliminate auxVars from input if possible. Let {x_1,...,x_n} be a subset of auxVars. Returns a term that is
 	 * equivalent to ∃x_1,...,∃x_n input and remove {x_1,...,x_n} from auxVars. The set {x_1,...,x_n} is determined by
 	 * NaiveDestructiveEqualityResolution.
-	 * 
+	 *
 	 * Returns term that is equisatisfiable to input. If a x is free variable
-	 * 
+	 *
 	 * @param input
 	 * @param auxVars
 	 *            set of free variables occurring in input
@@ -659,19 +656,16 @@ public class Statements2TransFormula {
 	}
 
 	/**
-	 * Try to replace existential quantification by auxiliary variables.
-	 * Bring input in prenex normal form (PNF). If the first
-	 * quantifier is ∃ we remove it and add the corresponding variables to 
-	 * auxVars.
-	 * 
-	 * @return input in NNF, possibly in a form where the first quantifier
-	 * block is removed.
+	 * Try to replace existential quantification by auxiliary variables. Bring input in prenex normal form (PNF). If the
+	 * first quantifier is ∃ we remove it and add the corresponding variables to auxVars.
+	 *
+	 * @return input in NNF, possibly in a form where the first quantifier block is removed.
 	 */
 	private Term skolemize(final Term input, final Set<TermVariable> auxVars) {
 		final Term pnf = new NnfTransformer(mMgdScript, mServices, QuantifierHandling.PULL).transform(input);
-//		2017-04-14 Matthias: I presume that PNF transformer is not needed since NNF transformation
-//		with QuantifierHandling.PULL will also produce PNF.
-//		final Term pnf = new PrenexNormalForm(mMgdScript).transform(nnf);
+		// 2017-04-14 Matthias: I presume that PNF transformer is not needed since NNF transformation
+		// with QuantifierHandling.PULL will also produce PNF.
+		// final Term pnf = new PrenexNormalForm(mMgdScript).transform(nnf);
 		final QuantifierSequence qs = new QuantifierSequence(mMgdScript.getScript(), pnf);
 		final List<QuantifiedVariables> qvs = qs.getQuantifierBlocks();
 		Term result;

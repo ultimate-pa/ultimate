@@ -41,25 +41,25 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractSta
  * @param <VARDECL>
  *            Any variable declaration.
  */
-public class EmptyDomain<ACTION, VARDECL> implements IAbstractDomain<EmptyDomainState<VARDECL>, ACTION, VARDECL> {
+public class EmptyDomain<ACTION> implements IAbstractDomain<EmptyDomainState, ACTION> {
 
 	@Override
-	public EmptyDomainState<VARDECL> createTopState() {
-		return new EmptyDomainState<>(false);
+	public EmptyDomainState createTopState() {
+		return new EmptyDomainState(false);
 	}
 
 	@Override
-	public EmptyDomainState<VARDECL> createBottomState() {
-		return new EmptyDomainState<>(true);
+	public EmptyDomainState createBottomState() {
+		return new EmptyDomainState(true);
 	}
 
 	@Override
-	public IAbstractStateBinaryOperator<EmptyDomainState<VARDECL>> getWideningOperator() {
+	public IAbstractStateBinaryOperator<EmptyDomainState> getWideningOperator() {
 		return (a, b) -> a.union(b);
 	}
 
 	@Override
-	public IAbstractPostOperator<EmptyDomainState<VARDECL>, ACTION, VARDECL> getPostOperator() {
+	public IAbstractPostOperator<EmptyDomainState, ACTION> getPostOperator() {
 		return new EmptyPostOperator<>();
 	}
 

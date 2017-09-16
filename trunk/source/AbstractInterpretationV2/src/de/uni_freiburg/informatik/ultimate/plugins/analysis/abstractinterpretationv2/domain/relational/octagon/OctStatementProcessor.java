@@ -44,7 +44,8 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.typeutils.TypeUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -90,18 +91,18 @@ public class OctStatementProcessor {
 			return oldStates;
 		}
 
-		final Map<String, IBoogieVar> tmpVars = new HashMap<>();
-		final List<Pair<IBoogieVar, Expression>> mapLhsToRhs = new ArrayList<>(length);
-		final List<Pair<IBoogieVar, IBoogieVar>> mapOrigVarToTmpVar = new ArrayList<>(length);
+		final Map<String, IProgramVarOrConst> tmpVars = new HashMap<>();
+		final List<Pair<IProgramVar, Expression>> mapLhsToRhs = new ArrayList<>(length);
+		final List<Pair<IProgramVarOrConst, IProgramVarOrConst>> mapOrigVarToTmpVar = new ArrayList<>(length);
 		for (int i = 0; i < length; ++i) {
 			final LeftHandSide l = lhs[i];
 
 			if (l instanceof VariableLHS) {
 				final VariableLHS vLhs = (VariableLHS) l;
-				final IBoogieVar origVar = mPostOp.getBoogieVar(vLhs);
+				final IProgramVar origVar = mPostOp.getBoogieVar(vLhs);
 				// unique (origVar is unique + braces are not allowed)
 				final String tmpVarName = "octTmp(" + origVar + ")";
-				final IBoogieVar tmpVar = AbsIntUtil.createTemporaryIBoogieVar(tmpVarName, vLhs.getType());
+				final IProgramVar tmpVar = AbsIntUtil.createTemporaryIBoogieVar(tmpVarName, vLhs.getType());
 
 				tmpVars.put(tmpVarName, tmpVar);
 				mapLhsToRhs.add(new Pair<>(tmpVar, rhs[i]));
@@ -118,7 +119,7 @@ public class OctStatementProcessor {
 
 		// (tmpVar := origExpr)*
 		// note: oldStates may be modified, since addVariables() returns only a shallow copy. Not a problem.
-		for (final Pair<IBoogieVar, Expression> assignment : mapLhsToRhs) {
+		for (final Pair<IProgramVar, Expression> assignment : mapLhsToRhs) {
 			tmpStates = processSingleAssignment(assignment.getFirst(), assignment.getSecond(), tmpStates);
 		}
 
@@ -132,7 +133,7 @@ public class OctStatementProcessor {
 		return newStates;
 	}
 
-	public List<OctDomainState> processSingleAssignment(final IBoogieVar targetVar, final Expression rhs,
+	public List<OctDomainState> processSingleAssignment(final IProgramVarOrConst targetVar, final Expression rhs,
 			final List<OctDomainState> oldStates) {
 		final IBoogieType type = rhs.getType();
 		if (TypeUtils.isBoolean(type)) {
@@ -144,7 +145,7 @@ public class OctStatementProcessor {
 		}
 	}
 
-	private List<OctDomainState> processBooleanAssign(final IBoogieVar targetVar, final Expression rhs,
+	private List<OctDomainState> processBooleanAssign(final IProgramVarOrConst targetVar, final Expression rhs,
 			List<OctDomainState> oldStates) {
 
 		if (rhs instanceof BooleanLiteral) {
@@ -157,7 +158,7 @@ public class OctStatementProcessor {
 			final IdentifierExpression ie = (IdentifierExpression) rhs;
 			oldStates = OctPostOperator.removeBottomStates(oldStates); // important!
 			if (AbsIntUtil.isVariable(ie)) {
-				final IBoogieVar sourceVar = mPostOp.getBoogieVar(ie);
+				final IProgramVarOrConst sourceVar = mPostOp.getBoogieVar(ie);
 				oldStates.forEach(s -> s.copyVar(targetVar, sourceVar));
 			} else {
 				oldStates.forEach(s -> s.havocVar(targetVar));
@@ -180,7 +181,7 @@ public class OctStatementProcessor {
 		}
 	}
 
-	private List<OctDomainState> processNumericAssign(final IBoogieVar targetVar, final Expression rhs,
+	private List<OctDomainState> processNumericAssign(final IProgramVarOrConst targetVar, final Expression rhs,
 			final List<OctDomainState> oldStates) {
 
 		final List<OctDomainState> newStates = new ArrayList<>();
@@ -193,8 +194,8 @@ public class OctStatementProcessor {
 		return mPostOp.joinDownToMax(newStates);
 	}
 
-	private List<OctDomainState> processNumericAssignWithoutIfs(final IBoogieVar targetVar, final Expression rhs,
-			final List<OctDomainState> oldStates) {
+	private List<OctDomainState> processNumericAssignWithoutIfs(final IProgramVarOrConst targetVar,
+			final Expression rhs, final List<OctDomainState> oldStates) {
 
 		final AffineExpression ae = mPostOp.getExprTransformer().affineExprCached(rhs);
 		if (ae != null) {
@@ -234,7 +235,7 @@ public class OctStatementProcessor {
 	}
 
 	private List<OctDomainState> processHavocStatement(final HavocStatement statement, List<OctDomainState> oldStates) {
-		final List<IBoogieVar> vars = new ArrayList<>();
+		final List<IProgramVarOrConst> vars = new ArrayList<>();
 		for (final VariableLHS lhs : statement.getIdentifiers()) {
 			vars.add(mPostOp.getBoogieVar(lhs));
 		}

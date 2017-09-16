@@ -54,8 +54,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 
-public abstract class NonrelationalPostOperator<STATE extends NonrelationalState<STATE, V, IProgramVarOrConst>, ACTION, V extends INonrelationalValue<V>>
-		implements IAbstractPostOperator<STATE, ACTION, IProgramVarOrConst> {
+public abstract class NonrelationalPostOperator<STATE extends NonrelationalState<STATE, V>, ACTION, V extends INonrelationalValue<V>>
+		implements IAbstractPostOperator<STATE, ACTION> {
 
 	private final ILogger mLogger;
 	private final NonrelationalTermProcessor<V, STATE> mTermProcessor;

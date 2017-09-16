@@ -54,7 +54,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.DisjunctiveAbstractState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
@@ -66,6 +65,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IRetu
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdgeIterator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
@@ -206,9 +206,9 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 							.getPathProgram();
 
 			@SuppressWarnings("unchecked")
-			final IAbstractInterpretationResult<?, LETTER, IBoogieVar, ?> result =
-					(IAbstractInterpretationResult<?, LETTER, IBoogieVar, ?>) AbstractInterpreter
-							.runWithoutTimeoutAndResults(pp, timer, mServices);
+			final IAbstractInterpretationResult<?, LETTER, ?> result =
+					(IAbstractInterpretationResult<?, LETTER, ?>) AbstractInterpreter.runWithoutTimeoutAndResults(pp,
+							timer, mServices);
 			if (result == null) {
 				mCurrentIteration = null;
 			} else {
@@ -323,20 +323,19 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 	 *
 	 * @param <STATE>
 	 */
-	private final class AbsIntCurrentIteration<STATE extends IAbstractState<STATE, IBoogieVar>> {
+	private final class AbsIntCurrentIteration<STATE extends IAbstractState<STATE>> {
 		private final IRun<LETTER, IPredicate, ?> mCex;
-		private final IAbstractInterpretationResult<STATE, LETTER, IBoogieVar, ?> mResult;
+		private final IAbstractInterpretationResult<STATE, LETTER, ?> mResult;
 
 		private IInterpolantGenerator mInterpolantGenerator;
 		private CachingHoareTripleChecker mHtc;
-		private final AbsIntPredicate<STATE, IBoogieVar> mFalsePredicate;
-		private final AbsIntPredicate<STATE, IBoogieVar> mTruePredicate;
+		private final AbsIntPredicate<STATE> mFalsePredicate;
+		private final AbsIntPredicate<STATE> mTruePredicate;
 		private final PredicateUnifier mPredicateUnifierAbsInt;
 		private final PathProgram mPathProgram;
 
 		public AbsIntCurrentIteration(final IRun<LETTER, IPredicate, ?> cex,
-				final IAbstractInterpretationResult<STATE, LETTER, IBoogieVar, ?> result,
-				final PathProgram pathprogram) {
+				final IAbstractInterpretationResult<STATE, LETTER, ?> result, final PathProgram pathprogram) {
 			mPathProgram = Objects.requireNonNull(pathprogram);
 			mCex = Objects.requireNonNull(cex);
 			mResult = Objects.requireNonNull(result);
@@ -350,7 +349,7 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 					mFalsePredicate, mTruePredicate);
 		}
 
-		public IAbstractInterpretationResult<STATE, LETTER, IBoogieVar, ?> getResult() {
+		public IAbstractInterpretationResult<STATE, LETTER, ?> getResult() {
 			return mResult;
 		}
 
@@ -389,9 +388,9 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 			try {
 				mLogger.info("Generating AbsInt predicates");
 				final List<LETTER> ppTrace = constructTraceFromWord(word, mPathProgram);
-				final List<AbsIntPredicate<STATE, IBoogieVar>> nonUnifiedPredicates = generateAbsIntPredicates(ppTrace);
+				final List<AbsIntPredicate<STATE>> nonUnifiedPredicates = generateAbsIntPredicates(ppTrace);
 
-				final List<AbsIntPredicate<STATE, IBoogieVar>> weakenedPredicates;
+				final List<AbsIntPredicate<STATE>> weakenedPredicates;
 				if (USE_INTERPOLANT_WEAKENER) {
 					final CachingHoareTripleCheckerMap absIntOnlyHtc = createHoareTripleChecker(true);
 					weakenedPredicates = weakenPredicates(nonUnifiedPredicates, ppTrace, absIntOnlyHtc);
@@ -401,7 +400,7 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 					weakenedPredicates = nonUnifiedPredicates;
 				}
 				mLogger.info("Unifying AI predicates");
-				final List<AbsIntPredicate<STATE, IBoogieVar>> interpolants = unifyPredicates(weakenedPredicates);
+				final List<AbsIntPredicate<STATE>> interpolants = unifyPredicates(weakenedPredicates);
 
 				if (mLogger.isDebugEnabled()) {
 					mLogger.debug("Interpolant sequence:");
@@ -421,16 +420,14 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 			}
 		}
 
-		private List<AbsIntPredicate<STATE, IBoogieVar>>
-				unifyPredicates(final List<AbsIntPredicate<STATE, IBoogieVar>> weakenedPredicates) {
+		private List<AbsIntPredicate<STATE>> unifyPredicates(final List<AbsIntPredicate<STATE>> weakenedPredicates) {
 			return weakenedPredicates.stream()
 					.map(a -> getPredicateFromStates(a.getAbstractStates(), mCsToolkit.getManagedScript().getScript()))
 					.collect(Collectors.toList());
 		}
 
-		private List<AbsIntPredicate<STATE, IBoogieVar>> weakenPredicates(
-				final List<AbsIntPredicate<STATE, IBoogieVar>> nonUnifiedPredicates, final List<LETTER> ppTrace,
-				final IHoareTripleChecker htc) {
+		private List<AbsIntPredicate<STATE>> weakenPredicates(final List<AbsIntPredicate<STATE>> nonUnifiedPredicates,
+				final List<LETTER> ppTrace, final IHoareTripleChecker htc) {
 			return new AbsIntPredicateInterpolantSequenceWeakener<>(mLogger, htc, nonUnifiedPredicates, ppTrace,
 					mTruePredicate, mFalsePredicate, mCsToolkit.getManagedScript().getScript(),
 					mPredicateUnifierAbsInt.getPredicateFactory()).getResult();
@@ -453,25 +450,25 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 			return rtr;
 		}
 
-		private boolean isInductive(final List<LETTER> trace,
-				final List<AbsIntPredicate<STATE, IBoogieVar>> interpolants, final IHoareTripleChecker htc) {
+		private boolean isInductive(final List<LETTER> trace, final List<AbsIntPredicate<STATE>> interpolants,
+				final IHoareTripleChecker htc) {
 			mLogger.debug("Checking inductivity of AbsInt predicates");
 			if (trace.isEmpty()) {
 				return true;
 			}
 			assert trace.size() == interpolants.size() + 1 : "trace size does not match interpolants size";
 
-			final List<AbsIntPredicate<STATE, IBoogieVar>> completeInterpolants = new ArrayList<>();
+			final List<AbsIntPredicate<STATE>> completeInterpolants = new ArrayList<>();
 			completeInterpolants.add(mTruePredicate);
 			completeInterpolants.addAll(interpolants);
 			completeInterpolants.add(mFalsePredicate);
 
 			final Iterator<LETTER> traceIter = trace.iterator();
-			final Iterator<AbsIntPredicate<STATE, IBoogieVar>> interpolantsIter = completeInterpolants.iterator();
+			final Iterator<AbsIntPredicate<STATE>> interpolantsIter = completeInterpolants.iterator();
 
-			AbsIntPredicate<STATE, IBoogieVar> pre = null;
-			AbsIntPredicate<STATE, IBoogieVar> post = interpolantsIter.next();
-			final Deque<AbsIntPredicate<STATE, IBoogieVar>> preHierStates = new ArrayDeque<>();
+			AbsIntPredicate<STATE> pre = null;
+			AbsIntPredicate<STATE> post = interpolantsIter.next();
+			final Deque<AbsIntPredicate<STATE>> preHierStates = new ArrayDeque<>();
 			while (interpolantsIter.hasNext()) {
 				pre = post;
 				post = interpolantsIter.next();
@@ -510,8 +507,8 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 			return true;
 		}
 
-		private List<AbsIntPredicate<STATE, IBoogieVar>> generateAbsIntPredicates(final List<LETTER> cexTrace) {
-			final List<AbsIntPredicate<STATE, IBoogieVar>> rtr = new ArrayList<>();
+		private List<AbsIntPredicate<STATE>> generateAbsIntPredicates(final List<LETTER> cexTrace) {
+			final List<AbsIntPredicate<STATE>> rtr = new ArrayList<>();
 			final Deque<LETTER> callstack = new ArrayDeque<>();
 			final Script script = mCsToolkit.getManagedScript().getScript();
 			Set<STATE> previousStates = Collections.emptySet();
@@ -522,25 +519,24 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 					callstack.removeFirst();
 				}
 				final Set<STATE> postStates = mResult.getPostStates(callstack, symbol, previousStates);
-				final AbsIntPredicate<STATE, IBoogieVar> next = getNonUnifiedPredicateFromStates(postStates, script);
+				final AbsIntPredicate<STATE> next = getNonUnifiedPredicateFromStates(postStates, script);
 				if (mLogger.isDebugEnabled()) {
 					mLogger.debug(String.format("[%s] %s %s", symbol.hashCode(), symbol, next));
 				}
 				previousStates = postStates;
 				rtr.add(next);
 			}
-			final AbsIntPredicate<STATE, IBoogieVar> lastPred = rtr.remove(rtr.size() - 1);
+			final AbsIntPredicate<STATE> lastPred = rtr.remove(rtr.size() - 1);
 			assert lastPred.getFormula().toString().equals("false");
 			return rtr;
 		}
 
-		private AbsIntPredicate<STATE, IBoogieVar> getPredicateFromStates(final Set<STATE> postStates,
-				final Script script) {
+		private AbsIntPredicate<STATE> getPredicateFromStates(final Set<STATE> postStates, final Script script) {
 			if (postStates.isEmpty()) {
 				return mFalsePredicate;
 			}
 
-			final DisjunctiveAbstractState<STATE, IBoogieVar> disjunctiveState =
+			final DisjunctiveAbstractState<STATE> disjunctiveState =
 					DisjunctiveAbstractState.createDisjunction(postStates);
 			final IPredicate unUnifiedPredicate =
 					mPredicateUnifierSmt.getPredicateFactory().newPredicate(disjunctiveState.getTerm(script));
@@ -552,17 +548,17 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 			if (disjunction.equals(mTruePredicate)) {
 				return mTruePredicate;
 			}
-			assert disjunction instanceof AbsIntPredicate<?, ?>;
-			return (AbsIntPredicate<STATE, IBoogieVar>) disjunction;
+			assert disjunction instanceof AbsIntPredicate<?>;
+			return (AbsIntPredicate<STATE>) disjunction;
 		}
 
-		private AbsIntPredicate<STATE, IBoogieVar> getNonUnifiedPredicateFromStates(final Set<STATE> postStates,
+		private AbsIntPredicate<STATE> getNonUnifiedPredicateFromStates(final Set<STATE> postStates,
 				final Script script) {
 			if (postStates.isEmpty()) {
 				return mFalsePredicate;
 			}
 			final BasicPredicateFactory predFac = mPredicateUnifierAbsInt.getPredicateFactory();
-			final DisjunctiveAbstractState<STATE, IBoogieVar> disjunctiveState =
+			final DisjunctiveAbstractState<STATE> disjunctiveState =
 					DisjunctiveAbstractState.createDisjunction(postStates).compact();
 			final IPredicate disjunction = predFac.newPredicate(disjunctiveState.getTerm(script));
 			return new AbsIntPredicate<>(disjunction, (STATE) disjunctiveState);
@@ -575,8 +571,8 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 		private final CachingHoareTripleChecker mHtc;
 
 		private AbsIntInterpolantGenerator(final IPredicateUnifier predicateUnifier, final Word<? extends IAction> cex,
-				final IPredicate[] sequence, final CachingHoareTripleChecker htc, final AbsIntPredicate<?, ?> preCond,
-				final AbsIntPredicate<?, ?> postCond) {
+				final IPredicate[] sequence, final CachingHoareTripleChecker htc, final AbsIntPredicate<?> preCond,
+				final AbsIntPredicate<?> postCond) {
 			super(predicateUnifier, cex, preCond, postCond, new InterpolantComputationStatus(true, null, null));
 			mInterpolants = Objects.requireNonNull(sequence);
 			mHtc = Objects.requireNonNull(htc);
@@ -635,8 +631,7 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 		}
 	}
 
-	private static final class AbsIntPredicateUnifier<STATE extends IAbstractState<STATE, IBoogieVar>>
-			extends PredicateUnifier {
+	private static final class AbsIntPredicateUnifier<STATE extends IAbstractState<STATE>> extends PredicateUnifier {
 
 		public AbsIntPredicateUnifier(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 				final BasicPredicateFactory predicateFactory, final IIcfgSymbolTable symbolTable,
@@ -649,13 +644,13 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 		@Override
 		protected IPredicate newPredicate(final Term term, final IPredicate originalPredicate) {
 			final IPredicate unifiedPred = super.newPredicate(term, originalPredicate);
-			if (unifiedPred instanceof AbsIntPredicate<?, ?>) {
-				assert assertValidPredicate((AbsIntPredicate<?, ?>) unifiedPred) : "Created invalid predicate";
+			if (unifiedPred instanceof AbsIntPredicate<?>) {
+				assert assertValidPredicate((AbsIntPredicate<?>) unifiedPred) : "Created invalid predicate";
 				return unifiedPred;
 			}
-			if (originalPredicate instanceof AbsIntPredicate<?, ?>) {
-				final AbsIntPredicate<?, ?> rtr = new AbsIntPredicate<>(unifiedPred,
-						((AbsIntPredicate<?, ?>) originalPredicate).getAbstractStates());
+			if (originalPredicate instanceof AbsIntPredicate<?>) {
+				final AbsIntPredicate<?> rtr = new AbsIntPredicate<>(unifiedPred,
+						((AbsIntPredicate<?>) originalPredicate).getAbstractStates());
 				assert assertValidPredicate(rtr) : "Created invalid predicate";
 				return rtr;
 			}
@@ -668,20 +663,20 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 				final HashMap<IPredicate, Validity> expliedPredicates) {
 			final IPredicate unifiedPred =
 					super.getOrConstructPredicateForConjunction(minimalSubset, impliedPredicates, expliedPredicates);
-			if (unifiedPred instanceof AbsIntPredicate<?, ?>) {
-				assert assertValidPredicate((AbsIntPredicate<?, ?>) unifiedPred) : "Created invalid predicate";
+			if (unifiedPred instanceof AbsIntPredicate<?>) {
+				assert assertValidPredicate((AbsIntPredicate<?>) unifiedPred) : "Created invalid predicate";
 				return unifiedPred;
 			}
-			final Set<DisjunctiveAbstractState<STATE, IBoogieVar>> multistates =
-					minimalSubset.stream().map(a -> ((AbsIntPredicate<STATE, ?>) a).getAbstractStates())
+			final Set<DisjunctiveAbstractState<STATE>> multistates =
+					minimalSubset.stream().map(a -> ((AbsIntPredicate<STATE>) a).getAbstractStates())
 							.map(a -> DisjunctiveAbstractState.createDisjunction(a)).collect(Collectors.toSet());
-			final Set<DisjunctiveAbstractState<STATE, IBoogieVar>> synchronizedMultiStates =
+			final Set<DisjunctiveAbstractState<STATE>> synchronizedMultiStates =
 					AbsIntUtil.synchronizeVariables(multistates);
 			assert sameVars(synchronizedMultiStates.stream().flatMap(a -> a.getStates().stream())
 					.collect(Collectors.toSet())) : "Synchronize failed";
-			final DisjunctiveAbstractState<STATE, IBoogieVar> conjunction = synchronizedMultiStates.stream()
+			final DisjunctiveAbstractState<STATE> conjunction = synchronizedMultiStates.stream()
 					.reduce((a, b) -> a.intersect(b)).orElseThrow(() -> new AssertionError("No predicates given"));
-			final AbsIntPredicate<?, ?> rtr = new AbsIntPredicate<>(unifiedPred, conjunction);
+			final AbsIntPredicate<?> rtr = new AbsIntPredicate<>(unifiedPred, conjunction);
 			assert assertValidPredicate(rtr) : "Created invalid predicate";
 			return rtr;
 		}
@@ -692,24 +687,24 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 				final HashMap<IPredicate, Validity> expliedPredicates) {
 			final IPredicate unifiedPred =
 					super.getOrConstructPredicateForDisjunction(minimalSubset, impliedPredicates, expliedPredicates);
-			if (unifiedPred instanceof AbsIntPredicate<?, ?>) {
+			if (unifiedPred instanceof AbsIntPredicate<?>) {
 				return unifiedPred;
 			}
-			final AbsIntPredicate<?, ?> rtr = new AbsIntPredicate<>(unifiedPred, toDisjunctiveState(minimalSubset));
+			final AbsIntPredicate<?> rtr = new AbsIntPredicate<>(unifiedPred, toDisjunctiveState(minimalSubset));
 			assert assertValidPredicate(rtr) : "Created invalid predicate";
 			return rtr;
 		}
 
-		private DisjunctiveAbstractState<STATE, IBoogieVar> toDisjunctiveState(final Set<IPredicate> preds) {
+		private DisjunctiveAbstractState<STATE> toDisjunctiveState(final Set<IPredicate> preds) {
 			if (preds == null || preds.isEmpty()) {
 				return new DisjunctiveAbstractState<>();
 			}
 			final Set<STATE> allStates = new HashSet<>();
 			for (final IPredicate pred : preds) {
-				final Set<STATE> states = ((AbsIntPredicate<STATE, ?>) pred).getAbstractStates();
+				final Set<STATE> states = ((AbsIntPredicate<STATE>) pred).getAbstractStates();
 				for (final STATE state : states) {
-					if (state instanceof DisjunctiveAbstractState<?, ?>) {
-						allStates.addAll(((DisjunctiveAbstractState) state).getStates());
+					if (state instanceof DisjunctiveAbstractState<?>) {
+						allStates.addAll(((DisjunctiveAbstractState<STATE>) state).getStates());
 					} else {
 						allStates.add(state);
 					}
@@ -720,11 +715,11 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 		}
 
 		private boolean sameVars(final Set<STATE> allStates) {
-			final Set<IBoogieVar> someVars = allStates.iterator().next().getVariables();
+			final Set<IProgramVarOrConst> someVars = allStates.iterator().next().getVariables();
 			return allStates.stream().allMatch(a -> a.getVariables().equals(someVars));
 		}
 
-		private boolean assertValidPredicate(final AbsIntPredicate<?, ?> pred) {
+		private boolean assertValidPredicate(final AbsIntPredicate<?> pred) {
 			final Script script = mMgnScript.getScript();
 			final List<Term> terms =
 					pred.getAbstractStates().stream().map(a -> a.getTerm(script)).collect(Collectors.toList());
@@ -741,7 +736,7 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 			mLogger.fatal("States: " + SmtUtils
 					.simplify(mMgnScript, stateTerm, mServices, SimplificationTechnique.SIMPLIFY_DDA).toStringDirect());
 			mLogger.fatal("Conjunctive states: ");
-			for (final IAbstractState<?, ?> state : pred.getAbstractStates()) {
+			for (final IAbstractState<?> state : pred.getAbstractStates()) {
 				mLogger.fatal(state.toLogString());
 				mLogger.fatal(SmtUtils
 						.simplify(mMgnScript, state.getTerm(script), mServices, SimplificationTechnique.SIMPLIFY_DDA)

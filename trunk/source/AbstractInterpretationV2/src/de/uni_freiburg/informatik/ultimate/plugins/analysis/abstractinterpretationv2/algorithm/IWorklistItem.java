@@ -34,11 +34,11 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractSta
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public interface IWorklistItem<STATE extends IAbstractState<STATE, VARDECL>, ACTION, VARDECL, LOCATION> {
+public interface IWorklistItem<STATE extends IAbstractState<STATE>, ACTION, LOCATION> {
 
 	ACTION getAction();
 
-	DisjunctiveAbstractState<STATE, VARDECL> getState();
+	DisjunctiveAbstractState<STATE> getState();
 
-	IWorklistItem<STATE, ACTION, VARDECL, LOCATION> getPredecessor();
+	IWorklistItem<STATE, ACTION, LOCATION> getPredecessor();
 }

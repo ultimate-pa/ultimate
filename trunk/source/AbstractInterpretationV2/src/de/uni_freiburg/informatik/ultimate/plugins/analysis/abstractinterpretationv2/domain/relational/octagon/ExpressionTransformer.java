@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieSymbolTableVariableProvider;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.typeutils.TypeUtils;
 
 /**
@@ -162,13 +162,13 @@ public class ExpressionTransformer {
 			return new AffineExpression(new BigDecimal(value));
 		} else if (expr instanceof IdentifierExpression) {
 			final IdentifierExpression ie = (IdentifierExpression) expr;
-			IBoogieVar var =
+			IProgramVarOrConst var =
 					mBpl2SmtSymbolTable.getBoogieVar(ie.getIdentifier(), ie.getDeclarationInformation(), false);
 			if (var == null) {
 				var = mBpl2SmtSymbolTable.getBoogieConst(ie.getIdentifier());
 			}
 			assert var != null;
-			final Map<IBoogieVar, BigDecimal> coefficients = Collections.singletonMap(var, BigDecimal.ONE);
+			final Map<IProgramVarOrConst, BigDecimal> coefficients = Collections.singletonMap(var, BigDecimal.ONE);
 			return new AffineExpression(coefficients, BigDecimal.ZERO);
 		} else if (expr instanceof UnaryExpression) {
 			final UnaryExpression uexpr = (UnaryExpression) expr;
@@ -177,13 +177,13 @@ public class ExpressionTransformer {
 					throw new UnsupportedOperationException("No support for old expressions yet");
 				}
 				final IdentifierExpression oldIe = (IdentifierExpression) uexpr.getExpr();
-				IBoogieVar var = mBpl2SmtSymbolTable.getBoogieVar(oldIe.getIdentifier(),
+				IProgramVarOrConst var = mBpl2SmtSymbolTable.getBoogieVar(oldIe.getIdentifier(),
 						oldIe.getDeclarationInformation(), true);
 				if (var == null) {
 					var = mBpl2SmtSymbolTable.getBoogieConst(oldIe.getIdentifier());
 				}
 				assert var != null;
-				final Map<IBoogieVar, BigDecimal> coefficients = Collections.singletonMap(var, BigDecimal.ONE);
+				final Map<IProgramVarOrConst, BigDecimal> coefficients = Collections.singletonMap(var, BigDecimal.ONE);
 				return new AffineExpression(coefficients, BigDecimal.ZERO);
 			}
 			return unaryExprToAffineExpr(uexpr);

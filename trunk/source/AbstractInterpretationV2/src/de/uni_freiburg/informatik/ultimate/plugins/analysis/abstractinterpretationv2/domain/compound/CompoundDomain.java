@@ -33,7 +33,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractStateBinaryOperator;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
@@ -46,14 +45,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Boo
  *
  */
 @SuppressWarnings("rawtypes")
-public class CompoundDomain implements IAbstractDomain<CompoundDomainState, IcfgEdge, IBoogieVar> {
+public class CompoundDomain implements IAbstractDomain<CompoundDomainState, IcfgEdge> {
 
 	private final IUltimateServiceProvider mServices;
 	private final List<IAbstractDomain> mDomainList;
 	private final BoogieIcfgContainer mRootAnnotation;
 
 	private IAbstractStateBinaryOperator<CompoundDomainState> mWideningOperator;
-	private IAbstractPostOperator<CompoundDomainState, IcfgEdge, IBoogieVar> mPostOperator;
+	private IAbstractPostOperator<CompoundDomainState, IcfgEdge> mPostOperator;
 
 	public CompoundDomain(final IUltimateServiceProvider serviceProvider, final List<IAbstractDomain> domainList,
 			final IIcfg<?> icfg) {
@@ -81,7 +80,7 @@ public class CompoundDomain implements IAbstractDomain<CompoundDomainState, Icfg
 	}
 
 	@Override
-	public IAbstractPostOperator<CompoundDomainState, IcfgEdge, IBoogieVar> getPostOperator() {
+	public IAbstractPostOperator<CompoundDomainState, IcfgEdge> getPostOperator() {
 		if (mPostOperator == null) {
 			mPostOperator = new CompoundDomainPostOperator(mServices, mRootAnnotation);
 		}

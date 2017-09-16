@@ -13,12 +13,13 @@ import org.junit.Test;
 
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
 
 public class AffineExpressionTest {
 
-	private Map<IBoogieType, Map<String, IBoogieVar>> mVarCache;
+	private Map<IBoogieType, Map<String, IProgramVar>> mVarCache;
 
 	@Before
 	public void setUp() {
@@ -163,7 +164,7 @@ public class AffineExpressionTest {
 		assertUnitCoefficientForm("2.9x + 29.0", "1.0x + 10.0");
 		assertUnitCoefficientForm("2x + -2y + 7.0", "x + -1y + 3.5");
 	}
-	
+
 	@Test
 	public void testTwoVar() {
 		AffineExpression.TwoVarForm tvf;
@@ -192,7 +193,7 @@ public class AffineExpressionTest {
 	private void assertUnitCoefficientForm(final String normalForm, final String unitCoefficientForm) {
 		Assert.assertEquals(ae(unitCoefficientForm), ae(normalForm).unitCoefficientForm());
 	}
-	
+
 	private void assertDivReal(final String a, final String b, final String expected) {
 		Assert.assertEquals(ae(expected), ae(a).divide(ae(b), false));
 	}
@@ -213,7 +214,7 @@ public class AffineExpressionTest {
 		if (expr == null) {
 			return null;
 		}
-		final Map<IBoogieVar, BigDecimal> coefficients = new LinkedHashMap<>();
+		final Map<IProgramVarOrConst, BigDecimal> coefficients = new LinkedHashMap<>();
 		BigDecimal constant = BigDecimal.ZERO;
 
 		expr = expr.replace(" ", "");
@@ -233,7 +234,7 @@ public class AffineExpressionTest {
 				type = BoogieType.TYPE_INT;
 				coeff = BigDecimal.ONE;
 			}
-			final IBoogieVar var = getVar(m.group(sVarGroup), type);
+			final IProgramVar var = getVar(m.group(sVarGroup), type);
 			final BigDecimal old = coefficients.put(var, coeff);
 			if (old != null) {
 				throw new IllegalArgumentException("Variable occurred multiple times: " + var);
@@ -247,17 +248,17 @@ public class AffineExpressionTest {
 		return new AffineExpression(coefficients, constant);
 	}
 
-	private IBoogieVar getVar(final String name, final IBoogieType type) {
-		final Map<String, IBoogieVar> cache = mVarCache.get(type);
+	private IProgramVar getVar(final String name, final IBoogieType type) {
+		final Map<String, IProgramVar> cache = mVarCache.get(type);
 		if (cache == null) {
 			throw new UnsupportedOperationException("cache not available for type " + type);
 		}
 		final String iname = name.intern();
-		final IBoogieVar rtr = cache.get(iname);
+		final IProgramVar rtr = cache.get(iname);
 		if (rtr != null) {
 			return rtr;
 		}
-		final IBoogieVar var = AbsIntUtil.createTemporaryIBoogieVar(iname, type);
+		final IProgramVar var = AbsIntUtil.createTemporaryIBoogieVar(iname, type);
 		cache.put(iname, var);
 		return var;
 	}
@@ -265,11 +266,11 @@ public class AffineExpressionTest {
 	private static final String sFloatNumGroup = "floatNum";
 	private static final String sIntNumGroup = "intNum";
 	private static final String sVarGroup = "var";
-	private static final String sFloatNumRegex = "(?<" + sFloatNumGroup
-			+ ">[-+]?[0-9]*\\.[0-9]+([eE][-+]?[0-9]+)?|[-+]?[0-9]*\\.?[0-9]+([eE][-+]?[0-9]+))";
+	private static final String sFloatNumRegex =
+			"(?<" + sFloatNumGroup + ">[-+]?[0-9]*\\.[0-9]+([eE][-+]?[0-9]+)?|[-+]?[0-9]*\\.?[0-9]+([eE][-+]?[0-9]+))";
 	private static final String sIntNumRegex = "(?<" + sIntNumGroup + ">[-+]?[0-9]+)";
 	private static final String sVarRegex = "(?<" + sVarGroup + ">[a-df-zA-DF-Z]+)";
-	private static final Pattern sCoeffVarRegex = Pattern
-			.compile("^(" + sFloatNumRegex + "|" + sIntNumRegex + "\\*?)?" + sVarRegex + "(\\+|$)");
+	private static final Pattern sCoeffVarRegex =
+			Pattern.compile("^(" + sFloatNumRegex + "|" + sIntNumRegex + "\\*?)?" + sVarRegex + "(\\+|$)");
 
 }

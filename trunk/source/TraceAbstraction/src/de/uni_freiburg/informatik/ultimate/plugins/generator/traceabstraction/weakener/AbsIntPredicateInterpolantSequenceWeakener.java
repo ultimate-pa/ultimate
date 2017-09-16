@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
@@ -60,13 +61,13 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
  *
  * @param <STATE>
  *            The type of the abstract states used.
- * @param <VARDECL>
+ * @param <IProgramVarOrConst>
  *            The type of the variable declarations used in each abstract state.
  * @param <LETTER>
  *            The type of the letters occurring in the trace of predicate-letter-predicate-triplets.
  */
-public class AbsIntPredicateInterpolantSequenceWeakener<STATE extends IAbstractState<STATE, VARDECL>, VARDECL, LETTER extends IIcfgTransition<?>>
-		extends InterpolantSequenceWeakener<IHoareTripleChecker, AbsIntPredicate<STATE, VARDECL>, LETTER> {
+public class AbsIntPredicateInterpolantSequenceWeakener<STATE extends IAbstractState<STATE>, LETTER extends IIcfgTransition<?>>
+		extends InterpolantSequenceWeakener<IHoareTripleChecker, AbsIntPredicate<STATE>, LETTER> {
 
 	private Set<IProgramVar> mVarsToKeep = null;
 
@@ -92,17 +93,17 @@ public class AbsIntPredicateInterpolantSequenceWeakener<STATE extends IAbstractS
 	 *            The factory to create new predicates.
 	 */
 	public AbsIntPredicateInterpolantSequenceWeakener(final ILogger logger, final IHoareTripleChecker htc,
-			final List<AbsIntPredicate<STATE, VARDECL>> predicates, final List<LETTER> trace,
-			final AbsIntPredicate<STATE, VARDECL> precondition, final AbsIntPredicate<STATE, VARDECL> postcondition,
-			final Script script, final BasicPredicateFactory predicateFactory) {
+			final List<AbsIntPredicate<STATE>> predicates, final List<LETTER> trace,
+			final AbsIntPredicate<STATE> precondition, final AbsIntPredicate<STATE> postcondition, final Script script,
+			final BasicPredicateFactory predicateFactory) {
 		super(logger, htc, predicates, trace, precondition, postcondition, script, predicateFactory);
 	}
 
 	@Override
-	protected AbsIntPredicate<STATE, VARDECL> refinePreState(final AbsIntPredicate<STATE, VARDECL> preState,
-			final LETTER transition, final AbsIntPredicate<STATE, VARDECL> postState, final int tracePosition) {
+	protected AbsIntPredicate<STATE> refinePreState(final AbsIntPredicate<STATE> preState, final LETTER transition,
+			final AbsIntPredicate<STATE> postState, final int tracePosition) {
 
-		final AbsIntPredicate<STATE, VARDECL> newPreState = removeUnneededVariables(preState, transition);
+		final AbsIntPredicate<STATE> newPreState = removeUnneededVariables(preState, transition);
 		final boolean valid = determineInductivity(newPreState, transition, postState, tracePosition);
 
 		if (valid) {
@@ -133,8 +134,8 @@ public class AbsIntPredicateInterpolantSequenceWeakener<STATE extends IAbstractS
 	 * @return <code>true</code> iff the Hoare-triple {newPreState} transition {postState} is valid, <code>false</code>
 	 *         otherwise.
 	 */
-	private boolean determineInductivity(final AbsIntPredicate<STATE, VARDECL> newPreState, final LETTER transition,
-			final AbsIntPredicate<STATE, VARDECL> postState, final int tracePosition) {
+	private boolean determineInductivity(final AbsIntPredicate<STATE> newPreState, final LETTER transition,
+			final AbsIntPredicate<STATE> postState, final int tracePosition) {
 		final Validity result;
 
 		if (transition instanceof IInternalAction) {
@@ -142,7 +143,7 @@ public class AbsIntPredicateInterpolantSequenceWeakener<STATE extends IAbstractS
 		} else if (transition instanceof ICallAction) {
 			result = mHtc.checkCall(newPreState, (ICallAction) transition, postState);
 		} else if (transition instanceof IReturnAction) {
-			final AbsIntPredicate<STATE, VARDECL> hierarchicalPre = mHierarchicalPreStates.get(tracePosition);
+			final AbsIntPredicate<STATE> hierarchicalPre = mHierarchicalPreStates.get(tracePosition);
 			assert hierarchicalPre != null;
 			result = mHtc.checkReturn(newPreState, hierarchicalPre, (IReturnAction) transition, postState);
 		} else {
@@ -164,7 +165,7 @@ public class AbsIntPredicateInterpolantSequenceWeakener<STATE extends IAbstractS
 	 *            The transition in concern.
 	 * @return A new state stripped from all unnecessary variables wrt. the transition.
 	 */
-	private AbsIntPredicate<STATE, VARDECL> removeUnneededVariables(final AbsIntPredicate<STATE, VARDECL> preState,
+	private AbsIntPredicate<STATE> removeUnneededVariables(final AbsIntPredicate<STATE> preState,
 			final LETTER transition) {
 
 		// Collect all variables occurring in the invars
@@ -194,7 +195,7 @@ public class AbsIntPredicateInterpolantSequenceWeakener<STATE extends IAbstractS
 				continue;
 			}
 
-			final Set<VARDECL> varsToRemove =
+			final Set<IProgramVarOrConst> varsToRemove =
 					s.getVariables().stream().filter(var -> !mVarsToKeep.contains(var)).collect(Collectors.toSet());
 
 			final STATE removedVariablesState = s.removeVariables(varsToRemove);
@@ -206,7 +207,7 @@ public class AbsIntPredicateInterpolantSequenceWeakener<STATE extends IAbstractS
 		final Set<Term> terms = newMultiState.stream().map(s -> s.getTerm(mScript)).collect(Collectors.toSet());
 		final IPredicate disjunction = mPredicateFactory.newPredicate(SmtUtils.or(mScript, terms));
 
-		final AbsIntPredicate<STATE, VARDECL> newPreState = new AbsIntPredicate<>(disjunction, newMultiState);
+		final AbsIntPredicate<STATE> newPreState = new AbsIntPredicate<>(disjunction, newMultiState);
 		return newPreState;
 	}
 

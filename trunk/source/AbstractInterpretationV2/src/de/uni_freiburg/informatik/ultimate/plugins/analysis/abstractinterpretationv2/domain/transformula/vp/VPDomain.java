@@ -37,7 +37,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNode;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNodeAndFunctionFactory;
@@ -55,7 +54,7 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.Benchmark;
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  */
 public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
-		implements IAbstractDomain<EqState<ACTION>, ACTION, IProgramVarOrConst> {
+		implements IAbstractDomain<EqState<ACTION>, ACTION> {
 
 	private final EqPostOperator<ACTION> mPost;
 	private final VPMergeOperator mMerge;
@@ -73,7 +72,7 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 	private final IUltimateServiceProvider mServices;
 
 	public VPDomain(final ILogger logger, final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
-			 final VPDomainPreanalysis preAnalysis) {
+			final VPDomainPreanalysis preAnalysis) {
 		mLogger = logger;
 		mPreAnalysis = preAnalysis;
 		mManagedScript = csToolkit.getManagedScript();
@@ -98,7 +97,7 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 	}
 
 	@Override
-	public IAbstractPostOperator<EqState<ACTION>, ACTION, IProgramVarOrConst> getPostOperator() {
+	public IAbstractPostOperator<EqState<ACTION>, ACTION> getPostOperator() {
 		return mPost;
 	}
 
@@ -151,6 +150,5 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 	public boolean useHierachicalPre() {
 		return true;
 	}
-
 
 }

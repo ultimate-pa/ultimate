@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IVariablePro
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
-public interface IAbstractInterpretationResult<STATE extends IAbstractState<STATE, VARDECL>, ACTION, VARDECL, LOCATION> {
+public interface IAbstractInterpretationResult<STATE extends IAbstractState<STATE>, ACTION, LOCATION> {
 
 	/**
 	 * @return a {@link Map} mapping to each location that was reachable during the analysis the computed fixpoint as
@@ -75,8 +75,7 @@ public interface IAbstractInterpretationResult<STATE extends IAbstractState<STAT
 	 *         counterexample does not contain the correct number of loop unrollings, but rather the number of loop
 	 *         unrollings until a fixpoint was computed.
 	 */
-	List<AbstractCounterexample<DisjunctiveAbstractState<STATE, VARDECL>, ACTION, VARDECL, LOCATION>>
-			getCounterexamples();
+	List<AbstractCounterexample<DisjunctiveAbstractState<STATE>, ACTION, LOCATION>> getCounterexamples();
 
 	/**
 	 * @return true if the analysis could reach an error location, false otherwise.
@@ -96,9 +95,9 @@ public interface IAbstractInterpretationResult<STATE extends IAbstractState<STAT
 	/**
 	 * @return The {@link IAbstractDomain} used during the analysis.
 	 */
-	IAbstractDomain<STATE, ACTION, VARDECL> getUsedDomain();
+	IAbstractDomain<STATE, ACTION> getUsedDomain();
 
 	Set<STATE> getPostStates(final Deque<ACTION> callStack, final ACTION symbol, final Set<STATE> preStates);
 
-	IVariableProvider<STATE, ACTION, VARDECL> getUsedVariableProvider();
+	IVariableProvider<STATE, ACTION> getUsedVariableProvider();
 }

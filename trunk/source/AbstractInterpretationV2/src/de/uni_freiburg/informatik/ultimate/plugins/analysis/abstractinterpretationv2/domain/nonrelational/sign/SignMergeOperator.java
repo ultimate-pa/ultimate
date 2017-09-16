@@ -31,6 +31,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractStateBinaryOperator;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.sign.SignDomainValue.SignValues;
 
 /**
@@ -41,10 +42,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  *
  * @param <ACTION>
  *            Any action.
- * @param <IBoogieVar>
+ * @param <IProgramVar>
  *            Any variable declaration.
  */
-public class SignMergeOperator<VARDECL> implements IAbstractStateBinaryOperator<SignDomainState<VARDECL>> {
+public class SignMergeOperator implements IAbstractStateBinaryOperator<SignDomainState> {
 
 	private static final int BUFFER_SIZE = 100;
 
@@ -80,7 +81,7 @@ public class SignMergeOperator<VARDECL> implements IAbstractStateBinaryOperator<
 	 *            The second state to merge.
 	 */
 	@Override
-	public SignDomainState<VARDECL> apply(final SignDomainState<VARDECL> first, final SignDomainState<VARDECL> second) {
+	public SignDomainState apply(final SignDomainState first, final SignDomainState second) {
 		assert first != null;
 		assert second != null;
 
@@ -88,11 +89,11 @@ public class SignMergeOperator<VARDECL> implements IAbstractStateBinaryOperator<
 			throw new UnsupportedOperationException("Cannot merge two states with a disjoint set of variables.");
 		}
 
-		final SignDomainState<VARDECL> newState = first.createCopy();
+		final SignDomainState newState = first.createCopy();
 
-		final Set<VARDECL> variables = first.getVariables();
+		final Set<IProgramVarOrConst> variables = first.getVariables();
 
-		for (final VARDECL entry : variables) {
+		for (final IProgramVarOrConst entry : variables) {
 
 			final SignDomainValue value1 = first.getValue(entry);
 			final SignDomainValue value2 = second.getValue(entry);

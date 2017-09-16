@@ -5,7 +5,7 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
- * 
+ *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  * @param <STATE>
@@ -13,7 +13,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  * @param <VARDECL>
  * @param <LOCATION>
  */
-public final class AbstractCounterexample<STATE, ACTION, VARDECL, LOCATION> {
+public final class AbstractCounterexample<STATE, ACTION, LOCATION> {
 	private final STATE mInitialState;
 	private final LOCATION mInitialLocation;
 	private final List<Triple<STATE, LOCATION, ACTION>> mAbstractExecution;

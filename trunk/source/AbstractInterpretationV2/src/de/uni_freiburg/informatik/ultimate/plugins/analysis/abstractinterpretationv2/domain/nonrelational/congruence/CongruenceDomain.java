@@ -9,7 +9,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPos
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieSymbolTableVariableProvider;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
@@ -25,15 +24,15 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Boo
  *
  */
 
-public class CongruenceDomain implements IAbstractDomain<CongruenceDomainState<IBoogieVar>, IcfgEdge, IBoogieVar> {
+public class CongruenceDomain implements IAbstractDomain<CongruenceDomainState, IcfgEdge> {
 
 	private final BoogieSymbolTable mSymbolTable;
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 	private final BoogieIcfgContainer mRootAnnotation;
 
-	private IAbstractStateBinaryOperator<CongruenceDomainState<IBoogieVar>> mWideningOperator;
-	private IAbstractPostOperator<CongruenceDomainState<IBoogieVar>, IcfgEdge, IBoogieVar> mPostOperator;
+	private IAbstractStateBinaryOperator<CongruenceDomainState> mWideningOperator;
+	private IAbstractPostOperator<CongruenceDomainState, IcfgEdge> mPostOperator;
 	private final CfgSmtToolkit mCfgSmtToolkit;
 
 	public CongruenceDomain(final ILogger logger, final IUltimateServiceProvider services,
@@ -46,17 +45,17 @@ public class CongruenceDomain implements IAbstractDomain<CongruenceDomainState<I
 	}
 
 	@Override
-	public CongruenceDomainState<IBoogieVar> createTopState() {
-		return new CongruenceDomainState<>(mLogger, false);
+	public CongruenceDomainState createTopState() {
+		return new CongruenceDomainState(mLogger, false);
 	}
 
 	@Override
-	public CongruenceDomainState<IBoogieVar> createBottomState() {
-		return new CongruenceDomainState<>(mLogger, true);
+	public CongruenceDomainState createBottomState() {
+		return new CongruenceDomainState(mLogger, true);
 	}
 
 	@Override
-	public IAbstractStateBinaryOperator<CongruenceDomainState<IBoogieVar>> getWideningOperator() {
+	public IAbstractStateBinaryOperator<CongruenceDomainState> getWideningOperator() {
 		if (mWideningOperator == null) {
 			// Widening is the same as merge, so we don't need an extra operator
 			mWideningOperator = new CongruenceMergeOperator<>();
@@ -65,7 +64,7 @@ public class CongruenceDomain implements IAbstractDomain<CongruenceDomainState<I
 	}
 
 	@Override
-	public IAbstractPostOperator<CongruenceDomainState<IBoogieVar>, IcfgEdge, IBoogieVar> getPostOperator() {
+	public IAbstractPostOperator<CongruenceDomainState, IcfgEdge> getPostOperator() {
 		if (mPostOperator == null) {
 			final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 			final int maxParallelStates = prefs.getInt(AbsIntPrefInitializer.LABEL_MAX_PARALLEL_STATES);

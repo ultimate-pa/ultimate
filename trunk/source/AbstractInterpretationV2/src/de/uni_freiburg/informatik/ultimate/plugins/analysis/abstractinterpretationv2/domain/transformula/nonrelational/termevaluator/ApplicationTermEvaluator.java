@@ -46,11 +46,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorLogger;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
 
-public class ApplicationTermEvaluator<VALUE extends INonrelationalValue<VALUE>, STATE extends IAbstractState<STATE, VARDECL>, VARDECL>
-		implements INaryTermEvaluator<VALUE, STATE, VARDECL> {
+public class ApplicationTermEvaluator<VALUE extends INonrelationalValue<VALUE>, STATE extends IAbstractState<STATE>>
+		implements INaryTermEvaluator<VALUE, STATE> {
 
 	private final int mArity;
-	private final List<ITermEvaluator<VALUE, STATE, VARDECL>> mSubEvaluators;
+	private final List<ITermEvaluator<VALUE, STATE>> mSubEvaluators;
 	private final String mOperator;
 	private final INonrelationalValueFactory<VALUE> mNonrelationalValueFactory;
 	private final Supplier<STATE> mBottomStateSupplier;
@@ -345,7 +345,7 @@ public class ApplicationTermEvaluator<VALUE extends INonrelationalValue<VALUE>, 
 	}
 
 	@Override
-	public void addSubEvaluator(final ITermEvaluator<VALUE, STATE, VARDECL> evaluator) {
+	public void addSubEvaluator(final ITermEvaluator<VALUE, STATE> evaluator) {
 		if (mSubEvaluators.size() >= mArity) {
 			throw new UnsupportedOperationException(
 					"The arity of this evaluator (" + mArity + ") does not allow to add additional sub evaluators.");

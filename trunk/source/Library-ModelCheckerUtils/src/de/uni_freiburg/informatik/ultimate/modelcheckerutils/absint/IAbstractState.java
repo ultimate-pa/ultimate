@@ -36,6 +36,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 
 /**
@@ -50,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  */
-public interface IAbstractState<STATE extends IAbstractState<STATE, VARDECL>, VARDECL> {
+public interface IAbstractState<STATE extends IAbstractState<STATE>> {
 
 	/**
 	 * {@link FixpointEngine} will call this method to add a variable to the set of variables of an abstract state s.t.
@@ -62,7 +63,7 @@ public interface IAbstractState<STATE extends IAbstractState<STATE, VARDECL>, VA
 	 *            The variable to add.
 	 * @return A new abstract state that is a copy of this instance except that it contains the freshly added variable.
 	 */
-	STATE addVariable(final VARDECL variable);
+	STATE addVariable(final IProgramVarOrConst variable);
 
 	/**
 	 * {@link FixpointEngine} will call this method to remove a variable from the set of variables of an abstract state
@@ -76,7 +77,7 @@ public interface IAbstractState<STATE extends IAbstractState<STATE, VARDECL>, VA
 	 *            The variable to remove.
 	 * @return A new abstract state that is a copy of this instance except that the removed variable is missing.
 	 */
-	STATE removeVariable(final VARDECL variable);
+	STATE removeVariable(final IProgramVarOrConst variable);
 
 	/**
 	 * Adds multiple variables at once.
@@ -85,7 +86,7 @@ public interface IAbstractState<STATE extends IAbstractState<STATE, VARDECL>, VA
 	 *            A {@link Set} describing all the variables that have to be added.
 	 * @return A new abstract state that is a copy of this instance except that it contains the freshly added variables.
 	 */
-	STATE addVariables(final Collection<VARDECL> variables);
+	STATE addVariables(final Collection<IProgramVarOrConst> variables);
 
 	/**
 	 * Remove multiple variables at once (see {@link #removeVariable(String, Object)} for details).
@@ -95,7 +96,7 @@ public interface IAbstractState<STATE extends IAbstractState<STATE, VARDECL>, VA
 	 * @return A new abstract state that is a copy of this instance except that all the variables defined by
 	 *         <code>variables</code> are missing.
 	 */
-	STATE removeVariables(final Collection<VARDECL> variables);
+	STATE removeVariables(final Collection<IProgramVarOrConst> variables);
 
 	/**
 	 * Check if a given variable exists in the abstract state.
@@ -104,12 +105,12 @@ public interface IAbstractState<STATE extends IAbstractState<STATE, VARDECL>, VA
 	 *            The variable to be tested for containment.
 	 * @return true if the variable exists, false otherwise.
 	 */
-	boolean containsVariable(final VARDECL var);
+	boolean containsVariable(final IProgramVarOrConst var);
 
 	/**
 	 * @return an unmodifiable {@link Set} containing all variables declared in this state.
 	 */
-	Set<VARDECL> getVariables();
+	Set<IProgramVarOrConst> getVariables();
 
 	/**
 	 * Create a new {@link IAbstractState} by renaming a variable.
@@ -120,7 +121,7 @@ public interface IAbstractState<STATE extends IAbstractState<STATE, VARDECL>, VA
 	 *            The new "name" of the variable. May not be null.
 	 * @return A state that is equivalent to this one except for the renamed variable.
 	 */
-	default STATE renameVariable(final VARDECL oldVar, final VARDECL newVar) {
+	default STATE renameVariable(final IProgramVarOrConst oldVar, final IProgramVarOrConst newVar) {
 		return renameVariables(Collections.singletonMap(oldVar, newVar));
 	}
 
@@ -132,7 +133,7 @@ public interface IAbstractState<STATE extends IAbstractState<STATE, VARDECL>, VA
 	 *            this method should throw an exception.
 	 * @return A state that is equivalent to this one except for the renamed variables.
 	 */
-	STATE renameVariables(final Map<VARDECL, VARDECL> old2newVars);
+	STATE renameVariables(final Map<IProgramVarOrConst, IProgramVarOrConst> old2newVars);
 
 	/**
 	 * Create a new state that has all the variables and abstraction of this {@link IAbstractState} and of the

@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.util.SetOperations;
  *
  */
 public class LiveVariablePreOperator<ACTION extends IAction>
-		implements IAbstractTransformer<LiveVariableState<ACTION>, ACTION, IProgramVarOrConst> {
+		implements IAbstractTransformer<LiveVariableState<ACTION>, ACTION> {
 
 	@Override
 	public List<LiveVariableState<ACTION>> apply(final LiveVariableState<ACTION> oldstate, final ACTION transition) {

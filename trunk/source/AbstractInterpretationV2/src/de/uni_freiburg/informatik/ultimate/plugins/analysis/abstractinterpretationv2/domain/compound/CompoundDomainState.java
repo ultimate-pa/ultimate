@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractStateBinaryOperator;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.util.SetOperations;
 
 /**
@@ -56,13 +56,13 @@ import de.uni_freiburg.informatik.ultimate.util.SetOperations;
  *
  */
 @SuppressWarnings({ "unchecked", "rawtypes" })
-public class CompoundDomainState implements IAbstractState<CompoundDomainState, IBoogieVar> {
+public class CompoundDomainState implements IAbstractState<CompoundDomainState> {
 
 	private static int sId;
 
 	private final IUltimateServiceProvider mServices;
 
-	private final List<IAbstractState<?, IBoogieVar>> mAbstractStates;
+	private final List<IAbstractState<?>> mAbstractStates;
 	private final List<IAbstractDomain> mDomainList;
 	private final int mId;
 
@@ -77,7 +77,7 @@ public class CompoundDomainState implements IAbstractState<CompoundDomainState, 
 	 *            The abstract state to create the new state from.
 	 */
 	public CompoundDomainState(final IUltimateServiceProvider services, final List<IAbstractDomain> domainList,
-			final List<IAbstractState<?, IBoogieVar>> abstractStateList) {
+			final List<IAbstractState<?>> abstractStateList) {
 		sId++;
 		mId = sId;
 		if (domainList.size() != abstractStateList.size()) {
@@ -114,42 +114,42 @@ public class CompoundDomainState implements IAbstractState<CompoundDomainState, 
 	}
 
 	@Override
-	public CompoundDomainState addVariable(final IBoogieVar variable) {
+	public CompoundDomainState addVariable(final IProgramVarOrConst variable) {
 		return performStateOperation(state -> state.addVariable(variable));
 	}
 
 	@Override
-	public CompoundDomainState removeVariable(final IBoogieVar variable) {
+	public CompoundDomainState removeVariable(final IProgramVarOrConst variable) {
 		return performStateOperation(state -> state.removeVariable(variable));
 	}
 
 	@Override
-	public CompoundDomainState addVariables(final Collection<IBoogieVar> variables) {
+	public CompoundDomainState addVariables(final Collection<IProgramVarOrConst> variables) {
 		return performStateOperation(state -> state.addVariables(variables));
 	}
 
 	@Override
-	public CompoundDomainState removeVariables(final Collection<IBoogieVar> variables) {
+	public CompoundDomainState removeVariables(final Collection<IProgramVarOrConst> variables) {
 		return performStateOperation(state -> state.removeVariables(variables));
 	}
 
 	@Override
-	public boolean containsVariable(final IBoogieVar var) {
+	public boolean containsVariable(final IProgramVarOrConst var) {
 		return mAbstractStates.get(0).containsVariable(var);
 	}
 
 	@Override
-	public Set<IBoogieVar> getVariables() {
+	public Set<IProgramVarOrConst> getVariables() {
 		return mAbstractStates.get(0).getVariables();
 	}
 
 	@Override
-	public CompoundDomainState renameVariable(final IBoogieVar oldVar, final IBoogieVar newVar) {
+	public CompoundDomainState renameVariable(final IProgramVarOrConst oldVar, final IProgramVarOrConst newVar) {
 		return performStateOperation(state -> state.renameVariable(oldVar, newVar));
 	}
 
 	@Override
-	public CompoundDomainState renameVariables(final Map<IBoogieVar, IBoogieVar> old2newVars) {
+	public CompoundDomainState renameVariables(final Map<IProgramVarOrConst, IProgramVarOrConst> old2newVars) {
 		return performStateOperation(state -> state.renameVariables(old2newVars));
 	}
 
@@ -157,7 +157,7 @@ public class CompoundDomainState implements IAbstractState<CompoundDomainState, 
 	public CompoundDomainState patch(final CompoundDomainState dominator) {
 		assert mAbstractStates.size() == dominator.mAbstractStates.size();
 
-		final List<IAbstractState<?, IBoogieVar>> returnList = new ArrayList<>();
+		final List<IAbstractState<?>> returnList = new ArrayList<>();
 		for (int i = 0; i < mAbstractStates.size(); i++) {
 			returnList.add(patchInternally(mAbstractStates.get(i), dominator.mAbstractStates.get(i)));
 		}
@@ -216,7 +216,7 @@ public class CompoundDomainState implements IAbstractState<CompoundDomainState, 
 	public String toLogString() {
 		final StringBuilder sb = new StringBuilder();
 
-		for (final IAbstractState<?, IBoogieVar> state : mAbstractStates) {
+		for (final IAbstractState<?> state : mAbstractStates) {
 			sb.append(getShortName(state.getClass())).append(": ").append(state.toLogString()).append(", ");
 		}
 
@@ -231,8 +231,7 @@ public class CompoundDomainState implements IAbstractState<CompoundDomainState, 
 		return s.substring(0, 3);
 	}
 
-	private CompoundDomainState
-			performStateOperation(final Function<IAbstractState<?, IBoogieVar>, IAbstractState<?, IBoogieVar>> state) {
+	private CompoundDomainState performStateOperation(final Function<IAbstractState<?>, IAbstractState<?>> state) {
 		return new CompoundDomainState(mServices, mDomainList,
 				mAbstractStates.stream().map(state).collect(Collectors.toList()));
 	}
@@ -241,7 +240,7 @@ public class CompoundDomainState implements IAbstractState<CompoundDomainState, 
 		return mDomainList;
 	}
 
-	protected List<IAbstractState<?, IBoogieVar>> getAbstractStatesList() {
+	protected List<IAbstractState<?>> getAbstractStatesList() {
 		return mAbstractStates;
 	}
 
@@ -262,8 +261,8 @@ public class CompoundDomainState implements IAbstractState<CompoundDomainState, 
 		return rtr;
 	}
 
-	private static SubsetResult isStrictSubsetOf(final SubsetResult current, final IAbstractState<?, IBoogieVar> aState,
-			final IAbstractState<?, IBoogieVar> bState) {
+	private static SubsetResult isStrictSubsetOf(final SubsetResult current, final IAbstractState<?> aState,
+			final IAbstractState<?> bState) {
 		final SubsetResult result = isSubsetOfInternally(aState, bState);
 		return current.min(result);
 	}
@@ -300,19 +299,19 @@ public class CompoundDomainState implements IAbstractState<CompoundDomainState, 
 
 	@Override
 	public CompoundDomainState intersect(final CompoundDomainState other) {
-		final List<IAbstractState<?, IBoogieVar>> thisStates = getAbstractStatesList();
-		final List<IAbstractState<?, IBoogieVar>> otherStates = other.getAbstractStatesList();
+		final List<IAbstractState<?>> thisStates = getAbstractStatesList();
+		final List<IAbstractState<?>> otherStates = other.getAbstractStatesList();
 		final List<IAbstractDomain> domains = getDomainList();
 
 		assert thisStates.size() == otherStates.size();
 		assert domains.size() == other.getDomainList().size();
 		assert domains.size() == thisStates.size();
 
-		final List<IAbstractState<?, IBoogieVar>> returnStates = new ArrayList<>();
+		final List<IAbstractState<?>> returnStates = new ArrayList<>();
 
 		for (int i = 0; i < thisStates.size(); i++) {
-			final IAbstractState<?, IBoogieVar> thisState = thisStates.get(i);
-			final IAbstractState<?, IBoogieVar> otherState = otherStates.get(i);
+			final IAbstractState<?> thisState = thisStates.get(i);
+			final IAbstractState<?> otherState = otherStates.get(i);
 			returnStates.add(applyCasted(thisState, otherState, (a, b) -> a.intersect(b)));
 		}
 
@@ -321,19 +320,19 @@ public class CompoundDomainState implements IAbstractState<CompoundDomainState, 
 
 	@Override
 	public CompoundDomainState union(final CompoundDomainState other) {
-		final List<IAbstractState<?, IBoogieVar>> thisStates = getAbstractStatesList();
-		final List<IAbstractState<?, IBoogieVar>> otherStates = other.getAbstractStatesList();
+		final List<IAbstractState<?>> thisStates = getAbstractStatesList();
+		final List<IAbstractState<?>> otherStates = other.getAbstractStatesList();
 		final List<IAbstractDomain> domains = getDomainList();
 
 		assert thisStates.size() == otherStates.size();
 		assert domains.size() == other.getDomainList().size();
 		assert domains.size() == thisStates.size();
 
-		final List<IAbstractState<?, IBoogieVar>> returnStates = new ArrayList<>();
+		final List<IAbstractState<?>> returnStates = new ArrayList<>();
 
 		for (int i = 0; i < thisStates.size(); i++) {
-			final IAbstractState<?, IBoogieVar> thisState = thisStates.get(i);
-			final IAbstractState<?, IBoogieVar> otherState = otherStates.get(i);
+			final IAbstractState<?> thisState = thisStates.get(i);
+			final IAbstractState<?> otherState = otherStates.get(i);
 			returnStates.add(applyCasted(thisState, otherState, (a, b) -> a.union(b)));
 		}
 
@@ -343,23 +342,23 @@ public class CompoundDomainState implements IAbstractState<CompoundDomainState, 
 	@Override
 	public CompoundDomainState compact() {
 
-		final List<IAbstractState<?, IBoogieVar>> thisStates = getAbstractStatesList();
+		final List<IAbstractState<?>> thisStates = getAbstractStatesList();
 		final int numberOfStates = thisStates.size();
 		final List<IAbstractDomain> domains = getDomainList();
 
 		assert domains.size() == thisStates.size();
 
-		final List<IAbstractState<?, IBoogieVar>> compactedStates = new ArrayList<>(numberOfStates);
-		final Set<IBoogieVar> vars = new HashSet<>();
-		for (final IAbstractState<?, IBoogieVar> thisState : thisStates) {
-			final IAbstractState<?, IBoogieVar> compactedState = thisState.compact();
+		final List<IAbstractState<?>> compactedStates = new ArrayList<>(numberOfStates);
+		final Set<IProgramVarOrConst> vars = new HashSet<>();
+		for (final IAbstractState<?> thisState : thisStates) {
+			final IAbstractState<?> compactedState = thisState.compact();
 			vars.addAll(compactedState.getVariables());
 			compactedStates.add(compactedState);
 		}
 
-		final List<IAbstractState<?, IBoogieVar>> compactedSynchronizedStates = new ArrayList<>(numberOfStates);
-		for (final IAbstractState<?, IBoogieVar> compactedState : compactedStates) {
-			final Set<IBoogieVar> missing = SetOperations.difference(vars, compactedState.getVariables());
+		final List<IAbstractState<?>> compactedSynchronizedStates = new ArrayList<>(numberOfStates);
+		for (final IAbstractState<?> compactedState : compactedStates) {
+			final Set<IProgramVarOrConst> missing = SetOperations.difference(vars, compactedState.getVariables());
 			if (missing.isEmpty()) {
 				compactedSynchronizedStates.add(compactedState);
 			} else {
@@ -370,8 +369,8 @@ public class CompoundDomainState implements IAbstractState<CompoundDomainState, 
 		return new CompoundDomainState(mServices, domains, compactedSynchronizedStates);
 	}
 
-	private static <T extends IAbstractState<T, IBoogieVar>> T applyCasted(final IAbstractState<?, IBoogieVar> first,
-			final IAbstractState<?, IBoogieVar> second, final IAbstractStateBinaryOperator<T> op) {
+	private static <T extends IAbstractState<T>> T applyCasted(final IAbstractState<?> first,
+			final IAbstractState<?> second, final IAbstractStateBinaryOperator<T> op) {
 		final T firstT = (T) first;
 		final T secondT = (T) second;
 		return op.apply(firstT, secondT);

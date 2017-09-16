@@ -34,17 +34,21 @@ import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.NoopScript;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TypeSortTranslator;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
 /**
- * A simulating implementation of {@link IBoogieVar}.
+ * A simulating implementation of {@link IProgramVar}.
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public final class FakeBoogieVar implements IBoogieVar {
+public final class FakeBoogieVar implements IProgramVar {
+
+	private static final long serialVersionUID = 1L;
 
 	private static final Script SCRIPT_MOCK = new MockScript();
 
@@ -80,5 +84,35 @@ public final class FakeBoogieVar implements IBoogieVar {
 		public MockScript() {
 			super(new Theory(Logics.ALL));
 		}
+	}
+
+	@Override
+	public Term getTerm() {
+		throw new UnsupportedOperationException("Temporary IBoogieVars dont have terms.");
+	}
+
+	@Override
+	public boolean isGlobal() {
+		throw new UnsupportedOperationException("Temporary IProgramVar");
+	}
+
+	@Override
+	public String getProcedure() {
+		throw new UnsupportedOperationException("Temporary IProgramVar");
+	}
+
+	@Override
+	public boolean isOldvar() {
+		throw new UnsupportedOperationException("Temporary IProgramVar");
+	}
+
+	@Override
+	public TermVariable getTermVariable() {
+		throw new UnsupportedOperationException("Temporary IProgramVar");
+	}
+
+	@Override
+	public ApplicationTerm getPrimedConstant() {
+		throw new UnsupportedOperationException("Temporary IProgramVar");
 	}
 }

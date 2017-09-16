@@ -34,7 +34,7 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint;
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public interface IAbstractDomain<STATE extends IAbstractState<STATE, VARDECL>, ACTION, VARDECL> {
+public interface IAbstractDomain<STATE extends IAbstractState<STATE>, ACTION> {
 
 	/**
 	 * @return A new state of the current abstract domain representing &top;.
@@ -54,11 +54,11 @@ public interface IAbstractDomain<STATE extends IAbstractState<STATE, VARDECL>, A
 	/**
 	 * @return The post operator for the current abstract domain.
 	 */
-	default IAbstractPostOperator<STATE, ACTION, VARDECL> getPostOperator() {
+	default IAbstractPostOperator<STATE, ACTION> getPostOperator() {
 		throw new UnsupportedOperationException("This domain does not support the post operator");
 	}
 
-	default IAbstractTransformer<STATE, ACTION, VARDECL> getPreOperator() {
+	default IAbstractTransformer<STATE, ACTION> getPreOperator() {
 		throw new UnsupportedOperationException("This domain does not support the pre operator");
 	}
 

@@ -33,7 +33,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @param <STATE>
  * @param <LOCATION>
  */
-public class RcfgDebugHelper<STATE extends IAbstractState<STATE, VARDECL>, ACTION extends IAction, VARDECL, LOCATION>
+public class RcfgDebugHelper<STATE extends IAbstractState<STATE>, ACTION extends IAction, VARDECL, LOCATION>
 		implements IDebugHelper<STATE, ACTION, VARDECL, LOCATION> {
 
 	private final ILogger mLogger;
@@ -54,8 +54,8 @@ public class RcfgDebugHelper<STATE extends IAbstractState<STATE, VARDECL>, ACTIO
 	}
 
 	@Override
-	public boolean isPostSound(final DisjunctiveAbstractState<STATE, VARDECL> preState,
-			final DisjunctiveAbstractState<STATE, VARDECL> hierPreState, final DisjunctiveAbstractState<STATE, VARDECL> postState,
+	public boolean isPostSound(final DisjunctiveAbstractState<STATE> preState,
+			final DisjunctiveAbstractState<STATE> hierPreState, final DisjunctiveAbstractState<STATE> postState,
 			final ACTION transition) {
 		final IPredicate pre = createPredicateFromState(preState);
 		final IPredicate post = createPredicateFromState(postState);
@@ -117,7 +117,7 @@ public class RcfgDebugHelper<STATE extends IAbstractState<STATE, VARDECL>, ACTIO
 		}
 	}
 
-	private IPredicate createPredicateFromState(final DisjunctiveAbstractState<STATE, VARDECL> state) {
+	private IPredicate createPredicateFromState(final DisjunctiveAbstractState<STATE> state) {
 		final Term acc = state.getTerm(mMgdScript.getScript());
 		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(acc, mMgdScript.getScript(), mSymbolTable);
 		return new AbsIntPredicate<>(new BasicPredicate(getIllegalPredicateId(), tvp.getProcedures(), acc,

@@ -34,7 +34,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValue;
@@ -55,29 +54,22 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  * @param <STATE>
  *            The type of abstract domain states.
  */
-public class SingletonVariableExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>, STATE extends NonrelationalState<STATE, VALUE, VARDECL>, VARDECL>
-		implements IEvaluator<VALUE, STATE, VARDECL> {
+public class SingletonVariableExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>, STATE extends NonrelationalState<STATE, VALUE>>
+		implements IEvaluator<VALUE, STATE> {
 
-	private final Set<VARDECL> mVariableSet;
-	private final VARDECL mVar;
+	private final Set<IProgramVarOrConst> mVariableSet;
+	private final IProgramVarOrConst mVar;
 	private final INonrelationalValueFactory<VALUE> mNonrelationalValueFactory;
 
 	private boolean mContainsBoolean = false;
 	private final EvaluatorType mType;
 
-	public SingletonVariableExpressionEvaluator(final VARDECL var,
+	public SingletonVariableExpressionEvaluator(final IProgramVarOrConst var,
 			final INonrelationalValueFactory<VALUE> nonrelationalValueFactory) {
 		mVar = var;
 		mVariableSet = Collections.singleton(var);
 		mNonrelationalValueFactory = nonrelationalValueFactory;
-		if (mVar instanceof IBoogieVar) {
-			mType = EvaluatorUtils.getEvaluatorType((IBoogieVar) mVar);
-		} else if (mVar instanceof IProgramVarOrConst) {
-			mType = EvaluatorUtils.getEvaluatorType((IProgramVarOrConst) mVar);
-		} else {
-			throw new UnsupportedOperationException(
-					"Variable type " + mVar.getClass().getSimpleName() + " not implemented.");
-		}
+		mType = EvaluatorUtils.getEvaluatorType(mVar);
 	}
 
 	@Override
@@ -90,9 +82,9 @@ public class SingletonVariableExpressionEvaluator<VALUE extends INonrelationalVa
 		BooleanValue returnBool = BooleanValue.TOP;
 
 		// TODO: Add array support.
-		final Function<VARDECL, Triple<VALUE, BooleanValue, Boolean>> varFunction =
+		final Function<IProgramVarOrConst, Triple<VALUE, BooleanValue, Boolean>> varFunction =
 				var -> new Triple<>(currentState.getValue(var), BooleanValue.TOP, false);
-		final Function<VARDECL, Triple<VALUE, BooleanValue, Boolean>> boolFunction =
+		final Function<IProgramVarOrConst, Triple<VALUE, BooleanValue, Boolean>> boolFunction =
 				var -> new Triple<>(mNonrelationalValueFactory.createTopValue(), currentState.getBooleanValue(var),
 						true);
 
@@ -132,13 +124,13 @@ public class SingletonVariableExpressionEvaluator<VALUE extends INonrelationalVa
 	}
 
 	@Override
-	public void addSubEvaluator(final IEvaluator<VALUE, STATE, VARDECL> evaluator) {
+	public void addSubEvaluator(final IEvaluator<VALUE, STATE> evaluator) {
 		throw new UnsupportedOperationException(
 				"Cannot add a subevaluator to singleton variable expression evaluators.");
 	}
 
 	@Override
-	public Set<VARDECL> getVarIdentifiers() {
+	public Set<IProgramVarOrConst> getVarIdentifiers() {
 		return mVariableSet;
 	}
 
@@ -154,13 +146,7 @@ public class SingletonVariableExpressionEvaluator<VALUE extends INonrelationalVa
 
 	@Override
 	public String toString() {
-		if (mVar instanceof IBoogieVar) {
-			return ((IBoogieVar) mVar).getGloballyUniqueId();
-		} else if (mVar instanceof IProgramVarOrConst) {
-			return ((IProgramVarOrConst) mVar).getGloballyUniqueId();
-		}
-		throw new UnsupportedOperationException(
-				"The variable type " + mVar.getClass().getSimpleName() + " is not implemented.");
+		return mVar.getGloballyUniqueId();
 	}
 
 	@Override

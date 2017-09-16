@@ -56,13 +56,12 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Expression2Term.IIdentifierTranslator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieSymbolTableVariableProvider;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgStatementExtractor;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.ITermProvider;
@@ -76,14 +75,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sum
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
- * A basic post operator for non-relational domains that operate on Boogie code and {@link IBoogieVar}s. It relies on
+ * A basic post operator for non-relational domains that operate on Boogie code and {@link IProgramVar}s. It relies on
  * {@link INonrelationalValue} for most of its operations.
  *
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
-public abstract class NonrelationalPostOperator<STATE extends NonrelationalState<STATE, V, IBoogieVar>, V extends INonrelationalValue<V>>
-		implements IAbstractPostOperator<STATE, IcfgEdge, IBoogieVar> {
+public abstract class NonrelationalPostOperator<STATE extends NonrelationalState<STATE, V>, V extends INonrelationalValue<V>>
+		implements IAbstractPostOperator<STATE, IcfgEdge> {
 
 	private final ILogger mLogger;
 	private final RcfgStatementExtractor mStatementExtractor;
@@ -175,7 +174,7 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 			throw new AssertionError("The assignment operation resulted in 0 states.");
 		}
 
-		final List<IBoogieVar> realParamVars = callInfo.getRealInParams();
+		final List<IProgramVarOrConst> realParamVars = callInfo.getRealInParams();
 
 		// assign values of expression evaluation to actual inparams
 		final List<STATE> returnList = new ArrayList<>();
@@ -183,15 +182,15 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 			STATE returnState = stateAfterLeaving;
 
 			for (int i = 0; i < realParamVars.size(); i++) {
-				final IBoogieVar tempVar = callInfo.getTempInParams().get(i);
-				final IBoogieVar realVar = realParamVars.get(i);
+				final IProgramVarOrConst tempVar = callInfo.getTempInParams().get(i);
+				final IProgramVarOrConst realVar = realParamVars.get(i);
 
 				final STATE finalReturnState = returnState;
 
 				// TODO: Add array support.
-				final Function<IBoogieVar, STATE> varFunction =
+				final Function<IProgramVarOrConst, STATE> varFunction =
 						var -> finalReturnState.setValue(realVar, resultState.getValue(var));
-				final Function<IBoogieVar, STATE> boolFunction =
+				final Function<IProgramVarOrConst, STATE> boolFunction =
 						var -> finalReturnState.setBooleanValue(realVar, resultState.getBooleanValue(tempVar));
 
 				returnState = TypeUtils.applyVariableFunction(varFunction, boolFunction, null, tempVar);
@@ -239,25 +238,25 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 		}
 
 		// Gather return variables and values for the return abstract state
-		final List<IBoogieVar> updateVarNames = new ArrayList<>();
+		final List<IProgramVar> updateVarNames = new ArrayList<>();
 		for (final VariableLHS varLhs : lhs) {
-			final BoogieVar boogieVar = mBoogie2SmtSymbolTable.getBoogieVar(varLhs.getIdentifier(),
+			final IProgramVar boogieVar = mBoogie2SmtSymbolTable.getBoogieVar(varLhs.getIdentifier(),
 					varLhs.getDeclarationInformation(), false);
 			assert boogieVar != null;
 			updateVarNames.add(boogieVar);
 		}
 
-		final List<Pair<IBoogieVar, V>> updateVars = new ArrayList<>();
-		final List<Pair<IBoogieVar, BooleanValue>> updateBools = new ArrayList<>();
+		final List<Pair<IProgramVar, V>> updateVars = new ArrayList<>();
+		final List<Pair<IProgramVar, BooleanValue>> updateBools = new ArrayList<>();
 
 		// TODO: Add array support.
-		final Consumer<IBoogieVar> varConsumer =
+		final Consumer<IProgramVar> varConsumer =
 				var -> updateVars.add(new Pair<>(var, outVals.getFirst().removeFirst()));
-		final Consumer<IBoogieVar> boolConsumer =
+		final Consumer<IProgramVar> boolConsumer =
 				var -> updateBools.add(new Pair<>(var, outVals.getSecond().removeFirst()));
 
 		// Assign to each return variable the corresponding return value
-		for (final IBoogieVar boogieVar : updateVarNames) {
+		for (final IProgramVar boogieVar : updateVarNames) {
 			TypeUtils.consumeVariable(varConsumer, boolConsumer, null, boogieVar);
 		}
 		assert outVals.getFirst().isEmpty();
@@ -299,20 +298,20 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 		}
 
 		// Create arrays for state update functions.
-		final IBoogieVar[] updateVarNameArray = updateVars.stream().map(Pair<IBoogieVar, V>::getFirst)
-				.collect(Collectors.toList()).toArray(new IBoogieVar[updateVars.size()]);
-		final V[] updateVarValsArray = updateVars.stream().map(Pair<IBoogieVar, V>::getSecond)
+		final IProgramVar[] updateVarNameArray = updateVars.stream().map(Pair<IProgramVar, V>::getFirst)
+				.collect(Collectors.toList()).toArray(new IProgramVar[updateVars.size()]);
+		final V[] updateVarValsArray = updateVars.stream().map(Pair<IProgramVar, V>::getSecond)
 				.collect(Collectors.toList()).toArray(stateAfterLeaving.getArray(updateVars.size()));
-		final IBoogieVar[] updateBoolNameArray = updateBools.stream().map(Pair<IBoogieVar, BooleanValue>::getFirst)
-				.collect(Collectors.toList()).toArray(new IBoogieVar[updateBools.size()]);
-		final BooleanValue[] updateBoolValsArray = updateBools.stream().map(Pair<IBoogieVar, BooleanValue>::getSecond)
+		final IProgramVar[] updateBoolNameArray = updateBools.stream().map(Pair<IProgramVar, BooleanValue>::getFirst)
+				.collect(Collectors.toList()).toArray(new IProgramVar[updateBools.size()]);
+		final BooleanValue[] updateBoolValsArray = updateBools.stream().map(Pair<IProgramVar, BooleanValue>::getSecond)
 				.collect(Collectors.toList()).toArray(new BooleanValue[updateBools.size()]);
 
 		final List<STATE> returnList = new ArrayList<>();
 		for (final STATE s : rets) {
 			// TODO: Implement better handling of arrays.
 			returnList.add(s.setMixedValues(updateVarNameArray, updateVarValsArray, updateBoolNameArray,
-					updateBoolValsArray, new IBoogieVar[0], stateAfterLeaving.getArray(0)));
+					updateBoolValsArray, new IProgramVar[0], stateAfterLeaving.getArray(0)));
 		}
 
 		// add oldvars
@@ -430,12 +429,12 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 		final Deque<BooleanValue> boolVals = new ArrayDeque<>();
 
 		// TODO: Add array support.
-		final Consumer<IBoogieVar> varConsumer = var -> vals.add(stateBeforeLeaving.getValue(var));
-		final Consumer<IBoogieVar> boolConsumer = var -> boolVals.add(stateBeforeLeaving.getBooleanValue(var));
+		final Consumer<IProgramVar> varConsumer = var -> vals.add(stateBeforeLeaving.getValue(var));
+		final Consumer<IProgramVar> boolConsumer = var -> boolVals.add(stateBeforeLeaving.getBooleanValue(var));
 
 		for (final VarList list : procedure.getOutParams()) {
 			for (final String s : list.getIdentifiers()) {
-				final IBoogieVar boogieVar = mBoogie2SmtSymbolTable.getBoogieVar(s, procedure.getIdentifier(), false);
+				final IProgramVar boogieVar = mBoogie2SmtSymbolTable.getBoogieVar(s, procedure.getIdentifier(), false);
 				assert boogieVar != null;
 				TypeUtils.consumeVariable(varConsumer, boolConsumer, null, boogieVar);
 			}
@@ -448,12 +447,12 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 		final List<ITermProvider> vals = new ArrayList<>();
 
 		// TODO: Add array support.
-		final Consumer<IBoogieVar> varConsumer = var -> vals.add(stateBeforeLeaving.getValue(var));
-		final Consumer<IBoogieVar> boolConsumer = var -> vals.add(stateBeforeLeaving.getBooleanValue(var));
+		final Consumer<IProgramVar> varConsumer = var -> vals.add(stateBeforeLeaving.getValue(var));
+		final Consumer<IProgramVar> boolConsumer = var -> vals.add(stateBeforeLeaving.getBooleanValue(var));
 
 		for (final VarList list : procedure.getInParams()) {
 			for (final String s : list.getIdentifiers()) {
-				final IBoogieVar boogieVar = mBoogie2SmtSymbolTable.getBoogieVar(s,
+				final IProgramVar boogieVar = mBoogie2SmtSymbolTable.getBoogieVar(s,
 						new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, procedure.getIdentifier()), false);
 				assert boogieVar != null;
 				TypeUtils.consumeVariable(varConsumer, boolConsumer, null, boogieVar);
@@ -467,12 +466,12 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 		@Override
 		public Term getSmtIdentifier(final String id, final DeclarationInformation declInfo, final boolean isOldContext,
 				final BoogieASTNode boogieASTNode) {
-			IProgramVarOrConst boogieVar = mBoogie2SmtSymbolTable.getBoogieVar(id, declInfo, isOldContext);
-			if (boogieVar == null) {
-				boogieVar = mBoogie2SmtSymbolTable.getBoogieConst(id);
+			IProgramVarOrConst var = mBoogie2SmtSymbolTable.getBoogieVar(id, declInfo, isOldContext);
+			if (var == null) {
+				var = mBoogie2SmtSymbolTable.getBoogieConst(id);
 			}
-			assert boogieVar != null : "Unknown symbol: " + id;
-			return boogieVar.getTerm();
+			assert var != null : "Unknown symbol: " + id;
+			return var.getTerm();
 		}
 	}
 

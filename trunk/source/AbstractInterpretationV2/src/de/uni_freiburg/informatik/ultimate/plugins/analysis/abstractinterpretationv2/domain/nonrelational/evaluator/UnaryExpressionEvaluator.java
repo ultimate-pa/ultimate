@@ -34,6 +34,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValueFactory;
@@ -51,13 +52,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @param <STATE>
  *            The type of states of the abstract domain.
  */
-public class UnaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>, STATE extends IAbstractState<STATE, VARDECL>, VARDECL>
-		implements INAryEvaluator<VALUE, STATE, VARDECL> {
+public class UnaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>, STATE extends IAbstractState<STATE>>
+		implements INAryEvaluator<VALUE, STATE> {
 
 	private final EvaluatorLogger mLogger;
 	private final INonrelationalValueFactory<VALUE> mNonrelationalValueFactory;
 
-	private IEvaluator<VALUE, STATE, VARDECL> mSubEvaluator;
+	private IEvaluator<VALUE, STATE> mSubEvaluator;
 	private Operator mOperator;
 
 	public UnaryExpressionEvaluator(final EvaluatorLogger logger,
@@ -128,7 +129,7 @@ public class UnaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>, 
 	}
 
 	@Override
-	public void addSubEvaluator(final IEvaluator<VALUE, STATE, VARDECL> evaluator) {
+	public void addSubEvaluator(final IEvaluator<VALUE, STATE> evaluator) {
 		assert evaluator != null;
 
 		if (mSubEvaluator == null) {
@@ -139,7 +140,7 @@ public class UnaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>, 
 	}
 
 	@Override
-	public Set<VARDECL> getVarIdentifiers() {
+	public Set<IProgramVarOrConst> getVarIdentifiers() {
 		return mSubEvaluator.getVarIdentifiers();
 	}
 

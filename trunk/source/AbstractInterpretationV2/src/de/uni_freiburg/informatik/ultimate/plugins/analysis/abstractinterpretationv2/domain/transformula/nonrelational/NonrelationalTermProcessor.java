@@ -41,7 +41,6 @@ import de.uni_freiburg.informatik.ultimate.logic.NonRecursive;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValueFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalState;
@@ -56,14 +55,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public abstract class NonrelationalTermProcessor<VALUE extends INonrelationalValue<VALUE>, STATE extends NonrelationalState<STATE, VALUE, IProgramVarOrConst>>
+public abstract class NonrelationalTermProcessor<VALUE extends INonrelationalValue<VALUE>, STATE extends NonrelationalState<STATE, VALUE>>
 		extends NonRecursive {
-	
+
 	protected final ILogger mLogger;
-	private final ITermEvaluatorFactory<VALUE, STATE, IProgramVarOrConst> mEvaluatorFactory;
+	private final ITermEvaluatorFactory<VALUE, STATE> mEvaluatorFactory;
 	private final Supplier<STATE> mBottomStateSupplier;
 
-	private TermExpressionEvaluator<VALUE, STATE, IProgramVarOrConst> mExpressionEvaluator;
+	private TermExpressionEvaluator<VALUE, STATE> mExpressionEvaluator;
 
 	public NonrelationalTermProcessor(final ILogger logger, final int maxParallelStates,
 			final Supplier<STATE> bottomStateSupplier) {
@@ -72,23 +71,22 @@ public abstract class NonrelationalTermProcessor<VALUE extends INonrelationalVal
 		mBottomStateSupplier = bottomStateSupplier;
 	}
 
-	protected abstract ITermEvaluatorFactory<VALUE, STATE, IProgramVarOrConst>
-			createEvaluatorFactory(int maxParallelStates);
+	protected abstract ITermEvaluatorFactory<VALUE, STATE> createEvaluatorFactory(int maxParallelStates);
 
 	protected abstract INonrelationalValueFactory<VALUE> getNonrelationalValueFactory();
-	
+
 	protected List<STATE> process(final Term term, final STATE oldState) {
 		mLogger.debug("Term processor is analyzing term: " + term);
 
 		mExpressionEvaluator = new TermExpressionEvaluator<>();
 		run(new NonrelationalTermWalker(term, mLogger));
-		
+
 		if (!mExpressionEvaluator.isFinished()) {
 			throw new IllegalStateException("Invalid state: the expression evaluator is not finished.");
 		}
 		final List<IEvaluationResult<VALUE>> result = mExpressionEvaluator.getRootEvaluator().evaluate(oldState);
 		assert result != null;
-		
+
 		final List<STATE> returnStates = new ArrayList<>();
 		for (final IEvaluationResult<VALUE> res : result) {
 			returnStates.addAll(mExpressionEvaluator.getRootEvaluator().inverseEvaluate(res, oldState));
@@ -96,9 +94,9 @@ public abstract class NonrelationalTermProcessor<VALUE extends INonrelationalVal
 
 		return returnStates;
 	}
-	
+
 	private final class NonrelationalTermWalker extends TermWalker {
-		
+
 		private final ILogger mLogger;
 
 		public NonrelationalTermWalker(final Term term, final ILogger logger) {
@@ -110,9 +108,9 @@ public abstract class NonrelationalTermProcessor<VALUE extends INonrelationalVal
 		public void walk(final NonRecursive walker, final ConstantTerm term) {
 			mLogger.debug("Constant Term: " + term);
 			mLogger.debug("Type of value: " + term.getValue().getClass().getSimpleName());
-			final ITermEvaluator<VALUE, STATE, IProgramVarOrConst> constantEvaluator =
+			final ITermEvaluator<VALUE, STATE> constantEvaluator =
 					mEvaluatorFactory.createConstantValueEvaluator(term.getValue());
-			
+
 			mExpressionEvaluator.addEvaluator(constantEvaluator);
 		}
 
@@ -128,9 +126,8 @@ public abstract class NonrelationalTermProcessor<VALUE extends INonrelationalVal
 
 			final String fName = term.getFunction().getName();
 
-			final ITermEvaluator<VALUE, STATE, IProgramVarOrConst> applicationTerm =
-					mEvaluatorFactory.createApplicationTerm(term.getParameters().length, fName,
-							getNonrelationalValueFactory(), mBottomStateSupplier);
+			final ITermEvaluator<VALUE, STATE> applicationTerm = mEvaluatorFactory.createApplicationTerm(
+					term.getParameters().length, fName, getNonrelationalValueFactory(), mBottomStateSupplier);
 			mExpressionEvaluator.addEvaluator(applicationTerm);
 
 			for (final Term t : term.getParameters()) {
@@ -153,10 +150,10 @@ public abstract class NonrelationalTermProcessor<VALUE extends INonrelationalVal
 		@Override
 		public void walk(final NonRecursive walker, final TermVariable term) {
 			mLogger.debug("Term Variable: " + term);
-			
-			final ITermEvaluator<VALUE, STATE, IProgramVarOrConst> variableTermEvaluator =
+
+			final ITermEvaluator<VALUE, STATE> variableTermEvaluator =
 					mEvaluatorFactory.createVariableTermEvaluator(term.getName(), term.getSort());
-			
+
 			mExpressionEvaluator.addEvaluator(variableTermEvaluator);
 		}
 	}

@@ -54,8 +54,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  *
  * @param <STATE>
  */
-public class FutureRcfgVariableProvider<STATE extends IAbstractState<STATE, IProgramVarOrConst>, ACTION extends IAction>
-		implements IVariableProvider<STATE, ACTION, IProgramVarOrConst> {
+public class FutureRcfgVariableProvider<STATE extends IAbstractState<STATE>, ACTION extends IAction>
+		implements IVariableProvider<STATE, ACTION> {
 
 	private final ILogger mLogger;
 	private final IIcfgSymbolTable mSymbolTable;
@@ -247,7 +247,7 @@ public class FutureRcfgVariableProvider<STATE extends IAbstractState<STATE, IPro
 	}
 
 	@Override
-	public IVariableProvider<STATE, ACTION, IProgramVarOrConst> createNewVariableProvider(final CfgSmtToolkit toolkit) {
+	public IVariableProvider<STATE, ACTION> createNewVariableProvider(final CfgSmtToolkit toolkit) {
 		return new FutureRcfgVariableProvider<>(toolkit.getSymbolTable(), mLogger);
 	}
 

@@ -366,7 +366,7 @@ public final class CFGInvariantsGenerator {
 	}
 
 	private Map<IcfgLocation, UnmodifiableTransFormula> extractAbstractInterpretationPredicates(
-			final IAbstractInterpretationResult<LiveVariableState<IcfgEdge>, IcfgEdge, IProgramVarOrConst, IcfgLocation> abstractInterpretationResult,
+			final IAbstractInterpretationResult<LiveVariableState<IcfgEdge>, IcfgEdge, IcfgLocation> abstractInterpretationResult,
 			final ManagedScript managedScript) {
 		final Map<IcfgLocation, UnmodifiableTransFormula> result = new HashMap<>();
 		final Map<IcfgLocation, Term> locs2term = abstractInterpretationResult.getLoc2Term();

@@ -26,12 +26,17 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables;
 
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
-public interface IProgramVarOrConst extends IProgramSymbol{
-	
+public interface IProgramVarOrConst extends IProgramSymbol {
+
 	Term getTerm();
-	
+
 	boolean isGlobal();
+
+	default Sort getSort() {
+		return getTerm().getSort();
+	}
 
 }

@@ -40,23 +40,23 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class RcfgLibraryModeResultReporter<STATE extends IAbstractState<STATE, VARDECL>, ACTION extends IcfgEdge, VARDECL, LOC extends IcfgLocation>
-		extends RcfgResultReporter<STATE, ACTION, VARDECL, LOC> {
-	
+public class RcfgLibraryModeResultReporter<STATE extends IAbstractState<STATE>, ACTION extends IcfgEdge, LOC extends IcfgLocation>
+		extends RcfgResultReporter<STATE, ACTION, LOC> {
+
 	public RcfgLibraryModeResultReporter(final IUltimateServiceProvider services) {
 		super(services);
 	}
-	
+
 	@Override
 	public void reportSafe(final ACTION first) {
 		reportSafe(first, "No error locations were reached.");
 	}
-	
+
 	@Override
 	public void reportSafe(final ACTION first, final String msg) {
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID,
 				new GenericResultAtElement<>(first, Activator.PLUGIN_ID, mServices.getBacktranslationService(),
 						"Procedure " + first.getPrecedingProcedure() + " is safe", msg, Severity.INFO));
 	}
-	
+
 }

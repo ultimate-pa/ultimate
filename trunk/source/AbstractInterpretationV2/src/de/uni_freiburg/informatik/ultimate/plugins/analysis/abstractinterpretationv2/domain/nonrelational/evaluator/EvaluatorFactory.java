@@ -32,6 +32,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValueFactory;
@@ -48,9 +49,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @param <STATE>
  *            The type of states of the abstract domain.
  */
-public class EvaluatorFactory<VALUE extends INonrelationalValue<VALUE>, STATE extends NonrelationalState<STATE, VALUE, VARDECL>, VARDECL>
-		implements IEvaluatorFactory<VALUE, STATE, VARDECL> {
-	
+public class EvaluatorFactory<VALUE extends INonrelationalValue<VALUE>, STATE extends NonrelationalState<STATE, VALUE>>
+		implements IEvaluatorFactory<VALUE, STATE> {
+
 	private static final int ARITY_MIN = 1;
 	private static final int ARITY_MAX = 2;
 	private static final int BUFFER_MAX = 100;
@@ -71,8 +72,7 @@ public class EvaluatorFactory<VALUE extends INonrelationalValue<VALUE>, STATE ex
 	}
 
 	@Override
-	public INAryEvaluator<VALUE, STATE, VARDECL> createNAryExpressionEvaluator(final int arity,
-			final EvaluatorType type) {
+	public INAryEvaluator<VALUE, STATE> createNAryExpressionEvaluator(final int arity, final EvaluatorType type) {
 		assert arity >= ARITY_MIN && arity <= ARITY_MAX;
 
 		switch (arity) {
@@ -87,23 +87,23 @@ public class EvaluatorFactory<VALUE extends INonrelationalValue<VALUE>, STATE ex
 	}
 
 	@Override
-	public IEvaluator<VALUE, STATE, VARDECL> createFunctionEvaluator(final String functionName,
-			final int inputParamCount, final EvaluatorType type) {
+	public IEvaluator<VALUE, STATE> createFunctionEvaluator(final String functionName, final int inputParamCount,
+			final EvaluatorType type) {
 		return new FunctionEvaluator<>(functionName, inputParamCount, mNonrelationalValueFactory, type);
 	}
 
 	@Override
-	public IEvaluator<VALUE, STATE, VARDECL> createConditionalEvaluator() {
+	public IEvaluator<VALUE, STATE> createConditionalEvaluator() {
 		return new ConditionalEvaluator<>(mNonrelationalValueFactory);
 	}
 
 	@Override
-	public IEvaluator<VALUE, STATE, VARDECL> createSingletonValueTopEvaluator(final EvaluatorType type) {
+	public IEvaluator<VALUE, STATE> createSingletonValueTopEvaluator(final EvaluatorType type) {
 		return new SingletonValueExpressionEvaluator<>(mNonrelationalValueFactory.createTopValue(), type);
 	}
 
 	@Override
-	public IEvaluator<VALUE, STATE, VARDECL> createSingletonValueExpressionEvaluator(final String value,
+	public IEvaluator<VALUE, STATE> createSingletonValueExpressionEvaluator(final String value,
 			final Class<?> valueType) {
 		assert value != null;
 		final EvaluatorType evaluatorType;
@@ -121,13 +121,13 @@ public class EvaluatorFactory<VALUE extends INonrelationalValue<VALUE>, STATE ex
 	}
 
 	@Override
-	public IEvaluator<VALUE, STATE, VARDECL> createSingletonVariableExpressionEvaluator(final VARDECL variableName) {
+	public IEvaluator<VALUE, STATE> createSingletonVariableExpressionEvaluator(final IProgramVarOrConst variableName) {
 		assert variableName != null;
 		return new SingletonVariableExpressionEvaluator<>(variableName, mNonrelationalValueFactory);
 	}
 
 	@Override
-	public IEvaluator<VALUE, STATE, VARDECL> createSingletonLogicalValueExpressionEvaluator(final BooleanValue value) {
+	public IEvaluator<VALUE, STATE> createSingletonLogicalValueExpressionEvaluator(final BooleanValue value) {
 		return new SingletonBooleanExpressionEvaluator<>(value, mNonrelationalValueFactory);
 	}
 

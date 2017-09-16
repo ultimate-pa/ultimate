@@ -11,9 +11,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public final class SilentReporter<STATE extends IAbstractState<STATE, VARDECL>, ACTION, VARDECL, LOCATION>
-		implements IResultReporter<STATE, ACTION, VARDECL, LOCATION> {
-	
+public final class SilentReporter<STATE extends IAbstractState<STATE>, ACTION, LOCATION>
+		implements IResultReporter<STATE, ACTION, LOCATION> {
+
 	@Override
 	public void reportSafe(final ACTION elem) {
 		// do nothing to stay silent
@@ -25,8 +25,8 @@ public final class SilentReporter<STATE extends IAbstractState<STATE, VARDECL>, 
 	}
 
 	@Override
-	public void reportPossibleError(
-			final AbstractCounterexample<DisjunctiveAbstractState<STATE, VARDECL>, ACTION, ?, LOCATION> cex) {
+	public void
+			reportPossibleError(final AbstractCounterexample<DisjunctiveAbstractState<STATE>, ACTION, LOCATION> cex) {
 		// do nothing to stay silent
 	}
 }

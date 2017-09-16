@@ -87,10 +87,10 @@ public class Boogie2SmtSymbolTable implements IIcfgSymbolTable, IBoogieSymbolTab
 	private final TypeSortTranslator mTypeSortTranslator;
 	private final Map<String, BoogieNonOldVar> mGlobals = new HashMap<>();
 	private final Map<String, BoogieOldVar> mOldGlobals = new HashMap<>();
-	private final Map<String, Map<String, BoogieVar>> mSpecificationInParam = new HashMap<>();
-	private final Map<String, Map<String, BoogieVar>> mSpecificationOutParam = new HashMap<>();
-	private final Map<String, Map<String, BoogieVar>> mImplementationInParam = new HashMap<>();
-	private final Map<String, Map<String, BoogieVar>> mImplementationOutParam = new HashMap<>();
+	private final Map<String, Map<String, IProgramVar>> mSpecificationInParam = new HashMap<>();
+	private final Map<String, Map<String, IProgramVar>> mSpecificationOutParam = new HashMap<>();
+	private final Map<String, Map<String, IProgramVar>> mImplementationInParam = new HashMap<>();
+	private final Map<String, Map<String, IProgramVar>> mImplementationOutParam = new HashMap<>();
 	private final Map<String, Map<String, LocalBoogieVar>> mImplementationLocals = new HashMap<>();
 	private final Map<String, BoogieConst> mConstants = new HashMap<>();
 
@@ -145,14 +145,14 @@ public class Boogie2SmtSymbolTable implements IIcfgSymbolTable, IBoogieSymbolTab
 		mScript.unlock(this);
 	}
 
-	private static <T extends BoogieVar> void putNew(final String procId, final String varId, final T bv,
+	private static <T extends IProgramVar> void putNew(final String procId, final String varId, final T bv,
 			final Map<String, Map<String, T>> map) {
 		Map<String, T> varId2BoogieVar = map.get(procId);
 		if (varId2BoogieVar == null) {
 			varId2BoogieVar = new HashMap<>();
 			map.put(procId, varId2BoogieVar);
 		}
-		final BoogieVar previousValue = varId2BoogieVar.put(varId, bv);
+		final IProgramVar previousValue = varId2BoogieVar.put(varId, bv);
 		assert previousValue == null : "variable already contained";
 	}
 
@@ -161,7 +161,7 @@ public class Boogie2SmtSymbolTable implements IIcfgSymbolTable, IBoogieSymbolTab
 		assert previousValue == null : "variable already contained";
 	}
 
-	private static <T extends BoogieVar> T get(final String varId, final String procId,
+	private static <T extends IProgramVar> T get(final String varId, final String procId,
 			final Map<String, Map<String, T>> map) {
 		final Map<String, T> varId2BoogieVar = map.get(procId);
 		if (varId2BoogieVar == null) {
@@ -179,9 +179,9 @@ public class Boogie2SmtSymbolTable implements IIcfgSymbolTable, IBoogieSymbolTab
 	}
 
 	@Override
-	public BoogieVar getBoogieVar(final String varId, final DeclarationInformation declarationInformation,
+	public IProgramVar getBoogieVar(final String varId, final DeclarationInformation declarationInformation,
 			final boolean inOldContext) {
-		final BoogieVar result;
+		final IProgramVar result;
 		final StorageClass storageClass = declarationInformation.getStorageClass();
 		final String procedure = declarationInformation.getProcedure();
 		switch (storageClass) {
@@ -213,7 +213,7 @@ public class Boogie2SmtSymbolTable implements IIcfgSymbolTable, IBoogieSymbolTab
 	}
 
 	/**
-	 * Get BoogieVar for in our outparams.
+	 * Get IProgramVar for in our outparams.
 	 *
 	 * @param varId
 	 *            The id of the param.
@@ -221,10 +221,10 @@ public class Boogie2SmtSymbolTable implements IIcfgSymbolTable, IBoogieSymbolTab
 	 *            The procedure.
 	 * @param isInParam
 	 *            true iff its an inparam, false if its an outparam.
-	 * @return The BoogieVar.
+	 * @return The IProgramVar.
 	 */
 	@Override
-	public BoogieVar getBoogieVar(final String varId, final String procedure, final boolean isInParam) {
+	public IProgramVar getBoogieVar(final String varId, final String procedure, final boolean isInParam) {
 		if (isInParam) {
 			return get(varId, procedure, mImplementationInParam);
 		}
@@ -445,7 +445,7 @@ public class Boogie2SmtSymbolTable implements IIcfgSymbolTable, IBoogieSymbolTab
 		return rtr;
 	}
 
-	private static <T extends BoogieVar> void addLocals(final Map<String, LocalBoogieVar> current,
+	private static <T extends IProgramVar> void addLocals(final Map<String, LocalBoogieVar> current,
 			final Map<String, Map<String, T>> toAdd, final String procedurename) {
 		final Map<String, T> map = toAdd.get(procedurename);
 		if (map == null) {
@@ -512,7 +512,7 @@ public class Boogie2SmtSymbolTable implements IIcfgSymbolTable, IBoogieSymbolTab
 	}
 
 	private void declareParams(final String procId, final VarList[] specVl, final VarList[] implVl,
-			final Map<String, Map<String, BoogieVar>> specMap, final Map<String, Map<String, BoogieVar>> implMap,
+			final Map<String, Map<String, IProgramVar>> specMap, final Map<String, Map<String, IProgramVar>> implMap,
 			final DeclarationInformation declarationInformation) {
 		if (specVl.length != implVl.length) {
 			throw new IllegalArgumentException("specification and implementation have different param length");
@@ -529,7 +529,7 @@ public class Boogie2SmtSymbolTable implements IIcfgSymbolTable, IBoogieSymbolTab
 				throw new IllegalArgumentException("specification and implementation have different param length");
 			}
 			for (int j = 0; j < specIds.length; j++) {
-				final BoogieVar bv =
+				final IProgramVar bv =
 						constructLocalBoogieVar(implIds[j], procId, implType, implVl[i], declarationInformation);
 				putNew(procId, implIds[j], bv, implMap);
 				putNew(procId, specIds[j], bv, specMap);
@@ -547,15 +547,15 @@ public class Boogie2SmtSymbolTable implements IIcfgSymbolTable, IBoogieSymbolTab
 	 * @param specMap
 	 *            map for the specification
 	 * @param declarationInformation
-	 *            StorageClass of the constructed BoogieVar
+	 *            StorageClass of the constructed IProgramVar
 	 */
 	private void declareParams(final String procId, final VarList[] vl,
-			final Map<String, Map<String, BoogieVar>> specMap, final DeclarationInformation declarationInformation) {
+			final Map<String, Map<String, IProgramVar>> specMap, final DeclarationInformation declarationInformation) {
 		for (int i = 0; i < vl.length; i++) {
 			final IBoogieType type = vl[i].getType().getBoogieType();
 			final String[] ids = vl[i].getIdentifiers();
 			for (int j = 0; j < ids.length; j++) {
-				final BoogieVar bv = constructLocalBoogieVar(ids[j], procId, type, vl[i], declarationInformation);
+				final IProgramVar bv = constructLocalBoogieVar(ids[j], procId, type, vl[i], declarationInformation);
 				putNew(procId, ids[j], bv, specMap);
 			}
 		}
@@ -579,7 +579,7 @@ public class Boogie2SmtSymbolTable implements IIcfgSymbolTable, IBoogieSymbolTab
 	}
 
 	/**
-	 * Construct BoogieVar and store it. Expects that no BoogieVar with the same identifier has already been
+	 * Construct IProgramVar and store it. Expects that no IProgramVar with the same identifier has already been
 	 * constructed.
 	 *
 	 * @param identifier
@@ -612,7 +612,7 @@ public class Boogie2SmtSymbolTable implements IIcfgSymbolTable, IBoogieSymbolTab
 	}
 
 	/**
-	 * Construct global BoogieVar and the corresponding oldVar and store both. Expects that no local BoogieVarwith the
+	 * Construct global IProgramVar and the corresponding oldVar and store both. Expects that no local BoogieVarwith the
 	 * same identifier has already been constructed.
 	 *
 	 * @param boogieASTNode

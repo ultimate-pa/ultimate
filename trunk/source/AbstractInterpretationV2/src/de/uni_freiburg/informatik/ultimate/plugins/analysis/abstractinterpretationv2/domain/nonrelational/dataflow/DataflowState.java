@@ -49,8 +49,7 @@ import de.uni_freiburg.informatik.ultimate.util.SetOperations;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class DataflowState<ACTION extends IAction>
-		implements IAbstractState<DataflowState<ACTION>, IProgramVarOrConst> {
+public class DataflowState<ACTION extends IAction> implements IAbstractState<DataflowState<ACTION>> {
 
 	private static int sId;
 	private final int mId;

@@ -29,7 +29,7 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 	
 	final private ILogger mLogger;
 	final private IUltimateServiceProvider mServices;
-	IAbstractInterpretationResult<DataflowState<IcfgEdge>, IcfgEdge, IProgramVarOrConst, IcfgLocation> mDataflowAnalysisResult;
+	IAbstractInterpretationResult<DataflowState<IcfgEdge>, IcfgEdge, IcfgLocation> mDataflowAnalysisResult;
 	private Integer mEdgeCount;
 	private Integer mNodeCount;
 	private Integer mCFGEdgeCount;
@@ -113,7 +113,7 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 		return false;
 	}
 
-	private IAbstractInterpretationResult<DataflowState<IcfgEdge>, IcfgEdge, IProgramVarOrConst, IcfgLocation>
+	private IAbstractInterpretationResult<DataflowState<IcfgEdge>, IcfgEdge, IcfgLocation>
 			obtainDataflowAnalysisResult(final IIcfg<?> r) {
 		final IProgressAwareTimer timer = mServices.getProgressMonitorService().getChildTimer(0.2);
 		return AbstractInterpreter.runFuture(r, timer, mServices, false, mLogger);

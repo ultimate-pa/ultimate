@@ -37,7 +37,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.EqualityAnalysisResult;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.IEqualityAnalysisResultProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.IEqualityProvidingState;
@@ -55,7 +54,7 @@ public class AbsIntEqualityProvider implements IEqualityAnalysisResultProvider<I
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private Map<IcfgLocation, Set<IEqualityProvidingState>> mLoc2States;
-	
+
 	private boolean mPreprocessed;
 
 	public AbsIntEqualityProvider(final IUltimateServiceProvider services) {
@@ -66,10 +65,9 @@ public class AbsIntEqualityProvider implements IEqualityAnalysisResultProvider<I
 	@Override
 	public void preprocess(final IIcfg<?> icfg) {
 		final IProgressAwareTimer timer = mServices.getProgressMonitorService();
-		
-		final IAbstractInterpretationResult<? extends IEqualityProvidingState, 
-				IcfgEdge, IProgramVarOrConst, IcfgLocation> absIntResult =
-//				AbstractInterpreter.runFutureSMTDomain(icfg, timer, mServices, true, mLogger);
+
+		final IAbstractInterpretationResult<? extends IEqualityProvidingState, IcfgEdge, IcfgLocation> absIntResult =
+				// AbstractInterpreter.runFutureSMTDomain(icfg, timer, mServices, true, mLogger);
 				AbstractInterpreter.runFutureEqualityDomain(icfg, timer, mServices, true, mLogger);
 		final Map<IcfgLocation, ?> loc2states = absIntResult.getLoc2States();
 		mLoc2States = (Map<IcfgLocation, Set<IEqualityProvidingState>>) loc2states;
@@ -105,16 +103,15 @@ public class AbsIntEqualityProvider implements IEqualityAnalysisResultProvider<I
 	}
 
 	@Override
-	public IEqualityProvidingState getEqualityProvidingStateForLocationSet(
-			final Set<IcfgLocation> locSet) {
+	public IEqualityProvidingState getEqualityProvidingStateForLocationSet(final Set<IcfgLocation> locSet) {
 		assert mPreprocessed;
 		IEqualityProvidingState result = null;
 
-		for (IcfgLocation loc : locSet) {
+		for (final IcfgLocation loc : locSet) {
 			if (!mLoc2States.containsKey(loc)) {
 				continue;
 			}
-			final IEqualityProvidingState unionStateForCurrentLoc = 
+			final IEqualityProvidingState unionStateForCurrentLoc =
 					mLoc2States.get(loc).stream().reduce((s1, s2) -> s1.union(s2)).get();
 			result = result == null ? unionStateForCurrentLoc : result.union(unionStateForCurrentLoc);
 		}

@@ -50,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  */
-public class SMTTheoryState implements IAbstractState<SMTTheoryState, IProgramVarOrConst>, IEqualityProvidingState {
+public class SMTTheoryState implements IAbstractState<SMTTheoryState>, IEqualityProvidingState {
 
 	private final IPredicate mPredicate;
 

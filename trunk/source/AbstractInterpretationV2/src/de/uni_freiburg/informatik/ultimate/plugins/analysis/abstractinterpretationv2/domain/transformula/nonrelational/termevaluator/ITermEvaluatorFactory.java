@@ -41,13 +41,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public interface ITermEvaluatorFactory<VALUE extends INonrelationalValue<VALUE>, STATE extends IAbstractState<STATE, VARDECL>, VARDECL> {
-	
-	INaryTermEvaluator<VALUE, STATE, VARDECL> createApplicationTerm(final int arity, final String operator,
+public interface ITermEvaluatorFactory<VALUE extends INonrelationalValue<VALUE>, STATE extends IAbstractState<STATE>> {
+
+	INaryTermEvaluator<VALUE, STATE> createApplicationTerm(final int arity, final String operator,
 			final INonrelationalValueFactory<VALUE> nonrelationalValueFactory,
 			final Supplier<STATE> bottomStateSupplier);
-	
-	ITermEvaluator<VALUE, STATE, VARDECL> createConstantValueEvaluator(final Object value);
-	
-	ITermEvaluator<VALUE, STATE, VARDECL> createVariableTermEvaluator(final String variableName, final Sort sort);
+
+	ITermEvaluator<VALUE, STATE> createConstantValueEvaluator(final Object value);
+
+	ITermEvaluator<VALUE, STATE> createVariableTermEvaluator(final String variableName, final Sort sort);
 }

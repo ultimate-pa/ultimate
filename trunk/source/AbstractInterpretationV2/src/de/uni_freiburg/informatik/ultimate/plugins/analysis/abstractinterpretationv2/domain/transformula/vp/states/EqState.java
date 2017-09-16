@@ -55,7 +55,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @param <ACTION>
  */
 public class EqState<ACTION extends IIcfgTransition<IcfgLocation>>
-		implements IAbstractState<EqState<ACTION>, IProgramVarOrConst>, IEqualityProvidingState {
+		implements IAbstractState<EqState<ACTION>>, IEqualityProvidingState {
 
 	private static int sNextFreeId = 0;
 

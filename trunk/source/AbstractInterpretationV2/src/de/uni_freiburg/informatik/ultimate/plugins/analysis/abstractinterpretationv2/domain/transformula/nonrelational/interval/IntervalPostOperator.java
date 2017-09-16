@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  *
  */
 public class IntervalPostOperator
-		extends NonrelationalPostOperator<IntervalDomainState<IProgramVarOrConst>, IcfgEdge, IntervalDomainValue> {
+		extends NonrelationalPostOperator<IntervalDomainState, IcfgEdge, IntervalDomainValue> {
 	
 	/**
 	 * Default constructor.
@@ -55,8 +55,8 @@ public class IntervalPostOperator
 	 *            The number of allowed parallel states.
 	 */
 	protected IntervalPostOperator(final ILogger logger, final int maxParallelStates,
-			final Supplier<IntervalDomainState<IProgramVarOrConst>> topStateSupplier,
-			final Supplier<IntervalDomainState<IProgramVarOrConst>> bottomStateSupplier) {
+			final Supplier<IntervalDomainState> topStateSupplier,
+			final Supplier<IntervalDomainState> bottomStateSupplier) {
 		super(logger, new IntervalDomainTermProcessor(logger, maxParallelStates, bottomStateSupplier),
 				topStateSupplier);
 	}

@@ -38,6 +38,7 @@ import java.util.function.BiFunction;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValueFactory;
@@ -55,18 +56,18 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @param <STATE>
  *            The state type of the domain.
  */
-public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>, STATE extends IAbstractState<STATE, VARDECL>, VARDECL>
-		implements INAryEvaluator<VALUE, STATE, VARDECL> {
+public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>, STATE extends IAbstractState<STATE>>
+		implements INAryEvaluator<VALUE, STATE> {
 
-	private final Set<VARDECL> mVariableSet;
+	private final Set<IProgramVarOrConst> mVariableSet;
 	private final EvaluatorLogger mLogger;
 	private final EvaluatorType mEvaluatorType;
 	private final int mMaxParallelSates;
 
 	private final INonrelationalValueFactory<VALUE> mNonrelationalValueFactory;
 
-	private IEvaluator<VALUE, STATE, VARDECL> mLeftSubEvaluator;
-	private IEvaluator<VALUE, STATE, VARDECL> mRightSubEvaluator;
+	private IEvaluator<VALUE, STATE> mLeftSubEvaluator;
+	private IEvaluator<VALUE, STATE> mRightSubEvaluator;
 
 	private Operator mOperator;
 
@@ -210,7 +211,8 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 		BooleanValue returnBool = BooleanValue.INVALID;
 		if (mLeftSubEvaluator.containsBool() || mRightSubEvaluator.containsBool()) {
 			returnBool = first.getBooleanValue().intersect(second.getBooleanValue()) != BooleanValue.BOTTOM
-					? BooleanValue.TRUE : BooleanValue.BOTTOM;
+					? BooleanValue.TRUE
+					: BooleanValue.BOTTOM;
 		}
 
 		final VALUE returnValue = first.getValue().intersect(second.getValue());
@@ -411,7 +413,7 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 	}
 
 	@Override
-	public void addSubEvaluator(final IEvaluator<VALUE, STATE, VARDECL> evaluator) {
+	public void addSubEvaluator(final IEvaluator<VALUE, STATE> evaluator) {
 		assert evaluator != null;
 
 		if (mLeftSubEvaluator != null && mRightSubEvaluator != null) {
@@ -427,7 +429,7 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 	}
 
 	@Override
-	public Set<VARDECL> getVarIdentifiers() {
+	public Set<IProgramVarOrConst> getVarIdentifiers() {
 		return mVariableSet;
 	}
 

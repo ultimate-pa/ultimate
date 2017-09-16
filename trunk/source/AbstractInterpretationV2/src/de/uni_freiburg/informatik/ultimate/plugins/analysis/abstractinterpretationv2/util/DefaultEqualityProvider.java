@@ -38,7 +38,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IEqualityProvider;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlockFactory;
@@ -52,12 +51,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sta
  * @param <STATE>
  *            The type of the abstract states handled by the equality provider.
  */
-public class DefaultEqualityProvider<STATE extends IAbstractState<STATE, IBoogieVar>>
-		implements IEqualityProvider<STATE, IBoogieVar, Expression> {
-	
-	private final IAbstractPostOperator<STATE, CodeBlock, IBoogieVar> mPostOperator;
+public class DefaultEqualityProvider<STATE extends IAbstractState<STATE>>
+		implements IEqualityProvider<STATE, Expression> {
+
+	private final IAbstractPostOperator<STATE, CodeBlock> mPostOperator;
 	private final CodeBlockFactory mCodeBlockFactory;
-	
+
 	/**
 	 * Creates an instance of a default Equality Provider for Boogie-based abstract domains.
 	 *
@@ -66,38 +65,38 @@ public class DefaultEqualityProvider<STATE extends IAbstractState<STATE, IBoogie
 	 * @param rootAnnotation
 	 *            The root annotation of the program.
 	 */
-	public DefaultEqualityProvider(final IAbstractPostOperator<STATE, CodeBlock, IBoogieVar> postOperator,
+	public DefaultEqualityProvider(final IAbstractPostOperator<STATE, CodeBlock> postOperator,
 			final BoogieIcfgContainer rootAnnotation) {
 		mPostOperator = postOperator;
 		mCodeBlockFactory = rootAnnotation.getCodeBlockFactory();
 	}
-	
+
 	@Override
 	public boolean isDefinitelyEqual(final STATE state, final Expression first, final Expression second) {
 		return checkVariableParameters(state, first, second, Operator.COMPNEQ);
 	}
-	
+
 	@Override
 	public boolean isDefinitelyNotEqual(final STATE state, final Expression first, final Expression second) {
 		return checkVariableParameters(state, first, second, Operator.COMPEQ);
 	}
-	
+
 	private boolean checkVariableParameters(final STATE state, final Expression first, final Expression second,
 			final Operator operator) {
 		assert state != null;
 		assert first != null;
 		assert second != null;
-		
+
 		final Expression formula = new BinaryExpression(null, operator, first, second);
 		final AssumeStatement assumeStatement = new AssumeStatement(null, formula);
-		
+
 		final CodeBlock assumeCodeBlock = mCodeBlockFactory.constructStatementSequence(null, null,
 				new ArrayList<>(Arrays.asList(assumeStatement)), Origin.IMPLEMENTATION);
-		
+
 		final List<STATE> postReturn = mPostOperator.apply(state, assumeCodeBlock);
 		assert postReturn.size() == 1;
-		
+
 		return postReturn.get(0).isBottom();
 	}
-	
+
 }

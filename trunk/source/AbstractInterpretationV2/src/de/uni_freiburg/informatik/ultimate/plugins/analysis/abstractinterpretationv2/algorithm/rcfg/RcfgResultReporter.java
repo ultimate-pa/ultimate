@@ -54,8 +54,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class RcfgResultReporter<STATE extends IAbstractState<STATE, VARDECL>, ACTION extends IcfgEdge, VARDECL, LOC extends IcfgLocation>
-		implements IResultReporter<STATE, ACTION, VARDECL, LOC> {
+public class RcfgResultReporter<STATE extends IAbstractState<STATE>, ACTION extends IcfgEdge, LOC extends IcfgLocation>
+		implements IResultReporter<STATE, ACTION, LOC> {
 
 	protected final IUltimateServiceProvider mServices;
 
@@ -64,15 +64,14 @@ public class RcfgResultReporter<STATE extends IAbstractState<STATE, VARDECL>, AC
 	}
 
 	@Override
-	public void reportPossibleError(
-			final AbstractCounterexample<DisjunctiveAbstractState<STATE, VARDECL>, ACTION, ?, LOC> cex) {
+	public void reportPossibleError(final AbstractCounterexample<DisjunctiveAbstractState<STATE>, ACTION, LOC> cex) {
 		final Map<Integer, ProgramState<Term>> programStates = new HashMap<>();
 		final List<IcfgEdge> trace = new ArrayList<>();
 
 		programStates.put(-1, computeProgramState(cex.getInitialState()));
 
 		int i = 0;
-		for (final Triple<DisjunctiveAbstractState<STATE, VARDECL>, LOC, ACTION> elem : cex.getAbstractExecution()) {
+		for (final Triple<DisjunctiveAbstractState<STATE>, LOC, ACTION> elem : cex.getAbstractExecution()) {
 			trace.add(elem.getThird().getLabel());
 			programStates.put(i, computeProgramState(elem.getFirst()));
 			++i;
@@ -85,13 +84,12 @@ public class RcfgResultReporter<STATE extends IAbstractState<STATE, VARDECL>, AC
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID, result);
 	}
 
-	private ProgramState<Term>
-			computeProgramState(final DisjunctiveAbstractState<STATE, VARDECL> abstractMultiState) {
+	private ProgramState<Term> computeProgramState(final DisjunctiveAbstractState<STATE> abstractMultiState) {
 		// TODO: Compute program state
 		return new ProgramState<>(Collections.emptyMap());
 	}
 
-	private LOC getLast(final AbstractCounterexample<DisjunctiveAbstractState<STATE, VARDECL>, ACTION, ?, LOC> cex) {
+	private LOC getLast(final AbstractCounterexample<DisjunctiveAbstractState<STATE>, ACTION, LOC> cex) {
 		final int size = cex.getAbstractExecution().size();
 		return cex.getAbstractExecution().get(size - 1).getSecond();
 	}

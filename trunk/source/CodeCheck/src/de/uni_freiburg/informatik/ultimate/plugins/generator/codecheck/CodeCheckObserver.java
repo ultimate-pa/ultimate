@@ -196,7 +196,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 			// Run for 20% of the complete time.
 			final IProgressAwareTimer timer = mServices.getProgressMonitorService().getChildTimer(0.2);
 
-			final IAbstractInterpretationResult<?, IcfgEdge, IProgramVarOrConst, IcfgLocation> result =
+			final IAbstractInterpretationResult<?, IcfgEdge, IcfgLocation> result =
 					AbstractInterpreter.runFuture(mOriginalRoot, timer, mServices, false, mLogger);
 
 			if (result == null) {

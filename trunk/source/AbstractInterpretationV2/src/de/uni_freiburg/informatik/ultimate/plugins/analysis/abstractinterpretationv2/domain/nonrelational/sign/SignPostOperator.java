@@ -37,8 +37,8 @@ import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgStatementExtractor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -50,7 +50,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sum
  *
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  */
-public class SignPostOperator implements IAbstractPostOperator<SignDomainState<IBoogieVar>, IcfgEdge, IBoogieVar> {
+public class SignPostOperator
+		implements IAbstractPostOperator<SignDomainState, IcfgEdge> {
 
 	private final RcfgStatementExtractor mStatementExtractor;
 	private final SignDomainStatementProcessor mStatementProcessor;
@@ -75,7 +76,7 @@ public class SignPostOperator implements IAbstractPostOperator<SignDomainState<I
 	 * @return A new abstract state which is the result of applying the post operator to a given abstract state.
 	 */
 	@Override
-	public List<SignDomainState<IBoogieVar>> apply(final SignDomainState<IBoogieVar> oldstate,
+	public List<SignDomainState> apply(final SignDomainState oldstate,
 			final IcfgEdge transition) {
 		assert oldstate != null;
 		assert !oldstate.isBottom();
@@ -86,14 +87,15 @@ public class SignPostOperator implements IAbstractPostOperator<SignDomainState<I
 			throw new UnsupportedOperationException("Summary for procedure without implementation");
 		}
 
-		List<SignDomainState<IBoogieVar>> currentStates = new ArrayList<>();
+		List<SignDomainState> currentStates = new ArrayList<>();
 		currentStates.add(oldstate);
 		final List<Statement> statements = mStatementExtractor.process(transition);
 
 		for (final Statement stmt : statements) {
-			final List<SignDomainState<IBoogieVar>> afterProcessStates = new ArrayList<>();
-			for (final SignDomainState<IBoogieVar> currentState : currentStates) {
-				final List<SignDomainState<IBoogieVar>> processed = mStatementProcessor.process(currentState, stmt);
+			final List<SignDomainState> afterProcessStates = new ArrayList<>();
+			for (final SignDomainState currentState : currentStates) {
+				final List<SignDomainState> processed =
+						mStatementProcessor.process(currentState, stmt);
 				assert !processed.isEmpty();
 				afterProcessStates.addAll(processed);
 			}
@@ -105,11 +107,11 @@ public class SignPostOperator implements IAbstractPostOperator<SignDomainState<I
 	}
 
 	@Override
-	public List<SignDomainState<IBoogieVar>> apply(final SignDomainState<IBoogieVar> stateBeforeLeaving,
-			final SignDomainState<IBoogieVar> stateAfterLeaving, final IcfgEdge transition) {
+	public List<SignDomainState> apply(final SignDomainState stateBeforeLeaving,
+			final SignDomainState stateAfterLeaving, final IcfgEdge transition) {
 		assert transition instanceof Call || transition instanceof Return;
 
-		final List<SignDomainState<IBoogieVar>> returnList = new ArrayList<>();
+		final List<SignDomainState> returnList = new ArrayList<>();
 
 		if (transition instanceof Call) {
 			// nothing changes during this switch

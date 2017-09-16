@@ -48,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
  *
  */
 public class DataflowPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
-		implements IAbstractPostOperator<DataflowState<ACTION>, ACTION, IProgramVarOrConst> {
+		implements IAbstractPostOperator<DataflowState<ACTION>, ACTION> {
 
 	@Override
 	public List<DataflowState<ACTION>> apply(final DataflowState<ACTION> oldstate, final ACTION transition) {

@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
  * @author heizmann@informatik.uni-freiburg.de
  *
  */
-public class BoogieConst implements IBoogieVar, IProgramConst {
+public class BoogieConst implements IProgramConst {
 	private static final long serialVersionUID = 2529175722580437047L;
 
 	private final String mIdentifier;

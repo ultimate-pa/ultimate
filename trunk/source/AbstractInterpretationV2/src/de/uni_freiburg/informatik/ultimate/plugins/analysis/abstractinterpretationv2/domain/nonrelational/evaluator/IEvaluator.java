@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorUtils.EvaluatorType;
 
 /**
@@ -48,8 +49,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @param <VARDECL>
  *            Any variable declaration type.
  */
-public interface IEvaluator<VALUE, STATE extends IAbstractState<STATE, VARDECL>, VARDECL> {
-	
+public interface IEvaluator<VALUE, STATE extends IAbstractState<STATE>> {
+
 	/**
 	 * Evaluates the evaluator with all its sub-evaluators according to the given state.
 	 *
@@ -79,12 +80,12 @@ public interface IEvaluator<VALUE, STATE extends IAbstractState<STATE, VARDECL>,
 	 * @param evaluator
 	 *            The evaluator to add.
 	 */
-	void addSubEvaluator(final IEvaluator<VALUE, STATE, VARDECL> evaluator);
+	void addSubEvaluator(final IEvaluator<VALUE, STATE> evaluator);
 
 	/**
 	 * @return The set of all variable identifiers that occur in all sub evaluators.
 	 */
-	Set<VARDECL> getVarIdentifiers();
+	Set<IProgramVarOrConst> getVarIdentifiers();
 
 	/**
 	 * @return <code>true</code> if and only if there are still free sub evaluators. <code>false</code> otherwise.
