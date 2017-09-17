@@ -872,6 +872,39 @@ public final class TransFormulaUtils {
 		tfb.addAuxVarsButRenameToFreshCopies(termAndAuxVars.getSecond(), mgdScript);
 		return tfb.finishConstruction(mgdScript);
 	}
+	
+	
+	/**
+	 * The "guarded havoc" is the transition relation in which we keep the
+	 * guard (for all inVars) but havoc all variables that are updated. 
+	 */
+	public static UnmodifiableTransFormula computeGuardedHavoc(final UnmodifiableTransFormula tf,
+			final ManagedScript mgdScript, final IUltimateServiceProvider services, final ILogger logger) {
+		final Set<TermVariable> auxVars = new HashSet<>(tf.getAuxVars());
+		final Map<TermVariable, TermVariable> substitutionMapping = new HashMap<>();
+		for (final IProgramVar bv : tf.getAssignedVars()) {
+			final TermVariable outVar = tf.getOutVars().get(bv);
+			final TermVariable aux = mgdScript.constructFreshCopy(outVar);
+			substitutionMapping.put(outVar, aux);
+			auxVars.add(aux);
+		}
+		if (!tf.getBranchEncoders().isEmpty()) {
+			throw new AssertionError("I think this does not make sense with branch enconders");
+		}
+		final Term term = new Substitution(mgdScript, substitutionMapping).transform(tf.getFormula());
+		final Pair<Term, Set<TermVariable>> termAndAuxVars =
+				tryToEliminateAuxVars(services, logger, mgdScript, term, auxVars);
+
+		final TransFormulaBuilder tfb =
+				new TransFormulaBuilder(tf.getInVars(), tf.getOutVars(), tf.getNonTheoryConsts().isEmpty(),
+						tf.getNonTheoryConsts().isEmpty() ? null : tf.getNonTheoryConsts(), true, null, false);
+		tfb.setFormula(termAndAuxVars.getFirst());
+		tfb.setInfeasibility(tf.isInfeasible());
+		tfb.addAuxVarsButRenameToFreshCopies(termAndAuxVars.getSecond(), mgdScript);
+		return tfb.finishConstruction(mgdScript);
+	}
+	
+	
 
 	public static UnmodifiableTransFormula negate(final UnmodifiableTransFormula tf, final ManagedScript maScript,
 			final IUltimateServiceProvider services, final ILogger logger,
