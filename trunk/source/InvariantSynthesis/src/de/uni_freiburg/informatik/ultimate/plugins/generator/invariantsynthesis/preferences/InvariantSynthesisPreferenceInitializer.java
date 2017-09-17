@@ -69,6 +69,7 @@ public class InvariantSynthesisPreferenceInitializer extends UltimatePreferenceI
 	public static final String LABEL_LARGE_BLOCK_ENCODING = "Large-Block-Encoding";
 	
 	public static final String LABEL_INCR_STRATEGY = "Increasing strategy";
+	public static final String LABEL_DANGER_INVARIANT_GUESSING = "Guess danger invariant";
 
 	/*
 	 * default values for the different preferences
@@ -87,6 +88,7 @@ public class InvariantSynthesisPreferenceInitializer extends UltimatePreferenceI
 	public static final int DEF_SOLVER_TIMEOUT = 15; // in seconds
 	
 	public static final IncreasingStrategy DEF_INCR_STRATEGY = IncreasingStrategy.Conservative;
+	public static final boolean DEF_DANGER_INVARIANT_GUESSING = false;
 	
 	
 	/**
@@ -110,6 +112,7 @@ public class InvariantSynthesisPreferenceInitializer extends UltimatePreferenceI
 				new UltimatePreferenceItem<>(LABEL_INCR_STRATEGY, DEF_INCR_STRATEGY, PreferenceType.Combo, IncreasingStrategy.values()),
 				new UltimatePreferenceItem<>(LABEL_EXTERNAL_SMT_SOLVER, DEF_EXTERNAL_SMT_SOLVER, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_SOLVER_TIMEOUT, DEF_SOLVER_TIMEOUT, PreferenceType.Integer),
+				new UltimatePreferenceItem<>(LABEL_DANGER_INVARIANT_GUESSING, DEF_DANGER_INVARIANT_GUESSING, PreferenceType.Boolean),
 		};
 	};
 }
