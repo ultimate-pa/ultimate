@@ -111,4 +111,12 @@ public class IcfgUtils {
 		}
 		return procErrorNodes.contains(loc);
 	}
+	
+	public static <LOC extends IcfgLocation> int getNumberOfLocations(final IIcfg<LOC> icfg) {
+		int result = 0;
+		for (final Entry<String, Map<String, LOC>> entry : icfg.getProgramPoints().entrySet()) {
+			result += entry.getValue().size();
+		}
+		return result;
+	}
 }
