@@ -35,10 +35,11 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TerminationAnalysisResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TerminationAnalysisResult.Termination;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.TimeoutResult;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IResultService;
@@ -91,6 +92,9 @@ public class SomeVerificationResultTestResultDecider extends TestResultDecider {
 					continue;
 				}
 				customMessages.add(result.getShortDescription());
+				if (result instanceof TimeoutResult) {
+					customMessages.add(result.getLongDescription());
+				}
 			}
 		}
 
