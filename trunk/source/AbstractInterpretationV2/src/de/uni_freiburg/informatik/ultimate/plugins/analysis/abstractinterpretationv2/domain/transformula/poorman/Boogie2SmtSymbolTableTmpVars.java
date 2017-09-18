@@ -30,11 +30,11 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieConst;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieSymbolTableVariableProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
@@ -48,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 public class Boogie2SmtSymbolTableTmpVars implements IBoogieSymbolTableVariableProvider {
 
 	private final Boogie2SmtSymbolTable mBoogie2SmtSymbolTable;
-	private final Map<String, BoogieVar> mTempVars;
+	private final Map<String, IProgramVar> mTempVars;
 
 	public Boogie2SmtSymbolTableTmpVars(final Boogie2SmtSymbolTable boogie2SmtSymbolTable) {
 		mBoogie2SmtSymbolTable = boogie2SmtSymbolTable;
@@ -61,7 +61,7 @@ public class Boogie2SmtSymbolTableTmpVars implements IBoogieSymbolTableVariableP
 	 * @param var
 	 *            The variable to add.
 	 */
-	public void addTemporaryVariable(final BoogieVar var) {
+	public void addTemporaryVariable(final IProgramVar var) {
 		if (mTempVars.put(var.getGloballyUniqueId(), var) != null) {
 			throw new UnsupportedOperationException(
 					"Temporary variable " + var.getGloballyUniqueId() + " already present.");
@@ -74,7 +74,7 @@ public class Boogie2SmtSymbolTableTmpVars implements IBoogieSymbolTableVariableP
 	 * @param var
 	 *            The variable to remove.
 	 */
-	public void removeTemporaryVariable(final BoogieVar var) {
+	public void removeTemporaryVariable(final IProgramVar var) {
 		if (mTempVars.remove(var.getGloballyUniqueId()) == null) {
 			throw new UnsupportedOperationException(
 					"Variable " + var.getGloballyUniqueId() + " not present in temporary variables.");
@@ -109,4 +109,13 @@ public class Boogie2SmtSymbolTableTmpVars implements IBoogieSymbolTableVariableP
 		return mTempVars.size();
 	}
 
+	@Override
+	public String toString() {
+		final StringBuilder sb = new StringBuilder();
+		sb.append("Temp Vars: ");
+		sb.append(mTempVars.entrySet().stream()
+				.map(entry -> entry.getKey() + " :: " + entry.getValue().getGloballyUniqueId())
+				.collect(Collectors.joining(", ")));
+		return sb.toString();
+	}
 }

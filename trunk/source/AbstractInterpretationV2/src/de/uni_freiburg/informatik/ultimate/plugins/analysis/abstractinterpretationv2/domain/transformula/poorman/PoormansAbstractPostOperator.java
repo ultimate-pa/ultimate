@@ -28,7 +28,6 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.poorman;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -47,10 +46,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractDom
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieNonOldVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieSymbolTableVariableProvider;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.LocalBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.MappedTerm2Expression;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Term2Expression;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
@@ -119,26 +115,42 @@ public class PoormansAbstractPostOperator<BACKING extends IAbstractState<BACKING
 		final Map<IProgramVarOrConst, IProgramVarOrConst> renamedInVars = transformula.getInVars().entrySet().stream()
 				.collect(Collectors.toMap(entry -> entry.getKey(), entry -> getFreshProgramVar(entry.getValue())));
 		final PoormanAbstractState<BACKING> renamedOldState = oldstate.renameVariables(renamedInVars);
+		mLogger.debug("Renamed the following variables in the current state:");
+		mLogger.debug(renamedInVars.entrySet().stream()
+				.map(entry -> "  " + entry.getKey().getGloballyUniqueId() + " (" + entry.getKey().hashCode() + ") --> "
+						+ entry.getValue().getGloballyUniqueId() + " (" + entry.getValue().hashCode() + ")")
+				.collect(Collectors.joining("\n")));
 
 		// Add outVars and auxVars to abstract state
+		mLogger.debug("Preparing outVars list...");
 		final Set<IProgramVarOrConst> newOutVars = new HashSet<>();
 		for (final TermVariable outVar : transformula.getOutVars().values()) {
-			if (!renamedOldState.getVariables().stream()
-					.anyMatch(var -> var.getGloballyUniqueId().equals(outVar.getName()))) {
-				newOutVars.add(getFreshProgramVar(outVar));
+			if (!renamedInVars.values().stream().anyMatch(var -> var.getGloballyUniqueId().equals(outVar.getName()))) {
+				final IProgramVarOrConst newOutVar = getFreshProgramVar(outVar);
+				newOutVars.add(newOutVar);
+				mLogger.debug("  Adding " + newOutVar.getGloballyUniqueId() + " (" + newOutVar.hashCode() + ")");
 			}
 		}
 
+		mLogger.debug("Preparing auxVars list...");
 		final Set<IProgramVarOrConst> newAuxVars = new HashSet<>();
 		for (final TermVariable auxVar : transformula.getAuxVars()) {
-			if (!renamedOldState.getVariables().stream()
-					.anyMatch(var -> var.getGloballyUniqueId().equals(auxVar.getName()))
+			if (!renamedInVars.values().stream().anyMatch(var -> var.getGloballyUniqueId().equals(auxVar.getName()))
 					&& !newOutVars.stream().anyMatch(var -> var.getGloballyUniqueId().equals(auxVar.getName()))) {
-				newAuxVars.add(getFreshProgramVar(auxVar));
+				final IProgramVarOrConst newAuxVar = getFreshProgramVar(auxVar);
+				newAuxVars.add(newAuxVar);
+				mLogger.debug("  Adding " + newAuxVar.getGloballyUniqueId() + " (" + newAuxVar.hashCode() + ")");
 			}
 		}
+
 		final PoormanAbstractState<BACKING> preState = renamedOldState
 				.addVariables(Stream.concat(newOutVars.stream(), newAuxVars.stream()).collect(Collectors.toSet()));
+
+		final Set<IProgramVarOrConst> tempVars = new HashSet<>();
+		tempVars.addAll(renamedInVars.values());
+		tempVars.addAll(newOutVars);
+		tempVars.addAll(newAuxVars);
+		tempVars.forEach(var -> mBoogie2SmtSymbolTable.addTemporaryVariable((IProgramVar) var));
 
 		// Prepare Boogie expression
 		final MappedTerm2Expression mappedT2e = new MappedTerm2Expression(mBoogie2Smt.getTypeSortTranslator(),
@@ -153,37 +165,15 @@ public class PoormansAbstractPostOperator<BACKING extends IAbstractState<BACKING
 		final CodeBlock assumeBlock =
 				mCodeBlockFactory.constructStatementSequence(null, null, assume, Origin.IMPLEMENTATION);
 
-		final List<BoogieVar> tempVars = new ArrayList<>();
-		tempVars.addAll(transformula.getInVars().entrySet().stream()
-				.map(entry -> new LocalBoogieVar(entry.getValue().getName(), entry.getKey().getProcedure(),
-						mBoogie2Smt.getTypeSortTranslator().getType(entry.getValue().getSort()), entry.getValue(),
-						entry.getKey().getDefaultConstant(), entry.getKey().getPrimedConstant()))
-				.collect(Collectors.toList()));
+		final List<BACKING> postStates =
+				mBackingDomain.getPostOperator().apply(preState.getBackingState(), assumeBlock);
 
-		tempVars.addAll(transformula.getOutVars().entrySet().stream()
-				.map(entry -> new BoogieNonOldVar(entry.getValue().getName(),
-						mBoogie2Smt.getTypeSortTranslator().getType(entry.getValue().getSort()), entry.getValue(),
-						entry.getKey().getDefaultConstant(), entry.getKey().getPrimedConstant(), null))
-				.collect(Collectors.toList()));
-
-		tempVars.addAll(transformula.getOutVars().entrySet().stream()
-				.map(entry -> new LocalBoogieVar(entry.getValue().getName(), entry.getKey().getProcedure(),
-						mBoogie2Smt.getTypeSortTranslator().getType(entry.getValue().getSort()), entry.getValue(),
-						entry.getKey().getDefaultConstant(), entry.getKey().getPrimedConstant()))
-				.collect(Collectors.toList()));
-
-		tempVars.addAll(transformula.getAuxVars().stream()
-				.map(entry -> new LocalBoogieVar(entry.getName(), "__AUX_VARIABLE__",
-						mBoogie2Smt.getTypeSortTranslator().getType(entry.getSort()), entry, null, null))
-				.collect(Collectors.toList()));
-
-		tempVars.forEach(var -> mBoogie2SmtSymbolTable.addTemporaryVariable(var));
-
-		mBackingDomain.getPostOperator().apply(preState.getBackingState(), assumeBlock);
+		// TODO Remove the following
+		mLogger.debug(postStates);
 
 		mLogger.debug("Transformula has expression: " + assume);
 
-		tempVars.forEach(var -> mBoogie2SmtSymbolTable.removeTemporaryVariable(var));
+		tempVars.forEach(var -> mBoogie2SmtSymbolTable.removeTemporaryVariable((IProgramVar) var));
 		assert mBoogie2SmtSymbolTable.getNumberOfTempVars() == 0;
 
 		if (true) {
@@ -201,7 +191,7 @@ public class PoormansAbstractPostOperator<BACKING extends IAbstractState<BACKING
 		return null;
 	}
 
-	private IProgramVar getFreshProgramVar(final TermVariable var) {
+	private IProgramVarOrConst getFreshProgramVar(final TermVariable var) {
 		return new IProgramVar() {
 
 			private static final long serialVersionUID = 4924620166368141045L;
@@ -249,6 +239,11 @@ public class PoormansAbstractPostOperator<BACKING extends IAbstractState<BACKING
 			@Override
 			public ApplicationTerm getDefaultConstant() {
 				return null;
+			}
+
+			@Override
+			public String toString() {
+				return getGloballyUniqueId();
 			}
 		};
 	}
