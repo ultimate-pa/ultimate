@@ -340,8 +340,8 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 			.forEach(node -> constants.addAll(new ConstantFinder().findConstants(node.getTerm(), false)));
 		// TODO do we need to find literals here, too?? (i.e. ConstantTerms)
 
-		mPartialArrangement.getAllFunctions().stream()
-			.forEach(func -> constants.addAll(new ConstantFinder().findConstants(func.getTerm(), false)));
+//		mPartialArrangement.getAllFunctions().stream()
+//			.forEach(func -> constants.addAll(new ConstantFinder().findConstants(func.getTerm(), false)));
 
 		mPvocs.addAll(constants.stream().map(c -> symbolTable.getProgramConst(c)).collect(Collectors.toSet()));
 
@@ -358,9 +358,9 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 		return mPartialArrangement.getAllElements().contains(node);
 	}
 
-	public Set<NODE> getAllFunctions() {
-		return mPartialArrangement.getAllFunctions();
-	}
+//	public Set<NODE> getAllFunctions() {
+//		return mPartialArrangement.getAllFunctions();
+//	}
 
 	public boolean isTop() {
 		return mPartialArrangement.isTautological();
@@ -445,8 +445,8 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 		mPartialArrangement.getAllElements().stream()
 			.forEach(node -> allTvs.addAll(Arrays.asList(node.getTerm().getFreeVars())));
 
-		mPartialArrangement.getAllFunctions().stream()
-			.forEach(func -> allTvs.addAll(Arrays.asList(func.getTerm().getFreeVars())));
+//		mPartialArrangement.getAllFunctions().stream()
+//			.forEach(func -> allTvs.addAll(Arrays.asList(func.getTerm().getFreeVars())));
 		return allTvs;
 	}
 

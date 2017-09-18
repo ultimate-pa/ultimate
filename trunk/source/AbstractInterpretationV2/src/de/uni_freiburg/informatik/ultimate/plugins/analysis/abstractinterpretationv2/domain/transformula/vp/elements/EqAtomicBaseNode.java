@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -71,10 +70,10 @@ public class EqAtomicBaseNode extends EqNode {
 		return Collections.unmodifiableSet(mDependentNonAtomicNodes);
 	}
 
-	@Override
-	public List<EqNode> getArguments() {
-		throw new IllegalStateException("check for isFunctionApplication() first");
-	}
+//	@Override
+//	public List<EqNode> getArguments() {
+//		throw new IllegalStateException("check for isFunctionApplication() first");
+//	}
 
 	@Override
 	public boolean isFunctionApplication() {

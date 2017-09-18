@@ -122,111 +122,111 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		assert sanityCheck();
 	}
 
-	/**
-	 * Called when an equality "node1 = node2" has just been reported.
-	 * Checks if there is a weak equivalence edge that allows a propagation because of that equality.
-	 * Analogous to the standard forward congruence propagation that is done in CongruenceClosure when an element
-	 * equality has been added.
-	 *
-	 * @param node1
-	 * @param node2
-	 * @return set of equalities that can be propagated (design decision: let modifications of the ground partial
-	 * 		arrangement be done "outside", in the WeqCongruenceClosure instance) EDIT: no more..
-	 */
-//	public  HashRelation<NODE, NODE> applyRoweqPropagationsOnReportEquality(final NODE node1, final NODE node2) {
-	public  void applyRoweqPropagationsOnReportEquality(final NODE node1, final NODE node2) {
-		assert !hasArrayEqualities();
-//		final HashRelation<NODE, NODE> equalitiesToBePropagated = new HashRelation<>();
-
-		final Set<NODE> ccpars1 = mPartialArrangement.getCcParsForNode(node1);
-		final Set<NODE> ccpars2 = mPartialArrangement.getCcParsForNode(node2);
-
-		for (final NODE ccp1 : ccpars1) {
-			for (final NODE ccp2 : ccpars2) {
-				final NODE funcApp1 = ccp1.getAppliedFunction();
-				final NODE funcApp2 = ccp2.getAppliedFunction();
-
-				assert funcApp1.getArity() == funcApp2.getArity();
-
-				/*
-				 * if the arrays have dimension 4, we have to try prefixes of the argument vectors up to size 4
-				 * e.g. a[i1], a[i1, i2], a[i1,i2,i3] etc.
-				 */
-				for (int dim = 1; dim <= funcApp1.getArity(); dim++) {
-					final List<NODE> prefix1 = funcApp1.getArguments().subList(0, dim);
-					final List<NODE> prefix2 = funcApp1.getArguments().subList(0, dim);
-
-					if (!mPartialArrangement.vectorsAreCongruent(prefix1, prefix2)) {
-						continue;
-					}
-					/*
-					 * args1, args2 (= the current index vector prefixes) are congruent
-					 *
-					 * <li> do we have nodes for the current index vector prefixes?
-					 * <li> is there a non-tautological edge for the current index vector prefixes?
-					 */
-					if (!mNodeAndFunctionFactory.hasFuncAppElement(funcApp1, prefix1)
-							|| !mNodeAndFunctionFactory.hasFuncAppElement(funcApp2, prefix2)) {
-						continue;
-					}
-
-					final NODE funcAppPrefix1 =
-							mNodeAndFunctionFactory.getFuncAppElementDetermineIsFunctionYourself(funcApp1, prefix1);
-					final NODE funcAppPrefix2 =
-							mNodeAndFunctionFactory.getFuncAppElementDetermineIsFunctionYourself(funcApp2, prefix2);
-
-					if (!hasWeqNonTautologicalEdgeForFunctions(funcAppPrefix1, funcAppPrefix2)) {
-						continue;
-					}
-
-					/*
-					 * project the edge label to the current index vector prefix (choose either, as they are congruent)
-					 * i.e. let edgelabel = Phi, first dim weqvars = q, args1 = i compute
-					 *   project_q(Phi /\ q = i), then decrease the weqvar indices in the resulting formula by dim
-					 *   -> that is the new edge label Phi', for funcApp[args1] -- -- funcApp[args2]
-					 *   if there already was one, strengthen it..
-					 */
-
-					final WeakEquivalenceEdgeLabel newEdgeLabel = projectToPrefix(
-							getWeqEdgeLabel(funcAppPrefix1, funcAppPrefix2),
-							prefix1,
-							getAllWeqVarsNodeForFunction(funcAppPrefix1));
-
-					if (newEdgeLabel.isInconsistent()) {
-//						equalitiesToBePropagated.addPair(funcAppPrefix1, funcAppPrefix2);
-						removeEdgeLabel(funcAppPrefix1, funcAppPrefix2);
-						mArrayEqualities.addPair(funcAppPrefix1, funcAppPrefix2);
-					} else {
-						// replace the old with the new label
-						replaceEdgeLabel(funcAppPrefix1, funcAppPrefix2, newEdgeLabel);
-					}
-				}
-			}
-		}
-
-		/*
-		 *  as we have strengthened some edges, we need to run floyd warshall..
-		 */
-		close();
-//		if (hasArrayEqualities()) {
-//			equalitiesToBePropagated.addAll(mArrayEqualities);
-//		}
-
-//		final Map<NODE, Set<NODE>> ccpars1 = mPartialArrangement.getCcParsForNode(node1);
-//		final Map<NODE, Set<NODE>> ccpars2 = mPartialArrangement.getCcParsForNode(node2);
-//		for (final Entry<Doubleton<NODE>, WeakEquivalenceEdgeLabel> edge : mWeakEquivalenceEdges.entrySet()) {
+//	/**
+//	 * Called when an equality "node1 = node2" has just been reported.
+//	 * Checks if there is a weak equivalence edge that allows a propagation because of that equality.
+//	 * Analogous to the standard forward congruence propagation that is done in CongruenceClosure when an element
+//	 * equality has been added.
+//	 *
+//	 * @param node1
+//	 * @param node2
+//	 * @return set of equalities that can be propagated (design decision: let modifications of the ground partial
+//	 * 		arrangement be done "outside", in the WeqCongruenceClosure instance) EDIT: no more..
+//	 */
+////	public  HashRelation<NODE, NODE> applyRoweqPropagationsOnReportEquality(final NODE node1, final NODE node2) {
+//	public  void applyRoweqPropagationsOnReportEquality(final NODE node1, final NODE node2) {
+//		assert !hasArrayEqualities();
+////		final HashRelation<NODE, NODE> equalitiesToBePropagated = new HashRelation<>();
 //
-//			final NODE func1 = edge.getKey().getOneElement();
-//			final NODE func2 = edge.getKey().getOtherElement();
-//			assert func1.isFunction() && func2.isFunction() && VPDomainHelpers.haveSameType(func1, func2);
+//		final Set<NODE> ccpars1 = mPartialArrangement.getCcParsForNode(node1);
+//		final Set<NODE> ccpars2 = mPartialArrangement.getCcParsForNode(node2);
 //
-//			equalitiesToBePropagated.addAll(
-//					congruencePropagationHelper(func1, func2, node1, node2, edge.getValue(), mPartialArrangement));
-//			equalitiesToBePropagated.addAll(
-//					congruencePropagationHelper(func2, func1, node1, node2, edge.getValue(), mPartialArrangement));
+//		for (final NODE ccp1 : ccpars1) {
+//			for (final NODE ccp2 : ccpars2) {
+//				final NODE funcApp1 = ccp1.getAppliedFunction();
+//				final NODE funcApp2 = ccp2.getAppliedFunction();
+//
+//				assert funcApp1.getArity() == funcApp2.getArity();
+//
+//				/*
+//				 * if the arrays have dimension 4, we have to try prefixes of the argument vectors up to size 4
+//				 * e.g. a[i1], a[i1, i2], a[i1,i2,i3] etc.
+//				 */
+//				for (int dim = 1; dim <= funcApp1.getArity(); dim++) {
+//					final List<NODE> prefix1 = funcApp1.getArguments().subList(0, dim);
+//					final List<NODE> prefix2 = funcApp1.getArguments().subList(0, dim);
+//
+//					if (!mPartialArrangement.vectorsAreCongruent(prefix1, prefix2)) {
+//						continue;
+//					}
+//					/*
+//					 * args1, args2 (= the current index vector prefixes) are congruent
+//					 *
+//					 * <li> do we have nodes for the current index vector prefixes?
+//					 * <li> is there a non-tautological edge for the current index vector prefixes?
+//					 */
+//					if (!mNodeAndFunctionFactory.hasFuncAppElement(funcApp1, prefix1)
+//							|| !mNodeAndFunctionFactory.hasFuncAppElement(funcApp2, prefix2)) {
+//						continue;
+//					}
+//
+//					final NODE funcAppPrefix1 =
+//							mNodeAndFunctionFactory.getFuncAppElementDetermineIsFunctionYourself(funcApp1, prefix1);
+//					final NODE funcAppPrefix2 =
+//							mNodeAndFunctionFactory.getFuncAppElementDetermineIsFunctionYourself(funcApp2, prefix2);
+//
+//					if (!hasWeqNonTautologicalEdgeForFunctions(funcAppPrefix1, funcAppPrefix2)) {
+//						continue;
+//					}
+//
+//					/*
+//					 * project the edge label to the current index vector prefix (choose either, as they are congruent)
+//					 * i.e. let edgelabel = Phi, first dim weqvars = q, args1 = i compute
+//					 *   project_q(Phi /\ q = i), then decrease the weqvar indices in the resulting formula by dim
+//					 *   -> that is the new edge label Phi', for funcApp[args1] -- -- funcApp[args2]
+//					 *   if there already was one, strengthen it..
+//					 */
+//
+//					final WeakEquivalenceEdgeLabel newEdgeLabel = projectToPrefix(
+//							getWeqEdgeLabel(funcAppPrefix1, funcAppPrefix2),
+//							prefix1,
+//							getAllWeqVarsNodeForFunction(funcAppPrefix1));
+//
+//					if (newEdgeLabel.isInconsistent()) {
+////						equalitiesToBePropagated.addPair(funcAppPrefix1, funcAppPrefix2);
+//						removeEdgeLabel(funcAppPrefix1, funcAppPrefix2);
+//						mArrayEqualities.addPair(funcAppPrefix1, funcAppPrefix2);
+//					} else {
+//						// replace the old with the new label
+//						replaceEdgeLabel(funcAppPrefix1, funcAppPrefix2, newEdgeLabel);
+//					}
+//				}
+//			}
 //		}
-//		return equalitiesToBePropagated;
-	}
+//
+//		/*
+//		 *  as we have strengthened some edges, we need to run floyd warshall..
+//		 */
+//		close();
+////		if (hasArrayEqualities()) {
+////			equalitiesToBePropagated.addAll(mArrayEqualities);
+////		}
+//
+////		final Map<NODE, Set<NODE>> ccpars1 = mPartialArrangement.getCcParsForNode(node1);
+////		final Map<NODE, Set<NODE>> ccpars2 = mPartialArrangement.getCcParsForNode(node2);
+////		for (final Entry<Doubleton<NODE>, WeakEquivalenceEdgeLabel> edge : mWeakEquivalenceEdges.entrySet()) {
+////
+////			final NODE func1 = edge.getKey().getOneElement();
+////			final NODE func2 = edge.getKey().getOtherElement();
+////			assert func1.isFunction() && func2.isFunction() && VPDomainHelpers.haveSameType(func1, func2);
+////
+////			equalitiesToBePropagated.addAll(
+////					congruencePropagationHelper(func1, func2, node1, node2, edge.getValue(), mPartialArrangement));
+////			equalitiesToBePropagated.addAll(
+////					congruencePropagationHelper(func2, func1, node1, node2, edge.getValue(), mPartialArrangement));
+////		}
+////		return equalitiesToBePropagated;
+//	}
 
 	private void removeEdgeLabel(final NODE func1, final NODE func2) {
 		mWeakEquivalenceEdges.remove(new Doubleton<NODE>(func1, func2));
@@ -289,43 +289,43 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		return null;
 	}
 
-	private Set<Doubleton<NODE>> congruencePropagationHelper(final NODE func1, final NODE func2,
-			final NODE node1, final NODE node2, final WeakEquivalenceEdgeLabel label,
-			final CongruenceClosure<NODE> pa) {
-		final Set<Doubleton<NODE>> newEqualitiesToBePropagated = new HashSet<>();
-
-		final Set<NODE> e1CcParsA = pa.getCcPars(func1, pa.getRepresentativeElement(node1));
-		final Set<NODE> e2CcParsA = pa.getCcPars(func2, pa.getRepresentativeElement(node2));
-
-		if (e1CcParsA == null || e2CcParsA == null) {
-			// nothing to do
-			return Collections.emptySet();
-		}
-
-		final Set<NODE> e1CcParsCopy = new HashSet<>(e1CcParsA);
-		final Set<NODE> e2CcParsCopy = new HashSet<>(e2CcParsA);
-		for (final NODE ccpar1 : e1CcParsCopy) {
-			assert ccpar1.isFunctionApplication();
-			for (final NODE ccpar2 : e2CcParsCopy) {
-				assert ccpar2.isFunctionApplication();
-
-				if (!pa.argumentsAreCongruent(ccpar1, ccpar2, false)) {
-					// no propagation because the arguments are not congruent
-					continue;
-				}
-				if (!label.impliesEqualityOnThatPosition(ccpar1.getArguments())) {
-					/*
-					 *  no propagation because the exceptions on array equality denoted by the weq edge's label contain
-					 *  the current arguments (i.e. the label, together with the gpa, does not contradict
-					 *  q = ccpar1.getArguments(), where  q is the vector of weq variables)
-					 */
-					continue;
-				}
-				newEqualitiesToBePropagated.add(new Doubleton<>(ccpar1, ccpar2));
-			}
-		}
-		return newEqualitiesToBePropagated;
-	}
+//	private Set<Doubleton<NODE>> congruencePropagationHelper(final NODE func1, final NODE func2,
+//			final NODE node1, final NODE node2, final WeakEquivalenceEdgeLabel label,
+//			final CongruenceClosure<NODE> pa) {
+//		final Set<Doubleton<NODE>> newEqualitiesToBePropagated = new HashSet<>();
+//
+//		final Set<NODE> e1CcParsA = pa.getCcPars(func1, pa.getRepresentativeElement(node1));
+//		final Set<NODE> e2CcParsA = pa.getCcPars(func2, pa.getRepresentativeElement(node2));
+//
+//		if (e1CcParsA == null || e2CcParsA == null) {
+//			// nothing to do
+//			return Collections.emptySet();
+//		}
+//
+//		final Set<NODE> e1CcParsCopy = new HashSet<>(e1CcParsA);
+//		final Set<NODE> e2CcParsCopy = new HashSet<>(e2CcParsA);
+//		for (final NODE ccpar1 : e1CcParsCopy) {
+//			assert ccpar1.isFunctionApplication();
+//			for (final NODE ccpar2 : e2CcParsCopy) {
+//				assert ccpar2.isFunctionApplication();
+//
+//				if (!pa.argumentsAreCongruent(ccpar1, ccpar2, false)) {
+//					// no propagation because the arguments are not congruent
+//					continue;
+//				}
+//				if (!label.impliesEqualityOnThatPosition(ccpar1.getArguments())) {
+//					/*
+//					 *  no propagation because the exceptions on array equality denoted by the weq edge's label contain
+//					 *  the current arguments (i.e. the label, together with the gpa, does not contradict
+//					 *  q = ccpar1.getArguments(), where  q is the vector of weq variables)
+//					 */
+//					continue;
+//				}
+//				newEqualitiesToBePropagated.add(new Doubleton<>(ccpar1, ccpar2));
+//			}
+//		}
+//		return newEqualitiesToBePropagated;
+//	}
 
 	private WeakEquivalenceGraph<ACTION, NODE>.WeakEquivalenceEdgeLabel getWeqEdgeLabel(final NODE func1,
 			final NODE func2) {
@@ -394,7 +394,8 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 				assert false;
 				return false;
 			}
-			if (edge.getValue().getAppearingFunctions().contains(func)) {
+//			if (edge.getValue().getAppearingFunctions().contains(func)) {
+			if (edge.getValue().getAppearingNodes().contains(func)) {
 				assert false;
 				return false;
 			}
@@ -604,21 +605,21 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		 */
 		if (mPartialArrangement != null) {
 			for (final Entry<Doubleton<NODE>, WeakEquivalenceEdgeLabel> edge : mWeakEquivalenceEdges.entrySet()) {
-				if (!mPartialArrangement.hasFunction(edge.getKey().getOneElement())
-						|| !mPartialArrangement.hasFunction(edge.getKey().getOtherElement())) {
-					assert false;
-					return false;
-				}
+//				if (!mPartialArrangement.hasFunction(edge.getKey().getOneElement())
+//						|| !mPartialArrangement.hasFunction(edge.getKey().getOtherElement())) {
+//					assert false;
+//					return false;
+//				}
 				if (!mPartialArrangement.getAllElements().containsAll(
 						edge.getValue().getAppearingNodes().stream()
 						.filter(node -> !mFactory.getAllWeqNodes().contains(node)).collect(Collectors.toSet()))) {
 					assert false;
 					return false;
 				}
-				if (!mPartialArrangement.getAllFunctions().containsAll(edge.getValue().getAppearingFunctions())) {
-					assert false;
-					return false;
-				}
+//				if (!mPartialArrangement.getAllFunctions().containsAll(edge.getValue().getAppearingFunctions())) {
+//					assert false;
+//					return false;
+//				}
 			}
 		}
 
@@ -754,17 +755,18 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		mWeakEquivalenceEdges.put(sourceAndTarget, strengthenedEdgeLabel);
 		assert sanityCheck();
 
-		// check for possible congruence propagations
-		final Set<Doubleton<NODE>> congruencePropagations = new HashSet<>();
-		for (final NODE rep : mPartialArrangement.getAllElementRepresentatives()) {
-			congruencePropagations.addAll(congruencePropagationHelper(
-					sourceAndTarget.getOneElement(), sourceAndTarget.getOtherElement(), rep, rep, strengthenedEdgeLabel,
-					mPartialArrangement));
-		}
-		// do the congruence propagations we found
-		for (final Doubleton<NODE> cp : congruencePropagations) {
-			mPartialArrangement.reportEquality(cp.getOneElement(), cp.getOtherElement());
-		}
+		// TODO roweq propagations
+//		// check for possible congruence propagations
+//		final Set<Doubleton<NODE>> congruencePropagations = new HashSet<>();
+//		for (final NODE rep : mPartialArrangement.getAllElementRepresentatives()) {
+//			congruencePropagations.addAll(congruencePropagationHelper(
+//					sourceAndTarget.getOneElement(), sourceAndTarget.getOtherElement(), rep, rep, strengthenedEdgeLabel,
+//					mPartialArrangement));
+//		}
+//		// do the congruence propagations we found
+//		for (final Doubleton<NODE> cp : congruencePropagations) {
+//			mPartialArrangement.reportEquality(cp.getOneElement(), cp.getOtherElement());
+//		}
 		assert sanityCheck();
 	}
 
@@ -1049,8 +1051,8 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 
 		public void renameVariables(final Map<Term, Term> substitutionMapping) {
 			for (int i = 0; i < getLabel().size(); i++) {
-				getLabel().get(i).transformElementsAndFunctions(node -> node.renameVariables(substitutionMapping),
-						func -> func.renameVariables(substitutionMapping));
+				getLabel().get(i).transformElementsAndFunctions(node -> node.renameVariables(substitutionMapping));
+//						func -> func.renameVariables(substitutionMapping));
 			}
 			assert sanityCheck();
 		}
@@ -1066,11 +1068,11 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 			return res;
 		}
 
-		public Set<NODE> getAppearingFunctions() {
-			final Set<NODE> res = new HashSet<>();
-			getLabel().forEach(pa -> res.addAll(pa.getAllFunctions()));
-			return res;
-		}
+//		public Set<NODE> getAppearingFunctions() {
+//			final Set<NODE> res = new HashSet<>();
+//			getLabel().forEach(pa -> res.addAll(pa.getAllFunctions()));
+//			return res;
+//		}
 
 		public WeakEquivalenceEdgeLabel meet(final WeakEquivalenceEdgeLabel otherLabel) {
 			assert sanityCheck();

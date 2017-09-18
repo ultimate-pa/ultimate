@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -109,13 +110,13 @@ public abstract class EqNode implements IEqNodeIdentifier<EqNode>, ICongruenceCl
 
 
 
-	@Override
-	public String getFunctionName() {
-		assert isFunction();
-//		assert false : "what's the right string here?";
-//		return mPvoc.toString();
-		return mTerm.toString();
-	}
+//	@Override
+//	public String getFunctionName() {
+//		assert isFunction();
+////		assert false : "what's the right string here?";
+////		return mPvoc.toString();
+//		return mTerm.toString();
+//	}
 
 	@Override
 	public boolean isFunction() {
@@ -144,4 +145,33 @@ public abstract class EqNode implements IEqNodeIdentifier<EqNode>, ICongruenceCl
 	public boolean hasSameTypeAs(final EqNode other) {
 		return mTerm.getSort().equals(other.mTerm.getSort());
 	}
+
+	@Override
+	public void addParent(final EqNode parent) {
+		mParents.add(parent);
+	}
+
+	@Override
+	public Set<EqNode> getParents() {
+		return Collections.unmodifiableSet(mParents);
+	}
+
+	/**
+	 * default implementation, override in EqFunctionApplicationNode
+	 */
+	@Override
+	public EqNode getArgument() {
+		throw new UnsupportedOperationException();
+	}
+
+	/**
+	 * unclear if we really want to have this method..
+	 */
+	@Override
+	public int getHeight() {
+		throw new UnsupportedOperationException();
+	}
+
+
+
 }

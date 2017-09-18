@@ -303,15 +303,15 @@ public class VPDomainHelpers {
 			assert false;
 			return false;
 		}
-		if (varsToProjectAway.stream().map(tv ->
-			unfrozen.getAllFunctions().stream()
-				.anyMatch(func ->
-					Arrays.asList(func.getTerm().getFreeVars()).contains(tv)))
-				.reduce((a, b) -> a || b)
-			.get()) {
-			assert false;
-			return false;
-		}
+//		if (varsToProjectAway.stream().map(tv ->
+//			unfrozen.getAllFunctions().stream()
+//				.anyMatch(func ->
+//					Arrays.asList(func.getTerm().getFreeVars()).contains(tv)))
+//				.reduce((a, b) -> a || b)
+//			.get()) {
+//			assert false;
+//			return false;
+//		}
 		if (script != null && Arrays.asList(unfrozen.getTerm(script)
 				.getFreeVars()).stream().anyMatch(fv -> varsToProjectAway.contains(fv))) {
 			assert false;

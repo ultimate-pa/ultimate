@@ -94,11 +94,7 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 		final Term normalizedTerm = normalizeTerm(term);
 		EqNode result = mTermToEqNode.get(normalizedTerm);
 		if (result == null) {
-			if (isFunction(normalizedTerm)) {
-				result = getFunctionBaseElement(normalizedTerm);
-			} else {
-				result = getNonFunctionBaseElement(normalizedTerm);
-			}
+			result = getBaseElement(normalizedTerm);
 			mTermToEqNode.put(normalizedTerm, result);
 		}
 		assert result instanceof EqNonAtomicBaseNode;
@@ -120,11 +116,8 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 				args.add(getOrConstructNode(index));
 			}
 
-			if (isFunction(selectTerm)) {
-				result = super.getFunctionFuncAppElement(function, args);
-			} else {
-				result = super.getNonFunctionFuncAppElement(function, args);
-			}
+			result = super.getFuncAppElement(function, args);
+
 			mTermToEqNode.put(selectTerm, result);
 		}
 		assert result instanceof EqFunctionApplicationNode;
@@ -139,12 +132,7 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 
 		EqNode result = mTermToEqNode.get(normalizedTerm);
 		if (result == null) {
-
-			if (isFunction(term)) {
-				result = getFunctionBaseElement(normalizedTerm);
-			} else {
-				result = getNonFunctionBaseElement(normalizedTerm);
-			}
+			result = getBaseElement(normalizedTerm);
 			mTermToEqNode.put(normalizedTerm, result);
 		}
 		assert result instanceof EqAtomicBaseNode;
@@ -281,10 +269,10 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 	}
 
 	@Override
-		protected EqNode newBaseElement(final Term term, final boolean isFunction) {
+	protected EqNode newBaseElement(final Term term) {
 	//		assert SmtUtils.isTrue(term) || SmtUtils.isFalse(term) || SmtUtils.isConstant(term) || term instanceof TermVariable
 	//			|| term instanceof ConstantTerm;
-		assert isFunction(term) == isFunction;
+//		assert isFunction(term) == isFunction;
 
 		if (isAtomic(term)) {
 			// term has no dependencies on other terms --> use an EqAtomicBaseNode
@@ -300,10 +288,31 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 	}
 
 	@Override
-	protected EqNode newFuncAppElement(final EqNode func, final List<EqNode> args, final boolean isFunction) {
-		final Term selectTerm = buildSelectTerm(func, args);
-		assert isFunction(selectTerm) == isFunction;
-		return new EqFunctionApplicationNode(func, args, selectTerm, this);
+	protected EqNode newFuncAppElement(final EqNode func, final List<EqNode> args) {
+//		final Term selectTerm = buildSelectTerm(func, args);
+////		assert isFunction(selectTerm) == isFunction;
+//		return new EqFunctionApplicationNode(func, args., selectTerm, this);
+		return buildFuncAppNodeElement(func, args);
+	}
+
+	public EqNode buildFuncAppNodeElement(final EqNode appliedFunction,
+			final List<EqNode> arguments) {//, final boolean isFunction) {
+
+		EqNode result = appliedFunction;
+
+		for (final EqNode arg : arguments) {
+			result = getOrConstructNode(buildSelectTerm(result, arg));
+//			result = new EqFunctionApplicationNode(result, arg, buildSelectTerm(result, arg), this);
+		}
+
+		return result;
+	}
+
+	private Term buildSelectTerm(final EqNode func, final EqNode arg) {
+		mMgdScript.lock(this);
+		final Term selectTerm = mMgdScript.term(this, "select", func.getTerm(), arg.getTerm());
+		mMgdScript.unlock(this);
+		return selectTerm;
 	}
 
 	private Term buildSelectTerm(final EqNode func, final List<EqNode> args) {
@@ -324,9 +333,9 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 		return term.getSort().isArraySort();
 	}
 
-	@Override
-	public EqNode getFuncAppElementDetermineIsFunctionYourself(final EqNode func, final List<EqNode> arguments) {
-		return getOrConstructNode(buildSelectTerm(func, arguments));
-	}
+//	@Override
+//	public EqNode getFuncAppElementDetermineIsFunctionYourself(final EqNode func, final List<EqNode> arguments) {
+//		return getOrConstructNode(buildSelectTerm(func, arguments));
+//	}
 
 }

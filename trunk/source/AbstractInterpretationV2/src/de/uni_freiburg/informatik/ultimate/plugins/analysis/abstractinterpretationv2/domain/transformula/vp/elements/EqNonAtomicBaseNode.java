@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
@@ -72,11 +71,11 @@ public class EqNonAtomicBaseNode extends EqNode {
 		return null;
 	}
 
-	@Override
-	public List<EqNode> getArguments() {
-		assert false : "check for isFunction() first";
-		return null;
-	}
+//	@Override
+//	public List<EqNode> getArguments() {
+//		assert false : "check for isFunction() first";
+//		return null;
+//	}
 
 	@Override
 	public boolean isDependent() {

@@ -130,10 +130,10 @@ public class EqBottomConstraint<ACTION extends IIcfgTransition<IcfgLocation>, NO
 	}
 
 
-	@Override
-	public Set<NODE> getAllFunctions() {
-		return Collections.emptySet();
-	}
+//	@Override
+//	public Set<NODE> getAllFunctions() {
+//		return Collections.emptySet();
+//	}
 
 	@Override
 	public boolean isTop() {

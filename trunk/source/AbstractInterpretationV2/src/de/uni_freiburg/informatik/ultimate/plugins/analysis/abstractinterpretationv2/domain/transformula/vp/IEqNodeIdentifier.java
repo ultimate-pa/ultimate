@@ -74,9 +74,9 @@ public interface IEqNodeIdentifier<NODE extends IEqNodeIdentifier<NODE>> extends
 	 */
 
 //	@Override
-//	boolean isFunction();
+	boolean isFunction();
 //
-//	int getArity();
+	int getArity();
 //
 //	String getFunctionName();
 

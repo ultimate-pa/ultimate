@@ -567,12 +567,13 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 	 * @param functionTransformer
 	 * @return
 	 */
-	public CongruenceClosure<ELEM> transformElementsAndFunctions(final Function<ELEM, ELEM> elemTransformer) {
+//	public CongruenceClosure<ELEM> transformElementsAndFunctions(final Function<ELEM, ELEM> elemTransformer) {
+	public void transformElementsAndFunctions(final Function<ELEM, ELEM> elemTransformer) {
 		assert sanitizeTransformer(elemTransformer, getAllElements()) : "we assume that the transformer does not "
 				+ "produce elements that were in the relation before!";
 
 		mElementTVER.transformElements(elemTransformer);
-		return new CongruenceClosure<>(new ThreeValuedEquivalenceRelation<>(mElementTVER));
+//		return new CongruenceClosure<>(new ThreeValuedEquivalenceRelation<>(mElementTVER));
 	}
 
 	/**
@@ -919,5 +920,52 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 				result.addPair(af1, af2);
 			}
 		}
+
+		public Collection<ELEM> getAfCcPars(final ELEM elem) {
+			return mAfCcPars.getImage(elem);
+		}
+
+
+//		/**
+//		 * When removing this function we will also remove all function nodes that depend on it. In this first
+//		 * step we attempt to conserve information about those nodes if possible by adding nodes with other
+//		 * functions but the same arguments.
+//		 *
+//		 * Conditions to add a node b[i1, ..., in]:
+//		 *  (a is the function we are about to remove)
+//		 * <li> a[i1, ..., in] is present in this weqCc and is part of a non-tautological constraint
+//		 * <li> the current weqCc allows us to conclude a[i1, .., in] = b[i1, ..,in]
+//		 *  <p>
+//		 *   that is the case if one of the following conditions holds
+//		 * <li> the strong equivalence a = b is implied by this weqCc (it is enough to propagate for one other
+//		 * 	function in the equivalence class of a)
+//		 * <li> there is a weak equivalence edge between a and b, and it allows weak congruence propagation of
+//		 *	 the above equality
+//		 */
+//		public Set<ELEM> collectElementsToBeAddedAtFunctionRemoval(final ELEM removedElement) {
+//			final Set<ELEM> constrainedFuncAppNodes = mAfCcPars.getImage(removedElement).stream()
+//					.filter(this::isConstrained).collect(Collectors.toSet());
+//
+//			final ELEM equalFunc = newRep;
+//
+//			for (final ELEM fan : constrainedFuncAppNodes) {
+//				if (equalFunc != null) {
+//					final ELEM nodeWithEqualFunc = mFactory.getEqNodeAndFunctionFactory()
+//							.getFuncAppElementDetermineIsFunctionYourself(equalFunc, fan.getArguments());
+//					addElement(nodeWithEqualFunc);
+//				}
+//
+//				for (final Entry<ELEM, WeakEquivalenceGraph<ACTION, ELEM>.WeakEquivalenceEdgeLabel> weqEdge
+//						:
+//							mWeakEquivalenceGraph.getAdjacentWeqEdges(elem).entrySet()) {
+//					if (weqEdge.getValue().impliesEqualityOnThatPosition(fan.getArguments())) {
+//						final ELEM nodeWithWequalFunc = mFactory.getEqNodeAndFunctionFactory()
+//								.getFuncAppElementDetermineIsFunctionYourself(weqEdge.getKey(), fan.getArguments());
+//						addElement(nodeWithWequalFunc);
+//					}
+//				}
+//			}
+//		}
+
 	}
 }
