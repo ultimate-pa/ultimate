@@ -13,7 +13,6 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import de.uni_freiburg.informatik.ultimate.util.SetOperations;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -143,7 +142,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 //		mAllFunctions = new HashSet<>(original.mAllFunctions);
 //		assert !original.mIsInconsistent;
 		mIsInconsistent = false;
-		mAuxData = new AuxData();
+		mAuxData = new AuxData(original.mAuxData);
 		assert sanityCheck();
 	}
 
@@ -463,7 +462,11 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		 *  must come after the addElement calls for the children because it queries for their representative
 		 *  (could be circumvented, I suppose..)
 		 */
-		mAuxData.registerNewElement(elem);
+//		final Pair<HashRelation<ELEM, ELEM>, HashRelation<ELEM, ELEM>> eqAndUneqToProp = mAuxData.registerNewElement(elem);
+		final HashRelation<ELEM, ELEM> equalitiesToPropagate = mAuxData.registerNewElement(elem);
+		for (final Entry<ELEM, ELEM> eq : equalitiesToPropagate.entrySet()) {
+			reportEquality(eq.getKey(), eq.getValue());
+		}
 
 //		addToCcChildren(elem, elem.getAppliedFunction(), elem.getArgument());
 //
@@ -472,10 +475,11 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 ////			mElementToParents.addPair(arg, elem);
 ////		}
 //
-//		/*
-//		 * As the new element is a function application, we might be able to infer
-//		 * equalities for it through congruence.
-//		 */
+
+		/*
+		 * As the new element is a function application, we might be able to infer
+		 * equalities for it through congruence.
+		 */
 //		for (final ELEM equivalentFunction : mElementTVER.getEquivalenceClass(elem.getAppliedFunction())) {
 //			Set<ELEM> candidateSet = null;
 //
@@ -1526,11 +1530,24 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		 * element must be a representative in mElementTVER (except for some time during reportEquality)
 		 *
 		 */
-		Map<ELEM, List<Set<ELEM>>> mCcPars = new HashMap<>();
+//		Map<ELEM, List<Set<ELEM>>> mCcPars = new HashMap<>();
+		private final HashRelation<ELEM, ELEM> mAfCcPars;
+		private final HashRelation<ELEM, ELEM> mArgCcPars;
 
 //		NestedMap2<ELEM, ELEM, List<HashRelation<ELEM, ELEM>>> mCcChildren = new NestedMap2<>();
 
 		Map<ELEM, HashRelation<ELEM, ELEM>> mCcChildren = new HashMap<>();
+
+		AuxData() {
+			mAfCcPars = new HashRelation<>();
+			mArgCcPars = new HashRelation<>();
+		}
+
+		AuxData(final CongruenceClosure<ELEM>.AuxData auxData) {
+			mAfCcPars = new HashRelation<>(auxData.mAfCcPars);
+			mArgCcPars = new HashRelation<>(auxData.mArgCcPars);
+		}
+
 //		NestedMap2<ELEM, ELEM, List<HashRelation<ELEM, ELEM>>> mCcChildren = new NestedMap2<>();
 
 		/**
@@ -1546,6 +1563,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 				final ELEM e2, final ELEM e1OldRep, final ELEM e2OldRep) {
 
 			final ELEM newRep = mElementTVER.getRepresentative(e1);
+			assert mElementTVER.getRepresentative(e2) == newRep : "we merged before calling this method, right?";
 
 			/*
 			 * collect new equalities and disequalities
@@ -1553,100 +1571,134 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 			final HashRelation<ELEM, ELEM> congruentResult = new HashRelation<>();
 			final HashRelation<ELEM, ELEM> unequalResult = new HashRelation<>();
 
-//			final List<Set<ELEM>> ccpar1 = mCcPars.get(e1OldRep);
-//			final List<Set<ELEM>> ccpar2 = mCcPars.get(e2OldRep);
-			final List<Set<ELEM>> ccpar1 = getCcPars(e1OldRep);
-			final List<Set<ELEM>> ccpar2 = getCcPars(e2OldRep);
+			final Set<ELEM> afccpar1 = mAfCcPars.getImage(e1OldRep);
+			final Set<ELEM> afccpar2 = mAfCcPars.getImage(e2OldRep);
 
+			final Set<ELEM> argccpar1 = mArgCcPars.getImage(e1OldRep);
+			final Set<ELEM> argccpar2 = mArgCcPars.getImage(e2OldRep);
 
-			final List<Set<ELEM>> newCcPars = new ArrayList<>(Math.max(ccpar1.size(), ccpar2.size()));
+			collectPropagations(afccpar1, afccpar2, congruentResult, unequalResult);
+			collectPropagations(argccpar1, argccpar2, congruentResult, unequalResult);
 
-			for (int i = 0; i < ccpar1.size() && i < ccpar2.size(); i++) {
-				final Set<ELEM> parents1 = ccpar1.get(i);
-				final Set<ELEM> parents2 = ccpar2.get(i);
+			propagateDisequalities(e1OldRep, unequalResult);
+			propagateDisequalities(e2OldRep, unequalResult);
 
-				newCcPars.add(SetOperations.union(parents1, parents2));
-
-				if (parents1 == null || parents2 == null || parents1.isEmpty() || parents2.isEmpty()) {
-					continue;
-				}
-
-				for (final List<ELEM> parentPair :
-					CrossProducts.crossProductOfSets(Arrays.asList(parents1, parents2))) {
-					final ELEM parent1 = parentPair.get(0);
-					final ELEM parent2 = parentPair.get(1);
-
-					assert parent1.getHeight() == parent2.getHeight();
-					assert parent1.getAppliedFunction() == parent2.getAppliedFunction() :
-						"this is ensured by the ccpar map, right?";
-
-					/*
-					 * fwcc
-					 *
-					 * is it correct to do this with out the vectors, just with getAppliedFunction and getArgument?
-					 */
-//					if (vectorsAreCongruent(parent1.getArguments(), parent2.getArguments())) {
-					if (getEqualityStatus(parent1.getAppliedFunction(), parent2.getAppliedFunction())
-							== EqualityStatus.EQUAL
-							&& getEqualityStatus(parent1.getArgument(), parent2.getArgument())
-							== EqualityStatus.EQUAL) {
-
-						congruentResult.addPair(parent1, parent2);
-						continue;
+			/*
+			 * update ccPars, ccChildren entries
+			 */
+			if (newRep == e1OldRep) {
+				final Set<ELEM> oldAf2 = mAfCcPars.removeDomainElement(e2OldRep);
+				if (oldAf2 != null) {
+					for (final ELEM e : oldAf2) {
+						mAfCcPars.addPair(newRep, e);
 					}
-
-					/*
-					 * bwcc
-					 */
-					addPropIfOneIsEqualOneIsUnconstrained(parent1.getAppliedFunction(), parent1.getArgument(),
-							parent2.getAppliedFunction(), parent2.getArgument(), unequalResult);
-
-//					if (getEqualityStatus(parent1, parent2) == EqualityStatus.NOT_EQUAL) {
-//						final int oup = getOnlyUnconstrainedPos(parent1.getArguments(), parent2.getArguments());
-//						if (oup == -1) {
-//							continue;
-//						}
-//						unequalResult.addPair(parent1.getArguments()[oup], parent2.getArguments()[oup]);
-//					}
 				}
-
-				/*
-				 * update ccPars, ccChildren entries
-				 */
-				boolean removeSuccess = true;
-				removeSuccess &= mCcPars.remove(e1OldRep) != null;
-				removeSuccess &= mCcPars.remove(e2OldRep) != null;
-				assert removeSuccess;
-				mCcPars.put(newRep, newCcPars);
-				final HashRelation<ELEM, ELEM> oldCcc1 = mCcChildren.remove(e1OldRep);
-				final HashRelation<ELEM, ELEM> oldCcc2 = mCcChildren.remove(e2OldRep);
-				final HashRelation<ELEM, ELEM> newCcc = new HashRelation<>();
-				newCcc.addAll(oldCcc1);
-				newCcc.addAll(oldCcc2);
-				mCcChildren.put(newRep, newCcc);
-
+				final Set<ELEM> oldArg2 = mArgCcPars.removeDomainElement(e2OldRep);
+				if (oldArg2 != null) {
+					for (final ELEM e : oldArg2) {
+						mArgCcPars.addPair(newRep, e);
+					}
+				}
+			} else {
+				assert newRep == e2OldRep;
+				final Set<ELEM> oldAf1 = mAfCcPars.removeDomainElement(e1OldRep);
+				if (oldAf1 != null) {
+					for (final ELEM e : oldAf1) {
+						mAfCcPars.addPair(newRep, e);
+					}
+				}
+				final Set<ELEM> oldArg1 = mArgCcPars.removeDomainElement(e1OldRep);
+				if (oldArg1 != null) {
+					for (final ELEM e : oldArg1) {
+						mArgCcPars.addPair(newRep, e);
+					}
+				}
 			}
+
+			final HashRelation<ELEM, ELEM> newCcc = new HashRelation<>();
+			final HashRelation<ELEM, ELEM> oldCcc1 = mCcChildren.remove(e1OldRep);
+			if (oldCcc1 != null) {
+				newCcc.addAll(oldCcc1);
+			}
+			final HashRelation<ELEM, ELEM> oldCcc2 = mCcChildren.remove(e2OldRep);
+			if (oldCcc2 != null) {
+				newCcc.addAll(oldCcc2);
+			}
+			mCcChildren.put(newRep, newCcc);
+
 			return new Pair<>(congruentResult, unequalResult);
 		}
 
-		private List<Set<ELEM>> getCcPars(final ELEM rep) {
-			List<Set<ELEM>> result = mCcPars.get(rep);
-			if (result == null) {
-				result = new ArrayList<>();
-				mCcPars.put(rep, result);
+		private void collectPropagations(final Set<ELEM> parents1, final Set<ELEM> parents2,
+				final HashRelation<ELEM, ELEM> congruentResult, final HashRelation<ELEM, ELEM> unequalResult) {
+			if (parents1 == null || parents2 == null || parents1.isEmpty() || parents2.isEmpty()) {
+				// nothing to do
+				return;
 			}
-			return result;
+
+			for (final List<ELEM> parentPair :
+				CrossProducts.crossProductOfSets(Arrays.asList(parents1, parents2))) {
+				final ELEM parent1 = parentPair.get(0);
+				final ELEM parent2 = parentPair.get(1);
+
+//				assert parent1.getHeight() == parent2.getHeight();
+//				assert parent1.getAppliedFunction() == parent2.getAppliedFunction() :
+//					"this is ensured by the ccpar map, right?";
+
+				/*
+				 * fwcc
+				 *
+				 * is it correct to do this with out the vectors, just with getAppliedFunction and getArgument?
+				 */
+				if (getEqualityStatus(parent1.getAppliedFunction(), parent2.getAppliedFunction())
+						== EqualityStatus.EQUAL
+						&& getEqualityStatus(parent1.getArgument(), parent2.getArgument())
+						== EqualityStatus.EQUAL) {
+
+					congruentResult.addPair(parent1, parent2);
+					continue;
+				}
+
+				/*
+				 * bwcc (1)
+				 */
+				if (getEqualityStatus(parent1, parent2) == EqualityStatus.NOT_EQUAL) {
+					addPropIfOneIsEqualOneIsUnconstrained(parent1.getAppliedFunction(), parent1.getArgument(),
+							parent2.getAppliedFunction(), parent2.getArgument(), unequalResult);
+				}
+			}
+
+			/*
+			 * bwcc (2)
+			 */
 		}
 
-		public void removeElement(final ELEM elem, final boolean elemWasRepresentative, final ELEM newRep) {
+
+
+//		private List<Set<ELEM>> getCcPars(final ELEM rep) {
+//			List<Set<ELEM>> result = mCcPars.get(rep);
+//			if (result == null) {
+//				result = new ArrayList<>();
+//				mCcPars.put(rep, result);
+//			}
+//			return result;
+//		}
+
+		void removeElement(final ELEM elem, final boolean elemWasRepresentative, final ELEM newRep) {
 			/*
 			 * ccpar and ccchild only have representatives in their keySets
 			 *  --> move the information to the new representative from elem, if necessary
 			 */
 			if (elemWasRepresentative) {
-				final List<Set<ELEM>> oldCcparEntry = mCcPars.remove(elem);
+//				final List<Set<ELEM>> oldCcparEntry = mCcPars.remove(elem);
+				final Set<ELEM> oldAfCcparEntry = mAfCcPars.removeDomainElement(elem);
+				final Set<ELEM> oldArgCcparEntry = mArgCcPars.removeDomainElement(elem);
 				if (newRep != null) {
-					mCcPars.put(newRep, oldCcparEntry);
+//					mCcPars.put(newRep, oldCcparEntry);
+
+					oldAfCcparEntry.forEach(e -> mAfCcPars.addPair(newRep, e));
+					oldArgCcparEntry.forEach(e -> mArgCcPars.addPair(newRep, e));
+//					mAfCcPars.addPa(newRep, oldAfCcparEntry);
 				}
 
 				final HashRelation<ELEM, ELEM> oldCccEntry = mCcChildren.remove(elem);
@@ -1659,13 +1711,15 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 			 * deal with the map entries
 			 * --> just remove elem from each
 			 */
-			for (final Entry<ELEM, List<Set<ELEM>>> en : mCcPars.entrySet()) {
-				assert !en.getKey().equals(elem) : "removed it in step before, right?";
-
-				for (final Set<ELEM> set : en.getValue()) {
-					set.remove(elem);
-				}
-			}
+			mAfCcPars.removeRangeElement(elem);
+			mArgCcPars.removeRangeElement(elem);
+//			for (final Entry<ELEM, List<Set<ELEM>>> en : mCcPars.entrySet()) {
+//				assert !en.getKey().equals(elem) : "removed it in step before, right?";
+//
+//				for (final Set<ELEM> set : en.getValue()) {
+//					set.remove(elem);
+//				}
+//			}
 
 			for (final Entry<ELEM, HashRelation<ELEM, ELEM>> en : mCcChildren.entrySet()) {
 				assert !en.getKey().equals(elem) : "removed it in step before, right?";
@@ -1675,20 +1729,80 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 			}
 		}
 
-		public void registerNewElement(final ELEM elem) {
+//		public Pair<HashRelation<ELEM, ELEM>, HashRelation<ELEM, ELEM>> registerNewElement(final ELEM elem) {
+		HashRelation<ELEM, ELEM> registerNewElement(final ELEM elem) {
 			assert elem.isFunctionApplication() : "right?..";
 
 			final ELEM afRep = mElementTVER.getRepresentative(elem.getAppliedFunction());
 			final ELEM argRep = mElementTVER.getRepresentative(elem.getArgument());
 
-			updateCcPars(afRep, elem);
-			updateCcPars(argRep, elem);
+
+			final HashRelation<ELEM, ELEM> equalitiesToPropagate = new HashRelation<>();
+//			// TODO: naive implementation; does not use the list representation..
+//			final Optional<Set<ELEM>> opt = getCcPars(afRep).stream().reduce(SetOperations::union);
+//			if (opt.isPresent()) {
+//				final Set<ELEM> afCcPars = opt.get();
+				final Set<ELEM> afCcPars = mAfCcPars.getImage(afRep);
+				final Set<ELEM> candidates = afCcPars.stream()
+						.filter(afccpar -> (getEqualityStatus(argRep, afccpar.getArgument()) == EqualityStatus.EQUAL))
+						.collect(Collectors.toSet());
+				candidates.forEach(c -> equalitiesToPropagate.addPair(elem, c));
+//			}
+
+				mAfCcPars.addPair(afRep, elem);
+				mArgCcPars.addPair(argRep, elem);
+//			updateCcPars(afRep, elem);
+//			updateCcPars(argRep, elem);
 
 			// is it even possible that elem is not its own representative at this point??
 			final ELEM elemRep = mElementTVER.getRepresentative(elem);
 
 			updateCcChild(elemRep, elem.getAppliedFunction(), elem.getArgument());
 
+			/*
+			 * the new element may be equal to existing elements because of fwcc
+			 */
+
+//			final List<Set<ELEM>> afCcPars = getCcPars(afRep);
+//			final List<Set<ELEM>> argCcPars = getCcPars(afRep);
+
+
+//			// TODO: not yet optimized; use the list representation, don't reduce the list..
+//			final Set<ELEM> afCcPars = getCcPars(afRep).stream().reduce(SetOperations::union).get();
+////			final Set<ELEM> argCcPars = getCcPars(argRep).stream().reduce(SetOperations::union).get();
+//
+//			final Set<ELEM> candidates = afCcPars.stream()
+//					.filter(afccpar -> (getEqualityStatus(argRep, afccpar.getArgument()) == EqualityStatus.EQUAL))
+//					.collect(Collectors.toSet());
+//			candidates.forEach(c -> equalitiesToPropagate.addPair(elem, c));
+
+
+//			for (final ELEM afCcPar : afCcPars) {
+//				if (afCcPar == elem) {
+//					continue;
+//				}
+//				if (getEqualityStatus(afCcPar.getAppliedFunction(), afRep) != EqualityStatus.EQUAL) {
+//					// we need the ones that are equal at the left position
+//					continue;
+//				}
+//				for (final ELEM argCcPar : argCcPars) {
+//					if (argCcPar == elem) {
+//						continue;
+//					}
+//					if (getEqualityStatus(argCcPar.getArgument(), argRep) != EqualityStatus.EQUAL) {
+//						// we need the ones that are equal at the right-hand position
+//						continue;
+//					}
+//					/*
+//					 *  afCcPar.getAppliedFunction = elem.getAppliedFunction
+//					 *  argCcPar.getArgument = elem.getArgument
+//					 *   ==>
+//					 */
+////					equalitiesToPropagate.addPair(afCcPar, argCcPar);
+//					equalitiesToPropagate.addPair(elem, argCcPar);
+//				}
+//			}
+			return equalitiesToPropagate;
 		}
 
 		private void updateCcChild(final ELEM elemRep, final ELEM appliedFunction, final ELEM argument) {
@@ -1700,30 +1814,30 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 			elemCcc.addPair(appliedFunction, argument);
 		}
 
-		/**
-		 * add parent to ccpars of child
-		 *
-		 * @param child
-		 * @param parent
-		 */
-		private void updateCcPars(final ELEM child, final ELEM parent) {
-			List<Set<ELEM>> afRepCcpList = mCcPars.get(child);
-
-			if (afRepCcpList == null) {
-				afRepCcpList = new ArrayList<>(child.getHeight());
-				mCcPars.put(child, afRepCcpList);
-			}
-
-			// TODO: perhaps a bit wasteful..
-			if (afRepCcpList.size() <= child.getHeight()) {
-				for (int i = afRepCcpList.size(); i <= child.getHeight(); i++) {
-					afRepCcpList.add(new HashSet<>());
-				}
-			}
-
-			final Set<ELEM> afRepCcpSet = afRepCcpList.get(child.getHeight());
-			afRepCcpSet.add(parent);
-		}
+//		/**
+//		 * add parent to ccpars of child
+//		 *
+//		 * @param child
+//		 * @param parent
+//		 */
+//		private void updateCcPars(final ELEM child, final ELEM parent) {
+//			List<Set<ELEM>> afRepCcpList = mCcPars.get(child);
+//
+//			if (afRepCcpList == null) {
+//				afRepCcpList = new ArrayList<>(child.getHeight());
+//				mCcPars.put(child, afRepCcpList);
+//			}
+//
+//			// TODO: perhaps a bit wasteful..
+//			if (afRepCcpList.size() <= child.getHeight()) {
+//				for (int i = afRepCcpList.size(); i <= child.getHeight(); i++) {
+//					afRepCcpList.add(new HashSet<>());
+//				}
+//			}
+//
+//			final Set<ELEM> afRepCcpSet = afRepCcpList.get(child.getHeight());
+//			afRepCcpSet.add(parent);
+//		}
 
 		public HashRelation<ELEM, ELEM> getPropagationsOnReportDisequality(final ELEM elem1, final ELEM elem2) {
 			final HashRelation<ELEM, ELEM> result = new HashRelation<>();
@@ -1790,5 +1904,63 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 //			// TODO Auto-generated method stub
 //			return null;
 //		}
+
+	/**
+	 * This method is a helper that, for two representatives of equivalence classes
+	 * checks if, because of merging the two equivalence classes, any disequality
+	 * propagations are possible.
+	 *
+	 * Example:
+	 * <li>preState: (i = f(y)) , (j != f(x)), (i = j)
+	 * <li>we just added an equality between i and j (did the merge operation)
+	 * <li>one call of this method will be with (preState, i, f(x))
+	 * <li>we will get the output state: (i = f(y)) , (j != f(x)), (i = j), (x != y)
+	 *
+	 * @param e1OldRep
+	 * @param e2OldRep
+	 * @param oldCcChild
+	 */
+	private void propagateDisequalities(final ELEM e1OldRep,// final ELEM e2OldRep,
+			final HashRelation<ELEM, ELEM> disequalitiesToPropagate) {
+//			final NestedMap2<ELEM, ELEM, Set<List<ELEM>>> oldCcChild) {
+		for (final ELEM repUnequalToE1 : mElementTVER.getRepresentativesUnequalTo(e1OldRep)) {
+
+			for (final Entry<ELEM, ELEM> ccc1 : mCcChildren.get(e1OldRep)) {
+				for (final Entry<ELEM, ELEM> ccc2 : mCcChildren.get(repUnequalToE1)) {
+					addPropIfOneIsEqualOneIsUnconstrained(ccc1.getKey(), ccc1.getValue(), ccc2.getKey(),
+							ccc2.getValue(), disequalitiesToPropagate);
+				}
+			}
+
+
+//			for (final Set<ELEM> eqc
+//					:
+//						mAllFunctions.stream().map(mElementTVER::getEquivalenceClass).collect(Collectors.toSet())) {
+//				for (final Entry<ELEM, ELEM> pair : getPairsWithMatchingType(eqc, true, true)) {
+//						CrossProducts.binarySelectiveCrossProduct(eqc, true, true).entrySet()) {
+//					final Set<ELEM> funcApps1 = getFunctionApplicationsInSameEquivalenceClass(pair.getKey(),
+//							repUnequalToE1);
+//					final Set<ELEM> funcApps2 = getFunctionApplicationsInSameEquivalenceClass(pair.getValue(),
+//							e2OldRep);
+
+//					if (funcApps1 == null || funcApps2 == null) {
+//						// nothing to do
+//						continue;
+//					}
+//
+//					for (final ELEM ccpar1 : funcApps1) {
+//						for (final ELEM ccpar2 : funcApps2) {
+//							final int onlyDifferentPos = getOnlyUnconstrainedPos(ccpar1.getArguments(),
+//									ccpar2.getArguments());
+//							if (onlyDifferentPos != -1) {
+//								reportDisequalityRec(ccpar1.getArguments().get(onlyDifferentPos),
+//										ccpar2.getArguments().get(onlyDifferentPos),
+//										oldCcChild);
+//							}
+//						}
+//					}
+//				}
+			}
+		}
 	}
 }
