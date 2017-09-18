@@ -28,7 +28,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -50,8 +49,8 @@ public interface IEqNodeIdentifier<NODE extends IEqNodeIdentifier<NODE>> extends
 	@Override
 	NODE getAppliedFunction();
 
-	@Override
-	List<NODE> getArguments();
+//	@Override
+//	List<NODE> getArguments();
 
 	boolean isDependent();
 
@@ -74,12 +73,12 @@ public interface IEqNodeIdentifier<NODE extends IEqNodeIdentifier<NODE>> extends
 	 * methods specific to the isFunction case
 	 */
 
-	@Override
-	boolean isFunction();
-
-	int getArity();
-
-	String getFunctionName();
+//	@Override
+//	boolean isFunction();
+//
+//	int getArity();
+//
+//	String getFunctionName();
 
 	Sort getSort();
 

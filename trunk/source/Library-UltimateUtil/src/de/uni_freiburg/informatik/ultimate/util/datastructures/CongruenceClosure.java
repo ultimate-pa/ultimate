@@ -14,7 +14,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -46,7 +45,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 
 	private boolean mIsInconsistent;
 
-	private final CongruenceClosure<ELEM>.AuxData mAuxData;
+	protected final CongruenceClosure<ELEM>.AuxData mAuxData;
 
 
 	/**
@@ -183,33 +182,6 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 
 		assert sanityCheck();
 		return true;
-	}
-
-	protected NestedMap2<ELEM, ELEM, Set<List<ELEM>>> ccchildDeepCopy(
-			final NestedMap2<ELEM, ELEM, Set<List<ELEM>>> functionToRepresentativeToCcChildren) {
-		final NestedMap2<ELEM, ELEM, Set<List<ELEM>>> result = new NestedMap2<>();
-		for (final ELEM func : functionToRepresentativeToCcChildren.keySet()) {
-			for (final ELEM rep : functionToRepresentativeToCcChildren.get(func).keySet()) {
-				final HashSet<List<ELEM>> newSet = new HashSet<>();
-				result.put(func, rep, newSet);
-				for (final List<ELEM> ccchild : functionToRepresentativeToCcChildren.get(func, rep)) {
-					newSet.add(new ArrayList<>(ccchild));
-				}
-			}
-		}
-		return result;
-	}
-
-	private NestedMap2<ELEM, ELEM, Set<ELEM>> ccparDeepCopy(
-			final NestedMap2<ELEM, ELEM, Set<ELEM>> functionToRepresentativeToCcPars) {
-		final NestedMap2<ELEM, ELEM, Set<ELEM>> result = new NestedMap2<>();
-		for (final ELEM func : functionToRepresentativeToCcPars.keySet()) {
-			for (final ELEM rep : functionToRepresentativeToCcPars.get(func).keySet()) {
-				final HashSet<ELEM> newset = new HashSet<>(functionToRepresentativeToCcPars.get(func, rep));
-				result.put(func, rep, newset);
-			}
-		}
-		return result;
 	}
 
 	/**
@@ -479,72 +451,6 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		return true;
 	}
 
-	public boolean vectorsAreCongruent(final ELEM[] argList1, final ELEM[] argList2) {
-		assert argList1.length == argList2.length;
-		for (int i = 0; i < argList1.length; i++) {
-			if (mElementTVER.getEqualityStatus(argList1[i], argList2[i]) != EqualityStatus.EQUAL) {
-				return false;
-			}
-		}
-		return true;
-	}
-
-	/**
-	 * Checks if all entries of the given lists are equal (at the matching list
-	 * index) on all positions except for one. Returns that position if it exists,
-	 * -1 otherwise.
-	 *
-	 * @param ccChild1
-	 * @param ccChild2
-	 * @return the only position in where the equality status between the entries of
-	 *         the lists is UNKOWN according to mElementTVER when all other
-	 *         positions have status EQUAL, -1 if no such position exists
-	 */
-	private int getOnlyUnconstrainedPos(final List<ELEM> ccChildList1, final List<ELEM> ccChildList2) {
-		assert ccChildList1.size() == ccChildList2.size();
-		int result = -1;
-		for (int i = 0; i < ccChildList1.size(); i++) {
-			if (mElementTVER.getEqualityStatus(ccChildList1.get(i), ccChildList2.get(i)) == EqualityStatus.UNKNOWN) {
-				if (result == -1) {
-					result = i;
-				} else {
-					// we have more than 1 unknown position
-					return -1;
-				}
-			} else if (mElementTVER.getEqualityStatus(ccChildList1.get(i),
-					ccChildList2.get(i)) == EqualityStatus.NOT_EQUAL) {
-				return -1;
-			}
-		}
-		return result;
-	}
-
-
-	private int getOnlyUnconstrainedPos(final ELEM[] ccChildList1, final ELEM[] ccChildList2) {
-		assert ccChildList1.length == ccChildList2.length;
-		int result = -1;
-		for (int i = 0; i < ccChildList1.length; i++) {
-			if (mElementTVER.getEqualityStatus(ccChildList1[i], ccChildList2[i]) == EqualityStatus.UNKNOWN) {
-				if (result == -1) {
-					result = i;
-				} else {
-					// we have more than 1 unknown position
-					return -1;
-				}
-			} else if (mElementTVER.getEqualityStatus(ccChildList1[i],
-					ccChildList2[i]) == EqualityStatus.NOT_EQUAL) {
-				return -1;
-			}
-		}
-		return result;
-	}
-
-	private Set<ELEM> getFunctionApplicationsInSameEquivalenceClass(final ELEM func, final ELEM elem) {
-		return mElementTVER.getEquivalenceClass(elem).stream()
-				.filter(el -> el.isFunctionApplication() && el.getAppliedFunction() == func)
-				.collect(Collectors.toSet());
-	}
-
 	/**
 	 * Check for some class invariants.
 	 *
@@ -662,7 +568,6 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 	 * @return
 	 */
 	public CongruenceClosure<ELEM> transformElementsAndFunctions(final Function<ELEM, ELEM> elemTransformer) {
-//			final Function<ELEM, ELEM> functionTransformer) {
 		assert sanitizeTransformer(elemTransformer, getAllElements()) : "we assume that the transformer does not "
 				+ "produce elements that were in the relation before!";
 
@@ -739,26 +644,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		return mElementTVER.getAllRepresentatives();
 	}
 
-	class AuxData {
+	protected class AuxData {
 
-
-		/**
-		 * element -> function -> argNr -> parents
-		 *
-		 * argNr indicates at which argument position element is an argument of parent
-		 */
-//		NestedMap2<ELEM, ELEM, List<Set<ELEM>>> mCcPars = new NestedMap2<>();
-
-		/**
-		 * signature:
-		 * element -> argNr -> parents
-		 *
-		 * argNr indicates at which argument position element is an argument of parent
-		 * (arguments include the function symbol)
-		 *
-		 * element must be a representative in mElementTVER (except for some time during reportEquality)
-		 *
-		 */
 		private final HashRelation<ELEM, ELEM> mAfCcPars;
 		private final HashRelation<ELEM, ELEM> mArgCcPars;
 
@@ -804,8 +691,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 			collectCcParBasedPropagations(afccpar1, afccpar2, congruentResult, unequalResult);
 			collectCcParBasedPropagations(argccpar1, argccpar2, congruentResult, unequalResult);
 
-			propagateDisequalities(e1OldRep, unequalResult);
-			propagateDisequalities(e2OldRep, unequalResult);
+			collectPropagationsForImplicitlyAddedDisequalities(e1OldRep, unequalResult);
+			collectPropagationsForImplicitlyAddedDisequalities(e2OldRep, unequalResult);
 
 			/*
 			 * update ccPars, ccChildren entries
@@ -904,21 +791,21 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		 * @param e2OldRep
 		 * @param oldCcChild
 		 */
-			private void propagateDisequalities(final ELEM e1OldRep,
+		private void collectPropagationsForImplicitlyAddedDisequalities(final ELEM e1OldRep,
 					final HashRelation<ELEM, ELEM> disequalitiesToPropagate) {
 				for (final ELEM repUnequalToE1 : mElementTVER.getRepresentativesUnequalTo(e1OldRep)) {
-		
+
 					for (final Entry<ELEM, ELEM> ccc1 : mCcChildren.get(e1OldRep)) {
 						for (final Entry<ELEM, ELEM> ccc2 : mCcChildren.get(repUnequalToE1)) {
 							addPropIfOneIsEqualOneIsUnconstrained(ccc1.getKey(), ccc1.getValue(), ccc2.getKey(),
 									ccc2.getValue(), disequalitiesToPropagate);
 						}
 					}
-		
+
 				}
 			}
 
-		void removeElement(final ELEM elem, final boolean elemWasRepresentative, final ELEM newRep) {
+		public void removeElement(final ELEM elem, final boolean elemWasRepresentative, final ELEM newRep) {
 			/*
 			 * ccpar and ccchild only have representatives in their keySets
 			 *  --> move the information to the new representative from elem, if necessary
