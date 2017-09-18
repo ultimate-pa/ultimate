@@ -35,7 +35,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractDom
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractStateBinaryOperator;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieSymbolTableVariableProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -50,15 +50,16 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.initializer.FixpointEngineParameterFactory;
 
-public class PoormanAbstractDomain<BACKING extends IAbstractState<BACKING, IBoogieVar>>
-		implements IAbstractDomain<PoormanAbstractState<BACKING>, IcfgEdge, IProgramVarOrConst> {
+public class PoormanAbstractDomain<BACKING extends IAbstractState<BACKING>>
+		implements IAbstractDomain<PoormanAbstractState<BACKING>, IcfgEdge> {
 
 	private final IUltimateServiceProvider mServices;
-	private final IAbstractDomain<BACKING, IcfgEdge, IBoogieVar> mBackingDomain;
+	private final IAbstractDomain<BACKING, IcfgEdge> mBackingDomain;
 
 	private final IAbstractStateBinaryOperator<PoormanAbstractState<BACKING>> mWideningOperator = null;
-	private IAbstractPostOperator<PoormanAbstractState<BACKING>, IcfgEdge, IProgramVarOrConst> mPostOperator = null;
+	private IAbstractPostOperator<PoormanAbstractState<BACKING>, IcfgEdge> mPostOperator = null;
 	private final IIcfg<?> mRoot;
+	private final IBoogieSymbolTableVariableProvider mVariableProvider;
 
 	public PoormanAbstractDomain(final IUltimateServiceProvider services, final IIcfg<?> root) {
 		mServices = services;
@@ -76,10 +77,11 @@ public class PoormanAbstractDomain<BACKING extends IAbstractState<BACKING, IBoog
 		final ILoopDetector<IcfgEdge> loopDetector = new RcfgLoopDetector<>();
 		final FixpointEngineParameterFactory fpepf =
 				new FixpointEngineParameterFactory(root, () -> new RCFGLiteralCollector(root), services);
-		final FixpointEngineParameters<BACKING, IcfgEdge, IBoogieVar, IcfgLocation> params =
+		final FixpointEngineParameters<BACKING, IcfgEdge, IProgramVarOrConst, IcfgLocation> params =
 				fpepf.createParams(timer, transProvider, loopDetector);
 
 		mBackingDomain = params.getAbstractDomain();
+		mVariableProvider = fpepf.getSymbolTableVariableProvider();
 	}
 
 	@Override
@@ -102,10 +104,10 @@ public class PoormanAbstractDomain<BACKING extends IAbstractState<BACKING, IBoog
 	}
 
 	@Override
-	public IAbstractPostOperator<PoormanAbstractState<BACKING>, IcfgEdge, IProgramVarOrConst> getPostOperator() {
+	public IAbstractPostOperator<PoormanAbstractState<BACKING>, IcfgEdge> getPostOperator() {
 		if (mPostOperator == null) {
 			// TODO Fill with sense
-			mPostOperator = new PoormansAbstractPostOperator<>(mServices, mRoot, mBackingDomain);
+			mPostOperator = new PoormansAbstractPostOperator<>(mServices, mRoot, mBackingDomain, mVariableProvider);
 		}
 		return mPostOperator;
 	}

@@ -33,9 +33,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractStateBinaryOperator;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 
 /**
@@ -55,10 +53,10 @@ public class CompoundDomain implements IAbstractDomain<CompoundDomainState, Icfg
 	private IAbstractPostOperator<CompoundDomainState, IcfgEdge> mPostOperator;
 
 	public CompoundDomain(final IUltimateServiceProvider serviceProvider, final List<IAbstractDomain> domainList,
-			final IIcfg<?> icfg) {
+			final BoogieIcfgContainer icfg) {
 		mServices = serviceProvider;
 		mDomainList = domainList;
-		mRootAnnotation = AbsIntUtil.getBoogieIcfgContainer(icfg);
+		mRootAnnotation = icfg;
 	}
 
 	@Override

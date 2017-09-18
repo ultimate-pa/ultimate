@@ -34,12 +34,10 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractStateBinaryOperator;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieSymbolTableVariableProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
 
 /**
  * This abstract domain keeps track of the sign of each variable during abstract interpretation. Variables can either be
@@ -57,12 +55,12 @@ public class SignDomain implements IAbstractDomain<SignDomainState, IcfgEdge> {
 	private final BoogieSymbolTable mSymbolTable;
 	private final IBoogieSymbolTableVariableProvider mIcfgSymbolTable;
 
-	public SignDomain(final IUltimateServiceProvider services, final IIcfg<?> icfg,
-			final BoogieSymbolTable symbolTable) {
+	public SignDomain(final IUltimateServiceProvider services, final IIcfg<?> icfg, final BoogieSymbolTable symbolTable,
+			final IBoogieSymbolTableVariableProvider variableProvider) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mSymbolTable = symbolTable;
-		mIcfgSymbolTable = (Boogie2SmtSymbolTable) AbsIntUtil.getBoogieIcfgContainer(icfg).getSymboltable();
+		mIcfgSymbolTable = variableProvider;
 	}
 
 	@Override

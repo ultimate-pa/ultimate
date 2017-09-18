@@ -442,8 +442,6 @@ public final class MappedTerm2Expression implements Serializable {
 				result = new IdentifierExpression(null, type, getFreshIdenfier(),
 						new DeclarationInformation(StorageClass.QUANTIFIED, null));
 				mFreeVariables.add((IdentifierExpression) result);
-
-				// TODO Marius: Insert stuff here!
 			} else {
 				final IProgramVar pv = mBoogie2SmtSymbolTable.getProgramVar(term);
 				final BoogieASTNode astNode = mBoogie2SmtSymbolTable.getAstNode(pv);

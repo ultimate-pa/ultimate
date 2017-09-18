@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IVariableProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieSymbolTableVariableProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -61,7 +62,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.sign.SignDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon.OctagonDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon.OctagonDomain.LiteralCollectorFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.poorman.Boogie2SmtSymbolTableTmpVars;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.poorman.PoormanAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 
 /**
  * Sets-up the fixpoint engine for abstract interpretation.
@@ -73,12 +78,15 @@ public class FixpointEngineParameterFactory {
 
 	private final BoogieSymbolTable mSymbolTable;
 	private final IIcfg<?> mRoot;
+	private final BoogieIcfgContainer mBoogieIcfg;
 	private final IUltimateServiceProvider mServices;
 	private final LiteralCollectorFactory mLiteralCollector;
+	private final IBoogieSymbolTableVariableProvider mVariableProvider;
 
 	public FixpointEngineParameterFactory(final IIcfg<?> root, final LiteralCollectorFactory literalCollector,
 			final IUltimateServiceProvider services) {
 		mRoot = root;
+		mBoogieIcfg = AbsIntUtil.getBoogieIcfgContainer(mRoot);
 		mServices = services;
 
 		final PreprocessorAnnotation pa = PreprocessorAnnotation.getAnnotation(root);
@@ -87,6 +95,17 @@ public class FixpointEngineParameterFactory {
 		}
 		mSymbolTable = pa.getSymbolTable();
 		mLiteralCollector = literalCollector;
+
+		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
+		final boolean useFuture = prefs.getBoolean(AbsIntPrefInitializer.LABEL_USE_FUTURE_RCFG);
+		final boolean poormanSelected = prefs.getString(AbsIntPrefInitializer.LABEL_ABSTRACT_DOMAIN_FUTURE)
+				.equals(PoormanAbstractDomain.class.getSimpleName());
+		if (useFuture && poormanSelected) {
+			mVariableProvider =
+					new Boogie2SmtSymbolTableTmpVars(mBoogieIcfg.getBoogie2SMT().getBoogie2SmtSymbolTable());
+		} else {
+			mVariableProvider = mBoogieIcfg.getBoogie2SMT().getBoogie2SmtSymbolTable();
+		}
 	}
 
 	@SuppressWarnings("unchecked")
@@ -117,14 +136,15 @@ public class FixpointEngineParameterFactory {
 		if (EmptyDomain.class.getSimpleName().equals(selectedDomain)) {
 			return new EmptyDomain<>();
 		} else if (SignDomain.class.getSimpleName().equals(selectedDomain)) {
-			return new SignDomain(mServices, mRoot, mSymbolTable);
+			return new SignDomain(mServices, mBoogieIcfg, mSymbolTable, mVariableProvider);
 		} else if (IntervalDomain.class.getSimpleName().equals(selectedDomain)) {
 			return new IntervalDomain(logger, mSymbolTable, mLiteralCollector.create().getLiteralCollection(),
-					mServices, mRoot);
+					mServices, mBoogieIcfg, mVariableProvider);
 		} else if (OctagonDomain.class.getSimpleName().equals(selectedDomain)) {
-			return new OctagonDomain(logger, mSymbolTable, mLiteralCollector, mServices, mRoot);
+			return new OctagonDomain(logger, mSymbolTable, mLiteralCollector, mServices, mBoogieIcfg,
+					mVariableProvider);
 		} else if (CongruenceDomain.class.getSimpleName().equals(selectedDomain)) {
-			return new CongruenceDomain(logger, mServices, mSymbolTable, mRoot);
+			return new CongruenceDomain(logger, mServices, mSymbolTable, mBoogieIcfg, mVariableProvider);
 		} else if (CompoundDomain.class.getSimpleName().equals(selectedDomain)) {
 			@SuppressWarnings("rawtypes")
 			final List<IAbstractDomain> domainList = new ArrayList<>();
@@ -132,21 +152,29 @@ public class FixpointEngineParameterFactory {
 				domainList.add(new EmptyDomain<>());
 			}
 			if (prefs.getBoolean(CompoundDomainPreferences.LABEL_USE_SIGN_DOMAIN)) {
-				domainList.add(new SignDomain(mServices, mRoot, mSymbolTable));
+				domainList.add(new SignDomain(mServices, mBoogieIcfg, mSymbolTable, mVariableProvider));
 			}
 			if (prefs.getBoolean(CompoundDomainPreferences.LABEL_USE_CONGRUENCE_DOMAIN)) {
-				domainList.add(new CongruenceDomain(logger, mServices, mSymbolTable, mRoot));
+				domainList.add(new CongruenceDomain(logger, mServices, mSymbolTable, mBoogieIcfg, mVariableProvider));
 			}
 			if (prefs.getBoolean(CompoundDomainPreferences.LABEL_USE_INTERVAL_DOMAIN)) {
 				domainList.add(new IntervalDomain(logger, mSymbolTable,
-						mLiteralCollector.create().getLiteralCollection(), mServices, mRoot));
+						mLiteralCollector.create().getLiteralCollection(), mServices, mBoogieIcfg, mVariableProvider));
 			}
 			if (prefs.getBoolean(CompoundDomainPreferences.LABEL_USE_OCTAGON_DOMAIN)) {
-				domainList.add(new OctagonDomain(logger, mSymbolTable, mLiteralCollector, mServices, mRoot));
+				domainList.add(new OctagonDomain(logger, mSymbolTable, mLiteralCollector, mServices, mBoogieIcfg,
+						mVariableProvider));
 			}
-			return new CompoundDomain(mServices, domainList, mRoot);
+			return new CompoundDomain(mServices, domainList, mBoogieIcfg);
 		}
 		throw new UnsupportedOperationException(getFailureString(selectedDomain));
+	}
+
+	/**
+	 * @return The symbol table's variable provider for usage in abstract domains.
+	 */
+	public IBoogieSymbolTableVariableProvider getSymbolTableVariableProvider() {
+		return mVariableProvider;
 	}
 
 	private static String getFailureString(final String selectedDomain) {

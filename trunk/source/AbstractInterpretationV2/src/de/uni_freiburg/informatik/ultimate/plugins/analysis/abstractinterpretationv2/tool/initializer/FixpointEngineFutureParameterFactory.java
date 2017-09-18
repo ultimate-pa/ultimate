@@ -151,7 +151,7 @@ public class FixpointEngineFutureParameterFactory {
 			return (IAbstractDomain<STATE, IcfgEdge>) new de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.nonrelational.interval.IntervalDomain(
 					logger, new LiteralCollection(Collections.emptySet()), services);
 		} else if (PoormanAbstractDomain.class.getSimpleName().equals(domainName)) {
-			return (IAbstractDomain<STATE, IcfgEdge, IProgramVarOrConst>) new PoormanAbstractDomain(services, root);
+			return (IAbstractDomain<STATE, IcfgEdge>) new PoormanAbstractDomain<>(services, root);
 		}
 		throw new UnsupportedOperationException(getFailureString(domainName));
 	}

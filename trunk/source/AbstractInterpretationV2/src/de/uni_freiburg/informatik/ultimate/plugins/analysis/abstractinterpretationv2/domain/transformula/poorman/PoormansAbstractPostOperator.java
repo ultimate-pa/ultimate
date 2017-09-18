@@ -28,6 +28,7 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.poorman;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -46,7 +47,10 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractDom
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieNonOldVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieSymbolTableVariableProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.LocalBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.MappedTerm2Expression;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Term2Expression;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
@@ -67,24 +71,29 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sta
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public class PoormansAbstractPostOperator<BACKING extends IAbstractState<BACKING, IBoogieVar>>
-		implements IAbstractPostOperator<PoormanAbstractState<BACKING>, IcfgEdge, IProgramVarOrConst> {
+public class PoormansAbstractPostOperator<BACKING extends IAbstractState<BACKING>>
+		implements IAbstractPostOperator<PoormanAbstractState<BACKING>, IcfgEdge> {
 
 	private final ILogger mLogger;
-	private final IAbstractDomain<BACKING, IcfgEdge, IBoogieVar> mBackingDomain;
+	private final IAbstractDomain<BACKING, IcfgEdge> mBackingDomain;
 	private final Boogie2SMT mBoogie2Smt;
 	private final ManagedScript mManagedScript;
 	private final Term2Expression mTerm2Expression;
 	private final IUltimateServiceProvider mServices;
 	private final CodeBlockFactory mCodeBlockFactory;
+	private final Boogie2SmtSymbolTableTmpVars mBoogie2SmtSymbolTable;
 
 	protected PoormansAbstractPostOperator(final IUltimateServiceProvider services, final IIcfg<?> root,
-			final IAbstractDomain<BACKING, IcfgEdge, IBoogieVar> backingDomain) {
+			final IAbstractDomain<BACKING, IcfgEdge> backingDomain,
+			final IBoogieSymbolTableVariableProvider variableProvider) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		final BoogieIcfgContainer boogieIcfgContainer = AbsIntUtil.getBoogieIcfgContainer(root);
 		mCodeBlockFactory = boogieIcfgContainer.getCodeBlockFactory();
 		mBoogie2Smt = boogieIcfgContainer.getBoogie2SMT();
+		assert variableProvider instanceof Boogie2SmtSymbolTableTmpVars;
+		mBoogie2SmtSymbolTable = (Boogie2SmtSymbolTableTmpVars) variableProvider;
+
 		mManagedScript = boogieIcfgContainer.getCfgSmtToolkit().getManagedScript();
 		mBackingDomain = backingDomain;
 		mTerm2Expression = mBoogie2Smt.getTerm2Expression();
@@ -144,9 +153,38 @@ public class PoormansAbstractPostOperator<BACKING extends IAbstractState<BACKING
 		final CodeBlock assumeBlock =
 				mCodeBlockFactory.constructStatementSequence(null, null, assume, Origin.IMPLEMENTATION);
 
+		final List<BoogieVar> tempVars = new ArrayList<>();
+		tempVars.addAll(transformula.getInVars().entrySet().stream()
+				.map(entry -> new LocalBoogieVar(entry.getValue().getName(), entry.getKey().getProcedure(),
+						mBoogie2Smt.getTypeSortTranslator().getType(entry.getValue().getSort()), entry.getValue(),
+						entry.getKey().getDefaultConstant(), entry.getKey().getPrimedConstant()))
+				.collect(Collectors.toList()));
+
+		tempVars.addAll(transformula.getOutVars().entrySet().stream()
+				.map(entry -> new BoogieNonOldVar(entry.getValue().getName(),
+						mBoogie2Smt.getTypeSortTranslator().getType(entry.getValue().getSort()), entry.getValue(),
+						entry.getKey().getDefaultConstant(), entry.getKey().getPrimedConstant(), null))
+				.collect(Collectors.toList()));
+
+		tempVars.addAll(transformula.getOutVars().entrySet().stream()
+				.map(entry -> new LocalBoogieVar(entry.getValue().getName(), entry.getKey().getProcedure(),
+						mBoogie2Smt.getTypeSortTranslator().getType(entry.getValue().getSort()), entry.getValue(),
+						entry.getKey().getDefaultConstant(), entry.getKey().getPrimedConstant()))
+				.collect(Collectors.toList()));
+
+		tempVars.addAll(transformula.getAuxVars().stream()
+				.map(entry -> new LocalBoogieVar(entry.getName(), "__AUX_VARIABLE__",
+						mBoogie2Smt.getTypeSortTranslator().getType(entry.getSort()), entry, null, null))
+				.collect(Collectors.toList()));
+
+		tempVars.forEach(var -> mBoogie2SmtSymbolTable.addTemporaryVariable(var));
+
 		mBackingDomain.getPostOperator().apply(preState.getBackingState(), assumeBlock);
 
 		mLogger.debug("Transformula has expression: " + assume);
+
+		tempVars.forEach(var -> mBoogie2SmtSymbolTable.removeTemporaryVariable(var));
+		assert mBoogie2SmtSymbolTable.getNumberOfTempVars() == 0;
 
 		if (true) {
 			throw new UnsupportedOperationException("Expression: " + termExpression);
