@@ -20,7 +20,7 @@ public class CongruenceClosureTest {
 	 * Test about basic congruence closure operations.
 	 */
 	@Test
-	public void test1() {
+	public void test01() {
 		final CongruenceClosure<StringCcElement> cc = new CongruenceClosure<>();
 
 		final StringElementFactory factory = new StringElementFactory();
@@ -64,6 +64,8 @@ public class CongruenceClosureTest {
 
 		cc.reportEquality(x, y);
 
+		assertFalse(cc.isInconsistent());
+
 		// transitivity
 		assertTrue(cc.getEqualityStatus(y, z) == EqualityStatus.EQUAL);
 
@@ -76,11 +78,12 @@ public class CongruenceClosureTest {
 
 		cc.reportEquality(f, g);
 
+		assertFalse(cc.isInconsistent());
 		assertTrue(cc.getEqualityStatus(f_x, g_x) == EqualityStatus.EQUAL);
 	}
 
 	@Test
-	public void test2() {
+	public void test02() {
 		final CongruenceClosure<StringCcElement> cc = new CongruenceClosure<>();
 
 		final StringElementFactory factory = new StringElementFactory();
@@ -134,7 +137,7 @@ public class CongruenceClosureTest {
 
 
 	@Test
-	public void test3() {
+	public void test03() {
 		final CongruenceClosure<StringCcElement> cc = new CongruenceClosure<>();
 
 		final StringElementFactory factory = new StringElementFactory();
@@ -170,7 +173,7 @@ public class CongruenceClosureTest {
 	}
 
 	@Test
-	public void test4() {
+	public void test04() {
 		final CongruenceClosure<StringCcElement> cc = new CongruenceClosure<>();
 
 		final StringElementFactory factory = new StringElementFactory();
@@ -216,7 +219,7 @@ public class CongruenceClosureTest {
 	 * </ul>
 	 */
 	@Test
-	public void test5() {
+	public void test05() {
 		final CongruenceClosure<StringCcElement> cc = new CongruenceClosure<>();
 
 		final StringElementFactory factory = new StringElementFactory();
@@ -252,7 +255,7 @@ public class CongruenceClosureTest {
 	 * --> then we need to propagate  x2 != y2 now.
 	 */
 	@Test
-	public void test6() {
+	public void test06() {
 		final CongruenceClosure<StringCcElement> cc = new CongruenceClosure<>();
 
 		final StringElementFactory factory = new StringElementFactory();
@@ -287,7 +290,7 @@ public class CongruenceClosureTest {
 	 * Tests what happens when we don't register all nodes up front (i.e. before the first report*-call).
 	 */
 	@Test
-	public void test7() {
+	public void test07() {
 		final CongruenceClosure<StringCcElement> cc = new CongruenceClosure<>();
 
 		final StringElementFactory factory = new StringElementFactory();
@@ -310,7 +313,7 @@ public class CongruenceClosureTest {
 	}
 
 	@Test
-	public void test7a() {
+	public void test07a() {
 		final CongruenceClosure<StringCcElement> cc = new CongruenceClosure<>();
 
 		final StringElementFactory factory = new StringElementFactory();
@@ -338,7 +341,7 @@ public class CongruenceClosureTest {
 	 * argument order is accounted for.
 	 */
 	@Test
-	public void test7b() {
+	public void test07b() {
 		final CongruenceClosure<StringCcElement> cc = new CongruenceClosure<>();
 
 		final StringElementFactory factory = new StringElementFactory();
@@ -374,7 +377,7 @@ public class CongruenceClosureTest {
 	 *
 	 */
 	@Test
-	public void test8() {
+	public void test08() {
 		final CongruenceClosure<StringCcElement> cc = new CongruenceClosure<>();
 
 		final StringElementFactory factory = new StringElementFactory();
@@ -399,7 +402,7 @@ public class CongruenceClosureTest {
 	 * Example from Jochen Hoenicke's Decision Procedures lecture.
 	 */
 	@Test
-	public void test9() {
+	public void test09() {
 		final CongruenceClosure<StringCcElement> cc = new CongruenceClosure<>();
 
 		final StringElementFactory factory = new StringElementFactory();
@@ -762,7 +765,8 @@ class StringCcElement implements ICongruenceClosureElement<StringCcElement>{
 
 	@Override
 	public boolean hasSameTypeAs(final StringCcElement other) {
-		return mHeight == other.mHeight;
+		return true;
+//		return mHeight == other.mHeight;
 	}
 
 	@Override
