@@ -4,7 +4,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import org.junit.Test;
@@ -648,12 +647,13 @@ class StringElementFactory extends AbstractCCElementFactory<StringCcElement, Str
 		return new StringCcElement(c);
 	}
 
-	@Override
-	protected StringCcElement newFuncAppElement(final StringCcElement f, final List<StringCcElement> args) {
-//			final boolean isFunction) {
-//		return new StringCCElement(f, args, isFunction);
-//		return StringCcElement.buildStringCcElement(f, args, isFunction);
+	public StringCcElement getFuncAppElement(final StringCcElement f, final StringCcElement... args) {
 		return StringCcElement.buildStringCcElement(f, args);
+	}
+
+	@Override
+	protected StringCcElement newFuncAppElement(final StringCcElement f, final StringCcElement arg) {
+		return new StringCcElement(f, arg);
 	}
 
 //	@Override
@@ -670,7 +670,6 @@ class StringCcElement implements ICongruenceClosureElement<StringCcElement>{
 	private final String mName;
 	private final StringCcElement mAppliedFunction;
 	private final StringCcElement mArgument;
-	private final boolean mIsFunction;
 	private final int mHeight;
 	private final Set<StringCcElement> mParents;
 
@@ -678,23 +677,13 @@ class StringCcElement implements ICongruenceClosureElement<StringCcElement>{
 	 * base element
 	 *
 	 * @param name
-	 */
-	public StringCcElement(final String name) {
-		this(name, false);
-	}
-
-	/**
-	 * base function
-	 *
-	 * @param name
 	 * @param isFunction
 	 */
-	public StringCcElement(final String name, final boolean isFunction) {
+	public StringCcElement(final String name) {
 		mIsFunctionApplication = false;
 		mName = name;
 		mAppliedFunction = null;
 		mArgument = null;
-		mIsFunction = isFunction;
 		mHeight = 0;
 		mParents = new HashSet<>();
 	}
@@ -706,15 +695,13 @@ class StringCcElement implements ICongruenceClosureElement<StringCcElement>{
 	 * @param argument
 	 * @param isFunction
 	 */
-	public StringCcElement(final StringCcElement appliedFunction, final StringCcElement argument,
-			final boolean isFunction) {
+	public StringCcElement(final StringCcElement appliedFunction, final StringCcElement argument) {
 		mIsFunctionApplication = true;
 		mName = null;
 		mAppliedFunction = appliedFunction;
 //		assert mAppliedFunction.isFunction();
 		mArgument = argument;
 //		assert !argument.isFunction();
-		mIsFunction = isFunction;
 		mHeight = appliedFunction.getHeight() + 1;
 		mParents = new HashSet<>();
 
@@ -723,12 +710,12 @@ class StringCcElement implements ICongruenceClosureElement<StringCcElement>{
 	}
 
 	public static StringCcElement buildStringCcElement(final StringCcElement appliedFunction,
-			final List<StringCcElement> arguments) {//, final boolean isFunction) {
+			final StringCcElement... arguments) {//, final boolean isFunction) {
 
 		StringCcElement result = appliedFunction;
 
 		for (final StringCcElement arg : arguments) {
-			result = new StringCcElement(result, arg, true);
+			result = new StringCcElement(result, arg);
 		}
 
 		return result;
