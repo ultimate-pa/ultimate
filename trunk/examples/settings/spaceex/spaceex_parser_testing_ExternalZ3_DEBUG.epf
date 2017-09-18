@@ -16,8 +16,6 @@
 file_export_version=3.0
 #Wed Mar 01 22:53:40 CET 2017
 \!/instance/de.uni_freiburg.informatik.ultimate.gui=
-/instance/de.uni_freiburg.informatik.ultimate.gui/LASTPATH=S\:\\uni\\Bachelorarbeit\\ultimateGit\\trunk\\examples\\programs\\spaceex\\test\\test3-safe.xml
-/instance/de.uni_freiburg.informatik.ultimate.gui/LASTTOOLCHAINPATH=C\:\\Users\\Bree\\AppData\\Local\\Temp\\lastUltimateToolchain.xml
 @de.uni_freiburg.informatik.ultimate.gui=0.1.8
 file_export_version=3.0
 #Wed Mar 01 22:53:40 CET 2017
@@ -263,7 +261,6 @@ file_export_version=3.0
 file_export_version=3.0
 #Wed Mar 01 22:53:40 CET 2017
 \!/instance/de.uni_freiburg.informatik.ultimate.boogie.printer=
-/instance/de.uni_freiburg.informatik.ultimate.boogie.printer/Dump\ path\:=C\:\\Users\\Bree\\AppData\\Local\\Temp\\
 /instance/de.uni_freiburg.informatik.ultimate.boogie.printer/File\ name\:=boogiePrinter.bpl
 /instance/de.uni_freiburg.informatik.ultimate.boogie.printer/Save\ file\ in\ source\ directory?=false
 /instance/de.uni_freiburg.informatik.ultimate.boogie.printer/Use\ automatic\ naming?=false

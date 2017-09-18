@@ -15,12 +15,6 @@
 /instance/UltimateCore/ultimate.logging.details=de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser\=DEBUG;de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction\=DEBUG;de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder\=DEBUG;
 file_export_version=3.0
 #Tue Feb 28 20:49:32 CET 2017
-\!/instance/de.uni_freiburg.informatik.ultimate.gui=
-/instance/de.uni_freiburg.informatik.ultimate.gui/LASTPATH=S\:\\uni\\Bachelorarbeit\\ultimateGit\\trunk\\examples\\programs\\spaceex\\test\\test7-safe.xml
-/instance/de.uni_freiburg.informatik.ultimate.gui/LASTTOOLCHAINPATH=C\:\\Users\\Bree\\AppData\\Local\\Temp\\lastUltimateToolchain.xml
-@de.uni_freiburg.informatik.ultimate.gui=0.1.8
-file_export_version=3.0
-#Tue Feb 28 20:49:32 CET 2017
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker=
 /instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker/Add\ annotations\ to\ SMT\ terms=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker/Affine\ template=true
@@ -262,7 +256,6 @@ file_export_version=3.0
 file_export_version=3.0
 #Tue Feb 28 20:49:32 CET 2017
 \!/instance/de.uni_freiburg.informatik.ultimate.boogie.printer=
-/instance/de.uni_freiburg.informatik.ultimate.boogie.printer/Dump\ path\:=C\:\\Users\\Bree\\AppData\\Local\\Temp\\
 /instance/de.uni_freiburg.informatik.ultimate.boogie.printer/File\ name\:=boogiePrinter.bpl
 /instance/de.uni_freiburg.informatik.ultimate.boogie.printer/Save\ file\ in\ source\ directory?=false
 /instance/de.uni_freiburg.informatik.ultimate.boogie.printer/Use\ automatic\ naming?=false
