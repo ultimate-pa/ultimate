@@ -246,7 +246,8 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 		assert values != null;
 		assert vars.length == values.length;
 
-		return setMixedValues(new IProgramVarOrConst[0], getArray(0), vars, values, new IProgramVarOrConst[0], getArray(0));
+		return setMixedValues(new IProgramVarOrConst[0], getArray(0), vars, values, new IProgramVarOrConst[0],
+				getArray(0));
 	}
 
 	/**
@@ -577,7 +578,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 				// this state does not contain this variable
 				continue;
 			}
-			newNRState.addVariable(newVar);
+			addVariableInternally(newNRState, newVar);
 			isChanged = true;
 
 			if (newNRState.mValueMap.containsKey(oldVar)) {
