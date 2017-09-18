@@ -564,10 +564,6 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 			final NODE newRep = mElementTVER.removeElement(elem);
 			mAuxData.removeElement(elem, elemWasRepresentative, newRep);
 
-			for (final NODE parent : elem.getParents()) {
-				removeElement(parent);
-			}
-
 
 			final Collection <NODE> nodesToAdd = collectNodesToAddAtFunctionRemoval(elem, newRep);
 			for (final NODE node : nodesToAdd) {
@@ -582,6 +578,10 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 			//				copy.removeFunction(func);
 			mWeakEquivalenceGraph.projectFunction(elem, copy);
 			assert projectedFunctionIsGoneFromWeqGraph(elem, mWeakEquivalenceGraph);
+
+			for (final NODE parent : elem.getParents()) {
+				removeElement(parent, copy);
+			}
 
 			for (final NODE dependent : new HashSet<>(mNodeToDependents.getImage(elem))) {
 				removeElement(dependent, copy);
@@ -634,7 +634,7 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 		for (final NODE fan : constrainedFuncAppNodes) {
 			if (equalFunc != null) {
 				final NODE nodeWithEqualFunc = mFactory.getEqNodeAndFunctionFactory()
-						.getFuncAppElement(equalFunc, fan.getArgument());
+						.getOrConstructFuncAppElement(equalFunc, fan.getArgument());
 //						.getFuncAppElementDetermineIsFunctionYourself(equalFunc, fan.getArguments());
 //				addElement(nodeWithEqualFunc);
 				nodesToAdd.add(nodeWithEqualFunc);
@@ -645,7 +645,7 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 						mWeakEquivalenceGraph.getAdjacentWeqEdges(elem).entrySet()) {
 				if (weqEdge.getValue().impliesEqualityOnThatPosition(Collections.singletonList(fan.getArgument()))) {
 					final NODE nodeWithWequalFunc = mFactory.getEqNodeAndFunctionFactory()
-							.getFuncAppElement(weqEdge.getKey(), fan.getArgument());
+							.getOrConstructFuncAppElement(weqEdge.getKey(), fan.getArgument());
 //					addElement(nodeWithWequalFunc);
 					nodesToAdd.add(nodeWithWequalFunc);
 				}

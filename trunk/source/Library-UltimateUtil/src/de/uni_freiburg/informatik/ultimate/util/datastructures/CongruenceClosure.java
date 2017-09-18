@@ -43,7 +43,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 
 	protected final ThreeValuedEquivalenceRelation<ELEM> mElementTVER;
 
-	private boolean mIsInconsistent;
+//	private boolean mIsInconsistent;
 
 	protected final CongruenceClosure<ELEM>.AuxData mAuxData;
 
@@ -54,7 +54,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 	 */
 	public CongruenceClosure() {
 		mElementTVER = new ThreeValuedEquivalenceRelation<>();
-		mIsInconsistent = false;
+//		mIsInconsistent = false;
 		mAuxData = new AuxData();
 	}
 
@@ -69,7 +69,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		if (!isInconsistent) {
 			throw new AssertionError("use other constructor");
 		}
-		mIsInconsistent = true;
+//		mIsInconsistent = true;
 
 		mElementTVER = null;
 		mAuxData = null;
@@ -77,7 +77,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 
 	public CongruenceClosure(final ThreeValuedEquivalenceRelation<ELEM> newElemPartition) {
 		mElementTVER = newElemPartition;
-		mIsInconsistent = false;
+//		mIsInconsistent = false;
 		mAuxData = new AuxData();
 
 		// initialize the helper mappings according to mElementTVER
@@ -97,13 +97,13 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 			throw new IllegalArgumentException("use other constructor!");
 		}
 		mElementTVER = new ThreeValuedEquivalenceRelation<>(original.mElementTVER);
-		mIsInconsistent = false;
+//		mIsInconsistent = false;
 		mAuxData = new AuxData(original.mAuxData);
 		assert sanityCheck();
 	}
 
 	public boolean reportEquality(final ELEM elem1, final ELEM elem2) {
-		if (mIsInconsistent) {
+		if (isInconsistent()) {
 			throw new IllegalStateException();
 		}
 
@@ -116,7 +116,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 			return false;
 		}
 		if (!freshElem && getEqualityStatus(elem1, elem2) == EqualityStatus.NOT_EQUAL) {
-			mIsInconsistent = true;
+			// report it to tver so that it is in an inconsistent state
+			mElementTVER.reportEquality(elem1, elem2);
 			return true;
 		}
 
@@ -125,7 +126,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 
 		mElementTVER.reportEquality(elem1, elem2);
 		if (mElementTVER.isInconsistent()) {
-			updateInconsistencyStatus();
+//			updateInconsistencyStatus();
 			return true;
 		}
 
@@ -148,13 +149,13 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 			reportDisequality(unequalNeighborIndices.getKey(), unequalNeighborIndices.getValue());
 		}
 
-		updateInconsistencyStatus();
+//		updateInconsistencyStatus();
 		assert sanityCheck();
 		return true;
 	}
 
 	public boolean reportDisequality(final ELEM elem1, final ELEM elem2) {
-		if (mIsInconsistent) {
+		if (isInconsistent()) {
 			throw new IllegalStateException();
 		}
 
@@ -170,7 +171,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 
 		mElementTVER.reportDisequality(elem1, elem2);
 		if (mElementTVER.isInconsistent()) {
-			updateInconsistencyStatus();
+//			updateInconsistencyStatus();
 			return true;
 		}
 
@@ -229,9 +230,9 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		assert sanityCheck();
 	}
 
-	protected void updateInconsistencyStatus() {
-		mIsInconsistent |= mElementTVER.isInconsistent();
-	}
+//	protected void updateInconsistencyStatus() {
+//		mIsInconsistent |= mElementTVER.isInconsistent();
+//	}
 
 	public ELEM getRepresentativeAndAddElementIfNeeded(final ELEM elem) {
 		addElement(elem);
@@ -249,7 +250,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 	}
 
 	public boolean removeElement(final ELEM elem) {
-		if (mIsInconsistent) {
+		if (isInconsistent()) {
 			throw new IllegalStateException();
 		}
 		if (!hasElement(elem)) {
@@ -439,7 +440,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 	}
 
 	public boolean isInconsistent() {
-		return mIsInconsistent;
+		return mElementTVER == null || mElementTVER.isInconsistent();
 	}
 
 	public boolean vectorsAreCongruent(final List<ELEM> argList1, final List<ELEM> argList2) {
@@ -494,7 +495,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 			}
 		}
 
-		if (!mIsInconsistent) {
+		if (!isInconsistent()) {
 			if (mElementTVER.isInconsistent()) {
 				assert false;
 				return false;
@@ -794,17 +795,26 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		 */
 		private void collectPropagationsForImplicitlyAddedDisequalities(final ELEM e1OldRep,
 					final HashRelation<ELEM, ELEM> disequalitiesToPropagate) {
-				for (final ELEM repUnequalToE1 : mElementTVER.getRepresentativesUnequalTo(e1OldRep)) {
 
-					for (final Entry<ELEM, ELEM> ccc1 : mCcChildren.get(e1OldRep)) {
-						for (final Entry<ELEM, ELEM> ccc2 : mCcChildren.get(repUnequalToE1)) {
-							addPropIfOneIsEqualOneIsUnconstrained(ccc1.getKey(), ccc1.getValue(), ccc2.getKey(),
-									ccc2.getValue(), disequalitiesToPropagate);
-						}
-					}
-
-				}
+			if (mCcChildren.get(e1OldRep) == null || mCcChildren.get(e1OldRep).isEmpty()) {
+				return;
 			}
+
+			for (final ELEM repUnequalToE1 : mElementTVER.getRepresentativesUnequalTo(e1OldRep)) {
+
+				for (final Entry<ELEM, ELEM> ccc1 : mCcChildren.get(e1OldRep)) {
+					final HashRelation<ELEM, ELEM> unequalRepCccs = mCcChildren.get(repUnequalToE1);
+					if (unequalRepCccs == null) {
+						continue;
+					}
+					for (final Entry<ELEM, ELEM> ccc2 : unequalRepCccs) {
+						addPropIfOneIsEqualOneIsUnconstrained(ccc1.getKey(), ccc1.getValue(), ccc2.getKey(),
+								ccc2.getValue(), disequalitiesToPropagate);
+					}
+				}
+
+			}
+		}
 
 		public void removeElement(final ELEM elem, final boolean elemWasRepresentative, final ELEM newRep) {
 			/*
@@ -813,14 +823,17 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 			 */
 			if (elemWasRepresentative) {
 				final Set<ELEM> oldAfCcparEntry = mAfCcPars.removeDomainElement(elem);
-				final Set<ELEM> oldArgCcparEntry = mArgCcPars.removeDomainElement(elem);
-				if (newRep != null) {
+				if (newRep != null && oldAfCcparEntry != null) {
 					oldAfCcparEntry.forEach(e -> mAfCcPars.addPair(newRep, e));
+				}
+
+				final Set<ELEM> oldArgCcparEntry = mArgCcPars.removeDomainElement(elem);
+				if (newRep != null && oldArgCcparEntry != null) {
 					oldArgCcparEntry.forEach(e -> mArgCcPars.addPair(newRep, e));
 				}
 
 				final HashRelation<ELEM, ELEM> oldCccEntry = mCcChildren.remove(elem);
-				if (newRep != null) {
+				if (newRep != null && oldCccEntry != null) {
 					mCcChildren.put(newRep, oldCccEntry);
 				}
 			}
@@ -850,7 +863,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 			final HashRelation<ELEM, ELEM> equalitiesToPropagate = new HashRelation<>();
 			final Set<ELEM> afCcPars = mAfCcPars.getImage(afRep);
 			final Set<ELEM> candidates = afCcPars.stream()
-					.filter(afccpar -> (getEqualityStatus(argRep, afccpar.getArgument()) == EqualityStatus.EQUAL))
+					.filter(afccpar -> (hasElement(afccpar.getArgument()) &&
+							getEqualityStatus(argRep, afccpar.getArgument()) == EqualityStatus.EQUAL))
 					.collect(Collectors.toSet());
 			candidates.forEach(c -> equalitiesToPropagate.addPair(elem, c));
 

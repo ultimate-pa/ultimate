@@ -83,4 +83,9 @@ public class EqFunctionApplicationNode extends EqNode {
 	public boolean isFunctionApplication() {
 		return true;
 	}
+
+	@Override
+	public String toString() {
+		return mFunction.toString() + "[" + mArg.toString() + "]";
+	}
 }

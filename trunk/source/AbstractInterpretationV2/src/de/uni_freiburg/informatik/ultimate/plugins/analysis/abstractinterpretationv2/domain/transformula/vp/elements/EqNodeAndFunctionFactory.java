@@ -40,7 +40,6 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.CommuhashNormalForm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineTerm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineTermTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -105,18 +104,28 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 		EqNode result = mTermToEqNode.get(selectTerm);
 
 		if (result == null) {
-			final MultiDimensionalSelect mds = new MultiDimensionalSelect(selectTerm);
+//			final MultiDimensionalSelect mds = new MultiDimensionalSelect(selectTerm);
+//
+////			final EqFunction function = getOrConstructFunction(mds.getArray());
+//			final EqNode function = getOrConstructNode(mds.getArray());
+//			assert function.isFunction();
+//
+//			final List<EqNode> args = new ArrayList<>();
+//
+//			EqNode innerSelect = function;
+//			for (final Term index : mds.getIndex()) {
+//				final EqNode argNode = getOrConstructNode(index);
+//
+//				innerSelect = super.getOrConstructFuncAppElement(function, argNode);
+////				args.add(getOrConstructNode(index));
+//			}
+//
+//			result = innerSelect;
+////			result = super.getOrConstructFuncAppElement(function, arg);
 
-//			final EqFunction function = getOrConstructFunction(mds.getArray());
-			final EqNode function = getOrConstructNode(mds.getArray());
-			assert function.isFunction();
-
-			final List<EqNode> args = new ArrayList<>();
-			for (final Term index : mds.getIndex()) {
-				args.add(getOrConstructNode(index));
-			}
-
-			result = super.getFuncAppElement(function, args);
+			final EqNode funcNode = getOrConstructNode(selectTerm.getParameters()[0]);
+			final EqNode argNode = getOrConstructNode(selectTerm.getParameters()[1]);
+			result = super.getOrConstructFuncAppElement(funcNode, argNode);
 
 			mTermToEqNode.put(selectTerm, result);
 		}
@@ -288,25 +297,27 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 	}
 
 	@Override
-	protected EqNode newFuncAppElement(final EqNode func, final List<EqNode> args) {
-//		final Term selectTerm = buildSelectTerm(func, args);
-////		assert isFunction(selectTerm) == isFunction;
+//	protected EqNode newFuncAppElement(final EqNode func, final List<EqNode> args) {
+	protected EqNode newFuncAppElement(final EqNode func, final EqNode arg) {
+//		assert isFunction(selectTerm) == isFunction;
 //		return new EqFunctionApplicationNode(func, args., selectTerm, this);
-		return buildFuncAppNodeElement(func, args);
+//		return buildFuncAppNodeElement(func, args);
+		final Term selectTerm = buildSelectTerm(func, arg);
+		return new EqFunctionApplicationNode(func, arg, selectTerm, this);
 	}
 
-	public EqNode buildFuncAppNodeElement(final EqNode appliedFunction,
-			final List<EqNode> arguments) {//, final boolean isFunction) {
-
-		EqNode result = appliedFunction;
-
-		for (final EqNode arg : arguments) {
-			result = getOrConstructNode(buildSelectTerm(result, arg));
-//			result = new EqFunctionApplicationNode(result, arg, buildSelectTerm(result, arg), this);
-		}
-
-		return result;
-	}
+//	public EqNode buildFuncAppNodeElement(final EqNode appliedFunction,
+//			final List<EqNode> arguments) {//, final boolean isFunction) {
+//
+//		EqNode result = appliedFunction;
+//
+//		for (final EqNode arg : arguments) {
+//			result = getOrConstructNode(buildSelectTerm(result, arg));
+////			result = new EqFunctionApplicationNode(result, arg, buildSelectTerm(result, arg), this);
+//		}
+//
+//		return result;
+//	}
 
 	private Term buildSelectTerm(final EqNode func, final EqNode arg) {
 		mMgdScript.lock(this);
