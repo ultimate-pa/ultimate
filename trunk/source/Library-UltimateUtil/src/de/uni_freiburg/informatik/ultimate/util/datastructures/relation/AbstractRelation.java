@@ -122,9 +122,10 @@ public abstract class AbstractRelation<D, R, MAP extends Map<D, Set<R>>> impleme
 	 *
 	 * @param left
 	 */
-	public void removeDomainElement(final D left) {
-		mMap.remove(left);
+	public Set<R> removeDomainElement(final D left) {
+		final Set<R> result = mMap.remove(left);
 		assert sanityCheck();
+		return result;
 	}
 
 	/**
