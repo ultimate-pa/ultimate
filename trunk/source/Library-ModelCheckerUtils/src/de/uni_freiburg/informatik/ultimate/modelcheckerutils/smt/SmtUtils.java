@@ -95,6 +95,8 @@ public final class SmtUtils {
 		SIMPLIFY_BDD_PROP, SIMPLIFY_BDD_FIRST_ORDER, SIMPLIFY_QUICK, SIMPLIFY_DDA, NONE
 	}
 
+	private static final boolean EXTENDED_LOCAL_SIMPLIFICATION = false;
+
 	private SmtUtils() {
 		// Prevent instantiation of this utility class
 	}
@@ -827,22 +829,38 @@ public final class SmtUtils {
 	}
 
 	public static Term and(final Script script, final Term... terms) {
-		return Util.and(script, terms);
+		if (EXTENDED_LOCAL_SIMPLIFICATION) {
+			return andWithExtendedLocalSimplification(script, Arrays.asList(terms));
+		} else {
+			return Util.and(script, terms);
+		}
 	}
 
 	public static Term and(final Script script, final Collection<Term> terms) {
-		return Util.and(script, terms.toArray(new Term[terms.size()]));
+		if (EXTENDED_LOCAL_SIMPLIFICATION) {
+			return andWithExtendedLocalSimplification(script, terms);
+		} else {
+			return Util.and(script, terms.toArray(new Term[terms.size()]));
+		}
 	}
 
 	public static Term or(final Script script, final Term... terms) {
-		return Util.or(script, terms);
+		if (EXTENDED_LOCAL_SIMPLIFICATION) {
+			return orWithExtendedLocalSimplification(script, Arrays.asList(terms));
+		} else {
+			return Util.or(script, terms);
+		}
 	}
 
 	public static Term or(final Script script, final Collection<Term> terms) {
-		return Util.or(script, terms.toArray(new Term[terms.size()]));
+		if (EXTENDED_LOCAL_SIMPLIFICATION) {
+			return orWithExtendedLocalSimplification(script, terms);
+		} else {
+			return Util.or(script, terms.toArray(new Term[terms.size()]));
+		}
 	}
 
-	public static Term and_NewVersion(final Script script, final Collection<Term> terms) {
+	public static Term andWithExtendedLocalSimplification(final Script script, final Collection<Term> terms) {
 		final Set<Term> resultJuncts = new HashSet<>();
 		final Set<Term> negativeJuncts = new HashSet<>();
 		final String connective = "and";
@@ -862,7 +880,7 @@ public final class SmtUtils {
 		}
 	}
 
-	public static Term or_NewVersion(final Script script, final Collection<Term> terms) {
+	public static Term orWithExtendedLocalSimplification(final Script script, final Collection<Term> terms) {
 		final Set<Term> resultJuncts = new HashSet<>();
 		final Set<Term> negativeJuncts = new HashSet<>();
 		final String connective = "or";
