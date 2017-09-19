@@ -13,13 +13,16 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSort;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.IEqNodeIdentifier;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CongruenceClosure;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.EqualityStatus;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, NODE extends IEqNodeIdentifier<NODE>>
@@ -198,22 +201,114 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 
 	public void reportWeakEquivalence(final NODE array1, final NODE array2, final NODE storeIndex) {
 		assert array1.isFunction() && array2.isFunction();
+		assert array1.hasSameTypeAs(array2);
 
 		getRepresentativeAndAddElementIfNeeded(storeIndex);
 
-		addElement(array1);
-		addElement(array2);
+		final CongruenceClosure<NODE> newConstraint = computeWeqConstraintForIndex(
+				Collections.singletonList(storeIndex));
+		reportWeakEquivalence(array1, array2, Collections.singletonList(newConstraint));
+	}
 
-		mWeakEquivalenceGraph.reportWeakEquivalence(array1, array2, storeIndex);
+	public void reportWeakEquivalence(final NODE array1, final NODE array2,
+			final List<CongruenceClosure<NODE>> edgeLabel) {
+
+		boolean madeChanges = false;
+		madeChanges |= addElement(array1);
+		madeChanges |= addElement(array2);
+
+		madeChanges |= mWeakEquivalenceGraph.reportWeakEquivalence(array1, array2, edgeLabel);
+
+		if (!madeChanges) {
+			// nothing to propagate
+			return;
+		}
+
+		List<CongruenceClosure<NODE>> strengthenedEdgeLabelContents =
+				mWeakEquivalenceGraph.getEdgeLabelContents(array1, array2);
+
+		if (strengthenedEdgeLabelContents == null) {
+			// edge became "false";
+			strengthenedEdgeLabelContents = Collections.emptyList();
+		}
+
+		/*
+		 * roweq propagations
+		 *
+		 *  look for fitting c[i], d[j]
+		 *  with i ~ j, array1 ~ c, array2 ~ d
+		 */
+		final Collection<NODE> ccps1 = mAuxData.getAfCcPars(array1);
+		final Collection<NODE> ccps2 = mAuxData.getAfCcPars(array2);
+		for (final NODE ccp1 : ccps1) {
+			for (final NODE ccp2 : ccps2) {
+				if (getEqualityStatus(ccp1.getArgument(), ccp2.getArgument()) != EqualityStatus.EQUAL) {
+					continue;
+				}
+				/*
+				 *  i ~ j holds
+				 *   propagate array1[i] --  -- array2[j]
+				 *  (note that this adds the arrayX[Y] nodes, possibly)
+				 */
+
+				final List<CongruenceClosure<NODE>> projectedLabel = mWeakEquivalenceGraph.projectEdgeLabelToPoint(
+						strengthenedEdgeLabelContents, ccp1.getArgument(), getAllWeqVarsNodeForFunction(array1));
+
+				final NODE array1atI = mFactory.getEqNodeAndFunctionFactory()
+						.getOrConstructFuncAppElement(array1, ccp1.getArgument());
+				final NODE array2atJ = mFactory.getEqNodeAndFunctionFactory()
+						.getOrConstructFuncAppElement(array2, ccp2.getArgument());
+
+				// recursive call
+				reportWeakEquivalence(array1atI, array2atJ, projectedLabel);
+			}
+		}
+
+		/*
+		 * roweq-1 propagations
+		 */
+		if (array1.isFunctionApplication() && array2.isFunctionApplication()
+				&& getEqualityStatus(array1.getArgument(), array2.getArgument()) == EqualityStatus.EQUAL) {
+
+			final List<CongruenceClosure<NODE>> shiftedLabelWithException =
+					mWeakEquivalenceGraph.shiftLabelAndAddException(strengthenedEdgeLabelContents,
+							array1.getArgument(), getAllWeqVarsNodeForFunction(array1));
+
+			// recursive call
+			reportWeakEquivalence(array1.getAppliedFunction(), array2.getAppliedFunction(),
+					shiftedLabelWithException);
+		}
+
+		/*
+		 * ext propagations
+		 */
 		reportAllArrayEqualitiesFromWeqGraph();
 	}
 
-
-	private void addWeakEquivalence(final Doubleton<NODE> key,
-				final WeakEquivalenceGraph<ACTION, NODE>.WeakEquivalenceEdgeLabel value) {
-		mWeakEquivalenceGraph.reportWeakEquivalence(key, value);
-		reportAllArrayEqualitiesFromWeqGraph();
+		/**
+	 * Given a (multidimensional) index, compute the corresponding annotation for a weak equivalence edge.
+	 *
+	 * Example:
+	 * for (i1, .., in), this should return (q1 = i1, ..., qn = in) as a list of CongruenceClosures.
+	 *  (where qi is the variable returned by getWeqVariableForDimension(i))
+	 *
+	 * @param nodes
+	 * @return
+	 */
+	private CongruenceClosure<NODE> computeWeqConstraintForIndex(final List<NODE> nodes) {
+		final CongruenceClosure<NODE> result = new CongruenceClosure<>();
+		for (int i = 0; i < nodes.size(); i++) {
+			final NODE ithNode = nodes.get(i);
+			result.reportEquality(mFactory.getWeqVariableNodeForDimension(i, ithNode.getTerm().getSort()), ithNode);
+		}
+		return result;
 	}
+
+//	private void addWeakEquivalence(final Doubleton<NODE> key,
+//				final WeakEquivalenceGraph<ACTION, NODE>.WeakEquivalenceEdgeLabel value) {
+//		mWeakEquivalenceGraph.reportWeakEquivalence(key, value);
+//		reportAllArrayEqualitiesFromWeqGraph();
+//	}
 
 	@Override
 	public boolean reportEquality(final NODE node1, final NODE node2) {
@@ -231,6 +326,49 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 		 *  there are three types of propagations related to weak equivalences, corresponding to the rules
 		 *   ext, roweq and roweq-1
 		 */
+
+		/*
+		 * the merge may collapse two nodes in the weak equivalence graph
+		 * (which may trigger propagations)
+		 */
+		// (recursive call)
+		reportWeakEquivalence(node1, node2, Collections.emptyList());
+
+		/*
+		 * roweq (again)
+		 */
+
+		// node1 = i, node2 = j in the rule
+		final Collection<NODE> ccps1 = mAuxData.getArgCcPars(node1);
+		final Collection<NODE> ccps2 = mAuxData.getArgCcPars(node2);
+		for (final NODE ccp1 : ccps1) {
+			for (final NODE ccp2 : ccps2) {
+				// ccp1 = a[i], ccp2 = b[j] in the rule
+
+				/*
+				 * roweq:
+				 */
+				final List<CongruenceClosure<NODE>> aToBLabel = mWeakEquivalenceGraph.getEdgeLabelContents(
+						ccp1.getAppliedFunction(), ccp2.getAppliedFunction());
+				final List<CongruenceClosure<NODE>> projectedLabel = mWeakEquivalenceGraph.projectEdgeLabelToPoint(
+						aToBLabel, ccp1.getArgument(), getAllWeqVarsNodeForFunction(ccp1.getAppliedFunction()));
+				// recursive call
+				reportWeakEquivalence(ccp1, ccp2, projectedLabel);
+
+				/*
+				 * roweq-1:
+				 */
+				final List<CongruenceClosure<NODE>> aiToBjLabel = mWeakEquivalenceGraph.getEdgeLabelContents(
+						ccp1, ccp2);
+				final List<CongruenceClosure<NODE>> shiftedLabelWithException =
+						mWeakEquivalenceGraph.shiftLabelAndAddException(aiToBjLabel,
+								node1, getAllWeqVarsNodeForFunction(ccp1));
+				// recursive call
+				reportWeakEquivalence(ccp1.getAppliedFunction(), ccp2.getAppliedFunction(),
+						shiftedLabelWithException);
+			}
+		}
+
 
 		/*
 		 * propagations according to the roweq rule:
@@ -328,6 +466,16 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 		reportAllArrayEqualitiesFromWeqGraph();
 		assert sanityCheck();
 		return madeChanges;
+	}
+
+	private List<NODE> getAllWeqVarsNodeForFunction(final NODE func) {
+		assert func.getSort().isArraySort();
+		final List<NODE> result = new ArrayList<>(func.getArity());
+		final List<Sort> indexSorts = new MultiDimensionalSort(func.getSort()).getIndexSorts();
+		for (int i = 0; i < func.getArity(); i++) {
+			result.add(mFactory.getWeqVariableNodeForDimension(i, indexSorts.get(i)));
+		}
+		return result;
 	}
 
 	@Override
@@ -598,7 +746,8 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 		for (final Entry<Doubleton<NODE>, WeakEquivalenceGraph<ACTION, NODE>.WeakEquivalenceEdgeLabel> edge
 				:
 					otherWeqCc.mWeakEquivalenceGraph.getEdges().entrySet()) {
-			newWeqCc.addWeakEquivalence(edge.getKey(), edge.getValue());
+			newWeqCc.reportWeakEquivalence(edge.getKey().getOneElement(), edge.getKey().getOtherElement(),
+					edge.getValue().getLabelContents());
 		}
 
 		newWeqCc.mWeakEquivalenceGraph.close();
@@ -633,5 +782,9 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 		sb.append("Weak equivalences:\n");
 		sb.append(mWeakEquivalenceGraph.toString());
 		return sb.toString();
+	}
+
+	public boolean isRepresentative(final NODE node) {
+		return mElementTVER.isRepresentative(node);
 	}
 }

@@ -880,7 +880,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 			return result;
 		}
 
-		private HashRelation<ELEM, ELEM> getCcChildren(final ELEM rep) {
+		public HashRelation<ELEM, ELEM> getCcChildren(final ELEM rep) {
 			assert mElementTVER.isRepresentative(rep);
 			HashRelation<ELEM, ELEM> result = mCcChildren.get(rep);
 			if (result == null) {
@@ -910,6 +910,10 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 
 		public Collection<ELEM> getAfCcPars(final ELEM elem) {
 			return mAfCcPars.getImage(elem);
+		}
+
+		public Collection<ELEM> getArgCcPars(final ELEM elem) {
+			return mArgCcPars.getImage(elem);
 		}
 	}
 }
