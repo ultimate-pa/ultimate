@@ -217,7 +217,10 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 		madeChanges |= addElement(array1);
 		madeChanges |= addElement(array2);
 
-		madeChanges |= mWeakEquivalenceGraph.reportWeakEquivalence(array1, array2, edgeLabel);
+		final NODE array1Rep = mElementTVER.getRepresentative(array1);
+		final NODE array2Rep = mElementTVER.getRepresentative(array2);
+
+		madeChanges |= mWeakEquivalenceGraph.reportWeakEquivalence(array1Rep, array2Rep, edgeLabel);
 
 		if (!madeChanges) {
 			// nothing to propagate
@@ -225,7 +228,7 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 		}
 
 		List<CongruenceClosure<NODE>> strengthenedEdgeLabelContents =
-				mWeakEquivalenceGraph.getEdgeLabelContents(array1, array2);
+				mWeakEquivalenceGraph.getEdgeLabelContents(array1Rep, array2Rep);
 
 		if (strengthenedEdgeLabelContents == null) {
 			// edge became "false";
@@ -238,8 +241,8 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 		 *  look for fitting c[i], d[j]
 		 *  with i ~ j, array1 ~ c, array2 ~ d
 		 */
-		final Collection<NODE> ccps1 = mAuxData.getAfCcPars(array1);
-		final Collection<NODE> ccps2 = mAuxData.getAfCcPars(array2);
+		final Collection<NODE> ccps1 = mAuxData.getAfCcPars(array1Rep);
+		final Collection<NODE> ccps2 = mAuxData.getAfCcPars(array2Rep);
 		for (final NODE ccp1 : ccps1) {
 			for (final NODE ccp2 : ccps2) {
 				if (getEqualityStatus(ccp1.getArgument(), ccp2.getArgument()) != EqualityStatus.EQUAL) {
@@ -248,19 +251,20 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 				/*
 				 *  i ~ j holds
 				 *   propagate array1[i] --  -- array2[j]
-				 *  (note that this adds the arrayX[Y] nodes, possibly)
+				 *  (note that this adds the arrayX[Y] nodes, possibly -- EDIT: not..)
 				 */
 
 				final List<CongruenceClosure<NODE>> projectedLabel = mWeakEquivalenceGraph.projectEdgeLabelToPoint(
 						strengthenedEdgeLabelContents, ccp1.getArgument(), getAllWeqVarsNodeForFunction(array1));
 
-				final NODE array1atI = mFactory.getEqNodeAndFunctionFactory()
-						.getOrConstructFuncAppElement(array1, ccp1.getArgument());
-				final NODE array2atJ = mFactory.getEqNodeAndFunctionFactory()
-						.getOrConstructFuncAppElement(array2, ccp2.getArgument());
+//				final NODE array1atI = mFactory.getEqNodeAndFunctionFactory()
+//						.getOrConstructFuncAppElement(array1, ccp1.getArgument());
+//				final NODE array2atJ = mFactory.getEqNodeAndFunctionFactory()
+//						.getOrConstructFuncAppElement(array2, ccp2.getArgument());
 
 				// recursive call
-				reportWeakEquivalence(array1atI, array2atJ, projectedLabel);
+//				reportWeakEquivalence(array1atI, array2atJ, projectedLabel);
+				reportWeakEquivalence(ccp1, ccp2, projectedLabel);
 			}
 		}
 
@@ -315,6 +319,16 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 		assert node1.hasSameTypeAs(node2);
 		boolean madeChanges = false;
 
+		// old means "before the merge", here..
+		final NODE node1OldRep = getRepresentativeElement(node1);
+		final NODE node2OldRep = getRepresentativeElement(node2);
+		final Collection<NODE> oldArgCcPars1 = new HashSet<>(mAuxData.getArgCcPars(node1OldRep));
+		final Collection<NODE> oldArgCcPars2 = new HashSet<>(mAuxData.getArgCcPars(node2OldRep));
+		final HashRelation<NODE, NODE> oldCcChildren1 = new HashRelation<>(mAuxData.getCcChildren(node1));
+		final HashRelation<NODE, NODE> oldCcChildren2 = new HashRelation<>(mAuxData.getCcChildren(node1));
+
+
+
 		madeChanges |= super.reportEquality(node1, node2);
 		assert sanityCheck();
 
@@ -335,14 +349,11 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 		reportWeakEquivalence(node1, node2, Collections.emptyList());
 
 		/*
-		 * roweq (again)
+		 * roweq, roweq-1 (1)
 		 */
-
 		// node1 = i, node2 = j in the rule
-		final Collection<NODE> ccps1 = mAuxData.getArgCcPars(node1);
-		final Collection<NODE> ccps2 = mAuxData.getArgCcPars(node2);
-		for (final NODE ccp1 : ccps1) {
-			for (final NODE ccp2 : ccps2) {
+		for (final NODE ccp1 : oldArgCcPars1) {
+			for (final NODE ccp2 : oldArgCcPars2) {
 				// ccp1 = a[i], ccp2 = b[j] in the rule
 
 				/*
@@ -368,53 +379,52 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 						shiftedLabelWithException);
 			}
 		}
-
-
-		/*
-		 * propagations according to the roweq rule:
-		 */
-//		final HashRelation<NODE, NODE> propagatedEqualitiesFromWeqEdges =
-//		mWeakEquivalenceGraph.applyRoweqPropagationsOnReportEquality(node1, node2);
-//		reportAllArrayEqualitiesFromWeqGraph();
-//		for (final Entry<NODE, NODE> eq : propagatedEqualitiesFromWeqEdges.entrySet()) {
-//			this.reportEquality(eq.getKey(), eq.getValue());
-//		}
 		assert sanityCheck();
 
 		/*
-		 * propagations according to the ext rule:
+		 * roweq-1(2)
+		 *
+		 * a somewhat more intricate case:
+		 *
+		 * the added equality may trigger the pattern matching on the weak equivalence condition of the roweq-1 rule
+		 */
+
+		for (final Entry<NODE, NODE> ccc : oldCcChildren1) {
+			// ccc = (b,j) , as in b[j]
+			for (final Entry<NODE, WeakEquivalenceGraph<ACTION, NODE>.WeakEquivalenceEdgeLabel> edgeAdjacentToNode
+					: mWeakEquivalenceGraph.getAdjacentWeqEdges(node1OldRep).entrySet()) {
+				final NODE n = edgeAdjacentToNode.getKey();
+				final WeakEquivalenceGraph<ACTION, NODE>.WeakEquivalenceEdgeLabel phi = edgeAdjacentToNode.getValue();
+
+				// TODO is it ok here to use tha auxData from after the merge??
+				if (!mAuxData.getArgCcPars(ccc.getValue()).contains(edgeAdjacentToNode.getKey())) {
+					continue;
+				}
+				// n in argccp(j)
+
+				// TODO is it ok here to use tha auxData from after the merge??
+				for (final Entry<NODE, NODE> aj : mAuxData.getCcChildren(edgeAdjacentToNode.getKey())) {
+					// aj = (a,j), as in a[j]
+
+					// propagate b -- q != j, Phi+ -- a
+
+					final List<CongruenceClosure<NODE>> shiftedLabelWithException =
+							mWeakEquivalenceGraph.shiftLabelAndAddException(phi.getLabelContents(),
+									ccc.getValue(), getAllWeqVarsNodeForFunction(ccc.getKey()));
+					// recursive call
+					reportWeakEquivalence(ccc.getKey(), aj.getKey(),
+							shiftedLabelWithException);
+				}
+
+			}
+		}
+
+
+		/*
+		 * ext
 		 */
 		reportGpaChangeToWeqGraphAndPropagateArrayEqualities(
 				(final CongruenceClosure<NODE> cc) -> cc.reportEquality(node1, node2));
-
-		/*
-		 * propagations according to the roweq-1 rule:
-		 *
-		 *  extensionality-related propagation:
- 		 *  We view an equality a[i] = b[i] as a weak equivalence a --q!=i-- b --> update the corresponding weq edge
-		 *  accordingly, or introduce one.
-		 */
-//		for (final Entry<NODE, NODE> funcPair : getPairsWithMatchingType(mAllFunctions, false, true)) {
-//			assert funcPair.getKey().getSort().equals(funcPair.getValue().getSort());
-//
-//			final Set<List<NODE>> ccchildren1 = getCcChildren(funcPair.getKey(), oldRep1, oldCcChild, true);
-//			final Set<List<NODE>> ccchildren2 = getCcChildren(funcPair.getValue(), oldRep2, oldCcChild, true);
-//
-//			for (final List<NODE> ccc1 : ccchildren1) {
-//				for (final List<NODE> ccc2 : ccchildren2) {
-//					if (vectorsAreCongruent(ccc1, ccc2)) {
-//						/*
-//						 * That the arguments are congruent will always be the case when this reportEqualityRec-call
-//						 * came from a congruence propagation, but we need to check it here, because the equality may
-//						 * have been added directly.
-//						 */
-//						mWeakEquivalenceGraph.strengthenEdgeWithExceptedPoint(funcPair.getKey(), funcPair.getValue(),
-//								ccc1);
-//					}
-//				}
-//			}
-//		}
-//		reportAllArrayEqualitiesFromWeqGraph();
 
 		return true;
 	}
@@ -784,7 +794,5 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 		return sb.toString();
 	}
 
-	public boolean isRepresentative(final NODE node) {
-		return mElementTVER.isRepresentative(node);
-	}
+
 }

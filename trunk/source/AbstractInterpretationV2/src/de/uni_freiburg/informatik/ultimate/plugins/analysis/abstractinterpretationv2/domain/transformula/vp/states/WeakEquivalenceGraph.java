@@ -648,7 +648,10 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 	 */
 	private boolean strengthenEdgeLabel(final Doubleton<NODE> sourceAndTarget,
 			final List<CongruenceClosure<NODE>> paList) {
+		assert mPartialArrangement.isRepresentative(sourceAndTarget.getOneElement())
+			&& mPartialArrangement.isRepresentative(sourceAndTarget.getOtherElement());
 		assert !sourceAndTarget.getOneElement().equals(sourceAndTarget.getOtherElement());
+
 		WeakEquivalenceEdgeLabel oldLabel = mWeakEquivalenceEdges.get(sourceAndTarget);
 		if (oldLabel == null) {
 			oldLabel = new WeakEquivalenceEdgeLabel();
@@ -719,17 +722,22 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 	 * (the third type, extensionality-like propagations are done at reportEqualityRec/
 	 * strengthenEdgeWithExceptedPoint..)
 	 *
-	 * @param key
+	 * @param sourceAndTarget
 	 * @param value
 	 */
-	private boolean reportWeakEquivalence(final Doubleton<NODE> key,
+	private boolean reportWeakEquivalence(final Doubleton<NODE> sourceAndTarget,
 			final WeakEquivalenceGraph<ACTION, NODE>.WeakEquivalenceEdgeLabel value) {
-		assert key.getOneElement().getTerm().getSort().equals(key.getOtherElement().getTerm().getSort());
-		return strengthenEdgeLabel(key, value.getLabelContents());
+		assert mPartialArrangement.isRepresentative(sourceAndTarget.getOneElement())
+			&& mPartialArrangement.isRepresentative(sourceAndTarget.getOtherElement());
+		assert sourceAndTarget.getOneElement().getTerm().getSort().equals(sourceAndTarget.getOtherElement().getTerm().getSort());
+
+		return strengthenEdgeLabel(sourceAndTarget, value.getLabelContents());
 	}
 
 	public boolean reportWeakEquivalence(final NODE array1, final NODE array2,
 			final List<CongruenceClosure<NODE>> edgeLabelContents) {
+		assert mPartialArrangement.isRepresentative(array1) && mPartialArrangement.isRepresentative(array2);
+
 		return reportWeakEquivalence(new Doubleton<NODE>(array1, array2),
 				new WeakEquivalenceEdgeLabel(edgeLabelContents));
 	}

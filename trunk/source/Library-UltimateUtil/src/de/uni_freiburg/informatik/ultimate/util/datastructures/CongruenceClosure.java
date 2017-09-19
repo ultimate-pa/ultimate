@@ -619,6 +619,10 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		return mElementTVER.getAllRepresentatives();
 	}
 
+	public boolean isRepresentative(final ELEM elem) {
+		return mElementTVER.isRepresentative(elem);
+	}
+
 	protected class AuxData {
 
 		private final HashRelation<ELEM, ELEM> mAfCcPars;
@@ -881,7 +885,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		}
 
 		public HashRelation<ELEM, ELEM> getCcChildren(final ELEM rep) {
-			assert mElementTVER.isRepresentative(rep);
+			assert isRepresentative(rep);
 			HashRelation<ELEM, ELEM> result = mCcChildren.get(rep);
 			if (result == null) {
 				result = new HashRelation<>();
@@ -909,10 +913,12 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		}
 
 		public Collection<ELEM> getAfCcPars(final ELEM elem) {
+			assert isRepresentative(elem);
 			return mAfCcPars.getImage(elem);
 		}
 
 		public Collection<ELEM> getArgCcPars(final ELEM elem) {
+			assert isRepresentative(elem);
 			return mArgCcPars.getImage(elem);
 		}
 	}
