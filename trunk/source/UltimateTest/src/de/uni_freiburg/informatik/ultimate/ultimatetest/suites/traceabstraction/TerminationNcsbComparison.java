@@ -368,7 +368,7 @@ public class TerminationNcsbComparison extends AbstractBuchiAutomizerTestSuite {
 	 */
 	@Override
 	public long getTimeout() {
-		return 9 * 1000;
+		return 900 * 1000;
 	}
 
 	/**
@@ -378,12 +378,19 @@ public class TerminationNcsbComparison extends AbstractBuchiAutomizerTestSuite {
 	 * 
 	 */
 	private static final String[] mSettings = { 
-			"buchiAutomizer/ncsb/INTSET_LAZY2.epf",
-			"buchiAutomizer/ncsb/SUNFLOWER-INTSET_LAZY2.epf",
-			"buchiAutomizer/ncsb/INTSET_LAZY3.epf",
-			"buchiAutomizer/ncsb/SUNFLOWER-INTSET_LAZY3.epf",
-			"buchiAutomizer/ncsb/ORIGINAL.epf",
-			"buchiAutomizer/ncsb/SUNFLOWER-ORIGINAL.epf",
+			
+			"buchiAutomizer/ncsb/SUNFLOWER-ORIGINAL-SAVE-AUT.epf",
+			"buchiAutomizer/ncsb/SUNFLOWER-INTSET_LAZY2-SAVE-AUT.epf",
+			"buchiAutomizer/ncsb/SUNFLOWER-INTSET_LAZY3-SAVE-AUT.epf",
+			"buchiAutomizer/ncsb/ORIGINAL-SAVE-AUT.epf",
+			"buchiAutomizer/ncsb/INTSET_LAZY2-SAVE-AUT.epf",
+			"buchiAutomizer/ncsb/INTSET_LAZY3-SAVE-AUT.epf",
+//			"buchiAutomizer/ncsb/INTSET_LAZY2.epf",
+//			"buchiAutomizer/ncsb/SUNFLOWER-INTSET_LAZY2.epf",
+//			"buchiAutomizer/ncsb/INTSET_LAZY3.epf",
+//			"buchiAutomizer/ncsb/SUNFLOWER-INTSET_LAZY3.epf",
+//			"buchiAutomizer/ncsb/ORIGINAL.epf",
+//			"buchiAutomizer/ncsb/SUNFLOWER-ORIGINAL.epf",
 	};
 
 	private static final String[] mCToolchains = {
