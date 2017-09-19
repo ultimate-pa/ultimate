@@ -745,15 +745,9 @@ class StringCcElement implements ICongruenceClosureElement<StringCcElement>{
 		}
 	}
 
-//	@Override
-//	public boolean isFunction() {
-//		return mIsFunction;
-//	}
-
 	@Override
 	public boolean hasSameTypeAs(final StringCcElement other) {
 		return true;
-//		return mHeight == other.mHeight;
 	}
 
 	@Override

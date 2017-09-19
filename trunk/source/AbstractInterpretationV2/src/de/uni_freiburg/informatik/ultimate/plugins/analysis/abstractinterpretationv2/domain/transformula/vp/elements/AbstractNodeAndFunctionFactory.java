@@ -8,10 +8,6 @@ public abstract class AbstractNodeAndFunctionFactory<NODE extends IEqNodeIdentif
 
 	public abstract NODE getOrConstructNode(CONTENT c);
 
-//	public abstract NODE getOrConstructFunction(Term term);
-
-//	public abstract NODE getExistingFunction(CONTENT term);
-
 	public abstract NODE getExistingNode(CONTENT term);
 }
 

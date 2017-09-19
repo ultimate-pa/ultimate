@@ -60,7 +60,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.EqualityStatus;
  */
 public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 		NODE extends IEqNodeIdentifier<NODE>> {
-//		FUNCTION extends IEqFunctionIdentifier<NODE, FUNCTION>> {
 
 	private final WeqCongruenceClosure<ACTION, NODE> mPartialArrangement;
 
@@ -147,23 +146,8 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 		return paHasChanged;
 	}
 
-//	public boolean reportFunctionEquality(final FUNCTION func1, final FUNCTION func2) {
-//		assert !mIsInconsistent;
-//		assert !mIsFrozen;
-//		final boolean paHasChanged = mPartialArrangement.reportFunctionEquality(func1, func2);
-//		return paHasChanged;
-//	}
-//
-//	public boolean reportFunctionDisequality(final FUNCTION func1, final FUNCTION func2) {
-//		assert !mIsInconsistent;
-//		assert !mIsFrozen;
-//		final boolean paHasChanged = mPartialArrangement.reportFunctionDisequality(func1, func2);
-//		return paHasChanged;
-//	}
-
 	public void reportWeakEquivalence(final NODE array1, final NODE array2,
 			final NODE storeIndex) {
-//			final List<NODE> storeIndex) {
 		assert !mIsInconsistent;
 		assert !mIsFrozen;
 		mPartialArrangement.reportWeakEquivalence(array1, array2, storeIndex);
@@ -232,22 +216,6 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 		return mPartialArrangement.getEqualityStatus(node1, node2) == EqualityStatus.NOT_EQUAL;
 	}
 
-//	public boolean areEqual(final FUNCTION func1, final FUNCTION func2) {
-//		if (!mPartialArrangement.hasFunction(func1)
-//		 || !mPartialArrangement.hasFunction(func2)) {
-//			return false;
-//		}
-//		return mPartialArrangement.getEqualityStatus(func1, func2) == EqualityStatus.EQUAL;
-//	}
-//
-//	public boolean areUnequal(final FUNCTION func1, final FUNCTION func2) {
-//		if (!mPartialArrangement.hasFunction(func1)
-//		 || !mPartialArrangement.hasFunction(func2)) {
-//			return false;
-//		}
-//		return mPartialArrangement.getEqualityStatus(func1, func2) == EqualityStatus.NOT_EQUAL;
-//	}
-
 	public Term getTerm(final Script script) {
 		assert mIsFrozen : "not yet frozen, term may not be final..";
 		if (mTerm != null) {
@@ -270,20 +238,10 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 		final List<Term> elementDisequalities = pa.getElementDisequalities().entrySet().stream()
 				.map(pair -> script.term("distinct", pair.getKey().getTerm(), pair.getValue().getTerm()))
 				.collect(Collectors.toList());
-//		final List<Term> functionEqualities = pa.getSupportingFunctionEqualities().entrySet().stream()
-//				.map(en -> script.term("=", en.getKey().getTerm(), en.getValue().getTerm()))
-//				.collect(Collectors.toList());
-//		final List<Term> functionDisequalities = pa.getFunctionDisequalities().entrySet().stream()
-//				.map(pair -> script.term("distinct", pair.getKey().getTerm(), pair.getValue().getTerm()))
-//				.collect(Collectors.toList());
 
-		final List<Term> result = new ArrayList<>(elementEqualities.size() + elementDisequalities.size()
-//			+ functionEqualities.size() + functionDisequalities.size());
-				);
+		final List<Term> result = new ArrayList<>(elementEqualities.size() + elementDisequalities.size());
 		result.addAll(elementEqualities);
 		result.addAll(elementDisequalities);
-//		result.addAll(functionEqualities);
-//		result.addAll(functionDisequalities);
 		return result;
 	}
 
@@ -358,10 +316,6 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 		return mPartialArrangement.getAllElements().contains(node);
 	}
 
-//	public Set<NODE> getAllFunctions() {
-//		return mPartialArrangement.getAllFunctions();
-//	}
-
 	public boolean isTop() {
 		return mPartialArrangement.isTautological();
 	}
@@ -422,15 +376,6 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 		mPartialArrangement.getRepresentativeAndAddElementIfNeeded(nodeToAdd);
 	}
 
-//	public void addFunction(final FUNCTION func) {
-//		assert !mIsFrozen;
-//		mPartialArrangement.addFunction(func);
-//	}
-//
-//	public void removeFunction(final FUNCTION functionToHavoc) {
-//		mPartialArrangement.removeFunction(functionToHavoc);
-//	}
-
 	public void removeElement(final NODE elemToHavoc) {
 		mPartialArrangement.removeElement(elemToHavoc);
 	}
@@ -444,9 +389,6 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 		final Set<TermVariable> allTvs = new HashSet<>();
 		mPartialArrangement.getAllElements().stream()
 			.forEach(node -> allTvs.addAll(Arrays.asList(node.getTerm().getFreeVars())));
-
-//		mPartialArrangement.getAllFunctions().stream()
-//			.forEach(func -> allTvs.addAll(Arrays.asList(func.getTerm().getFreeVars())));
 		return allTvs;
 	}
 
