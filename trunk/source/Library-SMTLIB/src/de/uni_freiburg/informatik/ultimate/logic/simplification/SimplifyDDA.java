@@ -75,10 +75,10 @@ public class SimplifyDDA extends NonRecursive {
 	
 	HashMap<Term, TermInfo> mTermInfos; 
 	Term mResult;
-	final Script mScript;
+	protected final Script mScript;
 	final Term mTrue;
 	final Term mFalse;
-	final boolean mSimplifyRepeatedly;
+	protected final boolean mSimplifyRepeatedly;
 	/**
 	 * If asserting a term returns UNSAT, we use this flag to store that the
 	 * context is inconsistent. The flag it set to false whenever we pop
