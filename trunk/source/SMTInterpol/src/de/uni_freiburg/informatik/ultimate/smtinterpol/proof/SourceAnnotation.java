@@ -63,7 +63,10 @@ public class SourceAnnotation implements IAnnotation {
 					}, res));
 		} else {
 			// Full proof mode
-			res = theory.term("@clause", mSource, res);
+			res = theory.term("@clause", mSource,  mAnnot.isEmpty() ? res
+							: theory.annotatedTerm(new Annotation[] {
+											new Annotation(":input", mAnnot)
+										}, res));
 		}
 		return res;
 	}

@@ -40,10 +40,13 @@ public class FrontEndOptions {
 
 	FrontEndOptions(OptionMap options) {
 		mPrintSuccess = (BooleanOption) options.getOption(":print-success");
-		// 20160905 Workaround by Matthias: Set mOut to null because 
-		// original code (below, commented) throws ClassCastException
-		mOut = null;
-		//mOut = (ChannelOption) options.getOption(REG_OUT_CHANNEL_NAME);
+		final Option outChannel = options.getOption(REG_OUT_CHANNEL_NAME);
+		if (outChannel instanceof ChannelOption) {
+			mOut = (ChannelOption) outChannel;
+		} else {
+			/* Frontend is not active */
+			mOut = null;
+		}
 		mPrintTermsCSE = (BooleanOption) options.getOption(":print-terms-cse");
 		mContinueOnError = (BooleanOption) options.getOption(":continue-on-error");
 	}

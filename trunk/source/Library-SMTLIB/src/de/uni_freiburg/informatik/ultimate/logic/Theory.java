@@ -66,29 +66,29 @@ public class Theory {
 		public abstract void setLogic(Theory theory, Logics logic);
 		/// *** Delegators ***
 		protected final void declareInternalSort(
-				final Theory theory, final String name, final int cardinality, final int flags) {
+				Theory theory, String name, int cardinality, int flags) {
 			theory.declareInternalSort(name, cardinality, flags);
 		}
-		protected final void declareInternalFunction(final Theory theory, final String name,
-				final Sort[] paramSorts, final Sort resultSort, final int flags) {
+		protected final void declareInternalFunction(Theory theory, String name,
+				Sort[] paramSorts, Sort resultSort, int flags) {
 			theory.declareInternalFunction(name, paramSorts, resultSort, flags);
 		}
-		protected final void declareInternalFunction(final Theory theory, final String name,
-				final Sort[] paramTypes, final TermVariable[] defVars, final Term definition,
-				final int flags) {
+		protected final void declareInternalFunction(Theory theory, String name,
+				Sort[] paramTypes, TermVariable[] defVars, Term definition,
+				int flags) {
 			theory.declareInternalFunction(
 					name, paramTypes, defVars, definition, flags);
 		}
 
-		protected final void declareInternalPolymorphicFunction(final Theory theory,
-				final String name, final Sort[] sortParams,
-				final Sort[] paramTypes, final Sort resultType, final int flags) {
+		protected final void declareInternalPolymorphicFunction(Theory theory,
+				String name, Sort[] sortParams,
+				Sort[] paramTypes, Sort resultType, int flags) {
 			theory.declareInternalPolymorphicFunction(
 					name, sortParams, paramTypes, resultType, flags);
 		}
 		
 		protected final void defineFunction(
-				final Theory theory, final FunctionSymbolFactory factory) {
+				Theory theory, FunctionSymbolFactory factory) {
 			theory.defineFunction(factory);
 		}
 	}
@@ -145,7 +145,7 @@ public class Theory {
 		mEquals = mDistinct = mIte = null;
 	}
 	
-	public Theory(final Logics logic) {
+	public Theory(Logics logic) {
 		this(logic, null);
 	}
 	
@@ -155,7 +155,7 @@ public class Theory {
 	 * @param logic       The logic to use.
 	 * @param solverSetup The solver-specific setup delegate.
 	 */
-	public Theory(final Logics logic, final SolverSetup solverSetup) {
+	public Theory(Logics logic, SolverSetup solverSetup) {
 		mSolverSetup = solverSetup;
 		final Sort[] noarg = new Sort[0];
 		mBooleanSort = declareInternalSort("Bool", 0, 0).getSort(
@@ -189,7 +189,7 @@ public class Theory {
 
 	/******************** LOGICAL OPERATORS *******************************/
 	
-	private Term simplifyAndOr(final FunctionSymbol connector, final Term... subforms) {
+	private Term simplifyAndOr(FunctionSymbol connector, Term... subforms) {
 		final Term neutral = (connector == mAnd ? mTrue : mFalse);
 		final LinkedHashSet<Term> formulas = new LinkedHashSet<Term>();
 		
@@ -223,7 +223,7 @@ public class Theory {
 		return term(connector, arrforms);
 	}
 
-	public Term not(final Term f) {
+	public Term not(Term f) {
 		if (f == mTrue) {
 			return mFalse;
 		}
@@ -237,14 +237,14 @@ public class Theory {
 		return term(mNot, f);
 	}
 
-	public Term and(final Term... subforms) {
+	public Term and(Term... subforms) {
 		return simplifyAndOr(mAnd, subforms);
 	}
-	public Term or(final Term... subforms) {
+	public Term or(Term... subforms) {
 		return simplifyAndOr(mOr, subforms);
 	}
 
-	public Term implies(final Term f, final Term g) { 
+	public Term implies(Term f, Term g) { 
 		if (g == mTrue || f == mTrue) {
 			return g;
 		}
@@ -260,7 +260,7 @@ public class Theory {
 		return term(mImplies, f, g);
 	}
 
-	public Term xor(final Term f, final Term g)	{ 
+	public Term xor(Term f, Term g)	{ 
 		if (f == mTrue) {
 			return not(g);
 		}
@@ -279,7 +279,7 @@ public class Theory {
 		return term(mXor, f, g);
 	}
 
-	public Term ifthenelse(final Term c, final Term t, final Term e) {
+	public Term ifthenelse(Term c, Term t, Term e) {
 		if (c == mTrue) {
 			return t;
 		}
@@ -310,7 +310,7 @@ public class Theory {
 		return term(mIte, c, t, e);
 	}
 
-	private Term quantify(final int quant, final TermVariable[] vars, final Term f) {
+	private Term quantify(int quant, TermVariable[] vars, Term f) {
 		if (f == mTrue || f == mFalse) {
 			return f;
 		}
@@ -326,14 +326,14 @@ public class Theory {
 		mQfCache.put(hash,qf);
 		return qf;
 	}
-	public Term exists(final TermVariable[] vars, final Term f)	{
+	public Term exists(TermVariable[] vars, Term f)	{
 		return quantify(QuantifiedFormula.EXISTS, vars, f);
 	}
-	public Term forall(final TermVariable[] vars, final Term f)	{
+	public Term forall(TermVariable[] vars, Term f)	{
 		return quantify(QuantifiedFormula.FORALL, vars, f);
 	}
 	
-	public Term let(final TermVariable[] vars, final Term[] values, final Term subform) {
+	public Term let(TermVariable[] vars, Term[] values, Term subform) {
 		assert (vars.length == values.length);
 		if (vars.length == 0) {
 			return subform;
@@ -351,11 +351,11 @@ public class Theory {
 		return lf;
 	}
 
-	public Term let(final TermVariable var, final Term value, final Term subform) {
+	public Term let(TermVariable var, Term value, Term subform) {
 		return let(new TermVariable[] {var}, new Term[]{value}, subform);
 	}
 
-	public Term distinct(final Term... terms)	{
+	public Term distinct(Term... terms)	{
 		if (terms.length < 2) {
 			return null;
 		}
@@ -386,7 +386,7 @@ public class Theory {
 		}
 		return term(mDistinct, terms);
 	}
-	public Term equals(final Term... terms) {
+	public Term equals(Term... terms) {
 		if (terms.length < 2) {
 			return null;
 		}
@@ -420,7 +420,7 @@ public class Theory {
 
 	/******************** CONSTANTS *************************************/
 
-	public Term constant(final Object value, final Sort sort) {
+	public Term constant(Object value, Sort sort) {
 		if (value instanceof Rational) {
 			if (!sort.isNumericSort()) {
 				throw new SMTLIBException("Not a numeric sort");
@@ -448,7 +448,7 @@ public class Theory {
 		return nt;
 	}
 	
-	public Term numeral(final BigInteger num) {
+	public Term numeral(BigInteger num) {
 		Term result = constant(num.abs(), mNumericSort);
 		if (num.signum() < 0) {
 			final FunctionSymbol neg = getFunction("-", mNumericSort);
@@ -456,7 +456,7 @@ public class Theory {
 		}
 		return result;
 	}
-	public Term numeral(final String num) {
+	public Term numeral(String num) {
 		return numeral(new BigInteger(num));
 	}
 
@@ -472,7 +472,7 @@ public class Theory {
 		}
 		return result;
 	}
-	public Term decimal(final String value) {
+	public Term decimal(String value) {
 		return decimal(new BigDecimal(value));
 	}
 
@@ -483,7 +483,7 @@ public class Theory {
 	 * @param sort the sort; either Real or Int.
 	 * @return an smt term representing constant c.
 	 */
-	public Term rational(final Rational c, final Sort sort) {
+	public Term rational(Rational c, Sort sort) {
 		// This must not be an infinite or a NAN.
 		assert c.denominator().signum() == 1;
 		if (sort == mRealSort) {
@@ -494,7 +494,7 @@ public class Theory {
 		}
 	}
 
-	public Term binary(final String value) {
+	public Term binary(String value) {
 		assert value.startsWith("#b");
 		if (mBitVecSort == null) {
 			return null;
@@ -506,7 +506,7 @@ public class Theory {
 				ConstantTerm.hashConstant(value, sort));
 	}
 	
-	public Term hexadecimal(final String value) {
+	public Term hexadecimal(String value) {
 		assert value.startsWith("#x");
 		if (mBitVecSort == null) {
 			return null;
@@ -534,7 +534,7 @@ public class Theory {
 		return term(div, decimal(new BigDecimal(num)), decimal(new BigDecimal(denom)));
 	}
 	
-	public Term modelRational(final Rational rat, final Sort sort) {
+	public Term modelRational(Rational rat, Sort sort) {
 		if (sort == mRealSort) {
 			final BigInteger num = rat.numerator();
 			final BigInteger denom = rat.denominator();
@@ -562,7 +562,7 @@ public class Theory {
 		}
 	}
 	
-	public Term string(final String value) {
+	public Term string(String value) {
 		return constant(new QuotedObject(value), mStringSort);
 	}
 	
@@ -571,21 +571,21 @@ public class Theory {
 		return mLogic;
 	}
 
-	FunctionSymbol declareInternalFunction(final String name, final Sort[] paramTypes, 
-			final Sort resultType, final int flags) {
+	FunctionSymbol declareInternalFunction(String name, Sort[] paramTypes, 
+			Sort resultType, int flags) {
 		return defineFunction(name, paramTypes, resultType, null, null, 
 			flags | FunctionSymbol.INTERNAL);
 	}
 
-	FunctionSymbol declareInternalFunction(final String name, final Sort[] paramTypes, 
-			final TermVariable[] defVars, final Term definition, final int flags) {
+	FunctionSymbol declareInternalFunction(String name, Sort[] paramTypes, 
+			TermVariable[] defVars, Term definition, int flags) {
 		return defineFunction(name, paramTypes, definition.getSort(), 
 				defVars, definition, flags | FunctionSymbol.INTERNAL);
 	}
 
 	PolymorphicFunctionSymbol declareInternalPolymorphicFunction(
-			final String name, final Sort[] sortParams,
-			final Sort[] paramTypes, final Sort resultType, final int flags) {
+			String name, Sort[] sortParams,
+			Sort[] paramTypes, Sort resultType, int flags) {
 		assert !mFunFactory.containsKey(name);
 		final PolymorphicFunctionSymbol f = new PolymorphicFunctionSymbol(
 				name, sortParams, paramTypes, resultType,
@@ -596,7 +596,7 @@ public class Theory {
 	
 	class MinusFunctionFactory extends FunctionSymbolFactory {
 		Sort mSort1, mSort2;
-		public MinusFunctionFactory(final Sort sort1, final Sort sort2) {
+		public MinusFunctionFactory(Sort sort1, Sort sort2) {
 			super("-");
 			mSort1 = sort1;
 			mSort2 = sort2;
@@ -604,14 +604,14 @@ public class Theory {
 
 		@Override
 		public int getFlags(
-				final BigInteger[] indices, final Sort[] paramSorts, final Sort resultSort) {
+				BigInteger[] indices, Sort[] paramSorts, Sort resultSort) {
 			return paramSorts.length == 1 ?  FunctionSymbol.INTERNAL
 					: FunctionSymbol.LEFTASSOC | FunctionSymbol.INTERNAL;
 		}
 
 		@Override
-		public Sort getResultSort(final BigInteger[] indices, final Sort[] paramSorts,
-				final Sort resultSort) {
+		public Sort getResultSort(BigInteger[] indices, Sort[] paramSorts,
+				Sort resultSort) {
 			if (indices != null 
 				|| paramSorts.length == 0 || paramSorts.length > 2	
 				|| resultSort != null
@@ -633,14 +633,14 @@ public class Theory {
 
 		@Override
 		public Sort getResultSort(
-				final BigInteger[] indices, final Sort[] paramSorts, final Sort resultSort) {
+				BigInteger[] indices, Sort[] paramSorts, Sort resultSort) {
 			return indices != null && indices.length == 1
 					&& indices[0].signum() > 0
 					&& paramSorts.length == 1 && paramSorts[0] == mNumericSort
 					&& resultSort == null ? mBooleanSort : null;
 		}
 	}
-	private void createNumericOperators(final Sort sort, final boolean isRational) {
+	private void createNumericOperators(final Sort sort, boolean isRational) {
 		final Sort[] sort1 = new Sort[] { sort };
 		final Sort[] sort2 = new Sort[] { sort, sort };
 		declareInternalFunction("+", sort2, sort, FunctionSymbol.LEFTASSOC);
@@ -671,7 +671,7 @@ public class Theory {
 		class BinArithFactory extends FunctionSymbolFactory {
 			Sort mReturnSort;
 			int mFlags;
-			BinArithFactory(final String name, final Sort returnSort, final int flags) {
+			BinArithFactory(String name, Sort returnSort, int flags) {
 				super(name);
 				mReturnSort = returnSort;
 				mFlags = flags | FunctionSymbol.INTERNAL;
@@ -679,13 +679,13 @@ public class Theory {
 
 			@Override
 			public int getFlags(
-					final BigInteger[] indices, final Sort[] paramSorts, final Sort resultSort) {
+					BigInteger[] indices, Sort[] paramSorts, Sort resultSort) {
 				return mFlags;
 			}
 
 			@Override
 			public Sort getResultSort(
-					final BigInteger[] indices, final Sort[] paramSorts, final Sort resultSort) {
+					BigInteger[] indices, Sort[] paramSorts, Sort resultSort) {
 				if (indices == null
 					&& paramSorts.length == 2
 					&& paramSorts[0] == paramSorts[1]
@@ -739,7 +739,7 @@ public class Theory {
 
 		defineFunction(new FunctionSymbolFactory("abs") {
 			@Override
-			public Term getDefinition(final TermVariable[] tvs, final Sort resultSort) {
+			public Term getDefinition(TermVariable[] tvs, Sort resultSort) {
 				final Term zero = (resultSort == mNumericSort) ? numeral("0")
 							: decimal("0.0");
 				// abs x: (ite (>= x 0) x (- x))
@@ -749,7 +749,7 @@ public class Theory {
 
 			@Override
 			public Sort getResultSort(
-					final BigInteger[] indices, final Sort[] paramSorts, final Sort resultSort) {
+					BigInteger[] indices, Sort[] paramSorts, Sort resultSort) {
 				if (indices == null
 					&& paramSorts.length == 1
 					&& (paramSorts[0] == mNumericSort
@@ -777,8 +777,8 @@ public class Theory {
 				new Sort[] { array, generic2[0], generic2[1] },	array, 0);
 		defineFunction(new FunctionSymbolFactory("const") {
 			@Override
-			public Sort getResultSort(final BigInteger[] indices, final Sort[] paramSorts,
-					final Sort resultSort) {
+			public Sort getResultSort(BigInteger[] indices, Sort[] paramSorts,
+					Sort resultSort) {
 				if (indices != null
 					|| paramSorts.length != 1 || resultSort == null
 					|| resultSort.getName() != "Array"
@@ -794,7 +794,7 @@ public class Theory {
 		mBitVecSort = new SortSymbol(this, "BitVec", 0, null,
 				SortSymbol.INTERNAL | SortSymbol.INDEXED) {
 			@Override
-			public void checkArity(final BigInteger[] indices, final int arity) {
+			public void checkArity(BigInteger[] indices, int arity) {
 				if (indices == null || indices.length != 1) {
 					throw new IllegalArgumentException(
 							"BitVec needs one index");
@@ -818,24 +818,24 @@ public class Theory {
 			int mFlags;
 			Sort mResult;
 			public RegularBitVecFunction(
-					final String name, final int numArgs, final Sort result, final int flags) {
+					String name, int numArgs, Sort result, int flags) {
 				super(name);
 				mNumArgs = numArgs;
 				mResult = result;
 				mFlags = flags;
 			}
 			public RegularBitVecFunction(
-					final String name, final int numArgs, final Sort result) {
+					String name, int numArgs, Sort result) {
 				this(name, numArgs, result, FunctionSymbol.INTERNAL);
 			}
 			@Override
-			public int getFlags(final BigInteger[] indices, final Sort[] paramSorts,
-					final Sort resultSort) {
+			public int getFlags(BigInteger[] indices, Sort[] paramSorts,
+					Sort resultSort) {
 				return mFlags;
 			}
 			@Override
-			public Sort getResultSort(final BigInteger[] indices, final Sort[] paramSorts,
-					final Sort resultSort) {
+			public Sort getResultSort(BigInteger[] indices, Sort[] paramSorts,
+					Sort resultSort) {
 				if (indices != null
 					|| paramSorts.length != mNumArgs || resultSort != null
 					|| paramSorts[0].getName() != "BitVec") {
@@ -850,12 +850,12 @@ public class Theory {
 			}
 		}
 		class ExtendBitVecFunction extends FunctionSymbolFactory {
-			public ExtendBitVecFunction(final String name) {
+			public ExtendBitVecFunction(String name) {
 				super(name);
 			}
 			@Override
-			public Sort getResultSort(final BigInteger[] indices, final Sort[] paramSorts,
-					final Sort resultSort) {
+			public Sort getResultSort(BigInteger[] indices, Sort[] paramSorts,
+					Sort resultSort) {
 				if (indices == null || indices.length != 1
 					|| paramSorts.length != 1 || resultSort != null
 					|| paramSorts[0].getName() != "BitVec") {
@@ -867,12 +867,12 @@ public class Theory {
 			}
 		}
 		class RotateBitVecFunction extends FunctionSymbolFactory {
-			public RotateBitVecFunction(final String name) {
+			public RotateBitVecFunction(String name) {
 				super(name);
 			}
 			@Override
-			public Sort getResultSort(final BigInteger[] indices, final Sort[] paramSorts,
-					final Sort resultSort) {
+			public Sort getResultSort(BigInteger[] indices, Sort[] paramSorts,
+					Sort resultSort) {
 				if (indices == null || indices.length != 1
 					|| paramSorts.length != 1 || resultSort != null
 					|| paramSorts[0].getName() != "BitVec") {
@@ -883,13 +883,13 @@ public class Theory {
 		}
 		defineFunction(new FunctionSymbolFactory("concat") {
 			@Override
-			public int getFlags(final BigInteger[] indices, final Sort[] paramSorts,
-					final Sort resultSort) {
+			public int getFlags(BigInteger[] indices, Sort[] paramSorts,
+					Sort resultSort) {
 				return FunctionSymbol.INTERNAL;
 			}
 			@Override
-			public Sort getResultSort(final BigInteger[] indices, final Sort[] paramSorts,
-					final Sort resultSort) {
+			public Sort getResultSort(BigInteger[] indices, Sort[] paramSorts,
+					Sort resultSort) {
 				if (indices != null
 					|| paramSorts.length != 2 || resultSort != null
 					|| paramSorts[0].getName() != "BitVec"
@@ -904,8 +904,8 @@ public class Theory {
 		});
 		defineFunction(new FunctionSymbolFactory("extract") {
 			@Override
-			public Sort getResultSort(final BigInteger[] indices, final Sort[] paramSorts,
-					final Sort resultSort) {
+			public Sort getResultSort(BigInteger[] indices, Sort[] paramSorts,
+					Sort resultSort) {
 				if (indices == null || indices.length < 2
 					|| paramSorts.length != 1 || resultSort != null
 					|| paramSorts[0].getName() != "BitVec") {
@@ -953,8 +953,8 @@ public class Theory {
 
 		defineFunction(new FunctionSymbolFactory("repeat") {
 			@Override
-			public Sort getResultSort(final BigInteger[] indices, final Sort[] paramSorts,
-					final Sort resultSort) {
+			public Sort getResultSort(BigInteger[] indices, Sort[] paramSorts,
+					Sort resultSort) {
 				if (indices == null || indices.length != 1
 					|| paramSorts.length != 1 || resultSort != null
 					|| paramSorts[0].getName() != "BitVec") {
@@ -994,7 +994,7 @@ public class Theory {
 		mFloatingPointSort = new SortSymbol(this, "FloatingPoint", 0, null,
 				SortSymbol.INTERNAL | SortSymbol.INDEXED) {
 			@Override
-			public void checkArity(final BigInteger[] indices, final int arity) {
+			public void checkArity(BigInteger[] indices, int arity) {
 				if (indices == null || indices.length != 2) {
 					throw new IllegalArgumentException(
 							"Floating Point needs two indices");
@@ -1025,20 +1025,20 @@ public class Theory {
 			int mFlags;
 			int mFirstFloat;
 			public RegularFloatingPointFunction(
-					final String name, final int numArgs, final Sort result, final int flags) {
+					String name, int numArgs, Sort result, int flags) {
 				super(name);
 				mNumArgs = numArgs;
 				mResult = result;
 				mFlags = flags;
 			}
 			@Override
-			public int getFlags(final BigInteger[] indices, final Sort[] paramSorts,
-					final Sort resultSort) {
+			public int getFlags(BigInteger[] indices, Sort[] paramSorts,
+					Sort resultSort) {
 				return mFlags;
 			}
 			@Override
-			public Sort getResultSort(final BigInteger[] indices, final Sort[] paramSorts,
-					final Sort resultSort) {
+			public Sort getResultSort(BigInteger[] indices, Sort[] paramSorts,
+					Sort resultSort) {
 				if (indices != null
 					|| paramSorts.length != mNumArgs || resultSort != null){
 					return null;
@@ -1059,8 +1059,8 @@ public class Theory {
 
 		defineFunction(new FunctionSymbolFactory("fp") {
 			@Override
-			public Sort getResultSort(final BigInteger[] indices, final Sort[] paramSorts,
-					final Sort resultSort) {
+			public Sort getResultSort(BigInteger[] indices, Sort[] paramSorts,
+					Sort resultSort) {
 				if (indices != null
 					|| paramSorts.length != 3 || resultSort != null
 					|| paramSorts[0].getName() != "BitVec"
@@ -1079,8 +1079,8 @@ public class Theory {
 		// from BitVec to FP
 		defineFunction(new FunctionSymbolFactory("to_fp") {
 			@Override
-			public Sort getResultSort(final BigInteger[] indices, final Sort[] paramSorts,
-					final Sort resultSort) {
+			public Sort getResultSort(BigInteger[] indices, Sort[] paramSorts,
+					Sort resultSort) {
 				if (indices == null || indices.length != 2
 					|| paramSorts == null) {
 					return null;
@@ -1116,8 +1116,8 @@ public class Theory {
 
 		defineFunction(new FunctionSymbolFactory("to_fp_unsigned") {
 			@Override
-			public Sort getResultSort(final BigInteger[] indices, final Sort[] paramSorts,
-					final Sort resultSort) {
+			public Sort getResultSort(BigInteger[] indices, Sort[] paramSorts,
+					Sort resultSort) {
 				if (indices == null || indices.length != 2
 					|| paramSorts.length != 2 || resultSort != null
 					|| paramSorts[0].getName() != "RoundingMode"
@@ -1130,8 +1130,8 @@ public class Theory {
 
 		defineFunction(new FunctionSymbolFactory("fp.to_ubv") {
 			@Override
-			public Sort getResultSort(final BigInteger[] indices, final Sort[] paramSorts,
-					final Sort resultSort) {
+			public Sort getResultSort(BigInteger[] indices, Sort[] paramSorts,
+					Sort resultSort) {
 				if (indices == null || indices.length != 1
 					|| paramSorts.length != 2 || resultSort != null
 					|| paramSorts[0].getName() != "RoundingMode"
@@ -1143,29 +1143,10 @@ public class Theory {
 			}
 		});
 
-		
-		 // Non-standard SMT-LIB extension of Z3.
-		 // See http://z3prover.github.io/api/html/ml/Z3.FloatingPoint.html
-		defineFunction(new FunctionSymbolFactory("fp.to_ieee_bv") {
-			@Override
-			public Sort getResultSort(final BigInteger[] indices, final Sort[] paramSorts,
-					final Sort resultSort) {
-				if (indices != null
-					|| paramSorts.length != 1 || resultSort != null
-					|| paramSorts[0].getName() != "FloatingPoint") {
-					return null;
-				}
-				assert paramSorts[0].getIndices().length == 2;
-				final BigInteger[] floatIndices = paramSorts[0].getIndices();
-				return mBitVecSort.getSort(
-						new BigInteger[] { floatIndices[0].add(floatIndices[1]) }, new Sort[0]);
-			}
-		});
-		
 		defineFunction(new FunctionSymbolFactory("fp.to_sbv") {
 			@Override
-			public Sort getResultSort(final BigInteger[] indices, final Sort[] paramSorts,
-					final Sort resultSort) {
+			public Sort getResultSort(BigInteger[] indices, Sort[] paramSorts,
+					Sort resultSort) {
 				if (indices == null || indices.length != 1
 					|| paramSorts.length != 2 || resultSort != null
 					|| paramSorts[0].getName() != "RoundingMode"
@@ -1181,12 +1162,12 @@ public class Theory {
 		 * Used to create Constants of the Floating Point theory
 		 */
 		class FloatingPointConstant extends FunctionSymbolFactory {
-			public FloatingPointConstant(final String name) {
+			public FloatingPointConstant(String name) {
 				super(name);
 			}
 			@Override
-			public Sort getResultSort(final BigInteger[] indices, final Sort[] paramSorts,
-					final Sort resultSort) {
+			public Sort getResultSort(BigInteger[] indices, Sort[] paramSorts,
+					Sort resultSort) {
 				if (indices.length != 2 || 
 					paramSorts.length != 0 || resultSort != null){
 					return null;
@@ -1261,7 +1242,7 @@ public class Theory {
 		defineFunction(new RegularFloatingPointFunction("fp.to_real", 1, mRealSort, FunctionSymbol.INTERNAL));
 	}
 
-	private void setLogic(final Logics logic) {
+	private void setLogic(Logics logic) {
 		mLogic = logic;
 
 		if (logic.isArray()) {
@@ -1307,8 +1288,8 @@ public class Theory {
 	
 	/******************** SORTS ********************************************/
 	
-	private SortSymbol defineSort(final String name, final int paramCount, final Sort definition,
-				final int flags) {
+	private SortSymbol defineSort(String name, int paramCount, Sort definition,
+				int flags) {
 		if ((flags & FunctionSymbol.INTERNAL) == 0
 				&& definition == null
 				&& !mLogic.isUF() && !mLogic.isArray()) {
@@ -1324,15 +1305,15 @@ public class Theory {
 		return sortsym;
 	}
 
-	public SortSymbol declareSort(final String name, final int paramCount) {
+	public SortSymbol declareSort(String name, int paramCount) {
 		return defineSort(name, paramCount, null, 0);
 	}
 	
-	public SortSymbol defineSort(final String name, final int paramCount, final Sort definition) {
+	public SortSymbol defineSort(String name, int paramCount, Sort definition) {
 		return defineSort(name, paramCount, definition, 0);
 	}
 
-	public Sort[] createSortVariables(final String... names) {
+	public Sort[] createSortVariables(String... names) {
 		final Sort[] sorts = new Sort[names.length];
 		for (int i = 0; i < names.length; i++) {
 			sorts[i] = new SortSymbol(
@@ -1342,7 +1323,7 @@ public class Theory {
 		return sorts;
 	}
 	
-	SortSymbol declareInternalSort(final String name, final int paramCount, final int flags) {
+	SortSymbol declareInternalSort(String name, int paramCount, int flags) {
 		return defineSort(name, paramCount, null, flags | SortSymbol.INTERNAL);
 	}
 
@@ -1353,7 +1334,7 @@ public class Theory {
 	 * @param args The sort arguments.
 	 * @return the sort object.
 	 */
-	public Sort getSort(final String id, final Sort... args) {
+	public Sort getSort(String id, Sort... args) {
 		return getSort(id, null, args);
 	}
 
@@ -1364,7 +1345,7 @@ public class Theory {
 	 * @param args The sort arguments.
 	 * @return the sort object.
 	 */
-	public Sort getSort(final String id, final BigInteger[] indices, final Sort... args) {
+	public Sort getSort(String id, BigInteger[] indices, Sort... args) {
 		SortSymbol symbol;
 		symbol = mDeclaredSorts.get(id);
 		if (symbol == null) {
@@ -1411,15 +1392,15 @@ public class Theory {
 
 	/******************** FUNCTIONS SYMBOLS AND FUNCTION TERMS ************/
 	
-	private void defineFunction(final FunctionSymbolFactory factory) {
+	private void defineFunction(FunctionSymbolFactory factory) {
 		if (mFunFactory.put(factory.mFuncName, factory) != null) {
 			throw new AssertionError();
 		}
 	}
 	
-	private FunctionSymbol defineFunction(final String name, Sort[] paramTypes,
-			final Sort resultType, TermVariable[] definitionVars, final Term definition,
-			final int flags) {
+	private FunctionSymbol defineFunction(String name, Sort[] paramTypes,
+			Sort resultType, TermVariable[] definitionVars, Term definition,
+			int flags) {
 		if ((flags & FunctionSymbol.INTERNAL) == 0) {
 			if (mLogic == null) {
 				throw new IllegalArgumentException("Call set-logic first!");
@@ -1460,7 +1441,7 @@ public class Theory {
 	 * @return the created function symbol.
 	 */
 	public FunctionSymbol declareFunction(
-			final String name, final Sort[] paramTypes, final Sort resultType) {
+			String name, Sort[] paramTypes, Sort resultType) {
 		return defineFunction(name, paramTypes, resultType, null, null, 0);
 	}
 	/**
@@ -1473,8 +1454,8 @@ public class Theory {
 	 *    if the sorts are not visible in this scope.
 	 * @return the created function symbol.
 	 */
-	public FunctionSymbol defineFunction(final String name, 
-			final TermVariable[] definitionVars, final Term definition) {
+	public FunctionSymbol defineFunction(String name, 
+			TermVariable[] definitionVars, Term definition) {
 		final Sort[] paramTypes =
 				definitionVars.length == 0 ? EMPTY_SORT_ARRAY : new Sort[definitionVars.length];
 		for (int i = 0; i < paramTypes.length; i++) {
@@ -1485,7 +1466,7 @@ public class Theory {
 				definitionVars, definition, 0);
 	}
 
-	public FunctionSymbol getFunction(final String name, final Sort... paramTypes) {
+	public FunctionSymbol getFunction(String name, Sort... paramTypes) {
 		return getFunctionWithResult(name, null, null, paramTypes);
 	}
 	
@@ -1493,7 +1474,7 @@ public class Theory {
 		return mDeclaredFuns;
 	}
 	
-	private FunctionSymbol getModelValueSymbol(final String name, final Sort sort) {
+	private FunctionSymbol getModelValueSymbol(String name, Sort sort) {
 		final int hash = HashUtils.hashJenkins(name.hashCode(), sort);
 		for (final FunctionSymbol symb : mModelValueCache.iterateHashCode(hash)) {
 			if (symb.getName().equals(name) && symb.getReturnSort() == sort) {
@@ -1509,8 +1490,8 @@ public class Theory {
 	}
 
 	public FunctionSymbol getFunctionWithResult(
-			final String name, final BigInteger[] indices, final Sort resultType,
-			final Sort... paramTypes) {
+			String name, BigInteger[] indices, Sort resultType,
+			Sort... paramTypes) {
 		if (resultType != null && indices == null && paramTypes.length == 0
 			&& name.matches(MODEL_VALUE_PATTERN)) {
 			return getModelValueSymbol(name, resultType);
@@ -1545,7 +1526,7 @@ public class Theory {
 		return null;
 	}
 	
-	private FunctionSymbol getBitVecConstant(final String name, final BigInteger[] indices) {
+	private FunctionSymbol getBitVecConstant(String name, BigInteger[] indices) {
 		if (mBitVecConstCache == null) {
 			mBitVecConstCache = new UnifyHash<FunctionSymbol>();
 		}
@@ -1564,7 +1545,7 @@ public class Theory {
 	}
 
 	public ApplicationTerm term(
-			final FunctionSymbolFactory factory, final Term... parameters) {
+			FunctionSymbolFactory factory, Term... parameters) {
 		final Sort[] sorts =
 				parameters.length == 0 ? EMPTY_SORT_ARRAY : new Sort[parameters.length];
 		for (int i = 0; i < parameters.length; i++) {
@@ -1579,7 +1560,7 @@ public class Theory {
 		return term(fsym, parameters);
 	}
 
-	public ApplicationTerm term(final String func, final Term... parameters) {
+	public ApplicationTerm term(String func, Term... parameters) {
 		final Sort[] paramSorts =
 				parameters.length == 0 ? EMPTY_SORT_ARRAY : new Sort[parameters.length];
 		for (int i = 0; i < parameters.length; i++) {
@@ -1593,7 +1574,7 @@ public class Theory {
 		return term(fsym, parameters);
 	}
 
-	public ApplicationTerm term(final FunctionSymbol func, Term... parameters) {
+	public ApplicationTerm term(FunctionSymbol func, Term... parameters) {
 		if (parameters.length == 0) {
 			parameters = EMPTY_TERM_ARRAY;
 		}
@@ -1621,7 +1602,7 @@ public class Theory {
 	 * @param sort   the sort of the variable.
 	 * @return a fresh term variable.
 	 */
-	public TermVariable createFreshTermVariable(final String prefix, final Sort sort) {
+	public TermVariable createFreshTermVariable(String prefix, Sort sort) {
 		final String name = "." + prefix + "." + mTvarCtr++;
 		return new TermVariable(name, sort,
 				TermVariable.hashVariable(name, sort));
@@ -1633,7 +1614,7 @@ public class Theory {
 	 * @param sort   the sort of the variable.
 	 * @return a term variable.
 	 */
-	public TermVariable createTermVariable(final String name,final Sort sort) {
+	public TermVariable createTermVariable(String name,Sort sort) {
 		final int hash = TermVariable.hashVariable(name, sort);
 		for (final TermVariable tv : mTvUnify.iterateHashCode(hash)) {
 			if (tv.getSort().equals(sort) && tv.getName().equals(name)) {
@@ -1645,13 +1626,13 @@ public class Theory {
 		return tv;
 	}
 	
-	public Term term(final TermVariable var) {
+	public Term term(TermVariable var) {
 		return var;
 	}
 
 	/******************** ANNOTATED TERMS *********************************/
 	
-	public Term annotatedTerm(final Annotation[] annots, final Term sub) {
+	public Term annotatedTerm(Annotation[] annots, Term sub) {
 		final int hash = AnnotatedTerm.hashAnnotations(annots, sub);
 		for (final Term t : mTermCache.iterateHashCode(hash)) {
 			if (t instanceof AnnotatedTerm) {
@@ -1684,7 +1665,7 @@ public class Theory {
 	}
 	
 	/******************** SKOLEMIZATION SUPPORT ***************************/
-	public FunctionSymbol skolemize(final TermVariable tv) {
+	public FunctionSymbol skolemize(TermVariable tv) {
 		return new FunctionSymbol(
 				"@" + tv.getName() + "_skolem_" + mSkolemCounter++,null,
 				EMPTY_SORT_ARRAY,tv.getSort(),null,null,0);
@@ -1716,7 +1697,7 @@ public class Theory {
 		}
 	}
 
-	public void setGlobalSymbols(final boolean globalDecls) {
+	public void setGlobalSymbols(boolean globalDecls) {
 		mGlobalDecls = globalDecls;
 	}
 }

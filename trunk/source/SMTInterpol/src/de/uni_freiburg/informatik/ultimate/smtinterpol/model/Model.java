@@ -18,9 +18,12 @@
  */
 package de.uni_freiburg.informatik.ultimate.smtinterpol.model;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
@@ -28,6 +31,7 @@ import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.LogProxy;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.Clausifier;
@@ -190,7 +194,53 @@ public class Model implements de.uni_freiburg.informatik.ultimate.logic.Model {
 		}
 		return si.extendFresh();
 	}
-	
+
+	public Set<FunctionSymbol> getDefinedFunctions() {
+		return Collections.unmodifiableSet(mFuncVals.keySet());
+	}
+
+	Term index2Term(Index index, TermVariable[] vars) {
+		final int[] idx = index.getArray();
+		assert vars.length == idx.length;
+		final Term[] conj = new Term[vars.length];
+		for (int i = 0; i < vars.length; ++i) {
+			conj[i] = mTheory.equals(vars[i],
+					toModelTerm(idx[i], vars[i].getSort()));
+		}
+		return mTheory.and(conj);
+	}
+
+	public Term getFunctionDefinition(FunctionSymbol fs, TermVariable[] vars) {
+		FunctionValue value = mFuncVals.get(fs);
+		if (value == null)
+			throw new IllegalArgumentException("No model for "+fs);
+		if (fs.getParameterSorts().length != vars.length)
+			throw new IllegalArgumentException("Wrong number of variables");
+		final int defaultVal = value.getDefault();
+		Sort resultSort = fs.getReturnSort();
+		Term definition = toModelTerm(defaultVal, resultSort);
+		for (final Entry<Index, Integer> me : value.values().entrySet()) {
+			if (me.getValue() != defaultVal) {
+				Term cond = index2Term(me.getKey(), vars);
+				Term val = toModelTerm(me.getValue(), resultSort);
+				definition = mTheory.ifthenelse(cond, val, definition);
+			}
+		}
+		return definition;
+	}
+
+	public Term getFunctionDefinition(String func, TermVariable[] args) {
+		Sort[] argTypes = new Sort[args.length];
+		for (int i = 0; i < args.length; i++) {
+			argTypes[i] = args[i].getSort();
+		}
+		FunctionSymbol fs = mTheory.getFunction(func, argTypes);
+		if (fs == null)
+			throw new IllegalArgumentException
+				("Function "+func+" not defined.");
+		return getFunctionDefinition(fs, args);
+	}
+
 	public FunctionValue map(FunctionSymbol fs, int value) {
 		FunctionValue res = mFuncVals.get(fs);
 		if (res == null) {

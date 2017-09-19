@@ -37,25 +37,25 @@ public class DAGSize extends NonRecursive {
 		long mSizeBefore = 0;
 		Term mTerm;
 
-		public TreeSizeCache(final Term term) {
+		public TreeSizeCache(Term term) {
 			mSizeBefore = mSize;
 			mTerm = term;
 		}
 
 		@Override
-		public void walk(final NonRecursive walker) {
+		public void walk(NonRecursive walker) {
 			mCache.put(mTerm, mSize - mSizeBefore);
 		}
 	}
 
 	private class TermOnceWalker extends NonRecursive.TermWalker {
 
-		public TermOnceWalker(final Term term) {
+		public TermOnceWalker(Term term) {
 			super(term);
 		}
 
 		@Override
-		public void walk(final NonRecursive walker) {
+		public void walk(NonRecursive walker) {
 			if (mCache.containsKey(mTerm)) {
 				if (mComputeTreeSize)
 					mSize += mCache.get(mTerm);
@@ -71,40 +71,40 @@ public class DAGSize extends NonRecursive {
 		}
 
 		@Override
-		public void walk(final NonRecursive walker, final ConstantTerm term) {
+		public void walk(NonRecursive walker, ConstantTerm term) {
 			// No subterms to enqueue
 		}
 
 		@Override
-		public void walk(final NonRecursive walker, final AnnotatedTerm term) {
+		public void walk(NonRecursive walker, AnnotatedTerm term) {
 			// TODO Do we want to count annotations???
 			walker.enqueueWalker(new TermOnceWalker(term.getSubterm()));
 		}
 
 		@Override
-		public void walk(final NonRecursive walker, final ApplicationTerm term) {
+		public void walk(NonRecursive walker, ApplicationTerm term) {
 			for (final Term t : term.getParameters()) {
 				walker.enqueueWalker(new TermOnceWalker(t));
 			}
 		}
 
 		@Override
-		public void walk(final NonRecursive walker, final LetTerm term) {
+		public void walk(NonRecursive walker, LetTerm term) {
 			throw new InternalError("Input should be unletted");
 		}
 
 		@Override
-		public void walk(final NonRecursive walker, final QuantifiedFormula term) {
+		public void walk(NonRecursive walker, QuantifiedFormula term) {
 			walker.enqueueWalker(new TermOnceWalker(term.getSubformula()));
 		}
 
 		@Override
-		public void walk(final NonRecursive walker, final TermVariable term) {
+		public void walk(NonRecursive walker, TermVariable term) {
 			// No subterms to enqueue
 		}
 	}
 
-	private final Map<Term, Long> mCache;
+	private Map<Term, Long> mCache;
 	private boolean mComputeTreeSize;
 	private long mSize;
 	
@@ -120,13 +120,13 @@ public class DAGSize extends NonRecursive {
 		mSize = 0;
 	}
 	
-	public int size(final Term term) {
+	public int size(Term term) {
 		mComputeTreeSize = false;
 		run(new TermOnceWalker(new FormulaUnLet().unlet(term)));
 		return (int) mSize;
 	}
 	
-	public long treesize(final Term term) {
+	public long treesize(Term term) {
 		mComputeTreeSize = true;
 		run(new TermOnceWalker(new FormulaUnLet().unlet(term)));
 		return mSize;

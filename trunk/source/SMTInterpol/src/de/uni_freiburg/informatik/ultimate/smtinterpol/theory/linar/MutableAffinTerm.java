@@ -18,7 +18,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar;
 
-import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Iterator;
 import java.util.Map;
@@ -93,7 +92,7 @@ public class MutableAffinTerm {
 	}
 	
 	private void addSimple(Rational c, LinVar term) {
-		assert (/*!term.getLinVar().isInitiallyBasic() &&*/ !c.equals(Rational.ZERO));
+		assert (!c.equals(Rational.ZERO));
 		final Rational oldc = mSummands.remove(term);
 		if (oldc != null) {
 			c = oldc.add(c);
@@ -217,8 +216,7 @@ public class MutableAffinTerm {
 		}
 		assert (!isInt || mConstant.mA.isIntegral());
 		final Term constTerm = mConstant.mA.equals(Rational.ZERO) ? null 
-			: isInt ? t.numeral(mConstant.mA.numerator())
-			: t.rational(mConstant.mA.numerator(), mConstant.mA.denominator());
+			: mConstant.mA.toTerm(numSort);
 		final Term[] terms = new Term[mSummands.size() + (constTerm == null ? 0 : 1)];
 		if (constTerm != null) {
 			terms[mSummands.size()] = constTerm;
@@ -238,14 +236,13 @@ public class MutableAffinTerm {
 			if (me.getValue().equals(Rational.MONE)) {
 				convme = t.term(negate, convme);
 			} else if (!me.getValue().equals(Rational.ONE)) {
-				final Term convfac = isInt ? t.numeral(me.getValue().numerator())
-						: t.rational(me.getValue().numerator(),me.getValue().denominator());
+				final Term convfac = me.getValue().toTerm(numSort);
 				convme = t.term(times, convfac, convme);
 			}
 			terms[offset++] = convme;
 		}
 		if (terms.length == 0) {
-			return isInt ? t.numeral(BigInteger.ZERO) : t.rational(BigInteger.ZERO, BigInteger.ONE);
+			return Rational.ZERO.toTerm(numSort);
 		} else if (terms.length == 1) {
 			return terms[0];
 		} else {
@@ -283,9 +280,9 @@ public class MutableAffinTerm {
 				? smtTheory.mTrue : smtTheory.mFalse;
 		}
 		final boolean isInt = isInt();
+		final Sort sort = smtTheory.getSort(isInt ? "Int" : "Real");
 		final String comp = mConstant.mEps == 0 ? "<=" : "<";
-		final Term zero = isInt ? smtTheory.numeral(BigInteger.ZERO)
-				: smtTheory.decimal(BigDecimal.ZERO);
+		final Term zero = Rational.ZERO.toTerm(sort);
 		final Term res = smtTheory.term(comp, toSMTLib(smtTheory, isInt, quoted), zero);
 		return quoted ? smtTheory.annotatedTerm(NamedAtom.QUOTED, res) : res;
 	}

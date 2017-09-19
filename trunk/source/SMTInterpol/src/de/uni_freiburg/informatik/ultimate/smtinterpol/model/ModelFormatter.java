@@ -91,17 +91,6 @@ public class ModelFormatter {
 		mIndent -= Config.INDENTATION;
 	}
 	
-	private Term index2Term(Index index, TermVariable[] vars) {
-		final int[] idx = index.getArray();
-		assert vars.length == idx.length;
-		final Term[] conj = new Term[vars.length];
-		for (int i = 0; i < vars.length; ++i) {
-			conj[i] = mTheory.equals(vars[i],
-					mModel.toModelTerm(idx[i], vars[i].getSort()));
-		}
-		return mTheory.and(conj);
-	}
-	
 	private void appendFunctionValue(FunctionValue value, TermVariable[] vars,
 			Sort resultSort) {
 		if (vars.length == 0) {
@@ -116,7 +105,7 @@ public class ModelFormatter {
 				if (me.getValue() != defaultVal) {
 					newline();
 					mString.append("(ite ").append(
-							index2Term(me.getKey(), vars).toStringDirect())
+							mModel.index2Term(me.getKey(), vars).toStringDirect())
 							.append(' ').append(mModel.toModelTerm(
 									me.getValue(), resultSort)
 											.toStringDirect());

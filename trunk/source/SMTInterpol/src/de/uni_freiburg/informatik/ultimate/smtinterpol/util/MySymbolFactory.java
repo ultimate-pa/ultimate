@@ -22,67 +22,29 @@ import com.github.jhoenicke.javacup.runtime.Symbol;
 import com.github.jhoenicke.javacup.runtime.SymbolFactory;
 
 public class MySymbolFactory implements SymbolFactory {
-	// Factory methods
-	public static Symbol newSymbol(
-			final String name, final int id, final int lline, final int lcol, final int rline, final int rcol,
-			final Object value) {
-		return new LineColumnSymbol(name, id, lline, lcol, rline, rcol, value);
-	}
-	
-	public static Symbol newSymbol(
-			final String name, final int id, final int lline, final int lcol, final int rline, final int rcol) {
-		return new LineColumnSymbol(name, id, lline, lcol, rline, rcol, null);
-	}
-	
-	@Override
-	public Symbol newSymbol(
-			final String name, final int id, final Symbol left, final Symbol right, final Object value) {
-		return new LineColumnSymbol(name, id, left, right, value);
-	}
-	
-	@Override
-	public Symbol newSymbol(final String name, final int id, final Symbol left, final Symbol right) {
-		return new LineColumnSymbol(name, id, left, right, null);
-	}
-	
-	@Override
-	public Symbol newSymbol(final String name, final int id) {
-		return new LineColumnSymbol(name, id, -1, -1, -1, -1, null);
-	}
-	
-	@Override
-	public Symbol newSymbol(final String name, final int id, final Object value) {
-		return new LineColumnSymbol(name, id, -1, -1, -1, -1, value);
-	}
-	
-	@Override
-	public Symbol startSymbol(final String name, final int id, final int state) {
-		return new LineColumnSymbol(name, id, state);
-	}
-	
-	public static class LineColumnSymbol extends Symbol {
+	public class LineColumnSymbol extends Symbol {
 		private final String mName;
 		private final int mLColumn;
 		private final int mRColumn;
-		
-		public LineColumnSymbol(final String name, final int id, final int state) {
-			super(id, state);
-			mName = name;
-			mLColumn = -1;
-			mRColumn = -1;
-		}
-		
-		public LineColumnSymbol(final String name, final int id,
-				final int left, final int lcolumn, final int right, final int rcolumn,
-				final Object o) {
-			super(id, left, right, o);
-			mName = name;
-			mLColumn = lcolumn;
-			mRColumn = rcolumn;
-		}
+ 
+ 		public LineColumnSymbol(String name, int id, int state) {
+ 			super(id, state);
+ 			mName = name;
+ 			mLColumn = -1;
+ 			mRColumn = -1;
+ 		}
+ 		
+ 		public LineColumnSymbol(String name, int id, 
+	            int left, int lcolumn, int right, int rcolumn, 
+	            Object o) {
+ 			super(id, left, right, o);
+ 			mName = name;
+ 			mLColumn = lcolumn;
+ 			mRColumn = rcolumn;
+ 		}
 		
 		public LineColumnSymbol(
-				final String name, final int id, final Symbol left, final Symbol right, final Object o) {
+				String name, int id, Symbol left, Symbol right, Object o) {
 			super(id, left, right, o);
 			mName = name;
 			if (left instanceof LineColumnSymbol) {
@@ -100,10 +62,11 @@ public class MySymbolFactory implements SymbolFactory {
 		public String getLocation() {
 			if (mLColumn >= 0) {
 				return left + ":" + mLColumn;
+			} else {
+				return Integer.toString(left);
 			}
-			return Integer.toString(left);
 		}
-		
+
 		public String getName() {
 			return mName;
 		}
@@ -114,4 +77,36 @@ public class MySymbolFactory implements SymbolFactory {
 					+ mRColumn + ")";
 		}
 	}
+	
+    // Factory methods
+    public Symbol newSymbol(
+    		String name, int id, int lline, int lcol, int rline, int rcol, Object value) {
+        return new LineColumnSymbol(name,id,lline,lcol,rline,rcol,value);
+    }
+    public Symbol newSymbol(
+    		String name, int id, int lline, int lcol, int rline, int rcol) {
+        return new LineColumnSymbol(name,id,lline,lcol,rline,rcol, null);
+    }
+    @Override
+	public Symbol newSymbol(
+    		String name, int id, Symbol left, Symbol right, Object value) {
+        return new LineColumnSymbol(name,id,left,right,value);
+    }
+    @Override
+	public Symbol newSymbol(String name, int id, Symbol left, Symbol right) {
+        return new LineColumnSymbol(name,id,left,right,null);
+    }
+    @Override
+	public Symbol newSymbol(String name, int id) {
+        return new LineColumnSymbol(name,id,-1,-1,-1,-1,null);
+    }
+    @Override
+	public Symbol newSymbol(String name, int id, Object value) {
+        return new LineColumnSymbol(name,id,-1,-1,-1,-1,value);
+    }
+    @Override
+	public Symbol startSymbol(String name, int id, int state) {
+        final LineColumnSymbol s = new LineColumnSymbol(name,id, state);
+        return s;
+    }
 }

@@ -18,7 +18,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar;
 
-import java.math.BigInteger;
 import java.util.ArrayList;
 
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
@@ -74,8 +73,7 @@ public class LAEquality extends DPLLAtom {
 				smtTheory.getFunction("=", binfunc);
 		final Term res = smtTheory.term(comp,
 				at.toSMTLib(smtTheory, isInt, quoted),
-				isInt ? smtTheory.numeral(BigInteger.ZERO)
-					: smtTheory.rational(BigInteger.ZERO,BigInteger.ONE));
+				Rational.ZERO.toTerm(s));
 		return quoted ? smtTheory.annotatedTerm(NamedAtom.QUOTED, res) : res;
 	}
 

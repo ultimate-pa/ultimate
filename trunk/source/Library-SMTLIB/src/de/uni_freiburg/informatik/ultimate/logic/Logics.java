@@ -98,7 +98,7 @@ public enum Logics {
 	
 	private final int mFeatures;
 	
-	private Logics(final int features) {
+	private Logics(int features) {
 		mFeatures = features;
 	}
 

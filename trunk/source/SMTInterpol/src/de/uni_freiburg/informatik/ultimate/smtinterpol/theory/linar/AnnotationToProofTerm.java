@@ -197,7 +197,9 @@ public class AnnotationToProofTerm {
 			// If the generated clause would just be of the form
 			// ell \/ not ell, we omit the clause from the
 			// proof.
-			if (disjs.length == 2 && disjs[1] == info.mNegLiteral) {
+			if (disjs.length == 2 &&
+					(disjs[0].equals(theory.term("not",disjs[1]))
+									|| disjs[1].equals(theory.term("not",disjs[0])))) {
 				continue todo_loop;
 			}
 			Term proofAnnot = theory.term(theory.mOr, disjs);

@@ -19,6 +19,7 @@
 package de.uni_freiburg.informatik.ultimate.logic;
 
 import java.util.Map;
+import java.util.Set;
 
 /**
  * A minimal interface for model queries.  The model should represent the model
@@ -33,7 +34,7 @@ import java.util.Map;
  * {@link ConstantTerm ConstantTerms} whose value is of type {@link Rational}.
  * For non-numeric sorts, we return some term of the corresponding sort.  No
  * further guarantees are made.  
- * @author Juergen Christ
+ * @author Juergen Christ, Jochen Hoenicke
  */
 public interface Model {
 	/**
@@ -42,10 +43,29 @@ public interface Model {
 	 * @return Value of the term.
 	 */
 	public Term evaluate(Term input);
+
 	/**
 	 * Compute the value of some input terms.
 	 * @param input Terms to evaluate.
 	 * @return Values of the terms.
 	 */
 	public Map<Term, Term> evaluate(Term[] input);
+
+	/**
+	 * Get the set of function symbols for which the model defines the value.
+	 * These is the set of uninterpreted function symbols.
+	 * @return The set of function symbols.
+	 */
+	public Set<FunctionSymbol> getDefinedFunctions();
+
+	/**
+	 * Get the definition of a function.  This is a term that can be used as
+	 * last parameter in a <pre>(define-fun ...)</pre> command.
+	 * @param func the name of the function
+	 * @param args the variables that should be used in the returned term
+	 * to refer to the arguments.  Their sort must match the function arguments
+	 * of the function.
+	 * @return The defining term.
+	 */
+	public Term getFunctionDefinition(String func, TermVariable[] args);
 }
