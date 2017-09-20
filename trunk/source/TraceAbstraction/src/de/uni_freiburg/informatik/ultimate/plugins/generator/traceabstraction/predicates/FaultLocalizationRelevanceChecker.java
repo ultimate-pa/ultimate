@@ -26,6 +26,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates;
 
+import java.util.function.Predicate;
+
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
@@ -36,11 +40,15 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICall
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.HoareTripleCheckerStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SubtermPropertyChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 
 /**
  * Checks the relevance of a <code>CodeBlock</code> with respect to a pre- and a
@@ -51,7 +59,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
  */
 public class FaultLocalizationRelevanceChecker {
 	
-	public final boolean mUseUnsatCores = false;
+	private final boolean mUseUnsatCores = false;
+	private final IUltimateServiceProvider mServices;
+	private final ILogger mLogger;
 	/**
 	 * Statement relevance information for fault localization.
 	 * 
@@ -118,7 +128,10 @@ public class FaultLocalizationRelevanceChecker {
 	private final FaultLocalizationHoareTripleChecker mHoareTripleChecker;
 	private final ManagedScript mManagedScript;
 	
-	public FaultLocalizationRelevanceChecker(final CfgSmtToolkit csToolkit) {
+	
+	public FaultLocalizationRelevanceChecker(final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit) {
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mHoareTripleChecker = new FaultLocalizationHoareTripleChecker(csToolkit);
 		mManagedScript = csToolkit.getManagedScript();
 	}
@@ -139,7 +152,7 @@ public class FaultLocalizationRelevanceChecker {
 	private ERelevanceStatus computeRelevancyInternalWithoutUnsatCores(final IPredicate pre, final IInternalAction act,
 			final IPredicate post) {
 		final ERelevanceStatus result;
-		final Validity havocRes = mHoareTripleChecker.checkInternal(pre, constructHavocedInternalAction(act, mManagedScript), post);
+		final Validity havocRes = mHoareTripleChecker.checkInternal(pre, constructHavocedInternalAction(mServices, act, mManagedScript), post);
 		switch (havocRes) {
 		case INVALID: {
 			final Validity nomalRes = mHoareTripleChecker.checkInternal(pre, act, post);
@@ -188,7 +201,7 @@ public class FaultLocalizationRelevanceChecker {
 	private ERelevanceStatus computeRelevancyCallWithoutUnsatCores(final IPredicate pre, final ICallAction act,
 			final IPredicate post) {
 		final ERelevanceStatus result;
-		final Validity havocRes = mHoareTripleChecker.checkCall(pre, constructHavocedCallAction(act, mManagedScript), post);
+		final Validity havocRes = mHoareTripleChecker.checkCall(pre, constructHavocedCallAction(mServices, act, mManagedScript), post);
 		switch (havocRes) {
 		case INVALID: {
 			final Validity nomalRes = mHoareTripleChecker.checkCall(pre, act, post);
@@ -239,7 +252,7 @@ public class FaultLocalizationRelevanceChecker {
 	private ERelevanceStatus computeRelevancyReturnWithoutUnsatCores(final IPredicate pre, final IPredicate hier,
 			final IReturnAction act, final IPredicate post) {
 		final ERelevanceStatus result;
-		final Validity havocRes = mHoareTripleChecker.checkReturn(pre, hier, constructHavocedReturnAction(act, mManagedScript), post);
+		final Validity havocRes = mHoareTripleChecker.checkReturn(pre, hier, constructHavocedReturnAction(mServices, act, mManagedScript), post);
 		switch (havocRes) {
 		case INVALID: {
 			final Validity nomalRes = mHoareTripleChecker.checkReturn(pre, hier, act, post);
@@ -309,22 +322,38 @@ public class FaultLocalizationRelevanceChecker {
 		return mHoareTripleChecker.getEdgeCheckerBenchmark();
 	}
 	
-	public static IInternalAction constructHavocedInternalAction(final IInternalAction act,
-			final ManagedScript mgdScript) {
+	public IInternalAction constructHavocedInternalAction(final IUltimateServiceProvider services,
+			final IInternalAction act, final ManagedScript mgdScript) {
 		return new BasicInternalAction(act.getPrecedingProcedure(), act.getSucceedingProcedure(),
-				TransFormulaUtils.constructHavoc(act.getTransformula(), mgdScript));
+				constructHavoc(services, act.getTransformula(), mgdScript));
 	}
-	
-	public static ICallAction constructHavocedCallAction(final ICallAction act,
+
+	public ICallAction constructHavocedCallAction(final IUltimateServiceProvider services, final ICallAction act,
 			final ManagedScript mgdScript) {
 		return new BasicCallAction(act.getPrecedingProcedure(), act.getSucceedingProcedure(),
-				TransFormulaUtils.constructHavoc(act.getLocalVarsAssignment(), mgdScript));
+				constructHavoc(services, act.getLocalVarsAssignment(), mgdScript));
+	}
+
+	public IReturnAction constructHavocedReturnAction(final IUltimateServiceProvider services,
+			final IReturnAction act, final ManagedScript mgdScript) {
+		return new BasicReturnAction(act.getPrecedingProcedure(), act.getSucceedingProcedure(),
+				constructHavoc(services, act.getAssignmentOfReturn(), mgdScript),
+				constructHavoc(services, act.getLocalVarsAssignmentOfCall(), mgdScript));
 	}
 	
-	public static IReturnAction constructHavocedReturnAction(final IReturnAction act,
-			final ManagedScript mgdScript) {
-		return new BasicReturnAction(act.getPrecedingProcedure(), act.getSucceedingProcedure(),
-				TransFormulaUtils.constructHavoc(act.getAssignmentOfReturn(), mgdScript), 
-				TransFormulaUtils.constructHavoc(act.getLocalVarsAssignmentOfCall(), mgdScript));
+	public UnmodifiableTransFormula constructHavoc(final IUltimateServiceProvider services,
+			final UnmodifiableTransFormula tf, final ManagedScript mgdScript) {
+		UnmodifiableTransFormula result;
+		if (containsArraySort(tf.getFormula())) {
+			result = TransFormulaUtils.computeGuardedHavoc(tf, mgdScript, services, mLogger, true); 
+		} else {
+			result = TransFormulaUtils.constructHavoc(tf, mgdScript);
+		}
+		return result;
+	}
+
+	private static boolean containsArraySort(final Term formula) {
+		final Predicate<Term> hasArraySort = (x -> SmtSortUtils.isArraySort(x.getSort()));
+		return new SubtermPropertyChecker(hasArraySort).isPropertySatisfied(formula);
 	}
 }

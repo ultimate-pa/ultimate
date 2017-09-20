@@ -336,7 +336,7 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 			final CfgSmtToolkit csToolkit) {
 		mLogger.info("Starting non-flow-sensitive error relevancy analysis");
 
-		final FaultLocalizationRelevanceChecker rc = new FaultLocalizationRelevanceChecker(csToolkit);
+		final FaultLocalizationRelevanceChecker rc = new FaultLocalizationRelevanceChecker(mServices, csToolkit);
 		// Non-Flow Sensitive INCREMENTAL ANALYSIS
 
 		// Calculating the WP and SP List
@@ -478,7 +478,7 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 			final IPredicate weakestPreconditionRight, final NestedWord<LETTER> counterexampleWord,
 			final CfgSmtToolkit csToolkit, final ModifiableGlobalsTable modifiableGlobalsTable) {
 
-		final FaultLocalizationRelevanceChecker rc = new FaultLocalizationRelevanceChecker(csToolkit);
+		final FaultLocalizationRelevanceChecker rc = new FaultLocalizationRelevanceChecker(mServices, csToolkit);
 		final IPredicate pre = mPredicateFactory.not(weakestPreconditionLeft);
 		final String preceeding = counterexampleWord.getSymbolAt(startPosition).getPrecedingProcedure();
 		final String succeeding = counterexampleWord.getSymbolAt(endPosition).getSucceedingProcedure();
@@ -644,7 +644,7 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 		// branch.
 		final PredicateTransformer<Term, IPredicate, TransFormula> pt = new PredicateTransformer<>(
 				csToolkit.getManagedScript(), new TermDomainOperationProvider(mServices, csToolkit.getManagedScript()));
-		final FaultLocalizationRelevanceChecker rc = new FaultLocalizationRelevanceChecker(csToolkit);
+		final FaultLocalizationRelevanceChecker rc = new FaultLocalizationRelevanceChecker(mServices, csToolkit);
 		final int startLocation = 0;
 		final int endLocation = counterexample.getWord().length() - 1;
 		final IPredicate falsePredicate =
