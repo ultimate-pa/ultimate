@@ -61,10 +61,12 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ApplicationTermFinder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ConstantFinder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.DagSizePrinter;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.MonolithicImplicationChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
@@ -879,14 +881,30 @@ public final class TransFormulaUtils {
 	 * guard (for all inVars) but havoc all variables that are updated. 
 	 */
 	public static UnmodifiableTransFormula computeGuardedHavoc(final UnmodifiableTransFormula tf,
-			final ManagedScript mgdScript, final IUltimateServiceProvider services, final ILogger logger) {
+			final ManagedScript mgdScript, final IUltimateServiceProvider services, final ILogger logger,
+			final boolean modifiableArraysWorkaround) {
 		final Set<TermVariable> auxVars = new HashSet<>(tf.getAuxVars());
-		final Map<TermVariable, TermVariable> substitutionMapping = new HashMap<>();
+		final Map<Term, Term> substitutionMapping = new HashMap<>();
 		for (final IProgramVar bv : tf.getAssignedVars()) {
-			final TermVariable outVar = tf.getOutVars().get(bv);
-			final TermVariable aux = mgdScript.constructFreshCopy(outVar);
-			substitutionMapping.put(outVar, aux);
-			auxVars.add(aux);
+            if (modifiableArraysWorkaround && SmtSortUtils.isArraySort(bv.getTermVariable().getSort())) {
+    			final Set<ApplicationTerm> stores = new ApplicationTermFinder("store", false).findMatchingSubterms(tf.getFormula());
+    			for (final ApplicationTerm appTerm : stores) {
+    				final Term storedValue = appTerm.getParameters()[2];
+    				if (!SmtSortUtils.isArraySort(storedValue.getSort())) {
+    					final TermVariable aux = mgdScript.constructFreshTermVariable("rosehip", storedValue.getSort());
+    					final Term array = appTerm.getParameters()[0];
+    					final Term index = appTerm.getParameters()[1];
+    					final Term newSelect = mgdScript.getScript().term("store", array, index, aux);
+    					substitutionMapping.put(appTerm, newSelect);
+    					auxVars.add(aux);
+    				}
+    			}
+            } else {
+                    final TermVariable outVar = tf.getOutVars().get(bv);
+                    final TermVariable aux = mgdScript.constructFreshCopy(outVar);
+                    substitutionMapping.put(outVar, aux);
+                    auxVars.add(aux);
+            }
 		}
 		if (!tf.getBranchEncoders().isEmpty()) {
 			throw new AssertionError("I think this does not make sense with branch enconders");
