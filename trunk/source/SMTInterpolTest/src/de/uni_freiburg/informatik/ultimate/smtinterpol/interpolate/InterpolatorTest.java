@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009-2012 University of Freiburg
+ * Copyright (C) 2009-2016 University of Freiburg
  *
  * This file is part of SMTInterpol.
  *
@@ -19,6 +19,7 @@
 package de.uni_freiburg.informatik.ultimate.smtinterpol.interpolate;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
 import org.junit.Assert;
@@ -26,22 +27,16 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
+import de.uni_freiburg.informatik.ultimate.logic.Annotation;
+import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.DefaultLogger;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.Clausifier;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.Clausifier.CCTermBuilder;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.EqualityProxy;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SMTAffineTerm;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SharedTerm;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Clause;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Literal;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.LeafNode;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCEquality;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.LAEquality;
 
 @RunWith(JUnit4.class)
 public class InterpolatorTest {
@@ -49,11 +44,14 @@ public class InterpolatorTest {
 	Clausifier mClausifier;
 	Interpolator mInterpolator;
 	
+	Theory mTheory;
+	
 	Sort mReal;
 	Term mA, mB, mS;
 	
 	public InterpolatorTest() {
 		mSolver = new SMTInterpol(new DefaultLogger());
+		mSolver.setOption(":produce-proofs", true);
 		mSolver.setLogic("QF_UFLRA");
 		mReal = mSolver.sort("Real");
 		mSolver.declareFun("a", new Sort[0], mReal);
@@ -64,6 +62,8 @@ public class InterpolatorTest {
 		mA = mSolver.term("a");
 		mB = mSolver.term("b");
 		mS = mSolver.term("s");
+		
+		mTheory = mSolver.getTheory();
 	}
 	
 	public void doTestEq(boolean ccswap, boolean abswap, 
@@ -72,61 +72,65 @@ public class InterpolatorTest {
 		addvar = false;
 		final Term a = mA;
 		final Term b = mB;
-		SharedTerm sa = mClausifier.getSharedTerm(a);
-		SharedTerm sb = mClausifier.getSharedTerm(b);
+		InterpolatorAffineTerm aterm =
+						new InterpolatorAffineTerm().add(Rational.ONE, a);
+		InterpolatorAffineTerm bterm = 
+						new InterpolatorAffineTerm().add(Rational.ONE, b);
 		if (doubleab || addconst || addvar) {
-			SMTAffineTerm aterm = SMTAffineTerm.create(a);
-			SMTAffineTerm bterm = SMTAffineTerm.create(b);
 			if (doubleab) {
 				aterm = aterm.mul(Rational.TWO);
 				bterm = bterm.mul(Rational.TWO);
 			}
 			if (addvar) {
-				aterm = aterm.add(SMTAffineTerm.create(mS));
-				bterm = bterm.add(SMTAffineTerm.create(mS));
+				aterm = aterm.add(Rational.ONE, mS);
+				bterm = bterm.add(Rational.ONE, mS);
 			}
 			if (addconst) {
 				aterm = aterm.add(Rational.TWO);
 				bterm = bterm.add(Rational.TWO);
 			}
-			sa = mClausifier.getSharedTerm(aterm);
-			sb = mClausifier.getSharedTerm(bterm);
 		}
-		final CCTermBuilder builder = mClausifier.new CCTermBuilder();
-		sa.shareWithLinAr(); builder.convert(sa.getTerm());
-		sb.shareWithLinAr(); builder.convert(sb.getTerm());
-		final EqualityProxy eq = sa.createEquality(sb);
-		Assert.assertNotSame(EqualityProxy.getFalseProxy(), eq);
-		Assert.assertNotSame(EqualityProxy.getTrueProxy(), eq);
-		final CCEquality cceq = ccswap
-				? eq.createCCEquality(sa, sb) : eq.createCCEquality(sb, sa);
-		final LAEquality laeq = cceq.getLASharedData();
-		final Literal[] lits = 
-		    clauseswap ? (litswap ? new Literal[] { cceq.negate(), laeq }
-		                          : new Literal[] { laeq, cceq.negate() })
-	                   : (litswap ? new Literal[] { laeq.negate(), cceq }
-	                   			  : new Literal[] { cceq, laeq.negate() });
-
-		final Clause clause = new Clause(lits);
-		clause.setProof(new LeafNode(LeafNode.EQ, null));
+		Term aSmt = aterm.toSMTLib(mTheory, false);
+		Term bSmt = bterm.toSMTLib(mTheory, false);
+		Term cceq = ccswap
+				? mTheory.term("=", aSmt, bSmt)
+				: mTheory.term("=", bSmt, aSmt);	
+		InterpolatorAffineTerm linTerm = aterm.add(Rational.MONE, bterm);
+		linTerm.normalize();
+		InterpolatorAffineTerm zeroterm = new InterpolatorAffineTerm();
+		Term laeq = mTheory.term("=", linTerm.toSMTLib(mTheory, false), zeroterm.toSMTLib(mTheory, false));
+		Term[] lits =
+			clauseswap ?  (litswap ? new Term[] { mTheory.term("not", cceq), laeq }
+            						: new Term[] { laeq, mTheory.term("not", cceq) })
+						: (litswap ? new Term[] { mTheory.term("not", laeq), cceq }
+									: new Term[] { cceq, mTheory.term("not", laeq) });
+		Term clause = mTheory.term("or", lits);
+		Annotation[] mAnnots = new Annotation[] {
+						new Annotation(":EQ", null)
+					};
+		Term lemma = mTheory.term("@lemma", mTheory.annotatedTerm(mAnnots,clause));
 		final Set<String> empty = Collections.emptySet();
 		@SuppressWarnings("unchecked")
 		final
 		Set<String>[] partition = new Set[] { empty, empty };
 		mInterpolator = 
-			new Interpolator(mSolver.getLogger(), mSolver, null,
-					mSolver.getTheory(), 
-					partition, new int[partition.length]);
-		if (abswap) {
-			mInterpolator.addOccurrence(sb, 0);
-			mInterpolator.addOccurrence(sa, 1);
-		} else {
-			mInterpolator.addOccurrence(sa, 0);
-			mInterpolator.addOccurrence(sb, 1);
+				new Interpolator(mSolver.getLogger(), mSolver, null, mTheory, 
+				partition, new int[partition.length]);
+		HashSet<Term> bsubTerms = mInterpolator.getSubTerms(bSmt);
+		HashSet<Term> asubTerms = mInterpolator.getSubTerms(aSmt);
+		for (Term sub : asubTerms) {
+			if (!(sub instanceof ConstantTerm)) {
+				mInterpolator.addOccurrence(sub, null, abswap ? 1 : 0);
+			}
 		}
-		final Interpolant[] interpolants = mInterpolator.interpolate(clause);
-		final TermVariable ccVar = mInterpolator.getLiteralInfo(cceq).getMixedVar();
-		final TermVariable laVar = mInterpolator.getLiteralInfo(laeq).getMixedVar();
+		for (Term sub : bsubTerms) {
+			if (!(sub instanceof ConstantTerm)) {
+				mInterpolator.addOccurrence(sub, null, abswap ? 0 : 1);
+			}
+		}
+		Interpolant[] interpolants = mInterpolator.interpolate(lemma);
+		TermVariable ccVar = mInterpolator.getLiteralInfo(cceq).getMixedVar();
+		TermVariable laVar = mInterpolator.getLiteralInfo(laeq).getMixedVar();
 		Term var;
 		final InterpolatorAffineTerm summands = new InterpolatorAffineTerm();
 		if (clauseswap) {
@@ -165,8 +169,8 @@ public class InterpolatorTest {
 			}
 			var = ccVar;
 		}
-		final Term rhs = summands.toSMTLib(mSolver.getTheory(), false);
-		final Term expected = mSolver.term("=", var, rhs);
+		Term rhs = summands.toSMTLib(mTheory, false);
+		Term expected = mTheory.term("=", var, rhs);
 		Assert.assertSame(expected, interpolants[0].mTerm);
 	}
 

@@ -19,14 +19,18 @@
 package de.uni_freiburg.informatik.ultimate.smtinterpol.model;
 
 import java.math.BigInteger;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
+import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Model;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
@@ -34,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.DefaultLogger;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
 
@@ -478,6 +483,21 @@ public class ModelTest {
 		Assert.assertEquals(val, model.evaluate(z1));
 		final Term z2 = script.term("z2");
 		Assert.assertEquals(val, model.evaluate(z2));
+		TermVariable[] args = new TermVariable[] { script.variable("@x", u) };
+		Set<FunctionSymbol> funcs = new HashSet<FunctionSymbol>();
+		funcs.add(((ApplicationTerm) fx).getFunction());
+		funcs.add(((ApplicationTerm) script.term("g", x)).getFunction());
+		funcs.add(((ApplicationTerm) x).getFunction());
+		funcs.add(((ApplicationTerm) script.term("y")).getFunction());
+		funcs.add(((ApplicationTerm) z1).getFunction());
+		funcs.add(((ApplicationTerm) z2).getFunction());
+		Assert.assertEquals(funcs, model.getDefinedFunctions());
+		Assert.assertEquals("(as @0 U)", model.getFunctionDefinition
+				("x", new TermVariable[0]).toString());
+		Assert.assertEquals("(as @0 U)", 
+				model.getFunctionDefinition("f", args).toString());
+		Assert.assertEquals("(as @0 U)", 
+				model.getFunctionDefinition("g", args).toString());
 	}
 	
 	@Test
@@ -509,6 +529,9 @@ public class ModelTest {
 								yvalminus5.toTerm(intSort)))).getValue());
 		Assert.assertEquals(five, getConstantTerm(model,
 				script.term("f", script.numeral(BigInteger.TEN))).getValue());
+		TermVariable[] args = new TermVariable[] { script.variable("@x", intSort) };
+		Assert.assertEquals("(ite (= @x 10) 5 0)", 
+				model.getFunctionDefinition("f", args).toString());
 	}
 	
 	@Test
