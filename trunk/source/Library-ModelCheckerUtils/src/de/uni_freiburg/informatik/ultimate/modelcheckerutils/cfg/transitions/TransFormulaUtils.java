@@ -882,11 +882,11 @@ public final class TransFormulaUtils {
 	 */
 	public static UnmodifiableTransFormula computeGuardedHavoc(final UnmodifiableTransFormula tf,
 			final ManagedScript mgdScript, final IUltimateServiceProvider services, final ILogger logger,
-			final boolean modifiableArraysWorkaround) {
+			final boolean cellPrecisionForArrays) {
 		final Set<TermVariable> auxVars = new HashSet<>(tf.getAuxVars());
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
 		for (final IProgramVar bv : tf.getAssignedVars()) {
-            if (modifiableArraysWorkaround && SmtSortUtils.isArraySort(bv.getTermVariable().getSort())) {
+            if (cellPrecisionForArrays && SmtSortUtils.isArraySort(bv.getTermVariable().getSort())) {
     			final Set<ApplicationTerm> stores = new ApplicationTermFinder("store", false).findMatchingSubterms(tf.getFormula());
     			for (final ApplicationTerm appTerm : stores) {
     				final Term storedValue = appTerm.getParameters()[2];
