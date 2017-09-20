@@ -153,6 +153,18 @@ public class EagerReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends Basi
 			final List<NestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile,
 			final INestedWordAutomaton<LETTER, IPredicate> abstraction, final CfgSmtToolkit csToolkit,
 			final PredicateFactoryForInterpolantAutomata predicateFactoryInterpolantAutomata) {
+		final NestedWordAutomaton<LETTER, IPredicate> floydHoareAutomaton = new NestedWordAutomaton<>(
+				new AutomataLibraryServices(mServices), abstraction.getVpAlphabet(),
+				mPredicateFactoryInterpolantAutomata);
+		IPredicate myFirstState;
+		{
+			final String nameOfMyFirstState = "this is the first state of the automaton";
+			myFirstState = mPredicateFactory.newDebugPredicate(nameOfMyFirstState);
+			final boolean isInitial = false;
+			final boolean isFinal = false;
+			floydHoareAutomaton.addState(isInitial, isFinal, myFirstState);
+		}
+		
 		// Let us do whatever we can to
 		// 1. match the letters of the rawFloydHoareAutomataFromFile with the letters of the abstraction
 		// 2. transform their states into IPredicates
