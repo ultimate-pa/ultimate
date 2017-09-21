@@ -259,10 +259,10 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		final ELEM newRep = mElementTVER.removeElement(elem);
 		mAuxData.removeElement(elem, elemWasRepresentative, newRep);
 
-		for (final ELEM parent : mFaAuxData.getAfParents(elem)) {
+		for (final ELEM parent : new ArrayList<>(mFaAuxData.getAfParents(elem))) {
 			removeElement(parent);
 		}
-		for (final ELEM parent : mFaAuxData.getArgParents(elem)) {
+		for (final ELEM parent : new ArrayList<>(mFaAuxData.getArgParents(elem))) {
 			removeElement(parent);
 		}
 
