@@ -626,10 +626,10 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 			mWeakEquivalenceGraph.projectFunction(elem, copy);
 			assert projectedFunctionIsGoneFromWeqGraph(elem, mWeakEquivalenceGraph);
 
-			for (final NODE parent : elem.getAfParents()) {
+			for (final NODE parent : mFaAuxData.getAfParents(elem)) {
 				removeElement(parent, copy);
 			}
-			for (final NODE parent : elem.getArgParents()) {
+			for (final NODE parent : mFaAuxData.getArgParents(elem)) {
 				removeElement(parent, copy);
 			}
 
@@ -682,7 +682,7 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 		/*
 		 * collect nodes that are applications with newRep as a function symbol, and that have some constraint on them
 		 */
-		final Set<NODE> constrainedFuncAppNodes = elem.getAfParents().stream().filter(this::isConstrained)
+		final Set<NODE> constrainedFuncAppNodes = mFaAuxData.getAfParents(elem).stream().filter(this::isConstrained)
 				.collect(Collectors.toSet());
 //		final Set<NODE> constrainedFuncAppNodes = mAuxData.getAfCcPars(newRep).stream().filter(this::isConstrained)
 //				.collect(Collectors.toSet());

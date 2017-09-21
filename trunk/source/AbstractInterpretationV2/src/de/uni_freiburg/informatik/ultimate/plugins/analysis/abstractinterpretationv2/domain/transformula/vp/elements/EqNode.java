@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -145,25 +144,6 @@ public abstract class EqNode implements IEqNodeIdentifier<EqNode>, ICongruenceCl
 		return mTerm.getSort().equals(other.mTerm.getSort());
 	}
 
-	@Override
-	public void addAfParent(final EqNode parent) {
-		mAfParents.add(parent);
-	}
-
-	@Override
-	public void addArgParent(final EqNode parent) {
-		mArgParents.add(parent);
-	}
-
-	@Override
-	public Set<EqNode> getAfParents() {
-		return Collections.unmodifiableSet(mAfParents);
-	}
-
-	@Override
-	public Set<EqNode> getArgParents() {
-		return Collections.unmodifiableSet(mArgParents);
-	}
 
 	/**
 	 * default implementation, override in EqFunctionApplicationNode
@@ -180,7 +160,6 @@ public abstract class EqNode implements IEqNodeIdentifier<EqNode>, ICongruenceCl
 	public int getHeight() {
 		throw new UnsupportedOperationException();
 	}
-
 
 
 }

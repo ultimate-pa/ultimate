@@ -43,7 +43,9 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 
 	protected final ThreeValuedEquivalenceRelation<ELEM> mElementTVER;
 
-	protected final CongruenceClosure<ELEM>.AuxData mAuxData;
+	protected final CongruenceClosure<ELEM>.CcAuxData mAuxData;
+
+	protected final CongruenceClosure<ELEM>.FuncAppTreeAuxData mFaAuxData;
 
 
 	/**
@@ -52,7 +54,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 	 */
 	public CongruenceClosure() {
 		mElementTVER = new ThreeValuedEquivalenceRelation<>();
-		mAuxData = new AuxData();
+		mAuxData = new CcAuxData();
+		mFaAuxData = new FuncAppTreeAuxData();
 	}
 
 	/**
@@ -69,11 +72,13 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 
 		mElementTVER = null;
 		mAuxData = null;
+		mFaAuxData = null;
 	}
 
 	public CongruenceClosure(final ThreeValuedEquivalenceRelation<ELEM> newElemPartition) {
 		mElementTVER = newElemPartition;
-		mAuxData = new AuxData();
+		mAuxData = new CcAuxData();
+		mFaAuxData = new FuncAppTreeAuxData();
 
 		// initialize the helper mappings according to mElementTVER
 		for (final ELEM elem : new HashSet<>(mElementTVER.getAllElements())) {
@@ -92,7 +97,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 			throw new IllegalArgumentException("use other constructor!");
 		}
 		mElementTVER = new ThreeValuedEquivalenceRelation<>(original.mElementTVER);
-		mAuxData = new AuxData(original.mAuxData);
+		mAuxData = new CcAuxData(original.mAuxData);
+		mFaAuxData = new FuncAppTreeAuxData(original.mFaAuxData);
 		assert sanityCheck();
 	}
 
@@ -211,6 +217,9 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		addElement(elem.getAppliedFunction());
 		addElement(elem.getArgument());
 
+		mFaAuxData.addAfParent(elem.getAppliedFunction(), elem);
+		mFaAuxData.addArgParent(elem.getArgument(), elem);
+
 		/*
 		 *  must come after the addElement calls for the children because it queries for their representative
 		 *  (could be circumvented, I suppose..)
@@ -250,11 +259,16 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		final ELEM newRep = mElementTVER.removeElement(elem);
 		mAuxData.removeElement(elem, elemWasRepresentative, newRep);
 
-		for (final ELEM parent : elem.getAfParents()) {
+		for (final ELEM parent : mFaAuxData.getAfParents(elem)) {
 			removeElement(parent);
 		}
-		for (final ELEM parent : elem.getArgParents()) {
+		for (final ELEM parent : mFaAuxData.getArgParents(elem)) {
 			removeElement(parent);
+		}
+
+		if (elem.isFunctionApplication()) {
+			mFaAuxData.removeAfParent(elem.getAppliedFunction(), elem);
+			mFaAuxData.removeArgParent(elem.getArgument(), elem);
 		}
 
 		assert elementIsFullyRemoved(elem);
@@ -628,19 +642,67 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		return mElementTVER.isRepresentative(elem);
 	}
 
-	protected class AuxData {
+	/**
+	 * auxilliary data related to the tree where an edge a -> b means that b is an argument to function a
+	 * (this is mostly/only needed for element removal)
+	 */
+	protected class FuncAppTreeAuxData {
+		// these cannot be managed within the nodes because the nodes are shared between CongruenceClosure instances!
+		private final HashRelation<ELEM, ELEM> mDirectAfPars;
+		private final HashRelation<ELEM, ELEM> mDirectArgPars;
+
+		FuncAppTreeAuxData() {
+			mDirectAfPars = new HashRelation<>();
+			mDirectArgPars = new HashRelation<>();
+		}
+
+		FuncAppTreeAuxData(final CongruenceClosure<ELEM>.FuncAppTreeAuxData faAuxData) {
+			mDirectAfPars = new HashRelation<>(faAuxData.mDirectAfPars);
+			mDirectArgPars = new HashRelation<>(faAuxData.mDirectArgPars);
+		}
+
+		public void addAfParent(final ELEM elem, final ELEM parent) {
+			mDirectAfPars.addPair(elem, parent);
+		}
+
+		public void addArgParent(final ELEM elem, final ELEM parent) {
+			mDirectArgPars.addPair(elem, parent);
+		}
+
+		public Set<ELEM> getAfParents(final ELEM elem) {
+			return Collections.unmodifiableSet(mDirectAfPars.getImage(elem));
+		}
+
+		public Set<ELEM> getArgParents(final ELEM elem) {
+			return Collections.unmodifiableSet(mDirectArgPars.getImage(elem));
+		}
+
+		public void removeAfParent(final ELEM elem, final ELEM parent) {
+			mDirectAfPars.removePair(elem, parent);
+		}
+
+		public void removeArgParent(final ELEM elem, final ELEM parent) {
+			mDirectArgPars.removePair(elem, parent);
+		}
+
+	}
+
+	/**
+	 * auxilliary data related to congruence classes
+	 */
+	protected class CcAuxData {
 
 		private final HashRelation<ELEM, ELEM> mAfCcPars;
 		private final HashRelation<ELEM, ELEM> mArgCcPars;
 
 		Map<ELEM, HashRelation<ELEM, ELEM>> mCcChildren = new HashMap<>();
 
-		AuxData() {
+		CcAuxData() {
 			mAfCcPars = new HashRelation<>();
 			mArgCcPars = new HashRelation<>();
 		}
 
-		AuxData(final CongruenceClosure<ELEM>.AuxData auxData) {
+		CcAuxData(final CongruenceClosure<ELEM>.CcAuxData auxData) {
 			mAfCcPars = new HashRelation<>(auxData.mAfCcPars);
 			mArgCcPars = new HashRelation<>(auxData.mArgCcPars);
 		}

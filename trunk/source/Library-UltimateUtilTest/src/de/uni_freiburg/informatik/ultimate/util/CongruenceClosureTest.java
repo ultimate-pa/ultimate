@@ -708,8 +708,6 @@ class StringCcElement implements ICongruenceClosureElement<StringCcElement>{
 		mAfParents = new HashSet<>();
 		mArgParents = new HashSet<>();
 
-		appliedFunction.addAfParent(this);
-		argument.addArgParent(this);
 	}
 
 	public static StringCcElement buildStringCcElement(final StringCcElement appliedFunction,
@@ -771,25 +769,5 @@ class StringCcElement implements ICongruenceClosureElement<StringCcElement>{
 //		assert result[0].isFunction();
 //		return result;
 //	}
-
-	@Override
-	public void addAfParent(final StringCcElement parent) {
-		mAfParents.add(parent);
-	}
-
-		@Override
-	public void addArgParent(final StringCcElement parent) {
-		mArgParents.add(parent);
-	}
-
-	@Override
-	public Set<StringCcElement> getAfParents() {
-		return mAfParents;
-	}
-
-	@Override
-	public Set<StringCcElement> getArgParents() {
-		return mArgParents;
-	}
 
 }
