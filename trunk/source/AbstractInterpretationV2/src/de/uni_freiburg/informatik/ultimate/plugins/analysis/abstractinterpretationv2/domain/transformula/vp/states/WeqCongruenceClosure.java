@@ -799,6 +799,43 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 		}
 
 		assert sanityCheck();
+
+
+		boolean madeChanges = false;
+		/*
+		 * roweq
+		 */
+		for (final NODE ccp : mAuxData.getArgCcPars(getRepresentativeElement(elem))) {
+			if (getEqualityStatus(elem.getAppliedFunction(), ccp.getAppliedFunction()) == EqualityStatus.EQUAL) {
+				// strong, not weak equivalence, nothing to do here (propagations done by fwcc)
+				continue;
+			}
+			final NODE ccpAfRep = getRepresentativeElement(ccp.getAppliedFunction());
+			for (final Entry<NODE, WeakEquivalenceGraph<ACTION, NODE>.WeakEquivalenceEdgeLabel> weqEdge
+					: mWeakEquivalenceGraph.getAdjacentWeqEdges(ccpAfRep).entrySet()) {
+
+				final List<CongruenceClosure<NODE>> projectedLabel = mWeakEquivalenceGraph.projectEdgeLabelToPoint(
+						weqEdge.getValue().getLabelContents(),
+						ccp.getArgument(),
+						getAllWeqVarsNodeForFunction(ccp.getAppliedFunction()));
+
+				madeChanges |= reportWeakEquivalenceDoOnlyRoweqPropagations(elem.getAppliedFunction(),
+						ccp.getAppliedFunction(),
+						projectedLabel);
+			}
+		}
+
+		if (madeChanges) {
+			final Map<Doubleton<NODE>, WeakEquivalenceGraph<ACTION, NODE>.WeakEquivalenceEdgeLabel> props =
+					mWeakEquivalenceGraph.close();
+			for (final Entry<Doubleton<NODE>, WeakEquivalenceGraph<ACTION, NODE>.WeakEquivalenceEdgeLabel> prop
+					: props.entrySet()) {
+				reportWeakEquivalenceDoOnlyRoweqPropagations(prop.getKey().getOneElement(),
+						prop.getKey().getOtherElement(),
+						prop.getValue().getLabelContents());
+			}
+		}
+
 		/*
 		 * As the new element is a function application, we might be able to infer
 		 * equalities for it through weak equivalence.
