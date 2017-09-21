@@ -382,7 +382,6 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 			return false;
 		}
 
-
 		doRoweqPropagationsOnMerge(node1, node2, node1OldRep, node2OldRep, oldAuxData);
 
 		executeFloydWarshallAndReportResult();
@@ -493,8 +492,7 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 						.equals(getAllWeqVarsNodeForFunction(ccp2.getAppliedFunction()));
 
 					final CongruenceClosure<NODE> qUnequalI = new CongruenceClosure<>();
-					qUnequalI.reportDisequality(firstWeqVar, node1.getArgument());
-					assert getEqualityStatus(node1.getArgument(), ccp1.getArgument()) == EqualityStatus.EQUAL;
+					qUnequalI.reportDisequality(firstWeqVar, ccp1.getArgument());
 					assert getEqualityStatus(ccp2.getArgument(), ccp1.getArgument()) == EqualityStatus.EQUAL;
 
 					goOn |= reportWeakEquivalenceDoOnlyRoweqPropagations(ccp1.getAppliedFunction(),
