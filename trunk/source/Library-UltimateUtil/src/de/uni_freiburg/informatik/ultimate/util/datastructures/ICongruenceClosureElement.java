@@ -12,9 +12,13 @@ public interface ICongruenceClosureElement<ELEM extends ICongruenceClosureElemen
 
 	ELEM getArgument();
 
-	void addParent(ELEM parent);
+	void addAfParent(ELEM parent);
 
-	Set<ELEM> getParents();
+	void addArgParent(ELEM parent);
+
+	Set<ELEM> getAfParents();
+
+	Set<ELEM> getArgParents();
 
 	int getHeight();
 }

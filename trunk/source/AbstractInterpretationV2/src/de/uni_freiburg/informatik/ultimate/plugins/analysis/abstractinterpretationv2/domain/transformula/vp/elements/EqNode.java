@@ -54,7 +54,8 @@ public abstract class EqNode implements IEqNodeIdentifier<EqNode>, ICongruenceCl
 
 	protected boolean mIsConstant;
 
-	private final Set<EqNode> mParents = new HashSet<>();
+	private final Set<EqNode> mAfParents = new HashSet<>();
+	private final Set<EqNode> mArgParents = new HashSet<>();
 
 	protected Term mTerm;
 
@@ -136,9 +137,7 @@ public abstract class EqNode implements IEqNodeIdentifier<EqNode>, ICongruenceCl
 
 	@Override
 	public Sort getSort() {
-		assert isFunction();
 		return mTerm.getSort();
-//		return mMdSort;
 	}
 
 	@Override
@@ -147,13 +146,23 @@ public abstract class EqNode implements IEqNodeIdentifier<EqNode>, ICongruenceCl
 	}
 
 	@Override
-	public void addParent(final EqNode parent) {
-		mParents.add(parent);
+	public void addAfParent(final EqNode parent) {
+		mAfParents.add(parent);
 	}
 
 	@Override
-	public Set<EqNode> getParents() {
-		return Collections.unmodifiableSet(mParents);
+	public void addArgParent(final EqNode parent) {
+		mArgParents.add(parent);
+	}
+
+	@Override
+	public Set<EqNode> getAfParents() {
+		return Collections.unmodifiableSet(mAfParents);
+	}
+
+	@Override
+	public Set<EqNode> getArgParents() {
+		return Collections.unmodifiableSet(mArgParents);
 	}
 
 	/**

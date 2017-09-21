@@ -671,7 +671,8 @@ class StringCcElement implements ICongruenceClosureElement<StringCcElement>{
 	private final StringCcElement mAppliedFunction;
 	private final StringCcElement mArgument;
 	private final int mHeight;
-	private final Set<StringCcElement> mParents;
+	private final Set<StringCcElement> mAfParents;
+	private final Set<StringCcElement> mArgParents;
 
 	/**
 	 * base element
@@ -685,7 +686,8 @@ class StringCcElement implements ICongruenceClosureElement<StringCcElement>{
 		mAppliedFunction = null;
 		mArgument = null;
 		mHeight = 0;
-		mParents = new HashSet<>();
+		mAfParents = new HashSet<>();
+		mArgParents = new HashSet<>();
 	}
 
 	/**
@@ -703,10 +705,11 @@ class StringCcElement implements ICongruenceClosureElement<StringCcElement>{
 		mArgument = argument;
 //		assert !argument.isFunction();
 		mHeight = appliedFunction.getHeight() + 1;
-		mParents = new HashSet<>();
+		mAfParents = new HashSet<>();
+		mArgParents = new HashSet<>();
 
-		appliedFunction.addParent(this);
-		argument.addParent(this);
+		appliedFunction.addAfParent(this);
+		argument.addArgParent(this);
 	}
 
 	public static StringCcElement buildStringCcElement(final StringCcElement appliedFunction,
@@ -770,12 +773,23 @@ class StringCcElement implements ICongruenceClosureElement<StringCcElement>{
 //	}
 
 	@Override
-	public void addParent(final StringCcElement parent) {
-		mParents.add(parent);
+	public void addAfParent(final StringCcElement parent) {
+		mAfParents.add(parent);
+	}
+
+		@Override
+	public void addArgParent(final StringCcElement parent) {
+		mArgParents.add(parent);
 	}
 
 	@Override
-	public Set<StringCcElement> getParents() {
-		return mParents;
+	public Set<StringCcElement> getAfParents() {
+		return mAfParents;
 	}
+
+	@Override
+	public Set<StringCcElement> getArgParents() {
+		return mArgParents;
+	}
+
 }

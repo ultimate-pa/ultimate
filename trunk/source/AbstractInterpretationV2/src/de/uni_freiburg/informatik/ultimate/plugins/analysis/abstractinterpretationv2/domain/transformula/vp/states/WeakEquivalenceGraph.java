@@ -495,7 +495,12 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 	}
 
 	public List<CongruenceClosure<NODE>> getEdgeLabelContents(final NODE array1, final NODE array2) {
-		return mWeakEquivalenceEdges.get(new Doubleton<>(array1, array2)).getLabelContents();
+		final WeakEquivalenceGraph<ACTION, NODE>.WeakEquivalenceEdgeLabel edge =
+				mWeakEquivalenceEdges.get(new Doubleton<>(array1, array2));
+		if (edge != null) {
+			return edge.getLabelContents();
+		}
+		return Collections.singletonList(new CongruenceClosure<>());
 	}
 
 	/**
@@ -549,23 +554,30 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 	 *
 	 * @param labelContents
 	 * @param argument
-	 * @param weqVarsForThisEdge
+	 * @param weqVarsForResolventEdge
 	 * @return
 	 */
 	public List<CongruenceClosure<NODE>> shiftLabelAndAddException(
 			final List<CongruenceClosure<NODE>> labelContents, final NODE argument,
-			final List<NODE> weqVarsForThisEdge) {
+			final List<NODE> weqVarsForResolventEdge) {
+		assert !weqVarsForResolventEdge.isEmpty() : "because the array in the resolvent must have a dimension >= 1";
 
 		final WeakEquivalenceGraph<ACTION, NODE>.WeakEquivalenceEdgeLabel labelToShiftAndAdd =
 				new WeakEquivalenceEdgeLabel(labelContents);
 
-		labelToShiftAndAdd.inOrDecreaseWeqVarIndices(1, weqVarsForThisEdge);
+		labelToShiftAndAdd.inOrDecreaseWeqVarIndices(1, weqVarsForResolventEdge);
 
-		final NODE firstWeqVar = weqVarsForThisEdge.get(0);
+		final NODE firstWeqVar = weqVarsForResolventEdge.get(0);
 
-		labelToShiftAndAdd.getLabelContents().forEach(cc -> cc.reportDisequality(firstWeqVar, argument));
+		final CongruenceClosure<NODE> firstWeqVarUnequalArgument = new CongruenceClosure<>();
+		firstWeqVarUnequalArgument.reportDisequality(firstWeqVar, argument);
 
-		return labelToShiftAndAdd.getLabelContents();
+		final List<CongruenceClosure<NODE>> shiftedLabelContents =
+				new ArrayList<>(labelToShiftAndAdd.getLabelContents());
+
+		shiftedLabelContents.add(firstWeqVarUnequalArgument);
+
+		return shiftedLabelContents;
 	}
 
 	boolean sanityCheck() {
@@ -640,15 +652,16 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 
 
 			/*
-			 * check that there are no inconsistent edge labels -- the plan is to replace them by array equalities as they
-			 * occur..
+			 * check that there are no inconsistent edge labels -- the plan is to replace them by array equalities as
+			 * they * occur..
+			 * EDIT (20.09.17): this is obsolete, we allow inconsistent edge label for some time during propagations
 			 */
-			for (final Entry<Doubleton<NODE>, WeakEquivalenceEdgeLabel> edge : mWeakEquivalenceEdges.entrySet()) {
-				if (edge.getValue().isInconsistent()) {
-					assert false;
-					return false;
-				}
-			}
+//			for (final Entry<Doubleton<NODE>, WeakEquivalenceEdgeLabel> edge : mWeakEquivalenceEdges.entrySet()) {
+//				if (edge.getValue().isInconsistent()) {
+//					assert false;
+//					return false;
+//				}
+//			}
 
 
 			// is closed/triangle inequation holds
@@ -783,7 +796,8 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		public boolean impliesEqualityOnThatPosition(final List<NODE> arguments) {
 			for (int i = 0; i < getLabelContents().size(); i++) {
 				final CongruenceClosure<NODE> copy = mCcManager.makeCopy(
-						mCcManager.getMeet(getLabelContents().get(i), mPartialArrangement));
+						// making a copy of mPartialArrangement's congruence closure here to avoid some sanity checks..
+						mCcManager.getMeet(getLabelContents().get(i), new CongruenceClosure<>(mPartialArrangement)));
 				for (int j = 0; j < arguments.size(); j++) {
 					if (copy.isInconsistent()) {
 						break;
@@ -1083,6 +1097,20 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 			copy.removeElement(elem);
 			return sanityCheck(copy);
 		}
+	}
+
+	/**
+	 * when we merge two equivalence classes that had a weak equivalence edge, these nodes must be collapsed into one
+	 * in the weq graph (the edge removed)
+	 *
+	 * (could also be called "removeEdge"..)
+	 *
+	 * @param node1OldRep
+	 * @param node2OldRep
+	 * @param newRep
+	 */
+	public void collapseEdgeAtMerge(final NODE node1OldRep, final NODE node2OldRep) {
+		mWeakEquivalenceEdges.remove(new Doubleton<>(node1OldRep, node2OldRep));
 	}
 }
 

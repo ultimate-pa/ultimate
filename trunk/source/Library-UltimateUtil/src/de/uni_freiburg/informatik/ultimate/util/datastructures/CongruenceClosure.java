@@ -199,6 +199,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 	 * @param elem
 	 */
 	protected void registerNewElement(final ELEM elem) {
+		assert sanityCheck();
+
 		if (!elem.isFunctionApplication()) {
 			// nothing to do
 			assert mElementTVER.getRepresentative(elem) != null : "this method assumes that elem has been added "
@@ -248,7 +250,10 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		final ELEM newRep = mElementTVER.removeElement(elem);
 		mAuxData.removeElement(elem, elemWasRepresentative, newRep);
 
-		for (final ELEM parent : elem.getParents()) {
+		for (final ELEM parent : elem.getAfParents()) {
+			removeElement(parent);
+		}
+		for (final ELEM parent : elem.getArgParents()) {
 			removeElement(parent);
 		}
 

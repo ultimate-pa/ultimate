@@ -41,8 +41,8 @@ public abstract class AbstractCCElementFactory<ELEM extends ICongruenceClosureEl
 				throw new IllegalStateException();
 			}
 			fae = newFuncAppElement(func, argument);
-			func.addParent(fae);
-			argument.addParent(fae);
+			func.addAfParent(fae);
+			argument.addArgParent(fae);
 			mFunctionToArgToFuncAppElem.put(func, argument, fae);
 		}
 		return fae;
