@@ -5,7 +5,9 @@ Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.cdt.parser;singleton:=t
 Bundle-Version: 0.1.20
 Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.core,
- org.eclipse.cdt.core;bundle-version="5.6.0"
+ org.eclipse.cdt.core;bundle-version="5.6.0",
+ de.uni_freiburg.informatik.ultimate.acsl.parser
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
-Export-Package: de.uni_freiburg.informatik.ultimate.cdt.parser
+Export-Package: de.uni_freiburg.informatik.ultimate.cdt.parser,
+ de.uni_freiburg.informatik.ultimate.cdt.decorator
