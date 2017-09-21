@@ -26,18 +26,26 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Difference;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsIncluded;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.IOpWithDelayedDeadEndRemoval;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
@@ -49,6 +57,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.in
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
+import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AutomataTestFileAST;
 
 /**
  * Subclass of {@link BasicCegarLoop} in which we initially subtract from the
@@ -153,26 +162,82 @@ public class EagerReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends Basi
 			final List<NestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile,
 			final INestedWordAutomaton<LETTER, IPredicate> abstraction, final CfgSmtToolkit csToolkit,
 			final PredicateFactoryForInterpolantAutomata predicateFactoryInterpolantAutomata) {
-		final NestedWordAutomaton<LETTER, IPredicate> floydHoareAutomaton = new NestedWordAutomaton<>(
-				new AutomataLibraryServices(mServices), abstraction.getVpAlphabet(),
-				mPredicateFactoryInterpolantAutomata);
-		IPredicate myFirstState;
-		{
-			final String nameOfMyFirstState = "this is the first state of the automaton";
-			myFirstState = mPredicateFactory.newDebugPredicate(nameOfMyFirstState);
-			final boolean isInitial = false;
-			final boolean isFinal = false;
-			floydHoareAutomaton.addState(isInitial, isFinal, myFirstState);
+		
+		List<INestedWordAutomaton<LETTER, IPredicate>> res = new ArrayList<INestedWordAutomaton<LETTER,IPredicate>>();
+		
+		for (final NestedWordAutomaton<String,String> rawAutomatonFromFile : rawFloydHoareAutomataFromFile) {
+			//Create map from strings to "new" letters (abstraction letters)
+			HashMap<String, LETTER> mapStringToLetter = new HashMap<String, LETTER>();
+			VpAlphabet<LETTER> abstractionAlphabet = abstraction.getVpAlphabet();
+			for (final LETTER letter : (abstractionAlphabet.getCallAlphabet())) {
+				if (!mapStringToLetter.containsKey(letter.toString())){
+					mapStringToLetter.put(letter.toString(), letter);
+				}
+			}
+			for (final LETTER letter : (abstractionAlphabet.getInternalAlphabet())) {
+				if (!mapStringToLetter.containsKey(letter.toString())){
+					mapStringToLetter.put(letter.toString(), letter);
+				}
+			}
+			for (final LETTER letter : (abstractionAlphabet.getReturnAlphabet())) {
+				if (!mapStringToLetter.containsKey(letter.toString())){
+					mapStringToLetter.put(letter.toString(), letter);
+				}
+			}
+			//Create empty automaton with same alphabet
+			final NestedWordAutomaton<LETTER, IPredicate> resAutomaton = new NestedWordAutomaton<>(
+					new AutomataLibraryServices(mServices), abstractionAlphabet,
+					mPredicateFactoryInterpolantAutomata);
+			//Add states 
+			Set<String> statesOfRawAutomaton = rawAutomatonFromFile.getStates();
+			HashMap<String,IPredicate> mapStringToFreshState = new HashMap<>();
+			for (final String stringState : statesOfRawAutomaton) {
+				IPredicate predicateState = mPredicateFactory.newDebugPredicate(stringState);
+				mapStringToFreshState.put(stringState, predicateState);
+				final boolean isInitial = rawAutomatonFromFile.isInitial(stringState);
+				final boolean isFinal = rawAutomatonFromFile.isFinal(stringState);
+				resAutomaton.addState(isInitial, isFinal, predicateState);
+			}
+			//Add transitions
+			for (final IPredicate predicateState : resAutomaton.getStates()) {
+				String stringState = predicateState.toString();
+				for (OutgoingCallTransition<String, String> callTransition : rawAutomatonFromFile.callSuccessors(stringState)) {
+					String transitionLetter = callTransition.getLetter();
+					String transitionSuccString = callTransition.getSucc();
+					if (mapStringToLetter.containsKey(transitionLetter)) {
+						LETTER letter = mapStringToLetter.get(transitionLetter);
+						IPredicate succState = mapStringToFreshState.get(transitionSuccString);
+						resAutomaton.addCallTransition(predicateState, letter, succState);
+					}
+				}
+				for (OutgoingInternalTransition<String, String> internalTransition : rawAutomatonFromFile.internalSuccessors(stringState)) {
+					String transitionLetter = internalTransition.getLetter();
+					String transitionSuccString = internalTransition.getSucc();
+					if (mapStringToLetter.containsKey(transitionLetter)) {
+						LETTER letter = mapStringToLetter.get(transitionLetter);
+						IPredicate succState = mapStringToFreshState.get(transitionSuccString);
+						resAutomaton.addInternalTransition(predicateState, letter, succState);
+					}
+				}
+				for (OutgoingReturnTransition<String, String> returnTransition : rawAutomatonFromFile.returnSuccessors(stringState)) {
+					String transitionLetter = returnTransition.getLetter();
+					String transitionSuccString = returnTransition.getSucc();
+					String transitionHeirPredString = returnTransition.getHierPred();
+					if (mapStringToLetter.containsKey(transitionLetter)) {
+						LETTER letter = mapStringToLetter.get(transitionLetter);
+						IPredicate succState = mapStringToFreshState.get(transitionSuccString);
+						IPredicate heirPredState = mapStringToFreshState.get(transitionHeirPredString);
+						resAutomaton.addReturnTransition(predicateState, heirPredState, letter, succState);
+					}
+				}
+			}
+			
+			//Add new automaton to list
+			res.add(resAutomaton);
 		}
 		
-		// Let us do whatever we can to
-		// 1. match the letters of the rawFloydHoareAutomataFromFile with the letters of the abstraction
-		// 2. transform their states into IPredicates
-		// (note that 1. is sufficient if we do not want to extend the automata)
-		return null;
+		return res;
 	}
-	
-	
 	
 	
 
