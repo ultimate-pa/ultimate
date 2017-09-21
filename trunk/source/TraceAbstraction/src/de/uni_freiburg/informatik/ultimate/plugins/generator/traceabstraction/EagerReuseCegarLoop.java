@@ -68,28 +68,30 @@ import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.A
  */
 public class EagerReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCegarLoop<LETTER> {
 
+	private enum MinimizeInitially {
+		NEVER, AFTER_EACH_DIFFERENCE, ONCE_AT_END
+	};
 
-	private enum MinimizeInitially { NEVER, AFTER_EACH_DIFFERENCE, ONCE_AT_END };
 	private final MinimizeInitially mMinimize = MinimizeInitially.AFTER_EACH_DIFFERENCE;
-	
+
 	private final List<AbstractInterpolantAutomaton<LETTER>> mFloydHoareAutomataFromOtherErrorLocations;
 	private final List<NestedWordAutomaton<String, String>> mRawFloydHoareAutomataFromFile;
 
 	/**
 	 * The following can be costly. Enable only for debugging or analyzing our
-	 * algorithm 
+	 * algorithm
 	 */
 	private static final boolean IDENTIFY_USELESS_FLOYDHOARE_AUTOMATA = false;
 
-	
-
 	public EagerReuseCegarLoop(final String name, final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit,
-			final PredicateFactory predicateFactory, final TAPreferences taPrefs, final Collection<? extends IcfgLocation> errorLocs,
-			final InterpolationTechnique interpolation, final boolean computeHoareAnnotation, final IUltimateServiceProvider services,
-			final IToolchainStorage storage, final List<AbstractInterpolantAutomaton<LETTER>> floydHoareAutomataFromOtherLocations, 
+			final PredicateFactory predicateFactory, final TAPreferences taPrefs,
+			final Collection<? extends IcfgLocation> errorLocs, final InterpolationTechnique interpolation,
+			final boolean computeHoareAnnotation, final IUltimateServiceProvider services,
+			final IToolchainStorage storage,
+			final List<AbstractInterpolantAutomaton<LETTER>> floydHoareAutomataFromOtherLocations,
 			final List<NestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile) {
-		super(name, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, interpolation, computeHoareAnnotation, services,
-				storage);
+		super(name, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, interpolation, computeHoareAnnotation,
+				services, storage);
 		mFloydHoareAutomataFromOtherErrorLocations = floydHoareAutomataFromOtherLocations;
 		mRawFloydHoareAutomataFromFile = rawFloydHoareAutomataFromFile;
 	}
@@ -97,17 +99,18 @@ public class EagerReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends Basi
 	@Override
 	protected void getInitialAbstraction() throws AutomataLibraryException {
 		super.getInitialAbstraction();
-		
+
 		final List<INestedWordAutomaton<LETTER, IPredicate>> floydHoareAutomataFromFiles = interpretAutomata(
-				mRawFloydHoareAutomataFromFile, (INestedWordAutomaton<LETTER, IPredicate>) mAbstraction, mCsToolkit, mPredicateFactoryInterpolantAutomata);
-		
+				mRawFloydHoareAutomataFromFile, (INestedWordAutomaton<LETTER, IPredicate>) mAbstraction, mCsToolkit,
+				mPredicateFactoryInterpolantAutomata);
+
 		mLogger.info("Reusing " + mFloydHoareAutomataFromOtherErrorLocations.size() + " Floyd-Hoare automata.");
-		for (int i=0; i<mFloydHoareAutomataFromOtherErrorLocations.size(); i++) {
+		for (int i = 0; i < mFloydHoareAutomataFromOtherErrorLocations.size(); i++) {
 			final AbstractInterpolantAutomaton<LETTER> ai = mFloydHoareAutomataFromOtherErrorLocations.get(i);
 			final int internalTransitionsBeforeDifference = ai.computeNumberOfInternalTransitions();
 			ai.switchToOnDemandConstructionMode();
-			final PowersetDeterminizer<LETTER, IPredicate> psd =
-					new PowersetDeterminizer<>(ai, true, mPredicateFactoryInterpolantAutomata);
+			final PowersetDeterminizer<LETTER, IPredicate> psd = new PowersetDeterminizer<>(ai, true,
+					mPredicateFactoryInterpolantAutomata);
 			IOpWithDelayedDeadEndRemoval<LETTER, IPredicate> diff;
 			final boolean explointSigmaStarConcatOfIA = true;
 			diff = new Difference<LETTER, IPredicate>(new AutomataLibraryServices(mServices),
@@ -116,9 +119,9 @@ public class EagerReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends Basi
 					explointSigmaStarConcatOfIA);
 			ai.switchToReadonlyMode();
 			final int internalTransitionsAfterDifference = ai.computeNumberOfInternalTransitions();
-			mLogger.info("Floyd-Hoare automaton" + i + " had " + internalTransitionsAfterDifference + 
-					" internal transitions before reuse, on-demand computation of difference added " + 
-					(internalTransitionsAfterDifference - internalTransitionsBeforeDifference) + " more.");
+			mLogger.info("Floyd-Hoare automaton" + i + " had " + internalTransitionsAfterDifference
+					+ " internal transitions before reuse, on-demand computation of difference added "
+					+ (internalTransitionsAfterDifference - internalTransitionsBeforeDifference) + " more.");
 			if (REMOVE_DEAD_ENDS) {
 				if (mComputeHoareAnnotation) {
 					final Difference<LETTER, IPredicate> difference = (Difference<LETTER, IPredicate>) diff;
@@ -138,17 +141,18 @@ public class EagerReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends Basi
 					mLogger.warn("Floyd-Hoare automaton" + i
 							+ " did not remove an error trace from abstraction and was hence useless for this error location.");
 				} else {
-					mLogger.info("Floyd-Hoare automaton" + i + " removed at least one error trace from the abstraction.");
+					mLogger.info(
+							"Floyd-Hoare automaton" + i + " removed at least one error trace from the abstraction.");
 				}
-				
+
 			}
 			mAbstraction = diff.getResult();
-			
+
 			if (mAbstraction.size() == 0) {
 				// stop to compute differences if abstraction is already empty
 				break;
 			}
-			
+
 			if (mMinimize == MinimizeInitially.AFTER_EACH_DIFFERENCE) {
 				minimizeAbstractionIfEnabled();
 			}
@@ -162,35 +166,64 @@ public class EagerReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends Basi
 			final List<NestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile,
 			final INestedWordAutomaton<LETTER, IPredicate> abstraction, final CfgSmtToolkit csToolkit,
 			final PredicateFactoryForInterpolantAutomata predicateFactoryInterpolantAutomata) {
-		
-		List<INestedWordAutomaton<LETTER, IPredicate>> res = new ArrayList<INestedWordAutomaton<LETTER,IPredicate>>();
-		
-		for (final NestedWordAutomaton<String,String> rawAutomatonFromFile : rawFloydHoareAutomataFromFile) {
-			//Create map from strings to "new" letters (abstraction letters)
+
+		Boolean debugOn = false;
+		List<INestedWordAutomaton<LETTER, IPredicate>> res = new ArrayList<INestedWordAutomaton<LETTER, IPredicate>>();
+
+		for (final NestedWordAutomaton<String, String> rawAutomatonFromFile : rawFloydHoareAutomataFromFile) {
+			// Create map from strings to "new" letters (abstraction letters)
 			HashMap<String, LETTER> mapStringToLetter = new HashMap<String, LETTER>();
 			VpAlphabet<LETTER> abstractionAlphabet = abstraction.getVpAlphabet();
 			for (final LETTER letter : (abstractionAlphabet.getCallAlphabet())) {
-				if (!mapStringToLetter.containsKey(letter.toString())){
+				if (!mapStringToLetter.containsKey(letter.toString())) {
 					mapStringToLetter.put(letter.toString(), letter);
 				}
 			}
 			for (final LETTER letter : (abstractionAlphabet.getInternalAlphabet())) {
-				if (!mapStringToLetter.containsKey(letter.toString())){
+				if (!mapStringToLetter.containsKey(letter.toString())) {
 					mapStringToLetter.put(letter.toString(), letter);
 				}
 			}
 			for (final LETTER letter : (abstractionAlphabet.getReturnAlphabet())) {
-				if (!mapStringToLetter.containsKey(letter.toString())){
+				if (!mapStringToLetter.containsKey(letter.toString())) {
 					mapStringToLetter.put(letter.toString(), letter);
 				}
 			}
-			//Create empty automaton with same alphabet
+			if (debugOn) {
+				// Create Debug information for letters
+				int removedLetters = 0;
+				int reusedLetters = 0;
+				for (String strLetter : rawAutomatonFromFile.getVpAlphabet().getCallAlphabet()) {
+					if (!mapStringToLetter.containsKey(strLetter)) {
+						removedLetters++;
+					} else {
+						reusedLetters++;
+					}
+				}
+				for (String strLetter : rawAutomatonFromFile.getVpAlphabet().getInternalAlphabet()) {
+					if (!mapStringToLetter.containsKey(strLetter)) {
+						removedLetters++;
+					} else {
+						reusedLetters++;
+					}
+				}
+				for (String strLetter : rawAutomatonFromFile.getVpAlphabet().getReturnAlphabet()) {
+					if (!mapStringToLetter.containsKey(strLetter)) {
+						removedLetters++;
+					} else {
+						reusedLetters++;
+					}
+				}
+				int totalLetters = removedLetters + reusedLetters;
+				mLogger.info("Reusing " + reusedLetters + "/" + totalLetters
+						+ " letters when constructing automaton from file.");
+			}
+			// Create empty automaton with same alphabet
 			final NestedWordAutomaton<LETTER, IPredicate> resAutomaton = new NestedWordAutomaton<>(
-					new AutomataLibraryServices(mServices), abstractionAlphabet,
-					mPredicateFactoryInterpolantAutomata);
-			//Add states 
+					new AutomataLibraryServices(mServices), abstractionAlphabet, mPredicateFactoryInterpolantAutomata);
+			// Add states
 			Set<String> statesOfRawAutomaton = rawAutomatonFromFile.getStates();
-			HashMap<String,IPredicate> mapStringToFreshState = new HashMap<>();
+			HashMap<String, IPredicate> mapStringToFreshState = new HashMap<>();
 			for (final String stringState : statesOfRawAutomaton) {
 				IPredicate predicateState = mPredicateFactory.newDebugPredicate(stringState);
 				mapStringToFreshState.put(stringState, predicateState);
@@ -198,28 +231,39 @@ public class EagerReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends Basi
 				final boolean isFinal = rawAutomatonFromFile.isFinal(stringState);
 				resAutomaton.addState(isInitial, isFinal, predicateState);
 			}
-			//Add transitions
+			// Add transitions
+			int removedTransitions = 0;
+			int reusedTransitions = 0;
 			for (final IPredicate predicateState : resAutomaton.getStates()) {
 				String stringState = predicateState.toString();
-				for (OutgoingCallTransition<String, String> callTransition : rawAutomatonFromFile.callSuccessors(stringState)) {
+				for (OutgoingCallTransition<String, String> callTransition : rawAutomatonFromFile
+						.callSuccessors(stringState)) {
 					String transitionLetter = callTransition.getLetter();
 					String transitionSuccString = callTransition.getSucc();
 					if (mapStringToLetter.containsKey(transitionLetter)) {
 						LETTER letter = mapStringToLetter.get(transitionLetter);
 						IPredicate succState = mapStringToFreshState.get(transitionSuccString);
 						resAutomaton.addCallTransition(predicateState, letter, succState);
+						reusedTransitions++;
+					} else {
+						removedTransitions++;
 					}
 				}
-				for (OutgoingInternalTransition<String, String> internalTransition : rawAutomatonFromFile.internalSuccessors(stringState)) {
+				for (OutgoingInternalTransition<String, String> internalTransition : rawAutomatonFromFile
+						.internalSuccessors(stringState)) {
 					String transitionLetter = internalTransition.getLetter();
 					String transitionSuccString = internalTransition.getSucc();
 					if (mapStringToLetter.containsKey(transitionLetter)) {
 						LETTER letter = mapStringToLetter.get(transitionLetter);
 						IPredicate succState = mapStringToFreshState.get(transitionSuccString);
 						resAutomaton.addInternalTransition(predicateState, letter, succState);
+						reusedTransitions++;
+					} else {
+						removedTransitions++;
 					}
 				}
-				for (OutgoingReturnTransition<String, String> returnTransition : rawAutomatonFromFile.returnSuccessors(stringState)) {
+				for (OutgoingReturnTransition<String, String> returnTransition : rawAutomatonFromFile
+						.returnSuccessors(stringState)) {
 					String transitionLetter = returnTransition.getLetter();
 					String transitionSuccString = returnTransition.getSucc();
 					String transitionHeirPredString = returnTransition.getHierPred();
@@ -228,17 +272,22 @@ public class EagerReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends Basi
 						IPredicate succState = mapStringToFreshState.get(transitionSuccString);
 						IPredicate heirPredState = mapStringToFreshState.get(transitionHeirPredString);
 						resAutomaton.addReturnTransition(predicateState, heirPredState, letter, succState);
+						reusedTransitions++;
+					} else {
+						removedTransitions++;
 					}
 				}
 			}
-			
-			//Add new automaton to list
+			int totalTransitions = removedTransitions + reusedTransitions;
+			if (debugOn) {
+				mLogger.info("Reusing " + reusedTransitions + "/" + totalTransitions
+						+ " transitions when constructing automaton from file.");
+			}
+			// Add new automaton to list
 			res.add(resAutomaton);
 		}
-		
+
 		return res;
 	}
-	
-	
 
 }
