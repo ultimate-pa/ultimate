@@ -37,24 +37,108 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.DefaultLogger;
 
 /**
  * A basic test case for the API of SMTInterpol.
+ *
  * @author Juergen Christ
  */
 @RunWith(JUnit4.class)
 public class APITest {
-	
+
 	private static class TerminationCounter implements TerminationRequest {
 
 		private boolean mStop = false;
-		
+
 		@Override
 		public boolean isTerminationRequested() {
 			return mStop;
 		}
-		
-		public void setStop(boolean stop) {
+
+		public void setStop(final boolean stop) {
 			mStop = stop;
 		}
-		
+
+	}
+
+	@Test
+	public void cancellationRequest() {
+		final TerminationCounter tc = new TerminationCounter();
+		final SMTInterpol solver = new SMTInterpol(new DefaultLogger(), tc);
+		solver.setLogic(Logics.CORE);
+		final Sort bool = solver.sort("Bool");
+		solver.declareFun("P", new Sort[0], bool);
+		solver.declareFun("Q", new Sort[0], bool);
+		solver.declareFun("R", new Sort[0], bool);
+		solver.push(1);
+		solver.assertTerm(solver.term("or", solver.term("P"), solver.term("Q")));
+		solver.assertTerm(solver.term("or", solver.term("P"), solver.term("R")));
+		solver.assertTerm(
+				solver.term("or", solver.term("not", solver.term("P")), solver.term("not", solver.term("Q"))));
+		solver.assertTerm(
+				solver.term("or", solver.term("not", solver.term("P")), solver.term("not", solver.term("R"))));
+		solver.assertTerm(solver.term("or", solver.term("not", solver.term("P")), solver.term("Q"), solver.term("R")));
+		LBool isSat = solver.checkSat();
+		Assert.assertSame(LBool.SAT, isSat);
+		solver.pop(1);
+		tc.setStop(true);
+		solver.push(1);
+		solver.assertTerm(solver.term("or", solver.term("P"), solver.term("Q")));
+		solver.assertTerm(solver.term("or", solver.term("P"), solver.term("R")));
+		solver.assertTerm(
+				solver.term("or", solver.term("not", solver.term("P")), solver.term("not", solver.term("Q"))));
+		solver.assertTerm(
+				solver.term("or", solver.term("not", solver.term("P")), solver.term("not", solver.term("R"))));
+		solver.assertTerm(solver.term("or", solver.term("not", solver.term("P")), solver.term("Q"), solver.term("R")));
+		solver.assertTerm(solver.term("or", solver.term("P"), solver.term("not", solver.term("Q")),
+				solver.term("not", solver.term("R"))));
+		isSat = solver.checkSat();
+		Assert.assertSame(LBool.UNKNOWN, isSat);
+		ReasonUnknown ru = (ReasonUnknown) solver.getInfo(":reason-unknown");
+		Assert.assertSame(ReasonUnknown.CANCELLED, ru);
+		// Check monotonicity of checker
+		tc.setStop(false);
+		isSat = solver.checkSat();
+		Assert.assertSame(LBool.UNKNOWN, isSat);
+		ru = (ReasonUnknown) solver.getInfo(":reason-unknown");
+		Assert.assertSame(ReasonUnknown.CANCELLED, ru);
+		solver.pop(1);
+		isSat = solver.checkSat();
+		Assert.assertSame(LBool.SAT, isSat);
+	}
+
+	@Test
+	public void testFaultyLogic() {
+		final SMTInterpol solver = new SMTInterpol(new DefaultLogger());
+		try {
+			solver.setLogic("TestLogicThatDoesNotExist");
+			Assert.fail("Could set strange logic!");
+		} catch (final UnsupportedOperationException expected) {
+			System.err.println(expected.getMessage());
+		}
+	}
+
+	@Test
+	public void testGlobalSymbols() {
+		final SMTInterpol solver = new SMTInterpol(new DefaultLogger());
+		try {
+			solver.setOption(":global-declarations", Boolean.TRUE);
+		} catch (final UnsupportedOperationException eunsupp) {
+			Assert.fail("global-declarations not supported!!!");
+		}
+		solver.setLogic(Logics.QF_LIA);
+		solver.declareFun("x", Script.EMPTY_SORT_ARRAY, solver.sort("Int"));
+		final Term x = solver.term("x");
+		try {
+			solver.resetAssertions();
+		} catch (final SMTLIBException ese) {
+			Assert.fail(ese.getMessage());
+		} catch (final UnsupportedOperationException eunsupp) {
+			Assert.fail(eunsupp.getMessage());
+		}
+		try {
+			final Term x2 = solver.term("x");
+			Assert.assertSame(x, x2);
+		} catch (final SMTLIBException ese) {
+			Assert.fail(ese.getMessage());
+		}
 	}
 
 	/**
@@ -109,17 +193,6 @@ public class APITest {
 	}
 
 	@Test
-	public void testFaultyLogic() {
-		final SMTInterpol solver = new SMTInterpol(new DefaultLogger());
-		try {
-			solver.setLogic("TestLogicThatDoesNotExist");
-			Assert.fail("Could set strange logic!");
-		} catch (final UnsupportedOperationException expected) {
-			System.err.println(expected.getMessage());
-		}
-	}
-	
-	@Test
 	public void testPushPop() {
 		final SMTInterpol solver = new SMTInterpol(new DefaultLogger());
 		solver.setLogic(Logics.QF_LIA);
@@ -138,6 +211,49 @@ public class APITest {
 			Assert.fail("Could pop 4 levels after pushing 3");
 		} catch (final SMTLIBException expected) {
 			System.err.println(expected.getMessage());
+		}
+	}
+
+	@Test
+	public void testResetAssertions() {
+		final SMTInterpol solver = new SMTInterpol(new DefaultLogger());
+		solver.setLogic(Logics.QF_LIA);
+		solver.declareFun("x", Script.EMPTY_SORT_ARRAY, solver.sort("Int"));
+		solver.assertTerm(solver.term("false"));
+		LBool res = solver.checkSat();
+		Assert.assertSame(res, LBool.UNSAT);
+		try {
+			solver.resetAssertions();
+			res = solver.checkSat();
+			Assert.assertSame(res, LBool.SAT);
+		} catch (final SMTLIBException ese) {
+			Assert.fail(ese.getMessage());
+		} catch (final UnsupportedOperationException eunsupp) {
+			Assert.fail(eunsupp.getMessage());
+		}
+		try {
+			solver.declareFun("x", Script.EMPTY_SORT_ARRAY, solver.sort("Int"));
+		} catch (final SMTLIBException ese) {
+			Assert.fail(ese.getMessage());
+		}
+	}
+
+	@Test
+	public void testSetLogicTwice() {
+		final SMTInterpol solver = new SMTInterpol(new DefaultLogger());
+		solver.setLogic(Logics.QF_LIA);
+		try {
+			solver.setLogic(Logics.QF_LIA);
+			Assert.fail("Could set logic a second time");
+		} catch (final SMTLIBException expected) {
+			System.err.println(expected.getMessage());
+		}
+		try {
+			solver.declareFun("x", new Sort[0], solver.sort("Int"));
+			solver.assertTerm(solver.term("=", solver.term("x"), solver.numeral(BigInteger.ZERO)));
+			solver.checkSat();
+		} catch (final SMTLIBException eUnexpected) {
+			Assert.fail(eUnexpected.getMessage());
 		}
 	}
 
@@ -182,27 +298,7 @@ public class APITest {
 			System.err.println(expected.getMessage());
 		}
 	}
-	
-	@Test
-	public void testSetLogicTwice() {
-		final SMTInterpol solver = new SMTInterpol(new DefaultLogger());
-		solver.setLogic(Logics.QF_LIA);
-		try {
-			solver.setLogic(Logics.QF_LIA);
-			Assert.fail("Could set logic a second time");
-		} catch (final SMTLIBException expected) {
-			System.err.println(expected.getMessage());
-		}
-		try {
-			solver.declareFun("x", new Sort[0], solver.sort("Int"));
-			solver.assertTerm(solver.term("=", 
-					solver.term("x"), solver.numeral(BigInteger.ZERO)));
-			solver.checkSat();
-		} catch (final SMTLIBException eUnexpected) {
-			Assert.fail(eUnexpected.getMessage());
-		}
-	}
-	
+
 	@Test
 	public void testTermAssertion() {
 		final SMTInterpol solver1 = new SMTInterpol(new DefaultLogger());
@@ -212,8 +308,7 @@ public class APITest {
 		solver1.declareFun("x", new Sort[0], solver1.sort("Int"));
 		solver2.declareFun("x", new Sort[0], solver2.sort("Int"));
 		try {
-			solver1.assertTerm(solver2.term("=",
-					solver2.term("x"), solver2.numeral(BigInteger.ZERO)));
+			solver1.assertTerm(solver2.term("=", solver2.term("x"), solver2.numeral(BigInteger.ZERO)));
 			Assert.fail("Could assert term created by different solver");
 		} catch (final SMTLIBException expected) {
 			System.err.println(expected.getMessage());
@@ -226,8 +321,7 @@ public class APITest {
 		}
 		if (Config.STRONG_USAGE_CHECKS) {
 			try {
-				solver1.assertTerm(solver1.term("=", solver1.term("x"),
-						solver1.variable("y", solver1.sort("Int"))));
+				solver1.assertTerm(solver1.term("=", solver1.term("x"), solver1.variable("y", solver1.sort("Int"))));
 				Assert.fail("Could assert open term");
 			} catch (final SMTLIBException expected) {
 				System.err.println(expected.getMessage());
@@ -236,7 +330,7 @@ public class APITest {
 			System.out.println("Skipping closed formula test since strong usage checks are disabled");// NOCHECKSTYLE
 		}
 	}
-	
+
 	@Test
 	public void testUndeclared() {
 		final SMTInterpol solver = new SMTInterpol(new DefaultLogger());
@@ -252,114 +346,6 @@ public class APITest {
 			Assert.fail("Could create variable with unknown sort");
 		} catch (final SMTLIBException expected) {
 			System.err.println(expected.getMessage());
-		}
-	}
-	
-	@Test
-	public void cancellationRequest() {
-		final TerminationCounter tc = new TerminationCounter();
-		final SMTInterpol solver = new SMTInterpol(new DefaultLogger(), tc);
-		solver.setLogic(Logics.CORE);
-		final Sort bool = solver.sort("Bool");
-		solver.declareFun("P", new Sort[0], bool);
-		solver.declareFun("Q", new Sort[0], bool);
-		solver.declareFun("R", new Sort[0], bool);
-		solver.push(1);
-		solver.assertTerm(solver.term(
-				"or", solver.term("P"), solver.term("Q")));
-		solver.assertTerm(solver.term(
-				"or", solver.term("P"), solver.term("R")));
-		solver.assertTerm(solver.term(
-				"or", solver.term("not", solver.term("P")),
-				      solver.term("not", solver.term("Q"))));
-		solver.assertTerm(solver.term(
-				"or", solver.term("not", solver.term("P")),
-				      solver.term("not", solver.term("R"))));
-		solver.assertTerm(solver.term(
-				"or", solver.term("not", solver.term("P")),
-				      solver.term("Q"), solver.term("R")));
-		LBool isSat = solver.checkSat();
-		Assert.assertSame(LBool.SAT, isSat);
-		solver.pop(1);
-		tc.setStop(true);
-		solver.push(1);
-		solver.assertTerm(solver.term(
-				"or", solver.term("P"), solver.term("Q")));
-		solver.assertTerm(solver.term(
-				"or", solver.term("P"), solver.term("R")));
-		solver.assertTerm(solver.term(
-				"or", solver.term("not", solver.term("P")),
-				      solver.term("not", solver.term("Q"))));
-		solver.assertTerm(solver.term(
-				"or", solver.term("not", solver.term("P")),
-				      solver.term("not", solver.term("R"))));
-		solver.assertTerm(solver.term(
-				"or", solver.term("not", solver.term("P")),
-				      solver.term("Q"), solver.term("R")));
-		solver.assertTerm(solver.term(
-				"or", solver.term("P"), solver.term("not", solver.term("Q")),
-						solver.term("not", solver.term("R"))));
-		isSat = solver.checkSat();
-		Assert.assertSame(LBool.UNKNOWN, isSat);
-		ReasonUnknown ru = (ReasonUnknown) solver.getInfo(":reason-unknown");
-		Assert.assertSame(ReasonUnknown.CANCELLED, ru);
-		// Check monotonicity of checker
-		tc.setStop(false);
-		isSat = solver.checkSat();
-		Assert.assertSame(LBool.UNKNOWN, isSat);
-		ru = (ReasonUnknown) solver.getInfo(":reason-unknown");
-		Assert.assertSame(ReasonUnknown.CANCELLED, ru);
-		solver.pop(1);
-		isSat = solver.checkSat();
-		Assert.assertSame(LBool.SAT, isSat);
-	}
-
-	@Test
-	public void testResetAssertions() {
-		final SMTInterpol solver = new SMTInterpol(new DefaultLogger());
-		solver.setLogic(Logics.QF_LIA);
-		solver.declareFun("x", Script.EMPTY_SORT_ARRAY, solver.sort("Int"));
-		solver.assertTerm(solver.term("false"));
-		LBool res = solver.checkSat();
-		Assert.assertSame(res, LBool.UNSAT);
-		try {
-			solver.resetAssertions();
-			res = solver.checkSat();
-			Assert.assertSame(res, LBool.SAT);
-		} catch (final SMTLIBException ese) {
-			Assert.fail(ese.getMessage());
-		} catch (final UnsupportedOperationException eunsupp) {
-			Assert.fail(eunsupp.getMessage());
-		}
-		try {
-			solver.declareFun("x", Script.EMPTY_SORT_ARRAY, solver.sort("Int"));
-		} catch (final SMTLIBException ese) {
-			Assert.fail(ese.getMessage());
-		}
-	}
-	@Test
-	public void testGlobalSymbols() {
-		final SMTInterpol solver = new SMTInterpol(new DefaultLogger());
-		try {
-			solver.setOption(":global-declarations", Boolean.TRUE);
-		} catch (final UnsupportedOperationException eunsupp) {
-			Assert.fail("global-declarations not supported!!!");
-		}
-		solver.setLogic(Logics.QF_LIA);
-		solver.declareFun("x", Script.EMPTY_SORT_ARRAY, solver.sort("Int"));
-		final Term x = solver.term("x");
-		try {
-			solver.resetAssertions();
-		} catch (final SMTLIBException ese) {
-			Assert.fail(ese.getMessage());
-		} catch (final UnsupportedOperationException eunsupp) {
-			Assert.fail(eunsupp.getMessage());
-		}
-		try {
-			final Term x2 = solver.term("x");
-			Assert.assertSame(x, x2);
-		} catch (final SMTLIBException ese) {
-			Assert.fail(ese.getMessage());
 		}
 	}
 }

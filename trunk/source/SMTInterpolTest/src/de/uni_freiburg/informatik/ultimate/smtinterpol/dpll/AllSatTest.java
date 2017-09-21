@@ -44,19 +44,12 @@ public class AllSatTest {
 		solver.declareFun("x", empty, intSort);
 		solver.declareFun("y", empty, intSort);
 		final Term zero = solver.numeral(BigInteger.ZERO);
-		solver.assertTerm(solver.term(">=", 
-				solver.term("+", solver.term("x"), solver.term("y")),
-			zero));
-		final Term[] important = new Term[] {
-				solver.term("<", solver.term("x"), zero),
-				solver.term("<", solver.term("y"), zero),
-				solver.term("=",
-						solver.term("*",
-								solver.numeral(BigInteger.valueOf(2)),
-								solver.term("x")),
-						solver.numeral(BigInteger.ONE)),
-				solver.term("=", solver.term("x"), solver.term("x"))
-		};
+		solver.assertTerm(solver.term(">=", solver.term("+", solver.term("x"), solver.term("y")), zero));
+		final Term[] important =
+				new Term[] { solver.term("<", solver.term("x"), zero), solver.term("<", solver.term("y"), zero),
+						solver.term("=", solver.term("*", solver.numeral(BigInteger.valueOf(2)), solver.term("x")),
+								solver.numeral(BigInteger.ONE)),
+						solver.term("=", solver.term("x"), solver.term("x")) };
 		int cnt = 0;
 		for (final Term[] minterm : solver.checkAllsat(important)) {
 			System.err.println("Found minterm:");
@@ -67,5 +60,5 @@ public class AllSatTest {
 		}
 		Assert.assertEquals(3, cnt);// NOCHECKSTYLE
 	}
-	
+
 }

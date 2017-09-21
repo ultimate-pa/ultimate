@@ -33,19 +33,19 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
 
 @RunWith(JUnit4.class)
 public class Incremental {
-	
+
 	@Test
 	public void testPushPop() throws Exception {
-        // Setup theory and formulae
+		// Setup theory and formulae
 		final Script script = new SMTInterpol(new DefaultLogger());
 		script.setLogic(Logics.QF_UFLIA);
 		final Sort intSort = script.sort("Int");
-		script.declareFun("f", new Sort[] {intSort}, intSort);
-		script.declareFun("x", new Sort[]{}, intSort);
+		script.declareFun("f", new Sort[] { intSort }, intSort);
+		script.declareFun("x", new Sort[] {}, intSort);
 		// (= (f x) (+ 5 7))
 		final Term satformula = script.term("=", script.term("f", script.term("x")),
-			script.term("+", script.numeral("5"), script.numeral("7")));
-		
+				script.term("+", script.numeral("5"), script.numeral("7")));
+
 		// Initial: satformula
 		script.assertTerm(satformula);
 		script.push(1);
@@ -73,6 +73,6 @@ public class Incremental {
 		script.assertTerm(script.term("false"));
 		isSat = script.checkSat();
 		Assert.assertSame(LBool.UNSAT, isSat);
-//		Assert.assertEquals(3, engine.getInterpolants().length);
+		// Assert.assertEquals(3, engine.getInterpolants().length);
 	}
 }

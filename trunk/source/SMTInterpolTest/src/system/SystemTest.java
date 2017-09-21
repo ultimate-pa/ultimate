@@ -39,47 +39,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
 @RunWith(JUnit4.class)
 public class SystemTest {
 
-	@Test
-	public void testSystem() throws URISyntaxException, FileNotFoundException {
-		final String name = getClass().getPackage().getName();
-		final URL url = getClass().getClassLoader().getResource(name);
-		final File f = new File(url.toURI());
-		File[] lst = f.getParentFile().getParentFile().listFiles(
-				new FilenameFilter() {
-			
-					@Override
-					public boolean accept(File dir, String name) {
-						return name.equals("test");
-					}
-				});
-		if (lst == null || lst.length != 1) {
-			return;
-		}
-		final File testDir = lst[0];
-		lst = testDir.listFiles();
-		for (final File dir : lst) {
-			for (final File tst: dir.listFiles(new FilenameFilter() {
-				
-				@Override
-				public boolean accept(File dir, String name) {
-					return name.endsWith(".smt2")
-							&& !name.endsWith(".msat.smt2");
-				}
-			})) {
-				try {
-					if (shouldExecute(tst)) {
-						performTest(tst);
-					}
-				} catch (final SMTLIBException e) {
-					Assert.fail("File " + tst.getAbsolutePath()
-							+ " produced error:\n" + e.getMessage());
-				}
-			}
-		}
-	}
-	
-	private void performTest(final File f)
-		throws SMTLIBException, FileNotFoundException {
+	private void performTest(final File f) throws SMTLIBException, FileNotFoundException {
 		System.out.println("Testing " + f.getAbsolutePath());
 		final DefaultLogger logger = new DefaultLogger();
 		final OptionMap options = new OptionMap(logger, true);
@@ -87,12 +47,12 @@ public class SystemTest {
 		final ParseEnvironment pe = new ParseEnvironment(solver, options) {
 
 			@Override
-			public void printError(String message) {
+			public void printError(final String message) {
 				Assert.fail(f.getAbsolutePath() + ": " + message);
 			}
 
 			@Override
-			public void printResponse(Object response) {
+			public void printResponse(final Object response) {
 				if ("unsupported".equals(response)) {
 					Assert.fail(f.getAbsolutePath() + ": " + "unsupported");
 				}
@@ -102,26 +62,51 @@ public class SystemTest {
 		};
 		pe.parseStream(new FileReader(f), "TestStream");
 	}
-	
-	private boolean shouldExecute(File f) {
+
+	private boolean shouldExecute(final File f) {
 		final String fname = f.getName();
 		if (fname.startsWith("tightrhombus-lira")) {
 			// remove tightrhombus-lira-xxx-yyy-
 			String sizestr = fname.substring(26, 28); // NOCHECKSTYLE
 			if (sizestr.length() == 2 && !Character.isDigit(sizestr.charAt(1))) {
-				sizestr = sizestr.substring(0,1);
+				sizestr = sizestr.substring(0, 1);
 			}
 			final int size = Integer.parseInt(sizestr);
 			return size < 5;// NOCHECKSTYLE
 		} else if (fname.startsWith("tightrhombus")) {
 			String sizestr = fname.substring(21, 23); // NOCHECKSTYLE
 			if (sizestr.length() == 2 && !Character.isDigit(sizestr.charAt(1))) {
-				sizestr = sizestr.substring(0,1);
+				sizestr = sizestr.substring(0, 1);
 			}
 			final int size = Integer.parseInt(sizestr);
 			return size < 5;// NOCHECKSTYLE
 		}
 		return true;
 	}
-	
+
+	@Test
+	public void testSystem() throws URISyntaxException, FileNotFoundException {
+		final String name = getClass().getPackage().getName();
+		final URL url = getClass().getClassLoader().getResource(name);
+		final File f = new File(url.toURI());
+		File[] lst = f.getParentFile().getParentFile().listFiles((FilenameFilter) (dir, name1) -> name1.equals("test"));
+		if (lst == null || lst.length != 1) {
+			return;
+		}
+		final File testDir = lst[0];
+		lst = testDir.listFiles();
+		for (final File dir : lst) {
+			for (final File tst : dir.listFiles(
+					(FilenameFilter) (dir1, name1) -> name1.endsWith(".smt2") && !name1.endsWith(".msat.smt2"))) {
+				try {
+					if (shouldExecute(tst)) {
+						performTest(tst);
+					}
+				} catch (final SMTLIBException e) {
+					Assert.fail("File " + tst.getAbsolutePath() + " produced error:\n" + e.getMessage());
+				}
+			}
+		}
+	}
+
 }

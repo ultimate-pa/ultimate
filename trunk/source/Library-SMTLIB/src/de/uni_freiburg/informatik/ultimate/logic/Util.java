@@ -23,29 +23,32 @@ import java.util.LinkedHashSet;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 
 /**
- * This class contains some static methods to help creating terms, checking
- * formulas, etc.
- * 
- * @author christ, heizmann, hoenicke 
+ * This class contains some static methods to help creating terms, checking formulas, etc.
+ *
+ * @author christ, heizmann, hoenicke
  */
 public final class Util {
 
 	private Util() {
 		// Prevent instantiation of this utility class
 	}
-	
+
 	/**
-	 * Check if {@code term} which may contain free {@code TermVariables} is
-	 * satisfiable with respect to the current assertion stack of 
-	 * {@code script}.  Only the result from this function can be used since the
-	 * assertion stack will be modified after leaving this function.
-	 * @param script the script used to run the check.
-	 * @param term the term to check for satisfiability (possibly containing
-	 *  free variables).
+	 * Check if {@code term} which may contain free {@code TermVariables} is satisfiable with respect to the current
+	 * assertion stack of {@code script}. Only the result from this function can be used since the assertion stack will
+	 * be modified after leaving this function.
+	 *
+	 * @param script
+	 *            the script used to run the check.
+	 * @param term
+	 *            the term to check for satisfiability (possibly containing free variables).
 	 * @return the satisfiability status (SAT, UNSAT or UNKNOWN).
 	 */
-	public static LBool checkSat(Script script, Term term) {
+	public static LBool checkSat(final Script script, Term term) {
 		script.push(1);
+		Throwable checkSatException = null;
+		SMTLIBException popException = null;
+		LBool result = null;
 		try {
 			final TermVariable[] vars = term.getFreeVars();
 			final Term[] values = new Term[vars.length];
@@ -53,17 +56,34 @@ public final class Util {
 				values[i] = termVariable2constant(script, vars[i]);
 			}
 			term = script.let(vars, values, term);
-			LBool result = script.assertTerm(term);
+			result = script.assertTerm(term);
 			if (result == LBool.UNKNOWN) {
 				result = script.checkSat();
 			}
-			return result;
+		} catch (final Throwable e) {
+			checkSatException = e;
 		} finally {
-			script.pop(1);
+			try {
+				script.pop(1);
+			} catch (final SMTLIBException e) {
+				popException = e;
+			}
+		}
+
+		// ignore popException and throw the check-sat exception
+		if (checkSatException != null) {
+			if (checkSatException instanceof SMTLIBException) {
+				throw (SMTLIBException) checkSatException;
+			}
+			throw new RuntimeException(checkSatException);
+		} else if (popException != null) {
+			throw popException;
+		} else {
+			return result;
 		}
 	}
-	
-	private static Term termVariable2constant(Script script, TermVariable tv) {
+
+	private static Term termVariable2constant(final Script script, final TermVariable tv) {
 		final String name = tv.getName() + "_const_" + tv.hashCode();
 		final Sort resultSort = tv.getSort();
 		script.declareFun(name, Script.EMPTY_SORT_ARRAY, resultSort);
@@ -71,52 +91,57 @@ public final class Util {
 	}
 
 	/**
-	 * Return slightly simplified version of (not f).  It removes
-	 * double negation and simplifies (not true) and (not false).
-	 * @param script the Script used to build terms.
-	 * @param f the term to negate
+	 * Return slightly simplified version of (not f). It removes double negation and simplifies (not true) and (not
+	 * false).
+	 *
+	 * @param script
+	 *            the Script used to build terms.
+	 * @param f
+	 *            the term to negate
 	 * @return a term logically equivalent to (not f).
 	 */
-	public static Term not(Script script, Term f) {
+	public static Term not(final Script script, final Term f) {
 		if (f == script.term("true")) {
 			return script.term("false");
 		}
 		if (f == script.term("false")) {
 			return script.term("true");
 		}
-		if (f instanceof ApplicationTerm
-			&& ((ApplicationTerm)f).getFunction().getName().equals("not")) {
+		if (f instanceof ApplicationTerm && ((ApplicationTerm) f).getFunction().getName().equals("not")) {
 			return ((ApplicationTerm) f).getParameters()[0];
 		}
 		return script.term("not", f);
 	}
 
 	/**
-	 * Return slightly simplified version of (and subforms).  It removes
-	 * parameters occuring multiple times, true and false.  It also handles
-	 * the case where there is only one or zero subformulas.
-	 * @param script the Script used to build terms.
-	 * @param subforms the sub formulas that are conjoined.
+	 * Return slightly simplified version of (and subforms). It removes parameters occuring multiple times, true and
+	 * false. It also handles the case where there is only one or zero subformulas.
+	 *
+	 * @param script
+	 *            the Script used to build terms.
+	 * @param subforms
+	 *            the sub formulas that are conjoined.
 	 * @return a term logically equivalent to (and subforms).
 	 */
-	public static Term and(Script script, Term... subforms) {
+	public static Term and(final Script script, final Term... subforms) {
 		return simplifyAndOr(script, "and", subforms);
 	}
-	
+
 	/**
-	 * Return slightly simplified version of (or subforms).  It removes
-	 * parameters occuring multiple times, true and false.  It also handles
-	 * the case where there is only one or zero subformulas.
-	 * @param script the Script used to build terms.
-	 * @param subforms the sub formulas that are disjoined.
+	 * Return slightly simplified version of (or subforms). It removes parameters occuring multiple times, true and
+	 * false. It also handles the case where there is only one or zero subformulas.
+	 *
+	 * @param script
+	 *            the Script used to build terms.
+	 * @param subforms
+	 *            the sub formulas that are disjoined.
 	 * @return a term logically equivalent to (or subforms).
 	 */
-	public static Term or(Script script, Term... subforms) {
+	public static Term or(final Script script, final Term... subforms) {
 		return simplifyAndOr(script, "or", subforms);
 	}
-	
-	private static Term simplifyAndOr(
-			Script script, String connector, Term... subforms) {
+
+	private static Term simplifyAndOr(final Script script, final String connector, final Term... subforms) {
 		final Term trueTerm = script.term("true");
 		final Term falseTerm = script.term("false");
 		Term neutral, absorbing;
@@ -127,8 +152,8 @@ public final class Util {
 			neutral = falseTerm;
 			absorbing = trueTerm;
 		}
-		final LinkedHashSet<Term> formulas = new LinkedHashSet<Term>();
-		
+		final LinkedHashSet<Term> formulas = new LinkedHashSet<>();
+
 		for (final Term f : subforms) {
 			if (f == neutral) {
 				continue;
@@ -138,9 +163,7 @@ public final class Util {
 			}
 
 			/* Normalize nested and/ors */
-			if (f instanceof ApplicationTerm
-				&& ((ApplicationTerm) f).getFunction().getName().equals(
-						connector)) {
+			if (f instanceof ApplicationTerm && ((ApplicationTerm) f).getFunction().getName().equals(connector)) {
 				for (final Term subf : ((ApplicationTerm) f).getParameters()) {
 					formulas.add(subf);
 				}
@@ -148,29 +171,31 @@ public final class Util {
 				formulas.add(f);
 			}
 		}
-		if (formulas.size() <= 1) { //NOPMD
+		if (formulas.size() <= 1) { // NOPMD
 			if (formulas.isEmpty()) {
 				return neutral;
-			} else {
-				return formulas.iterator().next();
 			}
+			return formulas.iterator().next();
 		}
 		final Term[] arrforms = formulas.toArray(new Term[formulas.size()]);
 		return script.term(connector, arrforms);
 	}
-	
+
 	/**
-	 * Create a slightly simplified if-then-else term.  This mainly
-	 * optimizes the special cases where one of the parameters is true or 
-	 * false.
-	 * @param script the script where the term is created.
-	 * @param cond  the if condition.
-	 * @param thenPart the then part.
-	 * @param elsePart the else part.
+	 * Create a slightly simplified if-then-else term. This mainly optimizes the special cases where one of the
+	 * parameters is true or false.
+	 *
+	 * @param script
+	 *            the script where the term is created.
+	 * @param cond
+	 *            the if condition.
+	 * @param thenPart
+	 *            the then part.
+	 * @param elsePart
+	 *            the else part.
 	 * @return the simplified if-then-else term.
 	 */
-	public static Term ite(
-			Script script, Term cond, Term thenPart, Term elsePart) {
+	public static Term ite(final Script script, final Term cond, final Term thenPart, final Term elsePart) {
 		final Term trueTerm = script.term("true");
 		final Term falseTerm = script.term("false");
 		if (cond == trueTerm || thenPart == elsePart) {
@@ -190,15 +215,17 @@ public final class Util {
 	}
 
 	/**
-	 * Create a slightly simplified implies term.  This mainly
-	 * optimizes the special cases where one of the parameters is true or 
-	 * false or if a left-hand-side term occurs more than once.
-	 * It also handles the case where only one subformula is given.
-	 * @param script the script where the term is created.
-	 * @param subforms the sub formulas.
+	 * Create a slightly simplified implies term. This mainly optimizes the special cases where one of the parameters is
+	 * true or false or if a left-hand-side term occurs more than once. It also handles the case where only one
+	 * subformula is given.
+	 *
+	 * @param script
+	 *            the script where the term is created.
+	 * @param subforms
+	 *            the sub formulas.
 	 * @return A simplified version of <code>(=&gt; subforms...)</code>.
 	 */
-	public static Term implies(Script script, Term... subforms) {
+	public static Term implies(final Script script, final Term... subforms) {
 		final Term trueTerm = script.term("true");
 		final Term lastFormula = subforms[subforms.length - 1];
 		if (lastFormula == trueTerm) {
@@ -210,7 +237,7 @@ public final class Util {
 			System.arraycopy(subforms, 0, allButLast, 0, subforms.length - 1);
 			return Util.not(script, Util.and(script, allButLast));
 		}
-		final LinkedHashSet<Term> newSubforms = new LinkedHashSet<Term>();
+		final LinkedHashSet<Term> newSubforms = new LinkedHashSet<>();
 		for (int i = 0; i < subforms.length - 1; i++) {
 			if (subforms[i] == falseTerm) {
 				return trueTerm;
@@ -222,8 +249,7 @@ public final class Util {
 		if (newSubforms.isEmpty()) {
 			return lastFormula;
 		}
-		final Term[] newParams = newSubforms.toArray(
-				new Term[newSubforms.size() + 1]);
+		final Term[] newParams = newSubforms.toArray(new Term[newSubforms.size() + 1]);
 		newParams[newParams.length - 1] = lastFormula;
 		return script.term("=>", newParams);
 	}

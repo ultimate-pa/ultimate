@@ -34,19 +34,17 @@ public class TerminationRequestTest {
 	public class MyTerminationRequest implements TerminationRequest {
 
 		public int mRequestCtr;
-		
-		public MyTerminationRequest(int deadline) {
+
+		public MyTerminationRequest(final int deadline) {
 			mRequestCtr = deadline;
 		}
 
 		@Override
 		public boolean isTerminationRequested() {
-			return (mRequestCtr-- <= 0);
+			return mRequestCtr-- <= 0;
 		}
-		
-		
 	}
-	
+
 	@Test
 	public void test() {
 		final TerminationRequest cancel = new MyTerminationRequest(0);
@@ -56,7 +54,6 @@ public class TerminationRequestTest {
 		smtinterpol.assertTerm(smtinterpol.term("false"));
 		final LBool status = smtinterpol.checkSat();
 		Assert.assertEquals(LBool.UNKNOWN, status);
-		Assert.assertEquals(ReasonUnknown.CANCELLED, 
-				smtinterpol.getInfo(":reason-unknown"));
+		Assert.assertEquals(ReasonUnknown.CANCELLED, smtinterpol.getInfo(":reason-unknown"));
 	}
 }

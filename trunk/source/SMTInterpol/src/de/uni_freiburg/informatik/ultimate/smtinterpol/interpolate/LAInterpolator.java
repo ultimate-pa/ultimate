@@ -32,17 +32,17 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.InfinitNumbe
  * The Interpolator for linear arithmetic. This computes the interpolants with the algorithm described in "Proof Tree
  * Preserving Interpolation" in the version "newtechreport.pdf" in this repository. In particular we need to compute
  * leaf interpolants for trichotomy
- * 
+ *
  * <pre>
  * a < b \/ a == b \/ a > b
  * </pre>
- * 
+ *
  * and for simple conflicts with Farkas coefficients.
- * 
+ *
  * @author Jochen Hoenicke, Alexander Nutz, Tanja Schindler
  */
 public class LAInterpolator {
-	
+
 	Interpolator mInterpolator;
 	/**
 	 * The lemma for which we compute an interpolant.
@@ -65,7 +65,7 @@ public class LAInterpolator {
 
 	/**
 	 * Return the epsilon. This is 1 for integer constraints, eps for rational constraints.
-	 * 
+	 *
 	 * @return the epsilon.
 	 */
 	public InfinitNumber getEpsilon() {
@@ -74,35 +74,35 @@ public class LAInterpolator {
 
 	/**
 	 * Create a new linear arithmetic interpolator for an LA lemma.
-	 * 
+	 *
 	 * @param interpolator
 	 *            the global interpolator.
 	 * @param laLemma
 	 *            the lemma that is interpolated.
 	 */
-	public LAInterpolator(Interpolator interpolator) {
+	public LAInterpolator(final Interpolator interpolator) {
 		mInterpolator = interpolator;
 		mInterpolants = new Interpolant[mInterpolator.mNumInterpolants];
 		for (int i = 0; i < mInterpolator.mNumInterpolants; i++) {
 			mInterpolants[i] = new Interpolant();
 		}
 	}
-	
+
 	/**
 	 * Interpolate an LA lemma. Normally, the interpolant is computed by summing up the A-part of all literals minding
 	 * the Farkas coefficients. For trichotomy clauses we have to return the special trichotomy interpolant,
-	 * 
+	 *
 	 * <pre>
 	 * LA(x1 + x2 &lt= 0, 0, x1 + x2 &lt= 0 and
 	 *         (x1 + x2 &lt 0 or EQ(x, x1)))
 	 * </pre>
-	 * 
+	 *
 	 * in the mixed case.
 	 *
 	 * @param lemma
 	 *            the LA lemma that is interpolated.
 	 */
-	private void interpolateLemma(Term lemma) {
+	private void interpolateLemma(final Term lemma) {
 		final InterpolatorAffineTerm[] ipl = new InterpolatorAffineTerm[mInterpolator.mNumInterpolants + 1];
 		for (int part = 0; part < ipl.length; part++) {
 			ipl[part] = new InterpolatorAffineTerm();
@@ -117,7 +117,7 @@ public class LAInterpolator {
 		Term equality = null;
 		LitInfo equalityInfo = null;
 		Interpolator.Occurrence inequalityInfo = null;
-		
+
 		/*
 		 * Add the A-part of the literals in this LA lemma.
 		 */
@@ -149,7 +149,7 @@ public class LAInterpolator {
 				}
 				final LitInfo info = mInterpolator.getLiteralInfo(litTermInfo.getAtom());
 				inequalityInfo = info;
-				
+
 				int part = info.mInB.nextClearBit(0);
 				while (part < ipl.length) {
 					if (info.isMixed(part)) {
@@ -157,9 +157,9 @@ public class LAInterpolator {
 						assert (info.mMixedVar != null);
 						ipl[part].add(factor, info.getAPart(part));
 						ipl[part].add(factor.negate(), info.mMixedVar);
-						
+
 						if (auxVars[part] == null) {
-							auxVars[part] = new ArrayList<TermVariable>();
+							auxVars[part] = new ArrayList<>();
 						}
 						auxVars[part].add(info.mMixedVar);
 					}
@@ -179,7 +179,7 @@ public class LAInterpolator {
 				assert equalityInfo == null;
 				equalityInfo = mInterpolator.getLiteralInfo(eq);
 				assert factor.abs() == Rational.ONE;
-				
+
 				int part = equalityInfo.mInB.nextClearBit(0);
 				while (part < ipl.length) {
 					if (equalityInfo.isALocal(part)) {
@@ -191,7 +191,7 @@ public class LAInterpolator {
 			}
 		}
 		assert (ipl[ipl.length - 1].isConstant() && InfinitNumber.ZERO.less(ipl[ipl.length - 1].getConstant()));
-		
+
 		/*
 		 * Save the interpolants computed for this leaf into the result array.
 		 */
@@ -205,7 +205,7 @@ public class LAInterpolator {
 			if (ipl[part].isInt()) {
 				ipl[part].mConstant = ipl[part].getConstant().ceil();
 			}
-			
+
 			if (auxVars[part] != null) { // NOPMD
 				/*
 				 * This is a mixed interpolant with auxiliary variables. Prepare an LATerm that wraps the interpolant.
@@ -253,13 +253,13 @@ public class LAInterpolator {
 			}
 		}
 	}
-	
+
 	/**
 	 * Computes partial interpolants for the LA lemma.
-	 * 
+	 *
 	 * @return an array containing the partial tree interpolants.
 	 */
-	public Interpolant[] computeInterpolants(Term lemma) {
+	public Interpolant[] computeInterpolants(final Term lemma) {
 		interpolateLemma(lemma);
 		return mInterpolants;
 	}

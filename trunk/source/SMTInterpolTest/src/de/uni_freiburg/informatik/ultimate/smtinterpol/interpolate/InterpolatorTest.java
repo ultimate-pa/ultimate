@@ -43,12 +43,12 @@ public class InterpolatorTest {
 	SMTInterpol mSolver;
 	Clausifier mClausifier;
 	Interpolator mInterpolator;
-	
+
 	Theory mTheory;
-	
+
 	Sort mReal;
 	Term mA, mB, mS;
-	
+
 	public InterpolatorTest() {
 		mSolver = new SMTInterpol(new DefaultLogger());
 		mSolver.setOption(":produce-proofs", true);
@@ -58,24 +58,21 @@ public class InterpolatorTest {
 		mSolver.declareFun("b", new Sort[0], mReal);
 		mSolver.declareFun("s", new Sort[0], mReal);
 		mClausifier = mSolver.getClausifier();
-		
+
 		mA = mSolver.term("a");
 		mB = mSolver.term("b");
 		mS = mSolver.term("s");
-		
+
 		mTheory = mSolver.getTheory();
 	}
-	
-	public void doTestEq(boolean ccswap, boolean abswap, 
-			boolean clauseswap, boolean litswap,
-			boolean doubleab, boolean addconst, boolean addvar) {
+
+	public void doTestEq(final boolean ccswap, final boolean abswap, final boolean clauseswap, final boolean litswap,
+			final boolean doubleab, final boolean addconst, boolean addvar) {
 		addvar = false;
 		final Term a = mA;
 		final Term b = mB;
-		InterpolatorAffineTerm aterm =
-						new InterpolatorAffineTerm().add(Rational.ONE, a);
-		InterpolatorAffineTerm bterm = 
-						new InterpolatorAffineTerm().add(Rational.ONE, b);
+		InterpolatorAffineTerm aterm = new InterpolatorAffineTerm().add(Rational.ONE, a);
+		InterpolatorAffineTerm bterm = new InterpolatorAffineTerm().add(Rational.ONE, b);
 		if (doubleab || addconst || addvar) {
 			if (doubleab) {
 				aterm = aterm.mul(Rational.TWO);
@@ -90,47 +87,41 @@ public class InterpolatorTest {
 				bterm = bterm.add(Rational.TWO);
 			}
 		}
-		Term aSmt = aterm.toSMTLib(mTheory, false);
-		Term bSmt = bterm.toSMTLib(mTheory, false);
-		Term cceq = ccswap
-				? mTheory.term("=", aSmt, bSmt)
-				: mTheory.term("=", bSmt, aSmt);	
-		InterpolatorAffineTerm linTerm = aterm.add(Rational.MONE, bterm);
+		final Term aSmt = aterm.toSMTLib(mTheory, false);
+		final Term bSmt = bterm.toSMTLib(mTheory, false);
+		final Term cceq = ccswap ? mTheory.term("=", aSmt, bSmt) : mTheory.term("=", bSmt, aSmt);
+		final InterpolatorAffineTerm linTerm = aterm.add(Rational.MONE, bterm);
 		linTerm.normalize();
-		InterpolatorAffineTerm zeroterm = new InterpolatorAffineTerm();
-		Term laeq = mTheory.term("=", linTerm.toSMTLib(mTheory, false), zeroterm.toSMTLib(mTheory, false));
-		Term[] lits =
-			clauseswap ?  (litswap ? new Term[] { mTheory.term("not", cceq), laeq }
-            						: new Term[] { laeq, mTheory.term("not", cceq) })
-						: (litswap ? new Term[] { mTheory.term("not", laeq), cceq }
-									: new Term[] { cceq, mTheory.term("not", laeq) });
-		Term clause = mTheory.term("or", lits);
-		Annotation[] mAnnots = new Annotation[] {
-						new Annotation(":EQ", null)
-					};
-		Term lemma = mTheory.term("@lemma", mTheory.annotatedTerm(mAnnots,clause));
+		final InterpolatorAffineTerm zeroterm = new InterpolatorAffineTerm();
+		final Term laeq = mTheory.term("=", linTerm.toSMTLib(mTheory, false), zeroterm.toSMTLib(mTheory, false));
+		final Term[] lits = clauseswap
+				? litswap ? new Term[] { mTheory.term("not", cceq), laeq }
+						: new Term[] { laeq, mTheory.term("not", cceq) }
+				: litswap ? new Term[] { mTheory.term("not", laeq), cceq }
+						: new Term[] { cceq, mTheory.term("not", laeq) };
+		final Term clause = mTheory.term("or", lits);
+		final Annotation[] mAnnots = new Annotation[] { new Annotation(":EQ", null) };
+		final Term lemma = mTheory.term("@lemma", mTheory.annotatedTerm(mAnnots, clause));
 		final Set<String> empty = Collections.emptySet();
 		@SuppressWarnings("unchecked")
-		final
-		Set<String>[] partition = new Set[] { empty, empty };
-		mInterpolator = 
-				new Interpolator(mSolver.getLogger(), mSolver, null, mTheory, 
-				partition, new int[partition.length]);
-		HashSet<Term> bsubTerms = mInterpolator.getSubTerms(bSmt);
-		HashSet<Term> asubTerms = mInterpolator.getSubTerms(aSmt);
-		for (Term sub : asubTerms) {
+		final Set<String>[] partition = new Set[] { empty, empty };
+		mInterpolator =
+				new Interpolator(mSolver.getLogger(), mSolver, null, mTheory, partition, new int[partition.length]);
+		final HashSet<Term> bsubTerms = mInterpolator.getSubTerms(bSmt);
+		final HashSet<Term> asubTerms = mInterpolator.getSubTerms(aSmt);
+		for (final Term sub : asubTerms) {
 			if (!(sub instanceof ConstantTerm)) {
 				mInterpolator.addOccurrence(sub, null, abswap ? 1 : 0);
 			}
 		}
-		for (Term sub : bsubTerms) {
+		for (final Term sub : bsubTerms) {
 			if (!(sub instanceof ConstantTerm)) {
 				mInterpolator.addOccurrence(sub, null, abswap ? 0 : 1);
 			}
 		}
-		Interpolant[] interpolants = mInterpolator.interpolate(lemma);
-		TermVariable ccVar = mInterpolator.getLiteralInfo(cceq).getMixedVar();
-		TermVariable laVar = mInterpolator.getLiteralInfo(laeq).getMixedVar();
+		final Interpolant[] interpolants = mInterpolator.interpolate(lemma);
+		final TermVariable ccVar = mInterpolator.getLiteralInfo(cceq).getMixedVar();
+		final TermVariable laVar = mInterpolator.getLiteralInfo(laeq).getMixedVar();
 		Term var;
 		final InterpolatorAffineTerm summands = new InterpolatorAffineTerm();
 		if (clauseswap) {
@@ -169,18 +160,17 @@ public class InterpolatorTest {
 			}
 			var = ccVar;
 		}
-		Term rhs = summands.toSMTLib(mTheory, false);
-		Term expected = mTheory.term("=", var, rhs);
+		final Term rhs = summands.toSMTLib(mTheory, false);
+		final Term expected = mTheory.term("=", var, rhs);
 		Assert.assertSame(expected, interpolants[0].mTerm);
 	}
 
 	@Test
 	public void testEq() {
-		for (int i = 0; i < 128; i++)
-		 {
-			doTestEq((i&1) != 0, (i&2) != 0, (i&4) != 0, (i&8) != 0,// NOCHECKSTYLE
-					(i&16) != 0, (i&32) != 0, (i& 64) != 0);// NOCHECKSTYLE
+		for (int i = 0; i < 128; i++) {
+			doTestEq((i & 1) != 0, (i & 2) != 0, (i & 4) != 0, (i & 8) != 0, // NOCHECKSTYLE
+					(i & 16) != 0, (i & 32) != 0, (i & 64) != 0);// NOCHECKSTYLE
 		}
 	}
-	
+
 }

@@ -42,7 +42,7 @@ public class LetTest {
 		Assert.assertSame(ij, new FormulaUnLet().unlet(letij));
 		Assert.assertSame(ij, letij);
 	}
-	
+
 	@Test
 	public void testArith() {
 		final Theory theory = new Theory(Logics.AUFLIA);
@@ -58,7 +58,7 @@ public class LetTest {
 		final Term expected = theory.let(cse0, toLet, theory.term("+", cse0, cse0));
 		Assert.assertSame(expected, output);
 	}
-	
+
 	@Test
 	public void testLet() {
 		final Theory theory = new Theory(Logics.AUFLIA);
@@ -71,32 +71,25 @@ public class LetTest {
 		final Term toLet = theory.term("+", x, x);
 		Term input = theory.let(x, ij, theory.term("+", toLet, toLet));
 		Term output = let.let(input);
-		Assert.assertSame(new FormulaUnLet().unlet(input),
-				new FormulaUnLet().unlet(output));
+		Assert.assertSame(new FormulaUnLet().unlet(input), new FormulaUnLet().unlet(output));
 		final TermVariable cse1 = theory.createTermVariable(".cse1", intSort);
 		final TermVariable cse0 = theory.createTermVariable(".cse0", intSort);
-		Term expected =  
-				theory.let(cse0, theory.let(cse1, ij,
-						theory.term("+", cse1, cse1)), 
-						theory.term("+", cse0, cse0));
+		Term expected =
+				theory.let(cse0, theory.let(cse1, ij, theory.term("+", cse1, cse1)), theory.term("+", cse0, cse0));
 		Assert.assertSame(expected, output);
 		final TermVariable y = theory.createTermVariable("y", intSort);
 		final TermVariable z = theory.createTermVariable("z", intSort);
 		final Term xz = theory.term("+", x, z);
-		input = theory.let(y, ij,
-				theory.let(x, theory.term("+", y, theory.numeral("1")), 
-						theory.let(z, theory.term("+", y, theory.numeral("1")),
-								theory.term("+", xz, xz))));
+		input = theory.let(y, ij, theory.let(x, theory.term("+", y, theory.numeral("1")),
+				theory.let(z, theory.term("+", y, theory.numeral("1")), theory.term("+", xz, xz))));
 		output = let.let(input);
-		Assert.assertSame(new FormulaUnLet().unlet(input),
-				new FormulaUnLet().unlet(output));
-		expected = theory.let(cse0, 
-				theory.let(cse1, theory.term("+", ij, theory.numeral("1")),
-								theory.term("+", cse1, cse1)),
-							theory.term("+", cse0, cse0));
+		Assert.assertSame(new FormulaUnLet().unlet(input), new FormulaUnLet().unlet(output));
+		expected = theory.let(cse0,
+				theory.let(cse1, theory.term("+", ij, theory.numeral("1")), theory.term("+", cse1, cse1)),
+				theory.term("+", cse0, cse0));
 		Assert.assertSame(expected, output);
 	}
-	
+
 	@Test
 	public void testStuff() {
 		final Theory theory = new Theory(Logics.QF_UF);
@@ -118,8 +111,7 @@ public class LetTest {
 		final Term nx = theory.term("n", theory.term("x"));
 		final Term mnx = theory.term("m", nx, nx);
 		final Term y = theory.term("y");
-		final Term big = theory.term("f", theory.term("g",
-				theory.term("h", theory.term("i", mnx)), mnx));
+		final Term big = theory.term("f", theory.term("g", theory.term("h", theory.term("i", mnx)), mnx));
 		final Term small = theory.term("a", theory.term("b", theory.term("c", mnx)));
 		final Term eq1 = theory.equals(big, y);
 		final Term eq2 = theory.equals(small, nx);
@@ -129,22 +121,21 @@ public class LetTest {
 		Assert.assertSame(andTerm, new FormulaUnLet().unlet(output));
 		final TermVariable cse1 = theory.createTermVariable(".cse1", u);
 		final TermVariable cse0 = theory.createTermVariable(".cse0", u);
-		final Term expected = theory.let(cse1, nx,
-				theory.let(cse0, theory.term("m", cse1, cse1), theory.and(
-					theory.equals(theory.term("f", 
-							theory.term("g", 
-									theory.term("h", 
-											theory.term("i", cse0)),
-									cse0)),
-							y),
-					theory.equals(
-							theory.term("a", 
-									theory.term("b",
-											theory.term("c", cse0))),
-							cse1))));
+		final Term expected =
+				theory.let(
+						cse1, nx, theory
+								.let(cse0, theory.term("m", cse1, cse1),
+										theory.and(
+												theory.equals(theory.term("f",
+														theory.term("g", theory.term("h", theory.term("i", cse0)),
+																cse0)),
+														y),
+												theory.equals(
+														theory.term("a", theory.term("b", theory.term("c", cse0))),
+														cse1))));
 		Assert.assertSame(expected, output);
 	}
-	
+
 	@Test
 	public void testScope() {
 		final Theory theory = new Theory(Logics.AUFLIA);
@@ -163,16 +154,12 @@ public class LetTest {
 		final FormulaLet let = new FormulaLet();
 		final Term output = let.let(outer);
 		Assert.assertSame(outer, new FormulaUnLet().unlet(output));
-		final TermVariable cse0 =
-				theory.createTermVariable(".cse0", theory.getBooleanSort());
-		final TermVariable cse1 =
-				theory.createTermVariable(".cse1", theory.getBooleanSort());
-		final Term expected = theory.let(cse0,
-				theory.forall(xarray, 
-						theory.let(cse1, px,
-								theory.term("f", cse1, cse1))),
-								theory.term("f", cse0, cse0));
+		final TermVariable cse0 = theory.createTermVariable(".cse0", theory.getBooleanSort());
+		final TermVariable cse1 = theory.createTermVariable(".cse1", theory.getBooleanSort());
+		final Term expected =
+				theory.let(cse0, theory.forall(xarray, theory.let(cse1, px, theory.term("f", cse1, cse1))),
+						theory.term("f", cse0, cse0));
 		Assert.assertSame(expected, output);
 	}
-	
+
 }

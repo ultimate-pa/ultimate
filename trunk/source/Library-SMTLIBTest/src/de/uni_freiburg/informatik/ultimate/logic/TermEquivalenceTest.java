@@ -25,7 +25,7 @@ import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
 public class TermEquivalenceTest {
-	
+
 	@Test
 	public void testEq() {
 		final Theory theory = new Theory(Logics.AUFLIRA);
@@ -36,10 +36,8 @@ public class TermEquivalenceTest {
 		final TermVariable y = theory.createTermVariable("y", intSort);
 		final TermVariable z = theory.createTermVariable("z", intSort);
 		final TermVariable w = theory.createTermVariable("w", intSort);
-		final Term lhs = theory.let(x, y, 
-				theory.forall(new TermVariable[]{y}, theory.term(">=", y, x)));
-		final Term rhs = theory.let(z, y, 
-				theory.forall(new TermVariable[]{w}, theory.term(">=", w, z)));
+		final Term lhs = theory.let(x, y, theory.forall(new TermVariable[] { y }, theory.term(">=", y, x)));
+		final Term rhs = theory.let(z, y, theory.forall(new TermVariable[] { w }, theory.term(">=", w, z)));
 		Assert.assertTrue(new TermEquivalence().equal(lhs, rhs));
 	}
 }

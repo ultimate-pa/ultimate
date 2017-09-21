@@ -38,6 +38,7 @@ public class EqualityDestructorTest {
 	private final Sort mInt, mU;
 	private final Term mIC1, mIC2;
 	private final Term mUC1, mUC2;
+
 	public EqualityDestructorTest() {
 		mScript = new SMTInterpol(new DefaultLogger());
 		mScript.setLogic(Logics.QF_UFLIA);
@@ -48,83 +49,61 @@ public class EqualityDestructorTest {
 		mScript.declareFun("ic2", new Sort[0], mInt);
 		mIC1 = mScript.term("ic1");
 		mIC2 = mScript.term("ic2");
-		mScript.declareFun("f", new Sort[] {mU}, mU);
+		mScript.declareFun("f", new Sort[] { mU }, mU);
 		mScript.declareFun("uc1", new Sort[0], mU);
 		mScript.declareFun("uc2", new Sort[0], mU);
 		mUC1 = mScript.term("uc1");
 		mUC2 = mScript.term("uc2");
 		mCompiler.setProofTracker(new NoopProofTracker());
 	}
-	
-	/**
-	 * Test case for the destruction of
-	 * (exists ((x::Int)) (and (= x 3) (< x 2))) to false. 
-	 */
-	@Test
-	public void testDestructToFalse() {
-		final Term body = mScript.term("and",
-				mScript.term("=",
-						mScript.variable("x", mInt), mScript.numeral("3")),
-				mScript.term("<",
-						mScript.variable("x", mInt), mScript.numeral("2")));
-		final Term ibody = mCompiler.transform(body);
-		final EqualityDestructor ed = new EqualityDestructor();
-		final Term dbody = ed.destruct(ibody);
-		Assert.assertSame(mScript.term("false"), dbody);
-	}
-	
+
 	@Test
 	public void testDestructInAffineTerm() {
-		final Term body = mScript.term("and",
-				mScript.term("=",
-						mScript.variable("x", mInt), mScript.numeral("3")),
-				mScript.term("<=",
-						mScript.term("+", 
-								mScript.variable("x", mInt), mIC1, mIC2),
-						mScript.numeral("0")));
+		final Term body = mScript.term("and", mScript.term("=", mScript.variable("x", mInt), mScript.numeral("3")),
+				mScript.term("<=", mScript.term("+", mScript.variable("x", mInt), mIC1, mIC2), mScript.numeral("0")));
 		final Term ibody = mCompiler.transform(body);
 		final EqualityDestructor ed = new EqualityDestructor();
 		final Term dbody = SMTAffineTerm.cleanup(ed.destruct(ibody));
-		final Term expected = mScript.term("<=",
-				mScript.term("+", mIC1, mIC2, mScript.numeral("3")),
-				mScript.numeral("0"));
+		final Term expected =
+				mScript.term("<=", mScript.term("+", mIC1, mIC2, mScript.numeral("3")), mScript.numeral("0"));
 		Assert.assertSame(expected, dbody);
 	}
-	
+
 	@Test
 	public void testDestructInApplicationTerm() {
-		final Term body = mScript.term("and",
-				mScript.term("=", mScript.variable("x", mU), mUC1),
-				mScript.term("=",mScript.term("f", 
-						mScript.variable("x", mU)),
-					mUC2));
+		final Term body = mScript.term("and", mScript.term("=", mScript.variable("x", mU), mUC1),
+				mScript.term("=", mScript.term("f", mScript.variable("x", mU)), mUC2));
 		final Term ibody = mCompiler.transform(body);
 		final EqualityDestructor ed = new EqualityDestructor();
 		final Term dbody = ed.destruct(ibody);
 		final Term expected = mScript.term("=", mScript.term("f", mUC1), mUC2);
 		Assert.assertSame(expected, dbody);
 	}
-	
+
 	@Test
 	public void testDestructNested() {
-		final Term body = mScript.term("and",
-				mScript.term("=",mScript.term("f", 
-						mScript.variable("x", mU)),
-					mUC2),
-				mScript.term("and",
-						mScript.term("=", mScript.term("f", mUC2), mUC2),
+		final Term body = mScript.term("and", mScript.term("=", mScript.term("f", mScript.variable("x", mU)), mUC2),
+				mScript.term("and", mScript.term("=", mScript.term("f", mUC2), mUC2),
 						mScript.term("=", mScript.variable("x", mU), mUC1)));
 		final Term ibody = mCompiler.transform(body);
 		final EqualityDestructor ed = new EqualityDestructor();
 		final Term dbody = ed.destruct(ibody);
 		final Term expected = mScript.term("not",
-				mScript.term("or",
-						mScript.term("not",
-								mScript.term("=", 
-										mScript.term("f", mUC1), mUC2)),
-						mScript.term("not",
-								mScript.term("=",
-										mScript.term("f", mUC2), mUC2))));
+				mScript.term("or", mScript.term("not", mScript.term("=", mScript.term("f", mUC1), mUC2)),
+						mScript.term("not", mScript.term("=", mScript.term("f", mUC2), mUC2))));
 		Assert.assertSame(expected, dbody);
+	}
+
+	/**
+	 * Test case for the destruction of (exists ((x::Int)) (and (= x 3) (< x 2))) to false.
+	 */
+	@Test
+	public void testDestructToFalse() {
+		final Term body = mScript.term("and", mScript.term("=", mScript.variable("x", mInt), mScript.numeral("3")),
+				mScript.term("<", mScript.variable("x", mInt), mScript.numeral("2")));
+		final Term ibody = mCompiler.transform(body);
+		final EqualityDestructor ed = new EqualityDestructor();
+		final Term dbody = ed.destruct(ibody);
+		Assert.assertSame(mScript.term("false"), dbody);
 	}
 }

@@ -25,17 +25,17 @@ import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
 public class ModelValueTest {
-	
+
 	@Test
 	public void test() {
 		final Script script = new NoopScript();
-		
+
 		script.setLogic(Logics.QF_AUFLIA);
 		final Sort sortInt = script.sort("Int");
 		script.declareSort("U", 0);
 		final Sort sortU = script.sort("U");
 		final Sort sortArray = script.sort("Array", sortInt, sortU);
-				
+
 		final Term term123 = script.term("@123", null, sortInt);
 		final Term term0Int = script.term("@0", null, sortInt);
 		final Term term0U = script.term("@0", null, sortU);
@@ -44,15 +44,15 @@ public class ModelValueTest {
 		// Check that caching of function symbols and application terms works.
 		// Also checks that it works for equal but not same strings.
 		final String at = "@";
-		Assert.assertSame(script.term(at+123, null, sortInt), term123);
-		Assert.assertSame(script.term(at+0, null, sortInt), term0Int);
-		Assert.assertSame(script.term(at+0, null, sortU), term0U);
-		Assert.assertSame(script.term(at+0, null, sortArray), term0Array);
+		Assert.assertSame(script.term(at + 123, null, sortInt), term123);
+		Assert.assertSame(script.term(at + 0, null, sortInt), term0Int);
+		Assert.assertSame(script.term(at + 0, null, sortU), term0U);
+		Assert.assertSame(script.term(at + 0, null, sortArray), term0Array);
 
 		// Check that the right symbols were created
 		Assert.assertEquals(term123.toString(), "(as @123 Int)");
 		Assert.assertEquals(term0Int.toString(), "(as @0 Int)");
 		Assert.assertEquals(term0U.toString(), "(as @0 U)");
 		Assert.assertEquals(term0Array.toString(), "(as @0 (Array Int U))");
-	}	
+	}
 }

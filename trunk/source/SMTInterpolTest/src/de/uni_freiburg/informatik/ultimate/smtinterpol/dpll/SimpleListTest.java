@@ -28,7 +28,7 @@ public class SimpleListTest {
 	class Elem extends SimpleListable<Elem> {
 		int mVal;
 
-		public Elem(int i) {
+		public Elem(final int i) {
 			mVal = i;
 		}
 
@@ -40,7 +40,7 @@ public class SimpleListTest {
 
 	@Test
 	public void testAppendPrepend() {
-		final SimpleList<Elem> l = new SimpleList<Elem>();
+		final SimpleList<Elem> l = new SimpleList<>();
 		l.append(new Elem(3));// NOCHECKSTYLE
 		l.append(new Elem(4));// NOCHECKSTYLE
 		l.prepend(new Elem(2));
@@ -60,7 +60,7 @@ public class SimpleListTest {
 
 	@Test
 	public void testJoinBorder() {
-		final SimpleList<Elem> la = new SimpleList<Elem>();
+		final SimpleList<Elem> la = new SimpleList<>();
 		la.prependIntoJoined(new Elem(3), true);// NOCHECKSTYLE
 		la.prependIntoJoined(new Elem(2), true);
 		la.prependIntoJoined(new Elem(1), true);
@@ -70,10 +70,10 @@ public class SimpleListTest {
 
 	@Test
 	public void testLinearJoins() {
-		final SimpleList<Elem> la = new SimpleList<Elem>();
-		final SimpleList<Elem> lb = new SimpleList<Elem>();
-		final SimpleList<Elem> lc = new SimpleList<Elem>();
-		final SimpleList<Elem> ld = new SimpleList<Elem>();
+		final SimpleList<Elem> la = new SimpleList<>();
+		final SimpleList<Elem> lb = new SimpleList<>();
+		final SimpleList<Elem> lc = new SimpleList<>();
+		final SimpleList<Elem> ld = new SimpleList<>();
 
 		la.append(new Elem(1));
 		la.append(new Elem(2));
@@ -141,11 +141,11 @@ public class SimpleListTest {
 
 	@Test
 	public void testTreeJoins() {
-		final SimpleList<Elem> la = new SimpleList<Elem>();
-		final SimpleList<Elem> lb = new SimpleList<Elem>();
-		final SimpleList<Elem> lc = new SimpleList<Elem>();
-		final SimpleList<Elem> ld = new SimpleList<Elem>();
-		final SimpleList<Elem> le = new SimpleList<Elem>();
+		final SimpleList<Elem> la = new SimpleList<>();
+		final SimpleList<Elem> lb = new SimpleList<>();
+		final SimpleList<Elem> lc = new SimpleList<>();
+		final SimpleList<Elem> ld = new SimpleList<>();
+		final SimpleList<Elem> le = new SimpleList<>();
 
 		lb.append(new Elem(1));
 		lb.append(new Elem(2));

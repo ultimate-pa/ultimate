@@ -48,35 +48,35 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.util.SymmetricPair;
  * weak paths, one term is a store "copy" of the other, or a pair of arrays between which there exists a select path as
  * well as paths or equality literals between the path index and the select indices. Congruences in the main and weak
  * paths are outsourced into auxiliary CC lemmas.
- * 
+ *
  * @author hoenicke, schindler
  */
 
 public class ArrayAnnotation extends CCAnnotation {
-	
+
 	enum RuleKind {
 		READ_OVER_WEAKEQ(":read-over-weakeq"), WEAKEQ_EXT(":weakeq-ext");
-		
+
 		String mKind;
-		
-		private RuleKind(String kind) {
+
+		private RuleKind(final String kind) {
 			mKind = kind;
 		}
-		
+
 		public String getKind() {
 			return mKind;
 		}
 	}
-	
+
 	final CCTerm[] mWeakIndices;
 	final RuleKind mRule;
 	final IndexedPath[] mIndexedPaths;
-	
+
 	private HashMap<SymmetricPair<CCTerm>, Literal> mEqualityLiterals;
 	private HashMap<SymmetricPair<CCTerm>, IndexedPath> mSubPathMap;
 	private HashMap<IndexedPath, ProofInfo> mPathProofMap;
-	
-	public ArrayAnnotation(CCEquality diseq, Collection<SubPath> paths, RuleKind rule) {
+
+	public ArrayAnnotation(final CCEquality diseq, final Collection<SubPath> paths, final RuleKind rule) {
 		super(diseq, paths);
 		mWeakIndices = new CCTerm[mPaths.length];
 		mIndexedPaths = new IndexedPath[mPaths.length];
@@ -88,32 +88,32 @@ public class ArrayAnnotation extends CCAnnotation {
 		}
 		mRule = rule;
 	}
-	
+
 	public CCTerm[] getWeakIndices() {
 		return mWeakIndices;
 	}
-	
+
 	/**
 	 * This class is used to keep together paths and their indices (i.e. null for subpaths, and weakpathindex else).
 	 */
 	class IndexedPath {
 		private final CCTerm mIndex;
 		private final CCTerm[] mPath;
-		
-		public IndexedPath(CCTerm index, CCTerm[] path) {
+
+		public IndexedPath(final CCTerm index, final CCTerm[] path) {
 			mIndex = index;
 			mPath = path;
 		}
-		
+
 		public CCTerm getIndex() {
 			return mIndex;
 		}
-		
+
 		public CCTerm[] getPath() {
 			return mPath;
 		}
 	}
-	
+
 	/**
 	 * This class can be used to store the data needed to prove one path or one disequality, respectively. For a
 	 * disequality, the required proof data is: - the proof paths with path indices (index != 0 marks weak paths), in
@@ -123,62 +123,62 @@ public class ArrayAnnotation extends CCAnnotation {
 	 * needed to explain these congruences. For a single path, only the literals and sub-proofs are necessary.
 	 */
 	private class ProofInfo {
-		
+
 		// Information needed to build the proof graph
 		private SymmetricPair<CCTerm> mLemmaDiseq;
 		private final HashMap<SymmetricPair<CCTerm>, Literal> mProofLiterals;
 		private LinkedHashSet<IndexedPath> mProofPaths;
 		private final HashMap<SymmetricPair<CCTerm>, LinkedHashSet<SymmetricPair<CCTerm>>> mSubProofs;
-		
+
 		// Information needed to determine the proof order
 		private int mNumParents;
 		private int mNumVisitedParents;
-		
+
 		public ProofInfo() {
 			mLemmaDiseq = null;
-			mProofLiterals = new HashMap<SymmetricPair<CCTerm>, Literal>();
-			mProofPaths = new LinkedHashSet<IndexedPath>();
-			mSubProofs = new HashMap<SymmetricPair<CCTerm>, LinkedHashSet<SymmetricPair<CCTerm>>>();
+			mProofLiterals = new HashMap<>();
+			mProofPaths = new LinkedHashSet<>();
+			mSubProofs = new HashMap<>();
 			mNumParents = 0;
 			mNumVisitedParents = 0;
 		}
-		
+
 		public SymmetricPair<CCTerm> getDiseq() {
 			return mLemmaDiseq;
 		}
-		
+
 		public HashMap<SymmetricPair<CCTerm>, Literal> getLiterals() {
 			return mProofLiterals;
 		}
-		
+
 		public LinkedHashSet<IndexedPath> getPaths() {
 			return mProofPaths;
 		}
-		
+
 		public HashMap<SymmetricPair<CCTerm>, LinkedHashSet<SymmetricPair<CCTerm>>> getSubProofs() {
 			return mSubProofs;
 		}
-		
+
 		public int getNumParents() {
 			return mNumParents;
 		}
-		
+
 		public void resetNumParents() {
 			mNumParents = 0;
 		}
-		
+
 		public void increaseNumParents() {
 			mNumParents++;
 		}
-		
+
 		public void increaseVisitedParentsCounter() {
 			mNumVisitedParents++;
 		}
-		
+
 		public boolean haveVisitedAllParents() {
 			return (mNumParents == mNumVisitedParents);
 		}
-		
+
 		/**
 		 * Collect the information needed to prove a lemma. For the main lemma paths, pairs of consecutive terms can be
 		 * (i) equality literals from the clause (-> are added to proofLiterals), or they are of the form (ii) (a (store
@@ -191,7 +191,7 @@ public class ArrayAnnotation extends CCAnnotation {
 		 * paths (or the corresponding clause literals), and a new auxiliary lemma proving the new select term literal).
 		 * These are all possible cases. For the auxiliary CC lemmas, only (i) and (iii) are possible.
 		 */
-		private void collectProofInfoDiseq(SymmetricPair<CCTerm> diseq, LinkedHashSet<IndexedPath> paths) {
+		private void collectProofInfoDiseq(final SymmetricPair<CCTerm> diseq, final LinkedHashSet<IndexedPath> paths) {
 			mLemmaDiseq = diseq;
 			mProofPaths = paths;
 			// Go through all paths needed for this diseq
@@ -207,18 +207,18 @@ public class ArrayAnnotation extends CCAnnotation {
 			// Remove self-dependencies
 			mSubProofs.remove(diseq);
 		}
-		
+
 		/**
 		 * Collect the proof info for one path.
 		 */
-		private void collectProofInfoOnePath(IndexedPath indexedPath) {
+		private void collectProofInfoOnePath(final IndexedPath indexedPath) {
 			final CCTerm pathIndex = indexedPath.getIndex();
 			final CCTerm[] path = indexedPath.getPath();
 			// Check cases (i) - (iv) for all term pairs.
 			for (int i = 0; i < path.length - 1; i++) {
 				final CCTerm firstTerm = path[i];
 				final CCTerm secondTerm = path[i + 1];
-				final SymmetricPair<CCTerm> termPair = new SymmetricPair<CCTerm>(firstTerm, secondTerm);
+				final SymmetricPair<CCTerm> termPair = new SymmetricPair<>(firstTerm, secondTerm);
 				// Case (i)
 				if (isEqualityLiteral(termPair)) {
 					mProofLiterals.put(termPair, mEqualityLiterals.get(termPair));
@@ -236,20 +236,19 @@ public class ArrayAnnotation extends CCAnnotation {
 					// In the main path of weakeq-ext, no index disequality is needed
 					if (pathIndex == null) {
 						continue;
-					} else {
-						final CCTerm storeIndex = ArrayTheory.getIndexFromStore((CCAppTerm) storeTerm);
-						final SymmetricPair<CCTerm> indexPair = new SymmetricPair<CCTerm>(pathIndex, storeIndex);
-						if (isDisequalityLiteral(indexPair)) {
-							mProofLiterals.put(indexPair, mEqualityLiterals.get(indexPair));
-							continue;
-						}
+					}
+					final CCTerm storeIndex = ArrayTheory.getIndexFromStore((CCAppTerm) storeTerm);
+					final SymmetricPair<CCTerm> indexPair = new SymmetricPair<>(pathIndex, storeIndex);
+					if (isDisequalityLiteral(indexPair)) {
+						mProofLiterals.put(indexPair, mEqualityLiterals.get(indexPair));
+						continue;
 					}
 				}
 				// Case (iii)
 				final LinkedHashSet<SymmetricPair<CCTerm>> ccArgPaths = findCongruencePaths(firstTerm, secondTerm);
 				// If there are paths for all arguments, the term pair is a congruence
 				if (ccArgPaths != null) {
-					final LinkedHashSet<SymmetricPair<CCTerm>> ccPaths = new LinkedHashSet<SymmetricPair<CCTerm>>();
+					final LinkedHashSet<SymmetricPair<CCTerm>> ccPaths = new LinkedHashSet<>();
 					ccPaths.add(termPair); // main path in CC annotation
 					ccPaths.addAll(ccArgPaths);
 					mProofLiterals.put(termPair, mEqualityLiterals.get(termPair));
@@ -259,7 +258,7 @@ public class ArrayAnnotation extends CCAnnotation {
 				// Case (iv)
 				final ArrayList<SymmetricPair<CCTerm>> selectAndIndexPaths = findSelectPath(termPair, pathIndex);
 				if (selectAndIndexPaths != null) {
-					final LinkedHashSet<SymmetricPair<CCTerm>> proofPaths = new LinkedHashSet<SymmetricPair<CCTerm>>();
+					final LinkedHashSet<SymmetricPair<CCTerm>> proofPaths = new LinkedHashSet<>();
 					proofPaths.addAll(selectAndIndexPaths);
 					final SymmetricPair<CCTerm> selectPath = selectAndIndexPaths.get(0);
 					// If the select path is not a clause equality, a subproof is needed.
@@ -274,8 +273,7 @@ public class ArrayAnnotation extends CCAnnotation {
 								final LinkedHashSet<SymmetricPair<CCTerm>> argPaths =
 										findCongruencePaths(indexPair.getFirst(), indexPair.getSecond());
 								if (argPaths != null) {
-									final LinkedHashSet<SymmetricPair<CCTerm>> ccPaths =
-											new LinkedHashSet<SymmetricPair<CCTerm>>();
+									final LinkedHashSet<SymmetricPair<CCTerm>> ccPaths = new LinkedHashSet<>();
 									ccPaths.add(indexPair);
 									ccPaths.addAll(argPaths);
 									mSubProofs.put(indexPair, ccPaths);
@@ -293,11 +291,11 @@ public class ArrayAnnotation extends CCAnnotation {
 				throw new IllegalArgumentException("Cannot explain term pair " + termPair.toString());
 			}
 		}
-		
+
 		/**
 		 * Merge the proof info of a congruence lemma into a parent's proof info.
 		 */
-		private void mergeProofInfo(ProofInfo otherProof) {
+		private void mergeProofInfo(final ProofInfo otherProof) {
 			final SymmetricPair<CCTerm> otherDiseq = otherProof.getDiseq();
 			// If the other disequality is not a literal from the main clause,
 			// merging corresponds to resolving the parent lemma with the auxiliary lemma
@@ -322,11 +320,11 @@ public class ArrayAnnotation extends CCAnnotation {
 			mSubProofs.remove(otherDiseq);
 		}
 	}
-	
+
 	/**
 	 * Convert the array annotation into a term suitable to add to the proof tree. The output is an array lemma where
 	 * all congruences are explained by auxiliary CC lemmas in a hyper-resolution step.
-	 * 
+	 *
 	 * @param clause
 	 *            The clause containing this annotation.
 	 * @param theory
@@ -336,33 +334,33 @@ public class ArrayAnnotation extends CCAnnotation {
 	 *         the array lemma.
 	 */
 	@Override
-	public Term toTerm(Clause clause, Theory theory) {
+	public Term toTerm(final Clause clause, final Theory theory) {
 		// Store all clause literals
 		mEqualityLiterals = collectClauseLiterals(clause);
 		// Store all subpaths
 		mSubPathMap = makeSubPathMap();
 		// For each single path, find the information needed to prove it
 		mPathProofMap = makePathProofMap();
-		
+
 		// Collect the paths needed to prove the main disequality
-		final SymmetricPair<CCTerm> mainDiseq = new SymmetricPair<CCTerm>(mDiseq.getLhs(), mDiseq.getRhs());
+		final SymmetricPair<CCTerm> mainDiseq = new SymmetricPair<>(mDiseq.getLhs(), mDiseq.getRhs());
 		final LinkedHashSet<IndexedPath> mainPaths = findMainPaths();
-		
+
 		// Build the proof graph starting with the main disequality.
 		// During this process, the required auxiliary lemmas are determined.
 		final HashMap<SymmetricPair<CCTerm>, ProofInfo> proofGraph = buildProofGraph(mainDiseq, mainPaths);
 		// Determine the order of the auxiliary lemmas in the resolution tree.
 		final ArrayList<SymmetricPair<CCTerm>> proofOrder = determineProofOrder(mainDiseq, proofGraph);
-		
+
 		// Build the final proof term
 		return buildProofTerm(clause, theory, proofOrder, proofGraph);
 	}
-	
+
 	/**
 	 * Store all original clause literals as a SymmetricPair for better comparison, mapped to the original literal.
 	 */
-	private HashMap<SymmetricPair<CCTerm>, Literal> collectClauseLiterals(Clause clause) {
-		final HashMap<SymmetricPair<CCTerm>, Literal> clauseLiterals = new HashMap<SymmetricPair<CCTerm>, Literal>();
+	private HashMap<SymmetricPair<CCTerm>, Literal> collectClauseLiterals(final Clause clause) {
+		final HashMap<SymmetricPair<CCTerm>, Literal> clauseLiterals = new HashMap<>();
 		CCTerm lhs, rhs;
 		Literal literal;
 		CCEquality atom;
@@ -371,33 +369,33 @@ public class ArrayAnnotation extends CCAnnotation {
 			atom = (CCEquality) literal.getAtom();
 			lhs = atom.getLhs();
 			rhs = atom.getRhs();
-			clauseLiterals.put(new SymmetricPair<CCTerm>(lhs, rhs), literal);
+			clauseLiterals.put(new SymmetricPair<>(lhs, rhs), literal);
 		}
 		return clauseLiterals;
 	}
-	
+
 	/**
 	 * Build a map from the pairs of subpath ends to the array containing the whole path. This helps to find select and
 	 * congruence paths more efficiently by comparing SymmetricPairs.
 	 */
 	private HashMap<SymmetricPair<CCTerm>, IndexedPath> makeSubPathMap() {
-		final HashMap<SymmetricPair<CCTerm>, IndexedPath> pathMap = new HashMap<SymmetricPair<CCTerm>, IndexedPath>();
+		final HashMap<SymmetricPair<CCTerm>, IndexedPath> pathMap = new HashMap<>();
 		for (int i = 0; i < mIndexedPaths.length; i++) {
 			final IndexedPath indexedPath = mIndexedPaths[i];
 			if (indexedPath.getIndex() == null) {
 				final CCTerm[] path = indexedPath.getPath();
-				final SymmetricPair<CCTerm> pathEnds = new SymmetricPair<CCTerm>(path[0], path[path.length - 1]);
+				final SymmetricPair<CCTerm> pathEnds = new SymmetricPair<>(path[0], path[path.length - 1]);
 				pathMap.put(pathEnds, indexedPath);
 			}
 		}
 		return pathMap;
 	}
-	
+
 	/**
 	 * Collect the information needed to prove each single path of this lemma.
 	 */
 	private HashMap<IndexedPath, ProofInfo> makePathProofMap() {
-		final HashMap<IndexedPath, ProofInfo> proofMap = new HashMap<IndexedPath, ProofInfo>();
+		final HashMap<IndexedPath, ProofInfo> proofMap = new HashMap<>();
 		for (int p = 0; p < mIndexedPaths.length; p++) {
 			final IndexedPath indexedPath = mIndexedPaths[p];
 			final ProofInfo pathInfo = new ProofInfo();
@@ -406,14 +404,14 @@ public class ArrayAnnotation extends CCAnnotation {
 		}
 		return proofMap;
 	}
-	
+
 	/**
 	 * Collect all paths needed to prove the main disequality, i.e. the main path which starts with one side of the main
 	 * diseq and ends with the other (for weakeq-ext) or which starts with the select index of one side of the main
 	 * diseq and ends with the other select index (for read-over-weakeq), and all weakpaths.
 	 */
 	private LinkedHashSet<IndexedPath> findMainPaths() {
-		final LinkedHashSet<IndexedPath> mainPaths = new LinkedHashSet<IndexedPath>();
+		final LinkedHashSet<IndexedPath> mainPaths = new LinkedHashSet<>();
 		IndexedPath firstSubPath = (mIndexedPaths[0].getIndex() == null) ? mIndexedPaths[0] : null;
 		if (firstSubPath != null) {
 			// for read-over-weakeq, outsource congruences in the index path
@@ -435,33 +433,33 @@ public class ArrayAnnotation extends CCAnnotation {
 		}
 		return mainPaths;
 	}
-	
+
 	/**
 	 * Build the proof graph. A node corresponds to either the main array lemma, or an auxiliary lemma explaining
 	 * congruences. The children of a node are the subproofs in its proof info. Each congruence in the main lemma
 	 * creates a new auxiliary CC lemma. Subordinate congruences are included in their parent lemma unless they are
 	 * needed in more than one lemma.
 	 */
-	private HashMap<SymmetricPair<CCTerm>, ProofInfo> buildProofGraph(SymmetricPair<CCTerm> mainDiseq,
-			LinkedHashSet<IndexedPath> mainPaths) {
-		
-		final HashMap<SymmetricPair<CCTerm>, ProofInfo> proofGraph = new HashMap<SymmetricPair<CCTerm>, ProofInfo>();
+	private HashMap<SymmetricPair<CCTerm>, ProofInfo> buildProofGraph(final SymmetricPair<CCTerm> mainDiseq,
+			final LinkedHashSet<IndexedPath> mainPaths) {
+
+		final HashMap<SymmetricPair<CCTerm>, ProofInfo> proofGraph = new HashMap<>();
 		final ArrayDeque<Map.Entry<SymmetricPair<CCTerm>, LinkedHashSet<SymmetricPair<CCTerm>>>> todoBuild =
-				new ArrayDeque<Map.Entry<SymmetricPair<CCTerm>, LinkedHashSet<SymmetricPair<CCTerm>>>>();
-		
+				new ArrayDeque<>();
+
 		final ProofInfo mainInfo = new ProofInfo();
 		mainInfo.collectProofInfoDiseq(mainDiseq, mainPaths);
 		proofGraph.put(mainDiseq, mainInfo);
 		if (!mainInfo.getSubProofs().isEmpty()) {
 			todoBuild.addAll(mainInfo.getSubProofs().entrySet());
 		}
-		
+
 		// Find subproof information.
 		while (!(todoBuild.isEmpty())) {
 			final Map.Entry<SymmetricPair<CCTerm>, LinkedHashSet<SymmetricPair<CCTerm>>> auxLemma =
 					todoBuild.removeLast();
 			final SymmetricPair<CCTerm> auxDiseq = auxLemma.getKey();
-			
+
 			// Don't build a lemma for congruences explained by a literal!
 			if (isEqualityLiteral(auxDiseq)) {
 				continue;
@@ -469,7 +467,7 @@ public class ArrayAnnotation extends CCAnnotation {
 			// Collect the proof info for this auxiliary lemma if it has not
 			// been collected before.
 			if (!(proofGraph.containsKey(auxDiseq))) {
-				final LinkedHashSet<IndexedPath> paths = new LinkedHashSet<IndexedPath>();
+				final LinkedHashSet<IndexedPath> paths = new LinkedHashSet<>();
 				for (final SymmetricPair<CCTerm> auxLemmaPath : auxLemma.getValue()) {
 					// Get the complete paths
 					if (mSubPathMap.containsKey(auxLemmaPath)) {
@@ -493,7 +491,7 @@ public class ArrayAnnotation extends CCAnnotation {
 				}
 			}
 		}
-		
+
 		// Determine the number of parents for each node
 		determineAllNumParents(proofGraph);
 		// Merge nodes with only one parent (other than mainDiseq) into the
@@ -501,14 +499,14 @@ public class ArrayAnnotation extends CCAnnotation {
 		mergeSingleDependencies(proofGraph, mainDiseq);
 		// Adjust the number of parents.
 		determineAllNumParents(proofGraph);
-		
+
 		return proofGraph;
 	}
-	
+
 	/**
 	 * Set mNumParents in the proof info for all nodes of a given proof graph.
 	 */
-	private void determineAllNumParents(HashMap<SymmetricPair<CCTerm>, ProofInfo> proofGraph) {
+	private void determineAllNumParents(final HashMap<SymmetricPair<CCTerm>, ProofInfo> proofGraph) {
 		// First, reset mNumParents for each node.
 		for (final Map.Entry<SymmetricPair<CCTerm>, ProofInfo> proofNode : proofGraph.entrySet()) {
 			proofNode.getValue().resetNumParents();
@@ -521,14 +519,14 @@ public class ArrayAnnotation extends CCAnnotation {
 			}
 		}
 	}
-	
+
 	/**
 	 * Merge nodes with only one parent (other than mainDiseq) into this parent node. Note that the parent numbers in
 	 * the proof info may need updates!
 	 */
-	private void mergeSingleDependencies(HashMap<SymmetricPair<CCTerm>, ProofInfo> proofGraph,
-			SymmetricPair<CCTerm> mainDiseq) {
-		final ArrayDeque<SymmetricPair<CCTerm>> todoMerge = new ArrayDeque<SymmetricPair<CCTerm>>();
+	private void mergeSingleDependencies(final HashMap<SymmetricPair<CCTerm>, ProofInfo> proofGraph,
+			final SymmetricPair<CCTerm> mainDiseq) {
+		final ArrayDeque<SymmetricPair<CCTerm>> todoMerge = new ArrayDeque<>();
 		if (!proofGraph.get(mainDiseq).getSubProofs().isEmpty()) {
 			todoMerge.addAll(proofGraph.get(mainDiseq).getSubProofs().keySet());
 		}
@@ -538,8 +536,8 @@ public class ArrayAnnotation extends CCAnnotation {
 			if (proofGraph.get(parentNode).getSubProofs().isEmpty()) {
 				continue;
 			}
-			
-			final Set<SymmetricPair<CCTerm>> children = new HashSet<SymmetricPair<CCTerm>>();
+
+			final Set<SymmetricPair<CCTerm>> children = new HashSet<>();
 			children.addAll(proofGraph.get(parentNode).getSubProofs().keySet());
 			for (final SymmetricPair<CCTerm> childNode : children) {
 				if ((proofGraph.get(childNode).getNumParents() == 1) && (!parentNode.equals(mainDiseq))) {
@@ -550,7 +548,7 @@ public class ArrayAnnotation extends CCAnnotation {
 					proofGraph.remove(childNode);
 				}
 			}
-			
+
 			// If at least one child was merged and has children itself,
 			// review the parent node for new merging possibilities.
 			if (merge) {
@@ -563,16 +561,16 @@ public class ArrayAnnotation extends CCAnnotation {
 			}
 		}
 	}
-	
+
 	/**
 	 * Determine the order of the resolution tree. Start with the main lemma, represented by the main disequality, and
 	 * continue with its successor nodes. A node representing an auxiliary lemma can appear in the proof order only
 	 * after all its parent nodes.
 	 */
-	private ArrayList<SymmetricPair<CCTerm>> determineProofOrder(SymmetricPair<CCTerm> mainDiseq,
-			HashMap<SymmetricPair<CCTerm>, ProofInfo> proofGraph) {
-		final ArrayList<SymmetricPair<CCTerm>> proofOrder = new ArrayList<SymmetricPair<CCTerm>>();
-		final ArrayDeque<SymmetricPair<CCTerm>> todo = new ArrayDeque<SymmetricPair<CCTerm>>();
+	private ArrayList<SymmetricPair<CCTerm>> determineProofOrder(final SymmetricPair<CCTerm> mainDiseq,
+			final HashMap<SymmetricPair<CCTerm>, ProofInfo> proofGraph) {
+		final ArrayList<SymmetricPair<CCTerm>> proofOrder = new ArrayList<>();
+		final ArrayDeque<SymmetricPair<CCTerm>> todo = new ArrayDeque<>();
 		todo.add(mainDiseq);
 		while (!todo.isEmpty()) {
 			final SymmetricPair<CCTerm> node = todo.removeFirst();
@@ -591,18 +589,19 @@ public class ArrayAnnotation extends CCAnnotation {
 		}
 		return proofOrder;
 	}
-	
+
 	/**
 	 * Build the proof term in the form of a resolution step of the main lemma resolved with the auxiliary lemmas in the
 	 * order determined by proofOrder.
 	 */
-	private Term buildProofTerm(Clause clause, Theory theory, ArrayList<SymmetricPair<CCTerm>> proofOrder,
-			HashMap<SymmetricPair<CCTerm>, ProofInfo> proofGraph) {
-		
+	private Term buildProofTerm(final Clause clause, final Theory theory,
+			final ArrayList<SymmetricPair<CCTerm>> proofOrder,
+			final HashMap<SymmetricPair<CCTerm>, ProofInfo> proofGraph) {
+
 		// Store the self-built auxiliary equality literals, such that the
 		// arguments of the equality are always in the same order.
-		final HashMap<SymmetricPair<CCTerm>, Term> auxLiterals = new HashMap<SymmetricPair<CCTerm>, Term>();
-		
+		final HashMap<SymmetricPair<CCTerm>, Term> auxLiterals = new HashMap<>();
+
 		// Build all lemma terms.
 		final Term[] allLemmas = new Term[proofOrder.size()];
 		for (int lemmaNo = 0; lemmaNo < proofOrder.size(); lemmaNo++) {
@@ -651,7 +650,7 @@ public class ArrayAnnotation extends CCAnnotation {
 			}
 			// Create the clause.
 			final Term base = theory.or(args);
-			
+
 			// Build lemma annotations.
 			String rule;
 			if (lemmaNo == 0) {
@@ -682,7 +681,6 @@ public class ArrayAnnotation extends CCAnnotation {
 			Term lemma = theory.term("@lemma", theory.annotatedTerm(annots, base));
 			if (lemmaNo != 0) {
 				final Term pivot = theory.annotatedTerm(quote, diseq);
-				;
 				lemma = theory.annotatedTerm(new Annotation[] { new Annotation(":pivot", pivot) }, lemma);
 			}
 			allLemmas[lemmaNo] = lemma;
@@ -694,8 +692,8 @@ public class ArrayAnnotation extends CCAnnotation {
 		// Otherwise just return the array lemma
 		return allLemmas[0];
 	}
-	
-	private boolean isEqualityLiteral(SymmetricPair<CCTerm> termPair) {
+
+	private boolean isEqualityLiteral(final SymmetricPair<CCTerm> termPair) {
 		if (mEqualityLiterals.containsKey(termPair)) {
 			if (mEqualityLiterals.get(termPair).getSign() < 0) {
 				return true;
@@ -703,8 +701,8 @@ public class ArrayAnnotation extends CCAnnotation {
 		}
 		return false;
 	}
-	
-	private boolean isDisequalityLiteral(SymmetricPair<CCTerm> termPair) {
+
+	private boolean isDisequalityLiteral(final SymmetricPair<CCTerm> termPair) {
 		if (mEqualityLiterals.containsKey(termPair)) {
 			if (mEqualityLiterals.get(termPair).getSign() > 0) {
 				return true;
@@ -712,8 +710,8 @@ public class ArrayAnnotation extends CCAnnotation {
 		}
 		return false;
 	}
-	
-	private boolean isStoreTerm(CCTerm term) {
+
+	private boolean isStoreTerm(final CCTerm term) {
 		if (term instanceof CCAppTerm) {
 			if (((CCAppTerm) term).getFunc() instanceof CCAppTerm) {
 				if (((CCAppTerm) ((CCAppTerm) term).getFunc()).getFunc() instanceof CCAppTerm) {
@@ -726,8 +724,8 @@ public class ArrayAnnotation extends CCAnnotation {
 		}
 		return false;
 	}
-	
-	private boolean isSelectTerm(CCTerm term) {
+
+	private boolean isSelectTerm(final CCTerm term) {
 		if (term instanceof CCAppTerm) {
 			if (((CCAppTerm) term).getFunc() instanceof CCAppTerm) {
 				if (((CCAppTerm) ((CCAppTerm) term).getFunc()).getFunc().toString().contains("select")) {
@@ -737,19 +735,19 @@ public class ArrayAnnotation extends CCAnnotation {
 		}
 		return false;
 	}
-	
+
 	/**
 	 * Find argument paths for a congruence. These may also be literals from the original clause. Note that a function
 	 * can have several arguments, and a path is needed for each of them!
-	 * 
+	 *
 	 * @return The argument paths, if they exist for all arguments, or null to indicate that the termpair is not a
 	 *         congruence.
 	 */
-	private LinkedHashSet<SymmetricPair<CCTerm>> findCongruencePaths(CCTerm firstTerm, CCTerm secondTerm) {
-		final LinkedHashSet<SymmetricPair<CCTerm>> ccPaths = new LinkedHashSet<SymmetricPair<CCTerm>>();
+	private LinkedHashSet<SymmetricPair<CCTerm>> findCongruencePaths(final CCTerm firstTerm, final CCTerm secondTerm) {
+		final LinkedHashSet<SymmetricPair<CCTerm>> ccPaths = new LinkedHashSet<>();
 		if (!(firstTerm instanceof CCAppTerm && secondTerm instanceof CCAppTerm)) {
 			// Test. this happens if we outsource congruences from the indexpath in read-ocver-weakeq
-			final SymmetricPair<CCTerm> termPair = new SymmetricPair<CCTerm>(firstTerm, secondTerm);
+			final SymmetricPair<CCTerm> termPair = new SymmetricPair<>(firstTerm, secondTerm);
 			if (mSubPathMap.containsKey(termPair)) {
 				ccPaths.add(termPair);
 				return ccPaths;
@@ -762,7 +760,7 @@ public class ArrayAnnotation extends CCAnnotation {
 		while (first instanceof CCAppTerm && second instanceof CCAppTerm) {
 			final CCTerm firstArg = ((CCAppTerm) first).getArg();
 			final CCTerm secondArg = ((CCAppTerm) second).getArg();
-			final SymmetricPair<CCTerm> argPair = new SymmetricPair<CCTerm>(firstArg, secondArg);
+			final SymmetricPair<CCTerm> argPair = new SymmetricPair<>(firstArg, secondArg);
 			boolean existsArgPath = false;
 			if (firstArg == secondArg) {
 				existsArgPath = true;
@@ -784,15 +782,16 @@ public class ArrayAnnotation extends CCAnnotation {
 		}
 		return ccPaths;
 	}
-	
+
 	/**
 	 * Search for a select path between two given arrays and paths from the select indices to the weakpath index for
 	 * which one wants to prove equality of the array elements.
-	 * 
+	 *
 	 * @return the select path and (if needed) index paths, or null if there were no suitable paths for the term pair.
 	 */
-	private ArrayList<SymmetricPair<CCTerm>> findSelectPath(SymmetricPair<CCTerm> termPair, CCTerm weakpathindex) {
-		final ArrayList<SymmetricPair<CCTerm>> selectAndIndexPaths = new ArrayList<SymmetricPair<CCTerm>>();
+	private ArrayList<SymmetricPair<CCTerm>> findSelectPath(final SymmetricPair<CCTerm> termPair,
+			final CCTerm weakpathindex) {
+		final ArrayList<SymmetricPair<CCTerm>> selectAndIndexPaths = new ArrayList<>();
 		for (final SymmetricPair<CCTerm> tryPath : mSubPathMap.keySet()) {
 			boolean needFirstIndexPath = true;
 			boolean needSecondIndexPath = true;
@@ -807,7 +806,7 @@ public class ArrayAnnotation extends CCAnnotation {
 			// Check if the arrays of the select terms match the term pair.
 			final CCTerm startArray = ArrayTheory.getArrayFromSelect((CCAppTerm) start);
 			final CCTerm endArray = ArrayTheory.getArrayFromSelect((CCAppTerm) end);
-			final SymmetricPair<CCTerm> arrayPair = new SymmetricPair<CCTerm>(startArray, endArray);
+			final SymmetricPair<CCTerm> arrayPair = new SymmetricPair<>(startArray, endArray);
 			if (!(termPair.equals(arrayPair))) {
 				continue;
 			}
@@ -823,8 +822,8 @@ public class ArrayAnnotation extends CCAnnotation {
 			}
 			// Otherwise, we need equality literals or paths between the select
 			// indices and the weakpath index.
-			final SymmetricPair<CCTerm> firstIndexPair = new SymmetricPair<CCTerm>(weakpathindex, startIndex);
-			final SymmetricPair<CCTerm> secondIndexPair = new SymmetricPair<CCTerm>(weakpathindex, endIndex);
+			final SymmetricPair<CCTerm> firstIndexPair = new SymmetricPair<>(weakpathindex, startIndex);
+			final SymmetricPair<CCTerm> secondIndexPair = new SymmetricPair<>(weakpathindex, endIndex);
 			if (needFirstIndexPath) {
 				if (isEqualityLiteral(firstIndexPair)) {
 					firstIndexPath = firstIndexPair;
