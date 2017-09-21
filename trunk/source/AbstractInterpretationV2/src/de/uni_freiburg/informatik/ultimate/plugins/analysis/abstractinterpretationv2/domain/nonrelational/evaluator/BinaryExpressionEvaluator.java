@@ -211,8 +211,7 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 		BooleanValue returnBool = BooleanValue.INVALID;
 		if (mLeftSubEvaluator.containsBool() || mRightSubEvaluator.containsBool()) {
 			returnBool = first.getBooleanValue().intersect(second.getBooleanValue()) != BooleanValue.BOTTOM
-					? BooleanValue.TRUE
-					: BooleanValue.BOTTOM;
+					? BooleanValue.TRUE : BooleanValue.BOTTOM;
 		}
 
 		final VALUE returnValue = first.getValue().intersect(second.getValue());
@@ -222,6 +221,7 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 		} else if (!mLeftSubEvaluator.containsBool() && !mRightSubEvaluator.containsBool()) {
 			returnBool = first.getValue().compareEquality(second.getValue());
 		}
+
 		return Collections.singletonList(new NonrelationalEvaluationResult<>(returnValue, returnBool));
 	}
 
@@ -242,15 +242,24 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 				final VALUE leftOpValue = leftOp.getValue();
 				final VALUE rightOpValue = rightOp.getValue();
 
+				// Construct an evaluation result that uses the evaluated value of the sub evaluators, but keeps the
+				// overall boolean value of the whole expression (this).
+				// This is needed for logical operations to not lose any precision, since in logical evaluation only the
+				// boolean value of this expression is important.
+				final IEvaluationResult<VALUE> logicalLeftOpValue =
+						new NonrelationalEvaluationResult<>(leftOpValue, evalResultBool);
+				final IEvaluationResult<VALUE> logicalRightOpValue =
+						new NonrelationalEvaluationResult<>(rightOpValue, evalResultBool);
+
 				switch (mOperator) {
 				case LOGICAND:
-					final List<STATE> leftAnd = mLeftSubEvaluator.inverseEvaluate(evalResult, oldState);
-					final List<STATE> rightAnd = mRightSubEvaluator.inverseEvaluate(evalResult, oldState);
+					final List<STATE> leftAnd = mLeftSubEvaluator.inverseEvaluate(logicalLeftOpValue, oldState);
+					final List<STATE> rightAnd = mRightSubEvaluator.inverseEvaluate(logicalRightOpValue, oldState);
 					returnStates.addAll(crossIntersect(leftAnd, rightAnd));
 					break;
 				case LOGICOR:
-					mLeftSubEvaluator.inverseEvaluate(evalResult, oldState).forEach(returnStates::add);
-					mRightSubEvaluator.inverseEvaluate(evalResult, oldState).forEach(returnStates::add);
+					mLeftSubEvaluator.inverseEvaluate(logicalLeftOpValue, oldState).forEach(returnStates::add);
+					mRightSubEvaluator.inverseEvaluate(logicalRightOpValue, oldState).forEach(returnStates::add);
 					break;
 				case LOGICIMPLIES:
 					throw new UnsupportedOperationException(
