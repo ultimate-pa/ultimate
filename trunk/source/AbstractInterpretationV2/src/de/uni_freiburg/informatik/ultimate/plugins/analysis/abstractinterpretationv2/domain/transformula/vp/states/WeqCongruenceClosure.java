@@ -712,6 +712,12 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 			final boolean elemWasRepresentative = mElementTVER.isRepresentative(elem);
 			final NODE newRep = mElementTVER.removeElement(elem);
 			mAuxData.removeElement(elem, elemWasRepresentative, newRep);
+			final Set<NODE> oldAfParents = new HashSet<>(mFaAuxData.getAfParents(elem));
+			final Set<NODE> oldArgParents = new HashSet<>(mFaAuxData.getArgParents(elem));
+			if (elem.isFunctionApplication()) {
+				mFaAuxData.removeAfParent(elem.getAppliedFunction(), elem);
+				mFaAuxData.removeArgParent(elem.getArgument(), elem);
+			}
 
 			/*
 			 * Project func from the weak equivalence graph. We need to make a copy of the
@@ -720,15 +726,13 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 			mWeakEquivalenceGraph.projectFunction(elem, copy);
 			assert projectedFunctionIsGoneFromWeqGraph(elem, mWeakEquivalenceGraph);
 
-			for (final NODE parent : mFaAuxData.getAfParents(elem)) {
+//			for (final NODE parent : mFaAuxData.getAfParents(elem)) {
+			for (final NODE parent : oldAfParents) {
 				removeElement(parent, copy);
 			}
-			for (final NODE parent : mFaAuxData.getArgParents(elem)) {
+//			for (final NODE parent : mFaAuxData.getArgParents(elem)) {
+			for (final NODE parent : oldArgParents) {
 				removeElement(parent, copy);
-			}
-			if (elem.isFunctionApplication()) {
-				mFaAuxData.removeAfParent(elem.getAppliedFunction(), elem);
-				mFaAuxData.removeArgParent(elem.getArgument(), elem);
 			}
 
 			for (final NODE dependent : new HashSet<>(mNodeToDependents.getImage(elem))) {
