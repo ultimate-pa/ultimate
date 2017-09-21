@@ -579,6 +579,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 				+ "produce elements that were in the relation before!";
 
 		mElementTVER.transformElements(elemTransformer);
+		mAuxData.transformElements(elemTransformer);
+		mFaAuxData.transformElements(elemTransformer);
 	}
 
 	/**
@@ -685,6 +687,10 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 			mDirectArgPars.removePair(elem, parent);
 		}
 
+		public void transformElements(final Function<ELEM, ELEM> elemTransformer) {
+			mDirectAfPars.transformElements(elemTransformer, elemTransformer);
+			mDirectArgPars.transformElements(elemTransformer, elemTransformer);
+		}
 	}
 
 	/**
@@ -987,6 +993,19 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		public Collection<ELEM> getArgCcPars(final ELEM elem) {
 			assert isRepresentative(elem);
 			return mArgCcPars.getImage(elem);
+		}
+
+		public void transformElements(final Function<ELEM, ELEM> elemTransformer) {
+			mAfCcPars.transformElements(elemTransformer, elemTransformer);
+			mArgCcPars.transformElements(elemTransformer, elemTransformer);
+
+			for (final Entry<ELEM, HashRelation<ELEM, ELEM>> en : new HashMap<>(mCcChildren).entrySet()) {
+				mCcChildren.remove(en.getKey());
+				assert !mCcChildren.values().contains(en.getValue()) : "just to make sure there's no overlap in the "
+						+ "map's image values";
+				en.getValue().transformElements(elemTransformer, elemTransformer);
+				mCcChildren.put(elemTransformer.apply(en.getKey()), en.getValue());
+			}
 		}
 	}
 }

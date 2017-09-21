@@ -37,6 +37,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -55,6 +56,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDim
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalStore;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.EqConstraint;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
  *
@@ -372,5 +374,13 @@ public class VPDomainHelpers {
 			return false;
 		}
 		return true;
+	}
+
+	public static <K, V> void transformRelationInPlace(final HashRelation<K, V> relation, final Function<K, K> kTransformer,
+			final Function<V, V> vTransformer) {
+		for (final Entry<K, V> pair : new HashRelation<>(relation)) {
+			relation.removePair(pair.getKey(), pair.getValue());
+			relation.addPair(kTransformer.apply(pair.getKey()), vTransformer.apply(pair.getValue()));
+		}
 	}
 }
