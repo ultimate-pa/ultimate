@@ -222,17 +222,15 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 	 * @param elem
 	 */
 	protected void registerNewElement(final ELEM elem) {
-		assert sanityCheck();
 
 		if (!elem.isFunctionApplication()) {
 			// nothing to do
 			assert mElementTVER.getRepresentative(elem) != null : "this method assumes that elem has been added "
 					+ "already";
+			assert sanityCheck();
 			return;
 		}
 
-		addElement(elem.getAppliedFunction());
-		addElement(elem.getArgument());
 
 		mFaAuxData.addAfParent(elem.getAppliedFunction(), elem);
 		mFaAuxData.addArgParent(elem.getArgument(), elem);
@@ -242,6 +240,10 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		 *  (could be circumvented, I suppose..)
 		 */
 		final HashRelation<ELEM, ELEM> equalitiesToPropagate = mAuxData.registerNewElement(elem);
+
+		addElement(elem.getAppliedFunction());
+		addElement(elem.getArgument());
+
 		for (final Entry<ELEM, ELEM> eq : equalitiesToPropagate.entrySet()) {
 			reportEquality(eq.getKey(), eq.getValue());
 		}
@@ -498,6 +500,45 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		}
 
 		/*
+		 * check that for each function application a[i], its representative's ccchild contains the corresponding
+		 * af/arg-pair (a,i)
+		 */
+		for (final ELEM elem : getAllElements()) {
+			if (!elem.isFunctionApplication()) {
+				continue;
+			}
+			final ELEM rep = getRepresentativeElement(elem);
+			if (!mAuxData.getCcChildren(rep).containsPair(elem.getAppliedFunction(), elem.getArgument())) {
+				assert false;
+				return false;
+			}
+		}
+
+		/*
+		 * check that for each element, its parents in funcAppTreeAuxData and ccAuxData agree
+		 */
+		for (final ELEM elem : getAllElements()) {
+
+
+			final Set<ELEM> afCcparFromDirectParents = new HashSet<>();
+			final Set<ELEM> argCcparFromDirectParents = new HashSet<>();
+			for (final ELEM eqcMember : mElementTVER.getEquivalenceClass(elem)) {
+				afCcparFromDirectParents.addAll(mFaAuxData.getAfParents(eqcMember));
+				argCcparFromDirectParents.addAll(mFaAuxData.getArgParents(eqcMember));
+			}
+
+			final ELEM rep = getRepresentativeElement(elem);
+			if (!afCcparFromDirectParents.equals(mAuxData.getAfCcPars(rep))) {
+				assert false;
+				return false;
+			}
+			if (!argCcparFromDirectParents.equals(mAuxData.getArgCcPars(rep))) {
+				assert false;
+				return false;
+			}
+		}
+
+		/*
 		 * check that all elements that are related are of the same type
 		 * while same type means here:
 		 *  - for funcApps: same number of arguments
@@ -718,7 +759,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		private final HashRelation<ELEM, ELEM> mAfCcPars;
 		private final HashRelation<ELEM, ELEM> mArgCcPars;
 
-		Map<ELEM, HashRelation<ELEM, ELEM>> mCcChildren = new HashMap<>();
+		private final Map<ELEM, HashRelation<ELEM, ELEM>> mCcChildren;
 
 		/**
 		 * normally we only allow get..(elem) calls when elem is a representative of the encolosing CongruenceClosure
@@ -729,12 +770,17 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		CcAuxData() {
 			mAfCcPars = new HashRelation<>();
 			mArgCcPars = new HashRelation<>();
+			mCcChildren = new HashMap<>();
 			mOmitRepresentativeChecks = false;
 		}
 
 		public CcAuxData(final CcAuxData auxData, final boolean omitRepresentativeChecks) {
 			mAfCcPars = new HashRelation<>(auxData.mAfCcPars);
 			mArgCcPars = new HashRelation<>(auxData.mArgCcPars);
+			mCcChildren = new HashMap<>();
+			for (final Entry<ELEM, HashRelation<ELEM, ELEM>> en : auxData.mCcChildren.entrySet()) {
+				mCcChildren.put(en.getKey(), new HashRelation<>(en.getValue()));
+			}
 			mOmitRepresentativeChecks = omitRepresentativeChecks;
 		}
 
@@ -935,14 +981,19 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		HashRelation<ELEM, ELEM> registerNewElement(final ELEM elem) {
 			assert elem.isFunctionApplication() : "right?..";
 
-			final ELEM afRep = mElementTVER.getRepresentative(elem.getAppliedFunction());
-			final ELEM argRep = mElementTVER.getRepresentative(elem.getArgument());
+			final ELEM afRep = hasElement(elem.getAppliedFunction()) ?
+					mElementTVER.getRepresentative(elem.getAppliedFunction()) :
+						elem.getAppliedFunction();
+			final ELEM argRep = hasElement(elem.getArgument()) ?
+					mElementTVER.getRepresentative(elem.getArgument()) :
+						elem.getArgument();
 
 
 			final HashRelation<ELEM, ELEM> equalitiesToPropagate = new HashRelation<>();
 			final Set<ELEM> afCcPars = mAfCcPars.getImage(afRep);
 			final Set<ELEM> candidates = afCcPars.stream()
-					.filter(afccpar -> (hasElement(afccpar.getArgument()) &&
+					.filter(afccpar -> (hasElement(argRep) &&
+							hasElement(afccpar.getArgument()) &&
 							getEqualityStatus(argRep, afccpar.getArgument()) == EqualityStatus.EQUAL))
 					.collect(Collectors.toSet());
 			candidates.forEach(c -> equalitiesToPropagate.addPair(elem, c));
@@ -1030,7 +1081,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 
 			for (final Entry<ELEM, HashRelation<ELEM, ELEM>> en : new HashMap<>(mCcChildren).entrySet()) {
 				mCcChildren.remove(en.getKey());
-				assert !mCcChildren.values().contains(en.getValue()) : "just to make sure there's no overlap in the "
+				assert en.getValue().isEmpty() ||
+					!mCcChildren.values().contains(en.getValue()) : "just to make sure there's no overlap in the "
 						+ "map's image values";
 				en.getValue().transformElements(elemTransformer, elemTransformer);
 				mCcChildren.put(elemTransformer.apply(en.getKey()), en.getValue());

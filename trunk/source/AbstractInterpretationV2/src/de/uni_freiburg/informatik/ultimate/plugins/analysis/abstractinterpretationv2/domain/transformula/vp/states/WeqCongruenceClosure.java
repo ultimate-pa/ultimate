@@ -720,6 +720,10 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 			for (final NODE parent : mFaAuxData.getArgParents(elem)) {
 				removeElement(parent, copy);
 			}
+			if (elem.isFunctionApplication()) {
+				mFaAuxData.removeAfParent(elem.getAppliedFunction(), elem);
+				mFaAuxData.removeArgParent(elem.getArgument(), elem);
+			}
 
 			for (final NODE dependent : new HashSet<>(mNodeToDependents.getImage(elem))) {
 				removeElement(dependent, copy);
@@ -809,7 +813,6 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 
 	@Override
 	protected void registerNewElement(final NODE elem) {
-		assert sanityCheck();
 		super.registerNewElement(elem);
 
 		if (elem.isDependent()) {
