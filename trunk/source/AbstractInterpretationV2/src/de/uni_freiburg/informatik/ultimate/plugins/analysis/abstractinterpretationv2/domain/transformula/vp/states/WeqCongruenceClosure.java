@@ -207,6 +207,9 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 
 	public void reportWeakEquivalence(final NODE array1, final NODE array2,
 			final List<CongruenceClosure<NODE>> edgeLabel) {
+		if (isInconsistent()) {
+			return;
+		}
 
 		while (true) {
 			boolean madeChanges = false;
@@ -247,6 +250,9 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 
 	private boolean reportWeakEquivalenceDoOnlyRoweqPropagations(final NODE array1, final NODE array2,
 			final List<CongruenceClosure<NODE>> edgeLabel) {
+		if (isInconsistent()) {
+			return false;
+		}
 
 		boolean madeChanges = false;
 		madeChanges |= addElement(array1);
@@ -284,6 +290,10 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 		final Collection<NODE> ccps2 = mAuxData.getAfCcPars(array2Rep);
 		for (final NODE ccp1 : ccps1) {
 			for (final NODE ccp2 : ccps2) {
+				if (isInconsistent()) {
+					return true;
+				}
+
 				if (getEqualityStatus(ccp1.getArgument(), ccp2.getArgument()) != EqualityStatus.EQUAL) {
 					continue;
 				}
@@ -357,10 +367,11 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 		// old means "before the merge", here..
 		final NODE node1OldRep = getRepresentativeElement(node1);
 		final NODE node2OldRep = getRepresentativeElement(node2);
-		final Collection<NODE> oldArgCcPars1 = new HashSet<>(mAuxData.getArgCcPars(node1OldRep));
-		final Collection<NODE> oldArgCcPars2 = new HashSet<>(mAuxData.getArgCcPars(node2OldRep));
-		final HashRelation<NODE, NODE> oldCcChildren1 = new HashRelation<>(mAuxData.getCcChildren(node1OldRep));
-		final HashRelation<NODE, NODE> oldCcChildren2 = new HashRelation<>(mAuxData.getCcChildren(node2OldRep));
+//		final Collection<NODE> oldArgCcPars1 = new HashSet<>(mAuxData.getArgCcPars(node1OldRep));
+//		final Collection<NODE> oldArgCcPars2 = new HashSet<>(mAuxData.getArgCcPars(node2OldRep));
+//		final HashRelation<NODE, NODE> oldCcChildren1 = new HashRelation<>(mAuxData.getCcChildren(node1OldRep));
+//		final HashRelation<NODE, NODE> oldCcChildren2 = new HashRelation<>(mAuxData.getCcChildren(node2OldRep));
+		final CongruenceClosure<NODE>.CcAuxData oldAuxData = new CcAuxData(mAuxData, true);
 
 		mWeakEquivalenceGraph.collapseEdgeAtMerge(node1OldRep, node2OldRep);
 
@@ -372,8 +383,7 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 		}
 
 
-		doRoweqPropagationsOnMerge(node1, node1OldRep, node2OldRep, oldArgCcPars1, oldArgCcPars2, oldCcChildren1,
-				oldCcChildren2);
+		doRoweqPropagationsOnMerge(node1, node2, node1OldRep, node2OldRep, oldAuxData);
 
 		executeFloydWarshallAndReportResult();
 
@@ -386,9 +396,10 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 		return true;
 	}
 
-	private void doRoweqPropagationsOnMerge(final NODE node1, final NODE node1OldRep, final NODE node2OldRep,
-			final Collection<NODE> oldArgCcPars1, final Collection<NODE> oldArgCcPars2,
-			final HashRelation<NODE, NODE> oldCcChildren1, final HashRelation<NODE, NODE> oldCcChildren2) {
+	private void doRoweqPropagationsOnMerge(final NODE node1, final NODE node2, final NODE node1OldRep,
+			final NODE node2OldRep, final CcAuxData oldAuxData) {
+//			final Collection<NODE> oldArgCcPars1, final Collection<NODE> oldArgCcPars2,
+//			final HashRelation<NODE, NODE> oldCcChildren1, final HashRelation<NODE, NODE> oldCcChildren2) {
 		if (isInconsistent()) {
 			return;
 		}
@@ -404,17 +415,46 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 		 * trigger propagations)
 		 */
 		// (recursive call)
-		goOn |= reportWeakEquivalenceDoOnlyRoweqPropagations(node1OldRep, node2OldRep, Collections.emptyList());
-		// reportWeakEquivalence(node1, node2, Collections.emptyList());
+		// EDIT: adding an edge between nodes that are being merged is problematic algorithmically
+		// instead do the rule roweqMerge (which models the consequence of the below a -- false -- b edge, together
+		//  with fwcc), doing it in an extra procedure..
+		//	goOn |= reportWeakEquivalenceDoOnlyRoweqPropagations(node1OldRep, node2OldRep, Collections.emptyList());
+		// we will treat roweqMerge during the other propagations below as it need similar matching..
+
+		/*
+		 * roweqMerge (1)
+		 */
+//		if (node1.isFunctionApplication() && node2.isFunctionApplication()
+//				&& getEqualityStatus(node1.getArgument(), node2.getArgument()) == EqualityStatus.EQUAL) {
+//			// case node1 = a[i], node2 = b[j]
+//			final NODE firstWeqVar = getAllWeqVarsNodeForFunction(node1.getAppliedFunction()).get(0);
+//			final CongruenceClosure<NODE> qUnequalI = new CongruenceClosure<>();
+//			qUnequalI.reportDisequality(firstWeqVar, node1.getArgument());
+//			goOn |= reportWeakEquivalenceDoOnlyRoweqPropagations(node1.getAppliedFunction(), node2.getAppliedFunction(),
+//					Collections.singletonList(qUnequalI));
+//		}
+		for (final Entry<NODE, NODE> ccc1 : oldAuxData.getCcChildren(node1OldRep)) {
+			for (final Entry<NODE, NODE> ccc2 : oldAuxData.getCcChildren(node2OldRep)) {
+				// case ccc1 = (a,i), ccc2 = (b,j)
+
+				final NODE firstWeqVar = getAllWeqVarsNodeForFunction(ccc1.getKey()).get(0);
+				final CongruenceClosure<NODE> qUnequalI = new CongruenceClosure<>();
+				qUnequalI.reportDisequality(firstWeqVar, ccc1.getValue());
+				goOn |= reportWeakEquivalenceDoOnlyRoweqPropagations(ccc1.getKey(), ccc2.getKey(),
+						Collections.singletonList(qUnequalI));
+			}
+		}
+
 
 		/*
 		 * roweq, roweq-1 (1)
 		 */
 		// node1 = i, node2 = j in the rule
 		// for (final NODE ccp1 : mAuxData.getArgCcPars(node1)) {
-		for (final NODE ccp1 : oldArgCcPars1) {
+//		for (final NODE ccp1 : oldArgCcPars1) {
+		for (final NODE ccp1 : oldAuxData.getArgCcPars(node1OldRep)) {
 			// for (final NODE ccp2 : mAuxData.getArgCcPars(node2)) {
-			for (final NODE ccp2 : oldArgCcPars2) {
+			for (final NODE ccp2 : oldAuxData.getArgCcPars(node2OldRep)) {
 				// ccp1 = a[i], ccp2 = b[j] in the rule
 
 				if (!ccp1.getSort().equals(ccp2.getSort())) {
@@ -442,6 +482,24 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 				// recursive call
 				goOn |= reportWeakEquivalenceDoOnlyRoweqPropagations(ccp1.getAppliedFunction(),
 						ccp2.getAppliedFunction(), shiftedLabelWithException);
+
+				/*
+				 * roweqMerge
+				 */
+				if (getEqualityStatus(ccp1, ccp2) == EqualityStatus.EQUAL) {
+					// we have node1 = i, node2 = j, ccp1 = a[i], ccp2 = b[j]
+					final NODE firstWeqVar = getAllWeqVarsNodeForFunction(ccp1.getAppliedFunction()).get(0);
+					assert getAllWeqVarsNodeForFunction(ccp1.getAppliedFunction())
+						.equals(getAllWeqVarsNodeForFunction(ccp2.getAppliedFunction()));
+
+					final CongruenceClosure<NODE> qUnequalI = new CongruenceClosure<>();
+					qUnequalI.reportDisequality(firstWeqVar, node1.getArgument());
+					assert getEqualityStatus(node1.getArgument(), ccp1.getArgument()) == EqualityStatus.EQUAL;
+					assert getEqualityStatus(ccp2.getArgument(), ccp1.getArgument()) == EqualityStatus.EQUAL;
+
+					goOn |= reportWeakEquivalenceDoOnlyRoweqPropagations(ccp1.getAppliedFunction(),
+							ccp2.getAppliedFunction(), Collections.singletonList(qUnequalI));
+				}
 			}
 
 		}
@@ -455,22 +513,24 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 		 * the added equality may trigger the pattern matching on the weak equivalence
 		 * condition of the roweq-1 rule
 		 */
-		goOn |= otherRoweqPropOnMerge(node1OldRep, oldCcChildren1);
-		goOn |= otherRoweqPropOnMerge(node2OldRep, oldCcChildren2);
+		goOn |= otherRoweqPropOnMerge(node1OldRep, oldAuxData);
+		goOn |= otherRoweqPropOnMerge(node2OldRep, oldAuxData);
 		// otherRoweqPropOnMerge(node1, mAuxData.getCcChildren(node1));
 		// otherRoweqPropOnMerge(node2, mAuxData.getCcChildren(node2));
 	}
 
-	private boolean otherRoweqPropOnMerge(final NODE node1OldRep, final HashRelation<NODE, NODE> oldCcChildren1) {
+	private boolean otherRoweqPropOnMerge(final NODE nodeOldRep, final CcAuxData oldAuxData) {
+//			final HashRelation<NODE, NODE> oldCcChildren1) {
 		boolean madeChanges = false;
-		for (final Entry<NODE, NODE> ccc : oldCcChildren1) {
+//		for (final Entry<NODE, NODE> ccc : oldCcChildren1) {
+		for (final Entry<NODE, NODE> ccc : oldAuxData.getCcChildren(nodeOldRep)) {
 			// ccc = (b,j) , as in b[j]
-			for (final Entry<NODE, WeakEquivalenceGraph<ACTION, NODE>.WeakEquivalenceEdgeLabel> edgeAdjacentToNode : mWeakEquivalenceGraph
-					.getAdjacentWeqEdges(node1OldRep).entrySet()) {
+			for (final Entry<NODE, WeakEquivalenceGraph<ACTION, NODE>.WeakEquivalenceEdgeLabel> edgeAdjacentToNode
+					: mWeakEquivalenceGraph .getAdjacentWeqEdges(nodeOldRep).entrySet()) {
 				final NODE n = edgeAdjacentToNode.getKey();
 				final WeakEquivalenceGraph<ACTION, NODE>.WeakEquivalenceEdgeLabel phi = edgeAdjacentToNode.getValue();
 
-				// TODO is it ok here to use tha auxData from after the merge??
+				// TODO is it ok here to use that auxData from after the merge??
 				if (!mAuxData.getArgCcPars(ccc.getValue()).contains(edgeAdjacentToNode.getKey())) {
 					continue;
 				}
@@ -491,6 +551,11 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 				}
 
 			}
+
+			/*
+			 * roweqMerge rule:
+			 *  not necessary here as we used ccpar in do doRoweqPropagationsOnMerge
+			 */
 		}
 		return madeChanges;
 	}

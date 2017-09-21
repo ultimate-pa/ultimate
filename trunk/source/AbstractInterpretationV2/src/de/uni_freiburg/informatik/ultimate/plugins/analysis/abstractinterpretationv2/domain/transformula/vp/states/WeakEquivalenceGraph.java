@@ -626,6 +626,14 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 			for (final Entry<Doubleton<NODE>, WeakEquivalenceEdgeLabel> edge : mWeakEquivalenceEdges.entrySet()) {
 				final NODE source = edge.getKey().getOneElement();
 				final NODE target = edge.getKey().getOtherElement();
+				if (!mPartialArrangement.hasElement(source)) {
+						assert false;
+						return false;
+				}
+				if (!mPartialArrangement.hasElement(target)) {
+						assert false;
+						return false;
+				}
 				if (!mPartialArrangement.isRepresentative(source)) {
 						assert false;
 						return false;

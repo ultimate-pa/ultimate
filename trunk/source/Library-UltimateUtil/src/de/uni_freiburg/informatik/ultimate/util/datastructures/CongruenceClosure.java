@@ -703,14 +703,26 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 
 		Map<ELEM, HashRelation<ELEM, ELEM>> mCcChildren = new HashMap<>();
 
+		/**
+		 * normally we only allow get..(elem) calls when elem is a representative of the encolosing CongruenceClosure
+		 * this flag deactivates those checks
+		 */
+		private final boolean mOmitRepresentativeChecks;
+
 		CcAuxData() {
 			mAfCcPars = new HashRelation<>();
 			mArgCcPars = new HashRelation<>();
+			mOmitRepresentativeChecks = false;
+		}
+
+		public CcAuxData(final CcAuxData auxData, final boolean omitRepresentativeChecks) {
+			mAfCcPars = new HashRelation<>(auxData.mAfCcPars);
+			mArgCcPars = new HashRelation<>(auxData.mArgCcPars);
+			mOmitRepresentativeChecks = omitRepresentativeChecks;
 		}
 
 		CcAuxData(final CongruenceClosure<ELEM>.CcAuxData auxData) {
-			mAfCcPars = new HashRelation<>(auxData.mAfCcPars);
-			mArgCcPars = new HashRelation<>(auxData.mArgCcPars);
+			this(auxData, false);
 		}
 
 		/**
@@ -958,7 +970,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		}
 
 		public HashRelation<ELEM, ELEM> getCcChildren(final ELEM rep) {
-			assert isRepresentative(rep);
+			assert mOmitRepresentativeChecks || isRepresentative(rep);
 			HashRelation<ELEM, ELEM> result = mCcChildren.get(rep);
 			if (result == null) {
 				result = new HashRelation<>();
@@ -986,12 +998,12 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		}
 
 		public Collection<ELEM> getAfCcPars(final ELEM elem) {
-			assert isRepresentative(elem);
+			assert mOmitRepresentativeChecks || isRepresentative(elem);
 			return mAfCcPars.getImage(elem);
 		}
 
 		public Collection<ELEM> getArgCcPars(final ELEM elem) {
-			assert isRepresentative(elem);
+			assert mOmitRepresentativeChecks || isRepresentative(elem);
 			return mArgCcPars.getImage(elem);
 		}
 
