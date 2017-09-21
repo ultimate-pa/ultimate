@@ -25,6 +25,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.CongruenceClosure
 import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.EqualityStatus;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, NODE extends IEqNodeIdentifier<NODE>>
 		extends CongruenceClosure<NODE> {
@@ -155,6 +156,7 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 	protected boolean addElement(final NODE elem) {
 		final boolean elemIsNew = super.addElement(elem);
 		if (!elemIsNew) {
+			assert sanityCheck();
 			return false;
 		}
 
@@ -164,6 +166,7 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 			}
 			mAllLiterals.add(elem);
 		}
+		assert sanityCheck();
 		return true;
 	}
 
@@ -363,24 +366,45 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 
 		madeChanges |= addElement(node1);
 		madeChanges |= addElement(node2);
+		assert sanityCheck();
+
+		if (!madeChanges && getEqualityStatus(node1, node2) == EqualityStatus.EQUAL) {
+			// nothing to do
+			return false;
+		}
+		if (!madeChanges && getEqualityStatus(node1, node2) == EqualityStatus.NOT_EQUAL) {
+			// report it to tver so that it is in an inconsistent state
+			mElementTVER.reportEquality(node1, node2);
+			return true;
+		}
+
 
 		// old means "before the merge", here..
 		final NODE node1OldRep = getRepresentativeElement(node1);
 		final NODE node2OldRep = getRepresentativeElement(node2);
-//		final Collection<NODE> oldArgCcPars1 = new HashSet<>(mAuxData.getArgCcPars(node1OldRep));
-//		final Collection<NODE> oldArgCcPars2 = new HashSet<>(mAuxData.getArgCcPars(node2OldRep));
-//		final HashRelation<NODE, NODE> oldCcChildren1 = new HashRelation<>(mAuxData.getCcChildren(node1OldRep));
-//		final HashRelation<NODE, NODE> oldCcChildren2 = new HashRelation<>(mAuxData.getCcChildren(node2OldRep));
 		final CongruenceClosure<NODE>.CcAuxData oldAuxData = new CcAuxData(mAuxData, true);
 
 		mWeakEquivalenceGraph.collapseEdgeAtMerge(node1OldRep, node2OldRep);
+		assert sanityCheck();
 
-		madeChanges |= super.reportEquality(node1, node2);
-
-		if (!madeChanges) {
-			assert sanityCheck();
-			return false;
+		/*
+		 * cannot just du a super.reportEquality here, because we want to reestablish some class invariants (checked
+		 * through sanityCheck()) before doing the recursive calls for the fwcc and bwcc propagations)
+		 * in particular we need to do mWeakEquivalenceGraph.updateforNewRep(..)
+		 */
+//		madeChanges |= super.reportEquality(node1, node2);
+		final Pair<HashRelation<NODE, NODE>, HashRelation<NODE, NODE>> propInfo = doMergeAndComputePropagations(node1,
+				node2);
+		if (propInfo == null) {
+			// this became inconsistent through the merge
+			return true;
 		}
+
+
+		final NODE newRep = getRepresentativeElement(node1);
+		mWeakEquivalenceGraph.updateForNewRep(node1, node2, newRep);
+
+		doFwccAndBwccPropagationsFromMerge(propInfo);
 
 		doRoweqPropagationsOnMerge(node1, node2, node1OldRep, node2OldRep, oldAuxData);
 
@@ -392,6 +416,7 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 		reportGpaChangeToWeqGraphAndPropagateArrayEqualities(
 				(final CongruenceClosure<NODE> cc) -> cc.reportEquality(node1, node2));
 
+		assert sanityCheck();
 		return true;
 	}
 
@@ -795,6 +820,7 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 
 		if (!elem.isFunctionApplication()) {
 			// nothing to do
+			assert sanityCheck();
 			return;
 		}
 
@@ -835,6 +861,8 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 						prop.getValue().getLabelContents());
 			}
 		}
+
+		assert sanityCheck();
 
 		/*
 		 * As the new element is a function application, we might be able to infer

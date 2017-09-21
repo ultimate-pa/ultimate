@@ -1120,6 +1120,34 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 	public void collapseEdgeAtMerge(final NODE node1OldRep, final NODE node2OldRep) {
 		mWeakEquivalenceEdges.remove(new Doubleton<>(node1OldRep, node2OldRep));
 	}
+
+	/**
+	 * Called after a merge
+	 *  <li> some element is no representative anymore
+	 *  <li> an eventual edge between the merged nodes representative has already been removed
+	 *  <li> but there may be edges where source or target is not a representative anymore..
+	 *  replace the edge source/target with the new representative
+	 */
+	public void updateForNewRep(final NODE node1OldRep, final NODE node2OldRep, final NODE newRep) {
+		assert mPartialArrangement.getRepresentativeElement(node1OldRep) == newRep;
+		assert mPartialArrangement.getRepresentativeElement(node2OldRep) == newRep;
+
+		if (node1OldRep == newRep) {
+			// node2OldRep is not representative anymore
+			for (final Entry<NODE, WeakEquivalenceGraph<ACTION, NODE>.WeakEquivalenceEdgeLabel> edge
+					: getAdjacentWeqEdges(node2OldRep).entrySet()) {
+				mWeakEquivalenceEdges.remove(new Doubleton<>(node2OldRep, edge.getKey()));
+				mWeakEquivalenceEdges.put(new Doubleton<>(newRep, edge.getKey()), edge.getValue());
+			}
+		} else {
+			// node1OldRep is not representative anymore
+			for (final Entry<NODE, WeakEquivalenceGraph<ACTION, NODE>.WeakEquivalenceEdgeLabel> edge
+					: getAdjacentWeqEdges(node1OldRep).entrySet()) {
+				mWeakEquivalenceEdges.remove(new Doubleton<>(node1OldRep, edge.getKey()));
+				mWeakEquivalenceEdges.put(new Doubleton<>(newRep, edge.getKey()), edge.getValue());
+			}
+		}
+	}
 }
 
 

@@ -110,6 +110,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		boolean freshElem = false;
 		freshElem |= addElement(elem1);
 		freshElem |= addElement(elem2);
+		assert sanityCheck();
 
 		if (!freshElem && getEqualityStatus(elem1, elem2) == EqualityStatus.EQUAL) {
 			// nothing to do
@@ -121,19 +122,23 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 			return true;
 		}
 
-		final ELEM e1OldRep = mElementTVER.getRepresentative(elem1);
-		final ELEM e2OldRep = mElementTVER.getRepresentative(elem2);
-
-		mElementTVER.reportEquality(elem1, elem2);
-		if (mElementTVER.isInconsistent()) {
+		final Pair<HashRelation<ELEM, ELEM>, HashRelation<ELEM, ELEM>> propInfo = doMergeAndComputePropagations(elem1,
+				elem2);
+		if (propInfo == null) {
+			// this became inconsistent through the merge
 			return true;
 		}
 
-		final Pair<HashRelation<ELEM, ELEM>, HashRelation<ELEM, ELEM>> propInfo =
-				mAuxData.updateAndGetPropagationsOnMerge(elem1, elem2, e1OldRep, e2OldRep);
+		doFwccAndBwccPropagationsFromMerge(propInfo);
+
+		assert sanityCheck();
+		return true;
+	}
+
+	protected void doFwccAndBwccPropagationsFromMerge(
+			final Pair<HashRelation<ELEM, ELEM>, HashRelation<ELEM, ELEM>> propInfo) {
 		final HashRelation<ELEM, ELEM> equalitiesToPropagate = propInfo.getFirst();
 		final HashRelation<ELEM, ELEM> disequalitiesToPropagate = propInfo.getSecond();
-
 		/*
 		 * (fwcc)
 		 */
@@ -147,9 +152,21 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		for (final Entry<ELEM, ELEM> unequalNeighborIndices : disequalitiesToPropagate) {
 			reportDisequality(unequalNeighborIndices.getKey(), unequalNeighborIndices.getValue());
 		}
+	}
 
-		assert sanityCheck();
-		return true;
+	protected Pair<HashRelation<ELEM, ELEM>, HashRelation<ELEM, ELEM>> doMergeAndComputePropagations(final ELEM elem1,
+			final ELEM elem2) {
+		final ELEM e1OldRep = mElementTVER.getRepresentative(elem1);
+		final ELEM e2OldRep = mElementTVER.getRepresentative(elem2);
+
+		mElementTVER.reportEquality(elem1, elem2);
+		if (mElementTVER.isInconsistent()) {
+			return null;
+		}
+
+		final Pair<HashRelation<ELEM, ELEM>, HashRelation<ELEM, ELEM>> propInfo =
+				mAuxData.updateAndGetPropagationsOnMerge(elem1, elem2, e1OldRep, e2OldRep);
+		return propInfo;
 	}
 
 	public boolean reportDisequality(final ELEM elem1, final ELEM elem2) {
