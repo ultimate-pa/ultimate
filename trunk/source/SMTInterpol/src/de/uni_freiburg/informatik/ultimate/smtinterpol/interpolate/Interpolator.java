@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009-2016 University of Freiburg
+ * Copyright (C) 2009-2017 University of Freiburg
  *
  * This file is part of SMTInterpol.
  *
@@ -23,7 +23,6 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map.Entry;
@@ -46,6 +45,10 @@ import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.Config;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.LogProxy;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SMTAffineTerm;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Clause;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.LeafNode;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.ProofNode;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.SourceAnnotation;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.InfinitNumber;
 
@@ -190,7 +193,7 @@ public class Interpolator extends NonRecursive {
 	}
 
 	public Term[] getInterpolants(final Term proofTree) {
-		colorLiterals(proofTree, new HashSet<Term>());
+		colorLiterals();
 		final Interpolant[] eqitps = interpolate(proofTree);
 		final Term[] itpTerms = new Term[eqitps.length];
 		for (int i = 0; i < eqitps.length; i++) {
@@ -873,46 +876,39 @@ public class Interpolator extends NonRecursive {
 		return interpolants;
 	}
 
-	public void colorLiterals(final Term proofTerm, final HashSet<Term> visited) {
-		// TODO non-recursive version
-		if (visited.contains(proofTerm)) {
-			return;
-		}
-		final InterpolatorClauseTermInfo termInfo = getClauseTermInfo(proofTerm);
-		if (!termInfo.isResolution()) {
-			final String leafKind = termInfo.getLeafKind();
-			if (leafKind.equals("@clause") || leafKind.equals("@asserted")) {
-				final String source = termInfo.getSource();
-				final int partition = mPartitions.containsKey(source) ? mPartitions.get(source) : 0;
-				for (final Term literal : termInfo.getLiterals()) {
-					final InterpolatorLiteralTermInfo litTermInfo = getLiteralTermInfo(literal);
-					final Term atom = litTermInfo.getAtom();
-					LitInfo info = mLiteralInfos.get(atom);
-					if (info == null) {
-						info = new LitInfo();
-						mLiteralInfos.put(atom, info);
-					}
-					if (!info.contains(partition)) {
-						info.occursIn(partition);
-						final HashSet<Term> subTerms = getSubTerms(atom);
-						for (final Term sub : subTerms) {
-							if (!(sub instanceof ConstantTerm)) {
-								addOccurrence(sub, source, partition);
-							}
+	/**
+	 * Color the input literals. This gets the source for the literals from the LeafNodes.
+	 */
+	public void colorLiterals() {
+
+		for (final Clause clause : mSmtSolver.getEngine().getClauses()) {
+			final ProofNode pn = clause.getProof();
+			assert pn instanceof LeafNode;
+			final LeafNode ln = (LeafNode) pn;
+			assert ((LeafNode) pn).hasSourceAnnotation();
+			final String source = ((SourceAnnotation) ln.getTheoryAnnotation()).getAnnotation();
+			final int partition = mPartitions.containsKey(source) ? mPartitions.get(source) : 0;
+			for (int i = 0; i < clause.getSize(); i++) {
+				final Term literal = clause.getLiteral(i).getSMTFormula(mTheory);
+
+				final InterpolatorLiteralTermInfo litTermInfo = getLiteralTermInfo(literal);
+				final Term atom = litTermInfo.getAtom();
+				LitInfo info = mLiteralInfos.get(atom);
+				if (info == null) {
+					info = new LitInfo();
+					mLiteralInfos.put(atom, info);
+				}
+				if (!info.contains(partition)) {
+					info.occursIn(partition);
+					final HashSet<Term> subTerms = getSubTerms(atom);
+					for (final Term sub : subTerms) {
+						if (!(sub instanceof ConstantTerm)) {
+							addOccurrence(sub, source, partition);
 						}
 					}
 				}
 			}
-		} else {
-			colorLiterals(termInfo.getPrimary(), visited);
-			for (Term antecedent : termInfo.getAntecedents()) {
-				if (antecedent instanceof AnnotatedTerm) {
-					antecedent = ((AnnotatedTerm) antecedent).getSubterm();
-				}
-				colorLiterals(antecedent, visited);
-			}
 		}
-		visited.add(proofTerm);
 	}
 
 	Occurrence getOccurrence(final Term term, final String source) {
@@ -1001,12 +997,8 @@ public class Interpolator extends NonRecursive {
 			}
 		} else {
 			final InterpolatorAffineTerm lv = atomInfo.getLinVar();
-			Collection<Term> components;
-			if (lv != null && lv.getSummands().size() > 1) {
-				components = lv.getSummands().keySet();
-			} else {
-				components = Collections.singleton(((ApplicationTerm) atom).getParameters()[0]);
-			}
+			assert lv != null;
+			final Collection<Term> components = lv.getSummands().keySet();
 			boolean allInt = true;
 			for (final Term c : components) {
 				// IRA-Hack
