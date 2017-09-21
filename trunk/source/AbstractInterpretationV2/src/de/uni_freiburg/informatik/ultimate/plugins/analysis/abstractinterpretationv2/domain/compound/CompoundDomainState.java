@@ -283,7 +283,7 @@ public class CompoundDomainState implements IAbstractState<CompoundDomainState> 
 		EvalResult rtr = EvalResult.UNKNOWN;
 		for (int i = 0; i < mAbstractStates.size(); i++) {
 			final EvalResult result = mAbstractStates.get(i).evaluate(script, term);
-			if (rtr == EvalResult.UNKNOWN) {
+			if (rtr == EvalResult.UNKNOWN || result == EvalResult.UNKNOWN) {
 				rtr = result;
 			} else if (result != rtr) {
 				assert false : "One state said " + rtr + " another said " + result;
