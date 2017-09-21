@@ -460,6 +460,11 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 		for (final Entry<NODE, NODE> ccc1 : oldAuxData.getCcChildren(node1OldRep)) {
 			for (final Entry<NODE, NODE> ccc2 : oldAuxData.getCcChildren(node2OldRep)) {
 				// case ccc1 = (a,i), ccc2 = (b,j)
+				if (getEqualityStatus(ccc1.getValue(), ccc2.getValue()) != EqualityStatus.EQUAL) {
+					// not i = j --> cannot propagate
+					continue;
+				}
+				// i = j
 
 				final NODE firstWeqVar = getAllWeqVarsNodeForFunction(ccc1.getKey()).get(0);
 				final CongruenceClosure<NODE> qUnequalI = new CongruenceClosure<>();
@@ -515,10 +520,11 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 					final NODE firstWeqVar = getAllWeqVarsNodeForFunction(ccp1.getAppliedFunction()).get(0);
 					assert getAllWeqVarsNodeForFunction(ccp1.getAppliedFunction())
 						.equals(getAllWeqVarsNodeForFunction(ccp2.getAppliedFunction()));
+					assert getEqualityStatus(ccp2.getArgument(), ccp1.getArgument()) == EqualityStatus.EQUAL :
+						" propagation is only allowed if i = j";
 
 					final CongruenceClosure<NODE> qUnequalI = new CongruenceClosure<>();
 					qUnequalI.reportDisequality(firstWeqVar, ccp1.getArgument());
-					assert getEqualityStatus(ccp2.getArgument(), ccp1.getArgument()) == EqualityStatus.EQUAL;
 
 					goOn |= reportWeakEquivalenceDoOnlyRoweqPropagations(ccp1.getAppliedFunction(),
 							ccp2.getAppliedFunction(), Collections.singletonList(qUnequalI));
