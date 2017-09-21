@@ -33,6 +33,8 @@ import java.util.Iterator;
 import java.util.Set;
 import java.util.Vector;
 
+import de.uni_freiburg.informatik.ultimate.util.datastructures.UnifyHash;
+
 /**
  * A CDD (constraint decision diagram) represents a logical quantifier free formula in a BDD like structure. This
  * formula can have arbitrary atomic propositions that are represented by subclasses of the Decision class. Each of this
@@ -116,7 +118,7 @@ public final class CDD {
 
 	/**
 	 * Create a new CDD with the given decision and sub diagrams.
-	 * 
+	 *
 	 * @param decision
 	 *            the decision.
 	 * @param childs
@@ -129,7 +131,7 @@ public final class CDD {
 			hashcode = (hashcode * (11 + i)) ^ childs[i].hashCode();
 		}
 
-		final Iterator<CDD> it = unifyHash.iterateHashCode(hashcode);
+		final Iterator<CDD> it = unifyHash.iterateHashCode(hashcode).iterator();
 		CDD cdd;
 
 		try_next: while (it.hasNext()) {
@@ -155,7 +157,7 @@ public final class CDD {
 	/**
 	 * Check if other CDD is implied by this one. This is equivalent to &quot;
 	 * <code>this.negate().or(other) == CDD.TRUE</code>&quot; but more efficient.
-	 * 
+	 *
 	 * @param other
 	 *            the other CDD.
 	 * @return true iff other CDD is implied by this one.
@@ -194,7 +196,7 @@ public final class CDD {
 
 	/**
 	 * Negate the current CDD. This means to recursively swap the TRUE and FALSE leafs.
-	 * 
+	 *
 	 * @return the negation of the current CDD.
 	 */
 	public CDD negate() {
@@ -216,7 +218,7 @@ public final class CDD {
 
 	/**
 	 * Calculate logical conjunction of this and other CDD.
-	 * 
+	 *
 	 * @param other
 	 *            the other CDD.
 	 * @return the conjunction of the CDDs.
@@ -236,7 +238,7 @@ public final class CDD {
 
 	/**
 	 * Calculate logical conjunction of this and other CDD.
-	 * 
+	 *
 	 * @param other
 	 *            the other CDD.
 	 * @return the conjunction of the CDDs.
@@ -287,7 +289,7 @@ public final class CDD {
 
 	/**
 	 * Calculate logical disjunction of this and other CDD.
-	 * 
+	 *
 	 * @param other
 	 *            the other CDD.
 	 * @return the disjunction of the CDDs.
@@ -328,11 +330,11 @@ public final class CDD {
 	/**
 	 * Simplify the current CDD under the given assumption. This should remove all parts that are already implied by the
 	 * assumption. The correctness criteria is
-	 * 
+	 *
 	 * <pre>
 	 * this.assume(assumption).and(assumption) == this.and(assumption)
 	 * </pre>
-	 * 
+	 *
 	 * @param assumption
 	 *            the assumption.
 	 * @return the simplified CDDs.
@@ -384,7 +386,7 @@ public final class CDD {
 
 	/**
 	 * Generates the disjunctive normal form of a CDD.
-	 * 
+	 *
 	 * @return It returns an array with CDDs for each conjunction term of the normal form.
 	 */
 	public CDD[] toDNF() {
@@ -453,7 +455,7 @@ public final class CDD {
 
 	/**
 	 * Generates the conjunctive normal form of a CDD.
-	 * 
+	 *
 	 * @return It returns an array with CDDs for each disjunction term of the normal form.
 	 */
 	public CDD[] toCNF() {
@@ -600,7 +602,7 @@ public final class CDD {
 
 	/**
 	 * Creates a string representation of the CDD.
-	 * 
+	 *
 	 * @param needsParens
 	 *            true, if disjunctions need to be parenthesised.
 	 */
@@ -745,7 +747,7 @@ public final class CDD {
 
 	/**
 	 * Creates a string representation of the CDD in tex-format.
-	 * 
+	 *
 	 * @param needsParens
 	 *            true, if disjunctions need to be parenthesised.
 	 */
@@ -791,7 +793,7 @@ public final class CDD {
 
 	/**
 	 * Creates a string representation of the CDD in tex-format.
-	 * 
+	 *
 	 * @param format
 	 *            in {tex, uppaal, general}
 	 * @param needsParens
@@ -977,11 +979,11 @@ public final class CDD {
 
 	/***
 	 * Collect Identifiers from the whole CDD
-	 * 
+	 *
 	 * @return set containing all variables in the CDD
 	 */
 	public Set<String> getIdents() {
-		final Set<String> idents = new HashSet<String>();
+		final Set<String> idents = new HashSet<>();
 		if (childs == null) { // empty cdds may happen
 			return idents;
 		}
