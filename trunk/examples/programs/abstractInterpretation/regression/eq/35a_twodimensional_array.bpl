@@ -17,10 +17,10 @@ implementation main() {
   var q.base, q.offset : int;
 
   call p.base, p.offset := malloc();
-  mem[p.base, p.offset] := 0;
+  mem[p.base, p.offset] := 12;
 
   call q.base, q.offset := malloc();
-  mem[q.base, q.offset] := 1;
+  mem[q.base, q.offset] := 7;
   call freemem(q.base, q.offset);
   havoc q.base;
 
