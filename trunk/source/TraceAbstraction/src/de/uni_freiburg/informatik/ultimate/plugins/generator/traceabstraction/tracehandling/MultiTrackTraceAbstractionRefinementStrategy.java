@@ -111,7 +111,6 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy<LETTER extend
 		MATHSAT_FP,
 	}
 
-	private static final int INTERPOLANT_ACCEPTANCE_THRESHOLD = 2;
 	private static final String UNKNOWN_MODE = "Unknown mode: ";
 
 	protected final IRun<LETTER, IPredicate, ?> mCounterexample;
@@ -142,6 +141,7 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy<LETTER extend
 	private IInterpolantAutomatonBuilder<LETTER, IPredicate> mInterpolantAutomatonBuilder;
 	protected final int mIteration;
 	private final CegarLoopStatisticsGenerator mCegarLoopsBenchmark;
+	private final int mInterpolantAcceptanceThreshold;
 
 	/**
 	 * @param prefs
@@ -165,15 +165,16 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy<LETTER extend
 	 *            current CEGAR loop iteration
 	 * @param cegarLoopBenchmarks
 	 *            benchmark
+	 * @param interpolantAcceptanceThreshold
 	 */
 	@SuppressWarnings("squid:S1699")
-	public MultiTrackTraceAbstractionRefinementStrategy(final ILogger logger,
+	protected MultiTrackTraceAbstractionRefinementStrategy(final ILogger logger,
 			final TaCheckAndRefinementPreferences<LETTER> prefs, final IUltimateServiceProvider services,
 			final CfgSmtToolkit cfgSmtToolkit, final PredicateFactory predicateFactory,
 			final PredicateUnifier predicateUnifier, final AssertionOrderModulation<LETTER> assertionOrderModulation,
 			final IRun<LETTER, IPredicate, ?> counterexample, final IAutomaton<LETTER, IPredicate> abstraction,
 			final TAPreferences taPrefsForInterpolantConsolidation, final int iteration,
-			final CegarLoopStatisticsGenerator cegarLoopBenchmarks) {
+			final CegarLoopStatisticsGenerator cegarLoopBenchmarks, final int interpolantAcceptanceThreshold) {
 		mServices = services;
 		mLogger = logger;
 		mPrefs = prefs;
@@ -186,6 +187,7 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy<LETTER extend
 		mIteration = iteration;
 		mCegarLoopsBenchmark = cegarLoopBenchmarks;
 		mTaPrefsForInterpolantConsolidation = taPrefsForInterpolantConsolidation;
+		mInterpolantAcceptanceThreshold = interpolantAcceptanceThreshold;
 
 		mInterpolationTechniques = initializeInterpolationTechniquesList();
 		nextTraceChecker();

@@ -84,7 +84,7 @@ public abstract class ParrotRefinementStrategy<LETTER extends IIcfgTransition<?>
 			final TAPreferences taPrefsForInterpolantConsolidation, final int iteration,
 			final CegarLoopStatisticsGenerator cegarLoopBenchmarks) {
 		super(logger, prefs, services, cfgSmtToolkit, predicateFactory, predicateUnifier, assertionOrderModulation,
-				counterexample, abstraction, taPrefsForInterpolantConsolidation, iteration, cegarLoopBenchmarks);
+				counterexample, abstraction, taPrefsForInterpolantConsolidation, iteration, cegarLoopBenchmarks, 2);
 		mInitialized = true;
 	}
 
@@ -93,8 +93,9 @@ public abstract class ParrotRefinementStrategy<LETTER extends IIcfgTransition<?>
 	protected abstract IRefinementStrategy<LETTER> createFallbackStrategy(RefinementStrategy strategy);
 
 	private void ask() {
-		if (mAsked)
+		if (mAsked) {
 			return;
+		}
 		mAsked = true;
 		if (mLeft.isEmpty()) {
 			mNextTrack = null;
@@ -104,8 +105,9 @@ public abstract class ParrotRefinementStrategy<LETTER extends IIcfgTransition<?>
 		final Track result;
 		try {
 			final StringBuilder message = new StringBuilder();
-			if (mNextTrack != null)
+			if (mNextTrack != null) {
 				message.append("The Track " + mNextTrack.name() + " has failed. ");
+			}
 			message.append("Please select the next Track to try.");
 			result = ChoiceRequest.get(leftTracks, t -> t.name()).setLogger(mLogger).setTitle("Select Track")
 					.setSubtitle(message.toString()).request(getInteractive().getInterface()).get();
@@ -156,14 +158,13 @@ public abstract class ParrotRefinementStrategy<LETTER extends IIcfgTransition<?>
 		if (mFallback != null) {
 			if (mFallback.hasNextTraceChecker()) {
 				return true;
-			} else {
-				// Fallback has failed before user interaction.
-				// so we ask the user to continue manually.
-				mLogger.info("Fallback Strategy "
-						+ getInteractive().getParrotInteractiveIterationInfo().getFallbackStrategy()
-						+ " has failed prematurely in iteration " + mIteration + " - asking the user");
-				mFallback = null;
 			}
+			// Fallback has failed before user interaction.
+			// so we ask the user to continue manually.
+			mLogger.info(
+					"Fallback Strategy " + getInteractive().getParrotInteractiveIterationInfo().getFallbackStrategy()
+							+ " has failed prematurely in iteration " + mIteration + " - asking the user");
+			mFallback = null;
 		}
 		return super.hasNextTraceChecker();
 	}
@@ -171,8 +172,9 @@ public abstract class ParrotRefinementStrategy<LETTER extends IIcfgTransition<?>
 	@Override
 	public void nextTraceChecker() {
 		if (mFallback != null) {
-			if (!mInitialized)
+			if (!mInitialized) {
 				return;
+			}
 			mFallback.nextTraceChecker();
 		} else {
 			super.nextTraceChecker();
@@ -207,8 +209,7 @@ public abstract class ParrotRefinementStrategy<LETTER extends IIcfgTransition<?>
 
 	@Override
 	public IInterpolantAutomatonBuilder<LETTER, IPredicate> getInterpolantAutomatonBuilder(
-			final List<TracePredicates> perfectIpps,
-			final List<TracePredicates> imperfectIpps) {
+			final List<TracePredicates> perfectIpps, final List<TracePredicates> imperfectIpps) {
 		return mFallback != null ? mFallback.getInterpolantAutomatonBuilder(perfectIpps, imperfectIpps)
 				: super.getInterpolantAutomatonBuilder(perfectIpps, imperfectIpps);
 	}
