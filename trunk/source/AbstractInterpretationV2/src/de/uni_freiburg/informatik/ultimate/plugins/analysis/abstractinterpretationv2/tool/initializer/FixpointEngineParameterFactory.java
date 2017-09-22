@@ -1,3 +1,31 @@
+/*
+ * Copyright (C) 2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2015 Marius Greitschus (greitsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2015 University of Freiburg
+ *
+ * This file is part of the ULTIMATE AbstractInterpretationV2 plug-in.
+ *
+ * The ULTIMATE AbstractInterpretationV2 plug-in is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * The ULTIMATE AbstractInterpretationV2 plug-in is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the ULTIMATE AbstractInterpretationV2 plug-in. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Additional permission under GNU GPL version 3 section 7:
+ * If you modify the ULTIMATE AbstractInterpretationV2 plug-in, or any covered work, by linking
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission
+ * to convey the resulting work.
+ */
+
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.initializer;
 
 import java.util.ArrayList;
@@ -22,7 +50,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.IDebugHelper;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.ILoopDetector;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.ITransitionProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.FutureRcfgVariableProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.IcfgAbstractStateStorageProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgDebugHelper;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgVariableProvider;
@@ -30,16 +57,18 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.compound.CompoundDomainPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.empty.EmptyDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.congruence.CongruenceDomain;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.dataflow.DataflowDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.sign.SignDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon.OctagonDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon.OctagonDomain.LiteralCollectorFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomain;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainPreanalysis;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 
+/**
+ * Sets-up the fixpoint engine for abstract interpretation.
+ *
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ *
+ */
 public class FixpointEngineParameterFactory {
 
 	private final BoogieSymbolTable mSymbolTable;
@@ -78,83 +107,6 @@ public class FixpointEngineParameterFactory {
 				IProgramVarOrConst.class).setDomain(domain).setLoopDetector(loopDetector).setStorage(storageProvider)
 						.setTransitionProvider(transitionProvider).setVariableProvider(variableProvider)
 						.setDebugHelper(debugHelper).setTimer(timer);
-	}
-
-	@SuppressWarnings("unchecked")
-	public <STATE extends IAbstractState<STATE>>
-			FixpointEngineParameters<STATE, IcfgEdge, IProgramVarOrConst, BoogieIcfgLocation>
-			createParamsFuture(final IProgressAwareTimer timer,
-					final ITransitionProvider<IcfgEdge, BoogieIcfgLocation> transitionProvider,
-					final ILoopDetector<IcfgEdge> loopDetector) {
-		final IAbstractDomain<STATE, IcfgEdge> domain = (IAbstractDomain<STATE, IcfgEdge>) selectDomainFutureCfg();
-		final IAbstractStateStorage<STATE, IcfgEdge, BoogieIcfgLocation> storageProvider =
-				new IcfgAbstractStateStorageProvider<>(mServices, transitionProvider);
-		final IVariableProvider<STATE, IcfgEdge> variableProvider =
-				new FutureRcfgVariableProvider<>(mRoot.getCfgSmtToolkit().getSymbolTable(), mServices);
-		final IDebugHelper<STATE, IcfgEdge, IProgramVarOrConst, BoogieIcfgLocation> debugHelper =
-				new RcfgDebugHelper<>(mRoot.getCfgSmtToolkit(), mServices, mRoot.getCfgSmtToolkit().getSymbolTable());
-
-		return new FixpointEngineParameters<STATE, IcfgEdge, IProgramVarOrConst, BoogieIcfgLocation>(mServices,
-				IProgramVarOrConst.class).setDomain(domain).setLoopDetector(loopDetector).setStorage(storageProvider)
-						.setTransitionProvider(transitionProvider).setVariableProvider(variableProvider)
-						.setDebugHelper(debugHelper).setTimer(timer);
-	}
-
-	/**
-	 * Creates parameters for when the equality domain is invoked from another plugin (e.g. HeapSeparator) and should
-	 * not take (all) its parameters from the settings.
-	 *
-	 * @param timer
-	 * @param transitionProvider
-	 * @param loopDetector
-	 * @return
-	 */
-	@SuppressWarnings("unchecked")
-	public <STATE extends IAbstractState<STATE>>
-			FixpointEngineParameters<STATE, IcfgEdge, IProgramVarOrConst, BoogieIcfgLocation>
-			createParamsFutureEqualityDomain(final IProgressAwareTimer timer,
-					final ITransitionProvider<IcfgEdge, BoogieIcfgLocation> transitionProvider,
-					final ILoopDetector<IcfgEdge> loopDetector) {
-		final ILogger logger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
-
-		final IAbstractDomain<STATE, IcfgEdge> domain = (IAbstractDomain<STATE, IcfgEdge>) createEqualityDomain(logger);
-
-		final IAbstractStateStorage<STATE, IcfgEdge, BoogieIcfgLocation> storageProvider =
-				new IcfgAbstractStateStorageProvider<>(mServices, transitionProvider);
-
-		final IVariableProvider<STATE, IcfgEdge> variableProvider =
-				new FutureRcfgVariableProvider<>(mRoot.getCfgSmtToolkit().getSymbolTable(), mServices);
-
-		final IDebugHelper<STATE, IcfgEdge, IProgramVarOrConst, BoogieIcfgLocation> debugHelper =
-				new RcfgDebugHelper<>(mRoot.getCfgSmtToolkit(), mServices, mRoot.getCfgSmtToolkit().getSymbolTable());
-
-		return new FixpointEngineParameters<STATE, IcfgEdge, IProgramVarOrConst, BoogieIcfgLocation>(mServices,
-				IProgramVarOrConst.class).setDomain(domain).setLoopDetector(loopDetector).setStorage(storageProvider)
-						.setTransitionProvider(transitionProvider).setVariableProvider(variableProvider)
-						.setDebugHelper(debugHelper).setTimer(timer);
-	}
-
-	private IAbstractDomain<?, IcfgEdge> selectDomainFutureCfg() {
-		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
-		final String selectedDomain = prefs.getString(AbsIntPrefInitializer.LABEL_ABSTRACT_DOMAIN);
-		final ILogger logger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
-
-		if (EmptyDomain.class.getSimpleName().equals(selectedDomain)) {
-			return new EmptyDomain<>();
-		} else if (DataflowDomain.class.getSimpleName().equals(selectedDomain)) {
-			return new DataflowDomain<>(logger);
-		} else if (VPDomain.class.getSimpleName().equals(selectedDomain)) {
-			return createEqualityDomain(logger);
-		}
-		throw new UnsupportedOperationException(getFailureString(selectedDomain));
-	}
-
-	private IAbstractDomain<?, IcfgEdge> createEqualityDomain(final ILogger logger) {
-		final VPDomainPreanalysis preAnalysis = new VPDomainPreanalysis(mRoot, logger, mServices);
-		preAnalysis.postProcess();
-		// final VPTfStateBuilderPreparer tfPreparer =
-		// new VPTfStateBuilderPreparer(preAnalysis, mRoot, logger);
-		return new VPDomain<>(logger, mServices, mRoot.getCfgSmtToolkit(), preAnalysis);
 	}
 
 	private IAbstractDomain<?, IcfgEdge> selectDomain() {
