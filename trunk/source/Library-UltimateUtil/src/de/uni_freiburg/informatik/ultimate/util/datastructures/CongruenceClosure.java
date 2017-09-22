@@ -47,6 +47,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 
 	protected final CongruenceClosure<ELEM>.FuncAppTreeAuxData mFaAuxData;
 
+	boolean mConstructorInitializationPhase = false;
 
 	/**
 	 * Constructs CongruenceClosure instance without any equalities or
@@ -80,10 +81,12 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		mAuxData = new CcAuxData();
 		mFaAuxData = new FuncAppTreeAuxData();
 
+		mConstructorInitializationPhase = true;
 		// initialize the helper mappings according to mElementTVER
 		for (final ELEM elem : new HashSet<>(mElementTVER.getAllElements())) {
 			registerNewElement(elem);
 		}
+		mConstructorInitializationPhase = false;
 		assert sanityCheck();
 	}
 
@@ -209,6 +212,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		if (newlyAdded) {
 			registerNewElement(elem);
 		}
+		assert sanityCheck();
 		return newlyAdded;
 	}
 
@@ -483,6 +487,10 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 	 * @return
 	 */
 	protected boolean sanityCheck() {
+		if (mConstructorInitializationPhase) {
+			return true;
+		}
+
 		if (this.isInconsistent()) {
 			if (mElementTVER != null) {
 				// transitory CClosure instance which will later be replaced by the "bottom" variant
