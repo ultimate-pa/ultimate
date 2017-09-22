@@ -119,7 +119,7 @@ public class Interpolator extends NonRecursive {
 
 		@Override
 		public void walk(final NonRecursive engine) {
-			final Interpolator proofTreeWalker = ((Interpolator) engine);
+			final Interpolator proofTreeWalker = (Interpolator) engine;
 			if (proofTreeWalker.checkCacheForInterpolants(mProofTerm)) {
 				return;
 			}
@@ -670,7 +670,7 @@ public class Interpolator extends NonRecursive {
 						}
 					}
 					if (info.isMixed(part)) {
-						assert (info.mMixedVar != null);
+						assert info.mMixedVar != null;
 						at.add(Rational.ONE, info.getAPart(part));
 						at.add(Rational.MONE, auxMaps[part].get(info.mMixedVar));
 						final boolean isInt = eqTermInfo.isInt();
@@ -719,7 +719,7 @@ public class Interpolator extends NonRecursive {
 						}
 					}
 					if (info.isMixed(part)) {
-						assert (info.mMixedVar != null);
+						assert info.mMixedVar != null;
 						at.add(Rational.ONE, info.getAPart(part));
 						at.add(Rational.MONE, auxMaps[part].get(info.mMixedVar));
 					} else {
@@ -1024,7 +1024,7 @@ public class Interpolator extends NonRecursive {
 			info.mLhsOccur = getOccurrence(eq.getParameters()[0], null);
 		} else if (atomInfo.isBoundConstraint() || atomInfo.isLAEquality()) {
 			final InterpolatorAffineTerm lv = atomInfo.getLinVar();
-			assert (lv.getSummands().size() > 1) : "Not initially basic: " + lv + " atom: " + atom;
+			assert lv.getSummands().size() > 1 : "Not initially basic: " + lv + " atom: " + atom;
 
 			info.mAPart = new InterpolatorAffineTerm[mNumInterpolants];
 			for (int part = 0; part < mNumInterpolants; part++) {
@@ -1277,7 +1277,7 @@ public class Interpolator extends NonRecursive {
 			final Rational c1 = s1.getSummands().remove(mMixedVar);
 			final InterpolatorAffineTerm s2 = new InterpolatorAffineTerm(la2.mS);
 			final Rational c2 = s2.getSummands().remove(mMixedVar);
-			assert (c1.signum() * c2.signum() == -1);
+			assert c1.signum() * c2.signum() == -1;
 			InfinitNumber newK = la1.mK.mul(c2.abs()).add(la2.mK.mul(c1.abs()));
 
 			// compute c1s2 + c2s1
@@ -1343,8 +1343,8 @@ public class Interpolator extends NonRecursive {
 			final Rational c1 = s1.getSummands().remove(mMixedVar);
 			final InterpolatorAffineTerm s2 = new InterpolatorAffineTerm(la2.mS);
 			final Rational c2 = s2.getSummands().remove(mMixedVar);
-			assert (c1.isIntegral() && c2.isIntegral());
-			assert (c1.signum() * c2.signum() == -1);
+			assert c1.isIntegral() && c2.isIntegral();
+			assert c1.signum() * c2.signum() == -1;
 			final Rational absc1 = c1.abs();
 			final Rational absc2 = c2.abs();
 
@@ -1486,7 +1486,7 @@ public class Interpolator extends NonRecursive {
 					factorTerm = ((ApplicationTerm) factorTerm).getParameters()[0];
 					isNeg = true;
 				}
-				assert (factorTerm instanceof ConstantTerm);
+				assert factorTerm instanceof ConstantTerm;
 				Rational factor = SMTAffineTerm.create(factorTerm).getConstant();
 				factor = isNeg ? factor.mul(Rational.MONE) : factor;
 				final InterpolatorAffineTerm affine = new InterpolatorAffineTerm();
