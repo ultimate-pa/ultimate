@@ -106,9 +106,9 @@ public class NwaApproximateDelayedSimulation<LETTER, STATE> {
 
 		// FIXME somehow dead ends in the game graph have to be removed first
 		final ISetOfPairs<STATE, ?> ordinarySimulation = computeOrdinarySimulation();
-		mLogger.info("Simulation: \n" + ordinarySimulation);
+		//mLogger.info("Simulation: \n" + ordinarySimulation);
 		mDuplicatorEventuallyAccepting = computeDuplicatorFollowing(ordinarySimulation);
-		mLogger.info("mDuplicatorEventuallyAccepting: \n" + mDuplicatorEventuallyAccepting);
+		//mLogger.info("mDuplicatorEventuallyAccepting: \n" + mDuplicatorEventuallyAccepting);
 		mSpoilerWinningStates = computeSpoilerWinning(mDuplicatorEventuallyAccepting);
 		mLogger.info("mSpoilerWinningStates: \n" + mSpoilerWinningStates);
 	}
@@ -138,7 +138,7 @@ public class NwaApproximateDelayedSimulation<LETTER, STATE> {
 
 		// propagate until fixpoint is reached
 		pair: while (!visit.isEmpty()) {
-			final Pair<STATE, STATE> pair = visit.iterator().next();
+			final Pair<STATE, STATE> pair = visit.iterator().next();  
 			visit.remove(pair);
 			
 			letter: for (final Pair<STATE, LETTER> gameLetter : getOutgoingGameLetters(pair)) {

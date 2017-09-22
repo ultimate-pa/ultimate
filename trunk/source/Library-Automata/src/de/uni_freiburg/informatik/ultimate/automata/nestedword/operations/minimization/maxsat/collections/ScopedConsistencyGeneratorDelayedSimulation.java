@@ -89,9 +89,8 @@ public class ScopedConsistencyGeneratorDelayedSimulation<T, LETTER, STATE> imple
 		if (newStatus && mSpoilerWinnings.containsPair(lhs, rhs) || !newStatus && mDuplicatorWinnings.containsPair(lhs, rhs)) {
 			return Collections.emptySet();
 		}
-		//Try to merge more? Leads to backtracking...
-		else if (!newStatus && mSpoilerWinnings.containsPair(lhs, rhs)) {
-			final Pair<T, Boolean> corrected = new Pair<T, Boolean>(doubleton, true);
+		else if (newStatus && !mSpoilerWinnings.containsPair(lhs, rhs)) {
+			final Pair<T, Boolean> corrected = new Pair<T, Boolean>(doubleton, false);
 			List<Pair<T, Boolean>> result = new ArrayList<>();
 			result.add(corrected);
 			return result;

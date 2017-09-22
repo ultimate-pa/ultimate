@@ -139,12 +139,7 @@ public class MinimizeNwaPmaxSatDelayedBi<LETTER, STATE> extends MinimizeNwaPmaxS
 			generateTransitivityConstraints(states);
 		}
 	}
-
-/*	
-	private void setVariableTrue(final Doubleton<STATE> pair) {
-		mSolver.addClause(null, (Doubleton<STATE> []) new Object [] {pair.getOneElement(), pair.getOtherElement() });
-	}
-*/	
+	
 	@Override
 	protected void generateVariablesHelper(final STATE[] states) {
 		if (states.length <= 1) {
@@ -172,10 +167,9 @@ public class MinimizeNwaPmaxSatDelayedBi<LETTER, STATE> extends MinimizeNwaPmaxS
 				mStatePair2Var.put(stateJ, stateI, doubleton);
 				mSolver.addVariable(doubleton);
 				
-			/*	if(isInitialPair(stateI, stateJ)) {
-					setVariableTrue(doubleton);
+				if(!mSpoilerWinnings.containsPair(stateI, stateJ)) {
+					setVariableFalse(doubleton);
 				}
-				*/
 			}
 		}
 	}
