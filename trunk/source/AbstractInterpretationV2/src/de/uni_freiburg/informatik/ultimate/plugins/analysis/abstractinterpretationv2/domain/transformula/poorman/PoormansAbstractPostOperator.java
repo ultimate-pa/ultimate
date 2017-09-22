@@ -28,9 +28,12 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.poorman;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -48,7 +51,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractSta
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieSymbolTableVariableProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.MappedTerm2Expression;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Term2Expression;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
@@ -74,7 +76,6 @@ public class PoormansAbstractPostOperator<BACKING extends IAbstractState<BACKING
 	private final IAbstractDomain<BACKING, IcfgEdge> mBackingDomain;
 	private final Boogie2SMT mBoogie2Smt;
 	private final ManagedScript mManagedScript;
-	private final Term2Expression mTerm2Expression;
 	private final IUltimateServiceProvider mServices;
 	private final CodeBlockFactory mCodeBlockFactory;
 	private final Boogie2SmtSymbolTableTmpVars mBoogie2SmtSymbolTable;
@@ -92,7 +93,6 @@ public class PoormansAbstractPostOperator<BACKING extends IAbstractState<BACKING
 
 		mManagedScript = boogieIcfgContainer.getCfgSmtToolkit().getManagedScript();
 		mBackingDomain = backingDomain;
-		mTerm2Expression = mBoogie2Smt.getTerm2Expression();
 	}
 
 	@Override
@@ -100,16 +100,6 @@ public class PoormansAbstractPostOperator<BACKING extends IAbstractState<BACKING
 			final IcfgEdge transition) {
 
 		final UnmodifiableTransFormula transformula = transition.getTransformula();
-
-		if (mLogger.isDebugEnabled()) {
-			mLogger.debug("Poorman abstract post apply...");
-			mLogger.debug("Transformula: " + transformula);
-			mLogger.debug("InVars: " + transformula.getInVars());
-			mLogger.debug("OutVars: " + transformula.getOutVars());
-		}
-
-		boolean assertionsEnabled = false;
-		assert assertionsEnabled = true;
 
 		// Rename inVars in abstract state
 		final Map<IProgramVarOrConst, IProgramVarOrConst> renamedInVars = transformula.getInVars().entrySet().stream()
@@ -122,29 +112,42 @@ public class PoormansAbstractPostOperator<BACKING extends IAbstractState<BACKING
 				.collect(Collectors.joining("\n")));
 
 		// Add outVars and auxVars to abstract state
-		mLogger.debug("Preparing outVars list...");
+		final Map<IProgramVarOrConst, IProgramVarOrConst> outVarRenaming = new HashMap<>();
 		final Set<IProgramVarOrConst> newOutVars = new HashSet<>();
-		for (final TermVariable outVar : transformula.getOutVars().values()) {
-			if (!renamedInVars.values().stream().anyMatch(var -> var.getGloballyUniqueId().equals(outVar.getName()))) {
-				final IProgramVarOrConst newOutVar = getFreshProgramVar(outVar);
+		for (final Entry<IProgramVar, TermVariable> entry : transformula.getOutVars().entrySet()) {
+			if (!renamedInVars.values().stream()
+					.anyMatch(var -> var.getGloballyUniqueId().equals(entry.getValue().getName()))) {
+				final IProgramVarOrConst newOutVar = getFreshProgramVar(entry.getValue());
 				newOutVars.add(newOutVar);
-				mLogger.debug("  Adding " + newOutVar.getGloballyUniqueId() + " (" + newOutVar.hashCode() + ")");
+				outVarRenaming.put(newOutVar, entry.getKey());
+			} else {
+				// In this case, the outVar is also an inVar. Thus, the corresponding inVar needs to be added to the
+				// renaming map to be able to restore the state after the application of abstract post.
+				final Entry<IProgramVarOrConst, IProgramVarOrConst> correspondingInVar = renamedInVars.entrySet()
+						.stream().filter(e -> e.getValue().getGloballyUniqueId().equals(entry.getValue().getName()))
+						.findFirst().orElseGet(() -> {
+							throw new UnsupportedOperationException();
+						});
+				outVarRenaming.put(correspondingInVar.getValue(), correspondingInVar.getKey());
 			}
 		}
 
-		mLogger.debug("Preparing auxVars list...");
 		final Set<IProgramVarOrConst> newAuxVars = new HashSet<>();
 		for (final TermVariable auxVar : transformula.getAuxVars()) {
 			if (!renamedInVars.values().stream().anyMatch(var -> var.getGloballyUniqueId().equals(auxVar.getName()))
 					&& !newOutVars.stream().anyMatch(var -> var.getGloballyUniqueId().equals(auxVar.getName()))) {
 				final IProgramVarOrConst newAuxVar = getFreshProgramVar(auxVar);
 				newAuxVars.add(newAuxVar);
-				mLogger.debug("  Adding " + newAuxVar.getGloballyUniqueId() + " (" + newAuxVar.hashCode() + ")");
 			}
 		}
 
-		final PoormanAbstractState<BACKING> preState = renamedOldState
-				.addVariables(Stream.concat(newOutVars.stream(), newAuxVars.stream()).collect(Collectors.toSet()));
+		final Set<IProgramVarOrConst> addedVariables =
+				Stream.concat(newOutVars.stream(), newAuxVars.stream()).collect(Collectors.toSet());
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("Adding the following variables to the abstract state: " + addedVariables);
+		}
+
+		final PoormanAbstractState<BACKING> preState = renamedOldState.addVariables(addedVariables);
 
 		final Set<IProgramVarOrConst> tempVars = new HashSet<>();
 		tempVars.addAll(renamedInVars.values());
@@ -156,32 +159,47 @@ public class PoormansAbstractPostOperator<BACKING extends IAbstractState<BACKING
 		final MappedTerm2Expression mappedT2e = new MappedTerm2Expression(mBoogie2Smt.getTypeSortTranslator(),
 				mBoogie2Smt.getBoogie2SmtSymbolTable(), mManagedScript);
 
-		final Set<TermVariable> renameMap = new HashSet<>();
-		renameMap.addAll(transformula.getOutVars().values());
+		final Set<TermVariable> renameSet = new HashSet<>();
+		renameSet.addAll(transformula.getOutVars().values());
+		renameSet.addAll(transformula.getInVars().values());
+		renameSet.addAll(transformula.getAuxVars());
 
-		final Expression termExpression = mappedT2e.translate(transformula.getFormula(), renameMap);
+		final Expression termExpression = mappedT2e.translate(transformula.getFormula(), renameSet);
 		final AssumeStatement assume = new AssumeStatement(termExpression.getLoc(), termExpression);
+
+		mLogger.debug("Constructed assumption expression: " + termExpression);
 
 		final CodeBlock assumeBlock =
 				mCodeBlockFactory.constructStatementSequence(null, null, assume, Origin.IMPLEMENTATION);
 
+		// Compute the abstract post
 		final List<BACKING> postStates =
 				mBackingDomain.getPostOperator().apply(preState.getBackingState(), assumeBlock);
-
-		// TODO Remove the following
-		mLogger.debug(postStates);
-
-		mLogger.debug("Transformula has expression: " + assume);
 
 		tempVars.forEach(var -> mBoogie2SmtSymbolTable.removeTemporaryVariable((IProgramVar) var));
 		assert mBoogie2SmtSymbolTable.getNumberOfTempVars() == 0;
 
-		if (true) {
-			throw new UnsupportedOperationException("Expression: " + termExpression);
+		// Remove in & aux vars from the resulting states and rename inVars back to original names.
+		final Set<IProgramVarOrConst> inAuxVars = new HashSet<>();
+		inAuxVars
+				.addAll(renamedInVars.values().stream()
+						.filter(var -> !transformula.getOutVars().values().stream()
+								.anyMatch(out -> out.getName().equals(var.getGloballyUniqueId())))
+						.collect(Collectors.toSet()));
+		inAuxVars.addAll(newAuxVars);
+
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("Removing the following variables from the post state: " + inAuxVars);
+			mLogger.debug("Renaming the following variables: " + outVarRenaming);
 		}
 
-		// TODO Auto-generated method stub
-		return null;
+		final List<PoormanAbstractState<BACKING>> returnList = new ArrayList<>();
+		for (final BACKING state : postStates) {
+			final BACKING newState = state.removeVariables(inAuxVars).renameVariables(outVarRenaming);
+			returnList.add(new PoormanAbstractState<>(mServices, mBackingDomain, newState));
+		}
+
+		return returnList;
 	}
 
 	@Override

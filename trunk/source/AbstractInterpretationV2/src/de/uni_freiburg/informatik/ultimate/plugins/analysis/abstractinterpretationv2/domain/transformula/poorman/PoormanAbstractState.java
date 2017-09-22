@@ -65,14 +65,17 @@ public class PoormanAbstractState<BACKING extends IAbstractState<BACKING>>
 
 	public PoormanAbstractState(final IUltimateServiceProvider services,
 			final IAbstractDomain<BACKING, IcfgEdge> boogieVarBackingDomain, final boolean isBottom) {
+		this(services, boogieVarBackingDomain,
+				isBottom ? boogieVarBackingDomain.createBottomState() : boogieVarBackingDomain.createTopState());
+
+	}
+
+	protected PoormanAbstractState(final IUltimateServiceProvider services,
+			final IAbstractDomain<BACKING, IcfgEdge> boogieVarBackingDomain, final BACKING backingState) {
 		mId = sId++;
 		mServices = services;
 		mBoogieVarBackingDomain = boogieVarBackingDomain;
-		if (isBottom) {
-			mBackingState = mBoogieVarBackingDomain.createBottomState();
-		} else {
-			mBackingState = mBoogieVarBackingDomain.createTopState();
-		}
+		mBackingState = backingState;
 	}
 
 	@Override
