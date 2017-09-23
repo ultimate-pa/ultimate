@@ -306,24 +306,29 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 			}
 		}
 
+		final Collection<ELEM> oldAfParents = new ArrayList<>(mFaAuxData.getAfParents(elem));
+		final Collection<ELEM> oldArgParents = new ArrayList<>(mFaAuxData.getArgParents(elem));
+
 		final boolean elemWasRepresentative = mElementTVER.isRepresentative(elem);
+
 		final ELEM newRep = mElementTVER.removeElement(elem);
+
 		mAuxData.removeElement(elem, elemWasRepresentative, newRep);
-
-		/*
-		 *
-		 */
-		for (final ELEM parent : new ArrayList<>(mFaAuxData.getAfParents(elem))) {
-			removeElement(parent);
-		}
-		for (final ELEM parent : new ArrayList<>(mFaAuxData.getArgParents(elem))) {
-			removeElement(parent);
-		}
-
 		if (elem.isFunctionApplication()) {
 			mFaAuxData.removeAfParent(elem.getAppliedFunction(), elem);
 			mFaAuxData.removeArgParent(elem.getArgument(), elem);
 		}
+
+		/*
+		 * remove elements that have elem as an argument
+		 */
+		for (final ELEM parent : oldAfParents) {
+			removeElement(parent);
+		}
+		for (final ELEM parent : oldArgParents) {
+			removeElement(parent);
+		}
+
 
 		assert elementIsFullyRemoved(elem);
 		return true;
@@ -1026,12 +1031,21 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 			mAfCcPars.removeRangeElement(elem);
 			mArgCcPars.removeRangeElement(elem);
 
-			for (final Entry<ELEM, HashRelation<ELEM, ELEM>> en : mCcChildren.entrySet()) {
-				assert !en.getKey().equals(elem) : "removed it in step before, right?";
-
-				en.getValue().removeDomainElement(elem);
-				en.getValue().removeRangeElement(elem);
+			if (newRep == null) {
+				// there was no equal element to elem
+				assert elemWasRepresentative;
+				mCcChildren.remove(elem);
+			} else {
+				if (elem.isFunctionApplication()) {
+					mCcChildren.get(newRep).removePair(elem.getAppliedFunction(), elem.getArgument());
+				}
 			}
+//			for (final Entry<ELEM, HashRelation<ELEM, ELEM>> en : mCcChildren.entrySet()) {
+//				assert !en.getKey().equals(elem) : "removed it in step before, right?";
+//
+//				en.getValue().removeDomainElement(elem);
+//				en.getValue().removeRangeElement(elem);
+//			}
 		}
 
 		HashRelation<ELEM, ELEM> registerNewElement(final ELEM elem) {
