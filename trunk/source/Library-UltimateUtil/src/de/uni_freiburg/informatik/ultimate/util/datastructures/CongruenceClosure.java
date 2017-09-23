@@ -287,27 +287,28 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 			return false;
 		}
 
-		final boolean elemWasRepresentative = mElementTVER.isRepresentative(elem);
-		final ELEM newRep = mElementTVER.removeElement(elem);
-		mAuxData.removeElement(elem, elemWasRepresentative, newRep);
-
 		/*
 		 * before removing the parents:
 		 * if there is a newRep, insert a node where the subnode elem is replaced by newRep
 		 * (this may introduce fresh nodes!)
 		 */
-		if (newRep != null) {
+		final ELEM otherRep = getOtherEquivalenceClassMember(elem);
+		if (otherRep != null) {
 			for (final ELEM parent : new ArrayList<>(mFaAuxData.getAfParents(elem))) {
 				assert parent.getAppliedFunction() == elem;
-				final ELEM replaced = parent.replaceAppliedFunction(newRep);
+				final ELEM replaced = parent.replaceAppliedFunction(otherRep);
 				addElement(replaced);
 			}
 			for (final ELEM parent : new ArrayList<>(mFaAuxData.getArgParents(elem))) {
 				assert parent.getArgument() == elem;
-				final ELEM replaced = parent.replaceArgument(newRep);
+				final ELEM replaced = parent.replaceArgument(otherRep);
 				addElement(replaced);
 			}
 		}
+
+		final boolean elemWasRepresentative = mElementTVER.isRepresentative(elem);
+		final ELEM newRep = mElementTVER.removeElement(elem);
+		mAuxData.removeElement(elem, elemWasRepresentative, newRep);
 
 		/*
 		 *
@@ -326,6 +327,21 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 
 		assert elementIsFullyRemoved(elem);
 		return true;
+	}
+
+	/**
+	 * If elem is alone in its equivalence class, return null.
+	 * Otherwise return any element from elem's equivalence class that is not elem.
+	 *
+	 * @param elem
+	 * @return
+	 */
+	protected ELEM getOtherEquivalenceClassMember(final ELEM elem) {
+		final Set<ELEM> eqc = mElementTVER.getEquivalenceClass(elem);
+		if (eqc.size() == 1) {
+			return null;
+		}
+		return eqc.stream().filter(e -> e != elem).findAny().get();
 	}
 
 	/**

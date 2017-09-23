@@ -7,7 +7,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -700,9 +699,7 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 	private boolean removeElement(final NODE elem, final CongruenceClosure<NODE> copy) {
 		if (hasElement(elem)) {
 
-			final Set<NODE> elemEqc = mElementTVER.getEquivalenceClass(elem);
-			final Optional<NODE> opt = elemEqc.stream().filter(n -> n != elem).findAny();
-			final NODE otherEqClassMember = opt.isPresent() ? opt.get() : null;
+			final NODE otherEqClassMember = getOtherEquivalenceClassMember(elem);
 
 			final Collection<NODE> nodesToAdd = collectNodesToAddAtFunctionRemoval(elem, otherEqClassMember);
 			for (final NODE node : nodesToAdd) {
