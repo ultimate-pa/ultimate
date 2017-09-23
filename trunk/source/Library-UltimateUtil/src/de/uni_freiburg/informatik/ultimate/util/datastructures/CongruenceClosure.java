@@ -826,8 +826,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 			collectCcParBasedPropagations(afccpar1, afccpar2, congruentResult, unequalResult);
 			collectCcParBasedPropagations(argccpar1, argccpar2, congruentResult, unequalResult);
 
-			collectPropagationsForImplicitlyAddedDisequalities(e1OldRep, unequalResult);
-			collectPropagationsForImplicitlyAddedDisequalities(e2OldRep, unequalResult);
+			collectPropagationsForImplicitlyAddedDisequalities(e1OldRep, e2OldRep, unequalResult);
+			collectPropagationsForImplicitlyAddedDisequalities(e2OldRep, e1OldRep, unequalResult);
 
 			/*
 			 * update ccPars, ccChildren entries
@@ -924,28 +924,31 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		 *
 		 * @param e1OldRep
 		 * @param e2OldRep
+		 * @param e2OldRep
 		 * @param oldCcChild
 		 */
 		private void collectPropagationsForImplicitlyAddedDisequalities(final ELEM e1OldRep,
-					final HashRelation<ELEM, ELEM> disequalitiesToPropagate) {
+					final ELEM e2OldRep, final HashRelation<ELEM, ELEM> disequalitiesToPropagate) {
 
 			if (mCcChildren.get(e1OldRep) == null || mCcChildren.get(e1OldRep).isEmpty()) {
 				return;
 			}
 
 			for (final ELEM repUnequalToE1 : mElementTVER.getRepresentativesUnequalTo(e1OldRep)) {
-
-				for (final Entry<ELEM, ELEM> ccc1 : mCcChildren.get(e1OldRep)) {
-					final HashRelation<ELEM, ELEM> unequalRepCccs = mCcChildren.get(repUnequalToE1);
-					if (unequalRepCccs == null) {
+				final HashRelation<ELEM, ELEM> unequalRepCccs = mCcChildren.get(repUnequalToE1);
+				if (unequalRepCccs == null) {
+						continue;
+				}
+				for (final Entry<ELEM, ELEM> ccc2 : unequalRepCccs) {
+					final HashRelation<ELEM, ELEM> mergePartnerOldRepCccs = mCcChildren.get(e2OldRep);
+					if (mergePartnerOldRepCccs == null) {
 						continue;
 					}
-					for (final Entry<ELEM, ELEM> ccc2 : unequalRepCccs) {
+					for (final Entry<ELEM, ELEM> ccc1 : mergePartnerOldRepCccs) {
 						addPropIfOneIsEqualOneIsUnconstrained(ccc1.getKey(), ccc1.getValue(), ccc2.getKey(),
 								ccc2.getValue(), disequalitiesToPropagate);
 					}
 				}
-
 			}
 		}
 
