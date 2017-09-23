@@ -784,7 +784,21 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 		/*
 		 * collect nodes that are applications with newRep as a function symbol, and that have some constraint on them
 		 */
-		final Set<NODE> constrainedFuncAppNodes = mFaAuxData.getAfParents(elem).stream().filter(this::isConstrained)
+		boolean goOn = true;
+		final Set<NODE> transitiveAfParents = new HashSet<>();
+		Set<NODE> currentLayer = new HashSet<>(mFaAuxData.getAfParents(elem));
+		while (goOn) {
+			goOn = false;
+			final Set<NODE> nextLayer = new HashSet<>();
+			for (final NODE afp : currentLayer) {
+				final Set<NODE> transAfp = mFaAuxData.getAfParents(afp);
+				goOn |= !transAfp.isEmpty();
+				nextLayer.addAll(transAfp);
+			}
+			transitiveAfParents.addAll(currentLayer);
+			currentLayer = nextLayer;
+		}
+		final Set<NODE> constrainedFuncAppNodes = transitiveAfParents.stream().filter(this::isConstrained)
 				.collect(Collectors.toSet());
 //		final Set<NODE> constrainedFuncAppNodes = mAuxData.getAfCcPars(newRep).stream().filter(this::isConstrained)
 //				.collect(Collectors.toSet());
