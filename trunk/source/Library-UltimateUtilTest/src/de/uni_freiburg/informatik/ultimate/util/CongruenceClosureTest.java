@@ -670,7 +670,7 @@ class StringCcElement implements ICongruenceClosureElement<StringCcElement>{
 	private final String mName;
 	private final StringCcElement mAppliedFunction;
 	private final StringCcElement mArgument;
-	private final int mHeight;
+//	private final int mHeight;
 	private final Set<StringCcElement> mAfParents;
 	private final Set<StringCcElement> mArgParents;
 
@@ -685,7 +685,7 @@ class StringCcElement implements ICongruenceClosureElement<StringCcElement>{
 		mName = name;
 		mAppliedFunction = null;
 		mArgument = null;
-		mHeight = 0;
+//		mHeight = 0;
 		mAfParents = new HashSet<>();
 		mArgParents = new HashSet<>();
 	}
@@ -704,7 +704,7 @@ class StringCcElement implements ICongruenceClosureElement<StringCcElement>{
 //		assert mAppliedFunction.isFunction();
 		mArgument = argument;
 //		assert !argument.isFunction();
-		mHeight = appliedFunction.getHeight() + 1;
+//		mHeight = appliedFunction.getHeight() + 1;
 		mAfParents = new HashSet<>();
 		mArgParents = new HashSet<>();
 
@@ -752,9 +752,17 @@ class StringCcElement implements ICongruenceClosureElement<StringCcElement>{
 	}
 
 	@Override
-	public int getHeight() {
-		return mHeight;
+	public StringCcElement replaceAppliedFunction(final StringCcElement replacer) {
+		throw new UnsupportedOperationException();
 	}
+
+	@Override
+	public StringCcElement replaceArgument(final StringCcElement replacer) {
+		throw new UnsupportedOperationException();
+	}
+
+
+
 
 //	@Override
 //	public StringCcElement[] getArguments() {

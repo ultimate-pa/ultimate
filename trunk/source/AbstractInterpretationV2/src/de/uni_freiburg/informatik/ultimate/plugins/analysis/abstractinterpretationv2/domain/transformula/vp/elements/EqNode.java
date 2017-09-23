@@ -154,12 +154,19 @@ public abstract class EqNode implements IEqNodeIdentifier<EqNode>, ICongruenceCl
 	}
 
 	/**
-	 * unclear if we really want to have this method..
+	 * default implementation, override in EqFunctionApplicationNode
 	 */
 	@Override
-	public int getHeight() {
+	public EqNode replaceAppliedFunction(final EqNode replacer) {
 		throw new UnsupportedOperationException();
 	}
 
+	/**
+	 * default implementation, override in EqFunctionApplicationNode
+	 */
+	@Override
+	public EqNode replaceArgument(final EqNode replacer) {
+		throw new UnsupportedOperationException();
+	}
 
 }

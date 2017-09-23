@@ -162,13 +162,22 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		final ELEM e1OldRep = mElementTVER.getRepresentative(elem1);
 		final ELEM e2OldRep = mElementTVER.getRepresentative(elem2);
 
+		/*
+		 * These sets are used for bwcc propagations, there the special case for the disequalities introduced through
+		 * transitivity.
+		 * Should save some useless propagations, and avoid some weirdness in debugging..
+		 */
+		final Set<ELEM> oldUnequalRepsForElem1 = mElementTVER.getRepresentativesUnequalTo(e1OldRep);
+		final Set<ELEM> oldUnequalRepsForElem2 = mElementTVER.getRepresentativesUnequalTo(e2OldRep);
+
 		mElementTVER.reportEquality(elem1, elem2);
 		if (mElementTVER.isInconsistent()) {
 			return null;
 		}
 
 		final Pair<HashRelation<ELEM, ELEM>, HashRelation<ELEM, ELEM>> propInfo =
-				mAuxData.updateAndGetPropagationsOnMerge(elem1, elem2, e1OldRep, e2OldRep);
+				mAuxData.updateAndGetPropagationsOnMerge(elem1, elem2, e1OldRep, e2OldRep, oldUnequalRepsForElem1,
+						oldUnequalRepsForElem2);
 		return propInfo;
 	}
 
@@ -282,6 +291,27 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		final ELEM newRep = mElementTVER.removeElement(elem);
 		mAuxData.removeElement(elem, elemWasRepresentative, newRep);
 
+		/*
+		 * before removing the parents:
+		 * if there is a newRep, insert a node where the subnode elem is replaced by newRep
+		 * (this may introduce fresh nodes!)
+		 */
+		if (newRep != null) {
+			for (final ELEM parent : new ArrayList<>(mFaAuxData.getAfParents(elem))) {
+				assert parent.getAppliedFunction() == elem;
+				final ELEM replaced = parent.replaceAppliedFunction(newRep);
+				addElement(replaced);
+			}
+			for (final ELEM parent : new ArrayList<>(mFaAuxData.getArgParents(elem))) {
+				assert parent.getArgument() == elem;
+				final ELEM replaced = parent.replaceArgument(newRep);
+				addElement(replaced);
+			}
+		}
+
+		/*
+		 *
+		 */
 		for (final ELEM parent : new ArrayList<>(mFaAuxData.getAfParents(elem))) {
 			removeElement(parent);
 		}
@@ -803,10 +833,13 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		 *
 		 * @param e1
 		 * @param e2
+		 * @param oldUnequalRepsForElem2
+		 * @param oldUnequalRepsForElem1
 		 * @return
 		 */
 		Pair<HashRelation<ELEM, ELEM>, HashRelation<ELEM, ELEM>> updateAndGetPropagationsOnMerge(final ELEM e1,
-				final ELEM e2, final ELEM e1OldRep, final ELEM e2OldRep) {
+				final ELEM e2, final ELEM e1OldRep, final ELEM e2OldRep, final Set<ELEM> oldUnequalRepsForElem1,
+				final Set<ELEM> oldUnequalRepsForElem2) {
 
 			final ELEM newRep = mElementTVER.getRepresentative(e1);
 			assert mElementTVER.getRepresentative(e2) == newRep : "we merged before calling this method, right?";
@@ -826,8 +859,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 			collectCcParBasedPropagations(afccpar1, afccpar2, congruentResult, unequalResult);
 			collectCcParBasedPropagations(argccpar1, argccpar2, congruentResult, unequalResult);
 
-			collectPropagationsForImplicitlyAddedDisequalities(e1OldRep, e2OldRep, unequalResult);
-			collectPropagationsForImplicitlyAddedDisequalities(e2OldRep, e1OldRep, unequalResult);
+			collectPropagationsForImplicitlyAddedDisequalities(oldUnequalRepsForElem1, e2OldRep, unequalResult);
+			collectPropagationsForImplicitlyAddedDisequalities(oldUnequalRepsForElem2, e1OldRep, unequalResult);
 
 			/*
 			 * update ccPars, ccChildren entries
@@ -922,24 +955,20 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		 * <li>one call of this method will be with (preState, i, f(x))
 		 * <li>we will get the output state: (i = f(y)) , (j != f(x)), (i = j), (x != y)
 		 *
-		 * @param e1OldRep
+		 * @param oldUnequalRepsForElem1
 		 * @param e2OldRep
 		 * @param e2OldRep
 		 * @param oldCcChild
 		 */
-		private void collectPropagationsForImplicitlyAddedDisequalities(final ELEM e1OldRep,
+		private void collectPropagationsForImplicitlyAddedDisequalities(final Set<ELEM> oldUnequalRepsForElem1,
 					final ELEM e2OldRep, final HashRelation<ELEM, ELEM> disequalitiesToPropagate) {
 
-			if (mCcChildren.get(e1OldRep) == null || mCcChildren.get(e1OldRep).isEmpty()) {
-				return;
-			}
-
-			for (final ELEM repUnequalToE1 : mElementTVER.getRepresentativesUnequalTo(e1OldRep)) {
-				final HashRelation<ELEM, ELEM> unequalRepCccs = mCcChildren.get(repUnequalToE1);
-				if (unequalRepCccs == null) {
+			for (final ELEM repUnequalToE1 : oldUnequalRepsForElem1) {
+				final HashRelation<ELEM, ELEM> unequalRep1Cccs = mCcChildren.get(repUnequalToE1);
+				if (unequalRep1Cccs == null) {
 						continue;
 				}
-				for (final Entry<ELEM, ELEM> ccc2 : unequalRepCccs) {
+				for (final Entry<ELEM, ELEM> ccc2 : unequalRep1Cccs) {
 					final HashRelation<ELEM, ELEM> mergePartnerOldRepCccs = mCcChildren.get(e2OldRep);
 					if (mergePartnerOldRepCccs == null) {
 						continue;

@@ -88,4 +88,16 @@ public class EqFunctionApplicationNode extends EqNode {
 	public String toString() {
 		return mFunction.toString() + "[" + mArg.toString() + "]";
 	}
+
+	@Override
+	public EqNode replaceAppliedFunction(final EqNode replacer) {
+		return mEqNodeFactory.getOrConstructFuncAppElement(replacer, mArg);
+	}
+
+	@Override
+	public EqNode replaceArgument(final EqNode replacer) {
+		return mEqNodeFactory.getOrConstructFuncAppElement(mFunction, replacer);
+	}
+
+
 }

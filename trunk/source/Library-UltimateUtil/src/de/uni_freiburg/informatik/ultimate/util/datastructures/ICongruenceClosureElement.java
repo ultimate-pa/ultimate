@@ -22,5 +22,9 @@ public interface ICongruenceClosureElement<ELEM extends ICongruenceClosureElemen
 //
 //	Set<ELEM> getArgParents();
 
-	int getHeight();
+	ELEM replaceAppliedFunction(ELEM replacer);
+
+	ELEM replaceArgument(ELEM replacer);
+
+//	int getHeight();
 }

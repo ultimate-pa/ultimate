@@ -329,13 +329,14 @@ public class ThreeValuedEquivalenceRelation<E> {
 		return mUnionFind.getAllElements();
 	}
 
-	public Set<E> getRepresentativesUnequalTo(final E elem) {
+	public Set<E> getRepresentativesUnequalTo(final E rep) {
+		assert isRepresentative(rep);
 		final Set<E> result = new HashSet<>();
 
-		result.addAll(mDisequalities.getImage(elem));
+		result.addAll(mDisequalities.getImage(rep));
 
 		for (final E domEl : mDisequalities.getDomain()) {
-			if (mDisequalities.getImage(domEl).contains(elem)) {
+			if (mDisequalities.getImage(domEl).contains(rep)) {
 				result.add(domEl);
 			}
 		}
