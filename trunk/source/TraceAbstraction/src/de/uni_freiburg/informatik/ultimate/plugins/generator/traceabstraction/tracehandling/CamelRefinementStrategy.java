@@ -53,7 +53,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  *
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
-public class CamelRefinementStrategy<LETTER extends IIcfgTransition<?>> extends PenguinRefinementStrategy<LETTER> {
+public class CamelRefinementStrategy<LETTER extends IIcfgTransition<?>>
+		extends MultiTrackTraceAbstractionRefinementStrategy<LETTER> {
+
 	public CamelRefinementStrategy(final ILogger logger, final TaCheckAndRefinementPreferences<LETTER> prefs,
 			final IUltimateServiceProvider services, final CfgSmtToolkit cfgSmtToolkit,
 			final PredicateFactory predicateFactory, final PredicateUnifier predicateUnifier,
@@ -62,7 +64,7 @@ public class CamelRefinementStrategy<LETTER extends IIcfgTransition<?>> extends 
 			final TAPreferences taPrefsForInterpolantConsolidation, final int iteration,
 			final CegarLoopStatisticsGenerator cegarLoopBenchmarks) {
 		super(logger, prefs, services, cfgSmtToolkit, predicateFactory, predicateUnifier, assertionOrderModulation,
-				counterexample, abstraction, taPrefsForInterpolantConsolidation, iteration, cegarLoopBenchmarks);
+				counterexample, abstraction, taPrefsForInterpolantConsolidation, iteration, cegarLoopBenchmarks, 2);
 	}
 
 	@Override
@@ -74,8 +76,8 @@ public class CamelRefinementStrategy<LETTER extends IIcfgTransition<?>> extends 
 	}
 
 	@Override
-	protected int getImperfectIppThreshold() {
-		// stop immediately after the first imperfect sequence
-		return 1;
+	protected String getCvc4Logic() {
+		return LOGIC_CVC4_DEFAULT;
 	}
+
 }
