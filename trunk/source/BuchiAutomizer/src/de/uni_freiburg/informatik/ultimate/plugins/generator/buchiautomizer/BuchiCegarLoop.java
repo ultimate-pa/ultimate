@@ -769,7 +769,9 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 		final BackwardCoveringInformation bci =
 				TraceCheckerUtils.computeCoverageCapability(mServices, traceChecker, mLogger);
 		mBenchmarkGenerator.addBackwardCoveringInformationFinite(bci);
-		constructInterpolantAutomaton(traceChecker, run);
+		final HistogramOfIterable<LETTER> traceHistogram = new HistogramOfIterable<>(run.getWord());
+		mBenchmarkGenerator.reportTraceHistogramMaximum(traceHistogram.getMax());
+				constructInterpolantAutomaton(traceChecker, run);
 
 		final IHoareTripleChecker htc = TraceAbstractionUtils.constructEfficientHoareTripleCheckerWithCaching(mServices,
 				HoareTripleChecks.INCREMENTAL, mCsToolkitWithRankVars, traceChecker.getPredicateUnifier());
