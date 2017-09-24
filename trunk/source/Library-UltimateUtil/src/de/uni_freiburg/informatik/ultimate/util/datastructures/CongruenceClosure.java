@@ -305,6 +305,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 				addElement(replaced);
 			}
 		}
+		assert sanityCheck();
 
 		final Collection<ELEM> oldAfParents = new ArrayList<>(mFaAuxData.getAfParents(elem));
 		final Collection<ELEM> oldArgParents = new ArrayList<>(mFaAuxData.getArgParents(elem));
@@ -318,6 +319,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 			mFaAuxData.removeAfParent(elem.getAppliedFunction(), elem);
 			mFaAuxData.removeArgParent(elem.getArgument(), elem);
 		}
+		assert sanityCheck();
 
 		/*
 		 * remove elements that have elem as an argument
@@ -1010,12 +1012,14 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 			if (elemWasRepresentative) {
 				final Set<ELEM> oldAfCcparEntry = mAfCcPars.removeDomainElement(elem);
 				if (newRep != null && oldAfCcparEntry != null) {
-					oldAfCcparEntry.forEach(e -> mAfCcPars.addPair(newRep, e));
+					oldAfCcparEntry//.stream().filter(e -> !e.getAppliedFunction().equals(elem))
+						.forEach(e -> mAfCcPars.addPair(newRep, e));
 				}
 
 				final Set<ELEM> oldArgCcparEntry = mArgCcPars.removeDomainElement(elem);
 				if (newRep != null && oldArgCcparEntry != null) {
-					oldArgCcparEntry.forEach(e -> mArgCcPars.addPair(newRep, e));
+					oldArgCcparEntry//.stream().filter(e -> !e.getArgument().equals(elem))
+						.forEach(e -> mArgCcPars.addPair(newRep, e));
 				}
 
 				final HashRelation<ELEM, ELEM> oldCccEntry = mCcChildren.remove(elem);
@@ -1025,16 +1029,33 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 			}
 
 			/*
-			 * deal with the map entries
-			 * --> just remove elem from each
+			 * remove ccpar entries that were there because of elem,
+			 * for example if we have a partition block { i, j} with ccpar { f(i) } and we remove i, then f(i) must be
+			 * eliminated from ccpar
+			 */
+			if (newRep != null) {
+				for (final ELEM e : new ArrayList<>(mAfCcPars.getImage(newRep))) {
+					if (e.getAppliedFunction().equals(elem)) {
+						mAfCcPars.removePair(newRep, e);
+					}
+				}
+				for (final ELEM e : new ArrayList<>(mArgCcPars.getImage(newRep))) {
+					if (e.getArgument().equals(elem)) {
+						mArgCcPars.removePair(newRep, e);
+					}
+				}
+			}
+
+			/*
+			 * remove any entries of elem to one of the maps
+			 *  possible optimization: look specifically for where elem could be instead of iterating over all pairs..
 			 */
 			mAfCcPars.removeRangeElement(elem);
 			mArgCcPars.removeRangeElement(elem);
 
 			if (newRep == null) {
-				// there was no equal element to elem
+				// there was no equal element to elem, we already removed elem from the keys in the above step
 				assert elemWasRepresentative;
-				mCcChildren.remove(elem);
 			} else {
 				if (elem.isFunctionApplication()) {
 					mCcChildren.get(newRep).removePair(elem.getAppliedFunction(), elem.getArgument());
