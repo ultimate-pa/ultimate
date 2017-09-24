@@ -74,7 +74,8 @@ public class CamelRefinementStrategy<LETTER extends IIcfgTransition<?>> extends 
 	}
 
 	@Override
-	protected String getCvc4Logic() {
-		return LOGIC_CVC4_DEFAULT;
+	protected int getImperfectIppThreshold() {
+		// stop immediately after the first imperfect sequence
+		return 1;
 	}
 }

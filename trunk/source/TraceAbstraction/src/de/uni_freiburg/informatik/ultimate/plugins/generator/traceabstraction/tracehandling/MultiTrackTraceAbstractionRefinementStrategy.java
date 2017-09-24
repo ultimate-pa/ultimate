@@ -230,14 +230,8 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy<LETTER extend
 			return false;
 		}
 
-		/*
-		 * current policy: stop after finding at least one perfect interpolant sequence or at least two interpolant
-		 * sequences in total
-		 */
-		if (!perfectIpps.isEmpty()) {
-			return false;
-		}
-		return imperfectIpps.size() < INTERPOLANT_ACCEPTANCE_THRESHOLD;
+		// stop after finding a perfect interpolant sequence; subclasses may have more sophisticated conditions
+		return perfectIpps.isEmpty();
 	}
 
 	protected boolean hasNextInterpolantGeneratorAvailable() {

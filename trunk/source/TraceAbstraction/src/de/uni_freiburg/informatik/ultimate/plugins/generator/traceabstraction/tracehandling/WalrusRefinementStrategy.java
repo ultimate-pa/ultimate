@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerUtils;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TracePredicates;
 
 /**
  * {@link IRefinementStrategy} that first tries either {@code MathSat} for floating points or {@code CVC4} in bitvector
@@ -70,7 +71,7 @@ public class WalrusRefinementStrategy<LETTER extends IIcfgTransition<?>>
 
 	@Override
 	protected Iterator<Track> initializeInterpolationTechniquesList() {
-		final List<Track> list = new ArrayList<>(3);
+		final List<Track> list = new ArrayList<>(2);
 		final TermClassifier tc =
 				TraceCheckerUtils.classifyTermsInTrace(mCounterexample.getWord(), mCsToolkit.getAxioms());
 		if (tc.getOccuringSortNames().contains(SmtSortUtils.FLOATINGPOINT_SORT)) {
@@ -83,12 +84,39 @@ public class WalrusRefinementStrategy<LETTER extends IIcfgTransition<?>>
 		} else {
 			list.add(Track.CVC4_FPBP);
 		}
-		list.add(Track.Z3_FPBP);
+		list.add(getZ3version());
 		return list.iterator();
+	}
+
+	/**
+	 * @return The version of Z3 that should be used by this strategy.
+	 */
+	@SuppressWarnings("static-method")
+	protected Track getZ3version() {
+		// use Z3 with forward and backward predicates
+		return Track.Z3_FPBP;
 	}
 
 	@Override
 	protected String getCvc4Logic() {
 		return LOGIC_CVC4_BITVECTORS;
+	}
+
+	@Override
+	public boolean hasNextInterpolantGenerator(final List<TracePredicates> perfectIpps,
+			final List<TracePredicates> imperfectIpps) {
+		if (!super.hasNextInterpolantGenerator(perfectIpps, imperfectIpps)) {
+			return false;
+		}
+		return imperfectIpps.size() < getImperfectIppThreshold();
+	}
+
+	/**
+	 * @return Threshold of how many imperfect interpolant sequences should be collected until accepted.
+	 */
+	@SuppressWarnings("static-method")
+	protected int getImperfectIppThreshold() {
+		// never accept imperfect interpolant sequences
+		return Integer.MAX_VALUE;
 	}
 }

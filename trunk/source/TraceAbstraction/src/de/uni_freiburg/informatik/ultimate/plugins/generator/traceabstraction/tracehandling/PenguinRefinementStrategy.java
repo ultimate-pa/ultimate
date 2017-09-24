@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TracePredicates;
 
 /**
  * {@link IRefinementStrategy} that first tries an {@link InterpolatingTraceChecker} using
@@ -79,5 +80,23 @@ public class PenguinRefinementStrategy<LETTER extends IIcfgTransition<?>>
 	@Override
 	protected String getCvc4Logic() {
 		return LOGIC_CVC4_DEFAULT;
+	}
+
+	@Override
+	public boolean hasNextInterpolantGenerator(final List<TracePredicates> perfectIpps,
+			final List<TracePredicates> imperfectIpps) {
+		if (!super.hasNextInterpolantGenerator(perfectIpps, imperfectIpps)) {
+			return false;
+		}
+		return imperfectIpps.size() < getImperfectIppThreshold();
+	}
+
+	/**
+	 * @return Threshold of how many imperfect interpolant sequences should be collected until accepted.
+	 */
+	@SuppressWarnings("static-method")
+	protected int getImperfectIppThreshold() {
+		// never accept imperfect interpolant sequences
+		return Integer.MAX_VALUE;
 	}
 }
