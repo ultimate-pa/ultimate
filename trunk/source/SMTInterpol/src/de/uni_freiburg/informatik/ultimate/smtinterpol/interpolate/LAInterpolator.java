@@ -127,7 +127,7 @@ public class LAInterpolator {
 			final Term lit = mInterpolator.mTheory.not(entry.getKey());
 			final InterpolatorLiteralTermInfo litTermInfo = mInterpolator.getLiteralTermInfo(lit);
 			final Rational factor = entry.getValue();
-			if (litTermInfo.isBoundConstraint() || (!litTermInfo.isNegated() && litTermInfo.isLAEquality())) {
+			if (litTermInfo.isBoundConstraint() || !litTermInfo.isNegated() && litTermInfo.isLAEquality()) {
 				InfinitNumber bound;
 				InterpolatorAffineTerm lv;
 				if (litTermInfo.isBoundConstraint()) {
@@ -154,7 +154,7 @@ public class LAInterpolator {
 				while (part < ipl.length) {
 					if (info.isMixed(part)) {
 						/* ab-mixed interpolation */
-						assert (info.mMixedVar != null);
+						assert info.mMixedVar != null;
 						ipl[part].add(factor, info.getAPart(part));
 						ipl[part].add(factor.negate(), info.mMixedVar);
 
@@ -188,9 +188,11 @@ public class LAInterpolator {
 					}
 					part++;
 				}
+			} else {
+				assert false;
 			}
 		}
-		assert (ipl[ipl.length - 1].isConstant() && InfinitNumber.ZERO.less(ipl[ipl.length - 1].getConstant()));
+		assert ipl[ipl.length - 1].isConstant() && InfinitNumber.ZERO.less(ipl[ipl.length - 1].getConstant());
 
 		/*
 		 * Save the interpolants computed for this leaf into the result array.
@@ -237,7 +239,7 @@ public class LAInterpolator {
 				final LATerm laTerm = new LATerm(ipl[part], k, F);
 				mInterpolants[part].mTerm = laTerm;
 			} else {
-				assert (equalityInfo == null || !equalityInfo.isMixed(part));
+				assert equalityInfo == null || !equalityInfo.isMixed(part);
 				if (equalityInfo != null && ipl[part].isConstant()
 						&& equalityInfo.isALocal(part) != inequalityInfo.isALocal(part)) {
 					/*

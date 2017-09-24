@@ -428,7 +428,10 @@ public class Interpolator extends NonRecursive {
 
 		public void occursIn(final int partition) {
 			for (int i = 0; i <= mNumInterpolants; i++) {
-				if (i < partition || mStartOfSubtrees[i] > partition) {
+				if (partition == -1) {
+					mInA.set(i);
+					mInB.set(i);
+				} else if (i < partition || mStartOfSubtrees[i] > partition) {
 					mInB.set(i);
 				} else {
 					mInA.set(i);
@@ -447,6 +450,14 @@ public class Interpolator extends NonRecursive {
 		}
 
 		public boolean contains(final int partition) {
+			if (partition == -1) {
+				for (int i = 0; i < mNumInterpolants; i++) {
+					if (!mInA.get(i) || !mInB.get(i)) {
+						return false;
+					}
+				}
+				return true;
+			}
 			if (!mInA.get(partition)) {
 				return false;
 			}
@@ -887,7 +898,7 @@ public class Interpolator extends NonRecursive {
 			final LeafNode ln = (LeafNode) pn;
 			assert ((LeafNode) pn).hasSourceAnnotation();
 			final String source = ((SourceAnnotation) ln.getTheoryAnnotation()).getAnnotation();
-			final int partition = mPartitions.containsKey(source) ? mPartitions.get(source) : 0;
+			final int partition = mPartitions.containsKey(source) ? mPartitions.get(source) : -1;
 			for (int i = 0; i < clause.getSize(); i++) {
 				final Term literal = clause.getLiteral(i).getSMTFormula(mTheory);
 
@@ -902,9 +913,7 @@ public class Interpolator extends NonRecursive {
 					info.occursIn(partition);
 					final HashSet<Term> subTerms = getSubTerms(atom);
 					for (final Term sub : subTerms) {
-						if (!(sub instanceof ConstantTerm)) {
-							addOccurrence(sub, source, partition);
-						}
+						addOccurrence(sub, source, partition);
 					}
 				}
 			}
@@ -931,14 +940,22 @@ public class Interpolator extends NonRecursive {
 		return result;
 	}
 
-	void addOccurrence(final Term term, final String source, final int part) {
-		getOccurrence(term, source).occursIn(part);
+	void addOccurrence(final Term term, final String source, int part) {
+		if (term instanceof ConstantTerm) {
+			/* Constant terms should be colored shared. */
+			part = -1;
+		}
+		final Occurrence occ = getOccurrence(term, source);
+		if (occ.contains(part)) {
+			/* Already colored correctly */
+			return;
+		}
+		occ.occursIn(part);
+		/* Recursively color subterms */
 		if (term instanceof ApplicationTerm) {
 			final ApplicationTerm at = (ApplicationTerm) term;
-			if (!at.getFunction().isInterpreted()) {
-				for (final Term p : at.getParameters()) {
-					addOccurrence(p, source, part);
-				}
+			for (final Term p : at.getParameters()) {
+				addOccurrence(p, source, part);
 			}
 		}
 	}
