@@ -53,14 +53,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategyExceptionBlacklist;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.IInterpolantGenerator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TracePredicates;
 
 /**
- * {@link IRefinementStrategy} that first tries an {@link InterpolatingTraceChecker} using
- * {@link InterpolationTechnique#Craig_TreeInterpolation} and then {@link InterpolationTechnique#FPandBP}.
+ * {@link IRefinementStrategy} that uses different {@link Track}s.
  * <p>
  * The class uses a {@link MultiTrackInterpolantAutomatonBuilder} for constructing the interpolant automaton.
  *
@@ -78,11 +76,19 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy<LETTER extend
 		/**
 		 * SMTInterpol with tree interpolation.
 		 */
-		SMTINTERPOL_TREE_INTERPOLANTS, SMTINTERPOL_FP,
+		SMTINTERPOL_TREE_INTERPOLANTS,
+		/**
+		 * SMTInterpol with forward predicates.
+		 */
+		SMTINTERPOL_FP,
 		/**
 		 * Z3 with forward and backward predicates.
 		 */
-		Z3_FPBP, Z3_FP,
+		Z3_FPBP,
+		/**
+		 * Z3 with forward predicates.
+		 */
+		Z3_FP,
 		/**
 		 * Z3 with Craig interpolation.
 		 */
@@ -90,11 +96,19 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy<LETTER extend
 		/**
 		 * CVC4 with forward and backward predicates.
 		 */
-		CVC4_FPBP, CVC4_FP,
+		CVC4_FPBP,
+		/**
+		 * CVC4 with forward predicates.
+		 */
+		CVC4_FP,
 		/**
 		 * MathSAT with forward and backward predicates.
 		 */
-		MATHSAT_FPBP, MATHSAT_FP,
+		MATHSAT_FPBP,
+		/**
+		 * MathSAT with forward predicates.
+		 */
+		MATHSAT_FP,
 	}
 
 	private static final int INTERPOLANT_ACCEPTANCE_THRESHOLD = 2;
@@ -291,32 +305,32 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy<LETTER extend
 	private static InterpolationTechnique getInterpolationTechnique(final Track mode) {
 		final InterpolationTechnique interpolationTechnique;
 		switch (mode) {
-		case SMTINTERPOL_TREE_INTERPOLANTS:
-			interpolationTechnique = InterpolationTechnique.Craig_TreeInterpolation;
-			break;
-		case Z3_NESTED_INTERPOLANTS:
-			interpolationTechnique = InterpolationTechnique.Craig_NestedInterpolation;
-			break;
-		case Z3_FPBP:
-		case CVC4_FPBP:
-		case MATHSAT_FPBP:
-			interpolationTechnique = InterpolationTechnique.FPandBPonlyIfFpWasNotPerfect;
-			break;
-		case Z3_FP:
-		case SMTINTERPOL_FP:
-		case CVC4_FP:
-		case MATHSAT_FP:
-			interpolationTechnique = InterpolationTechnique.ForwardPredicates;
-			break;
-		default:
-			throw new IllegalArgumentException(UNKNOWN_MODE + mode);
+			case SMTINTERPOL_TREE_INTERPOLANTS:
+				interpolationTechnique = InterpolationTechnique.Craig_TreeInterpolation;
+				break;
+			case Z3_NESTED_INTERPOLANTS:
+				interpolationTechnique = InterpolationTechnique.Craig_NestedInterpolation;
+				break;
+			case Z3_FPBP:
+			case CVC4_FPBP:
+			case MATHSAT_FPBP:
+				interpolationTechnique = InterpolationTechnique.FPandBPonlyIfFpWasNotPerfect;
+				break;
+			case Z3_FP:
+			case SMTINTERPOL_FP:
+			case CVC4_FP:
+			case MATHSAT_FP:
+				interpolationTechnique = InterpolationTechnique.ForwardPredicates;
+				break;
+			default:
+				throw new IllegalArgumentException(UNKNOWN_MODE + mode);
 		}
 		return interpolationTechnique;
 	}
 
 	@SuppressWarnings("squid:S1151")
 	private ManagedScript constructManagedScript(final IUltimateServiceProvider services,
-			final TaCheckAndRefinementPreferences prefs, final Track mode, final boolean useTimeout) {
+			final TaCheckAndRefinementPreferences<LETTER> prefs, final Track mode, final boolean useTimeout) {
 		final boolean dumpSmtScriptToFile = prefs.getDumpSmtScriptToFile();
 		final String pathOfDumpedScript = prefs.getPathOfDumpedScript();
 		final String baseNameOfDumpedScript =
@@ -326,49 +340,49 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy<LETTER extend
 		final String logicForExternalSolver;
 		final String command;
 		switch (mode) {
-		case SMTINTERPOL_TREE_INTERPOLANTS:
-		case SMTINTERPOL_FP:
-			final long timeout = useTimeout ? TIMEOUT_SMTINTERPOL : TIMEOUT_NONE_SMTINTERPOL;
-			solverSettings = new Settings(false, false, null, timeout, null, dumpSmtScriptToFile, pathOfDumpedScript,
-					baseNameOfDumpedScript);
-			solverMode = SolverMode.Internal_SMTInterpol;
-			logicForExternalSolver = null;
-			break;
-		case Z3_NESTED_INTERPOLANTS:
-			throw new AssertionError("The mode " + Track.Z3_NESTED_INTERPOLANTS + "is currently unsupported.");
-			/*
-			 * command = useTimeout ? COMMAND_Z3_TIMEOUT : COMMAND_Z3_NO_TIMEOUT; // TODO: Add external interpolator
-			 * String externalInterpolator = null; solverSettings = new Settings(false, true, command, 0,
-			 * externalInterpolator, dumpSmtScriptToFile, pathOfDumpedScript, baseNameOfDumpedScript); solverMode =
-			 * SolverMode.External_Z3InterpolationMode; logicForExternalSolver = LOGIC_Z3; break;
-			 */
-		case Z3_FPBP:
-		case Z3_FP:
-			command = useTimeout ? COMMAND_Z3_TIMEOUT : COMMAND_Z3_NO_TIMEOUT;
-			solverSettings = new Settings(false, true, command, 0, null, dumpSmtScriptToFile, pathOfDumpedScript,
-					baseNameOfDumpedScript);
-			solverMode = SolverMode.External_ModelsAndUnsatCoreMode;
-			logicForExternalSolver = LOGIC_Z3;
-			break;
-		case CVC4_FPBP:
-		case CVC4_FP:
-			command = useTimeout ? COMMAND_CVC4_TIMEOUT : COMMAND_CVC4_NO_TIMEOUT;
-			solverSettings = new Settings(false, true, command, 0, null, dumpSmtScriptToFile, pathOfDumpedScript,
-					baseNameOfDumpedScript);
-			solverMode = SolverMode.External_ModelsAndUnsatCoreMode;
-			logicForExternalSolver = getCvc4Logic();
-			break;
-		case MATHSAT_FPBP:
-		case MATHSAT_FP:
-			command = COMMAND_MATHSAT;
-			solverSettings = new Settings(false, true, command, 0, null, dumpSmtScriptToFile, pathOfDumpedScript,
-					baseNameOfDumpedScript);
-			solverMode = SolverMode.External_ModelsAndUnsatCoreMode;
-			logicForExternalSolver = LOGIC_MATHSAT;
-			break;
-		default:
-			throw new IllegalArgumentException(
-					"Managed script construction not supported for interpolation technique: " + mode);
+			case SMTINTERPOL_TREE_INTERPOLANTS:
+			case SMTINTERPOL_FP:
+				final long timeout = useTimeout ? TIMEOUT_SMTINTERPOL : TIMEOUT_NONE_SMTINTERPOL;
+				solverSettings = new Settings(false, false, null, timeout, null, dumpSmtScriptToFile,
+						pathOfDumpedScript, baseNameOfDumpedScript);
+				solverMode = SolverMode.Internal_SMTInterpol;
+				logicForExternalSolver = null;
+				break;
+			case Z3_NESTED_INTERPOLANTS:
+				throw new AssertionError("The mode " + Track.Z3_NESTED_INTERPOLANTS + "is currently unsupported.");
+				/*
+				 * command = useTimeout ? COMMAND_Z3_TIMEOUT : COMMAND_Z3_NO_TIMEOUT; // TODO: Add external interpolator
+				 * String externalInterpolator = null; solverSettings = new Settings(false, true, command, 0,
+				 * externalInterpolator, dumpSmtScriptToFile, pathOfDumpedScript, baseNameOfDumpedScript); solverMode =
+				 * SolverMode.External_Z3InterpolationMode; logicForExternalSolver = LOGIC_Z3; break;
+				 */
+			case Z3_FPBP:
+			case Z3_FP:
+				command = useTimeout ? COMMAND_Z3_TIMEOUT : COMMAND_Z3_NO_TIMEOUT;
+				solverSettings = new Settings(false, true, command, 0, null, dumpSmtScriptToFile, pathOfDumpedScript,
+						baseNameOfDumpedScript);
+				solverMode = SolverMode.External_ModelsAndUnsatCoreMode;
+				logicForExternalSolver = LOGIC_Z3;
+				break;
+			case CVC4_FPBP:
+			case CVC4_FP:
+				command = useTimeout ? COMMAND_CVC4_TIMEOUT : COMMAND_CVC4_NO_TIMEOUT;
+				solverSettings = new Settings(false, true, command, 0, null, dumpSmtScriptToFile, pathOfDumpedScript,
+						baseNameOfDumpedScript);
+				solverMode = SolverMode.External_ModelsAndUnsatCoreMode;
+				logicForExternalSolver = getCvc4Logic();
+				break;
+			case MATHSAT_FPBP:
+			case MATHSAT_FP:
+				command = COMMAND_MATHSAT;
+				solverSettings = new Settings(false, true, command, 0, null, dumpSmtScriptToFile, pathOfDumpedScript,
+						baseNameOfDumpedScript);
+				solverMode = SolverMode.External_ModelsAndUnsatCoreMode;
+				logicForExternalSolver = LOGIC_MATHSAT;
+				break;
+			default:
+				throw new IllegalArgumentException(
+						"Managed script construction not supported for interpolation technique: " + mode);
 		}
 		final Script solver = SolverBuilder.buildAndInitializeSolver(services, prefs.getToolchainStorage(), solverMode,
 				solverSettings, false, false, logicForExternalSolver, "TraceCheck_Iteration" + mIteration);

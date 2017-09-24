@@ -54,7 +54,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
 public class CamelRefinementStrategy<LETTER extends IIcfgTransition<?>> extends PenguinRefinementStrategy<LETTER> {
-	public CamelRefinementStrategy(final ILogger logger, final TaCheckAndRefinementPreferences prefs,
+	public CamelRefinementStrategy(final ILogger logger, final TaCheckAndRefinementPreferences<LETTER> prefs,
 			final IUltimateServiceProvider services, final CfgSmtToolkit cfgSmtToolkit,
 			final PredicateFactory predicateFactory, final PredicateUnifier predicateUnifier,
 			final AssertionOrderModulation<LETTER> assertionOrderModulation,
@@ -67,7 +67,7 @@ public class CamelRefinementStrategy<LETTER extends IIcfgTransition<?>> extends 
 
 	@Override
 	protected Iterator<Track> initializeInterpolationTechniquesList() {
-		final List<Track> list = new ArrayList<>(3);
+		final List<Track> list = new ArrayList<>(2);
 		list.add(Track.SMTINTERPOL_TREE_INTERPOLANTS);
 		list.add(Track.Z3_FP);
 		return list.iterator();
