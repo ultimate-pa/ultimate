@@ -6,11 +6,11 @@ modifies a;
 
 implementation main() {
   var i : int;
-  
 
   assume b[i] == 0;
   a[i] := 7;
 
+  call foo();
 
   assert a[i] == 7;
 }
