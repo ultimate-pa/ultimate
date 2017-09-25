@@ -50,13 +50,21 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.initializer.FixpointEngineParameterFactory;
 
+/**
+ * Wraps abstract domains that only work on Boogie-based ICFGs such that transformula-based ICFGs can be analyzed.
+ *
+ * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
+ *
+ * @param <BACKING>
+ *            The type of the backing abstract states.
+ */
 public class PoormanAbstractDomain<BACKING extends IAbstractState<BACKING>>
 		implements IAbstractDomain<PoormanAbstractState<BACKING>, IcfgEdge> {
 
 	private final IUltimateServiceProvider mServices;
 	private final IAbstractDomain<BACKING, IcfgEdge> mBackingDomain;
 
-	private final IAbstractStateBinaryOperator<PoormanAbstractState<BACKING>> mWideningOperator = null;
+	private IAbstractStateBinaryOperator<PoormanAbstractState<BACKING>> mWideningOperator = null;
 	private IAbstractPostOperator<PoormanAbstractState<BACKING>, IcfgEdge> mPostOperator = null;
 	private final IIcfg<?> mRoot;
 	private final IBoogieSymbolTableVariableProvider mVariableProvider;
@@ -97,8 +105,7 @@ public class PoormanAbstractDomain<BACKING extends IAbstractState<BACKING>>
 	@Override
 	public IAbstractStateBinaryOperator<PoormanAbstractState<BACKING>> getWideningOperator() {
 		if (mWideningOperator == null) {
-			// TODO Fill with widening operator
-			// mWideningOperator = ...
+			mWideningOperator = new PoormanAbstractWideningOperator<>(mServices, mBackingDomain);
 		}
 		return mWideningOperator;
 	}
@@ -106,10 +113,8 @@ public class PoormanAbstractDomain<BACKING extends IAbstractState<BACKING>>
 	@Override
 	public IAbstractPostOperator<PoormanAbstractState<BACKING>, IcfgEdge> getPostOperator() {
 		if (mPostOperator == null) {
-			// TODO Fill with sense
 			mPostOperator = new PoormansAbstractPostOperator<>(mServices, mRoot, mBackingDomain, mVariableProvider);
 		}
 		return mPostOperator;
 	}
-
 }
