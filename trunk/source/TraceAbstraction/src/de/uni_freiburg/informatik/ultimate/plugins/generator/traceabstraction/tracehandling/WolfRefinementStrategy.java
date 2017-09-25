@@ -36,8 +36,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermClassifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
@@ -66,7 +64,7 @@ public class WolfRefinementStrategy<LETTER extends IIcfgTransition<?>>
 			final TAPreferences taPrefsForInterpolantConsolidation, final int iteration,
 			final CegarLoopStatisticsGenerator cegarLoopBenchmarks) {
 		super(logger, prefs, services, cfgSmtToolkit, predicateFactory, predicateUnifier, assertionOrderModulation,
-				counterexample, abstraction, taPrefsForInterpolantConsolidation, iteration, cegarLoopBenchmarks, 2);
+				counterexample, abstraction, taPrefsForInterpolantConsolidation, iteration, cegarLoopBenchmarks);
 	}
 
 	@Override
@@ -74,22 +72,23 @@ public class WolfRefinementStrategy<LETTER extends IIcfgTransition<?>>
 		final List<Track> list = new ArrayList<>(3);
 		final TermClassifier tc =
 				TraceCheckerUtils.classifyTermsInTrace(mCounterexample.getWord(), mCsToolkit.getAxioms());
-		if (tc.getOccuringSortNames().contains(SmtSortUtils.FLOATINGPOINT_SORT)) {
-			if (tc.getOccuringFunctionNames().contains(SmtUtils.FP_TO_IEEE_BV_EXTENSION)
-					|| !tc.getOccuringQuantifiers().isEmpty()) {
-				// we need Z3, but Z3 is already added later, hence do nothing
-			} else {
-				list.add(Track.MATHSAT_FPBP);
-			}
-		} else {
+		if (RefinementStrategyUtils.hasNoFloats(tc)) {
 			list.add(Track.CVC4_FPBP);
+		} else if (RefinementStrategyUtils.hasNoQuantifiersNoBitvectorExtensions(tc)) {
+			// floats, but no quantifiers and no extensions
+			list.add(Track.MATHSAT_FPBP);
 		}
-		list.add(Track.Z3_FP);
+		list.add(Track.Z3_FPBP);
 		return list.iterator();
 	}
 
 	@Override
 	protected String getCvc4Logic() {
 		return LOGIC_CVC4_BITVECTORS;
+	}
+
+	@Override
+	protected int getInterpolantAcceptanceThreshold() {
+		return 2;
 	}
 }

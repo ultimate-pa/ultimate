@@ -36,6 +36,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermClassifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
@@ -69,11 +72,12 @@ public class RefinementStrategyUtils {
 			if (prefs.getUseInterpolantConsolidation()) {
 				try {
 					final CfgSmtToolkit cfgSmtToolkit = prefs.getCfgSmtToolkit();
-					final InterpolantConsolidation<LETTER> interpConsoli = new InterpolantConsolidation<>(
-							predicateUnifier.getTruePredicate(), predicateUnifier.getFalsePredicate(),
-							new TreeMap<Integer, IPredicate>(), NestedWord.nestedWord(counterexample.getWord()), cfgSmtToolkit,
-							cfgSmtToolkit.getModifiableGlobalsTable(), services, logger, predicateFactory, predicateUnifier,
-							interpolatingTraceChecker, taPrefsForInterpolantConsolidation);
+					final InterpolantConsolidation<LETTER> interpConsoli =
+							new InterpolantConsolidation<>(predicateUnifier.getTruePredicate(),
+									predicateUnifier.getFalsePredicate(), new TreeMap<Integer, IPredicate>(),
+									NestedWord.nestedWord(counterexample.getWord()), cfgSmtToolkit,
+									cfgSmtToolkit.getModifiableGlobalsTable(), services, logger, predicateFactory,
+									predicateUnifier, interpolatingTraceChecker, taPrefsForInterpolantConsolidation);
 					return interpConsoli;
 				} catch (final AutomataOperationCanceledException e) {
 					throw new AssertionError("react on timeout, not yet implemented");
@@ -82,6 +86,24 @@ public class RefinementStrategyUtils {
 			return interpolatingTraceChecker;
 		}
 		throw new AssertionError("Currently only interpolating trace checkers are supported.");
+	}
+
+	/**
+	 *
+	 * @return true iff classified term does not contain {@link SmtUtils#FLOATINGPOINT_SORT}.
+	 */
+	public static boolean hasNoFloats(final TermClassifier tc) {
+		return !tc.getOccuringSortNames().contains(SmtSortUtils.FLOATINGPOINT_SORT);
+	}
+
+	/**
+	 *
+	 * @return true iff classified term does not contain {@link SmtUtils#FP_TO_IEEE_BV_EXTENSION} and does not contain
+	 *         quantifiers.
+	 */
+	public static boolean hasNoQuantifiersNoBitvectorExtensions(final TermClassifier tc) {
+		return !tc.getOccuringFunctionNames().contains(SmtUtils.FP_TO_IEEE_BV_EXTENSION)
+				&& tc.getOccuringQuantifiers().isEmpty();
 	}
 
 }

@@ -63,7 +63,7 @@ public class PenguinRefinementStrategy<LETTER extends IIcfgTransition<?>>
 			final TAPreferences taPrefsForInterpolantConsolidation, final int iteration,
 			final CegarLoopStatisticsGenerator cegarLoopBenchmarks) {
 		super(logger, prefs, services, cfgSmtToolkit, predicateFactory, predicateUnifier, assertionOrderModulation,
-				counterexample, abstraction, taPrefsForInterpolantConsolidation, iteration, cegarLoopBenchmarks, 2);
+				counterexample, abstraction, taPrefsForInterpolantConsolidation, iteration, cegarLoopBenchmarks);
 	}
 
 	@Override
@@ -79,6 +79,11 @@ public class PenguinRefinementStrategy<LETTER extends IIcfgTransition<?>>
 	@Override
 	protected String getCvc4Logic() {
 		return LOGIC_CVC4_DEFAULT;
+	}
+
+	@Override
+	protected int getInterpolantAcceptanceThreshold() {
+		return Integer.MAX_VALUE;
 	}
 
 }

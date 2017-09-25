@@ -64,6 +64,11 @@ public class InteractiveRefinementStrategyFactory<LETTER extends IIcfgTransition
 			protected IRefinementStrategy<LETTER> createFallbackStrategy(final RefinementStrategy strategy) {
 				return fallBack.apply(strategy);
 			}
+
+			@Override
+			protected int getInterpolantAcceptanceThreshold() {
+				return 2;
+			}
 		};
 	}
 }

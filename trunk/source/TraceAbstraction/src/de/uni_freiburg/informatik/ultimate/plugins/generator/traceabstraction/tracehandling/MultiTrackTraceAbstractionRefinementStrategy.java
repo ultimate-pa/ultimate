@@ -141,7 +141,6 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy<LETTER extend
 	private IInterpolantAutomatonBuilder<LETTER, IPredicate> mInterpolantAutomatonBuilder;
 	protected final int mIteration;
 	private final CegarLoopStatisticsGenerator mCegarLoopsBenchmark;
-	private final int mInterpolantAcceptanceThreshold;
 
 	/**
 	 * @param prefs
@@ -165,7 +164,6 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy<LETTER extend
 	 *            current CEGAR loop iteration
 	 * @param cegarLoopBenchmarks
 	 *            benchmark
-	 * @param interpolantAcceptanceThreshold
 	 */
 	@SuppressWarnings("squid:S1699")
 	protected MultiTrackTraceAbstractionRefinementStrategy(final ILogger logger,
@@ -174,7 +172,7 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy<LETTER extend
 			final PredicateUnifier predicateUnifier, final AssertionOrderModulation<LETTER> assertionOrderModulation,
 			final IRun<LETTER, IPredicate, ?> counterexample, final IAutomaton<LETTER, IPredicate> abstraction,
 			final TAPreferences taPrefsForInterpolantConsolidation, final int iteration,
-			final CegarLoopStatisticsGenerator cegarLoopBenchmarks, final int interpolantAcceptanceThreshold) {
+			final CegarLoopStatisticsGenerator cegarLoopBenchmarks) {
 		mServices = services;
 		mLogger = logger;
 		mPrefs = prefs;
@@ -187,7 +185,6 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy<LETTER extend
 		mIteration = iteration;
 		mCegarLoopsBenchmark = cegarLoopBenchmarks;
 		mTaPrefsForInterpolantConsolidation = taPrefsForInterpolantConsolidation;
-		mInterpolantAcceptanceThreshold = interpolantAcceptanceThreshold;
 
 		mInterpolationTechniques = initializeInterpolationTechniquesList();
 		nextTraceChecker();
@@ -236,8 +233,16 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy<LETTER extend
 		if (!perfectIpps.isEmpty()) {
 			return false;
 		}
-		return imperfectIpps.size() < mInterpolantAcceptanceThreshold;
+		return imperfectIpps.size() < getInterpolantAcceptanceThreshold();
 	}
+
+	/**
+	 * Do not search for more interpolants if you already found a perfect interpolant sequence OR this number of
+	 * imperfect interpolant sequences.
+	 *
+	 * @return the number of imperfect sequences after which this strategy is satisfied.
+	 */
+	protected abstract int getInterpolantAcceptanceThreshold();
 
 	protected boolean hasNextInterpolantGeneratorAvailable() {
 		return mInterpolationTechniques.hasNext();
