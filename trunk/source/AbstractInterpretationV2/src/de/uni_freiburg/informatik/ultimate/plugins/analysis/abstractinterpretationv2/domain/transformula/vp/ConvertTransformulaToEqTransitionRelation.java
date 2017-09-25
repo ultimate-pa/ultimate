@@ -337,8 +337,7 @@ public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTrans
 						newConstraint = mEqConstraintFactory.addDisequalityFlat(simpleArray, otherSimpleArray,
 								emptyConstraint);
 					} else {
-						assert false;
-						// TODO do something here, or not?..
+						// "true" is only marginally than the negation of a -- i -- b /\ a[i] = x ..
 						newConstraint = emptyConstraint;
 					}
 				}
