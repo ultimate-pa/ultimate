@@ -1035,6 +1035,9 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 			for (int i = 0; i < getLabelContents().size(); i++) {
 				if (mLabel.get(i).isTautological()) {
 					// we have one "true" disjunct --> the whole disjunction is tautological
+					if (mLabel.size() == 1) {
+						return;
+					}
 					mLabel.clear();
 					mLabel.add(new CongruenceClosure<>());
 					return;

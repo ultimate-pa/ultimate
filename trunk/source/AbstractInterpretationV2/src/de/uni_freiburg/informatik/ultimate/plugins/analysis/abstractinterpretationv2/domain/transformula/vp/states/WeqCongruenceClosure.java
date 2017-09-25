@@ -406,7 +406,7 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 
 
 		final NODE newRep = getRepresentativeElement(node1);
-		mWeakEquivalenceGraph.updateForNewRep(node1, node2, newRep);
+		mWeakEquivalenceGraph.updateForNewRep(node1OldRep, node2OldRep, newRep);
 
 		doFwccAndBwccPropagationsFromMerge(propInfo);
 
