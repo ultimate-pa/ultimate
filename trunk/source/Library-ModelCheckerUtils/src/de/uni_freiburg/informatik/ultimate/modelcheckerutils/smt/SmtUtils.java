@@ -831,33 +831,29 @@ public final class SmtUtils {
 	public static Term and(final Script script, final Term... terms) {
 		if (EXTENDED_LOCAL_SIMPLIFICATION) {
 			return andWithExtendedLocalSimplification(script, Arrays.asList(terms));
-		} else {
-			return Util.and(script, terms);
 		}
+		return Util.and(script, terms);
 	}
 
 	public static Term and(final Script script, final Collection<Term> terms) {
 		if (EXTENDED_LOCAL_SIMPLIFICATION) {
 			return andWithExtendedLocalSimplification(script, terms);
-		} else {
-			return Util.and(script, terms.toArray(new Term[terms.size()]));
 		}
+		return Util.and(script, terms.toArray(new Term[terms.size()]));
 	}
 
 	public static Term or(final Script script, final Term... terms) {
 		if (EXTENDED_LOCAL_SIMPLIFICATION) {
 			return orWithExtendedLocalSimplification(script, Arrays.asList(terms));
-		} else {
-			return Util.or(script, terms);
 		}
+		return Util.or(script, terms);
 	}
 
 	public static Term or(final Script script, final Collection<Term> terms) {
 		if (EXTENDED_LOCAL_SIMPLIFICATION) {
 			return orWithExtendedLocalSimplification(script, terms);
-		} else {
-			return Util.or(script, terms.toArray(new Term[terms.size()]));
 		}
+		return Util.or(script, terms.toArray(new Term[terms.size()]));
 	}
 
 	public static Term andWithExtendedLocalSimplification(final Script script, final Collection<Term> terms) {
@@ -1497,8 +1493,7 @@ public final class SmtUtils {
 	/**
 	 * Returns a new {@link Set} that contains all variables that are contained in vars and occur freely in term.
 	 */
-	public static Set<TermVariable> filterToVarsThatOccurFreelyInTerm(final Set<TermVariable> vars,
-			final Term term) {
+	public static Set<TermVariable> filterToVarsThatOccurFreelyInTerm(final Set<TermVariable> vars, final Term term) {
 		final HashSet<TermVariable> result = new HashSet<>();
 		for (final TermVariable tv : Arrays.asList(term.getFreeVars())) {
 			if (vars.contains(tv)) {
