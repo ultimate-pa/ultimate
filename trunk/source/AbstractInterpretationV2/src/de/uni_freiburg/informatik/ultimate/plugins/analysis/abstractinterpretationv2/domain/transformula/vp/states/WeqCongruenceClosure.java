@@ -707,11 +707,9 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 	private boolean removeElement(final NODE elem, final CongruenceClosure<NODE> copy) {
 		if (hasElement(elem)) {
 
-			final NODE otherEqClassMember = getOtherEquivalenceClassMember(elem);
-
 			addNodesEquivalentToNodesWithRemovedElement(elem);
 
-			final Collection<NODE> nodesToAdd = collectNodesToAddAtFunctionRemoval(elem, otherEqClassMember);
+			final Collection<NODE> nodesToAdd = collectNodesToAddAtFunctionRemoval(elem);
 			for (final NODE node : nodesToAdd) {
 				addElement(node);
 			}
@@ -790,7 +788,7 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 	 * @param eqcMember a member of the equivalence class that elem was in before removal (may be null)
 	 * @param elemAfParents
 	 */
-	private Collection<NODE> collectNodesToAddAtFunctionRemoval(final NODE elem, final NODE eqcMember) {
+	private Collection<NODE> collectNodesToAddAtFunctionRemoval(final NODE elem) {
 
 		final Collection<NODE> nodesToAdd = new ArrayList<>();
 
@@ -816,14 +814,7 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 //		final Set<NODE> constrainedFuncAppNodes = mAuxData.getAfCcPars(newRep).stream().filter(this::isConstrained)
 //				.collect(Collectors.toSet());
 
-		final NODE equalFunc = eqcMember;
-
 		for (final NODE fan : constrainedFuncAppNodes) {
-			if (equalFunc != null) {
-				final NODE nodeWithEqualFunc = mFactory.getEqNodeAndFunctionFactory()
-						.getOrConstructFuncAppElement(equalFunc, fan.getArgument());
-				nodesToAdd.add(nodeWithEqualFunc);
-			}
 
 			for (final Entry<NODE, WeakEquivalenceGraph<ACTION, NODE>.WeakEquivalenceEdgeLabel> weqEdge
 					: mWeakEquivalenceGraph.getAdjacentWeqEdges(elem).entrySet()) {
