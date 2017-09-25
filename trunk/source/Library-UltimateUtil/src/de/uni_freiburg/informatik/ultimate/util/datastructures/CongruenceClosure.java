@@ -665,9 +665,29 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		}
 
 		final StringBuilder sb = new StringBuilder();
+		sb.append("--CC(begin):--\n");
 
-		sb.append("Element equivalences:");
-		sb.append(mElementTVER);
+		//sb.append("Element equivalences:\n");
+		sb.append("Equivalences:\n");
+		for (final Set<ELEM> eqc : mElementTVER.getAllEquivalenceClasses()) {
+			sb.append(eqc);
+			if (eqc.size() > 1) {
+				sb.append(" --- rep: ");
+				//sb.append("\n");
+				sb.append(mElementTVER.getRepresentative(eqc.iterator().next()));
+			}
+			sb.append("\n");
+		}
+		//sb.append("\n");
+		sb.append("Disequalities:\n");
+		for (final Entry<ELEM, ELEM> deq : mElementTVER.getDisequalities()) {
+			sb.append(deq.getKey());
+			sb.append(" != ");
+			sb.append(deq.getValue());
+			sb.append("\n");
+		}
+		sb.append("--CC(end):--\n");
+//		sb.append(mElementTVER);
 
 		return sb.toString();
 	}

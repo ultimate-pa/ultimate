@@ -103,15 +103,15 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 
 	@Override
 	public List<EqState<ACTION>> apply(final EqState<ACTION> stateBeforeLeaving,
-			final EqState<ACTION> hierarchicalPreOrStateAfterLeaving, final ACTION transition) {
-		assert hierarchicalPreOrStateAfterLeaving.getVariables()
+			final EqState<ACTION> hierarchicalPrestate, final ACTION transition) {
+		assert hierarchicalPrestate.getVariables()
 				.containsAll(mCfgSmtToolkit.getSymbolTable().getGlobals());
-		assert hierarchicalPreOrStateAfterLeaving.getVariables()
+		assert hierarchicalPrestate.getVariables()
 				.containsAll(mCfgSmtToolkit.getSymbolTable().getLocals(transition.getSucceedingProcedure()));
 
 		if (!mPreAnalysis.getServices().getProgressMonitorService().continueProcessing()) {
 			return mEqConstraintFactory.getTopDisjunctiveConstraint()
-					.toEqStates(hierarchicalPreOrStateAfterLeaving.getVariables());
+					.toEqStates(hierarchicalPrestate.getVariables());
 		}
 
 		if (transition instanceof ICallAction) {
@@ -133,21 +133,21 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 					.strongestPostconditionCall(stateBeforeLeaving.toEqPredicate(), localVarAssignments,
 							globalVarAssignments, oldVarAssignments, modifiableGlobalsOfCalledProcedure);
 			final List<EqState<ACTION>> result =
-					postConstraint.toEqStates(hierarchicalPreOrStateAfterLeaving.getVariables());
+					postConstraint.toEqStates(hierarchicalPrestate.getVariables());
 			return result;
 		} else if (transition instanceof IReturnAction) {
 
 			final EqPredicate<ACTION> returnPred = stateBeforeLeaving.toEqPredicate();
 
 			final Set<IProgramVar> oldVars =
-					hierarchicalPreOrStateAfterLeaving.getConstraint().getVariables(mCfgSmtToolkit.getSymbolTable())
+					hierarchicalPrestate.getConstraint().getVariables(mCfgSmtToolkit.getSymbolTable())
 							.stream().filter(var -> var.isOldvar()).collect(Collectors.toSet());
 			final Set<TermVariable> ovTvs =
 					oldVars.stream().map(ov -> ov.getTermVariable()).collect(Collectors.toSet());
 			final EqConstraint<ACTION, EqNode> projectedCons = mEqConstraintFactory.projectExistentially(ovTvs,
-					hierarchicalPreOrStateAfterLeaving.getConstraint());
+					hierarchicalPrestate.getConstraint());
 			final EqState<ACTION> hier = mEqConstraintFactory.getEqStateFactory().getEqState(projectedCons,
-					hierarchicalPreOrStateAfterLeaving.getVariables());
+					hierarchicalPrestate.getVariables());
 
 			final EqPredicate<ACTION> callPred = hier.toEqPredicate();
 
@@ -166,7 +166,7 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 							oldVarAssignments, modifiableGlobals);
 
 			final List<EqState<ACTION>> result =
-					postConstraint.toEqStates(hierarchicalPreOrStateAfterLeaving.getVariables());
+					postConstraint.toEqStates(hierarchicalPrestate.getVariables());
 			// assert result.stream()
 			// .allMatch(state -> state.getVariables().containsAll(hierarchicalPreOrStateAfterLeaving.getVariables()));
 			return result;
