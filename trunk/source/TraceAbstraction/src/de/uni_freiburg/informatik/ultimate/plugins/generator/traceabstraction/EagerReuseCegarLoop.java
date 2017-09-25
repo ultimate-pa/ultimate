@@ -98,9 +98,9 @@ public class EagerReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends Basi
 	protected void getInitialAbstraction() throws AutomataLibraryException {
 		super.getInitialAbstraction();
 
-		final List<INestedWordAutomaton<LETTER, IPredicate>> floydHoareAutomataFromFiles = interpretAutomata(
-				mRawFloydHoareAutomataFromFile, (INestedWordAutomaton<LETTER, IPredicate>) mAbstraction, mCsToolkit,
-				mPredicateFactoryInterpolantAutomata);
+		final List<INestedWordAutomaton<LETTER, IPredicate>> floydHoareAutomataFromFiles = AutomataReuseUtils.interpretAutomata(
+				mRawFloydHoareAutomataFromFile, (INestedWordAutomaton<LETTER, IPredicate>) mAbstraction,
+				mPredicateFactoryInterpolantAutomata, mServices, mPredicateFactory, mLogger);
 
 		mLogger.info("Reusing " + mFloydHoareAutomataFromOtherErrorLocations.size() + " Floyd-Hoare automata.");
 		for (int i = 0; i < mFloydHoareAutomataFromOtherErrorLocations.size(); i++) {
@@ -158,134 +158,6 @@ public class EagerReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends Basi
 		if (mMinimize == MinimizeInitially.ONCE_AT_END) {
 			minimizeAbstractionIfEnabled();
 		}
-	}
-
-	private List<INestedWordAutomaton<LETTER, IPredicate>> interpretAutomata(
-			final List<NestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile,
-			final INestedWordAutomaton<LETTER, IPredicate> abstraction, final CfgSmtToolkit csToolkit,
-			final PredicateFactoryForInterpolantAutomata predicateFactoryInterpolantAutomata) {
-
-		Boolean debugOn = false;
-		List<INestedWordAutomaton<LETTER, IPredicate>> res = new ArrayList<INestedWordAutomaton<LETTER, IPredicate>>();
-
-		for (final NestedWordAutomaton<String, String> rawAutomatonFromFile : rawFloydHoareAutomataFromFile) {
-			// Create map from strings to "new" letters (abstraction letters)
-			HashMap<String, LETTER> mapStringToLetter = new HashMap<String, LETTER>();
-			VpAlphabet<LETTER> abstractionAlphabet = abstraction.getVpAlphabet();
-			for (final LETTER letter : (abstractionAlphabet.getCallAlphabet())) {
-				if (!mapStringToLetter.containsKey(letter.toString())) {
-					mapStringToLetter.put(letter.toString(), letter);
-				}
-			}
-			for (final LETTER letter : (abstractionAlphabet.getInternalAlphabet())) {
-				if (!mapStringToLetter.containsKey(letter.toString())) {
-					mapStringToLetter.put(letter.toString(), letter);
-				}
-			}
-			for (final LETTER letter : (abstractionAlphabet.getReturnAlphabet())) {
-				if (!mapStringToLetter.containsKey(letter.toString())) {
-					mapStringToLetter.put(letter.toString(), letter);
-				}
-			}
-			if (debugOn) {
-				// Create Debug information for letters
-				int removedLetters = 0;
-				int reusedLetters = 0;
-				for (String strLetter : rawAutomatonFromFile.getVpAlphabet().getCallAlphabet()) {
-					if (!mapStringToLetter.containsKey(strLetter)) {
-						removedLetters++;
-					} else {
-						reusedLetters++;
-					}
-				}
-				for (String strLetter : rawAutomatonFromFile.getVpAlphabet().getInternalAlphabet()) {
-					if (!mapStringToLetter.containsKey(strLetter)) {
-						removedLetters++;
-					} else {
-						reusedLetters++;
-					}
-				}
-				for (String strLetter : rawAutomatonFromFile.getVpAlphabet().getReturnAlphabet()) {
-					if (!mapStringToLetter.containsKey(strLetter)) {
-						removedLetters++;
-					} else {
-						reusedLetters++;
-					}
-				}
-				int totalLetters = removedLetters + reusedLetters;
-				mLogger.info("Reusing " + reusedLetters + "/" + totalLetters
-						+ " letters when constructing automaton from file.");
-			}
-			// Create empty automaton with same alphabet
-			final NestedWordAutomaton<LETTER, IPredicate> resAutomaton = new NestedWordAutomaton<>(
-					new AutomataLibraryServices(mServices), abstractionAlphabet, mPredicateFactoryInterpolantAutomata);
-			// Add states
-			Set<String> statesOfRawAutomaton = rawAutomatonFromFile.getStates();
-			HashMap<String, IPredicate> mapStringToFreshState = new HashMap<>();
-			for (final String stringState : statesOfRawAutomaton) {
-				IPredicate predicateState = mPredicateFactory.newDebugPredicate(stringState);
-				mapStringToFreshState.put(stringState, predicateState);
-				final boolean isInitial = rawAutomatonFromFile.isInitial(stringState);
-				final boolean isFinal = rawAutomatonFromFile.isFinal(stringState);
-				resAutomaton.addState(isInitial, isFinal, predicateState);
-			}
-			// Add transitions
-			int removedTransitions = 0;
-			int reusedTransitions = 0;
-			for (final IPredicate predicateState : resAutomaton.getStates()) {
-				String stringState = predicateState.toString();
-				for (OutgoingCallTransition<String, String> callTransition : rawAutomatonFromFile
-						.callSuccessors(stringState)) {
-					String transitionLetter = callTransition.getLetter();
-					String transitionSuccString = callTransition.getSucc();
-					if (mapStringToLetter.containsKey(transitionLetter)) {
-						LETTER letter = mapStringToLetter.get(transitionLetter);
-						IPredicate succState = mapStringToFreshState.get(transitionSuccString);
-						resAutomaton.addCallTransition(predicateState, letter, succState);
-						reusedTransitions++;
-					} else {
-						removedTransitions++;
-					}
-				}
-				for (OutgoingInternalTransition<String, String> internalTransition : rawAutomatonFromFile
-						.internalSuccessors(stringState)) {
-					String transitionLetter = internalTransition.getLetter();
-					String transitionSuccString = internalTransition.getSucc();
-					if (mapStringToLetter.containsKey(transitionLetter)) {
-						LETTER letter = mapStringToLetter.get(transitionLetter);
-						IPredicate succState = mapStringToFreshState.get(transitionSuccString);
-						resAutomaton.addInternalTransition(predicateState, letter, succState);
-						reusedTransitions++;
-					} else {
-						removedTransitions++;
-					}
-				}
-				for (OutgoingReturnTransition<String, String> returnTransition : rawAutomatonFromFile
-						.returnSuccessors(stringState)) {
-					String transitionLetter = returnTransition.getLetter();
-					String transitionSuccString = returnTransition.getSucc();
-					String transitionHeirPredString = returnTransition.getHierPred();
-					if (mapStringToLetter.containsKey(transitionLetter)) {
-						LETTER letter = mapStringToLetter.get(transitionLetter);
-						IPredicate succState = mapStringToFreshState.get(transitionSuccString);
-						IPredicate heirPredState = mapStringToFreshState.get(transitionHeirPredString);
-						resAutomaton.addReturnTransition(predicateState, heirPredState, letter, succState);
-						reusedTransitions++;
-					} else {
-						removedTransitions++;
-					}
-				}
-			}
-			int totalTransitions = removedTransitions + reusedTransitions;
-			if (debugOn) {
-				mLogger.info("Reusing " + reusedTransitions + "/" + totalTransitions
-						+ " transitions when constructing automaton from file.");
-			}
-			// Add new automaton to list
-			res.add(resAutomaton);
-		}
-
-		return res;
 	}
 
 }
