@@ -430,7 +430,9 @@ public class Interpolator extends NonRecursive {
 			for (int i = 0; i <= mNumInterpolants; i++) {
 				if (partition == -1) {
 					mInA.set(i);
-					mInB.set(i);
+					if (i != mNumInterpolants) { // All literals are in A in the root
+						mInB.set(i);
+					}
 				} else if (i < partition || mStartOfSubtrees[i] > partition) {
 					mInB.set(i);
 				} else {
