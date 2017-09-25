@@ -287,11 +287,53 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 			return false;
 		}
 
+		addNodesEquivalentToNodesWithRemovedElement(elem);
+
+		assert sanityCheck();
+
+		final Collection<ELEM> oldAfParents = new ArrayList<>(mFaAuxData.getAfParents(elem));
+		final Collection<ELEM> oldArgParents = new ArrayList<>(mFaAuxData.getArgParents(elem));
+
+		updateElementTverAndAuxDataOnRemoveElement(elem);
+		assert sanityCheck();
+
+		removeParents(oldAfParents, oldArgParents);
+
+
+		assert elementIsFullyRemoved(elem);
+		return true;
+	}
+
+	protected void removeParents(final Collection<ELEM> oldAfParents, final Collection<ELEM> oldArgParents) {
 		/*
-		 * before removing the parents:
-		 * if there is a newRep, insert a node where the subnode elem is replaced by newRep
-		 * (this may introduce fresh nodes!)
+		 * remove elements that have elem as an argument
 		 */
+		for (final ELEM parent : oldAfParents) {
+			removeElement(parent);
+		}
+		for (final ELEM parent : oldArgParents) {
+			removeElement(parent);
+		}
+	}
+
+	protected void updateElementTverAndAuxDataOnRemoveElement(final ELEM elem) {
+		final boolean elemWasRepresentative = mElementTVER.isRepresentative(elem);
+
+		final ELEM newRep = mElementTVER.removeElement(elem);
+
+		mAuxData.removeElement(elem, elemWasRepresentative, newRep);
+		if (elem.isFunctionApplication()) {
+			mFaAuxData.removeAfParent(elem.getAppliedFunction(), elem);
+			mFaAuxData.removeArgParent(elem.getArgument(), elem);
+		}
+	}
+
+	/*
+	 * before removing the parents:
+	 * if there is a newRep, insert a node where the subnode elem is replaced by newRep
+	 * (this may introduce fresh nodes!)
+	 */
+	protected void addNodesEquivalentToNodesWithRemovedElement(final ELEM elem) {
 		final ELEM otherRep = getOtherEquivalenceClassMember(elem);
 		if (otherRep != null) {
 			for (final ELEM parent : new ArrayList<>(mFaAuxData.getAfParents(elem))) {
@@ -305,35 +347,6 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 				addElement(replaced);
 			}
 		}
-		assert sanityCheck();
-
-		final Collection<ELEM> oldAfParents = new ArrayList<>(mFaAuxData.getAfParents(elem));
-		final Collection<ELEM> oldArgParents = new ArrayList<>(mFaAuxData.getArgParents(elem));
-
-		final boolean elemWasRepresentative = mElementTVER.isRepresentative(elem);
-
-		final ELEM newRep = mElementTVER.removeElement(elem);
-
-		mAuxData.removeElement(elem, elemWasRepresentative, newRep);
-		if (elem.isFunctionApplication()) {
-			mFaAuxData.removeAfParent(elem.getAppliedFunction(), elem);
-			mFaAuxData.removeArgParent(elem.getArgument(), elem);
-		}
-		assert sanityCheck();
-
-		/*
-		 * remove elements that have elem as an argument
-		 */
-		for (final ELEM parent : oldAfParents) {
-			removeElement(parent);
-		}
-		for (final ELEM parent : oldArgParents) {
-			removeElement(parent);
-		}
-
-
-		assert elementIsFullyRemoved(elem);
-		return true;
 	}
 
 	/**
