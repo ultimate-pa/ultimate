@@ -37,7 +37,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
@@ -61,8 +60,7 @@ public class RefinementStrategyUtils {
 			final IUltimateServiceProvider services, final ILogger logger,
 			final TaCheckAndRefinementPreferences<LETTER> prefs, final TAPreferences taPrefsForInterpolantConsolidation,
 			final TraceChecker tracechecker, final PredicateFactory predicateFactory,
-			final PredicateUnifier predicateUnifier, final IRun<LETTER, IPredicate, ?> counterexample,
-			final CegarLoopStatisticsGenerator cegarLoopBenchmarks) {
+			final PredicateUnifier predicateUnifier, final IRun<LETTER, IPredicate, ?> counterexample) {
 		final TraceChecker localTraceChecker = Objects.requireNonNull(tracechecker,
 				"cannot construct interpolant generator if no trace checker is present");
 		if (localTraceChecker instanceof InterpolatingTraceChecker) {
@@ -70,9 +68,13 @@ public class RefinementStrategyUtils {
 
 			if (prefs.getUseInterpolantConsolidation()) {
 				try {
-					return consolidateInterpolants(services, logger, prefs, taPrefsForInterpolantConsolidation,
-							interpolatingTraceChecker, predicateUnifier, predicateFactory, counterexample,
-							cegarLoopBenchmarks);
+					final CfgSmtToolkit cfgSmtToolkit = prefs.getCfgSmtToolkit();
+					final InterpolantConsolidation<LETTER> interpConsoli = new InterpolantConsolidation<>(
+							predicateUnifier.getTruePredicate(), predicateUnifier.getFalsePredicate(),
+							new TreeMap<Integer, IPredicate>(), NestedWord.nestedWord(counterexample.getWord()), cfgSmtToolkit,
+							cfgSmtToolkit.getModifiableGlobalsTable(), services, logger, predicateFactory, predicateUnifier,
+							interpolatingTraceChecker, taPrefsForInterpolantConsolidation);
+					return interpConsoli;
 				} catch (final AutomataOperationCanceledException e) {
 					throw new AssertionError("react on timeout, not yet implemented");
 				}
@@ -82,20 +84,4 @@ public class RefinementStrategyUtils {
 		throw new AssertionError("Currently only interpolating trace checkers are supported.");
 	}
 
-	private static <LETTER extends IIcfgTransition<?>> IInterpolantGenerator consolidateInterpolants(
-			final IUltimateServiceProvider services, final ILogger logger,
-			final TaCheckAndRefinementPreferences<LETTER> prefs, final TAPreferences taPrefsForInterpolantConsolidation,
-			final InterpolatingTraceChecker tracechecker, final PredicateUnifier predicateUnifier,
-			final PredicateFactory predicateFactory, final IRun<LETTER, IPredicate, ?> counterexample,
-			final CegarLoopStatisticsGenerator cegarLoopBenchmarks) throws AutomataOperationCanceledException {
-		final CfgSmtToolkit cfgSmtToolkit = prefs.getCfgSmtToolkit();
-		final InterpolantConsolidation<LETTER> interpConsoli = new InterpolantConsolidation<>(
-				predicateUnifier.getTruePredicate(), predicateUnifier.getFalsePredicate(),
-				new TreeMap<Integer, IPredicate>(), NestedWord.nestedWord(counterexample.getWord()), cfgSmtToolkit,
-				cfgSmtToolkit.getModifiableGlobalsTable(), services, logger, predicateFactory, predicateUnifier,
-				tracechecker, taPrefsForInterpolantConsolidation);
-		// Add benchmark data of interpolant consolidation
-		cegarLoopBenchmarks.addInterpolationConsolidationData(interpConsoli.getInterpolantConsolidationBenchmarks());
-		return interpConsoli;
-	}
 }

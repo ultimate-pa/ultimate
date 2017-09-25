@@ -254,7 +254,7 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy<LETTER extend
 		if (mInterpolantGenerator == null) {
 			mInterpolantGenerator = RefinementStrategyUtils.constructInterpolantGenerator(mServices, mLogger, mPrefs,
 					mTaPrefsForInterpolantConsolidation, getTraceChecker(), mPredicateFactory, mPredicateUnifier,
-					mCounterexample, mCegarLoopsBenchmark);
+					mCounterexample);
 		}
 		return mInterpolantGenerator;
 	}
@@ -291,11 +291,16 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy<LETTER extend
 		TraceCheckerConstructor<LETTER> result;
 		if (mPrevTcConstructor == null) {
 			result = new TraceCheckerConstructor<>(mPrefs, managedScript, mServices, mPredicateFactory,
-					mPredicateUnifier, mCounterexample, assertionOrder, interpolationTechnique, mIteration,
-					mCegarLoopsBenchmark);
+					mPredicateUnifier, mCounterexample, assertionOrder, interpolationTechnique, mIteration);
 		} else {
 			result = new TraceCheckerConstructor<>(mPrevTcConstructor, managedScript, assertionOrder,
-					interpolationTechnique, mCegarLoopsBenchmark);
+					interpolationTechnique);
+		}
+		if (result.getStatisticsGenerator() != null) {
+			mCegarLoopsBenchmark.addTraceCheckerData(result.getStatisticsGenerator());
+		}
+		if (result.getPathInvariantsStatisticsGenerator() != null) {
+			mCegarLoopsBenchmark.addTraceCheckerData(result.getPathInvariantsStatisticsGenerator());
 		}
 
 		return result;

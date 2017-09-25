@@ -285,11 +285,16 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 		TraceCheckerConstructor<LETTER> result;
 		if (mPrevTcConstructor == null) {
 			result = new TraceCheckerConstructor<>(mPrefs, managedScript, mServices, mPredicateFactory,
-					mPredicateUnifierSmt, mCounterexample, assertionOrder, interpolationTechnique, mIteration,
-					mCegarLoopBenchmark);
+					mPredicateUnifierSmt, mCounterexample, assertionOrder, interpolationTechnique, mIteration);
 		} else {
 			result = new TraceCheckerConstructor<>(mPrevTcConstructor, managedScript, assertionOrder,
-					interpolationTechnique, mCegarLoopBenchmark);
+					interpolationTechnique);
+		}
+		if (result.getStatisticsGenerator() != null) {
+			mCegarLoopBenchmark.addTraceCheckerData(result.getStatisticsGenerator());
+		}
+		if (result.getPathInvariantsStatisticsGenerator() != null) {
+			mCegarLoopBenchmark.addTraceCheckerData(result.getPathInvariantsStatisticsGenerator());
 		}
 		return result;
 	}

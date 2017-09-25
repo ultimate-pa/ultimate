@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantComputationStatus;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantConsolidation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantConsolidation.InterpolantConsolidationBenchmarkGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckReasonUnknown;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerSpWp;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TracePredicates;
@@ -74,6 +75,7 @@ public final class TraceAbstractionRefinementEngine<LETTER>
 	private boolean mSomePerfectSequenceFound = false;
 
 	private final InteractiveCegar mInteractive;
+	private InterpolantConsolidationBenchmarkGenerator mInterpolantConsolidationStatistics;
 
 	/**
 	 * @param logger
@@ -255,6 +257,9 @@ public final class TraceAbstractionRefinementEngine<LETTER>
 		IInterpolantGenerator interpolantGenerator = null;
 		try {
 			interpolantGenerator = mStrategy.getInterpolantGenerator();
+			if (interpolantGenerator instanceof InterpolantConsolidation) {
+				mInterpolantConsolidationStatistics = ((InterpolantConsolidation) interpolantGenerator).getInterpolantConsolidationBenchmarks();
+			}
 		} catch (final ToolchainCanceledException tce) {
 			throw tce;
 		} catch (final Exception e) {
@@ -410,6 +415,14 @@ public final class TraceAbstractionRefinementEngine<LETTER>
 	public boolean somePerfectSequenceFound() {
 		return mSomePerfectSequenceFound;
 	}
+	
+	
+
+	public InterpolantConsolidationBenchmarkGenerator getInterpolantConsolidationStatistics() {
+		return mInterpolantConsolidationStatistics;
+	}
+
+
 
 	/**
 	 * Categories for exception handling.

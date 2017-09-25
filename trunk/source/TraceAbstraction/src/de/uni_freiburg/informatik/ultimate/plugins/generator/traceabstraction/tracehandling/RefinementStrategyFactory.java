@@ -129,8 +129,7 @@ public class RefinementStrategyFactory<LETTER extends IIcfgTransition<?>> {
 			final ManagedScript managedScript =
 					setupManagedScriptFromPreferences(mServices, mInitialIcfg, mStorage, iteration, mPrefs);
 			return new FixedTraceAbstractionRefinementStrategy<>(mLogger, mPrefs, managedScript, mServices,
-					mPredicateFactory, predicateUnifier, counterexample, abstraction, mPrefsConsolidation, iteration,
-					benchmark);
+					mPredicateFactory, predicateUnifier, counterexample, abstraction, mPrefsConsolidation, iteration);
 		case PENGUIN:
 			return new PenguinRefinementStrategy<>(mLogger, mPrefs, mServices, mInitialIcfg.getCfgSmtToolkit(),
 					mPredicateFactory, predicateUnifier, mAssertionOrderModulation, counterexample, abstraction,

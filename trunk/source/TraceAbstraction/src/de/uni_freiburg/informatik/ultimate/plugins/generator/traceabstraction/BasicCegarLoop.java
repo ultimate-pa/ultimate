@@ -363,6 +363,14 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 					((TraceAbstractionRefinementEngine<LETTER>) mTraceCheckAndRefinementEngine)
 							.somePerfectSequenceFound(),
 					mIteration);
+			// Add benchmark data of interpolant consolidation
+			final boolean useInterpolantConsolidation = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
+					.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_INTERPOLANTS_CONSOLIDATION);
+			if (useInterpolantConsolidation) {
+				mCegarLoopBenchmark.addInterpolationConsolidationData(
+						((TraceAbstractionRefinementEngine<LETTER>) mTraceCheckAndRefinementEngine)
+								.getInterpolantConsolidationStatistics());
+			}
 		}
 
 		if (mInteractive.isInteractiveMode() && feasibility == LBool.SAT) {

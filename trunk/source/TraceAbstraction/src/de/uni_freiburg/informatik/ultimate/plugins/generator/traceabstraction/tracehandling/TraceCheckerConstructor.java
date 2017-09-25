@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling;
 
-import java.util.Objects;
 import java.util.TreeMap;
 import java.util.function.Supplier;
 
@@ -34,6 +33,7 @@ import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
@@ -42,8 +42,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.S
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.InvariantSynthesisSettings;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.PathInvariantsStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
@@ -52,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerSpWp;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerUtils;
 
 /**
@@ -68,8 +69,9 @@ class TraceCheckerConstructor<LETTER extends IIcfgTransition<?>> implements Supp
 	private final IRun<LETTER, IPredicate, ?> mCounterexample;
 	private final InterpolationTechnique mInterpolationTechnique;
 	private final int mIteration;
-	private final CegarLoopStatisticsGenerator mCegarLoopBenchmark;
 	private final AssertCodeBlockOrder mAssertionOrder;
+	private TraceCheckerStatisticsGenerator mStatisticsGenerator;
+	private PathInvariantsStatisticsGenerator mPathInvariantsStatisticsGenerator;
 
 	/**
 	 * @param prefs
@@ -92,10 +94,9 @@ class TraceCheckerConstructor<LETTER extends IIcfgTransition<?>> implements Supp
 	public TraceCheckerConstructor(final TaCheckAndRefinementPreferences<LETTER> prefs, final ManagedScript managedScript,
 			final IUltimateServiceProvider services, final PredicateFactory predicateFactory,
 			final PredicateUnifier predicateUnifier, final IRun<LETTER, IPredicate, ?> counterexample,
-			final InterpolationTechnique interpolationTechnique, final int cegarIteration,
-			final CegarLoopStatisticsGenerator cegarLoopBenchmark) {
+			final InterpolationTechnique interpolationTechnique, final int cegarIteration) {
 		this(prefs, managedScript, services, predicateFactory, predicateUnifier, counterexample,
-				prefs.getAssertCodeBlocksOrder(), interpolationTechnique, cegarIteration, cegarLoopBenchmark);
+				prefs.getAssertCodeBlocksOrder(), interpolationTechnique, cegarIteration);
 	}
 
 	/**
@@ -111,8 +112,8 @@ class TraceCheckerConstructor<LETTER extends IIcfgTransition<?>> implements Supp
 	 *            CEGAR loop benchmark
 	 */
 	public TraceCheckerConstructor(final TraceCheckerConstructor<LETTER> other, final ManagedScript managedScript,
-			final InterpolationTechnique interpolationTechnique, final CegarLoopStatisticsGenerator benchmark) {
-		this(other, managedScript, other.mAssertionOrder, interpolationTechnique, benchmark);
+			final InterpolationTechnique interpolationTechnique) {
+		this(other, managedScript, other.mAssertionOrder, interpolationTechnique);
 	}
 
 	/**
@@ -130,10 +131,9 @@ class TraceCheckerConstructor<LETTER extends IIcfgTransition<?>> implements Supp
 	 *            CEGAR loop benchmark
 	 */
 	public TraceCheckerConstructor(final TraceCheckerConstructor<LETTER> other, final ManagedScript managedScript,
-			final AssertCodeBlockOrder assertOrder, final InterpolationTechnique interpolationTechnique,
-			final CegarLoopStatisticsGenerator benchmark) {
+			final AssertCodeBlockOrder assertOrder, final InterpolationTechnique interpolationTechnique) {
 		this(other.mPrefs, managedScript, other.mServices, other.mPredicateFactory, other.mPredicateUnifier,
-				other.mCounterexample, assertOrder, interpolationTechnique, other.mIteration, benchmark);
+				other.mCounterexample, assertOrder, interpolationTechnique, other.mIteration);
 	}
 
 	/**
@@ -161,8 +161,7 @@ class TraceCheckerConstructor<LETTER extends IIcfgTransition<?>> implements Supp
 	public TraceCheckerConstructor(final TaCheckAndRefinementPreferences<LETTER> prefs, final ManagedScript managedScript,
 			final IUltimateServiceProvider services,final PredicateFactory predicateFactory,  final PredicateUnifier predicateUnifier,
 			final IRun<LETTER, IPredicate, ?> counterexample, final AssertCodeBlockOrder assertOrder,
-			final InterpolationTechnique interpolationTechnique, final int cegarIteration,
-			final CegarLoopStatisticsGenerator cegarLoopBenchmark) {
+			final InterpolationTechnique interpolationTechnique, final int cegarIteration) {
 		mPrefs = prefs;
 		mManagedScript = managedScript;
 		mServices = services;
@@ -172,7 +171,6 @@ class TraceCheckerConstructor<LETTER extends IIcfgTransition<?>> implements Supp
 		mAssertionOrder = assertOrder;
 		mInterpolationTechnique = interpolationTechnique;
 		mIteration = cegarIteration;
-		mCegarLoopBenchmark = Objects.requireNonNull(cegarLoopBenchmark);
 	}
 
 	@Override
@@ -200,7 +198,12 @@ class TraceCheckerConstructor<LETTER extends IIcfgTransition<?>> implements Supp
 			}
 		}
 		if (traceChecker.wasTracecheckFinished()) {
-			mCegarLoopBenchmark.addTraceCheckerData(traceChecker.getTraceCheckerBenchmark());
+			mStatisticsGenerator = traceChecker.getTraceCheckerBenchmark();
+			if (traceChecker instanceof InterpolatingTraceCheckerPathInvariantsWithFallback && traceChecker.isCorrect() == LBool.UNSAT) {
+				mPathInvariantsStatisticsGenerator = ((InterpolatingTraceCheckerPathInvariantsWithFallback) traceChecker).getPathInvariantsStats();
+			} else {
+				mPathInvariantsStatisticsGenerator = null;
+			}
 		}
 
 		if (traceChecker.getToolchainCanceledExpection() != null) {
@@ -288,8 +291,17 @@ class TraceCheckerConstructor<LETTER extends IIcfgTransition<?>> implements Supp
 		return new InterpolatingTraceCheckerPathInvariantsWithFallback(truePredicate, falsePredicate,
 				new TreeMap<Integer, IPredicate>(), (NestedRun<CodeBlock, IPredicate>) mCounterexample,
 				mPrefs.getCfgSmtToolkit(), mAssertionOrder, mServices, mPrefs.getToolchainStorage(), true,
-				mPredicateFactory, mPredicateUnifier, invariantSynthesisSettings, xnfConversionTechnique, simplificationTechnique, icfgContainer,
-				mCegarLoopBenchmark);
+				mPredicateFactory, mPredicateUnifier, invariantSynthesisSettings, xnfConversionTechnique, simplificationTechnique, icfgContainer);
 	}
+
+	public TraceCheckerStatisticsGenerator getStatisticsGenerator() {
+		return mStatisticsGenerator;
+	}
+
+	public PathInvariantsStatisticsGenerator getPathInvariantsStatisticsGenerator() {
+		return mPathInvariantsStatisticsGenerator;
+	}
+	
+	
 
 }

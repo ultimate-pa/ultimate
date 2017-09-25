@@ -40,7 +40,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.IInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
@@ -73,7 +72,6 @@ public class FixedTraceAbstractionRefinementStrategy<LETTER extends IIcfgTransit
 	private TraceChecker mTraceChecker;
 	private IInterpolantGenerator mInterpolantGenerator;
 	private IInterpolantAutomatonBuilder<LETTER, IPredicate> mInterpolantAutomatonBuilder;
-	private final CegarLoopStatisticsGenerator mCegarLoopBenchmark;
 
 	/**
 	 * @param prefs
@@ -102,7 +100,7 @@ public class FixedTraceAbstractionRefinementStrategy<LETTER extends IIcfgTransit
 			final IUltimateServiceProvider services, final PredicateFactory predicateFactory,
 			final PredicateUnifier predicateUnifier, final IRun<LETTER, IPredicate, ?> counterexample,
 			final IAutomaton<LETTER, IPredicate> abstraction, final TAPreferences taPrefsForInterpolantConsolidation,
-			final int iteration, final CegarLoopStatisticsGenerator cegarLoopBenchmarks) {
+			final int iteration) {
 		mServices = services;
 		mLogger = logger;
 		mPrefs = prefs;
@@ -111,9 +109,8 @@ public class FixedTraceAbstractionRefinementStrategy<LETTER extends IIcfgTransit
 		mPredicateFactory = predicateFactory;
 		mPredicateUnifier = predicateUnifier;
 		mTaPrefsForInterpolantConsolidation = taPrefsForInterpolantConsolidation;
-		mCegarLoopBenchmark = cegarLoopBenchmarks;
 		mFunConstructFromPrefs = new TraceCheckerConstructor<>(prefs, managedScript, services, predicateFactory,
-				predicateUnifier, counterexample, mPrefs.getInterpolationTechnique(), iteration, cegarLoopBenchmarks);
+				predicateUnifier, counterexample, mPrefs.getInterpolationTechnique(), iteration);
 	}
 
 	@Override
@@ -150,7 +147,7 @@ public class FixedTraceAbstractionRefinementStrategy<LETTER extends IIcfgTransit
 		if (mInterpolantGenerator == null) {
 			mInterpolantGenerator = RefinementStrategyUtils.constructInterpolantGenerator(mServices, mLogger, mPrefs,
 					mTaPrefsForInterpolantConsolidation, getTraceChecker(), mPredicateFactory, mPredicateUnifier,
-					mCounterexample, mCegarLoopBenchmark);
+					mCounterexample);
 		}
 		return mInterpolantGenerator;
 	}

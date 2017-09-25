@@ -42,7 +42,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.InvariantSynthesisSettings;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.PathInvariantsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.PathInvariantsStatisticsGenerator;
@@ -74,7 +73,7 @@ public class InterpolatingTraceCheckerPathInvariantsWithFallback extends Interpo
 			final PredicateFactory predicateFactory, final PredicateUnifier predicateUnifier,
 			final InvariantSynthesisSettings invariantSynthesisSettings,
 			final XnfConversionTechnique xnfConversionTechnique, final SimplificationTechnique simplificationTechnique,
-			final IIcfg<?> icfgContainer, final CegarLoopStatisticsGenerator cegarLoopBenchmark) {
+			final IIcfg<?> icfgContainer) {
 		super(precondition, postcondition, pendingContexts, run.getWord(), csToolkit, assertCodeBlocksIncrementally,
 				services, computeRcfgProgramExecution, predicateFactory, predicateUnifier, csToolkit.getManagedScript(),
 				simplificationTechnique, xnfConversionTechnique, run.getStateSequence());
@@ -86,8 +85,6 @@ public class InterpolatingTraceCheckerPathInvariantsWithFallback extends Interpo
 			mTraceCheckFinished = true;
 			cleanupAndUnlockSolver();
 			computeInterpolants(new AllIntegers(), InterpolationTechnique.PathInvariants);
-			// Add benchmarks from PathInvariants
-			cegarLoopBenchmark.addPathInvariantsData(mPathInvariantsStats);
 			if (!mInterpolantComputationStatus.wasComputationSuccesful()) {
 				final String message = "invariant synthesis failed";
 				final String taskDescription = "trying to synthesize invariant for path program " + mPathInvariantsStats;
@@ -127,5 +124,11 @@ public class InterpolatingTraceCheckerPathInvariantsWithFallback extends Interpo
 	public InterpolantComputationStatus getInterpolantComputationStatus() {
 		return mInterpolantComputationStatus;
 	}
+
+	public PathInvariantsStatisticsGenerator getPathInvariantsStats() {
+		return mPathInvariantsStats;
+	}
+	
+	
 
 }
