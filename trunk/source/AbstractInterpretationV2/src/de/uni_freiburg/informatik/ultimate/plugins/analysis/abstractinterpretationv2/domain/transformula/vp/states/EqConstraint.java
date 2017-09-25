@@ -110,6 +110,7 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 
 	public void freeze() {
 		assert !isInconsistent() : "use EqBottomConstraint instead!!";
+		assert sanityCheck();
 //		assert !mIsFrozen;
 		mIsFrozen = true;
 	}
@@ -393,8 +394,15 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 	}
 
 	boolean sanityCheck() {
-		return mPartialArrangement.sanityCheck();
+		/*
+		 * the weak equivalence graph may not have any array equalities at this point
+		 */
+		if (!mPartialArrangement.weqGraphFreeOfArrayEqualities()) {
+			assert false;
+			return false;
+		}
 
+		return mPartialArrangement.sanityCheck();
 	}
 }
 

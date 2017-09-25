@@ -123,11 +123,11 @@ public abstract class EqNode implements IEqNodeIdentifier<EqNode>, ICongruenceCl
 		return mMdSort != null;
 	}
 
-	@Override
-	public int getArity() {
-		assert isFunction();
-		return mMdSort.getDimension();
-	}
+//	@Override
+//	public int getArity() {
+//		assert isFunction();
+//		return mMdSort.getDimension();
+//	}
 
 	@Override
 	public String toString() {

@@ -165,6 +165,11 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 			}
 			mAllLiterals.add(elem);
 		}
+
+		executeFloydWarshallAndReportResult();
+		reportAllArrayEqualitiesFromWeqGraph();
+
+		assert weqGraphFreeOfArrayEqualities();
 		assert sanityCheck();
 		return true;
 	}
@@ -617,6 +622,8 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 		reportGpaChangeToWeqGraphAndPropagateArrayEqualities(
 				(final CongruenceClosure<NODE> cc) -> cc.reportDisequality(elem1, elem2));
 
+		assert weqGraphFreeOfArrayEqualities();
+		assert sanityCheck();
 		return true;
 	}
 
@@ -644,9 +651,10 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 		if (!func.getSort().isArraySort()) {
 			return Collections.emptyList();
 		}
-		final List<NODE> result = new ArrayList<>(func.getArity());
-		final List<Sort> indexSorts = new MultiDimensionalSort(func.getSort()).getIndexSorts();
-		for (int i = 0; i < func.getArity(); i++) {
+		final MultiDimensionalSort mdSort = new MultiDimensionalSort(func.getSort());
+		final List<Sort> indexSorts = mdSort.getIndexSorts();
+		final List<NODE> result = new ArrayList<>(mdSort.getDimension());
+		for (int i = 0; i < mdSort.getDimension(); i++) {
 			result.add(mFactory.getWeqVariableNodeForDimension(i, indexSorts.get(i)));
 		}
 		return result;
@@ -737,6 +745,7 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 			}
 			mNodeToDependents.removeDomainElement(elem);
 
+			assert weqGraphFreeOfArrayEqualities();
 			assert projectedFunctionIsGoneFromWeqGraph(elem, mWeakEquivalenceGraph);
 
 			mAllLiterals.remove(elem);
@@ -855,24 +864,36 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 		/*
 		 * roweq
 		 */
-		for (final NODE ccp : mAuxData.getArgCcPars(getRepresentativeElement(elem))) {
-			if (getEqualityStatus(elem.getAppliedFunction(), ccp.getAppliedFunction()) == EqualityStatus.EQUAL) {
-				// strong, not weak equivalence, nothing to do here (propagations done by fwcc)
+		// say elem = a[i], then we attempt to discover all b[j] in exp such that i = j, these are the argccpar of i
+		for (final NODE ccp : mAuxData.getArgCcPars(getRepresentativeElement(elem.getArgument()))) {
+			if (!ccp.hasSameTypeAs(elem)) {
+				// TODO: nicer would be to have argCcPars contain only elements of fitting sort..
 				continue;
 			}
-			final NODE ccpAfRep = getRepresentativeElement(ccp.getAppliedFunction());
-			for (final Entry<NODE, WeakEquivalenceGraph<ACTION, NODE>.WeakEquivalenceEdgeLabel> weqEdge
-					: mWeakEquivalenceGraph.getAdjacentWeqEdges(ccpAfRep).entrySet()) {
 
-				final List<CongruenceClosure<NODE>> projectedLabel = mWeakEquivalenceGraph.projectEdgeLabelToPoint(
-						weqEdge.getValue().getLabelContents(),
-						ccp.getArgument(),
-						getAllWeqVarsNodeForFunction(ccp.getAppliedFunction()));
-
-				madeChanges |= reportWeakEquivalenceDoOnlyRoweqPropagations(elem.getAppliedFunction(),
-						ccp.getAppliedFunction(),
-						projectedLabel);
+			// ccp = b[j], look for a weq edge between a and b
+			if (getEqualityStatus(elem.getAppliedFunction(), ccp.getAppliedFunction()) == EqualityStatus.EQUAL) {
+				// a = b, strong, not weak equivalence, nothing to do here (propagations done by fwcc)
+				continue;
 			}
+//			final NODE ccpAfRep = getRepresentativeElement(ccp.getAppliedFunction());
+//			for (final Entry<NODE, WeakEquivalenceGraph<ACTION, NODE>.WeakEquivalenceEdgeLabel> weqEdge
+//					: mWeakEquivalenceGraph.getAdjacentWeqEdges(ccpAfRep).entrySet()) {
+
+			// get label of edge between a and b
+			final List<CongruenceClosure<NODE>> weqEdgeLabelContents =
+					mWeakEquivalenceGraph.getEdgeLabelContents(ccp.getAppliedFunction(), elem.getAppliedFunction());
+
+			final List<CongruenceClosure<NODE>> projectedLabel = mWeakEquivalenceGraph.projectEdgeLabelToPoint(
+					//						weqEdge.getValue().getLabelContents(),
+					weqEdgeLabelContents,
+					ccp.getArgument(),
+					getAllWeqVarsNodeForFunction(ccp.getAppliedFunction()));
+
+			madeChanges |= reportWeakEquivalenceDoOnlyRoweqPropagations(elem,
+					ccp,
+					projectedLabel);
+//			}
 		}
 
 		if (madeChanges) {
@@ -999,7 +1020,8 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 					edge.getValue().getLabelContents());
 		}
 
-		newWeqCc.mWeakEquivalenceGraph.close();
+//		newWeqCc.mWeakEquivalenceGraph.close();
+		executeFloydWarshallAndReportResult();
 		newWeqCc.reportAllArrayEqualitiesFromWeqGraph();
 
 		if (newWeqCc.isInconsistent()) {
@@ -1032,6 +1054,18 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 		sb.append("Weak equivalences:\n");
 		sb.append(mWeakEquivalenceGraph.toString());
 		return sb.toString();
+	}
+
+	/**
+	 * for sanity checking
+	 * @return
+	 */
+	public boolean weqGraphFreeOfArrayEqualities() {
+		if (mWeakEquivalenceGraph.hasArrayEqualities()) {
+			assert false;
+			return false;
+		}
+		return true;
 	}
 
 }

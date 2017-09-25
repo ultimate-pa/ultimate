@@ -327,11 +327,22 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 //		assert mArrayEqualities == null || mArrayEqualities.isEmpty();
 		final List<Term> result = new ArrayList<>();
 		for (final Entry<Doubleton<NODE>, WeakEquivalenceEdgeLabel> edge : mWeakEquivalenceEdges.entrySet()) {
+//			if (mArrayEqualities.containsPair(edge.getKey().getOneElement(), edge.getKey().getOtherElement())
+//					&& mArrayEqualities.containsPair(edge.getKey().getOtherElement(), edge.getKey().getOneElement())) {
+//				// case where the edge is inconsistent --> we could just add a ground equality instead of the whole
+//  			// edge..
+//				result.add(e)
+//				continue;
+//			}
 			final List<Term> dnfAsCubeList = new ArrayList<>();
 			dnfAsCubeList.addAll(edge.getValue().toDNF(script));
 
-			final Term arrayEquation = computeArrayEquation(script, edge.getKey().getOneElement(),
-					edge.getKey().getOtherElement());
+			final NODE source = edge.getKey().getOneElement();
+			final NODE target = edge.getKey().getOtherElement();
+			assert source.hasSameTypeAs(target);
+
+			final Term arrayEquation = computeArrayEquation(script, source, target);
+
 			dnfAsCubeList.add(arrayEquation);
 
 			final Term edgeFormula = SmtUtils.quantifier(script, QuantifiedFormula.FORALL,
@@ -357,8 +368,12 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 				.collect(Collectors.toList());
 		final ArrayIndex index = new ArrayIndex(indexEntries);
 
-		final Term select1 = SmtUtils.multiDimensionalSelect(script, array1.getTerm(), index);
-		final Term select2 = SmtUtils.multiDimensionalSelect(script, array2.getTerm(), index);
+		final Term select1 = array1.getSort().isArraySort() ?
+				SmtUtils.multiDimensionalSelect(script, array1.getTerm(), index) :
+					array1.getTerm();
+		final Term select2 = array2.getSort().isArraySort() ?
+				SmtUtils.multiDimensionalSelect(script, array2.getTerm(), index) :
+					array2.getTerm();
 
 		return SmtUtils.binaryEquality(script, select1, select2);
 	}
@@ -367,7 +382,7 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		final MultiDimensionalSort mdSort = new MultiDimensionalSort(array1.getTerm().getSort());
 
 		final List<TermVariable> indexEntries = new ArrayList<>();
-		for (int i = 0; i < array1.getArity(); i++) {
+		for (int i = 0; i < mdSort.getDimension(); i++) {
 			indexEntries.add(mFactory.getWeqVariableForDimension(i, mdSort.getIndexSorts().get(i)));
 		}
 		return indexEntries;
