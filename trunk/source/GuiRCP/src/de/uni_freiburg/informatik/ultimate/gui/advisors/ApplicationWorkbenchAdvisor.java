@@ -59,7 +59,6 @@ public class ApplicationWorkbenchAdvisor extends WorkbenchAdvisor {
 		mCore = icc;
 		mTrayIconNotifier = notifier;
 		mController = controller;
-
 	}
 
 	@Override
@@ -88,9 +87,4 @@ public class ApplicationWorkbenchAdvisor extends WorkbenchAdvisor {
 		super.initialize(configurer);
 		configurer.setSaveAndRestore(!Platform.inDevelopmentMode());
 	}
-
-	// public TrayItem getTrayItem() {
-	// return mApplicationWorkbenchWindowAdvisor.getTrayItem();
-	// }
-
 }

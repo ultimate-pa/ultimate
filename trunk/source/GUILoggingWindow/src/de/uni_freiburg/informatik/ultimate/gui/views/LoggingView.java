@@ -2,22 +2,22 @@
  * Copyright (C) 2014-2015 Christopher Dillo
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE GUILoggingWindow plug-in.
- * 
+ *
  * The ULTIMATE GUILoggingWindow plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE GUILoggingWindow plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE GUILoggingWindow plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE GUILoggingWindow plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -54,13 +54,13 @@ import de.uni_freiburg.informatik.ultimate.gui.logging.GuiLoggingWindowAppender;
 /**
  * simple text showing de.uni_freiburg.informatik.ultimate.gui.logging for the Gui .. so we can see logging messages
  * without an IDE
- * 
+ *
  * and for showing other textbased messages.
- * 
- * 
+ *
+ *
  * @author Christian Ortolf
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- * 
+ *
  */
 public class LoggingView extends ViewPart {
 
@@ -121,7 +121,7 @@ public class LoggingView extends ViewPart {
 
 	/**
 	 * deletes all text in the textwidget must be called from ui thread
-	 * 
+	 *
 	 */
 	public void clear() {
 		mStyledText.setText("");
@@ -130,7 +130,7 @@ public class LoggingView extends ViewPart {
 
 	/**
 	 * writes a string to the textwidget
-	 * 
+	 *
 	 * @param s
 	 *            the string that should be written. Callers should add their own linebreaks.
 	 */
@@ -208,7 +208,7 @@ public class LoggingView extends ViewPart {
 
 	/**
 	 * Create a Color object with the colour given by a string as in PreferenceType.Color
-	 * 
+	 *
 	 * @param colorString
 	 *            Color as "red,green,blue" where 0 <= red, green, blue <= 255
 	 * @return a Color object with the given colour

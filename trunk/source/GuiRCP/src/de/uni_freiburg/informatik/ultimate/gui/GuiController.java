@@ -204,6 +204,7 @@ public class GuiController implements IController<RunDefinition> {
 	@Override
 	public void displayException(final IToolchainData<RunDefinition> toolchain, final String description,
 			final Throwable ex) {
+		// TODO: Log exceptions
 	}
 
 	@Override
@@ -228,6 +229,6 @@ public class GuiController implements IController<RunDefinition> {
 
 	@Override
 	public void prerun(final IToolchainData<RunDefinition> tcData) {
-
+		// not needed
 	}
 }
