@@ -97,7 +97,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerSpWp;
 
-public class LassoChecker<LETTER extends IIcfgTransition<?>> {
+public class LassoCheck<LETTER extends IIcfgTransition<?>> {
 
 	enum ContinueDirective {
 		REFINE_FINITE, REFINE_BUCHI, REPORT_NONTERMINATION, REPORT_UNKNOWN, REFINE_BOTH
@@ -160,9 +160,9 @@ public class LassoChecker<LETTER extends IIcfgTransition<?>> {
 	private final NestedLassoRun<LETTER, IPredicate> mCounterexample;
 
 	/**
-	 * Identifier for this LassoChecker. Can be used to get unique filenames when dumping files.
+	 * Identifier for this LassoCheck. Can be used to get unique filenames when dumping files.
 	 */
-	private final String mLassoCheckerIdentifier;
+	private final String mLassoCheckIdentifier;
 
 	// ////////////////////////////// auxilliary variables
 	// //////////////////////
@@ -239,11 +239,11 @@ public class LassoChecker<LETTER extends IIcfgTransition<?>> {
 		return mNonterminationAnalysisBenchmarks;
 	}
 
-	public LassoChecker(final InterpolationTechnique interpolation, final CfgSmtToolkit csToolkit,
+	public LassoCheck(final InterpolationTechnique interpolation, final CfgSmtToolkit csToolkit,
 			final PredicateFactory predicateFactory, final IIcfgSymbolTable symbolTable,
 			final ModifiableGlobalsTable modifiableGlobalsTable, final IPredicate axioms,
 			final BinaryStatePredicateManager bspm, final NestedLassoRun<LETTER, IPredicate> counterexample,
-			final String lassoCheckerIdentifier, final IUltimateServiceProvider services,
+			final String lassoCheckIdentifier, final IUltimateServiceProvider services,
 			final IToolchainStorage storage, final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique) throws IOException {
 		mServices = services;
@@ -264,7 +264,7 @@ public class LassoChecker<LETTER extends IIcfgTransition<?>> {
 		mCsToolkit = csToolkit;
 		mBspm = bspm;
 		mCounterexample = counterexample;
-		mLassoCheckerIdentifier = lassoCheckerIdentifier;
+		mLassoCheckIdentifier = lassoCheckIdentifier;
 		mPredicateFactory = predicateFactory;
 		mPredicateUnifier = new PredicateUnifier(mServices, mCsToolkit.getManagedScript(), predicateFactory,
 				mSymbolTable, simplificationTechnique, xnfConversionTechnique);
@@ -605,7 +605,7 @@ public class LassoChecker<LETTER extends IIcfgTransition<?>> {
 	}
 
 	private String generateFileBasenamePrefix(final boolean withStem) {
-		return mLassoCheckerIdentifier + "_" + (withStem ? "Lasso" : "Loop");
+		return mLassoCheckIdentifier + "_" + (withStem ? "Lasso" : "Loop");
 	}
 
 	private ILassoRankerPreferences constructLassoRankerPreferences(final boolean withStem,

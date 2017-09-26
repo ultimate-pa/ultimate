@@ -82,8 +82,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.Increme
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoChecker.ContinueDirective;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoChecker.TraceCheckResult;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoCheck.ContinueDirective;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoCheck.TraceCheckResult;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.BuchiAutomizerPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.BuchiAutomizerPreferenceInitializer.BuchiComplementationConstruction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.BuchiAutomizerPreferenceInitializer.NcsbImplementation;
@@ -390,15 +390,15 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 				return Result.TERMINATING;
 			}
 
-			LassoChecker<LETTER> lassoChecker;
+			LassoCheck<LETTER> lassoCheck;
 			try {
 				mBenchmarkGenerator.start(BuchiCegarLoopBenchmark.s_LassoAnalysisTime);
-				lassoChecker = new LassoChecker<>(mInterpolation, mCsToolkitWithoutRankVars, mPredicateFactory,
+				lassoCheck = new LassoCheck<>(mInterpolation, mCsToolkitWithoutRankVars, mPredicateFactory,
 						mCsToolkitWithRankVars.getSymbolTable(), mCsToolkitWithoutRankVars.getModifiableGlobalsTable(),
 						mIcfg.getCfgSmtToolkit().getAxioms(), mBinaryStatePredicateManager, mCounterexample,
-						generateLassoCheckerIdentifier(), mServices, mStorage, mSimplificationTechnique,
+						generateLassoCheckIdentifier(), mServices, mStorage, mSimplificationTechnique,
 						mXnfConversionTechnique);
-				if (lassoChecker.getLassoCheckResult().getContinueDirective() == ContinueDirective.REPORT_UNKNOWN) {
+				if (lassoCheck.getLassoCheckResult().getContinueDirective() == ContinueDirective.REPORT_UNKNOWN) {
 					// if result was unknown, then try again but this time add one
 					// iteration of the loop to the stem.
 					// This allows us to verify Vincent's coolant examples
@@ -406,10 +406,10 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 					final NestedRun<LETTER, IPredicate> newStem =
 							mCounterexample.getStem().concatenate(mCounterexample.getLoop());
 					mCounterexample = new NestedLassoRun<>(newStem, mCounterexample.getLoop());
-					lassoChecker = new LassoChecker<>(mInterpolation, mCsToolkitWithoutRankVars, mPredicateFactory,
+					lassoCheck = new LassoCheck<>(mInterpolation, mCsToolkitWithoutRankVars, mPredicateFactory,
 							mIcfg.getSymboltable(), mCsToolkitWithoutRankVars.getModifiableGlobalsTable(),
 							mIcfg.getCfgSmtToolkit().getAxioms(), mBinaryStatePredicateManager, mCounterexample,
-							generateLassoCheckerIdentifier(), mServices, mStorage, mSimplificationTechnique,
+							generateLassoCheckIdentifier(), mServices, mStorage, mSimplificationTechnique,
 							mXnfConversionTechnique);
 				}
 			} catch (final ToolchainCanceledException e) {
@@ -429,12 +429,12 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 				mBenchmarkGenerator.stop(BuchiCegarLoopBenchmark.s_LassoAnalysisTime);
 			}
 
-			final ContinueDirective cd = lassoChecker.getLassoCheckResult().getContinueDirective();
-			mBenchmarkGenerator.reportLassoAnalysis(lassoChecker);
+			final ContinueDirective cd = lassoCheck.getLassoCheckResult().getContinueDirective();
+			mBenchmarkGenerator.reportLassoAnalysis(lassoCheck);
 			try {
 				switch (cd) {
 				case REFINE_BOTH: {
-					final BinaryStatePredicateManager bspm = lassoChecker.getBinaryStatePredicateManager();
+					final BinaryStatePredicateManager bspm = lassoCheck.getBinaryStatePredicateManager();
 					if (bspm.isLoopWithoutStemTerminating()) {
 						mRankWithoutSi++;
 					} else {
@@ -447,25 +447,25 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 									mCounterexample.getStem().getWord(), mCounterexample.getLoop().getWord());
 					mMDBenchmark.reportRankingFunction(mIteration, tar);
 
-					final INestedWordAutomaton<LETTER, IPredicate> newAbstraction = refineBuchi(lassoChecker);
+					final INestedWordAutomaton<LETTER, IPredicate> newAbstraction = refineBuchi(lassoCheck);
 					mAbstraction = newAbstraction;
 					mBinaryStatePredicateManager.clearPredicates();
 
 					reduceAbstractionSize(mAutomataMinimizationAfterRankBasedRefinement);
 
-					refineFinite(lassoChecker);
+					refineFinite(lassoCheck);
 					mInfeasible++;
 					reduceAbstractionSize(mAutomataMinimizationAfterFeasbilityBasedRefinement);
 				}
 					break;
 				case REFINE_FINITE:
-					refineFinite(lassoChecker);
+					refineFinite(lassoCheck);
 					mInfeasible++;
 					reduceAbstractionSize(mAutomataMinimizationAfterFeasbilityBasedRefinement);
 					break;
 
 				case REFINE_BUCHI:
-					final BinaryStatePredicateManager bspm = lassoChecker.getBinaryStatePredicateManager();
+					final BinaryStatePredicateManager bspm = lassoCheck.getBinaryStatePredicateManager();
 					if (bspm.isLoopWithoutStemTerminating()) {
 						mRankWithoutSi++;
 					} else {
@@ -478,7 +478,7 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 									mCounterexample.getStem().getWord(), mCounterexample.getLoop().getWord());
 					mMDBenchmark.reportRankingFunction(mIteration, tar);
 
-					final INestedWordAutomaton<LETTER, IPredicate> newAbstraction = refineBuchi(lassoChecker);
+					final INestedWordAutomaton<LETTER, IPredicate> newAbstraction = refineBuchi(lassoCheck);
 					mAbstraction = newAbstraction;
 					mBinaryStatePredicateManager.clearPredicates();
 					reduceAbstractionSize(mAutomataMinimizationAfterRankBasedRefinement);
@@ -499,7 +499,7 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 						mBenchmarkGenerator.setResult(Result.UNKNOWN);
 						return Result.UNKNOWN;
 					}
-					mNonterminationArgument = lassoChecker.getNonTerminationArgument();
+					mNonterminationArgument = lassoCheck.getNonTerminationArgument();
 					mMDBenchmark.reportRemainderModule(mAbstraction.size(), true);
 					if (mConstructTermcompProof) {
 						mTermcompProofBenchmark.reportRemainderModule(true);
@@ -610,7 +610,7 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 		mLogger.info("Abstraction has " + mAbstraction.sizeInformation());
 	}
 
-	private INestedWordAutomaton<LETTER, IPredicate> refineBuchi(final LassoChecker<LETTER> lassoChecker)
+	private INestedWordAutomaton<LETTER, IPredicate> refineBuchi(final LassoCheck<LETTER> lassoCheck)
 			throws AutomataOperationCanceledException {
 		mBenchmarkGenerator.start(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
 		int stage = 0;
@@ -637,7 +637,7 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 			INestedWordAutomaton<LETTER, IPredicate> newAbstraction = null;
 			try {
 				newAbstraction = mRefineBuchi.refineBuchi(mAbstraction, mCounterexample, mIteration, constructionStyle,
-						lassoChecker.getBinaryStatePredicateManager(),
+						lassoCheck.getBinaryStatePredicateManager(),
 						mCsToolkitWithRankVars.getModifiableGlobalsTable(), mInterpolation, mBenchmarkGenerator,
 						mComplementationConstruction);
 			} catch (final AutomataOperationCanceledException e) {
@@ -746,30 +746,30 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 	 * this rather inexpensive complementation algorithm.
 	 *  
 	 */
-	private void refineFinite(final LassoChecker<LETTER> lassoChecker) throws AutomataOperationCanceledException {
+	private void refineFinite(final LassoCheck<LETTER> lassoCheck) throws AutomataOperationCanceledException {
 		mBenchmarkGenerator.start(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
 		final InterpolatingTraceChecker traceChecker;
 		final NestedRun<LETTER, IPredicate> run;
-		final LassoChecker<LETTER>.LassoCheckResult lcr = lassoChecker.getLassoCheckResult();
-		if (lassoChecker.getLassoCheckResult().getStemFeasibility() == TraceCheckResult.INFEASIBLE) {
+		final LassoCheck<LETTER>.LassoCheckResult lcr = lassoCheck.getLassoCheckResult();
+		if (lassoCheck.getLassoCheckResult().getStemFeasibility() == TraceCheckResult.INFEASIBLE) {
 			// if both (stem and loop) are infeasible we take the smaller
 			// one.
 			final int stemSize = mCounterexample.getStem().getLength();
 			final int loopSize = mCounterexample.getLoop().getLength();
 			if (lcr.getLoopFeasibility() == TraceCheckResult.INFEASIBLE && loopSize <= stemSize) {
-				traceChecker = lassoChecker.getLoopCheck();
+				traceChecker = lassoCheck.getLoopCheck();
 				run = mCounterexample.getLoop();
 			} else {
-				traceChecker = lassoChecker.getStemCheck();
+				traceChecker = lassoCheck.getStemCheck();
 				run = mCounterexample.getStem();
 			}
 		} else if (lcr.getLoopFeasibility() == TraceCheckResult.INFEASIBLE) {
-			traceChecker = lassoChecker.getLoopCheck();
+			traceChecker = lassoCheck.getLoopCheck();
 			run = mCounterexample.getLoop();
 		} else {
 			assert lcr.getConcatFeasibility() == TraceCheckResult.INFEASIBLE;
-			traceChecker = lassoChecker.getConcatCheck();
-			run = lassoChecker.getConcatenatedCounterexample();
+			traceChecker = lassoCheck.getConcatCheck();
+			run = lassoCheck.getConcatenatedCounterexample();
 		}
 		final BackwardCoveringInformation bci =
 				TraceCheckerUtils.computeCoverageCapability(mServices, traceChecker, mLogger);
@@ -878,7 +878,7 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 	 * analyzed file together with the number of the current iteration.
 	 *
 	 */
-	public String generateLassoCheckerIdentifier() {
+	public String generateLassoCheckIdentifier() {
 		final String pureFilename = mIcfg.getIdentifier();
 		return pureFilename + "_Iteration" + mIteration;
 	}

@@ -34,10 +34,10 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.LassoAnalysis.Preprocessi
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.NonterminationAnalysisBenchmark;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.TerminationAnalysisBenchmark;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiCegarLoopBenchmark.LassoAnalysisResults;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoChecker.ContinueDirective;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoChecker.LassoCheckResult;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoChecker.SynthesisResult;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoChecker.TraceCheckResult;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoCheck.ContinueDirective;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoCheck.LassoCheckResult;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoCheck.SynthesisResult;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoCheck.TraceCheckResult;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
@@ -134,11 +134,11 @@ public class BuchiCegarLoopBenchmarkGenerator extends CegarLoopStatisticsGenerat
 		}
 	}
 
-	public void reportLassoAnalysis(final LassoChecker lassoChecker) {
-		final LassoCheckResult lcr = lassoChecker.getLassoCheckResult();
-		mPreprocessingBenchmarks.addAll(lassoChecker.getPreprocessingBenchmarks());
-		mTerminationAnalysisBenchmarks.addAll(lassoChecker.getTerminationAnalysisBenchmarks());
-		mNonterminationAnalysisBenchmarks.addAll(lassoChecker.getNonterminationAnalysisBenchmarks());
+	public void reportLassoAnalysis(final LassoCheck lassoCheck) {
+		final LassoCheckResult lcr = lassoCheck.getLassoCheckResult();
+		mPreprocessingBenchmarks.addAll(lassoCheck.getPreprocessingBenchmarks());
+		mTerminationAnalysisBenchmarks.addAll(lassoCheck.getTerminationAnalysisBenchmarks());
+		mNonterminationAnalysisBenchmarks.addAll(lassoCheck.getNonterminationAnalysisBenchmarks());
 		for (final NonterminationAnalysisBenchmark nab : mNonterminationAnalysisBenchmarks) {
 			switch (nab.getConstraintsSatisfiability()) {
 			case SAT:
@@ -205,16 +205,16 @@ public class BuchiCegarLoopBenchmarkGenerator extends CegarLoopStatisticsGenerat
 			assert lcr.getStemFeasibility() != TraceCheckResult.INFEASIBLE;
 			assert lcr.getLoopFeasibility() != TraceCheckResult.INFEASIBLE;
 			assert lcr.getConcatFeasibility() != TraceCheckResult.INFEASIBLE;
-			assert lassoChecker.getNonTerminationArgument() != null;
-			assert !lassoChecker.getBinaryStatePredicateManager().providesPredicates();
+			assert lassoCheck.getNonTerminationArgument() != null;
+			assert !lassoCheck.getBinaryStatePredicateManager().providesPredicates();
 			mLassoAnalysisResults.increment(LassoAnalysisResults.s_LassoNonterminating);
 			break;
 		case REPORT_UNKNOWN:
 			assert lcr.getStemFeasibility() != TraceCheckResult.INFEASIBLE;
 			assert lcr.getLoopFeasibility() != TraceCheckResult.INFEASIBLE;
 			assert lcr.getConcatFeasibility() != TraceCheckResult.INFEASIBLE;
-			assert lassoChecker.getNonTerminationArgument() == null;
-			assert !lassoChecker.getBinaryStatePredicateManager().providesPredicates();
+			assert lassoCheck.getNonTerminationArgument() == null;
+			assert !lassoCheck.getBinaryStatePredicateManager().providesPredicates();
 			mLassoAnalysisResults.increment(LassoAnalysisResults.s_TerminationUnknown);
 			break;
 		default:
