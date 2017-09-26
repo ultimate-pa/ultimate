@@ -49,9 +49,9 @@ import de.uni_freiburg.informatik.ultimate.cli.options.CommandLineOptions;
 import de.uni_freiburg.informatik.ultimate.cli.util.RcpUtils;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.BasicToolchainJob;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.DefaultToolchainJob;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultSummarizer;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultUtil;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.RunDefinition;
 import de.uni_freiburg.informatik.ultimate.core.model.IController;
 import de.uni_freiburg.informatik.ultimate.core.model.ICore;
@@ -117,6 +117,7 @@ public class CommandLineController implements IController<RunDefinition> {
 			mLogger.info("Version is " + RcpUtils.getVersion(Activator.PLUGIN_ID));
 			mLogger.info(
 					"Maximal heap size is " + CoreUtil.humanReadableByteCount(Runtime.getRuntime().maxMemory(), true));
+			mLogger.info("This is Ultimate " + core.getUltimateVersionString());
 			return IApplication.EXIT_OK;
 		}
 
@@ -160,7 +161,7 @@ public class CommandLineController implements IController<RunDefinition> {
 				printHelp(fullParser, fullParams);
 				return -1;
 			}
-
+			mLogger.info("This is Ultimate " + core.getUltimateVersionString());
 			final IToolchainData<RunDefinition> currentToolchain = prepareToolchain(core, fullParams);
 			assert currentToolchain == mToolchain;
 			// from now on, use the shutdown hook that disables the toolchain if the user presses CTRL+C (hopefully)

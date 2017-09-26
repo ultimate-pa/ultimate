@@ -23,6 +23,7 @@
 		<jacoco-version>0.7.7.201606060606</jacoco-version>
 		<m2e-version>1.0.0</m2e-version>
 		<coveralls-version>4.2.0</coveralls-version>
+		<git-commit-id-version>2.2.1</git-commit-id-version>
 
 		<!-- reference to workspace root -->
 		<workspaceDir>${basedir}/..</workspaceDir>
@@ -197,6 +198,50 @@
 				<artifactId>sonar-maven-plugin</artifactId>
 				<version>${sonar-version}</version>
 			</plugin>
+
+			<plugin>
+				<groupId>pl.project13.maven</groupId>
+				<artifactId>git-commit-id-plugin</artifactId>
+				<version>${git-commit-id-version}</version>
+				<executions>
+					<execution>
+						<goals>
+							<goal>revision</goal>
+						</goals>
+						<phase>generate-sources</phase>
+					</execution>
+				</executions>
+
+				<configuration>
+					<generateGitPropertiesFile>true</generateGitPropertiesFile>
+					<generateGitPropertiesFilename>${workspaceDir}/CoreRCP/version.properties</generateGitPropertiesFilename>
+					<dotGitDirectory>${workspaceDir}/../../.git</dotGitDirectory>
+					<format>properties</format>
+
+					<skipPoms>false</skipPoms>
+					<runOnlyOnce>true</runOnlyOnce>
+					<commitIdGenerationMode>flat</commitIdGenerationMode>
+					<gitDescribe>
+						<skip>false</skip>
+						<!-- when the build is triggered while the repo is in "dirty state", 
+							append this suffix -->
+						<dirty>-m</dirty>
+						<!-- Only consider tags matching the given pattern. This can be used 
+							to avoid leaking private tags from the repository. -->
+						<match>*</match>
+						<tags>true</tags>
+					</gitDescribe>
+
+					<includeOnlyProperties>
+						<includeOnlyProperty>^git.commit.id$</includeOnlyProperty>
+						<includeOnlyProperty>^git.commit.id.abbrev$</includeOnlyProperty>
+						<includeOnlyProperty>^git.dirty$</includeOnlyProperty>
+						<includeOnlyProperty>^git.build.version$</includeOnlyProperty>
+					</includeOnlyProperties>
+
+				</configuration>
+			</plugin>
+
 		</plugins>
 
 		<pluginManagement>
