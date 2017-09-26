@@ -312,13 +312,7 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 				final List<CongruenceClosure<NODE>> projectedLabel = mWeakEquivalenceGraph.projectEdgeLabelToPoint(
 						strengthenedEdgeLabelContents, ccp1.getArgument(), getAllWeqVarsNodeForFunction(array1));
 
-				// final NODE array1atI = mFactory.getEqNodeAndFunctionFactory()
-				// .getOrConstructFuncAppElement(array1, ccp1.getArgument());
-				// final NODE array2atJ = mFactory.getEqNodeAndFunctionFactory()
-				// .getOrConstructFuncAppElement(array2, ccp2.getArgument());
-
 				// recursive call
-				// reportWeakEquivalence(array1atI, array2atJ, projectedLabel);
 				reportWeakEquivalenceDoOnlyRoweqPropagations(ccp1, ccp2, projectedLabel);
 			}
 		}
@@ -640,7 +634,6 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 			return false;
 		}
 		boolean madeChanges = false;
-//		assert !mWeakEquivalenceGraph.hasArrayEqualities();
 		madeChanges |= mWeakEquivalenceGraph.reportChangeInGroundPartialArrangement(reporter);
 		reportAllArrayEqualitiesFromWeqGraph();
 		assert sanityCheck();
@@ -662,6 +655,7 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 
 	@Override
 	public boolean isTautological() {
+		// TODO: literal disequalities don't prevent being tautological --> account for that!
 		return super.isTautological() && mWeakEquivalenceGraph.isEmpty();
 	}
 
@@ -719,15 +713,6 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 
 			final NODE newRep = updateElementTverAndAuxDataOnRemoveElement(elem);
 
-//			final boolean elemWasRepresentative = mElementTVER.isRepresentative(elem);
-//			final NODE newRep = mElementTVER.removeElement(elem);
-//
-//			mAuxData.removeElement(elem, elemWasRepresentative, newRep);
-//			if (elem.isFunctionApplication()) {
-//				mFaAuxData.removeAfParent(elem.getAppliedFunction(), elem);
-//				mFaAuxData.removeArgParent(elem.getArgument(), elem);
-//			}
-
 			/*
 			 * Project func from the weak equivalence graph. We need to make a copy of the
 			 * ground partial arrangement, because ..
@@ -736,14 +721,6 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 			assert projectedFunctionIsGoneFromWeqGraph(elem, mWeakEquivalenceGraph);
 
 			removeParents(oldAfParents, oldArgParents);
-////			for (final NODE parent : mFaAuxData.getAfParents(elem)) {
-//			for (final NODE parent : oldAfParents) {
-//				removeElement(parent, copy);
-//			}
-////			for (final NODE parent : mFaAuxData.getArgParents(elem)) {
-//			for (final NODE parent : oldArgParents) {
-//				removeElement(parent, copy);
-//			}
 
 			for (final NODE dependent : new HashSet<>(mNodeToDependents.getImage(elem))) {
 				removeElement(dependent, copy);
@@ -906,52 +883,6 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 		}
 
 		assert sanityCheck();
-
-		/*
-		 * As the new element is a function application, we might be able to infer
-		 * equalities for it through weak equivalence.
-		 */
-		// for (final Entry<NODE, WeakEquivalenceGraph<ACTION,
-		// NODE>.WeakEquivalenceEdgeLabel> edge :
-		// mWeakEquivalenceGraph.getAdjacentWeqEdges(elem.getAppliedFunction()).entrySet())
-		// {
-		// Set<NODE> candidateSet = null;
-		//
-		// /*
-		// * obtain "candidate elements", i.e, elements that might be equivalent to elem
-		// insofar their arguments are
-		// * equal and their applied function is weakly equivalent to elem's applied
-		// function
-		// */
-		// for (int i = 0; i < elem.getArguments().size(); i++) {
-		// final NODE argRep =
-		// mElementTVER.getRepresentative(elem.getArguments().get(i));
-		// final Set<NODE> newCandidates = getCcParsForArgumentPosition(edge.getKey(),
-		// argRep, i);
-		// if (candidateSet == null) {
-		// candidateSet = new HashSet<>(newCandidates);
-		// } else {
-		// candidateSet.retainAll(newCandidates);
-		// }
-		// }
-		//
-		// for (final NODE c : candidateSet) {
-		// if (c == elem) {
-		// continue;
-		// }
-		//
-		// /*
-		// * check if the weak equivalence is strong enough to allow propagation of elem
-		// = c
-		// * (elem and c have the form a[...], b[...], where we have a weak equivalence
-		// edge (current edge)
-		// * between a and c)
-		// */
-		// if (edge.getValue().impliesEqualityOnThatPosition(elem.getArguments())) {
-		// reportEquality(elem, c);
-		// }
-		// }
-		// }
 	}
 
 	@Override
@@ -1018,7 +949,6 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 					edge.getValue().getLabelContents());
 		}
 
-//		newWeqCc.mWeakEquivalenceGraph.close();
 		executeFloydWarshallAndReportResult();
 		newWeqCc.reportAllArrayEqualitiesFromWeqGraph();
 

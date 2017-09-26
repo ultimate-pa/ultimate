@@ -167,8 +167,6 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 
 			final List<EqState<ACTION>> result =
 					postConstraint.toEqStates(hierarchicalPrestate.getVariables());
-			// assert result.stream()
-			// .allMatch(state -> state.getVariables().containsAll(hierarchicalPreOrStateAfterLeaving.getVariables()));
 			return result;
 		} else {
 			throw new UnsupportedOperationException();

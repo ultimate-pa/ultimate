@@ -130,16 +130,18 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		for (final Entry<Doubleton<NODE>, WeakEquivalenceEdgeLabel> edge : weqCopy.entrySet())  {
 			final WeakEquivalenceEdgeLabel newLabel = edge.getValue().reportChangeInGroundPartialArrangement(action);
 			if (newLabel.isInconsistent()) {
-				// edge label became inconsistent --> remove the weq edge, add a strong equivalence instead
-//				mWeakEquivalenceEdges.remove(edge.getKey());
+				/*
+				 *  edge label became inconsistent
+				 *   <li> report a strong equivalence
+				 *   <li> keep the edge for now, as we may still want to do propagations based on it, it will be removed
+				 *     later
+				 */
 				mArrayEqualities.addPair(edge.getKey().getOneElement(), edge.getKey().getOtherElement());
 				madeChanges = true;
 			}
-//			} else {
 			mWeakEquivalenceEdges.put(edge.getKey(), newLabel);
 			// TODO is the madeChanges flag worth this effort?.. should we just always say "true"?..
 			madeChanges |= !newLabel.isStrongerThan(edge.getValue()) || !edge.getValue().isStrongerThan(newLabel);
-//			}
 			assert mPartialArrangement.sanityCheck();
 		}
 		assert sanityCheck();
@@ -202,26 +204,6 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		return true;
 	}
 
-
-
-//	/**
-//	 * Project the given element from all weak equivalence edges.
-//	 * We aim to keep information about the projected element from the ground partial arrangement. We take the
-//	 * following steps to compute the new edge labels.
-//	 *  <li> compute the meet with the ground partial arrangement
-//	 *  <li> project out the variable to be projected elem
-//	 *  <li> project out all constraints that do not contain a weq-variable
-//	 *
-//	 * @param elem
-//	 * @param groundPartialArrangement
-//	 */
-//	public void projectElement(final NODE elem, final CongruenceClosure<NODE> groundPartialArrangement) {
-//		for (final Entry<Doubleton<NODE>, WeakEquivalenceEdgeLabel> en : mWeakEquivalenceEdges.entrySet()) {
-//			en.getValue().projectElement(elem, groundPartialArrangement);
-//		}
-//		assert sanityCheck();
-//	}
-
 	public void renameVariables(final Map<Term, Term> substitutionMapping) {
 		final HashMap<Doubleton<NODE>, WeakEquivalenceEdgeLabel> weqEdgesCopy =
 				new HashMap<>(mWeakEquivalenceEdges);
@@ -283,19 +265,8 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 						mWeakEquivalenceEdges,
 						WeakEquivalenceEdgeLabel::new);
 		if (!fw.performedChanges()) {
-//			return false;
 			return Collections.emptyMap();
 		}
-
-//		mWeakEquivalenceEdges = new HashMap<>();
-//		for (final Entry<Doubleton<NODE>, WeakEquivalenceEdgeLabel> edge : fw.getResult().entrySet()) {
-//			if (edge.getValue().isInconsistent()) {
-//				mArrayEqualities.addPair(edge.getKey().getOneElement(), edge.getKey().getOtherElement());
-//				continue;
-//			}
-//			assert edge.getValue().sanityCheck();
-//			mWeakEquivalenceEdges.put(edge.getKey(), edge.getValue());
-//		}
 		return fw.getResult();
 	}
 
@@ -304,10 +275,8 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 	 * @return true if this graph has no constraints/is tautological
 	 */
 	public boolean isEmpty() {
-//		return mWeakEquivalenceEdges.isEmpty() && !hasArrayEqualities();
 		for (final Entry<Doubleton<NODE>, WeakEquivalenceGraph<ACTION, NODE>.WeakEquivalenceEdgeLabel> edge
-				:
-			mWeakEquivalenceEdges.entrySet()) {
+				: mWeakEquivalenceEdges.entrySet()) {
 			if (!edge.getValue().isTautological()) {
 				return false;
 			}
@@ -436,16 +405,6 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		return Collections.unmodifiableMap(mWeakEquivalenceEdges);
 	}
 
-//	/**
-//	 *
-//	 * @param func1
-//	 * @param func2
-//	 * @return true iff this WeakEquivalenceGraph has an edge between func1 and func2.
-//	 */
-//	public boolean hasWeqNonTautologicalEdgeForFunctions(final NODE func1, final NODE func2) {
-//		return mWeakEquivalenceEdges.keySet().contains(new Doubleton<NODE>(func1, func2));
-//	}
-
 	/**
 	 *
 	 * @param sourceAndTarget
@@ -477,9 +436,7 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 
 		// inconsistency check
 		if (strengthenedEdgeLabel.isInconsistent()) {
-//			mWeakEquivalenceEdges.remove(sourceAndTarget);
 			mArrayEqualities.addPair(sourceAndTarget.getOneElement(), sourceAndTarget.getOtherElement());
-//			return true;
 		}
 
 		// replace the edge label by the strengthened version
@@ -615,26 +572,17 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 			assert mFactory != null : "factory is needed for the sanity check..";
 
 			/*
-			 * check that no weak equivalence edge contains an ELEM or FUNCTION that is not known to mPartialArrangement
+			 * check that no weak equivalence edge contains a NODE that is not known to mPartialArrangement
 			 * or is one of the special quantified variables from getVariableForDimension(..).
 			 */
 			if (mPartialArrangement != null) {
 				for (final Entry<Doubleton<NODE>, WeakEquivalenceEdgeLabel> edge : mWeakEquivalenceEdges.entrySet()) {
-	//				if (!mPartialArrangement.hasFunction(edge.getKey().getOneElement())
-	//						|| !mPartialArrangement.hasFunction(edge.getKey().getOtherElement())) {
-	//					assert false;
-	//					return false;
-	//				}
 					if (!mPartialArrangement.getAllElements().containsAll(
 							edge.getValue().getAppearingNodes().stream()
 							.filter(node -> !mFactory.getAllWeqNodes().contains(node)).collect(Collectors.toSet()))) {
 						assert false;
 						return false;
 					}
-	//				if (!mPartialArrangement.getAllFunctions().containsAll(edge.getValue().getAppearingFunctions())) {
-	//					assert false;
-	//					return false;
-	//				}
 				}
 			}
 
@@ -691,31 +639,22 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 
 
 			/*
-			 * check that there are no inconsistent edge labels -- the plan is to replace them by array equalities as
-			 * they * occur..
-			 * EDIT (20.09.17): this is obsolete, we allow inconsistent edge label for some time during propagations
+			 * check that we have remembered every inconsistent edge label in mArrayEqualities (for later cleanup)
 			 */
-//			for (final Entry<Doubleton<NODE>, WeakEquivalenceEdgeLabel> edge : mWeakEquivalenceEdges.entrySet()) {
-//				if (edge.getValue().isInconsistent()) {
-//					assert false;
-//					return false;
-//				}
-//			}
-
-
-			// is closed/triangle inequation holds
-			//			if (mPartialArrangement != null) {
-			//				if (close()) {
-			//					assert false;
-			//					return false;
-			//				}
-			//			}
-
+			for (final Entry<Doubleton<NODE>, WeakEquivalenceEdgeLabel> edge : mWeakEquivalenceEdges.entrySet()) {
+				final NODE source = edge.getKey().getOneElement();
+				final NODE target = edge.getKey().getOtherElement();
+				if (edge.getValue().isInconsistent()
+						&& !mArrayEqualities.containsPair(source, target)
+						&& !mArrayEqualities.containsPair(target, source)) {
+					assert false;
+					return false;
+				}
+			}
 			return true;
 		}
 
-	private static <NODE extends ICongruenceClosureElement<NODE>, FUNCTION>
-		List<CongruenceClosure<NODE>> simplifyPaDisjunction(
+	private static <NODE extends ICongruenceClosureElement<NODE>> List<CongruenceClosure<NODE>> simplifyPaDisjunction(
 			final List<CongruenceClosure<NODE>> newLabelContents) {
 		// make a copy of the list, filter out false disjuncts
 		List<CongruenceClosure<NODE>> newLabel = new ArrayList<>(newLabelContents).stream()
@@ -1045,6 +984,7 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 					return;
 				}
 				final CongruenceClosure<NODE>	meet = mCcManager.getMeet(mLabel.get(i), groundPartialArrangement);
+//				final CongruenceClosure<NODE>	meet = mCcManager.getMeet(mLabel.get(i), mPartialArrangement);
 				if (meet.isInconsistent()) {
 					/* label element is inconsistent with the current gpa
 					 * --> omit it from the new label
