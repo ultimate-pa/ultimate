@@ -316,7 +316,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		}
 	}
 
-	protected void updateElementTverAndAuxDataOnRemoveElement(final ELEM elem) {
+	protected ELEM updateElementTverAndAuxDataOnRemoveElement(final ELEM elem) {
 		final boolean elemWasRepresentative = mElementTVER.isRepresentative(elem);
 
 		final ELEM newRep = mElementTVER.removeElement(elem);
@@ -326,6 +326,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 			mFaAuxData.removeAfParent(elem.getAppliedFunction(), elem);
 			mFaAuxData.removeArgParent(elem.getArgument(), elem);
 		}
+		return newRep;
 	}
 
 	/*

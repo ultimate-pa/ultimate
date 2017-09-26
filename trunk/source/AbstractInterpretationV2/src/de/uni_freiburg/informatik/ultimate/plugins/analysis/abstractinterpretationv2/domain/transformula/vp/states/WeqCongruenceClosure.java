@@ -717,7 +717,7 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 			final Set<NODE> oldAfParents = new HashSet<>(mFaAuxData.getAfParents(elem));
 			final Set<NODE> oldArgParents = new HashSet<>(mFaAuxData.getArgParents(elem));
 
-			updateElementTverAndAuxDataOnRemoveElement(elem);
+			final NODE newRep = updateElementTverAndAuxDataOnRemoveElement(elem);
 
 //			final boolean elemWasRepresentative = mElementTVER.isRepresentative(elem);
 //			final NODE newRep = mElementTVER.removeElement(elem);
@@ -732,7 +732,7 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 			 * Project func from the weak equivalence graph. We need to make a copy of the
 			 * ground partial arrangement, because ..
 			 */
-			mWeakEquivalenceGraph.projectFunction(elem, copy);
+			mWeakEquivalenceGraph.projectFunction(elem, newRep, copy);
 			assert projectedFunctionIsGoneFromWeqGraph(elem, mWeakEquivalenceGraph);
 
 			removeParents(oldAfParents, oldArgParents);

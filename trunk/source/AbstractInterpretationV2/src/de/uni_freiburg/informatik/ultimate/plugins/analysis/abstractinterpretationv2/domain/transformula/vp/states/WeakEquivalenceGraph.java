@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -155,16 +154,33 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 	 * 		introducing fresh terms
 	 *
 	 * @param func function (array) to be projected
+	 * @param newRep the representative of func's equivalence class after removal
 	 * @param groundPartialArrangement the gpa that should be assumed for the projection (might be different from
 	 * 		mPartialArrangement, or mPartialArrangement might be null..)
 	 */
-	public void projectFunction(final NODE func, final CongruenceClosure<NODE> groundPartialArrangement) {
+	public void projectFunction(final NODE func, final NODE newRep,
+			final CongruenceClosure<NODE> groundPartialArrangement) {
 		final Map<Doubleton<NODE>, WeakEquivalenceEdgeLabel> edgesCopy = new HashMap<>(mWeakEquivalenceEdges);
 		for (final Entry<Doubleton<NODE>, WeakEquivalenceEdgeLabel> en : edgesCopy.entrySet()) {
-			if (en.getKey().getOneElement().equals(func) || en.getKey().getOtherElement().equals(func)) {
-				mWeakEquivalenceEdges.remove(en.getKey());
+			final NODE source = en.getKey().getOneElement();
+			final NODE target = en.getKey().getOtherElement();
+
+			if (source.equals(func)) {
+				final WeakEquivalenceGraph<ACTION, NODE>.WeakEquivalenceEdgeLabel label =
+						mWeakEquivalenceEdges.remove(en.getKey());
+				if (newRep != null) {
+					label.projectElement(func, newRep, groundPartialArrangement);
+					mWeakEquivalenceEdges.put(new Doubleton<NODE>(newRep, target), label);
+				}
+			} else if (target.equals(func)) {
+				final WeakEquivalenceGraph<ACTION, NODE>.WeakEquivalenceEdgeLabel label =
+						mWeakEquivalenceEdges.remove(en.getKey());
+				if (newRep != null) {
+					label.projectElement(func, newRep, groundPartialArrangement);
+					mWeakEquivalenceEdges.put(new Doubleton<NODE>(source, newRep), label);
+				}
 			} else {
-				en.getValue().projectFunction(func, groundPartialArrangement);
+				en.getValue().projectElement(func, newRep, groundPartialArrangement);
 			}
 		}
 		assert projectedFunctionIsFullyGone(func);
@@ -188,23 +204,23 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 
 
 
-	/**
-	 * Project the given element from all weak equivalence edges.
-	 * We aim to keep information about the projected element from the ground partial arrangement. We take the
-	 * following steps to compute the new edge labels.
-	 *  <li> compute the meet with the ground partial arrangement
-	 *  <li> project out the variable to be projected elem
-	 *  <li> project out all constraints that do not contain a weq-variable
-	 *
-	 * @param elem
-	 * @param groundPartialArrangement
-	 */
-	public void projectElement(final NODE elem, final CongruenceClosure<NODE> groundPartialArrangement) {
-		for (final Entry<Doubleton<NODE>, WeakEquivalenceEdgeLabel> en : mWeakEquivalenceEdges.entrySet()) {
-			en.getValue().projectElement(elem, groundPartialArrangement);
-		}
-		assert sanityCheck();
-	}
+//	/**
+//	 * Project the given element from all weak equivalence edges.
+//	 * We aim to keep information about the projected element from the ground partial arrangement. We take the
+//	 * following steps to compute the new edge labels.
+//	 *  <li> compute the meet with the ground partial arrangement
+//	 *  <li> project out the variable to be projected elem
+//	 *  <li> project out all constraints that do not contain a weq-variable
+//	 *
+//	 * @param elem
+//	 * @param groundPartialArrangement
+//	 */
+//	public void projectElement(final NODE elem, final CongruenceClosure<NODE> groundPartialArrangement) {
+//		for (final Entry<Doubleton<NODE>, WeakEquivalenceEdgeLabel> en : mWeakEquivalenceEdges.entrySet()) {
+//			en.getValue().projectElement(elem, groundPartialArrangement);
+//		}
+//		assert sanityCheck();
+//	}
 
 	public void renameVariables(final Map<Term, Term> substitutionMapping) {
 		final HashMap<Doubleton<NODE>, WeakEquivalenceEdgeLabel> weqEdgesCopy =
@@ -556,7 +572,7 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 				copy.meet(Collections.singletonList(qEqualsI));
 
 		for (int i = 0; i < dim; i++) {
-			meet.projectElement(firstDimWeqVarNodes.get(i), mPartialArrangement);
+			meet.projectElement(firstDimWeqVarNodes.get(i), null, mPartialArrangement);
 		}
 
 		meet.inOrDecreaseWeqVarIndices(-dim, weqVarsForThisEdge);
@@ -1004,33 +1020,19 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		 *  <li> project out the variable to be projected elem
 		 *  <li> project out all constraints that do not contain a weq-variable
 		 *
-		 * @param elem
-		 * @param groundPartialArrangement
-		 */
-		public void projectElement(final NODE elem,
-				final CongruenceClosure<NODE> groundPartialArrangement) {
-			projectHelper(cc -> cc.removeElement(elem), groundPartialArrangement);
-			assert sanityCheckAfterProject(elem, groundPartialArrangement);
-		}
-
-		public void projectFunction(final NODE func,
-				final CongruenceClosure<NODE> groundPartialArrangement) {
-			projectHelper(cc -> cc.removeElement(func), groundPartialArrangement);
-			assert sanityCheckAfterProject(func, groundPartialArrangement);
-		}
-
-
-		/**
+		 *  (formerly projecthelper:)
 		 * proceeds in three steps for each label element of this weq label :
 		 *  <li> constructs the meet of the element with the ground partial arrangement (gpa)
 		 *  <li> applies the given removal method on that meet
 		 *  <li> projects away the constraints in the resulting element that do not contain one of the weq-variables
 		 *
-		 * @param remove
-		 * @param groundPartialArrangement
+		 * @param elem
+		 * @param groundPartialArrangement the gpa that is like mPartialArrangement but elem has been removed already
+		 *    (if we used mPartialArrangement, we would put elem back in via the meet..)
 		 */
-		private void projectHelper(final Consumer<CongruenceClosure<NODE>> remove,
+		public void projectElement(final NODE elem, final NODE newRep,
 				final CongruenceClosure<NODE> groundPartialArrangement) {
+
 			final List<CongruenceClosure<NODE>> newLabelContents = new ArrayList<>();
 			for (int i = 0; i < getLabelContents().size(); i++) {
 				if (mLabel.get(i).isTautological()) {
@@ -1057,7 +1059,14 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 					mLabel.add(new CongruenceClosure<>());
 					return;
 				}
-				remove.accept(meet);
+//				remove.accept(meet);
+
+				// TODO: this is weird, is that not precisely the difference between mPartialArrangement and groundP..
+				if (newRep != null) {
+					meet.reportEquality(elem, newRep);
+				}
+
+				meet.removeElement(elem);
 				final CongruenceClosure<NODE> newPa = meet.projectToElements(mFactory.getAllWeqNodes());
 				if (newPa.isTautological()) {
 					// we have one "true" disjunct --> the whole disjunction is tautological
@@ -1070,6 +1079,8 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 			assert newLabelContents.size() <= 1 || !newLabelContents.stream().anyMatch(c -> c.isTautological());
 			mLabel.clear();
 			mLabel.addAll(newLabelContents);
+
+			assert sanityCheckAfterProject(elem, groundPartialArrangement);
 		}
 
 		private boolean isTautological() {
