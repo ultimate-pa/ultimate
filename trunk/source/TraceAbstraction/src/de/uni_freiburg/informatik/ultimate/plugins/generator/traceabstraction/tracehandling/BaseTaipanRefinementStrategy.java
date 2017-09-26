@@ -57,6 +57,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.RefinementEngineStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TracePredicates;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
@@ -102,6 +103,7 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 	private IInterpolantAutomatonBuilder<LETTER, IPredicate> mInterpolantAutomatonBuilder;
 	private final int mIteration;
 	private final CegarLoopStatisticsGenerator mCegarLoopBenchmark;
+	private final RefinementEngineStatisticsGenerator mRefinementEngineStatisticsGenerator;
 
 	/**
 	 * @param logger
@@ -144,6 +146,7 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 		mAbstraction = abstraction;
 		mIteration = iteration;
 		mCegarLoopBenchmark = cegarLoopBenchmark;
+		mRefinementEngineStatisticsGenerator = new RefinementEngineStatisticsGenerator();
 
 		mCurrentMode = getInitialMode();
 	}
@@ -213,6 +216,8 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 				mTcConstructor = constructTraceCheckerConstructor();
 			}
 			mTraceChecker = mTcConstructor.get();
+			mCegarLoopBenchmark.addTraceCheckerData(mTraceChecker.getTraceCheckerBenchmark());
+			mRefinementEngineStatisticsGenerator.addTraceCheckerStatistics(mTraceChecker);
 		}
 		return mTraceChecker;
 	}
@@ -289,12 +294,6 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 		} else {
 			result = new TraceCheckerConstructor<>(mPrevTcConstructor, managedScript, assertionOrder,
 					interpolationTechnique);
-		}
-		if (result.getStatisticsGenerator() != null) {
-			mCegarLoopBenchmark.addTraceCheckerData(result.getStatisticsGenerator());
-		}
-		if (result.getPathInvariantsStatisticsGenerator() != null) {
-			mCegarLoopBenchmark.addTraceCheckerData(result.getPathInvariantsStatisticsGenerator());
 		}
 		return result;
 	}
@@ -409,6 +408,11 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 	@Override
 	public RefinementStrategyExceptionBlacklist getExceptionBlacklist() {
 		return RefinementStrategyExceptionBlacklist.UNKNOWN;
+	}
+	
+	@Override
+	public RefinementEngineStatisticsGenerator getRefinementEngineStatistics() {
+		return mRefinementEngineStatisticsGenerator;
 	}
 
 	/**

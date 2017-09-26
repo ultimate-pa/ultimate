@@ -91,6 +91,9 @@ public enum CegarLoopStatisticsDefinitions implements IStatisticsElement {
 	
 	HoareAnnotationStatistics(StatisticsData.class, AStatisticsType.sStatisticsDataAggregation,
 			AStatisticsType.sKeyBeforeData),
+	
+	RefinementEngineStatistics(StatisticsData.class, AStatisticsType.sStatisticsDataAggregation,
+			AStatisticsType.sKeyBeforeData),
 	;
 
 	private final Class<?> mClazz;

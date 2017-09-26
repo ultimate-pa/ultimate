@@ -11,6 +11,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.in
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.InterpolantAutomatonBuilderFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategyExceptionBlacklist;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.IInterpolantGenerator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.RefinementEngineStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TracePredicates;
 
@@ -120,6 +121,9 @@ public interface IRefinementStrategy<LETTER> {
 	 * @see RefinementStrategyExceptionBlacklist
 	 */
 	RefinementStrategyExceptionBlacklist getExceptionBlacklist();
+	
+	
+	RefinementEngineStatisticsGenerator getRefinementEngineStatistics();
 
 	/**
 	 * @param list1

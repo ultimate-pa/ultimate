@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategyExceptionBlacklist;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.RefinementEngineStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TracePredicates;
 
@@ -72,6 +73,7 @@ public class FixedTraceAbstractionRefinementStrategy<LETTER extends IIcfgTransit
 	private TraceChecker mTraceChecker;
 	private IInterpolantGenerator mInterpolantGenerator;
 	private IInterpolantAutomatonBuilder<LETTER, IPredicate> mInterpolantAutomatonBuilder;
+	private final RefinementEngineStatisticsGenerator mRefinementEngineStatisticsGenerator;
 
 	/**
 	 * @param prefs
@@ -109,6 +111,7 @@ public class FixedTraceAbstractionRefinementStrategy<LETTER extends IIcfgTransit
 		mPredicateFactory = predicateFactory;
 		mPredicateUnifier = predicateUnifier;
 		mTaPrefsForInterpolantConsolidation = taPrefsForInterpolantConsolidation;
+		mRefinementEngineStatisticsGenerator = new RefinementEngineStatisticsGenerator();
 		mFunConstructFromPrefs = new TraceCheckerConstructor<>(prefs, managedScript, services, predicateFactory,
 				predicateUnifier, counterexample, mPrefs.getInterpolationTechnique(), iteration);
 	}
@@ -127,6 +130,7 @@ public class FixedTraceAbstractionRefinementStrategy<LETTER extends IIcfgTransit
 	public TraceChecker getTraceChecker() {
 		if (mTraceChecker == null) {
 			mTraceChecker = mFunConstructFromPrefs.get();
+			mRefinementEngineStatisticsGenerator.addTraceCheckerStatistics(mTraceChecker);
 		}
 		return mTraceChecker;
 	}
@@ -147,7 +151,7 @@ public class FixedTraceAbstractionRefinementStrategy<LETTER extends IIcfgTransit
 		if (mInterpolantGenerator == null) {
 			mInterpolantGenerator = RefinementStrategyUtils.constructInterpolantGenerator(mServices, mLogger, mPrefs,
 					mTaPrefsForInterpolantConsolidation, getTraceChecker(), mPredicateFactory, mPredicateUnifier,
-					mCounterexample);
+					mCounterexample, mRefinementEngineStatisticsGenerator);
 		}
 		return mInterpolantGenerator;
 	}
@@ -191,4 +195,11 @@ public class FixedTraceAbstractionRefinementStrategy<LETTER extends IIcfgTransit
 	public RefinementStrategyExceptionBlacklist getExceptionBlacklist() {
 		return mPrefs.getExceptionBlacklist();
 	}
+
+	@Override
+	public RefinementEngineStatisticsGenerator getRefinementEngineStatistics() {
+		return mRefinementEngineStatisticsGenerator;
+	}
+	
+	
 }

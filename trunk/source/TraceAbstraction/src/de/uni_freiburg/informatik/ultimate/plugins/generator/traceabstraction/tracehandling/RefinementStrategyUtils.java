@@ -47,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantConsolidation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.RefinementEngineStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceChecker;
 
 /**
@@ -63,7 +64,8 @@ public class RefinementStrategyUtils {
 			final IUltimateServiceProvider services, final ILogger logger,
 			final TaCheckAndRefinementPreferences<LETTER> prefs, final TAPreferences taPrefsForInterpolantConsolidation,
 			final TraceChecker tracechecker, final PredicateFactory predicateFactory,
-			final PredicateUnifier predicateUnifier, final IRun<LETTER, IPredicate, ?> counterexample) {
+			final PredicateUnifier predicateUnifier, final IRun<LETTER, IPredicate, ?> counterexample,
+			final RefinementEngineStatisticsGenerator statistics) {
 		final TraceChecker localTraceChecker = Objects.requireNonNull(tracechecker,
 				"cannot construct interpolant generator if no trace checker is present");
 		if (localTraceChecker instanceof InterpolatingTraceChecker) {
@@ -78,6 +80,7 @@ public class RefinementStrategyUtils {
 									NestedWord.nestedWord(counterexample.getWord()), cfgSmtToolkit,
 									cfgSmtToolkit.getModifiableGlobalsTable(), services, logger, predicateFactory,
 									predicateUnifier, interpolatingTraceChecker, taPrefsForInterpolantConsolidation);
+					statistics.addInterpolantConsolidationStatistics(interpConsoli.getInterpolantConsolidationBenchmarks());
 					return interpConsoli;
 				} catch (final AutomataOperationCanceledException e) {
 					throw new AssertionError("react on timeout, not yet implemented");

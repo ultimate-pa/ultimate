@@ -33,7 +33,6 @@ import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
@@ -43,7 +42,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.InvariantSynthesisSettings;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.PathInvariantsStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
@@ -52,7 +50,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerSpWp;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerUtils;
 
 /**
@@ -70,8 +67,6 @@ class TraceCheckerConstructor<LETTER extends IIcfgTransition<?>> implements Supp
 	private final InterpolationTechnique mInterpolationTechnique;
 	private final int mIteration;
 	private final AssertCodeBlockOrder mAssertionOrder;
-	private TraceCheckerStatisticsGenerator mStatisticsGenerator;
-	private PathInvariantsStatisticsGenerator mPathInvariantsStatisticsGenerator;
 
 	/**
 	 * @param prefs
@@ -197,14 +192,6 @@ class TraceCheckerConstructor<LETTER extends IIcfgTransition<?>> implements Supp
 				throw new UnsupportedOperationException("unsupported interpolation");
 			}
 		}
-		if (traceChecker.wasTracecheckFinished()) {
-			mStatisticsGenerator = traceChecker.getTraceCheckerBenchmark();
-			if (traceChecker instanceof InterpolatingTraceCheckerPathInvariantsWithFallback && traceChecker.isCorrect() == LBool.UNSAT) {
-				mPathInvariantsStatisticsGenerator = ((InterpolatingTraceCheckerPathInvariantsWithFallback) traceChecker).getPathInvariantsStats();
-			} else {
-				mPathInvariantsStatisticsGenerator = null;
-			}
-		}
 
 		if (traceChecker.getToolchainCanceledExpection() != null) {
 			throw traceChecker.getToolchainCanceledExpection();
@@ -293,15 +280,5 @@ class TraceCheckerConstructor<LETTER extends IIcfgTransition<?>> implements Supp
 				mPrefs.getCfgSmtToolkit(), mAssertionOrder, mServices, mPrefs.getToolchainStorage(), true,
 				mPredicateFactory, mPredicateUnifier, invariantSynthesisSettings, xnfConversionTechnique, simplificationTechnique, icfgContainer);
 	}
-
-	public TraceCheckerStatisticsGenerator getStatisticsGenerator() {
-		return mStatisticsGenerator;
-	}
-
-	public PathInvariantsStatisticsGenerator getPathInvariantsStatisticsGenerator() {
-		return mPathInvariantsStatisticsGenerator;
-	}
-	
-	
 
 }

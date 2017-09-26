@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.s
 
 import java.util.Collection;
 
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantConsolidation.InterpolantConsolidationBenchmarkGenerator;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
@@ -37,33 +38,35 @@ public class RefinementEngineStatisticsGenerator implements IStatisticsDataProvi
 
 	private final StatisticsData mTraceCheckerStatistics = new StatisticsData();
 	private final StatisticsData mInvariantSynthesisStatistics = new StatisticsData();
-	private InterpolantConsolidationBenchmarkGenerator mInterpolantConsolidationStatistics;
+	private final StatisticsData mInterpolantConsolidationStatistics = new StatisticsData();
 
 	@Override
 	public IStatisticsType getBenchmarkType() {
 		return RefinementEngineStatisticsType.getInstance();
 	}
 
-	public void addTraceCheckerStatistics(final IStatisticsDataProvider traceCheckerStatistics) {
+	private void addTraceCheckerStatistics(final IStatisticsDataProvider traceCheckerStatistics) {
 		mTraceCheckerStatistics.aggregateBenchmarkData(traceCheckerStatistics);
 	}
 
 
-	public void addInvariantSynthesisStatistics(final IStatisticsDataProvider invariantSynthesisStatistics) {
+	private void addInvariantSynthesisStatistics(final IStatisticsDataProvider invariantSynthesisStatistics) {
 		mInvariantSynthesisStatistics.aggregateBenchmarkData(invariantSynthesisStatistics);
 	}
 
-	public void setInterpolantConsolidationStatistics(
+	public void addInterpolantConsolidationStatistics(
 			final InterpolantConsolidationBenchmarkGenerator interpolantConsolidationStatistics) {
-		if (mInterpolantConsolidationStatistics == null) {
-			mInterpolantConsolidationStatistics = interpolantConsolidationStatistics;	
-		} else {
-			throw new AssertionError("can only set once");
-		}
-		
+		mInterpolantConsolidationStatistics.aggregateBenchmarkData(interpolantConsolidationStatistics);
 	}
 
-
+	public void addTraceCheckerStatistics(final TraceChecker traceChecker) {
+		if (traceChecker.wasTracecheckFinished()) {
+			addTraceCheckerStatistics(traceChecker.getTraceCheckerBenchmark());
+			if (traceChecker instanceof InterpolatingTraceCheckerPathInvariantsWithFallback && traceChecker.isCorrect() == LBool.UNSAT) {
+				addInvariantSynthesisStatistics(((InterpolatingTraceCheckerPathInvariantsWithFallback) traceChecker).getPathInvariantsStats());
+			} 
+		}
+	}
 
 
 

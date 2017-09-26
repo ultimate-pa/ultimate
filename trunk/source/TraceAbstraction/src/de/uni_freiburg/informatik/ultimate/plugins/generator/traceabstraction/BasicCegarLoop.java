@@ -379,6 +379,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 							+ " was feasible.");
 		}
 
+		mCegarLoopBenchmark.addRefinementEngineStatistics(strategy.getRefinementEngineStatistics());
 		return feasibility;
 	}
 
