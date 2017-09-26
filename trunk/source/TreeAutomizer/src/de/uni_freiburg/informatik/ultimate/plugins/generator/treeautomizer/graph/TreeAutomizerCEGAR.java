@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.TreeRun;
 import de.uni_freiburg.informatik.ultimate.automata.tree.operations.Accepts;
 import de.uni_freiburg.informatik.ultimate.automata.tree.operations.Difference;
 import de.uni_freiburg.informatik.ultimate.automata.tree.operations.IsEmpty;
-import de.uni_freiburg.informatik.ultimate.automata.tree.operations.Minimize;
+import de.uni_freiburg.informatik.ultimate.automata.tree.operations.minimization.Minimize;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TimeoutResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TreeAutomizerSatResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TreeAutomizerUnsatResult;
