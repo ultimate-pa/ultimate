@@ -20,9 +20,7 @@ modifies a;
 
 implementation foo() {
   var j : int;
-  while (*) {
-    assume b[j] == 1;
-    a[j] := 13;
-    havoc j;
-  }
+  assume b[j] == 1;
+  a[j] := 13;
+  havoc j;
 }

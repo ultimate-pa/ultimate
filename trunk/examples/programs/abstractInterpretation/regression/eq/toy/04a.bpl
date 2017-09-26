@@ -1,10 +1,10 @@
 //#Safe
 var a, b : [int] int;
 
-procedure main();
+procedure ULTIMATE.start();
 modifies a;
 
-implementation main() {
+implementation ULTIMATE.start() {
   var i : int;
 
   assume b[i] == 0;
@@ -20,9 +20,6 @@ modifies a;
 
 implementation foo() {
   var j : int;
-  while (*) {
-    assume b[j] == 1;
-    a[j] := 13;
-    havoc j;
-  }
+  assume b[j] == 1;
+  a[j] := 13;
 }
