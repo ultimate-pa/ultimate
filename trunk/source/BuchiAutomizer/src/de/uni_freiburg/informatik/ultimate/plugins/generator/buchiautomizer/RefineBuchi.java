@@ -89,7 +89,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerSpWp;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerUtils;
-import de.uni_freiburg.informatik.ultimate.util.HistogramOfIterable;
 
 public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 
@@ -171,11 +170,6 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 		// stem = mCounterexample.getStem().getWord();
 		// }
 		final NestedWord<LETTER> loop = mCounterexample.getLoop().getWord();
-		
-		final HistogramOfIterable<LETTER> traceHistogramStem = new HistogramOfIterable<>(stem);
-		benchmarkGenerator.reportTraceHistogramMaximum(traceHistogramStem.getMax());
-		final HistogramOfIterable<LETTER> traceHistogramLoop = new HistogramOfIterable<>(loop);
-		benchmarkGenerator.reportTraceHistogramMaximum(traceHistogramLoop.getMax());
 
 		assert !bspm.getStemPrecondition().getFormula().toString().equals("false");
 		assert !bspm.getHondaPredicate().getFormula().toString().equals("false");

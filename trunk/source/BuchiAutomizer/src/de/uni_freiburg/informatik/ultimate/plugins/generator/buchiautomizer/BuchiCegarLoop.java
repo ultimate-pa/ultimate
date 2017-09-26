@@ -686,13 +686,18 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 			return true;
 		}
 		mCounterexample = ec.getAcceptingNestedLassoRun();
+		
+		final HistogramOfIterable<LETTER> traceHistogramStem = new HistogramOfIterable<>(mCounterexample.getStem().getWord());
+		mBenchmarkGenerator.reportTraceHistogramMaximum(traceHistogramStem.getMax());
+		final HistogramOfIterable<LETTER> traceHistogramLoop = new HistogramOfIterable<>(mCounterexample.getLoop().getWord());
+		mBenchmarkGenerator.reportTraceHistogramMaximum(traceHistogramLoop.getMax());
+		
 		if (mLogger.isInfoEnabled()) {
-			mLogger.info(
-					"Counterexample stem histogram " + new HistogramOfIterable<>(mCounterexample.getStem().getWord()));
-			mLogger.info(
-					"Counterexample loop histogram " + new HistogramOfIterable<>(mCounterexample.getLoop().getWord()));
+			mLogger.info("Counterexample stem histogram " + traceHistogramStem);
+			mLogger.info("Counterexample loop histogram " + traceHistogramLoop);
 		}
 		assert mCounterexample.getLoop().getLength() > 1;
+
 		return false;
 	}
 
@@ -769,9 +774,8 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 		final BackwardCoveringInformation bci =
 				TraceCheckerUtils.computeCoverageCapability(mServices, traceChecker, mLogger);
 		mBenchmarkGenerator.addBackwardCoveringInformationFinite(bci);
-		final HistogramOfIterable<LETTER> traceHistogram = new HistogramOfIterable<>(run.getWord());
-		mBenchmarkGenerator.reportTraceHistogramMaximum(traceHistogram.getMax());
-				constructInterpolantAutomaton(traceChecker, run);
+
+		constructInterpolantAutomaton(traceChecker, run);
 
 		final IHoareTripleChecker htc = TraceAbstractionUtils.constructEfficientHoareTripleCheckerWithCaching(mServices,
 				HoareTripleChecks.INCREMENTAL, mCsToolkitWithRankVars, traceChecker.getPredicateUnifier());
