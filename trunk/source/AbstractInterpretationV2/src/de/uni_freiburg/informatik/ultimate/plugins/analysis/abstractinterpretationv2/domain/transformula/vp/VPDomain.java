@@ -28,6 +28,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp;
 
+import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractDomain;
@@ -38,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTabl
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNode;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNodeAndFunctionFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqPostOperator;
@@ -70,6 +72,8 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 	private final EqStateFactory<ACTION> mEqStateFactory;
 	private final CfgSmtToolkit mCsToolkit;
 	private final IUltimateServiceProvider mServices;
+
+	private VPDomainBenchmark mBenchmark;
 
 	public VPDomain(final ILogger logger, final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
 			final VPDomainPreanalysis preAnalysis) {
@@ -140,6 +144,13 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 
 	public Benchmark getVpBenchmark() {
 		return mPreAnalysis.getBenchmark();
+	}
+
+	public void finish() {
+		// TODO call this method once fixpoint engine has run (probably put it into the domain interface..)
+		mServices.getResultService().reportResult(Activator.PLUGIN_ID,
+				new StatisticsResult<>(Activator.PLUGIN_ID, "ArrayEqualityDomainStatistics", mBenchmark));
+//		mServices.getResultService().reportResult(Activator.PLUGIN_ID, mBenchmarkResult);
 	}
 
 	public EqStateFactory<ACTION> getEqStateFactory() {
