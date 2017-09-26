@@ -47,7 +47,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarAbsIntRunner;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.IInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.MultiTrackInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
@@ -57,7 +56,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.RefinementEngineStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TracePredicates;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
@@ -102,7 +100,6 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 	private IInterpolantGenerator mInterpolantGenerator;
 	private IInterpolantAutomatonBuilder<LETTER, IPredicate> mInterpolantAutomatonBuilder;
 	private final int mIteration;
-	private final CegarLoopStatisticsGenerator mCegarLoopBenchmark;
 	private final RefinementEngineStatisticsGenerator mRefinementEngineStatisticsGenerator;
 
 	/**
@@ -134,7 +131,7 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 			final CegarAbsIntRunner<LETTER> absIntRunner,
 			final AssertionOrderModulation<LETTER> assertionOrderModulation,
 			final IRun<LETTER, IPredicate, ?> counterexample, final IAutomaton<LETTER, IPredicate> abstraction,
-			final int iteration, final CegarLoopStatisticsGenerator cegarLoopBenchmark) {
+			final int iteration) {
 		mServices = services;
 		mLogger = logger;
 		mPrefs = prefs;
@@ -145,7 +142,6 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 		mCounterexample = counterexample;
 		mAbstraction = abstraction;
 		mIteration = iteration;
-		mCegarLoopBenchmark = cegarLoopBenchmark;
 		mRefinementEngineStatisticsGenerator = new RefinementEngineStatisticsGenerator();
 
 		mCurrentMode = getInitialMode();
@@ -216,7 +212,6 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 				mTcConstructor = constructTraceCheckerConstructor();
 			}
 			mTraceChecker = mTcConstructor.get();
-			mCegarLoopBenchmark.addTraceCheckerData(mTraceChecker.getTraceCheckerBenchmark());
 			mRefinementEngineStatisticsGenerator.addTraceCheckerStatistics(mTraceChecker);
 		}
 		return mTraceChecker;

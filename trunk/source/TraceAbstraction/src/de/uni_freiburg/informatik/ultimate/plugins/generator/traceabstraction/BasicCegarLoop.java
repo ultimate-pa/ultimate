@@ -322,7 +322,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 	protected LBool isCounterexampleFeasible() throws AutomataOperationCanceledException {
 
 		final IRefinementStrategy<LETTER> strategy = mRefinementStrategyFactory.createStrategy(
-				mPref.getRefinementStrategy(), mCounterexample, mAbstraction, getIteration(), getCegarLoopBenchmark());
+				mPref.getRefinementStrategy(), mCounterexample, mAbstraction, getIteration());
 		try {
 			mTraceCheckAndRefinementEngine = new TraceAbstractionRefinementEngine<>(mLogger, strategy, mInteractive);
 		} catch (final ToolchainCanceledException tce) {
@@ -363,14 +363,6 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 					((TraceAbstractionRefinementEngine<LETTER>) mTraceCheckAndRefinementEngine)
 							.somePerfectSequenceFound(),
 					mIteration);
-			// Add benchmark data of interpolant consolidation
-			final boolean useInterpolantConsolidation = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
-					.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_INTERPOLANTS_CONSOLIDATION);
-			if (useInterpolantConsolidation) {
-				mCegarLoopBenchmark.addInterpolationConsolidationData(
-						((TraceAbstractionRefinementEngine<LETTER>) mTraceCheckAndRefinementEngine)
-								.getInterpolantConsolidationStatistics());
-			}
 		}
 
 		if (mInteractive.isInteractiveMode() && feasibility == LBool.SAT) {

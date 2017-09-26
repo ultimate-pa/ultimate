@@ -75,14 +75,6 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 	public void addTraceCheckerData(final IStatisticsDataProvider tcbd) {
 		mTcData.aggregateBenchmarkData(tcbd);
 	}
-
-	public void addInterpolationConsolidationData(final IStatisticsDataProvider tcbd) {
-		mInterpolantConsolidationBenchmarks.aggregateBenchmarkData(tcbd);
-	}
-
-	public void addPathInvariantsData(final IStatisticsDataProvider tcbd) {
-		mPathInvariantsStatistics.aggregateBenchmarkData(tcbd);
-	}
 	
 	public void addRefinementEngineStatistics(final IStatisticsDataProvider res) {
 		mRefinementEngineStatistics.aggregateBenchmarkData(res);
