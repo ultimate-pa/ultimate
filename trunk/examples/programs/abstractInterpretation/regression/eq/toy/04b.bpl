@@ -1,10 +1,10 @@
 //#Safe
 var a, b : [int] int;
 
-procedure main();
+procedure ULTIMATE.start();
 modifies a;
 
-implementation main() {
+implementation ULTIMATE.start() {
   var i : int;
 
   assume b[i] == 0;
