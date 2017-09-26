@@ -51,7 +51,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractSta
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieSymbolTableVariableProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.MappedTerm2Expression;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
@@ -65,7 +67,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence.Origin;
 
 /**
- *
+ * The post operator for the poorman abstract domain. This post operator converts a given transformula to a sequence of
+ * Boogie assumptions and calls the post operator of the Boogie-based backing domain accordingly.
+ * 
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
@@ -79,6 +83,7 @@ public class PoormansAbstractPostOperator<BACKING extends IAbstractState<BACKING
 	private final IUltimateServiceProvider mServices;
 	private final CodeBlockFactory mCodeBlockFactory;
 	private final Boogie2SmtSymbolTableTmpVars mBoogie2SmtSymbolTable;
+	private final MappedTerm2Expression mMappedTerm2Expression;
 
 	protected PoormansAbstractPostOperator(final IUltimateServiceProvider services, final IIcfg<?> root,
 			final IAbstractDomain<BACKING, IcfgEdge> backingDomain,
@@ -93,6 +98,9 @@ public class PoormansAbstractPostOperator<BACKING extends IAbstractState<BACKING
 
 		mManagedScript = boogieIcfgContainer.getCfgSmtToolkit().getManagedScript();
 		mBackingDomain = backingDomain;
+
+		mMappedTerm2Expression = new MappedTerm2Expression(mBoogie2Smt.getTypeSortTranslator(),
+				mBoogie2Smt.getBoogie2SmtSymbolTable(), mManagedScript);
 	}
 
 	@Override
@@ -101,19 +109,141 @@ public class PoormansAbstractPostOperator<BACKING extends IAbstractState<BACKING
 
 		final UnmodifiableTransFormula transformula = transition.getTransformula();
 
-		// Rename inVars in abstract state
-		final Map<IProgramVarOrConst, IProgramVarOrConst> renamedInVars = transformula.getInVars().entrySet().stream()
-				.collect(Collectors.toMap(entry -> entry.getKey(), entry -> getFreshProgramVar(entry.getValue())));
-		final PoormanAbstractState<BACKING> renamedOldState = oldstate.renameVariables(renamedInVars);
-		mLogger.debug("Renamed the following variables in the current state:");
-		mLogger.debug(renamedInVars.entrySet().stream()
-				.map(entry -> "  " + entry.getKey().getGloballyUniqueId() + " (" + entry.getKey().hashCode() + ") --> "
-						+ entry.getValue().getGloballyUniqueId() + " (" + entry.getValue().hashCode() + ")")
-				.collect(Collectors.joining("\n")));
-
-		// Add outVars and auxVars to abstract state
-		final Map<IProgramVarOrConst, IProgramVarOrConst> outVarRenaming = new HashMap<>();
+		// Prepare hashsets and maps that are filled in the call to obtainVariableMappingFromTransformula
+		final Map<IProgramVarOrConst, IProgramVarOrConst> renamedInVars = new HashMap<>();
 		final Set<IProgramVarOrConst> newOutVars = new HashSet<>();
+		final Set<IProgramVarOrConst> newAuxVars = new HashSet<>();
+		final Map<IProgramVarOrConst, IProgramVarOrConst> outVarRenaming = new HashMap<>();
+		final Set<IProgramVarOrConst> addedVariables = new HashSet<>();
+		final Set<IProgramVarOrConst> inAuxVars = new HashSet<>();
+
+		// Construct the assume block
+		final Set<TermVariable> variableRetainmentSet = new HashSet<>();
+		variableRetainmentSet.addAll(transformula.getOutVars().values());
+		variableRetainmentSet.addAll(transformula.getInVars().values());
+		variableRetainmentSet.addAll(transformula.getAuxVars());
+		final CodeBlock assumeBlock = constructBoogieAssumeStatement(transformula, variableRetainmentSet);
+
+		obtainVariableMappingFromTransformula(transformula, renamedInVars, newOutVars, newAuxVars, outVarRenaming,
+				addedVariables, inAuxVars);
+
+		// Some logging output to debug renaming
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("Renamed the following variables in the current state:");
+			mLogger.debug(renamedInVars.entrySet().stream()
+					.map(entry -> "  " + entry.getKey().getGloballyUniqueId() + " (" + entry.getKey().hashCode()
+							+ ") --> " + entry.getValue().getGloballyUniqueId() + " (" + entry.getValue().hashCode()
+							+ ")")
+					.collect(Collectors.joining("\n")));
+			mLogger.debug("Adding the following variables to the abstract state: " + addedVariables);
+		}
+
+		final PoormanAbstractState<BACKING> preState =
+				oldstate.renameVariables(renamedInVars).addVariables(addedVariables);
+
+		// Compute the abstract post
+		final List<BACKING> postStates =
+				mBackingDomain.getPostOperator().apply(preState.getBackingState(), assumeBlock);
+
+		// Remove all added temporary variables from the symbol table
+		mBoogie2SmtSymbolTable.clearTemporaryVariables();
+
+		// Remove in & aux vars from the resulting states and rename inVars back to original names.
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("Removing the following variables from the post state(s): " + inAuxVars);
+			mLogger.debug("Renaming the following variables: " + outVarRenaming);
+		}
+
+		final List<PoormanAbstractState<BACKING>> returnList = new ArrayList<>();
+		for (final BACKING state : postStates) {
+			final BACKING newState = state.removeVariables(inAuxVars).renameVariables(outVarRenaming);
+			returnList.add(new PoormanAbstractState<>(mServices, mBackingDomain, newState));
+		}
+
+		return returnList;
+	}
+
+	@Override
+	public List<PoormanAbstractState<BACKING>> apply(final PoormanAbstractState<BACKING> stateBeforeLeaving,
+			final PoormanAbstractState<BACKING> stateAfterLeaving, final IcfgEdge transition) {
+		// Handle Call
+		if (transition instanceof ICallAction) {
+			return handleCallTransition(stateBeforeLeaving, stateAfterLeaving, (ICallAction) transition);
+		}
+		// Handle Return
+		else if (transition instanceof IReturnAction) {
+			return handleReturnTransition(stateBeforeLeaving, stateAfterLeaving, (IReturnAction) transition);
+		} else {
+			throw new UnsupportedOperationException(
+					"This post operator should not receive a transition different from ICallAction and IReturnAction.");
+		}
+	}
+
+	private List<PoormanAbstractState<BACKING>> handleCallTransition(
+			final PoormanAbstractState<BACKING> stateBeforeLeaving,
+			final PoormanAbstractState<BACKING> stateAfterLeaving, final ICallAction transition) {
+		final UnmodifiableTransFormula transformula = transition.getTransformula();
+
+		transition.getLocalVarsAssignment();
+		transition.getTransformula();
+		mLogger.debug("Call transformula: " + transformula);
+		return null;
+	}
+
+	private List<PoormanAbstractState<BACKING>> handleReturnTransition(
+			final PoormanAbstractState<BACKING> stateBeforeLeaving,
+			final PoormanAbstractState<BACKING> stateAfterLeaving, final IReturnAction transition) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	/**
+	 * Fills for a given transformula the given maps and sets with sensible values, depending on the variables in the
+	 * transformula. See its usage in, e.g., the {@link #apply(PoormanAbstractState, IcfgEdge)} function.
+	 *
+	 * @param transformula
+	 *            The transformula.
+	 * @param renamedInVars
+	 *            Is filled with a mapping of program vars occurring in the program to fresh program vars corresponding
+	 *            to the inVar mapping of the transformula.
+	 * @param newOutVars
+	 *            Is filled with fresh variables for outVars of the transformula.
+	 * @param newAuxVars
+	 *            Is filled with fresh variables for the auxVars of the transformula.
+	 * @param outVarRenaming
+	 *            Is filled with the mapping of program variables to outVars of the transformula to be able to rename
+	 *            the variables in the abstract state back to their original ones after applying the abstract post.
+	 * @param addedVariables
+	 *            Is filled with all variables that need to be added to the abstract state in order to be able to apply
+	 *            the abstract post for the given transformula correctly.
+	 * @param inAuxVars
+	 *            Is filled with all variables that need to be removed from the computed post state after applying the
+	 *            post operator to restore the original variables.
+	 */
+	private void obtainVariableMappingFromTransformula(final UnmodifiableTransFormula transformula,
+			final Map<IProgramVarOrConst, IProgramVarOrConst> renamedInVars, final Set<IProgramVarOrConst> newOutVars,
+			final Set<IProgramVarOrConst> newAuxVars, final Map<IProgramVarOrConst, IProgramVarOrConst> outVarRenaming,
+			final Set<IProgramVarOrConst> addedVariables, final Set<IProgramVarOrConst> inAuxVars) {
+
+		assert renamedInVars.isEmpty();
+		assert newOutVars.isEmpty();
+		assert newAuxVars.isEmpty();
+		assert outVarRenaming.isEmpty();
+		assert addedVariables.isEmpty();
+		assert inAuxVars.isEmpty();
+
+		// Collect inVars that are to be renamed.
+		// If in a state there is variable x and the transformula's inVars state that {x -> x_1}, then rename x to x_1
+		// in the current state.
+		renamedInVars.putAll(transformula.getInVars().entrySet().stream()
+				.collect(Collectors.toMap(entry -> entry.getKey(), entry -> getFreshProgramVar(entry.getValue()))));
+
+		// Collect the names of all outVars in the transformula and add fresh variables that are to be added as fresh
+		// variables to the state.
+		// For example, if the outVars state that {x -> x_2}, construct a fresh variable x_2 which is added later to the
+		// state.
+		// In the case where the outVar is also an inVar, e.g. inVars = {x -> x_1} and outVars = {x -> x_1}, x_1 has
+		// already been added to the state in the inVars and will not be added again, here.
 		for (final Entry<IProgramVar, TermVariable> entry : transformula.getOutVars().entrySet()) {
 			if (!renamedInVars.values().stream()
 					.anyMatch(var -> var.getGloballyUniqueId().equals(entry.getValue().getName()))) {
@@ -132,7 +262,7 @@ public class PoormansAbstractPostOperator<BACKING extends IAbstractState<BACKING
 			}
 		}
 
-		final Set<IProgramVarOrConst> newAuxVars = new HashSet<>();
+		// Collect the auxVars of the transformula that are to be added to the abstract state.
 		for (final TermVariable auxVar : transformula.getAuxVars()) {
 			if (!renamedInVars.values().stream().anyMatch(var -> var.getGloballyUniqueId().equals(auxVar.getName()))
 					&& !newOutVars.stream().anyMatch(var -> var.getGloballyUniqueId().equals(auxVar.getName()))) {
@@ -141,72 +271,46 @@ public class PoormansAbstractPostOperator<BACKING extends IAbstractState<BACKING
 			}
 		}
 
-		final Set<IProgramVarOrConst> addedVariables =
-				Stream.concat(newOutVars.stream(), newAuxVars.stream()).collect(Collectors.toSet());
-		if (mLogger.isDebugEnabled()) {
-			mLogger.debug("Adding the following variables to the abstract state: " + addedVariables);
-		}
+		addedVariables.addAll(Stream.concat(newOutVars.stream(), newAuxVars.stream()).collect(Collectors.toSet()));
 
-		final PoormanAbstractState<BACKING> preState = renamedOldState.addVariables(addedVariables);
-
+		// Add temporary variables to the symbol table
 		final Set<IProgramVarOrConst> tempVars = new HashSet<>();
 		tempVars.addAll(renamedInVars.values());
 		tempVars.addAll(newOutVars);
 		tempVars.addAll(newAuxVars);
-		tempVars.forEach(var -> mBoogie2SmtSymbolTable.addTemporaryVariable((IProgramVar) var));
+		mBoogie2SmtSymbolTable
+				.addTemporaryVariables(tempVars.stream().map(var -> (IProgramVar) var).collect(Collectors.toSet()));
 
-		// Prepare Boogie expression
-		final MappedTerm2Expression mappedT2e = new MappedTerm2Expression(mBoogie2Smt.getTypeSortTranslator(),
-				mBoogie2Smt.getBoogie2SmtSymbolTable(), mManagedScript);
-
-		final Set<TermVariable> renameSet = new HashSet<>();
-		renameSet.addAll(transformula.getOutVars().values());
-		renameSet.addAll(transformula.getInVars().values());
-		renameSet.addAll(transformula.getAuxVars());
-
-		final Expression termExpression = mappedT2e.translate(transformula.getFormula(), renameSet);
-		final AssumeStatement assume = new AssumeStatement(termExpression.getLoc(), termExpression);
-
-		mLogger.debug("Constructed assumption expression: " + termExpression);
-
-		final CodeBlock assumeBlock =
-				mCodeBlockFactory.constructStatementSequence(null, null, assume, Origin.IMPLEMENTATION);
-
-		// Compute the abstract post
-		final List<BACKING> postStates =
-				mBackingDomain.getPostOperator().apply(preState.getBackingState(), assumeBlock);
-
-		tempVars.forEach(var -> mBoogie2SmtSymbolTable.removeTemporaryVariable((IProgramVar) var));
-		assert mBoogie2SmtSymbolTable.getNumberOfTempVars() == 0;
-
-		// Remove in & aux vars from the resulting states and rename inVars back to original names.
-		final Set<IProgramVarOrConst> inAuxVars = new HashSet<>();
+		// Collect in and aux vars that are removed later from the abstract state
 		inAuxVars
 				.addAll(renamedInVars.values().stream()
 						.filter(var -> !transformula.getOutVars().values().stream()
 								.anyMatch(out -> out.getName().equals(var.getGloballyUniqueId())))
 						.collect(Collectors.toSet()));
 		inAuxVars.addAll(newAuxVars);
-
-		if (mLogger.isDebugEnabled()) {
-			mLogger.debug("Removing the following variables from the post state: " + inAuxVars);
-			mLogger.debug("Renaming the following variables: " + outVarRenaming);
-		}
-
-		final List<PoormanAbstractState<BACKING>> returnList = new ArrayList<>();
-		for (final BACKING state : postStates) {
-			final BACKING newState = state.removeVariables(inAuxVars).renameVariables(outVarRenaming);
-			returnList.add(new PoormanAbstractState<>(mServices, mBackingDomain, newState));
-		}
-
-		return returnList;
 	}
 
-	@Override
-	public List<PoormanAbstractState<BACKING>> apply(final PoormanAbstractState<BACKING> stateBeforeLeaving,
-			final PoormanAbstractState<BACKING> secondState, final IcfgEdge transition) {
-		// TODO Auto-generated method stub
-		return null;
+	/**
+	 * Constructs a Boogie {@link CodeBlock} in which the transformula is converted into an assume statement.
+	 *
+	 * @param transformula
+	 *            The transformula to construct an assume statement for.
+	 * @param variableRetainmentSet
+	 *            The set of variables whose names should be looked up in the temporary variable set of the symbol table
+	 *            instead of the Boogie symbol table itself.
+	 * @return A {@link CodeBlock} containing the conversion of the transformula to an assume statement.
+	 */
+	private CodeBlock constructBoogieAssumeStatement(final UnmodifiableTransFormula transformula,
+			final Set<TermVariable> variableRetainmentSet) {
+		final Expression termExpression =
+				mMappedTerm2Expression.translate(transformula.getFormula(), variableRetainmentSet);
+		final AssumeStatement assume = new AssumeStatement(termExpression.getLoc(), termExpression);
+
+		mLogger.debug("Constructed assumption expression: " + termExpression);
+
+		final CodeBlock assumeBlock =
+				mCodeBlockFactory.constructStatementSequence(null, null, assume, Origin.IMPLEMENTATION);
+		return assumeBlock;
 	}
 
 	private IProgramVarOrConst getFreshProgramVar(final TermVariable var) {

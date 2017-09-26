@@ -28,6 +28,7 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.poorman;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -69,6 +70,19 @@ public class Boogie2SmtSymbolTableTmpVars implements IBoogieSymbolTableVariableP
 	}
 
 	/**
+	 * Adds temporary variables to the symbol table. Throws an exception if the variable is already present.
+	 *
+	 * @param vars
+	 *            The collection of variables to add.
+	 */
+	public void addTemporaryVariables(final Collection<IProgramVar> vars) {
+		if (vars.stream().anyMatch(var -> mTempVars.containsKey(var.getGloballyUniqueId()))) {
+			throw new UnsupportedOperationException("Some variable is already present.");
+		}
+		mTempVars.putAll(vars.stream().collect(Collectors.toMap(var -> var.getGloballyUniqueId(), var -> var)));
+	}
+
+	/**
 	 * Removes a temporary variable from the symbol table. Throws an exception if the variable is not found.
 	 *
 	 * @param var
@@ -79,6 +93,13 @@ public class Boogie2SmtSymbolTableTmpVars implements IBoogieSymbolTableVariableP
 			throw new UnsupportedOperationException(
 					"Variable " + var.getGloballyUniqueId() + " not present in temporary variables.");
 		}
+	}
+
+	/**
+	 * Removes all temporary variables at once.
+	 */
+	public void clearTemporaryVariables() {
+		mTempVars.clear();
 	}
 
 	@Override
