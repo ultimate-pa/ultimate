@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 University of Freiburg
+ * Copyright (C) 2016-2017 University of Freiburg
  *
  * This file is part of SMTInterpol.
  *
@@ -458,7 +458,7 @@ public class InterpolatorClauseTermInfo {
 	/**
 	 * For a CC or array lemma, get the sub- and weak paths.
 	 * 
-	 * @return paths an array where the strings ":subpath"/":weakpath" and Term arrays are alternating
+	 * @return paths an array containing the proof paths
 	 */
 	private ProofPath[] computePaths(Term lemma) {
 		final AnnotatedTerm inner = (AnnotatedTerm) ((ApplicationTerm) lemma).getParameters()[0];

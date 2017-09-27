@@ -24,8 +24,7 @@ public class Interpolant {
 	Term mTerm;
 
 	/**
-	 * Empty interpolant.  Use this constructor if you want to set the term
-	 * later.
+	 * Empty interpolant. Use this constructor if you want to set the term later.
 	 */
 	public Interpolant() {
 		// Provide default ctor

@@ -283,15 +283,13 @@ public class Interpolator extends NonRecursive {
 			} else if (leafTermInfo.getLemmaType().equals(":LA") || leafTermInfo.getLemmaType().equals(":trichotomy")) {
 				final LAInterpolator ipolator = new LAInterpolator(this);
 				interpolants = ipolator.computeInterpolants(leaf);
-			} else if (leafTermInfo.getLemmaType().equals(":read-over-weakeq")) {
+			} else if (leafTermInfo.getLemmaType().equals(":read-over-weakeq")
+					|| leafTermInfo.getLemmaType().equals(":weakeq-ext")) {
 				final ArrayInterpolator ipolator = new ArrayInterpolator(this);
 				final Term[] interpolantTerms = ipolator.computeInterpolants(leaf);
 				for (int j = 0; j < mNumInterpolants; j++) {
 					interpolants[j] = new Interpolant(interpolantTerms[j]);
 				}
-			} else if (leafTermInfo.getLemmaType().equals(":weakeq-ext")) {
-				throw new UnsupportedOperationException(
-						"Interpolation for array extensionality lemmas is work in progress.");
 			} else {
 				throw new UnsupportedOperationException("Unknown lemma type!");
 			}
@@ -622,7 +620,7 @@ public class Interpolator extends NonRecursive {
 			}
 		}
 
-		for (int part = 0; part < ipls.length; part++) {
+		for (int part = 0; part < ipls.length + 1; part++) {
 			mCheckingSolver.push(1);
 			for (final Entry<String, Integer> entry : mPartitions.entrySet()) {
 				if (entry.getValue() == part) {
@@ -761,7 +759,9 @@ public class Interpolator extends NonRecursive {
 			for (int child = part - 1; child >= mStartOfSubtrees[part]; child = mStartOfSubtrees[child] - 1) {
 				mCheckingSolver.assertTerm(interpolants[child]);
 			}
-			mCheckingSolver.assertTerm(mTheory.term("not", interpolants[part]));
+			if (part < interpolants.length) {
+				mCheckingSolver.assertTerm(mTheory.term("not", interpolants[part]));
+			}
 			if (mCheckingSolver.checkSat() != LBool.UNSAT) {
 				throw new AssertionError();
 			}
