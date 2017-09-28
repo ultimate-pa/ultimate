@@ -103,9 +103,9 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 	private final String mName;
 
 	/**
-	 * Node of a recursive control flow graph which stores additional information about the program.
+	 * Interprocedural control flow graph.
 	 */
-	protected final IIcfg<?> mIcfgContainer;
+	protected final IIcfg<?> mIcfg;
 
 	/**
 	 * Intermediate layer to encapsulate communication with SMT solvers.
@@ -188,7 +188,7 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 		mXnfConversionTechnique = taPrefs.getXnfConversionTechnique();
 		mPrintAutomataLabeling = taPrefs.getAutomataFormat();
 		mName = name;
-		mIcfgContainer = rootNode;
+		mIcfg = rootNode;
 		mCsToolkit = csToolkit;
 		mPredicateFactory = predicateFactory;
 		mPref = taPrefs;
@@ -451,7 +451,7 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 			final boolean newMaximumReached =
 					mCegarLoopBenchmark.reportAbstractionSize(mAbstraction.size(), mIteration);
 			if (DUMP_BIGGEST_AUTOMATON && mIteration > 4 && newMaximumReached) {
-				final String filename = mIcfgContainer.getIdentifier();
+				final String filename = mIcfg.getIdentifier();
 				writeAutomatonToFile(mAbstraction, filename);
 			}
 
