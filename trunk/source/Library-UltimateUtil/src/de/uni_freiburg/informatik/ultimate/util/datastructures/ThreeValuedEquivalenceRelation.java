@@ -32,6 +32,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
@@ -53,6 +54,13 @@ public class ThreeValuedEquivalenceRelation<E> {
 
 	public ThreeValuedEquivalenceRelation() {
 		mUnionFind = new UnionFind<>();
+		mDisequalities = new HashRelation<>();
+		mIsInconsistent = false;
+	}
+
+	public ThreeValuedEquivalenceRelation(final BiFunction<E, E, Integer> elementComparator) {
+		assert elementComparator != null : "use other constructor in this case!";
+		mUnionFind = new UnionFind<>(elementComparator);
 		mDisequalities = new HashRelation<>();
 		mIsInconsistent = false;
 	}
@@ -237,7 +245,8 @@ public class ThreeValuedEquivalenceRelation<E> {
 
 	public EqualityStatus getEqualityStatus(final E elem1, final E elem2) {
 		if (mIsInconsistent) {
-			throw new IllegalStateException("Cannot get equality status from inconsistent " + this.getClass().getSimpleName());
+			throw new IllegalStateException("Cannot get equality status from inconsistent "
+					+ this.getClass().getSimpleName());
 		}
 
 		final E elem1Rep = mUnionFind.find(elem1);
@@ -440,7 +449,9 @@ public class ThreeValuedEquivalenceRelation<E> {
 	 * @return a new, projected ThreeValuedEquivalenceRelation
 	 */
 	public ThreeValuedEquivalenceRelation<E> projectToConstraintsWith(final Set<E> elems) {
-		final UnionFind<E> newUf = new UnionFind<>();
+		final UnionFind<E> newUf = mUnionFind.getElementComparator() != null ?
+				new UnionFind<>(mUnionFind.getElementComparator()) :
+					new UnionFind<>();
 		for (final E elem : elems) {
 			if (newUf.find(elem) != null) {
 				// already constructed current elem's equivalence class
