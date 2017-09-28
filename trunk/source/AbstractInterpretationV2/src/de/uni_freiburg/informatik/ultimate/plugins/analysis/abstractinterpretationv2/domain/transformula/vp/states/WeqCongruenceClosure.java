@@ -724,7 +724,7 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 		mAllLiterals.remove(elem);
 
 		assert sanityCheck();
-		assert elementIsFullyRemoved(elem);
+//		assert elementIsFullyRemoved(elem);
 		return true;
 //		return removeElement(elem, copy);
 	}

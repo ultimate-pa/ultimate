@@ -357,7 +357,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 //		removeParents(oldAfParents, oldArgParents);
 
 		assert sanityCheckOnlyCc();
-		assert elementIsFullyRemoved(elem);
+		assert elementIsFullyRemovedOnlyCc(elem);
 		return true;
 	}
 
@@ -434,12 +434,16 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		return eqc.stream().filter(e -> e != elem).findAny().get();
 	}
 
+	protected boolean elementIsFullyRemoved(final ELEM elem) {
+		return elementIsFullyRemovedOnlyCc(elem);
+	}
+
 	/**
 	 * Checks  for any remainig entries of elem, does not look for subterms.
 	 * @param elem
 	 * @return
 	 */
-	protected boolean elementIsFullyRemoved(final ELEM elem) {
+	protected boolean elementIsFullyRemovedOnlyCc(final ELEM elem) {
 		if (mElementTVER.getRepresentative(elem) != null) {
 			assert false;
 			return false;

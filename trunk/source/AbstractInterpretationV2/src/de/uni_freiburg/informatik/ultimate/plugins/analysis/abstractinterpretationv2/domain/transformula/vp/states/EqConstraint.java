@@ -379,6 +379,7 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 
 	public void removeElement(final NODE elemToHavoc) {
 		mPartialArrangement.removeSimpleElement(elemToHavoc);
+		assert mPartialArrangement.elementIsFullyRemoved(elemToHavoc);
 	}
 
 	/**
