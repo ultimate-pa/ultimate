@@ -30,8 +30,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
+import de.uni_freiburg.informatik.ultimate.test.benchexec.BenchexecRundefinitionGeneratorPreLog;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
 import de.uni_freiburg.informatik.ultimate.test.decider.SvcompReachTestResultDecider;
+import de.uni_freiburg.informatik.ultimate.test.reporting.IPreTestLog;
 
 /**
  *
@@ -43,6 +45,12 @@ public class SvcompEqualityDomainReachTestSuite extends AbstractSVCOMPTestSuite 
 	@Override
 	protected ITestResultDecider getTestResultDecider(final UltimateRunDefinition urd) {
 		return new SvcompReachTestResultDecider(urd, false);
+	}
+
+	@Override
+	protected IPreTestLog[] constructPreTestLogs() {
+		// TODO Auto-generated method stub
+		return new IPreTestLog[] { new BenchexecRundefinitionGeneratorPreLog(getClass()) };
 	}
 
 	@Override
