@@ -42,8 +42,6 @@ overflow_false_string = 'overflow possible'
 
 
 class PropParser:
-    # 117: Support init() function of .prp in SVCOMP wrapper script
-    # 118: create .ltl file from .prp file as auxilary input in SVCOMP wrapper script
 
     prop_regex = re.compile('^\s*CHECK\s*\(\s*init\s*\((.*)\)\s*,\s*LTL\((.*)\)\s*\)\s*$', re.MULTILINE)
     funid_regex = re.compile('\s*(\S*)\s*\(.*\)')
