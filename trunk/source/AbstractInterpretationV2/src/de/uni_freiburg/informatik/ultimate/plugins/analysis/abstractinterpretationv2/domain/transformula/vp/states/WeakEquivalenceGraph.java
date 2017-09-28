@@ -1,7 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -27,7 +26,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.CongruenceClosure
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CrossProducts;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ICongruenceClosureElement;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
@@ -39,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 			NODE extends IEqNodeIdentifier<NODE>> {
 
-	private final CCManager<NODE> mCcManager = new CCManager<>();
+	private final CCManager<NODE> mCcManager;
 
 	private final EqConstraintFactory<ACTION, NODE> mFactory;
 	private final AbstractNodeAndFunctionFactory<NODE, Term> mNodeAndFunctionFactory;
@@ -67,6 +65,7 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		assert factory != null;
 		mFactory = factory;
 		mNodeAndFunctionFactory = mFactory.getEqNodeAndFunctionFactory();
+		mCcManager = factory.getCcManager();
 		assert sanityCheck();
 	}
 
@@ -88,6 +87,7 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		assert factory != null;
 		mFactory = factory;
 		mNodeAndFunctionFactory = mFactory.getEqNodeAndFunctionFactory();
+		mCcManager = factory.getCcManager();
 		assert sanityCheck();
 	}
 
@@ -110,6 +110,7 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		}
 		mFactory = weakEquivalenceGraph.mFactory;
 		mNodeAndFunctionFactory = mFactory.getEqNodeAndFunctionFactory();
+		mCcManager = mFactory.getCcManager();
 		assert sanityCheck();
 	}
 
@@ -539,7 +540,7 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		final WeakEquivalenceGraph<ACTION, NODE>.WeakEquivalenceEdgeLabel copy =
 				new WeakEquivalenceEdgeLabel(originalEdgeLabel);
 		final WeakEquivalenceGraph<ACTION, NODE>.WeakEquivalenceEdgeLabel meet =
-				copy.meet(Collections.singletonList(qEqualsI));
+				copy.meetRec(Collections.singletonList(qEqualsI));
 
 		for (int i = 0; i < dim; i++) {
 //			meet.projectElement(firstDimWeqVarNodes.get(i), null, mPartialArrangement);
@@ -906,25 +907,30 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		}
 
 		public WeakEquivalenceEdgeLabel meet(final WeakEquivalenceEdgeLabel otherLabel) {
-			assert sanityCheck();
 			return meet(otherLabel.getLabelContents());
 		}
 
 		private WeakEquivalenceEdgeLabel meet(final List<CongruenceClosure<NODE>> paList) {
+			assert sanityCheck();
+			return meetRec(paList);
+		}
+
+		private WeakEquivalenceEdgeLabel meetRec(final List<CongruenceClosure<NODE>> paList) {
 
 			final List<List<CongruenceClosure<NODE>>> li = new ArrayList<>(2);
 			li.add(getLabelContents());
 			li.add(paList);
 			final List<List<CongruenceClosure<NODE>>> cp = CrossProducts.crossProduct(li);
 
-			List<CongruenceClosure<NODE>> newLabelContent = new ArrayList<>();
+			final List<CongruenceClosure<NODE>> newLabelContent = new ArrayList<>();
 			for (final List<CongruenceClosure<NODE>> pair : cp) {
 				assert pair.size() == 2;
 				newLabelContent.add(pair.get(0).meet(pair.get(1)));
 			}
-			newLabelContent = mCcManager.filterRedundantCcs(newLabelContent);
+//			newLabelContent = mCcManager.filterRedundantCcs(newLabelContent);
 
-			final List<CongruenceClosure<NODE>> newLabel = simplifyPaDisjunction(newLabelContent);
+//			final List<CongruenceClosure<NODE>> newLabel = simplifyPaDisjunction(newLabelContent);
+			final List<CongruenceClosure<NODE>> newLabel = mCcManager.filterRedundantCcs(newLabelContent);
 
 			final WeakEquivalenceEdgeLabel result =
 					new WeakEquivalenceEdgeLabel(newLabel);
@@ -1138,92 +1144,6 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 				mWeakEquivalenceEdges.put(new Doubleton<>(newRep, edge.getKey()), edge.getValue());
 			}
 		}
-	}
-}
-
-
-
-class CCManager<NODE extends IEqNodeIdentifier<NODE>> {
-	CongruenceClosure<NODE> getMeet(final CongruenceClosure<NODE> cc1,
-			final CongruenceClosure<NODE> cc2) {
-		/*
-		 *  TODO: something smarter
-		 *   ideas:
-		 *    - caching
-		 *    - updating meets alongside inputs (something that updates the cache on a report equality on the ground pa)
-		 *
-		 */
-		final CongruenceClosure<NODE> result = cc1.meet(cc2);
-		return result;
-	}
-
-	/**
-	 * The given list is implictly a disjunction.
-	 * If one element in the disjunction is stronger than another, we can drop it.
-	 *
-	 * TODO: poor man's solution, could be done much nicer with lattice representation..
-	 *
-	 * @param unionList
-	 * @return
-	 */
-	public List<CongruenceClosure<NODE>> filterRedundantCcs(final List<CongruenceClosure<NODE>> unionList) {
-		final List<CongruenceClosure<NODE>> filteredForWeaker = new ArrayList<>();
-
-		/*
-		 * filter strictly weaker elements
-		 */
-		for (final CongruenceClosure<NODE> cc1 : unionList) {
-			for (final CongruenceClosure<NODE> cc2 : unionList) {
-				if (cc1.isStrongerThan(cc2)) {
-					// drop cc1 as there is a stricly weaker element
-					continue;
-				}
-			}
-			filteredForWeaker.add(cc1);
-		}
-
-		/*
-		 * drop all but one equivalent element for each equivalence class
-		 */
-		final UnionFind<CongruenceClosure<NODE>> uf = new UnionFind<>();
-		for (final CongruenceClosure<NODE> cc : filteredForWeaker) {
-			uf.findAndConstructEquivalenceClassIfNeeded(cc);
-		}
-		boolean goOn = true;
-		while (goOn) {
-			goOn = false;
-			final Collection<CongruenceClosure<NODE>> repCopy = uf.getAllRepresentatives();
-			for (final Entry<CongruenceClosure<NODE>, CongruenceClosure<NODE>> repPair
-					: CrossProducts.binarySelectiveCrossProduct(repCopy, false, false).entrySet()) {
-				if (repPair.getKey().isEquivalent(repPair.getValue())) {
-					uf.union(repPair.getKey(), repPair.getValue());
-					goOn = true;
-				}
-			}
-		}
-
-		final List<CongruenceClosure<NODE>> result = new ArrayList<>(uf.getAllRepresentatives());
-		return result;
-	}
-
-	public CongruenceClosure<NODE> getSingleDisequalityCc(final NODE elem1, final NODE elem2) {
-		final CongruenceClosure<NODE> newCC = new CongruenceClosure<>();
-		newCC.reportDisequality(elem1, elem2);
-		return newCC;
-	}
-
-	public CongruenceClosure<NODE> makeCopy(final CongruenceClosure<NODE> meet) {
-		if (meet.isInconsistent()) {
-			return meet;
-		}
-		return new CongruenceClosure<>(meet);
-	}
-
-	public CongruenceClosure<NODE> getSingleEqualityCc(final NODE elem1,
-			final NODE  elem2) {
-		final CongruenceClosure<NODE> newCC = new CongruenceClosure<>();
-		newCC.reportEquality(elem1, elem2);
-		return newCC;
 	}
 }
 

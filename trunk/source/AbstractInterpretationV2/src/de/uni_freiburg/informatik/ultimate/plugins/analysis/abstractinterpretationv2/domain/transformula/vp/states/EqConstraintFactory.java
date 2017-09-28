@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.IEqNodeIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainHelpers;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.AbstractNodeAndFunctionFactory;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.CongruenceClosureComparator;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
 /**
@@ -72,7 +73,9 @@ public class EqConstraintFactory<ACTION extends IIcfgTransition<IcfgLocation>, N
 
 	private final NestedMap2<Sort, Integer, NODE> mDimensionToWeqVariableNode;
 
-	private final LiteralManager<NODE> mLiteralManager;
+//	private final LiteralManager<NODE> mLiteralManager;
+
+	private final CCManager<NODE> mCcManager;
 
 	public EqConstraintFactory(final AbstractNodeAndFunctionFactory<NODE, Term> eqNodeAndFunctionFactory,
 			final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit) {
@@ -88,7 +91,8 @@ public class EqConstraintFactory<ACTION extends IIcfgTransition<IcfgLocation>, N
 
 		mDimensionToWeqVariableNode = new NestedMap2<>();
 
-		mLiteralManager = new LiteralManager<>();
+		mCcManager = new CCManager<>(new CongruenceClosureComparator<NODE>());
+//		mLiteralManager = new LiteralManager<>();
 	}
 
 	public EqConstraint<ACTION, NODE> getEmptyConstraint() {
@@ -394,7 +398,11 @@ public class EqConstraintFactory<ACTION extends IIcfgTransition<IcfgLocation>, N
 		return this.getClass().getSimpleName();
 	}
 
-	public LiteralManager<NODE> getLiteralManager() {
-		return mLiteralManager;
+//	public LiteralManager<NODE> getLiteralManager() {
+//		return mLiteralManager;
+//	}
+
+	public CCManager<NODE> getCcManager() {
+		return mCcManager;
 	}
 }

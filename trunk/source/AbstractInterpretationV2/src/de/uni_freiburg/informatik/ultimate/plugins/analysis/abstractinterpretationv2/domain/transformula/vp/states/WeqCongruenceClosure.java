@@ -50,6 +50,7 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 //		mLiteralManager = mFactory.getLiteralManager();
 //		mAllLiterals = new HashSet<>();
 		mNodeToDependents = new HashRelation<>();
+		assert sanityCheck();
 	}
 
 	/**
@@ -88,6 +89,7 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 
 		mNodeToDependents = new HashRelation<>();
 		initializeNodeToDependents(original);
+		assert sanityCheck();
 	}
 
 	/**
@@ -112,6 +114,7 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 //				.collect(Collectors.toCollection(HashSet::new));
 		mNodeToDependents = new HashRelation<>();
 		initializeNodeToDependents(original);
+		assert sanityCheck();
 	}
 
 	/**
@@ -127,6 +130,7 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 		mWeakEquivalenceGraph = new WeakEquivalenceGraph<>(this, original.mWeakEquivalenceGraph);
 //		mAllLiterals = new HashSet<>(original.mAllLiterals);
 		mNodeToDependents = new HashRelation<>(original.mNodeToDependents);
+		assert sanityCheck();
 	}
 
 	private void initializeNodeToDependents(final CongruenceClosure<NODE> original) {
@@ -372,18 +376,27 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 	@Override
 	protected boolean reportEqualityRec(final NODE node1, final NODE node2) {
 		assert node1.hasSameTypeAs(node2);
-		boolean madeChanges = false;
-
-		madeChanges |= addElementRec(node1);
-		madeChanges |= addElementRec(node2);
-
-		if (!madeChanges && getEqualityStatus(node1, node2) == EqualityStatus.EQUAL) {
-			// nothing to do
-			return false;
+		if (isInconsistent()) {
+			throw new IllegalStateException();
 		}
-		if (!madeChanges && getEqualityStatus(node1, node2) == EqualityStatus.NOT_EQUAL) {
+
+		boolean freshElem = false;
+		freshElem |= addElementRec(node1);
+		freshElem |= addElementRec(node2);
+		assert atMostOneLiteralPerEquivalenceClass();
+
+		if (getEqualityStatus(node1, node2) == EqualityStatus.EQUAL) {
+			// nothing to do
+			return freshElem;
+		}
+		if (getEqualityStatus(node1, node2) == EqualityStatus.NOT_EQUAL) {
 			// report it to tver so that it is in an inconsistent state
 			mElementTVER.reportEquality(node1, node2);
+			// not so nice, but needed for literals where TVER does not know they are unequal otherwise
+			if (!mElementTVER.isInconsistent()) {
+				mElementTVER.reportDisequality(node1, node2);
+			}
+			assert mElementTVER.isInconsistent();
 			return true;
 		}
 
@@ -607,17 +620,17 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 	}
 
 	@Override
-	public boolean reportDisequality(final NODE elem1, final NODE elem2) {
-		final boolean result = reportDisequalityRec(elem1, elem2);
+	public boolean reportDisequality(final NODE node1, final NODE node2) {
+		final boolean result = reportDisequalityRec(node1, node2);
 		assert sanityCheck();
 		return result;
 	}
 
 	@Override
-	protected boolean reportDisequalityRec(final NODE elem1, final NODE elem2) {
+	protected boolean reportDisequalityRec(final NODE node1, final NODE node2) {
 		boolean madeChanges = false;
 
-		madeChanges |= super.reportDisequalityRec(elem1, elem2);
+		madeChanges |= super.reportDisequalityRec(node1, node2);
 
 		if (!madeChanges) {
 			return false;
@@ -629,7 +642,7 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 		}
 
 		reportGpaChangeToWeqGraphAndPropagateArrayEqualities(
-				(final CongruenceClosure<NODE> cc) -> cc.reportDisequality(elem1, elem2));
+				(final CongruenceClosure<NODE> cc) -> cc.reportDisequality(node1, node2));
 
 		assert weqGraphFreeOfArrayEqualities();
 		return true;
@@ -966,15 +979,24 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 
 	@Override
 	public WeqCongruenceClosure<ACTION, NODE> meet(final CongruenceClosure<NODE> other) {
+
+		final WeqCongruenceClosure<ACTION, NODE> result = meetRec(other);
+
+		assert result.sanityCheck();
+		return result;
+	}
+
+	@Override
+	public WeqCongruenceClosure<ACTION, NODE> meetRec(final CongruenceClosure<NODE> other) {
 		if (!(other instanceof WeqCongruenceClosure)) {
 			throw new IllegalArgumentException();
 		}
 
-		final CongruenceClosure<NODE> gPaMeet = super.meet(other);
+		final CongruenceClosure<NODE> gPaMeet = super.meetRec(other);
 		if (gPaMeet.isInconsistent()) {
 			return new WeqCongruenceClosure<>(true);
 		}
-
+		assert gPaMeet.atMostOneLiteralPerEquivalenceClass();
 		assert !this.mWeakEquivalenceGraph.hasArrayEqualities();
 
 		/*
@@ -986,13 +1008,16 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 		final WeqCongruenceClosure<ACTION, NODE> otherWeqCc = (WeqCongruenceClosure<ACTION, NODE>) other;
 
 		// report all weq edges from other
-		for (final Entry<Doubleton<NODE>, WeakEquivalenceGraph<ACTION, NODE>.WeakEquivalenceEdgeLabel> edge : otherWeqCc.mWeakEquivalenceGraph
-				.getEdges().entrySet()) {
-			newWeqCc.reportWeakEquivalence(edge.getKey().getOneElement(), edge.getKey().getOtherElement(),
+		for (final Entry<Doubleton<NODE>, WeakEquivalenceGraph<ACTION, NODE>.WeakEquivalenceEdgeLabel> edge
+				: otherWeqCc.mWeakEquivalenceGraph.getEdges().entrySet()) {
+//			newWeqCc.reportWeakEquivalence(edge.getKey().getOneElement(), edge.getKey().getOtherElement(),
+			newWeqCc.reportWeakEquivalenceDoOnlyRoweqPropagations(edge.getKey().getOneElement(),
+					edge.getKey().getOtherElement(),
 					edge.getValue().getLabelContents());
 		}
 
-		executeFloydWarshallAndReportResult();
+
+		newWeqCc.executeFloydWarshallAndReportResult();
 		if (newWeqCc.isInconsistent()) {
 			return new WeqCongruenceClosure<>(true);
 		}

@@ -133,16 +133,22 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		}
 
 		boolean freshElem = false;
-		freshElem |= addElement(elem1);
-		freshElem |= addElement(elem2);
+		freshElem |= addElementRec(elem1);
+		freshElem |= addElementRec(elem2);
+		assert atMostOneLiteralPerEquivalenceClass();
 
-		if (!freshElem && getEqualityStatus(elem1, elem2) == EqualityStatus.EQUAL) {
+		if (getEqualityStatus(elem1, elem2) == EqualityStatus.EQUAL) {
 			// nothing to do
-			return false;
+			return freshElem;
 		}
-		if (!freshElem && getEqualityStatus(elem1, elem2) == EqualityStatus.NOT_EQUAL) {
+		if (getEqualityStatus(elem1, elem2) == EqualityStatus.NOT_EQUAL) {
 			// report it to tver so that it is in an inconsistent state
 			mElementTVER.reportEquality(elem1, elem2);
+			// not so nice, but needed for literals where TVER does not know they are unequal otherwise
+			if (!mElementTVER.isInconsistent()) {
+				mElementTVER.reportDisequality(elem1, elem2);
+			}
+			assert mElementTVER.isInconsistent();
 			return true;
 		}
 
@@ -155,7 +161,18 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 
 		doFwccAndBwccPropagationsFromMerge(propInfo);
 
-		assert sanityCheck();
+//		assert sanityCheck();
+		assert atMostOneLiteralPerEquivalenceClass();
+		return true;
+	}
+
+	public boolean atMostOneLiteralPerEquivalenceClass() {
+		if (isInconsistent()) {
+			return true;
+		}
+		for (final Set<ELEM> eqc : mElementTVER.getAllEquivalenceClasses()) {
+			assert eqc.stream().filter(e -> e.isLiteral()).collect(Collectors.toList()).size() < 2;
+		}
 		return true;
 	}
 
@@ -225,6 +242,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 	}
 
 	protected boolean reportDisequalityRec(final ELEM elem1, final ELEM elem2) {
+		assert elem1.hasSameTypeAs(elem2);
+
 		if (isInconsistent()) {
 			throw new IllegalStateException();
 		}
@@ -530,25 +549,34 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		return result;
 	}
 
+	public CongruenceClosure<ELEM> meet(final CongruenceClosure<ELEM> other) {
+		assert this.sanityCheckOnlyCc();
+		assert other.sanityCheckOnlyCc();
+
+		final CongruenceClosure<ELEM> result = meetRec(other);
+
+		assert result.sanityCheckOnlyCc();
+		return result;
+	}
+
 	/**
 	 * Returns a new CongruenceClosure instance that is the meet of "this" and "other".
 	 *
 	 * @param other
 	 * @return
 	 */
-	public CongruenceClosure<ELEM> meet(final CongruenceClosure<ELEM> other) {
-		assert this.sanityCheckOnlyCc();
-		assert other.sanityCheckOnlyCc();
+	public CongruenceClosure<ELEM> meetRec(final CongruenceClosure<ELEM> other) {
 
 		if (this.isInconsistent() || other.isInconsistent()) {
 			return new CongruenceClosure<>(true);
 		}
 
 		final CongruenceClosure<ELEM> result = naiveMeet(other);
+		assert result.atMostOneLiteralPerEquivalenceClass();
+
 		if (result.isInconsistent()) {
 			return new CongruenceClosure<>(true);
 		}
-		assert result.sanityCheckOnlyCc();
 		return result;
 	}
 
@@ -562,13 +590,13 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 			if (thisAligned.isInconsistent()) {
 				return new CongruenceClosure<>(true);
 			}
-			thisAligned.reportEquality(eq.getKey(), eq.getValue());
+			thisAligned.reportEqualityRec(eq.getKey(), eq.getValue());
 		}
 		for (final Entry<ELEM, ELEM> deq : otherAligned.getElementDisequalities()) {
 			if (thisAligned.isInconsistent()) {
 				return new CongruenceClosure<>(true);
 			}
-			thisAligned.reportDisequality(deq.getKey(), deq.getValue());
+			thisAligned.reportDisequalityRec(deq.getKey(), deq.getValue());
 		}
 		return thisAligned;
 	}
@@ -1135,9 +1163,12 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 
 			collectCcParBasedPropagations(afccpar1, afccpar2, congruentResult, unequalResult);
 			collectCcParBasedPropagations(argccpar1, argccpar2, congruentResult, unequalResult);
+			assert hasOnlyPairsOfSameType(congruentResult);
+			assert hasOnlyPairsOfSameType(unequalResult);
 
 			collectPropagationsForImplicitlyAddedDisequalities(oldUnequalRepsForElem1, e2OldRep, unequalResult);
 			collectPropagationsForImplicitlyAddedDisequalities(oldUnequalRepsForElem2, e1OldRep, unequalResult);
+			assert hasOnlyPairsOfSameType(unequalResult);
 
 			/*
 			 * update ccPars, ccChildren entries
@@ -1182,7 +1213,16 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 			}
 			mCcChildren.put(newRep, newCcc);
 
+			assert hasOnlyPairsOfSameType(congruentResult);
+			assert hasOnlyPairsOfSameType(unequalResult);
 			return new Pair<>(congruentResult, unequalResult);
+		}
+
+		private boolean hasOnlyPairsOfSameType(final HashRelation<ELEM, ELEM> relation) {
+			for (final Entry<ELEM, ELEM> pair : relation) {
+				assert pair.getKey().hasSameTypeAs(pair.getValue());
+			}
+			return true;
 		}
 
 		private void collectCcParBasedPropagations(final Set<ELEM> parents1, final Set<ELEM> parents2,
@@ -1400,12 +1440,14 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 					getEqualityStatus(arg1, arg2);
 
 			if (equalityStatusOfAppliedFunctions == EqualityStatus.EQUAL
-					&& equalityStatusOfArguments == EqualityStatus.UNKNOWN) {
+					&& equalityStatusOfArguments == EqualityStatus.UNKNOWN
+					&& arg1.hasSameTypeAs(arg2)) {
 				result.addPair(arg1, arg2);
 			}
 
 			if (equalityStatusOfAppliedFunctions == EqualityStatus.UNKNOWN
-					&& equalityStatusOfArguments == EqualityStatus.EQUAL) {
+					&& equalityStatusOfArguments == EqualityStatus.EQUAL
+					&& af1.hasSameTypeAs(af2)) {
 				result.addPair(af1, af2);
 			}
 		}
@@ -1434,4 +1476,6 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 			}
 		}
 	}
+
+
 }
