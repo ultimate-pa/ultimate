@@ -123,8 +123,8 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 	}
 
 	public boolean reportChangeInGroundPartialArrangement(final Predicate<CongruenceClosure<NODE>> action) {
-		assert this.sanityCheck();
-		assert mPartialArrangement.sanityCheck();
+//		assert this.sanityCheck();
+//		assert mPartialArrangement.sanityCheck();
 		boolean madeChanges = false;
 		final Map<Doubleton<NODE>, WeakEquivalenceEdgeLabel> weqCopy = new HashMap<>(mWeakEquivalenceEdges);
 		for (final Entry<Doubleton<NODE>, WeakEquivalenceEdgeLabel> edge : weqCopy.entrySet())  {
@@ -142,9 +142,10 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 			mWeakEquivalenceEdges.put(edge.getKey(), newLabel);
 			// TODO is the madeChanges flag worth this effort?.. should we just always say "true"?..
 			madeChanges |= !newLabel.isStrongerThan(edge.getValue()) || !edge.getValue().isStrongerThan(newLabel);
-			assert mPartialArrangement.sanityCheck();
+//			assert mPartialArrangement.sanityCheck();
+			assert mPartialArrangement.sanityCheckOnlyCc();
 		}
-		assert sanityCheck();
+//		assert sanityCheck();
 		return madeChanges;
 	}
 
@@ -160,29 +161,39 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 	 * @param groundPartialArrangement the gpa that should be assumed for the projection (might be different from
 	 * 		mPartialArrangement, or mPartialArrangement might be null..)
 	 */
-	public void projectFunction(final NODE func, final NODE newRep,
-			final CongruenceClosure<NODE> groundPartialArrangement) {
+	public void projectFunction(final NODE func,// final NODE newRep,
+			final CongruenceClosure<NODE> groundPartialArrangement,
+			final Map<NODE, NODE> removedElemsToNewReps) {
+//			final Set<NODE> afParents) {
 		final Map<Doubleton<NODE>, WeakEquivalenceEdgeLabel> edgesCopy = new HashMap<>(mWeakEquivalenceEdges);
+
 		for (final Entry<Doubleton<NODE>, WeakEquivalenceEdgeLabel> en : edgesCopy.entrySet()) {
+
 			final NODE source = en.getKey().getOneElement();
 			final NODE target = en.getKey().getOtherElement();
 
-			if (source.equals(func)) {
+//			if (source.equals(func)) {
+			if (removedElemsToNewReps.containsKey(source)) {
 				final WeakEquivalenceGraph<ACTION, NODE>.WeakEquivalenceEdgeLabel label =
 						mWeakEquivalenceEdges.remove(en.getKey());
+				final NODE newRep = removedElemsToNewReps.get(source);
 				if (newRep != null) {
-					label.projectElement(func, newRep, groundPartialArrangement);
+//					label.projectElement(func, newRep, groundPartialArrangement);
+					label.projectElement(func, groundPartialArrangement);
 					mWeakEquivalenceEdges.put(new Doubleton<NODE>(newRep, target), label);
 				}
-			} else if (target.equals(func)) {
+			} else if (removedElemsToNewReps.containsKey(target)) {
 				final WeakEquivalenceGraph<ACTION, NODE>.WeakEquivalenceEdgeLabel label =
 						mWeakEquivalenceEdges.remove(en.getKey());
+				final NODE newRep = removedElemsToNewReps.get(target);
 				if (newRep != null) {
-					label.projectElement(func, newRep, groundPartialArrangement);
+//					label.projectElement(func, newRep, groundPartialArrangement);
+					label.projectElement(func, groundPartialArrangement);
 					mWeakEquivalenceEdges.put(new Doubleton<NODE>(source, newRep), label);
 				}
 			} else {
-				en.getValue().projectElement(func, newRep, groundPartialArrangement);
+//				en.getValue().projectElement(func, newRep, groundPartialArrangement);
+				en.getValue().projectElement(func, groundPartialArrangement);
 			}
 		}
 		assert projectedFunctionIsFullyGone(func);
@@ -529,7 +540,8 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 				copy.meet(Collections.singletonList(qEqualsI));
 
 		for (int i = 0; i < dim; i++) {
-			meet.projectElement(firstDimWeqVarNodes.get(i), null, mPartialArrangement);
+//			meet.projectElement(firstDimWeqVarNodes.get(i), null, mPartialArrangement);
+			meet.projectElement(firstDimWeqVarNodes.get(i), mPartialArrangement);
 		}
 
 		meet.inOrDecreaseWeqVarIndices(-dim, weqVarsForThisEdge);
@@ -814,14 +826,14 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		 */
 		public WeakEquivalenceEdgeLabel reportChangeInGroundPartialArrangement(
 				final Predicate<CongruenceClosure<NODE>> reportX) {
-			assert WeakEquivalenceGraph.this.sanityCheck();
-			assert mPartialArrangement.sanityCheck();
+//			assert WeakEquivalenceGraph.this.sanityCheck();
+//			assert mPartialArrangement.sanityCheck();
 
 
 			final List<CongruenceClosure<NODE>> newLabel = new ArrayList<>();
 
 			for (int i = 0; i < getLabelContents().size(); i++) {
-				assert mPartialArrangement.sanityCheck();
+//				assert mPartialArrangement.sanityCheck();
 				final CongruenceClosure<NODE> currentPaWgpa = mCcManager.getMeet(getLabelContents().get(i),
 						mPartialArrangement);
 
@@ -847,7 +859,7 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 				// add the strengthened version as the new label element
 				newLabel.add(currentPaWgpa.projectToElements(mFactory.getAllWeqNodes()));
 
-				assert mPartialArrangement.sanityCheck();
+//				assert mPartialArrangement.sanityCheck();
 				assert WeakEquivalenceGraph.this.sanityCheck();
 			}
 			return new WeakEquivalenceEdgeLabel(newLabel);
@@ -969,7 +981,7 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		 * @param groundPartialArrangement the gpa that is like mPartialArrangement but elem has been removed already
 		 *    (if we used mPartialArrangement, we would put elem back in via the meet..)
 		 */
-		public void projectElement(final NODE elem, final NODE newRep,
+		public void projectElement(final NODE elem,// final NODE newRep,
 				final CongruenceClosure<NODE> groundPartialArrangement) {
 
 			final List<CongruenceClosure<NODE>> newLabelContents = new ArrayList<>();
@@ -1001,12 +1013,12 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 				}
 //				remove.accept(meet);
 
-				// TODO: this is weird, is that not precisely the difference between mPartialArrangement and groundP..
-				if (newRep != null) {
-					meet.reportEquality(elem, newRep);
-				}
+//				// TODO: this is weird, is that not precisely the difference between mPartialArrangement and groundP..
+//				if (newRep != null) {
+//					meet.reportEquality(elem, newRep);
+//				}
 
-				meet.removeElement(elem);
+				meet.removeSimpleElement(elem);
 				final CongruenceClosure<NODE> newPa = meet.projectToElements(mFactory.getAllWeqNodes());
 				if (newPa.isTautological()) {
 					// we have one "true" disjunct --> the whole disjunction is tautological
@@ -1071,7 +1083,7 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		private boolean sanityCheckAfterProject(final NODE elem,
 				final CongruenceClosure<NODE> groundPartialArrangement) {
 			final CongruenceClosure<NODE> copy = new CongruenceClosure<>(groundPartialArrangement);
-			copy.removeElement(elem);
+			copy.removeSimpleElement(elem);
 			return sanityCheck(copy);
 		}
 	}

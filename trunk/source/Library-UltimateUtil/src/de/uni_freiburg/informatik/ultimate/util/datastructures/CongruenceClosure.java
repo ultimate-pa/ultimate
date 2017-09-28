@@ -106,6 +106,12 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 	}
 
 	public boolean reportEquality(final ELEM elem1, final ELEM elem2) {
+		final boolean result = reportEqualityRec(elem1, elem2);
+		assert sanityCheck();
+		return result;
+	}
+
+	protected boolean reportEqualityRec(final ELEM elem1, final ELEM elem2) {
 		if (isInconsistent()) {
 			throw new IllegalStateException();
 		}
@@ -113,7 +119,6 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		boolean freshElem = false;
 		freshElem |= addElement(elem1);
 		freshElem |= addElement(elem2);
-		assert sanityCheck();
 
 		if (!freshElem && getEqualityStatus(elem1, elem2) == EqualityStatus.EQUAL) {
 			// nothing to do
@@ -146,14 +151,14 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		 * (fwcc)
 		 */
 		for (final Entry<ELEM, ELEM> congruentParents : equalitiesToPropagate) {
-			reportEquality(congruentParents.getKey(), congruentParents.getValue());
+			reportEqualityRec(congruentParents.getKey(), congruentParents.getValue());
 		}
 
 		/*
 		 * (bwcc1), (bwcc2)  (-- they're only separate cases during reportDisequality)
 		 */
 		for (final Entry<ELEM, ELEM> unequalNeighborIndices : disequalitiesToPropagate) {
-			reportDisequality(unequalNeighborIndices.getKey(), unequalNeighborIndices.getValue());
+			reportDisequalityRec(unequalNeighborIndices.getKey(), unequalNeighborIndices.getValue());
 		}
 	}
 
@@ -182,13 +187,19 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 	}
 
 	public boolean reportDisequality(final ELEM elem1, final ELEM elem2) {
+		final boolean result = reportDisequalityRec(elem1, elem2);
+		assert sanityCheck();
+		return result;
+	}
+
+	protected boolean reportDisequalityRec(final ELEM elem1, final ELEM elem2) {
 		if (isInconsistent()) {
 			throw new IllegalStateException();
 		}
 
 		boolean freshElem = false;
-		freshElem |= addElement(elem1);
-		freshElem |= addElement(elem2);
+		freshElem |= addElementRec(elem1);
+		freshElem |= addElementRec(elem2);
 
 		if (!freshElem && getEqualityStatus(elem1, elem2) == EqualityStatus.NOT_EQUAL) {
 			// nothing to do
@@ -204,10 +215,9 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		final HashRelation<ELEM, ELEM> propDeqs = mAuxData.getPropagationsOnReportDisequality(elem1, elem2);
 
 		for (final Entry<ELEM, ELEM> deq : propDeqs) {
-			reportDisequality(deq.getKey(), deq.getValue());
+			reportDisequalityRec(deq.getKey(), deq.getValue());
 		}
 
-		assert sanityCheck();
 		return true;
 	}
 
@@ -217,11 +227,17 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 	 * @return true iff the element was not known to this CongruenceClosure before
 	 */
 	protected boolean addElement(final ELEM elem) {
+		final boolean result = addElementRec(elem);
+		assert sanityCheck();
+		return result;
+	}
+
+	protected boolean addElementRec(final ELEM elem) {
 		final boolean newlyAdded = mElementTVER.addElement(elem);
 		if (newlyAdded) {
 			registerNewElement(elem);
 		}
-		assert sanityCheck();
+//		assert sanityCheckOnlyCc();
 		return newlyAdded;
 	}
 
@@ -240,7 +256,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 			// nothing to do
 			assert mElementTVER.getRepresentative(elem) != null : "this method assumes that elem has been added "
 					+ "already";
-			assert sanityCheck();
+//			assert sanityCheck();
 			return;
 		}
 
@@ -254,14 +270,14 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		 */
 		final HashRelation<ELEM, ELEM> equalitiesToPropagate = mAuxData.registerNewElement(elem);
 
-		addElement(elem.getAppliedFunction());
-		addElement(elem.getArgument());
+		addElementRec(elem.getAppliedFunction());
+		addElementRec(elem.getArgument());
 
 		for (final Entry<ELEM, ELEM> eq : equalitiesToPropagate.entrySet()) {
-			reportEquality(eq.getKey(), eq.getValue());
+			reportEqualityRec(eq.getKey(), eq.getValue());
 		}
 
-		assert sanityCheck();
+//		assert sanityCheck();
 	}
 
 	public ELEM getRepresentativeAndAddElementIfNeeded(final ELEM elem) {
@@ -279,42 +295,95 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 
 	}
 
-	public boolean removeElement(final ELEM elem) {
+	/**
+	 * Remove a simple element, i.e., an element that is not a function application.
+	 *
+	 * @param elem
+	 * @return
+	 */
+	public boolean removeSimpleElement(final ELEM elem) {
+		if (elem.isFunctionApplication()) {
+			throw new IllegalArgumentException();
+		}
 		if (isInconsistent()) {
 			throw new IllegalStateException();
 		}
+		return removeAnyElement(elem, null);
+	}
+
+	protected final Map<ELEM, ELEM> removeSimpleElementTrackNewReps(final ELEM elem) {
+		if (elem.isFunctionApplication()) {
+			throw new IllegalArgumentException();
+		}
+		if (isInconsistent()) {
+			throw new IllegalStateException();
+		}
+		final HashMap<ELEM, ELEM> removedElemToNewRep = new HashMap<>();
+		removeAnyElement(elem, removedElemToNewRep);
+		return removedElemToNewRep;
+	}
+
+	/**
+	 * Helper (the division into removeSimple and removeFuncApp is used for subclasses)
+	 *
+	 * @param elem
+	 * @return
+	 */
+	private boolean removeAnyElement(final ELEM elem, final Map<ELEM, ELEM> removedElemToNewRep) {
 		if (!hasElement(elem)) {
 			return false;
 		}
 
 		addNodesEquivalentToNodesWithRemovedElement(elem);
-
-		assert sanityCheck();
+		assert sanityCheckOnlyCc();
 
 		final Collection<ELEM> oldAfParents = new ArrayList<>(mFaAuxData.getAfParents(elem));
 		final Collection<ELEM> oldArgParents = new ArrayList<>(mFaAuxData.getArgParents(elem));
 
-		updateElementTverAndAuxDataOnRemoveElement(elem);
-		assert sanityCheck();
+		if (removedElemToNewRep == null) {
+			updateElementTverAndAuxDataOnRemoveElement(elem);
+		} else {
+			final ELEM newRep = updateElementTverAndAuxDataOnRemoveElement(elem);
+			removedElemToNewRep.put(elem, newRep);
+		}
+		assert sanityCheckOnlyCc();
 
-		removeParents(oldAfParents, oldArgParents);
+		for (final ELEM parent : oldAfParents) {
+			removeAnyElement(parent, removedElemToNewRep);
+		}
+		for (final ELEM parent : oldArgParents) {
+			removeAnyElement(parent, removedElemToNewRep);
+		}
+//		removeParents(oldAfParents, oldArgParents);
 
-
+		assert sanityCheckOnlyCc();
 		assert elementIsFullyRemoved(elem);
 		return true;
 	}
 
-	protected void removeParents(final Collection<ELEM> oldAfParents, final Collection<ELEM> oldArgParents) {
-		/*
-		 * remove elements that have elem as an argument
-		 */
-		for (final ELEM parent : oldAfParents) {
-			removeElement(parent);
-		}
-		for (final ELEM parent : oldArgParents) {
-			removeElement(parent);
-		}
-	}
+//	/**
+//	 * Remove an element that is a function application.
+//	 *
+//	 * @param elem
+//	 */
+//	protected boolean removeFuncAppElement(final ELEM elem) {
+//		if (!elem.isFunctionApplication()) {
+//			throw new IllegalArgumentException();
+//		}
+//		return removeAnyElement(elem);
+//	}
+
+//	/**
+//	 * remove elements that have elem as an argument
+//	 */
+//	protected void removeParents(final Collection<ELEM> oldAfParents, final Collection<ELEM> oldArgParents) {
+//		for (final ELEM parent : oldAfParents) {
+//			removeFuncAppElement(parent);
+//		}
+//		for (final ELEM parent : oldArgParents) {
+//			removeFuncAppElement(parent);
+//		}
+//	}
 
 	protected ELEM updateElementTverAndAuxDataOnRemoveElement(final ELEM elem) {
 		final boolean elemWasRepresentative = mElementTVER.isRepresentative(elem);
@@ -340,12 +409,12 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 			for (final ELEM parent : new ArrayList<>(mFaAuxData.getAfParents(elem))) {
 				assert parent.getAppliedFunction() == elem;
 				final ELEM replaced = parent.replaceAppliedFunction(otherRep);
-				addElement(replaced);
+				addElementRec(replaced);
 			}
 			for (final ELEM parent : new ArrayList<>(mFaAuxData.getArgParents(elem))) {
 				assert parent.getArgument() == elem;
 				final ELEM replaced = parent.replaceArgument(otherRep);
-				addElement(replaced);
+				addElementRec(replaced);
 			}
 		}
 	}
@@ -394,13 +463,13 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 	 * @return
 	 */
 	protected CongruenceClosure<ELEM> alignElementsAndFunctions(final CongruenceClosure<ELEM> other) {
-		assert this.sanityCheck();
+//		assert this.sanityCheckOnlyCc();
 		final CongruenceClosure<ELEM> result = new CongruenceClosure<>(this);
-		assert result.sanityCheck();
+//		assert result.sanityCheckOnlyCc();
 
-		other.getAllElements().stream().forEach(result::addElement);
+		other.getAllElements().stream().forEach(result::addElementRec);
 
-		assert result.sanityCheck();
+//		assert result.sanityCheckOnlyCc();
 		return result;
 	}
 
@@ -411,8 +480,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 	 * @return
 	 */
 	public CongruenceClosure<ELEM> meet(final CongruenceClosure<ELEM> other) {
-		assert this.sanityCheck();
-		assert other.sanityCheck();
+		assert this.sanityCheckOnlyCc();
+		assert other.sanityCheckOnlyCc();
 
 		if (this.isInconsistent() || other.isInconsistent()) {
 			return new CongruenceClosure<>(true);
@@ -422,7 +491,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		if (result.isInconsistent()) {
 			return new CongruenceClosure<>(true);
 		}
-		assert result.sanityCheck();
+		assert result.sanityCheckOnlyCc();
 		return result;
 	}
 
@@ -548,12 +617,17 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		return true;
 	}
 
+
+	protected boolean sanityCheck() {
+		return sanityCheckOnlyCc();
+	}
+
 	/**
 	 * Check for some class invariants.
 	 *
 	 * @return
 	 */
-	protected boolean sanityCheck() {
+	public boolean sanityCheckOnlyCc() {
 		if (mConstructorInitializationPhase) {
 			return true;
 		}

@@ -152,16 +152,22 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 	}
 
 	@Override
-	protected boolean addElement(final NODE elem) {
-		final boolean elemIsNew = super.addElement(elem);
+	public boolean addElement(final NODE elem) {
+		final boolean result = addElementRec(elem);
+		assert sanityCheck();
+		return result;
+	}
+
+	@Override
+	protected boolean addElementRec(final NODE elem) {
+		final boolean elemIsNew = super.addElementRec(elem);
 		if (!elemIsNew) {
-			assert sanityCheck();
 			return false;
 		}
 
 		if (mLiteralManager.isLiteral(elem)) {
 			for (final NODE other : mLiteralManager.getDisequalities(elem, getAllLiteralElements())) {
-				reportDisequality(elem, other);
+				reportDisequalityRec(elem, other);
 			}
 			mAllLiterals.add(elem);
 		}
@@ -170,7 +176,6 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 		reportAllArrayEqualitiesFromWeqGraph();
 
 		assert weqGraphFreeOfArrayEqualities();
-		assert sanityCheck();
 		return true;
 	}
 
@@ -262,8 +267,8 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 		}
 
 		boolean madeChanges = false;
-		madeChanges |= addElement(array1);
-		madeChanges |= addElement(array2);
+		madeChanges |= addElementRec(array1);
+		madeChanges |= addElementRec(array2);
 
 		final NODE array1Rep = mElementTVER.getRepresentative(array1);
 		final NODE array2Rep = mElementTVER.getRepresentative(array2);
@@ -358,13 +363,18 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 
 	@Override
 	public boolean reportEquality(final NODE node1, final NODE node2) {
-		assert node1.hasSameTypeAs(node2);
+		final boolean result = reportEqualityRec(node1, node2);
 		assert sanityCheck();
+		return result;
+	}
+
+	@Override
+	protected boolean reportEqualityRec(final NODE node1, final NODE node2) {
+		assert node1.hasSameTypeAs(node2);
 		boolean madeChanges = false;
 
-		madeChanges |= addElement(node1);
-		madeChanges |= addElement(node2);
-		assert sanityCheck();
+		madeChanges |= addElementRec(node1);
+		madeChanges |= addElementRec(node2);
 
 		if (!madeChanges && getEqualityStatus(node1, node2) == EqualityStatus.EQUAL) {
 			// nothing to do
@@ -383,7 +393,6 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 		final CongruenceClosure<NODE>.CcAuxData oldAuxData = new CcAuxData(mAuxData, true);
 
 		mWeakEquivalenceGraph.collapseEdgeAtMerge(node1OldRep, node2OldRep);
-		assert sanityCheck();
 
 		/*
 		 * cannot just du a super.reportEquality here, because we want to reestablish some class invariants (checked
@@ -414,7 +423,6 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 		reportGpaChangeToWeqGraphAndPropagateArrayEqualities(
 				(final CongruenceClosure<NODE> cc) -> cc.reportEquality(node1, node2));
 
-		assert sanityCheck();
 		return true;
 	}
 
@@ -530,7 +538,7 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 			}
 
 		}
-		assert sanityCheck();
+//		assert sanityCheck();
 
 		/*
 		 * roweq-1(2)
@@ -599,10 +607,16 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 
 	@Override
 	public boolean reportDisequality(final NODE elem1, final NODE elem2) {
+		final boolean result = reportDisequalityRec(elem1, elem2);
+		assert sanityCheck();
+		return result;
+	}
+
+	@Override
+	protected boolean reportDisequalityRec(final NODE elem1, final NODE elem2) {
 		boolean madeChanges = false;
 
-		madeChanges |= super.reportDisequality(elem1, elem2);
-		assert sanityCheck();
+		madeChanges |= super.reportDisequalityRec(elem1, elem2);
 
 		if (!madeChanges) {
 			return false;
@@ -617,7 +631,6 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 				(final CongruenceClosure<NODE> cc) -> cc.reportDisequality(elem1, elem2));
 
 		assert weqGraphFreeOfArrayEqualities();
-		assert sanityCheck();
 		return true;
 	}
 
@@ -636,7 +649,7 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 		boolean madeChanges = false;
 		madeChanges |= mWeakEquivalenceGraph.reportChangeInGroundPartialArrangement(reporter);
 		reportAllArrayEqualitiesFromWeqGraph();
-		assert sanityCheck();
+//		assert sanityCheck();
 		return madeChanges;
 	}
 
@@ -677,71 +690,95 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 	}
 
 	@Override
-	public boolean removeElement(final NODE elem) {
+	public boolean removeSimpleElement(final NODE elem) {
+		if (elem.isFunctionApplication()) {
+			throw new IllegalArgumentException();
+		}
 		if (!hasElement(elem) && mNodeToDependents.getImage(elem).isEmpty()) {
 			return false;
 		}
 		final CongruenceClosure<NODE> copy = new CongruenceClosure<>(this);
-		copy.removeElement(elem);
-		return removeElement(elem, copy);
-	}
 
-	private boolean projectedFunctionIsGoneFromWeqGraph(final NODE func,
-			final WeakEquivalenceGraph<ACTION, NODE> weakEquivalenceGraph) {
-		for (final Entry<Doubleton<NODE>, WeakEquivalenceGraph<ACTION, NODE>.WeakEquivalenceEdgeLabel> edge : weakEquivalenceGraph
-				.getEdges().entrySet()) {
-			if (edge.getValue().getAppearingNodes().contains(func)) {
-				assert false;
-				return false;
-			}
+//		addNodesEquivalentToNodesWithRemovedElement(elem);
+
+		final Collection<NODE> nodesToAdd = collectNodesToAddAtFunctionRemoval(elem);
+		for (final NODE node : nodesToAdd) {
+			addElement(node);
 		}
-		return true;
-	}
 
-	private boolean removeElement(final NODE elem, final CongruenceClosure<NODE> copy) {
-		if (hasElement(elem)) {
+//		final Set<NODE> oldAfParents = new HashSet<>(mFaAuxData.getAfParents(elem));
+//		final Set<NODE> oldArgParents = new HashSet<>(mFaAuxData.getArgParents(elem));
 
-			addNodesEquivalentToNodesWithRemovedElement(elem);
+//		final NODE newRep = updateElementTverAndAuxDataOnRemoveElement(elem);
+		final Map<NODE, NODE> removedElemsToNewReps = super.removeSimpleElementTrackNewReps(elem);
 
-			final Collection<NODE> nodesToAdd = collectNodesToAddAtFunctionRemoval(elem);
-			for (final NODE node : nodesToAdd) {
-				addElement(node);
-			}
+		mWeakEquivalenceGraph.projectFunction(elem, copy, removedElemsToNewReps);
 
-			final Set<NODE> oldAfParents = new HashSet<>(mFaAuxData.getAfParents(elem));
-			final Set<NODE> oldArgParents = new HashSet<>(mFaAuxData.getArgParents(elem));
-
-			final NODE newRep = updateElementTverAndAuxDataOnRemoveElement(elem);
-
-			/*
-			 * Project func from the weak equivalence graph. We need to make a copy of the
-			 * ground partial arrangement, because ..
-			 */
-			mWeakEquivalenceGraph.projectFunction(elem, newRep, copy);
-			assert projectedFunctionIsGoneFromWeqGraph(elem, mWeakEquivalenceGraph);
-
-			removeParents(oldAfParents, oldArgParents);
-
-			for (final NODE dependent : new HashSet<>(mNodeToDependents.getImage(elem))) {
-				removeElement(dependent, copy);
-			}
-			mNodeToDependents.removeDomainElement(elem);
-
-			assert weqGraphFreeOfArrayEqualities();
-			assert projectedFunctionIsGoneFromWeqGraph(elem, mWeakEquivalenceGraph);
-
-			mAllLiterals.remove(elem);
-		}
+//		removeParents(oldAfParents, oldArgParents);
 
 		for (final NODE dependent : new HashSet<>(mNodeToDependents.getImage(elem))) {
-			removeElement(dependent, copy);
+			removeSimpleElement(dependent);
 		}
 		mNodeToDependents.removeDomainElement(elem);
-		mNodeToDependents.removeRangeElement(elem);
 
+		mAllLiterals.remove(elem);
+
+		assert sanityCheck();
 		assert elementIsFullyRemoved(elem);
 		return true;
+//		return removeElement(elem, copy);
 	}
+
+//	@Override
+//	protected boolean removeFuncAppElement(final NODE elem) {
+//		// TODO Auto-generated method stub
+//		return super.removeFuncAppElement(elem);
+//	}
+
+//	private boolean removeElement(final NODE elem, final CongruenceClosure<NODE> copy) {
+//		if (hasElement(elem)) {
+//
+//			addNodesEquivalentToNodesWithRemovedElement(elem);
+//
+//			final Collection<NODE> nodesToAdd = collectNodesToAddAtFunctionRemoval(elem);
+//			for (final NODE node : nodesToAdd) {
+//				addElement(node);
+//			}
+//
+//			final Set<NODE> oldAfParents = new HashSet<>(mFaAuxData.getAfParents(elem));
+//			final Set<NODE> oldArgParents = new HashSet<>(mFaAuxData.getArgParents(elem));
+//
+//			final NODE newRep = updateElementTverAndAuxDataOnRemoveElement(elem);
+//
+//			/*
+//			 * Project func from the weak equivalence graph. We need to make a copy of the
+//			 * ground partial arrangement, because ..
+//			 */
+//			mWeakEquivalenceGraph.projectFunction(elem, newRep, copy);
+//			assert projectedFunctionIsGoneFromWeqGraph(elem, mWeakEquivalenceGraph);
+//
+//			removeParents(oldAfParents, oldArgParents);
+//
+////			for (final NODE dependent : new HashSet<>(mNodeToDependents.getImage(elem))) {
+////				removeElement(dependent, copy);
+////			}
+////			mNodeToDependents.removeDomainElement(elem);
+//
+//			assert weqGraphFreeOfArrayEqualities();
+//			assert projectedFunctionIsGoneFromWeqGraph(elem, mWeakEquivalenceGraph);
+//
+//			mAllLiterals.remove(elem);
+//		}
+//
+//		for (final NODE dependent : new HashSet<>(mNodeToDependents.getImage(elem))) {
+//			removeElement(dependent, copy);
+//		}
+//		mNodeToDependents.removeDomainElement(elem);
+//		mNodeToDependents.removeRangeElement(elem);
+//
+//		assert elementIsFullyRemoved(elem);
+//		return true;
+//	}
 
 	/**
 	 * When removing a function we will also remove all function nodes that depend
@@ -828,11 +865,11 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 
 		if (!elem.isFunctionApplication()) {
 			// nothing to do
-			assert sanityCheck();
+//			assert sanityCheck();
 			return;
 		}
 
-		assert sanityCheck();
+//		assert sanityCheck();
 
 
 		boolean madeChanges = false;
@@ -882,7 +919,7 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 			}
 		}
 
-		assert sanityCheck();
+//		assert sanityCheck();
 	}
 
 	@Override
@@ -992,6 +1029,18 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 		if (mWeakEquivalenceGraph.hasArrayEqualities()) {
 			assert false;
 			return false;
+		}
+		return true;
+	}
+
+	private boolean projectedFunctionIsGoneFromWeqGraph(final NODE func,
+			final WeakEquivalenceGraph<ACTION, NODE> weakEquivalenceGraph) {
+		for (final Entry<Doubleton<NODE>, WeakEquivalenceGraph<ACTION, NODE>.WeakEquivalenceEdgeLabel> edge : weakEquivalenceGraph
+				.getEdges().entrySet()) {
+			if (edge.getValue().getAppearingNodes().contains(func)) {
+				assert false;
+				return false;
+			}
 		}
 		return true;
 	}
