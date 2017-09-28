@@ -50,7 +50,7 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 	 * The WeqCongruenceClosure that this weq graph is part of. This may be null, if we use this weq graph as an
 	 * intermediate, for example during a join or meet operation.
 	 */
-	private WeqCongruenceClosure<ACTION, NODE> mPartialArrangement;
+	private final WeqCongruenceClosure<ACTION, NODE> mPartialArrangement;
 
 
 	/**
@@ -70,6 +70,7 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 	}
 
 	/**
+	 * special constructor for use in join, where we need a weq graph without a partial arrangement as an intermediate
 	 *
 	 * @param weakEquivalenceEdges caller needs to make sure that no one else has a reference to this map -- we are
 	 * 		not making a copy here.
@@ -78,10 +79,11 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 	 * @param factory
 	 */
 	private WeakEquivalenceGraph(
-			final WeqCongruenceClosure<ACTION, NODE> pArr,
+//			final WeqCongruenceClosure<ACTION, NODE> pArr,
 			final Map<Doubleton<NODE>, WeakEquivalenceEdgeLabel> weakEquivalenceEdges,
 			final HashRelation<NODE, NODE> arrayEqualities,
 			final EqConstraintFactory<ACTION, NODE> factory) {
+		mPartialArrangement = null;
 		mWeakEquivalenceEdges = weakEquivalenceEdges;
 		mArrayEqualities = arrayEqualities;
 		assert factory != null;
@@ -253,7 +255,7 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 					thisWeqEdge.getValue().union(correspondingWeqEdgeInOther));
 
 		}
-		final WeakEquivalenceGraph<ACTION, NODE> result = new WeakEquivalenceGraph<>(null,
+		final WeakEquivalenceGraph<ACTION, NODE> result = new WeakEquivalenceGraph<>(//null,
 				newWeakEquivalenceEdges, new HashRelation<>(), mFactory);
 		assert result.sanityCheck();
 		return result;
@@ -619,24 +621,26 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 			/*
 			 * Check that all the edges are between equivalence representatives of mPartialArrangement
 			 */
-			for (final Entry<Doubleton<NODE>, WeakEquivalenceEdgeLabel> edge : mWeakEquivalenceEdges.entrySet()) {
-				final NODE source = edge.getKey().getOneElement();
-				final NODE target = edge.getKey().getOtherElement();
-				if (!mPartialArrangement.hasElement(source)) {
+			if (mPartialArrangement != null) {
+				for (final Entry<Doubleton<NODE>, WeakEquivalenceEdgeLabel> edge : mWeakEquivalenceEdges.entrySet()) {
+					final NODE source = edge.getKey().getOneElement();
+					final NODE target = edge.getKey().getOtherElement();
+					if (!mPartialArrangement.hasElement(source)) {
 						assert false;
 						return false;
-				}
-				if (!mPartialArrangement.hasElement(target)) {
+					}
+					if (!mPartialArrangement.hasElement(target)) {
 						assert false;
 						return false;
-				}
-				if (!mPartialArrangement.isRepresentative(source)) {
+					}
+					if (!mPartialArrangement.isRepresentative(source)) {
 						assert false;
 						return false;
-				}
-				if (!mPartialArrangement.isRepresentative(target)) {
+					}
+					if (!mPartialArrangement.isRepresentative(target)) {
 						assert false;
 						return false;
+					}
 				}
 			}
 

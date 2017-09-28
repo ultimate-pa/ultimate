@@ -580,13 +580,15 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 				final WeakEquivalenceGraph<ACTION, NODE>.WeakEquivalenceEdgeLabel phi = edgeAdjacentToNode.getValue();
 
 				// TODO is it ok here to use that auxData from after the merge??
-				if (!mAuxData.getArgCcPars(ccc.getValue()).contains(edgeAdjacentToNode.getKey())) {
+//				if (!mAuxData.getArgCcPars(ccc.getValue()).contains(edgeAdjacentToNode.getKey())) {
+				if (!oldAuxData.getArgCcPars(ccc.getValue()).contains(edgeAdjacentToNode.getKey())) {
 					continue;
 				}
 				// n in argccp(j)
 
 				// TODO is it ok here to use tha auxData from after the merge??
-				for (final Entry<NODE, NODE> aj : mAuxData.getCcChildren(edgeAdjacentToNode.getKey())) {
+//				for (final Entry<NODE, NODE> aj : mAuxData.getCcChildren(edgeAdjacentToNode.getKey())) {
+				for (final Entry<NODE, NODE> aj : oldAuxData.getCcChildren(edgeAdjacentToNode.getKey())) {
 					// aj = (a,j), as in a[j]
 
 					// propagate b -- q != j, Phi+ -- a
