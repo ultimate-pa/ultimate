@@ -911,17 +911,18 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		}
 
 		private WeakEquivalenceEdgeLabel meet(final List<CongruenceClosure<NODE>> paList) {
-			final List<CongruenceClosure<NODE>> newLabelContent = new ArrayList<>();
 
 			final List<List<CongruenceClosure<NODE>>> li = new ArrayList<>(2);
 			li.add(getLabelContents());
 			li.add(paList);
 			final List<List<CongruenceClosure<NODE>>> cp = CrossProducts.crossProduct(li);
 
+			List<CongruenceClosure<NODE>> newLabelContent = new ArrayList<>();
 			for (final List<CongruenceClosure<NODE>> pair : cp) {
 				assert pair.size() == 2;
 				newLabelContent.add(pair.get(0).meet(pair.get(1)));
 			}
+			newLabelContent = mCcManager.filterRedundantCcs(newLabelContent);
 
 			final List<CongruenceClosure<NODE>> newLabel = simplifyPaDisjunction(newLabelContent);
 
@@ -961,6 +962,7 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		 * @return
 		 */
 		public WeakEquivalenceEdgeLabel union(final WeakEquivalenceEdgeLabel other) {
+			assert this.mLabel.size() < 10 && other.mLabel.size() < 10;
 			final List<CongruenceClosure<NODE>> unionList = new ArrayList<>(
 					mLabel.size() + other.getLabelContents().size());
 			unionList.addAll(mLabel);
@@ -1059,6 +1061,7 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		}
 
 		private boolean sanityCheck() {
+			assert mLabel.size() < 10;
 			return sanityCheck(mPartialArrangement);
 		}
 

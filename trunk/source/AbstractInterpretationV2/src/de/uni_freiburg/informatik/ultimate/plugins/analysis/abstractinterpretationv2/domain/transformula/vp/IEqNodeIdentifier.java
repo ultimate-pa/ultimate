@@ -43,11 +43,11 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ICongruenceClosur
  */
 public interface IEqNodeIdentifier<NODE extends IEqNodeIdentifier<NODE>> extends ICongruenceClosureElement<NODE> {
 
-	@Override
-	boolean isFunctionApplication();
-
-	@Override
-	NODE getAppliedFunction();
+//	@Override
+//	boolean isFunctionApplication();
+//
+//	@Override
+//	NODE getAppliedFunction();
 
 //	@Override
 //	List<NODE> getArguments();
@@ -63,7 +63,7 @@ public interface IEqNodeIdentifier<NODE extends IEqNodeIdentifier<NODE>> extends
 
 //	Collection<NODE> getSupportingFunctions();
 
-	boolean isLiteral();
+//	boolean isLiteral();
 
 	NODE renameVariables(Map<Term, Term> substitutionMapping);
 

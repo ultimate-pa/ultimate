@@ -27,4 +27,6 @@ public interface ICongruenceClosureElement<ELEM extends ICongruenceClosureElemen
 	ELEM replaceArgument(ELEM replacer);
 
 //	int getHeight();
+
+	boolean isLiteral();
 }

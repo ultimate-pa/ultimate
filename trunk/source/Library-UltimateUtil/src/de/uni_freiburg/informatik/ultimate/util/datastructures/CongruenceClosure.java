@@ -47,6 +47,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 
 	protected final CongruenceClosure<ELEM>.FuncAppTreeAuxData mFaAuxData;
 
+	protected final Collection<ELEM> mAllLiterals;
+
 	boolean mConstructorInitializationPhase = false;
 
 	/**
@@ -54,9 +56,10 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 	 * disequalities.
 	 */
 	public CongruenceClosure() {
-		mElementTVER = new ThreeValuedEquivalenceRelation<>();
+		mElementTVER = new ThreeValuedEquivalenceRelation<>(CongruenceClosure::literalComparator);
 		mAuxData = new CcAuxData();
 		mFaAuxData = new FuncAppTreeAuxData();
+		mAllLiterals = new HashSet<>();
 	}
 
 	/**
@@ -74,12 +77,14 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		mElementTVER = null;
 		mAuxData = null;
 		mFaAuxData = null;
+		mAllLiterals = null;
 	}
 
 	public CongruenceClosure(final ThreeValuedEquivalenceRelation<ELEM> newElemPartition) {
 		mElementTVER = newElemPartition;
 		mAuxData = new CcAuxData();
 		mFaAuxData = new FuncAppTreeAuxData();
+		mAllLiterals = new HashSet<>();
 
 		mConstructorInitializationPhase = true;
 		// initialize the helper mappings according to mElementTVER
@@ -88,6 +93,16 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		}
 		mConstructorInitializationPhase = false;
 		assert sanityCheck();
+	}
+
+	static <ELEM extends ICongruenceClosureElement<ELEM>> Integer literalComparator(final ELEM e1, final ELEM e2) {
+		if (e1.isLiteral() && !e2.isLiteral()) {
+			return -1;
+		}
+		if (e2.isLiteral() && !e1.isLiteral()) {
+			return 1;
+		}
+		return 0;
 	}
 
 	/**
@@ -102,6 +117,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		mElementTVER = new ThreeValuedEquivalenceRelation<>(original.mElementTVER);
 		mAuxData = new CcAuxData(original.mAuxData);
 		mFaAuxData = new FuncAppTreeAuxData(original.mFaAuxData);
+		mAllLiterals = new HashSet<>(original.mAllLiterals);
 		assert sanityCheck();
 	}
 
@@ -172,8 +188,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		 * transitivity.
 		 * Should save some useless propagations, and avoid some weirdness in debugging..
 		 */
-		final Set<ELEM> oldUnequalRepsForElem1 = mElementTVER.getRepresentativesUnequalTo(e1OldRep);
-		final Set<ELEM> oldUnequalRepsForElem2 = mElementTVER.getRepresentativesUnequalTo(e2OldRep);
+		final Set<ELEM> oldUnequalRepsForElem1 = getRepresentativesUnequalTo(e1OldRep);
+		final Set<ELEM> oldUnequalRepsForElem2 = getRepresentativesUnequalTo(e2OldRep);
 
 		mElementTVER.reportEquality(elem1, elem2);
 		if (mElementTVER.isInconsistent()) {
@@ -184,6 +200,22 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 				mAuxData.updateAndGetPropagationsOnMerge(elem1, elem2, e1OldRep, e2OldRep, oldUnequalRepsForElem1,
 						oldUnequalRepsForElem2);
 		return propInfo;
+	}
+
+
+	public Set<ELEM> getRepresentativesUnequalTo(final ELEM rep) {
+		assert isRepresentative(rep);
+		final Set<ELEM> result = new HashSet<>(mElementTVER.getRepresentativesUnequalTo(rep));
+
+		if (rep.isLiteral()) {
+			for (final ELEM lit : mAllLiterals) {
+				if (!lit.equals(rep)) {
+					result.add(lit);
+				}
+			}
+		}
+
+		return result;
 	}
 
 	public boolean reportDisequality(final ELEM elem1, final ELEM elem2) {
@@ -251,6 +283,9 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 	 * @param elem
 	 */
 	protected void registerNewElement(final ELEM elem) {
+		if (elem.isLiteral()) {
+			mAllLiterals.add(elem);
+		}
 
 		if (!elem.isFunctionApplication()) {
 			// nothing to do
@@ -272,6 +307,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 
 		addElementRec(elem.getAppliedFunction());
 		addElementRec(elem.getArgument());
+
+
 
 		for (final Entry<ELEM, ELEM> eq : equalitiesToPropagate.entrySet()) {
 			reportEqualityRec(eq.getKey(), eq.getValue());
@@ -452,6 +489,13 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 	}
 
 	public CongruenceClosure<ELEM> join(final CongruenceClosure<ELEM> other) {
+		if (this.isInconsistent()) {
+			return new CongruenceClosure<>(other);
+		}
+		if (other.isInconsistent()) {
+			return new CongruenceClosure<>(this);
+		}
+
 		final CongruenceClosure<ELEM> thisAligned = this.alignElementsAndFunctions(other);
 		final CongruenceClosure<ELEM> otherAligned = other.alignElementsAndFunctions(this);
 
@@ -467,6 +511,15 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 	 * @return
 	 */
 	protected CongruenceClosure<ELEM> alignElementsAndFunctions(final CongruenceClosure<ELEM> other) {
+		assert !this.isInconsistent() && !other.isInconsistent();
+//		if (isInconsistent()) {
+//			return new CongruenceClosure<>(true);
+//		}
+//		if (other.isInconsistent()) {
+//			// nothing to align to
+//			return new CongruenceClosure<>(this);
+//		}
+
 //		assert this.sanityCheckOnlyCc();
 		final CongruenceClosure<ELEM> result = new CongruenceClosure<>(this);
 //		assert result.sanityCheckOnlyCc();
@@ -500,6 +553,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 	}
 
 	private CongruenceClosure<ELEM> naiveMeet(final CongruenceClosure<ELEM> other) {
+		assert !this.isInconsistent() && !other.isInconsistent();
+
 		final CongruenceClosure<ELEM> thisAligned = this.alignElementsAndFunctions(other);
 		final CongruenceClosure<ELEM> otherAligned = other.alignElementsAndFunctions(this);
 
@@ -525,6 +580,13 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 	 *         the other given CongruenceClosure
 	 */
 	public boolean isStrongerThan(final CongruenceClosure<ELEM> other) {
+		if (this.isInconsistent()) {
+			return true;
+		}
+		if (other.isInconsistent()) {
+			// we know this != False, and other = False
+			return false;
+		}
 		final CongruenceClosure<ELEM> thisAligned = this.alignElementsAndFunctions(other);
 		final CongruenceClosure<ELEM> otherAligned = other.alignElementsAndFunctions(this);
 		return checkIsStrongerThan(thisAligned, otherAligned);
@@ -538,9 +600,20 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 	 * might not see all relevant equivalence classes in "other")
 	 *
 	 * assumes that this and other have the same elements and functions
+	 *
+	 * Induces a non-strict (antisymmetric) partial ordering of the CongruenceClosure instances.
 	 */
 	private boolean checkIsStrongerThan(final CongruenceClosure<ELEM> thisAligned,
 			final CongruenceClosure<ELEM> otherAligned) {
+		assert !thisAligned.isInconsistent() && !otherAligned.isInconsistent();
+//		if (this.isInconsistent()) {
+//			return true;
+//		}
+//		if (otherAligned.isInconsistent()) {
+//			// we know this != False, and other = False
+//			return false;
+//		}
+
 		assert thisAligned.getAllElements().equals(otherAligned.getAllElements());
 
 		if (!isPartitionStronger(thisAligned.mElementTVER, otherAligned.mElementTVER)) {
@@ -557,6 +630,13 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 	}
 
 	public boolean isEquivalent(final CongruenceClosure<ELEM> other) {
+		if (this.isInconsistent() && other.isInconsistent()) {
+			return false;
+		}
+		if (other.isInconsistent() || this.isInconsistent()) {
+			return false;
+		}
+
 		final CongruenceClosure<ELEM> thisAligned = this.alignElementsAndFunctions(other);
 		final CongruenceClosure<ELEM> otherAligned = other.alignElementsAndFunctions(this);
 		return checkIsStrongerThan(thisAligned, otherAligned) && checkIsStrongerThan(otherAligned, thisAligned);
@@ -593,6 +673,16 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 	}
 
 	public EqualityStatus getEqualityStatus(final ELEM elem1, final ELEM elem2) {
+		assert hasElement(elem1) && hasElement(elem2);
+
+		final ELEM rep1 = getRepresentativeElement(elem1);
+		final ELEM rep2 = getRepresentativeElement(elem2);
+
+		if (rep1.equals(rep2)) {
+			return EqualityStatus.EQUAL;
+		} else if (rep1.isLiteral() && rep2.isLiteral()) {
+			return EqualityStatus.NOT_EQUAL;
+		}
 		return mElementTVER.getEqualityStatus(elem1, elem2);
 	}
 
@@ -614,7 +704,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 
 	public boolean vectorsAreCongruent(final List<ELEM> argList1, final List<ELEM> argList2) {
 		for (int i = 0; i < argList1.size(); i++) {
-			if (mElementTVER.getEqualityStatus(argList1.get(i), argList2.get(i)) != EqualityStatus.EQUAL) {
+			if (getEqualityStatus(argList1.get(i), argList2.get(i)) != EqualityStatus.EQUAL) {
 				return false;
 			}
 		}
@@ -664,6 +754,41 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 			if (!mAuxData.getCcChildren(rep).containsPair(elem.getAppliedFunction(), elem.getArgument())) {
 				assert false;
 				return false;
+			}
+		}
+
+		/*
+		 * check that all elements with isLiteral() = true are in mAllLiterals
+		 * an that every element of mAllLiterals is a literal
+		 */
+		for (final ELEM elem : getAllElements()) {
+			if (elem.isLiteral() && !mAllLiterals.contains(elem)) {
+				assert false;
+				return false;
+			}
+		}
+		for (final ELEM lit : mAllLiterals) {
+			if (!lit.isLiteral()) {
+				assert false;
+				return false;
+			}
+		}
+
+		/*
+		 * check for each equivalence class that if there is a literal in the equivalence class, it is the
+		 * representative
+		 */
+		for (final Set<ELEM> eqc : mElementTVER.getAllEquivalenceClasses()) {
+			for (final ELEM elem : eqc) {
+				if (!elem.isLiteral()) {
+					continue;
+				}
+				// elem is literal
+				if (!isRepresentative(elem)) {
+					// elem is a
+					assert false;
+					return false;
+				}
 			}
 		}
 

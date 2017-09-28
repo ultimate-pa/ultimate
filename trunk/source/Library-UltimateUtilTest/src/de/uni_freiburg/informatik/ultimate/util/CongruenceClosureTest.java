@@ -761,6 +761,12 @@ class StringCcElement implements ICongruenceClosureElement<StringCcElement>{
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
+	public boolean isLiteral() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
 
 
 

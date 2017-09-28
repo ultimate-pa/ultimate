@@ -32,8 +32,8 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 	private final WeakEquivalenceGraph<ACTION, NODE> mWeakEquivalenceGraph;
 	private final EqConstraintFactory<ACTION, NODE> mFactory;
 
-	private final LiteralManager<NODE> mLiteralManager;
-	private final Collection<NODE> mAllLiterals;
+//	private final LiteralManager<NODE> mLiteralManager;
+//	private final Collection<NODE> mAllLiterals;
 
 	private final HashRelation<Object, NODE> mNodeToDependents;
 
@@ -47,8 +47,8 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 		assert factory != null;
 		mWeakEquivalenceGraph = new WeakEquivalenceGraph<>(this, factory);
 		mFactory = factory;
-		mLiteralManager = mFactory.getLiteralManager();
-		mAllLiterals = new HashSet<>();
+//		mLiteralManager = mFactory.getLiteralManager();
+//		mAllLiterals = new HashSet<>();
 		mNodeToDependents = new HashRelation<>();
 	}
 
@@ -64,8 +64,8 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 		}
 		mWeakEquivalenceGraph = null;
 		mFactory = null;
-		mLiteralManager = null;
-		mAllLiterals = null;
+//		mLiteralManager = null;
+//		mAllLiterals = null;
 		mNodeToDependents = null;
 	}
 
@@ -82,9 +82,9 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 		assert factory != null;
 		mWeakEquivalenceGraph = new WeakEquivalenceGraph<>(this, factory);
 		mFactory = factory;
-		mLiteralManager = mFactory.getLiteralManager();
-		mAllLiterals = original.getAllElementRepresentatives().stream().filter(elem -> mLiteralManager.isLiteral(elem))
-				.collect(Collectors.toCollection(HashSet::new));
+//		mLiteralManager = mFactory.getLiteralManager();
+//		mAllLiterals = original.getAllElementRepresentatives().stream().filter(elem -> mLiteralManager.isLiteral(elem))
+//				.collect(Collectors.toCollection(HashSet::new));
 
 		mNodeToDependents = new HashRelation<>();
 		initializeNodeToDependents(original);
@@ -107,9 +107,9 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 		// graph to the right cc instance..
 		mWeakEquivalenceGraph = new WeakEquivalenceGraph<>(this, weqGraph);
 		mFactory = factory;
-		mLiteralManager = mFactory.getLiteralManager();
-		mAllLiterals = original.getAllElementRepresentatives().stream().filter(elem -> mLiteralManager.isLiteral(elem))
-				.collect(Collectors.toCollection(HashSet::new));
+//		mLiteralManager = mFactory.getLiteralManager();
+//		mAllLiterals = original.getAllElementRepresentatives().stream().filter(elem -> mLiteralManager.isLiteral(elem))
+//				.collect(Collectors.toCollection(HashSet::new));
 		mNodeToDependents = new HashRelation<>();
 		initializeNodeToDependents(original);
 	}
@@ -123,9 +123,9 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 		super(original);
 		assert original.mFactory != null;
 		mFactory = original.mFactory;
-		mLiteralManager = mFactory.getLiteralManager();
+//		mLiteralManager = mFactory.getLiteralManager();
 		mWeakEquivalenceGraph = new WeakEquivalenceGraph<>(this, original.mWeakEquivalenceGraph);
-		mAllLiterals = new HashSet<>(original.mAllLiterals);
+//		mAllLiterals = new HashSet<>(original.mAllLiterals);
 		mNodeToDependents = new HashRelation<>(original.mNodeToDependents);
 	}
 
@@ -165,12 +165,12 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 			return false;
 		}
 
-		if (mLiteralManager.isLiteral(elem)) {
-			for (final NODE other : mLiteralManager.getDisequalities(elem, getAllLiteralElements())) {
-				reportDisequalityRec(elem, other);
-			}
-			mAllLiterals.add(elem);
-		}
+//		if (mLiteralManager.isLiteral(elem)) {
+//			for (final NODE other : mLiteralManager.getDisequalities(elem, getAllLiteralElements())) {
+//				reportDisequalityRec(elem, other);
+//			}
+//			mAllLiterals.add(elem);
+//		}
 
 		executeFloydWarshallAndReportResult();
 		reportAllArrayEqualitiesFromWeqGraph();
@@ -179,12 +179,13 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 		return true;
 	}
 
-	private Collection<NODE> getAllLiteralElements() {
-		return mAllLiterals;
-	}
+//	private Collection<NODE> getAllLiteralElements() {
+//		return mAllLiterals;
+//	}
 
 	@Override
 	protected CongruenceClosure<NODE> alignElementsAndFunctions(final CongruenceClosure<NODE> otherCC) {
+		assert !this.isInconsistent() && !otherCC.isInconsistent();
 		if (!(otherCC instanceof WeqCongruenceClosure)) {
 			return super.alignElementsAndFunctions(otherCC);
 		}
@@ -953,6 +954,10 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 		if (!(otherCC instanceof WeqCongruenceClosure)) {
 			throw new IllegalArgumentException();
 		}
+		if (otherCC.isInconsistent()) {
+			return new WeqCongruenceClosure<>(this);
+		}
+
 		final WeqCongruenceClosure<ACTION, NODE> other = (WeqCongruenceClosure<ACTION, NODE>) otherCC;
 
 		return new WeqCongruenceClosure<>(super.join(other), mWeakEquivalenceGraph.join(other.mWeakEquivalenceGraph),
