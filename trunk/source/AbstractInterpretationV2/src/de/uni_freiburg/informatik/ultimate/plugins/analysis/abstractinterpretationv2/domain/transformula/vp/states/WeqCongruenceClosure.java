@@ -311,6 +311,14 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 					return true;
 				}
 
+				if (!hasElements(ccp1, ccp2, ccp1.getArgument(), ccp2.getArgument(), ccp1.getAppliedFunction(),
+						ccp2.getAppliedFunction())) {
+					/*
+					 * ccp1 or ccp2 or some part of them is currently being removed (I guess) -- don't add them back!..
+					 */
+					continue;
+				}
+
 				if (getEqualityStatus(ccp1.getArgument(), ccp2.getArgument()) != EqualityStatus.EQUAL) {
 					continue;
 				}
@@ -342,7 +350,7 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 					shiftedLabelWithException);
 		}
 
-		assert sanityCheck();
+//		assert sanityCheck();
 		return true;
 	}
 
@@ -479,6 +487,9 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 //		}
 		for (final Entry<NODE, NODE> ccc1 : oldAuxData.getCcChildren(node1OldRep)) {
 			for (final Entry<NODE, NODE> ccc2 : oldAuxData.getCcChildren(node2OldRep)) {
+				if (!hasElements(ccc1.getKey(), ccc1.getValue(), ccc2.getKey(), ccc2.getValue())) {
+					continue;
+				}
 				// case ccc1 = (a,i), ccc2 = (b,j)
 				if (getEqualityStatus(ccc1.getValue(), ccc2.getValue()) != EqualityStatus.EQUAL) {
 					// not i = j --> cannot propagate
@@ -896,6 +907,11 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 		for (final NODE ccp : mAuxData.getArgCcPars(getRepresentativeElement(elem.getArgument()))) {
 			if (!ccp.hasSameTypeAs(elem)) {
 				// TODO: nicer would be to have argCcPars contain only elements of fitting sort..
+				continue;
+			}
+
+			if (!hasElements(ccp, ccp.getAppliedFunction(), ccp.getArgument())) {
+				// might happen during remove operation
 				continue;
 			}
 

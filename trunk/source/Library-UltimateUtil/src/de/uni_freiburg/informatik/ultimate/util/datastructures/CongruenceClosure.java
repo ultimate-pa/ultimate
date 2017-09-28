@@ -184,6 +184,9 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		 * (fwcc)
 		 */
 		for (final Entry<ELEM, ELEM> congruentParents : equalitiesToPropagate) {
+			if (isInconsistent()) {
+				return;
+			}
 			reportEqualityRec(congruentParents.getKey(), congruentParents.getValue());
 		}
 
@@ -191,6 +194,9 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		 * (bwcc1), (bwcc2)  (-- they're only separate cases during reportDisequality)
 		 */
 		for (final Entry<ELEM, ELEM> unequalNeighborIndices : disequalitiesToPropagate) {
+			if (isInconsistent()) {
+				return;
+			}
 			reportDisequalityRec(unequalNeighborIndices.getKey(), unequalNeighborIndices.getValue());
 		}
 	}
@@ -988,6 +994,15 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		return true;
 	}
 
+	public boolean hasElements(final ELEM... elems) {
+		for (final ELEM e : elems) {
+			if (!hasElement(e)) {
+				return false;
+			}
+		}
+		return true;
+	}
+
 	public boolean hasElement(final ELEM elem) {
 		return getAllElements().contains(elem);
 	}
@@ -1434,6 +1449,14 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 
 		private void addPropIfOneIsEqualOneIsUnconstrained(final ELEM af1, final ELEM arg1, final ELEM af2,
 				final ELEM arg2,final HashRelation<ELEM, ELEM> result) {
+			if (!hasElement(af1) || !hasElement(af2) || !hasElement(arg1) || !hasElement(arg2)) {
+				/*
+				 *  it may happen that during a remove element we reach here and some map still has an element that is
+				 *  being removed (if we added a propagation here, we would add the element back..)
+				 */
+				return;
+			}
+
 			final EqualityStatus equalityStatusOfAppliedFunctions =
 					getEqualityStatus(af1, af2);
 			final EqualityStatus equalityStatusOfArguments =

@@ -457,7 +457,7 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 
 		// replace the edge label by the strengthened version
 		mWeakEquivalenceEdges.put(sourceAndTarget, strengthenedEdgeLabel);
-		assert sanityCheck();
+//		assert sanityCheck();
 		return true;
 	}
 
@@ -594,11 +594,10 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 			 */
 			if (mPartialArrangement != null) {
 				for (final Entry<Doubleton<NODE>, WeakEquivalenceEdgeLabel> edge : mWeakEquivalenceEdges.entrySet()) {
-					if (!mPartialArrangement.getAllElements().containsAll(
-							edge.getValue().getAppearingNodes().stream()
+					final Set<NODE> nodesOnEdgeLabelWithoutWeqNodes = edge.getValue().getAppearingNodes().stream()
 							.filter(node -> !CongruenceClosure.hasSubElement(node, mFactory.getAllWeqNodes()))
-//							.filter(node -> !mFactory.getAllWeqNodes().contains(node))
-							.collect(Collectors.toSet()))) {
+							.collect(Collectors.toSet());
+					if (!mPartialArrangement.getAllElements().containsAll(nodesOnEdgeLabelWithoutWeqNodes)) {
 						assert false;
 						return false;
 					}
