@@ -43,14 +43,14 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner/to\ procedures,\ called\ more\ than\ once=true
 
 #Fri Nov 06 13:55:47 CET 2015
-/instance/UltimateCore/Command\ to\ execute\ witness\ verifier\ (gets\ witness\ file\ as\ first\ and\ input\ file\ as\ second\ parameter)\nFor\ CPA\ Checker\:\ Additionally,\ set\ CPACHECKER_HOME=scripts/cpa.sh -witness-check 
-/instance/UltimateCore/Drop\ models\ when\ Ultimate\ exits=false
-/instance/UltimateCore/Write\ witness\ as\ "<inputfilename>-witness.graphml"\ in\ the\ same\ directory\ as\ the\ input\ file=true
-/instance/UltimateCore/Generate\ witness\ from\ each\ counter\ example\ result=true
-/instance/UltimateCore/For\ CPAChecker\:\ Use\ this\ .prp\ file\ (may\ be\ relative\ to\ CPACHECKER_HOME)=examples/PropertyERROR.prp
+/instance/de.uni_freiburg.informatik.ultimate.core/Command\ to\ execute\ witness\ verifier\ (gets\ witness\ file\ as\ first\ and\ input\ file\ as\ second\ parameter)\nFor\ CPA\ Checker\:\ Additionally,\ set\ CPACHECKER_HOME=scripts/cpa.sh -witness-check 
+/instance/de.uni_freiburg.informatik.ultimate.core/Drop\ models\ when\ Ultimate\ exits=false
+/instance/de.uni_freiburg.informatik.ultimate.core/Write\ witness\ as\ "<inputfilename>-witness.graphml"\ in\ the\ same\ directory\ as\ the\ input\ file=true
+/instance/de.uni_freiburg.informatik.ultimate.core/Generate\ witness\ from\ each\ counter\ example\ result=true
+/instance/de.uni_freiburg.informatik.ultimate.core/For\ CPAChecker\:\ Use\ this\ .prp\ file\ (may\ be\ relative\ to\ CPACHECKER_HOME)=examples/PropertyERROR.prp
 file_export_version=3.0
-/instance/UltimateCore/Verify\ the\ witness\ and\ generate\ results=true
-\!/instance/UltimateCore=
-/instance/UltimateCore/Write\ witness\ as\ "witness.graphml"\ to\ working\ directory=false
-/instance/UltimateCore/Log\ witness=true
-@UltimateCore=0.0.1
+/instance/de.uni_freiburg.informatik.ultimate.core/Verify\ the\ witness\ and\ generate\ results=true
+\!/instance/de.uni_freiburg.informatik.ultimate.core=
+/instance/de.uni_freiburg.informatik.ultimate.core/Write\ witness\ as\ "witness.graphml"\ to\ working\ directory=false
+/instance/de.uni_freiburg.informatik.ultimate.core/Log\ witness=true
+@de.uni_freiburg.informatik.ultimate.core=0.0.1

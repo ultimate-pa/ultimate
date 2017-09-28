@@ -20,5 +20,5 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Checked\ method.\ Library\ mode\ if\ empty.=main
 @de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator=0.0.1
 #Mon Jun 22 16:37:27 CEST 2015
-/instance/UltimateCore/ultimate.logging.details=de.uni_freiburg.informatik.ultimate.buchiprogramproduct\=DEBUG;de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2\=DEBUG;
-@UltimateCore=0.0.1
+/instance/de.uni_freiburg.informatik.ultimate.core/ultimate.logging.details=de.uni_freiburg.informatik.ultimate.buchiprogramproduct\=DEBUG;de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2\=DEBUG;
+@de.uni_freiburg.informatik.ultimate.core=0.0.1

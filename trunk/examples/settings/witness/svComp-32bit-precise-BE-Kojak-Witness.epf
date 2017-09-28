@@ -56,16 +56,16 @@ file_export_version=3.0
 @CDTParser=0.0.1
 #Mon Nov 03 12:22:26 CET 2014
 file_export_version=3.0
-/instance/UltimateCore/Command\ to\ execute\ witness\ verifier\ (gets\ witness\ file\ as\ first\ and\ input\ file\ as\ second\ parameter)\nFor\ CPA\ Checker\:\ Additionally,\ set\ CPACHECKER_HOME=scripts/cpa.bat -explicitAnalysis-NoRefiner -setprop analysis.checkCounterexamples\=false -setprop cpa.value.merge\=SEP -setprop cfa.useMultiEdges\=false -setprop parser.transformTokensToLines\=false -setprop spec.matchSourcecodeData\=false -setprop spec.strictLineMatching\=false -setprop cfa.simplifyCfa\=false -setprop cpa.value.optimizeBooleanVariables\=false
-/instance/UltimateCore/Write\ witness\ as\ "<inputfilename>-witness.graphml"\ in\ the\ same\ directory\ as\ the\ input\ file=true
-/instance/UltimateCore/For\ CPAChecker\:\ Use\ this\ .prp\ file\ (may\ be\ relative\ to\ CPACHECKER_HOME)=examples/PropertyERROR.prp
-/instance/UltimateCore/Timeout\ in\ seconds\ for\ witness\ verifier=30
+/instance/de.uni_freiburg.informatik.ultimate.core/Command\ to\ execute\ witness\ verifier\ (gets\ witness\ file\ as\ first\ and\ input\ file\ as\ second\ parameter)\nFor\ CPA\ Checker\:\ Additionally,\ set\ CPACHECKER_HOME=scripts/cpa.bat -explicitAnalysis-NoRefiner -setprop analysis.checkCounterexamples\=false -setprop cpa.value.merge\=SEP -setprop cfa.useMultiEdges\=false -setprop parser.transformTokensToLines\=false -setprop spec.matchSourcecodeData\=false -setprop spec.strictLineMatching\=false -setprop cfa.simplifyCfa\=false -setprop cpa.value.optimizeBooleanVariables\=false
+/instance/de.uni_freiburg.informatik.ultimate.core/Write\ witness\ as\ "<inputfilename>-witness.graphml"\ in\ the\ same\ directory\ as\ the\ input\ file=true
+/instance/de.uni_freiburg.informatik.ultimate.core/For\ CPAChecker\:\ Use\ this\ .prp\ file\ (may\ be\ relative\ to\ CPACHECKER_HOME)=examples/PropertyERROR.prp
+/instance/de.uni_freiburg.informatik.ultimate.core/Timeout\ in\ seconds\ for\ witness\ verifier=30
 file_export_version=3.0
-/instance/UltimateCore/Verify\ the\ witness\ and\ generate\ results=true
-\!/instance/UltimateCore=
-/instance/UltimateCore/Log\ witness=true
-/instance/UltimateCore/Write\ witness\ as\ "witness.graphml"\ to\ working\ directory=false
-@UltimateCore=0.0.1
+/instance/de.uni_freiburg.informatik.ultimate.core/Verify\ the\ witness\ and\ generate\ results=true
+\!/instance/de.uni_freiburg.informatik.ultimate.core=
+/instance/de.uni_freiburg.informatik.ultimate.core/Log\ witness=true
+/instance/de.uni_freiburg.informatik.ultimate.core/Write\ witness\ as\ "witness.graphml"\ to\ working\ directory=false
+@de.uni_freiburg.informatik.ultimate.core=0.0.1
 #Mon Nov 03 12:22:26 CET 2014
 file_export_version=3.0
 \!/instance/de.uni_freiburg.informatik.ultimate.gui=

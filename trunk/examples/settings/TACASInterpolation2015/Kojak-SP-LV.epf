@@ -60,10 +60,10 @@ file_export_version=3.0
 @CDTParser=0.0.1
 #Wed Feb 04 16:41:04 CET 2015
 file_export_version=3.0
-/instance/UltimateCore/Toolchain\ timeout\ in\ seconds=300
-\!/instance/UltimateCore=
-@UltimateCore=0.0.1
-/instance/UltimateCore/Generate\ benchmark\ results=true
+/instance/de.uni_freiburg.informatik.ultimate.core/Toolchain\ timeout\ in\ seconds=300
+\!/instance/de.uni_freiburg.informatik.ultimate.core=
+@de.uni_freiburg.informatik.ultimate.core=0.0.1
+/instance/de.uni_freiburg.informatik.ultimate.core/Generate\ benchmark\ results=true
 #Wed Feb 04 16:41:04 CET 2015
 file_export_version=3.0
 \!/instance/de.uni_freiburg.informatik.ultimate.gui=

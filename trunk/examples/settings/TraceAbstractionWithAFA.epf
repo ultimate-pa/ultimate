@@ -80,9 +80,9 @@ file_export_version=3.0
 @CDTParser=0.0.1
 #Tue Jan 27 16:36:29 CET 2015
 file_export_version=3.0
-\!/instance/UltimateCore=
-@UltimateCore=0.0.1
-/instance/UltimateCore/Generate\ benchmark\ results=false
+\!/instance/de.uni_freiburg.informatik.ultimate.core=
+@de.uni_freiburg.informatik.ultimate.core=0.0.1
+/instance/de.uni_freiburg.informatik.ultimate.core/Generate\ benchmark\ results=false
 #Tue Jan 27 16:36:29 CET 2015
 file_export_version=3.0
 \!/instance/de.uni_freiburg.informatik.ultimate.gui=

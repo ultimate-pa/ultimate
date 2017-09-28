@@ -34,6 +34,6 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Command\ for\ external\ solver\ (rank\ synthesis)=z3 SMTLIB2_COMPLIANT\=true -memory\:2560 -smt2 -in -t\:10000
 #Sat May 03 03:33:13 CEST 2014
 file_export_version=3.0
-\!/instance/UltimateCore=
-@UltimateCore=0.0.1
-/instance/UltimateCore/Generate\ benchmark\ results=false
+\!/instance/de.uni_freiburg.informatik.ultimate.core=
+@de.uni_freiburg.informatik.ultimate.core=0.0.1
+/instance/de.uni_freiburg.informatik.ultimate.core/Generate\ benchmark\ results=false

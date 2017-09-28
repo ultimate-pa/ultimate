@@ -1,8 +1,8 @@
 #Fri Sep 08 22:39:43 CEST 2017
-\!/instance/UltimateCore=
-/instance/UltimateCore/Generate\ witness\ from\ each\ counter\ example\ result=true
-/instance/UltimateCore/Log\ level\ for\ plugins=info
-/instance/UltimateCore/Write\ witness\ as\ "witness.graphml"\ to\ working\ directory=true
+\!/instance/de.uni_freiburg.informatik.ultimate.core=
+/instance/de.uni_freiburg.informatik.ultimate.core/Generate\ witness\ from\ each\ counter\ example\ result=true
+/instance/de.uni_freiburg.informatik.ultimate.core/Log\ level\ for\ plugins=info
+/instance/de.uni_freiburg.informatik.ultimate.core/Write\ witness\ as\ "witness.graphml"\ to\ working\ directory=true
 file_export_version=3.0
 #Fri Sep 08 22:39:43 CEST 2017
 \!/instance/de.uni_freiburg.informatik.ultimate.gui=

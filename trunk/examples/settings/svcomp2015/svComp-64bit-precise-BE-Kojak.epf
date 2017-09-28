@@ -54,8 +54,8 @@ file_export_version=3.0
 @CDTParser=0.0.1
 #Fri Oct 24 16:34:22 CEST 2014
 file_export_version=3.0
-\!/instance/UltimateCore=
-@UltimateCore=0.0.1
+\!/instance/de.uni_freiburg.informatik.ultimate.core=
+@de.uni_freiburg.informatik.ultimate.core=0.0.1
 #Fri Oct 24 16:34:22 CEST 2014
 file_export_version=3.0
 \!/instance/de.uni_freiburg.informatik.ultimate.gui=

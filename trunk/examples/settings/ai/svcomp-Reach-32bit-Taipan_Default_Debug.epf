@@ -60,8 +60,8 @@ file_export_version=3.0
 
 #Fri Jun 05 02:20:55 CEST 2015
 file_export_version=3.0
-@UltimateCore=0.0.1
-/instance/UltimateCore/ultimate.logging.details=de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2\=DEBUG;de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction\=DEBUG;
+@de.uni_freiburg.informatik.ultimate.core=0.0.1
+/instance/de.uni_freiburg.informatik.ultimate.core/ultimate.logging.details=de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2\=DEBUG;de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction\=DEBUG;
 
 
 #Thu Mar 30 11:40:11 CEST 2017

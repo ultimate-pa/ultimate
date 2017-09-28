@@ -16,8 +16,8 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Compute\ Hoare\ Annotation\ of\ negated\ interpolant\ automaton,\ abstraction\ and\ CFG=true
 
 #Fri Mar 07 12:08:07 CET 2014
-/instance/UltimateCore/Log\ Level\ for\ Controller\ Plugin=INFO
-/instance/UltimateCore/Log\ Level\ for\ Core\ Plugin=INFO
-/instance/UltimateCore/Log\ Level\ for\ External\ Tools=INFO
-/instance/UltimateCore/Root\ Log\ Level=INFO
-/instance/UltimateCore/Log\ Level\ for\ Plugins=INFO
+/instance/de.uni_freiburg.informatik.ultimate.core/Log\ Level\ for\ Controller\ Plugin=INFO
+/instance/de.uni_freiburg.informatik.ultimate.core/Log\ Level\ for\ Core\ Plugin=INFO
+/instance/de.uni_freiburg.informatik.ultimate.core/Log\ Level\ for\ External\ Tools=INFO
+/instance/de.uni_freiburg.informatik.ultimate.core/Root\ Log\ Level=INFO
+/instance/de.uni_freiburg.informatik.ultimate.core/Log\ Level\ for\ Plugins=INFO

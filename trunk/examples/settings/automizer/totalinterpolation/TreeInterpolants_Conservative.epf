@@ -18,4 +18,4 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Interpolant\ automaton\ enhancement=PREDICATE_ABSTRACTION_CONSERVATIVE
 #Sat Mar 15 16:00:32 CET 2014
 file_export_version=3.0
-/instance/UltimateCore/Generate\ benchmark\ results=false
+/instance/de.uni_freiburg.informatik.ultimate.core/Generate\ benchmark\ results=false

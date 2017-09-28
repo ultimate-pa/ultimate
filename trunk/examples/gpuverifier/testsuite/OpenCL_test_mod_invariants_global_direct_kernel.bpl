@@ -31,8 +31,6 @@ var {:race_checking} {:global} {:elem_width 32} {:source_elem_width 32} {:source
 
 const _WATCHED_OFFSET: bv32;
 
-const {:existential true} _c0: bool;
-
 const {:global_offset_x} global_offset_x: bv32;
 
 const {:global_offset_y} global_offset_y: bv32;
@@ -132,8 +130,8 @@ implementation {:source_name "foo"} ULTIMATE.start()
   $for.cond:
     assume {:captureState "loop_head_state_0"} true;
     assert {:block_sourceloc} {:sourceloc_num 1} p0$1 ==> true;
-    assert {:tag "user"} {:originated_from_invariant} {:sourceloc_num 2} {:thread 1} p0$1 ==> _c0 ==> (if $i.0$1 == v0$1 then 1bv1 else 0bv1) != 0bv1;
-    assert {:tag "user"} {:originated_from_invariant} {:sourceloc_num 2} {:thread 2} p0$2 ==> _c0 ==> (if $i.0$2 == v0$2 then 1bv1 else 0bv1) != 0bv1;
+    assert {:tag "user"} {:originated_from_invariant} {:sourceloc_num 2} {:thread 1} p0$1 ==> false ==> (if $i.0$1 == v0$1 then 1bv1 else 0bv1) != 0bv1;
+    assert {:tag "user"} {:originated_from_invariant} {:sourceloc_num 2} {:thread 2} p0$2 ==> false ==> (if $i.0$2 == v0$2 then 1bv1 else 0bv1) != 0bv1;
     v1$1 := (if p0$1 then BV32_SLT($i.0$1, 1024bv32) else v1$1);
     v1$2 := (if p0$2 then BV32_SLT($i.0$2, 1024bv32) else v1$2);
     p1$1 := false;
