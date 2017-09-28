@@ -591,7 +591,9 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 				for (final Entry<Doubleton<NODE>, WeakEquivalenceEdgeLabel> edge : mWeakEquivalenceEdges.entrySet()) {
 					if (!mPartialArrangement.getAllElements().containsAll(
 							edge.getValue().getAppearingNodes().stream()
-							.filter(node -> !mFactory.getAllWeqNodes().contains(node)).collect(Collectors.toSet()))) {
+							.filter(node -> !CongruenceClosure.hasSubElement(node, mFactory.getAllWeqNodes()))
+//							.filter(node -> !mFactory.getAllWeqNodes().contains(node))
+							.collect(Collectors.toSet()))) {
 						assert false;
 						return false;
 					}

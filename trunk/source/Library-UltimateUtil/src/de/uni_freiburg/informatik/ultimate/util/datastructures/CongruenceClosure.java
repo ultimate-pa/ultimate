@@ -858,13 +858,30 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 	 * @return
 	 */
 	public CongruenceClosure<ELEM> projectToElements(final Set<ELEM> set) {
-		final ThreeValuedEquivalenceRelation<ELEM> newElemPartition =
-				this.mElementTVER.projectToConstraintsWith(set);
-		return new CongruenceClosure<>(newElemPartition);
+//		final CongruenceClosure<ELEM> result = new CongruenceClosure<>(this);
+
+		// collect all elements that contain an element from the given set as a sub-node (i.e. child/descendant)
+		final Set<ELEM> elemsWithSubFromSet =
+				getAllElements().stream().filter(e -> hasSubElement(e, set)).collect(Collectors.toSet());
+
+		final ThreeValuedEquivalenceRelation<ELEM> newTver = mElementTVER.projectToConstraintsWith(elemsWithSubFromSet);
+
+		return new CongruenceClosure<>(newTver);
 	}
 
 	public Collection<ELEM> getAllElementRepresentatives() {
 		return mElementTVER.getAllRepresentatives();
+	}
+
+	public static <ELEM extends ICongruenceClosureElement<ELEM>> boolean hasSubElement(final ELEM elem,
+			final Set<ELEM> sub) {
+		if (sub.contains(elem)) {
+			return true;
+		}
+		if (elem.isFunctionApplication()) {
+			return hasSubElement(elem.getAppliedFunction(), sub) || hasSubElement(elem.getArgument(), sub);
+		}
+		return false;
 	}
 
 	public boolean isRepresentative(final ELEM elem) {
