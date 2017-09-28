@@ -971,6 +971,7 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 		}
 
 		assert !this.mWeakEquivalenceGraph.hasArrayEqualities();
+
 		/*
 		 * strategy: conjoin all weq edges of otherCC to a copy of this's weq graph
 		 */
@@ -987,11 +988,14 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 		}
 
 		executeFloydWarshallAndReportResult();
-		newWeqCc.reportAllArrayEqualitiesFromWeqGraph();
-
 		if (newWeqCc.isInconsistent()) {
 			return new WeqCongruenceClosure<>(true);
 		}
+		newWeqCc.reportAllArrayEqualitiesFromWeqGraph();
+		if (newWeqCc.isInconsistent()) {
+			return new WeqCongruenceClosure<>(true);
+		}
+
 		return newWeqCc;
 	}
 

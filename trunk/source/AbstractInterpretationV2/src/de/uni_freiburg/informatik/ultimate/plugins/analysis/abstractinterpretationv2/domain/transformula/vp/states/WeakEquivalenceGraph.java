@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -26,6 +27,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.CongruenceClosure
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CrossProducts;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ICongruenceClosureElement;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
@@ -964,7 +966,10 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 			unionList.addAll(mLabel);
 			unionList.addAll(other.getLabelContents());
 
-			return new WeakEquivalenceEdgeLabel(unionList);
+			final List<CongruenceClosure<NODE>> filtered = mCcManager.filterRedundantCcs(unionList);
+
+			assert filtered.size() < 10;
+			return new WeakEquivalenceEdgeLabel(filtered);
 		}
 
 
@@ -1146,6 +1151,55 @@ class CCManager<NODE extends IEqNodeIdentifier<NODE>> {
 		 *
 		 */
 		final CongruenceClosure<NODE> result = cc1.meet(cc2);
+		return result;
+	}
+
+	/**
+	 * The given list is implictly a disjunction.
+	 * If one element in the disjunction is stronger than another, we can drop it.
+	 *
+	 * TODO: poor man's solution, could be done much nicer with lattice representation..
+	 *
+	 * @param unionList
+	 * @return
+	 */
+	public List<CongruenceClosure<NODE>> filterRedundantCcs(final List<CongruenceClosure<NODE>> unionList) {
+		final List<CongruenceClosure<NODE>> filteredForWeaker = new ArrayList<>();
+
+		/*
+		 * filter strictly weaker elements
+		 */
+		for (final CongruenceClosure<NODE> cc1 : unionList) {
+			for (final CongruenceClosure<NODE> cc2 : unionList) {
+				if (cc1.isStrongerThan(cc2)) {
+					// drop cc1 as there is a stricly weaker element
+					continue;
+				}
+			}
+			filteredForWeaker.add(cc1);
+		}
+
+		/*
+		 * drop all but one equivalent element for each equivalence class
+		 */
+		final UnionFind<CongruenceClosure<NODE>> uf = new UnionFind<>();
+		for (final CongruenceClosure<NODE> cc : filteredForWeaker) {
+			uf.findAndConstructEquivalenceClassIfNeeded(cc);
+		}
+		boolean goOn = true;
+		while (goOn) {
+			goOn = false;
+			final Collection<CongruenceClosure<NODE>> repCopy = uf.getAllRepresentatives();
+			for (final Entry<CongruenceClosure<NODE>, CongruenceClosure<NODE>> repPair
+					: CrossProducts.binarySelectiveCrossProduct(repCopy, false, false).entrySet()) {
+				if (repPair.getKey().isEquivalent(repPair.getValue())) {
+					uf.union(repPair.getKey(), repPair.getValue());
+					goOn = true;
+				}
+			}
+		}
+
+		final List<CongruenceClosure<NODE>> result = new ArrayList<>(uf.getAllRepresentatives());
 		return result;
 	}
 
