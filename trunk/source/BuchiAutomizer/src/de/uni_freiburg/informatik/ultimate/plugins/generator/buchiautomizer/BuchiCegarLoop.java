@@ -89,8 +89,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.pref
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.BuchiAutomizerPreferenceInitializer.NcsbImplementation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CFG2NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarAbsIntRunner;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PathProgramCache;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryRefinement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryResultChecking;
@@ -98,6 +100,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Tr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization.AutomataMinimization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization.AutomataMinimization.AutomataMinimizationTimeout;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.CanonicalInterpolantAutomatonBuilder;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.InterpolantAutomatonBuilderFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.DeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
@@ -111,6 +114,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.Minimization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerUtils;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.RefinementStrategyFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TaCheckAndRefinementPreferences;
 import de.uni_freiburg.informatik.ultimate.util.HistogramOfIterable;
 
 public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
@@ -232,10 +237,12 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 
 	private final IUltimateServiceProvider mServices;
 
-	private final IToolchainStorage mStorage;
+	private final IToolchainStorage mToolchainStorage;
 
 	private ToolchainCanceledException mToolchainCancelledException;
 	private final RankVarConstructor mRankVarConstructor;
+	
+	private final RefinementStrategyFactory<LETTER> mRefinementStrategyFactory;
 
 	public ToolchainCanceledException getToolchainCancelledException() {
 		return mToolchainCancelledException;
@@ -251,7 +258,7 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 		assert services != null;
 		mLTLMode = false;
 		mServices = services;
-		mStorage = storage;
+		mToolchainStorage = storage;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mMDBenchmark = new BuchiAutomizerModuleDecompositionBenchmark(mServices.getBacktranslationService());
 		mName = "BuchiCegarLoop";
@@ -314,6 +321,21 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 				baPref.getEnum(BuchiAutomizerPreferenceInitializer.LABEL_BIA_CONSTRUCTION_STRATEGY,
 						BuchiInterpolantAutomatonConstructionStrategy.class);
 		mBiaConstructionStyleSequence = biaConstructionStrategy.getBiaConstrucionStyleSequence(baPref);
+		
+		{
+			final PathProgramCache<LETTER> pathProgramCache = new PathProgramCache<>(mLogger);
+			final CegarAbsIntRunner<LETTER> absIntRunner = new CegarAbsIntRunner<>(services, mBenchmarkGenerator, mIcfg,
+					mSimplificationTechnique, mXnfConversionTechnique, mCsToolkitWithoutRankVars, pathProgramCache);
+			final InterpolantAutomatonBuilderFactory<LETTER> mInterpolantAutomatonBuilderFactory = new InterpolantAutomatonBuilderFactory<>(
+					mServices, mCsToolkitWithoutRankVars, mDefaultStateFactory, mIcfg, absIntRunner, taPrefs,
+					mInterpolation, mPref.interpolantAutomaton(), mBenchmarkGenerator);
+			final TaCheckAndRefinementPreferences<LETTER> taCheckAndRefinementPrefs = new TaCheckAndRefinementPreferences<>(
+					mServices, mPref, mInterpolation, mSimplificationTechnique, mXnfConversionTechnique,
+					mCsToolkitWithoutRankVars, mPredicateFactory, mIcfg, mToolchainStorage,
+					mInterpolantAutomatonBuilderFactory);
+			mRefinementStrategyFactory = new RefinementStrategyFactory<>(mLogger, mServices, mToolchainStorage, mPref,
+					taCheckAndRefinementPrefs, absIntRunner, mIcfg, mPredicateFactory, pathProgramCache);
+		}
 	}
 
 	NestedLassoRun<LETTER, IPredicate> getCounterexample() {
@@ -396,7 +418,7 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 				lassoCheck = new LassoCheck<>(mInterpolation, mCsToolkitWithoutRankVars, mPredicateFactory,
 						mCsToolkitWithRankVars.getSymbolTable(), mCsToolkitWithoutRankVars.getModifiableGlobalsTable(),
 						mIcfg.getCfgSmtToolkit().getAxioms(), mBinaryStatePredicateManager, mCounterexample,
-						generateLassoCheckIdentifier(), mServices, mStorage, mSimplificationTechnique,
+						generateLassoCheckIdentifier(), mServices, mToolchainStorage, mSimplificationTechnique,
 						mXnfConversionTechnique);
 				if (lassoCheck.getLassoCheckResult().getContinueDirective() == ContinueDirective.REPORT_UNKNOWN) {
 					// if result was unknown, then try again but this time add one
@@ -409,7 +431,7 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 					lassoCheck = new LassoCheck<>(mInterpolation, mCsToolkitWithoutRankVars, mPredicateFactory,
 							mIcfg.getSymboltable(), mCsToolkitWithoutRankVars.getModifiableGlobalsTable(),
 							mIcfg.getCfgSmtToolkit().getAxioms(), mBinaryStatePredicateManager, mCounterexample,
-							generateLassoCheckIdentifier(), mServices, mStorage, mSimplificationTechnique,
+							generateLassoCheckIdentifier(), mServices, mToolchainStorage, mSimplificationTechnique,
 							mXnfConversionTechnique);
 				}
 			} catch (final ToolchainCanceledException e) {
