@@ -1,4 +1,10 @@
 //#Safe
+/*
+ * Checks that we can derive something like a framing condition.
+ * test is reduced to a minimum, real use case would involve a procedure call
+ * that introduced the old version of the array.
+ * b would be something like the valid array
+ */
 procedure main() {
   var a, b, a_old : [int] int;
   var i, j, k : int;

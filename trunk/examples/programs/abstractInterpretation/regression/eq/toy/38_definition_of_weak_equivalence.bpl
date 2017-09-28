@@ -1,4 +1,10 @@
 //#Safe
+/*
+ * Test that checks for the definition of  weak equivalence, expressed as an 
+ * equality with a store.
+ * Currently we cannot verify this because we overapproximate the negation of 
+ * an array equality where one element is a store by "true".
+ */
 procedure main() {
   var a1, b1 : [int] int;
   var a2, b2 : [int, int] int;
