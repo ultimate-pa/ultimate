@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.test.decider.SvcompReachTestResultDec
  * @author dietsch@informatik.uni-freiburg.de
  *
  */
-public class SvcompEqualityDomainTestSuite extends AbstractSVCOMPTestSuite {
+public class SvcompEqualityDomainReachTestSuite extends AbstractSVCOMPTestSuite {
 
 	@Override
 	protected ITestResultDecider getTestResultDecider(final UltimateRunDefinition urd) {
@@ -86,21 +86,6 @@ public class SvcompEqualityDomainTestSuite extends AbstractSVCOMPTestSuite {
 		//
 		// contains 2795 examples, 64bit
 		rtr.addAll(createTests("Systems_DeviceDriversLinux64_ReachSafety", "64bit", "Reach"));
-
-		// contains ?? examples, 32bit
-		rtr.addAll(createTests("MemSafety-Arrays", "32bit", "DerefFreeMemtrack"));
-
-		// contains ?? examples, 32bit
-		rtr.addAll(createTests("MemSafety-Heap", "32bit", "DerefFreeMemtrack"));
-
-		// contains ?? examples, 32bit
-		rtr.addAll(createTests("MemSafety-LinkedLists", "32bit", "DerefFreeMemtrack"));
-
-		// contains ?? examples, 32bit
-		rtr.addAll(createTests("MemSafety-Other", "32bit", "DerefFreeMemtrack"));
-
-		// contains ?? examples, 64bit
-		rtr.addAll(createTests("Systems_BusyBox_MemSafety", "64bit", "DerefFreeMemtrack"));
 
 		return rtr;
 	}
