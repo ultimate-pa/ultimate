@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
@@ -70,7 +71,11 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 	private final EqNodeAndFunctionFactory mEqNodeAndFunctionFactory;
 	private final VPDomainPreanalysis mPreAnalysis;
 
-	public EqPostOperator(final EqNodeAndFunctionFactory eqNodeAndFunctionFactory,
+	private final boolean mDebug = true;
+
+	private final ILogger mLogger;
+
+	public EqPostOperator(final ILogger logger, final EqNodeAndFunctionFactory eqNodeAndFunctionFactory,
 			final EqConstraintFactory<ACTION, EqNode> eqConstraintFactory, final VPDomainPreanalysis preAnalysis) {
 		mEqNodeAndFunctionFactory = eqNodeAndFunctionFactory;
 		mEqConstraintFactory = eqConstraintFactory;
@@ -83,6 +88,8 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 		mPredicateTransformer = new PredicateTransformer<>(mMgdScript, mOperationProvider);
 		mTransFormulaConverter =
 				new TransFormulaConverterCache<>(mEqNodeAndFunctionFactory, mEqConstraintFactory, mPreAnalysis);
+
+		mLogger = logger;
 	}
 
 	@Override
@@ -98,6 +105,9 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 				mPredicateTransformer.strongestPostcondition(oldstate.toEqPredicate(), transitionRelation);
 		final List<EqState<ACTION>> result = postConstraint.toEqStates(oldstate.getVariables());
 		assert result.stream().allMatch(state -> state.getVariables().containsAll(oldstate.getVariables()));
+		if (mDebug) {
+			mLogger.debug(postConstraint.getDebugInfo());
+		}
 		return result;
 	}
 

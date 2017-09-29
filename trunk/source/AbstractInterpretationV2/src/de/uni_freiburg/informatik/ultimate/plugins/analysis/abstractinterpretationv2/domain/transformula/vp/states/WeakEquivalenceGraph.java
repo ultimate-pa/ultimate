@@ -7,6 +7,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -148,7 +149,7 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 			// TODO is the madeChanges flag worth this effort?.. should we just always say "true"?..
 			madeChanges |= !newLabel.isStrongerThan(edge.getValue()) || !edge.getValue().isStrongerThan(newLabel);
 //			assert mPartialArrangement.sanityCheck();
-			assert mPartialArrangement.sanityCheckOnlyCc();
+//			assert mPartialArrangement.sanityCheckOnlyCc();
 		}
 //		assert sanityCheck();
 		return madeChanges;
@@ -928,7 +929,7 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 			final List<CongruenceClosure<NODE>> newLabelContent = new ArrayList<>();
 			for (final List<CongruenceClosure<NODE>> pair : cp) {
 				assert pair.size() == 2;
-				newLabelContent.add(pair.get(0).meet(pair.get(1)));
+				newLabelContent.add(pair.get(0).meetRec(pair.get(1)));
 			}
 //			newLabelContent = mCcManager.filterRedundantCcs(newLabelContent);
 
@@ -971,7 +972,7 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		 * @return
 		 */
 		public WeakEquivalenceEdgeLabel union(final WeakEquivalenceEdgeLabel other) {
-			assert this.mLabel.size() < 10 && other.mLabel.size() < 10;
+//			assert this.mLabel.size() < 10 && other.mLabel.size() < 10;
 			final List<CongruenceClosure<NODE>> unionList = new ArrayList<>(
 					mLabel.size() + other.getLabelContents().size());
 			unionList.addAll(mLabel);
@@ -979,7 +980,6 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 
 			final List<CongruenceClosure<NODE>> filtered = mCcManager.filterRedundantCcs(unionList);
 
-			assert filtered.size() < 10;
 			return new WeakEquivalenceEdgeLabel(filtered);
 		}
 
@@ -1070,7 +1070,7 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		}
 
 		private boolean sanityCheck() {
-			assert mLabel.size() < 10;
+//			assert mLabel.size() < 10;
 			return sanityCheck(mPartialArrangement);
 		}
 
@@ -1105,6 +1105,7 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 			copy.removeSimpleElement(elem);
 			return sanityCheck(copy);
 		}
+
 	}
 
 	/**
@@ -1147,6 +1148,19 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 				mWeakEquivalenceEdges.put(new Doubleton<>(newRep, edge.getKey()), edge.getValue());
 			}
 		}
+	}
+
+	public Integer getNumberOfEdgesStatistic() {
+		return mWeakEquivalenceEdges.size();
+	}
+
+	public Integer getMaxSizeOfEdgeLabelStatistic() {
+		final Optional<Integer> opt = mWeakEquivalenceEdges.values().stream()
+				.map(weqlabel -> weqlabel.mLabel.size()).reduce(Math::max);
+		if (opt.isPresent()) {
+			return opt.get();
+		}
+		return 0;
 	}
 }
 

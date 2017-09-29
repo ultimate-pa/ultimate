@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -41,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.IEqNodeIdentifier;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPStatistics;
 
 /**
  *
@@ -160,5 +162,25 @@ public class EqDisjunctiveConstraint<
 			return "EmptyDisjunction/False";
 		}
 		return "\\/ " + mConstraints.toString();
+	}
+
+	public String getDebugInfo() {
+
+		final Map<VPStatistics, Integer> statistics = new HashMap<>();
+		for (final VPStatistics stat : VPStatistics.values()) {
+			statistics.put(stat, VPStatistics.getInitialValue(stat));
+		}
+
+		final StringBuilder sb = new StringBuilder();
+		for (final EqConstraint<ACTION, NODE> c : mConstraints) {
+			for (final VPStatistics stat : VPStatistics.values()) {
+				statistics.put(stat, VPStatistics.getAggregator(stat)
+						.apply(statistics.get(stat), c.getStatistics(stat)));
+			}
+		}
+
+		sb.append("EqDisjunctiveConstraint statistics:");
+		sb.append(statistics);
+		return sb.toString();
 	}
 }

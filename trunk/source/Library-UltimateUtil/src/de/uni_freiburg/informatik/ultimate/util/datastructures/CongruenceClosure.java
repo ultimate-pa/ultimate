@@ -118,7 +118,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		mAuxData = new CcAuxData(original.mAuxData);
 		mFaAuxData = new FuncAppTreeAuxData(original.mFaAuxData);
 		mAllLiterals = new HashSet<>(original.mAllLiterals);
-		assert sanityCheck();
+//		assert sanityCheck(); // can be violated during remove
 	}
 
 	public boolean reportEquality(final ELEM elem1, final ELEM elem2) {
@@ -397,7 +397,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		}
 
 		addNodesEquivalentToNodesWithRemovedElement(elem);
-		assert sanityCheckOnlyCc();
+//		assert sanityCheckOnlyCc();
 
 		final Collection<ELEM> oldAfParents = new ArrayList<>(mFaAuxData.getAfParents(elem));
 		final Collection<ELEM> oldArgParents = new ArrayList<>(mFaAuxData.getArgParents(elem));
@@ -408,7 +408,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 			final ELEM newRep = updateElementTverAndAuxDataOnRemoveElement(elem);
 			removedElemToNewRep.put(elem, newRep);
 		}
-		assert sanityCheckOnlyCc();
+		assert elementIsFullyRemovedOnlyCc(elem);
+//		assert sanityCheckOnlyCc();
 
 		for (final ELEM parent : oldAfParents) {
 			removeAnyElement(parent, removedElemToNewRep);
@@ -418,7 +419,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		}
 //		removeParents(oldAfParents, oldArgParents);
 
-		assert sanityCheckOnlyCc();
+//		assert sanityCheckOnlyCc();
 		assert elementIsFullyRemovedOnlyCc(elem);
 		return true;
 	}
@@ -1257,7 +1258,9 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 				 *
 				 * is it correct to do this with out the vectors, just with getAppliedFunction and getArgument?
 				 */
-				if (getEqualityStatus(parent1.getAppliedFunction(), parent2.getAppliedFunction())
+				if (hasElements(parent1.getAppliedFunction(), parent1.getArgument(),
+						parent2.getAppliedFunction(), parent2.getArgument())
+						&& getEqualityStatus(parent1.getAppliedFunction(), parent2.getAppliedFunction())
 						== EqualityStatus.EQUAL
 						&& getEqualityStatus(parent1.getArgument(), parent2.getArgument())
 						== EqualityStatus.EQUAL) {

@@ -20,6 +20,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSort;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.IEqNodeIdentifier;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPStatistics;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CongruenceClosure;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.EqualityStatus;
@@ -1095,6 +1096,17 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 			}
 		}
 		return true;
+	}
+
+	public Integer getStatistics(final VPStatistics stat) {
+		switch (stat) {
+		case MAX_WEQGRAPH_SIZE:
+			return mWeakEquivalenceGraph.getNumberOfEdgesStatistic();
+		case MAX_SIZEOF_WEQEDGELABEL:
+			return mWeakEquivalenceGraph.getMaxSizeOfEdgeLabelStatistic();
+		default :
+			throw new UnsupportedOperationException();
+		}
 	}
 
 }

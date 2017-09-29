@@ -47,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ConstantFinder;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.IEqNodeIdentifier;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPStatistics;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CongruenceClosure;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.EqualityStatus;
 
@@ -404,6 +405,13 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 		}
 
 		return mPartialArrangement.sanityCheck();
+	}
+
+	public Integer getStatistics(final VPStatistics stat) {
+		switch (stat) {
+		default :
+			return mPartialArrangement.getStatistics(stat);
+		}
 	}
 }
 

@@ -30,7 +30,7 @@ class CCManager<NODE extends IEqNodeIdentifier<NODE>> {
 		 *    - updating meets alongside inputs (something that updates the cache on a report equality on the ground pa)
 		 *
 		 */
-		final CongruenceClosure<NODE> result = cc1.meet(cc2);
+		final CongruenceClosure<NODE> result = cc1.meetRec(cc2);
 		return result;
 	}
 
