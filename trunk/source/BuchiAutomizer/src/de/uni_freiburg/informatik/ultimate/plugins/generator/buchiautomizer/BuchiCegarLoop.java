@@ -48,11 +48,9 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiClosureNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiIsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoRun;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Accepts;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Difference;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsDeterministic;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
@@ -94,7 +92,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.Ic
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CFG2NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarAbsIntRunner;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PathProgramCache;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryRefinement;
@@ -102,7 +99,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization.AutomataMinimization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization.AutomataMinimization.AutomataMinimizationTimeout;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.CanonicalInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.InterpolantAutomatonBuilderFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.DeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
@@ -115,10 +111,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.HoareTripleChecks;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.Minimization;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceChecker;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.RefinementStrategyFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TaCheckAndRefinementPreferences;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TraceAbstractionRefinementEngine;
 import de.uni_freiburg.informatik.ultimate.util.HistogramOfIterable;
 
 public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
@@ -780,7 +775,7 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 	 */
 	private void refineFinite(final LassoCheck<LETTER> lassoCheck) throws AutomataOperationCanceledException {
 		mBenchmarkGenerator.start(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
-		final InterpolatingTraceChecker traceChecker;
+		final TraceAbstractionRefinementEngine traceChecker;
 		final NestedRun<LETTER, IPredicate> run;
 		final LassoCheck<LETTER>.LassoCheckResult lcr = lassoCheck.getLassoCheckResult();
 		if (lassoCheck.getLassoCheckResult().getStemFeasibility() == TraceCheckResult.INFEASIBLE) {
@@ -803,11 +798,12 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 			traceChecker = lassoCheck.getConcatCheck();
 			run = lassoCheck.getConcatenatedCounterexample();
 		}
-		final BackwardCoveringInformation bci =
-				TraceCheckerUtils.computeCoverageCapability(mServices, traceChecker, mLogger);
-		mBenchmarkGenerator.addBackwardCoveringInformationFinite(bci);
+//		final BackwardCoveringInformation bci =
+//				TraceCheckerUtils.computeCoverageCapability(mServices, traceChecker, mLogger);
+//		mBenchmarkGenerator.addBackwardCoveringInformationFinite(bci);
 
-		constructInterpolantAutomaton(traceChecker, run);
+//		constructInterpolantAutomaton(traceChecker, run);
+		mInterpolAutomaton = traceChecker.getInfeasibilityProof();
 
 		final IHoareTripleChecker htc = TraceAbstractionUtils.constructEfficientHoareTripleCheckerWithCaching(mServices,
 				HoareTripleChecks.INCREMENTAL, mCsToolkitWithRankVars, traceChecker.getPredicateUnifier());
@@ -849,29 +845,29 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 		mBenchmarkGenerator.stop(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
 	}
 
-	protected void constructInterpolantAutomaton(final InterpolatingTraceChecker traceChecker,
-			final NestedRun<LETTER, IPredicate> run) throws AutomataOperationCanceledException {
-		final CanonicalInterpolantAutomatonBuilder<? extends Object, LETTER> iab =
-				new CanonicalInterpolantAutomatonBuilder<>(mServices, traceChecker.getIpp(), run.getStateSequence(),
-						new VpAlphabet<>(mAbstraction), mCsToolkitWithRankVars, mAbstraction.getStateFactory(),
-						mLogger, traceChecker.getPredicateUnifier(), run.getWord());
-		iab.analyze();
-		mInterpolAutomaton = iab.getResult();
-
-		try {
-			assert new Accepts<>(new AutomataLibraryServices(mServices), mInterpolAutomaton, run.getWord())
-					.getResult() : "Interpolant automaton broken!";
-		} catch (final AutomataOperationCanceledException e) {
-			throw new ToolchainCanceledException(e, new RunningTaskInfo(getClass(), "checking acceptance"));
-		} catch (final AutomataLibraryException e) {
-			throw new AssertionError(e);
-		}
-		// assert((new BuchiAccepts<LETTER, IPredicate>(mInterpolAutomaton,
-		// mCounterexample.getNestedLassoWord())).getResult()) :
-		// "Interpolant automaton broken!";
-		assert new InductivityCheck<>(mServices, mInterpolAutomaton, false, true,
-				new IncrementalHoareTripleChecker(mCsToolkitWithRankVars)).getResult();
-	}
+//	protected void constructInterpolantAutomaton(final InterpolatingTraceChecker traceChecker,
+//			final NestedRun<LETTER, IPredicate> run) throws AutomataOperationCanceledException {
+//		final CanonicalInterpolantAutomatonBuilder<? extends Object, LETTER> iab =
+//				new CanonicalInterpolantAutomatonBuilder<>(mServices, traceChecker.getIpp(), run.getStateSequence(),
+//						new VpAlphabet<>(mAbstraction), mCsToolkitWithRankVars, mAbstraction.getStateFactory(),
+//						mLogger, traceChecker.getPredicateUnifier(), run.getWord());
+//		iab.analyze();
+//		mInterpolAutomaton = iab.getResult();
+//
+//		try {
+//			assert new Accepts<>(new AutomataLibraryServices(mServices), mInterpolAutomaton, run.getWord())
+//					.getResult() : "Interpolant automaton broken!";
+//		} catch (final AutomataOperationCanceledException e) {
+//			throw new ToolchainCanceledException(e, new RunningTaskInfo(getClass(), "checking acceptance"));
+//		} catch (final AutomataLibraryException e) {
+//			throw new AssertionError(e);
+//		}
+//		// assert((new BuchiAccepts<LETTER, IPredicate>(mInterpolAutomaton,
+//		// mCounterexample.getNestedLassoWord())).getResult()) :
+//		// "Interpolant automaton broken!";
+//		assert new InductivityCheck<>(mServices, mInterpolAutomaton, false, true,
+//				new IncrementalHoareTripleChecker(mCsToolkitWithRankVars)).getResult();
+//	}
 
 	private TerminationArgumentResult<IIcfgElement, Term> constructTAResult(
 			final TerminationArgument terminationArgument, final IcfgLocation honda, final NestedWord<LETTER> stem,

@@ -31,7 +31,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.TreeMap;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
@@ -91,15 +90,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.pref
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.UnsatCores;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceChecker;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceCheckerCraig;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerSpWp;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.RefinementStrategyFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TraceAbstractionRefinementEngine;
+import de.uni_freiburg.informatik.ultimate.util.HistogramOfIterable;
 
 public class LassoCheck<LETTER extends IIcfgTransition<?>> {
 
@@ -113,6 +110,10 @@ public class LassoCheck<LETTER extends IIcfgTransition<?>> {
 
 	enum SynthesisResult {
 		TERMINATING, NONTERMINATING, UNKNOWN, UNCHECKED
+	}
+	
+	enum LassoPart {
+		STEM, LOOP, CONCAT
 	}
 
 	// ////////////////////////////// settings /////////////////////////////////
@@ -181,9 +182,9 @@ public class LassoCheck<LETTER extends IIcfgTransition<?>> {
 	private final PredicateFactory mPredicateFactory;
 	private final PredicateUnifier mPredicateUnifier;
 
-	private InterpolatingTraceChecker mStemCheck;
-	private InterpolatingTraceChecker mLoopCheck;
-	private InterpolatingTraceChecker mConcatCheck;
+	private TraceAbstractionRefinementEngine mStemCheck;
+	private TraceAbstractionRefinementEngine mLoopCheck;
+	private TraceAbstractionRefinementEngine mConcatCheck;
 
 	private NestedRun<LETTER, IPredicate> mConcatenatedCounterexample;
 
@@ -202,19 +203,27 @@ public class LassoCheck<LETTER extends IIcfgTransition<?>> {
 	private final List<NonterminationAnalysisBenchmark> mNonterminationAnalysisBenchmarks = new ArrayList<>();
 	private final IIcfgSymbolTable mSymbolTable;
 
+	private final RefinementStrategyFactory<LETTER> mRefinementStrategyFactory;
+
+	private final RefinementStrategy mRefinementStrategy;
+
+	private final INestedWordAutomaton<LETTER, IPredicate> mAbstraction;
+
+	private final TaskIdentifier mTaskIdentifier;
+
 	public LassoCheckResult getLassoCheckResult() {
 		return mLassoCheckResult;
 	}
 
-	public InterpolatingTraceChecker getStemCheck() {
+	public TraceAbstractionRefinementEngine getStemCheck() {
 		return mStemCheck;
 	}
 
-	public InterpolatingTraceChecker getLoopCheck() {
+	public TraceAbstractionRefinementEngine getLoopCheck() {
 		return mLoopCheck;
 	}
 
-	public InterpolatingTraceChecker getConcatCheck() {
+	public TraceAbstractionRefinementEngine getConcatCheck() {
 		return mConcatCheck;
 	}
 
@@ -251,7 +260,7 @@ public class LassoCheck<LETTER extends IIcfgTransition<?>> {
 			final IToolchainStorage storage, final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique, 
 			final RefinementStrategyFactory<LETTER> refinementStrategyFactory, 
-			final INestedWordAutomaton<LETTER, IPredicate> mAbstraction, final RefinementStrategy refinementStrategy,
+			final INestedWordAutomaton<LETTER, IPredicate> abstraction, final RefinementStrategy refinementStrategy,
 			final TaskIdentifier taskIdentifier) throws IOException {
 		mServices = services;
 		mStorage = storage;
@@ -278,6 +287,12 @@ public class LassoCheck<LETTER extends IIcfgTransition<?>> {
 		mTruePredicate = mPredicateUnifier.getTruePredicate();
 		mFalsePredicate = mPredicateUnifier.getFalsePredicate();
 		mAxioms = axioms;
+		mRefinementStrategyFactory = refinementStrategyFactory;
+		mRefinementStrategy = refinementStrategy;
+		mAbstraction = abstraction;
+		mTaskIdentifier = taskIdentifier;
+		
+		
 		mLassoCheckResult = new LassoCheckResult();
 		assert mLassoCheckResult.getStemFeasibility() != TraceCheckResult.UNCHECKED;
 		assert (mLassoCheckResult.getLoopFeasibility() != TraceCheckResult.UNCHECKED)
@@ -412,25 +427,28 @@ public class LassoCheck<LETTER extends IIcfgTransition<?>> {
 			if (BuchiCegarLoop.isEmptyStem(mCounterexample)) {
 				return TraceCheckResult.FEASIBLE;
 			}
-			mStemCheck = checkFeasibilityAndComputeInterpolants(stem);
-			return translateSatisfiabilityToFeasibility(mStemCheck.isCorrect());
+			mStemCheck = checkFeasibilityAndComputeInterpolants(stem,
+					new SubtaskLassoCheckIdentifier(mTaskIdentifier, LassoPart.STEM));
+			return translateSatisfiabilityToFeasibility(mStemCheck.getCounterexampleFeasibility());
 		}
 
 		private TraceCheckResult checkLoopFeasibility() {
 			final NestedRun<LETTER, IPredicate> loop = mCounterexample.getLoop();
-			mLoopCheck = checkFeasibilityAndComputeInterpolants(loop);
-			return translateSatisfiabilityToFeasibility(mLoopCheck.isCorrect());
+			mLoopCheck = checkFeasibilityAndComputeInterpolants(loop,
+					new SubtaskLassoCheckIdentifier(mTaskIdentifier, LassoPart.LOOP));
+			return translateSatisfiabilityToFeasibility(mLoopCheck.getCounterexampleFeasibility());
 		}
 
 		private TraceCheckResult checkConcatFeasibility() {
 			final NestedRun<LETTER, IPredicate> stem = mCounterexample.getStem();
 			final NestedRun<LETTER, IPredicate> loop = mCounterexample.getLoop();
 			final NestedRun<LETTER, IPredicate> concat = stem.concatenate(loop);
-			mConcatCheck = checkFeasibilityAndComputeInterpolants(concat);
-			if (mConcatCheck.isCorrect() == LBool.UNSAT) {
+			mConcatCheck = checkFeasibilityAndComputeInterpolants(concat,
+					new SubtaskLassoCheckIdentifier(mTaskIdentifier, LassoPart.CONCAT));
+			if (mConcatCheck.getCounterexampleFeasibility() == LBool.UNSAT) {
 				mConcatenatedCounterexample = concat;
 			}
-			return translateSatisfiabilityToFeasibility(mConcatCheck.isCorrect());
+			return translateSatisfiabilityToFeasibility(mConcatCheck.getCounterexampleFeasibility());
 		}
 
 		private TraceCheckResult translateSatisfiabilityToFeasibility(final LBool lBool) {
@@ -446,43 +464,21 @@ public class LassoCheck<LETTER extends IIcfgTransition<?>> {
 			}
 		}
 
-		private InterpolatingTraceChecker
-				checkFeasibilityAndComputeInterpolants(final NestedRun<LETTER, IPredicate> run) {
-			InterpolatingTraceChecker result;
-			switch (mInterpolation) {
-			case Craig_NestedInterpolation:
-			case Craig_TreeInterpolation:
-				result = new InterpolatingTraceCheckerCraig(mTruePredicate, mFalsePredicate,
-						new TreeMap<Integer, IPredicate>(), run.getWord(), mCsToolkit,
-						/*
-						 * TODO: When Matthias introduced this parameter he set
-						 * the argument to
-						 * AssertCodeBlockOrder.NOT_INCREMENTALLY. Check if you
-						 * want to set this to a different value.
-						 */AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, false, mPredicateFactory,
-						mPredicateUnifier, mInterpolation, true, mXnfConversionTechnique, mSimplificationTechnique,
-						null);
-				break;
-			case ForwardPredicates:
-			case BackwardPredicates:
-			case FPandBP:
-			case FPandBPonlyIfFpWasNotPerfect:
-				result = new TraceCheckerSpWp(mTruePredicate, mFalsePredicate, new TreeMap<Integer, IPredicate>(),
-						run.getWord(), mCsToolkit,
-						/*
-						 * TODO: When Matthias introduced this parameter he set
-						 * the argument to
-						 * AssertCodeBlockOrder.NOT_INCREMENTALLY. Check if you
-						 * want to set this to a different value.
-						 */AssertCodeBlockOrder.NOT_INCREMENTALLY, UnsatCores.CONJUNCT_LEVEL, true, mServices, false,
-						mPredicateFactory, mPredicateUnifier, mInterpolation, mCsToolkit.getManagedScript(),
-						mXnfConversionTechnique, mSimplificationTechnique, null);
-				break;
-			default:
-				throw new UnsupportedOperationException("unsupported interpolation");
-			}
-			if (result.getToolchainCanceledExpection() != null) {
-				throw result.getToolchainCanceledExpection();
+		private TraceAbstractionRefinementEngine checkFeasibilityAndComputeInterpolants(
+				final NestedRun<LETTER, IPredicate> run, final TaskIdentifier taskIdentifier) {
+
+			final IRefinementStrategy<LETTER> strategy = mRefinementStrategyFactory.createStrategy(mRefinementStrategy,
+					run, mAbstraction, taskIdentifier);
+
+			final TraceAbstractionRefinementEngine result;
+			try {
+				result = new TraceAbstractionRefinementEngine<>(mLogger, strategy, null);
+			} catch (final ToolchainCanceledException tce) {
+				final int traceHistogramMax = new HistogramOfIterable<>(run.getWord()).getMax();
+				final String taskDescription = "analyzing trace of length " + run.getLength() + " with TraceHistMax "
+						+ traceHistogramMax;
+				tce.addRunningTaskInfo(new RunningTaskInfo(getClass(), taskDescription));
+				throw tce;
 			}
 			return result;
 		}
@@ -988,5 +984,25 @@ public class LassoCheck<LETTER extends IIcfgTransition<?>> {
 	// return mPreferences;
 	// }
 	// }
+	
+	private class SubtaskLassoCheckIdentifier extends TaskIdentifier {
+		
+		private final LassoPart mLassoPart;
+
+		public SubtaskLassoCheckIdentifier(final TaskIdentifier parentTaskIdentifier, final LassoPart lassoPart) {
+			super(parentTaskIdentifier);
+			mLassoPart = lassoPart;
+		}
+
+		@Override
+		protected String getSubtaskIdentifier() {
+			return mLassoPart.toString();
+		}
+		
+		
+
+
+		
+	}
 
 }
