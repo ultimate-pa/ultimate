@@ -47,13 +47,11 @@ public class PathProgramCache<LETTER> {
 	private final ILogger mLogger;
 	private final Map<Set<LETTER>, Integer> mKnownPathPrograms;
 	private final List<Integer> mTraceHashes;
-	private final Set<Integer> mTraceHashesSet;
 
 	public PathProgramCache(final ILogger logger) {
 		mLogger = logger;
 		mKnownPathPrograms = new HashMap<>();
 		mTraceHashes = new ArrayList<>();
-		mTraceHashesSet = new HashSet<>();
 	}
 
 	/**
@@ -83,9 +81,6 @@ public class PathProgramCache<LETTER> {
 
 		mLogger.info(
 				"Analyzing trace with hash " + traceHash + ", now seen corresponding path program " + rtr + " times");
-		if (!mTraceHashesSet.add(traceHash)) {
-			mLogger.warn("Trace hash already known. Did we analyze the same trace twice?");
-		}
 
 		return rtr;
 	}
