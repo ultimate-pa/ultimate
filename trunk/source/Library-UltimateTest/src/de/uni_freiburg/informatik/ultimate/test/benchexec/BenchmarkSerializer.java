@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2017 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2017 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE UnitTest Library.
- * 
+ *
  * The ULTIMATE UnitTest Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE UnitTest Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE UnitTest Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE UnitTest Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -45,6 +45,7 @@ import javax.xml.validation.SchemaFactory;
 import org.xml.sax.SAXException;
 
 import de.uni_freiburg.informatik.ultimate.test.benchexec.benchmark.Benchmark;
+import de.uni_freiburg.informatik.ultimate.test.benchexec.benchmark.ObjectFactory;
 
 /**
  *
@@ -63,11 +64,11 @@ public class BenchmarkSerializer {
 
 	/**
 	 * Convert a file to a {@link Benchmark} object if possible.
-	 * 
+	 *
 	 * @param xmlfile
 	 *            The absolute path to the xml file.
 	 * @return A {@link Benchmark} instance representing the file content.
-	 * 
+	 *
 	 * @throws JAXBException
 	 * @throws FileNotFoundException
 	 * @throws SAXException
@@ -100,7 +101,8 @@ public class BenchmarkSerializer {
 			throws JAXBException, FileNotFoundException {
 		final JAXBElement<Benchmark> jaxbelem =
 				new JAXBElement<>(QNAME_BENCHMARK, Benchmark.class, null, benchmarkInstance);
-		final JAXBContext jc = JAXBContext.newInstance(BENCHMARK_PACKAGE);
+		final ClassLoader cl = ObjectFactory.class.getClassLoader();
+		final JAXBContext jc = JAXBContext.newInstance(BENCHMARK_PACKAGE, cl);
 		final Marshaller marshaller = jc.createMarshaller();
 		marshaller.setProperty("jaxb.formatted.output", true);
 		marshaller.marshal(jaxbelem, new FileOutputStream(xmlfile));
@@ -109,7 +111,8 @@ public class BenchmarkSerializer {
 	public static String toString(final Benchmark benchmarkInstance) throws JAXBException {
 		final JAXBElement<Benchmark> jaxbelem =
 				new JAXBElement<>(QNAME_BENCHMARK, Benchmark.class, null, benchmarkInstance);
-		final JAXBContext jc = JAXBContext.newInstance(BENCHMARK_PACKAGE);
+		final ClassLoader cl = ObjectFactory.class.getClassLoader();
+		final JAXBContext jc = JAXBContext.newInstance(BENCHMARK_PACKAGE, cl);
 		final Marshaller marshaller = jc.createMarshaller();
 		marshaller.setProperty("jaxb.formatted.output", true);
 		final StringWriter sw = new StringWriter();
