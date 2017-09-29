@@ -37,6 +37,14 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint;
 public interface IAbstractDomain<STATE extends IAbstractState<STATE>, ACTION> {
 
 	/**
+	 * This method is called before the fixpoint computation begins. You can use it to prepare for reporting of
+	 * domain-specific statistics.
+	 */
+	default void beforeFixpointComputation() {
+		// default is doing nothing
+	}
+
+	/**
 	 * @return A new state of the current abstract domain representing &top;.
 	 */
 	STATE createTopState();
@@ -72,5 +80,13 @@ public interface IAbstractDomain<STATE extends IAbstractState<STATE>, ACTION> {
 	 */
 	default boolean useHierachicalPre() {
 		return false;
+	}
+
+	/**
+	 * This method is called after the fixpoint computation ends. You can use it to report domain-specific statistics
+	 * after a run.
+	 */
+	default void afterFixpointComputation() {
+		// default is doing nothing
 	}
 }

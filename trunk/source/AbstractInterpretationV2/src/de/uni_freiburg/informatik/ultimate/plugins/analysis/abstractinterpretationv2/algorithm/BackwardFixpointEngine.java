@@ -95,10 +95,15 @@ public class BackwardFixpointEngine<STATE extends IAbstractState<STATE>, ACTION,
 		mLogger.info("Starting fixpoint engine with domain " + mDomain.getClass().getSimpleName() + " (maxUnwinding="
 				+ mMaxUnwindings + ", maxParallelStates=" + mMaxParallelStates + ")");
 		mResult = new AbsIntResult<>(script, mDomain, mTransitionProvider, mVarProvider);
-		calculateFixpoint(start);
-		mResult.saveRootStorage(mStateStorage);
-		mResult.saveSummaryStorage(mSummaryMap);
-		return mResult;
+		try {
+			mDomain.beforeFixpointComputation();
+			calculateFixpoint(start);
+			mResult.saveRootStorage(mStateStorage);
+			mResult.saveSummaryStorage(mSummaryMap);
+			return mResult;
+		} finally {
+			mDomain.afterFixpointComputation();
+		}
 	}
 
 	private void calculateFixpoint(final Collection<? extends LOC> sinks) {

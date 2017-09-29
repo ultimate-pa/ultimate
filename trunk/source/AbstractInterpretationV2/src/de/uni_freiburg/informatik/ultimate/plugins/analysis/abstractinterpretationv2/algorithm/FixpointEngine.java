@@ -101,11 +101,16 @@ public class FixpointEngine<STATE extends IAbstractState<STATE>, ACTION, VARDECL
 		mLogger.info("Starting fixpoint engine with domain " + mDomain.getClass().getSimpleName() + " (maxUnwinding="
 				+ mMaxUnwindings + ", maxParallelStates=" + mMaxParallelStates + ")");
 		mResult = new AbsIntResult<>(script, mDomain, mTransitionProvider, mVarProvider);
-		calculateFixpoint(start);
-		mResult.saveRootStorage(mStateStorage);
-		mResult.saveSummaryStorage(mSummaryMap);
-		mLogger.debug("Fixpoint computation completed");
-		return mResult;
+		mDomain.beforeFixpointComputation();
+		try {
+			calculateFixpoint(start);
+			mResult.saveRootStorage(mStateStorage);
+			mResult.saveSummaryStorage(mSummaryMap);
+			mLogger.debug("Fixpoint computation completed");
+			return mResult;
+		} finally {
+			mDomain.afterFixpointComputation();
+		}
 	}
 
 	private void calculateFixpoint(final Collection<? extends LOC> start) {
