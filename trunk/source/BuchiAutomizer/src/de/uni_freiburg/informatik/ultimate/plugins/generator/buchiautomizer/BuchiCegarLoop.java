@@ -82,6 +82,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.Increme
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.taskidentifier.SubtaskFileIdentifier;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.taskidentifier.SubtaskIterationIdentifier;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.taskidentifier.TaskIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoCheck.ContinueDirective;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoCheck.TraceCheckResult;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.BuchiAutomizerPreferenceInitializer;
@@ -243,6 +246,7 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 	private final RankVarConstructor mRankVarConstructor;
 	
 	private final RefinementStrategyFactory<LETTER> mRefinementStrategyFactory;
+	private final TaskIdentifier mTaskIdentifier;
 
 	public ToolchainCanceledException getToolchainCancelledException() {
 		return mToolchainCancelledException;
@@ -256,13 +260,15 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 			final RankVarConstructor rankVarConstructor, final PredicateFactory predicateFactory,
 			final TAPreferences taPrefs, final IUltimateServiceProvider services, final IToolchainStorage storage) {
 		assert services != null;
+		mIcfg = icfg;
+		// TODO: TaskIdentifier should probably be provided by caller
+		mTaskIdentifier = new SubtaskFileIdentifier(null, mIcfg.getIdentifier());
 		mLTLMode = false;
 		mServices = services;
 		mToolchainStorage = storage;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mMDBenchmark = new BuchiAutomizerModuleDecompositionBenchmark(mServices.getBacktranslationService());
 		mName = "BuchiCegarLoop";
-		mIcfg = icfg;
 		mPredicateFactory = predicateFactory;
 		mRankVarConstructor = rankVarConstructor;
 		mCsToolkitWithoutRankVars = csToolkitWithoutRankVars;
@@ -414,16 +420,19 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 
 			LassoCheck<LETTER> lassoCheck;
 			try {
+				final TaskIdentifier taskIdentifier = new SubtaskIterationIdentifier(mTaskIdentifier, mIteration);
 				mBenchmarkGenerator.start(BuchiCegarLoopBenchmark.s_LassoAnalysisTime);
-				lassoCheck = new LassoCheck<>(mInterpolation, mCsToolkitWithoutRankVars, mPredicateFactory,
+				lassoCheck = new LassoCheck<LETTER>(mInterpolation, mCsToolkitWithoutRankVars, mPredicateFactory,
 						mCsToolkitWithRankVars.getSymbolTable(), mCsToolkitWithoutRankVars.getModifiableGlobalsTable(),
 						mIcfg.getCfgSmtToolkit().getAxioms(), mBinaryStatePredicateManager, mCounterexample,
 						generateLassoCheckIdentifier(), mServices, mToolchainStorage, mSimplificationTechnique,
-						mXnfConversionTechnique);
+						mXnfConversionTechnique, mRefinementStrategyFactory, mAbstraction,
+						mPref.getRefinementStrategy(), taskIdentifier);
 				if (lassoCheck.getLassoCheckResult().getContinueDirective() == ContinueDirective.REPORT_UNKNOWN) {
 					// if result was unknown, then try again but this time add one
 					// iteration of the loop to the stem.
 					// This allows us to verify Vincent's coolant examples
+					final TaskIdentifier unwindingTaskIdentifier = new SubtaskAdditionalLoopUnwinding(taskIdentifier, 1);
 					mLogger.info("Result of lasso check was UNKNOWN. I will concatenate loop to stem and try again.");
 					final NestedRun<LETTER, IPredicate> newStem =
 							mCounterexample.getStem().concatenate(mCounterexample.getLoop());
@@ -432,7 +441,8 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 							mIcfg.getSymboltable(), mCsToolkitWithoutRankVars.getModifiableGlobalsTable(),
 							mIcfg.getCfgSmtToolkit().getAxioms(), mBinaryStatePredicateManager, mCounterexample,
 							generateLassoCheckIdentifier(), mServices, mToolchainStorage, mSimplificationTechnique,
-							mXnfConversionTechnique);
+							mXnfConversionTechnique, mRefinementStrategyFactory, mAbstraction,
+							mPref.getRefinementStrategy(), unwindingTaskIdentifier);
 				}
 			} catch (final ToolchainCanceledException e) {
 				final int traceHistogramMaxStem =
@@ -923,6 +933,23 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 		}
 		final IPredicate someState = states.iterator().next();
 		return someState instanceof ISLPredicate;
+	}
+	
+	
+	
+	private class SubtaskAdditionalLoopUnwinding extends TaskIdentifier {
+		private final int mAdditionaUnwindings;
+		
+		public SubtaskAdditionalLoopUnwinding(final TaskIdentifier parentTaskIdentifier, final int additionaUnwindings) {
+			super(parentTaskIdentifier);
+			mAdditionaUnwindings = additionaUnwindings;
+		}
+
+		@Override
+		protected String getSubtaskIdentifier() {
+			return mAdditionaUnwindings + "additionalUnwindings";
+		}
+		
 	}
 
 }
