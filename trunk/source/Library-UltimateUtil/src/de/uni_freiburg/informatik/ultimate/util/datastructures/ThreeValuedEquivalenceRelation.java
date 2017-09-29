@@ -27,12 +27,12 @@
 package de.uni_freiburg.informatik.ultimate.util.datastructures;
 
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
@@ -58,7 +58,7 @@ public class ThreeValuedEquivalenceRelation<E> {
 		mIsInconsistent = false;
 	}
 
-	public ThreeValuedEquivalenceRelation(final BiFunction<E, E, Integer> elementComparator) {
+	public ThreeValuedEquivalenceRelation(final Comparator<E> elementComparator) {
 		assert elementComparator != null : "use other constructor in this case!";
 		mUnionFind = new UnionFind<>(elementComparator);
 		mDisequalities = new HashRelation<>();

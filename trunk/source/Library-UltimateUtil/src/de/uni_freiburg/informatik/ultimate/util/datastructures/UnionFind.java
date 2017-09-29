@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.util.datastructures;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -36,7 +37,6 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -77,7 +77,8 @@ public class UnionFind<E> implements IPartition<E> {
 	 * Use of the comparator is optional, if no element comparator is present,
 	 * this * class may choose any representative for each equivalence class.
 	 */
-	private final BiFunction<E, E, Integer> mElementComparator;
+//	private final BiFunction<E, E, Integer> mElementComparator;
+	private final Comparator<E> mElementComparator;
 
 	/**
 	 * Constructor for new (empty) data structure.
@@ -92,7 +93,7 @@ public class UnionFind<E> implements IPartition<E> {
 	 * Additionally takes a function that is used as a comparator between
 	 * elements. (See the field's documentation for more details.)
 	 */
-	public UnionFind(final BiFunction<E, E, Integer> elementComparator) {
+	public UnionFind(final Comparator<E> elementComparator) {
 		assert elementComparator != null : "use other constructor in this case!";
 		mElementComparator = elementComparator;
 	}
@@ -220,7 +221,7 @@ public class UnionFind<E> implements IPartition<E> {
 		if (mElementComparator != null) {
 			final E rep1 = mRepresentative.get(set1);
 			final E rep2 = mRepresentative.get(set2);
-			newRep = mElementComparator.apply(rep1, rep2) > 0 ? rep2 : rep1;
+			newRep = mElementComparator.compare(rep1, rep2) > 0 ? rep2 : rep1;
 		} else {
 			newRep = mRepresentative.get(largerSet);
 		}
@@ -352,7 +353,7 @@ public class UnionFind<E> implements IPartition<E> {
 		E result = newBlockIt.next();
 		while (newBlockIt.hasNext()) {
 			final E current = newBlockIt.next();
-			result = mElementComparator.apply(current, result) < 0 ? current : result;
+			result = mElementComparator.compare(current, result) < 0 ? current : result;
 		}
 		return result;
 	}
@@ -441,7 +442,7 @@ public class UnionFind<E> implements IPartition<E> {
 				// it does not matter which representative we choose
 				newBlockRep = uf1Rep;
 			} else {
-				newBlockRep = uf1.mElementComparator.apply(uf1Rep, uf2Rep) < 0 ? uf1Rep : uf2Rep;
+				newBlockRep = uf1.mElementComparator.compare(uf1Rep, uf2Rep) < 0 ? uf1Rep : uf2Rep;
 			}
 
 			final Set<E> newBlock = SetOperations.union(uf1.getEquivalenceClassMembers(tver1El),
@@ -463,7 +464,7 @@ public class UnionFind<E> implements IPartition<E> {
 
 			final E newRep = elemTransformer.apply(entry.getValue());
 
-			assert mElementComparator == null || mElementComparator.apply(newRep, entry.getValue()) == 0;
+			assert mElementComparator == null || mElementComparator.compare(newRep, entry.getValue()) == 0;
 
 			final Set<E> newEqClass = entry.getKey().stream().map(elemTransformer).collect(Collectors.toSet());
 			for (final E newElem : newEqClass) {
@@ -482,14 +483,14 @@ public class UnionFind<E> implements IPartition<E> {
 		for (final Entry<Set<E>, E> en : mRepresentative.entrySet()) {
 			final E rep = en.getValue();
 			for (final E member : en.getKey()) {
-				assert mElementComparator.apply(rep, member) <= 0;
+				assert mElementComparator.compare(rep, member) <= 0;
 			}
 		}
 		return true;
 	}
 
 
-	public  BiFunction<E, E, Integer> getElementComparator() {
+	public  Comparator<E> getElementComparator() {
 		return mElementComparator;
 	}
 }
