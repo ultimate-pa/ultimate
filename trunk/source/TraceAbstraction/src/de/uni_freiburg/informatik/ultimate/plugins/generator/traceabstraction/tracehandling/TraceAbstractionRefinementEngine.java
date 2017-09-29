@@ -387,7 +387,7 @@ public final class TraceAbstractionRefinementEngine<LETTER>
 			mLogger.info("Number of different interpolants: perfect sequences " + numberInterpolantsPerfect
 					+ " imperfect sequences " + numberInterpolantsImperfect + " total " + allInterpolants.size());
 		}
-		if (mInteractive.isInteractiveMode()) {
+		if (mInteractive != null && mInteractive.isInteractiveMode()) {
 			final InterpolantSequences sequences = InterpolantSequences.instance.set(perfectIpps, imperfectIpps);
 			if (mInteractive.getPreferences().isIPS() && perfectIpps.size() + imperfectIpps.size() > 1) {
 				mLogger.info("Asking the user to select interpolant sequences.");
