@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.taskidentifier.TaskIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.IInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.MultiTrackInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
@@ -138,7 +139,7 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy<LETTER extend
 	private TraceChecker mTraceChecker;
 	private IInterpolantGenerator mInterpolantGenerator;
 	private IInterpolantAutomatonBuilder<LETTER, IPredicate> mInterpolantAutomatonBuilder;
-	protected final int mIteration;
+	protected final TaskIdentifier mTaskIdentifier;
 	private final RefinementEngineStatisticsGenerator mRefinementEngineStatisticsGenerator;
 
 	/**
@@ -159,8 +160,6 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy<LETTER extend
 	 *            temporary argument, should be removed
 	 * @param assertionOrderModulation
 	 *            assertion order modulation
-	 * @param iteration
-	 *            current CEGAR loop iteration
 	 * @param cegarLoopBenchmarks
 	 *            benchmark
 	 */
@@ -170,7 +169,7 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy<LETTER extend
 			final CfgSmtToolkit cfgSmtToolkit, final PredicateFactory predicateFactory,
 			final PredicateUnifier predicateUnifier, final AssertionOrderModulation<LETTER> assertionOrderModulation,
 			final IRun<LETTER, IPredicate, ?> counterexample, final IAutomaton<LETTER, IPredicate> abstraction,
-			final TAPreferences taPrefsForInterpolantConsolidation, final int iteration) {
+			final TAPreferences taPrefsForInterpolantConsolidation, final TaskIdentifier taskIdentifier) {
 		mServices = services;
 		mLogger = logger;
 		mPrefs = prefs;
@@ -180,7 +179,7 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy<LETTER extend
 		mAbstraction = abstraction;
 		mPredicateFactory = predicateFactory;
 		mPredicateUnifier = predicateUnifier;
-		mIteration = iteration;
+		mTaskIdentifier = taskIdentifier;
 		mTaPrefsForInterpolantConsolidation = taPrefsForInterpolantConsolidation;
 		mRefinementEngineStatisticsGenerator = new RefinementEngineStatisticsGenerator();
 
@@ -295,7 +294,7 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy<LETTER extend
 		TraceCheckerConstructor<LETTER> result;
 		if (mPrevTcConstructor == null) {
 			result = new TraceCheckerConstructor<>(mPrefs, managedScript, mServices, mPredicateFactory,
-					mPredicateUnifier, mCounterexample, assertionOrder, interpolationTechnique, mIteration);
+					mPredicateUnifier, mCounterexample, assertionOrder, interpolationTechnique, mTaskIdentifier);
 		} else {
 			result = new TraceCheckerConstructor<>(mPrevTcConstructor, managedScript, assertionOrder,
 					interpolationTechnique);
@@ -335,7 +334,7 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy<LETTER extend
 		final boolean dumpSmtScriptToFile = prefs.getDumpSmtScriptToFile();
 		final String pathOfDumpedScript = prefs.getPathOfDumpedScript();
 		final String baseNameOfDumpedScript =
-				"Script_" + prefs.getIcfgContainer().getIdentifier() + "_Iteration" + mIteration;
+				"Script_" + prefs.getIcfgContainer().getIdentifier() + "_Iteration" + mTaskIdentifier;
 		final Settings solverSettings;
 		final SolverMode solverMode;
 		final String logicForExternalSolver;
@@ -386,7 +385,7 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy<LETTER extend
 					"Managed script construction not supported for interpolation technique: " + mode);
 		}
 		final Script solver = SolverBuilder.buildAndInitializeSolver(services, prefs.getToolchainStorage(), solverMode,
-				solverSettings, false, false, logicForExternalSolver, "TraceCheck_Iteration" + mIteration);
+				solverSettings, false, false, logicForExternalSolver, "TraceCheck_Iteration" + mTaskIdentifier);
 		final ManagedScript result = new ManagedScript(services, solver);
 
 		final TermTransferrer tt = new TermTransferrer(solver);

@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.taskidentifier.TaskIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interactive.InteractiveCegar;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.IInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.MultiTrackInterpolantAutomatonBuilder;
@@ -80,9 +81,9 @@ public abstract class ParrotRefinementStrategy<LETTER extends IIcfgTransition<?>
 			final PredicateFactory predicateFactory, final PredicateUnifier predicateUnifier,
 			final AssertionOrderModulation<LETTER> assertionOrderModulation,
 			final IRun<LETTER, IPredicate, ?> counterexample, final IAutomaton<LETTER, IPredicate> abstraction,
-			final TAPreferences taPrefsForInterpolantConsolidation, final int iteration) {
+			final TAPreferences taPrefsForInterpolantConsolidation, final TaskIdentifier taskIdentifier) {
 		super(logger, prefs, services, cfgSmtToolkit, predicateFactory, predicateUnifier, assertionOrderModulation,
-				counterexample, abstraction, taPrefsForInterpolantConsolidation, iteration);
+				counterexample, abstraction, taPrefsForInterpolantConsolidation, taskIdentifier);
 		mInitialized = true;
 	}
 
@@ -161,7 +162,7 @@ public abstract class ParrotRefinementStrategy<LETTER extends IIcfgTransition<?>
 			// so we ask the user to continue manually.
 			mLogger.info(
 					"Fallback Strategy " + getInteractive().getParrotInteractiveIterationInfo().getFallbackStrategy()
-							+ " has failed prematurely in iteration " + mIteration + " - asking the user");
+							+ " has failed prematurely in iteration " + mTaskIdentifier + " - asking the user");
 			mFallback = null;
 		}
 		return super.hasNextTraceChecker();

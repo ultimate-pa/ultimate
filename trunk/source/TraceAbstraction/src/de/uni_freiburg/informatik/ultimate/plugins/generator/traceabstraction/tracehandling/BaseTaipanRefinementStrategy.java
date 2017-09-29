@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.taskidentifier.TaskIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarAbsIntRunner;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.IInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.MultiTrackInterpolantAutomatonBuilder;
@@ -99,7 +100,7 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 	private TraceChecker mTraceChecker;
 	private IInterpolantGenerator mInterpolantGenerator;
 	private IInterpolantAutomatonBuilder<LETTER, IPredicate> mInterpolantAutomatonBuilder;
-	private final int mIteration;
+	private final TaskIdentifier mTaskIdentifier;
 	private final RefinementEngineStatisticsGenerator mRefinementEngineStatisticsGenerator;
 
 	/**
@@ -120,8 +121,6 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 	 *            counterexample
 	 * @param abstraction
 	 *            abstraction
-	 * @param iteration
-	 *            current CEGAR loop iteration
 	 * @param cegarLoopBenchmark
 	 *            benchmark
 	 */
@@ -131,7 +130,7 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 			final CegarAbsIntRunner<LETTER> absIntRunner,
 			final AssertionOrderModulation<LETTER> assertionOrderModulation,
 			final IRun<LETTER, IPredicate, ?> counterexample, final IAutomaton<LETTER, IPredicate> abstraction,
-			final int iteration) {
+			final TaskIdentifier taskIdentifier) {
 		mServices = services;
 		mLogger = logger;
 		mPrefs = prefs;
@@ -141,7 +140,7 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 		mAssertionOrderModulation = assertionOrderModulation;
 		mCounterexample = counterexample;
 		mAbstraction = abstraction;
-		mIteration = iteration;
+		mTaskIdentifier = taskIdentifier;
 		mRefinementEngineStatisticsGenerator = new RefinementEngineStatisticsGenerator();
 
 		mCurrentMode = getInitialMode();
@@ -275,7 +274,7 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 		}
 
 		final ManagedScript managedScript =
-				constructManagedScript(mServices, mPrefs, scriptMode, useTimeout, mIteration);
+				constructManagedScript(mServices, mPrefs, scriptMode, useTimeout, mTaskIdentifier);
 
 		final AssertCodeBlockOrder assertionOrder =
 				mAssertionOrderModulation.reportAndGet(mCounterexample, interpolationTechnique);
@@ -285,7 +284,7 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 		TraceCheckerConstructor<LETTER> result;
 		if (mPrevTcConstructor == null) {
 			result = new TraceCheckerConstructor<>(mPrefs, managedScript, mServices, mPredicateFactory,
-					mPredicateUnifierSmt, mCounterexample, assertionOrder, interpolationTechnique, mIteration);
+					mPredicateUnifierSmt, mCounterexample, assertionOrder, interpolationTechnique, mTaskIdentifier);
 		} else {
 			result = new TraceCheckerConstructor<>(mPrevTcConstructor, managedScript, assertionOrder,
 					interpolationTechnique);
@@ -317,11 +316,11 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 	@SuppressWarnings("squid:S1151")
 	private ManagedScript constructManagedScript(final IUltimateServiceProvider services,
 			final TaCheckAndRefinementPreferences<LETTER> prefs, final Mode mode, final boolean useTimeout,
-			final int iteration) {
+			final TaskIdentifier taskIdentifier) {
 		final boolean dumpSmtScriptToFile = prefs.getDumpSmtScriptToFile();
 		final String pathOfDumpedScript = prefs.getPathOfDumpedScript();
 		final String baseNameOfDumpedScript =
-				"Script_" + prefs.getIcfgContainer().getIdentifier() + "_Iteration" + iteration;
+				"Script_" + prefs.getIcfgContainer().getIdentifier() + "_Iteration" + taskIdentifier;
 		final Settings solverSettings;
 		final SolverMode solverMode;
 		final String logicForExternalSolver;
@@ -355,7 +354,7 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 			throw new IllegalArgumentException(UNKNOWN_MODE + mode);
 		}
 		final Script solver = SolverBuilder.buildAndInitializeSolver(services, prefs.getToolchainStorage(), solverMode,
-				solverSettings, false, false, logicForExternalSolver, "TraceCheck_Iteration" + iteration);
+				solverSettings, false, false, logicForExternalSolver, "TraceCheck_Iteration" + taskIdentifier);
 		final ManagedScript result = new ManagedScript(services, solver);
 
 		final TermTransferrer tt = new TermTransferrer(solver);

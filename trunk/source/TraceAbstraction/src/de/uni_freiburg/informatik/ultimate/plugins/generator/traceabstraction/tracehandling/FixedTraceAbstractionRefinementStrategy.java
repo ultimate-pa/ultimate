@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.taskidentifier.TaskIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.IInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
@@ -91,8 +92,6 @@ public class FixedTraceAbstractionRefinementStrategy<LETTER extends IIcfgTransit
 	 *            abstraction
 	 * @param taPrefsForInterpolantConsolidation
 	 *            temporary argument, should be removed
-	 * @param iteration
-	 *            current CEGAR loop iteration
 	 * @param cegarLoopBenchmarks
 	 *            benchmark
 	 */
@@ -101,7 +100,7 @@ public class FixedTraceAbstractionRefinementStrategy<LETTER extends IIcfgTransit
 			final IUltimateServiceProvider services, final PredicateFactory predicateFactory,
 			final PredicateUnifier predicateUnifier, final IRun<LETTER, IPredicate, ?> counterexample,
 			final IAutomaton<LETTER, IPredicate> abstraction, final TAPreferences taPrefsForInterpolantConsolidation,
-			final int iteration) {
+			final TaskIdentifier taskIdentifier) {
 		mServices = services;
 		mLogger = logger;
 		mPrefs = prefs;
@@ -112,7 +111,7 @@ public class FixedTraceAbstractionRefinementStrategy<LETTER extends IIcfgTransit
 		mTaPrefsForInterpolantConsolidation = taPrefsForInterpolantConsolidation;
 		mRefinementEngineStatisticsGenerator = new RefinementEngineStatisticsGenerator();
 		mFunConstructFromPrefs = new TraceCheckerConstructor<>(prefs, managedScript, services, predicateFactory,
-				predicateUnifier, counterexample, mPrefs.getInterpolationTechnique(), iteration);
+				predicateUnifier, counterexample, mPrefs.getInterpolationTechnique(), taskIdentifier);
 	}
 
 	@Override

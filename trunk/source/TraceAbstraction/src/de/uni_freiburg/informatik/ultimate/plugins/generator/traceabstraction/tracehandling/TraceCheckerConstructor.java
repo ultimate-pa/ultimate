@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfCon
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.taskidentifier.TaskIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.InvariantSynthesisSettings;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
@@ -65,7 +66,7 @@ class TraceCheckerConstructor<LETTER extends IIcfgTransition<?>> implements Supp
 	private final PredicateUnifier mPredicateUnifier;
 	private final IRun<LETTER, IPredicate, ?> mCounterexample;
 	private final InterpolationTechnique mInterpolationTechnique;
-	private final int mIteration;
+	private final TaskIdentifier mTaskIdentifier;
 	private final AssertCodeBlockOrder mAssertionOrder;
 
 	/**
@@ -81,17 +82,15 @@ class TraceCheckerConstructor<LETTER extends IIcfgTransition<?>> implements Supp
 	 *            counterexample trace
 	 * @param interpolationTechnique
 	 *            interpolation technique
-	 * @param cegarIteration
-	 *            iteration in the CEGAR loop
 	 * @param cegarLoopBenchmark
 	 *            CEGAR loop benchmark
 	 */
 	public TraceCheckerConstructor(final TaCheckAndRefinementPreferences<LETTER> prefs, final ManagedScript managedScript,
 			final IUltimateServiceProvider services, final PredicateFactory predicateFactory,
 			final PredicateUnifier predicateUnifier, final IRun<LETTER, IPredicate, ?> counterexample,
-			final InterpolationTechnique interpolationTechnique, final int cegarIteration) {
+			final InterpolationTechnique interpolationTechnique, final TaskIdentifier taskIdentifier) {
 		this(prefs, managedScript, services, predicateFactory, predicateUnifier, counterexample,
-				prefs.getAssertCodeBlocksOrder(), interpolationTechnique, cegarIteration);
+				prefs.getAssertCodeBlocksOrder(), interpolationTechnique, taskIdentifier);
 	}
 
 	/**
@@ -128,7 +127,7 @@ class TraceCheckerConstructor<LETTER extends IIcfgTransition<?>> implements Supp
 	public TraceCheckerConstructor(final TraceCheckerConstructor<LETTER> other, final ManagedScript managedScript,
 			final AssertCodeBlockOrder assertOrder, final InterpolationTechnique interpolationTechnique) {
 		this(other.mPrefs, managedScript, other.mServices, other.mPredicateFactory, other.mPredicateUnifier,
-				other.mCounterexample, assertOrder, interpolationTechnique, other.mIteration);
+				other.mCounterexample, assertOrder, interpolationTechnique, other.mTaskIdentifier);
 	}
 
 	/**
@@ -148,7 +147,7 @@ class TraceCheckerConstructor<LETTER extends IIcfgTransition<?>> implements Supp
 	 *            assertion order
 	 * @param interpolationTechnique
 	 *            interpolation technique
-	 * @param cegarIteration
+	 * @param taskIdentifier
 	 *            iteration in the CEGAR loop
 	 * @param cegarLoopBenchmark
 	 *            CEGAR loop benchmark
@@ -156,7 +155,7 @@ class TraceCheckerConstructor<LETTER extends IIcfgTransition<?>> implements Supp
 	public TraceCheckerConstructor(final TaCheckAndRefinementPreferences<LETTER> prefs, final ManagedScript managedScript,
 			final IUltimateServiceProvider services,final PredicateFactory predicateFactory,  final PredicateUnifier predicateUnifier,
 			final IRun<LETTER, IPredicate, ?> counterexample, final AssertCodeBlockOrder assertOrder,
-			final InterpolationTechnique interpolationTechnique, final int cegarIteration) {
+			final InterpolationTechnique interpolationTechnique, final TaskIdentifier taskIdentifier) {
 		mPrefs = prefs;
 		mManagedScript = managedScript;
 		mServices = services;
@@ -165,7 +164,7 @@ class TraceCheckerConstructor<LETTER extends IIcfgTransition<?>> implements Supp
 		mCounterexample = counterexample;
 		mAssertionOrder = assertOrder;
 		mInterpolationTechnique = interpolationTechnique;
-		mIteration = cegarIteration;
+		mTaskIdentifier = taskIdentifier;
 	}
 
 	@Override
@@ -257,7 +256,7 @@ class TraceCheckerConstructor<LETTER extends IIcfgTransition<?>> implements Supp
 		final boolean useWeakestPrecondition = mPrefs.getUseWeakestPreconditionForPathInvariants();
 		final boolean dumpSmtScriptToFile = mPrefs.getDumpSmtScriptToFile();
 		final String pathOfDumpedScript = mPrefs.getPathOfDumpedScript();
-		final String baseNameOfDumpedScript = "InVarSynth_" + icfgContainer.getIdentifier() + "_Iteration" + mIteration;
+		final String baseNameOfDumpedScript = "InVarSynth_" + icfgContainer.getIdentifier() + "_Iteration" + mTaskIdentifier;
 		final String solverCommand;
 		if (useNonlinearConstraints) {
 			// solverCommand = "yices-smt2 --incremental";
