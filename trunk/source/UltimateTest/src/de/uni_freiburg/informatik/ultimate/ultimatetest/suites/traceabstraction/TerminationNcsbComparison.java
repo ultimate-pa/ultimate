@@ -394,8 +394,8 @@ public class TerminationNcsbComparison extends AbstractBuchiAutomizerTestSuite {
 	};
 
 	private static final String[] mCToolchains = {
-			// "BuchiAutomizerCInlineWithBlockEncoding.xml",
-			"BuchiAutomizerCInline.xml", 
+			"BuchiAutomizerCInlineWithBlockEncoding.xml",
+//			"BuchiAutomizerCInline.xml", 
 		};
 
 	@Override
