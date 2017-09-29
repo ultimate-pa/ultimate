@@ -109,7 +109,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE>, ACTION, VARDECL
 			mLogger.debug("Fixpoint computation completed");
 			return mResult;
 		} finally {
-			mDomain.afterFixpointComputation();
+			mDomain.afterFixpointComputation(mResult);
 		}
 	}
 

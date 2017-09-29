@@ -24,7 +24,7 @@
  * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool;
+package de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint;
 
 import java.util.Deque;
 import java.util.List;
@@ -33,10 +33,6 @@ import java.util.Set;
 import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.DisjunctiveAbstractState;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractDomain;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IVariableProvider;
 
 /**
  * The result of an abstract interpretation analysis run.

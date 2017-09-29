@@ -102,7 +102,7 @@ public class BackwardFixpointEngine<STATE extends IAbstractState<STATE>, ACTION,
 			mResult.saveSummaryStorage(mSummaryMap);
 			return mResult;
 		} finally {
-			mDomain.afterFixpointComputation();
+			mDomain.afterFixpointComputation(mResult);
 		}
 	}
 

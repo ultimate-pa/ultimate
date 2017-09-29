@@ -85,8 +85,11 @@ public interface IAbstractDomain<STATE extends IAbstractState<STATE>, ACTION> {
 	/**
 	 * This method is called after the fixpoint computation ends. You can use it to report domain-specific statistics
 	 * after a run.
+	 *
+	 * @param result
+	 *            the result of the fixpoint computation (which contains, e.g., the set of fixpoints)
 	 */
-	default void afterFixpointComputation() {
+	default <LOC> void afterFixpointComputation(final IAbstractInterpretationResult<STATE, ACTION, LOC> result) {
 		// default is doing nothing
 	}
 }

@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool;
+package de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint;
 
 import java.util.List;
 
