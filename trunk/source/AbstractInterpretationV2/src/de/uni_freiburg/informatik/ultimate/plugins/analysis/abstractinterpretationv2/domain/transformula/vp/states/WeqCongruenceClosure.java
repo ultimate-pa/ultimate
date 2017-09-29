@@ -1104,6 +1104,22 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 			return mWeakEquivalenceGraph.getNumberOfEdgesStatistic();
 		case MAX_SIZEOF_WEQEDGELABEL:
 			return mWeakEquivalenceGraph.getMaxSizeOfEdgeLabelStatistic();
+		case NO_SUPPORTING_DISEQUALITIES:
+			// we have to eliminate symmetric entries
+			final HashRelation<NODE, NODE> cleanedDeqs = new HashRelation<>();
+			for (final Entry<NODE, NODE> deq : mElementTVER.getDisequalities()) {
+				if (cleanedDeqs.containsPair(deq.getValue(), deq.getKey())) {
+					continue;
+				}
+				cleanedDeqs.addPair(deq.getKey(), deq.getValue());
+			}
+			return cleanedDeqs.size();
+//			return mElementTVER.getDisequalities().entrySet().stream()
+//					.filter(en -> (!mElementTVER.getDisequalities().containsPair(en.getValue(), en.getKey())
+//							&& en.getKey().hashCode() < en.getValue().hashCode()))
+//					.collect(Collectors.counting()).intValue();
+		case NO_SUPPORTING_EQUALITIES:
+			return getSupportingElementEqualities().size();
 		default :
 			throw new UnsupportedOperationException();
 		}

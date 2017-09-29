@@ -27,11 +27,31 @@ public class VPDomainBenchmark implements ICsvProviderProvider<Integer> {
 		columnTitles.add("#SupportingDisequalities");
 		results.add(mSupportingDisequalitiesCounter);
 
+		columnTitles.add("Average#SupportingEqualities");
+		results.add(mSupportingEqualitiesCounter/mLocationsCounter);
+
+		columnTitles.add("Average#SupportingDisequalities");
+		results.add(mSupportingDisequalitiesCounter/mLocationsCounter);
+
 		final ICsvProvider<Integer> result = new SimpleCsvProvider<>(columnTitles);
 		result.addRow(results);
 
 		return result;
 	}
+
+	public void setSupportingEqualitiesCounter(final int supportingEqualitiesCounter) {
+		mSupportingEqualitiesCounter = supportingEqualitiesCounter;
+	}
+
+	public void setLocationsCounter(final int locationsCounter) {
+		mLocationsCounter = locationsCounter;
+	}
+
+	public void setSupportingDisequalitiesCounter(final int supportingDisequalitiesCounter) {
+		mSupportingDisequalitiesCounter = supportingDisequalitiesCounter;
+	}
+
+
 
 }
 

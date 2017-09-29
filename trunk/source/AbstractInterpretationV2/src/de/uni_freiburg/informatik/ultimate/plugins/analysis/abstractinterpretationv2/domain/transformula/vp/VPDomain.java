@@ -28,10 +28,13 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp;
 
+import java.util.Map.Entry;
+
 import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractDomain;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractInterpretationResult;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
@@ -146,12 +149,6 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 		return mPreAnalysis.getBenchmark();
 	}
 
-	public void finish() {
-		// TODO call this method once fixpoint engine has run (probably put it into the domain interface..)
-		mServices.getResultService().reportResult(Activator.PLUGIN_ID,
-				new StatisticsResult<>(Activator.PLUGIN_ID, "ArrayEqualityDomainStatistics", mBenchmark));
-//		mServices.getResultService().reportResult(Activator.PLUGIN_ID, mBenchmarkResult);
-	}
 
 	public EqStateFactory<ACTION> getEqStateFactory() {
 		return mEqStateFactory;
@@ -161,5 +158,30 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 	public boolean useHierachicalPre() {
 		return true;
 	}
+
+	@Override
+	public <LOC> void afterFixpointComputation(
+			final IAbstractInterpretationResult<EqState<ACTION>, ACTION, LOC> result) {
+
+		mBenchmark.setLocationsCounter(result.getLoc2SingleStates().keySet().size());
+
+		int noSupportingEqualitiesOverall = 0;
+		int noSupportingDisequalitiesOverall = 0;
+		for (final Entry<LOC, EqState<ACTION>> l2s : result.getLoc2SingleStates().entrySet()) {
+			noSupportingEqualitiesOverall += l2s.getValue().getConstraint()
+					.getStatistics(VPStatistics.NO_SUPPORTING_EQUALITIES);
+			noSupportingDisequalitiesOverall += l2s.getValue().getConstraint()
+					.getStatistics(VPStatistics.NO_SUPPORTING_DISEQUALITIES);
+
+		}
+
+		mBenchmark.setSupportingEqualitiesCounter(noSupportingEqualitiesOverall);
+		mBenchmark.setSupportingDisequalitiesCounter(noSupportingDisequalitiesOverall);
+
+
+		mServices.getResultService().reportResult(Activator.PLUGIN_ID,
+				new StatisticsResult<>(Activator.PLUGIN_ID, "ArrayEqualityDomainStatistics", mBenchmark));
+	}
+
 
 }
