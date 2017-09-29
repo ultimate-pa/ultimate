@@ -64,15 +64,18 @@ public class UnionFind<E> implements IPartition<E> {
 	 */
 	private final Map<Set<E>, E> mRepresentative = new HashMap<>();
 	/**
-	 * Comparator function for elements. Represents a partial order on the
-	 * elements.
+	 * Comparator function for elements. Represents a total, non-strict order
+	 * on the elements.
+	 * <p>
 	 * The meaning is as follows:
 	 *  <li> mPriorityComparator(e1, e2) > 0 iff e1 is strictly greater than e2
 	 *  <li> mPriorityComparator(e1, e2) < 0 iff e1 is strictly smaller than e2
 	 *  <li> mPriorityComparator(e1, e2) = 0 iff e1 and e2 are equally "big"
 	 * Our convention is that the representative of an equivalence class must
-	 * always be a minimal element in terms of this comparator.
-	 * (if the field mElementComparator is non-null)
+	 * always be a minimal element within the class in terms of this comparator.
+	 * <p>
+	 * Use of the comparator is optional, if no element comparator is present,
+	 * this * class may choose any representative for each equivalence class.
 	 */
 	private final BiFunction<E, E, Integer> mElementComparator;
 
@@ -84,6 +87,11 @@ public class UnionFind<E> implements IPartition<E> {
 	}
 
 
+	/**
+	 * Constructor for an empty union find data structure.
+	 * Additionally takes a function that is used as a comparator between
+	 * elements. (See the field's documentation for more details.)
+	 */
 	public UnionFind(final BiFunction<E, E, Integer> elementComparator) {
 		assert elementComparator != null : "use other constructor in this case!";
 		mElementComparator = elementComparator;
