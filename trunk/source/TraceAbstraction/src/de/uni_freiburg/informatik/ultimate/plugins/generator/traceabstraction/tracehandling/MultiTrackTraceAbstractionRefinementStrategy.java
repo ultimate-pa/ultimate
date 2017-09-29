@@ -287,7 +287,7 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy<LETTER extend
 		final ManagedScript managedScript = constructManagedScript(mServices, mPrefs, mNextTechnique, useTimeout);
 
 		final AssertCodeBlockOrder assertionOrder =
-				mAssertionOrderModulation.reportAndGet(mCounterexample, interpolationTechnique);
+				mAssertionOrderModulation.get(mCounterexample, interpolationTechnique);
 
 		mNextTechnique = null;
 

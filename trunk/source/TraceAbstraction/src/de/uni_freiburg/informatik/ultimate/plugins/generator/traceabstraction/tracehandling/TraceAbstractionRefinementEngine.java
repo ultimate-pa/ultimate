@@ -258,7 +258,8 @@ public final class TraceAbstractionRefinementEngine<LETTER>
 		try {
 			interpolantGenerator = mStrategy.getInterpolantGenerator();
 			if (interpolantGenerator instanceof InterpolantConsolidation) {
-				mInterpolantConsolidationStatistics = ((InterpolantConsolidation) interpolantGenerator).getInterpolantConsolidationBenchmarks();
+				mInterpolantConsolidationStatistics =
+						((InterpolantConsolidation) interpolantGenerator).getInterpolantConsolidationBenchmarks();
 			}
 		} catch (final ToolchainCanceledException tce) {
 			throw tce;
@@ -342,8 +343,7 @@ public final class TraceAbstractionRefinementEngine<LETTER>
 	}
 
 	private static void addForwardPredicates(final TraceCheckerSpWp traceCheckerSpWp,
-			final List<TracePredicates> perfectIpps,
-			final List<TracePredicates> imperfectIpps) {
+			final List<TracePredicates> perfectIpps, final List<TracePredicates> imperfectIpps) {
 		final TracePredicates interpolants = traceCheckerSpWp.getForwardIpp();
 		assert interpolants != null;
 		if (traceCheckerSpWp.isForwardSequencePerfect()) {
@@ -354,8 +354,7 @@ public final class TraceAbstractionRefinementEngine<LETTER>
 	}
 
 	private static void addBackwardPredicates(final TraceCheckerSpWp traceCheckerSpWp,
-			final List<TracePredicates> perfectIpps,
-			final List<TracePredicates> imperfectIpps) {
+			final List<TracePredicates> perfectIpps, final List<TracePredicates> imperfectIpps) {
 		final TracePredicates interpolants = traceCheckerSpWp.getBackwardIpp();
 		assert interpolants != null;
 		if (traceCheckerSpWp.isBackwardSequencePerfect()) {
@@ -365,8 +364,7 @@ public final class TraceAbstractionRefinementEngine<LETTER>
 		}
 	}
 
-	private LBool constructAutomatonFromIpps(List<TracePredicates> perfectIpps,
-			List<TracePredicates> imperfectIpps) {
+	private LBool constructAutomatonFromIpps(List<TracePredicates> perfectIpps, List<TracePredicates> imperfectIpps) {
 		// construct the interpolant automaton from the sequences we have found
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Constructing automaton from " + perfectIpps.size() + " perfect and " + imperfectIpps.size()
@@ -397,7 +395,7 @@ public final class TraceAbstractionRefinementEngine<LETTER>
 					perfectIpps = userSequences.mPerfectIpps;
 					imperfectIpps = userSequences.mImperfectIpps;
 					mLogger.info("User Selected " + perfectIpps.size() + " perfect and " + imperfectIpps.size()
-					+ " imperfect interpolant sequences.");					
+							+ " imperfect interpolant sequences.");
 				} catch (InterruptedException | ExecutionException e) {
 					mLogger.error(e);
 				}
@@ -415,14 +413,10 @@ public final class TraceAbstractionRefinementEngine<LETTER>
 	public boolean somePerfectSequenceFound() {
 		return mSomePerfectSequenceFound;
 	}
-	
-	
 
 	public InterpolantConsolidationBenchmarkGenerator getInterpolantConsolidationStatistics() {
 		return mInterpolantConsolidationStatistics;
 	}
-
-
 
 	/**
 	 * Categories for exception handling.

@@ -173,7 +173,7 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.AbstIntTime.toString());
 		try {
 
-			final int seen = mPathProgramCache.addRun(currentCex);
+			final int seen = mPathProgramCache.getPathProgramCount(currentCex);
 			if (seen > 1) {
 				mLogger.info("Skipping current iteration for AI because we have already analyzed this path program");
 				return;

@@ -277,7 +277,7 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 				constructManagedScript(mServices, mPrefs, scriptMode, useTimeout, mTaskIdentifier);
 
 		final AssertCodeBlockOrder assertionOrder =
-				mAssertionOrderModulation.reportAndGet(mCounterexample, interpolationTechnique);
+				mAssertionOrderModulation.get(mCounterexample, interpolationTechnique);
 
 		mLogger.info("Using TraceChecker mode " + mCurrentMode + " with AssertCodeBlockOrder " + assertionOrder
 				+ " (IT: " + interpolationTechnique + ")");

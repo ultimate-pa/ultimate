@@ -73,7 +73,7 @@ public class AssertionOrderModulation<LETTER> {
 	}
 
 	/**
-	 * A user reports a new counterexample and receives as answer the assertion order to use.
+	 * Get the assertion order to use based on the current state of the {@link PathProgramCache}.
 	 *
 	 * @param counterexample
 	 *            counterexample
@@ -81,13 +81,17 @@ public class AssertionOrderModulation<LETTER> {
 	 *            interpolation technique
 	 * @return which assertion order to use
 	 */
-	public AssertCodeBlockOrder reportAndGet(final IRun<LETTER, IPredicate, ?> counterexample,
+	public AssertCodeBlockOrder get(final IRun<LETTER, IPredicate, ?> counterexample,
 			final InterpolationTechnique interpolationTechnique) {
 
 		final int count = mPathProgramCache.getPathProgramCount(counterexample);
 
 		final AssertCodeBlockOrder oldOrder = ASSERTION_ORDERS[mCurrentIndex];
-		mCurrentIndex = (count - 1) % ASSERTION_ORDERS.length;
+		if (count == 0) {
+			mCurrentIndex = 0;
+		} else {
+			mCurrentIndex = (count - 1) % ASSERTION_ORDERS.length;
+		}
 
 		final AssertCodeBlockOrder newOrder = getOrder(interpolationTechnique);
 

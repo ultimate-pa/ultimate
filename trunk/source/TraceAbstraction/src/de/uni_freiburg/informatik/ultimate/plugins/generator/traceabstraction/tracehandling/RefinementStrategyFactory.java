@@ -65,6 +65,7 @@ public class RefinementStrategyFactory<LETTER extends IIcfgTransition<?>> {
 	private final IToolchainStorage mStorage;
 	protected final PredicateFactory mPredicateFactory;
 	protected final AssertionOrderModulation<LETTER> mAssertionOrderModulation;
+	private final PathProgramCache<LETTER> mPathProgramCache;
 
 	/**
 	 * @param logger
@@ -97,6 +98,7 @@ public class RefinementStrategyFactory<LETTER extends IIcfgTransition<?>> {
 		mLogger = logger;
 		mInitialIcfg = initialIcfg;
 		mPredicateFactory = predicateFactory;
+		mPathProgramCache = pathProgramCache;
 		mAssertionOrderModulation = new AssertionOrderModulation<>(pathProgramCache, logger);
 	}
 
@@ -121,13 +123,15 @@ public class RefinementStrategyFactory<LETTER extends IIcfgTransition<?>> {
 			final IRun<LETTER, IPredicate, ?> counterexample, final IAutomaton<LETTER, IPredicate> abstraction,
 			final TaskIdentifier taskIdentifier) {
 		final PredicateUnifier predicateUnifier = getNewPredicateUnifier();
+		mPathProgramCache.addRun(counterexample);
 
 		switch (strategy) {
 		case FIXED_PREFERENCES:
 			final ManagedScript managedScript =
 					setupManagedScriptFromPreferences(mServices, mInitialIcfg, mStorage, taskIdentifier, mPrefs);
 			return new FixedTraceAbstractionRefinementStrategy<>(mLogger, mPrefs, managedScript, mServices,
-					mPredicateFactory, predicateUnifier, counterexample, abstraction, mPrefsConsolidation, taskIdentifier);
+					mPredicateFactory, predicateUnifier, counterexample, abstraction, mPrefsConsolidation,
+					taskIdentifier);
 		case PENGUIN:
 			return new PenguinRefinementStrategy<>(mLogger, mPrefs, mServices, mInitialIcfg.getCfgSmtToolkit(),
 					mPredicateFactory, predicateUnifier, mAssertionOrderModulation, counterexample, abstraction,
@@ -176,8 +180,7 @@ public class RefinementStrategyFactory<LETTER extends IIcfgTransition<?>> {
 			final Settings solverSettings = SolverBuilder.constructSolverSettings(filename, solverMode,
 					fakeNonIncrementalSolver, commandExternalSolver, dumpSmtScriptToFile, pathOfDumpedScript);
 			final Script tcSolver = SolverBuilder.buildAndInitializeSolver(services, toolchainStorage,
-					prefs.getSolverMode(), solverSettings, false, false, prefs.getLogicForExternalSolver(),
-					filename);
+					prefs.getSolverMode(), solverSettings, false, false, prefs.getLogicForExternalSolver(), filename);
 			mgdScriptTc = new ManagedScript(services, tcSolver);
 			final TermTransferrer tt = new TermTransferrer(tcSolver);
 			final Term axioms = icfgContainer.getCfgSmtToolkit().getAxioms().getFormula();

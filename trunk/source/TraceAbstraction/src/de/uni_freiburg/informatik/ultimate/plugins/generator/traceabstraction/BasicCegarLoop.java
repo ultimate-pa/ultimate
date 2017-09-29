@@ -129,7 +129,6 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 	protected final PredicateFactoryForInterpolantAutomata mPredicateFactoryInterpolantAutomata;
 	protected final PredicateFactoryResultChecking mPredicateFactoryResultChecking;
 
-	private final CegarAbsIntRunner<LETTER> mAbsIntRunner;
 	private final InterpolantAutomatonBuilderFactory<LETTER> mInterpolantAutomatonBuilderFactory;
 	protected final InterpolationTechnique mInterpolation;
 	protected final InterpolantAutomaton mInterpolantAutomatonConstructionProcedure;
@@ -156,7 +155,6 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 	protected IRefinementEngine<NestedWordAutomaton<LETTER, IPredicate>> mTraceCheckAndRefinementEngine;
 
 	private final ErrorGeneralizationEngine<LETTER> mErrorGeneralizationEngine;
-	private final PathProgramCache<LETTER> mPathProgramCache;
 	private final boolean mStoreFloydHoareAutomata;
 	private final LinkedHashSet<AbstractInterpolantAutomaton<LETTER>> mFloydHoareAutomata = new LinkedHashSet<>();
 	protected final TaskIdentifier mTaskIdentifier;
@@ -219,11 +217,11 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		mDoFaultLocalizationFlowSensitive = prefs
 				.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_ERROR_TRACE_RELEVANCE_ANALYSIS_FLOW_SENSITIVE);
 
-		mPathProgramCache = new PathProgramCache<>(mLogger);
-		mAbsIntRunner = new CegarAbsIntRunner<>(services, mCegarLoopBenchmark, rootNode, mSimplificationTechnique,
-				mXnfConversionTechnique, mCsToolkit, mPathProgramCache);
+		final PathProgramCache<LETTER> pathProgramCache = new PathProgramCache<>(mLogger);
+		final CegarAbsIntRunner<LETTER> absIntRunner = new CegarAbsIntRunner<>(services, mCegarLoopBenchmark, rootNode,
+				mSimplificationTechnique, mXnfConversionTechnique, mCsToolkit, pathProgramCache);
 		mInterpolantAutomatonBuilderFactory = new InterpolantAutomatonBuilderFactory<>(mServices, mCsToolkit,
-				mPredicateFactoryInterpolantAutomata, mIcfg, mAbsIntRunner, taPrefs, mInterpolation,
+				mPredicateFactoryInterpolantAutomata, mIcfg, absIntRunner, taPrefs, mInterpolation,
 				mInterpolantAutomatonConstructionProcedure, mCegarLoopBenchmark);
 
 		mSearchStrategy = getSearchStrategy(prefs);
@@ -234,12 +232,12 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 				mPredicateFactory, mIcfg, mToolchainStorage, mInterpolantAutomatonBuilderFactory);
 
 		if (mInteractive.isInteractiveMode()) {
-			mRefinementStrategyFactory = new InteractiveRefinementStrategyFactory<>(mLogger, mServices,
-					mToolchainStorage, mInteractive, mPref, taCheckAndRefinementPrefs, mAbsIntRunner, mIcfg,
-					mPredicateFactory, mPathProgramCache);
+			mRefinementStrategyFactory =
+					new InteractiveRefinementStrategyFactory<>(mLogger, mServices, mToolchainStorage, mInteractive,
+							mPref, taCheckAndRefinementPrefs, absIntRunner, mIcfg, mPredicateFactory, pathProgramCache);
 		} else {
 			mRefinementStrategyFactory = new RefinementStrategyFactory<>(mLogger, mServices, mToolchainStorage, mPref,
-					taCheckAndRefinementPrefs, mAbsIntRunner, mIcfg, mPredicateFactory, mPathProgramCache);
+					taCheckAndRefinementPrefs, absIntRunner, mIcfg, mPredicateFactory, pathProgramCache);
 		}
 	}
 
@@ -305,7 +303,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 			mDumper.dumpNestedRun(mCounterexample);
 		}
 		mLogger.info("Found error trace");
-		mPathProgramCache.addRun(mCounterexample);
+
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug(mCounterexample.getWord());
 		}
@@ -327,9 +325,9 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 	@Override
 	protected LBool isCounterexampleFeasible() throws AutomataOperationCanceledException {
 
-		final IRefinementStrategy<LETTER> strategy = mRefinementStrategyFactory.createStrategy(
-				mPref.getRefinementStrategy(), mCounterexample, mAbstraction, 
-				new SubtaskIterationIdentifier(mTaskIdentifier, getIteration()));
+		final IRefinementStrategy<LETTER> strategy =
+				mRefinementStrategyFactory.createStrategy(mPref.getRefinementStrategy(), mCounterexample, mAbstraction,
+						new SubtaskIterationIdentifier(mTaskIdentifier, getIteration()));
 		try {
 			mTraceCheckAndRefinementEngine = new TraceAbstractionRefinementEngine<>(mLogger, strategy, mInteractive);
 		} catch (final ToolchainCanceledException tce) {
@@ -646,11 +644,10 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		mLogger.fatal("--");
 	}
 
-	private AbstractInterpolantAutomaton<LETTER>
-			constructInterpolantAutomatonForOnDemandEnhancement(
-					final NestedWordAutomaton<LETTER, IPredicate> inputInterpolantAutomaton,
-					final IPredicateUnifier predicateUnifier, final IHoareTripleChecker htc,
-					final InterpolantAutomatonEnhancement enhanceMode) {
+	private AbstractInterpolantAutomaton<LETTER> constructInterpolantAutomatonForOnDemandEnhancement(
+			final NestedWordAutomaton<LETTER, IPredicate> inputInterpolantAutomaton,
+			final IPredicateUnifier predicateUnifier, final IHoareTripleChecker htc,
+			final InterpolantAutomatonEnhancement enhanceMode) {
 		final AbstractInterpolantAutomaton<LETTER> result;
 		switch (enhanceMode) {
 		case NONE:
@@ -739,8 +736,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 			throws AutomataOperationCanceledException, AutomataLibraryException, AssertionError {
 
 		if (mPref.dumpAutomata()) {
-			final String filename =
-					mIcfg.getIdentifier() + "_DiffAutomatonBeforeMinimization_Iteration" + mIteration;
+			final String filename = mIcfg.getIdentifier() + "_DiffAutomatonBeforeMinimization_Iteration" + mIteration;
 			super.writeAutomatonToFile(mAbstraction, filename);
 		}
 		final Function<ISLPredicate, IcfgLocation> lcsProvider = x -> x.getProgramPoint();
@@ -791,8 +787,8 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		new HoareAnnotationExtractor<>(mServices, abstraction, mHaf);
 		final HoareAnnotationComposer clha = new HoareAnnotationComposer(mCsToolkit, mPredicateFactory, mHaf, mServices,
 				mSimplificationTechnique, mXnfConversionTechnique);
-		final HoareAnnotationWriter writer = new HoareAnnotationWriter(mIcfg, mCsToolkit, mPredicateFactory,
-				clha, mServices, mSimplificationTechnique, mXnfConversionTechnique);
+		final HoareAnnotationWriter writer = new HoareAnnotationWriter(mIcfg, mCsToolkit, mPredicateFactory, clha,
+				mServices, mSimplificationTechnique, mXnfConversionTechnique);
 		writer.addHoareAnnotationToCFG();
 		mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.HoareAnnotationTime.toString());
 		mCegarLoopBenchmark.addHoareAnnotationData(clha.getHoareAnnotationStatisticsGenerator());
@@ -850,8 +846,8 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		}
 		final CFG2NestedWordAutomaton<LETTER> cFG2NestedWordAutomaton = new CFG2NestedWordAutomaton<>(mServices,
 				mPref.interprocedural(), super.mCsToolkit, mPredicateFactory, mLogger);
-		final INestedWordAutomaton<LETTER, IPredicate> cfg = cFG2NestedWordAutomaton
-				.getNestedWordAutomaton(super.mIcfg, mStateFactoryForRefinement, super.mErrorLocs);
+		final INestedWordAutomaton<LETTER, IPredicate> cfg = cFG2NestedWordAutomaton.getNestedWordAutomaton(super.mIcfg,
+				mStateFactoryForRefinement, super.mErrorLocs);
 		return mErrorGeneralizationEngine.isResultUnsafe(abstractResult, cfg, mCsToolkit, mPredicateFactory,
 				mTraceCheckAndRefinementEngine.getPredicateUnifier(), mSimplificationTechnique, mXnfConversionTechnique,
 				mIcfg.getCfgSmtToolkit().getSymbolTable());
@@ -881,10 +877,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 	public LinkedHashSet<AbstractInterpolantAutomaton<LETTER>> getFloydHoareAutomata() {
 		if (mStoreFloydHoareAutomata) {
 			return mFloydHoareAutomata;
-		} else {
-			throw new IllegalStateException("Floyd-Hoare automata have not been stored");
 		}
+		throw new IllegalStateException("Floyd-Hoare automata have not been stored");
 	}
-	
-	
 }
