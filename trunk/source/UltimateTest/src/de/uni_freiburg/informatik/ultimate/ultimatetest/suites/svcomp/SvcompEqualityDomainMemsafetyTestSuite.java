@@ -62,26 +62,26 @@ public class SvcompEqualityDomainMemsafetyTestSuite extends AbstractSVCOMPTestSu
 	@Override
 	protected int getFilesPerCategory() {
 		// -1 or value larger than 0
-		return 5;
+		return -1;
 	}
 
 	@Override
 	protected List<SVCOMPTestDefinition> getTestDefinitions() {
 		final List<SVCOMPTestDefinition> rtr = new ArrayList<>();
 
-		// contains ?? examples, 32bit
+		// contains 69 examples, 32bit
 		rtr.addAll(createTests("MemSafety-Arrays", "32bit", "DerefFreeMemtrack"));
 
-		// contains ?? examples, 32bit
+		// contains 347 examples, 32bit
 		rtr.addAll(createTests("MemSafety-Heap", "32bit", "DerefFreeMemtrack"));
 
-		// contains ?? examples, 32bit
+		// contains 52 examples, 32bit
 		rtr.addAll(createTests("MemSafety-LinkedLists", "32bit", "DerefFreeMemtrack"));
 
-		// contains ?? examples, 32bit
+		// contains 26 examples, 32bit
 		rtr.addAll(createTests("MemSafety-Other", "32bit", "DerefFreeMemtrack"));
 
-		// contains ?? examples, 64bit
+		// contains 39 examples, 64bit
 		rtr.addAll(createTests("Systems_BusyBox_MemSafety", "64bit", "DerefFreeMemtrack"));
 
 		return rtr;
@@ -100,18 +100,18 @@ public class SvcompEqualityDomainMemsafetyTestSuite extends AbstractSVCOMPTestSu
 			final String arch, final String category) {
 		final List<SVCOMPTestDefinition> rtr = new ArrayList<>();
 
-		// uses CAMEL strategy
-		rtr.add(getTestDefinitionFromExamples(set, "AutomizerC.xml",
-				"ai/eq-bench/svcomp-" + category + "-" + arch + "-Automizer_Camel+AI_EQ.epf", timeout, limit));
 		// uses only abstract interpretation
 		rtr.add(getTestDefinitionFromExamples(set, "AbstractInterpretationC.xml",
 				"ai/eq-bench/svcomp-" + category + "-" + arch + "-Automizer_Camel+AI_EQ.epf", timeout, limit));
-		// uses RubberTaipan strategy
-		rtr.add(getTestDefinitionFromExamples(set, "AutomizerC.xml",
-				"ai/eq-bench/svcomp-" + category + "-" + arch + "-Automizer_RubberTaipan+AI_EQ.epf", timeout, limit));
-		// uses Taipan strategy
-		rtr.add(getTestDefinitionFromExamples(set, "AutomizerC.xml",
-				"ai/eq-bench/svcomp-" + category + "-" + arch + "-Automizer_Taipan+AI_EQ.epf", timeout, limit));
+		// // uses Taipan strategy
+		// rtr.add(getTestDefinitionFromExamples(set, "AutomizerC.xml",
+		// "ai/eq-bench/svcomp-" + category + "-" + arch + "-Automizer_Taipan+AI_EQ.epf", timeout, limit));
+		// // uses CAMEL strategy
+		// rtr.add(getTestDefinitionFromExamples(set, "AutomizerC.xml",
+		// "ai/eq-bench/svcomp-" + category + "-" + arch + "-Automizer_Camel+AI_EQ.epf", timeout, limit));
+		// // uses RubberTaipan strategy
+		// rtr.add(getTestDefinitionFromExamples(set, "AutomizerC.xml",
+		// "ai/eq-bench/svcomp-" + category + "-" + arch + "-Automizer_RubberTaipan+AI_EQ.epf", timeout, limit));
 
 		return rtr;
 	}

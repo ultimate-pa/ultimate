@@ -62,7 +62,7 @@ public class SvcompEqualityDomainReachTestSuite extends AbstractSVCOMPTestSuite 
 	@Override
 	protected int getFilesPerCategory() {
 		// -1 or value larger than 0
-		return 5;
+		return -1;
 	}
 
 	@Override
@@ -74,26 +74,26 @@ public class SvcompEqualityDomainReachTestSuite extends AbstractSVCOMPTestSuite 
 		// contains 94 examples, 32bit
 		rtr.addAll(createTests("ReachSafety-ControlFlow", "32bit", "Reach"));
 
-		// // contains 1149 examples, 32bit
-		// rtr.addAll(createReach("ReachSafety-ECA", "32bit","Reach"));
-
 		// contains 173 examples, 32bit
 		rtr.addAll(createTests("ReachSafety-Heap", "32bit", "Reach"));
 
 		// contains 159 examples, 32bit
 		rtr.addAll(createTests("ReachSafety-Loops", "32bit", "Reach"));
+
+		// contains 2795 examples, 64bit
+		rtr.addAll(createTests("Systems_DeviceDriversLinux64_ReachSafety", 100, "64bit", "Reach"));
+
+		// // contains 1149 examples, 32bit
+		// rtr.addAll(createTests("ReachSafety-ECA", "32bit", "Reach"));
 		//
-		// // contains 159 examples, 32bit
-		// rtr.addAll(createReach("ReachSafety-ProductLines", "32bit","Reach"));
+		// // contains 597 examples, 32bit
+		// rtr.addAll(createTests("ReachSafety-ProductLines", "32bit", "Reach"));
 		//
 		// // contains 98 examples, 32bit
-		// rtr.addAll(createReach("ReachSafety-Recursive", "32bit","Reach"));
+		// rtr.addAll(createTests("ReachSafety-Recursive", "32bit", "Reach"));
 		//
 		// // contains 273 examples, 32bit
-		// rtr.addAll(createReach("ReachSafety-Sequentialized", "32bit","Reach"));
-		//
-		// contains 2795 examples, 64bit
-		rtr.addAll(createTests("Systems_DeviceDriversLinux64_ReachSafety", "64bit", "Reach"));
+		// rtr.addAll(createTests("ReachSafety-Sequentialized", "32bit", "Reach"));
 
 		return rtr;
 	}
@@ -111,18 +111,18 @@ public class SvcompEqualityDomainReachTestSuite extends AbstractSVCOMPTestSuite 
 			final String arch, final String category) {
 		final List<SVCOMPTestDefinition> rtr = new ArrayList<>();
 
-		// uses CAMEL strategy
-		rtr.add(getTestDefinitionFromExamples(set, "AutomizerC.xml",
-				"ai/eq-bench/svcomp-" + category + "-" + arch + "-Automizer_Camel+AI_EQ.epf", timeout, limit));
 		// uses only abstract interpretation
 		rtr.add(getTestDefinitionFromExamples(set, "AbstractInterpretationC.xml",
 				"ai/eq-bench/svcomp-" + category + "-" + arch + "-Automizer_Camel+AI_EQ.epf", timeout, limit));
-		// uses RubberTaipan strategy
-		rtr.add(getTestDefinitionFromExamples(set, "AutomizerC.xml",
-				"ai/eq-bench/svcomp-" + category + "-" + arch + "-Automizer_RubberTaipan+AI_EQ.epf", timeout, limit));
-		// uses Taipan strategy
-		rtr.add(getTestDefinitionFromExamples(set, "AutomizerC.xml",
-				"ai/eq-bench/svcomp-" + category + "-" + arch + "-Automizer_Taipan+AI_EQ.epf", timeout, limit));
+		// // uses Taipan strategy
+		// rtr.add(getTestDefinitionFromExamples(set, "AutomizerC.xml",
+		// "ai/eq-bench/svcomp-" + category + "-" + arch + "-Automizer_Taipan+AI_EQ.epf", timeout, limit));
+		// // uses CAMEL strategy
+		// rtr.add(getTestDefinitionFromExamples(set, "AutomizerC.xml",
+		// "ai/eq-bench/svcomp-" + category + "-" + arch + "-Automizer_Camel+AI_EQ.epf", timeout, limit));
+		// // uses RubberTaipan strategy
+		// rtr.add(getTestDefinitionFromExamples(set, "AutomizerC.xml",
+		// "ai/eq-bench/svcomp-" + category + "-" + arch + "-Automizer_RubberTaipan+AI_EQ.epf", timeout, limit));
 
 		return rtr;
 	}
