@@ -207,8 +207,7 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 		return newExpr;
 	}
 
-	protected abstract IEvaluatorFactory<V, STATE>
-			createEvaluatorFactory(final int maxParallelStates);
+	protected abstract IEvaluatorFactory<V, STATE> createEvaluatorFactory(final int maxParallelStates);
 
 	/**
 	 * Override this method to add evaluators for this (already preprocessed) expression.
@@ -364,8 +363,10 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 					mReturnState.add(mOldState.bottomState());
 				}
 			} else {
-				final List<STATE> resultStates =
-						mExpressionEvaluator.getRootEvaluator().inverseEvaluate(res, mOldState);
+				// Assume statements must evaluate to true in all cases. Only the true part is important for succeeding
+				// states. Otherwise, the return state will be bottom.
+				final List<STATE> resultStates = mExpressionEvaluator.getRootEvaluator().inverseEvaluate(
+						new NonrelationalEvaluationResult<>(res.getValue(), BooleanValue.TRUE), mOldState);
 				mReturnState.addAll(resultStates);
 			}
 		}
