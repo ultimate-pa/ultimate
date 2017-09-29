@@ -211,6 +211,9 @@ public class LassoCheck<LETTER extends IIcfgTransition<?>> {
 
 	private final TaskIdentifier mTaskIdentifier;
 
+	// TODO: Do not add statistics but do provide statistics
+	private final BuchiCegarLoopBenchmarkGenerator mCegarStatistics;
+
 	public LassoCheckResult getLassoCheckResult() {
 		return mLassoCheckResult;
 	}
@@ -261,7 +264,7 @@ public class LassoCheck<LETTER extends IIcfgTransition<?>> {
 			final XnfConversionTechnique xnfConversionTechnique, 
 			final RefinementStrategyFactory<LETTER> refinementStrategyFactory, 
 			final INestedWordAutomaton<LETTER, IPredicate> abstraction, final RefinementStrategy refinementStrategy,
-			final TaskIdentifier taskIdentifier) throws IOException {
+			final TaskIdentifier taskIdentifier, final BuchiCegarLoopBenchmarkGenerator cegarStatistics) throws IOException {
 		mServices = services;
 		mStorage = storage;
 		mSimplificationTechnique = simplificationTechnique;
@@ -291,6 +294,7 @@ public class LassoCheck<LETTER extends IIcfgTransition<?>> {
 		mRefinementStrategy = refinementStrategy;
 		mAbstraction = abstraction;
 		mTaskIdentifier = taskIdentifier;
+		mCegarStatistics = cegarStatistics;
 		
 		
 		mLassoCheckResult = new LassoCheckResult();
@@ -473,6 +477,7 @@ public class LassoCheck<LETTER extends IIcfgTransition<?>> {
 			final TraceAbstractionRefinementEngine result;
 			try {
 				result = new TraceAbstractionRefinementEngine<>(mLogger, strategy, null);
+				mCegarStatistics.addRefinementEngineStatistics(strategy.getRefinementEngineStatistics());
 			} catch (final ToolchainCanceledException tce) {
 				final int traceHistogramMax = new HistogramOfIterable<>(run.getWord()).getMax();
 				final String taskDescription = "analyzing trace of length " + run.getLength() + " with TraceHistMax "
