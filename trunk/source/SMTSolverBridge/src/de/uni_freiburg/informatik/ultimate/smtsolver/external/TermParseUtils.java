@@ -26,10 +26,73 @@
  */
 package de.uni_freiburg.informatik.ultimate.smtsolver.external;
 
+import java.io.IOException;
+import java.io.StringReader;
+import java.util.List;
+
+import com.github.jhoenicke.javacup.runtime.Symbol;
+
+import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+
 /**
+ * Class that provides auxiliary methods for transforming Strings into SMT-
+ * {@link Term}s.
+ * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
 public class TermParseUtils {
+	
+	private TermParseUtils() {
+		// do not instantiate
+	}
+	
+	/**
+	 * Takes an SMT-Term given as a string and transforms it into our 
+	 * {@link Term} data structure.
+	 * Each identifier in this term will be translated to a function symbol
+	 * (or constant symbol) that is known to script (the first parameter).
+	 * If no symbol with this name is known an {@link SMTLIBException} is 
+	 * thrown.
+	 * This means especially that we cannot produce a {@link Term} that
+	 * contains a free {@link TermVariable}.
+	 * WARNING: This implementation is not very robust with respect to 
+	 * invalid input. 
+	 */
+	public static Term parseTerm(final Script script, final String string) {
+		
+		final MySymbolFactory symfactory = new MySymbolFactory();
+		final Lexer lexer = new Lexer(new StringReader(string));
+		lexer.setSymbolFactory(symfactory);
+		
+		// Workaround1: split input manually into s-expressions
+		final List<Symbol> sexpr;
+		try {
+			sexpr = Executor.parseSexpr(lexer);
+		} catch (final IOException e) {
+			throw new AssertionError("IOException but there is neither input nor output");
+		}
+		
+		final Parser parser = new Parser();
+		parser.setScript(script);
+		// Workaround2: add special symbol which says that we want to read a term
+		sexpr.add(0, new Symbol(LexerSymbols.GETTERM));
+		parser.setAnswer(sexpr);
+		try {
+			final Symbol resultSymbol = parser.parse();
+			final Term resultTerm = (Term) resultSymbol.value;
+			return resultTerm;
+		} catch (final SMTLIBException ex) {
+			throw ex;
+		} catch (final UnsupportedOperationException ex) {
+			throw ex;
+		} catch (final Exception ex) {
+			throw new SMTLIBException(
+					"wrapping Exception", ex);
+		}
+	}
 
 
 }

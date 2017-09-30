@@ -137,7 +137,7 @@ class Executor {
 		
 	}
 	
-	private static List<Symbol> parseSexpr(final Lexer lexer) throws IOException {
+	public static List<Symbol> parseSexpr(final Lexer lexer) throws IOException {
 		final ArrayList<Symbol> result = new ArrayList<>();
 		int parenLevel = 0;
 		do {
