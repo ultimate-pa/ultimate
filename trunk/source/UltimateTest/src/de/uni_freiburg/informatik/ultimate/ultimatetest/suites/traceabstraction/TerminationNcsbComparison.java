@@ -343,7 +343,7 @@ public class TerminationNcsbComparison extends AbstractBuchiAutomizerTestSuite {
 		new DirectoryFileEndingsPair("examples/svcomp/termination-15/", new String[]{ STANDARD_DOT_I_PATTERN }, FILE_OFFSET, mFilesPerDirectoryLimit),
 		new DirectoryFileEndingsPair("examples/svcomp/termination-recursive-malloc/", new String[]{ STANDARD_DOT_I_PATTERN }, FILE_OFFSET, mFilesPerDirectoryLimit),
 
-//		/*** Subcategory  Termination-Other ***/
+		/*** Subcategory  Termination-Other ***/
 		new DirectoryFileEndingsPair("examples/svcomp/pthread-atomic/", new String[]{ STANDARD_DOT_I_PATTERN }, FILE_OFFSET, mFilesPerDirectoryLimit),
 		new DirectoryFileEndingsPair("examples/svcomp/ntdrivers-simplified/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET, mFilesPerDirectoryLimit),
 		new DirectoryFileEndingsPair("examples/svcomp/ssh-simplified/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET, mFilesPerDirectoryLimit),
@@ -379,18 +379,18 @@ public class TerminationNcsbComparison extends AbstractBuchiAutomizerTestSuite {
 	 */
 	private static final String[] mSettings = { 
 			
-			"buchiAutomizer/ncsb/SUNFLOWER-ORIGINAL-SAVE-AUT.epf",
-			"buchiAutomizer/ncsb/SUNFLOWER-INTSET_LAZY2-SAVE-AUT.epf",
-			"buchiAutomizer/ncsb/SUNFLOWER-INTSET_LAZY3-SAVE-AUT.epf",
-			"buchiAutomizer/ncsb/ORIGINAL-SAVE-AUT.epf",
-			"buchiAutomizer/ncsb/INTSET_LAZY2-SAVE-AUT.epf",
-			"buchiAutomizer/ncsb/INTSET_LAZY3-SAVE-AUT.epf",
-//			"buchiAutomizer/ncsb/INTSET_LAZY2.epf",
-//			"buchiAutomizer/ncsb/SUNFLOWER-INTSET_LAZY2.epf",
-//			"buchiAutomizer/ncsb/INTSET_LAZY3.epf",
-//			"buchiAutomizer/ncsb/SUNFLOWER-INTSET_LAZY3.epf",
-//			"buchiAutomizer/ncsb/ORIGINAL.epf",
-//			"buchiAutomizer/ncsb/SUNFLOWER-ORIGINAL.epf",
+//			"buchiAutomizer/ncsb/SUNFLOWER-ORIGINAL-SAVE-AUT.epf",
+//			"buchiAutomizer/ncsb/SUNFLOWER-INTSET_LAZY2-SAVE-AUT.epf",
+//			"buchiAutomizer/ncsb/SUNFLOWER-INTSET_LAZY3-SAVE-AUT.epf",
+//			"buchiAutomizer/ncsb/ORIGINAL-SAVE-AUT.epf",
+//			"buchiAutomizer/ncsb/INTSET_LAZY2-SAVE-AUT.epf",
+//			"buchiAutomizer/ncsb/INTSET_LAZY3-SAVE-AUT.epf",
+			"buchiAutomizer/ncsb/INTSET_LAZY2.epf",
+			"buchiAutomizer/ncsb/SUNFLOWER-INTSET_LAZY2.epf",
+			"buchiAutomizer/ncsb/INTSET_LAZY3.epf",
+			"buchiAutomizer/ncsb/SUNFLOWER-INTSET_LAZY3.epf",
+			"buchiAutomizer/ncsb/ORIGINAL.epf",
+			"buchiAutomizer/ncsb/SUNFLOWER-ORIGINAL.epf",
 	};
 
 	private static final String[] mCToolchains = {
