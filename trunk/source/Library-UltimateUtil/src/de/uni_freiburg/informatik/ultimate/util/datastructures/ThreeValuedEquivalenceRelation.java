@@ -473,6 +473,40 @@ public class ThreeValuedEquivalenceRelation<E> {
 		}
 		return new ThreeValuedEquivalenceRelation<>(newUf, newDisequalities);
 	}
+	
+	
+	/**
+	 * Constructs a new {@link ThreeValuedEquivalenceRelation} that is similar to 
+	 * this but restricted to contraints where both elements occur in the set
+	 * elems. 
+	 */
+	public ThreeValuedEquivalenceRelation<E> projectTo(final Set<E> elems) {
+		final UnionFind<E> newUf = mUnionFind.getElementComparator() != null ?
+				new UnionFind<>(mUnionFind.getElementComparator()) :
+					new UnionFind<>();
+		for (final E elem : elems) {
+			if (newUf.find(elem) != null) {
+				// already constructed current elem's equivalence class
+				continue;
+			}
+			if (mUnionFind.find(elem) == null) {
+				// the current elem has never been added to this TVER; don't add it to the new TVER either
+				continue;
+			}
+			final Set<E> elemEqc = mUnionFind.getEquivalenceClassMembers(elem);
+			newUf.addEquivalenceClass(DataStructureUtils.intersection(elemEqc, elems));
+		}
+		final HashRelation<E, E> newDisequalities = new HashRelation<>();
+		for (final Entry<E, E> deq : mDisequalities.entrySet()) {
+			if (elems.contains(deq.getKey()) || elems.contains(deq.getValue())) {
+				newDisequalities.addPair(newUf.findAndConstructEquivalenceClassIfNeeded(deq.getKey()),
+						newUf.findAndConstructEquivalenceClassIfNeeded(deq.getValue()));
+			}
+		}
+		return new ThreeValuedEquivalenceRelation<>(newUf, newDisequalities);
+	}
+	
+	
 
 	/**
 	 * We call an element constrained iff this TVER puts any non-tautological constraint on it.
