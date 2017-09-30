@@ -28,10 +28,14 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IAbstractPredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNode;
 
 /**
@@ -40,22 +44,30 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  *
  * @param <ACTION>
  */
-public class EqPredicate<ACTION extends IIcfgTransition<IcfgLocation>> implements IAbstractPredicate {
+public class EqPredicate<ACTION extends IIcfgTransition<IcfgLocation>> implements IPredicate {
 
 	private final EqDisjunctiveConstraint<ACTION, EqNode> mConstraint;
 	private final String[] mProcedures;
 	private final Set<IProgramVar> mVars;
+	private final Term mClosedFormula;
+	private final Term mFormula;
 
 //	public EqPredicate(EqConstraint<ACTION, EqNode> constraint) {
 //
 //	}
 
 	public EqPredicate(final EqDisjunctiveConstraint<ACTION, EqNode> constraint, final Set<IProgramVar> vars,
-			final String[] procedures) {
+			final String[] procedures, final IIcfgSymbolTable symbolTable, final ManagedScript mgdScript) {
 		assert vars != null;
 		mConstraint = constraint;
 		mVars = vars;
 		mProcedures = procedures;
+
+
+		final Term acc = constraint.getTerm(mgdScript.getScript());
+		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(acc, mgdScript.getScript(), symbolTable);
+		mClosedFormula = tvp.getClosedFormula();
+		mFormula = tvp.getFormula();
 	}
 
 	@Override
@@ -76,5 +88,15 @@ public class EqPredicate<ACTION extends IIcfgTransition<IcfgLocation>> implement
 	@Override
 	public String toString() {
 		return mConstraint.toString();
+	}
+
+	@Override
+	public Term getFormula() {
+		return mFormula;
+	}
+
+	@Override
+	public Term getClosedFormula() {
+		return mClosedFormula;
 	}
 }

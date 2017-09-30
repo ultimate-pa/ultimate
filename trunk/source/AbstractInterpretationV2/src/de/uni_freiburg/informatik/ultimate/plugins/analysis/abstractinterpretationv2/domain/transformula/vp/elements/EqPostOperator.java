@@ -31,6 +31,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
@@ -38,10 +40,13 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICall
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateTransformer;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermDomainOperationProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.TransFormulaConverterCache;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainPreanalysis;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.EqConstraint;
@@ -62,9 +67,17 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 		implements IAbstractPostOperator<EqState<ACTION>, ACTION> {
 
 	private final ManagedScript mMgdScript;
-	private final EqOperationProvider<ACTION> mOperationProvider;
 
-	private final PredicateTransformer<EqDisjunctiveConstraint<ACTION, EqNode>, EqPredicate<ACTION>, EqTransitionRelation<ACTION>> mPredicateTransformer;
+	private final PredicateTransformer<
+		EqDisjunctiveConstraint<ACTION, EqNode>,
+		EqPredicate<ACTION>,
+		EqTransitionRelation<ACTION>> mPredicateTransformer;
+
+	/**
+	 * used for sanity/soundness checks only
+	 */
+	private final PredicateTransformer<Term, IPredicate, TransFormula> mDoubleCheckPredicateTransformer;
+
 	private final TransFormulaConverterCache<ACTION> mTransFormulaConverter;
 	private final CfgSmtToolkit mCfgSmtToolkit;
 	private final EqConstraintFactory<ACTION, EqNode> mEqConstraintFactory;
@@ -74,8 +87,11 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 	private final boolean mDebug = true;
 
 	private final ILogger mLogger;
+	private final IUltimateServiceProvider mServices;
 
-	public EqPostOperator(final ILogger logger, final EqNodeAndFunctionFactory eqNodeAndFunctionFactory,
+//	public EqPostOperator(final ILogger logger, final EqNodeAndFunctionFactory eqNodeAndFunctionFactory,
+	public EqPostOperator(final IUltimateServiceProvider services, final ILogger logger,
+			final EqNodeAndFunctionFactory eqNodeAndFunctionFactory,
 			final EqConstraintFactory<ACTION, EqNode> eqConstraintFactory, final VPDomainPreanalysis preAnalysis) {
 		mEqNodeAndFunctionFactory = eqNodeAndFunctionFactory;
 		mEqConstraintFactory = eqConstraintFactory;
@@ -83,30 +99,34 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 		mMgdScript = preAnalysis.getManagedScript();
 		mCfgSmtToolkit = preAnalysis.getCfgSmtToolkit();
 
-		mOperationProvider = new EqOperationProvider<>(eqConstraintFactory);
-
-		mPredicateTransformer = new PredicateTransformer<>(mMgdScript, mOperationProvider);
+		mPredicateTransformer = new PredicateTransformer<>(mMgdScript,new EqOperationProvider<>(eqConstraintFactory));
 		mTransFormulaConverter =
 				new TransFormulaConverterCache<>(mEqNodeAndFunctionFactory, mEqConstraintFactory, mPreAnalysis);
 
+		mServices = services;
 		mLogger = logger;
+
+		mDoubleCheckPredicateTransformer = new PredicateTransformer<>(mMgdScript,
+				new TermDomainOperationProvider(mServices, mMgdScript));
 	}
 
 	@Override
-	public List<EqState<ACTION>> apply(final EqState<ACTION> oldstate, final ACTION transition) {
+	public List<EqState<ACTION>> apply(final EqState<ACTION> oldState, final ACTION transition) {
 		if (!mPreAnalysis.getServices().getProgressMonitorService().continueProcessing()) {
-			return mEqConstraintFactory.getTopDisjunctiveConstraint().toEqStates(oldstate.getVariables());
+			return mEqConstraintFactory.getTopDisjunctiveConstraint().toEqStates(oldState.getVariables());
 		}
 
 		final EqTransitionRelation<ACTION> transitionRelation =
 				mTransFormulaConverter.getEqTransitionRelationFromTransformula(transition.getTransformula());
 
 		final EqDisjunctiveConstraint<ACTION, EqNode> postConstraint =
-				mPredicateTransformer.strongestPostcondition(oldstate.toEqPredicate(), transitionRelation);
-		final List<EqState<ACTION>> result = postConstraint.toEqStates(oldstate.getVariables());
-		assert result.stream().allMatch(state -> state.getVariables().containsAll(oldstate.getVariables()));
+				mPredicateTransformer.strongestPostcondition(oldState.toEqPredicate(), transitionRelation);
+		final List<EqState<ACTION>> result = postConstraint.toEqStates(oldState.getVariables());
+		assert result.stream().allMatch(state -> state.getVariables().containsAll(oldState.getVariables()));
 		if (mDebug) {
 			mLogger.debug(postConstraint.getDebugInfo());
+			mDoubleCheckPredicateTransformer.strongestPostcondition(oldState.toEqPredicate(),
+					transition.getTransformula());
 		}
 		return result;
 	}

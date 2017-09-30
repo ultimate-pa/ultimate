@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTabl
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.IEqNodeIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNode;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNodeAndFunctionFactory;
@@ -50,13 +51,15 @@ public class EqStateFactory<ACTION extends IIcfgTransition<IcfgLocation>> {
 	private final EqConstraintFactory<ACTION, EqNode> mEqConstraintFactory;
 	private final IIcfgSymbolTable mSymbolTable;
 	private EqState<ACTION> mTopStateWithEmptyPvocs;
+	private final ManagedScript mMgdScript;
 
 	public EqStateFactory(final EqNodeAndFunctionFactory eqNodeAndFunctionFactory,
 			final EqConstraintFactory<ACTION, EqNode> eqConstraintFactory,
-			final IIcfgSymbolTable symbolTable) {
+			final IIcfgSymbolTable symbolTable, final ManagedScript mgdScript) {
 		mEqNodeAndFunctionFactory = eqNodeAndFunctionFactory;
 		mEqConstraintFactory = eqConstraintFactory;
 		mSymbolTable = symbolTable;
+		mMgdScript = mgdScript;
 	}
 
 	public EqState<ACTION> disjoinAll(final Set<EqState<ACTION>> statesForCurrentEc) {
@@ -94,6 +97,10 @@ public class EqStateFactory<ACTION extends IIcfgTransition<IcfgLocation>> {
 
 	public IIcfgSymbolTable getSymbolTable() {
 		return mSymbolTable;
+	}
+
+	public ManagedScript getManagedScript() {
+		return mMgdScript;
 	}
 
 }

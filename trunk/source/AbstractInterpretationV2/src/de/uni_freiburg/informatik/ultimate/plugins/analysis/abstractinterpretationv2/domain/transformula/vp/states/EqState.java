@@ -241,7 +241,9 @@ public class EqState<ACTION extends IIcfgTransition<IcfgLocation>>
 				// .filter(pvoc -> (pvoc instanceof IProgramVar))
 				// .map(pvoc -> ((IProgramVar) pvoc))
 				// .collect(Collectors.toSet()),
-				null); // TODO: what procedures does the predicate need?
+				null,
+				mFactory.getSymbolTable(),
+				mFactory.getManagedScript()); // TODO: what procedures does the predicate need?
 	}
 
 	public boolean areUnequal(final EqNode node1, final EqNode node2) {

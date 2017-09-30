@@ -90,10 +90,11 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 
 		mEqNodeAndFunctionFactory = new EqNodeAndFunctionFactory(preAnalysis, mManagedScript);
 		mEqConstraintFactory = new EqConstraintFactory<>(mEqNodeAndFunctionFactory, mServices, mCsToolkit);
-		mEqStateFactory = new EqStateFactory<>(mEqNodeAndFunctionFactory, mEqConstraintFactory, mSymboltable);
+		mEqStateFactory = new EqStateFactory<>(mEqNodeAndFunctionFactory, mEqConstraintFactory, mSymboltable,
+				mManagedScript);
 		mEqConstraintFactory.setEqStateFactory(mEqStateFactory);
 
-		mPost = new EqPostOperator<>(mLogger, mEqNodeAndFunctionFactory, mEqConstraintFactory, mPreAnalysis);
+		mPost = new EqPostOperator<>(mServices, mLogger, mEqNodeAndFunctionFactory, mEqConstraintFactory, mPreAnalysis);
 
 		mDebugMode = mPreAnalysis.isDebugMode();
 
