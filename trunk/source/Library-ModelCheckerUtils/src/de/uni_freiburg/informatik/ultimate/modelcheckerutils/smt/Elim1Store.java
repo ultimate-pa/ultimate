@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
+import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -496,7 +497,7 @@ public class Elim1Store {
 		private Pair<ThreeValuedEquivalenceRelation<Term>, List<Term>> analyzeIndexEqualities(final int mQuantifier,
 				final Set<Term> selectIndices, final Term storeIndex, final Term storeValue, final Term preprocessedInput, final ThreeValuedEquivalenceRelation<Term> tver, final TermVariable eliminatee) {
 		
-		
+			mScript.echo(new QuotedObject("starting to analyze index equalities"));
 			final List<Term> relationsDetectedViaSolver = new ArrayList<>();
 			final ArrayList<Term> allIndicesList = new ArrayList<>(selectIndices);
 			if (storeIndex != null) {
@@ -518,6 +519,22 @@ public class Elim1Store {
 				return null;
 			}
 			
+			final List<Term> allValues = new ArrayList<>();
+			final Map<Term, Term> value2selectIndex = new HashMap<>();
+			final Map<Term, Term> selectIndex2value = new HashMap<>();
+			for (final Term selectIndex : selectIndices) {
+				final Term oldSelect = constructOldSelectTerm(mMgdScript, eliminatee, selectIndex);
+				allValues.add(oldSelect);
+				value2selectIndex.put(oldSelect, selectIndex);
+				selectIndex2value.put(selectIndex, oldSelect);
+			}
+			if (storeIndex != null) {
+				assert storeValue != null;
+				allValues.add(storeValue);
+			}
+//			cheapAndSimpleIndexValueAnalysis(allIndicesList, selectIndex2value, allValues, value2selectIndex, tver);
+			
+			
 			for (int i = 0; i < allIndicesList.size(); i++) {
 				for (int j = i + 1; j < allIndicesList.size(); j++) {
 					//TODO: try to obtain equal term with few variables
@@ -532,15 +549,8 @@ public class Elim1Store {
 					checkEqualityStatus(mQuantifier, tver, relationsDetectedViaSolver, iea, index1, index2);
 				}
 			}
-			final List<Term> allValues = new ArrayList<Term>();
-			for (final Term selectIndex : selectIndices) {
-				final Term oldSelect = constructOldSelectTerm(mMgdScript, eliminatee, selectIndex);
-				allValues.add(oldSelect);
-			}
-			if (storeIndex != null) {
-				assert storeValue != null;
-				allValues.add(storeValue);
-			}
+
+			cheapAndSimpleIndexValueAnalysis(allIndicesList, selectIndex2value, allValues, value2selectIndex, tver);
 			for (int i = 0; i < allValues.size(); i++) {
 				for (int j = i + 1; j < allValues.size(); j++) {
 					final Term value1 = allValues.get(i);
@@ -557,12 +567,62 @@ public class Elim1Store {
 			
 			
 			iea.unlockSolver();
+			mScript.echo(new QuotedObject("finished analysis of index equalities"));
 			return new Pair<>(tver, relationsDetectedViaSolver);
 		}
 
 
 
 
+
+		private void cheapAndSimpleIndexValueAnalysis(final ArrayList<Term> allIndicesList, final Map<Term, Term> selectIndex2value,
+				final List<Term> allValues, final Map<Term, Term> value2selectIndex, final ThreeValuedEquivalenceRelation<Term> tver) {
+			final LocalSimplificationsEqualityChecker lsec = new LocalSimplificationsEqualityChecker();
+			for (int i = 0; i < allIndicesList.size(); i++) {
+				for (int j = i + 1; j < allIndicesList.size(); j++) {
+					final Term index1 = allIndicesList.get(i);
+					final Term index2 = allIndicesList.get(j);
+					EqualityStatus eq = tver.getEqualityStatus(index1, index2);
+					if (eq == EqualityStatus.UNKNOWN) {
+						eq = lsec.checkEquality(index1, index2);
+						if (eq == EqualityStatus.EQUAL) {
+							tver.reportEquality(index1, index2);
+						} else if (eq == EqualityStatus.NOT_EQUAL) { 
+							tver.reportDisequality(index1, index2);
+						}
+					}
+					if (eq == EqualityStatus.EQUAL) {
+						final Term oldSelect1 = selectIndex2value.get(index1);
+						final Term oldSelect2 = selectIndex2value.get(index2);
+						if (oldSelect1 != null && oldSelect2 != null) {
+							tver.reportEquality(oldSelect1, oldSelect2);
+						}
+					}
+				}
+			}
+			for (int i = 0; i < allValues.size(); i++) {
+				for (int j = i + 1; j < allValues.size(); j++) {
+					final Term value1 = allValues.get(i);
+					final Term value2 = allValues.get(j);
+					EqualityStatus eq = tver.getEqualityStatus(value1, value2);
+					if (eq == EqualityStatus.UNKNOWN) {
+						eq = lsec.checkEquality(value1, value2);
+						if (eq == EqualityStatus.EQUAL) {
+							tver.reportEquality(value1, value2);
+						} else if (eq == EqualityStatus.NOT_EQUAL) { 
+							tver.reportDisequality(value1, value2);
+						}
+					}
+					if (eq == EqualityStatus.NOT_EQUAL) {
+						final Term index1 = value2selectIndex.get(value1);
+						final Term index2 = value2selectIndex.get(value2);
+						if (index1 != null && index2 != null) {
+							tver.reportDisequality(index1, index2);
+						}
+					}
+				}
+			}
+		}
 
 		private Term getIndexOfSelect(final ApplicationTerm appTerm) {
 			assert (appTerm.getParameters().length == 2) : "no select";
@@ -1022,6 +1082,31 @@ public class Elim1Store {
 			}
 		}
 
+		
+		private interface IEqualityChecker {
+			public EqualityStatus checkEquality(Term term1, Term term2);
+		}
+		
+		private class LocalSimplificationsEqualityChecker implements IEqualityChecker {
+
+			@Override
+			public EqualityStatus checkEquality(final Term term1, final Term term2) {
+				final Term eq = SmtUtils.binaryEquality(mScript, term1, term2);
+				if (SmtUtils.isTrue(eq)) {
+					return EqualityStatus.EQUAL;
+				} else if (SmtUtils.isFalse(eq)) {
+					return EqualityStatus.NOT_EQUAL;
+				} else {
+					return EqualityStatus.UNKNOWN;
+				}
+			}
+			
+		}
+		
+		
+		private class CheapIncompleteIndexValueAnalyzer {
+			
+		}
 
 
 }
