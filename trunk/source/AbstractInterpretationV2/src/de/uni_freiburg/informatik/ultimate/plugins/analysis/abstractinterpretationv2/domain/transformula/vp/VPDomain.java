@@ -76,7 +76,7 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 	private final CfgSmtToolkit mCsToolkit;
 	private final IUltimateServiceProvider mServices;
 
-	private VPDomainBenchmark mBenchmark;
+	private final VPDomainBenchmark mBenchmark;
 
 	public VPDomain(final ILogger logger, final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
 			final VPDomainPreanalysis preAnalysis) {
@@ -96,6 +96,8 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 		mPost = new EqPostOperator<>(mLogger, mEqNodeAndFunctionFactory, mEqConstraintFactory, mPreAnalysis);
 
 		mDebugMode = mPreAnalysis.isDebugMode();
+
+		mBenchmark = new VPDomainBenchmark();
 	}
 
 	@Override
