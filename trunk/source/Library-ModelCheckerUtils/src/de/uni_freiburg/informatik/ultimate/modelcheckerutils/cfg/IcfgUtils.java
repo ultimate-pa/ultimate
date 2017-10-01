@@ -44,6 +44,10 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgE
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocationIterator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ILocalProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
 /**
  *
@@ -116,6 +120,21 @@ public class IcfgUtils {
 		int result = 0;
 		for (final Entry<String, Map<String, LOC>> entry : icfg.getProgramPoints().entrySet()) {
 			result += entry.getValue().size();
+		}
+		return result;
+	}
+	
+	public static Set collectAllProgramVars(final CfgSmtToolkit csToolkit) {
+		final Set<IProgramVar> result = new HashSet<>();
+		for (final IProgramNonOldVar nonold : csToolkit.getSymbolTable().getGlobals()) {
+			result.add(nonold);
+			final IProgramOldVar oldVar = nonold.getOldVar();
+			result.add(oldVar);
+		}
+		for (final String proc : csToolkit.getProcedures()) {
+			for (final ILocalProgramVar local : csToolkit.getSymbolTable().getLocals(proc)) {
+				result.add(local);
+			}
 		}
 		return result;
 	}
