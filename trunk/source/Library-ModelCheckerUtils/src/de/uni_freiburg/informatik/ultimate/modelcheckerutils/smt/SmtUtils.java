@@ -366,10 +366,8 @@ public final class SmtUtils {
 		assert SmtSortUtils.isNumericSort(sort) || SmtSortUtils.isBitvecSort(sort);
 		if (summands.length == 0) {
 
-			if (SmtSortUtils.isIntSort(sort)) {
-				return script.numeral(BigInteger.ZERO);
-			} else if (SmtSortUtils.isRealSort(sort)) {
-				return script.decimal(BigDecimal.ZERO);
+			if (SmtSortUtils.isIntSort(sort) || SmtSortUtils.isRealSort(sort)) {
+				return Rational.ZERO.toTerm(sort);
 			} else if (SmtSortUtils.isBitvecSort(sort)) {
 				return BitvectorUtils.constructTerm(script, BigInteger.ZERO, sort);
 			} else {
