@@ -57,7 +57,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.util.SetOperations;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -393,8 +393,8 @@ public final class AbsIntUtil {
 
 		final Set<IProgramVarOrConst> definedVariables = state.getVariables();
 
-		final Set<IProgramVarOrConst> toRemove = SetOperations.difference(definedVariables, shouldVars);
-		final Set<IProgramVarOrConst> toAdd = SetOperations.difference(shouldVars, definedVariables);
+		final Set<IProgramVarOrConst> toRemove = DataStructureUtils.difference(definedVariables, shouldVars);
+		final Set<IProgramVarOrConst> toAdd = DataStructureUtils.difference(shouldVars, definedVariables);
 
 		if (toRemove.isEmpty() && toAdd.isEmpty()) {
 			return state;

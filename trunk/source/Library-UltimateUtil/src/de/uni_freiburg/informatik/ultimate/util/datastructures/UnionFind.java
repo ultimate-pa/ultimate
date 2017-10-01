@@ -40,7 +40,6 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import de.uni_freiburg.informatik.ultimate.util.SetOperations;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
@@ -362,7 +361,7 @@ public class UnionFind<E> implements IPartition<E> {
 	 * 	care
 	 */
 	public void addEquivalenceClass(final Set<E> newBlock, final E newBlockRep) {
-		assert SetOperations.intersect(newBlock, getAllElements()).isEmpty();
+		assert DataStructureUtils.intersection(newBlock, getAllElements()).isEmpty();
 		assert !newBlock.isEmpty();
 		assert newBlockRep == null || newBlock.contains(newBlockRep);
 		assert mElementComparator == null || newBlockRep != null : "if we don't give a representative for the new block"
@@ -438,7 +437,7 @@ public class UnionFind<E> implements IPartition<E> {
 				newBlockRep = uf1.mElementComparator.compare(uf1Rep, uf2Rep) < 0 ? uf1Rep : uf2Rep;
 			}
 
-			final Set<E> newBlock = SetOperations.union(uf1.getEquivalenceClassMembers(tver1El),
+			final Set<E> newBlock = DataStructureUtils.union(uf1.getEquivalenceClassMembers(tver1El),
 					uf2.getEquivalenceClassMembers(tver1El));
 			result.addEquivalenceClass(newBlock, newBlockRep);
 			todo.removeAll(newBlock);

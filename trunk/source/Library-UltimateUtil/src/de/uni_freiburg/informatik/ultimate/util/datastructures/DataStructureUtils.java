@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2017 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * Copyright (C) 2017 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2017 University of Freiburg
  *
  * This file is part of the ULTIMATE Util Library.
@@ -26,34 +27,67 @@
  */
 package de.uni_freiburg.informatik.ultimate.util.datastructures;
 
+import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
  *
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
 public class DataStructureUtils {
-	
+
 	private DataStructureUtils() {
 		// do not instantiate
 	}
-	
+
 	/**
-	 * Constructs a new Set that contains only elements that occur in set1 and 
-	 * that occur in set2.
+	 * Constructs a new {@link Set} that contains only elements that occur in set1 and that occur in set2.
 	 */
-	public static <E> Set<E> intersection(final Set<E> set1, final Set<E> set2){
-	    final Set<E> larger;
-	    final Set<E> smaller;
-	    if (set1.size() > set2.size()) {
-	    	larger = set1;
-	    	smaller = set2;
-	    } else {
-	    	larger = set2;
-	    	smaller = set1;
-	    }
-	    return smaller.stream().filter(n -> larger.contains(n)).collect(Collectors.toSet());
+	public static <T> Set<T> intersection(final Set<T> set1, final Set<T> set2) {
+		final Set<T> larger;
+		final Set<T> smaller;
+		if (set1.size() > set2.size()) {
+			larger = set1;
+			smaller = set2;
+		} else {
+			larger = set2;
+			smaller = set1;
+		}
+		return smaller.stream().filter(larger::contains).collect(Collectors.toSet());
+	}
+
+	/**
+	 * Construct a {@link Set} that contains all elements of set1 that are not in set2.
+	 */
+	public static <T> Set<T> difference(final Set<T> a, final Set<T> b) {
+		return a.stream().filter(elem -> !b.contains(elem)).collect(Collectors.toSet());
+	}
+
+	/**
+	 * Construct a {@link Set} that contains all elements of set1 and set2.
+	 */
+	public static <T> Set<T> union(final Set<T> a, final Set<T> b) {
+		final Set<T> rtr = DataStructureUtils.getFreshSet(a, a.size() + b.size());
+		rtr.addAll(b);
+		return rtr;
+	}
+
+	/**
+	 * Construct a {@link Set} that contains all elements of oldSet and has the capacity of oldSet.
+	 */
+	public static <T> Set<T> getFreshSet(final Set<T> oldSet) {
+		return DataStructureUtils.getFreshSet(oldSet, oldSet.size());
+	}
+
+	/**
+	 * Construct a {@link Set} that contains all elements of oldSet and starts with an initial capacity.
+	 */
+	public static <T> Set<T> getFreshSet(final Set<T> oldSet, final int capacity) {
+		final Set<T> rtr = new HashSet<>(capacity);
+		rtr.addAll(oldSet);
+		return rtr;
 	}
 
 }
