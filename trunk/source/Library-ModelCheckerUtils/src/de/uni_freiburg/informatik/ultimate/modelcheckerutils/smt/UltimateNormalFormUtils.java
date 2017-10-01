@@ -91,5 +91,15 @@ public final class UltimateNormalFormUtils {
 		final Predicate<Term> property = x -> !rootRespectsUltimateNormalForm(x);
 		return !new SubtermPropertyChecker(property).isPropertySatisfied(term);
 	}
+	
+	
+	public static boolean respectsUltimateNormalForm(final Term... terms) {
+		final Predicate<Term> property = x -> !rootRespectsUltimateNormalForm(x);
+		boolean respects = true;
+		for (final Term term : terms) {
+			respects &= !new SubtermPropertyChecker(property).isPropertySatisfied(term);
+		}
+		return respects;
+	}
 
 }
