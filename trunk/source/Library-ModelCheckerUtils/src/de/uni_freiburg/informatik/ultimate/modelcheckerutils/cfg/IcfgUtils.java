@@ -124,7 +124,7 @@ public class IcfgUtils {
 		return result;
 	}
 	
-	public static Set collectAllProgramVars(final CfgSmtToolkit csToolkit) {
+	public static Set<IProgramVar> collectAllProgramVars(final CfgSmtToolkit csToolkit) {
 		final Set<IProgramVar> result = new HashSet<>();
 		for (final IProgramNonOldVar nonold : csToolkit.getSymbolTable().getGlobals()) {
 			result.add(nonold);
