@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -31,26 +32,44 @@ public class AutomataReuseUtils {
 			final PredicateFactoryForInterpolantAutomata predicateFactoryInterpolantAutomata, 
 			final IUltimateServiceProvider services, final PredicateFactory predicateFactory, final ILogger logger) {
 
-		Boolean debugOn = false;
+		Boolean debugOn = true;
 		List<INestedWordAutomaton<LETTER, IPredicate>> res = new ArrayList<INestedWordAutomaton<LETTER, IPredicate>>();
 
 		for (final NestedWordAutomaton<String, String> rawAutomatonFromFile : rawFloydHoareAutomataFromFile) {
-			// Create map from strings to "new" letters (abstraction letters)
-			HashMap<String, LETTER> mapStringToLetter = new HashMap<String, LETTER>();
+			// Create map from strings to all equivalent "new" letters (abstraction letters)
+			HashMap<String, Set<LETTER>> mapStringToLetter = new HashMap<String, Set<LETTER>>();
 			VpAlphabet<LETTER> abstractionAlphabet = abstraction.getVpAlphabet();
 			for (final LETTER letter : (abstractionAlphabet.getCallAlphabet())) {
 				if (!mapStringToLetter.containsKey(letter.toString())) {
-					mapStringToLetter.put(letter.toString(), letter);
+					Set<LETTER> equivalentLetters = new HashSet<LETTER>();
+					equivalentLetters.add(letter);
+					mapStringToLetter.put(letter.toString(), equivalentLetters);
+				} else {
+					Set<LETTER> equivalentLetters = mapStringToLetter.get(letter.toString());
+					equivalentLetters.add(letter);
+					mapStringToLetter.put(letter.toString(), equivalentLetters); //needed? Will through exception?
 				}
 			}
 			for (final LETTER letter : (abstractionAlphabet.getInternalAlphabet())) {
 				if (!mapStringToLetter.containsKey(letter.toString())) {
-					mapStringToLetter.put(letter.toString(), letter);
+					Set<LETTER> equivalentLetters = new HashSet<LETTER>();
+					equivalentLetters.add(letter);
+					mapStringToLetter.put(letter.toString(), equivalentLetters);
+				} else {
+					Set<LETTER> equivalentLetters = mapStringToLetter.get(letter.toString());
+					equivalentLetters.add(letter);
+					mapStringToLetter.put(letter.toString(), equivalentLetters); //needed? Will through exception?
 				}
 			}
 			for (final LETTER letter : (abstractionAlphabet.getReturnAlphabet())) {
 				if (!mapStringToLetter.containsKey(letter.toString())) {
-					mapStringToLetter.put(letter.toString(), letter);
+					Set<LETTER> equivalentLetters = new HashSet<LETTER>();
+					equivalentLetters.add(letter);
+					mapStringToLetter.put(letter.toString(), equivalentLetters);
+				} else {
+					Set<LETTER> equivalentLetters = mapStringToLetter.get(letter.toString());
+					equivalentLetters.add(letter);
+					mapStringToLetter.put(letter.toString(), equivalentLetters); //needed? Will through exception?
 				}
 			}
 			if (debugOn) {
@@ -105,9 +124,10 @@ public class AutomataReuseUtils {
 					String transitionLetter = callTransition.getLetter();
 					String transitionSuccString = callTransition.getSucc();
 					if (mapStringToLetter.containsKey(transitionLetter)) {
-						LETTER letter = mapStringToLetter.get(transitionLetter);
 						IPredicate succState = mapStringToFreshState.get(transitionSuccString);
-						resAutomaton.addCallTransition(predicateState, letter, succState);
+						for (LETTER letter : mapStringToLetter.get(transitionLetter)) {
+							resAutomaton.addCallTransition(predicateState, letter, succState);
+						}
 						reusedTransitions++;
 					} else {
 						removedTransitions++;
@@ -118,9 +138,10 @@ public class AutomataReuseUtils {
 					String transitionLetter = internalTransition.getLetter();
 					String transitionSuccString = internalTransition.getSucc();
 					if (mapStringToLetter.containsKey(transitionLetter)) {
-						LETTER letter = mapStringToLetter.get(transitionLetter);
 						IPredicate succState = mapStringToFreshState.get(transitionSuccString);
-						resAutomaton.addInternalTransition(predicateState, letter, succState);
+						for (LETTER letter : mapStringToLetter.get(transitionLetter)) {
+							resAutomaton.addInternalTransition(predicateState, letter, succState);
+						}
 						reusedTransitions++;
 					} else {
 						removedTransitions++;
@@ -132,10 +153,11 @@ public class AutomataReuseUtils {
 					String transitionSuccString = returnTransition.getSucc();
 					String transitionHeirPredString = returnTransition.getHierPred();
 					if (mapStringToLetter.containsKey(transitionLetter)) {
-						LETTER letter = mapStringToLetter.get(transitionLetter);
 						IPredicate succState = mapStringToFreshState.get(transitionSuccString);
 						IPredicate heirPredState = mapStringToFreshState.get(transitionHeirPredString);
-						resAutomaton.addReturnTransition(predicateState, heirPredState, letter, succState);
+						for (LETTER letter : mapStringToLetter.get(transitionLetter)) {
+							resAutomaton.addReturnTransition(predicateState, heirPredState, letter, succState);
+						}
 						reusedTransitions++;
 					} else {
 						removedTransitions++;
