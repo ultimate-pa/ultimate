@@ -106,15 +106,14 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 		if (original.isInconsistent()) {
 			throw new IllegalArgumentException("use other constructor!");
 		}
-		// we need a fresh instance here, because we cannot set the link in the weq
-		// graph to the right cc instance..
-		mWeakEquivalenceGraph = new WeakEquivalenceGraph<>(this, weqGraph);
 		mFactory = factory;
-//		mLiteralManager = mFactory.getLiteralManager();
-//		mAllLiterals = original.getAllElementRepresentatives().stream().filter(elem -> mLiteralManager.isLiteral(elem))
-//				.collect(Collectors.toCollection(HashSet::new));
 		mNodeToDependents = new HashRelation<>();
 		initializeNodeToDependents(original);
+
+		// we need a fresh instance of WeakEquivalenceGraph here, because we cannot set the link in the weq
+		// graph to the right cc instance..
+		mWeakEquivalenceGraph = new WeakEquivalenceGraph<>(this, weqGraph);
+
 		assert sanityCheck();
 	}
 
@@ -1070,7 +1069,7 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 		sb.append(super.toString());
 		sb.append("\n");
 		sb.append("Weak equivalences:\n");
-		sb.append(mWeakEquivalenceGraph.toString());
+		sb.append(mWeakEquivalenceGraph);
 		return sb.toString();
 	}
 

@@ -109,7 +109,13 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		mWeakEquivalenceEdges = new HashMap<>();
 		for (final Entry<Doubleton<NODE>, WeakEquivalenceEdgeLabel> weqEdge
 				: weakEquivalenceGraph.mWeakEquivalenceEdges.entrySet()) {
-			mWeakEquivalenceEdges.put(weqEdge.getKey(), new WeakEquivalenceEdgeLabel(weqEdge.getValue()));
+
+			// make sure that the representatives in pArr and in our new weq edges are compatible
+			final Doubleton<NODE> newSoureceAndTarget = new Doubleton<>(
+					pArr.getRepresentativeElement(weqEdge.getKey().getOneElement()),
+					pArr.getRepresentativeElement(weqEdge.getKey().getOtherElement()));
+
+			mWeakEquivalenceEdges.put(newSoureceAndTarget, new WeakEquivalenceEdgeLabel(weqEdge.getValue()));
 		}
 		mFactory = weakEquivalenceGraph.mFactory;
 		mNodeAndFunctionFactory = mFactory.getEqNodeAndFunctionFactory();
