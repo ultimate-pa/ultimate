@@ -110,12 +110,20 @@ public class EagerReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends Basi
 		reuseAutomata.addAll(floydHoareAutomataFromFiles);
 				
 		for (int i = 0; i < reuseAutomata.size(); i++) {
+			int oneBasedi = i+1;
 			int internalTransitionsBeforeDifference = 0;
 			int internalTransitionsAfterDifference = 0;
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> ai = reuseAutomata.get(i);
 			if (ai instanceof AbstractInterpolantAutomaton<?>) {
 				internalTransitionsBeforeDifference = ((AbstractInterpolantAutomaton<LETTER>)ai).computeNumberOfInternalTransitions();
 				((AbstractInterpolantAutomaton<LETTER>)ai).switchToOnDemandConstructionMode();
+				if (mPref.dumpAutomata()) {
+					writeAutomatonToFile(ai, "ReusedAutomataFromErrorLocation"+oneBasedi);
+				}
+			} else {
+				if (mPref.dumpAutomata()) {
+					writeAutomatonToFile(ai, "ReusedAutomataFromFile"+oneBasedi);
+				}
 			}
 			final PowersetDeterminizer<LETTER, IPredicate> psd = new PowersetDeterminizer<>(ai, true,
 					mPredicateFactoryInterpolantAutomata);
@@ -125,6 +133,10 @@ public class EagerReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends Basi
 					mStateFactoryForRefinement,
 					(INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate>) mAbstraction, ai, psd,
 					explointSigmaStarConcatOfIA);
+			if (mPref.dumpAutomata()) {
+				final String filename = "DiffAfterEagerReuse" + oneBasedi;
+				writeAutomatonToFile(diff.getResult(), filename);
+			}
 			if (ai instanceof AbstractInterpolantAutomaton<?>) {
 				((AbstractInterpolantAutomaton<LETTER>)ai).switchToReadonlyMode();
 				internalTransitionsAfterDifference = ((AbstractInterpolantAutomaton<LETTER>)ai).computeNumberOfInternalTransitions();
