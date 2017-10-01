@@ -102,11 +102,21 @@ public class EagerReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends Basi
 				mRawFloydHoareAutomataFromFile, (INestedWordAutomaton<LETTER, IPredicate>) mAbstraction,
 				mPredicateFactoryInterpolantAutomata, mServices, mPredicateFactory, mLogger);
 
-		mLogger.info("Reusing " + mFloydHoareAutomataFromOtherErrorLocations.size() + " Floyd-Hoare automata.");
-		for (int i = 0; i < mFloydHoareAutomataFromOtherErrorLocations.size(); i++) {
-			final AbstractInterpolantAutomaton<LETTER> ai = mFloydHoareAutomataFromOtherErrorLocations.get(i);
-			final int internalTransitionsBeforeDifference = ai.computeNumberOfInternalTransitions();
-			ai.switchToOnDemandConstructionMode();
+		mLogger.info("Reusing " + mFloydHoareAutomataFromOtherErrorLocations.size() + " Floyd-Hoare automata from previous error locations.");
+		mLogger.info("Reusing " + floydHoareAutomataFromFiles.size() + " Floyd-Hoare automata from ats files.");
+
+		final List<INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate>> reuseAutomata = new ArrayList<>();
+		reuseAutomata.addAll(mFloydHoareAutomataFromOtherErrorLocations);
+		reuseAutomata.addAll(floydHoareAutomataFromFiles);
+				
+		for (int i = 0; i < reuseAutomata.size(); i++) {
+			int internalTransitionsBeforeDifference = 0;
+			int internalTransitionsAfterDifference = 0;
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> ai = reuseAutomata.get(i);
+			if (ai instanceof AbstractInterpolantAutomaton<?>) {
+				internalTransitionsBeforeDifference = ((AbstractInterpolantAutomaton<LETTER>)ai).computeNumberOfInternalTransitions();
+				((AbstractInterpolantAutomaton<LETTER>)ai).switchToOnDemandConstructionMode();
+			}
 			final PowersetDeterminizer<LETTER, IPredicate> psd = new PowersetDeterminizer<>(ai, true,
 					mPredicateFactoryInterpolantAutomata);
 			IOpWithDelayedDeadEndRemoval<LETTER, IPredicate> diff;
@@ -115,11 +125,13 @@ public class EagerReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends Basi
 					mStateFactoryForRefinement,
 					(INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate>) mAbstraction, ai, psd,
 					explointSigmaStarConcatOfIA);
-			ai.switchToReadonlyMode();
-			final int internalTransitionsAfterDifference = ai.computeNumberOfInternalTransitions();
-			mLogger.info("Floyd-Hoare automaton" + i + " had " + internalTransitionsAfterDifference
+			if (ai instanceof AbstractInterpolantAutomaton<?>) {
+				((AbstractInterpolantAutomaton<LETTER>)ai).switchToReadonlyMode();
+				internalTransitionsAfterDifference = ((AbstractInterpolantAutomaton<LETTER>)ai).computeNumberOfInternalTransitions();
+				mLogger.info("Floyd-Hoare automaton" + i + " had " + internalTransitionsAfterDifference
 					+ " internal transitions before reuse, on-demand computation of difference added "
 					+ (internalTransitionsAfterDifference - internalTransitionsBeforeDifference) + " more.");
+			}
 			if (REMOVE_DEAD_ENDS) {
 				if (mComputeHoareAnnotation) {
 					final Difference<LETTER, IPredicate> difference = (Difference<LETTER, IPredicate>) diff;
