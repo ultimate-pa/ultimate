@@ -85,12 +85,8 @@ public class ScopedConsistencyGeneratorDelayedSimulation<T, LETTER, STATE> imple
 		STATE lhs = ((Doubleton<STATE>) doubleton).getOneElement();
 		STATE rhs = ((Doubleton<STATE>) doubleton).getOtherElement();
 		
-		//These are okay the way they are
-		if (newStatus && mSpoilerWinnings.containsPair(lhs, rhs) || !newStatus && mDuplicatorWinnings.containsPair(lhs, rhs)) {
-			return Collections.emptySet();
-		}
-		else if (newStatus && !mSpoilerWinnings.containsPair(lhs, rhs)) {
-			final Pair<T, Boolean> corrected = new Pair<T, Boolean>(doubleton, false);
+		if (newStatus && (!mSpoilerWinnings.containsPair(lhs, rhs) && !mSpoilerWinnings.containsPair(rhs, lhs))) {
+			final Pair<T, Boolean> corrected = new Pair<T, Boolean>(doubleton, false);	
 			List<Pair<T, Boolean>> result = new ArrayList<>();
 			result.add(corrected);
 			return result;

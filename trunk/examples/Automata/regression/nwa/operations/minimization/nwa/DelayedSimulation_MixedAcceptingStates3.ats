@@ -27,7 +27,7 @@ assert(reduceNwaDirectFullMultipebbleSimulationSize == 6);
 // // assert(reduceNwaDelayedSimulationSize == 4); // TODO correct after fixing the method
 // // assert(reduceNwaDelayedSimulationBSize == 4); // TODO correct after fixing the method
 // assert(reduceNwaDelayedFullMultipebbleSimulationSize == 4); // TODO correct after fixing the method
-assert(minimizeNwaPmaxSatDelayedBiSize == 5);
+// assert(minimizeNwaPmaxSatDelayedBiSize == 5);
 
 NestedWordAutomaton nwa = (
 	callAlphabet = {c1 c2},

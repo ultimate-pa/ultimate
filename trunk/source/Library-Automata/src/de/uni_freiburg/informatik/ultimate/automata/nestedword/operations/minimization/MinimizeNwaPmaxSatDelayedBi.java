@@ -167,7 +167,7 @@ public class MinimizeNwaPmaxSatDelayedBi<LETTER, STATE> extends MinimizeNwaPmaxS
 				mStatePair2Var.put(stateJ, stateI, doubleton);
 				mSolver.addVariable(doubleton);
 				
-				if(!mSpoilerWinnings.containsPair(stateI, stateJ)) {
+				if(!mSpoilerWinnings.containsPair(stateI, stateJ) && !mSpoilerWinnings.containsPair(stateJ, stateI)) {
 					setVariableFalse(doubleton);
 				}
 			}

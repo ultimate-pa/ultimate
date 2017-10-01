@@ -106,9 +106,9 @@ public class NwaApproximateDelayedSimulation<LETTER, STATE> {
 
 		// FIXME somehow dead ends in the game graph have to be removed first
 		final ISetOfPairs<STATE, ?> ordinarySimulation = computeOrdinarySimulation();
-		//mLogger.info("Simulation: \n" + ordinarySimulation);
+		mLogger.info("Simulation: \n" + ordinarySimulation);
 		mDuplicatorEventuallyAccepting = computeDuplicatorFollowing(ordinarySimulation);
-		//mLogger.info("mDuplicatorEventuallyAccepting: \n" + mDuplicatorEventuallyAccepting);
+		mLogger.info("mDuplicatorEventuallyAccepting: \n" + mDuplicatorEventuallyAccepting);
 		mSpoilerWinningStates = computeSpoilerWinning(mDuplicatorEventuallyAccepting);
 		mLogger.info("mSpoilerWinningStates: \n" + mSpoilerWinningStates);
 	}
@@ -167,10 +167,10 @@ public class NwaApproximateDelayedSimulation<LETTER, STATE> {
 
 		// initialize with states s.t. spoiler is accepting and can force duplicator to avoid an accepting state
 		// FIXME: we also consider non-ordinary simulation pairs here; this should be correct; but what about dead ends?
-		for (final STATE lhs : mOperand.getFinalStates()) {
+		for (final STATE lhs : mOperand.getStates()) {
 			for (final STATE rhs : mOperand.getStates()) {
 				if (!duplicatorEventuallyAcceptingStates.containsPair(lhs, rhs)) {
-					markPair(marked, visit, new Pair<>(lhs, rhs));
+					markPair(marked, visit, new Pair<>(rhs, lhs));
 				}
 			}
 		}
@@ -186,7 +186,7 @@ public class NwaApproximateDelayedSimulation<LETTER, STATE> {
 				assert (!successors.isEmpty());
 				for (final Pair<STATE, STATE> succPair : successors) {
 					//either pair isn't marked or states can't be merged
-					if (!isMarked(succPair, marked) || !(mAreStatesMerged.test(succPair.getFirst(), succPair.getSecond()))) {
+					if (!isMarked(succPair, marked) || !(mAreStatesMerged.test(succPair.getFirst(), succPair.getSecond()) || mAreStatesMerged.test(succPair.getSecond(), succPair.getFirst()))) {
 						// unmarked successor found, try next letter
 						continue letter;
 					}
@@ -254,6 +254,7 @@ public class NwaApproximateDelayedSimulation<LETTER, STATE> {
 			for (final IncomingCallTransition<LETTER, STATE> lhsPred : mOperand.callPredecessors(lhs, letter)) {
 				for (final IncomingCallTransition<LETTER, STATE> rhsPred : mOperand.callPredecessors(rhs,
 						letter)) {
+					
 					result.add(new Pair<>(lhsPred.getPred(), rhsPred.getPred()));
 				}
 			}
