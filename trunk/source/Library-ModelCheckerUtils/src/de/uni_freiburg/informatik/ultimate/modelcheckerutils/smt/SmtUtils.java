@@ -96,6 +96,14 @@ public final class SmtUtils {
 	}
 
 	private static final boolean EXTENDED_LOCAL_SIMPLIFICATION = false;
+	
+	/**
+	 * Has problems with {@link ElimStore3}. Set to true once 
+	 * {@link ElimStore3} has been replace by {@link ElimStorePlain}.
+	 */
+	private static final boolean FLATTEN_ARRAY_TERMS = false;
+	
+	
 
 	private SmtUtils() {
 		// Prevent instantiation of this utility class
@@ -1152,44 +1160,51 @@ public final class SmtUtils {
 			}
 			result = comparison(script, funcname, params[0], params[1]);
 			break;
-		// case "store": {
-		// final Term array = params[0];
-		// final Term idx = params[1];
-		// final Term nestedIdx = getArrayStoreIdx(array);
-		// if (nestedIdx != null) {
-		// // Check for store-over-store
-		// if (nestedIdx.equals(idx)) {
-		// // Found store-over-store => ignore inner store
-		// final ApplicationTerm appArray = (ApplicationTerm) array;
-		// result = script.term(funcname,
-		// appArray.getParameters()[0], params[1], params[2]);
-		// } else {
-		// result = script.term(funcname, indices, null, params);
-		// }
-		// } else {
-		// result = script.term(funcname, indices, null, params);
-		// }
-		// break;
-		// }
-		// case "select": {
-		// final Term array = params[0];
-		// final Term idx = params[1];
-		// final Term nestedIdx = getArrayStoreIdx(array);
-		// if (nestedIdx != null) {
-		// // Check for store-over-store
-		// if (nestedIdx.equals(idx)) {
-		// // Found store-over-store => ignore inner store
-		// final ApplicationTerm appArray = (ApplicationTerm) array;
-		// // => transform into value
-		// result = appArray.getParameters()[2];
-		// } else {
-		// result = script.term(funcname, indices, null, params);
-		// }
-		// } else {
-		// result = script.term(funcname, indices, null, params);
-		// }
-		// break;
-		// }
+		case "store": {
+			if (FLATTEN_ARRAY_TERMS) {
+				final Term array = params[0];
+				final Term idx = params[1];
+				final Term nestedIdx = getArrayStoreIdx(array);
+				if (nestedIdx != null) {
+					// Check for store-over-store
+					if (nestedIdx.equals(idx)) {
+						// Found store-over-store => ignore inner store
+						final ApplicationTerm appArray = (ApplicationTerm) array;
+						result = script.term(funcname, appArray.getParameters()[0], params[1], params[2]);
+					} else {
+						result = script.term(funcname, indices, null, params);
+					}
+				} else {
+					result = script.term(funcname, indices, null, params);
+				}
+			} else {
+				result = script.term(funcname, indices, null, params);
+			}
+			break;
+		}
+		case "select": {
+			if (FLATTEN_ARRAY_TERMS) {
+				final Term array = params[0];
+				final Term idx = params[1];
+				final Term nestedIdx = getArrayStoreIdx(array);
+				if (nestedIdx != null) {
+					// Check for store-over-store
+					if (nestedIdx.equals(idx)) {
+						// Found store-over-store => ignore inner store
+						final ApplicationTerm appArray = (ApplicationTerm) array;
+						// => transform into value
+						result = appArray.getParameters()[2];
+					} else {
+						result = script.term(funcname, indices, null, params);
+					}
+				} else {
+					result = script.term(funcname, indices, null, params);
+				}
+			} else {
+				result = script.term(funcname, indices, null, params);
+			}
+			break;
+		}
 		case "zero_extend":
 		case "extract":
 		case "bvsub":
