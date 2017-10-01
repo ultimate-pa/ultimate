@@ -1037,7 +1037,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		final Set<ELEM> elemsWithSubFromSet =
 				getAllElements().stream().filter(e -> hasSubElement(e, set)).collect(Collectors.toSet());
 
-		final ThreeValuedEquivalenceRelation<ELEM> newTver = mElementTVER.projectToConstraintsWith(elemsWithSubFromSet);
+		final ThreeValuedEquivalenceRelation<ELEM> newTver = mElementTVER.filterAndKeepOnlyConstraintsThatIntersectWith(elemsWithSubFromSet);
 
 		return new CongruenceClosure<>(newTver);
 	}

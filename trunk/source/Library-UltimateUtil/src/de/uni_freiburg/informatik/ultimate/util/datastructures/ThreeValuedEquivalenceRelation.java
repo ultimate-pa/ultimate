@@ -451,7 +451,7 @@ public class ThreeValuedEquivalenceRelation<E> {
 	 * @param elem element constraints over which are to be kept
 	 * @return a new, projected ThreeValuedEquivalenceRelation
 	 */
-	public ThreeValuedEquivalenceRelation<E> projectToConstraintsWith(final Set<E> elems) {
+	public ThreeValuedEquivalenceRelation<E> filterAndKeepOnlyConstraintsThatIntersectWith(final Set<E> elems) {
 		final UnionFind<E> newUf = mUnionFind.getElementComparator() != null
 				? new UnionFind<>(mUnionFind.getElementComparator()) : new UnionFind<>();
 		for (final E elem : elems) {
