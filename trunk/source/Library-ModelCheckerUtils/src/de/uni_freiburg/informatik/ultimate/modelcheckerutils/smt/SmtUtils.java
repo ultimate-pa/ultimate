@@ -1360,6 +1360,19 @@ public final class SmtUtils {
 	public static Rational toRational(final BigInteger bigInt) {
 		return Rational.valueOf(bigInt, BigInteger.ONE);
 	}
+	
+	public static Rational toRational(final BigDecimal bigDec) {
+		Rational rat;
+		if (bigDec.scale() <= 0) {
+			final BigInteger num = bigDec.toBigInteger();
+			rat = Rational.valueOf(num, BigInteger.ONE);
+		} else {
+			final BigInteger num = bigDec.unscaledValue();
+			final BigInteger denom = BigInteger.TEN.pow(bigDec.scale());
+			rat = Rational.valueOf(num, denom);
+		}
+		return rat;
+	}
 
 	public static Term rational2Term(final Script script, final Rational rational, final Sort sort) {
 		if (SmtSortUtils.isNumericSort(sort)) {
