@@ -330,6 +330,13 @@ public class UnionFind<E> implements IPartition<E> {
 		return Collections.unmodifiableSet(mEquivalenceClass.keySet());
 	}
 
+	/**
+	 * Add a whole equivalence class at once to this UnionFind.
+	 *
+	 * Assumes none of the given elements is part of an existing equivalence class in this UnionFind instance.
+
+	 * @param newBlock
+	 */
 	public void addEquivalenceClass(final Set<E> newBlock) {
 		if (mElementComparator == null) {
 			addEquivalenceClass(newBlock, null);
@@ -352,9 +359,8 @@ public class UnionFind<E> implements IPartition<E> {
 
 
 	/**
-	 * Add a whole equivalence class at once to this UnionFind.
-	 *
-	 * Assumes none of the given elements is part of an existing equivalence class in this UnionFind instance.
+	 * A variant of {@link #addEquivalenceClass(Set)} where the caller specifies the representative that the newly added
+	 * equivalence class must have.
 	 *
 	 * @param newBlock new equivalence class that is to be added to the equivalence relation
 	 * @param newBlockRep the element that should be the representative of newBlock in this UnionFind, null for don't
