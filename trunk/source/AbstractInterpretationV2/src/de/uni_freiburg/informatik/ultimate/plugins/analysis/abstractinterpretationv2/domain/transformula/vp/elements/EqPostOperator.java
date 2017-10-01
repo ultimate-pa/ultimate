@@ -125,10 +125,17 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 		assert result.stream().allMatch(state -> state.getVariables().containsAll(oldState.getVariables()));
 		if (mDebug) {
 			mLogger.debug(postConstraint.getDebugInfo());
-			mDoubleCheckPredicateTransformer.strongestPostcondition(oldState.toEqPredicate(),
-					transition.getTransformula());
+			assert preciseStrongestPostImpliesAbstractPost(oldState, transition, result);
 		}
 		return result;
+	}
+
+	private boolean preciseStrongestPostImpliesAbstractPost(final EqState<ACTION> oldState, final ACTION transition,
+			final List<EqState<ACTION>> result) {
+		final Term spPrecise = mDoubleCheckPredicateTransformer.strongestPostcondition(oldState.toEqPredicate(),
+				transition.getTransformula());
+		// TODO
+		return true;
 	}
 
 	@Override

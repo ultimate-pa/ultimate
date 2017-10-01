@@ -66,6 +66,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.EqDisjunctiveConstraint;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.EqTransitionRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.BidirectionalMap;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  *
@@ -135,20 +136,11 @@ public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTrans
 	private boolean transformulaImpliesResultConstraint() {
 		mMgdScript.lock(this);
 		mMgdScript.push(this, 1);
-		final Map<Term, Term> sub = new HashMap<>();
-		for (final TermVariable tv : mTf.getFormula().getFreeVars()) {
 
-			final String constName = "tf2EqTR_" + tv.getName();
-			mMgdScript.declareFun(this, constName, new Sort[0], tv.getSort());
-			sub.put(tv, mMgdScript.term(this, constName));
-		}
+		final Pair<Term, Term> anteAndSucc = makeShiftVariableSubstitution(mMgdScript, mTf, mResultConstraint);
 
-		final Substitution substitution = new Substitution(mMgdScript, sub);
-		final Term tfSubs = substitution.transform(mTf.getFormula());
-		mMgdScript.assertTerm(this, tfSubs);
-		final Term eqConsSubs = Util.not(mMgdScript.getScript(),
-				substitution.transform(mResultConstraint.getTerm(mMgdScript.getScript())));
-		mMgdScript.assertTerm(this, eqConsSubs);
+		mMgdScript.assertTerm(this, anteAndSucc.getFirst());
+		mMgdScript.assertTerm(this, Util.not(mMgdScript.getScript(), anteAndSucc.getSecond()));
 
 		final LBool result = mMgdScript.checkSat(this);
 		mMgdScript.pop(this, 1);
@@ -157,6 +149,26 @@ public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTrans
 			assert false;
 		}
 		return result == LBool.UNSAT;
+	}
+
+	protected Pair<Term, Term> makeShiftVariableSubstitution(final ManagedScript mgdScript, final TransFormula tf,
+			final EqDisjunctiveConstraint<ACTION, EqNode> resultConstraint) {
+
+		final Map<Term, Term> sub = new HashMap<>();
+		for (final TermVariable tv : tf.getFormula().getFreeVars()) {
+
+			final String constName = "tf2EqTR_" + tv.getName();
+			mgdScript.declareFun(this, constName, new Sort[0], tv.getSort());
+			sub.put(tv, mgdScript.term(this, constName));
+		}
+
+		final Substitution substitution = new Substitution(mgdScript, sub);
+		final Term tfSubs = substitution.transform(tf.getFormula());
+
+		final Term resultConstraintTerm = substitution.transform(resultConstraint.getTerm(mgdScript.getScript()));
+
+		final Pair<Term, Term> anteAndSucc = new Pair<>(tfSubs, resultConstraintTerm);
+		return anteAndSucc;
 	}
 
 	public EqTransitionRelation<ACTION> getResult() {
