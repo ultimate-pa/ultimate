@@ -39,7 +39,7 @@ public class PropProofChecker {
 	/**
 	 * The set of clauses that contain a valid proof.
 	 */
-	private final HashSet<Clause> mCorrect = new HashSet<Clause>();
+	private final HashSet<Clause> mVisited = new HashSet<Clause>();
 	public boolean check(Clause refutation) {
 		mTodo.add(refutation);
 		return run();
@@ -47,18 +47,19 @@ public class PropProofChecker {
 	
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private boolean run() {
+		int errors = 0;
 		while (!mTodo.isEmpty()) {
 			final Clause clause = mTodo.removeLast();
-			if (!mCorrect.contains(clause)) {
+			if (!mVisited.contains(clause)) {
 				final ProofNode pn = clause.getProof();
 				if (pn.isLeaf()) {
 					// I assume all leaves are correct!
-					mCorrect.add(clause);
+					mVisited.add(clause);
 				} else {
 					final Antecedent[] antes = ((ResolutionNode) pn).getAntecedents();
 					final Clause prim = ((ResolutionNode) pn).getPrimary();
 					boolean unknownChild = false;
-					if (!mCorrect.contains(prim)) {
+					if (!mVisited.contains(prim)) {
 						if (!unknownChild) {
 							// We add ourselves in front of all unknown
 							// children to be reevaluated after they have
@@ -69,7 +70,7 @@ public class PropProofChecker {
 						mTodo.addLast(prim);
 					}
 					for (final Antecedent ante : antes) {
-						if (!mCorrect.contains(ante.mAntecedent)) {
+						if (!mVisited.contains(ante.mAntecedent)) {
 							if (!unknownChild) {
 								// We add ourselves in front of all unknown
 								// children to be reevaluated after they have
@@ -112,28 +113,29 @@ public class PropProofChecker {
 						for (int i = 0; i < clause.getSize(); ++i) {
 							clslits.add(clause.getLiteral(i));
 						}
-						if (clauselits.containsAll(clslits)
-								&& clslits.containsAll(clauselits)) {
-							mCorrect.add(clause);
-						} else {
-							System.err.println("Result of resolution incorrect");
-							System.err.println();
-							System.err.println("Result misses:");
+						if (!clauselits.equals(clslits)) {
+							errors++;
+							System.err.println("Result of resolution incorrect for: " + clause);
 							final Set<Literal> clauseremain = (Set)clauselits.clone();
 							clauseremain.removeAll(clslits);
-							System.err.println(clauseremain);
-							System.err.println();
-							System.err.println("Result additionally has:");
+							if (!clauseremain.isEmpty()) {
+								System.err.println();
+								System.err.println("Result misses:");
+								System.err.println(clauseremain);
+							}
 							final Set<Literal> clsremain = (Set)clslits.clone();
 							clsremain.removeAll(clauselits);
-							System.err.println(clsremain);
-							return false;
+							if (!clsremain.isEmpty()) {
+								System.err.println();
+								System.err.println("Result additionally has:");
+								System.err.println(clsremain);
+							}
 						}
+						mVisited.add(clause);
 					}
 				}
 			}
 		}
-//		System.err.println("Proof propositionally correct!");
-		return true;
+		return errors == 0;
 	}
 }

@@ -727,9 +727,11 @@ public class DPLLEngine {
 				if (l != lit) {
 					assert l.getAtom().mDecideStatus == l.negate();
 					final int level = l.getAtom().mDecideLevel;
-					if (l.getAtom().isAssumption() && conflict.add(l.negate())) {
-						++numAssumptions;
-					} else if (level >= mBaseLevel) {
+					if (l.getAtom().isAssumption()) {
+						if (conflict.add(l.negate())) {
+							++numAssumptions;
+						}
+					} else if (level >= mBaseLevel && level > 0) {
 						if (conflict.add(l.negate()) && level == maxDecideLevel) {
 							numLitsOnMaxDecideLevel++;
 						}

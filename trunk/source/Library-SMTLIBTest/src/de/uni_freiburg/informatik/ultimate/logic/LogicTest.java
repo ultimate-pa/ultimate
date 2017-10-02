@@ -63,7 +63,7 @@ public class LogicTest {
 		final Term i = theory.term(theory.declareFunction("i", new Sort[0], sortInt));
 		final Term j = theory.term(theory.declareFunction("j", new Sort[0], sortInt));
 		final Term sum = theory.term("+", x, y, i, j);
-		final Term mul = theory.term("*", theory.rational(new BigInteger("-3"), new BigInteger("7")), i);
+		final Term mul = theory.term("*", Rational.valueOf(-3, 7).toTerm(sortReal), i);
 		Assert.assertEquals("(+ x y i j)", sum.toString());
 		Assert.assertEquals("(* (/ (- 3.0) 7.0) i)", mul.toString());
 	}

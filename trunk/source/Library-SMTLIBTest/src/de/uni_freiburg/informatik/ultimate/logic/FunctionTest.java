@@ -18,8 +18,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.logic;
 
-import java.math.BigInteger;
-
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -84,11 +82,10 @@ public class FunctionTest {
 		Assert.assertNotNull(carHeap);
 		Assert.assertSame(sortArrIntReal.getRealSort(), carHeap.getReturnSort());
 		final Term selcarnilmone = theory.term(select, theory.term(carHeap, theory.term(nilHeap)),
-				theory.numeral(BigInteger.ONE.negate()));
+				Rational.MONE.toTerm(sortInt));
 		final FunctionSymbol eq = theory.getFunction("=", new Sort[] { selcarnilmone.getSort(), sortReal });
-		final Term t = theory.term(eq, selcarnilmone, theory.rational(BigInteger.TEN, BigInteger.valueOf(-15)));// NOCHECKSTYLE
+		final Term t = theory.term(eq, selcarnilmone, Rational.valueOf(10, -15).toTerm(sortReal));
 		Assert.assertSame(theory.getBooleanSort(), t.getSort());
-		Assert.assertEquals("(= (select (car (as nil Heap)) (- 1)) (/ (- 2.0) 3.0))", // NOCHECKSTYLE
-				t.toString());
+		Assert.assertEquals("(= (select (car (as nil Heap)) (- 1)) (/ (- 2.0) 3.0))", t.toString());
 	}
 }

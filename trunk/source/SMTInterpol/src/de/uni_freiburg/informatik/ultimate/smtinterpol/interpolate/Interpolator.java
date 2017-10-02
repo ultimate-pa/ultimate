@@ -18,7 +18,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.smtinterpol.interpolate;
 
-import java.math.BigInteger;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.BitSet;
@@ -31,7 +30,6 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
-import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.NonRecursive;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
@@ -859,11 +857,14 @@ public class Interpolator extends NonRecursive {
 							iat.negate();
 						}
 						final Term sharedTerm = iat.toSMTLib(mTheory, isInt);
-						interpolant = mTheory.equals(mixed,
-								mTheory.term("div", sharedTerm, mTheory.numeral(mixedFactor.numerator())));
-						final FunctionSymbol divisible = mTheory.getFunctionWithResult("divisible",
-								new BigInteger[] { mixedFactor.numerator().abs() }, null, mTheory.getSort("Int"));
-						interpolant = mTheory.and(interpolant, mTheory.term(divisible, sharedTerm));
+						final Term divisor = mixedFactor.toTerm(mixed.getSort());
+						// We need to divide sharedTerm by mixedFactor and check that it doesn't produce a remainder.
+						//
+						// Interpolant is: (and (= mixed (div sharedTerm mixedFactor))
+						//                      (= (mod sharedTerm mixedFactor) 0))
+						interpolant = mTheory.and(mTheory.equals(mixed, mTheory.term("div", sharedTerm, divisor)),
+								mTheory.term("=", mTheory.term("mod", sharedTerm, divisor),
+										Rational.ZERO.toTerm(mixed.getSort())));
 					} else {
 						iat.mul(mixedFactor.negate().inverse());
 						final Term sharedTerm = iat.toSMTLib(mTheory, isInt);
@@ -1391,14 +1392,14 @@ public class Interpolator extends NonRecursive {
 				theS = s2;
 				kc = k2c2;
 			}
-			final BigInteger cNum = theC.numerator().abs();
 			Term newF = mTheory.mFalse;
 			// Use -s/c as start value.
 			InterpolatorAffineTerm sPlusOffset = new InterpolatorAffineTerm();
 			sPlusOffset.add(theC.signum() > 0 ? Rational.MONE : Rational.ONE, theS);
 			Rational offset = Rational.ZERO;
+			final Rational theCabs = theC.abs();
 			if (theC.signum() < 0) {
-				sPlusOffset.add(theC.abs().add(Rational.MONE));
+				sPlusOffset.add(theCabs.add(Rational.MONE));
 			}
 			while (offset.compareTo(kc) <= 0) {
 				Term x;
@@ -1406,8 +1407,8 @@ public class Interpolator extends NonRecursive {
 					throw new SMTLIBException("Timeout exceeded");
 				}
 				x = sPlusOffset.toSMTLib(mTheory, true);
-				if (!cNum.equals(BigInteger.ONE)) {
-					x = mTheory.term("div", x, mTheory.numeral(cNum));
+				if (theCabs != Rational.ONE) {
+					x = mTheory.term("div", x, theCabs.toTerm(mTheory.getNumericSort()));
 				}
 				Term F1 = substitute(la1.mF, mMixedVar, x);
 				Term F2 = substitute(la2.mF, mMixedVar, x);

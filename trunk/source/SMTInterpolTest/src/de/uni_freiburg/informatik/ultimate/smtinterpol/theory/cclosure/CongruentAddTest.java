@@ -35,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.EqualityProxy;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SharedTerm;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Clause;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.DPLLEngine;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.SourceAnnotation;
 
 /**
  * Tests the addition of a term congruent to another term and the building of the congruence graph.
@@ -51,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.DPLLEngine;
 public class CongruentAddTest {
 	Theory mTheory;
 	Clausifier mClausifier;
+	SourceAnnotation mSource = new SourceAnnotation("", null);
 	CClosure mEngine;
 	CCTerm[] mTerms;
 	FunctionSymbol mF, mG, mH;
@@ -90,11 +92,11 @@ public class CongruentAddTest {
 		mC = mEngine.createFuncTerm(funcc, EMPTY_PARAMS, null);
 		mB = mEngine.createFuncTerm(funcb, EMPTY_PARAMS, null);
 		mA = mEngine.createFuncTerm(funca, EMPTY_PARAMS, null);
-		final SharedTerm shareda = mClausifier.getSharedTerm(mTheory.term(funca));
-		final SharedTerm sharedb = mClausifier.getSharedTerm(mTheory.term(funcb));
-		final SharedTerm sharedc = mClausifier.getSharedTerm(mTheory.term(funcc));
-		final SharedTerm sharedd = mClausifier.getSharedTerm(mTheory.term(funcd));
-		final CCTermBuilder builder = mClausifier.new CCTermBuilder();
+		final SharedTerm shareda = mClausifier.getSharedTerm(mTheory.term(funca), mSource);
+		final SharedTerm sharedb = mClausifier.getSharedTerm(mTheory.term(funcb), mSource);
+		final SharedTerm sharedc = mClausifier.getSharedTerm(mTheory.term(funcc), mSource);
+		final SharedTerm sharedd = mClausifier.getSharedTerm(mTheory.term(funcd), mSource);
+		final CCTermBuilder builder = mClausifier.new CCTermBuilder(mSource);
 		builder.convert(shareda.getTerm());
 		builder.convert(sharedb.getTerm());
 		builder.convert(sharedc.getTerm());
@@ -108,9 +110,9 @@ public class CongruentAddTest {
 		final EqualityProxy eqcd = mClausifier.createEqualityProxy(sharedc, sharedd);
 		Assert.assertNotSame(EqualityProxy.getTrueProxy(), eqcd);
 		Assert.assertNotSame(EqualityProxy.getFalseProxy(), eqcd);
-		mAB = (CCEquality) eqab.getLiteral();
-		mBC = (CCEquality) eqbc.getLiteral();
-		mCD = (CCEquality) eqcd.getLiteral();
+		mAB = (CCEquality) eqab.getLiteral(mSource);
+		mBC = (CCEquality) eqbc.getLiteral(mSource);
+		mCD = (CCEquality) eqcd.getLiteral(mSource);
 		mFc = mEngine.createFuncTerm(mF, new CCTerm[] { mC }, null);
 		mFb = mEngine.createFuncTerm(mF, new CCTerm[] { mB }, null);
 		mEqualities = new CCEquality[3];// NOCHECKSTYLE

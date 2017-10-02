@@ -28,16 +28,16 @@ import java.util.ArrayDeque;
  * {@link Rational}.  If it comes from user input it typically is BigInteger for
  * numerals or BigDecimal for decimals (note that you can also use Rational with
  * the API, but the parser won't do that).
- * 
- * A constant term is created by the 
+ *
+ * A constant term is created by the
  * {@link Script#numeral(java.math.BigInteger)},
  * {@link Script#decimal(BigDecimal)},
  * {@link Script#binary(String)},
  * {@link Script#hexadecimal(String)}, and
  * {@link Script#string(String)}.
- * 
+ *
  * Also {@link Rational#toTerm(Sort)} creates a constant term.
- * 
+ *
  * @author hoenicke, Juergen Christ
  */
 public class ConstantTerm extends Term {
@@ -49,18 +49,18 @@ public class ConstantTerm extends Term {
 	 */
 	private final Object mValue;
 	private final Sort mSort;
-	
-	ConstantTerm(Object value, Sort sort, int hash) {
+
+	ConstantTerm(final Object value, final Sort sort, final int hash) {
 		super(hash);
 		mValue = value;
 		mSort = sort;
 	}
-	
+
 	/**
 	 * Gets the constant value.
-	 * If this term has numeral sort and stems from model evaluation, 
-	 * the Java-type of the constant will be {@link Rational}.  If it comes 
-	 * from user input it typically is BigInteger for numerals or 
+	 * If this term has numeral sort and stems from model evaluation,
+	 * the Java-type of the constant will be {@link Rational}.  If it comes
+	 * from user input it typically is BigInteger for numerals or
 	 * BigDecimal for decimals (note that you can also use Rational with
 	 * the API, but the parser won't do that). For string literals this
 	 * is a {@link QuotedObject} containing a string.  Bit vector constants
@@ -75,32 +75,41 @@ public class ConstantTerm extends Term {
 	public Sort getSort() {
 		return mSort;
 	}
-	
+
 	@Override
 	public String toString() {
 		if (mValue instanceof BigDecimal) {
-			final BigDecimal decimal = (BigDecimal)mValue; 
+			final BigDecimal decimal = (BigDecimal) mValue;
 			final String str = decimal.toPlainString();
 			return str;
 		}
 		if (mValue instanceof Rational) {
-			return getTheory().rational((Rational) mValue, getSort()).
-				toStringDirect();
+			final Rational rat = (Rational) mValue;
+			final String dotZero = getSort().getName() == "Real" ? ".0" : "";
+			String result = rat.numerator().abs().toString() + dotZero;
+			if (rat.isNegative()) {
+				result = "(- " + result + ")";
+			}
+			if (!rat.isIntegral()) {
+				assert dotZero == ".0";
+				result = "(/ " + result + " " + rat.denominator() + ".0)";
+			}
+			return result;
 		}
 		return mValue.toString();
 	}
-	
+
 	@Override
 	public String toStringDirect() {
 		return toString();
 	}
 
-	public static final int hashConstant(Object value, Sort sort) {
+	public static final int hashConstant(final Object value, final Sort sort) {
 		return value.hashCode() ^ sort.hashCode();
 	}
 
 	@Override
-	public void toStringHelper(ArrayDeque<Object> mTodo) {
+	public void toStringHelper(final ArrayDeque<Object> mTodo) {
 		mTodo.add(toString());
 	}
 }

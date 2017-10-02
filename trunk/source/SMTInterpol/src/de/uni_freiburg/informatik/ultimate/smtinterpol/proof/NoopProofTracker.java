@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 University of Freiburg
+ * Copyright (C) 2017 University of Freiburg
  *
  * This file is part of SMTInterpol.
  *
@@ -18,187 +18,118 @@
  */
 package de.uni_freiburg.informatik.ultimate.smtinterpol.proof;
 
-import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
+import java.util.Set;
+
+import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
-import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
+import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SMTAffineTerm;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.DPLLAtom;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Literal;
 
 /**
- * A rewrite tracker that does nothing.  This can be used to "track" rewrites if
- * proof production is disabled.
- * @author Juergen Christ
+ * This is an implementation of the IProofTracker that doesn't generated the proof annotations. It still applies some of
+ * the rules to create the right result term, but it doesn't track the proof.
+ *
+ * @author Jochen Hoenicke
  */
 public class NoopProofTracker implements IProofTracker {
 
-	@Override
-	public void reset() { /* Noop */ }
-
-	@Override
-	public void expand(ApplicationTerm orig) { /* Noop */ }
-
-	@Override
-	public void distinct(Term[] args, Term res, int rule) { /* Noop */ }
-
-	@Override
-	public void negation(Term pos, Term res, int rule) { /* Noop */ }
-
-	@Override
-	public void or(Term[] args, Term res, int rule) { /* Noop */ }
-
-	@Override
-	public void ite(
-			Term cond, Term thenTerm, Term elseTerm, Term res, int rule) {
-		/* Noop */
+	/**
+	 * Create a dummy proof tracker for the case that proofs are not necessary.
+	 */
+	public NoopProofTracker() {
 	}
 
 	@Override
-	public void strip(AnnotatedTerm orig) { /* Noop */ }
-
-	@Override
-	public void sum(FunctionSymbol fsym, Term[] args, Term res) { /* Noop */ }
-
-	@Override
-	public void leqSimp(SMTAffineTerm leq, Term res, int rule) { /* Noop */ }
-
-	@Override
-	public void desugar(ApplicationTerm orig, Term[] origArgs, Term[] newArgs) {
-	    // Noop
+	public Term buildRewrite(final Term orig, final Term res, final Annotation rule) {
+		return res;
 	}
 
 	@Override
-	public void divisible(FunctionSymbol divn, Term div, Term res) {
-	    // Noop 
+	public Term intern(final Term orig, final Term res) {
+		return res;
 	}
 
 	@Override
-	public void expandDef(Term orig, Term res) { /* Noop */ }
+	/**
+	 * Apply disjunction flattening.
+	 * @param orig   The term to flatten.
+	 * @param flattenedOrs The sub terms (ApplicationTerms with function "or") that were flattened.
+	 * @return the rewrite proof to flatten the orig term.
+	 */
+	public Term flatten(final Term orig, final Set<Term> flattenedOrs) {
+		/* nobody cares about this */
+		return orig;
+	}
 
 	@Override
-	public Term getRewriteProof(Term asserted) {
+	public Term orSimpClause(final Term rewrite, final Literal[] lits) {
+		return rewrite;
+	}
+
+	@Override
+	public Term reflexivity(final Term a) {
+		return a;
+	}
+
+	@Override
+	public Term transitivity(final Term a, final Term b) {
+		return b;
+	}
+
+	@Override
+	public Term congruence(final Term a, final Term[] b) {
+		final Theory theory = a.getSort().getTheory();
+		final FunctionSymbol func = ((ApplicationTerm) a).getFunction();
+		return theory.term(func, b);
+	}
+
+	@Override
+	public Term getRewriteProof(final Term asserted, final Term simpFormula) {
+		return simpFormula;
+	}
+
+	@Override
+	public Term getClauseProof(final Term term) {
 		return null;
 	}
 
 	@Override
-	public void equality(Term[] args, Object res, int rule) { /* Noop */ }
+	public Term getProvedTerm(final Term t) {
+		return t;
+	}
 
+	/* (non-Javadoc)
+	 * @see de.uni_freiburg.informatik.ultimate.smtinterpol.proof.IRuleApplicator#auxAxiom(int, de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Literal, de.uni_freiburg.informatik.ultimate.logic.Term, de.uni_freiburg.informatik.ultimate.logic.Term, java.lang.Object)
+	 */
 	@Override
-	public void distinctBoolEq(Term lhs, Term rhs, boolean firstNegated) {
-		/* Noop */
+	public Term auxAxiom(final Term axiom, final Annotation auxRule) {
+		return axiom;
+	}
+
+	/* (non-Javadoc)
+	 * @see de.uni_freiburg.informatik.ultimate.smtinterpol.proof.IRuleApplicator#split(de.uni_freiburg.informatik.ultimate.logic.Term, de.uni_freiburg.informatik.ultimate.logic.Term, int)
+	 */
+	@Override
+	public Term split(final Term splitTerm, final Term input, final Annotation splitKind) {
+		return splitTerm;
 	}
 
 	@Override
-	public void removeConnective(Term[] origArgs, Term result, int rule) {
-		/* Noop */
+	public Term asserted(final Term formula) {
+		return formula;
 	}
 
 	@Override
-	public void quoted(Term orig, Literal quote) { /* Noop */ }
-
-	@Override
-	public void eq(Term lhs, Term rhs, Term res) { /* Noop */ }
-
-	@Override
-	public void eq(Term lhs, Term rhs, DPLLAtom eqAtom) { /* Noop */ }
-
-	@Override
-	public void leq0(SMTAffineTerm sum, Literal lit) { /* Noop */ }
-
-	@Override
-	public Term split(Term res, Term proof, int splitKind) {
-		return null;
+	public Term exists(final QuantifiedFormula quant, final Term newBody) {
+		final Theory theory = quant.getTheory();
+		return theory.exists(quant.getVariables(), newBody);
 	}
-
 	@Override
-	public void intern(Term term, Literal lit) { /* Noop */ }
-
-	@Override
-	public Term clause(Term proof) {
-		return null;
+	public Term forall(final QuantifiedFormula quant, final Term negNewBody) {
+		final Theory theory = quant.getTheory();
+		return theory.not(theory.exists(quant.getVariables(), negNewBody));
 	}
-
-	@Override
-	public Term auxAxiom(
-			int auxKind, Literal auxLit, Term res, Term base, Object auxData) {
-		return null;
-	}
-
-	@Override
-	public IProofTracker getDescendent() {
-		return this;
-	}
-
-	@Override
-	public void modulo(ApplicationTerm appTerm, Term res) { /* Noop */ }
-
-	@Override
-	public void mod(Term x, Term y, Term res,
-			int rule) { /* Noop */ }
-
-	@Override
-	public void div(Term x, Term y, Term res,
-			int rule) { /* Noop */ }
-
-	@Override
-	public void toInt(Term arg, Term res) { /* Noop */ }
-
-	@Override
-	public void negateLit(Literal lit, Theory theory) { /* Noop */ }
-
-	@Override
-	public Term[] prepareIRAHack(Term[] args) { // NOPMD
-		return null;
-	}
-
-	@Override
-	public void arrayRewrite(Term[] args, Term result, int rule) { /* Noop */ }
-
-	@Override
-	public void flatten(Term[] args, boolean simpOr) { /* Noop */ }
-
-	@Override
-	public void orSimpClause(Term[] args) { /* Noop */ }
-
-	@Override
-	public void markPosition() { /* Noop */ }
-
-	@Override
-	public Term[] produceAuxAxiom(Literal auxlit, Term... args) { // NOPMD
-		return null;
-	}
-
-	@Override
-	public void save() { /* Noop */ }
-
-	@Override
-	public void restore() { /* Noop */ }
-
-	@Override
-	public void cleanSave() { /* Noop */ }
-
-	@Override
-	public void normalized(ConstantTerm term, SMTAffineTerm res) { /* Noop */ }
-
-	@Override
-	public boolean notifyLiteral(Literal lit, Term t) {
-		// Never return false => Never restore this tracker...
-		return true;
-	}
-
-	@Override
-	public void notifyFalseLiteral(Term t) { /* Noop */ }
-
-	@Override
-	public void storeRewrite(
-			ApplicationTerm store, Term result, boolean arrayFirst) {
-	    // Noop
-	}
-
-	@Override
-	public void toReal(Term arg, Term res) { /* Noop */ }
-
 }

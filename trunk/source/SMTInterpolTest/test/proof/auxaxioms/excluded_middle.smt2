@@ -8,7 +8,7 @@
 (declare-fun f (Bool) Bool)
 (push 1)
 (assert x)
-(assert (not (= (f x) (f true)))
+(assert (not (= (f x) (f true))))
 ; (@tautology (! (or (not x) (! (= x true) :quoted)) :excludedMiddle1)) 
 
 (check-sat)
@@ -17,7 +17,7 @@
 
 (pop 1)
 (assert (not x))
-(assert (not (= (f x) (f false)))
+(assert (not (= (f x) (f false))))
 ; (@tautology (! (or x (! (= x false) :quoted)) :excludedMiddle2))
 
 (check-sat)

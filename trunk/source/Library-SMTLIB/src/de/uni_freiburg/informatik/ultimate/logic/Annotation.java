@@ -27,8 +27,12 @@ import java.util.Arrays;
  * @author Jochen Hoenicke
  */
 public class Annotation {
-	String mKey;
-	/** 
+	/**
+	 * The key of the annotation. This includes the colon in front of it.
+	 */
+	final String mKey;
+
+	/**
 	 * The value of the annotation.
 	 * In concrete syntax an annotation is an sexpr, i.e., there are three
 	 * cases:
@@ -37,13 +41,13 @@ public class Annotation {
 	 * <li>constant:  this is represented by a ConstantTerm object.</li>
 	 * <li>(sexpr*):  this is represented by an Object[] array.</li>
 	 * </ul>
-	 * 
+	 *
 	 * However some annotations are preparsed.  E.g. the :pattern annotation
 	 * is represented as an array of Terms.
 	 */
-	Object mValue;
-	
-	public Annotation(String key, Object value) {
+	final Object mValue;
+
+	public Annotation(final String key, final Object value) {
 		if (key == null) {
 			throw new SMTLIBException("Empty annotations not allowed!");
 		}
@@ -51,35 +55,51 @@ public class Annotation {
 		mValue = value;
 	}
 
+	/**
+	 * Returns the key of the annotation. This includes the colon, with which each annotation starts.
+	 *
+	 * @return the key of the annotation.
+	 */
 	public String getKey() {
 		return mKey;
 	}
 
+	/**
+	 * Returns the value of the annotation. This is null for the empty annotation. The object depends on the type of the
+	 * annotation. It can be a term (constants, patterns) a simple string, or an array of terms/strings/arrays.
+	 *
+	 * @return the value of the annotation.
+	 */
 	public Object getValue() {
 		return mValue;
 	}
-	
+
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(final Object obj) {
 		if (obj instanceof Annotation) {
 			final Annotation annot = (Annotation) obj;
 			return mKey.equals(annot.mKey)
 				&& (mValue == null ? annot.mValue == null
-					: mValue instanceof Object[] 
+					: mValue instanceof Object[]
 					&& annot.mValue instanceof Object[]
-						? Arrays.deepEquals((Object[]) mValue, 
+						? Arrays.deepEquals((Object[]) mValue,
 										  (Object[]) annot.mValue)
 						: mValue.equals(annot.mValue));
 		}
 		return false;
 	}
-	
+
 	@Override
 	public int hashCode() {
-		return mKey.hashCode() * 31 
+		return mKey.hashCode() * 31
 			+ (mValue == null ? 0
 			 : mValue instanceof Object[]
 					 ? Arrays.deepHashCode((Object[]) mValue)
 							 : mValue.hashCode());
+	}
+
+	@Override
+	public String toString() {
+		return "(" + mKey + " " + mValue + ")";
 	}
 }

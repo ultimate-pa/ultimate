@@ -30,8 +30,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SMTAffineTerm;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SharedTerm;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.NamedAtom;
 
 /**
@@ -54,18 +52,6 @@ public class MutableAffinTerm {
 
 	public MutableAffinTerm add(final InfinitNumber c) {
 		mConstant = mConstant.add(c);
-		return this;
-	}
-
-	public MutableAffinTerm add(final Rational c, final SharedTerm term) {
-		if (c.equals(Rational.ZERO)) {
-			return this;
-		}
-		if (term.getTerm() instanceof SMTAffineTerm) {
-			add(c, term.getClausifier().createMutableAffinTerm(term));
-		} else {
-			addSimple(c, term.getLinVar());
-		}
 		return this;
 	}
 

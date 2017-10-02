@@ -31,25 +31,25 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 public class Benchmark {
-	
+
 	private final Script mScript;
 	private int mFormulaNum;
 	private final Map<String, Sort> mSortTranslator;
 	private final Map<String, String> mFunNameTranslator;
-	
-	public Benchmark(Script solver, boolean disableIPol) {
+
+	public Benchmark(final Script solver, final boolean disableIPol) {
 		mScript = solver;
 		mFormulaNum = disableIPol ? -2 : -1;// NOCHECKSTYLE
 		mSortTranslator = new HashMap<String, Sort>();
 		mFunNameTranslator = new HashMap<String, String>();
 		mScript.setOption(":produce-proofs", true);
 	}
-	
-	public void setOption(String option, Object value) {
+
+	public void setOption(final String option, final Object value) {
 		mScript.setOption(option, value);
 	}
-	
-	public void note(String s) {
+
+	public void note(final String s) {
 		if ("Interpolation Problem starts here".equals(s)) {
 			++mFormulaNum;
 		}
@@ -57,24 +57,24 @@ public class Benchmark {
 
 	private final void mapFuns() {
 		// some benchmarks use abs/mod/div as uninterpreted functions.
-		// in smtlib2 they are predefined.  We rename the functions to save 
+		// in smtlib2 they are predefined.  We rename the functions to save
 		// names.
 		mFunNameTranslator.put("abs", "abs$");
 		mFunNameTranslator.put("mod", "mod$");
 		mFunNameTranslator.put("div", "div$");
 	}
-	
+
 	private final void mapArith() {
 		// smtlib1 used ~ for unary minus.
 		mFunNameTranslator.put("~", "-");
 	}
-	
-	private final String translateFunName(String funname) {
+
+	private final String translateFunName(final String funname) {
 		final String res = mFunNameTranslator.get(funname);
 		return res == null ? funname : res;
 	}
-	
-	public void setLogic(String logic) {
+
+	public void setLogic(final String logic) {
 		final Logics l = Logics.valueOf(logic);
 		mScript.setLogic(l);
 		switch (l) {
@@ -90,7 +90,7 @@ public class Benchmark {
 			final Sort array1 = mScript.sort("Array", mScript.sort("Int"),
 					mScript.sort("Real"));
 			mSortTranslator.put("Array1", array1);
-			mSortTranslator.put("Array2", mScript.sort("Array", 
+			mSortTranslator.put("Array2", mScript.sort("Array",
 					mScript.sort("Int"), array1));
 			mapFuns();
 			mapArith();
@@ -99,7 +99,7 @@ public class Benchmark {
 		case AUFLIA:
 			mSortTranslator.put("Array", mScript.sort("Array",
 					mScript.sort("Int"), mScript.sort("Real")));
-			// fallthrough
+			//$FALL-THROUGH$
 		case QF_UFLIA:
 		case QF_UFLRA:
 			mapFuns();
@@ -119,43 +119,43 @@ public class Benchmark {
 			break;
 		}
 	}
-	
-	public void setInfo(String info, String value) {
+
+	public void setInfo(final String info, final String value) {
 		mScript.setInfo(info, value);
 	}
-	
-	public void declareSort(String name) {
+
+	public void declareSort(final String name) {
 		mScript.declareSort(name, 0);
 	}
 
-	public void declareFun(String name, Sort[] paramSorts, Sort resultSort) {
+	public void declareFun(final String name, final Sort[] paramSorts, final Sort resultSort) {
 		mScript.declareFun(translateFunName(name), paramSorts, resultSort);
 	}
-	
-	public Term term(String name, Term... params) {
+
+	public Term term(final String name, final Term... params) {
 		return mScript.term(translateFunName(name), params);
 	}
-	public Term annotateTerm(Term t, Annotation... annots) {
+	public Term annotateTerm(Term t, final Annotation... annots) {
 		if (annots.length > 0) {
 			t = mScript.annotate(t, annots);
 		}
 		return t;
 	}
-	public Term quantifier(int quantor, TermVariable[] vars, Term body, 
-			Term[]...patterns) {
+	public Term quantifier(final int quantor, final TermVariable[] vars, final Term body,
+			final Term[]...patterns) {
 		return mScript.quantifier(quantor, vars, body, patterns);
 	}
-	public Term let(TermVariable var, Term value, Term body) {
+	public Term let(final TermVariable var, final Term value, final Term body) {
 		return mScript.let(new TermVariable[]{var}, new Term[]{value}, body);
 	}
-	public Sort sort(String name) {
+	public Sort sort(final String name) {
 		final Sort res = mSortTranslator.get(name);
 		if (res != null) {
 			return res;
 		}
 		return mScript.sort(name);
 	}
-	public TermVariable variable(String name, Sort sort) {
+	public TermVariable variable(final String name, final Sort sort) {
 		return mScript.variable(name, sort);
 	}
 	public Sort getBooleanSort() {
@@ -168,10 +168,10 @@ public class Benchmark {
 		}
 		mScript.assertTerm(t);
 	}
-	public Term numeral(String num) {
+	public Term numeral(final String num) {
 		return mScript.numeral(num);
 	}
-	public Term decimal(String decimal) {
+	public Term decimal(final String decimal) {
 		return mScript.decimal(decimal);
 	}
 	public Term[] check() { // NOPMD

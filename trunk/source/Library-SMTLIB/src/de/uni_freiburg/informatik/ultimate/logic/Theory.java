@@ -507,9 +507,9 @@ public class Theory {
 		denom = denom.divide(gcd);
 
 		if (denom.equals(BigInteger.ONE)) {
-			return decimal(new BigDecimal(num));// numeral(num);
+			return decimal(new BigDecimal(num));
 		}
-		final FunctionSymbol div = getFunction("/", mNumericSort, mNumericSort);
+		final FunctionSymbol div = getFunction("/", mRealSort, mRealSort);
 		return term(div, decimal(new BigDecimal(num)), decimal(new BigDecimal(denom)));
 	}
 

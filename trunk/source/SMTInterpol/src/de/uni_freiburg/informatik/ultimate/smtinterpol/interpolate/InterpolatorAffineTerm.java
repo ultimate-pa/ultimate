@@ -18,7 +18,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.smtinterpol.interpolate;
 
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -30,11 +29,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SMTAffineTerm;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SharedTerm;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.InfinitNumber;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.LinVar;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.MutableAffinTerm;
 
 /**
  * Represents a modifiable affin term, i.e. SUM_i c_i * x_i + c, where the x_i are initially nonbasic variable.
@@ -54,17 +49,6 @@ public class InterpolatorAffineTerm {
 		mSummands.putAll(iat.getSummands());
 	}
 
-	public InterpolatorAffineTerm(final Map<LinVar, Rational> sum, final InfinitNumber c) {
-		mConstant = c;
-		for (final Entry<LinVar, Rational> entry : sum.entrySet()) {
-			mSummands.put(entry.getKey().getSharedTerm().getTerm(), entry.getValue());
-		}
-	}
-
-	public InterpolatorAffineTerm(final MutableAffinTerm mat) {
-		this(mat.getSummands(), mat.getConstant());
-	}
-
 	public InterpolatorAffineTerm add(final Rational c) {
 		mConstant = mConstant.add(new InfinitNumber(c, 0));
 		return this;
@@ -75,14 +59,6 @@ public class InterpolatorAffineTerm {
 		return this;
 	}
 
-	public InterpolatorAffineTerm add(final Rational c, final MutableAffinTerm a) {
-		if (c != Rational.ZERO) {
-			addLinVarMap(c, a.getSummands());
-			mConstant = mConstant.add(a.getConstant().mul(c));
-		}
-		return this;
-	}
-
 	public InterpolatorAffineTerm add(final Rational c, final Term term) {
 		if (!c.equals(Rational.ZERO)) {
 			addSimple(c, term);
@@ -90,46 +66,10 @@ public class InterpolatorAffineTerm {
 		return this;
 	}
 
-	public InterpolatorAffineTerm add(final Rational c, final SharedTerm term) {
-		if (c.equals(Rational.ZERO)) {
-			return this;
-		}
-		if (term.getTerm() instanceof SMTAffineTerm) {
-			add(c, term.getClausifier().createMutableAffinTerm(term));
-		} else {
-			addSimple(c, term.getLinVar());
-		}
-		return this;
-	}
-
-	public InterpolatorAffineTerm add(final Rational c, final LinVar var) {
-		if (c.equals(Rational.ZERO)) {
-			return this;
-		}
-		if (var.isInitiallyBasic()) {
-			for (final Map.Entry<LinVar, BigInteger> me : var.getLinTerm().entrySet()) {
-				add(c.mul(me.getValue()), me.getKey());
-			}
-		} else {
-			addSimple(c, var);
-		}
-		return this;
-	}
-
-	private void addLinVarMap(final Rational c, final Map<LinVar, Rational> linterm) {
-		for (final Map.Entry<LinVar, Rational> summand : linterm.entrySet()) {
-			addSimple(c.mul(summand.getValue()), summand.getKey());
-		}
-	}
-
 	private void addMap(final Rational c, final Map<Term, Rational> linterm) {
 		for (final Map.Entry<Term, Rational> summand : linterm.entrySet()) {
 			addSimple(c.mul(summand.getValue()), summand.getKey());
 		}
-	}
-
-	private void addSimple(final Rational c, final LinVar term) {
-		addSimple(c, term.getSharedTerm().getRealTerm());
 	}
 
 	private void addSimple(Rational c, final Term term) {

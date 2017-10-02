@@ -65,6 +65,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.option.SolverOptions;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.ProofChecker;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.ProofTermGenerator;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.PropProofChecker;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.SourceAnnotation;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.UnsatCoreCollector;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedArrayList;
 
@@ -132,35 +133,6 @@ public class SMTInterpol extends NoopScript {
 
 	private static class SMTInterpolSetup extends Theory.SolverSetup {
 
-		private static class RewriteProofFactory extends FunctionSymbolFactory {
-			Sort mProofSort;
-
-			public RewriteProofFactory(final String name, final Sort proofSort) {
-				super(name);
-				mProofSort = proofSort;
-			}
-
-			@Override
-			public int getFlags(final BigInteger[] indices, final Sort[] paramSorts, final Sort resultSort) {
-				return paramSorts.length == 1 ? FunctionSymbol.INTERNAL
-						: FunctionSymbol.LEFTASSOC | FunctionSymbol.INTERNAL;
-			}
-
-			@Override
-			public Sort getResultSort(final BigInteger[] indices, final Sort[] paramSorts, final Sort resultSort) {
-				if (indices != null || paramSorts.length == 0 || paramSorts.length > 2 || resultSort != null
-						|| paramSorts[0] != mProofSort) {
-					return null;
-				}
-
-				if (paramSorts.length == 2 && paramSorts[0] != paramSorts[1]) {
-					return null;
-				}
-
-				return paramSorts[0];
-			}
-		}
-
 		private final int mProofMode;
 
 		public SMTInterpolSetup(final int proofMode) {
@@ -189,9 +161,14 @@ public class SMTInterpol extends NoopScript {
 			}
 			if (mProofMode > 1) {
 				// Full proofs.
+				Sort[] polySorts = theory.createSortVariables("A");
+				declareInternalPolymorphicFunction(theory, "@refl", polySorts, polySorts, proof, 0);
+				declareInternalFunction(theory, "@trans", proof2, proof, leftassoc);
+				declareInternalFunction(theory, "@cong", proof2, proof, leftassoc);
+				declareInternalFunction(theory, "@exists", new Sort[] { proof }, proof, 0);
 				declareInternalFunction(theory, "@intern", bool1, proof, 0);
 				declareInternalFunction(theory, "@split", new Sort[] { proof, bool }, proof, 0);
-				defineFunction(theory, new RewriteProofFactory("@eq", proof));
+				declareInternalFunction(theory, "@eq", proof2, proof, 0);
 				declareInternalFunction(theory, "@rewrite", bool1, proof, 0);
 				declareInternalFunction(theory, "@clause", new Sort[] { proof, bool }, proof, 0);
 			}
@@ -510,7 +487,7 @@ public class SMTInterpol extends NoopScript {
 			}
 			final Literal[] assumptionlits = new Literal[assumptions.length];
 			for (int i = 0; i < assumptions.length; ++i) {
-				assumptionlits[i] = mClausifier.getCreateLiteral(assumptions[i]);
+				assumptionlits[i] = mClausifier.getCreateLiteral(assumptions[i], new SourceAnnotation("", null));
 			}
 			mEngine.assume(assumptionlits);
 		}
@@ -646,6 +623,7 @@ public class SMTInterpol extends NoopScript {
 			mEngine.setProduceAssignments(produceAssignment);
 			mEngine.setRandomSeed(mSolverOptions.getRandomSeed());
 			if (getBooleanOption(":interactive-mode") || mSolverOptions.isInterpolantCheckModeActive()
+					|| mSolverOptions.isProofCheckModeActive()
 					|| mSolverOptions.isModelCheckModeActive() || getBooleanOption(":unsat-core-check-mode")
 					|| getBooleanOption(":unsat-assumptions-check-mode")) {
 				mAssertions = new ScopedArrayList<>();
@@ -1354,7 +1332,7 @@ public class SMTInterpol extends NoopScript {
 			if (input[i].getSort() != getTheory().getBooleanSort()) {
 				throw new SMTLIBException("AllSAT over non-Boolean");
 			}
-			lits[i] = mClausifier.getCreateLiteral(input[i]);
+			lits[i] = mClausifier.getCreateLiteral(input[i], new SourceAnnotation("", null));
 		}
 		return new Iterable<Term[]>() {
 

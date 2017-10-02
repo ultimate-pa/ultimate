@@ -23,29 +23,34 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-class FunctionValue {
+public class FunctionValue {
 
-	static class Index {
+	public static class Index {
 		private final int[] mIdx;
 		private final int mHash;
-		public Index(int[] idx) {
+
+		public Index(final int[] idx) {
 			mIdx = idx;
 			mHash = Arrays.hashCode(mIdx);
 		}
+
 		@Override
 		public int hashCode() {
 			return mHash;
 		}
+
 		@Override
-		public boolean equals(Object o) {
+		public boolean equals(final Object o) {
 			if (o instanceof Index) {
 				return Arrays.equals(mIdx, ((Index) o).mIdx);
 			}
 			return false;
 		}
+
 		public int[] getArray() {
 			return mIdx;
 		}
+
 		@Override
 		public String toString() {
 			return Arrays.toString(mIdx);
@@ -53,18 +58,18 @@ class FunctionValue {
 	}
 
 	private Map<Index, Integer> mValues;
-	
+
 	private int mDefault;
-	
+
 	public FunctionValue() {
 		this(0); // 0 is default for every sort
 	}
-	
-	public FunctionValue(int idx) {
+
+	public FunctionValue(final int idx) {
 		mDefault = idx;
 	}
-	
-	public void put(int value, int... idx) {
+
+	public void put(final int value, final int... idx) {
 		if (idx.length == 0) {
 			assert mDefault == 0;
 			mDefault = value;
@@ -75,8 +80,8 @@ class FunctionValue {
 			mValues.put(new Index(idx), value);
 		}
 	}
-	
-	public int get(int[] idx, boolean partial) {
+
+	public int get(final int[] idx, final boolean partial) {
 		if (idx == null || idx.length == 0) {
 			return mDefault;
 		}
@@ -90,7 +95,7 @@ class FunctionValue {
 	public int getDefault() {
 		return mDefault;
 	}
-	
+
 	public Map<Index, Integer> values() {
 		final Map<Index, Integer> empty = Collections.emptyMap();
 		return mValues == null ? empty : mValues;

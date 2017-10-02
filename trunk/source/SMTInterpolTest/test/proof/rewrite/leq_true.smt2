@@ -3,20 +3,23 @@
 (set-option :model-check-mode true)
 (set-option :print-terms-cse false)
 
-(set-logic QF_UFLIRA)
-(declare-fun x () Real)
-(declare-fun y () Real)
+(set-logic QF_LIA)
+(declare-fun x () Int)
 
 (push 1)
-(assert (< x (to_int x)))
+(assert (not (<= (+ x (- x)) 0)))
 (check-sat)
 (get-proof)
 (pop 1)
 
 (push 1)
-(assert (< (- y (to_int x)) (to_int (- y (to_int x)))))
+(assert (not (<= (+ x (- x)) 5)))
 (check-sat)
 (get-proof)
 (pop 1)
 
-
+(push 1)
+(assert (not (<= 123456893784 23849728930783804606)))
+(check-sat)
+(get-proof)
+(pop 1)

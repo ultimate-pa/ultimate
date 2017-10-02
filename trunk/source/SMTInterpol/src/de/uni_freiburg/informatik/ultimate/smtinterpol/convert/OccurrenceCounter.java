@@ -145,7 +145,6 @@ public class OccurrenceCounter extends NonRecursive {
 		public void walk(NonRecursive walker, TermVariable term) {
 			term.mTmpCtr = 0;
 		}
-		
 	}
 	
 	/**
