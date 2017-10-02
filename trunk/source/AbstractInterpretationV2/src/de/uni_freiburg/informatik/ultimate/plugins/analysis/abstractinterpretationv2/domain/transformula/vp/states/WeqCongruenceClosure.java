@@ -306,20 +306,23 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 		final Collection<NODE> ccps1 = mAuxData.getAfCcPars(array1Rep);
 		final Collection<NODE> ccps2 = mAuxData.getAfCcPars(array2Rep);
 		for (final NODE ccp1 : ccps1) {
+			final NODE ccp1Replaced = replaceFuncAppArgsWOtherRepIfNecAndPoss(ccp1);
+			if (ccp1Replaced == null) {
+				continue;
+			}
 			for (final NODE ccp2 : ccps2) {
 				if (isInconsistent()) {
 					return true;
 				}
-
-				if (!hasElements(ccp1, ccp2, ccp1.getArgument(), ccp2.getArgument(), ccp1.getAppliedFunction(),
-						ccp2.getAppliedFunction())) {
-					/*
-					 * ccp1 or ccp2 or some part of them is currently being removed (I guess) -- don't add them back!..
-					 */
+				final NODE ccp2Replaced = replaceFuncAppArgsWOtherRepIfNecAndPoss(ccp2);
+				if (ccp2Replaced == null) {
 					continue;
 				}
 
-				if (getEqualityStatus(ccp1.getArgument(), ccp2.getArgument()) != EqualityStatus.EQUAL) {
+				assert hasElements(ccp1Replaced, ccp2Replaced, ccp1Replaced.getArgument(), ccp2Replaced.getArgument(),
+						ccp1Replaced.getAppliedFunction(), ccp2Replaced.getAppliedFunction());
+
+				if (getEqualityStatus(ccp1Replaced.getArgument(), ccp2Replaced.getArgument()) != EqualityStatus.EQUAL) {
 					continue;
 				}
 				/*
@@ -328,10 +331,10 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 				 */
 
 				final List<CongruenceClosure<NODE>> projectedLabel = mWeakEquivalenceGraph.projectEdgeLabelToPoint(
-						strengthenedEdgeLabelContents, ccp1.getArgument(), getAllWeqVarsNodeForFunction(array1));
+						strengthenedEdgeLabelContents, ccp1Replaced.getArgument(), getAllWeqVarsNodeForFunction(array1));
 
 				// recursive call
-				reportWeakEquivalenceDoOnlyRoweqPropagations(ccp1, ccp2, projectedLabel);
+				reportWeakEquivalenceDoOnlyRoweqPropagations(ccp1Replaced, ccp2Replaced, projectedLabel);
 			}
 		}
 
@@ -486,21 +489,35 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 //					Collections.singletonList(qUnequalI));
 //		}
 		for (final Entry<NODE, NODE> ccc1 : oldAuxData.getCcChildren(node1OldRep)) {
+			// don't propagate something that uses the currently removed element
+			final NODE ccc1AfReplaced = replaceWithOtherRepIfNecessaryAndPossible(ccc1.getKey());
+			final NODE ccc1ArgReplaced = replaceWithOtherRepIfNecessaryAndPossible(ccc1.getValue());
+			if (ccc1AfReplaced == null || ccc1ArgReplaced == null) {
+				continue;
+			}
+
 			for (final Entry<NODE, NODE> ccc2 : oldAuxData.getCcChildren(node2OldRep)) {
-				if (!hasElements(ccc1.getKey(), ccc1.getValue(), ccc2.getKey(), ccc2.getValue())) {
+
+				// don't propagate something that uses the currently removed element
+				final NODE ccc2AfReplaced = replaceWithOtherRepIfNecessaryAndPossible(ccc2.getKey());
+				final NODE ccc2ArgReplaced = replaceWithOtherRepIfNecessaryAndPossible(ccc2.getValue());
+				if (ccc2AfReplaced == null || ccc2ArgReplaced == null) {
 					continue;
 				}
+
+				assert hasElements(ccc1AfReplaced, ccc1ArgReplaced, ccc2AfReplaced, ccc2ArgReplaced);
+
 				// case ccc1 = (a,i), ccc2 = (b,j)
-				if (getEqualityStatus(ccc1.getValue(), ccc2.getValue()) != EqualityStatus.EQUAL) {
+				if (getEqualityStatus(ccc1ArgReplaced, ccc2ArgReplaced) != EqualityStatus.EQUAL) {
 					// not i = j --> cannot propagate
 					continue;
 				}
 				// i = j
 
-				final NODE firstWeqVar = getAllWeqVarsNodeForFunction(ccc1.getKey()).get(0);
+				final NODE firstWeqVar = getAllWeqVarsNodeForFunction(ccc1AfReplaced).get(0);
 				final CongruenceClosure<NODE> qUnequalI = new CongruenceClosure<>();
-				qUnequalI.reportDisequality(firstWeqVar, ccc1.getValue());
-				goOn |= reportWeakEquivalenceDoOnlyRoweqPropagations(ccc1.getKey(), ccc2.getKey(),
+				qUnequalI.reportDisequality(firstWeqVar, ccc1ArgReplaced);
+				goOn |= reportWeakEquivalenceDoOnlyRoweqPropagations(ccc1AfReplaced, ccc2AfReplaced,
 						Collections.singletonList(qUnequalI));
 			}
 		}
@@ -578,6 +595,8 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 		// otherRoweqPropOnMerge(node1, mAuxData.getCcChildren(node1));
 		// otherRoweqPropOnMerge(node2, mAuxData.getCcChildren(node2));
 	}
+
+
 
 	private boolean otherRoweqPropOnMerge(final NODE nodeOldRep, final CcAuxData oldAuxData) {
 //			final HashRelation<NODE, NODE> oldCcChildren1) {
@@ -726,6 +745,9 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 		}
 		final CongruenceClosure<NODE> copy = new CongruenceClosure<>(this);
 
+
+		assert mElementCurrentlyBeingRemoved == null;
+		mElementCurrentlyBeingRemoved = new RemovalInfo(elem, getOtherEquivalenceClassMember(elem));
 //		addNodesEquivalentToNodesWithRemovedElement(elem);
 
 		final Collection<NODE> nodesToAdd = collectNodesToAddAtFunctionRemoval(elem);
@@ -750,6 +772,7 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 
 		mAllLiterals.remove(elem);
 
+		mElementCurrentlyBeingRemoved = null;
 		assert sanityCheck();
 //		assert elementIsFullyRemoved(elem);
 		return true;
@@ -910,13 +933,22 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 				continue;
 			}
 
-			if (!hasElements(ccp, ccp.getAppliedFunction(), ccp.getArgument())) {
-				// might happen during remove operation
+
+
+			/*
+			 * don't propagate something that uses the currently removed element
+			 */
+//			final NODE ccpReplaced = replaceFuncAppArgsWOtherRepIfNecAndPoss(ccp);
+			final NODE ccpReplaced = ccp;
+
+			if (ccpReplaced == null) {
 				continue;
 			}
 
+			assert hasElements(ccpReplaced, ccpReplaced.getAppliedFunction(), ccpReplaced.getArgument());
+
 			// ccp = b[j], look for a weq edge between a and b
-			if (getEqualityStatus(elem.getAppliedFunction(), ccp.getAppliedFunction()) == EqualityStatus.EQUAL) {
+			if (getEqualityStatus(elem.getAppliedFunction(), ccpReplaced.getAppliedFunction()) == EqualityStatus.EQUAL) {
 				// a = b, strong, not weak equivalence, nothing to do here (propagations done by fwcc)
 				continue;
 			}
@@ -926,16 +958,16 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 
 			// get label of edge between a and b
 			final List<CongruenceClosure<NODE>> weqEdgeLabelContents =
-					mWeakEquivalenceGraph.getEdgeLabelContents(ccp.getAppliedFunction(), elem.getAppliedFunction());
+					mWeakEquivalenceGraph.getEdgeLabelContents(ccpReplaced.getAppliedFunction(), elem.getAppliedFunction());
 
 			final List<CongruenceClosure<NODE>> projectedLabel = mWeakEquivalenceGraph.projectEdgeLabelToPoint(
 					//						weqEdge.getValue().getLabelContents(),
 					weqEdgeLabelContents,
-					ccp.getArgument(),
-					getAllWeqVarsNodeForFunction(ccp.getAppliedFunction()));
+					ccpReplaced.getArgument(),
+					getAllWeqVarsNodeForFunction(ccpReplaced.getAppliedFunction()));
 
 			madeChanges |= reportWeakEquivalenceDoOnlyRoweqPropagations(elem,
-					ccp,
+					ccpReplaced,
 					projectedLabel);
 //			}
 		}

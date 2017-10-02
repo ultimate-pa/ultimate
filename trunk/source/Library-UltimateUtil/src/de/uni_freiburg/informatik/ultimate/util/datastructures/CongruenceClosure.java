@@ -49,7 +49,16 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 
 	protected final Collection<ELEM> mAllLiterals;
 
+	/**
+	 *
+	 */
 	boolean mConstructorInitializationPhase = false;
+
+	/**
+	 * Store which element we are currently in the process of removing (a remove can trigger deep recursive calls, and
+	 *  some need to know this. Also sanity checks may be done more precisely when we know this)
+	 */
+	protected RemovalInfo mElementCurrentlyBeingRemoved;
 
 	/**
 	 * Constructs CongruenceClosure instance without any equalities or
@@ -290,6 +299,11 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 	}
 
 	protected boolean addElementRec(final ELEM elem) {
+//		assert mElementCurrentlyBeingRemoved == null
+//				|| !elem.isFunctionApplication()
+//				|| (!elem.getAppliedFunction().equals(mElementCurrentlyBeingRemoved.getElem())
+//						&& !elem.getArgument().equals(mElementCurrentlyBeingRemoved.getElem()));
+
 		final boolean newlyAdded = mElementTVER.addElement(elem);
 		if (newlyAdded) {
 			registerNewElement(elem);
@@ -370,7 +384,23 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		if (isInconsistent()) {
 			throw new IllegalStateException();
 		}
-		return removeAnyElement(elem, null);
+		if (!hasElement(elem)) {
+			return false;
+		}
+
+		// TODO: seems ugly, but WeqCongruenceClosure need this field, too..
+		if (this.getClass().equals(CongruenceClosure.class)) {
+			assert mElementCurrentlyBeingRemoved == null;
+			mElementCurrentlyBeingRemoved = new RemovalInfo(elem, getOtherEquivalenceClassMember(elem));
+		}
+
+		final boolean result = removeAnyElement(elem, null);
+
+		if (this.getClass().equals(CongruenceClosure.class)) {
+			mElementCurrentlyBeingRemoved = null;
+		}
+
+		return result;
 	}
 
 	protected final Map<ELEM, ELEM> removeSimpleElementTrackNewReps(final ELEM elem) {
@@ -380,8 +410,23 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		if (isInconsistent()) {
 			throw new IllegalStateException();
 		}
+		if (!hasElement(elem)) {
+			return new HashMap<>();
+		}
+
+		// TODO: seems ugly
+		if (this.getClass().equals(CongruenceClosure.class)) {
+			assert mElementCurrentlyBeingRemoved == null;
+			mElementCurrentlyBeingRemoved = new RemovalInfo(elem, getOtherEquivalenceClassMember(elem));
+		}
+
 		final HashMap<ELEM, ELEM> removedElemToNewRep = new HashMap<>();
 		removeAnyElement(elem, removedElemToNewRep);
+
+		if (this.getClass().equals(CongruenceClosure.class)) {
+			mElementCurrentlyBeingRemoved = null;
+		}
+
 		return removedElemToNewRep;
 	}
 
@@ -424,6 +469,21 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		return true;
 	}
 
+	protected ELEM replaceWithOtherRepIfNecessaryAndPossible(final ELEM elem) {
+		if (mElementCurrentlyBeingRemoved == null) {
+			return elem;
+		}
+		if (elem.equals(mElementCurrentlyBeingRemoved.getElem())) {
+			if (mElementCurrentlyBeingRemoved.getOtherRep() != null) {
+				assert hasElement(mElementCurrentlyBeingRemoved.getOtherRep());
+				return mElementCurrentlyBeingRemoved.getOtherRep();
+			} else {
+				return null;
+			}
+		}
+		return elem;
+	}
+
 //	/**
 //	 * Remove an element that is a function application.
 //	 *
@@ -461,10 +521,12 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		return newRep;
 	}
 
-	/*
+	/**
 	 * before removing the parents:
 	 * if there is a newRep, insert a node where the subnode elem is replaced by newRep
 	 * (this may introduce fresh nodes!)
+	 *
+	 * @param elem the element we are about to remove
 	 */
 	protected void addNodesEquivalentToNodesWithRemovedElement(final ELEM elem) {
 		final ELEM otherRep = getOtherEquivalenceClassMember(elem);
@@ -1037,7 +1099,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		final Set<ELEM> elemsWithSubFromSet =
 				getAllElements().stream().filter(e -> hasSubElement(e, set)).collect(Collectors.toSet());
 
-		final ThreeValuedEquivalenceRelation<ELEM> newTver = mElementTVER.filterAndKeepOnlyConstraintsThatIntersectWith(elemsWithSubFromSet);
+		final ThreeValuedEquivalenceRelation<ELEM> newTver =
+				mElementTVER.filterAndKeepOnlyConstraintsThatIntersectWith(elemsWithSubFromSet);
 
 		return new CongruenceClosure<>(newTver);
 	}
@@ -1059,6 +1122,34 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 
 	public boolean isRepresentative(final ELEM elem) {
 		return mElementTVER.isRepresentative(elem);
+	}
+
+	protected ELEM replaceFuncAppArgsWOtherRepIfNecAndPoss(final ELEM c) {
+		assert c.isFunctionApplication();
+		final ELEM cReplaced = c;
+
+		final ELEM afReplaced = replaceWithOtherRepIfNecessaryAndPossible(c.getAppliedFunction());
+		final ELEM argReplaced = replaceWithOtherRepIfNecessaryAndPossible(c.getArgument());
+		if (afReplaced == null || argReplaced == null) {
+			return null;
+		}
+		assert afReplaced == c.getAppliedFunction() || argReplaced == c.getArgument();
+		if (afReplaced != c.getAppliedFunction()) {
+			final ELEM rpaf = c.replaceAppliedFunction(mElementCurrentlyBeingRemoved.getOtherRep());
+			if (hasElement(rpaf)) {
+				return rpaf;
+			} else {
+				return null;
+			}
+		} else if (argReplaced != c.getArgument()) {
+			final ELEM rparg = c.replaceArgument(mElementCurrentlyBeingRemoved.getOtherRep());
+			if (hasElement(rparg)) {
+				return rparg;
+			} else {
+				return null;
+			}
+		}
+		return cReplaced;
 	}
 
 	/**
@@ -1395,11 +1486,37 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 			final HashRelation<ELEM, ELEM> equalitiesToPropagate = new HashRelation<>();
 			final Set<ELEM> afCcPars = mAfCcPars.getImage(afRep);
 			final Set<ELEM> candidates = afCcPars.stream()
-					.filter(afccpar -> (hasElement(argRep) &&
+//					.filter(c -> (!c.isFunctionApplication()
+//							|| (!c.getAppliedFunction().equals(mElementCurrentlyBeingRemoved)
+//									&& !c.getArgument().equals(mElementCurrentlyBeingRemoved))))
+					.filter(afccpar ->
+						(hasElement(argRep) &&
 							hasElement(afccpar.getArgument()) &&
-							getEqualityStatus(argRep, afccpar.getArgument()) == EqualityStatus.EQUAL))
+							getEqualityStatus(argRep, afccpar.getArgument()) == EqualityStatus.EQUAL)
+						)
 					.collect(Collectors.toSet());
-			candidates.forEach(c -> equalitiesToPropagate.addPair(elem, c));
+
+			/*
+			 * we have to make sure to not add an equality for propagation where an element contains the element
+			 *  currently being removed
+			 */
+			for (final ELEM c : candidates) {
+				assert c.isFunctionApplication();
+				equalitiesToPropagate.addPair(elem, c);
+
+//				final ELEM cReplaced = replaceFuncAppArgsWOtherRepIfNecAndPoss(c);
+//
+//				if (cReplaced != null) {
+//					equalitiesToPropagate.addPair(elem, cReplaced);
+//				}
+			}
+
+
+//			assert mElementCurrentlyBeingRemoved == null
+//					|| !equalitiesToPropagate.entrySet().stream().map(en -> en.getValue())
+//						.anyMatch(c -> c.isFunctionApplication()
+//					&& (c.getAppliedFunction().equals(mElementCurrentlyBeingRemoved.getElem())
+//							|| c.getArgument().equals(mElementCurrentlyBeingRemoved.getElem())));
 
 			mAfCcPars.addPair(afRep, elem);
 			mArgCcPars.addPair(argRep, elem);
@@ -1503,5 +1620,28 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		}
 	}
 
+	public class RemovalInfo {
+
+		private final ELEM mElemBeingRemoved;
+		private final ELEM mOtherRep;
+
+		public RemovalInfo(final ELEM elemBeingRemoved, final ELEM otherRep) {
+			mElemBeingRemoved = elemBeingRemoved;
+			mOtherRep = otherRep;
+		}
+
+		public ELEM getElem() {
+			return mElemBeingRemoved;
+		}
+
+		public ELEM getOtherRep() {
+			return mOtherRep;
+		}
+
+		@Override
+		public String toString() {
+			return mElemBeingRemoved + " --> " + mOtherRep;
+		}
+	}
 
 }
