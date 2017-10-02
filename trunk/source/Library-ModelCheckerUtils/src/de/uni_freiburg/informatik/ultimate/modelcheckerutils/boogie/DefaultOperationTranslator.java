@@ -153,6 +153,6 @@ public class DefaultOperationTranslator implements IOperationTranslator {
 	public Term realTranslation(final RealLiteral exp) {
 		final BigDecimal bigDec = new BigDecimal(exp.getValue());
 		final Rational rat = SmtUtils.toRational(bigDec);
-		return rat.toTerm(SmtSortUtils.getIntSort(mScript));
+		return rat.toTerm(SmtSortUtils.getRealSort(mScript));
 	}
 }
