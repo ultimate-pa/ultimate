@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -404,5 +405,9 @@ public class EqConstraintFactory<ACTION extends IIcfgTransition<IcfgLocation>, N
 
 	public CCManager<NODE> getCcManager() {
 		return mCcManager;
+	}
+
+	public  IIcfgSymbolTable getSymbolTable() {
+		return mCsToolkit.getSymbolTable();
 	}
 }

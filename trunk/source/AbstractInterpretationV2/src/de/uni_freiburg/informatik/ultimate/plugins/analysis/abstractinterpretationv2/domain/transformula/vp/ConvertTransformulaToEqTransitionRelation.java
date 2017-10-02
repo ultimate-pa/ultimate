@@ -115,8 +115,8 @@ public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTrans
 	}
 
 	private void computeResult() {
-		final Term transFormulaInNnf =
-				new NnfTransformer(mMgdScript, mServices, QuantifierHandling.CRASH).transform(mTf.getFormula());
+		final Term transFormulaInNnf = new NnfTransformer(mMgdScript, mServices, QuantifierHandling.CRASH)
+				.transform(mTf.getFormula());
 
 		final StoreChainSquisher scs = new StoreChainSquisher();
 		final List<Term> conjunction = new ArrayList<>();
@@ -134,17 +134,26 @@ public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTrans
 	}
 
 	private boolean transformulaImpliesResultConstraint() {
+
 		mMgdScript.lock(this);
 		mMgdScript.push(this, 1);
-
 		final Pair<Term, Term> anteAndSucc = makeShiftVariableSubstitution(mMgdScript, mTf, mResultConstraint);
 
-		mMgdScript.assertTerm(this, anteAndSucc.getFirst());
-		mMgdScript.assertTerm(this, Util.not(mMgdScript.getScript(), anteAndSucc.getSecond()));
+		final boolean result = implicationCheck(anteAndSucc.getFirst(), anteAndSucc.getSecond());
 
-		final LBool result = mMgdScript.checkSat(this);
 		mMgdScript.pop(this, 1);
 		mMgdScript.unlock(this);
+
+		return result;
+	}
+
+	protected boolean implicationCheck(final Term ante, final Term succ) {
+		final ManagedScript mgdScript = mMgdScript;
+
+		mgdScript.assertTerm(this, ante);
+		mgdScript.assertTerm(this, Util.not(mgdScript.getScript(), succ));
+
+		final LBool result = mgdScript.checkSat(this);
 		if (result != LBool.UNSAT) {
 			assert false;
 		}
@@ -167,8 +176,7 @@ public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTrans
 
 		final Term resultConstraintTerm = substitution.transform(resultConstraint.getTerm(mgdScript.getScript()));
 
-		final Pair<Term, Term> anteAndSucc = new Pair<>(tfSubs, resultConstraintTerm);
-		return anteAndSucc;
+		return new Pair<>(tfSubs, resultConstraintTerm);
 	}
 
 	public EqTransitionRelation<ACTION> getResult() {
@@ -177,7 +185,6 @@ public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTrans
 	}
 
 	class ConvertTfToEqDisjConsWalker extends TermWalker {
-
 
 		public ConvertTfToEqDisjConsWalker(final Term term) {
 			super(term);
@@ -223,48 +230,44 @@ public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTrans
 					walker.enqueueWalker(new ConvertTfToEqDisjConsWalker(param));
 				}
 
-
 			} else if ("false".equals(term.getFunction().getName())) {
-				mResultStack.push(mEqConstraintFactory.getDisjunctiveConstraint(
-						Collections.emptySet()));
+				mResultStack.push(mEqConstraintFactory.getDisjunctiveConstraint(Collections.emptySet()));
 			} else if ("true".equals(term.getFunction().getName())) {
-				mResultStack.push(mEqConstraintFactory.getDisjunctiveConstraint(
-						Collections.singleton(mEqConstraintFactory.getEmptyConstraint())));
+				mResultStack.push(mEqConstraintFactory
+						.getDisjunctiveConstraint(Collections.singleton(mEqConstraintFactory.getEmptyConstraint())));
 			} else {
-				// we don't recognize this function symbol -- overapproximating its effects by "top"
-				// TODO: perhaps we could make some checks here if it is trivially bottom or something like that..
-				mResultStack.push(mEqConstraintFactory.getDisjunctiveConstraint(
-						Collections.singleton(mEqConstraintFactory.getEmptyConstraint())));
+				// we don't recognize this function symbol -- overapproximating its effects by
+				// "top"
+				// TODO: perhaps we could make some checks here if it is trivially bottom or
+				// something like that..
+				mResultStack.push(mEqConstraintFactory
+						.getDisjunctiveConstraint(Collections.singleton(mEqConstraintFactory.getEmptyConstraint())));
 			}
 
 		}
 
 		private void handleBooleanTerm(final Term term, final boolean polarity) {
 			assert "Bool".equals(term.getSort().getName());
-			final EqConstraint<ACTION, EqNode> emptyConstraint =
-					mEqConstraintFactory.getEmptyConstraint();
+			final EqConstraint<ACTION, EqNode> emptyConstraint = mEqConstraintFactory.getEmptyConstraint();
 			final EqNode tvNode = mEqNodeAndFunctionFactory.getOrConstructNode(term);
 			if (polarity) {
 				final EqNode trueNode = mEqNodeAndFunctionFactory.getOrConstructNode(mTrueTerm);
-				final EqConstraint<ACTION, EqNode> tvEqualsTrue =
-						mEqConstraintFactory.addEqualityFlat(tvNode, trueNode, emptyConstraint);
-				mResultStack.push(mEqConstraintFactory.getDisjunctiveConstraint(
-						Collections.singleton(tvEqualsTrue)));
+				final EqConstraint<ACTION, EqNode> tvEqualsTrue = mEqConstraintFactory.addEqualityFlat(tvNode, trueNode,
+						emptyConstraint);
+				mResultStack.push(mEqConstraintFactory.getDisjunctiveConstraint(Collections.singleton(tvEqualsTrue)));
 			} else {
 				final EqNode falseNode = mEqNodeAndFunctionFactory.getOrConstructNode(mFalseTerm);
-				final EqConstraint<ACTION, EqNode> tvEqualsFalse =
-						mEqConstraintFactory.addEqualityFlat(tvNode, falseNode, emptyConstraint);
-				mResultStack.push(mEqConstraintFactory.getDisjunctiveConstraint(
-						Collections.singleton(tvEqualsFalse)));
+				final EqConstraint<ACTION, EqNode> tvEqualsFalse = mEqConstraintFactory.addEqualityFlat(tvNode,
+						falseNode, emptyConstraint);
+				mResultStack.push(mEqConstraintFactory.getDisjunctiveConstraint(Collections.singleton(tvEqualsFalse)));
 			}
 		}
 
 		private void handleXquality(final Term arg1, final Term arg2, final boolean polarity) {
 
-			final EqConstraint<ACTION, EqNode> emptyConstraint =
-					mEqConstraintFactory.getEmptyConstraint();
-			final EqDisjunctiveConstraint<ACTION, EqNode> emptyDisjunctiveConstraint =
-					mEqConstraintFactory.getDisjunctiveConstraint(Collections.singleton(emptyConstraint));
+			final EqConstraint<ACTION, EqNode> emptyConstraint = mEqConstraintFactory.getEmptyConstraint();
+			final EqDisjunctiveConstraint<ACTION, EqNode> emptyDisjunctiveConstraint = mEqConstraintFactory
+					.getDisjunctiveConstraint(Collections.singleton(emptyConstraint));
 
 			if (arg1.getSort().isArraySort()) {
 				// we have an array equality
@@ -275,65 +278,66 @@ public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTrans
 					return;
 				}
 
-//				MultiDimensionalStore mds;
+				// MultiDimensionalStore mds;
 				ApplicationTerm storeTerm;
 				EqNode simpleArray;
 				EqNode otherSimpleArray;
 
 				if (SmtUtils.isFunctionApplication(arg1, "store")) {
 					assert !SmtUtils.isFunctionApplication(arg2, "store");
-//					mds = new MultiDimensionalStore(arg1);
+					// mds = new MultiDimensionalStore(arg1);
 					storeTerm = (ApplicationTerm) arg1;
-//					simpleArray = mEqNodeAndFunctionFactory.getOrConstructFunction(arg2);
+					// simpleArray = mEqNodeAndFunctionFactory.getOrConstructFunction(arg2);
 					simpleArray = mEqNodeAndFunctionFactory.getOrConstructNode(arg2);
-//					assert !SmtUtils.isFunctionApplication(mds.getArray(), "store");
-//					otherSimpleArray = mEqNodeAndFunctionFactory.getOrConstructFunction(mds.getArray());
+					// assert !SmtUtils.isFunctionApplication(mds.getArray(), "store");
+					// otherSimpleArray =
+					// mEqNodeAndFunctionFactory.getOrConstructFunction(mds.getArray());
 					otherSimpleArray = mEqNodeAndFunctionFactory.getOrConstructNode(storeTerm.getParameters()[0]);
 				} else if (SmtUtils.isFunctionApplication(arg2, "store")) {
 					assert !SmtUtils.isFunctionApplication(arg1, "store");
-//					mds = new MultiDimensionalStore(arg2);
+					// mds = new MultiDimensionalStore(arg2);
 					storeTerm = (ApplicationTerm) arg2;
-//					simpleArray = mEqNodeAndFunctionFactory.getOrConstructFunction(arg1);
+					// simpleArray = mEqNodeAndFunctionFactory.getOrConstructFunction(arg1);
 					simpleArray = mEqNodeAndFunctionFactory.getOrConstructNode(arg1);
-//					assert !SmtUtils.isFunctionApplication(mds.getArray(), "store");
-//					otherSimpleArray = mEqNodeAndFunctionFactory.getOrConstructFunction(mds.getArray());
+					// assert !SmtUtils.isFunctionApplication(mds.getArray(), "store");
+					// otherSimpleArray =
+					// mEqNodeAndFunctionFactory.getOrConstructFunction(mds.getArray());
 					otherSimpleArray = mEqNodeAndFunctionFactory.getOrConstructNode(storeTerm.getParameters()[0]);
 				} else {
-//					mds = null;
+					// mds = null;
 					storeTerm = null;
-//					simpleArray = mEqNodeAndFunctionFactory.getOrConstructFunction(arg1);
+					// simpleArray = mEqNodeAndFunctionFactory.getOrConstructFunction(arg1);
 					simpleArray = mEqNodeAndFunctionFactory.getOrConstructNode(arg1);
-//					otherSimpleArray = mEqNodeAndFunctionFactory.getOrConstructFunction(arg2);
+					// otherSimpleArray = mEqNodeAndFunctionFactory.getOrConstructFunction(arg2);
 					otherSimpleArray = mEqNodeAndFunctionFactory.getOrConstructNode(arg2);
 				}
-
-
 
 				final EqConstraint<ACTION, EqNode> newConstraint;
 				if (polarity) {
 					if (storeTerm == null) {
 						// we have a strong equivalence
-//						newConstraint = mEqConstraintFactory.addFunctionEqualityFlat(simpleArray,
-						newConstraint = mEqConstraintFactory.addEqualityFlat(simpleArray,
-								otherSimpleArray, emptyConstraint);
+						// newConstraint = mEqConstraintFactory.addFunctionEqualityFlat(simpleArray,
+						newConstraint = mEqConstraintFactory.addEqualityFlat(simpleArray, otherSimpleArray,
+								emptyConstraint);
 					} else {
 
-//						final List<EqNode> storeIndex = mds.getIndex().stream()
-//								.map(mEqNodeAndFunctionFactory::getOrConstructNode)
-//								.collect(Collectors.toList());
-						final EqNode storeIndex = mEqNodeAndFunctionFactory.getOrConstructNode(
-								storeTerm.getParameters()[1]);
-//						final EqNode storeValue = mEqNodeAndFunctionFactory.getOrConstructNode(mds.getValue());
-						final EqNode storeValue = mEqNodeAndFunctionFactory.getOrConstructNode(
-								storeTerm.getParameters()[2]);
+						// final List<EqNode> storeIndex = mds.getIndex().stream()
+						// .map(mEqNodeAndFunctionFactory::getOrConstructNode)
+						// .collect(Collectors.toList());
+						final EqNode storeIndex = mEqNodeAndFunctionFactory
+								.getOrConstructNode(storeTerm.getParameters()[1]);
+						// final EqNode storeValue =
+						// mEqNodeAndFunctionFactory.getOrConstructNode(mds.getValue());
+						final EqNode storeValue = mEqNodeAndFunctionFactory
+								.getOrConstructNode(storeTerm.getParameters()[2]);
 
 						// we have a weak equivalence ..
-						final EqConstraint<ACTION, EqNode> intermediateConstraint =
-								mEqConstraintFactory.addWeakEquivalence(simpleArray, otherSimpleArray, storeIndex,
-										emptyConstraint);
+						final EqConstraint<ACTION, EqNode> intermediateConstraint = mEqConstraintFactory
+								.addWeakEquivalence(simpleArray, otherSimpleArray, storeIndex, emptyConstraint);
 						// .. and an equality on the stored position
-//						final Term selectTerm = SmtUtils.multiDimensionalSelect(mMgdScript.getScript(),
-//								simpleArray.getTerm(), mds.getIndex());
+						// final Term selectTerm =
+						// SmtUtils.multiDimensionalSelect(mMgdScript.getScript(),
+						// simpleArray.getTerm(), mds.getIndex());
 						mMgdScript.lock(this);
 						final Term selectTerm = mMgdScript.term(this, "select", simpleArray.getTerm(),
 								storeTerm.getParameters()[1]);
@@ -343,13 +347,14 @@ public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTrans
 								intermediateConstraint);
 					}
 				} else {
-//					if (mds == null) {
+					// if (mds == null) {
 					if (storeTerm == null) {
-//						newConstraint = mEqConstraintFactory.addFunctionDisequalityFlat(simpleArray,
+						// newConstraint = mEqConstraintFactory.addFunctionDisequalityFlat(simpleArray,
 						newConstraint = mEqConstraintFactory.addDisequalityFlat(simpleArray, otherSimpleArray,
 								emptyConstraint);
 					} else {
-						// "true" is only marginally weaker than the negation of a -- i -- b /\ a[i] = x, right? (TODO)
+						// "true" is only marginally weaker than the negation of a -- i -- b /\ a[i] =
+						// x, right? (TODO)
 						newConstraint = emptyConstraint;
 					}
 				}
@@ -370,11 +375,9 @@ public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTrans
 
 				final EqConstraint<ACTION, EqNode> newConstraint;
 				if (polarity) {
-					newConstraint =
-							mEqConstraintFactory.addEqualityFlat(node1, node2, emptyConstraint);
+					newConstraint = mEqConstraintFactory.addEqualityFlat(node1, node2, emptyConstraint);
 				} else {
-					newConstraint =
-							mEqConstraintFactory.addDisequalityFlat(node1, node2, emptyConstraint);
+					newConstraint = mEqConstraintFactory.addDisequalityFlat(node1, node2, emptyConstraint);
 				}
 				mResultStack.push(mEqConstraintFactory.getDisjunctiveConstraint(Collections.singleton(newConstraint)));
 				return;
@@ -396,8 +399,8 @@ public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTrans
 
 		@Override
 		public void walk(final NonRecursive walker, final QuantifiedFormula term) {
-			throw new UnsupportedOperationException("quantifiers in Transformulas are currently not supported in the"
-					+ " equality domain");
+			throw new UnsupportedOperationException(
+					"quantifiers in Transformulas are currently not supported in the" + " equality domain");
 		}
 
 		@Override
@@ -451,21 +454,25 @@ public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTrans
 	}
 
 	/**
-	 * Transforms a given Term into an equivalent term where every atom contains at most one application of the store
-	 * function.
-	 * (Multidimensional store terms count as one application.)
+	 * Transforms a given Term into an equivalent term where every atom contains at
+	 * most one application of the store function. (Multidimensional store terms
+	 * count as one application.)
 	 *
-	 * Right now the result is not equivalent. However it is equivalent to the original when conjoined with the
-	 * equalities from getReplacementEquations, and the replacement variables are existentially quantified.
+	 * Right now the result is not equivalent. However it is equivalent to the
+	 * original when conjoined with the equalities from getReplacementEquations, and
+	 * the replacement variables are existentially quantified.
 	 *
 	 * removes the following from the formula
 	 * <ul>
-	 *  <li> store chains, i.e., every (store s i x) where s is another store term is eliminated
-	 *  <li> multidimensional stores, explicit or not, i.e., every (store s i x) where x is another store term is
-	 *  	eliminated
-	 *  <li> stores on both sides of an equality, for example the term (= (store a i x) (store b j y)) would be
-	 *     transformed such that it contains at most one store
-	 *  <li> stores inside selects, for example (select (store a i x) j) would be transformed
+	 * <li>store chains, i.e., every (store s i x) where s is another store term is
+	 * eliminated
+	 * <li>multidimensional stores, explicit or not, i.e., every (store s i x) where
+	 * x is another store term is eliminated
+	 * <li>stores on both sides of an equality, for example the term (= (store a i
+	 * x) (store b j y)) would be transformed such that it contains at most one
+	 * store
+	 * <li>stores inside selects, for example (select (store a i x) j) would be
+	 * transformed
 	 * </ul>
 	 *
 	 * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
@@ -477,7 +484,8 @@ public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTrans
 
 		private final List<Term> mReplacementEquations = new ArrayList<>();
 
-//		private final BidirectionalMap<TermVariable, Term> mReplacementTvToReplacedTerm = new BidirectionalMap<>();
+		// private final BidirectionalMap<TermVariable, Term>
+		// mReplacementTvToReplacedTerm = new BidirectionalMap<>();
 		private final Map<Term, TermVariable> mReplacedTermToReplacementTv = new BidirectionalMap<>();
 
 		public Collection<Term> getReplacementEquations() {
@@ -517,8 +525,9 @@ public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTrans
 		 *
 		 * If the same term has been replaced before, the same variable is returned.
 		 *
-		 * The map that is used to manage the replacement variables will also be used to return the of equations between
-		 * the replacement variables and their corresponding terms.
+		 * The map that is used to manage the replacement variables will also be used to
+		 * return the of equations between the replacement variables and their
+		 * corresponding terms.
 		 *
 		 * @param term
 		 * @return
@@ -607,34 +616,35 @@ public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTrans
 				final Term[] newArgs = transformer.getConvertedArray(oldArgs);
 				assert newArgs.length == 3;
 
-//				final Term innerStoreAtArrayPosition;
-//				final Term innerStoreAtValuePosition;
+				// final Term innerStoreAtArrayPosition;
+				// final Term innerStoreAtValuePosition;
 
 				final Term replacedArray;
 				if (SmtUtils.isFunctionApplication(newArgs[0], "store")) {
-					replacedArray =  getReplacementTv(newArgs[0]);
+					replacedArray = getReplacementTv(newArgs[0]);
 				} else {
 					replacedArray = newArgs[0];
 				}
 
 				final Term replacedValue;
 				if (SmtUtils.isFunctionApplication(newArgs[2], "store")) {
-					replacedValue =  getReplacementTv(newArgs[2]);
+					replacedValue = getReplacementTv(newArgs[2]);
 				} else {
 					replacedValue = newArgs[2];
 				}
 
 				setResult(mScript.term("store", replacedArray, newArgs[1], replacedValue));
 
-//				if (SmtUtils.isFunctionApplication(newArgs[0], "store")) {
-//					final Term innerStoreTerm = newArgs[0];
-//					final TermVariable replacmentTv = getReplacementTv(innerStoreTerm);
-//					setResult(mScript.term("store", replacmentTv, newArgs[1], newArgs[2]));
-//				} else {
-//					// the array argument of the store that we enqueued this walker for is a variable
-//					// --> we do no further transformation
-//					setResult(mScript.term("store", newArgs[0], newArgs[1], newArgs[2]));
-//				}
+				// if (SmtUtils.isFunctionApplication(newArgs[0], "store")) {
+				// final Term innerStoreTerm = newArgs[0];
+				// final TermVariable replacmentTv = getReplacementTv(innerStoreTerm);
+				// setResult(mScript.term("store", replacmentTv, newArgs[1], newArgs[2]));
+				// } else {
+				// // the array argument of the store that we enqueued this walker for is a
+				// variable
+				// // --> we do no further transformation
+				// setResult(mScript.term("store", newArgs[0], newArgs[1], newArgs[2]));
+				// }
 			}
 
 			@Override

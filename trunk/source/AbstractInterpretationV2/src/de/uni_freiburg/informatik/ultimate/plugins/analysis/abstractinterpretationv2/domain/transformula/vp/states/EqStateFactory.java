@@ -27,14 +27,19 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states;
 
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.IEqNodeIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNode;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNodeAndFunctionFactory;
@@ -101,6 +106,47 @@ public class EqStateFactory<ACTION extends IIcfgTransition<IcfgLocation>> {
 
 	public ManagedScript getManagedScript() {
 		return mMgdScript;
+	}
+
+	public EqPredicate<ACTION> stateToPredicate(final EqState<ACTION> state) {
+		return new EqPredicate<>(
+				getEqConstraintFactory().getDisjunctiveConstraint(Collections.singleton(state.getConstraint())),
+				state.getConstraint().getVariables(getSymbolTable()),
+				// mVariables.stream()
+				// .filter(pvoc -> (pvoc instanceof IProgramVar))
+				// .map(pvoc -> ((IProgramVar) pvoc))
+				// .collect(Collectors.toSet()),
+				null,
+				getSymbolTable(),
+				getManagedScript()); // TODO: what procedures does the predicate need?
+	}
+
+	public EqPredicate<ACTION> statesToPredicate(final List<EqState<ACTION>> states) {
+
+		final Set<IProgramVar> variables = new HashSet<>();
+		final Set<EqConstraint<ACTION, EqNode>>  constraints = new HashSet<>();
+		for (final EqState<ACTION> state : states) {
+			variables.addAll(state.getConstraint().getVariables(mSymbolTable));
+			constraints.add(state.getConstraint());
+		}
+
+		return new EqPredicate<>(
+				getEqConstraintFactory().getDisjunctiveConstraint(constraints),
+				variables,
+				// mVariables.stream()
+				// .filter(pvoc -> (pvoc instanceof IProgramVar))
+				// .map(pvoc -> ((IProgramVar) pvoc))
+				// .collect(Collectors.toSet()),
+				null,
+				getSymbolTable(),
+				getManagedScript()); // TODO: what procedures does the predicate need?
+	}
+
+	public EqPredicate<IIcfgTransition<IcfgLocation>> termToPredicate(final Term spPrecise,
+			final IPredicate postConstraint) {
+		return new EqPredicate<>(spPrecise, postConstraint.getVars(), postConstraint.getProcedures(), mSymbolTable,
+				mMgdScript);
+
 	}
 
 }

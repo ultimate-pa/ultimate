@@ -70,6 +70,21 @@ public class EqPredicate<ACTION extends IIcfgTransition<IcfgLocation>> implement
 		mFormula = tvp.getFormula();
 	}
 
+	public EqPredicate(final Term formula, final Set<IProgramVar> vars, final String[] procedures,
+			final IIcfgSymbolTable symbolTable, final ManagedScript mgdScript) {
+		mConstraint = null;
+		mVars = vars;
+		mProcedures = procedures;
+
+
+		final Term acc = formula;
+		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(acc, mgdScript.getScript(), symbolTable);
+		mClosedFormula = tvp.getClosedFormula();
+		mFormula = tvp.getFormula();
+
+	}
+
+
 	@Override
 	public String[] getProcedures() {
 		return mProcedures;
@@ -81,13 +96,18 @@ public class EqPredicate<ACTION extends IIcfgTransition<IcfgLocation>> implement
 	}
 
 	public EqDisjunctiveConstraint<ACTION, EqNode> getEqConstraint() {
+		assert mConstraint != null;
 		return mConstraint;
 	}
 
 
 	@Override
 	public String toString() {
-		return mConstraint.toString();
+		if (mConstraint != null) {
+			return mConstraint.toString();
+		} else {
+			return mFormula.toString();
+		}
 	}
 
 	@Override

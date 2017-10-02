@@ -234,17 +234,10 @@ public class EqState<ACTION extends IIcfgTransition<IcfgLocation>>
 	}
 
 	public EqPredicate<ACTION> toEqPredicate() {
-		return new EqPredicate<>(
-				mFactory.getEqConstraintFactory().getDisjunctiveConstraint(Collections.singleton(mConstraint)),
-				mConstraint.getVariables(mFactory.getSymbolTable()),
-				// mVariables.stream()
-				// .filter(pvoc -> (pvoc instanceof IProgramVar))
-				// .map(pvoc -> ((IProgramVar) pvoc))
-				// .collect(Collectors.toSet()),
-				null,
-				mFactory.getSymbolTable(),
-				mFactory.getManagedScript()); // TODO: what procedures does the predicate need?
+		return mFactory.stateToPredicate(this);
 	}
+
+
 
 	public boolean areUnequal(final EqNode node1, final EqNode node2) {
 		return mConstraint.areUnequal(node1, node2);

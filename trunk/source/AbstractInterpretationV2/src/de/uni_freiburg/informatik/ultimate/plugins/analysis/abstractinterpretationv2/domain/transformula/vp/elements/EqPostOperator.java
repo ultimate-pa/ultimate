@@ -43,6 +43,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.MonolithicImplicationChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateTransformer;
@@ -77,6 +79,7 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 	 * used for sanity/soundness checks only
 	 */
 	private final PredicateTransformer<Term, IPredicate, TransFormula> mDoubleCheckPredicateTransformer;
+	private final MonolithicImplicationChecker mDoubleCheckImplicationChecker;
 
 	private final TransFormulaConverterCache<ACTION> mTransFormulaConverter;
 	private final CfgSmtToolkit mCfgSmtToolkit;
@@ -89,7 +92,6 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 
-//	public EqPostOperator(final ILogger logger, final EqNodeAndFunctionFactory eqNodeAndFunctionFactory,
 	public EqPostOperator(final IUltimateServiceProvider services, final ILogger logger,
 			final EqNodeAndFunctionFactory eqNodeAndFunctionFactory,
 			final EqConstraintFactory<ACTION, EqNode> eqConstraintFactory, final VPDomainPreanalysis preAnalysis) {
@@ -108,6 +110,7 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 
 		mDoubleCheckPredicateTransformer = new PredicateTransformer<>(mMgdScript,
 				new TermDomainOperationProvider(mServices, mMgdScript));
+		mDoubleCheckImplicationChecker = new MonolithicImplicationChecker(mServices, mMgdScript);
 	}
 
 	@Override
@@ -125,17 +128,26 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 		assert result.stream().allMatch(state -> state.getVariables().containsAll(oldState.getVariables()));
 		if (mDebug) {
 			mLogger.debug(postConstraint.getDebugInfo());
-			assert preciseStrongestPostImpliesAbstractPost(oldState, transition, result);
+			if (!preciseStrongestPostImpliesAbstractPost(oldState, transition,
+					mEqConstraintFactory.getEqStateFactory().statesToPredicate(result))) {
+				assert false;
+				mLogger.warn("soundness check failed!");
+			}
 		}
 		return result;
 	}
 
 	private boolean preciseStrongestPostImpliesAbstractPost(final EqState<ACTION> oldState, final ACTION transition,
-			final List<EqState<ACTION>> result) {
+			final IPredicate postConstraint) {
+
 		final Term spPrecise = mDoubleCheckPredicateTransformer.strongestPostcondition(oldState.toEqPredicate(),
 				transition.getTransformula());
-		// TODO
-		return true;
+		final EqPredicate<IIcfgTransition<IcfgLocation>> spPred =
+				mEqConstraintFactory.getEqStateFactory().termToPredicate(spPrecise, postConstraint);
+
+		final Validity icRes = mDoubleCheckImplicationChecker.checkImplication(spPred, false, postConstraint, false);
+		assert icRes != Validity.INVALID;
+		return icRes != Validity.INVALID;
 	}
 
 	@Override
