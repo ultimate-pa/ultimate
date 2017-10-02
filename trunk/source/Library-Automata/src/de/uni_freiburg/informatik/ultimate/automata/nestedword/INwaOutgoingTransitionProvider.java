@@ -26,11 +26,15 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.visualization.NwaToUltimateModel;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 
 /**
  * Interface for a Nested Word Automaton that is defined by its outgoing 
@@ -73,4 +77,10 @@ public interface INwaOutgoingTransitionProvider<LETTER, STATE> extends IAutomato
 	 * @return outgoing return transitions
 	 */
 	Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(final STATE state, final STATE hier);
+	
+	@Override
+	default IElement transformToUltimateModel(final AutomataLibraryServices services)
+			throws AutomataOperationCanceledException {
+		return new NwaToUltimateModel<LETTER, STATE>(services).transformToUltimateModel(this);
+	}
 }
