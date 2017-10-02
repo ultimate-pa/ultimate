@@ -79,10 +79,13 @@ public final class RuleContext<LETTER extends IRankedLetter, STATE> {
 		for (int i = 0; i < source.size(); i++) {
 			final STATE sourceToAdd = sourceIterator.next();
 
-			LinkedHashSet<STATE> statesAtPosition = this.mSources.get(i);
-			if (statesAtPosition == null) {
+			LinkedHashSet<STATE> statesAtPosition;
+			if (i >= this.mSources.size()) {
+				// There is currently no element at that position registered
 				statesAtPosition = new LinkedHashSet<>();
-				this.mSources.set(i, statesAtPosition);
+				this.mSources.add(statesAtPosition);
+			} else {
+				statesAtPosition = this.mSources.get(i);
 			}
 
 			statesAtPosition.add(sourceToAdd);
@@ -174,5 +177,25 @@ public final class RuleContext<LETTER extends IRankedLetter, STATE> {
 		}
 
 		return this.mSources.get(position);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+		final StringBuilder builder = new StringBuilder();
+		builder.append("RuleContext [destinationRepresentative=");
+		builder.append(this.mDestinationRepresentative);
+		builder.append(", letter=");
+		builder.append(this.mLetter);
+		builder.append(", sourceRepresentatives=");
+		builder.append(this.mSourceRepresentatives);
+		builder.append(", sources=");
+		builder.append(this.mSources);
+		builder.append("]");
+		return builder.toString();
 	}
 }

@@ -65,7 +65,7 @@ public class SymmetricHashRelation<E> extends HashRelation<E, E> {
 	public boolean removePair(final E domainElem, final E rangeElem) {
 		// Remove pair in both directions as it is considered to be symmetric
 		boolean containedPairFirstDirection = super.removePair(domainElem, rangeElem);
-		boolean containedPairSecondDirection = super.removePair(domainElem, rangeElem);
+		boolean containedPairSecondDirection = super.removePair(rangeElem, domainElem);
 
 		// A valid symmetric relation always needs to hold both directions if any
 		assert containedPairFirstDirection == containedPairSecondDirection;
