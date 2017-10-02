@@ -153,7 +153,7 @@ public class ArrayInterpolator {
 			assert mLemmaInfo.getLemmaType().equals(":weakeq-ext");
 			interpolants = computeWeakeqExtInterpolants(proofTerm);
 		}
-		FormulaUnLet unletter = new FormulaUnLet();
+		final FormulaUnLet unletter = new FormulaUnLet();
 		for (int i = 0; i < mNumInterpolants; i++) {
 			interpolants[i] = unletter.unlet(interpolants[i]);
 		}
@@ -703,14 +703,21 @@ public class ArrayInterpolator {
 					final Term storeIndex = getIndexFromStore(storeTerm);
 					final ApplicationTerm indexDiseq =
 							mDisequalities.get(new SymmetricPair<Term>(storeIndex, mPathIndex));
-					final Occurrence indexDiseqOcc = mInterpolator.getLiteralInfo(indexDiseq);
-					final Occurrence intersectOcc = stepOcc.intersect(indexDiseqOcc);
+					if (indexDiseq != null) {
+						final Occurrence indexDiseqOcc = mInterpolator.getLiteralInfo(indexDiseq);
+						final Occurrence intersectOcc = stepOcc.intersect(indexDiseqOcc);
 
-					mTail.closeAPath(mHead, boundaryTerm, stepOcc);
-					mTail.closeAPath(mHead, boundaryTerm, intersectOcc);
-					mTail.openAPath(mHead, boundaryTerm, intersectOcc);
-					mTail.openAPath(mHead, boundaryTerm, stepOcc);
-					mTail.addIndexDisequality(mHead, storeTerm);
+						mTail.closeAPath(mHead, boundaryTerm, stepOcc);
+						mTail.closeAPath(mHead, boundaryTerm, intersectOcc);
+						mTail.openAPath(mHead, boundaryTerm, intersectOcc);
+						mTail.openAPath(mHead, boundaryTerm, stepOcc);
+						mTail.addIndexDisequality(mHead, storeTerm);
+					} else {
+						// Otherwise indexDiseq is a trivial disequality like x = x + 1.
+						// Treat it as a shared disequality.
+						mTail.closeAPath(mHead, boundaryTerm, stepOcc);
+						mTail.openAPath(mHead, boundaryTerm, stepOcc);
+					}
 				} else { // In equality steps, we just close or open A paths.
 					final LitInfo stepInfo = mInterpolator.getLiteralInfo(lit);
 					mTail.closeAPath(mHead, boundaryTerm, stepInfo);
