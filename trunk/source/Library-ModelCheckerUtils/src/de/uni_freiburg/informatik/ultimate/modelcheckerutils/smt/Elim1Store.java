@@ -144,6 +144,7 @@ public class Elim1Store {
 	}
 
 	public EliminationTask elim1(final int quantifier, final TermVariable eliminatee, final Term inputTerm) {
+		assert UltimateNormalFormUtils.respectsUltimateNormalForm(inputTerm) : "invalid input";
 		final Term[] xjunctsOuter = QuantifierUtils.getXjunctsOuter(quantifier, inputTerm);
 		if (xjunctsOuter.length > 1) {
 			throw new AssertionError("several disjuncts! " + inputTerm);
@@ -238,8 +239,12 @@ public class Elim1Store {
 			allIndexRepresentatives.add(storeIndexRepresentative);
 		}
 
-
-
+		final Set<Term> allIndices = new HashSet<>(selectIndices);
+		if (storeIndex != null) {
+			allIndices.add(storeIndex);
+		}
+		final ThreeValuedEquivalenceRelation<Term> fun = analysisResult.getFirst().projectTo(allIndices);
+		final Term funTerm = equivalencesToTerm(mScript, fun, quantifier);
 
 
 		final AuxVarConstructor auxVarConstructor = new AuxVarConstructor();
@@ -254,7 +259,7 @@ public class Elim1Store {
 		final Term indexDefinitionsTerm =
 				QuantifierUtils.applyDualFiniteConnective(mScript, quantifier, indexMappingDefinitions);
 		final Term intermediateTerm = QuantifierUtils.applyDualFiniteConnective(mScript, quantifier,
-				indexDefinitionsTerm, preprocessedInput, equalitiesDetectedBySolver);
+				indexDefinitionsTerm, preprocessedInput, equalitiesDetectedBySolver, funTerm);
 
 		final Term newArray;
 		{
@@ -387,6 +392,22 @@ public class Elim1Store {
 						+ " Result:" + resultEt;
 		return resultEt;
 
+	}
+	
+	
+	private Term equivalencesToTerm(final Script script, final ThreeValuedEquivalenceRelation<Term> tver, final int quantifier) {
+
+		final List<Term> elementEqualities = tver.getSupportingEqualities().entrySet().stream()
+				.map(en -> QuantifierUtils.applyDerOperator(script, quantifier, en.getKey(), en.getValue()))
+				.collect(Collectors.toList());
+		final List<Term> elementDisequalities = tver.getDisequalities().entrySet().stream()
+				.map(pair -> QuantifierUtils.applyAntiDerOperator(script, quantifier, pair.getKey(), pair.getValue()))
+				.collect(Collectors.toList());
+
+		final List<Term> result = new ArrayList<>(elementEqualities.size() + elementDisequalities.size());
+		result.addAll(elementEqualities);
+		result.addAll(elementDisequalities);
+		return QuantifierUtils.applyDualFiniteConnective(script, quantifier, result);
 	}
 
 	/**
@@ -532,7 +553,7 @@ public class Elim1Store {
 				assert storeValue != null;
 				allValues.add(storeValue);
 			}
-//			cheapAndSimpleIndexValueAnalysis(allIndicesList, selectIndex2value, allValues, value2selectIndex, tver);
+			cheapAndSimpleIndexValueAnalysis(allIndicesList, selectIndex2value, allValues, value2selectIndex, tver);
 			
 			
 			for (int i = 0; i < allIndicesList.size(); i++) {
