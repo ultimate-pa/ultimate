@@ -755,8 +755,8 @@ public class FunctionHandler {
 				CType expectedParamType =
 						mProcedureToCFunctionType.get(methodName).getParameterTypes()[i].getType().getUnderlyingType();
 				// bool/int conversion
-				if ((expectedParamType instanceof CPrimitive
-						&& ((CPrimitive) expectedParamType).getGeneralType() == CPrimitiveCategory.INTTYPE)
+				if (expectedParamType instanceof CPrimitive
+						&& ((CPrimitive) expectedParamType).getGeneralType() == CPrimitiveCategory.INTTYPE
 						|| expectedParamType instanceof CEnum) {
 					in.rexBoolToIntIfNecessary(loc, mExpressionTranslation);
 				}
@@ -1183,7 +1183,8 @@ public class FunctionHandler {
 			final FloatFunction floatFunction = FloatFunction.decode(methodName);
 			if (floatFunction != null) {
 				if (!FloatSupportInUltimate.getSupportedFloatOperations().contains(methodName)) {
-					throw new AssertionError("inconsistent information about supported float operations");
+					throw new AssertionError(
+							"inconsistent information about supported float operations: " + methodName);
 				}
 				assert arguments.length == 1;
 				final ExpressionResult arg = ((ExpressionResult) main.dispatch(arguments[0]))
