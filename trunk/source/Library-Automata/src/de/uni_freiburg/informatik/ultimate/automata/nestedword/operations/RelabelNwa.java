@@ -32,7 +32,6 @@ import java.util.Set;
 import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.automata.SetOfStates;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
@@ -53,22 +52,23 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Transfor
  *            Type of objects which can be used as states.
  */
 public class RelabelNwa<LETTER, STATE> implements INwaOutgoingTransitionProvider<LETTER, STATE> {
-	
+
 	private final IRelabelStateFactory<STATE> mStateFactory;
-	private final INestedWordAutomaton<LETTER, STATE> mInput;
+	private final INwaOutgoingTransitionProvider<LETTER, STATE> mOperand;
 	private final ConstructionCache<STATE, STATE> mNewStateCache;
 	private final Map<STATE, STATE> mNewState2OldState;
-	
+
 	private final SetOfStates<STATE> mSetOfStates;
-	
+
 	private final Function<OutgoingInternalTransition<LETTER, STATE>, OutgoingInternalTransition<LETTER, STATE>> mInternalTransitionTransformer;
 	private final Function<OutgoingCallTransition<LETTER, STATE>, OutgoingCallTransition<LETTER, STATE>> mCallTransitionTransformer;
 	private final Function<OutgoingReturnTransition<LETTER, STATE>, OutgoingReturnTransition<LETTER, STATE>> mReturnTransitionTransformer;
 
-	public RelabelNwa(final IRelabelStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> input) {
+	public RelabelNwa(final IRelabelStateFactory<STATE> stateFactory,
+			final INwaOutgoingTransitionProvider<LETTER, STATE> operand) {
 		super();
 		mStateFactory = stateFactory;
-		mInput = input;
+		mOperand = operand;
 		mNewState2OldState = new HashMap<>();
 		final IValueConstruction<STATE, STATE> valueConstruction = new IValueConstruction<STATE, STATE>() {
 			int mStateCounter = 0;
@@ -81,12 +81,16 @@ public class RelabelNwa<LETTER, STATE> implements INwaOutgoingTransitionProvider
 				if (oldValue != null) {
 					throw new AssertionError("double state " + oldValue);
 				}
+				final boolean isInitial = mOperand.isInitial(oldState);
+				final boolean isAccepting = mOperand.isFinal(oldState);
+				
+				mSetOfStates.addState(isInitial, isAccepting, newState);
 				return newState;
 			}
-			
+
 		};
 		mNewStateCache = new ConstructionCache<>(valueConstruction);
-		
+
 		mInternalTransitionTransformer = (x -> new OutgoingInternalTransition<LETTER, STATE>(x.getLetter(),
 				mNewStateCache.getOrConstruct(x.getSucc())));
 		mCallTransitionTransformer = (x -> new OutgoingCallTransition<LETTER, STATE>(x.getLetter(),
@@ -94,21 +98,18 @@ public class RelabelNwa<LETTER, STATE> implements INwaOutgoingTransitionProvider
 		mReturnTransitionTransformer = (x -> new OutgoingReturnTransition<LETTER, STATE>(
 				mNewStateCache.getOrConstruct(x.getHierPred()), x.getLetter(),
 				mNewStateCache.getOrConstruct(x.getSucc())));
-		
+
 		final STATE newEmptyStackState = stateFactory.createEmptyStackState();
 		mSetOfStates = new SetOfStates<STATE>(newEmptyStackState);
-		for (final STATE oldInitialState : mInput.getInitialStates()) {
-			final STATE newInitialState = mNewStateCache.getOrConstruct(oldInitialState);
-			final boolean isAccepting = mInput.isFinal(oldInitialState);
-			mSetOfStates.addState(true, isAccepting, newInitialState);
+		for (final STATE oldInitialState : mOperand.getInitialStates()) {
+			mNewStateCache.getOrConstruct(oldInitialState);
 		}
-		
-		
+
 	}
 
 	@Override
 	public Set<LETTER> getAlphabet() {
-		return mInput.getAlphabet();
+		return mOperand.getAlphabet();
 	}
 
 	@Override
@@ -118,17 +119,17 @@ public class RelabelNwa<LETTER, STATE> implements INwaOutgoingTransitionProvider
 
 	@Override
 	public int size() {
-		return mInput.size();
+		return mOperand.size();
 	}
 
 	@Override
 	public String sizeInformation() {
-		return mInput.sizeInformation();
+		return mOperand.sizeInformation();
 	}
 
 	@Override
 	public VpAlphabet<LETTER> getVpAlphabet() {
-		return mInput.getVpAlphabet();
+		return mOperand.getVpAlphabet();
 	}
 
 	@Override
@@ -153,22 +154,25 @@ public class RelabelNwa<LETTER, STATE> implements INwaOutgoingTransitionProvider
 
 	@Override
 	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(final STATE state) {
+		final STATE oldState = mNewState2OldState.get(state);
 		return () -> new TransformIterator<OutgoingInternalTransition<LETTER, STATE>, OutgoingInternalTransition<LETTER, STATE>>(
-				mInput.internalSuccessors(state).iterator(), mInternalTransitionTransformer);
+				mOperand.internalSuccessors(oldState).iterator(), mInternalTransitionTransformer);
 	}
 
 	@Override
 	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(final STATE state) {
+		final STATE oldState = mNewState2OldState.get(state);
 		return () -> new TransformIterator<OutgoingCallTransition<LETTER, STATE>, OutgoingCallTransition<LETTER, STATE>>(
-				mInput.callSuccessors(state).iterator(), mCallTransitionTransformer);
+				mOperand.callSuccessors(oldState).iterator(), mCallTransitionTransformer);
 	}
 
 	@Override
-	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(final STATE state, final STATE hier) {
+	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(final STATE state,
+			final STATE hier) {
+		final STATE oldState = mNewState2OldState.get(state);
+		final STATE oldHier = mNewState2OldState.get(hier);
 		return () -> new TransformIterator<OutgoingReturnTransition<LETTER, STATE>, OutgoingReturnTransition<LETTER, STATE>>(
-				mInput.returnSuccessors(state).iterator(), mReturnTransitionTransformer);
+				mOperand.returnSuccessorsGivenHier(oldState, oldHier).iterator(), mReturnTransitionTransformer);
 	}
-	
-
 
 }
