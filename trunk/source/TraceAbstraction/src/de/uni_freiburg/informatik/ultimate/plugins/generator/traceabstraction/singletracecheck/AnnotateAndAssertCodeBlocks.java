@@ -35,7 +35,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheck.TraceCheckerLock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheck.TraceCheckLock;
 
 /**
  * Annotate formulas of SSA (e.g., with ssa_{42}) and assert them.
@@ -67,7 +67,7 @@ public class AnnotateAndAssertCodeBlocks {
 	protected static final String LOCVARASSIGN_PENDINGCONTEXT = "_LocVarAssignPendingContext";
 	protected static final String OLDVARASSIGN_PENDINGCONTEXT = "_OldVarAssignPendingContext";
 
-	public AnnotateAndAssertCodeBlocks(final ManagedScript csToolkit, final TraceCheckerLock scriptLockOwner,
+	public AnnotateAndAssertCodeBlocks(final ManagedScript csToolkit, final TraceCheckLock scriptLockOwner,
 			final NestedFormulas<Term, Term> nestedSSA, final ILogger logger) {
 		mLogger = logger;
 		mMgdScript = csToolkit;

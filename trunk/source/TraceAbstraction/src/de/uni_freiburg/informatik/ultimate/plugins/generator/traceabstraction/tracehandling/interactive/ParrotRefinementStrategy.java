@@ -153,9 +153,9 @@ public abstract class ParrotRefinementStrategy<LETTER extends IIcfgTransition<?>
 	}
 
 	@Override
-	public boolean hasNextTraceChecker() {
+	public boolean hasNextTraceCheck() {
 		if (mFallback != null) {
-			if (mFallback.hasNextTraceChecker()) {
+			if (mFallback.hasNextTraceCheck()) {
 				return true;
 			}
 			// Fallback has failed before user interaction.
@@ -165,24 +165,24 @@ public abstract class ParrotRefinementStrategy<LETTER extends IIcfgTransition<?>
 							+ " has failed prematurely in iteration " + mTaskIdentifier + " - asking the user");
 			mFallback = null;
 		}
-		return super.hasNextTraceChecker();
+		return super.hasNextTraceCheck();
 	}
 
 	@Override
-	public void nextTraceChecker() {
+	public void nextTraceCheck() {
 		if (mFallback != null) {
 			if (!mInitialized) {
 				return;
 			}
-			mFallback.nextTraceChecker();
+			mFallback.nextTraceCheck();
 		} else {
-			super.nextTraceChecker();
+			super.nextTraceCheck();
 		}
 	}
 
 	@Override
-	public TraceCheck getTraceChecker() {
-		return mFallback != null ? mFallback.getTraceChecker() : super.getTraceChecker();
+	public TraceCheck getTraceCheck() {
+		return mFallback != null ? mFallback.getTraceCheck() : super.getTraceCheck();
 	}
 
 	@Override

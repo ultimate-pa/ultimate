@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvid
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsGeneratorWithStopwatches;
 
-public class TraceCheckerStatisticsGenerator extends StatisticsGeneratorWithStopwatches
+public class TraceCheckStatisticsGenerator extends StatisticsGeneratorWithStopwatches
 		implements IStatisticsDataProvider {
 
 	public enum InterpolantType {
@@ -60,7 +60,7 @@ public class TraceCheckerStatisticsGenerator extends StatisticsGeneratorWithStop
 
 	@Override
 	public IStatisticsType getBenchmarkType() {
-		return TraceCheckerStatisticsType.getInstance();
+		return TraceCheckStatisticsType.getInstance();
 	}
 
 	/**
@@ -104,7 +104,7 @@ public class TraceCheckerStatisticsGenerator extends StatisticsGeneratorWithStop
 		}
 	}
 
-	private long computeLongSumOfIntArray(final long[] arr) {
+	private static long computeLongSumOfIntArray(final long[] arr) {
 		long sum = 0;
 		for (int i = 0; i < arr.length; i++) {
 			sum += arr[i];
@@ -131,7 +131,7 @@ public class TraceCheckerStatisticsGenerator extends StatisticsGeneratorWithStop
 
 	@Override
 	public Object getValue(final String key) {
-		final TraceCheckerStatisticsDefinitions keyEnum = Enum.valueOf(TraceCheckerStatisticsDefinitions.class, key);
+		final TraceCheckStatisticsDefinitions keyEnum = Enum.valueOf(TraceCheckStatisticsDefinitions.class, key);
 		switch (keyEnum) {
 		case SsaConstructionTime:
 		case SatisfiabilityAnalysisTime:
@@ -172,14 +172,14 @@ public class TraceCheckerStatisticsGenerator extends StatisticsGeneratorWithStop
 
 	@Override
 	public String[] getStopwatches() {
-		return new String[] { TraceCheckerStatisticsDefinitions.SsaConstructionTime.toString(),
-				TraceCheckerStatisticsDefinitions.SatisfiabilityAnalysisTime.toString(),
-				TraceCheckerStatisticsDefinitions.InterpolantComputationTime.toString() };
+		return new String[] { TraceCheckStatisticsDefinitions.SsaConstructionTime.toString(),
+				TraceCheckStatisticsDefinitions.SatisfiabilityAnalysisTime.toString(),
+				TraceCheckStatisticsDefinitions.InterpolantComputationTime.toString() };
 	}
 
 	@Override
 	public Collection<String> getKeys() {
-		return TraceCheckerStatisticsType.getInstance().getKeys();
+		return TraceCheckStatisticsType.getInstance().getKeys();
 	}
 
 }

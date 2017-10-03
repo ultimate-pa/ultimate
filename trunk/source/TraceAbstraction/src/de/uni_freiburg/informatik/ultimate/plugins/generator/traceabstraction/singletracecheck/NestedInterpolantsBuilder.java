@@ -70,7 +70,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Ab
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheck.TraceCheckerLock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheck.TraceCheckLock;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 
 public class NestedInterpolantsBuilder {
@@ -81,7 +81,7 @@ public class NestedInterpolantsBuilder {
 	private final XnfConversionTechnique mXnfConversionTechnique;
 
 	private final ManagedScript mMgdScriptTc;
-	private final TraceCheckerLock mScriptLockOwner;
+	private final TraceCheckLock mScriptLockOwner;
 	private final ManagedScript mMgdScriptCfg;
 
 	Term[] mCraigInterpolants;
@@ -120,11 +120,11 @@ public class NestedInterpolantsBuilder {
 
 	private final boolean mInstantiateArrayExt;
 
-	public NestedInterpolantsBuilder(final ManagedScript mgdScriptTc, final TraceCheckerLock scriptLockOwner,
+	public NestedInterpolantsBuilder(final ManagedScript mgdScriptTc, final TraceCheckLock scriptLockOwner,
 			final NestedFormulas<Term, Term> annotatdSsa, final Map<Term, IProgramVar> mconstants2BoogieVar,
 			final IPredicateUnifier predicateBuilder, final PredicateFactory predicateFactory,
 			final Set<Integer> interpolatedPositions, final boolean treeInterpolation,
-			final IUltimateServiceProvider services, final TraceCheck traceChecker, final ManagedScript mgdScriptCfg,
+			final IUltimateServiceProvider services, final TraceCheck traceCheck, final ManagedScript mgdScriptCfg,
 			final boolean instantiateArrayExt, final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique) {
 		mServices = services;
@@ -153,7 +153,7 @@ public class NestedInterpolantsBuilder {
 		}
 
 		computeCraigInterpolants();
-		traceChecker.cleanupAndUnlockSolver();
+		traceCheck.cleanupAndUnlockSolver();
 		for (int i = 0; i < mCraigInterpolants.length; i++) {
 			mLogger.debug(new DebugMessage("NestedInterpolant {0}: {1}", i, mCraigInterpolants[i]));
 		}

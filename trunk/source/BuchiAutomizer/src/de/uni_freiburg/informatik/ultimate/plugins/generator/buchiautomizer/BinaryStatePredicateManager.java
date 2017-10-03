@@ -508,20 +508,20 @@ public class BinaryStatePredicateManager {
 	public boolean checkSupportingInvariant(IPredicate siPredicate, final NestedWord<? extends IIcfgTransition<?>> stem,
 			final NestedWord<? extends IAction> loop, final ModifiableGlobalsTable modifiableGlobalsTable) {
 		boolean result = true;
-		TraceCheck traceChecker;
+		TraceCheck traceCheck;
 		final IPredicate truePredicate = mPredicateFactory.newPredicate(mManagedScript.getScript().term("true"));
 		if (isTrue(siPredicate)) {
 			siPredicate = truePredicate;
 		}
-		traceChecker = new TraceCheck(truePredicate, siPredicate, new TreeMap<Integer, IPredicate>(), stem,
+		traceCheck = new TraceCheck(truePredicate, siPredicate, new TreeMap<Integer, IPredicate>(), stem,
 				mCsToolkit, AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, false);
-		final LBool stemCheck = traceChecker.isCorrect();
+		final LBool stemCheck = traceCheck.isCorrect();
 		if (stemCheck != LBool.UNSAT) {
 			result = false;
 		}
-		traceChecker = new TraceCheck(siPredicate, siPredicate, new TreeMap<Integer, IPredicate>(), stem, mCsToolkit,
+		traceCheck = new TraceCheck(siPredicate, siPredicate, new TreeMap<Integer, IPredicate>(), stem, mCsToolkit,
 				AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, false);
-		final LBool loopCheck = traceChecker.isCorrect();
+		final LBool loopCheck = traceCheck.isCorrect();
 		if (loopCheck != LBool.UNSAT) {
 			result = false;
 		}
@@ -530,10 +530,10 @@ public class BinaryStatePredicateManager {
 
 	public boolean checkRankDecrease(final NestedWord<? extends IIcfgTransition<?>> loop,
 			final ModifiableGlobalsTable modifiableGlobalsTable) {
-		final TraceCheck traceChecker =
+		final TraceCheck traceCheck =
 				new TraceCheck(mRankEqualityAndSi, mRankDecreaseAndBound, new TreeMap<Integer, IPredicate>(), loop,
 						mCsToolkit, AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, false);
-		final LBool loopCheck = traceChecker.isCorrect();
+		final LBool loopCheck = traceCheck.isCorrect();
 		return loopCheck == LBool.UNSAT;
 	}
 

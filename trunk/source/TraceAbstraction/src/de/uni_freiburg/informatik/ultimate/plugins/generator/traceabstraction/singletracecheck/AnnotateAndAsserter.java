@@ -58,10 +58,10 @@ public class AnnotateAndAsserter {
 
 	protected final AnnotateAndAssertCodeBlocks mAnnotateAndAssertCodeBlocks;
 
-	protected final TraceCheckerStatisticsGenerator mTcbg;
+	protected final TraceCheckStatisticsGenerator mTcbg;
 
 	public AnnotateAndAsserter(final ManagedScript mgdScriptTc, final NestedFormulas<Term, Term> nestedSSA,
-			final AnnotateAndAssertCodeBlocks aaacb, final TraceCheckerStatisticsGenerator tcbg,
+			final AnnotateAndAssertCodeBlocks aaacb, final TraceCheckStatisticsGenerator tcbg,
 			final IUltimateServiceProvider services) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);

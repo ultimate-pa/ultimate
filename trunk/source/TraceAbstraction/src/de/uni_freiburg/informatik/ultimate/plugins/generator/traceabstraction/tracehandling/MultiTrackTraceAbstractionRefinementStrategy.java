@@ -129,14 +129,14 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy<LETTER extend
 
 	private final Iterator<Track> mInterpolationTechniques;
 
-	private TraceCheckerConstructor<LETTER> mTcConstructor;
-	private TraceCheckerConstructor<LETTER> mPrevTcConstructor;
+	private TraceCheckConstructor<LETTER> mTcConstructor;
+	private TraceCheckConstructor<LETTER> mPrevTcConstructor;
 	private Track mNextTechnique;
 
 	// store if the trace has already been shown to be infeasible in a previous attempt
 	private boolean mHasShownInfeasibilityBefore;
 
-	private TraceCheck mTraceChecker;
+	private TraceCheck mTraceCheck;
 	private IInterpolantGenerator mInterpolantGenerator;
 	private IInterpolantAutomatonBuilder<LETTER, IPredicate> mInterpolantAutomatonBuilder;
 	protected final TaskIdentifier mTaskIdentifier;
@@ -184,23 +184,23 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy<LETTER extend
 		mRefinementEngineStatisticsGenerator = new RefinementEngineStatisticsGenerator();
 
 		mInterpolationTechniques = initializeInterpolationTechniquesList();
-		nextTraceChecker();
+		nextTraceCheck();
 	}
 
 	@Override
-	public boolean hasNextTraceChecker() {
+	public boolean hasNextTraceCheck() {
 		return mInterpolationTechniques.hasNext();
 	}
 
 	@Override
-	public void nextTraceChecker() {
+	public void nextTraceCheck() {
 		if (mNextTechnique != null) {
 			throw new UnsupportedOperationException("Try the existing combination before advancing.");
 		}
 		mNextTechnique = mInterpolationTechniques.next();
 
 		// reset trace checker, interpolant generator, and constructor
-		mTraceChecker = null;
+		mTraceCheck = null;
 		mInterpolantGenerator = null;
 		mPrevTcConstructor = mTcConstructor;
 		mTcConstructor = null;
@@ -209,15 +209,15 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy<LETTER extend
 	}
 
 	@Override
-	public TraceCheck getTraceChecker() {
-		if (mTraceChecker == null) {
+	public TraceCheck getTraceCheck() {
+		if (mTraceCheck == null) {
 			if (mTcConstructor == null) {
-				mTcConstructor = constructTraceCheckerConstructor();
+				mTcConstructor = constructTraceCheckConstructor();
 			}
-			mTraceChecker = mTcConstructor.get();
-			mRefinementEngineStatisticsGenerator.addTraceCheckerStatistics(mTraceChecker);
+			mTraceCheck = mTcConstructor.get();
+			mRefinementEngineStatisticsGenerator.addTraceCheckStatistics(mTraceCheck);
 		}
-		return mTraceChecker;
+		return mTraceCheck;
 	}
 
 	@Override
@@ -248,7 +248,7 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy<LETTER extend
 
 	@Override
 	public void nextInterpolantGenerator() {
-		nextTraceChecker();
+		nextTraceCheck();
 	}
 
 	@Override
@@ -256,7 +256,7 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy<LETTER extend
 		mHasShownInfeasibilityBefore = true;
 		if (mInterpolantGenerator == null) {
 			mInterpolantGenerator = RefinementStrategyUtils.constructInterpolantGenerator(mServices, mLogger, mPrefs,
-					mTaPrefsForInterpolantConsolidation, getTraceChecker(), mPredicateFactory, mPredicateUnifier,
+					mTaPrefsForInterpolantConsolidation, getTraceCheck(), mPredicateFactory, mPredicateUnifier,
 					mCounterexample, mRefinementEngineStatisticsGenerator);
 		}
 		return mInterpolantGenerator;
@@ -280,7 +280,7 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy<LETTER extend
 	 */
 	protected abstract Iterator<Track> initializeInterpolationTechniquesList();
 
-	private TraceCheckerConstructor<LETTER> constructTraceCheckerConstructor() {
+	private TraceCheckConstructor<LETTER> constructTraceCheckConstructor() {
 		final InterpolationTechnique interpolationTechnique = getInterpolationTechnique(mNextTechnique);
 
 		final boolean useTimeout = mHasShownInfeasibilityBefore;
@@ -291,12 +291,12 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy<LETTER extend
 
 		mNextTechnique = null;
 
-		TraceCheckerConstructor<LETTER> result;
+		TraceCheckConstructor<LETTER> result;
 		if (mPrevTcConstructor == null) {
-			result = new TraceCheckerConstructor<>(mPrefs, managedScript, mServices, mPredicateFactory,
-					mPredicateUnifier, mCounterexample, assertionOrder, interpolationTechnique, mTaskIdentifier);
+			result = new TraceCheckConstructor<>(mPrefs, managedScript, mServices, mPredicateFactory, mPredicateUnifier,
+					mCounterexample, assertionOrder, interpolationTechnique, mTaskIdentifier);
 		} else {
-			result = new TraceCheckerConstructor<>(mPrevTcConstructor, managedScript, assertionOrder,
+			result = new TraceCheckConstructor<>(mPrevTcConstructor, managedScript, assertionOrder,
 					interpolationTechnique);
 		}
 		return result;
@@ -414,7 +414,5 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy<LETTER extend
 	public RefinementEngineStatisticsGenerator getRefinementEngineStatistics() {
 		return mRefinementEngineStatisticsGenerator;
 	}
-	
-	
-	
+
 }

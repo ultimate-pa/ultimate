@@ -62,13 +62,13 @@ public class RefinementStrategyUtils {
 	public static <LETTER extends IIcfgTransition<?>> IInterpolantGenerator constructInterpolantGenerator(
 			final IUltimateServiceProvider services, final ILogger logger,
 			final TaCheckAndRefinementPreferences<LETTER> prefs, final TAPreferences taPrefsForInterpolantConsolidation,
-			final TraceCheck tracechecker, final PredicateFactory predicateFactory,
+			final TraceCheck traceCheck, final PredicateFactory predicateFactory,
 			final PredicateUnifier predicateUnifier, final IRun<LETTER, IPredicate, ?> counterexample,
 			final RefinementEngineStatisticsGenerator statistics) {
-		final TraceCheck localTraceChecker = Objects.requireNonNull(tracechecker,
+		final TraceCheck localTraceCheck = Objects.requireNonNull(traceCheck,
 				"cannot construct interpolant generator if no trace checker is present");
-		if (localTraceChecker instanceof InterpolatingTraceCheck) {
-			final InterpolatingTraceCheck interpolatingTraceChecker = (InterpolatingTraceCheck) localTraceChecker;
+		if (localTraceCheck instanceof InterpolatingTraceCheck) {
+			final InterpolatingTraceCheck interpolatingTraceCheck = (InterpolatingTraceCheck) localTraceCheck;
 
 			if (prefs.getUseInterpolantConsolidation()) {
 				try {
@@ -78,14 +78,15 @@ public class RefinementStrategyUtils {
 									predicateUnifier.getFalsePredicate(), new TreeMap<Integer, IPredicate>(),
 									NestedWord.nestedWord(counterexample.getWord()), cfgSmtToolkit,
 									cfgSmtToolkit.getModifiableGlobalsTable(), services, logger, predicateFactory,
-									predicateUnifier, interpolatingTraceChecker, taPrefsForInterpolantConsolidation);
-					statistics.addInterpolantConsolidationStatistics(interpConsoli.getInterpolantConsolidationBenchmarks());
+									predicateUnifier, interpolatingTraceCheck, taPrefsForInterpolantConsolidation);
+					statistics.addInterpolantConsolidationStatistics(
+							interpConsoli.getInterpolantConsolidationBenchmarks());
 					return interpConsoli;
 				} catch (final AutomataOperationCanceledException e) {
 					throw new AssertionError("react on timeout, not yet implemented");
 				}
 			}
-			return interpolatingTraceChecker;
+			return interpolatingTraceCheck;
 		}
 		throw new AssertionError("Currently only interpolating trace checkers are supported.");
 	}

@@ -65,7 +65,7 @@ public interface ITraceCheck {
 	 */
 	IcfgProgramExecution getRcfgProgramExecution();
 
-	TraceCheckerStatisticsGenerator getTraceCheckerBenchmark();
+	TraceCheckStatisticsGenerator getTraceCheckBenchmark();
 
 	/**
 	 * Returns the {@link ToolchainCanceledException} that was thrown if the computation was cancelled. If the

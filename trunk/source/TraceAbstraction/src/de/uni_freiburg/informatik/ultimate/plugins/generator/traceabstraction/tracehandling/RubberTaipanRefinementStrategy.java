@@ -81,7 +81,7 @@ public class RubberTaipanRefinementStrategy<LETTER extends IIcfgTransition<?>>
 		default:
 			throw new IllegalArgumentException(UNKNOWN_MODE + getCurrentMode());
 		}
-		resetTraceChecker();
+		resetTraceCheck();
 		return nextMode;
 	}
 }

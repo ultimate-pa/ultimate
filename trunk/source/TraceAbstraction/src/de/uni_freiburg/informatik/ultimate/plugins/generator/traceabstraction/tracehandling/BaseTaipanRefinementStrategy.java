@@ -94,10 +94,10 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 	// store if the trace has already been shown to be infeasible in a previous attempt
 	private boolean mHasShownInfeasibilityBefore;
 
-	private TraceCheckerConstructor<LETTER> mTcConstructor;
-	private TraceCheckerConstructor<LETTER> mPrevTcConstructor;
+	private TraceCheckConstructor<LETTER> mTcConstructor;
+	private TraceCheckConstructor<LETTER> mPrevTcConstructor;
 
-	private TraceCheck mTraceChecker;
+	private TraceCheck mTraceCheck;
 	private IInterpolantGenerator mInterpolantGenerator;
 	private IInterpolantAutomatonBuilder<LETTER, IPredicate> mInterpolantAutomatonBuilder;
 	private final TaskIdentifier mTaskIdentifier;
@@ -149,23 +149,23 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 	protected abstract Mode getInitialMode();
 
 	@Override
-	public abstract boolean hasNextTraceChecker();
+	public abstract boolean hasNextTraceCheck();
 
 	@Override
-	public void nextTraceChecker() {
-		final Mode nextMode = getNextTraceCheckerMode();
+	public void nextTraceCheck() {
+		final Mode nextMode = getNextTraceCheckMode();
 		mCurrentMode = nextMode;
 
 		// reset trace checker, interpolant generator, and constructor
 		mInterpolantGenerator = null;
-		resetTraceChecker();
+		resetTraceCheck();
 
 		if (mLogger.isInfoEnabled()) {
-			mLogger.info("Switched to TraceChecker mode " + mCurrentMode);
+			mLogger.info("Switched to traceCheck mode " + mCurrentMode);
 		}
 	}
 
-	protected abstract Mode getNextTraceCheckerMode();
+	protected abstract Mode getNextTraceCheckMode();
 
 	@Override
 	public boolean hasNextInterpolantGenerator(final List<TracePredicates> perfectIpps,
@@ -188,8 +188,8 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 		}
 	}
 
-	protected void resetTraceChecker() {
-		mTraceChecker = null;
+	protected void resetTraceCheck() {
+		mTraceCheck = null;
 		mPrevTcConstructor = mTcConstructor;
 		mTcConstructor = null;
 	}
@@ -205,15 +205,15 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 	}
 
 	@Override
-	public TraceCheck getTraceChecker() {
-		if (mTraceChecker == null) {
+	public TraceCheck getTraceCheck() {
+		if (mTraceCheck == null) {
 			if (mTcConstructor == null) {
-				mTcConstructor = constructTraceCheckerConstructor();
+				mTcConstructor = constructTraceCheckConstructor();
 			}
-			mTraceChecker = mTcConstructor.get();
-			mRefinementEngineStatisticsGenerator.addTraceCheckerStatistics(mTraceChecker);
+			mTraceCheck = mTcConstructor.get();
+			mRefinementEngineStatisticsGenerator.addTraceCheckStatistics(mTraceCheck);
 		}
-		return mTraceChecker;
+		return mTraceCheck;
 	}
 
 	@Override
@@ -227,8 +227,7 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 
 	@Override
 	public IInterpolantAutomatonBuilder<LETTER, IPredicate> getInterpolantAutomatonBuilder(
-			final List<TracePredicates> perfectIpps,
-			final List<TracePredicates> imperfectIpps) {
+			final List<TracePredicates> perfectIpps, final List<TracePredicates> imperfectIpps) {
 		if (mInterpolantAutomatonBuilder == null) {
 			mInterpolantAutomatonBuilder =
 					constructInterpolantAutomatonBuilder(perfectIpps, imperfectIpps, mCurrentMode);
@@ -237,8 +236,7 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 	}
 
 	private IInterpolantAutomatonBuilder<LETTER, IPredicate> constructInterpolantAutomatonBuilder(
-			final List<TracePredicates> perfectIpps,
-			final List<TracePredicates> imperfectIpps, final Mode mode) {
+			final List<TracePredicates> perfectIpps, final List<TracePredicates> imperfectIpps, final Mode mode) {
 		switch (mode) {
 		case ABSTRACT_INTERPRETATION:
 		case SMTINTERPOL:
@@ -262,7 +260,7 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 		}
 	}
 
-	private TraceCheckerConstructor<LETTER> constructTraceCheckerConstructor() {
+	private TraceCheckConstructor<LETTER> constructTraceCheckConstructor() {
 		final InterpolationTechnique interpolationTechnique = getInterpolationTechnique(mCurrentMode);
 		final boolean useTimeout = mHasShownInfeasibilityBefore;
 
@@ -279,14 +277,14 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 		final AssertCodeBlockOrder assertionOrder =
 				mAssertionOrderModulation.get(mCounterexample, interpolationTechnique);
 
-		mLogger.info("Using TraceChecker mode " + mCurrentMode + " with AssertCodeBlockOrder " + assertionOrder
-				+ " (IT: " + interpolationTechnique + ")");
-		TraceCheckerConstructor<LETTER> result;
+		mLogger.info("Using traceCheck mode " + mCurrentMode + " with AssertCodeBlockOrder " + assertionOrder + " (IT: "
+				+ interpolationTechnique + ")");
+		TraceCheckConstructor<LETTER> result;
 		if (mPrevTcConstructor == null) {
-			result = new TraceCheckerConstructor<>(mPrefs, managedScript, mServices, mPredicateFactory,
+			result = new TraceCheckConstructor<>(mPrefs, managedScript, mServices, mPredicateFactory,
 					mPredicateUnifierSmt, mCounterexample, assertionOrder, interpolationTechnique, mTaskIdentifier);
 		} else {
-			result = new TraceCheckerConstructor<>(mPrevTcConstructor, managedScript, assertionOrder,
+			result = new TraceCheckConstructor<>(mPrevTcConstructor, managedScript, assertionOrder,
 					interpolationTechnique);
 		}
 		return result;
@@ -368,9 +366,9 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 		switch (mode) {
 		case SMTINTERPOL:
 		case CVC4_IG:
-			return castTraceChecker();
+			return castTraceCheck();
 		case Z3_IG:
-			return castTraceChecker();
+			return castTraceCheck();
 		case Z3_NO_IG:
 		case CVC4_NO_IG:
 		case ABSTRACT_INTERPRETATION:
@@ -383,10 +381,10 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 		}
 	}
 
-	private IInterpolantGenerator castTraceChecker() {
-		final TraceCheck traceChecker = getTraceChecker();
-		assert traceChecker != null && traceChecker instanceof InterpolatingTraceCheck;
-		return (InterpolatingTraceCheck) traceChecker;
+	private IInterpolantGenerator castTraceCheck() {
+		final TraceCheck traceCheck = getTraceCheck();
+		assert traceCheck != null && traceCheck instanceof InterpolatingTraceCheck;
+		return (InterpolatingTraceCheck) traceCheck;
 	}
 
 	@Override
@@ -403,7 +401,7 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 	public RefinementStrategyExceptionBlacklist getExceptionBlacklist() {
 		return RefinementStrategyExceptionBlacklist.UNKNOWN;
 	}
-	
+
 	@Override
 	public RefinementEngineStatisticsGenerator getRefinementEngineStatistics() {
 		return mRefinementEngineStatisticsGenerator;

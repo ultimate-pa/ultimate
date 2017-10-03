@@ -80,7 +80,7 @@ public class LazyTaipanRefinementStrategy<LETTER extends IIcfgTransition<?>>
 	}
 
 	@Override
-	protected Mode getNextTraceCheckerMode() {
+	protected Mode getNextTraceCheckMode() {
 		switch (getCurrentMode()) {
 		case ABSTRACT_INTERPRETATION:
 			return Mode.SMTINTERPOL;
@@ -92,7 +92,7 @@ public class LazyTaipanRefinementStrategy<LETTER extends IIcfgTransition<?>>
 		case CVC4_NO_IG:
 		case Z3_IG:
 		case CVC4_IG:
-			assert !hasNextTraceChecker();
+			assert !hasNextTraceCheck();
 			throw new NoSuchElementException("No next trace checker available.");
 		default:
 			throw new IllegalArgumentException(UNKNOWN_MODE + getCurrentMode());
@@ -120,7 +120,7 @@ public class LazyTaipanRefinementStrategy<LETTER extends IIcfgTransition<?>>
 		default:
 			throw new IllegalArgumentException(UNKNOWN_MODE + getCurrentMode());
 		}
-		resetTraceChecker();
+		resetTraceCheck();
 		return nextMode;
 	}
 
@@ -157,7 +157,7 @@ public class LazyTaipanRefinementStrategy<LETTER extends IIcfgTransition<?>>
 	}
 
 	@Override
-	public boolean hasNextTraceChecker() {
+	public boolean hasNextTraceCheck() {
 		switch (getCurrentMode()) {
 		case SMTINTERPOL:
 		case Z3_NO_IG:

@@ -72,7 +72,7 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 		mPuData.aggregateBenchmarkData(pubd);
 	}
 
-	public void addTraceCheckerData(final IStatisticsDataProvider tcbd) {
+	public void addTraceCheckData(final IStatisticsDataProvider tcbd) {
 		mTcData.aggregateBenchmarkData(tcbd);
 	}
 	
@@ -147,7 +147,7 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 			return mEcData;
 		case PredicateUnifierStatistics:
 			return mPuData;
-		case TraceCheckerStatistics:
+		case traceCheckStatistics:
 			return mTcData;
 		case InterpolantConsolidationStatistics:
 			return mInterpolantConsolidationBenchmarks;

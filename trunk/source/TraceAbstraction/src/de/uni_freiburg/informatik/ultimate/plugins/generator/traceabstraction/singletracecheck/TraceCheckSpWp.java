@@ -72,7 +72,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.UnsatCores;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantComputationStatus.ItpErrorStatus;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerStatisticsGenerator.InterpolantType;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckStatisticsGenerator.InterpolantType;
 
 /**
  * Use unsat core, predicate transformer and live variable analsysis to compute a sequence of interpolants.
@@ -168,15 +168,15 @@ public class TraceCheckSpWp extends InterpolatingTraceCheck {
 	@Override
 	public void computeInterpolants(final Set<Integer> interpolatedPositions,
 			final InterpolationTechnique interpolation) {
-		mTraceCheckerBenchmarkGenerator.start(TraceCheckerStatisticsDefinitions.InterpolantComputationTime.toString());
+		mTraceCheckBenchmarkGenerator.start(TraceCheckStatisticsDefinitions.InterpolantComputationTime.toString());
 		try {
 			computeInterpolantsUsingUnsatCore(interpolatedPositions);
 		} catch (final ToolchainCanceledException tce) {
 			mLogger.info("Timeout while computing interpolants");
 			mToolchainCanceledException = tce;
 		} finally {
-			mTraceCheckerBenchmarkGenerator
-					.stop(TraceCheckerStatisticsDefinitions.InterpolantComputationTime.toString());
+			mTraceCheckBenchmarkGenerator
+					.stop(TraceCheckStatisticsDefinitions.InterpolantComputationTime.toString());
 		}
 		mTraceCheckFinished = true;
 	}
@@ -247,7 +247,7 @@ public class TraceCheckSpWp extends InterpolatingTraceCheck {
 			}
 			mLogger.debug("Total number of conjuncts in trace: " + numberOfConjunctsInTrace);
 			mLogger.debug("Number of conjuncts in unsatisfiable core: " + unsatCore.size());
-			mTraceCheckerBenchmarkGenerator.setConjunctsInSSA(numberOfConjunctsInTrace, numberOfConjunctsInUnsatCore);
+			mTraceCheckBenchmarkGenerator.setConjunctsInSSA(numberOfConjunctsInTrace, numberOfConjunctsInUnsatCore);
 		}
 
 		final NestedFormulas<UnmodifiableTransFormula, IPredicate> rtf = constructRelevantTransFormulas(unsatCore);
@@ -286,22 +286,22 @@ public class TraceCheckSpWp extends InterpolatingTraceCheck {
 				tce.addRunningTaskInfo(new RunningTaskInfo(getClass(), taskDescription));
 				throw tce;
 			}
-			assert TraceCheckerUtils.checkInterpolantsInductivityForward(mInterpolantsFp, mTrace, mPrecondition,
+			assert TraceCheckUtils.checkInterpolantsInductivityForward(mInterpolantsFp, mTrace, mPrecondition,
 					mPostcondition, mPendingContexts, "FP", mCsToolkit, mLogger,
 					mCfgManagedScript) : "invalid Hoare triple in FP";
 
-			mTraceCheckerBenchmarkGenerator.reportSequenceOfInterpolants(mInterpolantsFp, InterpolantType.Forward);
-			mTraceCheckerBenchmarkGenerator.reportNumberOfNonLiveVariables(mNonLiveVariablesFp,
+			mTraceCheckBenchmarkGenerator.reportSequenceOfInterpolants(mInterpolantsFp, InterpolantType.Forward);
+			mTraceCheckBenchmarkGenerator.reportNumberOfNonLiveVariables(mNonLiveVariablesFp,
 					InterpolantType.Forward);
-			mTraceCheckerBenchmarkGenerator.reportInterpolantComputation();
+			mTraceCheckBenchmarkGenerator.reportInterpolantComputation();
 			if (mControlLocationSequence != null) {
-				final BackwardCoveringInformation bci = TraceCheckerUtils.computeCoverageCapability(mServices,
+				final BackwardCoveringInformation bci = TraceCheckUtils.computeCoverageCapability(mServices,
 						getForwardIpp(), mControlLocationSequence, mLogger, mPredicateUnifier);
 				mPerfectForwardSequence = bci.getPotentialBackwardCoverings() == bci.getSuccessfullBackwardCoverings();
 				if (mPerfectForwardSequence) {
-					mTraceCheckerBenchmarkGenerator.reportPerfectInterpolantSequences();
+					mTraceCheckBenchmarkGenerator.reportPerfectInterpolantSequences();
 				}
-				mTraceCheckerBenchmarkGenerator.addBackwardCoveringInformation(bci);
+				mTraceCheckBenchmarkGenerator.addBackwardCoveringInformation(bci);
 			}
 		}
 
@@ -328,23 +328,23 @@ public class TraceCheckSpWp extends InterpolatingTraceCheck {
 						spt.computeWeakestPreconditionSequence(rtf, postprocs, false, mAlternatingQuantifierBailout)
 								.getPredicates();
 
-				assert TraceCheckerUtils.checkInterpolantsInductivityBackward(mInterpolantsBp, mTrace, mPrecondition,
+				assert TraceCheckUtils.checkInterpolantsInductivityBackward(mInterpolantsBp, mTrace, mPrecondition,
 						mPostcondition, mPendingContexts, "BP", mCsToolkit, mLogger,
 						mCfgManagedScript) : "invalid Hoare triple in BP";
 
-				mTraceCheckerBenchmarkGenerator.reportSequenceOfInterpolants(mInterpolantsBp, InterpolantType.Backward);
-				mTraceCheckerBenchmarkGenerator.reportNumberOfNonLiveVariables(mNonLiveVariablesBp,
+				mTraceCheckBenchmarkGenerator.reportSequenceOfInterpolants(mInterpolantsBp, InterpolantType.Backward);
+				mTraceCheckBenchmarkGenerator.reportNumberOfNonLiveVariables(mNonLiveVariablesBp,
 						InterpolantType.Backward);
-				mTraceCheckerBenchmarkGenerator.reportInterpolantComputation();
+				mTraceCheckBenchmarkGenerator.reportInterpolantComputation();
 				if (mControlLocationSequence != null) {
-					final BackwardCoveringInformation bci = TraceCheckerUtils.computeCoverageCapability(mServices,
+					final BackwardCoveringInformation bci = TraceCheckUtils.computeCoverageCapability(mServices,
 							getBackwardIpp(), mControlLocationSequence, mLogger, mPredicateUnifier);
 					mPerfectBackwardSequence =
 							bci.getPotentialBackwardCoverings() == bci.getSuccessfullBackwardCoverings();
 					if (mPerfectBackwardSequence) {
-						mTraceCheckerBenchmarkGenerator.reportPerfectInterpolantSequences();
+						mTraceCheckBenchmarkGenerator.reportPerfectInterpolantSequences();
 					}
-					mTraceCheckerBenchmarkGenerator.addBackwardCoveringInformation(bci);
+					mTraceCheckBenchmarkGenerator.addBackwardCoveringInformation(bci);
 				}
 			} catch (final ToolchainCanceledException tce) {
 				final String taskDescription = "constructing backward predicates";
@@ -611,7 +611,7 @@ public class TraceCheckSpWp extends InterpolatingTraceCheck {
 	@Override
 	protected AnnotateAndAssertCodeBlocks getAnnotateAndAsserterCodeBlocks(final NestedFormulas<Term, Term> ssa) {
 		if (mAnnotateAndAsserterConjuncts == null) {
-			mAnnotateAndAsserterConjuncts = new AnnotateAndAssertConjunctsOfCodeBlocks(mTcSmtManager, mTraceCheckerLock,
+			mAnnotateAndAsserterConjuncts = new AnnotateAndAssertConjunctsOfCodeBlocks(mTcSmtManager, mTraceCheckLock,
 					ssa, mNestedFormulas, mLogger, mCfgManagedScript);
 		}
 		return mAnnotateAndAsserterConjuncts;

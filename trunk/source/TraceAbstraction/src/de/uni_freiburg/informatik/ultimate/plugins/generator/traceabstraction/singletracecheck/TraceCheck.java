@@ -101,8 +101,8 @@ public class TraceCheck implements ITraceCheck {
 	protected final ILogger mLogger;
 	protected final IUltimateServiceProvider mServices;
 	/**
-	 * After constructing a new TraceChecker satisfiability of the trace was checked. However, the trace check is not
-	 * yet finished, and the SmtManager is still locked by this TraceChecker to allow the computation of an interpolants
+	 * After constructing a new traceCheck satisfiability of the trace was checked. However, the trace check is not
+	 * yet finished, and the SmtManager is still locked by this traceCheck to allow the computation of an interpolants
 	 * or an execution. The trace check is only finished after the unlockSmtManager() method was called.
 	 */
 	protected boolean mTraceCheckFinished;
@@ -112,7 +112,7 @@ public class TraceCheck implements ITraceCheck {
 	 */
 	protected final ManagedScript mCfgManagedScript;
 	protected final ManagedScript mTcSmtManager;
-	protected final TraceCheckerLock mTraceCheckerLock = new TraceCheckerLock();
+	protected final TraceCheckLock mTraceCheckLock = new TraceCheckLock();
 	/**
 	 * Maps a procedure name to the set of global variables which may be modified by the procedure. The set of variables
 	 * is represented as a map where the identifier of the variable is mapped to the type of the variable.
@@ -133,8 +133,8 @@ public class TraceCheck implements ITraceCheck {
 	protected final IcfgProgramExecution mRcfgProgramExecution;
 	protected final NestedFormulas<UnmodifiableTransFormula, IPredicate> mNestedFormulas;
 	protected NestedSsaBuilder mNsb;
-	protected final TraceCheckerStatisticsGenerator mTraceCheckerBenchmarkGenerator =
-			new TraceCheckerStatisticsGenerator();
+	protected final TraceCheckStatisticsGenerator mTraceCheckBenchmarkGenerator =
+			new TraceCheckStatisticsGenerator();
 	protected final AssertCodeBlockOrder mAssertCodeBlocksIncrementally;
 	protected ToolchainCanceledException mToolchainCanceledException;
 	protected final IIcfgSymbolTable mBoogie2SmtSymbolTable;
@@ -242,8 +242,8 @@ public class TraceCheck implements ITraceCheck {
 		}
 	}
 
-	protected TraceCheckerStatisticsGenerator getBenchmarkGenerator() {
-		return new TraceCheckerStatisticsGenerator();
+	protected TraceCheckStatisticsGenerator getBenchmarkGenerator() {
+		return new TraceCheckStatisticsGenerator();
 	}
 
 	@Override
@@ -266,22 +266,22 @@ public class TraceCheck implements ITraceCheck {
 	protected FeasibilityCheckResult checkTrace() {
 		lockAndPrepareSolverForTraceCheck();
 		final boolean transferToDifferentScript = mTcSmtManager != mCfgManagedScript;
-		mTraceCheckerBenchmarkGenerator.start(TraceCheckerStatisticsDefinitions.SsaConstructionTime.toString());
+		mTraceCheckBenchmarkGenerator.start(TraceCheckStatisticsDefinitions.SsaConstructionTime.toString());
 		mNsb = new NestedSsaBuilder(mTrace, mTcSmtManager, mNestedFormulas, mCsToolkit.getModifiableGlobalsTable(),
 				mLogger, transferToDifferentScript);
 		final NestedFormulas<Term, Term> ssa = mNsb.getSsa();
-		mTraceCheckerBenchmarkGenerator.stop(TraceCheckerStatisticsDefinitions.SsaConstructionTime.toString());
+		mTraceCheckBenchmarkGenerator.stop(TraceCheckStatisticsDefinitions.SsaConstructionTime.toString());
 
-		mTraceCheckerBenchmarkGenerator.start(TraceCheckerStatisticsDefinitions.SatisfiabilityAnalysisTime.toString());
+		mTraceCheckBenchmarkGenerator.start(TraceCheckStatisticsDefinitions.SatisfiabilityAnalysisTime.toString());
 		if (mAssertCodeBlocksIncrementally != AssertCodeBlockOrder.NOT_INCREMENTALLY) {
 			mAAA = new AnnotateAndAsserterWithStmtOrderPrioritization(mTcSmtManager, ssa,
-					getAnnotateAndAsserterCodeBlocks(ssa), mTraceCheckerBenchmarkGenerator,
+					getAnnotateAndAsserterCodeBlocks(ssa), mTraceCheckBenchmarkGenerator,
 					mAssertCodeBlocksIncrementally, mServices);
 		} else {
 			mAAA = new AnnotateAndAsserter(mTcSmtManager, ssa, getAnnotateAndAsserterCodeBlocks(ssa),
-					mTraceCheckerBenchmarkGenerator, mServices);
+					mTraceCheckBenchmarkGenerator, mServices);
 			// Report the asserted code blocks
-			// mTraceCheckerBenchmarkGenerator.reportnewAssertedCodeBlocks(mTrace.length());
+			// mTraceCheckBenchmarkGenerator.reportnewAssertedCodeBlocks(mTrace.length());
 		}
 		FeasibilityCheckResult result = null;
 		try {
@@ -300,11 +300,11 @@ public class TraceCheck implements ITraceCheck {
 				result = new FeasibilityCheckResult(LBool.UNKNOWN, new TraceCheckReasonUnknown(Reason.ULTIMATE_TIMEOUT,
 						null, ExceptionHandlingCategory.KNOWN_IGNORE), true);
 			} else {
-				result = new FeasibilityCheckResult(LBool.UNKNOWN, TraceCheckerUtils.constructReasonUnknown(e), true);
+				result = new FeasibilityCheckResult(LBool.UNKNOWN, TraceCheckUtils.constructReasonUnknown(e), true);
 			}
 		} finally {
-			mTraceCheckerBenchmarkGenerator
-					.stop(TraceCheckerStatisticsDefinitions.SatisfiabilityAnalysisTime.toString());
+			mTraceCheckBenchmarkGenerator
+					.stop(TraceCheckStatisticsDefinitions.SatisfiabilityAnalysisTime.toString());
 		}
 		return result;
 	}
@@ -381,7 +381,7 @@ public class TraceCheck implements ITraceCheck {
 	}
 
 	protected AnnotateAndAssertCodeBlocks getAnnotateAndAsserterCodeBlocks(final NestedFormulas<Term, Term> ssa) {
-		return new AnnotateAndAssertCodeBlocks(mTcSmtManager, mTraceCheckerLock, ssa, mLogger);
+		return new AnnotateAndAssertCodeBlocks(mTcSmtManager, mTraceCheckLock, ssa, mLogger);
 
 		// AnnotateAndAssertCodeBlocks aaacb =
 		// return new AnnotateAndAsserter(mCsToolkit, ssa, aaacb);
@@ -438,9 +438,9 @@ public class TraceCheck implements ITraceCheck {
 	}
 
 	@Override
-	public TraceCheckerStatisticsGenerator getTraceCheckerBenchmark() {
+	public TraceCheckStatisticsGenerator getTraceCheckBenchmark() {
 		if (mTraceCheckFinished || mToolchainCanceledException != null) {
-			return mTraceCheckerBenchmarkGenerator;
+			return mTraceCheckBenchmarkGenerator;
 		}
 		throw new AssertionError("Benchmark is only available after the trace check is finished.");
 	}
@@ -451,21 +451,21 @@ public class TraceCheck implements ITraceCheck {
 	}
 
 	private void lockAndPrepareSolverForTraceCheck() {
-		mTcSmtManager.lock(mTraceCheckerLock);
-		mTcSmtManager.echo(mTraceCheckerLock, new QuotedObject("starting trace check"));
-		mTcSmtManager.push(mTraceCheckerLock, 1);
+		mTcSmtManager.lock(mTraceCheckLock);
+		mTcSmtManager.echo(mTraceCheckLock, new QuotedObject("starting trace check"));
+		mTcSmtManager.push(mTraceCheckLock, 1);
 	}
 
 	protected void cleanupAndUnlockSolver() {
-		mTcSmtManager.echo(mTraceCheckerLock, new QuotedObject("finished trace check"));
-		mTcSmtManager.pop(mTraceCheckerLock, 1);
-		mTcSmtManager.unlock(mTraceCheckerLock);
+		mTcSmtManager.echo(mTraceCheckLock, new QuotedObject("finished trace check"));
+		mTcSmtManager.pop(mTraceCheckLock, 1);
+		mTcSmtManager.unlock(mTraceCheckLock);
 	}
 
 	/**
 	 * Package private class used by trace checker to lock the {@link ManagedScript}.
 	 */
-	static class TraceCheckerLock {
+	static class TraceCheckLock {
 		// this abomination helps Matthias debug
 	}
 

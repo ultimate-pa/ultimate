@@ -64,7 +64,7 @@ public enum CegarLoopStatisticsDefinitions implements IStatisticsElement {
 	BiggestAbstraction(Integer.class, CegarStatisticsType.s_SizeIterationPairDataAggregation,
 			AStatisticsType.sKeyBeforeData),
 
-	TraceCheckerStatistics(StatisticsData.class, AStatisticsType.sStatisticsDataAggregation,
+	traceCheckStatistics(StatisticsData.class, AStatisticsType.sStatisticsDataAggregation,
 			AStatisticsType.sKeyBeforeData),
 
 	InterpolantConsolidationStatistics(StatisticsData.class,

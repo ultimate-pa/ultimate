@@ -101,7 +101,7 @@ public abstract class AbstractBuchiAutomizerTestSuite extends AbstractModelCheck
 								ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Ignore, Aggregate.Average),
 						new ColumnDefinition("PredicateUnifierData_Time", "pu time",
 								ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Ignore, Aggregate.Average),
-						new ColumnDefinition("TraceCheckerBenchmark_InterpolantComputationTime", "itp time",
+						new ColumnDefinition("traceCheckBenchmark_InterpolantComputationTime", "itp time",
 								ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Ignore, Aggregate.Average),
 
 						new ColumnDefinition("NonLiveStateRemoval", "non live time",

@@ -74,7 +74,7 @@ public class TaipanRefinementStrategy<LETTER extends IIcfgTransition<?>> extends
 	}
 
 	@Override
-	public boolean hasNextTraceChecker() {
+	public boolean hasNextTraceCheck() {
 		switch (getCurrentMode()) {
 		case SMTINTERPOL:
 		case Z3_NO_IG:
@@ -111,7 +111,7 @@ public class TaipanRefinementStrategy<LETTER extends IIcfgTransition<?>> extends
 	}
 
 	@Override
-	protected Mode getNextTraceCheckerMode() {
+	protected Mode getNextTraceCheckMode() {
 		switch (getCurrentMode()) {
 		case SMTINTERPOL:
 			return Mode.Z3_NO_IG;
@@ -122,7 +122,7 @@ public class TaipanRefinementStrategy<LETTER extends IIcfgTransition<?>> extends
 		case ABSTRACT_INTERPRETATION:
 		case Z3_IG:
 		case CVC4_IG:
-			assert !hasNextTraceChecker();
+			assert !hasNextTraceCheck();
 			throw new NoSuchElementException("No next trace checker available.");
 		default:
 			throw new IllegalArgumentException(UNKNOWN_MODE + getCurrentMode());
@@ -131,20 +131,20 @@ public class TaipanRefinementStrategy<LETTER extends IIcfgTransition<?>> extends
 
 	@Override
 	protected Mode getNextInterpolantGenerator() {
-		final boolean resetTraceChecker;
+		final boolean resetTraceCheck;
 		Mode nextMode;
 		switch (getCurrentMode()) {
 		case SMTINTERPOL:
 			nextMode = Mode.ABSTRACT_INTERPRETATION;
-			resetTraceChecker = false;
+			resetTraceCheck = false;
 			break;
 		case ABSTRACT_INTERPRETATION:
 			nextMode = mZ3TraceCheckUnsuccessful ? Mode.CVC4_IG : Mode.Z3_IG;
-			resetTraceChecker = true;
+			resetTraceCheck = true;
 			break;
 		case Z3_IG:
 			nextMode = Mode.CVC4_IG;
-			resetTraceChecker = true;
+			resetTraceCheck = true;
 			break;
 		case CVC4_IG:
 		case Z3_NO_IG:
@@ -155,8 +155,8 @@ public class TaipanRefinementStrategy<LETTER extends IIcfgTransition<?>> extends
 			throw new IllegalArgumentException(UNKNOWN_MODE + getCurrentMode());
 		}
 
-		if (resetTraceChecker) {
-			resetTraceChecker();
+		if (resetTraceCheck) {
+			resetTraceCheck();
 		}
 		return nextMode;
 	}

@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 
 public class RefinementEngineStatisticsGenerator implements IStatisticsDataProvider {
 
-	private final StatisticsData mTraceCheckerStatistics = new StatisticsData();
+	private final StatisticsData mTraceCheckStatistics = new StatisticsData();
 	private final StatisticsData mInvariantSynthesisStatistics = new StatisticsData();
 	private final StatisticsData mInterpolantConsolidationStatistics = new StatisticsData();
 
@@ -47,10 +47,9 @@ public class RefinementEngineStatisticsGenerator implements IStatisticsDataProvi
 		return RefinementEngineStatisticsType.getInstance();
 	}
 
-	private void addTraceCheckerStatistics(final IStatisticsDataProvider traceCheckerStatistics) {
-		mTraceCheckerStatistics.aggregateBenchmarkData(traceCheckerStatistics);
+	private void addTraceCheckStatistics(final IStatisticsDataProvider traceCheckStatistics) {
+		mTraceCheckStatistics.aggregateBenchmarkData(traceCheckStatistics);
 	}
-
 
 	private void addInvariantSynthesisStatistics(final IStatisticsDataProvider invariantSynthesisStatistics) {
 		mInvariantSynthesisStatistics.aggregateBenchmarkData(invariantSynthesisStatistics);
@@ -61,27 +60,28 @@ public class RefinementEngineStatisticsGenerator implements IStatisticsDataProvi
 		mInterpolantConsolidationStatistics.aggregateBenchmarkData(interpolantConsolidationStatistics);
 	}
 
-	public void addTraceCheckerStatistics(final TraceCheck traceChecker) {
-		if (traceChecker.wasTracecheckFinished()) {
-			addTraceCheckerStatistics(traceChecker.getTraceCheckerBenchmark());
-			if (traceChecker instanceof InterpolatingTraceCheckPathInvariantsWithFallback && traceChecker.isCorrect() == LBool.UNSAT) {
-				addInvariantSynthesisStatistics(((InterpolatingTraceCheckPathInvariantsWithFallback) traceChecker).getPathInvariantsStats());
-			} 
+	public void addTraceCheckStatistics(final TraceCheck traceCheck) {
+		if (traceCheck.wasTracecheckFinished()) {
+			addTraceCheckStatistics(traceCheck.getTraceCheckBenchmark());
+			if (traceCheck instanceof InterpolatingTraceCheckPathInvariantsWithFallback
+					&& traceCheck.isCorrect() == LBool.UNSAT) {
+				addInvariantSynthesisStatistics(
+						((InterpolatingTraceCheckPathInvariantsWithFallback) traceCheck).getPathInvariantsStats());
+			}
 		}
 	}
 
-
-
 	@Override
 	public Object getValue(final String key) {
-		final RefinementEngineStatisticsDefinitions keyEnum = Enum.valueOf(RefinementEngineStatisticsDefinitions.class, key);
+		final RefinementEngineStatisticsDefinitions keyEnum =
+				Enum.valueOf(RefinementEngineStatisticsDefinitions.class, key);
 		switch (keyEnum) {
 		case InterpolantConsolidationStatistics:
 			return mInterpolantConsolidationStatistics;
 		case InvariantSynthesisStatistics:
 			return mInvariantSynthesisStatistics;
-		case TraceCheckerStatistics:
-			return mTraceCheckerStatistics;
+		case TraceCheckStatistics:
+			return mTraceCheckStatistics;
 		default:
 			throw new AssertionError("unknown data");
 		}

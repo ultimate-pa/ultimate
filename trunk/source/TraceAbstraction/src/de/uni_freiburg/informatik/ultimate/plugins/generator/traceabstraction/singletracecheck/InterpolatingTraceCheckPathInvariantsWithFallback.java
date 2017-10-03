@@ -50,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 
 /**
- * InterpolatingTraceChecker that returns path invariants as interpolants. If no path invariants are available, Craig
+ * InterpolatingTraceCheck that returns path invariants as interpolants. If no path invariants are available, Craig
  * interpolation is used as a fallback.
  *
  * @author Matthias Heizmann
@@ -111,7 +111,7 @@ public class InterpolatingTraceCheckPathInvariantsWithFallback extends Interpola
 				throw new AssertionError("inkorrekt number of interpolants. "
 						+ "There should be one interpolant between each " + "two successive CodeBlocks");
 			}
-			assert TraceCheckerUtils.checkInterpolantsInductivityForward(Arrays.asList(interpolants), mTrace, mPrecondition,
+			assert TraceCheckUtils.checkInterpolantsInductivityForward(Arrays.asList(interpolants), mTrace, mPrecondition,
 					mPostcondition, mPendingContexts, "invariant map", mCsToolkit, mLogger,
 					mCfgManagedScript) : "invalid Hoare triple in invariant map";
 		}

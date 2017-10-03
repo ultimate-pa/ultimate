@@ -19,25 +19,24 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE TraceAbstraction plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck;
 
 import de.uni_freiburg.informatik.ultimate.util.statistics.AStatisticsType;
 
-public class TraceCheckerStatisticsType extends AStatisticsType<TraceCheckerStatisticsDefinitions> {
-	
-	public TraceCheckerStatisticsType() {
-		super(TraceCheckerStatisticsDefinitions.class);
+public class TraceCheckStatisticsType extends AStatisticsType<TraceCheckStatisticsDefinitions> {
+
+	private static TraceCheckStatisticsType INSTANCE = new TraceCheckStatisticsType();
+
+	public TraceCheckStatisticsType() {
+		super(TraceCheckStatisticsDefinitions.class);
 	}
 
-	private static TraceCheckerStatisticsType INSTANCE = new TraceCheckerStatisticsType();
-	
-	public static TraceCheckerStatisticsType getInstance() {
+	public static TraceCheckStatisticsType getInstance() {
 		return INSTANCE;
 	}
-
 }

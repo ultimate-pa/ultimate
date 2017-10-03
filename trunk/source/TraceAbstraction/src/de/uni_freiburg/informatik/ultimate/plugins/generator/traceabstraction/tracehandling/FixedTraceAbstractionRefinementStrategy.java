@@ -69,8 +69,8 @@ public class FixedTraceAbstractionRefinementStrategy<LETTER extends IIcfgTransit
 	// TODO Christian 2016-11-11: Matthias wants to get rid of this
 	private final TAPreferences mTaPrefsForInterpolantConsolidation;
 
-	private final TraceCheckerConstructor<LETTER> mFunConstructFromPrefs;
-	private TraceCheck mTraceChecker;
+	private final TraceCheckConstructor<LETTER> mFunConstructFromPrefs;
+	private TraceCheck mTraceCheck;
 	private IInterpolantGenerator mInterpolantGenerator;
 	private IInterpolantAutomatonBuilder<LETTER, IPredicate> mInterpolantAutomatonBuilder;
 	private final RefinementEngineStatisticsGenerator mRefinementEngineStatisticsGenerator;
@@ -110,27 +110,27 @@ public class FixedTraceAbstractionRefinementStrategy<LETTER extends IIcfgTransit
 		mPredicateUnifier = predicateUnifier;
 		mTaPrefsForInterpolantConsolidation = taPrefsForInterpolantConsolidation;
 		mRefinementEngineStatisticsGenerator = new RefinementEngineStatisticsGenerator();
-		mFunConstructFromPrefs = new TraceCheckerConstructor<>(prefs, managedScript, services, predicateFactory,
+		mFunConstructFromPrefs = new TraceCheckConstructor<>(prefs, managedScript, services, predicateFactory,
 				predicateUnifier, counterexample, mPrefs.getInterpolationTechnique(), taskIdentifier);
 	}
 
 	@Override
-	public boolean hasNextTraceChecker() {
+	public boolean hasNextTraceCheck() {
 		return false;
 	}
 
 	@Override
-	public void nextTraceChecker() {
+	public void nextTraceCheck() {
 		throw new NoSuchElementException("This strategy has only one element.");
 	}
 
 	@Override
-	public TraceCheck getTraceChecker() {
-		if (mTraceChecker == null) {
-			mTraceChecker = mFunConstructFromPrefs.get();
-			mRefinementEngineStatisticsGenerator.addTraceCheckerStatistics(mTraceChecker);
+	public TraceCheck getTraceCheck() {
+		if (mTraceCheck == null) {
+			mTraceCheck = mFunConstructFromPrefs.get();
+			mRefinementEngineStatisticsGenerator.addTraceCheckStatistics(mTraceCheck);
 		}
-		return mTraceChecker;
+		return mTraceCheck;
 	}
 
 	@Override
@@ -148,7 +148,7 @@ public class FixedTraceAbstractionRefinementStrategy<LETTER extends IIcfgTransit
 	public IInterpolantGenerator getInterpolantGenerator() {
 		if (mInterpolantGenerator == null) {
 			mInterpolantGenerator = RefinementStrategyUtils.constructInterpolantGenerator(mServices, mLogger, mPrefs,
-					mTaPrefsForInterpolantConsolidation, getTraceChecker(), mPredicateFactory, mPredicateUnifier,
+					mTaPrefsForInterpolantConsolidation, getTraceCheck(), mPredicateFactory, mPredicateUnifier,
 					mCounterexample, mRefinementEngineStatisticsGenerator);
 		}
 		return mInterpolantGenerator;
@@ -156,11 +156,9 @@ public class FixedTraceAbstractionRefinementStrategy<LETTER extends IIcfgTransit
 
 	@Override
 	public IInterpolantAutomatonBuilder<LETTER, IPredicate> getInterpolantAutomatonBuilder(
-			final List<TracePredicates> perfectIpps,
-			final List<TracePredicates> imperfectIpps) {
+			final List<TracePredicates> perfectIpps, final List<TracePredicates> imperfectIpps) {
 		// use all interpolant sequences
-		final List<TracePredicates> allIpps =
-				IRefinementStrategy.wrapTwoListsInOne(perfectIpps, imperfectIpps);
+		final List<TracePredicates> allIpps = IRefinementStrategy.wrapTwoListsInOne(perfectIpps, imperfectIpps);
 
 		if (mInterpolantAutomatonBuilder == null) {
 			mInterpolantAutomatonBuilder = constructInterpolantAutomatonBuilder(getInterpolantGenerator(), allIpps);
@@ -198,6 +196,5 @@ public class FixedTraceAbstractionRefinementStrategy<LETTER extends IIcfgTransit
 	public RefinementEngineStatisticsGenerator getRefinementEngineStatistics() {
 		return mRefinementEngineStatisticsGenerator;
 	}
-	
-	
+
 }

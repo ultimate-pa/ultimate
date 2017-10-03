@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE TraceAbstraction plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck;
@@ -33,9 +33,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Co
 import de.uni_freiburg.informatik.ultimate.util.statistics.AStatisticsType;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsElement;
 
-public enum TraceCheckerStatisticsDefinitions implements IStatisticsElement {
-	
-	
+public enum TraceCheckStatisticsDefinitions implements IStatisticsElement {
+
 	SsaConstructionTime(Long.class, AStatisticsType.sLongAddition, AStatisticsType.sTimeBeforeKey),
 
 	SatisfiabilityAnalysisTime(Long.class, AStatisticsType.sLongAddition, AStatisticsType.sTimeBeforeKey),
@@ -53,29 +52,25 @@ public enum TraceCheckerStatisticsDefinitions implements IStatisticsElement {
 	QuantifiedInterpolants(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sDataBeforeKey),
 
 	SizeOfPredicates(Long.class, AStatisticsType.sLongAddition, AStatisticsType.sDataBeforeKey),
-	
+
 	NumberOfNonLiveVariables(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sDataBeforeKey),
-	
+
 	ConjunctsInSsa(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sDataBeforeKey),
-	
+
 	ConjunctsInUnsatCore(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sDataBeforeKey),
-	
+
 	InterpolantComputations(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sDataBeforeKey),
-	
+
 	PerfectInterpolantSequences(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sDataBeforeKey),
-	
+
 	InterpolantCoveringCapability(BackwardCoveringInformation.class, CoverageAnalysis.DEFAULT_AGGREGATION,
 			AStatisticsType.sDataBeforeKey),;
-
-	
-	
 
 	private final Class<?> mClazz;
 	private final Function<Object, Function<Object, Object>> mAggr;
 	private final Function<String, Function<Object, String>> mPrettyprinter;
 
-	TraceCheckerStatisticsDefinitions(final Class<?> clazz,
-			final Function<Object, Function<Object, Object>> aggr,
+	TraceCheckStatisticsDefinitions(final Class<?> clazz, final Function<Object, Function<Object, Object>> aggr,
 			final Function<String, Function<Object, String>> prettyprinter) {
 		mClazz = clazz;
 		mAggr = aggr;

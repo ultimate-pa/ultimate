@@ -78,7 +78,7 @@ public abstract class InterpolatingTraceCheck extends TraceCheck implements IInt
 	 *            If set to false, check-sat is called after all CodeBlocks are asserted. If set to true we use Betims
 	 *            heuristic an incrementally assert CodeBlocks and do check-sat until all CodeBlocks are asserted or the
 	 *            result to a check-sat is UNSAT.
-	 * @param predicateFactory 
+	 * @param predicateFactory
 	 */
 	public InterpolatingTraceCheck(final IPredicate precondition, final IPredicate postcondition,
 			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<? extends IIcfgTransition<?>> trace,
@@ -103,11 +103,11 @@ public abstract class InterpolatingTraceCheck extends TraceCheck implements IInt
 	 * postcondition φ_n that were checked last. Interpolants are only available if the trace fulfilled its
 	 * specification. The length of the returned sequence is the length of the trace minus one.
 	 * <p>
-	 * For each two interpolants φ_i, φ_j which are similar (represented by the same term) the TraceChecker will use the
+	 * For each two interpolants φ_i, φ_j which are similar (represented by the same term) the traceCheck will use the
 	 * same predicate. This means the returned array may contain the same object several times.
 	 * <p>
-	 * Furthermore throughout the lifetime of the TraceChecker, the TraceChecker will always use one predicate object
-	 * for all interpolants which are similar (represented by the same term).
+	 * Furthermore throughout the lifetime of the {@link TraceCheck}, the traceCheck will always use one predicate
+	 * object for all interpolants which are similar (represented by the same term).
 	 * <p>
 	 *
 	 * @param interpolatedPositions
@@ -164,8 +164,8 @@ public abstract class InterpolatingTraceCheck extends TraceCheck implements IInt
 
 	@Override
 	public boolean isPerfectSequence() {
-		final int perfectSequences = (int) getTraceCheckerBenchmark()
-				.getValue(TraceCheckerStatisticsDefinitions.PerfectInterpolantSequences.toString());
+		final int perfectSequences = (int) getTraceCheckBenchmark()
+				.getValue(TraceCheckStatisticsDefinitions.PerfectInterpolantSequences.toString());
 		assert perfectSequences == 0 || perfectSequences == 1 || perfectSequences == 2;
 		return perfectSequences == 1;
 	}

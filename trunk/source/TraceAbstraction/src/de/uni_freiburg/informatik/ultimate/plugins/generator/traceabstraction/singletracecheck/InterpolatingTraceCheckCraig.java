@@ -56,7 +56,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantComputationStatus.ItpErrorStatus;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerStatisticsGenerator.InterpolantType;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckStatisticsGenerator.InterpolantType;
 
 /**
  * Uses Craig interpolation for computation of nested interpolants. Supports two algorithms. 1. Matthias' recursive
@@ -104,19 +104,19 @@ public class InterpolatingTraceCheckCraig extends InterpolatingTraceCheck {
 			InterpolantComputationStatus ics = new InterpolantComputationStatus(true, null, null);
 			try {
 				computeInterpolants(new AllIntegers(), interpolation);
-				mTraceCheckerBenchmarkGenerator.reportSequenceOfInterpolants(Arrays.asList(mInterpolants),
+				mTraceCheckBenchmarkGenerator.reportSequenceOfInterpolants(Arrays.asList(mInterpolants),
 						InterpolantType.Craig);
 				if (!innerRecursiveNestedInterpolationCall) {
-					mTraceCheckerBenchmarkGenerator.reportInterpolantComputation();
+					mTraceCheckBenchmarkGenerator.reportInterpolantComputation();
 					if (mControlLocationSequence != null) {
-						final BackwardCoveringInformation bci = TraceCheckerUtils.computeCoverageCapability(mServices,
+						final BackwardCoveringInformation bci = TraceCheckUtils.computeCoverageCapability(mServices,
 								getIpp(), mControlLocationSequence, mLogger, mPredicateUnifier);
 						final boolean perfectSequence =
 								bci.getPotentialBackwardCoverings() == bci.getSuccessfullBackwardCoverings();
 						if (perfectSequence) {
-							mTraceCheckerBenchmarkGenerator.reportPerfectInterpolantSequences();
+							mTraceCheckBenchmarkGenerator.reportPerfectInterpolantSequences();
 						}
-						mTraceCheckerBenchmarkGenerator.addBackwardCoveringInformation(bci);
+						mTraceCheckBenchmarkGenerator.addBackwardCoveringInformation(bci);
 					}
 				}
 			} catch (final UnsupportedOperationException | SMTLIBException e) {
@@ -176,7 +176,7 @@ public class InterpolatingTraceCheckCraig extends InterpolatingTraceCheck {
 	@Override
 	protected void computeInterpolants(final Set<Integer> interpolatedPositions,
 			final InterpolationTechnique interpolation) {
-		mTraceCheckerBenchmarkGenerator.start(TraceCheckerStatisticsDefinitions.InterpolantComputationTime.toString());
+		mTraceCheckBenchmarkGenerator.start(TraceCheckStatisticsDefinitions.InterpolantComputationTime.toString());
 		assert mPredicateUnifier != null;
 		assert mPredicateUnifier.isRepresentative(mPrecondition);
 		assert mPredicateUnifier.isRepresentative(mPostcondition);
@@ -200,8 +200,8 @@ public class InterpolatingTraceCheckCraig extends InterpolatingTraceCheck {
 			tce.addRunningTaskInfo(new RunningTaskInfo(getClass(), taskDescription));
 			throw tce;
 		} finally {
-			mTraceCheckerBenchmarkGenerator
-					.stop(TraceCheckerStatisticsDefinitions.InterpolantComputationTime.toString());
+			mTraceCheckBenchmarkGenerator
+					.stop(TraceCheckStatisticsDefinitions.InterpolantComputationTime.toString());
 		}
 		// TODO: remove this if relevant variables are definitely correct.
 		// assert testRelevantVars() : "bug in relevant variables";
@@ -254,12 +254,12 @@ public class InterpolatingTraceCheckCraig extends InterpolatingTraceCheck {
 		if (mInterpolants != null) {
 			throw new AssertionError("You already computed interpolants");
 		}
-		final NestedInterpolantsBuilder nib = new NestedInterpolantsBuilder(mTcSmtManager, mTraceCheckerLock,
+		final NestedInterpolantsBuilder nib = new NestedInterpolantsBuilder(mTcSmtManager, mTraceCheckLock,
 				mAAA.getAnnotatedSsa(), mNsb.getConstants2BoogieVar(), mPredicateUnifier, mPredicateFactory,
 				interpolatedPositions, true, mServices, this, mCfgManagedScript, mInstantiateArrayExt,
 				mSimplificationTechnique, mXnfConversionTechnique);
 		mInterpolants = nib.getNestedInterpolants();
-		assert TraceCheckerUtils.checkInterpolantsInductivityForward(Arrays.asList(mInterpolants), mTrace,
+		assert TraceCheckUtils.checkInterpolantsInductivityForward(Arrays.asList(mInterpolants), mTrace,
 				mPrecondition, mPostcondition, mPendingContexts, "Craig", mCsToolkit, mLogger,
 				mCfgManagedScript) : "invalid Hoare triple in tree interpolants";
 		assert mInterpolants != null;
@@ -285,7 +285,7 @@ public class InterpolatingTraceCheckCraig extends InterpolatingTraceCheck {
 		final Set<Integer> newInterpolatedPositions =
 				interpolatedPositionsForSubtraces(interpolatedPositions, nonPendingCallPositions);
 
-		final NestedInterpolantsBuilder nib = new NestedInterpolantsBuilder(mTcSmtManager, mTraceCheckerLock,
+		final NestedInterpolantsBuilder nib = new NestedInterpolantsBuilder(mTcSmtManager, mTraceCheckLock,
 				mAAA.getAnnotatedSsa(), mNsb.getConstants2BoogieVar(), mPredicateUnifier, mPredicateFactory,
 				newInterpolatedPositions, false, mServices, this, mCfgManagedScript, mInstantiateArrayExt,
 				mSimplificationTechnique, mXnfConversionTechnique);
@@ -336,7 +336,7 @@ public class InterpolatingTraceCheckCraig extends InterpolatingTraceCheck {
 			}
 
 			// Compute interpolants for subsequence and add them to interpolants
-			// computed by this TraceChecker
+			// computed by this traceCheck
 			final InterpolatingTraceCheckCraig tc =
 					new InterpolatingTraceCheckCraig(precondition, interpolantAtReturnPosition, pendingContexts,
 							subtrace, mCsToolkit, mAssertCodeBlocksIncrementally, mServices, false, mPredicateFactory,
@@ -364,7 +364,7 @@ public class InterpolatingTraceCheckCraig extends InterpolatingTraceCheck {
 		}
 
 		// if (mInterpolants != null) {
-		assert TraceCheckerUtils.checkInterpolantsInductivityForward(Arrays.asList(mInterpolants), mTrace,
+		assert TraceCheckUtils.checkInterpolantsInductivityForward(Arrays.asList(mInterpolants), mTrace,
 				mPrecondition, mPostcondition, mPendingContexts, "Craig", mCsToolkit, mLogger,
 				mCfgManagedScript) : "invalid Hoare triple in nested interpolants";
 		// }

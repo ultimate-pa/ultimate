@@ -215,10 +215,9 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 	private final BuchiComplementationConstruction mComplementationConstruction;
 
 	/**
-	 * Construct a termination proof in the form that is required for the
-	 * Termination Competition.
-	 * http://termination-portal.org/wiki/Termination_Competition
-	 * This proof is finally print in the console output and can be huge.
+	 * Construct a termination proof in the form that is required for the Termination Competition.
+	 * http://termination-portal.org/wiki/Termination_Competition This proof is finally print in the console output and
+	 * can be huge.
 	 */
 	private final boolean mConstructTermcompProof;
 	private final TermcompProofBenchmark mTermcompProofBenchmark;
@@ -239,7 +238,7 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 
 	private ToolchainCanceledException mToolchainCancelledException;
 	private final RankVarConstructor mRankVarConstructor;
-	
+
 	private final RefinementStrategyFactory<LETTER> mRefinementStrategyFactory;
 	private final TaskIdentifier mTaskIdentifier;
 
@@ -312,8 +311,8 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 			mTermcompProofBenchmark = null;
 		}
 
-		final NcsbImplementation ncsbImplemntation = baPref
-				.getEnum(BuchiAutomizerPreferenceInitializer.LABEL_NCSB_IMPLEMENTATION, NcsbImplementation.class);
+		final NcsbImplementation ncsbImplemntation =
+				baPref.getEnum(BuchiAutomizerPreferenceInitializer.LABEL_NCSB_IMPLEMENTATION, NcsbImplementation.class);
 		mRefineBuchi = new RefineBuchi<>(mIcfg, mCsToolkitWithRankVars, predicateFactory, mPref.dumpAutomata(),
 				mDifference, mDefaultStateFactory, mStateFactoryForRefinement, mUseDoubleDeckers, mPref.dumpPath(),
 				mPref.getAutomataFormat(), mInterpolation, mServices, mLogger, mSimplificationTechnique,
@@ -322,18 +321,19 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 				baPref.getEnum(BuchiAutomizerPreferenceInitializer.LABEL_BIA_CONSTRUCTION_STRATEGY,
 						BuchiInterpolantAutomatonConstructionStrategy.class);
 		mBiaConstructionStyleSequence = biaConstructionStrategy.getBiaConstrucionStyleSequence(baPref);
-		
+
 		{
 			final PathProgramCache<LETTER> pathProgramCache = new PathProgramCache<>(mLogger);
 			final CegarAbsIntRunner<LETTER> absIntRunner = new CegarAbsIntRunner<>(services, mBenchmarkGenerator, mIcfg,
 					mSimplificationTechnique, mXnfConversionTechnique, mCsToolkitWithoutRankVars, pathProgramCache);
-			final InterpolantAutomatonBuilderFactory<LETTER> mInterpolantAutomatonBuilderFactory = new InterpolantAutomatonBuilderFactory<>(
-					mServices, mCsToolkitWithoutRankVars, mDefaultStateFactory, mIcfg, absIntRunner, taPrefs,
-					mInterpolation, mPref.interpolantAutomaton(), mBenchmarkGenerator);
-			final TaCheckAndRefinementPreferences<LETTER> taCheckAndRefinementPrefs = new TaCheckAndRefinementPreferences<>(
-					mServices, mPref, mInterpolation, mSimplificationTechnique, mXnfConversionTechnique,
-					mCsToolkitWithoutRankVars, mPredicateFactory, mIcfg, mToolchainStorage,
-					mInterpolantAutomatonBuilderFactory);
+			final InterpolantAutomatonBuilderFactory<LETTER> mInterpolantAutomatonBuilderFactory =
+					new InterpolantAutomatonBuilderFactory<>(mServices, mCsToolkitWithoutRankVars, mDefaultStateFactory,
+							mIcfg, absIntRunner, taPrefs, mInterpolation, mPref.interpolantAutomaton(),
+							mBenchmarkGenerator);
+			final TaCheckAndRefinementPreferences<LETTER> taCheckAndRefinementPrefs =
+					new TaCheckAndRefinementPreferences<>(mServices, mPref, mInterpolation, mSimplificationTechnique,
+							mXnfConversionTechnique, mCsToolkitWithoutRankVars, mPredicateFactory, mIcfg,
+							mToolchainStorage, mInterpolantAutomatonBuilderFactory);
 			mRefinementStrategyFactory = new RefinementStrategyFactory<>(mLogger, mServices, mToolchainStorage, mPref,
 					taCheckAndRefinementPrefs, absIntRunner, mIcfg, mPredicateFactory, pathProgramCache);
 		}
@@ -427,7 +427,8 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 					// if result was unknown, then try again but this time add one
 					// iteration of the loop to the stem.
 					// This allows us to verify Vincent's coolant examples
-					final TaskIdentifier unwindingTaskIdentifier = new SubtaskAdditionalLoopUnwinding(taskIdentifier, 1);
+					final TaskIdentifier unwindingTaskIdentifier =
+							new SubtaskAdditionalLoopUnwinding(taskIdentifier, 1);
 					mLogger.info("Result of lasso check was UNKNOWN. I will concatenate loop to stem and try again.");
 					final NestedRun<LETTER, IPredicate> newStem =
 							mCounterexample.getStem().concatenate(mCounterexample.getLoop());
@@ -645,18 +646,16 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 		// lassoChecker.getBinaryStatePredicateManager().getUnseededVariable(),
 		// lassoChecker.getBinaryStatePredicateManager().getOldRankVariables(),
 		// mRootAnnot.getCfgSmtToolkit().getModifiableGlobals(), mRootAnnot.getBoogie2SMT());
-		
+
 		/*
-		 * Iterate through a sequence of BuchiInterpolantAutomatonConstructionStyles
-		 * Each construction style defines how an interpolant automaton is constructed.
-		 * Constructions that provide simpler (less nondeterministic) automata should come first.
-		 * In each iteration we compute the difference which causes an on-demand construciton of
-		 * the automaton and evaluate the automaton afterwards.
-		 * If the automaton is "good" we keep the difference and continued with the termination
-		 * analysis. If the automaton is "bad" we construct the next automaton.
-		 * Currently an automaton is "good" iff the counterexample of the current CEGAR iteration
-		 * is accepted by the automaton (otherwise the counterexample would not be excluded and
-		 * we might get it again in the next iteration of the CEGAR loop).
+		 * Iterate through a sequence of BuchiInterpolantAutomatonConstructionStyles Each construction style defines how
+		 * an interpolant automaton is constructed. Constructions that provide simpler (less nondeterministic) automata
+		 * should come first. In each iteration we compute the difference which causes an on-demand construciton of the
+		 * automaton and evaluate the automaton afterwards. If the automaton is "good" we keep the difference and
+		 * continued with the termination analysis. If the automaton is "bad" we construct the next automaton. Currently
+		 * an automaton is "good" iff the counterexample of the current CEGAR iteration is accepted by the automaton
+		 * (otherwise the counterexample would not be excluded and we might get it again in the next iteration of the
+		 * CEGAR loop).
 		 * 
 		 */
 		for (final BuchiInterpolantAutomatonConstructionStyle constructionStyle : mBiaConstructionStyleSequence) {
@@ -664,9 +663,8 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 			INestedWordAutomaton<LETTER, IPredicate> newAbstraction = null;
 			try {
 				newAbstraction = mRefineBuchi.refineBuchi(mAbstraction, mCounterexample, mIteration, constructionStyle,
-						lassoCheck.getBinaryStatePredicateManager(),
-						mCsToolkitWithRankVars.getModifiableGlobalsTable(), mInterpolation, mBenchmarkGenerator,
-						mComplementationConstruction);
+						lassoCheck.getBinaryStatePredicateManager(), mCsToolkitWithRankVars.getModifiableGlobalsTable(),
+						mInterpolation, mBenchmarkGenerator, mComplementationConstruction);
 			} catch (final AutomataOperationCanceledException e) {
 				mBenchmarkGenerator.stop(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
 				final RunningTaskInfo rti = new RunningTaskInfo(getClass(), "applying stage " + stage);
@@ -713,12 +711,14 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 			return true;
 		}
 		mCounterexample = ec.getAcceptingNestedLassoRun();
-		
-		final HistogramOfIterable<LETTER> traceHistogramStem = new HistogramOfIterable<>(mCounterexample.getStem().getWord());
+
+		final HistogramOfIterable<LETTER> traceHistogramStem =
+				new HistogramOfIterable<>(mCounterexample.getStem().getWord());
 		mBenchmarkGenerator.reportTraceHistogramMaximum(traceHistogramStem.getMax());
-		final HistogramOfIterable<LETTER> traceHistogramLoop = new HistogramOfIterable<>(mCounterexample.getLoop().getWord());
+		final HistogramOfIterable<LETTER> traceHistogramLoop =
+				new HistogramOfIterable<>(mCounterexample.getLoop().getWord());
 		mBenchmarkGenerator.reportTraceHistogramMaximum(traceHistogramLoop.getMax());
-		
+
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Counterexample stem histogram " + traceHistogramStem);
 			mLogger.info("Counterexample loop histogram " + traceHistogramLoop);
@@ -753,29 +753,23 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 		}
 	}
 
-	
 	/**
-	 * Do a refinement (i.e., replace mAbstraction by a new difference) for the 
-	 * case where we detected that a finite prefix of the lasso-shaped
-	 * counterexample is infeasible.
-	 * In this case the module (i.e., the subtrahend of the difference) will
-	 * be a weak Büchi automaton (Büchi automaton where set of final states is
-	 * a trap). In fact, the module will have only a single accepting state
-	 * that is labeled with "false" and that has a self-loop for every letter.
+	 * Do a refinement (i.e., replace mAbstraction by a new difference) for the case where we detected that a finite
+	 * prefix of the lasso-shaped counterexample is infeasible. In this case the module (i.e., the subtrahend of the
+	 * difference) will be a weak Büchi automaton (Büchi automaton where set of final states is a trap). In fact, the
+	 * module will have only a single accepting state that is labeled with "false" and that has a self-loop for every
+	 * letter.
 	 * 
-	 * In this case we construct the module with the same algorithm that we
-	 * use in our safety analysis (there the Floyd-Hoare automata also have a
-	 * single accepting state that is labeled with "false" and that has a 
-	 * self-loop for every letter).
-	 * "Coincidentally" is holds that for these kind of automata the 
-	 * powerset-based complementation of finite automata is also sound for 
-	 * Büchi automata, hence we use a difference operation that is based on
-	 * this rather inexpensive complementation algorithm.
-	 *  
+	 * In this case we construct the module with the same algorithm that we use in our safety analysis (there the
+	 * Floyd-Hoare automata also have a single accepting state that is labeled with "false" and that has a self-loop for
+	 * every letter). "Coincidentally" is holds that for these kind of automata the powerset-based complementation of
+	 * finite automata is also sound for Büchi automata, hence we use a difference operation that is based on this
+	 * rather inexpensive complementation algorithm.
+	 * 
 	 */
 	private void refineFinite(final LassoCheck<LETTER> lassoCheck) throws AutomataOperationCanceledException {
 		mBenchmarkGenerator.start(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
-		final TraceAbstractionRefinementEngine traceChecker;
+		final TraceAbstractionRefinementEngine traceCheck;
 		final NestedRun<LETTER, IPredicate> run;
 		final LassoCheck<LETTER>.LassoCheckResult lcr = lassoCheck.getLassoCheckResult();
 		if (lassoCheck.getLassoCheckResult().getStemFeasibility() == TraceCheckResult.INFEASIBLE) {
@@ -784,33 +778,33 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 			final int stemSize = mCounterexample.getStem().getLength();
 			final int loopSize = mCounterexample.getLoop().getLength();
 			if (lcr.getLoopFeasibility() == TraceCheckResult.INFEASIBLE && loopSize <= stemSize) {
-				traceChecker = lassoCheck.getLoopCheck();
+				traceCheck = lassoCheck.getLoopCheck();
 				run = mCounterexample.getLoop();
 			} else {
-				traceChecker = lassoCheck.getStemCheck();
+				traceCheck = lassoCheck.getStemCheck();
 				run = mCounterexample.getStem();
 			}
 		} else if (lcr.getLoopFeasibility() == TraceCheckResult.INFEASIBLE) {
-			traceChecker = lassoCheck.getLoopCheck();
+			traceCheck = lassoCheck.getLoopCheck();
 			run = mCounterexample.getLoop();
 		} else {
 			assert lcr.getConcatFeasibility() == TraceCheckResult.INFEASIBLE;
-			traceChecker = lassoCheck.getConcatCheck();
+			traceCheck = lassoCheck.getConcatCheck();
 			run = lassoCheck.getConcatenatedCounterexample();
 		}
-//		final BackwardCoveringInformation bci =
-//				TraceCheckerUtils.computeCoverageCapability(mServices, traceChecker, mLogger);
-//		mBenchmarkGenerator.addBackwardCoveringInformationFinite(bci);
+		// final BackwardCoveringInformation bci =
+		// TraceCheckUtils.computeCoverageCapability(mServices, traceCheck, mLogger);
+		// mBenchmarkGenerator.addBackwardCoveringInformationFinite(bci);
 
-//		constructInterpolantAutomaton(traceChecker, run);
-		mInterpolAutomaton = traceChecker.getInfeasibilityProof();
+		// constructInterpolantAutomaton(traceCheck, run);
+		mInterpolAutomaton = traceCheck.getInfeasibilityProof();
 
 		final IHoareTripleChecker htc = TraceAbstractionUtils.constructEfficientHoareTripleCheckerWithCaching(mServices,
-				HoareTripleChecks.INCREMENTAL, mCsToolkitWithRankVars, traceChecker.getPredicateUnifier());
+				HoareTripleChecks.INCREMENTAL, mCsToolkitWithRankVars, traceCheck.getPredicateUnifier());
 
 		final DeterministicInterpolantAutomaton<LETTER> determinized =
 				new DeterministicInterpolantAutomaton<>(mServices, mCsToolkitWithRankVars, htc, mInterpolAutomaton,
-						traceChecker.getPredicateUnifier(), false, false);
+						traceCheck.getPredicateUnifier(), false, false);
 		final PowersetDeterminizer<LETTER, IPredicate> psd =
 				new PowersetDeterminizer<>(determinized, true, mDefaultStateFactory);
 		Difference<LETTER, IPredicate> diff = null;
@@ -845,29 +839,29 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 		mBenchmarkGenerator.stop(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
 	}
 
-//	protected void constructInterpolantAutomaton(final InterpolatingTraceChecker traceChecker,
-//			final NestedRun<LETTER, IPredicate> run) throws AutomataOperationCanceledException {
-//		final CanonicalInterpolantAutomatonBuilder<? extends Object, LETTER> iab =
-//				new CanonicalInterpolantAutomatonBuilder<>(mServices, traceChecker.getIpp(), run.getStateSequence(),
-//						new VpAlphabet<>(mAbstraction), mCsToolkitWithRankVars, mAbstraction.getStateFactory(),
-//						mLogger, traceChecker.getPredicateUnifier(), run.getWord());
-//		iab.analyze();
-//		mInterpolAutomaton = iab.getResult();
-//
-//		try {
-//			assert new Accepts<>(new AutomataLibraryServices(mServices), mInterpolAutomaton, run.getWord())
-//					.getResult() : "Interpolant automaton broken!";
-//		} catch (final AutomataOperationCanceledException e) {
-//			throw new ToolchainCanceledException(e, new RunningTaskInfo(getClass(), "checking acceptance"));
-//		} catch (final AutomataLibraryException e) {
-//			throw new AssertionError(e);
-//		}
-//		// assert((new BuchiAccepts<LETTER, IPredicate>(mInterpolAutomaton,
-//		// mCounterexample.getNestedLassoWord())).getResult()) :
-//		// "Interpolant automaton broken!";
-//		assert new InductivityCheck<>(mServices, mInterpolAutomaton, false, true,
-//				new IncrementalHoareTripleChecker(mCsToolkitWithRankVars)).getResult();
-//	}
+	// protected void constructInterpolantAutomaton(final InterpolatingTraceCheck traceCheck,
+	// final NestedRun<LETTER, IPredicate> run) throws AutomataOperationCanceledException {
+	// final CanonicalInterpolantAutomatonBuilder<? extends Object, LETTER> iab =
+	// new CanonicalInterpolantAutomatonBuilder<>(mServices, traceCheck.getIpp(), run.getStateSequence(),
+	// new VpAlphabet<>(mAbstraction), mCsToolkitWithRankVars, mAbstraction.getStateFactory(),
+	// mLogger, traceCheck.getPredicateUnifier(), run.getWord());
+	// iab.analyze();
+	// mInterpolAutomaton = iab.getResult();
+	//
+	// try {
+	// assert new Accepts<>(new AutomataLibraryServices(mServices), mInterpolAutomaton, run.getWord())
+	// .getResult() : "Interpolant automaton broken!";
+	// } catch (final AutomataOperationCanceledException e) {
+	// throw new ToolchainCanceledException(e, new RunningTaskInfo(getClass(), "checking acceptance"));
+	// } catch (final AutomataLibraryException e) {
+	// throw new AssertionError(e);
+	// }
+	// // assert((new BuchiAccepts<LETTER, IPredicate>(mInterpolAutomaton,
+	// // mCounterexample.getNestedLassoWord())).getResult()) :
+	// // "Interpolant automaton broken!";
+	// assert new InductivityCheck<>(mServices, mInterpolAutomaton, false, true,
+	// new IncrementalHoareTripleChecker(mCsToolkitWithRankVars)).getResult();
+	// }
 
 	private TerminationArgumentResult<IIcfgElement, Term> constructTAResult(
 			final TerminationArgument terminationArgument, final IcfgLocation honda, final NestedWord<LETTER> stem,
@@ -930,13 +924,12 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 		final IPredicate someState = states.iterator().next();
 		return someState instanceof ISLPredicate;
 	}
-	
-	
-	
+
 	private class SubtaskAdditionalLoopUnwinding extends TaskIdentifier {
 		private final int mAdditionaUnwindings;
-		
-		public SubtaskAdditionalLoopUnwinding(final TaskIdentifier parentTaskIdentifier, final int additionaUnwindings) {
+
+		public SubtaskAdditionalLoopUnwinding(final TaskIdentifier parentTaskIdentifier,
+				final int additionaUnwindings) {
 			super(parentTaskIdentifier);
 			mAdditionaUnwindings = additionaUnwindings;
 		}
@@ -945,7 +938,7 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 		protected String getSubtaskIdentifier() {
 			return mAdditionaUnwindings + "additionalUnwindings";
 		}
-		
+
 	}
 
 }

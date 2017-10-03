@@ -167,11 +167,11 @@ public final class TraceAbstractionRefinementEngine<LETTER>
 	private LBool checkFeasibility() {
 		while (true) {
 			// NOTE: Do not convert to method reference!
-			final LBool feasibility = mStrategy.getTraceChecker().isCorrect();
+			final LBool feasibility = mStrategy.getTraceCheck().isCorrect();
 			Objects.requireNonNull(feasibility);
 
 			if (feasibility == LBool.UNKNOWN) {
-				final TraceCheckReasonUnknown tcra = mStrategy.getTraceChecker().getTraceCheckReasonUnknown();
+				final TraceCheckReasonUnknown tcra = mStrategy.getTraceCheck().getTraceCheckReasonUnknown();
 				if (tcra.getException() != null) {
 					final ExceptionHandlingCategory exceptionCategory = tcra.getExceptionHandlingCategory();
 					switch (exceptionCategory) {
@@ -200,10 +200,10 @@ public final class TraceAbstractionRefinementEngine<LETTER>
 					}
 				}
 
-				if (mStrategy.hasNextTraceChecker()) {
+				if (mStrategy.hasNextTraceCheck()) {
 					// feasibility check failed, try next combination in the strategy
 					mLogger.info("Advancing trace checker");
-					mStrategy.nextTraceChecker();
+					mStrategy.nextTraceCheck();
 				} else {
 					return feasibility;
 				}
@@ -214,9 +214,9 @@ public final class TraceAbstractionRefinementEngine<LETTER>
 	}
 
 	private LBool handleFeasibleCase() {
-		if (mStrategy.getTraceChecker().providesRcfgProgramExecution()) {
+		if (mStrategy.getTraceCheck().providesRcfgProgramExecution()) {
 			mProvidesIcfgProgramExecution = true;
-			mIcfgProgramExecution = mStrategy.getTraceChecker().getRcfgProgramExecution();
+			mIcfgProgramExecution = mStrategy.getTraceCheck().getRcfgProgramExecution();
 		}
 		return LBool.SAT;
 	}
@@ -312,7 +312,7 @@ public final class TraceAbstractionRefinementEngine<LETTER>
 		}
 
 		if (interpolantGenerator instanceof TraceCheckSpWp) {
-			handleTraceCheckerSpWpCase(perfectIpps, imperfectIpps, (TraceCheckSpWp) interpolantGenerator);
+			handleTraceCheckSpWpCase(perfectIpps, imperfectIpps, (TraceCheckSpWp) interpolantGenerator);
 			return;
 		}
 
@@ -332,32 +332,32 @@ public final class TraceAbstractionRefinementEngine<LETTER>
 	 * <li>there are two sequences of interpolants.</li>
 	 * </ol>
 	 */
-	private static void handleTraceCheckerSpWpCase(final List<TracePredicates> perfectIpps,
-			final List<TracePredicates> imperfectIpps, final TraceCheckSpWp traceCheckerSpWp) {
-		if (traceCheckerSpWp.wasForwardPredicateComputationRequested()) {
-			addForwardPredicates(traceCheckerSpWp, perfectIpps, imperfectIpps);
+	private static void handleTraceCheckSpWpCase(final List<TracePredicates> perfectIpps,
+			final List<TracePredicates> imperfectIpps, final TraceCheckSpWp traceCheckSpWp) {
+		if (traceCheckSpWp.wasForwardPredicateComputationRequested()) {
+			addForwardPredicates(traceCheckSpWp, perfectIpps, imperfectIpps);
 		}
-		if (traceCheckerSpWp.wasBackwardSequenceConstructed()) {
-			addBackwardPredicates(traceCheckerSpWp, perfectIpps, imperfectIpps);
+		if (traceCheckSpWp.wasBackwardSequenceConstructed()) {
+			addBackwardPredicates(traceCheckSpWp, perfectIpps, imperfectIpps);
 		}
 	}
 
-	private static void addForwardPredicates(final TraceCheckSpWp traceCheckerSpWp,
+	private static void addForwardPredicates(final TraceCheckSpWp traceCheckSpWp,
 			final List<TracePredicates> perfectIpps, final List<TracePredicates> imperfectIpps) {
-		final TracePredicates interpolants = traceCheckerSpWp.getForwardIpp();
+		final TracePredicates interpolants = traceCheckSpWp.getForwardIpp();
 		assert interpolants != null;
-		if (traceCheckerSpWp.isForwardSequencePerfect()) {
+		if (traceCheckSpWp.isForwardSequencePerfect()) {
 			perfectIpps.add(interpolants);
 		} else {
 			imperfectIpps.add(interpolants);
 		}
 	}
 
-	private static void addBackwardPredicates(final TraceCheckSpWp traceCheckerSpWp,
+	private static void addBackwardPredicates(final TraceCheckSpWp traceCheckSpWp,
 			final List<TracePredicates> perfectIpps, final List<TracePredicates> imperfectIpps) {
-		final TracePredicates interpolants = traceCheckerSpWp.getBackwardIpp();
+		final TracePredicates interpolants = traceCheckSpWp.getBackwardIpp();
 		assert interpolants != null;
-		if (traceCheckerSpWp.isBackwardSequencePerfect()) {
+		if (traceCheckSpWp.isBackwardSequencePerfect()) {
 			perfectIpps.add(interpolants);
 		} else {
 			imperfectIpps.add(interpolants);

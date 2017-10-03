@@ -66,8 +66,8 @@ import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
  *
  * @author Matthias Heizmann
  */
-public final class TraceCheckerUtils {
-	private TraceCheckerUtils() {
+public final class TraceCheckUtils {
+	private TraceCheckUtils() {
 		// utility class
 	}
 
@@ -102,19 +102,19 @@ public final class TraceCheckerUtils {
 	 *
 	 * @param services
 	 *            Ultimate services
-	 * @param traceChecker
+	 * @param traceCheck
 	 *            trace checker
 	 * @param logger
 	 *            logger
 	 * @return backward covering information
 	 */
 	public static BackwardCoveringInformation computeCoverageCapability(final IUltimateServiceProvider services,
-			final IInterpolantGenerator traceChecker, final ILogger logger) {
+			final IInterpolantGenerator traceCheck, final ILogger logger) {
 		@SuppressWarnings("unchecked")
-		final NestedWord<CodeBlock> trace = (NestedWord<CodeBlock>) NestedWord.nestedWord(traceChecker.getTrace());
+		final NestedWord<CodeBlock> trace = (NestedWord<CodeBlock>) NestedWord.nestedWord(traceCheck.getTrace());
 		final List<IcfgLocation> programPoints = getSequenceOfProgramPoints(trace);
-		return computeCoverageCapability(services, traceChecker.getIpp(), programPoints, logger,
-				traceChecker.getPredicateUnifier());
+		return computeCoverageCapability(services, traceCheck.getIpp(), programPoints, logger,
+				traceCheck.getPredicateUnifier());
 	}
 
 	public static <CL> BackwardCoveringInformation computeCoverageCapability(final IUltimateServiceProvider services,

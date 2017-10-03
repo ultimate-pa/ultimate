@@ -35,7 +35,7 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 public enum RefinementEngineStatisticsDefinitions implements IStatisticsElement {
 	
 	
-	TraceCheckerStatistics(StatisticsData.class, AStatisticsType.sStatisticsDataAggregation,
+	TraceCheckStatistics(StatisticsData.class, AStatisticsType.sStatisticsDataAggregation,
 			AStatisticsType.sKeyBeforeData),
 	
 	InvariantSynthesisStatistics(StatisticsData.class, AStatisticsType.sStatisticsDataAggregation,

@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.in
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerUtils;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckUtils;
 
 /**
  * {@link IRefinementStrategy} that first tries either {@code MathSat} for floating points or {@code CVC4} in bitvector
@@ -70,7 +70,7 @@ public class WolfRefinementStrategy<LETTER extends IIcfgTransition<?>>
 	protected Iterator<Track> initializeInterpolationTechniquesList() {
 		final List<Track> list = new ArrayList<>(3);
 		final TermClassifier tc =
-				TraceCheckerUtils.classifyTermsInTrace(mCounterexample.getWord(), mCsToolkit.getAxioms());
+				TraceCheckUtils.classifyTermsInTrace(mCounterexample.getWord(), mCsToolkit.getAxioms());
 		if (RefinementStrategyUtils.hasNoFloats(tc)) {
 			list.add(Track.CVC4_FPBP);
 		} else if (RefinementStrategyUtils.hasNoQuantifiersNoBitvectorExtensions(tc)) {

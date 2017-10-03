@@ -23,12 +23,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  * </ol>
  * In the following class documentation this combination is just called "combination".
  * <p>
- * The contract is that if {@link #hasNextTraceChecker()} (resp. {@link #hasNextInterpolantGenerator(List, List)})
- * returns {@code true}, then {@link #nextTraceChecker()} (resp. {@link #nextInterpolantGenerator()}) advances the
+ * The contract is that if {@link #hasNextTraceCheck()} (resp. {@link #hasNextInterpolantGenerator(List, List)})
+ * returns {@code true}, then {@link #nextTraceCheck()} (resp. {@link #nextInterpolantGenerator()}) advances the
  * respective component (but the strategy may also return {@code false} to enforce early termination).<br>
- * Between two calls to {@link #nextTraceChecker()} (resp. {@link #nextInterpolantGenerator()}) the respective getter (
- * {@link #getTraceChecker()} resp. {@link IRefinementStrategy#getInterpolantGenerator()}) always returns the same
- * object and {@link #hasNextTraceChecker()} (resp. {@link #hasNextInterpolantGenerator(List, List)}) always returns the
+ * Between two calls to {@link #nextTraceCheck()} (resp. {@link #nextInterpolantGenerator()}) the respective getter (
+ * {@link #getTraceCheck()} resp. {@link IRefinementStrategy#getInterpolantGenerator()}) always returns the same
+ * object and {@link #hasNextTraceCheck()} (resp. {@link #hasNextInterpolantGenerator(List, List)}) always returns the
  * same answer. However, for instance by a call to {@link #nextInterpolantGenerator()}, the {@link TraceCheck} may
  * change. A user should hence not store these objects temporarily.
  *
@@ -58,19 +58,19 @@ public interface IRefinementStrategy<LETTER> {
 	 *
 	 * @return {@code true} iff there is another {@link TraceCheck} available and should be used
 	 */
-	boolean hasNextTraceChecker();
+	boolean hasNextTraceCheck();
 
 	/**
 	 * Changes the {@link TraceCheck}.<br>
 	 * Throws a {@link NoSuchElementException} if there is no next {@link TraceCheck}; use
-	 * {@link #hasNextTraceChecker()} to check this.
+	 * {@link #hasNextTraceCheck()} to check this.
 	 */
-	void nextTraceChecker();
+	void nextTraceCheck();
 
 	/**
 	 * @return The trace checker of the current combination.
 	 */
-	TraceCheck getTraceChecker();
+	TraceCheck getTraceCheck();
 
 	/**
 	 * A user should use this method whenever new interpolants have been computed (or the computation has failed). The

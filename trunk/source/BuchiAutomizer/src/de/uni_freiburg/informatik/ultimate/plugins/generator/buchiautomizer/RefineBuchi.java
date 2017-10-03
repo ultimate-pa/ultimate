@@ -88,7 +88,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceCheckCraig;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckSpWp;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerUtils;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckUtils;
 
 public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 
@@ -179,31 +179,31 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 				bspm.getStemPrecondition(), bspm.getHondaPredicate(), bspm.getRankEqAndSi(),
 				bspm.getStemPostcondition(), bspm.getRankDecreaseAndBound(), bspm.getSiConjunction());
 		IPredicate[] stemInterpolants;
-		InterpolatingTraceCheck traceChecker;
+		InterpolatingTraceCheck traceCheck;
 		if (BuchiCegarLoop.isEmptyStem(mCounterexample)) {
 			stemInterpolants = null;
 		} else {
 
-			traceChecker = constructTraceChecker(bspm.getStemPrecondition(), bspm.getStemPostcondition(), stem,
+			traceCheck = constructTraceCheck(bspm.getStemPrecondition(), bspm.getStemPostcondition(), stem,
 					mCsToolkit, pu, mInterpolation);
-			final LBool stemCheck = traceChecker.isCorrect();
+			final LBool stemCheck = traceCheck.isCorrect();
 			if (stemCheck == LBool.UNSAT) {
-				stemInterpolants = traceChecker.getInterpolants();
+				stemInterpolants = traceCheck.getInterpolants();
 			} else {
 				throw new AssertionError("incorrect predicates - stem");
 			}
 		}
 
-		traceChecker = constructTraceChecker(bspm.getRankEqAndSi(), bspm.getHondaPredicate(), loop, mCsToolkit, pu,
+		traceCheck = constructTraceCheck(bspm.getRankEqAndSi(), bspm.getHondaPredicate(), loop, mCsToolkit, pu,
 				mInterpolation);
-		final LBool loopCheck = traceChecker.isCorrect();
+		final LBool loopCheck = traceCheck.isCorrect();
 		IPredicate[] loopInterpolants;
 		if (loopCheck == LBool.UNSAT) {
-			loopInterpolants = traceChecker.getInterpolants();
+			loopInterpolants = traceCheck.getInterpolants();
 		} else {
 			throw new AssertionError("incorrect predicates - loop");
 		}
-		mBci = TraceCheckerUtils.computeCoverageCapability(mServices, traceChecker, mLogger);
+		mBci = TraceCheckUtils.computeCoverageCapability(mServices, traceCheck, mLogger);
 
 		NestedWordAutomaton<LETTER, IPredicate> mInterpolAutomaton =
 				constructBuchiInterpolantAutomaton(bspm.getStemPrecondition(), stem, stemInterpolants,
@@ -486,7 +486,7 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 		return newAbstraction;
 	}
 
-	private InterpolatingTraceCheck constructTraceChecker(final IPredicate precond, final IPredicate postcond,
+	private InterpolatingTraceCheck constructTraceCheck(final IPredicate precond, final IPredicate postcond,
 			final NestedWord<LETTER> word, final CfgSmtToolkit csToolkit, final PredicateUnifier pu,
 			final InterpolationTechnique interpolation) {
 		final InterpolatingTraceCheck itc;
