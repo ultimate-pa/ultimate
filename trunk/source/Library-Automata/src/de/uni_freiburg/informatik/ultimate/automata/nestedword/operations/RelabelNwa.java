@@ -24,21 +24,22 @@
  * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.automata.nestedword;
+package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 
-import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.SetOfStates;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingTransitionProvider;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IRelabelStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
-import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.util.ConstructionCache;
 import de.uni_freiburg.informatik.ultimate.util.ConstructionCache.IValueConstruction;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.TransformIterator;
@@ -51,8 +52,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Transfor
  * @param <STATE>
  *            Type of objects which can be used as states.
  */
-public class NwaRelabeledAutomaton<LETTER, STATE> implements INwaOutgoingTransitionProvider<LETTER, STATE> {
+public class RelabelNwa<LETTER, STATE> implements INwaOutgoingTransitionProvider<LETTER, STATE> {
 	
+	private final IRelabelStateFactory<STATE> mStateFactory;
 	private final INestedWordAutomaton<LETTER, STATE> mInput;
 	private final ConstructionCache<STATE, STATE> mNewStateCache;
 	private final Map<STATE, STATE> mNewState2OldState;
@@ -63,15 +65,18 @@ public class NwaRelabeledAutomaton<LETTER, STATE> implements INwaOutgoingTransit
 	private final Function<OutgoingCallTransition<LETTER, STATE>, OutgoingCallTransition<LETTER, STATE>> mCallTransitionTransformer;
 	private final Function<OutgoingReturnTransition<LETTER, STATE>, OutgoingReturnTransition<LETTER, STATE>> mReturnTransitionTransformer;
 
-	public NwaRelabeledAutomaton(final INestedWordAutomaton<LETTER, STATE> input) {
+	public RelabelNwa(final IRelabelStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> input) {
 		super();
+		mStateFactory = stateFactory;
 		mInput = input;
 		mNewState2OldState = new HashMap<>();
 		final IValueConstruction<STATE, STATE> valueConstruction = new IValueConstruction<STATE, STATE>() {
+			int mStateCounter = 0;
 
 			@Override
 			public STATE constructValue(final STATE oldState) {
-				final STATE newState = null;
+				final STATE newState = stateFactory.relabel(oldState, mStateCounter);
+				mStateCounter++;
 				final STATE oldValue = mNewState2OldState.put(newState, oldState);
 				if (oldValue != null) {
 					throw new AssertionError("double state " + oldValue);
@@ -90,7 +95,7 @@ public class NwaRelabeledAutomaton<LETTER, STATE> implements INwaOutgoingTransit
 				mNewStateCache.getOrConstruct(x.getHierPred()), x.getLetter(),
 				mNewStateCache.getOrConstruct(x.getSucc())));
 		
-		final STATE newEmptyStackState = null;
+		final STATE newEmptyStackState = stateFactory.createEmptyStackState();
 		mSetOfStates = new SetOfStates<STATE>(newEmptyStackState);
 		for (final STATE oldInitialState : mInput.getInitialStates()) {
 			final STATE newInitialState = mNewStateCache.getOrConstruct(oldInitialState);
@@ -108,7 +113,7 @@ public class NwaRelabeledAutomaton<LETTER, STATE> implements INwaOutgoingTransit
 
 	@Override
 	public IStateFactory<STATE> getStateFactory() {
-		return mInput.getStateFactory();
+		return mStateFactory;
 	}
 
 	@Override
@@ -119,13 +124,6 @@ public class NwaRelabeledAutomaton<LETTER, STATE> implements INwaOutgoingTransit
 	@Override
 	public String sizeInformation() {
 		return mInput.sizeInformation();
-	}
-
-	@Override
-	public IElement transformToUltimateModel(final AutomataLibraryServices services)
-			throws AutomataOperationCanceledException {
-		// TODO Auto-generated method stub
-		return null;
 	}
 
 	@Override
@@ -161,14 +159,14 @@ public class NwaRelabeledAutomaton<LETTER, STATE> implements INwaOutgoingTransit
 
 	@Override
 	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(final STATE state) {
-		// TODO Auto-generated method stub
-		return null;
+		return () -> new TransformIterator<OutgoingCallTransition<LETTER, STATE>, OutgoingCallTransition<LETTER, STATE>>(
+				mInput.callSuccessors(state).iterator(), mCallTransitionTransformer);
 	}
 
 	@Override
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(final STATE state, final STATE hier) {
-		// TODO Auto-generated method stub
-		return null;
+		return () -> new TransformIterator<OutgoingReturnTransition<LETTER, STATE>, OutgoingReturnTransition<LETTER, STATE>>(
+				mInput.returnSuccessors(state).iterator(), mReturnTransitionTransformer);
 	}
 	
 
