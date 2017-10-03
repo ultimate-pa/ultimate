@@ -33,7 +33,7 @@ if [ ! $? -eq 0 ]; then
 	exit 1
 fi
 
-./makeFresh.sh
+exitOnFail bash makeFresh.sh
 
 # uncomment this after the final release 
 #for z in *.zip; do mv "$z" "${z%.zip}-post-final.zip"; done
