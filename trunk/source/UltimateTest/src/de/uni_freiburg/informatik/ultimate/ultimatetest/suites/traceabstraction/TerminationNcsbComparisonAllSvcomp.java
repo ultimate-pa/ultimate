@@ -68,74 +68,74 @@ public class TerminationNcsbComparisonAllSvcomp extends AbstractBuchiAutomizerTe
 
 	// @formatter:off
 	private static final DirectoryFileEndingsPair[] mDirectoryFileEndingsPairs = {
-		/***** Category 1. ReachSafety *****/
-		/*** Subcategory    ReachSafety-Arrays ***/
-		new DirectoryFileEndingsPair("examples/sv-benchmarks/c/array-examples/", new String[]{ ALL_I }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new DirectoryFileEndingsPair("examples/sv-benchmarks/c/array-industry-pattern/", new String[]{ ALL_I }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new DirectoryFileEndingsPair("examples/sv-benchmarks/c/reducercommutativity/", new String[]{ ALL_I }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-
-		/*** Subcategory   ReachSafety-BitVectors ***/
-		new DirectoryFileEndingsPair("examples/sv-benchmarks/c/bitvector/", new String[]{ ALL_I }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new DirectoryFileEndingsPair("examples/sv-benchmarks/c/bitvector-regression/", new String[]{ ALL_C }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new DirectoryFileEndingsPair("examples/sv-benchmarks/c/bitvector-loops/", new String[]{ ALL_I }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-			
-		/*** Subcategory   ReachSafety-ControlFlow ***/
-		new DirectoryFileEndingsPair("examples/sv-benchmarks/c/ntdrivers-simplified/", new String[]{ ALL_C }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new DirectoryFileEndingsPair("examples/sv-benchmarks/c/ssh-simplified/", new String[]{ ALL_C }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new DirectoryFileEndingsPair("examples/sv-benchmarks/c/locks/", new String[]{ ALL_C }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new DirectoryFileEndingsPair("examples/sv-benchmarks/c/ntdrivers/", new String[]{ ALL_C }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new DirectoryFileEndingsPair("examples/sv-benchmarks/c/ssh/", new String[]{ ALL_C }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		
-		/*** Subcategory   ReachSafety-ReachSafety-ECA ***/
-		new DirectoryFileEndingsPair("examples/sv-benchmarks/c/eca-rers2012/", new String[]{ ALL_C }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new DirectoryFileEndingsPair("examples/sv-benchmarks/c/psyco/", new String[]{ ALL_C }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		
-		/*** Subcategory   ReachSafety-Heap ***/
-		new DirectoryFileEndingsPair("examples/sv-benchmarks/c/heap-manipulation/", new String[]{ ALL_I }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new DirectoryFileEndingsPair("examples/sv-benchmarks/c/list-properties/", new String[]{ ALL_I }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new DirectoryFileEndingsPair("examples/sv-benchmarks/c/ldv-regression/", new String[]{ ALL_I }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		// TODO: add ldv-regression/test[0-9][0-9]_false-unreach-call*.c ldv-regression/test[0-9][0-9]_true-unreach-call*.c
-		new DirectoryFileEndingsPair("examples/sv-benchmarks/c/ddv-machzwd/", new String[]{ ALL_I }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new DirectoryFileEndingsPair("examples/sv-benchmarks/c/forester-heap/", new String[]{ ALL_I }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new DirectoryFileEndingsPair("examples/sv-benchmarks/c/list-ext-properties/", new String[]{ ALL_I }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new DirectoryFileEndingsPair("examples/sv-benchmarks/c/list-ext2-properties/", new String[]{ ALL_I }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		
-		/*** Subcategory    ReachSafety-Floats ***/
-		new DirectoryFileEndingsPair("examples/sv-benchmarks/c/floats-cdfpl/", new String[]{ ALL_I }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new DirectoryFileEndingsPair("examples/sv-benchmarks/c/floats-cbmc-regression/", new String[]{ ALL_I }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new DirectoryFileEndingsPair("examples/sv-benchmarks/c/float-benchs/", new String[]{ ALL_C }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new DirectoryFileEndingsPair("examples/sv-benchmarks/c/floats-esbmc-regression/", new String[]{ ALL_I }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-
-		/*** Subcategory   ReachSafety-Loops ***/
-		new DirectoryFileEndingsPair("examples/sv-benchmarks/c/loops/", new String[]{ ALL_I }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new DirectoryFileEndingsPair("examples/sv-benchmarks/c/loop-acceleration/", new String[]{ ALL_I }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new DirectoryFileEndingsPair("examples/sv-benchmarks/c/loop-invgen/", new String[]{ ALL_I }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new DirectoryFileEndingsPair("examples/sv-benchmarks/c/loop-lit/", new String[]{ ALL_I }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new DirectoryFileEndingsPair("examples/sv-benchmarks/c/loop-new/", new String[]{ ALL_I }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new DirectoryFileEndingsPair("examples/sv-benchmarks/c/loop-industry-pattern/", new String[]{ ALL_C }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		
-		
-		
-		/***** Category 2. MemSafety *****/
-		/*** Subcategory    MemSafety-Arrays ***/
-		new DirectoryFileEndingsPair("examples/sv-benchmarks/c/array-memsafety/", new String[]{ ALL_I }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new DirectoryFileEndingsPair("examples/sv-benchmarks/c/array-examples/", new String[]{ ALL_I }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new DirectoryFileEndingsPair("examples/sv-benchmarks/c/reducercommutativity/", new String[]{ ALL_I }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-
-		/*** Subcategory   MemSafety-Heap ***/
-		new DirectoryFileEndingsPair("examples/sv-benchmarks/c/memsafety/", new String[]{ ALL_I }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new DirectoryFileEndingsPair("examples/sv-benchmarks/c/list-ext-properties/", new String[]{ ALL_I }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new DirectoryFileEndingsPair("examples/sv-benchmarks/c/memory-alloca/", new String[]{ ALL_I }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new DirectoryFileEndingsPair("examples/sv-benchmarks/c/ldv-memsafety/", new String[]{ ALL_I }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new DirectoryFileEndingsPair("examples/sv-benchmarks/c/ldv-memsafety/", new String[]{ ALL_C }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new DirectoryFileEndingsPair("examples/sv-benchmarks/c/ldv-memsafety-bitfields/", new String[]{ ALL_I }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new DirectoryFileEndingsPair("examples/sv-benchmarks/c/bitvector-loops/", new String[]{ ALL_I }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		
-		/*** Subcategory    MemSafety-LinkedLists ***/
-		new DirectoryFileEndingsPair("examples/sv-benchmarks/c/heap-manipulation/", new String[]{ ALL_I }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new DirectoryFileEndingsPair("examples/sv-benchmarks/c/forester-heap/", new String[]{ ALL_I }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new DirectoryFileEndingsPair("examples/sv-benchmarks/c/list-properties/", new String[]{ ALL_I }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new DirectoryFileEndingsPair("examples/sv-benchmarks/c/ddv-machzwd/", new String[]{ ALL_I }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+//		/***** Category 1. ReachSafety *****/
+//		/*** Subcategory    ReachSafety-Arrays ***/
+//		new DirectoryFileEndingsPair("examples/sv-benchmarks/c/array-examples/", new String[]{ ALL_I }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+//		new DirectoryFileEndingsPair("examples/sv-benchmarks/c/array-industry-pattern/", new String[]{ ALL_I }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+//		new DirectoryFileEndingsPair("examples/sv-benchmarks/c/reducercommutativity/", new String[]{ ALL_I }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+//
+//		/*** Subcategory   ReachSafety-BitVectors ***/
+//		new DirectoryFileEndingsPair("examples/sv-benchmarks/c/bitvector/", new String[]{ ALL_I }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+//		new DirectoryFileEndingsPair("examples/sv-benchmarks/c/bitvector-regression/", new String[]{ ALL_C }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+//		new DirectoryFileEndingsPair("examples/sv-benchmarks/c/bitvector-loops/", new String[]{ ALL_I }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+//			
+//		/*** Subcategory   ReachSafety-ControlFlow ***/
+//		new DirectoryFileEndingsPair("examples/sv-benchmarks/c/ntdrivers-simplified/", new String[]{ ALL_C }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+//		new DirectoryFileEndingsPair("examples/sv-benchmarks/c/ssh-simplified/", new String[]{ ALL_C }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+//		new DirectoryFileEndingsPair("examples/sv-benchmarks/c/locks/", new String[]{ ALL_C }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+//		new DirectoryFileEndingsPair("examples/sv-benchmarks/c/ntdrivers/", new String[]{ ALL_C }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+//		new DirectoryFileEndingsPair("examples/sv-benchmarks/c/ssh/", new String[]{ ALL_C }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+//		
+//		/*** Subcategory   ReachSafety-ReachSafety-ECA ***/
+//		new DirectoryFileEndingsPair("examples/sv-benchmarks/c/eca-rers2012/", new String[]{ ALL_C }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+//		new DirectoryFileEndingsPair("examples/sv-benchmarks/c/psyco/", new String[]{ ALL_C }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+//		
+//		/*** Subcategory   ReachSafety-Heap ***/
+//		new DirectoryFileEndingsPair("examples/sv-benchmarks/c/heap-manipulation/", new String[]{ ALL_I }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+//		new DirectoryFileEndingsPair("examples/sv-benchmarks/c/list-properties/", new String[]{ ALL_I }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+//		new DirectoryFileEndingsPair("examples/sv-benchmarks/c/ldv-regression/", new String[]{ ALL_I }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+//		// TODO: add ldv-regression/test[0-9][0-9]_false-unreach-call*.c ldv-regression/test[0-9][0-9]_true-unreach-call*.c
+//		new DirectoryFileEndingsPair("examples/sv-benchmarks/c/ddv-machzwd/", new String[]{ ALL_I }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+//		new DirectoryFileEndingsPair("examples/sv-benchmarks/c/forester-heap/", new String[]{ ALL_I }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+//		new DirectoryFileEndingsPair("examples/sv-benchmarks/c/list-ext-properties/", new String[]{ ALL_I }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+//		new DirectoryFileEndingsPair("examples/sv-benchmarks/c/list-ext2-properties/", new String[]{ ALL_I }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+//		
+//		/*** Subcategory    ReachSafety-Floats ***/
+//		new DirectoryFileEndingsPair("examples/sv-benchmarks/c/floats-cdfpl/", new String[]{ ALL_I }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+//		new DirectoryFileEndingsPair("examples/sv-benchmarks/c/floats-cbmc-regression/", new String[]{ ALL_I }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+//		new DirectoryFileEndingsPair("examples/sv-benchmarks/c/float-benchs/", new String[]{ ALL_C }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+//		new DirectoryFileEndingsPair("examples/sv-benchmarks/c/floats-esbmc-regression/", new String[]{ ALL_I }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+//
+//		/*** Subcategory   ReachSafety-Loops ***/
+//		new DirectoryFileEndingsPair("examples/sv-benchmarks/c/loops/", new String[]{ ALL_I }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+//		new DirectoryFileEndingsPair("examples/sv-benchmarks/c/loop-acceleration/", new String[]{ ALL_I }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+//		new DirectoryFileEndingsPair("examples/sv-benchmarks/c/loop-invgen/", new String[]{ ALL_I }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+//		new DirectoryFileEndingsPair("examples/sv-benchmarks/c/loop-lit/", new String[]{ ALL_I }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+//		new DirectoryFileEndingsPair("examples/sv-benchmarks/c/loop-new/", new String[]{ ALL_I }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+//		new DirectoryFileEndingsPair("examples/sv-benchmarks/c/loop-industry-pattern/", new String[]{ ALL_C }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+//		
+//		
+//		
+//		/***** Category 2. MemSafety *****/
+//		/*** Subcategory    MemSafety-Arrays ***/
+//		new DirectoryFileEndingsPair("examples/sv-benchmarks/c/array-memsafety/", new String[]{ ALL_I }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+//		new DirectoryFileEndingsPair("examples/sv-benchmarks/c/array-examples/", new String[]{ ALL_I }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+//		new DirectoryFileEndingsPair("examples/sv-benchmarks/c/reducercommutativity/", new String[]{ ALL_I }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+//
+//		/*** Subcategory   MemSafety-Heap ***/
+//		new DirectoryFileEndingsPair("examples/sv-benchmarks/c/memsafety/", new String[]{ ALL_I }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+//		new DirectoryFileEndingsPair("examples/sv-benchmarks/c/list-ext-properties/", new String[]{ ALL_I }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+//		new DirectoryFileEndingsPair("examples/sv-benchmarks/c/memory-alloca/", new String[]{ ALL_I }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+//		new DirectoryFileEndingsPair("examples/sv-benchmarks/c/ldv-memsafety/", new String[]{ ALL_I }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+//		new DirectoryFileEndingsPair("examples/sv-benchmarks/c/ldv-memsafety/", new String[]{ ALL_C }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+//		new DirectoryFileEndingsPair("examples/sv-benchmarks/c/ldv-memsafety-bitfields/", new String[]{ ALL_I }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+//		new DirectoryFileEndingsPair("examples/sv-benchmarks/c/bitvector-loops/", new String[]{ ALL_I }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+//		
+//		/*** Subcategory    MemSafety-LinkedLists ***/
+//		new DirectoryFileEndingsPair("examples/sv-benchmarks/c/heap-manipulation/", new String[]{ ALL_I }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+//		new DirectoryFileEndingsPair("examples/sv-benchmarks/c/forester-heap/", new String[]{ ALL_I }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+//		new DirectoryFileEndingsPair("examples/sv-benchmarks/c/list-properties/", new String[]{ ALL_I }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+//		new DirectoryFileEndingsPair("examples/sv-benchmarks/c/ddv-machzwd/", new String[]{ ALL_I }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 
 	};
 	
@@ -147,7 +147,7 @@ public class TerminationNcsbComparisonAllSvcomp extends AbstractBuchiAutomizerTe
 	 */
 	@Override
 	public long getTimeout() {
-		return 120 * 1000;
+		return 900 * 1000;
 	}
 
 	/**
@@ -164,12 +164,12 @@ public class TerminationNcsbComparisonAllSvcomp extends AbstractBuchiAutomizerTe
 //			"buchiAutomizer/ncsb/ORIGINAL-SAVE-AUT.epf",
 //			"buchiAutomizer/ncsb/INTSET_LAZY2-SAVE-AUT.epf",
 //			"buchiAutomizer/ncsb/INTSET_LAZY3-SAVE-AUT.epf",
-//			"buchiAutomizer/ncsb/INTSET_LAZY2.epf",
-//			"buchiAutomizer/ncsb/SUNFLOWER-INTSET_LAZY2.epf",
-//			"buchiAutomizer/ncsb/INTSET_LAZY3.epf",
-//			"buchiAutomizer/ncsb/SUNFLOWER-INTSET_LAZY3.epf",
+			"buchiAutomizer/ncsb/INTSET_LAZY2.epf",
+			"buchiAutomizer/ncsb/SUNFLOWER-INTSET_LAZY2.epf",
+			"buchiAutomizer/ncsb/INTSET_LAZY3.epf",
+			"buchiAutomizer/ncsb/SUNFLOWER-INTSET_LAZY3.epf",
 			"buchiAutomizer/ncsb/ORIGINAL.epf",
-//			"buchiAutomizer/ncsb/SUNFLOWER-ORIGINAL.epf",
+			"buchiAutomizer/ncsb/SUNFLOWER-ORIGINAL.epf",
 	};
 
 	private static final String[] mCToolchains = {
