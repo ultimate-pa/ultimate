@@ -44,6 +44,8 @@ import de.uni_freiburg.informatik.ultimate.util.ConstructionCache.IValueConstruc
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.TransformIterator;
 
 /**
+ * Automaton that represents a copy of the input but where each states
+ * is labeled according to the {@link IRelabelStateFactory}.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>

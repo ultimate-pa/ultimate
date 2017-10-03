@@ -37,7 +37,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.N
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IRelabelStateFactory;
 
 /**
- * Complements a nested word automaton.
+ * Constructs a new automaton that is a copy of the input but where each states
+ * is labeled according to the {@link IRelabelStateFactory}.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
@@ -53,20 +54,6 @@ public final class Relabel<LETTER, STATE>
 	private final IRelabelStateFactory<STATE> mStateFactory;
 
 
-	/**
-	 * Extended constructor.
-	 * 
-	 * @param services
-	 *            Ultimate services
-	 * @param stateFactory
-	 *            state factory
-	 * @param operand
-	 *            operand
-	 * @param stateDeterminizer
-	 *            state determinizer
-	 * @throws AutomataOperationCanceledException
-	 *             if operation was canceled
-	 */
 	public Relabel(final AutomataLibraryServices services, final IRelabelStateFactory<STATE> stateFactory,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		super(services);
@@ -108,10 +95,6 @@ public final class Relabel<LETTER, STATE>
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Finished testing correctness of " + getOperationName());
 		}
-//		if (!correct) {
-//			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices, getOperationName() + "Failed",
-//					"language is different", mOperand);
-//		}
 		return correct;
 	}
 }
