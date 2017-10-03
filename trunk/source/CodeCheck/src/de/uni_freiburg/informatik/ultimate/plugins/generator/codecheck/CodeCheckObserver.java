@@ -118,10 +118,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.UnsatCores;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantConsolidation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceChecker;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceCheckerCraig;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceCheck;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceCheckCraig;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerSpWp;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckSpWp;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 
@@ -377,7 +377,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 
 		int iterationsCount = 0;
 
-		InterpolatingTraceChecker traceChecker = null;
+		InterpolatingTraceCheck traceChecker = null;
 		final CodeChecker codechecker = createCodeChecker();
 		for (final AnnotatedProgramPoint procedureRoot : procRootsToCheck) {
 			if (!mServices.getProgressMonitorService().continueProcessing()) {
@@ -579,14 +579,14 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		}
 	}
 
-	private InterpolatingTraceChecker createTraceChecker(
+	private InterpolatingTraceCheck createTraceChecker(
 			final NestedRun<IIcfgTransition<?>, AnnotatedProgramPoint> errorRun,
 			final ManagedScript mgdScriptTracechecks) {
 		switch (mGlobalSettings.getInterpolationMode()) {
 		case Craig_TreeInterpolation:
 		case Craig_NestedInterpolation:
 			try {
-				final InterpolatingTraceChecker tc = new InterpolatingTraceCheckerCraig(
+				final InterpolatingTraceCheck tc = new InterpolatingTraceCheckCraig(
 						mPredicateUnifier.getTruePredicate(), mPredicateUnifier.getFalsePredicate(),
 						new TreeMap<Integer, IPredicate>(), errorRun.getWord(), mCsToolkit,
 						AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, true, mPredicateFactory, mPredicateUnifier,
@@ -608,7 +608,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 			 *
 			 * The fallback interpolation mode is hardcoded for now
 			 */
-			return new TraceCheckerSpWp(mPredicateUnifier.getTruePredicate(), mPredicateUnifier.getFalsePredicate(),
+			return new TraceCheckSpWp(mPredicateUnifier.getTruePredicate(), mPredicateUnifier.getFalsePredicate(),
 					new TreeMap<Integer, IPredicate>(), errorRun.getWord(), mCsToolkit,
 					AssertCodeBlockOrder.NOT_INCREMENTALLY, UnsatCores.CONJUNCT_LEVEL, true, mServices, true,
 					mPredicateFactory, mPredicateUnifier, InterpolationTechnique.ForwardPredicates,
@@ -620,7 +620,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		case FPandBPonlyIfFpWasNotPerfect:
 			// return LBool.UNSAT if trace is infeasible
 			try {
-				return new TraceCheckerSpWp(mPredicateUnifier.getTruePredicate(), mPredicateUnifier.getFalsePredicate(),
+				return new TraceCheckSpWp(mPredicateUnifier.getTruePredicate(), mPredicateUnifier.getFalsePredicate(),
 						new TreeMap<Integer, IPredicate>(), errorRun.getWord(), mCsToolkit,
 						AssertCodeBlockOrder.NOT_INCREMENTALLY, mGlobalSettings.getUseUnsatCores(),
 						mGlobalSettings.isUseLiveVariables(), mServices, true, mPredicateFactory, mPredicateUnifier,
@@ -632,7 +632,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 					throw e;
 				}
 
-				return new TraceCheckerSpWp(mPredicateUnifier.getTruePredicate(), mPredicateUnifier.getFalsePredicate(),
+				return new TraceCheckSpWp(mPredicateUnifier.getTruePredicate(), mPredicateUnifier.getFalsePredicate(),
 						new TreeMap<Integer, IPredicate>(), errorRun.getWord(), mCsToolkit,
 						AssertCodeBlockOrder.NOT_INCREMENTALLY, UnsatCores.CONJUNCT_LEVEL, true, mServices, true,
 						mPredicateFactory, mPredicateUnifier, mGlobalSettings.getInterpolationMode(),

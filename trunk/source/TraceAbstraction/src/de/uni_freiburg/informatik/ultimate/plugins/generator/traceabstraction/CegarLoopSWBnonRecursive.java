@@ -69,8 +69,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.Minimization;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceCheckerCraig;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceCheckCraig;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheck;
 
 /**
  * @author haettigj@informatik.uni-freiburg.de
@@ -95,7 +95,7 @@ public class CegarLoopSWBnonRecursive<LETTER extends IIcfgTransition<?>> extends
 	/**
 	 * Used for computing the interpolants of additional paths
 	 */
-	protected TraceChecker mExtraTraceChecker;
+	protected TraceCheck mExtraTraceChecker;
 
 	/**
 	 * Version of the abstraction, casted as NestedWordAutomaton. It is casted in every call of
@@ -582,8 +582,8 @@ public class CegarLoopSWBnonRecursive<LETTER extends IIcfgTransition<?>> extends
 			}
 		}
 		// test if we found a new path which can be added
-		final InterpolatingTraceCheckerCraig traceChecker =
-				new InterpolatingTraceCheckerCraig(pre, post, pendingContexts, word, mCsToolkit,
+		final InterpolatingTraceCheckCraig traceChecker =
+				new InterpolatingTraceCheckCraig(pre, post, pendingContexts, word, mCsToolkit,
 						/*
 						 * TODO: When Matthias introduced this parameter he set the argument to
 						 * AssertCodeBlockOrder.NOT_INCREMENTALLY. Check if you want to set this to another value.

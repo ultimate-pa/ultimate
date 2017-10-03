@@ -75,7 +75,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceChecker.AllIntegers;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceCheck.AllIntegers;
 import de.uni_freiburg.informatik.ultimate.util.InCaReCounter;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
@@ -94,7 +94,7 @@ public class InterpolantConsolidation<LETTER extends IIcfgTransition<?>> impleme
 	private static final boolean PRINT_DIFFERENCE_AUTOMATA = false;
 	private static final boolean USE_CONSOLIDATION_IN_NON_EMPTY_CASE = false;
 
-	private final InterpolatingTraceChecker mInterpolatingTraceChecker;
+	private final InterpolatingTraceCheck mInterpolatingTraceChecker;
 	private final IPredicate mPrecondition;
 	private final IPredicate mPostcondition;
 	private final SortedMap<Integer, IPredicate> mPendingContexts;
@@ -118,7 +118,7 @@ public class InterpolantConsolidation<LETTER extends IIcfgTransition<?>> impleme
 			final CfgSmtToolkit csToolkit, final ModifiableGlobalsTable modifiableGlobalsTable,
 			final IUltimateServiceProvider services, final ILogger logger, final PredicateFactory predicateFactory, 
 			final PredicateUnifier predicateUnifier,
-			final InterpolatingTraceChecker tc, final TAPreferences taPrefs) throws AutomataOperationCanceledException {
+			final InterpolatingTraceCheck tc, final TAPreferences taPrefs) throws AutomataOperationCanceledException {
 		mPrecondition = precondition;
 		mPostcondition = postcondition;
 		mPendingContexts = pendingContexts;
@@ -207,16 +207,16 @@ public class InterpolantConsolidation<LETTER extends IIcfgTransition<?>> impleme
 					new IsEmpty<>(new AutomataLibraryServices(mServices), diff.getResult());
 			if (!empty.getResult()) {
 				if (!USE_CONSOLIDATION_IN_NON_EMPTY_CASE) {
-					if (mInterpolatingTraceChecker instanceof TraceCheckerSpWp) {
+					if (mInterpolatingTraceChecker instanceof TraceCheckSpWp) {
 						// If the forwards predicates is a perfect sequence of interpolants, then use it, otherwise use
 						// the sequence of backwards predicates
 						final boolean forwardsPredicatesPerfect =
-								((TraceCheckerSpWp) mInterpolatingTraceChecker).isForwardSequencePerfect();
+								((TraceCheckSpWp) mInterpolatingTraceChecker).isForwardSequencePerfect();
 						if (forwardsPredicatesPerfect) {
-							mConsolidatedInterpolants = ((TraceCheckerSpWp) mInterpolatingTraceChecker)
+							mConsolidatedInterpolants = ((TraceCheckSpWp) mInterpolatingTraceChecker)
 									.getForwardPredicates().toArray(new IPredicate[0]);
 						} else {
-							mConsolidatedInterpolants = ((TraceCheckerSpWp) mInterpolatingTraceChecker)
+							mConsolidatedInterpolants = ((TraceCheckSpWp) mInterpolatingTraceChecker)
 									.getBackwardPredicates().toArray(new IPredicate[0]);
 						}
 					} else {
@@ -481,8 +481,8 @@ public class InterpolantConsolidation<LETTER extends IIcfgTransition<?>> impleme
 	}
 
 	public List<IPredicate> getInterpolantsOfType_I() {
-		if (mInterpolatingTraceChecker instanceof TraceCheckerSpWp) {
-			final TraceCheckerSpWp tcspwp = (TraceCheckerSpWp) mInterpolatingTraceChecker;
+		if (mInterpolatingTraceChecker instanceof TraceCheckSpWp) {
+			final TraceCheckSpWp tcspwp = (TraceCheckSpWp) mInterpolatingTraceChecker;
 			if (tcspwp.wasForwardPredicateComputationRequested()) {
 				return tcspwp.getForwardPredicates();
 			}
@@ -492,8 +492,8 @@ public class InterpolantConsolidation<LETTER extends IIcfgTransition<?>> impleme
 	}
 
 	public List<IPredicate> getInterpolantsOfType_II() {
-		if (mInterpolatingTraceChecker instanceof TraceCheckerSpWp) {
-			final TraceCheckerSpWp tcspwp = (TraceCheckerSpWp) mInterpolatingTraceChecker;
+		if (mInterpolatingTraceChecker instanceof TraceCheckSpWp) {
+			final TraceCheckSpWp tcspwp = (TraceCheckSpWp) mInterpolatingTraceChecker;
 			if (tcspwp.wasBackwardSequenceConstructed()) {
 				return tcspwp.getBackwardPredicates();
 			}
@@ -517,7 +517,7 @@ public class InterpolantConsolidation<LETTER extends IIcfgTransition<?>> impleme
 	 */
 	private NestedWordAutomaton<LETTER, IPredicate> constructInterpolantAutomaton(final NestedWord<LETTER> trace,
 			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactor, final TAPreferences taPrefs,
-			final IUltimateServiceProvider services, final InterpolatingTraceChecker traceChecker) {
+			final IUltimateServiceProvider services, final InterpolatingTraceCheck traceChecker) {
 		// Set the alphabet
 		final Set<LETTER> internalAlphabet = new HashSet<>();
 		final Set<LETTER> callAlphabet = new HashSet<>();
@@ -546,8 +546,8 @@ public class InterpolantConsolidation<LETTER extends IIcfgTransition<?>> impleme
 		nwa.addState(false, true, traceChecker.getPostcondition());
 		boolean nwaStatesAndTransitionsAdded = false;
 
-		if (traceChecker instanceof TraceCheckerSpWp) {
-			final TraceCheckerSpWp tcSpWp = (TraceCheckerSpWp) traceChecker;
+		if (traceChecker instanceof TraceCheckSpWp) {
+			final TraceCheckSpWp tcSpWp = (TraceCheckSpWp) traceChecker;
 			if (tcSpWp.wasForwardPredicateComputationRequested() && tcSpWp.wasBackwardSequenceConstructed()) {
 				nwaStatesAndTransitionsAdded = true;
 				// Add states and transitions corresponding to forwards predicates
@@ -632,7 +632,7 @@ public class InterpolantConsolidation<LETTER extends IIcfgTransition<?>> impleme
 		return mPendingContexts;
 	}
 
-	public InterpolatingTraceChecker getInterpolatingTraceChecker() {
+	public InterpolatingTraceCheck getInterpolatingTraceChecker() {
 		return mInterpolatingTraceChecker;
 	}
 

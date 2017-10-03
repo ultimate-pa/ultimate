@@ -55,18 +55,18 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategyExceptionBlacklist;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.IInterpolantGenerator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TracePredicates;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 
 /**
- * {@link IRefinementStrategy} that is used by Taipan. It first tries an {@link InterpolatingTraceChecker} using
+ * {@link IRefinementStrategy} that is used by Taipan. It first tries an {@link InterpolatingTraceCheck} using
  * {@link SMTInterpol} with {@link InterpolationTechnique#Craig_TreeInterpolation}.<br>
  * If successful and the interpolant sequence is perfect, those interpolants are used.<br>
- * If not successful, it tries {@link TraceChecker} {@code Z3} and, if again not successful, {@code CVC4}.<br>
+ * If not successful, it tries {@link TraceCheck} {@code Z3} and, if again not successful, {@code CVC4}.<br>
  * If none of those is successful, the strategy gives up.<br>
  * Otherwise, if the trace is infeasible, the strategy uses an {@link CegarAbsIntRunner} to construct interpolants.<br>
  * If not successful, the strategy again tries {@code Z3} and {@code CVC4}, but this time using interpolation
@@ -97,7 +97,7 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 	private TraceCheckerConstructor<LETTER> mTcConstructor;
 	private TraceCheckerConstructor<LETTER> mPrevTcConstructor;
 
-	private TraceChecker mTraceChecker;
+	private TraceCheck mTraceChecker;
 	private IInterpolantGenerator mInterpolantGenerator;
 	private IInterpolantAutomatonBuilder<LETTER, IPredicate> mInterpolantAutomatonBuilder;
 	private final TaskIdentifier mTaskIdentifier;
@@ -205,7 +205,7 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 	}
 
 	@Override
-	public TraceChecker getTraceChecker() {
+	public TraceCheck getTraceChecker() {
 		if (mTraceChecker == null) {
 			if (mTcConstructor == null) {
 				mTcConstructor = constructTraceCheckerConstructor();
@@ -384,9 +384,9 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 	}
 
 	private IInterpolantGenerator castTraceChecker() {
-		final TraceChecker traceChecker = getTraceChecker();
-		assert traceChecker != null && traceChecker instanceof InterpolatingTraceChecker;
-		return (InterpolatingTraceChecker) traceChecker;
+		final TraceCheck traceChecker = getTraceChecker();
+		assert traceChecker != null && traceChecker instanceof InterpolatingTraceCheck;
+		return (InterpolatingTraceCheck) traceChecker;
 	}
 
 	@Override

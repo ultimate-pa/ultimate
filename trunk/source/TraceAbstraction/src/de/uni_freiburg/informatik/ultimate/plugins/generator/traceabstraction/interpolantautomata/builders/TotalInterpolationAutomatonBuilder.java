@@ -77,9 +77,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.UnsatCores;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.IInterpolantGenerator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceChecker;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceCheckerCraig;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerSpWp;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceCheck;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceCheckCraig;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckSpWp;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TracePredicates;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
@@ -327,11 +327,11 @@ public class TotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransition<?
 		final SortedMap<Integer, IPredicate> pendingContexts = computePendingContexts(run);
 		// SortedMap<Integer, IPredicate> pendingContexts = new TreeMap<>();
 
-		InterpolatingTraceChecker tc;
+		InterpolatingTraceCheck tc;
 		switch (mInterpolation) {
 		case Craig_NestedInterpolation:
 		case Craig_TreeInterpolation:
-			tc = new InterpolatingTraceCheckerCraig(precondition, postcondition, pendingContexts, run.getWord(),
+			tc = new InterpolatingTraceCheckCraig(precondition, postcondition, pendingContexts, run.getWord(),
 					mCsToolkit, AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, true, mPredicateFactory, mPredicateUnifier,
 					mInterpolation, true, mXnfConversionTechnique, mSimplificationTechnique, run.getStateSequence());
 			break;
@@ -339,7 +339,7 @@ public class TotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransition<?
 		case BackwardPredicates:
 		case FPandBP:
 		case FPandBPonlyIfFpWasNotPerfect:
-			tc = new TraceCheckerSpWp(precondition, postcondition, pendingContexts, run.getWord(), mCsToolkit,
+			tc = new TraceCheckSpWp(precondition, postcondition, pendingContexts, run.getWord(), mCsToolkit,
 					AssertCodeBlockOrder.NOT_INCREMENTALLY, UnsatCores.CONJUNCT_LEVEL, true, mServices, true,
 					mPredicateFactory, mPredicateUnifier, mInterpolation, mCsToolkit.getManagedScript(), mXnfConversionTechnique,
 					mSimplificationTechnique, run.getStateSequence());
@@ -387,7 +387,7 @@ public class TotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransition<?
 		return null;
 	}
 
-	private void addTransitions(final ArrayList<IPredicate> stateSequence, final InterpolatingTraceChecker tc) {
+	private void addTransitions(final ArrayList<IPredicate> stateSequence, final InterpolatingTraceCheck tc) {
 		final TracePredicates ipp = new TracePredicates(tc);
 		final NestedWord<? extends IAction> nw = NestedWord.nestedWord(tc.getTrace());
 		for (int i = 0; i < nw.length(); i++) {

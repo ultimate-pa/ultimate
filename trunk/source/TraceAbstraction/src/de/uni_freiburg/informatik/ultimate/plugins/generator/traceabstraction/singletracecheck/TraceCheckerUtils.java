@@ -62,7 +62,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 
 /**
- * Class that contains static methods that are related to the {@link TraceChecker}.
+ * Class that contains static methods that are related to the {@link TraceCheck}.
  *
  * @author Matthias Heizmann
  */

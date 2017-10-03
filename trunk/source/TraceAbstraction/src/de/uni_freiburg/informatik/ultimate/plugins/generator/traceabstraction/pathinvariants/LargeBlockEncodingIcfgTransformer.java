@@ -68,7 +68,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.UnsatCores;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerSpWp;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckSpWp;
 
 /**
  * Transform an {@link Icfg} using large block encoding.
@@ -262,7 +262,7 @@ public final class LargeBlockEncodingIcfgTransformer {
 		final XnfConversionTechnique xnfConversionTechnique =
 				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
 		@SuppressWarnings("unchecked")
-		final TraceCheckerSpWp tc = new TraceCheckerSpWp(precondition, postcondition, pendingContexts,
+		final TraceCheckSpWp tc = new TraceCheckSpWp(precondition, postcondition, pendingContexts,
 				(NestedWord<? extends IIcfgTransition<?>>) run.getWord(), csToolkit, assertCodeBlocksIncrementally,
 				unsatCores, useLiveVariables, mServices, computeRcfgProgramExecution, mPredicateFactory, predicateUnifier, interpolation,
 				mgdScriptTc, xnfConversionTechnique, simplificationTechnique, run.getStateSequence());

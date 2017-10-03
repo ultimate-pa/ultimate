@@ -45,9 +45,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantConsolidation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheck;
 
 /**
  * Provides static auxiliary methods for {@link RefinementStrategy}s.
@@ -62,13 +62,13 @@ public class RefinementStrategyUtils {
 	public static <LETTER extends IIcfgTransition<?>> IInterpolantGenerator constructInterpolantGenerator(
 			final IUltimateServiceProvider services, final ILogger logger,
 			final TaCheckAndRefinementPreferences<LETTER> prefs, final TAPreferences taPrefsForInterpolantConsolidation,
-			final TraceChecker tracechecker, final PredicateFactory predicateFactory,
+			final TraceCheck tracechecker, final PredicateFactory predicateFactory,
 			final PredicateUnifier predicateUnifier, final IRun<LETTER, IPredicate, ?> counterexample,
 			final RefinementEngineStatisticsGenerator statistics) {
-		final TraceChecker localTraceChecker = Objects.requireNonNull(tracechecker,
+		final TraceCheck localTraceChecker = Objects.requireNonNull(tracechecker,
 				"cannot construct interpolant generator if no trace checker is present");
-		if (localTraceChecker instanceof InterpolatingTraceChecker) {
-			final InterpolatingTraceChecker interpolatingTraceChecker = (InterpolatingTraceChecker) localTraceChecker;
+		if (localTraceChecker instanceof InterpolatingTraceCheck) {
+			final InterpolatingTraceCheck interpolatingTraceChecker = (InterpolatingTraceCheck) localTraceChecker;
 
 			if (prefs.getUseInterpolantConsolidation()) {
 				try {

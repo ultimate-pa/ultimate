@@ -57,7 +57,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantConsolidation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerSpWp;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckSpWp;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TracePredicates;
 
@@ -216,15 +216,15 @@ public class InterpolantAutomatonBuilderFactory<LETTER extends IIcfgTransition<?
 			final IAutomaton<LETTER, IPredicate> abstraction, final IInterpolantGenerator interpolGenerator,
 			final IRun<LETTER, IPredicate, ?> counterexample, final List<TracePredicates> ipps)
 			throws AutomataOperationCanceledException {
-		if (!(interpolGenerator instanceof TraceCheckerSpWp)
+		if (!(interpolGenerator instanceof TraceCheckSpWp)
 				&& !(interpolGenerator instanceof InterpolantConsolidation)) {
 			throw new AssertionError("TWOTRACK only for TraceCheckerSpWp or InterpolantConsolidation");
 		}
 		final List<IPredicate> predicatesA;
 		final List<IPredicate> predicatesB;
 		boolean build2TrackAutomaton = false;
-		if (interpolGenerator instanceof TraceCheckerSpWp) {
-			final TraceCheckerSpWp traceChecker = (TraceCheckerSpWp) interpolGenerator;
+		if (interpolGenerator instanceof TraceCheckSpWp) {
+			final TraceCheckSpWp traceChecker = (TraceCheckSpWp) interpolGenerator;
 			predicatesA = traceChecker.getForwardPredicates();
 			predicatesB = traceChecker.getBackwardPredicates();
 			build2TrackAutomaton = true;

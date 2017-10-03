@@ -54,7 +54,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
  *
  * @author heizmann@informatik.uni-freiburg.de
  */
-public abstract class InterpolatingTraceChecker extends TraceChecker implements IInterpolantGenerator {
+public abstract class InterpolatingTraceCheck extends TraceCheck implements IInterpolantGenerator {
 
 	protected final SimplificationTechnique mSimplificationTechnique;
 	protected final XnfConversionTechnique mXnfConversionTechnique;
@@ -80,7 +80,7 @@ public abstract class InterpolatingTraceChecker extends TraceChecker implements 
 	 *            result to a check-sat is UNSAT.
 	 * @param predicateFactory 
 	 */
-	public InterpolatingTraceChecker(final IPredicate precondition, final IPredicate postcondition,
+	public InterpolatingTraceCheck(final IPredicate precondition, final IPredicate postcondition,
 			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<? extends IIcfgTransition<?>> trace,
 			final CfgSmtToolkit csToolkit, final AssertCodeBlockOrder assertCodeBlocksIncrementally,
 			final IUltimateServiceProvider services, final boolean computeRcfgProgramExecution,

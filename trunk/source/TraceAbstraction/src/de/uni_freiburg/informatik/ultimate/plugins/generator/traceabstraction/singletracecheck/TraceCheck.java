@@ -96,7 +96,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
  *
  * @author heizmann@informatik.uni-freiburg.de
  */
-public class TraceChecker implements ITraceChecker {
+public class TraceCheck implements ITraceCheck {
 
 	protected final ILogger mLogger;
 	protected final IUltimateServiceProvider mServices;
@@ -154,7 +154,7 @@ public class TraceChecker implements ITraceChecker {
 	 * @param logger
 	 *            logger
 	 */
-	public TraceChecker(final IPredicate precondition, final IPredicate postcondition,
+	public TraceCheck(final IPredicate precondition, final IPredicate postcondition,
 			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<? extends IIcfgTransition<?>> trace,
 			final CfgSmtToolkit csToolkit, final AssertCodeBlockOrder assertCodeBlocksIncrementally,
 			final IUltimateServiceProvider services, final boolean computeRcfgProgramExecution) {
@@ -164,7 +164,7 @@ public class TraceChecker implements ITraceChecker {
 				assertCodeBlocksIncrementally, services, computeRcfgProgramExecution, true);
 	}
 
-	protected TraceChecker(final IPredicate precondition, final IPredicate postcondition,
+	protected TraceCheck(final IPredicate precondition, final IPredicate postcondition,
 			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<? extends IIcfgTransition<?>> trace,
 			final CfgSmtToolkit csToolkit, final NestedFormulas<UnmodifiableTransFormula, IPredicate> rv,
 			final AssertCodeBlockOrder assertCodeBlocksIncrementally, final IUltimateServiceProvider services,
@@ -178,7 +178,7 @@ public class TraceChecker implements ITraceChecker {
 	 *
 	 * @param services
 	 */
-	protected TraceChecker(final IPredicate precondition, final IPredicate postcondition,
+	protected TraceCheck(final IPredicate precondition, final IPredicate postcondition,
 			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<? extends IIcfgTransition<?>> trace,
 			final CfgSmtToolkit csToolkit, final NestedFormulas<UnmodifiableTransFormula, IPredicate> rv,
 			final AssertCodeBlockOrder assertCodeBlocksIncrementally, final IUltimateServiceProvider services,
@@ -203,10 +203,10 @@ public class TraceChecker implements ITraceChecker {
 		boolean providesIcfgProgramExecution = false;
 		IcfgProgramExecution icfgProgramExecution = null;
 		FeasibilityCheckResult feasibilityResult = null;
-		try { 
+		try {
 			feasibilityResult = checkTrace();
-			if (feasibilityResult.getLBool() == LBool.UNKNOWN && 
-					feasibilityResult.getReasonUnknown().getReason() == Reason.ULTIMATE_TIMEOUT) {
+			if (feasibilityResult.getLBool() == LBool.UNKNOWN
+					&& feasibilityResult.getReasonUnknown().getReason() == Reason.ULTIMATE_TIMEOUT) {
 				throw new ToolchainCanceledException(getClass(), "checking feasibility of error trace");
 			}
 			if (feasibilityResult.getLBool() == LBool.UNSAT) {
@@ -226,7 +226,8 @@ public class TraceChecker implements ITraceChecker {
 						mTraceCheckFinished = true;
 						cleanupAndUnlockSolver();
 					} else {
-						if (feasibilityResult.getReasonUnknown().getExceptionHandlingCategory() != ExceptionHandlingCategory.KNOWN_IGNORE) {
+						if (feasibilityResult.getReasonUnknown()
+								.getExceptionHandlingCategory() != ExceptionHandlingCategory.KNOWN_IGNORE) {
 							throw new AssertionError(feasibilityResult.getReasonUnknown().getException());
 						}
 					}
@@ -308,7 +309,6 @@ public class TraceChecker implements ITraceChecker {
 		return result;
 	}
 
-
 	/**
 	 * Compute a program execution for the checked trace. If the checked trace violates its specification (result of
 	 * trace check is SAT), we compute a program execution that contains program states that witness the violation of
@@ -327,7 +327,7 @@ public class TraceChecker implements ITraceChecker {
 			final DefaultTransFormulas withBE = new DefaultTransFormulas(mNestedFormulas.getTrace(),
 					mNestedFormulas.getPrecondition(), mNestedFormulas.getPostcondition(), mPendingContexts,
 					mCsToolkit.getOldVarsAssignmentCache(), true);
-			final TraceChecker tc = new TraceChecker(mNestedFormulas.getPrecondition(),
+			final TraceCheck tc = new TraceCheck(mNestedFormulas.getPrecondition(),
 					mNestedFormulas.getPostcondition(), mPendingContexts, mNestedFormulas.getTrace(), mCsToolkit,
 					withBE, AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, true, true, mTcSmtManager);
 			if (tc.getToolchainCanceledExpection() != null) {
@@ -465,21 +465,19 @@ public class TraceChecker implements ITraceChecker {
 	/**
 	 * Package private class used by trace checker to lock the {@link ManagedScript}.
 	 */
-	class TraceCheckerLock {
+	static class TraceCheckerLock {
 		// this abomination helps Matthias debug
 	}
 
 	/**
-	 * @return true iff trace check was successfully finished.
-	 * Examples for a not successfully finished trace check are:
-	 * Crash of solver, Toolchain cancelled,
+	 * @return true iff trace check was successfully finished. Examples for a not successfully finished trace check are:
+	 *         Crash of solver, Toolchain cancelled,
 	 */
 	public boolean wasTracecheckFinished() {
 		return mTraceCheckFinished;
 	}
-	
-	
-	class FeasibilityCheckResult {
+
+	static class FeasibilityCheckResult {
 		private final LBool mLBool;
 		private final TraceCheckReasonUnknown mReasonUnknown;
 		private final boolean mSolverCrashed;
@@ -487,10 +485,10 @@ public class TraceChecker implements ITraceChecker {
 		public FeasibilityCheckResult(final LBool lBool, final TraceCheckReasonUnknown reasonUnknown,
 				final boolean solverCrashed) {
 			super();
-			assert (lBool != LBool.UNKNOWN
-					|| reasonUnknown != null) : "if result is unknown you have to specify a reason";
-			assert (lBool == LBool.UNKNOWN
-					|| reasonUnknown == null) : "if result sat/unsat you cannot specify reason for unknown";
+			assert lBool != LBool.UNKNOWN
+					|| reasonUnknown != null : "if result is unknown you have to specify a reason";
+			assert lBool == LBool.UNKNOWN
+					|| reasonUnknown == null : "if result sat/unsat you cannot specify reason for unknown";
 			mLBool = lBool;
 			mReasonUnknown = reasonUnknown;
 			mSolverCrashed = solverCrashed;
@@ -507,7 +505,6 @@ public class TraceChecker implements ITraceChecker {
 		public boolean isSolverCrashed() {
 			return mSolverCrashed;
 		}
-		
-		
+
 	}
 }

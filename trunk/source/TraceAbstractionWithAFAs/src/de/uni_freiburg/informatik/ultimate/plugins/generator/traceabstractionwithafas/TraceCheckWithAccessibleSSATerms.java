@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE TraceAbstractionWithAFAs plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE TraceAbstractionWithAFAs plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE TraceAbstractionWithAFAs plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionwithafas;
@@ -41,37 +41,34 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheck;
 
-public class TraceCheckerWithAccessibleSSATerms extends TraceChecker {
-	
-	Script mScript;
+public class TraceCheckWithAccessibleSSATerms extends TraceCheck {
 
-	public TraceCheckerWithAccessibleSSATerms(final IPredicate precondition,
-			final IPredicate postcondition,
-			final SortedMap<Integer, IPredicate> pendingContexts,
-			final NestedWord<CodeBlock> trace, final CfgSmtToolkit csToolkit,
-			final AssertCodeBlockOrder assertCodeBlocksIncrementally,
-			final IUltimateServiceProvider services,
-			final boolean computeRcfgProgramExecution, final PredicateUnifier predicateUnifier, 
-			final InterpolationTechnique interpolation) {
-		super(precondition, postcondition, pendingContexts, trace, csToolkit, assertCodeBlocksIncrementally, 
-				services, computeRcfgProgramExecution);
+	private final Script mScript;
+
+	public TraceCheckWithAccessibleSSATerms(final IPredicate precondition, final IPredicate postcondition,
+			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<CodeBlock> trace,
+			final CfgSmtToolkit csToolkit, final AssertCodeBlockOrder assertCodeBlocksIncrementally,
+			final IUltimateServiceProvider services, final boolean computeRcfgProgramExecution,
+			final PredicateUnifier predicateUnifier, final InterpolationTechnique interpolation) {
+		super(precondition, postcondition, pendingContexts, trace, csToolkit, assertCodeBlocksIncrementally, services,
+				computeRcfgProgramExecution);
 		mScript = csToolkit.getManagedScript().getScript();
 	}
-	
+
 	public void traceCheckFinished() {
 		mTraceCheckFinished = true;
 	}
-	
+
 	public Term getAnnotatedSSATerm(final int position) {
 		return mAAA.getAnnotatedSsa().getFormulaFromNonCallPos(position);
 	}
-	
+
 	public Term getSSATerm(final int position) {
 		return mNsb.getSsa().getFormulaFromNonCallPos(position);
 	}
-	
+
 	public Map<Term, IProgramVar> getConstantsToBoogieVar() {
 		return mNsb.getConstants2BoogieVar();
 	}

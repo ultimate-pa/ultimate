@@ -70,7 +70,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Ab
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceChecker.TraceCheckerLock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheck.TraceCheckerLock;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 
 public class NestedInterpolantsBuilder {
@@ -124,7 +124,7 @@ public class NestedInterpolantsBuilder {
 			final NestedFormulas<Term, Term> annotatdSsa, final Map<Term, IProgramVar> mconstants2BoogieVar,
 			final IPredicateUnifier predicateBuilder, final PredicateFactory predicateFactory,
 			final Set<Integer> interpolatedPositions, final boolean treeInterpolation,
-			final IUltimateServiceProvider services, final TraceChecker traceChecker, final ManagedScript mgdScriptCfg,
+			final IUltimateServiceProvider services, final TraceCheck traceChecker, final ManagedScript mgdScriptCfg,
 			final boolean instantiateArrayExt, final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique) {
 		mServices = services;

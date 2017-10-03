@@ -55,7 +55,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
  *
  * @author Matthias Heizmann
  */
-public class InterpolatingTraceCheckerPathInvariantsWithFallback extends InterpolatingTraceChecker {
+public class InterpolatingTraceCheckPathInvariantsWithFallback extends InterpolatingTraceCheck {
 
 	private final IToolchainStorage mStorage;
 	private final NestedRun<? extends IAction, IPredicate> mNestedRun;
@@ -65,7 +65,7 @@ public class InterpolatingTraceCheckerPathInvariantsWithFallback extends Interpo
 	private InterpolantComputationStatus mInterpolantComputationStatus;
 	private final InvariantSynthesisSettings mInvariantSynthesisSettings;
 
-	public InterpolatingTraceCheckerPathInvariantsWithFallback(final IPredicate precondition,
+	public InterpolatingTraceCheckPathInvariantsWithFallback(final IPredicate precondition,
 			final IPredicate postcondition, final SortedMap<Integer, IPredicate> pendingContexts,
 			final NestedRun<? extends IIcfgTransition<?>, IPredicate> run, final CfgSmtToolkit csToolkit,
 			final AssertCodeBlockOrder assertCodeBlocksIncrementally, final IUltimateServiceProvider services,

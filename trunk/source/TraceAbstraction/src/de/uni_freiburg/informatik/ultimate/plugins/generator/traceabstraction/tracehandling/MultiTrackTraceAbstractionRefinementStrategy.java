@@ -54,7 +54,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategyExceptionBlacklist;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TracePredicates;
 
 /**
@@ -136,7 +136,7 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy<LETTER extend
 	// store if the trace has already been shown to be infeasible in a previous attempt
 	private boolean mHasShownInfeasibilityBefore;
 
-	private TraceChecker mTraceChecker;
+	private TraceCheck mTraceChecker;
 	private IInterpolantGenerator mInterpolantGenerator;
 	private IInterpolantAutomatonBuilder<LETTER, IPredicate> mInterpolantAutomatonBuilder;
 	protected final TaskIdentifier mTaskIdentifier;
@@ -209,7 +209,7 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy<LETTER extend
 	}
 
 	@Override
-	public TraceChecker getTraceChecker() {
+	public TraceCheck getTraceChecker() {
 		if (mTraceChecker == null) {
 			if (mTcConstructor == null) {
 				mTcConstructor = constructTraceCheckerConstructor();

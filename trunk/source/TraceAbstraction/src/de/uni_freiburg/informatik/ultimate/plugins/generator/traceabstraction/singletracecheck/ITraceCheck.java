@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.Ic
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public interface ITraceChecker {
+public interface ITraceCheck {
 
 	/**
 	 * Returns

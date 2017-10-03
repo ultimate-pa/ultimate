@@ -30,8 +30,8 @@ import java.util.Collection;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantConsolidation.InterpolantConsolidationBenchmarkGenerator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceCheckerPathInvariantsWithFallback;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceCheckPathInvariantsWithFallback;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheck;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
@@ -61,11 +61,11 @@ public class RefinementEngineStatisticsGenerator implements IStatisticsDataProvi
 		mInterpolantConsolidationStatistics.aggregateBenchmarkData(interpolantConsolidationStatistics);
 	}
 
-	public void addTraceCheckerStatistics(final TraceChecker traceChecker) {
+	public void addTraceCheckerStatistics(final TraceCheck traceChecker) {
 		if (traceChecker.wasTracecheckFinished()) {
 			addTraceCheckerStatistics(traceChecker.getTraceCheckerBenchmark());
-			if (traceChecker instanceof InterpolatingTraceCheckerPathInvariantsWithFallback && traceChecker.isCorrect() == LBool.UNSAT) {
-				addInvariantSynthesisStatistics(((InterpolatingTraceCheckerPathInvariantsWithFallback) traceChecker).getPathInvariantsStats());
+			if (traceChecker instanceof InterpolatingTraceCheckPathInvariantsWithFallback && traceChecker.isCorrect() == LBool.UNSAT) {
+				addInvariantSynthesisStatistics(((InterpolatingTraceCheckPathInvariantsWithFallback) traceChecker).getPathInvariantsStats());
 			} 
 		}
 	}

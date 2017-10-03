@@ -64,7 +64,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  *
  * @author heizmann@informatik.uni-freiburg.de
  */
-public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
+public class InterpolatingTraceCheckCraig extends InterpolatingTraceCheck {
 
 	private final boolean mInstantiateArrayExt;
 	private final InterpolantComputationStatus mInterpolantComputationStatus;
@@ -84,7 +84,7 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 	 * @param instanticateArrayExt
 	 * @param logger
 	 */
-	public InterpolatingTraceCheckerCraig(final IPredicate precondition, final IPredicate postcondition,
+	public InterpolatingTraceCheckCraig(final IPredicate precondition, final IPredicate postcondition,
 			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<? extends IIcfgTransition<?>> trace,
 			final CfgSmtToolkit csToolkit, final AssertCodeBlockOrder assertCodeBlocksIncrementally,
 			final IUltimateServiceProvider services, final boolean computeRcfgProgramExecution,
@@ -129,7 +129,7 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 					// SMTInterpol throws this during interpolation for unsupported fragments such as arrays
 					ics = new InterpolantComputationStatus(false, ItpErrorStatus.SMT_SOLVER_CANNOT_INTERPOLATE_INPUT,
 							e);
-				} else if (e instanceof SMTLIBException && message.equals("Unsupported non-linear arithmetic")) {
+				} else if (e instanceof SMTLIBException && "Unsupported non-linear arithmetic".equals(message)) {
 					// SMTInterpol was somehow able to determine satisfiability but detects
 					// non-linear arithmetic during interpolation
 					ics = new InterpolantComputationStatus(false, ItpErrorStatus.SMT_SOLVER_CANNOT_INTERPOLATE_INPUT,
@@ -146,7 +146,7 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 		}
 	}
 
-	public InterpolatingTraceCheckerCraig(final IPredicate precondition, final IPredicate postcondition,
+	public InterpolatingTraceCheckCraig(final IPredicate precondition, final IPredicate postcondition,
 			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<? extends IIcfgTransition<?>> trace,
 			final CfgSmtToolkit csToolkit, final AssertCodeBlockOrder assertCodeBlocksIncrementally,
 			final IUltimateServiceProvider services, final boolean computeRcfgProgramExecution,
@@ -186,10 +186,10 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 		try {
 			switch (interpolation) {
 			case Craig_NestedInterpolation:
-				computeInterpolants_Recursive(interpolatedPositions);
+				computeInterpolantsRecursive(interpolatedPositions);
 				break;
 			case Craig_TreeInterpolation:
-				computeInterpolants_Tree(interpolatedPositions);
+				computeInterpolantsTree(interpolatedPositions);
 				break;
 			default:
 				throw new UnsupportedOperationException("unsupportedInterpolation");
@@ -247,7 +247,7 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 	/**
 	 * Use tree interpolants to compute nested interpolants.
 	 */
-	private void computeInterpolants_Tree(final Set<Integer> interpolatedPositions) {
+	private void computeInterpolantsTree(final Set<Integer> interpolatedPositions) {
 		if (mFeasibilityResult.getLBool() != LBool.UNSAT) {
 			throw new IllegalArgumentException("Interpolants only available if trace fulfills specification");
 		}
@@ -269,7 +269,7 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 	 * Use Matthias' old naive iterative method to compute nested interpolants. (Recursive interpolation queries, one
 	 * for each call-return pair)
 	 */
-	private void computeInterpolants_Recursive(final Set<Integer> interpolatedPositions) {
+	private void computeInterpolantsRecursive(final Set<Integer> interpolatedPositions) {
 		assert interpolatedPositions != null : "no interpolatedPositions";
 		if (mFeasibilityResult.getLBool() != LBool.UNSAT) {
 			if (mFeasibilityResult.getLBool() == null) {
@@ -337,10 +337,11 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 
 			// Compute interpolants for subsequence and add them to interpolants
 			// computed by this TraceChecker
-			final InterpolatingTraceCheckerCraig tc = new InterpolatingTraceCheckerCraig(precondition,
-					interpolantAtReturnPosition, pendingContexts, subtrace, mCsToolkit, mAssertCodeBlocksIncrementally,
-					mServices, false, mPredicateFactory, mPredicateUnifier, InterpolationTechnique.Craig_NestedInterpolation,
-					mTcSmtManager, mInstantiateArrayExt, mXnfConversionTechnique, mSimplificationTechnique, null, true);
+			final InterpolatingTraceCheckCraig tc =
+					new InterpolatingTraceCheckCraig(precondition, interpolantAtReturnPosition, pendingContexts,
+							subtrace, mCsToolkit, mAssertCodeBlocksIncrementally, mServices, false, mPredicateFactory,
+							mPredicateUnifier, InterpolationTechnique.Craig_NestedInterpolation, mTcSmtManager,
+							mInstantiateArrayExt, mXnfConversionTechnique, mSimplificationTechnique, null, true);
 			final LBool isSafe = tc.isCorrect();
 			if (isSafe == LBool.SAT) {
 				throw new AssertionError(

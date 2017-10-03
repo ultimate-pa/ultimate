@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 /**
  * Wrapper for a sequence of {@link IPredicate}s along a trace, including the precondition and postcondition.
  * <p>
- * The sequence of interpolants returned by a {@link TraceChecker} contains neither the precondition nor the
+ * The sequence of interpolants returned by a {@link TraceCheck} contains neither the precondition nor the
  * postcondition of the trace check. This auxiliary class allows one to access the precondition via the index {@code 0}
  * and to access the postcondition via the index {@code length+1}. All other indices are shifted by one. In the future
  * we might also use negative indices to access pending contexts (therefore you should not catch the error thrown by the

@@ -52,7 +52,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantConsolidation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantConsolidation.InterpolantConsolidationBenchmarkGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckReasonUnknown;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerSpWp;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckSpWp;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TracePredicates;
 
 /**
@@ -311,8 +311,8 @@ public final class TraceAbstractionRefinementEngine<LETTER>
 			mHoareTripleChecker = ((AbsIntBaseInterpolantGenerator) interpolantGenerator).getHoareTripleChecker();
 		}
 
-		if (interpolantGenerator instanceof TraceCheckerSpWp) {
-			handleTraceCheckerSpWpCase(perfectIpps, imperfectIpps, (TraceCheckerSpWp) interpolantGenerator);
+		if (interpolantGenerator instanceof TraceCheckSpWp) {
+			handleTraceCheckerSpWpCase(perfectIpps, imperfectIpps, (TraceCheckSpWp) interpolantGenerator);
 			return;
 		}
 
@@ -326,14 +326,14 @@ public final class TraceAbstractionRefinementEngine<LETTER>
 	}
 
 	/**
-	 * NOTE: This method is complicated due to the structure of the {@link TraceCheckerSpWp} because
+	 * NOTE: This method is complicated due to the structure of the {@link TraceCheckSpWp} because
 	 * <ol>
 	 * <li>we need a different getter for the interpolant sequence and</li>
 	 * <li>there are two sequences of interpolants.</li>
 	 * </ol>
 	 */
 	private static void handleTraceCheckerSpWpCase(final List<TracePredicates> perfectIpps,
-			final List<TracePredicates> imperfectIpps, final TraceCheckerSpWp traceCheckerSpWp) {
+			final List<TracePredicates> imperfectIpps, final TraceCheckSpWp traceCheckerSpWp) {
 		if (traceCheckerSpWp.wasForwardPredicateComputationRequested()) {
 			addForwardPredicates(traceCheckerSpWp, perfectIpps, imperfectIpps);
 		}
@@ -342,7 +342,7 @@ public final class TraceAbstractionRefinementEngine<LETTER>
 		}
 	}
 
-	private static void addForwardPredicates(final TraceCheckerSpWp traceCheckerSpWp,
+	private static void addForwardPredicates(final TraceCheckSpWp traceCheckerSpWp,
 			final List<TracePredicates> perfectIpps, final List<TracePredicates> imperfectIpps) {
 		final TracePredicates interpolants = traceCheckerSpWp.getForwardIpp();
 		assert interpolants != null;
@@ -353,7 +353,7 @@ public final class TraceAbstractionRefinementEngine<LETTER>
 		}
 	}
 
-	private static void addBackwardPredicates(final TraceCheckerSpWp traceCheckerSpWp,
+	private static void addBackwardPredicates(final TraceCheckSpWp traceCheckerSpWp,
 			final List<TracePredicates> perfectIpps, final List<TracePredicates> imperfectIpps) {
 		final TracePredicates interpolants = traceCheckerSpWp.getBackwardIpp();
 		assert interpolants != null;

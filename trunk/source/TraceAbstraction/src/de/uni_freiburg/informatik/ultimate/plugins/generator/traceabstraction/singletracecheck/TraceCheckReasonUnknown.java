@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.s
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TraceAbstractionRefinementEngine.ExceptionHandlingCategory;
 
 /**
- * Provides reasons why the trace feasiblity result of {@link TraceChecker}
+ * Provides reasons why the trace feasiblity result of {@link TraceCheck}
  * is unknown. 
  * Objects of this class will NOT provide reasons for failed interpolations. 
  *

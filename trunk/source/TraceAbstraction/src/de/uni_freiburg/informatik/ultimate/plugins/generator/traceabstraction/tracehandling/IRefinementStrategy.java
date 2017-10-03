@@ -11,13 +11,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.in
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.InterpolantAutomatonBuilderFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategyExceptionBlacklist;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.IInterpolantGenerator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TracePredicates;
 
 /**
  * An {@link IRefinementStrategy} allows an {@link IRefinementEngine} to try multiple combinations of
  * <ol>
- * <li>a {@link TraceChecker},</li>
+ * <li>a {@link TraceCheck},</li>
  * <li>an {@link IInterpolantGenerator}, and</li>
  * <li>an {@link InterpolantAutomatonBuilderFactory}.</li>
  * </ol>
@@ -29,7 +29,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  * Between two calls to {@link #nextTraceChecker()} (resp. {@link #nextInterpolantGenerator()}) the respective getter (
  * {@link #getTraceChecker()} resp. {@link IRefinementStrategy#getInterpolantGenerator()}) always returns the same
  * object and {@link #hasNextTraceChecker()} (resp. {@link #hasNextInterpolantGenerator(List, List)}) always returns the
- * same answer. However, for instance by a call to {@link #nextInterpolantGenerator()}, the {@link TraceChecker} may
+ * same answer. However, for instance by a call to {@link #nextInterpolantGenerator()}, the {@link TraceCheck} may
  * change. A user should hence not store these objects temporarily.
  *
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
@@ -54,15 +54,15 @@ public interface IRefinementStrategy<LETTER> {
 	/**
 	 * A user should use this method whenever the trace check was unsuccessful (i.e., crashed or returned
 	 * {@link LBool.UNKNOWN}. The strategy then decides whether it wants to and whether it can use another
-	 * {@link TraceChecker}.
+	 * {@link TraceCheck}.
 	 *
-	 * @return {@code true} iff there is another {@link TraceChecker} available and should be used
+	 * @return {@code true} iff there is another {@link TraceCheck} available and should be used
 	 */
 	boolean hasNextTraceChecker();
 
 	/**
-	 * Changes the {@link TraceChecker}.<br>
-	 * Throws a {@link NoSuchElementException} if there is no next {@link TraceChecker}; use
+	 * Changes the {@link TraceCheck}.<br>
+	 * Throws a {@link NoSuchElementException} if there is no next {@link TraceCheck}; use
 	 * {@link #hasNextTraceChecker()} to check this.
 	 */
 	void nextTraceChecker();
@@ -70,7 +70,7 @@ public interface IRefinementStrategy<LETTER> {
 	/**
 	 * @return The trace checker of the current combination.
 	 */
-	TraceChecker getTraceChecker();
+	TraceCheck getTraceChecker();
 
 	/**
 	 * A user should use this method whenever new interpolants have been computed (or the computation has failed). The
@@ -93,7 +93,7 @@ public interface IRefinementStrategy<LETTER> {
 	void nextInterpolantGenerator();
 
 	/**
-	 * This method must only be called if the {@link TraceChecker} returns {@code UNSAT}.
+	 * This method must only be called if the {@link TraceCheck} returns {@code UNSAT}.
 	 *
 	 * @return The interpolant generator of the current combination.
 	 */

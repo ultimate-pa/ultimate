@@ -46,11 +46,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pa
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceCheckerCraig;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceCheckerPathInvariantsWithFallback;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceCheckCraig;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceCheckPathInvariantsWithFallback;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceChecker;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerSpWp;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheck;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckSpWp;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerUtils;
 
 /**
@@ -58,7 +58,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  *
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
-class TraceCheckerConstructor<LETTER extends IIcfgTransition<?>> implements Supplier<TraceChecker> {
+class TraceCheckerConstructor<LETTER extends IIcfgTransition<?>> implements Supplier<TraceCheck> {
 	private final TaCheckAndRefinementPreferences<LETTER> mPrefs;
 	private final ManagedScript mManagedScript;
 	private final IUltimateServiceProvider mServices;
@@ -168,8 +168,8 @@ class TraceCheckerConstructor<LETTER extends IIcfgTransition<?>> implements Supp
 	}
 
 	@Override
-	public TraceChecker get() {
-		final TraceChecker traceChecker;
+	public TraceCheck get() {
+		final TraceCheck traceChecker;
 		if (mInterpolationTechnique == null) {
 			traceChecker = constructDefault();
 		} else {
@@ -201,25 +201,25 @@ class TraceCheckerConstructor<LETTER extends IIcfgTransition<?>> implements Supp
 		return traceChecker;
 	}
 
-	private TraceChecker constructDefault() {
+	private TraceCheck constructDefault() {
 		final IPredicate precondition = mPredicateUnifier.getTruePredicate();
 		final IPredicate postcondition = mPredicateUnifier.getFalsePredicate();
 
-		final TraceChecker traceChecker;
-		traceChecker = new TraceChecker(precondition, postcondition, new TreeMap<Integer, IPredicate>(),
+		final TraceCheck traceChecker;
+		traceChecker = new TraceCheck(precondition, postcondition, new TreeMap<Integer, IPredicate>(),
 				NestedWord.nestedWord(mCounterexample.getWord()), mPrefs.getCfgSmtToolkit(), mAssertionOrder, mServices,
 				true);
 		return traceChecker;
 	}
 
-	private TraceChecker constructCraig() {
+	private TraceCheck constructCraig() {
 		final IPredicate truePredicate = mPredicateUnifier.getTruePredicate();
 		final IPredicate falsePredicate = mPredicateUnifier.getFalsePredicate();
 		final XnfConversionTechnique xnfConversionTechnique = mPrefs.getXnfConversionTechnique();
 		final SimplificationTechnique simplificationTechnique = mPrefs.getSimplificationTechnique();
 
-		final TraceChecker traceChecker;
-		traceChecker = new InterpolatingTraceCheckerCraig(truePredicate, falsePredicate,
+		final TraceCheck traceChecker;
+		traceChecker = new InterpolatingTraceCheckCraig(truePredicate, falsePredicate,
 				new TreeMap<Integer, IPredicate>(), NestedWord.nestedWord(mCounterexample.getWord()),
 				mPrefs.getCfgSmtToolkit(), mAssertionOrder, mServices, true, mPredicateFactory, mPredicateUnifier, mInterpolationTechnique,
 				mManagedScript, true, xnfConversionTechnique, simplificationTechnique,
@@ -227,14 +227,14 @@ class TraceCheckerConstructor<LETTER extends IIcfgTransition<?>> implements Supp
 		return traceChecker;
 	}
 
-	private TraceChecker constructForwardBackward() {
+	private TraceCheck constructForwardBackward() {
 		final IPredicate truePredicate = mPredicateUnifier.getTruePredicate();
 		final IPredicate falsePredicate = mPredicateUnifier.getFalsePredicate();
 		final XnfConversionTechnique xnfConversionTechnique = mPrefs.getXnfConversionTechnique();
 		final SimplificationTechnique simplificationTechnique = mPrefs.getSimplificationTechnique();
 
-		final TraceChecker traceChecker;
-		traceChecker = new TraceCheckerSpWp(truePredicate, falsePredicate, new TreeMap<Integer, IPredicate>(),
+		final TraceCheck traceChecker;
+		traceChecker = new TraceCheckSpWp(truePredicate, falsePredicate, new TreeMap<Integer, IPredicate>(),
 				NestedWord.nestedWord(mCounterexample.getWord()), mPrefs.getCfgSmtToolkit(), mAssertionOrder,
 				mPrefs.getUnsatCores(), mPrefs.getUseLiveVariables(), mServices, true, mPredicateFactory, mPredicateUnifier,
 				mInterpolationTechnique, mManagedScript, xnfConversionTechnique, simplificationTechnique,
@@ -243,7 +243,7 @@ class TraceCheckerConstructor<LETTER extends IIcfgTransition<?>> implements Supp
 	}
 
 	@SuppressWarnings("unchecked")
-	private TraceChecker constructPathInvariants() {
+	private TraceCheck constructPathInvariants() {
 		final IPredicate truePredicate = mPredicateUnifier.getTruePredicate();
 		final IPredicate falsePredicate = mPredicateUnifier.getFalsePredicate();
 		final XnfConversionTechnique xnfConversionTechnique = mPrefs.getXnfConversionTechnique();
@@ -274,7 +274,7 @@ class TraceCheckerConstructor<LETTER extends IIcfgTransition<?>> implements Supp
 				useNonlinearConstraints, useUnsatCores, useAbstractInterpretationPredicates, useWeakestPrecondition, true);
 		
 
-		return new InterpolatingTraceCheckerPathInvariantsWithFallback(truePredicate, falsePredicate,
+		return new InterpolatingTraceCheckPathInvariantsWithFallback(truePredicate, falsePredicate,
 				new TreeMap<Integer, IPredicate>(), (NestedRun<CodeBlock, IPredicate>) mCounterexample,
 				mPrefs.getCfgSmtToolkit(), mAssertionOrder, mServices, mPrefs.getToolchainStorage(), true,
 				mPredicateFactory, mPredicateUnifier, invariantSynthesisSettings, xnfConversionTechnique, simplificationTechnique, icfgContainer);
