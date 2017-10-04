@@ -158,6 +158,11 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 	@Override
 	public boolean addElement(final NODE elem) {
 		final boolean result = addElementRec(elem);
+
+		executeFloydWarshallAndReportResult();
+		reportAllArrayEqualitiesFromWeqGraph();
+		assert weqGraphFreeOfArrayEqualities();
+
 		assert sanityCheck();
 		return result;
 	}
@@ -176,10 +181,10 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 //			mAllLiterals.add(elem);
 //		}
 
-		executeFloydWarshallAndReportResult();
-		reportAllArrayEqualitiesFromWeqGraph();
+//		executeFloydWarshallAndReportResult();
+//		reportAllArrayEqualitiesFromWeqGraph();
 
-		assert weqGraphFreeOfArrayEqualities();
+//		assert weqGraphFreeOfArrayEqualities();
 		return true;
 	}
 
@@ -306,21 +311,27 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 		final Collection<NODE> ccps1 = mAuxData.getAfCcPars(array1Rep);
 		final Collection<NODE> ccps2 = mAuxData.getAfCcPars(array2Rep);
 		for (final NODE ccp1 : ccps1) {
-			final NODE ccp1Replaced = replaceFuncAppArgsWOtherRepIfNecAndPoss(ccp1);
+//			final NODE ccp1Replaced = replaceFuncAppArgsWOtherRepIfNecAndPoss(ccp1);
+			final NODE ccp1Replaced = replace(ccp1, mElementCurrentlyBeingRemoved);
 			if (ccp1Replaced == null) {
+				continue;
+			}
+			if (!hasElements(ccp1Replaced, ccp1Replaced.getArgument(), ccp1Replaced.getAppliedFunction())) {
 				continue;
 			}
 			for (final NODE ccp2 : ccps2) {
 				if (isInconsistent()) {
 					return true;
 				}
-				final NODE ccp2Replaced = replaceFuncAppArgsWOtherRepIfNecAndPoss(ccp2);
+//				final NODE ccp2Replaced = replaceFuncAppArgsWOtherRepIfNecAndPoss(ccp2);
+				final NODE ccp2Replaced = replace(ccp2, mElementCurrentlyBeingRemoved);
 				if (ccp2Replaced == null) {
 					continue;
 				}
 
-				assert hasElements(ccp1Replaced, ccp2Replaced, ccp1Replaced.getArgument(), ccp2Replaced.getArgument(),
-						ccp1Replaced.getAppliedFunction(), ccp2Replaced.getAppliedFunction());
+				if (!hasElements(ccp2Replaced, ccp2Replaced.getArgument(), ccp2Replaced.getAppliedFunction())) {
+					continue;
+				}
 
 				if (getEqualityStatus(ccp1Replaced.getArgument(), ccp2Replaced.getArgument()) != EqualityStatus.EQUAL) {
 					continue;
@@ -342,6 +353,7 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 		 * roweq-1 propagations
 		 */
 		if (array1.isFunctionApplication() && array2.isFunctionApplication()
+				&& hasElements(array1.getArgument(), array2.getArgument())
 				&& getEqualityStatus(array1.getArgument(), array2.getArgument()) == EqualityStatus.EQUAL) {
 
 			final List<CongruenceClosure<NODE>> shiftedLabelWithException = mWeakEquivalenceGraph
@@ -380,6 +392,7 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 	@Override
 	public boolean reportEquality(final NODE node1, final NODE node2) {
 		final boolean result = reportEqualityRec(node1, node2);
+		executeFloydWarshallAndReportResult();
 		assert sanityCheck();
 		return result;
 	}
@@ -440,7 +453,7 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 
 		doRoweqPropagationsOnMerge(node1, node2, node1OldRep, node2OldRep, oldAuxData);
 
-		executeFloydWarshallAndReportResult();
+//		executeFloydWarshallAndReportResult();
 
 		/*
 		 * ext
@@ -699,6 +712,14 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 		return madeChanges;
 	}
 
+	@Override
+	protected boolean supports(final NODE elem, final NODE elem2) {
+		if (mNodeToDependents.getImage(elem).contains(elem2)) {
+			return true;
+		}
+		return super.supports(elem, elem2);
+	}
+
 	private List<NODE> getAllWeqVarsNodeForFunction(final NODE func) {
 		if (!func.getSort().isArraySort()) {
 			return Collections.emptyList();
@@ -740,7 +761,8 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 		if (elem.isFunctionApplication()) {
 			throw new IllegalArgumentException();
 		}
-		if (!hasElement(elem) && mNodeToDependents.getImage(elem).isEmpty()) {
+		if (!hasElement(elem)) {
+			removeDependents(elem);
 			return false;
 		}
 		final CongruenceClosure<NODE> copy = new CongruenceClosure<>(this);
@@ -770,10 +792,7 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 
 //		removeParents(oldAfParents, oldArgParents);
 
-		for (final NODE dependent : new HashSet<>(mNodeToDependents.getImage(elem))) {
-			removeSimpleElement(dependent);
-		}
-		mNodeToDependents.removeDomainElement(elem);
+		removeDependents(elem);
 
 		mAllLiterals.remove(elem);
 
@@ -784,6 +803,13 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 //		assert elementIsFullyRemoved(elem);
 		return true;
 //		return removeElement(elem, copy);
+	}
+
+	protected void removeDependents(final NODE elem) {
+		for (final NODE dependent : new HashSet<>(mNodeToDependents.getImage(elem))) {
+			removeSimpleElement(dependent);
+		}
+		mNodeToDependents.removeDomainElement(elem);
 	}
 
 //	@Override
@@ -1039,6 +1065,15 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 
 		final WeqCongruenceClosure<ACTION, NODE> result = meetRec(other);
 
+		result.executeFloydWarshallAndReportResult();
+		if (result.isInconsistent()) {
+			return new WeqCongruenceClosure<>(true);
+		}
+		result.reportAllArrayEqualitiesFromWeqGraph();
+		if (result.isInconsistent()) {
+			return new WeqCongruenceClosure<>(true);
+		}
+
 		assert result.sanityCheck();
 		return result;
 	}
@@ -1074,14 +1109,14 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 		}
 
 
-		newWeqCc.executeFloydWarshallAndReportResult();
-		if (newWeqCc.isInconsistent()) {
-			return new WeqCongruenceClosure<>(true);
-		}
-		newWeqCc.reportAllArrayEqualitiesFromWeqGraph();
-		if (newWeqCc.isInconsistent()) {
-			return new WeqCongruenceClosure<>(true);
-		}
+//		newWeqCc.executeFloydWarshallAndReportResult();
+//		if (newWeqCc.isInconsistent()) {
+//			return new WeqCongruenceClosure<>(true);
+//		}
+//		newWeqCc.reportAllArrayEqualitiesFromWeqGraph();
+//		if (newWeqCc.isInconsistent()) {
+//			return new WeqCongruenceClosure<>(true);
+//		}
 
 		return newWeqCc;
 	}
