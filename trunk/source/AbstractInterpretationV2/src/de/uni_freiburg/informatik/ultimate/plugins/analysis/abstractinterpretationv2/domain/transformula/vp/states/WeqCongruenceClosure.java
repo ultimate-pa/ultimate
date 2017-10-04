@@ -746,8 +746,13 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 		final CongruenceClosure<NODE> copy = new CongruenceClosure<>(this);
 
 
-		assert mElementCurrentlyBeingRemoved == null;
-		mElementCurrentlyBeingRemoved = new RemovalInfo(elem, getOtherEquivalenceClassMember(elem));
+		if (mElementCurrentlyBeingRemoved == null) {
+			mElementCurrentlyBeingRemoved = new RemovalInfo(elem, getOtherEquivalenceClassMember(elem));
+		} else {
+			// this may happen if elem is a dependent element, check that through the assert..
+			assert mNodeToDependents.entrySet().stream()
+				.map(en -> en.getValue()).filter(e -> e.equals(elem)).findAny().isPresent();
+		}
 //		addNodesEquivalentToNodesWithRemovedElement(elem);
 
 		final Collection<NODE> nodesToAdd = collectNodesToAddAtFunctionRemoval(elem);
@@ -772,7 +777,9 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 
 		mAllLiterals.remove(elem);
 
-		mElementCurrentlyBeingRemoved = null;
+		if (mElementCurrentlyBeingRemoved.getElem().equals(elem)) {
+			mElementCurrentlyBeingRemoved = null;
+		}
 		assert sanityCheck();
 //		assert elementIsFullyRemoved(elem);
 		return true;
