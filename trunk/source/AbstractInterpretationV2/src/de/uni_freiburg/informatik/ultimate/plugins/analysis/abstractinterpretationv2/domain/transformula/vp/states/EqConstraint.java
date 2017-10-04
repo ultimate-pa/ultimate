@@ -413,5 +413,9 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 			return mPartialArrangement.getStatistics(stat);
 		}
 	}
+
+	public String toLogString() {
+		return mPartialArrangement.toLogString();
+	}
 }
 

@@ -1021,6 +1021,17 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		return mElementTVER.getDisequalities();
 	}
 
+	Map<String, Integer> summarize() {
+		final Map<String, Integer> result = new HashMap<>();
+
+		result.put("#Elements", getAllElements().size());
+		result.put("#EquivalenceClasses", getAllElementRepresentatives().size());
+		result.put("#SupportingEqualties", getSupportingElementEqualities().size());
+		result.put("#SupportingDisequalties", getElementDisequalities().size());
+
+		return result;
+	}
+
 	@Override
 	public String toString() {
 		if (isTautological()) {
@@ -1031,20 +1042,33 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		}
 
 		final StringBuilder sb = new StringBuilder();
+		for (final Entry<String, Integer> en : summarize().entrySet()) {
+			sb.append(String.format("%s : %d\n", en.getKey(), en.getValue()));
+		}
+
+		return sb.toString();
+	}
+
+	public String toLogString() {
+		if (isTautological()) {
+			return "True";
+		}
+		if (isInconsistent()) {
+			return "False";
+		}
+
+		final StringBuilder sb = new StringBuilder();
 		sb.append("--CC(begin):--\n");
 
-		//sb.append("Element equivalences:\n");
 		sb.append("Equivalences:\n");
 		for (final Set<ELEM> eqc : mElementTVER.getAllEquivalenceClasses()) {
 			sb.append(eqc);
 			if (eqc.size() > 1) {
 				sb.append(" --- rep: ");
-				//sb.append("\n");
 				sb.append(mElementTVER.getRepresentative(eqc.iterator().next()));
 			}
 			sb.append("\n");
 		}
-		//sb.append("\n");
 		sb.append("Disequalities:\n");
 		for (final Entry<ELEM, ELEM> deq : mElementTVER.getDisequalities()) {
 			sb.append(deq.getKey());
@@ -1053,7 +1077,6 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 			sb.append("\n");
 		}
 		sb.append("--CC(end):--\n");
-//		sb.append(mElementTVER);
 
 		return sb.toString();
 	}

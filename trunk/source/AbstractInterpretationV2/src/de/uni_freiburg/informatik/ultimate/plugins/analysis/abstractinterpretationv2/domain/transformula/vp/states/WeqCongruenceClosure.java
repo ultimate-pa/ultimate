@@ -1142,8 +1142,32 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 		sb.append("Partial arrangement:\n");
 		sb.append(super.toString());
 		sb.append("\n");
-		sb.append("Weak equivalences:\n");
-		sb.append(mWeakEquivalenceGraph);
+		if (mWeakEquivalenceGraph != null) {
+			sb.append("Weak equivalences:\n");
+			sb.append(mWeakEquivalenceGraph.toString());
+		} else {
+			sb.append("weak equivalence graph is null\n");
+		}
+		return sb.toString();
+	}
+
+	public String toLogString() {
+		if (isTautological()) {
+			return "True";
+		}
+		if (isInconsistent()) {
+			return "False";
+		}
+		final StringBuilder sb = new StringBuilder();
+		sb.append("Partial arrangement:\n");
+		sb.append(super.toLogString());
+		sb.append("\n");
+		if (mWeakEquivalenceGraph != null) {
+			sb.append("Weak equivalences:\n");
+			sb.append(mWeakEquivalenceGraph.toLogString());
+		} else {
+			sb.append("weak equivalence graph is null\n");
+		}
 		return sb.toString();
 	}
 
