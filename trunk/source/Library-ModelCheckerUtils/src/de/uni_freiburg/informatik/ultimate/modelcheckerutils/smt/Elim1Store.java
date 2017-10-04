@@ -53,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareT
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IncrementalPlicationChecker.Plication;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.ExtendedSimplificationResult;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArraySelectOverStore;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSort;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierPusher.PqeTechniques;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -132,6 +133,8 @@ public class Elim1Store {
 	private static final boolean APPLY_DOUBLE_CASE_SIMPLIFICATION = true;
 	private static final boolean APPLY_RESULT_SIMPLIFICATION = false;
 	private static final boolean DEBUG_CRASH_ON_LARGE_SIMPLIFICATION_POTENTIAL = false;
+	
+	private static final boolean SELECT_OVER_STORE_PREPROCESSING = false;
 
 
 	public Elim1Store(final ManagedScript mgdScript, final IUltimateServiceProvider services,
@@ -149,6 +152,47 @@ public class Elim1Store {
 		if (xjunctsOuter.length > 1) {
 			throw new AssertionError("several disjuncts! " + inputTerm);
 		}
+		
+		if (SELECT_OVER_STORE_PREPROCESSING) {
+			final Set<ApplicationTerm> allSelectTerms = new ApplicationTermFinder("select", false).findMatchingSubterms(inputTerm);
+			for (final ApplicationTerm selectTerm : allSelectTerms) {
+				final ArraySelectOverStore asos = ArraySelectOverStore.convert(selectTerm);
+				if (asos != null) {
+					if (asos.getArrayStore().getArray().equals(eliminatee)) {
+						final Term selectIndex = asos.getIndex();
+						final Term storeIndex = asos.getArrayStore().getIndex();
+						Term derCase;
+						{
+							final Term replacement = asos.getArrayStore().getValue();
+							final Map<Term, Term> substitutionMapping = Collections.singletonMap(selectTerm,
+									replacement);
+							final Term updated = new Substitution(mMgdScript, substitutionMapping).transform(inputTerm);
+							final Term derTerm = QuantifierUtils.applyDerOperator(mScript, quantifier, selectIndex,
+									storeIndex);
+							derCase = QuantifierUtils.applyDualFiniteConnective(mScript, quantifier, derTerm, updated);
+						}
+						Term antiDerCase;
+						{
+							final Term replacement = SmtUtils.select(mScript, asos.getArrayStore().getArray(),
+									selectIndex);
+							final Map<Term, Term> substitutionMapping = Collections.singletonMap(selectTerm,
+									replacement);
+							final Term updated = new Substitution(mMgdScript, substitutionMapping).transform(inputTerm);
+							final Term antiDerTerm = QuantifierUtils.applyAntiDerOperator(mScript, quantifier,
+									selectIndex, storeIndex);
+							antiDerCase = QuantifierUtils.applyDualFiniteConnective(mScript, quantifier, antiDerTerm,
+									updated);
+						}
+						final Term simpl = QuantifierUtils.applyCorrespondingFiniteConnective(mScript, quantifier,
+								derCase, antiDerCase);
+						return new EliminationTask(quantifier, Collections.singleton(eliminatee), simpl);
+						// throw new AssertionError("select-over-store");
+					}
+				}
+			}
+		}
+		
+		
 		final List<ApplicationTerm> stores = extractStores(eliminatee, inputTerm);
 		if (stores.size() > 1) {
 			throw new AssertionError("not yet supported: multiple stores " + inputTerm);
