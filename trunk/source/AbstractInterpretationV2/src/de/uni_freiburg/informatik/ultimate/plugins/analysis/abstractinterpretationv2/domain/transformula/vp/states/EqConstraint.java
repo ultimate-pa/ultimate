@@ -309,11 +309,6 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 		return mPvocs;
 	}
 
-	@Override
-	public String toString() {
-		return mPartialArrangement.toString();
-	}
-
 	public boolean hasNode(final NODE node) {
 		return mPartialArrangement.getAllElements().contains(node);
 	}
@@ -412,6 +407,11 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 		default :
 			return mPartialArrangement.getStatistics(stat);
 		}
+	}
+
+	@Override
+	public String toString() {
+		return mPartialArrangement.toString();
 	}
 
 	public String toLogString() {

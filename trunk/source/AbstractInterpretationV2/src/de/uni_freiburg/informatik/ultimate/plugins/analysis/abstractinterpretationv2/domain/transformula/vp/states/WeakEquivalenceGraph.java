@@ -792,7 +792,7 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 			mWeakEquivalenceEdges.entrySet()) {
 			sb.append(weq.getKey());
 			sb.append("\n");
-			sb.append(weq.getValue());
+			sb.append(weq.getValue().toLogString());
 			sb.append("\n");
 		}
 
@@ -1183,7 +1183,14 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 
 			@Override
 			public String toString() {
-				return mLabel.toString();
+				return "weq edge label, size: " + mLabel.size();
+			}
+
+			public String toLogString() {
+				final StringBuilder sb = new StringBuilder();
+
+				 mLabel.forEach(l -> sb.append(l.toLogString() + "\n"));
+				 return sb.toString();
 			}
 
 			private boolean sanityCheck() {
