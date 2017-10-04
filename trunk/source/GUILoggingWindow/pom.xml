@@ -31,11 +31,11 @@
 	<parent>
 		<artifactId>mavenparent</artifactId>
 		<groupId>de.uni_freiburg.informatik.ultimate</groupId>
-		<version>0.1.20</version>
+		<version>0.1.21</version>
 		<relativePath>../BA_MavenParentUltimate/pom.xml</relativePath>
 	</parent>
 
 	<artifactId>de.uni_freiburg.informatik.ultimate.gui.logging</artifactId>
-	<version>0.1.20</version>
+	<version>0.1.21</version>
 	<packaging>eclipse-plugin</packaging>
 </project>
