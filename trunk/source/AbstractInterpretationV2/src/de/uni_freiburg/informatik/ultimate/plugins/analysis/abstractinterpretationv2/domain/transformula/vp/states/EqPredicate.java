@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
@@ -64,7 +65,7 @@ public class EqPredicate<ACTION extends IIcfgTransition<IcfgLocation>> implement
 		mProcedures = procedures;
 
 
-		final Term acc = constraint.getTerm(mgdScript.getScript());
+		final ApplicationTerm acc = (ApplicationTerm) constraint.getTerm(mgdScript.getScript());
 		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(acc, mgdScript.getScript(), symbolTable);
 		mClosedFormula = tvp.getClosedFormula();
 		mFormula = tvp.getFormula();

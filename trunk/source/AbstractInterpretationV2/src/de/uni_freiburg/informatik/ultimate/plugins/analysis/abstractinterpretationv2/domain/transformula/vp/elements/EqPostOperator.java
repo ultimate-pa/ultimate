@@ -128,11 +128,8 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 		assert result.stream().allMatch(state -> state.getVariables().containsAll(oldState.getVariables()));
 		if (mDebug) {
 			mLogger.debug(postConstraint.getDebugInfo());
-			if (!preciseStrongestPostImpliesAbstractPost(oldState, transition,
-					mEqConstraintFactory.getEqStateFactory().statesToPredicate(result))) {
-				assert false;
-				mLogger.warn("soundness check failed!");
-			}
+			assert preciseStrongestPostImpliesAbstractPost(oldState, transition,
+					mEqConstraintFactory.getEqStateFactory().statesToPredicate(result)) : "soundness check failed!";
 		}
 		return result;
 	}
@@ -146,7 +143,7 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 				mEqConstraintFactory.getEqStateFactory().termToPredicate(spPrecise, postConstraint);
 
 		final Validity icRes = mDoubleCheckImplicationChecker.checkImplication(spPred, false, postConstraint, false);
-		assert icRes != Validity.INVALID;
+		assert icRes != Validity.INVALID : "soundness check failed!";
 		return icRes != Validity.INVALID;
 	}
 
