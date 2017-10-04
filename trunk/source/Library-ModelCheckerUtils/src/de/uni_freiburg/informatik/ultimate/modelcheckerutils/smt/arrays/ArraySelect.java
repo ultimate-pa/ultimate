@@ -26,6 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays;
 
+import java.text.MessageFormat;
+
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -43,6 +45,19 @@ public class ArraySelect {
 		mIndex = index;
 	}
 	
+	public ArraySelect(final Term term) {
+		if (!(term instanceof ApplicationTerm)) {
+			throw new IllegalArgumentException();
+		}
+		final ApplicationTerm appTerm = (ApplicationTerm) term;
+		if (!appTerm.getFunction().getName().equals("select")) {
+			throw new IllegalArgumentException();
+		}
+		assert appTerm.getParameters().length == 2;
+		mArray = appTerm.getParameters()[0];
+		mIndex = appTerm.getParameters()[1];
+	}
+	
 	public Term getArray() {
 		return mArray;
 	}
@@ -58,7 +73,7 @@ public class ArraySelect {
 
 	@Override
 	public String toString() {
-		return String.format("(select {0} {1})", getArray(), getIndex());
+		return MessageFormat.format("(select %s %s)", getArray(), getIndex());
 	}
 
 

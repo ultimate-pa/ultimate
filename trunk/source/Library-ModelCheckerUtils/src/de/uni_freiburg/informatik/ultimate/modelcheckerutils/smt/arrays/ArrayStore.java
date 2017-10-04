@@ -45,6 +45,20 @@ public class ArrayStore {
 		mValue = value;
 	}
 	
+	public ArrayStore(final Term term) {
+		if (!(term instanceof ApplicationTerm)) {
+			throw new IllegalArgumentException();
+		}
+		final ApplicationTerm appTerm = (ApplicationTerm) term;
+		if (!appTerm.getFunction().getName().equals("store")) {
+			throw new IllegalArgumentException();
+		}
+		assert appTerm.getParameters().length == 3;
+		mArray = appTerm.getParameters()[0];
+		mIndex = appTerm.getParameters()[1];
+		mValue = appTerm.getParameters()[2];
+	}
+	
 	public Term getArray() {
 		return mArray;
 	}
@@ -64,7 +78,7 @@ public class ArrayStore {
 
 	@Override
 	public String toString() {
-		return String.format("(store {0} {1} {2})", getArray(), getIndex(), getValue());
+		return String.format("(store %s %s %s)", getArray(), getIndex(), getValue());
 	}
 
 
