@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 public final class UltimateNormalFormUtils {
 
 	private UltimateNormalFormUtils() {
-		// do not instantiate
+		// do not instantiate 
 	}
 
 	private static boolean rootRespectsUltimateNormalForm(final ConstantTerm term) {
@@ -60,6 +60,23 @@ public final class UltimateNormalFormUtils {
 			assert false : "use not and equals";
 			return false;
 		}
+		if (term.getFunction().getName().equals("select")) {
+			final Term array = term.getParameters()[0];
+			final Term index = term.getParameters()[1];
+			if (index.equals(SmtUtils.getArrayStoreIdx(array))) {
+				assert false : "select-over-store with same index should have been removed";
+				return false;
+			}
+		}
+		if (term.getFunction().getName().equals("store")) {
+			final Term array = term.getParameters()[0];
+			final Term index = term.getParameters()[1];
+			if (index.equals(SmtUtils.getArrayStoreIdx(array))) {
+				assert false : "select-over-store with same index should have been removed";
+				return false;
+			}
+		}
+
 		return true;
 	}
 

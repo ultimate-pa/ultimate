@@ -1258,7 +1258,7 @@ public final class SmtUtils {
 	/**
 	 * @return idx if array has form (store a idx v) return null if array has a different form
 	 */
-	private final static Term getArrayStoreIdx(final Term array) {
+	public final static Term getArrayStoreIdx(final Term array) {
 		if (array instanceof ApplicationTerm) {
 			final ApplicationTerm appArray = (ApplicationTerm) array;
 			final FunctionSymbol arrayFunc = appArray.getFunction();
