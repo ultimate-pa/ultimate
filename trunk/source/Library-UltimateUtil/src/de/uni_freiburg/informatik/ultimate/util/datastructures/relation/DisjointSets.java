@@ -4,13 +4,16 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.NoSuchElementException;
 import java.util.Set;
-import java.util.Map.Entry;
 
 
 /***
  * DisjointSets data structure.
+ *
+ * TODO: can this class be deleted and UnionFind used instead??
+ *
  * @author Mostafa M.A. <mostafa.amin93@gmail.com>
  *
  * @param <T> Elements of the sets
@@ -32,7 +35,7 @@ public class DisjointSets<T> {
 			mSubsets.put(x, sub);
 		}
 	}
-	
+
 	/*
 	public DisjointSets(final Set<T> elements_sets,...) {
 		mRepresentative = new HashMap<>();
