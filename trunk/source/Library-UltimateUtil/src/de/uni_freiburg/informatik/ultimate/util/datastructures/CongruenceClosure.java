@@ -471,17 +471,70 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 
 	protected ELEM replaceWithOtherRepIfNecessaryAndPossible(final ELEM elem) {
 		if (mElementCurrentlyBeingRemoved == null) {
+			assert hasElement(elem);
 			return elem;
 		}
-		if (elem.equals(mElementCurrentlyBeingRemoved.getElem())) {
-			if (mElementCurrentlyBeingRemoved.getOtherRep() != null) {
-				assert hasElement(mElementCurrentlyBeingRemoved.getOtherRep());
-				return mElementCurrentlyBeingRemoved.getOtherRep();
+//		if (elem.equals(mElementCurrentlyBeingRemoved.getElem())) {
+//		if (mElementCurrentlyBeingRemoved.supports(elem)) {
+		if (supports(mElementCurrentlyBeingRemoved.getElem(), elem)) {
+
+			final ELEM replacement = replace(elem, mElementCurrentlyBeingRemoved);
+
+//			if (mElementCurrentlyBeingRemoved.getOtherRep() != null) {
+//				assert hasElement(mElementCurrentlyBeingRemoved.getOtherRep());
+//				return mElementCurrentlyBeingRemoved.getOtherRep();
+			if (replacement != null && hasElement(replacement)) {
+//				assert hasElement(replacement);
+				return replacement;
 			} else {
 				return null;
 			}
 		}
+		assert hasElement(elem);
 		return elem;
+	}
+
+	/**
+	 * elem depends on elementCurrentlyBeingRemoved.getElem()
+	 *
+	 * Attempt to replace elementCurrentlyBeingRemoved.getElem() by  elementCurrentlyBeingRemoved.getOtherElem()
+	 * in elem.
+	 *
+	 * return null if not possible
+	 *
+	 *
+	 * @param elem
+	 * @param elementCurrentlyBeingRemoved
+	 * @return
+	 */
+	protected ELEM replace(final ELEM elem, final CongruenceClosure<ELEM>.RemovalInfo elementCurrentlyBeingRemoved) {
+		if (elementCurrentlyBeingRemoved == null) {
+			return elem;
+		}
+		if (!supports(elementCurrentlyBeingRemoved.getElem(), elem)) {
+			return elem;
+		}
+
+		if (elem.equals(elementCurrentlyBeingRemoved.getElem())) {
+			return elementCurrentlyBeingRemoved.getOtherRep();
+		}
+		if (elem.isFunctionApplication()) {
+
+			final ELEM afReplaced = replace(elem.getAppliedFunction(), elementCurrentlyBeingRemoved);
+			if (afReplaced == null) {
+				return null;
+			}
+			final ELEM argReplaced = replace(elem.getArgument(), elementCurrentlyBeingRemoved);
+			if (argReplaced == null) {
+				return null;
+			}
+
+			ELEM result = elem.replaceAppliedFunction(afReplaced);
+			result = result.replaceArgument(argReplaced);
+
+			return result;
+		}
+		return null;
 	}
 
 //	/**
@@ -507,6 +560,17 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 //			removeFuncAppElement(parent);
 //		}
 //	}
+
+	/**
+	 * Does elem2 depend on elem?
+	 *
+	 * @param elem
+	 * @param elem2
+	 * @return
+	 */
+	protected boolean supports(final ELEM elem, final ELEM elem2) {
+		return hasSubElement(elem2, Collections.singleton(elem));
+	}
 
 	protected ELEM updateElementTverAndAuxDataOnRemoveElement(final ELEM elem) {
 		final boolean elemWasRepresentative = mElementTVER.isRepresentative(elem);
@@ -552,6 +616,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 	 * @return
 	 */
 	protected ELEM getOtherEquivalenceClassMember(final ELEM elem) {
+		assert hasElement(elem);
 		final Set<ELEM> eqc = mElementTVER.getEquivalenceClass(elem);
 		if (eqc.size() == 1) {
 			return null;
@@ -1028,8 +1093,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 	 * @return
 	 */
 	public void transformElementsAndFunctions(final Function<ELEM, ELEM> elemTransformer) {
-		assert sanitizeTransformer(elemTransformer, getAllElements()) : "we assume that the transformer does not "
-				+ "produce elements that were in the relation before!";
+//		assert sanitizeTransformer(elemTransformer, getAllElements()) : "we assume that the transformer does not "
+//				+ "produce elements that were in the relation before!";
 
 		mElementTVER.transformElements(elemTransformer);
 		mAuxData.transformElements(elemTransformer);
@@ -1109,6 +1174,13 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		return mElementTVER.getAllRepresentatives();
 	}
 
+	/**
+	 * Determines if one of the descendants of given element elem is a member of the given element set sub.
+	 *
+	 * @param elem
+	 * @param sub
+	 * @return
+	 */
 	public static <ELEM extends ICongruenceClosureElement<ELEM>> boolean hasSubElement(final ELEM elem,
 			final Set<ELEM> sub) {
 		if (sub.contains(elem)) {
@@ -1124,33 +1196,33 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		return mElementTVER.isRepresentative(elem);
 	}
 
-	protected ELEM replaceFuncAppArgsWOtherRepIfNecAndPoss(final ELEM c) {
-		assert c.isFunctionApplication();
-		final ELEM cReplaced = c;
-
-		final ELEM afReplaced = replaceWithOtherRepIfNecessaryAndPossible(c.getAppliedFunction());
-		final ELEM argReplaced = replaceWithOtherRepIfNecessaryAndPossible(c.getArgument());
-		if (afReplaced == null || argReplaced == null) {
-			return null;
-		}
-		assert afReplaced == c.getAppliedFunction() || argReplaced == c.getArgument();
-		if (afReplaced != c.getAppliedFunction()) {
-			final ELEM rpaf = c.replaceAppliedFunction(mElementCurrentlyBeingRemoved.getOtherRep());
-			if (hasElement(rpaf)) {
-				return rpaf;
-			} else {
-				return null;
-			}
-		} else if (argReplaced != c.getArgument()) {
-			final ELEM rparg = c.replaceArgument(mElementCurrentlyBeingRemoved.getOtherRep());
-			if (hasElement(rparg)) {
-				return rparg;
-			} else {
-				return null;
-			}
-		}
-		return cReplaced;
-	}
+//	protected ELEM replaceFuncAppArgsWOtherRepIfNecAndPoss(final ELEM c) {
+//		assert c.isFunctionApplication();
+//		final ELEM cReplaced = c;
+//
+//		final ELEM afReplaced = replaceWithOtherRepIfNecessaryAndPossible(c.getAppliedFunction());
+//		final ELEM argReplaced = replaceWithOtherRepIfNecessaryAndPossible(c.getArgument());
+//		if (afReplaced == null || argReplaced == null) {
+//			return null;
+//		}
+//		assert afReplaced == c.getAppliedFunction() || argReplaced == c.getArgument();
+//		if (afReplaced != c.getAppliedFunction()) {
+//			final ELEM rpaf = c.replaceAppliedFunction(mElementCurrentlyBeingRemoved.getOtherRep());
+//			if (hasElement(rpaf)) {
+//				return rpaf;
+//			} else {
+//				return null;
+//			}
+//		} else if (argReplaced != c.getArgument()) {
+//			final ELEM rparg = c.replaceArgument(mElementCurrentlyBeingRemoved.getOtherRep());
+//			if (hasElement(rparg)) {
+//				return rparg;
+//			} else {
+//				return null;
+//			}
+//		}
+//		return cReplaced;
+//	}
 
 	/**
 	 * auxilliary data related to the tree where an edge a -> b means that b is an argument to function a
@@ -1626,9 +1698,17 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		private final ELEM mOtherRep;
 
 		public RemovalInfo(final ELEM elemBeingRemoved, final ELEM otherRep) {
+			assert !elemBeingRemoved.isFunctionApplication();
 			mElemBeingRemoved = elemBeingRemoved;
 			mOtherRep = otherRep;
 		}
+
+//		public boolean supports(final ELEM elem) {
+//			if (hasSubElement(mElemBeingRemoved, Collections.singleton(elem))) {
+//				return true;
+//			}
+//			return false;
+//		}
 
 		public ELEM getElem() {
 			return mElemBeingRemoved;
