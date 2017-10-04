@@ -227,7 +227,7 @@ public final class ExpressionTransformer {
 		if (primitiveTypes == null || primitiveTypes.length == 0) {
 			return false;
 		}
-		return Arrays.stream(primitiveTypes).allMatch(a -> a.getTypeCode() == typecode);
+		return Arrays.stream(primitiveTypes).allMatch(type -> type.getTypeCode() == typecode);
 	}
 
 	private static boolean isPrimitive(final BinaryExpression expr) {

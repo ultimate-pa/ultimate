@@ -475,9 +475,7 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
 
-		sb.append("(");
-
-		sb.append(mLeftSubEvaluator);
+		sb.append('(').append(mLeftSubEvaluator);
 
 		switch (mOperator) {
 		case ARITHDIV:
@@ -530,9 +528,7 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 			break;
 		}
 
-		sb.append(mRightSubEvaluator);
-
-		sb.append(")");
+		sb.append(mRightSubEvaluator).append(')');
 
 		return sb.toString();
 	}
