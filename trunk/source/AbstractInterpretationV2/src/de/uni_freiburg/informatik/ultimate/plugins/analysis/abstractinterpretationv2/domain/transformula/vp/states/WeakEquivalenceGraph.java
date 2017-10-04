@@ -25,6 +25,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.AbstractNodeAndFunctionFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CongruenceClosure;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CrossProducts;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ICongruenceClosureElement;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
@@ -531,32 +532,39 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 
 		final WeakEquivalenceGraph<ACTION, NODE>.WeakEquivalenceEdgeLabel originalEdgeLabel =
 				new WeakEquivalenceEdgeLabel(labelContents);
-		final List<NODE> prefix1 = Collections.singletonList(value);
+//		final List<NODE> prefix1 = Collections.singletonList(value);
 
 		// TODO: this dimension stuff is a relic (dimension is always 1) --> get rid of it some time..
-		final int dim = prefix1.size();
+//		final int dim = prefix1.size();
 
-		final List<NODE> firstDimWeqVarNodes = new ArrayList<>(dim);
-		for (int i = 0; i < dim; i++) {
-			firstDimWeqVarNodes.add(mFactory.getWeqVariableNodeForDimension(i, prefix1.get(i).getSort()));
-		}
+//		final List<NODE> firstDimWeqVarNodes = new ArrayList<>(dim);
+//		for (int i = 0; i < dim; i++) {
+//			firstDimWeqVarNodes.add(mFactory.getWeqVariableNodeForDimension(i, prefix1.get(i).getSort()));
+//		}
+		final NODE firstDimWeqVarNode = weqVarsForThisEdge.get(0);
 
 		final CongruenceClosure<NODE> qEqualsI = new CongruenceClosure<>();
-		for (int i = 0; i < dim; i++) {
-			qEqualsI.reportEquality(firstDimWeqVarNodes.get(i), prefix1.get(i));
-		}
+//		for (int i = 0; i < dim; i++) {
+			qEqualsI.reportEquality(firstDimWeqVarNode, value);
+//			qEqualsI.reportEquality(firstDimWeqVarNodes.get(i), prefix1.get(i));
+//		}
 
 		final WeakEquivalenceGraph<ACTION, NODE>.WeakEquivalenceEdgeLabel copy =
 				new WeakEquivalenceEdgeLabel(originalEdgeLabel);
 		final WeakEquivalenceGraph<ACTION, NODE>.WeakEquivalenceEdgeLabel meet =
 				copy.meetRec(Collections.singletonList(qEqualsI));
 
-		for (int i = 0; i < dim; i++) {
+//		for (int i = 0; i < dim; i++) {
 //			meet.projectElement(firstDimWeqVarNodes.get(i), null, mPartialArrangement);
-			meet.projectElement(firstDimWeqVarNodes.get(i), mPartialArrangement);
-		}
+//			meet.projectElement(firstDimWeqVarNodes.get(i), mPartialArrangement);
+//		}
+		meet.projectElement(firstDimWeqVarNode, mPartialArrangement);
 
-		meet.inOrDecreaseWeqVarIndices(-dim, weqVarsForThisEdge);
+//		meet.inOrDecreaseWeqVarIndices(-dim, weqVarsForThisEdge);
+		meet.inOrDecreaseWeqVarIndices(-1, weqVarsForThisEdge);
+		assert !meet.getAppearingNodes().contains(weqVarsForThisEdge.get(weqVarsForThisEdge.size() - 1)) : "double "
+				+ "check the condition if this assertion fails, but as we decreased all weq vars, the last one should "
+				+ "not be present in the result, right?..";
 
 		return meet.getLabelContents();
 	}
@@ -577,9 +585,14 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		final WeakEquivalenceGraph<ACTION, NODE>.WeakEquivalenceEdgeLabel labelToShiftAndAdd =
 				new WeakEquivalenceEdgeLabel(labelContents);
 
+		// project away the highest weq var before shifting
+		labelToShiftAndAdd.projectElement(weqVarsForResolventEdge.get(weqVarsForResolventEdge.size() -1),
+				mPartialArrangement);
+
 		labelToShiftAndAdd.inOrDecreaseWeqVarIndices(1, weqVarsForResolventEdge);
 
 		final NODE firstWeqVar = weqVarsForResolventEdge.get(0);
+		assert !labelToShiftAndAdd.getAppearingNodes().contains(firstWeqVar);
 
 		final CongruenceClosure<NODE> firstWeqVarUnequalArgument = new CongruenceClosure<>();
 		firstWeqVarUnequalArgument.reportDisequality(firstWeqVar, argument);
@@ -605,6 +618,8 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 							.filter(node -> !CongruenceClosure.hasSubElement(node, mFactory.getAllWeqNodes()))
 							.collect(Collectors.toSet());
 					if (!mPartialArrangement.getAllElements().containsAll(nodesOnEdgeLabelWithoutWeqNodes)) {
+						final Set<NODE> difference = DataStructureUtils.difference(nodesOnEdgeLabelWithoutWeqNodes,
+								mPartialArrangement.getAllElements());
 						assert false;
 						return false;
 					}
@@ -737,17 +752,24 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		 *     they must be in correct order of dimensions according to source/target
 		 */
 		public void inOrDecreaseWeqVarIndices(final int inOrDecrease, final List<NODE> weqVarsForThisEdge) {
+			assert inOrDecrease == 1 || inOrDecrease == -1 : "we don't expect any other cases";
+			assert inOrDecrease != 1 || !this.getAppearingNodes()
+					.contains(weqVarsForThisEdge.get(weqVarsForThisEdge.size())) : "project the highest weqvar before"
+							+ "increasing!";
+			assert inOrDecrease != -1 || !this.getAppearingNodes()
+					.contains(weqVarsForThisEdge.get(0)) : "project the lowest weqvar before decreasing!";
+
 			final Map<Term, Term> substitutionMapping = new HashMap<>();
 			for (int i = 0; i < weqVarsForThisEdge.size(); i++) {
 				final NODE nodeI = weqVarsForThisEdge.get(i);
-				final int newDim = i - inOrDecrease;
+				final int newDim = i + inOrDecrease;
 				// the others (newDim <0) should have been projected out of the formula before.. (in the calling method)
-				if (newDim >= 0) {
+				if (newDim >= 0 && newDim < weqVarsForThisEdge.size()) {
 					substitutionMapping.put(nodeI.getTerm(),
 							mFactory.getWeqVariableForDimension(newDim, nodeI.getSort()));
 				}
 			}
-			renameVariables(substitutionMapping);
+			this.renameVariables(substitutionMapping);
 		}
 
 		public boolean isConstrained(final NODE elem) {
