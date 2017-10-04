@@ -843,8 +843,8 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 			public void inOrDecreaseWeqVarIndices(final int inOrDecrease, final List<NODE> weqVarsForThisEdge) {
 				assert inOrDecrease == 1 || inOrDecrease == -1 : "we don't expect any other cases";
 				assert inOrDecrease != 1 || !this.getAppearingNodes()
-						.contains(weqVarsForThisEdge.get(weqVarsForThisEdge.size())) : "project the highest weqvar before"
-								+ "increasing!";
+						.contains(weqVarsForThisEdge.get(weqVarsForThisEdge.size() - 1)) : "project the highest weqvar "
+								+ "before increasing!";
 				assert inOrDecrease != -1 || !this.getAppearingNodes()
 						.contains(weqVarsForThisEdge.get(0)) : "project the lowest weqvar before decreasing!";
 
