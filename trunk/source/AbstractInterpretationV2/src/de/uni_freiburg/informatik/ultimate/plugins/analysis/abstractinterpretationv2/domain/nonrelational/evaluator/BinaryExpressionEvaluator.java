@@ -288,6 +288,12 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 					returnStates.addAll(crossIntersect(leftEq, rightEq));
 					break;
 				case COMPNEQ:
+					if (mLeftSubEvaluator.containsBool() || mRightSubEvaluator.containsBool()) {
+						throw new UnsupportedOperationException(
+								"COMPNEQ operator should not occur for boolean formulas.");
+					}
+					// If there is a non-boolean formula present, fall through the arithmetic case and evaluate the
+					// inequality according to the expected arithmetic values.
 				case COMPGT:
 				case COMPGEQ:
 				case COMPLT:
@@ -469,6 +475,8 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
 
+		sb.append("(");
+
 		sb.append(mLeftSubEvaluator);
 
 		switch (mOperator) {
@@ -523,6 +531,8 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 		}
 
 		sb.append(mRightSubEvaluator);
+
+		sb.append(")");
 
 		return sb.toString();
 	}
