@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Library-InteractiveCommon
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.interactive.common;singleton:=true
-Bundle-Version: 0.1.20
+Bundle-Version: 0.1.21
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Require-Bundle: de.uni_freiburg.informatik.ultimate.core,
  com.google.protobuf,
