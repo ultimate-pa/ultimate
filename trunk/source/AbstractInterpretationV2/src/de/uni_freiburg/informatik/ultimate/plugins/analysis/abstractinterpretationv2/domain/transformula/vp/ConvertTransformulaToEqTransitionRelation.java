@@ -54,6 +54,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -135,6 +137,10 @@ public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTrans
 
 	private boolean transformulaImpliesResultConstraint() {
 
+
+
+
+
 		mMgdScript.lock(this);
 		mMgdScript.push(this, 1);
 		final Pair<Term, Term> anteAndSucc = makeShiftVariableSubstitution(mMgdScript, mTf, mResultConstraint);
@@ -163,20 +169,46 @@ public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTrans
 	protected Pair<Term, Term> makeShiftVariableSubstitution(final ManagedScript mgdScript, final TransFormula tf,
 			final EqDisjunctiveConstraint<ACTION, EqNode> resultConstraint) {
 
-		final Map<Term, Term> sub = new HashMap<>();
-		for (final TermVariable tv : tf.getFormula().getFreeVars()) {
 
-			final String constName = "tf2EqTR_" + tv.getName();
-			mgdScript.declareFun(this, constName, new Sort[0], tv.getSort());
-			sub.put(tv, mgdScript.term(this, constName));
+		final Map<Term, Term> substitutionMapping = new HashMap<>();
+
+		for (final Entry<IProgramVar, TermVariable> iv : mTf.getOutVars().entrySet()) {
+			substitutionMapping.put(iv.getValue(), iv.getKey().getPrimedConstant());
+		}
+		for (final Entry<IProgramVar, TermVariable> iv : mTf.getInVars().entrySet()) {
+			substitutionMapping.put(iv.getValue(), iv.getKey().getDefaultConstant());
+		}
+		for (final TermVariable auxVar : mTf.getAuxVars()) {
+			final String constName = "tf2EqTR_" + auxVar.getName();
+			mgdScript.declareFun(this, constName, new Sort[0], auxVar.getSort());
+			substitutionMapping.put(auxVar, mgdScript.term(this, constName));
 		}
 
-		final Substitution substitution = new Substitution(mgdScript, sub);
-		final Term tfSubs = substitution.transform(tf.getFormula());
+		final Substitution subs = new Substitution(mgdScript, substitutionMapping);
+		final Term rcClosed= subs.transform(resultConstraint.getTerm(mgdScript.getScript()));
 
-		final Term resultConstraintTerm = substitution.transform(resultConstraint.getTerm(mgdScript.getScript()));
+//		final Term rcClosed =
+//				mResultConstraint.renameVariables(substitutionMapping).getTerm(mgdScript.getScript());
+		assert rcClosed.getFreeVars().length == 0;
 
-		return new Pair<>(tfSubs, resultConstraintTerm);
+
+		final Term tfClosed = ((UnmodifiableTransFormula) mTf).getClosedFormula();
+		return new Pair<>(tfClosed, rcClosed);
+
+//		final Map<Term, Term> sub = new HashMap<>();
+//		for (final TermVariable tv : tf.getFormula().getFreeVars()) {
+//
+//			final String constName = "tf2EqTR_" + tv.getName();
+//			mgdScript.declareFun(this, constName, new Sort[0], tv.getSort());
+//			sub.put(tv, mgdScript.term(this, constName));
+//		}
+//
+//		final Substitution substitution = new Substitution(mgdScript, sub);
+//		final Term tfSubs = substitution.transform(tf.getFormula());
+//
+//		final Term resultConstraintTerm = substitution.transform(resultConstraint.getTerm(mgdScript.getScript()));
+//
+//		return new Pair<>(tfSubs, resultConstraintTerm);
 	}
 
 	public EqTransitionRelation<ACTION> getResult() {
