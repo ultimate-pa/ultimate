@@ -111,6 +111,15 @@ public class EqPredicate<ACTION extends IIcfgTransition<IcfgLocation>> implement
 		}
 	}
 
+	public String toLogString() {
+		if (mConstraint != null) {
+			return mConstraint.toLogString();
+		} else {
+			return mFormula.toString();
+		}
+	}
+
+
 	@Override
 	public Term getFormula() {
 		return mFormula;
