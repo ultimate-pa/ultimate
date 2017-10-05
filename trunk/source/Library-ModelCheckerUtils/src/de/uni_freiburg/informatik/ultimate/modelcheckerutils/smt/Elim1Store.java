@@ -193,12 +193,6 @@ public class Elim1Store {
 		}
 		
 		
-		final List<ApplicationTerm> stores = extractStores(eliminatee, inputTerm);
-		if (stores.size() > 1) {
-			throw new AssertionError("not yet supported: multiple stores " + inputTerm);
-		}
-		//		checkForUnsupportedSelfUpdate(eliminatee, inputTerm, mQuantifier);
-
 		final Set<TermVariable> newAuxVars = new LinkedHashSet<>();
 		final Term preprocessedInput;
 
@@ -225,6 +219,14 @@ public class Elim1Store {
 
 
 		final List<ApplicationTerm> selectTerms = extractArrayReads(eliminatee, preprocessedInput);
+		final Set<Term> selectIndices = new HashSet<>();
+		
+		
+		final List<ApplicationTerm> stores = extractStores(eliminatee, inputTerm);
+		if (stores.size() > 1) {
+			throw new AssertionError("not yet supported: multiple stores " + inputTerm);
+		}
+
 
 		final Term storeTerm;
 		final Term storeIndex;
@@ -239,15 +241,55 @@ public class Elim1Store {
 			storeValue = ((ApplicationTerm) storeTerm).getParameters()[2];
 		}
 
-		final Set<Term> selectIndices = new HashSet<>();
 
 
-		final ThreeValuedEquivalenceRelation<Term> equalityInformation = collectComplimentaryEqualityInformation(
-				mMgdScript.getScript(), quantifier, preprocessedInput, selectTerms, storeTerm, storeIndex, storeValue);
-		if (equalityInformation == null) {
+
+		final Term result = elim1Store(quantifier, eliminatee, inputTerm, stores, newAuxVars, preprocessedInput, selectTerms,
+				selectIndices, storeTerm, storeIndex, storeValue);
+		if (result == null) {
 			final Term absobingElement = QuantifierUtils.getNeutralElement(mScript, quantifier);
 			mLogger.warn("Array PQE input equivalent to " + absobingElement);
 			return new EliminationTask(quantifier, Collections.emptySet(), absobingElement);
+		}
+		final EliminationTask resultEt;
+		if (APPLY_RESULT_SIMPLIFICATION) {
+			if (DEBUG_CRASH_ON_LARGE_SIMPLIFICATION_POTENTIAL) {
+				final ExtendedSimplificationResult esrQuick = SmtUtils.simplifyWithStatistics(mMgdScript, result, mServices, SimplificationTechnique.SIMPLIFY_QUICK);
+				mLogger.info(String.format("quick treesize reduction %d that is %2.1f percent of original size",
+						esrQuick.getReductionOfTreeSize(), esrQuick.getReductionRatioInPercent()));
+				if (esrQuick.getReductionRatioInPercent() < 70) {
+					throw new AssertionError("Reduction: " + esrQuick.getReductionRatioInPercent() + " Input: " + preprocessedInput);
+				}
+			}
+			final ExtendedSimplificationResult esr = SmtUtils.simplifyWithStatistics(mMgdScript, result, mServices, SimplificationTechnique.SIMPLIFY_DDA);
+			final Term simplified = esr.getSimplifiedTerm();
+			final String sizeMessage = String.format("treesize reduction %d that is %2.1f percent of original size",
+					esr.getReductionOfTreeSize(), esr.getReductionRatioInPercent());
+			if (esr.getReductionRatioInPercent() <= 70) {
+				mLogger.info(sizeMessage);				
+			} else {
+				mLogger.info(sizeMessage);
+			}
+			mLogger.info("treesize after simplification " + new DAGSize().treesize(simplified));
+			resultEt = new EliminationTask(quantifier, newAuxVars, simplified);
+		} else {
+			resultEt = new EliminationTask(quantifier, newAuxVars, result);
+		}
+		assert !DEBUG_EXTENDED_RESULT_CHECK  || EliminationTask.areDistinct(mMgdScript.getScript(), resultEt, new EliminationTask(quantifier,
+				Collections.singleton(eliminatee), inputTerm)) != LBool.SAT : "Bug array QE Input: " + inputTerm
+						+ " Result:" + resultEt;
+		return resultEt;
+
+	}
+
+	private Term elim1Store(final int quantifier, final TermVariable eliminatee, final Term inputTerm,
+			final List<ApplicationTerm> stores, final Set<TermVariable> newAuxVars, final Term preprocessedInput,
+			final List<ApplicationTerm> selectTerms, final Set<Term> selectIndices, final Term storeTerm,
+			final Term storeIndex, final Term storeValue) throws AssertionError {
+		final ThreeValuedEquivalenceRelation<Term> equalityInformation = collectComplimentaryEqualityInformation(
+				mMgdScript.getScript(), quantifier, preprocessedInput, selectTerms, storeTerm, storeIndex, storeValue);
+		if (equalityInformation == null) {
+			return null;
 		}
 		
 
@@ -259,9 +301,7 @@ public class Elim1Store {
 		final Pair<ThreeValuedEquivalenceRelation<Term>, List<Term>> analysisResult =
 				analyzeIndexEqualities(quantifier, selectIndices, storeIndex, storeValue, preprocessedInput, equalityInformation, eliminatee);
 		if (analysisResult == null) {
-			final Term absobingElement = QuantifierUtils.getNeutralElement(mScript, quantifier);
-			mLogger.warn("Array PQE input equivalent to " + absobingElement);
-			return new EliminationTask(quantifier, Collections.emptySet(), absobingElement);
+			return null;
 		}
 
 		final List<Term> selectIndexRepresentatives = new ArrayList<>();
@@ -407,35 +447,7 @@ public class Elim1Store {
 					new DAGSize().treesize(inputTerm), new DAGSize().treesize(result)));
 			mLogger.info(sb.toString());
 		}
-		final EliminationTask resultEt;
-		if (APPLY_RESULT_SIMPLIFICATION) {
-			if (DEBUG_CRASH_ON_LARGE_SIMPLIFICATION_POTENTIAL) {
-				final ExtendedSimplificationResult esrQuick = SmtUtils.simplifyWithStatistics(mMgdScript, result, mServices, SimplificationTechnique.SIMPLIFY_QUICK);
-				mLogger.info(String.format("quick treesize reduction %d that is %2.1f percent of original size",
-						esrQuick.getReductionOfTreeSize(), esrQuick.getReductionRatioInPercent()));
-				if (esrQuick.getReductionRatioInPercent() < 70) {
-					throw new AssertionError("Reduction: " + esrQuick.getReductionRatioInPercent() + " Input: " + preprocessedInput);
-				}
-			}
-			final ExtendedSimplificationResult esr = SmtUtils.simplifyWithStatistics(mMgdScript, result, mServices, SimplificationTechnique.SIMPLIFY_DDA);
-			final Term simplified = esr.getSimplifiedTerm();
-			final String sizeMessage = String.format("treesize reduction %d that is %2.1f percent of original size",
-					esr.getReductionOfTreeSize(), esr.getReductionRatioInPercent());
-			if (esr.getReductionRatioInPercent() <= 70) {
-				mLogger.info(sizeMessage);				
-			} else {
-				mLogger.info(sizeMessage);
-			}
-			mLogger.info("treesize after simplification " + new DAGSize().treesize(simplified));
-			resultEt = new EliminationTask(quantifier, newAuxVars, simplified);
-		} else {
-			resultEt = new EliminationTask(quantifier, newAuxVars, result);
-		}
-		assert !DEBUG_EXTENDED_RESULT_CHECK  || EliminationTask.areDistinct(mMgdScript.getScript(), resultEt, new EliminationTask(quantifier,
-				Collections.singleton(eliminatee), inputTerm)) != LBool.SAT : "Bug array QE Input: " + inputTerm
-						+ " Result:" + resultEt;
-		return resultEt;
-
+		return result;
 	}
 	
 	
