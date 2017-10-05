@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.util.datastructures;
 
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -56,6 +57,24 @@ public class DataStructureUtils {
 			smaller = set1;
 		}
 		return smaller.stream().filter(larger::contains).collect(Collectors.toSet());
+	}
+	
+	
+	/**
+	 * @return an Optional<T> that contains an element that is contained in 
+	 * set1 and contained in set2 and that does not contain en element otherwise. 
+	 */
+	public static <T> Optional<T> getSomeCommonElement(final Set<T> set1, final Set<T> set2) {
+		final Set<T> larger;
+		final Set<T> smaller;
+		if (set1.size() > set2.size()) {
+			larger = set1;
+			smaller = set2;
+		} else {
+			larger = set2;
+			smaller = set1;
+		}
+		return smaller.stream().filter(larger::contains).findFirst();
 	}
 
 	/**
