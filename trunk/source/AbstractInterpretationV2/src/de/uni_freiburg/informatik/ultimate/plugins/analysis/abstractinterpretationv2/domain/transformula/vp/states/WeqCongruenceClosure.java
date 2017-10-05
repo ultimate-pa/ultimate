@@ -1151,6 +1151,7 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 		return sb.toString();
 	}
 
+	@Override
 	public String toLogString() {
 		if (isTautological()) {
 			return "True";
@@ -1162,9 +1163,11 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 		sb.append("Partial arrangement:\n");
 		sb.append(super.toLogString());
 		sb.append("\n");
-		if (mWeakEquivalenceGraph != null) {
+		if (mWeakEquivalenceGraph != null && !mWeakEquivalenceGraph.isEmpty()) {
 			sb.append("Weak equivalences:\n");
 			sb.append(mWeakEquivalenceGraph.toLogString());
+		} else if (mWeakEquivalenceGraph.isEmpty()) {
+			sb.append("weak equivalence graph is empty\n");
 		} else {
 			sb.append("weak equivalence graph is null\n");
 		}
