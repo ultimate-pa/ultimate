@@ -27,6 +27,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.CongruenceClosure
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CrossProducts;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.EqualityStatus;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ICongruenceClosureElement;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
@@ -244,6 +245,17 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 	}
 
 	/**
+	 * Compute join of the weak equivalence graphs.
+	 *
+	 * Algorithm overview:
+	 * For every two nodes a, b that appear in both graphs:
+	 * <li> If none, or only one graph, has a weak equivalence between a and b, there no edge between a and b  in the
+	 *   new graph.
+	 * <li> If both have a weak equivalence between a and b, then the new weak equivalence between a and b is labeled
+	 *   with the union of those weak equivalence's labels
+	 * <li> If one graph has a strong equivalence between a and b, and the other one a weak equivalence, we take over
+	 *   the weak equivalence. (This makes it necessary to take into account the ground partial arrangements of the
+	 *    weq graphs!)
 	 *
 	 * @param other
 	 * @param newPartialArrangement the joined partialArrangement, we need this because the edges of the the new
@@ -251,20 +263,55 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 	 * @return
 	 */
 	WeakEquivalenceGraph<ACTION, NODE> join(final WeakEquivalenceGraph<ACTION, NODE> other) {
+		assert mPartialArrangement != null && other.mPartialArrangement != null : "we need the partial for the join"
+				+ "of the weq graphs, because strong equalities influence the weak ones..";
+
 		final Map<Doubleton<NODE>, WeakEquivalenceEdgeLabel> newWeakEquivalenceEdges = new HashMap<>();
 		for (final Entry<Doubleton<NODE>, WeakEquivalenceEdgeLabel> thisWeqEdge
 				: this.mWeakEquivalenceEdges.entrySet()) {
 			final WeakEquivalenceEdgeLabel correspondingWeqEdgeInOther =
 					other.mWeakEquivalenceEdges.get(thisWeqEdge.getKey());
+
+			final NODE source = thisWeqEdge.getKey().getOneElement();
+			final NODE target = thisWeqEdge.getKey().getOtherElement();
+
+			/*
+			 * if the other weq graph's partial arrangement has a strong equivalence for the current edge, we can
+			 * keep the current edge.
+			 */
+			if (other.mPartialArrangement.hasElements(source, target)
+					&& other.mPartialArrangement.getEqualityStatus(source, target) == EqualityStatus.EQUAL) {
+				// case "weak equivalence in this, strong equivalence in other"
+				newWeakEquivalenceEdges.put(thisWeqEdge.getKey(), thisWeqEdge.getValue());
+				assert correspondingWeqEdgeInOther == null;
+				continue;
+			}
+
 			if (correspondingWeqEdgeInOther == null) {
 				continue;
 			}
+
 			newWeakEquivalenceEdges.put(thisWeqEdge.getKey(),
 					thisWeqEdge.getValue().union(correspondingWeqEdgeInOther));
-
 		}
-		final WeakEquivalenceGraph<ACTION, NODE> result = new WeakEquivalenceGraph<>(//null,
-				newWeakEquivalenceEdges, new HashRelation<>(), mFactory);
+
+		/*
+		 * for the case strong equivalence in this, weak equivalence in other, we iterate other's weak equivalence edges
+		 */
+		for (final Entry<Doubleton<NODE>, WeakEquivalenceEdgeLabel> otherWeqEdge
+				: other.mWeakEquivalenceEdges.entrySet()) {
+			final NODE source = otherWeqEdge.getKey().getOneElement();
+			final NODE target = otherWeqEdge.getKey().getOtherElement();
+
+			if (this.mPartialArrangement.hasElements(source, target)
+					&& this.mPartialArrangement.getEqualityStatus(source, target) == EqualityStatus.EQUAL) {
+				newWeakEquivalenceEdges.put(otherWeqEdge.getKey(), otherWeqEdge.getValue());
+				continue;
+			}
+		}
+
+		final WeakEquivalenceGraph<ACTION, NODE> result = new WeakEquivalenceGraph<>(newWeakEquivalenceEdges,
+				new HashRelation<>(), mFactory);
 		assert result.sanityCheck();
 		return result;
 	}
