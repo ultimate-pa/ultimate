@@ -136,11 +136,6 @@ public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTrans
 	}
 
 	private boolean transformulaImpliesResultConstraint() {
-
-
-
-
-
 		mMgdScript.lock(this);
 		mMgdScript.push(this, 1);
 		final Pair<Term, Term> anteAndSucc = makeShiftVariableSubstitution(mMgdScript, mTf, mResultConstraint);
@@ -168,8 +163,6 @@ public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTrans
 
 	protected Pair<Term, Term> makeShiftVariableSubstitution(final ManagedScript mgdScript, final TransFormula tf,
 			final EqDisjunctiveConstraint<ACTION, EqNode> resultConstraint) {
-
-
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
 
 		for (final Entry<IProgramVar, TermVariable> iv : mTf.getOutVars().entrySet()) {
@@ -187,28 +180,10 @@ public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTrans
 		final Substitution subs = new Substitution(mgdScript, substitutionMapping);
 		final Term rcClosed= subs.transform(resultConstraint.getTerm(mgdScript.getScript()));
 
-//		final Term rcClosed =
-//				mResultConstraint.renameVariables(substitutionMapping).getTerm(mgdScript.getScript());
 		assert rcClosed.getFreeVars().length == 0;
-
 
 		final Term tfClosed = ((UnmodifiableTransFormula) mTf).getClosedFormula();
 		return new Pair<>(tfClosed, rcClosed);
-
-//		final Map<Term, Term> sub = new HashMap<>();
-//		for (final TermVariable tv : tf.getFormula().getFreeVars()) {
-//
-//			final String constName = "tf2EqTR_" + tv.getName();
-//			mgdScript.declareFun(this, constName, new Sort[0], tv.getSort());
-//			sub.put(tv, mgdScript.term(this, constName));
-//		}
-//
-//		final Substitution substitution = new Substitution(mgdScript, sub);
-//		final Term tfSubs = substitution.transform(tf.getFormula());
-//
-//		final Term resultConstraintTerm = substitution.transform(resultConstraint.getTerm(mgdScript.getScript()));
-//
-//		return new Pair<>(tfSubs, resultConstraintTerm);
 	}
 
 	public EqTransitionRelation<ACTION> getResult() {
@@ -317,30 +292,17 @@ public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTrans
 
 				if (SmtUtils.isFunctionApplication(arg1, "store")) {
 					assert !SmtUtils.isFunctionApplication(arg2, "store");
-					// mds = new MultiDimensionalStore(arg1);
 					storeTerm = (ApplicationTerm) arg1;
-					// simpleArray = mEqNodeAndFunctionFactory.getOrConstructFunction(arg2);
 					simpleArray = mEqNodeAndFunctionFactory.getOrConstructNode(arg2);
-					// assert !SmtUtils.isFunctionApplication(mds.getArray(), "store");
-					// otherSimpleArray =
-					// mEqNodeAndFunctionFactory.getOrConstructFunction(mds.getArray());
 					otherSimpleArray = mEqNodeAndFunctionFactory.getOrConstructNode(storeTerm.getParameters()[0]);
 				} else if (SmtUtils.isFunctionApplication(arg2, "store")) {
 					assert !SmtUtils.isFunctionApplication(arg1, "store");
-					// mds = new MultiDimensionalStore(arg2);
 					storeTerm = (ApplicationTerm) arg2;
-					// simpleArray = mEqNodeAndFunctionFactory.getOrConstructFunction(arg1);
 					simpleArray = mEqNodeAndFunctionFactory.getOrConstructNode(arg1);
-					// assert !SmtUtils.isFunctionApplication(mds.getArray(), "store");
-					// otherSimpleArray =
-					// mEqNodeAndFunctionFactory.getOrConstructFunction(mds.getArray());
 					otherSimpleArray = mEqNodeAndFunctionFactory.getOrConstructNode(storeTerm.getParameters()[0]);
 				} else {
-					// mds = null;
 					storeTerm = null;
-					// simpleArray = mEqNodeAndFunctionFactory.getOrConstructFunction(arg1);
 					simpleArray = mEqNodeAndFunctionFactory.getOrConstructNode(arg1);
-					// otherSimpleArray = mEqNodeAndFunctionFactory.getOrConstructFunction(arg2);
 					otherSimpleArray = mEqNodeAndFunctionFactory.getOrConstructNode(arg2);
 				}
 
@@ -348,18 +310,11 @@ public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTrans
 				if (polarity) {
 					if (storeTerm == null) {
 						// we have a strong equivalence
-						// newConstraint = mEqConstraintFactory.addFunctionEqualityFlat(simpleArray,
 						newConstraint = mEqConstraintFactory.addEqualityFlat(simpleArray, otherSimpleArray,
 								emptyConstraint);
 					} else {
-
-						// final List<EqNode> storeIndex = mds.getIndex().stream()
-						// .map(mEqNodeAndFunctionFactory::getOrConstructNode)
-						// .collect(Collectors.toList());
 						final EqNode storeIndex = mEqNodeAndFunctionFactory
 								.getOrConstructNode(storeTerm.getParameters()[1]);
-						// final EqNode storeValue =
-						// mEqNodeAndFunctionFactory.getOrConstructNode(mds.getValue());
 						final EqNode storeValue = mEqNodeAndFunctionFactory
 								.getOrConstructNode(storeTerm.getParameters()[2]);
 
@@ -367,9 +322,6 @@ public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTrans
 						final EqConstraint<ACTION, EqNode> intermediateConstraint = mEqConstraintFactory
 								.addWeakEquivalence(simpleArray, otherSimpleArray, storeIndex, emptyConstraint);
 						// .. and an equality on the stored position
-						// final Term selectTerm =
-						// SmtUtils.multiDimensionalSelect(mMgdScript.getScript(),
-						// simpleArray.getTerm(), mds.getIndex());
 						mMgdScript.lock(this);
 						final Term selectTerm = mMgdScript.term(this, "select", simpleArray.getTerm(),
 								storeTerm.getParameters()[1]);
@@ -379,14 +331,19 @@ public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTrans
 								intermediateConstraint);
 					}
 				} else {
-					// if (mds == null) {
 					if (storeTerm == null) {
-						// newConstraint = mEqConstraintFactory.addFunctionDisequalityFlat(simpleArray,
 						newConstraint = mEqConstraintFactory.addDisequalityFlat(simpleArray, otherSimpleArray,
 								emptyConstraint);
 					} else {
-						// "true" is only marginally weaker than the negation of a -- i -- b /\ a[i] =
-						// x, right? (TODO)
+						/*
+						 * the best approximation for the negation of a weak equivalence that we can express is a
+						 * disequality on the arrays.
+						 * i.e.
+						 *  not ( a -- i -- b ) ~~> a != b
+						 * However, here we need to negate
+						 *  a -- i -- b /\ a[i] = x, thus we would need to return two EqConstraints
+						 *  --> TODO postponing this, overapproximating to "true"..
+						 */
 						newConstraint = emptyConstraint;
 					}
 				}

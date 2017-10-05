@@ -164,6 +164,17 @@ public class EqDisjunctiveConstraint<
 		return "\\/ " + mConstraints.toString();
 	}
 
+	public String toLogString() {
+		if (mConstraints.isEmpty()) {
+			return "EmptyDisjunction/False";
+		}
+		final StringBuilder sb = new StringBuilder();
+		mConstraints.forEach(c -> sb.append(c.toLogString() + "\n"));
+
+		return "\\/ " + sb.toString();
+	}
+
+
 	public String getDebugInfo() {
 
 		final Map<VPStatistics, Integer> statistics = new HashMap<>();
