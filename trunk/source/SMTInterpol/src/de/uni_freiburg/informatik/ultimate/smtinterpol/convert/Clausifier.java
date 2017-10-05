@@ -437,6 +437,8 @@ public class Clausifier {
 			mUndoTrail = new RemoveFlag(mUndoTrail, ci, flag);
 			final Literal auxlit = ci.getLiteral();
 			if (auxlit != null) {
+				// add the unit aux literal as clause; this will basically make the auxaxioms the axioms after unit
+				// propagation and level 0 resolution.
 				if (!ci.testFlags(auxflag)) {
 					new AddAuxAxioms(term, positive, mSource).perform();
 				}
@@ -447,6 +449,8 @@ public class Clausifier {
 			if (term instanceof ApplicationTerm) {
 				final ApplicationTerm at = (ApplicationTerm) term;
 				if (at.getFunction() == t.mOr && !positive) {
+					// these axioms already imply the auxaxiom clauses.
+					ci.setFlag(auxflag);
 					for (final Term p : at.getParameters()) {
 						final Term split = mTracker.split(t.term("not", p), mTerm, ProofConstants.SPLIT_NEG_OR);
 						pushOperation(new AddAsAxiom(split, mSource));
@@ -454,6 +458,8 @@ public class Clausifier {
 					return;
 				} else if (at.getFunction().getName().equals("=")
 						&& at.getParameters()[0].getSort() == t.getBooleanSort()) {
+					// these axioms already imply the auxaxiom clauses.
+					ci.setFlag(auxflag);
 					final Term p1 = at.getParameters()[0];
 					final Term p2 = at.getParameters()[1];
 					if (positive) {
@@ -484,6 +490,8 @@ public class Clausifier {
 					}
 					return;
 				} else if (at.getFunction().getName().equals("ite")) {
+					// these axioms already imply the auxaxiom clauses.
+					ci.setFlag(auxflag);
 					assert at.getFunction().getReturnSort() == t.getBooleanSort();
 					final Term cond = at.getParameters()[0];
 					Term thenForm = at.getParameters()[1];
@@ -533,24 +541,10 @@ public class Clausifier {
 		@Override
 		public void perform() {
 			final ClausifierInfo ci = getInfo(mTerm);
-			int auxflag, flag;
-			if (mPositive) {
-				auxflag = ClausifierInfo.POS_AUX_AXIOMS_ADDED;
-				flag = ClausifierInfo.POS_AXIOMS_ADDED;
-			} else {
-				auxflag = ClausifierInfo.NEG_AUX_AXIOMS_ADDED;
-				flag = ClausifierInfo.NEG_AXIOMS_ADDED;
-			}
+			final int auxflag = mPositive ? ClausifierInfo.POS_AUX_AXIOMS_ADDED : ClausifierInfo.NEG_AUX_AXIOMS_ADDED;
 			if (ci.testFlags(auxflag)) {
 				// We've already added the aux axioms
 				// Nothing to do
-				return;
-			}
-			if (ci.testFlags(flag)) {
-				/*
-				 * If we know that the axiom already holds, the aux axioms trivially simplify to true. Hence, we don't
-				 * need them at all.
-				 */
 				return;
 			}
 			ci.setFlag(auxflag);
@@ -691,14 +685,6 @@ public class Clausifier {
 				mCollector.setTrue();
 				return;
 			}
-			// TODO What about this optimization? It increases the number of
-			// conflicts on some examples, but should be better.
-			// Literal knownlit = getLiteralForPolarity(idx, positive);
-			// if (knownlit != null) {
-			// m_Collector.addLiteral(knownlit);
-			// return;
-			// }
-			// quoted:
 			if (idx instanceof ApplicationTerm) {
 				final ApplicationTerm at = (ApplicationTerm) idx;
 				Literal atom;
