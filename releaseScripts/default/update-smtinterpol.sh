@@ -28,18 +28,18 @@ fi
 
 echo "Updating $dir_smtinterpol..."
 pushd "$dir_smtinterpol" > /dev/null 
-#exitOnFail git fetch
-#exitOnFail git rebase
-#exitOnFail git clean -f -d 
-#echo "Building SMTInterpol..."
-#exitOnFail ant > /dev/null
+exitOnFail git fetch
+exitOnFail git rebase
+exitOnFail git clean -f -d 
+echo "Building SMTInterpol..."
+exitOnFail ant > /dev/null
 smtinterpol_cur=`git describe --tags` 
 popd > /dev/null
 
 echo "Updating $dir_ultimate..."
 pushd "$dir_ultimate" > /dev/null
-#exitOnFail git fetch 
-#exitOnFail git rebase
+exitOnFail git fetch 
+exitOnFail git rebase
 smtinterpol_ver=`grep version trunk/source/SMTInterpol/src/de/uni_freiburg/informatik/ultimate/smtinterpol/Version.properties | cut -d'=' -f 2`
 popd > /dev/null
 
