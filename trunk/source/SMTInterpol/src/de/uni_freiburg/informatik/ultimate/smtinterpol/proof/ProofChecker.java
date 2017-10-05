@@ -69,7 +69,7 @@ public class ProofChecker extends NonRecursive {
 	/**
 	 * The main proof walker that handles a term of sort {@literal @}Proof. It just calls the walk function.
 	 */
-	public static class ProofWalker implements Walker {
+	static class ProofWalker implements Walker {
 		final ApplicationTerm mTerm;
 
 		public ProofWalker(final Term term) {
@@ -87,7 +87,7 @@ public class ProofChecker extends NonRecursive {
 	 * The proof walker that handles a {@literal @}res application term after its arguments are converted. It just calls
 	 * the walkResolution function.
 	 */
-	public static class ResolutionWalker implements Walker {
+	static class ResolutionWalker implements Walker {
 		final ApplicationTerm mTerm;
 
 		public ResolutionWalker(final ApplicationTerm term) {
@@ -95,9 +95,25 @@ public class ProofChecker extends NonRecursive {
 			mTerm = term;
 		}
 
+		public void enqueue(final ProofChecker engine) {
+			engine.enqueueWalker(this);
+			final Term[] params = mTerm.getParameters();
+			for (int i = params.length - 1; i >= 1; i--) {
+				final AnnotatedTerm pivotClause = (AnnotatedTerm) params[i];
+				engine.enqueueWalker(new ProofWalker(pivotClause.getSubterm()));
+			}
+			engine.enqueueWalker(new ProofWalker(params[0]));
+		}
+
 		@Override
 		public void walk(final NonRecursive engine) {
-			((ProofChecker) engine).walkResolution(mTerm);
+			final ProofChecker checker = (ProofChecker) engine;
+			final Term[] subProofs = new Term[mTerm.getParameters().length];
+			for (int i = subProofs.length - 1; i >= 1; i--) {
+				subProofs[i] = checker.stackPop();
+			}
+			subProofs[0] = checker.stackPop();
+			checker.stackPush(checker.walkResolution(mTerm, subProofs), mTerm);
 		}
 	}
 
@@ -105,7 +121,7 @@ public class ProofChecker extends NonRecursive {
 	 * The proof walker that handles a {@literal @}eq application term after its arguments are converted. It just calls
 	 * the walkEquality function.
 	 */
-	public static class EqualityWalker implements Walker {
+	static class EqualityWalker implements Walker {
 		final ApplicationTerm mTerm;
 
 		public EqualityWalker(final ApplicationTerm term) {
@@ -113,9 +129,20 @@ public class ProofChecker extends NonRecursive {
 			mTerm = term;
 		}
 
+		public void enqueue(final ProofChecker engine) {
+			final Term[] params = mTerm.getParameters();
+			assert params.length == 2;
+			engine.enqueueWalker(this);
+			engine.enqueueWalker(new ProofWalker(params[1]));
+			engine.enqueueWalker(new ProofWalker(params[0]));
+		}
+
 		@Override
 		public void walk(final NonRecursive engine) {
-			((ProofChecker) engine).walkEquality(mTerm);
+			final ProofChecker checker = (ProofChecker) engine;
+			final Term rewrite = checker.stackPop();
+			final Term origFormula = checker.stackPop();
+			checker.stackPush(checker.walkEquality(mTerm, origFormula, rewrite), mTerm);
 		}
 	}
 
@@ -123,7 +150,7 @@ public class ProofChecker extends NonRecursive {
 	 * The proof walker that handles a {@literal @}clause application after its first argument is converted. It just
 	 * calls the walkClause function.
 	 */
-	public static class ClauseWalker implements Walker {
+	static class ClauseWalker implements Walker {
 		final ApplicationTerm mTerm;
 
 		public ClauseWalker(final ApplicationTerm term) {
@@ -131,9 +158,16 @@ public class ProofChecker extends NonRecursive {
 			mTerm = term;
 		}
 
+		public void enqueue(final ProofChecker engine) {
+			engine.enqueueWalker(this);
+			engine.enqueueWalker(new ProofWalker(mTerm.getParameters()[0]));
+		}
+
 		@Override
 		public void walk(final NonRecursive engine) {
-			((ProofChecker) engine).walkClause(mTerm);
+			final ProofChecker checker = (ProofChecker) engine;
+			final Term subProof = checker.stackPop();
+			checker.stackPush(checker.walkClause(mTerm, subProof), mTerm);
 		}
 	}
 
@@ -141,7 +175,7 @@ public class ProofChecker extends NonRecursive {
 	 * The proof walker that handles a {@literal @}split application after its first argument is converted. It just
 	 * calls the walkSplit function.
 	 */
-	public static class SplitWalker implements Walker {
+	static class SplitWalker implements Walker {
 		final ApplicationTerm mTerm;
 
 		public SplitWalker(final ApplicationTerm term) {
@@ -149,9 +183,22 @@ public class ProofChecker extends NonRecursive {
 			mTerm = term;
 		}
 
+		public void enqueue(final ProofChecker engine) {
+			final Term subproof = mTerm.getParameters()[0];
+			/* split expects an annotated proof as first parameter */
+			if (!(subproof instanceof AnnotatedTerm)) {
+				// push dummy proof as result an return
+				engine.stackPush(null, mTerm);
+				return;
+			}
+			engine.enqueueWalker(this);
+			engine.enqueueWalker(new ProofWalker(((AnnotatedTerm) subproof).getSubterm()));
+		}
+
 		@Override
 		public void walk(final NonRecursive engine) {
-			((ProofChecker) engine).walkSplit(mTerm);
+			final ProofChecker checker = (ProofChecker) engine;
+			checker.stackPush(checker.walkSplit(mTerm, checker.stackPop()), mTerm);
 		}
 	}
 
@@ -159,7 +206,7 @@ public class ProofChecker extends NonRecursive {
 	 * The proof walker that handles a {@literal @}cong application after its arguments are converted. It just calls the
 	 * walkCongruence function.
 	 */
-	public static class CongruenceWalker implements Walker {
+	static class CongruenceWalker implements Walker {
 		final ApplicationTerm mTerm;
 
 		public CongruenceWalker(final ApplicationTerm term) {
@@ -167,9 +214,24 @@ public class ProofChecker extends NonRecursive {
 			mTerm = term;
 		}
 
+		public void enqueue(final ProofChecker engine) {
+			final Term[] params = mTerm.getParameters();
+			engine.enqueueWalker(this);
+			for (int i = params.length - 1; i >= 0; i--) {
+				engine.enqueueWalker(new ProofWalker(params[i]));
+			}
+
+		}
+
 		@Override
 		public void walk(final NonRecursive engine) {
-			((ProofChecker) engine).walkCongruence(mTerm);
+			final ProofChecker checker = (ProofChecker) engine;
+			final Term[] params = mTerm.getParameters();
+			final Term[] subProofs = new Term[params.length];
+			for (int i = params.length - 1; i >= 0; i--) {
+				subProofs[i] = checker.stackPop();
+			}
+			checker.stackPush(checker.walkCongruence(mTerm, subProofs), mTerm);
 		}
 	}
 
@@ -177,7 +239,7 @@ public class ProofChecker extends NonRecursive {
 	 * The proof walker that handles a {@literal @}trans application after its arguments are converted. It just calls
 	 * the walkTransitivity function.
 	 */
-	public static class TransitivityWalker implements Walker {
+	static class TransitivityWalker implements Walker {
 		final ApplicationTerm mTerm;
 
 		public TransitivityWalker(final ApplicationTerm term) {
@@ -185,9 +247,23 @@ public class ProofChecker extends NonRecursive {
 			mTerm = term;
 		}
 
+		public void enqueue(final ProofChecker engine) {
+			final Term[] params = mTerm.getParameters();
+			engine.enqueueWalker(this);
+			for (int i = params.length - 1; i >= 0; i--) {
+				engine.enqueueWalker(new ProofWalker(params[i]));
+			}
+		}
+
 		@Override
 		public void walk(final NonRecursive engine) {
-			((ProofChecker) engine).walkTransitivity(mTerm);
+			final ProofChecker checker = (ProofChecker) engine;
+			final Term[] params = mTerm.getParameters();
+			final Term[] subProofs = new Term[params.length];
+			for (int i = params.length - 1; i >= 0; i--) {
+				subProofs[i] = checker.stackPop();
+			}
+			checker.stackPush(checker.walkTransitivity(mTerm, subProofs), mTerm);
 		}
 	}
 
@@ -297,11 +373,6 @@ public class ProofChecker extends NonRecursive {
 	int mError;
 
 	/**
-	 * Debugging flags. This contains the names of the functionalities for which debugging logs should be created.
-	 */
-	HashSet<String> mDebug = new HashSet<String>();
-
-	/**
 	 * The proof cache. It maps each converted proof to the boolean term it proves.
 	 */
 	HashMap<Term, Term> mCacheConv;
@@ -310,10 +381,6 @@ public class ProofChecker extends NonRecursive {
 	 * The result stack. This contains the terms proved by the proof terms.
 	 */
 	Stack<Term> mStackResults = new Stack<Term>();
-	/**
-	 * The result stack. This contains the original proof terms to find out of sync problems.
-	 */
-	Stack<Term> mStackResultsDebug = new Stack<Term>();
 
 	/**
 	 * An auxiliary object to convert Terms to SMT affine terms needed for various linear arithmetic proves.
@@ -334,7 +401,7 @@ public class ProofChecker extends NonRecursive {
 	}
 
 	/**
-	 * Check a proof for consistency. This reports minor errors and may throw assertions on some major errors.
+	 * Check a proof for consistency. This reports errors on the logger.
 	 *
 	 * @param proof
 	 *            the proof to check.
@@ -348,23 +415,6 @@ public class ProofChecker extends NonRecursive {
 			mAssertions.add(unletter.transform(ass));
 		}
 
-		// Just for debugging
-		// mDebug.add("currently");
-		// mDebug.add("hardTerm");
-		// mDebug.add("LemmaLAadd");
-		// mDebug.add("calculateTerm");
-		// mDebug.add("WalkerPath");
-		// mDebug.add("WalkerPathSmall");
-		// mDebug.add("LemmaCC");
-		// mDebug.add("newRules");
-		// mDebug.add("convertAppID");
-		// mDebug.add("cacheUsed");
-		// mDebug.add("cacheUsedSmall");
-		// mDebug.add("allSubpaths");
-		// mDebug.add("split_notOr");
-		// mDebug.add("CacheRuntimeCheck");
-		// mLogger.setLevel(Level.DEBUG);
-
 		// Initializing the proof-checker-cache
 		mCacheConv = new HashMap<Term, Term>();
 		mError = 0;
@@ -373,8 +423,8 @@ public class ProofChecker extends NonRecursive {
 		run(new ProofWalker(proof));
 
 		assert (mStackResults.size() == 1);
-		final Term result = stackPopCheck(proof);
-		if (!isApplication("false", result)) {
+		final Term result = stackPop();
+		if (result != null && !isApplication("false", result)) {
 			reportError("The proof did not yield a contradiction but " + result);
 		}
 		// clear state
@@ -400,83 +450,76 @@ public class ProofChecker extends NonRecursive {
 	 * @param proofTerm
 	 *            The proof term. Its sort must be {@literal @}Proof.
 	 */
-	public void walk(final ApplicationTerm proofTerm) {
+	void walk(final ApplicationTerm proofTerm) {
 		/* Check the cache, if the unfolding step was already done */
 		if (mCacheConv.containsKey(proofTerm)) {
-			if (mDebug.contains("CacheRuntimeCheck")) {
-				mLogger.debug("Cache-RT: K: " + proofTerm.toString() + " (known)");
-			}
-			if (mDebug.contains("cacheUsed")) {
-				mLogger.debug("Calculation of the term " + proofTerm.toString() + " is known: "
-						+ mCacheConv.get(proofTerm).toString());
-			}
-			if (mDebug.contains("cacheUsedSmall")) {
-				mLogger.debug("Calculation known.");
-			}
 			stackPush(mCacheConv.get(proofTerm), proofTerm);
 			return;
-		} else if (mDebug.contains("CacheRuntimeCheck")) {
-			mLogger.debug("Cache-RT: U: " + proofTerm.toString() + " (unknown)");
 		}
 
 		/* Get the function and parameters */
 		final String rulename = proofTerm.getFunction().getName();
-		final Term[] params = proofTerm.getParameters();
-
-		/* Just for debugging */
-		if (mDebug.contains("currently")) {
-			mLogger.debug("Currently looking at: " + rulename + " \t (function)");
-		}
 
 		/* Look at the rule name and treat each different */
-		if (rulename == "@res") {
+		switch (rulename) {
+		case "@res":
 			/*
 			 * The resolution rule.
 			 *
 			 * This function is expected to have as first argument the main clause. The other parameters are clauses
 			 * annotated with a pivot literal, on which they are resolved.
 			 */
-			enqueueWalker(new ResolutionWalker(proofTerm));
-			for (int i = params.length - 1; i >= 1; i--) {
-				final AnnotatedTerm pivotClause = (AnnotatedTerm) params[i];
-				enqueueWalker(new ProofWalker(pivotClause.getSubterm()));
-			}
-			enqueueWalker(new ProofWalker(params[0]));
-		} else if (rulename == "@eq") {
-			enqueueWalker(new EqualityWalker(proofTerm));
-			for (int i = params.length - 1; i >= 0; i--) {
-				enqueueWalker(new ProofWalker(params[i]));
-			}
-		} else if (rulename == "@cong") {
-			enqueueWalker(new CongruenceWalker(proofTerm));
-			for (int i = params.length - 1; i >= 0; i--) {
-				enqueueWalker(new ProofWalker(params[i]));
-			}
-		} else if (rulename == "@trans") {
-			enqueueWalker(new TransitivityWalker(proofTerm));
-			for (int i = params.length - 1; i >= 0; i--) {
-				enqueueWalker(new ProofWalker(params[i]));
-			}
-		} else if (rulename == "@refl") {
-			walkReflexivity(proofTerm);
-		} else if (rulename == "@lemma") {
-			walkLemma(proofTerm);
-		} else if (rulename == "@tautology") {
-			walkTautology(proofTerm);
-		} else if (rulename == "@asserted") {
-			walkAsserted(proofTerm);
-		} else if (rulename == "@rewrite") {
-			walkRewrite(proofTerm);
-		} else if (rulename == "@intern") {
-			walkIntern(proofTerm);
-		} else if (rulename == "@split") {
-			enqueueWalker(new SplitWalker(proofTerm));
-			enqueueWalker(new ProofWalker(((AnnotatedTerm) params[0]).getSubterm()));
-		} else if (rulename == "@clause") {
-			enqueueWalker(new ClauseWalker(proofTerm));
-			enqueueWalker(new ProofWalker(params[0]));
-		} else {
-			throw new AssertionError("Unknown proof rule " + rulename + ".");
+			new ResolutionWalker(proofTerm).enqueue(this);
+			break;
+
+		case "@eq":
+			new EqualityWalker(proofTerm).enqueue(this);
+			break;
+
+		case "@cong":
+			new CongruenceWalker(proofTerm).enqueue(this);
+			break;
+
+		case "@trans":
+			new TransitivityWalker(proofTerm).enqueue(this);
+			break;
+
+		case "@refl":
+			stackPush(walkReflexivity(proofTerm), proofTerm);
+			break;
+
+		case "@lemma":
+			stackPush(walkLemma(proofTerm), proofTerm);
+			break;
+
+		case "@tautology":
+			stackPush(walkTautology(proofTerm), proofTerm);
+			break;
+
+		case "@asserted":
+			stackPush(walkAsserted(proofTerm), proofTerm);
+			break;
+
+		case "@rewrite":
+			stackPush(walkRewrite(proofTerm), proofTerm);
+			break;
+
+		case "@intern":
+			stackPush(walkIntern(proofTerm), proofTerm);
+			break;
+
+		case "@split":
+			new SplitWalker(proofTerm).enqueue(this);
+			break;
+
+		case "@clause":
+			new ClauseWalker(proofTerm).enqueue(this);
+			break;
+
+		default:
+			reportError("Unknown proof rule " + rulename + ".");
+			stackPush(null, proofTerm);
+			break;
 		}
 	}
 
@@ -492,21 +535,21 @@ public class ProofChecker extends NonRecursive {
 	 * @param lemmaApp
 	 *            The {@literal @}lemma application.
 	 */
-	public void walkLemma(final ApplicationTerm lemmaApp) {
+	Term walkLemma(final ApplicationTerm lemmaApp) {
 		/*
 		 * The argument of the @lemma application is a single clause annotated with the lemma type, which has as object
 		 * all the necessary annotation. For example (@lemma (! (or (not (= a b)) (not (= b c)) (= a c)) :CC ((= a c)
 		 * :path (a b c))))
 		 */
+		if (!(lemmaApp.getParameters()[0] instanceof AnnotatedTerm)) {
+			reportError("Malformed lemma " + lemmaApp);
+			return null;
+		}
 		final AnnotatedTerm annTerm = (AnnotatedTerm) lemmaApp.getParameters()[0];
 		final String lemmaType = annTerm.getAnnotations()[0].getKey();
 		final Object lemmaAnnotation = annTerm.getAnnotations()[0].getValue();
 		final Term lemma = annTerm.getSubterm();
 		final Term[] clause = termToClause(lemma);
-
-		if (mDebug.contains("currently")) {
-			mLogger.debug("Lemma-type: " + lemmaType);
-		}
 
 		if (lemmaType == ":LA") {
 			checkLALemma(clause, (Term[]) lemmaAnnotation);
@@ -521,7 +564,7 @@ public class ProofChecker extends NonRecursive {
 			mLogger.error(annTerm);
 		}
 
-		stackPush(lemma, lemmaApp);
+		return lemma;
 	}
 
 	/**
@@ -1026,7 +1069,7 @@ public class ProofChecker extends NonRecursive {
 
 	/* === Tautologies === */
 
-	public void walkTautology(final ApplicationTerm tautologyApp) {
+	Term walkTautology(final ApplicationTerm tautologyApp) {
 		/*
 		 * Tautologies are created to define the meaning of proxy literals like (! (or a b c) :quoted), or of proxy
 		 * terms like (ite cond t1 t2) or (div x 5). They are of the form
@@ -1035,13 +1078,16 @@ public class ProofChecker extends NonRecursive {
 		 *
 		 * The possible types are defined in ProofConstants.AUX_*
 		 */
-		final AnnotatedTerm annTerm = (AnnotatedTerm) tautologyApp.getParameters()[0];
-		final String tautKind = annTerm.getAnnotations()[0].getKey();
-		final Term tautology = annTerm.getSubterm();
+		final String tautolyName = checkAndGetAnnotationKey(tautologyApp.getParameters()[0]);
+		if (tautolyName == null) {
+			reportError("Malformed tautology rule " + tautologyApp);
+			return null;
+		}
+		final Term tautology = ((AnnotatedTerm) tautologyApp.getParameters()[0]).getSubterm();
 		final Term[] clause = termToClause(tautology);
 
 		boolean result;
-		switch (tautKind) {
+		switch (tautolyName) {
 		case ":trueNotFalse":
 			result = (clause.length == 1 && clause[0] == mSkript.term("not",
 					mSkript.term("=", mSkript.term("true"), mSkript.term("false"))));
@@ -1058,13 +1104,13 @@ public class ProofChecker extends NonRecursive {
 		case ":ite-1":
 		case ":ite-2":
 		case ":ite-red":
-			result = checkTautIte(tautKind, clause);
+			result = checkTautIte(tautolyName, clause);
 			break;
 		case ":=+1":
 		case ":=+2":
 		case ":=-1":
 		case ":=-2":
-			result = checkTautEq(tautKind, clause);
+			result = checkTautEq(tautolyName, clause);
 			break;
 		case ":termITE":
 			result = checkTautTermIte(clause);
@@ -1077,7 +1123,7 @@ public class ProofChecker extends NonRecursive {
 		case ":divLow":
 		case ":toIntHigh":
 		case ":toIntLow":
-			result = checkTautLowHigh(tautKind, clause);
+			result = checkTautLowHigh(tautolyName, clause);
 			break;
 		case ":store":
 			result = checkTautStore(clause);
@@ -1094,8 +1140,7 @@ public class ProofChecker extends NonRecursive {
 			reportError("Malformed/unknown tautology rule " + tautologyApp);
 		}
 
-		/* push it and check later */
-		stackPush(tautology, tautologyApp);
+		return tautology;
 	}
 
 	private boolean checkTautOrPos(final Term[] clause) {
@@ -1395,16 +1440,16 @@ public class ProofChecker extends NonRecursive {
 		return false;
 	}
 
-	void walkAsserted(final ApplicationTerm assertedApp) {
+	Term walkAsserted(final ApplicationTerm assertedApp) {
 		final Term assertedTerm = assertedApp.getParameters()[0];
 		if (!mAssertions.contains(assertedTerm)) {
 			reportError("Could not find asserted term " + assertedTerm);
 		}
 		/* Just return the part without @asserted */
-		stackPush(assertedTerm, assertedApp);
+		return assertedTerm;
 	}
 
-	void walkReflexivity(final ApplicationTerm reflexivityApp) {
+	Term walkReflexivity(final ApplicationTerm reflexivityApp) {
 		// sanity check (caller and typechecker should ensure this
 		assert reflexivityApp.getFunction().getName() == "@refl";
 		assert reflexivityApp.getParameters().length == 1;
@@ -1413,97 +1458,103 @@ public class ProofChecker extends NonRecursive {
 		final Theory theory = reflexivityApp.getTheory();
 		final Term term = reflexivityApp.getParameters()[0];
 		final Term newEquality = theory.term("=", term, term);
-		stackPush(newEquality, reflexivityApp);
+		return newEquality;
 	}
 
-	void walkTransitivity(final ApplicationTerm transitivityApp) {
+	Term walkTransitivity(final ApplicationTerm transitivityApp, final Term[] equalities) {
 		// sanity check (caller and typechecker should ensure this
 		assert transitivityApp.getFunction().getName() == "@trans";
-		final Term[] params = transitivityApp.getParameters();
 
-		/*
-		 * Get the equalities from the stack.
-		 */
-		final ApplicationTerm[] equalities = new ApplicationTerm[params.length];
-		for (int i = params.length - 1; i >= 0; i--) {
-			equalities[i] = (ApplicationTerm) stackPopCheck(params[i]);
-			/* Check that it is an equality */
-			if (equalities[i].getFunction().getName() != "=" || equalities[i].getParameters().length != 2) {
-				throw new AssertionError("@trans on a proof of a non-equality: " + equalities[i]);
+		Term firstTerm = null;
+		Term lastTerm = null;
+		for (int i = 0; i < equalities.length; i++) {
+			// Check that subproofs prove equalities
+			if (!isApplication("=", equalities[i]) || ((ApplicationTerm) equalities[i]).getParameters().length != 2) {
+				// don't report errors if sub proof already failed
+				if (equalities[i] != null) {
+					reportError("@trans on a proof of a non-equality: " + equalities[i]);
+				}
+				return null;
 			}
-		}
-		for (int i = 0; i < equalities.length - 1; i++) {
+			final Term[] eqParams = ((ApplicationTerm) equalities[i]).getParameters();
 			/* check that equalities chain correctly */
-			if (equalities[i].getParameters()[1] != equalities[i + 1].getParameters()[0]) {
-				throw new AssertionError("@trans doesn't chain: " + equalities[i] + " and " + equalities[i + 1]);
+			if (i == 0) {
+				firstTerm = eqParams[0];
+			} else if (eqParams[0] != lastTerm) {
+				reportError("@trans doesn't chain: " + lastTerm + " and " + eqParams[0]);
 			}
+			lastTerm = eqParams[1];
 		}
-		final Theory theory = transitivityApp.getTheory();
-		final Term newEquality = theory.term("=", equalities[0].getParameters()[0],
-				equalities[equalities.length - 1].getParameters()[1]);
-		stackPush(newEquality, transitivityApp);
+		return transitivityApp.getTheory().term("=", firstTerm, lastTerm);
 	}
 
-	void walkCongruence(final ApplicationTerm congruenceApp) {
+	Term walkCongruence(final ApplicationTerm congruenceApp, final Term[] subProofs) {
 		// sanity check (caller and typechecker should ensure this
 		assert congruenceApp.getFunction().getName() == "@cong";
-		final Term[] params = congruenceApp.getParameters();
-
-		/*
-		 * Get the proven equalities from the stack.
-		 */
-		final ApplicationTerm[] rewrites = new ApplicationTerm[params.length];
-		for (int i = rewrites.length - 1; i >= 0; i--) {
-			rewrites[i] = (ApplicationTerm) stackPopCheck(params[i]);
+		for (int i = 0; i < subProofs.length; i++) {
 			/* Check that it is an equality */
-			if (rewrites[i].getFunction().getName() != "=" || rewrites[i].getParameters().length != 2) {
-				reportError("@cong on a proof of a non-equality: " + rewrites[i]);
+			if (!isApplication("=", subProofs[i]) || ((ApplicationTerm) subProofs[i]).getParameters().length != 2) {
+				// don't report errors if sub proof already failed
+				if (subProofs[i] != null) {
+					reportError("@cong on a proof of a non-equality: " + subProofs[i]);
+				}
+				return null;
 			}
 		}
 		/* assume that the first equality is of the form (= x (f p1 ... pn)) */
-		final ApplicationTerm funcTerm = (ApplicationTerm) rewrites[0].getParameters()[1];
-		final Term[] funcParams = funcTerm.getParameters();
+		final Term funcTerm = ((ApplicationTerm) subProofs[0]).getParameters()[1];
+		if (!(funcTerm instanceof ApplicationTerm)) {
+			reportError("@cong applied on a non-function term " + funcTerm);
+			return null;
+		}
+		final Term[] funcParams = ((ApplicationTerm) funcTerm).getParameters();
 		final Term[] newFuncParams = funcParams.clone();
 		/* check that the rewrites are of the form (= pi qi) where the i's are increasing */
 		int offset = 0;
-		for (int i = 1; i < rewrites.length; i++) {
+		for (int i = 1; i < subProofs.length; i++) {
+			final Term[] argRewrite = ((ApplicationTerm) subProofs[i]).getParameters();
 			/* search the parameter that is rewritten */
-			while (offset < funcParams.length && funcParams[offset] != rewrites[i].getParameters()[0]) {
+			while (offset < funcParams.length && funcParams[offset] != argRewrite[0]) {
 				offset++;
 			}
 			if (offset == funcParams.length) {
-				reportError("cannot find rewritten parameter in @cong: " + rewrites[i] + " in " + funcParams);
-				break;
+				reportError("cannot find rewritten parameter in @cong: " + subProofs[i] + " in " + funcParams);
+				offset = 0;
+			} else {
+				newFuncParams[offset] = argRewrite[1];
+				offset++;
 			}
-			newFuncParams[offset] = rewrites[i].getParameters()[1];
-			offset++;
 		}
 		/* compute the proven equality (= x (f q1 ... qn)) */
 		final Theory theory = congruenceApp.getTheory();
 		final Term newEquality =
-				theory.term("=", rewrites[0].getParameters()[0], theory.term(funcTerm.getFunction(), newFuncParams));
-		stackPush(newEquality, congruenceApp);
+				theory.term("=", ((ApplicationTerm) subProofs[0]).getParameters()[0],
+						theory.term(((ApplicationTerm) funcTerm).getFunction(), newFuncParams));
+		return newEquality;
 	}
 
-	void walkRewrite(final ApplicationTerm rewriteApp) {
+	Term walkRewrite(final ApplicationTerm rewriteApp) {
 		/*
 		 * A rewrite rule has the form (@rewrite (! (= lhs rhs) :rewriteRule)) The rewriteRule gives the name of the
 		 * rewrite axiom. The equality (= lhs rhs) is then a simple rewrite axiom.
 		 */
 		assert rewriteApp.getFunction().getName() == "@rewrite";
 		assert rewriteApp.getParameters().length == 1;
-		final AnnotatedTerm annotatedRule = (AnnotatedTerm) rewriteApp.getParameters()[0];
-		final String rewriteRule = annotatedRule.getAnnotations()[0].getKey();
-		final ApplicationTerm rewriteEq = (ApplicationTerm) annotatedRule.getSubterm();
-		final Term[] eqParams = rewriteEq.getParameters();
-		if (!isApplication("=", rewriteEq) || eqParams.length != 2) {
-			reportError("Rewrite rule is not a binary equality");
+		final String rewriteRule = checkAndGetAnnotationKey(rewriteApp.getParameters()[0]);
+		if (rewriteRule == null) {
+			reportError("Malformed rewrite rule " + rewriteApp);
+			return null;
 		}
-
-		/*
-		 * The result is simply the equality (without annotation). Compute it first and check later.
-		 */
-		stackPush(rewriteEq, rewriteApp);
+		final Term rewriteEq = ((AnnotatedTerm) rewriteApp.getParameters()[0]).getSubterm();
+		if (!isApplication("=", rewriteEq)) {
+			reportError("Rewrite rule is not a binary equality: " + rewriteApp);
+			return null;
+		}
+		final Term[] eqParams = ((ApplicationTerm) rewriteEq).getParameters();
+		if (eqParams.length != 2) {
+			reportError("Rewrite rule is not a binary equality: " + rewriteApp);
+			return null;
+		}
 
 		boolean okay;
 		switch (rewriteRule) {
@@ -1624,6 +1675,11 @@ public class ProofChecker extends NonRecursive {
 		if (!okay) {
 			reportError("Malformed/unknown @rewrite rule " + rewriteApp);
 		}
+
+		/*
+		 * The result is simply the equality (without annotation).
+		 */
+		return rewriteEq;
 	}
 
 	boolean checkRewriteAndToOr(final Term lhs, final Term rhs) {
@@ -2429,22 +2485,17 @@ public class ProofChecker extends NonRecursive {
 		}
 	}
 
-	public void walkIntern(final ApplicationTerm internApp) {
+	Term walkIntern(final ApplicationTerm internApp) {
 		final Term equality = internApp.getParameters()[0];
-
-		/*
-		 * The result is simply the equality.
-		 */
-		stackPush(equality, internApp);
-
 		if (!isApplication("=", equality)) {
 			reportError("Expected equality: " + equality);
-			return;
+			return null;
 		}
 		final Term[] args = ((ApplicationTerm) equality).getParameters();
 		if (args.length != 2 || args[0].getSort().getName() != "Bool" || !checkIntern(args[0], args[1])) {
 			reportError("Malformed intern application: " + internApp);
 		}
+		return equality;
 	}
 
 	boolean checkIntern(final Term lhs, Term rhs) {
@@ -2506,13 +2557,29 @@ public class ProofChecker extends NonRecursive {
 		}
 
 		if (isApplication("=", lhs) && ((ApplicationTerm) lhs).getParameters()[0].getSort().getName() != "Bool") {
+			/* compute affine term for lhs */
+			final Term[] lhsParams = ((ApplicationTerm) lhs).getParameters();
+			if (lhsParams.length != 2) {
+				return false;
+			}
+			SMTAffineTerm lhsAffine =
+					convertAffineTerm(lhsParams[0]).add(convertAffineTerm(lhsParams[1]).negate());
+
+			if (lhsAffine.isConstant()) {
+				/* simplify to true/false */
+				if (lhsAffine.getConstant() == Rational.ZERO) {
+					return isApplication("true", rhs);
+				} else {
+					return isApplication("false", rhs);
+				}
+			}
+
 			rhs = unquote(rhs);
 			if (!isApplication("=", rhs)) {
 				return false;
 			}
-			final Term[] lhsParams = ((ApplicationTerm) lhs).getParameters();
 			final Term[] rhsParams = ((ApplicationTerm) rhs).getParameters();
-			if (lhsParams.length != 2 || rhsParams.length != 2) {
+			if (rhsParams.length != 2) {
 				return false;
 			}
 
@@ -2526,10 +2593,9 @@ public class ProofChecker extends NonRecursive {
 			}
 
 			/* check that they represent the same equality */
-			final SMTAffineTerm lhsAffine = convertAffineTerm(lhsParams[0]).add(convertAffineTerm(lhsParams[1]).negate());
-			final SMTAffineTerm rhsAffine = convertAffineTerm(rhsParams[0]).add(convertAffineTerm(rhsParams[1]).negate());
-			lhsAffine.div(lhsAffine.getGcd());
-			rhsAffine.div(rhsAffine.getGcd());
+			SMTAffineTerm rhsAffine = convertAffineTerm(rhsParams[0]).add(convertAffineTerm(rhsParams[1]).negate());
+			lhsAffine = lhsAffine.div(lhsAffine.getGcd());
+			rhsAffine = rhsAffine.div(rhsAffine.getGcd());
 			return lhsAffine.equals(rhsAffine) || lhsAffine.equals(rhsAffine.negate());
 		}
 
@@ -2587,62 +2653,39 @@ public class ProofChecker extends NonRecursive {
 	 * @param resApp
 	 *            The <code>{@literal @}res</code> application from the original proof.
 	 */
-	public void walkResolution(final ApplicationTerm resApp) {
-		final Term[] termArgs = resApp.getParameters();
-
-		/*
-		 * Get the pivot literals (pivots[0] is always null) and retrieve the calculations for the proofs from the
-		 * stack.
-		 */
-		final Term[] pivots = new Term[termArgs.length];
-		final Term[] clauseTerms = new Term[termArgs.length];
-		for (int i = termArgs.length - 1; i >= 1; i--) {
-			final AnnotatedTerm pivotPlusProof = (AnnotatedTerm) termArgs[i];
-
-			/* Check if it is a pivot-annotation */
-			if (pivotPlusProof.getAnnotations().length != 1
-					|| pivotPlusProof.getAnnotations()[0].getKey() != ":pivot") {
-				throw new IllegalArgumentException("Annotation :pivot expected");
-			}
-
-			/*
-			 * Just take the first annotation, because it should have exactly one - otherwise the proof-checker throws
-			 * an error
-			 */
-			pivots[i] = (Term) pivotPlusProof.getAnnotations()[0].getValue();
-			clauseTerms[i] = stackPopCheck(pivotPlusProof.getSubterm());
-		}
-		// The 0th argument is the main clause an has no pivot.
-		clauseTerms[0] = stackPopCheck(termArgs[0]);
-
+	Term walkResolution(final ApplicationTerm resApp, final Term[] subProofs) {
 		/*
 		 * allDisjuncts is the currently computed resolution result.
 		 */
 		final HashSet<Term> allDisjuncts = new HashSet<Term>();
 
 		/* Now get the disjuncts of the first argument. */
-		allDisjuncts.addAll(Arrays.asList(termToClause(clauseTerms[0])));
-		if (mDebug.contains("resolution")) {
-			mLogger.warn("main clause: " + clauseTerms[0]);
-		}
+		allDisjuncts.addAll(Arrays.asList(termToClause(subProofs[0])));
 
 		/* Resolve the other clauses */
-		for (int i = 1; i < termArgs.length; i++) {
-			if (mDebug.contains("resolution")) {
-				mLogger.warn("  with pivot " + pivots[i] + " and clause " + clauseTerms[i]);
+		for (int i = 1; i < subProofs.length; i++) {
+			final AnnotatedTerm pivotPlusProof = (AnnotatedTerm) resApp.getParameters()[i];
+
+			/* Check if it is a pivot-annotation */
+			if (pivotPlusProof.getAnnotations().length != 1
+					|| pivotPlusProof.getAnnotations()[0].getKey() != ":pivot") {
+				reportError("Unexpected Annotation in resolution parameter: " + pivotPlusProof);
+				return null;
 			}
+
+			final Term pivot = (Term) pivotPlusProof.getAnnotations()[0].getValue();
 			/* Remove the negated pivot from allDisjuncts */
-			if (!allDisjuncts.remove(negate(pivots[i]))) {
+			if (!allDisjuncts.remove(negate(pivot))) {
 				reportWarning("Could not find negated pivot in main clause");
 			}
 
 			/*
 			 * For each clause check for the pivot and add all other literals.
 			 */
-			final Term[] clause = termToClause(clauseTerms[i]);
+			final Term[] clause = termToClause(subProofs[i]);
 			boolean pivotFound = false;
 			for (final Term t : clause) {
-				if (t == pivots[i]) {
+				if (t == pivot) {
 					pivotFound = true;
 				} else {
 					allDisjuncts.add(t);
@@ -2652,12 +2695,9 @@ public class ProofChecker extends NonRecursive {
 			if (!pivotFound) {
 				reportWarning("Could not find pivot in secondary clause");
 			}
-			if (mDebug.contains("resolution")) {
-				mLogger.warn("  results in " + allDisjuncts);
-			}
 		}
 
-		stackPush(clauseToTerm(allDisjuncts), resApp);
+		return clauseToTerm(allDisjuncts);
 	}
 
 	/**
@@ -2668,22 +2708,16 @@ public class ProofChecker extends NonRecursive {
 	 * @param eqApp
 	 *            The {@literal @}eq application.
 	 */
-	public void walkEquality(final ApplicationTerm eqApp) {
-		final Term[] eqParams = eqApp.getParameters();
+	Term walkEquality(final ApplicationTerm eqApp, final Term origFormula, final Term rewrite) {
 		assert eqApp.getFunction().getName().equals("@eq");
-		assert eqParams.length == 2;
 
 		/*
 		 * Expected: The first argument is a boolean formula f the second argument a binary equality (= f g).
 		 *
 		 * The second argument is a proves that g is equivalent to f and the result is a proof for g.
 		 */
-
-		final Term rewrite = stackPopCheck(eqParams[1]);
-		final Term origFormula = stackPopCheck(eqParams[0]);
-
 		boolean okay = false;
-		Term result = origFormula;
+		Term result = null;
 		if (isApplication("=", rewrite)) {
 			final Term[] eqSides = ((ApplicationTerm) rewrite).getParameters();
 			if (eqSides.length == 2) {
@@ -2691,15 +2725,14 @@ public class ProofChecker extends NonRecursive {
 				okay = (origFormula == eqSides[0]);
 			}
 		}
-		if (!okay) {
+		if (!okay && rewrite != null && origFormula != null) {
 			reportError("Malformed @eq application: " + origFormula + " and " + rewrite);
 		}
-		stackPush(result, eqApp);
+		return result;
 	}
 
-	public void walkClause(final ApplicationTerm clauseApp) {
+	Term walkClause(final ApplicationTerm clauseApp, final Term provedClause) {
 		/* Check if the parameters of clause are two disjunctions (which they should be) */
-		final Term provedClause = stackPopCheck(clauseApp.getParameters()[0]);
 		Term expectedClause = clauseApp.getParameters()[1];
 		if (expectedClause instanceof AnnotatedTerm) {
 			final Annotation[] annot = ((AnnotatedTerm) expectedClause).getAnnotations();
@@ -2709,43 +2742,43 @@ public class ProofChecker extends NonRecursive {
 			}
 		}
 
+		// If we had an error, we can silently recover now.
+		if (provedClause == null) {
+			return expectedClause;
+		}
+
 		// The disjuncts of each parameter
 		final Term[] provedLits = termToClause(provedClause);
 		final Term[] expectedLits = termToClause(expectedClause);
 		if (provedLits.length != expectedLits.length) {
 			reportError("Clause has different number of literals: " + provedClause + " versus " + expectedClause);
+		} else {
+			final HashSet<Term> param1Disjuncts = new HashSet<Term>(Arrays.asList(provedLits));
+			final HashSet<Term> param2Disjuncts = new HashSet<Term>(Arrays.asList(expectedLits));
+			/*
+			 * Check if the clause operation was correct. Each later disjunct has to be in the first disjunction and
+			 * reverse and there should be no double literal.
+			 */
+			if (!param1Disjuncts.equals(param2Disjuncts) || param1Disjuncts.size() != provedLits.length) {
+				reportError("The clause-operation didn't permute correctly!");
+			}
 		}
-		final HashSet<Term> param1Disjuncts = new HashSet<Term>(Arrays.asList(provedLits));
-		final HashSet<Term> param2Disjuncts = new HashSet<Term>(Arrays.asList(expectedLits));
-
-		/*
-		 * Check if the clause operation was correct. Each later disjunct has to be in the first disjunction and reverse
-		 * and there should be no double literal.
-		 */
-		if (!param1Disjuncts.equals(param2Disjuncts) || param1Disjuncts.size() != provedLits.length) {
-			reportError("The clause-operation didn't permute correctly!");
-		}
-
-		stackPush(expectedClause, clauseApp);
+		return expectedClause;
 	}
 
 	/* === Split rules === */
 
-	public void walkSplit(final ApplicationTerm splitApp) {
-		// term is just the first term
-
-		// The first term casted to an ApplicationTerm
-		final AnnotatedTerm annotSplit = (AnnotatedTerm) splitApp.getParameters()[0];
-		final Term splitTerm = splitApp.getParameters()[1];
-		final Term origTerm = stackPopCheck(annotSplit.getSubterm());
-
-		final String splitRule = annotSplit.getAnnotations()[0].getKey();
-
-		if (mDebug.contains("currently")) {
-			System.out.println("Split-Rule: " + splitRule);
+	Term walkSplit(final ApplicationTerm splitApp, final Term origTerm) {
+		final String splitRule = checkAndGetAnnotationKey(splitApp.getParameters()[0]);
+		if (splitRule == null) {
+			reportError("Malformed split rule " + splitApp);
+			return null;
 		}
-		if (mDebug.contains("hardTerm")) {
-			System.out.println("Term: " + splitApp.toStringDirect());
+		final Term splitTerm = splitApp.getParameters()[1];
+
+		// silently recover from previous errors.
+		if (origTerm == null) {
+			return splitTerm;
 		}
 
 		boolean result;
@@ -2772,10 +2805,10 @@ public class ProofChecker extends NonRecursive {
 		if (!result) {
 			reportError("Malformed/unknown split rule " + splitApp);
 		}
-		stackPush(splitTerm, splitApp);
+		return splitTerm;
 	}
 
-	public boolean checkSplitNotOr(final Term origTerm, final Term splitTerm) {
+	boolean checkSplitNotOr(final Term origTerm, final Term splitTerm) {
 		final Term orTerm = negate(origTerm);
 		if (!isApplication("or", orTerm)) {
 			return false;
@@ -2793,7 +2826,7 @@ public class ProofChecker extends NonRecursive {
 		return false;
 	}
 
-	public boolean checkSplitEq(final String splitRule, Term origTerm, final Term splitTerm) {
+	boolean checkSplitEq(final String splitRule, Term origTerm, final Term splitTerm) {
 		// rule is =+ iff origTerm is an equality.
 		final boolean positive = !isApplication("not", origTerm);
 		if (!positive) {
@@ -2827,7 +2860,7 @@ public class ProofChecker extends NonRecursive {
 		return false;
 	}
 
-	public boolean checkSplitIte(final String splitRule, Term origTerm, final Term splitTerm) {
+	boolean checkSplitIte(final String splitRule, Term origTerm, final Term splitTerm) {
 		final boolean positive = !isApplication("not", origTerm);
 		if (!positive) {
 			origTerm = ((ApplicationTerm) origTerm).getParameters()[0];
@@ -2862,28 +2895,13 @@ public class ProofChecker extends NonRecursive {
 
 	/* === Auxiliary functions === */
 
-	public void stackPush(final Term pushTerm, final ApplicationTerm keyTerm) {
+	void stackPush(final Term pushTerm, final ApplicationTerm keyTerm) {
 		mCacheConv.put(keyTerm, pushTerm);
 		mStackResults.push(pushTerm);
-		mStackResultsDebug.push(keyTerm);
 	}
 
-	public Term stackPopCheck(final Term expected) {
-		if (mStackResults.size() != mStackResultsDebug.size()) {
-			throw new AssertionError("The debug-stack and the result-stack have different size");
-		}
-		final Term returnTerm = mStackResults.pop();
-		final Term debugTerm = mStackResultsDebug.pop();
-
-		if (mCacheConv.get(debugTerm) != returnTerm) {
-			throw new AssertionError("The debugger couldn't associate " + returnTerm.toStringDirect() + " with "
-					+ debugTerm.toStringDirect());
-		}
-		if (expected != null && debugTerm != expected) {
-			throw new AssertionError("Unexpected Term on proofchecker stack.");
-		}
-
-		return returnTerm;
+	Term stackPop() {
+		return mStackResults.pop();
 	}
 
 	/*
@@ -2897,7 +2915,7 @@ public class ProofChecker extends NonRecursive {
 		return (SMTAffineTerm) mAffineConverter.transform(term);
 	}
 
-	public Term unquote(final Term quotedTerm) {
+	Term unquote(final Term quotedTerm) {
 		if (quotedTerm instanceof AnnotatedTerm) {
 			final AnnotatedTerm annTerm = (AnnotatedTerm) quotedTerm;
 			final Annotation[] annots = annTerm.getAnnotations();
@@ -2933,7 +2951,7 @@ public class ProofChecker extends NonRecursive {
 	 *            the term to check.
 	 * @return true if term is an application of funcSym.
 	 */
-	public boolean isApplication(final String funcSym, final Term term) {
+	boolean isApplication(final String funcSym, final Term term) {
 		if (term instanceof ApplicationTerm) {
 			final ApplicationTerm appTerm = (ApplicationTerm) term;
 			final FunctionSymbol func = appTerm.getFunction();
@@ -2945,13 +2963,30 @@ public class ProofChecker extends NonRecursive {
 	}
 
 	/**
+	 * Checks if a term is an annotation term with a single annotation without value.
+	 *
+	 * @param term
+	 *            the term to check.
+	 * @return the annotation key or null if it is not a correct annotation.
+	 */
+	String checkAndGetAnnotationKey(final Term term) {
+		if (term instanceof AnnotatedTerm) {
+			final Annotation[] annots = ((AnnotatedTerm) term).getAnnotations();
+			if (annots.length == 1 && annots[0].getValue() == null) {
+				return annots[0].getKey();
+			}
+		}
+		return null;
+	}
+
+	/**
 	 * Checks if a term is zero, either Int or Real.
 	 *
 	 * @param zero
 	 *            the term to check.
 	 * @return true if zero is 0.
 	 */
-	public boolean isZero(final Term zero) {
+	boolean isZero(final Term zero) {
 		return zero == Rational.ZERO.toTerm(zero.getSort());
 	}
 }

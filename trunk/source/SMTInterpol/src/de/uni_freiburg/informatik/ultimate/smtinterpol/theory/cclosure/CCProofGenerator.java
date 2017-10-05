@@ -627,7 +627,7 @@ public class CCProofGenerator {
 	private boolean isTrivialDisequality(final SymmetricPair<CCTerm> termPair) {
 		final SharedTerm first = termPair.getFirst().getSharedTerm();
 		final SharedTerm second = termPair.getSecond().getSharedTerm();
-		return first != null && second != null && first.getLinVar() != null && first.getLinVar() == second.getLinVar()
+		return first != null && second != null && first.getOffset() != null && first.getLinVar() == second.getLinVar()
 				&& first.getFactor() == second.getFactor() && first.getOffset() != second.getOffset();
 	}
 

@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashMap;
 
 /**
  * The DPLL engine.
- * 
+ *
  * @author hoenicke
  *
  */
@@ -220,7 +220,7 @@ public class DPLLEngine {
 
 	/**
 	 * Propagate unit clauses first in boolean part, then in the theory part.
-	 * 
+	 *
 	 * @return a conflict clause if a conflict was detected.
 	 */
 	@SuppressWarnings("unused")
@@ -417,7 +417,7 @@ public class DPLLEngine {
 	/**
 	 * Sets a literal to true and tells all theories about it. The literal must be undecided when this function is
 	 * called.
-	 * 
+	 *
 	 * @param literal
 	 *            the literal to set.
 	 * @return a conflict clause if a conflict was detected.
@@ -603,7 +603,7 @@ public class DPLLEngine {
 	 * Explain one conflict clause. DO NOT CALL THIS FUNCTION DIRECTLY!!! USE {@link #explain(Clause)} INSTEAD SINCE
 	 * THIS FUNCTION DOES A CORRECT LOOP INCLUDING {@link #finalizeBacktrack()} AND HENCE DOES NOT LEAVE BEHIND
 	 * INCONSISTENT THEORY SOLVERS.
-	 * 
+	 *
 	 * @param clause
 	 *            Conflict clause
 	 * @return Explanation
@@ -839,7 +839,7 @@ public class DPLLEngine {
 	/**
 	 * Explain all conflicts currently present in the solver starting with a given initial conflict. Returns
 	 * <code>true</code> if and only if the empty clause has been derived.
-	 * 
+	 *
 	 * @param conflict
 	 *            The initial conflict.
 	 * @return Is the solver inconsistent?
@@ -1075,7 +1075,7 @@ public class DPLLEngine {
 
 	/**
 	 * Solves the current problem.
-	 * 
+	 *
 	 * @return true if sat, false if unsat.
 	 */
 	public boolean solve() {
@@ -1646,7 +1646,7 @@ public class DPLLEngine {
 	/**
 	 * Run a quick and incomplete check on the current context. This only uses propagations and a conflict explanation
 	 * to the empty clause.
-	 * 
+	 *
 	 * @return <code>false</code> if and only if the empty clause could be derived.
 	 */
 	public boolean quickCheck() {
@@ -1661,7 +1661,7 @@ public class DPLLEngine {
 	/**
 	 * Propagate as much as possible. In contrast to {@link #quickCheck()}, this function tells the theory solvers to
 	 * start a check. This might get more propagations than {@link #quickCheck()}.
-	 * 
+	 *
 	 * @return <code>false</code> if and only if the empty clause could be derived.
 	 */
 	public boolean propagate() {
@@ -1835,7 +1835,7 @@ public class DPLLEngine {
 
 	/**
 	 * Add some literals and prepare for a check-sat. Trivial inconsistencies between assumptions are detected.
-	 * 
+	 *
 	 * @param lits
 	 *            The literals to assume.
 	 * @return <code>false</code> if the assumptions are trivially inconsistent.
@@ -1895,7 +1895,7 @@ public class DPLLEngine {
 		if (mUnsatClause != null) {
 			for (final Literal lit : mUnsatClause.mLiterals) {
 				assert lit.getAtom().isAssumption() : "Not an assumption in unsat clause";
-				assert lit.getAtom().getDecideStatus() == lit.negate() : "unsat clause satisfied!";
+				assert lit.getAtom().getDecideStatus() == lit : "unsat clause satisfied!";
 			}
 		}
 		return true;
