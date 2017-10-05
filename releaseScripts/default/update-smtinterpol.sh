@@ -66,7 +66,7 @@ echo "Latest SMTInterpol version is $smtinterpol_cur, in Ultimate is $smtinterpo
 pushd "$dir_smtinterpol" > /dev/null 
 echo "Creating diff..."
 [ -e "$diff_file" ] && rm "$diff_file"
-git diff "$smtinterpol_ver" -- SMTInterpol/src Library-SMTLIB/src Library-SMTLIBTest/src SMTInterpolTest/src \
+git diff "$smtinterpol_ver" -- SMTInterpol/src Library-SMTLIB/src Library-SMTLIBTest/src SMTInterpolTest/src SMTInterpolTest/test \
 ':(exclude,glob)**util/datastructures' \
 ':(exclude,glob)**util/HashUtils.java' \
 ':(exclude,glob)**util/ScopeUtils.java' \
