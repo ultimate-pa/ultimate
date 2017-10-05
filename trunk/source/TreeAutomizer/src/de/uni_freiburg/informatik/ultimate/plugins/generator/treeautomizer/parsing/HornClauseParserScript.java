@@ -42,6 +42,8 @@ import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HornUtilConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Assignments;
+import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
+import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet.UnletType;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Model;
@@ -78,6 +80,8 @@ public class HornClauseParserScript extends NoopScript {
 //	private final ArrayList<Term> mCurrentTransitionAtoms;
 	private final HCSymbolTable mSymbolTable;
 
+	FormulaUnLet mUnletter;
+
 	private int mFreshVarCounter = 0;
 
 	public HornClauseParserScript(final ManagedScript smtSolverScript, final String logic, final Settings settings) {
@@ -92,6 +96,9 @@ public class HornClauseParserScript extends NoopScript {
 //		mCurrentTransitionAtoms = new ArrayList<>();
 
 		mSymbolTable = new HCSymbolTable(mBackendSmtSolver);
+
+
+		mUnletter = new FormulaUnLet(UnletType.EXPAND_DEFINITIONS);
 
 	}
 
@@ -235,11 +242,11 @@ public class HornClauseParserScript extends NoopScript {
 		return tail;
 	}
 
-	private HornClauseBody parseBody(final Term term) throws SMTLIBException {
-		final ApplicationTerm t = (ApplicationTerm) term;
+	private HornClauseBody parseBody(final ApplicationTerm term) throws SMTLIBException {
+		final ApplicationTerm t = term;
 		if (t.getFunction().getName().equals("=>")) {
 			// implication
-			final HornClauseBody head = parseBody(t.getParameters()[1]);
+			final HornClauseBody head = parseBody((ApplicationTerm) t.getParameters()[1]);
 			final HornClauseCobody tail = parseCobody(t.getParameters()[0]);
 
 			head.mergeCobody(tail);
@@ -290,16 +297,16 @@ public class HornClauseParserScript extends NoopScript {
 
 	@Override
 	public LBool assertTerm(final Term rawTerm) throws SMTLIBException {
-//		final Term term = normalizeAssertedTerm(rawTerm);
-		final Term term = rawTerm;
+
+		final Term term = mUnletter.unlet(rawTerm);
 
 		if (term instanceof ApplicationTerm && !SmtUtils.isFunctionApplication(term, "not")) {
-			final HornClauseBody body = parseBody(term);
+			final HornClauseBody body = parseBody((ApplicationTerm) term);
 			mParsedHornClauses.add(body.convertToHornClause(mBackendSmtSolver, mSymbolTable, this));
 		} else if (term instanceof QuantifiedFormula) {
 			final QuantifiedFormula thisTerm = (QuantifiedFormula) term;
 			if (thisTerm.getQuantifier() == FORALL) {
-				final HornClauseBody body = parseBody(thisTerm.getSubformula());
+				final HornClauseBody body = parseBody((ApplicationTerm) thisTerm.getSubformula());
 				mParsedHornClauses.add(body.convertToHornClause(mBackendSmtSolver, mSymbolTable, this));
 				// System.err.println(mCurrentHornClause.get(mCurrentHornClause.size() - 1));
 			}
