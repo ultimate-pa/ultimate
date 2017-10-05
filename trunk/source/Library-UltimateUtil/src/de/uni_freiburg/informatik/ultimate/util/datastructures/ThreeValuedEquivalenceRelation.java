@@ -32,6 +32,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 
@@ -500,9 +501,13 @@ public class ThreeValuedEquivalenceRelation<E> {
 		}
 		final HashRelation<E, E> newDisequalities = new HashRelation<>();
 		for (final Entry<E, E> deq : mDisequalities.entrySet()) {
-			if (elems.contains(deq.getKey()) && elems.contains(deq.getValue())) {
-				newDisequalities.addPair(newUf.findAndConstructEquivalenceClassIfNeeded(deq.getKey()),
-						newUf.findAndConstructEquivalenceClassIfNeeded(deq.getValue()));
+			final Optional<E> lhsRep = DataStructureUtils.getSomeCommonElement(elems, getEquivalenceClass(deq.getKey()));
+			if (lhsRep.isPresent()) {
+				final Optional<E> rhsRep = DataStructureUtils.getSomeCommonElement(elems, getEquivalenceClass(deq.getValue()));
+				if (rhsRep.isPresent()) {
+					newDisequalities.addPair(newUf.find(lhsRep.get()),
+							newUf.find(rhsRep.get()));
+				}
 			}
 		}
 		return new ThreeValuedEquivalenceRelation<>(newUf, newDisequalities);
