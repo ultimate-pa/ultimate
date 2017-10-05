@@ -16,7 +16,7 @@ procedure main() {
     assume a == b;
   } else {
     assume j != i;
-    a := b[i := x]
+    a := b[i := x];
   }
   assert a[j] == 7;
 }
