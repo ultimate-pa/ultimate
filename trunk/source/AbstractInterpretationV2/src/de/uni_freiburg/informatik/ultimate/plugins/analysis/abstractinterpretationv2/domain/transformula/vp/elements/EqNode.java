@@ -61,6 +61,7 @@ public abstract class EqNode implements IEqNodeIdentifier<EqNode>, ICongruenceCl
 	private final MultiDimensionalSort mMdSort;
 
 	public EqNode(final Term term, final EqNodeAndFunctionFactory eqNodeFactory) {
+		assert mTerm != null;
 		mTerm = term;
 		mEqNodeFactory = eqNodeFactory;
 
@@ -169,4 +170,23 @@ public abstract class EqNode implements IEqNodeIdentifier<EqNode>, ICongruenceCl
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
+	public int hashCode() {
+		return mTerm.hashCode();
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		final EqNode other = (EqNode) obj;
+		return other.mTerm == mTerm;
+	}
 }
