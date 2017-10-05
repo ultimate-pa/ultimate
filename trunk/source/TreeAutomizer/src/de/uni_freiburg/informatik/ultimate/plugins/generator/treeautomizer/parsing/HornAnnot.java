@@ -49,16 +49,18 @@ public class HornAnnot implements IAnnotations {
 	private final ManagedScript mBackendSolverScript;
 	private final Map<String, Object> mMaechtigUnnoetigBenannteMap = new HashMap<>();
 	private final HCSymbolTable mSymbolTable;
+	private final String mFileName;
 
 	/***
 	 * An annotation of horn clauses.
+	 * @param filename
 	 * @param clauses
 	 * @param backendSolver
 	 * @param symbolTable
 	 */
-	public HornAnnot(final List<HornClause> clauses, 
-			final ManagedScript backendSolver,
+	public HornAnnot(final String filename, final List<HornClause> clauses, final ManagedScript backendSolver,
 			final HCSymbolTable symbolTable) {
+		mFileName = filename;
 		mMaechtigUnnoetigBenannteMap.put(HornUtilConstants.HORN_ANNOT_NAME, clauses);
 		mBackendSolverScript = backendSolver;
 		mSymbolTable = symbolTable;
@@ -72,13 +74,18 @@ public class HornAnnot implements IAnnotations {
 	public ManagedScript getScript() {
 		return mBackendSolverScript;
 	}
-	
+
 	public HCSymbolTable getSymbolTable() {
 		return mSymbolTable;
 	}
+
+	public String getFileName() {
+		return mFileName;
+	}
+
 	@Override
 	public String toString() {
-		StringBuilder res = new StringBuilder();
+		final StringBuilder res = new StringBuilder();
 		for (final Entry<String, Object> en : mMaechtigUnnoetigBenannteMap.entrySet()) {
 			if (res.length() != 0) {
 				res.append('\t');

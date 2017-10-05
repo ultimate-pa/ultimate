@@ -37,6 +37,9 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
+import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
+import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
@@ -49,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.results.TimeoutResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TreeAutomizerSatResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TreeAutomizerUnsatResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
@@ -68,6 +72,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.parsing.HornAnnot;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.preferences.TreeAutomizerPreferenceInitializer;
 
 /**
  * @author Mostafa M.A. (mostafa.amin93@gmail.com)
@@ -103,6 +108,7 @@ public class TreeAutomizerCEGAR {
 	private final List<HornClause> mAlphabet;
 	private TreeRun<HornClause, IPredicate> mCounterExample;
 	private final IUltimateServiceProvider mServices;
+	private final IPreferenceProvider mPreferences;
 
 	/**
 	 * Constructor for TreeAutomizer CEGAR
@@ -146,6 +152,7 @@ public class TreeAutomizerCEGAR {
 		mPredicateUnifier.getOrConstructPredicate(mInitialPredicate.getFormula());
 		mPredicateUnifier.getOrConstructPredicate(mFinalPredicate.getFormula());
 
+		mPreferences = services.getPreferenceProvider(Activator.PLUGIN_ID);
 	}
 
 	/**
@@ -269,6 +276,14 @@ public class TreeAutomizerCEGAR {
 
 		generalizeCounterExample(mInterpolAutomaton);
 
+		// dump interpolant automaton
+		final String automataDumpPath =
+				mPreferences.getString(TreeAutomizerPreferenceInitializer.LABEL_AutomataDumpPath);
+		if (!automataDumpPath.isEmpty()) {
+			final String filename = mHornAnnot.getFileName() + "_interpolant_automaton_nr_" + mIteration;
+			writeAutomatonToFile(mServices, mInterpolAutomaton, automataDumpPath, filename, Format.ATS, "");
+		}
+
 		assert allRulesAreInductive(mInterpolAutomaton);
 	}
 
@@ -310,6 +325,13 @@ public class TreeAutomizerCEGAR {
 	}
 
 	protected boolean refineAbstraction() throws AutomataLibraryException {
+		// dump abstraction
+		final String automataDumpPath =
+				mPreferences.getString(TreeAutomizerPreferenceInitializer.LABEL_AutomataDumpPath);
+		if (!automataDumpPath.isEmpty()) {
+			final String filename = mHornAnnot.getFileName() + "_abstraction_nr_" + mIteration;
+			writeAutomatonToFile(mServices, mAbstraction, automataDumpPath, filename, Format.ATS, "");
+		}
 
 		/*
 		final ITreeAutomatonBU<HornClause, IPredicate> cCounterExample = (new Complement<>(mAutomataLibraryServices,
@@ -399,4 +421,10 @@ public class TreeAutomizerCEGAR {
 		return null;
 	}
 
+	protected static void writeAutomatonToFile(final IUltimateServiceProvider services,
+			final IAutomaton<?, IPredicate> automaton, final String path, final String filename, final Format format,
+			final String message) {
+		new AutomatonDefinitionPrinter<String, String>(new AutomataLibraryServices(services), "ta",
+				path + "/" + filename, format, message, automaton);
+	}
 }

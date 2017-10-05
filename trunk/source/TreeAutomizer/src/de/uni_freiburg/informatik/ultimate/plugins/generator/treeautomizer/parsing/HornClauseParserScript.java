@@ -83,8 +83,11 @@ public class HornClauseParserScript extends NoopScript {
 	FormulaUnLet mUnletter;
 
 	private int mFreshVarCounter = 0;
+	private final String mFilename;
 
-	public HornClauseParserScript(final ManagedScript smtSolverScript, final String logic, final Settings settings) {
+	public HornClauseParserScript(final String filename, final ManagedScript smtSolverScript, final String logic,
+			final Settings settings) {
+		mFilename = filename;
 		mBackendSmtSolver = smtSolverScript;
 		mLogic = logic;
 		mSolverSettings = settings;
@@ -110,7 +113,7 @@ public class HornClauseParserScript extends NoopScript {
 		mSymbolTable.finishConstruction();
 
 		final Payload payload = new Payload();
-		final HornAnnot annot = new HornAnnot(mParsedHornClauses, mBackendSmtSolver, mSymbolTable);
+		final HornAnnot annot = new HornAnnot(mFilename, mParsedHornClauses, mBackendSmtSolver, mSymbolTable);
 		payload.getAnnotations().put(HornUtilConstants.HORN_ANNOT_NAME, annot);
 
 		return new HornClauseAST(payload);
