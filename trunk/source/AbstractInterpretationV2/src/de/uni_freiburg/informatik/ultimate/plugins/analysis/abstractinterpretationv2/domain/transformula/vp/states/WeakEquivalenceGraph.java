@@ -605,7 +605,7 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 					if (!mPartialArrangement.getAllElements().containsAll(nodesOnEdgeLabelWithoutWeqNodes)) {
 						final Set<NODE> difference = DataStructureUtils.difference(nodesOnEdgeLabelWithoutWeqNodes,
 								mPartialArrangement.getAllElements());
-						assert false;
+						assert false : "weq edge contains node(s) that has been removed: " + difference;
 						return false;
 					}
 				}
@@ -632,19 +632,19 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 					final NODE source = edge.getKey().getOneElement();
 					final NODE target = edge.getKey().getOtherElement();
 					if (!mPartialArrangement.hasElement(source)) {
-						assert false;
+						assert false : "weq edge source is not known to partial arrangement";
 						return false;
 					}
 					if (!mPartialArrangement.hasElement(target)) {
-						assert false;
+						assert false : "weq edge target is not known to partial arrangement";
 						return false;
 					}
 					if (!mPartialArrangement.isRepresentative(source)) {
-						assert false;
+						assert false : "weq edge source is not a representative";
 						return false;
 					}
 					if (!mPartialArrangement.isRepresentative(target)) {
-						assert false;
+						assert false : "weq edge target is not a representative";
 						return false;
 					}
 				}
@@ -655,7 +655,7 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 			 */
 			for (final Doubleton<NODE> dton : mWeakEquivalenceEdges.keySet()) {
 				if (dton.getOneElement().equals(dton.getOtherElement())) {
-					assert false;
+					assert false : "self loop in weq graph";
 					return false;
 				}
 			}
@@ -674,7 +674,7 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 				if (edge.getValue().isInconsistent()
 						&& !mArrayEqualities.containsPair(source, target)
 						&& !mArrayEqualities.containsPair(target, source)) {
-					assert false;
+					assert false : "lost track of an inconsistent weq edge";
 					return false;
 				}
 			}

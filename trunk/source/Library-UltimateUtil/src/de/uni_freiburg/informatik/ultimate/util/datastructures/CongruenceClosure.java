@@ -892,7 +892,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 			if (mElementTVER != null) {
 				// transitory CClosure instance which will later be replaced by the "bottom" variant
 				if (!mElementTVER.isInconsistent()) {
-					assert false;
+					assert false : "fields are null, but Cc is not inconsistent";
 					return false;
 				}
 			}
@@ -900,7 +900,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		}
 
 		if (mElementTVER.isInconsistent()) {
-					assert false;
+					assert false : "Cc is inconsistent but fields are not null";
 					return false;
 		}
 
@@ -914,7 +914,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 			}
 			final ELEM rep = getRepresentativeElement(elem);
 			if (!mAuxData.getCcChildren(rep).containsPair(elem.getAppliedFunction(), elem.getArgument())) {
-				assert false;
+				assert false : "ccchild store incomplete";
 				return false;
 			}
 		}
@@ -925,13 +925,13 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		 */
 		for (final ELEM elem : getAllElements()) {
 			if (elem.isLiteral() && !mAllLiterals.contains(elem)) {
-				assert false;
+				assert false : "all literals store incomplete";
 				return false;
 			}
 		}
 		for (final ELEM lit : mAllLiterals) {
 			if (!lit.isLiteral()) {
-				assert false;
+				assert false : "non-literal in all literals store";
 				return false;
 			}
 		}
@@ -948,7 +948,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 				// elem is literal
 				if (!isRepresentative(elem)) {
 					// elem is a
-					assert false;
+					assert false : "literal is not the representative of its eq class";
 					return false;
 				}
 			}
@@ -958,8 +958,6 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		 * check that for each element, its parents in funcAppTreeAuxData and ccAuxData agree
 		 */
 		for (final ELEM elem : getAllElements()) {
-
-
 			final Set<ELEM> afCcparFromDirectParents = new HashSet<>();
 			final Set<ELEM> argCcparFromDirectParents = new HashSet<>();
 			for (final ELEM eqcMember : mElementTVER.getEquivalenceClass(elem)) {
@@ -969,11 +967,11 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 
 			final ELEM rep = getRepresentativeElement(elem);
 			if (!afCcparFromDirectParents.equals(mAuxData.getAfCcPars(rep))) {
-				assert false;
+				assert false : "funcAppTreeAuxData and ccAuxData don't agree (Af case)";
 				return false;
 			}
 			if (!argCcparFromDirectParents.equals(mAuxData.getArgCcPars(rep))) {
-				assert false;
+				assert false : "funcAppTreeAuxData and ccAuxData don't agree (Arg case)";
 				return false;
 			}
 		}
@@ -987,25 +985,14 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		for (final ELEM e1 : getAllElements()) {
 			for (final ELEM e2 : mElementTVER.getEquivalenceClass(e1)) {
 				if (!e1.hasSameTypeAs(e2)) {
-					assert false;
+					assert false : "elements of incompatible type are in same eq class";
 					return false;
 				}
 			}
 		}
 		for (final Entry<ELEM, ELEM> deq : mElementTVER.getDisequalities()) {
 			if (!deq.getKey().hasSameTypeAs(deq.getValue())) {
-				assert false;
-				return false;
-			}
-		}
-
-		if (!isInconsistent()) {
-			if (mElementTVER.isInconsistent()) {
-				assert false;
-				return false;
-			}
-			if (mElementTVER == null) {
-				assert false;
+				assert false : "stored disequality between elements of incompatible type";
 				return false;
 			}
 		}
@@ -1422,7 +1409,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 
 		private boolean hasOnlyPairsOfSameType(final HashRelation<ELEM, ELEM> relation) {
 			for (final Entry<ELEM, ELEM> pair : relation) {
-				assert pair.getKey().hasSameTypeAs(pair.getValue());
+				assert pair.getKey().hasSameTypeAs(pair.getValue()) : "relation should only have pairs of same type"
+						+ "but does not";
 			}
 			return true;
 		}
@@ -1559,12 +1547,6 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 					mCcChildren.get(newRep).removePair(elem.getAppliedFunction(), elem.getArgument());
 				}
 			}
-//			for (final Entry<ELEM, HashRelation<ELEM, ELEM>> en : mCcChildren.entrySet()) {
-//				assert !en.getKey().equals(elem) : "removed it in step before, right?";
-//
-//				en.getValue().removeDomainElement(elem);
-//				en.getValue().removeRangeElement(elem);
-//			}
 		}
 
 		HashRelation<ELEM, ELEM> registerNewElement(final ELEM elem) {
@@ -1581,9 +1563,6 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 			final HashRelation<ELEM, ELEM> equalitiesToPropagate = new HashRelation<>();
 			final Set<ELEM> afCcPars = mAfCcPars.getImage(afRep);
 			final Set<ELEM> candidates = afCcPars.stream()
-//					.filter(c -> (!c.isFunctionApplication()
-//							|| (!c.getAppliedFunction().equals(mElementCurrentlyBeingRemoved)
-//									&& !c.getArgument().equals(mElementCurrentlyBeingRemoved))))
 					.filter(afccpar ->
 						(hasElement(argRep) &&
 							hasElement(afccpar.getArgument()) &&
@@ -1593,7 +1572,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 
 			/*
 			 * we have to make sure to not add an equality for propagation where an element contains the element
-			 *  currently being removed
+			 *  currently being removed EDIT: no we don't.. --> those might be the propagations for one of the elements
+			 *  we added to conserve information..
 			 */
 			for (final ELEM c : candidates) {
 				assert c.isFunctionApplication();
@@ -1725,13 +1705,6 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 			mElemBeingRemoved = elemBeingRemoved;
 			mOtherRep = otherRep;
 		}
-
-//		public boolean supports(final ELEM elem) {
-//			if (hasSubElement(mElemBeingRemoved, Collections.singleton(elem))) {
-//				return true;
-//			}
-//			return false;
-//		}
 
 		public ELEM getElem() {
 			return mElemBeingRemoved;
