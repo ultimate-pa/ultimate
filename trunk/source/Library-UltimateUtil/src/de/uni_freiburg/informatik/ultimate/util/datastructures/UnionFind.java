@@ -86,6 +86,7 @@ public class UnionFind<E> implements IPartition<E>, Cloneable {
 		assert result.representativesAreMinimal();
 		return result;
 	}
+
 	/**
 	 * Computes a new UnionFind instance whose partitions are the unions of the
 	 * given UnionFind instance's equivalence classes.
@@ -125,6 +126,7 @@ public class UnionFind<E> implements IPartition<E>, Cloneable {
 		assert result.representativesAreMinimal();
 		return result;
 	}
+
 	/**
 	 * Comparator for elements. Our convention is that the representative of an
 	 * equivalence class must always be a minimal element within the class in terms
@@ -168,7 +170,7 @@ public class UnionFind<E> implements IPartition<E>, Cloneable {
 	 * @param unionFind
 	 *            the UnionFind instance to be copied
 	 */
-	public UnionFind(final UnionFind<E> unionFind) {
+	protected UnionFind(final UnionFind<E> unionFind) {
 		for (final Entry<Set<E>, E> entry : unionFind.mRepresentative.entrySet()) {
 			final E representative = entry.getValue();
 			final Set<E> equivalenceClassCopy = new HashSet<>(entry.getKey());

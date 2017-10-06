@@ -67,14 +67,14 @@ public class ThreeValuedEquivalenceRelation<E> {
 	}
 
 	public ThreeValuedEquivalenceRelation(final ThreeValuedEquivalenceRelation<E> tver) {
-		this.mUnionFind = new UnionFind<>(tver.mUnionFind);
+		this.mUnionFind = tver.mUnionFind.clone();
 		this.mDisequalities = new HashRelation<>(tver.mDisequalities);
 		this.mIsInconsistent = tver.mIsInconsistent;
 		assert sanityCheck();
 	}
 
 	public ThreeValuedEquivalenceRelation(final UnionFind<E> newPartition, final HashRelation<E, E> newDisequalities) {
-		mUnionFind = new UnionFind<>(newPartition);
+		mUnionFind = newPartition.clone();
 		mDisequalities = new HashRelation<>(newDisequalities);
 		mIsInconsistent = false;
 		assert sanityCheck();
