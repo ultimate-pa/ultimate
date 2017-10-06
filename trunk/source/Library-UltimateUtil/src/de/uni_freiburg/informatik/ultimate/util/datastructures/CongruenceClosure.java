@@ -1212,11 +1212,23 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 	 * @return
 	 */
 	public CongruenceClosure<ELEM> projectToElements(final Set<ELEM> set) {
-//		final CongruenceClosure<ELEM> result = new CongruenceClosure<>(this);
+		/*
+		 *  we need to augment the set such that all equivalent elements are contained, too.
+		 *  example:
+		 *   we project to {q}
+		 *   current partition: {q, i} {a[i], 0}
+		 *   then the second block implicitly puts a constraint on q, too, thus we need to keep it.
+		 */
+		final HashSet<ELEM> augmentedSet = new HashSet<>();
+		for (final ELEM e : set) {
+			if (hasElement(e)) {
+				augmentedSet.addAll(mElementTVER.getEquivalenceClass(e));
+			}
+		}
 
 		// collect all elements that contain an element from the given set as a sub-node (i.e. child/descendant)
 		final Set<ELEM> elemsWithSubFromSet =
-				getAllElements().stream().filter(e -> hasSubElement(e, set)).collect(Collectors.toSet());
+				getAllElements().stream().filter(e -> hasSubElement(e, augmentedSet)).collect(Collectors.toSet());
 
 		final ThreeValuedEquivalenceRelation<ELEM> newTver =
 				mElementTVER.filterAndKeepOnlyConstraintsThatIntersectWith(elemsWithSubFromSet);

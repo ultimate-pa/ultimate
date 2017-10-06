@@ -282,7 +282,12 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 			if (other.mPartialArrangement.hasElements(source, target)
 					&& other.mPartialArrangement.getEqualityStatus(source, target) == EqualityStatus.EQUAL) {
 				// case "weak equivalence in this, strong equivalence in other"
-				newWeakEquivalenceEdges.put(thisWeqEdge.getKey(), thisWeqEdge.getValue());
+
+				final WeakEquivalenceGraph<ACTION, NODE>.WeakEquivalenceEdgeLabel newEdgeLabel = thisWeqEdge.getValue()
+						.meet(Collections.singletonList(this.mPartialArrangement))
+						.projectToElements(mFactory.getAllWeqNodes());
+
+				newWeakEquivalenceEdges.put(thisWeqEdge.getKey(), newEdgeLabel);
 				assert correspondingWeqEdgeInOther == null;
 				continue;
 			}
@@ -305,7 +310,11 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 
 			if (this.mPartialArrangement.hasElements(source, target)
 					&& this.mPartialArrangement.getEqualityStatus(source, target) == EqualityStatus.EQUAL) {
-				newWeakEquivalenceEdges.put(otherWeqEdge.getKey(), otherWeqEdge.getValue());
+				final WeakEquivalenceGraph<ACTION, NODE>.WeakEquivalenceEdgeLabel newEdgeLabel = otherWeqEdge.getValue()
+						.meet(Collections.singletonList(other.mPartialArrangement))
+						.projectToElements(mFactory.getAllWeqNodes());
+
+				newWeakEquivalenceEdges.put(otherWeqEdge.getKey(), newEdgeLabel);
 				continue;
 			}
 		}
@@ -1209,8 +1218,13 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 					 * <li>  However, if q was the representative and not j, we would get
 					 *  meet = {q, j} -- rep: q,  {a[q] = i}
 					 * <li>  and projectToElements would keep both blocks
+					 *
+					 * EDIT: actually, a fix to projectToElements, removes the necessity for
+					 *   removeSimpleElementWithReplacementPreference at this place (--> we keep the constraint
+					 *     {a[j] = i} by detecting that j = q)
 					 */
-					meet.removeSimpleElementWithReplacementPreference(elem, mFactory.getAllWeqNodes());
+//					meet.removeSimpleElementWithReplacementPreference(elem, mFactory.getAllWeqNodes());
+					meet.removeSimpleElement(elem);
 //					meet.transformElementsAndFunctions(node -> node.replaceSubNode(replacer, replacee));
 
 					final CongruenceClosure<NODE> newPa = meet.projectToElements(mFactory.getAllWeqNodes());
