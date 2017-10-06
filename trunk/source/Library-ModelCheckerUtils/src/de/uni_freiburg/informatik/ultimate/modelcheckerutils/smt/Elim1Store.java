@@ -191,13 +191,7 @@ public class Elim1Store {
 				}
 			}
 		}
-		
-		
-		final List<ApplicationTerm> stores = extractStores(eliminatee, inputTerm);
-		if (stores.size() > 1) {
-			throw new AssertionError("not yet supported: multiple stores " + inputTerm);
-		}
-		//		checkForUnsupportedSelfUpdate(eliminatee, inputTerm, mQuantifier);
+
 
 		final Set<TermVariable> newAuxVars = new LinkedHashSet<>();
 		final Term preprocessedInput;
@@ -227,6 +221,14 @@ public class Elim1Store {
 		final List<ApplicationTerm> selectTerms = extractArrayReads(eliminatee, preprocessedInput);
 		final Set<Term> selectIndices = new HashSet<>();
 
+		
+		
+		
+		final List<ApplicationTerm> stores = extractStores(eliminatee, inputTerm);
+		if (stores.size() > 1) {
+			throw new AssertionError("not yet supported: multiple stores " + inputTerm);
+		}
+		
 		final Term storeTerm;
 		final Term storeIndex;
 		final Term storeValue;
