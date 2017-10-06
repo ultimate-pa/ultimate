@@ -769,7 +769,7 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 
 
 		if (mElementCurrentlyBeingRemoved == null) {
-			mElementCurrentlyBeingRemoved = new RemovalInfo(elem, getOtherEquivalenceClassMember(elem));
+			mElementCurrentlyBeingRemoved = new RemovalInfo(elem, getOtherEquivalenceClassMember(elem, null));
 		} else {
 			// this may happen if elem is a dependent element, check that through the assert..
 			assert mNodeToDependents.entrySet().stream()
@@ -1138,6 +1138,10 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 		if (isInconsistent()) {
 			return "False";
 		}
+		if (getAllElements().size() < 20) {
+			return toLogString();
+		}
+
 		final StringBuilder sb = new StringBuilder();
 		sb.append("Partial arrangement:\n");
 		sb.append(super.toString());

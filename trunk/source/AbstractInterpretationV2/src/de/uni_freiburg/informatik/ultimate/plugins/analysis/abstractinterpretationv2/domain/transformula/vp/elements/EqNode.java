@@ -61,7 +61,7 @@ public abstract class EqNode implements IEqNodeIdentifier<EqNode>, ICongruenceCl
 	private final MultiDimensionalSort mMdSort;
 
 	public EqNode(final Term term, final EqNodeAndFunctionFactory eqNodeFactory) {
-		assert mTerm != null;
+		assert term != null;
 		mTerm = term;
 		mEqNodeFactory = eqNodeFactory;
 

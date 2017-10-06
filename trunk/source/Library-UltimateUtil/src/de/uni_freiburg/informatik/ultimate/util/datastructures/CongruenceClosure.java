@@ -9,6 +9,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -378,8 +379,33 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 	 * @return
 	 */
 	public boolean removeSimpleElement(final ELEM elem) {
+		return removeSimpleElementWithReplacementPreference(elem, null);
+	}
+
+	/**
+	 * Remove a simple element, i.e., an element that is not a function application.
+	 *
+	 * During removal, CongruenceClosure attempts to add nodes in order to retain constraints that follow from the
+	 * constraint but were not explicit before.
+	 * The second parameter allows to give a set of preferred nodes to be chosen for this purpose if possible.
+	 * Example:
+	 * <li> state before this method call: {i, j, q} {a[i], x}
+	 * <li> call this method with elem = i
+	 * <li> we will have to remove a[i], too, thus the second partition block would be removed, thus without adding
+	 *   nodes we would arrive at {j, q}
+	 * <li> if we introduce a[j] (or a[q]) before removing a[i], we still have a[j] = x (a[q] = x), the result would be
+	 *   {j, q}{a[j]=x}
+	 * <li> giving q as a preferred replacement would enforce that we choose a[q] for this purpose, the result would be
+	 *   {j, q}{a[q]=x}
+	 *
+	 * @param elem
+	 * @param preferredReplacements
+	 * @return
+	 */
+	public boolean removeSimpleElementWithReplacementPreference(final ELEM elem, final Set<ELEM> preferredReplacements) {
+		// TODO Auto-generated method stub
 		if (elem.isFunctionApplication()) {
-			throw new IllegalArgumentException();
+				throw new IllegalArgumentException();
 		}
 		if (isInconsistent()) {
 			throw new IllegalStateException();
@@ -391,10 +417,11 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		// TODO: seems ugly, but WeqCongruenceClosure need this field, too..
 		if (this.getClass().equals(CongruenceClosure.class)) {
 			assert mElementCurrentlyBeingRemoved == null;
-			mElementCurrentlyBeingRemoved = new RemovalInfo(elem, getOtherEquivalenceClassMember(elem));
+			mElementCurrentlyBeingRemoved = new RemovalInfo(elem,
+					getOtherEquivalenceClassMember(elem, preferredReplacements));
 		}
 
-		final boolean result = removeAnyElement(elem, null);
+		final boolean result = removeAnyElement(elem, null, preferredReplacements);
 
 		if (this.getClass().equals(CongruenceClosure.class)) {
 			mElementCurrentlyBeingRemoved = null;
@@ -417,11 +444,11 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		// TODO: seems ugly
 		if (this.getClass().equals(CongruenceClosure.class)) {
 			assert mElementCurrentlyBeingRemoved == null;
-			mElementCurrentlyBeingRemoved = new RemovalInfo(elem, getOtherEquivalenceClassMember(elem));
+			mElementCurrentlyBeingRemoved = new RemovalInfo(elem, getOtherEquivalenceClassMember(elem, null));
 		}
 
 		final HashMap<ELEM, ELEM> removedElemToNewRep = new HashMap<>();
-		removeAnyElement(elem, removedElemToNewRep);
+		removeAnyElement(elem, removedElemToNewRep, null);
 
 		if (this.getClass().equals(CongruenceClosure.class)) {
 			mElementCurrentlyBeingRemoved = null;
@@ -434,14 +461,16 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 	 * Helper (the division into removeSimple and removeFuncApp is used for subclasses)
 	 *
 	 * @param elem
+	 * @param allWeqNodes
 	 * @return
 	 */
-	private boolean removeAnyElement(final ELEM elem, final Map<ELEM, ELEM> removedElemToNewRep) {
+	private boolean removeAnyElement(final ELEM elem, final Map<ELEM, ELEM> removedElemToNewRep,
+			final Set<ELEM> preferredReplacements) {
 		if (!hasElement(elem)) {
 			return false;
 		}
 
-		addNodesEquivalentToNodesWithRemovedElement(elem);
+		addNodesEquivalentToNodesWithRemovedElement(elem, preferredReplacements);
 //		assert sanityCheckOnlyCc();
 
 		final Collection<ELEM> oldAfParents = new ArrayList<>(mFaAuxData.getAfParents(elem));
@@ -457,10 +486,10 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 //		assert sanityCheckOnlyCc();
 
 		for (final ELEM parent : oldAfParents) {
-			removeAnyElement(parent, removedElemToNewRep);
+			removeAnyElement(parent, removedElemToNewRep, preferredReplacements);
 		}
 		for (final ELEM parent : oldArgParents) {
-			removeAnyElement(parent, removedElemToNewRep);
+			removeAnyElement(parent, removedElemToNewRep, preferredReplacements);
 		}
 //		removeParents(oldAfParents, oldArgParents);
 
@@ -591,9 +620,10 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 	 * (this may introduce fresh nodes!)
 	 *
 	 * @param elem the element we are about to remove
+	 * @param preferredReplacements
 	 */
-	protected void addNodesEquivalentToNodesWithRemovedElement(final ELEM elem) {
-		final ELEM otherRep = getOtherEquivalenceClassMember(elem);
+	protected void addNodesEquivalentToNodesWithRemovedElement(final ELEM elem, final Set<ELEM> preferredReplacements) {
+		final ELEM otherRep = getOtherEquivalenceClassMember(elem, preferredReplacements);
 		if (otherRep != null) {
 			for (final ELEM parent : new ArrayList<>(mFaAuxData.getAfParents(elem))) {
 				assert parent.getAppliedFunction() == elem;
@@ -612,16 +642,27 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 	 * If elem is alone in its equivalence class, return null.
 	 * Otherwise return any element from elem's equivalence class that is not elem.
 	 *
+	 * The user may specify a preference, i.e., if some element from the given set can be picked, it is picked.
+	 *
 	 * @param elem
+	 * @param preferredReplacements
 	 * @return
 	 */
-	protected ELEM getOtherEquivalenceClassMember(final ELEM elem) {
+	protected ELEM getOtherEquivalenceClassMember(final ELEM elem, final Set<ELEM> preferredReplacements) {
 		assert hasElement(elem);
 		final Set<ELEM> eqc = mElementTVER.getEquivalenceClass(elem);
 		if (eqc.size() == 1) {
 			return null;
 		}
-		return eqc.stream().filter(e -> e != elem).findAny().get();
+		if (preferredReplacements != null) {
+			final Optional<ELEM> preferred = eqc.stream()
+					.filter(e ->  !e.equals(elem) && preferredReplacements.contains(e)).findFirst();
+			if (preferred.isPresent()) {
+				return preferred.get();
+			}
+		}
+		return eqc.stream().filter(e -> !e.equals(elem)).findFirst().get();
+//		return eqc.stream().filter(e -> e != elem).findAny().get();
 	}
 
 	protected boolean elementIsFullyRemoved(final ELEM elem) {
@@ -1026,6 +1067,9 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		}
 		if (isInconsistent()) {
 			return "False";
+		}
+		if (getAllElements().size() < 20) {
+			return toLogString();
 		}
 
 		final StringBuilder sb = new StringBuilder();

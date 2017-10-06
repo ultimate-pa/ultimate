@@ -1193,14 +1193,26 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 						mLabel.add(new CongruenceClosure<>());
 						return;
 					}
-	//				remove.accept(meet);
 
-	//				// TODO: this is weird, is that not precisely the difference between mPartialArrangement and groundP..
-	//				if (newRep != null) {
-	//					meet.reportEquality(elem, newRep);
-	//				}
+					/*
+					 * At this point (in removeSimpleElement) we need to control what
+					 *   CongruenceClosure.getOtherEquivalenceClassMember
+					 *  returns -- in particular if there is a weqVar in the equivalence class, it must choose it
+					 *   otherwise we may loos precision as in the following example:
+					 *  <p>
+					 * <li>  elem = i
+					 *  meet = {q, i, j} -- rep: j,  {a[i] = i}
+					 * <li>  then meet.remove(i) will give us
+					 *  meet = {q, j} -- rep: j,  {a[j] = i}
+					 * <li>  and the second partition block will be removed by meet.projectToElements
+					 *  meet = {q, j} -- rep: j
+					 * <li>  However, if q was the representative and not j, we would get
+					 *  meet = {q, j} -- rep: q,  {a[q] = i}
+					 * <li>  and projectToElements would keep both blocks
+					 */
+					meet.removeSimpleElementWithReplacementPreference(elem, mFactory.getAllWeqNodes());
+//					meet.transformElementsAndFunctions(node -> node.replaceSubNode(replacer, replacee));
 
-					meet.removeSimpleElement(elem);
 					final CongruenceClosure<NODE> newPa = meet.projectToElements(mFactory.getAllWeqNodes());
 					if (newPa.isTautological()) {
 						// we have one "true" disjunct --> the whole disjunction is tautological
