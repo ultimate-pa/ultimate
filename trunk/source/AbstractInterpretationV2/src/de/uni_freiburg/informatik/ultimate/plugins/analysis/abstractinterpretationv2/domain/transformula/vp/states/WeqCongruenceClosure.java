@@ -169,6 +169,8 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 
 	@Override
 	protected boolean addElementRec(final NODE elem) {
+		assert !mFactory.getAllWeqNodes().contains(elem);
+
 		final boolean elemIsNew = super.addElementRec(elem);
 		if (!elemIsNew) {
 			return false;
@@ -788,7 +790,11 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 //		final NODE newRep = updateElementTverAndAuxDataOnRemoveElement(elem);
 		final Map<NODE, NODE> removedElemsToNewReps = super.removeSimpleElementTrackNewReps(elem);
 
-		mWeakEquivalenceGraph.projectFunction(elem, copy, removedElemsToNewReps);
+		final Set<NODE> nodesAddedByWeqgProject =
+				mWeakEquivalenceGraph.projectFunction(elem, copy, removedElemsToNewReps);
+		for (final NODE n : nodesAddedByWeqgProject) {
+			addElementRec(n);
+		}
 
 //		removeParents(oldAfParents, oldArgParents);
 

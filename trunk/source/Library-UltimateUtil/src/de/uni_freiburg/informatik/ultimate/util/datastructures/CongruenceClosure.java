@@ -598,7 +598,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 	 * @return
 	 */
 	protected boolean supports(final ELEM elem, final ELEM elem2) {
-		return hasSubElement(elem2, Collections.singleton(elem));
+		return dependsOnAny(elem2, Collections.singleton(elem));
 	}
 
 	protected ELEM updateElementTverAndAuxDataOnRemoveElement(final ELEM elem) {
@@ -1228,7 +1228,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 
 		// collect all elements that contain an element from the given set as a sub-node (i.e. child/descendant)
 		final Set<ELEM> elemsWithSubFromSet =
-				getAllElements().stream().filter(e -> hasSubElement(e, augmentedSet)).collect(Collectors.toSet());
+				getAllElements().stream().filter(e -> dependsOnAny(e, augmentedSet)).collect(Collectors.toSet());
 
 		final ThreeValuedEquivalenceRelation<ELEM> newTver =
 				mElementTVER.filterAndKeepOnlyConstraintsThatIntersectWith(elemsWithSubFromSet);
@@ -1247,13 +1247,13 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 	 * @param sub
 	 * @return
 	 */
-	public static <ELEM extends ICongruenceClosureElement<ELEM>> boolean hasSubElement(final ELEM elem,
+	public static <ELEM extends ICongruenceClosureElement<ELEM>> boolean dependsOnAny(final ELEM elem,
 			final Set<ELEM> sub) {
 		if (sub.contains(elem)) {
 			return true;
 		}
 		if (elem.isFunctionApplication()) {
-			return hasSubElement(elem.getAppliedFunction(), sub) || hasSubElement(elem.getArgument(), sub);
+			return dependsOnAny(elem.getAppliedFunction(), sub) || dependsOnAny(elem.getArgument(), sub);
 		}
 		return false;
 	}
@@ -1749,6 +1749,10 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 				mCcChildren.put(elemTransformer.apply(en.getKey()), en.getValue());
 			}
 		}
+	}
+
+	public RemovalInfo getElementCurrentlyBeingRemoved() {
+		return mElementCurrentlyBeingRemoved;
 	}
 
 	public class RemovalInfo {
