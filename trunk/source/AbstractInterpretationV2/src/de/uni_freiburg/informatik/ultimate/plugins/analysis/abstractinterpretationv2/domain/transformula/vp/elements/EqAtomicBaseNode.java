@@ -85,5 +85,12 @@ public class EqAtomicBaseNode extends EqNode {
 		throw new IllegalStateException("check for isFunctionApplication() first");
 	}
 
-
+	@Override
+	public EqNode replaceSubNode(final EqNode replacer, final EqNode replacee) {
+		if (this.equals(replacee)) {
+			return replacer;
+		} else {
+			return this;
+		}
+	}
 }

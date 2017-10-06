@@ -67,6 +67,8 @@ public interface IEqNodeIdentifier<NODE extends IEqNodeIdentifier<NODE>> extends
 
 	NODE renameVariables(Map<Term, Term> substitutionMapping);
 
+	NODE replaceSubNode(NODE replacer, NODE replacee);
+
 	Term getTerm();
 
 	/*

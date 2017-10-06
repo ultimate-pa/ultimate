@@ -99,5 +99,14 @@ public class EqFunctionApplicationNode extends EqNode {
 		return mEqNodeFactory.getOrConstructFuncAppElement(mFunction, replacer);
 	}
 
+	@Override
+	public EqNode replaceSubNode(final EqNode replacer, final EqNode replacee) {
+		if (this.equals(replacee)) {
+			return replacer;
+		} else {
+			return mEqNodeFactory.getOrConstructFuncAppElement(mFunction.replaceSubNode(replacer, replacee),
+					mArg.replaceSubNode(replacer, replacee));
+		}
+	}
 
 }

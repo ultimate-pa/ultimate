@@ -87,8 +87,20 @@ public class EqNonAtomicBaseNode extends EqNode {
 		return mSupportingNodes;
 	}
 
+	@Override
+	public EqNode replaceSubNode(final EqNode replacer, final EqNode replacee) {
+		if (this.equals(replacee)) {
+			return replacer;
+		} else if (getSupportingNodes().contains(replacee)) {
+			throw new UnsupportedOperationException("TODO: support this");
+		} else {
+			return this;
+		}
+	}
+
 //	@Override
 //	public Collection<EqFunction> getSupportingFunctions() {
 //		return mSupportingFunctions;
 //	}
+
 }
