@@ -11,7 +11,6 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -27,7 +26,6 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.services.ToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.SymmetricHashRelation;
 
 /**
  * Operation that minimizes non-deterministic finite bottom-up tree automata
@@ -118,38 +116,6 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 	}
 
 	/**
-	 * Constructs and returns a partition of elements that corresponds to the given
-	 * symmetric relation. That means if the relation holds a pair <tt>(e1, e2)<tt>
-	 * than elements <tt>e1<tt> and <tt>e2<tt> will be in the same block of the
-	 * partition.
-	 * 
-	 * @param <E>
-	 *            The class of the elements
-	 * @param relation
-	 *            The relation to construct the partition of
-	 * @param allElements
-	 *            A collection containing all elements to consider
-	 * @return The partition of the elements corresponding to the given symmetric
-	 *         relation
-	 */
-	private static <E> UnionFind<E> constructPartitionFromRelation(final SymmetricHashRelation<E> relation,
-			final Collection<E> allElements) {
-		final UnionFind<E> partition = new UnionFind<>();
-
-		// Create the initial partition where every element is in its own block
-		for (final E element : allElements) {
-			partition.makeEquivalenceClass(element);
-		}
-
-		// Iterate the relation and union blocks corresponding to the pairs
-		for (final Entry<E, E> pair : relation.entrySet()) {
-			partition.union(pair.getKey(), pair.getValue());
-		}
-
-		return partition;
-	}
-
-	/**
 	 * Data-structure which maps compound progress blocks to a set of
 	 * representatives of the blocks it contains. A compound progress block belongs
 	 * to the <tt>progress relation</tt> and consists of several blocks of the
@@ -181,11 +147,6 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 	 */
 	private final UnionFind<STATE> mProgressPartition;
 	/**
-	 * The relation of the current iteration which gets refined until it represents
-	 * the final bisimulation equivalence relation.
-	 */
-	private final SymmetricHashRelation<STATE> mRelation;
-	/**
 	 * The resulting tree automaton after minimizing the operand.
 	 */
 	private ITreeAutomatonBU<LETTER, STATE> mResult;
@@ -212,7 +173,6 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 		this.mOperand = operand;
 
 		this.mResult = null;
-		this.mRelation = new SymmetricHashRelation<>();
 		this.mCompoundBlocks = new LinkedHashMap<>();
 		this.mProgressPartition = new UnionFind<>();
 		this.mNoFinalStates = false;
@@ -440,44 +400,9 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 		if (this.mLogger.isDebugEnabled()) {
 			this.mLogger.debug("Initial partition is: " + this.mPartition);
 		}
-		final LinkedHashSet<STATE> representativesOfCompoundBlocks = new LinkedHashSet<>();
-
 		// Create the corresponding relation
 		if (this.mLogger.isDebugEnabled()) {
 			this.mLogger.debug("Creating initial relation");
-		}
-		for (final STATE representative : this.mPartition.getAllRepresentatives()) {
-			// Initially all blocks belong to the only compound progress block
-			// which consists of all states
-			representativesOfCompoundBlocks.add(representative);
-
-			for (final STATE otherBlockMember : this.mPartition.getEquivalenceClassMembers(representative)) {
-				// Skip if the other member is the representative
-				if (otherBlockMember.equals(representative)) {
-					continue;
-				}
-
-				// Add the pair to the symmetric relation
-				this.mRelation.addPair(representative, otherBlockMember);
-				if (this.mLogger.isDebugEnabled()) {
-					this.mLogger.debug("Pair added: (" + representative + ", " + otherBlockMember + ")");
-				}
-			}
-
-			// If operation was canceled, for example from the
-			// Ultimate framework
-			if (this.mServices.getProgressAwareTimer() != null && isCancellationRequested()) {
-				this.mLogger.debug("Stopped at creating initial partition/relation creation");
-				throw new AutomataOperationCanceledException(this.getClass());
-			}
-		}
-		// Build the transitive closure
-		if (this.mLogger.isDebugEnabled()) {
-			this.mLogger.debug("Completing relation by making the transitive closure");
-		}
-		this.mRelation.makeTransitive();
-		if (this.mLogger.isDebugEnabled()) {
-			this.mLogger.debug("Initial relation is: " + this.mRelation);
 		}
 
 		// Build the progress partition which initially holds all states in one block
@@ -492,6 +417,12 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 		}
 
 		// Register the compound block
+		final LinkedHashSet<STATE> representativesOfCompoundBlocks = new LinkedHashSet<>();
+		for (final STATE representative : this.mPartition.getAllRepresentatives()) {
+			// Initially all blocks belong to the only compound progress block
+			// which consists of all states
+			representativesOfCompoundBlocks.add(representative);
+		}
 		this.mCompoundBlocks.put(representativeOfProgressBlock, representativesOfCompoundBlocks);
 		if (this.mLogger.isDebugEnabled()) {
 			this.mLogger.debug("Initial compound blocks are: " + this.mCompoundBlocks);
@@ -616,81 +547,100 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 			this.mLogger.debug("Starting to refine based on contexts");
 		}
 
-		// Iterate all contexts and refine the relation. In the paper this method is
+		// Iterate all contexts and refine the partition. In the paper this method is
 		// often referred to as 'split'
 		if (this.mLogger.isDebugEnabled()) {
-			this.mLogger.debug("Relation before refinement is: " + this.mRelation);
+			this.mLogger.debug("Starting to refine partition");
+			this.mLogger.debug("Partition before update is: " + this.mPartition);
 		}
-		boolean madeChanges = false;
+		UnionFind<STATE> refinedPartition = null;
 		for (final RuleContext<LETTER, STATE> context : contexts) {
 			if (this.mLogger.isDebugEnabled()) {
 				this.mLogger.debug("Looking at context: " + context);
 			}
 			// Iterate each position
 			for (int i = 0; i < context.getSourceSize(); i++) {
-				final Set<STATE> sourceStatesAtPosition = context.getSourceStatesAtPosition(i);
-				final STATE representative = context.getSourceRepresentativeAtPosition(i);
-				final Set<STATE> block = this.mPartition.getContainingSet(representative);
-
-				// Build the set representing states of that block which are not source states
-				// at this position, i.e. the difference between the whole block and the source
-				// states
-				final Set<STATE> statesNotAtPosition = new HashSet<>(block.size() - sourceStatesAtPosition.size());
-				for (final STATE stateOfBlock : block) {
-					if (!sourceStatesAtPosition.contains(stateOfBlock)) {
-						statesNotAtPosition.add(stateOfBlock);
-					}
-				}
-
-				if (this.mLogger.isDebugEnabled()) {
-					this.mLogger.debug("At position " + i + " statesAt=" + sourceStatesAtPosition + ", statesNotAt="
-							+ statesNotAtPosition);
-				}
-
-				// Remove all pairs of the current relation that can not hold under the current
-				// view. For example if there are states 1 and 2 at the current position in the
-				// context, but the block consists of (1, 2, 3), then 3 should not stay in the
-				// same block than 1 and 2 since the symmetric relation pairs (1, 3) and (2, 3)
-				// can not hold.
-				for (final STATE sourceStateAtPosition : sourceStatesAtPosition) {
-					for (final STATE stateNotAtPosition : statesNotAtPosition) {
-						this.mRelation.removePair(sourceStateAtPosition, stateNotAtPosition);
-						if (!madeChanges) {
-							madeChanges = true;
-						}
-
-						if (this.mLogger.isDebugEnabled()) {
-							this.mLogger
-									.debug("Removed pair: (" + sourceStateAtPosition + ", " + stateNotAtPosition + ")");
-						}
-					}
-				}
-
 				// If operation was canceled, for example from the
 				// Ultimate framework
 				if (this.mServices.getProgressAwareTimer() != null && isCancellationRequested()) {
 					this.mLogger.debug("Stopped at refining based on contexts/refining relation");
 					throw new AutomataOperationCanceledException(this.getClass());
 				}
+
+				final Set<STATE> sourceStatesAtPosition = context.getSourceStatesAtPosition(i);
+				final STATE representative = context.getSourceRepresentativeAtPosition(i);
+				final Set<STATE> block = this.mPartition.getContainingSet(representative);
+
+				if (this.mLogger.isDebugEnabled()) {
+					final Set<STATE> statesNotAtPosition = new HashSet<>(block.size() - sourceStatesAtPosition.size());
+					for (final STATE stateOfBlock : block) {
+						if (!sourceStatesAtPosition.contains(stateOfBlock)) {
+							statesNotAtPosition.add(stateOfBlock);
+						}
+					}
+					this.mLogger.debug("At position " + i + " statesAt=" + sourceStatesAtPosition + ", statesNotAt="
+							+ statesNotAtPosition);
+				}
+
+				// Whether this position yields changes
+				if (sourceStatesAtPosition.size() == block.size()) {
+					if (this.mLogger.isDebugEnabled()) {
+						this.mLogger.debug("Source position does not yield changes");
+					}
+					continue;
+				}
+
+				if (refinedPartition == null) {
+					// Create a clone to iteratively refine
+					refinedPartition = this.mPartition.clone();
+				}
+
+				// Find all refined equivalence classes of the current refinement which belong
+				// to the corresponding block
+				final Set<STATE> refinedBlockRepresentatives = new HashSet<>();
+				for (final STATE state : block) {
+					final STATE refinedRepresentative = refinedPartition.find(state);
+					refinedBlockRepresentatives.add(refinedRepresentative);
+				}
+
+				// Compute the intersection of the current partition with the partition
+				// represented by the states at and the states not at this source position.
+				for (final STATE refinedRepresentative : refinedBlockRepresentatives) {
+					final Set<STATE> refinedBlock = refinedPartition.getContainingSet(refinedRepresentative);
+
+					final HashSet<STATE> refinedStatesAtSourcePosition = new HashSet<>();
+					final HashSet<STATE> refinedStatesNotAtSourcePosition = new HashSet<>();
+					for (final STATE stateOfRefinedBlock : refinedBlock) {
+						if (sourceStatesAtPosition.contains(stateOfRefinedBlock)) {
+							refinedStatesAtSourcePosition.add(stateOfRefinedBlock);
+						} else {
+							refinedStatesNotAtSourcePosition.add(stateOfRefinedBlock);
+						}
+					}
+
+					// Whether the block is to be split
+					if (refinedStatesAtSourcePosition.isEmpty() || refinedStatesNotAtSourcePosition.isEmpty()) {
+						continue;
+					}
+
+					// Split the block by removing and re-adding
+					refinedPartition.removeAll(refinedBlock);
+					refinedPartition.addEquivalenceClass(refinedStatesAtSourcePosition);
+					refinedPartition.addEquivalenceClass(refinedStatesNotAtSourcePosition);
+
+					if (this.mLogger.isDebugEnabled()) {
+						this.mLogger.debug("Split block into: " + refinedStatesAtSourcePosition + " and "
+								+ refinedStatesNotAtSourcePosition);
+					}
+				}
 			}
 		}
-		if (this.mLogger.isDebugEnabled()) {
-			this.mLogger.debug("Relation after refinement is: " + this.mRelation);
-		}
-
-		// Update the partition such that it corresponds to the refined relation again.
-		// If nothing has changed, nothing has to be refined
-		if (this.mLogger.isDebugEnabled()) {
-			this.mLogger.debug("Starting to construct partition from relation");
-			this.mLogger.debug("Partition before update is: " + this.mPartition);
-		}
-		if (madeChanges) {
-			// TODO This step is extremely expensive. Find a way to update the partition at
-			// iteration time.
-			this.mPartition = constructPartitionFromRelation(this.mRelation, this.mOperand.getStates());
+		// If there where changes update the partition by using the refined partition
+		if (refinedPartition != null) {
+			this.mPartition = refinedPartition;
 		} else {
 			if (this.mLogger.isDebugEnabled()) {
-				this.mLogger.debug("Contexts did not yield any changes, skipping update of partition");
+				this.mLogger.debug("Contexts did not yield any changes, partition was not refined");
 			}
 		}
 		if (this.mLogger.isDebugEnabled()) {
@@ -708,7 +658,6 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 		// current round off. Note that this step also needs to be done if no changes
 		// where made, else we would not progress as we need to split the current block
 		// from the progress partition in each round.
-		// TODO This step is too expensive. Find a way to update it at iteration time.
 		updateCompoundBlocks(destinationBlock);
 	}
 
@@ -751,7 +700,9 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 			// Find the representative of the block of final states as in the initial round
 			// we always start with the set of final states
 			for (final STATE representative : progressBlock) {
-				// NOTE Could be done slightly faster by memorizing it before
+				// Could be done slightly faster by memorizing it before. However there are only
+				// two representatives in the initial round thus it has no impact on
+				// performance.
 				if (this.mOperand.isFinalState(representative)) {
 					return representative;
 				}
@@ -804,9 +755,7 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 		if (this.mLogger.isDebugEnabled()) {
 			this.mLogger.debug("Progress partition before update is: " + this.mProgressPartition);
 		}
-		for (final STATE stateToSplitOff : blockToSplitOff) {
-			this.mProgressPartition.remove(stateToSplitOff);
-		}
+		this.mProgressPartition.removeAll(blockToSplitOff);
 		this.mProgressPartition.addEquivalenceClass(blockToSplitOff);
 		if (this.mLogger.isDebugEnabled()) {
 			this.mLogger.debug("Progress partition after update is: " + this.mProgressPartition);

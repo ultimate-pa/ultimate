@@ -44,33 +44,106 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 
 /**
  * Data structure that can be used to partition a set of elements {@code <E>}.
- * http://en.wikipedia.org/wiki/Disjoint-set_data_structure Each equivalence class has a unique representative. This
- * implementation uses HashMaps - to store for each element its equivalence class and - to store for each equivalence
- * class the representative
+ * http://en.wikipedia.org/wiki/Disjoint-set_data_structure Each equivalence
+ * class has a unique representative. This implementation uses HashMaps - to
+ * store for each element its equivalence class and - to store for each
+ * equivalence class the representative
  *
  * @author Matthias Heizmann
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  * @param <E>
  *            element type
  */
-public class UnionFind<E> implements IPartition<E> {
+public class UnionFind<E> implements IPartition<E>, Cloneable {
+	/**
+	 * Computes a new UnionFind instance whose partitions are the intersections of
+	 * the given UnionFind instance's equivalence classes. Only non-empty
+	 * intersections are added to the new equivalence relation.
+	 *
+	 * @param <E>
+	 *            element type
+	 * @param uf1
+	 *            instance to be intersected with uf2
+	 * @param uf2
+	 *            instance to be intersected with uf1
+	 * @return UnionFind with intersected equivalence classes
+	 */
+	public static <E> UnionFind<E> intersectPartitionBlocks(final UnionFind<E> uf1, final UnionFind<E> uf2) {
+		assert uf1.mElementComparator == uf2.mElementComparator;
+
+		final UnionFind<E> result = new UnionFind<>(uf1.mElementComparator);
+		for (final Set<E> uf1Block : uf1.getAllEquivalenceClasses()) {
+			final HashRelation<E, E> uf2RepToSubblock = new HashRelation<>();
+
+			for (final E uf1El : uf1Block) {
+				final E uf2Rep = uf2.find(uf1El);
+				uf2RepToSubblock.addPair(uf2Rep, uf1El);
+			}
+
+			uf2RepToSubblock.getDomain().stream()
+					.forEach(u2rep -> result.addEquivalenceClass(uf2RepToSubblock.getImage(u2rep)));
+		}
+		assert result.representativesAreMinimal();
+		return result;
+	}
+	/**
+	 * Computes a new UnionFind instance whose partitions are the unions of the
+	 * given UnionFind instance's equivalence classes.
+	 *
+	 * @param <E>
+	 *            element type
+	 * @param uf1
+	 *            instance to be union'ed with uf2
+	 * @param uf2
+	 *            instance to be union'ed with uf1
+	 * @return UnionFind with union'ed equivalence classes
+	 */
+	public static <E> UnionFind<E> unionPartitionBlocks(final UnionFind<E> uf1, final UnionFind<E> uf2) {
+		assert uf1.mElementComparator == uf2.mElementComparator;
+
+		final UnionFind<E> result = new UnionFind<>(uf1.mElementComparator);
+		final HashSet<E> todo = new HashSet<>(uf1.getAllElements());
+		while (!todo.isEmpty()) {
+			final E tver1El = todo.iterator().next();
+
+			final E uf1Rep = uf1.find(tver1El);
+			final E uf2Rep = uf2.find(tver1El);
+
+			final E newBlockRep;
+			if (uf1.mElementComparator == null) {
+				// it does not matter which representative we choose
+				newBlockRep = uf1Rep;
+			} else {
+				newBlockRep = uf1.mElementComparator.compare(uf1Rep, uf2Rep) < 0 ? uf1Rep : uf2Rep;
+			}
+
+			final Set<E> newBlock = DataStructureUtils.union(uf1.getEquivalenceClassMembers(tver1El),
+					uf2.getEquivalenceClassMembers(tver1El));
+			result.addEquivalenceClass(newBlock, newBlockRep);
+			todo.removeAll(newBlock);
+		}
+		assert result.representativesAreMinimal();
+		return result;
+	}
+	/**
+	 * Comparator for elements. Our convention is that the representative of an
+	 * equivalence class must always be a minimal element within the class in terms
+	 * of this comparator.
+	 * <p>
+	 * Use of the comparator is optional, if no element comparator is present, this
+	 * class may choose any representative for each equivalence class.
+	 */
+	private final Comparator<E> mElementComparator;
+
 	/**
 	 * Maps an element to its equivalence class.
 	 */
 	private final Map<E, Set<E>> mEquivalenceClass = new HashMap<>();
+
 	/**
 	 * Maps an equivalence class to its representative.
 	 */
 	private final Map<Set<E>, E> mRepresentative = new HashMap<>();
-	/**
-	 * Comparator for elements. Our convention is that the representative of an
-	 * equivalence class must always be a minimal element within the class in
-	 * terms of this comparator.
-	 * <p>
-	 * Use of the comparator is optional, if no element comparator is present,
-	 * this class may choose any representative for each equivalence class.
-	 */
-	private final Comparator<E> mElementComparator;
 
 	/**
 	 * Constructor for new (empty) data structure.
@@ -79,22 +152,21 @@ public class UnionFind<E> implements IPartition<E> {
 		mElementComparator = null;
 	}
 
-
 	/**
-	 * Constructor for an empty union find data structure.
-	 * Additionally takes a function that is used as a comparator between
-	 * elements. (See the field's documentation for more details.)
+	 * Constructor for an empty union find data structure. Additionally takes a
+	 * function that is used as a comparator between elements. (See the field's
+	 * documentation for more details.)
 	 */
 	public UnionFind(final Comparator<E> elementComparator) {
 		assert elementComparator != null : "use other constructor in this case!";
 		mElementComparator = elementComparator;
 	}
 
-
 	/**
 	 * Copy constructor.
 	 *
-	 * @param unionFind the UnionFind instance to be copied
+	 * @param unionFind
+	 *            the UnionFind instance to be copied
 	 */
 	public UnionFind(final UnionFind<E> unionFind) {
 		for (final Entry<Set<E>, E> entry : unionFind.mRepresentative.entrySet()) {
@@ -111,9 +183,68 @@ public class UnionFind<E> implements IPartition<E> {
 	}
 
 	/**
-	 * @param elem element
-	 * @return the representative of the equivalence class of element elem. null if the given element is not in any
-	 * 				equivalence class
+	 * Add a whole equivalence class at once to this UnionFind.
+	 *
+	 * Assumes none of the given elements is part of an existing equivalence class
+	 * in this UnionFind instance.
+	 * 
+	 * @param newBlock
+	 */
+	public void addEquivalenceClass(final Set<E> newBlock) {
+		if (mElementComparator == null) {
+			addEquivalenceClass(newBlock, null);
+		} else {
+			addEquivalenceClass(newBlock, findMinimalElement(newBlock));
+		}
+		assert representativesAreMinimal();
+	}
+
+	/**
+	 * A variant of {@link #addEquivalenceClass(Set)} where the caller specifies the
+	 * representative that the newly added equivalence class must have.
+	 *
+	 * @param newBlock
+	 *            new equivalence class that is to be added to the equivalence
+	 *            relation
+	 * @param newBlockRep
+	 *            the element that should be the representative of newBlock in this
+	 *            UnionFind, null for don't care
+	 */
+	public void addEquivalenceClass(final Set<E> newBlock, final E newBlockRep) {
+		assert DataStructureUtils.intersection(newBlock, getAllElements()).isEmpty();
+		assert !newBlock.isEmpty();
+		assert newBlockRep == null || newBlock.contains(newBlockRep);
+		assert mElementComparator == null || newBlockRep != null : "if we don't give a representative for the new block"
+				+ "here, this method might violate the invariant that the representative is always the minimal "
+				+ "element.";
+
+		final Set<E> block = new HashSet<>(newBlock);
+
+		for (final E elem : block) {
+			mEquivalenceClass.put(elem, block);
+		}
+
+		final E rep = newBlockRep == null ? block.iterator().next() : newBlockRep;
+		assert mEquivalenceClass.get(rep) != null;
+		mRepresentative.put(block, rep);
+		assert representativesAreMinimal();
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see java.lang.Object#clone()
+	 */
+	@Override
+	public UnionFind<E> clone() {
+		return new UnionFind<>(this);
+	}
+
+	/**
+	 * @param elem
+	 *            element
+	 * @return the representative of the equivalence class of element elem. null if
+	 *         the given element is not in any equivalence class
 	 */
 	public E find(final E elem) {
 		final Set<E> set = mEquivalenceClass.get(elem);
@@ -123,8 +254,8 @@ public class UnionFind<E> implements IPartition<E> {
 	/**
 	 * @param elem
 	 *            element
-	 * @return the representative of the equivalence class of element e. If there is no equivalence class for e this
-	 *         equivalence class is constructed.
+	 * @return the representative of the equivalence class of element e. If there is
+	 *         no equivalence class for e this equivalence class is constructed.
 	 */
 	public E findAndConstructEquivalenceClassIfNeeded(final E elem) {
 		final E findResult = find(elem);
@@ -135,11 +266,17 @@ public class UnionFind<E> implements IPartition<E> {
 		return findResult;
 	}
 
+	public Set<E> getAllElements() {
+		return Collections.unmodifiableSet(mEquivalenceClass.keySet());
+	}
+
 	/**
-	 * Returns a collection of all equivalence classes. A equivalence class is an unmodifiable set that contains
-	 * elements. Each contained element is only in one equivalence class.
+	 * Returns a collection of all equivalence classes. A equivalence class is an
+	 * unmodifiable set that contains elements. Each contained element is only in
+	 * one equivalence class.
 	 *
-	 * @return A collection of all equivalence classes. If there are no, the collection is empty.
+	 * @return A collection of all equivalence classes. If there are no, the
+	 *         collection is empty.
 	 */
 	public Collection<Set<E>> getAllEquivalenceClasses() {
 		final Collection<Set<E>> allEquivalenceClasses = new LinkedList<>();
@@ -150,19 +287,11 @@ public class UnionFind<E> implements IPartition<E> {
 	}
 
 	/**
-	 * @return collection of all elements e such that e is representative of an equivalence class.
+	 * @return collection of all elements e such that e is representative of an
+	 *         equivalence class.
 	 */
 	public Collection<E> getAllRepresentatives() {
 		return Collections.unmodifiableCollection(mRepresentative.values());
-	}
-
-	/**
-	 * @param elem
-	 *            element
-	 * @return set of all elements that are in the same equivalence class than e. (Returned set also contains e).
-	 */
-	public Set<E> getEquivalenceClassMembers(final E elem) {
-		return Collections.unmodifiableSet(mEquivalenceClass.get(elem));
 	}
 
 	@Override
@@ -170,8 +299,28 @@ public class UnionFind<E> implements IPartition<E> {
 		return getEquivalenceClassMembers(elem);
 	}
 
+	public Comparator<E> getElementComparator() {
+		return mElementComparator;
+	}
+
 	/**
-	 * Construct a new equivalence class that is a singleton and contains only element e.
+	 * @param elem
+	 *            element
+	 * @return set of all elements that are in the same equivalence class than e.
+	 *         (Returned set also contains e).
+	 */
+	public Set<E> getEquivalenceClassMembers(final E elem) {
+		return Collections.unmodifiableSet(mEquivalenceClass.get(elem));
+	}
+
+	@Override
+	public Iterator<Set<E>> iterator() {
+		return getAllEquivalenceClasses().iterator();
+	}
+
+	/**
+	 * Construct a new equivalence class that is a singleton and contains only
+	 * element e.
 	 *
 	 * @param elem
 	 *            element
@@ -186,14 +335,124 @@ public class UnionFind<E> implements IPartition<E> {
 		mRepresentative.put(result, elem);
 	}
 
+	/**
+	 * Removes the given element from all the equivalence classes. If the element
+	 * was a representative and was not the only element of its equivalence class,
+	 * another representative for it is chosen for the new equivalence class.
+	 *
+	 * @param element
+	 *            element to be removed
+	 */
+	public void remove(final E element) {
+		final Set<E> eqc = mEquivalenceClass.get(element);
+		final HashSet<E> newEqc = new HashSet<>(eqc);
+		newEqc.remove(element);
+
+		if (mRepresentative.get(mEquivalenceClass.get(element)).equals(element)) {
+			// element is the representative of its equivalence class
+			// final Set<E> eqc = mEquivalenceClass.get(element);
+			if (eqc.size() == 1) {
+				// element was alone in its equivalence class
+				mEquivalenceClass.remove(element);
+				mRepresentative.remove(eqc);
+				assert areMembersConsistent();
+				return;
+			}
+
+			// pick another element from the equivalence class, and make it the
+			// representative
+			if (mElementComparator == null) {
+				final Iterator<E> it = eqc.iterator();
+				E other = it.next();
+				if (other.equals(element)) {
+					other = it.next();
+				}
+				mRepresentative.put(eqc, other);
+			} else {
+				mRepresentative.put(eqc, findMinimalElement(newEqc));
+			}
+		}
+
+		for (final E eqcEl : newEqc) {
+			mEquivalenceClass.put(eqcEl, newEqc);
+		}
+		mEquivalenceClass.remove(element);
+
+		final E rep = mRepresentative.get(eqc);
+		mRepresentative.remove(eqc);
+		assert !rep.equals(element);
+		mRepresentative.put(newEqc, rep);
+
+		assert areMembersConsistent();
+		assert representativesAreMinimal();
+	}
+
+	/**
+	 * Removes all given elements from all the equivalence classes. If an element
+	 * was a representative and was not the only element of its equivalence class,
+	 * another representative for it is chosen for the new equivalence class.
+	 * 
+	 * @param elements
+	 *            The elements to remove
+	 */
+	public void removeAll(final Collection<E> elements) {
+		elements.forEach(this::remove);
+	}
+
+	/**
+	 * @return number of equivalence classes.
+	 */
+	@Override
+	public int size() {
+		return mRepresentative.size();
+	}
+
 	@Override
 	public String toString() {
 		return mRepresentative.toString();
 	}
 
+	public void transformElements(final Function<E, E> elemTransformer) {
+		final HashMap<Set<E>, E> representativeCopy = new HashMap<>(mRepresentative);
+		for (final Entry<Set<E>, E> entry : representativeCopy.entrySet()) {
+			for (final E oldElem : entry.getKey()) {
+				mEquivalenceClass.remove(oldElem);
+			}
+			mRepresentative.remove(entry.getKey());
+
+			final E newRep = elemTransformer.apply(entry.getValue());
+
+			assert mElementComparator == null || mElementComparator.compare(newRep, entry.getValue()) == 0;
+
+			final Set<E> newEqClass = entry.getKey().stream().map(elemTransformer).collect(Collectors.toSet());
+			for (final E newElem : newEqClass) {
+				mEquivalenceClass.put(newElem, newEqClass);
+			}
+			mRepresentative.put(newEqClass, newRep);
+		}
+		assert representativesAreMinimal();
+	}
+
 	/**
-	 * Merge the equivalence classes of the elements e1 and e2. (e1 and e2 do not have to be the representatives of this
-	 * equivalence classes).
+	 * Union operation for arbitrary number of arguments.
+	 *
+	 * @param elements
+	 *            elements
+	 */
+	public void union(final Collection<E> elements) {
+		final Iterator<E> it = elements.iterator();
+		if (!it.hasNext()) {
+			return;
+		}
+		final E firstElem = it.next();
+		while (it.hasNext()) {
+			union(firstElem, it.next());
+		}
+	}
+
+	/**
+	 * Merge the equivalence classes of the elements e1 and e2. (e1 and e2 do not
+	 * have to be the representatives of this equivalence classes).
 	 *
 	 * @param elem1
 	 *            first element
@@ -228,85 +487,6 @@ public class UnionFind<E> implements IPartition<E> {
 		assert representativesAreMinimal();
 	}
 
-	/**
-	 * Union operation for arbitrary number of arguments.
-	 *
-	 * @param elements
-	 *            elements
-	 */
-	public void union(final Collection<E> elements) {
-		final Iterator<E> it = elements.iterator();
-		if (!it.hasNext()) {
-			return;
-		}
-		final E firstElem = it.next();
-		while (it.hasNext()) {
-			union(firstElem, it.next());
-		}
-	}
-
-	/**
-	 * @return number of equivalence classes.
-	 */
-	@Override
-	public int size() {
-		return mRepresentative.size();
-	}
-
-	@Override
-	public Iterator<Set<E>> iterator() {
-		return getAllEquivalenceClasses().iterator();
-	}
-
-	/**
-	 * Removes the given element from all the equivalence classes. If the element was a representative and was not the
-	 * only element of its equivalence class, another representative for is chosen for the new equivalence class.
-	 *
-	 * @param element element to be removed
-	 */
-	public void remove(final E element) {
-		final Set<E> eqc = mEquivalenceClass.get(element);
-		final HashSet<E> newEqc = new HashSet<>(eqc);
-		newEqc.remove(element);
-
-		if (mRepresentative.get(mEquivalenceClass.get(element)).equals(element)) {
-			// element is the representative of its equivalence class
-//			final Set<E> eqc = mEquivalenceClass.get(element);
-			if (eqc.size() == 1) {
-				// element was alone in its equivalence class
-				mEquivalenceClass.remove(element);
-				mRepresentative.remove(eqc);
-				assert areMembersConsistent();
-				return;
-			}
-
-			// pick another element from the equivalence class, and make it the representative
-			if (mElementComparator == null) {
-				final Iterator<E> it = eqc.iterator();
-				E other = it.next();
-				if (other.equals(element)) {
-					other = it.next();
-				}
-				mRepresentative.put(eqc, other);
-			} else {
-				mRepresentative.put(eqc, findMinimalElement(newEqc));
-			}
-		}
-
-		for (final E eqcEl : newEqc) {
-			mEquivalenceClass.put(eqcEl, newEqc);
-		}
-		mEquivalenceClass.remove(element);
-
-		final E rep = mRepresentative.get(eqc);
-		mRepresentative.remove(eqc);
-		assert !rep.equals(element);
-		mRepresentative.put(newEqc, rep);
-
-		assert areMembersConsistent();
-		assert representativesAreMinimal();
-	}
-
 	private boolean areMembersConsistent() {
 		for (final E e : mRepresentative.values()) {
 			if (!mEquivalenceClass.containsKey(e)) {
@@ -326,26 +506,6 @@ public class UnionFind<E> implements IPartition<E> {
 		return true;
 	}
 
-	public Set<E> getAllElements() {
-		return Collections.unmodifiableSet(mEquivalenceClass.keySet());
-	}
-
-	/**
-	 * Add a whole equivalence class at once to this UnionFind.
-	 *
-	 * Assumes none of the given elements is part of an existing equivalence class in this UnionFind instance.
-
-	 * @param newBlock
-	 */
-	public void addEquivalenceClass(final Set<E> newBlock) {
-		if (mElementComparator == null) {
-			addEquivalenceClass(newBlock, null);
-		} else {
-			addEquivalenceClass(newBlock, findMinimalElement(newBlock));
-		}
-		assert representativesAreMinimal();
-	}
-
 	private E findMinimalElement(final Set<E> newBlock) {
 		assert !newBlock.isEmpty();
 		final Iterator<E> newBlockIt = newBlock.iterator();
@@ -357,127 +517,11 @@ public class UnionFind<E> implements IPartition<E> {
 		return result;
 	}
 
-
-	/**
-	 * A variant of {@link #addEquivalenceClass(Set)} where the caller specifies the representative that the newly added
-	 * equivalence class must have.
-	 *
-	 * @param newBlock new equivalence class that is to be added to the equivalence relation
-	 * @param newBlockRep the element that should be the representative of newBlock in this UnionFind, null for don't
-	 * 	care
-	 */
-	public void addEquivalenceClass(final Set<E> newBlock, final E newBlockRep) {
-		assert DataStructureUtils.intersection(newBlock, getAllElements()).isEmpty();
-		assert !newBlock.isEmpty();
-		assert newBlockRep == null || newBlock.contains(newBlockRep);
-		assert mElementComparator == null || newBlockRep != null : "if we don't give a representative for the new block"
-				+ "here, this method might violate the invariant that the representative is always the minimal "
-				+ "element.";
-
-		final Set<E> block = new HashSet<>(newBlock);
-
-		for (final E elem : block) {
-			mEquivalenceClass.put(elem, block);
-		}
-
-		final E rep = newBlockRep == null ? block.iterator().next() : newBlockRep;
-		assert mEquivalenceClass.get(rep) != null;
-		mRepresentative.put(block, rep);
-		assert representativesAreMinimal();
-	}
-
-
-	/**
-	 * Computes a new UnionFind instance whose partitions are the intersections of the given UnionFind instance's
-	 * equivalence classes. Only non-empty intersections are added to the new equivalence relation.
-	 *
-	 * @param <E> element type
-	 * @param uf1 instance to be intersected with uf2
-	 * @param uf2 instance to be intersected with uf1
-	 * @return UnionFind with intersected equivalence classes
-	 */
-	public static <E> UnionFind<E> intersectPartitionBlocks(final UnionFind<E> uf1, final UnionFind<E> uf2) {
-		assert uf1.mElementComparator == uf2.mElementComparator;
-
-		final UnionFind<E> result = new UnionFind<>(uf1.mElementComparator);
-		for (final Set<E> uf1Block : uf1.getAllEquivalenceClasses()) {
-			final HashRelation<E, E> uf2RepToSubblock = new HashRelation<>();
-
-			for (final E uf1El : uf1Block) {
-				final E uf2Rep = uf2.find(uf1El);
-				uf2RepToSubblock.addPair(uf2Rep, uf1El);
-			}
-
-			uf2RepToSubblock.getDomain().stream()
-				.forEach(u2rep -> result.addEquivalenceClass(uf2RepToSubblock.getImage(u2rep)));
-		}
-		assert result.representativesAreMinimal();
-		return result;
-	}
-
-	/**
-	 * Computes a new UnionFind instance whose partitions are the unions of the given UnionFind instance's
-	 * equivalence classes.
-	 *
-	 * @param <E> element type
-	 * @param uf1 instance to be union'ed with uf2
-	 * @param uf2 instance to be union'ed with uf1
-	 * @return UnionFind with union'ed equivalence classes
-	 */
-	public static <E> UnionFind<E> unionPartitionBlocks(final UnionFind<E> uf1, final UnionFind<E> uf2) {
-		assert uf1.mElementComparator == uf2.mElementComparator;
-
-		final UnionFind<E> result = new UnionFind<>(uf1.mElementComparator);
-		final HashSet<E> todo = new HashSet<>(uf1.getAllElements());
-		while (!todo.isEmpty()) {
-			final E tver1El = todo.iterator().next();
-
-			final E uf1Rep = uf1.find(tver1El);
-			final E uf2Rep = uf2.find(tver1El);
-
-			final E newBlockRep;
-			if (uf1.mElementComparator == null) {
-				// it does not matter which representative we choose
-				newBlockRep = uf1Rep;
-			} else {
-				newBlockRep = uf1.mElementComparator.compare(uf1Rep, uf2Rep) < 0 ? uf1Rep : uf2Rep;
-			}
-
-			final Set<E> newBlock = DataStructureUtils.union(uf1.getEquivalenceClassMembers(tver1El),
-					uf2.getEquivalenceClassMembers(tver1El));
-			result.addEquivalenceClass(newBlock, newBlockRep);
-			todo.removeAll(newBlock);
-		}
-		assert result.representativesAreMinimal();
-		return result;
-	}
-
-	public void transformElements(final Function<E, E> elemTransformer) {
-		final HashMap<Set<E> ,E> representativeCopy = new HashMap<>(mRepresentative);
-		for (final Entry<Set<E>, E> entry : representativeCopy.entrySet()) {
-			for (final E oldElem : entry.getKey()) {
-				mEquivalenceClass.remove(oldElem);
-			}
-			mRepresentative.remove(entry.getKey());
-
-			final E newRep = elemTransformer.apply(entry.getValue());
-
-			assert mElementComparator == null || mElementComparator.compare(newRep, entry.getValue()) == 0;
-
-			final Set<E> newEqClass = entry.getKey().stream().map(elemTransformer).collect(Collectors.toSet());
-			for (final E newElem : newEqClass) {
-				mEquivalenceClass.put(newElem, newEqClass);
-			}
-			mRepresentative.put(newEqClass, newRep);
-		}
-		assert representativesAreMinimal();
-	}
-
 	private boolean representativesAreMinimal() {
 		if (mElementComparator == null) {
 			return true;
 		}
-//		for (Entry<E, Set<E>> en : mEquivalenceClass.entrySet()) {
+		// for (Entry<E, Set<E>> en : mEquivalenceClass.entrySet()) {
 		for (final Entry<Set<E>, E> en : mRepresentative.entrySet()) {
 			final E rep = en.getValue();
 			for (final E member : en.getKey()) {
@@ -485,10 +529,5 @@ public class UnionFind<E> implements IPartition<E> {
 			}
 		}
 		return true;
-	}
-
-
-	public  Comparator<E> getElementComparator() {
-		return mElementComparator;
 	}
 }
