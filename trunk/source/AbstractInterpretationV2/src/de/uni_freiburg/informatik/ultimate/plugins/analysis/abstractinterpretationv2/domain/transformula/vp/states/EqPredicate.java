@@ -129,4 +129,34 @@ public class EqPredicate<ACTION extends IIcfgTransition<IcfgLocation>> implement
 	public Term getClosedFormula() {
 		return mClosedFormula;
 	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((mConstraint == null) ? 0 : mConstraint.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		final EqPredicate other = (EqPredicate) obj;
+		if (mConstraint == null) {
+			if (other.mConstraint != null) {
+				return false;
+			}
+		} else if (!mConstraint.equals(other.mConstraint)) {
+			return false;
+		}
+		return true;
+	}
 }

@@ -57,10 +57,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 public class EqState<ACTION extends IIcfgTransition<IcfgLocation>>
 		implements IAbstractState<EqState<ACTION>>, IEqualityProvidingState {
 
-	private static int sNextFreeId = 0;
-
-	private final int mId;
-
 	/**
 	 * The variables and constants that this state has "for the abstract interpretation"/"as an IAbstractState". Note
 	 * that these should be related but need not be identical to mConstraint.getPvocs(..).
@@ -74,8 +70,9 @@ public class EqState<ACTION extends IIcfgTransition<IcfgLocation>>
 	public EqState(final EqConstraint<ACTION, EqNode> constraint,
 			final EqNodeAndFunctionFactory eqNodeAndFunctionFactory, final EqStateFactory<ACTION> eqStateFactory,
 			final Set<IProgramVarOrConst> variables) {
-		mId = sNextFreeId++;
-		assert sNextFreeId != Integer.MAX_VALUE;
+//		mId = sNextFreeId++;
+//		mId = constraint.hashCode();
+//		assert sNextFreeId != Integer.MAX_VALUE;
 		mConstraint = constraint;
 		mFactory = eqStateFactory;
 		mPvocs = new HashSet<>(variables);
@@ -290,6 +287,15 @@ public class EqState<ACTION extends IIcfgTransition<IcfgLocation>>
 	}
 
 	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((mConstraint == null) ? 0 : mConstraint.hashCode());
+		result = prime * result + ((mPvocs == null) ? 0 : mPvocs.hashCode());
+		return result;
+	}
+
+	@Override
 	public boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
@@ -300,13 +306,22 @@ public class EqState<ACTION extends IIcfgTransition<IcfgLocation>>
 		if (getClass() != obj.getClass()) {
 			return false;
 		}
-		return this.mId == ((EqState) obj).mId;
-	}
-
-	@Override
-	public int hashCode() {
-		// return super.hashCode();
-		return mId;
+		final EqState other = (EqState) obj;
+		if (mConstraint == null) {
+			if (other.mConstraint != null) {
+				return false;
+			}
+		} else if (!mConstraint.equals(other.mConstraint)) {
+			return false;
+		}
+		if (mPvocs == null) {
+			if (other.mPvocs != null) {
+				return false;
+			}
+		} else if (!mPvocs.equals(other.mPvocs)) {
+			return false;
+		}
+		return true;
 	}
 
 	@Override

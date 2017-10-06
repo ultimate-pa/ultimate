@@ -194,4 +194,34 @@ public class EqDisjunctiveConstraint<
 		sb.append(statistics);
 		return sb.toString();
 	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((mConstraints == null) ? 0 : mConstraints.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		final EqDisjunctiveConstraint other = (EqDisjunctiveConstraint) obj;
+		if (mConstraints == null) {
+			if (other.mConstraints != null) {
+				return false;
+			}
+		} else if (!mConstraints.equals(other.mConstraints)) {
+			return false;
+		}
+		return true;
+	}
 }

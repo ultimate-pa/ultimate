@@ -80,6 +80,7 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 	private Term mTerm;
 	private boolean mIsInconsistent;
 
+	private final int mId;
 
 
 	/**
@@ -88,15 +89,13 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 	 *
 	 * @param factory
 	 */
-	public EqConstraint(final EqConstraintFactory<ACTION, NODE> factory) {
-		mFactory = factory;
-		mPartialArrangement = new WeqCongruenceClosure<>(factory);
+	public EqConstraint(final int id, final EqConstraintFactory<ACTION, NODE> factory) {
+		this(id, factory, new WeqCongruenceClosure<>(factory));
 	}
 
-	public EqConstraint(final WeqCongruenceClosure<ACTION, NODE> cClosure,
+	public EqConstraint(final int id, final WeqCongruenceClosure<ACTION, NODE> cClosure,
 			final EqConstraintFactory<ACTION, NODE> factory) {
-		mFactory = factory;
-		mPartialArrangement = new WeqCongruenceClosure<>(cClosure);
+		this(id, factory, new WeqCongruenceClosure<>(cClosure));
 	}
 
 	/**
@@ -104,9 +103,16 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 	 *
 	 * @param constraint
 	 */
-	public EqConstraint(final EqConstraint<ACTION, NODE> constraint) {
-		mFactory = constraint.mFactory;
-		mPartialArrangement = new WeqCongruenceClosure<>(constraint.mPartialArrangement);
+	public EqConstraint(final int id, final EqConstraint<ACTION, NODE> constraint) {
+		this(id, constraint.mFactory, new WeqCongruenceClosure<>(constraint.mPartialArrangement));
+	}
+
+	private EqConstraint(final int id, final EqConstraintFactory<ACTION, NODE> factory,
+			final WeqCongruenceClosure<ACTION, NODE> cClosure) {
+		assert id != Integer.MAX_VALUE;
+		mId = id;
+		mFactory = factory;
+		mPartialArrangement = cClosure;
 	}
 
 	public void freeze() {
@@ -416,6 +422,33 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 
 	public String toLogString() {
 		return mPartialArrangement.toLogString();
+	}
+
+	@Override
+	public int hashCode() {
+		return mId;
+//		final int prime = 31;
+//		int result = 1;
+//		result = prime * result + mId;
+//		return result;
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		final EqConstraint other = (EqConstraint) obj;
+		if (mId != other.mId) {
+			return false;
+		}
+		return true;
 	}
 }
 

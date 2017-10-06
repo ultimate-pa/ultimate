@@ -71,6 +71,7 @@ public class EqConstraintFactory<ACTION extends IIcfgTransition<IcfgLocation>, N
 
 	private final CfgSmtToolkit mCsToolkit;
 
+	private int mConstraintIdCounter = 1;
 
 	private final NestedMap2<Sort, Integer, NODE> mDimensionToWeqVariableNode;
 
@@ -83,7 +84,7 @@ public class EqConstraintFactory<ACTION extends IIcfgTransition<IcfgLocation>, N
 		mBottomConstraint = new EqBottomConstraint<>(this);
 		mBottomConstraint.freeze();
 
-		mEmptyConstraint = new EqConstraint<>(this);
+		mEmptyConstraint = new EqConstraint<>(mConstraintIdCounter++, this);
 		mEmptyConstraint.freeze();
 
 		mServices = services;
@@ -109,7 +110,7 @@ public class EqConstraintFactory<ACTION extends IIcfgTransition<IcfgLocation>, N
 		if (constraint.isBottom()) {
 			return constraint;
 		}
-		return new EqConstraint<>(constraint);
+		return new EqConstraint<>(mConstraintIdCounter++, constraint);
 	}
 
 	public EqDisjunctiveConstraint<ACTION, NODE>
@@ -387,7 +388,7 @@ public class EqConstraintFactory<ACTION extends IIcfgTransition<IcfgLocation>, N
 		if (newPartialArrangement.isInconsistent()) {
 			return getBottomConstraint();
 		}
-		return new EqConstraint<>(newPartialArrangement, this);
+		return new EqConstraint<>(mConstraintIdCounter++, newPartialArrangement, this);
 	}
 
 	public ManagedScript getMgdScript() {
