@@ -269,7 +269,7 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		final Map<Doubleton<NODE>, WeakEquivalenceEdgeLabel> newWeakEquivalenceEdges = new HashMap<>();
 		for (final Entry<Doubleton<NODE>, WeakEquivalenceEdgeLabel> thisWeqEdge
 				: this.mWeakEquivalenceEdges.entrySet()) {
-			final WeakEquivalenceEdgeLabel correspondingWeqEdgeInOther =
+			final WeakEquivalenceEdgeLabel correspondingWeqEdgeLabelInOther =
 					other.mWeakEquivalenceEdges.get(thisWeqEdge.getKey());
 
 			final NODE source = thisWeqEdge.getKey().getOneElement();
@@ -288,16 +288,26 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 						.projectToElements(mFactory.getAllWeqNodes());
 
 				newWeakEquivalenceEdges.put(thisWeqEdge.getKey(), newEdgeLabel);
-				assert correspondingWeqEdgeInOther == null;
+				assert correspondingWeqEdgeLabelInOther == null;
 				continue;
 			}
 
-			if (correspondingWeqEdgeInOther == null) {
+			if (correspondingWeqEdgeLabelInOther == null) {
 				continue;
 			}
+
+			final WeakEquivalenceGraph<ACTION, NODE>.WeakEquivalenceEdgeLabel thisNewEdgeLabel = thisWeqEdge.getValue()
+						.meet(Collections.singletonList(this.mPartialArrangement))
+						.projectToElements(mFactory.getAllWeqNodes());
+			final WeakEquivalenceGraph<ACTION, NODE>.WeakEquivalenceEdgeLabel otherNewEdgeLabel =
+					correspondingWeqEdgeLabelInOther
+						.meet(Collections.singletonList(other.mPartialArrangement))
+						.projectToElements(mFactory.getAllWeqNodes());
+
 
 			newWeakEquivalenceEdges.put(thisWeqEdge.getKey(),
-					thisWeqEdge.getValue().union(correspondingWeqEdgeInOther));
+					thisNewEdgeLabel.union(otherNewEdgeLabel));
+//					thisWeqEdge.getValue().union(correspondingWeqEdgeLabelInOther));
 		}
 
 		/*
@@ -827,6 +837,10 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		if (isEmpty()) {
 			return "Empty";
 		}
+		if (mWeakEquivalenceEdges.size() < 4) {
+			return toLogString();
+		}
+
 		final StringBuilder sb = new StringBuilder();
 		sb.append("summary:\n");
 		for (final Entry<String, Integer> en : summarize().entrySet()) {
