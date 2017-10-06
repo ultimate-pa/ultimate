@@ -247,9 +247,9 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 				// This is needed for logical operations to not lose any precision, since in logical evaluation only the
 				// boolean value of this expression is important.
 				final IEvaluationResult<VALUE> logicalLeftOpValue =
-						new NonrelationalEvaluationResult<>(leftOpValue, leftOp.getBooleanValue());
+						new NonrelationalEvaluationResult<>(leftOpValue, evalResultBool);
 				final IEvaluationResult<VALUE> logicalRightOpValue =
-						new NonrelationalEvaluationResult<>(rightOpValue, rightOp.getBooleanValue());
+						new NonrelationalEvaluationResult<>(rightOpValue, evalResultBool);
 
 				switch (mOperator) {
 				case LOGICAND:
