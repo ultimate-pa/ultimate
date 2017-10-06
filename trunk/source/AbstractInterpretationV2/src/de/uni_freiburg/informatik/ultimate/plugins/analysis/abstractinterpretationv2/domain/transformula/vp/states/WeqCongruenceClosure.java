@@ -779,17 +779,12 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 			assert mNodeToDependents.entrySet().stream()
 				.map(en -> en.getValue()).filter(e -> e.equals(elem)).findAny().isPresent();
 		}
-//		addNodesEquivalentToNodesWithRemovedElement(elem);
 
 		final Collection<NODE> nodesToAdd = collectNodesToAddAtFunctionRemoval(elem);
 		for (final NODE node : nodesToAdd) {
 			addElement(node);
 		}
 
-//		final Set<NODE> oldAfParents = new HashSet<>(mFaAuxData.getAfParents(elem));
-//		final Set<NODE> oldArgParents = new HashSet<>(mFaAuxData.getArgParents(elem));
-
-//		final NODE newRep = updateElementTverAndAuxDataOnRemoveElement(elem);
 		final Map<NODE, NODE> removedElemsToNewReps = super.removeSimpleElementTrackNewReps(elem);
 
 		final Set<NODE> nodesAddedByWeqgProject =
@@ -797,8 +792,6 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 		for (final NODE n : nodesAddedByWeqgProject) {
 			addElementRec(n);
 		}
-
-//		removeParents(oldAfParents, oldArgParents);
 
 		removeDependents(elem);
 
@@ -808,9 +801,7 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 			mElementCurrentlyBeingRemoved = null;
 		}
 		assert sanityCheck();
-//		assert elementIsFullyRemoved(elem);
 		return true;
-//		return removeElement(elem, copy);
 	}
 
 	protected void removeDependents(final NODE elem) {
@@ -819,57 +810,6 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 		}
 		mNodeToDependents.removeDomainElement(elem);
 	}
-
-//	@Override
-//	protected boolean removeFuncAppElement(final NODE elem) {
-//		// TODO Auto-generated method stub
-//		return super.removeFuncAppElement(elem);
-//	}
-
-//	private boolean removeElement(final NODE elem, final CongruenceClosure<NODE> copy) {
-//		if (hasElement(elem)) {
-//
-//			addNodesEquivalentToNodesWithRemovedElement(elem);
-//
-//			final Collection<NODE> nodesToAdd = collectNodesToAddAtFunctionRemoval(elem);
-//			for (final NODE node : nodesToAdd) {
-//				addElement(node);
-//			}
-//
-//			final Set<NODE> oldAfParents = new HashSet<>(mFaAuxData.getAfParents(elem));
-//			final Set<NODE> oldArgParents = new HashSet<>(mFaAuxData.getArgParents(elem));
-//
-//			final NODE newRep = updateElementTverAndAuxDataOnRemoveElement(elem);
-//
-//			/*
-//			 * Project func from the weak equivalence graph. We need to make a copy of the
-//			 * ground partial arrangement, because ..
-//			 */
-//			mWeakEquivalenceGraph.projectFunction(elem, newRep, copy);
-//			assert projectedFunctionIsGoneFromWeqGraph(elem, mWeakEquivalenceGraph);
-//
-//			removeParents(oldAfParents, oldArgParents);
-//
-////			for (final NODE dependent : new HashSet<>(mNodeToDependents.getImage(elem))) {
-////				removeElement(dependent, copy);
-////			}
-////			mNodeToDependents.removeDomainElement(elem);
-//
-//			assert weqGraphFreeOfArrayEqualities();
-//			assert projectedFunctionIsGoneFromWeqGraph(elem, mWeakEquivalenceGraph);
-//
-//			mAllLiterals.remove(elem);
-//		}
-//
-//		for (final NODE dependent : new HashSet<>(mNodeToDependents.getImage(elem))) {
-//			removeElement(dependent, copy);
-//		}
-//		mNodeToDependents.removeDomainElement(elem);
-//		mNodeToDependents.removeRangeElement(elem);
-//
-//		assert elementIsFullyRemoved(elem);
-//		return true;
-//	}
 
 	/**
 	 * When removing a function we will also remove all function nodes that depend
@@ -916,8 +856,6 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 		}
 		final Set<NODE> constrainedFuncAppNodes = transitiveAfParents.stream().filter(this::isConstrained)
 				.collect(Collectors.toSet());
-//		final Set<NODE> constrainedFuncAppNodes = mAuxData.getAfCcPars(newRep).stream().filter(this::isConstrained)
-//				.collect(Collectors.toSet());
 
 		for (final NODE fan : constrainedFuncAppNodes) {
 
@@ -973,8 +911,6 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 				// TODO: nicer would be to have argCcPars contain only elements of fitting sort..
 				continue;
 			}
-
-
 
 			/*
 			 * don't propagate something that uses the currently removed element
@@ -1110,7 +1046,6 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 		// report all weq edges from other
 		for (final Entry<Doubleton<NODE>, WeakEquivalenceGraph<ACTION, NODE>.WeakEquivalenceEdgeLabel> edge
 				: otherWeqCc.mWeakEquivalenceGraph.getEdges().entrySet()) {
-//			newWeqCc.reportWeakEquivalence(edge.getKey().getOneElement(), edge.getKey().getOtherElement(),
 			newWeqCc.reportWeakEquivalenceDoOnlyRoweqPropagations(edge.getKey().getOneElement(),
 					edge.getKey().getOtherElement(),
 					edge.getValue().getLabelContents());
@@ -1226,10 +1161,6 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 				cleanedDeqs.addPair(deq.getKey(), deq.getValue());
 			}
 			return cleanedDeqs.size();
-//			return mElementTVER.getDisequalities().entrySet().stream()
-//					.filter(en -> (!mElementTVER.getDisequalities().containsPair(en.getValue(), en.getKey())
-//							&& en.getKey().hashCode() < en.getValue().hashCode()))
-//					.collect(Collectors.counting()).intValue();
 		case NO_SUPPORTING_EQUALITIES:
 			return getSupportingElementEqualities().size();
 		default :
