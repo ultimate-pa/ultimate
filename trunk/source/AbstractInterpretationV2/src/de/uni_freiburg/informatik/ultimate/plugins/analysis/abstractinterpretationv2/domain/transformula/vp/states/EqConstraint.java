@@ -91,6 +91,7 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 	 */
 	public EqConstraint(final int id, final EqConstraintFactory<ACTION, NODE> factory) {
 		this(id, factory, new WeqCongruenceClosure<>(factory));
+		assert id != 0 || this instanceof EqBottomConstraint : "0 is reserved for the bottom constraint";
 	}
 
 	public EqConstraint(final int id, final WeqCongruenceClosure<ACTION, NODE> cClosure,
@@ -417,11 +418,11 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 
 	@Override
 	public String toString() {
-		return mPartialArrangement.toString();
+		return "EqConstraint#" + mId + "\n" + mPartialArrangement.toString();
 	}
 
 	public String toLogString() {
-		return mPartialArrangement.toLogString();
+		return "EqConstraint#" + mId + "\n" + mPartialArrangement.toLogString();
 	}
 
 	@Override

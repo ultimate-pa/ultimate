@@ -51,7 +51,7 @@ public class EqBottomConstraint<ACTION extends IIcfgTransition<IcfgLocation>, NO
 	extends EqConstraint<ACTION, NODE> {
 
 	public EqBottomConstraint(final EqConstraintFactory<ACTION, NODE> factory) {
-		super(factory);
+		super(0, factory);
 	}
 
 	@Override
