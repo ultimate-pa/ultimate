@@ -117,6 +117,7 @@ public class IcfgLoopTransformerMohr<INLOC extends IcfgLocation, OUTLOC extends 
 		final Map<INLOC, UnmodifiableTransFormula> loopSummaries = new HashMap<>();
 		final Map<INLOC, Set<Pair<UnmodifiableTransFormula, INLOC>>> loopExits = new HashMap<>();
 		if (!loops.isEmpty()) {
+			// TODO: consider nested loops
 			for (final IcfgLoop<INLOC> loop : loops) {
 				loopHeads.add(loop.getHead());
 				loopNodes.addAll(loop.getLoopbody());
@@ -232,7 +233,8 @@ public class IcfgLoopTransformerMohr<INLOC extends IcfgLocation, OUTLOC extends 
 			pathTerms.add(varUpdate);
 		}
 		pathTerms.add(symbolicMemory.getKappaMin());
-		final Term loopSummary = SmtUtils.and(mManagedScript.getScript(), pathTerms.toArray(new Term[pathTerms.size()]));
+		final Term loopSummary =
+				SmtUtils.and(mManagedScript.getScript(), pathTerms.toArray(new Term[pathTerms.size()]));
 
 		final Map<IProgramVar, TermVariable> inVars = symbolicMemory.getInVars();
 		final Map<IProgramVar, TermVariable> outVars = symbolicMemory.getOutVars();
