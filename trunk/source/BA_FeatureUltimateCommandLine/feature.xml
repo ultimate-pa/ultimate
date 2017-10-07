@@ -2,7 +2,7 @@
 <feature
       id="BA_FeatureUltimateCommandLine"
       label="BA_FeatureUltimateCommandLine"
-      version="0.1.21">
+      version="0.1.22">
 
    <requires>
       <import plugin="de.uni_freiburg.informatik.ultimate.lib.core"/>
