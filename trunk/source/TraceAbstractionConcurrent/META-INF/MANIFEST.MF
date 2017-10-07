@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: TraceAbstractionConcurrent
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionconcurrent;singleton:=true
-Bundle-Version: 0.1.21
+Bundle-Version: 0.1.22
 Require-Bundle: de.uni_freiburg.informatik.ultimate.core,
  de.uni_freiburg.informatik.ultimate.lib.util,
  de.uni_freiburg.informatik.ultimate.lib.core,

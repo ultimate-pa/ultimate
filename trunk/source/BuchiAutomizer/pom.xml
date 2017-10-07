@@ -28,13 +28,13 @@
   <modelVersion>4.0.0</modelVersion>
 
   <artifactId>de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer</artifactId>
-  <version>0.1.21</version>
+  <version>0.1.22</version>
   <packaging>eclipse-plugin</packaging>
   
   <parent>
   	<groupId>de.uni_freiburg.informatik.ultimate</groupId>
   	<artifactId>mavenparent</artifactId>
-  	<version>0.1.21</version>
+  	<version>0.1.22</version>
   	<relativePath>../BA_MavenParentUltimate/pom.xml</relativePath>
   </parent>
 </project>
