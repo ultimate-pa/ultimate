@@ -270,6 +270,7 @@ Export-Package: de.uni_freiburg.informatik.ultimate.automata;
  de.uni_freiburg.informatik.ultimate.automata.tree.operations;uses:="de.uni_freiburg.informatik.ultimate.automata.statefactory,de.uni_freiburg.informatik.ultimate.automata.tree,de.uni_freiburg.informatik.ultimate.automata",
  de.uni_freiburg.informatik.ultimate.automata.tree.operations.minimization,
  de.uni_freiburg.informatik.ultimate.automata.tree.operations.minimization.hopcroft,
+ de.uni_freiburg.informatik.ultimate.automata.tree.operations.minimization.performance,
  de.uni_freiburg.informatik.ultimate.automata.tree.visualization;uses:="de.uni_freiburg.informatik.ultimate.automata.tree,de.uni_freiburg.informatik.ultimate.core.model.models,de.uni_freiburg.informatik.ultimate.automata",
  de.uni_freiburg.informatik.ultimate.automata.util;uses:="de.uni_freiburg.informatik.ultimate.util.datastructures.relation,de.uni_freiburg.informatik.ultimate.util.datastructures"
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8

@@ -145,6 +145,11 @@ public class UnionFind<E> implements IPartition<E>, Cloneable {
 	/**
 	 * Maps an equivalence class to its representative.
 	 */
+	// TODO This data-structure forms a performance bottleneck due to the usage of a
+	// collection as key (e.g. hashcode calculation in Map#get). Check whether it
+	// can be exchanged by a Map which stores keys by a fast-computed O(1) hashcode,
+	// e.g. IdentityHashMap. Requirements are to maintain a deterministic iteration
+	// order and to not fail at current, and also future, provided methods.
 	private final Map<Set<E>, E> mRepresentative = new HashMap<>();
 
 	/**
