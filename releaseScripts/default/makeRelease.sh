@@ -110,7 +110,6 @@ fi
 
 pushd ../../trunk/source/BA_MavenParentUltimate/ > /dev/null
 exitOnFailPop mvn org.eclipse.tycho:tycho-versions-plugin:set-version -DnewVersion="${NEW_VERSION}" -Dproperties="ultimate-version"
-exitOnFailPop mvn clean install -Pmaterialize
 popd > /dev/null
 
 # TODO: Run pre-deployment tests 
@@ -123,6 +122,11 @@ exitOnFailPop git fetch
 exitOnFailPop git rebase
 exitOnFailPop git push
 exitOnFailPop git push origin --tags
+
+pushd ../../trunk/source/BA_MavenParentUltimate/ > /dev/null
+exitOnFailPop mvn clean install -Pmaterialize
+popd > /dev/null
+
 
 # createZip <toolname> <targetarch> <reachtc> <termtc> <witnessvaltc> <memsafetytc> <ltl>
 ./createZip.sh Taipan linux AutomizerCInline_WitnessPrinter.xml NONE AutomizerCInline.xml AutomizerCInline_WitnessPrinter.xml NONE
