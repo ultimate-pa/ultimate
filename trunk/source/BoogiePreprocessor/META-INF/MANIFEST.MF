@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Boogie Preprocessor
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.boogie.preprocessor;singleton:=true
-Bundle-Version: 0.1.22
+Bundle-Version: 0.1.23
 Bundle-Activator: de.uni_freiburg.informatik.ultimate.boogie.preprocessor.Activator
 Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.lib.util,

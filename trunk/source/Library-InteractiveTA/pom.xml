@@ -4,12 +4,12 @@
   	<parent>
 		<artifactId>mavenparent</artifactId>
 		<groupId>de.uni_freiburg.informatik.ultimate</groupId>
-		<version>0.1.22</version>
+		<version>0.1.23</version>
 		<relativePath>../BA_MavenParentUltimate/pom.xml</relativePath>
 	</parent>
   
   <groupId>de.uni_freiburg.informatik.ultimate.interactive.traceabstraction</groupId>
   <artifactId>de.uni_freiburg.informatik.ultimate.interactive.traceabstraction</artifactId>
-  <version>0.1.22</version>
+  <version>0.1.23</version>
   <packaging>eclipse-plugin</packaging>
 </project>
