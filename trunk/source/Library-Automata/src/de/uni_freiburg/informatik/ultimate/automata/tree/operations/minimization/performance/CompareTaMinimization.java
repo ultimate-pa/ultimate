@@ -50,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.operations.minimization
 import de.uni_freiburg.informatik.ultimate.automata.tree.operations.minimization.hopcroft.MinimizeNftaHopcroft;
 
 /**
- * Operation that compares the different types of methods for tree reduction.
+ * Operation that compares the different types of methods for tree automata reduction.
  * The operation has no result, it automatically logs performance measurements
  * to a log file.
  *
@@ -60,7 +60,7 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.operations.minimization
  * @param <STATE>
  *            State class of tree automaton
  */
-public final class CompareTreeMinimization<LETTER extends IRankedLetter, STATE>
+public final class CompareTaMinimization<LETTER extends IRankedLetter, STATE>
 		extends GeneralOperation<LETTER, STATE, IStateFactory<STATE>> {
 	/**
 	 * Path where performance measurement relevant logs and data gets saved.
@@ -130,7 +130,7 @@ public final class CompareTreeMinimization<LETTER extends IRankedLetter, STATE>
 	private final SinkAndMergeStateFactory<STATE> mSinkAndMergeFactory;
 
 	/**
-	 * Compares the different types of methods for tree reduction. The operation has
+	 * Compares the different types of methods for tree automata reduction. The operation has
 	 * no result, it automatically logs performance measurements to a log file.
 	 * 
 	 * @param <SF>
@@ -144,7 +144,7 @@ public final class CompareTreeMinimization<LETTER extends IRankedLetter, STATE>
 	 * @param operand
 	 *            The tree automaton to compare with
 	 */
-	public <SF extends IMergeStateFactory<STATE> & ISinkStateFactory<STATE>> CompareTreeMinimization(
+	public <SF extends IMergeStateFactory<STATE> & ISinkStateFactory<STATE>> CompareTaMinimization(
 			final AutomataLibraryServices services, final SF mergeAndSinkFactory,
 			final ITreeAutomatonBU<LETTER, STATE> operand) {
 		super(services);
@@ -285,21 +285,21 @@ public final class CompareTreeMinimization<LETTER extends IRankedLetter, STATE>
 			outOfMemory = true;
 		}
 
-		ITreeAutomatonBU<LETTER, STATE> resultingTree = null;
+		ITreeAutomatonBU<LETTER, STATE> resultingTa = null;
 		if (method instanceof IOperation) {
 			final Object resultRaw = ((IOperation<LETTER, STATE, IStateFactory<STATE>>) method).getResult();
 			if (resultRaw instanceof ITreeAutomatonBU) {
-				resultingTree = (ITreeAutomatonBU<LETTER, STATE>) resultRaw;
+				resultingTa = (ITreeAutomatonBU<LETTER, STATE>) resultRaw;
 			}
 		}
-		if (resultingTree == null) {
+		if (resultingTa == null) {
 			throw new AssertionError("Result is null but must not be. Cast-logic may be incorrect.");
 		}
 
 		// Type, time, timedOut, outOfMemory, resultSize, resultAmountOfRules
 		final String[] results = new String[] { type, Long.toString(overallTime), Boolean.toString(timedOut),
-				Boolean.toString(outOfMemory), Integer.toString(resultingTree.size()),
-				Integer.toString(resultingTree.getAmountOfRules()) };
+				Boolean.toString(outOfMemory), Integer.toString(resultingTa.size()),
+				Integer.toString(resultingTa.getAmountOfRules()) };
 		return results;
 	}
 

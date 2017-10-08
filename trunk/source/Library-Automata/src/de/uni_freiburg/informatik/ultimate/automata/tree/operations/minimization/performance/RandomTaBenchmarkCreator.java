@@ -47,14 +47,14 @@ import de.uni_freiburg.informatik.ultimate.core.coreplugin.services.ToolchainSto
  *
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  */
-public final class RandomTreeBenchmarkCreator {
+public final class RandomTaBenchmarkCreator {
 
 	/**
 	 * Default path where the tree automata benchmark set gets saved if no other
 	 * path is specified.
 	 */
 	public static final Path DEFAULT_PATH = Paths.get(System.getProperty("user.home"), "Desktop",
-			"randomTreeBenchmark");
+			"randomTaBenchmark");
 	/**
 	 * Default amount of created tree automata after which a logging message gets
 	 * printed.
@@ -75,7 +75,7 @@ public final class RandomTreeBenchmarkCreator {
 	private static final int PERC_UPPER_BOUND = 100;
 
 	/**
-	 * Shows the usage of the {@link RandomTreeBenchmarkCreator} class.
+	 * Shows the usage of the {@link RandomTaBenchmarkCreator} class.
 	 *
 	 * @param args
 	 *            Not supported
@@ -99,7 +99,7 @@ public final class RandomTreeBenchmarkCreator {
 
 	/**
 	 * Creates a benchmark set with given explicit settings by using the
-	 * {@link RandomTreeBenchmarkCreator} class.
+	 * {@link RandomTaBenchmarkCreator} class.
 	 * 
 	 * @param n
 	 *            The amount of states the generated tree automata should have
@@ -127,7 +127,7 @@ public final class RandomTreeBenchmarkCreator {
 		final String operation;
 		switch (operationSwitch) {
 		case 0:
-			operation = "compareTreeMinimization(ta);";
+			operation = "compareTaMinimization(ta);";
 			break;
 		case 1:
 			operation = "minimizeNftaHopcroft(ta);";
@@ -141,14 +141,14 @@ public final class RandomTreeBenchmarkCreator {
 		}
 
 		final String timeStamp = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss").format(new Date());
-		final String preamble = "// Random tree automaton dumped by RandomTreeBenchmarkCreator at " + timeStamp + "\n"
+		final String preamble = "// Random tree automaton dumped by RandomTaBenchmarkCreator at " + timeStamp + "\n"
 				+ "// Author: Daniel Tischner {@literal <zabuza.dev@gmail.com>}\n\n" + operation
 				+ "\n\nTreeAutomaton ta = ";
 		final String postamble = ";";
 
 		// Create the object and pass settings
-		final RandomTreeBenchmarkCreator creator;
-		creator = new RandomTreeBenchmarkCreator(n, rankToK, acceptanceInPerc, rankToRulesPerLetter);
+		final RandomTaBenchmarkCreator creator;
+		creator = new RandomTaBenchmarkCreator(n, rankToK, acceptanceInPerc, rankToRulesPerLetter);
 		creator.setPreamble(preamble);
 		creator.setPostamble(postamble);
 
@@ -251,7 +251,7 @@ public final class RandomTreeBenchmarkCreator {
 	 * @throws IllegalArgumentException
 	 *             If a percentage value is not between 0 and 100 (inclusive)
 	 */
-	public RandomTreeBenchmarkCreator(final int size, final int[] rankToAlphabetSize, final float acceptance,
+	public RandomTaBenchmarkCreator(final int size, final int[] rankToAlphabetSize, final float acceptance,
 			final int[] rankToRulesPerLetter) throws IllegalArgumentException {
 		this.mSize = size;
 		this.mRankToAlphabetSize = rankToAlphabetSize;
@@ -318,7 +318,7 @@ public final class RandomTreeBenchmarkCreator {
 	 */
 	public void createAndSaveABenchmark(final int amount, final Path pathToSaveBenchmark, final int logEvery)
 			throws IOException, AutomataOperationCanceledException {
-		ITreeAutomatonBU<StringRankedLetter, String> tree = null;
+		ITreeAutomatonBU<StringRankedLetter, String> ta = null;
 
 		final double acceptanceDouble = percentageToDouble(this.mAcceptance);
 
@@ -338,18 +338,18 @@ public final class RandomTreeBenchmarkCreator {
 			}
 
 			// Generate the automaton
-			tree = new GetRandomNftaBU(this.mServices, this.mSize, this.mRankToAlphabetSize, this.mRankToRulesPerLetter,
+			ta = new GetRandomNftaBU(this.mServices, this.mSize, this.mRankToAlphabetSize, this.mRankToRulesPerLetter,
 					acceptanceDouble).getResult();
 
 			if (i == 1) {
 				// Print some debug information
-				System.out.println("#Rules: " + tree.getAmountOfRules());
+				System.out.println("#Rules: " + ta.getAmountOfRules());
 			}
 
 			final String fileNamePost = "_" + i;
 			final Path automatonFile = pathToSaveBenchmark.resolve(fileName + fileNamePost + fileFormat);
 
-			Files.write(automatonFile, Collections.singletonList(this.mPreamble + tree + this.mPostamble));
+			Files.write(automatonFile, Collections.singletonList(this.mPreamble + ta + this.mPostamble));
 		}
 	}
 
