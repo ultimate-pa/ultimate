@@ -33,9 +33,9 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.stream.StreamSupport;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
@@ -74,6 +74,40 @@ public final class CompareTreeMinimization<LETTER extends IRankedLetter, STATE>
 	 * Name for the object of the log file.
 	 */
 	private static final String LOG_PATH_DATA = "testData.tsv";
+
+	/**
+	 * Logs the head message to the log file.
+	 * 
+	 * @param dataFile
+	 *            The file to log to
+	 */
+	private static void logHead(final Path dataFile) {
+		final ArrayList<String> columns = new ArrayList<>();
+		columns.add("name");
+		columns.add("size");
+		columns.add("rules");
+		columns.add("ordinary_type");
+		columns.add("ordinary_time");
+		columns.add("ordinary_timedOut");
+		columns.add("ordinary_oom");
+		columns.add("ordinary_size");
+		columns.add("ordinary_rules");
+		columns.add("hopcroft_type");
+		columns.add("hopcroft_time");
+		columns.add("hopcroft_timedOut");
+		columns.add("hopcroft_oom");
+		columns.add("hopcroft_size");
+		columns.add("hopcroft_rules");
+
+		final String line = String.join(LOG_SEPARATOR, columns);
+
+		try {
+			Files.write(dataFile, Collections.singletonList(line), StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+		} catch (final IOException e) {
+			e.printStackTrace();
+		}
+	}
+
 	/**
 	 * The name of the automaton.
 	 */
@@ -98,20 +132,23 @@ public final class CompareTreeMinimization<LETTER extends IRankedLetter, STATE>
 	/**
 	 * Compares the different types of methods for tree reduction. The operation has
 	 * no result, it automatically logs performance measurements to a log file.
+	 * 
+	 * @param <SF>
+	 *            A state factory that is able to merge states and create sink
+	 *            states
 	 *
 	 * @param services
 	 *            Service provider of Ultimate framework
-	 * @param mergeFactory
-	 *            The factory to use for merging states
-	 * @param sinkFactory
-	 *            The factory to use for creating sink states
+	 * @param mergeAndSinkFactory
+	 *            The factory to use for merging states and creating sink states
 	 * @param operand
 	 *            The tree automaton to compare with
 	 */
-	public CompareTreeMinimization(final AutomataLibraryServices services, final IMergeStateFactory<STATE> mergeFactory,
-			final ISinkStateFactory<STATE> sinkFactory, final ITreeAutomatonBU<LETTER, STATE> operand) {
+	public <SF extends IMergeStateFactory<STATE> & ISinkStateFactory<STATE>> CompareTreeMinimization(
+			final AutomataLibraryServices services, final SF mergeAndSinkFactory,
+			final ITreeAutomatonBU<LETTER, STATE> operand) {
 		super(services);
-		this.mSinkAndMergeFactory = new SinkAndMergeStateFactory<>(mergeFactory, sinkFactory);
+		this.mSinkAndMergeFactory = new SinkAndMergeStateFactory<>(mergeAndSinkFactory, mergeAndSinkFactory);
 		this.mOperand = operand;
 		this.mLoggedLines = new LinkedList<>();
 
@@ -119,25 +156,12 @@ public final class CompareTreeMinimization<LETTER extends IRankedLetter, STATE>
 			this.mLogger.info(startMessage());
 		}
 
-		final String automatonName = "";
-		// BufferedReader br = null;
-		// try {
-		// br = new BufferedReader(new FileReader(new File(LOG_PATH,
-		// "currentAutomatonName.txt")));
-		// while (br.ready()) {
-		// automatonName = br.readLine();
-		// }
-		// } catch (IOException e) {
-		// e.printStackTrace();
-		// } finally {
-		// if (br != null) {
-		// try {
-		// br.close();
-		// } catch (IOException e) {
-		// e.printStackTrace();
-		// }
-		// }
-		// }
+		String automatonName = "";
+		try {
+			automatonName = Files.lines(LOG_PATH.resolve("currentAutomatonName.txt")).findFirst().get();
+		} catch (final IOException e) {
+			e.printStackTrace();
+		}
 		this.mAutomatonName = automatonName;
 
 		measurePerformances();
@@ -173,8 +197,14 @@ public final class CompareTreeMinimization<LETTER extends IRankedLetter, STATE>
 
 		// Write to file
 		final Path dataFile = LOG_PATH.resolve(LOG_PATH_DATA);
+
+		if (!Files.exists(dataFile)) {
+			logHead(dataFile);
+		}
+
 		try {
-			Files.write(dataFile, this.mLoggedLines, StandardOpenOption.APPEND);
+			Files.write(dataFile, this.mLoggedLines, StandardOpenOption.APPEND, StandardOpenOption.CREATE,
+					StandardOpenOption.WRITE);
 		} catch (final IOException e) {
 			e.printStackTrace();
 		}
@@ -207,7 +237,7 @@ public final class CompareTreeMinimization<LETTER extends IRankedLetter, STATE>
 		final String[] misc = new String[] { this.mAutomatonName };
 		// Size, amountOfRules
 		final String[] beforeResults = new String[] { Integer.toString(this.mOperand.size()),
-				Long.toString(StreamSupport.stream(this.mOperand.getRules().spliterator(), false).count()) };
+				Integer.toString(this.mOperand.getAmountOfRules()) };
 
 		// Collect all results
 		final ArrayList<String> completeResults = new ArrayList<>();
@@ -269,7 +299,7 @@ public final class CompareTreeMinimization<LETTER extends IRankedLetter, STATE>
 		// Type, time, timedOut, outOfMemory, resultSize, resultAmountOfRules
 		final String[] results = new String[] { type, Long.toString(overallTime), Boolean.toString(timedOut),
 				Boolean.toString(outOfMemory), Integer.toString(resultingTree.size()),
-				Long.toString(StreamSupport.stream(resultingTree.getRules().spliterator(), false).count()) };
+				Integer.toString(resultingTree.getAmountOfRules()) };
 		return results;
 	}
 
