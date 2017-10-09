@@ -169,7 +169,7 @@ public class Elim1Store {
 							final Term replacement = asos.getArrayStore().getValue();
 							final Map<Term, Term> substitutionMapping = Collections.singletonMap(selectTerm,
 									replacement);
-							final Term updated = new Substitution(mMgdScript, substitutionMapping).transform(inputTerm);
+							final Term updated = new SubstitutionWithLocalSimplification(mMgdScript, substitutionMapping).transform(inputTerm);
 							final Term derTerm = QuantifierUtils.applyDerOperator(mScript, quantifier, selectIndex,
 									storeIndex);
 							derCase = QuantifierUtils.applyDualFiniteConnective(mScript, quantifier, derTerm, updated);
@@ -180,7 +180,7 @@ public class Elim1Store {
 									selectIndex);
 							final Map<Term, Term> substitutionMapping = Collections.singletonMap(selectTerm,
 									replacement);
-							final Term updated = new Substitution(mMgdScript, substitutionMapping).transform(inputTerm);
+							final Term updated = new SubstitutionWithLocalSimplification(mMgdScript, substitutionMapping).transform(inputTerm);
 							final Term antiDerTerm = QuantifierUtils.applyAntiDerOperator(mScript, quantifier,
 									selectIndex, storeIndex);
 							antiDerCase = QuantifierUtils.applyDualFiniteConnective(mScript, quantifier, antiDerTerm,
