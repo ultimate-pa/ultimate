@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
@@ -45,13 +46,16 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.IRankedLetter;
 import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
+import de.uni_freiburg.informatik.ultimate.automata.tree.operations.IsEquivalent;
 import de.uni_freiburg.informatik.ultimate.automata.tree.operations.Totalize;
+import de.uni_freiburg.informatik.ultimate.automata.tree.operations.minimization.performance.SinkMergeIntersectStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.DisjointSets;
 
 /**
  * Minimize a given treeAutomaton.
  * 
  * @author Mostafa M.A. (mostafa.amin93@gmail.com)
+ * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  *
  * @param <LETTER>
  *            letter of the tree automaton.
@@ -62,11 +66,16 @@ public class Minimize<LETTER extends IRankedLetter, STATE> extends GeneralOperat
 		implements IOperation<LETTER, STATE, IStateFactory<STATE>> {
 
 	private final TreeAutomatonBU<LETTER, STATE> mTreeAutomaton;
-	private final IMergeStateFactory<STATE> mStateFactory;
+	private final SinkMergeIntersectStateFactory<STATE> mStateFactory;
 
 	protected final ITreeAutomatonBU<LETTER, STATE> mResult;
 
 	private final Map<Set<STATE>, STATE> mMinimizedStates;
+
+	/**
+	 * The operand of this operation, i.e. the automaton to minimize.
+	 */
+	private final ITreeAutomatonBU<LETTER, STATE> mOperand;
 
 	/***
 	 * Constructor of Minimize operator
@@ -75,11 +84,12 @@ public class Minimize<LETTER extends IRankedLetter, STATE> extends GeneralOperat
 	 * @param factory
 	 * @param tree
 	 */
-	public <SF extends IMergeStateFactory<STATE> & ISinkStateFactory<STATE>> Minimize(
+	public <SF extends IMergeStateFactory<STATE> & ISinkStateFactory<STATE> & IIntersectionStateFactory<STATE>> Minimize(
 			final AutomataLibraryServices services, final SF factory, final ITreeAutomatonBU<LETTER, STATE> tree) {
 		super(services);
-		mTreeAutomaton = (TreeAutomatonBU<LETTER, STATE>) new Totalize<LETTER, STATE>(services, factory, tree).getResult();
-		mStateFactory = factory;
+		this.mOperand = tree;
+		mTreeAutomaton = (TreeAutomatonBU<LETTER, STATE>) new Totalize<>(services, factory, tree).getResult();
+		mStateFactory = new SinkMergeIntersectStateFactory<>(factory, factory, factory);
 		mMinimizedStates = new HashMap<>();
 		mResult = computeResult();
 	}
@@ -313,9 +323,25 @@ public class Minimize<LETTER extends IRankedLetter, STATE> extends GeneralOperat
 		return mResult;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * de.uni_freiburg.informatik.ultimate.automata.GeneralOperation#checkResult(de.
+	 * uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory)
+	 */
 	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
-		return true;
-	}
+		// Check language equivalence between input and result automaton
+		final IsEquivalent<LETTER, STATE> equivalenceCheck = new IsEquivalent<>(this.mServices, this.mStateFactory,
+				this.mOperand, this.mResult);
+		final boolean isEquivalent = equivalenceCheck.getResult().booleanValue();
 
+		if (!isEquivalent && this.mLogger.isInfoEnabled()) {
+			this.mLogger.info("Counterexample: " + equivalenceCheck.getCounterexample().get());
+		}
+
+		// TODO Also check whether the automaton is minimal
+		return isEquivalent;
+	}
 }

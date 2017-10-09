@@ -39,10 +39,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
 import de.uni_freiburg.informatik.ultimate.automata.tree.IRankedLetter;
@@ -50,6 +53,8 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.StringRankedLetter;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
+import de.uni_freiburg.informatik.ultimate.automata.tree.operations.IsEquivalent;
+import de.uni_freiburg.informatik.ultimate.automata.tree.operations.minimization.performance.SinkMergeIntersectStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.services.ToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 
@@ -149,10 +154,6 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 	 */
 	private final LinkedHashMap<STATE, LinkedHashSet<STATE>> mCompoundBlocks;
 	/**
-	 * Factory used to merge states.
-	 */
-	private final IMergeStateFactory<STATE> mMergeFactory;
-	/**
 	 * A boolean indicating if the input automaton has no final states. Used for a
 	 * fast termination.
 	 */
@@ -176,26 +177,40 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 	 * The resulting tree automaton after minimizing the operand.
 	 */
 	private ITreeAutomatonBU<LETTER, STATE> mResult;
+	/**
+	 * Factory used to create sink states, merge and intersect states.
+	 */
+	private final SinkMergeIntersectStateFactory<STATE> mSinkMergeIntersectFactory;
 
 	/**
 	 * Minimizes the given tree automaton operand. The result can be obtained by
 	 * using {@link #getResult()}.
 	 * 
+	 * @param <SF>
+	 *            Factory that is able to create sink states, merge and intersect
+	 *            states
+	 * 
 	 * @param services
 	 *            Ultimate services
-	 * @param mergeFactory
-	 *            The factory to use for merging states
+	 * @param sinkMergeIntersectFactory
+	 *            The factory to use for creating sink states, merge and intersect
+	 *            states
 	 * @param operand
 	 *            The operand tree automaton to minimize
 	 * @throws AutomataOperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public MinimizeNftaHopcroft(final AutomataLibraryServices services, final IMergeStateFactory<STATE> mergeFactory,
+	public <SF extends IMergeStateFactory<STATE> & ISinkStateFactory<STATE> & IIntersectionStateFactory<STATE>> MinimizeNftaHopcroft(
+			final AutomataLibraryServices services, final SF sinkMergeIntersectFactory,
 			final ITreeAutomatonBU<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		super(services);
 		// TODO Analyze complexity of algorithm (but improve it first)
-		this.mMergeFactory = mergeFactory;
+		// The algorithm itself only needs a merge factory. However to proof correctness
+		// (with enabled assertions) currently also sink and intersect factories are
+		// needed.
+		this.mSinkMergeIntersectFactory = new SinkMergeIntersectStateFactory<>(sinkMergeIntersectFactory,
+				sinkMergeIntersectFactory, sinkMergeIntersectFactory);
 		this.mOperand = operand;
 
 		this.mResult = null;
@@ -212,6 +227,27 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 		if (this.mLogger.isInfoEnabled()) {
 			this.mLogger.info(exitMessage());
 		}
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * de.uni_freiburg.informatik.ultimate.automata.GeneralOperation#checkResult(de.
+	 * uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory)
+	 */
+	@Override
+	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
+		// Check language equivalence between input and result automaton
+		final IsEquivalent<LETTER, STATE> equivalenceCheck = new IsEquivalent<>(this.mServices,
+				this.mSinkMergeIntersectFactory, this.mOperand, this.mResult);
+		final boolean isEquivalent = equivalenceCheck.getResult().booleanValue();
+
+		if (!isEquivalent && this.mLogger.isInfoEnabled()) {
+			this.mLogger.info("Counterexample: " + equivalenceCheck.getCounterexample().get());
+		}
+
+		return isEquivalent;
 	}
 
 	/*
@@ -481,7 +517,7 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 			final Set<STATE> block = partition.getEquivalenceClassMembers(representative);
 
 			// Merge the states of the block
-			final STATE mergedState = this.mMergeFactory.merge(block);
+			final STATE mergedState = this.mSinkMergeIntersectFactory.merge(block);
 			if (this.mLogger.isDebugEnabled()) {
 				this.mLogger.debug("Merged " + block + " to " + mergedState);
 			}

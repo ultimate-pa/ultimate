@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.StringRankedLetter;
+import de.uni_freiburg.informatik.ultimate.automata.tree.operations.GetRandomDftaBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.operations.GetRandomNftaBU;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.services.ToolchainStorage;
 
@@ -53,8 +54,7 @@ public final class RandomTaBenchmarkCreator {
 	 * Default path where the tree automata benchmark set gets saved if no other
 	 * path is specified.
 	 */
-	public static final Path DEFAULT_PATH = Paths.get(System.getProperty("user.home"), "Desktop",
-			"randomTaBenchmark");
+	public static final Path DEFAULT_PATH = Paths.get(System.getProperty("user.home"), "Desktop", "randomTaBenchmark");
 	/**
 	 * Default amount of created tree automata after which a logging message gets
 	 * printed.
@@ -87,14 +87,16 @@ public final class RandomTaBenchmarkCreator {
 	 */
 	public static void main(final String[] args) throws IOException, AutomataOperationCanceledException {
 		// Settings
-		final int n = 100;
+		final int n = 20;
 		final float acceptanceInPerc = 20;
 		final int[] rankToK = new int[] { 2, 1, 3, 1 };
-		final int[] rankToRulesPerLetter = new int[] { 10, 20, 15, 5 };
+		final int[] rankToRulesPerLetter = new int[] { 3, 7, 2, 3 };
 		final int amount = 100;
 		final int operationSwitch = 0;
+		final boolean createDeterministic = true;
 
-		createExplicitSet(n, rankToK, acceptanceInPerc, rankToRulesPerLetter, amount, operationSwitch);
+		createExplicitSet(n, rankToK, acceptanceInPerc, rankToRulesPerLetter, amount, operationSwitch,
+				createDeterministic);
 	}
 
 	/**
@@ -115,6 +117,8 @@ public final class RandomTaBenchmarkCreator {
 	 *            Amount of random tree automata to generate
 	 * @param operationSwitch
 	 *            Which operation to use
+	 * @param createDeterministic
+	 *            Whether only deterministic automata should be created
 	 * @throws IOException
 	 *             If an I/O-Exception occurred
 	 * @throws AutomataOperationCanceledException
@@ -122,8 +126,8 @@ public final class RandomTaBenchmarkCreator {
 	 *             framework.
 	 */
 	private static void createExplicitSet(final int n, final int[] rankToK, final float acceptanceInPerc,
-			final int[] rankToRulesPerLetter, final int amount, final int operationSwitch)
-			throws IOException, AutomataOperationCanceledException {
+			final int[] rankToRulesPerLetter, final int amount, final int operationSwitch,
+			final boolean createDeterministic) throws IOException, AutomataOperationCanceledException {
 		final String operation;
 		switch (operationSwitch) {
 		case 0:
@@ -148,14 +152,14 @@ public final class RandomTaBenchmarkCreator {
 
 		// Create the object and pass settings
 		final RandomTaBenchmarkCreator creator;
-		creator = new RandomTaBenchmarkCreator(n, rankToK, acceptanceInPerc, rankToRulesPerLetter);
+		creator = new RandomTaBenchmarkCreator(n, rankToK, acceptanceInPerc, rankToRulesPerLetter, createDeterministic);
 		creator.setPreamble(preamble);
 		creator.setPostamble(postamble);
 
 		System.out.println("Starting automata generation.");
 		String label;
 		label = "#" + amount + "_n" + n + "_k" + Arrays.toString(rankToK) + "_f" + acceptanceInPerc + "%_r"
-				+ Arrays.toString(rankToRulesPerLetter);
+				+ Arrays.toString(rankToRulesPerLetter) + "_det" + createDeterministic;
 
 		creator.createAndSaveABenchmark(amount, label);
 		System.out.println("Finished automata generation.");
@@ -197,6 +201,11 @@ public final class RandomTaBenchmarkCreator {
 	 * (both inclusive).
 	 */
 	private final float mAcceptance;
+
+	/**
+	 * Whether only deterministic automata should be created.
+	 */
+	private final boolean mCreateDeterministic;
 
 	/**
 	 * The text that gets saved in every following created ats-File right after the
@@ -248,15 +257,18 @@ public final class RandomTaBenchmarkCreator {
 	 *            and 100 (both inclusive)
 	 * @param rankToRulesPerLetter
 	 *            The amount of how many rules each letter should have, per rank
+	 * @param createDeterministic
+	 *            Whether only deterministic automata should be created
 	 * @throws IllegalArgumentException
 	 *             If a percentage value is not between 0 and 100 (inclusive)
 	 */
 	public RandomTaBenchmarkCreator(final int size, final int[] rankToAlphabetSize, final float acceptance,
-			final int[] rankToRulesPerLetter) throws IllegalArgumentException {
+			final int[] rankToRulesPerLetter, final boolean createDeterministic) throws IllegalArgumentException {
 		this.mSize = size;
 		this.mRankToAlphabetSize = rankToAlphabetSize;
 		this.mAcceptance = ensureIsPercentage(acceptance);
 		this.mRankToRulesPerLetter = rankToRulesPerLetter;
+		this.mCreateDeterministic = createDeterministic;
 
 		this.mServices = new AutomataLibraryServices(new ToolchainStorage());
 		this.mPreamble = "";
@@ -338,8 +350,13 @@ public final class RandomTaBenchmarkCreator {
 			}
 
 			// Generate the automaton
-			ta = new GetRandomNftaBU(this.mServices, this.mSize, this.mRankToAlphabetSize, this.mRankToRulesPerLetter,
-					acceptanceDouble).getResult();
+			if (this.mCreateDeterministic) {
+				ta = new GetRandomDftaBU(this.mServices, this.mSize, this.mRankToAlphabetSize,
+						this.mRankToRulesPerLetter, acceptanceDouble).getResult();
+			} else {
+				ta = new GetRandomNftaBU(this.mServices, this.mSize, this.mRankToAlphabetSize,
+						this.mRankToRulesPerLetter, acceptanceDouble).getResult();
+			}
 
 			if (i == 1) {
 				// Print some debug information

@@ -65,8 +65,7 @@ import de.uni_freiburg.informatik.ultimate.core.coreplugin.services.ToolchainSto
  *            The type of the states of the tree automata
  */
 public final class IsEquivalent<LETTER extends IRankedLetter, STATE>
-		extends GeneralOperation<LETTER, STATE, IStateFactory<STATE>>
-		implements IOperation<LETTER, STATE, IStateFactory<STATE>> {
+		extends GeneralOperation<LETTER, STATE, IStateFactory<STATE>> {
 	/**
 	 * Demo usage of the equivalence check. Also used for debugging purpose.
 	 *

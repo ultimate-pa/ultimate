@@ -28,18 +28,25 @@ package de.uni_freiburg.informatik.ultimate.automata.tree.operations.minimizatio
 
 import java.util.Collection;
 
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
 
 /**
- * State factory which is able to create sink states and merge states.
+ * State factory which is able to create sink states, merge and intersect
+ * states.
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  *
  * @param <STATE>
  *            The type of the states
  */
-public final class SinkAndMergeStateFactory<STATE> implements IMergeStateFactory<STATE>, ISinkStateFactory<STATE> {
+public final class SinkMergeIntersectStateFactory<STATE>
+		implements IMergeStateFactory<STATE>, ISinkStateFactory<STATE>, IIntersectionStateFactory<STATE> {
+	/**
+	 * Factory used to intersect states.
+	 */
+	private final IIntersectionStateFactory<STATE> mIntersectFactory;
 	/**
 	 * Factory used to merge states.
 	 */
@@ -50,18 +57,21 @@ public final class SinkAndMergeStateFactory<STATE> implements IMergeStateFactory
 	private final ISinkStateFactory<STATE> mSinkFactory;
 
 	/**
-	 * Creates a new sink and merge factory which delegates operations to the given
-	 * factories.
+	 * Creates a new sink, merge and intersect factory which delegates operations to
+	 * the given factories.
 	 * 
-	 * @param mergeFactory
-	 *            The merge factory to use
 	 * @param sinkFactory
 	 *            The sink factory to use
+	 * @param mergeFactory
+	 *            The merge factory to use
+	 * @param intersectFactory
+	 *            The intersect factory to use
 	 */
-	public SinkAndMergeStateFactory(final IMergeStateFactory<STATE> mergeFactory,
-			final ISinkStateFactory<STATE> sinkFactory) {
+	public SinkMergeIntersectStateFactory(final ISinkStateFactory<STATE> sinkFactory,
+			final IMergeStateFactory<STATE> mergeFactory, final IIntersectionStateFactory<STATE> intersectFactory) {
 		this.mMergeFactory = mergeFactory;
 		this.mSinkFactory = sinkFactory;
+		this.mIntersectFactory = intersectFactory;
 	}
 
 	/*
@@ -85,6 +95,11 @@ public final class SinkAndMergeStateFactory<STATE> implements IMergeStateFactory
 	@Override
 	public STATE createSinkStateContent() {
 		return this.mSinkFactory.createSinkStateContent();
+	}
+
+	@Override
+	public STATE intersection(final STATE state1, final STATE state2) {
+		return this.mIntersectFactory.intersection(state1, state2);
 	}
 
 	/*

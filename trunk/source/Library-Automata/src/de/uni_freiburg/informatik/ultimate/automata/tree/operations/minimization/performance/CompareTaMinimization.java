@@ -41,6 +41,8 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.performance.CompareReduceBuchiSimulation;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
@@ -50,9 +52,9 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.operations.minimization
 import de.uni_freiburg.informatik.ultimate.automata.tree.operations.minimization.hopcroft.MinimizeNftaHopcroft;
 
 /**
- * Operation that compares the different types of methods for tree automata reduction.
- * The operation has no result, it automatically logs performance measurements
- * to a log file.
+ * Operation that compares the different types of methods for tree automata
+ * reduction. The operation has no result, it automatically logs performance
+ * measurements to a log file.
  *
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  * @param <LETTER>
@@ -66,6 +68,7 @@ public final class CompareTaMinimization<LETTER extends IRankedLetter, STATE>
 	 * Path where performance measurement relevant logs and data gets saved.
 	 */
 	public static final Path LOG_PATH = Paths.get(System.getProperty("user.home"), "Desktop", "performanceMeasurement");
+
 	/**
 	 * Separator that is used in the log.
 	 */
@@ -74,6 +77,25 @@ public final class CompareTaMinimization<LETTER extends IRankedLetter, STATE>
 	 * Name for the object of the log file.
 	 */
 	private static final String LOG_PATH_DATA = "testData.tsv";
+
+	/**
+	 * Reads the log file and creates readable performance tables as HTML files.
+	 * 
+	 * @param args
+	 *            Not supported
+	 * @throws IOException
+	 *             If an I/O-Exception occurred
+	 */
+	public static void main(final String[] args) throws IOException {
+		System.out.println("Parsing log file...");
+		final Path dataFile = LOG_PATH.resolve(LOG_PATH_DATA);
+		final List<String> lines = Files.readAllLines(dataFile);
+
+		System.out.println("Creating html files...");
+		CompareReduceBuchiSimulation.tableToHtmlFile("instanceFullComparison", lines);
+
+		System.out.println("Terminated.");
+	}
 
 	/**
 	 * Logs the head message to the log file.
@@ -127,28 +149,31 @@ public final class CompareTaMinimization<LETTER extends IRankedLetter, STATE>
 	/**
 	 * Factory used to merge states and create sink states.
 	 */
-	private final SinkAndMergeStateFactory<STATE> mSinkAndMergeFactory;
+	private final SinkMergeIntersectStateFactory<STATE> mSinkAndMergeFactory;
 
 	/**
-	 * Compares the different types of methods for tree automata reduction. The operation has
-	 * no result, it automatically logs performance measurements to a log file.
+	 * Compares the different types of methods for tree automata reduction. The
+	 * operation has no result, it automatically logs performance measurements to a
+	 * log file.
 	 * 
 	 * @param <SF>
-	 *            A state factory that is able to merge states and create sink
-	 *            states
+	 *            A state factory that is able to merge and intersect states and
+	 *            also to create sink states
 	 *
 	 * @param services
 	 *            Service provider of Ultimate framework
-	 * @param mergeAndSinkFactory
-	 *            The factory to use for merging states and creating sink states
+	 * @param sinkMergeIntersectFactory
+	 *            The factory to use for merging and intersecting states and also
+	 *            for creating sink states
 	 * @param operand
 	 *            The tree automaton to compare with
 	 */
-	public <SF extends IMergeStateFactory<STATE> & ISinkStateFactory<STATE>> CompareTaMinimization(
-			final AutomataLibraryServices services, final SF mergeAndSinkFactory,
+	public <SF extends IMergeStateFactory<STATE> & ISinkStateFactory<STATE> & IIntersectionStateFactory<STATE>> CompareTaMinimization(
+			final AutomataLibraryServices services, final SF sinkMergeIntersectFactory,
 			final ITreeAutomatonBU<LETTER, STATE> operand) {
 		super(services);
-		this.mSinkAndMergeFactory = new SinkAndMergeStateFactory<>(mergeAndSinkFactory, mergeAndSinkFactory);
+		this.mSinkAndMergeFactory = new SinkMergeIntersectStateFactory<>(sinkMergeIntersectFactory,
+				sinkMergeIntersectFactory, sinkMergeIntersectFactory);
 		this.mOperand = operand;
 		this.mLoggedLines = new LinkedList<>();
 
@@ -157,11 +182,11 @@ public final class CompareTaMinimization<LETTER extends IRankedLetter, STATE>
 		}
 
 		String automatonName = "";
-		try {
-			automatonName = Files.lines(LOG_PATH.resolve("currentAutomatonName.txt")).findFirst().get();
-		} catch (final IOException e) {
-			e.printStackTrace();
-		}
+//		try {
+//			automatonName = Files.lines(LOG_PATH.resolve("currentAutomatonName.txt")).findFirst().get();
+//		} catch (final IOException e) {
+//			e.printStackTrace();
+//		}
 		this.mAutomatonName = automatonName;
 
 		measurePerformances();
