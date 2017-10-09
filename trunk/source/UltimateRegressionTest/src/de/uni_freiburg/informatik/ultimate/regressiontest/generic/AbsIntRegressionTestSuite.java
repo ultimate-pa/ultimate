@@ -48,7 +48,8 @@ public class AbsIntRegressionTestSuite extends AbstractRegressionTestSuite {
 		mRootFolder = TestUtil.getPathFromTrunk("examples/programs/abstractInterpretation/");
 
 		// exclude paths that match the following regex
-		mExcludeFilterRegex = ".*(CToBoogieTranslation|Backtranslation|lassos|termination|SignedIntegerOverflow).*";
+//		mExcludeFilterRegex = ".*(CToBoogieTranslation|Backtranslation|lassos|termination|SignedIntegerOverflow).*";
+		mExcludeFilterRegex = ".*(all|oct|non_con|all|CToBoogieTranslation|Backtranslation|lassos|termination|SignedIntegerOverflow).*";
 	}
 
 	@Override

@@ -24,16 +24,36 @@
  * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements;
+package de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain;
 
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.IEqNodeIdentifier;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.AbstractCCElementFactory;
+import java.util.function.BinaryOperator;
 
-public abstract class AbstractNodeAndFunctionFactory<NODE extends IEqNodeIdentifier<NODE>, CONTENT>
-			extends AbstractCCElementFactory<NODE, CONTENT> {
+public enum VPStatistics {
+	MAX_WEQGRAPH_SIZE, MAX_SIZEOF_WEQEDGELABEL, NO_SUPPORTING_EQUALITIES, NO_SUPPORTING_DISEQUALITIES;
 
-	public abstract NODE getOrConstructNode(CONTENT c);
 
-	public abstract NODE getExistingNode(CONTENT term);
+	public static BinaryOperator<Integer> getAggregator(final VPStatistics vps) {
+		switch (vps) {
+		case MAX_WEQGRAPH_SIZE:
+		case MAX_SIZEOF_WEQEDGELABEL:
+			return Math::max;
+		case NO_SUPPORTING_EQUALITIES:
+		case NO_SUPPORTING_DISEQUALITIES:
+			return (i1, i2) -> i1 + i2;
+		default :
+			throw new UnsupportedOperationException();
+		}
+	}
+
+	public static Integer getInitialValue(final VPStatistics vps) {
+		switch (vps) {
+		case MAX_WEQGRAPH_SIZE:
+		case MAX_SIZEOF_WEQEDGELABEL:
+		case NO_SUPPORTING_EQUALITIES:
+		case NO_SUPPORTING_DISEQUALITIES:
+			return 0;
+		default :
+			throw new UnsupportedOperationException();
+		}
+	}
 }
-

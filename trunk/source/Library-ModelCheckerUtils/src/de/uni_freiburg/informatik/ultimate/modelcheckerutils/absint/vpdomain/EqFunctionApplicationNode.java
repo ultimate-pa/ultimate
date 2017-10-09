@@ -25,11 +25,7 @@
  * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements;
-
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+package de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
@@ -39,50 +35,68 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  */
-public class EqAtomicBaseNode extends EqNode {
+public class EqFunctionApplicationNode extends EqNode {
 
-	private final boolean mIsLiteral;
-	private final Set<EqNonAtomicBaseNode> mDependentNonAtomicNodes = new HashSet<>();
+	private final EqNode mFunction;
+//	private final List<EqNode> mArgs;
+	private final EqNode mArg;
 
-	public EqAtomicBaseNode(final Term term, final boolean isLiteral, final EqNodeAndFunctionFactory eqNodeAndFunctionFactory) {
-		super(term, eqNodeAndFunctionFactory);
-//		mIsLiteral = term instanceof ConstantTerm
-//				|| SmtUtils.isTrue(term)
-//				|| SmtUtils.isFalse(term);
-		mIsLiteral = isLiteral;
-	}
+//	public EqFunctionApplicationNode(final EqNode function, final List<EqNode> args, final Term term,
+	public EqFunctionApplicationNode(final EqNode function, final EqNode arg, final Term term,
+			final EqNodeAndFunctionFactory eqNodeFactory) {
+		super(term, eqNodeFactory);
+//		assert args.size() == function.getArity();
+//		assert args.size() > 0;
 
-	@Override
-	public String toString() {
-		return mTerm.toString();
-	}
-
-	@Override
-	public boolean isLiteral() {
-		return mIsLiteral;
-	}
-
-	public void addDependentNonAtomicBaseNode(final EqNonAtomicBaseNode node) {
-		mDependentNonAtomicNodes.add(node);
-	}
-
-	public Set<EqNonAtomicBaseNode> getDependentNonAtomicBaseNodes() {
-		return Collections.unmodifiableSet(mDependentNonAtomicNodes);
-	}
-
-//	@Override
-//	public List<EqNode> getArguments() {
-//		throw new IllegalStateException("check for isFunctionApplication() first");
-//	}
-
-	@Override
-	public boolean isFunctionApplication() {
-		return false;
+		mFunction = function;
+//		mArgs = Collections.unmodifiableList(args);
+		mArg = arg;
 	}
 
 	@Override
 	public EqNode getAppliedFunction() {
-		throw new IllegalStateException("check for isFunctionApplication() first");
+		return mFunction;
+	}
+
+	@Override
+	public EqNode getArgument() {
+		return mArg;
+	}
+
+//	@Override
+//	public List<EqNode> getArguments() {
+//		return mArgs;
+//	}
+
+//	@Override
+//	public String toString() {
+//		return mFunction.toString() + mArgs.toString();
+//	}
+
+	@Override
+	public boolean isLiteral() {
+		// a function node is never a literal
+		return false;
+	}
+
+	@Override
+	public boolean isFunctionApplication() {
+		return true;
+	}
+
+	@Override
+	public String toString() {
+		return mFunction.toString() + "[" + mArg.toString() + "]";
+	}
+
+	@Override
+	public EqNode replaceAppliedFunction(final EqNode replacer) {
+		return mEqNodeFactory.getOrConstructFuncAppElement(replacer, mArg);
+	}
+
+	@Override
+	public EqNode replaceArgument(final EqNode replacer) {
+		return mEqNodeFactory.getOrConstructFuncAppElement(mFunction, replacer);
 	}
 
 	@Override
@@ -90,7 +104,9 @@ public class EqAtomicBaseNode extends EqNode {
 		if (this.equals(replacee)) {
 			return replacer;
 		} else {
-			return this;
+			return mEqNodeFactory.getOrConstructFuncAppElement(mFunction.replaceSubNode(replacer, replacee),
+					mArg.replaceSubNode(replacer, replacee));
 		}
 	}
+
 }

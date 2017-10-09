@@ -24,7 +24,7 @@
  * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states;
+package de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -39,9 +39,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.IEqNodeIdentifier;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainHelpers;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.AbstractNodeAndFunctionFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CongruenceClosureComparator;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
@@ -58,7 +55,7 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 
 	private final EqConstraint<NODE> mEmptyConstraint;
 
-	private EqStateFactory mEqStateFactory;
+//	private EqStateFactory mEqStateFactory;
 
 	private final AbstractNodeAndFunctionFactory<NODE, Term> mEqNodeAndFunctionFactory;
 
@@ -338,13 +335,13 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 		return unfrozen;
 	}
 
-	public EqStateFactory getEqStateFactory() {
-		return mEqStateFactory;
-	}
-
-	public void setEqStateFactory(final EqStateFactory eqStateFactory) {
-		mEqStateFactory = eqStateFactory;
-	}
+//	public EqStateFactory getEqStateFactory() {
+//		return mEqStateFactory;
+//	}
+//
+//	public void setEqStateFactory(final EqStateFactory eqStateFactory) {
+//		mEqStateFactory = eqStateFactory;
+//	}
 
 	public AbstractNodeAndFunctionFactory<NODE, Term> getEqNodeAndFunctionFactory() {
 		return mEqNodeAndFunctionFactory;

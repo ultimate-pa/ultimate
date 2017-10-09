@@ -5,6 +5,7 @@ Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils
 Bundle-Version: 0.1.23
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Export-Package: de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint,
+ de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain,
  de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie,
  de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.normalforms,
  de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg,

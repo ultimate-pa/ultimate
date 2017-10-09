@@ -35,6 +35,11 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPostOperator;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.EqConstraint;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.EqConstraintFactory;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.EqDisjunctiveConstraint;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.EqNode;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.EqNodeAndFunctionFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
@@ -43,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.MonolithicImplicationChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -51,12 +57,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.Pred
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermDomainOperationProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.TransFormulaConverterCache;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainPreanalysis;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.EqConstraint;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.EqConstraintFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.EqDisjunctiveConstraint;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.EqOperationProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.EqPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.EqState;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.EqStateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.EqTransitionRelation;
 
 /**
@@ -92,14 +95,18 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 
+	private final EqStateFactory mEqStateFactory;
+
 	public EqPostOperator(final IUltimateServiceProvider services, final ILogger logger,
 			final EqNodeAndFunctionFactory eqNodeAndFunctionFactory,
-			final EqConstraintFactory<EqNode> eqConstraintFactory, final VPDomainPreanalysis preAnalysis) {
+			final EqConstraintFactory<EqNode> eqConstraintFactory, final VPDomainPreanalysis preAnalysis,
+			final EqStateFactory eqStateFactory) {
 		mEqNodeAndFunctionFactory = eqNodeAndFunctionFactory;
 		mEqConstraintFactory = eqConstraintFactory;
 		mPreAnalysis = preAnalysis;
 		mMgdScript = preAnalysis.getManagedScript();
 		mCfgSmtToolkit = preAnalysis.getCfgSmtToolkit();
+		mEqStateFactory = eqStateFactory;
 
 		mServices = services;
 		mLogger = logger;
@@ -118,7 +125,7 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 	@Override
 	public List<EqState> apply(final EqState oldState, final ACTION transition) {
 		if (!mPreAnalysis.getServices().getProgressMonitorService().continueProcessing()) {
-			return mEqConstraintFactory.getTopDisjunctiveConstraint().toEqStates(oldState.getVariables());
+			return toEqStates(mEqConstraintFactory.getTopDisjunctiveConstraint(), oldState.getVariables());
 		}
 
 		final EqTransitionRelation transitionRelation =
@@ -126,15 +133,37 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 
 		final EqDisjunctiveConstraint<EqNode> postConstraint =
 				mPredicateTransformer.strongestPostcondition(oldState.toEqPredicate(), transitionRelation);
-		final List<EqState> result = postConstraint.toEqStates(oldState.getVariables());
+		final List<EqState> result = toEqStates(postConstraint, oldState.getVariables());
 		assert result.stream().allMatch(state -> state.getVariables().containsAll(oldState.getVariables()));
 		if (mDebug) {
 			mLogger.debug(postConstraint.getDebugInfo());
 			assert preciseStrongestPostImpliesAbstractPost(oldState, transition,
-					mEqConstraintFactory.getEqStateFactory().statesToPredicate(result)) : "soundness check failed!";
+					mEqStateFactory.statesToPredicate(result)) : "soundness check failed!";
 		}
 		return result;
 	}
+
+	/**
+	 * Convert an EqDisjunctiveConstraints to a corresponding set of EqStates. (Assumes that all the TermVariables
+	 *  and nullary ApplicationTerms in this.mConstraints have a symbol table entry.)
+	 * @param variablesThatTheFrameworkLikesToSee
+	 * @return
+	 */
+	public List<EqState> toEqStates(final EqDisjunctiveConstraint<EqNode> disjunctiveConstraint,
+			final Set<IProgramVarOrConst> variablesThatTheFrameworkLikesToSee) {
+//		/*
+//		 *  The AbstractInterpretation framework demands that all EqStates here have the same Pvocs
+//		 *  Thus we set the Pvocs of all the disjunct-states to be the union of the pvocs that each
+//		 *  disjunct-state/constraint talks about.
+		  // EDIT: the variables are now determined externally (by the oldstate of the post operator..)
+//		 */
+		return disjunctiveConstraint.getConstraints().stream()
+			.map(cons -> mEqStateFactory.getEqState(cons, variablesThatTheFrameworkLikesToSee))
+			.collect(Collectors.toList());
+	}
+
+
+
 
 	private boolean preciseStrongestPostImpliesAbstractPost(final EqState oldState, final ACTION transition,
 			final IPredicate postConstraint) {
@@ -142,7 +171,7 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 		final Term spPrecise = mDoubleCheckPredicateTransformer.strongestPostcondition(oldState.toEqPredicate(),
 				transition.getTransformula());
 		final EqPredicate spPred =
-				mEqConstraintFactory.getEqStateFactory().termToPredicate(spPrecise, postConstraint);
+				mEqStateFactory.termToPredicate(spPrecise, postConstraint);
 
 		final Validity icRes = mDoubleCheckImplicationChecker.checkImplication(spPred, false, postConstraint, false);
 		assert icRes != Validity.INVALID : "soundness check failed!";
@@ -158,8 +187,7 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 				.containsAll(mCfgSmtToolkit.getSymbolTable().getLocals(transition.getSucceedingProcedure()));
 
 		if (!mPreAnalysis.getServices().getProgressMonitorService().continueProcessing()) {
-			return mEqConstraintFactory.getTopDisjunctiveConstraint()
-					.toEqStates(hierarchicalPrestate.getVariables());
+			return toEqStates(mEqConstraintFactory.getTopDisjunctiveConstraint(), hierarchicalPrestate.getVariables());
 		}
 
 		if (transition instanceof ICallAction) {
@@ -180,8 +208,7 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 			final EqDisjunctiveConstraint<EqNode> postConstraint = mPredicateTransformer
 					.strongestPostconditionCall(stateBeforeLeaving.toEqPredicate(), localVarAssignments,
 							globalVarAssignments, oldVarAssignments, modifiableGlobalsOfCalledProcedure);
-			final List<EqState> result =
-					postConstraint.toEqStates(hierarchicalPrestate.getVariables());
+			final List<EqState> result = toEqStates(postConstraint, hierarchicalPrestate.getVariables());
 			return result;
 		} else if (transition instanceof IReturnAction) {
 
@@ -194,7 +221,7 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 					oldVars.stream().map(ov -> ov.getTermVariable()).collect(Collectors.toSet());
 			final EqConstraint<EqNode> projectedCons = mEqConstraintFactory.projectExistentially(ovTvs,
 					hierarchicalPrestate.getConstraint());
-			final EqState hier = mEqConstraintFactory.getEqStateFactory().getEqState(projectedCons,
+			final EqState hier = mEqStateFactory.getEqState(projectedCons,
 					hierarchicalPrestate.getVariables());
 
 			final EqPredicate callPred = hier.toEqPredicate();
@@ -213,8 +240,7 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 					mPredicateTransformer.strongestPostconditionReturn(returnPred, callPred, returnTF, callTF,
 							oldVarAssignments, modifiableGlobals);
 
-			final List<EqState> result =
-					postConstraint.toEqStates(hierarchicalPrestate.getVariables());
+			final List<EqState> result = toEqStates(postConstraint, hierarchicalPrestate.getVariables());
 			return result;
 		} else {
 			throw new UnsupportedOperationException();

@@ -24,25 +24,15 @@
  * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements;
+package de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain;
 
-///**
-// *
-// * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
-// *
-// * @param <NODE>
-// * @param <FUNCTION>
-// */
-//public interface IEqFunctionIdentifier<NODE extends IEqNodeIdentifier<NODE, FUNCTION>,
-//	FUNCTION extends IEqFunctionIdentifier<NODE, FUNCTION>> {
-//
-//	FUNCTION renameVariables(Map<Term, Term> substitutionMapping);
-//
-//	int getArity();
-//
-//	Term getTerm();
-//
-//	String getFunctionName();
-//
-//	MultiDimensionalSort getSort();
-//}
+import de.uni_freiburg.informatik.ultimate.util.datastructures.AbstractCCElementFactory;
+
+public abstract class AbstractNodeAndFunctionFactory<NODE extends IEqNodeIdentifier<NODE>, CONTENT>
+			extends AbstractCCElementFactory<NODE, CONTENT> {
+
+	public abstract NODE getOrConstructNode(CONTENT c);
+
+	public abstract NODE getExistingNode(CONTENT term);
+}
+

@@ -24,7 +24,7 @@
  * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states;
+package de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -38,10 +38,7 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.IEqNodeIdentifier;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPStatistics;
 
 /**
  *
@@ -111,24 +108,6 @@ public class EqDisjunctiveConstraint<
 			return mConstraints.iterator().next();
 		}
 		return mConstraints.stream().reduce((c1, c2) -> c1.join(c2)).get();
-	}
-
-	/**
-	 * Convert this EqDisjunctiveConstraints to a corresponding set of EqStates. (Assumes that all the TermVariables
-	 *  and nullary ApplicationTerms in this.mConstraints have a symbol table entry.)
-	 * @param variablesThatTheFrameworkLikesToSee
-	 * @return
-	 */
-	public List<EqState> toEqStates(final Set<IProgramVarOrConst> variablesThatTheFrameworkLikesToSee) {
-//		/*
-//		 *  The AbstractInterpretation framework demands that all EqStates here have the same Pvocs
-//		 *  Thus we set the Pvocs of all the disjunct-states to be the union of the pvocs that each
-//		 *  disjunct-state/constraint talks about.
-		  // EDIT: the variables are now determined externally (by the oldstate of the post operator..)
-//		 */
-		return mConstraints.stream()
-			.map(cons -> mFactory.getEqStateFactory().getEqState(cons, variablesThatTheFrameworkLikesToSee))
-			.collect(Collectors.toList());
 	}
 
 	public boolean isEmpty() {

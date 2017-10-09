@@ -33,20 +33,22 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.EqConstraint;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.EqConstraintFactory;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.EqDisjunctiveConstraint;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.EqNode;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.EqNodeAndFunctionFactory;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.IEqNodeIdentifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.IEqNodeIdentifier;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNode;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNodeAndFunctionFactory;
 
 /**
  *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
- * @param <ACTION>
  */
 public class EqStateFactory {
 
@@ -86,12 +88,10 @@ public class EqStateFactory {
 		return mEqNodeAndFunctionFactory;
 	}
 
-	public <NODE extends IEqNodeIdentifier<NODE>>
-		EqState getEqState(final EqConstraint<NODE> constraint,
+	public <NODE extends IEqNodeIdentifier<NODE>> EqState getEqState(final EqConstraint<NODE> constraint,
 				final Set<IProgramVarOrConst> variables) {
-		// TODO something smarter
-		return new EqState((EqConstraint<EqNode>) constraint,
-				mEqNodeAndFunctionFactory, this, variables);
+		// TODO manage EqStates smarter?
+		return new EqState((EqConstraint<EqNode>) constraint, mEqNodeAndFunctionFactory, this, variables);
 	}
 
 	public EqConstraintFactory<EqNode> getEqConstraintFactory() {
@@ -110,10 +110,6 @@ public class EqStateFactory {
 		return new EqPredicate(
 				getEqConstraintFactory().getDisjunctiveConstraint(Collections.singleton(state.getConstraint())),
 				state.getConstraint().getVariables(getSymbolTable()),
-				// mVariables.stream()
-				// .filter(pvoc -> (pvoc instanceof IProgramVar))
-				// .map(pvoc -> ((IProgramVar) pvoc))
-				// .collect(Collectors.toSet()),
 				null,
 				getSymbolTable(),
 				getManagedScript()); // TODO: what procedures does the predicate need?
@@ -131,10 +127,6 @@ public class EqStateFactory {
 		return new EqPredicate(
 				getEqConstraintFactory().getDisjunctiveConstraint(constraints),
 				variables,
-				// mVariables.stream()
-				// .filter(pvoc -> (pvoc instanceof IProgramVar))
-				// .map(pvoc -> ((IProgramVar) pvoc))
-				// .collect(Collectors.toSet()),
 				null,
 				getSymbolTable(),
 				getManagedScript()); // TODO: what procedures does the predicate need?
