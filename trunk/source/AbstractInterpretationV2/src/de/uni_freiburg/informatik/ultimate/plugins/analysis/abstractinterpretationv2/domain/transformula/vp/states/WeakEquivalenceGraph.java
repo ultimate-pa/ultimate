@@ -1256,7 +1256,6 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 						return Collections.emptySet();
 					}
 					final CongruenceClosure<NODE>	meet = mCcManager.getMeet(mLabel.get(i), groundPartialArrangement);
-	//				final CongruenceClosure<NODE>	meet = mCcManager.getMeet(mLabel.get(i), mPartialArrangement);
 					if (meet.isInconsistent()) {
 						/* label element is inconsistent with the current gpa
 						 * --> omit it from the new label
@@ -1289,19 +1288,15 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 					 * <li>  and projectToElements would keep both blocks
 					 *
 					 * EDIT: actually, a fix to projectToElements, removes the necessity for
-					 *   removeSimpleElementWithReplacementPreference at this place (--> we keep the constraint
+					 *   "removeSimpleElementWithReplacementPreference" at this place (--> we keep the constraint
 					 *     {a[j] = i} by detecting that j = q)
 					 */
-//					meet.removeSimpleElementWithReplacementPreference(elem, mFactory.getAllWeqNodes());
 					meet.removeSimpleElement(elem);
-//					meet.transformElementsAndFunctions(node -> node.replaceSubNode(replacer, replacee));
 
 					/*
-					 * the removeSimpleElement may have added elements (function applications) to meet that are not in
+					 * the removeSimpleElement may have added elements (function applications) to meet that are not
+					 * known to mPartialArrangement --> collect them here and add them later
 					 */
-//					result.addAll(DataStructureUtils.difference(meet.getAllElements(),
-//									DataStructureUtils.union(groundPartialArrangement.getAllElements(),
-//											mFactory.getAllWeqNodes())));
 					// TODO: seems hacky..
 					final Stream<NODE> nodeToAddToGpa = meet.getAllElements().stream().filter(e ->
 							!groundPartialArrangement.getAllElements().contains(e)
@@ -1309,7 +1304,6 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 							&& (mPartialArrangement.getElementCurrentlyBeingRemoved() == null ||
 									!CongruenceClosure.dependsOnAny(e, Collections.singleton(
 													mPartialArrangement.getElementCurrentlyBeingRemoved().getElem()))));
-//									Collections.singleton(e)));
 					nodeToAddToGpa.forEach(result::add);
 					assert result.stream().allMatch(n -> n.isFunctionApplication()) : "cannot think of another case "
 							+ "right now..";

@@ -180,21 +180,21 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 		return result;
 	}
 
-	@Override
-	protected boolean addElementRec(final NODE elem) {
-		assert !mFactory.getAllWeqNodes().contains(elem);
-
-		final boolean elemIsNew = super.addElementRec(elem);
-		if (!elemIsNew) {
-			return false;
-		}
-
-//		executeFloydWarshallAndReportResult();
-//		reportAllArrayEqualitiesFromWeqGraph();
-
-//		assert weqGraphFreeOfArrayEqualities();
-		return true;
-	}
+//	@Override
+//	protected boolean addElementRec(final NODE elem) {
+//		assert !mFactory.getAllWeqNodes().contains(elem);
+//
+//		final boolean elemIsNew = super.addElementRec(elem);
+//		if (!elemIsNew) {
+//			return false;
+//		}
+//
+////		executeFloydWarshallAndReportResult();
+////		reportAllArrayEqualitiesFromWeqGraph();
+//
+////		assert weqGraphFreeOfArrayEqualities();
+//		return true;
+//	}
 
 	@Override
 	protected CongruenceClosure<NODE> alignElementsAndFunctions(final CongruenceClosure<NODE> otherCC) {
@@ -773,7 +773,7 @@ public class WeqCongruenceClosure<ACTION extends IIcfgTransition<IcfgLocation>, 
 
 
 		if (mElementCurrentlyBeingRemoved == null) {
-			mElementCurrentlyBeingRemoved = new RemovalInfo(elem, getOtherEquivalenceClassMember(elem, null));
+			mElementCurrentlyBeingRemoved = new RemovalInfo(elem, getOtherEquivalenceClassMember(elem));
 		} else {
 			// this may happen if elem is a dependent element, check that through the assert..
 			assert mNodeToDependents.entrySet().stream()

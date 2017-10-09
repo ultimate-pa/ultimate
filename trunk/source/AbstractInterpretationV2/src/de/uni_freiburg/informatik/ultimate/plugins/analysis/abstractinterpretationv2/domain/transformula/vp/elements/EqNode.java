@@ -98,32 +98,10 @@ public abstract class EqNode implements IEqNodeIdentifier<EqNode>, ICongruenceCl
 		throw new UnsupportedOperationException("check isDependent first");
 	}
 
-//	@Override
-//	public Collection<EqFunction> getSupportingFunctions() {
-//		// this is the default case NonAtomicBaseNode must override this
-//		throw new UnsupportedOperationException("check isDependent first");
-//	}
-
-
-
-//	@Override
-//	public String getFunctionName() {
-//		assert isFunction();
-////		assert false : "what's the right string here?";
-////		return mPvoc.toString();
-//		return mTerm.toString();
-//	}
-
 	@Override
 	public boolean isFunction() {
 		return mMdSort != null;
 	}
-
-//	@Override
-//	public int getArity() {
-//		assert isFunction();
-//		return mMdSort.getDimension();
-//	}
 
 	@Override
 	public String toString() {
