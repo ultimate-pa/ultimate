@@ -179,6 +179,7 @@ public class IcfgLoopTransformerMohr<INLOC extends IcfgLocation, OUTLOC extends 
 
 	}
 
+	@SuppressWarnings("unchecked")
 	private UnmodifiableTransFormula transformLoop(final IcfgLoop<INLOC> loop) {
 		final List<Map<IProgramVar, Term>> pathSymbolicMemory = new ArrayList<>();
 		final List<UnmodifiableTransFormula> pathGuards = new ArrayList<>();
@@ -192,10 +193,20 @@ public class IcfgLoopTransformerMohr<INLOC extends IcfgLocation, OUTLOC extends 
 			pathSymbolicMemory.add(new HashMap<>());
 			final List<UnmodifiableTransFormula> formulas = new ArrayList<>();
 			for (final IcfgEdge edge : path) {
+				if (loop.getNestedLoopHeads().contains(edge.getSource())) {
+					// compute summary of nested loop and add them to the path
+					formulas.add(transformLoop(loop.getNestedLoop((INLOC) edge.getSource())));
+					mLogger.debug("nested Loop @" + edge.getSource() + " : " + formulas.get(formulas.size() - 1));
+				}
 				formulas.add(edge.getTransformula());
 			}
 			final UnmodifiableTransFormula composition = TransFormulaUtils.sequentialComposition(mLogger, mServices,
 					mManagedScript, false, false, false, null, SimplificationTechnique.NONE, formulas);
+			mLogger.debug("Path formulas: " + formulas);
+			mLogger.debug("Composition: " + composition);
+			final ApplicationTerm dnf = (ApplicationTerm) SmtUtils.toDnf(mServices, mManagedScript, composition.getFormula(), XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+			mLogger.debug("DNF: " + dnf.toStringDirect());
+
 			final SimultaneousUpdate su = new SimultaneousUpdate(composition, mManagedScript);
 			final Map<IProgramVar, Term> varUpdates = su.getUpdatedVars();
 			final Set<IProgramVar> havocVars = su.getHavocedVars();

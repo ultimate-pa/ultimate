@@ -30,8 +30,10 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.moh
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -42,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class IcfgLoop<INLOC extends IcfgLocation> {
 
-	private final Set<IcfgLoop<INLOC>> mNestedLoops;
+	private final Map<INLOC, IcfgLoop<INLOC>> mNestedLoops;
 	private final Set<INLOC> mLoopbody;
 	private final INLOC mHead;
 	private final Set<INLOC> mNestedNodes;
@@ -55,7 +57,7 @@ public class IcfgLoop<INLOC extends IcfgLocation> {
 	}
 
 	public IcfgLoop(final IUltimateServiceProvider services, final Set<INLOC> loopNodes, final INLOC head) {
-		mNestedLoops = new HashSet<>();
+		mNestedLoops = new HashMap<>();
 		mLoopbody = new HashSet<>(loopNodes);
 		mHead = head;
 		mNestedNodes = new HashSet<>();
@@ -68,27 +70,31 @@ public class IcfgLoop<INLOC extends IcfgLocation> {
 		mLoopbody.addAll(loopNodes);
 	}
 
-	public void addNestedLoop(final IcfgLoop<INLOC> loopNodes) {
-		for (final IcfgLoop<INLOC> nestedLoop : mNestedLoops) {
-			if (nestedLoop.contains(loopNodes.getHead())) {
-				nestedLoop.addNestedLoop(loopNodes);
-				mNestedNodes.addAll(loopNodes.getLoopbody());
+	public void addNestedLoop(final IcfgLoop<INLOC> loop) {
+		for (final IcfgLoop<INLOC> nestedLoop : mNestedLoops.values()) {
+			if (nestedLoop.contains(loop.getHead())) {
+				nestedLoop.addNestedLoop(loop);
+				mNestedNodes.addAll(loop.getLoopbody());
 				return;
 			}
 		}
 
-		mNestedLoops.add(loopNodes);
-		mNestedNodes.addAll(loopNodes.getLoopbody());
-		mNestedNodes.remove(loopNodes.mHead);
+		mNestedLoops.put(loop.getHead(), loop);
+		mNestedNodes.addAll(loop.getLoopbody());
+		mNestedNodes.remove(loop.getHead());
 	}
 
 	public boolean hasNestedLoops() {
 		return !mNestedLoops.isEmpty();
 	}
 
-	public Set<IcfgLoop<INLOC>> getNestedLoops() {
-		return mNestedLoops;
+	public IcfgLoop<INLOC> getNestedLoop(INLOC loopHead) {
+		return mNestedLoops.get(loopHead);
 	}
+
+	public Set<INLOC> getNestedLoopHeads() {
+		return mNestedLoops.keySet();
+	};
 
 	public Set<INLOC> getLoopbody() {
 		return mLoopbody;
