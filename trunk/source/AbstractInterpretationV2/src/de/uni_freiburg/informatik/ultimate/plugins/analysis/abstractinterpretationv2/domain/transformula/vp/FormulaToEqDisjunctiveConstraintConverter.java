@@ -30,7 +30,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.Deque;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -45,19 +45,12 @@ import de.uni_freiburg.informatik.ultimate.logic.LetTerm;
 import de.uni_freiburg.informatik.ultimate.logic.NonRecursive;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
-import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.NnfTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.NnfTransformer.QuantifierHandling;
@@ -66,9 +59,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.EqConstraint;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.EqConstraintFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.EqDisjunctiveConstraint;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.EqTransitionRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.BidirectionalMap;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  *
@@ -76,10 +67,11 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *
  * @param <ACTION>
  */
-public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTransition<IcfgLocation>>
+public class FormulaToEqDisjunctiveConstraintConverter<ACTION extends IIcfgTransition<IcfgLocation>>
 		extends NonRecursive {
 
-	private final TransFormula mTf;
+	private final Term mFormula;
+
 	private EqDisjunctiveConstraint<ACTION, EqNode> mResultConstraint;
 
 	private final EqConstraintFactory<ACTION, EqNode> mEqConstraintFactory;
@@ -87,26 +79,26 @@ public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTrans
 	private final ManagedScript mMgdScript;
 	private final IUltimateServiceProvider mServices;
 
-	private final VPDomainPreanalysis mPreAnalysis;
-
 	private final Term mTrueTerm;
 	private final Term mFalseTerm;
 
 	/**
 	 * stores intermediate results of the "recursion"
 	 */
-	private final ArrayDeque<EqDisjunctiveConstraint<ACTION, EqNode>> mResultStack = new ArrayDeque<>();
+	private final Deque<EqDisjunctiveConstraint<ACTION, EqNode>> mResultStack = new ArrayDeque<>();
 
-	public ConvertTransformulaToEqTransitionRelation(final TransFormula tf,
+	public FormulaToEqDisjunctiveConstraintConverter(
+			final IUltimateServiceProvider services,
+			final ManagedScript mgdScript,
 			final EqConstraintFactory<ACTION, EqNode> eqConstraintFactory,
-			final EqNodeAndFunctionFactory eqNodeAndFunctionFactory, final VPDomainPreanalysis preAnalysis) {
-		mTf = tf;
+			final EqNodeAndFunctionFactory eqNodeAndFunctionFactory,
+			final Term formula) {
+		mFormula = formula;
 		mEqConstraintFactory = eqConstraintFactory;
 		mEqNodeAndFunctionFactory = eqNodeAndFunctionFactory;
 
-		mPreAnalysis = preAnalysis;
-		mMgdScript = preAnalysis.getManagedScript();
-		mServices = preAnalysis.getServices();
+		mMgdScript = mgdScript;
+		mServices = services;
 
 		mMgdScript.lock(this);
 		mTrueTerm = mMgdScript.term(this, "true");
@@ -117,12 +109,12 @@ public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTrans
 	}
 
 	private void computeResult() {
-		final Term transFormulaInNnf = new NnfTransformer(mMgdScript, mServices, QuantifierHandling.CRASH)
-				.transform(mTf.getFormula());
+		final Term formulaInNnf = new NnfTransformer(mMgdScript, mServices, QuantifierHandling.CRASH)
+				.transform(mFormula);
 
 		final StoreChainSquisher scs = new StoreChainSquisher();
 		final List<Term> conjunction = new ArrayList<>();
-		conjunction.add(scs.transform(transFormulaInNnf));
+		conjunction.add(scs.transform(formulaInNnf));
 		conjunction.addAll(scs.getReplacementEquations());
 		final Term transFormulaWithSquishedStoreChains = SmtUtils.and(mMgdScript.getScript(), conjunction);
 
@@ -131,64 +123,10 @@ public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTrans
 		assert mResultStack.size() == 1;
 		final EqDisjunctiveConstraint<ACTION, EqNode> processedTf = mResultStack.pop();
 		mResultConstraint = processedTf.projectExistentially(scs.getReplacementTermVariables());
-
-		assert transformulaImpliesResultConstraint();
 	}
 
-	private boolean transformulaImpliesResultConstraint() {
-		mMgdScript.lock(this);
-		mMgdScript.push(this, 1);
-		final Pair<Term, Term> anteAndSucc = makeShiftVariableSubstitution(mMgdScript, mTf, mResultConstraint);
-
-		final boolean result = implicationCheck(anteAndSucc.getFirst(), anteAndSucc.getSecond());
-
-		mMgdScript.pop(this, 1);
-		mMgdScript.unlock(this);
-
-		return result;
-	}
-
-	protected boolean implicationCheck(final Term ante, final Term succ) {
-		final ManagedScript mgdScript = mMgdScript;
-
-		mgdScript.assertTerm(this, ante);
-		mgdScript.assertTerm(this, Util.not(mgdScript.getScript(), succ));
-
-		final LBool result = mgdScript.checkSat(this);
-		if (result != LBool.UNSAT) {
-			assert false;
-		}
-		return result == LBool.UNSAT;
-	}
-
-	protected Pair<Term, Term> makeShiftVariableSubstitution(final ManagedScript mgdScript, final TransFormula tf,
-			final EqDisjunctiveConstraint<ACTION, EqNode> resultConstraint) {
-		final Map<Term, Term> substitutionMapping = new HashMap<>();
-
-		for (final Entry<IProgramVar, TermVariable> iv : mTf.getOutVars().entrySet()) {
-			substitutionMapping.put(iv.getValue(), iv.getKey().getPrimedConstant());
-		}
-		for (final Entry<IProgramVar, TermVariable> iv : mTf.getInVars().entrySet()) {
-			substitutionMapping.put(iv.getValue(), iv.getKey().getDefaultConstant());
-		}
-		for (final TermVariable auxVar : mTf.getAuxVars()) {
-			final String constName = "tf2EqTR_" + auxVar.getName();
-			mgdScript.declareFun(this, constName, new Sort[0], auxVar.getSort());
-			substitutionMapping.put(auxVar, mgdScript.term(this, constName));
-		}
-
-		final Substitution subs = new Substitution(mgdScript, substitutionMapping);
-		final Term rcClosed= subs.transform(resultConstraint.getTerm(mgdScript.getScript()));
-
-		assert rcClosed.getFreeVars().length == 0;
-
-		final Term tfClosed = ((UnmodifiableTransFormula) mTf).getClosedFormula();
-		return new Pair<>(tfClosed, rcClosed);
-	}
-
-	public EqTransitionRelation<ACTION> getResult() {
-		assert mResultConstraint != null;
-		return new EqTransitionRelation<>(mResultConstraint, mTf);
+	public EqDisjunctiveConstraint<ACTION, EqNode> getResult() {
+		return mResultConstraint;
 	}
 
 	class ConvertTfToEqDisjConsWalker extends TermWalker {
@@ -374,11 +312,15 @@ public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTrans
 		}
 
 		private boolean isElementTracked(final Term term) {
-			return mPreAnalysis.isElementTracked(term, mTf);
+			// TODO: implement something smart here, or get rid of this method
+			return true;
+//			return mPreAnalysis.isElementTracked(term, mTf);
 		}
 
 		private boolean isFunctionTracked(final Term term) {
-			return mPreAnalysis.isArrayTracked(term, mTf.getInVars(), mTf.getOutVars());
+			// TODO: implement something smart here, or get rid of this method
+			return true;
+//			return mPreAnalysis.isArrayTracked(term, mTf.getInVars(), mTf.getOutVars());
 		}
 
 		@Override

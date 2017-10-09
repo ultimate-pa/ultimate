@@ -88,7 +88,7 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 		mCsToolkit = csToolkit;
 		mServices = services;
 
-		mEqNodeAndFunctionFactory = new EqNodeAndFunctionFactory(preAnalysis, mManagedScript);
+		mEqNodeAndFunctionFactory = new EqNodeAndFunctionFactory(services, mManagedScript);
 		mEqConstraintFactory = new EqConstraintFactory<>(mEqNodeAndFunctionFactory, mServices, mCsToolkit);
 		mEqStateFactory = new EqStateFactory<>(mEqNodeAndFunctionFactory, mEqConstraintFactory, mSymboltable,
 				mManagedScript);

@@ -101,12 +101,14 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 		mMgdScript = preAnalysis.getManagedScript();
 		mCfgSmtToolkit = preAnalysis.getCfgSmtToolkit();
 
-		mPredicateTransformer = new PredicateTransformer<>(mMgdScript,new EqOperationProvider<>(eqConstraintFactory));
-		mTransFormulaConverter =
-				new TransFormulaConverterCache<>(mEqNodeAndFunctionFactory, mEqConstraintFactory, mPreAnalysis);
-
 		mServices = services;
 		mLogger = logger;
+
+		mPredicateTransformer = new PredicateTransformer<>(mMgdScript,new EqOperationProvider<>(eqConstraintFactory));
+		mTransFormulaConverter =
+				new TransFormulaConverterCache<>(mServices, mMgdScript, mEqNodeAndFunctionFactory,
+						mEqConstraintFactory);
+
 
 		mDoubleCheckPredicateTransformer = new PredicateTransformer<>(mMgdScript,
 				new TermDomainOperationProvider(mServices, mMgdScript));
