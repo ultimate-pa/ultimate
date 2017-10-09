@@ -58,10 +58,10 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 public class TransFormulaConverterCache<ACTION extends IIcfgTransition<IcfgLocation>> {
 
-	private final EqConstraintFactory<ACTION, EqNode> mEqConstraintFactory;
+	private final EqConstraintFactory<EqNode> mEqConstraintFactory;
 	private final EqNodeAndFunctionFactory mEqNodeAndFunctionFactory;
 
-	private final Map<TransFormula, EqTransitionRelation<ACTION>> mTransformulaToEqTransitionRelationCache =
+	private final Map<TransFormula, EqTransitionRelation> mTransformulaToEqTransitionRelationCache =
 			new HashMap<>();
 
 	private final ManagedScript mMgdScript;
@@ -69,7 +69,7 @@ public class TransFormulaConverterCache<ACTION extends IIcfgTransition<IcfgLocat
 
 	public TransFormulaConverterCache(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final EqNodeAndFunctionFactory eqNodeAndFunctionFactory,
-			final EqConstraintFactory<ACTION, EqNode> eqConstraintFactory) {
+			final EqConstraintFactory<EqNode> eqConstraintFactory) {
 
 		mEqNodeAndFunctionFactory = eqNodeAndFunctionFactory;
 		mEqConstraintFactory = eqConstraintFactory;
@@ -77,8 +77,8 @@ public class TransFormulaConverterCache<ACTION extends IIcfgTransition<IcfgLocat
 		mServices = services;
 	}
 
-	public EqTransitionRelation<ACTION> getEqTransitionRelationFromTransformula(final TransFormula tf) {
-		EqTransitionRelation<ACTION> result = mTransformulaToEqTransitionRelationCache.get(tf);
+	public EqTransitionRelation getEqTransitionRelationFromTransformula(final TransFormula tf) {
+		EqTransitionRelation result = mTransformulaToEqTransitionRelationCache.get(tf);
 		if (result == null) {
 			result = convertTransformulaToEqTransitionRelation(tf, mEqConstraintFactory, mEqNodeAndFunctionFactory);
 			mTransformulaToEqTransitionRelationCache.put(tf, result);
@@ -86,20 +86,20 @@ public class TransFormulaConverterCache<ACTION extends IIcfgTransition<IcfgLocat
 		return result;
 	}
 
-	private EqTransitionRelation<ACTION> convertTransformulaToEqTransitionRelation(final TransFormula tf,
-			final EqConstraintFactory<ACTION, EqNode> eqConstraintFactory,
+	private EqTransitionRelation convertTransformulaToEqTransitionRelation(final TransFormula tf,
+			final EqConstraintFactory<EqNode> eqConstraintFactory,
 			final EqNodeAndFunctionFactory eqNodeAndFunctionFactory) {
-		final EqDisjunctiveConstraint<ACTION, EqNode> constraint =
+		final EqDisjunctiveConstraint<EqNode> constraint =
 				new FormulaToEqDisjunctiveConstraintConverter<>(mServices, mMgdScript, mEqConstraintFactory,
 						mEqNodeAndFunctionFactory, tf.getFormula()).getResult();
 
 		assert transformulaImpliesResultConstraint(tf, constraint);
 
-		return new EqTransitionRelation<>(constraint, tf);
+		return new EqTransitionRelation(constraint, tf);
 	}
 
 	protected Pair<Term, Term> makeShiftVariableSubstitution(final ManagedScript mgdScript, final TransFormula tf,
-			final EqDisjunctiveConstraint<ACTION, EqNode> resultConstraint) {
+			final EqDisjunctiveConstraint<EqNode> resultConstraint) {
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
 
 		for (final Entry<IProgramVar, TermVariable> iv : tf.getOutVars().entrySet()) {
@@ -124,7 +124,7 @@ public class TransFormulaConverterCache<ACTION extends IIcfgTransition<IcfgLocat
 	}
 
 	private boolean transformulaImpliesResultConstraint(final TransFormula tf,
-			final EqDisjunctiveConstraint<ACTION, EqNode> constraint) {
+			final EqDisjunctiveConstraint<EqNode> constraint) {
 		mMgdScript.lock(this);
 		mMgdScript.push(this, 1);
 		final Pair<Term, Term> anteAndSucc = makeShiftVariableSubstitution(mMgdScript, tf, constraint);

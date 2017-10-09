@@ -45,8 +45,6 @@ import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
@@ -287,10 +285,10 @@ public class VPDomainHelpers {
 		return true;
 	}
 
-	public static <ACTION extends IIcfgTransition<IcfgLocation>,
+	public static <//ACTION extends IIcfgTransition<IcfgLocation>,
 		NODE extends IEqNodeIdentifier<NODE>> boolean
 			constraintFreeOfVars(final Collection<TermVariable> varsToProjectAway,
-					final EqConstraint<ACTION, NODE> unfrozen,
+					final EqConstraint<NODE> unfrozen,
 					final Script script) {
 		if (varsToProjectAway.isEmpty()) {
 			return true;

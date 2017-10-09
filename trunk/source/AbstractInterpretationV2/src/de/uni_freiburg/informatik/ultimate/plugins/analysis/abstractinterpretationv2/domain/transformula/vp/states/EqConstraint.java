@@ -41,8 +41,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ConstantFinder;
@@ -59,14 +57,13 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.EqualityStatus;
  * @param <NODE>
  * @param <FUNCTION>
  */
-public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
-		NODE extends IEqNodeIdentifier<NODE>> {
+public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 
-	private final WeqCongruenceClosure<ACTION, NODE> mPartialArrangement;
+	private final WeqCongruenceClosure<NODE> mPartialArrangement;
 
 	private boolean mIsFrozen;
 
-	final EqConstraintFactory<ACTION, NODE> mFactory;
+	final EqConstraintFactory<NODE> mFactory;
 	/**
 	 * The IProgramVars whose getTermVariable()-value is used in a NODE inside this constraint;
 	 * computed lazily by getVariables.
@@ -89,13 +86,13 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 	 *
 	 * @param factory
 	 */
-	public EqConstraint(final int id, final EqConstraintFactory<ACTION, NODE> factory) {
+	public EqConstraint(final int id, final EqConstraintFactory<NODE> factory) {
 		this(id, factory, new WeqCongruenceClosure<>(factory));
 		assert id != 0 || this instanceof EqBottomConstraint : "0 is reserved for the bottom constraint";
 	}
 
-	public EqConstraint(final int id, final WeqCongruenceClosure<ACTION, NODE> cClosure,
-			final EqConstraintFactory<ACTION, NODE> factory) {
+	public EqConstraint(final int id, final WeqCongruenceClosure<NODE> cClosure,
+			final EqConstraintFactory<NODE> factory) {
 		this(id, factory, new WeqCongruenceClosure<>(cClosure));
 	}
 
@@ -104,12 +101,12 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 	 *
 	 * @param constraint
 	 */
-	public EqConstraint(final int id, final EqConstraint<ACTION, NODE> constraint) {
+	public EqConstraint(final int id, final EqConstraint<NODE> constraint) {
 		this(id, constraint.mFactory, new WeqCongruenceClosure<>(constraint.mPartialArrangement));
 	}
 
-	private EqConstraint(final int id, final EqConstraintFactory<ACTION, NODE> factory,
-			final WeqCongruenceClosure<ACTION, NODE> cClosure) {
+	private EqConstraint(final int id, final EqConstraintFactory<NODE> factory,
+			final WeqCongruenceClosure<NODE> cClosure) {
 		assert id != Integer.MAX_VALUE;
 		mId = id;
 		mFactory = factory;
@@ -324,7 +321,7 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 		return mPartialArrangement.isTautological();
 	}
 
-	public EqConstraint<ACTION, NODE> join(final EqConstraint<ACTION, NODE> other) {
+	public EqConstraint<NODE> join(final EqConstraint<NODE> other) {
 		if (this.isBottom()) {
 			return other;
 		}
@@ -337,14 +334,14 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 		if (other.isTop()) {
 			return other;
 		}
-		final WeqCongruenceClosure<ACTION, NODE> newPartialArrangement = this.mPartialArrangement.join(
+		final WeqCongruenceClosure<NODE> newPartialArrangement = this.mPartialArrangement.join(
 				other.mPartialArrangement);
-		final EqConstraint<ACTION, NODE> res = mFactory.getEqConstraint(newPartialArrangement);
+		final EqConstraint<NODE> res = mFactory.getEqConstraint(newPartialArrangement);
 		res.freeze();
 		return res;
 	}
 
-	public EqConstraint<ACTION, NODE> meet(final EqConstraint<ACTION, NODE> other) {
+	public EqConstraint<NODE> meet(final EqConstraint<NODE> other) {
 		if (this.isBottom()) {
 			return this;
 		}
@@ -358,9 +355,9 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 			return this;
 		}
 
-		final WeqCongruenceClosure<ACTION, NODE> newPa = mPartialArrangement.meet(other.mPartialArrangement);
+		final WeqCongruenceClosure<NODE> newPa = mPartialArrangement.meet(other.mPartialArrangement);
 
-		final EqConstraint<ACTION, NODE> res = mFactory.getEqConstraint(newPa);
+		final EqConstraint<NODE> res = mFactory.getEqConstraint(newPa);
 		res.freeze();
 		return res;
 	}
@@ -371,7 +368,7 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>,
 	 * @param other
 	 * @return true iff this is more or equally constraining than other
 	 */
-	public boolean isStrongerThan(final EqConstraint<ACTION, NODE> other) {
+	public boolean isStrongerThan(final EqConstraint<NODE> other) {
 		return mPartialArrangement.isStrongerThan(other.mPartialArrangement);
 	}
 

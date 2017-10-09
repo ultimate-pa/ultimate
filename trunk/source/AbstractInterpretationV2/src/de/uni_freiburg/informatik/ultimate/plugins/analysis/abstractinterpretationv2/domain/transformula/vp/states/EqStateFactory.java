@@ -53,13 +53,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 public class EqStateFactory<ACTION extends IIcfgTransition<IcfgLocation>> {
 
 	private final EqNodeAndFunctionFactory mEqNodeAndFunctionFactory;
-	private final EqConstraintFactory<ACTION, EqNode> mEqConstraintFactory;
+	private final EqConstraintFactory<EqNode> mEqConstraintFactory;
 	private final IIcfgSymbolTable mSymbolTable;
 	private EqState<ACTION> mTopStateWithEmptyPvocs;
 	private final ManagedScript mMgdScript;
 
 	public EqStateFactory(final EqNodeAndFunctionFactory eqNodeAndFunctionFactory,
-			final EqConstraintFactory<ACTION, EqNode> eqConstraintFactory,
+			final EqConstraintFactory<EqNode> eqConstraintFactory,
 			final IIcfgSymbolTable symbolTable, final ManagedScript mgdScript) {
 		mEqNodeAndFunctionFactory = eqNodeAndFunctionFactory;
 		mEqConstraintFactory = eqConstraintFactory;
@@ -68,12 +68,12 @@ public class EqStateFactory<ACTION extends IIcfgTransition<IcfgLocation>> {
 	}
 
 	public EqState<ACTION> disjoinAll(final Set<EqState<ACTION>> statesForCurrentEc) {
-		final EqDisjunctiveConstraint<ACTION, EqNode> disjunctiveConstraint =
+		final EqDisjunctiveConstraint<EqNode> disjunctiveConstraint =
 				mEqConstraintFactory.getDisjunctiveConstraint(
 						statesForCurrentEc.stream()
 								.map(state -> state.getConstraint())
 								.collect(Collectors.toSet()));
-		final EqConstraint<ACTION, EqNode> flattenedConstraint = disjunctiveConstraint.flatten();
+		final EqConstraint<EqNode> flattenedConstraint = disjunctiveConstraint.flatten();
 		return getEqState(flattenedConstraint, flattenedConstraint.getPvocs(mSymbolTable));
 	}
 
@@ -89,14 +89,14 @@ public class EqStateFactory<ACTION extends IIcfgTransition<IcfgLocation>> {
 	}
 
 	public <NODE extends IEqNodeIdentifier<NODE>>
-		EqState<ACTION> getEqState(final EqConstraint<ACTION, NODE> constraint,
+		EqState<ACTION> getEqState(final EqConstraint<NODE> constraint,
 				final Set<IProgramVarOrConst> variables) {
 		// TODO something smarter
-		return new EqState<>((EqConstraint<ACTION, EqNode>) constraint,
+		return new EqState<>((EqConstraint<EqNode>) constraint,
 				mEqNodeAndFunctionFactory, this, variables);
 	}
 
-	public EqConstraintFactory<ACTION, EqNode> getEqConstraintFactory() {
+	public EqConstraintFactory<EqNode> getEqConstraintFactory() {
 		return mEqConstraintFactory;
 	}
 
@@ -124,7 +124,7 @@ public class EqStateFactory<ACTION extends IIcfgTransition<IcfgLocation>> {
 	public EqPredicate<ACTION> statesToPredicate(final List<EqState<ACTION>> states) {
 
 		final Set<IProgramVar> variables = new HashSet<>();
-		final Set<EqConstraint<ACTION, EqNode>>  constraints = new HashSet<>();
+		final Set<EqConstraint<EqNode>>  constraints = new HashSet<>();
 		for (final EqState<ACTION> state : states) {
 			variables.addAll(state.getConstraint().getVariables(mSymbolTable));
 			constraints.add(state.getConstraint());

@@ -71,9 +71,9 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 	private final ManagedScript mMgdScript;
 
 	private final PredicateTransformer<
-		EqDisjunctiveConstraint<ACTION, EqNode>,
+		EqDisjunctiveConstraint<EqNode>,
 		EqPredicate<ACTION>,
-		EqTransitionRelation<ACTION>> mPredicateTransformer;
+		EqTransitionRelation> mPredicateTransformer;
 
 	/**
 	 * used for sanity/soundness checks only
@@ -83,7 +83,7 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 
 	private final TransFormulaConverterCache<ACTION> mTransFormulaConverter;
 	private final CfgSmtToolkit mCfgSmtToolkit;
-	private final EqConstraintFactory<ACTION, EqNode> mEqConstraintFactory;
+	private final EqConstraintFactory<EqNode> mEqConstraintFactory;
 	private final EqNodeAndFunctionFactory mEqNodeAndFunctionFactory;
 	private final VPDomainPreanalysis mPreAnalysis;
 
@@ -94,7 +94,7 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 
 	public EqPostOperator(final IUltimateServiceProvider services, final ILogger logger,
 			final EqNodeAndFunctionFactory eqNodeAndFunctionFactory,
-			final EqConstraintFactory<ACTION, EqNode> eqConstraintFactory, final VPDomainPreanalysis preAnalysis) {
+			final EqConstraintFactory<EqNode> eqConstraintFactory, final VPDomainPreanalysis preAnalysis) {
 		mEqNodeAndFunctionFactory = eqNodeAndFunctionFactory;
 		mEqConstraintFactory = eqConstraintFactory;
 		mPreAnalysis = preAnalysis;
@@ -121,10 +121,10 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 			return mEqConstraintFactory.getTopDisjunctiveConstraint().toEqStates(oldState.getVariables());
 		}
 
-		final EqTransitionRelation<ACTION> transitionRelation =
+		final EqTransitionRelation transitionRelation =
 				mTransFormulaConverter.getEqTransitionRelationFromTransformula(transition.getTransformula());
 
-		final EqDisjunctiveConstraint<ACTION, EqNode> postConstraint =
+		final EqDisjunctiveConstraint<EqNode> postConstraint =
 				mPredicateTransformer.strongestPostcondition(oldState.toEqPredicate(), transitionRelation);
 		final List<EqState<ACTION>> result = postConstraint.toEqStates(oldState.getVariables());
 		assert result.stream().allMatch(state -> state.getVariables().containsAll(oldState.getVariables()));
@@ -165,19 +165,19 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 		if (transition instanceof ICallAction) {
 			final String calledProcedure = transition.getSucceedingProcedure();
 
-			final EqTransitionRelation<ACTION> localVarAssignments = mTransFormulaConverter
+			final EqTransitionRelation localVarAssignments = mTransFormulaConverter
 					.getEqTransitionRelationFromTransformula(((ICallAction) transition).getLocalVarsAssignment());
-			final EqTransitionRelation<ACTION> globalVarAssignments =
+			final EqTransitionRelation globalVarAssignments =
 					mTransFormulaConverter.getEqTransitionRelationFromTransformula(
 							mCfgSmtToolkit.getOldVarsAssignmentCache().getGlobalVarsAssignment(calledProcedure));
-			final EqTransitionRelation<ACTION> oldVarAssignments =
+			final EqTransitionRelation oldVarAssignments =
 					mTransFormulaConverter.getEqTransitionRelationFromTransformula(
 							mCfgSmtToolkit.getOldVarsAssignmentCache().getOldVarsAssignment(calledProcedure));
 
 			final Set<IProgramNonOldVar> modifiableGlobalsOfCalledProcedure =
 					mCfgSmtToolkit.getModifiableGlobalsTable().getModifiedBoogieVars(calledProcedure);
 
-			final EqDisjunctiveConstraint<ACTION, EqNode> postConstraint = mPredicateTransformer
+			final EqDisjunctiveConstraint<EqNode> postConstraint = mPredicateTransformer
 					.strongestPostconditionCall(stateBeforeLeaving.toEqPredicate(), localVarAssignments,
 							globalVarAssignments, oldVarAssignments, modifiableGlobalsOfCalledProcedure);
 			final List<EqState<ACTION>> result =
@@ -192,24 +192,24 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 							.stream().filter(var -> var.isOldvar()).collect(Collectors.toSet());
 			final Set<TermVariable> ovTvs =
 					oldVars.stream().map(ov -> ov.getTermVariable()).collect(Collectors.toSet());
-			final EqConstraint<ACTION, EqNode> projectedCons = mEqConstraintFactory.projectExistentially(ovTvs,
+			final EqConstraint<EqNode> projectedCons = mEqConstraintFactory.projectExistentially(ovTvs,
 					hierarchicalPrestate.getConstraint());
 			final EqState<ACTION> hier = mEqConstraintFactory.getEqStateFactory().getEqState(projectedCons,
 					hierarchicalPrestate.getVariables());
 
 			final EqPredicate<ACTION> callPred = hier.toEqPredicate();
 
-			final EqTransitionRelation<ACTION> returnTF = mTransFormulaConverter
+			final EqTransitionRelation returnTF = mTransFormulaConverter
 					.getEqTransitionRelationFromTransformula(((IReturnAction) transition).getAssignmentOfReturn());
-			final EqTransitionRelation<ACTION> callTF = mTransFormulaConverter.getEqTransitionRelationFromTransformula(
+			final EqTransitionRelation callTF = mTransFormulaConverter.getEqTransitionRelationFromTransformula(
 					((IReturnAction) transition).getLocalVarsAssignmentOfCall());
-			final EqTransitionRelation<ACTION> oldVarAssignments =
+			final EqTransitionRelation oldVarAssignments =
 					mTransFormulaConverter.getEqTransitionRelationFromTransformula(mCfgSmtToolkit
 							.getOldVarsAssignmentCache().getOldVarsAssignment(transition.getPrecedingProcedure()));
 			final Set<IProgramNonOldVar> modifiableGlobals = mCfgSmtToolkit.getModifiableGlobalsTable()
 					.getModifiedBoogieVars(transition.getPrecedingProcedure());
 
-			final EqDisjunctiveConstraint<ACTION, EqNode> postConstraint =
+			final EqDisjunctiveConstraint<EqNode> postConstraint =
 					mPredicateTransformer.strongestPostconditionReturn(returnPred, callPred, returnTF, callTF,
 							oldVarAssignments, modifiableGlobals);
 

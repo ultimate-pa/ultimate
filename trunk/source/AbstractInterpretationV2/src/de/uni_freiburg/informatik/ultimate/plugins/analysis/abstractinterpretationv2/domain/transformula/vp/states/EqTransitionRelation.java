@@ -30,8 +30,6 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ITransitionRelation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
@@ -44,13 +42,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  *
  * @param <ACTION>
  */
-public class EqTransitionRelation<ACTION extends IIcfgTransition<IcfgLocation>>  implements ITransitionRelation {
+public class EqTransitionRelation//<ACTION extends IIcfgTransition<IcfgLocation>>
+		implements ITransitionRelation {
 
 
 	private final TransFormula mTf;
-	private final EqDisjunctiveConstraint<ACTION, EqNode> mConstraint;
+	private final EqDisjunctiveConstraint<EqNode> mConstraint;
 
-	public EqTransitionRelation(final EqDisjunctiveConstraint<ACTION, EqNode> constraint, final TransFormula tf) {
+	public EqTransitionRelation(final EqDisjunctiveConstraint<EqNode> constraint, final TransFormula tf) {
 		/*
 		 * an EqTransitionRelation inherits all the ITransitionRelation-properties from the TransFormula it was
 		 * constructed from (see corresponding getters..)
@@ -95,7 +94,7 @@ public class EqTransitionRelation<ACTION extends IIcfgTransition<IcfgLocation>> 
 		return mTf.getAuxVars();
 	}
 
-	public EqDisjunctiveConstraint<ACTION, EqNode> getEqConstraint() {
+	public EqDisjunctiveConstraint<EqNode> getEqConstraint() {
 		return mConstraint;
 	}
 

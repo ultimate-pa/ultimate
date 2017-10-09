@@ -40,8 +40,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.IEqNodeIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainHelpers;
@@ -57,11 +55,12 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
  * @param <NODE>
  * @param <FUNCTION>
  */
-public class EqConstraintFactory<ACTION extends IIcfgTransition<IcfgLocation>, NODE extends IEqNodeIdentifier<NODE>> {
+public class EqConstraintFactory<//ACTION extends IIcfgTransition<IcfgLocation>,
+		NODE extends IEqNodeIdentifier<NODE>> {
 
-	private final EqConstraint<ACTION, NODE> mBottomConstraint;
+	private final EqConstraint<NODE> mBottomConstraint;
 
-	private final EqConstraint<ACTION, NODE> mEmptyConstraint;
+	private final EqConstraint<NODE> mEmptyConstraint;
 
 	private EqStateFactory<ACTION> mEqStateFactory;
 
@@ -97,15 +96,15 @@ public class EqConstraintFactory<ACTION extends IIcfgTransition<IcfgLocation>, N
 //		mLiteralManager = new LiteralManager<>();
 	}
 
-	public EqConstraint<ACTION, NODE> getEmptyConstraint() {
+	public EqConstraint<NODE> getEmptyConstraint() {
 		return mEmptyConstraint;
 	}
 
-	public EqConstraint<ACTION, NODE> getBottomConstraint() {
+	public EqConstraint<NODE> getBottomConstraint() {
 		return mBottomConstraint;
 	}
 
-	public EqConstraint<ACTION, NODE> unfreeze(final EqConstraint<ACTION, NODE> constraint) {
+	public EqConstraint<NODE> unfreeze(final EqConstraint<NODE> constraint) {
 		assert constraint.isFrozen();
 		if (constraint.isBottom()) {
 			return constraint;
@@ -113,16 +112,16 @@ public class EqConstraintFactory<ACTION extends IIcfgTransition<IcfgLocation>, N
 		return new EqConstraint<>(mConstraintIdCounter++, constraint);
 	}
 
-	public EqDisjunctiveConstraint<ACTION, NODE>
-			getDisjunctiveConstraint(final Collection<EqConstraint<ACTION, NODE>> constraintList) {
-		final Collection<EqConstraint<ACTION, NODE>> bottomsFiltered = constraintList.stream()
+	public EqDisjunctiveConstraint<NODE>
+			getDisjunctiveConstraint(final Collection<EqConstraint<NODE>> constraintList) {
+		final Collection<EqConstraint<NODE>> bottomsFiltered = constraintList.stream()
 				.filter(cons -> !(cons instanceof EqBottomConstraint)).collect(Collectors.toSet());
-		return new EqDisjunctiveConstraint<ACTION, NODE>(bottomsFiltered, this);
+		return new EqDisjunctiveConstraint<NODE>(bottomsFiltered, this);
 	}
 
-	public EqConstraint<ACTION, NODE> conjoinFlat(
-			final EqConstraint<ACTION, NODE> constraint1,
-			final EqConstraint<ACTION, NODE> constraint2) {
+	public EqConstraint<NODE> conjoinFlat(
+			final EqConstraint<NODE> constraint1,
+			final EqConstraint<NODE> constraint2) {
 		return constraint1.meet(constraint2);
 	}
 
@@ -132,12 +131,12 @@ public class EqConstraintFactory<ACTION extends IIcfgTransition<IcfgLocation>, N
 	 * @param conjuncts
 	 * @return
 	 */
-	public EqDisjunctiveConstraint<ACTION, NODE> conjoinDisjunctiveConstraints(
-			final List<EqDisjunctiveConstraint<ACTION, NODE>> conjuncts) {
-		final List<Set<EqConstraint<ACTION, NODE>>> listOfConstraintSets = conjuncts.stream()
+	public EqDisjunctiveConstraint<NODE> conjoinDisjunctiveConstraints(
+			final List<EqDisjunctiveConstraint<NODE>> conjuncts) {
+		final List<Set<EqConstraint<NODE>>> listOfConstraintSets = conjuncts.stream()
 				.map(conjunct -> conjunct.getConstraints()).collect(Collectors.toList());
 
-		final Set<List<EqConstraint<ACTION, NODE>>> crossProduct =
+		final Set<List<EqConstraint<NODE>>> crossProduct =
 				VPDomainHelpers.computeCrossProduct(listOfConstraintSets, mServices);
 
 		if (crossProduct == null) {
@@ -149,19 +148,19 @@ public class EqConstraintFactory<ACTION extends IIcfgTransition<IcfgLocation>, N
 		}
 
 		// for each tuple in the crossproduct: construct the meet, and add it to the resulting constraintList
-		final List<EqConstraint<ACTION, NODE>> constraintList = crossProduct.stream()
+		final List<EqConstraint<NODE>> constraintList = crossProduct.stream()
 			.map(tuple -> tuple.stream()
 					.reduce((constraint1, constraint2) -> constraint1.meet(constraint2)).get())
 			.collect(Collectors.toList());
 		return getDisjunctiveConstraint(constraintList);
 	}
 
-	public EqConstraint<ACTION, NODE> addWeakEquivalence(final NODE array1,
+	public EqConstraint<NODE> addWeakEquivalence(final NODE array1,
 			final NODE array2, final NODE storeIndex,
-			final EqConstraint<ACTION, NODE> inputConstraint) {
+			final EqConstraint<NODE> inputConstraint) {
 		assert VPDomainHelpers.haveSameType(array1, array2);
 
-		final EqConstraint<ACTION, NODE> newConstraint = unfreeze(inputConstraint);
+		final EqConstraint<NODE> newConstraint = unfreeze(inputConstraint);
 		newConstraint.reportWeakEquivalence(array1, array2, storeIndex);
 		if (newConstraint.isInconsistent()) {
 			return mBottomConstraint;
@@ -170,10 +169,10 @@ public class EqConstraintFactory<ACTION extends IIcfgTransition<IcfgLocation>, N
 		return newConstraint;
 	}
 
-	public EqDisjunctiveConstraint<ACTION, NODE> disjoinDisjunctiveConstraints(
-			final EqDisjunctiveConstraint<ACTION, NODE> disjunct1,
-			final EqDisjunctiveConstraint<ACTION, NODE> disjunct2) {
-		final Set<EqConstraint<ACTION, NODE>> allConjunctiveConstraints = new HashSet<>();
+	public EqDisjunctiveConstraint<NODE> disjoinDisjunctiveConstraints(
+			final EqDisjunctiveConstraint<NODE> disjunct1,
+			final EqDisjunctiveConstraint<NODE> disjunct2) {
+		final Set<EqConstraint<NODE>> allConjunctiveConstraints = new HashSet<>();
 		allConjunctiveConstraints.addAll(disjunct1.getConstraints());
 		allConjunctiveConstraints.addAll(disjunct2.getConstraints());
 		return getDisjunctiveConstraint(allConjunctiveConstraints);
@@ -185,11 +184,11 @@ public class EqConstraintFactory<ACTION extends IIcfgTransition<IcfgLocation>, N
 	 * @param disjuncts
 	 * @return
 	 */
-	public EqDisjunctiveConstraint<ACTION, NODE> disjoinDisjunctiveConstraints(
-			final List<EqDisjunctiveConstraint<ACTION, NODE>> disjuncts) {
+	public EqDisjunctiveConstraint<NODE> disjoinDisjunctiveConstraints(
+			final List<EqDisjunctiveConstraint<NODE>> disjuncts) {
 
-		final Set<EqConstraint<ACTION, NODE>> allConjunctiveConstraints = new HashSet<>();
-		for (final EqDisjunctiveConstraint<ACTION, NODE> disjunct : disjuncts) {
+		final Set<EqConstraint<NODE>> allConjunctiveConstraints = new HashSet<>();
+		for (final EqDisjunctiveConstraint<NODE> disjunct : disjuncts) {
 			allConjunctiveConstraints.addAll(disjunct.getConstraints());
 		}
 
@@ -206,17 +205,17 @@ public class EqConstraintFactory<ACTION extends IIcfgTransition<IcfgLocation>, N
 	 * @param constraint2
 	 * @return
 	 */
-	public EqConstraint<ACTION, NODE> disjoinFlat(
-			final EqConstraint<ACTION, NODE> constraint1,
-			final EqConstraint<ACTION, NODE> constraint2) {
-		final List<EqConstraint<ACTION, NODE>> disjuncts = new ArrayList<>();
+	public EqConstraint<NODE> disjoinFlat(
+			final EqConstraint<NODE> constraint1,
+			final EqConstraint<NODE> constraint2) {
+		final List<EqConstraint<NODE>> disjuncts = new ArrayList<>();
 		disjuncts.add(constraint1);
 		disjuncts.add(constraint2);
 		return getDisjunctiveConstraint(disjuncts).flatten();
 	}
 
-	public EqConstraint<ACTION, NODE> addEqualityFlat(final NODE node1, final NODE node2,
-			final EqConstraint<ACTION, NODE> originalState) {
+	public EqConstraint<NODE> addEqualityFlat(final NODE node1, final NODE node2,
+			final EqConstraint<NODE> originalState) {
 
 //		factory.getBenchmark().unpause(VPSFO.addEqualityClock);
 //		if (factory.isDebugMode()) {
@@ -241,7 +240,7 @@ public class EqConstraintFactory<ACTION extends IIcfgTransition<IcfgLocation>, N
 			return getBottomConstraint();
 		}
 
-		final EqConstraint<ACTION, NODE> unfrozen = unfreeze(originalState);
+		final EqConstraint<NODE> unfrozen = unfreeze(originalState);
 		unfrozen.reportEquality(node1, node2);
 		if (unfrozen.isInconsistent()) {
 			return mBottomConstraint;
@@ -251,8 +250,8 @@ public class EqConstraintFactory<ACTION extends IIcfgTransition<IcfgLocation>, N
 	}
 
 
-	public EqConstraint<ACTION, NODE> addDisequalityFlat(final NODE node1, final NODE node2,
-			final EqConstraint<ACTION, NODE> originalState) {
+	public EqConstraint<NODE> addDisequalityFlat(final NODE node1, final NODE node2,
+			final EqConstraint<NODE> originalState) {
 //		if (factory.isDebugMode()) {
 //			factory.getLogger().debug("VPFactoryHelpers: addDisEquality(..)");
 //		}
@@ -271,7 +270,7 @@ public class EqConstraintFactory<ACTION extends IIcfgTransition<IcfgLocation>, N
 			return getBottomConstraint();
 		}
 
-		final EqConstraint<ACTION, NODE> unfrozen = unfreeze(originalState);
+		final EqConstraint<NODE> unfrozen = unfreeze(originalState);
 		unfrozen.reportDisequality(node1, node2);
 		if (unfrozen.isInconsistent()) {
 			return mBottomConstraint;
@@ -281,25 +280,25 @@ public class EqConstraintFactory<ACTION extends IIcfgTransition<IcfgLocation>, N
 	}
 
 
-	public EqDisjunctiveConstraint<ACTION, NODE> addNode(final NODE nodeToAdd,
-			final EqDisjunctiveConstraint<ACTION, NODE> constraint) {
+	public EqDisjunctiveConstraint<NODE> addNode(final NODE nodeToAdd,
+			final EqDisjunctiveConstraint<NODE> constraint) {
 
-		final Set<EqConstraint<ACTION, NODE>> newConstraints = new HashSet<>();
+		final Set<EqConstraint<NODE>> newConstraints = new HashSet<>();
 
-		for (final EqConstraint<ACTION, NODE> cons : constraint.getConstraints()) {
+		for (final EqConstraint<NODE> cons : constraint.getConstraints()) {
 			newConstraints.add(addNodeFlat(nodeToAdd, cons));
 		}
 
 		return getDisjunctiveConstraint(newConstraints);
 	}
 
-	public EqConstraint<ACTION, NODE> addNodeFlat(final NODE nodeToAdd,
-			final EqConstraint<ACTION, NODE> constraint) {
+	public EqConstraint<NODE> addNodeFlat(final NODE nodeToAdd,
+			final EqConstraint<NODE> constraint) {
 		if (constraint.getAllNodes().contains(nodeToAdd)) {
 			return constraint;
 		}
 
-		final EqConstraint<ACTION, NODE> unf = unfreeze(constraint);
+		final EqConstraint<NODE> unf = unfreeze(constraint);
 		unf.addNode(nodeToAdd);
 		unf.freeze();
 
@@ -311,14 +310,14 @@ public class EqConstraintFactory<ACTION extends IIcfgTransition<IcfgLocation>, N
 	 * @param varsToProjectAway
 	 * @return
 	 */
-	public EqConstraint<ACTION, NODE> projectExistentially(final Collection<TermVariable> varsToProjectAway,
-			final EqConstraint<ACTION, NODE> original) {
+	public EqConstraint<NODE> projectExistentially(final Collection<TermVariable> varsToProjectAway,
+			final EqConstraint<NODE> original) {
 		assert original.isFrozen();
 		assert original.sanityCheck();
 		if (original.isBottom()) {
 			return original;
 		}
-		final EqConstraint<ACTION, NODE> unfrozen = unfreeze(original);
+		final EqConstraint<NODE> unfrozen = unfreeze(original);
 
 		final Collection<TermVariable> allTvs = original.getAllTermVariables();
 
@@ -379,12 +378,12 @@ public class EqConstraintFactory<ACTION extends IIcfgTransition<IcfgLocation>, N
 		return result;
 	}
 
-	public EqDisjunctiveConstraint<ACTION, NODE> getTopDisjunctiveConstraint() {
+	public EqDisjunctiveConstraint<NODE> getTopDisjunctiveConstraint() {
 		return getDisjunctiveConstraint(Collections.singleton(getEmptyConstraint()));
 	}
 
-	public EqConstraint<ACTION, NODE> getEqConstraint(
-			final WeqCongruenceClosure<ACTION, NODE> newPartialArrangement) {
+	public EqConstraint<NODE> getEqConstraint(
+			final WeqCongruenceClosure<NODE> newPartialArrangement) {
 		if (newPartialArrangement.isInconsistent()) {
 			return getBottomConstraint();
 		}

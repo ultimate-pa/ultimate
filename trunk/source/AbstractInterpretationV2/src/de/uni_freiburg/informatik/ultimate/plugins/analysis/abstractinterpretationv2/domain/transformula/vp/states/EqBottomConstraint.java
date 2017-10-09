@@ -33,8 +33,6 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.IEqNodeIdentifier;
@@ -47,10 +45,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @param <NODE>
  * @param <FUNCTION>
  */
-public class EqBottomConstraint<ACTION extends IIcfgTransition<IcfgLocation>, NODE extends IEqNodeIdentifier<NODE>>
-	extends EqConstraint<ACTION, NODE> {
+public class EqBottomConstraint<//ACTION extends IIcfgTransition<IcfgLocation>,
+		NODE extends IEqNodeIdentifier<NODE>>
+	extends EqConstraint<NODE> {
 
-	public EqBottomConstraint(final EqConstraintFactory<ACTION, NODE> factory) {
+	public EqBottomConstraint(final EqConstraintFactory<NODE> factory) {
 		super(0, factory);
 	}
 

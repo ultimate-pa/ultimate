@@ -46,17 +46,17 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  */
 public class EqPredicate<ACTION extends IIcfgTransition<IcfgLocation>> implements IPredicate {
 
-	private final EqDisjunctiveConstraint<ACTION, EqNode> mConstraint;
+	private final EqDisjunctiveConstraint<EqNode> mConstraint;
 	private final String[] mProcedures;
 	private final Set<IProgramVar> mVars;
 	private final Term mClosedFormula;
 	private final Term mFormula;
 
-//	public EqPredicate(EqConstraint<ACTION, EqNode> constraint) {
+//	public EqPredicate(EqConstraint<EqNode> constraint) {
 //
 //	}
 
-	public EqPredicate(final EqDisjunctiveConstraint<ACTION, EqNode> constraint, final Set<IProgramVar> vars,
+	public EqPredicate(final EqDisjunctiveConstraint<EqNode> constraint, final Set<IProgramVar> vars,
 			final String[] procedures, final IIcfgSymbolTable symbolTable, final ManagedScript mgdScript) {
 		assert vars != null;
 		mConstraint = constraint;
@@ -96,7 +96,7 @@ public class EqPredicate<ACTION extends IIcfgTransition<IcfgLocation>> implement
 		return mVars;
 	}
 
-	public EqDisjunctiveConstraint<ACTION, EqNode> getEqConstraint() {
+	public EqDisjunctiveConstraint<EqNode> getEqConstraint() {
 		assert mConstraint != null;
 		return mConstraint;
 	}

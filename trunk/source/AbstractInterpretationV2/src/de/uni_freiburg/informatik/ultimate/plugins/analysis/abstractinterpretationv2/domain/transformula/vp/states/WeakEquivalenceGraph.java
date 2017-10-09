@@ -43,8 +43,6 @@ import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSort;
@@ -64,12 +62,12 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  */
-public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
+public class WeakEquivalenceGraph<//ACTION extends IIcfgTransition<IcfgLocation>,
 			NODE extends IEqNodeIdentifier<NODE>> {
 
 	private final CCManager<NODE> mCcManager;
 
-	private final EqConstraintFactory<ACTION, NODE> mFactory;
+	private final EqConstraintFactory<NODE> mFactory;
 	private final AbstractNodeAndFunctionFactory<NODE, Term> mNodeAndFunctionFactory;
 
 	private final Map<Doubleton<NODE>, WeakEquivalenceEdgeLabel> mWeakEquivalenceEdges;
@@ -80,15 +78,15 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 	 * The WeqCongruenceClosure that this weq graph is part of. This may be null, if we use this weq graph as an
 	 * intermediate, for example during a join or meet operation.
 	 */
-	private final WeqCongruenceClosure<ACTION, NODE> mPartialArrangement;
+	private final WeqCongruenceClosure<NODE> mPartialArrangement;
 
 
 	/**
 	 * Constructs an empty WeakEquivalenceGraph
 	 * @param factory
 	 */
-	public WeakEquivalenceGraph(final WeqCongruenceClosure<ACTION, NODE> pArr,
-			final EqConstraintFactory<ACTION, NODE> factory) {
+	public WeakEquivalenceGraph(final WeqCongruenceClosure<NODE> pArr,
+			final EqConstraintFactory<NODE> factory) {
 		mPartialArrangement = pArr;
 		mWeakEquivalenceEdges = new HashMap<>();
 		mArrayEqualities = new HashRelation<>();
@@ -109,10 +107,10 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 	 * @param factory
 	 */
 	private WeakEquivalenceGraph(
-//			final WeqCongruenceClosure<ACTION, NODE> pArr,
+//			final WeqCongruenceClosure<NODE> pArr,
 			final Map<Doubleton<NODE>, WeakEquivalenceEdgeLabel> weakEquivalenceEdges,
 			final HashRelation<NODE, NODE> arrayEqualities,
-			final EqConstraintFactory<ACTION, NODE> factory) {
+			final EqConstraintFactory<NODE> factory) {
 		mPartialArrangement = null;
 		mWeakEquivalenceEdges = weakEquivalenceEdges;
 		mArrayEqualities = arrayEqualities;
@@ -128,8 +126,8 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 	 * @param weakEquivalenceGraph
 	 * @param factory
 	 */
-	public WeakEquivalenceGraph(final WeqCongruenceClosure<ACTION, NODE> pArr,
-			final WeakEquivalenceGraph<ACTION, NODE> weakEquivalenceGraph) {
+	public WeakEquivalenceGraph(final WeqCongruenceClosure<NODE> pArr,
+			final WeakEquivalenceGraph<NODE> weakEquivalenceGraph) {
 
 		mPartialArrangement = pArr;
 
@@ -216,7 +214,7 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 
 //			if (source.equals(func)) {
 			if (removedElemsToNewReps.containsKey(source)) {
-				final WeakEquivalenceGraph<ACTION, NODE>.WeakEquivalenceEdgeLabel label =
+				final WeakEquivalenceGraph<NODE>.WeakEquivalenceEdgeLabel label =
 						mWeakEquivalenceEdges.remove(en.getKey());
 				final NODE newRep = removedElemsToNewReps.get(source);
 				if (newRep != null) {
@@ -225,7 +223,7 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 					mWeakEquivalenceEdges.put(new Doubleton<NODE>(newRep, target), label);
 				}
 			} else if (removedElemsToNewReps.containsKey(target)) {
-				final WeakEquivalenceGraph<ACTION, NODE>.WeakEquivalenceEdgeLabel label =
+				final WeakEquivalenceGraph<NODE>.WeakEquivalenceEdgeLabel label =
 						mWeakEquivalenceEdges.remove(en.getKey());
 				final NODE newRep = removedElemsToNewReps.get(target);
 				if (newRep != null) {
@@ -291,7 +289,7 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 	 * 		weq graph have to be between the new equivalence representatives TODO
 	 * @return
 	 */
-	WeakEquivalenceGraph<ACTION, NODE> join(final WeakEquivalenceGraph<ACTION, NODE> other) {
+	WeakEquivalenceGraph<NODE> join(final WeakEquivalenceGraph<NODE> other) {
 		assert mPartialArrangement != null && other.mPartialArrangement != null : "we need the partial for the join"
 				+ "of the weq graphs, because strong equalities influence the weak ones..";
 
@@ -312,7 +310,7 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 					&& other.mPartialArrangement.getEqualityStatus(source, target) == EqualityStatus.EQUAL) {
 				// case "weak equivalence in this, strong equivalence in other"
 
-				final WeakEquivalenceGraph<ACTION, NODE>.WeakEquivalenceEdgeLabel newEdgeLabel = thisWeqEdge.getValue()
+				final WeakEquivalenceGraph<NODE>.WeakEquivalenceEdgeLabel newEdgeLabel = thisWeqEdge.getValue()
 						.meet(Collections.singletonList(this.mPartialArrangement))
 						.projectToElements(mFactory.getAllWeqNodes());
 
@@ -325,10 +323,10 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 				continue;
 			}
 
-			final WeakEquivalenceGraph<ACTION, NODE>.WeakEquivalenceEdgeLabel thisNewEdgeLabel = thisWeqEdge.getValue()
+			final WeakEquivalenceGraph<NODE>.WeakEquivalenceEdgeLabel thisNewEdgeLabel = thisWeqEdge.getValue()
 						.meet(Collections.singletonList(this.mPartialArrangement))
 						.projectToElements(mFactory.getAllWeqNodes());
-			final WeakEquivalenceGraph<ACTION, NODE>.WeakEquivalenceEdgeLabel otherNewEdgeLabel =
+			final WeakEquivalenceGraph<NODE>.WeakEquivalenceEdgeLabel otherNewEdgeLabel =
 					correspondingWeqEdgeLabelInOther
 						.meet(Collections.singletonList(other.mPartialArrangement))
 						.projectToElements(mFactory.getAllWeqNodes());
@@ -349,7 +347,7 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 
 			if (this.mPartialArrangement.hasElements(source, target)
 					&& this.mPartialArrangement.getEqualityStatus(source, target) == EqualityStatus.EQUAL) {
-				final WeakEquivalenceGraph<ACTION, NODE>.WeakEquivalenceEdgeLabel newEdgeLabel = otherWeqEdge.getValue()
+				final WeakEquivalenceGraph<NODE>.WeakEquivalenceEdgeLabel newEdgeLabel = otherWeqEdge.getValue()
 						.meet(Collections.singletonList(other.mPartialArrangement))
 						.projectToElements(mFactory.getAllWeqNodes());
 
@@ -358,7 +356,7 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 			}
 		}
 
-		final WeakEquivalenceGraph<ACTION, NODE> result = new WeakEquivalenceGraph<>(newWeakEquivalenceEdges,
+		final WeakEquivalenceGraph<NODE> result = new WeakEquivalenceGraph<>(newWeakEquivalenceEdges,
 				new HashRelation<>(), mFactory);
 		assert result.sanityCheck();
 		return result;
@@ -372,7 +370,7 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 	 *
 	 * @return true iff this operation performed any changes on this weq graph
 	 */
-	Map<Doubleton<NODE>, WeakEquivalenceGraph<ACTION, NODE>.WeakEquivalenceEdgeLabel> close() {
+	Map<Doubleton<NODE>, WeakEquivalenceGraph<NODE>.WeakEquivalenceEdgeLabel> close() {
 		if (mWeakEquivalenceEdges.isEmpty()) {
 			return Collections.emptyMap();
 		}
@@ -394,7 +392,7 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 	 * @return true if this graph has no constraints/is tautological
 	 */
 	public boolean isEmpty() {
-		for (final Entry<Doubleton<NODE>, WeakEquivalenceGraph<ACTION, NODE>.WeakEquivalenceEdgeLabel> edge
+		for (final Entry<Doubleton<NODE>, WeakEquivalenceGraph<NODE>.WeakEquivalenceEdgeLabel> edge
 				: mWeakEquivalenceEdges.entrySet()) {
 			if (!edge.getValue().isTautological()) {
 				return false;
@@ -403,7 +401,7 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		return true;
 	}
 
-	public boolean isStrongerThan(final WeakEquivalenceGraph<ACTION, NODE> other) {
+	public boolean isStrongerThan(final WeakEquivalenceGraph<NODE> other) {
 		for (final Entry<Doubleton<NODE>, WeakEquivalenceEdgeLabel> otherWeqEdgeAndLabel
 				: other.mWeakEquivalenceEdges.entrySet()) {
 			final WeakEquivalenceEdgeLabel correspondingWeqEdgeInThis =
@@ -561,7 +559,7 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 	 * @param value
 	 */
 	private boolean reportWeakEquivalence(final Doubleton<NODE> sourceAndTarget,
-			final WeakEquivalenceGraph<ACTION, NODE>.WeakEquivalenceEdgeLabel value) {
+			final WeakEquivalenceGraph<NODE>.WeakEquivalenceEdgeLabel value) {
 		assert mPartialArrangement.isRepresentative(sourceAndTarget.getOneElement())
 			&& mPartialArrangement.isRepresentative(sourceAndTarget.getOtherElement());
 		assert sourceAndTarget.getOneElement().getTerm().getSort().equals(sourceAndTarget.getOtherElement().getTerm().getSort());
@@ -587,7 +585,7 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 	}
 
 	public List<CongruenceClosure<NODE>> getEdgeLabelContents(final NODE array1, final NODE array2) {
-		final WeakEquivalenceGraph<ACTION, NODE>.WeakEquivalenceEdgeLabel edge =
+		final WeakEquivalenceGraph<NODE>.WeakEquivalenceEdgeLabel edge =
 				mWeakEquivalenceEdges.get(new Doubleton<>(array1, array2));
 		if (edge != null) {
 			return edge.getLabelContents();
@@ -610,7 +608,7 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 			final List<CongruenceClosure<NODE>> labelContents, final NODE value,
 			final List<NODE> weqVarsForThisEdge) {
 
-		final WeakEquivalenceGraph<ACTION, NODE>.WeakEquivalenceEdgeLabel originalEdgeLabel =
+		final WeakEquivalenceGraph<NODE>.WeakEquivalenceEdgeLabel originalEdgeLabel =
 				new WeakEquivalenceEdgeLabel(labelContents);
 //		final List<NODE> prefix1 = Collections.singletonList(value);
 
@@ -629,9 +627,9 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 //			qEqualsI.reportEquality(firstDimWeqVarNodes.get(i), prefix1.get(i));
 //		}
 
-		final WeakEquivalenceGraph<ACTION, NODE>.WeakEquivalenceEdgeLabel copy =
+		final WeakEquivalenceGraph<NODE>.WeakEquivalenceEdgeLabel copy =
 				new WeakEquivalenceEdgeLabel(originalEdgeLabel);
-		final WeakEquivalenceGraph<ACTION, NODE>.WeakEquivalenceEdgeLabel meet =
+		final WeakEquivalenceGraph<NODE>.WeakEquivalenceEdgeLabel meet =
 				copy.meetRec(Collections.singletonList(qEqualsI));
 
 //		for (int i = 0; i < dim; i++) {
@@ -663,7 +661,7 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 			final List<NODE> weqVarsForResolventEdge) {
 		assert !weqVarsForResolventEdge.isEmpty() : "because the array in the resolvent must have a dimension >= 1";
 
-		final WeakEquivalenceGraph<ACTION, NODE>.WeakEquivalenceEdgeLabel labelToShiftAndAdd =
+		final WeakEquivalenceGraph<NODE>.WeakEquivalenceEdgeLabel labelToShiftAndAdd =
 				new WeakEquivalenceEdgeLabel(labelContents);
 
 		// project away the highest weq var before shifting
@@ -841,14 +839,14 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 
 		if (node1OldRep == newRep) {
 			// node2OldRep is not representative anymore
-			for (final Entry<NODE, WeakEquivalenceGraph<ACTION, NODE>.WeakEquivalenceEdgeLabel> edge
+			for (final Entry<NODE, WeakEquivalenceGraph<NODE>.WeakEquivalenceEdgeLabel> edge
 					: getAdjacentWeqEdges(node2OldRep).entrySet()) {
 				mWeakEquivalenceEdges.remove(new Doubleton<>(node2OldRep, edge.getKey()));
 				mWeakEquivalenceEdges.put(new Doubleton<>(newRep, edge.getKey()), edge.getValue());
 			}
 		} else {
 			// node1OldRep is not representative anymore
-			for (final Entry<NODE, WeakEquivalenceGraph<ACTION, NODE>.WeakEquivalenceEdgeLabel> edge
+			for (final Entry<NODE, WeakEquivalenceGraph<NODE>.WeakEquivalenceEdgeLabel> edge
 					: getAdjacentWeqEdges(node1OldRep).entrySet()) {
 				mWeakEquivalenceEdges.remove(new Doubleton<>(node1OldRep, edge.getKey()));
 				mWeakEquivalenceEdges.put(new Doubleton<>(newRep, edge.getKey()), edge.getValue());
@@ -900,7 +898,7 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 			sb.append(String.format("%s : %d\n", en.getKey(), en.getValue()));
 		}
 		sb.append("graph shape:\n");
-		for (final Entry<Doubleton<NODE>, WeakEquivalenceGraph<ACTION, NODE>.WeakEquivalenceEdgeLabel> weq :
+		for (final Entry<Doubleton<NODE>, WeakEquivalenceGraph<NODE>.WeakEquivalenceEdgeLabel> weq :
 			mWeakEquivalenceEdges.entrySet()) {
 			sb.append(weq.getKey());
 			sb.append("\n");
@@ -911,7 +909,7 @@ public class WeakEquivalenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 	public String toLogString() {
 		final StringBuilder sb = new StringBuilder();
 
-		for (final Entry<Doubleton<NODE>, WeakEquivalenceGraph<ACTION, NODE>.WeakEquivalenceEdgeLabel> weq :
+		for (final Entry<Doubleton<NODE>, WeakEquivalenceGraph<NODE>.WeakEquivalenceEdgeLabel> weq :
 			mWeakEquivalenceEdges.entrySet()) {
 			sb.append(weq.getKey());
 			sb.append("\n");

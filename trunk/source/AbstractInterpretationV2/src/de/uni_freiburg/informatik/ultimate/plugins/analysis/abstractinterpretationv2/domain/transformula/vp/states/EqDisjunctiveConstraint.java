@@ -38,8 +38,6 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.IEqNodeIdentifier;
@@ -54,15 +52,15 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @param <FUNCTION>
  */
 public class EqDisjunctiveConstraint<
-				ACTION extends IIcfgTransition<IcfgLocation>,
+				//ACTION extends IIcfgTransition<IcfgLocation>,
 				NODE extends IEqNodeIdentifier<NODE>>  {
 
-	private final Set<EqConstraint<ACTION, NODE>> mConstraints;
+	private final Set<EqConstraint<NODE>> mConstraints;
 
-	private final EqConstraintFactory<ACTION, NODE> mFactory;
+	private final EqConstraintFactory<NODE> mFactory;
 
-	public EqDisjunctiveConstraint(final Collection<EqConstraint<ACTION, NODE>> constraintList,
-			final EqConstraintFactory<ACTION, NODE> factory) {
+	public EqDisjunctiveConstraint(final Collection<EqConstraint<NODE>> constraintList,
+			final EqConstraintFactory<NODE> factory) {
 		assert !constraintList.stream().filter(cons -> (cons instanceof EqBottomConstraint)).findAny().isPresent()
 		  : "we filter out EqBottomConstraints up front, right? (could also do it here..)";
 		assert !constraintList.stream().filter(cons -> !cons.isFrozen()).findAny().isPresent()
@@ -75,10 +73,10 @@ public class EqDisjunctiveConstraint<
 		return mConstraints.isEmpty();
 	}
 
-	public EqDisjunctiveConstraint<ACTION, NODE> renameVariables(final Map<Term, Term> substitutionMapping) {
-		final Collection<EqConstraint<ACTION, NODE>> constraintList = new HashSet<>();
-		for (final EqConstraint<ACTION, NODE> constraint : mConstraints) {
-			final EqConstraint<ACTION, NODE> newConstraint = mFactory.unfreeze(constraint);
+	public EqDisjunctiveConstraint<NODE> renameVariables(final Map<Term, Term> substitutionMapping) {
+		final Collection<EqConstraint<NODE>> constraintList = new HashSet<>();
+		for (final EqConstraint<NODE> constraint : mConstraints) {
+			final EqConstraint<NODE> newConstraint = mFactory.unfreeze(constraint);
 			newConstraint.renameVariables(substitutionMapping);
 			newConstraint.freeze();
 			constraintList.add(newConstraint);
@@ -87,7 +85,7 @@ public class EqDisjunctiveConstraint<
 	}
 
 
-	public EqDisjunctiveConstraint<ACTION, NODE> projectExistentially(
+	public EqDisjunctiveConstraint<NODE> projectExistentially(
 			final Collection<TermVariable> varsToProjectAway) {
 		return mFactory.getDisjunctiveConstraint(
 				mConstraints.stream()
@@ -95,7 +93,7 @@ public class EqDisjunctiveConstraint<
 					.collect(Collectors.toSet()));
 	}
 
-	public Set<EqConstraint<ACTION, NODE>> getConstraints() {
+	public Set<EqConstraint<NODE>> getConstraints() {
 		return mConstraints;
 	}
 
@@ -105,7 +103,7 @@ public class EqDisjunctiveConstraint<
 	 *
 	 * @return the join of all constraints in getConstraints()
 	 */
-	public EqConstraint<ACTION, NODE> flatten() {
+	public EqConstraint<NODE> flatten() {
 		if (mConstraints.size() == 0) {
 			return mFactory.getBottomConstraint();
 		}
@@ -151,10 +149,10 @@ public class EqDisjunctiveConstraint<
 		return mConstraints.stream().map(cons -> cons.areUnequal(node1, node2)).reduce((a, b) -> (a || b)).get();
 	}
 
-	public EqDisjunctiveConstraint<ACTION, NODE> reportEquality(final NODE node1, final NODE node2) {
-		final Collection<EqConstraint<ACTION, NODE>> constraintList = new ArrayList<>();
-		for (final EqConstraint<ACTION, NODE> constraint : mConstraints) {
-			final EqConstraint<ACTION, NODE> unfrozen = mFactory.unfreeze(constraint);
+	public EqDisjunctiveConstraint<NODE> reportEquality(final NODE node1, final NODE node2) {
+		final Collection<EqConstraint<NODE>> constraintList = new ArrayList<>();
+		for (final EqConstraint<NODE> constraint : mConstraints) {
+			final EqConstraint<NODE> unfrozen = mFactory.unfreeze(constraint);
 			unfrozen.reportEquality(node1, node2);
 			unfrozen.freeze();
 			constraintList.add(unfrozen);
@@ -162,10 +160,10 @@ public class EqDisjunctiveConstraint<
 		return mFactory.getDisjunctiveConstraint(constraintList);
 	}
 
-	public EqDisjunctiveConstraint<ACTION, NODE> reportDisequality(final NODE node1, final NODE node2) {
-		final Collection<EqConstraint<ACTION, NODE>> constraintList = new ArrayList<>();
-		for (final EqConstraint<ACTION, NODE> constraint : mConstraints) {
-			final EqConstraint<ACTION, NODE> unfrozen = mFactory.unfreeze(constraint);
+	public EqDisjunctiveConstraint<NODE> reportDisequality(final NODE node1, final NODE node2) {
+		final Collection<EqConstraint<NODE>> constraintList = new ArrayList<>();
+		for (final EqConstraint<NODE> constraint : mConstraints) {
+			final EqConstraint<NODE> unfrozen = mFactory.unfreeze(constraint);
 			unfrozen.reportDisequality(node1, node2);
 			unfrozen.freeze();
 			constraintList.add(unfrozen);
@@ -203,7 +201,7 @@ public class EqDisjunctiveConstraint<
 		}
 
 		final StringBuilder sb = new StringBuilder();
-		for (final EqConstraint<ACTION, NODE> c : mConstraints) {
+		for (final EqConstraint<NODE> c : mConstraints) {
 			for (final VPStatistics stat : VPStatistics.values()) {
 				statistics.put(stat, VPStatistics.getAggregator(stat)
 						.apply(statistics.get(stat), c.getStatistics(stat)));

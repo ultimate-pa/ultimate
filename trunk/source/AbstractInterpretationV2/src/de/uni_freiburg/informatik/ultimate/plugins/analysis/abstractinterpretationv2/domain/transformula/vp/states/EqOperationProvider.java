@@ -45,42 +45,42 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  */
 public class EqOperationProvider<ACTION extends IIcfgTransition<IcfgLocation>> implements
  		IDomainSpecificOperationProvider<
- 			EqDisjunctiveConstraint<ACTION, EqNode>,
+ 			EqDisjunctiveConstraint<EqNode>,
  			EqPredicate<ACTION>,
- 			EqTransitionRelation<ACTION>> {
+ 			EqTransitionRelation> {
 
-	private final EqConstraintFactory<ACTION, EqNode> mEqConstraintFactory;
+	private final EqConstraintFactory<EqNode> mEqConstraintFactory;
 
-	public EqOperationProvider(final EqConstraintFactory<ACTION, EqNode> eqConstraintFactory) {
+	public EqOperationProvider(final EqConstraintFactory<EqNode> eqConstraintFactory) {
 		mEqConstraintFactory = eqConstraintFactory;
 	}
 
 	@Override
-	public EqDisjunctiveConstraint<ACTION, EqNode> getConstraint(final EqPredicate<ACTION> p) {
+	public EqDisjunctiveConstraint<EqNode> getConstraint(final EqPredicate<ACTION> p) {
 		return p.getEqConstraint();
 	}
 
 	@Override
-	public boolean isConstaintUnsatisfiable(final EqDisjunctiveConstraint<ACTION, EqNode> constraint) {
+	public boolean isConstaintUnsatisfiable(final EqDisjunctiveConstraint<EqNode> constraint) {
 		return constraint.isBottom();
 	}
 
 	@Override
-	public EqDisjunctiveConstraint<ACTION, EqNode> getConstaintFromTransitionRelation(
-			final EqTransitionRelation<ACTION> transRel) {
+	public EqDisjunctiveConstraint<EqNode> getConstaintFromTransitionRelation(
+			final EqTransitionRelation transRel) {
 		return transRel.getEqConstraint();
 	}
 
 	@Override
-	public EqDisjunctiveConstraint<ACTION, EqNode> renameVariables(
+	public EqDisjunctiveConstraint<EqNode> renameVariables(
 			final Map<Term, Term> substitutionMapping,
-			final EqDisjunctiveConstraint<ACTION, EqNode> constraint) {
+			final EqDisjunctiveConstraint<EqNode> constraint) {
 		return constraint.renameVariables(substitutionMapping);
 	}
 
 	@Override
-	public EqDisjunctiveConstraint<ACTION, EqNode> constructConjunction(
-			final List<EqDisjunctiveConstraint<ACTION, EqNode>> conjuncts) {
+	public EqDisjunctiveConstraint<EqNode> constructConjunction(
+			final List<EqDisjunctiveConstraint<EqNode>> conjuncts) {
 		return mEqConstraintFactory.conjoinDisjunctiveConstraints(conjuncts);
 	}
 
@@ -88,33 +88,33 @@ public class EqOperationProvider<ACTION extends IIcfgTransition<IcfgLocation>> i
 
 
 	@Override
-	public EqDisjunctiveConstraint<ACTION, EqNode> projectExistentially(final Set<TermVariable> varsToProjectAway,
-			final EqDisjunctiveConstraint<ACTION, EqNode> constraint) {
+	public EqDisjunctiveConstraint<EqNode> projectExistentially(final Set<TermVariable> varsToProjectAway,
+			final EqDisjunctiveConstraint<EqNode> constraint) {
 		return constraint.projectExistentially(varsToProjectAway);
 	}
 
 
 	@Override
-	public boolean isConstaintValid(final EqDisjunctiveConstraint<ACTION, EqNode> constraint) {
+	public boolean isConstaintValid(final EqDisjunctiveConstraint<EqNode> constraint) {
 		// TODO Auto-generated method stub
 		return false;
 	}
 
 	@Override
-	public EqDisjunctiveConstraint<ACTION, EqNode> constructDisjunction(
-			final List<EqDisjunctiveConstraint<ACTION, EqNode>> disjuncts) {
+	public EqDisjunctiveConstraint<EqNode> constructDisjunction(
+			final List<EqDisjunctiveConstraint<EqNode>> disjuncts) {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public EqDisjunctiveConstraint<ACTION, EqNode> constructNegation(
-			final EqDisjunctiveConstraint<ACTION, EqNode> operand) {
+	public EqDisjunctiveConstraint<EqNode> constructNegation(
+			final EqDisjunctiveConstraint<EqNode> operand) {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public EqDisjunctiveConstraint<ACTION, EqNode> projectUniversally(final Set<TermVariable> varsToProjectAway,
-			final EqDisjunctiveConstraint<ACTION, EqNode> constraint) {
+	public EqDisjunctiveConstraint<EqNode> projectUniversally(final Set<TermVariable> varsToProjectAway,
+			final EqDisjunctiveConstraint<EqNode> constraint) {
 		throw new UnsupportedOperationException();
 	}
 

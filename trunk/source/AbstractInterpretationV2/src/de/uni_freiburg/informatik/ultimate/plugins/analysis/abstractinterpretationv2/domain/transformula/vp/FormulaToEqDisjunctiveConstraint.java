@@ -17,7 +17,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  */
 public class FormulaToEqDisjunctiveConstraint {
 
-	private final EqConstraintFactory<IcfgEdge, EqNode> mEqConstraintFactory;
+	private final EqConstraintFactory<EqNode> mEqConstraintFactory;
 	private final EqNodeAndFunctionFactory mEqNodeAndFunctionFactory;
 	private final ManagedScript mMgdScript;
 	private final IUltimateServiceProvider mServices;
@@ -36,7 +36,7 @@ public class FormulaToEqDisjunctiveConstraint {
 	 * @param formula
 	 * @return
 	 */
-	public EqDisjunctiveConstraint<IcfgEdge, EqNode> convertFormula(final Term formula) {
+	public EqDisjunctiveConstraint<EqNode> convertFormula(final Term formula) {
 		final FormulaToEqDisjunctiveConstraintConverter<IcfgEdge> converter =
 				new FormulaToEqDisjunctiveConstraintConverter<>(mServices, mMgdScript, mEqConstraintFactory,
 						mEqNodeAndFunctionFactory, formula);

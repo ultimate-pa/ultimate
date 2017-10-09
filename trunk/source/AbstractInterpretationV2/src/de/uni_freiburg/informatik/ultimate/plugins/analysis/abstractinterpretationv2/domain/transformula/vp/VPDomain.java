@@ -70,7 +70,7 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 	private final IIcfgSymbolTable mSymboltable;
 	private final boolean mDebugMode;
 
-	private final EqConstraintFactory<ACTION, EqNode> mEqConstraintFactory;
+	private final EqConstraintFactory<EqNode> mEqConstraintFactory;
 	private final EqNodeAndFunctionFactory mEqNodeAndFunctionFactory;
 	private final EqStateFactory<ACTION> mEqStateFactory;
 	private final CfgSmtToolkit mCsToolkit;

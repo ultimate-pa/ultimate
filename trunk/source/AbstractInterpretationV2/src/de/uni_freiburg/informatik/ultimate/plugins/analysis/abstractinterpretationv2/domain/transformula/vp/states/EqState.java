@@ -63,11 +63,11 @@ public class EqState<ACTION extends IIcfgTransition<IcfgLocation>>
 	 */
 	private final Set<IProgramVarOrConst> mPvocs;
 
-	private final EqConstraint<ACTION, EqNode> mConstraint;
+	private final EqConstraint<EqNode> mConstraint;
 
 	private final EqStateFactory<ACTION> mFactory;
 
-	public EqState(final EqConstraint<ACTION, EqNode> constraint,
+	public EqState(final EqConstraint<EqNode> constraint,
 			final EqNodeAndFunctionFactory eqNodeAndFunctionFactory, final EqStateFactory<ACTION> eqStateFactory,
 			final Set<IProgramVarOrConst> variables) {
 //		mId = sNextFreeId++;
@@ -104,7 +104,7 @@ public class EqState<ACTION extends IIcfgTransition<IcfgLocation>>
 	public EqState<ACTION> removeVariables(final Collection<IProgramVarOrConst> variables) {
 		final Set<TermVariable> termVariablesFromPvocs =
 				variables.stream().map(pvoc -> (TermVariable) pvoc.getTerm()).collect(Collectors.toSet());
-		final EqConstraint<ACTION, EqNode> projectedConstraint =
+		final EqConstraint<EqNode> projectedConstraint =
 				mFactory.getEqConstraintFactory().projectExistentially(termVariablesFromPvocs, mConstraint);
 
 		final Set<IProgramVarOrConst> newVariables = new HashSet<>(mPvocs);
@@ -136,7 +136,7 @@ public class EqState<ACTION extends IIcfgTransition<IcfgLocation>>
 
 	@Override
 	public EqState<ACTION> intersect(final EqState<ACTION> other) {
-		final EqConstraint<ACTION, EqNode> newConstraint =
+		final EqConstraint<EqNode> newConstraint =
 				mFactory.getEqConstraintFactory().conjoinFlat(this.getConstraint(), other.getConstraint());
 
 		final Set<IProgramVarOrConst> newVariables = new HashSet<>();
@@ -149,7 +149,7 @@ public class EqState<ACTION extends IIcfgTransition<IcfgLocation>>
 
 	@Override
 	public EqState<ACTION> union(final EqState<ACTION> other) {
-		final EqConstraint<ACTION, EqNode> newConstraint =
+		final EqConstraint<EqNode> newConstraint =
 				mFactory.getEqConstraintFactory().disjoinFlat(this.getConstraint(), other.getConstraint());
 
 		final Set<IProgramVarOrConst> newVariables = new HashSet<>();
@@ -226,7 +226,7 @@ public class EqState<ACTION extends IIcfgTransition<IcfgLocation>>
 		return mPvocs.toString() + "\n" + mConstraint.toString();
 	}
 
-	public EqConstraint<ACTION, EqNode> getConstraint() {
+	public EqConstraint<EqNode> getConstraint() {
 		return mConstraint;
 	}
 

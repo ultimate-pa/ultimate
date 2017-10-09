@@ -72,9 +72,9 @@ public class FormulaToEqDisjunctiveConstraintConverter<ACTION extends IIcfgTrans
 
 	private final Term mFormula;
 
-	private EqDisjunctiveConstraint<ACTION, EqNode> mResultConstraint;
+	private EqDisjunctiveConstraint<EqNode> mResultConstraint;
 
-	private final EqConstraintFactory<ACTION, EqNode> mEqConstraintFactory;
+	private final EqConstraintFactory<EqNode> mEqConstraintFactory;
 	private final EqNodeAndFunctionFactory mEqNodeAndFunctionFactory;
 	private final ManagedScript mMgdScript;
 	private final IUltimateServiceProvider mServices;
@@ -85,12 +85,12 @@ public class FormulaToEqDisjunctiveConstraintConverter<ACTION extends IIcfgTrans
 	/**
 	 * stores intermediate results of the "recursion"
 	 */
-	private final Deque<EqDisjunctiveConstraint<ACTION, EqNode>> mResultStack = new ArrayDeque<>();
+	private final Deque<EqDisjunctiveConstraint<EqNode>> mResultStack = new ArrayDeque<>();
 
 	public FormulaToEqDisjunctiveConstraintConverter(
 			final IUltimateServiceProvider services,
 			final ManagedScript mgdScript,
-			final EqConstraintFactory<ACTION, EqNode> eqConstraintFactory,
+			final EqConstraintFactory<EqNode> eqConstraintFactory,
 			final EqNodeAndFunctionFactory eqNodeAndFunctionFactory,
 			final Term formula) {
 		mFormula = formula;
@@ -121,11 +121,11 @@ public class FormulaToEqDisjunctiveConstraintConverter<ACTION extends IIcfgTrans
 		run(new ConvertTfToEqDisjConsWalker(transFormulaWithSquishedStoreChains));
 
 		assert mResultStack.size() == 1;
-		final EqDisjunctiveConstraint<ACTION, EqNode> processedTf = mResultStack.pop();
+		final EqDisjunctiveConstraint<EqNode> processedTf = mResultStack.pop();
 		mResultConstraint = processedTf.projectExistentially(scs.getReplacementTermVariables());
 	}
 
-	public EqDisjunctiveConstraint<ACTION, EqNode> getResult() {
+	public EqDisjunctiveConstraint<EqNode> getResult() {
 		return mResultConstraint;
 	}
 
@@ -193,16 +193,16 @@ public class FormulaToEqDisjunctiveConstraintConverter<ACTION extends IIcfgTrans
 
 		private void handleBooleanTerm(final Term term, final boolean polarity) {
 			assert "Bool".equals(term.getSort().getName());
-			final EqConstraint<ACTION, EqNode> emptyConstraint = mEqConstraintFactory.getEmptyConstraint();
+			final EqConstraint<EqNode> emptyConstraint = mEqConstraintFactory.getEmptyConstraint();
 			final EqNode tvNode = mEqNodeAndFunctionFactory.getOrConstructNode(term);
 			if (polarity) {
 				final EqNode trueNode = mEqNodeAndFunctionFactory.getOrConstructNode(mTrueTerm);
-				final EqConstraint<ACTION, EqNode> tvEqualsTrue = mEqConstraintFactory.addEqualityFlat(tvNode, trueNode,
+				final EqConstraint<EqNode> tvEqualsTrue = mEqConstraintFactory.addEqualityFlat(tvNode, trueNode,
 						emptyConstraint);
 				mResultStack.push(mEqConstraintFactory.getDisjunctiveConstraint(Collections.singleton(tvEqualsTrue)));
 			} else {
 				final EqNode falseNode = mEqNodeAndFunctionFactory.getOrConstructNode(mFalseTerm);
-				final EqConstraint<ACTION, EqNode> tvEqualsFalse = mEqConstraintFactory.addEqualityFlat(tvNode,
+				final EqConstraint<EqNode> tvEqualsFalse = mEqConstraintFactory.addEqualityFlat(tvNode,
 						falseNode, emptyConstraint);
 				mResultStack.push(mEqConstraintFactory.getDisjunctiveConstraint(Collections.singleton(tvEqualsFalse)));
 			}
@@ -210,8 +210,8 @@ public class FormulaToEqDisjunctiveConstraintConverter<ACTION extends IIcfgTrans
 
 		private void handleXquality(final Term arg1, final Term arg2, final boolean polarity) {
 
-			final EqConstraint<ACTION, EqNode> emptyConstraint = mEqConstraintFactory.getEmptyConstraint();
-			final EqDisjunctiveConstraint<ACTION, EqNode> emptyDisjunctiveConstraint = mEqConstraintFactory
+			final EqConstraint<EqNode> emptyConstraint = mEqConstraintFactory.getEmptyConstraint();
+			final EqDisjunctiveConstraint<EqNode> emptyDisjunctiveConstraint = mEqConstraintFactory
 					.getDisjunctiveConstraint(Collections.singleton(emptyConstraint));
 
 			if (arg1.getSort().isArraySort()) {
@@ -244,7 +244,7 @@ public class FormulaToEqDisjunctiveConstraintConverter<ACTION extends IIcfgTrans
 					otherSimpleArray = mEqNodeAndFunctionFactory.getOrConstructNode(arg2);
 				}
 
-				final EqConstraint<ACTION, EqNode> newConstraint;
+				final EqConstraint<EqNode> newConstraint;
 				if (polarity) {
 					if (storeTerm == null) {
 						// we have a strong equivalence
@@ -257,7 +257,7 @@ public class FormulaToEqDisjunctiveConstraintConverter<ACTION extends IIcfgTrans
 								.getOrConstructNode(storeTerm.getParameters()[2]);
 
 						// we have a weak equivalence ..
-						final EqConstraint<ACTION, EqNode> intermediateConstraint = mEqConstraintFactory
+						final EqConstraint<EqNode> intermediateConstraint = mEqConstraintFactory
 								.addWeakEquivalence(simpleArray, otherSimpleArray, storeIndex, emptyConstraint);
 						// .. and an equality on the stored position
 						mMgdScript.lock(this);
@@ -300,7 +300,7 @@ public class FormulaToEqDisjunctiveConstraintConverter<ACTION extends IIcfgTrans
 				final EqNode node1 = mEqNodeAndFunctionFactory.getOrConstructNode(arg1);
 				final EqNode node2 = mEqNodeAndFunctionFactory.getOrConstructNode(arg2);
 
-				final EqConstraint<ACTION, EqNode> newConstraint;
+				final EqConstraint<EqNode> newConstraint;
 				if (polarity) {
 					newConstraint = mEqConstraintFactory.addEqualityFlat(node1, node2, emptyConstraint);
 				} else {
@@ -356,7 +356,7 @@ public class FormulaToEqDisjunctiveConstraintConverter<ACTION extends IIcfgTrans
 
 		@Override
 		public void walk(final NonRecursive engine) {
-			final Set<EqConstraint<ACTION, EqNode>> allConjunctiveConstraints = new HashSet<>();
+			final Set<EqConstraint<EqNode>> allConjunctiveConstraints = new HashSet<>();
 			for (int i = 0; i < mArity; i++) {
 				allConjunctiveConstraints.addAll(mResultStack.pop().getConstraints());
 			}
@@ -376,7 +376,7 @@ public class FormulaToEqDisjunctiveConstraintConverter<ACTION extends IIcfgTrans
 
 		@Override
 		public void walk(final NonRecursive engine) {
-			final ArrayList<EqDisjunctiveConstraint<ACTION, EqNode>> conjuncts = new ArrayList<>();
+			final ArrayList<EqDisjunctiveConstraint<EqNode>> conjuncts = new ArrayList<>();
 			for (int i = 0; i < mArity; i++) {
 				conjuncts.add(mResultStack.pop());
 			}
