@@ -38,8 +38,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.IEqNodeIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainHelpers;
@@ -54,8 +52,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
  * @param <NODE>
  * @param <FUNCTION>
  */
-public class EqConstraintFactory<//ACTION extends IIcfgTransition<IcfgLocation>,
-		NODE extends IEqNodeIdentifier<NODE>> {
+public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 
 	private final EqConstraint<NODE> mBottomConstraint;
 
@@ -67,7 +64,7 @@ public class EqConstraintFactory<//ACTION extends IIcfgTransition<IcfgLocation>,
 
 	private final IUltimateServiceProvider mServices;
 
-	private final CfgSmtToolkit mCsToolkit;
+//	private final CfgSmtToolkit mCsToolkit;
 
 	private int mConstraintIdCounter = 1;
 
@@ -77,8 +74,10 @@ public class EqConstraintFactory<//ACTION extends IIcfgTransition<IcfgLocation>,
 
 	private final CCManager<NODE> mCcManager;
 
+	private final ManagedScript mMgdScript;
+
 	public EqConstraintFactory(final AbstractNodeAndFunctionFactory<NODE, Term> eqNodeAndFunctionFactory,
-			final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit) {
+			final IUltimateServiceProvider services, final ManagedScript mgdScript) {
 		mBottomConstraint = new EqBottomConstraint<>(this);
 		mBottomConstraint.freeze();
 
@@ -86,7 +85,8 @@ public class EqConstraintFactory<//ACTION extends IIcfgTransition<IcfgLocation>,
 		mEmptyConstraint.freeze();
 
 		mServices = services;
-		mCsToolkit = csToolkit;
+//		mCsToolkit = csToolkit;
+		mMgdScript = mgdScript;
 		mEqNodeAndFunctionFactory = eqNodeAndFunctionFactory;
 
 		mDimensionToWeqVariableNode = new NestedMap2<>();
@@ -390,7 +390,8 @@ public class EqConstraintFactory<//ACTION extends IIcfgTransition<IcfgLocation>,
 	}
 
 	public ManagedScript getMgdScript() {
-		return mCsToolkit.getManagedScript();
+		return mMgdScript;
+//		return mCsToolkit.getManagedScript();
 	}
 
 	@Override
@@ -406,7 +407,7 @@ public class EqConstraintFactory<//ACTION extends IIcfgTransition<IcfgLocation>,
 		return mCcManager;
 	}
 
-	public  IIcfgSymbolTable getSymbolTable() {
-		return mCsToolkit.getSymbolTable();
-	}
+//	public  IIcfgSymbolTable getSymbolTable() {
+//		return mCsToolkit.getSymbolTable();
+//	}
 }

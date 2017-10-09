@@ -2,7 +2,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNode;
@@ -22,12 +21,12 @@ public class FormulaToEqDisjunctiveConstraint {
 	private final ManagedScript mMgdScript;
 	private final IUltimateServiceProvider mServices;
 
-	public FormulaToEqDisjunctiveConstraint(final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit) {
+	public FormulaToEqDisjunctiveConstraint(final IUltimateServiceProvider services, final ManagedScript mgdScript) {
 		mServices = services;
-		mMgdScript = csToolkit.getManagedScript();
+		mMgdScript = mgdScript;
 
 		mEqNodeAndFunctionFactory = new EqNodeAndFunctionFactory(mServices, mMgdScript);
-		mEqConstraintFactory = new EqConstraintFactory<>(mEqNodeAndFunctionFactory, services, csToolkit);
+		mEqConstraintFactory = new EqConstraintFactory<>(mEqNodeAndFunctionFactory, services, mMgdScript);
 	}
 
 	/**
