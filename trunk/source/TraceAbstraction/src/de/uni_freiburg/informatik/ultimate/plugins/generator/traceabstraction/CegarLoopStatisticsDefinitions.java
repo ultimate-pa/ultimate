@@ -85,21 +85,25 @@ public enum CegarLoopStatisticsDefinitions implements IStatisticsElement {
 	AbstIntIterations(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sDataBeforeKey),
 
 	AbstIntStrong(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sDataBeforeKey),
-	
+
+	AbsIntWeakeningRatio(Double.class, AStatisticsType.sDoubleAddition, AStatisticsType.sDataBeforeKey),
+
+	AbsIntAvgWeakeningVarsNumRemoved(Double.class, AStatisticsType.sDoubleAddition, AStatisticsType.sDataBeforeKey),
+
+	AbsIntAvgWeakenedConjuncts(Double.class, AStatisticsType.sDoubleAddition, AStatisticsType.sDataBeforeKey),
+
 	AutomataMinimizationStatistics(StatisticsData.class, AStatisticsType.sStatisticsDataAggregation,
 			AStatisticsType.sKeyBeforeData),
-	
+
 	HoareAnnotationStatistics(StatisticsData.class, AStatisticsType.sStatisticsDataAggregation,
 			AStatisticsType.sKeyBeforeData),
-	
+
 	RefinementEngineStatistics(StatisticsData.class, AStatisticsType.sStatisticsDataAggregation,
-			AStatisticsType.sKeyBeforeData),
-	;
+			AStatisticsType.sKeyBeforeData),;
 
 	private final Class<?> mClazz;
 	private final Function<Object, Function<Object, Object>> mAggr;
 	private final Function<String, Function<Object, String>> mPrettyprinter;
-
 
 	CegarLoopStatisticsDefinitions(final Class<?> clazz, final Function<Object, Function<Object, Object>> aggr,
 			final Function<String, Function<Object, String>> prettyprinter) {

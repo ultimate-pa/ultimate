@@ -15,6 +15,7 @@ public abstract class AStatisticsType<T extends Enum<T> & IStatisticsElement> im
 		((InCaReCounter) x).add((InCaReCounter) y);
 		return x;
 	};
+	public static Function<Object, Function<Object, Object>> sDoubleAddition = x -> y -> (Double) x + (Double) y;
 	public static Function<Object, Function<Object, Object>> sStatisticsDataAggregation = x -> y -> {
 		((StatisticsData) x).aggregateBenchmarkData((StatisticsData) y);
 		return x;

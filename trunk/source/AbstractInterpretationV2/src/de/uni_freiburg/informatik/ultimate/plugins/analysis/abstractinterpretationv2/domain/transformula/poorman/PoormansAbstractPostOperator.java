@@ -218,7 +218,7 @@ public class PoormansAbstractPostOperator<BACKING extends IAbstractState<BACKING
 				.addAll(transformula.getOutVars().entrySet().stream().filter(entry -> !tvSet.contains(entry.getValue()))
 						.map(entry -> entry.getKey()).collect(Collectors.toSet()));
 
-		if (havocedVars.size() == 0) {
+		if (havocedVars.isEmpty()) {
 			return null;
 		}
 

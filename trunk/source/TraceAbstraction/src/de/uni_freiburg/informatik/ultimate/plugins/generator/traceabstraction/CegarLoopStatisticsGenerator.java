@@ -54,6 +54,12 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 	private BackwardCoveringInformation mBCI = new BackwardCoveringInformation(0, 0);
 	private int mAbsIntStrong = 0;
 	private int mTraceHistogramMaximum = 0;
+	private double mAiWeakeningAvgRatioSum = 0;
+	private int mAiWeakeningAvgRatioNum = 0;
+	private int mAiWeakeningVarsRemovedSum = 0;
+	private int mAiWeakeningVarsRemovedNum = 0;
+	private int mAiWeakeningConjunctReductionNum = 0;
+	private int mAiWeakeningConjunctReductionSum = 0;
 
 	@Override
 	public Collection<String> getKeys() {
@@ -75,7 +81,7 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 	public void addTraceCheckData(final IStatisticsDataProvider tcbd) {
 		mTcData.aggregateBenchmarkData(tcbd);
 	}
-	
+
 	public void addRefinementEngineStatistics(final IStatisticsDataProvider res) {
 		mRefinementEngineStatistics.aggregateBenchmarkData(res);
 	}
@@ -107,6 +113,21 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 
 	public void addHoareAnnotationData(final IStatisticsDataProvider hasp) {
 		mHaData.aggregateBenchmarkData(hasp);
+	}
+
+	public void addAiWeakeningRatio(final double ratio) {
+		mAiWeakeningAvgRatioNum++;
+		mAiWeakeningAvgRatioSum += ratio;
+	}
+
+	public void addAiWeakeningVarsNumRemoved(final int numRemoved) {
+		mAiWeakeningVarsRemovedNum++;
+		mAiWeakeningVarsRemovedSum += numRemoved;
+	}
+
+	public void addAiConjunctReductionNumber(final int differenceConjuncts) {
+		mAiWeakeningConjunctReductionNum++;
+		mAiWeakeningConjunctReductionSum += differenceConjuncts;
 	}
 
 	/**
@@ -143,6 +164,21 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 			} catch (final StopwatchStillRunningException e) {
 				throw new AssertionError("clock still running: " + key);
 			}
+		case AbsIntWeakeningRatio:
+			if (mAiWeakeningAvgRatioNum == 0) {
+				return Double.NaN;
+			}
+			return mAiWeakeningAvgRatioSum / mAiWeakeningAvgRatioNum;
+		case AbsIntAvgWeakeningVarsNumRemoved:
+			if (mAiWeakeningVarsRemovedNum == 0) {
+				return Double.NaN;
+			}
+			return mAiWeakeningVarsRemovedSum / mAiWeakeningVarsRemovedNum;
+		case AbsIntAvgWeakenedConjuncts:
+			if (mAiWeakeningConjunctReductionNum == 0) {
+				return Double.NaN;
+			}
+			return mAiWeakeningConjunctReductionSum / mAiWeakeningConjunctReductionNum;
 		case HoareTripleCheckerStatistics:
 			return mEcData;
 		case PredicateUnifierStatistics:
@@ -192,5 +228,4 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 				CegarLoopStatisticsDefinitions.HoareAnnotationTime.toString(),
 				CegarLoopStatisticsDefinitions.BasicInterpolantAutomatonTime.toString() };
 	}
-
 }

@@ -48,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.AbsIntPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
 
 /**
  * Weakens a sequence of predicates by reducing the number of variables occurring in each Hoare-triple of {pred1} letter
@@ -95,8 +96,9 @@ public class AbsIntPredicateInterpolantSequenceWeakener<STATE extends IAbstractS
 	public AbsIntPredicateInterpolantSequenceWeakener(final ILogger logger, final IHoareTripleChecker htc,
 			final List<AbsIntPredicate<STATE>> predicates, final List<LETTER> trace,
 			final AbsIntPredicate<STATE> precondition, final AbsIntPredicate<STATE> postcondition, final Script script,
-			final BasicPredicateFactory predicateFactory) {
-		super(logger, htc, predicates, trace, precondition, postcondition, script, predicateFactory);
+			final BasicPredicateFactory predicateFactory, final CegarLoopStatisticsGenerator cegarLoopBenchmark) {
+		super(logger, htc, predicates, trace, precondition, postcondition, script, predicateFactory,
+				cegarLoopBenchmark);
 	}
 
 	@Override
@@ -188,6 +190,14 @@ public class AbsIntPredicateInterpolantSequenceWeakener<STATE extends IAbstractS
 
 		final Set<STATE> newMultiState = new HashSet<>();
 
+		assert preState.getAbstractStates().size() > 0;
+
+		final int numStateVars = preState.getAbstractStates().stream().findFirst()
+				.orElseThrow(() -> new UnsupportedOperationException("No states in preState.")).getVariables().size();
+		final int numRemovedVars = mVarsToKeep.size();
+		reportWeakeningVarsNumRemoved(numRemovedVars);
+		reportWeakeningRatio((numStateVars - numRemovedVars) / numStateVars);
+
 		for (final STATE s : preState.getAbstractStates()) {
 			if (s.isBottom()) {
 				// Simply add the state to the new multi state if the state is bottom.
@@ -207,8 +217,20 @@ public class AbsIntPredicateInterpolantSequenceWeakener<STATE extends IAbstractS
 		final Set<Term> terms = newMultiState.stream().map(s -> s.getTerm(mScript)).collect(Collectors.toSet());
 		final IPredicate disjunction = mPredicateFactory.newPredicate(SmtUtils.or(mScript, terms));
 
+		final Set<Term> preStateTerms =
+				preState.getAbstractStates().stream().map(s -> s.getTerm(mScript)).collect(Collectors.toSet());
+
+		final int numberOfConjunctsBeforeWeakening =
+				preStateTerms.stream().mapToInt(term -> SmtUtils.getConjuncts(term).length).sum();
+
+		final int numberOfConjunctsAfterWeakening =
+				terms.stream().mapToInt(term -> SmtUtils.getConjuncts(term).length).sum();
+
+		final int conjunctReduction = numberOfConjunctsBeforeWeakening - numberOfConjunctsAfterWeakening;
+
+		reportConjunctReduction(conjunctReduction);
+
 		final AbsIntPredicate<STATE> newPreState = new AbsIntPredicate<>(disjunction, newMultiState);
 		return newPreState;
 	}
-
 }
