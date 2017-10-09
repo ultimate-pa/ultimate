@@ -121,7 +121,9 @@
 			src/de/uni_freiburg/informatik/ultimate/core/lib/toolchain/ToolchainListType.java,
 			src/de/uni_freiburg/informatik/ultimate/core/lib/toolchain/ToolchainModelType.java,
 			src/de/uni_freiburg/informatik/ultimate/core/lib/toolchain/OptionType.java,
-			src/de/uni_freiburg/informatik/ultimate/core/lib/toolchain/RunDefinition.java
+			src/de/uni_freiburg/informatik/ultimate/core/lib/toolchain/RunDefinition.java,
+			src/de/uni_freiburg/informatik/ultimate/interactive/traceabstraction/protobuf/*.java
+			src/de/uni_freiburg/informatik/ultimate/interactive/common/protobuf/*.java
 		</sonar.exclusions>
 
 		<!-- Exclude from sonar duplication analysis -->
