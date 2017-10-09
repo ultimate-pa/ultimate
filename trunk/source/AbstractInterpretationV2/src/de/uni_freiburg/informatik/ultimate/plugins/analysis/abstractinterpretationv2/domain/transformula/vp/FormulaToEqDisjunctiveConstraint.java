@@ -10,6 +10,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.EqConstraintFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.EqDisjunctiveConstraint;
 
+/**
+ * Helper class to convert formulas into EqDisjunctiveConstraints.
+ *
+ * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
+ */
 public class FormulaToEqDisjunctiveConstraint {
 
 	private final EqConstraintFactory<IcfgEdge, EqNode> mEqConstraintFactory;
@@ -25,6 +30,12 @@ public class FormulaToEqDisjunctiveConstraint {
 		mEqConstraintFactory = new EqConstraintFactory<>(mEqNodeAndFunctionFactory, services, csToolkit);
 	}
 
+	/**
+	 * Constructs an EqDisjunctiveConstraint from the given formula.
+	 *
+	 * @param formula
+	 * @return
+	 */
 	public EqDisjunctiveConstraint<IcfgEdge, EqNode> convertFormula(final Term formula) {
 		final FormulaToEqDisjunctiveConstraintConverter<IcfgEdge> converter =
 				new FormulaToEqDisjunctiveConstraintConverter<>(mServices, mMgdScript, mEqConstraintFactory,

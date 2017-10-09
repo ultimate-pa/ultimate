@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -56,7 +57,7 @@ public class EqDisjunctiveConstraint<
 				ACTION extends IIcfgTransition<IcfgLocation>,
 				NODE extends IEqNodeIdentifier<NODE>>  {
 
-	Set<EqConstraint<ACTION, NODE>> mConstraints;
+	private final Set<EqConstraint<ACTION, NODE>> mConstraints;
 
 	private final EqConstraintFactory<ACTION, NODE> mFactory;
 
@@ -99,8 +100,10 @@ public class EqDisjunctiveConstraint<
 	}
 
 	/**
-	 * Return the strongest conjunctive EqConstraint that is implied by all elements of mConstraints.
-	 * @return
+	 * Computes the join of all the (purely conjunctive) EqConstraints that form the disjuncts of this
+	 * EqDisjunctiveCostraint.
+	 *
+	 * @return the join of all constraints in getConstraints()
 	 */
 	public EqConstraint<ACTION, NODE> flatten() {
 		if (mConstraints.size() == 0) {
@@ -148,13 +151,30 @@ public class EqDisjunctiveConstraint<
 		return mConstraints.stream().map(cons -> cons.areUnequal(node1, node2)).reduce((a, b) -> (a || b)).get();
 	}
 
-//	public boolean areEqual(final FUNCTION func1, final FUNCTION func2) {
-//		return mConstraints.stream().map(cons -> cons.areEqual(func1, func2)).reduce((a, b) -> (a || b)).get();
-//	}
-//
-//	public boolean areUnequal(final FUNCTION func1, final FUNCTION func2) {
-//		return mConstraints.stream().map(cons -> cons.areUnequal(func1, func2)).reduce((a, b) -> (a || b)).get();
-//	}
+	public EqDisjunctiveConstraint<ACTION, NODE> reportEquality(final NODE node1, final NODE node2) {
+		final Collection<EqConstraint<ACTION, NODE>> constraintList = new ArrayList<>();
+		for (final EqConstraint<ACTION, NODE> constraint : mConstraints) {
+			final EqConstraint<ACTION, NODE> unfrozen = mFactory.unfreeze(constraint);
+			unfrozen.reportEquality(node1, node2);
+			unfrozen.freeze();
+			constraintList.add(unfrozen);
+		}
+		return mFactory.getDisjunctiveConstraint(constraintList);
+	}
+
+	public EqDisjunctiveConstraint<ACTION, NODE> reportDisequality(final NODE node1, final NODE node2) {
+		final Collection<EqConstraint<ACTION, NODE>> constraintList = new ArrayList<>();
+		for (final EqConstraint<ACTION, NODE> constraint : mConstraints) {
+			final EqConstraint<ACTION, NODE> unfrozen = mFactory.unfreeze(constraint);
+			unfrozen.reportDisequality(node1, node2);
+			unfrozen.freeze();
+			constraintList.add(unfrozen);
+		}
+		return mFactory.getDisjunctiveConstraint(constraintList);
+	}
+
+
+
 
 	@Override
 	public String toString() {
