@@ -40,8 +40,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieConst;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.IEqualityProvidingState;
@@ -52,10 +50,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
- * @param <ACTION>
  */
-public class EqState<ACTION extends IIcfgTransition<IcfgLocation>>
-		implements IAbstractState<EqState<ACTION>>, IEqualityProvidingState {
+public class EqState//<ACTION extends IIcfgTransition<IcfgLocation>>
+		implements IAbstractState<EqState>, IEqualityProvidingState {
 
 	/**
 	 * The variables and constants that this state has "for the abstract interpretation"/"as an IAbstractState". Note
@@ -65,10 +62,10 @@ public class EqState<ACTION extends IIcfgTransition<IcfgLocation>>
 
 	private final EqConstraint<EqNode> mConstraint;
 
-	private final EqStateFactory<ACTION> mFactory;
+	private final EqStateFactory mFactory;
 
 	public EqState(final EqConstraint<EqNode> constraint,
-			final EqNodeAndFunctionFactory eqNodeAndFunctionFactory, final EqStateFactory<ACTION> eqStateFactory,
+			final EqNodeAndFunctionFactory eqNodeAndFunctionFactory, final EqStateFactory eqStateFactory,
 			final Set<IProgramVarOrConst> variables) {
 //		mId = sNextFreeId++;
 //		mId = constraint.hashCode();
@@ -82,26 +79,26 @@ public class EqState<ACTION extends IIcfgTransition<IcfgLocation>>
 	}
 
 	@Override
-	public EqState<ACTION> addVariable(final IProgramVarOrConst variable) {
+	public EqState addVariable(final IProgramVarOrConst variable) {
 		final Set<IProgramVarOrConst> newPvocs = new HashSet<>(mPvocs);
 		newPvocs.add(variable);
 		return mFactory.getEqState(mConstraint, newPvocs);
 	}
 
 	@Override
-	public EqState<ACTION> removeVariable(final IProgramVarOrConst variable) {
+	public EqState removeVariable(final IProgramVarOrConst variable) {
 		return removeVariables(Collections.singleton(variable));
 	}
 
 	@Override
-	public EqState<ACTION> addVariables(final Collection<IProgramVarOrConst> variables) {
+	public EqState addVariables(final Collection<IProgramVarOrConst> variables) {
 		final Set<IProgramVarOrConst> newPvocs = new HashSet<>(mPvocs);
 		newPvocs.addAll(variables);
 		return mFactory.getEqState(mConstraint, newPvocs);
 	}
 
 	@Override
-	public EqState<ACTION> removeVariables(final Collection<IProgramVarOrConst> variables) {
+	public EqState removeVariables(final Collection<IProgramVarOrConst> variables) {
 		final Set<TermVariable> termVariablesFromPvocs =
 				variables.stream().map(pvoc -> (TermVariable) pvoc.getTerm()).collect(Collectors.toSet());
 		final EqConstraint<EqNode> projectedConstraint =
@@ -119,7 +116,7 @@ public class EqState<ACTION extends IIcfgTransition<IcfgLocation>>
 	}
 
 	@Override
-	public EqState<ACTION> renameVariables(final Map<IProgramVarOrConst, IProgramVarOrConst> old2newVars) {
+	public EqState renameVariables(final Map<IProgramVarOrConst, IProgramVarOrConst> old2newVars) {
 		throw new UnsupportedOperationException("not yet implemented");
 	}
 
@@ -129,13 +126,13 @@ public class EqState<ACTION extends IIcfgTransition<IcfgLocation>>
 	}
 
 	@Override
-	public EqState<ACTION> patch(final EqState<ACTION> dominator) {
-		final EqState<ACTION> newState = this.removeVariables(dominator.getVariables());
+	public EqState patch(final EqState dominator) {
+		final EqState newState = this.removeVariables(dominator.getVariables());
 		return newState.intersect(dominator);
 	}
 
 	@Override
-	public EqState<ACTION> intersect(final EqState<ACTION> other) {
+	public EqState intersect(final EqState other) {
 		final EqConstraint<EqNode> newConstraint =
 				mFactory.getEqConstraintFactory().conjoinFlat(this.getConstraint(), other.getConstraint());
 
@@ -148,7 +145,7 @@ public class EqState<ACTION extends IIcfgTransition<IcfgLocation>>
 	}
 
 	@Override
-	public EqState<ACTION> union(final EqState<ACTION> other) {
+	public EqState union(final EqState other) {
 		final EqConstraint<EqNode> newConstraint =
 				mFactory.getEqConstraintFactory().disjoinFlat(this.getConstraint(), other.getConstraint());
 
@@ -172,13 +169,13 @@ public class EqState<ACTION extends IIcfgTransition<IcfgLocation>>
 	}
 
 	@Override
-	public boolean isEqualTo(final EqState<ACTION> other) {
+	public boolean isEqualTo(final EqState other) {
 		return this.isSubsetOf(other) == SubsetResult.EQUAL || (this.isSubsetOf(other) == SubsetResult.NON_STRICT
 				&& other.isSubsetOf(this) == SubsetResult.NON_STRICT);
 	}
 
 	@Override
-	public SubsetResult isSubsetOf(final EqState<ACTION> other) {
+	public SubsetResult isSubsetOf(final EqState other) {
 		if (mConstraint.isTop() && other.mConstraint.isTop()) {
 			return SubsetResult.EQUAL;
 		}
@@ -207,7 +204,7 @@ public class EqState<ACTION extends IIcfgTransition<IcfgLocation>>
 	}
 
 	@Override
-	public EqState<ACTION> compact() {
+	public EqState compact() {
 		return mFactory.getEqState(mConstraint, mConstraint.getPvocs(mFactory.getSymbolTable()));
 	}
 
@@ -230,7 +227,7 @@ public class EqState<ACTION extends IIcfgTransition<IcfgLocation>>
 		return mConstraint;
 	}
 
-	public EqPredicate<ACTION> toEqPredicate() {
+	public EqPredicate toEqPredicate() {
 		return mFactory.stateToPredicate(this);
 	}
 
@@ -326,7 +323,7 @@ public class EqState<ACTION extends IIcfgTransition<IcfgLocation>>
 
 	@Override
 	public IEqualityProvidingState union(final IEqualityProvidingState other) {
-		return union((EqState<ACTION>) other);
+		return union((EqState) other);
 	}
 
 }

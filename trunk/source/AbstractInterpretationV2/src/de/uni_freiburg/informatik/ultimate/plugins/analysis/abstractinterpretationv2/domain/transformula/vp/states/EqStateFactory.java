@@ -34,8 +34,6 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -50,12 +48,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  *
  * @param <ACTION>
  */
-public class EqStateFactory<ACTION extends IIcfgTransition<IcfgLocation>> {
+public class EqStateFactory {
 
 	private final EqNodeAndFunctionFactory mEqNodeAndFunctionFactory;
 	private final EqConstraintFactory<EqNode> mEqConstraintFactory;
 	private final IIcfgSymbolTable mSymbolTable;
-	private EqState<ACTION> mTopStateWithEmptyPvocs;
+	private EqState mTopStateWithEmptyPvocs;
 	private final ManagedScript mMgdScript;
 
 	public EqStateFactory(final EqNodeAndFunctionFactory eqNodeAndFunctionFactory,
@@ -67,7 +65,7 @@ public class EqStateFactory<ACTION extends IIcfgTransition<IcfgLocation>> {
 		mMgdScript = mgdScript;
 	}
 
-	public EqState<ACTION> disjoinAll(final Set<EqState<ACTION>> statesForCurrentEc) {
+	public EqState disjoinAll(final Set<EqState> statesForCurrentEc) {
 		final EqDisjunctiveConstraint<EqNode> disjunctiveConstraint =
 				mEqConstraintFactory.getDisjunctiveConstraint(
 						statesForCurrentEc.stream()
@@ -77,7 +75,7 @@ public class EqStateFactory<ACTION extends IIcfgTransition<IcfgLocation>> {
 		return getEqState(flattenedConstraint, flattenedConstraint.getPvocs(mSymbolTable));
 	}
 
-	public EqState<ACTION> getTopState() {
+	public EqState getTopState() {
 		if (mTopStateWithEmptyPvocs == null) {
 			mTopStateWithEmptyPvocs = getEqState(mEqConstraintFactory.getEmptyConstraint(), Collections.emptySet());
 		}
@@ -89,10 +87,10 @@ public class EqStateFactory<ACTION extends IIcfgTransition<IcfgLocation>> {
 	}
 
 	public <NODE extends IEqNodeIdentifier<NODE>>
-		EqState<ACTION> getEqState(final EqConstraint<NODE> constraint,
+		EqState getEqState(final EqConstraint<NODE> constraint,
 				final Set<IProgramVarOrConst> variables) {
 		// TODO something smarter
-		return new EqState<>((EqConstraint<EqNode>) constraint,
+		return new EqState((EqConstraint<EqNode>) constraint,
 				mEqNodeAndFunctionFactory, this, variables);
 	}
 
@@ -108,8 +106,8 @@ public class EqStateFactory<ACTION extends IIcfgTransition<IcfgLocation>> {
 		return mMgdScript;
 	}
 
-	public EqPredicate<ACTION> stateToPredicate(final EqState<ACTION> state) {
-		return new EqPredicate<>(
+	public EqPredicate stateToPredicate(final EqState state) {
+		return new EqPredicate(
 				getEqConstraintFactory().getDisjunctiveConstraint(Collections.singleton(state.getConstraint())),
 				state.getConstraint().getVariables(getSymbolTable()),
 				// mVariables.stream()
@@ -121,16 +119,16 @@ public class EqStateFactory<ACTION extends IIcfgTransition<IcfgLocation>> {
 				getManagedScript()); // TODO: what procedures does the predicate need?
 	}
 
-	public EqPredicate<ACTION> statesToPredicate(final List<EqState<ACTION>> states) {
+	public EqPredicate statesToPredicate(final List<EqState> states) {
 
 		final Set<IProgramVar> variables = new HashSet<>();
 		final Set<EqConstraint<EqNode>>  constraints = new HashSet<>();
-		for (final EqState<ACTION> state : states) {
+		for (final EqState state : states) {
 			variables.addAll(state.getConstraint().getVariables(mSymbolTable));
 			constraints.add(state.getConstraint());
 		}
 
-		return new EqPredicate<>(
+		return new EqPredicate(
 				getEqConstraintFactory().getDisjunctiveConstraint(constraints),
 				variables,
 				// mVariables.stream()
@@ -142,9 +140,9 @@ public class EqStateFactory<ACTION extends IIcfgTransition<IcfgLocation>> {
 				getManagedScript()); // TODO: what procedures does the predicate need?
 	}
 
-	public EqPredicate<IIcfgTransition<IcfgLocation>> termToPredicate(final Term spPrecise,
+	public EqPredicate termToPredicate(final Term spPrecise,
 			final IPredicate postConstraint) {
-		return new EqPredicate<>(spPrecise, postConstraint.getVars(), postConstraint.getProcedures(), mSymbolTable,
+		return new EqPredicate(spPrecise, postConstraint.getVars(), postConstraint.getProcedures(), mSymbolTable,
 				mMgdScript);
 
 	}

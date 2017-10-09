@@ -30,8 +30,6 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
@@ -42,9 +40,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
- * @param <ACTION>
  */
-public class EqPredicate<ACTION extends IIcfgTransition<IcfgLocation>> implements IPredicate {
+public class EqPredicate implements IPredicate {
 
 	private final EqDisjunctiveConstraint<EqNode> mConstraint;
 	private final String[] mProcedures;

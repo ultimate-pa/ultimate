@@ -59,7 +59,7 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.Benchmark;
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  */
 public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
-		implements IAbstractDomain<EqState<ACTION>, ACTION> {
+		implements IAbstractDomain<EqState, ACTION> {
 
 	private final EqPostOperator<ACTION> mPost;
 	private final VPMergeOperator mMerge;
@@ -72,7 +72,7 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 
 	private final EqConstraintFactory<EqNode> mEqConstraintFactory;
 	private final EqNodeAndFunctionFactory mEqNodeAndFunctionFactory;
-	private final EqStateFactory<ACTION> mEqStateFactory;
+	private final EqStateFactory mEqStateFactory;
 	private final CfgSmtToolkit mCsToolkit;
 	private final IUltimateServiceProvider mServices;
 
@@ -90,7 +90,7 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 
 		mEqNodeAndFunctionFactory = new EqNodeAndFunctionFactory(services, mManagedScript);
 		mEqConstraintFactory = new EqConstraintFactory<>(mEqNodeAndFunctionFactory, mServices, mCsToolkit);
-		mEqStateFactory = new EqStateFactory<>(mEqNodeAndFunctionFactory, mEqConstraintFactory, mSymboltable,
+		mEqStateFactory = new EqStateFactory(mEqNodeAndFunctionFactory, mEqConstraintFactory, mSymboltable,
 				mManagedScript);
 		mEqConstraintFactory.setEqStateFactory(mEqStateFactory);
 
@@ -102,18 +102,18 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 	}
 
 	@Override
-	public IAbstractStateBinaryOperator<EqState<ACTION>> getWideningOperator() {
+	public IAbstractStateBinaryOperator<EqState> getWideningOperator() {
 		return mMerge;
 	}
 
 	@Override
-	public IAbstractPostOperator<EqState<ACTION>, ACTION> getPostOperator() {
+	public IAbstractPostOperator<EqState, ACTION> getPostOperator() {
 		return mPost;
 	}
 
-	private final class VPMergeOperator implements IAbstractStateBinaryOperator<EqState<ACTION>> {
+	private final class VPMergeOperator implements IAbstractStateBinaryOperator<EqState> {
 		@Override
-		public EqState<ACTION> apply(final EqState<ACTION> first, final EqState<ACTION> second) {
+		public EqState apply(final EqState first, final EqState second) {
 			return first.union(second);
 		}
 	}
@@ -135,12 +135,12 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 	}
 
 	@Override
-	public EqState<ACTION> createTopState() {
+	public EqState createTopState() {
 		return mEqStateFactory.getTopState();
 	}
 
 	@Override
-	public EqState<ACTION> createBottomState() {
+	public EqState createBottomState() {
 		throw new UnsupportedOperationException("Not implemented: createBottomState");
 	}
 
@@ -153,7 +153,7 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 	}
 
 
-	public EqStateFactory<ACTION> getEqStateFactory() {
+	public EqStateFactory getEqStateFactory() {
 		return mEqStateFactory;
 	}
 
@@ -164,13 +164,13 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 
 	@Override
 	public <LOC> void afterFixpointComputation(
-			final IAbstractInterpretationResult<EqState<ACTION>, ACTION, LOC> result) {
+			final IAbstractInterpretationResult<EqState, ACTION, LOC> result) {
 
 		mBenchmark.setLocationsCounter(result.getLoc2SingleStates().keySet().size());
 
 		int noSupportingEqualitiesOverall = 0;
 		int noSupportingDisequalitiesOverall = 0;
-		for (final Entry<LOC, EqState<ACTION>> l2s : result.getLoc2SingleStates().entrySet()) {
+		for (final Entry<LOC, EqState> l2s : result.getLoc2SingleStates().entrySet()) {
 			noSupportingEqualitiesOverall += l2s.getValue().getConstraint()
 					.getStatistics(VPStatistics.NO_SUPPORTING_EQUALITIES);
 			noSupportingDisequalitiesOverall += l2s.getValue().getConstraint()

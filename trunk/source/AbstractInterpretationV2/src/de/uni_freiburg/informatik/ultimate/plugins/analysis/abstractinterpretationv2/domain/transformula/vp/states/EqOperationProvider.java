@@ -32,8 +32,6 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IDomainSpecificOperationProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNode;
 
@@ -41,12 +39,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
- * @param <ACTION>
  */
-public class EqOperationProvider<ACTION extends IIcfgTransition<IcfgLocation>> implements
+public class EqOperationProvider implements
  		IDomainSpecificOperationProvider<
  			EqDisjunctiveConstraint<EqNode>,
- 			EqPredicate<ACTION>,
+ 			EqPredicate,
  			EqTransitionRelation> {
 
 	private final EqConstraintFactory<EqNode> mEqConstraintFactory;
@@ -56,7 +53,7 @@ public class EqOperationProvider<ACTION extends IIcfgTransition<IcfgLocation>> i
 	}
 
 	@Override
-	public EqDisjunctiveConstraint<EqNode> getConstraint(final EqPredicate<ACTION> p) {
+	public EqDisjunctiveConstraint<EqNode> getConstraint(final EqPredicate p) {
 		return p.getEqConstraint();
 	}
 

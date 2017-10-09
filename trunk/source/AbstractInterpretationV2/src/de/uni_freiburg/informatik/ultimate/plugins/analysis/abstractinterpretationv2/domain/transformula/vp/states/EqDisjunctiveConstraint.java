@@ -119,7 +119,7 @@ public class EqDisjunctiveConstraint<
 	 * @param variablesThatTheFrameworkLikesToSee
 	 * @return
 	 */
-	public List<EqState<ACTION>> toEqStates(final Set<IProgramVarOrConst> variablesThatTheFrameworkLikesToSee) {
+	public List<EqState> toEqStates(final Set<IProgramVarOrConst> variablesThatTheFrameworkLikesToSee) {
 //		/*
 //		 *  The AbstractInterpretation framework demands that all EqStates here have the same Pvocs
 //		 *  Thus we set the Pvocs of all the disjunct-states to be the union of the pvocs that each

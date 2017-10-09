@@ -187,10 +187,10 @@ public final class AbstractInterpreter {
 	 * @param logger
 	 *
 	 */
-	public static IAbstractInterpretationResult<EqState<IcfgEdge>, IcfgEdge, IcfgLocation>
+	public static IAbstractInterpretationResult<EqState, IcfgEdge, IcfgLocation>
 			runFutureEqualityDomain(final IIcfg<?> root, final IProgressAwareTimer timer,
 					final IUltimateServiceProvider services, final boolean isSilent, final ILogger logger) {
-		final FixpointEngineParameters<EqState<IcfgEdge>, IcfgEdge, IProgramVarOrConst, IcfgLocation> params =
+		final FixpointEngineParameters<EqState, IcfgEdge, IProgramVarOrConst, IcfgLocation> params =
 				new FixpointEngineParameters<>(services, IProgramVarOrConst.class);
 		return runFuture(root, services, logger, isSilent,
 				params.setDomain(FixpointEngineFutureParameterFactory.createEqualityDomain(logger, root, services))

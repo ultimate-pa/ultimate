@@ -51,7 +51,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
  *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
- * @param <ACTION>
  * @param <NODE>
  * @param <FUNCTION>
  */
@@ -62,7 +61,7 @@ public class EqConstraintFactory<//ACTION extends IIcfgTransition<IcfgLocation>,
 
 	private final EqConstraint<NODE> mEmptyConstraint;
 
-	private EqStateFactory<ACTION> mEqStateFactory;
+	private EqStateFactory mEqStateFactory;
 
 	private final AbstractNodeAndFunctionFactory<NODE, Term> mEqNodeAndFunctionFactory;
 
@@ -339,11 +338,11 @@ public class EqConstraintFactory<//ACTION extends IIcfgTransition<IcfgLocation>,
 		return unfrozen;
 	}
 
-	public EqStateFactory<ACTION> getEqStateFactory() {
+	public EqStateFactory getEqStateFactory() {
 		return mEqStateFactory;
 	}
 
-	public void setEqStateFactory(final EqStateFactory<ACTION> eqStateFactory) {
+	public void setEqStateFactory(final EqStateFactory eqStateFactory) {
 		mEqStateFactory = eqStateFactory;
 	}
 
