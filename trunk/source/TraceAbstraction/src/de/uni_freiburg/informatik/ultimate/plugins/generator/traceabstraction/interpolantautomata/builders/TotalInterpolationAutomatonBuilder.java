@@ -211,18 +211,18 @@ public class TotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransition<?
 			final OutgoingInternalTransition<LETTER, IPredicate> internalTrans =
 					(OutgoingInternalTransition<LETTER, IPredicate>) transition;
 			final Set<IPredicate> succs = mIA.succInternal(predItp, internalTrans.getLetter());
-			return succs != null && succs.contains(succItp);
+			return succs.contains(succItp);
 		} else if (transition instanceof OutgoingCallTransition) {
 			final OutgoingCallTransition<LETTER, IPredicate> callTrans =
 					(OutgoingCallTransition<LETTER, IPredicate>) transition;
 			final Set<IPredicate> succs = mIA.succCall(predItp, callTrans.getLetter());
-			return succs != null && succs.contains(succItp);
+			return succs.contains(succItp);
 		} else if (transition instanceof OutgoingReturnTransition) {
 			final OutgoingReturnTransition<LETTER, IPredicate> returnTrans =
 					(OutgoingReturnTransition<LETTER, IPredicate>) transition;
 			final IPredicate hierPredItp = mEpimorphism.getMapping(returnTrans.getHierPred());
 			final Set<IPredicate> succs = mIA.succReturn(predItp, hierPredItp, returnTrans.getLetter());
-			return succs != null && succs.contains(succItp);
+			return succs.contains(succItp);
 		} else if (transition instanceof SummaryReturnTransition) {
 			final SummaryReturnTransition<LETTER, IPredicate> summaryTrans =
 					(SummaryReturnTransition<LETTER, IPredicate>) transition;

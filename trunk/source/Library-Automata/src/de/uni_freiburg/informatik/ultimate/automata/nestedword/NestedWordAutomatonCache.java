@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2013-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -48,12 +48,11 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap4;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Quad;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Quin;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.TransformIterator;
 
 /**
  * undocumented!
- * 
+ *
  * @author heizmann@informatik.uni-freiburg.de
  * @param <LETTER>
  *            letter type
@@ -86,13 +85,14 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INwaOutgoingLett
 	 * Set of return transitions LinPREs x HierPREs x LETTERs x SUCCs stored as map LinPREs -> LETTERs -> HierPREs ->
 	 * SUCCs.
 	 */
-	protected final NestedMap4<STATE, STATE, LETTER, STATE, IsContained>  mReturnOut = new NestedMap4<>();
+	protected final NestedMap4<STATE, STATE, LETTER, STATE, IsContained> mReturnOut = new NestedMap4<>();
 
 	protected final SetOfStates<STATE> mSetOfStates;
+	private static final boolean VERBOSE = false;
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param internalAlphabet
@@ -104,8 +104,7 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INwaOutgoingLett
 	 * @param stateFactory
 	 *            state factory
 	 */
-	public NestedWordAutomatonCache(final AutomataLibraryServices services, 
-			final VpAlphabet<LETTER> vpAlphabet,
+	public NestedWordAutomatonCache(final AutomataLibraryServices services, final VpAlphabet<LETTER> vpAlphabet,
 			final IEmptyStackStateFactory<STATE> stateFactory) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
@@ -114,9 +113,9 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INwaOutgoingLett
 			throw new IllegalArgumentException("nwa must have stateFactory");
 		}
 		mStateFactory = stateFactory;
-		mSetOfStates = new SetOfStates<STATE>(mStateFactory.createEmptyStackState());
+		mSetOfStates = new SetOfStates<>(mStateFactory.createEmptyStackState());
 	}
-	
+
 	@Override
 	public VpAlphabet<LETTER> getVpAlphabet() {
 		return mVpAlphabet;
@@ -125,7 +124,7 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INwaOutgoingLett
 	public final Set<STATE> getStates() {
 		return mSetOfStates.getStates();
 	}
-	
+
 	public final Set<STATE> getFinalStates() {
 		return mSetOfStates.getAcceptingStates();
 	}
@@ -207,15 +206,14 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INwaOutgoingLett
 		final NestedMap3<STATE, LETTER, STATE, IsContained> map = mReturnOut.get(state);
 		if (map == null) {
 			return Collections.emptySet();
-		} else {
-			final Set<LETTER> result = new HashSet<>();
-			for (final Quad<STATE, LETTER, STATE, IsContained> entry : map.entrySet()) {
-				result.add(entry.getSecond());
-			}
-			return result;
 		}
+		final Set<LETTER> result = new HashSet<>();
+		for (final Quad<STATE, LETTER, STATE, IsContained> entry : map.entrySet()) {
+			result.add(entry.getSecond());
+		}
+		return result;
 	}
-	
+
 	@Override
 	public final Set<LETTER> lettersReturn(final STATE state, final STATE hier) {
 		if (!contains(state)) {
@@ -224,9 +222,8 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INwaOutgoingLett
 		final NestedMap2<LETTER, STATE, IsContained> map = mReturnOut.get(state, hier);
 		if (map == null) {
 			return Collections.emptySet();
-		} else {
-			return map.keySet();
 		}
+		return map.keySet();
 	}
 
 	/**
@@ -239,9 +236,8 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INwaOutgoingLett
 		final NestedMap3<STATE, LETTER, STATE, IsContained> map = mReturnOut.get(state);
 		if (map == null) {
 			return Collections.emptySet();
-		} else {
-			return map.keySet();
 		}
+		return map.keySet();
 	}
 
 	/**
@@ -255,7 +251,7 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INwaOutgoingLett
 		assert contains(state);
 		final Map<STATE, IsContained> map = mInternalOut.get(state, letter);
 		if (map == null) {
-			return null;
+			return Collections.emptySet();
 		}
 		return map.keySet();
 	}
@@ -271,7 +267,7 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INwaOutgoingLett
 		assert contains(state);
 		final Map<STATE, IsContained> map = mCallOut.get(state, letter);
 		if (map == null) {
-			return null;
+			return Collections.emptySet();
 		}
 		return map.keySet();
 	}
@@ -290,7 +286,7 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INwaOutgoingLett
 		assert contains(hier);
 		final Map<STATE, IsContained> map = mReturnOut.get(state, hier, letter);
 		if (map == null) {
-			return null;
+			return Collections.emptySet();
 		}
 		return map.keySet();
 	}
@@ -301,25 +297,22 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INwaOutgoingLett
 		return NestedWordAutomataUtils.constructInternalTransitionIteratorFromNestedMap(state, letter, mInternalOut);
 	}
 
-
-
 	@Override
 	public final Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(final STATE state) {
-		return () -> new TransformIterator<Quad<STATE, LETTER, STATE, IsContained>, OutgoingInternalTransition<LETTER, STATE>>(
-				mInternalOut.entries(state).iterator(), x -> new OutgoingInternalTransition<LETTER, STATE>(x.getSecond(), x.getThird()));
+		return () -> new TransformIterator<>(mInternalOut.entries(state).iterator(),
+				x -> new OutgoingInternalTransition<>(x.getSecond(), x.getThird()));
 	}
 
 	@Override
-	public final Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(final STATE state, final LETTER letter) {
+	public final Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(final STATE state,
+			final LETTER letter) {
 		return NestedWordAutomataUtils.constructCallTransitionIteratorFromNestedMap(state, letter, mCallOut);
 	}
 
-
-
 	@Override
 	public final Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(final STATE state) {
-		return () -> new TransformIterator<Quad<STATE, LETTER, STATE, IsContained>, OutgoingCallTransition<LETTER, STATE>>(
-				mCallOut.entries(state).iterator(), x -> new OutgoingCallTransition<LETTER, STATE>(x.getSecond(), x.getThird()));
+		return () -> new TransformIterator<>(mCallOut.entries(state).iterator(),
+				x -> new OutgoingCallTransition<>(x.getSecond(), x.getThird()));
 	}
 
 	@Override
@@ -328,13 +321,11 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INwaOutgoingLett
 		return NestedWordAutomataUtils.constructReturnTransitionIteratorFromNestedMap(state, hier, letter, mReturnOut);
 	}
 
-
-
 	@Override
 	public final Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(final STATE state,
 			final STATE hier) {
-		return () -> new TransformIterator<Quin<STATE, STATE, LETTER, STATE, IsContained>, OutgoingReturnTransition<LETTER, STATE>>(
-				mReturnOut.entries(state, hier).iterator(), x -> new OutgoingReturnTransition<LETTER, STATE>(x.getSecond(), x.getThird(), x.getFourth()));
+		return () -> new TransformIterator<>(mReturnOut.entries(state, hier).iterator(),
+				x -> new OutgoingReturnTransition<>(x.getSecond(), x.getThird(), x.getFourth()));
 	}
 
 	/**
@@ -385,8 +376,7 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INwaOutgoingLett
 
 	@Override
 	public String sizeInformation() {
-		final boolean verbose = false;
-		if (!verbose) {
+		if (!VERBOSE) {
 			final int states = getStates().size();
 			return states + " states.";
 		}
@@ -398,7 +388,7 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INwaOutgoingLett
 			statesWithInternalSuccessors = statesWithOutgoingInternal.size();
 		}
 		final int internalSuccessors = mInternalOut.size();
-		
+
 		final int statesWithCallSuccessors;
 		final Set<STATE> statesWithOutgoingCall = mCallOut.keySet();
 		if (statesWithOutgoingCall == null) {
@@ -488,7 +478,7 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INwaOutgoingLett
 		if (!getVpAlphabet().getCallAlphabet().contains(letter)) {
 			throw new IllegalArgumentException("letter" + letter + " not in call alphabet");
 		}
-		
+
 		assert contains(pred) : STATE + pred + NOT_IN_AUTOMATON;
 		assert contains(succ) : STATE + succ + NOT_IN_AUTOMATON;
 		assert getVpAlphabet().getCallAlphabet().contains(letter);
@@ -526,7 +516,7 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INwaOutgoingLett
 		if (!getVpAlphabet().getReturnAlphabet().contains(letter)) {
 			throw new IllegalArgumentException("letter" + letter + " not in return alphabet");
 		}
-		
+
 		assert contains(pred) : STATE + pred + NOT_IN_AUTOMATON;
 		assert contains(succ) : STATE + succ + NOT_IN_AUTOMATON;
 		assert contains(hier) : STATE + hier + NOT_IN_AUTOMATON;
@@ -554,28 +544,27 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INwaOutgoingLett
 			addReturnTransition(pred, hier, letter, succ);
 		}
 	}
-	
-	
+
 	protected final void removeInternalOut(final STATE pred, final LETTER letter, final STATE succ) {
 		mInternalOut.remove(pred, letter, succ);
 	}
-	
+
 	protected final void removeAllInternalOut(final STATE pred) {
 		mInternalOut.remove(pred);
 	}
-	
+
 	protected final void removeCallOut(final STATE pred, final LETTER letter, final STATE succ) {
 		mCallOut.remove(pred, letter, succ);
 	}
-	
+
 	protected final void removeAllCallOut(final STATE pred) {
 		mCallOut.remove(pred);
 	}
-	
+
 	protected final void removeReturnOut(final STATE pred, final STATE hier, final LETTER letter, final STATE succ) {
 		mReturnOut.remove(pred, hier, letter, succ);
 	}
-	
+
 	protected final void removeAllReturnOut(final STATE pred) {
 		mReturnOut.remove(pred);
 	}
@@ -670,7 +659,7 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INwaOutgoingLett
 		return (new AutomatonDefinitionPrinter<String, String>(mServices, "nwa", Format.ATS, this))
 				.getDefinitionAsString();
 	}
-	
+
 	public int computeNumberOfInternalTransitions() {
 		return mInternalOut.size();
 	}
