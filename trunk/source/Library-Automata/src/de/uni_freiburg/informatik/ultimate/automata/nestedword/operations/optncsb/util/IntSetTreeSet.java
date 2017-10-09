@@ -31,16 +31,13 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optnc
 import java.util.Iterator;
 import java.util.TreeSet;
 
-/**
- * @author Yong Li (liyong@ios.ac.cn)
- * */
 
 public class IntSetTreeSet implements IntSet {
 	
-	private final TreeSet<Integer> set;
+	private final TreeSet<Integer> mSet;
 	
 	public IntSetTreeSet() {
-		set = new TreeSet<>();
+		mSet = new TreeSet<>();
 	}
 
 	@Override
@@ -51,7 +48,7 @@ public class IntSetTreeSet implements IntSet {
 	@Override
 	public IntSet clone() {
 		IntSetTreeSet copy = new IntSetTreeSet();
-		copy.set.addAll(set);
+		copy.mSet.addAll(mSet);
 		return copy;
 	}
 
@@ -62,7 +59,7 @@ public class IntSetTreeSet implements IntSet {
 			System.exit(-1);
 		}
 		IntSetTreeSet temp = (IntSetTreeSet)set;
-		this.set.removeAll(temp.set);
+		this.mSet.removeAll(temp.mSet);
 	}
 
 	@Override
@@ -72,7 +69,7 @@ public class IntSetTreeSet implements IntSet {
 			System.exit(-1);
 		}
 		IntSetTreeSet temp = (IntSetTreeSet)set;
-		this.set.retainAll(temp.set);
+		this.mSet.retainAll(temp.mSet);
 	}
 
 	@Override
@@ -82,42 +79,42 @@ public class IntSetTreeSet implements IntSet {
 			System.exit(-1);
 		}
 		IntSetTreeSet temp = (IntSetTreeSet)set;
-		this.set.addAll(temp.set);
+		this.mSet.addAll(temp.mSet);
 	}
 
 	@Override
 	public boolean get(int value) {
-		return set.contains(value);
+		return mSet.contains(value);
 	}
 
 	@Override
 	public void clear(int value) {
-		set.remove(value);
+		mSet.remove(value);
 	}
 	
 	@Override
 	public String toString() {
-		return set.toString();
+		return mSet.toString();
 	}
 	
 	@Override
 	public void clear() {
-		set.clear();
+		mSet.clear();
 	}
 	
 	@Override
 	public void set(int value) {
-		set.add(value);
+		mSet.add(value);
 	}
 
 	@Override
 	public boolean isEmpty() {
-		return set.isEmpty();
+		return mSet.isEmpty();
 	}
 
 	@Override
 	public int cardinality() {
-		return set.size();
+		return mSet.size();
 	}
 
 	@Override
@@ -127,7 +124,7 @@ public class IntSetTreeSet implements IntSet {
 			System.exit(-1);
 		}
 		IntSetTreeSet temp = (IntSetTreeSet)set;
-		return temp.set.containsAll(this.set);
+		return temp.mSet.containsAll(this.mSet);
 	}
 
 	@Override
@@ -137,12 +134,12 @@ public class IntSetTreeSet implements IntSet {
 			System.exit(-1);
 		}
 		IntSetTreeSet temp = (IntSetTreeSet)set;
-		return this.set.equals(temp.set);
+		return this.mSet.equals(temp.mSet);
 	}
 
 	@Override
 	public Object get() {
-		return set;
+		return mSet;
 	}
 	
 	public boolean equals(Object obj) {
@@ -156,20 +153,25 @@ public class IntSetTreeSet implements IntSet {
 	
 	public static class TreeSetIterator implements IntIterator {
 
-		private Iterator<Integer> iterator;
+		private Iterator<Integer> mSetIter;
 		
 		public TreeSetIterator(IntSetTreeSet set) {
-			this.iterator = set.set.iterator();
+			this.mSetIter = set.mSet.iterator();
 		}
 		
 		public boolean hasNext() {
-			return iterator.hasNext();
+			return mSetIter.hasNext();
 		}
 		
 		public int next() {
-			return iterator.next();
+			return mSetIter.next();
 		}
 		
+	}
+	
+	@Override
+	public Iterable<Integer> iterable() {
+		return mSet;
 	}
 	
 

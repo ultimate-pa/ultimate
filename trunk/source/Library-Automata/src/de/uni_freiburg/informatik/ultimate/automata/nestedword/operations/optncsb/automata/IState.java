@@ -26,31 +26,22 @@
  * to convey the resulting work.
  */
 
-
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.automata;
 
-import java.util.Set;
+import java.io.PrintStream;
+import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util.IntSet;
-
-/**
- * @author Yong Li (liyong@ios.ac.cn)
- * */
-
+// state interface requirements for (nested) word automata
 public interface IState {
-	
-	int getId();
-		
-	void addSuccessor(int letter, int state);
-	
-	IntSet getSuccessors(int letter);
-	
-	Set<Integer> getEnabledLetters();
 
 	// ----- general requirements
+	int getId();
+
 	boolean equals(Object otherState);
 	
 	int hashCode();
 	
 	String toString();
+	
+	void toDot(PrintStream printer, List<String> alphabet);
 }

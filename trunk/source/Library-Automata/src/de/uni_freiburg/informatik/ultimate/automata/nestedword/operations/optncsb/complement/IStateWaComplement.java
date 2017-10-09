@@ -26,31 +26,14 @@
  * to convey the resulting work.
  */
 
-package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.inclusion;
+package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.complement;
 
-import java.util.List;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.automata.IBuchiWa;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.automata.IStateWa;
 
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.automata.IBuchi;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.automata.IState;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.complement.IBuchiComplement;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util.IPair;
-
-/**
- * @author Yong Li (liyong@ios.ac.cn)
- * */
-
-public interface IBuchiInclusion {
+public interface IStateWaComplement extends IStateWa {
 	
-	IBuchi getFstBuchi();
-	IBuchi getSndBuchi();
-	IBuchiComplement getSndBuchiComplement();
-	IBuchi getBuchiDifference();
+	IBuchiWa getOperand();
 	
-	Boolean isIncluded();
-	
-    IPair<List<Integer>, List<Integer>> getCounterexampleWord();
-    IPair<List<IState>, List<IState>> getCounterexampleRun();
-    
-    String getName();
-
+	IBuchiWa getComplement();
 }

@@ -30,10 +30,6 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optnc
 
 import java.util.BitSet;
 
-/**
- * @author Yong Li (liyong@ios.ac.cn)
- * */
-
 public class UtilBitSet {
 	
 	private UtilBitSet() {

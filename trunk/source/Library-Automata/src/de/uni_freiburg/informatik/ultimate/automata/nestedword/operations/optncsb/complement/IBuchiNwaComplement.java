@@ -26,14 +26,9 @@
  * to convey the resulting work.
  */
 
-
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.complement;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.automata.IBuchiNwa;
-
-/**
- * @author Yong Li
- * */
 
 public interface IBuchiNwaComplement extends IBuchiNwa {
 	IBuchiNwa getOperand();

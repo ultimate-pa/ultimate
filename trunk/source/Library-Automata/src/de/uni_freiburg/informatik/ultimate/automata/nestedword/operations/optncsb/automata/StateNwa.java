@@ -26,12 +26,12 @@
  * to convey the resulting work.
  */
 
-
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.automata;
 
-
+import java.io.PrintStream;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -42,8 +42,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncs
 
 /**
  * State class for Buchi Nested Word Automata
- * 
- * @author Yong Li
  * */
 public class StateNwa implements IStateNwa, Comparable<StateNwa> {
 	
@@ -121,13 +119,13 @@ public class StateNwa implements IStateNwa, Comparable<StateNwa> {
 	}
 
 	@Override
-	public IntSet getSuccessorsReturn(int pred, int letter) {
+	public IntSet getSuccessorsReturn(int hier, int letter) {
 		assert mBuchi.getAlphabetReturn().get(letter);
 		Map<Integer, IntSet> succMap = mSuccessorsReturn.get(letter);
 		if(succMap == null) {
 			return UtilIntSet.newIntSet();
 		}
-		return getSuccessors(succMap, pred);
+		return getSuccessors(succMap, hier);
 	}
 
 	@Override
@@ -178,6 +176,37 @@ public class StateNwa implements IStateNwa, Comparable<StateNwa> {
 	@Override
 	public String toString() {
 		return "s" + mId;
+	}
+	
+
+	@Override
+	public void toDot(PrintStream printer, List<String> alphabet) {
+		Set<Integer> callLetters = this.getEnabledLettersCall();
+		for(Integer letter : callLetters) {
+        	IntSet succs = this.getSuccessorsCall(letter);
+    		transToDot(printer, alphabet, succs, alphabet.get(letter) + "<");
+        }
+		
+		Set<Integer> internalLetters = this.getEnabledLettersInternal();
+		for(Integer letter : internalLetters) {
+        	IntSet succs = this.getSuccessorsInternal(letter);
+    		transToDot(printer, alphabet, succs, alphabet.get(letter).toString());
+        }
+		
+		Set<Integer> returnLetters = this.getEnabledLettersReturn();
+		for(Integer letter : returnLetters) {
+			Set<Integer> predHiers = this.getEnabledHiersReturn(letter);
+			for(Integer predHier : predHiers) {
+	        	IntSet succs = this.getSuccessorsReturn(predHier, letter);
+	    		transToDot(printer, alphabet, succs, predHier + ",>" + alphabet.get(letter));
+			}
+        }
+	}
+	
+	private void transToDot(PrintStream printer, List<String> alphabet, IntSet succs, String letter) {
+		for(final Integer succ : succs.iterable()) {
+			printer.print("  " + this.getId() + " -> " + succ + " [label=\"" + letter.replaceAll("\"", "") + "\"];\n");
+		}
 	}
 
 }

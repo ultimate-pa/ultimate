@@ -26,20 +26,11 @@
  * to convey the resulting work.
  */
 
+package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.inclusion;
 
-package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.complement;
+public interface IBinaryOperation<I, O> extends IGenericOperation<I, O> {
 
-
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.automata.IBuchi;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util.IntSet;
-
-/**
- * @author Yong Li (liyong@ios.ac.cn)
- * */
-
-public interface IBuchiComplement extends IBuchi {
-	IBuchi getOperand();
+	I getFirstOperand();
 	
-//	void useOpTransition(int letter, IntSet states);
-//	int getNumUsedOpTransition();
+	I getSecondOperand();
 }

@@ -26,18 +26,32 @@
  * to convey the resulting work.
  */
 
-package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.complement;
-
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.automata.IBuchi;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.automata.IState;
+package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.inclusion;
 
 /**
- * @author Yong Li (liyong@ios.ac.cn)
- * */
+ * This class is used to explore the state space of a given Buchi (nested) word automaton
+ *  */
+public abstract class BuchiExploration<T> implements IUnaryOperation<T, T>{
+	
+	protected final T mOperand;
+	protected boolean mExplored;
+	
+	public BuchiExploration(T operand) {
+		mOperand = operand;
+		mExplored = false;
+	}
+	
+	protected abstract void explore();
+	
+	@Override
+	public T getOperand() {
+		return mOperand;
+	}
 
-public interface IStateComplement extends IState {
+	@Override
+	public T getResult() {
+		if(! mExplored) explore();
+		return mOperand;
+	}
 	
-	IBuchi getOperand();
-	
-	IBuchi getComplement();
 }

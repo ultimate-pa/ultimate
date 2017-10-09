@@ -29,12 +29,7 @@
 
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
-
-
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.automata.StateGeneral;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.automata.StateNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util.IntIterator;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util.IntSet;
 
@@ -42,35 +37,54 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncs
  * @author Yong Li (liyong@ios.ac.cn)
  * */
 
-public class StateNWA<LETTER, STATE> extends StateGeneral {
+public class StateNWA<LETTER, STATE> extends StateNwa {
 
 	private NwaToBuchiWrapper<LETTER, STATE> mBuchi;
 	
-	private Set<Integer> mEnabledLetters;
-	
 	public StateNWA(NwaToBuchiWrapper<LETTER, STATE> buchi, int id) {
-		super(id);
+		super(buchi, id);
 		this.mBuchi = buchi;
-		this.mEnabledLetters = new HashSet<>();
-	}
-	
-	
-	@Override
-	public Set<Integer> getEnabledLetters() {
-		return Collections.unmodifiableSet(mEnabledLetters);
 	}
 	
 	// support on-the-fly exploration
 	@Override
-	public IntSet getSuccessors(int letter) {
-		if(mEnabledLetters.contains(letter)) {
-			return super.getSuccessors(letter);
+	public IntSet getSuccessorsInternal(int letter) {
+		if(super.getEnabledLettersInternal().contains(letter)) {
+			return super.getSuccessorsInternal(letter);
 		}else {
-			mEnabledLetters.add(letter);
-			IntSet succs = mBuchi.computeSuccessors(getId(), letter);
+			IntSet succs = mBuchi.computeSuccessorsInternal(getId(), letter);
 			IntIterator iter = succs.iterator();
 			while(iter.hasNext()) {
-				super.addSuccessor(letter, iter.next());
+				super.addSuccessorInternal(letter, iter.next());
+			}
+			return succs;
+		}
+	}
+	
+	@Override
+	public IntSet getSuccessorsCall(int letter) {
+		if(super.getEnabledLettersCall().contains(letter)) {
+			return super.getSuccessorsCall(letter);
+		}else {
+			IntSet succs = mBuchi.computeSuccessorsCall(getId(), letter);
+			IntIterator iter = succs.iterator();
+			while(iter.hasNext()) {
+				super.addSuccessorCall(letter, iter.next());
+			}
+			return succs;
+		}
+	}
+	
+	@Override
+	public IntSet getSuccessorsReturn(int hier, int letter) {
+		if(super.getEnabledLettersReturn().contains(letter)
+		&& super.getEnabledHiersReturn(letter).contains(hier)) {
+			return super.getSuccessorsReturn(hier, letter);
+		}else {
+			IntSet succs = mBuchi.computeSuccessorsReturn(getId(), hier, letter);
+			IntIterator iter = succs.iterator();
+			while(iter.hasNext()) {
+				super.addSuccessorReturn(hier, letter, iter.next());
 			}
 			return succs;
 		}

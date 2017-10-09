@@ -26,237 +26,118 @@
  * to convey the resulting work.
  */
 
-
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.automata;
 
+import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.LinkedList;
+import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util.IntIterator;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util.IntSet;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util.UtilIntSet;
+
 
 /**
- * @author Yong Li (liyong@ios.ac.cn)
+ * (generalized) Buchi automata
  * */
-
-public interface IBuchi {
+public interface IBuchi<S extends IState> {
 	
 	Acc getAcceptance();
 	
-	int getAlphabetSize();
-	
 	int getStateSize();
 	
-	IState addState();
+	S addState();
 	
-	int addState(IState state);
+	S makeState(int id);
 	
-	IState getState(int id);
+	int addState(S state);
+	
+	S getState(int id);
 	
 	IntSet getInitialStates();
 
 	IntSet getFinalStates();
 	
-	IState makeState(int id);
 	
-	
-	default public boolean isInitial(IState s) {
+	default public boolean isInitial(S s) {
 		return isInitial(s.getId());
 	}
 	
 	boolean isInitial(int id);
 	
-	default public boolean isFinal(IState s) {
+	default public boolean isFinal(S s) {
 		return isFinal(s.getId());
 	}
 	
 	boolean isFinal(int id);
 	
-	default public void setInitial(IState s) {
+	default public void setInitial(S s) {
 		setInitial(s.getId());
 	}
 	
 	void setInitial(int id);
 	
-	default public void setFinal(IState s) {
+	default public void setFinal(S s) {
 		setFinal(s.getId());
 	}
 	
 	void setFinal(int id);
 	
-	default public IntSet getSuccessors(IntSet states, int letter) {
-		IntSet result = UtilIntSet.newIntSet();
-		IntIterator iter = states.iterator();
-		while(iter.hasNext()) {
-			int n = iter.next();
-			result.or(getSuccessors(n, letter));
-		}
-		return result;
-	}
-	
-	IntSet getSuccessors(int state, int letter);
-	
-	Collection<IState> getStates();
+	Collection<S> getStates();
 	
 	void makeComplete();
 	
-	default public String toDot() {
+	int getAlphabetSize();
 		
-		StringBuilder sb = new StringBuilder();
+	int getTransitionSize();
+	// printer
+	
+	default public String toDot() {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        try {
+        	List<String> alphabet = new ArrayList<>();
+        	for(int i = 0; i < getAlphabetSize(); i ++) {
+        		alphabet.add(i + "");
+        	}
+            toDot(new PrintStream(out), alphabet);
+            return out.toString();
+        } catch (Exception e) {
+            return "ERROR";
+        }
+	}
+	
+	default void toDot(PrintStream out, List<String> alphabet) {
 		
 		// output automata in dot
-		sb.append("digraph {\n");
-		Collection<IState> states = getStates();
-		for(IState state : states) {
-			sb.append("  " + state.getId() + " [label=\"" +  state.getId() + "\"");
-            if(isFinal(state.getId())) sb.append(", shape = doublecircle");
-            else sb.append(", shape = circle");
-            sb.append("];\n");
-            for (int letter = 0; letter < getAlphabetSize(); letter ++) {
-            	IntSet succs = state.getSuccessors(letter);
-        		IntIterator iter = succs.iterator();
-        		while(iter.hasNext()) {
-        			int succ = iter.next();
-        			sb.append("  " + state.getId() + " -> " + succ + " [label=\"" + letter + "\"];\n");
-        		}
-            }
+		out.print("digraph {\n");
+		Collection<S> states = getStates();
+		for(S state : states) {
+			IntSet labels = getAcceptance().getLabels(state.getId());
+//			out.print("  " + state.getId() + " [label=\"" +  state.getId() + "\"");
+			out.print("  " + state.getId());
+            if(isFinal(state.getId())) out.print(" [label=\"" +  state.getId() + "\"" + ", shape = doublecircle");
+            else if(! labels.isEmpty()) {
+            	out.print(" [label=\"" +  state.getId() + " " +  labels + "\"" + ", shape = box");
+            }else out.print(", shape = circle");
+            
+            out.print("];\n");
+            state.toDot(out, alphabet);
         }	
-        sb.append("  " + states.size() + " [label=\"\", shape = plaintext];\n");
-        IntSet initialStates = getInitialStates();
-        IntIterator iter = initialStates.iterator();
-        while(iter.hasNext()) {
-        	int init = iter.next();
-        	sb.append("  " + states.size() + " -> " + init + " [label=\"\"];\n");
+		out.print("  " + states.size() + " [label=\"\", shape = plaintext];\n");
+        for(final Integer init : getInitialStates().iterable()) {
+        	out.print("  " + states.size() + " -> " + init + " [label=\"\"];\n");
         }
         
-        sb.append("}\n\n");
-		return sb.toString();
-	}
-	
-	// RABIT format
-	default public String toBA() {
-		
-		StringBuilder sb = new StringBuilder();
-        IntSet initialStates = getInitialStates();
-        if(initialStates.cardinality() > 1) 
-        	throw new RuntimeException("BA format does not allow multiple initial states...");
-        IntIterator iter = initialStates.iterator();
-        sb.append("[" + iter.next() + "]\n");
-		// output automata in BA (RABIT format)
-		Collection<IState> states = getStates();
-		for(IState state : states) {
-            for (int letter = 0; letter < getAlphabetSize(); letter ++) {
-            	IntSet succs = state.getSuccessors(letter);
-            	iter = succs.iterator();
-            	while(iter.hasNext()) {
-            		int succ = iter.next();
-            		sb.append("a" + letter + ",[" + state.getId() + "]->[" + succ + "]\n");
-            	}
-            }
-        }	
-        IntSet finStates = getFinalStates();
-        iter = finStates.iterator();
-        while(iter.hasNext()) {
-        	sb.append("[" + iter.next() + "]\n");
-        }
-        
-		return sb.toString();
-	}
-	
-	// use this function if automtaton is too large 
-	default public void toBA(PrintStream out) {
-        IntSet initialStates = getInitialStates();
-        if(initialStates.cardinality() > 1) 
-        	throw new RuntimeException("BA format does not allow multiple initial states...");
-        IntIterator iter = initialStates.iterator();
-        out.print("[" + iter.next() + "]\n");
-		// output automata in BA (RABIT format)
-		Collection<IState> states = getStates();
-		for(IState state : states) {
-            for (int letter = 0; letter < getAlphabetSize(); letter ++) {
-            	IntSet succs = state.getSuccessors(letter);
-            	iter = succs.iterator();
-            	while(iter.hasNext()) {
-            		int succ = iter.next();
-            		out.print("a" + letter + ",[" + state.getId() + "]->[" + succ + "]\n");
-            	}
-            }
-        }	
-        IntSet finStates = getFinalStates();
-        iter = finStates.iterator();
-        while(iter.hasNext()) {
-        	out.print("[" + iter.next() + "]\n");
-        }
-	}
-	
-	default int getNumTransition() {
-		int num = 0;
-		for(IState s : getStates()) {
-			for(Integer letter : s.getEnabledLetters()) {
-				num += s.getSuccessors(letter).cardinality();
-			}
-		}
-		return num;
-	}
-	
-	// a Buchi automaton is semideterministic if all transitions after the accepting states are deterministic
-	default boolean isSemiDeterministic() {
-		IntSet finIds = getFinalStates();
-		LinkedList<IState> walkList = new LinkedList<>();
-		
-		// add to list
-		IntIterator iter = finIds.iterator();
-		while(iter.hasNext()) {
-			walkList.addFirst(getState(iter.next()));
-		}
-		
-        IntSet visited = UtilIntSet.newIntSet();
-        while(! walkList.isEmpty()) {
-        	IState s = walkList.remove();
-        	if(visited.get(s.getId())) continue;
-        	visited.set(s.getId());
-        	for(int i = 0; i < getAlphabetSize(); i ++) {
-        		IntSet succs = s.getSuccessors(i);
-        		if(succs.isEmpty()) continue;
-        		if(succs.cardinality() > 1) return false;
+        out.print("}\n\n");
 
-        		iter = succs.iterator();
-        		int succ = iter.next();
-    			if(! visited.get(succ)) {
-    				walkList.addFirst(getState(succ));
-    			}
-        	}
-        }
-        
-        return true;
 	}
 	
-	default boolean isDeterministic(int state) {
-		LinkedList<IState> walkList = new LinkedList<>();
-		
-		walkList.addFirst(getState(state));
-		
-        IntSet visited = UtilIntSet.newIntSet();
-        while(! walkList.isEmpty()) {
-        	IState s = walkList.remove();
-        	if(visited.get(s.getId())) continue;
-        	visited.set(s.getId());
-        	for(int i = 0; i < getAlphabetSize(); i ++) {
-        		IntSet succs = s.getSuccessors(i);
-        		if(succs.cardinality() > 1) return false;
-        		if(succs.isEmpty()) continue;
-        		IntIterator iter = succs.iterator();
-        		int succ = iter.next();
-    			if(! visited.get(succ)) {
-    				walkList.addFirst(getState(succ));
-    			}
-        	}
-        }
-        
-        return true;
-	}
-
+	void toATS(PrintStream out, List<String> alphabet);
+	
+	// a Buchi automaton is semideterministic 
+	// if all transitions after the accepting states are deterministic
+	boolean isSemiDeterministic();
+	
+	boolean isDeterministic(int state);
 
 }

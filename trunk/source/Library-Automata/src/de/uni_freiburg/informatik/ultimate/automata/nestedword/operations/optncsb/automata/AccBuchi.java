@@ -26,19 +26,17 @@
  * to convey the resulting work.
  */
 
-
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.automata;
-
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util.IntSet;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util.UtilIntSet;
 
-/**
- * @author Yong Li
- * */
+
+
 public class AccBuchi implements Acc {
 
 	private final IntSet mFinalStates;
@@ -58,6 +56,15 @@ public class AccBuchi implements Acc {
 	@Override
 	public List<IntSet> getAccs() {
 		return Collections.unmodifiableList(mAccList);
+	}
+
+	@Override
+	public IntSet getLabels(int state) {
+		IntSet labels = UtilIntSet.newIntSet();
+		if(mFinalStates.get(state)) {
+			labels.set(0);
+		}
+		return labels;
 	}
 
 }

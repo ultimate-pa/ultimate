@@ -29,21 +29,19 @@
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util;
 
 import java.util.BitSet;
-import java.util.Iterator;
 
 /**
- * @author Yong Li (liyong@ios.ac.cn)
+ * This is a helper class for enumerate all possible subsets in a given full BitSet
  * */
+class EnumeratorBitSet extends BitSet implements Comparable<EnumeratorBitSet>{
 
-public class Valuation extends BitSet implements Comparable<Valuation>, Iterable<Integer> {
-
+	private static final long serialVersionUID = 1L;
 	/**
 	 * should keep the size
 	 */
-	private static final long serialVersionUID = 1L;
 	private int size ;
 	
-	public Valuation(int size) {
+	public EnumeratorBitSet(int size) {
 		super(size);
 		if(size <= 0) {
 			System.err.println("valuation size should be positive number");
@@ -57,36 +55,26 @@ public class Valuation extends BitSet implements Comparable<Valuation>, Iterable
 		return size;
 	}
 	
-	public boolean contains(Valuation other) {
-		for(int i = other.nextSetBit(0); i >= 0; i ++) {
-			if(! get(i)) return false;
-		}
-		return true;
-	}
-	
 	@Override
 	public boolean equals(Object obj) {
-		if(obj instanceof BitSet) {
-			return this.compareTo((Valuation)obj) == 0;
+		if(this == obj) return true;
+		if(! (obj instanceof EnumeratorBitSet)) {
+			return false;
 		}
-		return false;
+		EnumeratorBitSet other = (EnumeratorBitSet)obj;
+		return this.compareTo(other) == 0;
 	}
 	
 	
 	@Override
-	public Valuation clone() {
-		Valuation copy = new Valuation(this.size());
+	public EnumeratorBitSet clone() {
+		EnumeratorBitSet copy = new EnumeratorBitSet(this.size());
 		copy.or(this);
 		return copy;
 	}
-	
-	@Override
-	public Iterator<Integer> iterator() {
-		return new ValuationIterator(this);
-	}
 
 	@Override
-	public int compareTo(Valuation bits) {
+	public int compareTo(EnumeratorBitSet bits) {
 		if(bits.size() > this.size()) return -1;
 		if(bits.size() < this.size()) return 1;
 		for(int i = 0; i < size(); i ++) {
@@ -96,62 +84,21 @@ public class Valuation extends BitSet implements Comparable<Valuation>, Iterable
 		return 0;
 	}
 
+	@Override
 	public String toString() {
-		StringBuilder builder = new StringBuilder();
-		Iterator<Integer> iter = iterator();
-		builder.append("{");
-		while(iter.hasNext()) {
-			builder.append(iter.next());
-			if(iter.hasNext()) {
-				builder.append(", ");
-			}
-		}
-		builder.append("}");
-		return builder.toString();
+		return super.toString();
 	}
 	
 	/** increase a bit */
-	protected void increment() {
+	protected void nextBitSet() {
 		int i = this.nextClearBit(0);
 		this.clear(0,i);
 		this.set(i);
 	}
 	
-	public int toInt() {
-		int n = 0;
-		for(int i = 0; i < size(); i ++) {
-			n += get(i) ? (1 << i) : 0;
-		}
-		return n;
-	}
-	
+	// since this is modifiable bitset, we donot supprt hashCode
 	@Override
 	public int hashCode() {
-		return toInt();
-	}
-
-	public static class ValuationIterator implements Iterator<Integer> {
-
-		private Valuation valuation;
-		private int index;
-		
-		public ValuationIterator(Valuation val) {
-			this.valuation = val;
-			index = val.nextSetBit(0);
-		}
-		
-		public boolean hasNext() {
-			return (index >= 0);
-		}
-		
-		public Integer next() {
-			Integer rv = new Integer(index);
-			index = valuation.nextSetBit(index + 1);
-			return rv;
-		}
-		
-		public void remove() {
-			throw new UnsupportedOperationException();
-		}
+		throw new UnsupportedOperationException("EnumeratorBitSet doesnot support hashCode");
 	}
 }

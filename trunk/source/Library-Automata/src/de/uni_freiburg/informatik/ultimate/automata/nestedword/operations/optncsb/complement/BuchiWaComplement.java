@@ -26,94 +26,75 @@
  * to convey the resulting work.
  */
 
-
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.complement;
 
-import java.util.ArrayList;
+//import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.LinkedList;
-import java.util.List;
+//import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.automata.BuchiGeneral;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.automata.IBuchi;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.automata.IState;
-import gnu.trove.map.TObjectIntMap;
-import gnu.trove.map.hash.TObjectIntHashMap;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.Options;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.automata.BuchiWa;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.automata.IBuchiWa;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.automata.IStateWa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util.IntIterator;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util.IntSet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util.UtilIntSet;
+import gnu.trove.map.TObjectIntMap;
+import gnu.trove.map.hash.TObjectIntHashMap;
+
 
 /**
- * only valid for semi-deterministic Buchi automaton
+ * only valid for semi-deterministic Buchi word automata
  * */
+public class BuchiWaComplement extends BuchiWa implements IBuchiWaComplement {
 
-/**
- * @author Yong Li (liyong@ios.ac.cn)
- * */
-
-public class BuchiComplementSDBA extends BuchiGeneral implements IBuchiComplement {
-
-	private final IBuchi mOperand;
-	
-//	private final List<IntSet> mOpTransUsed;
-	
-	public BuchiComplementSDBA(IBuchi buchi) {
+	private final IBuchiWa mOperand;
+		
+	public BuchiWaComplement(IBuchiWa buchi) {
 		super(buchi.getAlphabetSize());
-		// TODO Auto-generated constructor stub
 		this.mOperand = buchi;
-//		this.mOpTransUsed = new ArrayList<>();
-//		for(int i = 0; i < mOperand.getAlphabetSize(); i ++) {
-//			this.mOpTransUsed.add(UtilIntSet.newIntSet());
-//		}
 		computeInitialStates();
 	}
 	
-	private final TObjectIntMap<StateNCSB> mState2Int = new TObjectIntHashMap<>();
+	private final TObjectIntMap<StateWaNCSB> mStateIndices = new TObjectIntHashMap<>();
 
 	private void computeInitialStates() {
-		StateNCSB state = new StateNCSB(0, this);
 		IntSet C = mOperand.getInitialStates().clone();
 		C.and(mOperand.getFinalStates()); // goto C
 		IntSet N = mOperand.getInitialStates().clone();
-		N.andNot(mOperand.getFinalStates());
-		state.setSets(N, C, UtilIntSet.newIntSet(), C);
+		N.andNot(C);
+		NCSB ncsb = new NCSB(N, C, UtilIntSet.newIntSet(), C);
+		StateWaNCSB state = new StateWaNCSB(this, 0, ncsb);
 		if(C.isEmpty()) this.setFinal(0);
 		this.setInitial(0);
 		int id = this.addState(state);
-		mState2Int.put(state, id);
+		mStateIndices.put(state, id);
 	}
 	
-	public StateNCSB getNCSBState(int id) {
-		return (StateNCSB) getState(id);
-	}
 
-	protected StateNCSB addState(IntSet N, IntSet C, IntSet S, IntSet B) {
+	protected StateWaNCSB addState(NCSB ncsb) {
 		
-		StateNCSB state = new StateNCSB(0, this);
-		state.setSets(N, C, S, B);
+		StateWaNCSB state = new StateWaNCSB(this, 0, ncsb);
 		
-		if(mState2Int.containsKey(state)) {
-			return (StateNCSB) getState(mState2Int.get(state));
+		if(mStateIndices.containsKey(state)) {
+			return (StateWaNCSB) getState(mStateIndices.get(state));
 		}else {
 			int index = getStateSize();
-			StateNCSB newState = new StateNCSB(index, this);
-			newState.setSets(N, C, S, B);
+			StateWaNCSB newState = new StateWaNCSB(this, index, ncsb);
 			int id = this.addState(newState);
-			mState2Int.put(newState, id);
-			
-			if(B.isEmpty()) setFinal(index);
-			
+			mStateIndices.put(newState, id);
+			if(ncsb.getBSet().isEmpty()) setFinal(index);
 			return newState;
 		}
 	}
 
 	@Override
-	public IBuchi getOperand() {
+	public IBuchiWa getOperand() {
 		return mOperand;
 	}
 	
-	
+	// ---------------- following is not needed 
 	private boolean mExplored = false;
 	
 	public void explore() {
@@ -122,7 +103,7 @@ public class BuchiComplementSDBA extends BuchiGeneral implements IBuchiComplemen
 		
 		mExplored = true;
 		
-		LinkedList<IState> walkList = new LinkedList<>();
+		LinkedList<IStateWa> walkList = new LinkedList<>();
 		IntSet initialStates = getInitialStates();
 		
 		IntIterator iter = initialStates.iterator();
@@ -134,10 +115,11 @@ public class BuchiComplementSDBA extends BuchiGeneral implements IBuchiComplemen
         BitSet visited = new BitSet();
         
         while(! walkList.isEmpty()) {
-        	IState s = walkList.remove();
+        	IStateWa s = walkList.remove();
         	if(visited.get(s.getId())) continue;
         	visited.set(s.getId());
         	if(Options.verbose) System.out.println("s"+ s.getId() + ": " + s.toString());
+        	
         	for(int i = 0; i < mOperand.getAlphabetSize(); i ++) {
         		IntSet succs = s.getSuccessors(i);
         		iter = succs.iterator();
@@ -155,22 +137,21 @@ public class BuchiComplementSDBA extends BuchiGeneral implements IBuchiComplemen
 
 //	@Override
 //	public void useOpTransition(int letter, IntSet states) {
-//		// TODO Auto-generated method stub
-////		this.mOpTransUsed.get(letter).or(states);
+//		this.mOpTransUsed.get(letter).or(states);
 //	}
-//
-//
+
+
 //	@Override
 //	public int getNumUsedOpTransition() {
 //		// TODO Auto-generated method stub
 //		int num = 0;
-////		for(int i = 0; i < mOpTransUsed.size(); i ++) {
-////			IntSet sources = mOpTransUsed.get(i);
-////			IntIterator iter = sources.iterator();
-////			while(iter.hasNext()) {
-////				num += mOperand.getState(iter.next()).getSuccessors(i).cardinality();
-////			}
-////		}
+//		for(int i = 0; i < mOpTransUsed.size(); i ++) {
+//			IntSet sources = mOpTransUsed.get(i);
+//			IntIterator iter = sources.iterator();
+//			while(iter.hasNext()) {
+//				num += mOperand.getState(iter.next()).getSuccessors(i).cardinality();
+//			}
+//		}
 //		return num;
 //	}
 	

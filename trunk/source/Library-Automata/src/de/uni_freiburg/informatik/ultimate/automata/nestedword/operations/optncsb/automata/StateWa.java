@@ -26,7 +26,6 @@
  * to convey the resulting work.
  */
 
-
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.automata;
 
 import java.util.Collections;
@@ -37,16 +36,15 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util.IntSet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util.UtilIntSet;
 
-/**
- * @author Yong Li (liyong@ios.ac.cn)
- * */
+
+
 
 //TODO deal with automata with large alphabet
-public class StateGeneral implements IState, Comparable<StateGeneral> {
+public class StateWa implements IStateWa, Comparable<StateWa> {
 
 	private final int mId;
 	private final Map<Integer, IntSet> mSuccessors;
-	public StateGeneral(int id) {
+	public StateWa(int id) {
 		this.mId = id;
 		this.mSuccessors = new HashMap<>();
 	}
@@ -81,22 +79,26 @@ public class StateGeneral implements IState, Comparable<StateGeneral> {
 	}
 
 	@Override
-	public int compareTo(StateGeneral other) {
+	public int compareTo(StateWa other) {
 		return mId - other.mId;
 	}
 	
+	@Override
 	public boolean equals(Object other) {
-		if(!(other instanceof StateGeneral)) {
+		if(this == other) return true;
+		if(!(other instanceof StateWa)) {
 			return false;
 		}
-		StateGeneral otherState = (StateGeneral)other;
+		StateWa otherState = (StateWa)other;
 		return otherState.mId == this.mId;
 	}
 	
+	@Override
 	public int hashCode() {
 		return mId;
 	}
 	
+	@Override
 	public String toString() {
 		return "s" + mId;
 	}
