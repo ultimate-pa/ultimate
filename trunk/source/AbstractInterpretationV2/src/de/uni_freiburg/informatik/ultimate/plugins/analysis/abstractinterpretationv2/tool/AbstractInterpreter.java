@@ -67,6 +67,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.arraytheory.SMTTheoryDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.arraytheory.SMTTheoryState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.EqState;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.initializer.FixpointEngineFutureParameterFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.initializer.FixpointEngineParameterFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
@@ -126,13 +127,24 @@ public final class AbstractInterpreter {
 		try {
 			final ITransitionProvider<IcfgEdge, IcfgLocation> transProvider = new IcfgTransitionProvider(root);
 			final Script script = root.getCfgSmtToolkit().getManagedScript().getScript();
-			final FixpointEngineParameterFactory domFac =
-					new FixpointEngineParameterFactory(root, () -> new RCFGLiteralCollector(root), services);
 			final ILoopDetector<IcfgEdge> loopDetector = new RcfgLoopDetector<>();
-			final FixpointEngineParameters<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> params =
-					domFac.createParams(timer, transProvider, loopDetector);
+			final boolean useFuture = services.getPreferenceProvider(Activator.PLUGIN_ID)
+					.getBoolean(AbsIntPrefInitializer.LABEL_USE_FUTURE_RCFG);
+			final FixpointEngineParameters<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> params;
+			if (useFuture) {
+				final FixpointEngineFutureParameterFactory domFac =
+						new FixpointEngineFutureParameterFactory(root, services);
+				final IAbstractDomain<STATE, IcfgEdge> domain = domFac.selectDomainFutureCfg();
+				params = domFac.createParamsFuture(timer, transProvider, loopDetector, domain);
+			} else {
+				final FixpointEngineParameterFactory domFac =
+						new FixpointEngineParameterFactory(root, () -> new RCFGLiteralCollector(root), services);
+				params = domFac.createParams(timer, transProvider, loopDetector);
+			}
+
 			final FixpointEngine<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> fxpe = new FixpointEngine<>(params);
 			final Set<? extends IcfgLocation> initial = root.getInitialNodes();
+			logger.info("Using domain " + params.getAbstractDomain().getClass().getSimpleName());
 			final AbsIntResult<STATE, IcfgEdge, IcfgLocation> result = fxpe.run(initial, script);
 			if (logger.isDebugEnabled()) {
 				logger.debug("Found the following predicates:");
@@ -153,8 +165,7 @@ public final class AbstractInterpreter {
 	 * @param logger
 	 *
 	 */
-	public static <STATE extends IAbstractState<STATE>>
-			IAbstractInterpretationResult<STATE, IcfgEdge, IcfgLocation>
+	public static <STATE extends IAbstractState<STATE>> IAbstractInterpretationResult<STATE, IcfgEdge, IcfgLocation>
 			runFuture(final IIcfg<?> root, final IProgressAwareTimer timer, final IUltimateServiceProvider services,
 					final boolean isSilent, final ILogger logger) {
 		final ITransitionProvider<IcfgEdge, IcfgLocation> transProvider = new IcfgTransitionProvider(root);
@@ -187,9 +198,9 @@ public final class AbstractInterpreter {
 	 * @param logger
 	 *
 	 */
-	public static IAbstractInterpretationResult<EqState, IcfgEdge, IcfgLocation>
-			runFutureEqualityDomain(final IIcfg<?> root, final IProgressAwareTimer timer,
-					final IUltimateServiceProvider services, final boolean isSilent, final ILogger logger) {
+	public static IAbstractInterpretationResult<EqState, IcfgEdge, IcfgLocation> runFutureEqualityDomain(
+			final IIcfg<?> root, final IProgressAwareTimer timer, final IUltimateServiceProvider services,
+			final boolean isSilent, final ILogger logger) {
 		final FixpointEngineParameters<EqState, IcfgEdge, IProgramVarOrConst, IcfgLocation> params =
 				new FixpointEngineParameters<>(services, IProgramVarOrConst.class);
 		return runFuture(root, services, logger, isSilent,
@@ -205,9 +216,9 @@ public final class AbstractInterpreter {
 	 * @param logger
 	 *
 	 */
-	public static IAbstractInterpretationResult<SMTTheoryState, IcfgEdge, IcfgLocation>
-			runFutureSMTDomain(final IIcfg<?> root, final IProgressAwareTimer timer,
-					final IUltimateServiceProvider services, final boolean isSilent, final ILogger logger) {
+	public static IAbstractInterpretationResult<SMTTheoryState, IcfgEdge, IcfgLocation> runFutureSMTDomain(
+			final IIcfg<?> root, final IProgressAwareTimer timer, final IUltimateServiceProvider services,
+			final boolean isSilent, final ILogger logger) {
 		final FixpointEngineParameters<SMTTheoryState, IcfgEdge, IProgramVarOrConst, IcfgLocation> params =
 				new FixpointEngineParameters<>(services, IProgramVarOrConst.class);
 		final IAbstractDomain<SMTTheoryState, IcfgEdge> smtDomain =
