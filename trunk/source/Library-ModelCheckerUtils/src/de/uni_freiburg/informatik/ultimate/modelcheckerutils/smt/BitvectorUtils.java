@@ -364,6 +364,9 @@ public final class BitvectorUtils {
 		@Override
 		public Term simplify_ConstantCase(final Script script, final BigInteger[] indices,
 				final BitvectorConstant[] bvs) {
+			if (bvs.length != getNumberOfParams()) {
+				throw new AssertionError("supported and provided parameters differ - feature not yet implemented");
+			}
 			return constructTerm(script, mFunction.apply(bvs[0]).apply(bvs[1]));
 		}
 	}
