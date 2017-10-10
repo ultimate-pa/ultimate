@@ -56,6 +56,20 @@ public final class BitvectorUtils {
 	public static boolean isBitvectorConstant(final FunctionSymbol symb) {
 		return symb.isIntern() && symb.getName().matches(BITVEC_CONST_PATTERN);
 	}
+	
+
+	/**
+	 * @return true iff term is some bitvector constant (we do not care about 
+	 * the index) whose value is the input number.
+	 */
+	public static boolean isBitvectorConstant(final BigInteger number, final Term term) {
+		final BitvectorConstant bvConst = constructBitvectorConstant(term);
+		if (bvConst == null) {
+			return false;
+		} else {
+			return bvConst.getValue().equals(number);
+		}
+	}
 
 	/**
 	 * Convert term to {@link BitvectorConstant} object. Return a {@link BitvectorConstant} object for term if

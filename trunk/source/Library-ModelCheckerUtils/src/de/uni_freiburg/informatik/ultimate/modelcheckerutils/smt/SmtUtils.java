@@ -101,7 +101,7 @@ public final class SmtUtils {
 	 * Has problems with {@link ElimStore3}. Set to true once 
 	 * {@link ElimStore3} has been replace by {@link ElimStorePlain}.
 	 */
-	private static final boolean FLATTEN_ARRAY_TERMS = !false;
+	private static final boolean FLATTEN_ARRAY_TERMS = false;
 	
 	
 
@@ -785,6 +785,23 @@ public final class SmtUtils {
 		if (term instanceof ApplicationTerm) {
 			final ApplicationTerm appTerm = (ApplicationTerm) term;
 			return appTerm.getParameters().length == 0 && !appTerm.getFunction().isIntern();
+		}
+		return false;
+	}
+	
+	/**
+	 * @return true iff term is some literal of sort Int whose value is the input number.
+	 */
+	public static boolean isIntegerLiteral(final BigInteger number, final Term term) {
+		if (term instanceof ConstantTerm) {
+			if (SmtSortUtils.isIntSort(term.getSort())) {
+				final Object value = ((ConstantTerm) term).getValue();
+				if (value instanceof Rational) {
+					value.equals(Rational.valueOf(number, BigInteger.ONE));
+				} else if (value instanceof BigInteger) {
+					return value.equals(number);
+				}
+			}
 		}
 		return false;
 	}
