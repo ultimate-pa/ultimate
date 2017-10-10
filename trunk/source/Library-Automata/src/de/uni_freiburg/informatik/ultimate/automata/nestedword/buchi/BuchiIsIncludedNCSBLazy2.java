@@ -39,11 +39,12 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.BinaryNwaOperatio
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 
 
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.NwaToBuchiWrapper;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.WaToBuchiWrapper;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.Options;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.automata.IBuchi;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.inclusion.BuchiInclusionComplement;
+
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.automata.IBuchiWa;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.inclusion.BuchiWaDifferenceAscc;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiComplementNcsbStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiIntersectStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
@@ -106,13 +107,14 @@ public final class BuchiIsIncludedNCSBLazy2<LETTER, STATE> extends BinaryNwaOper
 			letterIndex ++;
 		}
 		
-		Options.optNCSB = true;
+		Options.lazyS = true;
+		Options.lazyB = true;
 
-		IBuchi fstBuchi = new NwaToBuchiWrapper(letterMap.size(), letterMap, mFstOperand);
-		IBuchi sndBuchi = new NwaToBuchiWrapper(letterMap.size(), letterMap, mSndOperand);
+		IBuchiWa fstBuchi = new WaToBuchiWrapper(letterMap.size(), letterMap, mFstOperand);
+		IBuchiWa sndBuchi = new WaToBuchiWrapper(letterMap.size(), letterMap, mSndOperand);
 
 		//TODO should be able to terminate the procedure if time exceed the limit
-		BuchiInclusionComplement checker = new BuchiInclusionComplement(fstBuchi, sndBuchi);
+		BuchiWaDifferenceAscc checker = new BuchiWaDifferenceAscc(fstBuchi, sndBuchi);
 		mResult = checker.isIncluded(); //services
 		
 		if(mResult == null) {
