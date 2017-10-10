@@ -139,7 +139,7 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 	@Override
 	public EqNode getExistingNode(final Term term) {
 		final EqNode result = mTermToEqNode.get(normalizeTerm(term));
-		assert result != null;
+//		assert result != null;
 		return result;
 	}
 

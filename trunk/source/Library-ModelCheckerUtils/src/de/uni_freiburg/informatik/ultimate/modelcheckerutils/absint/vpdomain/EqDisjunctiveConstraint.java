@@ -44,17 +44,16 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
  *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
- * @param <ACTION>
  * @param <NODE>
  * @param <FUNCTION>
  */
-public class EqDisjunctiveConstraint<
-				//ACTION extends IIcfgTransition<IcfgLocation>,
-				NODE extends IEqNodeIdentifier<NODE>>  {
+public class EqDisjunctiveConstraint<NODE extends IEqNodeIdentifier<NODE>>  {
 
 	private final Set<EqConstraint<NODE>> mConstraints;
 
 	private final EqConstraintFactory<NODE> mFactory;
+
+	private final AbstractNodeAndFunctionFactory<NODE, Term> mNodeAndFunctionFactory;
 
 	public EqDisjunctiveConstraint(final Collection<EqConstraint<NODE>> constraintList,
 			final EqConstraintFactory<NODE> factory) {
@@ -64,6 +63,7 @@ public class EqDisjunctiveConstraint<
 		  : "all the constraints inside a disjunctive constraint should be frozen";
 		mConstraints = new HashSet<>(constraintList);
 		mFactory = factory;
+		mNodeAndFunctionFactory = factory.getEqNodeAndFunctionFactory();
 	}
 
 	public boolean isBottom() {
@@ -124,8 +124,32 @@ public class EqDisjunctiveConstraint<
 		return mConstraints.stream().map(cons -> cons.areEqual(node1, node2)).reduce((a, b) -> (a || b)).get();
 	}
 
+	public boolean areEqual(final Term node1, final Term node2) {
+		final NODE n1 = mNodeAndFunctionFactory.getExistingNode(node1);
+		if (n1 == null) {
+			return false;
+		}
+		final NODE n2 = mNodeAndFunctionFactory.getExistingNode(node2);
+		if (n2 == null) {
+			return false;
+		}
+		return areEqual(n1, n2);
+	}
+
 	public boolean areUnequal(final NODE node1, final NODE node2) {
 		return mConstraints.stream().map(cons -> cons.areUnequal(node1, node2)).reduce((a, b) -> (a || b)).get();
+	}
+
+	public boolean areUnequal(final Term node1, final Term node2) {
+		final NODE n1 = mNodeAndFunctionFactory.getExistingNode(node1);
+		if (n1 == null) {
+			return false;
+		}
+		final NODE n2 = mNodeAndFunctionFactory.getExistingNode(node2);
+		if (n2 == null) {
+			return false;
+		}
+		return areUnequal(n1, n2);
 	}
 
 	public EqDisjunctiveConstraint<NODE> reportEquality(final NODE node1, final NODE node2) {
@@ -139,6 +163,12 @@ public class EqDisjunctiveConstraint<
 		return mFactory.getDisjunctiveConstraint(constraintList);
 	}
 
+	public EqDisjunctiveConstraint<NODE> reportEquality(final Term node1, final Term node2) {
+		final NODE n1 = mNodeAndFunctionFactory.getOrConstructNode(node1);
+		final NODE n2 = mNodeAndFunctionFactory.getOrConstructNode(node2);
+		return reportEquality(n1, n2);
+	}
+
 	public EqDisjunctiveConstraint<NODE> reportDisequality(final NODE node1, final NODE node2) {
 		final Collection<EqConstraint<NODE>> constraintList = new ArrayList<>();
 		for (final EqConstraint<NODE> constraint : mConstraints) {
@@ -150,8 +180,11 @@ public class EqDisjunctiveConstraint<
 		return mFactory.getDisjunctiveConstraint(constraintList);
 	}
 
-
-
+	public EqDisjunctiveConstraint<NODE> reportDisequality(final Term node1, final Term node2) {
+		final NODE n1 = mNodeAndFunctionFactory.getOrConstructNode(node1);
+		final NODE n2 = mNodeAndFunctionFactory.getOrConstructNode(node2);
+		return reportDisequality(n1, n2);
+	}
 
 	@Override
 	public String toString() {
