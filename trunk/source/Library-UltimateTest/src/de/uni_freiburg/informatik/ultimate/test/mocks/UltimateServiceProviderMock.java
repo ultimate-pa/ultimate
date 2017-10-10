@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.test.mocks;
 import de.uni_freiburg.informatik.ultimate.core.model.IServiceFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILoggingService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressMonitorService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IResultService;
@@ -43,8 +44,10 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
  */
 public class UltimateServiceProviderMock implements IUltimateServiceProvider {
 
-	UltimateServiceProviderMock() {
-		// only instantiate in this package
+	private final LogLevel mDefaultLevel;
+
+	UltimateServiceProviderMock(final LogLevel defaultLevel) {
+		mDefaultLevel = defaultLevel;
 	}
 
 	@Override
@@ -54,7 +57,7 @@ public class UltimateServiceProviderMock implements IUltimateServiceProvider {
 
 	@Override
 	public ILoggingService getLoggingService() {
-		return new LoggingServiceMock();
+		return new LoggingServiceMock(mDefaultLevel);
 	}
 
 	@Override

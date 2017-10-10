@@ -38,69 +38,178 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  */
 public final class ConsoleLogger implements ILogger {
 
-	private static final String FATAL = "[FATAL]: ";
-	private static final String ERROR = "[ERROR]: ";
-	private static final String WARN = "[WARN]: ";
-	private static final String INFO = "[INFO]: ";
-	private static final String DEBUG = "[DEBUG]: ";
+	private LogLevel mLevel;
+	private ILogFunction mFatal;
+	private ILogFunction mError;
+	private ILogFunction mWarn;
+	private ILogFunction mInfo;
+	private ILogFunction mDebug;
+
+	public ConsoleLogger() {
+		setLevel(LogLevel.DEBUG);
+	}
+
+	public ConsoleLogger(final LogLevel level) {
+		setLevel(level);
+	}
 
 	@Override
 	public boolean isFatalEnabled() {
-		return true;
+		return isLevelEnabled(LogLevel.FATAL);
 	}
 
 	@Override
 	public void fatal(final Object msg, final Throwable t) {
-		System.out.println(FATAL + msg + " " + t);
+		mFatal.log(msg, t);
 	}
 
 	@Override
 	public void fatal(final Object msg) {
-		System.out.println(FATAL + msg);
+		mFatal.log(msg);
 	}
 
 	@Override
 	public boolean isErrorEnabled() {
-		return true;
+		return isLevelEnabled(LogLevel.ERROR);
 	}
 
 	@Override
 	public void error(final Object msg, final Throwable t) {
-		System.out.println(ERROR + msg + " " + t);
+		mError.log(msg, t);
 	}
 
 	@Override
 	public void error(final Object msg) {
-		System.out.println(ERROR + msg);
+		mError.log(msg);
 	}
 
 	@Override
 	public boolean isWarnEnabled() {
-		return true;
+		return isLevelEnabled(LogLevel.WARN);
 	}
 
 	@Override
 	public void warn(final Object msg) {
-		System.out.println(WARN + msg);
+		mWarn.log(msg);
 	}
 
 	@Override
 	public boolean isInfoEnabled() {
-		return true;
+		return isLevelEnabled(LogLevel.INFO);
 	}
 
 	@Override
 	public void info(final Object msg) {
-		System.out.println(INFO + msg);
+		mInfo.log(msg);
 	}
 
 	@Override
 	public boolean isDebugEnabled() {
-		return true;
+		return isLevelEnabled(LogLevel.DEBUG);
 	}
 
 	@Override
 	public void debug(final Object msg) {
-		System.out.println(DEBUG + msg);
+		mDebug.log(msg);
+	}
+
+	@Override
+	public void setLevel(final LogLevel level) {
+		mLevel = level;
+		final ILogFunction log = new Log(mLevel);
+		final ILogFunction noLog = new NoLog();
+		mDebug = noLog;
+		mInfo = noLog;
+		mWarn = noLog;
+		mError = noLog;
+		mFatal = noLog;
+		// intentional fall-through
+		switch (mLevel) {
+		case OFF:
+			break;
+		case DEBUG:
+			mDebug = log;
+		case INFO:
+			mInfo = log;
+		case WARN:
+			mWarn = log;
+		case ERROR:
+			mError = log;
+		case FATAL:
+			mFatal = log;
+			break;
+		default:
+			throw new UnsupportedOperationException("Unknown log level " + level);
+		}
+	}
+
+	private boolean isLevelEnabled(final LogLevel level) {
+		return level.compareTo(mLevel) != -1;
+	}
+
+	private static interface ILogFunction {
+
+		void log(final Object msg);
+
+		void log(final Object msg, Throwable t);
+	}
+
+	private final class Log implements ILogFunction {
+
+		private static final String FATAL = "[FATAL]: ";
+		private static final String ERROR = "[ERROR]: ";
+		private static final String WARN = "[WARN]: ";
+		private static final String INFO = "[INFO]: ";
+		private static final String DEBUG = "[DEBUG]: ";
+
+		private final String mPrefix;
+
+		private Log(final LogLevel level) {
+			switch (level) {
+			case DEBUG:
+				mPrefix = DEBUG;
+				break;
+			case ERROR:
+				mPrefix = ERROR;
+				break;
+			case FATAL:
+				mPrefix = FATAL;
+				break;
+			case INFO:
+				mPrefix = INFO;
+				break;
+			case WARN:
+				mPrefix = WARN;
+				break;
+			case OFF:
+				throw new IllegalArgumentException("Cannot create Log with LogLevel Off");
+			default:
+				throw new UnsupportedOperationException("Unhandled log level " + level);
+			}
+		}
+
+		@Override
+		public void log(final Object msg) {
+			System.out.println(mPrefix + msg);
+
+		}
+
+		@Override
+		public void log(final Object msg, final Throwable t) {
+			System.out.println(mPrefix + msg + " " + t);
+		}
+	}
+
+	private static final class NoLog implements ILogFunction {
+
+		@Override
+		public void log(final Object msg) {
+			// do nothing
+		}
+
+		@Override
+		public void log(final Object msg, final Throwable t) {
+			// do nothing
+		}
 	}
 }

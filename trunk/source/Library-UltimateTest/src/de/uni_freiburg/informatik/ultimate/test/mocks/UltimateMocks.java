@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.test.mocks;
 import java.io.IOException;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.services.ToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -50,11 +51,19 @@ public class UltimateMocks {
 	}
 
 	public static IUltimateServiceProvider createUltimateServiceProviderMock() {
-		return new UltimateServiceProviderMock();
+		return createUltimateServiceProviderMock(LogLevel.DEBUG);
+	}
+
+	public static IUltimateServiceProvider createUltimateServiceProviderMock(final LogLevel defaultLogLevel) {
+		return new UltimateServiceProviderMock(defaultLogLevel);
 	}
 
 	public static Script createZ3Script() throws IOException {
-		final IUltimateServiceProvider services = createUltimateServiceProviderMock();
+		return createZ3Script(LogLevel.DEBUG);
+	}
+
+	public static Script createZ3Script(final LogLevel defaultLogLevel) throws IOException {
+		final IUltimateServiceProvider services = createUltimateServiceProviderMock(defaultLogLevel);
 		return new Scriptor("z3 SMTLIB2_COMPLIANT=true -memory:2024 -smt2 -in",
 				services.getLoggingService().getLogger(UltimateMocks.class), services, createToolchainStorageMock(),
 				"z3");
