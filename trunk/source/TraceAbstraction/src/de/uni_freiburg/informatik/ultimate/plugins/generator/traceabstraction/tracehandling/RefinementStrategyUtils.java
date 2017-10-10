@@ -56,7 +56,23 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  */
 public class RefinementStrategyUtils {
 
+	public static final String COMMAND_Z3_NO_TIMEOUT = "z3 -smt2 -in SMTLIB2_COMPLIANT=true";
+	public static final String COMMAND_Z3_TIMEOUT = COMMAND_Z3_NO_TIMEOUT + " -t:12000";
+	public static final String COMMAND_CVC4_NO_TIMEOUT =
+			"cvc4 --tear-down-incremental --print-success --lang smt --rewrite-divk";
+	public static final String COMMAND_CVC4_TIMEOUT = COMMAND_CVC4_NO_TIMEOUT + " --tlimit-per=12000";
+
+	// 20161214 Matthias: MathSAT does not support timeouts
+	public static final String COMMAND_MATHSAT = "mathsat -unsat_core_generation=3";
+	public static final long TIMEOUT_SMTINTERPOL = 12_000L;
+	public static final long TIMEOUT_NONE_SMTINTERPOL = 0L;
+	public static final String LOGIC_Z3 = "ALL";
+	public static final String LOGIC_CVC4_DEFAULT = "AUFLIRA";
+	public static final String LOGIC_CVC4_BITVECTORS = "AUFBV";
+	public static final String LOGIC_MATHSAT = "ALL";
+
 	private RefinementStrategyUtils() {
+		// do not instantiate utility classes
 	}
 
 	public static <LETTER extends IIcfgTransition<?>> IInterpolantGenerator constructInterpolantGenerator(

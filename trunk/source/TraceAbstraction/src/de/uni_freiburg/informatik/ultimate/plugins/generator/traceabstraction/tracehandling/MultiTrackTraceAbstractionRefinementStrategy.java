@@ -342,7 +342,7 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy<LETTER extend
 		switch (mode) {
 		case SMTINTERPOL_TREE_INTERPOLANTS:
 		case SMTINTERPOL_FP:
-			final long timeout = useTimeout ? TIMEOUT_SMTINTERPOL : TIMEOUT_NONE_SMTINTERPOL;
+			final long timeout = useTimeout ? RefinementStrategyUtils.TIMEOUT_SMTINTERPOL : RefinementStrategyUtils.TIMEOUT_NONE_SMTINTERPOL;
 			solverSettings = new Settings(false, false, null, timeout, null, dumpSmtScriptToFile, pathOfDumpedScript,
 					baseNameOfDumpedScript);
 			solverMode = SolverMode.Internal_SMTInterpol;
@@ -358,15 +358,15 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy<LETTER extend
 			 */
 		case Z3_FPBP:
 		case Z3_FP:
-			command = useTimeout ? COMMAND_Z3_TIMEOUT : COMMAND_Z3_NO_TIMEOUT;
+			command = useTimeout ? RefinementStrategyUtils.COMMAND_Z3_TIMEOUT : RefinementStrategyUtils.COMMAND_Z3_NO_TIMEOUT;
 			solverSettings = new Settings(false, true, command, 0, null, dumpSmtScriptToFile, pathOfDumpedScript,
 					baseNameOfDumpedScript);
 			solverMode = SolverMode.External_ModelsAndUnsatCoreMode;
-			logicForExternalSolver = LOGIC_Z3;
+			logicForExternalSolver = RefinementStrategyUtils.LOGIC_Z3;
 			break;
 		case CVC4_FPBP:
 		case CVC4_FP:
-			command = useTimeout ? COMMAND_CVC4_TIMEOUT : COMMAND_CVC4_NO_TIMEOUT;
+			command = useTimeout ? RefinementStrategyUtils.COMMAND_CVC4_TIMEOUT : RefinementStrategyUtils.COMMAND_CVC4_NO_TIMEOUT;
 			solverSettings = new Settings(false, true, command, 0, null, dumpSmtScriptToFile, pathOfDumpedScript,
 					baseNameOfDumpedScript);
 			solverMode = SolverMode.External_ModelsAndUnsatCoreMode;
@@ -374,11 +374,11 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy<LETTER extend
 			break;
 		case MATHSAT_FPBP:
 		case MATHSAT_FP:
-			command = COMMAND_MATHSAT;
+			command = RefinementStrategyUtils.COMMAND_MATHSAT;
 			solverSettings = new Settings(false, true, command, 0, null, dumpSmtScriptToFile, pathOfDumpedScript,
 					baseNameOfDumpedScript);
 			solverMode = SolverMode.External_ModelsAndUnsatCoreMode;
-			logicForExternalSolver = LOGIC_MATHSAT;
+			logicForExternalSolver = RefinementStrategyUtils.LOGIC_MATHSAT;
 			break;
 		default:
 			throw new IllegalArgumentException(

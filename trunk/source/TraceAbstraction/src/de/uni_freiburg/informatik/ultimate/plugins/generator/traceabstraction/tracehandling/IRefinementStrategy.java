@@ -23,34 +23,19 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  * </ol>
  * In the following class documentation this combination is just called "combination".
  * <p>
- * The contract is that if {@link #hasNextTraceCheck()} (resp. {@link #hasNextInterpolantGenerator(List, List)})
- * returns {@code true}, then {@link #nextTraceCheck()} (resp. {@link #nextInterpolantGenerator()}) advances the
- * respective component (but the strategy may also return {@code false} to enforce early termination).<br>
+ * The contract is that if {@link #hasNextTraceCheck()} (resp. {@link #hasNextInterpolantGenerator(List, List)}) returns
+ * {@code true}, then {@link #nextTraceCheck()} (resp. {@link #nextInterpolantGenerator()}) advances the respective
+ * component (but the strategy may also return {@code false} to enforce early termination).<br>
  * Between two calls to {@link #nextTraceCheck()} (resp. {@link #nextInterpolantGenerator()}) the respective getter (
- * {@link #getTraceCheck()} resp. {@link IRefinementStrategy#getInterpolantGenerator()}) always returns the same
- * object and {@link #hasNextTraceCheck()} (resp. {@link #hasNextInterpolantGenerator(List, List)}) always returns the
- * same answer. However, for instance by a call to {@link #nextInterpolantGenerator()}, the {@link TraceCheck} may
- * change. A user should hence not store these objects temporarily.
+ * {@link #getTraceCheck()} resp. {@link IRefinementStrategy#getInterpolantGenerator()}) always returns the same object
+ * and {@link #hasNextTraceCheck()} (resp. {@link #hasNextInterpolantGenerator(List, List)}) always returns the same
+ * answer. However, for instance by a call to {@link #nextInterpolantGenerator()}, the {@link TraceCheck} may change. A
+ * user should hence not store these objects temporarily.
  *
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
 public interface IRefinementStrategy<LETTER> {
-	String COMMAND_Z3_NO_TIMEOUT = "z3 -smt2 -in SMTLIB2_COMPLIANT=true";
-	String COMMAND_Z3_TIMEOUT = COMMAND_Z3_NO_TIMEOUT + " -t:12000";
-	String COMMAND_CVC4_NO_TIMEOUT = "cvc4 --tear-down-incremental --print-success --lang smt --rewrite-divk";
-	String COMMAND_CVC4_TIMEOUT = COMMAND_CVC4_NO_TIMEOUT + " --tlimit-per=12000";
-	// 20161214 Matthias: MathSAT does not support timeouts
-	String COMMAND_MATHSAT = "mathsat -unsat_core_generation=3";
-
-	long TIMEOUT_SMTINTERPOL = 12_000L;
-	long TIMEOUT_NONE_SMTINTERPOL = 0L;
-
-	String LOGIC_Z3 = "ALL";
-	String LOGIC_CVC4_DEFAULT = "AUFLIRA";
-	String LOGIC_CVC4_BITVECTORS = "AUFBV";
-	String LOGIC_MATHSAT = "ALL";
-
 	/**
 	 * A user should use this method whenever the trace check was unsuccessful (i.e., crashed or returned
 	 * {@link LBool.UNKNOWN}. The strategy then decides whether it wants to and whether it can use another
@@ -62,8 +47,8 @@ public interface IRefinementStrategy<LETTER> {
 
 	/**
 	 * Changes the {@link TraceCheck}.<br>
-	 * Throws a {@link NoSuchElementException} if there is no next {@link TraceCheck}; use
-	 * {@link #hasNextTraceCheck()} to check this.
+	 * Throws a {@link NoSuchElementException} if there is no next {@link TraceCheck}; use {@link #hasNextTraceCheck()}
+	 * to check this.
 	 */
 	void nextTraceCheck();
 
@@ -82,8 +67,7 @@ public interface IRefinementStrategy<LETTER> {
 	 *            imperfect interpolant sequences constructed so far
 	 * @return {@code true} iff there is another {@link IInterpolantGenerator} available and should be used
 	 */
-	boolean hasNextInterpolantGenerator(List<TracePredicates> perfectIpps,
-			List<TracePredicates> imperfectIpps);
+	boolean hasNextInterpolantGenerator(List<TracePredicates> perfectIpps, List<TracePredicates> imperfectIpps);
 
 	/**
 	 * Changes the {@link IInterpolantGenerator}.<br>
@@ -106,8 +90,7 @@ public interface IRefinementStrategy<LETTER> {
 	 *            sequences of imperfect interpolants
 	 * @return an interpolant automaton builder
 	 */
-	IInterpolantAutomatonBuilder<LETTER, IPredicate> getInterpolantAutomatonBuilder(
-			List<TracePredicates> perfectIpps,
+	IInterpolantAutomatonBuilder<LETTER, IPredicate> getInterpolantAutomatonBuilder(List<TracePredicates> perfectIpps,
 			List<TracePredicates> imperfectIpps);
 
 	/**
@@ -120,8 +103,7 @@ public interface IRefinementStrategy<LETTER> {
 	 * @see RefinementStrategyExceptionBlacklist
 	 */
 	RefinementStrategyExceptionBlacklist getExceptionBlacklist();
-	
-	
+
 	RefinementEngineStatisticsGenerator getRefinementEngineStatistics();
 
 	/**
@@ -131,8 +113,7 @@ public interface IRefinementStrategy<LETTER> {
 	 *            second list
 	 * @return new list containing all elements from the two lists
 	 */
-	static List<TracePredicates> wrapTwoListsInOne(
-			final List<TracePredicates> list1,
+	static List<TracePredicates> wrapTwoListsInOne(final List<TracePredicates> list1,
 			final List<TracePredicates> list2) {
 		final List<TracePredicates> allIpps = new ArrayList<>(list1.size() + list2.size());
 		allIpps.addAll(list1);

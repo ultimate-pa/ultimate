@@ -77,7 +77,7 @@ public class PenguinRefinementStrategy<LETTER extends IIcfgTransition<?>>
 
 	@Override
 	protected String getCvc4Logic() {
-		return LOGIC_CVC4_DEFAULT;
+		return RefinementStrategyUtils.LOGIC_CVC4_DEFAULT;
 	}
 
 	@Override

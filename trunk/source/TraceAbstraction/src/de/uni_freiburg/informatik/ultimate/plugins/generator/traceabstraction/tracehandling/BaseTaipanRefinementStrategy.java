@@ -326,7 +326,7 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 		switch (mode) {
 		case SMTINTERPOL:
 		case ABSTRACT_INTERPRETATION:
-			final long timeout = useTimeout ? TIMEOUT_SMTINTERPOL : TIMEOUT_NONE_SMTINTERPOL;
+			final long timeout = useTimeout ? RefinementStrategyUtils.TIMEOUT_SMTINTERPOL : RefinementStrategyUtils.TIMEOUT_NONE_SMTINTERPOL;
 			solverSettings = new Settings(false, false, null, timeout, null, dumpSmtScriptToFile, pathOfDumpedScript,
 					baseNameOfDumpedScript);
 			solverMode = SolverMode.Internal_SMTInterpol;
@@ -334,19 +334,19 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 			break;
 		case Z3_IG:
 		case Z3_NO_IG:
-			command = useTimeout ? COMMAND_Z3_TIMEOUT : COMMAND_Z3_NO_TIMEOUT;
+			command = useTimeout ? RefinementStrategyUtils.COMMAND_Z3_TIMEOUT : RefinementStrategyUtils.COMMAND_Z3_NO_TIMEOUT;
 			solverSettings = new Settings(false, true, command, 0, null, dumpSmtScriptToFile, pathOfDumpedScript,
 					baseNameOfDumpedScript);
 			solverMode = SolverMode.External_ModelsAndUnsatCoreMode;
-			logicForExternalSolver = LOGIC_Z3;
+			logicForExternalSolver = RefinementStrategyUtils.LOGIC_Z3;
 			break;
 		case CVC4_IG:
 		case CVC4_NO_IG:
-			command = useTimeout ? COMMAND_CVC4_TIMEOUT : COMMAND_CVC4_NO_TIMEOUT;
+			command = useTimeout ? RefinementStrategyUtils.COMMAND_CVC4_TIMEOUT : RefinementStrategyUtils.COMMAND_CVC4_NO_TIMEOUT;
 			solverSettings = new Settings(false, true, command, 0, null, dumpSmtScriptToFile, pathOfDumpedScript,
 					baseNameOfDumpedScript);
 			solverMode = SolverMode.External_ModelsAndUnsatCoreMode;
-			logicForExternalSolver = LOGIC_CVC4_DEFAULT;
+			logicForExternalSolver = RefinementStrategyUtils.LOGIC_CVC4_DEFAULT;
 			break;
 		default:
 			throw new IllegalArgumentException(UNKNOWN_MODE + mode);

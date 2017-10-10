@@ -83,7 +83,7 @@ public class WolfRefinementStrategy<LETTER extends IIcfgTransition<?>>
 
 	@Override
 	protected String getCvc4Logic() {
-		return LOGIC_CVC4_BITVECTORS;
+		return RefinementStrategyUtils.LOGIC_CVC4_BITVECTORS;
 	}
 
 	@Override
