@@ -7,8 +7,6 @@
  *
  * author: nutz@informatik.uni-freiburg.de
  */
- * author: nutz@informatik.uni-freiburg.de
- */
 var valid, content : [int] int;
 
 procedure ULTIMATE.start();
