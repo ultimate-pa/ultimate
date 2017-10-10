@@ -634,7 +634,60 @@ public class CongruenceClosureTest {
 	}
 
 
-	// TODO test remove
+	@Test
+	public void testRemove01() {
+		final CongruenceClosure<StringCcElement> cc = new CongruenceClosure<>();
+
+		final StringElementFactory factory = new StringElementFactory();
+
+		final StringCcElement f = factory.getBaseElement("f");
+		final StringCcElement g = factory.getBaseElement("g");
+
+		final StringCcElement a = factory.getBaseElement("a");
+		final StringCcElement b = factory.getBaseElement("b");
+		final StringCcElement c = factory.getBaseElement("c");
+
+		cc.reportEquality(a, b);
+		cc.reportEquality(b, c);
+		assertTrue(cc.getEqualityStatus(a, c) == EqualityStatus.EQUAL);
+		cc.removeSimpleElement(b);
+		assertTrue(cc.getEqualityStatus(a, c) == EqualityStatus.EQUAL);
+		cc.getRepresentativeAndAddElementIfNeeded(b);
+		assertTrue(cc.getEqualityStatus(a, b) == EqualityStatus.UNKNOWN);
+	}
+
+	@Test
+	public void testRemove02() {
+		final CongruenceClosure<StringCcElement> cc = new CongruenceClosure<>();
+
+		final StringElementFactory factory = new StringElementFactory();
+
+		final StringCcElement f = factory.getBaseElement("f");
+		final StringCcElement g = factory.getBaseElement("g");
+
+		final StringCcElement a = factory.getBaseElement("a");
+		final StringCcElement b = factory.getBaseElement("b");
+		final StringCcElement c = factory.getBaseElement("c");
+
+		final StringCcElement f_a = factory.getOrConstructFuncAppElement(f, a);
+		final StringCcElement f_b = factory.getOrConstructFuncAppElement(f, b);
+		final StringCcElement f_c = factory.getOrConstructFuncAppElement(f, c);
+
+		cc.reportEquality(a, b);
+		cc.reportEquality(b, c);
+		cc.getRepresentativeAndAddElementIfNeeded(f_a);
+		cc.getRepresentativeAndAddElementIfNeeded(f_b);
+		cc.getRepresentativeAndAddElementIfNeeded(f_c);
+		assertTrue(cc.getEqualityStatus(f_a, f_b) == EqualityStatus.EQUAL);
+		assertTrue(cc.getEqualityStatus(f_c, f_b) == EqualityStatus.EQUAL);
+		cc.removeSimpleElement(b);
+		assertTrue(cc.getEqualityStatus(f_a, f_c) == EqualityStatus.EQUAL);
+		cc.getRepresentativeAndAddElementIfNeeded(f_b);
+		assertTrue(cc.getEqualityStatus(f_a, f_b) == EqualityStatus.UNKNOWN);
+	}
+
+
+
 	// TODO test transformer
 
 }
