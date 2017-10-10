@@ -76,7 +76,31 @@ public final class UltimateNormalFormUtils {
 				return false;
 			}
 		}
-
+		if (term.getFunction().getName().equals("+")) {
+			for (final Term param : term.getParameters()) {
+				if (SmtUtils.isIntegerLiteral(BigInteger.ZERO, param)) {
+					assert false : "zero is neutral element of plus operator";
+					return false;
+				}
+			}
+		}
+		if (term.getFunction().getName().equals("bvadd")) {
+			for (final Term param : term.getParameters()) {
+				if (BitvectorUtils.isBitvectorConstant(BigInteger.ZERO, param)) {
+					assert false : "zero is neutral element of plus operator";
+					return false;
+				}
+			}
+		}
+		// FIXME: Implement and enable
+		if (false && term.getFunction().getName().equals("bvand")) {
+			for (final Term param : term.getParameters()) {
+				if (BitvectorUtils.isBitvectorConstant(BigInteger.ZERO, param)) {
+					assert false : "zero is absorbing element of bvand operator";
+					return false;
+				}
+			}
+		}
 		return true;
 	}
 
