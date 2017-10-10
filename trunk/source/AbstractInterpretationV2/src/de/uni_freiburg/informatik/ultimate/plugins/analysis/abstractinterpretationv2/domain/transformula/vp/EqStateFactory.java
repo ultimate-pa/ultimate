@@ -139,4 +139,8 @@ public class EqStateFactory {
 
 	}
 
+	public EqState getBottomState() {
+		return getEqState(mEqConstraintFactory.getBottomConstraint(), Collections.emptySet());
+	}
+
 }

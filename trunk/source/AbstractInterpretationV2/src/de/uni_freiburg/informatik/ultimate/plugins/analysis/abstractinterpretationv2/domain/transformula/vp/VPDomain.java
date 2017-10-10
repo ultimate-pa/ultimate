@@ -140,7 +140,7 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 
 	@Override
 	public EqState createBottomState() {
-		throw new UnsupportedOperationException("Not implemented: createBottomState");
+		return mEqStateFactory.getBottomState();
 	}
 
 	public boolean isDebugMode() {
