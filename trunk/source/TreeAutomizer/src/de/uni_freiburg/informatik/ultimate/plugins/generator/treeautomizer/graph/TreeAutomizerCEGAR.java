@@ -281,7 +281,7 @@ public class TreeAutomizerCEGAR {
 				mPreferences.getString(TreeAutomizerPreferenceInitializer.LABEL_AutomataDumpPath);
 		if (!automataDumpPath.isEmpty()) {
 			final String filename = mHornAnnot.getFileName() + "_interpolant_automaton_nr_" + mIteration;
-			writeAutomatonToFile(mServices, mInterpolAutomaton, automataDumpPath, filename, Format.ATS, "");
+			writeAutomatonToFile(mServices, mInterpolAutomaton, automataDumpPath, filename, Format.ATS_NUMERATE, "");
 		}
 
 		assert allRulesAreInductive(mInterpolAutomaton);
@@ -330,7 +330,7 @@ public class TreeAutomizerCEGAR {
 				mPreferences.getString(TreeAutomizerPreferenceInitializer.LABEL_AutomataDumpPath);
 		if (!automataDumpPath.isEmpty()) {
 			final String filename = mHornAnnot.getFileName() + "_abstraction_nr_" + mIteration;
-			writeAutomatonToFile(mServices, mAbstraction, automataDumpPath, filename, Format.ATS, "");
+			writeAutomatonToFile(mServices, mAbstraction, automataDumpPath, filename, Format.ATS_NUMERATE, "");
 		}
 
 		/*

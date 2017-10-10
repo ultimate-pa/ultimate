@@ -56,6 +56,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization.NetWr
 import de.uni_freiburg.informatik.ultimate.automata.tree.IRankedLetter;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.visualization.TreeAutomatonWriter;
+import de.uni_freiburg.informatik.ultimate.automata.tree.visualization.TreeAutomatonWriterUniqueId;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
@@ -320,8 +321,10 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 			case ATS:
 				new TreeAutomatonWriter<>(mPrintWriter, name, automaton);
 				break;
-			case ATS_QUOTED:
 			case ATS_NUMERATE:
+				new TreeAutomatonWriterUniqueId<>(mPrintWriter, name, automaton);
+				break;
+			case ATS_QUOTED:
 			case BA:
 			case GFF:
 			case HOA:

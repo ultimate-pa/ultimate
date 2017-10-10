@@ -28,14 +28,19 @@
 package de.uni_freiburg.informatik.ultimate.automata.tree.visualization;
 
 import java.io.PrintWriter;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.GeneralAutomatonPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.tree.IRankedLetter;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
+import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
 
 /**
  * Constructor takes a TreeAutomaton and writes it to a testfile.
- * 
+ *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  * @param <LETTER>
  *            letter type
@@ -43,7 +48,18 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
  *            state type
  */
 public class TreeAutomatonWriter<LETTER extends IRankedLetter, STATE> extends GeneralAutomatonPrinter {
+
 	private final TreeAutomatonBU<LETTER, STATE> mTreeAutomaton;
+	/**
+	 * character used to quote states
+	 */
+	private final String mQuote;
+
+	public TreeAutomatonWriter(final PrintWriter writer, final String name,
+			final TreeAutomatonBU<LETTER, STATE> automaton) {
+		// default is to use a quote symbol
+		this(writer, name, automaton, "\"");
+	}
 
 	/**
 	 * @param writer
@@ -53,22 +69,123 @@ public class TreeAutomatonWriter<LETTER extends IRankedLetter, STATE> extends Ge
 	 * @param automaton
 	 *            alternating automaton
 	 */
-	public TreeAutomatonWriter(final PrintWriter writer, final String name,
-			final TreeAutomatonBU<LETTER, STATE> automaton) {
+	protected TreeAutomatonWriter(final PrintWriter writer, final String name,
+			final TreeAutomatonBU<LETTER, STATE> automaton, final String quote) {
 		super(writer);
 		mTreeAutomaton = automaton;
+		mQuote = quote;
+
+		final Map<LETTER, String> alphabetMapping = getAlphabetMapping(mTreeAutomaton.getAlphabet());
+		final Map<STATE, String> stateMapping = getStateMapping(mTreeAutomaton.getStates());
 
 		print("TreeAutomaton ");
 		print(name);
-		printAutomatonPrefix();
-		println(mTreeAutomaton.toString());
-		// printAlphabet(mAa.getAlphabet());
-		// printExistentialStates(mAa.getExistentialStates());
-		// printUniversalStates(mAa.getUniversalStates());
-		// printInitialStates(mAa.getInitialStates());
-		// printFinalStates(mAa.getFinalStates());
-		// printInternalTransitions(mAa.getTransitionsMap());
+		print(" = ");
+		print("TreeAutomaton (\n");
+		printAlphabet(mTreeAutomaton.getAlphabet(), alphabetMapping);
+		printStates(mTreeAutomaton.getStates(), stateMapping);
+		printFinalStates(mTreeAutomaton.getFinalStates(), stateMapping);
+		printTransitionTable(mTreeAutomaton.getRules(), alphabetMapping, stateMapping);
 		printAutomatonSuffix();
+	}
+
+	private void printTransitionTable(final Iterable<TreeAutomatonRule<LETTER, STATE>> rules,
+			final Map<LETTER, String> alphabetMapping, final Map<STATE, String> stateMapping) {
+		final StringBuilder transitionTable = new StringBuilder();
+
+		transitionTable.append("\ttransitionTable = {");
+
+		for (final TreeAutomatonRule<LETTER, STATE> rule : rules) {
+			if (transitionTable.length() > 0) {
+				transitionTable.append("\n");
+			}
+			final StringBuilder src = new StringBuilder();
+			for (final STATE st : rule.getSource()) {
+				if (src.length() > 0) {
+					src.append(" ");
+				}
+				src.append(mQuote);
+				src.append(stateMapping.get(st));
+				src.append(mQuote);
+			}
+			final StringBuilder dest = new StringBuilder();
+			dest.append(mQuote);
+			dest.append(stateMapping.get(rule.getDest()));
+			dest.append(mQuote);
+
+			final StringBuilder letter = new StringBuilder();
+			letter.append(mQuote);
+			letter.append(alphabetMapping.get(rule.getLetter()));
+			letter.append(mQuote);
+			transitionTable.append(String.format("\t\t((%s) %s %s)", src, letter, dest));
+		}
+
+		transitionTable.append("}");
+
+		println(transitionTable.toString());
+	}
+
+	private void printFinalStates(final Set<STATE> originalFinalStates, final Map<STATE, String> stateMapping) {
+
+		final StringBuilder finalStates = new StringBuilder();
+
+		finalStates.append("\tfinalStates = {");
+		for (final STATE state : originalFinalStates) {
+			if (finalStates.length() > 0) {
+				finalStates.append(" ");
+			}
+			finalStates.append(mQuote);
+			finalStates.append(stateMapping.get(state));
+			finalStates.append(mQuote);
+		}
+		finalStates.append("},");
+		println(finalStates.toString());
+	}
+
+	private void printStates(final Set<STATE> originalStates, final Map<STATE, String> stateMapping) {
+		final StringBuilder states = new StringBuilder();
+		states.append("\tstates = {");
+		for (final STATE state : originalStates) {
+			if (states.length() > 0) {
+				states.append(" ");
+			}
+			states.append(mQuote);
+			states.append(stateMapping.get(state));
+			states.append(mQuote);
+		}
+		states.append("},");
+		println(states.toString());
+	}
+
+	private void printAlphabet(final Set<LETTER> originalAlphabet, final Map<LETTER, String> alphabetMapping) {
+		final StringBuilder alphabet = new StringBuilder();
+		alphabet.append("\talphabet = {");
+		for (final LETTER letter : originalAlphabet) {
+			if (alphabet.length() > 0) {
+				alphabet.append(" ");
+			}
+			alphabet.append(mQuote);
+			alphabet.append(alphabetMapping.get(letter));
+			alphabet.append(mQuote);
+		}
+		alphabet.append("},");
+		println(alphabet.toString());
+	}
+
+	protected Map<LETTER, String> getAlphabetMapping(final Collection<LETTER> alphabet) {
+		final Map<LETTER, String> alphabetMapping = new HashMap<>();
+		for (final LETTER letter : mTreeAutomaton.getAlphabet()) {
+			alphabetMapping.put(letter, letter.toString());
+		}
+		return alphabetMapping;
+	}
+
+	protected Map<STATE, String> getStateMapping(final Collection<STATE> states) {
+		final Map<STATE, String> stateMapping = new HashMap<>();
+		for (final STATE state : mTreeAutomaton.getStates()) {
+			stateMapping.put(state, state.toString());
+		}
+		return stateMapping;
 	}
 
 	/*
