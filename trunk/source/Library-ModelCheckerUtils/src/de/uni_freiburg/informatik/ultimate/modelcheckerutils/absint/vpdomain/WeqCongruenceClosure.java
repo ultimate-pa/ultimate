@@ -833,6 +833,21 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		return super.removeSingleElement(elem, replacement);
 	}
 
+
+
+	@Override
+	protected NODE getReplacementNodeToIntroduce(final NODE elemToRemove,
+			final boolean elemToRemoveIsAppliedFunctionNotArgument,
+			final Map<NODE, NODE> nodeToReplacement) {
+		final NODE replByFwcc = super.getReplacementNodeToIntroduce(elemToRemove,
+				elemToRemoveIsAppliedFunctionNotArgument, nodeToReplacement);
+		if (replByFwcc != null) {
+			return replByFwcc;
+		}
+
+		return null;
+	}
+
 	/**
 	 * When removing a function we will also remove all function nodes that depend
 	 * on it. In this first step we attempt to conserve information about those
@@ -893,9 +908,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 			for (final Entry<NODE, WeakEquivalenceGraph<NODE>.WeakEquivalenceEdgeLabel> weqEdge
 					: mWeakEquivalenceGraph.getAdjacentWeqEdges(elem).entrySet()) {
 				if (weqEdge.getValue().impliesEqualityOnThatPosition(Collections.singletonList(fan.getArgument()))) {
-//				if (weqEdge.getValue().impliesEqualityOnThatPosition(Collections.singletonList(elem.getArgument()))) {
 					final NODE nodeWithWequalFunc = mFactory.getEqNodeAndFunctionFactory()
-//							.getOrConstructFuncAppElement(weqEdge.getKey(), elem.getArgument());
 							.getOrConstructFuncAppElement(weqEdge.getKey(), fan.getArgument());
 					nodesToAdd.add(nodeWithWequalFunc);
 				}

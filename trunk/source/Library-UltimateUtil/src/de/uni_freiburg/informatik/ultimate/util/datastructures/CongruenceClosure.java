@@ -502,10 +502,32 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 //					nodesToAdd.add(replacementNode);
 //				}
 //			}
-			for (final ELEM elemToRemove : elementsToRemove) {
-				nodesToAdd.addAll(collectNodesToAddBeforeRemoval(elemToRemove,
-						nodeToReplacementNode.get(elemToRemove)));
+
+			for (final Entry<ELEM, ELEM> en : new HashMap<>(nodeToReplacementNode).entrySet()) {
+				if (en.getKey().isFunctionApplication() && isConstrained(en.getKey())) {
+					// we don't have a replacement, but we want one, try if we can get one
+					final ELEM replacementNode = getReplacementNodeToIntroduce(en.getKey(),
+							// TODO is there a nicer way to get this boolean parameter?
+							elementsToRemove.contains(en.getKey().getAppliedFunction()),
+							nodeToReplacementNode);
+					if (replacementNode != null) {
+						nodesToAdd.add(replacementNode);
+						nodeToReplacementNode.put(en.getKey(), replacementNode);
+					}
+				}
 			}
+
+//			for (final ELEM elemToRemove : elementsToRemove) {
+//				final ELEM nodeToAdd = collectNodesToAddBeforeRemoval(elemToRemove,
+//						nodeToReplacementNode.get(elemToRemove));
+//				if (nodeToAdd != null) {
+//					nodesToAdd.add(nodeToAdd);
+//				}
+////				nodesToAdd.addAll(collectNodesToAddBeforeRemoval(elemToRemove,
+////						nodeToReplacementNode.get(elemToRemove)));
+////				nodesToAdd.addAll(collectNodesToAddBeforeRemoval(elemToRemove,
+////						nodeToReplacementNode.get(elemToRemove)));
+//			}
 
 			// add proxy elements
 			for (final ELEM proxyElem : nodesToAdd) {
@@ -572,27 +594,57 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		return true;
 	}
 
-	protected Collection<? extends ELEM> collectNodesToAddBeforeRemoval(final ELEM elemToRemove,
-			final ELEM replacement) {
-		final Set<ELEM> result = new HashSet<>();
-
+	protected ELEM getReplacementNodeToIntroduce(final ELEM elemToRemove,
+			final boolean elemToRemoveIsAppliedFunctionNotArgument,
+			final Map<ELEM, ELEM> nodeToReplacement) {
 		/*
-		 * say we remove i, and we have a node a[i], and i is equivalent to j, then we introduce the node a[j].
+		 * say
+		 * <li> elemToRemove = a[i]
+		 * <li> elemToRemove does not have an equivalence class member to replace it with (assumed by this method)
+		 * <li> isConstrained(a[i]) (assumed by this method)
+		 * <li> (case1) a[i] is removed because a is removed, and exists b ~ a, then return b[i] (to be added later)
+		 * <li> (case2) a[i] is removed because i is removed, and exists i ~ j, then return a[j] (to be added later)
 		 */
-		if (replacement != null) {
-			for (final ELEM parent : new ArrayList<>(mFaAuxData.getAfParents(elemToRemove))) {
-				assert parent.getAppliedFunction() == elemToRemove;
-				final ELEM replaced = parent.replaceAppliedFunction(replacement);
-//				addElementRec(replaced);
-				result.add(replaced);
+		assert elemToRemove.isFunctionApplication();
+
+		if (elemToRemoveIsAppliedFunctionNotArgument) {
+			// look for a b with a ~ b
+			final ELEM afReplacement = nodeToReplacement.get(elemToRemove.getAppliedFunction());
+			if (afReplacement != null) {
+				return elemToRemove.replaceAppliedFunction(afReplacement);
 			}
-			for (final ELEM parent : new ArrayList<>(mFaAuxData.getArgParents(elemToRemove))) {
-				assert parent.getArgument() == elemToRemove;
-				final ELEM replaced = parent.replaceArgument(replacement);
-//				addElementRec(replaced);
-				result.add(replaced);
+		} else {
+			// look for a j with i ~ j
+			final ELEM argReplacement = nodeToReplacement.get(elemToRemove.getArgument());
+			if (argReplacement != null) {
+				return elemToRemove.replaceArgument(argReplacement);
 			}
 		}
+		return null;
+	}
+
+	protected Collection<? extends ELEM> collectNodesToAddBeforeRemoval(final ELEM elemToRemove,
+			final ELEM replacement) {
+		assert false : "doing this differently..";
+		final Set<ELEM> result = new HashSet<>();
+
+//		/*
+//		 * say we remove i, and we have a node a[i], and i is equivalent to j, then we introduce the node a[j].
+//		 */
+//		if (replacement != null) {
+//			for (final ELEM parent : new ArrayList<>(mFaAuxData.getAfParents(elemToRemove))) {
+//				assert parent.getAppliedFunction() == elemToRemove;
+//				final ELEM replaced = parent.replaceAppliedFunction(replacement);
+////				addElementRec(replaced);
+//				result.add(replaced);
+//			}
+//			for (final ELEM parent : new ArrayList<>(mFaAuxData.getArgParents(elemToRemove))) {
+//				assert parent.getArgument() == elemToRemove;
+//				final ELEM replaced = parent.replaceArgument(replacement);
+////				addElementRec(replaced);
+//				result.add(replaced);
+//			}
+//		}
 		return result;
 	}
 
