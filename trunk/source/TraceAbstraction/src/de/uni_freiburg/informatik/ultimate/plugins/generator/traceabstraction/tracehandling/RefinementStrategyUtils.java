@@ -48,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheck;
+import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 
 /**
  * Provides static auxiliary methods for {@link RefinementStrategy}s.
@@ -58,8 +59,7 @@ public class RefinementStrategyUtils {
 
 	public static final String COMMAND_Z3_NO_TIMEOUT = "z3 -smt2 -in SMTLIB2_COMPLIANT=true";
 	public static final String COMMAND_Z3_TIMEOUT = COMMAND_Z3_NO_TIMEOUT + " -t:12000";
-	public static final String COMMAND_CVC4_NO_TIMEOUT =
-			"cvc4 --tear-down-incremental --print-success --lang smt --rewrite-divk";
+	public static final String COMMAND_CVC4_NO_TIMEOUT = getCvc4NoTimeout();
 	public static final String COMMAND_CVC4_TIMEOUT = COMMAND_CVC4_NO_TIMEOUT + " --tlimit-per=12000";
 
 	// 20161214 Matthias: MathSAT does not support timeouts
@@ -73,6 +73,19 @@ public class RefinementStrategyUtils {
 
 	private RefinementStrategyUtils() {
 		// do not instantiate utility classes
+	}
+
+	/**
+	 * On Windows we do not have the "golden copy" of cvc4 anymore. Newer versions require a different commandline, so
+	 * we switch here based on the OS in use.
+	 *
+	 * @return the command to start cvc4
+	 */
+	private static final String getCvc4NoTimeout() {
+		if (CoreUtil.OS_IS_WINDOWS) {
+			return "cvc4 --tear-down-incremental=1 --print-success --lang smt --rewrite-divk";
+		}
+		return "cvc4 --tear-down-incremental --print-success --lang smt --rewrite-divk";
 	}
 
 	public static <LETTER extends IIcfgTransition<?>> IInterpolantGenerator constructInterpolantGenerator(
