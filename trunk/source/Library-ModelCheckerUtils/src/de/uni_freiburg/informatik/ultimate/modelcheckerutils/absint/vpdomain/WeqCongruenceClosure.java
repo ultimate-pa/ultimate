@@ -36,6 +36,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -838,15 +839,16 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 	 * nodes if possible by adding nodes with other functions but the same
 	 * arguments.
 	 *
-	 * Conditions to add a node b[i1, ..., in]: (a is the function we are about to
+	 * Conditions to add a node b[i]: (a is the function we are about to
 	 * remove)
-	 * <li>a[i1, ..., in] is present in this weqCc and is part of a non-tautological
+	 * <li>a[i] is present in this weqCc and is part of a non-tautological
 	 * constraint
-	 * <li>the current weqCc allows us to conclude a[i1, .., in] = b[i1, ..,in]
+	 * <li>the current weqCc allows us to conclude a[i] = b[i]
 	 * <p>
 	 * that is the case if one of the following conditions holds
 	 * <li>the strong equivalence a = b is implied by this weqCc (it is enough to
-	 * propagate for one other function in the equivalence class of a)
+	 * propagate for one other function in the equivalence class of a, this should be covered by the analogue method
+	 *  in the super-class CongruenceClosure, i.e., calling super... in this method should give us the according nodes)
 	 * <li>there is a weak equivalence edge between a and b, and it allows weak
 	 * congruence propagation of the above equality
 	 *
@@ -855,13 +857,17 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 	 * @param elemAfParents
 	 */
 	@Override
-	protected Collection<NODE> collectNodesToAddBeforeRemoval(final NODE elem) {
+	protected Collection<NODE> collectNodesToAddBeforeRemoval(final NODE elem, final NODE replacement) {
 
 		final Collection<NODE> nodesToAdd = new ArrayList<>();
 
-//		/*
-//		 * collect nodes that are applications with newRep as a function symbol, and that have some constraint on them
-//		 */
+		nodesToAdd.addAll(super.collectNodesToAddBeforeRemoval(elem, replacement));
+
+		/*
+		 * collect nodes that are applications with elem as a function symbol, and that have some constraint on them
+		 * EDIT: i think we don't need transitive af parents anymore, but only af parents
+		 */
+		final Set<NODE> afParents = new HashSet<>(mFaAuxData.getAfParents(elem));
 //		boolean goOn = true;
 //		final Set<NODE> transitiveAfParents = new HashSet<>();
 //		Set<NODE> currentLayer = new HashSet<>(mFaAuxData.getAfParents(elem));
@@ -879,28 +885,22 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 
 
 //		final Set<NODE> constrainedFuncAppNodes = transitiveAfParents.stream().filter(this::isConstrained)
-//				.collect(Collectors.toSet());
+		final Set<NODE> constrainedFuncAppNodes = afParents.stream().filter(this::isConstrained)
+				.collect(Collectors.toSet());
 //
-//		for (final NODE fan : constrainedFuncAppNodes) {
-		if (!elem.isFunctionApplication()) {
-			return Collections.emptySet();
-		}
-		if (!isConstrained(elem)) {
-			return Collections.emptySet();
-		}
-		// TODO: rework this
+		for (final NODE fan : constrainedFuncAppNodes) {
 
 			for (final Entry<NODE, WeakEquivalenceGraph<NODE>.WeakEquivalenceEdgeLabel> weqEdge
 					: mWeakEquivalenceGraph.getAdjacentWeqEdges(elem).entrySet()) {
-//				if (weqEdge.getValue().impliesEqualityOnThatPosition(Collections.singletonList(fan.getArgument()))) {
-				if (weqEdge.getValue().impliesEqualityOnThatPosition(Collections.singletonList(elem.getArgument()))) {
+				if (weqEdge.getValue().impliesEqualityOnThatPosition(Collections.singletonList(fan.getArgument()))) {
+//				if (weqEdge.getValue().impliesEqualityOnThatPosition(Collections.singletonList(elem.getArgument()))) {
 					final NODE nodeWithWequalFunc = mFactory.getEqNodeAndFunctionFactory()
-							.getOrConstructFuncAppElement(weqEdge.getKey(), elem.getArgument());
-//							.getOrConstructFuncAppElement(weqEdge.getKey(), fan.getArgument());
+//							.getOrConstructFuncAppElement(weqEdge.getKey(), elem.getArgument());
+							.getOrConstructFuncAppElement(weqEdge.getKey(), fan.getArgument());
 					nodesToAdd.add(nodeWithWequalFunc);
 				}
 			}
-//		}
+		}
 		return nodesToAdd;
 	}
 

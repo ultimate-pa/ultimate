@@ -686,6 +686,57 @@ public class CongruenceClosureTest {
 		assertTrue(cc.getEqualityStatus(f_a, f_b) == EqualityStatus.UNKNOWN);
 	}
 
+	@Test
+	public void testRemove03() {
+		final CongruenceClosure<StringCcElement> cc = new CongruenceClosure<>();
+
+		final StringElementFactory factory = new StringElementFactory();
+
+		final StringCcElement f = factory.getBaseElement("f");
+		final StringCcElement g = factory.getBaseElement("g");
+
+		final StringCcElement a = factory.getBaseElement("a");
+		final StringCcElement b = factory.getBaseElement("b");
+		final StringCcElement c = factory.getBaseElement("c");
+
+		final StringCcElement f_a = factory.getOrConstructFuncAppElement(f, a);
+		final StringCcElement f_b = factory.getOrConstructFuncAppElement(f, b);
+		final StringCcElement f_c = factory.getOrConstructFuncAppElement(f, c);
+
+		cc.reportEquality(a, b);
+		cc.reportEquality(b, c);
+		cc.getRepresentativeAndAddElementIfNeeded(f_a);
+		cc.getRepresentativeAndAddElementIfNeeded(f_c);
+		assertTrue(cc.getEqualityStatus(f_a, f_c) == EqualityStatus.EQUAL);
+		cc.removeSimpleElement(a);
+		cc.getRepresentativeAndAddElementIfNeeded(f_b);
+		assertTrue(cc.getEqualityStatus(f_b, f_c) == EqualityStatus.EQUAL);
+	}
+
+	@Test
+	public void testRemove04() {
+		final CongruenceClosure<StringCcElement> cc = new CongruenceClosure<>();
+
+		final StringElementFactory factory = new StringElementFactory();
+
+		final StringCcElement a = factory.getBaseElement("a");
+
+		final StringCcElement x = factory.getBaseElement("x");
+		final StringCcElement y = factory.getBaseElement("y");
+		final StringCcElement i = factory.getBaseElement("i");
+
+		final StringCcElement l1 = factory.getBaseElement("1");
+
+		final StringCcElement a_x = factory.getOrConstructFuncAppElement(a, x);
+		final StringCcElement a_y = factory.getOrConstructFuncAppElement(a, y);
+
+		cc.reportEquality(a_y, l1);
+		cc.reportEquality(i, y);
+		cc.removeSimpleElement(y);
+		cc.reportEquality(x, i);
+		cc.getRepresentativeAndAddElementIfNeeded(a_x);
+		assertTrue(cc.getEqualityStatus(a_x, l1) == EqualityStatus.EQUAL);
+	}
 
 
 	// TODO test transformer
@@ -701,12 +752,12 @@ class StringElementFactory extends AbstractCCElementFactory<StringCcElement, Str
 	}
 
 	public StringCcElement getFuncAppElement(final StringCcElement f, final StringCcElement... args) {
-		return StringCcElement.buildStringCcElement(f, args);
+		return StringCcElement.buildStringCcElement(this, f, args);
 	}
 
 	@Override
 	protected StringCcElement newFuncAppElement(final StringCcElement f, final StringCcElement arg) {
-		return new StringCcElement(f, arg);
+		return new StringCcElement(f, arg, this);
 	}
 
 //	@Override
@@ -726,6 +777,7 @@ class StringCcElement implements ICongruenceClosureElement<StringCcElement>{
 //	private final int mHeight;
 	private final Set<StringCcElement> mAfParents;
 	private final Set<StringCcElement> mArgParents;
+	private final StringElementFactory mFactory;
 
 	/**
 	 * base element
@@ -741,6 +793,7 @@ class StringCcElement implements ICongruenceClosureElement<StringCcElement>{
 //		mHeight = 0;
 		mAfParents = new HashSet<>();
 		mArgParents = new HashSet<>();
+		mFactory = null;
 	}
 
 	/**
@@ -750,7 +803,8 @@ class StringCcElement implements ICongruenceClosureElement<StringCcElement>{
 	 * @param argument
 	 * @param isFunction
 	 */
-	public StringCcElement(final StringCcElement appliedFunction, final StringCcElement argument) {
+	public StringCcElement(final StringCcElement appliedFunction, final StringCcElement argument,
+			final StringElementFactory factory) {
 		mIsFunctionApplication = true;
 		mName = null;
 		mAppliedFunction = appliedFunction;
@@ -760,16 +814,16 @@ class StringCcElement implements ICongruenceClosureElement<StringCcElement>{
 //		mHeight = appliedFunction.getHeight() + 1;
 		mAfParents = new HashSet<>();
 		mArgParents = new HashSet<>();
-
+		mFactory = factory;
 	}
 
-	public static StringCcElement buildStringCcElement(final StringCcElement appliedFunction,
-			final StringCcElement... arguments) {//, final boolean isFunction) {
+	public static StringCcElement buildStringCcElement(final StringElementFactory factory,
+			final StringCcElement appliedFunction, final StringCcElement... arguments) {//, final boolean isFunction) {
 
 		StringCcElement result = appliedFunction;
 
 		for (final StringCcElement arg : arguments) {
-			result = new StringCcElement(result, arg);
+			result = new StringCcElement(result, arg, factory);
 		}
 
 		return result;
@@ -806,12 +860,12 @@ class StringCcElement implements ICongruenceClosureElement<StringCcElement>{
 
 	@Override
 	public StringCcElement replaceAppliedFunction(final StringCcElement replacer) {
-		throw new UnsupportedOperationException();
+		return mFactory.getOrConstructFuncAppElement(replacer, mArgument);
 	}
 
 	@Override
 	public StringCcElement replaceArgument(final StringCcElement replacer) {
-		throw new UnsupportedOperationException();
+		return mFactory.getOrConstructFuncAppElement(mAppliedFunction, replacer);
 	}
 
 	@Override

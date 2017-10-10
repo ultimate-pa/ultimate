@@ -32,8 +32,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * It is recommended to use a factory for constructing ELEM objects that extends
  * AbstractCCElementFactory.
  *
- * TODO: can we make this more lightweight somehow? Maybe by initializing maps on demand? --> analyze..
- *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  * @param <ELEM>
@@ -493,20 +491,20 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		void doRemoval() {
 			final Set<ELEM> elementsToRemove = collectElementsToRemove(mElem);
 
-
 			final Map<ELEM, ELEM> nodeToReplacementNode = new HashMap<>();
 			for (final ELEM elemToRemove : elementsToRemove) {
 				nodeToReplacementNode.put(elemToRemove, getOtherEquivalenceClassMember(elemToRemove));
 			}
 
 			final Set<ELEM> nodesToAdd = new HashSet<>();
-			for (final ELEM replacementNode : nodeToReplacementNode.values()) {
-				if (replacementNode != null) {
-					nodesToAdd.add(replacementNode);
-				}
-			}
+//			for (final ELEM replacementNode : nodeToReplacementNode.values()) {
+//				if (replacementNode != null) {
+//					nodesToAdd.add(replacementNode);
+//				}
+//			}
 			for (final ELEM elemToRemove : elementsToRemove) {
-				nodesToAdd.addAll(collectNodesToAddBeforeRemoval(elemToRemove));
+				nodesToAdd.addAll(collectNodesToAddBeforeRemoval(elemToRemove,
+						nodeToReplacementNode.get(elemToRemove)));
 			}
 
 			// add proxy elements
@@ -574,8 +572,28 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		return true;
 	}
 
-	protected Collection<? extends ELEM> collectNodesToAddBeforeRemoval(final ELEM elemToRemove) {
-		return Collections.emptySet();
+	protected Collection<? extends ELEM> collectNodesToAddBeforeRemoval(final ELEM elemToRemove,
+			final ELEM replacement) {
+		final Set<ELEM> result = new HashSet<>();
+
+		/*
+		 * say we remove i, and we have a node a[i], and i is equivalent to j, then we introduce the node a[j].
+		 */
+		if (replacement != null) {
+			for (final ELEM parent : new ArrayList<>(mFaAuxData.getAfParents(elemToRemove))) {
+				assert parent.getAppliedFunction() == elemToRemove;
+				final ELEM replaced = parent.replaceAppliedFunction(replacement);
+//				addElementRec(replaced);
+				result.add(replaced);
+			}
+			for (final ELEM parent : new ArrayList<>(mFaAuxData.getArgParents(elemToRemove))) {
+				assert parent.getArgument() == elemToRemove;
+				final ELEM replaced = parent.replaceArgument(replacement);
+//				addElementRec(replaced);
+				result.add(replaced);
+			}
+		}
+		return result;
 	}
 
 	protected void prepareForRemove() {
