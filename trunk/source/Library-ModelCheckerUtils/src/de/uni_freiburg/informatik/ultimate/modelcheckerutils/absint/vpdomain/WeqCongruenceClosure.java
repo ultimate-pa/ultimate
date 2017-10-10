@@ -845,6 +845,40 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 			return replByFwcc;
 		}
 
+		/*
+		 * say elemToRemove = a[i]
+		 */
+		assert elemToRemove.isFunctionApplication();
+
+		// forall j ~ i
+		for (final NODE j : mElementTVER.getEquivalenceClass(elemToRemove.getArgument())) {
+			if (j.equals(elemToRemove.getArgument()) && !elemToRemoveIsAppliedFunctionNotArgument) {
+				// i is being removed, don't pick i as j
+				continue;
+			}
+			// forall b --Phi(q)-- a
+			for (final Entry<NODE, WeakEquivalenceGraph<NODE>.WeakEquivalenceEdgeLabel> edge
+					: mWeakEquivalenceGraph.getAdjacentWeqEdges(elemToRemove.getAppliedFunction()).entrySet()) {
+				if (edge.getKey().equals(elemToRemove.getAppliedFunction())
+						&& elemToRemoveIsAppliedFunctionNotArgument) {
+					// a is being removed, don't pick a as b
+					continue;
+				}
+
+				// does the weak equivalence edge allow propagation of a[i] ~ b[j]? in case add b[j]
+				if (edge.getValue().impliesEqualityOnThatPosition(Collections.singletonList(j))) {
+
+					final NODE nodeToAdd = mFactory.getEqNodeAndFunctionFactory()
+							.getOrConstructFuncAppElement(edge.getKey(), j);
+					if (!hasElement(nodeToAdd)) {
+						return nodeToAdd;
+					}
+				}
+			}
+
+		}
+
+
 		return null;
 	}
 
