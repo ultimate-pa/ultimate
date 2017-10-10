@@ -30,6 +30,8 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.moh
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -54,17 +56,18 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.SimultaneousUpdate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.DnfTransformer;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class IcfgLoopTransformerMohr<INLOC extends IcfgLocation, OUTLOC extends IcfgLocation>
@@ -143,7 +146,7 @@ public class IcfgLoopTransformerMohr<INLOC extends IcfgLocation, OUTLOC extends 
 			visited.add(node);
 			final OUTLOC newSource = mTib.createNewLocation(node);
 			for (final IcfgEdge edge : node.getOutgoingEdges()) {
-				if ((loopNodes.contains(edge.getTarget()) && !loopHeads.contains(edge.getTarget()))
+				if (loopNodes.contains(edge.getTarget()) && !loopHeads.contains(edge.getTarget())
 						|| node.equals(edge.getTarget())) {
 					continue;
 				} else if (!visited.contains(edge.getTarget())) {
@@ -204,35 +207,46 @@ public class IcfgLoopTransformerMohr<INLOC extends IcfgLocation, OUTLOC extends 
 					mManagedScript, false, false, false, null, SimplificationTechnique.NONE, formulas);
 			mLogger.debug("Path formulas: " + formulas);
 			mLogger.debug("Composition: " + composition);
-			final ApplicationTerm dnf = (ApplicationTerm) SmtUtils.toDnf(mServices, mManagedScript, composition.getFormula(), XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
-			mLogger.debug("DNF: " + dnf.toStringDirect());
 
-			final SimultaneousUpdate su = new SimultaneousUpdate(composition, mManagedScript);
-			final Map<IProgramVar, Term> varUpdates = su.getUpdatedVars();
-			final Set<IProgramVar> havocVars = su.getHavocedVars();
-			if (!havocVars.isEmpty()) {
-				mOverApproximation.put(loop.getHead(), true);
-			}
-			pathGuards.add(TransFormulaUtils.computeGuard(composition, mManagedScript, mServices, mLogger));
+			// DD: It is not enough to just construct the DNF. You have to use it as input to the SimultaneousUpdate!
+			final List<TransFormula> disjunctsOfTransformula = getDisjunctsFromTransformula(composition);
 
-			// calculate symbolic memory of the path
-			for (final Map.Entry<IProgramVar, Term> newValue : varUpdates.entrySet()) {
-				if (newValue.getValue() instanceof ConstantTerm || newValue.getValue() instanceof TermVariable) {
-					symbolicMemory.updateConst(newValue.getKey(), newValue.getValue(), mSymbolTable);
-				} else if (newValue.getValue() instanceof ApplicationTerm
-						&& ("+".equals(((ApplicationTerm) newValue.getValue()).getFunction().getName())
-								|| "-".equals(((ApplicationTerm) newValue.getValue()).getFunction().getName()))) {
-					final Set<TermVariable> freeVars = new HashSet<>(Arrays.asList(newValue.getValue().getFreeVars()));
-					if (freeVars.contains(newValue.getKey().getTermVariable())) {
-						symbolicMemory.updateInc(newValue.getKey(), newValue.getValue(), mSymbolTable);
-					} else {
-						symbolicMemory.updateConst(newValue.getKey(), newValue.getValue(), mSymbolTable);
-					}
-				} else {
-					symbolicMemory.updateUndefined(newValue.getKey(), mSymbolTable);
+			// DD: It is possible that you have multiple paths instead of one. You should deal with that. I just copied
+			// your
+			// code in the for-loop (I think this is not enough)
+			// DD: Note that the issue with the "IllegalArgumentException: cannot bring into simultaneous update form
+			// xxx outvar occurs in several conjuncts" still persists. I have to check with Matthias if we can fix this.
+			// Until then, you can just ignore these errors.
+			for (final TransFormula disjunct : disjunctsOfTransformula) {
+				final SimultaneousUpdate su = new SimultaneousUpdate(disjunct, mManagedScript);
+				final Map<IProgramVar, Term> varUpdates = su.getUpdatedVars();
+				final Set<IProgramVar> havocVars = su.getHavocedVars();
+				mLogger.debug("Updates: " + varUpdates + " havocs: " + havocVars);
+				if (!havocVars.isEmpty()) {
+					mOverApproximation.put(loop.getHead(), true);
 				}
+				pathGuards.add(TransFormulaUtils.computeGuard(composition, mManagedScript, mServices, mLogger));
+
+				// calculate symbolic memory of the path
+				for (final Map.Entry<IProgramVar, Term> newValue : varUpdates.entrySet()) {
+					if (newValue.getValue() instanceof ConstantTerm || newValue.getValue() instanceof TermVariable) {
+						symbolicMemory.updateConst(newValue.getKey(), newValue.getValue(), mSymbolTable);
+					} else if (newValue.getValue() instanceof ApplicationTerm
+							&& ("+".equals(((ApplicationTerm) newValue.getValue()).getFunction().getName())
+									|| "-".equals(((ApplicationTerm) newValue.getValue()).getFunction().getName()))) {
+						final Set<TermVariable> freeVars =
+								new HashSet<>(Arrays.asList(newValue.getValue().getFreeVars()));
+						if (freeVars.contains(newValue.getKey().getTermVariable())) {
+							symbolicMemory.updateInc(newValue.getKey(), newValue.getValue(), mSymbolTable);
+						} else {
+							symbolicMemory.updateConst(newValue.getKey(), newValue.getValue(), mSymbolTable);
+						}
+					} else {
+						symbolicMemory.updateUndefined(newValue.getKey(), mSymbolTable);
+					}
+				}
+				pathCount++;
 			}
-			pathCount++;
 		}
 
 		final List<Term> pathTerms = new ArrayList<>();
@@ -269,10 +283,36 @@ public class IcfgLoopTransformerMohr<INLOC extends IcfgLocation, OUTLOC extends 
 		return tfb.finishConstruction(mManagedScript);
 	}
 
-	private Term[] toDnf(final Term term) {
-		final DnfTransformer dnf = new DnfTransformer(mManagedScript, mServices);
-		final Term transFormedTerm = dnf.transform(term);
-		return SmtUtils.getDisjuncts(transFormedTerm);
+	/**
+	 * Converts a given transformula to DNF and returns a list of transformulas for each disjunct.
+	 */
+	private List<TransFormula> getDisjunctsFromTransformula(final TransFormula originalTf) {
+		final Term dnf = SmtUtils.toDnf(mServices, mManagedScript, originalTf.getFormula(),
+				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("DNF: " + dnf.toStringDirect());
+		}
+		final Term[] disjuncts = SmtUtils.getDisjuncts(dnf);
+		if (disjuncts.length == 1) {
+			return Collections.singletonList(originalTf);
+		}
+		final List<TransFormula> rtr = new ArrayList<>(disjuncts.length);
+		final Map<IProgramVar, TermVariable> inVars = originalTf.getInVars();
+		final Map<IProgramVar, TermVariable> outVars = originalTf.getOutVars();
+		final Set<IProgramConst> nonTheoryConsts = originalTf.getNonTheoryConsts();
+		final Collection<TermVariable> branchEncoders = Collections.emptySet();
+		final boolean emptyAuxVars = originalTf.getAuxVars().isEmpty();
+		for (final Term disjunct : disjuncts) {
+			final Term simpl =
+					SmtUtils.simplify(mManagedScript, disjunct, mServices, SimplificationTechnique.SIMPLIFY_DDA);
+			final TransFormulaBuilder tfBuilder = new TransFormulaBuilder(inVars, outVars, nonTheoryConsts.isEmpty(),
+					nonTheoryConsts, branchEncoders.isEmpty(), branchEncoders, emptyAuxVars);
+			tfBuilder.setFormula(simpl);
+			tfBuilder.setInfeasibility(Infeasibility.NOT_DETERMINED);
+			final UnmodifiableTransFormula disjunctTf = tfBuilder.finishConstruction(mManagedScript);
+			rtr.add(disjunctTf);
+		}
+		return rtr;
 	}
 
 	@Override
