@@ -1,9 +1,11 @@
 package de.uni_freiburg.informatik.ultimate.util.datastructures;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -402,47 +404,133 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 			return false;
 		}
 
-		// TODO: seems ugly, but WeqCongruenceClosure need this field, too..
-		if (this.getClass().equals(CongruenceClosure.class)) {
-			assert mElementCurrentlyBeingRemoved == null;
-			mElementCurrentlyBeingRemoved = new RemovalInfo(elem,
-					getOtherEquivalenceClassMember(elem));
-		}
+		final CongruenceClosure<ELEM>.RemoveElement re = new RemoveElement(elem, false);
+		return re.madeChanges();
 
-		final boolean result = removeAnyElement(elem, null);
+//
+//		// TODO: seems ugly, but WeqCongruenceClosure need this field, too..
+//		if (this.getClass().equals(CongruenceClosure.class)) {
+//			assert mElementCurrentlyBeingRemoved == null;
+//			mElementCurrentlyBeingRemoved = new RemovalInfo(elem,
+//					getOtherEquivalenceClassMember(elem));
+//		}
+//
+//		final boolean result = removeAnyElement(elem, null);
+//
+//		if (this.getClass().equals(CongruenceClosure.class)) {
+//			mElementCurrentlyBeingRemoved = null;
+//		}
+//
+//		return result;
+	}
 
-		if (this.getClass().equals(CongruenceClosure.class)) {
-			mElementCurrentlyBeingRemoved = null;
+//	protected final Map<ELEM, ELEM> removeSimpleElementTrackNewReps(final ELEM elem) {
+//		if (elem.isFunctionApplication()) {
+//			throw new IllegalArgumentException();
+//		}
+//		if (isInconsistent()) {
+//			throw new IllegalStateException();
+//		}
+//		if (!hasElement(elem)) {
+//			return new HashMap<>();
+//		}
+//
+//		// TODO: seems ugly
+//		if (this.getClass().equals(CongruenceClosure.class)) {
+//			assert mElementCurrentlyBeingRemoved == null;
+//			mElementCurrentlyBeingRemoved = new RemovalInfo(elem, getOtherEquivalenceClassMember(elem));
+//		}
+//
+//		final HashMap<ELEM, ELEM> removedElemToNewRep = new HashMap<>();
+//		removeAnyElement(elem, removedElemToNewRep);
+//
+//		if (this.getClass().equals(CongruenceClosure.class)) {
+//			mElementCurrentlyBeingRemoved = null;
+//		}
+//
+//		return removedElemToNewRep;
+//	}
+
+	protected Set<ELEM> collectElementsToRemove(final ELEM elem) {
+
+		final Set<ELEM> result = new HashSet<>();
+
+		final Deque<ELEM> worklist = new ArrayDeque<>();
+		worklist.add(elem);
+
+		while (!worklist.isEmpty()) {
+			final ELEM current = worklist.pop();
+			result.add(current);
+
+			worklist.addAll(mFaAuxData.getAfParents(current));
+			worklist.addAll(mFaAuxData.getArgParents(current));
 		}
 
 		return result;
 	}
 
-	protected final Map<ELEM, ELEM> removeSimpleElementTrackNewReps(final ELEM elem) {
-		if (elem.isFunctionApplication()) {
-			throw new IllegalArgumentException();
-		}
-		if (isInconsistent()) {
-			throw new IllegalStateException();
-		}
-		if (!hasElement(elem)) {
-			return new HashMap<>();
+	public class RemoveElement {
+
+		private final ELEM mElem;
+		private final HashMap<ELEM, ELEM> mRemovedElemToNewRep;
+
+		private final boolean mMadeChanges;
+
+		public RemoveElement(final ELEM elem, final boolean trackNewReps) {
+			assert !elem.isFunctionApplication() : "unexpected..";
+
+			if (isInconsistent()) {
+				throw new IllegalStateException();
+			}
+
+			mElem = elem;
+			mRemovedElemToNewRep = trackNewReps ? new HashMap<>() : null;
+			mMadeChanges = false;
+
+			doRemoval();
 		}
 
-		// TODO: seems ugly
-		if (this.getClass().equals(CongruenceClosure.class)) {
-			assert mElementCurrentlyBeingRemoved == null;
-			mElementCurrentlyBeingRemoved = new RemovalInfo(elem, getOtherEquivalenceClassMember(elem));
+		void doRemoval() {
+			final Set<ELEM> elementsToRemove = collectElementsToRemove(mElem);
+
+
+			final Map<ELEM, ELEM> nodeToReplacementNode = new HashMap<>();
+			for (final ELEM elemToRemove : elementsToRemove) {
+				nodeToReplacementNode.put(elemToRemove, getOtherEquivalenceClassMember(elemToRemove));
+			}
+
+			final Set<ELEM> nodesToAdd = new HashSet<>();
+			for (final ELEM replacementNode : nodeToReplacementNode.values()) {
+				if (replacementNode != null) {
+					nodesToAdd.add(replacementNode);
+				}
+			}
+			for (final ELEM elemToRemove : elementsToRemove) {
+				nodesToAdd.addAll(collectNodesToAddBeforeRemoval(elemToRemove));
+			}
+
+			// add proxy elements
+			for (final ELEM proxyElem : nodesToAdd) {
+				addElement(proxyElem);
+			}
+
+			// (for instance:) prepare weq graph by conjoining edge labels with the current gpa
+			prepareForRemove();
+
+			for (final ELEM elemToRemove : elementsToRemove) {
+				removeSingleElement(elemToRemove, nodeToReplacementNode.get(elemToRemove));
+			}
 		}
 
-		final HashMap<ELEM, ELEM> removedElemToNewRep = new HashMap<>();
-		removeAnyElement(elem, removedElemToNewRep);
-
-		if (this.getClass().equals(CongruenceClosure.class)) {
-			mElementCurrentlyBeingRemoved = null;
+		public boolean madeChanges() {
+			return mMadeChanges;
 		}
 
-		return removedElemToNewRep;
+		public HashMap<ELEM, ELEM> removedElemToNewRep() {
+			assert mRemovedElemToNewRep != null : "constructor flag trackNewReps was not set!";
+			return mRemovedElemToNewRep;
+		}
+
 	}
 
 	/**
@@ -483,6 +571,34 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 
 //		assert sanityCheckOnlyCc();
 		assert elementIsFullyRemovedOnlyCc(elem);
+		return true;
+	}
+
+	protected Collection<? extends ELEM> collectNodesToAddBeforeRemoval(final ELEM elemToRemove) {
+		return Collections.emptySet();
+	}
+
+	protected void prepareForRemove() {
+		// do nothing (method relevant for subclasses)
+	}
+
+	/**
+	 * should only be called from WeakEquivalenceGraph or from CongruenceClosure!
+	 *
+	 * @param elem
+	 * @param replacement
+	 * @return
+	 */
+	public boolean removeSingleElement(final ELEM elem, final ELEM replacement) {
+		assert !isInconsistent();
+
+		if (!hasElement(elem)) {
+			return false;
+		}
+
+		updateElementTverAndAuxDataOnRemoveElement(elem);
+
+		assert elementIsFullyRemoved(elem);
 		return true;
 	}
 
@@ -653,7 +769,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 //		return eqc.stream().filter(e -> e != elem).findAny().get();
 	}
 
-	protected boolean elementIsFullyRemoved(final ELEM elem) {
+	public boolean elementIsFullyRemoved(final ELEM elem) {
 		return elementIsFullyRemovedOnlyCc(elem);
 	}
 

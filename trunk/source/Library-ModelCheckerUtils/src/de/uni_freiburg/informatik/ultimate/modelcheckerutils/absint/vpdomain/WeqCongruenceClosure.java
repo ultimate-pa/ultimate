@@ -36,7 +36,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -386,6 +385,18 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 			final NODE ithNode = nodes.get(i);
 			result.reportEquality(mFactory.getWeqVariableNodeForDimension(i, ithNode.getTerm().getSort()), ithNode);
 		}
+		return result;
+	}
+
+
+
+	@Override
+	protected Set<NODE> collectElementsToRemove(final NODE elem) {
+		final Set<NODE> result = new HashSet<>();
+		// collect (transitive) parent nodes
+		result.addAll(super.collectElementsToRemove(elem));
+		// collect (transitive) parent nodes
+		result.addAll(mNodeToDependents.getImage(elem));
 		return result;
 	}
 
@@ -756,55 +767,69 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		return true;
 	}
 
+//	@Override
+//	public boolean removeSimpleElement(final NODE elem) {
+//		if (elem.isFunctionApplication()) {
+//			throw new IllegalArgumentException();
+//		}
+//		if (!hasElement(elem)) {
+//			removeDependents(elem);
+//			return false;
+//		}
+//		final CongruenceClosure<NODE> copy = new CongruenceClosure<>(this);
+//
+//
+//		if (mElementCurrentlyBeingRemoved == null) {
+//			mElementCurrentlyBeingRemoved = new RemovalInfo(elem, getOtherEquivalenceClassMember(elem));
+//		} else {
+//			// this may happen if elem is a dependent element, check that through the assert..
+//			assert mNodeToDependents.entrySet().stream()
+//				.map(en -> en.getValue()).filter(e -> e.equals(elem)).findAny().isPresent();
+//		}
+//
+//		final Collection<NODE> nodesToAdd = collectNodesToAddAtFunctionRemoval(elem);
+//		for (final NODE node : nodesToAdd) {
+//			addElement(node);
+//		}
+//
+//		final Map<NODE, NODE> removedElemsToNewReps = super.removeSimpleElementTrackNewReps(elem);
+//
+//		final Set<NODE> nodesAddedByWeqgProject =
+//				mWeakEquivalenceGraph.projectFunction(elem, copy, removedElemsToNewReps);
+//		for (final NODE n : nodesAddedByWeqgProject) {
+//			addElementRec(n);
+//		}
+//
+//		removeDependents(elem);
+//
+//		mAllLiterals.remove(elem);
+//
+//		if (mElementCurrentlyBeingRemoved.getElem().equals(elem)) {
+//			mElementCurrentlyBeingRemoved = null;
+//		}
+//		assert sanityCheck();
+//		return true;
+//	}
+
+//	protected void removeDependents(final NODE elem) {
+//		for (final NODE dependent : new HashSet<>(mNodeToDependents.getImage(elem))) {
+//			removeSimpleElement(dependent);
+//		}
+//		mNodeToDependents.removeDomainElement(elem);
+//	}
+
 	@Override
-	public boolean removeSimpleElement(final NODE elem) {
-		if (elem.isFunctionApplication()) {
-			throw new IllegalArgumentException();
-		}
-		if (!hasElement(elem)) {
-			removeDependents(elem);
-			return false;
-		}
-		final CongruenceClosure<NODE> copy = new CongruenceClosure<>(this);
-
-
-		if (mElementCurrentlyBeingRemoved == null) {
-			mElementCurrentlyBeingRemoved = new RemovalInfo(elem, getOtherEquivalenceClassMember(elem));
-		} else {
-			// this may happen if elem is a dependent element, check that through the assert..
-			assert mNodeToDependents.entrySet().stream()
-				.map(en -> en.getValue()).filter(e -> e.equals(elem)).findAny().isPresent();
-		}
-
-		final Collection<NODE> nodesToAdd = collectNodesToAddAtFunctionRemoval(elem);
-		for (final NODE node : nodesToAdd) {
-			addElement(node);
-		}
-
-		final Map<NODE, NODE> removedElemsToNewReps = super.removeSimpleElementTrackNewReps(elem);
-
-		final Set<NODE> nodesAddedByWeqgProject =
-				mWeakEquivalenceGraph.projectFunction(elem, copy, removedElemsToNewReps);
-		for (final NODE n : nodesAddedByWeqgProject) {
-			addElementRec(n);
-		}
-
-		removeDependents(elem);
-
-		mAllLiterals.remove(elem);
-
-		if (mElementCurrentlyBeingRemoved.getElem().equals(elem)) {
-			mElementCurrentlyBeingRemoved = null;
-		}
-		assert sanityCheck();
-		return true;
+	protected void prepareForRemove() {
+		mWeakEquivalenceGraph.meetEdgeLabelsWithGpa();
+		super.prepareForRemove();
 	}
 
-	protected void removeDependents(final NODE elem) {
-		for (final NODE dependent : new HashSet<>(mNodeToDependents.getImage(elem))) {
-			removeSimpleElement(dependent);
-		}
-		mNodeToDependents.removeDomainElement(elem);
+	@Override
+	public boolean removeSingleElement(final NODE elem, final NODE replacement) {
+
+		mWeakEquivalenceGraph.projectSingleElement(elem, replacement);
+
+		return super.removeSingleElement(elem, replacement);
 	}
 
 	/**
@@ -829,41 +854,53 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 	 * @param eqcMember a member of the equivalence class that elem was in before removal (may be null)
 	 * @param elemAfParents
 	 */
-	private Collection<NODE> collectNodesToAddAtFunctionRemoval(final NODE elem) {
+	@Override
+	protected Collection<NODE> collectNodesToAddBeforeRemoval(final NODE elem) {
 
 		final Collection<NODE> nodesToAdd = new ArrayList<>();
 
-		/*
-		 * collect nodes that are applications with newRep as a function symbol, and that have some constraint on them
-		 */
-		boolean goOn = true;
-		final Set<NODE> transitiveAfParents = new HashSet<>();
-		Set<NODE> currentLayer = new HashSet<>(mFaAuxData.getAfParents(elem));
-		while (goOn) {
-			goOn = false;
-			final Set<NODE> nextLayer = new HashSet<>();
-			for (final NODE afp : currentLayer) {
-				final Set<NODE> transAfp = mFaAuxData.getAfParents(afp);
-				goOn |= !transAfp.isEmpty();
-				nextLayer.addAll(transAfp);
-			}
-			transitiveAfParents.addAll(currentLayer);
-			currentLayer = nextLayer;
-		}
-		final Set<NODE> constrainedFuncAppNodes = transitiveAfParents.stream().filter(this::isConstrained)
-				.collect(Collectors.toSet());
+//		/*
+//		 * collect nodes that are applications with newRep as a function symbol, and that have some constraint on them
+//		 */
+//		boolean goOn = true;
+//		final Set<NODE> transitiveAfParents = new HashSet<>();
+//		Set<NODE> currentLayer = new HashSet<>(mFaAuxData.getAfParents(elem));
+//		while (goOn) {
+//			goOn = false;
+//			final Set<NODE> nextLayer = new HashSet<>();
+//			for (final NODE afp : currentLayer) {
+//				final Set<NODE> transAfp = mFaAuxData.getAfParents(afp);
+//				goOn |= !transAfp.isEmpty();
+//				nextLayer.addAll(transAfp);
+//			}
+//			transitiveAfParents.addAll(currentLayer);
+//			currentLayer = nextLayer;
+//		}
 
-		for (final NODE fan : constrainedFuncAppNodes) {
+
+//		final Set<NODE> constrainedFuncAppNodes = transitiveAfParents.stream().filter(this::isConstrained)
+//				.collect(Collectors.toSet());
+//
+//		for (final NODE fan : constrainedFuncAppNodes) {
+		if (!elem.isFunctionApplication()) {
+			return Collections.emptySet();
+		}
+		if (!isConstrained(elem)) {
+			return Collections.emptySet();
+		}
+		// TODO: rework this
 
 			for (final Entry<NODE, WeakEquivalenceGraph<NODE>.WeakEquivalenceEdgeLabel> weqEdge
 					: mWeakEquivalenceGraph.getAdjacentWeqEdges(elem).entrySet()) {
-				if (weqEdge.getValue().impliesEqualityOnThatPosition(Collections.singletonList(fan.getArgument()))) {
+//				if (weqEdge.getValue().impliesEqualityOnThatPosition(Collections.singletonList(fan.getArgument()))) {
+				if (weqEdge.getValue().impliesEqualityOnThatPosition(Collections.singletonList(elem.getArgument()))) {
 					final NODE nodeWithWequalFunc = mFactory.getEqNodeAndFunctionFactory()
-							.getOrConstructFuncAppElement(weqEdge.getKey(), fan.getArgument());
+							.getOrConstructFuncAppElement(weqEdge.getKey(), elem.getArgument());
+//							.getOrConstructFuncAppElement(weqEdge.getKey(), fan.getArgument());
 					nodesToAdd.add(nodeWithWequalFunc);
 				}
 			}
-		}
+//		}
 		return nodesToAdd;
 	}
 
@@ -975,7 +1012,12 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 	}
 
 	@Override
-	protected boolean elementIsFullyRemoved(final NODE elem) {
+	public boolean elementIsFullyRemoved(final NODE elem) {
+		if (!mWeakEquivalenceGraph.elementIsFullyRemoved(elem)) {
+			assert false;
+			return false;
+		}
+
 		for (final Entry<Object, NODE> en : mNodeToDependents.entrySet()) {
 			if (en.getKey().equals(elem) || en.getValue().equals(elem)) {
 				assert false;

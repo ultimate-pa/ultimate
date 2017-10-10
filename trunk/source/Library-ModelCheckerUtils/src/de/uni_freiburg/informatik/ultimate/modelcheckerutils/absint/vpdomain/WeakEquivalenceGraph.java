@@ -186,6 +186,36 @@ public class WeakEquivalenceGraph<//ACTION extends IIcfgTransition<IcfgLocation>
 		return madeChanges;
 	}
 
+	public void projectSingleElement(final NODE elem, final NODE replacement) {
+				final Map<Doubleton<NODE>, WeakEquivalenceEdgeLabel> edgesCopy = new HashMap<>(mWeakEquivalenceEdges);
+//		final Set<NODE> nodesThatHaveBeenAddedDuringProject = new HashSet<>();
+
+		for (final Entry<Doubleton<NODE>, WeakEquivalenceEdgeLabel> en : edgesCopy.entrySet()) {
+
+			final NODE source = en.getKey().getOneElement();
+			final NODE target = en.getKey().getOtherElement();
+
+			if (source.equals(elem)) {
+				final WeakEquivalenceGraph<NODE>.WeakEquivalenceEdgeLabel label =
+						mWeakEquivalenceEdges.remove(en.getKey());
+				if (replacement != null) {
+					label.projectSingleElement(elem, replacement);
+					mWeakEquivalenceEdges.put(new Doubleton<NODE>(replacement, target), label);
+				}
+			} else if (target.equals(elem)) {
+				final WeakEquivalenceGraph<NODE>.WeakEquivalenceEdgeLabel label =
+						mWeakEquivalenceEdges.remove(en.getKey());
+				if (replacement != null) {
+					label.projectSingleElement(elem, replacement);
+					mWeakEquivalenceEdges.put(new Doubleton<NODE>(source, replacement), label);
+				}
+			} else {
+				en.getValue().projectSingleElement(elem, replacement);
+			}
+		}
+		assert elementIsFullyRemoved(elem);
+	}
+
 	/**
 	 * Project the given function (array) from this weq graph.
 	 * <li> remove edges that are adjacent to the given function
@@ -865,6 +895,12 @@ public class WeakEquivalenceGraph<//ACTION extends IIcfgTransition<IcfgLocation>
 		return 0;
 	}
 
+	public void meetEdgeLabelsWithGpa() {
+		for (final WeakEquivalenceGraph<NODE>.WeakEquivalenceEdgeLabel edgeLabel : mWeakEquivalenceEdges.values()) {
+			edgeLabel.meetWithGpa();
+		}
+	}
+
 	Map<String, Integer> summarize() {
 		final Map<String, Integer> result = new HashMap<>();
 
@@ -938,6 +974,34 @@ public class WeakEquivalenceGraph<//ACTION extends IIcfgTransition<IcfgLocation>
 				mLabel = new ArrayList<>();
 				mLabel.add(new CongruenceClosure<>());
 				assert sanityCheck();
+			}
+
+			public void projectSingleElement(final NODE elem, final NODE replacement) {
+				if (isTautological()) {
+					return;
+				}
+				if (isInconsistent()) {
+					return;
+				}
+
+//				final List<CongruenceClosure<NODE>> newLabelContents = new ArrayList<>();
+//				for (int i = 0; i < mLabel.size(); i++) {
+				for (final CongruenceClosure<NODE> lab : mLabel) {
+
+					lab.removeSingleElement(elem, replacement);
+
+					if (lab.isTautological()) {
+						// a disjunct became "true" through projection --> the whole disjunction is tautological
+						mLabel.clear();
+						mLabel.add(new CongruenceClosure<>());
+						return;
+					}
+					lab.projectToElements(mFactory.getAllWeqNodes());
+//					newLabelContents.add(lab);
+				}
+//				assert newLabelContents.size() <= 1 || !newLabelContents.stream().anyMatch(c -> c.isTautological());
+//				mLabel.clear();
+//				mLabel.addAll(newLabelContents);
 			}
 
 			public WeakEquivalenceEdgeLabel projectToElements(final Set<NODE> allWeqNodes) {
@@ -1381,6 +1445,70 @@ public class WeakEquivalenceGraph<//ACTION extends IIcfgTransition<IcfgLocation>
 				return sanityCheck(copy);
 			}
 
+			public void meetWithGpa() {
+				final List<CongruenceClosure<NODE>> newLabelContents = new ArrayList<>();
+				for (int i = 0; i < getLabelContents().size(); i++) {
+					if (mLabel.get(i).isTautological()) {
+						// we have one "true" disjunct --> the whole disjunction is tautological
+						if (mLabel.size() == 1) {
+							return;
+						}
+						mLabel.clear();
+						mLabel.add(new CongruenceClosure<>());
+						return;
+					}
+					final CongruenceClosure<NODE>	meet = mCcManager.getMeet(mLabel.get(i), mPartialArrangement);
+					if (meet.isInconsistent()) {
+						/* label element is inconsistent with the current gpa
+						 * --> omit it from the new label
+						 */
+						continue;
+					}
+					if (meet.isTautological()) {
+						assert false : "this should never happen because if the meet is tautological then mLabel.get(i)"
+								+ "is, too, right?";
+						// we have one "true" disjunct --> the whole disjunction is tautological
+						mLabel.clear();
+						mLabel.add(new CongruenceClosure<>());
+						return;
+					}
+					newLabelContents.add(meet);
+				}
+				assert newLabelContents.size() <= 1 || !newLabelContents.stream().anyMatch(c -> c.isTautological());
+				mLabel.clear();
+				mLabel.addAll(newLabelContents);
+
+//				assert sanityCheckAfterProject(elem, groundPartialArrangement);
+			}
+
+			public boolean elementIsFullyRemoved(final NODE elem) {
+				for (final CongruenceClosure<NODE> lab : mLabel) {
+					if (!lab.elementIsFullyRemoved(elem)) {
+						assert false;
+						return false;
+					}
+				}
+				return true;
+			}
 		}
+
+	public boolean elementIsFullyRemoved(final NODE elem) {
+		for (final Entry<Doubleton<NODE>, WeakEquivalenceGraph<NODE>.WeakEquivalenceEdgeLabel> edge
+				: mWeakEquivalenceEdges.entrySet()) {
+			if (edge.getKey().getOneElement().equals(elem)) {
+				assert false;
+				return false;
+			}
+			if (edge.getKey().getOtherElement().equals(elem)) {
+				assert false;
+				return false;
+			}
+			if (!edge.getValue().elementIsFullyRemoved(elem)) {
+				assert false;
+				return false;
+			}
+		}
+		return true;
+	}
 }
 
