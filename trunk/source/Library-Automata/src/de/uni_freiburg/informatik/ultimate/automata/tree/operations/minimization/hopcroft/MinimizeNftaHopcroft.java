@@ -28,7 +28,6 @@ package de.uni_freiburg.informatik.ultimate.automata.tree.operations.minimizatio
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -38,6 +37,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -57,6 +57,7 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.operations.IsEquivalent
 import de.uni_freiburg.informatik.ultimate.automata.tree.operations.minimization.performance.SinkMergeIntersectStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.services.ToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
 /**
  * Operation that minimizes non-deterministic finite bottom-up tree automata
@@ -285,7 +286,7 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	private Collection<RuleContext<LETTER, STATE>> collectContexts(final Set<STATE> destinationBlock)
+	private Stream<RuleContext<LETTER, STATE>> collectContexts(final Set<STATE> destinationBlock)
 			throws AutomataOperationCanceledException {
 		// We now consider all rules that lead to a state contained in the current
 		// selected block. With context objects we determine differences between the
@@ -302,7 +303,7 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 			this.mLogger.debug("Starting to collect contexts");
 		}
 		final STATE destinationRepresentative = this.mPartition.find(destinationBlock.iterator().next());
-		final HashMap<List<STATE>, RuleContext<LETTER, STATE>> sourceSignatureToContexts = new HashMap<>();
+		final NestedMap2<LETTER, List<STATE>, RuleContext<LETTER, STATE>> letterAndSourceSignatureToContexts = new NestedMap2<>();
 
 		// Find all rules whose destination is in the given block
 		for (final STATE destination : destinationBlock) {
@@ -328,10 +329,10 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 					}
 
 					// Find the context under this signature
-					RuleContext<LETTER, STATE> context = sourceSignatureToContexts.get(signature);
+					RuleContext<LETTER, STATE> context = letterAndSourceSignatureToContexts.get(letter, signature);
 					if (context == null) {
 						context = new RuleContext<>(signature, letter, destinationRepresentative);
-						sourceSignatureToContexts.put(signature, context);
+						letterAndSourceSignatureToContexts.put(letter, signature, context);
 					}
 
 					// Add the current rule to the corresponding context
@@ -351,7 +352,7 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 			}
 		}
 
-		return sourceSignatureToContexts.values();
+		return letterAndSourceSignatureToContexts.values();
 	}
 
 	/**
@@ -391,7 +392,7 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 			// In the paper this block is often referred to as B
 			final Set<STATE> block = this.mPartition.getContainingSet(representativeOfBlock);
 
-			final Collection<RuleContext<LETTER, STATE>> contexts = collectContexts(block);
+			final Iterator<RuleContext<LETTER, STATE>> contexts = collectContexts(block).iterator();
 			refineBasedOnContexts(contexts, block);
 
 			// Preparations for the next round
@@ -461,10 +462,6 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 		this.mPartition.addEquivalenceClass(nonFinalBlock);
 		if (this.mLogger.isDebugEnabled()) {
 			this.mLogger.debug("Initial partition is: " + this.mPartition);
-		}
-		// Create the corresponding relation
-		if (this.mLogger.isDebugEnabled()) {
-			this.mLogger.debug("Creating initial relation");
 		}
 
 		// Build the progress partition which initially holds all states in one block
@@ -592,7 +589,7 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	private void refineBasedOnContexts(final Collection<RuleContext<LETTER, STATE>> contexts,
+	private void refineBasedOnContexts(final Iterator<RuleContext<LETTER, STATE>> contexts,
 			final Set<STATE> destinationBlock) throws AutomataOperationCanceledException {
 		// Based on the previously collected context objects we now find differences in
 		// the behavior of states that are currently in the same block of the regular
@@ -616,7 +613,9 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 			this.mLogger.debug("Partition before update is: " + this.mPartition);
 		}
 		UnionFind<STATE> refinedPartition = null;
-		for (final RuleContext<LETTER, STATE> context : contexts) {
+		while (contexts.hasNext()) {
+			final RuleContext<LETTER, STATE> context = contexts.next();
+
 			if (this.mLogger.isDebugEnabled()) {
 				this.mLogger.debug("Looking at context: " + context);
 			}
@@ -720,7 +719,7 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 		// current round off. Note that this step also needs to be done if no changes
 		// where made, else we would not progress as we need to split the current block
 		// from the progress partition in each round.
-		updateCompoundBlocks(destinationBlock);
+		updateCompoundBlocksAndProgressPartition(destinationBlock);
 	}
 
 	/**
@@ -808,9 +807,10 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	private void updateCompoundBlocks(final Set<STATE> blockToSplitOff) throws AutomataOperationCanceledException {
+	private void updateCompoundBlocksAndProgressPartition(final Set<STATE> blockToSplitOff)
+			throws AutomataOperationCanceledException {
 		if (this.mLogger.isDebugEnabled()) {
-			this.mLogger.debug("Starting to update compound blocks");
+			this.mLogger.debug("Starting to update compound blocks and progress partition");
 		}
 		// Split the given block off by making it its own equivalence class in the
 		// progress partition. In the paper this method is often referred to as 'cut'.

@@ -27,6 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.util.datastructures.relation;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -35,12 +36,14 @@ import java.util.Map.Entry;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 /**
  * TODO: comment
  *
  * @author Matthias Heizmann
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
+ * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  *
  * @param <K1>
  * @param <K2>
@@ -54,6 +57,15 @@ public class NestedMap2<K1, K2, V> {
 	 * Construct an empty NestedMap2
 	 */
 	public NestedMap2() {
+	}
+
+	/**
+	 * Returns a stream to all values of the nested map.
+	 * 
+	 * @return A stream to all values of the nested map
+	 */
+	public Stream<V> values() {
+		return this.mK1ToK2ToV.values().stream().flatMap(key2ToValue -> key2ToValue.values().stream());
 	}
 
 	/**
@@ -180,7 +192,8 @@ public class NestedMap2<K1, K2, V> {
 	}
 
 	/**
-	 * Removes all triples from the given map whose second entry equals the given argument.
+	 * Removes all triples from the given map whose second entry equals the given
+	 * argument.
 	 *
 	 * @param k2
 	 */

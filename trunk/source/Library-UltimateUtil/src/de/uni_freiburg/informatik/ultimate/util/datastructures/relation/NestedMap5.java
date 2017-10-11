@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.util.datastructures.relation;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Stream;
 
 /**
  * Nested map that stores a value accessible by 5 different keys.
@@ -59,6 +60,15 @@ public class NestedMap5<K1, K2, K3, K4, K5, V> {
 	 */
 	public void clear() {
 		mK1ToK2ToK3ToK4ToK5V.clear();
+	}
+	
+	/**
+	 * Returns a stream to all values of the nested map.
+	 * 
+	 * @return A stream to all values of the nested map
+	 */
+	public Stream<V> values() {
+		return this.mK1ToK2ToK3ToK4ToK5V.values().stream().flatMap(NestedMap4::values);
 	}
 
 	/**

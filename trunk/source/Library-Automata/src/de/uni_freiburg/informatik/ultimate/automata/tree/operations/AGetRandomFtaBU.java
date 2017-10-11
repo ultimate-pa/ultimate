@@ -128,7 +128,7 @@ abstract class AGetRandomFtaBU extends GeneralOperation<StringRankedLetter, Stri
 	/**
 	 * The seed to use for random automaton generation.
 	 */
-	private final long mSeed;
+	private long mSeed;
 
 	/**
 	 * Constructor of a deterministic finite tree automaton for the
@@ -465,6 +465,8 @@ abstract class AGetRandomFtaBU extends GeneralOperation<StringRankedLetter, Stri
 
 		checkInputValidity();
 		this.mResult = generateAutomaton(this.mSeed);
+		// Deterministically change the seed for the next generation
+		this.mSeed++;
 
 		if (this.mLogger.isInfoEnabled()) {
 			this.mLogger.info(exitMessage());

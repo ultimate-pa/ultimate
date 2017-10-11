@@ -34,10 +34,12 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 /**
  * TODO: comment
  * @author Matthias Heizmann
+ * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  *
  * @param <K1>
  * @param <K2>
@@ -48,6 +50,15 @@ public class NestedMap4<K1, K2, K3, K4, V> {
 	
 	private final Map<K1, NestedMap3<K2, K3, K4, V>> mK1ToK2ToK3ToK4V = 
 			new HashMap<K1, NestedMap3<K2, K3, K4, V>>();
+	
+	/**
+	 * Returns a stream to all values of the nested map.
+	 * 
+	 * @return A stream to all values of the nested map
+	 */
+	public Stream<V> values() {
+		return this.mK1ToK2ToK3ToK4V.values().stream().flatMap(NestedMap3::values);
+	}
 	
 	public V put(final K1 key1, final K2 key2, final K3 key3, final K4 key4, final V value) {
 		NestedMap3<K2, K3, K4, V> k2tok3tok4toV = mK1ToK2ToK3ToK4V.get(key1);

@@ -350,12 +350,13 @@ public final class RandomTaBenchmarkCreator {
 			}
 
 			// Generate the automaton
+			final long seed = System.currentTimeMillis();
 			if (this.mCreateDeterministic) {
 				ta = new GetRandomDftaBU(this.mServices, this.mSize, this.mRankToAlphabetSize,
-						this.mRankToRulesPerLetter, acceptanceDouble).getResult();
+						this.mRankToRulesPerLetter, acceptanceDouble, seed).getResult();
 			} else {
 				ta = new GetRandomNftaBU(this.mServices, this.mSize, this.mRankToAlphabetSize,
-						this.mRankToRulesPerLetter, acceptanceDouble).getResult();
+						this.mRankToRulesPerLetter, acceptanceDouble, seed).getResult();
 			}
 
 			if (i == 1) {
