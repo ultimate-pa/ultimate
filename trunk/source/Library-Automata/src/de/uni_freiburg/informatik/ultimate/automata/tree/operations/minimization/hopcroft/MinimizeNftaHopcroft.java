@@ -281,12 +281,12 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 	 * 
 	 * @param destinationBlock
 	 *            The block used as destination for rules to be selected
-	 * @return A collection of all collected contexts
+	 * @return An iterator over all collected contexts
 	 * @throws AutomataOperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	private Stream<RuleContext<LETTER, STATE>> collectContexts(final Set<STATE> destinationBlock)
+	private Iterator<RuleContext<LETTER, STATE>> collectContexts(final Set<STATE> destinationBlock)
 			throws AutomataOperationCanceledException {
 		// We now consider all rules that lead to a state contained in the current
 		// selected block. With context objects we determine differences between the
@@ -352,7 +352,7 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 			}
 		}
 
-		return letterAndSourceSignatureToContexts.values();
+		return letterAndSourceSignatureToContexts.values().iterator();
 	}
 
 	/**
@@ -392,7 +392,7 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 			// In the paper this block is often referred to as B
 			final Set<STATE> block = this.mPartition.getContainingSet(representativeOfBlock);
 
-			final Iterator<RuleContext<LETTER, STATE>> contexts = collectContexts(block).iterator();
+			final Iterator<RuleContext<LETTER, STATE>> contexts = collectContexts(block);
 			refineBasedOnContexts(contexts, block);
 
 			// Preparations for the next round

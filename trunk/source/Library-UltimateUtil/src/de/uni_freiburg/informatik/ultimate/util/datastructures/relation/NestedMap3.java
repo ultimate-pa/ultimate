@@ -38,6 +38,7 @@ import java.util.stream.Stream;
 
 /**
  * TODO: comment
+ * 
  * @author Matthias Heizmann
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
@@ -49,19 +50,19 @@ import java.util.stream.Stream;
  */
 public class NestedMap3<K1, K2, K3, V> {
 
-	private final Map<K1, NestedMap2<K2, K3, V>> mK1ToK2ToK3V =
-			new HashMap<>();
+	private final Map<K1, NestedMap2<K2, K3, V>> mK1ToK2ToK3V = new HashMap<>();
 
 	/**
 	 * Construct an empty NestedMap3
 	 */
 	public NestedMap3() {
 	}
-	
+
 	/**
-	 * Returns a stream to all values of the nested map.
+	 * Returns a stream to all values of the nested map. The values are backed by
+	 * the map.
 	 * 
-	 * @return A stream to all values of the nested map
+	 * @return A backed stream to all values of the nested map
 	 */
 	public Stream<V> values() {
 		return this.mK1ToK2ToK3V.values().stream().flatMap(NestedMap2::values);
@@ -145,8 +146,8 @@ public class NestedMap3<K1, K2, K3, V> {
 		if (k2Tok3ToV == null) {
 			return Collections.emptySet();
 		} else {
-			final Function<Triple<K2, K3, V>, Quad<K1, K2, K3, V>> transformer = (x -> new Quad<K1, K2, K3, V>(k1, x.getFirst(), x.getSecond(),
-					x.getThird()));
+			final Function<Triple<K2, K3, V>, Quad<K1, K2, K3, V>> transformer = (x -> new Quad<K1, K2, K3, V>(k1,
+					x.getFirst(), x.getSecond(), x.getThird()));
 			return () -> new TransformIterator<Triple<K2, K3, V>, Quad<K1, K2, K3, V>>(k2Tok3ToV.entrySet().iterator(),
 					transformer);
 		}
@@ -160,14 +161,14 @@ public class NestedMap3<K1, K2, K3, V> {
 		if (k3ToV == null) {
 			return Collections.emptySet();
 		} else {
-			final Function<Entry<K3, V>, Quad<K1, K2, K3, V>> transformer = (x -> new Quad<K1, K2, K3, V>(k1, k2, x.getKey(),
-					x.getValue()));
+			final Function<Entry<K3, V>, Quad<K1, K2, K3, V>> transformer = (x -> new Quad<K1, K2, K3, V>(k1, k2,
+					x.getKey(), x.getValue()));
 			return () -> new TransformIterator<Entry<K3, V>, Quad<K1, K2, K3, V>>(k3ToV.entrySet().iterator(),
 					transformer);
 		}
 	}
 
-	public  NestedMap2<K2, K3, V> remove(final K1 k1) {
+	public NestedMap2<K2, K3, V> remove(final K1 k1) {
 		return mK1ToK2ToK3V.remove(k1);
 	}
 
@@ -187,7 +188,6 @@ public class NestedMap3<K1, K2, K3, V> {
 		return k1Tok2ToV.remove(k2, k3);
 	}
 
-
 	public int size() {
 		int result = 0;
 		for (final Entry<K1, NestedMap2<K2, K3, V>> entry : mK1ToK2ToK3V.entrySet()) {
@@ -196,20 +196,20 @@ public class NestedMap3<K1, K2, K3, V> {
 		return result;
 	}
 
-//	/**
-//	 * Makes a deep copy of this NestedMap3.
-//	 * (but not the objects it holds)
-//	 * (added by Alexander Nutz)
-//	 * @deprecated replace by constructor
-//	 */
-//	@Deprecated
-//	public NestedMap3<K1, K2, K3, V> copy() {
-//		final NestedMap3<K1, K2, K3, V> result = new NestedMap3<>();
-//		for (final K1 k1 : this.keySet()) {
-//			result.mK1ToK2ToK3V.put(k1, this.get(k1).copy());
-//		}
-//		return result;
-//	}
+	// /**
+	// * Makes a deep copy of this NestedMap3.
+	// * (but not the objects it holds)
+	// * (added by Alexander Nutz)
+	// * @deprecated replace by constructor
+	// */
+	// @Deprecated
+	// public NestedMap3<K1, K2, K3, V> copy() {
+	// final NestedMap3<K1, K2, K3, V> result = new NestedMap3<>();
+	// for (final K1 k1 : this.keySet()) {
+	// result.mK1ToK2ToK3V.put(k1, this.get(k1).copy());
+	// }
+	// return result;
+	// }
 
 	public Set<K2> projektTo2() {
 		final Set<K2> result = new HashSet<>();

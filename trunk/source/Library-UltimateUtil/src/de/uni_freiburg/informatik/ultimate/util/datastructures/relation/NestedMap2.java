@@ -60,12 +60,13 @@ public class NestedMap2<K1, K2, V> {
 	}
 
 	/**
-	 * Returns a stream to all values of the nested map.
+	 * Returns a stream to all values of the nested map. The values are backed by
+	 * the map.
 	 * 
-	 * @return A stream to all values of the nested map
+	 * @return A backed stream to all values of the nested map
 	 */
 	public Stream<V> values() {
-		return this.mK1ToK2ToV.values().stream().flatMap(key2ToValue -> key2ToValue.values().stream());
+		return this.mK1ToK2ToV.values().stream().map(Map::values).flatMap(Collection::stream);
 	}
 
 	/**
