@@ -197,10 +197,10 @@ public class AbsIntPredicateInterpolantSequenceWeakener<STATE extends IAbstractS
 		final int numRemovedVars = mVarsToKeep.size();
 		reportWeakeningVarsNumRemoved(numRemovedVars);
 		final int leftVars = numStateVars - numRemovedVars;
-		if (leftVars == numStateVars) {
+		if (numStateVars == 0 || leftVars == numStateVars) {
 			reportWeakeningRatio(1);
 		} else {
-			reportWeakeningRatio(leftVars / numStateVars);
+			reportWeakeningRatio((double) leftVars / (double) numStateVars);
 		}
 
 		for (final STATE s : preState.getAbstractStates()) {
