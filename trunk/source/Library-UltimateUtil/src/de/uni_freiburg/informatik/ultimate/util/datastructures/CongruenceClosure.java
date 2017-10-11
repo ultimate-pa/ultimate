@@ -506,14 +506,15 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 			for (final Entry<ELEM, ELEM> en : new HashMap<>(nodeToReplacementNode).entrySet()) {
 				if (en.getKey().isFunctionApplication() && isConstrained(en.getKey())) {
 					// we don't have a replacement, but we want one, try if we can get one
-					final ELEM replacementNode = getReplacementNodeToIntroduce(en.getKey(),
+					final Set<ELEM> replacementNodes = getNodesToIntroduceBeforeRemoval(en.getKey(),
 							// TODO is there a nicer way to get this boolean parameter?
 							elementsToRemove.contains(en.getKey().getAppliedFunction()),
 							nodeToReplacementNode);
-					if (replacementNode != null) {
-						nodesToAdd.add(replacementNode);
-						nodeToReplacementNode.put(en.getKey(), replacementNode);
-					}
+					nodesToAdd.addAll(replacementNodes);
+//					if (replacementNode != null) {
+//						nodesToAdd.add(replacementNode);
+//						nodeToReplacementNode.put(en.getKey(), replacementNode);
+//					}
 				}
 			}
 
@@ -594,7 +595,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		return true;
 	}
 
-	protected ELEM getReplacementNodeToIntroduce(final ELEM elemToRemove,
+	protected Set<ELEM> getNodesToIntroduceBeforeRemoval(final ELEM elemToRemove,
 			final boolean elemToRemoveIsAppliedFunctionNotArgument,
 			final Map<ELEM, ELEM> nodeToReplacement) {
 		/*
@@ -611,16 +612,16 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 			// look for a b with a ~ b
 			final ELEM afReplacement = nodeToReplacement.get(elemToRemove.getAppliedFunction());
 			if (afReplacement != null) {
-				return elemToRemove.replaceAppliedFunction(afReplacement);
+				return Collections.singleton(elemToRemove.replaceAppliedFunction(afReplacement));
 			}
 		} else {
 			// look for a j with i ~ j
 			final ELEM argReplacement = nodeToReplacement.get(elemToRemove.getArgument());
 			if (argReplacement != null) {
-				return elemToRemove.replaceArgument(argReplacement);
+				return Collections.singleton(elemToRemove.replaceArgument(argReplacement));
 			}
 		}
-		return null;
+		return Collections.emptySet();
 	}
 
 	protected Collection<? extends ELEM> collectNodesToAddBeforeRemoval(final ELEM elemToRemove,
@@ -1382,30 +1383,71 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 	/**
 	 * Returns a new CongruenceClosure which contains only those constraints in this CongruenceClosure that constrain
 	 *  the given element.
-	 * @param set
+	 * @param elemsToKeep
 	 * @return
 	 */
-	public CongruenceClosure<ELEM> projectToElements(final Set<ELEM> set) {
+	public CongruenceClosure<ELEM> projectToElements(final Set<ELEM> elemsToKeep) {
 		/*
 		 *  we need to augment the set such that all equivalent elements are contained, too.
 		 *  example:
 		 *   we project to {q}
 		 *   current partition: {q, i} {a[i], 0}
 		 *   then the second block implicitly puts a constraint on q, too, thus we need to keep it.
+		 *   --> this principle applies transitively, i.e., say we have {a[q], x} {b[x], y}...
 		 */
-		final HashSet<ELEM> augmentedSet = new HashSet<>();
-		for (final ELEM e : set) {
-			if (hasElement(e)) {
-				augmentedSet.addAll(mElementTVER.getEquivalenceClass(e));
-			}
-		}
 
-		// collect all elements that contain an element from the given set as a sub-node (i.e. child/descendant)
-		final Set<ELEM> elemsWithSubFromSet =
-				getAllElements().stream().filter(e -> dependsOnAny(e, augmentedSet)).collect(Collectors.toSet());
+//		final Map<ELEM, Set<ELEM>> elemToKeepToEquivalenceClass = new HashMap<>();
+//		final Map<ELEM, ELEM> mapping = new HashMap<>();
+//		for (final ELEM elemToKeep : elemsToKeep) {
+//			if (!hasElement(elemToKeep)) {
+//				continue;
+//			}
+//			final Set<ELEM> eqc = mElementTVER.getEquivalenceClass(elemToKeep);
+//			elemToKeepToEquivalenceClass.put(elemToKeep, eqc);
+//
+//			for (final ELEM e : eqc) {
+//				mapping.put(e, elemToKeep);
+//			}
+//		}
+//
+//
+//		final CongruenceClosure<ELEM> copy = new CongruenceClosure<>(this);
+//		copy.transformElementsAndFunctions(e -> e.replaceSubNode(mapping));
+//
+//
+//		// collect all elements that contain an element from the given set as a sub-node (i.e. child/descendant)
+//		final Set<ELEM> elemsWithSubFromSet =
+//				getAllElements().stream().filter(e -> dependsOnAny(e, elemsToKeep)).collect(Collectors.toSet());
+//
+//		final ThreeValuedEquivalenceRelation<ELEM> newTver =
+//				copy.mElementTVER.filterAndKeepOnlyConstraintsThatIntersectWith(elemsWithSubFromSet);
+//
+//		return new CongruenceClosure<>(newTver);
+
+		final Deque<ELEM> worklist = new ArrayDeque<>(elemsToKeep);
+		final Set<ELEM> visited = new HashSet<>();
+		while (!worklist.isEmpty()) {
+//			boolean madeChanges = false;
+
+			final ELEM current = worklist.pop();
+			visited.add(current);
+//			augmentedSet.add(current);
+
+			final Set<ELEM> eqc = mElementTVER.getEquivalenceClass(current);
+
+			final Set<ELEM> dependents = getAllElements().stream()
+					.filter(e -> !visited.contains(e) && dependsOnAny(e, eqc)).collect(Collectors.toSet());
+			worklist.addAll(dependents);
+		}
+		final Set<ELEM> augmentedSet = visited;
+
+//		// collect all elements that contain an element from the given set as a sub-node (i.e. child/descendant)
+//		final Set<ELEM> elemsWithSubFromSet =
+////				getAllElements().stream().filter(e -> dependsOnAny(e, augmentedSet)).collect(Collectors.toSet());
+//				getAllElements().stream().filter(augmentedSet::contains).collect(Collectors.toSet());
 
 		final ThreeValuedEquivalenceRelation<ELEM> newTver =
-				mElementTVER.filterAndKeepOnlyConstraintsThatIntersectWith(elemsWithSubFromSet);
+				mElementTVER.filterAndKeepOnlyConstraintsThatIntersectWith(augmentedSet);
 
 		return new CongruenceClosure<>(newTver);
 	}
