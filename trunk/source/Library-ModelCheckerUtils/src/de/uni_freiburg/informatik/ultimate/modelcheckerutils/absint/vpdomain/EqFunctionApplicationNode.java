@@ -27,6 +27,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain;
 
+import java.util.Map;
+
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
@@ -100,12 +102,13 @@ public class EqFunctionApplicationNode extends EqNode {
 	}
 
 	@Override
-	public EqNode replaceSubNode(final EqNode replacer, final EqNode replacee) {
-		if (this.equals(replacee)) {
+	public EqNode replaceSubNode(final Map<EqNode, EqNode> mapping) {
+		final EqNode replacer = mapping.get(this);
+		if (replacer != null) {
 			return replacer;
 		} else {
-			return mEqNodeFactory.getOrConstructFuncAppElement(mFunction.replaceSubNode(replacer, replacee),
-					mArg.replaceSubNode(replacer, replacee));
+			return mEqNodeFactory.getOrConstructFuncAppElement(mFunction.replaceSubNode(mapping),
+					mArg.replaceSubNode(mapping));
 		}
 	}
 

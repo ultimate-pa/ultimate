@@ -1,5 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.util.datastructures;
 
+import java.util.Map;
+
 public interface ICongruenceClosureElement<ELEM extends ICongruenceClosureElement<ELEM>> {
 
 	boolean hasSameTypeAs(ELEM other);
@@ -25,6 +27,8 @@ public interface ICongruenceClosureElement<ELEM extends ICongruenceClosureElemen
 	ELEM replaceAppliedFunction(ELEM replacer);
 
 	ELEM replaceArgument(ELEM replacer);
+
+	ELEM replaceSubNode(Map<ELEM, ELEM> replacementMapping);
 
 //	int getHeight();
 

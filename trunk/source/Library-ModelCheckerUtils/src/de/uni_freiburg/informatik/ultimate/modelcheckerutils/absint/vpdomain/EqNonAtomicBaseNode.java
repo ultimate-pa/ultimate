@@ -27,10 +27,12 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain;
 
-import java.util.Collection;
 import java.util.Collections;
+import java.util.Map;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 /**
  *
@@ -38,15 +40,15 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  */
 public class EqNonAtomicBaseNode extends EqNode {
 
-	private final Collection<EqNode> mSupportingNodes;
+	private final Set<EqNode> mSupportingNodes;
 //	private final Collection<EqFunction> mSupportingFunctions;
 
-	public EqNonAtomicBaseNode(final Term term, final Collection<EqNode> supportingNodes,
+	public EqNonAtomicBaseNode(final Term term, final Set<EqNode> supportingNodes,
 			final EqNodeAndFunctionFactory eqNodeAndFunctionFactory) {
 		super(term, eqNodeAndFunctionFactory);
 		assert !supportingNodes.isEmpty();
 		assert supportingNodes.stream().allMatch(n -> n instanceof EqAtomicBaseNode);
-		mSupportingNodes = Collections.unmodifiableCollection(supportingNodes);
+		mSupportingNodes = Collections.unmodifiableSet(supportingNodes);
 //		mSupportingFunctions = Collections.unmodifiableCollection(supportingFunctions);
 	}
 
@@ -83,15 +85,16 @@ public class EqNonAtomicBaseNode extends EqNode {
 	}
 
 	@Override
-	public Collection<EqNode> getSupportingNodes() {
+	public Set<EqNode> getSupportingNodes() {
 		return mSupportingNodes;
 	}
 
 	@Override
-	public EqNode replaceSubNode(final EqNode replacer, final EqNode replacee) {
-		if (this.equals(replacee)) {
+	public EqNode replaceSubNode(final Map<EqNode, EqNode> mapping) {
+		final EqNode replacer = mapping.get(this);
+		if (replacer != null) {
 			return replacer;
-		} else if (getSupportingNodes().contains(replacee)) {
+		} else if (DataStructureUtils.intersection(getSupportingNodes(), mapping.keySet()).isEmpty()) {
 			throw new UnsupportedOperationException("TODO: support this");
 		} else {
 			return this;

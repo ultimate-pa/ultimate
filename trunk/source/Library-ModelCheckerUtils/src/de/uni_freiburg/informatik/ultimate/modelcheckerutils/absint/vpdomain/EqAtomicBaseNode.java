@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain;
 
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -86,8 +87,10 @@ public class EqAtomicBaseNode extends EqNode {
 	}
 
 	@Override
-	public EqNode replaceSubNode(final EqNode replacer, final EqNode replacee) {
-		if (this.equals(replacee)) {
+	public EqNode replaceSubNode(final Map<EqNode, EqNode> mapping) {
+		final EqNode replacer = mapping.get(this);
+//		if (this.equals(replacee)) {
+		if (replacer != null) {
 			return replacer;
 		} else {
 			return this;
