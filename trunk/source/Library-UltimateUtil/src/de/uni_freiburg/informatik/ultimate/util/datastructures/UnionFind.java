@@ -194,7 +194,7 @@ public class UnionFind<E> implements IPartition<E>, Cloneable {
 	 *
 	 * Assumes none of the given elements is part of an existing equivalence class
 	 * in this UnionFind instance.
-	 * 
+	 *
 	 * @param newBlock
 	 */
 	public void addEquivalenceClass(final Set<E> newBlock) {
@@ -239,7 +239,7 @@ public class UnionFind<E> implements IPartition<E>, Cloneable {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see java.lang.Object#clone()
 	 */
 	@Override
@@ -398,7 +398,7 @@ public class UnionFind<E> implements IPartition<E>, Cloneable {
 	 * Removes all given elements from all the equivalence classes. If an element
 	 * was a representative and was not the only element of its equivalence class,
 	 * another representative for it is chosen for the new equivalence class.
-	 * 
+	 *
 	 * @param elements
 	 *            The elements to remove
 	 */
@@ -429,7 +429,7 @@ public class UnionFind<E> implements IPartition<E>, Cloneable {
 
 			final E newRep = elemTransformer.apply(entry.getValue());
 
-			assert mElementComparator == null || mElementComparator.compare(newRep, entry.getValue()) == 0;
+//			assert mElementComparator == null || mElementComparator.compare(newRep, entry.getValue()) == 0;
 
 			final Set<E> newEqClass = entry.getKey().stream().map(elemTransformer).collect(Collectors.toSet());
 			for (final E newElem : newEqClass) {

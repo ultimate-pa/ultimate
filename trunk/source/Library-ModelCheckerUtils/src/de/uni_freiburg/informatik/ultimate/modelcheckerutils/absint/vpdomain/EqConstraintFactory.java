@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSort;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CongruenceClosureComparator;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
@@ -402,6 +403,19 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 
 	public CCManager<NODE> getCcManager() {
 		return mCcManager;
+	}
+
+	public List<NODE> getAllWeqVarsNodeForFunction(final NODE func) {
+		if (!func.getSort().isArraySort()) {
+			return Collections.emptyList();
+		}
+		final MultiDimensionalSort mdSort = new MultiDimensionalSort(func.getSort());
+		final List<Sort> indexSorts = mdSort.getIndexSorts();
+		final List<NODE> result = new ArrayList<>(mdSort.getDimension());
+		for (int i = 0; i < mdSort.getDimension(); i++) {
+			result.add(this.getWeqVariableNodeForDimension(i, indexSorts.get(i)));
+		}
+		return result;
 	}
 
 //	public  IIcfgSymbolTable getSymbolTable() {

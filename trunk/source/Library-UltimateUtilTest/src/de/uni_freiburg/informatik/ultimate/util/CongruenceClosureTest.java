@@ -4,6 +4,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import org.junit.Test;
@@ -872,6 +873,12 @@ class StringCcElement implements ICongruenceClosureElement<StringCcElement>{
 	public boolean isLiteral() {
 		// TODO Auto-generated method stub
 		return false;
+	}
+
+	@Override
+	public StringCcElement replaceSubNode(final Map<StringCcElement, StringCcElement> replacementMapping) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 

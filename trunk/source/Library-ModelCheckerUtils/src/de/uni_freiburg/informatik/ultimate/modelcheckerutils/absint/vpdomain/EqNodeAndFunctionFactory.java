@@ -26,10 +26,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -201,7 +201,7 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 			return new EqAtomicBaseNode(term, isTermALiteral(term), this);
 		} else {
 			assert term.getFreeVars().length > 0;
-			final Collection<EqNode> supportingNodes = new ArrayList<>();
+			final Set<EqNode> supportingNodes = new HashSet<>();
 			for (final TermVariable fv : term.getFreeVars()) {
 				supportingNodes.add(getOrConstructNode(fv));
 			}
