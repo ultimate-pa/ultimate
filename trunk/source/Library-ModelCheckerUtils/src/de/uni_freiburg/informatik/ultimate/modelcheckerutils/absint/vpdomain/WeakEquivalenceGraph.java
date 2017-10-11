@@ -492,6 +492,7 @@ public class WeakEquivalenceGraph<//ACTION extends IIcfgTransition<IcfgLocation>
 		assert mPartialArrangement.isRepresentative(sourceAndTarget.getOneElement())
 			&& mPartialArrangement.isRepresentative(sourceAndTarget.getOtherElement());
 		assert !sourceAndTarget.getOneElement().equals(sourceAndTarget.getOtherElement());
+		assert paList.stream().allMatch(l -> l.assertHasOnlyWeqVarConstraints(mFactory.getAllWeqNodes()));
 
 		WeakEquivalenceEdgeLabel oldLabel = mWeakEquivalenceEdges.get(sourceAndTarget);
 		if (oldLabel == null) {
@@ -520,6 +521,11 @@ public class WeakEquivalenceGraph<//ACTION extends IIcfgTransition<IcfgLocation>
 		mWeakEquivalenceEdges.put(sourceAndTarget, strengthenedEdgeLabel);
 //		assert sanityCheck();
 		return true;
+	}
+
+	private Predicate<? super CongruenceClosure<NODE>> assertHasOnlyWeqVarConstraints() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 	/**
@@ -611,8 +617,15 @@ public class WeakEquivalenceGraph<//ACTION extends IIcfgTransition<IcfgLocation>
 				+ "not be present in the result, right?..";
 		assert !meet.mLabel.stream().anyMatch(l -> l.isInconsistent()) : "label not well-formed";
 
-		assert meet.sanityCheck();
-		return meet.getLabelContents();
+		assert meet.sanityCheckDontEnforceProjectToWeqVars(mPartialArrangement);
+
+		final WeakEquivalenceGraph<NODE>.WeakEquivalenceEdgeLabel result =
+				meet.projectToElements(new HashSet<>(weqVarsForThisEdge));
+
+		assert result.assertHasOnlyWeqVarConstraints(new HashSet<>(weqVarsForThisEdge));
+
+		assert result.sanityCheck();
+		return result.getLabelContents();
 	}
 
 	/**
@@ -628,10 +641,10 @@ public class WeakEquivalenceGraph<//ACTION extends IIcfgTransition<IcfgLocation>
 			final List<NODE> weqVarsForResolventEdge) {
 		assert !weqVarsForResolventEdge.isEmpty() : "because the array in the resolvent must have a dimension >= 1";
 
-		final WeakEquivalenceGraph<NODE>.WeakEquivalenceEdgeLabel labelToShiftAndAdd =
+		final WeakEquivalenceGraph<NODE>.WeakEquivalenceEdgeLabel meet =
 				new WeakEquivalenceEdgeLabel(labelContents);
 
-		labelToShiftAndAdd.meetWithGpa();
+		meet.meetWithGpa();
 
 		// project away the highest weq var before shifting
 //		final Set<NODE> nodesAddedByProject = labelToShiftAndAdd.projectElement(
@@ -639,19 +652,21 @@ public class WeakEquivalenceGraph<//ACTION extends IIcfgTransition<IcfgLocation>
 //				mPartialArrangement);
 //		nodesAddedByProject.forEach(mPartialArrangement::addElement);
 //		labelToShiftAndAdd.projectSingleElement(weqVarsForResolventEdge.get(weqVarsForResolventEdge.size() - 1), null);
-		labelToShiftAndAdd.projectWeqVarNode(weqVarsForResolventEdge.get(weqVarsForResolventEdge.size() - 1));
+		meet.projectWeqVarNode(weqVarsForResolventEdge.get(weqVarsForResolventEdge.size() - 1));
+
+		final WeakEquivalenceGraph<NODE>.WeakEquivalenceEdgeLabel labelToShiftAndAdd =
+				meet.projectToElements(new HashSet<>(weqVarsForResolventEdge));
 
 		labelToShiftAndAdd.inOrDecreaseWeqVarIndices(1, weqVarsForResolventEdge);
 
 		final NODE firstWeqVar = weqVarsForResolventEdge.get(0);
 		assert !labelToShiftAndAdd.getAppearingNodes().contains(firstWeqVar);
 
-		final CongruenceClosure<NODE> firstWeqVarUnequalArgument = new CongruenceClosure<>();
-		firstWeqVarUnequalArgument.reportDisequality(firstWeqVar, argument);
-
 		final List<CongruenceClosure<NODE>> shiftedLabelContents =
 				new ArrayList<>(labelToShiftAndAdd.getLabelContents());
 
+		final CongruenceClosure<NODE> firstWeqVarUnequalArgument = new CongruenceClosure<>();
+		firstWeqVarUnequalArgument.reportDisequality(firstWeqVar, argument);
 		shiftedLabelContents.add(firstWeqVarUnequalArgument);
 
 		assert shiftedLabelContents.stream().allMatch(l -> l.sanityCheckOnlyCc());
@@ -932,6 +947,16 @@ public class WeakEquivalenceGraph<//ACTION extends IIcfgTransition<IcfgLocation>
 				assert sanityCheck();
 			}
 
+			public boolean assertHasOnlyWeqVarConstraints(final Set<NODE> weqVarsForThisEdge) {
+				for (final CongruenceClosure<NODE> l : mLabel) {
+					if (!l.assertHasOnlyWeqVarConstraints(weqVarsForThisEdge)) {
+						assert false;
+						return false;
+					}
+				}
+				return true;
+			}
+
 			/**
 			 * Construct a weak equivalence edge from a list of label contents.
 			 *
@@ -957,7 +982,7 @@ public class WeakEquivalenceGraph<//ACTION extends IIcfgTransition<IcfgLocation>
 				for (final CongruenceClosure<NODE> lab : mLabel) {
 					lab.removeSimpleElement(firstDimWeqVarNode);
 				}
-				assert sanityCheck();
+				assert sanityCheckDontEnforceProjectToWeqVars(mPartialArrangement);
 			}
 
 			public void projectSingleElement(final NODE elem, final NODE replacement) {
@@ -968,6 +993,7 @@ public class WeakEquivalenceGraph<//ACTION extends IIcfgTransition<IcfgLocation>
 					return;
 				}
 
+				final List<CongruenceClosure<NODE>> newLabelContents = new ArrayList<>(mLabel.size());
 				for (final CongruenceClosure<NODE> lab : mLabel) {
 					assert lab.sanityCheckOnlyCc();
 
@@ -990,10 +1016,13 @@ public class WeakEquivalenceGraph<//ACTION extends IIcfgTransition<IcfgLocation>
 						mLabel.add(new CongruenceClosure<>());
 						return;
 					}
-					lab.projectToElements(mFactory.getAllWeqNodes(),
+					final CongruenceClosure<NODE> newLab = lab.projectToElements(mFactory.getAllWeqNodes(),
 							mPartialArrangement.getElementCurrentlyBeingRemoved());
+					newLabelContents.add(newLab);
 					assert lab.sanityCheckOnlyCc(mPartialArrangement.getElementCurrentlyBeingRemoved());
 				}
+				mLabel.clear();
+				mLabel.addAll(newLabelContents);
 				assert sanityCheck();
 			}
 
@@ -1007,7 +1036,10 @@ public class WeakEquivalenceGraph<//ACTION extends IIcfgTransition<IcfgLocation>
 							mPartialArrangement.getElementCurrentlyBeingRemoved()));
 				}
 				assert newLabelContents.stream().allMatch(l -> l.sanityCheckOnlyCc());
-				return new WeakEquivalenceEdgeLabel(newLabelContents);
+				final WeakEquivalenceGraph<NODE>.WeakEquivalenceEdgeLabel result =
+						new WeakEquivalenceEdgeLabel(newLabelContents);
+				assert result.sanityCheck();
+				return result;
 			}
 
 			/**
@@ -1037,7 +1069,7 @@ public class WeakEquivalenceGraph<//ACTION extends IIcfgTransition<IcfgLocation>
 					}
 				}
 				this.renameVariables(substitutionMapping);
-				assert sanityCheck();
+				assert sanityCheckDontEnforceProjectToWeqVars(mPartialArrangement);
 			}
 
 			public boolean isConstrained(final NODE elem) {
@@ -1169,7 +1201,7 @@ public class WeakEquivalenceGraph<//ACTION extends IIcfgTransition<IcfgLocation>
 					getLabelContents().get(i).transformElementsAndFunctions(node -> node.renameVariables(substitutionMapping));
 	//						func -> func.renameVariables(substitutionMapping));
 				}
-				assert sanityCheck();
+				assert sanityCheckDontEnforceProjectToWeqVars(mPartialArrangement);
 			}
 
 			/**
@@ -1209,8 +1241,11 @@ public class WeakEquivalenceGraph<//ACTION extends IIcfgTransition<IcfgLocation>
 	//			final List<CongruenceClosure<NODE>> newLabel = simplifyPaDisjunction(newLabelContent);
 				final List<CongruenceClosure<NODE>> newLabel = mCcManager.filterRedundantCcs(newLabelContent);
 
+				final List<CongruenceClosure<NODE>> newLabelProjected = newLabel.stream()
+						.map(l -> l.projectToElements(mFactory.getAllWeqNodes(), null)).collect(Collectors.toList());
+
 				final WeakEquivalenceEdgeLabel result =
-						new WeakEquivalenceEdgeLabel(newLabel);
+						new WeakEquivalenceEdgeLabel(newLabelProjected);
 				assert result.sanityCheck();
 				return result;
 			}
@@ -1390,26 +1425,18 @@ public class WeakEquivalenceGraph<//ACTION extends IIcfgTransition<IcfgLocation>
 			}
 
 			private boolean sanityCheck(final CongruenceClosure<NODE> groundPartialArrangement) {
+				if (mFactory == null) {
+					return true;
+				}
+				if (isEmpty()) {
+					return true;
+				}
 
 				for (final CongruenceClosure<NODE> lab : mLabel) {
-					if (!lab.sanityCheckOnlyCc(groundPartialArrangement.getElementCurrentlyBeingRemoved())) {
-						assert false;
-						return false;
-					}
+					assert lab.assertHasOnlyWeqVarConstraints(mFactory.getAllWeqNodes());
 				}
 
-				if (mLabel.stream().anyMatch(pa -> pa.isTautological()) && mLabel.size() != 1) {
-					assert false : "missing normalization: if there is one 'true' disjunct, we can drop"
-							+ "all other disjuncts";
-				return false;
-				}
-
-				if (mLabel.stream().anyMatch(pa -> pa.isInconsistent())) {
-					assert false : "missing normalization: contains 'false' disjuncts";
-				return false;
-				}
-
-				return true;
+				return sanityCheckDontEnforceProjectToWeqVars(mPartialArrangement);
 			}
 
 			/**
@@ -1458,11 +1485,35 @@ public class WeakEquivalenceGraph<//ACTION extends IIcfgTransition<IcfgLocation>
 					newLabelContents.add(meet);
 				}
 				assert newLabelContents.size() <= 1 || !newLabelContents.stream().anyMatch(c -> c.isTautological());
+
+
 				mLabel.clear();
 				mLabel.addAll(newLabelContents);
 
 //				assert sanityCheckAfterProject(elem, groundPartialArrangement);
-				assert sanityCheck();
+				assert sanityCheckDontEnforceProjectToWeqVars(mPartialArrangement);
+			}
+
+			private boolean sanityCheckDontEnforceProjectToWeqVars(final CongruenceClosure<NODE> groundPartialArrangement) {
+				for (final CongruenceClosure<NODE> lab : mLabel) {
+					if (!lab.sanityCheckOnlyCc(groundPartialArrangement.getElementCurrentlyBeingRemoved())) {
+						assert false;
+						return false;
+					}
+				}
+
+				if (mLabel.stream().anyMatch(pa -> pa.isTautological()) && mLabel.size() != 1) {
+					assert false : "missing normalization: if there is one 'true' disjunct, we can drop"
+							+ "all other disjuncts";
+				return false;
+				}
+
+				if (mLabel.stream().anyMatch(pa -> pa.isInconsistent())) {
+					assert false : "missing normalization: contains 'false' disjuncts";
+				return false;
+				}
+
+				return true;
 			}
 
 			public boolean assertElementIsFullyRemoved(final NODE elem) {

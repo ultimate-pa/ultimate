@@ -1464,6 +1464,10 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 	 */
 	public CongruenceClosure<ELEM> projectToElements(final Set<ELEM> elemsToKeep,
 			final CongruenceClosure<ELEM>.RemoveElement removeElementInfo) {
+		if (isInconsistent()) {
+			return this;
+		}
+
 		/*
 		 *  we need to augment the set such that all equivalent elements are contained, too.
 		 *  example:
@@ -2117,6 +2121,36 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		public String toString() {
 			return mElemBeingRemoved + " --> " + mOtherRep;
 		}
+	}
+
+	public boolean assertHasOnlyWeqVarConstraints(final Set<ELEM> allWeqNodes) {
+		if (isTautological()) {
+			return true;
+		}
+
+		final Set<ELEM> elemsAppearingInADisequality = new HashSet<>();
+		for (final Entry<ELEM, ELEM> deq : mElementTVER.getDisequalities().entrySet()) {
+			elemsAppearingInADisequality.add(deq.getKey());
+			elemsAppearingInADisequality.add(deq.getValue());
+		}
+
+		for (final Set<ELEM> eqc : mElementTVER.getAllEquivalenceClasses()) {
+			if (eqc.size() == 1 &&
+					(!mFaAuxData.getAfParents(eqc.iterator().next()).isEmpty() ||
+							!mFaAuxData.getArgParents(eqc.iterator().next()).isEmpty())) {
+				continue;
+			}
+
+//			final Set<ELEM> intersection1 = DataStructureUtils.intersection(eqc, allWeqNodes);
+			final Set<ELEM> intersection1 = eqc.stream().filter(eqcelem -> dependsOnAny(eqcelem, allWeqNodes))
+					.collect(Collectors.toSet());
+			final Set<ELEM> intersection2 = DataStructureUtils.intersection(eqc, elemsAppearingInADisequality);
+			if (intersection1.isEmpty() && intersection2.isEmpty()) {
+				assert false;
+				return false;
+			}
+		}
+		return true;
 	}
 
 }

@@ -270,7 +270,11 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 
 	private boolean reportWeakEquivalenceDoOnlyRoweqPropagations(final NODE array1, final NODE array2,
 			final List<CongruenceClosure<NODE>> edgeLabel) {
+		assert edgeLabel.stream().allMatch(l -> l.assertHasOnlyWeqVarConstraints(mFactory.getAllWeqNodes()));
 		if (isInconsistent()) {
+			return false;
+		}
+		if (isLabelTautological(edgeLabel)) {
 			return false;
 		}
 
@@ -869,6 +873,10 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 							elemToRemove.getArgument(),
 							mFactory.getAllWeqVarsNodeForFunction(elemToRemove.getAppliedFunction()));
 
+			if (isLabelTautological(projectedLabel)) {
+				continue;
+			}
+
 			/*
 			 *  best case: projectedLabel is inconsistent, this means if we introduce b[i] we can later propagate
 			 *  a[i] = b[i], this also means we don't need to introduce any other node
@@ -979,6 +987,10 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 //		}
 //		return nodesToAdd;
 //	}
+
+	private boolean isLabelTautological(final List<CongruenceClosure<NODE>> projectedLabel) {
+		return projectedLabel.size() == 1 && projectedLabel.get(0).isTautological();
+	}
 
 	@Override
 	public boolean isConstrained(final NODE elem) {
@@ -1156,6 +1168,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		final WeqCongruenceClosure<NODE> newWeqCc = (WeqCongruenceClosure<NODE>) gPaMeet;
 
 		final WeqCongruenceClosure<NODE> otherWeqCc = (WeqCongruenceClosure<NODE>) other;
+		assert otherWeqCc.mWeakEquivalenceGraph.sanityCheck();
 
 		// report all weq edges from other
 		for (final Entry<Doubleton<NODE>, WeakEquivalenceGraph<NODE>.WeakEquivalenceEdgeLabel> edge
