@@ -478,6 +478,9 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE>, ACTIO
 	}
 
 	private DisjunctiveAbstractState<STATE> unifyBottom(final DisjunctiveAbstractState<STATE> state) {
+		if (state == null) {
+			return null;
+		}
 		if (state.isBottom()) {
 			return mBottomState;
 		}
@@ -491,11 +494,8 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE>, ACTIO
 	private boolean assertBottomRetained(final DisjunctiveAbstractState<STATE> pre,
 			final DisjunctiveAbstractState<STATE> preHierState, final DisjunctiveAbstractState<STATE> synchronizedState,
 			final IFunPointer funReplay) {
-		if (pre == null) {
-			return false;
-		}
 		final boolean rtr =
-				(!pre.isBottom() && (preHierState == null || !preHierState.isBottom())) || synchronizedState.isBottom();
+				!pre.isBottom() && (preHierState == null || !preHierState.isBottom()) || synchronizedState.isBottom();
 		if (!rtr) {
 			funReplay.run();
 		}
