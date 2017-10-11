@@ -196,7 +196,12 @@ public class AbsIntPredicateInterpolantSequenceWeakener<STATE extends IAbstractS
 				.orElseThrow(() -> new UnsupportedOperationException("No states in preState.")).getVariables().size();
 		final int numRemovedVars = mVarsToKeep.size();
 		reportWeakeningVarsNumRemoved(numRemovedVars);
-		reportWeakeningRatio((numStateVars - numRemovedVars) / numStateVars);
+		final int leftVars = numStateVars - numRemovedVars;
+		if (leftVars == numStateVars) {
+			reportWeakeningRatio(1);
+		} else {
+			reportWeakeningRatio(leftVars / numStateVars);
+		}
 
 		for (final STATE s : preState.getAbstractStates()) {
 			if (s.isBottom()) {
