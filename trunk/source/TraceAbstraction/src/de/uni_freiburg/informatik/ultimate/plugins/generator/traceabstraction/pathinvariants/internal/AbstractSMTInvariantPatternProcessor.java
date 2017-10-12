@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 
@@ -113,7 +114,7 @@ public abstract class AbstractSMTInvariantPatternProcessor<IPT> implements IInva
 
 	protected static Term constructZero(final Script script, final Sort sort) {
 		if (SmtSortUtils.isIntSort(sort)) {
-			return script.numeral(BigInteger.ZERO);
+			return SmtUtils.constructIntValue(script, BigInteger.ZERO);
 		} else if (SmtSortUtils.isRealSort(sort)) {
 			return script.decimal(BigDecimal.ZERO);
 		} else {

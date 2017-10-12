@@ -501,7 +501,7 @@ public class BinaryStatePredicateManager {
 	}
 
 	private Term getRankGeq0(final IProgramVar oldRankVariable) {
-		final Term geq = mScript.term(">=", oldRankVariable.getTermVariable(), mScript.numeral(BigInteger.ZERO));
+		final Term geq = mScript.term(">=", oldRankVariable.getTermVariable(), SmtUtils.constructIntValue(mScript, BigInteger.ZERO));
 		return geq;
 	}
 

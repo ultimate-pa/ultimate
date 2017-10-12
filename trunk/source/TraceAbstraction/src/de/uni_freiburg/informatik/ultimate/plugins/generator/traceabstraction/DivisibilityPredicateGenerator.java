@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
@@ -112,8 +113,8 @@ public class DivisibilityPredicateGenerator {
 	}
 
 	private Term getDivisibilityTerm(final Term term, final Integer value) {
-		final Term divisor = mScript.numeral(BigInteger.valueOf(value));
-		final Term zero = mScript.numeral(BigInteger.ZERO);
+		final Term divisor = SmtUtils.constructIntValue(mScript, BigInteger.valueOf(value));
+		final Term zero = SmtUtils.constructIntValue(mScript, BigInteger.ZERO);
 		final Term divisible = mScript.term("=", mScript.term("mod", term, divisor), zero);
 		return divisible;
 	}

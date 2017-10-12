@@ -379,7 +379,7 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 					throw new AssertionError("unknown quantifier");
 				}
 			} else if (SmtSortUtils.isIntSort(term.getSort())) {
-				final Term one = mScript.numeral(BigInteger.ONE);
+				final Term one = SmtUtils.constructIntValue(mScript, BigInteger.ONE);
 				if (quantifier == QuantifiedFormula.EXISTS) {
 					// transform terms such that
 					// lower < x /\ x < upper
