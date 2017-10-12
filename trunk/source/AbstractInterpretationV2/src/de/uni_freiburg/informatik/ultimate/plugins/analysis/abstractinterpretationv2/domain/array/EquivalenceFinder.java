@@ -54,7 +54,6 @@ public class EquivalenceFinder {
 	private Set<AffineRelation> getEquivalenceRelations(final Term term) {
 		final Set<AffineRelation> result = new HashSet<>();
 		final Set<AffineTerm> leqTerms = new HashSet<>();
-		final Set<AffineTerm> geqTerms = new HashSet<>();
 		final Script script = mMgdScript.getScript();
 		for (final Term conjunct : SmtUtils.getConjuncts(term)) {
 			final AffineRelation relation;
@@ -63,23 +62,25 @@ public class EquivalenceFinder {
 			} catch (final NotAffineException e) {
 				continue;
 			}
-			final AffineTerm affineTerm = relation.getAffineTerm();
 			switch (relation.getRelationSymbol()) {
 			case EQ:
 				result.add(relation);
 				break;
 			case GEQ:
-				geqTerms.add(normalize(affineTerm));
+				// Rewrite x >= 0 to -x <= 0
+				final AffineTerm negated = new AffineTerm(relation.getAffineTerm(), Rational.MONE);
+				leqTerms.add(normalize(negated));
 				break;
 			case LEQ:
-				leqTerms.add(normalize(affineTerm));
+				leqTerms.add(normalize(relation.getAffineTerm()));
 				break;
 			default:
 				break;
 			}
 		}
 		for (final AffineTerm a : leqTerms) {
-			if (!geqTerms.contains(a)) {
+			final AffineTerm negated = new AffineTerm(a, Rational.MONE);
+			if (!leqTerms.contains(negated)) {
 				continue;
 			}
 			// TODO: Is there a more efficient way to get an AffineRelation from an AffineTerm and a RelationSymbol?
