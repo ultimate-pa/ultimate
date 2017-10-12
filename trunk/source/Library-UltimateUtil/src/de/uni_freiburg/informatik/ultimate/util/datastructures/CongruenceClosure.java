@@ -11,6 +11,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -416,6 +417,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		assert sanityCheck();
 		final boolean result = mElementCurrentlyBeingRemoved.madeChanges();
 		mElementCurrentlyBeingRemoved = null;
+		assert assertElementIsFullyRemoved(elem);
 		return result;
 
 //
@@ -505,24 +507,31 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 			final Set<ELEM> elementsToRemove = collectElementsToRemove(mElem);
 			mElementsToRemove = Collections.unmodifiableSet(elementsToRemove);
 
+			assert elementsToRemove.stream().allMatch(e -> dependsOnAny(e, Collections.singleton(mElem)));
+
 			final Map<ELEM, ELEM> nodeToReplacementNode = new HashMap<>();
 			for (final ELEM elemToRemove : elementsToRemove) {
-				nodeToReplacementNode.put(elemToRemove, getOtherEquivalenceClassMember(elemToRemove));
+				nodeToReplacementNode.put(elemToRemove, getOtherEquivalenceClassMember(elemToRemove, elementsToRemove));
 			}
+			assert DataStructureUtils.intersection(new HashSet<>(nodeToReplacementNode.values()), elementsToRemove)
+				.isEmpty();
 
 			final Set<ELEM> nodesToAdd = new HashSet<>();
 
-			for (final Entry<ELEM, ELEM> en : new HashMap<>(nodeToReplacementNode).entrySet()) {
-				if (en.getKey().isFunctionApplication() && isConstrained(en.getKey())) {
+//			for (final Entry<ELEM, ELEM> en : new HashMap<>(nodeToReplacementNode).entrySet()) {
+			for (final ELEM elemToRemove : elementsToRemove) {
+//				if (en.getKey().isFunctionApplication() && isConstrained(en.getKey())) {
+				if (elemToRemove.isFunctionApplication() && isConstrained(elemToRemove)) {
 					// we don't have a replacement, but we want one, try if we can get one
-					final Set<ELEM> replacementNodes = getNodesToIntroduceBeforeRemoval(en.getKey(),
-							// TODO is there a nicer way to get this boolean parameter?
-							elementsToRemove.contains(en.getKey().getAppliedFunction()),
+					final Set<ELEM> replacementNodes = getNodesToIntroduceBeforeRemoval(elemToRemove,
+//							// TODO is there a nicer way to get this boolean parameter?
+//							elementsToRemove.contains(elemToRemove.getAppliedFunction()),
 							nodeToReplacementNode);
 					nodesToAdd.addAll(replacementNodes);
 				}
 			}
 
+			assert nodesToAdd.stream().allMatch(e -> !dependsOnAny(e, Collections.singleton(mElem)));
 			assert sanityCheck();
 
 			// add proxy elements
@@ -549,7 +558,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 			return mRemovedElemToNewRep;
 		}
 
-		public Collection<ELEM> getRemovedElements() {
+		public Set<ELEM> getRemovedElements() {
 			return mElementsToRemove;
 		}
 
@@ -596,9 +605,23 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		return true;
 	}
 
+	/**
+	 *
+	 * @param elemToRemove
+	 * @param elemToRemoveIsAppliedFunctionNotArgument
+	 * @param elemToRemoveToReplacement this method may schedule elements for adding that can replace elements being
+	 *   removed -- it should update this map accordingly
+	 *   this map's keyset also serves as info which elements are currently being removed -- we don't want to schedule
+	 *   any of these for adding
+	 * @return
+	 */
 	protected Set<ELEM> getNodesToIntroduceBeforeRemoval(final ELEM elemToRemove,
-			final boolean elemToRemoveIsAppliedFunctionNotArgument,
-			final Map<ELEM, ELEM> nodeToReplacement) {
+//			final boolean elemToRemoveIsAppliedFunctionNotArgument,
+			final Map<ELEM, ELEM> elemToRemoveToReplacement) {
+
+		assert elemToRemoveToReplacement.keySet().contains(elemToRemove);
+		assert elemToRemoveToReplacement.keySet().equals(mElementCurrentlyBeingRemoved.getRemovedElements());
+
 		/*
 		 * say
 		 * <li> elemToRemove = a[i]
@@ -608,21 +631,93 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		 * <li> (case2) a[i] is removed because i is removed, and exists i ~ j, then return a[j] (to be added later)
 		 */
 		assert elemToRemove.isFunctionApplication();
+		/*
+		 *  it is tempting to make the following assertion, but not what we want:
+		 *   assume we have {x, y}, then we have a replacement for x for all other purposes, but not for the purpose
+		 *    of keeping the "y equals something" constraint
+		 */
+//		assert getOtherEquivalenceClassMember(elemToRemove, elemToRemoveToReplacement.keySet()) == null;
 
-		if (elemToRemoveIsAppliedFunctionNotArgument) {
-			// look for a b with a ~ b
-			final ELEM afReplacement = nodeToReplacement.get(elemToRemove.getAppliedFunction());
+		/*
+		 *  case split on which child of elemToRemove is a reason for elemToRemove being scheduled for removal
+		 *  three cases: appliedfunction, argument, both
+		 */
+		final boolean etrIsRemovedBecauseOfAf =
+				elemToRemoveToReplacement.keySet().contains(elemToRemove.getAppliedFunction());
+		final boolean etrIsRemovedBecauseOfArg =
+				elemToRemoveToReplacement.keySet().contains(elemToRemove.getArgument());
+
+		if (etrIsRemovedBecauseOfAf && etrIsRemovedBecauseOfArg) {
+			// look for b with a ~ b, and j with i ~ j
+			final ELEM afReplacement = getOtherEquivalenceClassMember(elemToRemove.getAppliedFunction(),
+				elemToRemoveToReplacement.keySet());
+			final ELEM argReplacement = getOtherEquivalenceClassMember(elemToRemove.getArgument(),
+					elemToRemoveToReplacement.keySet());
+			if (afReplacement != null && argReplacement != null) {
+				final ELEM afReplaced = elemToRemove.replaceAppliedFunction(afReplacement);
+				final ELEM afAndArgReplaced = afReplaced.replaceArgument(argReplacement);
+				assert !mElementCurrentlyBeingRemoved.getRemovedElements().contains(afAndArgReplaced);
+				elemToRemoveToReplacement.put(elemToRemove, afAndArgReplaced);
+				return Collections.singleton(afAndArgReplaced);
+			}
+		} else if (etrIsRemovedBecauseOfAf) {
+			// look for b with a ~ b
+			final ELEM afReplacement = getOtherEquivalenceClassMember(elemToRemove.getAppliedFunction(),
+					elemToRemoveToReplacement.keySet());
 			if (afReplacement != null) {
-				return Collections.singleton(elemToRemove.replaceAppliedFunction(afReplacement));
+				final ELEM afReplaced = elemToRemove.replaceAppliedFunction(afReplacement);
+				assert !mElementCurrentlyBeingRemoved.getRemovedElements().contains(afReplaced);
+				elemToRemoveToReplacement.put(elemToRemove, afReplaced);
+				return Collections.singleton(afReplaced);
 			}
 		} else {
-			// look for a j with i ~ j
-			final ELEM argReplacement = nodeToReplacement.get(elemToRemove.getArgument());
+			// look for j with i ~ j
+			final ELEM argReplacement = getOtherEquivalenceClassMember(elemToRemove.getArgument(),
+					elemToRemoveToReplacement.keySet());
 			if (argReplacement != null) {
-				return Collections.singleton(elemToRemove.replaceArgument(argReplacement));
+				final ELEM argReplaced = elemToRemove.replaceArgument(argReplacement);
+				assert !mElementCurrentlyBeingRemoved.getRemovedElements().contains(argReplaced);
+				elemToRemoveToReplacement.put(elemToRemove, argReplaced);
+				return Collections.singleton(argReplaced);
 			}
 		}
 		return Collections.emptySet();
+	}
+
+	/**
+	 * If elem is alone in its equivalence class, return null.
+	 * Otherwise return any element from elem's equivalence class that is not elem.
+	 *
+	 * The user may specify a preference, i.e., if some element from the given set can be picked, it is picked.
+	 *
+	 * @param elem
+	 * @param preferredReplacements
+	 * @return
+	 */
+	protected ELEM getOtherEquivalenceClassMember(final ELEM elem) {
+		return getOtherEquivalenceClassMember(elem, null);
+	}
+
+	/**
+	 *
+	 * @param argument
+	 * @param forbiddenSet optional, a set whose members we don't want returned, so only look for an elemen in
+	 *    equivalenceClassOf(argument) \ forbiddenSet
+	 * @return
+	 */
+	protected ELEM getOtherEquivalenceClassMember(final ELEM eqmember, final Set<ELEM> forbiddenSet) {
+
+		assert hasElement(eqmember);
+		final Set<ELEM> eqc = mElementTVER.getEquivalenceClass(eqmember);
+		if (eqc.size() == 1) {
+			return null;
+		}
+		final Optional<ELEM> opt = eqc.stream().filter(e -> !e.equals(eqmember) &&
+				(forbiddenSet == null || !forbiddenSet.contains(e))).findFirst();
+		if (opt.isPresent()) {
+			return opt.get();
+		}
+		return null;
 	}
 
 	protected Collection<? extends ELEM> collectNodesToAddBeforeRemoval(final ELEM elemToRemove,
@@ -670,7 +765,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 
 		updateElementTverAndAuxDataOnRemoveElement(elem);
 
-		assert elementIsFullyRemoved(elem);
+		assert assertElementIsFullyRemoved(elem);
 		return true;
 	}
 
@@ -814,34 +909,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		}
 	}
 
-	/**
-	 * If elem is alone in its equivalence class, return null.
-	 * Otherwise return any element from elem's equivalence class that is not elem.
-	 *
-	 * The user may specify a preference, i.e., if some element from the given set can be picked, it is picked.
-	 *
-	 * @param elem
-	 * @param preferredReplacements
-	 * @return
-	 */
-	protected ELEM getOtherEquivalenceClassMember(final ELEM elem) {
-		assert hasElement(elem);
-		final Set<ELEM> eqc = mElementTVER.getEquivalenceClass(elem);
-		if (eqc.size() == 1) {
-			return null;
-		}
-//		if (preferredReplacements != null) {
-//			final Optional<ELEM> preferred = eqc.stream()
-//					.filter(e ->  !e.equals(elem) && preferredReplacements.contains(e)).findFirst();
-//			if (preferred.isPresent()) {
-//				return preferred.get();
-//			}
-//		}
-		return eqc.stream().filter(e -> !e.equals(elem)).findFirst().get();
-//		return eqc.stream().filter(e -> e != elem).findAny().get();
-	}
-
-	public boolean elementIsFullyRemoved(final ELEM elem) {
+	public boolean assertElementIsFullyRemoved(final ELEM elem) {
 		return elementIsFullyRemovedOnlyCc(elem);
 	}
 
@@ -1178,6 +1246,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 			}
 			if (!hasElement(elem.getAppliedFunction()) &&
 					(remInfo == null || !remInfo.getRemovedElements().contains(elem.getAppliedFunction())) &&
+					(mElementCurrentlyBeingRemoved == null
+						|| !mElementCurrentlyBeingRemoved.getRemovedElements().contains(elem.getAppliedFunction())) &&
 					(mExternalRemovalInfo == null
 						|| !mExternalRemovalInfo.getRemovedElements().contains(elem.getAppliedFunction()))) {
 				assert false;
@@ -1185,6 +1255,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 			}
 			if (!hasElement(elem.getArgument()) &&
 					(remInfo == null || !remInfo.getRemovedElements().contains(elem.getArgument())) &&
+					(mElementCurrentlyBeingRemoved == null
+						|| !mElementCurrentlyBeingRemoved.getRemovedElements().contains(elem.getArgument())) &&
 					(mExternalRemovalInfo == null
 						|| !mExternalRemovalInfo.getRemovedElements().contains(elem.getArgument()))) {
 				assert false;

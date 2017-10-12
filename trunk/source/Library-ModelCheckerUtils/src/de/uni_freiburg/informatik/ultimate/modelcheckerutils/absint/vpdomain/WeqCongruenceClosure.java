@@ -837,18 +837,25 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 
 	@Override
 	protected Set<NODE> getNodesToIntroduceBeforeRemoval(final NODE elemToRemove,
-			final boolean elemToRemoveIsAppliedFunctionNotArgument, final Map<NODE, NODE> nodeToReplacement) {
+//			final boolean elemToRemoveIsAppliedFunctionNotArgument,
+			final Map<NODE, NODE> elemToRemoveToReplacement) {
 		final boolean stopAtFirst = false;
 
 	    final Set<NODE> replByFwcc = super.getNodesToIntroduceBeforeRemoval(elemToRemove,
-	    		elemToRemoveIsAppliedFunctionNotArgument, nodeToReplacement);
+//	    		elemToRemoveIsAppliedFunctionNotArgument,
+	    		elemToRemoveToReplacement);
 
 
 		if (!replByFwcc.isEmpty()) {
+			assert DataStructureUtils.intersection(
+					mElementCurrentlyBeingRemoved.getRemovedElements(), replByFwcc).isEmpty();
 			return replByFwcc;
 		}
 
-		if (!elemToRemoveIsAppliedFunctionNotArgument) {
+
+		final boolean etrIsRemovedBecauseOfAf =
+				elemToRemoveToReplacement.keySet().contains(elemToRemove.getAppliedFunction());
+		if (!etrIsRemovedBecauseOfAf) {
 			return Collections.emptySet();
 		}
 
@@ -862,11 +869,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		// forall b --Phi(q)-- a
 		for (final Entry<NODE, WeakEquivalenceGraph<NODE>.WeakEquivalenceEdgeLabel> edge
 				: mWeakEquivalenceGraph.getAdjacentWeqEdges(elemToRemove.getAppliedFunction()).entrySet()) {
-			if (edge.getKey().equals(elemToRemove.getAppliedFunction())
-					&& elemToRemoveIsAppliedFunctionNotArgument) {
-				// a is being removed, don't pick a as b
-				continue;
-			}
+			assert !edge.getKey().equals(elemToRemove.getAppliedFunction());
 
 			final List<CongruenceClosure<NODE>> projectedLabel = mWeakEquivalenceGraph
 					.projectEdgeLabelToPoint(edge.getValue().getLabelContents(),
@@ -884,20 +887,27 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 			if (projectedLabel.isEmpty()) {
 				final NODE bi = mFactory.getEqNodeAndFunctionFactory()
 						.getOrConstructFuncAppElement(edge.getKey(), elemToRemove.getArgument());
+				assert !mElementCurrentlyBeingRemoved.getRemovedElements().contains(bi);
+				elemToRemoveToReplacement.put(elemToRemove, bi);
 				return Collections.singleton(bi);
 			}
 
 			/*
 			 * if there is a disjunct in projectedLabel that does not depend on any weq var, we don't introduce a new
 			 * node (we would get a weak equivalence with a ground disjunct
+			 * EDIT: this case should be treatable via check for tautology (see also assert below)
 			 */
-			if (projectedLabel.stream().anyMatch(l ->
-				DataStructureUtils.intersection(l.getAllElements(), mFactory.getAllWeqNodes()).isEmpty())) {
+			if (isLabelTautological(projectedLabel)) {
 				continue;
 			}
+			// if a disjunct was ground, the the projectToElem(weqvars) operation should have made it "true"
+			assert !projectedLabel.stream().anyMatch(l ->
+				DataStructureUtils.intersection(l.getAllElements(), mFactory.getAllWeqNodes()).isEmpty());
+
 
 			final NODE bi = mFactory.getEqNodeAndFunctionFactory()
 						.getOrConstructFuncAppElement(edge.getKey(), elemToRemove.getArgument());
+			assert !mElementCurrentlyBeingRemoved.getRemovedElements().contains(bi);
 
 			if (stopAtFirst) {
 				return Collections.singleton(bi);
@@ -1100,7 +1110,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 	}
 
 	@Override
-	public boolean elementIsFullyRemoved(final NODE elem) {
+	public boolean assertElementIsFullyRemoved(final NODE elem) {
 		if (!mWeakEquivalenceGraph.elementIsFullyRemoved(elem)) {
 			assert false;
 			return false;
@@ -1112,7 +1122,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 				return false;
 			}
 		}
-		return super.elementIsFullyRemoved(elem);
+		return super.assertElementIsFullyRemoved(elem);
 	}
 
 	@Override

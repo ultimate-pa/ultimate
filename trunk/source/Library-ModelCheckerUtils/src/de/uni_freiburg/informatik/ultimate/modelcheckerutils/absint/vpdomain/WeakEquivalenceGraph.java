@@ -1518,7 +1518,7 @@ public class WeakEquivalenceGraph<//ACTION extends IIcfgTransition<IcfgLocation>
 
 			public boolean assertElementIsFullyRemoved(final NODE elem) {
 				for (final CongruenceClosure<NODE> lab : mLabel) {
-					if (!lab.elementIsFullyRemoved(elem)) {
+					if (!lab.assertElementIsFullyRemoved(elem)) {
 						assert false;
 						return false;
 					}
