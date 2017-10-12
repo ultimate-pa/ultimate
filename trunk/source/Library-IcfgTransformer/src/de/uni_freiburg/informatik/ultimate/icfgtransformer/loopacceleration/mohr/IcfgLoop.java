@@ -71,6 +71,11 @@ public class IcfgLoop<INLOC extends IcfgLocation> {
 	}
 
 	public void addNestedLoop(final IcfgLoop<INLOC> loop) {
+		if (loop.getLoopbody().equals(mLoopbody)) {
+			// @loop is no nested loop, but the same loop
+			return;
+		}
+
 		for (final IcfgLoop<INLOC> nestedLoop : mNestedLoops.values()) {
 			if (nestedLoop.contains(loop.getHead())) {
 				nestedLoop.addNestedLoop(loop);

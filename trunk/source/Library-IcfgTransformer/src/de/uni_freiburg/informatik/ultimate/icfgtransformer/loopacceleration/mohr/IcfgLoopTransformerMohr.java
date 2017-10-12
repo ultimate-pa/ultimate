@@ -208,7 +208,6 @@ public class IcfgLoopTransformerMohr<INLOC extends IcfgLocation, OUTLOC extends 
 			mLogger.debug("Path formulas: " + formulas);
 			mLogger.debug("Composition: " + composition);
 
-			// DD: It is not enough to just construct the DNF. You have to use it as input to the SimultaneousUpdate!
 			final List<TransFormula> disjunctsOfTransformula = getDisjunctsFromTransformula(composition);
 
 			// DD: It is possible that you have multiple paths instead of one. You should deal with that. I just copied

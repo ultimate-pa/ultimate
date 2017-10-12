@@ -96,7 +96,11 @@ public class IcfgLoopDetection<INLOC extends IcfgLocation> {
 						open.add((INLOC) successor);
 					}
 				}
-				dom.put(node, newDom);
+				if (dom.containsKey(node)) {
+					dom.get(node).addAll(newDom);
+				} else {
+					dom.put(node, newDom);
+				}
 			}
 
 		}
@@ -151,7 +155,7 @@ public class IcfgLoopDetection<INLOC extends IcfgLocation> {
 		final ArrayList<INLOC> heads = new ArrayList<>(loopbodies.keySet());
 		for (final INLOC nestedhead : heads) {
 			for (final INLOC head : heads) {
-				if (nestedhead.equals(head) || !loopbodies.containsKey(head)) {
+				if (nestedhead.equals(head) || !loopbodies.containsKey(nestedhead) || !loopbodies.containsKey(head)) {
 					continue;
 				}
 				if (loopbodies.get(head).contains(nestedhead)) {
