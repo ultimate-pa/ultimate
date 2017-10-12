@@ -167,8 +167,7 @@ public final class BitvectorUtils {
 					.simplifiedResult(script, funcname, indices, params);
 			break;
 		case bvand:
-			result = new RegularBitvectorOperation_BitvectorResult(funcname, x -> y -> BitvectorConstant.bvand(x, y))
-					.simplifiedResult(script, funcname, indices, params);
+			result = new Bvand().simplifiedResult(script, funcname, indices, params);
 			break;
 		case bvor:
 			result = new RegularBitvectorOperation_BitvectorResult(funcname, x -> y -> BitvectorConstant.bvor(x, y))
@@ -259,7 +258,7 @@ public final class BitvectorUtils {
 			return simplify_NonConstantCase(script, indices, params, bvs);
 		}
 
-		private Term simplify_NonConstantCase(final Script script, final BigInteger[] indices, final Term[] params,
+		protected Term simplify_NonConstantCase(final Script script, final BigInteger[] indices, final Term[] params,
 				final BitvectorConstant[] bvs) {
 			return notSimplified(script, indices, params);
 		}
@@ -347,13 +346,13 @@ public final class BitvectorUtils {
 	private static class RegularBitvectorOperation_BitvectorResult extends RegularBitvectorOperation {
 
 		private final String mName;
-		private final Function<BitvectorConstant, Function<BitvectorConstant, BitvectorConstant>> mFunction;
+		private final Function<BitvectorConstant, Function<BitvectorConstant, BitvectorConstant>> mConstantSimplification;
 
 		public RegularBitvectorOperation_BitvectorResult(final String name,
 				final Function<BitvectorConstant, Function<BitvectorConstant, BitvectorConstant>> function) {
 			super();
 			mName = name;
-			mFunction = function;
+			mConstantSimplification = function;
 		}
 
 		@Override
@@ -367,7 +366,7 @@ public final class BitvectorUtils {
 			if (bvs.length != getNumberOfParams()) {
 				throw new AssertionError("supported and provided parameters differ - feature not yet implemented");
 			}
-			return constructTerm(script, mFunction.apply(bvs[0]).apply(bvs[1]));
+			return constructTerm(script, mConstantSimplification.apply(bvs[0]).apply(bvs[1]));
 		}
 	}
 
@@ -441,6 +440,24 @@ public final class BitvectorUtils {
 			return constructTerm(script, BitvectorConstant.bvneg(bvs[0]));
 		}
 
+	}
+	
+	private static class Bvand extends RegularBitvectorOperation_BitvectorResult {
+
+		public Bvand() {
+			super("bvand", x -> y -> BitvectorConstant.bvand(x, y));
+		}
+		
+		@Override
+		protected Term simplify_NonConstantCase(final Script script, final BigInteger[] indices, final Term[] params,
+				final BitvectorConstant[] bvs) {
+			for (final BitvectorConstant bvConst : bvs) {
+				if (bvConst != null && bvConst.getValue().equals(BigInteger.ZERO)) {
+					return constructTerm(script, bvConst);
+				}
+			}
+			return super.simplify_NonConstantCase(script, indices, params, bvs);
+		}
 	}
 
 }
