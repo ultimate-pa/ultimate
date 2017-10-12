@@ -8,7 +8,6 @@ import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -1486,61 +1485,50 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 //			assert copy.sanityCheck(removeElementInfo);
 			assert copy.sanityCheck();
 
-			final Set<ELEM> oldElems = new HashSet<>(copy.getAllElements());
+//			final Set<ELEM> oldElems = new HashSet<>(copy.getAllElements());
 
 			final ELEM current = worklist.pop();
+			assert dependsOnAny(current, elemsToKeep);
 			visited.add(current);
 
 			if (!hasElement(current)) {
 				continue;
 			}
 
-			final Map<ELEM, ELEM> mapping = new HashMap<>();
-			final Set<ELEM> eqc = mElementTVER.getEquivalenceClass(current);
-			for (final ELEM eqm : eqc) {
-				if (eqm == current) {
-					continue;
-				}
-				mapping.put(eqm, current);
-			}
-
-
-			for (final Entry<ELEM, ELEM> en : mapping.entrySet()) {
-				for (final ELEM afccpar : copy.mFaAuxData.getAfParents(en.getKey())) {
-//					copy.reportEquality(afccpar, afccpar.replaceAppliedFunction(en.getValue()));
-					copy.addElement(afccpar.replaceAppliedFunction(en.getValue()));
-				}
-				for (final ELEM argccpar : copy.mFaAuxData.getArgParents(en.getKey())) {
-//					copy.reportEquality(argccpar, argccpar.replaceArgument(en.getValue()));
-					copy.addElement(argccpar.replaceArgument(en.getValue()));
-				}
-			}
-
-//			for (final ELEM eqcm : eqc) {
-//				if (eqcm != current) {
-//					copy.removeSingleElement(eqcm, null);
+			/*
+			 * collect all elements that are equivalent to current
+			 */
+			final Set<ELEM> eqc = new HashSet<>(mElementTVER.getEquivalenceClass(current));
+//			eqc.remove(current);
+//			final Map<ELEM, ELEM> mapping = new HashMap<>();
+//			final Set<ELEM> eqc = mElementTVER.getEquivalenceClass(current);
+//			for (final ELEM eqm : eqc) {
+//				if (eqm == current) {
+//					continue;
 //				}
+//				mapping.put(eqm, current);
 //			}
-//			copy.transformElementsAndFunctions(e -> e.replaceSubNode(mapping));
-//			assert copy.sanityCheck(removeElementInfo);
-			assert copy.sanityCheck();
 
-			// report the equivalence class back --> transformation collapsed it into q..
-			final Iterator<ELEM> it = eqc.iterator();
-//			for (int i = 0; i <eqc.size(); i++) {
-			ELEM prev = it.next();
-			while (it.hasNext()) {
-				final ELEM curInEqc = it.next();
-				copy.reportEquality(curInEqc, prev);
-				prev = curInEqc;
+
+//			for (final Entry<ELEM, ELEM> en : mapping.entrySet()) {
+			for (final ELEM e : eqc) {
+				for (final ELEM afccpar : copy.mFaAuxData.getAfParents(e)) {
+					final ELEM substituted = afccpar.replaceAppliedFunction(current);
+					copy.addElement(substituted);
+					worklist.add(substituted);
+				}
+				for (final ELEM argccpar : copy.mFaAuxData.getArgParents(e)) {
+					final ELEM substituted = argccpar.replaceArgument(current);
+					copy.addElement(substituted);
+					worklist.add(substituted);
+				}
 			}
 
-
-			final Set<ELEM> newElems = DataStructureUtils.difference(copy.getAllElements(), oldElems);
-			for (final ELEM newElem : newElems) {
-				assert !visited.contains(newElem);
-				worklist.add(newElem);
-			}
+//			final Set<ELEM> newElems = DataStructureUtils.difference(copy.getAllElements(), oldElems);
+//			for (final ELEM newElem : newElems) {
+//				assert !visited.contains(newElem);
+//				worklist.add(newElem);
+//			}
 		}
 
 		final ThreeValuedEquivalenceRelation<ELEM> newTver =
