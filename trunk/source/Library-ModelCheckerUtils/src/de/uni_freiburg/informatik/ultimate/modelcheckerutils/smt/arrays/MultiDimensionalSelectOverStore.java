@@ -63,5 +63,15 @@ public class MultiDimensionalSelectOverStore {
 		return mStore;
 	}
 
+	
+	
+	public static MultiDimensionalSelectOverStore convert(final Term term) {
+		final MultiDimensionalSelectOverStore mdsos = new MultiDimensionalSelectOverStore(term);
+		if (mdsos.getSelect() == null) {
+			return null;
+		} else {
+			return mdsos;
+		}
+	}
 
 }
