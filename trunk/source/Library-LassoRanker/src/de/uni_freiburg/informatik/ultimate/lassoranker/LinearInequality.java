@@ -360,13 +360,21 @@ public class LinearInequality implements Serializable {
 	 * Negate the linear inequality
 	 *
 	 * <pre>
-	 * a ≥ b --> b > a
-	 * a > b --> b ≥ a
+	 * a > b --> b ≥ a (resp. t > 0 ~~> -t ≥ 0)
+	 * for reals
+	 *     a ≥ b --> b > a (resp. t ≥ 0 ~~> -t > 0)
+	 * for ints
+	 *     a ≥ b --> b ≥ a + 1 (resp. t ≥ 0 ~~> -t-1 ≥ 0)
 	 * </pre>
+	 * 
 	 */
 	public void negate() {
 		mult(Rational.MONE);
-		mStrict = !mStrict;
+		if (false && !mStrict && getSortName().equals("Int")) {
+			add(new AffineTerm(BigInteger.valueOf(-1)));
+		} else {
+			mStrict = !mStrict;
+		}
 	}
 
 	/**
@@ -394,7 +402,7 @@ public class LinearInequality implements Serializable {
 		final String sortName = getSortName();
 		final boolean real = sortName.equals(SmtSortUtils.REAL_SORT);
 		final Term[] summands = new Term[mCoefficients.size() + 1];
-		final Term zero = real ? script.decimal(BigDecimal.ZERO) : script.numeral(BigInteger.ZERO);
+		final Term zero = real ? script.decimal(BigDecimal.ZERO) : SmtUtils.constructIntValue(script, BigInteger.ZERO);
 
 		int i = 0;
 		for (final Entry<Term, AffineTerm> entry : mCoefficients.entrySet()) {

@@ -173,7 +173,7 @@ public class AffineFunction implements Serializable {
 		if (coefficient.equals(BigInteger.ONE)) {
 			return t;
 		}
-		return script.term("*", script.numeral(coefficient), t);
+		return script.term("*", SmtUtils.constructIntValue(script, coefficient), t);
 	}
 
 	/**
@@ -190,7 +190,7 @@ public class AffineFunction implements Serializable {
 			final Term definition = ReplacementVarUtils.getDefinition(entry.getKey());
 			summands.add(constructSummand(script, definition, entry.getValue()));
 		}
-		summands.add(script.numeral(mConstant));
+		summands.add(SmtUtils.constructIntValue(script, mConstant));
 		return SmtUtils.sum(script, SmtSortUtils.getRealSort(script), summands.toArray(new Term[summands.size()]));
 	}
 

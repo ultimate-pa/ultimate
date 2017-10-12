@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 
 
 /**
@@ -51,7 +52,7 @@ public class NestedRankingFunction extends RankingFunction {
 	private final AffineFunction[] mRanking;
 	public final int mFunctions;
 	
-	public NestedRankingFunction(AffineFunction[] ranking) {
+	public NestedRankingFunction(final AffineFunction[] ranking) {
 		mRanking = ranking;
 		mFunctions = ranking.length;
 		assert(mFunctions > 0);
@@ -93,25 +94,25 @@ public class NestedRankingFunction extends RankingFunction {
 	}
 	
 	@Override
-	public Term[] asLexTerm(Script script) throws SMTLIBException {
+	public Term[] asLexTerm(final Script script) throws SMTLIBException {
 		// similar to the multiphase ranking function this can be seen as a
 		// ranking function that proceed through phases.
 		BigInteger n = BigInteger.ZERO;
-		Term phase = script.numeral(n);
+		Term phase = SmtUtils.constructIntValue(script, n);
 		Term value = mRanking[mRanking.length - 1].asTerm(script);
 		for (int i = mRanking.length - 2; i >= 0; --i) {
 			n = n.add(BigInteger.ONE);
 			final Term f_term = mRanking[i].asTerm(script);
 			final Term cond = script.term(">", f_term,
-					script.numeral(BigInteger.ZERO));
-			phase = script.term("ite", cond, script.numeral(n), phase);
+					SmtUtils.constructIntValue(script, BigInteger.ZERO));
+			phase = script.term("ite", cond, SmtUtils.constructIntValue(script, n), phase);
 			value = script.term("ite", cond, f_term, value);
 		}
 		return new Term[] { phase, value };
 	}
 	
 	@Override
-	public Ordinal evaluate(Map<IProgramVar, Rational> assignment) {
+	public Ordinal evaluate(final Map<IProgramVar, Rational> assignment) {
 		throw new UnsupportedOperationException("not yet implemented");
 	}
 	

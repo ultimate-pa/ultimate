@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 
 
 /**
@@ -50,7 +51,7 @@ public class MultiphaseRankingFunction extends RankingFunction {
 	private final AffineFunction[] mranking;
 	public final int phases;
 	
-	public MultiphaseRankingFunction(AffineFunction[] ranking) {
+	public MultiphaseRankingFunction(final AffineFunction[] ranking) {
 		mranking = ranking;
 		phases = ranking.length;
 		assert(phases > 0);
@@ -92,23 +93,23 @@ public class MultiphaseRankingFunction extends RankingFunction {
 	}
 	
 	@Override
-	public Term[] asLexTerm(Script script) throws SMTLIBException {
+	public Term[] asLexTerm(final Script script) throws SMTLIBException {
 		BigInteger n = BigInteger.ZERO;
-		Term phase = script.numeral(n);
+		Term phase = SmtUtils.constructIntValue(script, n);
 		Term value = mranking[mranking.length - 1].asTerm(script);
 		for (int i = mranking.length - 2; i >= 0; --i) {
 			n = n.add(BigInteger.ONE);
 			final Term f_term = mranking[i].asTerm(script);
 			final Term cond = script.term(">", f_term,
-					script.numeral(BigInteger.ZERO));
-			phase = script.term("ite", cond, script.numeral(n), phase);
+					SmtUtils.constructIntValue(script, BigInteger.ZERO));
+			phase = script.term("ite", cond, SmtUtils.constructIntValue(script, n), phase);
 			value = script.term("ite", cond, f_term, value);
 		}
 		return new Term[] { phase, value };
 	}
 	
 	@Override
-	public Ordinal evaluate(Map<IProgramVar, Rational> assignment) {
+	public Ordinal evaluate(final Map<IProgramVar, Rational> assignment) {
 		Ordinal o = Ordinal.ZERO;
 		for (int i = 0; i < phases; ++i) {
 			final Rational r = mranking[i].evaluate(assignment);

@@ -191,12 +191,12 @@ public class AffineTerm implements Serializable {
 		int i = 0;
 		for (final Map.Entry<Term, Rational> entry : mCoefficients.entrySet()) {
 			assert entry.getValue().isIntegral();
-			final Term coeff = script.numeral(entry.getValue().numerator());
+			final Term coeff = SmtUtils.constructIntValue(script, entry.getValue().numerator());
 			summands[i] = script.term("*", coeff, entry.getKey());
 			++i;
 		}
 		assert mConstant.isIntegral();
-		summands[i] = script.numeral(mConstant.numerator());
+		summands[i] = SmtUtils.constructIntValue(script, mConstant.numerator());
 		return SmtUtils.sum(script, SmtSortUtils.getIntSort(script), summands);
 	}
 

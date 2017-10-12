@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 
 
 /**
@@ -114,12 +115,12 @@ public class PiecewiseRankingFunction extends RankingFunction {
 	
 	@Override
 	public Term[] asLexTerm(final Script script) throws SMTLIBException {
-		Term value = script.numeral(BigInteger.ZERO);
+		Term value = SmtUtils.constructIntValue(script, BigInteger.ZERO);
 		for (int i = mranking.length - 1; i >= 0; --i) {
 			final AffineFunction af = mranking[i];
 			final AffineFunction gf = mpredicates[i];
 			final Term pred = script.term(">=", gf.asTerm(script),
-					script.numeral(BigInteger.ZERO));
+					SmtUtils.constructIntValue(script, BigInteger.ZERO));
 			value = script.term("ite", pred, af.asTerm(script), value);
 		}
 		return new Term[] { value };
