@@ -54,10 +54,10 @@ public class InterpolantComputationStatus {
 
 	private final boolean mComputationSuccessful;
 	private final ItpErrorStatus mStatus;
-	private final Exception mException;
+	private final Throwable mException;
 
 	public InterpolantComputationStatus(final boolean computationSuccessful, final ItpErrorStatus status,
-			final Exception exception) {
+			final Throwable exception) {
 		super();
 		mComputationSuccessful = computationSuccessful;
 		mStatus = status;
@@ -72,7 +72,7 @@ public class InterpolantComputationStatus {
 		return mStatus;
 	}
 
-	public Exception getException() {
+	public Throwable getException() {
 		return mException;
 	}
 

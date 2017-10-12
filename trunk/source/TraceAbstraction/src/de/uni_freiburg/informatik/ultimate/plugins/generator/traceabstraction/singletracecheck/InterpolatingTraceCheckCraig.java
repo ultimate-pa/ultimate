@@ -57,6 +57,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantComputationStatus.ItpErrorStatus;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckStatisticsGenerator.InterpolantType;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
 
 /**
  * Uses Craig interpolation for computation of nested interpolants. Supports two algorithms. 1. Matthias' recursive
@@ -68,6 +69,8 @@ public class InterpolatingTraceCheckCraig extends InterpolatingTraceCheck {
 
 	private final boolean mInstantiateArrayExt;
 	private final InterpolantComputationStatus mInterpolantComputationStatus;
+
+	private static final boolean IGNORE_UNSUPPORTED_DIFF = true;
 
 	/**
 	 * Check if trace fulfills specification given by precondition, postcondition and pending contexts. The
@@ -138,6 +141,21 @@ public class InterpolatingTraceCheckCraig extends InterpolatingTraceCheck {
 					throw e;
 				}
 				mTraceCheckFinished = true;
+			} catch (final AssertionError e) {
+				final String message = e.getMessage();
+				if (IGNORE_UNSUPPORTED_DIFF
+						&& (interpolation == InterpolationTechnique.Craig_NestedInterpolation
+								|| interpolation == InterpolationTechnique.Craig_TreeInterpolation)
+						&& mTcSmtManager.getScript() instanceof SMTInterpol
+						&& "invalid Hoare triple in Craig".equals(message)) {
+					// SMTInterpol currently produces interpolants with @diff that are unsupported. For EQ benchmarks,
+					// we want to ignore this and do it here
+					ics = new InterpolantComputationStatus(false, ItpErrorStatus.SMT_SOLVER_CANNOT_INTERPOLATE_INPUT,
+							e);
+				} else {
+					throw e;
+				}
+				mTraceCheckFinished = true;
 			}
 			mInterpolantComputationStatus = ics;
 		} else {
@@ -200,8 +218,7 @@ public class InterpolatingTraceCheckCraig extends InterpolatingTraceCheck {
 			tce.addRunningTaskInfo(new RunningTaskInfo(getClass(), taskDescription));
 			throw tce;
 		} finally {
-			mTraceCheckBenchmarkGenerator
-					.stop(TraceCheckStatisticsDefinitions.InterpolantComputationTime.toString());
+			mTraceCheckBenchmarkGenerator.stop(TraceCheckStatisticsDefinitions.InterpolantComputationTime.toString());
 		}
 		// TODO: remove this if relevant variables are definitely correct.
 		// assert testRelevantVars() : "bug in relevant variables";
@@ -259,8 +276,8 @@ public class InterpolatingTraceCheckCraig extends InterpolatingTraceCheck {
 				interpolatedPositions, true, mServices, this, mCfgManagedScript, mInstantiateArrayExt,
 				mSimplificationTechnique, mXnfConversionTechnique);
 		mInterpolants = nib.getNestedInterpolants();
-		assert TraceCheckUtils.checkInterpolantsInductivityForward(Arrays.asList(mInterpolants), mTrace,
-				mPrecondition, mPostcondition, mPendingContexts, "Craig", mCsToolkit, mLogger,
+		assert TraceCheckUtils.checkInterpolantsInductivityForward(Arrays.asList(mInterpolants), mTrace, mPrecondition,
+				mPostcondition, mPendingContexts, "Craig", mCsToolkit, mLogger,
 				mCfgManagedScript) : "invalid Hoare triple in tree interpolants";
 		assert mInterpolants != null;
 	}
@@ -364,8 +381,8 @@ public class InterpolatingTraceCheckCraig extends InterpolatingTraceCheck {
 		}
 
 		// if (mInterpolants != null) {
-		assert TraceCheckUtils.checkInterpolantsInductivityForward(Arrays.asList(mInterpolants), mTrace,
-				mPrecondition, mPostcondition, mPendingContexts, "Craig", mCsToolkit, mLogger,
+		assert TraceCheckUtils.checkInterpolantsInductivityForward(Arrays.asList(mInterpolants), mTrace, mPrecondition,
+				mPostcondition, mPendingContexts, "Craig", mCsToolkit, mLogger,
 				mCfgManagedScript) : "invalid Hoare triple in nested interpolants";
 		// }
 	}
