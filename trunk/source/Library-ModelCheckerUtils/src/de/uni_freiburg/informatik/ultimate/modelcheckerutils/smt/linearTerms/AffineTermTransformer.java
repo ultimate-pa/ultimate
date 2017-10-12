@@ -78,31 +78,7 @@ public class AffineTermTransformer extends TermTransformer {
 			if (isAffineSymbol(funName)) {
 				super.convert(term);
 				return;
-			} else if (funName.equals("to_real")) {
-				final AffineTerm result = convertToReal(appTerm);
-				setResult(result);
-				return;
-			} else if (funName.equals("select")) {
-				final AffineTerm result = new AffineTerm(appTerm);
-				setResult(result);
-				return;
-			} else if (funName.equals("mod")) {
-				final AffineTerm result;
-				final Term simplified = SmtUtils.termWithLocalSimplification(
-						mScript, "mod", appTerm.getSort().getIndices(), appTerm.getParameters());
-				if (simplified instanceof ApplicationTerm) {
-					result = new AffineTerm((ApplicationTerm) simplified);
-				} else if (simplified instanceof ConstantTerm) {
-					result = new AffineTerm(simplified.getSort(), 
-							SmtUtils.convertConstantTermToRational((ConstantTerm) simplified));
-				} else {
-					throw new AssertionError(
-							"should be either ApplicationTerm or ConstantTerm " + simplified);
-				}
-				setResult(result);
-				return;
-			} else if (appTerm.getParameters().length == 0 && appTerm.getSort().isNumericSort()) {
-				// appTerm is a constant (0-ary function)
+			} else if (term.getSort().isNumericSort() || SmtSortUtils.isBitvecSort(term.getSort())) {
 				final AffineTerm result = new AffineTerm(appTerm);
 				setResult(result);
 				return;
@@ -110,6 +86,38 @@ public class AffineTermTransformer extends TermTransformer {
 				resultIsNotAffine();
 				return;
 			}
+//			} else if (funName.equals("to_real")) {
+//				final AffineTerm result = convertToReal(appTerm);
+//				setResult(result);
+//				return;
+//			} else if (funName.equals("select")) {
+//				final AffineTerm result = new AffineTerm(appTerm);
+//				setResult(result);
+//				return;
+//			} else if (funName.equals("mod")) {
+//				final AffineTerm result;
+//				final Term simplified = SmtUtils.termWithLocalSimplification(
+//						mScript, "mod", appTerm.getSort().getIndices(), appTerm.getParameters());
+//				if (simplified instanceof ApplicationTerm) {
+//					result = new AffineTerm((ApplicationTerm) simplified);
+//				} else if (simplified instanceof ConstantTerm) {
+//					result = new AffineTerm(simplified.getSort(), 
+//							SmtUtils.convertConstantTermToRational((ConstantTerm) simplified));
+//				} else {
+//					throw new AssertionError(
+//							"should be either ApplicationTerm or ConstantTerm " + simplified);
+//				}
+//				setResult(result);
+//				return;
+//			} else if (appTerm.getParameters().length == 0 && appTerm.getSort().isNumericSort()) {
+//				// appTerm is a constant (0-ary function)
+//				final AffineTerm result = new AffineTerm(appTerm);
+//				setResult(result);
+//				return;
+//			} else {
+//				resultIsNotAffine();
+//				return;
+//			}
 		} else if (term instanceof ConstantTerm) {
 			final ConstantTerm constTerm = (ConstantTerm) term;
 			if (constTerm.getSort().isNumericSort()) {
