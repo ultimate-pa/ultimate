@@ -427,7 +427,7 @@ public final class SmtUtils {
 		assert SmtSortUtils.isNumericSort(sort) || SmtSortUtils.isBitvecSort(sort);
 		if (factors.length == 0) {
 			if (SmtSortUtils.isIntSort(sort)) {
-				return script.numeral(BigInteger.ONE);
+				return SmtUtils.constructIntValue(script, BigInteger.ONE);
 			} else if (SmtSortUtils.isRealSort(sort)) {
 				return script.decimal(BigDecimal.ONE);
 			} else if (SmtSortUtils.isBitvecSort(sort)) {
@@ -1330,7 +1330,7 @@ public final class SmtUtils {
 			if (affineDivident.isConstant()) {
 				final BigInteger bigIntDivident = toInt(affineDivident.getConstant());
 				final BigInteger modulus = BoogieUtils.euclideanMod(bigIntDivident, bigIntDivisor);
-				return script.numeral(modulus);
+				return constructIntValue(script, modulus);
 			}
 			final Term simplifiedNestedModulo = simplifyNestedModulo(script, divident, bigIntDivisor);
 			if (simplifiedNestedModulo == null) {
@@ -1369,7 +1369,7 @@ public final class SmtUtils {
 							|| bigIntDivisor.mod(bigIntInnerDivisor).equals(BigInteger.ZERO)) {
 						final BigInteger min = bigIntInnerDivisor.min(bigIntDivisor);
 						final Term innerDivisor = appTerm.getParameters()[0];
-						final Term result = mod(script, innerDivisor, script.numeral(min));
+						final Term result = mod(script, innerDivisor, SmtUtils.constructIntValue(script, min));
 						return result;
 					}
 				}
@@ -1737,5 +1737,13 @@ public final class SmtUtils {
 		} else {
 			throw new AssertionError("unknown quantifier");
 		}
+	}
+	
+	/**
+	 * This is an (the) alternative to script.numeral that constructs an integer
+	 * constant that respects the UltimateNormalForm. See {@link UltimateNormalFormUtils}.
+	 */
+	public static Term constructIntValue(final Script script, final BigInteger number) {
+		return Rational.valueOf(number, BigInteger.ONE).toTerm(SmtSortUtils.getIntSort(script));
 	}
 }
