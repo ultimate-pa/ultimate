@@ -1,11 +1,9 @@
-//#Unsafe
+//#Safe
 
 procedure ULTIMATE.start()
 {
         var x : int;
 
         assume x == 3;
-
-        assert true;
-        assert x != 3;
+        assert x == 3;
 }
