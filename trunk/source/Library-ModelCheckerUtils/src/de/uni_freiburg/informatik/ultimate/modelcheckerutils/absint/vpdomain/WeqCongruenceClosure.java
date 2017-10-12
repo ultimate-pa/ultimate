@@ -837,12 +837,10 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 
 	@Override
 	protected Set<NODE> getNodesToIntroduceBeforeRemoval(final NODE elemToRemove,
-//			final boolean elemToRemoveIsAppliedFunctionNotArgument,
 			final Map<NODE, NODE> elemToRemoveToReplacement) {
 		final boolean stopAtFirst = false;
 
 	    final Set<NODE> replByFwcc = super.getNodesToIntroduceBeforeRemoval(elemToRemove,
-//	    		elemToRemoveIsAppliedFunctionNotArgument,
 	    		elemToRemoveToReplacement);
 
 
@@ -866,6 +864,19 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 
 		final Set<NODE> result = new HashSet<>();
 
+		/*
+		 * we may need this later if i is also scheduled for removal
+		 */
+		final boolean iToBeRemovedToo = elemToRemoveToReplacement.keySet().contains(elemToRemove.getArgument());
+		final NODE jEqualToI =
+				getOtherEquivalenceClassMember(elemToRemove.getArgument(), elemToRemoveToReplacement.keySet());
+		if (iToBeRemovedToo && jEqualToI == null) {
+			// no way of introducing a b[j] because we cannot find a j (and i is being removed, too..)
+			return Collections.emptySet();
+		}
+		// a node equal to i
+		final NODE j = iToBeRemovedToo ? jEqualToI : elemToRemove.getArgument();
+
 		// forall b --Phi(q)-- a
 		for (final Entry<NODE, WeakEquivalenceGraph<NODE>.WeakEquivalenceEdgeLabel> edge
 				: mWeakEquivalenceGraph.getAdjacentWeqEdges(elemToRemove.getAppliedFunction()).entrySet()) {
@@ -886,7 +897,8 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 			 */
 			if (projectedLabel.isEmpty()) {
 				final NODE bi = mFactory.getEqNodeAndFunctionFactory()
-						.getOrConstructFuncAppElement(edge.getKey(), elemToRemove.getArgument());
+						.getOrConstructFuncAppElement(edge.getKey(), j);
+//								elemToRemove.getArgument());
 				assert !mElementCurrentlyBeingRemoved.getRemovedElements().contains(bi);
 				elemToRemoveToReplacement.put(elemToRemove, bi);
 				return Collections.singleton(bi);
@@ -905,13 +917,21 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 				DataStructureUtils.intersection(l.getAllElements(), mFactory.getAllWeqNodes()).isEmpty());
 
 
-			final NODE bi = mFactory.getEqNodeAndFunctionFactory()
-						.getOrConstructFuncAppElement(edge.getKey(), elemToRemove.getArgument());
-			assert !mElementCurrentlyBeingRemoved.getRemovedElements().contains(bi);
+			final NODE bi = mFactory.getEqNodeAndFunctionFactory() .getOrConstructFuncAppElement(edge.getKey(), j);
+//								elemToRemove.getArgument());
+
+//			if (elemToRemoveToReplacement.keySet().contains(bi)) {
+//				// bi is scheduled to be removed, can we find a j with i ~ j?
+//				getOtherEquivalenceClassMember(, elemToRemoveToReplacement.keySet())
+//
+//
+//			}
 
 			if (stopAtFirst) {
+				assert !mElementCurrentlyBeingRemoved.getRemovedElements().contains(bi);
 				return Collections.singleton(bi);
 			}
+			assert !mElementCurrentlyBeingRemoved.getRemovedElements().contains(bi);
 			result.add(bi);
 
 //			// does the weak equivalence edge allow propagation of a[i] ~ b[j]? in case add b[j]
