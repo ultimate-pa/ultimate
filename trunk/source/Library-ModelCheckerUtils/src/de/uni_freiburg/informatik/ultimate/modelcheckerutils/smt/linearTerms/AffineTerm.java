@@ -45,11 +45,11 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 
 /**
  * This represents an affine term in the form of
- * 
+ *
  * <pre>
  * Σ c_i * x_i + c,
  * </pre>
- * 
+ *
  * where c_i, c are rational constants and x_i are variables. The variables x_i can be either TermVariables or array
  * read expressions.
  *
@@ -219,7 +219,7 @@ public class AffineTerm extends Term {
 
 	/**
 	 * Use modulo operation to bring Rational in the range of representable values.
-	 * 
+	 *
 	 * @param bv
 	 *            Rational that represents a bitvector
 	 * @param sort
@@ -294,7 +294,7 @@ public class AffineTerm extends Term {
 
 	/**
 	 * Transforms this AffineTerm into a Term that is supported by the solver.
-	 * 
+	 *
 	 * @param script
 	 *            Script for that this term is constructed.
 	 */
@@ -374,5 +374,51 @@ public class AffineTerm extends Term {
 		final Rational constant =
 				SmtUtils.toRational(BoogieUtils.euclideanMod(SmtUtils.toInt(affineTerm.getConstant()), divident));
 		return new AffineTerm(affineTerm.getSort(), terms, coefficients, constant);
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + (mConstant == null ? 0 : mConstant.hashCode());
+		result = prime * result + (mSort == null ? 0 : mSort.hashCode());
+		result = prime * result + (mVariable2Coefficient == null ? 0 : mVariable2Coefficient.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (!(obj instanceof AffineTerm)) {
+			return false;
+		}
+		final AffineTerm other = (AffineTerm) obj;
+		if (mConstant == null) {
+			if (other.mConstant != null) {
+				return false;
+			}
+		} else if (!mConstant.equals(other.mConstant)) {
+			return false;
+		}
+		if (mSort == null) {
+			if (other.mSort != null) {
+				return false;
+			}
+		} else if (!mSort.equals(other.mSort)) {
+			return false;
+		}
+		if (mVariable2Coefficient == null) {
+			if (other.mVariable2Coefficient != null) {
+				return false;
+			}
+		} else if (!mVariable2Coefficient.equals(other.mVariable2Coefficient)) {
+			return false;
+		}
+		return true;
 	}
 }
