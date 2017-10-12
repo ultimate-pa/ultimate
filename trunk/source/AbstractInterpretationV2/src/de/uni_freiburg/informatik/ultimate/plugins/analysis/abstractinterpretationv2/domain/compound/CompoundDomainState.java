@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractDom
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 /**
@@ -207,9 +208,8 @@ public class CompoundDomainState implements IAbstractState<CompoundDomainState> 
 		if (mAbstractStates.size() == 1) {
 			return mAbstractStates.iterator().next().getTerm(script);
 		}
-
-		return script.term("and",
-				mAbstractStates.stream().map(state -> state.getTerm(script)).toArray(i -> new Term[i]));
+		return SmtUtils.and(script,
+				mAbstractStates.stream().map(state -> state.getTerm(script)).collect(Collectors.toSet()));
 	}
 
 	@Override
