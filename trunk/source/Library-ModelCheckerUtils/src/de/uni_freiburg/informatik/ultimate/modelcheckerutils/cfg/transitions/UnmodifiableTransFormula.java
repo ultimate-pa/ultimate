@@ -51,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.Progr
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ConstantFinder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.UltimateNormalFormUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
@@ -88,6 +89,7 @@ public class UnmodifiableTransFormula extends TransFormula implements Serializab
 			final Set<TermVariable> auxVars, final Set<TermVariable> branchEncoders, final Infeasibility infeasibility,
 			final ManagedScript script) {
 		super(inVars, outVars, auxVars, nonTheoryConsts);
+		assert UltimateNormalFormUtils.respectsUltimateNormalForm(formula) : "Term not in UltimateNormalForm";
 		mFormula = formula;
 		mBranchEncoders = branchEncoders;
 		mInfeasibility = infeasibility;
