@@ -227,7 +227,7 @@ public class RewriteDivision extends TransformerPreprocessor {
 		 */
 		private Term computeDivAuxTerms(final Term dividend, final Term divisor, final TermVariable quotientAuxVar) {
 			final Term[] disjuncts = new Term[2];
-			final Term one = mScript.numeral(BigInteger.ONE);
+			final Term one = SmtUtils.constructIntValue(mScript, BigInteger.ONE);
 			final Term minusOne = mScript.term("-", one);
 			final Term divisorIsNegative = mScript.term("<=", divisor, minusOne);
 			final Term divisorIsPositive = mScript.term(">=", divisor, one);
@@ -261,11 +261,11 @@ public class RewriteDivision extends TransformerPreprocessor {
 		private Term computeModAuxTerms(final Term dividend, final Term divisor, final TermVariable quotientAuxVar,
 				final TermVariable remainderAuxVar) {
 			final Term[] disjuncts = new Term[2];
-			final Term one = mScript.numeral(BigInteger.ONE);
+			final Term one = SmtUtils.constructIntValue(mScript, BigInteger.ONE);
 			final Term minusOne = mScript.term("-", one);
 			final Term divisorIsNegative = mScript.term("<=", divisor, minusOne);
 			final Term divisorIsPositive = mScript.term(">=", divisor, one);
-			final Term zero = mScript.numeral(BigInteger.ZERO);
+			final Term zero = SmtUtils.constructIntValue(mScript, BigInteger.ZERO);
 			final Term isLowerBound = mScript.term("<=", zero, remainderAuxVar);
 			final Term upperBoundPosDivisor = mScript.term("-", divisor, one);
 			final Term isUpperBoundPosDivisor = mScript.term("<=", remainderAuxVar, upperBoundPosDivisor);

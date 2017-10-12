@@ -32,6 +32,7 @@ import java.math.BigInteger;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 
 public abstract class OctTerm {
 
@@ -41,8 +42,8 @@ public abstract class OctTerm {
 	protected final boolean mSecondNegative;
 	protected final Object mValue;
 
-	public OctTerm(Object value, TermVariable firstVar, boolean firstNegative, TermVariable secondVar,
-			boolean secondNegative) {
+	public OctTerm(final Object value, final TermVariable firstVar, final boolean firstNegative, final TermVariable secondVar,
+			final boolean secondNegative) {
 		mValue = value;
 		mFirstVar = firstVar;
 		mFirstNegative = firstNegative;
@@ -50,7 +51,7 @@ public abstract class OctTerm {
 		mSecondNegative = secondNegative;
 	}
 
-	public OctTerm(Object value, TermVariable firstVar, boolean firstNegative) {
+	public OctTerm(final Object value, final TermVariable firstVar, final boolean firstNegative) {
 		mValue = value;
 		mFirstVar = firstVar;
 		mFirstNegative = firstNegative;
@@ -65,16 +66,16 @@ public abstract class OctTerm {
 	 *            Script to build Terms
 	 * @return Fresh Term representing the OctTerm
 	 */
-	public Term toTerm(Script script) {
+	public Term toTerm(final Script script) {
 		final Term leftTerm = leftTerm(script);
 		final Term rightTerm = rightTerm(script);
 		return script.term("<=", leftTerm, rightTerm);
 	}
 
-	protected Term leftTerm(Script script) {
+	protected Term leftTerm(final Script script) {
 		if (isOneVar()) {
-			return script.term("*", isFirstNegative() ? script.numeral(new BigInteger("-2")) : script.numeral("2"),
-					mFirstVar);
+			return script.term("*", isFirstNegative() ? SmtUtils.constructIntValue(script, BigInteger.valueOf(-2))
+					: SmtUtils.constructIntValue(script, BigInteger.valueOf(2)), mFirstVar);
 
 		} else {
 			return script.term("+", isFirstNegative() ? script.term("*", script.decimal("-1"), mFirstVar) : mFirstVar,

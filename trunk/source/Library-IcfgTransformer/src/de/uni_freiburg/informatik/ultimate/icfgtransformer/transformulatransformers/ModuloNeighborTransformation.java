@@ -122,7 +122,7 @@ public class ModuloNeighborTransformation extends TransitionPreprocessor {
 	}
 
 	private Term constructInRangeBounds(final Script script, final Term dividend, final Term divisor) {
-		final Term geqZero = script.term("<=", script.numeral(BigInteger.ZERO), dividend);
+		final Term geqZero = script.term("<=", SmtUtils.constructIntValue(script, BigInteger.ZERO), dividend);
 		final Term ltDivisor = script.term("<", dividend, divisor);
 		return script.term("and", geqZero, ltDivisor);
 	}
@@ -133,7 +133,7 @@ public class ModuloNeighborTransformation extends TransitionPreprocessor {
 
 	private Term constructLeftIntervalBounds(final Script script, final Term dividend, final Term divisor) {
 		final Term geqLeftBound = script.term("<=", script.term("-", divisor), dividend);
-		final Term ltZero = script.term("<", dividend, script.numeral(BigInteger.ZERO));
+		final Term ltZero = script.term("<", dividend, SmtUtils.constructIntValue(script, BigInteger.ZERO););
 		return script.term("and", geqLeftBound, ltZero);
 	}
 

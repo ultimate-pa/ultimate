@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
@@ -111,7 +112,7 @@ public class RewriteStrictInequalities extends TransformerPreprocessor {
 			if (!SmtSortUtils.isIntSort(appTerm.getParameters()[0].getSort())) {
 				return null;
 			}
-			final Term one = mScript.numeral(BigInteger.ONE);
+			final Term one = SmtUtils.constructIntValue(mScript, BigInteger.ONE);
 			Term result;
 			if (functionSymbolName.equals("<")) {
 				result = mScript.term("<=", mScript.term("+", appTerm.getParameters()[0], one),

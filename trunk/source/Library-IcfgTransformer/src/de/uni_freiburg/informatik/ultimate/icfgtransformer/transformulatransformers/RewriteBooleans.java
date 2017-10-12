@@ -35,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.ReplacementVarUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
@@ -84,7 +85,7 @@ public class RewriteBooleans extends RewriteTermVariables {
 
 	@Override
 	protected Term constructReplacementTerm(final TermVariable tv) {
-		final Term one = mScript.getScript().numeral(BigInteger.ONE);
+		final Term one = SmtUtils.constructIntValue(mScript.getScript(), BigInteger.ONE);
 		final Term repTerm = mScript.getScript().term(">=", tv, one);
 		return repTerm;
 	}
@@ -101,8 +102,8 @@ public class RewriteBooleans extends RewriteTermVariables {
 	protected Term constructNewDefinitionForRankVar(final IProgramVar oldRankVar) {
 		final Term booleanTerm = ReplacementVarUtils.getDefinition(oldRankVar);
 		assert isBool(booleanTerm);
-		final Term one = mScript.getScript().numeral(BigInteger.ONE);
-		final Term zero = mScript.getScript().numeral(BigInteger.ZERO);
+		final Term one = SmtUtils.constructIntValue(mScript.getScript(), BigInteger.ONE);
+		final Term zero = SmtUtils.constructIntValue(mScript.getScript(), BigInteger.ZERO);
 		return mScript.getScript().term("ite", booleanTerm, one, zero);
 	}
 
