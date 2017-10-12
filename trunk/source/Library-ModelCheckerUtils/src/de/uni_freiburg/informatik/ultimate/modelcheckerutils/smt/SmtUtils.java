@@ -101,7 +101,7 @@ public final class SmtUtils {
 	 * Has problems with {@link ElimStore3}. Set to true once 
 	 * {@link ElimStore3} has been replace by {@link ElimStorePlain}.
 	 */
-	private static final boolean FLATTEN_ARRAY_TERMS = false;
+	private static final boolean FLATTEN_ARRAY_TERMS = true;
 	
 	
 
