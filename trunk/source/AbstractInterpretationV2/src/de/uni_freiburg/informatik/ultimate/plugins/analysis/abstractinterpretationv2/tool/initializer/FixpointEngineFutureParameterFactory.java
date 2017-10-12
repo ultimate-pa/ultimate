@@ -21,9 +21,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.ILoopDetector;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.ITransitionProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.generic.LiteralCollection;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.FutureRcfgVariableProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.IcfgAbstractStateStorageProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgDebugHelper;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgVariableProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.empty.EmptyDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.dataflow.DataflowDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.livevariable.LiveVariableDomain;
@@ -53,7 +53,7 @@ public class FixpointEngineFutureParameterFactory {
 		final IAbstractStateStorage<STATE, IcfgEdge, IcfgLocation> storageProvider =
 				new IcfgAbstractStateStorageProvider<>(mServices, transitionProvider);
 		final IVariableProvider<STATE, IcfgEdge> variableProvider =
-				new FutureRcfgVariableProvider<>(mRoot.getCfgSmtToolkit().getSymbolTable(), mServices);
+				new RcfgVariableProvider<>(mRoot.getCfgSmtToolkit(), mServices);
 		final IDebugHelper<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> debugHelper =
 				new RcfgDebugHelper<>(mRoot.getCfgSmtToolkit(), mServices, mRoot.getCfgSmtToolkit().getSymbolTable());
 
@@ -71,7 +71,7 @@ public class FixpointEngineFutureParameterFactory {
 		final IAbstractStateStorage<STATE, IcfgEdge, IcfgLocation> storageProvider =
 				new IcfgAbstractStateStorageProvider<>(mServices, transitionProvider);
 		final IVariableProvider<STATE, IcfgEdge> variableProvider =
-				new FutureRcfgVariableProvider<>(mRoot.getCfgSmtToolkit().getSymbolTable(), mServices);
+				new RcfgVariableProvider<>(mRoot.getCfgSmtToolkit(), mServices);
 		final IDebugHelper<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> debugHelper =
 				new RcfgDebugHelper<>(mRoot.getCfgSmtToolkit(), mServices, mRoot.getCfgSmtToolkit().getSymbolTable());
 		return new FixpointEngineParameters<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation>(mServices,
@@ -88,7 +88,7 @@ public class FixpointEngineFutureParameterFactory {
 		final IAbstractStateStorage<STATE, IcfgEdge, IcfgLocation> storageProvider =
 				new IcfgAbstractStateStorageProvider<>(mServices, transitionProvider);
 		final IVariableProvider<STATE, IcfgEdge> variableProvider =
-				new FutureRcfgVariableProvider<>(mRoot.getCfgSmtToolkit().getSymbolTable(), mServices);
+				new RcfgVariableProvider<>(mRoot.getCfgSmtToolkit(), mServices);
 		final IDebugHelper<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> debugHelper =
 				new RcfgDebugHelper<>(mRoot.getCfgSmtToolkit(), mServices, mRoot.getCfgSmtToolkit().getSymbolTable());
 		return params.setStorage(storageProvider).setVariableProvider(variableProvider).setDebugHelper(debugHelper)
@@ -116,7 +116,7 @@ public class FixpointEngineFutureParameterFactory {
 		final IAbstractStateStorage<STATE, IcfgEdge, IcfgLocation> storageProvider =
 				new IcfgAbstractStateStorageProvider<>(mServices, transitionProvider);
 		final IVariableProvider<STATE, IcfgEdge> variableProvider =
-				new FutureRcfgVariableProvider<>(mRoot.getCfgSmtToolkit().getSymbolTable(), mServices);
+				new RcfgVariableProvider<>(mRoot.getCfgSmtToolkit(), mServices);
 		final IDebugHelper<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> debugHelper =
 				new RcfgDebugHelper<>(mRoot.getCfgSmtToolkit(), mServices, mRoot.getCfgSmtToolkit().getSymbolTable());
 		return new FixpointEngineParameters<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation>(mServices,

@@ -101,6 +101,7 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE>, ACTIO
 	private final ManagedScript mManagedScript;
 	private final SdHoareTripleChecker mHtcSd;
 	private final boolean mOnlyAbsInt;
+	private final boolean mUseHierachicalPre;
 
 	public AbsIntHoareTripleChecker(final ILogger logger, final IUltimateServiceProvider services,
 			final IAbstractDomain<STATE, ACTION> domain, final IVariableProvider<STATE, ACTION> varProvider,
@@ -108,10 +109,7 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE>, ACTIO
 		mServices = services;
 		mLogger = Objects.requireNonNull(logger);
 		mDomain = Objects.requireNonNull(domain);
-		if (mDomain.useHierachicalPre()) {
-			throw new UnsupportedOperationException(
-					"AbsIntHoareTripleChecker does not support domains that require hierachical pre states in their post operator");
-		}
+		mUseHierachicalPre = mDomain.useHierachicalPre();
 
 		mPostOp = Objects.requireNonNull(mDomain.getPostOperator());
 		mPredicateUnifier = Objects.requireNonNull(predicateUnifer);
@@ -268,8 +266,12 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE>, ACTIO
 		final DisjunctiveAbstractState<STATE> validPreBL = createValidPostOpStateBeforeLeaving(action, pre);
 		final DisjunctiveAbstractState<STATE> validPreHier =
 				createValidPostOpStateBeforeLeaving(correspondingCall, preHier);
-		final DisjunctiveAbstractState<STATE> validPreAL =
-				createValidPostOpStateAfterLeaving(action, validPreBL, validPreHier);
+		final DisjunctiveAbstractState<STATE> validPreAL;
+		if (mUseHierachicalPre) {
+			validPreAL = createValidPostOpStateHierachicalPre(action, validPreBL, validPreHier);
+		} else {
+			validPreAL = createValidPostOpStateAfterLeaving(action, validPreBL, validPreHier);
+		}
 
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("PreBL: " + validPreBL.toLogString());
@@ -444,6 +446,16 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE>, ACTIO
 		assert assertBottomRetained(preState, preHierState, rtr, () -> unifiedPreState
 				.createValidPostOpStateAfterLeaving(mVarProvider, act, unifiedPreHierState)) : MSG_BOTTOM_WAS_LOST;
 		return rtr;
+	}
+
+	private DisjunctiveAbstractState<STATE> createValidPostOpStateHierachicalPre(final ACTION act,
+			final DisjunctiveAbstractState<STATE> preState, final DisjunctiveAbstractState<STATE> preHierState) {
+
+		final DisjunctiveAbstractState<STATE> unifiedPreState = unifyBottom(preState);
+		if (unifiedPreState == mBottomState) {
+			return unifiedPreState;
+		}
+		return unifyBottom(preHierState);
 	}
 
 	private DisjunctiveAbstractState<STATE> reducePreState(final DisjunctiveAbstractState<STATE> validPreState,

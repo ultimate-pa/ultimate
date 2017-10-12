@@ -67,10 +67,7 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 
 	private final ManagedScript mMgdScript;
 
-	private final PredicateTransformer<
-		EqDisjunctiveConstraint<EqNode>,
-		EqPredicate,
-		EqTransitionRelation> mPredicateTransformer;
+	private final PredicateTransformer<EqDisjunctiveConstraint<EqNode>, EqPredicate, EqTransitionRelation> mPredicateTransformer;
 
 	/**
 	 * used for sanity/soundness checks only
@@ -105,14 +102,12 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 		mServices = services;
 		mLogger = logger;
 
-		mPredicateTransformer = new PredicateTransformer<>(mMgdScript,new EqOperationProvider(eqConstraintFactory));
+		mPredicateTransformer = new PredicateTransformer<>(mMgdScript, new EqOperationProvider(eqConstraintFactory));
 		mTransFormulaConverter =
-				new TransFormulaConverterCache(mServices, mMgdScript, mEqNodeAndFunctionFactory,
-						mEqConstraintFactory);
+				new TransFormulaConverterCache(mServices, mMgdScript, mEqNodeAndFunctionFactory, mEqConstraintFactory);
 
-
-		mDoubleCheckPredicateTransformer = new PredicateTransformer<>(mMgdScript,
-				new TermDomainOperationProvider(mServices, mMgdScript));
+		mDoubleCheckPredicateTransformer =
+				new PredicateTransformer<>(mMgdScript, new TermDomainOperationProvider(mServices, mMgdScript));
 		mDoubleCheckImplicationChecker = new MonolithicImplicationChecker(mServices, mMgdScript);
 	}
 
@@ -138,34 +133,31 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 	}
 
 	/**
-	 * Convert an EqDisjunctiveConstraints to a corresponding set of EqStates. (Assumes that all the TermVariables
-	 *  and nullary ApplicationTerms in this.mConstraints have a symbol table entry.)
+	 * Convert an EqDisjunctiveConstraints to a corresponding set of EqStates. (Assumes that all the TermVariables and
+	 * nullary ApplicationTerms in this.mConstraints have a symbol table entry.)
+	 * 
 	 * @param variablesThatTheFrameworkLikesToSee
 	 * @return
 	 */
 	public List<EqState> toEqStates(final EqDisjunctiveConstraint<EqNode> disjunctiveConstraint,
 			final Set<IProgramVarOrConst> variablesThatTheFrameworkLikesToSee) {
-//		/*
-//		 *  The AbstractInterpretation framework demands that all EqStates here have the same Pvocs
-//		 *  Thus we set the Pvocs of all the disjunct-states to be the union of the pvocs that each
-//		 *  disjunct-state/constraint talks about.
-		  // EDIT: the variables are now determined externally (by the oldstate of the post operator..)
-//		 */
+		// /*
+		// * The AbstractInterpretation framework demands that all EqStates here have the same Pvocs
+		// * Thus we set the Pvocs of all the disjunct-states to be the union of the pvocs that each
+		// * disjunct-state/constraint talks about.
+		// EDIT: the variables are now determined externally (by the oldstate of the post operator..)
+		// */
 		return disjunctiveConstraint.getConstraints().stream()
-			.map(cons -> mEqStateFactory.getEqState(cons, variablesThatTheFrameworkLikesToSee))
-			.collect(Collectors.toList());
+				.map(cons -> mEqStateFactory.getEqState(cons, variablesThatTheFrameworkLikesToSee))
+				.collect(Collectors.toList());
 	}
-
-
-
 
 	private boolean preciseStrongestPostImpliesAbstractPost(final EqState oldState, final ACTION transition,
 			final IPredicate postConstraint) {
 
 		final Term spPrecise = mDoubleCheckPredicateTransformer.strongestPostcondition(oldState.toEqPredicate(),
 				transition.getTransformula());
-		final EqPredicate spPred =
-				mEqStateFactory.termToPredicate(spPrecise, postConstraint);
+		final EqPredicate spPred = mEqStateFactory.termToPredicate(spPrecise, postConstraint);
 
 		final Validity icRes = mDoubleCheckImplicationChecker.checkImplication(spPred, false, postConstraint, false);
 		assert icRes != Validity.INVALID : "soundness check failed!";
@@ -173,12 +165,14 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 	}
 
 	@Override
-	public List<EqState> apply(final EqState stateBeforeLeaving,
-			final EqState hierarchicalPrestate, final ACTION transition) {
-		assert hierarchicalPrestate.getVariables()
-				.containsAll(mCfgSmtToolkit.getSymbolTable().getGlobals());
-		assert hierarchicalPrestate.getVariables()
-				.containsAll(mCfgSmtToolkit.getSymbolTable().getLocals(transition.getSucceedingProcedure()));
+	public List<EqState> apply(final EqState stateBeforeLeaving, final EqState hierarchicalPrestate,
+			final ACTION transition) {
+		// DD: You should not require having all variables of the current scope, only variables occuring in the
+		// transition are necessary
+		// assert hierarchicalPrestate.getVariables()
+		// .containsAll(mCfgSmtToolkit.getSymbolTable().getGlobals());
+		// assert hierarchicalPrestate.getVariables()
+		// .containsAll(mCfgSmtToolkit.getSymbolTable().getLocals(transition.getSucceedingProcedure()));
 
 		if (!mPreAnalysis.getServices().getProgressMonitorService().continueProcessing()) {
 			return toEqStates(mEqConstraintFactory.getTopDisjunctiveConstraint(), hierarchicalPrestate.getVariables());
@@ -199,9 +193,9 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 			final Set<IProgramNonOldVar> modifiableGlobalsOfCalledProcedure =
 					mCfgSmtToolkit.getModifiableGlobalsTable().getModifiedBoogieVars(calledProcedure);
 
-			final EqDisjunctiveConstraint<EqNode> postConstraint = mPredicateTransformer
-					.strongestPostconditionCall(stateBeforeLeaving.toEqPredicate(), localVarAssignments,
-							globalVarAssignments, oldVarAssignments, modifiableGlobalsOfCalledProcedure);
+			final EqDisjunctiveConstraint<EqNode> postConstraint = mPredicateTransformer.strongestPostconditionCall(
+					stateBeforeLeaving.toEqPredicate(), localVarAssignments, globalVarAssignments, oldVarAssignments,
+					modifiableGlobalsOfCalledProcedure);
 			final List<EqState> result = toEqStates(postConstraint, hierarchicalPrestate.getVariables());
 			return result;
 		} else if (transition instanceof IReturnAction) {
@@ -209,14 +203,13 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 			final EqPredicate returnPred = stateBeforeLeaving.toEqPredicate();
 
 			final Set<IProgramVar> oldVars =
-					hierarchicalPrestate.getConstraint().getVariables(mCfgSmtToolkit.getSymbolTable())
-							.stream().filter(var -> var.isOldvar()).collect(Collectors.toSet());
+					hierarchicalPrestate.getConstraint().getVariables(mCfgSmtToolkit.getSymbolTable()).stream()
+							.filter(var -> var.isOldvar()).collect(Collectors.toSet());
 			final Set<TermVariable> ovTvs =
 					oldVars.stream().map(ov -> ov.getTermVariable()).collect(Collectors.toSet());
-			final EqConstraint<EqNode> projectedCons = mEqConstraintFactory.projectExistentially(ovTvs,
-					hierarchicalPrestate.getConstraint());
-			final EqState hier = mEqStateFactory.getEqState(projectedCons,
-					hierarchicalPrestate.getVariables());
+			final EqConstraint<EqNode> projectedCons =
+					mEqConstraintFactory.projectExistentially(ovTvs, hierarchicalPrestate.getConstraint());
+			final EqState hier = mEqStateFactory.getEqState(projectedCons, hierarchicalPrestate.getVariables());
 
 			final EqPredicate callPred = hier.toEqPredicate();
 
@@ -230,9 +223,8 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 			final Set<IProgramNonOldVar> modifiableGlobals = mCfgSmtToolkit.getModifiableGlobalsTable()
 					.getModifiedBoogieVars(transition.getPrecedingProcedure());
 
-			final EqDisjunctiveConstraint<EqNode> postConstraint =
-					mPredicateTransformer.strongestPostconditionReturn(returnPred, callPred, returnTF, callTF,
-							oldVarAssignments, modifiableGlobals);
+			final EqDisjunctiveConstraint<EqNode> postConstraint = mPredicateTransformer.strongestPostconditionReturn(
+					returnPred, callPred, returnTF, callTF, oldVarAssignments, modifiableGlobals);
 
 			final List<EqState> result = toEqStates(postConstraint, hierarchicalPrestate.getVariables());
 			return result;
