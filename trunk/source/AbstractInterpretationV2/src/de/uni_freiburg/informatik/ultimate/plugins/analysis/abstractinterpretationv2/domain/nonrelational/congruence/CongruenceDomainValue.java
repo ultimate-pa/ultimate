@@ -9,6 +9,7 @@ import java.util.function.Predicate;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValue;
 
@@ -302,9 +303,9 @@ public final class CongruenceDomainValue
 			return script.term("false");
 		}
 		if (mIsConstant) {
-			return script.term("=", var, script.numeral(mValue));
+			return script.term("=", var, SmtUtils.constructIntValue(script, mValue));
 		}
-		final Term nonZeroTerm = script.term("not", script.term("=", var, script.numeral(BigInteger.ZERO)));
+		final Term nonZeroTerm = script.term("not", script.term("=", var, SmtUtils.constructIntValue(script, BigInteger.ZERO)));
 		if (mValue.equals(BigInteger.ONE)) {
 			if (mNonZero) {
 				return nonZeroTerm;
@@ -312,7 +313,7 @@ public final class CongruenceDomainValue
 			return script.term("true");
 		}
 		final Term modTerm =
-				script.term("=", script.term("mod", var, script.numeral(mValue)), script.numeral(BigInteger.ZERO));
+				script.term("=", script.term("mod", var, SmtUtils.constructIntValue(script, mValue)), SmtUtils.constructIntValue(script, BigInteger.ZERO));
 		if (mNonZero) {
 			return script.term("and", modTerm, nonZeroTerm);
 		}

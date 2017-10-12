@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 
 /**
  * A value in the interval domain for abstract interpretation. This value can be of any numbered type or can be
@@ -275,7 +276,7 @@ public class IntervalValue implements Comparable<IntervalValue> {
 		assert !isInfinity() : "Cannot convert infinity to Term";
 		assert SmtSortUtils.isNumericSort(sort) : "Sort has to be numeric";
 		if (SmtSortUtils.isIntSort(sort)) {
-			return script.numeral(mValue.toBigIntegerExact());
+			return SmtUtils.constructIntValue(script, mValue.toBigIntegerExact());
 		}
 		assert SmtSortUtils.isRealSort(sort) : "Seems that numeric sort now has something different then Int or Real";
 		// has to be real
