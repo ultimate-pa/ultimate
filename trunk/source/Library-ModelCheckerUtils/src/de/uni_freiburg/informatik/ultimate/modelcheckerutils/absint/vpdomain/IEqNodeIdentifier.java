@@ -27,7 +27,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain;
 
-import java.util.Collection;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -43,14 +42,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ICongruenceClosur
  */
 public interface IEqNodeIdentifier<NODE extends IEqNodeIdentifier<NODE>> extends ICongruenceClosureElement<NODE> {
 
-	boolean isDependent();
-
-	/**
-	 * Should only be called if this id is a dependent id. Returns all supporters of this id.
-	 * A supporter is an id that a dependent id depends on.
-	 * @return
-	 */
-	Collection<NODE> getSupportingNodes();
 
 	NODE renameVariables(Map<Term, Term> substitutionMapping);
 

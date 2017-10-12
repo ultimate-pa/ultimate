@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -92,7 +93,7 @@ public abstract class EqNode implements IEqNodeIdentifier<EqNode>, ICongruenceCl
 	}
 
 	@Override
-	public Collection<EqNode> getSupportingNodes() {
+	public Set<EqNode> getSupportingNodes() {
 		// this is the default case NonAtomicBaseNode must override this
 		throw new UnsupportedOperationException("check isDependent first");
 	}

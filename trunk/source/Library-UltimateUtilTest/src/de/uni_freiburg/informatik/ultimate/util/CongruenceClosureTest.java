@@ -881,6 +881,18 @@ class StringCcElement implements ICongruenceClosureElement<StringCcElement>{
 		return null;
 	}
 
+	@Override
+	public boolean isDependent() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public Set<StringCcElement> getSupportingNodes() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 
 
 

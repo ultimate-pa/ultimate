@@ -1647,7 +1647,15 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 	 * @return
 	 */
 	public static <ELEM extends ICongruenceClosureElement<ELEM>> boolean dependsOnAny(final ELEM elem,
+//	public boolean dependsOnAny(final ELEM elem,
 			final Set<ELEM> sub) {
+
+		if (elem.isDependent()) {
+			if (!DataStructureUtils.intersection(elem.getSupportingNodes(), sub).isEmpty()) {
+				return true;
+			}
+		}
+
 		if (sub.contains(elem)) {
 			return true;
 		}

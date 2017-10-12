@@ -827,6 +827,10 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 
 	@Override
 	public boolean removeSingleElement(final NODE elem, final NODE replacement) {
+		if (elem.isDependent()) {
+			mNodeToDependents.removeRangeElement(elem);
+		}
+		mNodeToDependents.removeDomainElement(elem);
 
 		mWeakEquivalenceGraph.projectSingleElement(elem, replacement);
 
@@ -1033,12 +1037,27 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		return false;
 	}
 
+
+//	@Override
+//	public boolean dependsOnAny(final NODE elem, final Set<NODE> sub) {
+//		if (super.dependsOnAny(elem, sub)) {
+//			return true;
+//		}
+//		for (final NODE supporter : sub) {
+//			if (mNodeToDependents.getImage(supporter).contains(elem)) {
+//				return true;
+//			}
+//		}
+//		return false;
+//	}
+
 	@Override
 	protected void registerNewElement(final NODE elem) {
 		super.registerNewElement(elem);
 
 		if (elem.isDependent()) {
 			for (final NODE supp : elem.getSupportingNodes()) {
+				addElementRec(supp);
 				mNodeToDependents.addPair(supp, elem);
 			}
 		}
