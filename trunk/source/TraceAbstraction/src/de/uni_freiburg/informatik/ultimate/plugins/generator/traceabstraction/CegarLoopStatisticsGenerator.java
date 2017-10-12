@@ -173,12 +173,12 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 			if (mAiWeakeningVarsRemovedNum == 0) {
 				return Double.NaN;
 			}
-			return mAiWeakeningVarsRemovedSum / mAiWeakeningVarsRemovedNum;
+			return (double) mAiWeakeningVarsRemovedSum / (double) mAiWeakeningVarsRemovedNum;
 		case AbsIntAvgWeakenedConjuncts:
 			if (mAiWeakeningConjunctReductionNum == 0) {
 				return Double.NaN;
 			}
-			return mAiWeakeningConjunctReductionSum / mAiWeakeningConjunctReductionNum;
+			return (double) mAiWeakeningConjunctReductionSum / (double) mAiWeakeningConjunctReductionNum;
 		case HoareTripleCheckerStatistics:
 			return mEcData;
 		case PredicateUnifierStatistics:

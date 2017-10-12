@@ -27,10 +27,12 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.weakener;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -194,7 +196,7 @@ public class AbsIntPredicateInterpolantSequenceWeakener<STATE extends IAbstractS
 
 		final int numStateVars = preState.getAbstractStates().stream().findFirst()
 				.orElseThrow(() -> new UnsupportedOperationException("No states in preState.")).getVariables().size();
-		final int numRemovedVars = mVarsToKeep.size();
+		final int numRemovedVars = removableOutVars.size();
 		reportWeakeningVarsNumRemoved(numRemovedVars);
 		final int leftVars = numStateVars - numRemovedVars;
 		if (numStateVars == 0 || leftVars == numStateVars) {
@@ -224,6 +226,22 @@ public class AbsIntPredicateInterpolantSequenceWeakener<STATE extends IAbstractS
 
 		final Set<Term> preStateTerms =
 				preState.getAbstractStates().stream().map(s -> s.getTerm(mScript)).collect(Collectors.toSet());
+
+		if (mLogger.isDebugEnabled()) {
+			final Term firstTerm = preStateTerms.toArray(new Term[preStateTerms.size()])[0];
+			final Term[] firstConjs = SmtUtils.getConjuncts(firstTerm);
+			final Stream<Term> conj = Arrays.stream(firstConjs);
+			final String conjString = conj.map(elem -> elem.toString()).collect(Collectors.joining("\n   "));
+			mLogger.debug("PRE CONJUNCTS (" + firstConjs.length + "):");
+			mLogger.debug("   " + conjString);
+
+			final Term secondTerm = terms.toArray(new Term[terms.size()])[0];
+			final Term[] secondConjs = SmtUtils.getConjuncts(secondTerm);
+			final Stream<Term> conjSec = Arrays.stream(secondConjs);
+			final String conjStringSec = conjSec.map(elem -> elem.toString()).collect(Collectors.joining("\n   "));
+			mLogger.debug("POST CONJUNCTS (" + secondConjs.length + "):");
+			mLogger.debug("   " + conjStringSec);
+		}
 
 		final int numberOfConjunctsBeforeWeakening =
 				preStateTerms.stream().mapToInt(term -> SmtUtils.getConjuncts(term).length).sum();
