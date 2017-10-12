@@ -92,8 +92,7 @@ public final class UltimateNormalFormUtils {
 				}
 			}
 		}
-		// FIXME: Implement and enable
-		if (false && term.getFunction().getName().equals("bvand")) {
+		if (term.getFunction().getName().equals("bvand")) {
 			for (final Term param : term.getParameters()) {
 				if (BitvectorUtils.isBitvectorConstant(BigInteger.ZERO, param)) {
 					assert false : "zero is absorbing element of bvand operator";
