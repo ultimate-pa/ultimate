@@ -359,17 +359,26 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		/*
 		 * roweq-1 propagations
 		 */
-		if (array1.isFunctionApplication() && array2.isFunctionApplication()
-				&& hasElements(array1.getArgument(), array2.getArgument())
-				&& getEqualityStatus(array1.getArgument(), array2.getArgument()) == EqualityStatus.EQUAL) {
+//		if (array1.isFunctionApplication() && array2.isFunctionApplication()
+//				&& hasElements(array1.getArgument(), array2.getArgument())
+//				&& getEqualityStatus(array1.getArgument(), array2.getArgument()) == EqualityStatus.EQUAL) {
+		for (final Entry<NODE, NODE> ccc1 : mAuxData.getCcChildren(array1Rep).entrySet()) {
+			for (final Entry<NODE, NODE> ccc2 : mAuxData.getCcChildren(array2Rep).entrySet()) {
+				if (getEqualityStatus(ccc1.getValue(), ccc2.getValue()) != EqualityStatus.EQUAL) {
+					continue;
+				}
 
-			final List<CongruenceClosure<NODE>> shiftedLabelWithException = mWeakEquivalenceGraph
-					.shiftLabelAndAddException(strengthenedEdgeLabelContents, array1.getArgument(),
-						mFactory.getAllWeqVarsNodeForFunction(array1.getAppliedFunction()));
+				final List<CongruenceClosure<NODE>> shiftedLabelWithException = mWeakEquivalenceGraph
+						.shiftLabelAndAddException(strengthenedEdgeLabelContents, ccc1.getValue(),
+								mFactory.getAllWeqVarsNodeForFunction(ccc1.getKey()));
+//						.shiftLabelAndAddException(strengthenedEdgeLabelContents, array1.getArgument(),
+//								mFactory.getAllWeqVarsNodeForFunction(array1.getAppliedFunction()));
 
-			// recursive call
-			reportWeakEquivalenceDoOnlyRoweqPropagations(array1.getAppliedFunction(), array2.getAppliedFunction(),
-					shiftedLabelWithException);
+				// recursive call
+//				reportWeakEquivalenceDoOnlyRoweqPropagations(array1.getAppliedFunction(), array2.getAppliedFunction(),
+				reportWeakEquivalenceDoOnlyRoweqPropagations(ccc1.getKey(), ccc2.getKey(),
+						shiftedLabelWithException);
+			}
 		}
 
 //		assert sanityCheck();

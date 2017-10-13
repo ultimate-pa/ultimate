@@ -492,22 +492,39 @@ public class WeakEquivalenceGraph<//ACTION extends IIcfgTransition<IcfgLocation>
 			&& mPartialArrangement.isRepresentative(sourceAndTarget.getOtherElement());
 		assert !sourceAndTarget.getOneElement().equals(sourceAndTarget.getOtherElement());
 		assert paList.stream().allMatch(l -> l.assertHasOnlyWeqVarConstraints(mFactory.getAllWeqNodes()));
+		assert paList.size() != 1 || !paList.get(0).isTautological() : "catch this case before?";
 
-		WeakEquivalenceEdgeLabel oldLabel = mWeakEquivalenceEdges.get(sourceAndTarget);
-		if (oldLabel == null) {
-			oldLabel = new WeakEquivalenceEdgeLabel();
+		final WeakEquivalenceEdgeLabel oldLabel = mWeakEquivalenceEdges.get(sourceAndTarget);
+
+		if (paList.isEmpty()) {
+			mWeakEquivalenceEdges.put(sourceAndTarget, new WeakEquivalenceEdgeLabel(paList));
+			mArrayEqualities.addPair(sourceAndTarget.getOneElement(), sourceAndTarget.getOtherElement());
+			return oldLabel == null || !oldLabel.isInconsistent();
 		}
 
+		if (oldLabel == null || oldLabel.isTautological()) {
+//			oldLabel = new WeakEquivalenceEdgeLabel();
+			assert paList.size() != 1 || !paList.get(0).isTautological();
+			mWeakEquivalenceEdges.put(sourceAndTarget, new WeakEquivalenceEdgeLabel(paList));
+			return true;
+		}
+
+		final WeakEquivalenceEdgeLabel oldLabelCopy = new WeakEquivalenceEdgeLabel(oldLabel);
+
 		final WeakEquivalenceEdgeLabel labelToStrengthenWith = new WeakEquivalenceEdgeLabel(paList);
-		if (oldLabel.isStrongerThan(labelToStrengthenWith)) {
+		assert labelToStrengthenWith.sanityCheck() : "input label not normalized??";
+
+		labelToStrengthenWith.meetWithGpa();
+		oldLabelCopy.meetWithGpa();
+		if (oldLabelCopy.isStrongerThan(labelToStrengthenWith)) {
 			// nothing to do
 			return false;
 		}
 
-		WeakEquivalenceEdgeLabel strengthenedEdgeLabel = oldLabel.meet(labelToStrengthenWith);
+		WeakEquivalenceEdgeLabel strengthenedEdgeLabel = oldLabelCopy.meet(labelToStrengthenWith);
 
-		// meet with gpa and project afterwards
-		strengthenedEdgeLabel = strengthenedEdgeLabel.meet(Collections.singletonList(mPartialArrangement));
+		// meet with gpa (done before) and project afterwards
+//		strengthenedEdgeLabel = strengthenedEdgeLabel.meet(Collections.singletonList(mPartialArrangement));
 		strengthenedEdgeLabel = strengthenedEdgeLabel.projectToElements(mFactory.getAllWeqNodes());
 
 		// inconsistency check
@@ -544,15 +561,22 @@ public class WeakEquivalenceGraph<//ACTION extends IIcfgTransition<IcfgLocation>
 			&& mPartialArrangement.isRepresentative(sourceAndTarget.getOtherElement());
 		assert sourceAndTarget.getOneElement().getTerm().getSort().equals(sourceAndTarget.getOtherElement().getTerm().getSort());
 
-		return strengthenEdgeLabel(sourceAndTarget, value.getLabelContents());
+		final boolean result = strengthenEdgeLabel(sourceAndTarget, value.getLabelContents());
+		assert sanityCheck();
+		return result;
 	}
 
 	public boolean reportWeakEquivalence(final NODE array1, final NODE array2,
 			final List<CongruenceClosure<NODE>> edgeLabelContents) {
 		assert mPartialArrangement.isRepresentative(array1) && mPartialArrangement.isRepresentative(array2);
+		if (edgeLabelContents.size() == 1 && edgeLabelContents.get(0).isTautological()) {
+			return false;
+		}
 
-		return reportWeakEquivalence(new Doubleton<NODE>(array1, array2),
+		final boolean result = reportWeakEquivalence(new Doubleton<NODE>(array1, array2),
 				new WeakEquivalenceEdgeLabel(edgeLabelContents));
+		assert sanityCheck();
+		return result;
 	}
 
 	public boolean isConstrained(final NODE elem) {
@@ -670,9 +694,12 @@ public class WeakEquivalenceGraph<//ACTION extends IIcfgTransition<IcfgLocation>
 		final CongruenceClosure<NODE> firstWeqVarUnequalArgument = new CongruenceClosure<>();
 		firstWeqVarUnequalArgument.reportDisequality(firstWeqVar, argument);
 		shiftedLabelContents.add(firstWeqVarUnequalArgument);
-
 		assert shiftedLabelContents.stream().allMatch(l -> l.sanityCheckOnlyCc());
-		return shiftedLabelContents;
+
+		final List<CongruenceClosure<NODE>> normalized = mCcManager.filterRedundantCcs(shiftedLabelContents);
+
+		assert normalized.stream().allMatch(l -> l.sanityCheckOnlyCc());
+		return normalized;
 	}
 
 	private boolean sanityCheckNodesNotYetAdded(final Set<NODE> nodesThatHaveBeenAddedDuringProject) {
@@ -1255,7 +1282,7 @@ public class WeakEquivalenceGraph<//ACTION extends IIcfgTransition<IcfgLocation>
 			}
 
 			private WeakEquivalenceEdgeLabel meet(final List<CongruenceClosure<NODE>> paList) {
-				assert sanityCheck();
+				assert sanityCheckDontEnforceProjectToWeqVars(mPartialArrangement);
 				return meetRec(paList);
 			}
 
@@ -1548,6 +1575,7 @@ public class WeakEquivalenceGraph<//ACTION extends IIcfgTransition<IcfgLocation>
 					}
 				}
 
+				// check label normalization
 				if (mLabel.stream().anyMatch(pa -> pa.isTautological()) && mLabel.size() != 1) {
 					assert false : "missing normalization: if there is one 'true' disjunct, we can drop"
 							+ "all other disjuncts";
