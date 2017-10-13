@@ -30,9 +30,12 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.pars
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 import java.util.Stack;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
@@ -59,6 +62,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
@@ -86,7 +91,7 @@ public class HornClauseParserScript extends NoopScript {
 	private int mFreshVarCounter = 0;
 	private final String mFilename;
 	
-	private final Stack<TermVariable> mVariablesStack;
+	private final Set<TermVariable> mVariablesStack;
 
 	public HornClauseParserScript(final String filename, final ManagedScript smtSolverScript, final String logic,
 			final Settings settings) {
@@ -98,13 +103,11 @@ public class HornClauseParserScript extends NoopScript {
 		mDeclaredPredicateSymbols = new HashSet<>();
 
 		mParsedHornClauses = new ArrayList<>();
-//		mCurrentPredicateAtoms = new ArrayList<>();
-//		mCurrentTransitionAtoms = new ArrayList<>();
 
 		mSymbolTable = new HCSymbolTable(mBackendSmtSolver);
 
 
-		mVariablesStack = new Stack<>();
+		mVariablesStack = new HashSet<>();
 		mUnletter = new FormulaUnLet(UnletType.EXPAND_DEFINITIONS);
 
 	}
@@ -206,27 +209,38 @@ public class HornClauseParserScript extends NoopScript {
 	 * getTheory().and(terms.toArray(new Term[] {})); else return getTheory().mTrue; } if
 	 * (!predicates.containsKey(term.getFunction().getName())) { return term; } return getTheory().mTrue; }
 	 */
+	
+	private Map<TermVariable, TermVariable> getTempVariablesMap(final QuantifiedFormula term) {
+
+		final Map<TermVariable, TermVariable> tempVars = new HashMap<>();
+		for (final TermVariable var : term.getVariables()) {
+			if (mVariablesStack.contains(var)) {
+				final TermVariable versionedVar = mSymbolTable.createFreshVersion(var);
+				tempVars.put(var, versionedVar);
+				mVariablesStack.add(versionedVar);
+				// mVariablesStack.put(var, mSymbolTable.) Construct a fresh copy of var
+			} else {
+				mVariablesStack.add(var);
+			}
+		}
+		return tempVars;
+	}
+	
+	private void resetTempVariables(final QuantifiedFormula term, final Map<TermVariable, TermVariable> tempVars) {
+		for (final TermVariable var : term.getVariables()) {
+			mVariablesStack.remove(var);
+		}
+		for (final Entry<TermVariable, TermVariable> oldvar : tempVars.entrySet()) {
+			mVariablesStack.remove(oldvar.getKey());
+			//mVariablesStack.put(oldvar.getKey(), oldvar.getValue());
+		}
+	}
 
 	private HornClauseCobody parseCobody(final Term term) throws SMTLIBException {
-		//final ApplicationTerm t = (ApplicationTerm) term;
 
 		if (term instanceof ApplicationTerm && ((ApplicationTerm) term).getFunction().getName().equals("and")) {
 			// t = And (y1 y2 ... yn)
 			final HornClauseCobody tail = new HornClauseCobody(this);
-			/*
-			for (final Term literal : t.getParameters()) {
-				final ApplicationTerm par = (ApplicationTerm) literal;
-				if (mDeclaredPredicateSymbols.contains(par.getFunction().getName())) {
-					// yi = I
-					tail.addPredicate(par);
-				} else if (par.getFunction().getName().equals("not") && mDeclaredPredicateSymbols
-						.contains(((ApplicationTerm) par.getParameters()[0]).getFunction().getName())) {
-					throw new SMTLIBException("The cobody has a negative predicate.");
-				} else {
-					// yi = formula
-					tail.addTransitionFormula(par);
-				}
-			}*/
 			for (final Term literal : ((ApplicationTerm) term).getParameters()) {
 				tail.mergeCobody(parseCobody(literal));
 			}
@@ -240,12 +254,14 @@ public class HornClauseParserScript extends NoopScript {
 				isUninterpretedPredicateSymbol((((ApplicationTerm) ((ApplicationTerm) term).getParameters()[0]).getFunction()))) {
 			throw new SMTLIBException("The cobody has a negative predicate.");
 		} else if (term instanceof QuantifiedFormula){
-			for (final TermVariable var : ((QuantifiedFormula) term).getFreeVars()) {
-				mVariablesStack.push(var);
-			}
-			tail.mergeCobody(parseCobody(((QuantifiedFormula) term).getSubformula()));
-			for (final TermVariable var : ((QuantifiedFormula) term).getFreeVars()) {
-				mVariablesStack.pop();
+			final QuantifiedFormula thisTerm = (QuantifiedFormula) term;
+			if (thisTerm.getQuantifier() == FORALL) {
+				final Map<TermVariable, TermVariable> tempVars = getTempVariablesMap(thisTerm);
+				final Substitution subs = new Substitution(this, tempVars);
+				tail.mergeCobody(parseCobody(subs.transform(thisTerm.getSubformula())));
+				resetTempVariables(thisTerm, tempVars);
+			} else {
+				throw new SMTLIBException("Nested exists quantified, ungrammatical");
 			}
 		} else {
 			// yi = formula
@@ -257,8 +273,7 @@ public class HornClauseParserScript extends NoopScript {
 
 	private HornClauseBody parseBody(final Term term) throws SMTLIBException {
 		System.err.println(term);
-		//
-		//final ApplicationTerm t = (ApplicationTerm) term;
+		
 		if (term instanceof ApplicationTerm && ((ApplicationTerm) term).getFunction().getName().equals("=>")) {
 			// implication
 			final HornClauseBody head = parseBody((ApplicationTerm) ((ApplicationTerm) term).getParameters()[1]);
@@ -292,35 +307,26 @@ public class HornClauseParserScript extends NoopScript {
 				}
 			}
 			return head;
-		} //else if (term instanceof ApplicationTerm && !SmtUtils.isFunctionApplication(term, "not")) {
-			//final HornClauseBody body = parseBody((ApplicationTerm) term);
-			//return body;}
-		 else if (term instanceof QuantifiedFormula) {
+		} else if (term instanceof QuantifiedFormula) {
 			final QuantifiedFormula thisTerm = (QuantifiedFormula) term;
-			for (final TermVariable var : thisTerm.getVariables()) {
-				mVariablesStack.push(var);
-			}
-			if (thisTerm.getQuantifier() == FORALL) {
-				final HornClauseBody body = parseBody(thisTerm.getSubformula());
-				return body;
-			}
-			for (final TermVariable var : thisTerm.getVariables()) {
-				mVariablesStack.pop();
-			}
+			final Map<TermVariable, TermVariable> tempVars = getTempVariablesMap((QuantifiedFormula) term);
+			final Substitution subs = new Substitution(this, tempVars);
+			final HornClauseBody body = parseBody(subs.transform(thisTerm.getSubformula()));
+			resetTempVariables(thisTerm, tempVars);
+			return body;
 		} else if (SmtUtils.isFunctionApplication(term, "not")) {
 			final Term nested = ((ApplicationTerm) term).getParameters()[0];
 			if (nested instanceof QuantifiedFormula) {
 				final QuantifiedFormula thisTerm = (QuantifiedFormula) nested;
-				for (final TermVariable var : thisTerm.getVariables()) {
-					mVariablesStack.push(var);
-				}
 				if (thisTerm.getQuantifier() == EXISTS) {
-					final HornClauseCobody cobody = parseCobody(thisTerm.getSubformula());
+					final Map<TermVariable, TermVariable> tempVars = getTempVariablesMap((QuantifiedFormula) term);
+					final Substitution subs = new Substitution(this, tempVars);
+					final HornClauseCobody cobody = parseCobody(subs.transform(thisTerm.getSubformula()));
 					final HornClauseBody body = cobody.negate();
+					resetTempVariables(thisTerm, tempVars);
 					return body;
-				}
-				for (final TermVariable var : thisTerm.getVariables()) {
-					mVariablesStack.pop();
+				} else {
+					throw new SMTLIBException("Unhandled nested negated forall expression, ungrammatical");
 				}
 			}
 		}
@@ -344,30 +350,6 @@ public class HornClauseParserScript extends NoopScript {
 	public LBool assertTerm(final Term rawTerm) throws SMTLIBException {
 
 		final Term term = mUnletter.unlet(rawTerm);
-
-		/*
-		if (term instanceof ApplicationTerm && !SmtUtils.isFunctionApplication(term, "not")) {
-			final HornClauseBody body = parseBody((ApplicationTerm) term);
-			mParsedHornClauses.add(body.convertToHornClause(mBackendSmtSolver, mSymbolTable, this));
-		} else if (term instanceof QuantifiedFormula) {
-			final QuantifiedFormula thisTerm = (QuantifiedFormula) term;
-			if (thisTerm.getQuantifier() == FORALL) {
-				final HornClauseBody body = parseBody((ApplicationTerm) thisTerm.getSubformula());
-				mParsedHornClauses.add(body.convertToHornClause(mBackendSmtSolver, mSymbolTable, this));
-				// System.err.println(mCurrentHornClause.get(mCurrentHornClause.size() - 1));
-			}
-		} else if (SmtUtils.isFunctionApplication(term, "not")) {
-			final Term nested = ((ApplicationTerm) term).getParameters()[0];
-			if (nested instanceof QuantifiedFormula) {
-				final QuantifiedFormula thisTerm = (QuantifiedFormula) nested;
-				if (thisTerm.getQuantifier() == EXISTS) {
-					final HornClauseCobody cobody = parseCobody(thisTerm.getSubformula());
-					final HornClauseBody body = cobody.negate();
-					mParsedHornClauses.add(body.convertToHornClause(mBackendSmtSolver, mSymbolTable, this));
-				}
-			}
-		}
-		*/
 		mVariablesStack.clear();
 		final HornClause parsedQuantification = parseBody(term).convertToHornClause(mBackendSmtSolver, mSymbolTable, this);
 		if (parsedQuantification != null) {
