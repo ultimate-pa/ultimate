@@ -54,11 +54,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SubstitutionWit
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
- * Replace e.g., (x % 256) == y by the following disjunction
- *    (0 <= x && x < 256) && x == y
- * || (-256 <= x && x < 0) && (x + 256) == y
- * || (256 <= x && x < 256 + 256) && (x - 256) == y
- * || (x < -256 || 256 + 256 <= x) && (x % 256) == y
+ * Replace e.g., (x % 256) == y by the following disjunction (0 <= x && x < 256) && x == y || (-256 <= x && x < 0) && (x
+ * + 256) == y || (256 <= x && x < 256 + 256) && (x - 256) == y || (x < -256 || 256 + 256 <= x) && (x % 256) == y
  * 
  * @author Matthias Heizmann
  */
@@ -66,8 +63,8 @@ public class ModuloNeighborTransformation extends TransitionPreprocessor {
 	public static final String DESCRIPTION = "Replace modulo operation by disjunction if divisor is a literal";
 
 	/**
-	 * Use assert statement to check if result is equivalent to the conjunction
-	 * of input term and definition of auxiliary variables.
+	 * Use assert statement to check if result is equivalent to the conjunction of input term and definition of
+	 * auxiliary variables.
 	 */
 	private static final boolean CHECK_RESULT = true;
 
@@ -113,9 +110,8 @@ public class ModuloNeighborTransformation extends TransitionPreprocessor {
 	}
 
 	/**
-	 * Return true if we were able to prove that the result is incorrect. For
-	 * this check we add to the input term the definition of the auxiliary
-	 * variables.
+	 * Return true if we were able to prove that the result is incorrect. For this check we add to the input term the
+	 * definition of the auxiliary variables.
 	 */
 	private boolean isIncorrect(final Script script, final Term input, final Term result) {
 		return LBool.SAT == Util.checkSat(script, script.term("distinct", input, result));
@@ -133,7 +129,7 @@ public class ModuloNeighborTransformation extends TransitionPreprocessor {
 
 	private Term constructLeftIntervalBounds(final Script script, final Term dividend, final Term divisor) {
 		final Term geqLeftBound = script.term("<=", script.term("-", divisor), dividend);
-		final Term ltZero = script.term("<", dividend, SmtUtils.constructIntValue(script, BigInteger.ZERO););
+		final Term ltZero = script.term("<", dividend, SmtUtils.constructIntValue(script, BigInteger.ZERO));
 		return script.term("and", geqLeftBound, ltZero);
 	}
 
@@ -166,24 +162,20 @@ public class ModuloNeighborTransformation extends TransitionPreprocessor {
 		mgdScript.push(this, 1);
 		final Sort intSort = SmtSortUtils.getIntSort(mgdScript);
 		/*
-		 * Problem: nested mod terms
-		 *          the result contains also mod terms we cannot distinguish
-		 *          terms were already processed from those that were not
-		 *          simplification converts result back into input
-		 * Solution: process one after the other replace mod in case 4 by
-		 *          new aux function symbol by mod2, simplify, replace mod2
-		 *          by mod later
+		 * Problem: nested mod terms the result contains also mod terms we cannot distinguish terms were already
+		 * processed from those that were not simplification converts result back into input Solution: process one after
+		 * the other replace mod in case 4 by new aux function symbol by mod2, simplify, replace mod2 by mod later
 		 */
 		mgdScript.declareFun(this, MODULO_REPLACEMENT, new Sort[] { intSort, intSort }, intSort);
 		while (true) {
-			final Set<ApplicationTerm> modTerms = new ApplicationTermFinder(Collections.singleton("mod"), false)
-					.findMatchingSubterms(term);
+			final Set<ApplicationTerm> modTerms =
+					new ApplicationTermFinder(Collections.singleton("mod"), false).findMatchingSubterms(term);
 			if (modTerms.isEmpty()) {
 				break;
 			}
 			if (!mServices.getProgressMonitorService().continueProcessing()) {
 				throw new ToolchainCanceledException(this.getClass(), "removing " + modTerms.size()
-						+ " modulo operations from term of size " + (new DagSizePrinter(term)).toString());
+						+ " modulo operations from term of size " + new DagSizePrinter(term).toString());
 			}
 			ApplicationTerm someModuloTermWithConstantDivisor = null;
 			Term dividend = null;
@@ -192,59 +184,57 @@ public class ModuloNeighborTransformation extends TransitionPreprocessor {
 				assert modTerm.getParameters().length == 2;
 				dividend = modTerm.getParameters()[0];
 				divisor = modTerm.getParameters()[1];
-				if ((divisor instanceof ConstantTerm) && (!APPLY_ONLY_TO_TYPICAL_WRAPAROUD_CONSTANTS
+				if (divisor instanceof ConstantTerm && (!APPLY_ONLY_TO_TYPICAL_WRAPAROUD_CONSTANTS
 						|| isWraparoundConstant((ConstantTerm) divisor))) {
 					someModuloTermWithConstantDivisor = modTerm;
 					break;
-				} else {
-					dividend = null;
-					divisor = null;
 				}
+				dividend = null;
+				divisor = null;
 			}
 			if (someModuloTermWithConstantDivisor == null) {
 				// no mod term with constant divisor left
 				break;
-			} else {
-				final Script script = mgdScript.getScript();
-				final List<Term> cases = new ArrayList<>();
-				{
-					final Map<Term, Term> substitutionMapping = Collections
-							.singletonMap(someModuloTermWithConstantDivisor, constructInRangeResult(dividend));
-					final Term case1 = SmtUtils.and(script, constructInRangeBounds(script, dividend, divisor),
-							new SubstitutionWithLocalSimplification(mgdScript, substitutionMapping).transform(term));
-					cases.add(case1);
-				}
-				{
-					final Map<Term, Term> substitutionMapping = Collections.singletonMap(
-							someModuloTermWithConstantDivisor, constructLeftIntervalResult(script, dividend, divisor));
-					final Term case2 = SmtUtils.and(script, constructLeftIntervalBounds(script, dividend, divisor),
-							new SubstitutionWithLocalSimplification(mgdScript, substitutionMapping).transform(term));
-					cases.add(case2);
-				}
-				{
-					final Map<Term, Term> substitutionMapping = Collections.singletonMap(
-							someModuloTermWithConstantDivisor, constructRightIntervalResult(script, dividend, divisor));
-					final Term case3 = SmtUtils.and(script, constructRightIntervalBounds(script, dividend, divisor),
-							new SubstitutionWithLocalSimplification(mgdScript, substitutionMapping).transform(term));
-					cases.add(case3);
-				}
-				{
-					final Map<Term, Term> substitutionMapping = Collections.singletonMap(
-							someModuloTermWithConstantDivisor,
-							constructNoNeighborIntervalResult(script, dividend, divisor));
-					final Term case4 = SmtUtils.and(script, constructNoNeighborIntervalBounds(script, dividend, divisor),
-							new SubstitutionWithLocalSimplification(mgdScript, substitutionMapping).transform(term));
-					cases.add(case4);
-				}
-				term = SmtUtils.or(script, cases);
 			}
+			final Script script = mgdScript.getScript();
+			final List<Term> cases = new ArrayList<>();
+			{
+				final Map<Term, Term> substitutionMapping =
+						Collections.singletonMap(someModuloTermWithConstantDivisor, constructInRangeResult(dividend));
+				final Term case1 = SmtUtils.and(script, constructInRangeBounds(script, dividend, divisor),
+						new SubstitutionWithLocalSimplification(mgdScript, substitutionMapping).transform(term));
+				cases.add(case1);
+			}
+			{
+				final Map<Term, Term> substitutionMapping = Collections.singletonMap(someModuloTermWithConstantDivisor,
+						constructLeftIntervalResult(script, dividend, divisor));
+				final Term case2 = SmtUtils.and(script, constructLeftIntervalBounds(script, dividend, divisor),
+						new SubstitutionWithLocalSimplification(mgdScript, substitutionMapping).transform(term));
+				cases.add(case2);
+			}
+			{
+				final Map<Term, Term> substitutionMapping = Collections.singletonMap(someModuloTermWithConstantDivisor,
+						constructRightIntervalResult(script, dividend, divisor));
+				final Term case3 = SmtUtils.and(script, constructRightIntervalBounds(script, dividend, divisor),
+						new SubstitutionWithLocalSimplification(mgdScript, substitutionMapping).transform(term));
+				cases.add(case3);
+			}
+			{
+				final Map<Term, Term> substitutionMapping = Collections.singletonMap(someModuloTermWithConstantDivisor,
+						constructNoNeighborIntervalResult(script, dividend, divisor));
+				final Term case4 = SmtUtils.and(script, constructNoNeighborIntervalBounds(script, dividend, divisor),
+						new SubstitutionWithLocalSimplification(mgdScript, substitutionMapping).transform(term));
+				cases.add(case4);
+			}
+			term = SmtUtils.or(script, cases);
 
 		}
 		term = SmtUtils.simplify(mgdScript, term, mServices, SimplificationTechnique.SIMPLIFY_DDA);
 
 		while (true) {
-			final Set<ApplicationTerm> auxModTerms = new ApplicationTermFinder(
-					Collections.singleton(MODULO_REPLACEMENT), false).findMatchingSubterms(term);
+			final Set<ApplicationTerm> auxModTerms =
+					new ApplicationTermFinder(Collections.singleton(MODULO_REPLACEMENT), false)
+							.findMatchingSubterms(term);
 			if (auxModTerms.isEmpty()) {
 				break;
 			}
