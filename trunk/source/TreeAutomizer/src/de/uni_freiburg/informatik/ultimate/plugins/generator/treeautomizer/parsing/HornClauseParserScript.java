@@ -73,6 +73,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
  */
 public class HornClauseParserScript extends NoopScript {
 
+	private final String M_CONSTANTS = "subst"; 
 	/**
 	 * Interface to the SMT solver that TreeAutomizer (or whoever else will used the HornClauseGraph) will use as a
 	 * backend.
@@ -215,7 +216,7 @@ public class HornClauseParserScript extends NoopScript {
 		final Map<TermVariable, TermVariable> tempVars = new HashMap<>();
 		for (final TermVariable var : term.getVariables()) {
 			if (mVariablesStack.contains(var)) {
-				final TermVariable versionedVar = mSymbolTable.createFreshVersion(var);
+				final TermVariable versionedVar = createFreshTermVariable(var.getName(), var.getSort());
 				tempVars.put(var, versionedVar);
 				mVariablesStack.add(versionedVar);
 				// mVariablesStack.put(var, mSymbolTable.) Construct a fresh copy of var
@@ -249,7 +250,8 @@ public class HornClauseParserScript extends NoopScript {
 		final HornClauseCobody tail = new HornClauseCobody(this);
 		if (term instanceof ApplicationTerm && isUninterpretedPredicateSymbol(((ApplicationTerm) term).getFunction())) {
 			// yi = I
-			tail.addPredicate(((ApplicationTerm) term));
+			// TODO recheck if we should take function or term
+			tail.addPredicate((ApplicationTerm) mapFormulasToVars(tail, term));
 		} else if (term instanceof ApplicationTerm && ((ApplicationTerm) term).getFunction().getName().equals("not") &&
 				isUninterpretedPredicateSymbol((((ApplicationTerm) ((ApplicationTerm) term).getParameters()[0]).getFunction()))) {
 			throw new SMTLIBException("The cobody has a negative predicate.");
@@ -332,7 +334,7 @@ public class HornClauseParserScript extends NoopScript {
 		}
 		final HornClauseBody head = new HornClauseBody(this);
 		if (isUninterpretedPredicateSymbol(((ApplicationTerm) term).getFunction())) {
-			if (!head.setHead(((ApplicationTerm) term))) {
+			if (!head.setHead(((ApplicationTerm) mapFormulasToVars(head, term)))) {
 				throw new SMTLIBException("The head has more than one positive predicate symbols.");
 			}
 		} else if (((ApplicationTerm) term).getFunction().getName().equals("not") &&
@@ -346,6 +348,41 @@ public class HornClauseParserScript extends NoopScript {
 		return head;
 	}
 
+	private Term mapFormulasToVars(final HornClauseBody head, final Term term) {
+		final ApplicationTerm func = (ApplicationTerm) term; 
+		final Term[] variables = new Term[func.getParameters().length];
+		for (int i = 0; i < variables.length; ++i) {
+			final Term t = func.getParameters()[i];
+			if (t instanceof TermVariable) {
+				variables[i] = t;
+			} else {
+				// TODO this.term
+				variables[i] = createFreshTermVariable(M_CONSTANTS, t.getSort());
+				head.addTransitionFormula(this.term("=", variables[i], t));
+			}
+		}
+		final Term ret = this.term(func.getFunction().getName(), variables);
+		return ret;
+	}
+	private Term mapFormulasToVars(final HornClauseCobody body, final Term term) {
+		final ApplicationTerm func = (ApplicationTerm) term; 
+		final Term[] variables = new Term[func.getParameters().length];
+		for (int i = 0; i < variables.length; ++i) {
+			final Term t = func.getParameters()[i];
+			if (t instanceof TermVariable) {
+				variables[i] = t;
+			} else {
+				// TODO this.term
+				variables[i] = createFreshTermVariable(M_CONSTANTS, t.getSort());
+				body.addTransitionFormula(this.term("=", variables[i], t));
+
+			}
+		}
+
+		final Term ret = this.term(func.getFunction().getName(), variables);
+		
+		return ret;
+	}
 	@Override
 	public LBool assertTerm(final Term rawTerm) throws SMTLIBException {
 
