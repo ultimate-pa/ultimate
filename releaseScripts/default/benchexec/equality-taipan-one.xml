@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<benchmark tool="ultimateautomizer" memlimit="6GB" timelimit="90" hardtimelimit="112" cpuCores="4">
+	<rundefinition name="AbsInt">
+		<option name="-tc">/storage/ultimate/trunk/examples/toolchains/AbstractInterpretationC.xml</option>
+		<option name="--generate-csv" />
+		<option name="--csv-dir">/storage/ultimate/releaseScripts/default/UAutomizer-linux/csv</option>
+
+		<tasks name="32bit">
+			<option name="-s">/storage/ultimate/trunk/examples/settings/ai/eq-bench/svcomp-Reach-32bit-Automizer_Camel+AI_EQ.epf</option>
+			<include>/storage/ultimate/trunk/examples/svcomp/ntdrivers-simplified/floppy_simpl4_true-unreach-call_true-valid-memsafety_true-termination.cil.c</include>
+		</tasks>
+
+		<tasks name="32bitMem">
+			<option name="-s">/storage/ultimate/trunk/examples/settings/ai/eq-bench/svcomp-DerefFreeMemtrack-32bit-Automizer_Camel+AI_EQ.epf</option>
+			<include>/storage/ultimate/trunk/examples/svcomp/ntdrivers-simplified/floppy_simpl4_true-unreach-call_true-valid-memsafety_true-termination.cil.c</include>
+		</tasks>
+	</rundefinition>
+
+	<rundefinition name="Automizer">
+		<option name="-tc">/storage/ultimate/trunk/examples/toolchains/AutomizerC.xml</option>
+		<option name="--generate-csv" />
+		<option name="--csv-dir">/storage/ultimate/releaseScripts/default/UAutomizer-linux/csv</option>
+
+		<tasks name="32bit">
+			<option name="-s">/storage/ultimate/trunk/examples/settings/ai/eq-bench/svcomp-Reach-32bit-Automizer_Camel+AI_EQ.epf</option>
+			<include>/storage/ultimate/trunk/examples/svcomp/ntdrivers-simplified/floppy_simpl4_true-unreach-call_true-valid-memsafety_true-termination.cil.c</include>
+		</tasks>
+		<tasks name="32bitMem">
+			<option name="-s">/storage/ultimate/trunk/examples/settings/ai/eq-bench/svcomp-DerefFreeMemtrack-32bit-Automizer_Camel+AI_EQ.epf</option>
+			<include>/storage/ultimate/trunk/examples/svcomp/ntdrivers-simplified/floppy_simpl4_true-unreach-call_true-valid-memsafety_true-termination.cil.c</include>
+		</tasks>
+	</rundefinition>
+		
+	<rundefinition name="RubberTaipan">
+		<option name="-tc">/storage/ultimate/trunk/examples/toolchains/AutomizerC.xml</option>
+		<option name="--generate-csv" />
+		<option name="--csv-dir">/storage/ultimate/releaseScripts/default/UAutomizer-linux/csv</option>
+
+		<tasks name="32bit">
+			<option name="-s">/storage/ultimate/trunk/examples/settings/ai/eq-bench/svcomp-Reach-32bit-Automizer_RubberTaipan+AI_EQ.epf</option>
+			<include>/storage/ultimate/trunk/examples/svcomp/ntdrivers-simplified/floppy_simpl4_true-unreach-call_true-valid-memsafety_true-termination.cil.c</include>
+		</tasks>
+
+		<tasks name="32bitMem">
+			<option name="-s">/storage/ultimate/trunk/examples/settings/ai/eq-bench/svcomp-DerefFreeMemtrack-32bit-Automizer_RubberTaipan+AI_EQ.epf</option>
+			<include>/storage/ultimate/trunk/examples/svcomp/ntdrivers-simplified/floppy_simpl4_true-unreach-call_true-valid-memsafety_true-termination.cil.c</include>
+		</tasks>
+	</rundefinition>
+	
+	<rundefinition name="Taipan">
+		<option name="-tc">/storage/ultimate/trunk/examples/toolchains/AutomizerC.xml</option>
+		<option name="--generate-csv" />
+		<option name="--csv-dir">/storage/ultimate/releaseScripts/default/UAutomizer-linux/csv</option>
+
+		<tasks name="32bit">
+			<option name="-s">/storage/ultimate/trunk/examples/settings/ai/eq-bench/svcomp-Reach-32bit-Automizer_Taipan+AI_EQ.epf</option>
+			<include>/storage/ultimate/trunk/examples/svcomp/ntdrivers-simplified/floppy_simpl4_true-unreach-call_true-valid-memsafety_true-termination.cil.c</include>
+		</tasks>
+		<tasks name="32bitMem">
+			<option name="-s">/storage/ultimate/trunk/examples/settings/ai/eq-bench/svcomp-DerefFreeMemtrack-32bit-Automizer_Taipan+AI_EQ.epf</option>
+			<include>/storage/ultimate/trunk/examples/svcomp/ntdrivers-simplified/floppy_simpl4_true-unreach-call_true-valid-memsafety_true-termination.cil.c</include>
+		</tasks>
+	</rundefinition>
+
+</benchmark>
