@@ -47,7 +47,7 @@ class CCManager<NODE extends IEqNodeIdentifier<NODE>> {
 	}
 
 	CongruenceClosure<NODE> getMeet(final CongruenceClosure<NODE> cc1,
-			final CongruenceClosure<NODE> cc2) {
+			final CongruenceClosure<NODE> cc2, final CongruenceClosure<NODE>.RemoveElement remInfo) {
 		/*
 		 *  TODO: something smarter
 		 *   ideas:
@@ -55,8 +55,18 @@ class CCManager<NODE extends IEqNodeIdentifier<NODE>> {
 		 *    - updating meets alongside inputs (something that updates the cache on a report equality on the ground pa)
 		 *
 		 */
-		final CongruenceClosure<NODE> result = cc1.meetRec(cc2);
+		final CongruenceClosure<NODE> result;
+		if (remInfo == null) {
+			result = cc1.meetRec(cc2);
+		} else {
+			result = cc1.meetRec(cc2, remInfo);
+		}
 		return result;
+	}
+
+	public CongruenceClosure<NODE> getMeet(final CongruenceClosure<NODE> cc1,
+			final CongruenceClosure<NODE> cc2) {
+		return getMeet(cc1, cc2, null);
 	}
 
 	public ComparisonResult compare(final CongruenceClosure<NODE> cc1,

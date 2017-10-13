@@ -191,11 +191,13 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 //	}
 
 	@Override
-	protected CongruenceClosure<NODE> alignElementsAndFunctions(final CongruenceClosure<NODE> otherCC) {
+	protected CongruenceClosure<NODE> alignElementsAndFunctions(final CongruenceClosure<NODE> otherCC,
+			final RemoveElement remInfo) {
 		assert !this.isInconsistent() && !otherCC.isInconsistent();
 		if (!(otherCC instanceof WeqCongruenceClosure)) {
-			return super.alignElementsAndFunctions(otherCC);
+			return super.alignElementsAndFunctions(otherCC, remInfo);
 		}
+		assert remInfo == null;
 		final WeqCongruenceClosure<NODE> other = (WeqCongruenceClosure<NODE>) otherCC;
 
 		final WeqCongruenceClosure<NODE> result = new WeqCongruenceClosure<>(this);
@@ -1050,10 +1052,9 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 //		}
 //		return false;
 //	}
-
 	@Override
-	protected void registerNewElement(final NODE elem) {
-		super.registerNewElement(elem);
+	protected void registerNewElement(final NODE elem, final RemoveElement remInfo) {
+		super.registerNewElement(elem, remInfo);
 
 		if (elem.isDependent()) {
 			for (final NODE supp : elem.getSupportingNodes()) {
@@ -1131,6 +1132,11 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		}
 
 //		assert sanityCheck();
+	}
+
+	@Override
+	protected void registerNewElement(final NODE elem) {
+		registerNewElement(elem, null);
 	}
 
 	@Override
