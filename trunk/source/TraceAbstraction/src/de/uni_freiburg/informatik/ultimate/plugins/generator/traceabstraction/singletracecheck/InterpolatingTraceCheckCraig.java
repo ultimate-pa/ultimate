@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
@@ -46,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermClassifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
@@ -57,7 +59,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantComputationStatus.ItpErrorStatus;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckStatisticsGenerator.InterpolantType;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
 
 /**
  * Uses Craig interpolation for computation of nested interpolants. Supports two algorithms. 1. Matthias' recursive
@@ -67,10 +68,11 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
  */
 public class InterpolatingTraceCheckCraig extends InterpolatingTraceCheck {
 
+	private static final String DIFF_IS_UNSUPPORTED = "@diff is unsupported";
 	private final boolean mInstantiateArrayExt;
 	private final InterpolantComputationStatus mInterpolantComputationStatus;
 
-	private static final boolean IGNORE_UNSUPPORTED_DIFF = true;
+	private static final Predicate<String> IGNORE_UNSUPPORTED_DIFF = a -> DIFF_IS_UNSUPPORTED.equals(a) && true;
 
 	/**
 	 * Check if trace fulfills specification given by precondition, postcondition and pending contexts. The
@@ -128,28 +130,14 @@ public class InterpolatingTraceCheckCraig extends InterpolatingTraceCheck {
 					throw new IllegalArgumentException(
 							"solver crashed with " + e.getClass().getSimpleName() + " whose message is null");
 				}
-				if (e instanceof UnsupportedOperationException && message.startsWith("Cannot interpolate")) {
+				if (e instanceof UnsupportedOperationException
+						&& (message.startsWith("Cannot interpolate") || IGNORE_UNSUPPORTED_DIFF.test(message))) {
 					// SMTInterpol throws this during interpolation for unsupported fragments such as arrays
 					ics = new InterpolantComputationStatus(false, ItpErrorStatus.SMT_SOLVER_CANNOT_INTERPOLATE_INPUT,
 							e);
 				} else if (e instanceof SMTLIBException && "Unsupported non-linear arithmetic".equals(message)) {
 					// SMTInterpol was somehow able to determine satisfiability but detects
 					// non-linear arithmetic during interpolation
-					ics = new InterpolantComputationStatus(false, ItpErrorStatus.SMT_SOLVER_CANNOT_INTERPOLATE_INPUT,
-							e);
-				} else {
-					throw e;
-				}
-				mTraceCheckFinished = true;
-			} catch (final AssertionError e) {
-				final String message = e.getMessage();
-				if (IGNORE_UNSUPPORTED_DIFF
-						&& (interpolation == InterpolationTechnique.Craig_NestedInterpolation
-								|| interpolation == InterpolationTechnique.Craig_TreeInterpolation)
-						&& mTcSmtManager.getScript() instanceof SMTInterpol
-						&& "invalid Hoare triple in Craig".equals(message)) {
-					// SMTInterpol currently produces interpolants with @diff that are unsupported. For EQ benchmarks,
-					// we want to ignore this and do it here
 					ics = new InterpolantComputationStatus(false, ItpErrorStatus.SMT_SOLVER_CANNOT_INTERPOLATE_INPUT,
 							e);
 				} else {
@@ -177,10 +165,6 @@ public class InterpolatingTraceCheckCraig extends InterpolatingTraceCheck {
 				csToolkit.getManagedScript(), instanticateArrayExt, xnfConversionTechnique, simplificationTechnique,
 				controlLocationSequence, false);
 	}
-
-	// protected int[] getSizeOfPredicates(InterpolationTechnique interpolation) {
-	// return mCsToolkit.computeDagSizeOfPredicates(mInterpolants);
-	// }
 
 	/**
 	 *
@@ -276,6 +260,7 @@ public class InterpolatingTraceCheckCraig extends InterpolatingTraceCheck {
 				interpolatedPositions, true, mServices, this, mCfgManagedScript, mInstantiateArrayExt,
 				mSimplificationTechnique, mXnfConversionTechnique);
 		mInterpolants = nib.getNestedInterpolants();
+		checkIfDiffOccursInInterpolants(mInterpolants);
 		assert TraceCheckUtils.checkInterpolantsInductivityForward(Arrays.asList(mInterpolants), mTrace, mPrecondition,
 				mPostcondition, mPendingContexts, "Craig", mCsToolkit, mLogger,
 				mCfgManagedScript) : "invalid Hoare triple in tree interpolants";
@@ -380,11 +365,20 @@ public class InterpolatingTraceCheckCraig extends InterpolatingTraceCheck {
 			}
 		}
 
-		// if (mInterpolants != null) {
+		checkIfDiffOccursInInterpolants(mInterpolants);
 		assert TraceCheckUtils.checkInterpolantsInductivityForward(Arrays.asList(mInterpolants), mTrace, mPrecondition,
 				mPostcondition, mPendingContexts, "Craig", mCsToolkit, mLogger,
 				mCfgManagedScript) : "invalid Hoare triple in nested interpolants";
-		// }
+	}
+
+	private static void checkIfDiffOccursInInterpolants(final IPredicate[] interpolants) {
+		for (final IPredicate interpolant : interpolants) {
+			final TermClassifier tc = new TermClassifier();
+			tc.checkTerm(interpolant.getClosedFormula());
+			if (tc.getOccuringFunctionNames().contains("@diff")) {
+				throw new UnsupportedOperationException(DIFF_IS_UNSUPPORTED);
+			}
+		}
 	}
 
 	/**

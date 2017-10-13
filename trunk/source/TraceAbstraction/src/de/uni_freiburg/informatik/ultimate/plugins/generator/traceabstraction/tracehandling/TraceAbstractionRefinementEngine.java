@@ -301,6 +301,8 @@ public final class TraceAbstractionRefinementEngine<LETTER>
 			if (throwException) {
 				throw new AssertionError(status.getException());
 			}
+			final String message = status.getException() == null ? "Unknown" : status.getException().getMessage();
+			mLogger.info("Interpolation failed due to " + category + ": " + message);
 			return;
 		}
 
