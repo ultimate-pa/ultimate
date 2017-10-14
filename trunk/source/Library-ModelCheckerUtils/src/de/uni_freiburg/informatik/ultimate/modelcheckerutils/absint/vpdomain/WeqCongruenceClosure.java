@@ -916,7 +916,11 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 //								elemToRemove.getArgument());
 				assert !mElementCurrentlyBeingRemoved.getRemovedElements().contains(bi);
 				elemToRemoveToReplacement.put(elemToRemove, bi);
-				return Collections.singleton(bi);
+				if (!hasElement(bi)) {
+					return Collections.singleton(bi);
+				} else {
+					return Collections.emptySet();
+				}
 			}
 
 			/*
@@ -944,10 +948,16 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 
 			if (stopAtFirst) {
 				assert !mElementCurrentlyBeingRemoved.getRemovedElements().contains(bi);
-				return Collections.singleton(bi);
+				if (!hasElement(bi)) {
+					return Collections.singleton(bi);
+				} else {
+					return Collections.emptySet();
+				}
 			}
 			assert !mElementCurrentlyBeingRemoved.getRemovedElements().contains(bi);
-			result.add(bi);
+			if (!hasElement(bi)) {
+				result.add(bi);
+			}
 
 //			// does the weak equivalence edge allow propagation of a[i] ~ b[j]? in case add b[j]
 //			if (edge.getValue().impliesEqualityOnThatPosition(Collections.singletonList(elemToRemove.getArgument()))) {

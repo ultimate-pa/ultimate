@@ -563,12 +563,14 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 			assert DataStructureUtils.intersection(new HashSet<>(nodeToReplacementNode.values()), elementsToRemove)
 				.isEmpty();
 
+			while (true) {
 			final Set<ELEM> nodesToAdd = new HashSet<>();
 
 //			for (final Entry<ELEM, ELEM> en : new HashMap<>(nodeToReplacementNode).entrySet()) {
 			for (final ELEM elemToRemove : elementsToRemove) {
 //				if (en.getKey().isFunctionApplication() && isConstrained(en.getKey())) {
 				if (elemToRemove.isFunctionApplication() && isConstrained(elemToRemove)) {
+//				if (elemToRemove.isFunctionApplication()) {
 					// we don't have a replacement, but we want one, try if we can get one
 					final Set<ELEM> replacementNodes = getNodesToIntroduceBeforeRemoval(elemToRemove,
 //							// TODO is there a nicer way to get this boolean parameter?
@@ -579,11 +581,17 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 			}
 
 			assert nodesToAdd.stream().allMatch(e -> !dependsOnAny(e, Collections.singleton(mElem)));
+			assert nodesToAdd.stream().allMatch(n -> !hasElement(n));
 			assert sanityCheck();
+
+			if (nodesToAdd.isEmpty()) {
+				break;
+			}
 
 			// add proxy elements
 			for (final ELEM proxyElem : nodesToAdd) {
 				addElement(proxyElem);
+			}
 			}
 
 			// (for instance:) prepare weq graph by conjoining edge labels with the current gpa
@@ -672,8 +680,15 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 //			final boolean elemToRemoveIsAppliedFunctionNotArgument,
 			final Map<ELEM, ELEM> elemToRemoveToReplacement) {
 
+
+
 		assert elemToRemoveToReplacement.keySet().contains(elemToRemove);
 		assert elemToRemoveToReplacement.keySet().equals(mElementCurrentlyBeingRemoved.getRemovedElements());
+
+
+//		if (!isConstrained(elemToRemove)) {
+//			return Collections.emptySet();
+//		}
 
 		/*
 		 * say
@@ -711,7 +726,11 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 				final ELEM afAndArgReplaced = afReplaced.replaceArgument(argReplacement);
 				assert !mElementCurrentlyBeingRemoved.getRemovedElements().contains(afAndArgReplaced);
 				elemToRemoveToReplacement.put(elemToRemove, afAndArgReplaced);
-				return Collections.singleton(afAndArgReplaced);
+				if (!hasElement(afAndArgReplaced)) {
+					return Collections.singleton(afAndArgReplaced);
+				} else {
+					return Collections.emptySet();
+				}
 			}
 		} else if (etrIsRemovedBecauseOfAf) {
 			// look for b with a ~ b
@@ -721,7 +740,11 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 				final ELEM afReplaced = elemToRemove.replaceAppliedFunction(afReplacement);
 				assert !mElementCurrentlyBeingRemoved.getRemovedElements().contains(afReplaced);
 				elemToRemoveToReplacement.put(elemToRemove, afReplaced);
-				return Collections.singleton(afReplaced);
+				if (!hasElement(afReplaced)) {
+					return Collections.singleton(afReplaced);
+				} else {
+					return Collections.emptySet();
+				}
 			}
 		} else {
 			// look for j with i ~ j
@@ -731,7 +754,11 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 				final ELEM argReplaced = elemToRemove.replaceArgument(argReplacement);
 				assert !mElementCurrentlyBeingRemoved.getRemovedElements().contains(argReplaced);
 				elemToRemoveToReplacement.put(elemToRemove, argReplaced);
-				return Collections.singleton(argReplaced);
+				if (!hasElement(argReplaced)) {
+					return Collections.singleton(argReplaced);
+				} else {
+					return Collections.emptySet();
+				}
 			}
 		}
 		return Collections.emptySet();
@@ -1595,7 +1622,20 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		if (!hasElement(elem)) {
 			return false;
 		}
-		return mElementTVER.isConstrained(elem);
+		if (mElementTVER.isConstrained(elem)) {
+			return true;
+		}
+		for (final ELEM afpar : mFaAuxData.getAfParents(elem)) {
+			if (isConstrained(afpar)) {
+				return true;
+			}
+		}
+		for (final ELEM argpar : mFaAuxData.getArgParents(elem)) {
+			if (isConstrained(argpar)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -1731,23 +1771,23 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 //
 //	}
 
-	/**
-	 * Removes an element from its equivalence class and possible disequalities, but not from the whole congruence
-	 * closure. I.e. the element will be present afterwards, but unconstrained
-	 *
-	 * @param e
-	 * @param removeElementInfo
-	 */
-	private void unconstrainSingleElement(final ELEM e, final CongruenceClosure<ELEM>.RemoveElement removeElementInfo) {
-		assert hasElement(e);
-
-		updateElementTverAndAuxDataOnRemoveElement(e);
-		mElementTVER.addElement(e);
-		mAuxData.registerNewElement(e);
-
-
-		assert !isConstrained(e);
-	}
+//	/**
+//	 * Removes an element from its equivalence class and possible disequalities, but not from the whole congruence
+//	 * closure. I.e. the element will be present afterwards, but unconstrained
+//	 *
+//	 * @param e
+//	 * @param removeElementInfo
+//	 */
+//	private void unconstrainSingleElement(final ELEM e, final CongruenceClosure<ELEM>.RemoveElement removeElementInfo) {
+//		assert hasElement(e);
+//
+//		updateElementTverAndAuxDataOnRemoveElement(e);
+//		mElementTVER.addElement(e);
+//		mAuxData.registerNewElement(e);
+//
+//
+//		assert !isConstrained(e);
+//	}
 
 	public Collection<ELEM> getAllElementRepresentatives() {
 		return mElementTVER.getAllRepresentatives();

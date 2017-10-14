@@ -1480,6 +1480,9 @@ public class WeakEquivalenceGraph<//ACTION extends IIcfgTransition<IcfgLocation>
 
 			@Override
 			public String toString() {
+				if (mLabel.size() < 3) {
+					return toLogString();
+				}
 				return "weq edge label, size: " + mLabel.size();
 			}
 
