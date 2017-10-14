@@ -37,7 +37,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -65,8 +64,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
  * resulting automaton is a minimal automaton that is bisimulation-equivalent to
  * the input.<br/>
  * Runtime is in:<br/>
- * <b>O(?)</b> with usage of<br/>
- * <b>O(?)</b> space<br/>
+ * <b>O(r * m * log(n))</b> with usage of<br/>
+ * <b>O(r + m + n)</b> space<br/>
  * where 'r' is the maximum rank of the input alphabet, 'n' is the number of
  * states and 'm' the number of rules.<br/>
  * <br/>
@@ -78,6 +77,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
  * <li><i>2006 Abdulla, Parosh Aziz et al. - Bisimulation Minimization of Tree
  * Automata.</i></li>
  * </ol>
+ * The runtime is the same as in [2], also for the same reason.
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  *
@@ -206,7 +206,6 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 			final AutomataLibraryServices services, final SF sinkMergeIntersectFactory,
 			final ITreeAutomatonBU<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		super(services);
-		// TODO Analyze complexity of algorithm (but improve it first)
 		// The algorithm itself only needs a merge factory. However to proof correctness
 		// (with enabled assertions) currently also sink and intersect factories are
 		// needed.
