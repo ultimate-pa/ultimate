@@ -120,7 +120,9 @@ public class LazyReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends Basic
 				if (cexAccepted) {
 					mIsCounterexampleAccepted = true;
 					mAutomatonAcceptingCounterexample = ai;
-					mLogger.info("Cex is accepted by automaton number " + i);
+					final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> removed = mReuseAutomata.remove(i);
+					assert (removed.equals(ai));
+					mLogger.info("Cex is accepted by automaton number " + i + " in the current list.");
 					return LBool.UNSAT;
 				}
 			} catch (AutomataLibraryException e) {
