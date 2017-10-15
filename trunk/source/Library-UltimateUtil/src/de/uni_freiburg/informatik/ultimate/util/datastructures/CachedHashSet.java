@@ -9,7 +9,7 @@ import java.util.Map;
  * by {@link #hashCode()}. This means that if there is a valid cache, calls to
  * {@link #hashCode()} are computed in <tt>O(1)</tt> instead of
  * <tt>O(n)</tt>.<br/>
- * This makes the set considerable for use as <tt>key</tt> in a {@link Map Maps}
+ * This makes the set considerable for usage as <tt>key</tt> in {@link Map Maps}
  * or similar data structures. <br/>
  * <br/>
  * The cache is automatically cleared every time the set is modified, for
@@ -114,6 +114,7 @@ public final class CachedHashSet<E> extends HashSet<E> {
 	 */
 	@Override
 	public void clear() {
+		super.clear();
 		clearHashCache();
 	}
 
@@ -165,8 +166,8 @@ public final class CachedHashSet<E> extends HashSet<E> {
 	 * @see java.util.HashSet#remove(java.lang.Object)
 	 */
 	@Override
-	public boolean remove(final Object o) {
-		final boolean wasModified = super.remove(o);
+	public boolean remove(final Object object) {
+		final boolean wasModified = super.remove(object);
 		if (wasModified) {
 			clearHashCache();
 		}

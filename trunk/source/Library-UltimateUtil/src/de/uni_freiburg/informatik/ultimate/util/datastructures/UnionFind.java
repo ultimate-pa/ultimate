@@ -138,19 +138,25 @@ public class UnionFind<E> implements IPartition<E>, Cloneable {
 	private final Comparator<E> mElementComparator;
 
 	/**
-	 * Maps an element to its equivalence class.
+	 * Maps an element to its equivalence class.<br/>
+	 * <br/>
+	 * Note that whenever updating values in this map other corresponding
+	 * data-structures as {@link #mRepresentative} also need to be updated with the
+	 * same new identity.
 	 */
-	private final Map<E, Set<E>> mEquivalenceClass = new HashMap<>();
+	private final Map<E, CachedHashSet<E>> mEquivalenceClass = new HashMap<>();
 
 	/**
-	 * Maps an equivalence class to its representative.
+	 * Maps an equivalence class to its representative.<br/>
+	 * <br/>
+	 * The current implementation uses {@link CachedHashSet} to provide a fast
+	 * key-based access.<br/>
+	 * <br/>
+	 * Therefore whenever changing keys in this set other corresponding
+	 * data-structures like {@link #mEquivalenceClass} also need to be updated with
+	 * the same new identity.
 	 */
-	// TODO This data-structure forms a performance bottleneck due to the usage of a
-	// collection as key (e.g. hashcode calculation in Map#get). Check whether it
-	// can be exchanged by a Map which stores keys by a fast-computed O(1) hashcode,
-	// e.g. IdentityHashMap. Requirements are to maintain a deterministic iteration
-	// order and to not fail at current, and also future, provided methods.
-	private final Map<Set<E>, E> mRepresentative = new HashMap<>();
+	private final Map<CachedHashSet<E>, E> mRepresentative = new HashMap<>();
 
 	/**
 	 * Constructor for new (empty) data structure.
@@ -176,9 +182,9 @@ public class UnionFind<E> implements IPartition<E>, Cloneable {
 	 *            the UnionFind instance to be copied
 	 */
 	protected UnionFind(final UnionFind<E> unionFind) {
-		for (final Entry<Set<E>, E> entry : unionFind.mRepresentative.entrySet()) {
+		for (final Entry<CachedHashSet<E>, E> entry : unionFind.mRepresentative.entrySet()) {
 			final E representative = entry.getValue();
-			final Set<E> equivalenceClassCopy = new HashSet<>(entry.getKey());
+			final CachedHashSet<E> equivalenceClassCopy = new CachedHashSet<>(entry.getKey());
 			for (final E equivalenceClassMember : equivalenceClassCopy) {
 				final Set<E> oldValue = this.mEquivalenceClass.put(equivalenceClassMember, equivalenceClassCopy);
 				assert oldValue == null : "element was contained twice";
@@ -225,7 +231,7 @@ public class UnionFind<E> implements IPartition<E>, Cloneable {
 				+ "here, this method might violate the invariant that the representative is always the minimal "
 				+ "element.";
 
-		final Set<E> block = new HashSet<>(newBlock);
+		final CachedHashSet<E> block = new CachedHashSet<>(newBlock);
 
 		for (final E elem : block) {
 			mEquivalenceClass.put(elem, block);
@@ -336,7 +342,7 @@ public class UnionFind<E> implements IPartition<E>, Cloneable {
 		if (mEquivalenceClass.containsKey(elem)) {
 			throw new IllegalArgumentException("Already contained " + elem);
 		}
-		final Set<E> result = new HashSet<>();
+		final CachedHashSet<E> result = new CachedHashSet<>();
 		result.add(elem);
 		mEquivalenceClass.put(elem, result);
 		mRepresentative.put(result, elem);
@@ -351,8 +357,8 @@ public class UnionFind<E> implements IPartition<E>, Cloneable {
 	 *            element to be removed
 	 */
 	public void remove(final E element) {
-		final Set<E> eqc = mEquivalenceClass.get(element);
-		final HashSet<E> newEqc = new HashSet<>(eqc);
+		final CachedHashSet<E> eqc = mEquivalenceClass.get(element);
+		final CachedHashSet<E> newEqc = new CachedHashSet<>(eqc);
 		newEqc.remove(element);
 
 		if (mRepresentative.get(mEquivalenceClass.get(element)).equals(element)) {
@@ -420,8 +426,8 @@ public class UnionFind<E> implements IPartition<E>, Cloneable {
 	}
 
 	public void transformElements(final Function<E, E> elemTransformer) {
-		final HashMap<Set<E>, E> representativeCopy = new HashMap<>(mRepresentative);
-		for (final Entry<Set<E>, E> entry : representativeCopy.entrySet()) {
+		final HashMap<CachedHashSet<E>, E> representativeCopy = new HashMap<>(mRepresentative);
+		for (final Entry<CachedHashSet<E>, E> entry : representativeCopy.entrySet()) {
 			for (final E oldElem : entry.getKey()) {
 				mEquivalenceClass.remove(oldElem);
 			}
@@ -429,9 +435,11 @@ public class UnionFind<E> implements IPartition<E>, Cloneable {
 
 			final E newRep = elemTransformer.apply(entry.getValue());
 
-//			assert mElementComparator == null || mElementComparator.compare(newRep, entry.getValue()) == 0;
+			// assert mElementComparator == null || mElementComparator.compare(newRep,
+			// entry.getValue()) == 0;
 
-			final Set<E> newEqClass = entry.getKey().stream().map(elemTransformer).collect(Collectors.toSet());
+			final CachedHashSet<E> newEqClass = entry.getKey().stream().map(elemTransformer)
+					.collect(Collectors.toCollection(CachedHashSet::new));
 			for (final E newElem : newEqClass) {
 				mEquivalenceClass.put(newElem, newEqClass);
 			}
@@ -467,13 +475,13 @@ public class UnionFind<E> implements IPartition<E>, Cloneable {
 	 *            second element
 	 */
 	public void union(final E elem1, final E elem2) {
-		final Set<E> set1 = mEquivalenceClass.get(elem1);
-		final Set<E> set2 = mEquivalenceClass.get(elem2);
+		final CachedHashSet<E> set1 = mEquivalenceClass.get(elem1);
+		final CachedHashSet<E> set2 = mEquivalenceClass.get(elem2);
 
 		final boolean set1IsLarger = set1.size() > set2.size();
 
-		final Set<E> largerSet = set1IsLarger ? set1 : set2;
-		final Set<E> smallerSet = set1IsLarger ? set2 : set1;
+		final CachedHashSet<E> largerSet = set1IsLarger ? set1 : set2;
+		final CachedHashSet<E> smallerSet = set1IsLarger ? set2 : set1;
 
 		final E newRep;
 		if (mElementComparator != null) {
@@ -529,7 +537,7 @@ public class UnionFind<E> implements IPartition<E>, Cloneable {
 			return true;
 		}
 		// for (Entry<E, Set<E>> en : mEquivalenceClass.entrySet()) {
-		for (final Entry<Set<E>, E> en : mRepresentative.entrySet()) {
+		for (final Entry<CachedHashSet<E>, E> en : mRepresentative.entrySet()) {
 			final E rep = en.getValue();
 			for (final E member : en.getKey()) {
 				assert mElementComparator.compare(rep, member) <= 0;
