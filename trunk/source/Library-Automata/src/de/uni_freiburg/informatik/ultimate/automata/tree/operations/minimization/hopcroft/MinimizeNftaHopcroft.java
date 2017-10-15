@@ -169,6 +169,11 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 	 */
 	private UnionFind<STATE> mPartition;
 	/**
+	 * Represents the block to use for the last round if the last round is
+	 * introduced.
+	 */
+	private STATE mPossiblyLastRoundBlockRepresentative;
+	/**
 	 * The partition of all states which iteratively approaches the regular
 	 * partition. Once they are the same a fixed point has been reached which
 	 * indicates that the partition represents a valid bisimulation.
@@ -178,6 +183,7 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 	 * The resulting tree automaton after minimizing the operand.
 	 */
 	private ITreeAutomatonBU<LETTER, STATE> mResult;
+
 	/**
 	 * Factory used to create sink states, merge and intersect states.
 	 */
@@ -217,6 +223,7 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 		this.mCompoundBlocks = new LinkedHashMap<>();
 		this.mProgressPartition = new UnionFind<>();
 		this.mNoFinalStates = false;
+		this.mPossiblyLastRoundBlockRepresentative = null;
 
 		if (this.mLogger.isInfoEnabled()) {
 			this.mLogger.info(startMessage());
@@ -382,21 +389,47 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 		// block anymore. At this point the progress relation has become the same then
 		// the current iteration, i.e. there is no further refinement possible and a
 		// fixed point has been reached which represents a valid bisimulation.
-		boolean initialRound = true;
-		while (!this.mCompoundBlocks.isEmpty()) {
+		boolean isInitialRound = true;
+		boolean isLastRound = false;
+		boolean doProcess = !this.mCompoundBlocks.isEmpty();
+		while (doProcess) {
 			if (this.mLogger.isDebugEnabled()) {
-				this.mLogger.debug("Starting round");
+				if (isInitialRound) {
+					this.mLogger.debug("Starting initial round");
+				} else if (isLastRound) {
+					this.mLogger.debug("Starting last round");
+				} else {
+					this.mLogger.debug("Starting round");
+				}
 			}
-			final STATE representativeOfBlock = selectBlockForRound(initialRound);
+
+			// Select a block for the round
+			final STATE representativeOfBlock;
+			if (!isLastRound) {
+				representativeOfBlock = selectBlockForRound(isInitialRound);
+			} else {
+				representativeOfBlock = this.mPossiblyLastRoundBlockRepresentative;
+				if (this.mLogger.isDebugEnabled()) {
+					this.mLogger.debug("Selected block of " + representativeOfBlock + " for last round");
+				}
+			}
 			// In the paper this block is often referred to as B
 			final Set<STATE> block = this.mPartition.getContainingSet(representativeOfBlock);
 
 			final Iterator<RuleContext<LETTER, STATE>> contexts = collectContexts(block);
-			refineBasedOnContexts(contexts, block);
+			refineBasedOnContexts(contexts, block, isLastRound);
 
 			// Preparations for the next round
-			if (initialRound) {
-				initialRound = false;
+			if (isInitialRound) {
+				// Initial round has finished
+				isInitialRound = false;
+			}
+			if (this.mCompoundBlocks.isEmpty() && !isLastRound) {
+				// Last round begins
+				isLastRound = true;
+			} else if (isLastRound) {
+				// Last round has finished
+				doProcess = false;
 			}
 
 			// If operation was canceled, for example from the
@@ -584,12 +617,16 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 	 *            The contexts to refine based on
 	 * @param destinationBlock
 	 *            The block used as destination all rules in the contexts
+	 * @param isLastRound
+	 *            Whether this is the last round or not. In the last round updates
+	 *            of compound blocks and the progress partition is skipped as not
+	 *            needed anymore
 	 * @throws AutomataOperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
 	private void refineBasedOnContexts(final Iterator<RuleContext<LETTER, STATE>> contexts,
-			final Set<STATE> destinationBlock) throws AutomataOperationCanceledException {
+			final Set<STATE> destinationBlock, final boolean isLastRound) throws AutomataOperationCanceledException {
 		// Based on the previously collected context objects we now find differences in
 		// the behavior of states that are currently in the same block of the regular
 		// relation. States that are listed in the same block but behave differently
@@ -718,6 +755,14 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 		// current round off. Note that this step also needs to be done if no changes
 		// where made, else we would not progress as we need to split the current block
 		// from the progress partition in each round.
+		if (isLastRound) {
+			// Skip the update in the last round as not needed anymore
+			if (this.mLogger.isDebugEnabled()) {
+				this.mLogger.debug("Last round, skipping update of compound blocks and progress partition");
+			}
+
+			return;
+		}
 		updateCompoundBlocksAndProgressPartition(destinationBlock);
 	}
 
@@ -759,15 +804,25 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 			}
 			// Find the representative of the block of final states as in the initial round
 			// we always start with the set of final states
+			assert progressBlock.size() == 2;
+			STATE blockRepresentative = null;
+			STATE otherBlockRepresentative = null;
 			for (final STATE representative : progressBlock) {
 				// Could be done slightly faster by memorizing it before. However there are only
 				// two representatives in the initial round thus it has no impact on
 				// performance.
 				if (this.mOperand.isFinalState(representative)) {
-					return representative;
+					blockRepresentative = representative;
+				} else {
+					// Remember the other representative as it could possibly be the block for the
+					// last round
+					otherBlockRepresentative = representative;
 				}
 			}
-			throw new AssertionError("There is no final state in the initial progress block.");
+			assert blockRepresentative != null && otherBlockRepresentative != null;
+
+			this.mPossiblyLastRoundBlockRepresentative = otherBlockRepresentative;
+			return blockRepresentative;
 		}
 
 		// Select the block that is smaller than the half of the progress block. This is
@@ -784,11 +839,13 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 				this.mLogger
 						.debug("Block of " + firstRepresentative + " is smaller than block of " + secondRepresentative);
 			}
+			this.mPossiblyLastRoundBlockRepresentative = secondRepresentative;
 			return firstRepresentative;
 		}
 		if (this.mLogger.isDebugEnabled()) {
 			this.mLogger.debug("Block of " + secondRepresentative + " is smaller than block of " + firstRepresentative);
 		}
+		this.mPossiblyLastRoundBlockRepresentative = firstRepresentative;
 		return secondRepresentative;
 	}
 
