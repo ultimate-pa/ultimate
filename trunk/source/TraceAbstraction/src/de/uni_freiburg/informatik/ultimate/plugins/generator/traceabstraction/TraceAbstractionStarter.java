@@ -348,7 +348,8 @@ public class TraceAbstractionStarter {
 					break;
 				case LAZY_IN_ORDER:
 					result = new LazyReuseCegarLoop<>(name, root, csToolkit, predicateFactory, taPrefs, errorLocs,
-							taPrefs.interpolation(), taPrefs.computeHoareAnnotation(), mServices, mToolchainStorage, mFloydHoareAutomataFromOtherErrorLocations);
+							taPrefs.interpolation(), taPrefs.computeHoareAnnotation(), mServices, mToolchainStorage, mFloydHoareAutomataFromOtherErrorLocations, 
+							rawFloydHoareAutomataFromFile);
 					break;
 				case NONE:
 					result = new BasicCegarLoop<>(name, root, csToolkit, predicateFactory, taPrefs, errorLocs,
