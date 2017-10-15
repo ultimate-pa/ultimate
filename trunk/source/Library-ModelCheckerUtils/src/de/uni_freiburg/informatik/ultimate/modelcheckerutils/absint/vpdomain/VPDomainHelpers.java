@@ -346,10 +346,11 @@ public class VPDomainHelpers {
 		return new Substitution(mgdScript, subs).transform(t);
 	}
 
-	public static List<Term> normalizeArrayIndex(final ArrayIndex index, final TransFormula tf, final ManagedScript script) {
-		return index.stream()
+//	public static List<Term> normalizeArrayIndex(final ArrayIndex index, final TransFormula tf, final ManagedScript script) {
+	public static ArrayIndex normalizeArrayIndex(final ArrayIndex index, final TransFormula tf, final ManagedScript script) {
+		return new ArrayIndex(index.stream()
 				.map(t -> normalizeTerm(t, tf, script))
-				.collect(Collectors.toList());
+				.collect(Collectors.toList()));
 	}
 
 	public static <T> boolean arrayContains(final T[] array, final T elem) {

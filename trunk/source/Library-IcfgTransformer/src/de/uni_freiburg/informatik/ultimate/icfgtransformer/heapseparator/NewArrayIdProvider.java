@@ -53,7 +53,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.Progr
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.IEqualityAnalysisResultProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.IEqualityProvidingState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainSymmetricPair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
@@ -95,45 +94,10 @@ public class NewArrayIdProvider {
 			final IEqualityAnalysisResultProvider<IcfgLocation, IIcfg<?>> equalityProvider,
 			final HeapSepPreAnalysis hspav) {
 
-		/*
-		 * compute which arrays are equated somewhere in the program and thus need the same partitioning
-		 */
-		final UnionFind<Term> arrayGroupingUf = new UnionFind<>();
-		for (final Term array : hspav.getArrayToAccessLocations().getDomain()) {
-			arrayGroupingUf.findAndConstructEquivalenceClassIfNeeded(array);
-		}
-		for (final VPDomainSymmetricPair<Term> pair : hspav.getArrayEqualities()) {
-			if (arrayGroupingUf.find(pair.getFirst()) == null) {
-				continue;
-			}
-			if (arrayGroupingUf.find(pair.getSecond()) == null) {
-				continue;
-			}
-			arrayGroupingUf.union(pair.getFirst(), pair.getSecond());
-		}
-		arrayGroupingUf.getAllEquivalenceClasses();
+		final UnionFind<Term> arrayGroupingUf = computeArrayGroups(hspav);
 
-		mStatistics.setNoArrays(hspav.getArrayToAccessLocations().getDomain().size());
-		mStatistics.setNoArrayGroups(arrayGroupingUf.getAllEquivalenceClasses().size());
-
-		final HashRelation<Set<Term>, IcfgLocation> arrayGroupToAccessLocations = new HashRelation<>();
-
-		for (final Set<Term> ec : arrayGroupingUf.getAllEquivalenceClasses()) {
-			for (final Term array : ec) {
-				for (final IcfgLocation loc : hspav.getArrayToAccessLocations().getImage(array)) {
-					arrayGroupToAccessLocations.addPair(ec, loc);
-				}
-			}
-		}
-
-		final Map<Set<Term>, IEqualityProvidingState> arrayGroupToVPState = new HashMap<>();
-		for (final Set<Term> arrayGroup : arrayGroupingUf.getAllEquivalenceClasses()) {
-			final Set<IcfgLocation> arrayGroupAccessLocations = arrayGroupToAccessLocations.getImage(arrayGroup);
-			final IEqualityProvidingState eqpState =
-					equalityProvider.getEqualityProvidingStateForLocationSet(arrayGroupAccessLocations);
-			assert eqpState != null;
-			arrayGroupToVPState.put(arrayGroup, eqpState);
-		}
+		final Map<Set<Term>, IEqualityProvidingState> arrayGroupToVPState = computeEqStateForArrayGroups(
+				equalityProvider, hspav, arrayGroupingUf);
 
 
 		/*
@@ -168,6 +132,64 @@ public class NewArrayIdProvider {
 			}
 		}
 
+	}
+
+	/**
+	 * For each array group:
+	 * Obtain an equality provider that sums up the equality and disequality information that * must hold at each
+	 * program location where an array in the group is accessed.
+	 *
+	 * @param equalityProvider
+	 * @param hspav
+	 * @param arrayGroupingUf
+	 * @return
+	 */
+	protected Map<Set<Term>, IEqualityProvidingState> computeEqStateForArrayGroups(
+			final IEqualityAnalysisResultProvider<IcfgLocation, IIcfg<?>> equalityProvider,
+			final HeapSepPreAnalysis hspav, final UnionFind<Term> arrayGroupingUf) {
+		final HashRelation<Set<Term>, IcfgLocation> arrayGroupToAccessLocations = new HashRelation<>();
+
+		for (final Set<Term> ec : arrayGroupingUf.getAllEquivalenceClasses()) {
+			for (final Term array : ec) {
+				for (final IcfgLocation loc : hspav.getArrayToAccessLocations().getImage(array)) {
+					arrayGroupToAccessLocations.addPair(ec, loc);
+				}
+			}
+		}
+
+		final Map<Set<Term>, IEqualityProvidingState> arrayGroupToVPState = new HashMap<>();
+		for (final Set<Term> arrayGroup : arrayGroupingUf.getAllEquivalenceClasses()) {
+			final Set<IcfgLocation> arrayGroupAccessLocations = arrayGroupToAccessLocations.getImage(arrayGroup);
+			final IEqualityProvidingState eqpState =
+					equalityProvider.getEqualityProvidingStateForLocationSet(arrayGroupAccessLocations);
+			assert eqpState != null;
+			arrayGroupToVPState.put(arrayGroup, eqpState);
+		}
+		return arrayGroupToVPState;
+	}
+
+	/**
+	 * compute which arrays are equated somewhere in the program and thus need the same partitioning
+	 */
+	protected UnionFind<Term> computeArrayGroups(final HeapSepPreAnalysis hspav) {
+		final UnionFind<Term> arrayGroupingUf = new UnionFind<>();
+		for (final Term array : hspav.getArrayToAccessLocations().getDomain()) {
+			arrayGroupingUf.findAndConstructEquivalenceClassIfNeeded(array);
+		}
+		for (final Entry<Term, Term> pair : hspav.getArrayEqualities()) {
+			if (arrayGroupingUf.find(pair.getKey()) == null) {
+				continue;
+			}
+			if (arrayGroupingUf.find(pair.getValue()) == null) {
+				continue;
+			}
+			arrayGroupingUf.union(pair.getKey(), pair.getValue());
+		}
+		arrayGroupingUf.getAllEquivalenceClasses();
+
+		mStatistics.setNoArrays(hspav.getArrayToAccessLocations().getDomain().size());
+		mStatistics.setNoArrayGroups(arrayGroupingUf.getAllEquivalenceClasses().size());
+		return arrayGroupingUf;
 	}
 
 
