@@ -505,7 +505,13 @@ public class WeakEquivalenceGraph<//ACTION extends IIcfgTransition<IcfgLocation>
 		if (oldLabel == null || oldLabel.isTautological()) {
 //			oldLabel = new WeakEquivalenceEdgeLabel();
 			assert paList.size() != 1 || !paList.get(0).isTautological();
-			mWeakEquivalenceEdges.put(sourceAndTarget, new WeakEquivalenceEdgeLabel(paList));
+
+			final WeakEquivalenceGraph<NODE>.WeakEquivalenceEdgeLabel newLabel = new WeakEquivalenceEdgeLabel(paList);
+			newLabel.meetWithCcGpa();
+			final WeakEquivalenceGraph<NODE>.WeakEquivalenceEdgeLabel newLabelMeetProject =
+					newLabel.projectToElements(mFactory.getAllWeqNodes());
+			mWeakEquivalenceEdges.put(sourceAndTarget, newLabelMeetProject);
+
 			return true;
 		}
 

@@ -1673,9 +1673,10 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 
 		final CongruenceClosure<ELEM> copy = new CongruenceClosure<>(this, removeElementInfo);
 
+
 		final Set<ELEM> worklist = new HashSet<>(elemsToKeep);
-		final Set<ELEM> visited = new HashSet<>();
-		final Set<ELEM> visitedAndAllEquivalentElements = new HashSet<>();
+		final Set<ELEM> constraintsToKeepReps = new HashSet<>();
+		final Set<ELEM> visitedEquivalenceClassElements = new HashSet<>();
 
 
 		while (!worklist.isEmpty()) {
@@ -1685,109 +1686,62 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 			final ELEM current = worklist.iterator().next();
 			worklist.remove(current);
 
-			assert dependsOnAny(current, elemsToKeep);
-			visited.add(current);
-			visitedAndAllEquivalentElements.add(current);
 
-			if (!this.hasElement(current)) {
+			if (!copy.hasElement(current)) {
 				continue;
 			}
-			visitedAndAllEquivalentElements.addAll(this.mElementTVER.getEquivalenceClass(current));
+			visitedEquivalenceClassElements.addAll(copy.mElementTVER.getEquivalenceClass(current));
 
-			/*
-			 * collect all elements that are equivalent to current
-			 */
-			final Set<ELEM> eqc = new HashSet<>(this.mElementTVER.getEquivalenceClass(current));
+			assert copy.mElementTVER.getEquivalenceClass(current).stream()
+				.anyMatch(e -> dependsOnAny(e, elemsToKeep));
+			constraintsToKeepReps.add(current);
 
-			for (final ELEM e : eqc) {
-				for (final ELEM afccpar : copy.mFaAuxData.getAfParents(e)) {
-					final ELEM substituted = afccpar.replaceAppliedFunction(current);
-					if (visited.contains(substituted)) {
-						continue;
-					}
-					if (removeElementInfo != null
-							&& dependsOnAny(substituted, removeElementInfo.getRemovedElements())) {
-						// don't add anything that is currently being removed or depends on it
-						continue;
-					}
-					assert removeElementInfo == null
-							|| !dependsOnAny(substituted, removeElementInfo.getRemovedElements());
-					copy.addElement(substituted);
-					worklist.add(substituted);
+			for (final ELEM afccpar : new HashSet<>(copy.mAuxData.getAfCcPars(copy.getRepresentativeElement(current)))) {
+				if (visitedEquivalenceClassElements.contains(afccpar)) {
+					continue;
 				}
-				for (final ELEM argccpar : copy.mFaAuxData.getArgParents(e)) {
-					final ELEM substituted = argccpar.replaceArgument(current);
-					if (visited.contains(substituted)) {
-						continue;
-					}
-					if (removeElementInfo != null
-							&& dependsOnAny(substituted, removeElementInfo.getRemovedElements())) {
-						// don't add anything that is currently being removed or depends on it
-						continue;
-					}
-					assert removeElementInfo == null
-							|| !dependsOnAny(substituted, removeElementInfo.getRemovedElements());
-					copy.addElement(substituted);
-					worklist.add(substituted);
+				final ELEM substituted = afccpar.replaceAppliedFunction(current);
+				if (constraintsToKeepReps.contains(substituted)) {
+					continue;
 				}
+				if (removeElementInfo != null
+						&& dependsOnAny(substituted, removeElementInfo.getRemovedElements())) {
+					// don't add anything that is currently being removed or depends on it
+					continue;
+				}
+				assert removeElementInfo == null
+						|| !dependsOnAny(substituted, removeElementInfo.getRemovedElements());
+				copy.addElement(substituted);
+				worklist.add(substituted);
+			}
+			for (final ELEM argccpar : new HashSet<>(copy.mAuxData.getArgCcPars(copy.getRepresentativeElement(current)))) {
+				if (visitedEquivalenceClassElements.contains(argccpar)) {
+					continue;
+				}
+				final ELEM substituted = argccpar.replaceArgument(current);
+				if (constraintsToKeepReps.contains(substituted)) {
+					continue;
+				}
+				if (removeElementInfo != null
+						&& dependsOnAny(substituted, removeElementInfo.getRemovedElements())) {
+					// don't add anything that is currently being removed or depends on it
+					continue;
+				}
+				assert removeElementInfo == null
+						|| !dependsOnAny(substituted, removeElementInfo.getRemovedElements());
+				copy.addElement(substituted);
+				worklist.add(substituted);
 			}
 		}
-
-//		final Set<ELEM> elementsToRemove =
-//				DataStructureUtils.difference(copy.getAllElements(), visitedAndAllEquivalentElements);
-//		for (final Entry<ELEM, ELEM> deq : copy.getElementDisequalities()) {
-//			if (elementsToRemove.contains(deq.getKey())) {
-//				elementsToRemove.add(deq.getValue());
-//			} else if (elementsToRemove.contains(deq.getValue())) {
-//				elementsToRemove.add(deq.getKey());
-//			}
-//		}
-//
-//		for (final ELEM e : elementsToRemove) {
-//			todo
-//			copy.unconstrainSingleElement(e, removeElementInfo);
-//		}
-//		assert copy.sanityCheck(removeElementInfo);
-//		return copy;
-
-
-//		copy.filterAndKeepOnlyConstraintsThatIntersectWith(visited, removeElementInfo);
-//		return copy;
-
-
 		// TVER does not know about parent/child relationship of nodes, so it is safe
 		final ThreeValuedEquivalenceRelation<ELEM> newTver =
-				copy.mElementTVER.filterAndKeepOnlyConstraintsThatIntersectWith(visited);
+				copy.mElementTVER.filterAndKeepOnlyConstraintsThatIntersectWith(constraintsToKeepReps);
 		/*
 		 *  (former BUG!!!) this constructor may not add all child elements for all remaining elements, therefore
 		 *  we either need a special constructor or do something else..
 		 */
 		return new CongruenceClosure<>(newTver, removeElementInfo);
 	}
-
-//	private void filterAndKeepOnlyConstraintsThatIntersectWith(final Set<ELEM> visited,
-//			final CongruenceClosure<ELEM>.RemoveElement removeElementInfo) {
-//		// TODO Auto-generated method stub
-//
-//	}
-
-//	/**
-//	 * Removes an element from its equivalence class and possible disequalities, but not from the whole congruence
-//	 * closure. I.e. the element will be present afterwards, but unconstrained
-//	 *
-//	 * @param e
-//	 * @param removeElementInfo
-//	 */
-//	private void unconstrainSingleElement(final ELEM e, final CongruenceClosure<ELEM>.RemoveElement removeElementInfo) {
-//		assert hasElement(e);
-//
-//		updateElementTverAndAuxDataOnRemoveElement(e);
-//		mElementTVER.addElement(e);
-//		mAuxData.registerNewElement(e);
-//
-//
-//		assert !isConstrained(e);
-//	}
 
 	public Collection<ELEM> getAllElementRepresentatives() {
 		return mElementTVER.getAllRepresentatives();
