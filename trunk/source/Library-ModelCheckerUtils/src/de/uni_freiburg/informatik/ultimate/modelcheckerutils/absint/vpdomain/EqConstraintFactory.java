@@ -67,6 +67,7 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 	private int mConstraintIdCounter = 1;
 
 	private final NestedMap2<Sort, Integer, NODE> mDimensionToWeqVariableNode;
+	private final NestedMap2<Sort, Integer, NODE> mDimensionToWeqVariableNodePrimed;
 
 //	private final LiteralManager<NODE> mLiteralManager;
 
@@ -88,6 +89,7 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 		mEqNodeAndFunctionFactory = eqNodeAndFunctionFactory;
 
 		mDimensionToWeqVariableNode = new NestedMap2<>();
+		mDimensionToWeqVariableNodePrimed = new NestedMap2<>();
 
 		mCcManager = new CCManager<>(new CongruenceClosureComparator<NODE>());
 //		mLiteralManager = new LiteralManager<>();
@@ -346,6 +348,16 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 
 	public AbstractNodeAndFunctionFactory<NODE, Term> getEqNodeAndFunctionFactory() {
 		return mEqNodeAndFunctionFactory;
+	}
+
+	public NODE getPrimedWeqVariableNodeForDimension(final int dimensionNumber, final Sort sort) {
+		NODE result = mDimensionToWeqVariableNodePrimed.get(sort, dimensionNumber);
+		if (result == null) {
+			final TermVariable tv = getMgdScript().constructFreshTermVariable("weqPrime" + dimensionNumber, sort);
+			result = getEqNodeAndFunctionFactory().getOrConstructNode(tv);
+			mDimensionToWeqVariableNodePrimed.put(sort, dimensionNumber, result);
+		}
+		return result;
 	}
 
 	public NODE getWeqVariableNodeForDimension(final int dimensionNumber, final Sort sort) {

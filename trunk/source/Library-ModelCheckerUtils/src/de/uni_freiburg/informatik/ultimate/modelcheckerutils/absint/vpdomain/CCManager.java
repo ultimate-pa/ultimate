@@ -46,6 +46,10 @@ class CCManager<NODE extends IEqNodeIdentifier<NODE>> {
 		mCcComparator = ccComparator;
 	}
 
+	CongruenceClosure<NODE> getMeet(final CongruenceClosure<NODE> cc1, final CongruenceClosure<NODE> cc2) {
+		return getMeet(cc1, cc2, null);
+	}
+
 	CongruenceClosure<NODE> getMeet(final CongruenceClosure<NODE> cc1,
 			final CongruenceClosure<NODE> cc2, final CongruenceClosure<NODE>.RemoveElement remInfo) {
 		/*
@@ -64,9 +68,39 @@ class CCManager<NODE extends IEqNodeIdentifier<NODE>> {
 		return result;
 	}
 
-	public CongruenceClosure<NODE> getMeet(final CongruenceClosure<NODE> cc1,
-			final CongruenceClosure<NODE> cc2) {
-		return getMeet(cc1, cc2, null);
+
+	WeqCongruenceClosure<NODE> getWeqMeet(final CongruenceClosure<NODE> cc1,
+			final WeqCongruenceClosure<NODE> cc2, final CongruenceClosure<NODE>.RemoveElement remInfo) {
+		/*
+		 *  TODO: something smarter
+		 *   ideas:
+		 *    - caching
+		 *    - updating meets alongside inputs (something that updates the cache on a report equality on the ground pa)
+		 *
+		 */
+		final WeqCongruenceClosure<NODE> result;
+		if (remInfo == null) {
+			result = cc2.meetRec(cc1);
+		} else {
+			assert false : "do we need this case?";
+			result = null;
+//			result = cc2.meetRec(cc1, remInfo);
+		}
+		if (result.isInconsistent()) {
+			return result;
+		}
+
+		return result;
+	}
+
+//	public CongruenceClosure<NODE> getMeet(final CongruenceClosure<NODE> cc1,
+//			final CongruenceClosure<NODE> cc2) {
+//		return getMeet(cc1, cc2, null);
+//	}
+
+	public WeqCongruenceClosure<NODE> getWeqMeet(final CongruenceClosure<NODE> cc1,
+			final WeqCongruenceClosure<NODE> cc2) {
+		return getWeqMeet(cc1, cc2, null);
 	}
 
 	public ComparisonResult compare(final CongruenceClosure<NODE> cc1,

@@ -127,8 +127,8 @@ public class WeakEquivalenceGraph<//ACTION extends IIcfgTransition<IcfgLocation>
 
 		mPartialArrangement = pArr;
 
-		assert weakEquivalenceGraph.mArrayEqualities.isEmpty();
-		mArrayEqualities = new HashRelation<>();
+//		assert weakEquivalenceGraph.mArrayEqualities.isEmpty();
+		mArrayEqualities = new HashRelation<>(weakEquivalenceGraph.mArrayEqualities);
 		mWeakEquivalenceEdges = new HashMap<>();
 		for (final Entry<Doubleton<NODE>, WeakEquivalenceEdgeLabel> weqEdge
 				: weakEquivalenceGraph.mWeakEquivalenceEdges.entrySet()) {
@@ -514,8 +514,8 @@ public class WeakEquivalenceGraph<//ACTION extends IIcfgTransition<IcfgLocation>
 		final WeakEquivalenceEdgeLabel labelToStrengthenWith = new WeakEquivalenceEdgeLabel(paList);
 		assert labelToStrengthenWith.sanityCheck() : "input label not normalized??";
 
-		labelToStrengthenWith.meetWithGpa();
-		oldLabelCopy.meetWithGpa();
+		labelToStrengthenWith.meetWithCcGpa();
+		oldLabelCopy.meetWithCcGpa();
 		if (oldLabelCopy.isStrongerThan(labelToStrengthenWith)) {
 			// nothing to do
 			return false;
@@ -624,7 +624,8 @@ public class WeakEquivalenceGraph<//ACTION extends IIcfgTransition<IcfgLocation>
 		final WeakEquivalenceGraph<NODE>.WeakEquivalenceEdgeLabel copy =
 				new WeakEquivalenceEdgeLabel(originalEdgeLabel);
 
-		copy.meetWithGpa();
+//		copy.meetWithWeqGpa();
+		copy.meetWithCcGpa();
 
 		final WeakEquivalenceGraph<NODE>.WeakEquivalenceEdgeLabel meet =
 				copy.meetRec(Collections.singletonList(qEqualsI));
@@ -669,7 +670,8 @@ public class WeakEquivalenceGraph<//ACTION extends IIcfgTransition<IcfgLocation>
 		final WeakEquivalenceGraph<NODE>.WeakEquivalenceEdgeLabel meet =
 				new WeakEquivalenceEdgeLabel(labelContents);
 
-		meet.meetWithGpa();
+//		meet.meetWithWeqGpa();
+		meet.meetWithCcGpa();
 
 		// project away the highest weq var before shifting
 //		final Set<NODE> nodesAddedByProject = labelToShiftAndAdd.projectElement(
@@ -889,9 +891,10 @@ public class WeakEquivalenceGraph<//ACTION extends IIcfgTransition<IcfgLocation>
 		return 0;
 	}
 
-	public void meetEdgeLabelsWithGpa() {
+	public void meetEdgeLabelsWithGpaBeforeRemove() {
 		for (final WeakEquivalenceGraph<NODE>.WeakEquivalenceEdgeLabel edgeLabel : mWeakEquivalenceEdges.values()) {
-			edgeLabel.meetWithGpa();
+//			edgeLabel.meetWithWeqGpa();
+			edgeLabel.meetWithCcGpa();
 		}
 	}
 
@@ -1208,6 +1211,8 @@ public class WeakEquivalenceGraph<//ACTION extends IIcfgTransition<IcfgLocation>
 				for (int i = 0; i < getLabelContents().size(); i++) {
 					assert mPartialArrangement.sanityCheck();
 					assert getLabelContents().get(i).sanityCheckOnlyCc();
+//					final CongruenceClosure<NODE> currentPaWgpa = mCcManager.getWeqMeet(getLabelContents().get(i),
+//							mPartialArrangement, mPartialArrangement.getElementCurrentlyBeingRemoved());
 					final CongruenceClosure<NODE> currentPaWgpa = mCcManager.getMeet(getLabelContents().get(i),
 							mPartialArrangement, mPartialArrangement.getElementCurrentlyBeingRemoved());
 
@@ -1529,7 +1534,16 @@ public class WeakEquivalenceGraph<//ACTION extends IIcfgTransition<IcfgLocation>
 				return sanityCheck(copy);
 			}
 
-			public void meetWithGpa() {
+			public void meetWithWeqGpa() {
+				meetWithGpa(true);
+			}
+
+			public void meetWithCcGpa() {
+				meetWithGpa(false);
+			}
+
+			public void meetWithGpa(final boolean meetWithFullWeqCc) {
+
 				final List<CongruenceClosure<NODE>> newLabelContents = new ArrayList<>();
 				for (int i = 0; i < getLabelContents().size(); i++) {
 					if (mLabel.get(i).isTautological()) {
@@ -1541,9 +1555,14 @@ public class WeakEquivalenceGraph<//ACTION extends IIcfgTransition<IcfgLocation>
 						mLabel.add(new CongruenceClosure<>());
 						return;
 					}
-					final CongruenceClosure<NODE> meet =
-							mCcManager.getMeet(mLabel.get(i), mPartialArrangement);
-//									mPartialArrangement.getElementCurrentlyBeingRemoved());
+					final CongruenceClosure<NODE> meet;
+					if (meetWithFullWeqCc) {
+						meet = mCcManager.getWeqMeet(mLabel.get(i), mPartialArrangement);
+					} else {
+						meet = mCcManager.getMeet(mLabel.get(i), mPartialArrangement, mPartialArrangement.getElementCurrentlyBeingRemoved());
+					}
+//					final CongruenceClosure<NODE> meet = null;
+
 					if (meet.isInconsistent()) {
 						/* label element is inconsistent with the current gpa
 						 * --> omit it from the new label

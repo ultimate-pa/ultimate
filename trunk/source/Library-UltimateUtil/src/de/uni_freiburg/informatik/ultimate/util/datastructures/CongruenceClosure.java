@@ -1014,8 +1014,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 			return new CongruenceClosure<>(this);
 		}
 
-		final CongruenceClosure<ELEM> thisAligned = this.alignElementsAndFunctions(other, null);
-		final CongruenceClosure<ELEM> otherAligned = other.alignElementsAndFunctions(this, null);
+		final CongruenceClosure<ELEM> thisAligned = this.alignElementsAndFunctionsCc(other, null);
+		final CongruenceClosure<ELEM> otherAligned = other.alignElementsAndFunctionsCc(this, null);
 
 		final ThreeValuedEquivalenceRelation<ELEM> newElemTver = thisAligned.mElementTVER
 				.join(otherAligned.mElementTVER);
@@ -1029,7 +1029,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 	 * @param remInfo
 	 * @return
 	 */
-	protected CongruenceClosure<ELEM> alignElementsAndFunctions(final CongruenceClosure<ELEM> other,
+	public CongruenceClosure<ELEM> alignElementsAndFunctionsCc(final CongruenceClosure<ELEM> other,
 			final CongruenceClosure<ELEM>.RemoveElement remInfo) {
 		assert !this.isInconsistent() && !other.isInconsistent();
 //		if (isInconsistent()) {
@@ -1106,8 +1106,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 			final CongruenceClosure<ELEM>.RemoveElement remInfo) {
 		assert !this.isInconsistent() && !other.isInconsistent();
 
-		final CongruenceClosure<ELEM> thisAligned = this.alignElementsAndFunctions(other, remInfo);
-		final CongruenceClosure<ELEM> otherAligned = other.alignElementsAndFunctions(this, remInfo);
+		final CongruenceClosure<ELEM> thisAligned = this.alignElementsAndFunctionsCc(other, remInfo);
+		final CongruenceClosure<ELEM> otherAligned = other.alignElementsAndFunctionsCc(this, remInfo);
 
 		for (final Entry<ELEM, ELEM> eq : otherAligned.getSupportingElementEqualities().entrySet()) {
 			if (thisAligned.isInconsistent()) {
@@ -1138,9 +1138,9 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 			// we know this != False, and other = False
 			return false;
 		}
-		final CongruenceClosure<ELEM> thisAligned = this.alignElementsAndFunctions(other, null);
+		final CongruenceClosure<ELEM> thisAligned = this.alignElementsAndFunctionsCc(other, null);
 		assert assertElementsAreSuperset(thisAligned, other);
-		final CongruenceClosure<ELEM> otherAligned = other.alignElementsAndFunctions(this, null);
+		final CongruenceClosure<ELEM> otherAligned = other.alignElementsAndFunctionsCc(this, null);
 		assert assertElementsAreSuperset(thisAligned, otherAligned);
 		assert assertElementsAreSuperset(otherAligned, thisAligned);
 		return checkIsStrongerThan(thisAligned, otherAligned);
@@ -1193,8 +1193,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 			return false;
 		}
 
-		final CongruenceClosure<ELEM> thisAligned = this.alignElementsAndFunctions(other, null);
-		final CongruenceClosure<ELEM> otherAligned = other.alignElementsAndFunctions(this, null);
+		final CongruenceClosure<ELEM> thisAligned = this.alignElementsAndFunctionsCc(other, null);
+		final CongruenceClosure<ELEM> otherAligned = other.alignElementsAndFunctionsCc(this, null);
 		return checkIsStrongerThan(thisAligned, otherAligned) && checkIsStrongerThan(otherAligned, thisAligned);
 	}
 
