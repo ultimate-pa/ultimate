@@ -9,6 +9,8 @@ import java.util.Map;
  * by {@link #hashCode()}. This means that if there is a valid cache, calls to
  * {@link #hashCode()} are computed in <tt>O(1)</tt> instead of
  * <tt>O(n)</tt>.<br/>
+ * This makes the set considerable for use as <tt>key</tt> in a {@link Map Maps}
+ * or similar data structures. <br/>
  * <br/>
  * The cache is automatically cleared every time the set is modified, for
  * example by {@link #add(Object)} or {@link #remove(Object)}. The cache can be
