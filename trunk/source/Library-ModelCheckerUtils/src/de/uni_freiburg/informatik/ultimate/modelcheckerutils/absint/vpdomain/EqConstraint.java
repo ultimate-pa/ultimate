@@ -375,7 +375,7 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 
 	public void removeElement(final NODE elemToHavoc) {
 		mPartialArrangement.removeSimpleElement(elemToHavoc);
-		assert mPartialArrangement.assertElementIsFullyRemoved(elemToHavoc);
+		assert mPartialArrangement.assertSingleElementIsFullyRemoved(elemToHavoc);
 		assert mPartialArrangement.sanityCheck();
 	}
 

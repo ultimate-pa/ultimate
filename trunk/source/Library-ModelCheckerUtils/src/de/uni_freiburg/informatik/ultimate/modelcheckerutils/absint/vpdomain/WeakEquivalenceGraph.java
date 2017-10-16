@@ -1082,7 +1082,7 @@ public class WeakEquivalenceGraph<//ACTION extends IIcfgTransition<IcfgLocation>
 //						lab.removeSimpleElement(elem);
 //					}
 
-					assert lab.assertElementIsFullyRemoved(elem);
+					assert lab.assertSingleElementIsFullyRemoved(elem);
 
 					if (lab.isTautological()) {
 						// a disjunct became "true" through projection --> the whole disjunction is tautological
@@ -1092,13 +1092,13 @@ public class WeakEquivalenceGraph<//ACTION extends IIcfgTransition<IcfgLocation>
 					}
 					final CongruenceClosure<NODE> newLab = lab.projectToElements(mFactory.getAllWeqNodes(),
 							mPartialArrangement.getElementCurrentlyBeingRemoved());
-					assert newLab.assertElementIsFullyRemoved(elem);
+					assert newLab.assertSingleElementIsFullyRemoved(elem);
 					newLabelContents.add(newLab);
 					assert lab.sanityCheckOnlyCc(mPartialArrangement.getElementCurrentlyBeingRemoved());
 				}
 				mLabel.clear();
 				mLabel.addAll(newLabelContents);
-				assert mLabel.stream().allMatch(l -> l.assertElementIsFullyRemoved(elem));
+				assert mLabel.stream().allMatch(l -> l.assertSingleElementIsFullyRemoved(elem));
 				assert sanityCheck();
 			}
 
@@ -1609,7 +1609,7 @@ public class WeakEquivalenceGraph<//ACTION extends IIcfgTransition<IcfgLocation>
 
 			public boolean assertElementIsFullyRemoved(final NODE elem) {
 				for (final CongruenceClosure<NODE> lab : mLabel) {
-					if (!lab.assertElementIsFullyRemoved(elem)) {
+					if (!lab.assertSingleElementIsFullyRemoved(elem)) {
 						assert false;
 						return false;
 					}

@@ -461,19 +461,29 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		}
 
 		assert mElementCurrentlyBeingRemoved == null;
-		mElementCurrentlyBeingRemoved = new RemoveElement(elem, introduceNewNodes);
-		mElementCurrentlyBeingRemoved.doRemoval();
+		final CongruenceClosure<ELEM>.RemoveElement re = new RemoveElement(elem, introduceNewNodes);
+		mElementCurrentlyBeingRemoved = re;
+
+		re.doRemoval();
+		assert assertSimpleElementIsFullyRemoved(elem);
 		assert sanityCheck();
-		final boolean result = mElementCurrentlyBeingRemoved.madeChanges();
+
+		final boolean result = re.madeChanges();
+
 		mElementCurrentlyBeingRemoved = null;
-		assert assertElementIsFullyRemoved(elem);
+
+		assert assertSimpleElementIsFullyRemoved(elem);
+		assert sanityCheck();
 		return result;
 	}
 
 
 
 	protected Set<ELEM> collectElementsToRemove(final ELEM elem) {
+		return collectTransitiveParents(elem);
+	}
 
+	protected Set<ELEM> collectTransitiveParents(final ELEM elem) {
 		final Set<ELEM> result = new HashSet<>();
 
 		final Deque<ELEM> worklist = new ArrayDeque<>();
@@ -486,7 +496,6 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 			worklist.addAll(mFaAuxData.getAfParents(current));
 			worklist.addAll(mFaAuxData.getArgParents(current));
 		}
-
 		return result;
 	}
 
@@ -817,7 +826,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 
 		updateElementTverAndAuxDataOnRemoveElement(elem);
 
-		assert assertElementIsFullyRemoved(elem);
+		assert assertSingleElementIsFullyRemoved(elem);
 		return true;
 	}
 
@@ -961,7 +970,21 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		}
 	}
 
-	public boolean assertElementIsFullyRemoved(final ELEM elem) {
+	public boolean assertSimpleElementIsFullyRemoved(final ELEM elem) {
+
+		// not ideal as this method is used during the removal, too..
+		final Set<ELEM> transitiveParents = collectElementsToRemove(elem);
+
+		for (final ELEM e : getAllElements()) {
+			if (transitiveParents.contains(e)) {
+				assert false;
+				return false;
+			}
+		}
+		return true;
+	}
+
+	public boolean assertSingleElementIsFullyRemoved(final ELEM elem) {
 		return elementIsFullyRemovedOnlyCc(elem);
 	}
 

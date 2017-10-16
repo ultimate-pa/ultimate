@@ -417,8 +417,13 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		final Set<NODE> result = new HashSet<>();
 		// collect (transitive) parent nodes
 		result.addAll(super.collectElementsToRemove(elem));
-		// collect (transitive) parent nodes
+
+		// collect dependent elements and their transitive parent nodes
 		result.addAll(mNodeToDependents.getImage(elem));
+		for (final NODE dep : mNodeToDependents.getImage(elem)) {
+			result.addAll(collectTransitiveParents(dep));
+		}
+
 		return result;
 	}
 
@@ -1189,8 +1194,26 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		}
 	}
 
+	/**
+	 * is a simple element and all the elements that depend on it fully removed?
+	 */
 	@Override
-	public boolean assertElementIsFullyRemoved(final NODE elem) {
+	public boolean assertSimpleElementIsFullyRemoved(final NODE elem) {
+		for (final NODE e : getAllElements()) {
+			if (e.isDependent() && e.getSupportingNodes().contains(elem)) {
+				assert false;
+				return false;
+			}
+		}
+		return super.assertSimpleElementIsFullyRemoved(elem);
+	}
+
+	@Override
+	public boolean assertSingleElementIsFullyRemoved(final NODE elem) {
+
+
+
+
 		if (!mWeakEquivalenceGraph.elementIsFullyRemoved(elem)) {
 			assert false;
 			return false;
@@ -1202,7 +1225,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 				return false;
 			}
 		}
-		return super.assertElementIsFullyRemoved(elem);
+		return super.assertSingleElementIsFullyRemoved(elem);
 	}
 
 	@Override
