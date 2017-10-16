@@ -44,12 +44,14 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.IGeneralizedNestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiClosureNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiIsEmpty;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.GeneralizedBuchiIsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Difference;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsDeterministic;
@@ -593,7 +595,10 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 			throws AutomataOperationCanceledException, AssertionError {
 		mBenchmarkGenerator.start(BuchiCegarLoopBenchmark.s_NonLiveStateRemoval);
 		try {
-			mAbstraction = new RemoveNonLiveStates<>(new AutomataLibraryServices(mServices), mAbstraction).getResult();
+			if(! (mAbstraction instanceof IGeneralizedNestedWordAutomaton)) {
+				mAbstraction = new RemoveNonLiveStates<>(new AutomataLibraryServices(mServices), mAbstraction).getResult();
+			}
+//			mAbstraction = new RemoveNonLiveStates<>(new AutomataLibraryServices(mServices), mAbstraction).getResult();
 		} finally {
 			mBenchmarkGenerator.stop(BuchiCegarLoopBenchmark.s_NonLiveStateRemoval);
 		}
@@ -705,12 +710,23 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 	}
 
 	private boolean isAbstractionCorrect() throws AutomataLibraryException {
-		final BuchiIsEmpty<LETTER, IPredicate> ec =
-				new BuchiIsEmpty<>(new AutomataLibraryServices(mServices), mAbstraction);
-		if (ec.getResult()) {
-			return true;
+		if(mAbstraction instanceof IGeneralizedNestedWordAutomaton) {
+			IGeneralizedNestedWordAutomaton<LETTER, IPredicate> abstraction 
+			           = (IGeneralizedNestedWordAutomaton<LETTER, IPredicate>)mAbstraction;
+			final GeneralizedBuchiIsEmpty<LETTER, IPredicate> ec =
+					new GeneralizedBuchiIsEmpty<>(new AutomataLibraryServices(mServices), abstraction);
+			if (ec.getResult()) {
+				return true;
+			}
+			mCounterexample = ec.getAcceptingNestedLassoRun();
+		}else {
+			final BuchiIsEmpty<LETTER, IPredicate> ec =
+					new BuchiIsEmpty<>(new AutomataLibraryServices(mServices), mAbstraction);
+			if (ec.getResult()) {
+				return true;
+			}
+			mCounterexample = ec.getAcceptingNestedLassoRun();
 		}
-		mCounterexample = ec.getAcceptingNestedLassoRun();
 
 		final HistogramOfIterable<LETTER> traceHistogramStem =
 				new HistogramOfIterable<>(mCounterexample.getStem().getWord());
