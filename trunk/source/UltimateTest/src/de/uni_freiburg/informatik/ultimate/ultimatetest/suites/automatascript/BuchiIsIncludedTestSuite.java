@@ -70,6 +70,7 @@ public class BuchiIsIncludedTestSuite extends UltimateTestSuite {
 	private static final String TOOLCHAIN = "examples/toolchains/AutomataScriptInterpreter.xml";
 	private static final File TOOLCHAIN_FILE = new File(TestUtil.getPathFromTrunk(TOOLCHAIN));
 	private static int sTimeout = 10 * 1_000;
+//	private static int sTimeout = Integer.MAX_VALUE;
 	private static final String[] mDirectories = {
 
 			// The following folder is not in the Ultimate repository.
@@ -78,6 +79,7 @@ public class BuchiIsIncludedTestSuite extends UltimateTestSuite {
 			// https://github.com/ultimate-pa/automata-benchmarks
 //			"examples/automata-benchmarks/20170521-TerminationAnalysis-BuchiIsIncluded",
 			"examples/automata-benchmarks/20170611-TerminationAnalysis-BuchiIsIncluded"
+//			"examples/automata-benchmarks/bug"
 	};
 	
 	private static final String[] mFileEndings = { ".ats" };
@@ -85,9 +87,10 @@ public class BuchiIsIncludedTestSuite extends UltimateTestSuite {
 	private static final String[] SETTINGS = {
 //			"AutomataScript/buchiIsIncluded/buchiIsIncluded.epf",
 			"AutomataScript/buchiIsIncluded/buchiIsIncludedNCSB.epf",
-			"AutomataScript/buchiIsIncluded/buchiIsIncludedNCSBLazy.epf",
+//			"AutomataScript/buchiIsIncluded/buchiIsIncludedNCSBLazy.epf",
 //			"AutomataScript/buchiIsIncluded/buchiIsIncludedNCSBLazy2.epf",
-			"AutomataScript/buchiIsIncluded/buchiIsIncludedNCSBSimple.epf",
+//			"AutomataScript/buchiIsIncluded/buchiIsIncludedNCSBSimple.epf",
+			"AutomataScript/buchiIsIncluded/generalizedBuchiIsIncludedNCSBSimple.epf",
 //			"AutomataScript/buchiIsIncluded/buchiIsIncludedNCSBSimple2.epf"
 //			"AutomataScript/buchiIsIncluded/buchiIsIncludedRabit.epf"
 			};
@@ -110,9 +113,10 @@ public class BuchiIsIncludedTestSuite extends UltimateTestSuite {
 	private static final Object[] INTERESTING_OPERATIONS = {
 //			"buchiIsIncluded",
 			"buchiIsIncludedNCSB",
-			"buchiIsIncludedNCSBLazy",
+//			"buchiIsIncludedNCSBLazy",
 //			"buchiIsIncludedNCSBLazy2",
-			"buchiIsIncludedNCSBSimple",
+//			"buchiIsIncludedNCSBSimple",
+			"generalizedBuchiIsIncludedNCSBSimple"
 //			"buchiIsIncludedNCSBSimple2",
 //			"buchiIsIncludedRabit"
 	};
@@ -163,12 +167,12 @@ public class BuchiIsIncludedTestSuite extends UltimateTestSuite {
 		int n = 0;
 		for (final File inputFile : inputFiles) {
 // bugs for antichain
-//			if(! inputFile.getName().equals("bist_cell_true-unreach-call_false-termination.cil.c_Iteration17.ats")) continue;
+			if(! inputFile.getName().equals("GCD3_true-termination_true-no-overflow.c_Iteration4.ats")) continue;
 			// bug for simple
 //			if(! inputFile.getName().equals("b.15_true-termination_true-no-overflow.c_Iteration3.ats")) continue;
 //			if(! inputFile.getName().equals("PastaC1_true-termination.c_Iteration2.ats"))
 //			continue;
-			if(n > 10) break;
+			if(n > 20) break;
 			n ++;
 			for (final String settingFileName : SETTINGS) {
 				final File settingsFile = new File(TestUtil.getPathFromTrunk("/examples/settings/" + settingFileName));
