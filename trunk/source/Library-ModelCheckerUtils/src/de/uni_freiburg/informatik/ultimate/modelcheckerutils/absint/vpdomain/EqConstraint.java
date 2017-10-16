@@ -63,13 +63,13 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 
 	final EqConstraintFactory<NODE> mFactory;
 	/**
-	 * The IProgramVars whose getTermVariable()-value is used in a NODE inside this constraint;
-	 * computed lazily by getVariables.
+	 * The IProgramVars whose getTermVariable()-value is used in a NODE inside this
+	 * constraint; computed lazily by getVariables.
 	 */
 	private Set<IProgramVar> mVariables;
 	/**
-	 * Same as mVariables, but with respect to IProgramVarOrConst, and getTerm, instead of IProgramVar and
-	 * getTermVariable.
+	 * Same as mVariables, but with respect to IProgramVarOrConst, and getTerm,
+	 * instead of IProgramVar and getTermVariable.
 	 */
 	private Set<IProgramVarOrConst> mPvocs;
 	private Term mTerm;
@@ -77,10 +77,9 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 
 	private final int mId;
 
-
 	/**
-	 * Creates an empty constraint (i.e. an EqConstraint that does not constrain anything, whose toTerm() will return
-	 * "true").
+	 * Creates an empty constraint (i.e. an EqConstraint that does not constrain
+	 * anything, whose toTerm() will return "true").
 	 *
 	 * @param factory
 	 */
@@ -114,13 +113,15 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 	public void freeze() {
 		assert !isInconsistent() : "use EqBottomConstraint instead!!";
 		assert sanityCheck();
-//		assert !mIsFrozen;
+		// assert !mIsFrozen;
 		mIsFrozen = true;
 	}
 
 	/**
-	 * Whenever an EqConstraint becomes inconsistent, we replace it with an EqBottomConstraint.
-	 * Thus this should always return false. (see also checkForContradictionMethod)
+	 * Whenever an EqConstraint becomes inconsistent, we replace it with an
+	 * EqBottomConstraint. Thus this should always return false. (see also
+	 * checkForContradictionMethod)
+	 *
 	 * @return
 	 */
 	public boolean isBottom() {
@@ -141,8 +142,6 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 		return mPartialArrangement.reportEquality(node1, node2);
 	}
 
-
-
 	public boolean reportDisequality(final NODE node1, final NODE node2) {
 		assert !mIsInconsistent;
 		assert !mIsFrozen;
@@ -150,8 +149,7 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 		return paHasChanged;
 	}
 
-	public void reportWeakEquivalence(final NODE array1, final NODE array2,
-			final NODE storeIndex) {
+	public void reportWeakEquivalence(final NODE array1, final NODE array2, final NODE storeIndex) {
 		assert !mIsInconsistent;
 		assert !mIsFrozen;
 		mPartialArrangement.reportWeakEquivalence(array1, array2, storeIndex);
@@ -169,7 +167,6 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 	public boolean isInconsistent() {
 		return mIsInconsistent;
 	}
-
 
 	private static <E, F extends E> boolean arrayContains(final E[] freeVars, final F var) {
 		for (int i = 0; i < freeVars.length; i++) {
@@ -199,8 +196,7 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 	 * @return true iff this constraint implies that node1 and node2 are equal
 	 */
 	public boolean areEqual(final NODE node1, final NODE node2) {
-		if (!mPartialArrangement.hasElement(node1)
-		 || !mPartialArrangement.hasElement(node2)) {
+		if (!mPartialArrangement.hasElement(node1) || !mPartialArrangement.hasElement(node2)) {
 			return false;
 		}
 		return mPartialArrangement.getEqualityStatus(node1, node2) == EqualityStatus.EQUAL;
@@ -213,8 +209,7 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 	 * @return true iff this constraint implies that node1 and node2 are unequal
 	 */
 	public boolean areUnequal(final NODE node1, final NODE node2) {
-		if (!mPartialArrangement.hasElement(node1)
-		 || !mPartialArrangement.hasElement(node2)) {
+		if (!mPartialArrangement.hasElement(node1) || !mPartialArrangement.hasElement(node2)) {
 			return false;
 		}
 		return mPartialArrangement.getEqualityStatus(node1, node2) == EqualityStatus.NOT_EQUAL;
@@ -233,8 +228,8 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 		return result;
 	}
 
-	static <NODE extends IEqNodeIdentifier<NODE>>
-		List<Term> partialArrangementToCube(final Script script, final CongruenceClosure<NODE> pa) {
+	static <NODE extends IEqNodeIdentifier<NODE>> List<Term> partialArrangementToCube(final Script script,
+			final CongruenceClosure<NODE> pa) {
 
 		final List<Term> elementEqualities = pa.getSupportingElementEqualities().entrySet().stream()
 				.map(en -> script.term("=", en.getKey().getTerm(), en.getValue().getTerm()))
@@ -250,9 +245,9 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 	}
 
 	/**
-	 * This only really makes sense when this constraint is in a renaming state
-	 * such that the TermVariables are "normalized" to the TermVariables that
-	 * are associated to IProgramVars.
+	 * This only really makes sense when this constraint is in a renaming state such
+	 * that the TermVariables are "normalized" to the TermVariables that are
+	 * associated to IProgramVars.
 	 *
 	 * I.e. when it is the constraint of a EqPredicate or an EqState
 	 *
@@ -265,8 +260,8 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 		final Collection<TermVariable> allTvs = getAllTermVariables();
 
 		/*
-		 * note this will probably crash if this method is called on an
-		 * EqConstraint that does not belong to a predicate or state
+		 * note this will probably crash if this method is called on an EqConstraint
+		 * that does not belong to a predicate or state
 		 */
 		mVariables = allTvs.stream().map(symbolTable::getProgramVar).collect(Collectors.toSet());
 
@@ -275,15 +270,18 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 	}
 
 	/**
-	 * Collects the Pvocs (IprogramVarOrConsts) that are mentioned in this EqConstraint by looking up the TermVariables
-	 * and nullary ApplicationTerms in the symbol table.
+	 * Collects the Pvocs (IprogramVarOrConsts) that are mentioned in this
+	 * EqConstraint by looking up the TermVariables and nullary ApplicationTerms in
+	 * the symbol table.
 	 *
-	 * These Pvocs correspond to the Pvocs of the compacted version of an EqState that has this constraint, i.e.,
-	 * only Pvocs that are actually constrained by this constraint are mentioned.
+	 * These Pvocs correspond to the Pvocs of the compacted version of an EqState
+	 * that has this constraint, i.e., only Pvocs that are actually constrained by
+	 * this constraint are mentioned.
 	 *
-	 * We expect this to only be called when this constraint is the constraint
-	 * of an EqState, thus we expect all TermVariables to correspond to an IProgramVar and all nullary ApplicationTerms
-	 * to correspond to a constant that is mentioned in the symbol table.
+	 * We expect this to only be called when this constraint is the constraint of an
+	 * EqState, thus we expect all TermVariables to correspond to an IProgramVar and
+	 * all nullary ApplicationTerms to correspond to a constant that is mentioned in
+	 * the symbol table.
 	 *
 	 * @param symbolTable
 	 *
@@ -299,11 +297,12 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 
 		final Set<ApplicationTerm> constants = new HashSet<>();
 		mPartialArrangement.getAllElements().stream()
-			.forEach(node -> constants.addAll(new ConstantFinder().findConstants(node.getTerm(), false)));
+				.forEach(node -> constants.addAll(new ConstantFinder().findConstants(node.getTerm(), false)));
 		// TODO do we need to find literals here, too?? (i.e. ConstantTerms)
 
-//		mPartialArrangement.getAllFunctions().stream()
-//			.forEach(func -> constants.addAll(new ConstantFinder().findConstants(func.getTerm(), false)));
+		// mPartialArrangement.getAllFunctions().stream()
+		// .forEach(func -> constants.addAll(new
+		// ConstantFinder().findConstants(func.getTerm(), false)));
 
 		mPvocs.addAll(constants.stream().map(c -> symbolTable.getProgramConst(c)).collect(Collectors.toSet()));
 
@@ -332,8 +331,8 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 		if (other.isTop()) {
 			return other;
 		}
-		final WeqCongruenceClosure<NODE> newPartialArrangement = this.mPartialArrangement.join(
-				other.mPartialArrangement);
+		final WeqCongruenceClosure<NODE> newPartialArrangement = this.mPartialArrangement
+				.join(other.mPartialArrangement);
 		final EqConstraint<NODE> res = mFactory.getEqConstraint(newPartialArrangement);
 		res.freeze();
 		return res;
@@ -359,7 +358,6 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 		res.freeze();
 		return res;
 	}
-
 
 	/**
 	 *
@@ -389,7 +387,7 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 	public Collection<TermVariable> getAllTermVariables() {
 		final Set<TermVariable> allTvs = new HashSet<>();
 		mPartialArrangement.getAllElements().stream()
-			.forEach(node -> allTvs.addAll(Arrays.asList(node.getTerm().getFreeVars())));
+				.forEach(node -> allTvs.addAll(Arrays.asList(node.getTerm().getFreeVars())));
 		return allTvs;
 	}
 
@@ -407,7 +405,7 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 
 	public Integer getStatistics(final VPStatistics stat) {
 		switch (stat) {
-		default :
+		default:
 			return mPartialArrangement.getStatistics(stat);
 		}
 	}
@@ -424,10 +422,10 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 	@Override
 	public int hashCode() {
 		return mId;
-//		final int prime = 31;
-//		int result = 1;
-//		result = prime * result + mId;
-//		return result;
+		// final int prime = 31;
+		// int result = 1;
+		// result = prime * result + mId;
+		// return result;
 	}
 
 	@Override
@@ -448,4 +446,3 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 		return true;
 	}
 }
-

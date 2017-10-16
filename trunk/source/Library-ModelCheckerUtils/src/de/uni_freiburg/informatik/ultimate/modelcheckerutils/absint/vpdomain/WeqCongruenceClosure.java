@@ -842,6 +842,13 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 	}
 
 	@Override
+	protected void applyClosureOperations() {
+		executeFloydWarshallAndReportResultToWeqCc();
+		reportAllArrayEqualitiesFromWeqGraph();
+		assert sanityCheck();
+	}
+
+	@Override
 	public boolean removeSingleElement(final NODE elem, final NODE replacement) {
 		if (elem.isDependent()) {
 			mNodeToDependents.removeRangeElement(elem);
@@ -901,6 +908,10 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		for (final Entry<NODE, WeakEquivalenceGraph<NODE>.WeakEquivalenceEdgeLabel> edge
 				: mWeakEquivalenceGraph.getAdjacentWeqEdges(elemToRemove.getAppliedFunction()).entrySet()) {
 			assert !edge.getKey().equals(elemToRemove.getAppliedFunction());
+			if (elemToRemoveToReplacement.keySet().contains(edge.getKey())) {
+				// b is also being removed, cannot use it for propagations..
+				continue;
+			}
 
 			final List<CongruenceClosure<NODE>> projectedLabel = mWeakEquivalenceGraph
 					.projectEdgeLabelToPoint(edge.getValue().getLabelContents(),
@@ -1235,6 +1246,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 //
 //		final CongruenceClosure<NODE> gPaMeet = super.meetRec(other);
 		final WeqCongruenceClosure<NODE> gPaMeet = meetWeqWithCc(other);
+		assert gPaMeet.sanityCheck();
 		if (gPaMeet.isInconsistent()) {
 			return new WeqCongruenceClosure<>(true);
 		}
@@ -1251,16 +1263,22 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		 */
 
 		final WeqCongruenceClosure<NODE> newWeqCc = gPaMeet;
+		assert newWeqCc.sanityCheck();
 
 		final WeqCongruenceClosure<NODE> otherWeqCc = (WeqCongruenceClosure<NODE>) other;
 		assert otherWeqCc.mWeakEquivalenceGraph.sanityCheck();
+		assert otherWeqCc.sanityCheck();
 
 		// report all weq edges from other
 		for (final Entry<Doubleton<NODE>, WeakEquivalenceGraph<NODE>.WeakEquivalenceEdgeLabel> edge
 				: otherWeqCc.mWeakEquivalenceGraph.getEdges().entrySet()) {
+
+//			assert gPaMeet.getAllElements().containsAll(edge.getValue().getAppearingNodes());
+
 			newWeqCc.reportWeakEquivalenceDoOnlyRoweqPropagations(edge.getKey().getOneElement(),
 					edge.getKey().getOtherElement(),
 					edge.getValue().getLabelContents());
+			assert newWeqCc.sanityCheck();
 		}
 
 
@@ -1294,6 +1312,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 			}
 			thisAligned.reportDisequalityRec(deq.getKey(), deq.getValue());
 		}
+		assert thisAligned.sanityCheck();
 		return thisAligned;
 	}
 

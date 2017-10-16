@@ -493,6 +493,7 @@ public class WeakEquivalenceGraph<//ACTION extends IIcfgTransition<IcfgLocation>
 		assert !sourceAndTarget.getOneElement().equals(sourceAndTarget.getOtherElement());
 		assert paList.stream().allMatch(l -> l.assertHasOnlyWeqVarConstraints(mFactory.getAllWeqNodes()));
 		assert paList.size() != 1 || !paList.get(0).isTautological() : "catch this case before?";
+		assert sanityCheck();
 
 		final WeakEquivalenceEdgeLabel oldLabel = mWeakEquivalenceEdges.get(sourceAndTarget);
 
@@ -512,6 +513,7 @@ public class WeakEquivalenceGraph<//ACTION extends IIcfgTransition<IcfgLocation>
 					newLabel.projectToElements(mFactory.getAllWeqNodes());
 			mWeakEquivalenceEdges.put(sourceAndTarget, newLabelMeetProject);
 
+			assert sanityCheck();
 			return true;
 		}
 
@@ -541,7 +543,7 @@ public class WeakEquivalenceGraph<//ACTION extends IIcfgTransition<IcfgLocation>
 		assert strengthenedEdgeLabel.sanityCheck();
 		// replace the edge label by the strengthened version
 		mWeakEquivalenceEdges.put(sourceAndTarget, strengthenedEdgeLabel);
-//		assert sanityCheck();
+		assert sanityCheck();
 		return true;
 	}
 
@@ -655,6 +657,7 @@ public class WeakEquivalenceGraph<//ACTION extends IIcfgTransition<IcfgLocation>
 				meet.projectToElements(new HashSet<>(weqVarsForThisEdge));
 
 		assert result.assertHasOnlyWeqVarConstraints(new HashSet<>(weqVarsForThisEdge));
+//		assert copy.getAppearingNodes().containsAll(result.getAppearingNodes());
 
 		assert result.sanityCheck();
 		return result.getLabelContents();
@@ -811,7 +814,9 @@ public class WeakEquivalenceGraph<//ACTION extends IIcfgTransition<IcfgLocation>
 		if (mPartialArrangement != null) {
 			for (final Entry<Doubleton<NODE>, WeakEquivalenceEdgeLabel> edge : mWeakEquivalenceEdges.entrySet()) {
 
-				final Set<NODE> nodesOnEdgeLabelWithoutWeqNodes = edge.getValue().getAppearingNodes().stream()
+				final WeakEquivalenceGraph<NODE>.WeakEquivalenceEdgeLabel label = edge.getValue();
+
+				final Set<NODE> nodesOnEdgeLabelWithoutWeqNodes = label.getAppearingNodes().stream()
 						.filter(node -> !CongruenceClosure.dependsOnAny(node, mFactory.getAllWeqNodes()))
 						.filter(node -> nodesScheduledForAdding == null
 							|| !nodesScheduledForAdding.contains(node))
@@ -1031,7 +1036,7 @@ public class WeakEquivalenceGraph<//ACTION extends IIcfgTransition<IcfgLocation>
 
 			public void projectWeqVarNode(final NODE firstDimWeqVarNode) {
 				for (final CongruenceClosure<NODE> lab : mLabel) {
-					lab.removeSimpleElement(firstDimWeqVarNode);
+					lab.removeSimpleElementDontIntroduceNewNodes(firstDimWeqVarNode);
 				}
 				assert sanityCheckDontEnforceProjectToWeqVars(mPartialArrangement);
 			}
