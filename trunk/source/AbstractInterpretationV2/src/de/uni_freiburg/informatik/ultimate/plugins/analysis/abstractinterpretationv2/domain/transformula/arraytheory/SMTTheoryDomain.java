@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  */
-public class SMTTheoryDomain implements IAbstractDomain<SMTTheoryState, IcfgEdge, IProgramVarOrConst> {
+public class SMTTheoryDomain implements IAbstractDomain<SMTTheoryState, IcfgEdge> {
 	
 	private final SMTTheoryPostOperator mPostOperator;
 
@@ -68,7 +68,7 @@ public class SMTTheoryDomain implements IAbstractDomain<SMTTheoryState, IcfgEdge
 	}
 
 	@Override
-	public IAbstractPostOperator<SMTTheoryState, IcfgEdge, IProgramVarOrConst> getPostOperator() {
+	public IAbstractPostOperator<SMTTheoryState, IcfgEdge> getPostOperator() {
 		return mPostOperator;
 	}
 

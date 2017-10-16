@@ -18,7 +18,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.smtinterpol.convert;
 
-
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -35,39 +34,30 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.ClauseDeletionHook;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.DPLLEngine;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Literal;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.ProofNode;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.TerminationRequest;
 
 /**
  * Test Class for integer divide operators.
- * 
+ *
  * @author Jochen Hoenicke
  */
 public final class IntDivideTest {
 	Theory mTheory;
 	Clausifier mClausifier;
 	Sort mIntSort, mRealSort;
-	Term mI,mJ,mK,mL,mR,mS,mT;
-	ArrayList<Literal[]> mClauses = new ArrayList<Literal[]>();
-	
+	Term mI, mJ, mK, mL, mR, mS, mT;
+	ArrayList<Literal[]> mClauses = new ArrayList<>();
+
 	public IntDivideTest() {
 		mTheory = new Theory(Logics.QF_UFLIRA);
-		final DPLLEngine dpllEngine = new DPLLEngine(mTheory, new DefaultLogger(),
-				new TerminationRequest() {
-			
-					@Override
-					public boolean isTerminationRequested() {
-						return false;
-					}
-				});
+		final DPLLEngine dpllEngine = new DPLLEngine(mTheory, new DefaultLogger(), () -> false);
 		mClausifier = new Clausifier(dpllEngine, 0) {
 			@Override
-			public void addClause(
-					Literal[] lits, ClauseDeletionHook hook, ProofNode pn) {
+			public void addClause(final Literal[] lits, final ClauseDeletionHook hook, final ProofNode pn) {
 				mClauses.add(lits);
 			}
 		};
 		mClausifier.setLogic(Logics.QF_UFLIRA);
-		
+
 		final Sort[] empty = new Sort[0];
 		mIntSort = mTheory.getSort("Int");
 		mRealSort = mTheory.getSort("Real");
@@ -79,7 +69,7 @@ public final class IntDivideTest {
 		mS = mTheory.term(mTheory.declareFunction("s", empty, mRealSort));
 		mT = mTheory.term(mTheory.declareFunction("t", empty, mRealSort));
 	}
-	
+
 	@Test
 	@SuppressWarnings("unused")
 	public void testCreateDiv() {
@@ -97,14 +87,9 @@ public final class IntDivideTest {
 		final Term termMod = mTheory.term(mod, mI, five);
 		final Term termAbs = mTheory.term(abs, mJ);
 		final Term termToI = mTheory.term(toint, mR);
-		final Term termSum = mTheory.term(add,
-				mTheory.term(mul, mTheory.term(div, mI, five), five),
-				mTheory.term(mod, mI, five),
-				mTheory.term(toint, mR),
-				mTheory.term(abs, mJ));
-		final Term formIsInt = 
-				mTheory.term(isint,
-						mTheory.term(addr, mR, mS, mTheory.term(toreal, mI)));
+		final Term termSum = mTheory.term(add, mTheory.term(mul, mTheory.term(div, mI, five), five),
+				mTheory.term(mod, mI, five), mTheory.term(toint, mR), mTheory.term(abs, mJ));
+		final Term formIsInt = mTheory.term(isint, mTheory.term(addr, mR, mS, mTheory.term(toreal, mI)));
 		mClausifier.addFormula(formIsInt);
 		System.err.println(formIsInt);
 		for (final Literal[] clause : mClauses) {

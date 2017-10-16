@@ -55,9 +55,9 @@ file_export_version=3.0
 @CDTParser=0.0.1
 #Thu Oct 16 13:48:06 CEST 2014
 file_export_version=3.0
-/instance/UltimateCore/Toolchain\ timeout\ in\ seconds=60
-\!/instance/UltimateCore=
-@UltimateCore=0.0.1
+/instance/de.uni_freiburg.informatik.ultimate.core/Toolchain\ timeout\ in\ seconds=60
+\!/instance/de.uni_freiburg.informatik.ultimate.core=
+@de.uni_freiburg.informatik.ultimate.core=0.0.1
 #Thu Oct 16 13:48:06 CEST 2014
 file_export_version=3.0
 \!/instance/de.uni_freiburg.informatik.ultimate.gui=

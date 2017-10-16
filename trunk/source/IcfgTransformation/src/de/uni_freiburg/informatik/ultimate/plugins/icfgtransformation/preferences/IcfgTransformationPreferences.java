@@ -33,6 +33,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePrefer
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.biesenbach.IcfgLoopAcceleration.LoopAccelerationOptions;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr.FastUPRTransformer.FastUPRReplacementMethod;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.werner.WernerLoopAccelerationIcfgTransformer.DealingWithArraysTypes;
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtransformation.Activator;
 
 /**
@@ -58,6 +59,9 @@ public class IcfgTransformationPreferences extends UltimatePreferenceInitializer
 					+ "underapproximation, MARK_AS_OVERAPPROX allows underapproximations that contain overapproximations"
 					+ " of single variables and ignores all other not-accelerabe loops, and "
 					+ "DO_NOT_ACCELERATE only accelerates loops for which a valid underapproximation could be found. ";
+
+	public static final String LABEL_LA_WERNER_MODE = "Loopacceleration Werner Mode";
+	private static final String DESC_LA_WERNER_MODE = null;
 
 	public static final String LABEL_MAPELIM_ADD_INEQUALITIES = "Map elimination: also add inequalities";
 	private static final String DESC_MAPELIM_ADD_INEQUALITIES =
@@ -132,6 +136,9 @@ public class IcfgTransformationPreferences extends UltimatePreferenceInitializer
 						DESC_FASTUPR_MODE, PreferenceType.Combo, FastUPRReplacementMethod.values()),
 				new UltimatePreferenceItem<>(LABEL_LA_BB_MODE, LoopAccelerationOptions.MARK_AS_OVERAPPROX,
 						DESC_LA_BB_MODE, PreferenceType.Combo, LoopAccelerationOptions.values()),
+
+				new UltimatePreferenceItem<>(LABEL_LA_WERNER_MODE, DealingWithArraysTypes.SKIP_LOOP,
+						DESC_LA_WERNER_MODE, PreferenceType.Combo, DealingWithArraysTypes.values()),
 
 				new UltimatePreferenceItem<>(LABEL_MAPELIM_ADD_INEQUALITIES, false, DESC_MAPELIM_ADD_INEQUALITIES,
 						PreferenceType.Boolean),

@@ -12,12 +12,12 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *
  */
 public final class LoggingHelper {
-	
+
 	private LoggingHelper() {
 		// this is a util class
 	}
 
-	public static <STATE extends IAbstractState<STATE, ?>> StringBuilder getStateString(final STATE current) {
+	public static <STATE extends IAbstractState<STATE>> StringBuilder getStateString(final STATE current) {
 		if (current == null) {
 			return new StringBuilder("__");
 		}
@@ -40,7 +40,7 @@ public final class LoggingHelper {
 		return builder.append('[').append(current.hashCode()).append(']');
 	}
 
-	public static <ACTION, STORE extends IAbstractStateStorage<?, ACTION, ?, ?>> String
+	public static <ACTION, STORE extends IAbstractStateStorage<?, ACTION, ?>> String
 			getScopeStackString(final Deque<Pair<ACTION, STORE>> scopeStack) {
 		return scopeStack.stream().sequential().map(a -> a.getFirst())
 				.map(a -> a == null ? "[G]" : getHashCodeString(a).toString()).reduce((a, b) -> a + b)

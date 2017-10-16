@@ -1,0 +1,52 @@
+_check_SGE_0:int declare main()
+_call:
+  assume (forall l in [0,0] % 4 :: @V_1[l]=0);
+  assume (forall l in [0,36] % 4 :: @V_2[l]=0);
+  _2 = array_read(@V_1,x);
+  _store = _2+1;
+  array_write(@V_1,x,_store);
+  i.0 = 0;
+--> [_i.0;]
+_i.0:
+--> [__@bb_1;__@bb_2;]
+__@bb_1:
+  assume (i.0 <= 9);
+--> [_6;]
+_6:
+  _7 =* ;
+--> [__@bb_3;__@bb_4;]
+__@bb_3:
+  assume (_7 = 0);
+--> [_11;]
+_11:
+  _12 = array_read(@V_1,x);
+  _store3 = a + 4*i.0;
+  array_write(@V_2,_store3,_12);
+--> [_14;]
+_14:
+  _br4 = i.0+1;
+  i.0 = _br4;
+--> [_i.0;]
+__@bb_4:
+  assume (_7 != 0);
+--> [_9;]
+_9:
+  _store2 = a + 4*i.0;
+  array_write(@V_2,_store2,3);
+--> [_14;]
+__@bb_2:
+  assume (-i.0 <= -10);
+  i.0.lcssa = i.0;
+--> [PHILowerICmp;]
+PHILowerICmp:
+  _16 = i.0.lcssa+-1;
+  _17 = a + 4*_16;
+  _check_SGE_0 = array_read(@V_2,_17);
+  check_SGE_0 = (-_check_SGE_0 <= 0);
+  _19 = (_check_SGE_0 <= 6);
+  @V_20 = true ;
+  _20 = ite(check_SGE_0,_19,@V_20);
+  zext _20:1 to _call5:32;
+  assert (-_call5 <= -1);
+  return _check_SGE_0;
+--> []

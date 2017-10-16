@@ -3,25 +3,17 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minim
 import java.util.Map;
 import java.util.function.BiPredicate;
 
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.ScopedTransitivityGenerator.BridgeNode;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.ScopedTransitivityGenerator.INode;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.ScopedTransitivityGenerator.NormalNode;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.ScopedTransitivityGenerator.PersistentRootPredicate;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.ScopedTransitivityGenerator.TemporaryRootPredicate;
 
 public class BiPredicateStateMap <STATE> implements BiPredicate<STATE, STATE>{
 	
 	private final Map<STATE, NormalNode<STATE>> mStateMap;
-	private final TemporaryRootPredicate mTemporaryRootPredicate;
-	private final PersistentRootPredicate mPersistentRootPredicate;
-	
 	private final boolean mCompressPaths;
 
 
 	public BiPredicateStateMap (Map<STATE, NormalNode<STATE>> stateMap, boolean compressPaths) {
 		mStateMap = stateMap;
-		mTemporaryRootPredicate = new TemporaryRootPredicate();
-		mPersistentRootPredicate = new PersistentRootPredicate();
 		mCompressPaths = compressPaths;
 	}
 
@@ -45,7 +37,7 @@ public class BiPredicateStateMap <STATE> implements BiPredicate<STATE, STATE>{
 	@SuppressWarnings("squid:S1698")
 	private NormalNode<STATE> find(final NormalNode<STATE> source) {
 		if (mCompressPaths) {
-			final NormalNode<STATE> persistentParent = findNextRoot(source, mPersistentRootPredicate);
+			final NormalNode<STATE> persistentParent = findNextRoot(source, false);
 			if (source != persistentParent) {
 				// if the source is not the transitive persistent parent of its subtree, compress the path to this node
 				final INode<STATE> sourceDirectParent = source.getParent();
@@ -57,16 +49,16 @@ public class BiPredicateStateMap <STATE> implements BiPredicate<STATE, STATE>{
 				// add source to transitive parent's children
 				persistentParent.addNormalChild(source);
 			}
-			return findNextRoot(persistentParent, mTemporaryRootPredicate);
+			return findNextRoot(persistentParent, true);
 		}
-		return findNextRoot(source, mTemporaryRootPredicate);
+		return findNextRoot(source, true);
 	}
 	
 	@SuppressWarnings("hiding")
-	private <INodePredicate> NormalNode<STATE> findNextRoot(final NormalNode<STATE> source, final INodePredicate predicate) {
+	private <INodePredicate> NormalNode<STATE> findNextRoot(final NormalNode<STATE> source, final boolean isTemporaryNode) {
 		INode<STATE> node = source;
 
-		while (node.isRoot()) { //|| predicate instanceof TemporaryRootPredicate && (node.getParent().getClass() == BridgeNode.class)) {
+		while (!node.isRoot() && isTemporaryNode || !node.isTemporaryRootOrBridge() && !isTemporaryNode) {
 			node = node.getParent();
 		}
 		assert node.getClass() == NormalNode.class : "Invalid tree root.";

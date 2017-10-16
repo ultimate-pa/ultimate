@@ -26,16 +26,14 @@
  * to convey the resulting work.
  */
 
-
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.complement;
 
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util.IntIterator;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util.IntSet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util.UtilIntSet;
 
 /**
  * NCSB tuple 
- * @author Yong Li
+ * TODO: in order to make it unmodifiable
  * */
 public class NCSB {
 	
@@ -103,7 +101,7 @@ public class NCSB {
 		return  contentEqual(ncsb);
 	}
 	
-	public boolean contentEqual(NCSB ncsb) {
+	private boolean contentEqual(NCSB ncsb) {
 		if(! mNSet.equals(ncsb.mNSet)
 		|| ! mCSet.equals(ncsb.mCSet)
 		|| ! mSSet.equals(ncsb.mSSet)
@@ -111,6 +109,47 @@ public class NCSB {
 			return false;
 		}
 		return true;
+	}
+	
+
+	public boolean coveredBy(NCSB other) {
+		if(! other.mNSet.subsetOf(mNSet)
+		|| ! other.mCSet.subsetOf(mCSet)
+		|| ! other.mSSet.subsetOf(mSSet)) {
+			return false;
+		}
+
+		return true;
+	}
+	
+	// this.N >= other.N & this.C >= other.C & this.S >= other.S & this.B >= other.B
+	public boolean strictlyCoveredBy(NCSB other) {
+		if(! other.mNSet.subsetOf(mNSet)
+		|| ! other.mCSet.subsetOf(mCSet)
+		|| ! other.mSSet.subsetOf(mSSet)
+		|| ! other.mBSet.subsetOf(mBSet)) {
+			return false;
+		}
+
+		return true;
+	}
+	
+	private IntSet mAllSets = null; 
+	
+	private void initializeAllSets() {
+	    mAllSets = copyNSet();
+	    mAllSets.or(mCSet);
+	    mAllSets.or(mSSet);
+	}
+	
+	public boolean subsetOf(NCSB other) {
+	    if(mAllSets == null) {
+	        initializeAllSets();
+	    }
+	    if(other.mAllSets == null) {
+	        other.initializeAllSets();
+	    }
+        return mAllSets.subsetOf(other.mAllSets);
 	}
 	
 	@Override
@@ -147,9 +186,8 @@ public class NCSB {
 	private int hashValue(IntSet set) {
 		final int prime = 31;
         int result = 1;
-        IntIterator iter = set.iterator();
-        while(iter.hasNext()) {
-        	result = prime * result + iter.next();
+        for(final int n : set.iterable()) {
+        	result = prime * result + n;
         }
         return result;
 	}

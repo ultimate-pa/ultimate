@@ -53,9 +53,6 @@ public class ApplicationWorkbenchWindowAdvisor extends WorkbenchWindowAdvisor {
 
 	private final ICore<RunDefinition> mCore;
 	private final GuiController mController;
-	// private TrayItem mTrayItem;
-	// private Image mTrayImage;
-	// private TrayIconNotifier mTrayIconNotifier;
 	private final ILogger mLogger;
 
 	public ApplicationWorkbenchWindowAdvisor(final IWorkbenchWindowConfigurer configurer,
@@ -63,15 +60,9 @@ public class ApplicationWorkbenchWindowAdvisor extends WorkbenchWindowAdvisor {
 			final ILogger logger) {
 		super(configurer);
 		mCore = icc;
-		// mTrayIconNotifier = notifier;
 		mController = controller;
 		mLogger = logger;
-
 	}
-
-	// public TrayItem getTrayItem() {
-	// return mTrayItem;
-	// }
 
 	@Override
 	public ActionBarAdvisor createActionBarAdvisor(final IActionBarConfigurer configurer) {
@@ -92,19 +83,6 @@ public class ApplicationWorkbenchWindowAdvisor extends WorkbenchWindowAdvisor {
 
 	}
 
-	// @Override
-	// public void postWindowOpen() {
-	// super.postWindowOpen();
-	// // Deactivate the tray icon for now since it does not work correctly on
-	// // linux and nobody seems to have a good idea how to fix it and nobody
-	// // really wants to have a tray icon.
-	//// final IWorkbenchWindow window = getWindowConfigurer().getWindow();
-	//// if (initTaskItem(window)) {
-	//// hookMinimized(window);
-	//// }
-	//
-	// }
-
 	@Override
 	public void postWindowCreate() {
 		super.postWindowCreate();
@@ -113,88 +91,7 @@ public class ApplicationWorkbenchWindowAdvisor extends WorkbenchWindowAdvisor {
 		if (view instanceof LoggingView) {
 			final LoggingView lv = (LoggingView) view;
 			lv.initializeLogging(mController.getLoggingService());
+			mLogger.info("This is Ultimate GUI " + mCore.getUltimateVersionString());
 		}
 	}
-
-	// @Override
-	// public void dispose() {
-	// if (mTrayImage != null) {
-	// mTrayImage.dispose();
-	// }
-	// if (mTrayItem != null) {
-	// mTrayItem.dispose();
-	// }
-	// }
-
-	// private void hookMinimized(final IWorkbenchWindow window) {
-	// // This listener leads to a bug on linux where the window never
-	// // reappears after it has been minimized into the tray. The bug stems
-	// // from the fact that the listener is called while processing
-	// // shell.setVisible(true)
-	//// window.getShell().addShellListener(new ShellAdapter() {
-	//// public void shellIconified(ShellEvent e) {
-	//// if (!mTrayIconNotifier.isResultDisplayActive()) {
-	//// window.getShell().setVisible(false);
-	//// }
-	//// }
-	//// });
-	// mTrayItem.addListener(SWT.DefaultSelection, new Listener() {
-	// @Override
-	// public void handleEvent(Event e) {
-	// Shell shell = window.getShell();
-	// // Modified this event handler for the case where we never hide
-	// // the shell (by a call to setVisible(false)).
-	//// if (!shell.isVisible()) {
-	// shell.setVisible(true);
-	// shell.setMinimized(false);
-	// shell.setActive();
-	//// shell.setFocus();
-	//// } else {
-	//// shell.setMinimized(false);
-	// shell.forceActive();
-	// shell.setFocus();
-	//// }
-	// }
-	// });
-	// }
-	//
-	// /**
-	// * Returns true if the tray icon was initialized successfully, false
-	// * otherwise
-	// *
-	// * @param window
-	// * @return
-	// */
-	// private boolean initTaskItem(IWorkbenchWindow window) {
-	// final Tray tray = window.getShell().getDisplay().getSystemTray();
-	// if (tray == null) {
-	// return false;
-	// }
-	// mTrayItem = new TrayItem(tray, SWT.NONE);
-	// ImageDescriptor id = AbstractUIPlugin.imageDescriptorFromPlugin(GuiController.sPLUGINID, IImageKeys.TRAYICON);
-	// mTrayImage = id.createImage();
-	// mTrayItem.setImage(mTrayImage);
-	// mTrayItem.setToolTipText("Ultimate Model Checker");
-	//
-	// final Menu menu = new Menu(window.getShell(), SWT.POP_UP);
-	// final MenuItem exit = new MenuItem(menu, SWT.PUSH);
-	// exit.setText("Exit Ultimate");
-	// exit.addListener(SWT.Selection, new Listener() {
-	// @Override
-	// public void handleEvent(Event event) {
-	// exit.dispose();
-	// menu.dispose();
-	// getWindowConfigurer().getWorkbenchConfigurer().getWorkbench().close();
-	// }
-	// });
-	// mTrayItem.addListener(SWT.MenuDetect, new Listener() {
-	// @Override
-	// public void handleEvent(Event event) {
-	// menu.setVisible(true);
-	// }
-	// });
-	//
-	// return true;
-	// }
-
 }

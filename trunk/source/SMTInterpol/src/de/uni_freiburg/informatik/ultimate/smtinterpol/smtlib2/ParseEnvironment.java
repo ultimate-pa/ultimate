@@ -284,7 +284,7 @@ public class ParseEnvironment {
 	public void setInfo(String info, Object value) {
 		if (info.equals(":smt-lib-version")) {
 			final String svalue = String.valueOf(value);
-			if ("2.5".equals(svalue)) {
+			if ("2.5".equals(svalue) || "2.6".equals(svalue)) {
 				mVersion25 = true;
 				mLexer.setVersion25(true);
 			} else if ("2.0".equals(svalue)) {

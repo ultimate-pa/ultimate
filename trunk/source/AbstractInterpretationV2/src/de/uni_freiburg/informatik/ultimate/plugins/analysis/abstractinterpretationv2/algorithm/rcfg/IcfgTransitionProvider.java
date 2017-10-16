@@ -132,7 +132,7 @@ public class IcfgTransitionProvider implements ITransitionProvider<IcfgEdge, Icf
 	@Override
 	public boolean isSummaryForCall(final IcfgEdge action, final IcfgEdge possibleCall) {
 		if (action instanceof CodeBlock && possibleCall instanceof CodeBlock) {
-			return RcfgUtils.isSummaryForCall((CodeBlock) action, (CodeBlock) possibleCall);
+			return RcfgUtils.isSummaryForCall(action, possibleCall);
 		}
 		return false;
 	}

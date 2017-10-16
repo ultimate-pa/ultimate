@@ -36,20 +36,20 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.taskidentifier.TaskIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarAbsIntRunner;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheck;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
 
 /**
- * {@link IRefinementStrategy} that is used by Taipan. It first tries an {@link InterpolatingTraceChecker} using
+ * {@link IRefinementStrategy} that is used by Taipan. It first tries an {@link InterpolatingTraceCheck} using
  * {@link SMTInterpol} with {@link InterpolationTechnique#Craig_TreeInterpolation}.<br>
  * If successful and the interpolant sequence is perfect, those interpolants are used.<br>
- * If not successful, it tries {@link TraceChecker} {@code Z3} and, if again not successful, {@code CVC4}.<br>
+ * If not successful, it tries {@link TraceCheck} {@code Z3} and, if again not successful, {@code CVC4}.<br>
  * If none of those is successful, the strategy gives up.<br>
  * Otherwise, if the trace is infeasible, the strategy uses an {@link CegarAbsIntRunner} to construct interpolants.<br>
  * If not successful, the strategy again tries {@code Z3} and {@code CVC4}, but this time using interpolation
@@ -68,13 +68,13 @@ public class TaipanRefinementStrategy<LETTER extends IIcfgTransition<?>> extends
 			final CegarAbsIntRunner<LETTER> absIntRunner,
 			final AssertionOrderModulation<LETTER> assertionOrderModulation,
 			final IRun<LETTER, IPredicate, ?> counterexample, final IAutomaton<LETTER, IPredicate> abstraction,
-			final int iteration, final CegarLoopStatisticsGenerator cegarLoopBenchmark) {
+			final TaskIdentifier taskIdentifier) {
 		super(logger, services, prefs, cfgSmtToolkit, predicateFactory, predicateUnifier, absIntRunner,
-				assertionOrderModulation, counterexample, abstraction, iteration, cegarLoopBenchmark);
+				assertionOrderModulation, counterexample, abstraction, taskIdentifier);
 	}
 
 	@Override
-	public boolean hasNextTraceChecker() {
+	public boolean hasNextTraceCheck() {
 		switch (getCurrentMode()) {
 		case SMTINTERPOL:
 		case Z3_NO_IG:
@@ -111,7 +111,7 @@ public class TaipanRefinementStrategy<LETTER extends IIcfgTransition<?>> extends
 	}
 
 	@Override
-	protected Mode getNextTraceCheckerMode() {
+	protected Mode getNextTraceCheckMode() {
 		switch (getCurrentMode()) {
 		case SMTINTERPOL:
 			return Mode.Z3_NO_IG;
@@ -122,7 +122,7 @@ public class TaipanRefinementStrategy<LETTER extends IIcfgTransition<?>> extends
 		case ABSTRACT_INTERPRETATION:
 		case Z3_IG:
 		case CVC4_IG:
-			assert !hasNextTraceChecker();
+			assert !hasNextTraceCheck();
 			throw new NoSuchElementException("No next trace checker available.");
 		default:
 			throw new IllegalArgumentException(UNKNOWN_MODE + getCurrentMode());
@@ -131,20 +131,20 @@ public class TaipanRefinementStrategy<LETTER extends IIcfgTransition<?>> extends
 
 	@Override
 	protected Mode getNextInterpolantGenerator() {
-		final boolean resetTraceChecker;
+		final boolean resetTraceCheck;
 		Mode nextMode;
 		switch (getCurrentMode()) {
 		case SMTINTERPOL:
 			nextMode = Mode.ABSTRACT_INTERPRETATION;
-			resetTraceChecker = false;
+			resetTraceCheck = false;
 			break;
 		case ABSTRACT_INTERPRETATION:
 			nextMode = mZ3TraceCheckUnsuccessful ? Mode.CVC4_IG : Mode.Z3_IG;
-			resetTraceChecker = true;
+			resetTraceCheck = true;
 			break;
 		case Z3_IG:
 			nextMode = Mode.CVC4_IG;
-			resetTraceChecker = true;
+			resetTraceCheck = true;
 			break;
 		case CVC4_IG:
 		case Z3_NO_IG:
@@ -155,8 +155,8 @@ public class TaipanRefinementStrategy<LETTER extends IIcfgTransition<?>> extends
 			throw new IllegalArgumentException(UNKNOWN_MODE + getCurrentMode());
 		}
 
-		if (resetTraceChecker) {
-			resetTraceChecker();
+		if (resetTraceCheck) {
+			resetTraceCheck();
 		}
 		return nextMode;
 	}

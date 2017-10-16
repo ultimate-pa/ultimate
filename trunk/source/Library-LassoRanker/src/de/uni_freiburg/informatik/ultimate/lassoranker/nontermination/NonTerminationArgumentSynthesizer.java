@@ -494,7 +494,7 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 			}
 			conjunction.add(mScript.term(rays ? ">=" : ieq.getInequalitySymbol(),
 					SmtUtils.sum(mScript, mSort, summands.toArray(new Term[summands.size()])),
-					mIntegerMode ? mScript.numeral(BigInteger.ZERO) : mScript.decimal("0")));
+					mIntegerMode ? SmtUtils.constructIntValue(mScript, BigInteger.ZERO) : mScript.decimal("0")));
 		}
 		return SmtUtils.and(mScript, conjunction.toArray(new Term[conjunction.size()]));
 	}

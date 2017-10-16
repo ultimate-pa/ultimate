@@ -31,16 +31,16 @@ file_export_version=3.0
 
 
 #Thu Feb 18 11:31:25 CET 2016
-/instance/UltimateCore/Drop\ models\ when\ Ultimate\ exits=false
-/instance/UltimateCore/Root\ log\ level=INFO
-/instance/UltimateCore/Log\ level\ for\ core\ plugin=INFO
-/instance/UltimateCore/Generate\ benchmark\ results=false
-/instance/UltimateCore/Log\ level\ for\ controller\ plugin=INFO
-/instance/UltimateCore/Logger\ pattern\:\ =%-5p\: %m%n
+/instance/de.uni_freiburg.informatik.ultimate.core/Drop\ models\ when\ Ultimate\ exits=false
+/instance/de.uni_freiburg.informatik.ultimate.core/Root\ log\ level=INFO
+/instance/de.uni_freiburg.informatik.ultimate.core/Log\ level\ for\ core\ plugin=INFO
+/instance/de.uni_freiburg.informatik.ultimate.core/Generate\ benchmark\ results=false
+/instance/de.uni_freiburg.informatik.ultimate.core/Log\ level\ for\ controller\ plugin=INFO
+/instance/de.uni_freiburg.informatik.ultimate.core/Logger\ pattern\:\ =%-5p\: %m%n
 file_export_version=3.0
-/instance/UltimateCore/Log\ level\ for\ plugins=WARN
-\!/instance/UltimateCore=
-/instance/UltimateCore/Log\ witness=false
-/instance/UltimateCore/Write\ witness\ as\ "witness.graphml"\ to\ working\ directory=false
-/instance/UltimateCore/Show\ long\ description\ of\ results=false
-@UltimateCore=0.0.1
+/instance/de.uni_freiburg.informatik.ultimate.core/Log\ level\ for\ plugins=WARN
+\!/instance/de.uni_freiburg.informatik.ultimate.core=
+/instance/de.uni_freiburg.informatik.ultimate.core/Log\ witness=false
+/instance/de.uni_freiburg.informatik.ultimate.core/Write\ witness\ as\ "witness.graphml"\ to\ working\ directory=false
+/instance/de.uni_freiburg.informatik.ultimate.core/Show\ long\ description\ of\ results=false
+@de.uni_freiburg.informatik.ultimate.core=0.0.1

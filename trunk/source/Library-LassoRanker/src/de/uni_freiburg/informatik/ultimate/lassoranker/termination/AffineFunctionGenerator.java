@@ -114,7 +114,7 @@ public class AffineFunctionGenerator implements Serializable {
 		mCoefficients = new LinkedHashMap<>();
 		// initialize all the coefficients with the numerical constant '1'
 		for (final IProgramVar var : variables) {
-			mCoefficients.put(var, script.numeral(BigInteger.ONE));
+			mCoefficients.put(var, SmtUtils.constructIntValue(script, BigInteger.ONE));
 		}
 	}
 

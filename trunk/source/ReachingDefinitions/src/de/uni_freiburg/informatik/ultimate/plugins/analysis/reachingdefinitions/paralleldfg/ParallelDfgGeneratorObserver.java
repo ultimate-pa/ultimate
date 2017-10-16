@@ -13,6 +13,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractInterpretationResult;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
@@ -21,7 +22,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.dataflow.DataflowState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.AbstractInterpreter;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.IAbstractInterpretationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
@@ -29,7 +29,7 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 	
 	final private ILogger mLogger;
 	final private IUltimateServiceProvider mServices;
-	IAbstractInterpretationResult<DataflowState<IcfgEdge>, IcfgEdge, IProgramVarOrConst, IcfgLocation> mDataflowAnalysisResult;
+	IAbstractInterpretationResult<DataflowState<IcfgEdge>, IcfgEdge, IcfgLocation> mDataflowAnalysisResult;
 	private Integer mEdgeCount;
 	private Integer mNodeCount;
 	private Integer mCFGEdgeCount;
@@ -113,7 +113,7 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 		return false;
 	}
 
-	private IAbstractInterpretationResult<DataflowState<IcfgEdge>, IcfgEdge, IProgramVarOrConst, IcfgLocation>
+	private IAbstractInterpretationResult<DataflowState<IcfgEdge>, IcfgEdge, IcfgLocation>
 			obtainDataflowAnalysisResult(final IIcfg<?> r) {
 		final IProgressAwareTimer timer = mServices.getProgressMonitorService().getChildTimer(0.2);
 		return AbstractInterpreter.runFuture(r, timer, mServices, false, mLogger);

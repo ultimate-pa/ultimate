@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.Bin
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.BinaryRelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceChecker.TraceCheckerLock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheck.TraceCheckLock;
 
 
 /**
@@ -69,7 +69,7 @@ public class AnnotateAndAssertConjunctsOfCodeBlocks extends AnnotateAndAssertCod
 	 * @param mgdScriptCfg Script that was used for building the CFG
 	 */
 	public AnnotateAndAssertConjunctsOfCodeBlocks(final ManagedScript mgdScriptTc,
-			final TraceCheckerLock scriptLockOwner,
+			final TraceCheckLock scriptLockOwner,
 			final NestedFormulas<Term, Term> nestedSSA, 
 			final NestedFormulas<UnmodifiableTransFormula, IPredicate> nestedFormulas, final ILogger logger,
 			final ManagedScript mgdScriptCfg) {

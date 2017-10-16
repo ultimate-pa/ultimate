@@ -37,16 +37,16 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.taskidentifier.TaskIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.MultiTrackInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 
 /**
- * {@link IRefinementStrategy} that first tries an {@link InterpolatingTraceChecker} using
+ * {@link IRefinementStrategy} that first tries an {@link InterpolatingTraceCheck} using
  * {@link InterpolationTechnique#Craig_TreeInterpolation} and then {@link InterpolationTechnique#FPandBP}.
  * <p>
  * The class uses a {@link MultiTrackInterpolantAutomatonBuilder} for constructing the interpolant automaton.
@@ -55,15 +55,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  */
 public class PenguinRefinementStrategy<LETTER extends IIcfgTransition<?>>
 		extends MultiTrackTraceAbstractionRefinementStrategy<LETTER> {
-	public PenguinRefinementStrategy(final ILogger logger, final TaCheckAndRefinementPreferences prefs,
+	public PenguinRefinementStrategy(final ILogger logger, final TaCheckAndRefinementPreferences<LETTER> prefs,
 			final IUltimateServiceProvider services, final CfgSmtToolkit cfgSmtToolkit,
 			final PredicateFactory predicateFactory, final PredicateUnifier predicateUnifier,
 			final AssertionOrderModulation<LETTER> assertionOrderModulation,
 			final IRun<LETTER, IPredicate, ?> counterexample, final IAutomaton<LETTER, IPredicate> abstraction,
-			final TAPreferences taPrefsForInterpolantConsolidation, final int iteration,
-			final CegarLoopStatisticsGenerator cegarLoopBenchmarks) {
+			final TAPreferences taPrefsForInterpolantConsolidation, final TaskIdentifier taskIdentifier) {
 		super(logger, prefs, services, cfgSmtToolkit, predicateFactory, predicateUnifier, assertionOrderModulation,
-				counterexample, abstraction, taPrefsForInterpolantConsolidation, iteration, cegarLoopBenchmarks);
+				counterexample, abstraction, taPrefsForInterpolantConsolidation, taskIdentifier);
 	}
 
 	@Override
@@ -78,6 +77,12 @@ public class PenguinRefinementStrategy<LETTER extends IIcfgTransition<?>>
 
 	@Override
 	protected String getCvc4Logic() {
-		return LOGIC_CVC4_DEFAULT;
+		return RefinementStrategyUtils.LOGIC_CVC4_DEFAULT;
 	}
+
+	@Override
+	protected int getInterpolantAcceptanceThreshold() {
+		return Integer.MAX_VALUE;
+	}
+
 }

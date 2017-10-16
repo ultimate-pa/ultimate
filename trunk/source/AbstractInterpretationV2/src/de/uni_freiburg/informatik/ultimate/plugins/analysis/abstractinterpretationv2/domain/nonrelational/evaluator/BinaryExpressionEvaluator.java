@@ -38,6 +38,7 @@ import java.util.function.BiFunction;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValueFactory;
@@ -55,18 +56,18 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @param <STATE>
  *            The state type of the domain.
  */
-public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>, STATE extends IAbstractState<STATE, VARDECL>, VARDECL>
-		implements INAryEvaluator<VALUE, STATE, VARDECL> {
+public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>, STATE extends IAbstractState<STATE>>
+		implements INAryEvaluator<VALUE, STATE> {
 
-	private final Set<VARDECL> mVariableSet;
+	private final Set<IProgramVarOrConst> mVariableSet;
 	private final EvaluatorLogger mLogger;
 	private final EvaluatorType mEvaluatorType;
 	private final int mMaxParallelSates;
 
 	private final INonrelationalValueFactory<VALUE> mNonrelationalValueFactory;
 
-	private IEvaluator<VALUE, STATE, VARDECL> mLeftSubEvaluator;
-	private IEvaluator<VALUE, STATE, VARDECL> mRightSubEvaluator;
+	private IEvaluator<VALUE, STATE> mLeftSubEvaluator;
+	private IEvaluator<VALUE, STATE> mRightSubEvaluator;
 
 	private Operator mOperator;
 
@@ -220,6 +221,7 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 		} else if (!mLeftSubEvaluator.containsBool() && !mRightSubEvaluator.containsBool()) {
 			returnBool = first.getValue().compareEquality(second.getValue());
 		}
+
 		return Collections.singletonList(new NonrelationalEvaluationResult<>(returnValue, returnBool));
 	}
 
@@ -240,15 +242,24 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 				final VALUE leftOpValue = leftOp.getValue();
 				final VALUE rightOpValue = rightOp.getValue();
 
+				// Construct an evaluation result that uses the evaluated value of the sub evaluators, but keeps the
+				// overall boolean value of the whole expression (this).
+				// This is needed for logical operations to not lose any precision, since in logical evaluation only the
+				// boolean value of this expression is important.
+				final IEvaluationResult<VALUE> logicalLeftOpValue =
+						new NonrelationalEvaluationResult<>(leftOpValue, evalResultBool);
+				final IEvaluationResult<VALUE> logicalRightOpValue =
+						new NonrelationalEvaluationResult<>(rightOpValue, evalResultBool);
+
 				switch (mOperator) {
 				case LOGICAND:
-					final List<STATE> leftAnd = mLeftSubEvaluator.inverseEvaluate(evalResult, oldState);
-					final List<STATE> rightAnd = mRightSubEvaluator.inverseEvaluate(evalResult, oldState);
+					final List<STATE> leftAnd = mLeftSubEvaluator.inverseEvaluate(logicalLeftOpValue, oldState);
+					final List<STATE> rightAnd = mRightSubEvaluator.inverseEvaluate(logicalRightOpValue, oldState);
 					returnStates.addAll(crossIntersect(leftAnd, rightAnd));
 					break;
 				case LOGICOR:
-					mLeftSubEvaluator.inverseEvaluate(evalResult, oldState).forEach(returnStates::add);
-					mRightSubEvaluator.inverseEvaluate(evalResult, oldState).forEach(returnStates::add);
+					mLeftSubEvaluator.inverseEvaluate(logicalLeftOpValue, oldState).forEach(returnStates::add);
+					mRightSubEvaluator.inverseEvaluate(logicalRightOpValue, oldState).forEach(returnStates::add);
 					break;
 				case LOGICIMPLIES:
 					throw new UnsupportedOperationException(
@@ -277,6 +288,12 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 					returnStates.addAll(crossIntersect(leftEq, rightEq));
 					break;
 				case COMPNEQ:
+					if (mLeftSubEvaluator.containsBool() || mRightSubEvaluator.containsBool()) {
+						throw new UnsupportedOperationException(
+								"COMPNEQ operator should not occur for boolean formulas.");
+					}
+					// If there is a non-boolean formula present, fall through the arithmetic case and evaluate the
+					// inequality according to the expected arithmetic values.
 				case COMPGT:
 				case COMPGEQ:
 				case COMPLT:
@@ -411,7 +428,7 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 	}
 
 	@Override
-	public void addSubEvaluator(final IEvaluator<VALUE, STATE, VARDECL> evaluator) {
+	public void addSubEvaluator(final IEvaluator<VALUE, STATE> evaluator) {
 		assert evaluator != null;
 
 		if (mLeftSubEvaluator != null && mRightSubEvaluator != null) {
@@ -427,7 +444,7 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 	}
 
 	@Override
-	public Set<VARDECL> getVarIdentifiers() {
+	public Set<IProgramVarOrConst> getVarIdentifiers() {
 		return mVariableSet;
 	}
 
@@ -458,7 +475,7 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
 
-		sb.append(mLeftSubEvaluator);
+		sb.append('(').append(mLeftSubEvaluator);
 
 		switch (mOperator) {
 		case ARITHDIV:
@@ -511,7 +528,7 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 			break;
 		}
 
-		sb.append(mRightSubEvaluator);
+		sb.append(mRightSubEvaluator).append(')');
 
 		return sb.toString();
 	}

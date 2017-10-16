@@ -41,8 +41,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.S
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.taskidentifier.TaskIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarAbsIntRunner;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PathProgramCache;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
@@ -65,6 +65,7 @@ public class RefinementStrategyFactory<LETTER extends IIcfgTransition<?>> {
 	private final IToolchainStorage mStorage;
 	protected final PredicateFactory mPredicateFactory;
 	protected final AssertionOrderModulation<LETTER> mAssertionOrderModulation;
+	private final PathProgramCache<LETTER> mPathProgramCache;
 
 	/**
 	 * @param logger
@@ -97,6 +98,7 @@ public class RefinementStrategyFactory<LETTER extends IIcfgTransition<?>> {
 		mLogger = logger;
 		mInitialIcfg = initialIcfg;
 		mPredicateFactory = predicateFactory;
+		mPathProgramCache = pathProgramCache;
 		mAssertionOrderModulation = new AssertionOrderModulation<>(pathProgramCache, logger);
 	}
 
@@ -113,52 +115,51 @@ public class RefinementStrategyFactory<LETTER extends IIcfgTransition<?>> {
 	 *            counterexample
 	 * @param abstraction
 	 *            abstraction
-	 * @param iteration
-	 *            current iteration
 	 * @param benchmark
 	 *            benchmark
 	 * @return refinement strategy
 	 */
 	public IRefinementStrategy<LETTER> createStrategy(final RefinementStrategy strategy,
 			final IRun<LETTER, IPredicate, ?> counterexample, final IAutomaton<LETTER, IPredicate> abstraction,
-			final int iteration, final CegarLoopStatisticsGenerator benchmark) {
+			final TaskIdentifier taskIdentifier) {
 		final PredicateUnifier predicateUnifier = getNewPredicateUnifier();
+		mPathProgramCache.addRun(counterexample);
 
 		switch (strategy) {
 		case FIXED_PREFERENCES:
 			final ManagedScript managedScript =
-					setupManagedScriptFromPreferences(mServices, mInitialIcfg, mStorage, iteration, mPrefs);
+					setupManagedScriptFromPreferences(mServices, mInitialIcfg, mStorage, taskIdentifier, mPrefs);
 			return new FixedTraceAbstractionRefinementStrategy<>(mLogger, mPrefs, managedScript, mServices,
-					mPredicateFactory, predicateUnifier, counterexample, abstraction, mPrefsConsolidation, iteration,
-					benchmark);
+					mPredicateFactory, predicateUnifier, counterexample, abstraction, mPrefsConsolidation,
+					taskIdentifier);
 		case PENGUIN:
 			return new PenguinRefinementStrategy<>(mLogger, mPrefs, mServices, mInitialIcfg.getCfgSmtToolkit(),
 					mPredicateFactory, predicateUnifier, mAssertionOrderModulation, counterexample, abstraction,
-					mPrefsConsolidation, iteration, benchmark);
+					mPrefsConsolidation, taskIdentifier);
 		case CAMEL:
 			return new CamelRefinementStrategy<>(mLogger, mPrefs, mServices, mInitialIcfg.getCfgSmtToolkit(),
 					mPredicateFactory, predicateUnifier, mAssertionOrderModulation, counterexample, abstraction,
-					mPrefsConsolidation, iteration, benchmark);
+					mPrefsConsolidation, taskIdentifier);
 		case WALRUS:
 			return new WalrusRefinementStrategy<>(mLogger, mPrefs, mServices, mInitialIcfg.getCfgSmtToolkit(),
 					mPredicateFactory, predicateUnifier, mAssertionOrderModulation, counterexample, abstraction,
-					mPrefsConsolidation, iteration, benchmark);
+					mPrefsConsolidation, taskIdentifier);
 		case WOLF:
 			return new WolfRefinementStrategy<>(mLogger, mPrefs, mServices, mInitialIcfg.getCfgSmtToolkit(),
 					mPredicateFactory, predicateUnifier, mAssertionOrderModulation, counterexample, abstraction,
-					mPrefsConsolidation, iteration, benchmark);
+					mPrefsConsolidation, taskIdentifier);
 		case RUBBER_TAIPAN:
 			return new RubberTaipanRefinementStrategy<>(mLogger, mServices, mPrefs, mInitialIcfg.getCfgSmtToolkit(),
 					mPredicateFactory, predicateUnifier, mAbsIntRunner, mAssertionOrderModulation, counterexample,
-					abstraction, iteration, benchmark);
+					abstraction, taskIdentifier);
 		case TAIPAN:
 			return new TaipanRefinementStrategy<>(mLogger, mServices, mPrefs, mInitialIcfg.getCfgSmtToolkit(),
 					mPredicateFactory, predicateUnifier, mAbsIntRunner, mAssertionOrderModulation, counterexample,
-					abstraction, iteration, benchmark);
+					abstraction, taskIdentifier);
 		case LAZY_TAIPAN:
 			return new LazyTaipanRefinementStrategy<>(mLogger, mServices, mPrefs, mInitialIcfg.getCfgSmtToolkit(),
 					mPredicateFactory, predicateUnifier, mAbsIntRunner, mAssertionOrderModulation, counterexample,
-					abstraction, iteration, benchmark);
+					abstraction, taskIdentifier);
 		default:
 			throw new IllegalArgumentException(
 					"Unknown refinement strategy specified: " + mPrefs.getRefinementStrategy());
@@ -166,11 +167,11 @@ public class RefinementStrategyFactory<LETTER extends IIcfgTransition<?>> {
 	}
 
 	private ManagedScript setupManagedScriptFromPreferences(final IUltimateServiceProvider services,
-			final IIcfg<?> icfgContainer, final IToolchainStorage toolchainStorage, final int iteration,
+			final IIcfg<?> icfgContainer, final IToolchainStorage toolchainStorage, final TaskIdentifier taskIdentifier,
 			final TaCheckAndRefinementPreferences<LETTER> prefs) throws AssertionError {
 		final ManagedScript mgdScriptTc;
 		if (prefs.getUseSeparateSolverForTracechecks()) {
-			final String filename = icfgContainer.getIdentifier() + "_TraceCheck_Iteration" + iteration;
+			final String filename = taskIdentifier + "_TraceCheck";
 			final SolverMode solverMode = prefs.getSolverMode();
 			final boolean fakeNonIncrementalSolver = prefs.getFakeNonIncrementalSolver();
 			final String commandExternalSolver = prefs.getCommandExternalSolver();
@@ -179,8 +180,7 @@ public class RefinementStrategyFactory<LETTER extends IIcfgTransition<?>> {
 			final Settings solverSettings = SolverBuilder.constructSolverSettings(filename, solverMode,
 					fakeNonIncrementalSolver, commandExternalSolver, dumpSmtScriptToFile, pathOfDumpedScript);
 			final Script tcSolver = SolverBuilder.buildAndInitializeSolver(services, toolchainStorage,
-					prefs.getSolverMode(), solverSettings, false, false, prefs.getLogicForExternalSolver(),
-					"TraceCheck_Iteration" + iteration);
+					prefs.getSolverMode(), solverSettings, false, false, prefs.getLogicForExternalSolver(), filename);
 			mgdScriptTc = new ManagedScript(services, tcSolver);
 			final TermTransferrer tt = new TermTransferrer(tcSolver);
 			final Term axioms = icfgContainer.getCfgSmtToolkit().getAxioms().getFormula();

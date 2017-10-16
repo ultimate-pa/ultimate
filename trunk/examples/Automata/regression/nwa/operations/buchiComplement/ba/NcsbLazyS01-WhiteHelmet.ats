@@ -1,0 +1,37 @@
+/*
+ * Small example where we can see that the Lazy-S optimization can
+ * produce smaller results than the original NCSB algorithm.
+ *
+ * The orignal NCSB produces a complement with 12 states.
+ * Using the Lazy-S optimization we can save two states.
+ * 
+ * 
+ * Date: 2017-08-31
+ * Author: Yong Li (李勇), Matthias Heizmann
+ */
+
+
+NestedWordAutomaton complementNCSB = buchiComplementNCSB(ba);
+assert (numberOfStates(complementNCSB) == 12);
+
+NestedWordAutomaton complementFKV = buchiComplementFKV(ba);
+assert (numberOfStates(complementFKV) == 23);
+
+print(complementNCSB);
+
+FiniteAutomaton ba = (
+	alphabet = {a0 a1},
+	states = {s0 s1 s2 s3},
+	initialStates = {s0},
+	finalStates = {s1 s2},
+	transitions = {
+		(s0 a0 s0)
+		(s0 a1 s0)
+		(s0 a1 s1)
+		(s1 a0 s3)
+		(s1 a1 s2)
+		(s2 a1 s3)
+		(s3 a0 s3)
+		(s3 a1 s1)
+	}
+);

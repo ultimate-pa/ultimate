@@ -25,10 +25,10 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Convert\ code\ blocks\ to\ CNF=false
 #Fri Oct 03 12:44:52 EST 2014
 file_export_version=3.0
-/instance/UltimateCore/Log\ Level\ for\ Controller\ Plugin=INFO
-/instance/UltimateCore/Log\ Level\ for\ Core\ Plugin=INFO
-\!/instance/UltimateCore=
-/instance/UltimateCore/Log\ Level\ for\ External\ Tools=INFO
-@UltimateCore=0.0.1
-/instance/UltimateCore/Root\ Log\ Level=INFO
-/instance/UltimateCore/ultimate.logging.details=de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker\=INFO;
+/instance/de.uni_freiburg.informatik.ultimate.core/Log\ Level\ for\ Controller\ Plugin=INFO
+/instance/de.uni_freiburg.informatik.ultimate.core/Log\ Level\ for\ Core\ Plugin=INFO
+\!/instance/de.uni_freiburg.informatik.ultimate.core=
+/instance/de.uni_freiburg.informatik.ultimate.core/Log\ Level\ for\ External\ Tools=INFO
+@de.uni_freiburg.informatik.ultimate.core=0.0.1
+/instance/de.uni_freiburg.informatik.ultimate.core/Root\ Log\ Level=INFO
+/instance/de.uni_freiburg.informatik.ultimate.core/ultimate.logging.details=de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker\=INFO;

@@ -17,9 +17,9 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Checked\ method.\ Library\ mode\ if\ empty.=main
 #Wed Feb 12 16:57:46 CET 2014
 file_export_version=3.0
-/instance/UltimateCore/Toolchain\ timeout\ in\ seconds=100
-\!/instance/UltimateCore=
-@UltimateCore=0.0.1
+/instance/de.uni_freiburg.informatik.ultimate.core/Toolchain\ timeout\ in\ seconds=100
+\!/instance/de.uni_freiburg.informatik.ultimate.core=
+@de.uni_freiburg.informatik.ultimate.core=0.0.1
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/SMT\ solver=Internal_SMTInterpol
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Size\ of\ a\ code\ block=SequenceOfStatements
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Remove\ goto\ edges\ from\ RCFG=false

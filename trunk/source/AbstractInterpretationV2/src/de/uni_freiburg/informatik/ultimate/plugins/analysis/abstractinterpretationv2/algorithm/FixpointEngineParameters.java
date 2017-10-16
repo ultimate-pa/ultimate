@@ -15,30 +15,28 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class FixpointEngineParameters<STATE extends IAbstractState<STATE, VARDECL>, ACTION, VARDECL, LOC> {
+public class FixpointEngineParameters<STATE extends IAbstractState<STATE>, ACTION, VARDECL, LOC> {
 
 	private final ITransitionProvider<ACTION, LOC> mTransitionProvider;
-	private final IAbstractStateStorage<STATE, ACTION, VARDECL, LOC> mStorage;
-	private final IVariableProvider<STATE, ACTION, VARDECL> mVarProvider;
+	private final IAbstractStateStorage<STATE, ACTION, LOC> mStorage;
+	private final IVariableProvider<STATE, ACTION> mVarProvider;
 	private final ILoopDetector<ACTION> mLoopDetector;
-	private final IAbstractDomain<STATE, ACTION, VARDECL> mDomain;
+	private final IAbstractDomain<STATE, ACTION> mDomain;
 	private final IDebugHelper<STATE, ACTION, VARDECL, LOC> mDebugHelper;
 	private final IProgressAwareTimer mTimer;
 	private final int mMaxUnwindings;
 	private final int mMaxParallelStates;
 	private final ILogger mLogger;
-	private final Class<VARDECL> mVariablesType;
 
 	/**
 	 * Create {@link FixpointEngineParameters} with default logger, timer and settings from abstract interpretation
 	 * settings.
 	 */
 	private FixpointEngineParameters(final ITransitionProvider<ACTION, LOC> transitionProvider,
-			final IAbstractStateStorage<STATE, ACTION, VARDECL, LOC> storage,
-			final IVariableProvider<STATE, ACTION, VARDECL> varProvider, final ILoopDetector<ACTION> loopDetector,
-			final IAbstractDomain<STATE, ACTION, VARDECL> domain,
-			final IDebugHelper<STATE, ACTION, VARDECL, LOC> debugHelper, final IUltimateServiceProvider services,
-			final Class<VARDECL> variablesType) {
+			final IAbstractStateStorage<STATE, ACTION, LOC> storage,
+			final IVariableProvider<STATE, ACTION> varProvider, final ILoopDetector<ACTION> loopDetector,
+			final IAbstractDomain<STATE, ACTION> domain, final IDebugHelper<STATE, ACTION, VARDECL, LOC> debugHelper,
+			final IUltimateServiceProvider services) {
 		if (services == null) {
 			throw new IllegalArgumentException("services may not be null");
 		}
@@ -53,19 +51,17 @@ public class FixpointEngineParameters<STATE extends IAbstractState<STATE, VARDEC
 		final IPreferenceProvider ups = services.getPreferenceProvider(Activator.PLUGIN_ID);
 		mMaxUnwindings = ups.getInt(AbsIntPrefInitializer.LABEL_ITERATIONS_UNTIL_WIDENING);
 		mMaxParallelStates = ups.getInt(AbsIntPrefInitializer.LABEL_MAX_PARALLEL_STATES);
-		mVariablesType = variablesType;
 	}
 
 	/**
 	 * Create {@link FixpointEngineParameters} by specifying all fields.
 	 */
 	private FixpointEngineParameters(final ITransitionProvider<ACTION, LOC> transitionProvider,
-			final IAbstractStateStorage<STATE, ACTION, VARDECL, LOC> storage,
-			final IVariableProvider<STATE, ACTION, VARDECL> varProvider, final ILoopDetector<ACTION> loopDetector,
-			final IAbstractDomain<STATE, ACTION, VARDECL> domain,
-			final IDebugHelper<STATE, ACTION, VARDECL, LOC> debugHelper, final IProgressAwareTimer timer,
-			final ILogger logger, final int maxUnwindings, final int maxParallelStates,
-			final Class<VARDECL> variablesType) {
+			final IAbstractStateStorage<STATE, ACTION, LOC> storage,
+			final IVariableProvider<STATE, ACTION> varProvider, final ILoopDetector<ACTION> loopDetector,
+			final IAbstractDomain<STATE, ACTION> domain, final IDebugHelper<STATE, ACTION, VARDECL, LOC> debugHelper,
+			final IProgressAwareTimer timer, final ILogger logger, final int maxUnwindings,
+			final int maxParallelStates) {
 		mTransitionProvider = transitionProvider;
 		mStorage = storage;
 		mVarProvider = varProvider;
@@ -76,7 +72,6 @@ public class FixpointEngineParameters<STATE extends IAbstractState<STATE, VARDEC
 		mLogger = logger;
 		mMaxUnwindings = maxUnwindings;
 		mMaxParallelStates = maxParallelStates;
-		mVariablesType = variablesType;
 	}
 
 	/**
@@ -86,7 +81,7 @@ public class FixpointEngineParameters<STATE extends IAbstractState<STATE, VARDEC
 	 *            A {@link IUltimateServiceProvider} instance to initialize timer, logger, and default settings.
 	 */
 	public FixpointEngineParameters(final IUltimateServiceProvider services, final Class<VARDECL> variablesType) {
-		this(null, null, null, null, null, null, services, variablesType);
+		this(null, null, null, null, null, null, services);
 	}
 
 	public FixpointEngineParameters<STATE, ACTION, VARDECL, LOC>
@@ -95,25 +90,25 @@ public class FixpointEngineParameters<STATE extends IAbstractState<STATE, VARDEC
 			throw new IllegalArgumentException("transitionProvider may not be null");
 		}
 		return new FixpointEngineParameters<>(transitionProvider, mStorage, mVarProvider, mLoopDetector, mDomain,
-				mDebugHelper, mTimer, mLogger, mMaxUnwindings, mMaxParallelStates, mVariablesType);
+				mDebugHelper, mTimer, mLogger, mMaxUnwindings, mMaxParallelStates);
 	}
 
 	public FixpointEngineParameters<STATE, ACTION, VARDECL, LOC>
-			setStorage(final IAbstractStateStorage<STATE, ACTION, VARDECL, LOC> storage) {
+			setStorage(final IAbstractStateStorage<STATE, ACTION, LOC> storage) {
 		if (storage == null) {
 			throw new IllegalArgumentException("storage may not be null");
 		}
 		return new FixpointEngineParameters<>(mTransitionProvider, storage, mVarProvider, mLoopDetector, mDomain,
-				mDebugHelper, mTimer, mLogger, mMaxUnwindings, mMaxParallelStates, mVariablesType);
+				mDebugHelper, mTimer, mLogger, mMaxUnwindings, mMaxParallelStates);
 	}
 
 	public FixpointEngineParameters<STATE, ACTION, VARDECL, LOC>
-			setVariableProvider(final IVariableProvider<STATE, ACTION, VARDECL> varProvider) {
+			setVariableProvider(final IVariableProvider<STATE, ACTION> varProvider) {
 		if (varProvider == null) {
 			throw new IllegalArgumentException("varProvider may not be null");
 		}
 		return new FixpointEngineParameters<>(mTransitionProvider, mStorage, varProvider, mLoopDetector, mDomain,
-				mDebugHelper, mTimer, mLogger, mMaxUnwindings, mMaxParallelStates, mVariablesType);
+				mDebugHelper, mTimer, mLogger, mMaxUnwindings, mMaxParallelStates);
 	}
 
 	public FixpointEngineParameters<STATE, ACTION, VARDECL, LOC>
@@ -122,16 +117,16 @@ public class FixpointEngineParameters<STATE extends IAbstractState<STATE, VARDEC
 			throw new IllegalArgumentException("loopDetector may not be null");
 		}
 		return new FixpointEngineParameters<>(mTransitionProvider, mStorage, mVarProvider, loopDetector, mDomain,
-				mDebugHelper, mTimer, mLogger, mMaxUnwindings, mMaxParallelStates, mVariablesType);
+				mDebugHelper, mTimer, mLogger, mMaxUnwindings, mMaxParallelStates);
 	}
 
 	public FixpointEngineParameters<STATE, ACTION, VARDECL, LOC>
-			setDomain(final IAbstractDomain<STATE, ACTION, VARDECL> domain) {
+			setDomain(final IAbstractDomain<STATE, ACTION> domain) {
 		if (domain == null) {
 			throw new IllegalArgumentException("domain may not be null");
 		}
 		return new FixpointEngineParameters<>(mTransitionProvider, mStorage, mVarProvider, mLoopDetector, domain,
-				mDebugHelper, mTimer, mLogger, mMaxUnwindings, mMaxParallelStates, mVariablesType);
+				mDebugHelper, mTimer, mLogger, mMaxUnwindings, mMaxParallelStates);
 	}
 
 	public FixpointEngineParameters<STATE, ACTION, VARDECL, LOC>
@@ -140,7 +135,7 @@ public class FixpointEngineParameters<STATE extends IAbstractState<STATE, VARDEC
 			throw new IllegalArgumentException("debugHelper may not be null");
 		}
 		return new FixpointEngineParameters<>(mTransitionProvider, mStorage, mVarProvider, mLoopDetector, mDomain,
-				debugHelper, mTimer, mLogger, mMaxUnwindings, mMaxParallelStates, mVariablesType);
+				debugHelper, mTimer, mLogger, mMaxUnwindings, mMaxParallelStates);
 	}
 
 	public FixpointEngineParameters<STATE, ACTION, VARDECL, LOC> setTimer(final IProgressAwareTimer timer) {
@@ -148,7 +143,7 @@ public class FixpointEngineParameters<STATE extends IAbstractState<STATE, VARDEC
 			throw new IllegalArgumentException("timer may not be null");
 		}
 		return new FixpointEngineParameters<>(mTransitionProvider, mStorage, mVarProvider, mLoopDetector, mDomain,
-				mDebugHelper, timer, mLogger, mMaxUnwindings, mMaxParallelStates, mVariablesType);
+				mDebugHelper, timer, mLogger, mMaxUnwindings, mMaxParallelStates);
 	}
 
 	public FixpointEngineParameters<STATE, ACTION, VARDECL, LOC> setMaxUnwindings(final int maxUnwindings) {
@@ -156,7 +151,7 @@ public class FixpointEngineParameters<STATE extends IAbstractState<STATE, VARDEC
 			throw new IllegalArgumentException("maxUnwindings must be larger than zero");
 		}
 		return new FixpointEngineParameters<>(mTransitionProvider, mStorage, mVarProvider, mLoopDetector, mDomain,
-				mDebugHelper, mTimer, mLogger, maxUnwindings, mMaxParallelStates, mVariablesType);
+				mDebugHelper, mTimer, mLogger, maxUnwindings, mMaxParallelStates);
 	}
 
 	public FixpointEngineParameters<STATE, ACTION, VARDECL, LOC> setMaxParallelStates(final int maxParallelStates) {
@@ -164,7 +159,7 @@ public class FixpointEngineParameters<STATE extends IAbstractState<STATE, VARDEC
 			throw new IllegalArgumentException("maxParallelStates must be larger than zero");
 		}
 		return new FixpointEngineParameters<>(mTransitionProvider, mStorage, mVarProvider, mLoopDetector, mDomain,
-				mDebugHelper, mTimer, mLogger, mMaxUnwindings, maxParallelStates, mVariablesType);
+				mDebugHelper, mTimer, mLogger, mMaxUnwindings, maxParallelStates);
 	}
 
 	public boolean isValid() {
@@ -205,11 +200,11 @@ public class FixpointEngineParameters<STATE extends IAbstractState<STATE, VARDEC
 		return mTransitionProvider;
 	}
 
-	public IAbstractStateStorage<STATE, ACTION, VARDECL, LOC> getStorage() {
+	public IAbstractStateStorage<STATE, ACTION, LOC> getStorage() {
 		return mStorage;
 	}
 
-	public IVariableProvider<STATE, ACTION, VARDECL> getVariableProvider() {
+	public IVariableProvider<STATE, ACTION> getVariableProvider() {
 		return mVarProvider;
 	}
 
@@ -217,7 +212,7 @@ public class FixpointEngineParameters<STATE extends IAbstractState<STATE, VARDEC
 		return mLoopDetector;
 	}
 
-	public IAbstractDomain<STATE, ACTION, VARDECL> getAbstractDomain() {
+	public IAbstractDomain<STATE, ACTION> getAbstractDomain() {
 		return mDomain;
 	}
 
@@ -239,9 +234,5 @@ public class FixpointEngineParameters<STATE extends IAbstractState<STATE, VARDEC
 
 	public int getMaxParallelStates() {
 		return mMaxParallelStates;
-	}
-
-	public Class<VARDECL> getVariablesType() {
-		return mVariablesType;
 	}
 }

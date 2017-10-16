@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.test.mocks;
 import java.io.Writer;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILoggingService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 
@@ -40,24 +41,30 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage
  */
 final class LoggingServiceMock implements ILoggingService {
 
+	private final LogLevel mDefaultLevel;
+
+	LoggingServiceMock(final LogLevel defaultLevel) {
+		mDefaultLevel = defaultLevel;
+	}
+
 	@Override
 	public ILogger getLogger(final String pluginId) {
-		return new ConsoleLogger();
+		return new ConsoleLogger(mDefaultLevel);
 	}
 
 	@Override
 	public ILogger getLogger(final Class<?> clazz) {
-		return new ConsoleLogger();
+		return new ConsoleLogger(mDefaultLevel);
 	}
 
 	@Override
 	public ILogger getLoggerForExternalTool(final String id) {
-		return new ConsoleLogger();
+		return new ConsoleLogger(mDefaultLevel);
 	}
 
 	@Override
 	public ILogger getControllerLogger() {
-		return new ConsoleLogger();
+		return new ConsoleLogger(mDefaultLevel);
 	}
 
 	@Override
@@ -67,29 +74,26 @@ final class LoggingServiceMock implements ILoggingService {
 
 	@Override
 	public void addWriter(final Writer writer, final String logPattern) {
-
+		// do nothing
 	}
 
 	@Override
 	public void removeWriter(final Writer writer) {
-
+		// do nothing
 	}
 
 	@Override
 	public void reloadLoggers() {
-		// TODO Auto-generated method stub
-
+		// do nothing
 	}
 
 	@Override
 	public void setCurrentControllerID(final String name) {
-		// TODO Auto-generated method stub
-
+		// do nothing
 	}
 
 	@Override
 	public void store(final IToolchainStorage storage) {
-		// TODO Auto-generated method stub
-
+		// do nothing
 	}
 }

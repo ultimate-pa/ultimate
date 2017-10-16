@@ -26,23 +26,18 @@
  * to convey the resulting work.
  */
 
-
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.automata;
-
 
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util.IntSet;
 
 
+
 /**
  * State interface of nested word automata
- * 
- * @author Yong Li
  * */
-public interface IStateNwa {
-	
-	int getId();
+public interface IStateNwa extends IState {
 
 	// setters
 	void addSuccessorInternal(int letter, int state);
@@ -65,12 +60,5 @@ public interface IStateNwa {
 	Set<Integer> getEnabledLettersReturn();
 	
 	Set<Integer> getEnabledHiersReturn(int letter);
-
-	// ----- general requirements
-	boolean equals(Object otherState);
-	
-	int hashCode();
-	
-	String toString();
 
 }

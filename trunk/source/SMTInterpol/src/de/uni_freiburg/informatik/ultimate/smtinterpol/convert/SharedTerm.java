@@ -21,7 +21,6 @@ package de.uni_freiburg.informatik.ultimate.smtinterpol.convert;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.IAnnotation;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCTerm;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.LinVar;
 
@@ -29,7 +28,6 @@ public class SharedTerm {
 	
 	private final Clausifier mClausifier;
 	private final Term mTerm;
-	private final IAnnotation mAnnot;
 	
 	// fields for theory.cclosure (Congruence Closure)
 	CCTerm mCCterm;
@@ -40,17 +38,12 @@ public class SharedTerm {
 	
 	private Term mRealTerm = null;
 	
-	public SharedTerm(Clausifier clausifier, Term term) {
+	public SharedTerm(final Clausifier clausifier, final Term term) {
 		mClausifier = clausifier;
 		mTerm = term;
-		if (clausifier.getEngine().isProofGenerationEnabled()) {
-			mAnnot = mClausifier.getAnnotation();
-		} else {
-			mAnnot = null;
-		}
 	}
 	
-	public void setLinVar(Rational factor, LinVar linvar, Rational offset) {
+	public void setLinVar(final Rational factor, final LinVar linvar, final Rational offset) {
 		mFactor = factor;
 		mLinVar = linvar;
 		mOffset = offset;
@@ -64,33 +57,27 @@ public class SharedTerm {
 		mClausifier.getLASolver().share(this);
 		mCCterm.share(mClausifier.getCClosure(), this);
 	}
-		
+
 	public void shareWithLinAr() {
 		if (mOffset != null) {
 			return;
 		}
 		assert getSort().isNumericSort() : "Sharing non-numeric sort?";
+		assert ! (mTerm instanceof SMTAffineTerm) : "SMTAffineTerm without a linvar?";
+
+		final boolean isint = getSort().getName().equals("Int");
+		mLinVar = mClausifier.getLASolver().addVar(this, isint,
+				mClausifier.getStackLevel());
 		
-		if (mTerm instanceof SMTAffineTerm) {
-			mClausifier.getLASolver().generateSharedVar(
-					this, mClausifier.createMutableAffinTerm(
-							(SMTAffineTerm) mTerm),
-					mClausifier.getStackLevel());
-		} else {
-			final boolean isint = getSort().getName().equals("Int");
-			mLinVar = mClausifier.getLASolver().addVar(this, isint,
-					mClausifier.getStackLevel());
-			
-			mFactor = Rational.ONE;
-			mOffset = Rational.ZERO;
-		}
+		mFactor = Rational.ONE;
+		mOffset = Rational.ZERO;
 		mClausifier.addUnshareLA(this);
 		if (mCCterm != null) {
 			share();
 		}
 	}
 	
-	public EqualityProxy createEquality(SharedTerm other) {
+	public EqualityProxy createEquality(final SharedTerm other) {
 		return mClausifier.createEqualityProxy(this, other);
 	}
 
@@ -139,10 +126,6 @@ public class SharedTerm {
 		return mRealTerm;
 	}
 	
-	public IAnnotation getAnnotation() {
-		return mAnnot;
-	}
-	
 	public Clausifier getClausifier() {
 		return mClausifier;
 	}
@@ -161,7 +144,7 @@ public class SharedTerm {
 		return SMTAffineTerm.cleanup(mTerm).toString();
 	}
 	
-	void setCCTerm(CCTerm ccterm) {
+	void setCCTerm(final CCTerm ccterm) {
 		assert(mCCterm == null);
 		mCCterm = ccterm;
 		mClausifier.addUnshareCC(this);

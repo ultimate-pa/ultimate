@@ -48,10 +48,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.UnsatCores;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceChecker;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceCheckerCraig;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceCheck;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceCheckCraig;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerSpWp;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckSpWp;
 
 /**
  * Extract many predicates from a loop. Given a termination argument (given by a honda predicate) we check for some
@@ -125,11 +125,11 @@ public class LoopCannibalizer<LETTER extends IIcfgTransition<?>> {
 					final NestedWord<LETTER> before = mLoop.getSubWord(0, i);
 					final NestedWord<LETTER> after = mLoop.getSubWord(i + 1, mLoop.length() - 1);
 					final NestedWord<LETTER> shifted = after.concatenate(before);
-					final InterpolatingTraceChecker traceChecker = getTraceChecker(shifted, interpolation);
-					final LBool loopCheck = traceChecker.isCorrect();
+					final InterpolatingTraceCheck traceCheck = getTraceCheck(shifted, interpolation);
+					final LBool loopCheck = traceCheck.isCorrect();
 					if (loopCheck == LBool.UNSAT) {
 						IPredicate[] loopInterpolants;
-						loopInterpolants = traceChecker.getInterpolants();
+						loopInterpolants = traceCheck.getInterpolants();
 						final Set<IPredicate> cannibalized =
 								mPredicateUnifier.cannibalizeAll(false, Arrays.asList(loopInterpolants));
 						mResultPredicates.addAll(cannibalized);
@@ -142,13 +142,13 @@ public class LoopCannibalizer<LETTER extends IIcfgTransition<?>> {
 		}
 	}
 
-	private InterpolatingTraceChecker getTraceChecker(final NestedWord<? extends IIcfgTransition<?>> shifted,
+	private InterpolatingTraceCheck getTraceCheck(final NestedWord<? extends IIcfgTransition<?>> shifted,
 			final InterpolationTechnique interpolation) {
-		InterpolatingTraceChecker traceChecker;
+		InterpolatingTraceCheck traceCheck;
 		switch (interpolation) {
 		case Craig_NestedInterpolation:
 		case Craig_TreeInterpolation:
-			traceChecker = new InterpolatingTraceCheckerCraig(mBspm.getRankEqAndSi(), mBspm.getHondaPredicate(),
+			traceCheck = new InterpolatingTraceCheckCraig(mBspm.getRankEqAndSi(), mBspm.getHondaPredicate(),
 					new TreeMap<Integer, IPredicate>(), shifted, mCsToolkit, AssertCodeBlockOrder.NOT_INCREMENTALLY,
 					mServices, false, mPredicateFactory, mPredicateUnifier, interpolation, true, mXnfConversionTechnique,
 					mSimplificationTechnique, null);
@@ -157,7 +157,7 @@ public class LoopCannibalizer<LETTER extends IIcfgTransition<?>> {
 		case BackwardPredicates:
 		case FPandBP:
 		case FPandBPonlyIfFpWasNotPerfect:
-			traceChecker = new TraceCheckerSpWp(mBspm.getRankEqAndSi(), mBspm.getHondaPredicate(),
+			traceCheck = new TraceCheckSpWp(mBspm.getRankEqAndSi(), mBspm.getHondaPredicate(),
 					new TreeMap<Integer, IPredicate>(), shifted, mCsToolkit, AssertCodeBlockOrder.NOT_INCREMENTALLY,
 					UnsatCores.CONJUNCT_LEVEL, true, mServices, false, mPredicateFactory, mPredicateUnifier, interpolation,
 					mCsToolkit.getManagedScript(), mXnfConversionTechnique, mSimplificationTechnique, null);
@@ -165,10 +165,10 @@ public class LoopCannibalizer<LETTER extends IIcfgTransition<?>> {
 		default:
 			throw new UnsupportedOperationException("unsupported interpolation");
 		}
-		if (traceChecker.getToolchainCanceledExpection() != null) {
-			throw traceChecker.getToolchainCanceledExpection();
+		if (traceCheck.getToolchainCanceledExpection() != null) {
+			throw traceCheck.getToolchainCanceledExpection();
 		}
-		return traceChecker;
+		return traceCheck;
 	}
 
 	/**

@@ -220,7 +220,7 @@ public class TAwAFAsCegarLoop<LETTER extends IIcfgTransition<?>> extends CegarLo
 			}
 			mLogger.debug("Calculating RD DAGs for " + sb);
 			final List<DataflowDAG<TraceCodeBlock>> dags =
-					ReachingDefinitions.computeRDForTrace((List<CodeBlock>) word, mLogger, mIcfgContainer);
+					ReachingDefinitions.computeRDForTrace((List<CodeBlock>) word, mLogger, mIcfg);
 			return dags;
 		} catch (final Throwable e) {
 			mLogger.fatal("DataflowDAG generation threw an exception.", e);

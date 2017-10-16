@@ -28,7 +28,11 @@
 package de.uni_freiburg.informatik.ultimate.core.coreplugin.services;
 
 import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.LoggerContext;
+import org.apache.logging.log4j.core.config.Configuration;
+import org.apache.logging.log4j.core.config.LoggerConfig;
 import org.apache.logging.log4j.spi.ExtendedLogger;
 import org.apache.logging.log4j.spi.ExtendedLoggerWrapper;
 
@@ -149,6 +153,39 @@ public class Log4J2Wrapper implements ILogger {
 	@Override
 	public String toString() {
 		return "[" + hashCode() + "][" + getBacking().getLevel() + "] " + getBacking().getName();
+	}
+
+	@Override
+	public void setLevel(final LogLevel level) {
+
+		final Level log4j2Level;
+		switch (level) {
+		case DEBUG:
+			log4j2Level = Level.DEBUG;
+			break;
+		case ERROR:
+			log4j2Level = Level.ERROR;
+			break;
+		case FATAL:
+			log4j2Level = Level.FATAL;
+			break;
+		case INFO:
+			log4j2Level = Level.INFO;
+			break;
+		case OFF:
+			log4j2Level = Level.OFF;
+			break;
+		case WARN:
+			log4j2Level = Level.WARN;
+			break;
+		default:
+			throw new UnsupportedOperationException("Unhandled LogLevel " + level);
+		}
+
+		final LoggerContext ctx = (LoggerContext) LogManager.getContext(false);
+		final Configuration config = ctx.getConfiguration();
+		final LoggerConfig loggerConfig = config.getLoggerConfig(mLogger.getName());
+		loggerConfig.setLevel(log4j2Level);
 	}
 
 }

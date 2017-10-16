@@ -2,9 +2,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
 
-public interface INaryTermEvaluator<VALUE, STATE extends IAbstractState<STATE, VARDECL>, VARDECL>
-		extends ITermEvaluator<VALUE, STATE, VARDECL> {
-	
+public interface INaryTermEvaluator<VALUE, STATE extends IAbstractState<STATE>> extends ITermEvaluator<VALUE, STATE> {
+
 	/**
 	 * @return The arity of the n-ary evaluator.
 	 */

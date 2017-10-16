@@ -21,15 +21,15 @@ package de.uni_freiburg.informatik.ultimate.logic;
 import java.math.BigInteger;
 
 /**
- * Class that represents a rational number num/denom, 
+ * Class that represents a rational number num/denom,
  * where num and denom are BigInteger.  This class also handles
- * infinity and NAN.  
- * 
+ * infinity and NAN.
+ *
  * Internally, the numbers are always kept in reduced form; the
  * denominator is always kept non-negative.  A zero denominator
  * with non-zero numerator indicates positive or negative infinity.
  * The number 0/0 is used to represent NAN (not a number).
- * 
+ *
  * Every operation that involves NAN gives NAN as result.
  * The non-obvious rules for ZERO, INFINITY, and NAN are:
  * <pre>
@@ -44,27 +44,27 @@ import java.math.BigInteger;
  * POSITIVE_INFINITY.floor() = POSITIVE_INFINITY;
  * NAN.frac() = POSITIVE_INFINITY.frac() = ZERO;
  * </pre>
- * 
+ *
  * This class only uses bigintegers if either numerator or
  * denominator does not fit into an int.
  * @author Juergen Christ, Jochen Hoenicke
  */
 public class Rational implements Comparable<Rational> {
-	/** 
+	/**
 	 * The numerator if num and denom are in int range.
 	 */
 	int mNum;
-	/** 
+	/**
 	 * The denominator if num and denom are in int range.
 	 */
 	int mDenom;
-	
+
 	static class BigRational extends Rational {
-		/** 
+		/**
 		 * The numerator if num or denom is outside int range.
 		 */
 		BigInteger mBignum;
-		/** 
+		/**
 		 * The denominator if num or denom is outside int range.
 		 */
 		BigInteger mBigdenom;
@@ -72,11 +72,11 @@ public class Rational implements Comparable<Rational> {
 		/**
 		 * Construct a rational from two bigints.  The constructor
 		 * is private and does not normalize.  Use the static
-		 * constructor valueOf instead. 
+		 * constructor valueOf instead.
 		 * @param nom   Numerator
 		 * @param denom Denominator
 		 */
-		private BigRational(BigInteger nom,BigInteger denom) {
+		private BigRational(final BigInteger nom,final BigInteger denom) {
 			super(nom.signum(),1);
 			mBignum = nom;
 			mBigdenom = denom;
@@ -88,12 +88,12 @@ public class Rational implements Comparable<Rational> {
 		 * @return Sum of <code>this</code> and <code>other</code>.
 		 */
 		@Override
-		public Rational add(Rational other) {
+		public Rational add(final Rational other) {
 			/* fast path */
 			if (other == Rational.ZERO) {
 				return this;
 			}
-			
+
 			final BigInteger tdenom = denominator();
 			final BigInteger odenom = other.denominator();
 			if (tdenom.equals(odenom)) {
@@ -124,7 +124,7 @@ public class Rational implements Comparable<Rational> {
 		 * @return Product of <code>this</code> and <code>other</code>.
 		 */
 		@Override
-		public Rational mul(Rational other) {
+		public Rational mul(final Rational other) {
 			/* fast path */
 			if (other == Rational.ONE) {
 				return this;
@@ -147,7 +147,7 @@ public class Rational implements Comparable<Rational> {
 		 * @return Product of <code>this</code> and <code>other</code>.
 		 */
 		@Override
-		public Rational mul(BigInteger other) {
+		public Rational mul(final BigInteger other) {
 			if (other.bitLength() < 2) {
 				/* fast path */
 				final int oint = other.intValue();
@@ -170,7 +170,7 @@ public class Rational implements Comparable<Rational> {
 		 * @return Quotient of <code>this</code> and <code>other</code>.
 		 */
 		@Override
-		public Rational div(Rational other) {
+		public Rational div(final Rational other) {
 			if (other == Rational.ONE) {
 				return this;
 			}
@@ -192,7 +192,7 @@ public class Rational implements Comparable<Rational> {
 		 * @param other Rational to divide.
 		 * @return Quotient of <code>this</code> and <code>other</code>.
 		 */
-		public Rational idiv(Rational other) {
+		public Rational idiv(final Rational other) {
 			BigInteger num = denominator().multiply(other.numerator());
 			final BigInteger denom = numerator().multiply(other.denominator());
 			// +-inf : -c = -+inf
@@ -219,7 +219,7 @@ public class Rational implements Comparable<Rational> {
 		 * @return the gcd of this and other.
 		 */
 		@Override
-		public Rational gcd(Rational other) {
+		public Rational gcd(final Rational other) {
 			if (other == Rational.ZERO) {
 				return this;
 			}
@@ -232,18 +232,18 @@ public class Rational implements Comparable<Rational> {
 		}
 
 		@Override
-		public int compareTo(Rational o) {
+		public int compareTo(final Rational o) {
 			final BigInteger valthis = numerator().multiply(o.denominator());
 			final BigInteger valo = o.numerator().multiply(denominator());
 			return valthis.compareTo(valo);
 		}
 
 		@Override
-		public boolean equals(Object o) {
+		public boolean equals(final Object o) {
 			if (o instanceof BigRational) {
 				final BigRational r = (BigRational) o;
 				// Works thanks to normalization!!!
-				return mBignum.equals(r.mBignum) 
+				return mBignum.equals(r.mBignum)
 					&& mBigdenom.equals(r.mBigdenom);
 			}
 			if (o instanceof MutableRational) {
@@ -336,15 +336,15 @@ public class Rational implements Comparable<Rational> {
 			return valueOf(mBignum.abs(), mBigdenom);
 		}
 	}
-	
+
 	/**
 	 * Construct a rational from two ints.  The constructor
 	 * is private and does not normalize.  Use the static
-	 * constructor valueOf instead. 
+	 * constructor valueOf instead.
 	 * @param num   The numerator.
 	 * @param denom The denominator.
 	 */
-	private Rational(int num, int denom) {
+	private Rational(final int num, final int denom) {
 		mNum = num;
 		mDenom = denom;
 	}
@@ -365,7 +365,7 @@ public class Rational implements Comparable<Rational> {
 			bignum = bignum.negate();
 			bigdenom = bigdenom.negate();
 		} else if (cp == 0) {
-			return valueOf(bignum.signum(), 0); 
+			return valueOf(bignum.signum(), 0);
 		}
 		if (!bigdenom.equals(BigInteger.ONE)) {
 			final BigInteger norm = gcd(bignum, bigdenom).abs();
@@ -380,13 +380,13 @@ public class Rational implements Comparable<Rational> {
 			return new BigRational(bignum, bigdenom);
 		}
 	}
-	
+
 	/**
 	 * Construct a rational from two longs.  Use this method
 	 * to create a rational number.  This method normalizes
 	 * the rational number and may return a previously created
 	 * one.
-	 * This method does not work if called with value 
+	 * This method does not work if called with value
 	 * Long.MIN_VALUE.
 	 *
 	 * @param newnum   The numerator.
@@ -405,7 +405,7 @@ public class Rational implements Comparable<Rational> {
 			newnum /= gcd2;
 			newdenom /= gcd2;
 		}
-		
+
 		if (newdenom == 1) {
 			if (newnum == 0) {
 				return ZERO;
@@ -423,17 +423,17 @@ public class Rational implements Comparable<Rational> {
 				return NEGATIVE_INFINITY;
 			}
 		}
-		
+
 		if (Integer.MIN_VALUE <= newnum && newnum <= Integer.MAX_VALUE
 			&& newdenom <= Integer.MAX_VALUE) {
 			return new Rational((int) newnum, (int) newdenom);
 		}
-		return new BigRational(BigInteger.valueOf(newnum), 
+		return new BigRational(BigInteger.valueOf(newnum),
 				BigInteger.valueOf(newdenom));
 	}
-	
+
 	/**
-	 * Calculates the greatest common divisor of two numbers. Expects two 
+	 * Calculates the greatest common divisor of two numbers. Expects two
 	 * nonnegative values.
 	 * @param a First number
 	 * @param b Second Number
@@ -501,7 +501,7 @@ public class Rational implements Comparable<Rational> {
 	 * @param i2 the second big integer.
 	 * @return the gcd of i1 and i2.
 	 */
-	public static BigInteger gcd(BigInteger i1, BigInteger i2) {
+	public static BigInteger gcd(final BigInteger i1, final BigInteger i2) {
 		if (i1.equals(BigInteger.ONE) || i2.equals(BigInteger.ONE)) {
 			return BigInteger.ONE;
 		}
@@ -521,7 +521,7 @@ public class Rational implements Comparable<Rational> {
 	 * @param other Rational to add.
 	 * @return Sum of <code>this</code> and <code>other</code>.
 	 */
-	public Rational add(Rational other) {
+	public Rational add(final Rational other) {
 		/* fast path */
 		if (other == Rational.ZERO) {
 			return this;
@@ -533,7 +533,7 @@ public class Rational implements Comparable<Rational> {
 			return other.add(this);
 		} else {
 			if (mDenom == other.mDenom) {
-				/* handle gcd = 0 correctly 
+				/* handle gcd = 0 correctly
 				 * two INFINITYs with same sign give INFINITY,
 				 * otherwise it gives NAN.
 				 */
@@ -545,8 +545,8 @@ public class Rational implements Comparable<Rational> {
 			}
 			/* This also handles infinity/NAN + normal correctly. */
 			final int gcd = gcd(mDenom, other.mDenom);
-			final long denomgcd = mDenom / gcd; 
-			final long otherdenomgcd = other.mDenom / gcd; 
+			final long denomgcd = mDenom / gcd;
+			final long otherdenomgcd = other.mDenom / gcd;
 			final long newdenom = denomgcd * other.mDenom;
 			final long newnum = otherdenomgcd * mNum + denomgcd * other.mNum;
 			return valueOf(newnum, newdenom);
@@ -559,7 +559,7 @@ public class Rational implements Comparable<Rational> {
 	 * @param fac2 the other factor.
 	 * @return the result of the computation.
 	 */
-	public Rational addmul(Rational fac1,Rational fac2) {
+	public Rational addmul(final Rational fac1,final Rational fac2) {
 		return add(fac1.mul(fac2));
 	}
 
@@ -569,7 +569,7 @@ public class Rational implements Comparable<Rational> {
 	 * @param d the divisor.
 	 * @return the result of the computation.
 	 */
-	public Rational subdiv(Rational s,Rational d) {
+	public Rational subdiv(final Rational s,final Rational d) {
 		return sub(s).div(d);
 	}
 	/**
@@ -577,14 +577,14 @@ public class Rational implements Comparable<Rational> {
 	 * @return <code>-this</code>.
 	 */
 	public Rational negate() {
-		return Rational.valueOf(-(long)mNum, mDenom);		
+		return Rational.valueOf(-(long)mNum, mDenom);
 	}
 	/**
 	 * Return a new rational representing <code>this - other</code>.
 	 * @param other Rational to subtract.
 	 * @return Difference of <code>this</code> and <code>other</code>.
 	 */
-	public Rational sub(Rational other) {
+	public Rational sub(final Rational other) {
 		return add(other.negate());
 	}
 	/**
@@ -592,7 +592,7 @@ public class Rational implements Comparable<Rational> {
 	 * @param other Rational to multiply.
 	 * @return Product of <code>this</code> and <code>other</code>.
 	 */
-	public Rational mul(Rational other) {
+	public Rational mul(final Rational other) {
 		/* fast path */
 		if (other == Rational.ONE) {
 			return this;
@@ -614,13 +614,13 @@ public class Rational implements Comparable<Rational> {
 		final long newdenom = (long)mDenom * other.mDenom;
 		return valueOf(newnum, newdenom);
 	}
-	
+
 	/**
 	 * Return a new rational representing <code>this * other</code>.
 	 * @param other big integer to multiply.
 	 * @return Product of <code>this</code> and <code>other</code>.
 	 */
-	public Rational mul(BigInteger other) {
+	public Rational mul(final BigInteger other) {
 		if (other.bitLength() < 32) { // NOCHECKSTYLE
 			/* fast path */
 			final int oint = other.intValue();
@@ -633,7 +633,7 @@ public class Rational implements Comparable<Rational> {
 			final long newnum = (long)mNum * oint;
 			return valueOf(newnum, mDenom);
 		}
-			
+
 		if (this == Rational.ONE) {
 			return valueOf(other, BigInteger.ONE);
 		}
@@ -648,18 +648,18 @@ public class Rational implements Comparable<Rational> {
 	 * @param other Rational to divide.
 	 * @return Quotient of <code>this</code> and <code>other</code>.
 	 */
-	public Rational div(Rational other) {
+	public Rational div(final Rational other) {
 		if (other == Rational.ONE) {
 			return this;
 		}
 		if (other == Rational.MONE) {
 			return negate();
 		}
-		
+
 		if (other instanceof BigRational) {
 			return ((BigRational)other).idiv(this);
 		}
-		
+
 		/* fast path */
 		long newnum = (long)mNum * other.mDenom;
 		final long newdenom = (long)mDenom * other.mNum;
@@ -669,7 +669,7 @@ public class Rational implements Comparable<Rational> {
 		}
 		return valueOf(newnum, newdenom);
 	}
-	
+
 	/**
 	 * Compute the gcd of two rationals (this and other).  The gcd
 	 * is the rational number, such that dividing this and other with
@@ -677,7 +677,7 @@ public class Rational implements Comparable<Rational> {
 	 * @param other the second rational argument.
 	 * @return the gcd of this and other.
 	 */
-	public Rational gcd(Rational other) {
+	public Rational gcd(final Rational other) {
 		if (this == Rational.ZERO) {
 			return other;
 		}
@@ -725,7 +725,7 @@ public class Rational implements Comparable<Rational> {
 	 * @param o the other rational.
 	 * @return -1, if this &lt; o; 1, if this &gt; o; 0 if they are equal.
 	 */
-	public int compareTo(Rational o) {
+	public int compareTo(final Rational o) {
 		if (o instanceof BigRational) {
 			return -o.compareTo(this);
 		}
@@ -736,7 +736,7 @@ public class Rational implements Comparable<Rational> {
 		}
 		final long valt = (long)mNum * o.mDenom;
 		final long valo = (long)o.mNum * mDenom;
-		return valt < valo ? -1 : valt == valo ? 0 : 1; 
+		return valt < valo ? -1 : valt == valo ? 0 : 1;
 	}
 	@Override
 	/**
@@ -745,7 +745,7 @@ public class Rational implements Comparable<Rational> {
 	 * @param o the other rational.
 	 * @return true if this equals o, false otherwise.
 	 */
-	public boolean equals(Object o) {
+	public boolean equals(final Object o) {
 		if (o instanceof Rational) {
 			if (o instanceof BigRational) {
 				return false;
@@ -777,7 +777,7 @@ public class Rational implements Comparable<Rational> {
 	}
 
 	/**
-	 * Computes a hashcode.  The hashcode is computed as 
+	 * Computes a hashcode.  The hashcode is computed as
 	 * {@code 257 * numerator + denominator} if both fit into an integer and
 	 * {@code 257 * numerator().hashCode() + denominator().hashCode()} if big
 	 * integers are necessary.
@@ -790,7 +790,7 @@ public class Rational implements Comparable<Rational> {
 	/**
 	 * Get a string representation of this number.  This is
 	 * {@code numerator()+ "/" + denominator()} except for
-	 * infinity ({@code "inf"}), nan ({@code "nan"}), or minus 
+	 * infinity ({@code "inf"}), nan ({@code "nan"}), or minus
 	 * infinity ({@code "-inf"}).
 	 * @return the string representation.
 	 */
@@ -909,12 +909,12 @@ public class Rational implements Comparable<Rational> {
 	/**
 	 * Creates a constant term containing this rational.
 	 * @param sort the sort of the constant term that should be created.
-	 * @return a constant term with this rational value. 
+	 * @return a constant term with this rational value.
 	 * @throws SMTLIBException if term is infinite or NaN, if the
-	 * sort is not numeric, or if the term is not integral and the sort 
+	 * sort is not numeric, or if the term is not integral and the sort
 	 * is Int.
 	 */
-	public Term toTerm(Sort sort) {
+	public Term toTerm(final Sort sort) {
 		return sort.getTheory().constant(this, sort);
 	}
 	/**
@@ -924,7 +924,7 @@ public class Rational implements Comparable<Rational> {
 	 * @deprecated Use {@link #toTerm(Sort)} since this is the type-safe version
 	 */
 	@Deprecated
-	public Term toSMTLIB(Theory t) {
+	public Term toSMTLIB(final Theory t) {
 		return t.rational(numerator(), denominator());
 	}
 	/**
@@ -933,6 +933,6 @@ public class Rational implements Comparable<Rational> {
 	 * @return true if and only if this rational is not infinite or NaN.
 	 */
 	public boolean isRational() {
-		return mDenom != 0; 
+		return mDenom != 0;
 	}
 }

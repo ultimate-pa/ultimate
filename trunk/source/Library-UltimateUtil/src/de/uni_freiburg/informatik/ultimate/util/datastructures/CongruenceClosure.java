@@ -1,19 +1,23 @@
 package de.uni_freiburg.informatik.ultimate.util.datastructures;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Deque;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Implementation of the congruence closure algorithm and data structure. Builds
@@ -29,52 +33,45 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  * It is recommended to use a factory for constructing ELEM objects that extends
  * AbstractCCElementFactory.
  *
- * TODO: can we make this more lightweight somehow? Maybe by initializing maps on demand? --> analyze..
- *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  * @param <ELEM>
  *            The element type. Elements correspond to the "nodes" or terms in
  *            standard congruence closure terminology. Elements can be constants
  *            or function applications.
- * @param <FUNCTION>
- *            The function type. We allow equalities and disequalities between
- *            functions, too.
  */
-public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNCTION>, FUNCTION> {
+public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 
 	protected final ThreeValuedEquivalenceRelation<ELEM> mElementTVER;
-	protected final ThreeValuedEquivalenceRelation<FUNCTION> mFunctionTVER;
+
+	protected final CongruenceClosure<ELEM>.CcAuxData mAuxData;
+
+	protected final CongruenceClosure<ELEM>.FuncAppTreeAuxData mFaAuxData;
+
+	protected final Collection<ELEM> mAllLiterals;
 
 	/**
-	 * conventions:
-	 * <li> function f (first index) is not a representative, every function known to mFunctionTVER can have an entry here
-	 * <li> representative r (second index) is a representative of an equivalence class in mElemenTVER
-	 * <li> the result set, ccpars, contains nodes that are an f-parent of a node in r's equivalence class.
-	 * <p>
-	 * usage of this map: reportEqualityRec, together with argumentsAreCongruent
+	 *
 	 */
-	protected final NestedMap2<FUNCTION, ELEM, Set<ELEM>> mFunctionToRepresentativeToCcPars;
-	protected final NestedMap2<FUNCTION, ELEM, Set<List<ELEM>>> mFunctionToRepresentativeToCcChildren;
-	protected final HashRelation<FUNCTION, ELEM> mFunctionToFuncApps;
+	boolean mConstructorInitializationPhase = false;
+
 	/**
-	 * stores all known parents for an element -- used for remove method to also remove dependent elements
-	 * (might be used for other dependencies, too..
+	 * Store which element we are currently in the process of removing (a remove can trigger deep recursive calls, and
+	 *  some need to know this. Also sanity checks may be done more precisely when we know this)
 	 */
-	protected final HashRelation<ELEM, ELEM> mElementToParents;
-	private boolean mIsInconsistent;
+	protected RemoveElement mElementCurrentlyBeingRemoved;
+
+	private CongruenceClosure<ELEM>.RemoveElement mExternalRemovalInfo;
+
 	/**
 	 * Constructs CongruenceClosure instance without any equalities or
 	 * disequalities.
 	 */
 	public CongruenceClosure() {
-		mElementTVER = new ThreeValuedEquivalenceRelation<>();
-		mFunctionTVER = new ThreeValuedEquivalenceRelation<>();
-		mFunctionToRepresentativeToCcPars = new NestedMap2<>();
-		mFunctionToRepresentativeToCcChildren = new NestedMap2<>();
-		mFunctionToFuncApps = new HashRelation<>();
-		mElementToParents = new HashRelation<>();
-		mIsInconsistent = false;
+		mElementTVER = new ThreeValuedEquivalenceRelation<>(CongruenceClosure::literalComparator);
+		mAuxData = new CcAuxData();
+		mFaAuxData = new FuncAppTreeAuxData();
+		mAllLiterals = new HashSet<>();
 	}
 
 	/**
@@ -88,32 +85,63 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 		if (!isInconsistent) {
 			throw new AssertionError("use other constructor");
 		}
-		mIsInconsistent = true;
 
 		mElementTVER = null;
-		mFunctionTVER = null;
-		mFunctionToRepresentativeToCcPars = null;
-		mFunctionToRepresentativeToCcChildren = null;
-		mFunctionToFuncApps = null;
-		mElementToParents = null;
+		mAuxData = null;
+		mFaAuxData = null;
+		mAllLiterals = null;
 	}
 
-	public CongruenceClosure(final ThreeValuedEquivalenceRelation<ELEM> newElemPartition,
-			final ThreeValuedEquivalenceRelation<FUNCTION> newFunctionPartition) {
+	public CongruenceClosure(final ThreeValuedEquivalenceRelation<ELEM> newElemPartition) {
 		mElementTVER = newElemPartition;
-		mFunctionTVER = newFunctionPartition;
-		mFunctionToRepresentativeToCcPars = new NestedMap2<>();
-		mFunctionToRepresentativeToCcChildren = new NestedMap2<>();
-		mFunctionToFuncApps = new HashRelation<>();
-		mElementToParents = new HashRelation<>();
-		assert !mElementTVER.isInconsistent() && !mFunctionTVER.isInconsistent();
-		mIsInconsistent = false;
+		mAuxData = new CcAuxData();
+		mFaAuxData = new FuncAppTreeAuxData();
+		mAllLiterals = new HashSet<>();
 
+		mConstructorInitializationPhase = true;
 		// initialize the helper mappings according to mElementTVER
 		for (final ELEM elem : new HashSet<>(mElementTVER.getAllElements())) {
 			registerNewElement(elem);
 		}
+		mConstructorInitializationPhase = false;
 		assert sanityCheck();
+	}
+
+	public CongruenceClosure(final ThreeValuedEquivalenceRelation<ELEM> newElemPartition, final RemoveElement remInfo) {
+		mElementTVER = newElemPartition;
+		mAuxData = new CcAuxData();
+		mFaAuxData = new FuncAppTreeAuxData();
+		mAllLiterals = new HashSet<>();
+
+		mConstructorInitializationPhase = true;
+		// initialize the helper mappings according to mElementTVER
+		for (final ELEM elem : new HashSet<>(mElementTVER.getAllElements())) {
+			registerNewElement(elem, remInfo);
+		}
+		mConstructorInitializationPhase = false;
+		assert sanityCheck(remInfo);
+	}
+
+	static <ELEM extends ICongruenceClosureElement<ELEM>> Integer literalComparator(final ELEM e1, final ELEM e2) {
+		if (e1.isLiteral() && !e2.isLiteral()) {
+			return -1;
+		}
+		if (e2.isLiteral() && !e1.isLiteral()) {
+			return 1;
+		}
+		return 0;
+	}
+
+	public CongruenceClosure(final CongruenceClosure<ELEM> original, final RemoveElement externalRemovalInfo) {
+		if (original.isInconsistent()) {
+			throw new IllegalArgumentException("use other constructor!");
+		}
+		mElementTVER = new ThreeValuedEquivalenceRelation<>(original.mElementTVER);
+		mAuxData = new CcAuxData(original.mAuxData);
+		mFaAuxData = new FuncAppTreeAuxData(original.mFaAuxData);
+		mAllLiterals = new HashSet<>(original.mAllLiterals);
+		mExternalRemovalInfo = externalRemovalInfo;
+		assert sanityCheck(externalRemovalInfo); // can be violated during remove (?)
 	}
 
 	/**
@@ -121,286 +149,165 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 	 *
 	 * @param original the CC to copy
 	 */
-	public CongruenceClosure(final CongruenceClosure<ELEM, FUNCTION> original) {
-		if (original.isInconsistent()) {
-			throw new IllegalArgumentException("use other constructor!");
-		}
-		mElementTVER = new ThreeValuedEquivalenceRelation<>(original.mElementTVER);
-		mFunctionTVER = new ThreeValuedEquivalenceRelation<>(original.mFunctionTVER);
-		mFunctionToRepresentativeToCcPars = new NestedMap2<>(original.mFunctionToRepresentativeToCcPars);
-		mFunctionToRepresentativeToCcChildren = new NestedMap2<>(original.mFunctionToRepresentativeToCcChildren);
-		mFunctionToFuncApps = new HashRelation<>(original.mFunctionToFuncApps);
-		mElementToParents = new HashRelation<>(original.mElementToParents);
-		assert !original.mIsInconsistent;
-		mIsInconsistent = false;
-		assert sanityCheck();
-	}
-
-	/**
-	 *
-	 * @param func1
-	 * @param func2
-	 * @return true iff the state of this CongruenceClosure instance has changed through this method call
-	 */
-	public boolean reportFunctionEquality(final FUNCTION func1, final FUNCTION func2) {
-		final FUNCTION f1OldRep = getRepresentativeAndAddFunctionIfNeeded(func1);
-		final FUNCTION f2OldRep = getRepresentativeAndAddFunctionIfNeeded(func2);
-
-		if (f1OldRep == f2OldRep) {
-			// already equal --> nothing to do
-			return false;
-		}
-
-		mFunctionTVER.reportEquality(func1, func2);
-		updateInconsistencyStatus();
-		if (isInconsistent()) {
-			// no need to propagate anything if this is already inconsistent
-			return true;
-		}
-
-		/*
-		 * congruence propagations: if we are adding f = g then we can propagate f(x) =
-		 * g(x) for all nodes of that form we know.
-		 *
-		 */
-		for (final ELEM funcApp1 : mFunctionToFuncApps.getImage(func1)) {
-			for (final ELEM funcApp2 : mFunctionToFuncApps.getImage(func2)) {
-				if (funcApp1 == funcApp2) {
-					continue;
-				}
-				if (argumentsAreCongruent(funcApp1, funcApp2)) {
-					reportEquality(funcApp1, funcApp2);
-				}
-			}
-		}
-		updateInconsistencyStatus();
-		assert sanityCheck();
-		return true;
-	}
-
-	/**
-	 *
-	 * @param func1
-	 * @param func2
-	 * @return
-	 */
-	public boolean reportFunctionDisequality(final FUNCTION func1, final FUNCTION func2) {
-		if (getEqualityStatus(func1, func2) == EqualityStatus.NOT_EQUAL) {
-			return false;
-		}
-		mFunctionTVER.reportDisequality(func1, func2);
-		updateInconsistencyStatus();
-		assert sanityCheck();
-		return true;
+	public CongruenceClosure(final CongruenceClosure<ELEM> original) {
+		this(original, null);
 	}
 
 	public boolean reportEquality(final ELEM elem1, final ELEM elem2) {
-		if (mIsInconsistent) {
-			throw new IllegalStateException();
-		}
-
-		boolean freshElem = false;
-		freshElem |= addElement(elem1);
-		freshElem |= addElement(elem2);
-
-		if (!freshElem && getEqualityStatus(elem1, elem2) == EqualityStatus.EQUAL) {
-			// nothing to do
-			return false;
-		}
-		if (!freshElem && getEqualityStatus(elem1, elem2) == EqualityStatus.NOT_EQUAL) {
-			mIsInconsistent = true;
-			return true;
-		}
-
-		reportEqualityRec(elem1, elem2);
-		updateInconsistencyStatus();
+		final boolean result = reportEqualityRec(elem1, elem2);
 		assert sanityCheck();
-		return true;
-	}
-
-	public boolean reportDisequality(final ELEM elem1, final ELEM elem2) {
-		if (mIsInconsistent) {
-			throw new IllegalStateException();
-		}
-
-		boolean freshElem = false;
-		freshElem |= addElement(elem1);
-		freshElem |= addElement(elem2);
-
-		if (!freshElem && getEqualityStatus(elem1, elem2) == EqualityStatus.NOT_EQUAL) {
-			// nothing to do
-			return false;
-		}
-
-		reportDisequalityRec(elem1, elem2, mFunctionToRepresentativeToCcChildren);
-		assert sanityCheck();
-		return true;
-	}
-
-	protected boolean reportDisequalityRec(final ELEM elem1, final ELEM elem2,
-			final NestedMap2<FUNCTION, ELEM, Set<List<ELEM>>> oldCcChild) {
-		if (mElementTVER.getEqualityStatus(elem1, elem2) == EqualityStatus.NOT_EQUAL) {
-			return false;
-		}
-		mElementTVER.reportDisequality(elem1, elem2);
-		if (mElementTVER.isInconsistent()) {
-			updateInconsistencyStatus();
-			return true;
-		}
-		doBackwardCongruencePropagations(elem1, elem2, oldCcChild);
-		return true;
+		return result;
 	}
 
 	protected boolean reportEqualityRec(final ELEM elem1, final ELEM elem2) {
-
-		final ELEM e1OldRep = getRepresentativeAndAddElementIfNeeded(elem1);
-		final ELEM e2OldRep = getRepresentativeAndAddElementIfNeeded(elem2);
-
-		if (e1OldRep == e2OldRep) {
-			// already equal --> nothing to do
-			return false;
+		if (isInconsistent()) {
+			throw new IllegalStateException();
 		}
 
-		// merge the equivalence classes
-		mElementTVER.reportEquality(elem1, elem2);
+		boolean freshElem = false;
+		freshElem |= addElementRec(elem1);
+		freshElem |= addElementRec(elem2);
+		assert atMostOneLiteralPerEquivalenceClass();
 
-		final ELEM newRep = mElementTVER.getRepresentative(elem1);
-
-
-		/*
-		 * make copies of the ccpar and ccchild maps -- we need the old versions for congruence propagations
-		 * (but we dont want to update after the propagations because this would hinder us from doing a lot of sanity
-		 *   checks)
-		 */
-		final NestedMap2<FUNCTION, ELEM, Set<ELEM>> oldCcPar = ccparDeepCopy(mFunctionToRepresentativeToCcPars);
-		final NestedMap2<FUNCTION, ELEM, Set<List<ELEM>>> oldCcChild =
-				ccchildDeepCopy(mFunctionToRepresentativeToCcChildren);
-
-		// update ccpar and ccchild sets
-		updateCcparAndCcChildren(e1OldRep, e2OldRep, newRep);
-
-		// do forward congruence propagations
-		for (final Set<FUNCTION> eqc : mFunctionTVER.getAllEquivalenceClasses()) {
-			for (final Entry<FUNCTION, FUNCTION> funcPair
-					: CrossProducts.binarySelectiveCrossProduct(eqc, true, true)) {
-				final Set<ELEM> e1CcPars = getCcPars(funcPair.getKey(), e1OldRep, oldCcPar);
-				final Set<ELEM> e2CcPars = getCcPars(funcPair.getValue(), e2OldRep, oldCcPar);
-
-				if (e1CcPars == null || e2CcPars == null) {
-					// nothing to do
-					continue;
-				}
-
-				final Set<ELEM> e1CcParsCopy = new HashSet<>(e1CcPars);
-				final Set<ELEM> e2CcParsCopy = new HashSet<>(e2CcPars);
-
-				// need to make copies because reportEqualityRec inside may modify the sets..
-				for (final ELEM ccpar1 : e1CcParsCopy) {
-					for (final ELEM ccpar2 : e2CcParsCopy) {
-						// insert forward congruence
-						if (argumentsAreCongruent(ccpar1, ccpar2)) {
-							reportEqualityRec(ccpar1, ccpar2);
-						}
-
-						/*
-						 * insert some backward congruences:
-						 *
-						 * say we knew before f(x1, x2) != g(y1, y2), and f = g. now we are reporting x1 = y1
-						 *  --> then we need to propagate x2 != y2 now.
-						 */
-						if (getEqualityStatus(ccpar1, ccpar2) == EqualityStatus.NOT_EQUAL) {
-							final int onlyDifferentPos = getOnlyUnconstrainedPos(ccpar1.getArguments(),
-									ccpar2.getArguments());
-							if (onlyDifferentPos != -1) {
-								reportDisequalityRec(ccpar1.getArguments().get(onlyDifferentPos),
-										ccpar2.getArguments().get(onlyDifferentPos),
-										oldCcChild);
-							}
-						}
-					}
-				}
+		if (getEqualityStatus(elem1, elem2) == EqualityStatus.EQUAL) {
+			// nothing to do
+			return freshElem;
+		}
+		if (getEqualityStatus(elem1, elem2) == EqualityStatus.NOT_EQUAL) {
+			// report it to tver so that it is in an inconsistent state
+			mElementTVER.reportEquality(elem1, elem2);
+			// not so nice, but needed for literals where TVER does not know they are unequal otherwise
+			if (!mElementTVER.isInconsistent()) {
+				mElementTVER.reportDisequality(elem1, elem2);
 			}
+			assert mElementTVER.isInconsistent();
+			return true;
 		}
 
-		/*
-		 * do some more backward congruence propagations (see method documentation) we
-		 * have two symmetric cases
-		 */
-		propagateDisequalities(e1OldRep, e2OldRep, oldCcChild);
-		propagateDisequalities(e2OldRep, e1OldRep, oldCcChild);
+		final Pair<HashRelation<ELEM, ELEM>, HashRelation<ELEM, ELEM>> propInfo = doMergeAndComputePropagations(elem1,
+				elem2);
+		if (propInfo == null) {
+			// this became inconsistent through the merge
+			return true;
+		}
 
+		doFwccAndBwccPropagationsFromMerge(propInfo);
 
+//		assert sanityCheck();
+		assert atMostOneLiteralPerEquivalenceClass();
 		return true;
 	}
 
-	/**
-	 * Called when element equivalence classes have been merged, and we therefore need to update the maps that have
-	 * entries that need to be representatives (currently the maps for ccpars and ccchildren)
-	 *
-	 * @param e1OldRep
-	 * @param e2OldRep
-	 * @param newRep
-	 */
-	private void updateCcparAndCcChildren(final ELEM e1OldRep, final ELEM e2OldRep, final ELEM newRep) {
-		for (final FUNCTION func : mFunctionTVER.getAllElements()) {
-			final Set<ELEM> e1CcPars = getCcPars(func, e1OldRep, true);
-			final Set<ELEM> e2CcPars = getCcPars(func, e2OldRep, true);
+	public boolean atMostOneLiteralPerEquivalenceClass() {
+		if (isInconsistent()) {
+			return true;
+		}
+		for (final Set<ELEM> eqc : mElementTVER.getAllEquivalenceClasses()) {
+			assert eqc.stream().filter(e -> e.isLiteral()).collect(Collectors.toList()).size() < 2;
+		}
+		return true;
+	}
 
-			final Set<List<ELEM>> e1CcChildren = mFunctionToRepresentativeToCcChildren.get(func, e1OldRep);
-			final Set<List<ELEM>> e2CcChildren = mFunctionToRepresentativeToCcChildren.get(func, e2OldRep);
-
-			// update CcPars and ccChildren -- add the elements in-place according to which element is the
-			// new representative
-			final Set<ELEM> newCcPars = getCcPars(func, newRep);
-			final Set<List<ELEM>> newCcChildren = getCcChildren(func, newRep);
-			if (newRep == e1OldRep) {
-				if (e2CcPars != null) {
-					newCcPars.addAll(e2CcPars);
-				}
-				removeFromCcpars(e2OldRep, func);
-				if (e2CcChildren != null) {
-					newCcChildren.addAll(e2CcChildren);
-				}
-				removeFromCcChildren(e2OldRep, func);
-			} else {
-				assert newRep == e2OldRep;
-				if (e1CcPars != null) {
-					newCcPars.addAll(e1CcPars);
-				}
-				removeFromCcpars(e1OldRep, func);
-				if (e1CcChildren != null) {
-					newCcChildren.addAll(e1CcChildren);
-				}
-				removeFromCcChildren(e1OldRep, func);
+	protected void doFwccAndBwccPropagationsFromMerge(
+			final Pair<HashRelation<ELEM, ELEM>, HashRelation<ELEM, ELEM>> propInfo) {
+		final HashRelation<ELEM, ELEM> equalitiesToPropagate = propInfo.getFirst();
+		final HashRelation<ELEM, ELEM> disequalitiesToPropagate = propInfo.getSecond();
+		/*
+		 * (fwcc)
+		 */
+		for (final Entry<ELEM, ELEM> congruentParents : equalitiesToPropagate) {
+			if (isInconsistent()) {
+				return;
 			}
+			reportEqualityRec(congruentParents.getKey(), congruentParents.getValue());
+		}
+
+		/*
+		 * (bwcc1), (bwcc2)  (-- they're only separate cases during reportDisequality)
+		 */
+		for (final Entry<ELEM, ELEM> unequalNeighborIndices : disequalitiesToPropagate) {
+			if (isInconsistent()) {
+				return;
+			}
+			reportDisequalityRec(unequalNeighborIndices.getKey(), unequalNeighborIndices.getValue());
 		}
 	}
 
-	protected NestedMap2<FUNCTION, ELEM, Set<List<ELEM>>> ccchildDeepCopy(
-			final NestedMap2<FUNCTION, ELEM, Set<List<ELEM>>> functionToRepresentativeToCcChildren) {
-		final NestedMap2<FUNCTION, ELEM, Set<List<ELEM>>> result = new NestedMap2<>();
-		for (final FUNCTION func : functionToRepresentativeToCcChildren.keySet()) {
-			for (final ELEM rep : functionToRepresentativeToCcChildren.get(func).keySet()) {
-				final HashSet<List<ELEM>> newSet = new HashSet<>();
-				result.put(func, rep, newSet);
-				for (final List<ELEM> ccchild : functionToRepresentativeToCcChildren.get(func, rep)) {
-					newSet.add(new ArrayList<>(ccchild));
+	protected Pair<HashRelation<ELEM, ELEM>, HashRelation<ELEM, ELEM>> doMergeAndComputePropagations(final ELEM elem1,
+			final ELEM elem2) {
+		final ELEM e1OldRep = mElementTVER.getRepresentative(elem1);
+		final ELEM e2OldRep = mElementTVER.getRepresentative(elem2);
+
+		/*
+		 * These sets are used for bwcc propagations, there the special case for the disequalities introduced through
+		 * transitivity.
+		 * Should save some useless propagations, and avoid some weirdness in debugging..
+		 */
+		final Set<ELEM> oldUnequalRepsForElem1 = getRepresentativesUnequalTo(e1OldRep);
+		final Set<ELEM> oldUnequalRepsForElem2 = getRepresentativesUnequalTo(e2OldRep);
+
+		mElementTVER.reportEquality(elem1, elem2);
+		if (mElementTVER.isInconsistent()) {
+			return null;
+		}
+
+		final Pair<HashRelation<ELEM, ELEM>, HashRelation<ELEM, ELEM>> propInfo =
+				mAuxData.updateAndGetPropagationsOnMerge(elem1, elem2, e1OldRep, e2OldRep, oldUnequalRepsForElem1,
+						oldUnequalRepsForElem2);
+		return propInfo;
+	}
+
+
+	public Set<ELEM> getRepresentativesUnequalTo(final ELEM rep) {
+		assert isRepresentative(rep);
+		final Set<ELEM> result = new HashSet<>(mElementTVER.getRepresentativesUnequalTo(rep));
+
+		if (rep.isLiteral()) {
+			for (final ELEM lit : mAllLiterals) {
+				if (!lit.equals(rep)) {
+					result.add(lit);
 				}
 			}
 		}
+
 		return result;
 	}
 
-	private NestedMap2<FUNCTION, ELEM, Set<ELEM>> ccparDeepCopy(
-			final NestedMap2<FUNCTION, ELEM, Set<ELEM>> functionToRepresentativeToCcPars) {
-		final NestedMap2<FUNCTION, ELEM, Set<ELEM>> result = new NestedMap2<>();
-		for (final FUNCTION func : functionToRepresentativeToCcPars.keySet()) {
-			for (final ELEM rep : functionToRepresentativeToCcPars.get(func).keySet()) {
-				final HashSet<ELEM> newset = new HashSet<>(functionToRepresentativeToCcPars.get(func, rep));
-				result.put(func, rep, newset);
-			}
-		}
+	public boolean reportDisequality(final ELEM elem1, final ELEM elem2) {
+		final boolean result = reportDisequalityRec(elem1, elem2);
+		assert sanityCheck();
 		return result;
+	}
+
+	protected boolean reportDisequalityRec(final ELEM elem1, final ELEM elem2) {
+		assert elem1.hasSameTypeAs(elem2);
+
+		if (isInconsistent()) {
+			throw new IllegalStateException();
+		}
+
+		boolean freshElem = false;
+		freshElem |= addElementRec(elem1);
+		freshElem |= addElementRec(elem2);
+
+		if (!freshElem && getEqualityStatus(elem1, elem2) == EqualityStatus.NOT_EQUAL) {
+			// nothing to do
+			return false;
+		}
+
+
+		mElementTVER.reportDisequality(elem1, elem2);
+		if (mElementTVER.isInconsistent()) {
+			return true;
+		}
+
+		final HashRelation<ELEM, ELEM> propDeqs = mAuxData.getPropagationsOnReportDisequality(elem1, elem2);
+
+		for (final Entry<ELEM, ELEM> deq : propDeqs) {
+			reportDisequalityRec(deq.getKey(), deq.getValue());
+		}
+
+		return true;
 	}
 
 	/**
@@ -409,10 +316,27 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 	 * @return true iff the element was not known to this CongruenceClosure before
 	 */
 	protected boolean addElement(final ELEM elem) {
+		final boolean result = addElementRec(elem);
+		assert sanityCheck();
+		return result;
+	}
+
+	protected boolean addElementRec(final ELEM elem) {
+		return addElementRec(elem, null);
+	}
+
+	private boolean addElementRec(final ELEM elem, final CongruenceClosure<ELEM>.RemoveElement remInfo) {
+
+		//		assert mElementCurrentlyBeingRemoved == null
+//				|| !elem.isFunctionApplication()
+//				|| (!elem.getAppliedFunction().equals(mElementCurrentlyBeingRemoved.getElem())
+//						&& !elem.getArgument().equals(mElementCurrentlyBeingRemoved.getElem()));
+
 		final boolean newlyAdded = mElementTVER.addElement(elem);
 		if (newlyAdded) {
-			registerNewElement(elem);
+			registerNewElement(elem, remInfo);
 		}
+//		assert sanityCheckOnlyCc();
 		return newlyAdded;
 	}
 
@@ -420,174 +344,71 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 	 * Updates the helper mappings for ccpars, ccchildren, and function
 	 * applications. When a new element is added.
 	 *
+	 * Assumes that the element has been added to mElementTVER by addElement(elem), but was not present before that call
+	 * to addElement(..).
+	 *
 	 * @param elem
 	 */
 	protected void registerNewElement(final ELEM elem) {
-		if (elem.isFunctionApplication()) {
-			mFunctionToFuncApps.addPair(elem.getAppliedFunction(), elem);
+		registerNewElement(elem, null);
+	}
 
-			getRepresentativeAndAddFunctionIfNeeded(elem.getAppliedFunction());
+	protected void registerNewElement(final ELEM elem, final CongruenceClosure<ELEM>.RemoveElement remInfo) {
+		if (elem.isLiteral()) {
+			mAllLiterals.add(elem);
+		}
 
-			addToCcChildren(elem, elem.getArguments());
+		if (!elem.isFunctionApplication()) {
+			// nothing to do
+			assert mElementTVER.getRepresentative(elem) != null : "this method assumes that elem has been added "
+					+ "already";
+//			assert sanityCheck();
+			return;
+		}
 
-			for (final ELEM arg : elem.getArguments()) {
-				addElement(arg);
-				addToCcPar(arg, elem);
-				mElementToParents.addPair(arg, elem);
+
+		if (remInfo == null) {
+			// "fast track"
+			mFaAuxData.addAfParent(elem.getAppliedFunction(), elem);
+			mFaAuxData.addArgParent(elem.getArgument(), elem);
+		} else {
+			if (!remInfo.getAlreadyRemovedElements().contains(elem.getAppliedFunction())) {
+				mFaAuxData.addAfParent(elem.getAppliedFunction(), elem);
 			}
-
-			/*
-			 * As the new element is a function application, we might be able to infer
-			 * equalities for it through congruence.
-			 */
-			for (final FUNCTION equivalentFunction : mFunctionTVER.getEquivalenceClass(elem.getAppliedFunction())) {
-				Set<ELEM> candidateSet = null;
-
-				for (int i = 0; i < elem.getArguments().size(); i++) {
-					final ELEM argRep = mElementTVER.getRepresentative(elem.getArguments().get(i));
-					final Set<ELEM> newCandidates = getCcParsForArgumentPosition(equivalentFunction, argRep, i);
-					if (candidateSet == null) {
-						candidateSet = new HashSet<>(newCandidates);
-					} else {
-						candidateSet.retainAll(newCandidates);
-					}
-				}
-
-				for (final ELEM c : candidateSet) {
-					if (c == elem) {
-						continue;
-					}
-					reportEquality(elem, c);
-				}
+			if (!remInfo.getAlreadyRemovedElements().contains(elem.getArgument())) {
+				mFaAuxData.addArgParent(elem.getArgument(), elem);
 			}
 		}
-		assert sanityCheck();
-	}
 
-	/**
-	 * Retrieve CcPars of elem for function func that are parents for argument
-	 * position i.
-	 *
-	 * @param equivalentFunction
-	 * @param argRep
-	 * @param i
-	 * @return
-	 */
-	protected Set<ELEM> getCcParsForArgumentPosition(final FUNCTION func, final ELEM elem, final int i) {
-		/*
-		 * we take the ccpars from elem's equivalence class, but we filter, such that we only keep those ccpars that
-		 * have an element of the equivalence class at argument position i.
-		 */
-		final Set<ELEM> result = mFunctionToRepresentativeToCcPars.get(func, elem);
-		if (result == null) {
-			return Collections.emptySet();
-		}
-		return result.stream().filter(par -> mElementTVER.getRepresentative(par.getArguments().get(i)).equals(elem))
-				.collect(Collectors.toSet());
-	}
+		final HashRelation<ELEM, ELEM> equalitiesToPropagate = mAuxData.registerNewElement(elem);
 
-	protected void updateInconsistencyStatus() {
-		mIsInconsistent |= mElementTVER.isInconsistent() || mFunctionTVER.isInconsistent();
-	}
-
-	/**
-	 * Assumes that a disequality between the given elements has just been
-	 * introduced. Does the propagations that follow from that disequality and the
-	 * function congruence axiom.
-	 *
-	 * @param e1
-	 * @param e2
-	 * @param oldCcChild
-	 */
-	private void doBackwardCongruencePropagations(final ELEM e1, final ELEM e2,
-			final NestedMap2<FUNCTION, ELEM, Set<List<ELEM>>> oldCcChild) {
-		for (final Set<FUNCTION> eqc : mFunctionTVER.getAllEquivalenceClasses()) {
-			for (final Entry<FUNCTION, FUNCTION> pair
-					:
-					CrossProducts.binarySelectiveCrossProduct(eqc, true, true).entrySet()) {
-
-				final Set<List<ELEM>> e1CcChildren = getCcChildren(pair.getKey(), mElementTVER.getRepresentative(e1),
-						oldCcChild);
-				final Set<List<ELEM>> e2CcChildren = getCcChildren(pair.getValue(), mElementTVER.getRepresentative(e2),
-						oldCcChild);
-
-				for (final List<ELEM> ccChildList1 : e1CcChildren) {
-					for (final List<ELEM> ccChildList2 : e2CcChildren) {
-						final int onlyUnconstrainedPos = getOnlyUnconstrainedPos(ccChildList1, ccChildList2);
-						if (onlyUnconstrainedPos != -1) {
-							reportDisequalityRec(ccChildList1.get(onlyUnconstrainedPos),
-									ccChildList2.get(onlyUnconstrainedPos), oldCcChild);
-						}
-					}
-				}
+		if (remInfo == null) {
+			addElementRec(elem.getAppliedFunction());
+			addElementRec(elem.getArgument());
+		} else {
+			if (!remInfo.getAlreadyRemovedElements().contains(elem.getAppliedFunction())) {
+				addElementRec(elem.getAppliedFunction(), remInfo);
+			}
+			if (!remInfo.getAlreadyRemovedElements().contains(elem.getArgument())) {
+				addElementRec(elem.getArgument(), remInfo);
 			}
 		}
-	}
 
-	/**
-	 * This method is a helper that, for two representatives of equivalence classes
-	 * checks if, because of merging the two equivalence classes, any disequality
-	 * propagations are possible.
-	 *
-	 * Example:
-	 * <li>preState: (i = f(y)) , (j != f(x)), (i = j)
-	 * <li>we just added an equality between i and j (did the merge operation)
-	 * <li>one call of this method will be with (preState, i, f(x))
-	 * <li>we will get the output state: (i = f(y)) , (j != f(x)), (i = j), (x != y)
-	 *
-	 * @param e1OldRep
-	 * @param e2OldRep
-	 * @param oldCcChild
-	 */
-	private void propagateDisequalities(final ELEM e1OldRep, final ELEM e2OldRep,
-			final NestedMap2<FUNCTION, ELEM, Set<List<ELEM>>> oldCcChild) {
-		for (final ELEM repUnequalToE1 : mElementTVER.getRepresentativesUnequalTo(e1OldRep)) {
-			for (final Set<FUNCTION> eqc : mFunctionTVER.getAllEquivalenceClasses()) {
-				for (final Entry<FUNCTION, FUNCTION> pair
-						:
-						CrossProducts.binarySelectiveCrossProduct(eqc, true, true).entrySet()) {
-					final Set<ELEM> funcApps1 = getFunctionApplicationsInSameEquivalenceClass(pair.getKey(),
-							repUnequalToE1);
-					final Set<ELEM> funcApps2 = getFunctionApplicationsInSameEquivalenceClass(pair.getValue(),
-							e2OldRep);
 
-					if (funcApps1 == null || funcApps2 == null) {
-						// nothing to do
-						continue;
-					}
-
-					for (final ELEM ccpar1 : funcApps1) {
-						for (final ELEM ccpar2 : funcApps2) {
-							final int onlyDifferentPos = getOnlyUnconstrainedPos(ccpar1.getArguments(),
-									ccpar2.getArguments());
-							if (onlyDifferentPos != -1) {
-								reportDisequalityRec(ccpar1.getArguments().get(onlyDifferentPos),
-										ccpar2.getArguments().get(onlyDifferentPos),
-										oldCcChild);
-							}
-						}
-					}
-				}
+		if (remInfo == null) {
+			for (final Entry<ELEM, ELEM> eq : equalitiesToPropagate.entrySet()) {
+				reportEqualityRec(eq.getKey(), eq.getValue());
 			}
+		} else {
+			// do nothing in this case, right?..
 		}
-	}
 
-	public FUNCTION getRepresentativeAndAddFunctionIfNeeded(final FUNCTION func) {
-		return mFunctionTVER.getRepresentativeAndAddElementIfNeeded(func);
+//		assert sanityCheck();
 	}
 
 	public ELEM getRepresentativeAndAddElementIfNeeded(final ELEM elem) {
 		addElement(elem);
 		return mElementTVER.getRepresentative(elem);
-	}
-
-	public FUNCTION getRepresentativeFunction(final FUNCTION func) {
-		final FUNCTION result = mFunctionTVER.getRepresentative(func);
-		if (result == null) {
-			throw new IllegalArgumentException(
-					"Use this method only for elements that you now have been added " + "already");
-		}
-		return result;
 	}
 
 	public ELEM getRepresentativeElement(final ELEM elem) {
@@ -600,99 +421,571 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 
 	}
 
-	public boolean removeFunction(final FUNCTION func) {
-		if (mIsInconsistent) {
-			throw new IllegalStateException();
-		}
-		if (!hasFunction(func)) {
-			return false;
-		}
+//	/**
+//	 * Remove a simple element, i.e., an element that is not a function application.
+//	 *
+//	 * @param elem
+//	 * @return
+//	 */
+//	public boolean removeSimpleElement(final ELEM elem) {
+//		return removeSimpleElementWithReplacementPreference(elem, null);
+//	}
 
-
-		// remove all elements that depend on the function
-		final Set<ELEM> funcAppsWithFuncCopy = new HashSet<>(mFunctionToFuncApps.getImage(func));
-		for (final ELEM funcApp : funcAppsWithFuncCopy) {
-			removeElement(funcApp);
-		}
-
-		// remove from the function equivalence relation
-		mFunctionTVER.removeElement(func);
-
-		mFunctionToRepresentativeToCcPars.remove(func);
-		mFunctionToRepresentativeToCcChildren.remove(func);
-		mFunctionToFuncApps.removeDomainElement(func);
-		return true;
+	/**
+	 * Remove a simple element, i.e., an element that is not a function application.
+	 *
+	 * During removal, CongruenceClosure attempts to add nodes in order to retain constraints that follow from the
+	 * constraint but were not explicit before.
+	 *
+	 * @param elem
+	 * @param preferredReplacements
+	 * @return
+	 */
+	public boolean removeSimpleElement(final ELEM elem) {
+		return removeSimpleElement(elem, true);
 	}
 
-	public boolean removeElement(final ELEM elem) {
-		if (mIsInconsistent) {
+	public boolean removeSimpleElementDontIntroduceNewNodes(final ELEM elem) {
+		return removeSimpleElement(elem, false);
+	}
+
+	private boolean removeSimpleElement(final ELEM elem, final boolean introduceNewNodes) {
+		if (elem.isFunctionApplication()) {
+				throw new IllegalArgumentException();
+		}
+		if (isInconsistent()) {
 			throw new IllegalStateException();
 		}
 		if (!hasElement(elem)) {
 			return false;
 		}
 
-		purgeElem(elem);
+		assert mElementCurrentlyBeingRemoved == null;
+		final CongruenceClosure<ELEM>.RemoveElement re = new RemoveElement(elem, introduceNewNodes);
+		mElementCurrentlyBeingRemoved = re;
 
-		/*
-		 * recursive call: if an element is removed, all the function applications that have it as an argument are
-		 * removed, too
-		 */
-		for (final ELEM parent : new HashSet<>(mElementToParents.getImage(elem))) {
-			removeElement(parent);
+		re.doRemoval();
+		assert assertSimpleElementIsFullyRemoved(elem);
+		assert sanityCheck();
+
+		final boolean result = re.madeChanges();
+
+		mElementCurrentlyBeingRemoved = null;
+
+		assert assertSimpleElementIsFullyRemoved(elem);
+		assert sanityCheck();
+		return result;
+	}
+
+
+
+	protected Set<ELEM> collectElementsToRemove(final ELEM elem) {
+		return collectTransitiveParents(elem);
+	}
+
+	protected Set<ELEM> collectTransitiveParents(final ELEM elem) {
+		final Set<ELEM> result = new HashSet<>();
+
+		final Deque<ELEM> worklist = new ArrayDeque<>();
+		worklist.add(elem);
+
+		while (!worklist.isEmpty()) {
+			final ELEM current = worklist.pop();
+			result.add(current);
+
+			worklist.addAll(mFaAuxData.getAfParents(current));
+			worklist.addAll(mFaAuxData.getArgParents(current));
 		}
-		mElementToParents.removeDomainElement(elem);
-		mElementToParents.removeRangeElement(elem);
+		return result;
+	}
 
-		assert elementIsFullyRemoved(elem);
+	public class RemoveElement {
+
+		private final ELEM mElem;
+//		private final HashMap<ELEM, ELEM> mRemovedElemToNewRep;
+		private final boolean mIntroduceNewNodes;
+
+		private final boolean mMadeChanges;
+		private Set<ELEM> mElementsToRemove;
+		private final Set<ELEM> mElementsAlreadyRemoved = new HashSet<>();
+
+		public RemoveElement(final ELEM elem, final boolean introduceNewNodes) {
+			assert !elem.isFunctionApplication() : "unexpected..";
+
+			if (isInconsistent()) {
+				throw new IllegalStateException();
+			}
+
+			mElem = elem;
+//			mRemovedElemToNewRep = trackNewReps ? new HashMap<>() : null;
+			mIntroduceNewNodes = introduceNewNodes;
+			mMadeChanges = false;
+
+		}
+
+		public Collection<ELEM> getAlreadyRemovedElements() {
+			return mElementsAlreadyRemoved;
+		}
+
+		public void doRemoval() {
+			final Set<ELEM> elementsToRemove = collectElementsToRemove(mElem);
+			mElementsToRemove = Collections.unmodifiableSet(elementsToRemove);
+
+			assert elementsToRemove.stream().allMatch(e -> dependsOnAny(e, Collections.singleton(mElem)));
+
+			final Map<ELEM, ELEM> nodeToReplacementNode = new HashMap<>();
+			for (final ELEM elemToRemove : elementsToRemove) {
+				nodeToReplacementNode.put(elemToRemove, getOtherEquivalenceClassMember(elemToRemove, elementsToRemove));
+			}
+			assert DataStructureUtils.intersection(new HashSet<>(nodeToReplacementNode.values()), elementsToRemove)
+				.isEmpty();
+
+			while (true) {
+				if (!mIntroduceNewNodes) {
+					break;
+				}
+				final Set<ELEM> nodesToAdd = new HashSet<>();
+
+				for (final ELEM elemToRemove : elementsToRemove) {
+					if (elemToRemove.isFunctionApplication() && isConstrained(elemToRemove)) {
+						// we don't have a replacement, but we want one, try if we can get one
+						final Set<ELEM> replacementNodes = getNodesToIntroduceBeforeRemoval(elemToRemove,
+								nodeToReplacementNode);
+						nodesToAdd.addAll(replacementNodes);
+					}
+				}
+
+				assert nodesToAdd.stream().allMatch(e -> !dependsOnAny(e, Collections.singleton(mElem)));
+				assert nodesToAdd.stream().allMatch(n -> !hasElement(n));
+				assert sanityCheck();
+
+				if (nodesToAdd.isEmpty()) {
+					break;
+				}
+
+				// add proxy elements
+				for (final ELEM proxyElem : nodesToAdd) {
+					addElementRec(proxyElem);
+				}
+			}
+
+			applyClosureOperations();
+
+			// (for instance:) prepare weq graph by conjoining edge labels with the current gpa
+			prepareForRemove();
+
+			for (final ELEM elemToRemove : elementsToRemove) {
+				removeSingleElement(elemToRemove, nodeToReplacementNode.get(elemToRemove));
+				mElementsAlreadyRemoved.add(elemToRemove);
+			}
+
+			assert sanityCheck();
+		}
+
+		public boolean madeChanges() {
+			return mMadeChanges;
+		}
+
+//		public HashMap<ELEM, ELEM> removedElemToNewRep() {
+//			assert mRemovedElemToNewRep != null : "constructor flag trackNewReps was not set!";
+//			return mRemovedElemToNewRep;
+//		}
+
+		public Set<ELEM> getRemovedElements() {
+			return mElementsToRemove;
+		}
+
+		@Override
+		public String toString() {
+			return mElementsToRemove.toString();
+		}
+
+	}
+
+	/**
+	 * Helper (the division into removeSimple and removeFuncApp is used for subclasses)
+	 *
+	 * @param elem
+	 * @param allWeqNodes
+	 * @return
+	 */
+	private boolean removeAnyElement(final ELEM elem, final Map<ELEM, ELEM> removedElemToNewRep) {
+		if (!hasElement(elem)) {
+			return false;
+		}
+
+		addNodesEquivalentToNodesWithRemovedElement(elem);
+//		assert sanityCheckOnlyCc();
+
+		final Collection<ELEM> oldAfParents = new ArrayList<>(mFaAuxData.getAfParents(elem));
+		final Collection<ELEM> oldArgParents = new ArrayList<>(mFaAuxData.getArgParents(elem));
+
+		if (removedElemToNewRep == null) {
+			updateElementTverAndAuxDataOnRemoveElement(elem);
+		} else {
+			final ELEM newRep = updateElementTverAndAuxDataOnRemoveElement(elem);
+			removedElemToNewRep.put(elem, newRep);
+		}
+		assert elementIsFullyRemovedOnlyCc(elem);
+//		assert sanityCheckOnlyCc();
+
+		for (final ELEM parent : oldAfParents) {
+			removeAnyElement(parent, removedElemToNewRep);
+		}
+		assert elementIsFullyRemovedOnlyCc(elem);
+		for (final ELEM parent : oldArgParents) {
+			removeAnyElement(parent, removedElemToNewRep);
+		}
+//		removeParents(oldAfParents, oldArgParents);
+
+//		assert sanityCheckOnlyCc();
+		assert elementIsFullyRemovedOnlyCc(elem);
 		return true;
 	}
 
-	protected void purgeElem(final ELEM elem) {
-		final boolean elemWasRepresentative = mElementTVER.isRepresentative(elem);
-		final ELEM newRep = mElementTVER.removeElement(elem);
+	protected void applyClosureOperations() {
+		// do nothing here at them moment (but in overriding methods)
+	}
+
+	/**
+	 *
+	 * @param elemToRemove
+	 * @param elemToRemoveIsAppliedFunctionNotArgument
+	 * @param elemToRemoveToReplacement this method may schedule elements for adding that can replace elements being
+	 *   removed -- it should update this map accordingly
+	 *   this map's keyset also serves as info which elements are currently being removed -- we don't want to schedule
+	 *   any of these for adding
+	 * @return
+	 */
+	protected Set<ELEM> getNodesToIntroduceBeforeRemoval(final ELEM elemToRemove,
+//			final boolean elemToRemoveIsAppliedFunctionNotArgument,
+			final Map<ELEM, ELEM> elemToRemoveToReplacement) {
+
+
+
+		assert elemToRemoveToReplacement.keySet().contains(elemToRemove);
+		assert elemToRemoveToReplacement.keySet().equals(mElementCurrentlyBeingRemoved.getRemovedElements());
+
+
+//		if (!isConstrained(elemToRemove)) {
+//			return Collections.emptySet();
+//		}
 
 		/*
-		 * deal with the maps that may only have elem representatives as entries
+		 * say
+		 * <li> elemToRemove = a[i]
+		 * <li> elemToRemove does not have an equivalence class member to replace it with (assumed by this method)
+		 * <li> isConstrained(a[i]) (assumed by this method)
+		 * <li> (case1) a[i] is removed because a is removed, and exists b ~ a, then return b[i] (to be added later)
+		 * <li> (case2) a[i] is removed because i is removed, and exists i ~ j, then return a[j] (to be added later)
 		 */
-		if (newRep == null) {
-			// elem was the only element of its equivalence class
-			mFunctionToRepresentativeToCcPars.removeK2(elem);
-			mFunctionToRepresentativeToCcChildren.removeK2(elem);
+		assert elemToRemove.isFunctionApplication();
+		/*
+		 *  it is tempting to make the following assertion, but not what we want:
+		 *   assume we have {x, y}, then we have a replacement for x for all other purposes, but not for the purpose
+		 *    of keeping the "y equals something" constraint
+		 */
+//		assert getOtherEquivalenceClassMember(elemToRemove, elemToRemoveToReplacement.keySet()) == null;
 
-		} else if (elemWasRepresentative) {
-			// elem was the representative, and not the only element of its equivalence class
-			mFunctionToRepresentativeToCcPars.replaceK2(elem, newRep, false);
-			mFunctionToRepresentativeToCcChildren.replaceK2(elem, newRep, false);
+		/*
+		 *  case split on which child of elemToRemove is a reason for elemToRemove being scheduled for removal
+		 *  three cases: appliedfunction, argument, both
+		 */
+		final boolean etrIsRemovedBecauseOfAf =
+				elemToRemoveToReplacement.keySet().contains(elemToRemove.getAppliedFunction());
+		final boolean etrIsRemovedBecauseOfArg =
+				elemToRemoveToReplacement.keySet().contains(elemToRemove.getArgument());
+
+		if (etrIsRemovedBecauseOfAf && etrIsRemovedBecauseOfArg) {
+			// look for b with a ~ b, and j with i ~ j
+			final ELEM afReplacement = getOtherEquivalenceClassMember(elemToRemove.getAppliedFunction(),
+				elemToRemoveToReplacement.keySet());
+			final ELEM argReplacement = getOtherEquivalenceClassMember(elemToRemove.getArgument(),
+					elemToRemoveToReplacement.keySet());
+			if (afReplacement != null && argReplacement != null) {
+				final ELEM afReplaced = elemToRemove.replaceAppliedFunction(afReplacement);
+				final ELEM afAndArgReplaced = afReplaced.replaceArgument(argReplacement);
+				assert !mElementCurrentlyBeingRemoved.getRemovedElements().contains(afAndArgReplaced);
+				elemToRemoveToReplacement.put(elemToRemove, afAndArgReplaced);
+				if (!hasElement(afAndArgReplaced)) {
+					return Collections.singleton(afAndArgReplaced);
+				} else {
+					return Collections.emptySet();
+				}
+			}
+		} else if (etrIsRemovedBecauseOfAf) {
+			// look for b with a ~ b
+			final ELEM afReplacement = getOtherEquivalenceClassMember(elemToRemove.getAppliedFunction(),
+					elemToRemoveToReplacement.keySet());
+			if (afReplacement != null) {
+				final ELEM afReplaced = elemToRemove.replaceAppliedFunction(afReplacement);
+				assert !mElementCurrentlyBeingRemoved.getRemovedElements().contains(afReplaced);
+				elemToRemoveToReplacement.put(elemToRemove, afReplaced);
+				if (!hasElement(afReplaced)) {
+					return Collections.singleton(afReplaced);
+				} else {
+					return Collections.emptySet();
+				}
+			}
 		} else {
-			// elem was not the representative of its equivalence class
-
-		}
-
-		/*
-		 * clean the entries that not only store representatives
-		 */
-		final NestedMap2<FUNCTION, ELEM, Set<List<ELEM>>> ccchildrencpy =
-				new NestedMap2<>(mFunctionToRepresentativeToCcChildren);
-		for (final FUNCTION func : ccchildrencpy.keySet()) {
-			for (final ELEM rep : ccchildrencpy.get(func).keySet()) {
-				final Set<List<ELEM>> lists = mFunctionToRepresentativeToCcChildren.get(func, rep);
-				final Set<List<ELEM>> listscpy = new HashSet<>(lists);
-				for (final List<ELEM> list : listscpy) {
-					if (list.contains(elem)) {
-						lists.remove(list);
-					}
+			// look for j with i ~ j
+			final ELEM argReplacement = getOtherEquivalenceClassMember(elemToRemove.getArgument(),
+					elemToRemoveToReplacement.keySet());
+			if (argReplacement != null) {
+				final ELEM argReplaced = elemToRemove.replaceArgument(argReplacement);
+				assert !mElementCurrentlyBeingRemoved.getRemovedElements().contains(argReplaced);
+				elemToRemoveToReplacement.put(elemToRemove, argReplaced);
+				if (!hasElement(argReplaced)) {
+					return Collections.singleton(argReplaced);
+				} else {
+					return Collections.emptySet();
 				}
 			}
 		}
-		final NestedMap2<FUNCTION, ELEM, Set<ELEM>> ccparscpy = new NestedMap2<>(mFunctionToRepresentativeToCcPars);
-		for (final FUNCTION func : ccparscpy.keySet()) {
-			for (final ELEM rep : ccparscpy.get(func).keySet()) {
-				mFunctionToRepresentativeToCcPars.get(func, rep).remove(elem);
-			}
+		return Collections.emptySet();
+	}
+
+	/**
+	 * If elem is alone in its equivalence class, return null.
+	 * Otherwise return any element from elem's equivalence class that is not elem.
+	 *
+	 * The user may specify a preference, i.e., if some element from the given set can be picked, it is picked.
+	 *
+	 * @param elem
+	 * @param preferredReplacements
+	 * @return
+	 */
+	protected ELEM getOtherEquivalenceClassMember(final ELEM elem) {
+		return getOtherEquivalenceClassMember(elem, null);
+	}
+
+	/**
+	 *
+	 * @param argument
+	 * @param forbiddenSet optional, a set whose members we don't want returned, so only look for an elemen in
+	 *    equivalenceClassOf(argument) \ forbiddenSet
+	 * @return
+	 */
+	protected ELEM getOtherEquivalenceClassMember(final ELEM eqmember, final Set<ELEM> forbiddenSet) {
+
+		assert hasElement(eqmember);
+		final Set<ELEM> eqc = mElementTVER.getEquivalenceClass(eqmember);
+		if (eqc.size() == 1) {
+			return null;
+		}
+		final Optional<ELEM> opt = eqc.stream().filter(e -> !e.equals(eqmember) &&
+				(forbiddenSet == null || !forbiddenSet.contains(e))).findFirst();
+		if (opt.isPresent()) {
+			return opt.get();
+		}
+		return null;
+	}
+
+	protected Collection<? extends ELEM> collectNodesToAddBeforeRemoval(final ELEM elemToRemove,
+			final ELEM replacement) {
+		assert false : "doing this differently..";
+		final Set<ELEM> result = new HashSet<>();
+
+//		/*
+//		 * say we remove i, and we have a node a[i], and i is equivalent to j, then we introduce the node a[j].
+//		 */
+//		if (replacement != null) {
+//			for (final ELEM parent : new ArrayList<>(mFaAuxData.getAfParents(elemToRemove))) {
+//				assert parent.getAppliedFunction() == elemToRemove;
+//				final ELEM replaced = parent.replaceAppliedFunction(replacement);
+////				addElementRec(replaced);
+//				result.add(replaced);
+//			}
+//			for (final ELEM parent : new ArrayList<>(mFaAuxData.getArgParents(elemToRemove))) {
+//				assert parent.getArgument() == elemToRemove;
+//				final ELEM replaced = parent.replaceArgument(replacement);
+////				addElementRec(replaced);
+//				result.add(replaced);
+//			}
+//		}
+		return result;
+	}
+
+	protected void prepareForRemove() {
+		// do nothing (method relevant for subclasses)
+	}
+
+	/**
+	 * should only be called from WeakEquivalenceGraph or from CongruenceClosure!
+	 *
+	 * @param elem
+	 * @param replacement
+	 * @return
+	 */
+	public boolean removeSingleElement(final ELEM elem, final ELEM replacement) {
+		assert !isInconsistent();
+
+		if (!hasElement(elem)) {
+			return false;
 		}
 
-		mFunctionToFuncApps.removeRangeElement(elem);
+		updateElementTverAndAuxDataOnRemoveElement(elem);
+
+		assert assertSingleElementIsFullyRemoved(elem);
+		return true;
+	}
+
+//	protected ELEM replaceWithOtherRepIfNecessaryAndPossible(final ELEM elem) {
+//		if (mElementCurrentlyBeingRemoved == null) {
+//			assert hasElement(elem);
+//			return elem;
+//		}
+////		if (elem.equals(mElementCurrentlyBeingRemoved.getElem())) {
+////		if (mElementCurrentlyBeingRemoved.supports(elem)) {
+//		if (supports(mElementCurrentlyBeingRemoved.getElem(), elem)) {
+//
+//			final ELEM replacement = replace(elem, mElementCurrentlyBeingRemoved);
+//
+////			if (mElementCurrentlyBeingRemoved.getOtherRep() != null) {
+////				assert hasElement(mElementCurrentlyBeingRemoved.getOtherRep());
+////				return mElementCurrentlyBeingRemoved.getOtherRep();
+//			if (replacement != null && hasElement(replacement)) {
+////				assert hasElement(replacement);
+//				return replacement;
+//			} else {
+//				return null;
+//			}
+//		}
+//		assert hasElement(elem);
+//		return elem;
+//	}
+
+	/**
+	 * elem depends on elementCurrentlyBeingRemoved.getElem()
+	 *
+	 * Attempt to replace elementCurrentlyBeingRemoved.getElem() by  elementCurrentlyBeingRemoved.getOtherElem()
+	 * in elem.
+	 *
+	 * return null if not possible
+	 *
+	 *
+	 * @param elem
+	 * @param elementCurrentlyBeingRemoved
+	 * @return
+	 */
+	protected ELEM replace(final ELEM elem, final CongruenceClosure<ELEM>.RemovalInfo elementCurrentlyBeingRemoved) {
+		if (elementCurrentlyBeingRemoved == null) {
+			return elem;
+		}
+		if (!supports(elementCurrentlyBeingRemoved.getElem(), elem)) {
+			return elem;
+		}
+
+		if (elem.equals(elementCurrentlyBeingRemoved.getElem())) {
+			return elementCurrentlyBeingRemoved.getOtherRep();
+		}
+		if (elem.isFunctionApplication()) {
+
+			final ELEM afReplaced = replace(elem.getAppliedFunction(), elementCurrentlyBeingRemoved);
+			if (afReplaced == null) {
+				return null;
+			}
+			final ELEM argReplaced = replace(elem.getArgument(), elementCurrentlyBeingRemoved);
+			if (argReplaced == null) {
+				return null;
+			}
+
+			ELEM result = elem.replaceAppliedFunction(afReplaced);
+			result = result.replaceArgument(argReplaced);
+
+			return result;
+		}
+		return null;
+	}
+
+//	/**
+//	 * Remove an element that is a function application.
+//	 *
+//	 * @param elem
+//	 */
+//	protected boolean removeFuncAppElement(final ELEM elem) {
+//		if (!elem.isFunctionApplication()) {
+//			throw new IllegalArgumentException();
+//		}
+//		return removeAnyElement(elem);
+//	}
+
+//	/**
+//	 * remove elements that have elem as an argument
+//	 */
+//	protected void removeParents(final Collection<ELEM> oldAfParents, final Collection<ELEM> oldArgParents) {
+//		for (final ELEM parent : oldAfParents) {
+//			removeFuncAppElement(parent);
+//		}
+//		for (final ELEM parent : oldArgParents) {
+//			removeFuncAppElement(parent);
+//		}
+//	}
+
+	/**
+	 * Does elem2 depend on elem?
+	 *
+	 * @param elem
+	 * @param elem2
+	 * @return
+	 */
+	protected boolean supports(final ELEM elem, final ELEM elem2) {
+		return dependsOnAny(elem2, Collections.singleton(elem));
+	}
+
+	protected ELEM updateElementTverAndAuxDataOnRemoveElement(final ELEM elem) {
+		final boolean elemWasRepresentative = mElementTVER.isRepresentative(elem);
+
+		final ELEM newRep = mElementTVER.removeElement(elem);
+
+		mAuxData.removeElement(elem, elemWasRepresentative, newRep);
+		if (elem.isFunctionApplication()) {
+			mFaAuxData.removeAfParent(elem.getAppliedFunction(), elem);
+			mFaAuxData.removeArgParent(elem.getArgument(), elem);
+		}
+		return newRep;
+	}
+
+	/**
+	 * before removing the parents:
+	 * if there is a newRep, insert a node where the subnode elem is replaced by newRep
+	 * (this may introduce fresh nodes!)
+	 *
+	 * @param elem the element we are about to remove
+	 * @param preferredReplacements
+	 */
+	protected void addNodesEquivalentToNodesWithRemovedElement(final ELEM elem) {
+		final ELEM otherRep = getOtherEquivalenceClassMember(elem);
+		if (otherRep != null) {
+			for (final ELEM parent : new ArrayList<>(mFaAuxData.getAfParents(elem))) {
+				assert parent.getAppliedFunction() == elem;
+				final ELEM replaced = parent.replaceAppliedFunction(otherRep);
+				addElementRec(replaced);
+			}
+			for (final ELEM parent : new ArrayList<>(mFaAuxData.getArgParents(elem))) {
+				assert parent.getArgument() == elem;
+				final ELEM replaced = parent.replaceArgument(otherRep);
+				addElementRec(replaced);
+			}
+		}
+	}
+
+	public boolean assertSimpleElementIsFullyRemoved(final ELEM elem) {
+
+		// not ideal as this method is used during the removal, too..
+		final Set<ELEM> transitiveParents = collectElementsToRemove(elem);
+
+		for (final ELEM e : getAllElements()) {
+			if (transitiveParents.contains(e)) {
+				assert false;
+				return false;
+			}
+		}
+		return true;
+	}
+
+	public boolean assertSingleElementIsFullyRemoved(final ELEM elem) {
+		return elementIsFullyRemovedOnlyCc(elem);
 	}
 
 	/**
@@ -700,76 +993,97 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 	 * @param elem
 	 * @return
 	 */
-	protected boolean elementIsFullyRemoved(final ELEM elem) {
+	protected boolean elementIsFullyRemovedOnlyCc(final ELEM elem) {
 		if (mElementTVER.getRepresentative(elem) != null) {
 			assert false;
 			return false;
 		}
-		for (final Entry<FUNCTION, ELEM> en : mFunctionToFuncApps.entrySet()) {
-			if (en.getValue().equals(elem)) {
-				assert false;
-				return false;
-			}
-		}
-
-		for (final Entry<ELEM, ELEM> en : mElementToParents) {
-			if (en.getKey().equals(elem) || en.getValue().equals(elem)) {
-				assert false;
-				return false;
-			}
-		}
-
-		for (final Triple<FUNCTION, ELEM, Set<List<ELEM>>> en : mFunctionToRepresentativeToCcChildren.entrySet()) {
-			if (en.getSecond().equals(elem)) {
-				assert false;
-				return false;
-			}
-			if (en.getThird().stream().anyMatch(list -> list.contains(elem))) {
-				assert false;
-				return false;
-			}
-		}
-
-		for (final Triple<FUNCTION, ELEM, Set<ELEM>> en : mFunctionToRepresentativeToCcPars.entrySet()) {
-			if (en.getSecond().equals(elem)) {
-				assert false;
-				return false;
-			}
-			if (en.getThird().contains(elem)) {
-				assert false;
-				return false;
-			}
-		}
-
 		return true;
 	}
 
-	public CongruenceClosure<ELEM, FUNCTION> join(final CongruenceClosure<ELEM, FUNCTION> other) {
-		final CongruenceClosure<ELEM, FUNCTION> thisAligned = this.alignElementsAndFunctions(other);
-		final CongruenceClosure<ELEM, FUNCTION> otherAligned = other.alignElementsAndFunctions(this);
+	public CongruenceClosure<ELEM> join(final CongruenceClosure<ELEM> other) {
+		if (this.isInconsistent()) {
+			return new CongruenceClosure<>(other);
+		}
+		if (other.isInconsistent()) {
+			return new CongruenceClosure<>(this);
+		}
+
+		final CongruenceClosure<ELEM> thisAligned = this.alignElementsAndFunctionsCc(other, null);
+		final CongruenceClosure<ELEM> otherAligned = other.alignElementsAndFunctionsCc(this, null);
 
 		final ThreeValuedEquivalenceRelation<ELEM> newElemTver = thisAligned.mElementTVER
 				.join(otherAligned.mElementTVER);
-		final ThreeValuedEquivalenceRelation<FUNCTION> newFunctionTver = thisAligned.mFunctionTVER
-				.join(otherAligned.mFunctionTVER);
 
-		return new CongruenceClosure<>(newElemTver, newFunctionTver);
+		return new CongruenceClosure<>(newElemTver);
 	}
 
 	/**
 	 * returns a copy of this where all elements and functions from other have been added.
 	 * @param other
+	 * @param remInfo
 	 * @return
 	 */
-	protected CongruenceClosure<ELEM, FUNCTION> alignElementsAndFunctions(final CongruenceClosure<ELEM, FUNCTION> other) {
-		assert this.sanityCheck();
-		final CongruenceClosure<ELEM, FUNCTION> result = new CongruenceClosure<>(this);
-		assert result.sanityCheck();
+	public CongruenceClosure<ELEM> alignElementsAndFunctionsCc(final CongruenceClosure<ELEM> other,
+			final CongruenceClosure<ELEM>.RemoveElement remInfo) {
+		assert !this.isInconsistent() && !other.isInconsistent();
+//		if (isInconsistent()) {
+//			return new CongruenceClosure<>(true);
+//		}
+//		if (other.isInconsistent()) {
+//			// nothing to align to
+//			return new CongruenceClosure<>(this);
+//		}
 
-		other.getAllElements().stream().forEach(elem -> result.addElement(elem));
-		other.getAllFunctions().stream().forEach(func -> result.mFunctionTVER.addElement(func));
+//		assert this.sanityCheckOnlyCc();
+		final CongruenceClosure<ELEM> result = new CongruenceClosure<>(this, remInfo);
+//		assert result.sanityCheckOnlyCc();
 
-		assert result.sanityCheck();
+		other.getAllElements().stream().forEach(result::addElementRec);
+
+//		assert result.sanityCheckOnlyCc();
+		assert assertElementsAreSuperset(result, other);
+		return result;
+	}
+
+	/**
+	 * check that elements in a are a superset of elements in b
+	 * @param a
+	 * @param b
+	 * @return
+	 */
+	private boolean assertElementsAreSuperset(final CongruenceClosure<ELEM> a,
+			final CongruenceClosure<ELEM> b) {
+		final Set<ELEM> difference = DataStructureUtils.difference(b.getAllElements(), a.getAllElements());
+		if (!difference.isEmpty()) {
+			assert false;
+			return false;
+		}
+		return true;
+	}
+
+	public CongruenceClosure<ELEM> meet(final CongruenceClosure<ELEM> other) {
+		assert this.sanityCheckOnlyCc();
+		assert other.sanityCheckOnlyCc();
+
+		final CongruenceClosure<ELEM> result = meetRec(other);
+
+		assert result.sanityCheckOnlyCc();
+		return result;
+	}
+
+	public CongruenceClosure<ELEM> meetRec(final CongruenceClosure<ELEM> other,
+			final CongruenceClosure<ELEM>.RemoveElement remInfo) {
+		if (this.isInconsistent() || other.isInconsistent()) {
+			return new CongruenceClosure<>(true);
+		}
+
+		final CongruenceClosure<ELEM> result = naiveMeet(other, remInfo);
+		assert result.atMostOneLiteralPerEquivalenceClass();
+
+		if (result.isInconsistent()) {
+			return new CongruenceClosure<>(true);
+		}
 		return result;
 	}
 
@@ -779,51 +1093,29 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 	 * @param other
 	 * @return
 	 */
-	public CongruenceClosure<ELEM, FUNCTION> meet(final CongruenceClosure<ELEM, FUNCTION> other) {
-		assert this.sanityCheck();
-		assert other.sanityCheck();
-
-		if (this.isInconsistent() || other.isInconsistent()) {
-			return new CongruenceClosure<>(true);
-		}
-
-		final CongruenceClosure<ELEM, FUNCTION> result = naiveMeet(other);
-		if (result.isInconsistent()) {
-			return new CongruenceClosure<>(true);
-		}
-		assert result.sanityCheck();
-		return result;
+	public CongruenceClosure<ELEM> meetRec(final CongruenceClosure<ELEM> other) {
+		return meetRec(other, null);
 	}
 
-	private CongruenceClosure<ELEM, FUNCTION> naiveMeet(final CongruenceClosure<ELEM, FUNCTION> other) {
-		final CongruenceClosure<ELEM, FUNCTION> thisAligned = this.alignElementsAndFunctions(other);
-		final CongruenceClosure<ELEM, FUNCTION> otherAligned = other.alignElementsAndFunctions(this);
+	private CongruenceClosure<ELEM> naiveMeet(final CongruenceClosure<ELEM> other,
+			final CongruenceClosure<ELEM>.RemoveElement remInfo) {
+		assert !this.isInconsistent() && !other.isInconsistent();
+
+		final CongruenceClosure<ELEM> thisAligned = this.alignElementsAndFunctionsCc(other, remInfo);
+		final CongruenceClosure<ELEM> otherAligned = other.alignElementsAndFunctionsCc(this, remInfo);
 
 		for (final Entry<ELEM, ELEM> eq : otherAligned.getSupportingElementEqualities().entrySet()) {
 			if (thisAligned.isInconsistent()) {
 				return new CongruenceClosure<>(true);
 			}
-			thisAligned.reportEquality(eq.getKey(), eq.getValue());
-		}
-		for (final Entry<FUNCTION, FUNCTION> eq : otherAligned.getSupportingFunctionEqualities().entrySet()) {
-			if (thisAligned.isInconsistent()) {
-				return new CongruenceClosure<>(true);
-			}
-			thisAligned.reportFunctionEquality(eq.getKey(), eq.getValue());
+			thisAligned.reportEqualityRec(eq.getKey(), eq.getValue());
 		}
 		for (final Entry<ELEM, ELEM> deq : otherAligned.getElementDisequalities()) {
 			if (thisAligned.isInconsistent()) {
 				return new CongruenceClosure<>(true);
 			}
-			thisAligned.reportDisequality(deq.getKey(), deq.getValue());
+			thisAligned.reportDisequalityRec(deq.getKey(), deq.getValue());
 		}
-		for (final Entry<FUNCTION, FUNCTION> deq : otherAligned.getFunctionDisequalities()) {
-			if (thisAligned.isInconsistent()) {
-				return new CongruenceClosure<>(true);
-			}
-			thisAligned.reportFunctionDisequality(deq.getKey(), deq.getValue());
-		}
-
 		return thisAligned;
 	}
 
@@ -833,9 +1125,19 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 	 * @return true iff this CongruenceClosure is equally or more constraining, than
 	 *         the other given CongruenceClosure
 	 */
-	public boolean isStrongerThan(final CongruenceClosure<ELEM, FUNCTION> other) {
-		final CongruenceClosure<ELEM, FUNCTION> thisAligned = this.alignElementsAndFunctions(other);
-		final CongruenceClosure<ELEM, FUNCTION> otherAligned = other.alignElementsAndFunctions(this);
+	public boolean isStrongerThan(final CongruenceClosure<ELEM> other) {
+		if (this.isInconsistent()) {
+			return true;
+		}
+		if (other.isInconsistent()) {
+			// we know this != False, and other = False
+			return false;
+		}
+		final CongruenceClosure<ELEM> thisAligned = this.alignElementsAndFunctionsCc(other, null);
+		assert assertElementsAreSuperset(thisAligned, other);
+		final CongruenceClosure<ELEM> otherAligned = other.alignElementsAndFunctionsCc(this, null);
+		assert assertElementsAreSuperset(thisAligned, otherAligned);
+		assert assertElementsAreSuperset(otherAligned, thisAligned);
 		return checkIsStrongerThan(thisAligned, otherAligned);
 	}
 
@@ -847,16 +1149,25 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 	 * might not see all relevant equivalence classes in "other")
 	 *
 	 * assumes that this and other have the same elements and functions
+	 *
+	 * Induces a non-strict (antisymmetric) partial ordering of the CongruenceClosure instances.
 	 */
-	private boolean checkIsStrongerThan(final CongruenceClosure<ELEM, FUNCTION> thisAligned,
-			final CongruenceClosure<ELEM, FUNCTION> otherAligned) {
-		assert thisAligned.getAllElements().equals(otherAligned.getAllElements());
-		assert thisAligned.getAllFunctions().equals(otherAligned.getAllFunctions());
+	private boolean checkIsStrongerThan(final CongruenceClosure<ELEM> thisAligned,
+			final CongruenceClosure<ELEM> otherAligned) {
+		assert !thisAligned.isInconsistent() && !otherAligned.isInconsistent();
+//		if (this.isInconsistent()) {
+//			return true;
+//		}
+//		if (otherAligned.isInconsistent()) {
+//			// we know this != False, and other = False
+//			return false;
+//		}
+
+//		assert thisAligned.getAllElements().equals(otherAligned.getAllElements());
+		assert assertElementsAreSuperset(thisAligned, otherAligned);
+		assert assertElementsAreSuperset(otherAligned, thisAligned);
 
 		if (!isPartitionStronger(thisAligned.mElementTVER, otherAligned.mElementTVER)) {
-			return false;
-		}
-		if (!isPartitionStronger(thisAligned.mFunctionTVER, otherAligned.mFunctionTVER)) {
 			return false;
 		}
 
@@ -866,15 +1177,19 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 		if (!areDisequalitiesStrongerThan(thisAligned.mElementTVER, otherAligned.mElementTVER)) {
 			return false;
 		}
-		if (!areDisequalitiesStrongerThan(thisAligned.mFunctionTVER, otherAligned.mFunctionTVER)) {
-			return false;
-		}
 		return true;
 	}
 
-	public boolean isEquivalent(final CongruenceClosure<ELEM, FUNCTION> other) {
-		final CongruenceClosure<ELEM, FUNCTION> thisAligned = this.alignElementsAndFunctions(other);
-		final CongruenceClosure<ELEM, FUNCTION> otherAligned = other.alignElementsAndFunctions(this);
+	public boolean isEquivalent(final CongruenceClosure<ELEM> other) {
+		if (this.isInconsistent() && other.isInconsistent()) {
+			return false;
+		}
+		if (other.isInconsistent() || this.isInconsistent()) {
+			return false;
+		}
+
+		final CongruenceClosure<ELEM> thisAligned = this.alignElementsAndFunctionsCc(other, null);
+		final CongruenceClosure<ELEM> otherAligned = other.alignElementsAndFunctionsCc(this, null);
 		return checkIsStrongerThan(thisAligned, otherAligned) && checkIsStrongerThan(otherAligned, thisAligned);
 	}
 
@@ -908,11 +1223,17 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 		return true;
 	}
 
-	public EqualityStatus getEqualityStatus(final FUNCTION elem1, final FUNCTION elem2) {
-		return mFunctionTVER.getEqualityStatus(elem1, elem2);
-	}
-
 	public EqualityStatus getEqualityStatus(final ELEM elem1, final ELEM elem2) {
+		assert hasElement(elem1) && hasElement(elem2);
+
+		final ELEM rep1 = getRepresentativeElement(elem1);
+		final ELEM rep2 = getRepresentativeElement(elem2);
+
+		if (rep1.equals(rep2)) {
+			return EqualityStatus.EQUAL;
+		} else if (rep1.isLiteral() && rep2.isLiteral()) {
+			return EqualityStatus.NOT_EQUAL;
+		}
 		return mElementTVER.getEqualityStatus(elem1, elem2);
 	}
 
@@ -920,219 +1241,37 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 		return Collections.unmodifiableSet(mElementTVER.getAllElements());
 	}
 
-	public Set<FUNCTION> getAllFunctions() {
-		return Collections.unmodifiableSet(mFunctionTVER.getAllElements());
+	protected Set<Entry<ELEM, ELEM>> getPairsWithMatchingType(final Set<ELEM> baseSet,
+			final boolean getReflexive, final boolean getSymmetric) {
+		return CrossProducts.binarySelectiveCrossProduct(baseSet, getReflexive, getSymmetric)
+				.entrySet().stream()
+				.filter(en -> en.getKey().hasSameTypeAs(en.getValue()))
+				.collect(Collectors.toSet());
 	}
 
 	public boolean isInconsistent() {
-		return mIsInconsistent;
+		return mElementTVER == null || mElementTVER.isInconsistent();
 	}
 
-	public boolean argumentsAreCongruent(final ELEM funcApp1, final ELEM funcApp2) {
-		return argumentsAreCongruent(funcApp1, funcApp2, true);
-	}
-
-	/**
-	 *
-	 * @param funcApp1 function application element
-	 * @param funcApp2 function application element
-	 * @param forceThatFunctionsAreEqual true iff we expect that the given functions are equal according to the current
-	 * 		state
-	 * @return true iff each two argument elements at the same position in the
-	 *         argument list are equal according to the current state of mElemenTVER
-	 */
-	public boolean argumentsAreCongruent(final ELEM funcApp1, final ELEM funcApp2,
-			final boolean forceThatFunctionsAreEqual) {
-		assert funcApp1.isFunctionApplication() && funcApp2.isFunctionApplication();
-		assert !forceThatFunctionsAreEqual || mFunctionTVER.getEqualityStatus(funcApp1.getAppliedFunction(),
-				funcApp2.getAppliedFunction()) == EqualityStatus.EQUAL;
-		assert funcApp1.getArguments().size() == funcApp2.getArguments().size();
-
-		return argumentsAreCongruent(funcApp1.getArguments(), funcApp2.getArguments());
-	}
-
-	protected boolean argumentsAreCongruent(final List<ELEM> argList1, final List<ELEM> argList2) {
+	public boolean vectorsAreCongruent(final List<ELEM> argList1, final List<ELEM> argList2) {
 		for (int i = 0; i < argList1.size(); i++) {
-			if (mElementTVER.getEqualityStatus(argList1.get(i), argList2.get(i)) != EqualityStatus.EQUAL) {
+			if (getEqualityStatus(argList1.get(i), argList2.get(i)) != EqualityStatus.EQUAL) {
 				return false;
 			}
 		}
 		return true;
 	}
 
-	/**
-	 * Checks if all entries of the given lists are equal (at the matching list
-	 * index) on all positions except for one. Returns that position if it exists,
-	 * -1 otherwise.
-	 *
-	 * @param ccChild1
-	 * @param ccChild2
-	 * @return the only position in where the equality status between the entries of
-	 *         the lists is UNKOWN according to mElementTVER when all other
-	 *         positions have status EQUAL, -1 if no such position exists
-	 */
-	private int getOnlyUnconstrainedPos(final List<ELEM> ccChildList1, final List<ELEM> ccChildList2) {
-		assert ccChildList1.size() == ccChildList2.size();
-		int result = -1;
-		for (int i = 0; i < ccChildList1.size(); i++) {
-			if (mElementTVER.getEqualityStatus(ccChildList1.get(i), ccChildList2.get(i)) == EqualityStatus.UNKNOWN) {
-				if (result == -1) {
-					result = i;
-				} else {
-					// we have more than 1 unknown position
-					return -1;
-				}
-			} else if (mElementTVER.getEqualityStatus(ccChildList1.get(i),
-					ccChildList2.get(i)) == EqualityStatus.NOT_EQUAL) {
-				return -1;
-			}
-		}
-		return result;
+	protected boolean sanityCheck() {
+		return sanityCheck(null);
 	}
 
-	private Set<ELEM> getFunctionApplicationsInSameEquivalenceClass(final FUNCTION func, final ELEM elem) {
-		return mElementTVER.getEquivalenceClass(elem).stream()
-				.filter(el -> el.isFunctionApplication() && el.getAppliedFunction() == func)
-				.collect(Collectors.toSet());
+	protected boolean sanityCheck(final RemoveElement remInfo) {
+		return sanityCheckOnlyCc(remInfo);
 	}
 
-	/**
-	 * Add the function application element funcApp to the CcPar set of elem class.
-	 * (more precisely: do this for their equivalence representatives)
-	 *
-	 * @param elem
-	 * @param funcApp
-	 */
-	private void addToCcPar(final ELEM elem, final ELEM funcApp) {
-		final FUNCTION func = funcApp.getAppliedFunction();
-		final ELEM elemRep = getRepresentativeElement(elem);
-
-		Set<ELEM> ccpars = mFunctionToRepresentativeToCcPars.get(func, elemRep);
-		if (ccpars == null) {
-			ccpars = new HashSet<>();
-			mFunctionToRepresentativeToCcPars.put(func, elemRep, ccpars);
-		}
-		ccpars.add(funcApp);
-		assert ccparsFunctionMatchesFuncApps();
-	}
-
-	private boolean ccparsFunctionMatchesFuncApps() {
-		for (final Triple<FUNCTION, ELEM, Set<ELEM>> triple : mFunctionToRepresentativeToCcPars.entrySet()) {
-			for (final ELEM setElem : triple.getThird()) {
-				if (!setElem.isFunctionApplication()) {
-					assert false;
-					return false;
-				}
-				if (!setElem.getAppliedFunction().equals(triple.getFirst())) {
-					assert false;
-					return false;
-				}
-			}
-		}
-		return true;
-	}
-
-	private void addToCcChildren(final ELEM elem, final List<ELEM> arguments) {
-		assert elem.isFunctionApplication();
-		final FUNCTION funcRep = getRepresentativeFunction(elem.getAppliedFunction());
-		final ELEM elemRep = getRepresentativeElement(elem);
-
-		Set<List<ELEM>> ccChildrenSet = mFunctionToRepresentativeToCcChildren.get(funcRep, elemRep);
-
-		if (ccChildrenSet == null) {
-			ccChildrenSet = new HashSet<>();
-			mFunctionToRepresentativeToCcChildren.put(funcRep, elemRep, ccChildrenSet);
-		}
-		ccChildrenSet.add(arguments);
-	}
-
-	/**
-	 * mFunctionToRepresentativeToCcPars only speaks about representatives (in the
-	 * second entry). This is called when the given ELEM is no more a representative
-	 * an thus its whole entry in the nested map can be removed.
-	 *
-	 * @param e2OldRep
-	 * @param func
-	 */
-	private void removeFromCcpars(final ELEM e2OldRep, final FUNCTION func) {
-		if (mFunctionToRepresentativeToCcPars.get(func) == null) {
-			// no entry for func present --> do nothing
-			return;
-		}
-		mFunctionToRepresentativeToCcPars.remove(func, e2OldRep);
-	}
-
-	private void removeFromCcChildren(final ELEM elem, final FUNCTION func) {
-		if (mFunctionToRepresentativeToCcChildren.get(func) == null) {
-			// no entry for func present --> do nothing
-			return;
-		}
-		mFunctionToRepresentativeToCcChildren.remove(func, elem);
-	}
-
-
-	public Set<ELEM> getCcPars(final FUNCTION func, final ELEM newRep) {
-		return getCcPars(func, newRep, false);
-	}
-
-
-	private static <ELEM, FUNCTION> Set<ELEM> getCcPars(final FUNCTION func, final ELEM newRep,
-			final NestedMap2<FUNCTION, ELEM, Set<ELEM>> oldCcPar) {
-		Set<ELEM> res = oldCcPar.get(func, newRep);
-		if (res == null) {
-			res = new HashSet<>();
-			oldCcPar.put(func, newRep, res);
-		}
-		return res;
-
-	}
-
-	/**
-	 * Retrieves the ccpar map for the given function and element. Creates one if there is none..
-	 *
-	 * Note that this method can introduce new entries at the "second" position of the ccpars nested map, this may
-	 * violate our invariant that that position only contains representatives. This may be done temporarily, in that
-	 * case the flag should be used, otherwise an assertion checks that newRep is a representative.
-	 *
-	 * @param func
-	 * @param newRep
-	 * @param allowNonrepElem
-	 * @return
-	 */
-	private Set<ELEM> getCcPars(final FUNCTION func, final ELEM newRep, final boolean allowNonRepresentatives) {
-		assert mElementTVER.isRepresentative(newRep) || allowNonRepresentatives;
-		Set<ELEM> res = mFunctionToRepresentativeToCcPars.get(func, newRep);
-		if (res == null) {
-			res = new HashSet<>();
-			mFunctionToRepresentativeToCcPars.put(func, newRep, res);
-		}
-		return res;
-	}
-
-	protected Set<List<ELEM>> getCcChildren(final FUNCTION func, final ELEM rep,
-			final NestedMap2<FUNCTION, ELEM, Set<List<ELEM>>> oldCcChild) {
-		return getCcChildren(func, rep, oldCcChild, false);
-	}
-
-	protected Set<List<ELEM>> getCcChildren(final FUNCTION func, final ELEM rep,
-			final NestedMap2<FUNCTION, ELEM, Set<List<ELEM>>> oldCcChild, final boolean allowNonRepresentatives) {
-		assert allowNonRepresentatives || mElementTVER.isRepresentative(rep);
-		Set<List<ELEM>> res = oldCcChild.get(func, rep);
-		if (res == null) {
-			res = new HashSet<>();
-			oldCcChild.put(func, rep, res);
-		}
-		return res;
-	}
-
-	private Set<List<ELEM>> getCcChildren(final FUNCTION func, final ELEM el) {
-		final ELEM rep = mElementTVER.getRepresentative(el);
-		Set<List<ELEM>> res = mFunctionToRepresentativeToCcChildren.get(func, rep);
-		if (res == null) {
-			res = new HashSet<>();
-			mFunctionToRepresentativeToCcChildren.put(func, rep, res);
-		}
-		return res;
+	public boolean sanityCheckOnlyCc() {
+		return sanityCheckOnlyCc(null);
 	}
 
 	/**
@@ -1140,12 +1279,16 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 	 *
 	 * @return
 	 */
-	protected boolean sanityCheck() {
+	public boolean sanityCheckOnlyCc(final RemoveElement remInfo) {
+		if (mConstructorInitializationPhase) {
+			return true;
+		}
+
 		if (this.isInconsistent()) {
 			if (mElementTVER != null) {
 				// transitory CClosure instance which will later be replaced by the "bottom" variant
-				if (!mElementTVER.isInconsistent() && !mFunctionTVER.isInconsistent()) {
-					assert false;
+				if (!mElementTVER.isInconsistent()) {
+					assert false : "fields are null, but Cc is not inconsistent";
 					return false;
 				}
 			}
@@ -1153,50 +1296,158 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 		}
 
 		if (mElementTVER.isInconsistent()) {
-					assert false;
+					assert false : "Cc is inconsistent but fields are not null";
 					return false;
 		}
 
-		if (mFunctionTVER.isInconsistent()) {
-					assert false;
+		/*
+		 * check that each element in ccpars is a function application
+		 */
+		for (final ELEM elem : getAllElementRepresentatives()) {
+			for (final ELEM ccp : mAuxData.getAfCcPars(elem)) {
+				if (!ccp.isFunctionApplication()) {
+					assert false : "ccpar is not a funcapp";
 					return false;
-		}
-
-
-		for (final Triple<FUNCTION, ELEM, Set<ELEM>> repFuncCcPars : mFunctionToRepresentativeToCcPars.entrySet()) {
-			if (!mElementTVER.isRepresentative(repFuncCcPars.getSecond())) {
-				assert false;
-				return false;
+				}
 			}
-
-			// every element in the ccpars set must be a function application of the function that the ccpars set is for
-			if (repFuncCcPars.getThird().stream()
-					.anyMatch(elem -> (!elem.isFunctionApplication()
-							|| !elem.getAppliedFunction().equals(repFuncCcPars.getFirst())))) {
-				assert false;
-				return false;
+			for (final ELEM ccp : mAuxData.getArgCcPars(elem)) {
+				if (!ccp.isFunctionApplication()) {
+					assert false : "ccpar is not a funcapp";
+					return false;
+				}
 			}
 		}
 
-		for (final Triple<FUNCTION, ELEM, Set<List<ELEM>>> repFuncCcChildren : mFunctionToRepresentativeToCcChildren
-				.entrySet()) {
-			if (!mElementTVER.isRepresentative(repFuncCcChildren.getSecond())) {
+		/*
+		 * check that for each element that is a function application, its children are present, too
+		 * However, take removalInfo into account.
+		 */
+		for (final ELEM elem : getAllElements()) {
+			if (!elem.isFunctionApplication()) {
+				continue;
+			}
+			if (!hasElement(elem.getAppliedFunction()) &&
+					(remInfo == null || !remInfo.getRemovedElements().contains(elem.getAppliedFunction())) &&
+					(mElementCurrentlyBeingRemoved == null
+						|| !mElementCurrentlyBeingRemoved.getRemovedElements().contains(elem.getAppliedFunction())) &&
+					(mExternalRemovalInfo == null
+						|| !mExternalRemovalInfo.getRemovedElements().contains(elem.getAppliedFunction()))) {
+				assert false;
+				return false;
+			}
+			if (!hasElement(elem.getArgument()) &&
+					(remInfo == null || !remInfo.getRemovedElements().contains(elem.getArgument())) &&
+					(mElementCurrentlyBeingRemoved == null
+						|| !mElementCurrentlyBeingRemoved.getRemovedElements().contains(elem.getArgument())) &&
+					(mExternalRemovalInfo == null
+						|| !mExternalRemovalInfo.getRemovedElements().contains(elem.getArgument()))) {
 				assert false;
 				return false;
 			}
 		}
 
-		if (!mIsInconsistent) {
-			if (mElementTVER.isInconsistent()) {
-				assert false;
+
+		/*
+		 * check that for each function application a[i], its representative's ccchild contains the corresponding
+		 * af/arg-pair (a,i)
+		 */
+		for (final ELEM elem : getAllElements()) {
+			if (!elem.isFunctionApplication()) {
+				continue;
+			}
+			final ELEM rep = getRepresentativeElement(elem);
+			if (!mAuxData.getCcChildren(rep).containsPair(elem.getAppliedFunction(), elem.getArgument())) {
+				assert false : "ccchild store incomplete";
 				return false;
 			}
-			if (mFunctionTVER.isInconsistent()) {
-				assert false;
+		}
+
+		/*
+		 * check that all elements with isLiteral() = true are in mAllLiterals
+		 * an that every element of mAllLiterals is a literal
+		 */
+		for (final ELEM elem : getAllElements()) {
+			if (elem.isLiteral() && !mAllLiterals.contains(elem)) {
+				assert false : "all literals store incomplete";
 				return false;
 			}
-			if (mElementTVER == null) {
-				assert false;
+		}
+		for (final ELEM lit : mAllLiterals) {
+			if (!lit.isLiteral()) {
+				assert false : "non-literal in all literals store";
+				return false;
+			}
+		}
+
+		/*
+		 * check for each equivalence class that if there is a literal in the equivalence class, it is the
+		 * representative
+		 */
+		for (final Set<ELEM> eqc : mElementTVER.getAllEquivalenceClasses()) {
+			for (final ELEM elem : eqc) {
+				if (!elem.isLiteral()) {
+					continue;
+				}
+				// elem is literal
+				if (!isRepresentative(elem)) {
+					// elem is a
+					assert false : "literal is not the representative of its eq class";
+					return false;
+				}
+			}
+		}
+
+		/*
+		 * check that for each element, its parents in funcAppTreeAuxData and ccAuxData agree
+		 */
+		for (final ELEM elem : getAllElements()) {
+			final Set<ELEM> afCcparFromDirectParents = new HashSet<>();
+			final Set<ELEM> argCcparFromDirectParents = new HashSet<>();
+			for (final ELEM eqcMember : mElementTVER.getEquivalenceClass(elem)) {
+				afCcparFromDirectParents.addAll(mFaAuxData.getAfParents(eqcMember));
+				argCcparFromDirectParents.addAll(mFaAuxData.getArgParents(eqcMember));
+			}
+
+			final ELEM rep = getRepresentativeElement(elem);
+			if (!afCcparFromDirectParents.equals(mAuxData.getAfCcPars(rep))) {
+				final Set<ELEM> d1 =
+						DataStructureUtils.difference(afCcparFromDirectParents,
+								new HashSet<>(mAuxData.getAfCcPars(rep)));
+				final Set<ELEM> d2 =
+						DataStructureUtils.difference(new HashSet<>(mAuxData.getAfCcPars(rep)),
+								afCcparFromDirectParents);
+				assert false : "funcAppTreeAuxData and ccAuxData don't agree (Af case)";
+				return false;
+			}
+			if (!argCcparFromDirectParents.equals(mAuxData.getArgCcPars(rep))) {
+				final Set<ELEM> d1 =
+						DataStructureUtils.difference(argCcparFromDirectParents,
+								new HashSet<>(mAuxData.getArgCcPars(rep)));
+				final Set<ELEM> d2 =
+						DataStructureUtils.difference(new HashSet<>(mAuxData.getArgCcPars(rep)),
+								argCcparFromDirectParents);
+				assert false : "funcAppTreeAuxData and ccAuxData don't agree (Arg case)";
+				return false;
+			}
+		}
+
+		/*
+		 * check that all elements that are related are of the same type
+		 * while same type means here:
+		 *  - for funcApps: same number of arguments
+		 *  -
+		 */
+		for (final ELEM e1 : getAllElements()) {
+			for (final ELEM e2 : mElementTVER.getEquivalenceClass(e1)) {
+				if (!e1.hasSameTypeAs(e2)) {
+					assert false : "elements of incompatible type are in same eq class";
+					return false;
+				}
+			}
+		}
+		for (final Entry<ELEM, ELEM> deq : mElementTVER.getDisequalities()) {
+			if (!deq.getKey().hasSameTypeAs(deq.getValue())) {
+				assert false : "stored disequality between elements of incompatible type";
 				return false;
 			}
 		}
@@ -1208,16 +1459,19 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 		return mElementTVER.getSupportingEqualities();
 	}
 
-	public Map<FUNCTION, FUNCTION> getSupportingFunctionEqualities() {
-		return mFunctionTVER.getSupportingEqualities();
-	}
-
 	public HashRelation<ELEM, ELEM> getElementDisequalities() {
 		return mElementTVER.getDisequalities();
 	}
 
-	public HashRelation<FUNCTION, FUNCTION> getFunctionDisequalities() {
-		return mFunctionTVER.getDisequalities();
+	Map<String, Integer> summarize() {
+		final Map<String, Integer> result = new HashMap<>();
+
+		result.put("#Elements", getAllElements().size());
+		result.put("#EquivalenceClasses", getAllElementRepresentatives().size());
+		result.put("#SupportingEqualties", getSupportingElementEqualities().size());
+		result.put("#SupportingDisequalties", getElementDisequalities().size());
+
+		return result;
 	}
 
 	@Override
@@ -1228,15 +1482,46 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 		if (isInconsistent()) {
 			return "False";
 		}
+		if (getAllElements().size() < 20) {
+			return toLogString();
+		}
 
 		final StringBuilder sb = new StringBuilder();
+		for (final Entry<String, Integer> en : summarize().entrySet()) {
+			sb.append(String.format("%s : %d\n", en.getKey(), en.getValue()));
+		}
 
-		sb.append("Element equivalences:");
-		sb.append(mElementTVER);
-		sb.append("\n");
+		return sb.toString();
+	}
 
-		sb.append("Function equivalences:");
-		sb.append(mFunctionTVER);
+	public String toLogString() {
+		if (isTautological()) {
+			return "True";
+		}
+		if (isInconsistent()) {
+			return "False";
+		}
+
+		final StringBuilder sb = new StringBuilder();
+		sb.append("--CC(begin):--\n");
+
+		sb.append("Equivalences:\n");
+		for (final Set<ELEM> eqc : mElementTVER.getAllEquivalenceClasses()) {
+			sb.append(eqc);
+			if (eqc.size() > 1) {
+				sb.append(" --- rep: ");
+				sb.append(mElementTVER.getRepresentative(eqc.iterator().next()));
+			}
+			sb.append("\n");
+		}
+		sb.append("Disequalities:\n");
+		for (final Entry<ELEM, ELEM> deq : mElementTVER.getDisequalities()) {
+			sb.append(deq.getKey());
+			sb.append(" != ");
+			sb.append(deq.getValue());
+			sb.append("\n");
+		}
+		sb.append("--CC(end):--\n");
 
 		return sb.toString();
 	}
@@ -1264,59 +1549,26 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 		if (isInconsistent()) {
 			return false;
 		}
-		return mElementTVER.isTautological() && mFunctionTVER.isTautological();
+		return mElementTVER.isTautological();
 	}
 
 	/**
-	 * Replaces all ELEMs and FUNCTIONs with transformed versions in place.
+	 * Replaces all ELEMs and ELEMs with transformed versions in place.
 	 * The transformation is done by the given Functions.
 	 *
 	 * @param elemTransformer
 	 * @param functionTransformer
+	 * @return
 	 */
-	public void transformElementsAndFunctions(final Function<ELEM, ELEM> elemTransformer,
-			final Function<FUNCTION, FUNCTION> functionTransformer) {
-		assert sanitizeTransformer(elemTransformer, getAllElements()) : "we assume that the transformer does not "
-				+ "produce elements that were in the relation before!";
-		assert sanitizeTransformer(functionTransformer, getAllFunctions()) : "we assume that the transformer does not "
-				+ "produce elements that were in the relation before!";
+	public void transformElementsAndFunctions(final Function<ELEM, ELEM> elemTransformer) {
+//		assert sanitizeTransformer(elemTransformer, getAllElements()) : "we assume that the transformer does not "
+//				+ "produce elements that were in the relation before!";
 
 		mElementTVER.transformElements(elemTransformer);
-		mFunctionTVER.transformElements(functionTransformer);
-
-		final NestedMap2<FUNCTION, ELEM, Set<ELEM>> ccparsCopy = new NestedMap2<>(mFunctionToRepresentativeToCcPars);
-		for (final Triple<FUNCTION, ELEM, Set<ELEM>> triple : ccparsCopy.entrySet()) {
-			mFunctionToRepresentativeToCcPars.remove(triple.getFirst(), triple.getSecond());
-			mFunctionToRepresentativeToCcPars.put(functionTransformer.apply(triple.getFirst()),
-					elemTransformer.apply(triple.getSecond()),
-					triple.getThird().stream().map(elemTransformer).collect(Collectors.toSet()));
-		}
-
-
-		final NestedMap2<FUNCTION, ELEM, Set<List<ELEM>>> ccChildrenCopy =
-				new NestedMap2<>(mFunctionToRepresentativeToCcChildren);
-		for (final Triple<FUNCTION, ELEM, Set<List<ELEM>>> triple : ccChildrenCopy.entrySet()) {
-			mFunctionToRepresentativeToCcChildren.remove(triple.getFirst(), triple.getSecond());
-			mFunctionToRepresentativeToCcChildren.put(functionTransformer.apply(triple.getFirst()),
-					elemTransformer.apply(triple.getSecond()),
-					triple.getThird().stream()
-						.map(list ->
-							list.stream().map(elemTransformer).collect(Collectors.toList()))
-						.collect(Collectors.toSet()));
-		}
-
-		final HashRelation<FUNCTION, ELEM> ftfaCopy = new HashRelation<>(mFunctionToFuncApps);
-		for (final Entry<FUNCTION, ELEM> en : ftfaCopy.entrySet()) {
-			mFunctionToFuncApps.removePair(en.getKey(), en.getValue());
-			mFunctionToFuncApps.addPair(functionTransformer.apply(en.getKey()), elemTransformer.apply(en.getValue()));
-		}
-
-		final HashRelation<ELEM, ELEM> etpCopy = new HashRelation<>(mElementToParents);
-		for (final Entry<ELEM, ELEM> en : etpCopy.entrySet()) {
-			mElementToParents.removePair(en.getKey(), en.getValue());
-			mElementToParents.addPair(elemTransformer.apply(en.getKey()), elemTransformer.apply(en.getValue()));
-		}
+		mAuxData.transformElements(elemTransformer);
+		mFaAuxData.transformElements(elemTransformer);
 	}
+
 
 	/**
 	 * We demand that if our transformer changes an element, it may not be in the original set of elements
@@ -1339,12 +1591,17 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 		return true;
 	}
 
-	public boolean hasElement(final ELEM elem) {
-		return getAllElements().contains(elem);
+	public boolean hasElements(final ELEM... elems) {
+		for (final ELEM e : elems) {
+			if (!hasElement(e)) {
+				return false;
+			}
+		}
+		return true;
 	}
 
-	public boolean hasFunction(final FUNCTION elem) {
-		return getAllFunctions().contains(elem);
+	public boolean hasElement(final ELEM elem) {
+		return getAllElements().contains(elem);
 	}
 
 	/**
@@ -1360,50 +1617,722 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM, FUNC
 		if (!hasElement(elem)) {
 			return false;
 		}
-		return mElementTVER.isConstrained(elem);
-	}
-
-	/**
-	 * We call a function constrained iff this CongruenceClosure puts any non-tautological constraint on it.
-	 *
-	 * @param func
-	 * @return true
-	 */
-	public boolean isConstrained(final FUNCTION func) {
-		if (!hasFunction(func)) {
-			return false;
+		if (mElementTVER.isConstrained(elem)) {
+			return true;
 		}
-		return mFunctionTVER.isConstrained(func);
-	}
-
-
-	@Override
-	public boolean equals(final Object obj) {
-		// TODO Auto-generated method stub
-		return super.equals(obj);
-	}
-
-	@Override
-	public int hashCode() {
-		// TODO Auto-generated method stub
-		return super.hashCode();
+		for (final ELEM afpar : mFaAuxData.getAfParents(elem)) {
+			if (isConstrained(afpar)) {
+				return true;
+			}
+		}
+		for (final ELEM argpar : mFaAuxData.getArgParents(elem)) {
+			if (isConstrained(argpar)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**
 	 * Returns a new CongruenceClosure which contains only those constraints in this CongruenceClosure that constrain
-	 *  the given element.
-	 * @param set
+	 *  at least one of the given elements.
+	 *
+	 * <li> Say elemsToKeep contains a variable q, and we have {q, i} {a[i], j}, then we make explicit that the second
+	 * conjunct constrains q, too, by adding the node a[q], we get {q, i} {a[q], a[i], j}.
+	 * <li> we may call this during a remove-operation (where this Cc labels a weak equivalence edge in a weqCc, and
+	 *  in the weqCc we are in the process of removing elements).
+	 *  That means that we may not introduce elements that are currently being removed, in particular, it may be the
+	 *  case that this Cc has a parent a[i], but not the child element i. We may not do anything that adds i back.
+	 *  (sanity checks have to account for this by taking into account the removeElementInfo, that we are passing
+	 *  around).
+	 *
+	 *
+	 * @param elemsToKeep
+	 * @param removeElement
 	 * @return
 	 */
-	public CongruenceClosure<ELEM, FUNCTION> projectToElements(final Set<ELEM> set) {
-		final ThreeValuedEquivalenceRelation<ELEM> newElemPartition =
-				this.mElementTVER.projectToConstraintsWith(set);
-		final ThreeValuedEquivalenceRelation<FUNCTION> newFunctionPartition =
-				new ThreeValuedEquivalenceRelation<>(this.mFunctionTVER);
-		return new CongruenceClosure<>(newElemPartition, newFunctionPartition);
+	public CongruenceClosure<ELEM> projectToElements(final Set<ELEM> elemsToKeep,
+			final CongruenceClosure<ELEM>.RemoveElement removeElementInfo) {
+		if (isInconsistent()) {
+			return this;
+		}
+
+		/*
+		 *  we need to augment the set such that all equivalent elements are contained, too.
+		 *  example:
+		 *   we project to {q}
+		 *   current partition: {q, i} {a[i], 0}
+		 *   then the second block implicitly puts a constraint on q, too, thus we need to keep it.
+		 *   --> this principle applies transitively, i.e., say we have {a[q], x} {b[x], y}...
+		 */
+
+		final CongruenceClosure<ELEM> copy = new CongruenceClosure<>(this, removeElementInfo);
+
+
+		final Set<ELEM> worklist = new HashSet<>(elemsToKeep);
+		final Set<ELEM> constraintsToKeepReps = new HashSet<>();
+		final Set<ELEM> visitedEquivalenceClassElements = new HashSet<>();
+
+
+		while (!worklist.isEmpty()) {
+//			assert copy.sanityCheck(removeElementInfo);
+			assert copy.sanityCheck();
+
+			final ELEM current = worklist.iterator().next();
+			worklist.remove(current);
+
+
+			if (!copy.hasElement(current)) {
+				continue;
+			}
+			visitedEquivalenceClassElements.addAll(copy.mElementTVER.getEquivalenceClass(current));
+
+			assert copy.mElementTVER.getEquivalenceClass(current).stream()
+				.anyMatch(e -> dependsOnAny(e, elemsToKeep));
+			constraintsToKeepReps.add(current);
+
+			for (final ELEM afccpar : new HashSet<>(copy.mAuxData.getAfCcPars(copy.getRepresentativeElement(current)))) {
+				if (visitedEquivalenceClassElements.contains(afccpar)) {
+					continue;
+				}
+				final ELEM substituted = afccpar.replaceAppliedFunction(current);
+				if (constraintsToKeepReps.contains(substituted)) {
+					continue;
+				}
+				if (removeElementInfo != null
+						&& dependsOnAny(substituted, removeElementInfo.getRemovedElements())) {
+					// don't add anything that is currently being removed or depends on it
+					continue;
+				}
+				assert removeElementInfo == null
+						|| !dependsOnAny(substituted, removeElementInfo.getRemovedElements());
+				assert dependsOnAny(substituted, elemsToKeep);
+				copy.addElement(substituted);
+				worklist.add(substituted);
+			}
+			for (final ELEM argccpar : new HashSet<>(copy.mAuxData.getArgCcPars(copy.getRepresentativeElement(current)))) {
+				if (visitedEquivalenceClassElements.contains(argccpar)) {
+					continue;
+				}
+				final ELEM substituted = argccpar.replaceArgument(current);
+				if (constraintsToKeepReps.contains(substituted)) {
+					continue;
+				}
+				if (removeElementInfo != null
+						&& dependsOnAny(substituted, removeElementInfo.getRemovedElements())) {
+					// don't add anything that is currently being removed or depends on it
+					continue;
+				}
+				assert removeElementInfo == null
+						|| !dependsOnAny(substituted, removeElementInfo.getRemovedElements());
+				assert dependsOnAny(substituted, elemsToKeep);
+				copy.addElement(substituted);
+				worklist.add(substituted);
+			}
+		}
+		// TVER does not know about parent/child relationship of nodes, so it is safe
+		final ThreeValuedEquivalenceRelation<ELEM> newTver =
+				copy.mElementTVER.filterAndKeepOnlyConstraintsThatIntersectWith(constraintsToKeepReps);
+		/*
+		 *  (former BUG!!!) this constructor may not add all child elements for all remaining elements, therefore
+		 *  we either need a special constructor or do something else..
+		 */
+		return new CongruenceClosure<>(newTver, removeElementInfo);
 	}
 
 	public Collection<ELEM> getAllElementRepresentatives() {
 		return mElementTVER.getAllRepresentatives();
 	}
+
+	/**
+	 * Determines if one of the descendants of given element elem is a member of the given element set sub.
+	 *
+	 * @param elem
+	 * @param sub
+	 * @return
+	 */
+	public static <ELEM extends ICongruenceClosureElement<ELEM>> boolean dependsOnAny(final ELEM elem,
+//	public boolean dependsOnAny(final ELEM elem,
+			final Set<ELEM> sub) {
+
+		if (elem.isDependent()) {
+			if (!DataStructureUtils.intersection(elem.getSupportingNodes(), sub).isEmpty()) {
+				return true;
+			}
+		}
+
+		if (sub.contains(elem)) {
+			return true;
+		}
+		if (elem.isFunctionApplication()) {
+			return dependsOnAny(elem.getAppliedFunction(), sub) || dependsOnAny(elem.getArgument(), sub);
+		}
+		return false;
+	}
+
+	public boolean isRepresentative(final ELEM elem) {
+		return mElementTVER.isRepresentative(elem);
+	}
+
+//	protected ELEM replaceFuncAppArgsWOtherRepIfNecAndPoss(final ELEM c) {
+//		assert c.isFunctionApplication();
+//		final ELEM cReplaced = c;
+//
+//		final ELEM afReplaced = replaceWithOtherRepIfNecessaryAndPossible(c.getAppliedFunction());
+//		final ELEM argReplaced = replaceWithOtherRepIfNecessaryAndPossible(c.getArgument());
+//		if (afReplaced == null || argReplaced == null) {
+//			return null;
+//		}
+//		assert afReplaced == c.getAppliedFunction() || argReplaced == c.getArgument();
+//		if (afReplaced != c.getAppliedFunction()) {
+//			final ELEM rpaf = c.replaceAppliedFunction(mElementCurrentlyBeingRemoved.getOtherRep());
+//			if (hasElement(rpaf)) {
+//				return rpaf;
+//			} else {
+//				return null;
+//			}
+//		} else if (argReplaced != c.getArgument()) {
+//			final ELEM rparg = c.replaceArgument(mElementCurrentlyBeingRemoved.getOtherRep());
+//			if (hasElement(rparg)) {
+//				return rparg;
+//			} else {
+//				return null;
+//			}
+//		}
+//		return cReplaced;
+//	}
+
+	/**
+	 * auxilliary data related to the tree where an edge a -> b means that b is an argument to function a
+	 * (this is mostly/only needed for element removal)
+	 */
+	protected class FuncAppTreeAuxData {
+		// these cannot be managed within the nodes because the nodes are shared between CongruenceClosure instances!
+		private final HashRelation<ELEM, ELEM> mDirectAfPars;
+		private final HashRelation<ELEM, ELEM> mDirectArgPars;
+
+		FuncAppTreeAuxData() {
+			mDirectAfPars = new HashRelation<>();
+			mDirectArgPars = new HashRelation<>();
+		}
+
+		FuncAppTreeAuxData(final CongruenceClosure<ELEM>.FuncAppTreeAuxData faAuxData) {
+			mDirectAfPars = new HashRelation<>(faAuxData.mDirectAfPars);
+			mDirectArgPars = new HashRelation<>(faAuxData.mDirectArgPars);
+		}
+
+		public void addAfParent(final ELEM elem, final ELEM parent) {
+			mDirectAfPars.addPair(elem, parent);
+		}
+
+		public void addArgParent(final ELEM elem, final ELEM parent) {
+			mDirectArgPars.addPair(elem, parent);
+		}
+
+		public Set<ELEM> getAfParents(final ELEM elem) {
+			return Collections.unmodifiableSet(mDirectAfPars.getImage(elem));
+		}
+
+		public Set<ELEM> getArgParents(final ELEM elem) {
+			return Collections.unmodifiableSet(mDirectArgPars.getImage(elem));
+		}
+
+		public void removeAfParent(final ELEM elem, final ELEM parent) {
+			mDirectAfPars.removePair(elem, parent);
+		}
+
+		public void removeArgParent(final ELEM elem, final ELEM parent) {
+			mDirectArgPars.removePair(elem, parent);
+		}
+
+		public void transformElements(final Function<ELEM, ELEM> elemTransformer) {
+			mDirectAfPars.transformElements(elemTransformer, elemTransformer);
+			mDirectArgPars.transformElements(elemTransformer, elemTransformer);
+		}
+	}
+
+	/**
+	 * auxilliary data related to congruence classes
+	 */
+	protected class CcAuxData {
+
+		private final HashRelation<ELEM, ELEM> mAfCcPars;
+		private final HashRelation<ELEM, ELEM> mArgCcPars;
+
+		private final Map<ELEM, HashRelation<ELEM, ELEM>> mCcChildren;
+
+		/**
+		 * normally we only allow get..(elem) calls when elem is a representative of the encolosing CongruenceClosure
+		 * this flag deactivates those checks
+		 */
+		private final boolean mOmitRepresentativeChecks;
+
+		CcAuxData() {
+			mAfCcPars = new HashRelation<>();
+			mArgCcPars = new HashRelation<>();
+			mCcChildren = new HashMap<>();
+			mOmitRepresentativeChecks = false;
+		}
+
+		public CcAuxData(final CcAuxData auxData, final boolean omitRepresentativeChecks) {
+			mAfCcPars = new HashRelation<>(auxData.mAfCcPars);
+			mArgCcPars = new HashRelation<>(auxData.mArgCcPars);
+			mCcChildren = new HashMap<>();
+			for (final Entry<ELEM, HashRelation<ELEM, ELEM>> en : auxData.mCcChildren.entrySet()) {
+				mCcChildren.put(en.getKey(), new HashRelation<>(en.getValue()));
+			}
+			mOmitRepresentativeChecks = omitRepresentativeChecks;
+		}
+
+		CcAuxData(final CongruenceClosure<ELEM>.CcAuxData auxData) {
+			this(auxData, false);
+		}
+
+		/**
+		 * e1 and e2 are currently merged
+		 * computes pairs of elements that must be merged as a consequence of merging e1 and e2, because of
+		 * (forward) congruence
+		 *
+		 * @param e1
+		 * @param e2
+		 * @param oldUnequalRepsForElem2
+		 * @param oldUnequalRepsForElem1
+		 * @return
+		 */
+		Pair<HashRelation<ELEM, ELEM>, HashRelation<ELEM, ELEM>> updateAndGetPropagationsOnMerge(final ELEM e1,
+				final ELEM e2, final ELEM e1OldRep, final ELEM e2OldRep, final Set<ELEM> oldUnequalRepsForElem1,
+				final Set<ELEM> oldUnequalRepsForElem2) {
+
+			final ELEM newRep = mElementTVER.getRepresentative(e1);
+			assert mElementTVER.getRepresentative(e2) == newRep : "we merged before calling this method, right?";
+
+			/*
+			 * collect new equalities and disequalities
+			 */
+			final HashRelation<ELEM, ELEM> congruentResult = new HashRelation<>();
+			final HashRelation<ELEM, ELEM> unequalResult = new HashRelation<>();
+
+			final Set<ELEM> afccpar1 = mAfCcPars.getImage(e1OldRep);
+			final Set<ELEM> afccpar2 = mAfCcPars.getImage(e2OldRep);
+
+			final Set<ELEM> argccpar1 = mArgCcPars.getImage(e1OldRep);
+			final Set<ELEM> argccpar2 = mArgCcPars.getImage(e2OldRep);
+
+			collectCcParBasedPropagations(afccpar1, afccpar2, congruentResult, unequalResult);
+			collectCcParBasedPropagations(argccpar1, argccpar2, congruentResult, unequalResult);
+			assert hasOnlyPairsOfSameType(congruentResult);
+			assert hasOnlyPairsOfSameType(unequalResult);
+
+			collectPropagationsForImplicitlyAddedDisequalities(oldUnequalRepsForElem1, e2OldRep, unequalResult);
+			collectPropagationsForImplicitlyAddedDisequalities(oldUnequalRepsForElem2, e1OldRep, unequalResult);
+			assert hasOnlyPairsOfSameType(unequalResult);
+
+			/*
+			 * update ccPars, ccChildren entries
+			 */
+			if (newRep == e1OldRep) {
+				final Set<ELEM> oldAf2 = mAfCcPars.removeDomainElement(e2OldRep);
+				if (oldAf2 != null) {
+					for (final ELEM e : oldAf2) {
+						assert e.isFunctionApplication();
+						mAfCcPars.addPair(newRep, e);
+					}
+				}
+				final Set<ELEM> oldArg2 = mArgCcPars.removeDomainElement(e2OldRep);
+				if (oldArg2 != null) {
+					for (final ELEM e : oldArg2) {
+						assert e.isFunctionApplication();
+						mArgCcPars.addPair(newRep, e);
+					}
+				}
+			} else {
+				assert newRep == e2OldRep;
+				final Set<ELEM> oldAf1 = mAfCcPars.removeDomainElement(e1OldRep);
+				if (oldAf1 != null) {
+					for (final ELEM e : oldAf1) {
+						assert e.isFunctionApplication();
+						mAfCcPars.addPair(newRep, e);
+					}
+				}
+				final Set<ELEM> oldArg1 = mArgCcPars.removeDomainElement(e1OldRep);
+				if (oldArg1 != null) {
+					for (final ELEM e : oldArg1) {
+						assert e.isFunctionApplication();
+						mArgCcPars.addPair(newRep, e);
+					}
+				}
+			}
+
+			final HashRelation<ELEM, ELEM> newCcc = new HashRelation<>();
+			final HashRelation<ELEM, ELEM> oldCcc1 = mCcChildren.remove(e1OldRep);
+			if (oldCcc1 != null) {
+				newCcc.addAll(oldCcc1);
+			}
+			final HashRelation<ELEM, ELEM> oldCcc2 = mCcChildren.remove(e2OldRep);
+			if (oldCcc2 != null) {
+				newCcc.addAll(oldCcc2);
+			}
+			mCcChildren.put(newRep, newCcc);
+
+			assert hasOnlyPairsOfSameType(congruentResult);
+			assert hasOnlyPairsOfSameType(unequalResult);
+			return new Pair<>(congruentResult, unequalResult);
+		}
+
+		private boolean hasOnlyPairsOfSameType(final HashRelation<ELEM, ELEM> relation) {
+			for (final Entry<ELEM, ELEM> pair : relation) {
+				assert pair.getKey().hasSameTypeAs(pair.getValue()) : "relation should only have pairs of same type"
+						+ "but does not";
+			}
+			return true;
+		}
+
+		private void collectCcParBasedPropagations(final Set<ELEM> parents1, final Set<ELEM> parents2,
+				final HashRelation<ELEM, ELEM> congruentResult, final HashRelation<ELEM, ELEM> unequalResult) {
+			if (parents1 == null || parents2 == null || parents1.isEmpty() || parents2.isEmpty()) {
+				// nothing to do
+				return;
+			}
+
+			for (final List<ELEM> parentPair :
+				CrossProducts.crossProductOfSets(Arrays.asList(parents1, parents2))) {
+				final ELEM parent1 = parentPair.get(0);
+				final ELEM parent2 = parentPair.get(1);
+
+				/*
+				 * fwcc
+				 *
+				 * is it correct to do this with out the vectors, just with getAppliedFunction and getArgument?
+				 */
+				if (hasElements(parent1.getAppliedFunction(), parent1.getArgument(),
+						parent2.getAppliedFunction(), parent2.getArgument())
+						&& getEqualityStatus(parent1.getAppliedFunction(), parent2.getAppliedFunction())
+						== EqualityStatus.EQUAL
+						&& getEqualityStatus(parent1.getArgument(), parent2.getArgument())
+						== EqualityStatus.EQUAL) {
+
+					congruentResult.addPair(parent1, parent2);
+					continue;
+				}
+
+				/*
+				 * bwcc (1)
+				 */
+				if (getEqualityStatus(parent1, parent2) == EqualityStatus.NOT_EQUAL) {
+					addPropIfOneIsEqualOneIsUnconstrained(parent1.getAppliedFunction(), parent1.getArgument(),
+							parent2.getAppliedFunction(), parent2.getArgument(), unequalResult);
+				}
+			}
+		}
+
+		/**
+		 * This method is a helper that, for two representatives of equivalence classes
+		 * checks if, because of merging the two equivalence classes, any disequality
+		 * propagations are possible.
+		 *
+		 * Example:
+		 * <li>preState: (i = f(y)) , (j != f(x)), (i = j)
+		 * <li>we just added an equality between i and j (did the merge operation)
+		 * <li>one call of this method will be with (preState, i, f(x))
+		 * <li>we will get the output state: (i = f(y)) , (j != f(x)), (i = j), (x != y)
+		 *
+		 * @param oldUnequalRepsForElem1
+		 * @param e2OldRep
+		 * @param e2OldRep
+		 * @param oldCcChild
+		 */
+		private void collectPropagationsForImplicitlyAddedDisequalities(final Set<ELEM> oldUnequalRepsForElem1,
+					final ELEM e2OldRep, final HashRelation<ELEM, ELEM> disequalitiesToPropagate) {
+
+			for (final ELEM repUnequalToE1 : oldUnequalRepsForElem1) {
+				final HashRelation<ELEM, ELEM> unequalRep1Cccs = mCcChildren.get(repUnequalToE1);
+				if (unequalRep1Cccs == null) {
+						continue;
+				}
+				for (final Entry<ELEM, ELEM> ccc2 : unequalRep1Cccs) {
+					final HashRelation<ELEM, ELEM> mergePartnerOldRepCccs = mCcChildren.get(e2OldRep);
+					if (mergePartnerOldRepCccs == null) {
+						continue;
+					}
+					for (final Entry<ELEM, ELEM> ccc1 : mergePartnerOldRepCccs) {
+						addPropIfOneIsEqualOneIsUnconstrained(ccc1.getKey(), ccc1.getValue(), ccc2.getKey(),
+								ccc2.getValue(), disequalitiesToPropagate);
+					}
+				}
+			}
+		}
+
+		public void removeElement(final ELEM elem, final boolean elemWasRepresentative, final ELEM newRep) {
+			/*
+			 * ccpar and ccchild only have representatives in their keySets
+			 *  --> move the information to the new representative from elem, if necessary
+			 */
+			if (elemWasRepresentative) {
+				final Set<ELEM> oldAfCcparEntry = mAfCcPars.removeDomainElement(elem);
+				if (newRep != null && oldAfCcparEntry != null) {
+					oldAfCcparEntry//.stream().filter(e -> !e.getAppliedFunction().equals(elem))
+						.forEach(e -> mAfCcPars.addPair(newRep, e));
+				}
+
+				final Set<ELEM> oldArgCcparEntry = mArgCcPars.removeDomainElement(elem);
+				if (newRep != null && oldArgCcparEntry != null) {
+					oldArgCcparEntry//.stream().filter(e -> !e.getArgument().equals(elem))
+						.forEach(e -> mArgCcPars.addPair(newRep, e));
+				}
+
+				final HashRelation<ELEM, ELEM> oldCccEntry = mCcChildren.remove(elem);
+				if (newRep != null && oldCccEntry != null) {
+					mCcChildren.put(newRep, oldCccEntry);
+				}
+			}
+
+			/*
+			 * remove ccpar entries that were there because of elem,
+			 * for example if we have a partition block { i, j} with ccpar { f(i) } and we remove i, then f(i) must be
+			 * eliminated from ccpar
+			 */
+			if (newRep != null) {
+				for (final ELEM e : new ArrayList<>(mAfCcPars.getImage(newRep))) {
+					if (e.getAppliedFunction().equals(elem)) {
+						mAfCcPars.removePair(newRep, e);
+					}
+				}
+				for (final ELEM e : new ArrayList<>(mArgCcPars.getImage(newRep))) {
+					if (e.getArgument().equals(elem)) {
+						mArgCcPars.removePair(newRep, e);
+					}
+				}
+			}
+
+			/*
+			 * remove any entries of elem to one of the maps
+			 *  possible optimization: look specifically for where elem could be instead of iterating over all pairs..
+			 */
+			mAfCcPars.removeRangeElement(elem);
+			mArgCcPars.removeRangeElement(elem);
+
+			if (newRep == null) {
+				// there was no equal element to elem, we already removed elem from the keys in the above step
+				assert elemWasRepresentative;
+			} else {
+				if (elem.isFunctionApplication()) {
+					mCcChildren.get(newRep).removePair(elem.getAppliedFunction(), elem.getArgument());
+				}
+			}
+		}
+
+		HashRelation<ELEM, ELEM> registerNewElement(final ELEM elem) {
+			assert elem.isFunctionApplication() : "right?..";
+
+			final ELEM afRep = hasElement(elem.getAppliedFunction()) ?
+					mElementTVER.getRepresentative(elem.getAppliedFunction()) :
+						elem.getAppliedFunction();
+			final ELEM argRep = hasElement(elem.getArgument()) ?
+					mElementTVER.getRepresentative(elem.getArgument()) :
+						elem.getArgument();
+
+
+			final HashRelation<ELEM, ELEM> equalitiesToPropagate = new HashRelation<>();
+			final Set<ELEM> afCcPars = mAfCcPars.getImage(afRep);
+			final Set<ELEM> candidates = afCcPars.stream()
+					.filter(afccpar ->
+						(hasElement(argRep) &&
+							hasElement(afccpar.getArgument()) &&
+							getEqualityStatus(argRep, afccpar.getArgument()) == EqualityStatus.EQUAL)
+						)
+					.collect(Collectors.toSet());
+
+			/*
+			 * we have to make sure to not add an equality for propagation where an element contains the element
+			 *  currently being removed EDIT: no we don't.. --> those might be the propagations for one of the elements
+			 *  we added to conserve information..
+			 */
+			for (final ELEM c : candidates) {
+				assert c.isFunctionApplication();
+				equalitiesToPropagate.addPair(elem, c);
+
+//				final ELEM cReplaced = replaceFuncAppArgsWOtherRepIfNecAndPoss(c);
+//
+//				if (cReplaced != null) {
+//					equalitiesToPropagate.addPair(elem, cReplaced);
+//				}
+			}
+
+
+//			assert mElementCurrentlyBeingRemoved == null
+//					|| !equalitiesToPropagate.entrySet().stream().map(en -> en.getValue())
+//						.anyMatch(c -> c.isFunctionApplication()
+//					&& (c.getAppliedFunction().equals(mElementCurrentlyBeingRemoved.getElem())
+//							|| c.getArgument().equals(mElementCurrentlyBeingRemoved.getElem())));
+
+			mAfCcPars.addPair(afRep, elem);
+			mArgCcPars.addPair(argRep, elem);
+
+			// is it even possible that elem is not its own representative at this point??
+			final ELEM elemRep = mElementTVER.getRepresentative(elem);
+
+			updateCcChild(elemRep, elem.getAppliedFunction(), elem.getArgument());
+
+			return equalitiesToPropagate;
+		}
+
+		private void updateCcChild(final ELEM elemRep, final ELEM appliedFunction, final ELEM argument) {
+			HashRelation<ELEM, ELEM> elemCcc = mCcChildren.get(elemRep);
+			if (elemCcc == null) {
+				elemCcc = new HashRelation<>();
+				mCcChildren.put(elemRep, elemCcc);
+			}
+			elemCcc.addPair(appliedFunction, argument);
+		}
+
+		public HashRelation<ELEM, ELEM> getPropagationsOnReportDisequality(final ELEM elem1, final ELEM elem2) {
+			final HashRelation<ELEM, ELEM> result = new HashRelation<>();
+
+			final ELEM e1Rep = mElementTVER.getRepresentative(elem1);
+			final ELEM e2Rep = mElementTVER.getRepresentative(elem2);
+
+			final HashRelation<ELEM, ELEM> ccc1 = getCcChildren(e1Rep);
+			final HashRelation<ELEM, ELEM> ccc2 = getCcChildren(e2Rep);
+
+
+			for (final Entry<ELEM, ELEM> pair1 : ccc1.entrySet()) {
+				for (final Entry<ELEM, ELEM> pair2 : ccc2.entrySet()) {
+					addPropIfOneIsEqualOneIsUnconstrained(pair1.getKey(), pair1.getValue(), pair2.getKey(),
+							pair2.getValue(), result);
+				}
+			}
+			return result;
+		}
+
+		public HashRelation<ELEM, ELEM> getCcChildren(final ELEM rep) {
+			assert mOmitRepresentativeChecks || isRepresentative(rep);
+			HashRelation<ELEM, ELEM> result = mCcChildren.get(rep);
+			if (result == null) {
+				result = new HashRelation<>();
+				mCcChildren.put(rep, result);
+			}
+			return result;
+		}
+
+		private void addPropIfOneIsEqualOneIsUnconstrained(final ELEM af1, final ELEM arg1, final ELEM af2,
+				final ELEM arg2,final HashRelation<ELEM, ELEM> result) {
+			if (!hasElement(af1) || !hasElement(af2) || !hasElement(arg1) || !hasElement(arg2)) {
+				/*
+				 *  it may happen that during a remove element we reach here and some map still has an element that is
+				 *  being removed (if we added a propagation here, we would add the element back..)
+				 */
+				return;
+			}
+
+			final EqualityStatus equalityStatusOfAppliedFunctions =
+					getEqualityStatus(af1, af2);
+			final EqualityStatus equalityStatusOfArguments =
+					getEqualityStatus(arg1, arg2);
+
+			if (equalityStatusOfAppliedFunctions == EqualityStatus.EQUAL
+					&& equalityStatusOfArguments == EqualityStatus.UNKNOWN
+					&& arg1.hasSameTypeAs(arg2)) {
+				result.addPair(arg1, arg2);
+			}
+
+			if (equalityStatusOfAppliedFunctions == EqualityStatus.UNKNOWN
+					&& equalityStatusOfArguments == EqualityStatus.EQUAL
+					&& af1.hasSameTypeAs(af2)) {
+				result.addPair(af1, af2);
+			}
+		}
+
+		public Collection<ELEM> getAfCcPars(final ELEM elem) {
+			assert mOmitRepresentativeChecks || isRepresentative(elem);
+			return mAfCcPars.getImage(elem);
+		}
+
+		public Collection<ELEM> getArgCcPars(final ELEM elem) {
+			assert mOmitRepresentativeChecks || isRepresentative(elem);
+			return mArgCcPars.getImage(elem);
+		}
+
+		public void transformElements(final Function<ELEM, ELEM> elemTransformer) {
+			mAfCcPars.transformElements(elemTransformer, elemTransformer);
+			mArgCcPars.transformElements(elemTransformer, elemTransformer);
+
+			for (final Entry<ELEM, HashRelation<ELEM, ELEM>> en : new HashMap<>(mCcChildren).entrySet()) {
+				mCcChildren.remove(en.getKey());
+				assert en.getValue().isEmpty() ||
+					!mCcChildren.values().contains(en.getValue()) : "just to make sure there's no overlap in the "
+						+ "map's image values";
+				en.getValue().transformElements(elemTransformer, elemTransformer);
+				mCcChildren.put(elemTransformer.apply(en.getKey()), en.getValue());
+			}
+		}
+	}
+
+	public CongruenceClosure<ELEM>.RemoveElement getElementCurrentlyBeingRemoved() {
+		return mElementCurrentlyBeingRemoved;
+	}
+
+	public class RemovalInfo {
+
+		private final ELEM mElemBeingRemoved;
+		private final ELEM mOtherRep;
+
+		public RemovalInfo(final ELEM elemBeingRemoved, final ELEM otherRep) {
+			assert !elemBeingRemoved.isFunctionApplication();
+			mElemBeingRemoved = elemBeingRemoved;
+			mOtherRep = otherRep;
+		}
+
+		public ELEM getElem() {
+			return mElemBeingRemoved;
+		}
+
+		public ELEM getOtherRep() {
+			return mOtherRep;
+		}
+
+		@Override
+		public String toString() {
+			return mElemBeingRemoved + " --> " + mOtherRep;
+		}
+	}
+
+	public boolean assertHasOnlyWeqVarConstraints(final Set<ELEM> allWeqNodes) {
+		if (isTautological()) {
+			return true;
+		}
+
+		final Set<ELEM> elemsAppearingInADisequality = new HashSet<>();
+		for (final Entry<ELEM, ELEM> deq : mElementTVER.getDisequalities().entrySet()) {
+			elemsAppearingInADisequality.add(deq.getKey());
+			elemsAppearingInADisequality.add(deq.getValue());
+		}
+
+		for (final Set<ELEM> eqc : mElementTVER.getAllEquivalenceClasses()) {
+			if (eqc.size() == 1 &&
+					(!mFaAuxData.getAfParents(eqc.iterator().next()).isEmpty() ||
+							!mFaAuxData.getArgParents(eqc.iterator().next()).isEmpty())) {
+				continue;
+			}
+
+//			final Set<ELEM> intersection1 = DataStructureUtils.intersection(eqc, allWeqNodes);
+			final Set<ELEM> intersection1 = eqc.stream().filter(eqcelem -> dependsOnAny(eqcelem, allWeqNodes))
+					.collect(Collectors.toSet());
+			final Set<ELEM> intersection2 = DataStructureUtils.intersection(eqc, elemsAppearingInADisequality);
+			if (intersection1.isEmpty() && intersection2.isEmpty()) {
+				assert false;
+				return false;
+			}
+		}
+		return true;
+	}
+
+	public boolean assertHasExternalRemInfo() {
+		return mExternalRemovalInfo != null;
+	}
+
+	public void setExternalRemInfo(final CongruenceClosure<ELEM>.RemoveElement remInfo) {
+		assert mExternalRemovalInfo == null || mExternalRemovalInfo == remInfo;
+		mExternalRemovalInfo = remInfo;
+	}
+
 }

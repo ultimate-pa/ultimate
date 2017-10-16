@@ -47,12 +47,19 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 	private final StatisticsData mHaData = new StatisticsData();
 	private final StatisticsData mInterpolantConsolidationBenchmarks = new StatisticsData();
 	private final StatisticsData mPathInvariantsStatistics = new StatisticsData();
+	private final StatisticsData mRefinementEngineStatistics = new StatisticsData();
 	private int mIterations = 0;
 	private int mAbsIntIterations = 0;
 	private SizeIterationPair mBiggestAbstraction = new SizeIterationPair(-1, -1);
 	private BackwardCoveringInformation mBCI = new BackwardCoveringInformation(0, 0);
 	private int mAbsIntStrong = 0;
 	private int mTraceHistogramMaximum = 0;
+	private double mAiWeakeningAvgRatioSum = 0;
+	private int mAiWeakeningAvgRatioNum = 0;
+	private int mAiWeakeningVarsRemovedSum = 0;
+	private int mAiWeakeningVarsRemovedNum = 0;
+	private int mAiWeakeningConjunctReductionNum = 0;
+	private int mAiWeakeningConjunctReductionSum = 0;
 
 	@Override
 	public Collection<String> getKeys() {
@@ -71,16 +78,12 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 		mPuData.aggregateBenchmarkData(pubd);
 	}
 
-	public void addTraceCheckerData(final IStatisticsDataProvider tcbd) {
+	public void addTraceCheckData(final IStatisticsDataProvider tcbd) {
 		mTcData.aggregateBenchmarkData(tcbd);
 	}
 
-	public void addInterpolationConsolidationData(final IStatisticsDataProvider tcbd) {
-		mInterpolantConsolidationBenchmarks.aggregateBenchmarkData(tcbd);
-	}
-
-	public void addPathInvariantsData(final IStatisticsDataProvider tcbd) {
-		mPathInvariantsStatistics.aggregateBenchmarkData(tcbd);
+	public void addRefinementEngineStatistics(final IStatisticsDataProvider res) {
+		mRefinementEngineStatistics.aggregateBenchmarkData(res);
 	}
 
 	public void addTotalInterpolationData(final IStatisticsDataProvider tibd) {
@@ -110,6 +113,21 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 
 	public void addHoareAnnotationData(final IStatisticsDataProvider hasp) {
 		mHaData.aggregateBenchmarkData(hasp);
+	}
+
+	public void addAiWeakeningRatio(final double ratio) {
+		mAiWeakeningAvgRatioNum++;
+		mAiWeakeningAvgRatioSum += ratio;
+	}
+
+	public void addAiWeakeningVarsNumRemoved(final int numRemoved) {
+		mAiWeakeningVarsRemovedNum++;
+		mAiWeakeningVarsRemovedSum += numRemoved;
+	}
+
+	public void addAiConjunctReductionNumber(final int differenceConjuncts) {
+		mAiWeakeningConjunctReductionNum++;
+		mAiWeakeningConjunctReductionSum += differenceConjuncts;
 	}
 
 	/**
@@ -146,11 +164,26 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 			} catch (final StopwatchStillRunningException e) {
 				throw new AssertionError("clock still running: " + key);
 			}
+		case AbsIntWeakeningRatio:
+			if (mAiWeakeningAvgRatioNum == 0) {
+				return Double.NaN;
+			}
+			return mAiWeakeningAvgRatioSum / mAiWeakeningAvgRatioNum;
+		case AbsIntAvgWeakeningVarsNumRemoved:
+			if (mAiWeakeningVarsRemovedNum == 0) {
+				return Double.NaN;
+			}
+			return (double) mAiWeakeningVarsRemovedSum / (double) mAiWeakeningVarsRemovedNum;
+		case AbsIntAvgWeakenedConjuncts:
+			if (mAiWeakeningConjunctReductionNum == 0) {
+				return Double.NaN;
+			}
+			return (double) mAiWeakeningConjunctReductionSum / (double) mAiWeakeningConjunctReductionNum;
 		case HoareTripleCheckerStatistics:
 			return mEcData;
 		case PredicateUnifierStatistics:
 			return mPuData;
-		case TraceCheckerStatistics:
+		case traceCheckStatistics:
 			return mTcData;
 		case InterpolantConsolidationStatistics:
 			return mInterpolantConsolidationBenchmarks;
@@ -174,6 +207,8 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 			return mAmData;
 		case HoareAnnotationStatistics:
 			return mHaData;
+		case RefinementEngineStatistics:
+			return mRefinementEngineStatistics;
 		default:
 			throw new AssertionError("unknown data");
 		}
@@ -193,5 +228,4 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 				CegarLoopStatisticsDefinitions.HoareAnnotationTime.toString(),
 				CegarLoopStatisticsDefinitions.BasicInterpolantAutomatonTime.toString() };
 	}
-
 }

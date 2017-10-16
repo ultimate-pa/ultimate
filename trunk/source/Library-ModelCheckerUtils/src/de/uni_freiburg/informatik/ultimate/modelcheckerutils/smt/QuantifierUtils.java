@@ -29,9 +29,12 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 import java.util.Arrays;
 import java.util.Collection;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
  * Provides static methods for handling of quantifiers and their finite connectives
@@ -170,6 +173,24 @@ public class QuantifierUtils {
 		} else {
 			throw new AssertionError("unknown quantifier");
 		}
+	}
+	
+	
+	/**
+	 * Transform to DNF for existential quantifier, 
+	 * transform to CNF for universal quantifier.
+	 */
+	public static Term transformToXnf(final IUltimateServiceProvider services, final Script script,
+			final int quantifier, final ManagedScript freshTermVariableConstructor, Term term,
+			final XnfConversionTechnique xnfConversionTechnique) throws AssertionError {
+		if (quantifier == QuantifiedFormula.EXISTS) {
+			term = SmtUtils.toDnf(services, freshTermVariableConstructor, term, xnfConversionTechnique);
+		} else if (quantifier == QuantifiedFormula.FORALL) {
+			term = SmtUtils.toCnf(services, freshTermVariableConstructor, term, xnfConversionTechnique);
+		} else {
+			throw new AssertionError("unknown quantifier");
+		}
+		return term;
 	}
 
 

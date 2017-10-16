@@ -33,33 +33,33 @@ public class ModelFormatter {
 	private final String mLineSep;
 	private final StringBuilder mString;// NOPMD
 	private int mIndent;
-	
+
 	private final Theory mTheory;
 	private final Model mModel;
-	
+
 	private void newline() {
 		mString.append(mLineSep);
 		for (int i = 0; i < mIndent; ++i) {
 			mString.append(' ');
 		}
 	}
-	
-	public ModelFormatter(Theory t, Model model) {
+
+	public ModelFormatter(final Theory t, final Model model) {
 		mLineSep = System.getProperty("line.separator");
 		mString = new StringBuilder("(model ");// NOPMD
 		mIndent = 0;
 		mTheory = t;
 		mModel = model;
 	}
-	
-	public void appendComment(String comment) {
+
+	public void appendComment(final String comment) {
 		mIndent += Config.INDENTATION;
 		newline();
 		mString.append(";; ").append(comment);
 		mIndent -= Config.INDENTATION;
 	}
-	
-	public void appendSortInterpretation(SortInterpretation si, Sort sort) {
+
+	public void appendSortInterpretation(final SortInterpretation si, final Sort sort) {
 		final Term t = si.toSMTLIB(mTheory, sort);
 		if (t != null) {
 			mIndent += Config.INDENTATION;
@@ -68,8 +68,8 @@ public class ModelFormatter {
 			mIndent -= Config.INDENTATION;
 		}
 	}
-	
-	public void appendValue(FunctionSymbol f, FunctionValue value, Theory t) {
+
+	public void appendValue(final FunctionSymbol f, final FunctionValue value, final Theory t) {
 		mIndent += Config.INDENTATION;
 		newline();
 		final Sort[] paramSorts = f.getParameterSorts();
@@ -77,11 +77,9 @@ public class ModelFormatter {
 		for (int i = 0; i < vars.length; ++i) {
 			vars[i] = t.createTermVariable("@p" + i, paramSorts[i]);
 		}
-		mString.append("(define-fun ").append(PrintTerm.quoteIdentifier(
-				f.getName())).append(" (");
+		mString.append("(define-fun ").append(PrintTerm.quoteIdentifier(f.getName())).append(" (");
 		for (int i = 0; i < vars.length; ++i) {
-			mString.append('(').append(vars[i]).append(' ').
-				append(paramSorts[i]).append(')');
+			mString.append('(').append(vars[i]).append(' ').append(paramSorts[i]).append(')');
 		}
 		mString.append(") ").append(f.getReturnSort());
 		mIndent += Config.INDENTATION;
@@ -90,36 +88,19 @@ public class ModelFormatter {
 		mIndent -= Config.INDENTATION;
 		mIndent -= Config.INDENTATION;
 	}
-	
-	private Term index2Term(Index index, TermVariable[] vars) {
-		final int[] idx = index.getArray();
-		assert vars.length == idx.length;
-		final Term[] conj = new Term[vars.length];
-		for (int i = 0; i < vars.length; ++i) {
-			conj[i] = mTheory.equals(vars[i],
-					mModel.toModelTerm(idx[i], vars[i].getSort()));
-		}
-		return mTheory.and(conj);
-	}
-	
-	private void appendFunctionValue(FunctionValue value, TermVariable[] vars,
-			Sort resultSort) {
+
+	private void appendFunctionValue(final FunctionValue value, final TermVariable[] vars, final Sort resultSort) {
 		if (vars.length == 0) {
 			newline();
-			mString.append(
-					mModel.toModelTerm(value.getDefault(), resultSort)
-					.toStringDirect());
+			mString.append(mModel.toModelTerm(value.getDefault(), resultSort).toStringDirect());
 		} else {
 			final int defaultVal = value.getDefault();
 			int closing = 0;
 			for (final Entry<Index, Integer> me : value.values().entrySet()) {
 				if (me.getValue() != defaultVal) {
 					newline();
-					mString.append("(ite ").append(
-							index2Term(me.getKey(), vars).toStringDirect())
-							.append(' ').append(mModel.toModelTerm(
-									me.getValue(), resultSort)
-											.toStringDirect());
+					mString.append("(ite ").append(mModel.index2Term(me.getKey(), vars).toStringDirect()).append(' ')
+							.append(mModel.toModelTerm(me.getValue(), resultSort).toStringDirect());
 					// We have to close one parenthesis;
 					++closing;
 				}
@@ -127,17 +108,16 @@ public class ModelFormatter {
 			// Default value
 			mIndent += Config.INDENTATION;
 			newline();
-			mString.append(mModel.toModelTerm(defaultVal, resultSort)
-					.toStringDirect());
+			mString.append(mModel.toModelTerm(defaultVal, resultSort).toStringDirect());
 			for (int i = 0; i < closing; ++i) {
 				mString.append(')');
 			}
 			mIndent -= Config.INDENTATION;
 		}
 	}
-	
+
 	public String finish() {
 		return mString.append(')').toString();
 	}
-	
+
 }

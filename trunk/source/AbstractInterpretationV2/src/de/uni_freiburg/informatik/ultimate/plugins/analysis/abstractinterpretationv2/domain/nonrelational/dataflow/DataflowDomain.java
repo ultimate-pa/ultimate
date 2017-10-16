@@ -32,7 +32,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPos
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 
 /**
  * Domain that can be used to compute fixpoints for various dataflow analyses like reaching definitions, def-use, etc.
@@ -50,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
 public class DataflowDomain<ACTION extends IIcfgTransition<IcfgLocation>>
-		implements IAbstractDomain<DataflowState<ACTION>, ACTION, IProgramVarOrConst> {
+		implements IAbstractDomain<DataflowState<ACTION>, ACTION> {
 
 	private final DataflowPostOperator<ACTION> mPost;
 	private final IAbstractStateBinaryOperator<DataflowState<ACTION>> mMerge;
@@ -76,7 +75,7 @@ public class DataflowDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 	}
 
 	@Override
-	public IAbstractPostOperator<DataflowState<ACTION>, ACTION, IProgramVarOrConst> getPostOperator() {
+	public IAbstractPostOperator<DataflowState<ACTION>, ACTION> getPostOperator() {
 		return mPost;
 	}
 }

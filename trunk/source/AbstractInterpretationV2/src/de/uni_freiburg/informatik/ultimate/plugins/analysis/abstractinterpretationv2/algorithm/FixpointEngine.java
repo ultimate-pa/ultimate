@@ -59,23 +59,23 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public class FixpointEngine<STATE extends IAbstractState<STATE, VARDECL>, ACTION, VARDECL, LOC>
+public class FixpointEngine<STATE extends IAbstractState<STATE>, ACTION, VARDECL, LOC>
 		implements IFixpointEngine<STATE, ACTION, VARDECL, LOC> {
 
 	private final int mMaxUnwindings;
 	private final int mMaxParallelStates;
 
 	private final ITransitionProvider<ACTION, LOC> mTransitionProvider;
-	private final IAbstractStateStorage<STATE, ACTION, VARDECL, LOC> mStateStorage;
-	private final IAbstractDomain<STATE, ACTION, VARDECL> mDomain;
-	private final IVariableProvider<STATE, ACTION, VARDECL> mVarProvider;
+	private final IAbstractStateStorage<STATE, ACTION, LOC> mStateStorage;
+	private final IAbstractDomain<STATE, ACTION> mDomain;
+	private final IVariableProvider<STATE, ACTION> mVarProvider;
 	private final ILoopDetector<ACTION> mLoopDetector;
 	private final IDebugHelper<STATE, ACTION, VARDECL, LOC> mDebugHelper;
 	private final IProgressAwareTimer mTimer;
 	private final ILogger mLogger;
 
-	private AbsIntResult<STATE, ACTION, VARDECL, LOC> mResult;
-	private final SummaryMap<STATE, ACTION, VARDECL, LOC> mSummaryMap;
+	private AbsIntResult<STATE, ACTION, LOC> mResult;
+	private final SummaryMap<STATE, ACTION, LOC> mSummaryMap;
 	private final boolean mUseHierachicalPre;
 
 	public FixpointEngine(final FixpointEngineParameters<STATE, ACTION, VARDECL, LOC> params) {
@@ -97,20 +97,22 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, VARDECL>, ACTION
 	}
 
 	@Override
-	public AbsIntResult<STATE, ACTION, VARDECL, LOC> run(final Collection<? extends LOC> start, final Script script) {
+	public AbsIntResult<STATE, ACTION, LOC> run(final Collection<? extends LOC> start, final Script script) {
 		mLogger.info("Starting fixpoint engine with domain " + mDomain.getClass().getSimpleName() + " (maxUnwinding="
 				+ mMaxUnwindings + ", maxParallelStates=" + mMaxParallelStates + ")");
 		mResult = new AbsIntResult<>(script, mDomain, mTransitionProvider, mVarProvider);
+		mDomain.beforeFixpointComputation();
 		calculateFixpoint(start);
 		mResult.saveRootStorage(mStateStorage);
 		mResult.saveSummaryStorage(mSummaryMap);
 		mLogger.debug("Fixpoint computation completed");
+		mDomain.afterFixpointComputation(mResult);
 		return mResult;
 	}
 
 	private void calculateFixpoint(final Collection<? extends LOC> start) {
 		final Deque<WorklistItem<STATE, ACTION, VARDECL, LOC>> worklist = new ArrayDeque<>();
-		final IAbstractPostOperator<STATE, ACTION, VARDECL> postOp = mDomain.getPostOperator();
+		final IAbstractPostOperator<STATE, ACTION> postOp = mDomain.getPostOperator();
 		final IAbstractStateBinaryOperator<STATE> wideningOp = mDomain.getWideningOperator();
 		final Set<ACTION> reachedErrors = new HashSet<>();
 
@@ -129,7 +131,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, VARDECL>, ACTION
 				mLogger.debug(getLogMessageCurrentTransition(currentItem));
 			}
 
-			final DisjunctiveAbstractState<STATE, VARDECL> postState = calculateAbstractPost(currentItem, postOp);
+			final DisjunctiveAbstractState<STATE> postState = calculateAbstractPost(currentItem, postOp);
 
 			if (isUnnecessaryPostState(currentItem, postState)) {
 				continue;
@@ -143,7 +145,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, VARDECL>, ACTION
 			checkLoopState(currentItem);
 			checkReachedError(currentItem, postState, reachedErrors);
 
-			final DisjunctiveAbstractState<STATE, VARDECL> postStateAfterWidening =
+			final DisjunctiveAbstractState<STATE> postStateAfterWidening =
 					widenIfNecessary(currentItem, postState, wideningOp);
 			if (postStateAfterWidening == null) {
 				// we have reached a fixpoint
@@ -154,7 +156,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, VARDECL>, ACTION
 				continue;
 			}
 			logDebugPostChanged(postState, postStateAfterWidening, "Widening");
-			final DisjunctiveAbstractState<STATE, VARDECL> postStatesAfterSave =
+			final DisjunctiveAbstractState<STATE> postStatesAfterSave =
 					savePostState(currentItem, postStateAfterWidening);
 			assert postStatesAfterSave != null : "Saving a state is not allowed to return null";
 			logDebugPostChanged(postStateAfterWidening, postStatesAfterSave, "Merge");
@@ -176,7 +178,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, VARDECL>, ACTION
 	 * @return true if a summary item was added to the worklist and this item should be ignored.
 	 */
 	private boolean useSummaryInstead(final WorklistItem<STATE, ACTION, VARDECL, LOC> currentItem,
-			final DisjunctiveAbstractState<STATE, VARDECL> postState,
+			final DisjunctiveAbstractState<STATE> postState,
 			final Deque<WorklistItem<STATE, ACTION, VARDECL, LOC>> worklist) {
 		final ACTION callAction = currentItem.getAction();
 		if (!mTransitionProvider.isEnteringScope(callAction)) {
@@ -185,7 +187,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, VARDECL>, ACTION
 		}
 		final ACTION summaryAction = mTransitionProvider.getSummaryForCall(callAction);
 
-		final DisjunctiveAbstractState<STATE, VARDECL> summaryPostState =
+		final DisjunctiveAbstractState<STATE> summaryPostState =
 				currentItem.getSummaryPostState(summaryAction, postState);
 		if (summaryPostState == null) {
 			// we do not have a usable summary for this call, we have to use it as-it
@@ -218,17 +220,17 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, VARDECL>, ACTION
 		return true;
 	}
 
-	private DisjunctiveAbstractState<STATE, VARDECL> calculateAbstractPost(
+	private DisjunctiveAbstractState<STATE> calculateAbstractPost(
 			final WorklistItem<STATE, ACTION, VARDECL, LOC> currentItem,
-			final IAbstractPostOperator<STATE, ACTION, VARDECL> postOp) {
+			final IAbstractPostOperator<STATE, ACTION> postOp) {
 
-		final DisjunctiveAbstractState<STATE, VARDECL> preState = currentItem.getState();
-		final DisjunctiveAbstractState<STATE, VARDECL> hierachicalPreState = currentItem.getHierachicalState();
+		final DisjunctiveAbstractState<STATE> preState = currentItem.getState();
+		final DisjunctiveAbstractState<STATE> hierachicalPreState = currentItem.getHierachicalState();
 		final ACTION currentAction = currentItem.getAction();
 
 		// calculate the (abstract) effect of the current action
-		DisjunctiveAbstractState<STATE, VARDECL> postState;
-		final DisjunctiveAbstractState<STATE, VARDECL> preStateWithFreshVariables;
+		DisjunctiveAbstractState<STATE> postState;
+		final DisjunctiveAbstractState<STATE> preStateWithFreshVariables;
 		if (mTransitionProvider.isEnteringScope(currentAction) || mTransitionProvider.isLeavingScope(currentAction)) {
 			// if we enter or leave a scope, we first declare variables in the prestate
 			preStateWithFreshVariables =
@@ -257,10 +259,10 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, VARDECL>, ACTION
 		return postState;
 	}
 
-	private boolean assertIsPostSound(final DisjunctiveAbstractState<STATE, VARDECL> preState,
-			final ACTION currentAction, final DisjunctiveAbstractState<STATE, VARDECL> preStateWithFreshVariables,
-			final DisjunctiveAbstractState<STATE, VARDECL> hierachicalPreState,
-			final DisjunctiveAbstractState<STATE, VARDECL> postState) {
+	private boolean assertIsPostSound(final DisjunctiveAbstractState<STATE> preState, final ACTION currentAction,
+			final DisjunctiveAbstractState<STATE> preStateWithFreshVariables,
+			final DisjunctiveAbstractState<STATE> hierachicalPreState,
+			final DisjunctiveAbstractState<STATE> postState) {
 		final boolean rtr = mTransitionProvider.isSummaryWithImplementation(currentAction)
 				|| mDebugHelper.isPostSound(preState, hierachicalPreState, postState, currentAction);
 		if (rtr) {
@@ -292,7 +294,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, VARDECL>, ACTION
 	 *         and false otherwise.
 	 */
 	private boolean isUnnecessaryPostState(final WorklistItem<STATE, ACTION, VARDECL, LOC> currentItem,
-			final DisjunctiveAbstractState<STATE, VARDECL> pendingPostState) {
+			final DisjunctiveAbstractState<STATE> pendingPostState) {
 		if (pendingPostState.isBottom()) {
 			// if the new abstract state is bottom, we do not enter loops and we do not add
 			// new actions to the worklist
@@ -302,7 +304,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, VARDECL>, ACTION
 			return true;
 		}
 
-		final IAbstractStateStorage<STATE, ACTION, VARDECL, LOC> currentStateStorage = currentItem.getCurrentStorage();
+		final IAbstractStateStorage<STATE, ACTION, LOC> currentStateStorage = currentItem.getCurrentStorage();
 
 		// check if the pending post state is already subsumed by a pre-existing state and if this is not a return
 		if (checkSubset(currentStateStorage, currentItem.getAction(), pendingPostState)) {
@@ -314,7 +316,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, VARDECL>, ACTION
 		return false;
 	}
 
-	private boolean isHierachicalPostResultBottom(final DisjunctiveAbstractState<STATE, VARDECL> postState,
+	private boolean isHierachicalPostResultBottom(final DisjunctiveAbstractState<STATE> postState,
 			final WorklistItem<?, ?, ?, ?> currentItem) {
 		if (postState.isBottom()) {
 			if (mLogger.isDebugEnabled()) {
@@ -338,16 +340,15 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, VARDECL>, ACTION
 		}
 	}
 
-	private DisjunctiveAbstractState<STATE, VARDECL> savePostState(
-			final WorklistItem<STATE, ACTION, VARDECL, LOC> currentItem,
-			final DisjunctiveAbstractState<STATE, VARDECL> postState) {
-		final IAbstractStateStorage<STATE, ACTION, VARDECL, LOC> currentStorage = currentItem.getCurrentStorage();
+	private DisjunctiveAbstractState<STATE> savePostState(final WorklistItem<STATE, ACTION, VARDECL, LOC> currentItem,
+			final DisjunctiveAbstractState<STATE> postState) {
+		final IAbstractStateStorage<STATE, ACTION, LOC> currentStorage = currentItem.getCurrentStorage();
 		final ACTION currentAction = currentItem.getAction();
 		final LOC target = mTransitionProvider.getTarget(currentAction);
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug(getLogMessageNewPostState(postState));
 		}
-		final DisjunctiveAbstractState<STATE, VARDECL> rtrState = currentStorage.addAbstractState(target, postState);
+		final DisjunctiveAbstractState<STATE> rtrState = currentStorage.addAbstractState(target, postState);
 		if (rtrState != postState) {
 			mResult.getBenchmark().addMerge();
 		}
@@ -355,7 +356,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, VARDECL>, ACTION
 	}
 
 	private void checkReachedError(final WorklistItem<STATE, ACTION, VARDECL, LOC> currentItem,
-			final DisjunctiveAbstractState<STATE, VARDECL> postState, final Set<ACTION> reachedErrors) {
+			final DisjunctiveAbstractState<STATE> postState, final Set<ACTION> reachedErrors) {
 		final ACTION currentAction = currentItem.getAction();
 		final LOC postLoc = mTransitionProvider.getTarget(currentAction);
 		if (!mTransitionProvider.isErrorLocation(postLoc) || postState.isBottom()
@@ -373,14 +374,14 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, VARDECL>, ACTION
 	private WorklistItem<STATE, ACTION, VARDECL, LOC> createInitialWorklistItem(final ACTION elem) {
 		final STATE preState = mVarProvider.defineInitialVariables(elem, mDomain.createTopState());
 		assert preState != null;
-		final DisjunctiveAbstractState<STATE, VARDECL> preMultiState =
+		final DisjunctiveAbstractState<STATE> preMultiState =
 				new DisjunctiveAbstractState<>(mMaxParallelStates, preState);
 		return new WorklistItem<>(preMultiState, elem, mStateStorage, mSummaryMap);
 	}
 
 	private List<WorklistItem<STATE, ACTION, VARDECL, LOC>> createSuccessorItems(
 			final WorklistItem<STATE, ACTION, VARDECL, LOC> currentItem,
-			final DisjunctiveAbstractState<STATE, VARDECL> postState) {
+			final DisjunctiveAbstractState<STATE> postState) {
 		final ACTION current = currentItem.getAction();
 		final Collection<ACTION> successors = mTransitionProvider.getSuccessors(current, currentItem.getCurrentScope());
 
@@ -404,10 +405,9 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, VARDECL>, ACTION
 		return successorItems;
 	}
 
-	private DisjunctiveAbstractState<STATE, VARDECL> widenIfNecessary(
+	private DisjunctiveAbstractState<STATE> widenIfNecessary(
 			final WorklistItem<STATE, ACTION, VARDECL, LOC> currentItem,
-			final DisjunctiveAbstractState<STATE, VARDECL> postState,
-			final IAbstractStateBinaryOperator<STATE> wideningOp) {
+			final DisjunctiveAbstractState<STATE> postState, final IAbstractStateBinaryOperator<STATE> wideningOp) {
 
 		final ACTION currentAction = currentItem.getAction();
 
@@ -415,8 +415,8 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, VARDECL>, ACTION
 		// we should widen if the current item is a transition to a loop head
 		// or if a successor transition enters a scope
 		final LOC target = mTransitionProvider.getTarget(currentAction);
-		final Pair<Integer, DisjunctiveAbstractState<STATE, VARDECL>> loopPair = currentItem.getLoopPair(target);
-		final DisjunctiveAbstractState<STATE, VARDECL> oldState;
+		final Pair<Integer, DisjunctiveAbstractState<STATE>> loopPair = currentItem.getLoopPair(target);
+		final DisjunctiveAbstractState<STATE> oldState;
 		boolean scopeWidening = false;
 		if (loopPair != null && loopPair.getFirst() > mMaxUnwindings) {
 			oldState = loopPair.getSecond();
@@ -438,7 +438,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, VARDECL>, ACTION
 			mLogger.debug(AbsIntPrefInitializer.DINDENT + "Op1: " + LoggingHelper.getStateString(oldState));
 			mLogger.debug(AbsIntPrefInitializer.DINDENT + "Op2: " + LoggingHelper.getStateString(postState));
 		}
-		final DisjunctiveAbstractState<STATE, VARDECL> postStateAfterWidening = oldState.apply(wideningOp, postState);
+		final DisjunctiveAbstractState<STATE> postStateAfterWidening = oldState.apply(wideningOp, postState);
 		if (isFixpoint(oldState, postStateAfterWidening)) {
 			if (scopeWidening) {
 				// if we found a fixpoint during scope widening, it means that we will not continue into this scope but
@@ -456,9 +456,8 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, VARDECL>, ACTION
 	 *
 	 * @param postState
 	 */
-	private DisjunctiveAbstractState<STATE, VARDECL> prepareScope(
-			final WorklistItem<STATE, ACTION, VARDECL, LOC> currentItem,
-			final DisjunctiveAbstractState<STATE, VARDECL> postState) {
+	private DisjunctiveAbstractState<STATE> prepareScope(final WorklistItem<STATE, ACTION, VARDECL, LOC> currentItem,
+			final DisjunctiveAbstractState<STATE> postState) {
 		final ACTION action = currentItem.getAction();
 		if (mTransitionProvider.isEnteringScope(action)) {
 			currentItem.addScope(action, postState);
@@ -481,12 +480,11 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, VARDECL>, ACTION
 		return mTransitionProvider.isLeavingScope(currentItem.getAction(), currentItem.getCurrentScope());
 	}
 
-	private DisjunctiveAbstractState<STATE, VARDECL>
+	private DisjunctiveAbstractState<STATE>
 			getWidenStateAtScopeEntry(final WorklistItem<STATE, ACTION, VARDECL, LOC> currentItem) {
 		final ACTION currentAction = currentItem.getAction();
 
-		final Deque<Pair<ACTION, DisjunctiveAbstractState<STATE, VARDECL>>> scopeStack =
-				currentItem.getScopeWideningStack();
+		final Deque<Pair<ACTION, DisjunctiveAbstractState<STATE>>> scopeStack = currentItem.getScopeWideningStack();
 		// count all stack items that are there more than once and the current item
 		final Optional<Long> count = scopeStack.stream().map(a -> a.getFirst()).filter(a -> a != null)
 				.collect(Collectors.groupingBy(a -> a, Collectors.counting())).entrySet().stream()
@@ -507,8 +505,8 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, VARDECL>, ACTION
 					.map(a3 -> AbsIntPrefInitializer.TINDENT + a3).forEach(mLogger::debug);
 		}
 
-		final List<Pair<ACTION, DisjunctiveAbstractState<STATE, VARDECL>>> relevantStackItems = scopeStack.stream()
-				.sequential().filter(a -> a.getFirst() == currentAction).collect(Collectors.toList());
+		final List<Pair<ACTION, DisjunctiveAbstractState<STATE>>> relevantStackItems = scopeStack.stream().sequential()
+				.filter(a -> a.getFirst() == currentAction).collect(Collectors.toList());
 		if (relevantStackItems.isEmpty()) {
 			// there is no relevant sequence
 			return null;
@@ -533,7 +531,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, VARDECL>, ACTION
 			}
 			return null;
 		}
-		final DisjunctiveAbstractState<STATE, VARDECL> lastState = relevantStackItems.get(idx).getSecond();
+		final DisjunctiveAbstractState<STATE> lastState = relevantStackItems.get(idx).getSecond();
 
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug(AbsIntPrefInitializer.DINDENT + "Selected " + LoggingHelper.getHashCodeString(lastState));
@@ -541,8 +539,8 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, VARDECL>, ACTION
 		return lastState;
 	}
 
-	private boolean isFixpoint(final DisjunctiveAbstractState<STATE, VARDECL> oldState,
-			final DisjunctiveAbstractState<STATE, VARDECL> newState) {
+	private boolean isFixpoint(final DisjunctiveAbstractState<STATE> oldState,
+			final DisjunctiveAbstractState<STATE> newState) {
 		if (oldState.isEqualTo(newState)) {
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug(getLogMessageFixpointFound(oldState, newState));
@@ -553,10 +551,10 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, VARDECL>, ACTION
 		return false;
 	}
 
-	private boolean checkSubset(final IAbstractStateStorage<STATE, ACTION, VARDECL, LOC> currentStateStorage,
-			final ACTION currentAction, final DisjunctiveAbstractState<STATE, VARDECL> pendingPostState) {
+	private boolean checkSubset(final IAbstractStateStorage<STATE, ACTION, LOC> currentStateStorage,
+			final ACTION currentAction, final DisjunctiveAbstractState<STATE> pendingPostState) {
 		final LOC target = mTransitionProvider.getTarget(currentAction);
-		final DisjunctiveAbstractState<STATE, VARDECL> oldPostState = currentStateStorage.getAbstractState(target);
+		final DisjunctiveAbstractState<STATE> oldPostState = currentStateStorage.getAbstractState(target);
 		assert oldPostState == null || Objects.equals(pendingPostState.getVariables(),
 				oldPostState.getVariables()) : "States in the same scope have different variables";
 		if (pendingPostState == oldPostState || pendingPostState.isSubsetOf(oldPostState) != SubsetResult.NONE) {
@@ -575,8 +573,8 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, VARDECL>, ACTION
 		}
 	}
 
-	private void logDebugPostChanged(final DisjunctiveAbstractState<STATE, VARDECL> postState,
-			final DisjunctiveAbstractState<STATE, VARDECL> postStateAfterChange, final String reason) {
+	private void logDebugPostChanged(final DisjunctiveAbstractState<STATE> postState,
+			final DisjunctiveAbstractState<STATE> postStateAfterChange, final String reason) {
 		if (!mLogger.isDebugEnabled()) {
 			return;
 		}
@@ -589,15 +587,14 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, VARDECL>, ACTION
 		mLogger.debug(prefix + "After: " + LoggingHelper.getStateString(postStateAfterChange));
 	}
 
-	private StringBuilder
-			getLogMessagePostIsBottom(final DisjunctiveAbstractState<STATE, VARDECL> pendingNewPostState) {
+	private StringBuilder getLogMessagePostIsBottom(final DisjunctiveAbstractState<STATE> pendingNewPostState) {
 		return new StringBuilder().append(AbsIntPrefInitializer.INDENT)
 				.append(" Skipping all successors because post state [").append(pendingNewPostState.hashCode())
 				.append("] is bottom");
 	}
 
-	private StringBuilder getLogMessagePostIsSubsumed(final DisjunctiveAbstractState<STATE, VARDECL> subState,
-			final DisjunctiveAbstractState<STATE, VARDECL> superState) {
+	private StringBuilder getLogMessagePostIsSubsumed(final DisjunctiveAbstractState<STATE> subState,
+			final DisjunctiveAbstractState<STATE> superState) {
 		return new StringBuilder().append(AbsIntPrefInitializer.INDENT)
 				.append(" Skipping all successors because post state ").append(LoggingHelper.getStateString(subState))
 				.append(" is subsumed by pre-existing state ").append(LoggingHelper.getStateString(superState));
@@ -620,26 +617,26 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, VARDECL>, ACTION
 
 	}
 
-	private StringBuilder getLogMessageFixpointFound(final DisjunctiveAbstractState<STATE, VARDECL> oldPostState,
-			final DisjunctiveAbstractState<STATE, VARDECL> newPostState) {
+	private StringBuilder getLogMessageFixpointFound(final DisjunctiveAbstractState<STATE> oldPostState,
+			final DisjunctiveAbstractState<STATE> newPostState) {
 		return new StringBuilder().append(AbsIntPrefInitializer.INDENT).append(" State [")
 				.append(oldPostState.hashCode()).append("] ").append(oldPostState.toLogString())
 				.append(" is equal to [").append(newPostState.hashCode()).append("]");
 	}
 
-	private StringBuilder getLogMessageNewPostState(final DisjunctiveAbstractState<STATE, VARDECL> newPostState) {
+	private StringBuilder getLogMessageNewPostState(final DisjunctiveAbstractState<STATE> newPostState) {
 		return new StringBuilder().append(AbsIntPrefInitializer.INDENT).append(" Adding post state [")
 				.append(newPostState.hashCode()).append("] ").append(newPostState.toLogString());
 	}
 
 	private StringBuilder getLogMessageEnterLoop(final int loopCounterValue, final LOC loopHead,
-			final DisjunctiveAbstractState<STATE, VARDECL> state) {
+			final DisjunctiveAbstractState<STATE> state) {
 		return new StringBuilder().append(AbsIntPrefInitializer.INDENT).append(" Entering loop ").append(loopHead)
 				.append(" (").append(loopCounterValue).append("), saving ").append(LoggingHelper.getStateString(state));
 	}
 
 	private StringBuilder getLogMessageCurrentTransition(final WorklistItem<STATE, ACTION, VARDECL, LOC> currentItem) {
-		final DisjunctiveAbstractState<STATE, VARDECL> preState = currentItem.getState();
+		final DisjunctiveAbstractState<STATE> preState = currentItem.getState();
 		final ACTION current = currentItem.getAction();
 		final int depth = currentItem.getScopeStackDepth();
 		final String preStateString = preState == null ? "NULL" : LoggingHelper.getStateString(preState).toString();

@@ -448,7 +448,7 @@ public class FunctionHandler {
 			if (!exprResult.lrVal.getCType().equals(functionResultType) && functionResultType instanceof CPointer
 					&& exprResult.lrVal.getCType() instanceof CPrimitive
 					&& exprResult.lrVal.getValue() instanceof IntegerLiteral
-					&& ((IntegerLiteral) exprResult.lrVal.getValue()).getValue().equals("0")) {
+					&& "0".equals(((IntegerLiteral) exprResult.lrVal.getValue()).getValue())) {
 				exprResult.lrVal = new RValue(mExpressionTranslation.constructNullPointer(loc), functionResultType);
 			}
 
@@ -666,7 +666,7 @@ public class FunctionHandler {
 		return declarations;
 	}
 
-	private boolean containsOneHeapDataArray(final LinkedHashSet<String> modifySet,
+	private static boolean containsOneHeapDataArray(final LinkedHashSet<String> modifySet,
 			final Collection<HeapDataArray> heapDataArrays) {
 		for (final HeapDataArray hda : heapDataArrays) {
 			if (modifySet.contains(hda.getVariableName())) {
@@ -755,8 +755,8 @@ public class FunctionHandler {
 				CType expectedParamType =
 						mProcedureToCFunctionType.get(methodName).getParameterTypes()[i].getType().getUnderlyingType();
 				// bool/int conversion
-				if ((expectedParamType instanceof CPrimitive
-						&& ((CPrimitive) expectedParamType).getGeneralType() == CPrimitiveCategory.INTTYPE)
+				if (expectedParamType instanceof CPrimitive
+						&& ((CPrimitive) expectedParamType).getGeneralType() == CPrimitiveCategory.INTTYPE
 						|| expectedParamType instanceof CEnum) {
 					in.rexBoolToIntIfNecessary(loc, mExpressionTranslation);
 				}
@@ -1183,7 +1183,8 @@ public class FunctionHandler {
 			final FloatFunction floatFunction = FloatFunction.decode(methodName);
 			if (floatFunction != null) {
 				if (!FloatSupportInUltimate.getSupportedFloatOperations().contains(methodName)) {
-					throw new AssertionError("inconsistent information about supported float operations");
+					throw new AssertionError(
+							"inconsistent information about supported float operations: " + methodName);
 				}
 				assert arguments.length == 1;
 				final ExpressionResult arg = ((ExpressionResult) main.dispatch(arguments[0]))
@@ -1215,8 +1216,8 @@ public class FunctionHandler {
 	 * @param resultType
 	 *            CType that determinies the type of the auxiliary variable
 	 */
-	private ExpressionResult constructOverapproximationForFunctionCall(final Dispatcher main, final ILocation loc,
-			final String functionName, final CType resultType) {
+	private static ExpressionResult constructOverapproximationForFunctionCall(final Dispatcher main,
+			final ILocation loc, final String functionName, final CType resultType) {
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 		// introduce fresh aux variable
 		final String tmpId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.NONDET, resultType);
@@ -1235,7 +1236,7 @@ public class FunctionHandler {
 	 * active. settings concerned are: - "Pointer base address is valid at dereference" -
 	 * "Pointer to allocated memory at dereference"
 	 */
-	private List<Statement> constructMemsafetyChecksForPointerExpression(final ILocation loc,
+	private static List<Statement> constructMemsafetyChecksForPointerExpression(final ILocation loc,
 			final Expression pointerValue, final MemoryHandler memoryHandler,
 			final AExpressionTranslation expressionTranslation) {
 		final List<Statement> result = new ArrayList<>();
@@ -1711,7 +1712,7 @@ public class FunctionHandler {
 		main.mCHandler.endScope();
 	}
 
-	private CFunction addFPParamToCFunction(final CFunction calledFuncCFunction) {
+	private static CFunction addFPParamToCFunction(final CFunction calledFuncCFunction) {
 		final CDeclaration[] newCDecs = new CDeclaration[calledFuncCFunction.getParameterTypes().length + 1];
 		for (int i = 0; i < newCDecs.length - 1; i++) {
 			newCDecs[i] = calledFuncCFunction.getParameterTypes()[i];

@@ -35,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IOutgoingTransitionlet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.visualization.AutomatonTransition.Transition;
@@ -74,7 +75,7 @@ public class NwaToUltimateModel<LETTER, STATE> {
 	 * @throws AutomataOperationCanceledException
 	 *             if operation was canceled
 	 */
-	public IElement transformToUltimateModel(final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> nwaSimple)
+	public IElement transformToUltimateModel(final INwaOutgoingTransitionProvider<LETTER, STATE> nwaSimple)
 			throws AutomataOperationCanceledException {
 		final INestedWordAutomaton<LETTER, STATE> nwa;
 		if (nwaSimple instanceof INestedWordAutomaton) {

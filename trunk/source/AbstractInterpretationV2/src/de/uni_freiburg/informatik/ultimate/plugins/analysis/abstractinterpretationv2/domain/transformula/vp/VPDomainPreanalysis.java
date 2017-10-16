@@ -42,6 +42,10 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.EqFunctionApplicationNode;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.EqNode;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.EqNodeAndFunctionFactory;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.VPDomainHelpers;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
@@ -58,9 +62,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDim
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalStore;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgUtils;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqFunctionNode;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNode;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNodeAndFunctionFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.statistics.Benchmark;
 
@@ -71,8 +72,8 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.Benchmark;
  * @author Alexander Nutz
  */
 public class VPDomainPreanalysis {
-	
-	
+
+
 	private final Benchmark mBenchmark;
 
 	private final Map<Term, IProgramVarOrConst> mTermToProgramVarOrConst = new HashMap<>();
@@ -89,7 +90,7 @@ public class VPDomainPreanalysis {
 	/**
 	 * Stores for each array, which EqFunctionNodes have it as their topmost function symbol.
 	 */
-	private final HashRelation<IProgramVarOrConst, EqFunctionNode> mArrayIdToFnNodes = new HashRelation<>();
+	private final HashRelation<IProgramVarOrConst, EqFunctionApplicationNode> mArrayIdToFnNodes = new HashRelation<>();
 
 	private final ILogger mLogger;
 
@@ -101,14 +102,14 @@ public class VPDomainPreanalysis {
 
 	private final CfgSmtToolkit mCfgSmtToolkit;
 
-	public VPDomainPreanalysis(final IIcfg<?> root, final ILogger logger, IUltimateServiceProvider services) {
+	public VPDomainPreanalysis(final IIcfg<?> root, final ILogger logger, final IUltimateServiceProvider services) {
 		mManagedScript = root.getCfgSmtToolkit().getManagedScript();
 		mLogger = logger;
 		mSymboltable = root.getCfgSmtToolkit().getSymbolTable();
 		mCfgSmtToolkit = root.getCfgSmtToolkit();
 		mSettings = new VPDomainPreanalysisSettings();
-		mEqNodeAndFunctionFactory = new EqNodeAndFunctionFactory(this, mManagedScript);
 		mServices = services;
+		mEqNodeAndFunctionFactory = new EqNodeAndFunctionFactory(mServices, mManagedScript);
 
 		mBenchmark = new Benchmark();
 		mBenchmark.start(VPSFO.overallFromPreAnalysis);
@@ -119,12 +120,12 @@ public class VPDomainPreanalysis {
 		mBenchmark.register(VPSFO.conjoinOverallClock);
 
 		process(RcfgUtils.getInitialEdges(root));
-		
+
 	}
 
 	private <T extends IcfgEdge> void process(final Collection<T> edges) {
 		mLogger.info("started VPDomainPreAnalysis");
-		
+
 
 		final Deque<IcfgEdge> worklist = new ArrayDeque<>();
 		final Set<IcfgEdge> finished = new HashSet<>();
@@ -136,16 +137,16 @@ public class VPDomainPreanalysis {
 				continue;
 			}
 			if (current instanceof IAction) {
-				visit((IAction) current);
+				visit(current);
 			}
 			worklist.addAll(current.getTarget().getOutgoingEdges());
 		}
 	}
 
-	
+
 	// TODO: move to interfaces I<X>Action, the visitor is unnecessary, then
-	
-	protected void visit(IAction c) {
+
+	protected void visit(final IAction c) {
 		if (c instanceof ICallAction) {
 			visit((ICallAction) c);
 		} else if (c instanceof IReturnAction) {
@@ -157,28 +158,28 @@ public class VPDomainPreanalysis {
 		}
 	}
 
-	protected void visit(ICallAction c) {
-		TransFormula tf = c.getLocalVarsAssignment();
+	protected void visit(final ICallAction c) {
+		final TransFormula tf = c.getLocalVarsAssignment();
 		handleTransFormula(tf);
 	}
 
-	protected void visit(IReturnAction c) {
-		TransFormula tf = c.getAssignmentOfReturn();
+	protected void visit(final IReturnAction c) {
+		final TransFormula tf = c.getAssignmentOfReturn();
 		handleTransFormula(tf);
 	}
 
-	protected void visit(IInternalAction c) {
-		TransFormula tf = c.getTransformula();
+	protected void visit(final IInternalAction c) {
+		final TransFormula tf = c.getTransformula();
 		handleTransFormula(tf);
 	}
 
-	
-	private void handleTransFormula(TransFormula tf) {
+
+	private void handleTransFormula(final TransFormula tf) {
 		final Map<Term, Term> substitionMap =
 				VPDomainHelpers.computeNormalizingSubstitution(tf);
 		final Term formulaWithNormalizedVariables = new Substitution(mManagedScript, substitionMap)
 				.transform(tf.getFormula());
-		
+
 		/*
 		 * handle selects in the formula
 		 */
@@ -234,24 +235,24 @@ public class VPDomainPreanalysis {
 	}
 
 	public Set<EqNode> getAccessingIndicesForArrays(final Set<IProgramVarOrConst> arrays) {
-		Set<EqNode> result = new HashSet<>();
-		for (IProgramVarOrConst a : arrays) {
+		final Set<EqNode> result = new HashSet<>();
+		for (final IProgramVarOrConst a : arrays) {
 			result.addAll(getAccessingIndicesForArray(a));
 		}
 		return result;
 	}
-	
-	private Set<EqNode> getAccessingIndicesForArray(IProgramVarOrConst array) {
+
+	private Set<EqNode> getAccessingIndicesForArray(final IProgramVarOrConst array) {
 		return Collections.unmodifiableSet(mArrayToAccessingEqNodes.getImage(array));
 	}
-	
+
 	/**
 	 * Called after the main run (which is initiated by the constructor)
 	 *
-	 * We have collected all (multi-dimensional) select-terms in the program and all equations. 
-	 *  Step 1: construct EqNodes for everything that is equated to a select-term, and then build the transitive 
+	 * We have collected all (multi-dimensional) select-terms in the program and all equations.
+	 *  Step 1: construct EqNodes for everything that is equated to a select-term, and then build the transitive
 	 *    closure.
-	 *  Step 2: build nodes necessary for array equations (i.e., when a and b are equated they should have analogous  
+	 *  Step 2: build nodes necessary for array equations (i.e., when a and b are equated they should have analogous
 	 *   node sets)
 	 */
 	public void postProcess() {
@@ -304,27 +305,27 @@ public class VPDomainPreanalysis {
 		for (final Term t : closure) {
 //			getOrConstructEqNode(t); TODO
 		}
-		
-		
+
+
 //		/*
-//		 * Say the program equates two arrays, with or without stores in between. Then we want to have the same 
-//		 * EqFunctionNodes for these symbols. 
-//		 * 
+//		 * Say the program equates two arrays, with or without stores in between. Then we want to have the same
+//		 * EqFunctionNodes for these symbols.
+//		 *
 //		 * E.g.
 //		 *  We have (= a b), or (= a (store b i x)). Then for every node a[t] we also want to have the node b[t], and
 //		 *  vice versa. Note that this introduces EqNode that do not correspond to any term in the formula.
 //		 *  Why do we want those extra nodes?
-//		 *  
+//		 *
 //		 *  say we have a state where
 //		 *   valid[p] == 1
 //		 *  then we say
 //		 *   valid' := valid
 //		 *   assume valid'[m] == 0
-//		 *  and we want to conclude 
+//		 *  and we want to conclude
 //		 *   m != p
-//		 *   Then we can conclude this from valid'[m] != valid'[p], but that we know from the fact that 
+//		 *   Then we can conclude this from valid'[m] != valid'[p], but that we know from the fact that
 //		 *    valid'[p] == valid[p] (and valid[p] == 1 and 1 != 0 and valid'[m] == 0)
-//		 *   However our program contains no term that triggers tracking of valid'[p] 
+//		 *   However our program contains no term that triggers tracking of valid'[p]
 //		 */
 //		final Set<ApplicationTerm> arrayEquations = mEquations.stream()
 //				.filter(eq -> eq.getFunction().getParameterSorts()[0].isArraySort())
@@ -337,7 +338,7 @@ public class VPDomainPreanalysis {
 //					getOrConstructBoogieVarOrConst(VPDomainHelpers.getArrayTerm(arg1)));
 //			final EqFunction array2 = mEqNodeAndFunctionFactory.getOrConstructEqFunction(
 //					getOrConstructBoogieVarOrConst(VPDomainHelpers.getArrayTerm(arg2)));
-//			
+//
 //			/*
 //			 * for each EqFunctionNode of the form array1[i1 .. in] create the node array2[i1 .. in] and vice versa
 //			 */
@@ -348,7 +349,7 @@ public class VPDomainPreanalysis {
 //				getOrConstructEqFnNode(array1, eqfn.getArgs());
 //			}
 //		}
-		
+
 		mLogger.info("VPDomainPreanalysis finished.");
 		mLogger.info("tracked arrays: " + mArrayIdToFnNodes.getDomain());
 	}
@@ -358,11 +359,11 @@ public class VPDomainPreanalysis {
 		return mSettings;
 	}
 
-	public boolean isArrayTracked(Term arrayid, TransFormula tf) {
+	public boolean isArrayTracked(final Term arrayid, final TransFormula tf) {
 		return isArrayTracked(arrayid, VPDomainHelpers.computeProgramVarMappingFromTransFormula(tf));
 	}
 
-	public boolean isArrayTracked(Term arrayid, Map<TermVariable, IProgramVar> tvToPvMap) {
+	public boolean isArrayTracked(final Term arrayid, final Map<TermVariable, IProgramVar> tvToPvMap) {
 		if (arrayid instanceof ApplicationTerm && "store".equals(((ApplicationTerm) arrayid).getFunction().getName())) {
 			final ApplicationTerm at = (ApplicationTerm) arrayid;
 			boolean result = true;
@@ -371,33 +372,33 @@ public class VPDomainPreanalysis {
 			result &= isElementTracked(at.getParameters()[2], tvToPvMap);
 			return result;
 		} else {
-			IProgramVarOrConst pvoc = null; //getIProgramVarOrConstOrLiteral(arrayid, tvToPvMap); TODO
+			final IProgramVarOrConst pvoc = null; //getIProgramVarOrConstOrLiteral(arrayid, tvToPvMap); TODO
 //			assert pvoc != null : "perhaps implement this case?";
 			return isArrayTracked(pvoc);
 		}
 	}
 
-	public boolean isArrayTracked(IProgramVarOrConst pvoc) {
-	
+	public boolean isArrayTracked(final IProgramVarOrConst pvoc) {
+
 		if (mSettings.trackAllArrays()) {
 			return true;
 		}
-		
-		for (String arrayName : mSettings.getArraysToTrack()) {
+
+		for (final String arrayName : mSettings.getArraysToTrack()) {
 			if (pvoc.toString().contains(arrayName)) {
 				return true;
 			}
 		}
 		return false;
 	}
-	
+
 	public ManagedScript getManagedScript() {
 		return mManagedScript;
 	}
 
-	public boolean isArrayTracked(Term lhs, Map<IProgramVar, TermVariable> inVars,
-			Map<IProgramVar, TermVariable> outVars) {
-		return isArrayTracked(lhs, 
+	public boolean isArrayTracked(final Term lhs, final Map<IProgramVar, TermVariable> inVars,
+			final Map<IProgramVar, TermVariable> outVars) {
+		return isArrayTracked(lhs,
 				VPDomainHelpers.computeProgramVarMappingFromInVarOutVarMappings(inVars, outVars));
 	}
 
@@ -412,23 +413,23 @@ public class VPDomainPreanalysis {
 	public Benchmark getBenchmark() {
 		return mBenchmark;
 	}
-	
+
 	public IIcfgSymbolTable getSymbolTable() {
 		return mSymboltable;
 	}
 
-	private boolean isElementTracked(Term term, Map<TermVariable, IProgramVar> tvToPvMap) {
+	private boolean isElementTracked(final Term term, final Map<TermVariable, IProgramVar> tvToPvMap) {
 		if (mSettings.trackAllElements()) {
 			return true;
 		}
-		final Term normalizedTerm = 
+		final Term normalizedTerm =
 				new Substitution(mManagedScript, VPDomainHelpers.computeNormalizingSubstitution(tvToPvMap))
 				.transform(term);
 		return false; //getEqNode(normalizedTerm) != null; TODO
 
 	}
 
-	public boolean isElementTracked(Term term, TransFormula tf) {
+	public boolean isElementTracked(final Term term, final TransFormula tf) {
 		return isElementTracked(term, VPDomainHelpers.computeProgramVarMappingFromInVarOutVarMappings(
 				tf.getInVars(), tf.getOutVars()));
 	}
@@ -455,26 +456,26 @@ class VPDomainPreanalysisSettings {
 		mArrayNames.add(SFO.VALID);
 		mArrayNames.add(SFO.MEMORY_INT);
 		mArrayNames.add(SFO.MEMORY_POINTER);
-		
-		
+
+
 		//TODO restore svcomp settings
 		mArrayNames.add("f_a");
-		
-		Set<String> oldArrayNames = new HashSet<>();
-		for (String an : mArrayNames) {
+
+		final Set<String> oldArrayNames = new HashSet<>();
+		for (final String an : mArrayNames) {
 			oldArrayNames.add("old(" + an + ")");
 		}
 		mArrayNames.addAll(oldArrayNames);
 	}
-	
+
 	public boolean trackAllElements() {
 		return true;
 	}
-	
+
 	public boolean trackAllArrays() {
 		return true;
 	}
-	
+
 	public Set<String> getArraysToTrack() {
 			return mArrayNames;
 	}
@@ -494,7 +495,7 @@ class SFO { //copied from translation TODO: perhaps move it to utils or so..
 	 * The "#memory" array identifier.
 	 */
 	public static final String MEMORY = "#memory";
-	
+
 	/**
 	 * String holding "int".
 	 */
@@ -503,7 +504,7 @@ class SFO { //copied from translation TODO: perhaps move it to utils or so..
 	/**
 	 * The "$Pointer$" type identifier.
 	 */
-	public static final String POINTER = "$Pointer$";	
+	public static final String POINTER = "$Pointer$";
 
 	/**
 	 * combined SFOs for memory arrays:
@@ -511,5 +512,5 @@ class SFO { //copied from translation TODO: perhaps move it to utils or so..
 	public static final String MEMORY_INT = MEMORY + "_" + INT;
 //	public static final String MEMORY_REAL = MEMORY + "_" + REAL;
 	public static final String MEMORY_POINTER = MEMORY + "_" + POINTER;
-	
+
 }

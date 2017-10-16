@@ -32,6 +32,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.Function;
 
 /**
  * Object that represents a binary relation (i.e. a set of ordered pairs). Given an element of this relation (d,r)
@@ -122,9 +123,10 @@ public abstract class AbstractRelation<D, R, MAP extends Map<D, Set<R>>> impleme
 	 *
 	 * @param left
 	 */
-	public void removeDomainElement(final D left) {
-		mMap.remove(left);
+	public Set<R> removeDomainElement(final D left) {
+		final Set<R> result = mMap.remove(left);
 		assert sanityCheck();
+		return result;
 	}
 
 	/**
@@ -181,6 +183,14 @@ public abstract class AbstractRelation<D, R, MAP extends Map<D, Set<R>>> impleme
 			}
 		}
 		assert sanityCheck();
+	}
+
+	public void transformElements(final Function<D, D> dTransformer, final Function<R, R> rTransformer) {
+		// TODO: would be nicer if we did not use HashRelation but something more generic for the copy
+		for (final Entry<D, R> pair : new HashRelation<>(this)) {
+			removePair(pair.getKey(), pair.getValue());
+			addPair(dTransformer.apply(pair.getKey()), rTransformer.apply(pair.getValue()));
+		}
 	}
 
 	/**

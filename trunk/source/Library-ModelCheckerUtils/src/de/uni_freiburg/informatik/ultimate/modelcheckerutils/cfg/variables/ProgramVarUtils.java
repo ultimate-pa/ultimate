@@ -50,8 +50,11 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
  */
 public class ProgramVarUtils {
 	
+	private static final String AUX_VAR_PREFIX = "c_aux_";
+
+
 	private ProgramVarUtils() {
-		
+		// do not instantiate
 	}
 
 	
@@ -88,26 +91,35 @@ public class ProgramVarUtils {
 	}
 	
 	/**
-	 * Construct constant for an aux var.
-	 * (The default constant is used to represent the aux var in the closed formulas
-	 * of {@link TransFormula}s.
-	 * @param script {@link ManagedScript} for which constant is constructed.
+	 * Construct constant for an aux var. (The default constant is used to
+	 * represent the aux var in the closed formulas of {@link TransFormula}s.
+	 * 
+	 * @param mgdScript
+	 *            {@link ManagedScript} for which constant is constructed.
 	 */
-	public static ApplicationTerm constructConstantForAuxVar(final ManagedScript script, final TermVariable auxVar) {
+	public static ApplicationTerm constructConstantForAuxVar(final ManagedScript mgdScript, final TermVariable auxVar) {
 		ApplicationTerm defaultConstant;
 		{
-			
-			final String defaultConstantName = "c_aux_" + auxVar.getName();
+
+			final String defaultConstantName = AUX_VAR_PREFIX + auxVar.getName();
 			final Object lockOwner = auxVar;
-			script.lock(lockOwner);
-			script.declareFun(lockOwner, defaultConstantName, new Sort[0], auxVar.getSort());
-			defaultConstant = (ApplicationTerm) script.term(lockOwner, defaultConstantName);
-			script.unlock(lockOwner);
+			mgdScript.lock(lockOwner);
+			mgdScript.declareFun(lockOwner, defaultConstantName, new Sort[0], auxVar.getSort());
+			defaultConstant = (ApplicationTerm) mgdScript.term(lockOwner, defaultConstantName);
+			mgdScript.unlock(lockOwner);
 		}
 		return defaultConstant;
 	}
-	
-	
+
+	/**
+	 * Get the constant that represents an auxVar. Requires that this constant
+	 * has already been declared.
+	 */
+	public static ApplicationTerm getAuxVarConstant(final ManagedScript mgdScript, final TermVariable auxVar) {
+		final String defaultConstantName = AUX_VAR_PREFIX + auxVar.getName();
+		return (ApplicationTerm) mgdScript.getScript().term(defaultConstantName);
+	}
+
 	public static Set<IProgramNonOldVar> extractNonOldVars(final Term term, final IIcfgSymbolTable symbolTable) {
 		final Set<IProgramNonOldVar> result = new HashSet<>();
 		for (final TermVariable tv : term.getFreeVars()) {

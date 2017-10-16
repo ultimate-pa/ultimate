@@ -56,7 +56,7 @@ public class StringFactory implements ISenwaStateFactory<String>, IBlackWhiteSta
 		IBuchiComplementNcsbStateFactory<String>, IBuchiComplementSvwStateFactory<String>,
 		IPetriNet2FiniteAutomatonStateFactory<String>, IIncrementalInclusionStateFactory<String>,
 		IMinimizationStateFactory<String>, IMinimizationCheckResultStateFactory<String>, IUnionStateFactory<String>, 
-        IBuchiComplementNcsbSimpleStateFactory<String> {
+        IBuchiComplementNcsbSimpleStateFactory<String>, IRelabelStateFactory<String> {
 
 	public static final String INFINITY = "∞";
 	private static final String EMPTY_STRING = "";
@@ -370,7 +370,12 @@ public class StringFactory implements ISenwaStateFactory<String>, IBlackWhiteSta
 	 * @author Yong Li (liyong@ios.ac.cn)
 	 * */
 	@Override
-	public String buchiComplementNcsbSimple(int id) {
+	public String buchiComplementNcsbSimple(final int id) {
 		return "s" + id;
+	}
+
+	@Override
+	public String relabel(final String state, final int i) {
+		return "q" + i;
 	}
 }

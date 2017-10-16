@@ -1,0 +1,8 @@
+let rec halt _ = 
+	and shrink f  
+	if (f() =0 ) then 
+		halt()
+	else shrink (lambda_ . f() -1) 
+
+and main()
+	let t = *+ in shrink (lambda_. t)

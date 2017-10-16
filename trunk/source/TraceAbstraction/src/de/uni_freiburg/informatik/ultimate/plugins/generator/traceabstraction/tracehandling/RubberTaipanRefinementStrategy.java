@@ -36,8 +36,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.taskidentifier.TaskIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarAbsIntRunner;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 
@@ -57,9 +57,9 @@ public class RubberTaipanRefinementStrategy<LETTER extends IIcfgTransition<?>>
 			final CegarAbsIntRunner<LETTER> absIntRunner,
 			final AssertionOrderModulation<LETTER> assertionOrderModulation,
 			final IRun<LETTER, IPredicate, ?> counterexample, final IAutomaton<LETTER, IPredicate> abstraction,
-			final int iteration, final CegarLoopStatisticsGenerator cegarLoopBenchmark) {
+			final TaskIdentifier taskIdentifier) {
 		super(logger, services, prefs, cfgSmtToolkit, predicateFactory, predicateUnifier, absIntRunner,
-				assertionOrderModulation, counterexample, abstraction, iteration, cegarLoopBenchmark);
+				assertionOrderModulation, counterexample, abstraction, taskIdentifier);
 	}
 
 	@Override
@@ -81,7 +81,7 @@ public class RubberTaipanRefinementStrategy<LETTER extends IIcfgTransition<?>>
 		default:
 			throw new IllegalArgumentException(UNKNOWN_MODE + getCurrentMode());
 		}
-		resetTraceChecker();
+		resetTraceCheck();
 		return nextMode;
 	}
 }

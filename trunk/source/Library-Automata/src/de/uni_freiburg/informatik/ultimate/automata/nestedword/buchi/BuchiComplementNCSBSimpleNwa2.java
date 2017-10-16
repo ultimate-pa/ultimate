@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -41,23 +40,15 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLette
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaSuccessorStateProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.NwaToBuchiWrapper;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.NwaToBuchiWrapper2;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.Options;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.automata.IBuchi;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.automata.IState;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.automata.IStateNwa;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.complement.BuchiComplementSDBA;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.complement.BuchiNwaComplementSDBA;
+
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.complement.BuchiNwaComplement;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.complement.DoubleDecker;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.complement.NCSB;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.complement.StateNCSB;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.complement.StateNwaNCSB;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util.IntIterator;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util.IntSet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util.UtilIntSet;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiComplementNcsbSimpleStateFactory;
+
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiComplementNcsbStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
@@ -84,13 +75,13 @@ public class BuchiComplementNCSBSimpleNwa2<LETTER, STATE> implements INwaSuccess
 	
 	private final StateWithRankInfo<STATE> mEmptyStackStateWri;
 
-	private final BuchiNwaComplementSDBA mComplementBuchi; 
+	private final BuchiNwaComplement mComplementBuchi; 
 //	private final Map<Integer, LETTER> mIdLetterMap;
 	private final Map<LETTER, Integer> mLetterIdMap;
 	private final Map<Integer, STATE> mIdStateMap;
 	private final Map<STATE, Integer> mStateIdMap;
 
-	private final NwaToBuchiWrapper2<LETTER, STATE> mOperandBuchi;
+	private final NwaToBuchiWrapper<LETTER, STATE> mOperandBuchi;
 	private final Map<LevelRankingState<LETTER, STATE>, STATE> mDet2res = new HashMap<>();
 	private final Map<Integer, LevelRankingState<LETTER, STATE>> mInt2LevelRanks = new HashMap<>();
 	/**
@@ -141,10 +132,9 @@ public class BuchiComplementNCSBSimpleNwa2<LETTER, STATE> implements INwaSuccess
 		}
 
 		mEmptyStackStateWri = new StateWithRankInfo<>(mSetOfStates.getEmptyStackState());
-		mOperandBuchi = new NwaToBuchiWrapper2<LETTER, STATE>(callAlphabet, internalAlphabet, returnAlphabet, mLetterIdMap, operand);
-		mComplementBuchi = new BuchiNwaComplementSDBA(mOperandBuchi);
+		mOperandBuchi = new NwaToBuchiWrapper<LETTER, STATE>(callAlphabet, internalAlphabet, returnAlphabet, mLetterIdMap, operand);
+		mComplementBuchi = new BuchiNwaComplement(mOperandBuchi);
 		constructInitialState();
-		Options.optNCSB = false;
 	}
 	
 	
@@ -166,7 +156,7 @@ public class BuchiComplementNCSBSimpleNwa2<LETTER, STATE> implements INwaSuccess
 	}
 	private StateWithRankInfo<STATE> getStackState(int downState) {
 		StateWithRankInfo<STATE> stackState = null;
-		if(downState == mComplementBuchi.getEmptyDownState()) {
+		if(downState == DoubleDecker.EMPTY_DOWN_STATE) {
 			stackState = mEmptyStackStateWri;
 		}else {
 			stackState = new StateWithRankInfo<STATE>(mOperandBuchi.getNwaSTATE(downState));
@@ -177,50 +167,36 @@ public class BuchiComplementNCSBSimpleNwa2<LETTER, STATE> implements INwaSuccess
 		LevelRankingState<LETTER, STATE> lvlrk = mInt2LevelRanks.get(sid);
 		if(lvlrk != null) return lvlrk;
 		
-		NCSB state = mComplementBuchi.getState(sid).getNCSB();
+		StateNwaNCSB state = (StateNwaNCSB) mComplementBuchi.getState(sid);
+		NCSB ncsb = state.getNCSB();
 
 		lvlrk = new LevelRankingState<>(mOperand);
-		IntSet B = state.getBSet();
+		IntSet B = ncsb.getBSet();
 		// N
-		IntSet temp = state.getNSet();
-		IntIterator iterSet = temp.iterator();
-		while(iterSet.hasNext()) {
-			int decker = iterSet.next();
-			int downState = mComplementBuchi.getDownState(decker);
-			int upState = mComplementBuchi.getUpState(decker);	
-			lvlrk.addRank(getStackState(downState), mOperandBuchi.getNwaSTATE(upState), 3, false);
-		}
+		IntSet temp = ncsb.getNSet();
+		addLevelRankingState(lvlrk, temp, 3, false);
 		// C\B
-		temp = state.copyCSet();
+		temp = ncsb.copyCSet();
 		temp.andNot(B);
-		iterSet = temp.iterator();
-		while (iterSet.hasNext()) {
-			int decker = iterSet.next();
-			int downState = mComplementBuchi.getDownState(decker);
-			int upState = mComplementBuchi.getUpState(decker);
-			lvlrk.addRank(getStackState(downState), mOperandBuchi.getNwaSTATE(upState), 2, false);
-		}
+		addLevelRankingState(lvlrk, temp, 2, false);
 		// C/\ B
-		temp = state.copyCSet();
+		temp = ncsb.copyCSet();
 		temp.and(B);
-		iterSet = temp.iterator();
-		while (iterSet.hasNext()) {
-			int decker = iterSet.next();
-			int downState = mComplementBuchi.getDownState(decker);
-			int upState = mComplementBuchi.getUpState(decker);
-			lvlrk.addRank(getStackState(downState), mOperandBuchi.getNwaSTATE(upState), 2, true);
-		}
+		addLevelRankingState(lvlrk, temp, 2, true);
 		// S
-		temp = state.getSSet();
-		iterSet = temp.iterator();
+		addLevelRankingState(lvlrk, ncsb.getSSet(), 1, false);
+
+		return lvlrk;
+	}
+	
+	private void addLevelRankingState(LevelRankingState<LETTER, STATE> lvlrk, IntSet states, int rank, boolean isInB) {
+		IntIterator iterSet = states.iterator();
 		while (iterSet.hasNext()) {
 			int decker = iterSet.next();
 			int downState = mComplementBuchi.getDownState(decker);
 			int upState = mComplementBuchi.getUpState(decker);
-			lvlrk.addRank(getStackState(downState), mOperandBuchi.getNwaSTATE(upState), 1, false);
+			lvlrk.addRank(getStackState(downState), mOperandBuchi.getNwaSTATE(upState), rank, isInB);
 		}
-		
-		return lvlrk;
 	}
 	
 
@@ -285,7 +261,7 @@ public class BuchiComplementNCSBSimpleNwa2<LETTER, STATE> implements INwaSuccess
 	public Collection<STATE> internalSuccessors(final STATE state, final LETTER letter) {
 		// compute the successors on-the-fly
 		int letterId = mLetterIdMap.get(letter);
-		StateNwaNCSB s = mComplementBuchi.getState(mStateIdMap.get(state));
+		StateNwaNCSB s = (StateNwaNCSB) mComplementBuchi.getState(mStateIdMap.get(state));
 		IntSet succs = s.getSuccessorsInternal(letterId);
 		return computeSuccessors(succs);
 	}
@@ -293,7 +269,7 @@ public class BuchiComplementNCSBSimpleNwa2<LETTER, STATE> implements INwaSuccess
 	@Override
 	public Collection<STATE> callSuccessors(final STATE state, final LETTER letter) {
 		int letterId = mLetterIdMap.get(letter);
-		StateNwaNCSB s = mComplementBuchi.getState(mStateIdMap.get(state));
+		StateNwaNCSB s = (StateNwaNCSB)mComplementBuchi.getState(mStateIdMap.get(state));
 		IntSet succs = s.getSuccessorsCall(letterId);
 		return computeSuccessors(succs);
 	}
@@ -311,7 +287,7 @@ public class BuchiComplementNCSBSimpleNwa2<LETTER, STATE> implements INwaSuccess
 	@Override
 	public Collection<STATE> returnSuccessorsGivenHier(final STATE state, final STATE hier, final LETTER letter) {
 		int letterId = mLetterIdMap.get(letter);
-		StateNwaNCSB s = mComplementBuchi.getState(mStateIdMap.get(state));
+		StateNwaNCSB s = (StateNwaNCSB)mComplementBuchi.getState(mStateIdMap.get(state));
 		IntSet succs = s.getSuccessorsReturn(mStateIdMap.get(hier), letterId);
 		return computeSuccessors(succs);
 	}

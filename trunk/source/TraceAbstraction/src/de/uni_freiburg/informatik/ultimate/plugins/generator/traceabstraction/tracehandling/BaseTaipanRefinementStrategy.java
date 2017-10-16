@@ -46,8 +46,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.taskidentifier.TaskIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarAbsIntRunner;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.IInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.MultiTrackInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
@@ -55,18 +55,18 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategyExceptionBlacklist;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.IInterpolantGenerator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TracePredicates;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 
 /**
- * {@link IRefinementStrategy} that is used by Taipan. It first tries an {@link InterpolatingTraceChecker} using
+ * {@link IRefinementStrategy} that is used by Taipan. It first tries an {@link InterpolatingTraceCheck} using
  * {@link SMTInterpol} with {@link InterpolationTechnique#Craig_TreeInterpolation}.<br>
  * If successful and the interpolant sequence is perfect, those interpolants are used.<br>
- * If not successful, it tries {@link TraceChecker} {@code Z3} and, if again not successful, {@code CVC4}.<br>
+ * If not successful, it tries {@link TraceCheck} {@code Z3} and, if again not successful, {@code CVC4}.<br>
  * If none of those is successful, the strategy gives up.<br>
  * Otherwise, if the trace is infeasible, the strategy uses an {@link CegarAbsIntRunner} to construct interpolants.<br>
  * If not successful, the strategy again tries {@code Z3} and {@code CVC4}, but this time using interpolation
@@ -94,14 +94,14 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 	// store if the trace has already been shown to be infeasible in a previous attempt
 	private boolean mHasShownInfeasibilityBefore;
 
-	private TraceCheckerConstructor<LETTER> mTcConstructor;
-	private TraceCheckerConstructor<LETTER> mPrevTcConstructor;
+	private TraceCheckConstructor<LETTER> mTcConstructor;
+	private TraceCheckConstructor<LETTER> mPrevTcConstructor;
 
-	private TraceChecker mTraceChecker;
+	private TraceCheck mTraceCheck;
 	private IInterpolantGenerator mInterpolantGenerator;
 	private IInterpolantAutomatonBuilder<LETTER, IPredicate> mInterpolantAutomatonBuilder;
-	private final int mIteration;
-	private final CegarLoopStatisticsGenerator mCegarLoopBenchmark;
+	private final TaskIdentifier mTaskIdentifier;
+	private final RefinementEngineStatisticsGenerator mRefinementEngineStatisticsGenerator;
 
 	/**
 	 * @param logger
@@ -121,8 +121,6 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 	 *            counterexample
 	 * @param abstraction
 	 *            abstraction
-	 * @param iteration
-	 *            current CEGAR loop iteration
 	 * @param cegarLoopBenchmark
 	 *            benchmark
 	 */
@@ -132,7 +130,7 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 			final CegarAbsIntRunner<LETTER> absIntRunner,
 			final AssertionOrderModulation<LETTER> assertionOrderModulation,
 			final IRun<LETTER, IPredicate, ?> counterexample, final IAutomaton<LETTER, IPredicate> abstraction,
-			final int iteration, final CegarLoopStatisticsGenerator cegarLoopBenchmark) {
+			final TaskIdentifier taskIdentifier) {
 		mServices = services;
 		mLogger = logger;
 		mPrefs = prefs;
@@ -142,8 +140,8 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 		mAssertionOrderModulation = assertionOrderModulation;
 		mCounterexample = counterexample;
 		mAbstraction = abstraction;
-		mIteration = iteration;
-		mCegarLoopBenchmark = cegarLoopBenchmark;
+		mTaskIdentifier = taskIdentifier;
+		mRefinementEngineStatisticsGenerator = new RefinementEngineStatisticsGenerator();
 
 		mCurrentMode = getInitialMode();
 	}
@@ -151,23 +149,23 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 	protected abstract Mode getInitialMode();
 
 	@Override
-	public abstract boolean hasNextTraceChecker();
+	public abstract boolean hasNextTraceCheck();
 
 	@Override
-	public void nextTraceChecker() {
-		final Mode nextMode = getNextTraceCheckerMode();
+	public void nextTraceCheck() {
+		final Mode nextMode = getNextTraceCheckMode();
 		mCurrentMode = nextMode;
 
 		// reset trace checker, interpolant generator, and constructor
 		mInterpolantGenerator = null;
-		resetTraceChecker();
+		resetTraceCheck();
 
 		if (mLogger.isInfoEnabled()) {
-			mLogger.info("Switched to TraceChecker mode " + mCurrentMode);
+			mLogger.info("Switched to traceCheck mode " + mCurrentMode);
 		}
 	}
 
-	protected abstract Mode getNextTraceCheckerMode();
+	protected abstract Mode getNextTraceCheckMode();
 
 	@Override
 	public boolean hasNextInterpolantGenerator(final List<TracePredicates> perfectIpps,
@@ -190,8 +188,8 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 		}
 	}
 
-	protected void resetTraceChecker() {
-		mTraceChecker = null;
+	protected void resetTraceCheck() {
+		mTraceCheck = null;
 		mPrevTcConstructor = mTcConstructor;
 		mTcConstructor = null;
 	}
@@ -207,14 +205,15 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 	}
 
 	@Override
-	public TraceChecker getTraceChecker() {
-		if (mTraceChecker == null) {
+	public TraceCheck getTraceCheck() {
+		if (mTraceCheck == null) {
 			if (mTcConstructor == null) {
-				mTcConstructor = constructTraceCheckerConstructor();
+				mTcConstructor = constructTraceCheckConstructor();
 			}
-			mTraceChecker = mTcConstructor.get();
+			mTraceCheck = mTcConstructor.get();
+			mRefinementEngineStatisticsGenerator.addTraceCheckStatistics(mTraceCheck);
 		}
-		return mTraceChecker;
+		return mTraceCheck;
 	}
 
 	@Override
@@ -228,8 +227,7 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 
 	@Override
 	public IInterpolantAutomatonBuilder<LETTER, IPredicate> getInterpolantAutomatonBuilder(
-			final List<TracePredicates> perfectIpps,
-			final List<TracePredicates> imperfectIpps) {
+			final List<TracePredicates> perfectIpps, final List<TracePredicates> imperfectIpps) {
 		if (mInterpolantAutomatonBuilder == null) {
 			mInterpolantAutomatonBuilder =
 					constructInterpolantAutomatonBuilder(perfectIpps, imperfectIpps, mCurrentMode);
@@ -238,8 +236,7 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 	}
 
 	private IInterpolantAutomatonBuilder<LETTER, IPredicate> constructInterpolantAutomatonBuilder(
-			final List<TracePredicates> perfectIpps,
-			final List<TracePredicates> imperfectIpps, final Mode mode) {
+			final List<TracePredicates> perfectIpps, final List<TracePredicates> imperfectIpps, final Mode mode) {
 		switch (mode) {
 		case ABSTRACT_INTERPRETATION:
 		case SMTINTERPOL:
@@ -263,7 +260,7 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 		}
 	}
 
-	private TraceCheckerConstructor<LETTER> constructTraceCheckerConstructor() {
+	private TraceCheckConstructor<LETTER> constructTraceCheckConstructor() {
 		final InterpolationTechnique interpolationTechnique = getInterpolationTechnique(mCurrentMode);
 		final boolean useTimeout = mHasShownInfeasibilityBefore;
 
@@ -275,21 +272,20 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 		}
 
 		final ManagedScript managedScript =
-				constructManagedScript(mServices, mPrefs, scriptMode, useTimeout, mIteration);
+				constructManagedScript(mServices, mPrefs, scriptMode, useTimeout, mTaskIdentifier);
 
 		final AssertCodeBlockOrder assertionOrder =
-				mAssertionOrderModulation.reportAndGet(mCounterexample, interpolationTechnique);
+				mAssertionOrderModulation.get(mCounterexample, interpolationTechnique);
 
-		mLogger.info("Using TraceChecker mode " + mCurrentMode + " with AssertCodeBlockOrder " + assertionOrder
-				+ " (IT: " + interpolationTechnique + ")");
-		TraceCheckerConstructor<LETTER> result;
+		mLogger.info("Using traceCheck mode " + mCurrentMode + " with AssertCodeBlockOrder " + assertionOrder + " (IT: "
+				+ interpolationTechnique + ")");
+		TraceCheckConstructor<LETTER> result;
 		if (mPrevTcConstructor == null) {
-			result = new TraceCheckerConstructor<>(mPrefs, managedScript, mServices, mPredicateFactory,
-					mPredicateUnifierSmt, mCounterexample, assertionOrder, interpolationTechnique, mIteration,
-					mCegarLoopBenchmark);
+			result = new TraceCheckConstructor<>(mPrefs, managedScript, mServices, mPredicateFactory,
+					mPredicateUnifierSmt, mCounterexample, assertionOrder, interpolationTechnique, mTaskIdentifier);
 		} else {
-			result = new TraceCheckerConstructor<>(mPrevTcConstructor, managedScript, assertionOrder,
-					interpolationTechnique, mCegarLoopBenchmark);
+			result = new TraceCheckConstructor<>(mPrevTcConstructor, managedScript, assertionOrder,
+					interpolationTechnique);
 		}
 		return result;
 	}
@@ -318,11 +314,11 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 	@SuppressWarnings("squid:S1151")
 	private ManagedScript constructManagedScript(final IUltimateServiceProvider services,
 			final TaCheckAndRefinementPreferences<LETTER> prefs, final Mode mode, final boolean useTimeout,
-			final int iteration) {
+			final TaskIdentifier taskIdentifier) {
 		final boolean dumpSmtScriptToFile = prefs.getDumpSmtScriptToFile();
 		final String pathOfDumpedScript = prefs.getPathOfDumpedScript();
 		final String baseNameOfDumpedScript =
-				"Script_" + prefs.getIcfgContainer().getIdentifier() + "_Iteration" + iteration;
+				"Script_" + prefs.getIcfgContainer().getIdentifier() + "_Iteration" + taskIdentifier;
 		final Settings solverSettings;
 		final SolverMode solverMode;
 		final String logicForExternalSolver;
@@ -330,7 +326,7 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 		switch (mode) {
 		case SMTINTERPOL:
 		case ABSTRACT_INTERPRETATION:
-			final long timeout = useTimeout ? TIMEOUT_SMTINTERPOL : TIMEOUT_NONE_SMTINTERPOL;
+			final long timeout = useTimeout ? RefinementStrategyUtils.TIMEOUT_SMTINTERPOL : RefinementStrategyUtils.TIMEOUT_NONE_SMTINTERPOL;
 			solverSettings = new Settings(false, false, null, timeout, null, dumpSmtScriptToFile, pathOfDumpedScript,
 					baseNameOfDumpedScript);
 			solverMode = SolverMode.Internal_SMTInterpol;
@@ -338,25 +334,25 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 			break;
 		case Z3_IG:
 		case Z3_NO_IG:
-			command = useTimeout ? COMMAND_Z3_TIMEOUT : COMMAND_Z3_NO_TIMEOUT;
+			command = useTimeout ? RefinementStrategyUtils.COMMAND_Z3_TIMEOUT : RefinementStrategyUtils.COMMAND_Z3_NO_TIMEOUT;
 			solverSettings = new Settings(false, true, command, 0, null, dumpSmtScriptToFile, pathOfDumpedScript,
 					baseNameOfDumpedScript);
 			solverMode = SolverMode.External_ModelsAndUnsatCoreMode;
-			logicForExternalSolver = LOGIC_Z3;
+			logicForExternalSolver = RefinementStrategyUtils.LOGIC_Z3;
 			break;
 		case CVC4_IG:
 		case CVC4_NO_IG:
-			command = useTimeout ? COMMAND_CVC4_TIMEOUT : COMMAND_CVC4_NO_TIMEOUT;
+			command = useTimeout ? RefinementStrategyUtils.COMMAND_CVC4_TIMEOUT : RefinementStrategyUtils.COMMAND_CVC4_NO_TIMEOUT;
 			solverSettings = new Settings(false, true, command, 0, null, dumpSmtScriptToFile, pathOfDumpedScript,
 					baseNameOfDumpedScript);
 			solverMode = SolverMode.External_ModelsAndUnsatCoreMode;
-			logicForExternalSolver = LOGIC_CVC4_DEFAULT;
+			logicForExternalSolver = RefinementStrategyUtils.LOGIC_CVC4_DEFAULT;
 			break;
 		default:
 			throw new IllegalArgumentException(UNKNOWN_MODE + mode);
 		}
 		final Script solver = SolverBuilder.buildAndInitializeSolver(services, prefs.getToolchainStorage(), solverMode,
-				solverSettings, false, false, logicForExternalSolver, "TraceCheck_Iteration" + iteration);
+				solverSettings, false, false, logicForExternalSolver, "TraceCheck_Iteration" + taskIdentifier);
 		final ManagedScript result = new ManagedScript(services, solver);
 
 		final TermTransferrer tt = new TermTransferrer(solver);
@@ -370,9 +366,9 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 		switch (mode) {
 		case SMTINTERPOL:
 		case CVC4_IG:
-			return castTraceChecker();
+			return castTraceCheck();
 		case Z3_IG:
-			return castTraceChecker();
+			return castTraceCheck();
 		case Z3_NO_IG:
 		case CVC4_NO_IG:
 		case ABSTRACT_INTERPRETATION:
@@ -385,10 +381,10 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 		}
 	}
 
-	private IInterpolantGenerator castTraceChecker() {
-		final TraceChecker traceChecker = getTraceChecker();
-		assert traceChecker != null && traceChecker instanceof InterpolatingTraceChecker;
-		return (InterpolatingTraceChecker) traceChecker;
+	private IInterpolantGenerator castTraceCheck() {
+		final TraceCheck traceCheck = getTraceCheck();
+		assert traceCheck != null && traceCheck instanceof InterpolatingTraceCheck;
+		return (InterpolatingTraceCheck) traceCheck;
 	}
 
 	@Override
@@ -404,6 +400,11 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 	@Override
 	public RefinementStrategyExceptionBlacklist getExceptionBlacklist() {
 		return RefinementStrategyExceptionBlacklist.UNKNOWN;
+	}
+
+	@Override
+	public RefinementEngineStatisticsGenerator getRefinementEngineStatistics() {
+		return mRefinementEngineStatisticsGenerator;
 	}
 
 	/**

@@ -31,15 +31,12 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.option.OptionMap;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.ParseEnvironment;
 
 public class CompilerTest {
-	
-	private CompilerTest() {
-		// Hide constructor
-	}
+
 	public static class MyLoggingScript extends LoggingScript {
-		public MyLoggingScript(String filename) throws FileNotFoundException {
+		public MyLoggingScript(final String filename) throws FileNotFoundException {
 			super(filename, false);
 		}
-		
+
 		@Override
 		public LBool assertTerm(Term term) {
 			term = new FormulaUnLet(UnletType.EXPAND_DEFINITIONS).unlet(term);
@@ -49,12 +46,8 @@ public class CompilerTest {
 			return super.assertTerm(term);
 		}
 	}
-	
-	private static void usage() {
-		System.err.println("USAGE smtinterpol [file.smt] [output.smt]");
-	}
-	
-	public static void main(String[] param) throws Exception {
+
+	public static void main(final String[] param) throws Exception {
 		int paramctr = 0;
 		String infilename, outfilename;
 		if (paramctr < param.length) {
@@ -77,5 +70,13 @@ public class CompilerTest {
 		final ParseEnvironment parseEnv = new ParseEnvironment(script, options);
 		parseEnv.parseScript(infilename);
 		parseEnv.exit();
+	}
+
+	private static void usage() {
+		System.err.println("USAGE smtinterpol [file.smt] [output.smt]");
+	}
+
+	private CompilerTest() {
+		// Hide constructor
 	}
 }

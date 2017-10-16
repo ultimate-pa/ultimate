@@ -42,15 +42,14 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
-import de.uni_freiburg.informatik.ultimate.util.SetOperations;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 /**
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class DataflowState<ACTION extends IAction>
-		implements IAbstractState<DataflowState<ACTION>, IProgramVarOrConst> {
+public class DataflowState<ACTION extends IAction> implements IAbstractState<DataflowState<ACTION>> {
 
 	private static int sId;
 	private final int mId;
@@ -85,7 +84,7 @@ public class DataflowState<ACTION extends IAction>
 		if (mVars.contains(variable)) {
 			return this;
 		}
-		final Set<IProgramVarOrConst> vars = SetOperations.getFreshSet(mVars, mVars.size() + 1);
+		final Set<IProgramVarOrConst> vars = DataStructureUtils.getFreshSet(mVars, mVars.size() + 1);
 		vars.add(variable);
 		return new DataflowState<>(vars, mDef, mUse, mReachDef, mNoWrite);
 	}
@@ -95,7 +94,7 @@ public class DataflowState<ACTION extends IAction>
 		if (!mVars.contains(variable)) {
 			return this;
 		}
-		final Set<IProgramVarOrConst> vars = SetOperations.getFreshSet(mVars);
+		final Set<IProgramVarOrConst> vars = DataStructureUtils.getFreshSet(mVars);
 		vars.remove(variable);
 		final Map<IProgramVarOrConst, Set<ACTION>> def = AbsIntUtil.getFreshMap(mDef);
 		def.remove(variable);
@@ -113,7 +112,7 @@ public class DataflowState<ACTION extends IAction>
 		if (variables == null || variables.isEmpty()) {
 			return this;
 		}
-		final Set<IProgramVarOrConst> vars = SetOperations.getFreshSet(mVars, mVars.size() + variables.size());
+		final Set<IProgramVarOrConst> vars = DataStructureUtils.getFreshSet(mVars, mVars.size() + variables.size());
 		vars.addAll(variables);
 		return new DataflowState<>(vars, mDef, mUse, mReachDef, mNoWrite);
 	}
@@ -123,7 +122,7 @@ public class DataflowState<ACTION extends IAction>
 		if (variables == null || variables.isEmpty()) {
 			return this;
 		}
-		final Set<IProgramVarOrConst> vars = SetOperations.getFreshSet(mVars);
+		final Set<IProgramVarOrConst> vars = DataStructureUtils.getFreshSet(mVars);
 		final Map<IProgramVarOrConst, Set<ACTION>> def = AbsIntUtil.getFreshMap(mDef);
 		final Map<IProgramVarOrConst, Set<ACTION>> use = AbsIntUtil.getFreshMap(mUse);
 		final Map<IProgramVarOrConst, Set<ACTION>> reachdef = AbsIntUtil.getFreshMap(mReachDef);
@@ -280,7 +279,7 @@ public class DataflowState<ACTION extends IAction>
 			throw new UnsupportedOperationException("Cannot create union of two incompatible dataflow states");
 		}
 
-		final Set<IProgramVarOrConst> vars = SetOperations.getFreshSet(mVars);
+		final Set<IProgramVarOrConst> vars = DataStructureUtils.getFreshSet(mVars);
 		final Map<IProgramVarOrConst, Set<ACTION>> def = AbsIntUtil.getFreshMap(mDef);
 		final Map<IProgramVarOrConst, Set<ACTION>> use = AbsIntUtil.getFreshMap(mUse);
 		final Map<IProgramVarOrConst, Set<ACTION>> reachdef = AbsIntUtil.getFreshMap(mReachDef);
@@ -344,7 +343,7 @@ public class DataflowState<ACTION extends IAction>
 		if (old2newVars == null || old2newVars.isEmpty()) {
 			return this;
 		}
-		final Set<IProgramVarOrConst> vars = SetOperations.getFreshSet(mVars);
+		final Set<IProgramVarOrConst> vars = DataStructureUtils.getFreshSet(mVars);
 		final Map<IProgramVarOrConst, Set<ACTION>> def = AbsIntUtil.getFreshMap(mDef);
 		final Map<IProgramVarOrConst, Set<ACTION>> use = AbsIntUtil.getFreshMap(mUse);
 		final Map<IProgramVarOrConst, Set<ACTION>> reachdef = AbsIntUtil.getFreshMap(mReachDef);

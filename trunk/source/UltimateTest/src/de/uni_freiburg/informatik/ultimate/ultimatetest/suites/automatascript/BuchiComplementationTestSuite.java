@@ -46,10 +46,10 @@ import de.uni_freiburg.informatik.ultimate.test.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimate.test.decider.AutomataScriptTestResultDecider;
 import de.uni_freiburg.informatik.ultimate.test.logs.summaries.AutomataScriptTestSummary;
 import de.uni_freiburg.informatik.ultimate.test.logs.summaries.ColumnDefinition;
+import de.uni_freiburg.informatik.ultimate.test.logs.summaries.ColumnDefinition.Aggregate;
 import de.uni_freiburg.informatik.ultimate.test.logs.summaries.ConversionContext;
 import de.uni_freiburg.informatik.ultimate.test.logs.summaries.CsvConcatenator;
 import de.uni_freiburg.informatik.ultimate.test.logs.summaries.LatexOverviewSummary;
-import de.uni_freiburg.informatik.ultimate.test.logs.summaries.ColumnDefinition.Aggregate;
 import de.uni_freiburg.informatik.ultimate.test.reporting.IIncrementalLog;
 import de.uni_freiburg.informatik.ultimate.test.reporting.ITestSummary;
 import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
@@ -60,7 +60,7 @@ import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderTransformer;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
- * Testsuite for compelementation of Büchi automata.
+ * Testsuite for complementation of Büchi automata.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
@@ -69,29 +69,37 @@ public class BuchiComplementationTestSuite extends UltimateTestSuite {
 
 	private static final String TOOLCHAIN = "examples/toolchains/AutomataScriptInterpreter.xml";
 	private static final File TOOLCHAIN_FILE = new File(TestUtil.getPathFromTrunk(TOOLCHAIN));
-	private static int sTimeout = 10 * 1_000;
-	private static final String[] mDirectories = {
+//	private static final int TIMEOUT = Integer.MAX_VALUE;
+	private static final int TIMEOUT = 60 * 1_000;
+	private static final String[] DIRECTORIES = {
 //			"examples/Automata/regression/nwa/operations/minimization",
 //			"examples/Automata/benchmarks/nwa/operations/minimization",
 
 			
 			// TODO: find some better folder
 			"examples/Automata/regression/nwa/operations/buchiComplement/ba",
+			
+			"examples/automata-benchmarks/2016TACAS-Complementing_Semi-deterministic_Buchi_Automata"
+
 	};
 	
-	private static final String[] mFileEndings = { ".ats" };
+	private static final String[] FILE_ENDINGS = { ".ats" };
 
 	private static final String[] SETTINGS = {
-			"AutomataScript/buchiComplementation/buchiComplementFKV.epf",
 			"AutomataScript/buchiComplementation/buchiComplementNCSB.epf",
-			"AutomataScript/buchiComplementation/buchiComplementSVW.epf",
+			"AutomataScript/buchiComplementation/buchiComplementNCSBLazyS.epf",
+			"AutomataScript/buchiComplementation/buchiComplementNCSBLazy.epf",
+			"AutomataScript/buchiComplementation/buchiComplementNCSBLazy2.epf",
+//			"AutomataScript/buchiComplementation/buchiComplementNCSBLazy3.epf",
+			"AutomataScript/buchiComplementation/buchiComplementFKV.epf",
+//			"AutomataScript/buchiComplementation/buchiComplementSVW.epf",
 			};
 
 	private static final String[] INTERESTING_COLUMNS = {
 			"File",
 			// "Settings",
-			// StatisticsType.ATS_ID.toString(),
-			StatisticsType.OPERATION_NAME.toString(),
+			StatisticsType.ATS_ID.toString(),
+//			StatisticsType.OPERATION_NAME.toString(),
 			StatisticsType.RUNTIME_TOTAL_MS.toString(),
 			StatisticsType.STATES_INPUT.toString(),
 			StatisticsType.STATES_OUTPUT.toString(),
@@ -100,8 +108,12 @@ public class BuchiComplementationTestSuite extends UltimateTestSuite {
 	private static final Set<String> INTERESTING_COLUMNS_AS_SET = new HashSet<>(Arrays.asList(INTERESTING_COLUMNS));
 
 	private static final Object[] INTERESTING_OPERATIONS = {
-			"buchiComplementFKV",
 			"buchiComplementNCSB",
+			"buchiComplementNCSBLazyS",
+			"buchiComplementNCSBLazy",
+			"buchiComplementNCSBLazy2",
+			"buchiComplementNCSBLazy3",
+			"buchiComplementFKV",
 			"buchiComplementSVW",
 	};
 	
@@ -144,14 +156,15 @@ public class BuchiComplementationTestSuite extends UltimateTestSuite {
 		final List<UltimateTestCase> testCases = new ArrayList<>();
 
 		final Collection<File> inputFiles = new ArrayList<>();
-		for (final String directory : mDirectories) {
-			inputFiles.addAll(getInputFiles(directory, mFileEndings));
+		for (final String directory : DIRECTORIES) {
+			inputFiles.addAll(getInputFiles(directory, FILE_ENDINGS));
 		}
 
 		for (final File inputFile : inputFiles) {
 			for (final String settingFileName : SETTINGS) {
 				final File settingsFile = new File(TestUtil.getPathFromTrunk("/examples/settings/" + settingFileName));
-				final UltimateRunDefinition urd = new UltimateRunDefinition(inputFile, settingsFile, TOOLCHAIN_FILE,sTimeout);
+				final UltimateRunDefinition urd = new UltimateRunDefinition(inputFile, settingsFile, TOOLCHAIN_FILE,
+						TIMEOUT);
 				testCases.add(buildTestCase(urd, new AutomataScriptTestResultDecider()));
 			}
 		}

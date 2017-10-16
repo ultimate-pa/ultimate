@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.core.coreplugin.services.ToolchainSto
  */
 public final class GetRandomDftaBU extends AGetRandomFtaBU {
 	/**
-	 * The default seed to use for generation. It is not indented to change thus the
+	 * The default seed to use for generation. It is not intended to change thus the
 	 * result of using the default seed will always remain the same even in
 	 * different JVM cycles.
 	 */
@@ -136,7 +136,7 @@ public final class GetRandomDftaBU extends AGetRandomFtaBU {
 	/**
 	 * Constructor of a deterministic finite tree automaton for the
 	 * {@code TestFileInterpreter}. This method uses a default seed that is not
-	 * indented to change thus the result of this method, for same arguments, will
+	 * intended to change thus the result of this method, for same arguments, will
 	 * always remain the same even in different JVM cycles. Use
 	 * {@link #GetRandomDftaBU(AutomataLibraryServices, int, int[], double[], double, long)}
 	 * if a seed should be specified.
@@ -232,7 +232,7 @@ public final class GetRandomDftaBU extends AGetRandomFtaBU {
 	/**
 	 * Constructor of a deterministic finite tree automaton for the
 	 * {@code TestFileInterpreter}. This method uses a default seed that is not
-	 * indented to change thus the result of this method, for same arguments, will
+	 * intended to change thus the result of this method, for same arguments, will
 	 * always remain the same even in different JVM cycles. Use
 	 * {@link #GetRandomDftaBU(AutomataLibraryServices, int, int[], int[], double, long)}
 	 * if a seed should be specified.

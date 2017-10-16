@@ -62,7 +62,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.Pred
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  */
-public class SMTTheoryPostOperator implements IAbstractPostOperator<SMTTheoryState, IcfgEdge, IProgramVarOrConst> {
+public class SMTTheoryPostOperator implements IAbstractPostOperator<SMTTheoryState, IcfgEdge> {
 	
 	private SMTTheoryTransitionRelationProvider mTransitionRelationProvider;
 	private PredicateTransformer<Term, IPredicate, TransFormula> mPredicateTransformer;

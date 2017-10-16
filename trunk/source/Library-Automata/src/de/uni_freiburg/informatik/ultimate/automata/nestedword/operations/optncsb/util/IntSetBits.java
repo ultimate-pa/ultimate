@@ -29,17 +29,14 @@
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util;
 
 import java.util.BitSet;
-
-/**
- * @author Yong Li (liyong@ios.ac.cn)
- * */
+import java.util.Iterator;
 
 public class IntSetBits implements IntSet {
 	
-	private BitSet set;
+	private BitSet mSet;
 	
 	public IntSetBits() {
-		set = new BitSet();
+		mSet = new BitSet();
 	}
 
 	@Override
@@ -50,7 +47,7 @@ public class IntSetBits implements IntSet {
 	@Override
 	public IntSet clone() {
 		IntSetBits bits = new IntSetBits();
-		bits.set = (BitSet) set.clone();
+		bits.mSet = (BitSet) mSet.clone();
 		return bits;
 	}
 
@@ -61,7 +58,7 @@ public class IntSetBits implements IntSet {
 			System.exit(-1);
 		}
 		BitSet bits = (BitSet) set.get();
-		this.set.andNot(bits);
+		this.mSet.andNot(bits);
 	}
 
 	@Override
@@ -71,7 +68,7 @@ public class IntSetBits implements IntSet {
 			System.exit(-1);
 		}
 		BitSet bits = (BitSet) set.get();
-		this.set.and(bits);
+		this.mSet.and(bits);
 	}
 
 	@Override
@@ -81,37 +78,37 @@ public class IntSetBits implements IntSet {
 			System.exit(-1);
 		}
 		BitSet bits = (BitSet) set.get();
-		this.set.or(bits);		
+		this.mSet.or(bits);		
 	}
 
 	@Override
 	public boolean get(int value) {
-		return set.get(value);
+		return mSet.get(value);
 	}
 	
 	@Override
 	public void set(int value) {
-		set.set(value);
+		mSet.set(value);
 	}
 
 	@Override
 	public void clear(int value) {
-		set.clear(value);
+		mSet.clear(value);
 	}
 	
 	@Override
 	public void clear() {
-		set.clear();
+		mSet.clear();
 	}
 
 	@Override
 	public boolean isEmpty() {
-		return set.isEmpty();
+		return mSet.isEmpty();
 	}
 
 	@Override
 	public int cardinality() {
-		return set.cardinality();
+		return mSet.cardinality();
 	}
 	
 	@Override
@@ -121,7 +118,7 @@ public class IntSetBits implements IntSet {
 			System.exit(-1);
 		}
 		IntSetBits temp = (IntSetBits) set;
-		return temp.set.intersects(this.set);
+		return temp.mSet.intersects(this.mSet);
 	}
 	
 
@@ -131,7 +128,7 @@ public class IntSetBits implements IntSet {
 			System.err.println("OPERAND should be BitSet");
 			System.exit(-1);
 		}
-		BitSet temp = (BitSet) this.set.clone();
+		BitSet temp = (BitSet) this.mSet.clone();
 		BitSet bits = (BitSet) set.get();
 		temp.andNot(bits);
 		return temp.isEmpty();
@@ -144,17 +141,17 @@ public class IntSetBits implements IntSet {
 			System.exit(-1);
 		}
 		BitSet bits = (BitSet) set.get();
-		return this.set.equals(bits);
+		return this.mSet.equals(bits);
 	}
 
 	@Override
 	public Object get() {
-		return set;
+		return mSet;
 	}
 	
 	@Override
 	public String toString() {
-		return set.toString();
+		return mSet.toString();
 	}
 	
 	public boolean equals(Object obj) {
@@ -168,23 +165,40 @@ public class IntSetBits implements IntSet {
 	
 	public static class SparseBitsIterator implements IntIterator {
 
-		private BitSet bits;
-		private int index;
+		private BitSet mBits;
+		private int mIndex;
 		
 		public SparseBitsIterator(IntSetBits set) {
-			this.bits = set.set;
-			index = bits.nextSetBit(0);
+			this.mBits = set.mSet;
+			mIndex = mBits.nextSetBit(0);
 		}
 		
 		public boolean hasNext() {
-			return (index >= 0);
+			return (mIndex >= 0);
 		}
 		
 		public int next() {
-			int rv = index;
-			index = bits.nextSetBit(index + 1);
+			int rv = mIndex;
+			mIndex = mBits.nextSetBit(mIndex + 1);
 			return rv;
 		}
+	}
+	
+	@Override
+	public Iterable<Integer> iterable() {
+		return () -> new Iterator<Integer>() {
+			IntIterator iter = iterator();
+			@Override
+			public boolean hasNext() {
+				return iter.hasNext();
+			}
+
+			@Override
+			public Integer next() {
+				return iter.next();
+			}
+			
+		};
 	}
 
 }

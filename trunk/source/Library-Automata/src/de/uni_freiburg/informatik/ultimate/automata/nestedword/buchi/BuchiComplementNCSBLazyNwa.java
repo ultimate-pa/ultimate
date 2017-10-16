@@ -27,27 +27,13 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.SetOfStates;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaSuccessorStateProvider;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
+
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.Options;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiComplementNcsbSimpleStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiComplementNcsbStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
-import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 
 /**
  * Optimized Buchi Complementation. This complementation is
@@ -65,7 +51,9 @@ public final class BuchiComplementNCSBLazyNwa<LETTER, STATE> extends BuchiComple
 			IBuchiComplementNcsbStateFactory<STATE> stateFactory,
 			INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		super(services, stateFactory, operand);
-		Options.optNCSB = true;
+		// this is optimized lazy 3
+		Options.lazyS = true;
+		Options.lazyB = true;
 	}
 
 }

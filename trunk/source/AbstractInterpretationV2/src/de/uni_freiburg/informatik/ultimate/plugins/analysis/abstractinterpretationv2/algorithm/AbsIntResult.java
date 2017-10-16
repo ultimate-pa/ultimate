@@ -42,12 +42,12 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.AbstractCounterexample;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.DisjunctiveAbstractState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractDomain;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractInterpretationResult;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IVariableProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.AbstractCounterexample;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.IAbstractInterpretationResult;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
@@ -55,28 +55,28 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public final class AbsIntResult<STATE extends IAbstractState<STATE, VARDECL>, ACTION, VARDECL, LOCATION>
-		implements IAbstractInterpretationResult<STATE, ACTION, VARDECL, LOCATION> {
+public final class AbsIntResult<STATE extends IAbstractState<STATE>, ACTION, LOCATION>
+		implements IAbstractInterpretationResult<STATE, ACTION, LOCATION> {
 
-	private final IAbstractDomain<STATE, ACTION, VARDECL> mAbstractDomain;
-	private final IVariableProvider<STATE, ACTION, VARDECL> mVariableProvider;
+	private final IAbstractDomain<STATE, ACTION> mAbstractDomain;
+	private final IVariableProvider<STATE, ACTION> mVariableProvider;
 	private final ITransitionProvider<ACTION, LOCATION> mTransProvider;
-	private final List<AbstractCounterexample<DisjunctiveAbstractState<STATE, VARDECL>, ACTION, VARDECL, LOCATION>> mCounterexamples;
+	private final List<AbstractCounterexample<DisjunctiveAbstractState<STATE>, ACTION, LOCATION>> mCounterexamples;
 	private final AbsIntBenchmark<ACTION, LOCATION> mBenchmark;
 
 	private final Script mScript;
 
-	private IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> mRootStorage;
-	private ISummaryStorage<STATE, ACTION, VARDECL, LOCATION> mSummaryMap;
+	private IAbstractStateStorage<STATE, ACTION, LOCATION> mRootStorage;
+	private ISummaryStorage<STATE, ACTION, LOCATION> mSummaryMap;
 
 	private Map<LOCATION, Term> mLoc2Term;
 	private Map<LOCATION, Set<STATE>> mLoc2States;
 	private Map<LOCATION, STATE> mLoc2SingleStates;
 	private Set<Term> mTerms;
 
-	protected AbsIntResult(final Script script, final IAbstractDomain<STATE, ACTION, VARDECL> abstractDomain,
+	protected AbsIntResult(final Script script, final IAbstractDomain<STATE, ACTION> abstractDomain,
 			final ITransitionProvider<ACTION, LOCATION> transProvider,
-			final IVariableProvider<STATE, ACTION, VARDECL> varProvider) {
+			final IVariableProvider<STATE, ACTION> varProvider) {
 		mAbstractDomain = Objects.requireNonNull(abstractDomain);
 		mScript = Objects.requireNonNull(script);
 		mTransProvider = Objects.requireNonNull(transProvider);
@@ -87,17 +87,15 @@ public final class AbsIntResult<STATE extends IAbstractState<STATE, VARDECL>, AC
 	}
 
 	void reachedError(final ITransitionProvider<ACTION, LOCATION> transitionProvider,
-			final IWorklistItem<STATE, ACTION, VARDECL, LOCATION> currentItem,
-			final DisjunctiveAbstractState<STATE, VARDECL> postState) {
+			final IWorklistItem<STATE, ACTION, LOCATION> currentItem, final DisjunctiveAbstractState<STATE> postState) {
 
-		final List<Triple<DisjunctiveAbstractState<STATE, VARDECL>, LOCATION, ACTION>> abstractExecution =
-				new ArrayList<>();
+		final List<Triple<DisjunctiveAbstractState<STATE>, LOCATION, ACTION>> abstractExecution = new ArrayList<>();
 
 		ACTION transition = currentItem.getAction();
 		abstractExecution.add(getCexTriple(transitionProvider, postState, transition));
 
-		DisjunctiveAbstractState<STATE, VARDECL> post = currentItem.getState();
-		IWorklistItem<STATE, ACTION, VARDECL, LOCATION> current = currentItem.getPredecessor();
+		DisjunctiveAbstractState<STATE> post = currentItem.getState();
+		IWorklistItem<STATE, ACTION, LOCATION> current = currentItem.getPredecessor();
 		while (current != null) {
 			transition = current.getAction();
 			abstractExecution.add(getCexTriple(transitionProvider, post, transition));
@@ -110,17 +108,17 @@ public final class AbsIntResult<STATE extends IAbstractState<STATE, VARDECL>, AC
 				.add(new AbstractCounterexample<>(post, transitionProvider.getSource(transition), abstractExecution));
 	}
 
-	private Triple<DisjunctiveAbstractState<STATE, VARDECL>, LOCATION, ACTION> getCexTriple(
+	private Triple<DisjunctiveAbstractState<STATE>, LOCATION, ACTION> getCexTriple(
 			final ITransitionProvider<ACTION, LOCATION> transitionProvider,
-			final DisjunctiveAbstractState<STATE, VARDECL> postState, final ACTION transition) {
+			final DisjunctiveAbstractState<STATE> postState, final ACTION transition) {
 		return new Triple<>(postState, transitionProvider.getTarget(transition), transition);
 	}
 
-	void saveRootStorage(final IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> rootStateStorage) {
+	void saveRootStorage(final IAbstractStateStorage<STATE, ACTION, LOCATION> rootStateStorage) {
 		mRootStorage = rootStateStorage;
 	}
 
-	void saveSummaryStorage(final ISummaryStorage<STATE, ACTION, VARDECL, LOCATION> summaryStorage) {
+	void saveSummaryStorage(final ISummaryStorage<STATE, ACTION, LOCATION> summaryStorage) {
 		mSummaryMap = summaryStorage;
 	}
 
@@ -130,7 +128,7 @@ public final class AbsIntResult<STATE extends IAbstractState<STATE, VARDECL>, AC
 		if (states.isEmpty() && mTransProvider.isEnteringScope(symbol)) {
 			// TODO: this has to be disabled until summary calculation works correctly
 			// because this is a call, it could also be somewhere in the summary map
-			// final AbstractMultiState<STATE, VARDECL> summaryState =
+			// final AbstractMultiState<STATE> summaryState =
 			// mSummaryMap.getSummaryPostState(symbol, new AbstractMultiState<>(preStates));
 			// if (summaryState != null) {
 			// states.addAll(summaryState.getStates());
@@ -154,10 +152,9 @@ public final class AbsIntResult<STATE extends IAbstractState<STATE, VARDECL>, AC
 	public Map<LOCATION, Set<STATE>> getLoc2States() {
 		if (mLoc2States == null) {
 			mLoc2States = new HashMap<>();
-			final Map<LOCATION, Set<DisjunctiveAbstractState<STATE, VARDECL>>> loc2multistates =
+			final Map<LOCATION, Set<DisjunctiveAbstractState<STATE>>> loc2multistates =
 					mRootStorage.computeLoc2States();
-			for (final Entry<LOCATION, Set<DisjunctiveAbstractState<STATE, VARDECL>>> entry : loc2multistates
-					.entrySet()) {
+			for (final Entry<LOCATION, Set<DisjunctiveAbstractState<STATE>>> entry : loc2multistates.entrySet()) {
 				final Set<STATE> states =
 						entry.getValue().stream().flatMap(a -> a.getStates().stream()).collect(Collectors.toSet());
 				mLoc2States.put(entry.getKey(), states);
@@ -190,18 +187,17 @@ public final class AbsIntResult<STATE extends IAbstractState<STATE, VARDECL>, AC
 	}
 
 	@Override
-	public IAbstractDomain<STATE, ACTION, VARDECL> getUsedDomain() {
+	public IAbstractDomain<STATE, ACTION> getUsedDomain() {
 		return mAbstractDomain;
 	}
 
 	@Override
-	public IVariableProvider<STATE, ACTION, VARDECL> getUsedVariableProvider() {
+	public IVariableProvider<STATE, ACTION> getUsedVariableProvider() {
 		return mVariableProvider;
 	}
 
 	@Override
-	public List<AbstractCounterexample<DisjunctiveAbstractState<STATE, VARDECL>, ACTION, VARDECL, LOCATION>>
-			getCounterexamples() {
+	public List<AbstractCounterexample<DisjunctiveAbstractState<STATE>, ACTION, LOCATION>> getCounterexamples() {
 		return mCounterexamples;
 	}
 

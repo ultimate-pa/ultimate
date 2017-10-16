@@ -36,8 +36,8 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Convert\ code\ blocks\ to\ CNF=true
 #Wed Mar 19 04:15:41 CET 2014
 file_export_version=3.0
-/instance/UltimateCore/Log\ level\ for\ plugins=warn
-\!/instance/UltimateCore=
-@UltimateCore=0.0.1
-/instance/UltimateCore/Generate\ benchmark\ results=false
-/instance/UltimateCore/Show\ long\ description\ of\ results=true
+/instance/de.uni_freiburg.informatik.ultimate.core/Log\ level\ for\ plugins=warn
+\!/instance/de.uni_freiburg.informatik.ultimate.core=
+@de.uni_freiburg.informatik.ultimate.core=0.0.1
+/instance/de.uni_freiburg.informatik.ultimate.core/Generate\ benchmark\ results=false
+/instance/de.uni_freiburg.informatik.ultimate.core/Show\ long\ description\ of\ results=true

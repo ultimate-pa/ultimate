@@ -33,6 +33,7 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.TVBool;
@@ -43,8 +44,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public class IntervalDomainState<VARDECL>
-		extends NonrelationalState<IntervalDomainState<VARDECL>, IntervalDomainValue, VARDECL> {
+public class IntervalDomainState extends NonrelationalState<IntervalDomainState, IntervalDomainValue> {
 
 	/**
 	 * Constructor of an {@link IntervalDomainState} that is either &bot;, or &top;.
@@ -58,29 +58,29 @@ public class IntervalDomainState<VARDECL>
 		super(logger, isBottom);
 	}
 
-	public IntervalDomainState(final ILogger logger, final Set<VARDECL> variables,
-			final Map<VARDECL, IntervalDomainValue> valuesMap, final Map<VARDECL, BooleanValue> booleanValuesMap,
-			final boolean isBottom) {
+	public IntervalDomainState(final ILogger logger, final Set<IProgramVarOrConst> variables,
+			final Map<IProgramVarOrConst, IntervalDomainValue> valuesMap,
+			final Map<IProgramVarOrConst, BooleanValue> booleanValuesMap, final boolean isBottom) {
 		super(logger, variables, valuesMap, booleanValuesMap, isBottom);
 	}
 
-	public IntervalDomainState(final ILogger logger, final Set<VARDECL> variables,
-			final Map<VARDECL, IntervalDomainValue> valuesMap, final Map<VARDECL, BooleanValue> booleanValuesMap,
-			final TVBool isBottom) {
+	public IntervalDomainState(final ILogger logger, final Set<IProgramVarOrConst> variables,
+			final Map<IProgramVarOrConst, IntervalDomainValue> valuesMap,
+			final Map<IProgramVarOrConst, BooleanValue> booleanValuesMap, final TVBool isBottom) {
 		super(logger, variables, valuesMap, booleanValuesMap, isBottom);
 	}
 
 	@Override
-	protected IntervalDomainState<VARDECL> createCopy() {
-		return new IntervalDomainState<>(getLogger(), getVariables(), new HashMap<>(getVar2ValueNonrelational()),
+	protected IntervalDomainState createCopy() {
+		return new IntervalDomainState(getLogger(), getVariables(), new HashMap<>(getVar2ValueNonrelational()),
 				new HashMap<>(getVar2ValueBoolean()), getBottomFlag());
 	}
 
 	@Override
-	protected IntervalDomainState<VARDECL> createState(final ILogger logger, final Set<VARDECL> newVarMap,
-			final Map<VARDECL, IntervalDomainValue> newValMap, final Map<VARDECL, BooleanValue> newBooleanValMap,
-			final boolean isBottom) {
-		return new IntervalDomainState<>(logger, newVarMap, newValMap, newBooleanValMap, isBottom);
+	protected IntervalDomainState createState(final ILogger logger, final Set<IProgramVarOrConst> newVarMap,
+			final Map<IProgramVarOrConst, IntervalDomainValue> newValMap,
+			final Map<IProgramVarOrConst, BooleanValue> newBooleanValMap, final boolean isBottom) {
+		return new IntervalDomainState(logger, newVarMap, newValMap, newBooleanValMap, isBottom);
 	}
 
 	@Override
@@ -99,7 +99,7 @@ public class IntervalDomainState<VARDECL>
 	}
 
 	@Override
-	protected IntervalDomainState<VARDECL> getThis() {
+	protected IntervalDomainState getThis() {
 		return this;
 	}
 }

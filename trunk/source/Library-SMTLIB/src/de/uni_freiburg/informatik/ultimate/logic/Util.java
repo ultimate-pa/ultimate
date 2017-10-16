@@ -24,7 +24,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 
 /**
  * This class contains some static methods to help creating terms, checking formulas, etc.
- * 
+ *
  * @author christ, heizmann, hoenicke
  */
 public final class Util {
@@ -37,7 +37,7 @@ public final class Util {
 	 * Check if {@code term} which may contain free {@code TermVariables} is satisfiable with respect to the current
 	 * assertion stack of {@code script}. Only the result from this function can be used since the assertion stack will
 	 * be modified after leaving this function.
-	 * 
+	 *
 	 * @param script
 	 *            the script used to run the check.
 	 * @param term
@@ -93,7 +93,7 @@ public final class Util {
 	/**
 	 * Return slightly simplified version of (not f). It removes double negation and simplifies (not true) and (not
 	 * false).
-	 * 
+	 *
 	 * @param script
 	 *            the Script used to build terms.
 	 * @param f
@@ -116,7 +116,7 @@ public final class Util {
 	/**
 	 * Return slightly simplified version of (and subforms). It removes parameters occuring multiple times, true and
 	 * false. It also handles the case where there is only one or zero subformulas.
-	 * 
+	 *
 	 * @param script
 	 *            the Script used to build terms.
 	 * @param subforms
@@ -130,7 +130,7 @@ public final class Util {
 	/**
 	 * Return slightly simplified version of (or subforms). It removes parameters occuring multiple times, true and
 	 * false. It also handles the case where there is only one or zero subformulas.
-	 * 
+	 *
 	 * @param script
 	 *            the Script used to build terms.
 	 * @param subforms
@@ -152,7 +152,7 @@ public final class Util {
 			neutral = falseTerm;
 			absorbing = trueTerm;
 		}
-		final LinkedHashSet<Term> formulas = new LinkedHashSet<Term>();
+		final LinkedHashSet<Term> formulas = new LinkedHashSet<>();
 
 		for (final Term f : subforms) {
 			if (f == neutral) {
@@ -174,9 +174,8 @@ public final class Util {
 		if (formulas.size() <= 1) { // NOPMD
 			if (formulas.isEmpty()) {
 				return neutral;
-			} else {
-				return formulas.iterator().next();
 			}
+			return formulas.iterator().next();
 		}
 		final Term[] arrforms = formulas.toArray(new Term[formulas.size()]);
 		return script.term(connector, arrforms);
@@ -185,7 +184,7 @@ public final class Util {
 	/**
 	 * Create a slightly simplified if-then-else term. This mainly optimizes the special cases where one of the
 	 * parameters is true or false.
-	 * 
+	 *
 	 * @param script
 	 *            the script where the term is created.
 	 * @param cond
@@ -219,7 +218,7 @@ public final class Util {
 	 * Create a slightly simplified implies term. This mainly optimizes the special cases where one of the parameters is
 	 * true or false or if a left-hand-side term occurs more than once. It also handles the case where only one
 	 * subformula is given.
-	 * 
+	 *
 	 * @param script
 	 *            the script where the term is created.
 	 * @param subforms
@@ -238,7 +237,7 @@ public final class Util {
 			System.arraycopy(subforms, 0, allButLast, 0, subforms.length - 1);
 			return Util.not(script, Util.and(script, allButLast));
 		}
-		final LinkedHashSet<Term> newSubforms = new LinkedHashSet<Term>();
+		final LinkedHashSet<Term> newSubforms = new LinkedHashSet<>();
 		for (int i = 0; i < subforms.length - 1; i++) {
 			if (subforms[i] == falseTerm) {
 				return trueTerm;

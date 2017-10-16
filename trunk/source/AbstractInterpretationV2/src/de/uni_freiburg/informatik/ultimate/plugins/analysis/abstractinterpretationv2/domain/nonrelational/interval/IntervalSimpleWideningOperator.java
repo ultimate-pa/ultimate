@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.function.Consumer;
 
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractStateBinaryOperator;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.typeutils.TypeUtils;
 
 /**
@@ -41,32 +42,30 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public class IntervalSimpleWideningOperator<VARDECL>
-		implements IAbstractStateBinaryOperator<IntervalDomainState<VARDECL>> {
-	
+public class IntervalSimpleWideningOperator implements IAbstractStateBinaryOperator<IntervalDomainState> {
+
 	@Override
-	public IntervalDomainState<VARDECL> apply(final IntervalDomainState<VARDECL> first,
-			final IntervalDomainState<VARDECL> second) {
+	public IntervalDomainState apply(final IntervalDomainState first, final IntervalDomainState second) {
 		assert first.hasSameVariables(second);
 		assert !first.isBottom() && !second.isBottom();
 
-		final List<VARDECL> boolsToTop = new ArrayList<>();
-		final List<VARDECL> varsToTop = new ArrayList<>();
-		final List<VARDECL> arraysToTop = new ArrayList<>();
+		final List<IProgramVarOrConst> boolsToTop = new ArrayList<>();
+		final List<IProgramVarOrConst> varsToTop = new ArrayList<>();
+		final List<IProgramVarOrConst> arraysToTop = new ArrayList<>();
 
 		// TODO: Add array support.
-		final Consumer<VARDECL> varConsumer = var -> {
+		final Consumer<IProgramVarOrConst> varConsumer = var -> {
 			if (!first.getValue(var).isEqualTo(second.getValue(var))) {
 				varsToTop.add(var);
 			}
 		};
-		final Consumer<VARDECL> boolConsumer = var -> {
+		final Consumer<IProgramVarOrConst> boolConsumer = var -> {
 			if (!first.getBooleanValue(var).isEqualTo(second.getBooleanValue(var))) {
 				boolsToTop.add(var);
 			}
 		};
 
-		for (final VARDECL var : first.getVariables()) {
+		for (final IProgramVarOrConst var : first.getVariables()) {
 			TypeUtils.consumeVariable(varConsumer, boolConsumer, null, var);
 		}
 

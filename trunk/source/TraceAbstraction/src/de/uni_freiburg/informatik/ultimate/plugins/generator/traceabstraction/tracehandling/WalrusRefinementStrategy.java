@@ -36,54 +36,46 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermClassifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.taskidentifier.TaskIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.MultiTrackInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerUtils;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckUtils;
 
 /**
- * {@link IRefinementStrategy} that first tries {@code CVC4} in bitvector mode,
- * then {@code}, and finally {@link SMTInterpol}.
+ * {@link IRefinementStrategy} that first tries either {@code MathSat} for floating points or {@code CVC4} in bitvector
+ * mode, and then {@code Z3}.
  * <p>
- * The class uses a {@link MultiTrackInterpolantAutomatonBuilder} for
- * constructing the interpolant automaton.
+ * The class uses a {@link MultiTrackInterpolantAutomatonBuilder} for constructing the interpolant automaton.
  *
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
 public class WalrusRefinementStrategy<LETTER extends IIcfgTransition<?>>
 		extends MultiTrackTraceAbstractionRefinementStrategy<LETTER> {
-	public WalrusRefinementStrategy(final ILogger logger, final TaCheckAndRefinementPreferences prefs,
+
+	public WalrusRefinementStrategy(final ILogger logger, final TaCheckAndRefinementPreferences<LETTER> prefs,
 			final IUltimateServiceProvider services, final CfgSmtToolkit cfgSmtToolkit,
 			final PredicateFactory predicateFactory, final PredicateUnifier predicateUnifier,
 			final AssertionOrderModulation<LETTER> assertionOrderModulation,
 			final IRun<LETTER, IPredicate, ?> counterexample, final IAutomaton<LETTER, IPredicate> abstraction,
-			final TAPreferences taPrefsForInterpolantConsolidation, final int iteration,
-			final CegarLoopStatisticsGenerator cegarLoopBenchmarks) {
+			final TAPreferences taPrefsForInterpolantConsolidation, final TaskIdentifier taskIdentifier) {
 		super(logger, prefs, services, cfgSmtToolkit, predicateFactory, predicateUnifier, assertionOrderModulation,
-				counterexample, abstraction, taPrefsForInterpolantConsolidation, iteration, cegarLoopBenchmarks);
+				counterexample, abstraction, taPrefsForInterpolantConsolidation, taskIdentifier);
 	}
 
 	@Override
 	protected Iterator<Track> initializeInterpolationTechniquesList() {
 		final List<Track> list = new ArrayList<>(3);
-		final TermClassifier tc = TraceCheckerUtils.classifyTermsInTrace(mCounterexample.getWord(),
-				mCsToolkit.getAxioms());
-		if (tc.getOccuringSortNames().contains(SmtSortUtils.FLOATINGPOINT_SORT)) {
-			if (tc.getOccuringFunctionNames().contains(SmtUtils.FP_TO_IEEE_BV_EXTENSION)
-					|| !tc.getOccuringQuantifiers().isEmpty()) {
-				// we need Z3, but Z3 is already added later, hence do nothing
-			} else {
-				list.add(Track.MATHSAT_FPBP);
-			}
-		} else {
+		final TermClassifier tc =
+				TraceCheckUtils.classifyTermsInTrace(mCounterexample.getWord(), mCsToolkit.getAxioms());
+		if (RefinementStrategyUtils.hasNoFloats(tc)) {
 			list.add(Track.CVC4_FPBP);
+		} else if (RefinementStrategyUtils.hasNoQuantifiersNoBitvectorExtensions(tc)) {
+			// floats, but no quantifiers and no extensions
+			list.add(Track.MATHSAT_FPBP);
 		}
 		list.add(Track.Z3_FPBP);
 		return list.iterator();
@@ -91,6 +83,11 @@ public class WalrusRefinementStrategy<LETTER extends IIcfgTransition<?>>
 
 	@Override
 	protected String getCvc4Logic() {
-		return LOGIC_CVC4_BITVECTORS;
+		return RefinementStrategyUtils.LOGIC_CVC4_BITVECTORS;
+	}
+
+	@Override
+	protected int getInterpolantAcceptanceThreshold() {
+		return Integer.MAX_VALUE;
 	}
 }

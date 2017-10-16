@@ -38,8 +38,8 @@ import java.util.List;
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public interface IAbstractPostOperator<STATE extends IAbstractState<STATE, VARDECL>, ACTION, VARDECL>
-		extends IAbstractTransformer<STATE, ACTION, VARDECL> {
+public interface IAbstractPostOperator<STATE extends IAbstractState<STATE>, ACTION>
+		extends IAbstractTransformer<STATE, ACTION> {
 
 	/**
 	 * Compute the abstract post from two abstract STATEs and one ACTION. This is used for scope switching.

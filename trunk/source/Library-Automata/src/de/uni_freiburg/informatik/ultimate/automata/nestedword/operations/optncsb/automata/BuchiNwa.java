@@ -26,7 +26,6 @@
  * to convey the resulting work.
  */
 
-
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.automata;
 
 import java.util.ArrayList;
@@ -37,9 +36,6 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util.IntSet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util.UtilIntSet;
 
-/**
- * @author Yong Li
- * */
 
 public class BuchiNwa implements IBuchiNwa {
 	
@@ -166,5 +162,6 @@ public class BuchiNwa implements IBuchiNwa {
 	public IStateNwa makeState(int id) {
 		return new StateNwa(this, id);
 	}
+
 
 }

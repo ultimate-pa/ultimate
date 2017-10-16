@@ -29,9 +29,13 @@ package de.uni_freiburg.informatik.ultimate.core.coreplugin;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Dictionary;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Properties;
 import java.util.Set;
 
 import javax.xml.bind.JAXBException;
@@ -43,6 +47,7 @@ import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.core.runtime.jobs.JobChangeAdapter;
 import org.eclipse.equinox.app.IApplication;
 import org.eclipse.equinox.app.IApplicationContext;
+import org.osgi.framework.Bundle;
 import org.xml.sax.SAXException;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.CorePreferenceInitializer;
@@ -89,6 +94,8 @@ public class UltimateCore implements IApplication, ICore<RunDefinition>, IUltima
 	private ILoggingService mLoggingService;
 
 	private JobChangeAdapter mJobChangeAdapter;
+
+	private String mUltimateVersion;
 
 	public UltimateCore() {
 		// This Default-Constructor is needed to start up the application
@@ -334,4 +341,42 @@ public class UltimateCore implements IApplication, ICore<RunDefinition>, IUltima
 			mLogger.error("Error during toolchain job processing:", event.getResult().getException());
 		}
 	}
+
+	@Override
+	public String getUltimateVersionString() {
+		if (mUltimateVersion == null) {
+			mUltimateVersion = createVersionString();
+		}
+		return mUltimateVersion;
+	}
+
+	private String createVersionString() {
+		final Bundle bundle = Platform.getBundle(Activator.PLUGIN_ID);
+		if (bundle == null) {
+			return "UNKNOWN";
+		}
+		final Dictionary<String, String> headers = bundle.getHeaders();
+		if (headers == null) {
+			return "UNKNOWN";
+		}
+
+		final String major = headers.get("Bundle-Version");
+
+		final Properties properties = new Properties();
+		try {
+			final InputStream prop = getClass().getClassLoader().getResourceAsStream("version.properties");
+			if (prop == null) {
+				return major + "-?-m";
+			}
+			properties.load(prop);
+		} catch (final IOException e) {
+			return major;
+		}
+
+		final String hash = properties.getProperty("git.commit.id.abbrev", "UNKNOWN");
+		final String dirty = properties.getProperty("git.dirty", "UNKNOWN");
+
+		return major + "-" + hash + ("UNKNOWN".equals(dirty) ? "" : "true".equals(dirty) ? "-m" : "");
+	}
+
 }

@@ -62,7 +62,7 @@ public class HTMLSummary extends BaseCsvProviderSummary {
 		final String linebreak = CoreUtil.getPlatformLineSeparator();
 
 		sb.append("<html><head><style>td { vertical-align:top;}</style></head><body>").append(linebreak);
-		sb.append("<h1>").append(TestUtil.generateLogfilename(this)).append("</h1>").append(linebreak);
+		sb.append("<h1>").append(TestUtil.generateLogFilename(this)).append("</h1>").append(linebreak);
 
 		final List<Entry<String, Collection<Entry<UltimateRunDefinition, ExtendedResult>>>> partitions =
 				new ArrayList<>();

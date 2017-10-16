@@ -36,22 +36,20 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
 
-public class LogicalTermEvaluator<VALUE, STATE extends IAbstractState<STATE, VARDECL>, VARDECL>
-		implements INaryTermEvaluator<VALUE, STATE, VARDECL> {
-	
+public class LogicalTermEvaluator<VALUE, STATE extends IAbstractState<STATE>>
+		implements INaryTermEvaluator<VALUE, STATE> {
+
 	private final int mArity;
-	private final String mType;
 	private final ILogger mLogger;
-	
-	private final List<ITermEvaluator<VALUE, STATE, VARDECL>> mSubEvaluators;
+
+	private final List<ITermEvaluator<VALUE, STATE>> mSubEvaluators;
 
 	protected LogicalTermEvaluator(final int arity, final String type, final ILogger logger) {
 		mArity = arity;
-		mType = type;
 		mLogger = logger;
 		mSubEvaluators = new ArrayList<>(arity);
 	}
-	
+
 	@Override
 	public List<IEvaluationResult<VALUE>> evaluate(final STATE currentState) {
 		// TODO Auto-generated method stub
@@ -63,35 +61,35 @@ public class LogicalTermEvaluator<VALUE, STATE extends IAbstractState<STATE, VAR
 		// TODO Auto-generated method stub
 		return null;
 	}
-	
+
 	@Override
-	public void addSubEvaluator(final ITermEvaluator<VALUE, STATE, VARDECL> evaluator) {
+	public void addSubEvaluator(final ITermEvaluator<VALUE, STATE> evaluator) {
 		if (mSubEvaluators.size() > mArity) {
 			throw new UnsupportedOperationException("Cannot add another subevaluator to this evaluator of arity "
 					+ mArity + ". Already at " + mSubEvaluators.size() + " subevaluators.");
 		}
-		
+
 		mSubEvaluators.add(evaluator);
 	}
-	
+
 	@Override
 	public boolean hasFreeOperands() {
 		// TODO Auto-generated method stub
 		return false;
 	}
-	
+
 	@Override
 	public boolean containsBool() {
 		// TODO Auto-generated method stub
 		return false;
 	}
-	
+
 	@Override
 	public int getArity() {
 		// TODO Auto-generated method stub
 		return 0;
 	}
-	
+
 	protected enum LogicalTypes {
 		AND, OR, XOR, NOT, GEQ
 	}

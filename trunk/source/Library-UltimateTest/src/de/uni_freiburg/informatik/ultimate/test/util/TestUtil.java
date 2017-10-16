@@ -216,7 +216,7 @@ public final class TestUtil {
 	 * Get absolute path for the file in which an ITestLogfile will be written. This includes also the filename.
 	 */
 	public static String generateAbsolutePathForLogfile(final ITestLogfile testSummary) {
-		final String absolutPath = TestUtil.getPathFromSurefire(generateLogfilename(testSummary),
+		final String absolutPath = TestUtil.getPathFromSurefire(generateLogFilename(testSummary),
 				testSummary.getUltimateTestSuiteClass().getCanonicalName());
 		return absolutPath;
 	}
@@ -225,14 +225,14 @@ public final class TestUtil {
 	 * Get filename for the file in which an ITestSummary will be written. Returns only the name of the file without
 	 * directories.
 	 */
-	public static String generateLogfilename(final ITestLogfile testSummary) {
+	public static String generateLogFilename(final ITestLogfile testSummary) {
 		final String filename = testSummary.getDescriptiveLogName() + "_"
 				+ de.uni_freiburg.informatik.ultimate.util.CoreUtil.getCurrentDateTimeAsString()
 				+ testSummary.getFilenameExtension();
 		return filename;
 	}
 
-	public static String generateLogfilename(final String directory, String description) {
+	public static String generateLogFilename(final String directory, String description) {
 		if (description == null) {
 			description = "";
 		}

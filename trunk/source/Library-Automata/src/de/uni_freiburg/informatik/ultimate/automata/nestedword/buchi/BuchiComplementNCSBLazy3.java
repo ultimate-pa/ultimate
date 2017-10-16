@@ -1,8 +1,5 @@
 /*
-<<<<<<< HEAD
-=======
  * Copyright (C) 2017 Yong Li (liyong@ios.ac.cn)
->>>>>>> 72c139c716fa03cb20ca032f94e62b8d3a4870f2
  * Copyright (C) 2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
  * 
@@ -44,7 +41,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NwaOutgoingLetterAndTransitionAdapter;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiComplementNcsbSimpleStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiComplementNcsbStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 

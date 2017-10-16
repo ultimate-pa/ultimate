@@ -44,12 +44,12 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPostOperator;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieNonOldVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieSymbolTableVariableProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.CallInfoCache;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.CallInfoCache.CallInfo;
@@ -58,7 +58,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Ret
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
-public class OctPostOperator implements IAbstractPostOperator<OctDomainState, IcfgEdge, IBoogieVar> {
+public class OctPostOperator implements IAbstractPostOperator<OctDomainState, IcfgEdge> {
 
 	private final ILogger mLogger;
 	private final BoogieSymbolTable mSymbolTable;
@@ -69,24 +69,24 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Ic
 	private final ExpressionTransformer mExprTransformer;
 	private final OctStatementProcessor mStatementProcessor;
 	private final OctAssumeProcessor mAssumeProcessor;
-	private final Boogie2SmtSymbolTable mBpl2SmtTable;
+	private final IBoogieSymbolTableVariableProvider mBpl2SmtTable;
 	private final CallInfoCache mCallInfoCache;
 
 	public OctPostOperator(final ILogger logger, final BoogieSymbolTable symbolTable, final CfgSmtToolkit cfgSmtToolkit,
 			final int maxParallelStates, final boolean fallbackAssignIntervalProjection,
-			final Boogie2SmtSymbolTable bpl2smtTable) {
+			final IBoogieSymbolTableVariableProvider bpl2smtSymbolTable) {
 		if (maxParallelStates < 1) {
 			throw new IllegalArgumentException("MaxParallelStates needs to be > 0, was " + maxParallelStates);
 		}
 
 		mLogger = logger;
 		mSymbolTable = symbolTable;
-		mBpl2SmtTable = bpl2smtTable;
+		mBpl2SmtTable = bpl2smtSymbolTable;
 		mMaxParallelStates = maxParallelStates;
 		mFallbackAssignIntervalProjection = fallbackAssignIntervalProjection;
 
 		mHavocBundler = new HavocBundler();
-		mExprTransformer = new ExpressionTransformer(bpl2smtTable);
+		mExprTransformer = new ExpressionTransformer(bpl2smtSymbolTable);
 		mStatementProcessor = new OctStatementProcessor(this);
 		mAssumeProcessor = new OctAssumeProcessor(this);
 		mCallInfoCache = new CallInfoCache(cfgSmtToolkit, symbolTable);
@@ -166,7 +166,7 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Ic
 		return mAssumeProcessor;
 	}
 
-	public Boogie2SmtSymbolTable getBoogie2SmtSymbolTable() {
+	public IBoogieSymbolTableVariableProvider getBoogie2SmtSymbolTable() {
 		return mBpl2SmtTable;
 	}
 
@@ -263,7 +263,7 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Ic
 		final ArrayList<OctDomainState> result = new ArrayList<>();
 		if (!stateAfterReturn.isBottom()) {
 			final Procedure procedure = calledProcedure(correspondingCall);
-			final List<Pair<IBoogieVar, IBoogieVar>> mapLhsToOut =
+			final List<Pair<IProgramVarOrConst, IProgramVarOrConst>> mapLhsToOut =
 					generateMapCallLhsToOutParams(correspondingCall.getLhs(), procedure);
 			stateAfterReturn = stateAfterReturn.copyValuesOnScopeChange(stateBeforeReturn, mapLhsToOut, false);
 			result.add(stateAfterReturn);
@@ -291,18 +291,18 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Ic
 		return implementation;
 	}
 
-	private List<Pair<IBoogieVar, IBoogieVar>> generateMapCallLhsToOutParams(final VariableLHS[] callLhs,
-			final Procedure calledProcedure) {
-		final List<Pair<IBoogieVar, IBoogieVar>> mapLhsToOut = new ArrayList<>(callLhs.length);
+	private List<Pair<IProgramVarOrConst, IProgramVarOrConst>>
+			generateMapCallLhsToOutParams(final VariableLHS[] callLhs, final Procedure calledProcedure) {
+		final List<Pair<IProgramVarOrConst, IProgramVarOrConst>> mapLhsToOut = new ArrayList<>(callLhs.length);
 		int i = 0;
 		for (final VarList outParamList : calledProcedure.getOutParams()) {
 			for (final String outParam : outParamList.getIdentifiers()) {
 				assert i < callLhs.length : "missing left hand side for out-parameter";
 				final VariableLHS currentLhs = callLhs[i];
-				final BoogieVar lhsBoogieVar = mBpl2SmtTable.getBoogieVar(currentLhs.getIdentifier(),
+				final IProgramVar lhsBoogieVar = mBpl2SmtTable.getBoogieVar(currentLhs.getIdentifier(),
 						currentLhs.getDeclarationInformation(), false);
 				assert lhsBoogieVar != null;
-				final BoogieVar outParamBoogieVar =
+				final IProgramVar outParamBoogieVar =
 						mBpl2SmtTable.getBoogieVar(outParam, calledProcedure.getIdentifier(), false);
 				assert outParamBoogieVar != null;
 				mapLhsToOut.add(new Pair<>(lhsBoogieVar, outParamBoogieVar));
@@ -313,8 +313,8 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Ic
 		return mapLhsToOut;
 	}
 
-	IBoogieVar getBoogieVar(final VariableLHS vLhs) {
-		IBoogieVar rtr =
+	IProgramVar getBoogieVar(final VariableLHS vLhs) {
+		IProgramVar rtr =
 				getBoogie2SmtSymbolTable().getBoogieVar(vLhs.getIdentifier(), vLhs.getDeclarationInformation(), false);
 		if (rtr == null) {
 			// hack for oldvars
@@ -326,8 +326,8 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Ic
 		return rtr;
 	}
 
-	IBoogieVar getBoogieVar(final IdentifierExpression ie) {
-		IBoogieVar returnVar =
+	IProgramVarOrConst getBoogieVar(final IdentifierExpression ie) {
+		IProgramVarOrConst returnVar =
 				getBoogie2SmtSymbolTable().getBoogieVar(ie.getIdentifier(), ie.getDeclarationInformation(), false);
 		if (returnVar != null) {
 			return returnVar;

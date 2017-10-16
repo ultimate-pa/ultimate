@@ -47,7 +47,7 @@ public abstract class BinaryRelation {
 	    
 	    private final String mStringRepresentation;
 	    
-	    RelationSymbol(String stringRepresentation) {
+	    RelationSymbol(final String stringRepresentation) {
 	    	mStringRepresentation = stringRepresentation;
 	    }
 	
@@ -62,7 +62,7 @@ public abstract class BinaryRelation {
 	 * relation ψ ◾ φ is equivalent to the relation ¬(ψ ▷ φ), which is the 
 	 * negated relation.
 	 */
-	public static RelationSymbol negateRelation(RelationSymbol symb) {
+	public static RelationSymbol negateRelation(final RelationSymbol symb) {
 		final RelationSymbol result;
 		switch (symb) {
 		case EQ:
@@ -94,7 +94,7 @@ public abstract class BinaryRelation {
 	 * relation ψ ◾ φ is equivalent to the relation φ ▷ ψ, which is the relation
 	 * where we swaped the parameters.
 	 */
-	public static RelationSymbol swapParameters(RelationSymbol symb) {
+	public static RelationSymbol swapParameters(final RelationSymbol symb) {
 		final RelationSymbol result;
 		switch (symb) {
 		case EQ:
@@ -126,21 +126,42 @@ public abstract class BinaryRelation {
 	 * not a greater-than relation symbol. Otherwise returns an equivalent
 	 * term where relation symbol and parameters are swapped.
 	 */
-	public static Term constructLessNormalForm(Script script, 
-			RelationSymbol relationSymbol, Term lhsTerm, Term rhsTerm)
+	public static Term constructLessNormalForm(final Script script, 
+			final RelationSymbol relationSymbol, final Term lhsTerm, final Term rhsTerm)
 			throws AssertionError {
-		Term result;
+		final Term result;
 		switch (relationSymbol) {
 		case DISTINCT:
 		case EQ:
 		case LEQ:
 		case LESS:
-			result = script.term(relationSymbol.toString(), lhsTerm, rhsTerm);
+			result = toTerm(script, relationSymbol, lhsTerm, rhsTerm);
 			break;
 		case GEQ:
 		case GREATER:
 			final RelationSymbol swapped = BinaryRelation.swapParameters(relationSymbol);
-			result = script.term(swapped.toString(), rhsTerm, lhsTerm);
+			result = toTerm(script, swapped, rhsTerm, lhsTerm);
+			break;
+		default:
+			throw new AssertionError("unknown relation symbol");
+		}
+		return result;
+	}
+	
+	public static Term toTerm(final Script script, 
+			final RelationSymbol relationSymbol, final Term lhsTerm, final Term rhsTerm) {
+		Term result;
+		switch (relationSymbol) {
+		case DISTINCT:
+			final Term eq = script.term("=", lhsTerm, rhsTerm);
+			result = script.term("not", eq);
+			break;
+		case EQ:
+		case LEQ:
+		case LESS:
+		case GEQ:
+		case GREATER:
+			result = script.term(relationSymbol.toString(), lhsTerm, rhsTerm);
 			break;
 		default:
 			throw new AssertionError("unknown relation symbol");
@@ -155,14 +176,14 @@ public abstract class BinaryRelation {
 	protected final Term mRhs;
 	
 
-	protected BinaryRelation(RelationSymbol relationSymbol, Term lhs, Term rhs) {
+	protected BinaryRelation(final RelationSymbol relationSymbol, final Term lhs, final Term rhs) {
 		super();
 		mRelationSymbol = relationSymbol;
 		mLhs = lhs;
 		mRhs = rhs;
 	}
 
-	public BinaryRelation(Term term) throws NoRelationOfThisKindException {
+	public BinaryRelation(final Term term) throws NoRelationOfThisKindException {
 		if (!(term instanceof ApplicationTerm)) {
 			throw new NoRelationOfThisKindException("no ApplicationTerm");
 		}
@@ -239,7 +260,7 @@ public abstract class BinaryRelation {
 
 		private static final long serialVersionUID = 1L;
 
-		public NoRelationOfThisKindException(String message) {
+		public NoRelationOfThisKindException(final String message) {
 			super(message);
 		}
 	}

@@ -37,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.ConstructedType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 
@@ -64,8 +64,8 @@ public final class TypeUtils {
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	private static <VARDECL> void consumeVariablePerType(final Consumer varConsumer, final Consumer boolConsumer,
 			final Consumer arrayConsumer, final VARDECL variable) {
-		if (variable instanceof IBoogieVar) {
-			final IBoogieVar boogieVar = (IBoogieVar) variable;
+		if (variable instanceof IProgramVar) {
+			final IProgramVar boogieVar = (IProgramVar) variable;
 			if (SmtSortUtils.isBoolSort(boogieVar.getSort())) {
 				boolConsumer.accept(variable);
 			} else if (SmtSortUtils.isNumericSort(boogieVar.getSort())) {
@@ -106,8 +106,8 @@ public final class TypeUtils {
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	private static <R, VARDECL> R applyVariableFunctionPerType(final Function varFunction, final Function boolFunction,
 			final Function arrayFunction, final VARDECL variable) {
-		if (variable instanceof IBoogieVar) {
-			final IBoogieVar boogieVar = (IBoogieVar) variable;
+		if (variable instanceof IProgramVar) {
+			final IProgramVar boogieVar = (IProgramVar) variable;
 			if (SmtSortUtils.isBoolSort(boogieVar.getSort())) {
 				return (R) boolFunction.apply(variable);
 			} else if (SmtSortUtils.isNumericSort(boogieVar.getSort())) {

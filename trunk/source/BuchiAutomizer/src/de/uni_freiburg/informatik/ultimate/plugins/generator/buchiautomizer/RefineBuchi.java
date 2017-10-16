@@ -36,6 +36,7 @@ import java.util.TreeMap;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.IGeneralizedNwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
@@ -50,6 +51,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiDiffer
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiDifferenceNCSBLazy3;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiDifferenceNCSBSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiIntersect;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiToGeneralizedBuchi;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.GeneralizedBuchiDifferenceNCSBSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.MultiOptimizationLevelRankingGenerator.FkvOptimization;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoWord;
@@ -84,11 +87,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.HoareTripleChecks;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.UnsatCores;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceChecker;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceCheckerCraig;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceCheck;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceCheckCraig;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerSpWp;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerUtils;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckSpWp;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckUtils;
 
 public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 
@@ -179,31 +182,31 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 				bspm.getStemPrecondition(), bspm.getHondaPredicate(), bspm.getRankEqAndSi(),
 				bspm.getStemPostcondition(), bspm.getRankDecreaseAndBound(), bspm.getSiConjunction());
 		IPredicate[] stemInterpolants;
-		InterpolatingTraceChecker traceChecker;
+		InterpolatingTraceCheck traceCheck;
 		if (BuchiCegarLoop.isEmptyStem(mCounterexample)) {
 			stemInterpolants = null;
 		} else {
 
-			traceChecker = constructTraceChecker(bspm.getStemPrecondition(), bspm.getStemPostcondition(), stem,
+			traceCheck = constructTraceCheck(bspm.getStemPrecondition(), bspm.getStemPostcondition(), stem,
 					mCsToolkit, pu, mInterpolation);
-			final LBool stemCheck = traceChecker.isCorrect();
+			final LBool stemCheck = traceCheck.isCorrect();
 			if (stemCheck == LBool.UNSAT) {
-				stemInterpolants = traceChecker.getInterpolants();
+				stemInterpolants = traceCheck.getInterpolants();
 			} else {
 				throw new AssertionError("incorrect predicates - stem");
 			}
 		}
 
-		traceChecker = constructTraceChecker(bspm.getRankEqAndSi(), bspm.getHondaPredicate(), loop, mCsToolkit, pu,
+		traceCheck = constructTraceCheck(bspm.getRankEqAndSi(), bspm.getHondaPredicate(), loop, mCsToolkit, pu,
 				mInterpolation);
-		final LBool loopCheck = traceChecker.isCorrect();
+		final LBool loopCheck = traceCheck.isCorrect();
 		IPredicate[] loopInterpolants;
 		if (loopCheck == LBool.UNSAT) {
-			loopInterpolants = traceChecker.getInterpolants();
+			loopInterpolants = traceCheck.getInterpolants();
 		} else {
 			throw new AssertionError("incorrect predicates - loop");
 		}
-		mBci = TraceCheckerUtils.computeCoverageCapability(mServices, traceChecker, mLogger);
+		mBci = TraceCheckUtils.computeCoverageCapability(mServices, traceCheck, mLogger);
 
 		NestedWordAutomaton<LETTER, IPredicate> mInterpolAutomaton =
 				constructBuchiInterpolantAutomaton(bspm.getStemPrecondition(), stem, stemInterpolants,
@@ -438,10 +441,24 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 			final BuchiCegarLoopBenchmarkGenerator benchmarkGenerator) throws AutomataLibraryException {
 		INestedWordAutomaton<LETTER, IPredicate> newAbstraction;
 		final AbstractBuchiDifference<LETTER, IPredicate> diff;
+		GeneralizedBuchiDifferenceNCSBSimple<LETTER, IPredicate> gbaDiff = null;
 		switch (mNcsbImplementation) {
 		case INTSET:
-			diff = new BuchiDifferenceNCSBSimple<LETTER, IPredicate>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement,
-					abstraction, mInterpolAutomatonUsedInRefinement);
+			if(!abstraction.getVpAlphabet().getReturnAlphabet().isEmpty()
+			|| !abstraction.getVpAlphabet().getCallAlphabet().isEmpty()) {
+				diff = new BuchiDifferenceNCSBSimple<LETTER, IPredicate>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement,
+				abstraction, mInterpolAutomatonUsedInRefinement);
+				break;
+			}
+			final IGeneralizedNwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> gbaAbstraction;
+			if(abstraction instanceof IGeneralizedNwaOutgoingLetterAndTransitionProvider) {
+				gbaAbstraction = (IGeneralizedNwaOutgoingLetterAndTransitionProvider)abstraction;
+			}else {
+				gbaAbstraction = new BuchiToGeneralizedBuchi<LETTER, IPredicate>(abstraction);
+			}
+			gbaDiff = new GeneralizedBuchiDifferenceNCSBSimple<LETTER, IPredicate>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement,
+					gbaAbstraction, mInterpolAutomatonUsedInRefinement);
+			diff = null;
 			break;
 		case INTSET_LAZY:
 			diff = new BuchiDifferenceNCSBLazy<LETTER, IPredicate>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement,
@@ -464,8 +481,13 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 		}
 		finishComputation(mInterpolAutomatonUsedInRefinement, setting);
 		benchmarkGenerator.reportHighestRank(3);
-		assert diff.checkResult(mStateFactoryInterpolAutom);
-		newAbstraction = diff.getResult();
+		if(gbaDiff == null) {
+			assert diff.checkResult(mStateFactoryInterpolAutom);
+			newAbstraction = diff.getResult();
+		}else {
+			newAbstraction = gbaDiff.getResult();
+		}
+		
 		return newAbstraction;
 	}
 
@@ -486,14 +508,14 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 		return newAbstraction;
 	}
 
-	private InterpolatingTraceChecker constructTraceChecker(final IPredicate precond, final IPredicate postcond,
+	private InterpolatingTraceCheck constructTraceCheck(final IPredicate precond, final IPredicate postcond,
 			final NestedWord<LETTER> word, final CfgSmtToolkit csToolkit, final PredicateUnifier pu,
 			final InterpolationTechnique interpolation) {
-		final InterpolatingTraceChecker itc;
+		final InterpolatingTraceCheck itc;
 		switch (mInterpolation) {
 		case Craig_NestedInterpolation:
 		case Craig_TreeInterpolation: {
-			itc = new InterpolatingTraceCheckerCraig(precond, postcond, new TreeMap<Integer, IPredicate>(), word,
+			itc = new InterpolatingTraceCheckCraig(precond, postcond, new TreeMap<Integer, IPredicate>(), word,
 					mCsToolkit, AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, false, mPredicateFactory, pu, interpolation, true,
 					mXnfConversionTechnique, mSimplificationTechnique, null);
 			break;
@@ -502,7 +524,7 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 		case BackwardPredicates:
 		case FPandBP:
 		case FPandBPonlyIfFpWasNotPerfect: {
-			itc = new TraceCheckerSpWp(precond, postcond, new TreeMap<Integer, IPredicate>(), word, mCsToolkit,
+			itc = new TraceCheckSpWp(precond, postcond, new TreeMap<Integer, IPredicate>(), word, mCsToolkit,
 					AssertCodeBlockOrder.NOT_INCREMENTALLY, UnsatCores.CONJUNCT_LEVEL, true, mServices, false, mPredicateFactory, pu,
 					interpolation, mCsToolkit.getManagedScript(), mXnfConversionTechnique, mSimplificationTechnique,
 					null);

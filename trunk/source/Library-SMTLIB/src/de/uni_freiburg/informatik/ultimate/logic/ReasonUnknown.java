@@ -19,9 +19,9 @@
 package de.uni_freiburg.informatik.ultimate.logic;
 
 /**
- * The reason why we returned unknown.  Note that the SMTLIB standard at the
- * moment only allows "memout" and "incomplete", but "timeout" and "crashed" and
- * "cancelled" seem to be a good idea, too...
+ * The reason why we returned unknown. Note that the SMTLIB standard at the moment only allows "memout" and
+ * "incomplete", but "timeout" and "crashed" and "cancelled" seem to be a good idea, too...
+ * 
  * @author Juergen Christ
  */
 public enum ReasonUnknown {
@@ -54,7 +54,7 @@ public enum ReasonUnknown {
 		public String toString() {
 			return "cancelled";
 		}
-	}, 
+	},
 	OTHER {
 		@Override
 		public String toString() {

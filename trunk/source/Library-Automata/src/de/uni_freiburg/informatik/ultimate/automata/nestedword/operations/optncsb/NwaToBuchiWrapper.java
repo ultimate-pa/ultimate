@@ -38,12 +38,15 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.automata.BuchiGeneral;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.automata.IState;
 
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.automata.BuchiNwa;
+
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.automata.IStateNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util.IntSet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util.UtilIntSet;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 
 
 
@@ -53,19 +56,20 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
  * */
 
 // TODO support on-demand exploration
-public class NwaToBuchiWrapper<LETTER, STATE> extends BuchiGeneral {
+public class NwaToBuchiWrapper<LETTER, STATE> extends BuchiNwa {
 
 	private final Map<LETTER, Integer> mLetterMap;
 	private final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mInnerBuchi;
 
-	private final Map<STATE, IState> mStateMap;
+	private final Map<STATE, IStateNwa> mStateMap;
 	private final List<STATE> mStateArr;
 	private final List<LETTER> mLetterArr;
 	
-	public NwaToBuchiWrapper(int alphabetSize, Map<LETTER, Integer> letterMap,
+	public NwaToBuchiWrapper(
+			IntSet mAlphabetCall, IntSet mAlphabetInternal, IntSet mAlphabetReturn
+			, Map<LETTER, Integer> letterMap,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> buchi) {
-		super(alphabetSize);
-		// TODO Auto-generated constructor stub
+		super(mAlphabetCall, mAlphabetInternal, mAlphabetReturn);
 		this.mLetterMap = letterMap;
 		this.mInnerBuchi = buchi;
 		this.mStateMap = new HashMap<>();
@@ -81,8 +85,8 @@ public class NwaToBuchiWrapper<LETTER, STATE> extends BuchiGeneral {
 		computeInitialStates();
 	}
 	
-	private IState getOrAddState(STATE str) {
-		IState state = mStateMap.get(str);
+	private IStateNwa getOrAddState(STATE str) {
+		IStateNwa state = mStateMap.get(str);
 		if(state == null) {
 			state = addState();
 			mStateMap.put(str, state);
@@ -93,29 +97,65 @@ public class NwaToBuchiWrapper<LETTER, STATE> extends BuchiGeneral {
 	}
 	
 	private void computeInitialStates() {
-		// TODO Auto-generated method stub
 		Iterable<STATE> states = mInnerBuchi.getInitialStates();
 		for(STATE s : states) {
-			IState state = getOrAddState(s);
+			IStateNwa state = getOrAddState(s);
 			this.setInitial(state);
 		}
 	}
 	
 	@Override
-	public IState makeState(int id) {
+	public StateNWA<LETTER, STATE> makeState(int id) {
 		return new StateNWA<LETTER, STATE>(this, id);
 	}
 	
 	
-	protected IntSet computeSuccessors(int state, int letter) {
-				
+	protected IntSet computeSuccessorsCall(int state, int letter) {
+		assert this.getAlphabetCall().get(letter);
+		
+		LETTER letterStr = mLetterArr.get(letter);
+		STATE currStateStr = mStateArr.get(state);
+		
+		IntSet succs = UtilIntSet.newIntSet();
+		Iterable<OutgoingCallTransition<LETTER, STATE>> transIter = mInnerBuchi.callSuccessors(currStateStr, letterStr);
+		for(OutgoingCallTransition<LETTER, STATE> trans : transIter) {
+			IStateNwa succ = getOrAddState(trans.getSucc());
+			Integer letterId = mLetterMap.get(trans.getLetter());
+			assert letterId == letter;
+			succs.set(succ.getId());
+		}
+
+		return succs;
+	}
+	
+	protected IntSet computeSuccessorsInternal(int state, int letter) {
+		assert this.getAlphabetInternal().get(letter);
+		
 		LETTER letterStr = mLetterArr.get(letter);
 		STATE currStateStr = mStateArr.get(state);
 		
 		IntSet succs = UtilIntSet.newIntSet();
 		Iterable<OutgoingInternalTransition<LETTER, STATE>> transIter = mInnerBuchi.internalSuccessors(currStateStr, letterStr);
 		for(OutgoingInternalTransition<LETTER, STATE> trans : transIter) {
-			IState succ = getOrAddState(trans.getSucc());
+			IStateNwa succ = getOrAddState(trans.getSucc());
+			Integer letterId = mLetterMap.get(trans.getLetter());
+			assert letterId == letter;
+			succs.set(succ.getId());
+		}
+
+		return succs;
+	}
+	
+	protected IntSet computeSuccessorsReturn(int state, int hier, int letter) {
+		assert this.getAlphabetReturn().get(letter);
+		LETTER letterStr = mLetterArr.get(letter);
+		STATE currStateStr = mStateArr.get(state);
+		STATE currHierStr = mStateArr.get(hier);
+		
+		IntSet succs = UtilIntSet.newIntSet();
+		Iterable<OutgoingReturnTransition<LETTER, STATE>> transIter = mInnerBuchi.returnSuccessors(currStateStr, currHierStr, letterStr);
+		for(OutgoingReturnTransition<LETTER, STATE> trans : transIter) {
+			IStateNwa succ = getOrAddState(trans.getSucc());
 			Integer letterId = mLetterMap.get(trans.getLetter());
 			assert letterId == letter;
 			succs.set(succ.getId());

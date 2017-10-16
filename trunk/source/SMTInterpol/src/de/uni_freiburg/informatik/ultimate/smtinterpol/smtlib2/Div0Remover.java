@@ -18,13 +18,12 @@
  */
 package de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2;
 
-import java.math.BigInteger;
-
 import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.NonRecursive;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 
@@ -32,7 +31,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
  * This class can be used to replace the symbols @/0, @div0, and @mod0 from
  * terms and replace them by their meaning (/ ... 0), (div ... 0), and
  * (mod ... 0).
- * 
+ *
  * This transformer also tries to transform annotations to remove these terms.
  * This is needed to fix the proof trees returned from SMTInterpol.  Note that
  * in these proof terms annotations might be Object[] that contain further terms
@@ -43,12 +42,12 @@ public class Div0Remover extends TermTransformer {
 
 	private static class BuildAnnotationTerm implements Walker {
 		private final AnnotatedTerm mTerm;
-		
-		public BuildAnnotationTerm(AnnotatedTerm term) {
+
+		public BuildAnnotationTerm(final AnnotatedTerm term) {
 			mTerm = term;
 		}
 		@Override
-		public void walk(NonRecursive engine) {
+		public void walk(final NonRecursive engine) {
 			final Div0Remover remover = (Div0Remover) engine;
 			final Annotation[] newAnnots =
 					remover.collectAnnotations(mTerm.getAnnotations());
@@ -60,10 +59,10 @@ public class Div0Remover extends TermTransformer {
 						mTerm.getTheory().annotatedTerm(newAnnots, sub));
 			}
 		}
-		
+
 	}
-	
-	private void pushTermsFromArray(Object[] arr) {
+
+	private void pushTermsFromArray(final Object[] arr) {
 		for (int i = arr.length - 1; i >= 0; --i) {
 			final Object val = arr[i];
 			if (val instanceof Term) {
@@ -78,8 +77,8 @@ public class Div0Remover extends TermTransformer {
 			}
 		}
 	}
-	
-	void pushTermsFromAnnotations(Annotation[] annots) {
+
+	void pushTermsFromAnnotations(final Annotation[] annots) {
 		for (int i = annots.length - 1; i >= 0; --i) {
 			final Object val = annots[i].getValue();
 			if (val instanceof Term) {
@@ -91,8 +90,8 @@ public class Div0Remover extends TermTransformer {
 			}
 		}
 	}
-	
-	private Object[] getFromArray(Object[] oldVal) {
+
+	private Object[] getFromArray(final Object[] oldVal) {
 		Object[] newVal = oldVal;
 		for (int i = oldVal.length - 1; i >= 0; --i) {
 			final Object val = oldVal[i];
@@ -118,8 +117,8 @@ public class Div0Remover extends TermTransformer {
 		}
 		return newVal;
 	}
-	
-	Annotation[] collectAnnotations(Annotation[] oldAnnots) {
+
+	Annotation[] collectAnnotations(final Annotation[] oldAnnots) {
 		Annotation[] newAnnots = oldAnnots;
 		for (int i = oldAnnots.length - 1; i >= 0; i--) {
 			final Object value = oldAnnots[i].getValue();
@@ -142,9 +141,9 @@ public class Div0Remover extends TermTransformer {
 		}
 		return newAnnots;
 	}
-	
+
 	@Override
-	protected void convert(Term term) {
+	protected void convert(final Term term) {
 		if (term instanceof AnnotatedTerm) {
 			/* We cannot use postConvertAnnotation here since TermTransformer
 			 * does not descend into Object[] which is needed for proof tree
@@ -160,19 +159,17 @@ public class Div0Remover extends TermTransformer {
 	}
 
 	@Override
-	public void convertApplicationTerm(ApplicationTerm appTerm, Term[] newArgs) {
+	public void convertApplicationTerm(final ApplicationTerm appTerm, final Term[] newArgs) {
 		final FunctionSymbol sym = appTerm.getFunction();
 		String name = sym.getName();
 		if (name.charAt(0) == '@' && name.endsWith("0")) {
 			name = name.substring(1, name.length() - 1);
 			final Term[] args = new Term[2];
 			args[0] = newArgs[0];
-			args[1] = appTerm.getTheory().constant(
-					BigInteger.ZERO, newArgs[0].getSort());
+			args[1] = Rational.ZERO.toTerm(newArgs[0].getSort());
 			setResult(appTerm.getTheory().term(name, args));
 		} else {
 			super.convertApplicationTerm(appTerm, newArgs);
 		}
 	}
-	
 }

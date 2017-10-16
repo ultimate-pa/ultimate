@@ -33,7 +33,7 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Interplant\ automaton\ enhancement=EAGER
 #Sat Oct 18 16:33:01 CEST 2014
 file_export_version=3.0
-/instance/UltimateCore/Toolchain\ timeout\ in\ seconds=300
-\!/instance/UltimateCore=
-@UltimateCore=0.0.1
-/instance/UltimateCore/Generate\ benchmark\ results=true
+/instance/de.uni_freiburg.informatik.ultimate.core/Toolchain\ timeout\ in\ seconds=300
+\!/instance/de.uni_freiburg.informatik.ultimate.core=
+@de.uni_freiburg.informatik.ultimate.core=0.0.1
+/instance/de.uni_freiburg.informatik.ultimate.core/Generate\ benchmark\ results=true

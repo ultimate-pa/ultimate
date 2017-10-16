@@ -28,47 +28,123 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.EqConstraintFactory;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.EqDisjunctiveConstraint;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.EqNode;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.EqNodeAndFunctionFactory;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.FormulaToEqDisjunctiveConstraintConverter;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqFunction;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNode;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNodeAndFunctionFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.EqConstraintFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.EqTransitionRelation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
- * 
+ *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
- * @param <ACTION>
  */
-public class TransFormulaConverterCache<ACTION extends IIcfgTransition<IcfgLocation>> {
+public class TransFormulaConverterCache//<ACTION extends IIcfgTransition<IcfgLocation>> {
+{
 
-	private EqConstraintFactory<ACTION, EqNode, EqFunction> mEqConstraintFactory;
-	private EqNodeAndFunctionFactory mEqNodeAndFunctionFactory;
-	
-	private final Map<TransFormula, EqTransitionRelation<ACTION>> mTransformulaToEqTransitionRelationCache =
+	private final EqConstraintFactory<EqNode> mEqConstraintFactory;
+	private final EqNodeAndFunctionFactory mEqNodeAndFunctionFactory;
+
+	private final Map<TransFormula, EqTransitionRelation> mTransformulaToEqTransitionRelationCache =
 			new HashMap<>();
-	private final VPDomainPreanalysis mPreAnalysis;
-	
-	public TransFormulaConverterCache(EqNodeAndFunctionFactory eqNodeAndFunctionFactory, 
-			EqConstraintFactory<ACTION, EqNode, EqFunction> eqConstraintFactory, VPDomainPreanalysis preAnalysis) {
-		
+
+	private final ManagedScript mMgdScript;
+	private final IUltimateServiceProvider mServices;
+
+	public TransFormulaConverterCache(final IUltimateServiceProvider services, final ManagedScript mgdScript,
+			final EqNodeAndFunctionFactory eqNodeAndFunctionFactory,
+			final EqConstraintFactory<EqNode> eqConstraintFactory) {
+
 		mEqNodeAndFunctionFactory = eqNodeAndFunctionFactory;
 		mEqConstraintFactory = eqConstraintFactory;
-		mPreAnalysis = preAnalysis;
+		mMgdScript = mgdScript;
+		mServices = services;
 	}
 
-	public EqTransitionRelation<ACTION> getEqTransitionRelationFromTransformula(TransFormula tf) {
-		EqTransitionRelation<ACTION> result = mTransformulaToEqTransitionRelationCache.get(tf);
+	public EqTransitionRelation getEqTransitionRelationFromTransformula(final TransFormula tf) {
+		EqTransitionRelation result = mTransformulaToEqTransitionRelationCache.get(tf);
 		if (result == null) {
-			result = new ConvertTransformulaToEqTransitionRelation<ACTION>(tf, 
-					mEqConstraintFactory, mEqNodeAndFunctionFactory, mPreAnalysis)
-				.getResult();
+			result = convertTransformulaToEqTransitionRelation(tf, mEqConstraintFactory, mEqNodeAndFunctionFactory);
 			mTransformulaToEqTransitionRelationCache.put(tf, result);
 		}
 		return result;
+	}
+
+	private EqTransitionRelation convertTransformulaToEqTransitionRelation(final TransFormula tf,
+			final EqConstraintFactory<EqNode> eqConstraintFactory,
+			final EqNodeAndFunctionFactory eqNodeAndFunctionFactory) {
+		final EqDisjunctiveConstraint<EqNode> constraint =
+				new FormulaToEqDisjunctiveConstraintConverter<>(mServices, mMgdScript, mEqConstraintFactory,
+						mEqNodeAndFunctionFactory, tf.getFormula()).getResult();
+
+		assert transformulaImpliesResultConstraint(tf, constraint);
+
+		return new EqTransitionRelation(constraint, tf);
+	}
+
+	protected Pair<Term, Term> makeShiftVariableSubstitution(final ManagedScript mgdScript, final TransFormula tf,
+			final EqDisjunctiveConstraint<EqNode> resultConstraint) {
+		final Map<Term, Term> substitutionMapping = new HashMap<>();
+
+		for (final Entry<IProgramVar, TermVariable> iv : tf.getOutVars().entrySet()) {
+			substitutionMapping.put(iv.getValue(), iv.getKey().getPrimedConstant());
+		}
+		for (final Entry<IProgramVar, TermVariable> iv : tf.getInVars().entrySet()) {
+			substitutionMapping.put(iv.getValue(), iv.getKey().getDefaultConstant());
+		}
+		for (final TermVariable auxVar : tf.getAuxVars()) {
+			final String constName = "tf2EqTR_" + auxVar.getName();
+			mgdScript.declareFun(this, constName, new Sort[0], auxVar.getSort());
+			substitutionMapping.put(auxVar, mgdScript.term(this, constName));
+		}
+
+		final Substitution subs = new Substitution(mgdScript, substitutionMapping);
+		final Term rcClosed= subs.transform(resultConstraint.getTerm(mgdScript.getScript()));
+
+		assert rcClosed.getFreeVars().length == 0;
+
+		final Term tfClosed = ((UnmodifiableTransFormula) tf).getClosedFormula();
+		return new Pair<>(tfClosed, rcClosed);
+	}
+
+	private boolean transformulaImpliesResultConstraint(final TransFormula tf,
+			final EqDisjunctiveConstraint<EqNode> constraint) {
+		mMgdScript.lock(this);
+		mMgdScript.push(this, 1);
+		final Pair<Term, Term> anteAndSucc = makeShiftVariableSubstitution(mMgdScript, tf, constraint);
+
+		final boolean result = implicationCheck(anteAndSucc.getFirst(), anteAndSucc.getSecond());
+
+		mMgdScript.pop(this, 1);
+		mMgdScript.unlock(this);
+
+		return result;
+	}
+
+	protected boolean implicationCheck(final Term ante, final Term succ) {
+		final ManagedScript mgdScript = mMgdScript;
+
+		mgdScript.assertTerm(this, ante);
+		mgdScript.assertTerm(this, Util.not(mgdScript.getScript(), succ));
+
+		final LBool result = mgdScript.checkSat(this);
+		if (result != LBool.UNSAT) {
+			assert false;
+		}
+		return result == LBool.UNSAT;
 	}
 }

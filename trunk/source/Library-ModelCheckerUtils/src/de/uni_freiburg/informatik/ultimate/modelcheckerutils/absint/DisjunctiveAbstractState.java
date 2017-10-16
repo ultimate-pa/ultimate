@@ -40,6 +40,7 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 
 /**
@@ -50,10 +51,10 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
  *
  * @param <STATE>
  * @param <ACTION>
- * @param <VARDECL>
+ * @param <IProgramVarOrConst>
  */
-public class DisjunctiveAbstractState<STATE extends IAbstractState<STATE, VARDECL>, VARDECL>
-		implements IAbstractState<DisjunctiveAbstractState<STATE, VARDECL>, VARDECL> {
+public class DisjunctiveAbstractState<STATE extends IAbstractState<STATE>>
+		implements IAbstractState<DisjunctiveAbstractState<STATE>> {
 
 	private static int sNextFreeId;
 	private final Set<STATE> mStates;
@@ -80,7 +81,7 @@ public class DisjunctiveAbstractState<STATE extends IAbstractState<STATE, VARDEC
 		assert states != null;
 		assert haveSameVars(states);
 		assert states.stream().allMatch(
-				a -> !(a instanceof DisjunctiveAbstractState<?, ?>)) : "Cannot nest AbstractMultiStates, use flatten() instead";
+				a -> !(a instanceof DisjunctiveAbstractState<?>)) : "Cannot nest AbstractMultiStates, use flatten() instead";
 		mMaxSize = maxSize;
 		mStates = states;
 		sNextFreeId++;
@@ -91,37 +92,37 @@ public class DisjunctiveAbstractState<STATE extends IAbstractState<STATE, VARDEC
 		if (states.size() <= 1) {
 			return true;
 		}
-		final Set<VARDECL> firstVars = states.iterator().next().getVariables();
+		final Set<IProgramVarOrConst> firstVars = states.iterator().next().getVariables();
 		return states.stream().allMatch(a -> firstVars.equals(a.getVariables()));
 	}
 
 	@Override
-	public DisjunctiveAbstractState<STATE, VARDECL> addVariable(final VARDECL variable) {
+	public DisjunctiveAbstractState<STATE> addVariable(final IProgramVarOrConst variable) {
 		return map(a -> a.addVariable(variable));
 	}
 
 	@Override
-	public DisjunctiveAbstractState<STATE, VARDECL> removeVariable(final VARDECL variable) {
+	public DisjunctiveAbstractState<STATE> removeVariable(final IProgramVarOrConst variable) {
 		return map(a -> a.removeVariable(variable));
 	}
 
 	@Override
-	public DisjunctiveAbstractState<STATE, VARDECL> addVariables(final Collection<VARDECL> variables) {
+	public DisjunctiveAbstractState<STATE> addVariables(final Collection<IProgramVarOrConst> variables) {
 		return map(a -> a.addVariables(variables));
 	}
 
 	@Override
-	public DisjunctiveAbstractState<STATE, VARDECL> removeVariables(final Collection<VARDECL> variables) {
+	public DisjunctiveAbstractState<STATE> removeVariables(final Collection<IProgramVarOrConst> variables) {
 		return map(a -> a.removeVariables(variables));
 	}
 
 	@Override
-	public boolean containsVariable(final VARDECL var) {
+	public boolean containsVariable(final IProgramVarOrConst var) {
 		return mStates.stream().anyMatch(a -> a.containsVariable(var));
 	}
 
 	@Override
-	public Set<VARDECL> getVariables() {
+	public Set<IProgramVarOrConst> getVariables() {
 		if (mStates.isEmpty()) {
 			return Collections.emptySet();
 		}
@@ -129,12 +130,13 @@ public class DisjunctiveAbstractState<STATE extends IAbstractState<STATE, VARDEC
 	}
 
 	@Override
-	public DisjunctiveAbstractState<STATE, VARDECL> renameVariables(final Map<VARDECL, VARDECL> old2newVars) {
+	public DisjunctiveAbstractState<STATE>
+			renameVariables(final Map<IProgramVarOrConst, IProgramVarOrConst> old2newVars) {
 		return map(a -> a.renameVariables(old2newVars));
 	}
 
 	@Override
-	public DisjunctiveAbstractState<STATE, VARDECL> patch(final DisjunctiveAbstractState<STATE, VARDECL> dominator) {
+	public DisjunctiveAbstractState<STATE> patch(final DisjunctiveAbstractState<STATE> dominator) {
 		assert mStates.size() != dominator.mStates
 				.size() : "Cannot apply symmetrical with differently sized multi-states";
 		final Set<STATE> newSet = newSet(mStates.size());
@@ -157,7 +159,7 @@ public class DisjunctiveAbstractState<STATE extends IAbstractState<STATE, VARDEC
 	}
 
 	@Override
-	public boolean isEqualTo(final DisjunctiveAbstractState<STATE, VARDECL> other) {
+	public boolean isEqualTo(final DisjunctiveAbstractState<STATE> other) {
 		if (other == null) {
 			return false;
 		}
@@ -174,7 +176,7 @@ public class DisjunctiveAbstractState<STATE extends IAbstractState<STATE, VARDEC
 	}
 
 	@Override
-	public SubsetResult isSubsetOf(final DisjunctiveAbstractState<STATE, VARDECL> other) {
+	public SubsetResult isSubsetOf(final DisjunctiveAbstractState<STATE> other) {
 		if (other == null) {
 			return SubsetResult.NONE;
 		}
@@ -269,7 +271,7 @@ public class DisjunctiveAbstractState<STATE extends IAbstractState<STATE, VARDEC
 		if (getClass() != obj.getClass()) {
 			return false;
 		}
-		final DisjunctiveAbstractState<?, ?> other = (DisjunctiveAbstractState<?, ?>) obj;
+		final DisjunctiveAbstractState<?> other = (DisjunctiveAbstractState<?>) obj;
 		if (mId != other.mId) {
 			return false;
 		}
@@ -284,13 +286,13 @@ public class DisjunctiveAbstractState<STATE extends IAbstractState<STATE, VARDEC
 	}
 
 	@Override
-	public DisjunctiveAbstractState<STATE, VARDECL> intersect(final DisjunctiveAbstractState<STATE, VARDECL> other) {
+	public DisjunctiveAbstractState<STATE> intersect(final DisjunctiveAbstractState<STATE> other) {
 		assert other != null && other.getVariables().equals(getVariables()) : "Cannot intersect incompatible states";
 		return crossProduct((a, b) -> a.intersect(b), other, mStates.size() * other.mStates.size());
 	}
 
 	@Override
-	public DisjunctiveAbstractState<STATE, VARDECL> union(final DisjunctiveAbstractState<STATE, VARDECL> other) {
+	public DisjunctiveAbstractState<STATE> union(final DisjunctiveAbstractState<STATE> other) {
 		assert other != null && other.getVariables().equals(getVariables()) : "Cannot merge incompatible states";
 		final Set<STATE> set = newSet(mStates, other.mStates);
 		return new DisjunctiveAbstractState<>(mMaxSize, reduce(set));
@@ -301,9 +303,9 @@ public class DisjunctiveAbstractState<STATE extends IAbstractState<STATE, VARDEC
 	 * states in this multi-state. This state acts as local pre state, and all states in hierachicalPreState are used as
 	 * hierachical pre states.
 	 */
-	public <ACTION> DisjunctiveAbstractState<STATE, VARDECL> defineVariablesAfter(
-			final IVariableProvider<STATE, ACTION, VARDECL> varProvider, final ACTION transition,
-			final DisjunctiveAbstractState<STATE, VARDECL> hierachicalPreState) {
+	public <ACTION> DisjunctiveAbstractState<STATE> defineVariablesAfter(
+			final IVariableProvider<STATE, ACTION> varProvider, final ACTION transition,
+			final DisjunctiveAbstractState<STATE> hierachicalPreState) {
 		return crossProduct((a, b) -> varProvider.defineVariablesAfter(transition, a, b), hierachicalPreState,
 				mMaxSize);
 	}
@@ -313,9 +315,9 @@ public class DisjunctiveAbstractState<STATE extends IAbstractState<STATE, VARDEC
 	 * function to all states in this multi-state. This state acts as local pre state, and all states in
 	 * hierachicalPreState are used as hierachical pre states.
 	 */
-	public <ACTION> DisjunctiveAbstractState<STATE, VARDECL> createValidPostOpStateAfterLeaving(
-			final IVariableProvider<STATE, ACTION, VARDECL> varProvider, final ACTION act,
-			final DisjunctiveAbstractState<STATE, VARDECL> hierachicalPreState) {
+	public <ACTION> DisjunctiveAbstractState<STATE> createValidPostOpStateAfterLeaving(
+			final IVariableProvider<STATE, ACTION> varProvider, final ACTION act,
+			final DisjunctiveAbstractState<STATE> hierachicalPreState) {
 		if (hierachicalPreState == null) {
 			return map(a -> varProvider.createValidPostOpStateAfterLeaving(act, a, null));
 		}
@@ -324,9 +326,9 @@ public class DisjunctiveAbstractState<STATE extends IAbstractState<STATE, VARDEC
 	}
 
 	@Override
-	public DisjunctiveAbstractState<STATE, VARDECL> compact() {
+	public DisjunctiveAbstractState<STATE> compact() {
 		final Set<STATE> compactedStates = newSet(mStates.size());
-		final Set<VARDECL> vars = new HashSet<>();
+		final Set<IProgramVarOrConst> vars = new HashSet<>();
 		for (final STATE state : mStates) {
 			final STATE compacted = state.compact();
 			compactedStates.add(compacted);
@@ -339,7 +341,7 @@ public class DisjunctiveAbstractState<STATE extends IAbstractState<STATE, VARDEC
 		final Set<STATE> compactedSynchronizedStates = newSet(mStates.size());
 		for (final STATE state : compactedStates) {
 
-			final Set<VARDECL> missing = new HashSet<>(vars);
+			final Set<IProgramVarOrConst> missing = new HashSet<>(vars);
 			missing.removeAll(state.getVariables());
 			if (missing.isEmpty()) {
 				compactedSynchronizedStates.add(state);
@@ -351,24 +353,23 @@ public class DisjunctiveAbstractState<STATE extends IAbstractState<STATE, VARDEC
 		return new DisjunctiveAbstractState<>(mMaxSize, compactedSynchronizedStates);
 	}
 
-	public <ACTION> DisjunctiveAbstractState<STATE, VARDECL> createValidPostOpStateBeforeLeaving(
-			final IVariableProvider<STATE, ACTION, VARDECL> varProvider, final ACTION act) {
+	public <ACTION> DisjunctiveAbstractState<STATE> createValidPostOpStateBeforeLeaving(
+			final IVariableProvider<STATE, ACTION> varProvider, final ACTION act) {
 		return map(a -> varProvider.createValidPostOpStateBeforeLeaving(act, a));
 	}
 
-	public <ACTION> DisjunctiveAbstractState<STATE, VARDECL>
-			apply(final IAbstractTransformer<STATE, ACTION, VARDECL> op, final ACTION transition) {
+	public <ACTION> DisjunctiveAbstractState<STATE> apply(final IAbstractTransformer<STATE, ACTION> op,
+			final ACTION transition) {
 		return mapCollection(a -> op.apply(a, transition));
 	}
 
-	public <ACTION> DisjunctiveAbstractState<STATE, VARDECL> apply(
-			final IAbstractPostOperator<STATE, ACTION, VARDECL> postOp,
-			final DisjunctiveAbstractState<STATE, VARDECL> multiStateBeforeLeaving, final ACTION transition) {
+	public <ACTION> DisjunctiveAbstractState<STATE> apply(final IAbstractPostOperator<STATE, ACTION> postOp,
+			final DisjunctiveAbstractState<STATE> multiStateBeforeLeaving, final ACTION transition) {
 		return crossProductCollection((a, b) -> postOp.apply(b, a, transition), multiStateBeforeLeaving, mMaxSize);
 	}
 
-	public DisjunctiveAbstractState<STATE, VARDECL> apply(final IAbstractStateBinaryOperator<STATE> op,
-			final DisjunctiveAbstractState<STATE, VARDECL> other) {
+	public DisjunctiveAbstractState<STATE> apply(final IAbstractStateBinaryOperator<STATE> op,
+			final DisjunctiveAbstractState<STATE> other) {
 		return crossProduct(op::apply, other, mMaxSize);
 	}
 
@@ -392,8 +393,8 @@ public class DisjunctiveAbstractState<STATE extends IAbstractState<STATE, VARDEC
 	 * it differs, create a new {@link DisjunctiveAbstractState} that retains as many as <code>maxSize</code>
 	 * disjunctive states.
 	 */
-	private DisjunctiveAbstractState<STATE, VARDECL> crossProduct(final BiFunction<STATE, STATE, STATE> funCreateState,
-			final DisjunctiveAbstractState<STATE, VARDECL> otherMultiState, final int maxSize) {
+	private DisjunctiveAbstractState<STATE> crossProduct(final BiFunction<STATE, STATE, STATE> funCreateState,
+			final DisjunctiveAbstractState<STATE> otherMultiState, final int maxSize) {
 		final Set<STATE> newSet = newSet(mStates.size() * otherMultiState.mStates.size());
 		for (final STATE localState : mStates) {
 			for (final STATE otherState : otherMultiState.mStates) {
@@ -410,9 +411,9 @@ public class DisjunctiveAbstractState<STATE extends IAbstractState<STATE, VARDEC
 	 * Same as {@link #crossProduct(BiFunction, DisjunctiveAbstractState, int)}, but the function creates a collection
 	 * of states.
 	 */
-	private DisjunctiveAbstractState<STATE, VARDECL> crossProductCollection(
+	private DisjunctiveAbstractState<STATE> crossProductCollection(
 			final BiFunction<STATE, STATE, Collection<STATE>> funCreateState,
-			final DisjunctiveAbstractState<STATE, VARDECL> otherMultiState, final int maxSize) {
+			final DisjunctiveAbstractState<STATE> otherMultiState, final int maxSize) {
 		final Set<STATE> newSet = newSet(mStates.size() * otherMultiState.mStates.size());
 		for (final STATE localState : mStates) {
 			for (final STATE otherState : otherMultiState.mStates) {
@@ -425,7 +426,7 @@ public class DisjunctiveAbstractState<STATE extends IAbstractState<STATE, VARDEC
 		return new DisjunctiveAbstractState<>(maxSize, getMaximalElements(newSet));
 	}
 
-	private DisjunctiveAbstractState<STATE, VARDECL> map(final Function<STATE, STATE> func) {
+	private DisjunctiveAbstractState<STATE> map(final Function<STATE, STATE> func) {
 		final Set<STATE> newSet = newSet(mStates.size());
 		for (final STATE state : mStates) {
 			newSet.add(func.apply(state));
@@ -436,7 +437,7 @@ public class DisjunctiveAbstractState<STATE extends IAbstractState<STATE, VARDEC
 		return new DisjunctiveAbstractState<>(mMaxSize, newSet);
 	}
 
-	private DisjunctiveAbstractState<STATE, VARDECL> mapCollection(final Function<STATE, Collection<STATE>> func) {
+	private DisjunctiveAbstractState<STATE> mapCollection(final Function<STATE, Collection<STATE>> func) {
 		final Set<STATE> newSet = newSet();
 		for (final STATE state : mStates) {
 			newSet.addAll(func.apply(state));
@@ -495,13 +496,13 @@ public class DisjunctiveAbstractState<STATE extends IAbstractState<STATE, VARDEC
 	 * {@link DisjunctiveAbstractState}s, essentially flattening the disjunction.
 	 */
 	@SuppressWarnings("unchecked")
-	public static <STATE extends IAbstractState<STATE, VARDECL>, VARDECL> DisjunctiveAbstractState<STATE, VARDECL>
+	public static <STATE extends IAbstractState<STATE>> DisjunctiveAbstractState<STATE>
 			createDisjunction(final Collection<STATE> states) {
 
 		final Set<STATE> disjuncts = new HashSet<>();
 		for (final STATE state : states) {
-			if (state instanceof DisjunctiveAbstractState<?, ?>) {
-				disjuncts.addAll(((DisjunctiveAbstractState<STATE, VARDECL>) state).getStates());
+			if (state instanceof DisjunctiveAbstractState<?>) {
+				disjuncts.addAll(((DisjunctiveAbstractState<STATE>) state).getStates());
 			} else {
 				disjuncts.add(state);
 			}
@@ -509,8 +510,7 @@ public class DisjunctiveAbstractState<STATE extends IAbstractState<STATE, VARDEC
 		return new DisjunctiveAbstractState<>(reduce(disjuncts, disjuncts.size()));
 	}
 
-	private static <STATE extends IAbstractState<STATE, VARDECL>, VARDECL> Set<STATE> reduce(final Set<STATE> states,
-			final int maxsize) {
+	private static <STATE extends IAbstractState<STATE>> Set<STATE> reduce(final Set<STATE> states, final int maxsize) {
 		final Set<STATE> maximalElements = getMaximalElements(states);
 		if (maximalElements.size() <= maxsize) {
 			return maximalElements;
@@ -518,8 +518,8 @@ public class DisjunctiveAbstractState<STATE extends IAbstractState<STATE, VARDEC
 		return reduceByOrderedMerge(maximalElements, maxsize);
 	}
 
-	private static <STATE extends IAbstractState<STATE, VARDECL>, VARDECL> Set<STATE>
-			reduceByOrderedMerge(final Set<STATE> states, final int maxsize) {
+	private static <STATE extends IAbstractState<STATE>> Set<STATE> reduceByOrderedMerge(final Set<STATE> states,
+			final int maxsize) {
 		final Set<STATE> reducibleSet = new LinkedHashSet<>(states);
 		int numberOfMerges = states.size() - maxsize;
 		while (numberOfMerges > 0) {
@@ -538,8 +538,7 @@ public class DisjunctiveAbstractState<STATE extends IAbstractState<STATE, VARDEC
 		return reducibleSet;
 	}
 
-	private static <STATE extends IAbstractState<STATE, VARDECL>, VARDECL> Set<STATE>
-			getMaximalElements(final Set<STATE> states) {
+	private static <STATE extends IAbstractState<STATE>> Set<STATE> getMaximalElements(final Set<STATE> states) {
 		if (states.isEmpty() || states.size() == 1) {
 			return states;
 		}

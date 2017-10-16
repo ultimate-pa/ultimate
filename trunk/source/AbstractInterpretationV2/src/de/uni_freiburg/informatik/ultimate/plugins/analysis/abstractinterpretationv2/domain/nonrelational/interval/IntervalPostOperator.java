@@ -31,24 +31,25 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieSymbolTableVariableProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalPostOperator;
 
 /**
- * The post operator of the interval domain for {@link IBoogieVar}s.
+ * The post operator of the interval domain for {@link IProgramVar}s.
  *
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  */
 public class IntervalPostOperator
-		extends NonrelationalPostOperator<IntervalDomainState<IBoogieVar>, IntervalDomainValue> {
+		extends NonrelationalPostOperator<IntervalDomainState, IntervalDomainValue> {
 
 	public IntervalPostOperator(final ILogger logger, final BoogieSymbolTable symbolTable,
-			final Boogie2SmtSymbolTable bpl2smtSymbolTable, final int maxParallelStates, final Boogie2SMT boogie2Smt,
-			final CfgSmtToolkit cfgSmtToolkit) {
-		super(logger, symbolTable, bpl2smtSymbolTable,
-				new IntervalDomainStatementProcessor(logger, symbolTable, bpl2smtSymbolTable, maxParallelStates),
+			final IBoogieSymbolTableVariableProvider bpl2SmtSymbolTable, final int maxParallelStates,
+			final Boogie2SMT boogie2Smt, final CfgSmtToolkit cfgSmtToolkit) {
+		super(logger, symbolTable, bpl2SmtSymbolTable,
+				new IntervalDomainStatementProcessor(logger, symbolTable, bpl2SmtSymbolTable, maxParallelStates),
 				maxParallelStates, boogie2Smt, cfgSmtToolkit);
 	}
 

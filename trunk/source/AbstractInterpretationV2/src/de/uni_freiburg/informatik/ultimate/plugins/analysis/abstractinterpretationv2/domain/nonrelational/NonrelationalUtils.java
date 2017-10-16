@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  *
  */
 public final class NonrelationalUtils {
-	
+
 	private NonrelationalUtils() {
 		// do not instantiate util class
 	}
@@ -76,8 +76,8 @@ public final class NonrelationalUtils {
 	 *            The largest allowed number of singular {@link IntervalDomainState}s in the given list.
 	 * @return A new list that contains the result of merging all {@link IntervalDomainState}s in the given list.
 	 */
-	public static <STATE extends NonrelationalState<STATE, V, VARDECL>, V extends INonrelationalValue<V>, VARDECL>
-			List<STATE> mergeStatesIfNecessary(final List<STATE> results, final int maxParallelStates) {
+	public static <STATE extends NonrelationalState<STATE, V>, V extends INonrelationalValue<V>> List<STATE>
+			mergeStatesIfNecessary(final List<STATE> results, final int maxParallelStates) {
 		if (results.size() > maxParallelStates) {
 			return Collections.singletonList(results.stream().reduce(NonrelationalUtils::merge).get());
 		}
@@ -90,8 +90,8 @@ public final class NonrelationalUtils {
 				a.getBooleanValue().merge(b.getBooleanValue()));
 	}
 
-	private static <STATE extends NonrelationalState<STATE, V, VARDECL>, V extends INonrelationalValue<V>, VARDECL>
-			STATE merge(final STATE a, final STATE b) {
+	private static <STATE extends NonrelationalState<STATE, V>, V extends INonrelationalValue<V>> STATE
+			merge(final STATE a, final STATE b) {
 		return a.union(b);
 	}
 }

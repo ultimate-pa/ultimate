@@ -69,9 +69,11 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieNonOldVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieSymbolTableVariableProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.ExpressionEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
@@ -89,26 +91,26 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.CrossProducts;
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public abstract class NonrelationalStatementProcessor<STATE extends NonrelationalState<STATE, V, IBoogieVar>, V extends INonrelationalValue<V>>
+public abstract class NonrelationalStatementProcessor<STATE extends NonrelationalState<STATE, V>, V extends INonrelationalValue<V>>
 		extends BoogieVisitor {
 
-	private final Boogie2SmtSymbolTable mBoogie2SmtSymbolTable;
+	private final IBoogieSymbolTableVariableProvider mBoogie2SmtSymbolTable;
 	private final BoogieSymbolTable mSymbolTable;
 	private final ILogger mLogger;
-	private final IEvaluatorFactory<V, STATE, IBoogieVar> mEvaluatorFactory;
+	private final IEvaluatorFactory<V, STATE> mEvaluatorFactory;
 
 	private STATE mOldState;
 	private List<STATE> mReturnState;
-	private ExpressionEvaluator<V, STATE, IBoogieVar> mExpressionEvaluator;
-	private IBoogieVar mLhsVariable;
-	private Map<LeftHandSide, IBoogieVar> mTemporaryVars;
+	private ExpressionEvaluator<V, STATE> mExpressionEvaluator;
+	private IProgramVarOrConst mLhsVariable;
+	private Map<LeftHandSide, IProgramVarOrConst> mTemporaryVars;
 
 	private final Map<Expression, Expression> mNormalizedExpressionCache;
 
 	private boolean mOldScope;
 
 	protected NonrelationalStatementProcessor(final ILogger logger, final BoogieSymbolTable boogieSymbolTable,
-			final Boogie2SmtSymbolTable bpl2SmtTable, final int maxParallelStates) {
+			final IBoogieSymbolTableVariableProvider bpl2SmtTable, final int maxParallelStates) {
 		mBoogie2SmtSymbolTable = bpl2SmtTable;
 		mSymbolTable = boogieSymbolTable;
 		mOldScope = false;
@@ -124,7 +126,7 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 	}
 
 	public List<STATE> process(final STATE oldState, final Statement statement,
-			final Map<LeftHandSide, IBoogieVar> tmpVars) {
+			final Map<LeftHandSide, IProgramVarOrConst> tmpVars) {
 		assert oldState != null;
 		assert statement != null;
 		assert tmpVars != null;
@@ -205,7 +207,7 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 		return newExpr;
 	}
 
-	protected abstract IEvaluatorFactory<V, STATE, IBoogieVar> createEvaluatorFactory(final int maxParallelStates);
+	protected abstract IEvaluatorFactory<V, STATE> createEvaluatorFactory(final int maxParallelStates);
 
 	/**
 	 * Override this method to add evaluators for this (already preprocessed) expression.
@@ -217,8 +219,8 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 	 * @param expr
 	 *            The preprocessed expression.
 	 */
-	protected void addEvaluators(final ExpressionEvaluator<V, STATE, IBoogieVar> evaluator,
-			final IEvaluatorFactory<V, STATE, IBoogieVar> evaluatorFactory, final Expression expr) {
+	protected void addEvaluators(final ExpressionEvaluator<V, STATE> evaluator,
+			final IEvaluatorFactory<V, STATE> evaluatorFactory, final Expression expr) {
 		// not necessary for non-relational statement processor
 	}
 
@@ -254,7 +256,7 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 	private void handleMultiAssignment(final LeftHandSide[] lhs, final Expression[] rhs) {
 		final List<List<STATE>> multiAssignmentResults = new ArrayList<>();
 		for (int i = 0; i < lhs.length; i++) {
-			final IBoogieVar lhsVar = getLhsVariable(lhs[i]);
+			final IProgramVarOrConst lhsVar = getLhsVariable(lhs[i]);
 			final List<STATE> unprojectedState = handleSingleAssignment(lhsVar, rhs[i], mOldState);
 			final List<STATE> projectedState = project(lhsVar, unprojectedState);
 			assert projectedState != null;
@@ -272,12 +274,12 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 	 * Project away all variables expect lhsVar from each STATE in states.
 	 *
 	 * @param lhsVar
-	 *            The {@link IBoogieVar} to keep.
+	 *            The {@link IProgramVar} to keep.
 	 * @param states
 	 *            The states which should be projected on lhsVar.
 	 * @return A {@link List} of states containing only lhsVar.
 	 */
-	private List<STATE> project(final IBoogieVar lhsVar, final List<STATE> states) {
+	private List<STATE> project(final IProgramVarOrConst lhsVar, final List<STATE> states) {
 		return states.stream().map(a -> project(lhsVar, a)).collect(Collectors.toList());
 	}
 
@@ -285,18 +287,19 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 	 * Project away all variables expect lhsVar from state.
 	 *
 	 * @param lhsVar
-	 *            The {@link IBoogieVar} to keep.
+	 *            The {@link IProgramVar} to keep.
 	 * @param state
 	 *            The state which should be projected on lhsVar.
 	 * @return A STATE containing only lhsVar.
 	 */
-	private STATE project(final IBoogieVar lhsVar, final STATE state) {
-		final Set<IBoogieVar> varsToRemove = new HashSet<>(state.getVariables());
+	private STATE project(final IProgramVarOrConst lhsVar, final STATE state) {
+		final Set<IProgramVarOrConst> varsToRemove = new HashSet<>(state.getVariables());
 		varsToRemove.remove(lhsVar);
 		return state.removeVariables(varsToRemove);
 	}
 
-	private List<STATE> handleSingleAssignment(final IBoogieVar lhsVar, final Expression rhs, final STATE oldstate) {
+	private List<STATE> handleSingleAssignment(final IProgramVarOrConst lhsVar, final Expression rhs,
+			final STATE oldstate) {
 		mExpressionEvaluator = new ExpressionEvaluator<>();
 		processExpression(rhs);
 
@@ -312,8 +315,8 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 
 		final List<STATE> newStates = new ArrayList<>();
 		for (final IEvaluationResult<V> res : results) {
-			final Function<IBoogieVar, STATE> varFunction = var -> oldstate.setValue(var, res.getValue());
-			final Function<IBoogieVar, STATE> boolFunction =
+			final Function<IProgramVarOrConst, STATE> varFunction = var -> oldstate.setValue(var, res.getValue());
+			final Function<IProgramVarOrConst, STATE> boolFunction =
 					var -> oldstate.setBooleanValue(var, res.getBooleanValue());
 
 			final STATE newState = TypeUtils.applyVariableFunction(varFunction, boolFunction, null, lhsVar);
@@ -323,11 +326,11 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 		return newStates;
 	}
 
-	private IBoogieVar getLhsVariable(final LeftHandSide lhs) {
+	private IProgramVarOrConst getLhsVariable(final LeftHandSide lhs) {
 		assert mLhsVariable == null;
 		processLeftHandSide(lhs);
 		assert mLhsVariable != null : "processLeftHandSide(...) failed";
-		final IBoogieVar var = mLhsVariable;
+		final IProgramVarOrConst var = mLhsVariable;
 		mLhsVariable = null;
 		return var;
 	}
@@ -360,8 +363,10 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 					mReturnState.add(mOldState.bottomState());
 				}
 			} else {
-				final List<STATE> resultStates =
-						mExpressionEvaluator.getRootEvaluator().inverseEvaluate(res, mOldState);
+				// Assume statements must evaluate to true in all cases. Only the true part is important for succeeding
+				// states. Otherwise, the return state will be bottom.
+				final List<STATE> resultStates = mExpressionEvaluator.getRootEvaluator().inverseEvaluate(
+						new NonrelationalEvaluationResult<>(res.getValue(), BooleanValue.TRUE), mOldState);
 				mReturnState.addAll(resultStates);
 			}
 		}
@@ -371,13 +376,13 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 		STATE currentNewState = mOldState;
 
 		for (final VariableLHS var : statement.getIdentifiers()) {
-			final IBoogieVar type = getBoogieVar(var);
+			final IProgramVarOrConst type = getBoogieVar(var);
 
 			// TODO: Add array support.
 			final STATE finalCurrentNewState = currentNewState;
-			final Function<IBoogieVar, STATE> varFunction =
+			final Function<IProgramVarOrConst, STATE> varFunction =
 					variable -> finalCurrentNewState.setValue(variable, finalCurrentNewState.createTopValue());
-			final Function<IBoogieVar, STATE> boolFunction =
+			final Function<IProgramVarOrConst, STATE> boolFunction =
 					variable -> finalCurrentNewState.setBooleanValue(variable, BooleanValue.TOP);
 
 			currentNewState = TypeUtils.applyVariableFunction(varFunction, boolFunction, null, type);
@@ -393,21 +398,21 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 
 	@Override
 	protected void visit(final IntegerLiteral expr) {
-		final IEvaluator<V, STATE, IBoogieVar> evaluator =
+		final IEvaluator<V, STATE> evaluator =
 				mEvaluatorFactory.createSingletonValueExpressionEvaluator(expr.getValue(), BigInteger.class);
 		mExpressionEvaluator.addEvaluator(evaluator);
 	}
 
 	@Override
 	protected void visit(final RealLiteral expr) {
-		final IEvaluator<V, STATE, IBoogieVar> evaluator =
+		final IEvaluator<V, STATE> evaluator =
 				mEvaluatorFactory.createSingletonValueExpressionEvaluator(expr.getValue(), BigDecimal.class);
 		mExpressionEvaluator.addEvaluator(evaluator);
 	}
 
 	@Override
 	protected void visit(final BinaryExpression expr) {
-		final INAryEvaluator<V, STATE, IBoogieVar> evaluator =
+		final INAryEvaluator<V, STATE> evaluator =
 				mEvaluatorFactory.createNAryExpressionEvaluator(2, EvaluatorUtils.getEvaluatorType(expr.getType()));
 		evaluator.setOperator(expr.getOperator());
 		mExpressionEvaluator.addEvaluator(evaluator);
@@ -415,7 +420,7 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 
 	@Override
 	protected void visit(final FunctionApplication expr) {
-		final IEvaluator<V, STATE, IBoogieVar> evaluator;
+		final IEvaluator<V, STATE> evaluator;
 		final List<Declaration> decls = mSymbolTable.getFunctionOrProcedureDeclaration(expr.getIdentifier());
 
 		// If we don't have a specification for the function, we return top.
@@ -444,7 +449,7 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 
 	@Override
 	protected void visit(final IdentifierExpression expr) {
-		final IEvaluator<V, STATE, IBoogieVar> evaluator =
+		final IEvaluator<V, STATE> evaluator =
 				mEvaluatorFactory.createSingletonVariableExpressionEvaluator(getBoogieVar(expr));
 		mExpressionEvaluator.addEvaluator(evaluator);
 		super.visit(expr);
@@ -452,7 +457,7 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 
 	@Override
 	protected void visit(final UnaryExpression expr) {
-		final INAryEvaluator<V, STATE, IBoogieVar> evaluator =
+		final INAryEvaluator<V, STATE> evaluator =
 				mEvaluatorFactory.createNAryExpressionEvaluator(1, EvaluatorUtils.getEvaluatorType(expr.getType()));
 		evaluator.setOperator(expr.getOperator());
 		mExpressionEvaluator.addEvaluator(evaluator);
@@ -461,7 +466,7 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 
 	@Override
 	protected void visit(final BooleanLiteral expr) {
-		final IEvaluator<V, STATE, IBoogieVar> evaluator = mEvaluatorFactory
+		final IEvaluator<V, STATE> evaluator = mEvaluatorFactory
 				.createSingletonLogicalValueExpressionEvaluator(BooleanValue.getBooleanValue(expr.getValue()));
 		mExpressionEvaluator.addEvaluator(evaluator);
 	}
@@ -478,7 +483,7 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 
 	@Override
 	protected void visit(final IfThenElseExpression expr) {
-		final IEvaluator<V, STATE, IBoogieVar> evaluator = mEvaluatorFactory.createConditionalEvaluator();
+		final IEvaluator<V, STATE> evaluator = mEvaluatorFactory.createConditionalEvaluator();
 		mExpressionEvaluator.addEvaluator(evaluator);
 
 		// Create a new expression for the negative case
@@ -489,8 +494,8 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 		processExpression(newUnary);
 	}
 
-	private IBoogieVar getBoogieVar(final VariableLHS expr) {
-		IBoogieVar rtr = mTemporaryVars.get(expr);
+	private IProgramVarOrConst getBoogieVar(final VariableLHS expr) {
+		IProgramVarOrConst rtr = mTemporaryVars.get(expr);
 		if (rtr == null) {
 			rtr = mBoogie2SmtSymbolTable.getBoogieVar(expr.getIdentifier(), expr.getDeclarationInformation(), false);
 		}
@@ -504,13 +509,13 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 		return rtr;
 	}
 
-	private IBoogieVar getBoogieVar(final IdentifierExpression expr) {
-		IBoogieVar returnVar =
+	private IProgramVarOrConst getBoogieVar(final IdentifierExpression expr) {
+		IProgramVarOrConst returnVar =
 				mBoogie2SmtSymbolTable.getBoogieVar(expr.getIdentifier(), expr.getDeclarationInformation(), false);
 
 		if (returnVar != null) {
-			if (mOldScope && returnVar instanceof BoogieNonOldVar) {
-				return ((BoogieNonOldVar) returnVar).getOldVar();
+			if (mOldScope && returnVar instanceof IProgramNonOldVar) {
+				return ((IProgramNonOldVar) returnVar).getOldVar();
 			}
 			return returnVar;
 		}

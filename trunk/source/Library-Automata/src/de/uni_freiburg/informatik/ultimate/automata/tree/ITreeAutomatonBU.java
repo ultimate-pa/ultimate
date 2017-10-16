@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
  * Interface to create a tree automaton
  * 
  * @author mostafa.amin93@gmail.com, grugelt@uni-freiburg.de
- * 
+ * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  * 
  * @param <LETTER>
  *            symbol
@@ -49,27 +49,56 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
  */
 public interface ITreeAutomatonBU<LETTER extends IRankedLetter, STATE> extends IAutomaton<LETTER, STATE> {
 
+	/***
+	 * Add a new rule to the automaton.
+	 * 
+	 * @param rule
+	 */
+	void addRule(final TreeAutomatonRule<LETTER, STATE> rule);
+
+	/**
+	 * Gets the amount of rules contained in this automaton. This operation operates
+	 * in O(1), i.e. it is fast.
+	 * 
+	 * @return The amount of rules contained in this automaton
+	 */
+	int getAmountOfRules();
+
+	// /**
+	// * @return a set of all initial states in the automaton.
+	// */
+	// Set<STATE> getInitialStates();
+
+	/**
+	 * @param state
+	 * @return a map that denotes all the lists of rules that goes to given state.
+	 */
+	Map<LETTER, Iterable<List<STATE>>> getPredecessors(final STATE state);
+
+	// /**
+	// * @param state
+	// * @return true, if given state is initial.
+	// */
+	// boolean isInitialState(final STATE state);
+
+	/**
+	 * @param state
+	 * @param letter
+	 * @return Given a letter and a state, get all rules that goes to the given
+	 *         state using the given letter.
+	 */
+	Iterable<List<STATE>> getPredecessors(final STATE state, final LETTER letter);
+
+	/**
+	 * 
+	 * @return Get the rules of the automaton.
+	 */
+	Iterable<TreeAutomatonRule<LETTER, STATE>> getRules();
+
 	/**
 	 * @return a set of all the states in the automaton.
 	 */
 	Set<STATE> getStates();
-
-//	/**
-//	 * @return a set of all initial states in the automaton.
-//	 */
-//	Set<STATE> getInitialStates();
-
-	/**
-	 * @param state
-	 * @return true, if given state is final.
-	 */
-	boolean isFinalState(final STATE state);
-
-//	/**
-//	 * @param state
-//	 * @return true, if given state is initial.
-//	 */
-//	boolean isInitialState(final STATE state);
 
 	/**
 	 * @param states
@@ -86,31 +115,9 @@ public interface ITreeAutomatonBU<LETTER extends IRankedLetter, STATE> extends I
 
 	/**
 	 * @param state
-	 * @return a map that denotes all the lists of rules that goes to given
-	 *         state.
+	 * @return true, if given state is final.
 	 */
-	Map<LETTER, Iterable<List<STATE>>> getPredecessors(final STATE state);
-
-	/**
-	 * @param state
-	 * @param letter
-	 * @return Given a letter and a state, get all rules that goes to the given
-	 *         state using the given letter.
-	 */
-	Iterable<List<STATE>> getPredecessors(final STATE state, final LETTER letter);
-
-	/**
-	 * 
-	 * @return Get the rules of the automaton.
-	 */
-	Iterable<TreeAutomatonRule<LETTER, STATE>> getRules();
-
-	/***
-	 * Add a new rule to the automaton.
-	 * 
-	 * @param rule
-	 */
-	void addRule(final TreeAutomatonRule<LETTER, STATE> rule);
+	boolean isFinalState(final STATE state);
 
 	@Override
 	default IElement transformToUltimateModel(final AutomataLibraryServices services)

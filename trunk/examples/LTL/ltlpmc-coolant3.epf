@@ -66,9 +66,9 @@ file_export_version=3.0
 /instance/LTL2aut/Path\ to\ ltl->ba\ tool\ (LTL2BA,\ LTL3BA)\ \:=C\:\\Users\\firefox\\Desktop\\Diverses\\Downloads\\ltl2ba-1.1.tar\\ltl2ba-1.1\\ltl2ba.exe
 #Fri Feb 21 11:44:54 CET 2014
 file_export_version=3.0
-\!/instance/UltimateCore=
-/instance/UltimateCore/Show\ usable\ parsers=false
-@UltimateCore=0.0.1
+\!/instance/de.uni_freiburg.informatik.ultimate.core=
+/instance/de.uni_freiburg.informatik.ultimate.core/Show\ usable\ parsers=false
+@de.uni_freiburg.informatik.ultimate.core=0.0.1
 #Fri Feb 21 11:44:54 CET 2014
 file_export_version=3.0
 \!/instance/UltimateGui=

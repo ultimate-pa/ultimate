@@ -28,24 +28,24 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp;
 
+import java.util.Map.Entry;
+
+import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractDomain;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractInterpretationResult;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractStateBinaryOperator;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.EqConstraintFactory;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.EqNode;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.EqNodeAndFunctionFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqFunction;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNode;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNodeAndFunctionFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqPostOperator;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.EqConstraintFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.EqState;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.EqStateFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
 import de.uni_freiburg.informatik.ultimate.util.statistics.Benchmark;
 
 /**
@@ -56,7 +56,7 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.Benchmark;
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  */
 public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
-		implements IAbstractDomain<EqState<ACTION>, ACTION, IProgramVarOrConst> {
+		implements IAbstractDomain<EqState, ACTION> {
 
 	private final EqPostOperator<ACTION> mPost;
 	private final VPMergeOperator mMerge;
@@ -67,14 +67,16 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 	private final IIcfgSymbolTable mSymboltable;
 	private final boolean mDebugMode;
 
-	private final EqConstraintFactory<ACTION, EqNode, EqFunction> mEqConstraintFactory;
+	private final EqConstraintFactory<EqNode> mEqConstraintFactory;
 	private final EqNodeAndFunctionFactory mEqNodeAndFunctionFactory;
-	private final EqStateFactory<ACTION> mEqStateFactory;
+	private final EqStateFactory mEqStateFactory;
 	private final CfgSmtToolkit mCsToolkit;
 	private final IUltimateServiceProvider mServices;
 
+	private final VPDomainBenchmark mBenchmark;
+
 	public VPDomain(final ILogger logger, final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
-			 final VPDomainPreanalysis preAnalysis) {
+			final VPDomainPreanalysis preAnalysis) {
 		mLogger = logger;
 		mPreAnalysis = preAnalysis;
 		mManagedScript = csToolkit.getManagedScript();
@@ -83,29 +85,33 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 		mCsToolkit = csToolkit;
 		mServices = services;
 
-		mEqNodeAndFunctionFactory = new EqNodeAndFunctionFactory(preAnalysis, mManagedScript);
-		mEqConstraintFactory = new EqConstraintFactory<>(mEqNodeAndFunctionFactory, mServices, mCsToolkit);
-		mEqStateFactory = new EqStateFactory<>(mEqNodeAndFunctionFactory, mEqConstraintFactory, mSymboltable);
-		mEqConstraintFactory.setEqStateFactory(mEqStateFactory);
+		mEqNodeAndFunctionFactory = new EqNodeAndFunctionFactory(services, mManagedScript);
+		mEqConstraintFactory = new EqConstraintFactory<>(mEqNodeAndFunctionFactory, mServices, mManagedScript);
+		mEqStateFactory = new EqStateFactory(mEqNodeAndFunctionFactory, mEqConstraintFactory, mSymboltable,
+				mManagedScript);
+//		mEqConstraintFactory.setEqStateFactory(mEqStateFactory);
 
-		mPost = new EqPostOperator<>(mEqNodeAndFunctionFactory, mEqConstraintFactory, mPreAnalysis);
+		mPost = new EqPostOperator<>(mServices, mLogger, mEqNodeAndFunctionFactory, mEqConstraintFactory, mPreAnalysis,
+				mEqStateFactory);
 
 		mDebugMode = mPreAnalysis.isDebugMode();
+
+		mBenchmark = new VPDomainBenchmark();
 	}
 
 	@Override
-	public IAbstractStateBinaryOperator<EqState<ACTION>> getWideningOperator() {
+	public IAbstractStateBinaryOperator<EqState> getWideningOperator() {
 		return mMerge;
 	}
 
 	@Override
-	public IAbstractPostOperator<EqState<ACTION>, ACTION, IProgramVarOrConst> getPostOperator() {
+	public IAbstractPostOperator<EqState, ACTION> getPostOperator() {
 		return mPost;
 	}
 
-	private final class VPMergeOperator implements IAbstractStateBinaryOperator<EqState<ACTION>> {
+	private final class VPMergeOperator implements IAbstractStateBinaryOperator<EqState> {
 		@Override
-		public EqState<ACTION> apply(final EqState<ACTION> first, final EqState<ACTION> second) {
+		public EqState apply(final EqState first, final EqState second) {
 			return first.union(second);
 		}
 	}
@@ -127,13 +133,13 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 	}
 
 	@Override
-	public EqState<ACTION> createTopState() {
+	public EqState createTopState() {
 		return mEqStateFactory.getTopState();
 	}
 
 	@Override
-	public EqState<ACTION> createBottomState() {
-		throw new UnsupportedOperationException("Not implemented: createBottomState");
+	public EqState createBottomState() {
+		return mEqStateFactory.getBottomState();
 	}
 
 	public boolean isDebugMode() {
@@ -144,13 +150,43 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 		return mPreAnalysis.getBenchmark();
 	}
 
-	public EqStateFactory<ACTION> getEqStateFactory() {
+
+	public EqStateFactory getEqStateFactory() {
 		return mEqStateFactory;
 	}
 
 	@Override
 	public boolean useHierachicalPre() {
 		return true;
+	}
+
+	@Override
+	public <LOC> void afterFixpointComputation(
+			final IAbstractInterpretationResult<EqState, ACTION, LOC> result) {
+
+//		mBenchmark.setLocationsCounter(result.getLoc2SingleStates().keySet().size());
+
+//		int noSupportingEqualitiesOverall = 0;
+//		int noSupportingDisequalitiesOverall = 0;
+		for (final Entry<LOC, EqState> l2s : result.getLoc2SingleStates().entrySet()) {
+//			noSupportingEqualitiesOverall += l2s.getValue().getConstraint()
+//					.getStatistics(VPStatistics.NO_SUPPORTING_EQUALITIES);
+//			noSupportingDisequalitiesOverall += l2s.getValue().getConstraint()
+//					.getStatistics(VPStatistics.NO_SUPPORTING_DISEQUALITIES);
+
+			mBenchmark.reportStatsForLocation(l2s.getValue().getConstraint()::getStatistics);
+//			for (stat : VPStatistics) {
+//
+//			}
+
+		}
+
+//		mBenchmark.setSupportingEqualitiesCounter(noSupportingEqualitiesOverall);
+//		mBenchmark.setSupportingDisequalitiesCounter(noSupportingDisequalitiesOverall);
+
+
+		mServices.getResultService().reportResult(Activator.PLUGIN_ID,
+				new StatisticsResult<>(Activator.PLUGIN_ID, "ArrayEqualityDomainStatistics", mBenchmark));
 	}
 
 

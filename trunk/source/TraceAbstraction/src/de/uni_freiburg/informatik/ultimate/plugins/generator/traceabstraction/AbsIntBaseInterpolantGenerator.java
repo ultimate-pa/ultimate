@@ -51,7 +51,7 @@ public abstract class AbsIntBaseInterpolantGenerator implements IInterpolantGene
 	private final InterpolantComputationStatus mStatus;
 
 	AbsIntBaseInterpolantGenerator(final IPredicateUnifier predicateUnifier, final Word<? extends IAction> cex,
-			final AbsIntPredicate<?, ?> precondition, final AbsIntPredicate<?, ?> postcondition,
+			final AbsIntPredicate<?> precondition, final AbsIntPredicate<?> postcondition,
 			final InterpolantComputationStatus status) {
 		mPredicateUnifier = Objects.requireNonNull(predicateUnifier);
 		mCex = cex;

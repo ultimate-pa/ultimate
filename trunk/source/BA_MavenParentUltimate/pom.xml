@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>de.uni_freiburg.informatik.ultimate</groupId>
 	<artifactId>mavenparent</artifactId>
-	<version>0.1.20</version>
+	<version>0.1.23</version>
 	<packaging>pom</packaging>
 
 	<name>Ultimate</name>
@@ -15,7 +15,7 @@
 	</scm>
 
 	<properties>
-		<ultimate-version>0.1.20</ultimate-version>
+		<ultimate-version>0.1.23</ultimate-version>
 
 		<!-- maven plugin versions -->
 		<tycho-version>1.0.0</tycho-version>
@@ -23,6 +23,7 @@
 		<jacoco-version>0.7.7.201606060606</jacoco-version>
 		<m2e-version>1.0.0</m2e-version>
 		<coveralls-version>4.2.0</coveralls-version>
+		<git-commit-id-version>2.2.3</git-commit-id-version>
 
 		<!-- reference to workspace root -->
 		<workspaceDir>${basedir}/..</workspaceDir>
@@ -120,7 +121,9 @@
 			src/de/uni_freiburg/informatik/ultimate/core/lib/toolchain/ToolchainListType.java,
 			src/de/uni_freiburg/informatik/ultimate/core/lib/toolchain/ToolchainModelType.java,
 			src/de/uni_freiburg/informatik/ultimate/core/lib/toolchain/OptionType.java,
-			src/de/uni_freiburg/informatik/ultimate/core/lib/toolchain/RunDefinition.java
+			src/de/uni_freiburg/informatik/ultimate/core/lib/toolchain/RunDefinition.java,
+			src/de/uni_freiburg/informatik/ultimate/interactive/traceabstraction/protobuf/*.java
+			src/de/uni_freiburg/informatik/ultimate/interactive/common/protobuf/*.java
 		</sonar.exclusions>
 
 		<!-- Exclude from sonar duplication analysis -->
@@ -197,6 +200,50 @@
 				<artifactId>sonar-maven-plugin</artifactId>
 				<version>${sonar-version}</version>
 			</plugin>
+
+			<plugin>
+				<groupId>pl.project13.maven</groupId>
+				<artifactId>git-commit-id-plugin</artifactId>
+				<version>${git-commit-id-version}</version>
+				<executions>
+					<execution>
+						<goals>
+							<goal>revision</goal>
+						</goals>
+						<phase>generate-sources</phase>
+					</execution>
+				</executions>
+
+				<configuration>
+					<generateGitPropertiesFile>true</generateGitPropertiesFile>
+					<generateGitPropertiesFilename>${workspaceDir}/CoreRCP/version.properties</generateGitPropertiesFilename>
+					<dotGitDirectory>${workspaceDir}/../../.git</dotGitDirectory>
+					<format>properties</format>
+
+					<skipPoms>false</skipPoms>
+					<runOnlyOnce>true</runOnlyOnce>
+					<commitIdGenerationMode>flat</commitIdGenerationMode>
+					<gitDescribe>
+						<skip>false</skip>
+						<!-- when the build is triggered while the repo is in "dirty state", 
+							append this suffix -->
+						<dirty>-m</dirty>
+						<!-- Only consider tags matching the given pattern. This can be used 
+							to avoid leaking private tags from the repository. -->
+						<match>*</match>
+						<tags>true</tags>
+					</gitDescribe>
+
+					<includeOnlyProperties>
+						<includeOnlyProperty>^git.commit.id$</includeOnlyProperty>
+						<includeOnlyProperty>^git.commit.id.abbrev$</includeOnlyProperty>
+						<includeOnlyProperty>^git.dirty$</includeOnlyProperty>
+						<includeOnlyProperty>^git.build.version$</includeOnlyProperty>
+					</includeOnlyProperties>
+
+				</configuration>
+			</plugin>
+
 		</plugins>
 
 		<pluginManagement>

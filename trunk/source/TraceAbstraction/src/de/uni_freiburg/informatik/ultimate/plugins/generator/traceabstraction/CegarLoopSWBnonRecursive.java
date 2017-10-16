@@ -69,8 +69,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.Minimization;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceCheckerCraig;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceCheckCraig;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheck;
 
 /**
  * @author haettigj@informatik.uni-freiburg.de
@@ -95,7 +95,7 @@ public class CegarLoopSWBnonRecursive<LETTER extends IIcfgTransition<?>> extends
 	/**
 	 * Used for computing the interpolants of additional paths
 	 */
-	protected TraceChecker mExtraTraceChecker;
+	protected TraceCheck mExtraTraceCheck;
 
 	/**
 	 * Version of the abstraction, casted as NestedWordAutomaton. It is casted in every call of
@@ -582,22 +582,22 @@ public class CegarLoopSWBnonRecursive<LETTER extends IIcfgTransition<?>> extends
 			}
 		}
 		// test if we found a new path which can be added
-		final InterpolatingTraceCheckerCraig traceChecker =
-				new InterpolatingTraceCheckerCraig(pre, post, pendingContexts, word, mCsToolkit,
+		final InterpolatingTraceCheckCraig traceCheck =
+				new InterpolatingTraceCheckCraig(pre, post, pendingContexts, word, mCsToolkit,
 						/*
 						 * TODO: When Matthias introduced this parameter he set the argument to
 						 * AssertCodeBlockOrder.NOT_INCREMENTALLY. Check if you want to set this to another value.
 						 */AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, false, mPredicateFactory, mPredicateUnifier,
 						mPref.interpolation(), true, mXnfConversionTechnique, mSimplificationTechnique, null);
 
-		mInterpolantGenerator = traceChecker;
-		if (traceChecker.isCorrect() == LBool.UNSAT) {
+		mInterpolantGenerator = traceCheck;
+		if (traceCheck.isCorrect() == LBool.UNSAT) {
 			mLogger.debug("Accepted");
-			addPath(word, mActualPath, traceChecker.getInterpolants(), pre, post, pendingContexts);
+			addPath(word, mActualPath, traceCheck.getInterpolants(), pre, post, pendingContexts);
 			mNofAdditionalPaths++;
 			return true;
 		}
-		// else if (mTraceChecker.isCorrect() == LBool.SAT)
+		// else if (mTraceCheck.isCorrect() == LBool.SAT)
 		// {
 		// }
 		mLogger.debug("Declined");

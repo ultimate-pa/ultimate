@@ -40,14 +40,14 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.taskidentifier.TaskIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.IInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategyExceptionBlacklist;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TracePredicates;
 
 /**
@@ -69,11 +69,11 @@ public class FixedTraceAbstractionRefinementStrategy<LETTER extends IIcfgTransit
 	// TODO Christian 2016-11-11: Matthias wants to get rid of this
 	private final TAPreferences mTaPrefsForInterpolantConsolidation;
 
-	private final TraceCheckerConstructor<LETTER> mFunConstructFromPrefs;
-	private TraceChecker mTraceChecker;
+	private final TraceCheckConstructor<LETTER> mFunConstructFromPrefs;
+	private TraceCheck mTraceCheck;
 	private IInterpolantGenerator mInterpolantGenerator;
 	private IInterpolantAutomatonBuilder<LETTER, IPredicate> mInterpolantAutomatonBuilder;
-	private final CegarLoopStatisticsGenerator mCegarLoopBenchmark;
+	private final RefinementEngineStatisticsGenerator mRefinementEngineStatisticsGenerator;
 
 	/**
 	 * @param prefs
@@ -92,8 +92,6 @@ public class FixedTraceAbstractionRefinementStrategy<LETTER extends IIcfgTransit
 	 *            abstraction
 	 * @param taPrefsForInterpolantConsolidation
 	 *            temporary argument, should be removed
-	 * @param iteration
-	 *            current CEGAR loop iteration
 	 * @param cegarLoopBenchmarks
 	 *            benchmark
 	 */
@@ -102,7 +100,7 @@ public class FixedTraceAbstractionRefinementStrategy<LETTER extends IIcfgTransit
 			final IUltimateServiceProvider services, final PredicateFactory predicateFactory,
 			final PredicateUnifier predicateUnifier, final IRun<LETTER, IPredicate, ?> counterexample,
 			final IAutomaton<LETTER, IPredicate> abstraction, final TAPreferences taPrefsForInterpolantConsolidation,
-			final int iteration, final CegarLoopStatisticsGenerator cegarLoopBenchmarks) {
+			final TaskIdentifier taskIdentifier) {
 		mServices = services;
 		mLogger = logger;
 		mPrefs = prefs;
@@ -111,27 +109,28 @@ public class FixedTraceAbstractionRefinementStrategy<LETTER extends IIcfgTransit
 		mPredicateFactory = predicateFactory;
 		mPredicateUnifier = predicateUnifier;
 		mTaPrefsForInterpolantConsolidation = taPrefsForInterpolantConsolidation;
-		mCegarLoopBenchmark = cegarLoopBenchmarks;
-		mFunConstructFromPrefs = new TraceCheckerConstructor<>(prefs, managedScript, services, predicateFactory,
-				predicateUnifier, counterexample, mPrefs.getInterpolationTechnique(), iteration, cegarLoopBenchmarks);
+		mRefinementEngineStatisticsGenerator = new RefinementEngineStatisticsGenerator();
+		mFunConstructFromPrefs = new TraceCheckConstructor<>(prefs, managedScript, services, predicateFactory,
+				predicateUnifier, counterexample, mPrefs.getInterpolationTechnique(), taskIdentifier);
 	}
 
 	@Override
-	public boolean hasNextTraceChecker() {
+	public boolean hasNextTraceCheck() {
 		return false;
 	}
 
 	@Override
-	public void nextTraceChecker() {
+	public void nextTraceCheck() {
 		throw new NoSuchElementException("This strategy has only one element.");
 	}
 
 	@Override
-	public TraceChecker getTraceChecker() {
-		if (mTraceChecker == null) {
-			mTraceChecker = mFunConstructFromPrefs.get();
+	public TraceCheck getTraceCheck() {
+		if (mTraceCheck == null) {
+			mTraceCheck = mFunConstructFromPrefs.get();
+			mRefinementEngineStatisticsGenerator.addTraceCheckStatistics(mTraceCheck);
 		}
-		return mTraceChecker;
+		return mTraceCheck;
 	}
 
 	@Override
@@ -149,19 +148,17 @@ public class FixedTraceAbstractionRefinementStrategy<LETTER extends IIcfgTransit
 	public IInterpolantGenerator getInterpolantGenerator() {
 		if (mInterpolantGenerator == null) {
 			mInterpolantGenerator = RefinementStrategyUtils.constructInterpolantGenerator(mServices, mLogger, mPrefs,
-					mTaPrefsForInterpolantConsolidation, getTraceChecker(), mPredicateFactory, mPredicateUnifier,
-					mCounterexample, mCegarLoopBenchmark);
+					mTaPrefsForInterpolantConsolidation, getTraceCheck(), mPredicateFactory, mPredicateUnifier,
+					mCounterexample, mRefinementEngineStatisticsGenerator);
 		}
 		return mInterpolantGenerator;
 	}
 
 	@Override
 	public IInterpolantAutomatonBuilder<LETTER, IPredicate> getInterpolantAutomatonBuilder(
-			final List<TracePredicates> perfectIpps,
-			final List<TracePredicates> imperfectIpps) {
+			final List<TracePredicates> perfectIpps, final List<TracePredicates> imperfectIpps) {
 		// use all interpolant sequences
-		final List<TracePredicates> allIpps =
-				IRefinementStrategy.wrapTwoListsInOne(perfectIpps, imperfectIpps);
+		final List<TracePredicates> allIpps = IRefinementStrategy.wrapTwoListsInOne(perfectIpps, imperfectIpps);
 
 		if (mInterpolantAutomatonBuilder == null) {
 			mInterpolantAutomatonBuilder = constructInterpolantAutomatonBuilder(getInterpolantGenerator(), allIpps);
@@ -194,4 +191,10 @@ public class FixedTraceAbstractionRefinementStrategy<LETTER extends IIcfgTransit
 	public RefinementStrategyExceptionBlacklist getExceptionBlacklist() {
 		return mPrefs.getExceptionBlacklist();
 	}
+
+	@Override
+	public RefinementEngineStatisticsGenerator getRefinementEngineStatistics() {
+		return mRefinementEngineStatisticsGenerator;
+	}
+
 }

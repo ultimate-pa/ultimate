@@ -35,7 +35,6 @@ assert(reduceNwaDirectFullMultipebbleSimulationSize == 8);
 // assert(reduceNwaDelayedSimulationBSize == 5);
 // assert(reduceNwaDelayedFullMultipebbleSimulationSize == 5);
 assert(minimizeNwaPmaxSatDelayedBiSize == 5);
-print(minimizeNwaPmaxSatDelayedBiSize);
 
 NestedWordAutomaton nwa = (
 	callAlphabet = {"c"},

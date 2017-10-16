@@ -29,20 +29,15 @@
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util;
 
 // TODO
-
-/**
- * @author Yong Li (liyong@ios.ac.cn)
- * */
-
 public class Timer {
 	
-	private long time;
+	private long mTime;
 	
 	public Timer() {
 	}
 	
 	public void start() {
-		time = System.currentTimeMillis();
+		mTime = System.currentTimeMillis();
 	}
 	
 	public long getCurrentTime() {
@@ -50,15 +45,15 @@ public class Timer {
 	}
 	
 	public long tick() {
-		return System.currentTimeMillis() - time;
+		return System.currentTimeMillis() - mTime;
 	}
 	
 	public void stop() {
-		time = System.currentTimeMillis() - time;
+		mTime = System.currentTimeMillis() - mTime;
 	}
 	
 	public long getTimeElapsed() {
-		return time;
+		return mTime;
 	}
 
 }

@@ -55,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.HoareTripleCheckerStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
@@ -66,7 +67,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
 import de.uni_freiburg.informatik.ultimate.util.InCaReCounter;
-import de.uni_freiburg.informatik.ultimate.util.SetOperations;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 /**
  * {@link IHoareTripleChecker} that performs hoare triple checks using an abstract post operator.
@@ -75,7 +76,7 @@ import de.uni_freiburg.informatik.ultimate.util.SetOperations;
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDECL>, ACTION extends IIcfgTransition<?>, VARDECL>
+public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE>, ACTION extends IIcfgTransition<?>>
 		implements IHoareTripleChecker {
 
 	private static final String MSG_BOTTOM_WAS_LOST = "Bottom was lost";
@@ -84,15 +85,15 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 	private static final String MSG_INVALID_HOARE_TRIPLE_CHECK = "Invalid hoare triple check";
 
 	private final ILogger mLogger;
-	private final IAbstractPostOperator<STATE, ACTION, VARDECL> mPostOp;
-	private final IAbstractDomain<STATE, ACTION, VARDECL> mDomain;
+	private final IAbstractPostOperator<STATE, ACTION> mPostOp;
+	private final IAbstractDomain<STATE, ACTION> mDomain;
 	private final IPredicateUnifier mPredicateUnifier;
 	private final HoareTripleCheckerStatisticsGenerator mBenchmark;
 	private final IPredicate mTruePred;
 	private final IPredicate mFalsePred;
-	private final DisjunctiveAbstractState<STATE, VARDECL> mTopState;
-	private final DisjunctiveAbstractState<STATE, VARDECL> mBottomState;
-	private final IVariableProvider<STATE, ACTION, VARDECL> mVarProvider;
+	private final DisjunctiveAbstractState<STATE> mTopState;
+	private final DisjunctiveAbstractState<STATE> mBottomState;
+	private final IVariableProvider<STATE, ACTION> mVarProvider;
 	private final IncrementalHoareTripleChecker mHtcSmt;
 	private final IUltimateServiceProvider mServices;
 	private final CfgSmtToolkit mCsToolkit;
@@ -100,18 +101,15 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 	private final ManagedScript mManagedScript;
 	private final SdHoareTripleChecker mHtcSd;
 	private final boolean mOnlyAbsInt;
+	private final boolean mUseHierachicalPre;
 
 	public AbsIntHoareTripleChecker(final ILogger logger, final IUltimateServiceProvider services,
-			final IAbstractDomain<STATE, ACTION, VARDECL> domain,
-			final IVariableProvider<STATE, ACTION, VARDECL> varProvider, final IPredicateUnifier predicateUnifer,
-			final CfgSmtToolkit csToolkit, final boolean onlyAbsInt) {
+			final IAbstractDomain<STATE, ACTION> domain, final IVariableProvider<STATE, ACTION> varProvider,
+			final IPredicateUnifier predicateUnifer, final CfgSmtToolkit csToolkit, final boolean onlyAbsInt) {
 		mServices = services;
 		mLogger = Objects.requireNonNull(logger);
 		mDomain = Objects.requireNonNull(domain);
-		if (mDomain.useHierachicalPre()) {
-			throw new UnsupportedOperationException(
-					"AbsIntHoareTripleChecker does not support domains that require hierachical pre states in their post operator");
-		}
+		mUseHierachicalPre = mDomain.useHierachicalPre();
 
 		mPostOp = Objects.requireNonNull(mDomain.getPostOperator());
 		mPredicateUnifier = Objects.requireNonNull(predicateUnifer);
@@ -199,14 +197,13 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 	private Validity checkInternalAbsInt(final IPredicate prePred, final IInternalAction act,
 			final IPredicate succPred) {
 		mBenchmark.continueEdgeCheckerTime();
-		final DisjunctiveAbstractState<STATE, VARDECL> pre = getState(prePred);
-		final DisjunctiveAbstractState<STATE, VARDECL> succ = getState(succPred);
+		final DisjunctiveAbstractState<STATE> pre = getState(prePred);
+		final DisjunctiveAbstractState<STATE> succ = getState(succPred);
 		final ACTION action = getAction(act);
 
-		final DisjunctiveAbstractState<STATE, VARDECL> validPreState = createValidPostOpStateAfterLeaving(action, pre, null);
-		final DisjunctiveAbstractState<STATE, VARDECL> reducedPostState = succ.compact();
-		final DisjunctiveAbstractState<STATE, VARDECL> reducedPreState =
-				reducePreState(validPreState, reducedPostState, action);
+		final DisjunctiveAbstractState<STATE> validPreState = createValidPostOpStateAfterLeaving(action, pre, null);
+		final DisjunctiveAbstractState<STATE> reducedPostState = succ.compact();
+		final DisjunctiveAbstractState<STATE> reducedPreState = reducePreState(validPreState, reducedPostState, action);
 
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("Pre : " + reducedPreState.toLogString());
@@ -225,20 +222,20 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 		return rtr;
 	}
 
-	private Set<VARDECL> getVars(final ACTION action) {
+	private Set<IProgramVarOrConst> getVars(final ACTION action) {
 		return mVarProvider.getRequiredVars(action);
 	}
 
 	private Validity checkCallAbsInt(final IPredicate prePred, final ICallAction act, final IPredicate succPred) {
 		mBenchmark.continueEdgeCheckerTime();
-		final DisjunctiveAbstractState<STATE, VARDECL> pre = getState(prePred);
-		final DisjunctiveAbstractState<STATE, VARDECL> succ = getState(succPred);
+		final DisjunctiveAbstractState<STATE> pre = getState(prePred);
+		final DisjunctiveAbstractState<STATE> succ = getState(succPred);
 		final ACTION action = getAction(act);
 
-		final DisjunctiveAbstractState<STATE, VARDECL> validPreBL = createValidPostOpStateBeforeLeaving(action, pre);
-		final DisjunctiveAbstractState<STATE, VARDECL> validPreAL = createValidPostOpStateAfterLeaving(action, pre, null);
-		final DisjunctiveAbstractState<STATE, VARDECL> reducedPreBL = reducePreState(validPreBL, succ, action);
-		final DisjunctiveAbstractState<STATE, VARDECL> reducedPreAL = reducePreState(validPreAL, succ, action);
+		final DisjunctiveAbstractState<STATE> validPreBL = createValidPostOpStateBeforeLeaving(action, pre);
+		final DisjunctiveAbstractState<STATE> validPreAL = createValidPostOpStateAfterLeaving(action, pre, null);
+		final DisjunctiveAbstractState<STATE> reducedPreBL = reducePreState(validPreBL, succ, action);
+		final DisjunctiveAbstractState<STATE> reducedPreAL = reducePreState(validPreAL, succ, action);
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("PSBL: " + reducedPreBL.toLogString());
 			mLogger.debug("PSAL: " + reducedPreAL.toLogString());
@@ -260,17 +257,21 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 			final IReturnAction act, final IPredicate succPred) {
 		mBenchmark.continueEdgeCheckerTime();
 
-		final DisjunctiveAbstractState<STATE, VARDECL> pre = getState(preLinPred);
-		final DisjunctiveAbstractState<STATE, VARDECL> preHier = getState(preHierPred);
-		final DisjunctiveAbstractState<STATE, VARDECL> succ = getState(succPred);
+		final DisjunctiveAbstractState<STATE> pre = getState(preLinPred);
+		final DisjunctiveAbstractState<STATE> preHier = getState(preHierPred);
+		final DisjunctiveAbstractState<STATE> succ = getState(succPred);
 		final ACTION action = getAction(act);
 		final ACTION correspondingCall = getCorrespondingCall(action);
 
-		final DisjunctiveAbstractState<STATE, VARDECL> validPreBL = createValidPostOpStateBeforeLeaving(action, pre);
-		final DisjunctiveAbstractState<STATE, VARDECL> validPreHier =
+		final DisjunctiveAbstractState<STATE> validPreBL = createValidPostOpStateBeforeLeaving(action, pre);
+		final DisjunctiveAbstractState<STATE> validPreHier =
 				createValidPostOpStateBeforeLeaving(correspondingCall, preHier);
-		final DisjunctiveAbstractState<STATE, VARDECL> validPreAL =
-				createValidPostOpStateAfterLeaving(action, validPreBL, validPreHier);
+		final DisjunctiveAbstractState<STATE> validPreAL;
+		if (mUseHierachicalPre) {
+			validPreAL = createValidPostOpStateHierachicalPre(action, validPreBL, validPreHier);
+		} else {
+			validPreAL = createValidPostOpStateAfterLeaving(action, validPreBL, validPreHier);
+		}
 
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("PreBL: " + validPreBL.toLogString());
@@ -304,20 +305,20 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 		return mBenchmark;
 	}
 
-	private Validity checkInternalTransitionWithValidState(final DisjunctiveAbstractState<STATE, VARDECL> preState,
-			final ACTION act, final DisjunctiveAbstractState<STATE, VARDECL> postState) {
+	private Validity checkInternalTransitionWithValidState(final DisjunctiveAbstractState<STATE> preState,
+			final ACTION act, final DisjunctiveAbstractState<STATE> postState) {
 		if (preState.isBottom()) {
 			return Validity.VALID;
 		}
 
-		final DisjunctiveAbstractState<STATE, VARDECL> calculatedPost = preState.apply(mPostOp, act);
+		final DisjunctiveAbstractState<STATE> calculatedPost = preState.apply(mPostOp, act);
 		return comparePostAndCalculatedPost(act, postState, calculatedPost);
 	}
 
 	private Validity checkScopeChangingTransitionWithValidState(
-			final DisjunctiveAbstractState<STATE, VARDECL> stateBeforeLeaving,
-			final DisjunctiveAbstractState<STATE, VARDECL> stateAfterLeaving, final ACTION act,
-			final DisjunctiveAbstractState<STATE, VARDECL> postState) {
+			final DisjunctiveAbstractState<STATE> stateBeforeLeaving,
+			final DisjunctiveAbstractState<STATE> stateAfterLeaving, final ACTION act,
+			final DisjunctiveAbstractState<STATE> postState) {
 
 		if (stateBeforeLeaving.isBottom()) {
 			return Validity.VALID;
@@ -328,13 +329,13 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 		}
 
 		// TODO: Take mDomain.useHierachicalPre() into account
-		final DisjunctiveAbstractState<STATE, VARDECL> calculatedPost =
+		final DisjunctiveAbstractState<STATE> calculatedPost =
 				stateAfterLeaving.apply(mPostOp, stateBeforeLeaving, act);
 		return comparePostAndCalculatedPost(act, postState, calculatedPost);
 	}
 
-	private Validity comparePostAndCalculatedPost(final ACTION act, final DisjunctiveAbstractState<STATE, VARDECL> postState,
-			final DisjunctiveAbstractState<STATE, VARDECL> calculatedPost) {
+	private Validity comparePostAndCalculatedPost(final ACTION act, final DisjunctiveAbstractState<STATE> postState,
+			final DisjunctiveAbstractState<STATE> calculatedPost) {
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("Calculated post: " + calculatedPost.toLogString());
 		}
@@ -342,8 +343,7 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 			return trackPost(Validity.VALID, act);
 		}
 
-		final DisjunctiveAbstractState<STATE, VARDECL> synchronizedCalculatedPost =
-				synchronizeState(postState, calculatedPost);
+		final DisjunctiveAbstractState<STATE> synchronizedCalculatedPost = synchronizeState(postState, calculatedPost);
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("Synchronized calculated post: " + calculatedPost.toLogString());
 		}
@@ -392,13 +392,13 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 	}
 
 	@SuppressWarnings("unchecked")
-	private DisjunctiveAbstractState<STATE, VARDECL> getState(final IPredicate pred) {
-		if (pred instanceof AbsIntPredicate<?, ?>) {
-			final Set<STATE> states = ((AbsIntPredicate<STATE, ?>) pred).getAbstractStates();
+	private DisjunctiveAbstractState<STATE> getState(final IPredicate pred) {
+		if (pred instanceof AbsIntPredicate<?>) {
+			final Set<STATE> states = ((AbsIntPredicate<STATE>) pred).getAbstractStates();
 			if (states.size() <= 1) {
 				return DisjunctiveAbstractState.createDisjunction(states);
 			}
-			final Set<VARDECL> vars = new HashSet<>();
+			final Set<IProgramVarOrConst> vars = new HashSet<>();
 			states.stream().forEach(a -> vars.addAll(a.getVariables()));
 			final Set<STATE> synchronizedStates =
 					states.stream().map(a -> AbsIntUtil.synchronizeVariables(a, vars)).collect(Collectors.toSet());
@@ -418,29 +418,29 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 		return (ACTION) act;
 	}
 
-	private DisjunctiveAbstractState<STATE, VARDECL> synchronizeState(final DisjunctiveAbstractState<STATE, VARDECL> template,
-			final DisjunctiveAbstractState<STATE, VARDECL> toSynchronize) {
+	private DisjunctiveAbstractState<STATE> synchronizeState(final DisjunctiveAbstractState<STATE> template,
+			final DisjunctiveAbstractState<STATE> toSynchronize) {
 
-		final DisjunctiveAbstractState<STATE, VARDECL> unifiedToSynchronize = unifyBottom(toSynchronize);
+		final DisjunctiveAbstractState<STATE> unifiedToSynchronize = unifyBottom(toSynchronize);
 		if (unifiedToSynchronize == mBottomState) {
 			return unifiedToSynchronize;
 		}
-		final DisjunctiveAbstractState<STATE, VARDECL> rtr = AbsIntUtil.synchronizeVariables(template, unifiedToSynchronize);
+		final DisjunctiveAbstractState<STATE> rtr = AbsIntUtil.synchronizeVariables(template, unifiedToSynchronize);
 		assert assertBottomRetained(unifiedToSynchronize, null, rtr,
 				() -> AbsIntUtil.synchronizeVariables(template, unifiedToSynchronize)) : MSG_BOTTOM_WAS_LOST;
 		return rtr;
 	}
 
-	private DisjunctiveAbstractState<STATE, VARDECL> createValidPostOpStateAfterLeaving(final ACTION act,
-			final DisjunctiveAbstractState<STATE, VARDECL> preState, final DisjunctiveAbstractState<STATE, VARDECL> preHierState) {
+	private DisjunctiveAbstractState<STATE> createValidPostOpStateAfterLeaving(final ACTION act,
+			final DisjunctiveAbstractState<STATE> preState, final DisjunctiveAbstractState<STATE> preHierState) {
 
-		final DisjunctiveAbstractState<STATE, VARDECL> unifiedPreState = unifyBottom(preState);
+		final DisjunctiveAbstractState<STATE> unifiedPreState = unifyBottom(preState);
 		if (unifiedPreState == mBottomState) {
 			return unifiedPreState;
 		}
-		final DisjunctiveAbstractState<STATE, VARDECL> unifiedPreHierState = unifyBottom(preHierState);
+		final DisjunctiveAbstractState<STATE> unifiedPreHierState = unifyBottom(preHierState);
 
-		final DisjunctiveAbstractState<STATE, VARDECL> rtr =
+		final DisjunctiveAbstractState<STATE> rtr =
 				unifiedPreState.createValidPostOpStateAfterLeaving(mVarProvider, act, unifiedPreHierState);
 
 		assert assertBottomRetained(preState, preHierState, rtr, () -> unifiedPreState
@@ -448,13 +448,23 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 		return rtr;
 	}
 
-	private DisjunctiveAbstractState<STATE, VARDECL> reducePreState(final DisjunctiveAbstractState<STATE, VARDECL> validPreState,
-			final DisjunctiveAbstractState<STATE, VARDECL> succ, final ACTION action) {
-		final Set<VARDECL> requiredVars = new HashSet<>();
+	private DisjunctiveAbstractState<STATE> createValidPostOpStateHierachicalPre(final ACTION act,
+			final DisjunctiveAbstractState<STATE> preState, final DisjunctiveAbstractState<STATE> preHierState) {
+
+		final DisjunctiveAbstractState<STATE> unifiedPreState = unifyBottom(preState);
+		if (unifiedPreState == mBottomState) {
+			return unifiedPreState;
+		}
+		return unifyBottom(preHierState);
+	}
+
+	private DisjunctiveAbstractState<STATE> reducePreState(final DisjunctiveAbstractState<STATE> validPreState,
+			final DisjunctiveAbstractState<STATE> succ, final ACTION action) {
+		final Set<IProgramVarOrConst> requiredVars = new HashSet<>();
 		requiredVars.addAll(getVars(action));
 		requiredVars.addAll(succ.getVariables());
-		final Set<VARDECL> preVars = validPreState.getVariables();
-		final Set<VARDECL> toRemove = SetOperations.difference(preVars, requiredVars);
+		final Set<IProgramVarOrConst> preVars = validPreState.getVariables();
+		final Set<IProgramVarOrConst> toRemove = DataStructureUtils.difference(preVars, requiredVars);
 
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug(String.format("Removing %s of %s vars", toRemove.size(), preVars.size()));
@@ -464,14 +474,14 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 		return validPreState.removeVariables(toRemove);
 	}
 
-	private DisjunctiveAbstractState<STATE, VARDECL> createValidPostOpStateBeforeLeaving(final ACTION act,
-			final DisjunctiveAbstractState<STATE, VARDECL> preState) {
+	private DisjunctiveAbstractState<STATE> createValidPostOpStateBeforeLeaving(final ACTION act,
+			final DisjunctiveAbstractState<STATE> preState) {
 
-		final DisjunctiveAbstractState<STATE, VARDECL> unifiedPreState = unifyBottom(preState);
+		final DisjunctiveAbstractState<STATE> unifiedPreState = unifyBottom(preState);
 		if (unifiedPreState == mBottomState) {
 			return unifiedPreState;
 		}
-		final DisjunctiveAbstractState<STATE, VARDECL> rtr =
+		final DisjunctiveAbstractState<STATE> rtr =
 				unifiedPreState.createValidPostOpStateBeforeLeaving(mVarProvider, act);
 
 		assert assertBottomRetained(preState, null, rtr,
@@ -479,7 +489,7 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 		return rtr;
 	}
 
-	private DisjunctiveAbstractState<STATE, VARDECL> unifyBottom(final DisjunctiveAbstractState<STATE, VARDECL> state) {
+	private DisjunctiveAbstractState<STATE> unifyBottom(final DisjunctiveAbstractState<STATE> state) {
 		if (state == null) {
 			return null;
 		}
@@ -489,13 +499,13 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 		return state;
 	}
 
-	private IPredicate createPredicateFromState(final DisjunctiveAbstractState<STATE, VARDECL> preState) {
+	private IPredicate createPredicateFromState(final DisjunctiveAbstractState<STATE> preState) {
 		return mPredicateUnifier.getPredicateFactory().newPredicate(preState.getTerm(mManagedScript.getScript()));
 	}
 
-	private boolean assertBottomRetained(final DisjunctiveAbstractState<STATE, VARDECL> pre,
-			final DisjunctiveAbstractState<STATE, VARDECL> preHierState,
-			final DisjunctiveAbstractState<STATE, VARDECL> synchronizedState, final IFunPointer funReplay) {
+	private boolean assertBottomRetained(final DisjunctiveAbstractState<STATE> pre,
+			final DisjunctiveAbstractState<STATE> preHierState, final DisjunctiveAbstractState<STATE> synchronizedState,
+			final IFunPointer funReplay) {
 		final boolean rtr =
 				!pre.isBottom() && (preHierState == null || !preHierState.isBottom()) || synchronizedState.isBottom();
 		if (!rtr) {
@@ -504,9 +514,9 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 		return rtr;
 	}
 
-	private boolean assertValidity(final DisjunctiveAbstractState<STATE, VARDECL> preState,
-			final DisjunctiveAbstractState<STATE, VARDECL> validPreLinState, final ACTION transition,
-			final DisjunctiveAbstractState<STATE, VARDECL> succ, final Validity result) {
+	private boolean assertValidity(final DisjunctiveAbstractState<STATE> preState,
+			final DisjunctiveAbstractState<STATE> validPreLinState, final ACTION transition,
+			final DisjunctiveAbstractState<STATE> succ, final Validity result) {
 
 		final IPredicate precond = createPredicateFromState(preState);
 		final IPredicate postcond = createPredicateFromState(succ);
@@ -582,8 +592,8 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 		return result;
 	}
 
-	private boolean assertIsSubsetOf(final DisjunctiveAbstractState<STATE, VARDECL> leftState,
-			final DisjunctiveAbstractState<STATE, VARDECL> rightState, final SubsetResult subResult) {
+	private boolean assertIsSubsetOf(final DisjunctiveAbstractState<STATE> leftState,
+			final DisjunctiveAbstractState<STATE> rightState, final SubsetResult subResult) {
 		final Script script = mManagedScript.getScript();
 		mHtcSmt.releaseLock();
 

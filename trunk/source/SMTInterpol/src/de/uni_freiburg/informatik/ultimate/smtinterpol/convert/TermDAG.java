@@ -27,6 +27,7 @@ import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.SourceAnnotation;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCTerm;
 
 
@@ -210,11 +211,11 @@ public class TermDAG {
 		}
 		return mRoots.toArray(new TermNode[mRoots.size()]);
 	}
-	public CCTerm[] getConstants(Clausifier converter) {
+	public CCTerm[] getConstants(Clausifier converter, SourceAnnotation source) {
 		final CCTerm[] res = new CCTerm[mConsts.size()];
 		int i = -1;
 		for (final ConstTermNode ctn : mConsts) {
-			res[++i] = converter.getSharedTerm(ctn.getConstant()).getCCTerm();
+			res[++i] = converter.getSharedTerm(ctn.getConstant(), source).getCCTerm();
 			ctn.setRegPos(i);
 		}
 		return res;

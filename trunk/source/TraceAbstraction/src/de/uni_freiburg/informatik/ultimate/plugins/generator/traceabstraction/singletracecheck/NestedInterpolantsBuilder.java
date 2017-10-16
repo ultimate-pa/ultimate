@@ -58,6 +58,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SubtermPropertyChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierSequence;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -70,18 +71,23 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Ab
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceChecker.TraceCheckerLock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheck.TraceCheckLock;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 
 public class NestedInterpolantsBuilder {
 
+	// TODO 2017-10-13 Matthias: When Jochen implement support for "@diff" this 
+	// probably has to become a parameter for this class.
+	private static final boolean ALLOW_AT_DIFF = false;
+	public static final String DIFF_IS_UNSUPPORTED = "@diff is unsupported";
+	
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private final SimplificationTechnique mSimplificationTechnique;
 	private final XnfConversionTechnique mXnfConversionTechnique;
 
 	private final ManagedScript mMgdScriptTc;
-	private final TraceCheckerLock mScriptLockOwner;
+	private final TraceCheckLock mScriptLockOwner;
 	private final ManagedScript mMgdScriptCfg;
 
 	Term[] mCraigInterpolants;
@@ -120,11 +126,11 @@ public class NestedInterpolantsBuilder {
 
 	private final boolean mInstantiateArrayExt;
 
-	public NestedInterpolantsBuilder(final ManagedScript mgdScriptTc, final TraceCheckerLock scriptLockOwner,
+	public NestedInterpolantsBuilder(final ManagedScript mgdScriptTc, final TraceCheckLock scriptLockOwner,
 			final NestedFormulas<Term, Term> annotatdSsa, final Map<Term, IProgramVar> mconstants2BoogieVar,
 			final IPredicateUnifier predicateBuilder, final PredicateFactory predicateFactory,
 			final Set<Integer> interpolatedPositions, final boolean treeInterpolation,
-			final IUltimateServiceProvider services, final TraceChecker traceChecker, final ManagedScript mgdScriptCfg,
+			final IUltimateServiceProvider services, final TraceCheck traceCheck, final ManagedScript mgdScriptCfg,
 			final boolean instantiateArrayExt, final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique) {
 		mServices = services;
@@ -153,7 +159,7 @@ public class NestedInterpolantsBuilder {
 		}
 
 		computeCraigInterpolants();
-		traceChecker.cleanupAndUnlockSolver();
+		traceCheck.cleanupAndUnlockSolver();
 		for (int i = 0; i < mCraigInterpolants.length; i++) {
 			mLogger.debug(new DebugMessage("NestedInterpolant {0}: {1}", i, mCraigInterpolants[i]));
 		}
@@ -563,6 +569,9 @@ public class NestedInterpolantsBuilder {
 					if (mInstantiateArrayExt) {
 						withoutIndices = instantiateArrayExt(withoutIndices);
 					}
+					if (!ALLOW_AT_DIFF && new SubtermPropertyChecker(x -> isAtDiffTerm(x)).isPropertySatisfied(withoutIndices)) {
+						throw new UnsupportedOperationException(DIFF_IS_UNSUPPORTED);
+					}
 					final Term lessQuantifiers = PartialQuantifierElimination.tryToEliminate(mServices, mLogger,
 							mMgdScriptCfg, withoutIndices, mSimplificationTechnique, mXnfConversionTechnique);
 					result[resultPos] = mPredicateUnifier.getOrConstructPredicate(lessQuantifiers);
@@ -782,6 +791,14 @@ public class NestedInterpolantsBuilder {
 			}
 		} finally {
 			pW.flush();
+		}
+	}
+	
+	private static boolean isAtDiffTerm(final Term term) {
+		if (term instanceof ApplicationTerm) {
+			return ((ApplicationTerm) term).getFunction().getName().equals("@diff");
+		} else {
+			return false;
 		}
 	}
 

@@ -31,7 +31,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.function.Supplier;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValueFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalDomainState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalDomainValue;
@@ -47,16 +46,15 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public class IntervalDomainTermProcessor
-		extends NonrelationalTermProcessor<IntervalDomainValue, IntervalDomainState<IProgramVarOrConst>> {
-	
+public class IntervalDomainTermProcessor extends NonrelationalTermProcessor<IntervalDomainValue, IntervalDomainState> {
+
 	private INonrelationalValueFactory<IntervalDomainValue> mIntervalValueFactory;
 
 	public IntervalDomainTermProcessor(final ILogger logger, final int maxParallelStates,
-			final Supplier<IntervalDomainState<IProgramVarOrConst>> bottomStateSupplier) {
+			final Supplier<IntervalDomainState> bottomStateSupplier) {
 		super(logger, maxParallelStates, bottomStateSupplier);
 	}
-	
+
 	@Override
 	protected INonrelationalValueFactory<IntervalDomainValue> getNonrelationalValueFactory() {
 		if (mIntervalValueFactory == null) {
@@ -64,9 +62,9 @@ public class IntervalDomainTermProcessor
 		}
 		return mIntervalValueFactory;
 	}
-	
+
 	@Override
-	protected ITermEvaluatorFactory<IntervalDomainValue, IntervalDomainState<IProgramVarOrConst>, IProgramVarOrConst>
+	protected ITermEvaluatorFactory<IntervalDomainValue, IntervalDomainState>
 			createEvaluatorFactory(final int maxParallelStates) {
 		final TermEvaluatorFactory.Function<Object, IntervalDomainValue> valueEvaluatorCreator =
 				(value) -> new IntervalDomainValue(new IntervalValue(value.toString()),

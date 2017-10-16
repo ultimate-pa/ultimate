@@ -27,10 +27,12 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.weakener;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -41,12 +43,14 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.AbsIntPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
 
 /**
  * Weakens a sequence of predicates by reducing the number of variables occurring in each Hoare-triple of {pred1} letter
@@ -60,13 +64,13 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
  *
  * @param <STATE>
  *            The type of the abstract states used.
- * @param <VARDECL>
+ * @param <IProgramVarOrConst>
  *            The type of the variable declarations used in each abstract state.
  * @param <LETTER>
  *            The type of the letters occurring in the trace of predicate-letter-predicate-triplets.
  */
-public class AbsIntPredicateInterpolantSequenceWeakener<STATE extends IAbstractState<STATE, VARDECL>, VARDECL, LETTER extends IIcfgTransition<?>>
-		extends InterpolantSequenceWeakener<IHoareTripleChecker, AbsIntPredicate<STATE, VARDECL>, LETTER> {
+public class AbsIntPredicateInterpolantSequenceWeakener<STATE extends IAbstractState<STATE>, LETTER extends IIcfgTransition<?>>
+		extends InterpolantSequenceWeakener<IHoareTripleChecker, AbsIntPredicate<STATE>, LETTER> {
 
 	private Set<IProgramVar> mVarsToKeep = null;
 
@@ -92,17 +96,18 @@ public class AbsIntPredicateInterpolantSequenceWeakener<STATE extends IAbstractS
 	 *            The factory to create new predicates.
 	 */
 	public AbsIntPredicateInterpolantSequenceWeakener(final ILogger logger, final IHoareTripleChecker htc,
-			final List<AbsIntPredicate<STATE, VARDECL>> predicates, final List<LETTER> trace,
-			final AbsIntPredicate<STATE, VARDECL> precondition, final AbsIntPredicate<STATE, VARDECL> postcondition,
-			final Script script, final BasicPredicateFactory predicateFactory) {
-		super(logger, htc, predicates, trace, precondition, postcondition, script, predicateFactory);
+			final List<AbsIntPredicate<STATE>> predicates, final List<LETTER> trace,
+			final AbsIntPredicate<STATE> precondition, final AbsIntPredicate<STATE> postcondition, final Script script,
+			final BasicPredicateFactory predicateFactory, final CegarLoopStatisticsGenerator cegarLoopBenchmark) {
+		super(logger, htc, predicates, trace, precondition, postcondition, script, predicateFactory,
+				cegarLoopBenchmark);
 	}
 
 	@Override
-	protected AbsIntPredicate<STATE, VARDECL> refinePreState(final AbsIntPredicate<STATE, VARDECL> preState,
-			final LETTER transition, final AbsIntPredicate<STATE, VARDECL> postState, final int tracePosition) {
+	protected AbsIntPredicate<STATE> refinePreState(final AbsIntPredicate<STATE> preState, final LETTER transition,
+			final AbsIntPredicate<STATE> postState, final int tracePosition) {
 
-		final AbsIntPredicate<STATE, VARDECL> newPreState = removeUnneededVariables(preState, transition);
+		final AbsIntPredicate<STATE> newPreState = removeUnneededVariables(preState, transition);
 		final boolean valid = determineInductivity(newPreState, transition, postState, tracePosition);
 
 		if (valid) {
@@ -133,8 +138,8 @@ public class AbsIntPredicateInterpolantSequenceWeakener<STATE extends IAbstractS
 	 * @return <code>true</code> iff the Hoare-triple {newPreState} transition {postState} is valid, <code>false</code>
 	 *         otherwise.
 	 */
-	private boolean determineInductivity(final AbsIntPredicate<STATE, VARDECL> newPreState, final LETTER transition,
-			final AbsIntPredicate<STATE, VARDECL> postState, final int tracePosition) {
+	private boolean determineInductivity(final AbsIntPredicate<STATE> newPreState, final LETTER transition,
+			final AbsIntPredicate<STATE> postState, final int tracePosition) {
 		final Validity result;
 
 		if (transition instanceof IInternalAction) {
@@ -142,7 +147,7 @@ public class AbsIntPredicateInterpolantSequenceWeakener<STATE extends IAbstractS
 		} else if (transition instanceof ICallAction) {
 			result = mHtc.checkCall(newPreState, (ICallAction) transition, postState);
 		} else if (transition instanceof IReturnAction) {
-			final AbsIntPredicate<STATE, VARDECL> hierarchicalPre = mHierarchicalPreStates.get(tracePosition);
+			final AbsIntPredicate<STATE> hierarchicalPre = mHierarchicalPreStates.get(tracePosition);
 			assert hierarchicalPre != null;
 			result = mHtc.checkReturn(newPreState, hierarchicalPre, (IReturnAction) transition, postState);
 		} else {
@@ -164,7 +169,7 @@ public class AbsIntPredicateInterpolantSequenceWeakener<STATE extends IAbstractS
 	 *            The transition in concern.
 	 * @return A new state stripped from all unnecessary variables wrt. the transition.
 	 */
-	private AbsIntPredicate<STATE, VARDECL> removeUnneededVariables(final AbsIntPredicate<STATE, VARDECL> preState,
+	private AbsIntPredicate<STATE> removeUnneededVariables(final AbsIntPredicate<STATE> preState,
 			final LETTER transition) {
 
 		// Collect all variables occurring in the invars
@@ -187,6 +192,19 @@ public class AbsIntPredicateInterpolantSequenceWeakener<STATE extends IAbstractS
 
 		final Set<STATE> newMultiState = new HashSet<>();
 
+		assert preState.getAbstractStates().size() > 0;
+
+		final int numStateVars = preState.getAbstractStates().stream().findFirst()
+				.orElseThrow(() -> new UnsupportedOperationException("No states in preState.")).getVariables().size();
+		final int numRemovedVars = removableOutVars.size();
+		reportWeakeningVarsNumRemoved(numRemovedVars);
+		final int leftVars = numStateVars - numRemovedVars;
+		if (numStateVars == 0 || leftVars == numStateVars) {
+			reportWeakeningRatio(1);
+		} else {
+			reportWeakeningRatio((double) leftVars / (double) numStateVars);
+		}
+
 		for (final STATE s : preState.getAbstractStates()) {
 			if (s.isBottom()) {
 				// Simply add the state to the new multi state if the state is bottom.
@@ -194,7 +212,7 @@ public class AbsIntPredicateInterpolantSequenceWeakener<STATE extends IAbstractS
 				continue;
 			}
 
-			final Set<VARDECL> varsToRemove =
+			final Set<IProgramVarOrConst> varsToRemove =
 					s.getVariables().stream().filter(var -> !mVarsToKeep.contains(var)).collect(Collectors.toSet());
 
 			final STATE removedVariablesState = s.removeVariables(varsToRemove);
@@ -206,8 +224,36 @@ public class AbsIntPredicateInterpolantSequenceWeakener<STATE extends IAbstractS
 		final Set<Term> terms = newMultiState.stream().map(s -> s.getTerm(mScript)).collect(Collectors.toSet());
 		final IPredicate disjunction = mPredicateFactory.newPredicate(SmtUtils.or(mScript, terms));
 
-		final AbsIntPredicate<STATE, VARDECL> newPreState = new AbsIntPredicate<>(disjunction, newMultiState);
+		final Set<Term> preStateTerms =
+				preState.getAbstractStates().stream().map(s -> s.getTerm(mScript)).collect(Collectors.toSet());
+
+		if (mLogger.isDebugEnabled()) {
+			final Term firstTerm = preStateTerms.toArray(new Term[preStateTerms.size()])[0];
+			final Term[] firstConjs = SmtUtils.getConjuncts(firstTerm);
+			final Stream<Term> conj = Arrays.stream(firstConjs);
+			final String conjString = conj.map(elem -> elem.toString()).collect(Collectors.joining("\n   "));
+			mLogger.debug("PRE CONJUNCTS (" + firstConjs.length + "):");
+			mLogger.debug("   " + conjString);
+
+			final Term secondTerm = terms.toArray(new Term[terms.size()])[0];
+			final Term[] secondConjs = SmtUtils.getConjuncts(secondTerm);
+			final Stream<Term> conjSec = Arrays.stream(secondConjs);
+			final String conjStringSec = conjSec.map(elem -> elem.toString()).collect(Collectors.joining("\n   "));
+			mLogger.debug("POST CONJUNCTS (" + secondConjs.length + "):");
+			mLogger.debug("   " + conjStringSec);
+		}
+
+		final int numberOfConjunctsBeforeWeakening =
+				preStateTerms.stream().mapToInt(term -> SmtUtils.getConjuncts(term).length).sum();
+
+		final int numberOfConjunctsAfterWeakening =
+				terms.stream().mapToInt(term -> SmtUtils.getConjuncts(term).length).sum();
+
+		final int conjunctReduction = numberOfConjunctsBeforeWeakening - numberOfConjunctsAfterWeakening;
+
+		reportConjunctReduction(conjunctReduction);
+
+		final AbsIntPredicate<STATE> newPreState = new AbsIntPredicate<>(disjunction, newMultiState);
 		return newPreState;
 	}
-
 }

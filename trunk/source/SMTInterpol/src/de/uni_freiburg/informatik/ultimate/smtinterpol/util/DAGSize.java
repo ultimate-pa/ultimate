@@ -32,7 +32,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 public class DAGSize extends NonRecursive {
-	
+
 	private class TreeSizeCache implements NonRecursive.Walker {
 		long mSizeBefore = 0;
 		Term mTerm;
@@ -57,8 +57,9 @@ public class DAGSize extends NonRecursive {
 		@Override
 		public void walk(final NonRecursive walker) {
 			if (mCache.containsKey(mTerm)) {
-				if (mComputeTreeSize)
+				if (mComputeTreeSize) {
 					mSize += mCache.get(mTerm);
+				}
 				return;
 			}
 			if (mComputeTreeSize) {
@@ -107,25 +108,25 @@ public class DAGSize extends NonRecursive {
 	private final Map<Term, Long> mCache;
 	private boolean mComputeTreeSize;
 	private long mSize;
-	
+
 	public DAGSize() {
-		mCache = new HashMap<Term, Long>();
+		mCache = new HashMap<>();
 		mSize = 0;
 	}
-	
+
 	@Override
 	public void reset() {
 		super.reset();
 		mCache.clear();
 		mSize = 0;
 	}
-	
+
 	public int size(final Term term) {
 		mComputeTreeSize = false;
 		run(new TermOnceWalker(new FormulaUnLet().unlet(term)));
 		return (int) mSize;
 	}
-	
+
 	public long treesize(final Term term) {
 		mComputeTreeSize = true;
 		run(new TermOnceWalker(new FormulaUnLet().unlet(term)));

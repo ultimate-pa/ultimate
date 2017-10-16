@@ -36,9 +36,10 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
  * Implementation of the AbstractRelation that uses HashMap and HashSet.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  */
 public class SymmetricHashRelation<E> extends HashRelation<E, E> {
-	
+
 	public SymmetricHashRelation() {
 		super();
 	}
@@ -53,7 +54,25 @@ public class SymmetricHashRelation<E> extends HashRelation<E, E> {
 		super.addPair(rangeElem, domainElem);
 		return wasModified;
 	}
-	
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see de.uni_freiburg.informatik.ultimate.util.datastructures.relation.
+	 * AbstractRelation#removePair(java.lang.Object, java.lang.Object)
+	 */
+	@Override
+	public boolean removePair(final E domainElem, final E rangeElem) {
+		// Remove pair in both directions as it is considered to be symmetric
+		boolean containedPairFirstDirection = super.removePair(domainElem, rangeElem);
+		boolean containedPairSecondDirection = super.removePair(rangeElem, domainElem);
+
+		// A valid symmetric relation always needs to hold both directions if any
+		assert containedPairFirstDirection == containedPairSecondDirection;
+
+		return containedPairFirstDirection;
+	}
+
 	public Set<Doubleton<E>> buildSetOfDoubletons() {
 		final Set<Doubleton<E>> result = new HashSet<>();
 		for (final Entry<E, E> entry : entrySet()) {
@@ -61,7 +80,7 @@ public class SymmetricHashRelation<E> extends HashRelation<E, E> {
 		}
 		return result;
 	}
-	
+
 	public Set<Doubleton<E>> buildSetOfNonSymmetricDoubletons() {
 		final Set<Doubleton<E>> result = new HashSet<>();
 		for (final Entry<E, E> entry : entrySet()) {
@@ -71,10 +90,10 @@ public class SymmetricHashRelation<E> extends HashRelation<E, E> {
 		}
 		return result;
 	}
-	
+
 	/**
-	 * Transform this relation into its transitive closure and return all
-	 * the difference of the input and the transitive closure as set of doubletons.
+	 * Transform this relation into its transitive closure and return all the
+	 * difference of the input and the transitive closure as set of doubletons.
 	 */
 	public Set<Doubleton<E>> makeTransitive() {
 		final Set<Doubleton<E>> allAddedDoubletons = new HashSet<Doubleton<E>>();
@@ -101,7 +120,5 @@ public class SymmetricHashRelation<E> extends HashRelation<E, E> {
 		}
 		return allAddedDoubletons;
 	}
-	
-	
 
 }

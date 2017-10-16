@@ -26,21 +26,24 @@
  * to convey the resulting work.
  */
 
-
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.automata;
 
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util.IntSet;
 
-/**
- * @author Yong Li (liyong@ios.ac.cn)
- * */
+
 
 public interface Acc {
 	
 	boolean isAccepted(IntSet set);
 	
 	List<IntSet> getAccs();
+	
+	IntSet getLabels(int state);
+	
+	default int getAccSize() {
+	    return getAccs().size();
+	}
 	
 }

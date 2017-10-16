@@ -39,16 +39,13 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractStateBinaryOperator;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieSymbolTableVariableProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RCFGLiteralCollector;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon.OctPreferences.LogMessageFormatting;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon.OctPreferences.WideningOperator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon.OctagonDomainPreferences.LogMessageFormatting;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon.OctagonDomainPreferences.WideningOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 
 /**
@@ -61,30 +58,31 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Boo
  *
  * @author schaetzc@informatik.uni-freiburg.de
  */
-public class OctagonDomain implements IAbstractDomain<OctDomainState, IcfgEdge, IBoogieVar> {
+public class OctagonDomain implements IAbstractDomain<OctDomainState, IcfgEdge> {
 
 	private final BoogieSymbolTable mSymbolTable;
 	private final ILogger mLogger;
 	private final LiteralCollectorFactory mLiteralCollectorFactory;
 	private final Function<Boolean, OctDomainState> mOctDomainStateFactory;
 	private final Supplier<IAbstractStateBinaryOperator<OctDomainState>> mWideningOperatorFactory;
-	private final Supplier<IAbstractPostOperator<OctDomainState, IcfgEdge, IBoogieVar>> mPostOperatorFactory;
+	private final Supplier<IAbstractPostOperator<OctDomainState, IcfgEdge>> mPostOperatorFactory;
 	private final BoogieIcfgContainer mBoogieIcfg;
-	private final IIcfg<?> mIcfg;
+	private final IBoogieSymbolTableVariableProvider mBoogie2SmtSymbolTableVariableProvider;
 
 	public OctagonDomain(final ILogger logger, final BoogieSymbolTable symbolTable,
 			final LiteralCollectorFactory literalCollectorFactory, final IUltimateServiceProvider services,
-			final IIcfg<?> icfg) {
+			final BoogieIcfgContainer icfg,
+			final IBoogieSymbolTableVariableProvider boogie2SmtSymbolTableVariableProvider) {
 		mLogger = logger;
 		mSymbolTable = symbolTable;
 		mLiteralCollectorFactory = literalCollectorFactory;
-		mIcfg = icfg;
-		mBoogieIcfg = AbsIntUtil.getBoogieIcfgContainer(icfg);
+		mBoogieIcfg = icfg;
 
 		final IPreferenceProvider ups = services.getPreferenceProvider(Activator.PLUGIN_ID);
 		mOctDomainStateFactory = makeDomainStateFactory(ups);
 		mWideningOperatorFactory = makeWideningOperatorFactory(ups);
 		mPostOperatorFactory = makePostOperatorFactory(ups);
+		mBoogie2SmtSymbolTableVariableProvider = boogie2SmtSymbolTableVariableProvider;
 	}
 
 	/**
@@ -97,7 +95,7 @@ public class OctagonDomain implements IAbstractDomain<OctDomainState, IcfgEdge, 
 	 * @return Factory for creating empty octagons
 	 */
 	private static Function<Boolean, OctDomainState> makeDomainStateFactory(final IPreferenceProvider ups) {
-		final String settingLabel = OctPreferences.LOG_STRING_FORMAT;
+		final String settingLabel = OctagonDomainPreferences.LOG_STRING_FORMAT;
 		final LogMessageFormatting settingValue = ups.getEnum(settingLabel, LogMessageFormatting.class);
 
 		final Function<OctDomainState, String> logStringFunction;
@@ -129,14 +127,14 @@ public class OctagonDomain implements IAbstractDomain<OctDomainState, IcfgEdge, 
 	 */
 	private Supplier<IAbstractStateBinaryOperator<OctDomainState>>
 			makeWideningOperatorFactory(final IPreferenceProvider ups) {
-		final String settingLabel = OctPreferences.WIDENING_OPERATOR;
+		final String settingLabel = OctagonDomainPreferences.WIDENING_OPERATOR;
 		final WideningOperator settingValue = ups.getEnum(settingLabel, WideningOperator.class);
 
 		switch (settingValue) {
 		case SIMPLE:
 			return () -> new OctSimpleWideningOperator();
 		case EXPONENTIAL:
-			final String thresholdString = ups.getString(OctPreferences.EXP_WIDENING_THRESHOLD);
+			final String thresholdString = ups.getString(OctagonDomainPreferences.EXP_WIDENING_THRESHOLD);
 			try {
 				final BigDecimal threshold = new BigDecimal(thresholdString);
 				return () -> new OctExponentialWideningOperator(threshold);
@@ -147,7 +145,7 @@ public class OctagonDomain implements IAbstractDomain<OctDomainState, IcfgEdge, 
 			final Collection<BigDecimal> literals = mLiteralCollectorFactory.create().getNumberLiterals();
 			return () -> new OctLiteralWideningOperator(literals);
 		default:
-			throw makeIllegalSettingException(OctPreferences.WIDENING_OPERATOR, settingValue);
+			throw makeIllegalSettingException(OctagonDomainPreferences.WIDENING_OPERATOR, settingValue);
 		}
 	}
 
@@ -159,14 +157,13 @@ public class OctagonDomain implements IAbstractDomain<OctDomainState, IcfgEdge, 
 	 *            Preferences
 	 * @return Factory for creating widening operators
 	 */
-	private Supplier<IAbstractPostOperator<OctDomainState, IcfgEdge, IBoogieVar>>
+	private Supplier<IAbstractPostOperator<OctDomainState, IcfgEdge>>
 			makePostOperatorFactory(final IPreferenceProvider ups) {
-		final Boogie2SmtSymbolTable bpl2smtSymbolTable = mBoogieIcfg.getBoogie2SMT().getBoogie2SmtSymbolTable();
 		final int maxParallelStates = ups.getInt(AbsIntPrefInitializer.LABEL_MAX_PARALLEL_STATES);
 		final boolean fallbackAssignIntervalProjection =
-				ups.getBoolean(OctPreferences.FALLBACK_ASSIGN_INTERVAL_PROJECTION);
-		return () -> new OctPostOperator(mLogger, mSymbolTable, mIcfg.getCfgSmtToolkit(), maxParallelStates,
-				fallbackAssignIntervalProjection, bpl2smtSymbolTable);
+				ups.getBoolean(OctagonDomainPreferences.FALLBACK_ASSIGN_INTERVAL_PROJECTION);
+		return () -> new OctPostOperator(mLogger, mSymbolTable, mBoogieIcfg.getCfgSmtToolkit(), maxParallelStates,
+				fallbackAssignIntervalProjection, mBoogie2SmtSymbolTableVariableProvider);
 	}
 
 	/**
@@ -200,7 +197,7 @@ public class OctagonDomain implements IAbstractDomain<OctDomainState, IcfgEdge, 
 	}
 
 	@Override
-	public IAbstractPostOperator<OctDomainState, IcfgEdge, IBoogieVar> getPostOperator() {
+	public IAbstractPostOperator<OctDomainState, IcfgEdge> getPostOperator() {
 		return mPostOperatorFactory.get();
 	}
 

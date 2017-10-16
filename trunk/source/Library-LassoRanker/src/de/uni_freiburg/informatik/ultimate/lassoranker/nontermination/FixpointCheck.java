@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Tra
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ProgramVarUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -188,7 +189,7 @@ public class FixpointCheck {
 			substitutionMapping.put(entry.getValue(), outVarMapping.getConstant(entry.getKey()));
 		}
 		for (final TermVariable auxVar : tf.getAuxVars()) {
-			substitutionMapping.put(auxVar, SmtUtils.termVariable2constant(mManagedScript.getScript(), auxVar, false));
+			substitutionMapping.put(auxVar, ProgramVarUtils.getAuxVarConstant(mManagedScript, auxVar));
 		}
 		return substitutionMapping;
 	}

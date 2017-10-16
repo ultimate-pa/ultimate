@@ -2,26 +2,26 @@
  * Copyright (C) 2013-2015 Jochen Hoenicke (hoenicke@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
  *
- * This file is part of the ULTIMATE PEAtoBoogie plug-in.
+ * This file is part of the ULTIMATE Util Library.
  *
- * The ULTIMATE PEAtoBoogie plug-in is free software: you can redistribute it and/or modify
+ * The ULTIMATE Util Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * The ULTIMATE PEAtoBoogie plug-in is distributed in the hope that it will be useful,
+ * The ULTIMATE Util Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with the ULTIMATE PEAtoBoogie plug-in. If not, see <http://www.gnu.org/licenses/>.
+ * along with the ULTIMATE Util Library. If not, see <http://www.gnu.org/licenses/>.
  *
  * Additional permission under GNU GPL version 3 section 7:
- * If you modify the ULTIMATE PEAtoBoogie plug-in, or any covered work, by linking
+ * If you modify the ULTIMATE Util Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
  * containing parts covered by the terms of the Eclipse Public License, the
- * licensors of the ULTIMATE PEAtoBoogie plug-in grant you additional permission
+ * licensors of the ULTIMATE Util Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.util.datastructures;
@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
@@ -63,6 +64,31 @@ public final class CrossProducts {
 	public static List<int[]> crossProduct(final int[][] input) {
 		final List<int[]> result = new ArrayList<>();
 		crossProductHelper(result, input, new int[input.length], 0);
+		return result;
+	}
+
+	/**
+	 * TODO: not so nice because of code redundancy, but I don't know an easy way to
+	 *
+	 * @param input
+	 * @return
+	 */
+	public static <T> List<List<T>> crossProductOfSets(final List<Set<T>> input) {
+		List<List<T>> result = new ArrayList<>();
+		result.add(new ArrayList<>());
+		for (final Set<T> nwscs : input) {
+			final List<List<T>> newResult = new ArrayList<>();
+
+			for (final List<T> index : result) {
+				for (final T nwsc : nwscs) {
+					final List<T> newIndex = new ArrayList<>(index);
+					newIndex.add(nwsc);
+
+					newResult.add(newIndex);
+				}
+			}
+			result = newResult;
+		}
 		return result;
 	}
 

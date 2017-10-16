@@ -47,6 +47,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Util;
  *
  */
 public class EliminationTask {
+	private static final boolean DEBUG_USE_TO_STRING_DIRECT = false;
+	
 	private final int mQuantifier;
 	private final LinkedHashSet<TermVariable> mEliminatees;
 	private final Term mTerm;
@@ -89,7 +91,8 @@ public class EliminationTask {
 	public String toString() {
 		final String quantifier = (getQuantifier() == QuantifiedFormula.EXISTS ? "∃" : "∀");
 		final String vars = getEliminatees().toString();
-		return quantifier + " " + vars + ". " + getTerm();
+		final String term = (DEBUG_USE_TO_STRING_DIRECT ? getTerm().toStringDirect() : getTerm().toString());
+		return quantifier + " " + vars + ". " + term;
 	}
 	
 

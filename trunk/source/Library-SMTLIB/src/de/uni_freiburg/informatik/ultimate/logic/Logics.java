@@ -33,7 +33,7 @@ public enum Logics {
 	QF_RDL    (Features.DL + Features.RA),
 	QF_LIA    (Features.LA + Features.IA),
 	QF_LRA    (Features.LA + Features.RA),
-	QF_LIRA   (Features.LA + Features.RA + Features.IA),
+	QF_LIRA   (Features.LA + Features.RA + Features.IA), 
 	QF_NIA    (Features.NA + Features.IA),
 	QF_NRA    (Features.NA + Features.RA),
 	QF_NIRA   (Features.NA + Features.RA + Features.IA),

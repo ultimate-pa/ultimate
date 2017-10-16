@@ -87,7 +87,7 @@ public class CegarLoopConcurrentAutomata<LETTER extends IIcfgTransition<?>> exte
 	protected void getInitialAbstraction() {
 		final IStateFactory<IPredicate> predicateFactory = new PredicateFactoryForInterpolantAutomata(
 				super.mCsToolkit.getManagedScript(), mPredicateFactory, mPref.computeHoareAnnotation());
-		final Cfg2Nwa<LETTER> cFG2NestedWordAutomaton = new Cfg2Nwa<>(mIcfgContainer, predicateFactory, mCsToolkit,
+		final Cfg2Nwa<LETTER> cFG2NestedWordAutomaton = new Cfg2Nwa<>(mIcfg, predicateFactory, mCsToolkit,
 				mPredicateFactory, mServices, mXnfConversionTechnique, mSimplificationTechnique);
 		mAbstraction = cFG2NestedWordAutomaton.getResult();
 
@@ -107,7 +107,7 @@ public class CegarLoopConcurrentAutomata<LETTER extends IIcfgTransition<?>> exte
 			throws AutomataOperationCanceledException, AutomataLibraryException, AssertionError {
 		if (mPref.dumpAutomata()) {
 			final String filename =
-					mIcfgContainer.getIdentifier() + "_DiffAutomatonBeforeMinimization_Iteration" + mIteration;
+					mIcfg.getIdentifier() + "_DiffAutomatonBeforeMinimization_Iteration" + mIteration;
 			super.writeAutomatonToFile(mAbstraction, filename);
 		}
 		final Function<IMLPredicate, Set<IcfgLocation>> lcsProvider = x -> asHashSet(x.getProgramPoints());

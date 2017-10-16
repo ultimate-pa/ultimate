@@ -31,6 +31,7 @@ import java.math.BigInteger;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 
 
 /**
@@ -55,7 +56,7 @@ public class SupportingInvariant extends AffineFunction {
 	/**
 	 * Construct a supporting invariant from an AffineFunction
 	 */
-	public SupportingInvariant(AffineFunction f) {
+	public SupportingInvariant(final AffineFunction f) {
 		mCoefficients.putAll(f.mCoefficients);
 		mConstant = f.mConstant;
 	}
@@ -91,9 +92,9 @@ public class SupportingInvariant extends AffineFunction {
 	}
 	
 	@Override
-	public Term asTerm(Script script) throws SMTLIBException {
+	public Term asTerm(final Script script) throws SMTLIBException {
 		final Term t = super.asTerm(script);
 		return script.term(strict ? ">" : ">=", t,
-				script.numeral(BigInteger.ZERO));
+				SmtUtils.constructIntValue(script, BigInteger.ZERO));
 	}
 }

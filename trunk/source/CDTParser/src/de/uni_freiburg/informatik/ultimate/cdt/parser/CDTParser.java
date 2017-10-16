@@ -258,6 +258,10 @@ public class CDTParser implements ISource {
 
 	private IElement parseAST(final File file) throws Exception {
 
+		if (file == null || !file.canRead()) {
+			throw new IllegalArgumentException("Input file does not exist");
+		}
+
 		final IParserLogService log = new DefaultLogService();
 
 		final FileContent fContent = FileContent.createForExternalFileLocation(file.getAbsolutePath());

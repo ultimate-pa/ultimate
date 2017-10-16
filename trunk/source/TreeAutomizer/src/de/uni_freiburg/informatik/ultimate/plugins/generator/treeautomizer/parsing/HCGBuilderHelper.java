@@ -71,7 +71,7 @@ public class HCGBuilderHelper {
 			mLogicForExternalSolver = prefs
 					.getString(TreeAutomizerPreferenceInitializer.LABEL_ExtSolverLogic);
 			
-			final String dumpPath = prefs.getString(TreeAutomizerPreferenceInitializer.LABEL_DumpPath);
+			final String dumpPath = prefs.getString(TreeAutomizerPreferenceInitializer.LABEL_SmtDumpPath);
 			final boolean dumpScript = !dumpPath.isEmpty();
 
 			final boolean fakeNonIncrementalSolver = false;

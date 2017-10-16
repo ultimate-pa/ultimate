@@ -21,18 +21,14 @@ package system;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
-import java.io.IOException;
-import java.net.URI;
+import java.io.FilenameFilter;
 import java.net.URISyntaxException;
 import java.net.URL;
 
-import org.eclipse.core.runtime.FileLocator;
-import org.eclipse.core.runtime.Platform;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-import org.osgi.framework.Bundle;
 
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.DefaultLogger;
@@ -43,35 +39,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
 @RunWith(JUnit4.class)
 public class SystemTest {
 
-	@Test
-	public void testSystem() throws URISyntaxException, IOException {
-		final Bundle bundle = Platform.getBundle("SMTInterpolTest");
-		final URL fileURL = bundle.getEntry("test/");
-		final URL resolvedUrl = FileLocator.resolve(fileURL);
-		// Do not use Url.toURI as it will throw an exception if your path contains spaces. Thanks Java!!!!einself!!
-		final URI uri = new URI(resolvedUrl.getProtocol(), resolvedUrl.getUserInfo(), resolvedUrl.getHost(),
-				resolvedUrl.getPort(), resolvedUrl.getPath(), resolvedUrl.getQuery(), resolvedUrl.getRef());
-		final File testDir = new File(uri);
-		final File[] lst = testDir.listFiles();
-		if (lst == null || lst.length == 0) {
-			throw new IllegalArgumentException("could not locate SMT scripts");
-		}
-
-		for (final File dir : lst) {
-			for (final File tst : dir
-					.listFiles((dir1, name) -> name.endsWith(".smt2") && !name.endsWith(".msat.smt2"))) {
-				try {
-					if (shouldExecute(tst)) {
-						performTest(tst);
-					}
-				} catch (final SMTLIBException e) {
-					Assert.fail("File " + tst.getAbsolutePath() + " produced error:\n" + e.getMessage());
-				}
-			}
-		}
-	}
-
-	private static void performTest(final File f) throws SMTLIBException, FileNotFoundException {
+	private void performTest(final File f) throws SMTLIBException, FileNotFoundException {
 		System.out.println("Testing " + f.getAbsolutePath());
 		final DefaultLogger logger = new DefaultLogger();
 		final OptionMap options = new OptionMap(logger, true);
@@ -114,6 +82,31 @@ public class SystemTest {
 			return size < 5;// NOCHECKSTYLE
 		}
 		return true;
+	}
+
+	@Test
+	public void testSystem() throws URISyntaxException, FileNotFoundException {
+		final String name = getClass().getPackage().getName();
+		final URL url = getClass().getClassLoader().getResource(name);
+		final File f = new File(url.toURI());
+		File[] lst = f.getParentFile().getParentFile().listFiles((FilenameFilter) (dir, name1) -> name1.equals("test"));
+		if (lst == null || lst.length != 1) {
+			return;
+		}
+		final File testDir = lst[0];
+		lst = testDir.listFiles();
+		for (final File dir : lst) {
+			for (final File tst : dir.listFiles(
+					(FilenameFilter) (dir1, name1) -> name1.endsWith(".smt2") && !name1.endsWith(".msat.smt2"))) {
+				try {
+					if (shouldExecute(tst)) {
+						performTest(tst);
+					}
+				} catch (final SMTLIBException e) {
+					Assert.fail("File " + tst.getAbsolutePath() + " produced error:\n" + e.getMessage());
+				}
+			}
+		}
 	}
 
 }

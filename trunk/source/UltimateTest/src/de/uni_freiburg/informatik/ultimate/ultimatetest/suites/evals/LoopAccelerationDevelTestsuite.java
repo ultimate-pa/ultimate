@@ -53,9 +53,10 @@ public class LoopAccelerationDevelTestsuite extends AbstractEvalTestSuite {
 	@SuppressWarnings("unchecked")
 	private static final Triple<String, String[], String>[] TOOLCHAINS = new Triple[] {
 
-			new Triple<>("AutomizerBpl.xml", BPL, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_BB_Debug.epf"),
-			new Triple<>("AutomizerBplTransformed.xml", BPL,
-					"loopacceleration/svcomp-Reach-32bit-Automizer_Default_BB_Debug.epf"),
+			// new Triple<>("AutomizerBpl.xml", BPL,
+			// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_BB_Debug.epf"),
+			// new Triple<>("AutomizerBplTransformed.xml", BPL,
+			// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_BB_Debug.epf"),
 
 			// new Triple<>("AutomizerCInline.xml", C,
 			// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_BB_Debug.epf"),
@@ -65,10 +66,10 @@ public class LoopAccelerationDevelTestsuite extends AbstractEvalTestSuite {
 			// new Triple<>("AutomizerBplTransformed.xml", BPL,
 			// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Ahmed_Debug.epf"),
 
-			// new Triple<>("AutomizerBpl.xml", BPL,
-			// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Werner_Debug.epf"),
-			// new Triple<>("AutomizerBplTransformed.xml", BPL,
-			// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Werner_Debug.epf"),
+			new Triple<>("AutomizerBpl.xml", BPL,
+					"loopacceleration/svcomp-Reach-32bit-Automizer_Default_Werner_Debug.epf"),
+			new Triple<>("AutomizerBplTransformed.xml", BPL,
+					"loopacceleration/svcomp-Reach-32bit-Automizer_Default_Werner_Debug.epf"),
 
 			// new Triple<>("AutomizerBplTransformed.xml", BPL,
 			// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_FastUpr_EE.epf"),
@@ -211,15 +212,15 @@ public class LoopAccelerationDevelTestsuite extends AbstractEvalTestSuite {
 						ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Sum, Aggregate.Average),
 				new ColumnDefinition(CegarLoopStatisticsDefinitions.OverallTime.toString(), "Trace Abstraction Time",
 						ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Sum, Aggregate.Average),
-				new ColumnDefinition("TraceCheckerStatistics_NumberOfCodeBlocks", null,
+				new ColumnDefinition("traceCheckStatistics_NumberOfCodeBlocks", null,
 						ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),
-				new ColumnDefinition("TraceCheckerStatistics_SizeOfPredicatesFP", null,
+				new ColumnDefinition("traceCheckStatistics_SizeOfPredicatesFP", null,
 						ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),
-				new ColumnDefinition("TraceCheckerStatistics_SizeOfPredicatesBP", null,
+				new ColumnDefinition("traceCheckStatistics_SizeOfPredicatesBP", null,
 						ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),
-				new ColumnDefinition("TraceCheckerStatistics_Conjuncts in SSA", null, ConversionContext.BestFitNumber(),
+				new ColumnDefinition("traceCheckStatistics_Conjuncts in SSA", null, ConversionContext.BestFitNumber(),
 						Aggregate.Ignore, Aggregate.Average),
-				new ColumnDefinition("TraceCheckerStatistics_Conjuncts in UnsatCore", null,
+				new ColumnDefinition("traceCheckStatistics_Conjuncts in UnsatCore", null,
 						ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),
 				new ColumnDefinition("InterpolantCoveringCapability", "ICC", ConversionContext.Percent(true, 2),
 						Aggregate.Ignore, Aggregate.Average), };

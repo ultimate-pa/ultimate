@@ -28,7 +28,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.graph;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -38,21 +37,22 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
+import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
+import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeRun;
 import de.uni_freiburg.informatik.ultimate.automata.tree.operations.Accepts;
-import de.uni_freiburg.informatik.ultimate.automata.tree.operations.Complement;
 import de.uni_freiburg.informatik.ultimate.automata.tree.operations.Difference;
-import de.uni_freiburg.informatik.ultimate.automata.tree.operations.Intersect;
 import de.uni_freiburg.informatik.ultimate.automata.tree.operations.IsEmpty;
-import de.uni_freiburg.informatik.ultimate.automata.tree.operations.Minimize;
-import de.uni_freiburg.informatik.ultimate.automata.tree.operations.Totalize;
+import de.uni_freiburg.informatik.ultimate.automata.tree.operations.minimization.Minimize;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TimeoutResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TreeAutomizerSatResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TreeAutomizerUnsatResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
@@ -60,12 +60,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HCSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HornClause;
 import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HornClausePredicateSymbol;
-import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HornClausePredicateSymbol.HornClauseFalsePredicateSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HornUtilConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
@@ -75,7 +72,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.parsing.HornAnnot;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.preferences.TreeAutomizerPreferenceInitializer;
 
 /**
  * @author Mostafa M.A. (mostafa.amin93@gmail.com)
@@ -101,7 +98,7 @@ public class TreeAutomizerCEGAR {
 	 */
 	protected ITreeAutomatonBU<HornClause, IPredicate> mInterpolAutomaton;
 	private final HCSymbolTable mSymbolTable;
-	private final CfgSmtToolkit mCfgSmtToolkit;
+//	private final CfgSmtToolkit mCfgSmtToolkit;
 	private final HCHoareTripleChecker mHoareTripleChecker;
 	private final PredicateUnifier mPredicateUnifier;
 
@@ -110,7 +107,8 @@ public class TreeAutomizerCEGAR {
 
 	private final List<HornClause> mAlphabet;
 	private TreeRun<HornClause, IPredicate> mCounterExample;
-	private IUltimateServiceProvider mServices;
+	private final IUltimateServiceProvider mServices;
+	private final IPreferenceProvider mPreferences;
 
 	/**
 	 * Constructor for TreeAutomizer CEGAR
@@ -144,16 +142,17 @@ public class TreeAutomizerCEGAR {
 		mInitialPredicate = mPredicateFactory.getTruePredicate();
 		mFinalPredicate = mPredicateFactory.getFalsePredicate();
 
-		mCfgSmtToolkit = new CfgSmtToolkit(new ModifiableGlobalsTable(new HashRelation<>()), mBackendSmtSolverScript,
-				mSymbolTable, mInitialPredicate, Collections.singleton(HornUtilConstants.HORNCLAUSEMETHODNAME));
+//		mCfgSmtToolkit = new CfgSmtToolkit(new ModifiableGlobalsTable(new HashRelation<>()), mBackendSmtSolverScript,
+//				mSymbolTable, mInitialPredicate, Collections.singleton(HornUtilConstants.HORNCLAUSEMETHODNAME));
 		mPredicateUnifier = new PredicateUnifier(services, mBackendSmtSolverScript, mPredicateFactory, mSymbolTable,
 				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BDD_BASED, mInitialPredicate);
-		mHoareTripleChecker = new HCHoareTripleChecker(mPredicateUnifier, mCfgSmtToolkit, mPredicateFactory,
+		mHoareTripleChecker = new HCHoareTripleChecker(mPredicateUnifier, mBackendSmtSolverScript, mPredicateFactory,
 				mSymbolTable);
 
 		mPredicateUnifier.getOrConstructPredicate(mInitialPredicate.getFormula());
 		mPredicateUnifier.getOrConstructPredicate(mFinalPredicate.getFormula());
 
+		mPreferences = services.getPreferenceProvider(Activator.PLUGIN_ID);
 	}
 
 	/**
@@ -174,6 +173,12 @@ public class TreeAutomizerCEGAR {
 			final TreeRun<HornClause, IPredicate> counterExample = isAbstractionCorrect();
 			if (counterExample == null) {
 				mLogger.info("The horn clause set is SAT!!");
+
+				mLogger.info("states of the final abstraction: (i.e., the model for the uninterpreted predicates)");
+				for (final IPredicate state : mAbstraction.getStates()) {
+					mLogger.info(state.toString());
+				}
+
 				return new TreeAutomizerSatResult(Activator.PLUGIN_ID, "SAT", "The given horn clause set is SAT");
 			}
 
@@ -215,7 +220,7 @@ public class TreeAutomizerCEGAR {
 			for (final HornClausePredicateSymbol sym : clause.getBodyPredicates()) {
 				tail.add(mPredicateFactory.createTruePredicateWithLocation(sym));
 			}
-			if (clause.getHeadPredicate() instanceof HornClauseFalsePredicateSymbol) {
+			if (clause.isHeadFalse()) {
 				mAbstraction.addRule(new TreeAutomatonRule<>(clause, tail, mFinalPredicate));
 			} else {
 				mAbstraction.addRule(new TreeAutomatonRule<>(clause, tail,
@@ -271,6 +276,14 @@ public class TreeAutomizerCEGAR {
 
 		generalizeCounterExample(mInterpolAutomaton);
 
+		// dump interpolant automaton
+		final String automataDumpPath =
+				mPreferences.getString(TreeAutomizerPreferenceInitializer.LABEL_AutomataDumpPath);
+		if (!automataDumpPath.isEmpty()) {
+			final String filename = mHornAnnot.getFileName() + "_interpolant_automaton_nr_" + mIteration;
+			writeAutomatonToFile(mServices, mInterpolAutomaton, automataDumpPath, filename, Format.ATS_NUMERATE, "");
+		}
+
 		assert allRulesAreInductive(mInterpolAutomaton);
 	}
 
@@ -312,6 +325,13 @@ public class TreeAutomizerCEGAR {
 	}
 
 	protected boolean refineAbstraction() throws AutomataLibraryException {
+		// dump abstraction
+		final String automataDumpPath =
+				mPreferences.getString(TreeAutomizerPreferenceInitializer.LABEL_AutomataDumpPath);
+		if (!automataDumpPath.isEmpty()) {
+			final String filename = mHornAnnot.getFileName() + "_abstraction_nr_" + mIteration;
+			writeAutomatonToFile(mServices, mAbstraction, automataDumpPath, filename, Format.ATS_NUMERATE, "");
+		}
 
 		/*
 		final ITreeAutomatonBU<HornClause, IPredicate> cCounterExample = (new Complement<>(mAutomataLibraryServices,
@@ -329,7 +349,7 @@ public class TreeAutomizerCEGAR {
 		mLogger.debug(String.format("Size after totalize %d states, %d rules.", mAbstraction.getStates().size(),
 				((Set<TreeAutomatonRule<HornClause, IPredicate>>) mAbstraction.getRules()).size()));
 		*/
-		
+
 		mAbstraction = (TreeAutomatonBU<HornClause, IPredicate>) (new Difference<HornClause, IPredicate>(
 				mAutomataLibraryServices, mStateFactory, mAbstraction, getCounterExample()).getResult());
 		mLogger.debug(String.format("Size before minimize %d states, %d rules.", mAbstraction.getStates().size(),
@@ -401,4 +421,10 @@ public class TreeAutomizerCEGAR {
 		return null;
 	}
 
+	protected static void writeAutomatonToFile(final IUltimateServiceProvider services,
+			final IAutomaton<?, IPredicate> automaton, final String path, final String filename, final Format format,
+			final String message) {
+		new AutomatonDefinitionPrinter<String, String>(new AutomataLibraryServices(services), "ta",
+				path + "/" + filename, format, message, automaton);
+	}
 }

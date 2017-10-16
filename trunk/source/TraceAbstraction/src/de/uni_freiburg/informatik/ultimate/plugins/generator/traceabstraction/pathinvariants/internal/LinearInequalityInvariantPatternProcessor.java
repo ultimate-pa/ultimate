@@ -162,11 +162,13 @@ public final class LinearInequalityInvariantPatternProcessor
 	private static final boolean ADD_ONLY_SUCC_LOC_TO_UNSAT_CORE = false;
 	private static boolean USE_UNDER_APPROX_AS_ADDITIONAL_CONSTRAINT = true;
 	private static boolean USE_OVER_APPROX_AS_ADDITIONAL_CONSTRAINT = true;
+	private static final boolean ASSERT_INTEGER_COEFFICIENTS = false;
 
 	/**
 	 * Contains all coefficients of all patterns from the current round.
 	 */
 	private Set<Term> mAllPatternCoefficients;
+	private Set<Term> mIntegerCoefficients;
 	/**
 	 * If the current constraints are satisfiable, then this map contains the values of the pattern coefficients.
 	 */
@@ -318,6 +320,7 @@ public final class LinearInequalityInvariantPatternProcessor
 		mMotzkinCoefficients2LinearInequalities = new HashMap<>();
 		mLinearInequalities2Locations = new HashMap<>();
 		mAllPatternCoefficients = null;
+		mIntegerCoefficients = null;
 		mPatternCoefficients2Values = null;
 		mLoc2UnderApproximation = loc2underApprox;
 		mLoc2OverApproximation = loc2overApprox;
@@ -337,6 +340,7 @@ public final class LinearInequalityInvariantPatternProcessor
 		mPrefixCounter = 0;
 		mCurrentRound = round;
 		mAllPatternCoefficients = new HashSet<>();
+		mIntegerCoefficients = new HashSet<>();
 		mLinearInequalities2Locations = new HashMap<>();
 	}
 
@@ -1189,6 +1193,12 @@ public final class LinearInequalityInvariantPatternProcessor
 			generateAndAssertDangerTerms(successorConstraintIngredients);
 		}
 
+		if (ASSERT_INTEGER_COEFFICIENTS) {
+			for (final Term coefficient : mIntegerCoefficients) {
+				mSolver.assertTerm(mSolver.term("is_int", coefficient));
+			}
+		}
+
 		// Convert ns to ms
 		mConstraintsConstructionTime = (System.nanoTime() - startTimeConstraintsConstruction) / 1_000_000L;
 		mLogger.info("Terms generated, checking SAT.");
@@ -1297,6 +1307,26 @@ public final class LinearInequalityInvariantPatternProcessor
 				}
 			}
 		}
+
+		if (!ASSERT_INTEGER_COEFFICIENTS && smtResult == LBool.SAT && !mIntegerCoefficients.isEmpty()) {
+			// Check that all integer coefficients are integers
+			try {
+				final Map<Term, Rational> valuation = ModelExtractionUtils.getSimplifiedAssignment_TwoMode(mSolver,
+						mIntegerCoefficients, mLogger, mServices);
+				for (final Map.Entry<Term, Rational> entry : valuation.entrySet()) {
+					final Rational value = entry.getValue();
+					final Term coefficient = entry.getKey();
+					// We try to use the ceiled value if the value is not integral
+					mSolver.assertTerm(mSolver.term("=", coefficient, value.ceil().toTerm(coefficient.getSort())));
+				}
+				return mSolver.checkSat();
+			} catch (final TermException e) {
+				e.printStackTrace();
+				mLogger.error("Getting values for integer coefficients failed.");
+				return LBool.UNKNOWN;
+			}
+		}
+
 		return smtResult;
 	}
 
@@ -1382,7 +1412,10 @@ public final class LinearInequalityInvariantPatternProcessor
 
 	@Override
 	public Dnf<AbstractLinearInvariantPattern> getPatternForTransition(final IcfgEdge transition, final int round) {
-		return mStrategy.getPatternForTransition(transition, round, mSolver, newPrefix());
+		final Dnf<AbstractLinearInvariantPattern> pattern =
+				mStrategy.getPatternForTransition(transition, round, mSolver, newPrefix());
+		mIntegerCoefficients.addAll(mStrategy.getIntegerCoefficientsForTransition(transition));
+		return pattern;
 	}
 
 	/**

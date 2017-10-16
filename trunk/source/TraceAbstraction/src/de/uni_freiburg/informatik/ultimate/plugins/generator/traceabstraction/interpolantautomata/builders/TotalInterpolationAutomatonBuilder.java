@@ -77,9 +77,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.UnsatCores;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.IInterpolantGenerator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceChecker;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceCheckerCraig;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerSpWp;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceCheck;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceCheckCraig;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckSpWp;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TracePredicates;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
@@ -123,15 +123,16 @@ public class TotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransition<?
 		mXnfConversionTechnique = xnfConversionTechnique;
 		mSymbolTable = symbolTable;
 		mStateSequence = stateSequence;
-		// mTraceChecker = traceChecker;
+		// mTraceCheck = traceCheck;
 		mCsToolkit = csToolkit;
-		// mInterpolants = traceChecker.getInterpolants();
+		// mInterpolants = traceCheck.getInterpolants();
 		mPredicateUnifier = interpolantGenerator.getPredicateUnifier();
 		mPredicateFactory = (PredicateFactory) mPredicateUnifier.getPredicateFactory();
 		mAbstraction = abstraction;
 		final VpAlphabet<LETTER> alphabet = new VpAlphabet<>(abstraction);
 		mIA = new StraightLineInterpolantAutomatonBuilder<>(mServices, alphabet, interpolantGenerator, predicateFactory,
-				StraightLineInterpolantAutomatonBuilder.InitialAndAcceptingStateMode.ONLY_FIRST_INITIAL_LAST_ACCEPTING).getResult();
+				StraightLineInterpolantAutomatonBuilder.InitialAndAcceptingStateMode.ONLY_FIRST_INITIAL_LAST_ACCEPTING)
+						.getResult();
 		mModifiedGlobals = modifiableGlobalsTable;
 		mInterpolation = interpolation;
 		mEpimorphism = new AutomatonEpimorphism<>(new AutomataLibraryServices(mServices));
@@ -181,7 +182,7 @@ public class TotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransition<?
 		if (mAnnotated.contains(succ)) {
 			final IPredicate predItp = mEpimorphism.getMapping(p);
 			final IPredicate succItp = mEpimorphism.getMapping(succ);
-			// this is a one-step path, no need to call TraceChecker
+			// this is a one-step path, no need to call traceCheck
 			if (interpolantAutomatonContainsTransition(predItp, transition, succItp)) {
 				// do nothing, transition is already contained
 			} else {
@@ -200,11 +201,9 @@ public class TotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransition<?
 
 	}
 
-	
 	/**
-	 * Check if automaton contains transition 
-	 * (predItp, internalTrans.getLetter(), succItp)
-	 * We take from the transition only the letter!
+	 * Check if automaton contains transition (predItp, internalTrans.getLetter(), succItp) We take from the transition
+	 * only the letter!
 	 */
 	private boolean interpolantAutomatonContainsTransition(final IPredicate predItp,
 			final ITransitionlet<LETTER, IPredicate> transition, final IPredicate succItp) {
@@ -212,18 +211,18 @@ public class TotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransition<?
 			final OutgoingInternalTransition<LETTER, IPredicate> internalTrans =
 					(OutgoingInternalTransition<LETTER, IPredicate>) transition;
 			final Set<IPredicate> succs = mIA.succInternal(predItp, internalTrans.getLetter());
-			return succs != null && succs.contains(succItp);
+			return succs.contains(succItp);
 		} else if (transition instanceof OutgoingCallTransition) {
 			final OutgoingCallTransition<LETTER, IPredicate> callTrans =
 					(OutgoingCallTransition<LETTER, IPredicate>) transition;
 			final Set<IPredicate> succs = mIA.succCall(predItp, callTrans.getLetter());
-			return succs != null && succs.contains(succItp);
+			return succs.contains(succItp);
 		} else if (transition instanceof OutgoingReturnTransition) {
 			final OutgoingReturnTransition<LETTER, IPredicate> returnTrans =
 					(OutgoingReturnTransition<LETTER, IPredicate>) transition;
 			final IPredicate hierPredItp = mEpimorphism.getMapping(returnTrans.getHierPred());
 			final Set<IPredicate> succs = mIA.succReturn(predItp, hierPredItp, returnTrans.getLetter());
-			return succs != null && succs.contains(succItp);
+			return succs.contains(succItp);
 		} else if (transition instanceof SummaryReturnTransition) {
 			final SummaryReturnTransition<LETTER, IPredicate> summaryTrans =
 					(SummaryReturnTransition<LETTER, IPredicate>) transition;
@@ -327,29 +326,30 @@ public class TotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransition<?
 		final SortedMap<Integer, IPredicate> pendingContexts = computePendingContexts(run);
 		// SortedMap<Integer, IPredicate> pendingContexts = new TreeMap<>();
 
-		InterpolatingTraceChecker tc;
+		InterpolatingTraceCheck tc;
 		switch (mInterpolation) {
 		case Craig_NestedInterpolation:
 		case Craig_TreeInterpolation:
-			tc = new InterpolatingTraceCheckerCraig(precondition, postcondition, pendingContexts, run.getWord(),
-					mCsToolkit, AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, true, mPredicateFactory, mPredicateUnifier,
-					mInterpolation, true, mXnfConversionTechnique, mSimplificationTechnique, run.getStateSequence());
+			tc = new InterpolatingTraceCheckCraig(precondition, postcondition, pendingContexts, run.getWord(),
+					mCsToolkit, AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, true, mPredicateFactory,
+					mPredicateUnifier, mInterpolation, true, mXnfConversionTechnique, mSimplificationTechnique,
+					run.getStateSequence());
 			break;
 		case ForwardPredicates:
 		case BackwardPredicates:
 		case FPandBP:
 		case FPandBPonlyIfFpWasNotPerfect:
-			tc = new TraceCheckerSpWp(precondition, postcondition, pendingContexts, run.getWord(), mCsToolkit,
+			tc = new TraceCheckSpWp(precondition, postcondition, pendingContexts, run.getWord(), mCsToolkit,
 					AssertCodeBlockOrder.NOT_INCREMENTALLY, UnsatCores.CONJUNCT_LEVEL, true, mServices, true,
-					mPredicateFactory, mPredicateUnifier, mInterpolation, mCsToolkit.getManagedScript(), mXnfConversionTechnique,
-					mSimplificationTechnique, run.getStateSequence());
+					mPredicateFactory, mPredicateUnifier, mInterpolation, mCsToolkit.getManagedScript(),
+					mXnfConversionTechnique, mSimplificationTechnique, run.getStateSequence());
 
 			break;
 		case PathInvariants:
 		default:
 			throw new UnsupportedOperationException("unsupported interpolation");
 		}
-		mBenchmarkGenerator.addTraceCheckerData(tc.getTraceCheckerBenchmark());
+		mBenchmarkGenerator.addTraceCheckData(tc.getTraceCheckBenchmark());
 		if (tc.getToolchainCanceledExpection() != null) {
 			throw tc.getToolchainCanceledExpection();
 		}
@@ -367,8 +367,8 @@ public class TotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransition<?
 		final SortedMap<Integer, IPredicate> result = new TreeMap<>();
 		for (final int pendingReturnPos : run.getWord().getPendingReturns().keySet()) {
 			final IPredicate linPred = run.getStateAtPosition(pendingReturnPos);
-			final Iterable<IPredicate> hierPreds =
-					NestedWordAutomataUtils.hierarchicalPredecessorsOutgoing(linPred, run.getSymbol(pendingReturnPos), mAbstraction);
+			final Iterable<IPredicate> hierPreds = NestedWordAutomataUtils.hierarchicalPredecessorsOutgoing(linPred,
+					run.getSymbol(pendingReturnPos), mAbstraction);
 			final IPredicate hierPred = getSomeAnnotatedState(hierPreds);
 			if (hierPred == null) {
 				throw new AssertionError("found nothing");
@@ -387,7 +387,7 @@ public class TotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransition<?
 		return null;
 	}
 
-	private void addTransitions(final ArrayList<IPredicate> stateSequence, final InterpolatingTraceChecker tc) {
+	private void addTransitions(final ArrayList<IPredicate> stateSequence, final InterpolatingTraceCheck tc) {
 		final TracePredicates ipp = new TracePredicates(tc);
 		final NestedWord<? extends IAction> nw = NestedWord.nestedWord(tc.getTrace());
 		for (int i = 0; i < nw.length(); i++) {
@@ -611,7 +611,7 @@ public class TotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransition<?
 		public final static String s_RunSearches = "RunSearches";
 		public final static String s_UsefullRunGeq2 = "UsefullRunGeq2";
 		public final static String s_UselessRunGeq2 = "UselessRunGeq2";
-		public final static String s_TraceCheckerBenchmarks = "TraceCheckerBenchmarks";
+		public final static String s_TraceCheckBenchmarks = "traceCheckBenchmarks";
 		public final static String s_EdgeCheckerBenchmarks = "EdgeCheckerBenchmarks";
 
 		public static TotalInterpolationBenchmarkType getInstance() {
@@ -621,7 +621,7 @@ public class TotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransition<?
 		@Override
 		public Collection<String> getKeys() {
 			return Arrays.asList(new String[] { s_AdditionalInterpolants, s_PathLenght1, s_RunSearches,
-					s_UsefullRunGeq2, s_UselessRunGeq2, s_TraceCheckerBenchmarks, s_EdgeCheckerBenchmarks });
+					s_UsefullRunGeq2, s_UselessRunGeq2, s_TraceCheckBenchmarks, s_EdgeCheckerBenchmarks });
 		}
 
 		@Override
@@ -633,7 +633,7 @@ public class TotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransition<?
 			case s_UsefullRunGeq2:
 			case s_UselessRunGeq2:
 				return (int) value1 + (int) value2;
-			case s_TraceCheckerBenchmarks:
+			case s_TraceCheckBenchmarks:
 			case s_EdgeCheckerBenchmarks:
 				final StatisticsData bmData1 = (StatisticsData) value1;
 				final StatisticsData bmData2 = (StatisticsData) value2;
@@ -657,9 +657,9 @@ public class TotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransition<?
 				sb.append("  ");
 			}
 
-			sb.append(s_TraceCheckerBenchmarks);
+			sb.append(s_TraceCheckBenchmarks);
 			sb.append(": ");
-			final StatisticsData ecData = (StatisticsData) benchmarkData.getValue(s_TraceCheckerBenchmarks);
+			final StatisticsData ecData = (StatisticsData) benchmarkData.getValue(s_TraceCheckBenchmarks);
 			sb.append(ecData);
 			sb.append("  ");
 
@@ -711,7 +711,7 @@ public class TotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransition<?
 			mEcData.aggregateBenchmarkData(ecbd);
 		}
 
-		public void addTraceCheckerData(final IStatisticsDataProvider tcbd) {
+		public void addTraceCheckData(final IStatisticsDataProvider tcbd) {
 			mTcData.aggregateBenchmarkData(tcbd);
 		}
 
@@ -728,7 +728,7 @@ public class TotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransition<?
 				return mUsefullRunGeq2;
 			case TotalInterpolationBenchmarkType.s_UselessRunGeq2:
 				return mUselessRunGeq2;
-			case TotalInterpolationBenchmarkType.s_TraceCheckerBenchmarks:
+			case TotalInterpolationBenchmarkType.s_TraceCheckBenchmarks:
 				return mTcData;
 			case TotalInterpolationBenchmarkType.s_EdgeCheckerBenchmarks:
 				return mEcData;

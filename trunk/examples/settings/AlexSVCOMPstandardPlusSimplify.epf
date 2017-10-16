@@ -53,9 +53,9 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Size\ of\ a\ code\ block=SingleStatement
 #Tue Nov 05 17:28:40 CET 2013
 file_export_version=3.0
-\!/instance/UltimateCore=
-/instance/UltimateCore/Show\ usable\ parsers=false
-@UltimateCore=0.0.1
+\!/instance/de.uni_freiburg.informatik.ultimate.core=
+/instance/de.uni_freiburg.informatik.ultimate.core/Show\ usable\ parsers=false
+@de.uni_freiburg.informatik.ultimate.core=0.0.1
 #Tue Nov 05 17:28:40 CET 2013
 file_export_version=3.0
 \!/instance/UltimateGui=

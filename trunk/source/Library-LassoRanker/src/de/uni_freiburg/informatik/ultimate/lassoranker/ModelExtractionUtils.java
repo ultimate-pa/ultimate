@@ -181,7 +181,7 @@ public class ModelExtractionUtils {
 		for (int i = 0; i < variables.size(); ++i) {
 			final Term var = variables.get(i);
 			script.push(1);
-			script.assertTerm(script.term("=", var, script.numeral(BigInteger.ZERO)));
+			script.assertTerm(script.term("=", var, SmtUtils.constructIntValue(script, BigInteger.ZERO)));
 			LBool sat = script.checkSat();
 			++checkSat_calls;
 			if (sat != LBool.SAT) {

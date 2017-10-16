@@ -1,0 +1,32 @@
+(set-option :produce-proofs true)
+(set-option :proof-check-mode true)
+(set-option :model-check-mode true)
+(set-option :print-terms-cse false)
+
+(set-logic QF_UFLIRA)
+(declare-fun a () Real)
+(declare-fun b () Real)
+(declare-fun c () Real)
+(declare-fun d () Real)
+(declare-fun i () Int)
+(declare-fun j () Int)
+(declare-fun k () Int)
+(declare-fun l () Int)
+
+(push 1)
+(assert (< a b))
+(assert (> c d))
+(assert (or (<= b a) (>= d c)))
+(check-sat)
+(get-proof)
+(pop 1)
+
+(push 1)
+(assert (< i j))
+(assert (> k l))
+(assert (or (<= j i) (>= l k)))
+(check-sat)
+(get-proof)
+(pop 1)
+
+

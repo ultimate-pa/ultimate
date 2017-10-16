@@ -30,30 +30,26 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optnc
 
 import java.util.Iterator;
 
-/**
- * @author Yong Li (liyong@ios.ac.cn)
- * */
-
 public class PowerSet implements Iterator<IntSet> {
 	
-	private Iterator<IntSet> iterator;
+	private Iterator<IntSet> mIterator;
 	public PowerSet(IntSet set) {
 		if(set.isEmpty()) {
-			iterator = new PowerSetEmpty();
+			mIterator = new PowerSetEmpty();
 		}else {
-			iterator = new PowerSetPositive(set);
+			mIterator = new PowerSetPositive(set);
 		}
 	}
 
 	@Override
 	public boolean hasNext() {
-		return iterator.hasNext();
+		return mIterator.hasNext();
 	}
 
 	@Override
 	public IntSet next() {
 		assert hasNext();
-		return iterator.next();
+		return mIterator.next();
 	}
 	
 	
@@ -70,7 +66,7 @@ public class PowerSet implements Iterator<IntSet> {
 		while(ps.hasNext()) {
 			IntSet subset = ps.next();
 			i ++;
-			System.out.println(" " + subset);
+			System.out.println(" " + subset + ", hashCode=" + subset.hashCode());
 		}
 		System.out.println("number "+ i);
 		
@@ -82,7 +78,7 @@ public class PowerSet implements Iterator<IntSet> {
 		while(ps.hasNext()) {
 			IntSet subset = ps.next();
 			i ++;
-			System.out.println(" " + subset);
+			System.out.println(" " + subset + ", hashCode=" + subset.hashCode());
 		}
 		System.out.println("number "+ i);
 	}

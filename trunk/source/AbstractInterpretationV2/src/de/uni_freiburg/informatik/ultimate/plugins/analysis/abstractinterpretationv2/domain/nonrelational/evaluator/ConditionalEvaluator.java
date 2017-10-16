@@ -33,6 +33,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValueFactory;
@@ -51,16 +52,16 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @param <STATE>
  *            The type of states of the abstract domain.
  */
-public class ConditionalEvaluator<VALUE extends INonrelationalValue<VALUE>, STATE extends NonrelationalState<STATE, VALUE, VARDECL>, VARDECL>
-		implements IEvaluator<VALUE, STATE, VARDECL> {
-	
-	private final Set<VARDECL> mVariables;
+public class ConditionalEvaluator<VALUE extends INonrelationalValue<VALUE>, STATE extends NonrelationalState<STATE, VALUE>>
+		implements IEvaluator<VALUE, STATE> {
+
+	private final Set<IProgramVarOrConst> mVariables;
 	private final INonrelationalValueFactory<VALUE> mNonrelationalValueFactory;
 
-	private IEvaluator<VALUE, STATE, VARDECL> mConditionEvaluator;
-	private IEvaluator<VALUE, STATE, VARDECL> mNegatedConditionEvaluator;
-	private IEvaluator<VALUE, STATE, VARDECL> mIfEvaluator;
-	private IEvaluator<VALUE, STATE, VARDECL> mElseEvaluator;
+	private IEvaluator<VALUE, STATE> mConditionEvaluator;
+	private IEvaluator<VALUE, STATE> mNegatedConditionEvaluator;
+	private IEvaluator<VALUE, STATE> mIfEvaluator;
+	private IEvaluator<VALUE, STATE> mElseEvaluator;
 
 	public ConditionalEvaluator(final INonrelationalValueFactory<VALUE> nonrelationalValueFactory) {
 		mVariables = new HashSet<>();
@@ -201,7 +202,7 @@ public class ConditionalEvaluator<VALUE extends INonrelationalValue<VALUE>, STAT
 	}
 
 	@Override
-	public void addSubEvaluator(final IEvaluator<VALUE, STATE, VARDECL> evaluator) {
+	public void addSubEvaluator(final IEvaluator<VALUE, STATE> evaluator) {
 		assert evaluator != null;
 		if (mNegatedConditionEvaluator == null) {
 			mNegatedConditionEvaluator = evaluator;
@@ -217,7 +218,7 @@ public class ConditionalEvaluator<VALUE extends INonrelationalValue<VALUE>, STAT
 	}
 
 	@Override
-	public Set<VARDECL> getVarIdentifiers() {
+	public Set<IProgramVarOrConst> getVarIdentifiers() {
 		return mVariables;
 	}
 

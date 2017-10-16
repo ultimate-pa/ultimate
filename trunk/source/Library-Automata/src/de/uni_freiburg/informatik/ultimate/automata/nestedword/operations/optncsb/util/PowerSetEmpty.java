@@ -30,27 +30,23 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optnc
 
 import java.util.Iterator;
 
-/**
- * @author Yong Li (liyong@ios.ac.cn)
- * */
-
 class PowerSetEmpty implements Iterator<IntSet> {
 	
-	private boolean hasNext;
+	private boolean mHasNext;
 	
 	public PowerSetEmpty() {
-		hasNext = true;
+		mHasNext = true;
 	}
 
 	@Override
 	public boolean hasNext() {
-		return hasNext;
+		return mHasNext;
 	}
 
 	@Override
 	public IntSet next() {
 		assert hasNext();
-		hasNext = false;
+		mHasNext = false;
 		return UtilIntSet.newIntSet();
 	}
 

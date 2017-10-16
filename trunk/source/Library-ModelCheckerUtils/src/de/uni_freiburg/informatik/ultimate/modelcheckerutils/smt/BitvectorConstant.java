@@ -39,7 +39,7 @@ public class BitvectorConstant {
 	private final BigInteger mIndex;
 	
 	
-	public BitvectorConstant(BigInteger value, BigInteger index) {
+	public BitvectorConstant(final BigInteger value, final BigInteger index) {
 		super();
 		mValue = computeUnifiedValue(value, index);
 		mIndex = index;
@@ -49,7 +49,7 @@ public class BitvectorConstant {
 	/**
 	 * @return the result of value % 2^index
 	 */
-	private BigInteger computeUnifiedValue(BigInteger value, BigInteger index) {
+	private BigInteger computeUnifiedValue(final BigInteger value, final BigInteger index) {
 		return value.mod(new BigInteger("2").pow(index.intValueExact()));
 	}
 
@@ -71,7 +71,7 @@ public class BitvectorConstant {
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
 		}
@@ -109,70 +109,70 @@ public class BitvectorConstant {
 	
 	
 	
-	public static BitvectorConstant bvadd(BitvectorConstant bv1, BitvectorConstant bv2) {
+	public static BitvectorConstant bvadd(final BitvectorConstant bv1, final BitvectorConstant bv2) {
 		return similarIndexBvOp_BitvectorResult(bv1, bv2, x -> y -> x.add(y));
 	}
 	
-	public static BitvectorConstant bvsub(BitvectorConstant bv1, BitvectorConstant bv2) {
+	public static BitvectorConstant bvsub(final BitvectorConstant bv1, final BitvectorConstant bv2) {
 		return similarIndexBvOp_BitvectorResult(bv1, bv2, x -> y -> x.subtract(y));
 	}
 	
-	public static BitvectorConstant bvmul(BitvectorConstant bv1, BitvectorConstant bv2) {
+	public static BitvectorConstant bvmul(final BitvectorConstant bv1, final BitvectorConstant bv2) {
 		return similarIndexBvOp_BitvectorResult(bv1, bv2, x -> y -> x.multiply(y));
 	}
 	
-	public static BitvectorConstant bvudiv(BitvectorConstant bv1, BitvectorConstant bv2) {
+	public static BitvectorConstant bvudiv(final BitvectorConstant bv1, final BitvectorConstant bv2) {
 		return similarIndexBvOp_BitvectorResult(bv1, bv2, x -> y -> x.divide(y));
 	}
 	
-	public static BitvectorConstant bvurem(BitvectorConstant bv1, BitvectorConstant bv2) {
+	public static BitvectorConstant bvurem(final BitvectorConstant bv1, final BitvectorConstant bv2) {
 		return similarIndexBvOp_BitvectorResult(bv1, bv2, x -> y -> x.remainder(y));
 	}
 	
-	public static BitvectorConstant bvsdiv(BitvectorConstant bv1, BitvectorConstant bv2) {
+	public static BitvectorConstant bvsdiv(final BitvectorConstant bv1, final BitvectorConstant bv2) {
 		return similarIndexBvOp_BitvectorResult(bv1, bv2, x -> y -> toSignedInt(x, bv1.getIndex()).divide(toSignedInt(y, bv2.getIndex())));
 	}
 	
-	public static BitvectorConstant bvsrem(BitvectorConstant bv1, BitvectorConstant bv2) {
+	public static BitvectorConstant bvsrem(final BitvectorConstant bv1, final BitvectorConstant bv2) {
 		return similarIndexBvOp_BitvectorResult(bv1, bv2, x -> y -> toSignedInt(x, bv1.getIndex()).remainder(toSignedInt(y, bv2.getIndex())));
 	}
 	
-	public static BitvectorConstant bvand(BitvectorConstant bv1, BitvectorConstant bv2) {
+	public static BitvectorConstant bvand(final BitvectorConstant bv1, final BitvectorConstant bv2) {
 		return similarIndexBvOp_BitvectorResult(bv1, bv2, x -> y -> x.and(y));
 	}
 	
-	public static BitvectorConstant bvor(BitvectorConstant bv1, BitvectorConstant bv2) {
+	public static BitvectorConstant bvor(final BitvectorConstant bv1, final BitvectorConstant bv2) {
 		return similarIndexBvOp_BitvectorResult(bv1, bv2, x -> y -> x.or(y));
 	}
 	
-	public static BitvectorConstant bvxor(BitvectorConstant bv1, BitvectorConstant bv2) {
+	public static BitvectorConstant bvxor(final BitvectorConstant bv1, final BitvectorConstant bv2) {
 		return similarIndexBvOp_BitvectorResult(bv1, bv2, x -> y -> x.xor(y));
 	}
 	
-	public static BitvectorConstant bvshl(BitvectorConstant bv1, BitvectorConstant bv2) {
+	public static BitvectorConstant bvshl(final BitvectorConstant bv1, final BitvectorConstant bv2) {
 		return similarIndexBvOp_BitvectorResult(bv1, bv2, x -> y -> x.shiftLeft(y.intValueExact()));
 	}
 	
-	public static BitvectorConstant bvlshr(BitvectorConstant bv1, BitvectorConstant bv2) {
+	public static BitvectorConstant bvlshr(final BitvectorConstant bv1, final BitvectorConstant bv2) {
 		return similarIndexBvOp_BitvectorResult(bv1, bv2, x -> y -> x.shiftRight(y.intValueExact()));
 	}
 	
-	public static BitvectorConstant bvashr(BitvectorConstant bv1, BitvectorConstant bv2) {
+	public static BitvectorConstant bvashr(final BitvectorConstant bv1, final BitvectorConstant bv2) {
 		return similarIndexBvOp_BitvectorResult(bv1, bv2, x -> y -> toSignedInt(x, bv1.getIndex()).shiftRight(y.intValueExact()));
 	}
 
 	
-	public static BitvectorConstant bvnot(BitvectorConstant bv) {
+	public static BitvectorConstant bvnot(final BitvectorConstant bv) {
 		return new BitvectorConstant(bv.getValue().not(), bv.getIndex());
 	}
 	
-	public static BitvectorConstant bvneg(BitvectorConstant bv) {
+	public static BitvectorConstant bvneg(final BitvectorConstant bv) {
 		return new BitvectorConstant(toSignedInt(bv.getValue(), bv.getIndex()).negate(), bv.getIndex());
 	}
 
 	
-	public static BitvectorConstant similarIndexBvOp_BitvectorResult(BitvectorConstant bv1, BitvectorConstant bv2, 
-			Function<BigInteger, Function<BigInteger, BigInteger>> fun) {
+	public static BitvectorConstant similarIndexBvOp_BitvectorResult(final BitvectorConstant bv1, final BitvectorConstant bv2, 
+			final Function<BigInteger, Function<BigInteger, BigInteger>> fun) {
 		if (bv1.getIndex().equals(bv2.getIndex())) {
 			return new BitvectorConstant(fun.apply(bv1.getValue()).apply(bv2.getValue()), bv1.getIndex());
 		} else {
@@ -180,8 +180,8 @@ public class BitvectorConstant {
 		}
 	}
 	
-	public static Boolean comparison(BitvectorConstant bv1, BitvectorConstant bv2, 
-			Function<BigInteger, Function<BigInteger, Boolean>> fun) {
+	public static Boolean comparison(final BitvectorConstant bv1, final BitvectorConstant bv2, 
+			final Function<BigInteger, Function<BigInteger, Boolean>> fun) {
 		if (bv1.getIndex().equals(bv2.getIndex())) {
 			return fun.apply(bv1.getValue()).apply(bv2.getValue());
 		} else {
@@ -194,42 +194,42 @@ public class BitvectorConstant {
 //		return new BitvectorConstant(b1.getValue().multiply(new BigInteger("2").pow(effectiveShift)), b1.getIndex());
 //	}
 	
-	public static boolean bvult(BitvectorConstant bv1, BitvectorConstant bv2) {
+	public static boolean bvult(final BitvectorConstant bv1, final BitvectorConstant bv2) {
 		return comparison(bv1, bv2, x -> y -> x.compareTo(y) < 0);
 	}
 	
-	public static boolean bvule(BitvectorConstant bv1, BitvectorConstant bv2) {
+	public static boolean bvule(final BitvectorConstant bv1, final BitvectorConstant bv2) {
 		return comparison(bv1, bv2, x -> y -> x.compareTo(y) <= 0);
 	}
 	
-	public static boolean bvugt(BitvectorConstant bv1, BitvectorConstant bv2) {
+	public static boolean bvugt(final BitvectorConstant bv1, final BitvectorConstant bv2) {
 		return comparison(bv1, bv2, x -> y -> x.compareTo(y) > 0);
 	}
 	
-	public static boolean bvuge(BitvectorConstant bv1, BitvectorConstant bv2) {
+	public static boolean bvuge(final BitvectorConstant bv1, final BitvectorConstant bv2) {
 		return comparison(bv1, bv2, x -> y -> x.compareTo(y) >= 0);
 	}
 	
 	
-	public static boolean bvslt(BitvectorConstant bv1, BitvectorConstant bv2) {
+	public static boolean bvslt(final BitvectorConstant bv1, final BitvectorConstant bv2) {
 		return comparison(bv1, bv2, x -> y -> toSignedInt(x, bv1.getIndex()).compareTo(toSignedInt(y, bv2.getIndex())) < 0);
 	}
 	
-	public static boolean bvsle(BitvectorConstant bv1, BitvectorConstant bv2) {
+	public static boolean bvsle(final BitvectorConstant bv1, final BitvectorConstant bv2) {
 		return comparison(bv1, bv2, x -> y -> toSignedInt(x, bv1.getIndex()).compareTo(toSignedInt(y, bv2.getIndex())) <= 0);
 	}
 	
-	public static boolean bvsgt(BitvectorConstant bv1, BitvectorConstant bv2) {
+	public static boolean bvsgt(final BitvectorConstant bv1, final BitvectorConstant bv2) {
 		return comparison(bv1, bv2, x -> y -> toSignedInt(x, bv1.getIndex()).compareTo(toSignedInt(y, bv2.getIndex())) > 0);
 	}
 	
-	public static boolean bvsge(BitvectorConstant bv1, BitvectorConstant bv2) {
+	public static boolean bvsge(final BitvectorConstant bv1, final BitvectorConstant bv2) {
 		return comparison(bv1, bv2, x -> y -> toSignedInt(x, bv1.getIndex()).compareTo(toSignedInt(y, bv2.getIndex())) >= 0);
 	}
 
 
 
-	public static BitvectorConstant extract(BitvectorConstant bv, int upperIndex, int lowerIndex) {
+	public static BitvectorConstant extract(final BitvectorConstant bv, final int upperIndex, final int lowerIndex) {
 		final String binaryString = bvToBinaryString(bv);
 		final int resultIndex = upperIndex + 1 - lowerIndex;
 		final String extractedBinaryString;
@@ -248,29 +248,21 @@ public class BitvectorConstant {
 		return new BigInteger(extractedBinaryString, 2);
 	}
 
-
-	private static String bvToBinaryString(BitvectorConstant bv) {
-		return bv.getValue().toString(2);
+	private static String bvToBinaryString(final BitvectorConstant bv) {
+		final String number = bv.getValue().toString(2);
+		final String leadingZeros = new String(new char[bv.getIndex().intValueExact() - number.length()]).replace('\0',
+				'0');
+		final String result = leadingZeros + number;
+		assert result.length() == bv.getIndex().intValueExact();
+		return result;
 	}
 	
-	private static String bvToFullBinaryString(BitvectorConstant bv) {
-		final String withoutZeros = bv.getValue().toString(2);
-		final StringBuilder sb = new StringBuilder();
-		final int missingZeros = bv.getIndex().intValueExact() - withoutZeros.length(); 
-		for (int i=0; i<missingZeros; i++) {
-			sb.append("0");
-		}
-		sb.append(withoutZeros);
-		return sb.toString();
-	}
 
-
-
-	public static BitvectorConstant zero_extend(BitvectorConstant bv, BigInteger index) {
+	public static BitvectorConstant zero_extend(final BitvectorConstant bv, final BigInteger index) {
 		return new BitvectorConstant(bv.getValue(), bv.getIndex().add(index));
 	}
 	
-	public static BigInteger toSignedInt(BigInteger bvValue, BigInteger bvIndex) {
+	public static BigInteger toSignedInt(final BigInteger bvValue, final BigInteger bvIndex) {
 		final BigInteger firstNegative = new BigInteger("2").pow(bvIndex.intValueExact() - 1);
 		if (bvValue.compareTo(firstNegative) < 0) {
 			return bvValue;

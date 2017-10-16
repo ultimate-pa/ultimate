@@ -36,20 +36,20 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.taskidentifier.TaskIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarAbsIntRunner;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheck;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
 
 /**
- * {@link IRefinementStrategy} that is used by Taipan. It first tries an {@link InterpolatingTraceChecker} using
+ * {@link IRefinementStrategy} that is used by Taipan. It first tries an {@link InterpolatingTraceCheck} using
  * {@link SMTInterpol} with {@link InterpolationTechnique#Craig_TreeInterpolation}.<br>
  * If successful and the interpolant sequence is perfect, those interpolants are used.<br>
- * If not successful, it tries {@link TraceChecker} {@code Z3} and, if again not successful, {@code CVC4}.<br>
+ * If not successful, it tries {@link TraceCheck} {@code Z3} and, if again not successful, {@code CVC4}.<br>
  * If none of those is successful, the strategy gives up.<br>
  * Otherwise, if the trace is infeasible, the strategy uses an {@link CegarAbsIntRunner} to construct interpolants.<br>
  * If not successful, the strategy again tries {@code Z3} and {@code CVC4}, but this time using interpolation
@@ -69,9 +69,9 @@ public class LazyTaipanRefinementStrategy<LETTER extends IIcfgTransition<?>>
 			final CegarAbsIntRunner<LETTER> absIntRunner,
 			final AssertionOrderModulation<LETTER> assertionOrderModulation,
 			final IRun<LETTER, IPredicate, ?> counterexample, final IAutomaton<LETTER, IPredicate> abstraction,
-			final int iteration, final CegarLoopStatisticsGenerator cegarLoopBenchmark) {
+			final TaskIdentifier taskIdentifier) {
 		super(logger, services, prefs, cfgSmtToolkit, predicateFactory, predicateUnifier, absIntRunner,
-				assertionOrderModulation, counterexample, abstraction, iteration, cegarLoopBenchmark);
+				assertionOrderModulation, counterexample, abstraction, taskIdentifier);
 	}
 
 	@Override
@@ -80,7 +80,7 @@ public class LazyTaipanRefinementStrategy<LETTER extends IIcfgTransition<?>>
 	}
 
 	@Override
-	protected Mode getNextTraceCheckerMode() {
+	protected Mode getNextTraceCheckMode() {
 		switch (getCurrentMode()) {
 		case ABSTRACT_INTERPRETATION:
 			return Mode.SMTINTERPOL;
@@ -92,7 +92,7 @@ public class LazyTaipanRefinementStrategy<LETTER extends IIcfgTransition<?>>
 		case CVC4_NO_IG:
 		case Z3_IG:
 		case CVC4_IG:
-			assert !hasNextTraceChecker();
+			assert !hasNextTraceCheck();
 			throw new NoSuchElementException("No next trace checker available.");
 		default:
 			throw new IllegalArgumentException(UNKNOWN_MODE + getCurrentMode());
@@ -120,7 +120,7 @@ public class LazyTaipanRefinementStrategy<LETTER extends IIcfgTransition<?>>
 		default:
 			throw new IllegalArgumentException(UNKNOWN_MODE + getCurrentMode());
 		}
-		resetTraceChecker();
+		resetTraceCheck();
 		return nextMode;
 	}
 
@@ -157,7 +157,7 @@ public class LazyTaipanRefinementStrategy<LETTER extends IIcfgTransition<?>>
 	}
 
 	@Override
-	public boolean hasNextTraceChecker() {
+	public boolean hasNextTraceCheck() {
 		switch (getCurrentMode()) {
 		case SMTINTERPOL:
 		case Z3_NO_IG:

@@ -31,10 +31,10 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractStateBinaryOperator;
 
-public class CongruenceMergeOperator<VARDECL> implements IAbstractStateBinaryOperator<CongruenceDomainState<VARDECL>> {
+public class CongruenceMergeOperator<VARDECL> implements IAbstractStateBinaryOperator<CongruenceDomainState> {
 	@Override
-	public CongruenceDomainState<VARDECL> apply(final CongruenceDomainState<VARDECL> first,
-			final CongruenceDomainState<VARDECL> second) {
+	public CongruenceDomainState apply(final CongruenceDomainState first,
+			final CongruenceDomainState second) {
 		assert first != null;
 		assert second != null;
 

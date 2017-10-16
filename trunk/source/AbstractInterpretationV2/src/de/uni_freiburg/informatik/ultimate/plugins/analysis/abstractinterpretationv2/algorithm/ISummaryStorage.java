@@ -34,9 +34,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractSta
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public interface ISummaryStorage<STATE extends IAbstractState<STATE, VARDECL>, ACTION, VARDECL, LOCATION> {
-	
-	DisjunctiveAbstractState<STATE, VARDECL> getSummaryPostState(final ACTION summaryAction,
-			final DisjunctiveAbstractState<STATE, VARDECL> preCallState);
+public interface ISummaryStorage<STATE extends IAbstractState<STATE>, ACTION, LOCATION> {
+
+	DisjunctiveAbstractState<STATE> getSummaryPostState(final ACTION summaryAction,
+			final DisjunctiveAbstractState<STATE> preCallState);
 
 }

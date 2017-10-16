@@ -83,7 +83,7 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 	protected void getInitialAbstraction() throws AutomataLibraryException {
 		final TaConcurContentFactory contentFactory = new TaConcurContentFactory(this, super.mCsToolkit,
 				mPredicateFactory, super.mPref.computeHoareAnnotation(), mPref.computeHoareAnnotation(), false);
-		final Cfg2NetJulian<LETTER> cFG2Automaton = new Cfg2NetJulian<>(mIcfgContainer, contentFactory, mCsToolkit,
+		final Cfg2NetJulian<LETTER> cFG2Automaton = new Cfg2NetJulian<>(mIcfg, contentFactory, mCsToolkit,
 				mPredicateFactory, mServices, mXnfConversionTechnique, mSimplificationTechnique);
 		mAbstraction = cFG2Automaton.getResult();
 

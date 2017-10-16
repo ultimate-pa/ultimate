@@ -38,7 +38,7 @@ import java.util.List;
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public interface IAbstractTransformer<STATE extends IAbstractState<STATE, VARDECL>, ACTION, VARDECL> {
+public interface IAbstractTransformer<STATE extends IAbstractState<STATE>, ACTION> {
 
 	/**
 	 * Compute the abstract post for an old STATE (that extends {@link IAbstractState}) and a given ACTION (transition).

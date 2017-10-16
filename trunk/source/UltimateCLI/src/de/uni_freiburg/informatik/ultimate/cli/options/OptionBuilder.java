@@ -166,7 +166,7 @@ public class OptionBuilder {
 		final Options op = new Options();
 
 		// add CLI controller options
-		for (final Option option : CommandLineOptions.createFinalCLIOptions(requireToolchain, requireInputFiles)) {
+		for (final Option option : CommandLineOptions.createCliControllerOptions(requireToolchain, requireInputFiles)) {
 			op.addOption(option);
 		}
 

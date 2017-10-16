@@ -34,20 +34,21 @@ import java.util.List;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValueFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorUtils.EvaluatorType;
 
-public class FunctionEvaluator<VALUE extends INonrelationalValue<VALUE>, STATE extends IAbstractState<STATE, VARDECL>, VARDECL>
-		implements IFunctionEvaluator<VALUE, STATE, VARDECL> {
+public class FunctionEvaluator<VALUE extends INonrelationalValue<VALUE>, STATE extends IAbstractState<STATE>>
+		implements IFunctionEvaluator<VALUE, STATE> {
 
 	private final String mName;
 	private final int mInParamCount;
 	private final INonrelationalValueFactory<VALUE> mNonrelationalValueFactory;
 
-	private final List<IEvaluator<VALUE, STATE, VARDECL>> mInputParamEvaluators;
+	private final List<IEvaluator<VALUE, STATE>> mInputParamEvaluators;
 	private final EvaluatorType mType;
 
 	public FunctionEvaluator(final String name, final int numInParams,
@@ -74,14 +75,13 @@ public class FunctionEvaluator<VALUE extends INonrelationalValue<VALUE>, STATE e
 	@Override
 	public List<STATE> inverseEvaluate(final IEvaluationResult<VALUE> computedValue, final STATE currentState) {
 		assert currentState != null;
-
 		final List<STATE> returnList = new ArrayList<>();
 		returnList.add(currentState);
 		return returnList;
 	}
 
 	@Override
-	public void addSubEvaluator(final IEvaluator<VALUE, STATE, VARDECL> evaluator) {
+	public void addSubEvaluator(final IEvaluator<VALUE, STATE> evaluator) {
 		if (mInputParamEvaluators.size() < mInParamCount) {
 			mInputParamEvaluators.add(evaluator);
 		} else {
@@ -90,7 +90,7 @@ public class FunctionEvaluator<VALUE extends INonrelationalValue<VALUE>, STATE e
 	}
 
 	@Override
-	public Set<VARDECL> getVarIdentifiers() {
+	public Set<IProgramVarOrConst> getVarIdentifiers() {
 		return new HashSet<>();
 	}
 

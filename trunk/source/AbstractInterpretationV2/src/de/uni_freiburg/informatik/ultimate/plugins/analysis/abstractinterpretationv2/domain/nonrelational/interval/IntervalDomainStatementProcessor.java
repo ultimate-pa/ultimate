@@ -31,8 +31,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieSymbolTableVariableProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalStatementProcessor;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluatorFactory;
@@ -45,22 +44,22 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  *
  */
 public class IntervalDomainStatementProcessor
-		extends NonrelationalStatementProcessor<IntervalDomainState<IBoogieVar>, IntervalDomainValue> {
-	
+		extends NonrelationalStatementProcessor<IntervalDomainState, IntervalDomainValue> {
+
 	protected IntervalDomainStatementProcessor(final ILogger logger, final BoogieSymbolTable boogieSymbolTable,
-			final Boogie2SmtSymbolTable bpl2SmtTable, final int maxParallelStates) {
-		super(logger, boogieSymbolTable, bpl2SmtTable, maxParallelStates);
+			final IBoogieSymbolTableVariableProvider bpl2SmtSymbolTable, final int maxParallelStates) {
+		super(logger, boogieSymbolTable, bpl2SmtSymbolTable, maxParallelStates);
 	}
-	
+
 	@Override
-	protected IEvaluatorFactory<IntervalDomainValue, IntervalDomainState<IBoogieVar>, IBoogieVar>
+	protected IEvaluatorFactory<IntervalDomainValue, IntervalDomainState>
 			createEvaluatorFactory(final int maxParallelStates) {
 		final EvaluatorFactory.Function<String, IntervalDomainValue> valueExpressionEvaluatorCreator =
 				(value, type) -> new IntervalDomainValue(new IntervalValue(value), new IntervalValue(value));
 		return new EvaluatorFactory<>(getLogger(), maxParallelStates, new IntervalValueFactory(),
 				valueExpressionEvaluatorCreator);
 	}
-	
+
 	@Override
 	protected Expression normalizeExpression(final Expression expr) {
 		return new ExpressionNormalizer().transform(expr);

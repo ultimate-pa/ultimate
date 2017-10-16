@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage
 public final class ResultService implements IStorable, IResultService {
 
 	private final HashMap<String, List<IResult>> mResults;
-	private static final String sKey = "ResultService";
+	private static final String KEY = "ResultService";
 
 	private ResultService() {
 		mResults = new HashMap<>();
@@ -84,10 +84,10 @@ public final class ResultService implements IStorable, IResultService {
 
 	static IResultService getService(final IToolchainStorage storage) {
 		assert storage != null;
-		IStorable rtr = storage.getStorable(sKey);
+		IStorable rtr = storage.getStorable(KEY);
 		if (rtr == null) {
 			rtr = new ResultService();
-			storage.putStorable(sKey, rtr);
+			storage.putStorable(KEY, rtr);
 		}
 		return (IResultService) rtr;
 	}

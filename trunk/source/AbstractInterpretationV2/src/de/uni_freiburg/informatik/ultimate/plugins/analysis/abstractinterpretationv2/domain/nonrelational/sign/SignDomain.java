@@ -34,12 +34,10 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractStateBinaryOperator;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieSymbolTableVariableProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
 
 /**
  * This abstract domain keeps track of the sign of each variable during abstract interpretation. Variables can either be
@@ -48,40 +46,40 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public class SignDomain implements IAbstractDomain<SignDomainState<IBoogieVar>, IcfgEdge, IBoogieVar> {
+public class SignDomain implements IAbstractDomain<SignDomainState, IcfgEdge> {
 
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 
-	private IAbstractPostOperator<SignDomainState<IBoogieVar>, IcfgEdge, IBoogieVar> mPostOperator;
+	private IAbstractPostOperator<SignDomainState, IcfgEdge> mPostOperator;
 	private final BoogieSymbolTable mSymbolTable;
-	private final Boogie2SmtSymbolTable mIcfgSymbolTable;
+	private final IBoogieSymbolTableVariableProvider mIcfgSymbolTable;
 
-	public SignDomain(final IUltimateServiceProvider services, final IIcfg<?> icfg,
-			final BoogieSymbolTable symbolTable) {
+	public SignDomain(final IUltimateServiceProvider services, final IIcfg<?> icfg, final BoogieSymbolTable symbolTable,
+			final IBoogieSymbolTableVariableProvider variableProvider) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mSymbolTable = symbolTable;
-		mIcfgSymbolTable = (Boogie2SmtSymbolTable) AbsIntUtil.getBoogieIcfgContainer(icfg).getSymboltable();
+		mIcfgSymbolTable = variableProvider;
 	}
 
 	@Override
-	public SignDomainState<IBoogieVar> createTopState() {
-		return new SignDomainState<>(mLogger, false);
+	public SignDomainState createTopState() {
+		return new SignDomainState(mLogger, false);
 	}
 
 	@Override
-	public SignDomainState<IBoogieVar> createBottomState() {
-		return new SignDomainState<>(mLogger, true);
+	public SignDomainState createBottomState() {
+		return new SignDomainState(mLogger, true);
 	}
 
 	@Override
-	public IAbstractStateBinaryOperator<SignDomainState<IBoogieVar>> getWideningOperator() {
-		return new SignMergeOperator<>();
+	public IAbstractStateBinaryOperator<SignDomainState> getWideningOperator() {
+		return new SignMergeOperator();
 	}
 
 	@Override
-	public IAbstractPostOperator<SignDomainState<IBoogieVar>, IcfgEdge, IBoogieVar> getPostOperator() {
+	public IAbstractPostOperator<SignDomainState, IcfgEdge> getPostOperator() {
 		if (mPostOperator == null) {
 			final int maxParallelStates = 2;
 			final SignDomainStatementProcessor stmtProcessor =

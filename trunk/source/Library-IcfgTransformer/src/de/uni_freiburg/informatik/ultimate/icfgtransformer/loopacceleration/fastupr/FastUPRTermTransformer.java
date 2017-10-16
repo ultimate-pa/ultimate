@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 
 public class FastUPRTermTransformer extends NonRecursive {
 
@@ -52,7 +53,7 @@ public class FastUPRTermTransformer extends NonRecursive {
 	 * @param script
 	 *            The {@link Script} to use for {@link Term} transformation.
 	 */
-	public FastUPRTermTransformer(Script script) {
+	public FastUPRTermTransformer(final Script script) {
 		mScript = script;
 	}
 
@@ -60,29 +61,29 @@ public class FastUPRTermTransformer extends NonRecursive {
 
 		private final Term mTerm;
 
-		RealToIntWalker(Term term) {
+		RealToIntWalker(final Term term) {
 			mTerm = term;
 		}
 
 		@Override
-		public void walk(NonRecursive engine) {
+		public void walk(final NonRecursive engine) {
 			((FastUPRTermTransformer) engine).realToIntWalk(mTerm);
 		}
 
 	}
 
 	@Deprecated
-	public Term transformToIntConstants(Term term) {
+	public Term transformToIntConstants(final Term term) {
 		run(new RealToIntWalker(term));
 		return mCurrentTerm;
 	}
 
 	@Deprecated
-	private void realToIntWalk(Term term) {
+	private void realToIntWalk(final Term term) {
 		if (term instanceof ConstantTerm) {
 			final Object value = ((ConstantTerm) term).getValue();
 			if (value instanceof BigDecimal) {
-				mCurrentTerm = mScript.numeral(((BigDecimal) value).toBigInteger());
+				mCurrentTerm = SmtUtils.constructIntValue(mScript, ((BigDecimal) value).toBigInteger());
 			} else if (value instanceof BigInteger) {
 				mCurrentTerm = term;
 			} else {
@@ -133,7 +134,7 @@ public class FastUPRTermTransformer extends NonRecursive {
 	 *            The term to be transformed.
 	 * @return The transformed term.
 	 */
-	public Term transformToInt(Term term) {
+	public Term transformToInt(final Term term) {
 		if (term instanceof ConstantTerm) {
 			final Object value = ((ConstantTerm) term).getValue();
 			if (value instanceof Rational) {
@@ -145,9 +146,9 @@ public class FastUPRTermTransformer extends NonRecursive {
 				} else {
 					throw new AssertionError("Can't Handle Reals.");
 				}
-				mCurrentTerm = mScript.numeral(intValue);
+				mCurrentTerm = SmtUtils.constructIntValue(mScript, intValue);
 			} else if (value instanceof BigDecimal) {
-				mCurrentTerm = mScript.numeral(((BigDecimal) value).toBigIntegerExact());
+				mCurrentTerm = SmtUtils.constructIntValue(mScript, ((BigDecimal) value).toBigIntegerExact());
 			} else if (value instanceof BigInteger) {
 				mCurrentTerm = term;
 			} else {
@@ -197,7 +198,7 @@ public class FastUPRTermTransformer extends NonRecursive {
 	 *            The replacement variable.
 	 * @return The transformed term.
 	 */
-	public Term replaceVar(Term term, TermVariable toReplace, TermVariable replaceWith) {
+	public Term replaceVar(final Term term, final TermVariable toReplace, final TermVariable replaceWith) {
 		if (term instanceof ConstantTerm) {
 			mCurrentTerm = term;
 		} else if (term instanceof ApplicationTerm) {
@@ -244,7 +245,7 @@ public class FastUPRTermTransformer extends NonRecursive {
 	 *            The term to be transformed.
 	 * @return The transformed Term.
 	 */
-	public Term toExistential(Term term) {
+	public Term toExistential(final Term term) {
 		if (!(term instanceof QuantifiedFormula)) {
 			return term;
 		}

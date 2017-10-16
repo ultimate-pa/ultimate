@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.congruence;
 
 import java.math.BigInteger;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.function.Function;
@@ -13,6 +14,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
+import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.typeutils.TypeUtils;
@@ -175,8 +177,22 @@ public final class ExpressionTransformer {
 					new UnaryExpression(loc, BoogieType.TYPE_BOOL, UnaryExpression.Operator.LOGICNEG, expr.getRight());
 			newRight = transform(new BinaryExpression(loc, BoogieType.TYPE_BOOL, Operator.LOGICAND, negLeft, negRight));
 			break;
-		case COMPEQ:
 		case COMPNEQ:
+			// expr1 != expr2 ---> expr1 == !expr2
+			if (isPrimitive(expr)) {
+				final PrimitiveType prim = (PrimitiveType) expr.getType();
+				final PrimitiveType leftPrim = (PrimitiveType) expr.getLeft().getType();
+				final PrimitiveType rightPrim = (PrimitiveType) expr.getRight().getType();
+				if (isOfType(PrimitiveType.BOOL, prim, leftPrim, rightPrim)) {
+					final UnaryExpression negatedRight = new UnaryExpression(expr.getLoc(), BoogieType.TYPE_BOOL,
+							de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression.Operator.LOGICNEG,
+							expr.getRight());
+					return new BinaryExpression(expr.getLoc(), BoogieType.TYPE_BOOL, Operator.COMPEQ, expr.getLeft(),
+							negatedRight);
+				}
+			}
+			// If no transformation is possible, fall back to old behavior
+		case COMPEQ:
 			final Function<IBoogieType, Triple<Expression, Expression, Boolean>> boolFunction = type -> {
 				final Expression ll = transform(expr.getLeft());
 				final Expression rr = transform(expr.getRight());
@@ -205,6 +221,18 @@ public final class ExpressionTransformer {
 			return expr;
 		}
 		return new BinaryExpression(loc, BoogieType.TYPE_BOOL, newOp, newLeft, newRight);
+	}
+
+	private static boolean isOfType(final int typecode, final PrimitiveType... primitiveTypes) {
+		if (primitiveTypes == null || primitiveTypes.length == 0) {
+			return false;
+		}
+		return Arrays.stream(primitiveTypes).allMatch(type -> type.getTypeCode() == typecode);
+	}
+
+	private static boolean isPrimitive(final BinaryExpression expr) {
+		return expr.getType() instanceof PrimitiveType && expr.getLeft().getType() instanceof PrimitiveType
+				&& expr.getRight().getType() instanceof PrimitiveType;
 	}
 
 	/**

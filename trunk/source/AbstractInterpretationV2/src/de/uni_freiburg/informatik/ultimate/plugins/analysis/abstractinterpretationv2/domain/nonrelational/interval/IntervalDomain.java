@@ -37,15 +37,12 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractStateBinaryOperator;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieSymbolTableVariableProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.generic.LiteralCollection;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 
 /**
@@ -56,7 +53,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Boo
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public class IntervalDomain implements IAbstractDomain<IntervalDomainState<IBoogieVar>, IcfgEdge, IBoogieVar> {
+public class IntervalDomain implements IAbstractDomain<IntervalDomainState, IcfgEdge> {
 
 	private final ILogger mLogger;
 	private final LiteralCollection mLiteralCollection;
@@ -64,41 +61,44 @@ public class IntervalDomain implements IAbstractDomain<IntervalDomainState<IBoog
 	private final BoogieIcfgContainer mRootAnnotation;
 	private final BoogieSymbolTable mSymbolTable;
 
-	private IAbstractStateBinaryOperator<IntervalDomainState<IBoogieVar>> mWideningOperator;
-	private IAbstractPostOperator<IntervalDomainState<IBoogieVar>, IcfgEdge, IBoogieVar> mPostOperator;
+	private IAbstractStateBinaryOperator<IntervalDomainState> mWideningOperator;
+	private IAbstractPostOperator<IntervalDomainState, IcfgEdge> mPostOperator;
 	private final CfgSmtToolkit mCfgSmtToolkit;
+	private final IBoogieSymbolTableVariableProvider mBpl2SmtSymbolTable;
 
 	public IntervalDomain(final ILogger logger, final BoogieSymbolTable symbolTable,
-			final LiteralCollection literalCollector, final IUltimateServiceProvider services, final IIcfg<?> icfg) {
+			final LiteralCollection literalCollector, final IUltimateServiceProvider services,
+			final BoogieIcfgContainer icfg, final IBoogieSymbolTableVariableProvider variableProvider) {
 		mLogger = logger;
 		mLiteralCollection = literalCollector;
 		mServices = services;
 		mCfgSmtToolkit = icfg.getCfgSmtToolkit();
-		mRootAnnotation = AbsIntUtil.getBoogieIcfgContainer(icfg);
+		mRootAnnotation = icfg;
 		mSymbolTable = symbolTable;
+		mBpl2SmtSymbolTable = variableProvider;
 	}
 
 	@Override
-	public IntervalDomainState<IBoogieVar> createTopState() {
-		return new IntervalDomainState<>(mLogger, false);
+	public IntervalDomainState createTopState() {
+		return new IntervalDomainState(mLogger, false);
 	}
 
 	@Override
-	public IntervalDomainState<IBoogieVar> createBottomState() {
-		return new IntervalDomainState<>(mLogger, true);
+	public IntervalDomainState createBottomState() {
+		return new IntervalDomainState(mLogger, true);
 	}
 
 	@Override
-	public IAbstractStateBinaryOperator<IntervalDomainState<IBoogieVar>> getWideningOperator() {
+	public IAbstractStateBinaryOperator<IntervalDomainState> getWideningOperator() {
 		if (mWideningOperator == null) {
 			final IPreferenceProvider ups = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 			final String wideningOperator = ups.getString(IntervalDomainPreferences.LABEL_INTERVAL_WIDENING_OPERATOR);
 
 			if (wideningOperator.equals(IntervalDomainPreferences.VALUE_WIDENING_OPERATOR_SIMPLE)) {
-				mWideningOperator = new IntervalSimpleWideningOperator<>();
+				mWideningOperator = new IntervalSimpleWideningOperator();
 			} else if (wideningOperator.equals(IntervalDomainPreferences.VALUE_WIDENING_OPERATOR_LITERALS)) {
-				final IAbstractStateBinaryOperator<IntervalDomainState<IBoogieVar>> rtr =
-						new IntervalLiteralWideningOperator<>(mLiteralCollection);
+				final IAbstractStateBinaryOperator<IntervalDomainState> rtr =
+						new IntervalLiteralWideningOperator(mLiteralCollection);
 				if (mLogger.isDebugEnabled()) {
 					mLogger.debug("Using the following literals during widening: " + mLiteralCollection);
 				}
@@ -113,12 +113,11 @@ public class IntervalDomain implements IAbstractDomain<IntervalDomainState<IBoog
 	}
 
 	@Override
-	public IAbstractPostOperator<IntervalDomainState<IBoogieVar>, IcfgEdge, IBoogieVar> getPostOperator() {
+	public IAbstractPostOperator<IntervalDomainState, IcfgEdge> getPostOperator() {
 		if (mPostOperator == null) {
-			final Boogie2SmtSymbolTable bpl2SmtSymbolTable = mRootAnnotation.getBoogie2SMT().getBoogie2SmtSymbolTable();
 			final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 			final int maxParallelStates = prefs.getInt(AbsIntPrefInitializer.LABEL_MAX_PARALLEL_STATES);
-			mPostOperator = new IntervalPostOperator(mLogger, mSymbolTable, bpl2SmtSymbolTable, maxParallelStates,
+			mPostOperator = new IntervalPostOperator(mLogger, mSymbolTable, mBpl2SmtSymbolTable, maxParallelStates,
 					mRootAnnotation.getBoogie2SMT(), mCfgSmtToolkit);
 		}
 		return mPostOperator;

@@ -161,6 +161,11 @@ public class BuchiCegarLoopBenchmark extends CegarStatisticsType implements ISta
 		sb.append(overallIterations);
 		sb.append(" iterations. ");
 		
+		sb.append(" TraceHistogramMax:");
+		final Integer trMax = (Integer) benchmarkData.getValue(CegarLoopStatisticsDefinitions.TraceHistogramMax.toString());
+		sb.append(trMax);
+		sb.append(". ");
+		
 		final Long laTime = (Long) benchmarkData.getValue(s_LassoAnalysisTime);
 		sb.append("Analysis of lassos took ");
 		sb.append(prettyprintNanoseconds(laTime));

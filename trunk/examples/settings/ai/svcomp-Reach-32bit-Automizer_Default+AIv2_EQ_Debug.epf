@@ -44,18 +44,18 @@ file_export_version=3.0
 file_export_version=3.0
 @de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2=0.0.1
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2=
-/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2/Abstract\ domain=VPDomain
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2/Abstract\ domain\ for\ RCFG-of-the-future=VPDomain
 /instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2/Use\ the\ RCFG-of-the-future\ interface=true
 
 #Fri Jun 05 02:20:55 CEST 2015
 file_export_version=3.0
-/instance/UltimateCore/Root\ log\ level=INFO
-/instance/UltimateCore/Log\ level\ for\ plugins=info
-/instance/UltimateCore/Write\ witness\ as\ "witness.graphml"\ to\ working\ directory=true
-\!/instance/UltimateCore=
-@UltimateCore=0.0.1
-/instance/UltimateCore/Generate\ witness\ from\ each\ counter\ example\ result=true
-/instance/UltimateCore/ultimate.logging.details=de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2\=DEBUG;de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction\=DEBUG;
+/instance/de.uni_freiburg.informatik.ultimate.core/Root\ log\ level=INFO
+/instance/de.uni_freiburg.informatik.ultimate.core/Log\ level\ for\ plugins=info
+/instance/de.uni_freiburg.informatik.ultimate.core/Write\ witness\ as\ "witness.graphml"\ to\ working\ directory=true
+\!/instance/de.uni_freiburg.informatik.ultimate.core=
+@de.uni_freiburg.informatik.ultimate.core=0.0.1
+/instance/de.uni_freiburg.informatik.ultimate.core/Generate\ witness\ from\ each\ counter\ example\ result=true
+/instance/de.uni_freiburg.informatik.ultimate.core/ultimate.logging.details=de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2\=DEBUG;de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction\=DEBUG;
 
 
 #Thu Mar 30 11:40:11 CEST 2017

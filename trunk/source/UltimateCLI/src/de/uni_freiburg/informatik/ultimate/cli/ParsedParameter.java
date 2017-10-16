@@ -88,16 +88,16 @@ public class ParsedParameter {
 	}
 
 	public boolean isVersionRequested() {
-		return mCli.hasOption(CommandLineOptions.OPTION_NAME_VERSION);
+		return mCli.hasOption(CommandLineOptions.OPTION_LONG_NAME_VERSION);
 	}
 
 	public boolean showExperimentals() {
-		return mCli.hasOption(CommandLineOptions.OPTION_NAME_EXPERIMENTAL);
+		return mCli.hasOption(CommandLineOptions.OPTION_LONG_NAME_EXPERIMENTAL);
 	}
 
 	public String getSettingsFile() throws ParseException, InvalidFileArgumentException {
 		final File file = getParsedOption(CommandLineOptions.OPTION_NAME_SETTINGS);
-		checkFileExists(file, CommandLineOptions.OPTION_LONG_NAME_SETTINGS);
+		checkFileReadable(file, CommandLineOptions.OPTION_LONG_NAME_SETTINGS);
 		return file.getAbsolutePath();
 	}
 
@@ -113,9 +113,23 @@ public class ParsedParameter {
 		return mCli.hasOption(CommandLineOptions.OPTION_NAME_INPUTFILES);
 	}
 
+	public boolean generateCsvs() {
+		return mCli.hasOption(CommandLineOptions.OPTION_LONG_NAME_GENERATE_CSV);
+	}
+
+	public boolean hasCsvDirectory() {
+		return mCli.hasOption(CommandLineOptions.OPTION_LONG_NAME_CSV_DIR);
+	}
+
+	public File getCsvDirectory() throws ParseException, InvalidFileArgumentException {
+		final File file = getParsedOption(CommandLineOptions.OPTION_LONG_NAME_CSV_DIR);
+		checkFileRW(file, CommandLineOptions.OPTION_LONG_NAME_CSV_DIR);
+		return file;
+	}
+
 	public File getToolchainFile() throws ParseException, InvalidFileArgumentException {
 		final File file = getParsedOption(CommandLineOptions.OPTION_NAME_TOOLCHAIN);
-		checkFileExists(file, CommandLineOptions.OPTION_LONG_NAME_TOOLCHAIN);
+		checkFileReadable(file, CommandLineOptions.OPTION_LONG_NAME_TOOLCHAIN);
 		return file;
 	}
 
@@ -155,19 +169,28 @@ public class ParsedParameter {
 		return files;
 	}
 
-	private static void checkFileExists(final File file, final String argumentName)
+	private static void checkFileReadable(final File file, final String argumentName)
 			throws InvalidFileArgumentException {
 		if (file == null) {
 			throw new IllegalArgumentException("file");
 		}
 		if (!file.exists()) {
 			throw new InvalidFileArgumentException("Argument of \"" + argumentName + "\" has invalid value \""
-					+ file.getAbsolutePath() + "\": File does not exist");
+					+ file.getAbsolutePath() + "\": File/Dir does not exist");
 		}
 		if (!file.canRead()) {
 			throw new InvalidFileArgumentException("Argument of \"" + argumentName + "\" has invalid value \""
-					+ file.getAbsolutePath() + "\": File cannot be read");
+					+ file.getAbsolutePath() + "\": File/Dir cannot be read");
 		}
+	}
+
+	private static void checkFileRW(final File file, final String argumentName) throws InvalidFileArgumentException {
+		checkFileReadable(file, argumentName);
+		if (!file.canWrite()) {
+			throw new InvalidFileArgumentException("Argument of \"" + argumentName + "\" has invalid value \""
+					+ file.getAbsolutePath() + "\": File/Dir cannot be written");
+		}
+
 	}
 
 	@SuppressWarnings("unchecked")

@@ -77,7 +77,8 @@ public class PartialQuantifierElimination {
 	static final boolean USE_SOS = true;
 	static final boolean USE_USR = false;
 	private static boolean mPushPull = true;
-	private final static boolean EXTENDED_RESULT_CHECK = false;
+	private static final boolean DEBUG_EXTENDED_RESULT_CHECK = false;
+	private static final boolean DEBUG_APPLY_ARRAY_PQE_ALSO_TO_NEGATION = false;
 
 	public static Term tryToEliminate(final IUltimateServiceProvider services, final ILogger logger,
 			final ManagedScript mgdScript, final Term term, final SimplificationTechnique simplificationTechnique,
@@ -206,7 +207,7 @@ public class PartialQuantifierElimination {
 
 		// transform to DNF (resp. CNF)
 		result = (new IteRemover(mgdScript)).transform(term);
-		result = transformToXnf(services, script, quantifier, mgdScript, result, xnfConversionTechnique);
+		result = QuantifierUtils.transformToXnf(services, script, quantifier, mgdScript, result, xnfConversionTechnique);
 		// if (result instanceof QuantifiedFormula) {
 		// QuantifiedFormula qf = (QuantifiedFormula) result;
 		// if (qf.getQuantifier() != quantifier) {
@@ -264,16 +265,31 @@ public class PartialQuantifierElimination {
 		}
 		
 		if (USE_SSD) {
-			final EliminationTask esp = new ElimStorePlain(mgdScript, services,
-					simplificationTechnique).elimAll(new EliminationTask(quantifier, eliminatees, result));
-			{
+			final EliminationTask esp = new ElimStorePlain(mgdScript, services, simplificationTechnique)
+					.elimAll(new EliminationTask(quantifier, eliminatees, result));
+			if (DEBUG_APPLY_ARRAY_PQE_ALSO_TO_NEGATION) {
+				final int quantifierNegated = (quantifier * -1) + 1;
+				final Term negatedInput = new NnfTransformer(mgdScript, services, QuantifierHandling.CRASH)
+						.transform(SmtUtils.not(mgdScript.getScript(), result));
+				final EliminationTask espNegated = new ElimStorePlain(mgdScript, services, simplificationTechnique)
+						.elimAll(new EliminationTask(quantifierNegated, eliminatees, negatedInput));
+				espNegated.toString();
+				if (esp.getEliminatees().size() != espNegated.getEliminatees().size()) {
+					throw new AssertionError("different number of auxVars: esp " + esp.getEliminatees().size()
+							+ " nesp " + espNegated.getEliminatees().size() + "Input: " + result);
+				}
+			}
+			if (DEBUG_EXTENDED_RESULT_CHECK) {
 				final EliminationTask sosResult = applyStoreOverSelect(mgdScript, quantifier, eliminatees, services,
 						logger, simplificationTechnique, script, result);
-				assert !EXTENDED_RESULT_CHECK || EliminationTask.areDistinct(script, esp, sosResult) != LBool.SAT : "Array QEs differ. Esp: "
+				assert EliminationTask.areDistinct(script, esp, sosResult) != LBool.SAT : "Array QEs differ. Esp: "
 						+ esp + " Sos:" + sosResult;
-				final long espTreeSize = new DAGSize().treesize(esp.getTerm());
-				final long sosTreeSize = new DAGSize().treesize(sosResult.getTerm());
-				assert espTreeSize <= sosTreeSize : "unexpected size! esp:" + espTreeSize + " sos" + sosTreeSize;
+				final boolean doSizeCheck = false;
+				if (doSizeCheck) {
+					final long espTreeSize = new DAGSize().treesize(esp.getTerm());
+					final long sosTreeSize = new DAGSize().treesize(sosResult.getTerm());
+					assert espTreeSize <= sosTreeSize : "unexpected size! esp:" + espTreeSize + " sos" + sosTreeSize;
+				}
 			}
 			result = esp.getTerm();
 			eliminatees.clear();
@@ -406,19 +422,6 @@ public class PartialQuantifierElimination {
 		return termAfterUsr;
 	}
 
-	private static Term transformToXnf(final IUltimateServiceProvider services, final Script script,
-			final int quantifier, final ManagedScript freshTermVariableConstructor, Term term,
-			final XnfConversionTechnique xnfConversionTechnique) throws AssertionError {
-		if (quantifier == QuantifiedFormula.EXISTS) {
-			term = SmtUtils.toDnf(services, freshTermVariableConstructor, term, xnfConversionTechnique);
-		} else if (quantifier == QuantifiedFormula.FORALL) {
-			term = SmtUtils.toCnf(services, freshTermVariableConstructor, term, xnfConversionTechnique);
-		} else {
-			throw new AssertionError("unknown quantifier");
-		}
-		return term;
-	}
-
 	private static Term applyEliminationOuter(final Script script, final int quantifier,
 			final Set<TermVariable> eliminatees, final Term term, final XjunctPartialQuantifierElimination elimination,
 			final IUltimateServiceProvider services, final ManagedScript freshTermVariableConstructor,
@@ -453,7 +456,7 @@ public class PartialQuantifierElimination {
 		remainingEliminatees.retainAll(Arrays.asList(result.getFreeVars()));
 		eliminatees.retainAll(remainingEliminatees);
 		if (!elimination.resultIsXjunction()) {
-			result = transformToXnf(services, script, quantifier, freshTermVariableConstructor, result,
+			result = QuantifierUtils.transformToXnf(services, script, quantifier, freshTermVariableConstructor, result,
 					xnfConversionTechnique);
 		}
 		return result;

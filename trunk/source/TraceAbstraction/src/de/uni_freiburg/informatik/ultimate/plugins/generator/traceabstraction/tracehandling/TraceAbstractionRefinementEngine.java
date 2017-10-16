@@ -50,8 +50,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantComputationStatus;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantConsolidation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantConsolidation.InterpolantConsolidationBenchmarkGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckReasonUnknown;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerSpWp;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckSpWp;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TracePredicates;
 
 /**
@@ -74,6 +75,7 @@ public final class TraceAbstractionRefinementEngine<LETTER>
 	private boolean mSomePerfectSequenceFound = false;
 
 	private final InteractiveCegar mInteractive;
+	private InterpolantConsolidationBenchmarkGenerator mInterpolantConsolidationStatistics;
 
 	/**
 	 * @param logger
@@ -165,11 +167,11 @@ public final class TraceAbstractionRefinementEngine<LETTER>
 	private LBool checkFeasibility() {
 		while (true) {
 			// NOTE: Do not convert to method reference!
-			final LBool feasibility = mStrategy.getTraceChecker().isCorrect();
+			final LBool feasibility = mStrategy.getTraceCheck().isCorrect();
 			Objects.requireNonNull(feasibility);
 
 			if (feasibility == LBool.UNKNOWN) {
-				final TraceCheckReasonUnknown tcra = mStrategy.getTraceChecker().getTraceCheckReasonUnknown();
+				final TraceCheckReasonUnknown tcra = mStrategy.getTraceCheck().getTraceCheckReasonUnknown();
 				if (tcra.getException() != null) {
 					final ExceptionHandlingCategory exceptionCategory = tcra.getExceptionHandlingCategory();
 					switch (exceptionCategory) {
@@ -198,10 +200,10 @@ public final class TraceAbstractionRefinementEngine<LETTER>
 					}
 				}
 
-				if (mStrategy.hasNextTraceChecker()) {
+				if (mStrategy.hasNextTraceCheck()) {
 					// feasibility check failed, try next combination in the strategy
 					mLogger.info("Advancing trace checker");
-					mStrategy.nextTraceChecker();
+					mStrategy.nextTraceCheck();
 				} else {
 					return feasibility;
 				}
@@ -212,9 +214,9 @@ public final class TraceAbstractionRefinementEngine<LETTER>
 	}
 
 	private LBool handleFeasibleCase() {
-		if (mStrategy.getTraceChecker().providesRcfgProgramExecution()) {
+		if (mStrategy.getTraceCheck().providesRcfgProgramExecution()) {
 			mProvidesIcfgProgramExecution = true;
-			mIcfgProgramExecution = mStrategy.getTraceChecker().getRcfgProgramExecution();
+			mIcfgProgramExecution = mStrategy.getTraceCheck().getRcfgProgramExecution();
 		}
 		return LBool.SAT;
 	}
@@ -255,6 +257,10 @@ public final class TraceAbstractionRefinementEngine<LETTER>
 		IInterpolantGenerator interpolantGenerator = null;
 		try {
 			interpolantGenerator = mStrategy.getInterpolantGenerator();
+			if (interpolantGenerator instanceof InterpolantConsolidation) {
+				mInterpolantConsolidationStatistics =
+						((InterpolantConsolidation) interpolantGenerator).getInterpolantConsolidationBenchmarks();
+			}
 		} catch (final ToolchainCanceledException tce) {
 			throw tce;
 		} catch (final Exception e) {
@@ -295,6 +301,8 @@ public final class TraceAbstractionRefinementEngine<LETTER>
 			if (throwException) {
 				throw new AssertionError(status.getException());
 			}
+			final String message = status.getException() == null ? "Unknown" : status.getException().getMessage();
+			mLogger.info("Interpolation failed due to " + category + ": " + message);
 			return;
 		}
 
@@ -305,8 +313,8 @@ public final class TraceAbstractionRefinementEngine<LETTER>
 			mHoareTripleChecker = ((AbsIntBaseInterpolantGenerator) interpolantGenerator).getHoareTripleChecker();
 		}
 
-		if (interpolantGenerator instanceof TraceCheckerSpWp) {
-			handleTraceCheckerSpWpCase(perfectIpps, imperfectIpps, (TraceCheckerSpWp) interpolantGenerator);
+		if (interpolantGenerator instanceof TraceCheckSpWp) {
+			handleTraceCheckSpWpCase(perfectIpps, imperfectIpps, (TraceCheckSpWp) interpolantGenerator);
 			return;
 		}
 
@@ -320,48 +328,45 @@ public final class TraceAbstractionRefinementEngine<LETTER>
 	}
 
 	/**
-	 * NOTE: This method is complicated due to the structure of the {@link TraceCheckerSpWp} because
+	 * NOTE: This method is complicated due to the structure of the {@link TraceCheckSpWp} because
 	 * <ol>
 	 * <li>we need a different getter for the interpolant sequence and</li>
 	 * <li>there are two sequences of interpolants.</li>
 	 * </ol>
 	 */
-	private static void handleTraceCheckerSpWpCase(final List<TracePredicates> perfectIpps,
-			final List<TracePredicates> imperfectIpps, final TraceCheckerSpWp traceCheckerSpWp) {
-		if (traceCheckerSpWp.wasForwardPredicateComputationRequested()) {
-			addForwardPredicates(traceCheckerSpWp, perfectIpps, imperfectIpps);
+	private static void handleTraceCheckSpWpCase(final List<TracePredicates> perfectIpps,
+			final List<TracePredicates> imperfectIpps, final TraceCheckSpWp traceCheckSpWp) {
+		if (traceCheckSpWp.wasForwardPredicateComputationRequested()) {
+			addForwardPredicates(traceCheckSpWp, perfectIpps, imperfectIpps);
 		}
-		if (traceCheckerSpWp.wasBackwardSequenceConstructed()) {
-			addBackwardPredicates(traceCheckerSpWp, perfectIpps, imperfectIpps);
+		if (traceCheckSpWp.wasBackwardSequenceConstructed()) {
+			addBackwardPredicates(traceCheckSpWp, perfectIpps, imperfectIpps);
 		}
 	}
 
-	private static void addForwardPredicates(final TraceCheckerSpWp traceCheckerSpWp,
-			final List<TracePredicates> perfectIpps,
-			final List<TracePredicates> imperfectIpps) {
-		final TracePredicates interpolants = traceCheckerSpWp.getForwardIpp();
+	private static void addForwardPredicates(final TraceCheckSpWp traceCheckSpWp,
+			final List<TracePredicates> perfectIpps, final List<TracePredicates> imperfectIpps) {
+		final TracePredicates interpolants = traceCheckSpWp.getForwardIpp();
 		assert interpolants != null;
-		if (traceCheckerSpWp.isForwardSequencePerfect()) {
+		if (traceCheckSpWp.isForwardSequencePerfect()) {
 			perfectIpps.add(interpolants);
 		} else {
 			imperfectIpps.add(interpolants);
 		}
 	}
 
-	private static void addBackwardPredicates(final TraceCheckerSpWp traceCheckerSpWp,
-			final List<TracePredicates> perfectIpps,
-			final List<TracePredicates> imperfectIpps) {
-		final TracePredicates interpolants = traceCheckerSpWp.getBackwardIpp();
+	private static void addBackwardPredicates(final TraceCheckSpWp traceCheckSpWp,
+			final List<TracePredicates> perfectIpps, final List<TracePredicates> imperfectIpps) {
+		final TracePredicates interpolants = traceCheckSpWp.getBackwardIpp();
 		assert interpolants != null;
-		if (traceCheckerSpWp.isBackwardSequencePerfect()) {
+		if (traceCheckSpWp.isBackwardSequencePerfect()) {
 			perfectIpps.add(interpolants);
 		} else {
 			imperfectIpps.add(interpolants);
 		}
 	}
 
-	private LBool constructAutomatonFromIpps(List<TracePredicates> perfectIpps,
-			List<TracePredicates> imperfectIpps) {
+	private LBool constructAutomatonFromIpps(List<TracePredicates> perfectIpps, List<TracePredicates> imperfectIpps) {
 		// construct the interpolant automaton from the sequences we have found
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Constructing automaton from " + perfectIpps.size() + " perfect and " + imperfectIpps.size()
@@ -382,7 +387,7 @@ public final class TraceAbstractionRefinementEngine<LETTER>
 			mLogger.info("Number of different interpolants: perfect sequences " + numberInterpolantsPerfect
 					+ " imperfect sequences " + numberInterpolantsImperfect + " total " + allInterpolants.size());
 		}
-		if (mInteractive.isInteractiveMode()) {
+		if (mInteractive != null && mInteractive.isInteractiveMode()) {
 			final InterpolantSequences sequences = InterpolantSequences.instance.set(perfectIpps, imperfectIpps);
 			if (mInteractive.getPreferences().isIPS() && perfectIpps.size() + imperfectIpps.size() > 1) {
 				mLogger.info("Asking the user to select interpolant sequences.");
@@ -392,7 +397,7 @@ public final class TraceAbstractionRefinementEngine<LETTER>
 					perfectIpps = userSequences.mPerfectIpps;
 					imperfectIpps = userSequences.mImperfectIpps;
 					mLogger.info("User Selected " + perfectIpps.size() + " perfect and " + imperfectIpps.size()
-					+ " imperfect interpolant sequences.");					
+							+ " imperfect interpolant sequences.");
 				} catch (InterruptedException | ExecutionException e) {
 					mLogger.error(e);
 				}
@@ -409,6 +414,10 @@ public final class TraceAbstractionRefinementEngine<LETTER>
 
 	public boolean somePerfectSequenceFound() {
 		return mSomePerfectSequenceFound;
+	}
+
+	public InterpolantConsolidationBenchmarkGenerator getInterpolantConsolidationStatistics() {
+		return mInterpolantConsolidationStatistics;
 	}
 
 	/**

@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 
 /**
- * This is the equivalent of Automizer's TraceChecker. Here we check a tree for
+ * This is the equivalent of Automizer's traceCheck. Here we check a tree for
  * feasibility instead of a trace.
  * 
  * @author Mostafa M.A. (mostafa.amin93@gmail.com)

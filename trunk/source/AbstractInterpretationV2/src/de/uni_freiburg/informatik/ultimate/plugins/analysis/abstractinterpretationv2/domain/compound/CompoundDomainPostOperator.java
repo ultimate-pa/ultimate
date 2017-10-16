@@ -46,7 +46,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractDom
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
@@ -68,7 +67,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.Tr
  *
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
-public class CompoundDomainPostOperator implements IAbstractPostOperator<CompoundDomainState, IcfgEdge, IBoogieVar> {
+public class CompoundDomainPostOperator implements IAbstractPostOperator<CompoundDomainState, IcfgEdge> {
 
 	private final boolean mCreateStateAssumptions;
 	private final boolean mUseSmtSolverChecks;
@@ -113,18 +112,18 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 	public List<CompoundDomainState> apply(final CompoundDomainState oldstate, final IcfgEdge transition) {
 		final List<CompoundDomainState> returnStates = new ArrayList<>();
 
-		final List<IAbstractState<?, IBoogieVar>> states = oldstate.getAbstractStatesList();
+		final List<IAbstractState<?>> states = oldstate.getAbstractStatesList();
 		final List<IAbstractDomain> domains = oldstate.getDomainList();
 		assert domains.size() == states.size();
 
 		final List<IcfgEdge> transitionList = createTransitionList(transition, states);
 		assert transitionList.size() == domains.size();
 
-		final List<IAbstractState<?, IBoogieVar>> resultingStates = new ArrayList<>();
+		final List<IAbstractState<?>> resultingStates = new ArrayList<>();
 
 		for (int i = 0; i < domains.size(); i++) {
 			final IAbstractDomain currentDomain = domains.get(i);
-			final IAbstractState<?, IBoogieVar> currentPreState = states.get(i);
+			final IAbstractState<?> currentPreState = states.get(i);
 			final IcfgEdge currentTrans = transitionList.get(i);
 
 			final List<IAbstractState> result =
@@ -190,8 +189,7 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 	 * @param states
 	 * @return
 	 */
-	private List<IcfgEdge> createTransitionList(final IcfgEdge transition,
-			final List<IAbstractState<?, IBoogieVar>> states) {
+	private List<IcfgEdge> createTransitionList(final IcfgEdge transition, final List<IAbstractState<?>> states) {
 
 		final List<IcfgEdge> returnList = new ArrayList<>();
 
@@ -222,7 +220,7 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 	 * @param transition
 	 * @return
 	 */
-	private IcfgEdge createBlockWithoutState(final List<IAbstractState<?, IBoogieVar>> states, final int index,
+	private IcfgEdge createBlockWithoutState(final List<IAbstractState<?>> states, final int index,
 			final IcfgEdge transition) {
 
 		assert !states.isEmpty();
@@ -232,7 +230,7 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 			if (i == index) {
 				continue;
 			}
-			final IAbstractState<?, IBoogieVar> state = states.get(i);
+			final IAbstractState<?> state = states.get(i);
 
 			final Term stateTerm = state.getTerm(mScript);
 			assumeTerm = assumeTerm == null ? stateTerm : mScript.term("and", assumeTerm, stateTerm);
@@ -267,8 +265,8 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 			final CompoundDomainState stateAfterLeaving, final IcfgEdge transition) {
 		final List<CompoundDomainState> returnStates = new ArrayList<>();
 
-		final List<IAbstractState<?, IBoogieVar>> beforeStates = stateBeforeLeaving.getAbstractStatesList();
-		final List<IAbstractState<?, IBoogieVar>> afterStates = stateAfterLeaving.getAbstractStatesList();
+		final List<IAbstractState<?>> beforeStates = stateBeforeLeaving.getAbstractStatesList();
+		final List<IAbstractState<?>> afterStates = stateAfterLeaving.getAbstractStatesList();
 		final List<IAbstractDomain> domainsBefore = stateBeforeLeaving.getDomainList();
 		final List<IAbstractDomain> domainsAfter = stateAfterLeaving.getDomainList();
 
@@ -276,7 +274,7 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 		assert beforeStates.size() == afterStates.size();
 		assert domainsBefore.size() == beforeStates.size();
 
-		final List<IAbstractState<?, IBoogieVar>> resultingStates = new ArrayList<>();
+		final List<IAbstractState<?>> resultingStates = new ArrayList<>();
 
 		for (int i = 0; i < domainsBefore.size(); i++) {
 			final List<IAbstractState> result = applyInternally(beforeStates.get(i), afterStates.get(i),
@@ -307,18 +305,17 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 		return rtr;
 	}
 
-	private static List<IAbstractState> applyInternally(final IAbstractState<?, IBoogieVar> currentState,
+	private static List<IAbstractState> applyInternally(final IAbstractState<?> currentState,
 			final IAbstractPostOperator postOperator, final IcfgEdge transition) {
 		return postOperator.apply(currentState, transition);
 	}
 
-	private static List<IAbstractState> applyInternally(final IAbstractState<?, IBoogieVar> first,
-			final IAbstractState<?, IBoogieVar> second, final IAbstractPostOperator postOperator,
-			final IcfgEdge transition) {
+	private static List<IAbstractState> applyInternally(final IAbstractState<?> first, final IAbstractState<?> second,
+			final IAbstractPostOperator postOperator, final IcfgEdge transition) {
 		return postOperator.apply(first, second, transition);
 	}
 
-	private static <T extends IAbstractState<T, ?>> T applyMergeInternally(final T first, final T second) {
+	private static <T extends IAbstractState<T>> T applyMergeInternally(final T first, final T second) {
 		return first.union(second);
 	}
 

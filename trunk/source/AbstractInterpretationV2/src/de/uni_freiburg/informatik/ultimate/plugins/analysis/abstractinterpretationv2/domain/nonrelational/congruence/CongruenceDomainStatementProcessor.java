@@ -35,8 +35,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieSymbolTableVariableProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalStatementProcessor;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluatorFactory;
@@ -50,15 +49,15 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  *
  */
 public class CongruenceDomainStatementProcessor
-		extends NonrelationalStatementProcessor<CongruenceDomainState<IBoogieVar>, CongruenceDomainValue> {
-	
+		extends NonrelationalStatementProcessor<CongruenceDomainState, CongruenceDomainValue> {
+
 	protected CongruenceDomainStatementProcessor(final ILogger logger, final BoogieSymbolTable symbolTable,
-			final Boogie2SmtSymbolTable bpl2smtTable, final int maxParallelStates) {
-		super(logger, symbolTable, bpl2smtTable, maxParallelStates);
+			final IBoogieSymbolTableVariableProvider bpl2SmtSymbolTable, final int maxParallelStates) {
+		super(logger, symbolTable, bpl2SmtSymbolTable, maxParallelStates);
 	}
 
 	@Override
-	protected IEvaluatorFactory<CongruenceDomainValue, CongruenceDomainState<IBoogieVar>, IBoogieVar>
+	protected IEvaluatorFactory<CongruenceDomainValue, CongruenceDomainState>
 			createEvaluatorFactory(final int maxParallelStates) {
 		final EvaluatorFactory.Function<String, CongruenceDomainValue> singletonValueExpressionEvaluatorCreator =
 				(value, type) -> {

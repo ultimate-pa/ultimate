@@ -168,9 +168,9 @@ public class SimplifyDDA extends NonRecursive {
 				if (info.mContext == null) {
 					info.mContext = mContext.toArray(new Term[mContext.size()]);
 				} else {
-					final HashSet<Term> oldContext = new HashSet<Term>(info.mContext.length);
+					final HashSet<Term> oldContext = new HashSet<>(info.mContext.length);
 					oldContext.addAll(Arrays.asList(info.mContext));
-					final ArrayDeque<Term> newContext = new ArrayDeque<Term>(info.mContext.length);
+					final ArrayDeque<Term> newContext = new ArrayDeque<>(info.mContext.length);
 					for (final Term t : mContext) {
 						if (oldContext.contains(t)) {
 							newContext.add(t);
@@ -476,7 +476,7 @@ public class SimplifyDDA extends NonRecursive {
 				assert (connective == "and" || connective == "or" || connective == "=>");
 				if (mParamCtr == params.length) {
 					simplifier.popContext();
-					final ArrayList<Term> newparams = new ArrayList<Term>();
+					final ArrayList<Term> newparams = new ArrayList<>();
 					Term result = null;
 					for (int i = 0; i < mSimplifiedParams.length; i++) {
 						final Term param = mSimplifiedParams[i];
@@ -551,7 +551,7 @@ public class SimplifyDDA extends NonRecursive {
 
 	/**
 	 * Creates a simplifier. This will simplify repeatedly until a fixpoint is reached.
-	 * 
+	 *
 	 * @param script
 	 *            A Script object that will be used to check for equivalent formulas.
 	 */
@@ -561,7 +561,7 @@ public class SimplifyDDA extends NonRecursive {
 
 	/**
 	 * Creates a simplifier.
-	 * 
+	 *
 	 * @param script
 	 *            A Script object that will be used to check for equivalent formulas.
 	 * @param simplifyRepeatedly
@@ -608,7 +608,7 @@ public class SimplifyDDA extends NonRecursive {
 
 	/**
 	 * Checks if term is redundant, with respect to the critical constraint on the assertion stack.
-	 * 
+	 *
 	 * @return NON_CONSTRAINING if term is equivalent to true, NON_RELAXING if term is equivalent to true, NOT_REDUNDANT
 	 *         if term is not redundant.
 	 */
@@ -631,7 +631,7 @@ public class SimplifyDDA extends NonRecursive {
 		return Redundancy.NOT_REDUNDANT;
 	}
 
-	protected static Term termVariable2constant(final Script script, final TermVariable tv) {
+	private static Term termVariable2constant(final Script script, final TermVariable tv) {
 		final String name = tv.getName() + "_const_" + tv.hashCode();
 		final Sort[] paramSorts = {};
 		final Sort resultSort = tv.getSort();
@@ -642,7 +642,7 @@ public class SimplifyDDA extends NonRecursive {
 
 	public Term simplifyOnce(final Term term) {
 		mInconsistencyOfContextDetected = false;
-		mTermInfos = new HashMap<Term, TermInfo>();
+		mTermInfos = new HashMap<>();
 
 		run(new TermCounter(term));
 		run(new ContextCollector(false, term, new ArrayDeque<Term>()));
@@ -657,7 +657,7 @@ public class SimplifyDDA extends NonRecursive {
 	/**
 	 * Return a Term which is equivalent to term but whose number of leaves is less than or equal to the number of
 	 * leaves in term.
-	 * 
+	 *
 	 * @return term if each subterm of term is neither NON_CONSTRAINING nor NON_RELAXING. Otherwise return a copy of
 	 *         term, where each NON_CONSTRAINING subterm is replaced by true and each NON_RELAXING subterm is replaced
 	 *         by false
@@ -667,7 +667,7 @@ public class SimplifyDDA extends NonRecursive {
 	public Term getSimplifiedTerm(final Term inputTerm) throws SMTLIBException {
 		// mLogger.debug("Simplifying " + term);
 		/* We can only simplify boolean terms. */
-		if (!inputTerm.getSort().getName().equals("Bool")) {
+		if (!"Bool".equals(inputTerm.getSort().getName())) {
 			return inputTerm;
 		}
 		int lvl = 0;// Java requires initialization
@@ -696,13 +696,13 @@ public class SimplifyDDA extends NonRecursive {
 
 		term = new TermTransformer() {
 			@Override
-			public void convert(Term term) {
+			public void convert(Term innerTerm) {
 				for (int i = 0; i < vars.length; i++) {
-					if (term == values[i]) {
-						term = vars[i];
+					if (innerTerm == values[i]) {
+						innerTerm = vars[i];
 					}
 				}
-				super.convert(term);
+				super.convert(innerTerm);
 			}
 		}.transform(term);// NOCHECKSTYLE
 		mScript.pop(1);
@@ -729,9 +729,8 @@ public class SimplifyDDA extends NonRecursive {
 		final boolean negate = (connective == "or" || connective == "=>" && i == n - 1);
 		if (negate) {
 			return Util.not(mScript, sibling);
-		} else {
-			return sibling;
 		}
+		return sibling;
 	}
 
 	void pushContext(final Term... context) {

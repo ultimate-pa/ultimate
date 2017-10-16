@@ -32,6 +32,7 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.TVBool;
@@ -43,8 +44,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public class CongruenceDomainState<VARDECL>
-		extends NonrelationalState<CongruenceDomainState<VARDECL>, CongruenceDomainValue, VARDECL> {
+public class CongruenceDomainState extends NonrelationalState<CongruenceDomainState, CongruenceDomainValue> {
 
 	/**
 	 * Default constructor of an {@link CongruenceDomainState}.
@@ -73,29 +73,29 @@ public class CongruenceDomainState<VARDECL>
 	 * @param isBottom
 	 *            If <code>true</code>, the created state is &bot;, &top; otherwise.
 	 */
-	protected CongruenceDomainState(final ILogger logger, final Set<VARDECL> variablesMap,
-			final Map<VARDECL, CongruenceDomainValue> valuesMap, final Map<VARDECL, BooleanValue> booleanValuesMap,
-			final boolean isBottom) {
+	protected CongruenceDomainState(final ILogger logger, final Set<IProgramVarOrConst> variablesMap,
+			final Map<IProgramVarOrConst, CongruenceDomainValue> valuesMap,
+			final Map<IProgramVarOrConst, BooleanValue> booleanValuesMap, final boolean isBottom) {
 		super(logger, variablesMap, valuesMap, booleanValuesMap, isBottom);
 	}
 
-	protected CongruenceDomainState(final ILogger logger, final Set<VARDECL> variablesMap,
-			final Map<VARDECL, CongruenceDomainValue> valuesMap, final Map<VARDECL, BooleanValue> booleanValuesMap,
-			final TVBool isBottom) {
+	protected CongruenceDomainState(final ILogger logger, final Set<IProgramVarOrConst> variablesMap,
+			final Map<IProgramVarOrConst, CongruenceDomainValue> valuesMap,
+			final Map<IProgramVarOrConst, BooleanValue> booleanValuesMap, final TVBool isBottom) {
 		super(logger, variablesMap, valuesMap, booleanValuesMap, isBottom);
 	}
 
 	@Override
-	protected CongruenceDomainState<VARDECL> createCopy() {
-		return new CongruenceDomainState<>(getLogger(), getVariables(), getVar2ValueNonrelational(),
+	protected CongruenceDomainState createCopy() {
+		return new CongruenceDomainState(getLogger(), getVariables(), getVar2ValueNonrelational(),
 				getVar2ValueBoolean(), getBottomFlag());
 	}
 
 	@Override
-	protected CongruenceDomainState<VARDECL> createState(final ILogger logger, final Set<VARDECL> newVarMap,
-			final Map<VARDECL, CongruenceDomainValue> newValMap, final Map<VARDECL, BooleanValue> newBooleanValMap,
-			final boolean isBottom) {
-		return new CongruenceDomainState<>(logger, newVarMap, newValMap, newBooleanValMap, isBottom);
+	protected CongruenceDomainState createState(final ILogger logger, final Set<IProgramVarOrConst> newVarMap,
+			final Map<IProgramVarOrConst, CongruenceDomainValue> newValMap,
+			final Map<IProgramVarOrConst, BooleanValue> newBooleanValMap, final boolean isBottom) {
+		return new CongruenceDomainState(logger, newVarMap, newValMap, newBooleanValMap, isBottom);
 	}
 
 	@Override
@@ -114,7 +114,7 @@ public class CongruenceDomainState<VARDECL>
 	}
 
 	@Override
-	protected CongruenceDomainState<VARDECL> getThis() {
+	protected CongruenceDomainState getThis() {
 		return this;
 	}
 }

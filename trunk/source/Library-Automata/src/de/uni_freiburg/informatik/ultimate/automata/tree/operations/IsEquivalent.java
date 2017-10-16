@@ -32,7 +32,6 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
-import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
@@ -42,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.IRankedLetter;
 import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.StringRankedLetter;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeRun;
+import de.uni_freiburg.informatik.ultimate.automata.tree.operations.minimization.Minimize;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.services.ToolchainStorage;
 
 /**
@@ -64,8 +64,7 @@ import de.uni_freiburg.informatik.ultimate.core.coreplugin.services.ToolchainSto
  *            The type of the states of the tree automata
  */
 public final class IsEquivalent<LETTER extends IRankedLetter, STATE>
-		extends GeneralOperation<LETTER, STATE, IStateFactory<STATE>>
-		implements IOperation<LETTER, STATE, IStateFactory<STATE>> {
+		extends GeneralOperation<LETTER, STATE, IStateFactory<STATE>> {
 	/**
 	 * Demo usage of the equivalence check. Also used for debugging purpose.
 	 *

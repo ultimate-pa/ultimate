@@ -37,6 +37,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 
 /**
  * This is an abstract state of the {@link EmptyDomain}. It does save variable declarations, but no values or value
@@ -46,17 +47,17 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractSta
  *
  * @param <ACTION>
  *            The action (i.e., the type of statements or transitions) on which this empty domain should operate.
- * @param <IBoogieVar>
+ * @param <IProgramVar>
  *            The variable declaration type of the current model.
  *
  * @author dietsch@informatik.uni-freiburg.de
  *
  *
  */
-public final class EmptyDomainState<VARDECL> implements IAbstractState<EmptyDomainState<VARDECL>, VARDECL> {
+public final class EmptyDomainState implements IAbstractState<EmptyDomainState> {
 
 	private static int sId;
-	private final Set<VARDECL> mVarDecls;
+	private final Set<IProgramVarOrConst> mVarDecls;
 	private final int mId;
 	private final boolean mIsBottom;
 
@@ -68,11 +69,11 @@ public final class EmptyDomainState<VARDECL> implements IAbstractState<EmptyDoma
 		this(new HashSet<>(), isBottom);
 	}
 
-	protected EmptyDomainState(final Set<VARDECL> varDecls) {
+	protected EmptyDomainState(final Set<IProgramVarOrConst> varDecls) {
 		this(varDecls, false);
 	}
 
-	protected EmptyDomainState(final Set<VARDECL> varDecls, final boolean isBottom) {
+	protected EmptyDomainState(final Set<IProgramVarOrConst> varDecls, final boolean isBottom) {
 		mVarDecls = varDecls;
 		sId++;
 		mId = sId;
@@ -80,49 +81,49 @@ public final class EmptyDomainState<VARDECL> implements IAbstractState<EmptyDoma
 	}
 
 	@Override
-	public EmptyDomainState<VARDECL> addVariable(final VARDECL variable) {
+	public EmptyDomainState addVariable(final IProgramVarOrConst variable) {
 		assert variable != null;
 
-		final Set<VARDECL> newMap = new HashSet<>(mVarDecls);
+		final Set<IProgramVarOrConst> newMap = new HashSet<>(mVarDecls);
 		if (!newMap.add(variable)) {
 			throw new UnsupportedOperationException("Variable names have to be disjoint");
 		}
-		return new EmptyDomainState<>(newMap);
+		return new EmptyDomainState(newMap);
 	}
 
 	@Override
-	public EmptyDomainState<VARDECL> removeVariable(final VARDECL variable) {
+	public EmptyDomainState removeVariable(final IProgramVarOrConst variable) {
 		assert variable != null;
-		final Set<VARDECL> newMap = new HashSet<>(mVarDecls);
+		final Set<IProgramVarOrConst> newMap = new HashSet<>(mVarDecls);
 		final boolean result = newMap.remove(variable);
 		assert result;
-		return new EmptyDomainState<>(newMap);
+		return new EmptyDomainState(newMap);
 	}
 
 	@Override
-	public EmptyDomainState<VARDECL> addVariables(final Collection<VARDECL> variables) {
+	public EmptyDomainState addVariables(final Collection<IProgramVarOrConst> variables) {
 		assert variables != null;
 		assert !variables.isEmpty();
 
-		final Set<VARDECL> newMap = new HashSet<>(mVarDecls);
-		for (final VARDECL entry : variables) {
+		final Set<IProgramVarOrConst> newMap = new HashSet<>(mVarDecls);
+		for (final IProgramVarOrConst entry : variables) {
 			if (!newMap.add(entry)) {
 				throw new UnsupportedOperationException("Variable names have to be disjoint");
 			}
 		}
-		return new EmptyDomainState<>(newMap);
+		return new EmptyDomainState(newMap);
 	}
 
 	@Override
-	public EmptyDomainState<VARDECL> removeVariables(final Collection<VARDECL> variables) {
+	public EmptyDomainState removeVariables(final Collection<IProgramVarOrConst> variables) {
 		assert variables != null;
 		assert !variables.isEmpty();
 
-		final Set<VARDECL> newMap = new HashSet<>(mVarDecls);
-		for (final VARDECL entry : variables) {
+		final Set<IProgramVarOrConst> newMap = new HashSet<>(mVarDecls);
+		for (final IProgramVarOrConst entry : variables) {
 			newMap.remove(entry);
 		}
-		return new EmptyDomainState<>(newMap);
+		return new EmptyDomainState(newMap);
 	}
 
 	@Override
@@ -138,14 +139,14 @@ public final class EmptyDomainState<VARDECL> implements IAbstractState<EmptyDoma
 	@Override
 	public String toLogString() {
 		final StringBuilder sb = new StringBuilder();
-		for (final VARDECL entry : mVarDecls) {
+		for (final IProgramVarOrConst entry : mVarDecls) {
 			sb.append(entry).append("; ");
 		}
 		return sb.toString();
 	}
 
 	@Override
-	public boolean isEqualTo(final EmptyDomainState<VARDECL> other) {
+	public boolean isEqualTo(final EmptyDomainState other) {
 		if (other == null) {
 			return false;
 		}
@@ -158,7 +159,7 @@ public final class EmptyDomainState<VARDECL> implements IAbstractState<EmptyDoma
 			return false;
 		}
 
-		for (final VARDECL entry : mVarDecls) {
+		for (final IProgramVarOrConst entry : mVarDecls) {
 			if (!other.mVarDecls.contains(entry)) {
 				return false;
 			}
@@ -187,8 +188,7 @@ public final class EmptyDomainState<VARDECL> implements IAbstractState<EmptyDoma
 		if (getClass() != obj.getClass()) {
 			return false;
 		}
-		@SuppressWarnings("unchecked")
-		final EmptyDomainState<VARDECL> other = (EmptyDomainState<VARDECL>) obj;
+		final EmptyDomainState other = (EmptyDomainState) obj;
 		return mId == other.mId;
 	}
 
@@ -199,17 +199,17 @@ public final class EmptyDomainState<VARDECL> implements IAbstractState<EmptyDoma
 	 *            another state
 	 * @return true iff this state has the same variables than other
 	 */
-	boolean hasSameVariables(final EmptyDomainState<VARDECL> other) {
+	boolean hasSameVariables(final EmptyDomainState other) {
 		return isEqualTo(other);
 	}
 
 	@Override
-	public Set<VARDECL> getVariables() {
+	public Set<IProgramVarOrConst> getVariables() {
 		return Collections.unmodifiableSet(mVarDecls);
 	}
 
 	@Override
-	public boolean containsVariable(final VARDECL var) {
+	public boolean containsVariable(final IProgramVarOrConst var) {
 		return mVarDecls.contains(var);
 	}
 
@@ -219,14 +219,14 @@ public final class EmptyDomainState<VARDECL> implements IAbstractState<EmptyDoma
 	}
 
 	@Override
-	public EmptyDomainState<VARDECL> patch(final EmptyDomainState<VARDECL> dominator) {
+	public EmptyDomainState patch(final EmptyDomainState dominator) {
 		if (dominator.isEmpty()) {
 			return this;
 		} else if (isEmpty()) {
 			return dominator;
 		}
 
-		final Set<VARDECL> newVarDecls = new HashSet<>();
+		final Set<IProgramVarOrConst> newVarDecls = new HashSet<>();
 		newVarDecls.addAll(mVarDecls);
 		newVarDecls.addAll(dominator.mVarDecls);
 
@@ -234,17 +234,17 @@ public final class EmptyDomainState<VARDECL> implements IAbstractState<EmptyDoma
 			return this;
 		}
 
-		return new EmptyDomainState<>(newVarDecls);
+		return new EmptyDomainState(newVarDecls);
 	}
 
 	@Override
-	public SubsetResult isSubsetOf(final EmptyDomainState<VARDECL> other) {
+	public SubsetResult isSubsetOf(final EmptyDomainState other) {
 		assert hasSameVariables(other);
 		return isEqualTo(other) ? SubsetResult.EQUAL : SubsetResult.NONE;
 	}
 
 	@Override
-	public EmptyDomainState<VARDECL> intersect(final EmptyDomainState<VARDECL> other) {
+	public EmptyDomainState intersect(final EmptyDomainState other) {
 		if (!hasSameVariables(other)) {
 			throw new UnsupportedOperationException("Cannot widen or merge two states with different variables");
 		}
@@ -252,27 +252,27 @@ public final class EmptyDomainState<VARDECL> implements IAbstractState<EmptyDoma
 	}
 
 	@Override
-	public EmptyDomainState<VARDECL> union(final EmptyDomainState<VARDECL> other) {
+	public EmptyDomainState union(final EmptyDomainState other) {
 		return intersect(other);
 	}
 
 	@Override
-	public EmptyDomainState<VARDECL> compact() {
+	public EmptyDomainState compact() {
 		// empty states are always compact
 		return this;
 	}
 
 	@Override
-	public EmptyDomainState<VARDECL> renameVariables(final Map<VARDECL, VARDECL> old2newVars) {
+	public EmptyDomainState renameVariables(final Map<IProgramVarOrConst, IProgramVarOrConst> old2newVars) {
 		if (old2newVars == null || old2newVars.isEmpty()) {
 			return this;
 		}
 
 		boolean isChanged = false;
-		final Set<VARDECL> newVars = new HashSet<>(mVarDecls);
-		for (final Entry<VARDECL, VARDECL> entry : old2newVars.entrySet()) {
-			final VARDECL oldVar = entry.getKey();
-			final VARDECL newVar = entry.getValue();
+		final Set<IProgramVarOrConst> newVars = new HashSet<>(mVarDecls);
+		for (final Entry<IProgramVarOrConst, IProgramVarOrConst> entry : old2newVars.entrySet()) {
+			final IProgramVarOrConst oldVar = entry.getKey();
+			final IProgramVarOrConst newVar = entry.getValue();
 
 			if (newVar == null) {
 				throw new IllegalArgumentException("Cannot rename " + oldVar + " to null");
@@ -290,7 +290,7 @@ public final class EmptyDomainState<VARDECL> implements IAbstractState<EmptyDoma
 		}
 
 		if (isChanged) {
-			return new EmptyDomainState<>(newVars);
+			return new EmptyDomainState(newVars);
 		}
 		return this;
 	}

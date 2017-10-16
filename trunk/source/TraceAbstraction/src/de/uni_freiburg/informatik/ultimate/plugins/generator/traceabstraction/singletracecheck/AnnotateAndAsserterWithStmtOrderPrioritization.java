@@ -82,7 +82,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 
 	public AnnotateAndAsserterWithStmtOrderPrioritization(final ManagedScript mgdScriptTc,
 			final NestedFormulas<Term, Term> nestedSSA, final AnnotateAndAssertCodeBlocks aaacb,
-			final TraceCheckerStatisticsGenerator tcbg, final AssertCodeBlockOrder assertCodeBlocksOrder,
+			final TraceCheckStatisticsGenerator tcbg, final AssertCodeBlockOrder assertCodeBlocksOrder,
 			final IUltimateServiceProvider services) {
 		super(mgdScriptTc, nestedSSA, aaacb, tcbg, services);
 		mAssertCodeBlocksOrder = assertCodeBlocksOrder;
@@ -174,7 +174,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 
 	@Override
 	public void buildAnnotatedSsaAndAssertTerms() {
-		final List<IcfgLocation> pps = TraceCheckerUtils.getSequenceOfProgramPoints(mTrace);
+		final List<IcfgLocation> pps = TraceCheckUtils.getSequenceOfProgramPoints(mTrace);
 		final RelationWithTreeSet<IcfgLocation, Integer> rwt =
 				computeRelationWithTreeSetForTrace(0, mTrace.length(), pps);
 

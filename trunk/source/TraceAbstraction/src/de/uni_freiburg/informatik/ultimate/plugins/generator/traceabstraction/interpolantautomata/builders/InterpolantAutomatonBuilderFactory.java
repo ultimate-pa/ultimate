@@ -57,8 +57,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantConsolidation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerSpWp;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerUtils;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckSpWp;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TracePredicates;
 
 /**
@@ -180,8 +180,8 @@ public class InterpolantAutomatonBuilderFactory<LETTER extends IIcfgTransition<?
 						interpolGenerator.getPredicateUnifier(), (NestedWord<LETTER>) interpolGenerator.getTrace());
 		iab.analyze();
 		mLogger.info("Interpolants " + iab.getResult().getStates());
-		final BackwardCoveringInformation bci = TraceCheckerUtils.computeCoverageCapability(mServices, ipp,
-				TraceCheckerUtils.getSequenceOfProgramPoints(NestedWord.nestedWord(counterexample.getWord())), mLogger,
+		final BackwardCoveringInformation bci = TraceCheckUtils.computeCoverageCapability(mServices, ipp,
+				TraceCheckUtils.getSequenceOfProgramPoints(NestedWord.nestedWord(counterexample.getWord())), mLogger,
 				interpolGenerator.getPredicateUnifier());
 		mBenchmark.addBackwardCoveringInformation(bci);
 		return iab;
@@ -216,17 +216,17 @@ public class InterpolantAutomatonBuilderFactory<LETTER extends IIcfgTransition<?
 			final IAutomaton<LETTER, IPredicate> abstraction, final IInterpolantGenerator interpolGenerator,
 			final IRun<LETTER, IPredicate, ?> counterexample, final List<TracePredicates> ipps)
 			throws AutomataOperationCanceledException {
-		if (!(interpolGenerator instanceof TraceCheckerSpWp)
+		if (!(interpolGenerator instanceof TraceCheckSpWp)
 				&& !(interpolGenerator instanceof InterpolantConsolidation)) {
-			throw new AssertionError("TWOTRACK only for TraceCheckerSpWp or InterpolantConsolidation");
+			throw new AssertionError("TWOTRACK only for traceCheckSpWp or InterpolantConsolidation");
 		}
 		final List<IPredicate> predicatesA;
 		final List<IPredicate> predicatesB;
 		boolean build2TrackAutomaton = false;
-		if (interpolGenerator instanceof TraceCheckerSpWp) {
-			final TraceCheckerSpWp traceChecker = (TraceCheckerSpWp) interpolGenerator;
-			predicatesA = traceChecker.getForwardPredicates();
-			predicatesB = traceChecker.getBackwardPredicates();
+		if (interpolGenerator instanceof TraceCheckSpWp) {
+			final TraceCheckSpWp traceCheck = (TraceCheckSpWp) interpolGenerator;
+			predicatesA = traceCheck.getForwardPredicates();
+			predicatesB = traceCheck.getBackwardPredicates();
 			build2TrackAutomaton = true;
 		} else if (!((InterpolantConsolidation<?>) interpolGenerator).consolidationSuccessful()) {
 			// if consolidation wasn't successful, then build a 2-Track-Automaton

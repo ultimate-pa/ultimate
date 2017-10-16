@@ -51,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareT
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
 
 /**
  * {@link InterpolantSequenceWeakener} tries to weaken each predicate in a sequence of predicates s.t. it is still
@@ -74,6 +75,7 @@ public abstract class InterpolantSequenceWeakener<HTC extends IHoareTripleChecke
 	// TODO: move statistics in benchmarks class
 	private int mSuccessfulWeakenings;
 	private final List<Rational> mSizeDifferential;
+	private final CegarLoopStatisticsGenerator mCegarLoopBenchmark;
 
 	/**
 	 * Default constructor. Generates result directly.
@@ -89,7 +91,7 @@ public abstract class InterpolantSequenceWeakener<HTC extends IHoareTripleChecke
 	 */
 	public InterpolantSequenceWeakener(final ILogger logger, final HTC htc, final List<P> predicates,
 			final List<LETTER> trace, final P precondition, final P postcondition, final Script script,
-			final BasicPredicateFactory predicateFactory) {
+			final BasicPredicateFactory predicateFactory, final CegarLoopStatisticsGenerator cegarLoopBenchmark) {
 		mSuccessfulWeakenings = 0;
 		mSizeDifferential = new ArrayList<>();
 
@@ -99,6 +101,7 @@ public abstract class InterpolantSequenceWeakener<HTC extends IHoareTripleChecke
 		mPostcondition = postcondition;
 		mScript = script;
 		mPredicateFactory = predicateFactory;
+		mCegarLoopBenchmark = cegarLoopBenchmark;
 		mTripleList = new TripleList<>(predicates, trace, mPrecondition, mPostcondition);
 		final List<LETTER> checkedTrace = Objects.requireNonNull(trace, "trace is null");
 		final List<P> checkedPredicates = Objects.requireNonNull(predicates, "predicates are null");
@@ -290,6 +293,30 @@ public abstract class InterpolantSequenceWeakener<HTC extends IHoareTripleChecke
 	 */
 	protected abstract P refinePreState(final P preState, final LETTER transition, final P postState,
 			final int tracePosition);
+
+	/**
+	 * Stores the ratio of weakening for one pre-state weakening operation.
+	 *
+	 * @param ratio
+	 *            The ratio of the number weakened predicates to the total number of predicates.
+	 */
+	protected void reportWeakeningRatio(final double ratio) {
+		mCegarLoopBenchmark.addAiWeakeningRatio(ratio);
+	}
+
+	/**
+	 * Stores the number of currently removed variables for one pre-state weakening operation.
+	 *
+	 * @param numRemovedVars
+	 *            The number of removed variables.
+	 */
+	protected void reportWeakeningVarsNumRemoved(final int numRemovedVars) {
+		mCegarLoopBenchmark.addAiWeakeningVarsNumRemoved(numRemovedVars);
+	}
+
+	protected void reportConjunctReduction(final int differenceConjuncts) {
+		mCegarLoopBenchmark.addAiConjunctReductionNumber(differenceConjuncts);
+	}
 
 	/**
 	 * @return the (hopefully) weakened sequence of predicates that is still inductive.

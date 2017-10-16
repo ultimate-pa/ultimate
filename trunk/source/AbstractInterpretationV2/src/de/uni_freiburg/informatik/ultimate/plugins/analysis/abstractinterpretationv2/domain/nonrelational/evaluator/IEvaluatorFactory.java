@@ -29,6 +29,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator;
 
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorUtils.EvaluatorType;
 
@@ -44,8 +45,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @param <VARDECL>
  *            Any declaration type.
  */
-public interface IEvaluatorFactory<VALUE, STATE extends IAbstractState<STATE, VARDECL>, VARDECL> {
-	
+public interface IEvaluatorFactory<VALUE, STATE extends IAbstractState<STATE>> {
+
 	/**
 	 * Creates an n-ary evaluator for n-ary expressions.
 	 *
@@ -55,8 +56,8 @@ public interface IEvaluatorFactory<VALUE, STATE extends IAbstractState<STATE, VA
 	 *            The type of the evaluator.
 	 * @return A new {@link INAryEvaluator}.
 	 */
-	INAryEvaluator<VALUE, STATE, VARDECL> createNAryExpressionEvaluator(final int arity, final EvaluatorType type);
-	
+	INAryEvaluator<VALUE, STATE> createNAryExpressionEvaluator(final int arity, final EvaluatorType type);
+
 	/**
 	 * Creates a function evaluator for expressions that contain functions.
 	 *
@@ -66,21 +67,21 @@ public interface IEvaluatorFactory<VALUE, STATE extends IAbstractState<STATE, VA
 	 *            The number of input parameters of the function.
 	 * @return A new {@link IEvaluator}.
 	 */
-	IEvaluator<VALUE, STATE, VARDECL> createFunctionEvaluator(final String functionName, final int inputParamCount,
+	IEvaluator<VALUE, STATE> createFunctionEvaluator(final String functionName, final int inputParamCount,
 			EvaluatorType type);
-	
+
 	/**
 	 * @return A new conditional evaluator.
 	 */
-	IEvaluator<VALUE, STATE, VARDECL> createConditionalEvaluator();
-	
+	IEvaluator<VALUE, STATE> createConditionalEvaluator();
+
 	/**
 	 * Creates an evaluator that represents the top value.
 	 *
 	 * @return A new {@link IEvaluator}.
 	 */
-	IEvaluator<VALUE, STATE, VARDECL> createSingletonValueTopEvaluator(final EvaluatorType type);
-	
+	IEvaluator<VALUE, STATE> createSingletonValueTopEvaluator(final EvaluatorType type);
+
 	/**
 	 * Creates an evaluator for single values that are occurring in expressions.
 	 *
@@ -90,9 +91,8 @@ public interface IEvaluatorFactory<VALUE, STATE extends IAbstractState<STATE, VA
 	 *            The type of the value.
 	 * @return A new {@link IEvaluator}.
 	 */
-	IEvaluator<VALUE, STATE, VARDECL> createSingletonValueExpressionEvaluator(final String value,
-			final Class<?> valueType);
-	
+	IEvaluator<VALUE, STATE> createSingletonValueExpressionEvaluator(final String value, final Class<?> valueType);
+
 	/**
 	 * Creates an evaluator for single variables that are occurring in expressions.
 	 *
@@ -100,8 +100,8 @@ public interface IEvaluatorFactory<VALUE, STATE extends IAbstractState<STATE, VA
 	 *            The name of the variable.
 	 * @return A new {@link IEvaluator}.
 	 */
-	IEvaluator<VALUE, STATE, VARDECL> createSingletonVariableExpressionEvaluator(final VARDECL variableName);
-	
+	IEvaluator<VALUE, STATE> createSingletonVariableExpressionEvaluator(final IProgramVarOrConst variableName);
+
 	/**
 	 * Creates an evaluator for single boolean values that are occurring in expressions.
 	 *
@@ -109,5 +109,5 @@ public interface IEvaluatorFactory<VALUE, STATE extends IAbstractState<STATE, VA
 	 *            The boolean value.
 	 * @return A new {@link IEvaluator}.
 	 */
-	IEvaluator<VALUE, STATE, VARDECL> createSingletonLogicalValueExpressionEvaluator(final BooleanValue value);
+	IEvaluator<VALUE, STATE> createSingletonLogicalValueExpressionEvaluator(final BooleanValue value);
 }

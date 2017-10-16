@@ -131,6 +131,7 @@ public abstract class AbstractSVCOMPTestSuite extends UltimateTestSuite {
 		final int limit = def.getLimit() < 0 ? getFilesPerCategory() : def.getLimit();
 		final Collection<File> inputFiles = TestUtil.limitFiles(allInputFiles, 0, limit);
 
+		int i = 0;
 		for (final File input : inputFiles) {
 			try {
 				// note: do not change the name without also checking
@@ -139,11 +140,14 @@ public abstract class AbstractSVCOMPTestSuite extends UltimateTestSuite {
 				final UltimateRunDefinition urd =
 						new UltimateRunDefinition(input, def.getSettings(), def.getToolchain(), def.getTimeout());
 				testcases.add(buildTestCase(urd, getTestResultDecider(urd), name));
+				++i;
 			} catch (final Throwable ex) {
 				getLogger().error("Exception while creating test case, skipping this one: " + input.getAbsolutePath(),
 						ex);
 			}
 		}
+		// DD: I use this sometimes to determine the set size
+		// System.out.println("Added " + i + " tests for " + def);
 	}
 
 	private static Map<String, Collection<File>> getSetName2InputFiles(final Map<String, File> setName2File,
@@ -220,15 +224,15 @@ public abstract class AbstractSVCOMPTestSuite extends UltimateTestSuite {
 						ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Sum, Aggregate.Average),
 				new ColumnDefinition(CegarLoopStatisticsDefinitions.OverallTime.toString(), "Trace Abstraction Time",
 						ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Sum, Aggregate.Average),
-				new ColumnDefinition("TraceCheckerStatistics_NumberOfCodeBlocks", null,
+				new ColumnDefinition("traceCheckStatistics_NumberOfCodeBlocks", null,
 						ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),
-				new ColumnDefinition("TraceCheckerStatistics_SizeOfPredicatesFP", null,
+				new ColumnDefinition("traceCheckStatistics_SizeOfPredicatesFP", null,
 						ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),
-				new ColumnDefinition("TraceCheckerStatistics_SizeOfPredicatesBP", null,
+				new ColumnDefinition("traceCheckStatistics_SizeOfPredicatesBP", null,
 						ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),
-				new ColumnDefinition("TraceCheckerStatistics_Conjuncts in SSA", null, ConversionContext.BestFitNumber(),
+				new ColumnDefinition("traceCheckStatistics_Conjuncts in SSA", null, ConversionContext.BestFitNumber(),
 						Aggregate.Ignore, Aggregate.Average),
-				new ColumnDefinition("TraceCheckerStatistics_Conjuncts in UnsatCore", null,
+				new ColumnDefinition("traceCheckStatistics_Conjuncts in UnsatCore", null,
 						ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),
 				new ColumnDefinition("InterpolantCoveringCapability", "ICC", ConversionContext.Percent(true, 2),
 						Aggregate.Ignore, Aggregate.Average), };
@@ -408,6 +412,15 @@ public abstract class AbstractSVCOMPTestSuite extends UltimateTestSuite {
 
 		public int getLimit() {
 			return mLimit;
+		}
+
+		@Override
+		public String toString() {
+			if (getLimit() == -1) {
+				return getSetName();
+			}
+			return getSetName() + "(limit=" + getLimit() + ")";
+
 		}
 	}
 }

@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.util.datastructures.relation;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Stream;
 
 /**
  * Nested map that stores a value accessible by 5 different keys.
@@ -86,8 +87,7 @@ public class NestedMap5<K1, K2, K3, K4, K5, V> {
 	}
 
 	/**
-	 * Puts the given value in the nested map. See
-	 * {@link Map#put(Object, Object)}.
+	 * Puts the given value in the nested map. See {@link Map#put(Object, Object)}.
 	 * 
 	 * @param key1
 	 *            First key to store the value at
@@ -101,8 +101,8 @@ public class NestedMap5<K1, K2, K3, K4, K5, V> {
 	 *            Fifth key to store the value at
 	 * @param value
 	 *            Value to store
-	 * @return The previous value associated with key, or <tt>null</tt> if there
-	 *         was no mapping for key. See {@link Map#put(Object, Object)}.
+	 * @return The previous value associated with key, or <tt>null</tt> if there was
+	 *         no mapping for key. See {@link Map#put(Object, Object)}.
 	 */
 	public V put(K1 key1, K2 key2, K3 key3, K4 key4, K5 key5, V value) {
 		NestedMap4<K2, K3, K4, K5, V> k2tok3tok4tok5toV = mK1ToK2ToK3ToK4ToK5V.get(key1);
@@ -111,5 +111,15 @@ public class NestedMap5<K1, K2, K3, K4, K5, V> {
 			mK1ToK2ToK3ToK4ToK5V.put(key1, k2tok3tok4tok5toV);
 		}
 		return k2tok3tok4tok5toV.put(key2, key3, key4, key5, value);
+	}
+
+	/**
+	 * Returns a stream to all values of the nested map. The values are backed by
+	 * the map.
+	 * 
+	 * @return A backed stream to all values of the nested map
+	 */
+	public Stream<V> values() {
+		return this.mK1ToK2ToK3ToK4ToK5V.values().stream().flatMap(NestedMap4::values);
 	}
 }

@@ -38,8 +38,8 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.Config;
 public class AssumptionTest {
 
 	/**
-	 * A test that only executes if Config.STRONG_USAGE_CHECKS is set.  It
-	 * tests that we correctly complain about bad terms used as assumptions.
+	 * A test that only executes if Config.STRONG_USAGE_CHECKS is set. It tests that we correctly complain about bad
+	 * terms used as assumptions.
 	 */
 	@Test
 	public void badAssumptions() {
@@ -50,7 +50,7 @@ public class AssumptionTest {
 			final Sort intsort = solver.sort("Int");
 			solver.declareFun("P", Script.EMPTY_SORT_ARRAY, boolsort);
 			solver.declareFun("Q", Script.EMPTY_SORT_ARRAY, boolsort);
-			solver.declareFun("f", new Sort[]{intsort}, intsort);
+			solver.declareFun("f", new Sort[] { intsort }, intsort);
 			final Term p = solver.term("P");
 			final Term q = solver.term("Q");
 			final Term notp = solver.term("not", p);
@@ -84,7 +84,7 @@ public class AssumptionTest {
 			}
 			// Make sure Boolean terms are supported
 			// I omit try-catch here since junit takes care of catching the
-			// exception and setting the test to failed.  I don't want to lose
+			// exception and setting the test to failed. I don't want to lose
 			// the exception
 			// 4) Assume negation
 			solver.checkSatAssuming(notp);
@@ -92,7 +92,7 @@ public class AssumptionTest {
 			solver.checkSatAssuming(p, q, notp);
 		}
 	}
-	
+
 	/**
 	 * A test to check that we don't keep assumptions that should be deleted.
 	 */
@@ -108,7 +108,7 @@ public class AssumptionTest {
 		isSat = solver.checkSatAssuming(notp);
 		Assert.assertSame(LBool.SAT, isSat);
 	}
-	
+
 	/**
 	 * Test that conflicting assumptions are handled correctly
 	 */
@@ -127,28 +127,7 @@ public class AssumptionTest {
 		isSat = solver.checkSat();
 		Assert.assertSame(LBool.SAT, isSat);
 	}
-	
-	@Test
-	public void testAssumptionRemoval() {
-		final SMTInterpol solver = new SMTInterpol();
-		solver.setLogic(Logics.QF_UFLIA);
-		final Sort boolsort = solver.sort("Bool");
-		final Sort intsort = solver.sort("Int");
-		solver.declareFun("P", Script.EMPTY_SORT_ARRAY, boolsort);
-		solver.declareFun("Q", Script.EMPTY_SORT_ARRAY, boolsort);
-		final Term p = solver.term("P");
-		final Term q = solver.term("Q");
-		solver.assertTerm(solver.term("or", p, q));
-		LBool isSat = solver.checkSatAssuming(solver.term("not", p));
-		// Model should be (not p) q (not r)
-		Assert.assertSame(LBool.SAT, isSat);
-		// Note that q was essentially a unit clause before.  Check that is not
-		// stored as unit clause
-		solver.assertTerm(solver.term("not", q));
-		isSat = solver.checkSat();
-		Assert.assertSame(LBool.SAT, isSat);
-	}
-	
+
 	@Test
 	public void modelproduction() {
 		final SMTInterpol solver = new SMTInterpol();
@@ -163,20 +142,40 @@ public class AssumptionTest {
 		// Check value of assumption
 		LBool isSat = solver.checkSatAssuming(p);
 		Assert.assertSame(LBool.SAT, isSat);
-		// q is essentially undefined, so I don't check it.  Should be false...
-		final Term pval = solver.getValue(new Term[] {p}).get(p);
+		// q is essentially undefined, so I don't check it. Should be false...
+		final Term pval = solver.getValue(new Term[] { p }).get(p);
 		Assert.assertSame(solver.term("true"), pval);
 		// Check value of assumption and derived values
 		isSat = solver.checkSatAssuming(solver.term("not", p));
 		Assert.assertSame(LBool.SAT, isSat);
-		final Map<Term, Term> vals = solver.getValue(new Term[] {p, q});
+		final Map<Term, Term> vals = solver.getValue(new Term[] { p, q });
 		Assert.assertSame(solver.term("false"), vals.get(p));
 		Assert.assertSame(solver.term("true"), vals.get(q));
 		// Check correct unsatisfiability deduction
-		isSat = solver.checkSatAssuming(
-				solver.term("not", p), solver.term("not", q));
+		isSat = solver.checkSatAssuming(solver.term("not", p), solver.term("not", q));
 		Assert.assertSame(LBool.UNSAT, isSat);
-		
+
 	}
 	// More tests are needed that test unsat assumption production, proof production, interpolation
+
+	@Test
+	public void testAssumptionRemoval() {
+		final SMTInterpol solver = new SMTInterpol();
+		solver.setLogic(Logics.QF_UFLIA);
+		final Sort boolsort = solver.sort("Bool");
+		final Sort intsort = solver.sort("Int");
+		solver.declareFun("P", Script.EMPTY_SORT_ARRAY, boolsort);
+		solver.declareFun("Q", Script.EMPTY_SORT_ARRAY, boolsort);
+		final Term p = solver.term("P");
+		final Term q = solver.term("Q");
+		solver.assertTerm(solver.term("or", p, q));
+		LBool isSat = solver.checkSatAssuming(solver.term("not", p));
+		// Model should be (not p) q (not r)
+		Assert.assertSame(LBool.SAT, isSat);
+		// Note that q was essentially a unit clause before. Check that is not
+		// stored as unit clause
+		solver.assertTerm(solver.term("not", q));
+		isSat = solver.checkSat();
+		Assert.assertSame(LBool.SAT, isSat);
+	}
 }

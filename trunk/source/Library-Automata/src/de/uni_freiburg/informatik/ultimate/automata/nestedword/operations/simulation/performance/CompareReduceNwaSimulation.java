@@ -90,7 +90,7 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 
 	@Override
 	public void verifyAutomatonValidity(final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> automaton) {
-		// Do noting to accept nwa automata
+		// Do nothing to accept nwa automata
 	}
 
 	@Override

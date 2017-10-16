@@ -39,9 +39,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractSta
  * @param <STATE>
  * @param <VARDECL>
  */
-public interface IFunctionEvaluator<VALUE, STATE extends IAbstractState<STATE, VARDECL>, VARDECL>
-		extends IEvaluator<VALUE, STATE, VARDECL> {
-	
+public interface IFunctionEvaluator<VALUE, STATE extends IAbstractState<STATE>> extends IEvaluator<VALUE, STATE> {
+
 	/**
 	 * @return The number of input parameters of the function.
 	 */

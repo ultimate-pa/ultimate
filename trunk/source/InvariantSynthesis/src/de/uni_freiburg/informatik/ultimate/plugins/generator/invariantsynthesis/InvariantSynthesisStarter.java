@@ -39,6 +39,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessInvariant;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.DangerInvariantResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.GenericResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.InvariantResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.PositiveResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ProcedureContractResult;
@@ -49,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
+import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithSeverity.Severity;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
@@ -79,6 +81,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pa
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.CFGInvariantsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.ConjunctsPriorizedTemplateIncreasingDimensionsStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.ConservativeTemplateIncreasingDimensionsStrategy;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.DangerInvariantGuesser;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.DefaultTemplateIncreasingDimensionsStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.DisjunctsWithBoundTemplateIncreasingDimensionsStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.ExponentialConjunctsTemplateIncreasingDimensionsStrategy;
@@ -133,6 +136,27 @@ public class InvariantSynthesisStarter {
 			assert kindOfInvariant == KindOfInvariant.SAFETY;
 			precondition = predicateUnifier.getTruePredicate();
 			postcondition = predicateUnifier.getFalsePredicate();
+		}
+		
+		final boolean guessDangerInvariant = prefs
+				.getBoolean(InvariantSynthesisPreferenceInitializer.LABEL_DANGER_INVARIANT_GUESSING);
+		if (kindOfInvariant == KindOfInvariant.DANGER && guessDangerInvariant) {
+			final DangerInvariantGuesser dig = new DangerInvariantGuesser(icfg, services, storage,
+					precondition, predicateFactory, predicateUnifier, icfg.getCfgSmtToolkit());
+			mLogger.info("Constructed danger invariant candidate");
+			if (dig.isDangerInvariant()) {
+				mLogger.info("Candidate is a valid danger invariant");
+				mOverallResult = Result.UNSAFE;
+				reportDangerResults(dig.getCandidateInvariant(), IcfgUtils.getErrorLocations(icfg),
+						mServices.getBacktranslationService());
+			} else {
+				mLogger.info("Candidate is not a danger invariant");
+				mOverallResult = Result.UNKNOWN;
+				final String message = "Did not find a danger invariant";
+				reportResult(new GenericResult(Activator.PLUGIN_ID, message, message, Severity.WARNING));
+			}
+			mRootOfNewModel = null;
+			return;
 		}
 
 		final CFGInvariantsGenerator cfgInvGenerator = new CFGInvariantsGenerator(icfg, services, storage,

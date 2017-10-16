@@ -20,10 +20,10 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Checked\ method.\ Library\ mode\ if\ empty.=main
 #Thu Nov 06 16:26:23 CET 2014
 file_export_version=3.0
-/instance/UltimateCore/Log\ level\ for\ plugins=DEBUG
-\!/instance/UltimateCore=
-@UltimateCore=0.0.1
-/instance/UltimateCore/Show\ long\ description\ of\ results=true
+/instance/de.uni_freiburg.informatik.ultimate.core/Log\ level\ for\ plugins=DEBUG
+\!/instance/de.uni_freiburg.informatik.ultimate.core=
+@de.uni_freiburg.informatik.ultimate.core=0.0.1
+/instance/de.uni_freiburg.informatik.ultimate.core/Show\ long\ description\ of\ results=true
 #Thu Nov 06 16:26:23 CET 2014
 file_export_version=3.0
 \!/instance/de.uni_freiburg.informatik.ultimate.gui=

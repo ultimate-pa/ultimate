@@ -95,6 +95,16 @@ public final class SmtUtils {
 		SIMPLIFY_BDD_PROP, SIMPLIFY_BDD_FIRST_ORDER, SIMPLIFY_QUICK, SIMPLIFY_DDA, NONE
 	}
 
+	private static final boolean EXTENDED_LOCAL_SIMPLIFICATION = false;
+	
+	/**
+	 * Has problems with {@link ElimStore3}. Set to true once 
+	 * {@link ElimStore3} has been replace by {@link ElimStorePlain}.
+	 */
+	private static final boolean FLATTEN_ARRAY_TERMS = true;
+	
+	
+
 	private SmtUtils() {
 		// Prevent instantiation of this utility class
 	}
@@ -149,8 +159,8 @@ public final class SmtUtils {
 		final Term simplified = simplify(script, formula, services, simplificationTechnique);
 		final long sizeAfter = new DAGSize().treesize(simplified);
 		final long endTime = System.nanoTime();
-		final ExtendedSimplificationResult result =
-				new ExtendedSimplificationResult(simplified, endTime - startTime, sizeBefore - sizeAfter, ((double) sizeAfter) / sizeBefore * 100);
+		final ExtendedSimplificationResult result = new ExtendedSimplificationResult(simplified, endTime - startTime,
+				sizeBefore - sizeAfter, ((double) sizeAfter) / sizeBefore * 100);
 		return result;
 	}
 
@@ -184,8 +194,6 @@ public final class SmtUtils {
 		public double getReductionRatioInPercent() {
 			return mReductionRatioInPercent;
 		}
-		
-		
 
 	}
 
@@ -366,10 +374,8 @@ public final class SmtUtils {
 		assert SmtSortUtils.isNumericSort(sort) || SmtSortUtils.isBitvecSort(sort);
 		if (summands.length == 0) {
 
-			if (SmtSortUtils.isIntSort(sort)) {
-				return script.numeral(BigInteger.ZERO);
-			} else if (SmtSortUtils.isRealSort(sort)) {
-				return script.decimal(BigDecimal.ZERO);
+			if (SmtSortUtils.isIntSort(sort) || SmtSortUtils.isRealSort(sort)) {
+				return Rational.ZERO.toTerm(sort);
 			} else if (SmtSortUtils.isBitvecSort(sort)) {
 				return BitvectorUtils.constructTerm(script, BigInteger.ZERO, sort);
 			} else {
@@ -421,7 +427,7 @@ public final class SmtUtils {
 		assert SmtSortUtils.isNumericSort(sort) || SmtSortUtils.isBitvecSort(sort);
 		if (factors.length == 0) {
 			if (SmtSortUtils.isIntSort(sort)) {
-				return script.numeral(BigInteger.ONE);
+				return SmtUtils.constructIntValue(script, BigInteger.ONE);
 			} else if (SmtSortUtils.isRealSort(sort)) {
 				return script.decimal(BigDecimal.ONE);
 			} else if (SmtSortUtils.isBitvecSort(sort)) {
@@ -457,7 +463,7 @@ public final class SmtUtils {
 		}
 		return affine.toTerm(script);
 	}
-	
+
 	/**
 	 * Return product, in affine representation if possible.
 	 *
@@ -473,28 +479,27 @@ public final class SmtUtils {
 		}
 		return affine.toTerm(script);
 	}
-	
+
 	public static Term minus(final Script script, final Term... operands) {
 		if (operands.length <= 1) {
 			throw new UnsupportedOperationException("use neg for unary minus");
-		} else {
-			final Term[] newOperands = new Term[operands.length];
-			newOperands[0] = operands[0];
-			for (int i=1; i<operands.length; i++) {
-				newOperands[i] = neg(script, operands[i]);
-			}
-			String funcname;
-			final Sort sort = operands[0].getSort();
-			if (SmtSortUtils.isNumericSort(sort)) {
-				funcname = "+";
-			} else if (SmtSortUtils.isBitvecSort(sort)) {
-				funcname = "bvadd";
-			} else {
-				throw new UnsupportedOperationException("unsupported sort " + sort);
-			}
-			return sum(script, funcname, newOperands);
 		}
-		
+		final Term[] newOperands = new Term[operands.length];
+		newOperands[0] = operands[0];
+		for (int i = 1; i < operands.length; i++) {
+			newOperands[i] = neg(script, operands[i]);
+		}
+		String funcname;
+		final Sort sort = operands[0].getSort();
+		if (SmtSortUtils.isNumericSort(sort)) {
+			funcname = "+";
+		} else if (SmtSortUtils.isBitvecSort(sort)) {
+			funcname = "bvadd";
+		} else {
+			throw new UnsupportedOperationException("unsupported sort " + sort);
+		}
+		return sum(script, funcname, newOperands);
+
 	}
 
 	/**
@@ -626,12 +631,11 @@ public final class SmtUtils {
 		}
 		return script.term("false");
 	}
-	
+
 	/**
-	 * Returns the equality ("=" lhs rhs), for inputs of array sort. 
-	 * If the term if of the form ("=" a ("store" a k v)) it is simplified to
-	 * ("=" ("select" a k) v).
-	 * Rationale: the latter term is simpler than the first term for our algorithms
+	 * Returns the equality ("=" lhs rhs), for inputs of array sort. If the term if of the form ("=" a ("store" a k v))
+	 * it is simplified to ("=" ("select" a k) v). Rationale: the latter term is simpler than the first term for our
+	 * algorithms
 	 */
 	private static Term arrayEquality(final Script script, final Term lhs, final Term rhs) {
 		if (!lhs.getSort().isArraySort()) {
@@ -686,9 +690,9 @@ public final class SmtUtils {
 		return result;
 	}
 
-	public static Map<Term, Term> termVariables2Constants(final Script script,
+	public static Map<TermVariable, Term> termVariables2Constants(final Script script,
 			final Collection<TermVariable> termVariables, final boolean declareConstants) {
-		final Map<Term, Term> mapping = new HashMap<>();
+		final Map<TermVariable, Term> mapping = new HashMap<>();
 		for (final TermVariable tv : termVariables) {
 			final Term constant = termVariable2constant(script, tv, declareConstants);
 			mapping.put(tv, constant);
@@ -784,6 +788,23 @@ public final class SmtUtils {
 		}
 		return false;
 	}
+	
+	/**
+	 * @return true iff term is some literal of sort Int whose value is the input number.
+	 */
+	public static boolean isIntegerLiteral(final BigInteger number, final Term term) {
+		if (term instanceof ConstantTerm) {
+			if (SmtSortUtils.isIntSort(term.getSort())) {
+				final Object value = ((ConstantTerm) term).getValue();
+				if (value instanceof Rational) {
+					value.equals(Rational.valueOf(number, BigInteger.ONE));
+				} else if (value instanceof BigInteger) {
+					return value.equals(number);
+				}
+			}
+		}
+		return false;
+	}
 
 	/**
 	 * Returns true iff the given term is an atomic formula, which means it does not contain any logical symbols (and,
@@ -831,22 +852,34 @@ public final class SmtUtils {
 	}
 
 	public static Term and(final Script script, final Term... terms) {
+		if (EXTENDED_LOCAL_SIMPLIFICATION) {
+			return andWithExtendedLocalSimplification(script, Arrays.asList(terms));
+		}
 		return Util.and(script, terms);
 	}
 
 	public static Term and(final Script script, final Collection<Term> terms) {
+		if (EXTENDED_LOCAL_SIMPLIFICATION) {
+			return andWithExtendedLocalSimplification(script, terms);
+		}
 		return Util.and(script, terms.toArray(new Term[terms.size()]));
 	}
-	
+
 	public static Term or(final Script script, final Term... terms) {
+		if (EXTENDED_LOCAL_SIMPLIFICATION) {
+			return orWithExtendedLocalSimplification(script, Arrays.asList(terms));
+		}
 		return Util.or(script, terms);
 	}
 
 	public static Term or(final Script script, final Collection<Term> terms) {
+		if (EXTENDED_LOCAL_SIMPLIFICATION) {
+			return orWithExtendedLocalSimplification(script, terms);
+		}
 		return Util.or(script, terms.toArray(new Term[terms.size()]));
 	}
-	
-	public static Term and_NewVersion(final Script script, final Collection<Term> terms) {
+
+	public static Term andWithExtendedLocalSimplification(final Script script, final Collection<Term> terms) {
 		final Set<Term> resultJuncts = new HashSet<>();
 		final Set<Term> negativeJuncts = new HashSet<>();
 		final String connective = "and";
@@ -856,18 +889,17 @@ public final class SmtUtils {
 				isAbsorbing, terms, resultJuncts, negativeJuncts);
 		if (resultIsAbsorbingElement) {
 			return script.term("false");
+		}
+		if (resultJuncts.isEmpty()) {
+			return script.term("true");
+		} else if (resultJuncts.size() == 1) {
+			return resultJuncts.iterator().next();
 		} else {
-			if (resultJuncts.isEmpty()) {
-				return script.term("true");
-			} else if (resultJuncts.size() == 1) {
-				return resultJuncts.iterator().next();
-			} else {
-				return script.term(connective, resultJuncts.toArray(new Term[resultJuncts.size()]));
-			}
+			return script.term(connective, resultJuncts.toArray(new Term[resultJuncts.size()]));
 		}
 	}
-	
-	public static Term or_NewVersion(final Script script, final Collection<Term> terms) {
+
+	public static Term orWithExtendedLocalSimplification(final Script script, final Collection<Term> terms) {
 		final Set<Term> resultJuncts = new HashSet<>();
 		final Set<Term> negativeJuncts = new HashSet<>();
 		final String connective = "or";
@@ -877,40 +909,44 @@ public final class SmtUtils {
 				isAbsorbing, terms, resultJuncts, negativeJuncts);
 		if (resultIsAbsorbingElement) {
 			return script.term("true");
+		}
+		if (resultJuncts.isEmpty()) {
+			return script.term("false");
+		} else if (resultJuncts.size() == 1) {
+			return resultJuncts.iterator().next();
 		} else {
-			if (resultJuncts.isEmpty()) {
-				return script.term("false");
-			} else if (resultJuncts.size() == 1) {
-				return resultJuncts.iterator().next();
-			} else {
-				return script.term(connective, resultJuncts.toArray(new Term[resultJuncts.size()]));
-			}
+			return script.term(connective, resultJuncts.toArray(new Term[resultJuncts.size()]));
 		}
 	}
 
 	/**
-	 * Auxiliary method for constructing simplified versions of conjunctions and disjunctions.
-	 * Does the following simplications
+	 * Auxiliary method for constructing simplified versions of conjunctions and disjunctions. Does the following
+	 * simplications
 	 * <ul>
-	 *   <li> if some junct is neutral element, we can omit it
-	 *   (e.g., we can drop "true" from conjunctions)
-	 *   <li> if some junct is absorbing element, result is equivalent to absorbing element
-	 *   (e.g., "x=0 /\ false" is equivalent to "false")
-	 *   <li> if some junct is has the same connective, we can flatten it
-	 *   (e.g., "((A /\ B) /\ C)" is equivalent to "(A /\ B /\ C)")
-	 *   <li> if some junct and its negation occur, the result is equivalent to the absorbing element
-	 *   (e.g., "A /\ (not A)" is equivalent to "false")
-	 *   <li> if some junct occurs twice we can drop one occurrence.
-	 *   (e.g., "A /\ A" is equivalent to "A")
+	 * <li>if some junct is neutral element, we can omit it (e.g., we can drop "true" from conjunctions)
+	 * <li>if some junct is absorbing element, result is equivalent to absorbing element (e.g., "x=0 /\ false" is
+	 * equivalent to "false")
+	 * <li>if some junct is has the same connective, we can flatten it (e.g., "((A /\ B) /\ C)" is equivalent to "(A /\
+	 * B /\ C)")
+	 * <li>if some junct and its negation occur, the result is equivalent to the absorbing element (e.g., "A /\ (not A)"
+	 * is equivalent to "false")
+	 * <li>if some junct occurs twice we can drop one occurrence. (e.g., "A /\ A" is equivalent to "A")
 	 * </ul>
-	 * @param connective either "and" or "or"
-	 * @param isNeutral {@link Predicate} that is true iff input is the neutral element wrt. the connective
-	 * 			("true" is neutral for "and", "false" is neutral for "or")
-	 * @param isAbsorbing {@link Predicate} that is true iff input is the absorbing element wrt. the connective
-	 * 			("false" is absorbing for "and", "true" is absorbing for "or")
-	 * @param inputJuncts disjuncts or conjuncts that are the input to this simplification
-	 * @param resultJuncts disjuncts or conjuncts that will belong to the final output
-	 * @param negatedJuncts arguments of juncts whose connective is "not"
+	 *
+	 * @param connective
+	 *            either "and" or "or"
+	 * @param isNeutral
+	 *            {@link Predicate} that is true iff input is the neutral element wrt. the connective ("true" is neutral
+	 *            for "and", "false" is neutral for "or")
+	 * @param isAbsorbing
+	 *            {@link Predicate} that is true iff input is the absorbing element wrt. the connective ("false" is
+	 *            absorbing for "and", "true" is absorbing for "or")
+	 * @param inputJuncts
+	 *            disjuncts or conjuncts that are the input to this simplification
+	 * @param resultJuncts
+	 *            disjuncts or conjuncts that will belong to the final output
+	 * @param negatedJuncts
+	 *            arguments of juncts whose connective is "not"
 	 * @return true iff we detected that the result is equivalent to the absorbing element of the connective
 	 */
 	private static boolean recursiveAndOrSimplificationHelper(final Script script, final String connective,
@@ -929,33 +965,31 @@ public final class SmtUtils {
 					if (appTerm.getFunction().getName().equals(connective)) {
 						// current junct has same connective as result
 						// descend recusively to check and add its subjuncts
-						final boolean resultIsAbsorbingElement = recursiveAndOrSimplificationHelper(script, connective,
-								isNeutral, isAbsorbing, Arrays.asList(appTerm.getParameters()), resultJuncts, negatedJuncts);
+						final boolean resultIsAbsorbingElement =
+								recursiveAndOrSimplificationHelper(script, connective, isNeutral, isAbsorbing,
+										Arrays.asList(appTerm.getParameters()), resultJuncts, negatedJuncts);
 						if (resultIsAbsorbingElement) {
 							return true;
-						} else {
-							// the recursive all added all subjuncts,
-							// no need to add the junct itself
-							continue;
 						}
+						// the recursive all added all subjuncts,
+						// no need to add the junct itself
+						continue;
 					} else if (appTerm.getFunction().getName().equals("not")) {
 						if (resultJuncts.contains(appTerm.getParameters()[0])) {
-							// we already have the argument of this not term in the resultJuncts, 
+							// we already have the argument of this not term in the resultJuncts,
 							// hence the result will be equivalent to the absorbing element
 							return true;
-						} else {
-							negatedJuncts.add(appTerm.getParameters()[0]);
 						}
+						negatedJuncts.add(appTerm.getParameters()[0]);
 					}
-				} 
+				}
 			}
 			if (negatedJuncts.contains(junct)) {
-				// we already have the negation of this junct in the resultJuncts, 
+				// we already have the negation of this junct in the resultJuncts,
 				// hence the result will be equivalent to the absorbing element
 				return true;
-			} else {
-				resultJuncts.add(junct);
 			}
+			resultJuncts.add(junct);
 		}
 		return false;
 	}
@@ -1143,48 +1177,23 @@ public final class SmtUtils {
 			}
 			result = comparison(script, funcname, params[0], params[1]);
 			break;
-		// case "store": {
-		// final Term array = params[0];
-		// final Term idx = params[1];
-		// final Term nestedIdx = getArrayStoreIdx(array);
-		// if (nestedIdx != null) {
-		// // Check for store-over-store
-		// if (nestedIdx.equals(idx)) {
-		// // Found store-over-store => ignore inner store
-		// final ApplicationTerm appArray = (ApplicationTerm) array;
-		// result = script.term(funcname,
-		// appArray.getParameters()[0], params[1], params[2]);
-		// } else {
-		// result = script.term(funcname, indices, null, params);
-		// }
-		// } else {
-		// result = script.term(funcname, indices, null, params);
-		// }
-		// break;
-		// }
-		// case "select": {
-		// final Term array = params[0];
-		// final Term idx = params[1];
-		// final Term nestedIdx = getArrayStoreIdx(array);
-		// if (nestedIdx != null) {
-		// // Check for store-over-store
-		// if (nestedIdx.equals(idx)) {
-		// // Found store-over-store => ignore inner store
-		// final ApplicationTerm appArray = (ApplicationTerm) array;
-		// // => transform into value
-		// result = appArray.getParameters()[2];
-		// } else {
-		// result = script.term(funcname, indices, null, params);
-		// }
-		// } else {
-		// result = script.term(funcname, indices, null, params);
-		// }
-		// break;
-		// }
+		case "store": {
+			final Term array = params[0];
+			final Term index = params[1];
+			final Term value = params[2];
+			result = store(script, array, index, value);
+			break;
+		}
+		case "select": {
+			final Term array = params[0];
+			final Term index = params[1];
+			result = select(script, array, index);
+			break;
+		}
 		case "zero_extend":
 		case "extract":
 		case "bvsub":
-//		case "bvmul":
+			// case "bvmul":
 		case "bvudiv":
 		case "bvurem":
 		case "bvsdiv":
@@ -1216,11 +1225,57 @@ public final class SmtUtils {
 		}
 		return result;
 	}
+	
+	public static Term select(final Script script, final Term array, final Term index) {
+		final Term result;
+		if (FLATTEN_ARRAY_TERMS) {
+			final Term nestedIdx = getArrayStoreIdx(array);
+			if (nestedIdx != null) {
+				// Check for store-over-store
+				if (nestedIdx.equals(index)) {
+					// Found store-over-store => ignore inner store
+					final ApplicationTerm appArray = (ApplicationTerm) array;
+					// => transform into value
+					result = appArray.getParameters()[2];
+				} else {
+					result = script.term("select", array, index);
+				}
+			} else {
+				result = script.term("select", array, index);
+			}
+		} else {
+			result = script.term("select", array, index);
+		}
+		return result;
+	}
+	
+	
+	public static Term store(final Script script, final Term array, final Term index, final Term value) {
+		final Term result;
+		if (FLATTEN_ARRAY_TERMS) {
+			final Term nestedIdx = getArrayStoreIdx(array);
+			if (nestedIdx != null) {
+				// Check for store-over-store
+				if (nestedIdx.equals(index)) {
+					// Found store-over-store => ignore inner store
+					final ApplicationTerm appArray = (ApplicationTerm) array;
+					result = script.term("store", appArray.getParameters()[0], index, value);
+				} else {
+					result = script.term("store", array, index, value);
+				}
+			} else {
+				result = script.term("store", array, index, value);
+			}
+		} else {
+			result = script.term("store", array, index, value);
+		}
+		return result;
+	}
 
 	/**
 	 * @return idx if array has form (store a idx v) return null if array has a different form
 	 */
-	private final static Term getArrayStoreIdx(final Term array) {
+	public final static Term getArrayStoreIdx(final Term array) {
 		if (array instanceof ApplicationTerm) {
 			final ApplicationTerm appArray = (ApplicationTerm) array;
 			final FunctionSymbol arrayFunc = appArray.getFunction();
@@ -1275,7 +1330,7 @@ public final class SmtUtils {
 			if (affineDivident.isConstant()) {
 				final BigInteger bigIntDivident = toInt(affineDivident.getConstant());
 				final BigInteger modulus = BoogieUtils.euclideanMod(bigIntDivident, bigIntDivisor);
-				return script.numeral(modulus);
+				return constructIntValue(script, modulus);
 			}
 			final Term simplifiedNestedModulo = simplifyNestedModulo(script, divident, bigIntDivisor);
 			if (simplifiedNestedModulo == null) {
@@ -1314,7 +1369,7 @@ public final class SmtUtils {
 							|| bigIntDivisor.mod(bigIntInnerDivisor).equals(BigInteger.ZERO)) {
 						final BigInteger min = bigIntInnerDivisor.min(bigIntDivisor);
 						final Term innerDivisor = appTerm.getParameters()[0];
-						final Term result = mod(script, innerDivisor, script.numeral(min));
+						final Term result = mod(script, innerDivisor, SmtUtils.constructIntValue(script, min));
 						return result;
 					}
 				}
@@ -1335,6 +1390,19 @@ public final class SmtUtils {
 
 	public static Rational toRational(final BigInteger bigInt) {
 		return Rational.valueOf(bigInt, BigInteger.ONE);
+	}
+	
+	public static Rational toRational(final BigDecimal bigDec) {
+		Rational rat;
+		if (bigDec.scale() <= 0) {
+			final BigInteger num = bigDec.toBigInteger();
+			rat = Rational.valueOf(num, BigInteger.ONE);
+		} else {
+			final BigInteger num = bigDec.unscaledValue();
+			final BigInteger denom = BigInteger.TEN.pow(bigDec.scale());
+			rat = Rational.valueOf(num, denom);
+		}
+		return rat;
 	}
 
 	public static Term rational2Term(final Script script, final Rational rational, final Sort sort) {
@@ -1458,7 +1526,7 @@ public final class SmtUtils {
 	 * Returns quantified formula. Drops quantifiers for variables that do not occur in formula. If subformula is
 	 * quantified formula with same quantifier both are merged.
 	 */
-	public static Term quantifier(final Script script, final int quantifier, final Collection<TermVariable> vars,
+	public static Term quantifier(final Script script, final int quantifier, final Set<TermVariable> vars,
 			final Term body) {
 		if (vars.isEmpty()) {
 			return body;
@@ -1482,8 +1550,7 @@ public final class SmtUtils {
 	/**
 	 * Returns a new {@link Set} that contains all variables that are contained in vars and occur freely in term.
 	 */
-	public static Set<TermVariable> filterToVarsThatOccurFreelyInTerm(final Collection<TermVariable> vars,
-			final Term term) {
+	public static Set<TermVariable> filterToVarsThatOccurFreelyInTerm(final Set<TermVariable> vars, final Term term) {
 		final HashSet<TermVariable> result = new HashSet<>();
 		for (final TermVariable tv : Arrays.asList(term.getFreeVars())) {
 			if (vars.contains(tv)) {
@@ -1670,5 +1737,13 @@ public final class SmtUtils {
 		} else {
 			throw new AssertionError("unknown quantifier");
 		}
+	}
+	
+	/**
+	 * This is an (the) alternative to script.numeral that constructs an integer
+	 * constant that respects the UltimateNormalForm. See {@link UltimateNormalFormUtils}.
+	 */
+	public static Term constructIntValue(final Script script, final BigInteger number) {
+		return Rational.valueOf(number, BigInteger.ONE).toTerm(SmtSortUtils.getIntSort(script));
 	}
 }

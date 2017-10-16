@@ -41,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IfThenElseExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.typeutils.TypeUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -97,7 +97,7 @@ public class OctAssumeProcessor {
 			return new ArrayList<>(); // assume false
 
 		} else if (expr instanceof IdentifierExpression) {
-			final IBoogieVar var = mPostOp.getBoogieVar((IdentifierExpression) expr);
+			final IProgramVarOrConst var = mPostOp.getBoogieVar((IdentifierExpression) expr);
 			final BoolValue value = BoolValue.get(!isNegated);
 			oldStates.forEach(s -> s.assumeBooleanVar(var, value));
 			return oldStates;
@@ -352,8 +352,8 @@ public class OctAssumeProcessor {
 		}
 
 		// from now on handle (affExpr - c != 0) as (affExpr <= c) or (affExpr >= c) ----------------
-		BigDecimal leC; //        affExpr \in [-\inf,  leC] ...
-		BigDecimal geC; // ... or affExpr \in [  geC, \inf]
+		BigDecimal leC; // affExpr \in [-\inf, leC] ...
+		BigDecimal geC; // ... or affExpr \in [ geC, \inf]
 		leC = geC = affExpr.getConstant().negate();
 		if (intRelation) {
 			// in case of integers: (affExpr - c != 0) as (affExpr <= c-1) or (affExpr >= c+1)
@@ -465,8 +465,8 @@ public class OctAssumeProcessor {
 	 *            Pre-states -- may be modified in-place.
 	 * @return Post-states
 	 */
-	private static List<OctDomainState> processAffineLtZero(AffineExpression affExpr,
-			final boolean intRelation, final boolean strictRelation, final List<OctDomainState> oldStates) {
+	private static List<OctDomainState> processAffineLtZero(AffineExpression affExpr, final boolean intRelation,
+			final boolean strictRelation, final List<OctDomainState> oldStates) {
 
 		if (affExpr.getCoefficients().size() > 2 || (affExpr = affExpr.unitCoefficientForm()) == null) {
 			return oldStates;
@@ -476,11 +476,11 @@ public class OctAssumeProcessor {
 		BigDecimal c = affExpr.getConstant().negate();
 		if (intRelation) {
 			if (!AbsIntUtil.isIntegral(c)) {
-				// int <= 1.5   ==>   int <= 1
-				// int <  1.5   ==>   int <= 1
+				// int <= 1.5 ==> int <= 1
+				// int < 1.5 ==> int <= 1
 				c = c.setScale(0, RoundingMode.FLOOR);
 			} else if (strictRelation) { // && c is int
-				// int < 2   ==>   int <= 1
+				// int < 2 ==> int <= 1
 				c = c.subtract(BigDecimal.ONE);
 			}
 		}

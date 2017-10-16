@@ -44,14 +44,20 @@ public class DangerInvariantsTest extends AbstractTraceAbstractionTestSuite {
 
 	private static final String[] mPrograms = {
 			"examples/programs/dangerInvariants",
+			// "examples/programs/regression",
 			// "examples/ultimate-benchmarks/pathprograms/20170417-DifficultOverflow/MapElim",
 			// "examples/ultimate-benchmarks/pathprograms/20170417-DifficultOverflow/ModNeigh-MapElim",
 			// "examples/ultimate-benchmarks/pathprograms/20170417-DifficultReach/MapElim",
 			// "examples/ultimate-benchmarks/pathprograms/20170417-DifficultReach/MapElim-ModNeigh",
 			// "examples/ultimate-benchmarks/pathprograms/20170417-DifficultReach/ModNeigh-MapElim",
+//			"examples/ultimate-benchmarks/pathprograms/",
 	};
 
-	private static final String[] mSettings = { "automizer/dangerInvariants/dangerInvariants.epf" };
+	private static final String[] mSettings = {
+			"automizer/dangerInvariants/dangerInvariants.epf",
+			// "automizer/dangerInvariants/dangerInvariants_Nonlinear.epf",
+//			"automizer/dangerInvariants/dangerInvariantsGuessing.epf",
+	};
 
 	@Override
 	public long getTimeout() {

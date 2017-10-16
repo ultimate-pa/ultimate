@@ -649,7 +649,7 @@ command ::= SETLOGIC symbol:logic
             } catch(SMTLIBException se) {
             	parser.env.printError(se.getMessage());
             } :}
-          | CHECKSATASSUMING LPAR term+:t RPAR
+          | CHECKSATASSUMING LPAR term*:t RPAR
             {: try {
                 Script.LBool res = parser.env.getScript().checkSatAssuming(t);
                 parser.env.printResponse(res);

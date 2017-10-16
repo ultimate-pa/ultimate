@@ -27,7 +27,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -79,7 +78,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Ac
  * @author Matthias Heizmann
  *
  */
-public abstract class AbstractInterpolantAutomaton<LETTER> implements INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> {
+public abstract class AbstractInterpolantAutomaton<LETTER>
+		implements INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> {
 
 	public enum Mode {
 		ON_DEMAND_CONSTRUCTION, READ_ONLY
@@ -120,7 +120,8 @@ public abstract class AbstractInterpolantAutomaton<LETTER> implements INwaOutgoi
 		mCaSucComp = new CallSuccessorComputationHelper();
 		mReSucComp = new ReturnSuccessorComputationHelper();
 		mAlreadyConstructedAutomaton = new NestedWordAutomatonCache<>(new AutomataLibraryServices(mServices),
-				inputInterpolantAutomaton.getVpAlphabet(), (IEmptyStackStateFactory) inputInterpolantAutomaton.getStateFactory());
+				inputInterpolantAutomaton.getVpAlphabet(),
+				(IEmptyStackStateFactory) inputInterpolantAutomaton.getStateFactory());
 		if (useEfficientTotalAutomatonBookkeeping) {
 			mSuccessorComputationBookkeeping = new SuccessorComputationBookkeepingForTotalAutomata();
 		} else {
@@ -219,7 +220,7 @@ public abstract class AbstractInterpolantAutomaton<LETTER> implements INwaOutgoi
 	public final Set<LETTER> lettersCall(final IPredicate state) {
 		return getVpAlphabet().getCallAlphabet();
 	}
-	
+
 	@Override
 	public final Set<LETTER> lettersReturn(final IPredicate state, final IPredicate hier) {
 		return getVpAlphabet().getReturnAlphabet();
@@ -303,7 +304,7 @@ public abstract class AbstractInterpolantAutomaton<LETTER> implements INwaOutgoi
 		}
 		return "automaton under construction";
 	}
-	
+
 	public int computeNumberOfInternalTransitions() {
 		return mAlreadyConstructedAutomaton.computeNumberOfInternalTransitions();
 	}
@@ -364,9 +365,6 @@ public abstract class AbstractInterpolantAutomaton<LETTER> implements INwaOutgoi
 			assert resHier == null;
 			final Collection<IPredicate> succs =
 					NestedWordAutomataUtils.constructInternalSuccessors(mInputInterpolantAutomaton, resPred, letter);
-			if (succs == null) {
-				return Collections.emptySet();
-			}
 			return succs;
 		}
 
@@ -411,9 +409,6 @@ public abstract class AbstractInterpolantAutomaton<LETTER> implements INwaOutgoi
 			assert resHier == null;
 			final Collection<IPredicate> succs =
 					NestedWordAutomataUtils.constructCallSuccessors(mInputInterpolantAutomaton, resPred, letter);
-			if (succs == null) {
-				return Collections.emptySet();
-			}
 			return succs;
 		}
 
@@ -454,9 +449,6 @@ public abstract class AbstractInterpolantAutomaton<LETTER> implements INwaOutgoi
 				final LETTER letter) {
 			final Collection<IPredicate> succs = NestedWordAutomataUtils
 					.constructReturnSuccessors(mInputInterpolantAutomaton, resPred, resHier, letter);
-			if (succs == null) {
-				return Collections.emptySet();
-			}
 			return succs;
 		}
 
@@ -556,27 +548,18 @@ public abstract class AbstractInterpolantAutomaton<LETTER> implements INwaOutgoi
 		@Override
 		public boolean areInternalSuccsComputed(final IPredicate state, final LETTER letter) {
 			final Collection<IPredicate> succs = mAlreadyConstructedAutomaton.succInternal(state, letter);
-			if (succs == null) {
-				return false;
-			}
 			return succs.iterator().hasNext();
 		}
 
 		@Override
 		public boolean areCallSuccsComputed(final IPredicate state, final LETTER call) {
 			final Collection<IPredicate> succs = mAlreadyConstructedAutomaton.succCall(state, call);
-			if (succs == null) {
-				return false;
-			}
 			return succs.iterator().hasNext();
 		}
 
 		@Override
 		public boolean areReturnSuccsComputed(final IPredicate state, final IPredicate hier, final LETTER ret) {
 			final Collection<IPredicate> succs = mAlreadyConstructedAutomaton.succReturn(state, hier, ret);
-			if (succs == null) {
-				return false;
-			}
 			return succs.iterator().hasNext();
 		}
 

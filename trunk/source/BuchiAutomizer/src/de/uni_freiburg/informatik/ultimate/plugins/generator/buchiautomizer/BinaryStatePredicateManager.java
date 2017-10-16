@@ -65,7 +65,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheck;
 
 public class BinaryStatePredicateManager {
 
@@ -501,27 +501,27 @@ public class BinaryStatePredicateManager {
 	}
 
 	private Term getRankGeq0(final IProgramVar oldRankVariable) {
-		final Term geq = mScript.term(">=", oldRankVariable.getTermVariable(), mScript.numeral(BigInteger.ZERO));
+		final Term geq = mScript.term(">=", oldRankVariable.getTermVariable(), SmtUtils.constructIntValue(mScript, BigInteger.ZERO));
 		return geq;
 	}
 
 	public boolean checkSupportingInvariant(IPredicate siPredicate, final NestedWord<? extends IIcfgTransition<?>> stem,
 			final NestedWord<? extends IAction> loop, final ModifiableGlobalsTable modifiableGlobalsTable) {
 		boolean result = true;
-		TraceChecker traceChecker;
+		TraceCheck traceCheck;
 		final IPredicate truePredicate = mPredicateFactory.newPredicate(mManagedScript.getScript().term("true"));
 		if (isTrue(siPredicate)) {
 			siPredicate = truePredicate;
 		}
-		traceChecker = new TraceChecker(truePredicate, siPredicate, new TreeMap<Integer, IPredicate>(), stem,
+		traceCheck = new TraceCheck(truePredicate, siPredicate, new TreeMap<Integer, IPredicate>(), stem,
 				mCsToolkit, AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, false);
-		final LBool stemCheck = traceChecker.isCorrect();
+		final LBool stemCheck = traceCheck.isCorrect();
 		if (stemCheck != LBool.UNSAT) {
 			result = false;
 		}
-		traceChecker = new TraceChecker(siPredicate, siPredicate, new TreeMap<Integer, IPredicate>(), stem, mCsToolkit,
+		traceCheck = new TraceCheck(siPredicate, siPredicate, new TreeMap<Integer, IPredicate>(), stem, mCsToolkit,
 				AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, false);
-		final LBool loopCheck = traceChecker.isCorrect();
+		final LBool loopCheck = traceCheck.isCorrect();
 		if (loopCheck != LBool.UNSAT) {
 			result = false;
 		}
@@ -530,10 +530,10 @@ public class BinaryStatePredicateManager {
 
 	public boolean checkRankDecrease(final NestedWord<? extends IIcfgTransition<?>> loop,
 			final ModifiableGlobalsTable modifiableGlobalsTable) {
-		final TraceChecker traceChecker =
-				new TraceChecker(mRankEqualityAndSi, mRankDecreaseAndBound, new TreeMap<Integer, IPredicate>(), loop,
+		final TraceCheck traceCheck =
+				new TraceCheck(mRankEqualityAndSi, mRankDecreaseAndBound, new TreeMap<Integer, IPredicate>(), loop,
 						mCsToolkit, AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, false);
-		final LBool loopCheck = traceChecker.isCorrect();
+		final LBool loopCheck = traceCheck.isCorrect();
 		return loopCheck == LBool.UNSAT;
 	}
 

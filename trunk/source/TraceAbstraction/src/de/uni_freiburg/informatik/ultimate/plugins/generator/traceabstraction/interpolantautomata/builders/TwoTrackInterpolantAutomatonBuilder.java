@@ -66,7 +66,7 @@ public class TwoTrackInterpolantAutomatonBuilder<LETTER> implements IInterpolant
 	 * 
 	 * @param nestedRun
 	 * @param csToolkit
-	 * @param traceChecker
+	 * @param traceCheck
 	 * @param abstraction
 	 * 
 	 */

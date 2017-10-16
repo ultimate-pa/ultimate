@@ -37,31 +37,38 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareT
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 
 /**
- * Provides rules that might be added to an interpolant automaton during the generalization phase. 
- * 
- * 
+ * Provides rules that might be added to an interpolant automaton during the generalization phase.
+ *
+ *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  */
 public class CandidateRuleProvider {
-	
-	
-	
-	private Set<TreeAutomatonRule<HornClause, IPredicate>> mCandidateRules;
+
+
+
+	private final Set<TreeAutomatonRule<HornClause, IPredicate>> mCandidateRules;
 
 	/**
 	 * Triggers computation of candidate rules.
 	 * Result can be obtained via getter method.
-	 * 
+	 *
 	 * @param originalTreeRun
-	 * @param hcSymbolsToInterpolants 
-	 * @param alphabet 
+	 * @param hcSymbolsToInterpolants
+	 * @param alphabet
 	 */
-	public CandidateRuleProvider(ITreeAutomatonBU<HornClause, IPredicate> originalTreeRun, 
-			HCHoareTripleChecker hoareTripleChecker) {
+	public CandidateRuleProvider(final ITreeAutomatonBU<HornClause, IPredicate> originalTreeRun,
+			final HCHoareTripleChecker hoareTripleChecker) {
 		mCandidateRules = new HashSet<>();
-		
+
 		for (final TreeAutomatonRule<HornClause, IPredicate> rule : originalTreeRun.getRules()) {
+			if (rule.getDest().equals(hoareTripleChecker.getFalsePredicate())) {
+				/*
+				 * Rule of the form "... -> False"
+				 * Finding a new destination would be useless.
+				 */
+				continue;
+			}
 			for (final IPredicate dest : originalTreeRun.getStates()) {
 				if (hoareTripleChecker.check(rule.getSource(), rule.getLetter(), dest) == Validity.VALID) {
 					mCandidateRules.add(new TreeAutomatonRule<HornClause, IPredicate>(rule.getLetter(), rule.getSource(), dest));

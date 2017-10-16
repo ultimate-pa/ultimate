@@ -44,6 +44,7 @@ import java.util.function.Consumer;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
 
 /**
@@ -1761,7 +1762,7 @@ public class OctMatrix {
 		final Term t1 = subtrahend;
 		final boolean subtrahendIsInt = SmtSortUtils.isIntSort(t1.getSort());
 		if (minuendIsInt && subtrahendIsInt) {
-			tBound = script.numeral(bound.getValue().round(new MathContext(0, RoundingMode.FLOOR)).toBigIntegerExact());
+			tBound = SmtUtils.constructIntValue(script, bound.getValue().round(new MathContext(0, RoundingMode.FLOOR)).toBigIntegerExact());
 		} else {
 			tBound = script.decimal(bound.getValue());
 			if (minuendIsInt) {

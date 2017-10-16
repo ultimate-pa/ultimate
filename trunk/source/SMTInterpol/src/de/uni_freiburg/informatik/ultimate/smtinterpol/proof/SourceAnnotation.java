@@ -25,45 +25,49 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Clause;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.IAnnotation;
 
 /**
- * Class used to annotate the input formulas such that interpolation is able to
- * discover the origin of a clause.
+ * Class used to annotate the input formulas such that interpolation is able to discover the origin of a clause.
+ * 
  * @author Juergen Christ
  */
 public class SourceAnnotation implements IAnnotation {
-	public static final SourceAnnotation EMPTY_SOURCE_ANNOT =
-			new SourceAnnotation("", null);
+	public static final SourceAnnotation EMPTY_SOURCE_ANNOT = new SourceAnnotation("", null);
 	private final String mAnnot;
 	private final Term mSource;
-	public SourceAnnotation(String annot, Term source) {
+
+	public SourceAnnotation(final String annot, final Term source) {
 		mAnnot = annot;
 		mSource = source;
 	}
-	public SourceAnnotation(SourceAnnotation orig, Term newSource) {
+
+	public SourceAnnotation(final SourceAnnotation orig, final Term newSource) {
 		mAnnot = orig.mAnnot;
 		mSource = newSource;
 	}
+
 	public String getAnnotation() {
 		return mAnnot;
 	}
+
 	public Term getSource() {
 		return mSource;
 	}
+
 	@Override
 	public String toString() {
 		return mAnnot;
 	}
+
 	@Override
-	public Term toTerm(Clause cls, Theory theory) {
+	public Term toTerm(final Clause cls, final Theory theory) {
 		Term res = cls.toTerm(theory);
 		if (mSource == null) {
 			// Partial proof mode
 			res = theory.term("@asserted", mAnnot.isEmpty() ? res
-					: theory.annotatedTerm(new Annotation[] {
-						new Annotation(":input", mAnnot)
-					}, res));
+					: theory.annotatedTerm(new Annotation[] { new Annotation(":input", mAnnot) }, res));
 		} else {
 			// Full proof mode
-			res = theory.term("@clause", mSource, res);
+			res = theory.term("@clause", mSource, mAnnot.isEmpty() ? res
+					: theory.annotatedTerm(new Annotation[] { new Annotation(":input", mAnnot) }, res));
 		}
 		return res;
 	}

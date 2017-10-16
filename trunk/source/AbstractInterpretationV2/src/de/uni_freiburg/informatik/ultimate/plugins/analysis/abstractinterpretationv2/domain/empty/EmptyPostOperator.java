@@ -39,21 +39,20 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPos
  * @param <ACTION>
  * @param <VARDECL>
  */
-public final class EmptyPostOperator<ACTION, VARDECL>
-		implements IAbstractPostOperator<EmptyDomainState<VARDECL>, ACTION, VARDECL> {
+public final class EmptyPostOperator<ACTION> implements IAbstractPostOperator<EmptyDomainState, ACTION> {
 
 	@Override
-	public List<EmptyDomainState<VARDECL>> apply(final EmptyDomainState<VARDECL> oldstate, final ACTION concrete) {
-		final List<EmptyDomainState<VARDECL>> returnList = new ArrayList<>();
-		returnList.add(new EmptyDomainState<>(new HashSet<>(oldstate.getVariables())));
+	public List<EmptyDomainState> apply(final EmptyDomainState oldstate, final ACTION concrete) {
+		final List<EmptyDomainState> returnList = new ArrayList<>();
+		returnList.add(new EmptyDomainState(new HashSet<>(oldstate.getVariables())));
 		return returnList;
 	}
 
 	@Override
-	public List<EmptyDomainState<VARDECL>> apply(final EmptyDomainState<VARDECL> oldstate,
-			final EmptyDomainState<VARDECL> oldstateWithFreshVariables, final ACTION transition) {
-		final List<EmptyDomainState<VARDECL>> returnList = new ArrayList<>();
-		returnList.add(new EmptyDomainState<>(new HashSet<>(oldstateWithFreshVariables.getVariables())));
+	public List<EmptyDomainState> apply(final EmptyDomainState oldstate,
+			final EmptyDomainState oldstateWithFreshVariables, final ACTION transition) {
+		final List<EmptyDomainState> returnList = new ArrayList<>();
+		returnList.add(new EmptyDomainState(new HashSet<>(oldstateWithFreshVariables.getVariables())));
 		return returnList;
 	}
 }

@@ -1,0 +1,7 @@
+#Thu Aug 31 18:46:39 GMT+01:00 2017
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.invariantsynthesis=
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.invariantsynthesis/Kind\ of\ invariant=DANGER
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.invariantsynthesis/Large-Block-Encoding=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.invariantsynthesis/Guess\ danger\ invariant=true
+@de.uni_freiburg.informatik.ultimate.plugins.generator.invariantsynthesis=0.1.20
+file_export_version=3.0

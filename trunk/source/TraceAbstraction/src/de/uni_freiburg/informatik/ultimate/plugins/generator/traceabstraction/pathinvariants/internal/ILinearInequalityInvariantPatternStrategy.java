@@ -115,6 +115,17 @@ public interface ILinearInequalityInvariantPatternStrategy<IPT> {
 	IPT getPatternForTransition(IcfgEdge transition, int round, Script solver, String prefix);
 
 	/**
+	 * Get the set of integer coefficients for the given transition.
+	 *
+	 * @param transition
+	 *            the transition
+	 * @return a set of coefficients
+	 * @throws UnsupportedOperationException
+	 *             when patterns for transitions are not supported by the current strategy.
+	 */
+	Set<Term> getIntegerCoefficientsForTransition(final IcfgEdge transition);
+
+	/**
 	 * Returns the maximal number of attempts that should be respected while trying to find a solution for the constraints.
 	 */
 	public int getMaxRounds();

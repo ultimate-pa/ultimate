@@ -41,7 +41,7 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint;
  * @param <EXPRESSION>
  *            The type of the expressions of this equality provider.
  */
-public interface IEqualityProvider<STATE extends IAbstractState<STATE, VARDECL>, VARDECL, EXPRESSION> {
+public interface IEqualityProvider<STATE extends IAbstractState<STATE>, EXPRESSION> {
 
 	/**
 	 * Checks whether two expressions over a given abstract state are equal, i.e. whether they evaluate to the same

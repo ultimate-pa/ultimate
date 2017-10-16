@@ -34,6 +34,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
@@ -48,11 +49,14 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ILocalProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -94,7 +98,7 @@ public final class CallInfoCache {
 
 	private CallInfo createCallInfo(final CallStatement callStatement) {
 		final Expression[] args = callStatement.getArguments();
-		final List<IBoogieVar> realInParams = getInParams(callStatement);
+		final List<IProgramVarOrConst> realInParams = getInParams(callStatement);
 		final AssignmentStatement oldVarAssign = getOldvarAssign(callStatement);
 
 		// If there are no arguments, we don't need to rewrite states and thus no inparam assign.
@@ -108,12 +112,12 @@ public final class CallInfoCache {
 		final List<String> tmpParamNames =
 				getArgumentTemporaries(args.length, getForbiddenNames(callStatement.getMethodName()));
 		final List<LeftHandSide> idents = new ArrayList<>();
-		final Map<LeftHandSide, IBoogieVar> tmpVarUses = new HashMap<>();
-		final List<IBoogieVar> tmpParamVars = new ArrayList<>();
+		final Map<LeftHandSide, IProgramVarOrConst> tmpVarUses = new HashMap<>();
+		final List<IProgramVarOrConst> tmpParamVars = new ArrayList<>();
 		final ILocation loc = callStatement.getLocation();
 		for (int i = 0; i < args.length; i++) {
 			final String name = tmpParamNames.get(i);
-			final IBoogieVar boogieVar = AbsIntUtil.createTemporaryIBoogieVar(name, args[i].getType());
+			final IProgramVarOrConst boogieVar = AbsIntUtil.createTemporaryIBoogieVar(name, args[i].getType());
 			final VariableLHS lhs = new VariableLHS(loc, name);
 			tmpParamVars.add(boogieVar);
 			tmpVarUses.put(lhs, boogieVar);
@@ -168,9 +172,12 @@ public final class CallInfoCache {
 	 * </code>
 	 */
 	private AssignmentStatement getOldvarAssign(final CallStatement callStatement) {
-		// TODO: Can we restrict the oldvars we need to track somehow?
-		final Set<IProgramNonOldVar> globals = mCfgSmtToolkit.getSymbolTable().getGlobals();
-		final int modglobsize = globals.size();
+		final UnmodifiableTransFormula ova =
+				mCfgSmtToolkit.getOldVarsAssignmentCache().getOldVarsAssignment(callStatement.getMethodName());
+		final Map<IProgramVar, TermVariable> ovaOutvars = ova.getOutVars();
+		final Set<IProgramNonOldVar> modifiedGlobals = mCfgSmtToolkit.getSymbolTable().getGlobals().stream()
+				.filter(a -> ovaOutvars.containsKey(a)).collect(Collectors.toSet());
+		final int modglobsize = modifiedGlobals.size();
 		if (modglobsize == 0) {
 			return null;
 		}
@@ -178,7 +185,8 @@ public final class CallInfoCache {
 		final Expression[] rhs = new Expression[modglobsize];
 		int i = 0;
 		final ILocation loc = callStatement.getLocation();
-		for (final IProgramNonOldVar modGlob : globals) {
+
+		for (final IProgramNonOldVar modGlob : modifiedGlobals) {
 			final DeclarationInformation declInfo = new DeclarationInformation(StorageClass.GLOBAL, null);
 			final IBoogieType bType =
 					mSymbolTable.getTypeForVariableSymbol(modGlob.getGloballyUniqueId(), StorageClass.GLOBAL, null);
@@ -195,17 +203,17 @@ public final class CallInfoCache {
 	// return AbsIntUtil.intersect(modGlobs, mCfgSmtToolkit.getSymbolTable().getGlobals());
 	// }
 
-	private List<IBoogieVar> getInParams(final CallStatement callStatement) {
+	private List<IProgramVarOrConst> getInParams(final CallStatement callStatement) {
 		final Procedure procedure = getProcedure(callStatement.getMethodName());
 		assert procedure != null;
 		final VarList[] inParams = procedure.getInParams();
-		final List<IBoogieVar> realParamVars = new ArrayList<>();
+		final List<IProgramVarOrConst> realParamVars = new ArrayList<>();
 
 		final Map<String, ILocalProgramVar> name2locals = getName2Locals(callStatement.getMethodName());
 
 		for (final VarList varlist : inParams) {
 			for (final String var : varlist.getIdentifiers()) {
-				final IBoogieVar bVar = (IBoogieVar) name2locals.get(var);
+				final IProgramVarOrConst bVar = name2locals.get(var);
 				assert bVar != null;
 				realParamVars.add(bVar);
 			}
@@ -244,19 +252,19 @@ public final class CallInfoCache {
 
 	public static final class CallInfo {
 		private final AssignmentStatement mInParamAssign;
-		private final List<IBoogieVar> mTmpVars;
-		private final Map<LeftHandSide, IBoogieVar> mTmpVarUses;
-		private final List<IBoogieVar> mRealInParams;
+		private final List<IProgramVarOrConst> mTmpVars;
+		private final Map<LeftHandSide, IProgramVarOrConst> mTmpVarUses;
+		private final List<IProgramVarOrConst> mRealInParams;
 		private final AssignmentStatement mOldVarAssign;
-		private final List<Pair<IBoogieVar, IBoogieVar>> mInParam2TmpVars;
+		private final List<Pair<IProgramVarOrConst, IProgramVarOrConst>> mInParam2TmpVars;
 
-		private CallInfo(final List<IBoogieVar> realInParams, final AssignmentStatement oldVarAssign) {
+		private CallInfo(final List<IProgramVarOrConst> realInParams, final AssignmentStatement oldVarAssign) {
 			this(realInParams, oldVarAssign, null, Collections.emptyList(), Collections.emptyMap());
 		}
 
-		private CallInfo(final List<IBoogieVar> realInParams, final AssignmentStatement oldVarAssign,
-				final AssignmentStatement inParamAssign, final List<IBoogieVar> tmpVars,
-				final Map<LeftHandSide, IBoogieVar> tmpVarUses) {
+		private CallInfo(final List<IProgramVarOrConst> realInParams, final AssignmentStatement oldVarAssign,
+				final AssignmentStatement inParamAssign, final List<IProgramVarOrConst> tmpVars,
+				final Map<LeftHandSide, IProgramVarOrConst> tmpVarUses) {
 			mOldVarAssign = oldVarAssign;
 			mInParamAssign = inParamAssign;
 			mTmpVars = Collections.unmodifiableList(tmpVars);
@@ -264,26 +272,27 @@ public final class CallInfoCache {
 			mRealInParams = Collections.unmodifiableList(realInParams);
 
 			assert realInParams.size() == tmpVars.size();
-			final List<Pair<IBoogieVar, IBoogieVar>> inparams2tmpvars = new ArrayList<>(realInParams.size());
+			final List<Pair<IProgramVarOrConst, IProgramVarOrConst>> inparams2tmpvars =
+					new ArrayList<>(realInParams.size());
 			for (int i = 0; i < realInParams.size(); ++i) {
 				inparams2tmpvars.add(new Pair<>(realInParams.get(i), tmpVars.get(i)));
 			}
 			mInParam2TmpVars = Collections.unmodifiableList(inparams2tmpvars);
 		}
 
-		public List<IBoogieVar> getRealInParams() {
+		public List<IProgramVarOrConst> getRealInParams() {
 			return mRealInParams;
 		}
 
-		public List<IBoogieVar> getTempInParams() {
+		public List<IProgramVarOrConst> getTempInParams() {
 			return mTmpVars;
 		}
 
-		public Map<LeftHandSide, IBoogieVar> getLhs2TmpVar() {
+		public Map<LeftHandSide, IProgramVarOrConst> getLhs2TmpVar() {
 			return mTmpVarUses;
 		}
 
-		public List<Pair<IBoogieVar, IBoogieVar>> getInParam2TmpVars() {
+		public List<Pair<IProgramVarOrConst, IProgramVarOrConst>> getInParam2TmpVars() {
 			return mInParam2TmpVars;
 		}
 

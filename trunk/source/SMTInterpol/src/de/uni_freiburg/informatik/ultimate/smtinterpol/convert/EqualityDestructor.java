@@ -148,23 +148,21 @@ public class EqualityDestructor extends NonRecursive {
 				} else {
 					final Theory t = appTerm.getTheory();
 					if (appTerm.getFunction() == t.mNot) {
-						setResult(mUtils.createNot(newArgs[0]));
+						setResult(mUtils.convertNot(appTerm));
 					} else if (appTerm.getFunction() == t.mOr) {
-						setResult(mUtils.createOr(newArgs));
+						setResult(mUtils.convertOr(appTerm));
 					} else if (appTerm.getFunction().getName().equals("=")) {
-						setResult(mUtils.createEq(newArgs));
+						setResult(mUtils.convertEq(appTerm));
 					} else if (appTerm.getFunction().getName().equals("<=")) {
-						setResult(mUtils.createLeq0(newArgs[0]));
+						setResult(mUtils.convertLeq0(appTerm));
 					} else if (appTerm.getFunction().getName().equals("ite")) {
-						setResult(mUtils.createIte(
-								newArgs[0], newArgs[1], newArgs[2]));
+						setResult(mUtils.convertIte(appTerm));
 					} else {
 						assert !appTerm.getFunction().isIntern();
 						setResult(t.term(appTerm.getFunction(), newArgs));
 					}
 				}
 			}
-			
 		}.transform(qbody);
 	}
 }

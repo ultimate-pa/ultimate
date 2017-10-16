@@ -132,8 +132,7 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 		if (root instanceof Unit) {
 			throw new UnsupportedOperationException("Your input file is a Boogie program. This plugin takes as input a C program.");
 		}
-		
-		throw new UnsupportedOperationException("This plugin takes as input a C program. Your input is not a C program.");
+		return false;
 	}
 
 	private void extractWitnessInformation(final WitnessNode wnode) {

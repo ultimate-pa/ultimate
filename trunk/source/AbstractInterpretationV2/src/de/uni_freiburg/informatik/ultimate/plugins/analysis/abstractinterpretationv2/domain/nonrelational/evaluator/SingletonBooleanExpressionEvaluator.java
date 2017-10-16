@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValueFactory;
@@ -49,8 +50,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @param <STATE>
  *            The type of the states of the abstract domain.
  */
-public class SingletonBooleanExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>, STATE extends IAbstractState<STATE, VARDECL>, VARDECL>
-		implements IEvaluator<VALUE, STATE, VARDECL> {
+public class SingletonBooleanExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>, STATE extends IAbstractState<STATE>>
+		implements IEvaluator<VALUE, STATE> {
 
 	private final BooleanValue mBooleanValue;
 	private final INonrelationalValueFactory<VALUE> mNonrelationalValueFactory;
@@ -74,13 +75,13 @@ public class SingletonBooleanExpressionEvaluator<VALUE extends INonrelationalVal
 	}
 
 	@Override
-	public void addSubEvaluator(final IEvaluator<VALUE, STATE, VARDECL> evaluator) {
+	public void addSubEvaluator(final IEvaluator<VALUE, STATE> evaluator) {
 		throw new UnsupportedOperationException(
 				"Adding a subevaluator is not supported for singleton boolean expression evaluators.");
 	}
 
 	@Override
-	public Set<VARDECL> getVarIdentifiers() {
+	public Set<IProgramVarOrConst> getVarIdentifiers() {
 		return Collections.emptySet();
 	}
 

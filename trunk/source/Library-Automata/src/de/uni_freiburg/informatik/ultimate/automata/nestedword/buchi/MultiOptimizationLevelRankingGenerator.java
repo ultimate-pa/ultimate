@@ -129,8 +129,9 @@ public class MultiOptimizationLevelRankingGenerator<LETTER, STATE, CONSTRAINT ex
 		if (predecessorIsSubsetComponent) {
 			return new HeiMatTightLevelRankingStateGenerator(constraint, false).computeResult();
 		}
+		final boolean lazySOptimization = false;
 		return new BarelyCoveredLevelRankingsGenerator<>(mServices, mOperand, mUserDefinedMaxRank, true, false, true,
-				true, true).generateLevelRankings((LevelRankingConstraintDrdCheck<LETTER, STATE>) constraint, false);
+				true, true, lazySOptimization).generateLevelRankings((LevelRankingConstraintDrdCheck<LETTER, STATE>) constraint, false);
 	}
 
 	/**

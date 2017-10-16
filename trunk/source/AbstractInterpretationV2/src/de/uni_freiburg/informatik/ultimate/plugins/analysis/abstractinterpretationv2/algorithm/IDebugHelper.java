@@ -9,7 +9,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractSta
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public interface IDebugHelper<STATE extends IAbstractState<STATE, VARDECL>, ACTION, VARDECL, LOCATION> {
+public interface IDebugHelper<STATE extends IAbstractState<STATE>, ACTION, VARDECL, LOCATION> {
 
 	/**
 	 * Check whether the Hoare triple {preState} {hierachicalPreState} transition {postState} holds.
@@ -26,7 +26,7 @@ public interface IDebugHelper<STATE extends IAbstractState<STATE, VARDECL>, ACTI
 	 *            The transition.
 	 * @return true iff the Hoare triple holds.
 	 */
-	boolean isPostSound(final DisjunctiveAbstractState<STATE, VARDECL> preState,
-			final DisjunctiveAbstractState<STATE, VARDECL> hierachicalPreState,
-			final DisjunctiveAbstractState<STATE, VARDECL> postState, final ACTION transition);
+	boolean isPostSound(final DisjunctiveAbstractState<STATE> preState,
+			final DisjunctiveAbstractState<STATE> hierachicalPreState,
+			final DisjunctiveAbstractState<STATE> postState, final ACTION transition);
 }

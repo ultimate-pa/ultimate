@@ -7,7 +7,7 @@
 (declare-fun q () Bool)
 (declare-fun r () Bool)
 
-(assert (or (not (or p q)) r)
+(assert (or (not (or p q)) r))
 (assert p)
 (assert (not r))
 ;(@tautology (! (or (! (or p q) :quoted) (not p)) :or-))

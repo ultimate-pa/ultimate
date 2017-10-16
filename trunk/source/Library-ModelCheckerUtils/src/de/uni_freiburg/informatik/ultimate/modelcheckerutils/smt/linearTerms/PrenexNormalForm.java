@@ -130,7 +130,7 @@ public class PrenexNormalForm extends TermTransformer {
 	public void postConvertQuantifier(final QuantifiedFormula old, final Term newBody) {
 		if (SmtUtils.isQuantifiedFormulaWithSameQuantifier(old.getQuantifier(), newBody) != null) {
 			final Term result = SmtUtils.quantifier(mScript, old.getQuantifier(), 
-					Arrays.asList(old.getVariables()), newBody);
+					new HashSet<TermVariable>(Arrays.asList(old.getVariables())), newBody);
 			setResult(result);
 		} else {
 			super.postConvertQuantifier(old, newBody);

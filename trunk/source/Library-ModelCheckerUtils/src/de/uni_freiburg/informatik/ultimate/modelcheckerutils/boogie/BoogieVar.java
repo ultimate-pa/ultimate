@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
  * @author heizmann@informatik.uni-freiburg.de
  *
  */
-public abstract class BoogieVar implements IProgramVar, Serializable, IBoogieVar {
+public abstract class BoogieVar implements IProgramVar, Serializable {
 
 	private static final long serialVersionUID = 103072739646531062L;
 	protected final String mIdentifier;

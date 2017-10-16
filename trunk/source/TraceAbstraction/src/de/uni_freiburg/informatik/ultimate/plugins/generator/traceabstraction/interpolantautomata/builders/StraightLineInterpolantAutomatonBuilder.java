@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TracePredicates;
 
 /**
- * Build an interpolant automaton whose shape is a straight line. The input for this construction is a TraceChecker that
+ * Build an interpolant automaton whose shape is a straight line. The input for this construction is a traceCheck that
  * has proven that its trace is infeasible. The result of this construction is a NestedWordAutomaton object that can
  * still be modified by adding additional states or transitions. The result has one initial state which is the
  * precondition of the trace check, the result has one accepting/final state which is the postcondition of the trace

@@ -52,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractInterpretationResult;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
@@ -62,7 +63,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
@@ -71,7 +71,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.livevariable.LiveVariableState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.AbstractInterpreter;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.IAbstractInterpretationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.InvariantSynthesisSettings;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.LargeBlockEncodingIcfgTransformer;
@@ -366,7 +365,7 @@ public final class CFGInvariantsGenerator {
 	}
 
 	private Map<IcfgLocation, UnmodifiableTransFormula> extractAbstractInterpretationPredicates(
-			final IAbstractInterpretationResult<LiveVariableState<IcfgEdge>, IcfgEdge, IProgramVarOrConst, IcfgLocation> abstractInterpretationResult,
+			final IAbstractInterpretationResult<LiveVariableState<IcfgEdge>, IcfgEdge, IcfgLocation> abstractInterpretationResult,
 			final ManagedScript managedScript) {
 		final Map<IcfgLocation, UnmodifiableTransFormula> result = new HashMap<>();
 		final Map<IcfgLocation, Term> locs2term = abstractInterpretationResult.getLoc2Term();

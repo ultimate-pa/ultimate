@@ -53,22 +53,20 @@ public class LoopAccelerationMatrix<INLOC extends IcfgLocation> {
 
 	private final MatrixBB mMatrix;
 	private final int mMatrixSize;
-	private final CfgSmtToolkit mCfgSmtToolkit;
 	private final UnmodifiableTransFormula mOriginalTransFormula;
 	private final ManagedScript mMgScript;
 	private final ILogger mLogger;
 	private List<Integer> mOpenV = new ArrayList<>();
 
-	public LoopAccelerationMatrix(final ILogger logger, final IIcfg<INLOC> originalIcfg) {
+	public LoopAccelerationMatrix(final ILogger logger, final UnmodifiableTransFormula loopTransFormula, final ManagedScript script) {
 		mLogger = logger;
-		mCfgSmtToolkit = originalIcfg.getCfgSmtToolkit();
-		mMgScript = mCfgSmtToolkit.getManagedScript();
+		mMgScript = script;
 
 		mMgScript.lock(this);
 		mMgScript.push(this, 1);
 
-		mOriginalTransFormula =
-				originalIcfg.getInitialNodes().iterator().next().getOutgoingEdges().iterator().next().getTransformula();
+		mOriginalTransFormula = loopTransFormula;
+
 		mMatrixSize = mOriginalTransFormula.getInVars().size();
 		mMatrix = new MatrixBB(mOriginalTransFormula.getInVars(), logger);
 

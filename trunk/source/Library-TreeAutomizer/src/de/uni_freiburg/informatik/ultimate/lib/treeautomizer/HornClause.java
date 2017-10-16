@@ -40,12 +40,39 @@ public class HornClause implements IRankedLetter {
 	private final HornClausePredicateSymbol mHeadPredicate;
 
 	private final HCSymbolTable mHornClauseSymbolTable;
-	
+
 	private final Term mFormula;
 
+	private final boolean mHeadIsFalse;
+
 	/**
-	 * Standard constructor for a Horn clause as used by TreeAutomizer.
-	 * 
+	 * Constructor for a Horn clause of the form b1 /\ ... /\ bn /\ constraint --> false.
+	 * Where b1 .. bn are uninterpreted predicates and constraint is a Term.
+	 *
+	 * @param script
+	 * @param symbolTable
+	 * @param constraint
+	 * @param bodyPreds
+	 * @param bodyPredToTermVariables
+	 */
+	public HornClause(final ManagedScript script, final HCSymbolTable symbolTable, final Term constraint,
+			final List<HornClausePredicateSymbol> bodyPreds, final List<List<TermVariable>> bodyPredToTermVariables) {
+		this(script, symbolTable, constraint, null, Collections.emptyList(), bodyPreds, bodyPredToTermVariables, false);
+	}
+
+	public HornClause(final ManagedScript script, final HCSymbolTable symbolTable, final Term constraint,
+			final HornClausePredicateSymbol headPred, final List<TermVariable> headVars,
+			final List<HornClausePredicateSymbol> bodyPreds, final List<List<TermVariable>> bodyPredToTermVariables) {
+		this(script, symbolTable, constraint, headPred, headVars, bodyPreds, bodyPredToTermVariables, false);
+		assert headPred != null : "use other constructor for '... -> False' case";
+	}
+
+
+
+	/**
+	 * Constructor for a Horn clause of the form b1 /\ ... /\ bn /\ constraint --> h.
+	 * Where b1 .. bn, and h, are uninterpreted predicates and constraint is a Term.
+	 *
 	 * @param script
 	 *            The script that will be used in TreeAutomizer (not the
 	 *            HornClauseParserScript)
@@ -55,11 +82,12 @@ public class HornClause implements IRankedLetter {
 	 * @param headVars
 	 * @param bodyPreds
 	 * @param bodyPredToTermVariables
+	 * @param dummy dummy parameter to allow for an extra constructor
 	 */
-	public HornClause(final ManagedScript script, final HCSymbolTable symbolTable, final Term constraint,
+	private HornClause(final ManagedScript script, final HCSymbolTable symbolTable, final Term constraint,
 			final HornClausePredicateSymbol headPred, final List<TermVariable> headVars,
-			final List<HornClausePredicateSymbol> bodyPreds, final List<List<TermVariable>> bodyPredToTermVariables, 
-			int version) {
+			final List<HornClausePredicateSymbol> bodyPreds, final List<List<TermVariable>> bodyPredToTermVariables,
+			final boolean dummy) {
 
 		mHornClauseSymbolTable = symbolTable;
 
@@ -73,27 +101,30 @@ public class HornClause implements IRankedLetter {
 		mBodyPredToTermVariables = bodyPredToTermVariables.stream()
 				.map(list -> list.stream().map(var -> (TermVariable) ttf.transform(var)).collect(Collectors.toList()))
 				.collect(Collectors.toList());
-		
+
 		// transfer the transition formula to the solver script
 		mFormula = ttf.transform(constraint);
-		
-		for (TermVariable fv : mFormula.getFreeVars()) {
+
+		for (final TermVariable fv : mFormula.getFreeVars()) {
 			mHornClauseSymbolTable.registerTermVariable(fv);
 		}
+		mHeadPredTermVariables.forEach(mHornClauseSymbolTable::registerTermVariable);
+		mBodyPredToTermVariables.forEach(tvs -> tvs.forEach(mHornClauseSymbolTable::registerTermVariable));
 
+		mHeadIsFalse = headPred == null;
 		mHeadPredicate = headPred;
 		mBodyPreds = bodyPreds;
 	}
 
-	public HornClause(final ManagedScript script, final HCSymbolTable symbolTable,
-			 final Term transitionFormula,
-			final HornClausePredicateSymbol head, final List<TermVariable> headVars,
-			final List<HornClausePredicateSymbol> bodyPreds, final List<List<TermVariable>> bodyPredToTermVariables) {
-		this(script, symbolTable, transitionFormula, head, headVars, bodyPreds, bodyPredToTermVariables, 0);
+	public HornClausePredicateSymbol getHeadPredicate() {
+		if (mHeadIsFalse) {
+			throw new AssertionError("Check for isHeadFalse() before calling this");
+		}
+		return mHeadPredicate;
 	}
 
-	public HornClausePredicateSymbol getHeadPredicate() {
-		return mHeadPredicate;
+	public boolean isHeadFalse() {
+		return mHeadIsFalse;
 	}
 
 	public List<HornClausePredicateSymbol> getBodyPredicates() {
@@ -104,14 +135,14 @@ public class HornClause implements IRankedLetter {
 		return mBodyPreds.size();
 	}
 
-	public TermVariable getPredArgTermVariable(int predPos, int argPos) {
+	public TermVariable getPredArgTermVariable(final int predPos, final int argPos) {
 		return mBodyPredToTermVariables.get(predPos).get(argPos);
 	}
 
-	public List<TermVariable> getTermVariablesForPredPos(int predPos) {
+	public List<TermVariable> getTermVariablesForPredPos(final int predPos) {
 		return mBodyPredToTermVariables.get(predPos);
 	}
-	
+
 	public List<List<TermVariable>> getBodyPredToTermVariables() {
 		return Collections.unmodifiableList(mBodyPredToTermVariables);
 	}

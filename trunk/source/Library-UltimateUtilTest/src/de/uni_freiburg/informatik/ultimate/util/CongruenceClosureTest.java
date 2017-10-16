@@ -3,7 +3,9 @@ package de.uni_freiburg.informatik.ultimate.util;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import java.util.List;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 import org.junit.Test;
 
@@ -18,30 +20,33 @@ public class CongruenceClosureTest {
 	 * Test about basic congruence closure operations.
 	 */
 	@Test
-	public void test1() {
-		final CongruenceClosure<StringCCElement, String> cc = new CongruenceClosure<>();
+	public void test01() {
+		final CongruenceClosure<StringCcElement> cc = new CongruenceClosure<>();
 
 		final StringElementFactory factory = new StringElementFactory();
 
-		final StringCCElement x = factory.getBaseElement("x");
+		final StringCcElement f = factory.getBaseElement("f");
+		final StringCcElement g = factory.getBaseElement("g");
+
+		final StringCcElement x = factory.getBaseElement("x");
 		cc.getRepresentativeAndAddElementIfNeeded(x);
-		final StringCCElement f_x = factory.getFuncAppElement("f", x);
+		final StringCcElement f_x = factory.getFuncAppElement(f, x);
 		cc.getRepresentativeAndAddElementIfNeeded(f_x);
-		final StringCCElement g_x = factory.getFuncAppElement("g", x);
+		final StringCcElement g_x = factory.getFuncAppElement(g, x);
 		cc.getRepresentativeAndAddElementIfNeeded(g_x);
 
-		final StringCCElement y = factory.getBaseElement("y");
+		final StringCcElement y = factory.getBaseElement("y");
 		cc.getRepresentativeAndAddElementIfNeeded(y);
-		final StringCCElement f_y = factory.getFuncAppElement("f", y);
+		final StringCcElement f_y = factory.getFuncAppElement(f, y);
 		cc.getRepresentativeAndAddElementIfNeeded(f_y);
-		final StringCCElement g_y = factory.getFuncAppElement("g", y);
+		final StringCcElement g_y = factory.getFuncAppElement(g, y);
 		cc.getRepresentativeAndAddElementIfNeeded(g_y);
 
-		final StringCCElement z = factory.getBaseElement("z");
+		final StringCcElement z = factory.getBaseElement("z");
 		cc.getRepresentativeAndAddElementIfNeeded(z);
-		final StringCCElement f_z = factory.getFuncAppElement("f", z);
+		final StringCcElement f_z = factory.getFuncAppElement(f, z);
 		cc.getRepresentativeAndAddElementIfNeeded(f_z);
-		final StringCCElement g_z = factory.getFuncAppElement("g", z);
+		final StringCcElement g_z = factory.getFuncAppElement(g, z);
 		cc.getRepresentativeAndAddElementIfNeeded(g_z);
 
 		// reflexivity
@@ -59,6 +64,8 @@ public class CongruenceClosureTest {
 
 		cc.reportEquality(x, y);
 
+		assertFalse(cc.isInconsistent());
+
 		// transitivity
 		assertTrue(cc.getEqualityStatus(y, z) == EqualityStatus.EQUAL);
 
@@ -69,36 +76,40 @@ public class CongruenceClosureTest {
 
 		assertTrue(cc.getEqualityStatus(f_x, g_x) == EqualityStatus.UNKNOWN);
 
-		cc.reportFunctionEquality("f", "g");
+		cc.reportEquality(f, g);
 
+		assertFalse(cc.isInconsistent());
 		assertTrue(cc.getEqualityStatus(f_x, g_x) == EqualityStatus.EQUAL);
 	}
 
 	@Test
-	public void test2() {
-		final CongruenceClosure<StringCCElement, String> cc = new CongruenceClosure<>();
+	public void test02() {
+		final CongruenceClosure<StringCcElement> cc = new CongruenceClosure<>();
 
 		final StringElementFactory factory = new StringElementFactory();
 
-		final StringCCElement x = factory.getBaseElement("x");
+		final StringCcElement f = factory.getBaseElement("f");
+		final StringCcElement g = factory.getBaseElement("g");
+
+		final StringCcElement x = factory.getBaseElement("x");
 		cc.getRepresentativeAndAddElementIfNeeded(x);
-		final StringCCElement f_x = factory.getFuncAppElement("f", x);
+		final StringCcElement f_x = factory.getFuncAppElement(f, x);
 		cc.getRepresentativeAndAddElementIfNeeded(f_x);
-		final StringCCElement g_x = factory.getFuncAppElement("g", x);
+		final StringCcElement g_x = factory.getFuncAppElement(g, x);
 		cc.getRepresentativeAndAddElementIfNeeded(g_x);
 
-		final StringCCElement y = factory.getBaseElement("y");
+		final StringCcElement y = factory.getBaseElement("y");
 		cc.getRepresentativeAndAddElementIfNeeded(y);
-		final StringCCElement f_y = factory.getFuncAppElement("f", y);
+		final StringCcElement f_y = factory.getFuncAppElement(f, y);
 		cc.getRepresentativeAndAddElementIfNeeded(f_y);
-		final StringCCElement g_y = factory.getFuncAppElement("g", y);
+		final StringCcElement g_y = factory.getFuncAppElement(g, y);
 		cc.getRepresentativeAndAddElementIfNeeded(g_y);
 
-		final StringCCElement z = factory.getBaseElement("z");
+		final StringCcElement z = factory.getBaseElement("z");
 		cc.getRepresentativeAndAddElementIfNeeded(z);
-		final StringCCElement f_z = factory.getFuncAppElement("f", z);
+		final StringCcElement f_z = factory.getFuncAppElement(f, z);
 		cc.getRepresentativeAndAddElementIfNeeded(f_z);
-		final StringCCElement g_z = factory.getFuncAppElement("g", z);
+		final StringCcElement g_z = factory.getFuncAppElement(g, z);
 		cc.getRepresentativeAndAddElementIfNeeded(g_z);
 
 		cc.reportEquality(x, z);
@@ -126,30 +137,33 @@ public class CongruenceClosureTest {
 
 
 	@Test
-	public void test3() {
-		final CongruenceClosure<StringCCElement, String> cc = new CongruenceClosure<>();
+	public void test03() {
+		final CongruenceClosure<StringCcElement> cc = new CongruenceClosure<>();
 
 		final StringElementFactory factory = new StringElementFactory();
 
-		final StringCCElement x = factory.getBaseElement("x");
+		final StringCcElement f = factory.getBaseElement("f");
+		final StringCcElement g = factory.getBaseElement("g");
+
+		final StringCcElement x = factory.getBaseElement("x");
 		cc.getRepresentativeAndAddElementIfNeeded(x);
-		final StringCCElement f_x = factory.getFuncAppElement("f", x);
+		final StringCcElement f_x = factory.getFuncAppElement(f, x);
 		cc.getRepresentativeAndAddElementIfNeeded(f_x);
-		final StringCCElement g_x = factory.getFuncAppElement("g", x);
+		final StringCcElement g_x = factory.getFuncAppElement(g, x);
 		cc.getRepresentativeAndAddElementIfNeeded(g_x);
 
-		final StringCCElement y = factory.getBaseElement("y");
+		final StringCcElement y = factory.getBaseElement("y");
 		cc.getRepresentativeAndAddElementIfNeeded(y);
-		final StringCCElement f_y = factory.getFuncAppElement("f", y);
+		final StringCcElement f_y = factory.getFuncAppElement(f, y);
 		cc.getRepresentativeAndAddElementIfNeeded(f_y);
-		final StringCCElement g_y = factory.getFuncAppElement("g", y);
+		final StringCcElement g_y = factory.getFuncAppElement(g, y);
 		cc.getRepresentativeAndAddElementIfNeeded(g_y);
 
-		final StringCCElement z = factory.getBaseElement("z");
+		final StringCcElement z = factory.getBaseElement("z");
 		cc.getRepresentativeAndAddElementIfNeeded(z);
-		final StringCCElement f_z = factory.getFuncAppElement("f", z);
+		final StringCcElement f_z = factory.getFuncAppElement(f, z);
 		cc.getRepresentativeAndAddElementIfNeeded(f_z);
-		final StringCCElement g_z = factory.getFuncAppElement("g", z);
+		final StringCcElement g_z = factory.getFuncAppElement(g, z);
 		cc.getRepresentativeAndAddElementIfNeeded(g_z);
 
 		cc.reportDisequality(f_x, f_y);
@@ -159,33 +173,36 @@ public class CongruenceClosureTest {
 	}
 
 	@Test
-	public void test4() {
-		final CongruenceClosure<StringCCElement, String> cc = new CongruenceClosure<>();
+	public void test04() {
+		final CongruenceClosure<StringCcElement> cc = new CongruenceClosure<>();
 
 		final StringElementFactory factory = new StringElementFactory();
 
-		final StringCCElement x = factory.getBaseElement("x");
+		final StringCcElement f = factory.getBaseElement("f");
+		final StringCcElement g = factory.getBaseElement("g");
+
+		final StringCcElement x = factory.getBaseElement("x");
 		cc.getRepresentativeAndAddElementIfNeeded(x);
-		final StringCCElement f_x = factory.getFuncAppElement("f", x);
+		final StringCcElement f_x = factory.getFuncAppElement(f, x);
 		cc.getRepresentativeAndAddElementIfNeeded(f_x);
-		final StringCCElement g_x = factory.getFuncAppElement("g", x);
+		final StringCcElement g_x = factory.getFuncAppElement(g, x);
 		cc.getRepresentativeAndAddElementIfNeeded(g_x);
 
-		final StringCCElement y = factory.getBaseElement("y");
+		final StringCcElement y = factory.getBaseElement("y");
 		cc.getRepresentativeAndAddElementIfNeeded(y);
-		final StringCCElement f_y = factory.getFuncAppElement("f", y);
+		final StringCcElement f_y = factory.getFuncAppElement(f, y);
 		cc.getRepresentativeAndAddElementIfNeeded(f_y);
-		final StringCCElement g_y = factory.getFuncAppElement("g", y);
+		final StringCcElement g_y = factory.getFuncAppElement(g, y);
 		cc.getRepresentativeAndAddElementIfNeeded(g_y);
 
-		final StringCCElement z = factory.getBaseElement("z");
+		final StringCcElement z = factory.getBaseElement("z");
 		cc.getRepresentativeAndAddElementIfNeeded(z);
-		final StringCCElement f_z = factory.getFuncAppElement("f", z);
+		final StringCcElement f_z = factory.getFuncAppElement(f, z);
 		cc.getRepresentativeAndAddElementIfNeeded(f_z);
-		final StringCCElement g_z = factory.getFuncAppElement("g", z);
+		final StringCcElement g_z = factory.getFuncAppElement(g, z);
 		cc.getRepresentativeAndAddElementIfNeeded(g_z);
 
-		cc.reportFunctionEquality("f", "g");
+		cc.reportEquality(f, g);
 		assertTrue(cc.getEqualityStatus(f_x, g_x) == EqualityStatus.EQUAL);
 		assertTrue(cc.getEqualityStatus(f_y, g_y) == EqualityStatus.EQUAL);
 
@@ -202,23 +219,25 @@ public class CongruenceClosureTest {
 	 * </ul>
 	 */
 	@Test
-	public void test5() {
-		final CongruenceClosure<StringCCElement, String> cc = new CongruenceClosure<>();
+	public void test05() {
+		final CongruenceClosure<StringCcElement> cc = new CongruenceClosure<>();
 
 		final StringElementFactory factory = new StringElementFactory();
 
-		final StringCCElement x = factory.getBaseElement("x");
+		final StringCcElement f = factory.getBaseElement("f");
+
+		final StringCcElement x = factory.getBaseElement("x");
 		cc.getRepresentativeAndAddElementIfNeeded(x);
-		final StringCCElement f_x = factory.getFuncAppElement("f", x);
+		final StringCcElement f_x = factory.getFuncAppElement(f, x);
 		cc.getRepresentativeAndAddElementIfNeeded(f_x);
-		final StringCCElement y = factory.getBaseElement("y");
+		final StringCcElement y = factory.getBaseElement("y");
 		cc.getRepresentativeAndAddElementIfNeeded(y);
-		final StringCCElement f_y = factory.getFuncAppElement("f", y);
+		final StringCcElement f_y = factory.getFuncAppElement(f, y);
 		cc.getRepresentativeAndAddElementIfNeeded(f_y);
 
-		final StringCCElement i = factory.getBaseElement("i");
+		final StringCcElement i = factory.getBaseElement("i");
 		cc.getRepresentativeAndAddElementIfNeeded(i);
-		final StringCCElement j = factory.getBaseElement("j");
+		final StringCcElement j = factory.getBaseElement("j");
 		cc.getRepresentativeAndAddElementIfNeeded(j);
 
 		cc.reportEquality(i, f_y);
@@ -236,28 +255,31 @@ public class CongruenceClosureTest {
 	 * --> then we need to propagate  x2 != y2 now.
 	 */
 	@Test
-	public void test6() {
-		final CongruenceClosure<StringCCElement, String> cc = new CongruenceClosure<>();
+	public void test06() {
+		final CongruenceClosure<StringCcElement> cc = new CongruenceClosure<>();
 
 		final StringElementFactory factory = new StringElementFactory();
 
-		final StringCCElement x1 = factory.getBaseElement("x1");
+		final StringCcElement f = factory.getBaseElement("f");
+		final StringCcElement g = factory.getBaseElement("g");
+
+		final StringCcElement x1 = factory.getBaseElement("x1");
 		cc.getRepresentativeAndAddElementIfNeeded(x1);
-		final StringCCElement x2 = factory.getBaseElement("x2");
+		final StringCcElement x2 = factory.getBaseElement("x2");
 		cc.getRepresentativeAndAddElementIfNeeded(x2);
-		final StringCCElement y1 = factory.getBaseElement("y1");
+		final StringCcElement y1 = factory.getBaseElement("y1");
 		cc.getRepresentativeAndAddElementIfNeeded(y1);
-		final StringCCElement y2 = factory.getBaseElement("y2");
+		final StringCcElement y2 = factory.getBaseElement("y2");
 		cc.getRepresentativeAndAddElementIfNeeded(y2);
 
-		final StringCCElement f_x1_x2 = factory.getFuncAppElement("f", x1, x2);
+		final StringCcElement f_x1_x2 = factory.getFuncAppElement(f, x1, x2);
 		cc.getRepresentativeAndAddElementIfNeeded(f_x1_x2);
-		final StringCCElement g_y1_y2 = factory.getFuncAppElement("g", y1, y2);
+		final StringCcElement g_y1_y2 = factory.getFuncAppElement(g, y1, y2);
 		cc.getRepresentativeAndAddElementIfNeeded(g_y1_y2);
 
 
 		cc.reportDisequality(f_x1_x2, g_y1_y2);
-		cc.reportFunctionEquality("f", "g");
+		cc.reportEquality(f, g);
 
 		cc.reportEquality(x1, y1);
 
@@ -268,15 +290,17 @@ public class CongruenceClosureTest {
 	 * Tests what happens when we don't register all nodes up front (i.e. before the first report*-call).
 	 */
 	@Test
-	public void test7() {
-		final CongruenceClosure<StringCCElement, String> cc = new CongruenceClosure<>();
+	public void test07() {
+		final CongruenceClosure<StringCcElement> cc = new CongruenceClosure<>();
 
 		final StringElementFactory factory = new StringElementFactory();
 
-		final StringCCElement a = factory.getBaseElement("a");
-		final StringCCElement b = factory.getBaseElement("b");
-		final StringCCElement f_a = factory.getFuncAppElement("f", a);
-		final StringCCElement f_b = factory.getFuncAppElement("f", b);
+		final StringCcElement f = factory.getBaseElement("f");
+
+		final StringCcElement a = factory.getBaseElement("a");
+		final StringCcElement b = factory.getBaseElement("b");
+		final StringCcElement f_a = factory.getFuncAppElement(f, a);
+		final StringCcElement f_b = factory.getFuncAppElement(f, b);
 
 		cc.reportEquality(a, b);
 
@@ -289,19 +313,22 @@ public class CongruenceClosureTest {
 	}
 
 	@Test
-	public void test7a() {
-		final CongruenceClosure<StringCCElement, String> cc = new CongruenceClosure<>();
+	public void test07a() {
+		final CongruenceClosure<StringCcElement> cc = new CongruenceClosure<>();
 
 		final StringElementFactory factory = new StringElementFactory();
 
-		final StringCCElement a = factory.getBaseElement("a");
-		final StringCCElement b = factory.getBaseElement("b");
-		final StringCCElement f_a_b = factory.getFuncAppElement("f", a, b);
-		final StringCCElement g_b_a = factory.getFuncAppElement("g", b, a);
+		final StringCcElement f = factory.getBaseElement("f");
+		final StringCcElement g = factory.getBaseElement("g");
+
+		final StringCcElement a = factory.getBaseElement("a");
+		final StringCcElement b = factory.getBaseElement("b");
+		final StringCcElement f_a_b = factory.getFuncAppElement(f, a, b);
+		final StringCcElement g_b_a = factory.getFuncAppElement(g, b, a);
 
 		cc.reportEquality(a, b);
 
-		cc.reportFunctionEquality("f", "g");
+		cc.reportEquality(f, g);
 
 		cc.reportDisequality(f_a_b, g_b_a);
 
@@ -314,23 +341,26 @@ public class CongruenceClosureTest {
 	 * argument order is accounted for.
 	 */
 	@Test
-	public void test7b() {
-		final CongruenceClosure<StringCCElement, String> cc = new CongruenceClosure<>();
+	public void test07b() {
+		final CongruenceClosure<StringCcElement> cc = new CongruenceClosure<>();
 
 		final StringElementFactory factory = new StringElementFactory();
 
-		final StringCCElement a = factory.getBaseElement("a");
-		final StringCCElement b = factory.getBaseElement("b");
-		final StringCCElement i = factory.getBaseElement("i");
-		final StringCCElement j = factory.getBaseElement("j");
+		final StringCcElement f = factory.getBaseElement("f");
+		final StringCcElement g = factory.getBaseElement("g");
 
-		final StringCCElement f_a_i = factory.getFuncAppElement("f", a, i);
-		final StringCCElement g_j_b = factory.getFuncAppElement("g", j, b);
+		final StringCcElement a = factory.getBaseElement("a");
+		final StringCcElement b = factory.getBaseElement("b");
+		final StringCcElement i = factory.getBaseElement("i");
+		final StringCcElement j = factory.getBaseElement("j");
+
+		final StringCcElement f_a_i = factory.getFuncAppElement(f, a, i);
+		final StringCcElement g_j_b = factory.getFuncAppElement(g, j, b);
 
 		cc.reportEquality(a, b);
 		cc.reportEquality(i, j);
 
-		cc.reportFunctionEquality("f", "g");
+		cc.reportEquality(f, g);
 
 		/*
 		 * At this point we _cannot_ propagate "f(a,i) = g(j,b)" because of argument order. (We could propagate
@@ -347,17 +377,19 @@ public class CongruenceClosureTest {
 	 *
 	 */
 	@Test
-	public void test8() {
-		final CongruenceClosure<StringCCElement, String> cc = new CongruenceClosure<>();
+	public void test08() {
+		final CongruenceClosure<StringCcElement> cc = new CongruenceClosure<>();
 
 		final StringElementFactory factory = new StringElementFactory();
 
-		final StringCCElement a = factory.getBaseElement("a");
-		final StringCCElement b = factory.getBaseElement("b");
+		final StringCcElement f = factory.getBaseElement("f");
 
-		final StringCCElement f_a_b = factory.getFuncAppElement("f", a, b);
+		final StringCcElement a = factory.getBaseElement("a");
+		final StringCcElement b = factory.getBaseElement("b");
 
-		final StringCCElement f_f_a_b_b = factory.getFuncAppElement("f", f_a_b, b);
+		final StringCcElement f_a_b = factory.getFuncAppElement(f, a, b);
+
+		final StringCcElement f_f_a_b_b = factory.getFuncAppElement(f, f_a_b, b);
 
 		cc.reportEquality(f_a_b, a);
 		assertFalse(cc.isInconsistent());
@@ -370,17 +402,19 @@ public class CongruenceClosureTest {
 	 * Example from Jochen Hoenicke's Decision Procedures lecture.
 	 */
 	@Test
-	public void test9() {
-		final CongruenceClosure<StringCCElement, String> cc = new CongruenceClosure<>();
+	public void test09() {
+		final CongruenceClosure<StringCcElement> cc = new CongruenceClosure<>();
 
 		final StringElementFactory factory = new StringElementFactory();
 
-		final StringCCElement a = factory.getBaseElement("a");
-		final StringCCElement f_a = factory.getFuncAppElement("f", a);
-		final StringCCElement f2_a = factory.getFuncAppElement("f", f_a);
-		final StringCCElement f3_a = factory.getFuncAppElement("f", f2_a);
-		final StringCCElement f4_a = factory.getFuncAppElement("f", f3_a);
-		final StringCCElement f5_a = factory.getFuncAppElement("f", f4_a);
+		final StringCcElement f = factory.getBaseElement("f");
+
+		final StringCcElement a = factory.getBaseElement("a");
+		final StringCcElement f_a = factory.getFuncAppElement(f, a);
+		final StringCcElement f2_a = factory.getFuncAppElement(f, f_a);
+		final StringCcElement f3_a = factory.getFuncAppElement(f, f2_a);
+		final StringCcElement f4_a = factory.getFuncAppElement(f, f3_a);
+		final StringCcElement f5_a = factory.getFuncAppElement(f, f4_a);
 
 		cc.reportEquality(f3_a, a);
 		cc.reportEquality(f5_a, a);
@@ -396,24 +430,26 @@ public class CongruenceClosureTest {
 	 */
 	@Test
 	public void testOperators1() {
-		final CongruenceClosure<StringCCElement, String> cc1 = new CongruenceClosure<>();
-		final CongruenceClosure<StringCCElement, String> cc2 = new CongruenceClosure<>();
+		final CongruenceClosure<StringCcElement> cc1 = new CongruenceClosure<>();
+		final CongruenceClosure<StringCcElement> cc2 = new CongruenceClosure<>();
 
 		final StringElementFactory factory = new StringElementFactory();
 
-		final StringCCElement a = factory.getBaseElement("a");
-		final StringCCElement b = factory.getBaseElement("b");
+		final StringCcElement f = factory.getBaseElement("f");
 
-		final StringCCElement i = factory.getBaseElement("i");
-		final StringCCElement j = factory.getBaseElement("j");
+		final StringCcElement a = factory.getBaseElement("a");
+		final StringCcElement b = factory.getBaseElement("b");
 
-		final StringCCElement x = factory.getBaseElement("x");
-		final StringCCElement y = factory.getBaseElement("y");
+		final StringCcElement i = factory.getBaseElement("i");
+		final StringCcElement j = factory.getBaseElement("j");
 
-		final StringCCElement f_a = factory.getFuncAppElement("f", a);
-		final StringCCElement f_f_a = factory.getFuncAppElement("f", f_a);
-		final StringCCElement f_b = factory.getFuncAppElement("f", b);
-		final StringCCElement f_f_b = factory.getFuncAppElement("f", f_b);
+		final StringCcElement x = factory.getBaseElement("x");
+		final StringCcElement y = factory.getBaseElement("y");
+
+		final StringCcElement f_a = factory.getFuncAppElement(f, a);
+		final StringCcElement f_f_a = factory.getFuncAppElement(f, f_a);
+		final StringCcElement f_b = factory.getFuncAppElement(f, b);
+		final StringCcElement f_f_b = factory.getFuncAppElement(f, f_b);
 
 
 		cc1.reportEquality(a, b);
@@ -452,7 +488,7 @@ public class CongruenceClosureTest {
 		assertFalse(cc1.isStrongerThan(cc2));
 		assertFalse(cc2.isStrongerThan(cc1));
 
-		final CongruenceClosure<StringCCElement, String> cc3 = cc1.join(cc2);
+		final CongruenceClosure<StringCcElement> cc3 = cc1.join(cc2);
 		// state of cc3 should be {{a, b}, {i,x} {f(a), f(b)}, {f(f(a)), f(f(b))}}
 		assertTrue(cc3.getEqualityStatus(a, b) == EqualityStatus.EQUAL);
 		assertTrue(cc3.getEqualityStatus(i, x) == EqualityStatus.EQUAL);
@@ -470,7 +506,7 @@ public class CongruenceClosureTest {
 		assertTrue(cc2.isStrongerThan(cc3));
 		assertFalse(cc3.isStrongerThan(cc2));
 
-		final CongruenceClosure<StringCCElement, String> cc4 = cc1.meet(cc2);
+		final CongruenceClosure<StringCcElement> cc4 = cc1.meet(cc2);
 		// state of cc4 should be {{a, b, i, j, x, y, f(f(a)), f(f(b))}, {f(a), f(b)}}
 		assertTrue(cc4.getEqualityStatus(a, b) == EqualityStatus.EQUAL);
 		assertTrue(cc4.getEqualityStatus(b, i) == EqualityStatus.EQUAL);
@@ -500,24 +536,26 @@ public class CongruenceClosureTest {
 	 */
 	@Test
 	public void testOperators2() {
-		final CongruenceClosure<StringCCElement, String> cc1 = new CongruenceClosure<>();
-		final CongruenceClosure<StringCCElement, String> cc2 = new CongruenceClosure<>();
+		final CongruenceClosure<StringCcElement> cc1 = new CongruenceClosure<>();
+		final CongruenceClosure<StringCcElement> cc2 = new CongruenceClosure<>();
 
 		final StringElementFactory factory = new StringElementFactory();
 
-		final StringCCElement a = factory.getBaseElement("a");
-		final StringCCElement b = factory.getBaseElement("b");
+		final StringCcElement f = factory.getBaseElement("f");
 
-		final StringCCElement i = factory.getBaseElement("i");
-		final StringCCElement j = factory.getBaseElement("j");
+		final StringCcElement a = factory.getBaseElement("a");
+		final StringCcElement b = factory.getBaseElement("b");
 
-		final StringCCElement x = factory.getBaseElement("x");
-		final StringCCElement y = factory.getBaseElement("y");
+		final StringCcElement i = factory.getBaseElement("i");
+		final StringCcElement j = factory.getBaseElement("j");
 
-		final StringCCElement f_a = factory.getFuncAppElement("f", a);
-		final StringCCElement f_f_a = factory.getFuncAppElement("f", f_a);
-		final StringCCElement f_b = factory.getFuncAppElement("f", b);
-		final StringCCElement f_f_b = factory.getFuncAppElement("f", f_b);
+		final StringCcElement x = factory.getBaseElement("x");
+		final StringCcElement y = factory.getBaseElement("y");
+
+		final StringCcElement f_a = factory.getFuncAppElement(f, a);
+		final StringCcElement f_f_a = factory.getFuncAppElement(f, f_a);
+		final StringCcElement f_b = factory.getFuncAppElement(f, b);
+		final StringCcElement f_f_b = factory.getFuncAppElement(f, f_b);
 
 
 		cc1.reportEquality(a, b);
@@ -557,7 +595,7 @@ public class CongruenceClosureTest {
 		assertFalse(cc1.isStrongerThan(cc2));
 		assertFalse(cc2.isStrongerThan(cc1));
 
-		final CongruenceClosure<StringCCElement, String> cc3 = cc1.join(cc2);
+		final CongruenceClosure<StringCcElement> cc3 = cc1.join(cc2);
 		// state of cc3 should be {{a, b}, {i,x} {f(a), f(b)}, {f(f(a)), f(f(b))}} (unchanged from testOperators1)
 		assertTrue(cc3.getEqualityStatus(a, b) == EqualityStatus.EQUAL);
 		assertTrue(cc3.getEqualityStatus(i, x) == EqualityStatus.EQUAL);
@@ -575,7 +613,7 @@ public class CongruenceClosureTest {
 		assertTrue(cc2.isStrongerThan(cc3));
 		assertFalse(cc3.isStrongerThan(cc2));
 
-		final CongruenceClosure<StringCCElement, String> cc4 = cc1.meet(cc2);
+		final CongruenceClosure<StringCcElement> cc4 = cc1.meet(cc2);
 		// state of cc4 should be {{a, b, i, j, x, y, f(f(a)), f(f(b))}, {f(a), f(b)}}, x != f(a)
 		// (includes the extra disequality from cc2, in comparison to testOperators1)
 		assertTrue(cc4.getEqualityStatus(a, b) == EqualityStatus.EQUAL);
@@ -597,42 +635,199 @@ public class CongruenceClosureTest {
 	}
 
 
+	@Test
+	public void testRemove01() {
+		final CongruenceClosure<StringCcElement> cc = new CongruenceClosure<>();
+
+		final StringElementFactory factory = new StringElementFactory();
+
+		final StringCcElement f = factory.getBaseElement("f");
+		final StringCcElement g = factory.getBaseElement("g");
+
+		final StringCcElement a = factory.getBaseElement("a");
+		final StringCcElement b = factory.getBaseElement("b");
+		final StringCcElement c = factory.getBaseElement("c");
+
+		cc.reportEquality(a, b);
+		cc.reportEquality(b, c);
+		assertTrue(cc.getEqualityStatus(a, c) == EqualityStatus.EQUAL);
+		cc.removeSimpleElement(b);
+		assertTrue(cc.getEqualityStatus(a, c) == EqualityStatus.EQUAL);
+		cc.getRepresentativeAndAddElementIfNeeded(b);
+		assertTrue(cc.getEqualityStatus(a, b) == EqualityStatus.UNKNOWN);
+	}
+
+	@Test
+	public void testRemove02() {
+		final CongruenceClosure<StringCcElement> cc = new CongruenceClosure<>();
+
+		final StringElementFactory factory = new StringElementFactory();
+
+		final StringCcElement f = factory.getBaseElement("f");
+		final StringCcElement g = factory.getBaseElement("g");
+
+		final StringCcElement a = factory.getBaseElement("a");
+		final StringCcElement b = factory.getBaseElement("b");
+		final StringCcElement c = factory.getBaseElement("c");
+
+		final StringCcElement f_a = factory.getOrConstructFuncAppElement(f, a);
+		final StringCcElement f_b = factory.getOrConstructFuncAppElement(f, b);
+		final StringCcElement f_c = factory.getOrConstructFuncAppElement(f, c);
+
+		cc.reportEquality(a, b);
+		cc.reportEquality(b, c);
+		cc.getRepresentativeAndAddElementIfNeeded(f_a);
+		cc.getRepresentativeAndAddElementIfNeeded(f_b);
+		cc.getRepresentativeAndAddElementIfNeeded(f_c);
+		assertTrue(cc.getEqualityStatus(f_a, f_b) == EqualityStatus.EQUAL);
+		assertTrue(cc.getEqualityStatus(f_c, f_b) == EqualityStatus.EQUAL);
+		cc.removeSimpleElement(b);
+		assertTrue(cc.getEqualityStatus(f_a, f_c) == EqualityStatus.EQUAL);
+		cc.getRepresentativeAndAddElementIfNeeded(f_b);
+		assertTrue(cc.getEqualityStatus(f_a, f_b) == EqualityStatus.UNKNOWN);
+	}
+
+	@Test
+	public void testRemove03() {
+		final CongruenceClosure<StringCcElement> cc = new CongruenceClosure<>();
+
+		final StringElementFactory factory = new StringElementFactory();
+
+		final StringCcElement f = factory.getBaseElement("f");
+		final StringCcElement g = factory.getBaseElement("g");
+
+		final StringCcElement a = factory.getBaseElement("a");
+		final StringCcElement b = factory.getBaseElement("b");
+		final StringCcElement c = factory.getBaseElement("c");
+
+		final StringCcElement f_a = factory.getOrConstructFuncAppElement(f, a);
+		final StringCcElement f_b = factory.getOrConstructFuncAppElement(f, b);
+		final StringCcElement f_c = factory.getOrConstructFuncAppElement(f, c);
+
+		cc.reportEquality(a, b);
+		cc.reportEquality(b, c);
+		cc.getRepresentativeAndAddElementIfNeeded(f_a);
+		cc.getRepresentativeAndAddElementIfNeeded(f_c);
+		assertTrue(cc.getEqualityStatus(f_a, f_c) == EqualityStatus.EQUAL);
+		cc.removeSimpleElement(a);
+		cc.getRepresentativeAndAddElementIfNeeded(f_b);
+		assertTrue(cc.getEqualityStatus(f_b, f_c) == EqualityStatus.EQUAL);
+	}
+
+	@Test
+	public void testRemove04() {
+		final CongruenceClosure<StringCcElement> cc = new CongruenceClosure<>();
+
+		final StringElementFactory factory = new StringElementFactory();
+
+		final StringCcElement a = factory.getBaseElement("a");
+
+		final StringCcElement x = factory.getBaseElement("x");
+		final StringCcElement y = factory.getBaseElement("y");
+		final StringCcElement i = factory.getBaseElement("i");
+
+		final StringCcElement l1 = factory.getBaseElement("1");
+
+		final StringCcElement a_x = factory.getOrConstructFuncAppElement(a, x);
+		final StringCcElement a_y = factory.getOrConstructFuncAppElement(a, y);
+
+		cc.reportEquality(a_y, l1);
+		cc.reportEquality(i, y);
+		cc.removeSimpleElement(y);
+		cc.reportEquality(x, i);
+		cc.getRepresentativeAndAddElementIfNeeded(a_x);
+		assertTrue(cc.getEqualityStatus(a_x, l1) == EqualityStatus.EQUAL);
+	}
+
+
+	// TODO test transformer
 
 }
 
-class StringElementFactory extends AbstractCCElementFactory<StringCCElement, String, String> {
+class StringElementFactory extends AbstractCCElementFactory<StringCcElement, String> {
 
 	@Override
-	protected StringCCElement newBaseElement(final String c) {
-		return new StringCCElement(c);
+//	protected StringCcElement newBaseElement(final String c, final boolean isFunction) {
+	protected StringCcElement newBaseElement(final String c) {
+		return new StringCcElement(c);
+	}
+
+	public StringCcElement getFuncAppElement(final StringCcElement f, final StringCcElement... args) {
+		return StringCcElement.buildStringCcElement(this, f, args);
 	}
 
 	@Override
-	protected StringCCElement newFuncAppElement(final String f, final List<StringCCElement> args) {
-		return new StringCCElement(f, args);
+	protected StringCcElement newFuncAppElement(final StringCcElement f, final StringCcElement arg) {
+		return new StringCcElement(f, arg, this);
 	}
+
+//	@Override
+//	public StringCcElement getFuncAppElementDetermineIsFunctionYourself(final StringCcElement func,
+//			final List<StringCcElement> arguments) {
+//		throw new UnsupportedOperationException();
+//	}
 
 }
 
-class StringCCElement implements ICongruenceClosureElement<StringCCElement, String>{
+class StringCcElement implements ICongruenceClosureElement<StringCcElement>{
 
 	private final boolean mIsFunctionApplication;
 	private final String mName;
-	private final String mAppliedFunction;
-	private final List<StringCCElement> mArguments;
+	private final StringCcElement mAppliedFunction;
+	private final StringCcElement mArgument;
+//	private final int mHeight;
+	private final Set<StringCcElement> mAfParents;
+	private final Set<StringCcElement> mArgParents;
+	private final StringElementFactory mFactory;
 
-	public StringCCElement(final String name) {
+	/**
+	 * base element
+	 *
+	 * @param name
+	 * @param isFunction
+	 */
+	public StringCcElement(final String name) {
 		mIsFunctionApplication = false;
 		mName = name;
 		mAppliedFunction = null;
-		mArguments = null;
+		mArgument = null;
+//		mHeight = 0;
+		mAfParents = new HashSet<>();
+		mArgParents = new HashSet<>();
+		mFactory = null;
 	}
 
-	public StringCCElement(final String appliedFunction, final List<StringCCElement> arguments) {
+	/**
+	 * function application
+	 *
+	 * @param appliedFunction
+	 * @param argument
+	 * @param isFunction
+	 */
+	public StringCcElement(final StringCcElement appliedFunction, final StringCcElement argument,
+			final StringElementFactory factory) {
 		mIsFunctionApplication = true;
 		mName = null;
 		mAppliedFunction = appliedFunction;
-		mArguments = arguments;
+//		assert mAppliedFunction.isFunction();
+		mArgument = argument;
+//		assert !argument.isFunction();
+//		mHeight = appliedFunction.getHeight() + 1;
+		mAfParents = new HashSet<>();
+		mArgParents = new HashSet<>();
+		mFactory = factory;
+	}
+
+	public static StringCcElement buildStringCcElement(final StringElementFactory factory,
+			final StringCcElement appliedFunction, final StringCcElement... arguments) {//, final boolean isFunction) {
+
+		StringCcElement result = appliedFunction;
+
+		for (final StringCcElement arg : arguments) {
+			result = new StringCcElement(result, arg, factory);
+		}
+
+		return result;
 	}
 
 	@Override
@@ -641,22 +836,78 @@ class StringCCElement implements ICongruenceClosureElement<StringCCElement, Stri
 	}
 
 	@Override
-	public String getAppliedFunction() {
+	public StringCcElement getAppliedFunction() {
 		return mAppliedFunction;
 	}
 
 	@Override
-	public List<StringCCElement> getArguments() {
-		return mArguments;
+	public StringCcElement getArgument() {
+		return mArgument;
 	}
 
 	@Override
 	public String toString() {
 		if (mIsFunctionApplication) {
-			return mAppliedFunction.toString() + mArguments.toString();
+			return mAppliedFunction.toString() + "(" + mArgument.toString() + ")";
 		} else {
 			return mName;
 		}
 	}
+
+	@Override
+	public boolean hasSameTypeAs(final StringCcElement other) {
+		return true;
+	}
+
+	@Override
+	public StringCcElement replaceAppliedFunction(final StringCcElement replacer) {
+		return mFactory.getOrConstructFuncAppElement(replacer, mArgument);
+	}
+
+	@Override
+	public StringCcElement replaceArgument(final StringCcElement replacer) {
+		return mFactory.getOrConstructFuncAppElement(mAppliedFunction, replacer);
+	}
+
+	@Override
+	public boolean isLiteral() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public StringCcElement replaceSubNode(final Map<StringCcElement, StringCcElement> replacementMapping) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public boolean isDependent() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public Set<StringCcElement> getSupportingNodes() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+
+
+
+//	@Override
+//	public StringCcElement[] getArguments() {
+//		final StringCcElement[] result = new StringCcElement[mHeight + 1];
+//		StringCcElement af = this;
+//		for (int i = mHeight; i > 0; i--) {
+//			result[i] = af.getArgument();
+//			assert !result[i].isFunction();
+//			af = af.getAppliedFunction();
+//		}
+//		result[0] = af.getAppliedFunction();
+//		assert result[0].isFunction();
+//		return result;
+//	}
 
 }

@@ -36,16 +36,19 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermClassifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantConsolidation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheck;
+import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 
 /**
  * Provides static auxiliary methods for {@link RefinementStrategy}s.
@@ -54,48 +57,85 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  */
 public class RefinementStrategyUtils {
 
+	public static final String COMMAND_Z3_NO_TIMEOUT = "z3 -smt2 -in SMTLIB2_COMPLIANT=true";
+	public static final String COMMAND_Z3_TIMEOUT = COMMAND_Z3_NO_TIMEOUT + " -t:12000";
+	public static final String COMMAND_CVC4_NO_TIMEOUT = getCvc4NoTimeout();
+	public static final String COMMAND_CVC4_TIMEOUT = COMMAND_CVC4_NO_TIMEOUT + " --tlimit-per=12000";
+
+	// 20161214 Matthias: MathSAT does not support timeouts
+	public static final String COMMAND_MATHSAT = "mathsat -unsat_core_generation=3";
+	public static final long TIMEOUT_SMTINTERPOL = 12_000L;
+	public static final long TIMEOUT_NONE_SMTINTERPOL = 0L;
+	public static final String LOGIC_Z3 = "ALL";
+	public static final String LOGIC_CVC4_DEFAULT = "AUFLIRA";
+	public static final String LOGIC_CVC4_BITVECTORS = "AUFBV";
+	public static final String LOGIC_MATHSAT = "ALL";
+
 	private RefinementStrategyUtils() {
+		// do not instantiate utility classes
+	}
+
+	/**
+	 * On Windows we do not have the "golden copy" of cvc4 anymore. Newer versions require a different commandline, so
+	 * we switch here based on the OS in use.
+	 *
+	 * @return the command to start cvc4
+	 */
+	private static final String getCvc4NoTimeout() {
+		if (CoreUtil.OS_IS_WINDOWS) {
+			return "cvc4 --tear-down-incremental=1 --print-success --lang smt --rewrite-divk";
+		}
+		return "cvc4 --tear-down-incremental --print-success --lang smt --rewrite-divk";
 	}
 
 	public static <LETTER extends IIcfgTransition<?>> IInterpolantGenerator constructInterpolantGenerator(
 			final IUltimateServiceProvider services, final ILogger logger,
 			final TaCheckAndRefinementPreferences<LETTER> prefs, final TAPreferences taPrefsForInterpolantConsolidation,
-			final TraceChecker tracechecker, final PredicateFactory predicateFactory,
+			final TraceCheck traceCheck, final PredicateFactory predicateFactory,
 			final PredicateUnifier predicateUnifier, final IRun<LETTER, IPredicate, ?> counterexample,
-			final CegarLoopStatisticsGenerator cegarLoopBenchmarks) {
-		final TraceChecker localTraceChecker = Objects.requireNonNull(tracechecker,
+			final RefinementEngineStatisticsGenerator statistics) {
+		final TraceCheck localTraceCheck = Objects.requireNonNull(traceCheck,
 				"cannot construct interpolant generator if no trace checker is present");
-		if (localTraceChecker instanceof InterpolatingTraceChecker) {
-			final InterpolatingTraceChecker interpolatingTraceChecker = (InterpolatingTraceChecker) localTraceChecker;
+		if (localTraceCheck instanceof InterpolatingTraceCheck) {
+			final InterpolatingTraceCheck interpolatingTraceCheck = (InterpolatingTraceCheck) localTraceCheck;
 
 			if (prefs.getUseInterpolantConsolidation()) {
 				try {
-					return consolidateInterpolants(services, logger, prefs, taPrefsForInterpolantConsolidation,
-							interpolatingTraceChecker, predicateUnifier, predicateFactory, counterexample,
-							cegarLoopBenchmarks);
+					final CfgSmtToolkit cfgSmtToolkit = prefs.getCfgSmtToolkit();
+					final InterpolantConsolidation<LETTER> interpConsoli =
+							new InterpolantConsolidation<>(predicateUnifier.getTruePredicate(),
+									predicateUnifier.getFalsePredicate(), new TreeMap<Integer, IPredicate>(),
+									NestedWord.nestedWord(counterexample.getWord()), cfgSmtToolkit,
+									cfgSmtToolkit.getModifiableGlobalsTable(), services, logger, predicateFactory,
+									predicateUnifier, interpolatingTraceCheck, taPrefsForInterpolantConsolidation);
+					statistics.addInterpolantConsolidationStatistics(
+							interpConsoli.getInterpolantConsolidationBenchmarks());
+					return interpConsoli;
 				} catch (final AutomataOperationCanceledException e) {
 					throw new AssertionError("react on timeout, not yet implemented");
 				}
 			}
-			return interpolatingTraceChecker;
+			return interpolatingTraceCheck;
 		}
 		throw new AssertionError("Currently only interpolating trace checkers are supported.");
 	}
 
-	private static <LETTER extends IIcfgTransition<?>> IInterpolantGenerator consolidateInterpolants(
-			final IUltimateServiceProvider services, final ILogger logger,
-			final TaCheckAndRefinementPreferences<LETTER> prefs, final TAPreferences taPrefsForInterpolantConsolidation,
-			final InterpolatingTraceChecker tracechecker, final PredicateUnifier predicateUnifier,
-			final PredicateFactory predicateFactory, final IRun<LETTER, IPredicate, ?> counterexample,
-			final CegarLoopStatisticsGenerator cegarLoopBenchmarks) throws AutomataOperationCanceledException {
-		final CfgSmtToolkit cfgSmtToolkit = prefs.getCfgSmtToolkit();
-		final InterpolantConsolidation<LETTER> interpConsoli = new InterpolantConsolidation<>(
-				predicateUnifier.getTruePredicate(), predicateUnifier.getFalsePredicate(),
-				new TreeMap<Integer, IPredicate>(), NestedWord.nestedWord(counterexample.getWord()), cfgSmtToolkit,
-				cfgSmtToolkit.getModifiableGlobalsTable(), services, logger, predicateFactory, predicateUnifier,
-				tracechecker, taPrefsForInterpolantConsolidation);
-		// Add benchmark data of interpolant consolidation
-		cegarLoopBenchmarks.addInterpolationConsolidationData(interpConsoli.getInterpolantConsolidationBenchmarks());
-		return interpConsoli;
+	/**
+	 *
+	 * @return true iff classified term does not contain {@link SmtUtils#FLOATINGPOINT_SORT}.
+	 */
+	public static boolean hasNoFloats(final TermClassifier tc) {
+		return !tc.getOccuringSortNames().contains(SmtSortUtils.FLOATINGPOINT_SORT);
 	}
+
+	/**
+	 *
+	 * @return true iff classified term does not contain {@link SmtUtils#FP_TO_IEEE_BV_EXTENSION} and does not contain
+	 *         quantifiers.
+	 */
+	public static boolean hasNoQuantifiersNoBitvectorExtensions(final TermClassifier tc) {
+		return !tc.getOccuringFunctionNames().contains(SmtUtils.FP_TO_IEEE_BV_EXTENSION)
+				&& tc.getOccuringQuantifiers().isEmpty();
+	}
+
 }

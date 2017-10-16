@@ -22,6 +22,7 @@ import de.uni_freiburg.informatik.ultimate.logic.PrintTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.Clausifier.CCTermBuilder;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.DPLLAtom;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.SourceAnnotation;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCEquality;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.LAEquality;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.MutableAffinTerm;
@@ -37,7 +38,7 @@ public class EqualityProxy {
 			super(null, null, null);
 		}
 		@Override
-		public DPLLAtom getLiteral() {
+		public DPLLAtom getLiteral(SourceAnnotation source) {
 			throw new InternalError("Should never be called");
 		}
 	}
@@ -50,7 +51,7 @@ public class EqualityProxy {
 			super(null, null, null);
 		}
 		@Override
-		public DPLLAtom getLiteral() {
+		public DPLLAtom getLiteral(SourceAnnotation source) {
 			throw new InternalError("Should never be called");
 		}
 	}
@@ -144,8 +145,7 @@ public class EqualityProxy {
 		return eq;
 	}
 
-	private DPLLAtom createAtom() {
-		
+	private DPLLAtom createAtom(SourceAnnotation source) {
 		if (mLhs.mCCterm == null && mRhs.mCCterm == null) {
 			/* if both terms do not exist in CClosure yet, it may be better to
 			 * create them in linear arithmetic.
@@ -178,7 +178,7 @@ public class EqualityProxy {
 		if (!((mLhs.mCCterm != null && mRhs.mCCterm != null)
 				|| (mLhs.mOffset != null && mRhs.mOffset != null))) {
 			/* let them share congruence closure */
-			final CCTermBuilder cc = mClausifier.new CCTermBuilder();
+			final CCTermBuilder cc = mClausifier.new CCTermBuilder(source);
 			cc.convert(mLhs.getTerm());
 			cc.convert(mRhs.getTerm());
 		}
@@ -193,9 +193,9 @@ public class EqualityProxy {
 		}
 	}
 	
-	public DPLLAtom getLiteral() {
+	public DPLLAtom getLiteral(SourceAnnotation source) {
 		if (mEqAtom == null) {
-			mEqAtom = createAtom();
+			mEqAtom = createAtom(source);
 			if (mClausifier.getLogger().isDebugEnabled()) {
 				mClausifier.getLogger().debug("Created Equality: " + mEqAtom);
 			}

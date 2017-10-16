@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 
 
 /**
@@ -50,7 +51,7 @@ public class ParallelRankingFunction extends RankingFunction {
 	private final AffineFunction[] mranking;
 	public final int size;
 	
-	public ParallelRankingFunction(AffineFunction[] ranking) {
+	public ParallelRankingFunction(final AffineFunction[] ranking) {
 		mranking = ranking;
 		size = ranking.length;
 		assert(size > 0);
@@ -93,8 +94,8 @@ public class ParallelRankingFunction extends RankingFunction {
 	}
 	
 	@Override
-	public Term[] asLexTerm(Script script) throws SMTLIBException {
-		final Term zero = script.numeral(BigInteger.ZERO);
+	public Term[] asLexTerm(final Script script) throws SMTLIBException {
+		final Term zero = SmtUtils.constructIntValue(script, BigInteger.ZERO);
 		final Term[] summands = new Term[size];
 		for (int i = 0; i < size; ++i) {
 			final Term f_term = mranking[i].asTerm(script);
@@ -105,7 +106,7 @@ public class ParallelRankingFunction extends RankingFunction {
 	}
 	
 	@Override
-	public Ordinal evaluate(Map<IProgramVar, Rational> assignment) {
+	public Ordinal evaluate(final Map<IProgramVar, Rational> assignment) {
 		Ordinal o = Ordinal.ZERO;
 		for (int i = 0; i < size; ++i) {
 			final Rational r = mranking[i].evaluate(assignment);

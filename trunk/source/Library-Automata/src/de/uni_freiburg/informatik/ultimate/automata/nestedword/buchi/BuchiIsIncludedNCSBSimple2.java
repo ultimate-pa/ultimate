@@ -37,10 +37,12 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationStatistics;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.BinaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.NwaToBuchiWrapper;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.WaToBuchiWrapper;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.Options;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.automata.IBuchi;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.inclusion.BuchiInclusionComplement;
+
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.automata.IBuchiWa;
+
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.inclusion.BuchiWaDifferenceAscc;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiComplementNcsbStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiIntersectStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
@@ -104,10 +106,11 @@ public final class BuchiIsIncludedNCSBSimple2<LETTER, STATE> extends BinaryNwaOp
 			letterIndex ++;
 		}
 		
-		Options.optNCSB = false;
+		Options.lazyS = false;
+		Options.lazyB = false;
 
-		IBuchi fstBuchi = new NwaToBuchiWrapper(letterMap.size(), letterMap, mFstOperand);
-		IBuchi sndBuchi = new NwaToBuchiWrapper(letterMap.size(), letterMap, mSndOperand);
+		IBuchiWa fstBuchi = new WaToBuchiWrapper(letterMap.size(), letterMap, mFstOperand);
+		IBuchiWa sndBuchi = new WaToBuchiWrapper(letterMap.size(), letterMap, mSndOperand);
 		
 //		if (!services.getProgressAwareTimer().continueProcessing()) {
 //			// TODO: Check if this has a performance impact
@@ -121,7 +124,7 @@ public final class BuchiIsIncludedNCSBSimple2<LETTER, STATE> extends BinaryNwaOp
 //		}
 		
 		//TODO should be able to terminate the procedure if time exceed the limit
-		BuchiInclusionComplement checker = new BuchiInclusionComplement(fstBuchi, sndBuchi);
+		BuchiWaDifferenceAscc checker = new BuchiWaDifferenceAscc(fstBuchi, sndBuchi);
 		mResult = checker.isIncluded(); //services
 		
 		if(mResult == null) {
@@ -140,8 +143,8 @@ public final class BuchiIsIncludedNCSBSimple2<LETTER, STATE> extends BinaryNwaOp
 		}
 	}
 	
-	private RunningTaskInfo constructRunningTaskInfo(BuchiInclusionComplement complement) {
-		final String taskDescription = "computing complement states (" + complement.getSndBuchiComplement().getStateSize()
+	private RunningTaskInfo constructRunningTaskInfo(BuchiWaDifferenceAscc complement) {
+		final String taskDescription = "computing complement states (" + complement.getSecondBuchiComplement().getStateSize()
 				+ " states constructed" + "input type " + getClass().getSimpleName() + ")";
 		final RunningTaskInfo rti = new RunningTaskInfo(getClass(), taskDescription);
 		return rti;

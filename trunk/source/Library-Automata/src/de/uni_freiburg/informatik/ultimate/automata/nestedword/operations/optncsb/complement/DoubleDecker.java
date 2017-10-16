@@ -26,18 +26,12 @@
  * to convey the resulting work.
  */
 
-
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.complement;
-
-
-/**
- * @author Yong Li
- * */
 
 public class DoubleDecker {
 	
-	private int mDownState;
-	private int mUpState;
+	private final int mDownState;
+	private final int mUpState;
 		
 	public DoubleDecker(int down, int up) {
 		this.mDownState = down;
@@ -65,16 +59,18 @@ public class DoubleDecker {
 	
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-        int result = 1;
-        result = prime * result + this.mDownState;
-        result = prime * result + this.mUpState;
-        return result;
+	    final int prime = 31;
+	    int result = 1;
+	    result = prime * result + this.mDownState;
+	    result = prime * result + this.mUpState;
+	    return result;
 	}
 	
 	@Override
 	public String toString() {
 		return "<down:" + this.mDownState + ", up:" +this.mUpState + ">"; 
 	}
+	
+	public static final int EMPTY_DOWN_STATE = -1;
 
 }

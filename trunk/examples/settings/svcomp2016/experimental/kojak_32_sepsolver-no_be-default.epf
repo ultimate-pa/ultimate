@@ -60,11 +60,11 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.boogie.printer/Dump\ path\:=C\:\\data\\bin\\svcompC
 #Thu Nov 05 00:04:33 CET 2015
 file_export_version=3.0
-/instance/UltimateCore/Log\ level\ for\ plugins=info
-/instance/UltimateCore/Write\ witness\ as\ "witness.graphml"\ to\ working\ directory=true
-\!/instance/UltimateCore=
-@UltimateCore=0.0.1
-/instance/UltimateCore/Generate\ witness\ from\ each\ counter\ example\ result=true
+/instance/de.uni_freiburg.informatik.ultimate.core/Log\ level\ for\ plugins=info
+/instance/de.uni_freiburg.informatik.ultimate.core/Write\ witness\ as\ "witness.graphml"\ to\ working\ directory=true
+\!/instance/de.uni_freiburg.informatik.ultimate.core=
+@de.uni_freiburg.informatik.ultimate.core=0.0.1
+/instance/de.uni_freiburg.informatik.ultimate.core/Generate\ witness\ from\ each\ counter\ example\ result=true
 #Thu Nov 05 00:04:33 CET 2015
 file_export_version=3.0
 \!/instance/de.uni_freiburg.informatik.ultimate.gui=

@@ -1,0 +1,17 @@
+(set-option :produce-proofs true)
+(set-option :proof-check-mode true)
+(set-option :model-check-mode true)
+(set-option :print-terms-cse false)
+
+(set-logic QF_UF)
+(declare-fun p () Bool)
+(declare-fun q () Bool)
+(declare-fun r () Bool)
+
+(push 1)
+(assert (xor p q r))
+(assert q)
+(assert (xor p r))
+(check-sat)
+(get-proof)
+(pop 1)

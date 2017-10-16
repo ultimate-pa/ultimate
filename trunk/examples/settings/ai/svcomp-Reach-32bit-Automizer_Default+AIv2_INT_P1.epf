@@ -51,10 +51,10 @@ file_export_version=3.0
 
 #Fri Jun 05 02:20:55 CEST 2015
 file_export_version=3.0
-@UltimateCore=0.0.1
-\!/instance/UltimateCore=
-/instance/UltimateCore/Root\ log\ level=INFO
-/instance/UltimateCore/Log\ level\ for\ plugins=info
+@de.uni_freiburg.informatik.ultimate.core=0.0.1
+\!/instance/de.uni_freiburg.informatik.ultimate.core=
+/instance/de.uni_freiburg.informatik.ultimate.core/Root\ log\ level=INFO
+/instance/de.uni_freiburg.informatik.ultimate.core/Log\ level\ for\ plugins=info
 
 
 

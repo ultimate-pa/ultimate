@@ -143,4 +143,33 @@ public final class Log4JWrapper implements ILogger {
 	public String toString() {
 		return "[" + hashCode() + "][" + getBacking().getLevel() + "] " + getBacking().getName();
 	}
+
+	@Override
+	public void setLevel(final LogLevel level) {
+		final Level log4jLevel;
+		switch (level) {
+		case DEBUG:
+			log4jLevel = Level.DEBUG;
+			break;
+		case ERROR:
+			log4jLevel = Level.ERROR;
+			break;
+		case FATAL:
+			log4jLevel = Level.FATAL;
+			break;
+		case INFO:
+			log4jLevel = Level.INFO;
+			break;
+		case OFF:
+			log4jLevel = Level.OFF;
+			break;
+		case WARN:
+			log4jLevel = Level.WARN;
+			break;
+		default:
+			throw new UnsupportedOperationException("Unhandled LogLevel " + level);
+
+		}
+		mLogger.setLevel(log4jLevel);
+	}
 }

@@ -10,8 +10,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.taskidentifier.TaskIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarAbsIntRunner;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PathProgramCache;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interactive.InteractiveCegar;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
@@ -42,15 +42,15 @@ public class InteractiveRefinementStrategyFactory<LETTER extends IIcfgTransition
 	@Override
 	public IRefinementStrategy<LETTER> createStrategy(final RefinementStrategy strategy,
 			final IRun<LETTER, IPredicate, ?> counterexample, final IAutomaton<LETTER, IPredicate> abstraction,
-			final int iteration, final CegarLoopStatisticsGenerator benchmark) {
+			final TaskIdentifier taskIdentifier) {
 		final PredicateUnifier predicateUnifier = getNewPredicateUnifier();
 
 		final Function<RefinementStrategy, IRefinementStrategy<LETTER>> fallBack =
-				s -> super.createStrategy(s, counterexample, abstraction, iteration, benchmark);
+				s -> super.createStrategy(s, counterexample, abstraction, taskIdentifier);
 
 		return new ParrotRefinementStrategy<LETTER>(mLogger, mPrefs, mServices, mInitialIcfg.getCfgSmtToolkit(),
 				mPredicateFactory, predicateUnifier, mAssertionOrderModulation, counterexample, abstraction,
-				mPrefsConsolidation, iteration, benchmark) {
+				mPrefsConsolidation, taskIdentifier) {
 			@Override
 			protected InteractiveCegar getInteractive() {
 				// instead of passing the interactive interface via
@@ -63,6 +63,11 @@ public class InteractiveRefinementStrategyFactory<LETTER extends IIcfgTransition
 			@Override
 			protected IRefinementStrategy<LETTER> createFallbackStrategy(final RefinementStrategy strategy) {
 				return fallBack.apply(strategy);
+			}
+
+			@Override
+			protected int getInterpolantAcceptanceThreshold() {
+				return 2;
 			}
 		};
 	}

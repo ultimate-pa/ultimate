@@ -30,13 +30,9 @@ import java.util.Iterator;
 import java.util.Set;
 import java.util.function.Function;
 
-import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.visualization.NwaToUltimateModel;
-import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedIteratorNoopConstruction;
 
 /**
@@ -139,13 +135,6 @@ public interface INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> extends 
 		final Function<LETTER, Iterator<OutgoingReturnTransition<LETTER, STATE>>> fun = x -> returnSuccessors(state, hier, x).iterator();
 		return () -> new NestedIteratorNoopConstruction<LETTER, OutgoingReturnTransition<LETTER, STATE>>(lettersReturn(state, hier).iterator(), fun);
 	}
-
-	@Override
-	default IElement transformToUltimateModel(final AutomataLibraryServices services)
-			throws AutomataOperationCanceledException {
-		return new NwaToUltimateModel<LETTER, STATE>(services).transformToUltimateModel(this);
-	}
-	
 
 
 }

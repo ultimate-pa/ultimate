@@ -34,7 +34,15 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint;
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public interface IAbstractDomain<STATE extends IAbstractState<STATE, VARDECL>, ACTION, VARDECL> {
+public interface IAbstractDomain<STATE extends IAbstractState<STATE>, ACTION> {
+
+	/**
+	 * This method is called before the fixpoint computation begins. You can use it to prepare for reporting of
+	 * domain-specific statistics.
+	 */
+	default void beforeFixpointComputation() {
+		// default is doing nothing
+	}
 
 	/**
 	 * @return A new state of the current abstract domain representing &top;.
@@ -54,11 +62,11 @@ public interface IAbstractDomain<STATE extends IAbstractState<STATE, VARDECL>, A
 	/**
 	 * @return The post operator for the current abstract domain.
 	 */
-	default IAbstractPostOperator<STATE, ACTION, VARDECL> getPostOperator() {
+	default IAbstractPostOperator<STATE, ACTION> getPostOperator() {
 		throw new UnsupportedOperationException("This domain does not support the post operator");
 	}
 
-	default IAbstractTransformer<STATE, ACTION, VARDECL> getPreOperator() {
+	default IAbstractTransformer<STATE, ACTION> getPreOperator() {
 		throw new UnsupportedOperationException("This domain does not support the pre operator");
 	}
 
@@ -72,5 +80,16 @@ public interface IAbstractDomain<STATE extends IAbstractState<STATE, VARDECL>, A
 	 */
 	default boolean useHierachicalPre() {
 		return false;
+	}
+
+	/**
+	 * This method is called after the fixpoint computation ends. You can use it to report domain-specific statistics
+	 * after a run.
+	 *
+	 * @param result
+	 *            the result of the fixpoint computation (which contains, e.g., the set of fixpoints)
+	 */
+	default <LOC> void afterFixpointComputation(final IAbstractInterpretationResult<STATE, ACTION, LOC> result) {
+		// default is doing nothing
 	}
 }

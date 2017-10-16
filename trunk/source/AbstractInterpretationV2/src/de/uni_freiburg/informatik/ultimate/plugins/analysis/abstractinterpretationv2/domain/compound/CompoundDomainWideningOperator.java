@@ -35,7 +35,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractStateBinaryOperator;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 
 /**
  * Widening operator of the {@link CompoundDomain}.
@@ -45,36 +44,36 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class CompoundDomainWideningOperator implements IAbstractStateBinaryOperator<CompoundDomainState> {
-	
+
 	private final IUltimateServiceProvider mServices;
-	
+
 	public CompoundDomainWideningOperator(final IUltimateServiceProvider services) {
 		mServices = services;
 	}
-	
+
 	@Override
 	public CompoundDomainState apply(final CompoundDomainState first, final CompoundDomainState second) {
-		final List<IAbstractState<?, IBoogieVar>> firstStates = first.getAbstractStatesList();
-		final List<IAbstractState<?, IBoogieVar>> secondStates = second.getAbstractStatesList();
-		
+		final List<IAbstractState<?>> firstStates = first.getAbstractStatesList();
+		final List<IAbstractState<?>> secondStates = second.getAbstractStatesList();
+
 		assert firstStates.size() == secondStates.size();
 		assert first.getDomainList().size() == second.getDomainList().size();
-		
+
 		final List<IAbstractDomain> domains = first.getDomainList();
-		
-		final List<IAbstractState<?, IBoogieVar>> widenedList = new ArrayList<>();
-		
+
+		final List<IAbstractState<?>> widenedList = new ArrayList<>();
+
 		for (int i = 0; i < firstStates.size(); i++) {
 			widenedList.add(
 					widenInternally(firstStates.get(i), secondStates.get(i), domains.get(i).getWideningOperator()));
 		}
-		
+
 		return new CompoundDomainState(mServices, domains, widenedList);
 	}
-	
+
 	private static <T extends IAbstractState> T widenInternally(final T firstState, final T secondState,
 			final IAbstractStateBinaryOperator<T> wideningOperator) {
 		return wideningOperator.apply(firstState, secondState);
 	}
-	
+
 }

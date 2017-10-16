@@ -30,6 +30,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
@@ -40,8 +41,11 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 
 /**
  * Assists in the translation process in Expression2Term by covering the cases 
@@ -55,13 +59,13 @@ public class DefaultOperationTranslator implements IOperationTranslator {
 	protected final Boogie2SmtSymbolTable mBoogie2SmtSymbolTable;
 	protected final Script mScript;
 	
-	public DefaultOperationTranslator(Boogie2SmtSymbolTable symbolTable, Script script) {
+	public DefaultOperationTranslator(final Boogie2SmtSymbolTable symbolTable, final Script script) {
 		mBoogie2SmtSymbolTable = symbolTable;
 		mScript = script;
 	}
 
 	@Override
-	public String opTranslation(BinaryExpression.Operator op, IBoogieType type1, IBoogieType type2) {
+	public String opTranslation(final BinaryExpression.Operator op, final IBoogieType type1, final IBoogieType type2) {
 			if (op == BinaryExpression.Operator.COMPEQ) {
 				return "=";
 			} else if (op == BinaryExpression.Operator.COMPGEQ) {
@@ -111,7 +115,7 @@ public class DefaultOperationTranslator implements IOperationTranslator {
 	}
 
 	@Override
-	public String opTranslation(UnaryExpression.Operator op, IBoogieType type) {
+	public String opTranslation(final UnaryExpression.Operator op, final IBoogieType type) {
 		if (op == UnaryExpression.Operator.LOGICNEG) {
 			return "not";
 		} else if (op == UnaryExpression.Operator.ARITHNEGATIVE) {
@@ -122,29 +126,33 @@ public class DefaultOperationTranslator implements IOperationTranslator {
 	}
 
 	@Override
-	public String funcApplication(String funcIdentifier, IBoogieType[] argumentTypes) {
+	public String funcApplication(final String funcIdentifier, final IBoogieType[] argumentTypes) {
 		return mBoogie2SmtSymbolTable.getBoogieFunction2SmtFunction().get(funcIdentifier);
 	}
 
 	@Override
-	public Term booleanTranslation(BooleanLiteral exp) {
+	public Term booleanTranslation(final BooleanLiteral exp) {
 		return exp.getValue() ? mScript.term("true") : mScript.term("false");
 	}
 
 	@Override
-	public Term bitvecTranslation(BitvecLiteral exp) {
+	public Term bitvecTranslation(final BitvecLiteral exp) {
 		final BigInteger[] indices = { BigInteger.valueOf(exp.getLength()) };
 		
 		return mScript.term("bv" + exp.getValue(), indices, null);
 	}
 
 	@Override
-	public Term integerTranslation(IntegerLiteral exp) {
-		return mScript.numeral(exp.getValue());
+	public Term integerTranslation(final IntegerLiteral exp) {
+		final BigInteger bigInt = new BigInteger(exp.getValue());
+		final Rational rat = SmtUtils.toRational(bigInt);
+		return rat.toTerm(SmtSortUtils.getIntSort(mScript));
 	}
 
 	@Override
-	public Term realTranslation(RealLiteral exp) {
-		return mScript.decimal(exp.getValue());
+	public Term realTranslation(final RealLiteral exp) {
+		final BigDecimal bigDec = new BigDecimal(exp.getValue());
+		final Rational rat = SmtUtils.toRational(bigDec);
+		return rat.toTerm(SmtSortUtils.getRealSort(mScript));
 	}
 }

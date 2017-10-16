@@ -28,8 +28,11 @@ package de.uni_freiburg.informatik.ultimate.cli;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -49,9 +52,9 @@ import de.uni_freiburg.informatik.ultimate.cli.options.CommandLineOptions;
 import de.uni_freiburg.informatik.ultimate.cli.util.RcpUtils;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.BasicToolchainJob;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.DefaultToolchainJob;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultSummarizer;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultUtil;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.RunDefinition;
 import de.uni_freiburg.informatik.ultimate.core.model.IController;
 import de.uni_freiburg.informatik.ultimate.core.model.ICore;
@@ -75,10 +78,9 @@ import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
  */
 public class CommandLineController implements IController<RunDefinition> {
 
-	private static final boolean WRITE_CSV = false;
-
 	private ILogger mLogger;
 	private IToolchainData<RunDefinition> mToolchain;
+	private String mCsvPathPrefix;
 
 	@Override
 	public int init(final ICore<RunDefinition> core) {
@@ -117,6 +119,7 @@ public class CommandLineController implements IController<RunDefinition> {
 			mLogger.info("Version is " + RcpUtils.getVersion(Activator.PLUGIN_ID));
 			mLogger.info(
 					"Maximal heap size is " + CoreUtil.humanReadableByteCount(Runtime.getRuntime().maxMemory(), true));
+			mLogger.info("This is Ultimate " + core.getUltimateVersionString());
 			return IApplication.EXIT_OK;
 		}
 
@@ -161,6 +164,11 @@ public class CommandLineController implements IController<RunDefinition> {
 				return -1;
 			}
 
+			if (fullParams.generateCsvs()) {
+				mCsvPathPrefix = generateCsvPrefix(fullParams);
+			}
+
+			mLogger.info("This is Ultimate " + core.getUltimateVersionString());
 			final IToolchainData<RunDefinition> currentToolchain = prepareToolchain(core, fullParams);
 			assert currentToolchain == mToolchain;
 			// from now on, use the shutdown hook that disables the toolchain if the user presses CTRL+C (hopefully)
@@ -180,6 +188,25 @@ public class CommandLineController implements IController<RunDefinition> {
 			return -1;
 		}
 		return IApplication.EXIT_OK;
+	}
+
+	private static String generateCsvPrefix(final ParsedParameter fullParams)
+			throws ParseException, InvalidFileArgumentException {
+		String dir;
+		if (fullParams.hasCsvDirectory()) {
+			dir = fullParams.getCsvDirectory().getAbsolutePath();
+		} else {
+			dir = new File(".").getAbsolutePath();
+		}
+
+		final List<File> files = new ArrayList<>();
+		files.addAll(Arrays.asList(fullParams.getInputFiles()));
+		if (fullParams.hasSettings()) {
+			files.add(new File(fullParams.getSettingsFile()));
+		}
+		files.add(fullParams.getToolchainFile());
+		final String joinednames = files.stream().map(a -> a.getName()).collect(Collectors.joining("_"));
+		return Paths.get(dir, joinednames).toString();
 	}
 
 	/**
@@ -290,7 +317,8 @@ public class CommandLineController implements IController<RunDefinition> {
 		}
 
 		// TODO: Add option to control the writing of .csv files
-		if (WRITE_CSV) {
+
+		if (mCsvPathPrefix != null) {
 			final List<ICsvProviderProvider<?>> csvProviders = ResultUtil.filterResults(results, StatisticsResult.class)
 					.stream().map(a -> a.getStatistics()).collect(Collectors.toList());
 			writeCsvLogs(csvProviders);
@@ -298,10 +326,12 @@ public class CommandLineController implements IController<RunDefinition> {
 	}
 
 	private void writeCsvLogs(final List<ICsvProviderProvider<?>> csvProviders) {
+
 		if (csvProviders == null || csvProviders.isEmpty()) {
 			return;
 		}
 		final String timestamp = CoreUtil.getCurrentDateTimeAsString();
+		final Map<String, Integer> alreadySeenProviders = new HashMap<>();
 		for (final ICsvProviderProvider<?> provider : csvProviders) {
 			if (provider == null) {
 				continue;
@@ -310,7 +340,20 @@ public class CommandLineController implements IController<RunDefinition> {
 			if (csvProvider.isEmpty()) {
 				continue;
 			}
-			final String filename = "Csv-" + provider.getClass().getSimpleName() + "-" + timestamp + ".csv";
+
+			final String providerName = provider.getClass().getSimpleName();
+			Integer counter = alreadySeenProviders.get(providerName);
+			if (counter == null) {
+				counter = 0;
+			} else {
+				counter = counter + 1;
+			}
+			alreadySeenProviders.put(providerName, counter);
+
+			final String filename = Paths
+					.get(mCsvPathPrefix,
+							"Csv-" + provider.getClass().getSimpleName() + "-" + counter + "-" + timestamp + ".csv")
+					.toString();
 			try {
 				final File file = CoreUtil.writeFile(filename, csvProvider.toCsv(null, null, true).toString());
 				if (file != null) {
@@ -421,6 +464,6 @@ public class CommandLineController implements IController<RunDefinition> {
 
 	@Override
 	public void prerun(final IToolchainData<RunDefinition> tcData) {
-
+		// not needed
 	}
 }
