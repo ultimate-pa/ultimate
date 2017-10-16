@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.IntraproceduralReplacementVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ProgramVarUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.IEqualityAnalysisResultProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.IEqualityProvidingState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -107,14 +108,14 @@ public class NewArrayIdProvider {
 			final Set<Term> arrayGroup = en.getKey();
 			final IEqualityProvidingState state = en.getValue();
 
-			final UnionFind<List<Term>> uf = new UnionFind<>();
-			for (final List<Term> accessingTerm : hspav.getAccessingIndicesForArrays(arrayGroup)) {
+			final UnionFind<ArrayIndex> uf = new UnionFind<>();
+			for (final ArrayIndex accessingTerm : hspav.getAccessingIndicesForArrays(arrayGroup)) {
 				uf.findAndConstructEquivalenceClassIfNeeded(accessingTerm);
 			}
 			// TODO: optimization: compute partitioning on the equivalence class representatives instead
 			// of all nodes
-			for (final List<Term> accessingNode1 : hspav.getAccessingIndicesForArrays(arrayGroup)) {
-				for (final List<Term> accessingNode2 : hspav.getAccessingIndicesForArrays(arrayGroup)) {
+			for (final ArrayIndex accessingNode1 : hspav.getAccessingIndicesForArrays(arrayGroup)) {
+				for (final ArrayIndex accessingNode2 : hspav.getAccessingIndicesForArrays(arrayGroup)) {
 					assert accessingNode1.size() == accessingNode2.size();
 					boolean anyUnequal = false;
 					for (int i = 0; i < accessingNode1.size(); i++) {
@@ -126,7 +127,7 @@ public class NewArrayIdProvider {
 					}
 				}
 			}
-			for (final Set<List<Term>> ec : uf.getAllEquivalenceClasses()) {
+			for (final Set<ArrayIndex> ec : uf.getAllEquivalenceClasses()) {
 				registerEquivalenceClass(arrayGroup, ec);
 				mStatistics.incrementEquivalenceClassCounter();
 			}
@@ -201,7 +202,7 @@ public class NewArrayIdProvider {
 	 * @param indexVector
 	 * @return
 	 */
-	public Term getNewArrayId(final Term originalArrayId, final List<Term> indexVector) {
+	public Term getNewArrayId(final Term originalArrayId, final ArrayIndex indexVector) {
 		return mArrayToPartitionInformation
 				.get(mArrayIdToArrayGroup.get(originalArrayId))
 				.getNewArray(originalArrayId, indexVector);
@@ -209,7 +210,7 @@ public class NewArrayIdProvider {
 
 	public void registerEquivalenceClass(
 			final Set<Term> arrayIds,
-			final Set<List<Term>> ec) {
+			final Set<ArrayIndex> ec) {
 		final IndexPartition indexPartition = new IndexPartition(arrayIds, ec);
 
 		PartitionInformation partitionInfo = mArrayToPartitionInformation.get(arrayIds);
@@ -245,9 +246,9 @@ public class NewArrayIdProvider {
  */
 class IndexPartition {
 	final Set<Term> arrayIds;
-	final Set<List<Term>> indices;
+	final Set<ArrayIndex> indices;
 
-	public IndexPartition(final Set<Term> arrayIds, final Set<List<Term>> indices) {
+	public IndexPartition(final Set<Term> arrayIds, final Set<ArrayIndex> indices) {
 		this.arrayIds = arrayIds;
 		this.indices = Collections.unmodifiableSet(indices);
 	}
@@ -278,9 +279,9 @@ class PartitionInformation {
 
 	private final Map<Term, List<Term>> mOldArrayIdToNewArrayIds = new HashMap<>();
 
-	final NestedMap2<IndexPartition, Term, Term> indexPartitionToArrayToNewArrayId = new NestedMap2<>();
+	final NestedMap2<IndexPartition, Term, Term> indexBlockToArrayToNewArrayId = new NestedMap2<>();
 
-	private final Map<List<Term>, IndexPartition> indexToIndexPartition = new HashMap<>();
+	private final Map<ArrayIndex, IndexPartition> indexToIndexBlock = new HashMap<>();
 	private final ManagedScript mManagedScript;
 	private final IIcfgSymbolTable mOldSymbolTable;
 
@@ -293,18 +294,18 @@ class PartitionInformation {
 		mOldSymbolTable = oldSymbolTable;
 	}
 
-	Term getNewArray(final Term oldArrayId, final List<Term> indexVector) {
+	Term getNewArray(final Term oldArrayId, final ArrayIndex indexVector) {
 		assert arrayIds.contains(oldArrayId);
-		final IndexPartition ip = indexToIndexPartition.get(indexVector);
+		final IndexPartition ip = indexToIndexBlock.get(indexVector);
 		assert ip != null;
-		assert indexPartitionToArrayToNewArrayId.get(ip, oldArrayId) != null;
-		return indexPartitionToArrayToNewArrayId.get(ip, oldArrayId);
+		assert indexBlockToArrayToNewArrayId.get(ip, oldArrayId) != null;
+		return indexBlockToArrayToNewArrayId.get(ip, oldArrayId);
 	}
 
 	void addPartition(final IndexPartition ip) {
 		indexPartitions.add(ip);
-		for (final List<Term> index : ip.indices) {
-			indexToIndexPartition.put(index, ip);
+		for (final ArrayIndex index : ip.indices) {
+			indexToIndexBlock.put(index, ip);
 		}
 		constructFreshProgramVarsForIndexPartition(ip);
 	}
@@ -353,10 +354,10 @@ class PartitionInformation {
 						newPrimedConst);
 				mNewSymbolTable.add(freshVar);
 
-				indexPartitionToArrayToNewArrayId.put(indexPartition, arrayTv, newTv);
+				indexBlockToArrayToNewArrayId.put(indexPartition, arrayTv, newTv);
 			} else if (arrayPv instanceof BoogieNonOldVar) {
 				// the oldVar may have come up first..
-				final Term alreadyConstructed = indexPartitionToArrayToNewArrayId.get(indexPartition, arrayTv);
+				final Term alreadyConstructed = indexBlockToArrayToNewArrayId.get(indexPartition, arrayTv);
 				if (alreadyConstructed == null) {
 					final BoogieNonOldVar bnovOld = (BoogieNonOldVar) arrayPv;
 
@@ -368,8 +369,8 @@ class PartitionInformation {
 					freshVar = bnovNew;
 					mNewSymbolTable.add(freshVar);
 
-					indexPartitionToArrayToNewArrayId.put(indexPartition, arrayTv, freshVar.getTerm());
-					indexPartitionToArrayToNewArrayId.put(indexPartition,
+					indexBlockToArrayToNewArrayId.put(indexPartition, arrayTv, freshVar.getTerm());
+					indexBlockToArrayToNewArrayId.put(indexPartition,
 							((BoogieNonOldVar) arrayPv).getOldVar().getTerm(),
 							bnovNew.getOldVar().getTerm());
 				} else {
@@ -378,7 +379,7 @@ class PartitionInformation {
 
 			} else if (arrayPv instanceof BoogieOldVar) {
 				// the nonOldVar may have come up first..
-				final Term alreadyConstructed = indexPartitionToArrayToNewArrayId.get(indexPartition, arrayTv);
+				final Term alreadyConstructed = indexBlockToArrayToNewArrayId.get(indexPartition, arrayTv);
 				if (alreadyConstructed == null) {
 					final BoogieOldVar bovOld = (BoogieOldVar) arrayPv;
 
@@ -390,8 +391,8 @@ class PartitionInformation {
 					freshVar = bnovNew.getOldVar();
 					mNewSymbolTable.add(freshVar);
 
-					indexPartitionToArrayToNewArrayId.put(indexPartition, arrayTv, freshVar.getTerm());
-					indexPartitionToArrayToNewArrayId.put(indexPartition,
+					indexBlockToArrayToNewArrayId.put(indexPartition, arrayTv, freshVar.getTerm());
+					indexBlockToArrayToNewArrayId.put(indexPartition,
 							((BoogieOldVar) arrayPv).getNonOldVar().getTerm(),
 							bnovNew.getTerm());
 				} else {

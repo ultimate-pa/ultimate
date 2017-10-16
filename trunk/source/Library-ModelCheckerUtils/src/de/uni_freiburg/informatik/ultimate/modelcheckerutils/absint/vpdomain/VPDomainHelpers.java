@@ -353,6 +353,14 @@ public class VPDomainHelpers {
 				.collect(Collectors.toList()));
 	}
 
+
+	public static ArrayIndex normalizeArrayIndex(final ArrayIndex index, final Map<IProgramVar, TermVariable> newInVars,
+			final Map<IProgramVar, TermVariable> newOutVars, final ManagedScript script) {
+		return new ArrayIndex(index.stream()
+				.map(t -> normalizeTerm(t, newInVars, newOutVars, script))
+				.collect(Collectors.toList()));
+	}
+
 	public static <T> boolean arrayContains(final T[] array, final T elem) {
 		for (final T t : array) {
 			if (t.equals(elem)) {

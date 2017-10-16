@@ -189,8 +189,8 @@ public class HeapSepPreAnalysis {
 		return innerArray;
 	}
 
-	public Set<List<Term>> getAccessingIndicesForArrays(final Set<Term> arrayGroup) {
-		 final Set<List<Term>> result = new HashSet<>();
+	public Set<ArrayIndex> getAccessingIndicesForArrays(final Set<Term> arrayGroup) {
+		 final Set<ArrayIndex> result = new HashSet<>();
 		 arrayGroup.forEach(array ->
 		 	result.addAll(getArrayToAccessingIndices().getImage(array)));
 		return result;

@@ -35,7 +35,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -81,7 +80,7 @@ public class HeapSepTransFormulaTransformer implements ITransformulaTransformer 
 	 */
 	private final ManagedScript mMgdScript;
 	private NewArrayIdProvider mNewArrayIdProvider;
-	
+
 	private final IIcfgSymbolTable mOldSymbolTable;
 	private IIcfgSymbolTable mNewSymbolTable;
 	private final ILogger mLogger;
@@ -89,9 +88,9 @@ public class HeapSepTransFormulaTransformer implements ITransformulaTransformer 
 	private final CfgSmtToolkit mCsToolkit;
 	private final IEqualityAnalysisResultProvider<IcfgLocation, IIcfg<?>> mEqualityProvider;
 	private final HeapSeparatorBenchmark mStatistics;
-	
-	public HeapSepTransFormulaTransformer(final CfgSmtToolkit csToolkit, IUltimateServiceProvider services, 
-			IEqualityAnalysisResultProvider<IcfgLocation, IIcfg<?>> equalityProvider) {
+
+	public HeapSepTransFormulaTransformer(final CfgSmtToolkit csToolkit, final IUltimateServiceProvider services,
+			final IEqualityAnalysisResultProvider<IcfgLocation, IIcfg<?>> equalityProvider) {
 		mMgdScript = csToolkit.getManagedScript();
 		mOldSymbolTable = csToolkit.getSymbolTable();
 		mServices = services;
@@ -123,7 +122,7 @@ public class HeapSepTransFormulaTransformer implements ITransformulaTransformer 
 		final NewTermVariableProvider newTvProvider = new NewTermVariableProvider(tf);
 
 		Term intermediateFormula = tf.getFormula();
-		
+
 //		/*
 //		 *  we need this because the mapping oldTermVariable -> ProgramVar -> newTermVariables is sound
 //		 *  example: a := a becomes a_1 = a_2, where both that the same ProgramVar
@@ -135,25 +134,25 @@ public class HeapSepTransFormulaTransformer implements ITransformulaTransformer 
 
 		intermediateFormula = substituteRemainingStoresAndSelects(tf, intermediateFormula, newTvProvider);
 		mMgdScript.unlock(this);
-		
-		boolean newEmptyNonTheoryConsts = false;
-		Set<IProgramConst> newNonTheoryConsts = null;
-		boolean newEmptyBranchEncoders = false;
-		Collection<TermVariable> newBranchEncoders = null; // TODO: deal with these for working LBE, right?..
-		boolean newEmptyAuxVars = false;
-		TransFormulaBuilder tfBuilder = new TransFormulaBuilder(
+
+		final boolean newEmptyNonTheoryConsts = false;
+		final Set<IProgramConst> newNonTheoryConsts = null;
+		final boolean newEmptyBranchEncoders = false;
+		final Collection<TermVariable> newBranchEncoders = null; // TODO: deal with these for working LBE, right?..
+		final boolean newEmptyAuxVars = false;
+		final TransFormulaBuilder tfBuilder = new TransFormulaBuilder(
 				newTvProvider.getNewInVars(),
 				newTvProvider.getNewOutVars(),
-				newEmptyNonTheoryConsts, 
-				newNonTheoryConsts, 
-				newEmptyBranchEncoders, 
-				newBranchEncoders, 
+				newEmptyNonTheoryConsts,
+				newNonTheoryConsts,
+				newEmptyBranchEncoders,
+				newBranchEncoders,
 				newEmptyAuxVars);
-		
+
 		tfBuilder.setFormula(intermediateFormula);
-		
+
 		tfBuilder.setInfeasibility(Infeasibility.NOT_DETERMINED);
-		
+
 		return tfBuilder.finishConstruction(mMgdScript);
 	}
 
@@ -161,7 +160,7 @@ public class HeapSepTransFormulaTransformer implements ITransformulaTransformer 
 
 	/**
 	 * update selects and stores
-	 * 
+	 *
 	 * details:
 	 *  select case:
 	 *   the result depends on the accessed index
@@ -169,33 +168,33 @@ public class HeapSepTransFormulaTransformer implements ITransformulaTransformer 
 	 *  assume p != q;  mem -> p -> mem1, mem -> q -> mem2 are in the corresponding map from old to new array ids
 	 *   old: mem[p]
 	 *   new: mem1[p]
-	 *   
+	 *
 	 *   less simple example (select over store):
 	 *  assume p != q;  mem -> p -> mem1, mem -> q -> mem2 are in the corresponding map from old to new array ids
 	 *   old: mem[p:=i][q]
 	 *   new: mem2[q]
-	 *   
+	 *
 	 *   alternative new: mem2[p:=i][q]
-	 *     --> the store does not hurt us here, as we're not accessing at q anyway.. 
+	 *     --> the store does not hurt us here, as we're not accessing at q anyway..
 	 *        (but the above is better, of course, and we may only omit the store for (must) non-aliasing pointers ..)
-	 *   
+	 *
 	 * @param tf
 	 * @param newInVars
 	 * @param newOutVars
 	 * @param intermediateFormula
-	 * @param newTvProvider 
+	 * @param newTvProvider
 	 * @return
 	 */
 	private Term substituteRemainingStoresAndSelects(final UnmodifiableTransFormula tf,
 //			final Map<IProgramVar, TermVariable> newInVars, final Map<IProgramVar, TermVariable> newOutVars,
 			final Term intermediateFormula, final NewTermVariableProvider newTvProvider) {
 		final Map<Term, Term> substitutionMapPvoc = new HashMap<>();
-		
-		List<MultiDimensionalSelect> mdSelects = 
+
+		final List<MultiDimensionalSelect> mdSelects =
 				MultiDimensionalSelect.extractSelectShallow(intermediateFormula, true);//TODO allowArrayValues??
-		List<MultiDimensionalSelect> mdSelectsInOriginalTf = 
+		final List<MultiDimensionalSelect> mdSelectsInOriginalTf =
 				MultiDimensionalSelect.extractSelectShallow(tf.getFormula(), true);//TODO allowArrayValues??
-		for (MultiDimensionalSelect mds : mdSelects) {
+		for (final MultiDimensionalSelect mds : mdSelects) {
 			if (!mdSelectsInOriginalTf.contains(mds)) {
 				// the current mds comes from a replacement we made earlier (during ArrayUpdate or ArrayEquality-handling)
 				continue;
@@ -208,24 +207,26 @@ public class HeapSepTransFormulaTransformer implements ITransformulaTransformer 
 
 			final Term oldArray = VPDomainHelpers.normalizeTerm(getInnerMostArray(mds.getArray()), tf, mMgdScript);
 
-			final List<Term> pointers = mds.getIndex().stream()
-					.map(t -> VPDomainHelpers.normalizeTerm(t, newTvProvider.getNewInVars(), 
-							newTvProvider.getNewOutVars(), mMgdScript))
-					.collect(Collectors.toList());
-	
+//			final List<Term> pointers = mds.getIndex().stream()
+//					.map(t -> VPDomainHelpers.normalizeTerm(t, newTvProvider.getNewInVars(),
+//							newTvProvider.getNewOutVars(), mMgdScript))
+//					.collect(Collectors.toList());
+			final ArrayIndex pointers = VPDomainHelpers.normalizeArrayIndex(mds.getIndex(),  newTvProvider.getNewInVars(),
+							newTvProvider.getNewOutVars(), mMgdScript);
 
-			Term newArray = mNewArrayIdProvider.getNewArrayId(oldArray, pointers);
+
+			final Term newArray = mNewArrayIdProvider.getNewArrayId(oldArray, pointers);
 
 			updateMappingsForSubstitution(mds.getArray(), newArray, substitutionMapPvoc, newTvProvider, tf);
 		}
-		Term result = new Substitution(mMgdScript, substitutionMapPvoc).transform(intermediateFormula);	
+		Term result = new Substitution(mMgdScript, substitutionMapPvoc).transform(intermediateFormula);
 
 		final Map<Term, Term> substitutionMapPvoc2 = new HashMap<>();
-		final List<MultiDimensionalStore> mdStores = 
+		final List<MultiDimensionalStore> mdStores =
 				MultiDimensionalStore.extractArrayStoresShallow(result);
-		final List<MultiDimensionalStore> mdStoresInOriginalTf = 
+		final List<MultiDimensionalStore> mdStoresInOriginalTf =
 				MultiDimensionalStore.extractArrayStoresShallow(tf.getFormula());
-		for (MultiDimensionalStore mds : mdStores) {
+		for (final MultiDimensionalStore mds : mdStores) {
 			if (!mdStoresInOriginalTf.contains(mds)) {
 				// the current mds comes from a replacement we made earlier (during ArrayUpdate or ArrayEquality-handling)
 				continue;
@@ -235,7 +236,7 @@ public class HeapSepTransFormulaTransformer implements ITransformulaTransformer 
 					VPDomainHelpers.computeProgramVarMappingFromTransFormula(tf))) {
 				continue;
 			}
-			
+
 			assert false : "TODO"; // TODO
 
 //			final Term oldArray = VPDomainHelpers.normalizeTerm(getInnerMostArray(mds.getArray()), tf, mScript);
@@ -243,12 +244,12 @@ public class HeapSepTransFormulaTransformer implements ITransformulaTransformer 
 //			final List<Term> pointers = mds.getIndex().stream()
 //					.map(t -> VPDomainHelpers.normalizeTerm(t, newInVars, newOutVars, mScript))
 //					.collect(Collectors.toList());
-//					
+//
 //			final Term newArray = mNewArrayIdProvider.getNewArrayId(oldArray, pointers);
 //
 //			updateMappingsForSubstitution(oldArray, newArray, newInVars, newOutVars, substitutionMapPvoc2);
 		}
-		result = new Substitution(mMgdScript, substitutionMapPvoc2).transform(result);	
+		result = new Substitution(mMgdScript, substitutionMapPvoc2).transform(result);
 		return result;
 	}
 
@@ -256,31 +257,31 @@ public class HeapSepTransFormulaTransformer implements ITransformulaTransformer 
 
 	/**
 	 * The conversion of an array update depends on which indices are written.
-	 * 
-	 * simplest case: 
+	 *
+	 * simplest case:
 	 *  assume p != q;  mem -> p -> mem1, mem -> q -> mem2 are in the corresponding map from old to new array ids
 	 *  old: mem := mem[p:=i]
 	 *  new: mem1 := mem1[p:=i]
-	 *  
+	 *
 	 * less simple case: (TODO: implement)
 	 *  assume p != q;  mem -> p -> mem1, mem -> q -> mem2 are in the corresponding map from old to new array ids
 	 *  old: mem := mem[p:=i][q:=j]
-	 *  new: mem1 := mem1[p:=i] ; mem2 := mem2[q:=j]  (this conversion is correct because of p!=q, mem1 will never be 
+	 *  new: mem1 := mem1[p:=i] ; mem2 := mem2[q:=j]  (this conversion is correct because of p!=q, mem1 will never be
 	 *  				read at q, and mem2 never at p)
-	 *  
-	 *  new': mem1 := mem1[p:=i][q:=j] ; mem2 := mem2[p:=i][q:=j] 
+	 *
+	 *  new': mem1 := mem1[p:=i][q:=j] ; mem2 := mem2[p:=i][q:=j]
 	 *   			(contracting the stores could be an additional optimization)
-	 * 
+	 *
 	 * @param tf
 	 * @param newInVars
 	 * @param newOutVars
 	 * @param formula
-	 * @param newTvProvider 
+	 * @param newTvProvider
 	 * @return
 	 */
 	private Term substituteArrayUpdates(final UnmodifiableTransFormula tf,
 			final Term formula, final NewTermVariableProvider newTvProvider) {
-		
+
 		/*
 		 * algorithmic plan:
 		 *  - the rhs is the one that is accessed according to the pointers
@@ -295,23 +296,23 @@ public class HeapSepTransFormulaTransformer implements ITransformulaTransformer 
 		 */
 		final Map<Term, Term> equalitySubstitution = new HashMap<>();
 
-		List<ArrayUpdate> arrayUpdates = ArrayUpdate.extractArrayUpdates(formula, false);
-		for (ArrayUpdate au : arrayUpdates) {
+		final List<ArrayUpdate> arrayUpdates = ArrayUpdate.extractArrayUpdates(formula, false);
+		for (final ArrayUpdate au : arrayUpdates) {
 			mStatistics.incrementArrayUpdateCounter();
 
 			final Term rhsStoreTerm = au.getMultiDimensionalStore().getStoreTerm();
 			final TermVariable oldRhsVar = (TermVariable) getInnerMostArray(rhsStoreTerm);
 
-			// we get a list of indices according to the store chain; 
+			// we get a list of indices according to the store chain;
 			final List<ArrayIndex> pointers = computeAccessingIndicesInStoreChain(rhsStoreTerm);
 
 			final List<Term> newEqualities = new ArrayList<>();
-			
-			Set<Term> alreadySeenNewArrayRhs = new HashSet<>();
-			
+
+			final Set<Term> alreadySeenNewArrayRhs = new HashSet<>();
+
 			// for each of the pointers we have to determine the corresponding new array and update it
-			for (ArrayIndex pointer : pointers) {
-				
+			for (final ArrayIndex pointer : pointers) {
+
 				// rhs is chosen according to pointerGroup
 				final Term newArrayRhsVarNorm = mNewArrayIdProvider.getNewArrayId(
 						VPDomainHelpers.normalizeTerm(oldRhsVar, tf, mMgdScript),
@@ -323,13 +324,13 @@ public class HeapSepTransFormulaTransformer implements ITransformulaTransformer 
 				mStatistics.incrementNewlyIntroducedArrayUpdateCounter();
 
 				alreadySeenNewArrayRhs.add(newArrayRhsVarNorm);
-				
+
 				/*
-				 *  lhs is chosen according to rhs 
+				 *  lhs is chosen according to rhs
 				 *  --> but actually the outcome is the same as chosing it by pointer group, right?
 				 */
 				final Term newArrayLhsNorm = mNewArrayIdProvider.getNewArrayId(
-						VPDomainHelpers.normalizeTerm(au.getNewArray(), tf, mMgdScript), 
+						VPDomainHelpers.normalizeTerm(au.getNewArray(), tf, mMgdScript),
 						VPDomainHelpers.normalizeArrayIndex(pointer, tf, mMgdScript));
 
 				final IProgramVar newArrayLhsPvoc = mNewSymbolTable.getProgramVar((TermVariable) newArrayLhsNorm);
@@ -340,85 +341,85 @@ public class HeapSepTransFormulaTransformer implements ITransformulaTransformer 
 				 */
 
 				/*
-				 *  check if we already have an entry for the new lhs, because we have an update we only check in 
+				 *  check if we already have an entry for the new lhs, because we have an update we only check in
 				 *  outVars
 				 */
 
-				TermVariable newArrayLhs = newTvProvider.getOrConstructNewTermVariable(newArrayLhsPvoc, 
+				final TermVariable newArrayLhs = newTvProvider.getOrConstructNewTermVariable(newArrayLhsPvoc,
 						au.getNewArray(), tf);
 
 				/*
-				 *  check if we already have an entry for the new rhs, because we have an update we only check in 
-				 *  inVars --> the rhs may be only in (for instance a := a[i:=x]) or both in and out with the same 
+				 *  check if we already have an entry for the new rhs, because we have an update we only check in
+				 *  inVars --> the rhs may be only in (for instance a := a[i:=x]) or both in and out with the same
 				 *   (for instance b := a[i:=x]) variables
 				 */
-				TermVariable newArrayRhsVar = newTvProvider.getOrConstructNewTermVariable(newArrayRhsVarPvoc, 
+				final TermVariable newArrayRhsVar = newTvProvider.getOrConstructNewTermVariable(newArrayRhsVarPvoc,
 						oldRhsVar, tf);
-				
+
 				if (newArrayLhs == null || newArrayRhsVar == null) {
-					assert !isArrayTracked(newArrayLhs, tf) 
+					assert !isArrayTracked(newArrayLhs, tf)
 						|| !isArrayTracked(newArrayRhsVar, tf);
 					continue;
 				}
-				
-				final Term newArrayRhs = new Substitution(mMgdScript, 
+
+				final Term newArrayRhs = new Substitution(mMgdScript,
 						Collections.singletonMap(oldRhsVar, newArrayRhsVar))
 						.transform(rhsStoreTerm);
 
 				final Term newEquality = mMgdScript.term(this, "=", newArrayLhs, newArrayRhs);
 				newEqualities.add(newEquality);
-	
+
 			}
 
 			final Term newConjunctionOfEquations = SmtUtils.and(mMgdScript.getScript(), newEqualities);
 			equalitySubstitution.put(au.getArrayUpdateTerm(), newConjunctionOfEquations);
 		}
-		
+
 		final Term newTerm = new Substitution(mMgdScript, equalitySubstitution).transform(formula);
 		return newTerm;
 	}
 
 	private Term substituteArrayEqualites(final UnmodifiableTransFormula tf,
-			final Term intermediateFormula, 
+			final Term intermediateFormula,
 			final NewTermVariableProvider newTvProvider) {
 		final List<ArrayEquality> arrayEqualities = ArrayEquality.extractArrayEqualities(intermediateFormula);
 		final Map<Term, Term> equalitySubstitution = new HashMap<>();
-		for (ArrayEquality ae : arrayEqualities) {
+		for (final ArrayEquality ae : arrayEqualities) {
 			/*
 			 * plan:
 			 *  (- check compatibility --> should be guaranteed by NewArrayIdProvider)
 			 *  - make an assignment between all the partitions
 			 */
-			if (!isArrayTracked(ae.getLhs(), 
+			if (!isArrayTracked(ae.getLhs(),
 					VPDomainHelpers.computeProgramVarMappingFromTransFormula(tf))
-					|| !isArrayTracked(ae.getRhs(), 
+					|| !isArrayTracked(ae.getRhs(),
 					VPDomainHelpers.computeProgramVarMappingFromTransFormula(tf))) {
 				continue;
 			}
-			
-			
-			List<Term> newEqualities = new ArrayList<>();
-			
+
+
+			final List<Term> newEqualities = new ArrayList<>();
+
 			final Term oldLhsNorm = VPDomainHelpers.normalizeTerm(ae.getLhs(), tf, mMgdScript);
 			final List<Term> newLhss = mNewArrayIdProvider.getAllNewArrayIds(oldLhsNorm);
 
 			final Term oldRhsNorm = VPDomainHelpers.normalizeTerm(ae.getRhs(), tf, mMgdScript);
 			final List<Term> newRhss = mNewArrayIdProvider.getAllNewArrayIds(oldRhsNorm);
-			
+
 			assert newLhss.size() == newRhss.size();
 			for (int i = 0; i < newLhss.size(); i++) {
 				final Term newLhs = newLhss.get(i);
 				final Term newRhs = newRhss.get(i);
-				
+
 				final IProgramVar newLhsPvoc = mNewSymbolTable.getProgramVar((TermVariable) newLhs);
 				final IProgramVar newRhsPvoc = mNewSymbolTable.getProgramVar((TermVariable) newRhs);
-				
+
 				/*
 				 * update the new invar/outvar maps
 				 */
-				TermVariable newArrayLhs = newTvProvider.getOrConstructNewTermVariable(newLhsPvoc, 
+				final TermVariable newArrayLhs = newTvProvider.getOrConstructNewTermVariable(newLhsPvoc,
 						ae.getLhsTermVariable(), tf);
-				TermVariable newArrayRhs = newTvProvider.getOrConstructNewTermVariable(newRhsPvoc, 
+				final TermVariable newArrayRhs = newTvProvider.getOrConstructNewTermVariable(newRhsPvoc,
 						ae.getRhsTermVariable(), tf);
 
 				assert newArrayLhs != null && newArrayRhs != null;
@@ -435,31 +436,31 @@ public class HeapSepTransFormulaTransformer implements ITransformulaTransformer 
 	}
 
 	/**
-	 * 
+	 *
 	 * - updates the maps newInVars and newOutVars
 	 * - updates the map substitutionMap
-	 * 
+	 *
 	 * This method is for the simple cases, where we just need to replace the arrayIdentifer "one-by-one".
 	 * (not like the ArrayEquality, where we replace one-by-many)
-	 * 
+	 *
 	 * @param oldArray
 	 * @param newArray
 	 * @param tf
 	 * @param newInVars
 	 * @param newOutVars
 	 * @param substitutionMap
-	 * @param tf 
+	 * @param tf
 	 */
-	private void updateMappingsForSubstitution(Term versionedTermInOrigTf, Term newArrayTerm,
-			final Map<Term, Term> substitutionMap, 
+	private void updateMappingsForSubstitution(final Term versionedTermInOrigTf, final Term newArrayTerm,
+			final Map<Term, Term> substitutionMap,
 			final NewTermVariableProvider newTvProvider,
 			final UnmodifiableTransFormula tf) {
 		if (versionedTermInOrigTf instanceof TermVariable) {
 			assert newArrayTerm instanceof TermVariable;
 
 			final IProgramVar newArray = mNewSymbolTable.getProgramVar((TermVariable) newArrayTerm);
-		
-			final TermVariable versionedInTvNew = newTvProvider.getOrConstructNewTermVariable(newArray, 
+
+			final TermVariable versionedInTvNew = newTvProvider.getOrConstructNewTermVariable(newArray,
 					(TermVariable) versionedTermInOrigTf, tf);
 			substitutionMap.put(versionedTermInOrigTf, versionedInTvNew);
 		} else if (SmtUtils.isConstant(versionedTermInOrigTf)) {
@@ -473,13 +474,13 @@ public class HeapSepTransFormulaTransformer implements ITransformulaTransformer 
 			throw new AssertionError("did not see this case coming..");
 		}
 	}
-	
+
 	/**
 	 * Computes the ArrayIndexes that are used in a store chain. The result is ordered from the outside in.
 	 * @param arrayUpdateTerm
 	 * @return
 	 */
-	private List<ArrayIndex> computeAccessingIndicesInStoreChain(Term arrayUpdateTerm) {
+	private List<ArrayIndex> computeAccessingIndicesInStoreChain(final Term arrayUpdateTerm) {
 		final List<ArrayIndex> result = new ArrayList<>();
 
 		Term currentTerm = arrayUpdateTerm;
@@ -490,7 +491,7 @@ public class HeapSepTransFormulaTransformer implements ITransformulaTransformer 
 		return result;
 	}
 
-	public static Term getInnerMostArray(Term arrayTerm) {
+	public static Term getInnerMostArray(final Term arrayTerm) {
 		assert arrayTerm.getSort().isArraySort();
 		Term innerArray = arrayTerm;
 		while (SmtUtils.containsFunctionApplication(innerArray, "store")) {
@@ -503,27 +504,27 @@ public class HeapSepTransFormulaTransformer implements ITransformulaTransformer 
 
 
 	@Override
-	public void preprocessIcfg(IIcfg<?> icfg) {
-		/* 
+	public void preprocessIcfg(final IIcfg<?> icfg) {
+		/*
 		 * run a preanalysis that finds out necessary information for the (heap) array partitioning, in particular:
 		 *  <li> which arrays are equated in the program
 		 *  <li> at which indices each array is accessed
 		 */
-		HeapSepPreAnalysis heapSepPreanalysis = new HeapSepPreAnalysis(mLogger, 
+		final HeapSepPreAnalysis heapSepPreanalysis = new HeapSepPreAnalysis(mLogger,
 				icfg.getCfgSmtToolkit().getManagedScript());
 		new IcfgEdgeIterator(icfg).forEachRemaining(edge -> heapSepPreanalysis.processEdge(edge));
-		
-		
+
+
 		mEqualityProvider.preprocess(icfg);
 
-		/* 
+		/*
 		 * compute the partitioning from the above results, in particular compute which array will translate to which
 		 *  new array for which accessing expression
 		 */
-		mNewArrayIdProvider = 
+		mNewArrayIdProvider =
 				new NewArrayIdProvider(mCsToolkit, mEqualityProvider, heapSepPreanalysis, mStatistics);
 		mNewSymbolTable = mNewArrayIdProvider.getNewSymbolTable();
-		
+
 		mLogger.info("IcfgTransformer_HeapSeparator: Computed the following array partitioning from the given"
 				+ "equality information:");
 		mLogger.info(mNewArrayIdProvider.toString());
@@ -534,9 +535,9 @@ public class HeapSepTransFormulaTransformer implements ITransformulaTransformer 
 	@Override
 	public TransforumlaTransformationResult transform(final UnmodifiableTransFormula tf) {
 		/*
-		 * The question if the HeapSeparator computes an overapproximation ("false" flag we give below) is a bit more 
+		 * The question if the HeapSeparator computes an overapproximation ("false" flag we give below) is a bit more
 		 * complicated:
-		 *  <li> we introduce fresh program variables, so strictly speaking the transformed program's behaviour is 
+		 *  <li> we introduce fresh program variables, so strictly speaking the transformed program's behaviour is
 		 *    incomparable to the input program's
 		 *  <li> if we view the TransFormula just by itself, and restrict ourselves to the unchanged program variables,
 		 *      the HeapSeparator should produce an overapproximation
@@ -559,13 +560,13 @@ public class HeapSepTransFormulaTransformer implements ITransformulaTransformer 
 		return mNewSymbolTable;
 	}
 
-	private boolean isArrayTracked(Term rhs, Map<TermVariable, IProgramVar> computeProgramVarMappingFromTransFormula) {
+	private boolean isArrayTracked(final Term rhs, final Map<TermVariable, IProgramVar> computeProgramVarMappingFromTransFormula) {
 		// TODO Auto-generated method stub
 		// also look into neighboring classes -- we have that method there, too..
 		return true;
 	}
 
-	private boolean isArrayTracked(TermVariable newArrayLhs, UnmodifiableTransFormula tf) {
+	private boolean isArrayTracked(final TermVariable newArrayLhs, final UnmodifiableTransFormula tf) {
 		// TODO Auto-generated method stub
 		// also look into neighboring classes -- we have that method there, too..
 		return true;
@@ -574,37 +575,37 @@ public class HeapSepTransFormulaTransformer implements ITransformulaTransformer 
 	public HeapSeparatorBenchmark getStatistics() {
 		return mStatistics;
 	}
-	
+
 
 	/**
 	 * Provides Terms that substitute the old array-representing Terms in the new TransFormulas we build.
-	 * 
+	 *
 	 * We probably only need this for TermVariables because constants are much simpler to replace (because they don't have
 	 *  many versions within one TransFormula).
-	 * 
+	 *
 	 * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
 	 *
 	 */
 	class NewTermVariableProvider {
 
-		private final NestedMap2<IProgramVar, TermVariable, TermVariable> mNewPvocToVersionedTvToNewVersionedTv = 
+		private final NestedMap2<IProgramVar, TermVariable, TermVariable> mNewPvocToVersionedTvToNewVersionedTv =
 				new NestedMap2<>();
-		
+
 		private final Map<IProgramVar, TermVariable> mNewInVars;
 		private final Map<IProgramVar, TermVariable> mNewOutVars;
 
-		public NewTermVariableProvider(UnmodifiableTransFormula tf) {
+		public NewTermVariableProvider(final UnmodifiableTransFormula tf) {
 			mNewInVars = new HashMap<>(tf.getInVars());
 			mNewOutVars = new HashMap<>(tf.getOutVars());
 		}
 
-		TermVariable getOrConstructNewTermVariable(IProgramVar newPvoc, TermVariable versionedTvInOrigTf, 
-				UnmodifiableTransFormula origTf) {
+		TermVariable getOrConstructNewTermVariable(final IProgramVar newPvoc, final TermVariable versionedTvInOrigTf,
+				final UnmodifiableTransFormula origTf) {
 			TermVariable result = mNewPvocToVersionedTvToNewVersionedTv.get(newPvoc, versionedTvInOrigTf);
 			if (result == null) {
 				result = mMgdScript.constructFreshCopy(versionedTvInOrigTf);
 				mNewPvocToVersionedTvToNewVersionedTv.put(newPvoc, versionedTvInOrigTf, result);
-				
+
 				if (origTf.getInVars().values().contains(versionedTvInOrigTf)) {
 					mNewInVars.put(newPvoc, result);
 				}
