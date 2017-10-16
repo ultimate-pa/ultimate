@@ -64,7 +64,6 @@ public class WeakEquivalenceGraph<//ACTION extends IIcfgTransition<IcfgLocation>
 	private final CCManager<NODE> mCcManager;
 
 	private final EqConstraintFactory<NODE> mFactory;
-	private final AbstractNodeAndFunctionFactory<NODE, Term> mNodeAndFunctionFactory;
 
 	private final Map<Doubleton<NODE>, WeakEquivalenceEdgeLabel> mWeakEquivalenceEdges;
 
@@ -88,7 +87,6 @@ public class WeakEquivalenceGraph<//ACTION extends IIcfgTransition<IcfgLocation>
 		mArrayEqualities = new HashRelation<>();
 		assert factory != null;
 		mFactory = factory;
-		mNodeAndFunctionFactory = mFactory.getEqNodeAndFunctionFactory();
 		mCcManager = factory.getCcManager();
 		assert sanityCheck();
 	}
@@ -112,7 +110,6 @@ public class WeakEquivalenceGraph<//ACTION extends IIcfgTransition<IcfgLocation>
 		mArrayEqualities = arrayEqualities;
 		assert factory != null;
 		mFactory = factory;
-		mNodeAndFunctionFactory = mFactory.getEqNodeAndFunctionFactory();
 		mCcManager = factory.getCcManager();
 		assert sanityCheck();
 	}
@@ -141,7 +138,6 @@ public class WeakEquivalenceGraph<//ACTION extends IIcfgTransition<IcfgLocation>
 			mWeakEquivalenceEdges.put(newSoureceAndTarget, new WeakEquivalenceEdgeLabel(weqEdge.getValue()));
 		}
 		mFactory = weakEquivalenceGraph.mFactory;
-		mNodeAndFunctionFactory = mFactory.getEqNodeAndFunctionFactory();
 		mCcManager = mFactory.getCcManager();
 		assert sanityCheck();
 	}
@@ -212,21 +208,6 @@ public class WeakEquivalenceGraph<//ACTION extends IIcfgTransition<IcfgLocation>
 			}
 		}
 		assert elementIsFullyRemoved(elem);
-	}
-
-	private boolean projectedFunctionIsFullyGone(final NODE func) {
-		for (final Entry<Doubleton<NODE>, WeakEquivalenceEdgeLabel> edge : mWeakEquivalenceEdges.entrySet()) {
-			if (edge.getKey().getOneElement().equals(func) || edge.getKey().getOtherElement().equals(func)) {
-				assert false;
-				return false;
-			}
-
-			if (edge.getValue().getAppearingNodes().contains(func)) {
-				assert false;
-				return false;
-			}
-		}
-		return true;
 	}
 
 	public void renameVariables(final Map<Term, Term> substitutionMapping) {
@@ -402,13 +383,6 @@ public class WeakEquivalenceGraph<//ACTION extends IIcfgTransition<IcfgLocation>
 //		assert mArrayEqualities == null || mArrayEqualities.isEmpty();
 		final List<Term> result = new ArrayList<>();
 		for (final Entry<Doubleton<NODE>, WeakEquivalenceEdgeLabel> edge : mWeakEquivalenceEdges.entrySet()) {
-//			if (mArrayEqualities.containsPair(edge.getKey().getOneElement(), edge.getKey().getOtherElement())
-//					&& mArrayEqualities.containsPair(edge.getKey().getOtherElement(), edge.getKey().getOneElement())) {
-//				// case where the edge is inconsistent --> we could just add a ground equality instead of the whole
-//  			// edge..
-//				result.add(e)
-//				continue;
-//			}
 			final List<Term> dnfAsCubeList = new ArrayList<>();
 			dnfAsCubeList.addAll(edge.getValue().toDNF(script));
 
@@ -504,7 +478,6 @@ public class WeakEquivalenceGraph<//ACTION extends IIcfgTransition<IcfgLocation>
 		}
 
 		if (oldLabel == null || oldLabel.isTautological()) {
-//			oldLabel = new WeakEquivalenceEdgeLabel();
 			assert paList.size() != 1 || !paList.get(0).isTautological();
 
 			final WeakEquivalenceGraph<NODE>.WeakEquivalenceEdgeLabel newLabel = new WeakEquivalenceEdgeLabel(paList);
@@ -532,7 +505,6 @@ public class WeakEquivalenceGraph<//ACTION extends IIcfgTransition<IcfgLocation>
 		WeakEquivalenceEdgeLabel strengthenedEdgeLabel = oldLabelCopy.meet(labelToStrengthenWith);
 
 		// meet with gpa (done before) and project afterwards
-//		strengthenedEdgeLabel = strengthenedEdgeLabel.meet(Collections.singletonList(mPartialArrangement));
 		strengthenedEdgeLabel = strengthenedEdgeLabel.projectToElements(mFactory.getAllWeqNodes());
 
 		// inconsistency check
@@ -638,10 +610,6 @@ public class WeakEquivalenceGraph<//ACTION extends IIcfgTransition<IcfgLocation>
 		final WeakEquivalenceGraph<NODE>.WeakEquivalenceEdgeLabel meet =
 				copy.meetRec(Collections.singletonList(qEqualsI));
 
-//		final Set<NODE> nodesAddedByProject = meet.projectElement(firstDimWeqVarNode, mPartialArrangement);
-//		nodesAddedByProject.forEach(mPartialArrangement::addElement);
-//		meet.projectSingleElement(firstDimWeqVarNode, null);
-
 		meet.setExternalRemInfo(mPartialArrangement.getElementCurrentlyBeingRemoved());
 		meet.projectWeqVarNode(firstDimWeqVarNode);
 
@@ -657,7 +625,6 @@ public class WeakEquivalenceGraph<//ACTION extends IIcfgTransition<IcfgLocation>
 				meet.projectToElements(new HashSet<>(weqVarsForThisEdge));
 
 		assert result.assertHasOnlyWeqVarConstraints(new HashSet<>(weqVarsForThisEdge));
-//		assert copy.getAppearingNodes().containsAll(result.getAppearingNodes());
 
 		assert result.sanityCheck();
 		return result.getLabelContents();
@@ -682,12 +649,6 @@ public class WeakEquivalenceGraph<//ACTION extends IIcfgTransition<IcfgLocation>
 //		meet.meetWithWeqGpa();
 		meet.meetWithCcGpa();
 
-		// project away the highest weq var before shifting
-//		final Set<NODE> nodesAddedByProject = labelToShiftAndAdd.projectElement(
-//				weqVarsForResolventEdge.get(weqVarsForResolventEdge.size() -1),
-//				mPartialArrangement);
-//		nodesAddedByProject.forEach(mPartialArrangement::addElement);
-//		labelToShiftAndAdd.projectSingleElement(weqVarsForResolventEdge.get(weqVarsForResolventEdge.size() - 1), null);
 		meet.setExternalRemInfo(mPartialArrangement.getElementCurrentlyBeingRemoved());
 		meet.projectWeqVarNode(weqVarsForResolventEdge.get(weqVarsForResolventEdge.size() - 1));
 
@@ -713,14 +674,7 @@ public class WeakEquivalenceGraph<//ACTION extends IIcfgTransition<IcfgLocation>
 		return normalized;
 	}
 
-	private boolean sanityCheckNodesNotYetAdded(final Set<NODE> nodesThatHaveBeenAddedDuringProject) {
-		// TODO Auto-generated method stub
-		assert sanityAllNodesOnWeqLabelsAreKnownToGpa(nodesThatHaveBeenAddedDuringProject);
-		return true;
-	}
-
 	boolean sanityCheck() {
-
 		for (final Entry<Doubleton<NODE>, WeakEquivalenceGraph<NODE>.WeakEquivalenceEdgeLabel> en
 				: mWeakEquivalenceEdges.entrySet()) {
 			assert en.getValue().sanityCheck();
@@ -888,10 +842,7 @@ public class WeakEquivalenceGraph<//ACTION extends IIcfgTransition<IcfgLocation>
 			}
 		}
 
-//		assert !mArrayEqualities.containsPair(node1OldRep, node2OldRep)
-//			&& !mArrayEqualities.containsPair(node2OldRep, node1OldRep) : "TODO: treat this case";
-
-		// we can remove array equalities between the nodes that are merge now anyways..
+		// we can remove array equalities between the nodes that are merged now anyways..
 		mArrayEqualities.removePair(node1OldRep, node2OldRep);
 		mArrayEqualities.removePair(node2OldRep, node1OldRep);
 
@@ -1093,13 +1044,6 @@ public class WeakEquivalenceGraph<//ACTION extends IIcfgTransition<IcfgLocation>
 						lab.removeSingleElement(dep, null);
 					}
 
-
-//					if (elem.isFunctionApplication()) {
-//						lab.removeSingleElement(elem, replacement);
-//					} else {
-//						lab.removeSimpleElement(elem);
-//					}
-
 					assert lab.assertSingleElementIsFullyRemoved(elem);
 
 					if (lab.isTautological()) {
@@ -1187,34 +1131,6 @@ public class WeakEquivalenceGraph<//ACTION extends IIcfgTransition<IcfgLocation>
 				return true;
 			}
 
-//			public boolean impliesEqualityOnThatPosition(final List<NODE> arguments) {
-//				for (int i = 0; i < getLabelContents().size(); i++) {
-//					final CongruenceClosure<NODE> copy = mCcManager.makeCopy(
-//							// making a copy of mPartialArrangement's congruence closure here to avoid some sanity checks..
-//							mCcManager.getMeet(getLabelContents().get(i), new CongruenceClosure<>(mPartialArrangement)));
-//					for (int j = 0; j < arguments.size(); j++) {
-//						if (copy.isInconsistent()) {
-//							break;
-//						}
-//						final NODE argJ = arguments.get(j);
-//						final NODE weqVar = WeakEquivalenceGraph.this.mFactory.getWeqVariableNodeForDimension(j, argJ.getTerm().getSort());
-//						copy.reportEquality(weqVar, argJ);
-//					}
-//
-//					if (copy.isInconsistent()) {
-//						// go on;
-//					} else {
-//						/*
-//						 * label did not become inconsistent when adding the equalities q1 = arg1, ... qn = argn
-//						 *  --> the weak equivalence is not strong enough to imply a[arg1, ..,argn] = b[arg1, .., argn]
-//						 *     (where a, b are the source and target of the weq edge)
-//						 */
-//						return false;
-//					}
-//				}
-//				return true;
-//			}
-
 			/**
 			 * Called when the ground partial arrangement (gpa) has changed.
 			 * Checks if any entry of a weq label became inconsistent through the change, removes that entry, propagates
@@ -1230,8 +1146,6 @@ public class WeakEquivalenceGraph<//ACTION extends IIcfgTransition<IcfgLocation>
 			 */
 			public WeakEquivalenceEdgeLabel reportChangeInGroundPartialArrangement(
 					final Predicate<CongruenceClosure<NODE>> reportX) {
-	//			assert WeakEquivalenceGraph.this.sanityCheck();
-	//			assert mPartialArrangement.sanityCheck();
 				assert this.sanityCheck();
 
 
@@ -1240,8 +1154,6 @@ public class WeakEquivalenceGraph<//ACTION extends IIcfgTransition<IcfgLocation>
 				for (int i = 0; i < getLabelContents().size(); i++) {
 					assert mPartialArrangement.sanityCheck();
 					assert getLabelContents().get(i).sanityCheckOnlyCc();
-//					final CongruenceClosure<NODE> currentPaWgpa = mCcManager.getWeqMeet(getLabelContents().get(i),
-//							mPartialArrangement, mPartialArrangement.getElementCurrentlyBeingRemoved());
 					final CongruenceClosure<NODE> currentPaWgpa = mCcManager.getMeet(getLabelContents().get(i),
 							mPartialArrangement, mPartialArrangement.getElementCurrentlyBeingRemoved());
 
@@ -1268,7 +1180,6 @@ public class WeakEquivalenceGraph<//ACTION extends IIcfgTransition<IcfgLocation>
 					newLabel.add(currentPaWgpa.projectToElements(mFactory.getAllWeqNodes(),
 							mPartialArrangement.getElementCurrentlyBeingRemoved()));
 
-	//				assert mPartialArrangement.sanityCheck();
 					assert WeakEquivalenceGraph.this.sanityCheck();
 				}
 				assert newLabel.stream().allMatch(l -> l.sanityCheckOnlyCc());
@@ -1295,7 +1206,6 @@ public class WeakEquivalenceGraph<//ACTION extends IIcfgTransition<IcfgLocation>
 			public void renameVariables(final Map<Term, Term> substitutionMapping) {
 				for (int i = 0; i < getLabelContents().size(); i++) {
 					getLabelContents().get(i).transformElementsAndFunctions(node -> node.renameVariables(substitutionMapping));
-	//						func -> func.renameVariables(substitutionMapping));
 				}
 				assert sanityCheckDontEnforceProjectToWeqVars(mPartialArrangement);
 			}
@@ -1321,18 +1231,6 @@ public class WeakEquivalenceGraph<//ACTION extends IIcfgTransition<IcfgLocation>
 			}
 
 			private WeakEquivalenceEdgeLabel meetRec(final List<CongruenceClosure<NODE>> paList) {
-
-//				final List<List<CongruenceClosure<NODE>>> li = new ArrayList<>(2);
-//				li.add(getLabelContents());
-//				li.add(paList);
-//				final List<List<CongruenceClosure<NODE>>> cp = CrossProducts.crossProduct(li);
-//
-//				final List<CongruenceClosure<NODE>> newLabelContent = new ArrayList<>();
-//				for (final List<CongruenceClosure<NODE>> pair : cp) {
-//					assert pair.size() == 2;
-//					newLabelContent.add(pair.get(0).meetRec(pair.get(1)));
-//				}
-
 				final List<CongruenceClosure<NODE>> newLabelContent = new ArrayList<>();
 				for (final CongruenceClosure<NODE> lc1 : mLabel) {
 					for (final CongruenceClosure<NODE> lc2 : paList) {
@@ -1399,108 +1297,6 @@ public class WeakEquivalenceGraph<//ACTION extends IIcfgTransition<IcfgLocation>
 				return result;
 			}
 
-
-//			/**
-//			 *  <li> compute the meet with the ground partial arrangement
-//			 *  <li> project out the variable to be projected elem
-//			 *  <li> project out all constraints that do not contain a weq-variable
-//			 *
-//			 *  (formerly projecthelper:)
-//			 * proceeds in three steps for each label element of this weq label :
-//			 *  <li> constructs the meet of the element with the ground partial arrangement (gpa)
-//			 *  <li> applies the given removal method on that meet
-//			 *  <li> projects away the constraints in the resulting element that do not contain one of the weq-variables
-//			 *
-//			 * @param elem
-//			 * @param groundPartialArrangement the gpa that is like mPartialArrangement but elem has been removed already
-//			 *    (if we used mPartialArrangement, we would put elem back in via the meet..)
-//			 * @return
-//			 */
-//			public Set<NODE> projectElement(final NODE elem,// final NODE newRep,
-//					final CongruenceClosure<NODE> groundPartialArrangement) {
-//				final Set<NODE> result = new HashSet<>();
-//
-//				final List<CongruenceClosure<NODE>> newLabelContents = new ArrayList<>();
-//				for (int i = 0; i < getLabelContents().size(); i++) {
-//					if (mLabel.get(i).isTautological()) {
-//						// we have one "true" disjunct --> the whole disjunction is tautological
-//						if (mLabel.size() == 1) {
-//							return Collections.emptySet();
-//						}
-//						mLabel.clear();
-//						mLabel.add(new CongruenceClosure<>());
-//						return Collections.emptySet();
-//					}
-//					final CongruenceClosure<NODE>	meet = mCcManager.getMeet(mLabel.get(i), groundPartialArrangement);
-//					if (meet.isInconsistent()) {
-//						/* label element is inconsistent with the current gpa
-//						 * --> omit it from the new label
-//						 */
-//						continue;
-//					}
-//					if (meet.isTautological()) {
-//						assert false : "this should never happen because if the meet is tautological then mLabel.get(i)"
-//								+ "is, too, right?";
-//						// we have one "true" disjunct --> the whole disjunction is tautological
-//						mLabel.clear();
-//						mLabel.add(new CongruenceClosure<>());
-//						return Collections.emptySet();
-//					}
-//
-//					/*
-//					 * At this point (in removeSimpleElement) we need to control what
-//					 *   CongruenceClosure.getOtherEquivalenceClassMember
-//					 *  returns -- in particular if there is a weqVar in the equivalence class, it must choose it
-//					 *   otherwise we may loos precision as in the following example:
-//					 *  <p>
-//					 * <li>  elem = i
-//					 *  meet = {q, i, j} -- rep: j,  {a[i] = i}
-//					 * <li>  then meet.remove(i) will give us
-//					 *  meet = {q, j} -- rep: j,  {a[j] = i}
-//					 * <li>  and the second partition block will be removed by meet.projectToElements
-//					 *  meet = {q, j} -- rep: j
-//					 * <li>  However, if q was the representative and not j, we would get
-//					 *  meet = {q, j} -- rep: q,  {a[q] = i}
-//					 * <li>  and projectToElements would keep both blocks
-//					 *
-//					 * EDIT: actually, a fix to projectToElements, removes the necessity for
-//					 *   "removeSimpleElementWithReplacementPreference" at this place (--> we keep the constraint
-//					 *     {a[j] = i} by detecting that j = q)
-//					 */
-//					meet.removeSimpleElement(elem);
-//
-//					/*
-//					 * the removeSimpleElement may have added elements (function applications) to meet that are not
-//					 * known to mPartialArrangement --> collect them here and add them later
-//					 */
-//					// TODO: seems hacky..
-//					final Stream<NODE> nodeToAddToGpa = meet.getAllElements().stream().filter(e ->
-//							!groundPartialArrangement.getAllElements().contains(e)
-//							&& !CongruenceClosure.dependsOnAny(e, mFactory.getAllWeqNodes())
-//							&& (mPartialArrangement.getElementCurrentlyBeingRemoved() == null ||
-//									!CongruenceClosure.dependsOnAny(e, Collections.singleton(
-//													mPartialArrangement.getElementCurrentlyBeingRemoved().getElem()))));
-//					nodeToAddToGpa.forEach(result::add);
-//					assert result.stream().allMatch(n -> n.isFunctionApplication()) : "cannot think of another case "
-//							+ "right now..";
-//
-//					final CongruenceClosure<NODE> newPa = meet.projectToElements(mFactory.getAllWeqNodes());
-//					if (newPa.isTautological()) {
-//						// we have one "true" disjunct --> the whole disjunction is tautological
-//						mLabel.clear();
-//						mLabel.add(new CongruenceClosure<>());
-//						return Collections.emptySet();
-//					}
-//					newLabelContents.add(newPa);
-//				}
-//				assert newLabelContents.size() <= 1 || !newLabelContents.stream().anyMatch(c -> c.isTautological());
-//				mLabel.clear();
-//				mLabel.addAll(newLabelContents);
-//
-//				assert sanityCheckAfterProject(elem, groundPartialArrangement);
-//				return result;
-//			}
-
 			private boolean isTautological() {
 				for (final CongruenceClosure<NODE> l : getLabelContents()) {
 					if (l.isTautological()) {
@@ -1528,7 +1324,6 @@ public class WeakEquivalenceGraph<//ACTION extends IIcfgTransition<IcfgLocation>
 			}
 
 			private boolean sanityCheck() {
-	//			assert mLabel.size() < 10;
 				return sanityCheck(mPartialArrangement);
 			}
 
@@ -1574,7 +1369,6 @@ public class WeakEquivalenceGraph<//ACTION extends IIcfgTransition<IcfgLocation>
 					} else {
 						meet = mCcManager.getMeet(mLabel.get(i), mPartialArrangement, mPartialArrangement.getElementCurrentlyBeingRemoved());
 					}
-//					final CongruenceClosure<NODE> meet = null;
 
 					if (meet.isInconsistent()) {
 						/* label element is inconsistent with the current gpa
@@ -1598,7 +1392,6 @@ public class WeakEquivalenceGraph<//ACTION extends IIcfgTransition<IcfgLocation>
 				mLabel.clear();
 				mLabel.addAll(newLabelContents);
 
-//				assert sanityCheckAfterProject(elem, groundPartialArrangement);
 				assert sanityCheckDontEnforceProjectToWeqVars(mPartialArrangement);
 			}
 
