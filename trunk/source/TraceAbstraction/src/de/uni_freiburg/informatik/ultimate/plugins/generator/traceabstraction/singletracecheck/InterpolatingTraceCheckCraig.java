@@ -66,7 +66,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  */
 public class InterpolatingTraceCheckCraig extends InterpolatingTraceCheck {
 
-	
 	private final boolean mInstantiateArrayExt;
 	private final InterpolantComputationStatus mInterpolantComputationStatus;
 
@@ -140,7 +139,17 @@ public class InterpolatingTraceCheckCraig extends InterpolatingTraceCheck {
 					throw e;
 				}
 				mTraceCheckFinished = true;
+			} catch (final IllegalArgumentException e) {
+				final String message = e.getMessage();
+				if (message != null && message.startsWith("Did not find overload for function =")) {
+					// DD: this is a known bug in SMTInterpol; until it is fixed, we catch it here so that we can run
+					// benchmarks
+					ics = new InterpolantComputationStatus(false, ItpErrorStatus.SMT_SOLVER_CRASH, e);
+				} else {
+					throw e;
+				}
 			}
+
 			mInterpolantComputationStatus = ics;
 		} else {
 			mInterpolantComputationStatus =
