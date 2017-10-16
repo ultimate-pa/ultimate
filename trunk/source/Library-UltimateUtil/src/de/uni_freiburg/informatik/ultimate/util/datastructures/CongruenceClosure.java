@@ -1028,17 +1028,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 	public CongruenceClosure<ELEM> alignElementsAndFunctionsCc(final CongruenceClosure<ELEM> other,
 			final CongruenceClosure<ELEM>.RemoveElement remInfo) {
 		assert !this.isInconsistent() && !other.isInconsistent();
-//		if (isInconsistent()) {
-//			return new CongruenceClosure<>(true);
-//		}
-//		if (other.isInconsistent()) {
-//			// nothing to align to
-//			return new CongruenceClosure<>(this);
-//		}
 
-//		assert this.sanityCheckOnlyCc();
 		final CongruenceClosure<ELEM> result = new CongruenceClosure<>(this, remInfo);
-//		assert result.sanityCheckOnlyCc();
 
 		other.getAllElements().stream().forEach(result::addElementRec);
 
@@ -1134,6 +1125,13 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 			// we know this != False, and other = False
 			return false;
 		}
+		if (other.isTautological()) {
+			return true;
+		}
+		if (this.isTautological()) {
+			// we know other != True, and this = True
+			return false;
+		}
 		final CongruenceClosure<ELEM> thisAligned = this.alignElementsAndFunctionsCc(other, null);
 		assert assertElementsAreSuperset(thisAligned, other);
 		final CongruenceClosure<ELEM> otherAligned = other.alignElementsAndFunctionsCc(this, null);
@@ -1183,9 +1181,15 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 
 	public boolean isEquivalent(final CongruenceClosure<ELEM> other) {
 		if (this.isInconsistent() && other.isInconsistent()) {
-			return false;
+			return true;
+		}
+		if (this.isTautological() && other.isTautological()) {
+			return true;
 		}
 		if (other.isInconsistent() || this.isInconsistent()) {
+			return false;
+		}
+		if (other.isTautological() || this.isTautological()) {
 			return false;
 		}
 
