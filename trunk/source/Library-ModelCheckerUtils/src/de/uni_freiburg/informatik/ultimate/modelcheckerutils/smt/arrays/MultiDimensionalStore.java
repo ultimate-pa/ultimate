@@ -62,27 +62,31 @@ public class MultiDimensionalStore {
 	private final Term mValue;
 	private final ApplicationTerm mStoreTerm;
 	
-	public MultiDimensionalStore(Term term) {
+	public MultiDimensionalStore(final Term term) {
 		mStoreTerm = (ApplicationTerm) term;
 		Term array = null;
 		final ArrayList<Term> index = new ArrayList<Term>();
 		Term value = term;
 		while (true) {
-			if (!(value instanceof ApplicationTerm)) {
-				break;
+			if (value instanceof ApplicationTerm) {
+				final ApplicationTerm appTerm = (ApplicationTerm) value;
+				if (appTerm.getFunction().getName().equals("store")) {
+					assert appTerm.getParameters().length == 3;
+					if (array == null) {
+						// first iteration
+						assert value == term : "not first iteration";
+						array = appTerm.getParameters()[0];
+					} else {
+						if(!isCompatibleSelect(appTerm.getParameters()[0], array, index)) {
+							break;
+						}
+					}
+					index.add(appTerm.getParameters()[1]);
+					value = appTerm.getParameters()[2];
+
+				}
 			}
-			final ApplicationTerm appTerm = (ApplicationTerm) value;
-			if (!appTerm.getFunction().getName().equals("store")) {
-				break;
-			}
-			assert appTerm.getParameters().length == 3;
-			if (array == null) {
-				array = appTerm.getParameters()[0];
-			} else {
-				assert isCompatibleSelect(appTerm.getParameters()[0], array, index);
-			}
-			index.add(appTerm.getParameters()[1]);
-			value = appTerm.getParameters()[2];
+			break;
 		}
 		mArray = array;
 		mIndex = new ArrayIndex(index);
@@ -100,7 +104,7 @@ public class MultiDimensionalStore {
 		}
 	}
 	
-	private boolean isCompatibleSelect(Term term, Term array, ArrayList<Term> index) {
+	private boolean isCompatibleSelect(final Term term, final Term array, final ArrayList<Term> index) {
 		final MultiDimensionalSelect mdSelect = new MultiDimensionalSelect(term);
 		return mdSelect.getArray() == array && index.equals(mdSelect.getIndex());
 	}
@@ -127,7 +131,7 @@ public class MultiDimensionalStore {
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(final Object obj) {
 		if (obj instanceof MultiDimensionalStore) {
 			return mStoreTerm.equals(((MultiDimensionalStore) obj).getStoreTerm());
 		} else {
@@ -150,7 +154,7 @@ public class MultiDimensionalStore {
 	 * If a store term occurs multiple times it is contained multiple times
 	 * in the result.
 	 */
-	public static List<MultiDimensionalStore> extractArrayStoresShallow(Term term) {
+	public static List<MultiDimensionalStore> extractArrayStoresShallow(final Term term) {
 		final List<MultiDimensionalStore> arrayStoreDefs = new ArrayList<MultiDimensionalStore>();
 		final Set<ApplicationTerm> storeTerms = 
 				(new ApplicationTermFinder("store", true)).findMatchingSubterms(term);
@@ -174,7 +178,7 @@ public class MultiDimensionalStore {
 	 * If multidimensional stores are nested, the inner ones occur earlier
 	 * in the resulting list.
 	 */
-	public static List<MultiDimensionalStore> extractArrayStoresDeep(Term term) {
+	public static List<MultiDimensionalStore> extractArrayStoresDeep(final Term term) {
 		final List<MultiDimensionalStore> result = new LinkedList<MultiDimensionalStore>();
 		List<MultiDimensionalStore> foundInThisIteration = extractArrayStoresShallow(term);
 		while (!foundInThisIteration.isEmpty()) {
