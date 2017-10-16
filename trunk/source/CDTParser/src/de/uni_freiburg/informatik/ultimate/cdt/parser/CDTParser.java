@@ -178,7 +178,7 @@ public class CDTParser implements ISource {
 	// created by Hamiz for entering multiple files
 	private ICProject createCDTProjectFromFiles(final File[] files)
 			throws OperationCanceledException, CoreException, FileNotFoundException {
-		final IProject proj = createCDTProject("Test Project 8");
+		final IProject proj = createCDTProject("Test Project 6");
 		mCdtProject = proj;
 		mLogger.info("Created temporary CDT project at " + getFullPath(mCdtProject));
 

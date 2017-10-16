@@ -17,4 +17,3 @@ Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Export-Package: de.uni_freiburg.informatik.ultimate.cdt.translation.implementation,
  de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util,
  de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator
-Import-Package: de.uni_freiburg.informatik.ultimate.cdt.decorator
