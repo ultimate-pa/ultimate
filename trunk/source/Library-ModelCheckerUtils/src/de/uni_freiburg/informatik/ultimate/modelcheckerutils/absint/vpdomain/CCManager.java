@@ -27,18 +27,12 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
-import java.util.Map.Entry;
-import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CongruenceClosure;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.CrossProducts;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialComparator;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialComparator.ComparisonResult;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.PartialOrderCache;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.PosetUtils;
 
 class CCManager<NODE extends IEqNodeIdentifier<NODE>> {
 	private final IPartialComparator<CongruenceClosure<NODE>> mCcComparator;
@@ -125,37 +119,6 @@ class CCManager<NODE extends IEqNodeIdentifier<NODE>> {
 			poc.addElement(cc);
 		}
 		final List<CongruenceClosure<NODE>> result = new ArrayList<>(poc.getMaximalRepresentatives());
-		return result;
-	}
-
-	public List<CongruenceClosure<NODE>> filterRedundantCcsOld(final List<CongruenceClosure<NODE>> unionList) {
-		// TODO: check if this is a performance bottleneck
-		final List<CongruenceClosure<NODE>> filteredForWeaker =
-				PosetUtils.filterMaximalElements(unionList, mCcComparator).collect(Collectors.toList());
-
-		/*
-		 * drop all but one equivalent element for each equivalence class
-		 */
-		final UnionFind<CongruenceClosure<NODE>> uf = new UnionFind<>();
-		for (final CongruenceClosure<NODE> cc : filteredForWeaker) {
-			uf.findAndConstructEquivalenceClassIfNeeded(cc);
-		}
-		boolean goOn = true;
-		while (goOn) {
-			goOn = false;
-			final Collection<CongruenceClosure<NODE>> repCopy = uf.getAllRepresentatives();
-			// TODO optimize
-			for (final Entry<CongruenceClosure<NODE>, CongruenceClosure<NODE>> repPair
-					: CrossProducts.binarySelectiveCrossProduct(repCopy, false, false).entrySet()) {
-				if (mCcComparator.compare(repPair.getKey(), repPair.getValue()) == ComparisonResult.EQUAL) {
-					uf.union(repPair.getKey(), repPair.getValue());
-					goOn = true;
-				}
-			}
-		}
-
-		final List<CongruenceClosure<NODE>> result = new ArrayList<>(uf.getAllRepresentatives());
-
 		return result;
 	}
 
