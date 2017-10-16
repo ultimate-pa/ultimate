@@ -43,6 +43,9 @@ public class PartialOrderCache<E> {
 	private final IPartialComparator<E> mComparator;
 
 	private final HashRelation<E, E> mStrictlySmaller;
+
+	private final HashRelation<E, E> mNotStrictlySmaller;
+
 	private final UnionFind<E> mEquivalences;
 
 	private final Set<E> mMaximalElements;
@@ -53,6 +56,7 @@ public class PartialOrderCache<E> {
 	public PartialOrderCache(final IPartialComparator<E> comparator) {
 		mComparator = comparator;
 		mStrictlySmaller = new HashRelation<>();
+		mNotStrictlySmaller = new HashRelation<>();
 		mEquivalences = new UnionFind<>();
 		mMaximalElements = new HashSet<>();
 //		mMinimalElements = new HashSet<>();
@@ -149,6 +153,9 @@ public class PartialOrderCache<E> {
 		if (mStrictlySmaller.containsPair(rep1, rep2)) {
 			return true;
 		}
+		if (mNotStrictlySmaller.containsPair(rep1, rep2)) {
+			return false;
+		}
 		final Deque<E> worklist = new ArrayDeque<>();
 		worklist.add(rep1);
 		while (!worklist.isEmpty()) {
@@ -168,6 +175,7 @@ public class PartialOrderCache<E> {
 			worklist.addAll(mStrictlySmaller.getImage(current));
 		}
 		// found no path --> not smaller
+		mNotStrictlySmaller.addPair(rep1, rep2);
 		return false;
 	}
 
