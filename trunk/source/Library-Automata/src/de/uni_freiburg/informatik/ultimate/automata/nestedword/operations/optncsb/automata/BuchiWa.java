@@ -63,7 +63,7 @@ public class BuchiWa implements IBuchiWa {
 	@Override
 	public IStateWa addState() {
 		int id = mStates.size();
-		mStates.add(new StateWa(id));
+		mStates.add(makeState(id));
 		return mStates.get(id);
 	}
 	

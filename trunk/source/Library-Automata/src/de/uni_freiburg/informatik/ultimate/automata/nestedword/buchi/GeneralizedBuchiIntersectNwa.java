@@ -242,7 +242,6 @@ public class GeneralizedBuchiIntersectNwa<LETTER, STATE> implements IGeneralized
 				STATE resSucc = getOrConstructState(fstSucc, sndSucc);
 				result.add(new OutgoingCallTransition<>(letter, resSucc));
 			}
-
 		}
 		return result;
 	}

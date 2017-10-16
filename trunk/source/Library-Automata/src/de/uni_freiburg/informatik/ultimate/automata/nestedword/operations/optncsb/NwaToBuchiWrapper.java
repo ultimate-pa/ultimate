@@ -105,7 +105,7 @@ public class NwaToBuchiWrapper<LETTER, STATE> extends BuchiNwa {
 	}
 	
 	@Override
-	public IStateNwa makeState(int id) {
+	public StateNWA<LETTER, STATE> makeState(int id) {
 		return new StateNWA<LETTER, STATE>(this, id);
 	}
 	

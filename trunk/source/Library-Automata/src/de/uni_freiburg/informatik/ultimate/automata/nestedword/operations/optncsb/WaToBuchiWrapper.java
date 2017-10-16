@@ -100,10 +100,9 @@ public class WaToBuchiWrapper<LETTER, STATE> extends BuchiWa {
 	}
 	
 	@Override
-	public IStateWa makeState(int id) {
+	public StateWA<LETTER, STATE> makeState(int id) {
 		return new StateWA<LETTER, STATE>(this, id);
 	}
-	
 	
 	protected IntSet computeSuccessors(int state, int letter) {
 				

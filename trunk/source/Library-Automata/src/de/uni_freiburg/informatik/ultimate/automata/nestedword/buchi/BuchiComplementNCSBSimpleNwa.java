@@ -139,6 +139,12 @@ public class BuchiComplementNCSBSimpleNwa<LETTER, STATE> implements INwaSuccesso
 		return resState;
 	}
 	
+	protected NCSB getRelatedNCSB(STATE state) {
+		int id = mStateIdMap.get(state);
+		StateWaNCSB ncsbState = (StateWaNCSB) mComplementBuchi.getState(id);
+		return ncsbState.getNCSB();
+	}
+	
 	protected LevelRankingState<LETTER, STATE> constructLevelRankingState(int sid) {
 		LevelRankingState<LETTER, STATE> lvlrk = mInt2LevelRanks.get(sid);
 		if(lvlrk != null) return lvlrk;

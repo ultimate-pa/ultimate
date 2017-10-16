@@ -55,7 +55,7 @@ public interface IGeneralizedNwaOutgoingLetterAndTransitionProvider<LETTER, STAT
 	
 	@Override
 	default boolean isFinal(final STATE state) {
-		throw new UnsupportedOperationException("Generalized Buchi automata donot support isFinal operation");
+		return !getAcceptanceLabels(state).isEmpty();
 	}
 	
 	/** get the labels (the indices of accepting set) of state */
