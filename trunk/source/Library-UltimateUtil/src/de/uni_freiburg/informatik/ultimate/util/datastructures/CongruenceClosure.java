@@ -566,6 +566,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 				// add proxy elements
 				for (final ELEM proxyElem : nodesToAdd) {
 					addElementRec(proxyElem);
+					assert sanityCheck();
 				}
 			}
 

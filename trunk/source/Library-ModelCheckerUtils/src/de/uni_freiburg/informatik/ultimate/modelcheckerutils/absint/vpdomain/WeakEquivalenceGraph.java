@@ -887,6 +887,19 @@ public class WeakEquivalenceGraph<//ACTION extends IIcfgTransition<IcfgLocation>
 				mWeakEquivalenceEdges.put(new Doubleton<>(newRep, edge.getKey()), edge.getValue());
 			}
 		}
+
+		assert !mArrayEqualities.containsPair(node1OldRep, node2OldRep)
+			&& !mArrayEqualities.containsPair(node2OldRep, node1OldRep) : "TODO: treat this case";
+		if (node1OldRep == newRep) {
+			mArrayEqualities.replaceDomainElement(node2OldRep, newRep);
+			mArrayEqualities.replaceRangeElement(node2OldRep, newRep);
+		} else {
+			assert node2OldRep == newRep;
+			mArrayEqualities.replaceDomainElement(node1OldRep, newRep);
+			mArrayEqualities.replaceRangeElement(node1OldRep, newRep);
+		}
+		assert !mArrayEqualities.containsPair(node1OldRep, node2OldRep)
+			&& !mArrayEqualities.containsPair(node2OldRep, node1OldRep) : "TODO: treat this case";
 	}
 
 	public Integer getNumberOfEdgesStatistic() {
