@@ -27,8 +27,13 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.function.BinaryOperator;
+import java.util.function.Function;
 
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.VPStatistics;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.SimpleCsvProvider;
@@ -43,6 +48,8 @@ public class VPDomainBenchmark implements ICsvProviderProvider<Integer> {
 	private boolean alreadyGeneratedColumnTitlesAndResults = false;
 	final private List<String> mColumnTitles = new ArrayList<>();
 	final private List<Integer> mResults = new ArrayList<>();
+
+	Map<VPStatistics, Integer> mAggregateStatistics = new HashMap<>();
 
 	@Override
 	public ICsvProvider<Integer> createCsvProvider() {
@@ -59,22 +66,28 @@ public class VPDomainBenchmark implements ICsvProviderProvider<Integer> {
 			return;
 		}
 
-		mColumnTitles.add("#Locations");
-		mResults.add(mLocationsCounter);
+//		mColumnTitles.add("#Locations");
+//		mResults.add(mLocationsCounter);
+//
+//		mColumnTitles.add("#SupportingEqualities");
+//		mResults.add(mSupportingEqualitiesCounter);
+//
+//		mColumnTitles.add("#SupportingDisequalities");
+//		mResults.add(mSupportingDisequalitiesCounter);
+//
+//		mColumnTitles.add("Average#SupportingEqualities");
+//		mResults.add(mSupportingEqualitiesCounter/mLocationsCounter);
+//
+//		mColumnTitles.add("Average#SupportingDisequalities");
+//		mResults.add(mSupportingDisequalitiesCounter/mLocationsCounter);
+//
+//		assert mColumnTitles.size() == mResults.size();
 
-		mColumnTitles.add("#SupportingEqualities");
-		mResults.add(mSupportingEqualitiesCounter);
+		for (final VPStatistics stat : VPStatistics.values()) {
+			mColumnTitles.add(stat.toString());
+			mResults.add(mAggregateStatistics.get(stat));
+		}
 
-		mColumnTitles.add("#SupportingDisequalities");
-		mResults.add(mSupportingDisequalitiesCounter);
-
-		mColumnTitles.add("Average#SupportingEqualities");
-		mResults.add(mSupportingEqualitiesCounter/mLocationsCounter);
-
-		mColumnTitles.add("Average#SupportingDisequalities");
-		mResults.add(mSupportingDisequalitiesCounter/mLocationsCounter);
-
-		assert mColumnTitles.size() == mResults.size();
 		alreadyGeneratedColumnTitlesAndResults = true;
 	}
 
@@ -82,9 +95,9 @@ public class VPDomainBenchmark implements ICsvProviderProvider<Integer> {
 		mSupportingEqualitiesCounter = supportingEqualitiesCounter;
 	}
 
-	public void setLocationsCounter(final int locationsCounter) {
-		mLocationsCounter = locationsCounter;
-	}
+//	public void setLocationsCounter(final int locationsCounter) {
+//		mLocationsCounter = locationsCounter;
+//	}
 
 	public void setSupportingDisequalitiesCounter(final int supportingDisequalitiesCounter) {
 		mSupportingDisequalitiesCounter = supportingDisequalitiesCounter;
@@ -107,6 +120,20 @@ public class VPDomainBenchmark implements ICsvProviderProvider<Integer> {
 //			sb.append("\n");
 		}
 		return sb.toString();
+	}
+
+	public void reportStatsForLocation(final Function<VPStatistics, Integer> object) {
+		mLocationsCounter++;
+		for (final VPStatistics stat : VPStatistics.values()) {
+			Integer currentVal = mAggregateStatistics.get(stat);
+			if (currentVal == null) {
+				currentVal = VPStatistics.getInitialValue(stat);
+			}
+			final Integer valueForLoc = object.apply(stat);
+			final BinaryOperator<Integer> agg = VPStatistics.getAggregator(stat);
+			final Integer newVal = agg.apply(currentVal, valueForLoc);
+			mAggregateStatistics.put(stat, newVal);
+		}
 	}
 }
 

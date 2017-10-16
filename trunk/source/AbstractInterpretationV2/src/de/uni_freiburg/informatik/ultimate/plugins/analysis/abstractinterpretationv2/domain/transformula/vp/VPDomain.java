@@ -40,7 +40,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractSta
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.EqConstraintFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.EqNode;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.EqNodeAndFunctionFactory;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.VPStatistics;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
@@ -165,20 +164,25 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 	public <LOC> void afterFixpointComputation(
 			final IAbstractInterpretationResult<EqState, ACTION, LOC> result) {
 
-		mBenchmark.setLocationsCounter(result.getLoc2SingleStates().keySet().size());
+//		mBenchmark.setLocationsCounter(result.getLoc2SingleStates().keySet().size());
 
-		int noSupportingEqualitiesOverall = 0;
-		int noSupportingDisequalitiesOverall = 0;
+//		int noSupportingEqualitiesOverall = 0;
+//		int noSupportingDisequalitiesOverall = 0;
 		for (final Entry<LOC, EqState> l2s : result.getLoc2SingleStates().entrySet()) {
-			noSupportingEqualitiesOverall += l2s.getValue().getConstraint()
-					.getStatistics(VPStatistics.NO_SUPPORTING_EQUALITIES);
-			noSupportingDisequalitiesOverall += l2s.getValue().getConstraint()
-					.getStatistics(VPStatistics.NO_SUPPORTING_DISEQUALITIES);
+//			noSupportingEqualitiesOverall += l2s.getValue().getConstraint()
+//					.getStatistics(VPStatistics.NO_SUPPORTING_EQUALITIES);
+//			noSupportingDisequalitiesOverall += l2s.getValue().getConstraint()
+//					.getStatistics(VPStatistics.NO_SUPPORTING_DISEQUALITIES);
+
+			mBenchmark.reportStatsForLocation(l2s.getValue().getConstraint()::getStatistics);
+//			for (stat : VPStatistics) {
+//
+//			}
 
 		}
 
-		mBenchmark.setSupportingEqualitiesCounter(noSupportingEqualitiesOverall);
-		mBenchmark.setSupportingDisequalitiesCounter(noSupportingDisequalitiesOverall);
+//		mBenchmark.setSupportingEqualitiesCounter(noSupportingEqualitiesOverall);
+//		mBenchmark.setSupportingDisequalitiesCounter(noSupportingDisequalitiesOverall);
 
 
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID,
