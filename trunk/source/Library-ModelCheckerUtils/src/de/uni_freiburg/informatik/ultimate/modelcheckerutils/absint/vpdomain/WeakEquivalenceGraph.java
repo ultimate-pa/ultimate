@@ -58,8 +58,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  */
-public class WeakEquivalenceGraph<//ACTION extends IIcfgTransition<IcfgLocation>,
-			NODE extends IEqNodeIdentifier<NODE>> {
+public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>> {
 
 	private final CCManager<NODE> mCcManager;
 
@@ -74,7 +73,6 @@ public class WeakEquivalenceGraph<//ACTION extends IIcfgTransition<IcfgLocation>
 	 * intermediate, for example during a join or meet operation.
 	 */
 	private final WeqCongruenceClosure<NODE> mPartialArrangement;
-
 
 	/**
 	 * Constructs an empty WeakEquivalenceGraph
@@ -101,7 +99,6 @@ public class WeakEquivalenceGraph<//ACTION extends IIcfgTransition<IcfgLocation>
 	 * @param factory
 	 */
 	private WeakEquivalenceGraph(
-//			final WeqCongruenceClosure<NODE> pArr,
 			final Map<Doubleton<NODE>, WeakEquivalenceEdgeLabel> weakEquivalenceEdges,
 			final HashRelation<NODE, NODE> arrayEqualities,
 			final EqConstraintFactory<NODE> factory) {
@@ -124,7 +121,6 @@ public class WeakEquivalenceGraph<//ACTION extends IIcfgTransition<IcfgLocation>
 
 		mPartialArrangement = pArr;
 
-//		assert weakEquivalenceGraph.mArrayEqualities.isEmpty();
 		mArrayEqualities = new HashRelation<>(weakEquivalenceGraph.mArrayEqualities);
 		mWeakEquivalenceEdges = new HashMap<>();
 		for (final Entry<Doubleton<NODE>, WeakEquivalenceEdgeLabel> weqEdge
@@ -285,10 +281,7 @@ public class WeakEquivalenceGraph<//ACTION extends IIcfgTransition<IcfgLocation>
 						.meet(Collections.singletonList(other.mPartialArrangement))
 						.projectToElements(mFactory.getAllWeqNodes());
 
-
-			newWeakEquivalenceEdges.put(thisWeqEdge.getKey(),
-					thisNewEdgeLabel.union(otherNewEdgeLabel));
-//					thisWeqEdge.getValue().union(correspondingWeqEdgeLabelInOther));
+			newWeakEquivalenceEdges.put(thisWeqEdge.getKey(), thisNewEdgeLabel.union(otherNewEdgeLabel));
 		}
 
 		/*
@@ -517,11 +510,6 @@ public class WeakEquivalenceGraph<//ACTION extends IIcfgTransition<IcfgLocation>
 		mWeakEquivalenceEdges.put(sourceAndTarget, strengthenedEdgeLabel);
 		assert sanityCheck();
 		return true;
-	}
-
-	private Predicate<? super CongruenceClosure<NODE>> assertHasOnlyWeqVarConstraints() {
-		// TODO Auto-generated method stub
-		return null;
 	}
 
 	/**
