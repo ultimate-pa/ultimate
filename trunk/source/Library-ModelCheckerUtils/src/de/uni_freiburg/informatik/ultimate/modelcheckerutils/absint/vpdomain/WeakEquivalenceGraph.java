@@ -888,8 +888,13 @@ public class WeakEquivalenceGraph<//ACTION extends IIcfgTransition<IcfgLocation>
 			}
 		}
 
-		assert !mArrayEqualities.containsPair(node1OldRep, node2OldRep)
-			&& !mArrayEqualities.containsPair(node2OldRep, node1OldRep) : "TODO: treat this case";
+//		assert !mArrayEqualities.containsPair(node1OldRep, node2OldRep)
+//			&& !mArrayEqualities.containsPair(node2OldRep, node1OldRep) : "TODO: treat this case";
+
+		// we can remove array equalities between the nodes that are merge now anyways..
+		mArrayEqualities.removePair(node1OldRep, node2OldRep);
+		mArrayEqualities.removePair(node2OldRep, node1OldRep);
+
 		if (node1OldRep == newRep) {
 			mArrayEqualities.replaceDomainElement(node2OldRep, newRep);
 			mArrayEqualities.replaceRangeElement(node2OldRep, newRep);
