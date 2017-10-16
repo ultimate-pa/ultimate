@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.CrossProducts;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialComparator;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialComparator.ComparisonResult;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.PartialOrderCache;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.PosetUtils;
 
 class CCManager<NODE extends IEqNodeIdentifier<NODE>> {
@@ -119,6 +120,15 @@ class CCManager<NODE extends IEqNodeIdentifier<NODE>> {
 	 * @return
 	 */
 	public List<CongruenceClosure<NODE>> filterRedundantCcs(final List<CongruenceClosure<NODE>> unionList) {
+		final PartialOrderCache<CongruenceClosure<NODE>> poc = new PartialOrderCache<>(mCcComparator);
+		for (final CongruenceClosure<NODE> cc : unionList) {
+			poc.addElement(cc);
+		}
+		final List<CongruenceClosure<NODE>> result = new ArrayList<>(poc.getMaximalRepresentatives());
+		return result;
+	}
+
+	public List<CongruenceClosure<NODE>> filterRedundantCcsOld(final List<CongruenceClosure<NODE>> unionList) {
 		// TODO: check if this is a performance bottleneck
 		final List<CongruenceClosure<NODE>> filteredForWeaker =
 				PosetUtils.filterMaximalElements(unionList, mCcComparator).collect(Collectors.toList());
