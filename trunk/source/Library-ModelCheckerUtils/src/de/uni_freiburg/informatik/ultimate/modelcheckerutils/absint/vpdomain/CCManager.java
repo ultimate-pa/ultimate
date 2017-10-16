@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CongruenceClosure;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialComparator;
@@ -113,13 +114,9 @@ class CCManager<NODE extends IEqNodeIdentifier<NODE>> {
 	 * @param unionList
 	 * @return
 	 */
-	public List<CongruenceClosure<NODE>> filterRedundantCcs(final List<CongruenceClosure<NODE>> unionList) {
+	public List<CongruenceClosure<NODE>> filterRedundantCcs(final Set<CongruenceClosure<NODE>> unionList) {
 		final PartialOrderCache<CongruenceClosure<NODE>> poc = new PartialOrderCache<>(mCcComparator);
-		for (final CongruenceClosure<NODE> cc : unionList) {
-			poc.addElement(cc);
-		}
-		final List<CongruenceClosure<NODE>> result = new ArrayList<>(poc.getMaximalRepresentatives());
-		return result;
+		return filterRedundantCcs(unionList, poc);
 	}
 
 	public CongruenceClosure<NODE> getSingleDisequalityCc(final NODE elem1, final NODE elem2) {
@@ -140,5 +137,19 @@ class CCManager<NODE extends IEqNodeIdentifier<NODE>> {
 		final CongruenceClosure<NODE> newCC = new CongruenceClosure<>();
 		newCC.reportEquality(elem1, elem2);
 		return newCC;
+	}
+
+	public  IPartialComparator<CongruenceClosure<NODE>> getCcComparator() {
+		return mCcComparator;
+	}
+
+	public List<CongruenceClosure<NODE>> filterRedundantCcs(final Set<CongruenceClosure<NODE>> unionList,
+			final PartialOrderCache<CongruenceClosure<NODE>> ccPoCache) {
+//		for (final CongruenceClosure<NODE> cc : unionList) {
+//			ccPoCache.addElement(cc);
+//		}
+		final List<CongruenceClosure<NODE>> result = new ArrayList<>(ccPoCache.getMaximalRepresentatives(unionList));
+
+		return result;
 	}
 }

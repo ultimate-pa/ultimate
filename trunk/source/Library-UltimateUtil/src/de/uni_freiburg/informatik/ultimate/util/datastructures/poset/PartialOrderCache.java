@@ -26,12 +26,16 @@
  */
 package de.uni_freiburg.informatik.ultimate.util.datastructures.poset;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Deque;
 import java.util.HashSet;
 import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialComparator.ComparisonResult;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 public class PartialOrderCache<E> {
@@ -42,7 +46,7 @@ public class PartialOrderCache<E> {
 	private final UnionFind<E> mEquivalences;
 
 	private final Set<E> mMaximalElements;
-	private final Set<E> mMinimalElements;
+//	private final Set<E> mMinimalElements;
 
 
 
@@ -51,7 +55,7 @@ public class PartialOrderCache<E> {
 		mStrictlySmaller = new HashRelation<>();
 		mEquivalences = new UnionFind<>();
 		mMaximalElements = new HashSet<>();
-		mMinimalElements = new HashSet<>();
+//		mMinimalElements = new HashSet<>();
 	}
 
 	public E addElement(final E elemToAdd) {
@@ -63,7 +67,7 @@ public class PartialOrderCache<E> {
 		// elemToAdd element is new
 		rep = mEquivalences.findAndConstructEquivalenceClassIfNeeded(elemToAdd);
 		assert rep == elemToAdd;
-		mMinimalElements.add(rep);
+//		mMinimalElements.add(rep);
 		mMaximalElements.add(rep);
 
 		for (final E otherRep : new ArrayList<>(mEquivalences.getAllRepresentatives())) {
@@ -78,13 +82,13 @@ public class PartialOrderCache<E> {
 				if (newRep == rep) {
 					// representative has changed
 					assert mEquivalences.find(otherRep) == rep;
-					mMinimalElements.remove(otherRep);
+//					mMinimalElements.remove(otherRep);
 					mMaximalElements.remove(otherRep);
 					mStrictlySmaller.replaceDomainElement(otherRep, newRep);
 					mStrictlySmaller.replaceRangeElement(otherRep, newRep);
 				} else {
 					// representative is the old one but we have already made some entries into the data structures
-					mMinimalElements.remove(rep);
+//					mMinimalElements.remove(rep);
 					mMaximalElements.remove(rep);
 					mStrictlySmaller.replaceDomainElement(rep, newRep);
 					mStrictlySmaller.replaceRangeElement(rep, newRep);
@@ -114,43 +118,122 @@ public class PartialOrderCache<E> {
 		final E greaterRep = mEquivalences.find(greater);
 
 		mStrictlySmaller.addPair(smallerRep, greaterRep);
+		assert assertStrictlySmaller(smallerRep, greaterRep);
 //		mExplies.addPair(greaterRep, smallerRep);
 
-		mMinimalElements.remove(greaterRep);
+//		mMinimalElements.remove(greaterRep);
 		mMaximalElements.remove(smallerRep);
 
 		assert sanityCheck();
 	}
 
 	public boolean lowerEqual(final E elem1, final E elem2) {
-		throw new UnsupportedOperationException("not yet implemented");
+		if (elem1 == elem2) {
+			return true;
+		}
+		assert sanityCheck();
+		final E rep1 = addElement(elem1);
+		final E rep2 = addElement(elem2);
+		if (rep1 == rep2) {
+			// elements are equal
+			return true;
+		}
+		/*
+		 * elements are not equal
+		 * We need to test if there is a path through the graph mStrictlySmaller from rep1 to rep2.
+		 */
+		return strictlySmaller(rep1, rep2);
+	}
+
+	protected boolean strictlySmaller(final E rep1, final E rep2) {
+		if (mStrictlySmaller.containsPair(rep1, rep2)) {
+			return true;
+		}
+		final Deque<E> worklist = new ArrayDeque<>();
+		worklist.add(rep1);
+		while (!worklist.isEmpty()) {
+			final E current = worklist.pop();
+
+			if (current == rep2 && current != rep1) {
+				/*
+				 * found a path
+				 * update the map (caching the transitive closure information)
+				 * return true
+				 */
+				mStrictlySmaller.addPair(rep1, rep2);
+				assert assertStrictlySmaller(rep1, rep2);
+				assert sanityCheck();
+				return true;
+			}
+			worklist.addAll(mStrictlySmaller.getImage(current));
+		}
+		// found no path --> not smaller
+		return false;
 	}
 
 	public boolean greaterEqual(final E elem1, final E elem2) {
 		throw new UnsupportedOperationException("not yet implemented");
 	}
 
+	/**
+	 * Get the maximal elements from to the given list (or elements equivalent to those)
+	 *
+	 * @param elements
+	 * @return
+	 */
+	public Set<E> getMaximalRepresentatives(final Collection<E> elements) {
+		final Set<E> reps = new HashSet<>();
+		for (final E el : elements) {
+			reps.add(addElement(el));
+		}
+
+		final Set<E> result = new HashSet<>(reps);
+
+		for (final E rep1 : reps) {
+			for (final E rep2 : reps) {
+				if (strictlySmaller(rep1, rep2)) {
+					result.remove(rep1);
+				}
+			}
+		}
+
+		return result;
+	}
+
+	/**
+	 * Get overall maximal elements in the map (modulo being equal/only representatives)
+	 *
+	 * @return
+	 */
 	public Set<E> getMaximalRepresentatives() {
 		return mMaximalElements;
 	}
 
-	public Set<E> getMinimalRepresentatives() {
-		return mMinimalElements;
+//	public Set<E> getMinimalRepresentatives() {
+//		return mMinimalElements;
+//	}
+
+	boolean assertStrictlySmaller(final E elem1, final E elem2) {
+		// order must be correct
+		if (mComparator.compare(elem1, elem2) != ComparisonResult.STRICTLY_SMALLER) {
+			final ComparisonResult compres = mComparator.compare(elem1, elem2);
+			assert false;
+			return false;
+		}
+		return true;
 	}
-
-
 
 	boolean sanityCheck() {
 		/*
 		 * the sets mMinimalElemnts and mMaximalElements may only contain representatives
 		 */
-		for (final E e : mMinimalElements) {
-			if (mEquivalences.find(e) != e) {
-				final E find = mEquivalences.find(e);
-				assert false;
-				return false;
-			}
-		}
+//		for (final E e : mMinimalElements) {
+//			if (mEquivalences.find(e) != e) {
+//				final E find = mEquivalences.find(e);
+//				assert false;
+//				return false;
+//			}
+//		}
 		for (final E e : mMaximalElements) {
 			if (mEquivalences.find(e) != e) {
 				final E find = mEquivalences.find(e);
@@ -160,20 +243,27 @@ public class PartialOrderCache<E> {
 		}
 
 		for (final Entry<E, E> en : mStrictlySmaller) {
+			// key must be a representative
 			if (mEquivalences.find(en.getKey()) != en.getKey()) {
 				final E find = mEquivalences.find(en.getKey());
 				assert false;
 				return false;
 			}
+			// value must be a representative
 			if (mEquivalences.find(en.getValue()) != en.getValue()) {
 				final E find = mEquivalences.find(en.getValue());
 				assert false;
 				return false;
 			}
+
 		}
 
 
 		return true;
 	}
+
+
+
+
 
 }
