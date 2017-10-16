@@ -53,6 +53,7 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 	private final ManagedScript mMgdScript;
 
 	private final Map<Term, EqNode> mTermToEqNode = new HashMap<>();
+	private final Map<Term, Term> mNormalizationCache = new HashMap<>();
 
 //	private final VPDomainPreanalysis mPreAnalysis;
 
@@ -120,15 +121,28 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 		if (term instanceof TermVariable) {
 			return term;
 		}
+		Term result = mNormalizationCache.get(term);
+		if (result != null) {
+			return result;
+		}
 
 		mMgdScript.lock(this);
 		final AffineTerm affineTerm = (AffineTerm) new AffineTermTransformer(mMgdScript.getScript()).transform(term);
 		mMgdScript.unlock(this);
 
 		if (affineTerm.isErrorTerm()) {
-			return new CommuhashNormalForm(mServices, mMgdScript.getScript()).transform(term);
+			result = new CommuhashNormalForm(mServices, mMgdScript.getScript()).transform(term);
+		} else {
+			result = affineTerm.toTerm(mMgdScript.getScript());
 		}
-		return affineTerm.toTerm(mMgdScript.getScript());
+		mNormalizationCache.put(term, result);
+		return result;
+
+	}
+
+	@Override
+	public boolean hasNode(final Term term) {
+		return mTermToEqNode.get(normalizeTerm(term)) != null;
 	}
 
 	/**

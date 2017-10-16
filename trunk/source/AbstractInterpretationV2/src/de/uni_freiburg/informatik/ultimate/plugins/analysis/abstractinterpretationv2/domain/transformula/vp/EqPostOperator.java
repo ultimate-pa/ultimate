@@ -33,7 +33,6 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.EqConstraint;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.EqConstraintFactory;
@@ -135,7 +134,7 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 	/**
 	 * Convert an EqDisjunctiveConstraints to a corresponding set of EqStates. (Assumes that all the TermVariables and
 	 * nullary ApplicationTerms in this.mConstraints have a symbol table entry.)
-	 * 
+	 *
 	 * @param variablesThatTheFrameworkLikesToSee
 	 * @return
 	 */
@@ -205,7 +204,7 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 			final Set<IProgramVar> oldVars =
 					hierarchicalPrestate.getConstraint().getVariables(mCfgSmtToolkit.getSymbolTable()).stream()
 							.filter(var -> var.isOldvar()).collect(Collectors.toSet());
-			final Set<TermVariable> ovTvs =
+			final Set<Term> ovTvs =
 					oldVars.stream().map(ov -> ov.getTermVariable()).collect(Collectors.toSet());
 			final EqConstraint<EqNode> projectedCons =
 					mEqConstraintFactory.projectExistentially(ovTvs, hierarchicalPrestate.getConstraint());

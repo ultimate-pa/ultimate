@@ -37,7 +37,6 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.EqConstraint;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.EqNode;
@@ -100,10 +99,12 @@ public class EqState//<ACTION extends IIcfgTransition<IcfgLocation>>
 
 	@Override
 	public EqState removeVariables(final Collection<IProgramVarOrConst> variables) {
-		final Set<TermVariable> termVariablesFromPvocs =
-				variables.stream().map(pvoc -> (TermVariable) pvoc.getTerm()).collect(Collectors.toSet());
+//		final Set<TermVariable> termVariablesFromPvocs =
+//				variables.stream().map(pvoc -> (TermVariable) pvoc.getTerm()).collect(Collectors.toSet());
+		final Set<Term> termsFromPvocs =
+				variables.stream().map(pvoc -> pvoc.getTerm()).collect(Collectors.toSet());
 		final EqConstraint<EqNode> projectedConstraint =
-				mFactory.getEqConstraintFactory().projectExistentially(termVariablesFromPvocs, mConstraint);
+				mFactory.getEqConstraintFactory().projectExistentially(termsFromPvocs, mConstraint);
 
 		final Set<IProgramVarOrConst> newVariables = new HashSet<>(mPvocs);
 		newVariables.removeAll(variables);

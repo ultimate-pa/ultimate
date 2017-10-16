@@ -306,10 +306,10 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 
 	/**
 	 *
-	 * @param varsToProjectAway
+	 * @param termsToProjectAway
 	 * @return
 	 */
-	public EqConstraint<NODE> projectExistentially(final Collection<TermVariable> varsToProjectAway,
+	public EqConstraint<NODE> projectExistentially(final Collection<Term> termsToProjectAway,
 			final EqConstraint<NODE> original) {
 		assert original.isFrozen();
 		assert original.sanityCheck();
@@ -318,21 +318,19 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 		}
 		final EqConstraint<NODE> unfrozen = unfreeze(original);
 
-		final Collection<TermVariable> allTvs = original.getAllTermVariables();
-
-		for (final TermVariable var : varsToProjectAway) {
-			if (!allTvs.contains(var)) {
-				// nothing to do
+		for (final Term term : termsToProjectAway) {
+			if (!getEqNodeAndFunctionFactory().hasNode(term)) {
+//				// nothing to do
 				continue;
 			}
 			// havoccing an element
-			final NODE nodeToHavoc = getEqNodeAndFunctionFactory().getExistingNode(var);
+			final NODE nodeToHavoc = getEqNodeAndFunctionFactory().getExistingNode(term);
 			unfrozen.removeElement(nodeToHavoc);
 			assert unfrozen.sanityCheck();
 		}
 
 		unfrozen.freeze();
-		assert VPDomainHelpers.constraintFreeOfVars(varsToProjectAway, unfrozen, getMgdScript().getScript()) :
+		assert VPDomainHelpers.constraintFreeOfVars(termsToProjectAway, unfrozen, getMgdScript().getScript()) :
 					"resulting constraint still has at least one of the to-be-projected vars";
 
 		return unfrozen;

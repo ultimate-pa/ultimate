@@ -37,7 +37,6 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 
 /**
@@ -83,10 +82,10 @@ public class EqDisjunctiveConstraint<NODE extends IEqNodeIdentifier<NODE>>  {
 
 
 	public EqDisjunctiveConstraint<NODE> projectExistentially(
-			final Collection<TermVariable> varsToProjectAway) {
+			final Collection<Term> termsToProjectAway) {
 		return mFactory.getDisjunctiveConstraint(
 				mConstraints.stream()
-					.map(conjConstraint -> mFactory.projectExistentially(varsToProjectAway, conjConstraint))
+					.map(conjConstraint -> mFactory.projectExistentially(termsToProjectAway, conjConstraint))
 					.collect(Collectors.toSet()));
 	}
 

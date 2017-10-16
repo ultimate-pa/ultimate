@@ -1529,22 +1529,6 @@ public class WeakEquivalenceGraph<//ACTION extends IIcfgTransition<IcfgLocation>
 				return sanityCheckDontEnforceProjectToWeqVars(mPartialArrangement);
 			}
 
-			/**
-			 * special sanity check where we check as normal except that we are checkin wrt another gpa, not mPartial..
-			 * but mPartial.. where elem has been projected out (as this will be done after the project in the weq
-			 * labels)
-			 *
-			 * @param elem
-			 * @param groundPartialArrangement
-			 * @return
-			 */
-			private boolean sanityCheckAfterProject(final NODE elem,
-					final CongruenceClosure<NODE> groundPartialArrangement) {
-				final CongruenceClosure<NODE> copy = new CongruenceClosure<>(groundPartialArrangement);
-				copy.removeSimpleElement(elem);
-				return sanityCheck(copy);
-			}
-
 			public void meetWithWeqGpa() {
 				meetWithGpa(true);
 			}

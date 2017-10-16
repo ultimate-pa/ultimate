@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -89,7 +90,8 @@ public class EqOperationProvider implements
 	@Override
 	public EqDisjunctiveConstraint<EqNode> projectExistentially(final Set<TermVariable> varsToProjectAway,
 			final EqDisjunctiveConstraint<EqNode> constraint) {
-		return constraint.projectExistentially(varsToProjectAway);
+		return constraint.projectExistentially(varsToProjectAway.stream()
+				.map(tv -> (Term) tv).collect(Collectors.toSet()));
 	}
 
 

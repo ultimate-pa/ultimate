@@ -423,7 +423,7 @@ public class FormulaToEqDisjunctiveConstraintConverter<ACTION extends IIcfgTrans
 			return result;
 		}
 
-		public Collection<TermVariable> getReplacementTermVariables() {
+		public Collection<Term> getReplacementTermVariables() {
 			return new ArrayList<>(mReplacedTermToReplacementTv.values());
 		}
 

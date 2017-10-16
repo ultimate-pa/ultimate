@@ -286,7 +286,7 @@ public class VPDomainHelpers {
 
 	public static <//ACTION extends IIcfgTransition<IcfgLocation>,
 		NODE extends IEqNodeIdentifier<NODE>> boolean
-			constraintFreeOfVars(final Collection<TermVariable> varsToProjectAway,
+			constraintFreeOfVars(final Collection<Term> varsToProjectAway,
 					final EqConstraint<NODE> unfrozen,
 					final Script script) {
 		if (varsToProjectAway.isEmpty()) {

@@ -34,5 +34,7 @@ public abstract class AbstractNodeAndFunctionFactory<NODE extends IEqNodeIdentif
 	public abstract NODE getOrConstructNode(CONTENT c);
 
 	public abstract NODE getExistingNode(CONTENT term);
+
+	public abstract boolean hasNode(CONTENT term);
 }
 
