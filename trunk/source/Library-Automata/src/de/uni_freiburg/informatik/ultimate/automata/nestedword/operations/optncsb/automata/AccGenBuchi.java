@@ -28,57 +28,91 @@
 
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.automata;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util.IntSet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util.UtilIntSet;
+import gnu.trove.map.TIntObjectMap;
+import gnu.trove.map.hash.TIntObjectHashMap;
 
 
 
 public class AccGenBuchi implements Acc {
 
-    private final List<IntSet> mAccList;
+    protected final TIntObjectMap<IntSet> mAccStateMap;
+    protected final int mAccSize;
     
-    public AccGenBuchi() {
-        mAccList = new ArrayList<>();
+    public AccGenBuchi(int size) {
+    	mAccStateMap = new TIntObjectHashMap<>();
+    	mAccSize = size;
     }
     
     public AccGenBuchi(IntSet finalStates) {
-        mAccList = new ArrayList<>();
-        mAccList.add(finalStates);
+    	mAccStateMap = new TIntObjectHashMap<>();
+    	mAccSize = AccBuchi.ACC_SIZE_ONE;
+    	mAccStateMap.put(AccBuchi.ACC_LABEL_ZERO, finalStates.clone());
     }
     
     @Override
     public boolean isAccepted(IntSet set) {
-        for(int i = 0; i < mAccList.size(); i ++) {
-            if(!set.overlap(mAccList.get(i))) return false;
+    	IntSet labels = UtilIntSet.newIntSet();
+        for(int state : set.iterable()) {
+        	IntSet lab = mAccStateMap.get(state);
+            if(lab == null) continue;
+            labels.or(lab);
+            if(labels.cardinality() == mAccSize)
+            	return true;
         }
-        return true;
-    }
-
-    @Override
-    public List<IntSet> getAccs() {
-        return Collections.unmodifiableList(mAccList);
+        return false;
     }
 
     @Override
     public IntSet getLabels(int state) {
-        IntSet labels = UtilIntSet.newIntSet();
-        for(int i = 0; i < mAccList.size(); i ++) {
-            if(mAccList.get(i).get(state)) {
-                labels.set(i);
-            }
+        IntSet labels = mAccStateMap.get(state);
+        if(labels == null) {
+        	labels = UtilIntSet.newIntSet();
+        }else {
+        	labels = labels.clone();
         }
         return labels;
     }
     
+    @Override
     public void setLabel(int state, int label) {
-        while(mAccList.size() <= label) {
-            mAccList.add(UtilIntSet.newIntSet());
-        }
-        mAccList.get(label).set(state);
+    	assert checkLabelConsistency(label);
+    	IntSet labels = mAccStateMap.get(state);
+    	if(labels == null) {
+    		labels = UtilIntSet.newIntSet();
+    	}
+    	labels.set(label);
+    	mAccStateMap.put(state, labels);
+    }
+    
+    @Override
+    public void setLabel(int state, IntSet labels) {
+    	if(labels == null) return ;
+    	IntSet result = mAccStateMap.get(state);
+    	if(result == null) {
+    		result = UtilIntSet.newIntSet();
+    	}
+    	assert checkLabelConsistency(labels);
+    	result.or(labels);
+    	mAccStateMap.put(state, result);
+    }
+    
+    @Override
+    public int getAccSize() {
+    	return mAccSize;
+    }
+    
+    private boolean checkLabelConsistency(IntSet labels) {
+    	for(int label : labels.iterable()) {
+    		if(! checkLabelConsistency(label))
+    			return false;
+    	}
+    	return true;
+    }
+    
+    private boolean checkLabelConsistency(int label) {
+    	return label >= 0 && label < mAccSize;
     }
     
 }

@@ -38,7 +38,7 @@ import java.util.PriorityQueue;
 import java.util.Stack;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.Options;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.automata.AccGenBuchi;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.automata.Acc;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.automata.GeneralizedBuchiWa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.automata.IBuchiWa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.automata.IStateWa;
@@ -56,7 +56,7 @@ public class AntichainDifferenceExploration {
     private final GeneralizedBuchiWa mDifference;
     private final IBuchiWa mFstOperand;
     private final BuchiWaComplement mSndComplement;
-    private final AccGenBuchi mAcceptance;
+    private final Acc mAcceptance;
     private AntichainASCCExploration mAntichainExploration;
     
     public AntichainDifferenceExploration(IBuchiWa fstOp, BuchiWaComplement sndComplement) {

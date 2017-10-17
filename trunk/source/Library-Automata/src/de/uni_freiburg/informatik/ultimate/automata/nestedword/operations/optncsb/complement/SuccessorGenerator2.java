@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncs
  * */
 class SuccessorGenerator2 {
 	
-	private final NCSB mCurrNCSB;
+	private boolean mIsCurrBEmpty;
 	private final NCSB mSuccNCSB;
 	
 	private IntSet mMinusFSuccs;
@@ -59,8 +59,8 @@ class SuccessorGenerator2 {
 	private boolean hasSuccessors = true;
 	
 		
-	public SuccessorGenerator2(NCSB curr, NCSB succ, IntSet minusFSuccs, IntSet interFSuccs, IntSet f) {
-		this.mCurrNCSB = curr;
+	public SuccessorGenerator2(boolean isCurrBEmpty, NCSB succ, IntSet minusFSuccs, IntSet interFSuccs, IntSet f) {
+		this.mIsCurrBEmpty = isCurrBEmpty;
 		this.mSuccNCSB = succ;
 		
 		this.mMinusFSuccs = minusFSuccs;
@@ -86,7 +86,7 @@ class SuccessorGenerator2 {
 		// B successors
 		mBPrime =  mSuccNCSB.copyBSet();
 		
-		if(Options.lazyS && mCurrNCSB.getBSet().isEmpty()) {
+		if(Options.lazyS && mIsCurrBEmpty) {
 			mInterFSuccs = mSuccNCSB.copyCSet(); // set to d(C)
 		}
 		
@@ -115,7 +115,7 @@ class SuccessorGenerator2 {
 		IntSet BP = null;
 		
 		if(Options.lazyS) {
-			if(mCurrNCSB.getBSet().isEmpty()) {
+			if(mIsCurrBEmpty) {
 				// as usual S and C
 				CP = mVPrime.clone();
 				CP.andNot(Sextra); // C' get extra
@@ -145,7 +145,7 @@ class SuccessorGenerator2 {
 			CP = mVPrime.clone();
 			CP.andNot(Sextra);
 			SP.or(Sextra);
-			if(mCurrNCSB.getBSet().isEmpty()) {
+			if(mIsCurrBEmpty) {
 				BP =  CP;
 			}else {
 				BP =  mBPrime.clone();
