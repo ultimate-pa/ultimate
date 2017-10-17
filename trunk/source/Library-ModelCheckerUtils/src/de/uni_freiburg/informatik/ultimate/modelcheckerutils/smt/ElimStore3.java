@@ -282,7 +282,8 @@ public class ElimStore3 {
 				Term writtenCellHasNewValue;
 				writtenCellHasNewValue = mScript.term("=",
 						SmtUtils.multiDimensionalSelect(mScript, a_heir, idx_writeRenamed), dataRenamed);
-				assert !Arrays.asList(writtenCellHasNewValue.getFreeVars()).contains(eliminatee) : "var is still there";
+				assert !Arrays.asList(writtenCellHasNewValue.getFreeVars()).contains(
+						eliminatee) : "var is still there - maybe you have to switch off the flattening of multi-dimensional arrays";
 				additionalConjuncs.add(writtenCellHasNewValue);
 			}
 
