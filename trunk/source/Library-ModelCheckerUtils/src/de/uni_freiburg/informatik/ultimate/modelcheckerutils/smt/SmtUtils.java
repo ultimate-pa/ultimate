@@ -95,7 +95,7 @@ public final class SmtUtils {
 		SIMPLIFY_BDD_PROP, SIMPLIFY_BDD_FIRST_ORDER, SIMPLIFY_QUICK, SIMPLIFY_DDA, NONE
 	}
 
-	private static final boolean EXTENDED_LOCAL_SIMPLIFICATION = false;
+	private static final boolean EXTENDED_LOCAL_SIMPLIFICATION = true;
 	
 	/**
 	 * Has problems with {@link ElimStore3}. Set to true once 
