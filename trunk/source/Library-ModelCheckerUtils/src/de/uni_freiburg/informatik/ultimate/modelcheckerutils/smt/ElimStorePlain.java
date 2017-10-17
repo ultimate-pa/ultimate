@@ -57,6 +57,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.TreeRelation;
 
 /**
+ * TODO 2017-10-17 Matthias: The following documentation is outdated.
  * Let aElim be the array variable that we want to eliminate. We presume that
  * there is only one term of the form (store aElim storeIndex newValue), for
  * some index element storeIndex and some value element newValue.
@@ -120,6 +121,12 @@ public class ElimStorePlain {
 		mSimplificationTechnique = simplificationTechnique;
 	}
 
+	/**
+	 * Old, iterative elimination. Is sound but if we cannot eliminate all
+	 * quantifiers it sometimes produces a large number of similar
+	 * disjuncts/conjuncts that is too large for simplification.
+	 * 
+	 */
 	public EliminationTask elimAll(final EliminationTask eTask) {
 
 		final Stack<EliminationTask> taskStack = new Stack<>();
@@ -178,6 +185,9 @@ public class ElimStorePlain {
 				.applyCorrespondingFiniteConnective(mMgdScript.getScript(), eTask.getQuantifier(), resultDisjuncts));
 	}
 	
+	/**
+	 * New recursive elimination. Not yet finished but should be sound.
+	 */
 	public EliminationTask elimAllRec(final EliminationTask eTask) {
 		final TreeRelation<Integer, TermVariable> tr = classifyEliminatees(eTask.getEliminatees());
 		if (tr.isEmpty() || (tr.getDomain().size() == 1 && tr.getDomain().contains(0))) {
@@ -215,32 +225,32 @@ public class ElimStorePlain {
 
 	}
 
-	private EliminationTask doElimAllRec(final EliminationTask eliminationTask2) {
+	private EliminationTask doElimAllRec(final EliminationTask eTask) {
 		mRecursiveCallCounter++;
 		final int thisRecursiveCallNumber = mRecursiveCallCounter;
-		final TreeRelation<Integer, TermVariable> tr = classifyEliminatees(eliminationTask2.getEliminatees());
-		Term currentTerm = eliminationTask2.getTerm();
+		final TreeRelation<Integer, TermVariable> tr = classifyEliminatees(eTask.getEliminatees());
+		Term currentTerm = eTask.getTerm();
 		final Set<TermVariable> newElimnatees = new LinkedHashSet<>();
 		for (final Entry<Integer, TermVariable> entry : tr.entrySet()) {
 			if (entry.getKey() != 0) {
-				final Term[] xjuncts = split(eliminationTask2.getQuantifier(), entry.getValue(), currentTerm);
+				final Term[] xjuncts = split(eTask.getQuantifier(), entry.getValue(), currentTerm);
 				final List<Term> resXJuncts = new ArrayList<>();
 				for (final Term xjunct : xjuncts) {
 					if (Arrays.asList(xjunct.getFreeVars()).contains(entry.getValue())) {
-						final EliminationTask res = doElimOneRec(new EliminationTask(eliminationTask2.getQuantifier(), Collections.singleton(entry.getValue()), xjunct));
+						final EliminationTask res = doElimOneRec(new EliminationTask(eTask.getQuantifier(), Collections.singleton(entry.getValue()), xjunct));
 						newElimnatees.addAll(res.getEliminatees());
 						resXJuncts.add(res.getTerm());
 					} else {
 						resXJuncts.add(xjunct);
 					}
 				}
-				currentTerm = compose(eliminationTask2.getQuantifier(), resXJuncts);
+				currentTerm = compose(eTask.getQuantifier(), resXJuncts);
 				currentTerm = SmtUtils.simplify(mMgdScript, currentTerm, mServices, mSimplificationTechnique);
 			}
 		}
 		final Set<TermVariable> resultEliminatees = new HashSet<>(newElimnatees);
-		resultEliminatees.addAll(eliminationTask2.getEliminatees());
-		final EliminationTask resultEliminationTask = new EliminationTask(eliminationTask2.getQuantifier(), resultEliminatees, currentTerm);
+		resultEliminatees.addAll(eTask.getEliminatees());
+		final EliminationTask resultEliminationTask = new EliminationTask(eTask.getQuantifier(), resultEliminatees, currentTerm);
 		final EliminationTask finalResult = applyNonSddEliminations(mServices, mMgdScript,
 				resultEliminationTask, PqeTechniques.ALL_LOCAL);
 		if (mLogger.isInfoEnabled()) {
