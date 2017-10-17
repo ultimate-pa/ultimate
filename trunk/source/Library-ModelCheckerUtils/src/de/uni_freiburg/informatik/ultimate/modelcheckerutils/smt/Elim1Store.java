@@ -140,7 +140,7 @@ public class Elim1Store {
 	private static final boolean APPLY_RESULT_SIMPLIFICATION = false;
 	private static final boolean DEBUG_CRASH_ON_LARGE_SIMPLIFICATION_POTENTIAL = false;
 	
-	private static final boolean SELECT_OVER_STORE_PREPROCESSING = !false;
+	private static final boolean SELECT_OVER_STORE_PREPROCESSING = false;
 
 
 	public Elim1Store(final ManagedScript mgdScript, final IUltimateServiceProvider services,

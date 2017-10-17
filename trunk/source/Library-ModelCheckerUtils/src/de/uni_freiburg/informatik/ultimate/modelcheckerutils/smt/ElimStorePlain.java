@@ -27,16 +27,20 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.Stack;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
@@ -49,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.Qua
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierSequence;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierSequence.QuantifiedVariables;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.TreeRelation;
 
 /**
@@ -104,6 +109,7 @@ public class ElimStorePlain {
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private final SimplificationTechnique mSimplificationTechnique;
+	private int mRecursiveCallCounter = -1;
 
 	public ElimStorePlain(final ManagedScript mgdScript, final IUltimateServiceProvider services,
 			final SimplificationTechnique simplificationTechnique) {
@@ -170,6 +176,98 @@ public class ElimStorePlain {
 		// return term and variables that we could not eliminate
 		return new EliminationTask(eTask.getQuantifier(), resultEliminatees, QuantifierUtils
 				.applyCorrespondingFiniteConnective(mMgdScript.getScript(), eTask.getQuantifier(), resultDisjuncts));
+	}
+	
+	public EliminationTask elimAllRec(final EliminationTask eTask) {
+		final TreeRelation<Integer, TermVariable> tr = classifyEliminatees(eTask.getEliminatees());
+		if (tr.isEmpty() || (tr.getDomain().size() == 1 && tr.getDomain().contains(0))) {
+			return eTask;
+		}
+		mRecursiveCallCounter = 0;
+		final long inputSize = new DAGSize().treesize(eTask.getTerm());
+		final EliminationTask result = doElimAllRec(eTask);
+		final long outputSize = new DAGSize().treesize(result.getTerm());
+		mLogger.info(String.format(
+				"Needed %s recursive calls to eliminate %s variables, input treesize:%s, output treesize:%s",
+				mRecursiveCallCounter, eTask.getEliminatees().size(), inputSize, outputSize));
+		return result;
+	}
+	
+	
+	private EliminationTask doElimOneRec(final EliminationTask eTask) {
+		// input one ?
+		// split in disjunction
+		// elim1store, output many
+		// apply non-sdd on new only
+		// classify, recurse, result array free, put results together
+		// classify, recurse, result array free, put results together
+		// ...
+		assert eTask.getEliminatees().size() == 1;
+		final TermVariable eliminatee = eTask.getEliminatees().iterator().next();
+		assert SmtSortUtils.isArraySort(eliminatee.getSort());
+		final EliminationTask ssdElimRes = new Elim1Store(mMgdScript, mServices, mSimplificationTechnique,
+				eTask.getQuantifier()).elim1(eTask.getQuantifier(), eliminatee,
+						eTask.getTerm());
+		final EliminationTask eliminationTask2 = applyNonSddEliminations(mServices, mMgdScript,
+				ssdElimRes, PqeTechniques.ALL_LOCAL);
+		
+		return doElimAllRec(eliminationTask2);
+
+	}
+
+	private EliminationTask doElimAllRec(final EliminationTask eliminationTask2) {
+		mRecursiveCallCounter++;
+		final int thisRecursiveCallNumber = mRecursiveCallCounter;
+		final TreeRelation<Integer, TermVariable> tr = classifyEliminatees(eliminationTask2.getEliminatees());
+		Term currentTerm = eliminationTask2.getTerm();
+		final Set<TermVariable> newElimnatees = new LinkedHashSet<>();
+		for (final Entry<Integer, TermVariable> entry : tr.entrySet()) {
+			if (entry.getKey() != 0) {
+				final Term[] xjuncts = split(eliminationTask2.getQuantifier(), entry.getValue(), currentTerm);
+				final List<Term> resXJuncts = new ArrayList<>();
+				for (final Term xjunct : xjuncts) {
+					if (Arrays.asList(xjunct.getFreeVars()).contains(entry.getValue())) {
+						final EliminationTask res = doElimOneRec(new EliminationTask(eliminationTask2.getQuantifier(), Collections.singleton(entry.getValue()), xjunct));
+						newElimnatees.addAll(res.getEliminatees());
+						resXJuncts.add(res.getTerm());
+					} else {
+						resXJuncts.add(xjunct);
+					}
+				}
+				currentTerm = compose(eliminationTask2.getQuantifier(), resXJuncts);
+				currentTerm = SmtUtils.simplify(mMgdScript, currentTerm, mServices, mSimplificationTechnique);
+			}
+		}
+		final Set<TermVariable> resultEliminatees = new HashSet<>(newElimnatees);
+		resultEliminatees.addAll(eliminationTask2.getEliminatees());
+		final EliminationTask resultEliminationTask = new EliminationTask(eliminationTask2.getQuantifier(), resultEliminatees, currentTerm);
+		final EliminationTask finalResult = applyNonSddEliminations(mServices, mMgdScript,
+				resultEliminationTask, PqeTechniques.ALL_LOCAL);
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info("Start of recursive call " + thisRecursiveCallNumber + ": " + printVarInfo(tr) + " End of recursive call: "
+					+ printVarInfo(classifyEliminatees(finalResult.getEliminatees())) + " and "
+					+ QuantifierUtils.getXjunctsOuter(finalResult.getQuantifier(), finalResult.getTerm()).length
+					+ " xjuncts.");
+		}
+		return finalResult;
+	}
+	
+	
+
+	private Term compose(final int quantifier, final List<Term> resXJuncts) {
+		return QuantifierUtils.applyCorrespondingFiniteConnective(mMgdScript.getScript(), quantifier, resXJuncts);
+	}
+
+	private Term[] split(final int quantifier, final TermVariable value, final Term term) {
+		final Term xnf = QuantifierUtils.transformToXnf(mServices, mMgdScript.getScript(), quantifier, mMgdScript, term,
+				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+		final Term[] result = QuantifierUtils.getXjunctsOuter(quantifier, xnf);
+		if (term instanceof ApplicationTerm) {
+			if (((ApplicationTerm) term).getParameters().length < result.length) {
+				"lol".toString();
+			}
+		}
+		return result;
 	}
 
 	private String printVarInfo(final TreeRelation<Integer, TermVariable> tr) {
