@@ -106,6 +106,8 @@ public class PartialOrderCache<E> {
 				addStrictlySmaller(otherRep, elemToAdd);
 				break;
 			case INCOMPARABLE:
+				mNotStrictlySmaller.addPair(elemToAdd, otherRep);
+				mNotStrictlySmaller.addPair(otherRep, elemToAdd);
 				break;
 			}
 		}
@@ -122,6 +124,7 @@ public class PartialOrderCache<E> {
 		final E greaterRep = mEquivalences.find(greater);
 
 		mStrictlySmaller.addPair(smallerRep, greaterRep);
+		mNotStrictlySmaller.addPair(greaterRep, smallerRep);
 		assert assertStrictlySmaller(smallerRep, greaterRep);
 //		mExplies.addPair(greaterRep, smallerRep);
 
