@@ -1,27 +1,27 @@
 /*
  * Copyright (C) 2014-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2012-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE ModelCheckerUtils Library.
- * 
+ *
  * The ULTIMATE ModelCheckerUtils Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE ModelCheckerUtils Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE ModelCheckerUtils Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE ModelCheckerUtils Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays;
@@ -40,15 +40,15 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ApplicationTerm
  * In the array theory of SMT-LIB the Array sort has only two parameters one
  * for the index and one for the value.
  * We model multidimensional arrays by nesting arrays. E.g. an array with two
- * integer indices and real values has the following Sort. 
+ * integer indices and real values has the following Sort.
  * (Array Int -> (Array Int -> Real))
- * The store function has the following signature. 
+ * The store function has the following signature.
  * (store (Array X Y) X Y (Array X Y))
  * Hence we have to use nested store expressions for multidimensional array
- * reads, e.g., in order to get the array that differs from array a only 
+ * reads, e.g., in order to get the array that differs from array a only
  * because at index (i1,i2) the value of v was stored we use the following
  * expression.
- * (store a i1 (store (select a i1) i2 v)) 
+ * (store a i1 (store (select a i1) i2 v))
  * This is data structure is a wrapper for such a nested select expression which
  * allows you to directly access the array, the indices and the value.
  * This data structure allows also multidimensional arrays of dimension 0. In
@@ -61,7 +61,7 @@ public class MultiDimensionalStore {
 	private final ArrayIndex mIndex;
 	private final Term mValue;
 	private final ApplicationTerm mStoreTerm;
-	
+
 	public MultiDimensionalStore(final Term term) {
 		mStoreTerm = (ApplicationTerm) term;
 		Term array = null;
@@ -83,7 +83,7 @@ public class MultiDimensionalStore {
 					}
 					index.add(appTerm.getParameters()[1]);
 					value = appTerm.getParameters()[2];
-
+					continue;
 				}
 			}
 			break;
@@ -93,7 +93,7 @@ public class MultiDimensionalStore {
 		mValue = value;
 		assert classInvariant();
 	}
-	
+
 	private boolean classInvariant() {
 		if (mArray == null) {
 			return mIndex.size() == 0 && mStoreTerm == mValue;
@@ -103,7 +103,7 @@ public class MultiDimensionalStore {
 					areDimensionsConsistent(mArray, mIndex, mValue);
 		}
 	}
-	
+
 	private boolean isCompatibleSelect(final Term term, final Term array, final ArrayList<Term> index) {
 		final MultiDimensionalSelect mdSelect = new MultiDimensionalSelect(term);
 		return mdSelect.getArray() == array && index.equals(mdSelect.getIndex());
@@ -143,10 +143,10 @@ public class MultiDimensionalStore {
 	public int hashCode() {
 		return mStoreTerm.hashCode();
 	}
-	
-	
+
+
 	/**
-	 * Return all MultiDimensionalStore objects for all multidimensional 
+	 * Return all MultiDimensionalStore objects for all multidimensional
 	 * store expressions that occur in term.
 	 * If one multidimensional store occurs in another multidimensional
 	 * store expression (e.g. as index) the nested one is not returned by
@@ -156,7 +156,7 @@ public class MultiDimensionalStore {
 	 */
 	public static List<MultiDimensionalStore> extractArrayStoresShallow(final Term term) {
 		final List<MultiDimensionalStore> arrayStoreDefs = new ArrayList<MultiDimensionalStore>();
-		final Set<ApplicationTerm> storeTerms = 
+		final Set<ApplicationTerm> storeTerms =
 				(new ApplicationTermFinder("store", true)).findMatchingSubterms(term);
 		for (final Term storeTerm : storeTerms) {
 			final MultiDimensionalStore mdStore = new MultiDimensionalStore(storeTerm);
@@ -167,8 +167,8 @@ public class MultiDimensionalStore {
 		}
 		return arrayStoreDefs;
 	}
-	
-	
+
+
 	/**
 	 * Return all MultiDimensionalStore objects for all store expressions
 	 * that occur in term. This method also return the inner multidimensional
@@ -196,5 +196,5 @@ public class MultiDimensionalStore {
 		}
 		return result;
 	}
-	
+
 }
