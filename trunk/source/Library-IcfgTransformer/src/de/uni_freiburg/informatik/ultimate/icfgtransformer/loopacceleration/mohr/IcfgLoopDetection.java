@@ -60,6 +60,12 @@ public class IcfgLoopDetection<INLOC extends IcfgLocation> {
 	@SuppressWarnings("unchecked")
 	private Set<IcfgLoop<INLOC>> loopExtraction(final IIcfg<INLOC> originalIcfg) {
 		final Set<INLOC> init = originalIcfg.getInitialNodes();
+
+		if (init.size() > 1) {
+			mLogger.info("Unable to accelerate with more than one entries");
+			return new HashSet<IcfgLoop<INLOC>>();
+		}
+
 		final Deque<INLOC> open = new ArrayDeque<>();
 		final Map<INLOC, Set<INLOC>> dom = new HashMap<>();
 
@@ -161,6 +167,8 @@ public class IcfgLoopDetection<INLOC extends IcfgLocation> {
 				if (loopbodies.get(head).contains(nestedhead)) {
 					loopbodies.get(head).addNestedLoop(loopbodies.get(nestedhead));
 					loopbodies.remove(nestedhead);
+					mLogger.info("Unable to accelerate, since loop contains nested loops");
+					return new HashSet<IcfgLoop<INLOC>>();
 				}
 			}
 		}
@@ -201,6 +209,7 @@ public class IcfgLoopDetection<INLOC extends IcfgLocation> {
 	}
 
 	public Set<IcfgLoop<INLOC>> getResult() {
+		mLoops.forEach(l -> mLogger.info("Loop @"+l.getHead()+": "+l.getLoopbody()+"; nested @"+l.getNestedLoopHeads()));
 		return mLoops;
 	}
 }

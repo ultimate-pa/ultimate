@@ -53,6 +53,8 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgCallTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.SimultaneousUpdate;
@@ -69,6 +71,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.Simpli
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 public class IcfgLoopTransformerMohr<INLOC extends IcfgLocation, OUTLOC extends IcfgLocation>
 		implements IIcfgTransformer<OUTLOC> {
@@ -141,6 +144,9 @@ public class IcfgLoopTransformerMohr<INLOC extends IcfgLocation, OUTLOC extends 
 		final ArrayDeque<INLOC> queue = new ArrayDeque<>();
 		final Set<INLOC> visited = new HashSet<>();
 		queue.add(origIcfg.getInitialNodes().iterator().next());
+
+		final List<Triple<OUTLOC, OUTLOC, IcfgEdge>> rtrTransitions = new ArrayList<>();
+
 		while (!queue.isEmpty()) {
 			final INLOC node = queue.removeFirst();
 			visited.add(node);
@@ -175,10 +181,21 @@ public class IcfgLoopTransformerMohr<INLOC extends IcfgLocation, OUTLOC extends 
 					}
 
 				} else {
-					mTib.createNewTransition(newSource, newTarget, edge);
+					if (edge instanceof IIcfgReturnTransition<?, ?>) {
+						mLogger.info("Return: " + newSource + " - " + edge + " -> " + newTarget);
+						rtrTransitions.add(new Triple<OUTLOC, OUTLOC, IcfgEdge>(newSource, newTarget, edge));
+					} else {
+						if (edge instanceof IIcfgCallTransition<?>) {
+							mLogger.info("Call: " + newSource + " - " + edge + " -> " + newTarget);
+						}
+						mLogger.info("Internal: " + newSource + " - " + edge + " -> " + newTarget);
+						mTib.createNewTransition(newSource, newTarget, edge);
+					}
 				}
 			}
 		}
+
+		rtrTransitions.forEach(a -> mTib.createNewTransition(a.getFirst(), a.getSecond(), a.getThird()));
 
 	}
 
