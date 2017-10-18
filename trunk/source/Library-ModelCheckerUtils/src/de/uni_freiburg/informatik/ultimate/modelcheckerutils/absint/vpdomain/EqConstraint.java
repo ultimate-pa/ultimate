@@ -176,7 +176,8 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 
 	public void renameVariables(final Map<Term, Term> substitutionMapping) {
 		assert !mIsFrozen;
-		mPartialArrangement.renameVariables(substitutionMapping);
+//		mPartialArrangement.renameVariables(substitutionMapping);
+		mPartialArrangement.transformElementsAndFunctions(e -> e.renameVariables(substitutionMapping));
 		resetCachingFields();
 	}
 

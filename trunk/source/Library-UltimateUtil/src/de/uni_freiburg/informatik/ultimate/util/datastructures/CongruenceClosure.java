@@ -468,14 +468,18 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 	 * @return
 	 */
 	public boolean removeSimpleElement(final ELEM elem) {
-		return removeSimpleElement(elem, true);
+		return removeSimpleElement(elem, true, true);
 	}
 
 	public boolean removeSimpleElementDontIntroduceNewNodes(final ELEM elem) {
-		return removeSimpleElement(elem, false);
+		return removeSimpleElement(elem, false, true);
 	}
 
-	private boolean removeSimpleElement(final ELEM elem, final boolean introduceNewNodes) {
+	public boolean removeSimpleElementDontUseWeqGpa(final ELEM elem) {
+		return removeSimpleElement(elem, true, false);
+	}
+
+	private boolean removeSimpleElement(final ELEM elem, final boolean introduceNewNodes, final boolean useWeqGpa) {
 		if (elem.isFunctionApplication()) {
 				throw new IllegalArgumentException();
 		}
@@ -487,7 +491,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		}
 
 		assert mElementCurrentlyBeingRemoved == null;
-		final CongruenceClosure<ELEM>.RemoveElement re = new RemoveElement(elem, introduceNewNodes);
+		final CongruenceClosure<ELEM>.RemoveElement re = new RemoveElement(elem, introduceNewNodes, useWeqGpa);
 		mElementCurrentlyBeingRemoved = re;
 
 		re.doRemoval();
@@ -530,12 +534,13 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		private final ELEM mElem;
 //		private final HashMap<ELEM, ELEM> mRemovedElemToNewRep;
 		private final boolean mIntroduceNewNodes;
+		private final boolean mUseWeqGpa;
 
 		private final boolean mMadeChanges;
 		private Set<ELEM> mElementsToRemove;
 		private final Set<ELEM> mElementsAlreadyRemoved = new HashSet<>();
 
-		public RemoveElement(final ELEM elem, final boolean introduceNewNodes) {
+		public RemoveElement(final ELEM elem, final boolean introduceNewNodes, final boolean useWeqGpa) {
 			assert !elem.isFunctionApplication() : "unexpected..";
 
 			if (isInconsistent()) {
@@ -545,6 +550,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 			mElem = elem;
 //			mRemovedElemToNewRep = trackNewReps ? new HashMap<>() : null;
 			mIntroduceNewNodes = introduceNewNodes;
+			mUseWeqGpa = useWeqGpa;
 			mMadeChanges = false;
 
 		}
@@ -559,7 +565,13 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 
 			assert elementsToRemove.stream().allMatch(e -> dependsOnAny(e, Collections.singleton(mElem)));
 
+			/**
+			 * Map in which try to collect a perfect replacement for each element that is to be removed.
+			 * This map is updated through "getOtherEquivalenceMemeber", for already existing nodes,
+			 *  and through getNodesToIntroducebeforeRemoval, for newly introduced equivalents.
+			 */
 			final Map<ELEM, ELEM> nodeToReplacementNode = new HashMap<>();
+
 			for (final ELEM elemToRemove : elementsToRemove) {
 				nodeToReplacementNode.put(elemToRemove, getOtherEquivalenceClassMember(elemToRemove, elementsToRemove));
 			}
@@ -609,12 +621,16 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 
 
 			// (for instance:) prepare weq graph by conjoining edge labels with the current gpa
-			prepareForRemove();
+			prepareForRemove(mUseWeqGpa);
 
-			for (final ELEM elemToRemove : elementsToRemove) {
-				removeSingleElement(elemToRemove, nodeToReplacementNode.get(elemToRemove));
-				mElementsAlreadyRemoved.add(elemToRemove);
-			}
+			removeElementAndDependents(mElem, elementsToRemove, nodeToReplacementNode, mUseWeqGpa);
+
+//			} else {
+//				for (final ELEM elemToRemove : elementsToRemove) {
+//					removeSingleElement(elemToRemove, nodeToReplacementNode.get(elemToRemove));
+//					mElementsAlreadyRemoved.add(elemToRemove);
+//				}
+//			}
 
 			assert sanityCheck();
 		}
@@ -678,6 +694,17 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 //		assert sanityCheckOnlyCc();
 		assert elementIsFullyRemovedOnlyCc(elem);
 		return true;
+	}
+
+	public void removeElementAndDependents(final ELEM elem, final Set<ELEM> elementsToRemove,
+			final Map<ELEM, ELEM> nodeToReplacementNode, final boolean useWeqGpa) {
+		// remove from this cc
+		for (final ELEM etr : elementsToRemove) {
+			if (!hasElement(etr)) {
+				continue;
+			}
+			updateElementTverAndAuxDataOnRemoveElement(etr);
+		}
 	}
 
 	protected void applyClosureOperations() {
@@ -843,29 +870,29 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		return result;
 	}
 
-	protected void prepareForRemove() {
+	protected void prepareForRemove(final boolean useWeqGpa) {
 		// do nothing (method relevant for subclasses)
 	}
 
-	/**
-	 * should only be called from WeakEquivalenceGraph or from CongruenceClosure!
-	 *
-	 * @param elem
-	 * @param replacement
-	 * @return
-	 */
-	public boolean removeSingleElement(final ELEM elem, final ELEM replacement) {
-		assert !isInconsistent();
-
-		if (!hasElement(elem)) {
-			return false;
-		}
-
-		updateElementTverAndAuxDataOnRemoveElement(elem);
-
-		assert assertSingleElementIsFullyRemoved(elem);
-		return true;
-	}
+//	/**
+//	 * should only be called from WeakEquivalenceGraph or from CongruenceClosure!
+//	 *
+//	 * @param elem
+//	 * @param replacement
+//	 * @return
+//	 */
+//	public boolean removeSingleElement(final ELEM elem, final ELEM replacement) {
+//		assert !isInconsistent();
+//
+//		if (!hasElement(elem)) {
+//			return false;
+//		}
+//
+//		updateElementTverAndAuxDataOnRemoveElement(elem);
+//
+//		assert assertSingleElementIsFullyRemoved(elem);
+//		return true;
+//	}
 
 //	protected ELEM replaceWithOtherRepIfNecessaryAndPossible(final ELEM elem) {
 //		if (mElementCurrentlyBeingRemoved == null) {

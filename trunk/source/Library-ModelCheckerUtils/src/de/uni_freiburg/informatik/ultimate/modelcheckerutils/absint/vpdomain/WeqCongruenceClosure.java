@@ -53,7 +53,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 	private final WeakEquivalenceGraph<NODE> mWeakEquivalenceGraph;
 	private final EqConstraintFactory<NODE> mFactory;
 
-	private final HashRelation<Object, NODE> mNodeToDependents;
+	private final HashRelation<NODE, NODE> mNodeToDependents;
 	public final boolean mMeetWithGpaCase;
 
 	/**
@@ -225,10 +225,10 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		return result;
 	}
 
-	public void renameVariables(final Map<Term, Term> substitutionMapping) {
-		transformElementsAndFunctions(node -> node.renameVariables(substitutionMapping));
-		mWeakEquivalenceGraph.renameVariables(substitutionMapping);
-	}
+//	public void renameVariables(final Map<Term, Term> substitutionMapping) {
+//		transformElementsAndFunctions(node -> node.renameVariables(substitutionMapping));
+//		mWeakEquivalenceGraph.renameVariables(substitutionMapping);
+//	}
 
 	public void reportWeakEquivalence(final NODE array1, final NODE array2, final NODE storeIndex) {
 		assert array1.isFunction() && array2.isFunction();
@@ -763,9 +763,13 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 	}
 
 	@Override
-	protected void prepareForRemove() {
-		mWeakEquivalenceGraph.meetEdgeLabelsWithGpaBeforeRemove(new WeqCongruenceClosure<>(this));
-		super.prepareForRemove();
+	protected void prepareForRemove(final boolean useWeqGpa) {
+		if (useWeqGpa) {
+			mWeakEquivalenceGraph.meetEdgeLabelsWithWeqGpaBeforeRemove(new WeqCongruenceClosure<>(this));
+		} else {
+			mWeakEquivalenceGraph.meetEdgeLabelsWithCcGpaBeforeRemove();
+		}
+		super.prepareForRemove(useWeqGpa);
 	}
 
 	@Override
@@ -775,19 +779,41 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		assert sanityCheck();
 	}
 
+//	@Override
+//	public boolean removeSingleElement(final NODE elem, final NODE replacement) {
+//		if (elem.isDependent()) {
+//			mNodeToDependents.removeRangeElement(elem);
+//		}
+//		mNodeToDependents.removeDomainElement(elem);
+//
+//		mWeakEquivalenceGraph.projectSingleElement(elem, replacement);
+//
+//		return super.removeSingleElement(elem, replacement);
+//	}
+
+
 	@Override
-	public boolean removeSingleElement(final NODE elem, final NODE replacement) {
-		if (elem.isDependent()) {
-			mNodeToDependents.removeRangeElement(elem);
+	public void removeElementAndDependents(final NODE elem, final Set<NODE> elementsToRemove,
+			final Map<NODE, NODE> nodeToReplacementNode, final boolean useWeqGpa) {
+
+		for (final NODE etr : elementsToRemove) {
+			if (etr.isDependent()) {
+				mNodeToDependents.removeRangeElement(etr);
+			}
+			mNodeToDependents.removeDomainElement(etr);
+
+			mWeakEquivalenceGraph.updateVerticesOnRemoveElement(etr, nodeToReplacementNode.get(etr));
+			if (!useWeqGpa) {
+				mWeakEquivalenceGraph.projectSingleElementInEdgeLabels(etr);
+			}
 		}
-		mNodeToDependents.removeDomainElement(elem);
 
-		mWeakEquivalenceGraph.projectSingleElement(elem, replacement);
+		if (useWeqGpa) {
+			mWeakEquivalenceGraph.projectSimpleElementInEdgeLabels(elem);
+		}
 
-		return super.removeSingleElement(elem, replacement);
+		super.removeElementAndDependents(elem, elementsToRemove, nodeToReplacementNode, useWeqGpa);
 	}
-
-
 
 	@Override
 	protected Set<NODE> getNodesToIntroduceBeforeRemoval(final NODE elemToRemove,
@@ -988,15 +1014,17 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 	public void transformElementsAndFunctions(final Function<NODE, NODE> elemTransformer) {
 		super.transformElementsAndFunctions(elemTransformer);
 
-		for (final Entry<Object, NODE> en : new HashRelation<>(mNodeToDependents).entrySet()) {
+		for (final Entry<NODE, NODE> en : new HashRelation<>(mNodeToDependents).entrySet()) {
 			mNodeToDependents.removePair(en.getKey(), en.getValue());
 			if (en.getKey() instanceof IEqNodeIdentifier<?>) {
-				mNodeToDependents.addPair(elemTransformer.apply((NODE) en.getKey()),
+				mNodeToDependents.addPair(elemTransformer.apply(en.getKey()),
 						elemTransformer.apply(en.getValue()));
 			} else {
 				throw new AssertionError();
 			}
 		}
+
+		mWeakEquivalenceGraph.transformElementsAndFunctions(elemTransformer);
 	}
 
 	/**
@@ -1020,7 +1048,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 			return false;
 		}
 
-		for (final Entry<Object, NODE> en : mNodeToDependents.entrySet()) {
+		for (final Entry<NODE, NODE> en : mNodeToDependents.entrySet()) {
 			if (en.getKey().equals(elem) || en.getValue().equals(elem)) {
 				assert false;
 				return false;
