@@ -93,6 +93,7 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 	// public static final String LABEL_EXPLICIT_TYPESIZE_CHAR16 = "sizeof char16";
 	// public static final String LABEL_EXPLICIT_TYPESIZE_CHAR32 = "sizeof char32";
 	public static final String LABEL_SIGNEDNESS_CHAR = "signedness of char";
+	public static final String LABEL_CHECK_ALLOCATION_PURITY = "Check allocation purity";
 
 	public enum PointerCheckMode {
 		IGNORE, ASSUME, ASSERTandASSUME
@@ -143,6 +144,7 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 				new UltimatePreferenceItem<>(LABEL_CHECK_FREE_VALID, true, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_CHECK_MEMORY_LEAK_IN_MAIN, false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_SVCOMP_MEMTRACK_COMPATIBILITY_MODE, false, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_CHECK_ALLOCATION_PURITY, false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_MEMORY_MODEL, MemoryModel.HoenickeLindenmann_Original,
 						PreferenceType.Combo, MemoryModel.values()),
 				new UltimatePreferenceItem<>(LABEL_POINTER_INTEGER_CONVERSION,
