@@ -179,7 +179,6 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 
 		executeFloydWarshallAndReportResultToWeqCc();
 		reportAllArrayEqualitiesFromWeqGraph();
-		assert weqGraphFreeOfArrayEqualities();
 
 		assert sanityCheck();
 		return result;
@@ -678,6 +677,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 				return;
 			}
 		}
+		assert weqGraphFreeOfArrayEqualities();
 	}
 
 	@Override
@@ -792,8 +792,9 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 //	}
 
 
+
 	@Override
-	public void removeElementAndDependents(final NODE elem, final Set<NODE> elementsToRemove,
+	public Set<NODE> removeElementAndDependents(final NODE elem, final Set<NODE> elementsToRemove,
 			final Map<NODE, NODE> nodeToReplacementNode, final boolean useWeqGpa) {
 
 		for (final NODE etr : elementsToRemove) {
@@ -803,16 +804,18 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 			mNodeToDependents.removeDomainElement(etr);
 
 			mWeakEquivalenceGraph.updateVerticesOnRemoveElement(etr, nodeToReplacementNode.get(etr));
-			if (!useWeqGpa) {
-				mWeakEquivalenceGraph.projectSingleElementInEdgeLabels(etr);
-			}
+//			if (!useWeqGpa) {
+//				mWeakEquivalenceGraph.projectSingleElementInEdgeLabels(etr);
+//			}
 		}
 
-		if (useWeqGpa) {
-			mWeakEquivalenceGraph.projectSimpleElementInEdgeLabels(elem);
-		}
+//		if (useWeqGpa) {
+		final Set<NODE> nodesToAddInGpa = mWeakEquivalenceGraph.projectSimpleElementInEdgeLabels(elem, useWeqGpa);
+//		}
 
 		super.removeElementAndDependents(elem, elementsToRemove, nodeToReplacementNode, useWeqGpa);
+
+		return nodesToAddInGpa;
 	}
 
 	@Override
@@ -1159,6 +1162,16 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		if (mWeakEquivalenceGraph != null) {
 			res &= mWeakEquivalenceGraph.sanityCheck();
 		}
+
+		if (!mMeetWithGpaCase && !isInconsistent()) {
+			for (final NODE el : getAllElements()) {
+				if (dependsOnAny(el, mFactory.getAllWeqPrimedNodes())) {
+					assert false;
+					return false;
+				}
+			}
+		}
+
 		return res;
 	}
 

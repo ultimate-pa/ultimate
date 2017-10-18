@@ -475,8 +475,33 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		return removeSimpleElement(elem, false, true);
 	}
 
-	public boolean removeSimpleElementDontUseWeqGpa(final ELEM elem) {
-		return removeSimpleElement(elem, true, false);
+	public Set<ELEM> removeSimpleElementDontUseWeqGpa(final ELEM elem) {
+//		return removeSimpleElement(elem, true, false);
+		if (elem.isFunctionApplication()) {
+				throw new IllegalArgumentException();
+		}
+		if (isInconsistent()) {
+			throw new IllegalStateException();
+		}
+		if (!hasElement(elem)) {
+			return Collections.emptySet();
+		}
+
+		assert mElementCurrentlyBeingRemoved == null;
+		final CongruenceClosure<ELEM>.RemoveElement re = new RemoveElement(elem, true, false);
+		mElementCurrentlyBeingRemoved = re;
+
+		re.doRemoval();
+		assert assertSimpleElementIsFullyRemoved(elem);
+		assert sanityCheck();
+
+		final Set<ELEM> result = re.getAddedNodes();
+
+		mElementCurrentlyBeingRemoved = null;
+
+		assert assertSimpleElementIsFullyRemoved(elem);
+		assert sanityCheck();
+		return result;
 	}
 
 	private boolean removeSimpleElement(final ELEM elem, final boolean introduceNewNodes, final boolean useWeqGpa) {
@@ -540,6 +565,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		private Set<ELEM> mElementsToRemove;
 		private final Set<ELEM> mElementsAlreadyRemoved = new HashSet<>();
 
+		private final Set<ELEM> mAddedNodes;
+
 		public RemoveElement(final ELEM elem, final boolean introduceNewNodes, final boolean useWeqGpa) {
 			assert !elem.isFunctionApplication() : "unexpected..";
 
@@ -553,6 +580,13 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 			mUseWeqGpa = useWeqGpa;
 			mMadeChanges = false;
 
+			mAddedNodes = mUseWeqGpa && mIntroduceNewNodes ? null : new HashSet<>();
+		}
+
+		public Set<ELEM> getAddedNodes() {
+			assert !mUseWeqGpa : "currently the only case we need this, right?";
+			assert mIntroduceNewNodes : "the only case this makes sense";
+			return mAddedNodes;
 		}
 
 		public Collection<ELEM> getAlreadyRemovedElements() {
@@ -608,6 +642,10 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 					addElementRec(proxyElem);
 					assert sanityCheck();
 				}
+
+				if (mIntroduceNewNodes && !mUseWeqGpa) {
+					mAddedNodes.addAll(nodesToAdd);
+				}
 			}
 
 			assert !isInconsistent();
@@ -623,7 +661,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 			// (for instance:) prepare weq graph by conjoining edge labels with the current gpa
 			prepareForRemove(mUseWeqGpa);
 
-			removeElementAndDependents(mElem, elementsToRemove, nodeToReplacementNode, mUseWeqGpa);
+			final Set<ELEM> nodesAddedInLabels =
+					removeElementAndDependents(mElem, elementsToRemove, nodeToReplacementNode, mUseWeqGpa);
 
 //			} else {
 //				for (final ELEM elemToRemove : elementsToRemove) {
@@ -631,6 +670,12 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 //					mElementsAlreadyRemoved.add(elemToRemove);
 //				}
 //			}
+
+			// the edge labels may have added nodes when projecting something --> add them to the gpa
+			for (final ELEM nail : nodesAddedInLabels) {
+				addElementRec(nail);
+			}
+			applyClosureOperations();
 
 			assert sanityCheck();
 		}
@@ -696,7 +741,17 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		return true;
 	}
 
-	public void removeElementAndDependents(final ELEM elem, final Set<ELEM> elementsToRemove,
+	/**
+	 *
+	 * @param elem
+	 * @param elementsToRemove
+	 * @param nodeToReplacementNode
+	 * @param useWeqGpa
+	 *
+	 * @return a set of nodes that have been added to dependent objects (weakEqLabels in the WeqCC case)
+	 *		 empty set for this class (only meaningful in subclasses)
+	 */
+	public Set<ELEM> removeElementAndDependents(final ELEM elem, final Set<ELEM> elementsToRemove,
 			final Map<ELEM, ELEM> nodeToReplacementNode, final boolean useWeqGpa) {
 		// remove from this cc
 		for (final ELEM etr : elementsToRemove) {
@@ -705,6 +760,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 			}
 			updateElementTverAndAuxDataOnRemoveElement(etr);
 		}
+		return Collections.emptySet();
 	}
 
 	protected void applyClosureOperations() {

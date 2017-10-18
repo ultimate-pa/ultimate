@@ -206,27 +206,29 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>> {
 		}
 	}
 
-	public void projectSimpleElementInEdgeLabels(final NODE elem) {
+	public Set<NODE> projectSimpleElementInEdgeLabels(final NODE elem, final boolean useWeqGpa) {
+		final Set<NODE> nodesToAdd = new HashSet<>();
 		for (final Entry<Doubleton<NODE>, WeakEquivalenceEdgeLabel> en : mWeakEquivalenceEdges.entrySet()) {
 			assert !elem.equals(en.getKey().getOneElement());
 			assert !elem.equals(en.getKey().getOtherElement());
 
-			en.getValue().projectSingleOrSimpleElement(elem, true);
+			nodesToAdd.addAll(en.getValue().projectSingleOrSimpleElement(elem, useWeqGpa));
 		}
 		assert elementIsFullyRemoved(elem);
+		return nodesToAdd;
 	}
 
-	public void projectSingleElementInEdgeLabels(final NODE elem) {
-
-		for (final Entry<Doubleton<NODE>, WeakEquivalenceEdgeLabel> en : mWeakEquivalenceEdges.entrySet()) {
-
-			assert !elem.equals(en.getKey().getOneElement());
-			assert !elem.equals(en.getKey().getOtherElement());
-
-			en.getValue().projectSingleOrSimpleElement(elem, false);
-		}
-		assert elementIsFullyRemoved(elem);
-	}
+//	public void projectSingleElementInEdgeLabels(final NODE elem) {
+//
+//		for (final Entry<Doubleton<NODE>, WeakEquivalenceEdgeLabel> en : mWeakEquivalenceEdges.entrySet()) {
+//
+//			assert !elem.equals(en.getKey().getOneElement());
+//			assert !elem.equals(en.getKey().getOtherElement());
+//
+//			en.getValue().projectSingleOrSimpleElement(elem, false);
+//		}
+//		assert elementIsFullyRemoved(elem);
+//	}
 
 
 //	public void projectSingleElement(final NODE elem, final NODE replacement) {
@@ -1134,14 +1136,18 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>> {
 		}
 
 //		public void projectSingleElement(final NODE elem, final NODE replacement) {
-		public void projectSingleOrSimpleElement(final NODE elem, final boolean simpleNotSingle) {
+//		public void projectSingleOrSimpleElement(final NODE elem, final boolean simpleNotSingle) {
+		public Set<NODE> projectSingleOrSimpleElement(final NODE elem, final boolean simpleNotSingle) {
 			if (isTautological()) {
-				return;
+				return Collections.emptySet();
+//				return;
 			}
 			if (isInconsistent()) {
-				return;
+				return Collections.emptySet();
+//				return;
 			}
 
+			final Set<NODE> nodesToAddToGpa = new HashSet<>();
 //			assert mLabel.stream().allMatch(l -> (l instanceof WeqCongruenceClosure<?>)) : "the meetWeqGpa method"
 //					+ "should ensure this, right?";
 
@@ -1165,7 +1171,11 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>> {
 				 *  plan: compute all dependents, and remove them one by one
 				 */
 				if (simpleNotSingle) {
-					lab.removeSimpleElementDontUseWeqGpa(elem);
+					final Set<NODE> nodesAdded = lab.removeSimpleElementDontUseWeqGpa(elem);
+					nodesAdded.stream()
+						.filter(n -> !CongruenceClosure.dependsOnAny(n, mFactory.getAllWeqPrimedNodes()))
+						.forEach(nodesToAddToGpa::add);
+//					nodesToAddToGpa.addAll(lab.removeSimpleElementDontUseWeqGpa(elem));
 				} else {
 					// "single" case
 					final Set<NODE> dependents = lab.getAllElements().stream()
@@ -1187,11 +1197,11 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>> {
 					// a disjunct became "true" through projection --> the whole disjunction is tautological
 					mLabel.clear();
 					mLabel.add(new CongruenceClosure<>());
-					return;
+					return Collections.emptySet();
 				}
 				assert lab.sanityCheckOnlyCc(mPartialArrangement.getElementCurrentlyBeingRemoved());
 
-				CongruenceClosure<NODE> lab2;
+				final CongruenceClosure<NODE> lab2;
 				if (simpleNotSingle) {
 					// unprime weqvars
 					lab2 = new CongruenceClosure<>(lab);
@@ -1212,6 +1222,7 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>> {
 			mLabel.addAll(newLabelContents);
 			assert mLabel.stream().allMatch(l -> l.assertSingleElementIsFullyRemoved(elem));
 			assert sanityCheck();
+			return nodesToAddToGpa;
 		}
 
 		public WeakEquivalenceEdgeLabel projectToElements(final Set<NODE> allWeqNodes) {
