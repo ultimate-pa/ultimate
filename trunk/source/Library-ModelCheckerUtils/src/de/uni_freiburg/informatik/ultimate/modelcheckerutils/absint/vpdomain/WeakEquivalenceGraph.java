@@ -1189,6 +1189,7 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>> {
 					mLabel.add(new CongruenceClosure<>());
 					return;
 				}
+				assert lab.sanityCheckOnlyCc(mPartialArrangement.getElementCurrentlyBeingRemoved());
 
 				CongruenceClosure<NODE> lab2;
 				if (simpleNotSingle) {
@@ -1200,11 +1201,12 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>> {
 					lab2 = lab;
 				}
 
-				final CongruenceClosure<NODE> newLab = lab.projectToElements(mFactory.getAllWeqNodes(),
+				final CongruenceClosure<NODE> newLab = lab2.projectToElements(mFactory.getAllWeqNodes(),
 						mPartialArrangement.getElementCurrentlyBeingRemoved());
 				assert newLab.assertSingleElementIsFullyRemoved(elem);
+				assert !newLab.isTautological();
+				assert newLab.sanityCheckOnlyCc(mPartialArrangement.getElementCurrentlyBeingRemoved());
 				newLabelContents.add(newLab);
-				assert lab.sanityCheckOnlyCc(mPartialArrangement.getElementCurrentlyBeingRemoved());
 			}
 			mLabel.clear();
 			mLabel.addAll(newLabelContents);
@@ -1510,6 +1512,30 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>> {
 			}
 			if (isEmpty()) {
 				return true;
+			}
+
+			if (mLabel.stream().anyMatch(l -> l.isTautological()) && mLabel.size() > 1) {
+				// not normalized
+				assert false;
+				return false;
+			}
+
+			if (mLabel.stream().anyMatch(l -> l.isInconsistent())) {
+				// not normalized
+				assert false;
+				return false;
+			}
+
+			// check that labels are free of weqPrimed vars
+			if (!groundPartialArrangement.mMeetWithGpaCase) {
+				for (final CongruenceClosure<NODE> lab : mLabel) {
+					for (final NODE el : lab.getAllElements()) {
+						if (CongruenceClosure.dependsOnAny(el, mFactory.getAllWeqPrimedNodes())) {
+							assert false;
+							return false;
+						}
+					}
+				}
 			}
 
 			// check that labels are free of constraints that don't contain weq nodes
