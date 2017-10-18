@@ -1137,7 +1137,7 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>> {
 
 //		public void projectSingleElement(final NODE elem, final NODE replacement) {
 //		public void projectSingleOrSimpleElement(final NODE elem, final boolean simpleNotSingle) {
-		public Set<NODE> projectSingleOrSimpleElement(final NODE elem, final boolean simpleNotSingle) {
+		public Set<NODE> projectSingleOrSimpleElement(final NODE elem, final boolean useWeqGpaMode) {
 			if (isTautological()) {
 				return Collections.emptySet();
 //				return;
@@ -1170,7 +1170,7 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>> {
 				 *
 				 *  plan: compute all dependents, and remove them one by one
 				 */
-				if (simpleNotSingle) {
+				if (useWeqGpaMode) {
 					final Set<NODE> nodesAdded = lab.removeSimpleElementDontUseWeqGpa(elem);
 					nodesAdded.stream()
 						.filter(n -> !CongruenceClosure.dependsOnAny(n, mFactory.getAllWeqPrimedNodes()))
@@ -1183,13 +1183,6 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>> {
 							.collect(Collectors.toSet());
 					lab.removeElementAndDependents(elem, dependents, Collections.emptyMap(), false);
 				}
-//					final Set<NODE> dependents = lab.getAllElements().stream()
-//							.filter(e -> CongruenceClosure.dependsOnAny(e, Collections.singleton(elem)))
-//							.collect(Collectors.toSet());
-//					for (final NODE dep : dependents) {
-//						lab.removeSingleElement(dep, null);
-//					}
-
 
 				assert lab.assertSingleElementIsFullyRemoved(elem);
 
@@ -1202,7 +1195,7 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>> {
 				assert lab.sanityCheckOnlyCc(mPartialArrangement.getElementCurrentlyBeingRemoved());
 
 				final CongruenceClosure<NODE> lab2;
-				if (simpleNotSingle) {
+				if (useWeqGpaMode) {
 					// unprime weqvars
 					lab2 = new CongruenceClosure<>(lab);
 //					lab2 = lab;
