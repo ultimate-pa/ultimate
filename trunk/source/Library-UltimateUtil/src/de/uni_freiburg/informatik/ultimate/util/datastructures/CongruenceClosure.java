@@ -566,6 +566,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 			assert DataStructureUtils.intersection(new HashSet<>(nodeToReplacementNode.values()), elementsToRemove)
 				.isEmpty();
 
+			assert !isInconsistent();
+
 			while (true) {
 				if (!mIntroduceNewNodes) {
 					break;
@@ -596,7 +598,15 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 				}
 			}
 
+			assert !isInconsistent();
+
 			applyClosureOperations();
+
+			assert !isInconsistent();
+			if (isInconsistent()) {
+				return;
+			}
+
 
 			// (for instance:) prepare weq graph by conjoining edge labels with the current gpa
 			prepareForRemove();

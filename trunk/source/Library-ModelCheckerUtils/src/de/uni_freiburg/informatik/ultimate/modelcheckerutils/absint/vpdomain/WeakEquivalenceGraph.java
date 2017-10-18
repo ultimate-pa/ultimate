@@ -666,6 +666,11 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>> {
 	}
 
 	boolean sanityCheck() {
+//		if (mPartialArrangement.mMeetWithGpaCase) {
+//			// TODO sharpen sanity check for this case
+//			return true;
+//		}
+
 		for (final Entry<Doubleton<NODE>, WeakEquivalenceGraph<NODE>.WeakEquivalenceEdgeLabel> en
 				: mWeakEquivalenceEdges.entrySet()) {
 			assert en.getValue().sanityCheck();
@@ -862,10 +867,15 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>> {
 		return 0;
 	}
 
-	public void meetEdgeLabelsWithGpaBeforeRemove() {
+	/**
+	 *
+	 * @param originalPa a version of the gpa before we started to meet edgeLabels with the gpa (resulting in changed
+	 *  edgeLabels in the gpa (mPartialArrangement))
+	 */
+	public void meetEdgeLabelsWithGpaBeforeRemove(final WeqCongruenceClosure<NODE> originalPa) {
 		for (final WeakEquivalenceGraph<NODE>.WeakEquivalenceEdgeLabel edgeLabel : mWeakEquivalenceEdges.values()) {
-//			edgeLabel.meetWithWeqGpa();
-			edgeLabel.meetWithCcGpa();
+			edgeLabel.meetWithWeqGpa(originalPa);
+//			edgeLabel.meetWithCcGpa();
 		}
 	}
 
@@ -1058,6 +1068,9 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>> {
 				return;
 			}
 
+			assert mLabel.stream().allMatch(l -> (l instanceof WeqCongruenceClosure<?>)) : "the meetWeqGpa method"
+					+ "should ensure this, right?";
+
 			final List<CongruenceClosure<NODE>> newLabelContents = new ArrayList<>(mLabel.size());
 			for (final CongruenceClosure<NODE> lab : mLabel) {
 				assert lab.sanityCheckOnlyCc(mPartialArrangement.getElementCurrentlyBeingRemoved());
@@ -1092,6 +1105,10 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>> {
 					mLabel.add(new CongruenceClosure<>());
 					return;
 				}
+
+				// unprime weqvars
+				lab.transformElementsAndFunctions(node -> node.renameVariables(mFactory.getWeqPrimedVarsToWeqVars()));
+
 				final CongruenceClosure<NODE> newLab = lab.projectToElements(mFactory.getAllWeqNodes(),
 						mPartialArrangement.getElementCurrentlyBeingRemoved());
 				assert newLab.assertSingleElementIsFullyRemoved(elem);
@@ -1386,7 +1403,7 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>> {
 			return sanityCheck(mPartialArrangement);
 		}
 
-		private boolean sanityCheck(final CongruenceClosure<NODE> groundPartialArrangement) {
+		private boolean sanityCheck(final WeqCongruenceClosure<NODE> groundPartialArrangement) {
 			if (mFactory == null) {
 				return true;
 			}
@@ -1394,15 +1411,59 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>> {
 				return true;
 			}
 
+			// check that labels are free of constraints that don't contain weq nodes
 			for (final CongruenceClosure<NODE> lab : mLabel) {
-				assert lab.assertHasOnlyWeqVarConstraints(mFactory.getAllWeqNodes());
+//				if (groundPartialArrangement.mMeetWithGpaCase) {
+//					// don't check in this case, as edges may have been "metWithWeqGpa" already..
+////					assert lab.assertHasOnlyWeqVarConstraints(mFactory.getAllWeqPrimedAndUnprimedNodes());
+//				} else {
+					assert lab.assertHasOnlyWeqVarConstraints(mFactory.getAllWeqNodes());
+//				}
 			}
 
 			return sanityCheckDontEnforceProjectToWeqVars(mPartialArrangement);
 		}
 
-		public void meetWithWeqGpa() {
-			meetWithGpa(true);
+		public void meetWithWeqGpa(final WeqCongruenceClosure<NODE> originalPa) {
+			// prime the weq vars
+//			this.renameVariables(mFactory.getWeqVarsToWeqPrimedVars());
+
+			final List<CongruenceClosure<NODE>> newLabelContents = new ArrayList<>();
+			for (final CongruenceClosure<NODE> l : mLabel) {
+				final WeqCongruenceClosure<NODE> paCopy = new WeqCongruenceClosure<>(originalPa, true);
+
+				final CongruenceClosure<NODE> lCopy = new CongruenceClosure<>(l);
+				// prime the weq vars
+				lCopy.transformElementsAndFunctions(n -> n.renameVariables(mFactory.getWeqVarsToWeqPrimedVars()));
+
+				for (final Entry<NODE, NODE> eq : lCopy.getSupportingElementEqualities().entrySet()) {
+					if (paCopy.isInconsistent()) {
+						mLabel.clear();
+						return;
+					}
+					paCopy.reportEquality(eq.getKey(), eq.getValue());
+				}
+				for (final Entry<NODE, NODE> deq : lCopy.getElementDisequalities().entrySet()) {
+					if (paCopy.isInconsistent()) {
+						mLabel.clear();
+						return;
+					}
+					paCopy.reportDisequality(deq.getKey(), deq.getValue());
+				}
+
+				if (paCopy.isTautological()) {
+						mLabel.clear();
+						mLabel.add(new CongruenceClosure<NODE>());
+						return;
+				}
+				newLabelContents.add(paCopy);
+			}
+
+			mLabel.clear();
+			mLabel.addAll(newLabelContents);
+
+			assert sanityCheckDontEnforceProjectToWeqVars(mPartialArrangement);
+
 		}
 
 		public void meetWithCcGpa() {

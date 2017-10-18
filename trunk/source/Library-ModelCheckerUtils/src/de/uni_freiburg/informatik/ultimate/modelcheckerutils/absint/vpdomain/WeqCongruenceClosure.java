@@ -54,6 +54,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 	private final EqConstraintFactory<NODE> mFactory;
 
 	private final HashRelation<Object, NODE> mNodeToDependents;
+	public final boolean mMeetWithGpaCase;
 
 	/**
 	 * Create an empty ("True"/unconstrained) WeqCC.
@@ -66,6 +67,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		mWeakEquivalenceGraph = new WeakEquivalenceGraph<>(this, factory);
 		mFactory = factory;
 		mNodeToDependents = new HashRelation<>();
+		mMeetWithGpaCase = false;
 		assert sanityCheck();
 	}
 
@@ -82,6 +84,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		mWeakEquivalenceGraph = null;
 		mFactory = null;
 		mNodeToDependents = null;
+		mMeetWithGpaCase = false;
 	}
 
 	/**
@@ -99,6 +102,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		mFactory = factory;
 		mNodeToDependents = new HashRelation<>();
 		initializeNodeToDependents(original);
+		mMeetWithGpaCase = false;
 		assert sanityCheck();
 	}
 
@@ -119,10 +123,22 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		mNodeToDependents = new HashRelation<>();
 		initializeNodeToDependents(original);
 
+		mMeetWithGpaCase = false;
+
 		// we need a fresh instance of WeakEquivalenceGraph here, because we cannot set the link in the weq
 		// graph to the right cc instance..
 		mWeakEquivalenceGraph = new WeakEquivalenceGraph<>(this, weqGraph);
 
+		assert sanityCheck();
+	}
+
+	public WeqCongruenceClosure(final WeqCongruenceClosure<NODE> original, final boolean meetWGpaCase) {
+		super(original);
+		assert original.mFactory != null;
+		mMeetWithGpaCase = meetWGpaCase;
+		mFactory = original.mFactory;
+		mWeakEquivalenceGraph = new WeakEquivalenceGraph<>(this, original.mWeakEquivalenceGraph);
+		mNodeToDependents = new HashRelation<>(original.mNodeToDependents);
 		assert sanityCheck();
 	}
 
@@ -132,12 +148,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 	 * @param original
 	 */
 	public WeqCongruenceClosure(final WeqCongruenceClosure<NODE> original) {
-		super(original);
-		assert original.mFactory != null;
-		mFactory = original.mFactory;
-		mWeakEquivalenceGraph = new WeakEquivalenceGraph<>(this, original.mWeakEquivalenceGraph);
-		mNodeToDependents = new HashRelation<>(original.mNodeToDependents);
-		assert sanityCheck();
+		this(original, false);
 	}
 
 	private void initializeNodeToDependents(final CongruenceClosure<NODE> original) {
@@ -753,7 +764,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 
 	@Override
 	protected void prepareForRemove() {
-		mWeakEquivalenceGraph.meetEdgeLabelsWithGpaBeforeRemove();
+		mWeakEquivalenceGraph.meetEdgeLabelsWithGpaBeforeRemove(new WeqCongruenceClosure<>(this));
 		super.prepareForRemove();
 	}
 

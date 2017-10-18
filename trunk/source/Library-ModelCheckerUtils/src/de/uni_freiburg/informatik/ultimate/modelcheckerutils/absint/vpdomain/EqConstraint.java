@@ -73,7 +73,7 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 	 */
 	private Set<IProgramVarOrConst> mPvocs;
 	private Term mTerm;
-	private boolean mIsInconsistent;
+//	private boolean mIsInconsistent;
 
 	private final int mId;
 
@@ -125,7 +125,7 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 	 * @return
 	 */
 	public boolean isBottom() {
-		assert !mIsInconsistent : "this should only be called on EqConstraints that are either consistent or an "
+		assert !isInconsistent() : "this should only be called on EqConstraints that are either consistent or an "
 				+ "instance of EqBottomConstraint";
 		assert !mPartialArrangement.isInconsistent();
 		return false;
@@ -136,36 +136,33 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 	}
 
 	public boolean reportEquality(final NODE node1, final NODE node2) {
-		assert !mIsInconsistent;
+		assert !isInconsistent();
 		assert !mIsFrozen;
 
 		return mPartialArrangement.reportEquality(node1, node2);
 	}
 
 	public boolean reportDisequality(final NODE node1, final NODE node2) {
-		assert !mIsInconsistent;
+		assert !isInconsistent();
 		assert !mIsFrozen;
 		final boolean paHasChanged = mPartialArrangement.reportDisequality(node1, node2);
 		return paHasChanged;
 	}
 
 	public void reportWeakEquivalence(final NODE array1, final NODE array2, final NODE storeIndex) {
-		assert !mIsInconsistent;
+		assert !isInconsistent();
 		assert !mIsFrozen;
 		mPartialArrangement.reportWeakEquivalence(array1, array2, storeIndex);
-		if (mPartialArrangement.isInconsistent()) {
-			mIsInconsistent = true;
-		}
 	}
 
 	public boolean isFrozen() {
-		assert !mIsFrozen || !mIsInconsistent : "an inconsistent constraint that is not EqBottomConstraint should "
+		assert !mIsFrozen || !isInconsistent() : "an inconsistent constraint that is not EqBottomConstraint should "
 				+ "never be frozen.";
 		return mIsFrozen;
 	}
 
 	public boolean isInconsistent() {
-		return mIsInconsistent;
+		return mPartialArrangement.isInconsistent();
 	}
 
 	private static <E, F extends E> boolean arrayContains(final E[] freeVars, final F var) {
