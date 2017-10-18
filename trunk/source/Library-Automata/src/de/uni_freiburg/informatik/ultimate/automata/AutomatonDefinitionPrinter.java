@@ -156,11 +156,14 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 	 *            message
 	 * @param automata
 	 *            sequence of automata to print
+	 * @param append
+	 * 			  whether the automata should be added at the end of the file (true) or replace the content of the file (false) 
 	 */
 	public AutomatonDefinitionPrinter(final AutomataLibraryServices services, final String automatonName,
-			final String fileName, final Format format, final String message, final IAutomaton<?, ?>... automata) {
+			final String fileName, final Format format, final String message, final boolean append,
+			final IAutomaton<?, ?>... automata) {
 		this(services);
-		final FileWriter fileWriter = getFileWriter(fileName, format);
+		final FileWriter fileWriter = getFileWriterWithOptionalAppend(fileName, format, append);
 		if (fileWriter != null) {
 			if (mLogger.isWarnEnabled()) {
 				mLogger.warn("Dumping automata.");
@@ -169,7 +172,12 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 			printAutomataToFileWriter(automatonName, format, message, automata);
 		}
 	}
-
+	
+	public AutomatonDefinitionPrinter(final AutomataLibraryServices services, final String automatonName,
+			final String fileName, final Format format, final String message, final IAutomaton<?, ?>... automata) {
+		this(services, automatonName, fileName, format, message, false, automata);
+	}
+	
 	/**
 	 * Constructor for printing a single {@link IAutomaton} to a {@link StringWriter}.
 	 *
@@ -230,10 +238,14 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 		return mStringWriter.toString();
 	}
 
-	private FileWriter getFileWriter(final String fileName, final Format format) {
+	/**
+	 *  @param append 
+	 *  		
+	 */
+	private FileWriter getFileWriterWithOptionalAppend(final String fileName, final Format format, final boolean append) {
 		final File testfile = new File(fileName + '.' + format.getFileEnding());
 		try {
-			return new FileWriter(testfile);
+			return new FileWriter(testfile,append);
 		} catch (final IOException e) {
 			if (mLogger.isErrorEnabled()) {
 				mLogger.error("Creating FileWriter did not work.", e);
@@ -241,7 +253,7 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 			return null;
 		}
 	}
-
+	
 	/**
 	 * Date/time string used inside files.
 	 *

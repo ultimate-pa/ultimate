@@ -28,6 +28,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -39,6 +40,8 @@ import java.util.function.Function;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
+import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
@@ -597,6 +600,13 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 			mAbstraction = diff.getResult();
 
 			dumpAutomatonIfEnabled(subtrahendBeforeEnhancement, "Enhanced", automatonType);
+			
+			if (mIteration==1) {
+				dumpOrAppendAutomatonForReuseIfEnabled(subtrahend, false);
+			} else {
+				dumpOrAppendAutomatonForReuseIfEnabled(subtrahend, true);
+			}
+			
 		} finally {
 			mCegarLoopBenchmark.addEdgeCheckerData(htc.getEdgeCheckerBenchmark());
 			mCegarLoopBenchmark.addPredicateUnifierData(predicateUnifier.getPredicateUnifierBenchmark());
@@ -635,7 +645,20 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 			super.writeAutomatonToFile(subtrahend, filename);
 		}
 	}
-
+	
+	private void dumpOrAppendAutomatonForReuseIfEnabled(final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> automaton, boolean append) {
+		if (mPref.dumpAutomata()) {
+			String[] splitRes = mTaskIdentifier.toString().split("\\.", 2);
+			String programName = "";
+			if (splitRes.length==2) {
+				programName=splitRes[0];
+			}
+			String filename = programName+"AutomataForReuse";
+			new AutomatonDefinitionPrinter<String, String>(new AutomataLibraryServices(mServices), "nwa"+mIteration ,
+					mPref.dumpPath() + File.separator + filename, mPrintAutomataLabeling, "",append, automaton);
+		}
+	}
+	
 	private void checkEnhancement(
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> inputInterpolantAutomaton,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> interpolantAutomaton)
