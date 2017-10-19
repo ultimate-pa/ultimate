@@ -15,6 +15,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimi
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.InteractiveMaxSatSolver;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.NwaApproximateDelayedSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.ScopedConsistencyGeneratorDelayedSimulation;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.ScopedConsistencyGeneratorDelayedSimulationDoubleton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.ScopedTransitivityGeneratorDoubleton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.VariableFactory.MergeDoubleton;
 import de.uni_freiburg.informatik.ultimate.automata.util.ISetOfPairs;
@@ -167,7 +168,7 @@ public class MinimizeNwaPmaxSatDelayedBi<LETTER, STATE> extends MinimizeNwaPmaxS
 				mStatePair2Var.put(stateJ, stateI, doubleton);
 				mSolver.addVariable(doubleton);
 				
-				if(!mSpoilerWinnings.containsPair(stateI, stateJ) && !mSpoilerWinnings.containsPair(stateJ, stateI)) {
+				if(!mSpoilerWinnings.containsPair(stateI, stateJ) || !mSpoilerWinnings.containsPair(stateJ, stateI)) {
 					setVariableFalse(doubleton);
 				}
 			}
@@ -177,7 +178,7 @@ public class MinimizeNwaPmaxSatDelayedBi<LETTER, STATE> extends MinimizeNwaPmaxS
 	@Override
 	protected AbstractMaxSatSolver<Doubleton<STATE>> createTransitivitySolver() {
 		mTransitivityGenerator = new ScopedTransitivityGeneratorDoubleton<>(mSettings.isUsePathCompression());
-		mConsistencyGenerator = new ScopedConsistencyGeneratorDelayedSimulation<Doubleton<STATE>, LETTER, STATE>(mSettings.isUsePathCompression(), mServices, mOperand);
+		mConsistencyGenerator = new ScopedConsistencyGeneratorDelayedSimulationDoubleton<STATE, LETTER, STATE>(mSettings.isUsePathCompression(), mServices, mOperand);
 		final List<IAssignmentCheckerAndGenerator<Doubleton<STATE>>> assignmentCheckerAndGeneratorList =
 				new ArrayList<>();
 		assignmentCheckerAndGeneratorList.add(mConsistencyGenerator);
@@ -188,7 +189,7 @@ public class MinimizeNwaPmaxSatDelayedBi<LETTER, STATE> extends MinimizeNwaPmaxS
 	@Override
 	protected boolean isInitialPair(STATE state1, STATE state2) {
 		
-		if(mSpoilerWinnings.containsPair(state1, state2) || mSpoilerWinnings.containsPair(state2, state1)) {
+		if(mSpoilerWinnings.containsPair(state1, state2) && mSpoilerWinnings.containsPair(state2, state1)) {
 			return true;
 		}
 		else {

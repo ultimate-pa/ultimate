@@ -186,7 +186,7 @@ public class NwaApproximateDelayedSimulation<LETTER, STATE> {
 				assert (!successors.isEmpty());
 				for (final Pair<STATE, STATE> succPair : successors) {
 					//either pair isn't marked or states can't be merged
-					if (!isMarked(succPair, marked) || !(mAreStatesMerged.test(succPair.getFirst(), succPair.getSecond()) || mAreStatesMerged.test(succPair.getSecond(), succPair.getFirst()))) {
+					if (!isMarked(succPair, marked) || !(mAreStatesMerged.test(succPair.getFirst(), succPair.getSecond()))) {
 						// unmarked successor found, try next letter
 						continue letter;
 					}

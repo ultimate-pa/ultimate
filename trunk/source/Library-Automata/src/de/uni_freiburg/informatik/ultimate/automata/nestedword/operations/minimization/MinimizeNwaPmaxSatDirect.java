@@ -71,7 +71,7 @@ public class MinimizeNwaPmaxSatDirect<LETTER, STATE> extends MinimizeNwaMaxSat2<
 	 * 
 	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
 	 */
-	private enum PreprocessingMode {
+	public enum PreprocessingMode {
 		/**
 		 * Initial partition.
 		 */
