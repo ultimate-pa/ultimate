@@ -300,7 +300,7 @@
 		<option name="--csv-dir">/storage/ultimate/releaseScripts/default/UAutomizer-linux/csv</option>
 
 		<tasks name="64bitMem">
-			<option name="-s">/storage/ultimate/trunk/examples/settings/ai/eq-bench/mempurity-64bit-Automizer_Taipan+AI_EQ</option>
+			<option name="-s">/storage/ultimate/trunk/examples/settings/ai/eq-bench/mempurity-64bit-Automizer_Taipan+AI_EQ.epf</option>
 			<include>/storage/ultimate/trunk/examples/svcomp/busybox-1.22.0/expand_false-unreach-call_true-no-overflow_true-valid-memsafety.i</include>
 			<include>/storage/ultimate/trunk/examples/svcomp/busybox-1.22.0/tac_true-no-overflow_true-valid-memsafety.i</include>
 			<include>/storage/ultimate/trunk/examples/svcomp/busybox-1.22.0/uudecode_true-no-overflow_true-valid-memsafety.i</include>
@@ -321,7 +321,7 @@
 		</tasks>
 
 		<tasks name="32bitMem">
-			<option name="-s">/storage/ultimate/trunk/examples/settings/ai/eq-bench/mempurity-32bit-Automizer_Taipan+AI_EQ</option>
+			<option name="-s">/storage/ultimate/trunk/examples/settings/ai/eq-bench/mempurity-32bit-Automizer_Taipan+AI_EQ.epf</option>
 			<include>/storage/ultimate/trunk/examples/svcomp/locks/test_locks_11_true-unreach-call_true-valid-memsafety_false-termination.c</include>
 			<include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/memleaks_test7_false-valid-memtrack.i</include>
 			<include>/storage/ultimate/trunk/examples/svcomp/array-memsafety/stroeder1-alloca_true-valid-memsafety.i</include>
