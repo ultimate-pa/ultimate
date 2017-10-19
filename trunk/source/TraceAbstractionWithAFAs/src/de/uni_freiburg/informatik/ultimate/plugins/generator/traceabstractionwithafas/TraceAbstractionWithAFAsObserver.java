@@ -57,6 +57,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Boo
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
@@ -73,7 +74,7 @@ public class TraceAbstractionWithAFAsObserver extends BaseObserver {
 	 * Root Node of this Ultimate model. I use this to store information that should be passed to the next plugin. The
 	 * Successors of this node exactly the initial nodes of procedures.
 	 */
-	private final IElement mgraphroot = null;
+	private final IElement mGraphroot = null;
 
 	private final IUltimateServiceProvider mServices;
 	private final IToolchainStorage mToolchainStorage;
@@ -83,7 +84,7 @@ public class TraceAbstractionWithAFAsObserver extends BaseObserver {
 	public TraceAbstractionWithAFAsObserver(final IUltimateServiceProvider services, final IToolchainStorage storage) {
 		mServices = services;
 		mToolchainStorage = storage;
-		mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
+		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 	}
 
 	@Override
@@ -124,35 +125,30 @@ public class TraceAbstractionWithAFAsObserver extends BaseObserver {
 			final String shortDescription = "Unable to decide if program is safe!";
 			final String longDescription = "Unable to decide if program is safe!";
 			final GenericResult genResult =
-					new GenericResult(Activator.s_PLUGIN_NAME, shortDescription, longDescription, Severity.INFO);
-			mServices.getResultService().reportResult(Activator.s_PLUGIN_ID, genResult);
+					new GenericResult(Activator.PLUGIN_NAME, shortDescription, longDescription, Severity.INFO);
+			mServices.getResultService().reportResult(Activator.PLUGIN_ID, genResult);
 		}
 		return false;
 	}
 
 	private <T> void reportBenchmark(final ICsvProviderProvider<T> benchmark) {
 		final String shortDescription = "Ultimate CodeCheck benchmark data";
-		final StatisticsResult<T> res = new StatisticsResult<>(Activator.s_PLUGIN_NAME, shortDescription, benchmark);
+		final StatisticsResult<T> res = new StatisticsResult<>(Activator.PLUGIN_NAME, shortDescription, benchmark);
 		// s_Logger.warn(res.getLongDescription());
 
 		reportResult(res);
 	}
 
 	private void reportPositiveResults(final Collection<BoogieIcfgLocation> errorLocs) {
-		final String longDescription;
-		if (errorLocs.isEmpty()) {
-			longDescription = "We were not able to verify any"
-					+ " specifiation because the program does not contain any specification.";
-		} else {
-			longDescription = errorLocs.size() + " specifications checked. All of them hold";
+		if (!errorLocs.isEmpty()) {
 			for (final BoogieIcfgLocation errorLoc : errorLocs) {
-				final PositiveResult<IIcfgElement> pResult = new PositiveResult<IIcfgElement>(Activator.s_PLUGIN_NAME,
-						errorLoc, mServices.getBacktranslationService());
+				final PositiveResult<IIcfgElement> pResult =
+						new PositiveResult<>(Activator.PLUGIN_NAME, errorLoc, mServices.getBacktranslationService());
 				reportResult(pResult);
 			}
 		}
 		final AllSpecificationsHoldResult result =
-				new AllSpecificationsHoldResult(Activator.s_PLUGIN_NAME, longDescription);
+				AllSpecificationsHoldResult.createAllSpecificationsHoldResult(Activator.PLUGIN_NAME, errorLocs.size());
 		reportResult(result);
 		mLogger.info(result.getShortDescription() + " " + result.getLongDescription());
 	}
@@ -163,16 +159,15 @@ public class TraceAbstractionWithAFAsObserver extends BaseObserver {
 			return;
 		}
 
-		reportResult(new CounterExampleResult<IIcfgElement, IcfgEdge, Term>(getErrorPP(pe), Activator.s_PLUGIN_NAME,
+		reportResult(new CounterExampleResult<IIcfgElement, IcfgEdge, Term>(getErrorPP(pe), Activator.PLUGIN_NAME,
 				mServices.getBacktranslationService(), pe));
 	}
 
 	private void reportUnproveableResult(final IcfgProgramExecution pe,
 			final List<UnprovabilityReason> unproabilityReasons) {
 		final BoogieIcfgLocation errorPP = getErrorPP(pe);
-		final UnprovableResult<IIcfgElement, IcfgEdge, Term> uknRes =
-				new UnprovableResult<IIcfgElement, IcfgEdge, Term>(Activator.s_PLUGIN_NAME, errorPP,
-						mServices.getBacktranslationService(), pe, unproabilityReasons);
+		final UnprovableResult<IIcfgElement, IcfgEdge, Term> uknRes = new UnprovableResult<>(Activator.PLUGIN_NAME,
+				errorPP, mServices.getBacktranslationService(), pe, unproabilityReasons);
 		reportResult(uknRes);
 	}
 
@@ -190,21 +185,21 @@ public class TraceAbstractionWithAFAsObserver extends BaseObserver {
 			String timeOutMessage =
 					"Unable to prove that " + ResultUtil.getCheckedSpecification(errorLoc).getPositiveMessage();
 			timeOutMessage += " (line " + origin.getStartLine() + ")";
-			final TimeoutResultAtElement<IIcfgElement> timeOutRes = new TimeoutResultAtElement<IIcfgElement>(errorLoc,
-					Activator.s_PLUGIN_NAME, mServices.getBacktranslationService(), timeOutMessage);
+			final TimeoutResultAtElement<IIcfgElement> timeOutRes = new TimeoutResultAtElement<>(errorLoc,
+					Activator.PLUGIN_NAME, mServices.getBacktranslationService(), timeOutMessage);
 			reportResult(timeOutRes);
 		}
 	}
 
 	private void reportResult(final IResult res) {
-		mServices.getResultService().reportResult(Activator.s_PLUGIN_ID, res);
+		mServices.getResultService().reportResult(Activator.PLUGIN_ID, res);
 	}
 
 	/**
 	 * @return the root of the CFG.
 	 */
 	public IElement getRoot() {
-		return mgraphroot;
+		return mGraphroot;
 	}
 
 }

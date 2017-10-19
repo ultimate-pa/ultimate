@@ -74,6 +74,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.invariantsynthesis.
 import de.uni_freiburg.informatik.ultimate.plugins.generator.invariantsynthesis.preferences.InvariantSynthesisPreferenceInitializer.IncreasingStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.HoareAnnotation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.InvariantSynthesisSettings;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.AbstractTemplateIncreasingDimensionsStrategy;
@@ -114,7 +115,8 @@ public class InvariantSynthesisStarter {
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 
 		final SimplificationTechnique simplificationTechnique = SimplificationTechnique.SIMPLIFY_DDA;
-		final XnfConversionTechnique xnfConversionTechnique = XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
+		final XnfConversionTechnique xnfConversionTechnique =
+				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
 		final ManagedScript mgdScript = icfg.getCfgSmtToolkit().getManagedScript();
 		final PredicateFactory predicateFactory = new PredicateFactory(mServices, mgdScript,
 				icfg.getCfgSmtToolkit().getSymbolTable(), simplificationTechnique, xnfConversionTechnique);
@@ -124,7 +126,8 @@ public class InvariantSynthesisStarter {
 		final InvariantSynthesisSettings invSynthSettings = constructSettings(icfg.getIdentifier());
 
 		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
-		final KindOfInvariant kindOfInvariant = prefs.getEnum(InvariantSynthesisPreferenceInitializer.LABEL_KIND_INVARIANT, KindOfInvariant.class);
+		final KindOfInvariant kindOfInvariant =
+				prefs.getEnum(InvariantSynthesisPreferenceInitializer.LABEL_KIND_INVARIANT, KindOfInvariant.class);
 
 		IPredicate precondition;
 		IPredicate postcondition;
@@ -137,12 +140,12 @@ public class InvariantSynthesisStarter {
 			precondition = predicateUnifier.getTruePredicate();
 			postcondition = predicateUnifier.getFalsePredicate();
 		}
-		
-		final boolean guessDangerInvariant = prefs
-				.getBoolean(InvariantSynthesisPreferenceInitializer.LABEL_DANGER_INVARIANT_GUESSING);
+
+		final boolean guessDangerInvariant =
+				prefs.getBoolean(InvariantSynthesisPreferenceInitializer.LABEL_DANGER_INVARIANT_GUESSING);
 		if (kindOfInvariant == KindOfInvariant.DANGER && guessDangerInvariant) {
-			final DangerInvariantGuesser dig = new DangerInvariantGuesser(icfg, services, storage,
-					precondition, predicateFactory, predicateUnifier, icfg.getCfgSmtToolkit());
+			final DangerInvariantGuesser dig = new DangerInvariantGuesser(icfg, services, storage, precondition,
+					predicateFactory, predicateUnifier, icfg.getCfgSmtToolkit());
 			mLogger.info("Constructed danger invariant candidate");
 			if (dig.isDangerInvariant()) {
 				mLogger.info("Candidate is a valid danger invariant");
@@ -159,9 +162,9 @@ public class InvariantSynthesisStarter {
 			return;
 		}
 
-		final CFGInvariantsGenerator cfgInvGenerator = new CFGInvariantsGenerator(icfg, services, storage,
-				precondition, postcondition, predicateFactory, predicateUnifier, invSynthSettings,
-				icfg.getCfgSmtToolkit(), kindOfInvariant);
+		final CFGInvariantsGenerator cfgInvGenerator =
+				new CFGInvariantsGenerator(icfg, services, storage, precondition, postcondition, predicateFactory,
+						predicateUnifier, invSynthSettings, icfg.getCfgSmtToolkit(), kindOfInvariant);
 		final Map<IcfgLocation, IPredicate> invariants = cfgInvGenerator.synthesizeInvariants();
 		final IStatisticsDataProvider statistics = cfgInvGenerator.getInvariantSynthesisStatistics();
 		if (invariants != null) {
@@ -203,15 +206,8 @@ public class InvariantSynthesisStarter {
 		}
 
 		if (mOverallResult == Result.SAFE) {
-			final String longDescription;
-			if (errNodesOfAllProc.isEmpty()) {
-				longDescription = "We were not able to verify any"
-						+ " specifiation because the program does not contain any specification.";
-			} else {
-				longDescription = errNodesOfAllProc.size() + " specifications checked. All of them hold";
-			}
-			final AllSpecificationsHoldResult result =
-					new AllSpecificationsHoldResult(Activator.PLUGIN_NAME, longDescription);
+			final AllSpecificationsHoldResult result = AllSpecificationsHoldResult
+					.createAllSpecificationsHoldResult(Activator.PLUGIN_NAME, errNodesOfAllProc.size());
 			reportResult(result);
 		}
 
@@ -224,7 +220,8 @@ public class InvariantSynthesisStarter {
 		}
 		final StatisticsData stat = new StatisticsData();
 		stat.aggregateBenchmarkData(statistics);
-		final IResult benchmarkResult =	new StatisticsResult<>(Activator.PLUGIN_ID, "InvariantSynthesisStatistics", stat);
+		final IResult benchmarkResult =
+				new StatisticsResult<>(Activator.PLUGIN_ID, "InvariantSynthesisStatistics", stat);
 		reportResult(benchmarkResult);
 		switch (mOverallResult) {
 		case SAFE:
@@ -245,12 +242,13 @@ public class InvariantSynthesisStarter {
 		mRootOfNewModel = mArtifact;
 	}
 
-
 	private InvariantSynthesisSettings constructSettings(final String cfgIdentifier) {
 		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 
-		final boolean useNonlinearConstraints = prefs.getBoolean(InvariantSynthesisPreferenceInitializer.LABEL_NONLINEAR_CONSTRAINTS);
-		final boolean useExternalSolver = prefs.getBoolean(InvariantSynthesisPreferenceInitializer.LABEL_EXTERNAL_SMT_SOLVER);
+		final boolean useNonlinearConstraints =
+				prefs.getBoolean(InvariantSynthesisPreferenceInitializer.LABEL_NONLINEAR_CONSTRAINTS);
+		final boolean useExternalSolver =
+				prefs.getBoolean(InvariantSynthesisPreferenceInitializer.LABEL_EXTERNAL_SMT_SOLVER);
 		final long timeoutSmtInterpol = prefs.getInt(InvariantSynthesisPreferenceInitializer.LABEL_SOLVER_TIMEOUT);
 		final String externalSolverTimeout = timeoutSmtInterpol + "000"; // z3 expects the timeout in msec
 		final String commandExternalSolver;
@@ -268,8 +266,8 @@ public class InvariantSynthesisStarter {
 		final boolean fakeNonIncrementalScript = false;
 		final boolean dumpSmtScriptToFile = false;
 		final String pathOfDumpedScript = "YOUR/FOLDER/HERE";
-		final String baseNameOfDumpedScript = useNonlinearConstraints ? "Nonlinear" + "_" + cfgIdentifier
-				: "Linear" + "_" + cfgIdentifier;
+		final String baseNameOfDumpedScript =
+				useNonlinearConstraints ? "Nonlinear" + "_" + cfgIdentifier : "Linear" + "_" + cfgIdentifier;
 		final Settings solverSettings = new Settings(fakeNonIncrementalScript, useExternalSolver, commandExternalSolver,
 				timeoutSmtInterpol, null, dumpSmtScriptToFile, pathOfDumpedScript, baseNameOfDumpedScript);
 
@@ -287,26 +285,33 @@ public class InvariantSynthesisStarter {
 		final IncreasingStrategy incrStrat = prefs.getEnum(InvariantSynthesisPreferenceInitializer.LABEL_INCR_STRATEGY,
 				InvariantSynthesisPreferenceInitializer.DEF_INCR_STRATEGY, IncreasingStrategy.class);
 		if (incrStrat == IncreasingStrategy.Conservative) {
-			templateIncrDimensionsStrat = new ConservativeTemplateIncreasingDimensionsStrategy(initialDisjuncts, initialConjuncts, disjunctsStep, conjunctsStep);
+			templateIncrDimensionsStrat = new ConservativeTemplateIncreasingDimensionsStrategy(initialDisjuncts,
+					initialConjuncts, disjunctsStep, conjunctsStep);
 		} else if (incrStrat == IncreasingStrategy.Medium) {
-			templateIncrDimensionsStrat = new MediumTemplateIncreasingDimensionsStrategy(initialDisjuncts, initialConjuncts, disjunctsStep, conjunctsStep);
+			templateIncrDimensionsStrat = new MediumTemplateIncreasingDimensionsStrategy(initialDisjuncts,
+					initialConjuncts, disjunctsStep, conjunctsStep);
 		} else if (incrStrat == IncreasingStrategy.IncrOnlyConjunctsAfterMaxDisjuncts) {
-			templateIncrDimensionsStrat = new DisjunctsWithBoundTemplateIncreasingDimensionsStrategy(initialDisjuncts, initialConjuncts, disjunctsStep, conjunctsStep);
+			templateIncrDimensionsStrat = new DisjunctsWithBoundTemplateIncreasingDimensionsStrategy(initialDisjuncts,
+					initialConjuncts, disjunctsStep, conjunctsStep);
 		} else if (incrStrat == IncreasingStrategy.Aggressive) {
-			templateIncrDimensionsStrat = new AggressiveTemplateIncreasingDimensionsStrategy(initialDisjuncts, initialConjuncts, disjunctsStep, conjunctsStep);
+			templateIncrDimensionsStrat = new AggressiveTemplateIncreasingDimensionsStrategy(initialDisjuncts,
+					initialConjuncts, disjunctsStep, conjunctsStep);
 		} else if (incrStrat == IncreasingStrategy.ExponentialConjuncts) {
-			templateIncrDimensionsStrat = new ExponentialConjunctsTemplateIncreasingDimensionsStrategy(initialDisjuncts, initialConjuncts, disjunctsStep, conjunctsStep);
+			templateIncrDimensionsStrat = new ExponentialConjunctsTemplateIncreasingDimensionsStrategy(initialDisjuncts,
+					initialConjuncts, disjunctsStep, conjunctsStep);
 		} else if (incrStrat == IncreasingStrategy.ConjunctsPriorized) {
-			templateIncrDimensionsStrat = new ConjunctsPriorizedTemplateIncreasingDimensionsStrategy(initialDisjuncts, initialConjuncts, disjunctsStep, conjunctsStep);
+			templateIncrDimensionsStrat = new ConjunctsPriorizedTemplateIncreasingDimensionsStrategy(initialDisjuncts,
+					initialConjuncts, disjunctsStep, conjunctsStep);
 		} else {
-			templateIncrDimensionsStrat = new DefaultTemplateIncreasingDimensionsStrategy(initialDisjuncts, initialConjuncts, disjunctsStep, conjunctsStep);
+			templateIncrDimensionsStrat = new DefaultTemplateIncreasingDimensionsStrategy(initialDisjuncts,
+					initialConjuncts, disjunctsStep, conjunctsStep);
 		}
 
-		final InvariantSynthesisSettings invSynthSettings = new InvariantSynthesisSettings(solverSettings, templateIncrDimensionsStrat,
-				useNonlinearConstraints, useUnsatCores, useAbstractInterpretationPredicates, useWPForPathInvariants, useLBE);
+		final InvariantSynthesisSettings invSynthSettings =
+				new InvariantSynthesisSettings(solverSettings, templateIncrDimensionsStrat, useNonlinearConstraints,
+						useUnsatCores, useAbstractInterpretationPredicates, useWPForPathInvariants, useLBE);
 		return invSynthSettings;
 	}
-
 
 	private void createInvariantResults(final IIcfg<IcfgLocation> icfg, final CfgSmtToolkit csToolkit,
 			final IBacktranslationService backTranslatorService) {
@@ -359,8 +364,6 @@ public class InvariantSynthesisStarter {
 		}
 	}
 
-
-
 	private void writeHoareAnnotationToLogger(final IIcfg<IcfgLocation> root) {
 		for (final Entry<String, Map<String, IcfgLocation>> proc2label2pp : root.getProgramPoints().entrySet()) {
 			for (final IcfgLocation pp : proc2label2pp.getValue().values()) {
@@ -409,7 +412,6 @@ public class InvariantSynthesisStarter {
 			reportResult(pResult);
 		}
 	}
-
 
 	private void reportUnproveableResult(final IcfgProgramExecution pe,
 			final List<UnprovabilityReason> unproabilityReasons) {

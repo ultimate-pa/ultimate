@@ -97,12 +97,12 @@ public class FixpointEngine<STATE extends IAbstractState<STATE>, ACTION, VARDECL
 	}
 
 	@Override
-	public AbsIntResult<STATE, ACTION, LOC> run(final Collection<? extends LOC> start, final Script script) {
+	public AbsIntResult<STATE, ACTION, LOC> run(final Collection<? extends LOC> initialNodes, final Script script) {
 		mLogger.info("Starting fixpoint engine with domain " + mDomain.getClass().getSimpleName() + " (maxUnwinding="
 				+ mMaxUnwindings + ", maxParallelStates=" + mMaxParallelStates + ")");
 		mResult = new AbsIntResult<>(script, mDomain, mTransitionProvider, mVarProvider);
 		mDomain.beforeFixpointComputation();
-		calculateFixpoint(start);
+		calculateFixpoint(initialNodes);
 		mResult.saveRootStorage(mStateStorage);
 		mResult.saveSummaryStorage(mSummaryMap);
 		mLogger.debug("Fixpoint computation completed");

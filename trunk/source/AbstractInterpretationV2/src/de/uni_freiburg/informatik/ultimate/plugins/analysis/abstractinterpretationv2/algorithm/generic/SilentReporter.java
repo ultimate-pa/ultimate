@@ -15,18 +15,13 @@ public final class SilentReporter<STATE extends IAbstractState<STATE>, ACTION, L
 		implements IResultReporter<STATE, ACTION, LOCATION> {
 
 	@Override
-	public void reportSafe(final ACTION elem) {
-		// do nothing to stay silent
-	}
-
-	@Override
-	public void reportSafe(final ACTION elem, final String msg) {
-		// do nothing to stay silent
-	}
-
-	@Override
 	public void
 			reportPossibleError(final AbstractCounterexample<DisjunctiveAbstractState<STATE>, ACTION, LOCATION> cex) {
+		// do nothing to stay silent
+	}
+
+	@Override
+	public void reportFinished() {
 		// do nothing to stay silent
 	}
 }
