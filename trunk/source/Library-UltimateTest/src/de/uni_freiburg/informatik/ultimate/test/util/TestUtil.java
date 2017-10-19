@@ -313,6 +313,9 @@ public final class TestUtil {
 	}
 
 	public static Predicate<File> getRegexTest(final Collection<String> regexes) {
+		if (regexes.isEmpty()) {
+			return file -> file != null;
+		}
 		return file -> file != null && regexes.stream().allMatch(regex -> file.getAbsolutePath().matches(regex));
 	}
 
@@ -589,7 +592,7 @@ public final class TestUtil {
 		map.put("#SyntaxError", TerminationAnalysisOverallResult.SYNTAX_ERROR);
 		return map;
 	}
-	
+
 	/**
 	 * Returns a map from keywords to verification results. We use keywords in the first line of files to specify
 	 * expected verification results. If a key of this map is a substring of the first line, the value of this map is
@@ -617,7 +620,7 @@ public final class TestUtil {
 		}
 		return line;
 	}
-	
+
 	/**
 	 * Returns the line of File file that starts with "(set-info :status", or null if there is no such line
 	 */
@@ -644,7 +647,6 @@ public final class TestUtil {
 		}
 		return line;
 	}
-	
 
 	/**
 	 * Returns an absolute path to the SVCOMP root directory specified by the Maven variable "svcompdir". If there is no
