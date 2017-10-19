@@ -14,6 +14,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.Aff
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.NotAffineException;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineRelation.TransformInequality;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineTerm;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.BinaryRelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 
@@ -62,33 +63,33 @@ public class EquivalenceFinder {
 			} catch (final NotAffineException e) {
 				continue;
 			}
-			switch (relation.getRelationSymbol()) {
+			final RelationSymbol symbol = relation.getRelationSymbol();
+			switch (symbol) {
 			case EQ:
 				result.add(relation);
 				break;
-			case GEQ:
-				// Rewrite x >= 0 to -x <= 0
-				final AffineTerm negated = new AffineTerm(relation.getAffineTerm(), Rational.MONE);
-				leqTerms.add(normalize(negated));
-				break;
 			case LEQ:
-				leqTerms.add(normalize(relation.getAffineTerm()));
+			case GEQ:
+				final AffineTerm affine1 = normalize(relation.getAffineTerm());
+				final AffineTerm affine2 = normalize(new AffineTerm(relation.getAffineTerm(), Rational.MONE));
+				final AffineTerm positive = symbol == RelationSymbol.LEQ ? affine1 : affine2;
+				final AffineTerm negative = symbol == RelationSymbol.LEQ ? affine2 : affine1;
+				if (leqTerms.contains(negative)) {
+					leqTerms.remove(negative);
+					// TODO: Is there a more efficient way to get an AffineRelation from an AffineTerm and a
+					// RelationSymbol?
+					final Term equality = SmtUtils.binaryEquality(script, positive.toTerm(script), script.numeral("0"));
+					try {
+						result.add(new AffineRelation(script, equality, TransformInequality.STRICT2NONSTRICT));
+					} catch (final NotAffineException e) {
+						continue;
+					}
+				} else {
+					leqTerms.add(positive);
+				}
 				break;
 			default:
 				break;
-			}
-		}
-		for (final AffineTerm a : leqTerms) {
-			final AffineTerm negated = new AffineTerm(a, Rational.MONE);
-			if (!leqTerms.contains(negated)) {
-				continue;
-			}
-			// TODO: Is there a more efficient way to get an AffineRelation from an AffineTerm and a RelationSymbol?
-			final Term t = SmtUtils.binaryEquality(script, a.toTerm(script), script.numeral("0"));
-			try {
-				result.add(new AffineRelation(script, t, TransformInequality.STRICT2NONSTRICT));
-			} catch (final NotAffineException e) {
-				continue;
 			}
 		}
 		return result;
