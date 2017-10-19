@@ -11,9 +11,9 @@ modifies x,y,z;
   z := 0;
   
   call dec();
-  assert x >= z;
+  assert x == y;
   call dec();
-  assert x >= z;
+  assert x == z;
 }
 
 
