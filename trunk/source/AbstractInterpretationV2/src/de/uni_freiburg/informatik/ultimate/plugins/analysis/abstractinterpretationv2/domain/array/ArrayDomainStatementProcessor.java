@@ -1,7 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.array;
 
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -19,6 +18,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Label;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 
@@ -55,8 +55,7 @@ public class ArrayDomainStatementProcessor<STATE extends IAbstractState<STATE>> 
 		final Expression expression = statement.getFormula();
 		final ExpressionResult<STATE> result = mExpressionProcessor.process(expression, state, true);
 		final ArrayDomainState<STATE> resultingState = result.getState();
-		final Collection<IProgramVarOrConst> auxVars = result.getAuxVars();
-		return resultingState.removeVariables(auxVars);
+		return resultingState.removeUnusedAuxVars();
 	}
 
 	private ArrayDomainState<STATE> processAssignment(final ArrayDomainState<STATE> state,
@@ -90,38 +89,37 @@ public class ArrayDomainStatementProcessor<STATE extends IAbstractState<STATE>> 
 		final ExpressionResult<STATE> processed = mExpressionProcessor.process(rhs, oldstate, false);
 		final Expression newExpr = processed.getExpression();
 		if (lhs instanceof VariableLHS) {
-			STATE newBoundState = oldstate.getSubState();
+			STATE newSubState = oldstate.getSubState();
 			final SegmentationMap newSegmentationMap = oldstate.getSegmentationMap();
 			if (newExpr.getType() instanceof ArrayType) {
+				final IProgramVarOrConst leftVar = mToolkit.getBoogieVar((VariableLHS) lhs);
 				if (newExpr instanceof IdentifierExpression) {
-					final IProgramVarOrConst leftVar = mToolkit.getBoogieVar((VariableLHS) lhs);
 					final IProgramVarOrConst rightVar = mToolkit.getBoogieVar((IdentifierExpression) newExpr);
 					newSegmentationMap.move(leftVar, rightVar);
-				} else if (newExpr instanceof ArrayStoreExpression) {
-					final ArrayStoreExpression store = (ArrayStoreExpression) newExpr;
-					// a:=b[i:=v] => a:=b; a[i]:=v
-					final ArrayDomainState<STATE> tmpState = processSingleAssignment(lhs, store.getArray(), oldstate);
-					final ArrayLHS arrayLhs = new ArrayLHS(null, lhs, store.getIndices());
-					return processSingleAssignment(arrayLhs, store.getValue(), tmpState);
 				} else {
-					throw new UnsupportedOperationException(
-							"The domain does not support array-expressions except identifier and store");
+					final Segmentation newSegmentation = oldstate.getSegmentation(newExpr);
+					newSegmentationMap.remove(leftVar);
+					newSegmentationMap.add(leftVar, newSegmentation);
 				}
 			} else {
 				final AssignmentStatement assignment = constructSingleAssignment(lhs, newExpr);
-				newBoundState = mToolkit.handleStatementBySubdomain(oldstate.getSubState(), assignment);
+				newSubState = mToolkit.handleStatementBySubdomain(oldstate.getSubState(), assignment);
 			}
-			return oldstate.updateState(newBoundState, newSegmentationMap).removeUnusedAuxVars();
+			return oldstate.updateState(newSubState, newSegmentationMap).removeUnusedAuxVars();
 		} else if (lhs instanceof ArrayLHS) {
-			return processArrayAssignment((ArrayLHS) lhs, rhs, oldstate);
+			final ArrayLHS arrayLhs = (ArrayLHS) lhs;
+			final LeftHandSide array = arrayLhs.getArray();
+			if (!(array instanceof VariableLHS)) {
+				throw new UnsupportedOperationException("Unsupported assignment: " + lhs + " := " + rhs);
+			}
+			// a[i]:=x ==> a:=a[i:=x]
+			final TermVariable arrayVar = mToolkit.getBoogieVar((VariableLHS) array).getTermVariable();
+			final Expression arrayExpr = mToolkit.getExpression(arrayVar);
+			final Expression[] indices = arrayLhs.getIndices();
+			final ArrayStoreExpression store = new ArrayStoreExpression(null, arrayExpr, indices, rhs);
+			return processSingleAssignment(array, store, oldstate);
 		}
 		throw new UnsupportedOperationException("Unkonwn type of " + lhs);
-	}
-
-	private ArrayDomainState<STATE> processArrayAssignment(final ArrayLHS lhs, final Expression rhs,
-			final ArrayDomainState<STATE> oldstate) {
-		// TODO: a[i]:=v
-		return null;
 	}
 
 	private AssignmentStatement constructSingleAssignment(final LeftHandSide lhs, final Expression rhs) {
