@@ -33,6 +33,7 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LassoAnalysis.PreprocessingBenchmark;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.NonterminationAnalysisBenchmark;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.TerminationAnalysisBenchmark;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiCegarLoopBenchmark.LassoAnalysisResults;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoCheck.ContinueDirective;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoCheck.LassoCheckResult;
@@ -134,12 +135,12 @@ public class BuchiCegarLoopBenchmarkGenerator extends CegarLoopStatisticsGenerat
 		}
 	}
 
-	public void reportLassoAnalysis(final LassoCheck lassoCheck) {
+	public void reportLassoAnalysis(final LassoCheck<? extends IIcfgTransition<?>> lassoCheck) {
 		final LassoCheckResult lcr = lassoCheck.getLassoCheckResult();
 		mPreprocessingBenchmarks.addAll(lassoCheck.getPreprocessingBenchmarks());
 		mTerminationAnalysisBenchmarks.addAll(lassoCheck.getTerminationAnalysisBenchmarks());
 		mNonterminationAnalysisBenchmarks.addAll(lassoCheck.getNonterminationAnalysisBenchmarks());
-		for (final NonterminationAnalysisBenchmark nab : mNonterminationAnalysisBenchmarks) {
+		for (final NonterminationAnalysisBenchmark nab : lassoCheck.getNonterminationAnalysisBenchmarks()) {
 			switch (nab.getConstraintsSatisfiability()) {
 			case SAT:
 				mLassoNonterminationAnalysisSAT++;
