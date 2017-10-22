@@ -125,4 +125,29 @@ public class MuensterbergBenchmark {
 	mLogger.info(result);
 	}
 
+	
+	
+	/**
+	 * Old PQE size 43, new PQE size 96
+	 */
+	public void memsafet_test_0232_false_valid_free_ias() {
+		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
+		final Sort intintintArraySort = SmtSortUtils.getArraySort(mScript, intSort, SmtSortUtils.getArraySort(mScript, intSort, intSort));
+		mScript.declareFun("ULTIMATE.start_append_~item~4.offset", new Sort[0], intSort);
+		mScript.declareFun("ULTIMATE.start_append_~plist.offset", new Sort[0], intSort);
+		mScript.declareFun("ULTIMATE.start_append_~plist.base", new Sort[0], intSort);
+		mScript.declareFun("ULTIMATE.start_main_~#list~5.base", new Sort[0], intSort);
+		mScript.declareFun("#memory_$Pointer$.offset", new Sort[0], intintintArraySort);
+		mScript.declareFun("ULTIMATE.start_main_~#list~5.offset", new Sort[0], intSort);
+		mScript.declareFun("ULTIMATE.start_append_~item~4.base", new Sort[0], intSort);
+		final String formulaAsString = "(forall ((|#memory_$Pointer$.base| (Array Int (Array Int Int)))) (= (select (select (store |#memory_$Pointer$.offset| ULTIMATE.start_append_~plist.base (store (select |#memory_$Pointer$.offset| ULTIMATE.start_append_~plist.base) ULTIMATE.start_append_~plist.offset ULTIMATE.start_append_~item~4.offset)) (select (select (store |#memory_$Pointer$.base| ULTIMATE.start_append_~plist.base (store (select |#memory_$Pointer$.base| ULTIMATE.start_append_~plist.base) ULTIMATE.start_append_~plist.offset ULTIMATE.start_append_~item~4.base)) |ULTIMATE.start_main_~#list~5.base|) |ULTIMATE.start_main_~#list~5.offset|)) (+ (select (select (store |#memory_$Pointer$.offset| ULTIMATE.start_append_~plist.base (store (select |#memory_$Pointer$.offset| ULTIMATE.start_append_~plist.base) ULTIMATE.start_append_~plist.offset ULTIMATE.start_append_~item~4.offset)) |ULTIMATE.start_main_~#list~5.base|) |ULTIMATE.start_main_~#list~5.offset|) 4)) 0))";
+		
+		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
+		
+	final Term result = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mMgdScript, formulaAsTerm,
+			SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+	mLogger.info(result);
+		
+		
+	}
 }
