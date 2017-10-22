@@ -64,34 +64,31 @@ public class MultiDimensionalStore {
 
 	public MultiDimensionalStore(final Term term) {
 		mStoreTerm = (ApplicationTerm) term;
-		Term array = null;
 		final ArrayList<Term> index = new ArrayList<Term>();
-		Term value = term;
-		while (true) {
-			if (value instanceof ApplicationTerm) {
-				final ApplicationTerm appTerm = (ApplicationTerm) value;
-				if (appTerm.getFunction().getName().equals("store")) {
-					assert appTerm.getParameters().length == 3;
-					if (array == null) {
-						// first iteration
-						assert value == term : "not first iteration";
-						array = appTerm.getParameters()[0];
-					} else {
-						if(!isCompatibleSelect(appTerm.getParameters()[0], array, index)) {
-							break;
-						}
-					}
-					index.add(appTerm.getParameters()[1]);
-					value = appTerm.getParameters()[2];
-					continue;
-				}
+		Term remainder = term;
+		if (isStore(term)) {
+			mArray = ((ApplicationTerm) term).getParameters()[0];
+			index.add(((ApplicationTerm) term).getParameters()[1]);
+			remainder = ((ApplicationTerm) term).getParameters()[2];
+			while (isStore(remainder) && isCompatibleSelect(((ApplicationTerm) remainder).getParameters()[0], mArray, index)) {
+				index.add(((ApplicationTerm) remainder).getParameters()[1]);
+				remainder = ((ApplicationTerm) remainder).getParameters()[2];
+				
 			}
-			break;
+		} else {
+			mArray = null;
 		}
-		mArray = array;
 		mIndex = new ArrayIndex(index);
-		mValue = value;
+		mValue = remainder;
 		assert classInvariant();
+	}
+	
+	private boolean isStore(final Term term) {
+		if (term instanceof ApplicationTerm) {
+			return ((ApplicationTerm) term).getFunction().getName().equals("store");
+		} else {
+			return false;
+		}
 	}
 
 	private boolean classInvariant() {
