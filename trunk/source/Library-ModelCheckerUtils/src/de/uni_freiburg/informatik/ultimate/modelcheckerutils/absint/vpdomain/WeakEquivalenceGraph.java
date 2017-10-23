@@ -218,64 +218,6 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>> {
 		return nodesToAdd;
 	}
 
-//	public void projectSingleElementInEdgeLabels(final NODE elem) {
-//
-//		for (final Entry<Doubleton<NODE>, WeakEquivalenceEdgeLabel> en : mWeakEquivalenceEdges.entrySet()) {
-//
-//			assert !elem.equals(en.getKey().getOneElement());
-//			assert !elem.equals(en.getKey().getOtherElement());
-//
-//			en.getValue().projectSingleOrSimpleElement(elem, false);
-//		}
-//		assert elementIsFullyRemoved(elem);
-//	}
-
-
-//	public void projectSingleElement(final NODE elem, final NODE replacement) {
-//
-//		final Map<Doubleton<NODE>, WeakEquivalenceEdgeLabel> edgesCopy = new HashMap<>(mWeakEquivalenceEdges);
-//
-//		for (final Entry<Doubleton<NODE>, WeakEquivalenceEdgeLabel> en : edgesCopy.entrySet()) {
-//
-//			final NODE source = en.getKey().getOneElement();
-//			final NODE target = en.getKey().getOtherElement();
-//
-//			if (source.equals(elem)) {
-//				final WeakEquivalenceGraph<NODE>.WeakEquivalenceEdgeLabel label =
-//						mWeakEquivalenceEdges.remove(en.getKey());
-//				if (replacement != null) {
-//					label.projectSingleElement(elem, replacement);
-//					mWeakEquivalenceEdges.put(new Doubleton<NODE>(replacement, target), label);
-//				}
-//			} else if (target.equals(elem)) {
-//				final WeakEquivalenceGraph<NODE>.WeakEquivalenceEdgeLabel label =
-//						mWeakEquivalenceEdges.remove(en.getKey());
-//				if (replacement != null) {
-//					label.projectSingleElement(elem, replacement);
-//					mWeakEquivalenceEdges.put(new Doubleton<NODE>(source, replacement), label);
-//				}
-//			} else {
-//				en.getValue().projectSingleElement(elem, replacement);
-//			}
-//		}
-//		assert elementIsFullyRemoved(elem);
-//	}
-
-//	public void renameVariables(final Map<Term, Term> substitutionMapping) {
-//		final HashMap<Doubleton<NODE>, WeakEquivalenceEdgeLabel> weqEdgesCopy =
-//				new HashMap<>(mWeakEquivalenceEdges);
-//		for (final Entry<Doubleton<NODE>, WeakEquivalenceEdgeLabel> en : weqEdgesCopy.entrySet()) {
-//			mWeakEquivalenceEdges.remove(en.getKey());
-//
-//			final Doubleton<NODE> newDton = new Doubleton<>(
-//					en.getKey().getOneElement().renameVariables(substitutionMapping),
-//					en.getKey().getOtherElement().renameVariables(substitutionMapping));
-//			en.getValue().renameVariables(substitutionMapping);
-//			mWeakEquivalenceEdges.put(newDton, en.getValue());
-//		}
-//		assert sanityCheck();
-//	}
-
 	public void transformElementsAndFunctions(final Function<NODE, NODE> transformer) {
 		final HashMap<Doubleton<NODE>, WeakEquivalenceEdgeLabel> weqEdgesCopy =
 				new HashMap<>(mWeakEquivalenceEdges);
@@ -1045,17 +987,6 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>> {
 
 	}
 
-//	class WeqEdgeLabelComparator implements IPartialComparator<WeakEquivalenceEdgeLabel> {
-//
-//		@Override
-//		public ComparisonResult compare(final WeakEquivalenceGraph<NODE>.WeakEquivalenceEdgeLabel o1,
-//				final WeakEquivalenceGraph<NODE>.WeakEquivalenceEdgeLabel o2) {
-//			assert asser
-//			// TODO Auto-generated method stub
-//			return null;
-//		}
-//	}
-
 	/**
 	 * Represents an edge label in the weak equivalence graph.
 	 * An edge label connects two arrays of the same arity(dimensionality) #a.
@@ -1135,21 +1066,15 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>> {
 			assert sanityCheckDontEnforceProjectToWeqVars(mPartialArrangement);
 		}
 
-//		public void projectSingleElement(final NODE elem, final NODE replacement) {
-//		public void projectSingleOrSimpleElement(final NODE elem, final boolean simpleNotSingle) {
 		public Set<NODE> projectSingleOrSimpleElement(final NODE elem, final boolean useWeqGpaMode) {
 			if (isTautological()) {
 				return Collections.emptySet();
-//				return;
 			}
 			if (isInconsistent()) {
 				return Collections.emptySet();
-//				return;
 			}
 
 			final Set<NODE> nodesToAddToGpa = new HashSet<>();
-//			assert mLabel.stream().allMatch(l -> (l instanceof WeqCongruenceClosure<?>)) : "the meetWeqGpa method"
-//					+ "should ensure this, right?";
 
 			final List<CongruenceClosure<NODE>> newLabelContents = new ArrayList<>(mLabel.size());
 			for (final CongruenceClosure<NODE> lab : mLabel) {
@@ -1198,7 +1123,6 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>> {
 				if (useWeqGpaMode) {
 					// unprime weqvars
 					lab2 = new CongruenceClosure<>(lab);
-//					lab2 = lab;
 					lab2.transformElementsAndFunctions(node -> node.renameVariables(mFactory.getWeqPrimedVarsToWeqVars()));
 				} else {
 					lab2 = lab;
@@ -1260,7 +1184,6 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>> {
 											mFactory.getWeqVariableForDimension(newDim, nodeI.getSort()));
 								}
 							}
-//							this.renameVariables(substitutionMapping);
 							this.transformElements(e -> e.renameVariables(substitutionMapping));
 							assert sanityCheckDontEnforceProjectToWeqVars(mPartialArrangement);
 		}
@@ -1367,13 +1290,6 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>> {
 			assert sanityCheckDontEnforceProjectToWeqVars(mPartialArrangement);
 		}
 
-//		public void renameVariables(final Map<Term, Term> substitutionMapping) {
-//			for (int i = 0; i < getLabelContents().size(); i++) {
-//				getLabelContents().get(i).transformElementsAndFunctions(node -> node.renameVariables(substitutionMapping));
-//			}
-//			assert sanityCheckDontEnforceProjectToWeqVars(mPartialArrangement);
-//		}
-
 		/**
 		 * Returns all NODEs that are used in this WeqEdgeLabel.
 		 * Not including the special quantified variable's nodes.
@@ -1431,12 +1347,9 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>> {
 
 		public boolean isStrongerThan(final WeakEquivalenceEdgeLabel other,
 				final BiPredicate<CongruenceClosure<NODE>, CongruenceClosure<NODE>> lowerOrEqual) {
-//				final PartialOrderCache<CongruenceClosure<NODE>> ccPoCache) {
 			for (final CongruenceClosure<NODE> paThis : getLabelContents()) {
 				boolean existsWeaker = false;
 				for (final CongruenceClosure<NODE> paOther : other.getLabelContents()) {
-//					if (paThis.isStrongerThan(paOther)) {
-//					if (ccPoCache.lowerEqual(paThis, paOther)) {
 					if (lowerOrEqual.test(paThis, paOther)) {
 						existsWeaker = true;
 						break;
@@ -1544,12 +1457,7 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>> {
 
 			// check that labels are free of constraints that don't contain weq nodes
 			for (final CongruenceClosure<NODE> lab : mLabel) {
-//				if (groundPartialArrangement.mMeetWithGpaCase) {
-//					// don't check in this case, as edges may have been "metWithWeqGpa" already..
-////					assert lab.assertHasOnlyWeqVarConstraints(mFactory.getAllWeqPrimedAndUnprimedNodes());
-//				} else {
-					assert lab.assertHasOnlyWeqVarConstraints(mFactory.getAllWeqNodes());
-//				}
+				assert lab.assertHasOnlyWeqVarConstraints(mFactory.getAllWeqNodes());
 			}
 
 			return sanityCheckDontEnforceProjectToWeqVars(mPartialArrangement);
@@ -1557,7 +1465,6 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>> {
 
 		public void meetWithWeqGpa(final WeqCongruenceClosure<NODE> originalPa) {
 			// prime the weq vars
-//			this.renameVariables(mFactory.getWeqVarsToWeqPrimedVars());
 
 			final List<CongruenceClosure<NODE>> newLabelContents = new ArrayList<>();
 			for (final CongruenceClosure<NODE> l : mLabel) {
@@ -1565,7 +1472,6 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>> {
 
 				final CongruenceClosure<NODE> lCopy = new CongruenceClosure<>(l);
 				// prime the weq vars
-//				lCopy.transformElementsAndFunctions(n -> n.renameVariables(mFactory.getWeqVarsToWeqPrimedVars()));
 				lCopy.transformElementsAndFunctions(n -> n.renameVariables(mFactory.getWeqVarsToWeqPrimedVars()));
 
 				for (final Entry<NODE, NODE> eq : lCopy.getSupportingElementEqualities().entrySet()) {

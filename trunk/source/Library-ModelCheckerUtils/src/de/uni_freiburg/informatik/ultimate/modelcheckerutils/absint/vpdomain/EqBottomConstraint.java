@@ -44,9 +44,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
  * @param <NODE>
  * @param <FUNCTION>
  */
-public class EqBottomConstraint<//ACTION extends IIcfgTransition<IcfgLocation>,
-		NODE extends IEqNodeIdentifier<NODE>>
-	extends EqConstraint<NODE> {
+public class EqBottomConstraint<NODE extends IEqNodeIdentifier<NODE>> extends EqConstraint<NODE> {
 
 	public EqBottomConstraint(final EqConstraintFactory<NODE> factory) {
 		super(0, factory);
@@ -77,11 +75,6 @@ public class EqBottomConstraint<//ACTION extends IIcfgTransition<IcfgLocation>,
 		return true;
 	}
 
-	////////////////////////////////////////////////////////////////////////
-	/*
-	 * from here on down: methods that probably don't need to be overwritten, but are, for performance, and to be safe..
-	 */
-
 	@Override
 	public Set<NODE> getAllNodes() {
 		return Collections.emptySet();
@@ -102,16 +95,6 @@ public class EqBottomConstraint<//ACTION extends IIcfgTransition<IcfgLocation>,
 		return true;
 	}
 
-//	@Override
-//	public boolean areEqual(final FUNCTION func1, final FUNCTION func2) {
-//		return true;
-//	}
-//
-//	@Override
-//	public boolean areUnequal(final FUNCTION func1, final FUNCTION func2) {
-//		return true;
-//	}
-
 	@Override
 	public Set<IProgramVar> getVariables(final IIcfgSymbolTable symbolTable) {
 		return Collections.emptySet();
@@ -121,17 +104,6 @@ public class EqBottomConstraint<//ACTION extends IIcfgTransition<IcfgLocation>,
 	public Set<IProgramVarOrConst> getPvocs(final IIcfgSymbolTable symbolTable) {
 		return Collections.emptySet();
 	}
-
-	@Override
-	public boolean hasNode(final NODE node) {
-		return false; // TODO ??
-	}
-
-
-//	@Override
-//	public Set<NODE> getAllFunctions() {
-//		return Collections.emptySet();
-//	}
 
 	@Override
 	public boolean isTop() {

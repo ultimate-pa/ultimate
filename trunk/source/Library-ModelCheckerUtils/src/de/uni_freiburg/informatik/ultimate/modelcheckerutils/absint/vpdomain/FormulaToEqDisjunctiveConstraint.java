@@ -2,7 +2,6 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
@@ -32,8 +31,8 @@ public class FormulaToEqDisjunctiveConstraint {
 	 * @return
 	 */
 	public EqDisjunctiveConstraint<EqNode> convertFormula(final Term formula) {
-		final FormulaToEqDisjunctiveConstraintConverter<IcfgEdge> converter =
-				new FormulaToEqDisjunctiveConstraintConverter<>(mServices, mMgdScript, mEqConstraintFactory,
+		final FormulaToEqDisjunctiveConstraintConverter converter =
+				new FormulaToEqDisjunctiveConstraintConverter(mServices, mMgdScript, mEqConstraintFactory,
 						mEqNodeAndFunctionFactory, formula);
 		return converter.getResult();
 	}

@@ -60,20 +60,14 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 
 	private final EqConstraint<NODE> mEmptyConstraint;
 
-//	private EqStateFactory mEqStateFactory;
-
 	private final AbstractNodeAndFunctionFactory<NODE, Term> mEqNodeAndFunctionFactory;
 
 	private final IUltimateServiceProvider mServices;
-
-//	private final CfgSmtToolkit mCsToolkit;
 
 	private int mConstraintIdCounter = 1;
 
 	private final NestedMap2<Sort, Integer, NODE> mDimensionToWeqVariableNode;
 	private final NestedMap2<Sort, Integer, NODE> mDimensionToWeqVariableNodePrimed;
-
-//	private final LiteralManager<NODE> mLiteralManager;
 
 	private final CCManager<NODE> mCcManager;
 
@@ -224,17 +218,11 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 	public EqConstraint<NODE> addEqualityFlat(final NODE node1, final NODE node2,
 			final EqConstraint<NODE> originalState) {
 
-//		factory.getBenchmark().unpause(VPSFO.addEqualityClock);
-//		if (factory.isDebugMode()) {
-//			factory.getLogger().debug("VPFactoryHelpers: addEquality(" + node1 + ", " + node2 + ", " + "..." + ")");
-//		}
 		if (originalState.isBottom()) {
-//			factory.getBenchmark().stop(VPSFO.addEqualityClock);
 			return originalState;
 		}
 
 		if (node1 == node2 || node1.equals(node2)) {
-//			factory.getBenchmark().stop(VPSFO.addEqualityClock);
 			return originalState;
 		}
 
@@ -259,9 +247,6 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 
 	public EqConstraint<NODE> addDisequalityFlat(final NODE node1, final NODE node2,
 			final EqConstraint<NODE> originalState) {
-//		if (factory.isDebugMode()) {
-//			factory.getLogger().debug("VPFactoryHelpers: addDisEquality(..)");
-//		}
 		if (originalState.isBottom()) {
 			return originalState;
 		}
@@ -350,27 +335,9 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 		return unfrozen;
 	}
 
-//	public EqStateFactory getEqStateFactory() {
-//		return mEqStateFactory;
-//	}
-//
-//	public void setEqStateFactory(final EqStateFactory eqStateFactory) {
-//		mEqStateFactory = eqStateFactory;
-//	}
-
 	public AbstractNodeAndFunctionFactory<NODE, Term> getEqNodeAndFunctionFactory() {
 		return mEqNodeAndFunctionFactory;
 	}
-
-//	public NODE getPrimedWeqVariableNodeForDimension(final int dimensionNumber, final Sort sort) {
-//		NODE result = mDimensionToWeqVariableNodePrimed.get(sort, dimensionNumber);
-//		if (result == null) {
-//			final TermVariable tv = getMgdScript().constructFreshTermVariable("weqPrime" + dimensionNumber, sort);
-//			result = getEqNodeAndFunctionFactory().getOrConstructNode(tv);
-//			mDimensionToWeqVariableNodePrimed.put(sort, dimensionNumber, result);
-//		}
-//		return result;
-//	}
 
 	public NODE getWeqVariableNodeForDimension(final int dimensionNumber, final Sort sort) {
 		NODE result = mDimensionToWeqVariableNode.get(sort, dimensionNumber);
@@ -398,10 +365,8 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 
 	public Set<NODE> getAllWeqNodes() {
 		final Set<NODE> result = new HashSet<>();
-//		mDimensionToWeqVariableNode.entrySet().forEach(en -> result.add(en.getThird()));
 		for (final Triple<Sort, Integer, NODE> en : mDimensionToWeqVariableNode.entrySet()) {
 			result.add(en.getThird());
-//			result.add(mEqNodeAndFunctionFactory.getExistingNode(mWeqVarsToWeqPrimedVars.get(en.getThird().getTerm())));
 		}
 		return result;
 	}
@@ -420,17 +385,12 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 
 	public ManagedScript getMgdScript() {
 		return mMgdScript;
-//		return mCsToolkit.getManagedScript();
 	}
 
 	@Override
 	public String toString() {
 		return this.getClass().getSimpleName();
 	}
-
-//	public LiteralManager<NODE> getLiteralManager() {
-//		return mLiteralManager;
-//	}
 
 	public CCManager<NODE> getCcManager() {
 		return mCcManager;
@@ -454,12 +414,6 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 
 	public Map<Term, Term> getWeqVarsToWeqPrimedVars() {
 		return mWeqVarsToWeqPrimedVars;
-//		final Map<Term, Term> result = new HashMap<>();
-//		for (final TermVariable weqv : getAllWeqVariables()) {
-//			get
-//
-//		}
-//		return result;
 	}
 	public Set<NODE> getAllWeqPrimedAndUnprimedNodes() {
 		return DataStructureUtils.union(getAllWeqNodes(), getAllWeqPrimedNodes());
@@ -468,7 +422,6 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 	public Set<NODE> getAllWeqPrimedNodes() {
 		final Set<NODE> result = new HashSet<>();
 		for (final Triple<Sort, Integer, NODE> en : mDimensionToWeqVariableNode.entrySet()) {
-//			result.add(en.getThird());
 			result.add(mEqNodeAndFunctionFactory.getExistingNode(mWeqVarsToWeqPrimedVars.get(en.getThird().getTerm())));
 		}
 		return result;

@@ -47,11 +47,6 @@ public interface IEqNodeIdentifier<NODE extends IEqNodeIdentifier<NODE>> extends
 
 	Term getTerm();
 
-	/*
-	 * methods specific to the isFunction case
-	 */
-
-//	@Override
 	boolean isFunction();
 
 	Sort getSort();

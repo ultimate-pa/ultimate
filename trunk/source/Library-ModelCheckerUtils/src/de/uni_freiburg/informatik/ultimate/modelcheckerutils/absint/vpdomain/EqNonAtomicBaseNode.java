@@ -41,7 +41,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
 public class EqNonAtomicBaseNode extends EqNode {
 
 	private final Set<EqNode> mSupportingNodes;
-//	private final Collection<EqFunction> mSupportingFunctions;
 
 	public EqNonAtomicBaseNode(final Term term, final Set<EqNode> supportingNodes,
 			final EqNodeAndFunctionFactory eqNodeAndFunctionFactory) {
@@ -49,7 +48,6 @@ public class EqNonAtomicBaseNode extends EqNode {
 		assert !supportingNodes.isEmpty();
 		assert supportingNodes.stream().allMatch(n -> n instanceof EqAtomicBaseNode);
 		mSupportingNodes = Collections.unmodifiableSet(supportingNodes);
-//		mSupportingFunctions = Collections.unmodifiableCollection(supportingFunctions);
 	}
 
 	@Override
@@ -73,12 +71,6 @@ public class EqNonAtomicBaseNode extends EqNode {
 		return null;
 	}
 
-//	@Override
-//	public List<EqNode> getArguments() {
-//		assert false : "check for isFunction() first";
-//		return null;
-//	}
-
 	@Override
 	public boolean isDependent() {
 		return true;
@@ -100,10 +92,4 @@ public class EqNonAtomicBaseNode extends EqNode {
 			return this;
 		}
 	}
-
-//	@Override
-//	public Collection<EqFunction> getSupportingFunctions() {
-//		return mSupportingFunctions;
-//	}
-
 }

@@ -50,10 +50,6 @@ public class EqPredicate implements IPredicate {
 	private final Term mClosedFormula;
 	private final Term mFormula;
 
-//	public EqPredicate(EqConstraint<EqNode> constraint) {
-//
-//	}
-
 	public EqPredicate(final EqDisjunctiveConstraint<EqNode> constraint, final Set<IProgramVar> vars,
 			final String[] procedures, final IIcfgSymbolTable symbolTable, final ManagedScript mgdScript) {
 		assert vars != null;

@@ -308,10 +308,6 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 		return mPvocs;
 	}
 
-	public boolean hasNode(final NODE node) {
-		return mPartialArrangement.getAllElements().contains(node);
-	}
-
 	public boolean isTop() {
 		return mPartialArrangement.isTautological();
 	}

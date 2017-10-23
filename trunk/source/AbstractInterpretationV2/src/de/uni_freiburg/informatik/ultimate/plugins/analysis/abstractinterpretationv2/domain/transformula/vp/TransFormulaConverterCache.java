@@ -53,8 +53,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  */
-public class TransFormulaConverterCache//<ACTION extends IIcfgTransition<IcfgLocation>> {
-{
+public class TransFormulaConverterCache {
 
 	private final EqConstraintFactory<EqNode> mEqConstraintFactory;
 	private final EqNodeAndFunctionFactory mEqNodeAndFunctionFactory;
@@ -88,7 +87,7 @@ public class TransFormulaConverterCache//<ACTION extends IIcfgTransition<IcfgLoc
 			final EqConstraintFactory<EqNode> eqConstraintFactory,
 			final EqNodeAndFunctionFactory eqNodeAndFunctionFactory) {
 		final EqDisjunctiveConstraint<EqNode> constraint =
-				new FormulaToEqDisjunctiveConstraintConverter<>(mServices, mMgdScript, mEqConstraintFactory,
+				new FormulaToEqDisjunctiveConstraintConverter(mServices, mMgdScript, mEqConstraintFactory,
 						mEqNodeAndFunctionFactory, tf.getFormula()).getResult();
 
 		assert transformulaImpliesResultConstraint(tf, constraint);

@@ -48,8 +48,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.NnfTransformer;
@@ -62,8 +60,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.BidirectionalMap;
  *
  * @param <ACTION>
  */
-public class FormulaToEqDisjunctiveConstraintConverter<ACTION extends IIcfgTransition<IcfgLocation>>
-		extends NonRecursive {
+public class FormulaToEqDisjunctiveConstraintConverter extends NonRecursive {
 
 	private final Term mFormula;
 
@@ -410,8 +407,6 @@ public class FormulaToEqDisjunctiveConstraintConverter<ACTION extends IIcfgTrans
 
 		private final List<Term> mReplacementEquations = new ArrayList<>();
 
-		// private final BidirectionalMap<TermVariable, Term>
-		// mReplacementTvToReplacedTerm = new BidirectionalMap<>();
 		private final Map<Term, TermVariable> mReplacedTermToReplacementTv = new BidirectionalMap<>();
 
 		public Collection<Term> getReplacementEquations() {
@@ -542,9 +537,6 @@ public class FormulaToEqDisjunctiveConstraintConverter<ACTION extends IIcfgTrans
 				final Term[] newArgs = transformer.getConvertedArray(oldArgs);
 				assert newArgs.length == 3;
 
-				// final Term innerStoreAtArrayPosition;
-				// final Term innerStoreAtValuePosition;
-
 				final Term replacedArray;
 				if (SmtUtils.isFunctionApplication(newArgs[0], "store")) {
 					replacedArray = getReplacementTv(newArgs[0]);
@@ -560,17 +552,6 @@ public class FormulaToEqDisjunctiveConstraintConverter<ACTION extends IIcfgTrans
 				}
 
 				setResult(mScript.term("store", replacedArray, newArgs[1], replacedValue));
-
-				// if (SmtUtils.isFunctionApplication(newArgs[0], "store")) {
-				// final Term innerStoreTerm = newArgs[0];
-				// final TermVariable replacmentTv = getReplacementTv(innerStoreTerm);
-				// setResult(mScript.term("store", replacmentTv, newArgs[1], newArgs[2]));
-				// } else {
-				// // the array argument of the store that we enqueued this walker for is a
-				// variable
-				// // --> we do no further transformation
-				// setResult(mScript.term("store", newArgs[0], newArgs[1], newArgs[2]));
-				// }
 			}
 
 			@Override

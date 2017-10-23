@@ -45,11 +45,9 @@ public class EqAtomicBaseNode extends EqNode {
 	private final boolean mIsLiteral;
 	private final Set<EqNonAtomicBaseNode> mDependentNonAtomicNodes = new HashSet<>();
 
-	public EqAtomicBaseNode(final Term term, final boolean isLiteral, final EqNodeAndFunctionFactory eqNodeAndFunctionFactory) {
+	public EqAtomicBaseNode(final Term term, final boolean isLiteral,
+			final EqNodeAndFunctionFactory eqNodeAndFunctionFactory) {
 		super(term, eqNodeAndFunctionFactory);
-//		mIsLiteral = term instanceof ConstantTerm
-//				|| SmtUtils.isTrue(term)
-//				|| SmtUtils.isFalse(term);
 		mIsLiteral = isLiteral;
 	}
 
@@ -71,11 +69,6 @@ public class EqAtomicBaseNode extends EqNode {
 		return Collections.unmodifiableSet(mDependentNonAtomicNodes);
 	}
 
-//	@Override
-//	public List<EqNode> getArguments() {
-//		throw new IllegalStateException("check for isFunctionApplication() first");
-//	}
-
 	@Override
 	public boolean isFunctionApplication() {
 		return false;
@@ -89,7 +82,6 @@ public class EqAtomicBaseNode extends EqNode {
 	@Override
 	public EqNode replaceSubNode(final Map<EqNode, EqNode> mapping) {
 		final EqNode replacer = mapping.get(this);
-//		if (this.equals(replacee)) {
 		if (replacer != null) {
 			return replacer;
 		} else {

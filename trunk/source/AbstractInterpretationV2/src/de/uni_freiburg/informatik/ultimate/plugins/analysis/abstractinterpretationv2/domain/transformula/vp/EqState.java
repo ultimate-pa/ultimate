@@ -26,11 +26,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -51,8 +49,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysi
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  */
-public class EqState//<ACTION extends IIcfgTransition<IcfgLocation>>
-		implements IAbstractState<EqState>, IEqualityProvidingState {
+public class EqState implements IAbstractState<EqState>, IEqualityProvidingState {
 
 	/**
 	 * The variables and constants that this state has "for the abstract interpretation"/"as an IAbstractState". Note
@@ -67,9 +64,6 @@ public class EqState//<ACTION extends IIcfgTransition<IcfgLocation>>
 	public EqState(final EqConstraint<EqNode> constraint,
 			final EqNodeAndFunctionFactory eqNodeAndFunctionFactory, final EqStateFactory eqStateFactory,
 			final Set<IProgramVarOrConst> variables) {
-//		mId = sNextFreeId++;
-//		mId = constraint.hashCode();
-//		assert sNextFreeId != Integer.MAX_VALUE;
 		mConstraint = constraint;
 		mFactory = eqStateFactory;
 		mPvocs = new HashSet<>(variables);
@@ -99,8 +93,6 @@ public class EqState//<ACTION extends IIcfgTransition<IcfgLocation>>
 
 	@Override
 	public EqState removeVariables(final Collection<IProgramVarOrConst> variables) {
-//		final Set<TermVariable> termVariablesFromPvocs =
-//				variables.stream().map(pvoc -> (TermVariable) pvoc.getTerm()).collect(Collectors.toSet());
 		final Set<Term> termsFromPvocs =
 				variables.stream().map(pvoc -> pvoc.getTerm()).collect(Collectors.toSet());
 		final EqConstraint<EqNode> projectedConstraint =
@@ -155,7 +147,6 @@ public class EqState//<ACTION extends IIcfgTransition<IcfgLocation>>
 		newVariables.addAll(this.getVariables());
 		newVariables.addAll(other.getVariables());
 
-		// return mFactory.getEqState(newConstraint, newConstraint.getPvocs(mFactory.getSymbolTable()));
 		return mFactory.getEqState(newConstraint, newVariables);
 
 	}
@@ -200,11 +191,6 @@ public class EqState//<ACTION extends IIcfgTransition<IcfgLocation>>
 		}
 	}
 
-	@SafeVarargs
-	private static <E> List<E> toList(final E... elems) {
-		return Arrays.asList(elems);
-	}
-
 	@Override
 	public EqState compact() {
 		return mFactory.getEqState(mConstraint, mConstraint.getPvocs(mFactory.getSymbolTable()));
@@ -241,18 +227,6 @@ public class EqState//<ACTION extends IIcfgTransition<IcfgLocation>>
 
 	@Override
 	public boolean areEqual(final Term term1, final Term term2) {
-//		if (term1.getSort().isArraySort()) {
-//			// array case
-//			assert term2.getSort().isArraySort();
-//			final EqFunction node1 = mFactory.getEqNodeAndFunctionFactory().getExistingFunction(term1);
-//			final EqFunction node2 = mFactory.getEqNodeAndFunctionFactory().getExistingFunction(term2);
-//			if (node1 == null || node2 == null) {
-//				// we did not track at least one of the nodes
-//				return false;
-//			}
-//			return mConstraint.areEqual(node1, node2);
-//		}
-//		// element case
 		final EqNode node1 = mFactory.getEqNodeAndFunctionFactory().getExistingNode(term1);
 		final EqNode node2 = mFactory.getEqNodeAndFunctionFactory().getExistingNode(term2);
 		if (node1 == null || node2 == null) {
@@ -264,18 +238,6 @@ public class EqState//<ACTION extends IIcfgTransition<IcfgLocation>>
 
 	@Override
 	public boolean areUnequal(final Term term1, final Term term2) {
-//		if (term1.getSort().isArraySort()) {
-//			// array case
-//			assert term2.getSort().isArraySort();
-//			final EqFunction func1 = mFactory.getEqNodeAndFunctionFactory().getExistingFunction(term1);
-//			final EqFunction func2 = mFactory.getEqNodeAndFunctionFactory().getExistingFunction(term2);
-//			if (func1 == null || func2 == null) {
-//				// we did not track at least one of the nodes
-//				return false;
-//			}
-//			return mConstraint.areUnequal(func1, func2);
-//		}
-//		// element case
 		final EqNode node1 = mFactory.getEqNodeAndFunctionFactory().getExistingNode(term1);
 		final EqNode node2 = mFactory.getEqNodeAndFunctionFactory().getExistingNode(term2);
 		if (node1 == null || node2 == null) {

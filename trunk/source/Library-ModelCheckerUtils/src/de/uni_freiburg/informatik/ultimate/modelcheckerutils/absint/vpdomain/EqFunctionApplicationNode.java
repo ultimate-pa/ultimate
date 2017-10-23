@@ -40,18 +40,13 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 public class EqFunctionApplicationNode extends EqNode {
 
 	private final EqNode mFunction;
-//	private final List<EqNode> mArgs;
 	private final EqNode mArg;
 
-//	public EqFunctionApplicationNode(final EqNode function, final List<EqNode> args, final Term term,
 	public EqFunctionApplicationNode(final EqNode function, final EqNode arg, final Term term,
 			final EqNodeAndFunctionFactory eqNodeFactory) {
 		super(term, eqNodeFactory);
-//		assert args.size() == function.getArity();
-//		assert args.size() > 0;
 
 		mFunction = function;
-//		mArgs = Collections.unmodifiableList(args);
 		mArg = arg;
 	}
 
@@ -64,16 +59,6 @@ public class EqFunctionApplicationNode extends EqNode {
 	public EqNode getArgument() {
 		return mArg;
 	}
-
-//	@Override
-//	public List<EqNode> getArguments() {
-//		return mArgs;
-//	}
-
-//	@Override
-//	public String toString() {
-//		return mFunction.toString() + mArgs.toString();
-//	}
 
 	@Override
 	public boolean isLiteral() {
