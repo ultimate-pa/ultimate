@@ -52,7 +52,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  * @param <NODE>
- * @param <FUNCTION>
  */
 public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 
@@ -92,7 +91,6 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 		mDimensionToWeqVariableNodePrimed = new NestedMap2<>();
 
 		mCcManager = new CCManager<>(new CongruenceClosureComparator<NODE>());
-//		mLiteralManager = new LiteralManager<>();
 
 		mWeqVarsToWeqPrimedVars = new BidirectionalMap<>();
 	}

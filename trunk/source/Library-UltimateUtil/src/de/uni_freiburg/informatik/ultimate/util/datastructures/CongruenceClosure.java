@@ -148,16 +148,6 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		assert sanityCheck(remInfo);
 	}
 
-	static <ELEM extends ICongruenceClosureElement<ELEM>> Integer literalComparator(final ELEM e1, final ELEM e2) {
-		if (e1.isLiteral() && !e2.isLiteral()) {
-			return -1;
-		}
-		if (e2.isLiteral() && !e1.isLiteral()) {
-			return 1;
-		}
-		return 0;
-	}
-
 	public CongruenceClosure(final CongruenceClosure<ELEM> original, final RemoveElement externalRemovalInfo) {
 		if (original.isInconsistent()) {
 			throw new IllegalArgumentException("use other constructor!");
@@ -177,6 +167,16 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 	 */
 	public CongruenceClosure(final CongruenceClosure<ELEM> original) {
 		this(original, null);
+	}
+
+	static <ELEM extends ICongruenceClosureElement<ELEM>> Integer literalComparator(final ELEM e1, final ELEM e2) {
+		if (e1.isLiteral() && !e2.isLiteral()) {
+			return -1;
+		}
+		if (e2.isLiteral() && !e1.isLiteral()) {
+			return 1;
+		}
+		return 0;
 	}
 
 	public boolean reportEquality(final ELEM elem1, final ELEM elem2) {

@@ -77,15 +77,13 @@ public class TransFormulaConverterCache {
 	public EqTransitionRelation getEqTransitionRelationFromTransformula(final TransFormula tf) {
 		EqTransitionRelation result = mTransformulaToEqTransitionRelationCache.get(tf);
 		if (result == null) {
-			result = convertTransformulaToEqTransitionRelation(tf, mEqConstraintFactory, mEqNodeAndFunctionFactory);
+			result = convertTransformulaToEqTransitionRelation(tf);
 			mTransformulaToEqTransitionRelationCache.put(tf, result);
 		}
 		return result;
 	}
 
-	private EqTransitionRelation convertTransformulaToEqTransitionRelation(final TransFormula tf,
-			final EqConstraintFactory<EqNode> eqConstraintFactory,
-			final EqNodeAndFunctionFactory eqNodeAndFunctionFactory) {
+	private EqTransitionRelation convertTransformulaToEqTransitionRelation(final TransFormula tf) {
 		final EqDisjunctiveConstraint<EqNode> constraint =
 				new FormulaToEqDisjunctiveConstraintConverter(mServices, mMgdScript, mEqConstraintFactory,
 						mEqNodeAndFunctionFactory, tf.getFormula()).getResult();
