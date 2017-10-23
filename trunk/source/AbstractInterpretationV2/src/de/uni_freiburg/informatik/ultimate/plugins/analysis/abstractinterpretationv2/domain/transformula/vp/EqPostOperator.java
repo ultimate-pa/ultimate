@@ -78,7 +78,6 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 	private final CfgSmtToolkit mCfgSmtToolkit;
 	private final EqConstraintFactory<EqNode> mEqConstraintFactory;
 	private final EqNodeAndFunctionFactory mEqNodeAndFunctionFactory;
-	private final VPDomainPreanalysis mPreAnalysis;
 
 	private final boolean mDebug = true;
 
@@ -87,15 +86,14 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 
 	private final EqStateFactory mEqStateFactory;
 
-	public EqPostOperator(final IUltimateServiceProvider services, final ILogger logger,
+	public EqPostOperator(final IUltimateServiceProvider services, final ILogger logger, final CfgSmtToolkit csToolkit,
 			final EqNodeAndFunctionFactory eqNodeAndFunctionFactory,
-			final EqConstraintFactory<EqNode> eqConstraintFactory, final VPDomainPreanalysis preAnalysis,
+			final EqConstraintFactory<EqNode> eqConstraintFactory,
 			final EqStateFactory eqStateFactory) {
 		mEqNodeAndFunctionFactory = eqNodeAndFunctionFactory;
 		mEqConstraintFactory = eqConstraintFactory;
-		mPreAnalysis = preAnalysis;
-		mMgdScript = preAnalysis.getManagedScript();
-		mCfgSmtToolkit = preAnalysis.getCfgSmtToolkit();
+		mCfgSmtToolkit = csToolkit;
+		mMgdScript = csToolkit.getManagedScript();
 		mEqStateFactory = eqStateFactory;
 
 		mServices = services;
@@ -112,7 +110,7 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 
 	@Override
 	public List<EqState> apply(final EqState oldState, final ACTION transition) {
-		if (!mPreAnalysis.getServices().getProgressMonitorService().continueProcessing()) {
+		if (!mServices.getProgressMonitorService().continueProcessing()) {
 			return toEqStates(mEqConstraintFactory.getTopDisjunctiveConstraint(), oldState.getVariables());
 		}
 
@@ -138,14 +136,14 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 	 * @param variablesThatTheFrameworkLikesToSee
 	 * @return
 	 */
-	public List<EqState> toEqStates(final EqDisjunctiveConstraint<EqNode> disjunctiveConstraint,
+	private List<EqState> toEqStates(final EqDisjunctiveConstraint<EqNode> disjunctiveConstraint,
 			final Set<IProgramVarOrConst> variablesThatTheFrameworkLikesToSee) {
-		// /*
-		// * The AbstractInterpretation framework demands that all EqStates here have the same Pvocs
-		// * Thus we set the Pvocs of all the disjunct-states to be the union of the pvocs that each
-		// * disjunct-state/constraint talks about.
-		// EDIT: the variables are now determined externally (by the oldstate of the post operator..)
-		// */
+		/*
+		 * The AbstractInterpretation framework demands that all EqStates here have the same Pvocs
+		 * Thus we set the Pvocs of all the disjunct-states to be the union of the pvocs that each
+		 * disjunct-state/constraint talks about.
+		 * EDIT: the variables are now determined externally (by the oldstate of the post operator..)
+		 */
 		return disjunctiveConstraint.getConstraints().stream()
 				.map(cons -> mEqStateFactory.getEqState(cons, variablesThatTheFrameworkLikesToSee))
 				.collect(Collectors.toList());
@@ -173,7 +171,7 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 		// assert hierarchicalPrestate.getVariables()
 		// .containsAll(mCfgSmtToolkit.getSymbolTable().getLocals(transition.getSucceedingProcedure()));
 
-		if (!mPreAnalysis.getServices().getProgressMonitorService().continueProcessing()) {
+		if (!mServices.getProgressMonitorService().continueProcessing()) {
 			return toEqStates(mEqConstraintFactory.getTopDisjunctiveConstraint(), hierarchicalPrestate.getVariables());
 		}
 

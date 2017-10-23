@@ -46,7 +46,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
-import de.uni_freiburg.informatik.ultimate.util.statistics.Benchmark;
 
 /**
  * Domain of variable partition.
@@ -63,9 +62,8 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 	private final ILogger mLogger;
 
 	private final ManagedScript mManagedScript;
-	private final VPDomainPreanalysis mPreAnalysis;
 	private final IIcfgSymbolTable mSymboltable;
-	private final boolean mDebugMode;
+	private boolean mDebugMode;
 
 	private final EqConstraintFactory<EqNode> mEqConstraintFactory;
 	private final EqNodeAndFunctionFactory mEqNodeAndFunctionFactory;
@@ -75,10 +73,8 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 
 	private final VPDomainBenchmark mBenchmark;
 
-	public VPDomain(final ILogger logger, final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
-			final VPDomainPreanalysis preAnalysis) {
+	public VPDomain(final ILogger logger, final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit) {
 		mLogger = logger;
-		mPreAnalysis = preAnalysis;
 		mManagedScript = csToolkit.getManagedScript();
 		mMerge = new VPMergeOperator();
 		mSymboltable = csToolkit.getSymbolTable();
@@ -89,12 +85,9 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 		mEqConstraintFactory = new EqConstraintFactory<>(mEqNodeAndFunctionFactory, mServices, mManagedScript);
 		mEqStateFactory = new EqStateFactory(mEqNodeAndFunctionFactory, mEqConstraintFactory, mSymboltable,
 				mManagedScript);
-//		mEqConstraintFactory.setEqStateFactory(mEqStateFactory);
 
-		mPost = new EqPostOperator<>(mServices, mLogger, mEqNodeAndFunctionFactory, mEqConstraintFactory, mPreAnalysis,
+		mPost = new EqPostOperator<>(mServices, mLogger, mCsToolkit, mEqNodeAndFunctionFactory, mEqConstraintFactory,
 				mEqStateFactory);
-
-		mDebugMode = mPreAnalysis.isDebugMode();
 
 		mBenchmark = new VPDomainBenchmark();
 	}
@@ -124,10 +117,6 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 		return mLogger;
 	}
 
-	public VPDomainPreanalysis getPreAnalysis() {
-		return mPreAnalysis;
-	}
-
 	public IIcfgSymbolTable getSymbolTable() {
 		return mSymboltable;
 	}
@@ -145,11 +134,6 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 	public boolean isDebugMode() {
 		return mDebugMode;
 	}
-
-	public Benchmark getVpBenchmark() {
-		return mPreAnalysis.getBenchmark();
-	}
-
 
 	public EqStateFactory getEqStateFactory() {
 		return mEqStateFactory;
