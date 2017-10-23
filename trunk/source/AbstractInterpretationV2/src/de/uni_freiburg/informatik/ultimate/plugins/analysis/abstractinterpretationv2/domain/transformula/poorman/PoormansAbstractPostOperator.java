@@ -28,6 +28,8 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.poorman;
 
+import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -80,8 +82,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sta
  * The post operator for the poorman abstract domain. This post operator converts a given transformula to a sequence of
  * Boogie assumptions and calls the post operator of the Boogie-based backing domain accordingly.
  *
- * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
+ * @param <BACKING>
+ *            The type of the backing abstract domain.
  *
+ * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  */
 public class PoormansAbstractPostOperator<BACKING extends IAbstractState<BACKING>>
 		implements IAbstractPostOperator<PoormanAbstractState<BACKING>, IcfgEdge> {
@@ -197,8 +201,8 @@ public class PoormansAbstractPostOperator<BACKING extends IAbstractState<BACKING
 		final CodeBlock codeBlock =
 				mCodeBlockFactory.constructStatementSequence(null, null, statementList, Origin.IMPLEMENTATION);
 
-		obtainVariableMappingFromTransformula(transformula, alternateOldNames, oldTermVarMapping, renamedInVars,
-				newOutVars, newAuxVars, outVarRenaming, addedVariables, inAuxVars);
+		obtainVariableMappingFromTransformula(transformula, oldTermVarMapping, renamedInVars, newOutVars, newAuxVars,
+				outVarRenaming, addedVariables, inAuxVars);
 
 		final PoormanAbstractState<BACKING> preState =
 				oldstate.renameVariables(renamedInVars).addVariables(addedVariables);
@@ -212,7 +216,6 @@ public class PoormansAbstractPostOperator<BACKING extends IAbstractState<BACKING
 		final List<PoormanAbstractState<BACKING>> returnList = new ArrayList<>();
 		for (final BACKING state : postStates) {
 			// Remove all variables that are the target of the renaming later on
-			// TODO determine whether this will maybe lead to imprecision. I don't think so, but I'm not entirely sure.
 			final Set<IProgramVarOrConst> removeOverwrittenOuts = state.getVariables().stream()
 					.filter(var -> outVarRenaming.values().stream()
 							.anyMatch(out -> var.getGloballyUniqueId().equals(out.getGloballyUniqueId())))
@@ -244,7 +247,7 @@ public class PoormansAbstractPostOperator<BACKING extends IAbstractState<BACKING
 		// Variable in outVars has a mapping to a TermVariable that does not occur in the term of the transformula
 		havocedVars
 				.addAll(transformula.getOutVars().entrySet().stream().filter(entry -> !tvSet.contains(entry.getValue()))
-						.map(entry -> entry.getKey()).collect(Collectors.toSet()));
+						.map(Entry<IProgramVar, TermVariable>::getKey).collect(Collectors.toSet()));
 
 		if (havocedVars.isEmpty()) {
 			return null;
@@ -287,11 +290,8 @@ public class PoormansAbstractPostOperator<BACKING extends IAbstractState<BACKING
 		final List<BACKING> postStates = mBackingDomain.getPostOperator().apply(stateBeforeLeaving.getBackingState(),
 				stateAfterLeaving.getBackingState(), call);
 
-		final List<PoormanAbstractState<BACKING>> returnList =
-				postStates.stream().map(state -> new PoormanAbstractState<>(mServices, mBackingDomain, state))
-						.collect(Collectors.toList());
-
-		return returnList;
+		return postStates.stream().map(state -> new PoormanAbstractState<>(mServices, mBackingDomain, state))
+				.collect(Collectors.toList());
 	}
 
 	private List<PoormanAbstractState<BACKING>> handleReturnTransition(
@@ -308,11 +308,8 @@ public class PoormansAbstractPostOperator<BACKING extends IAbstractState<BACKING
 		final List<BACKING> postStates = mBackingDomain.getPostOperator().apply(stateBeforeLeaving.getBackingState(),
 				stateAfterLeaving.getBackingState(), returnTransition);
 
-		final List<PoormanAbstractState<BACKING>> returnStates =
-				postStates.stream().map(state -> new PoormanAbstractState<>(mServices, mBackingDomain, state))
-						.collect(Collectors.toList());
-
-		return returnStates;
+		return postStates.stream().map(state -> new PoormanAbstractState<>(mServices, mBackingDomain, state))
+				.collect(Collectors.toList());
 	}
 
 	/**
@@ -321,7 +318,6 @@ public class PoormansAbstractPostOperator<BACKING extends IAbstractState<BACKING
 	 *
 	 * @param transformula
 	 *            The transformula.
-	 * @param alternateOldNames
 	 * @param oldTermVarMapping
 	 * @param renamedInVars
 	 *            Is filled with a mapping of program vars occurring in the program to fresh program vars corresponding
@@ -341,7 +337,6 @@ public class PoormansAbstractPostOperator<BACKING extends IAbstractState<BACKING
 	 *            post operator to restore the original variables.
 	 */
 	private void obtainVariableMappingFromTransformula(final UnmodifiableTransFormula transformula,
-			final Map<TermVariable, String> alternateOldNames,
 			final Map<TermVariable, IProgramVarOrConst> oldTermVarMapping,
 			final Map<IProgramVarOrConst, IProgramVarOrConst> renamedInVars, final Set<IProgramVarOrConst> newOutVars,
 			final Set<IProgramVarOrConst> newAuxVars, final Map<IProgramVarOrConst, IProgramVarOrConst> outVarRenaming,
@@ -358,7 +353,7 @@ public class PoormansAbstractPostOperator<BACKING extends IAbstractState<BACKING
 		// If in a state there is variable x and the transformula's inVars state that {x -> x_1}, then rename x to x_1
 		// in the current state. If the variable is a renamed old variable, take this into account.
 		renamedInVars.putAll(transformula.getInVars().entrySet().stream()
-				.collect(Collectors.toMap(entry -> entry.getKey(), entry -> {
+				.collect(Collectors.toMap(Entry<IProgramVar, TermVariable>::getKey, entry -> {
 					if (oldTermVarMapping.containsKey(entry.getValue())) {
 						return oldTermVarMapping.get(entry.getValue());
 					}
@@ -374,8 +369,6 @@ public class PoormansAbstractPostOperator<BACKING extends IAbstractState<BACKING
 		for (final Entry<IProgramVar, TermVariable> entry : transformula.getOutVars().entrySet()) {
 			if (!renamedInVars.values().stream()
 					.anyMatch(var -> var.getGloballyUniqueId().equals(entry.getValue().getName()))) {
-				// TODO Pass map of old name to new renamed name and, if old name != what is in entry here, then add it.
-				// If it is equal, we already added the variable before.
 				final IProgramVarOrConst newOutVar;
 				if (oldTermVarMapping.containsKey(entry.getValue())) {
 					newOutVar = oldTermVarMapping.get(entry.getValue());
@@ -476,7 +469,7 @@ public class PoormansAbstractPostOperator<BACKING extends IAbstractState<BACKING
 		if (mFreshVarsCache.containsKey(alternateName)) {
 			return mFreshVarsCache.get(alternateName);
 		} else {
-			final IProgramVar freshProgramVar = new MockupProgramVar(var, alternateName);
+			final IProgramVar freshProgramVar = new MockupProgramVar(var, alternateName, mManagedScript);
 			mFreshVarsCache.put(alternateName, freshProgramVar);
 			return freshProgramVar;
 		}
@@ -486,25 +479,22 @@ public class PoormansAbstractPostOperator<BACKING extends IAbstractState<BACKING
 		return getCachedFreshProgramVar(var, var.getName());
 	}
 
-	private class MockupProgramVar implements IProgramVar {
-		private final TermVariable mVar;
-		private final String mAlternateName;
-
-		private MockupProgramVar(final TermVariable var, final String alternateName) {
-			mVar = var;
-			mAlternateName = alternateName;
-		}
-
+	private static final class MockupProgramVar implements IProgramVar {
 		private static final long serialVersionUID = 4924620166368141045L;
 
-		private TermVariable mTerm;
-		private String mName;
+		private final TermVariable mVar;
+		private final TermVariable mTerm;
+		private final String mName;
+
+		private MockupProgramVar(final TermVariable var, final String alternateName,
+				final ManagedScript managedScript) {
+			mVar = var;
+			mName = alternateName;
+			mTerm = managedScript.variable(mName, mVar.getSort());
+		}
 
 		@Override
 		public String getGloballyUniqueId() {
-			if (mName == null) {
-				mName = mAlternateName;
-			}
 			return mName;
 		}
 
@@ -525,9 +515,6 @@ public class PoormansAbstractPostOperator<BACKING extends IAbstractState<BACKING
 
 		@Override
 		public TermVariable getTermVariable() {
-			if (mTerm == null) {
-				mTerm = mManagedScript.variable(getGloballyUniqueId(), mVar.getSort());
-			}
 			return mTerm;
 		}
 
@@ -549,6 +536,14 @@ public class PoormansAbstractPostOperator<BACKING extends IAbstractState<BACKING
 		@Override
 		public ApplicationTerm getPrimedConstant() {
 			return null;
+		}
+
+		private void writeObject(final ObjectOutputStream out) throws IOException {
+			throw new IOException("Unserializable object: " + getClass().getSimpleName());
+		}
+
+		private void readObject(final java.io.ObjectInputStream in) throws IOException, ClassNotFoundException {
+			throw new IOException("Unserializable object: " + getClass().getSimpleName());
 		}
 	}
 }
