@@ -105,4 +105,5 @@ public class HeapSeparatorBenchmark implements ICsvProviderProvider<Integer> {
 	public void incrementEquivalenceClassCounter() {
 		mNoEquivalenceClasses++;
 	}
+
 }
