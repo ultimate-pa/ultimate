@@ -34,6 +34,7 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
@@ -119,20 +120,21 @@ public final class MappedTerm2Expression implements Serializable {
 		return "freshIdentifier" + mFreshIdentiferCounter;
 	}
 
-	public Expression translate(final Term term, final Set<TermVariable> variableNameRetainment) {
+	public Expression translate(final Term term, final Set<TermVariable> variableNameRetainment,
+			final Map<TermVariable, String> alternateOldNames) {
 		Expression result;
 		if (term instanceof AnnotatedTerm) {
-			result = translate((AnnotatedTerm) term, variableNameRetainment);
+			result = translate((AnnotatedTerm) term, variableNameRetainment, alternateOldNames);
 		} else if (term instanceof ApplicationTerm) {
-			return translate((ApplicationTerm) term, variableNameRetainment);
+			return translate((ApplicationTerm) term, variableNameRetainment, alternateOldNames);
 		} else if (term instanceof ConstantTerm) {
-			result = translate((ConstantTerm) term, variableNameRetainment);
+			result = translate((ConstantTerm) term, variableNameRetainment, alternateOldNames);
 		} else if (term instanceof LetTerm) {
-			result = translate((LetTerm) term, variableNameRetainment);
+			result = translate((LetTerm) term, variableNameRetainment, alternateOldNames);
 		} else if (term instanceof QuantifiedFormula) {
-			result = translate((QuantifiedFormula) term, variableNameRetainment);
+			result = translate((QuantifiedFormula) term, variableNameRetainment, alternateOldNames);
 		} else if (term instanceof TermVariable) {
-			result = translate((TermVariable) term, variableNameRetainment);
+			result = translate((TermVariable) term, variableNameRetainment, alternateOldNames);
 		} else {
 			throw new UnsupportedOperationException("unknown kind of Term");
 		}
@@ -140,17 +142,19 @@ public final class MappedTerm2Expression implements Serializable {
 		return result;
 	}
 
-	private static Expression translate(final AnnotatedTerm term, final Set<TermVariable> variableMapRetainment) {
+	private static Expression translate(final AnnotatedTerm term, final Set<TermVariable> variableMapRetainment,
+			final Map<TermVariable, String> alternateOldNames) {
 		throw new UnsupportedOperationException("annotations not supported yet" + term);
 	}
 
-	private Expression translate(final ApplicationTerm term, final Set<TermVariable> variableRewriteMap) {
+	private Expression translate(final ApplicationTerm term, final Set<TermVariable> variableRewriteMap,
+			final Map<TermVariable, String> alternateOldNames) {
 		final FunctionSymbol symb = term.getFunction();
 
 		if (symb.isIntern() && "select".equals(symb.getName())) {
-			return translateSelect(term, variableRewriteMap);
+			return translateSelect(term, variableRewriteMap, alternateOldNames);
 		} else if (symb.isIntern() && "store".equals(symb.getName())) {
-			return translateStore(term, variableRewriteMap);
+			return translateStore(term, variableRewriteMap, alternateOldNames);
 		} else if (BitvectorUtils.isBitvectorConstant(symb)) {
 			return translateBitvectorConstant(term);
 		}
@@ -158,7 +162,7 @@ public final class MappedTerm2Expression implements Serializable {
 		final Term[] termParams = term.getParameters();
 		final Expression[] params = new Expression[termParams.length];
 		for (int i = 0; i < termParams.length; i++) {
-			params[i] = translate(termParams[i], variableRewriteMap);
+			params[i] = translate(termParams[i], variableRewriteMap, alternateOldNames);
 		}
 		final IBoogieType type = mTypeSortTranslator.getType(symb.getReturnSort());
 		if (symb.getParameterSorts().length == 0) {
@@ -176,7 +180,7 @@ public final class MappedTerm2Expression implements Serializable {
 						boogieConst.getIdentifier(), new DeclarationInformation(StorageClass.GLOBAL, null));
 			}
 			if (mBoogie2SmtSymbolTable.getSmtFunction2BoogieFunction().containsKey(symb.getName())) {
-				return translateWithSymbolTable(symb, type, termParams, variableRewriteMap);
+				return translateWithSymbolTable(symb, type, termParams, variableRewriteMap, alternateOldNames);
 			}
 			throw new IllegalArgumentException();
 		} else if ("ite".equals(symb.getName())) {
@@ -187,19 +191,19 @@ public final class MappedTerm2Expression implements Serializable {
 							|| SmtSortUtils.isFloatingpointSort(symb.getReturnSort()))
 					&& !"=".equals(symb.getName()) && !"distinct".equals(symb.getName())) {
 				if ("extract".equals(symb.getName())) {
-					return translateBitvectorAccess(type, term, variableRewriteMap);
+					return translateBitvectorAccess(type, term, variableRewriteMap, alternateOldNames);
 				} else if (mBoogie2SmtSymbolTable.getSmtFunction2BoogieFunction().containsKey(symb.getName())) {
-					return translateWithSymbolTable(symb, type, termParams, variableRewriteMap);
+					return translateWithSymbolTable(symb, type, termParams, variableRewriteMap, alternateOldNames);
 				} else {
 					throw new UnsupportedOperationException(
 							"translation of " + symb + " not yet implemented, please contact Matthias");
 				}
 			} else if (symb.getParameterSorts().length == 1) {
 				if ("not".equals(symb.getName())) {
-					final Expression param = translate(term.getParameters()[0], variableRewriteMap);
+					final Expression param = translate(term.getParameters()[0], variableRewriteMap, alternateOldNames);
 					return new UnaryExpression(null, type, UnaryExpression.Operator.LOGICNEG, param);
 				} else if ("-".equals(symb.getName())) {
-					final Expression param = translate(term.getParameters()[0], variableRewriteMap);
+					final Expression param = translate(term.getParameters()[0], variableRewriteMap, alternateOldNames);
 					return new UnaryExpression(null, type, UnaryExpression.Operator.ARITHNEGATIVE, param);
 				} else {
 					throw new IllegalArgumentException("unknown symbol " + symb);
@@ -225,7 +229,7 @@ public final class MappedTerm2Expression implements Serializable {
 				}
 			}
 		} else if (mBoogie2SmtSymbolTable.getSmtFunction2BoogieFunction().containsKey(symb.getName())) {
-			return translateWithSymbolTable(symb, type, termParams, variableRewriteMap);
+			return translateWithSymbolTable(symb, type, termParams, variableRewriteMap, alternateOldNames);
 		} else {
 			throw new UnsupportedOperationException(
 					"translation of " + symb + " not yet implemented, please contact Matthias");
@@ -233,11 +237,11 @@ public final class MappedTerm2Expression implements Serializable {
 	}
 
 	private Expression translateBitvectorAccess(final IBoogieType type, final ApplicationTerm term,
-			final Set<TermVariable> variableNameRetainment) {
+			final Set<TermVariable> variableNameRetainment, final Map<TermVariable, String> alternateOldNames) {
 		assert "extract".equals(term.getFunction().getName()) : "no extract";
 		assert term.getParameters().length == 1;
 		assert term.getFunction().getIndices().length == 2;
-		final Expression bitvector = translate(term.getParameters()[0], variableNameRetainment);
+		final Expression bitvector = translate(term.getParameters()[0], variableNameRetainment, alternateOldNames);
 		final int start = term.getFunction().getIndices()[1].intValueExact();
 		final int end = term.getFunction().getIndices()[0].intValueExact();
 		return new BitVectorAccessExpression(null, type, bitvector, end, start);
@@ -245,13 +249,16 @@ public final class MappedTerm2Expression implements Serializable {
 
 	/**
 	 * Use symbol table to translate a SMT function application into a Boogie function application.
+	 *
+	 * @param alternateOldNames
 	 */
 	private Expression translateWithSymbolTable(final FunctionSymbol symb, final IBoogieType type,
-			final Term[] termParams, final Set<TermVariable> variableNameRetainment) {
+			final Term[] termParams, final Set<TermVariable> variableNameRetainment,
+			final Map<TermVariable, String> alternateOldNames) {
 		final String identifier = mBoogie2SmtSymbolTable.getSmtFunction2BoogieFunction().get(symb.getName());
 		final Expression[] arguments = new Expression[termParams.length];
 		for (int i = 0; i < termParams.length; i++) {
-			arguments[i] = translate(termParams[i], variableNameRetainment);
+			arguments[i] = translate(termParams[i], variableNameRetainment, alternateOldNames);
 		}
 		return new FunctionApplication(null, type, identifier, arguments);
 	}
@@ -277,11 +284,11 @@ public final class MappedTerm2Expression implements Serializable {
 	}
 
 	private ArrayStoreExpression translateStore(final ApplicationTerm term,
-			final Set<TermVariable> variableNameRetainment) {
-		final Expression array = translate(term.getParameters()[0], variableNameRetainment);
-		final Expression index = translate(term.getParameters()[1], variableNameRetainment);
+			final Set<TermVariable> variableNameRetainment, final Map<TermVariable, String> alternateOldNames) {
+		final Expression array = translate(term.getParameters()[0], variableNameRetainment, alternateOldNames);
+		final Expression index = translate(term.getParameters()[1], variableNameRetainment, alternateOldNames);
 		final Expression[] indices = { index };
-		final Expression value = translate(term.getParameters()[2], variableNameRetainment);
+		final Expression value = translate(term.getParameters()[2], variableNameRetainment, alternateOldNames);
 		final IBoogieType type = mTypeSortTranslator.getType(term.getSort());
 		return new ArrayStoreExpression(null, type, array, indices, value);
 	}
@@ -289,11 +296,13 @@ public final class MappedTerm2Expression implements Serializable {
 	/**
 	 * Translate a single select expression to an ArrayAccessExpression. If we have nested select expressions this leads
 	 * to nested ArrayAccessExpressions, hence arrays which do not occur in the boogie program.
+	 *
+	 * @param alternateOldNames
 	 */
 	private ArrayAccessExpression translateSelect(final ApplicationTerm term,
-			final Set<TermVariable> variableRewriteMap) {
-		final Expression array = translate(term.getParameters()[0], variableRewriteMap);
-		final Expression index = translate(term.getParameters()[1], variableRewriteMap);
+			final Set<TermVariable> variableRewriteMap, final Map<TermVariable, String> alternateOldNames) {
+		final Expression array = translate(term.getParameters()[0], variableRewriteMap, alternateOldNames);
+		final Expression index = translate(term.getParameters()[1], variableRewriteMap, alternateOldNames);
 		final Expression[] indices = { index };
 		final IBoogieType type = mTypeSortTranslator.getType(term.getSort());
 		return new ArrayAccessExpression(null, type, array, indices);
@@ -302,23 +311,25 @@ public final class MappedTerm2Expression implements Serializable {
 	/**
 	 * Translate a nested sequence of select expressions to a single ArrayAccessExpression. (see translateSelect why
 	 * this might be useful)
+	 *
+	 * @param alternateOldNames
 	 */
 	private ArrayAccessExpression translateArray(final ApplicationTerm term,
-			final Set<TermVariable> variableNameRetainment) {
+			final Set<TermVariable> variableNameRetainment, final Map<TermVariable, String> alternateOldNames) {
 		final List<Expression> reverseIndices = new ArrayList<>();
 		ApplicationTerm localTerm = term;
 		while ("select".equals(localTerm.getFunction().getName())
 				&& (localTerm.getParameters()[0] instanceof ApplicationTerm)) {
 			assert localTerm.getParameters().length == 2;
-			final Expression index = translate(localTerm.getParameters()[1], variableNameRetainment);
+			final Expression index = translate(localTerm.getParameters()[1], variableNameRetainment, alternateOldNames);
 			reverseIndices.add(index);
 			localTerm = (ApplicationTerm) localTerm.getParameters()[0];
 		}
 		assert localTerm.getParameters().length == 2;
-		final Expression index = translate(localTerm.getParameters()[1], variableNameRetainment);
+		final Expression index = translate(localTerm.getParameters()[1], variableNameRetainment, alternateOldNames);
 		reverseIndices.add(index);
 
-		final Expression array = translate(localTerm.getParameters()[0], variableNameRetainment);
+		final Expression array = translate(localTerm.getParameters()[0], variableNameRetainment, alternateOldNames);
 		final Expression[] indices = new Expression[reverseIndices.size()];
 		for (int i = 0; i < indices.length; i++) {
 			indices[i] = reverseIndices.get(indices.length - 1 - i);
@@ -327,7 +338,8 @@ public final class MappedTerm2Expression implements Serializable {
 		return new ArrayAccessExpression(null, type, array, indices);
 	}
 
-	private Expression translate(final ConstantTerm term, final Set<TermVariable> variableNameRetainment) {
+	private Expression translate(final ConstantTerm term, final Set<TermVariable> variableNameRetainment,
+			final Map<TermVariable, String> alternateOldNames) {
 		final Object value = term.getValue();
 		final IBoogieType type = mTypeSortTranslator.getType(term.getSort());
 		if (SmtSortUtils.isBitvecSort(term.getSort())) {
@@ -366,11 +378,13 @@ public final class MappedTerm2Expression implements Serializable {
 		}
 	}
 
-	private static Expression translate(final LetTerm term, final Set<TermVariable> variableNameRetainment) {
+	private static Expression translate(final LetTerm term, final Set<TermVariable> variableNameRetainment,
+			final Map<TermVariable, String> alternateOldNames) {
 		throw new IllegalArgumentException("unlet Term first");
 	}
 
-	private Expression translate(final QuantifiedFormula term, final Set<TermVariable> variableNameRetainment) {
+	private Expression translate(final QuantifiedFormula term, final Set<TermVariable> variableNameRetainment,
+			final Map<TermVariable, String> alternateOldNames) {
 		mQuantifiedVariables.beginScope();
 		final VarList[] parameters = new VarList[term.getVariables().length];
 		int offset = 0;
@@ -404,7 +418,7 @@ public final class MappedTerm2Expression implements Serializable {
 			} else {
 				final Expression[] triggers = new Expression[pattern.length];
 				for (int i = 0; i < pattern.length; i++) {
-					triggers[i] = translate(pattern[i], variableNameRetainment);
+					triggers[i] = translate(pattern[i], variableNameRetainment, alternateOldNames);
 				}
 				final Trigger trigger = new Trigger(null, triggers);
 				attributes = new Attribute[1];
@@ -413,18 +427,22 @@ public final class MappedTerm2Expression implements Serializable {
 		} else {
 			attributes = new Attribute[0];
 		}
-		final Expression subformula = translate(subTerm, variableNameRetainment);
+		final Expression subformula = translate(subTerm, variableNameRetainment, alternateOldNames);
 		final QuantifierExpression result =
 				new QuantifierExpression(null, type, isUniversal, typeParams, parameters, attributes, subformula);
 		mQuantifiedVariables.endScope();
 		return result;
 	}
 
-	private Expression translate(final TermVariable term, final Set<TermVariable> variableNameRetainment) {
+	private Expression translate(final TermVariable term, final Set<TermVariable> variableNameRetainment,
+			final Map<TermVariable, String> alternateOldNames) {
 		final Expression result;
 		final IBoogieType type = mTypeSortTranslator.getType(term.getSort());
 
-		if (variableNameRetainment.contains(term)) {
+		if (alternateOldNames.containsKey(term)) {
+			result = new IdentifierExpression(null, type, alternateOldNames.get(term),
+					new DeclarationInformation(StorageClass.IMPLEMENTATION, null));
+		} else if (variableNameRetainment.contains(term)) {
 			result = new IdentifierExpression(null, type, term.getName(),
 					new DeclarationInformation(StorageClass.IMPLEMENTATION, null));
 		} else {

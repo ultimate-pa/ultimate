@@ -56,9 +56,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractDom
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieSymbolTableVariableProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.MappedTerm2Expression;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
@@ -70,8 +70,10 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlockFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence.Origin;
 
 /**
@@ -92,7 +94,9 @@ public class PoormansAbstractPostOperator<BACKING extends IAbstractState<BACKING
 	private final CodeBlockFactory mCodeBlockFactory;
 	private final Boogie2SmtSymbolTableTmpVars mBoogie2SmtSymbolTable;
 	private final MappedTerm2Expression mMappedTerm2Expression;
-	private final CfgSmtToolkit mCfgSmtToolkit;
+
+	private final Map<IProgramVar, IProgramVar> mVariableMap;
+	private Map<String, IProgramVar> mFreshVarsCache;
 
 	protected PoormansAbstractPostOperator(final IUltimateServiceProvider services, final IIcfg<?> root,
 			final IAbstractDomain<BACKING, IcfgEdge> backingDomain,
@@ -111,18 +115,20 @@ public class PoormansAbstractPostOperator<BACKING extends IAbstractState<BACKING
 		mMappedTerm2Expression = new MappedTerm2Expression(mBoogie2Smt.getTypeSortTranslator(),
 				mBoogie2Smt.getBoogie2SmtSymbolTable(), mManagedScript);
 
-		mCfgSmtToolkit = root.getCfgSmtToolkit();
+		mVariableMap = new HashMap<>();
 	}
 
 	@Override
 	public List<PoormanAbstractState<BACKING>> apply(final PoormanAbstractState<BACKING> oldstate,
 			final IcfgEdge transition) {
+		mFreshVarsCache = new HashMap<>();
 		return applyPost(oldstate, transition.getTransformula());
 	}
 
 	@Override
 	public List<PoormanAbstractState<BACKING>> apply(final PoormanAbstractState<BACKING> stateBeforeLeaving,
 			final PoormanAbstractState<BACKING> stateAfterLeaving, final IcfgEdge transition) {
+		mFreshVarsCache = new HashMap<>();
 		if (transition instanceof ICallAction) {
 			return handleCallTransition(stateBeforeLeaving, stateAfterLeaving, (ICallAction) transition);
 		} else if (transition instanceof IReturnAction) {
@@ -144,6 +150,8 @@ public class PoormansAbstractPostOperator<BACKING extends IAbstractState<BACKING
 	 */
 	private List<PoormanAbstractState<BACKING>> applyPost(final PoormanAbstractState<BACKING> oldstate,
 			final UnmodifiableTransFormula transformula) {
+		mVariableMap.clear();
+
 		// Prepare hashsets and maps that are filled in the call to obtainVariableMappingFromTransformula
 		final Map<IProgramVarOrConst, IProgramVarOrConst> renamedInVars = new HashMap<>();
 		final Set<IProgramVarOrConst> newOutVars = new HashSet<>();
@@ -154,10 +162,30 @@ public class PoormansAbstractPostOperator<BACKING extends IAbstractState<BACKING
 
 		// Construct the assume block
 		final Set<TermVariable> variableRetainmentSet = new HashSet<>();
-		variableRetainmentSet.addAll(transformula.getOutVars().values());
+		final Map<TermVariable, IProgramVarOrConst> oldTermVarMapping = new HashMap<>();
+		final Map<TermVariable, String> alternateOldNames = new HashMap<>();
+		// Out-, in- and aux-vars have a different name in the transformula than in the state. These names will be
+		// translated into an assume expression in which the same names occur. These "new" variables do not have a
+		// representation in the symbol table, therefore, they are added to the variableRetainmentSet which indicates
+		// the translator to ignore the symbol table and just create a new variable expression.
+		for (final Entry<IProgramVar, TermVariable> varEntry : transformula.getOutVars().entrySet()) {
+			if (varEntry.getKey() instanceof BoogieOldVar) {
+				// Construct a new variable name from old(x): old~~x
+				final String termVarName =
+						"old~~".concat(varEntry.getValue().getName().replace("old(", "").replace(")", ""));
+
+				alternateOldNames.put(varEntry.getValue(), termVarName);
+				final IProgramVarOrConst newProgramVarFromOld =
+						getCachedFreshProgramVar(varEntry.getValue(), termVarName);
+				oldTermVarMapping.put(varEntry.getValue(), newProgramVarFromOld);
+			} else {
+				variableRetainmentSet.add(varEntry.getValue());
+			}
+		}
 		variableRetainmentSet.addAll(transformula.getInVars().values());
 		variableRetainmentSet.addAll(transformula.getAuxVars());
-		final AssumeStatement assumeStmt = constructBoogieAssumeStatement(transformula, variableRetainmentSet);
+		final AssumeStatement assumeStmt =
+				constructBoogieAssumeStatement(transformula, variableRetainmentSet, alternateOldNames);
 		final HavocStatement havocStmt = constructBoogieHavocStatementOfUnmappedOutVars(transformula);
 
 		final List<Statement> statementList = new ArrayList<>();
@@ -169,8 +197,8 @@ public class PoormansAbstractPostOperator<BACKING extends IAbstractState<BACKING
 		final CodeBlock codeBlock =
 				mCodeBlockFactory.constructStatementSequence(null, null, statementList, Origin.IMPLEMENTATION);
 
-		obtainVariableMappingFromTransformula(transformula, renamedInVars, newOutVars, newAuxVars, outVarRenaming,
-				addedVariables, inAuxVars);
+		obtainVariableMappingFromTransformula(transformula, alternateOldNames, oldTermVarMapping, renamedInVars,
+				newOutVars, newAuxVars, outVarRenaming, addedVariables, inAuxVars);
 
 		final PoormanAbstractState<BACKING> preState =
 				oldstate.renameVariables(renamedInVars).addVariables(addedVariables);
@@ -249,34 +277,42 @@ public class PoormansAbstractPostOperator<BACKING extends IAbstractState<BACKING
 			final PoormanAbstractState<BACKING> stateBeforeLeaving,
 			final PoormanAbstractState<BACKING> stateAfterLeaving, final ICallAction transition) {
 
-		// if (true) {
-		// return null;
-		// }
-
-		final String calledProcedure = transition.getSucceedingProcedure();
-		final UnmodifiableTransFormula globalVarsAssignment =
-				mCfgSmtToolkit.getOldVarsAssignmentCache().getGlobalVarsAssignment(calledProcedure);
-
-		final List<PoormanAbstractState<BACKING>> afterGlobalVars = applyPost(stateBeforeLeaving, globalVarsAssignment);
-
-		final UnmodifiableTransFormula oldVarAssignment =
-				mCfgSmtToolkit.getOldVarsAssignmentCache().getOldVarsAssignment(calledProcedure);
-
-		final List<PoormanAbstractState<BACKING>> localApplication =
-				applyPost(stateBeforeLeaving, transition.getLocalVarsAssignment());
-
-		final List<PoormanAbstractState<BACKING>> returnList = new ArrayList<>();
-		for (final PoormanAbstractState<BACKING> state : localApplication) {
-			returnList.addAll(applyPost(state, transition.getTransformula()));
+		if (!(transition instanceof Call)) {
+			throw new UnsupportedOperationException(
+					"Unknown transition type: " + transition.getClass().getSimpleName());
 		}
+		final Call call = (Call) transition;
+
+		// Apply the call
+		final List<BACKING> postStates = mBackingDomain.getPostOperator().apply(stateBeforeLeaving.getBackingState(),
+				stateAfterLeaving.getBackingState(), call);
+
+		final List<PoormanAbstractState<BACKING>> returnList =
+				postStates.stream().map(state -> new PoormanAbstractState<>(mServices, mBackingDomain, state))
+						.collect(Collectors.toList());
+
 		return returnList;
 	}
 
 	private List<PoormanAbstractState<BACKING>> handleReturnTransition(
 			final PoormanAbstractState<BACKING> stateBeforeLeaving,
 			final PoormanAbstractState<BACKING> stateAfterLeaving, final IReturnAction transition) {
-		// TODO Auto-generated method stub
-		return null;
+
+		if (!(transition instanceof Return)) {
+			throw new UnsupportedOperationException(
+					"Return transition type not supported: " + transition.getClass().getSimpleName());
+		}
+		final Return returnTransition = (Return) transition;
+
+		// Apply the return
+		final List<BACKING> postStates = mBackingDomain.getPostOperator().apply(stateBeforeLeaving.getBackingState(),
+				stateAfterLeaving.getBackingState(), returnTransition);
+
+		final List<PoormanAbstractState<BACKING>> returnStates =
+				postStates.stream().map(state -> new PoormanAbstractState<>(mServices, mBackingDomain, state))
+						.collect(Collectors.toList());
+
+		return returnStates;
 	}
 
 	/**
@@ -285,6 +321,8 @@ public class PoormansAbstractPostOperator<BACKING extends IAbstractState<BACKING
 	 *
 	 * @param transformula
 	 *            The transformula.
+	 * @param alternateOldNames
+	 * @param oldTermVarMapping
 	 * @param renamedInVars
 	 *            Is filled with a mapping of program vars occurring in the program to fresh program vars corresponding
 	 *            to the inVar mapping of the transformula.
@@ -303,6 +341,8 @@ public class PoormansAbstractPostOperator<BACKING extends IAbstractState<BACKING
 	 *            post operator to restore the original variables.
 	 */
 	private void obtainVariableMappingFromTransformula(final UnmodifiableTransFormula transformula,
+			final Map<TermVariable, String> alternateOldNames,
+			final Map<TermVariable, IProgramVarOrConst> oldTermVarMapping,
 			final Map<IProgramVarOrConst, IProgramVarOrConst> renamedInVars, final Set<IProgramVarOrConst> newOutVars,
 			final Set<IProgramVarOrConst> newAuxVars, final Map<IProgramVarOrConst, IProgramVarOrConst> outVarRenaming,
 			final Set<IProgramVarOrConst> addedVariables, final Set<IProgramVarOrConst> inAuxVars) {
@@ -316,9 +356,14 @@ public class PoormansAbstractPostOperator<BACKING extends IAbstractState<BACKING
 
 		// Collect inVars that are to be renamed.
 		// If in a state there is variable x and the transformula's inVars state that {x -> x_1}, then rename x to x_1
-		// in the current state.
+		// in the current state. If the variable is a renamed old variable, take this into account.
 		renamedInVars.putAll(transformula.getInVars().entrySet().stream()
-				.collect(Collectors.toMap(entry -> entry.getKey(), entry -> getFreshProgramVar(entry.getValue()))));
+				.collect(Collectors.toMap(entry -> entry.getKey(), entry -> {
+					if (oldTermVarMapping.containsKey(entry.getValue())) {
+						return oldTermVarMapping.get(entry.getValue());
+					}
+					return getCachedFreshProgramVar(entry.getValue());
+				})));
 
 		// Collect the names of all outVars in the transformula and add fresh variables that are to be added as fresh
 		// variables to the state.
@@ -329,8 +374,15 @@ public class PoormansAbstractPostOperator<BACKING extends IAbstractState<BACKING
 		for (final Entry<IProgramVar, TermVariable> entry : transformula.getOutVars().entrySet()) {
 			if (!renamedInVars.values().stream()
 					.anyMatch(var -> var.getGloballyUniqueId().equals(entry.getValue().getName()))) {
-				final IProgramVarOrConst newOutVar = getFreshProgramVar(entry.getValue());
-				newOutVars.add(newOutVar);
+				// TODO Pass map of old name to new renamed name and, if old name != what is in entry here, then add it.
+				// If it is equal, we already added the variable before.
+				final IProgramVarOrConst newOutVar;
+				if (oldTermVarMapping.containsKey(entry.getValue())) {
+					newOutVar = oldTermVarMapping.get(entry.getValue());
+				} else {
+					newOutVar = getCachedFreshProgramVar(entry.getValue());
+					newOutVars.add(newOutVar);
+				}
 				outVarRenaming.put(newOutVar, entry.getKey());
 			} else {
 				// In this case, the outVar is also an inVar. Thus, the corresponding inVar needs to be added to the
@@ -348,7 +400,7 @@ public class PoormansAbstractPostOperator<BACKING extends IAbstractState<BACKING
 		for (final TermVariable auxVar : transformula.getAuxVars()) {
 			if (!renamedInVars.values().stream().anyMatch(var -> var.getGloballyUniqueId().equals(auxVar.getName()))
 					&& !newOutVars.stream().anyMatch(var -> var.getGloballyUniqueId().equals(auxVar.getName()))) {
-				final IProgramVarOrConst newAuxVar = getFreshProgramVar(auxVar);
+				final IProgramVarOrConst newAuxVar = getCachedFreshProgramVar(auxVar);
 				newAuxVars.add(newAuxVar);
 			}
 		}
@@ -369,6 +421,12 @@ public class PoormansAbstractPostOperator<BACKING extends IAbstractState<BACKING
 						.filter(var -> !transformula.getOutVars().values().stream()
 								.anyMatch(out -> out.getName().equals(var.getGloballyUniqueId())))
 						.collect(Collectors.toSet()));
+
+		for (final TermVariable outVar : transformula.getOutVars().values()) {
+			if (oldTermVarMapping.containsKey(outVar)) {
+				inAuxVars.remove(oldTermVarMapping.get(outVar));
+			}
+		}
 		inAuxVars.addAll(newAuxVars);
 
 		// Some logging output to debug renaming
@@ -379,9 +437,12 @@ public class PoormansAbstractPostOperator<BACKING extends IAbstractState<BACKING
 							+ entry.getKey().hashCode() + ") --> " + entry.getValue().getGloballyUniqueId() + " ("
 							+ entry.getValue().hashCode() + ")"));
 			mLogger.debug("   Will add the following variables to the pre state: " + addedVariables);
-
 			mLogger.debug("   Will remove the following variables from the post state(s): " + inAuxVars);
-			mLogger.debug("   Will rename the following variables from the post state(s): " + outVarRenaming);
+			mLogger.debug("   Will rename the following variables in the post state(s):");
+			outVarRenaming.entrySet().stream()
+					.forEach(entry -> mLogger.debug("     " + entry.getKey().getGloballyUniqueId() + " ("
+							+ entry.getKey().hashCode() + ") --> " + entry.getValue().getGloballyUniqueId() + " ("
+							+ entry.getValue().hashCode() + ")"));
 		}
 	}
 
@@ -393,12 +454,14 @@ public class PoormansAbstractPostOperator<BACKING extends IAbstractState<BACKING
 	 * @param variableRetainmentSet
 	 *            The set of variables whose names should be looked up in the temporary variable set of the symbol table
 	 *            instead of the Boogie symbol table itself.
+	 * @param alternateOldNames
+	 *            The renamed old variables.
 	 * @return A {@link CodeBlock} containing the conversion of the transformula to an assume statement.
 	 */
 	private AssumeStatement constructBoogieAssumeStatement(final UnmodifiableTransFormula transformula,
-			final Set<TermVariable> variableRetainmentSet) {
+			final Set<TermVariable> variableRetainmentSet, final Map<TermVariable, String> alternateOldNames) {
 		final Expression termExpression =
-				mMappedTerm2Expression.translate(transformula.getFormula(), variableRetainmentSet);
+				mMappedTerm2Expression.translate(transformula.getFormula(), variableRetainmentSet, alternateOldNames);
 		final AssumeStatement assume = new AssumeStatement(termExpression.getLoc(), termExpression);
 
 		if (mLogger.isDebugEnabled()) {
@@ -409,60 +472,83 @@ public class PoormansAbstractPostOperator<BACKING extends IAbstractState<BACKING
 		return assume;
 	}
 
-	private IProgramVarOrConst getFreshProgramVar(final TermVariable var) {
-		return new IProgramVar() {
+	private IProgramVar getCachedFreshProgramVar(final TermVariable var, final String alternateName) {
+		if (mFreshVarsCache.containsKey(alternateName)) {
+			return mFreshVarsCache.get(alternateName);
+		} else {
+			final IProgramVar freshProgramVar = new MockupProgramVar(var, alternateName);
+			mFreshVarsCache.put(alternateName, freshProgramVar);
+			return freshProgramVar;
+		}
+	}
 
-			private static final long serialVersionUID = 4924620166368141045L;
+	private IProgramVar getCachedFreshProgramVar(final TermVariable var) {
+		return getCachedFreshProgramVar(var, var.getName());
+	}
 
-			private TermVariable mTerm;
+	private class MockupProgramVar implements IProgramVar {
+		private final TermVariable mVar;
+		private final String mAlternateName;
 
-			@Override
-			public String getGloballyUniqueId() {
-				return var.getName();
+		private MockupProgramVar(final TermVariable var, final String alternateName) {
+			mVar = var;
+			mAlternateName = alternateName;
+		}
+
+		private static final long serialVersionUID = 4924620166368141045L;
+
+		private TermVariable mTerm;
+		private String mName;
+
+		@Override
+		public String getGloballyUniqueId() {
+			if (mName == null) {
+				mName = mAlternateName;
 			}
+			return mName;
+		}
 
-			@Override
-			public boolean isGlobal() {
-				return false;
-			}
+		@Override
+		public boolean isGlobal() {
+			return false;
+		}
 
-			@Override
-			public Term getTerm() {
-				return getTermVariable();
-			}
+		@Override
+		public Term getTerm() {
+			return getTermVariable();
+		}
 
-			@Override
-			public boolean isOldvar() {
-				return false;
-			}
+		@Override
+		public boolean isOldvar() {
+			return false;
+		}
 
-			@Override
-			public TermVariable getTermVariable() {
-				if (mTerm == null) {
-					mTerm = mManagedScript.variable(getGloballyUniqueId(), var.getSort());
-				}
-				return mTerm;
+		@Override
+		public TermVariable getTermVariable() {
+			if (mTerm == null) {
+				mTerm = mManagedScript.variable(getGloballyUniqueId(), mVar.getSort());
 			}
+			return mTerm;
+		}
 
-			@Override
-			public String getProcedure() {
-				return null;
-			}
+		@Override
+		public String toString() {
+			return getGloballyUniqueId();
+		}
 
-			@Override
-			public ApplicationTerm getPrimedConstant() {
-				return null;
-			}
+		@Override
+		public String getProcedure() {
+			return null;
+		}
 
-			@Override
-			public ApplicationTerm getDefaultConstant() {
-				return null;
-			}
+		@Override
+		public ApplicationTerm getDefaultConstant() {
+			return null;
+		}
 
-			@Override
-			public String toString() {
-				return getGloballyUniqueId();
-			}
-		};
+		@Override
+		public ApplicationTerm getPrimedConstant() {
+			return null;
+		}
 	}
 }
