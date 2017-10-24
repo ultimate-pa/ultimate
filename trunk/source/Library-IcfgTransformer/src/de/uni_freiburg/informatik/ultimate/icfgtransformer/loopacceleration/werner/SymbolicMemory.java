@@ -118,6 +118,11 @@ public class SymbolicMemory {
 				substitution.put(t, mMemoryMapping.get(entry.getKey()));
 			}
 
+			if (t instanceof TermVariable && !mMemoryMapping.containsKey(entry.getKey())) {
+				mMemoryMapping.put(entry.getKey(), entry.getValue());
+				continue;
+			}
+
 			if (t instanceof ConstantTerm) {
 				substitution.put(mMemoryMapping.get(entry.getKey()), t);
 			} else {

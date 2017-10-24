@@ -319,7 +319,8 @@ public class IteratedSymbolicMemory {
 			Term newTerm = updateBackboneTerm(backbone);
 
 			for (final TermVariable pathCounter : mPathCounters) {
-				final Term t = mScript.getScript().term("<=", Rational.ZERO.toTerm(SmtSortUtils.getIntSort(mScript)), pathCounter);
+				final Term t = mScript.getScript().term("<=", Rational.ZERO.toTerm(SmtSortUtils.getIntSort(mScript)),
+						pathCounter);
 				newTerm = mScript.getScript().term("and", t, newTerm);
 			}
 

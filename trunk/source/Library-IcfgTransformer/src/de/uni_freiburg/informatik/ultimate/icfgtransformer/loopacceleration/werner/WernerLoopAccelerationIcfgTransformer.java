@@ -219,9 +219,11 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 					loop.addVar(nestedLoop.getVars());
 
 					final List<UnmodifiableTransFormula> tfs = new ArrayList<>();
+
 					final UnmodifiableTransFormula updated = (UnmodifiableTransFormula) loop
 							.updateVars(backbone.getFormula(), loop.getInVars(), loop.getOutVars());
 					tfs.add(updated);
+
 					final UnmodifiableTransFormula updatedExit = (UnmodifiableTransFormula) loop
 							.updateVars(nestedLoop.getExitConditions().get(0), loop.getInVars(), loop.getOutVars());
 					tfs.add(updatedExit);
@@ -287,7 +289,8 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 			Term errorTerm = iteratedSymbolicMemory.updateBackboneTerm(errorTf);
 
 			for (final TermVariable pathCounter : mPathCounter) {
-				final Term t = mScript.getScript().term("<=", Rational.ZERO.toTerm(SmtSortUtils.getIntSort(mScript)), pathCounter);
+				final Term t = mScript.getScript().term("<=", Rational.ZERO.toTerm(SmtSortUtils.getIntSort(mScript)),
+						pathCounter);
 				errorTerm = mScript.getScript().term("and", t, errorTerm);
 			}
 

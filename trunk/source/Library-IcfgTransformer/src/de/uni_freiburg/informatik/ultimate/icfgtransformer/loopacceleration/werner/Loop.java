@@ -122,6 +122,17 @@ public class Loop {
 		final Map<Term, Term> subMapping = new HashMap<>();
 
 		for (final Entry<IProgramVar, TermVariable> oldVar : tf.getInVars().entrySet()) {
+
+			if (inVars.containsKey(oldVar.getKey()) && inVars.get(oldVar.getKey()).equals(outVars.get(oldVar.getKey()))
+					&& !tf.getOutVars().get(oldVar.getKey()).equals(tf.getInVars().get(oldVar.getKey()))) {
+
+				newInVars.put(oldVar.getKey(), inVars.get(oldVar.getKey()));
+				newOutVars.put(oldVar.getKey(), tf.getOutVars().get(oldVar.getKey()));
+
+				subMapping.put(oldVar.getValue(), inVars.get(oldVar.getKey()));
+				continue;
+			}
+
 			if (!inVars.containsKey(oldVar.getKey())) {
 				newInVars.put(oldVar.getKey(), oldVar.getValue());
 				subMapping.put(oldVar.getValue(), oldVar.getValue());
@@ -130,7 +141,14 @@ public class Loop {
 				subMapping.put(oldVar.getValue(), inVars.get(oldVar.getKey()));
 			}
 		}
+
 		for (final Entry<IProgramVar, TermVariable> oldVar : tf.getOutVars().entrySet()) {
+
+			if (inVars.containsKey(oldVar.getKey()) && inVars.get(oldVar.getKey()).equals(outVars.get(oldVar.getKey()))
+					&& !tf.getOutVars().get(oldVar.getKey()).equals(tf.getInVars().get(oldVar.getKey()))) {
+				continue;
+			}
+
 			if (!outVars.containsKey(oldVar.getKey())) {
 				newOutVars.put(oldVar.getKey(), oldVar.getValue());
 				subMapping.put(oldVar.getValue(), oldVar.getValue());
@@ -139,6 +157,9 @@ public class Loop {
 				subMapping.put(oldVar.getValue(), outVars.get(oldVar.getKey()));
 			}
 		}
+
+		setInVars(newInVars);
+		setOutVars(newOutVars);
 
 		final Substitution sub = new Substitution(mScript, subMapping);
 		final Term updatedTerm = sub.transform(tf.getFormula());
