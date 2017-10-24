@@ -160,7 +160,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		}
 	}
 
-	private static Set<? extends IcfgEdge>
+	public static Set<? extends IcfgEdge>
 			extractTransitionsFromRun(final NestedRun<? extends IAction, IPredicate> run) {
 		final int len = run.getLength();
 		final LinkedHashSet<IcfgInternalTransition> transitions = new LinkedHashSet<>(len - 1);
