@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.BackTransValu
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.InlineVersionTransformer;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.GenericResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.translation.DefaultTranslator;
+import de.uni_freiburg.informatik.ultimate.core.model.results.IRelevanceInformation;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithSeverity.Severity;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -132,7 +133,7 @@ public class InlinerBacktranslator
 			}
 			final BackTransValue traceElemMapping = mBackTransMap.get(traceElem);
 			final List<AtomicTraceElement<BoogieASTNode>> recoveredCalls =
-					callReinserter.recoverInlinedCallsBefore(atomicTraceElem, traceElemMapping);
+					callReinserter.recoverInlinedCallsBefore(atomicTraceElem, traceElemMapping, null);
 			for (final AtomicTraceElement<BoogieASTNode> insertedCall : recoveredCalls) {
 				translatedTrace.add(insertedCall.getTraceElement());
 			}
@@ -156,15 +157,23 @@ public class InlinerBacktranslator
 		final CallReinserter callReinserter = new CallReinserter();
 		final Map<Integer, ProgramState<Expression>> translatedStates = new HashMap<>();
 		final List<AtomicTraceElement<BoogieASTNode>> translatedTrace = new ArrayList<>();
+		/*
+		 * We skip undefined functions, but we still want to remember the relevance information. For that we collect all
+		 * the previous relevance information until we find a return and add the relevance information to it (merged).
+		 * We forget the relevance information again after we see a "translatedTraceElem" that is not skipped.
+		 */
+		IRelevanceInformation collectedRelevanceInfo = null;
 		for (int i = 0; i < length; ++i) {
 			final AtomicTraceElement<BoogieASTNode> traceElem = exec.getTraceElement(i);
 			final BackTransValue traceElemMapping = mBackTransMap.get(traceElem.getTraceElement());
-			translatedTrace.addAll(callReinserter.recoverInlinedCallsBefore(traceElem, traceElemMapping));
+			translatedTrace.addAll(
+					callReinserter.recoverInlinedCallsBefore(traceElem, traceElemMapping, collectedRelevanceInfo));
 			if (traceElemMapping == null) {
 				translatedTrace.add(traceElem); // traceElem wasn't affected by inlining
 			} else {
 				final BoogieASTNode translatedTraceElem = traceElemMapping.getOriginalNode();
 				if (translatedTraceElem != null) {
+					collectedRelevanceInfo = null;
 					final BackTransValue stepMapping = mBackTransMap.get(traceElem.getStep());
 					BoogieASTNode translatedStep;
 					if (stepMapping == null || stepMapping.getOriginalNode() == null) {
@@ -175,6 +184,11 @@ public class InlinerBacktranslator
 					translatedTrace.add(new AtomicTraceElement<>(translatedTraceElem, translatedStep,
 							traceElem.getStepInfo(), stringProvider, traceElem.getRelevanceInformation()));
 				} else {
+					if (collectedRelevanceInfo == null) {
+						collectedRelevanceInfo = traceElem.getRelevanceInformation();
+					} else {
+						collectedRelevanceInfo = collectedRelevanceInfo.merge(traceElem.getRelevanceInformation());
+					}
 					continue; // discards the associated ProgramState (State makes no sense without Statement)
 				}
 			}

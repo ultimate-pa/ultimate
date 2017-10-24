@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.BackTransValue;
+import de.uni_freiburg.informatik.ultimate.core.model.results.IRelevanceInformation;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement.StepInfo;
 
@@ -68,10 +69,13 @@ public class CallReinserter {
 	 *            Current trace element.
 	 * @param curBackTrans
 	 *            trace element's value from the backtranslation map.
+	 * @param relevanceInfoForInlinedReturn
+	 *            relevance information for inlined return statements collected by the caller
 	 * @return CallStatements to be inserted before the current trace element.
 	 */
 	public List<AtomicTraceElement<BoogieASTNode>> recoverInlinedCallsBefore(
-			final AtomicTraceElement<BoogieASTNode> curTraceElem, final BackTransValue curBackTrans) {
+			final AtomicTraceElement<BoogieASTNode> curTraceElem, final BackTransValue curBackTrans,
+			final IRelevanceInformation relevanceInfoForInlinedReturn) {
 		final List<AtomicTraceElement<BoogieASTNode>> recoveredCalls = new ArrayList<>();
 		final boolean nonInlinedCall = curTraceElem.hasStepInfo(StepInfo.PROC_CALL);
 		final boolean nonInlinedReturn = curTraceElem.hasStepInfo(StepInfo.PROC_RETURN);
@@ -82,7 +86,7 @@ public class CallReinserter {
 			if (prevBackTrans != curBackTrans) {
 				mPrevBackTranslations.pop();
 				for (final CallStatement callStmt : prevBackTrans.getOriginalCallStack()) {
-					recoveredCalls.add(makeAtomicReturn(callStmt));
+					recoveredCalls.add(makeAtomicReturn(callStmt, null));
 				}
 			}
 			// there were no inlined nodes inside the called procedure
@@ -110,12 +114,12 @@ public class CallReinserter {
 					final CallStatement prevCs = prevStackRevIter.next();
 					final CallStatement curCs = curStackRevIter.next();
 					if (prevCs != curCs) {
-						returns.add(makeAtomicReturn(prevCs));
+						returns.add(makeAtomicReturn(prevCs, null));
 						calls.add(makeAtomicCall(curCs));
 					}
 				}
 				while (prevStackRevIter.hasNext()) {
-					returns.add(makeAtomicReturn(prevStackRevIter.next()));
+					returns.add(makeAtomicReturn(prevStackRevIter.next(), relevanceInfoForInlinedReturn));
 				}
 				while (curStackRevIter.hasNext()) {
 					calls.add(makeAtomicCall(curStackRevIter.next()));
@@ -138,9 +142,10 @@ public class CallReinserter {
 				BoogiePrettyPrinter.getBoogieToStringprovider(), null, null, originalCall.getMethodName());
 	}
 
-	private static AtomicTraceElement<BoogieASTNode> makeAtomicReturn(final CallStatement originalReturn) {
+	private static AtomicTraceElement<BoogieASTNode> makeAtomicReturn(final CallStatement originalReturn,
+			final IRelevanceInformation relevanceInfo) {
 		return new AtomicTraceElement<>(originalReturn, originalReturn, StepInfo.PROC_RETURN,
-				BoogiePrettyPrinter.getBoogieToStringprovider(), null, originalReturn.getMethodName(), null);
+				BoogiePrettyPrinter.getBoogieToStringprovider(), relevanceInfo, originalReturn.getMethodName(), null);
 	}
 
 	/**
