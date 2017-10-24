@@ -66,7 +66,6 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 	private int mConstraintIdCounter = 1;
 
 	private final NestedMap2<Sort, Integer, NODE> mDimensionToWeqVariableNode;
-	private final NestedMap2<Sort, Integer, NODE> mDimensionToWeqVariableNodePrimed;
 
 	private final CCManager<NODE> mCcManager;
 
@@ -83,12 +82,11 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 		mEmptyConstraint.freeze();
 
 		mServices = services;
-//		mCsToolkit = csToolkit;
+
 		mMgdScript = mgdScript;
 		mEqNodeAndFunctionFactory = eqNodeAndFunctionFactory;
 
 		mDimensionToWeqVariableNode = new NestedMap2<>();
-		mDimensionToWeqVariableNodePrimed = new NestedMap2<>();
 
 		mCcManager = new CCManager<>(new CongruenceClosureComparator<NODE>());
 
@@ -118,9 +116,7 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 		return new EqDisjunctiveConstraint<NODE>(bottomsFiltered, this);
 	}
 
-	public EqConstraint<NODE> conjoinFlat(
-			final EqConstraint<NODE> constraint1,
-			final EqConstraint<NODE> constraint2) {
+	public EqConstraint<NODE> conjoin(final EqConstraint<NODE> constraint1, final EqConstraint<NODE> constraint2) {
 		return constraint1.meet(constraint2);
 	}
 
@@ -146,7 +142,7 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 			}
 		}
 
-		// for each tuple in the crossproduct: construct the meet, and add it to the resulting constraintList
+		// for each tuple in the cross product: construct the meet, and add it to the resulting constraintList
 		final List<EqConstraint<NODE>> constraintList = crossProduct.stream()
 			.map(tuple -> tuple.stream()
 					.reduce((constraint1, constraint2) -> constraint1.meet(constraint2)).get())
@@ -154,8 +150,7 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 		return getDisjunctiveConstraint(constraintList);
 	}
 
-	public EqConstraint<NODE> addWeakEquivalence(final NODE array1,
-			final NODE array2, final NODE storeIndex,
+	public EqConstraint<NODE> addWeakEquivalence(final NODE array1, final NODE array2, final NODE storeIndex,
 			final EqConstraint<NODE> inputConstraint) {
 		assert VPDomainHelpers.haveSameType(array1, array2);
 
@@ -204,16 +199,14 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 	 * @param constraint2
 	 * @return
 	 */
-	public EqConstraint<NODE> disjoinFlat(
-			final EqConstraint<NODE> constraint1,
-			final EqConstraint<NODE> constraint2) {
+	public EqConstraint<NODE> disjoin(final EqConstraint<NODE> constraint1, final EqConstraint<NODE> constraint2) {
 		final List<EqConstraint<NODE>> disjuncts = new ArrayList<>();
 		disjuncts.add(constraint1);
 		disjuncts.add(constraint2);
 		return getDisjunctiveConstraint(disjuncts).flatten();
 	}
 
-	public EqConstraint<NODE> addEqualityFlat(final NODE node1, final NODE node2,
+	public EqConstraint<NODE> addEquality(final NODE node1, final NODE node2,
 			final EqConstraint<NODE> originalState) {
 
 		if (originalState.isBottom()) {
@@ -243,7 +236,7 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 	}
 
 
-	public EqConstraint<NODE> addDisequalityFlat(final NODE node1, final NODE node2,
+	public EqConstraint<NODE> addDisequality(final NODE node1, final NODE node2,
 			final EqConstraint<NODE> originalState) {
 		if (originalState.isBottom()) {
 			return originalState;
@@ -373,8 +366,7 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 		return getDisjunctiveConstraint(Collections.singleton(getEmptyConstraint()));
 	}
 
-	public EqConstraint<NODE> getEqConstraint(
-			final WeqCongruenceClosure<NODE> newPartialArrangement) {
+	public EqConstraint<NODE> getEqConstraint(final WeqCongruenceClosure<NODE> newPartialArrangement) {
 		if (newPartialArrangement.isInconsistent()) {
 			return getBottomConstraint();
 		}
@@ -406,6 +398,7 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 		}
 		return result;
 	}
+
 	public Map<Term, Term> getWeqPrimedVarsToWeqVars() {
 		return mWeqVarsToWeqPrimedVars.inverse();
 	}
@@ -424,5 +417,4 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 		}
 		return result;
 	}
-
 }

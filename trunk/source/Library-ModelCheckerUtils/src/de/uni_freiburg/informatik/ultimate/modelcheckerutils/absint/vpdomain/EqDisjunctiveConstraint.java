@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -81,16 +82,16 @@ public class EqDisjunctiveConstraint<NODE extends IEqNodeIdentifier<NODE>>  {
 	}
 
 
-	public EqDisjunctiveConstraint<NODE> projectExistentially(
-			final Collection<Term> termsToProjectAway) {
-		return mFactory.getDisjunctiveConstraint(
-				mConstraints.stream()
-					.map(conjConstraint -> mFactory.projectExistentially(termsToProjectAway, conjConstraint))
-					.collect(Collectors.toSet()));
+	public EqDisjunctiveConstraint<NODE> projectExistentially(final Collection<Term> termsToProjectAway) {
+		final Collection<EqConstraint<NODE>> newConstraints = new ArrayList<>();
+		for (final EqConstraint<NODE> c : mConstraints) {
+			newConstraints.add(mFactory.projectExistentially(termsToProjectAway, c));
+		}
+		return mFactory.getDisjunctiveConstraint(newConstraints);
 	}
 
 	public Set<EqConstraint<NODE>> getConstraints() {
-		return mConstraints;
+		return Collections.unmodifiableSet(mConstraints);
 	}
 
 	/**

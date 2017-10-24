@@ -128,7 +128,7 @@ public class EqState implements IAbstractState<EqState>, IEqualityProvidingState
 	@Override
 	public EqState intersect(final EqState other) {
 		final EqConstraint<EqNode> newConstraint =
-				mFactory.getEqConstraintFactory().conjoinFlat(this.getConstraint(), other.getConstraint());
+				mFactory.getEqConstraintFactory().conjoin(this.getConstraint(), other.getConstraint());
 
 		final Set<IProgramVarOrConst> newVariables = new HashSet<>();
 		newVariables.addAll(this.getVariables());
@@ -141,7 +141,7 @@ public class EqState implements IAbstractState<EqState>, IEqualityProvidingState
 	@Override
 	public EqState union(final EqState other) {
 		final EqConstraint<EqNode> newConstraint =
-				mFactory.getEqConstraintFactory().disjoinFlat(this.getConstraint(), other.getConstraint());
+				mFactory.getEqConstraintFactory().disjoin(this.getConstraint(), other.getConstraint());
 
 		final Set<IProgramVarOrConst> newVariables = new HashSet<>();
 		newVariables.addAll(this.getVariables());

@@ -212,7 +212,7 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>> {
 			assert !elem.equals(en.getKey().getOneElement());
 			assert !elem.equals(en.getKey().getOtherElement());
 
-			nodesToAdd.addAll(en.getValue().projectSingleOrSimpleElement(elem, useWeqGpa));
+			nodesToAdd.addAll(en.getValue().projectSimpleElement(elem, useWeqGpa));
 		}
 		assert elementIsFullyRemoved(elem);
 		return nodesToAdd;
@@ -1066,7 +1066,7 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>> {
 			assert sanityCheckDontEnforceProjectToWeqVars(mPartialArrangement);
 		}
 
-		public Set<NODE> projectSingleOrSimpleElement(final NODE elem, final boolean useWeqGpaMode) {
+		public Set<NODE> projectSimpleElement(final NODE elem, final boolean useWeqGpaMode) {
 			if (isTautological()) {
 				return Collections.emptySet();
 			}
@@ -1096,17 +1096,22 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>> {
 				 *  plan: compute all dependents, and remove them one by one
 				 */
 				if (useWeqGpaMode) {
+					/*
+					 *  current label has been joined with WeqGpa
+					 *  (i.e. lab is a WeqCongruenceClosure, not only a CongruenceClosure)
+					 *  use CcGpa inside this remove.. (avoids endless recursion)
+					 */
 					final Set<NODE> nodesAdded = lab.removeSimpleElementDontUseWeqGpa(elem);
+					// some nodes may have been introduced
 					nodesAdded.stream()
 						.filter(n -> !CongruenceClosure.dependsOnAny(n, mFactory.getAllWeqPrimedNodes()))
 						.forEach(nodesToAddToGpa::add);
-//					nodesToAddToGpa.addAll(lab.removeSimpleElementDontUseWeqGpa(elem));
 				} else {
-					// "single" case
-					final Set<NODE> dependents = lab.getAllElements().stream()
-							.filter(e -> CongruenceClosure.dependsOnAny(e, Collections.singleton(elem)))
-							.collect(Collectors.toSet());
-					lab.removeElementAndDependents(elem, dependents, Collections.emptyMap(), false);
+					/*
+					 * lightweight case, current label is a CongruenceClosure, not a WeqCongruenceClosure
+					 * --> we do not allow introduction of new nodes during the remove operation in the labels here
+					 */
+					lab.removeSimpleElementDontIntroduceNewNodes(elem);
 				}
 
 				assert lab.assertSingleElementIsFullyRemoved(elem);
@@ -1123,7 +1128,8 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>> {
 				if (useWeqGpaMode) {
 					// unprime weqvars
 					lab2 = new CongruenceClosure<>(lab);
-					lab2.transformElementsAndFunctions(node -> node.renameVariables(mFactory.getWeqPrimedVarsToWeqVars()));
+					lab2.transformElementsAndFunctions(
+							node -> node.renameVariables(mFactory.getWeqPrimedVarsToWeqVars()));
 				} else {
 					lab2 = lab;
 				}

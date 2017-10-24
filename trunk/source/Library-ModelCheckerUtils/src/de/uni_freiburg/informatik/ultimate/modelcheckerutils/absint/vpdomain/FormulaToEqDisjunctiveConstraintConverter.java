@@ -189,12 +189,12 @@ public class FormulaToEqDisjunctiveConstraintConverter extends NonRecursive {
 			final EqNode tvNode = mEqNodeAndFunctionFactory.getOrConstructNode(term);
 			if (polarity) {
 				final EqNode trueNode = mEqNodeAndFunctionFactory.getOrConstructNode(mTrueTerm);
-				final EqConstraint<EqNode> tvEqualsTrue = mEqConstraintFactory.addEqualityFlat(tvNode, trueNode,
+				final EqConstraint<EqNode> tvEqualsTrue = mEqConstraintFactory.addEquality(tvNode, trueNode,
 						emptyConstraint);
 				mResultStack.push(mEqConstraintFactory.getDisjunctiveConstraint(Collections.singleton(tvEqualsTrue)));
 			} else {
 				final EqNode falseNode = mEqNodeAndFunctionFactory.getOrConstructNode(mFalseTerm);
-				final EqConstraint<EqNode> tvEqualsFalse = mEqConstraintFactory.addEqualityFlat(tvNode,
+				final EqConstraint<EqNode> tvEqualsFalse = mEqConstraintFactory.addEquality(tvNode,
 						falseNode, emptyConstraint);
 				mResultStack.push(mEqConstraintFactory.getDisjunctiveConstraint(Collections.singleton(tvEqualsFalse)));
 			}
@@ -240,7 +240,7 @@ public class FormulaToEqDisjunctiveConstraintConverter extends NonRecursive {
 				if (polarity) {
 					if (storeTerm == null) {
 						// we have a strong equivalence
-						newConstraint = mEqConstraintFactory.addEqualityFlat(simpleArray, otherSimpleArray,
+						newConstraint = mEqConstraintFactory.addEquality(simpleArray, otherSimpleArray,
 								emptyConstraint);
 					} else {
 						final EqNode storeIndex = mEqNodeAndFunctionFactory
@@ -257,12 +257,12 @@ public class FormulaToEqDisjunctiveConstraintConverter extends NonRecursive {
 								storeTerm.getParameters()[1]);
 						mMgdScript.unlock(this);
 						final EqNode selectEqNode = mEqNodeAndFunctionFactory.getOrConstructNode(selectTerm);
-						newConstraint = mEqConstraintFactory.addEqualityFlat(selectEqNode, storeValue,
+						newConstraint = mEqConstraintFactory.addEquality(selectEqNode, storeValue,
 								intermediateConstraint);
 					}
 				} else {
 					if (storeTerm == null) {
-						newConstraint = mEqConstraintFactory.addDisequalityFlat(simpleArray, otherSimpleArray,
+						newConstraint = mEqConstraintFactory.addDisequality(simpleArray, otherSimpleArray,
 								emptyConstraint);
 					} else {
 						/*
@@ -294,9 +294,9 @@ public class FormulaToEqDisjunctiveConstraintConverter extends NonRecursive {
 
 				final EqConstraint<EqNode> newConstraint;
 				if (polarity) {
-					newConstraint = mEqConstraintFactory.addEqualityFlat(node1, node2, emptyConstraint);
+					newConstraint = mEqConstraintFactory.addEquality(node1, node2, emptyConstraint);
 				} else {
-					newConstraint = mEqConstraintFactory.addDisequalityFlat(node1, node2, emptyConstraint);
+					newConstraint = mEqConstraintFactory.addDisequality(node1, node2, emptyConstraint);
 				}
 				mResultStack.push(mEqConstraintFactory.getDisjunctiveConstraint(Collections.singleton(newConstraint)));
 				return;
