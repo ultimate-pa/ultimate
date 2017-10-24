@@ -20,11 +20,13 @@ import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
 
 public class TreeAutomizerTest extends UltimateTestSuite {
 
-	private static final String TEST_FILES_DIR = "examples/smtlib/horn";
+	private static final String TEST_FILES_DIR = TestUtil.getPathFromTrunk("examples/smtlib/horn");
+//	private static final String TEST_FILES_DIR = "C:\\data\\sv-benchmarks\\clauses\\LIA\\Consistency";
+
+	private static final long TIMEOUT = 10000;
+
 	private static final String TOOLCHAIN = "examples/toolchains/TreeAutomizer.xml";
 	private static final String SETTINGS_FILE = "examples/settings/TreeAutomizer/TreeAutomizerStandardSettings.epf";
-//	private static final String SETTINGS_FILE = "examples/settings/EmptySettings.epf";
-	private static final long TIMEOUT = 10000;
 
 	@Override
 	protected ITestSummary[] constructTestSummaries() {
@@ -48,9 +50,7 @@ public class TreeAutomizerTest extends UltimateTestSuite {
 			final UltimateRunDefinition urd =
 					new UltimateRunDefinition(inputFile, settingsFile, toolchainFile, TIMEOUT);
 			final TreeAutomizerTestResultDecider decider = new TreeAutomizerTestResultDecider(urd, true);
-//			if (decider.getExpectedResult() == ExpectedResult.IGNORE) {
-//				continue;
-//			}
+
 			rtr.add(buildTestCase(urd, decider, inputFile.getName()));
 		}
 
@@ -59,6 +59,6 @@ public class TreeAutomizerTest extends UltimateTestSuite {
 
 
 	public Collection<File> getInputFiles() {
-		return TestUtil.getFiles(new File(TestUtil.getPathFromTrunk(TEST_FILES_DIR)), new String[] { ".smt2" });
+		return TestUtil.getFiles(new File(TEST_FILES_DIR), new String[] { ".smt2" });
 	}
 }
