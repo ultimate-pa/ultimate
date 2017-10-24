@@ -45,11 +45,21 @@ public class HCSymbolTable extends DefaultIcfgSymbolTable {
 		mManagedScript.lock(this);
 		mFalseHornClausePredSym = new HornClausePredicateSymbol.HornClauseFalsePredicateSymbol();
 		mTrueHornClausePredSym = new HornClausePredicateSymbol.HornClauseTruePredicateSymbol();
-
+		mVersionsMap = new HashMap<>();
 		mDontCareHornClausePredSym = new HornClausePredicateSymbol.HornClauseDontCareSymbol();
 		mManagedScript.unlock(this);
 	}
 
+	final Map<TermVariable, Integer> mVersionsMap;
+	
+	public TermVariable createFreshVersion(final TermVariable var) {
+		int ver = 1;
+		if (mVersionsMap.containsKey(var)) {
+			ver = mVersionsMap.get(var) + 1;
+		}
+		return mManagedScript.constructFreshTermVariable(var.getName() + ver, var.getSort());
+	}
+	
 	public HCOutVar getOrConstructHCOutVar(final int argPos, final Sort sort) {
 		HCOutVar result = mArgPosToSortToHcOutVar.get(argPos, sort);
 
