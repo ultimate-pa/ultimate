@@ -1,68 +1,64 @@
 package de.uni_freiburg.informatik.ultimate.ultimatetest.suites.treeautomizer;
 
+import java.io.File;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
+import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestSuite;
+import de.uni_freiburg.informatik.ultimate.test.decider.TreeAutomizerTestResultDecider;
+import de.uni_freiburg.informatik.ultimate.test.logs.incremental.IncrementalLogWithBenchmarkResults;
+import de.uni_freiburg.informatik.ultimate.test.logs.summaries.CsvConcatenator;
+import de.uni_freiburg.informatik.ultimate.test.logs.summaries.TraceAbstractionTestSummary;
 import de.uni_freiburg.informatik.ultimate.test.reporting.IIncrementalLog;
 import de.uni_freiburg.informatik.ultimate.test.reporting.ITestSummary;
+import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
 
 public class TreeAutomizerTest extends UltimateTestSuite {
 
-
-//	private static final String[] ULTIMATE_EXAMPLES = {
-//		"examples/smtlib/horn",
-//	};
-//
-//	/**
-//	 * List of path to setting files.
-//	 * Ultimate will run on each program with each setting that is defined here.
-//	 * The path are defined relative to the folder "trunk/examples/settings/",
-//	 * because we assume that all settings files are in this folder.
-//	 *
-//	 */
-//	private static final String[] SETTINGS = {
-//		"EmptySettings.epf",
-//	};
-//
-//
-//	private static final String[] ATS_TOOLCHAINS = {
-//		"TreeAutomizer.xml",
-//	};
-
-
-//	@Override
-//	protected ColumnDefinition[] getColumnDefinitions() {
-//		return new ColumnDefinition[0];
-//	}
-//	@Override
-//	protected long getTimeout() {
-//		return 10 * 1000;
-//	}
-
-//	@Override
-//	public Collection<UltimateTestCase> createTestCases() {
-//		for (final String setting : SETTINGS) {
-//			for (final String toolchain : ATS_TOOLCHAINS) {
-//				addTestCase(toolchain, setting, ULTIMATE_EXAMPLES, new String[] { ".smt2" });
-//			}
-//		}
-//		return super.createTestCases();
-//	}
+	private static final String TEST_FILES_DIR = "examples/smtlib/horn";
+	private static final String TOOLCHAIN = "examples/toolchains/TreeAutomizer.xml";
+	private static final String SETTINGS_FILE = "examples/settings/TreeAutomizer/TreeAutomizerStandardSettings.epf";
+//	private static final String SETTINGS_FILE = "examples/settings/EmptySettings.epf";
+	private static final long TIMEOUT = 10000;
 
 	@Override
 	protected ITestSummary[] constructTestSummaries() {
-		// TODO Auto-generated method stub
-		return null;
+		return new ITestSummary[] { new TraceAbstractionTestSummary(this.getClass()),
+				new CsvConcatenator(this.getClass(), TraceAbstractionBenchmarks.class) };
 	}
 	@Override
 	protected IIncrementalLog[] constructIncrementalLog() {
-		// TODO Auto-generated method stub
-		return null;
+		return new IIncrementalLog[] { new IncrementalLogWithBenchmarkResults(this.getClass()) };
 	}
+
 	@Override
 	protected Collection<UltimateTestCase> createTestCases() {
-		// TODO Auto-generated method stub
-		return null;
+		final List<UltimateTestCase> rtr = new ArrayList<>();
+		final List<File> inputFiles = new ArrayList<>(getInputFiles());
+		Collections.sort(inputFiles);
+
+		final File toolchainFile = new File(TestUtil.getPathFromTrunk(TOOLCHAIN));
+		final File settingsFile = new File(TestUtil.getPathFromTrunk(SETTINGS_FILE));
+		for (final File inputFile : inputFiles) {
+			final UltimateRunDefinition urd =
+					new UltimateRunDefinition(inputFile, settingsFile, toolchainFile, TIMEOUT);
+			final TreeAutomizerTestResultDecider decider = new TreeAutomizerTestResultDecider(urd, true);
+//			if (decider.getExpectedResult() == ExpectedResult.IGNORE) {
+//				continue;
+//			}
+			rtr.add(buildTestCase(urd, decider, inputFile.getName()));
+		}
+
+		return rtr;
+	}
+
+
+	public Collection<File> getInputFiles() {
+		return TestUtil.getFiles(new File(TestUtil.getPathFromTrunk(TEST_FILES_DIR)), new String[] { ".smt2" });
 	}
 }

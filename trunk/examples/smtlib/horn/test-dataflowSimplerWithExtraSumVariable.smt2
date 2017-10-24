@@ -1,5 +1,7 @@
 ; status: sat (checked by z3)
 ; written on 27.03.2017
+(set-info :status sat)
+
 (set-logic HORN)
 
 (declare-fun I_x (Int) Bool)
