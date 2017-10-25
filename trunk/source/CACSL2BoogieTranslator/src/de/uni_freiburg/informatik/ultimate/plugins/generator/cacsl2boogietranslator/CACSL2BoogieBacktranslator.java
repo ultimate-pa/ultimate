@@ -489,7 +489,14 @@ public class CACSL2BoogieBacktranslator
 	private static IRelevanceInformation getCombinedRelevanceInfo(final AtomicTraceElement<BoogieASTNode> ate1,
 			final AtomicTraceElement<BoogieASTNode> ate2) {
 		final IRelevanceInformation info1 = ate1.getRelevanceInformation();
-		return info1;
+		final IRelevanceInformation info2 = ate2.getRelevanceInformation();
+		if (info1 == null) {
+			return info2;
+		}
+		if (info2 == null) {
+			return info1;
+		}
+		return info1.merge(info2);
 	}
 
 	/**
