@@ -1,0 +1,72 @@
+// This file contains examples from the lecture on theoretical
+// computer science that was held in the winter term 2017/2018
+// at the University of Freiburg.
+// https://swt.informatik.uni-freiburg.de/teaching/WS2017-18/info3
+// The lecture was held in German.
+//
+// Author: Matthias Heizmann, Christian Schilling
+
+
+
+// Deklariere den deterministischen endlichen Automaten (DEA)
+// aus Bsp 2.3
+
+FiniteAutomaton dea1 = (
+     alphabet = {"0" "1"},
+     states = {q0 q1 q2},
+     initialStates = {q0},
+     finalStates = {q0 q1},
+     transitions = {
+         (q0 "0" q0)
+         (q0 "1" q1)
+         (q1 "0" q1)
+         (q1 "1" q2)
+         (q2 "0" q2)
+         (q2 "1" q2)
+     }
+);
+
+// Deklariere das Wort 0101
+Word word1 = ["0" "1" "0" "1"];
+
+// Prüfe ob der DEA dea1 das Wort word1 akzeptiert. (Def 2.3)
+boolean acceptance1 = accepts(dea1, word1);
+
+// Gib das Resultat des Akzeptanztestes aus
+print(acceptance1);
+
+
+// Deklariere den DEA aus Bsp. 2.2
+FiniteAutomaton deaEven = (
+     alphabet = {"0" "1"},
+     states = {q0 q1},
+     initialStates = {q0},
+     finalStates = {q0},
+     transitions = {
+         (q0 "0" q0)
+         (q0 "1" q1)
+         (q1 "0" q1)
+         (q1 "1" q0)
+     }
+);
+
+// Prüfe wieder Akzeptanz.
+boolean acceptance2 = accepts(deaEven, word1);
+print(acceptance2);
+
+
+// Konstruiere den Produktautomat für Schnitt (siehe Beweis von Satz 2.1)
+FiniteAutomaton deaSchnitt = intersect(dea1, deaEven);
+// Beachte dass unsere Automatenbibliothek vorausschauend arbeitet
+// und nur erreichbare Zustände konstruiert.
+
+// Gib eine Textrepräsentation dieses Automaten aus.
+print(deaSchnitt);
+
+// Prüfe wieder Akzeptanz.
+boolean acceptance3 = accepts(deaSchnitt, word1);
+print(acceptance3);
+
+// Konstruiere den Äquivalenzklassenautomaten (Def. 2.6)
+FiniteAutomaton deaAquiv = minimizeSevpa(deaSchnitt);
+print(deaAquiv);
