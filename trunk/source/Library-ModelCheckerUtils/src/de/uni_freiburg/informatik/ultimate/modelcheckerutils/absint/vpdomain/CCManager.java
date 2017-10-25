@@ -27,13 +27,15 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain;
 
 import java.util.Set;
+import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CongruenceClosure;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ICongruenceClosureElement;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialComparator;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialComparator.ComparisonResult;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.PartialOrderCache;
 
-class CCManager<NODE extends IEqNodeIdentifier<NODE>> {
+public class CCManager<NODE extends ICongruenceClosureElement<NODE>> {
 	private final IPartialComparator<CongruenceClosure<NODE>> mCcComparator;
 
 	public CCManager(final IPartialComparator<CongruenceClosure<NODE>> ccComparator) {
@@ -46,13 +48,6 @@ class CCManager<NODE extends IEqNodeIdentifier<NODE>> {
 
 	CongruenceClosure<NODE> getMeet(final CongruenceClosure<NODE> cc1,
 			final CongruenceClosure<NODE> cc2, final CongruenceClosure<NODE>.RemoveElement remInfo) {
-		/*
-		 *  TODO: something smarter
-		 *   ideas:
-		 *    - caching
-		 *    - updating meets alongside inputs (something that updates the cache on a report equality on the ground pa)
-		 *
-		 */
 		final CongruenceClosure<NODE> result;
 		if (remInfo == null) {
 			result = cc1.meetRec(cc2);
@@ -60,41 +55,6 @@ class CCManager<NODE extends IEqNodeIdentifier<NODE>> {
 			result = cc1.meetRec(cc2, remInfo);
 		}
 		return result;
-	}
-
-
-	WeqCongruenceClosure<NODE> getWeqMeet(final CongruenceClosure<NODE> cc1,
-			final WeqCongruenceClosure<NODE> cc2, final CongruenceClosure<NODE>.RemoveElement remInfo) {
-		/*
-		 *  TODO: something smarter
-		 *   ideas:
-		 *    - caching
-		 *    - updating meets alongside inputs (something that updates the cache on a report equality on the ground pa)
-		 *
-		 */
-		final WeqCongruenceClosure<NODE> result;
-		if (remInfo == null) {
-			result = cc2.meetRec(cc1);
-		} else {
-			assert false : "do we need this case?";
-			result = null;
-//			result = cc2.meetRec(cc1, remInfo);
-		}
-		if (result.isInconsistent()) {
-			return result;
-		}
-
-		return result;
-	}
-
-//	public CongruenceClosure<NODE> getMeet(final CongruenceClosure<NODE> cc1,
-//			final CongruenceClosure<NODE> cc2) {
-//		return getMeet(cc1, cc2, null);
-//	}
-
-	public WeqCongruenceClosure<NODE> getWeqMeet(final CongruenceClosure<NODE> cc1,
-			final WeqCongruenceClosure<NODE> cc2) {
-		return getWeqMeet(cc1, cc2, null);
 	}
 
 	public ComparisonResult compare(final CongruenceClosure<NODE> cc1,
@@ -123,13 +83,6 @@ class CCManager<NODE extends IEqNodeIdentifier<NODE>> {
 		return newCC;
 	}
 
-	public CongruenceClosure<NODE> makeCopy(final CongruenceClosure<NODE> meet) {
-		if (meet.isInconsistent()) {
-			return meet;
-		}
-		return new CongruenceClosure<>(meet);
-	}
-
 	public CongruenceClosure<NODE> getSingleEqualityCc(final NODE elem1,
 			final NODE  elem2) {
 		final CongruenceClosure<NODE> newCC = new CongruenceClosure<>();
@@ -144,5 +97,34 @@ class CCManager<NODE extends IEqNodeIdentifier<NODE>> {
 	public Set<CongruenceClosure<NODE>> filterRedundantCcs(final Set<CongruenceClosure<NODE>> unionList,
 			final PartialOrderCache<CongruenceClosure<NODE>> ccPoCache) {
 		return ccPoCache.getMaximalRepresentatives(unionList);
+	}
+
+	public CongruenceClosure<NODE> reportEquality(final NODE node1, final NODE node2,
+			final CongruenceClosure<NODE> origCc) {
+		final CongruenceClosure<NODE> unfrozen = unfreeze(origCc);
+		unfrozen.reportEquality(node1, node2);
+		unfrozen.freeze();
+		return unfrozen;
+	}
+
+	public CongruenceClosure<NODE> reportDisequality(final NODE node1, final NODE node2,
+			final CongruenceClosure<NODE> origCc) {
+		final CongruenceClosure<NODE> unfrozen = unfreeze(origCc);
+		unfrozen.reportDisequality(node1, node2);
+		unfrozen.freeze();
+		return unfrozen;
+	}
+
+	public CongruenceClosure<NODE> transformElementsAndFunctions(final Function<NODE, NODE> elemTransformer,
+			final CongruenceClosure<NODE> origCc) {
+		final CongruenceClosure<NODE> unfrozen = unfreeze(origCc);
+		unfrozen.transformElementsAndFunctions(elemTransformer);
+		unfrozen.freeze();
+		return unfrozen;
+	}
+
+	CongruenceClosure<NODE> unfreeze(final CongruenceClosure<NODE> origCc) {
+		assert origCc.isFrozen();
+		return new CongruenceClosure<>(origCc);
 	}
 }

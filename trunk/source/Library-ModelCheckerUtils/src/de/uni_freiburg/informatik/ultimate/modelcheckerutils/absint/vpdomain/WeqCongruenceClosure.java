@@ -408,7 +408,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		boolean freshElem = false;
 		freshElem |= addElementRec(node1);
 		freshElem |= addElementRec(node2);
-		assert atMostOneLiteralPerEquivalenceClass();
+		assert assertAtMostOneLiteralPerEquivalenceClass();
 
 		if (getEqualityStatus(node1, node2) == EqualityStatus.EQUAL) {
 			// nothing to do
@@ -1037,7 +1037,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		if (gPaMeet.isInconsistent()) {
 			return new WeqCongruenceClosure<>(true);
 		}
-		assert gPaMeet.atMostOneLiteralPerEquivalenceClass();
+		assert gPaMeet.assertAtMostOneLiteralPerEquivalenceClass();
 		assert !this.mWeakEquivalenceGraph.hasArrayEqualities();
 
 

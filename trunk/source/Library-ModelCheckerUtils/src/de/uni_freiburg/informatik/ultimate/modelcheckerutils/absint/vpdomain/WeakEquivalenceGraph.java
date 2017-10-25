@@ -62,7 +62,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  */
 public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>> {
 
-	private final CCManager<NODE> mCcManager;
+	private final WeqCcManager<NODE> mCcManager;
 
 	private final EqConstraintFactory<NODE> mFactory;
 
@@ -668,7 +668,8 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>> {
 		shiftedLabelContents.add(firstWeqVarUnequalArgument);
 		assert shiftedLabelContents.stream().allMatch(l -> l.sanityCheckOnlyCc());
 
-		final Set<CongruenceClosure<NODE>> normalized = mCcManager.filterRedundantCcs(new HashSet<>(shiftedLabelContents));
+		final Set<CongruenceClosure<NODE>> normalized = mCcManager
+				.filterRedundantCcs(new HashSet<>(shiftedLabelContents));
 
 		assert normalized.stream().allMatch(l -> l.sanityCheckOnlyCc());
 		return normalized;
@@ -1104,7 +1105,7 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>> {
 					 *  (i.e. lab is a WeqCongruenceClosure, not only a CongruenceClosure)
 					 *  use CcGpa inside this remove.. (avoids endless recursion)
 					 */
-					final Set<NODE> nodesAdded = lab.removeSimpleElementDontUseWeqGpa(elem);
+					final Set<NODE> nodesAdded = lab.removeSimpleElementDontUseWeqGpaTrackAddedNodes(elem);
 					// some nodes may have been introduced
 					nodesAdded.stream()
 						.filter(n -> !CongruenceClosure.dependsOnAny(n, mFactory.getAllWeqPrimedNodes()))

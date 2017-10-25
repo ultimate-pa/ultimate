@@ -67,7 +67,7 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 
 	private final NestedMap2<Sort, Integer, NODE> mDimensionToWeqVariableNode;
 
-	private final CCManager<NODE> mCcManager;
+	private final WeqCcManager<NODE> mCcManager;
 
 	private final ManagedScript mMgdScript;
 
@@ -88,7 +88,7 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 
 		mDimensionToWeqVariableNode = new NestedMap2<>();
 
-		mCcManager = new CCManager<>(new CongruenceClosureComparator<NODE>());
+		mCcManager = new WeqCcManager<>(new CongruenceClosureComparator<NODE>());
 
 		mWeqVarsToWeqPrimedVars = new BidirectionalMap<>();
 	}
@@ -382,7 +382,7 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 		return this.getClass().getSimpleName();
 	}
 
-	public CCManager<NODE> getCcManager() {
+	public WeqCcManager<NODE> getCcManager() {
 		return mCcManager;
 	}
 
