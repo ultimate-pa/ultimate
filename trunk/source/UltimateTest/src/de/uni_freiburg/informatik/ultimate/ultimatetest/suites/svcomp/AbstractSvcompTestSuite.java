@@ -356,6 +356,17 @@ public abstract class AbstractSvcompTestSuite extends UltimateTestSuite {
 				new File(TestUtil.getPathFromTrunk("examples/settings/" + settings)), timeout, limit);
 	}
 
+	protected SvcompTestDefinition getTestDefinitionFromExamplesOrNull(final String setname, final String toolchain,
+			final String settings, final long timeout, final int limit) {
+		try {
+			return getTestDefinitionFromExamples(setname, toolchain, settings, timeout, limit);
+		} catch (final Exception ex) {
+			getLogger().error("Skipping " + setname + ", " + toolchain + ", " + settings + ", " + timeout + ", " + limit
+					+ "because of ", ex);
+			return null;
+		}
+	}
+
 	protected final static class SvcompTestDefinition {
 		private final String mSetname;
 		private final File mToolchain;
