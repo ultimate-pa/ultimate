@@ -940,16 +940,8 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		}
 
 		if (madeChanges) {
-			final Map<Doubleton<NODE>, WeakEquivalenceGraph<NODE>.WeakEquivalenceEdgeLabel> props =
-					mWeakEquivalenceGraph.close();
-			for (final Entry<Doubleton<NODE>, WeakEquivalenceGraph<NODE>.WeakEquivalenceEdgeLabel> prop
-					: props.entrySet()) {
-				reportWeakEquivalenceDoOnlyRoweqPropagations(prop.getKey().getOneElement(),
-						prop.getKey().getOtherElement(),
-						prop.getValue().getLabelContents());
-			}
+			executeFloydWarshallAndReportResultToWeqCc();
 		}
-
 //		assert sanityCheck();
 	}
 

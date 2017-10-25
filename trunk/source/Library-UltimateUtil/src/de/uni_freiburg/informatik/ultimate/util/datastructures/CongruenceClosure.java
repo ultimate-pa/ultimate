@@ -468,11 +468,11 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 	 * @return
 	 */
 	public boolean removeSimpleElement(final ELEM elem) {
-		return removeSimpleElement(elem, true, true);
+		return removeSimpleElement(elem, true, CcSettings.MEET_WITH_WEQ_CC);
 	}
 
 	public boolean removeSimpleElementDontIntroduceNewNodes(final ELEM elem) {
-		return removeSimpleElement(elem, false, true);
+		return removeSimpleElement(elem, false, false);
 	}
 
 	public Set<ELEM> removeSimpleElementDontUseWeqGpa(final ELEM elem) {
@@ -2451,4 +2451,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		mExternalRemovalInfo = remInfo;
 	}
 
+	static class CcSettings {
+		static final boolean MEET_WITH_WEQ_CC = true;
+	}
 }
