@@ -32,6 +32,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.EqDisjunctiveConstraint;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.EqNode;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.VPStatistics;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ITransitionRelation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
@@ -102,5 +103,13 @@ public class EqTransitionRelation//<ACTION extends IIcfgTransition<IcfgLocation>
 	@Override
 	public String toString() {
 		return "EqTransRel: " + mConstraint.toString();
+	}
+
+
+	public Integer getStatistics(final VPStatistics stat) {
+		switch (stat) {
+		default :
+			return mConstraint.getStatistics(stat);
+		}
 	}
 }

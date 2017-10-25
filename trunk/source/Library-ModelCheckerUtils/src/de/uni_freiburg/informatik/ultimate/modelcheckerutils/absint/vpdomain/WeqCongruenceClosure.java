@@ -1191,7 +1191,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		case NO_SUPPORTING_EQUALITIES:
 			return getSupportingElementEqualities().size();
 		default :
-			throw new UnsupportedOperationException();
+			return VPStatistics.getNonApplicableValue(stat);
 		}
 	}
 

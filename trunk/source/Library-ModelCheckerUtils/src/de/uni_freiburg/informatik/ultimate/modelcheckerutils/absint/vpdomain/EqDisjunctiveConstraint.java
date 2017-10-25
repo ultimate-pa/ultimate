@@ -254,4 +254,18 @@ public class EqDisjunctiveConstraint<NODE extends IEqNodeIdentifier<NODE>>  {
 		}
 		return true;
 	}
+
+	public Integer getStatistics(final VPStatistics stat) {
+		switch (stat) {
+		case NO_DISJUNCTIONS:
+		case MAX_NO_DISJUNCTIONS:
+			return mConstraints.size();
+		default:
+			Integer val = VPStatistics.getInitialValue(stat);
+			for (final EqConstraint<NODE> c : mConstraints) {
+				val = VPStatistics.getAggregator(stat).apply(val, c.getStatistics(stat));
+			}
+			return val;
+		}
+	}
 }

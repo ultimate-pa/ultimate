@@ -148,26 +148,16 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 	public <LOC> void afterFixpointComputation(
 			final IAbstractInterpretationResult<EqState, ACTION, LOC> result) {
 
-//		mBenchmark.setLocationsCounter(result.getLoc2SingleStates().keySet().size());
-
-//		int noSupportingEqualitiesOverall = 0;
-//		int noSupportingDisequalitiesOverall = 0;
+		mBenchmark.setLocationsCounter(result.getLoc2SingleStates().keySet().size());
 		for (final Entry<LOC, EqState> l2s : result.getLoc2SingleStates().entrySet()) {
-//			noSupportingEqualitiesOverall += l2s.getValue().getConstraint()
-//					.getStatistics(VPStatistics.NO_SUPPORTING_EQUALITIES);
-//			noSupportingDisequalitiesOverall += l2s.getValue().getConstraint()
-//					.getStatistics(VPStatistics.NO_SUPPORTING_DISEQUALITIES);
-
 			mBenchmark.reportStatsForLocation(l2s.getValue().getConstraint()::getStatistics);
-//			for (stat : VPStatistics) {
-//
-//			}
-
 		}
 
-//		mBenchmark.setSupportingEqualitiesCounter(noSupportingEqualitiesOverall);
-//		mBenchmark.setSupportingDisequalitiesCounter(noSupportingDisequalitiesOverall);
-
+		mBenchmark.setTransitionsCounter(
+				mPost.getTransformulaConverterCache().getAllTransitionRelations().size());
+		for (final EqTransitionRelation tr : mPost.getTransformulaConverterCache().getAllTransitionRelations()) {
+			mBenchmark.reportStatsForTransitionRelation(tr::getStatistics);
+		}
 
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID,
 				new StatisticsResult<>(Activator.PLUGIN_ID, "ArrayEqualityDomainStatistics", mBenchmark));

@@ -229,4 +229,8 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 			throw new UnsupportedOperationException();
 		}
 	}
+
+	public TransFormulaConverterCache getTransformulaConverterCache() {
+		return mTransFormulaConverter;
+	}
 }

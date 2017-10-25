@@ -26,6 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -143,5 +145,13 @@ public class TransFormulaConverterCache {
 			assert false;
 		}
 		return result == LBool.UNSAT;
+	}
+
+	/**
+	 *
+	 * @return all EqTransitionRelations that have been computed so far
+	 */
+	public Collection<EqTransitionRelation> getAllTransitionRelations() {
+		return Collections.unmodifiableCollection(mTransformulaToEqTransitionRelationCache.values());
 	}
 }

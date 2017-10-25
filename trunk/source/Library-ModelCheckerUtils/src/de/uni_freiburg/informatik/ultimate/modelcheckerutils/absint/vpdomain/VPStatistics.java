@@ -29,16 +29,19 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain;
 import java.util.function.BinaryOperator;
 
 public enum VPStatistics {
-	MAX_WEQGRAPH_SIZE, MAX_SIZEOF_WEQEDGELABEL, NO_SUPPORTING_EQUALITIES, NO_SUPPORTING_DISEQUALITIES;
+	MAX_WEQGRAPH_SIZE, MAX_SIZEOF_WEQEDGELABEL, NO_SUPPORTING_EQUALITIES, NO_SUPPORTING_DISEQUALITIES, NO_DISJUNCTIONS,
+	 MAX_NO_DISJUNCTIONS;
 
 
 	public static BinaryOperator<Integer> getAggregator(final VPStatistics vps) {
 		switch (vps) {
 		case MAX_WEQGRAPH_SIZE:
 		case MAX_SIZEOF_WEQEDGELABEL:
+		case MAX_NO_DISJUNCTIONS:
 			return Math::max;
 		case NO_SUPPORTING_EQUALITIES:
 		case NO_SUPPORTING_DISEQUALITIES:
+		case NO_DISJUNCTIONS:
 			return (i1, i2) -> i1 + i2;
 		default :
 			throw new UnsupportedOperationException();
@@ -49,9 +52,33 @@ public enum VPStatistics {
 		switch (vps) {
 		case MAX_WEQGRAPH_SIZE:
 		case MAX_SIZEOF_WEQEDGELABEL:
+		case MAX_NO_DISJUNCTIONS:
+			return -1;
 		case NO_SUPPORTING_EQUALITIES:
 		case NO_SUPPORTING_DISEQUALITIES:
+		case NO_DISJUNCTIONS:
 			return 0;
+		default :
+			throw new UnsupportedOperationException();
+		}
+	}
+
+	/**
+	 * No all stats of this enum apply for every object. In these cases, they should return the values from here.
+	 *
+	 * @param stat
+	 * @return a value for stat that makes it easy to notice if we are actually using it.
+	 */
+	public static Integer getNonApplicableValue(final VPStatistics stat) {
+		switch (stat) {
+		case MAX_WEQGRAPH_SIZE:
+		case MAX_SIZEOF_WEQEDGELABEL:
+		case MAX_NO_DISJUNCTIONS:
+			return -2;
+		case NO_SUPPORTING_EQUALITIES:
+		case NO_SUPPORTING_DISEQUALITIES:
+		case NO_DISJUNCTIONS:
+			return -2;
 		default :
 			throw new UnsupportedOperationException();
 		}
