@@ -7,10 +7,8 @@
 // Author: Matthias Heizmann, Christian Schilling
 
 
-
 // Deklariere den deterministischen endlichen Automaten (DEA)
 // aus Bsp 2.3
-
 FiniteAutomaton dea1 = (
      alphabet = {"0" "1"},
      states = {q0 q1 q2},
@@ -27,14 +25,13 @@ FiniteAutomaton dea1 = (
 );
 
 // Deklariere das Wort 0101
-Word word1 = ["0" "1" "0" "1"];
+Word w1 = ["0" "1" "0" "1"];
 
-// Prüfe ob der DEA dea1 das Wort word1 akzeptiert. (Def 2.3)
-boolean acceptance1 = accepts(dea1, word1);
+// Prüfe ob der DEA dea1 das Wort w1 akzeptiert. (Def 2.3)
+boolean akzeptanz1 = accepts(dea1, w1);
 
 // Gib das Resultat des Akzeptanztestes aus
-print(acceptance1);
-
+print(akzeptanz1);
 
 // Deklariere den DEA aus Bsp. 2.2
 FiniteAutomaton deaEven = (
@@ -51,9 +48,8 @@ FiniteAutomaton deaEven = (
 );
 
 // Prüfe wieder Akzeptanz.
-boolean acceptance2 = accepts(deaEven, word1);
-print(acceptance2);
-
+boolean akzeptanz2 = accepts(deaEven, w1);
+print(akzeptanz2);
 
 // Konstruiere den Produktautomat für Schnitt (siehe Beweis von Satz 2.1)
 FiniteAutomaton deaSchnitt = intersect(dea1, deaEven);
@@ -64,8 +60,8 @@ FiniteAutomaton deaSchnitt = intersect(dea1, deaEven);
 print(deaSchnitt);
 
 // Prüfe wieder Akzeptanz.
-boolean acceptance3 = accepts(deaSchnitt, word1);
-print(acceptance3);
+boolean akzeptanz3 = accepts(deaSchnitt, w1);
+print(akzeptanz3);
 
 // Konstruiere den Äquivalenzklassenautomaten (Def. 2.6)
 FiniteAutomaton deaAquiv = minimizeSevpa(deaSchnitt);
