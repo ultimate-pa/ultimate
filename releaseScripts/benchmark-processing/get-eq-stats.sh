@@ -5,11 +5,14 @@
 count=0
 valid=0
 
-declare -A statistics=( 
-["MAX_WEQGRAPH_SIZE"]=0
-["MAX_SIZEOF_WEQEDGELABEL"]=0
+declare -A statistics_sum=( 
 ["NO_SUPPORTING_EQUALITIES"]=0
 ["NO_SUPPORTING_DISEQUALITIES"]=0
+)
+
+declare -A statistics_max=( 
+["MAX_WEQGRAPH_SIZE"]=0
+["MAX_SIZEOF_WEQEDGELABEL"]=0
 )
 
 declare -A exceptions
@@ -61,17 +64,28 @@ find "$1" -type f -iname '*.log' | (while read line; do
 
     valid=$((valid+1))
 
-    for i in "${!statistics[@]}"; do 
+    for i in "${!statistics_sum[@]}"; do 
         val=`echo $stats | grep -oP "$i\s*:\s*[0-9]+" | cut -d ':' -f 2`
-        statistics[$i]=$((statistics[$i]+val))
+        statistics_sum[$i]=$((statistics_sum[$i]+val))
+    done
+	for i in "${!statistics_max[@]}"; do 
+        val=`echo $stats | grep -oP "$i\s*:\s*[0-9]+" | cut -d ':' -f 2`
+        if (( statistics_max[$i] < val )); then 
+			statistics_max[$i]=$((val))
+		fi
     done
 done
 
 echo "$valid of $count valid"
 echo "Sum" 
-for i in "${!statistics[@]}"; do 
-    echo "$i=${statistics[$i]}"
+for i in "${!statistics_sum[@]}"; do 
+    echo "$i=${statistics_sum[$i]}"
 done
+echo "Max" 
+for i in "${!statistics_max[@]}"; do 
+    echo "$i=${statistics_max[$i]}"
+done
+
 
 tot=0
 for i in ${exceptions[@]}; do
