@@ -26,8 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CongruenceClosure;
@@ -114,7 +112,7 @@ class CCManager<NODE extends IEqNodeIdentifier<NODE>> {
 	 * @param unionList
 	 * @return
 	 */
-	public List<CongruenceClosure<NODE>> filterRedundantCcs(final Set<CongruenceClosure<NODE>> unionList) {
+	public Set<CongruenceClosure<NODE>> filterRedundantCcs(final Set<CongruenceClosure<NODE>> unionList) {
 		final PartialOrderCache<CongruenceClosure<NODE>> poc = new PartialOrderCache<>(mCcComparator);
 		return filterRedundantCcs(unionList, poc);
 	}
@@ -143,13 +141,8 @@ class CCManager<NODE extends IEqNodeIdentifier<NODE>> {
 		return mCcComparator;
 	}
 
-	public List<CongruenceClosure<NODE>> filterRedundantCcs(final Set<CongruenceClosure<NODE>> unionList,
+	public Set<CongruenceClosure<NODE>> filterRedundantCcs(final Set<CongruenceClosure<NODE>> unionList,
 			final PartialOrderCache<CongruenceClosure<NODE>> ccPoCache) {
-//		for (final CongruenceClosure<NODE> cc : unionList) {
-//			ccPoCache.addElement(cc);
-//		}
-		final List<CongruenceClosure<NODE>> result = new ArrayList<>(ccPoCache.getMaximalRepresentatives(unionList));
-
-		return result;
+		return ccPoCache.getMaximalRepresentatives(unionList);
 	}
 }

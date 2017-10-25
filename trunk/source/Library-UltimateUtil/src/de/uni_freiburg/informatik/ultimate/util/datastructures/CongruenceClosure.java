@@ -657,19 +657,11 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 				return;
 			}
 
-
 			// (for instance:) prepare weq graph by conjoining edge labels with the current gpa
 			prepareForRemove(mUseWeqGpa);
 
 			final Set<ELEM> nodesAddedInLabels =
 					removeElementAndDependents(mElem, elementsToRemove, nodeToReplacementNode, mUseWeqGpa);
-
-//			} else {
-//				for (final ELEM elemToRemove : elementsToRemove) {
-//					removeSingleElement(elemToRemove, nodeToReplacementNode.get(elemToRemove));
-//					mElementsAlreadyRemoved.add(elemToRemove);
-//				}
-//			}
 
 			// the edge labels may have added nodes when projecting something --> add them to the gpa
 			for (final ELEM nail : nodesAddedInLabels) {
