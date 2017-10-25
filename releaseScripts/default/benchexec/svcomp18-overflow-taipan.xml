@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<benchmark tool="ultimatetaipan" memlimit="3.8 GB" timelimit="90" hardtimelimit="112" cpuCores="4">
+<benchmark tool="ultimatetaipan" memlimit="6GB" timelimit="90" hardtimelimit="112" cpuCores="2">
     <rundefinition name="Taipan">
         <propertyfile>/storage/ultimate/trunk/examples/svcomp/NoOverflows.prp</propertyfile>
         <option name="--full-output"/>
