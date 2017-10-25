@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.test.reporting.IPreTestLog;
  * @author dietsch@informatik.uni-freiburg.de
  *
  */
-public class SvcompEqualityDomainMemsafetyTestSuite extends AbstractSVCOMPTestSuite {
+public class SvcompEqualityDomainMemsafetyTestSuite extends AbstractSvcompTestSuite {
 
 	@Override
 	protected ITestResultDecider getTestResultDecider(final UltimateRunDefinition urd) {
@@ -66,8 +66,8 @@ public class SvcompEqualityDomainMemsafetyTestSuite extends AbstractSVCOMPTestSu
 	}
 
 	@Override
-	protected List<SVCOMPTestDefinition> getTestDefinitions() {
-		final List<SVCOMPTestDefinition> rtr = new ArrayList<>();
+	protected List<SvcompTestDefinition> getTestDefinitions() {
+		final List<SvcompTestDefinition> rtr = new ArrayList<>();
 
 		// contains 69 examples, 32bit
 		rtr.addAll(createTests("MemSafety-Arrays", "32bit", "DerefFreeMemtrack"));
@@ -87,18 +87,18 @@ public class SvcompEqualityDomainMemsafetyTestSuite extends AbstractSVCOMPTestSu
 		return rtr;
 	}
 
-	private List<SVCOMPTestDefinition> createTests(final String set, final int limit, final String arch,
+	private List<SvcompTestDefinition> createTests(final String set, final int limit, final String arch,
 			final String category) {
 		return createTests(set, getTimeout(), limit, arch, category);
 	}
 
-	private List<SVCOMPTestDefinition> createTests(final String set, final String arch, final String category) {
+	private List<SvcompTestDefinition> createTests(final String set, final String arch, final String category) {
 		return createTests(set, getTimeout(), getFilesPerCategory(), arch, category);
 	}
 
-	private List<SVCOMPTestDefinition> createTests(final String set, final long timeout, final int limit,
+	private List<SvcompTestDefinition> createTests(final String set, final long timeout, final int limit,
 			final String arch, final String category) {
-		final List<SVCOMPTestDefinition> rtr = new ArrayList<>();
+		final List<SvcompTestDefinition> rtr = new ArrayList<>();
 
 		// uses only abstract interpretation
 		rtr.add(getTestDefinitionFromExamples(set, "AbstractInterpretationC.xml",

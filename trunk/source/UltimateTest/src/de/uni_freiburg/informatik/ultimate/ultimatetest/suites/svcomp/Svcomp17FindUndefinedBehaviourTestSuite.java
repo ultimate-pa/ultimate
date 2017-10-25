@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.test.decider.SomeVerificationResultTe
  * @author dietsch@informatik.uni-freiburg.de, heizmann@informatik.uni-freiburg.de
  *
  */
-public class Svcomp17FindUndefinedBehaviourTestSuite extends AbstractSVCOMPTestSuite {
+public class Svcomp17FindUndefinedBehaviourTestSuite extends AbstractSvcompTestSuite {
 	
 	@Override
 	protected ITestResultDecider getTestResultDecider(final UltimateRunDefinition urd) {
@@ -57,8 +57,8 @@ public class Svcomp17FindUndefinedBehaviourTestSuite extends AbstractSVCOMPTestS
 	}
 	
 	@Override
-	protected List<SVCOMPTestDefinition> getTestDefinitions() {
-		final List<SVCOMPTestDefinition> rtr = new ArrayList<>();
+	protected List<SvcompTestDefinition> getTestDefinitions() {
+		final List<SvcompTestDefinition> rtr = new ArrayList<>();
 		//@formatter:off
 
 		// available sets:
@@ -93,16 +93,16 @@ public class Svcomp17FindUndefinedBehaviourTestSuite extends AbstractSVCOMPTestS
 		return rtr;
 	}
 	
-	private List<SVCOMPTestDefinition> getForAll(final String set, final int limit) {
+	private List<SvcompTestDefinition> getForAll(final String set, final int limit) {
 		return getForAll(set, getTimeout(), limit);
 	}
 	
-	private List<SVCOMPTestDefinition> getForAll(final String set) {
+	private List<SvcompTestDefinition> getForAll(final String set) {
 		return getForAll(set, getTimeout(), getFilesPerCategory());
 	}
 	
-	private List<SVCOMPTestDefinition> getForAll(final String set, final long timeout, final int limit) {
-		final List<SVCOMPTestDefinition> rtr = new ArrayList<>();
+	private List<SvcompTestDefinition> getForAll(final String set, final long timeout, final int limit) {
+		final List<SvcompTestDefinition> rtr = new ArrayList<>();
 		rtr.add(getTestDefinitionFromExamples(set, "AutomizerC.xml", "automizer/FindUndefinedBehaviour/svcomp-DerefFree-32bit-Automizer_Default.epf",
 				timeout, limit));
 		return rtr;

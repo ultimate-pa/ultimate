@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.test.decider.SvcompReachTestResultDec
  * @author dietsch@informatik.uni-freiburg.de
  *
  */
-public class Svcomp17TaipanReachTestSuite extends AbstractSVCOMPTestSuite {
+public class Svcomp17TaipanReachTestSuite extends AbstractSvcompTestSuite {
 
 	@Override
 	protected ITestResultDecider getTestResultDecider(final UltimateRunDefinition urd) {
@@ -58,8 +58,8 @@ public class Svcomp17TaipanReachTestSuite extends AbstractSVCOMPTestSuite {
 	}
 
 	@Override
-	protected List<SVCOMPTestDefinition> getTestDefinitions() {
-		final List<SVCOMPTestDefinition> rtr = new ArrayList<>();
+	protected List<SvcompTestDefinition> getTestDefinitions() {
+		final List<SvcompTestDefinition> rtr = new ArrayList<>();
 		// contains 135 examples
 		// rtr.addAll(getForAll("ReachSafety-Arrays", true));
 
@@ -90,17 +90,17 @@ public class Svcomp17TaipanReachTestSuite extends AbstractSVCOMPTestSuite {
 		return rtr;
 	}
 
-	private List<SVCOMPTestDefinition> getForAll(final String set, final int limit, final boolean arch32) {
+	private List<SvcompTestDefinition> getForAll(final String set, final int limit, final boolean arch32) {
 		return getForAll(set, getTimeout(), limit, arch32);
 	}
 
-	private List<SVCOMPTestDefinition> getForAll(final String set, final boolean arch32) {
+	private List<SvcompTestDefinition> getForAll(final String set, final boolean arch32) {
 		return getForAll(set, getTimeout(), getFilesPerCategory(), arch32);
 	}
 
-	private List<SVCOMPTestDefinition> getForAll(final String set, final long timeout, final int limit,
+	private List<SvcompTestDefinition> getForAll(final String set, final long timeout, final int limit,
 			final boolean arch32) {
-		final List<SVCOMPTestDefinition> rtr = new ArrayList<>();
+		final List<SvcompTestDefinition> rtr = new ArrayList<>();
 
 		if (arch32) {
 			rtr.add(getTestDefinitionFromExamples(set, "AutomizerCInline.xml",
