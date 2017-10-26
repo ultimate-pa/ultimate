@@ -342,10 +342,11 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 	 * @param elem
 	 * @return true iff the element was not known to this CongruenceClosure before
 	 */
-	protected boolean addElement(final ELEM elem) {
-		final boolean result = addElementRec(elem);
+	protected void addElement(final ELEM elem) {
+//		final boolean result = addElementRec(elem);
+		addElementRec(elem);
 		assert sanityCheck();
-		return result;
+//		return result;
 	}
 
 	protected boolean addElementRec(final ELEM elem) {
@@ -384,6 +385,15 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		if (elem.isLiteral()) {
 			mAllLiterals.add(elem);
 		}
+
+		if (elem.isDependent()) {
+			for (final ELEM supp : elem.getSupportingNodes()) {
+				addElementRec(supp);
+//				mNodeToDependents.addPair(supp, elem);
+				mFaAuxData.addSupportingNode(supp, elem);
+			}
+		}
+
 
 		if (!elem.isFunctionApplication()) {
 			// nothing to do
@@ -448,16 +458,6 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 
 	}
 
-//	/**
-//	 * Remove a simple element, i.e., an element that is not a function application.
-//	 *
-//	 * @param elem
-//	 * @return
-//	 */
-//	public boolean removeSimpleElement(final ELEM elem) {
-//		return removeSimpleElementWithReplacementPreference(elem, null);
-//	}
-
 	/**
 	 * Remove a simple element, i.e., an element that is not a function application.
 	 *
@@ -468,12 +468,12 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 	 * @param preferredReplacements
 	 * @return
 	 */
-	public boolean removeSimpleElement(final ELEM elem) {
-		return removeSimpleElement(elem, true, CcSettings.MEET_WITH_WEQ_CC).madeChanges();
+	public void removeSimpleElement(final ELEM elem) {
+		removeSimpleElement(elem, true, CcSettings.MEET_WITH_WEQ_CC);
 	}
 
-	public boolean removeSimpleElementDontIntroduceNewNodes(final ELEM elem) {
-		return removeSimpleElement(elem, false, false).madeChanges();
+	public void removeSimpleElementDontIntroduceNewNodes(final ELEM elem) {
+		removeSimpleElement(elem, false, false);
 	}
 
 	public Set<ELEM> removeSimpleElementDontUseWeqGpaTrackAddedNodes(final ELEM elem) {
@@ -515,7 +515,19 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 
 
 	protected Set<ELEM> collectElementsToRemove(final ELEM elem) {
-		return collectTransitiveParents(elem);
+		final Set<ELEM> result = new HashSet<>();
+
+		// collect transitive parents of dependent elements
+//		result.addAll(mNodeToDependents.getImage(elem));
+		result.addAll(mFaAuxData.getDependentsOf(elem));
+//		for (final ELEM dep : mNodeToDependents.getImage(elem)) {
+		for (final ELEM dep : mFaAuxData.getDependentsOf(elem)) {
+			result.addAll(collectTransitiveParents(dep));
+		}
+
+		result.addAll(collectTransitiveParents(elem));
+
+		return result;
 	}
 
 	protected Set<ELEM> collectTransitiveParents(final ELEM elem) {
@@ -739,6 +751,11 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 	 */
 	public Set<ELEM> removeElementAndDependents(final ELEM elem, final Set<ELEM> elementsToRemove,
 			final Map<ELEM, ELEM> nodeToReplacementNode, final boolean useWeqGpa) {
+
+		for (final ELEM etr : elementsToRemove) {
+			mFaAuxData.removeFromNodeToDependents(etr);
+		}
+
 		// remove from this cc
 		for (final ELEM etr : elementsToRemove) {
 			if (!hasElement(etr)) {
@@ -978,7 +995,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		if (elementCurrentlyBeingRemoved == null) {
 			return elem;
 		}
-		if (!supports(elementCurrentlyBeingRemoved.getElem(), elem)) {
+//		if (!supports(elementCurrentlyBeingRemoved.getElem(), elem)) {
+		if (!dependsOnAny(elementCurrentlyBeingRemoved.getElem(), Collections.singleton(elem))) {
 			return elem;
 		}
 
@@ -1004,16 +1022,16 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		return null;
 	}
 
-	/**
-	 * Does elem2 depend on elem?
-	 *
-	 * @param elem
-	 * @param elem2
-	 * @return
-	 */
-	protected boolean supports(final ELEM elem, final ELEM elem2) {
-		return dependsOnAny(elem2, Collections.singleton(elem));
-	}
+//	/**
+//	 * Does elem2 depend on elem?
+//	 *
+//	 * @param elem
+//	 * @param elem2
+//	 * @return
+//	 */
+//	protected boolean supports(final ELEM elem, final ELEM elem2) {
+//		return dependsOnAny(elem2, Collections.singleton(elem));
+//	}
 
 	protected ELEM updateElementTverAndAuxDataOnRemoveElement(final ELEM elem) {
 		final boolean elemWasRepresentative = mElementTVER.isRepresentative(elem);
@@ -1347,6 +1365,14 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 	}
 
 	public boolean assertSingleElementIsFullyRemoved(final ELEM elem) {
+//		for (final Entry<ELEM, ELEM> en : mNodeToDependents.entrySet()) {
+		for (final Entry<ELEM, ELEM> en : mFaAuxData.getNodeToDependentPairs()) {
+			if (en.getKey().equals(elem) || en.getValue().equals(elem)) {
+				assert false;
+				return false;
+			}
+		}
+
 		return assertElementIsFullyRemovedOnlyCc(elem);
 	}
 
@@ -1912,14 +1938,23 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		private final HashRelation<ELEM, ELEM> mDirectAfPars;
 		private final HashRelation<ELEM, ELEM> mDirectArgPars;
 
+
+		private final HashRelation<ELEM, ELEM> mNodeToDependents;
+
 		FuncAppTreeAuxData() {
 			mDirectAfPars = new HashRelation<>();
 			mDirectArgPars = new HashRelation<>();
+			mNodeToDependents = new HashRelation<>();
 		}
 
 		FuncAppTreeAuxData(final CongruenceClosure<ELEM>.FuncAppTreeAuxData faAuxData) {
 			mDirectAfPars = new HashRelation<>(faAuxData.mDirectAfPars);
 			mDirectArgPars = new HashRelation<>(faAuxData.mDirectArgPars);
+			mNodeToDependents = new HashRelation<>(faAuxData.mNodeToDependents);
+		}
+
+		public void addSupportingNode(final ELEM supp, final ELEM elem) {
+			mNodeToDependents.addPair(supp, elem);
 		}
 
 		public void addAfParent(final ELEM elem, final ELEM parent) {
@@ -1949,6 +1984,27 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		public void transformElements(final Function<ELEM, ELEM> elemTransformer) {
 			mDirectAfPars.transformElements(elemTransformer, elemTransformer);
 			mDirectArgPars.transformElements(elemTransformer, elemTransformer);
+
+			for (final Entry<ELEM, ELEM> en : new HashRelation<>(mNodeToDependents).entrySet()) {
+				mNodeToDependents.removePair(en.getKey(), en.getValue());
+				mNodeToDependents.addPair(elemTransformer.apply(en.getKey()),
+						elemTransformer.apply(en.getValue()));
+			}
+		}
+
+		public Set<Entry<ELEM, ELEM>> getNodeToDependentPairs() {
+			return mNodeToDependents.entrySet();
+		}
+
+		public Set<ELEM> getDependentsOf(final ELEM elem) {
+			return mNodeToDependents.getImage(elem);
+		}
+
+		public void removeFromNodeToDependents(final ELEM etr) {
+			if (etr.isDependent()) {
+				mNodeToDependents.removeRangeElement(etr);
+			}
+			mNodeToDependents.removeDomainElement(etr);
 		}
 	}
 

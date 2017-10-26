@@ -8,18 +8,18 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.PartialOrde
 
 public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 
-	private final CCManager<NODE> mCcManager;
+	private final CcManager<NODE> mCcManager;
 
 	public WeqCcManager(final IPartialComparator<CongruenceClosure<NODE>> ccComparator) {
-		mCcManager = new CCManager<>(ccComparator);
+		mCcManager = new CcManager<>(ccComparator);
 	}
 
-	WeqCongruenceClosure<NODE> getWeqMeet(final CongruenceClosure<NODE> cc1,
-			final WeqCongruenceClosure<NODE> cc2, final CongruenceClosure<NODE>.RemoveElement remInfo) {
+	WeqCongruenceClosure<NODE> getWeqMeet(final CongruenceClosure<NODE> cc,
+			final WeqCongruenceClosure<NODE> weqcc, final CongruenceClosure<NODE>.RemoveElement remInfo) {
 
 		final WeqCongruenceClosure<NODE> result;
 		if (remInfo == null) {
-			result = cc2.meetRec(cc1);
+			result = weqcc.meetRec(cc);
 		} else {
 			assert false : "do we need this case?";
 			result = null;
@@ -30,9 +30,20 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		return result;
 	}
 
-	public WeqCongruenceClosure<NODE> getWeqMeet(final CongruenceClosure<NODE> cc1,
-			final WeqCongruenceClosure<NODE> cc2) {
-		return getWeqMeet(cc1, cc2, null);
+	public WeqCongruenceClosure<NODE> getWeqMeet(final CongruenceClosure<NODE> cc,
+			final WeqCongruenceClosure<NODE> weqcc) {
+		return getWeqMeet(cc, weqcc, null);
+	}
+
+	public WeqCongruenceClosure<NODE> addNode(final NODE node, final WeqCongruenceClosure<NODE> origWeqCc) {
+		final WeqCongruenceClosure<NODE> unfrozen = unfreeze(origWeqCc);
+		unfrozen.addElement(node);
+		unfrozen.freeze();
+		return unfrozen;
+	}
+
+	private WeqCongruenceClosure<NODE> unfreeze(final WeqCongruenceClosure<NODE> origWeqCc) {
+		return new WeqCongruenceClosure<>(origWeqCc);
 	}
 
 	public Set<CongruenceClosure<NODE>> filterRedundantCcs(final Set<CongruenceClosure<NODE>> ccs) {
