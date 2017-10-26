@@ -76,7 +76,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 
 	protected final Collection<ELEM> mAllLiterals;
 
-	protected boolean mIsFrozen = false;;
+	protected boolean mIsFrozen = false;
 
 	/**
 	 *
@@ -343,10 +343,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 	 * @return true iff the element was not known to this CongruenceClosure before
 	 */
 	protected void addElement(final ELEM elem) {
-//		final boolean result = addElementRec(elem);
 		addElementRec(elem);
 		assert sanityCheck();
-//		return result;
 	}
 
 	protected boolean addElementRec(final ELEM elem) {
@@ -354,12 +352,6 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 	}
 
 	private boolean addElementRec(final ELEM elem, final CongruenceClosure<ELEM>.RemoveElement remInfo) {
-
-		//		assert mElementCurrentlyBeingRemoved == null
-//				|| !elem.isFunctionApplication()
-//				|| (!elem.getAppliedFunction().equals(mElementCurrentlyBeingRemoved.getElem())
-//						&& !elem.getArgument().equals(mElementCurrentlyBeingRemoved.getElem()));
-
 		final boolean newlyAdded = mElementTVER.addElement(elem);
 		if (newlyAdded) {
 			registerNewElement(elem, remInfo);
@@ -389,7 +381,6 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		if (elem.isDependent()) {
 			for (final ELEM supp : elem.getSupportingNodes()) {
 				addElementRec(supp);
-//				mNodeToDependents.addPair(supp, elem);
 				mFaAuxData.addSupportingNode(supp, elem);
 			}
 		}
@@ -518,9 +509,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		final Set<ELEM> result = new HashSet<>();
 
 		// collect transitive parents of dependent elements
-//		result.addAll(mNodeToDependents.getImage(elem));
 		result.addAll(mFaAuxData.getDependentsOf(elem));
-//		for (final ELEM dep : mNodeToDependents.getImage(elem)) {
 		for (final ELEM dep : mFaAuxData.getDependentsOf(elem)) {
 			result.addAll(collectTransitiveParents(dep));
 		}
@@ -549,7 +538,6 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 	public class RemoveElement {
 
 		private final ELEM mElem;
-//		private final HashMap<ELEM, ELEM> mRemovedElemToNewRep;
 		private final boolean mIntroduceNewNodes;
 		private final boolean mUseWeqGpa;
 
@@ -578,7 +566,6 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 			}
 
 			mElem = elem;
-//			mRemovedElemToNewRep = trackNewReps ? new HashMap<>() : null;
 			mIntroduceNewNodes = introduceNewNodes;
 			mUseWeqGpa = useWeqGpa;
 			mMadeChanges = false;
@@ -682,11 +669,6 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 			return mMadeChanges;
 		}
 
-//		public HashMap<ELEM, ELEM> removedElemToNewRep() {
-//			assert mRemovedElemToNewRep != null : "constructor flag trackNewReps was not set!";
-//			return mRemovedElemToNewRep;
-//		}
-
 		public Set<ELEM> getRemovedElements() {
 			return mElementsToRemove;
 		}
@@ -696,47 +678,6 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 			return mElementsToRemove.toString();
 		}
 
-	}
-
-	/**
-	 * Helper (the division into removeSimple and removeFuncApp is used for subclasses)
-	 *
-	 * @param elem
-	 * @param allWeqNodes
-	 * @return
-	 */
-	private boolean removeAnyElement(final ELEM elem, final Map<ELEM, ELEM> removedElemToNewRep) {
-		if (!hasElement(elem)) {
-			return false;
-		}
-
-		addNodesEquivalentToNodesWithRemovedElement(elem);
-//		assert sanityCheckOnlyCc();
-
-		final Collection<ELEM> oldAfParents = new ArrayList<>(mFaAuxData.getAfParents(elem));
-		final Collection<ELEM> oldArgParents = new ArrayList<>(mFaAuxData.getArgParents(elem));
-
-		if (removedElemToNewRep == null) {
-			updateElementTverAndAuxDataOnRemoveElement(elem);
-		} else {
-			final ELEM newRep = updateElementTverAndAuxDataOnRemoveElement(elem);
-			removedElemToNewRep.put(elem, newRep);
-		}
-		assert assertElementIsFullyRemovedOnlyCc(elem);
-//		assert sanityCheckOnlyCc();
-
-		for (final ELEM parent : oldAfParents) {
-			removeAnyElement(parent, removedElemToNewRep);
-		}
-		assert assertElementIsFullyRemovedOnlyCc(elem);
-		for (final ELEM parent : oldArgParents) {
-			removeAnyElement(parent, removedElemToNewRep);
-		}
-//		removeParents(oldAfParents, oldArgParents);
-
-//		assert sanityCheckOnlyCc();
-		assert assertElementIsFullyRemovedOnlyCc(elem);
-		return true;
 	}
 
 	/**
@@ -781,18 +722,10 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 	 * @return
 	 */
 	protected Set<ELEM> getNodesToIntroduceBeforeRemoval(final ELEM elemToRemove,
-//			final boolean elemToRemoveIsAppliedFunctionNotArgument,
 			final Map<ELEM, ELEM> elemToRemoveToReplacement) {
-
-
 
 		assert elemToRemoveToReplacement.keySet().contains(elemToRemove);
 		assert elemToRemoveToReplacement.keySet().equals(mElementCurrentlyBeingRemoved.getRemovedElements());
-
-
-//		if (!isConstrained(elemToRemove)) {
-//			return Collections.emptySet();
-//		}
 
 		/*
 		 * say
@@ -904,134 +837,9 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		return null;
 	}
 
-	protected Collection<? extends ELEM> collectNodesToAddBeforeRemoval(final ELEM elemToRemove,
-			final ELEM replacement) {
-		assert false : "doing this differently..";
-		final Set<ELEM> result = new HashSet<>();
-
-//		/*
-//		 * say we remove i, and we have a node a[i], and i is equivalent to j, then we introduce the node a[j].
-//		 */
-//		if (replacement != null) {
-//			for (final ELEM parent : new ArrayList<>(mFaAuxData.getAfParents(elemToRemove))) {
-//				assert parent.getAppliedFunction() == elemToRemove;
-//				final ELEM replaced = parent.replaceAppliedFunction(replacement);
-////				addElementRec(replaced);
-//				result.add(replaced);
-//			}
-//			for (final ELEM parent : new ArrayList<>(mFaAuxData.getArgParents(elemToRemove))) {
-//				assert parent.getArgument() == elemToRemove;
-//				final ELEM replaced = parent.replaceArgument(replacement);
-////				addElementRec(replaced);
-//				result.add(replaced);
-//			}
-//		}
-		return result;
-	}
-
 	protected void prepareForRemove(final boolean useWeqGpa) {
 		// do nothing (method relevant for subclasses)
 	}
-
-//	/**
-//	 * should only be called from WeakEquivalenceGraph or from CongruenceClosure!
-//	 *
-//	 * @param elem
-//	 * @param replacement
-//	 * @return
-//	 */
-//	public boolean removeSingleElement(final ELEM elem, final ELEM replacement) {
-//		assert !isInconsistent();
-//
-//		if (!hasElement(elem)) {
-//			return false;
-//		}
-//
-//		updateElementTverAndAuxDataOnRemoveElement(elem);
-//
-//		assert assertSingleElementIsFullyRemoved(elem);
-//		return true;
-//	}
-
-//	protected ELEM replaceWithOtherRepIfNecessaryAndPossible(final ELEM elem) {
-//		if (mElementCurrentlyBeingRemoved == null) {
-//			assert hasElement(elem);
-//			return elem;
-//		}
-////		if (elem.equals(mElementCurrentlyBeingRemoved.getElem())) {
-////		if (mElementCurrentlyBeingRemoved.supports(elem)) {
-//		if (supports(mElementCurrentlyBeingRemoved.getElem(), elem)) {
-//
-//			final ELEM replacement = replace(elem, mElementCurrentlyBeingRemoved);
-//
-////			if (mElementCurrentlyBeingRemoved.getOtherRep() != null) {
-////				assert hasElement(mElementCurrentlyBeingRemoved.getOtherRep());
-////				return mElementCurrentlyBeingRemoved.getOtherRep();
-//			if (replacement != null && hasElement(replacement)) {
-////				assert hasElement(replacement);
-//				return replacement;
-//			} else {
-//				return null;
-//			}
-//		}
-//		assert hasElement(elem);
-//		return elem;
-//	}
-
-	/**
-	 * elem depends on elementCurrentlyBeingRemoved.getElem()
-	 *
-	 * Attempt to replace elementCurrentlyBeingRemoved.getElem() by  elementCurrentlyBeingRemoved.getOtherElem()
-	 * in elem.
-	 *
-	 * return null if not possible
-	 *
-	 *
-	 * @param elem
-	 * @param elementCurrentlyBeingRemoved
-	 * @return
-	 */
-	protected ELEM replace(final ELEM elem, final CongruenceClosure<ELEM>.RemovalInfo elementCurrentlyBeingRemoved) {
-		if (elementCurrentlyBeingRemoved == null) {
-			return elem;
-		}
-//		if (!supports(elementCurrentlyBeingRemoved.getElem(), elem)) {
-		if (!dependsOnAny(elementCurrentlyBeingRemoved.getElem(), Collections.singleton(elem))) {
-			return elem;
-		}
-
-		if (elem.equals(elementCurrentlyBeingRemoved.getElem())) {
-			return elementCurrentlyBeingRemoved.getOtherRep();
-		}
-		if (elem.isFunctionApplication()) {
-
-			final ELEM afReplaced = replace(elem.getAppliedFunction(), elementCurrentlyBeingRemoved);
-			if (afReplaced == null) {
-				return null;
-			}
-			final ELEM argReplaced = replace(elem.getArgument(), elementCurrentlyBeingRemoved);
-			if (argReplaced == null) {
-				return null;
-			}
-
-			ELEM result = elem.replaceAppliedFunction(afReplaced);
-			result = result.replaceArgument(argReplaced);
-
-			return result;
-		}
-		return null;
-	}
-
-//	/**
-//	 * Does elem2 depend on elem?
-//	 *
-//	 * @param elem
-//	 * @param elem2
-//	 * @return
-//	 */
-//	protected boolean supports(final ELEM elem, final ELEM elem2) {
-//		return dependsOnAny(elem2, Collections.singleton(elem));
-//	}
 
 	protected ELEM updateElementTverAndAuxDataOnRemoveElement(final ELEM elem) {
 		final boolean elemWasRepresentative = mElementTVER.isRepresentative(elem);
@@ -1315,15 +1123,6 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		return mElementTVER == null || mElementTVER.isInconsistent();
 	}
 
-	public boolean vectorsAreCongruent(final List<ELEM> argList1, final List<ELEM> argList2) {
-		for (int i = 0; i < argList1.size(); i++) {
-			if (getEqualityStatus(argList1.get(i), argList2.get(i)) != EqualityStatus.EQUAL) {
-				return false;
-			}
-		}
-		return true;
-	}
-
 	/**
 	 * check that elements in a are a superset of elements in b
 	 * @param a
@@ -1387,6 +1186,40 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 			return false;
 		}
 		return true;
+	}
+
+	public boolean assertHasOnlyWeqVarConstraints(final Set<ELEM> allWeqNodes) {
+			if (isTautological()) {
+				return true;
+			}
+
+			final Set<ELEM> elemsAppearingInADisequality = new HashSet<>();
+			for (final Entry<ELEM, ELEM> deq : mElementTVER.getDisequalities().entrySet()) {
+				elemsAppearingInADisequality.add(deq.getKey());
+				elemsAppearingInADisequality.add(deq.getValue());
+			}
+
+			for (final Set<ELEM> eqc : mElementTVER.getAllEquivalenceClasses()) {
+				if (eqc.size() == 1 &&
+						(!mFaAuxData.getAfParents(eqc.iterator().next()).isEmpty() ||
+								!mFaAuxData.getArgParents(eqc.iterator().next()).isEmpty())) {
+					continue;
+				}
+
+	//			final Set<ELEM> intersection1 = DataStructureUtils.intersection(eqc, allWeqNodes);
+				final Set<ELEM> intersection1 = eqc.stream().filter(eqcelem -> dependsOnAny(eqcelem, allWeqNodes))
+						.collect(Collectors.toSet());
+				final Set<ELEM> intersection2 = DataStructureUtils.intersection(eqc, elemsAppearingInADisequality);
+				if (intersection1.isEmpty() && intersection2.isEmpty()) {
+					assert false;
+					return false;
+				}
+			}
+			return true;
+		}
+
+	public boolean assertHasExternalRemInfo() {
+		return mExternalRemovalInfo != null;
 	}
 
 	protected boolean sanityCheck() {
@@ -1895,6 +1728,15 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 			return dependsOnAny(elem.getAppliedFunction(), sub) || dependsOnAny(elem.getArgument(), sub);
 		}
 		return false;
+	}
+
+	public CongruenceClosure<ELEM>.RemoveElement getElementCurrentlyBeingRemoved() {
+		return mElementCurrentlyBeingRemoved;
+	}
+
+	public void setExternalRemInfo(final CongruenceClosure<ELEM>.RemoveElement remInfo) {
+		assert mExternalRemovalInfo == null || mExternalRemovalInfo == remInfo;
+		mExternalRemovalInfo = remInfo;
 	}
 
 	public boolean isRepresentative(final ELEM elem) {
@@ -2422,74 +2264,6 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 				mCcChildren.put(elemTransformer.apply(en.getKey()), en.getValue());
 			}
 		}
-	}
-
-	public CongruenceClosure<ELEM>.RemoveElement getElementCurrentlyBeingRemoved() {
-		return mElementCurrentlyBeingRemoved;
-	}
-
-	public class RemovalInfo {
-
-		private final ELEM mElemBeingRemoved;
-		private final ELEM mOtherRep;
-
-		public RemovalInfo(final ELEM elemBeingRemoved, final ELEM otherRep) {
-			assert !elemBeingRemoved.isFunctionApplication();
-			mElemBeingRemoved = elemBeingRemoved;
-			mOtherRep = otherRep;
-		}
-
-		public ELEM getElem() {
-			return mElemBeingRemoved;
-		}
-
-		public ELEM getOtherRep() {
-			return mOtherRep;
-		}
-
-		@Override
-		public String toString() {
-			return mElemBeingRemoved + " --> " + mOtherRep;
-		}
-	}
-
-	public boolean assertHasOnlyWeqVarConstraints(final Set<ELEM> allWeqNodes) {
-		if (isTautological()) {
-			return true;
-		}
-
-		final Set<ELEM> elemsAppearingInADisequality = new HashSet<>();
-		for (final Entry<ELEM, ELEM> deq : mElementTVER.getDisequalities().entrySet()) {
-			elemsAppearingInADisequality.add(deq.getKey());
-			elemsAppearingInADisequality.add(deq.getValue());
-		}
-
-		for (final Set<ELEM> eqc : mElementTVER.getAllEquivalenceClasses()) {
-			if (eqc.size() == 1 &&
-					(!mFaAuxData.getAfParents(eqc.iterator().next()).isEmpty() ||
-							!mFaAuxData.getArgParents(eqc.iterator().next()).isEmpty())) {
-				continue;
-			}
-
-//			final Set<ELEM> intersection1 = DataStructureUtils.intersection(eqc, allWeqNodes);
-			final Set<ELEM> intersection1 = eqc.stream().filter(eqcelem -> dependsOnAny(eqcelem, allWeqNodes))
-					.collect(Collectors.toSet());
-			final Set<ELEM> intersection2 = DataStructureUtils.intersection(eqc, elemsAppearingInADisequality);
-			if (intersection1.isEmpty() && intersection2.isEmpty()) {
-				assert false;
-				return false;
-			}
-		}
-		return true;
-	}
-
-	public boolean assertHasExternalRemInfo() {
-		return mExternalRemovalInfo != null;
-	}
-
-	public void setExternalRemInfo(final CongruenceClosure<ELEM>.RemoveElement remInfo) {
-		assert mExternalRemovalInfo == null || mExternalRemovalInfo == remInfo;
-		mExternalRemovalInfo = remInfo;
 	}
 
 	static class CcSettings {

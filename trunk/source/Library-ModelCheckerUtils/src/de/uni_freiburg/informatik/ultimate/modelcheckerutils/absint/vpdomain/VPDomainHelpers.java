@@ -354,10 +354,6 @@ public class VPDomainHelpers {
 	}
 
 	public static <NODE extends IEqNodeIdentifier<NODE>> boolean haveSameType(final NODE func1, final NODE func2) {
-		if (func1.isFunction() != func2.isFunction()) {
-			assert false;
-			return false;
-		}
 		if (func1.getTerm().getSort() != func2.getTerm().getSort()) {
 			assert false;
 			return false;

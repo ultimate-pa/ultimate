@@ -47,8 +47,6 @@ public interface IEqNodeIdentifier<NODE extends IEqNodeIdentifier<NODE>> extends
 
 	Term getTerm();
 
-	boolean isFunction();
-
 	Sort getSort();
 
 }

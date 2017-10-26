@@ -65,7 +65,6 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		assert factory != null;
 		mWeakEquivalenceGraph = new WeakEquivalenceGraph<>(this, factory);
 		mFactory = factory;
-//		mNodeToDependents = new HashRelation<>();
 		mMeetWithGpaCase = false;
 		assert sanityCheck();
 	}
@@ -82,7 +81,6 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		}
 		mWeakEquivalenceGraph = null;
 		mFactory = null;
-//		mNodeToDependents = null;
 		mMeetWithGpaCase = false;
 	}
 
@@ -99,8 +97,6 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		assert factory != null;
 		mWeakEquivalenceGraph = new WeakEquivalenceGraph<>(this, factory);
 		mFactory = factory;
-//		mNodeToDependents = new HashRelation<>();
-//		initializeNodeToDependents(original);
 		mMeetWithGpaCase = false;
 		assert sanityCheck();
 	}
@@ -119,8 +115,6 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 			throw new IllegalArgumentException("use other constructor!");
 		}
 		mFactory = factory;
-//		mNodeToDependents = new HashRelation<>();
-//		initializeNodeToDependents(original);
 
 		mMeetWithGpaCase = false;
 
@@ -137,7 +131,6 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		mMeetWithGpaCase = meetWGpaCase;
 		mFactory = original.mFactory;
 		mWeakEquivalenceGraph = new WeakEquivalenceGraph<>(this, original.mWeakEquivalenceGraph);
-//		mNodeToDependents = new HashRelation<>(original.mNodeToDependents);
 		assert sanityCheck();
 	}
 
@@ -149,17 +142,6 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 	public WeqCongruenceClosure(final WeqCongruenceClosure<NODE> original) {
 		this(original, false);
 	}
-
-//	private void initializeNodeToDependents(final CongruenceClosure<NODE> original) {
-//		for (final NODE e : original.getAllElements()) {
-//			if (!e.isDependent()) {
-//				continue;
-//			}
-//			for (final NODE supp : e.getSupportingNodes()) {
-//				mNodeToDependents.addPair(supp, e);
-//			}
-//		}
-//	}
 
 	public Term getTerm(final Script script) {
 		final List<Term> allConjuncts = new ArrayList<>();
@@ -204,7 +186,6 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 
 	public void reportWeakEquivalence(final NODE array1, final NODE array2, final NODE storeIndex) {
 		assert !isFrozen();
-		assert array1.isFunction() && array2.isFunction();
 		assert array1.hasSameTypeAs(array2);
 
 		getRepresentativeAndAddElementIfNeeded(storeIndex);
@@ -376,23 +357,6 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		}
 		return result;
 	}
-
-
-
-//	@Override
-//	protected Set<NODE> collectElementsToRemove(final NODE elem) {
-//		final Set<NODE> result = new HashSet<>();
-//		// collect (transitive) parent nodes
-//		result.addAll(super.collectElementsToRemove(elem));
-//
-////		// collect dependent elements and their transitive parent nodes
-////		result.addAll(mNodeToDependents.getImage(elem));
-////		for (final NODE dep : mNodeToDependents.getImage(elem)) {
-////			result.addAll(collectTransitiveParents(dep));
-////		}
-//
-//		return result;
-//	}
 
 	@Override
 	public boolean reportEquality(final NODE node1, final NODE node2) {
@@ -696,16 +660,6 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		return madeChanges;
 	}
 
-//	@Override
-//	protected boolean supports(final NODE elem, final NODE elem2) {
-//		if (mNodeToDependents.getImage(elem).contains(elem2)) {
-//			return true;
-//		}
-//		return super.supports(elem, elem2);
-//	}
-
-
-
 	@Override
 	public boolean isTautological() {
 		// TODO: literal disequalities don't prevent being tautological --> account for that!
@@ -751,11 +705,6 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 			final Map<NODE, NODE> nodeToReplacementNode, final boolean useWeqGpa) {
 
 		for (final NODE etr : elementsToRemove) {
-//			if (etr.isDependent()) {
-//				mNodeToDependents.removeRangeElement(etr);
-//			}
-//			mNodeToDependents.removeDomainElement(etr);
-
 			mWeakEquivalenceGraph.updateVerticesOnRemoveElement(etr, nodeToReplacementNode.get(etr));
 		}
 
@@ -957,16 +906,6 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		assert !isFrozen();
 		super.transformElementsAndFunctions(elemTransformer);
 
-//		for (final Entry<NODE, NODE> en : new HashRelation<>(mNodeToDependents).entrySet()) {
-//			mNodeToDependents.removePair(en.getKey(), en.getValue());
-//			if (en.getKey() instanceof IEqNodeIdentifier<?>) {
-//				mNodeToDependents.addPair(elemTransformer.apply(en.getKey()),
-//						elemTransformer.apply(en.getValue()));
-//			} else {
-//				throw new AssertionError();
-//			}
-//		}
-
 		mWeakEquivalenceGraph.transformElementsAndFunctions(elemTransformer);
 	}
 
@@ -991,12 +930,6 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 			return false;
 		}
 
-//		for (final Entry<NODE, NODE> en : mNodeToDependents.entrySet()) {
-//			if (en.getKey().equals(elem) || en.getValue().equals(elem)) {
-//				assert false;
-//				return false;
-//			}
-//		}
 		return super.assertSingleElementIsFullyRemoved(elem);
 	}
 
