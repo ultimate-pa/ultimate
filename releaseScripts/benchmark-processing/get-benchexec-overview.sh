@@ -17,6 +17,8 @@ known_exceptions=(
 "SyntaxErrorResult"
 "Unable to prove that all allocated memory was freed"
 "overapproximation of large string literal"
+"TerminationAnalysisResult: Unable to decide termination"
+"An exception occured during the execution of Ultimate: The toolchain threw an exception"
 )
 
 known_timeouts=(
@@ -26,10 +28,12 @@ known_timeouts=(
 
 known_safe=(
 "AllSpecificationsHoldResult"
+"TerminationAnalysisResult: Termination proven"
 )
 
 known_unsafe=(
 "CounterExampleResult"
+"NonterminatingLassoResult"
 )
 
 log_separator_line="Retrying with bit-precise analysis"
