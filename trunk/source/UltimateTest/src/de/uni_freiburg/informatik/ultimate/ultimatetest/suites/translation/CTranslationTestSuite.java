@@ -27,25 +27,30 @@
 
 package de.uni_freiburg.informatik.ultimate.ultimatetest.suites.translation;
 
+import java.io.File;
 import java.util.Collection;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
 import de.uni_freiburg.informatik.ultimate.test.decider.TranslationTestResultDecider;
 import de.uni_freiburg.informatik.ultimate.test.logs.summaries.ColumnDefinition;
-import de.uni_freiburg.informatik.ultimate.test.logs.summaries.ConversionContext;
 import de.uni_freiburg.informatik.ultimate.test.logs.summaries.ColumnDefinition.Aggregate;
+import de.uni_freiburg.informatik.ultimate.test.logs.summaries.ConversionContext;
 import de.uni_freiburg.informatik.ultimate.test.util.DirectoryFileEndingsPair;
+import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
+import de.uni_freiburg.informatik.ultimate.test.util.UltimateRunDefinitionGenerator;
 import de.uni_freiburg.informatik.ultimate.ultimatetest.suites.AbstractEvalTestSuite;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class Svcomp2016CTranslationTestSuite extends AbstractEvalTestSuite {
+public class CTranslationTestSuite extends AbstractEvalTestSuite {
 
 	private static final String[] ALL_C = new String[] { ".c", ".i" };
 	private static final int DEFAULT_LIMIT = Integer.MAX_VALUE;
@@ -53,20 +58,20 @@ public class Svcomp2016CTranslationTestSuite extends AbstractEvalTestSuite {
 	// @formatter:off
 
 	@SuppressWarnings("unchecked")
-	private static final Triple<String, String[], String>[] TOOLCHAINS = new Triple[] {
-			new Triple<>("CTranslationTest.xml", ALL_C, "translation/ReachBitvector.epf"),
-			new Triple<>("CTranslationTest.xml", ALL_C, "translation/DerefFreeMemtrackInteger.epf"),
-			new Triple<>("CTranslationTest.xml", ALL_C, "translation/DerefFreeMemtrackBitvector.epf"),
-			new Triple<>("CTranslationTest.xml", ALL_C, "translation/ReachInteger.epf"),
-
-//			new Triple<>("CTranslationBETest.xml", ALL_C, "translation/ReachBitvector.epf"),
-//			new Triple<>("CTranslationBETest.xml", ALL_C, "translation/DerefFreeMemtrackInteger.epf"),
-//			new Triple<>("CTranslationBETest.xml", ALL_C, "translation/DerefFreeMemtrackBitvector.epf"),
-			new Triple<>("CTranslationBETest.xml", ALL_C, "translation/ReachInteger.epf"),
+	private static final String[] TOOLCHAINS = new String[] {
+			"CTranslationTest.xml","CTranslationBETest.xml"
 	};
 
 	private static final String[] INPUT = new String[] {
-			 "examples/svcomp/",
+//			 "examples/svcomp/",
+			 "examples/CToBoogieTranslation/ClassCast.c", //#100
+			 "examples/CToBoogieTranslation/RValueArrayType.c", //#59
+			 "examples/CToBoogieTranslation/Stackoverflow.c", //#61
+			 "examples/CToBoogieTranslation/MultidimensionalArrays.c", //#58
+			 "examples/CToBoogieTranslation/innerouterAssertionError.c", //#68
+			 "examples/CToBoogieTranslation/floatToInt.c", //#65
+			 "examples/CToBoogieTranslation/unnamedFieldInStruct.c", //#69
+
 	};
 
 	// @formatter:on
@@ -96,16 +101,28 @@ public class Svcomp2016CTranslationTestSuite extends AbstractEvalTestSuite {
 
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
-		for (final Triple<String, String[], String> triple : TOOLCHAINS) {
+
+		final String[] settingsDirs = { "default/automizer", "translation" };
+		final LinkedHashSet<File> settingsFiles = new LinkedHashSet<>();
+		for (final String settingsDir : settingsDirs) {
+			final File dirFile = UltimateRunDefinitionGenerator.getFileFromSettingsDir(settingsDir);
+			settingsFiles.addAll(TestUtil.getFiles(dirFile, "epf"));
+		}
+
+		final List<String> settingsFileNames = settingsFiles.stream().map(a -> a.getAbsolutePath())
+				.map(TestUtil::removeTrunkSettingsPrefix).collect(Collectors.toList());
+
+		for (final String toolchain : TOOLCHAINS) {
 			final DirectoryFileEndingsPair[] pairs = new DirectoryFileEndingsPair[INPUT.length];
 			for (int i = 0; i < INPUT.length; ++i) {
-				pairs[i] = new DirectoryFileEndingsPair(INPUT[i], triple.getSecond(), DEFAULT_LIMIT);
+				pairs[i] = new DirectoryFileEndingsPair(INPUT[i], ALL_C, DEFAULT_LIMIT);
 			}
-			addTestCase(triple.getFirst(), triple.getThird(), pairs);
+
+			for (final String setting : settingsFileNames) {
+				addTestCase(toolchain, setting, pairs);
+			}
 		}
 		return super.createTestCases();
 	}
-	
-	
-	
+
 }
