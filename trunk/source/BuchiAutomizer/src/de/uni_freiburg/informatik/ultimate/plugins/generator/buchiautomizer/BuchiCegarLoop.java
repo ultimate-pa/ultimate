@@ -603,12 +603,12 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 	 */
 	private void reduceAbstractionSize(final Minimization automataMinimization)
 			throws AutomataOperationCanceledException, AssertionError {
+		if( (mAbstraction instanceof IGeneralizedNestedWordAutomaton)) {
+			return ;
+		}
 		mBenchmarkGenerator.start(BuchiCegarLoopBenchmark.s_NonLiveStateRemoval);
 		try {
-			if(! (mAbstraction instanceof IGeneralizedNestedWordAutomaton)) {
-				mAbstraction = new RemoveNonLiveStates<>(new AutomataLibraryServices(mServices), mAbstraction).getResult();
-			}
-//			mAbstraction = new RemoveNonLiveStates<>(new AutomataLibraryServices(mServices), mAbstraction).getResult();
+			mAbstraction = new RemoveNonLiveStates<>(new AutomataLibraryServices(mServices), mAbstraction).getResult();
 		} finally {
 			mBenchmarkGenerator.stop(BuchiCegarLoopBenchmark.s_NonLiveStateRemoval);
 		}

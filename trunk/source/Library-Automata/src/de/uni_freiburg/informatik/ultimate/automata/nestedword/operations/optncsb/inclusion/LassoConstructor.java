@@ -20,7 +20,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 class LassoConstructor<LETTER, STATE> {
 	
 	private final AutomataLibraryServices mServices;
-	private final GeneralizedNestedWordAutomatonReachableStates<LETTER, STATE> mReach;
+	private final AbstractGeneralizedAutomatonReachableStates<LETTER, STATE> mReach;
 	private NestedRun<LETTER, STATE> mLoop;
 	private NestedRun<LETTER, STATE> mStem;
 	private StateContainer<LETTER, STATE> mGoal;
@@ -28,8 +28,9 @@ class LassoConstructor<LETTER, STATE> {
 	private final List<STATE> mSCC;
 	private final Set<STATE> mSCCSet;
 	
+	// here we should make sure that all necessary accepting states are in the sccList
 	LassoConstructor(final AutomataLibraryServices services,
-			final GeneralizedNestedWordAutomatonReachableStates<LETTER, STATE> reach
+			final AbstractGeneralizedAutomatonReachableStates<LETTER, STATE> reach
 			, final List<STATE> sccList) throws AutomataOperationCanceledException {
 		mServices = services;
 		mReach = reach;
@@ -69,7 +70,7 @@ class LassoConstructor<LETTER, STATE> {
 		StateContainer<LETTER, STATE> stateCont = mGoal;
 		Set<Integer> labels = new HashSet<>();
 		labels.addAll(mReach.getAcceptanceLabels(stateCont.getState()));
-		STATE backState = null;
+		STATE backState = mGoal.getState();
 		for(STATE current : newList) {
 			testTimeoutCancelException(this.getClass());
 			LETTER letter = stateCont.getLetterOfSuccessor(current);
@@ -97,6 +98,13 @@ class LassoConstructor<LETTER, STATE> {
 			stateCont = mReach.getStateContainer(current);
 		}
 		assert labels.size() == mReach.getAcceptanceSize();
+		if(backState.equals(mGoal.getState())) {
+			LETTER letter = mGoal.getLetterOfSuccessor(backState);
+			assert letter != null;
+			mLoop = new NestedRun<>(backState, letter, NestedWord.INTERNAL_POSITION,
+					backState);
+			return ;
+		}
 		final Set<STATE> source = new HashSet<>();
 		final Set<STATE> target = new HashSet<>();
 		source.add(backState);
@@ -230,7 +238,6 @@ class LassoConstructor<LETTER, STATE> {
 		private void breathFirstSearch() throws AutomataOperationCanceledException {
 			// construct a run from initial state to mGoal
 			PriorityQueue<SuccessorInfo> queue = new PriorityQueue<>(new ComparatorSuccessorInfo());
-			
 			// initialize sources
 			for (STATE state : mSources) {
 				SuccessorInfo succInfo = getSuccessorInfoPrivate(state);

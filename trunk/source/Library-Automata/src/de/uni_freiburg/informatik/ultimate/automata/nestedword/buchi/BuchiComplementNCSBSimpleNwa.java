@@ -269,4 +269,12 @@ public class BuchiComplementNCSBSimpleNwa<LETTER, STATE> implements INwaSuccesso
 			throws AutomataOperationCanceledException {
 		throw new UnsupportedOperationException();
 	}
+	
+	public boolean coveredBy(STATE fstState, STATE sndState) {
+		int fstId = mStateIdMap.get(fstState);
+		NCSB fstNcsb = ((StateWaNCSB) mComplementBuchi.getState(fstId)).getNCSB();
+		int sndId = mStateIdMap.get(sndState);
+		NCSB sndNcsb = ((StateWaNCSB) mComplementBuchi.getState(sndId)).getNCSB();
+		return fstNcsb.coveredBy(sndNcsb);
+	}
 }

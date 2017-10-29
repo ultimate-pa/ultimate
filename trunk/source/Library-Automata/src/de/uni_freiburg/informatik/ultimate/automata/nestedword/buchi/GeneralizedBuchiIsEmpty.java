@@ -34,8 +34,9 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IGeneralizedNwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.Options;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.inclusion.AbstractGeneralizedAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.inclusion.GeneralizedNestedWordAutomatonReachableStates;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.inclusion.GeneralizedNestedWordAutomatonReachableStatesAntichain;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
@@ -51,7 +52,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  */
 public final class GeneralizedBuchiIsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, IStateFactory<STATE>> {
 	private final IGeneralizedNwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mOperand;
-	private GeneralizedNestedWordAutomatonReachableStates<LETTER, STATE> mReach;
+	private AbstractGeneralizedAutomatonReachableStates<LETTER, STATE> mReach;
 	private final Boolean mResult;
 
 	/**
@@ -73,9 +74,10 @@ public final class GeneralizedBuchiIsEmpty<LETTER, STATE> extends UnaryNwaOperat
 			mLogger.info(startMessage());
 		}
 		try {
-			if (mOperand instanceof GeneralizedNestedWordAutomatonReachableStates) {
-				mReach = (GeneralizedNestedWordAutomatonReachableStates<LETTER, STATE>) mOperand;
-			} else {
+			if (mOperand instanceof GeneralizedNestedWordAutomatonReachableStates
+			|| mOperand instanceof GeneralizedNestedWordAutomatonReachableStatesAntichain) {
+				mReach = (AbstractGeneralizedAutomatonReachableStates<LETTER, STATE>) mOperand;
+			} else{
 				mReach = new GeneralizedNestedWordAutomatonReachableStates<>(mServices, mOperand);
 			}
 			mResult = mReach.isEmpty();
