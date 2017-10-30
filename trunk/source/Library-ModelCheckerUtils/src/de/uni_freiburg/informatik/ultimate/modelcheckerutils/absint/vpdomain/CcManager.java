@@ -83,18 +83,18 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 		return filterRedundantCcs(unionList, poc);
 	}
 
-	public CongruenceClosure<ELEM> getSingleDisequalityCc(final ELEM elem1, final ELEM elem2) {
-		final CongruenceClosure<ELEM> newCC = new CongruenceClosure<>();
-		newCC.reportDisequality(elem1, elem2);
-		return newCC;
-	}
+//	public CongruenceClosure<ELEM> getSingleDisequalityCc(final ELEM elem1, final ELEM elem2) {
+//		final CongruenceClosure<ELEM> newCC = new CongruenceClosure<>();
+//		newCC.reportDisequality(elem1, elem2);
+//		return newCC;
+//	}
 
-	public CongruenceClosure<ELEM> getSingleEqualityCc(final ELEM elem1,
-			final ELEM  elem2) {
-		final CongruenceClosure<ELEM> newCC = new CongruenceClosure<>();
-		newCC.reportEquality(elem1, elem2);
-		return newCC;
-	}
+//	public CongruenceClosure<ELEM> getSingleEqualityCc(final ELEM elem1,
+//			final ELEM  elem2) {
+//		final CongruenceClosure<ELEM> newCC = new CongruenceClosure<>();
+//		newCC.reportEquality(elem1, elem2);
+//		return newCC;
+//	}
 
 	public  IPartialComparator<CongruenceClosure<ELEM>> getCcComparator() {
 		return mCcComparator;

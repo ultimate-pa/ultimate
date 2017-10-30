@@ -83,7 +83,10 @@ class FloydWarshall<VERTEX, EDGELABEL> {
 		mPerformedChanges = false;
 
 		// initialize with a deep copy of the input graph
+
+		// TODO: dreiecksmatrix statt map
 		mDist = new HashMap<>();
+
 		final HashSet<VERTEX> verticeSet = new HashSet<>();
 		for (final Entry<Doubleton<VERTEX>, EDGELABEL> en : graph.entrySet()) {
 			verticeSet.add(en.getKey().getOneElement());
@@ -109,7 +112,7 @@ class FloydWarshall<VERTEX, EDGELABEL> {
 					continue;
 				}
 				for (int j = 0; j < mVertices.size(); j++) {
-					if (j == i || j == k) {
+					if (j == i || j == k || i > j) {
 						continue;
 					}
 					final EDGELABEL distIj = getDist(i, j);

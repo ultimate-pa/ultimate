@@ -89,4 +89,13 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 			final PartialOrderCache<CongruenceClosure<NODE>> ccPoCache) {
 		return mCcManager.filterRedundantCcs(ccs, ccPoCache);
 	}
+
+
+	public WeqCongruenceClosure<NODE> reportEquality(final NODE node1, final NODE node2,
+			final WeqCongruenceClosure<NODE> origWeqCc) {
+		final WeqCongruenceClosure<NODE> unfrozen = unfreeze(origWeqCc);
+		unfrozen.reportEquality(node1, node2);
+		unfrozen.freeze();
+		return unfrozen;
+	}
 }

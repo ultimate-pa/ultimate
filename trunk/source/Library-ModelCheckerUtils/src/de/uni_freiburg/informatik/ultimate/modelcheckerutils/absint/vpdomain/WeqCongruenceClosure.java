@@ -120,7 +120,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 
 		// we need a fresh instance of WeakEquivalenceGraph here, because we cannot set the link in the weq
 		// graph to the right cc instance..
-		mWeakEquivalenceGraph = new WeakEquivalenceGraph<>(this, weqGraph);
+		mWeakEquivalenceGraph = new WeakEquivalenceGraph<>(this, weqGraph, false);
 
 		assert sanityCheck();
 	}
@@ -130,7 +130,9 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		assert original.mFactory != null;
 		mMeetWithGpaCase = meetWGpaCase;
 		mFactory = original.mFactory;
-		mWeakEquivalenceGraph = new WeakEquivalenceGraph<>(this, original.mWeakEquivalenceGraph);
+		mWeakEquivalenceGraph = new WeakEquivalenceGraph<>(this, original.mWeakEquivalenceGraph,
+				false);
+//				meetWGpaCase && WeqSettings.FLATTEN_WEQ_EDGES_BEFORE_JOIN); //TODO simplify
 		assert sanityCheck();
 	}
 
