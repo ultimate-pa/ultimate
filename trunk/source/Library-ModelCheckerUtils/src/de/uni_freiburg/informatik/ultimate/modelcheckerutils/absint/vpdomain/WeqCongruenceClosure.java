@@ -243,6 +243,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 					fwEdge.getKey().getOtherElement(), fwEdge.getValue().getLabelContents());
 			assert sanityCheck();
 		}
+		assert sanityCheck();
 		return fwmc;
 	}
 
@@ -626,8 +627,8 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 			}
 			assert sanityCheck();
 		}
-		assert weqGraphFreeOfArrayEqualities();
 		assert sanityCheck();
+		assert weqGraphFreeOfArrayEqualities();
 	}
 
 	@Override
@@ -722,6 +723,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 	@Override
 	protected void applyClosureOperations() {
 		executeFloydWarshallAndReportResultToWeqCc();
+		assert sanityCheck();
 		reportAllArrayEqualitiesFromWeqGraph();
 		assert sanityCheck();
 	}

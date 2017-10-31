@@ -668,6 +668,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 			for (final ELEM nail : nodesAddedInLabels) {
 				addElementRec(nail);
 			}
+			assert sanityCheck();
 			applyClosureOperations();
 
 			mDidRemoval = true;

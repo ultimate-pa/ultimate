@@ -789,15 +789,25 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>> {
 	 *  edgeLabels in the gpa (mPartialArrangement))
 	 */
 	public void meetEdgeLabelsWithWeqGpaBeforeRemove(final WeqCongruenceClosure<NODE> originalPa) {
-		for (final WeakEquivalenceEdgeLabel<NODE> edgeLabel : mWeakEquivalenceEdges.values()) {
-			edgeLabel.meetWithWeqGpa(originalPa);
+		for (final Entry<Doubleton<NODE>, WeakEquivalenceEdgeLabel<NODE>> edgeLabel
+				: mWeakEquivalenceEdges.entrySet()) {
+			edgeLabel.getValue().meetWithWeqGpa(originalPa);
+
+			if (edgeLabel.getValue().isInconsistent()) {
+				mArrayEqualities.addPair(edgeLabel.getKey().getOneElement(), edgeLabel.getKey().getOtherElement());
+			}
 		}
 //		mWeqMeetMode = true;
 	}
 
 	public void meetEdgeLabelsWithCcGpaBeforeRemove() {
-		for (final WeakEquivalenceEdgeLabel<NODE> edgeLabel : mWeakEquivalenceEdges.values()) {
-			edgeLabel.meetWithCcGpa();
+//		for (final WeakEquivalenceEdgeLabel<NODE> edgeLabel : mWeakEquivalenceEdges.values()) {
+		for (final Entry<Doubleton<NODE>, WeakEquivalenceEdgeLabel<NODE>> edgeLabel
+				: mWeakEquivalenceEdges.entrySet()) {
+			edgeLabel.getValue().meetWithCcGpa();
+			if (edgeLabel.getValue().isInconsistent()) {
+				mArrayEqualities.addPair(edgeLabel.getKey().getOneElement(), edgeLabel.getKey().getOtherElement());
+			}
 		}
 //		mWeqMeetMode = false;
 	}
@@ -832,7 +842,8 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>> {
 				.get();
 		result.put("#EdgeLabelDisjuncts", noEdgeLabelDisjuncts);
 
-		result.put("Average#EdgeLabelDisjuncts", mWeakEquivalenceEdges.size()/noEdgeLabelDisjuncts);
+		result.put("Average#EdgeLabelDisjuncts", noEdgeLabelDisjuncts == 0 ? -1 :
+					mWeakEquivalenceEdges.size()/noEdgeLabelDisjuncts);
 
 		return result;
 	}

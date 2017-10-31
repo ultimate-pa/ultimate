@@ -556,15 +556,15 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>> {
 			// report all constraints from the label into the copy of the weqCc
 			for (final Entry<NODE, NODE> eq : lCopy.getSupportingElementEqualities().entrySet()) {
 				if (paCopy.isInconsistent()) {
-					mLabel.clear();
-					return;
+//					mLabel.clear();
+					break;
 				}
 				paCopy.reportEquality(eq.getKey(), eq.getValue());
 			}
 			for (final Entry<NODE, NODE> deq : lCopy.getElementDisequalities().entrySet()) {
 				if (paCopy.isInconsistent()) {
-					mLabel.clear();
-					return;
+//					mLabel.clear();
+					break;
 				}
 				paCopy.reportDisequality(deq.getKey(), deq.getValue());
 			}
@@ -574,7 +574,10 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>> {
 				mLabel.add(new CongruenceClosure<NODE>());
 				return;
 			}
-			newLabelContents.add(paCopy);
+
+			if (!paCopy.isInconsistent()) {
+				newLabelContents.add(paCopy);
+			}
 		}
 
 		mLabel.clear();
@@ -585,10 +588,6 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>> {
 	}
 
 	public void meetWithCcGpa() {
-		meetWithGpa(false);
-	}
-
-	public void meetWithGpa(final boolean meetWithFullWeqCc) {
 
 		final Set<CongruenceClosure<NODE>> newLabelContents = new HashSet<>();
 		//			for (int i = 0; i < getLabelContents().size(); i++) {
@@ -603,11 +602,11 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>> {
 				return;
 			}
 			final CongruenceClosure<NODE> meet;
-			if (meetWithFullWeqCc) {
-				meet = mWeakEquivalenceGraph.mCcManager.getWeqMeet(l, mWeakEquivalenceGraph.mPartialArrangement);
-			} else {
+//			if (meetWithFullWeqCc) {
+//				meet = mWeakEquivalenceGraph.mCcManager.getWeqMeet(l, mWeakEquivalenceGraph.mPartialArrangement);
+//			} else {
 				meet = mWeakEquivalenceGraph.mCcManager.getMeet(l, mWeakEquivalenceGraph.mPartialArrangement, mWeakEquivalenceGraph.mPartialArrangement.getElementCurrentlyBeingRemoved());
-			}
+//			}
 
 			if (meet.isInconsistent()) {
 				/* label element is inconsistent with the current gpa
