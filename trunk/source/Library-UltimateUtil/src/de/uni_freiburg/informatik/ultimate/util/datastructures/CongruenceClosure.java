@@ -426,6 +426,10 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 		if (remInfo == null) {
 			for (final Entry<ELEM, ELEM> eq : equalitiesToPropagate.entrySet()) {
 				reportEqualityRec(eq.getKey(), eq.getValue());
+				if (isInconsistent()) {
+					// propagated equality made this Cc inconsistent (break or return here?)
+					break;
+				}
 			}
 		} else {
 			// do nothing in this case, right?..
@@ -631,6 +635,12 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 				// add proxy elements
 				for (final ELEM proxyElem : nodesToAdd) {
 					addElementRec(proxyElem);
+
+					if (isInconsistent()) {
+						// Cc became inconsistent through adding proxyElem --> nothing more to do
+						return;
+					}
+
 					assert sanityCheck();
 				}
 

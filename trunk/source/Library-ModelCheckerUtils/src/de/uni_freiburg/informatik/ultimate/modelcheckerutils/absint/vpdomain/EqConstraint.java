@@ -90,7 +90,8 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 
 	public EqConstraint(final int id, final WeqCongruenceClosure<NODE> cClosure,
 			final EqConstraintFactory<NODE> factory) {
-		this(id, factory, new WeqCongruenceClosure<>(cClosure));
+		this(id, factory, factory.getCcManager().makeCopy(cClosure));
+//		this(id, factory, new WeqCongruenceClosure<>(cClosure));
 	}
 
 	/**
@@ -99,7 +100,8 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 	 * @param constraint
 	 */
 	public EqConstraint(final int id, final EqConstraint<NODE> constraint) {
-		this(id, constraint.mFactory, new WeqCongruenceClosure<>(constraint.mPartialArrangement));
+		this(id, constraint.mFactory,  constraint.mFactory.getCcManager().makeCopy(constraint.mPartialArrangement));
+		//new WeqCongruenceClosure<>(constraint.mPartialArrangement));
 	}
 
 	private EqConstraint(final int id, final EqConstraintFactory<NODE> factory,

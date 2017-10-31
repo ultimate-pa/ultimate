@@ -69,7 +69,8 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 	}
 
 	private WeqCongruenceClosure<NODE> unfreeze(final WeqCongruenceClosure<NODE> origWeqCc) {
-		return new WeqCongruenceClosure<>(origWeqCc);
+		assert origWeqCc.isFrozen();
+		return new WeqCongruenceClosure<>(origWeqCc, false);
 	}
 
 	public Set<CongruenceClosure<NODE>> filterRedundantCcs(final Set<CongruenceClosure<NODE>> ccs) {
@@ -97,5 +98,17 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		unfrozen.reportEquality(node1, node2);
 		unfrozen.freeze();
 		return unfrozen;
+	}
+
+	public WeqCongruenceClosure<NODE> makeCopyForWeqMeet(final WeqCongruenceClosure<NODE> originalPa) {
+		return new WeqCongruenceClosure<>(originalPa, true);
+	}
+
+	public WeqCongruenceClosure<NODE> makeCopy(final WeqCongruenceClosure<NODE> original) {
+		if (original.isFrozen()) {
+			// original is frozen --> a copy should not be necessary (use unfreeze if an unfrozen copy is needed)
+			return original;
+		}
+		return new WeqCongruenceClosure<>(original, false);
 	}
 }

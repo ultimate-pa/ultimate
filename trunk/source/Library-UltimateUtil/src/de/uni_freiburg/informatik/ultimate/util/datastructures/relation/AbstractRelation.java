@@ -276,6 +276,13 @@ public abstract class AbstractRelation<D, R, MAP extends Map<D, Set<R>>> impleme
 		return new MapToCollectionIterator<>(mMap);
 	}
 
+	/**
+	 * Remove all entries from this relation.
+	 */
+	public void clear() {
+		mMap.clear();
+	}
+
 	@Override
 	public int hashCode() {
 		final int prime = 31;
