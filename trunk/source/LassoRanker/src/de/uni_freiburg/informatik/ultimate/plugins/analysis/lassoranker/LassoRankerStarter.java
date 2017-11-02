@@ -82,6 +82,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgElement;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
@@ -193,7 +194,7 @@ public class LassoRankerStarter {
 						reportFailBecauseOfOverapproximationResult();
 						return;
 					}
-					reportNonTerminationResult(nta);
+					reportNonTerminationResult(nta, mStem, mLoop);
 					return;
 				}
 			} catch (final SMTLIBException e) {
@@ -431,10 +432,16 @@ public class LassoRankerStarter {
 
 	/**
 	 * Report a nontermination argument back to Ultimate's toolchain
+	 * @param loop 
+	 * @param stem 
 	 *
 	 * @param arg
 	 */
-	private void reportNonTerminationResult(final GeometricNonTerminationArgument nta) {
+	private void reportNonTerminationResult(final GeometricNonTerminationArgument nta,
+			final NestedWord<IIcfgTransition<IcfgLocation>> stem, final NestedWord<IIcfgTransition<IcfgLocation>> loop) {
+		final IcfgProgramExecution stemExecution = new IcfgProgramExecution(stem.asList(), Collections.emptyMap());
+		final IcfgProgramExecution loopExecution = new IcfgProgramExecution(loop.asList(), Collections.emptyMap());
+		final IcfgEdge hondaEdge = (IcfgEdge) loop.getSymbol(0);
 		// TODO: translate also the rational coefficients to Expressions?
 		// mRootAnnot.getBoogie2Smt().translate(term)
 		// final Term2Expression term2expression = mRootAnnot.getBoogie2SMT().getTerm2Expression();
@@ -445,10 +452,10 @@ public class LassoRankerStarter {
 		states.addAll(nta.getGEVs());
 		final List<Map<Term, Rational>> initHondaRays = BacktranslationUtil.rank2Rcfg(states);
 
-		final NonTerminationArgumentResult<IIcfgElement, Term> result =
-				new GeometricNonTerminationArgumentResult<>(mHonda, Activator.PLUGIN_NAME, initHondaRays.get(0),
+		final NonTerminationArgumentResult<? extends IIcfgTransition<?>, Term> result =
+				new GeometricNonTerminationArgumentResult<>(hondaEdge, Activator.PLUGIN_NAME, initHondaRays.get(0),
 						initHondaRays.get(1), initHondaRays.subList(2, initHondaRays.size()), nta.getLambdas(),
-						nta.getNus(), getTranslatorSequence(), Term.class);
+						nta.getNus(), getTranslatorSequence(), Term.class, stemExecution, loopExecution);
 		reportResult(result);
 	}
 

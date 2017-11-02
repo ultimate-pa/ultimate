@@ -38,6 +38,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoRun;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoWord;
 import de.uni_freiburg.informatik.ultimate.boogie.annotation.LTLPropertyCheck;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.FixpointNonTerminationResult;
@@ -142,9 +143,14 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 
 	/**
 	 * Report a nontermination argument back to Ultimate's toolchain
+	 * @param nestedLassoWord 
 	 */
-	private void reportNonTerminationResult(final IcfgLocation honda, final NonTerminationArgument nta) {
-		final NonTerminationArgumentResult<IIcfgElement, Term> result;
+	private void reportNonTerminationResult(final IcfgLocation honda, final NonTerminationArgument nta,
+			final NestedLassoWord<? extends IIcfgTransition<?>> nestedLassoWord) {
+		final IcfgProgramExecution stemExecution = new IcfgProgramExecution(nestedLassoWord.getStem().asList(), Collections.emptyMap());
+		final IcfgProgramExecution loopExecution = new IcfgProgramExecution(nestedLassoWord.getLoop().asList(), Collections.emptyMap());
+		final NonTerminationArgumentResult<IcfgEdge, Term> result;
+		final IcfgEdge honda1 = (IcfgEdge) nestedLassoWord.getLoop().getSymbol(0);
 		if (nta instanceof GeometricNonTerminationArgument) {
 			final GeometricNonTerminationArgument gnta = (GeometricNonTerminationArgument) nta;
 			// TODO: translate also the rational coefficients to Expressions?
@@ -157,13 +163,14 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 			states.addAll(gnta.getGEVs());
 			final List<Map<Term, Rational>> initHondaRays = BacktranslationUtil.rank2Rcfg(states);
 
-			result = new GeometricNonTerminationArgumentResult<>(honda, Activator.PLUGIN_NAME, initHondaRays.get(0),
+			result = new GeometricNonTerminationArgumentResult<>(honda1, Activator.PLUGIN_NAME, initHondaRays.get(0),
 					initHondaRays.get(1), initHondaRays.subList(2, initHondaRays.size()), gnta.getLambdas(),
-					gnta.getNus(), getBacktranslationService(), Term.class);
+					gnta.getNus(), getBacktranslationService(), Term.class, stemExecution, loopExecution);
 		} else if (nta instanceof InfiniteFixpointRepetition) {
 			final InfiniteFixpointRepetition ifr = (InfiniteFixpointRepetition) nta;
-			result = new FixpointNonTerminationResult<>(honda, Activator.PLUGIN_NAME, ifr.getValuesAtInit(),
-					ifr.getValuesAtHonda(), getBacktranslationService(), Term.class);
+			
+			result = new FixpointNonTerminationResult<IcfgEdge, Term>(honda1, Activator.PLUGIN_NAME, ifr.getValuesAtInit(),
+					ifr.getValuesAtHonda(), getBacktranslationService(), Term.class, stemExecution, loopExecution);
 		} else {
 			throw new IllegalArgumentException("unknown TerminationArgument");
 		}
@@ -229,7 +236,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 			final IPredicate hondaPredicate = counterexample.getLoop().getStateAtPosition(0);
 			final IcfgLocation honda = ((ISLPredicate) hondaPredicate).getProgramPoint();
 			final NonTerminationArgument nta = bcl.getNonTerminationArgument();
-			reportNonTerminationResult(honda, nta);
+			reportNonTerminationResult(honda, nta, counterexample.getNestedLassoWord());
 			reportResult(new StatisticsResult<>(Activator.PLUGIN_NAME, "NonterminationBenchmark",
 					new NonterminationBenchmark(nta)));
 

@@ -35,6 +35,7 @@ import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 
 /**
@@ -73,7 +74,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
  * @param <P>
  *            program position class
  */
-public class GeometricNonTerminationArgumentResult<P extends IElement, E> extends NonTerminationArgumentResult<P, E> {
+public class GeometricNonTerminationArgumentResult<P extends IElement, E> extends LassoShapedNonTerminationArgument<P, E> {
 	/**
 	 * How many steps the infinite execution should be schematically unwinded
 	 */
@@ -89,8 +90,8 @@ public class GeometricNonTerminationArgumentResult<P extends IElement, E> extend
 	public GeometricNonTerminationArgumentResult(final P position, final String plugin,
 			final Map<E, Rational> stateInit, final Map<E, Rational> stateHonda, final List<Map<E, Rational>> rays,
 			final List<Rational> lambdas, final List<Rational> nus, final IBacktranslationService translatorSequence,
-			final Class<E> exprClazz) {
-		super(position, plugin, translatorSequence, exprClazz);
+			final Class<E> exprClazz, final IProgramExecution<P, E> stem, final IProgramExecution<P, E> loop) {
+		super(position, plugin, translatorSequence, exprClazz, stem, loop);
 		mStateInit = stateInit;
 		mStateHonda = stateHonda;
 		mRays = rays;

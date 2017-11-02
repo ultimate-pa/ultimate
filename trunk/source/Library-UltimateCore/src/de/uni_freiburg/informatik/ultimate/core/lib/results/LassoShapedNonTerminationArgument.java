@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2016 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * Copyright (C) 2016 University of Freiburg
+ * Copyright (C) 2017 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * Copyright (C) 2017 University of Freiburg
  *
  * This file is part of the ULTIMATE Core.
  *
@@ -26,50 +26,39 @@
  */
 package de.uni_freiburg.informatik.ultimate.core.lib.results;
 
-import java.util.Map;
-
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 
 /**
- * Repeating program execution.
+ * Abstract superclass for Nontermination Arguments where the trace has the 
+ * form of a lasso.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <P>
  *            program position class
  */
-public class FixpointNonTerminationResult<P extends IElement, E> extends LassoShapedNonTerminationArgument<P, E> {
+public abstract class LassoShapedNonTerminationArgument<P extends IElement, E> extends NonTerminationArgumentResult<P, E> {
+	
+	private final IProgramExecution<P, E> mStemExecution;
+	private final IProgramExecution<P, E> mLoopExecution;
 
-	private final Map<E, E> mStateInit;
-	private final Map<E, E> mStateHonda;
-
-	public FixpointNonTerminationResult(final P position, final String plugin, final Map<E, E> stateInit,
-			final Map<E, E> stateHonda, final IBacktranslationService translatorSequence, final Class<E> exprClazz, 
-			final IProgramExecution<P, E> stem, final IProgramExecution<P, E> loop) {
-		super(position, plugin, translatorSequence, exprClazz, stem, loop);
-		mStateInit = stateInit;
-		mStateHonda = stateHonda;
+	public LassoShapedNonTerminationArgument(final P element, final String plugin, final IBacktranslationService translatorSequence,
+			final Class<E> exprClass, final IProgramExecution<P, E> stem, final IProgramExecution<P, E> loop) {
+		super(element, plugin, translatorSequence, exprClass);
+		mStemExecution = stem;
+		mLoopExecution = loop;
 	}
 
-	@Override
-	public String getShortDescription() {
-		return "Nontermination argument in form of an infinite " + "program execution.";
+	public IProgramExecution<P, E> getStemExecution() {
+		return mStemExecution;
 	}
 
-	@Override
-	public String getLongDescription() {
-		final StringBuilder sb = new StringBuilder();
-		sb.append("Nontermination argument in form of an infinite execution\n");
-
-		// State 1 (before the honda)
-		sb.append("State at position 0 is\n");
-		sb.append(printState2(mStateInit));
-
-		// State 2 (at the honda)
-		sb.append("\nState at position 1 is\n");
-		sb.append(printState2(mStateHonda));
-		return sb.toString();
+	public IProgramExecution<P, E> getLoopExecution() {
+		return mLoopExecution;
 	}
+
+	
+	
 
 }
