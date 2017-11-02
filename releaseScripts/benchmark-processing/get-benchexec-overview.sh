@@ -58,6 +58,11 @@ do
     
     length=${#content}
     if [[ "$length" == "0" ]]; then 
+	    if grep -q 'No suitable settings file found' "$line"; then
+			exceptions["No suitable settings file found"]=$((exceptions["No suitable settings file found"]+1))
+			continue 
+		fi
+	
         timeouts["Unexpected end"]=$((timeouts["Unexpected end"]+1))
         continue     
     fi 
