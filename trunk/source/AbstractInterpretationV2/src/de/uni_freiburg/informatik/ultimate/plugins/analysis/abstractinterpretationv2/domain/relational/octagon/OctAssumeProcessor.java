@@ -419,6 +419,7 @@ public class OctAssumeProcessor {
 		}
 
 		if (affExpr.getCoefficients().size() > 2 || (affExpr = affExpr.unitCoefficientForm()) == null) {
+			// TODO: Deal with certain forms (project to intervalls?)
 			return oldStates;
 		}
 
