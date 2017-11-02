@@ -7,7 +7,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.translation.BacktranslatedCF
 import de.uni_freiburg.informatik.ultimate.core.model.models.IExplicitEdgesMultigraph;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.witnessprinter.CorrectnessWitnessGenerator;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.IBacktranslationValueProvider;
 
 /**
  *
@@ -28,8 +28,7 @@ public class CACSLBacktranslatedCFG extends BacktranslatedCFG<String, CACSLLocat
 	}
 
 	@Override
-	public String getSVCOMPWitnessString() {
-		return new CorrectnessWitnessGenerator<>(this, new CACSLBacktranslationValueProvider(), mLogger, mServices)
-				.makeGraphMLString();
+	public IBacktranslationValueProvider<CACSLLocation, ?> getBacktranslationValueProvider() {
+		return new CACSLBacktranslationValueProvider();
 	}
 }

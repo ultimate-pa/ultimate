@@ -37,12 +37,15 @@ public class GeneratedWitnessNode {
 	private final boolean mIsError;
 	private final boolean mIsSink;
 	private String mInvariant;
+	private final boolean mIsHonda;
 
-	GeneratedWitnessNode(final long currentNodeId, final boolean isEntry, final boolean isError, final boolean isSink) {
+	GeneratedWitnessNode(final long currentNodeId, final boolean isEntry, final boolean isError, final boolean isSink,
+			final boolean isHonda) {
 		mIsEntry = isEntry;
 		mIsError = isError;
 		mId = 'N' + String.valueOf(currentNodeId);
 		mIsSink = isSink;
+		mIsHonda = isHonda;
 		mInvariant = null;
 	}
 
@@ -73,5 +76,9 @@ public class GeneratedWitnessNode {
 	@Override
 	public String toString() {
 		return mId;
+	}
+
+	public boolean isHonda() {
+		return mIsHonda;
 	}
 }

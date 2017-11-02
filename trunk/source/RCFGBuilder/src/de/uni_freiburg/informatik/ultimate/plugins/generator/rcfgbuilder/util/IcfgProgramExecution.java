@@ -35,12 +35,14 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.NoBacktranslationValueProvider;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovabilityReason;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IRelevanceInformation;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement.StepInfo;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.IBacktranslationValueProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -217,11 +219,6 @@ public class IcfgProgramExecution implements IProgramExecution<IcfgEdge, Term> {
 		return IcfgEdge.class;
 	}
 
-	@Override
-	public String getSVCOMPWitnessString() {
-		return null;
-	}
-
 	public List<UnprovabilityReason> getUnprovabilityReasons() {
 		final List<UnprovabilityReason> unproabilityReasons = new ArrayList<>();
 		for (final Entry<String, ILocation> entry : mOverapproximations.entrySet()) {
@@ -238,6 +235,11 @@ public class IcfgProgramExecution implements IProgramExecution<IcfgEdge, Term> {
 		}
 		return new IcfgProgramExecution(edgeSequence, mPartialProgramStateMapping, mBranchEncoders,
 				relevanceInformation);
+	}
+
+	@Override
+	public IBacktranslationValueProvider<IcfgEdge, Term> getBacktranslationValueProvider() {
+		return new NoBacktranslationValueProvider<>();
 	}
 
 }

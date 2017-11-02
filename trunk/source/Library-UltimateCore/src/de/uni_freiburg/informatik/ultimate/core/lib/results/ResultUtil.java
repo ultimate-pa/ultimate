@@ -33,6 +33,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
@@ -72,19 +73,30 @@ public final class ResultUtil {
 	 * Returns new Collections that contains all IResults from ultimateIResults that are subclasses of the class
 	 * resClass.
 	 */
-	public static <E extends IResult> Collection<E> filterResults(final Map<String, List<IResult>> ultimateIResults,
+	public static <E extends IResult> Collection<E> filterResults(final Map<String, List<IResult>> results,
 			final Class<E> resClass) {
 		final List<E> filteredList = new ArrayList<>();
-		for (final Entry<String, List<IResult>> entry : ultimateIResults.entrySet()) {
-			for (final IResult res : entry.getValue()) {
-				if (resClass.isAssignableFrom(res.getClass())) {
-					@SuppressWarnings("unchecked")
-					final E benchmarkResult = (E) res;
-					filteredList.add(benchmarkResult);
-				}
+		for (final Entry<String, List<IResult>> entry : results.entrySet()) {
+			filteredList.addAll(filterResults(entry.getValue(), resClass));
+		}
+		return filteredList;
+	}
+
+	public static <E extends IResult> Collection<E> filterResults(final List<IResult> results,
+			final Class<E> resClass) {
+		final List<E> filteredList = new ArrayList<>();
+		for (final IResult result : results) {
+			if (resClass.isAssignableFrom(result.getClass())) {
+				@SuppressWarnings("unchecked")
+				final E benchmarkResult = (E) result;
+				filteredList.add(benchmarkResult);
 			}
 		}
 		return filteredList;
+	}
+
+	public static boolean anyMatch(final Map<String, List<IResult>> results, final Predicate<IResult> pred) {
+		return results.entrySet().stream().flatMap(a -> a.getValue().stream()).anyMatch(pred);
 	}
 
 	public static <SE> String translateExpressionToString(final IBacktranslationService translator,
