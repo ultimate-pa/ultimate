@@ -165,7 +165,9 @@ public class HornClauseCobody {
 			final HornClausePredicateSymbol bodySymbol = symbolTable.getOrConstructHornClausePredicateSymbol(
 					pred.getFunction().getName(), pred.getFunction().getParameterSorts());
 			mPredicateSymbols.add(bodySymbol);
-
+			for (final Term par : pred.getParameters()) {
+				assert par instanceof TermVariable;
+			}
 			final List<TermVariable> parameterTermVariables = Arrays.asList(pred.getParameters()).stream()
 					.map(t -> (TermVariable) t)
 					.collect(Collectors.toList());

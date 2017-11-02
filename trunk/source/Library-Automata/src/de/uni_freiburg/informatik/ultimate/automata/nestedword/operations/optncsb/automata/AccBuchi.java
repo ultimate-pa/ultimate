@@ -28,10 +28,6 @@
 
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.automata;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util.IntSet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util.UtilIntSet;
 
@@ -40,12 +36,11 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncs
 public class AccBuchi implements Acc {
 
 	private final IntSet mFinalStates;
-	private final List<IntSet> mAccList;
+	public static final int ACC_SIZE_ONE = 1; 
+	public static final int ACC_LABEL_ZERO = 0;
 	
 	public AccBuchi(IntSet finalStates) {
 		this.mFinalStates = finalStates;
-		this.mAccList = new ArrayList<>();
-		mAccList.add(mFinalStates);
 	}
 	
 	@Override
@@ -54,17 +49,35 @@ public class AccBuchi implements Acc {
 	}
 
 	@Override
-	public List<IntSet> getAccs() {
-		return Collections.unmodifiableList(mAccList);
-	}
-
-	@Override
 	public IntSet getLabels(int state) {
 		IntSet labels = UtilIntSet.newIntSet();
 		if(mFinalStates.get(state)) {
-			labels.set(0);
+			labels.set(ACC_LABEL_ZERO);
 		}
 		return labels;
+	}
+
+	@Override
+	public int getAccSize() {
+		return ACC_SIZE_ONE;
+	}
+
+	@Override
+	public void setLabel(int state, int label) {
+		if(label != ACC_LABEL_ZERO) {
+			return ;
+		}
+		mFinalStates.set(state);
+	}
+
+	@Override
+	public void setLabel(int state, IntSet labels) {
+		for(final int label : labels.iterable()) {
+			if(label != ACC_LABEL_ZERO) {
+				return ;
+			}
+		}
+		mFinalStates.set(state);
 	}
 
 }

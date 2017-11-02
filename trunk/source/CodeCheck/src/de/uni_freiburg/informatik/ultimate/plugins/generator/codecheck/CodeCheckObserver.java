@@ -108,6 +108,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferenc
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.CachingHoareTripleCheckerMap;
@@ -750,12 +751,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 	}
 
 	private void reportPositiveResults(final Collection<IcfgLocation> errorLocs) {
-		final String longDescription;
-		if (errorLocs.isEmpty()) {
-			longDescription = "We were not able to verify any"
-					+ " specifiation because the program does not contain any specification.";
-		} else {
-			longDescription = errorLocs.size() + " specifications checked. All of them hold";
+		if (!errorLocs.isEmpty()) {
 			for (final IcfgLocation errorLoc : errorLocs) {
 				final PositiveResult<IIcfgElement> pResult =
 						new PositiveResult<>(Activator.PLUGIN_NAME, errorLoc, mServices.getBacktranslationService());
@@ -763,7 +759,8 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 			}
 		}
 		final AllSpecificationsHoldResult result =
-				new AllSpecificationsHoldResult(Activator.PLUGIN_NAME, longDescription);
+				AllSpecificationsHoldResult.createAllSpecificationsHoldResult(Activator.PLUGIN_NAME, errorLocs.size());
+
 		reportResult(result);
 		mLogger.info(result.getShortDescription() + " " + result.getLongDescription());
 	}

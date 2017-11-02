@@ -55,10 +55,7 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 	private final Map<Term, EqNode> mTermToEqNode = new HashMap<>();
 	private final Map<Term, Term> mNormalizationCache = new HashMap<>();
 
-//	private final VPDomainPreanalysis mPreAnalysis;
-
 	public EqNodeAndFunctionFactory(final IUltimateServiceProvider services, final ManagedScript script) {
-//		mPreAnalysis = preAnalysis;
 		mServices = services;
 		mMgdScript = script;
 	}
@@ -153,7 +150,6 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 	@Override
 	public EqNode getExistingNode(final Term term) {
 		final EqNode result = mTermToEqNode.get(normalizeTerm(term));
-//		assert result != null;
 		return result;
 	}
 

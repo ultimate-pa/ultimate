@@ -48,8 +48,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.NnfTransformer;
@@ -62,8 +60,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.BidirectionalMap;
  *
  * @param <ACTION>
  */
-public class FormulaToEqDisjunctiveConstraintConverter<ACTION extends IIcfgTransition<IcfgLocation>>
-		extends NonRecursive {
+public class FormulaToEqDisjunctiveConstraintConverter extends NonRecursive {
 
 	private final Term mFormula;
 
@@ -192,12 +189,12 @@ public class FormulaToEqDisjunctiveConstraintConverter<ACTION extends IIcfgTrans
 			final EqNode tvNode = mEqNodeAndFunctionFactory.getOrConstructNode(term);
 			if (polarity) {
 				final EqNode trueNode = mEqNodeAndFunctionFactory.getOrConstructNode(mTrueTerm);
-				final EqConstraint<EqNode> tvEqualsTrue = mEqConstraintFactory.addEqualityFlat(tvNode, trueNode,
+				final EqConstraint<EqNode> tvEqualsTrue = mEqConstraintFactory.addEquality(tvNode, trueNode,
 						emptyConstraint);
 				mResultStack.push(mEqConstraintFactory.getDisjunctiveConstraint(Collections.singleton(tvEqualsTrue)));
 			} else {
 				final EqNode falseNode = mEqNodeAndFunctionFactory.getOrConstructNode(mFalseTerm);
-				final EqConstraint<EqNode> tvEqualsFalse = mEqConstraintFactory.addEqualityFlat(tvNode,
+				final EqConstraint<EqNode> tvEqualsFalse = mEqConstraintFactory.addEquality(tvNode,
 						falseNode, emptyConstraint);
 				mResultStack.push(mEqConstraintFactory.getDisjunctiveConstraint(Collections.singleton(tvEqualsFalse)));
 			}
@@ -243,7 +240,7 @@ public class FormulaToEqDisjunctiveConstraintConverter<ACTION extends IIcfgTrans
 				if (polarity) {
 					if (storeTerm == null) {
 						// we have a strong equivalence
-						newConstraint = mEqConstraintFactory.addEqualityFlat(simpleArray, otherSimpleArray,
+						newConstraint = mEqConstraintFactory.addEquality(simpleArray, otherSimpleArray,
 								emptyConstraint);
 					} else {
 						final EqNode storeIndex = mEqNodeAndFunctionFactory
@@ -260,12 +257,12 @@ public class FormulaToEqDisjunctiveConstraintConverter<ACTION extends IIcfgTrans
 								storeTerm.getParameters()[1]);
 						mMgdScript.unlock(this);
 						final EqNode selectEqNode = mEqNodeAndFunctionFactory.getOrConstructNode(selectTerm);
-						newConstraint = mEqConstraintFactory.addEqualityFlat(selectEqNode, storeValue,
+						newConstraint = mEqConstraintFactory.addEquality(selectEqNode, storeValue,
 								intermediateConstraint);
 					}
 				} else {
 					if (storeTerm == null) {
-						newConstraint = mEqConstraintFactory.addDisequalityFlat(simpleArray, otherSimpleArray,
+						newConstraint = mEqConstraintFactory.addDisequality(simpleArray, otherSimpleArray,
 								emptyConstraint);
 					} else {
 						/*
@@ -297,9 +294,9 @@ public class FormulaToEqDisjunctiveConstraintConverter<ACTION extends IIcfgTrans
 
 				final EqConstraint<EqNode> newConstraint;
 				if (polarity) {
-					newConstraint = mEqConstraintFactory.addEqualityFlat(node1, node2, emptyConstraint);
+					newConstraint = mEqConstraintFactory.addEquality(node1, node2, emptyConstraint);
 				} else {
-					newConstraint = mEqConstraintFactory.addDisequalityFlat(node1, node2, emptyConstraint);
+					newConstraint = mEqConstraintFactory.addDisequality(node1, node2, emptyConstraint);
 				}
 				mResultStack.push(mEqConstraintFactory.getDisjunctiveConstraint(Collections.singleton(newConstraint)));
 				return;
@@ -410,8 +407,6 @@ public class FormulaToEqDisjunctiveConstraintConverter<ACTION extends IIcfgTrans
 
 		private final List<Term> mReplacementEquations = new ArrayList<>();
 
-		// private final BidirectionalMap<TermVariable, Term>
-		// mReplacementTvToReplacedTerm = new BidirectionalMap<>();
 		private final Map<Term, TermVariable> mReplacedTermToReplacementTv = new BidirectionalMap<>();
 
 		public Collection<Term> getReplacementEquations() {
@@ -542,9 +537,6 @@ public class FormulaToEqDisjunctiveConstraintConverter<ACTION extends IIcfgTrans
 				final Term[] newArgs = transformer.getConvertedArray(oldArgs);
 				assert newArgs.length == 3;
 
-				// final Term innerStoreAtArrayPosition;
-				// final Term innerStoreAtValuePosition;
-
 				final Term replacedArray;
 				if (SmtUtils.isFunctionApplication(newArgs[0], "store")) {
 					replacedArray = getReplacementTv(newArgs[0]);
@@ -560,17 +552,6 @@ public class FormulaToEqDisjunctiveConstraintConverter<ACTION extends IIcfgTrans
 				}
 
 				setResult(mScript.term("store", replacedArray, newArgs[1], replacedValue));
-
-				// if (SmtUtils.isFunctionApplication(newArgs[0], "store")) {
-				// final Term innerStoreTerm = newArgs[0];
-				// final TermVariable replacmentTv = getReplacementTv(innerStoreTerm);
-				// setResult(mScript.term("store", replacmentTv, newArgs[1], newArgs[2]));
-				// } else {
-				// // the array argument of the store that we enqueued this walker for is a
-				// variable
-				// // --> we do no further transformation
-				// setResult(mScript.term("store", newArgs[0], newArgs[1], newArgs[2]));
-				// }
 			}
 
 			@Override

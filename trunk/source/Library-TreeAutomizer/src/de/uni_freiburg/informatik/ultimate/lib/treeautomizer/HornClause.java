@@ -46,8 +46,9 @@ public class HornClause implements IRankedLetter {
 	private final boolean mHeadIsFalse;
 
 	/**
-	 * Constructor for a Horn clause of the form b1 /\ ... /\ bn /\ constraint --> false.
-	 * Where b1 .. bn are uninterpreted predicates and constraint is a Term.
+	 * Constructor for a Horn clause of the form b1 /\ ... /\ bn /\ constraint
+	 * --> false. Where b1 .. bn are uninterpreted predicates and constraint is
+	 * a Term.
 	 *
 	 * @param script
 	 * @param symbolTable
@@ -67,11 +68,10 @@ public class HornClause implements IRankedLetter {
 		assert headPred != null : "use other constructor for '... -> False' case";
 	}
 
-
-
 	/**
-	 * Constructor for a Horn clause of the form b1 /\ ... /\ bn /\ constraint --> h.
-	 * Where b1 .. bn, and h, are uninterpreted predicates and constraint is a Term.
+	 * Constructor for a Horn clause of the form b1 /\ ... /\ bn /\ constraint
+	 * --> h. Where b1 .. bn, and h, are uninterpreted predicates and constraint
+	 * is a Term.
 	 *
 	 * @param script
 	 *            The script that will be used in TreeAutomizer (not the
@@ -82,7 +82,8 @@ public class HornClause implements IRankedLetter {
 	 * @param headVars
 	 * @param bodyPreds
 	 * @param bodyPredToTermVariables
-	 * @param dummy dummy parameter to allow for an extra constructor
+	 * @param dummy
+	 *            dummy parameter to allow for an extra constructor
 	 */
 	private HornClause(final ManagedScript script, final HCSymbolTable symbolTable, final Term constraint,
 			final HornClausePredicateSymbol headPred, final List<TermVariable> headVars,
@@ -151,6 +152,29 @@ public class HornClause implements IRankedLetter {
 		return mHeadPredTermVariables;
 	}
 
+	public String debugString() {
+
+		String cobody = "";
+
+		for (int i = 0; i < mBodyPredToTermVariables.size(); ++i) {
+			cobody += " " + mBodyPreds.get(i) + "(";
+			cobody += mBodyPredToTermVariables.get(i);
+			cobody += ")";
+		}
+		if (cobody.length() > 0) {
+			cobody = "and" + cobody;
+		} else {
+			cobody = "true";
+		}
+
+		final String body = mHeadPredicate != null ? mHeadPredicate.getName() : "false" + mHeadPredTermVariables;
+		if (mFormula == null) {
+			return "unintialized HornClause";
+		}
+
+		return String.format("(%s) ^^ (%s) ~~> (%s)", cobody, mFormula.toString(), body);
+	}
+
 	@Override
 	public String toString() {
 		// String cobody = "";
@@ -168,12 +192,12 @@ public class HornClause implements IRankedLetter {
 		//
 		// final String body = mHeadPredicate.getName() +
 		// mHeadPredTermVariables;
-//		if (mTransitionFormula == null) {
+		// if (mTransitionFormula == null) {
 		if (mFormula == null) {
 			return "unintialized HornClause";
 		}
 
-//		return mTransitionFormula.getFormula().toString();
+		// return mTransitionFormula.getFormula().toString();
 		return mFormula.toString();
 		// return String.format("(%s) ^^ (%s) ~~> (%s) || in : %s || out : %s ",
 		// cobody, mTransitionFormula, body,
@@ -188,12 +212,14 @@ public class HornClause implements IRankedLetter {
 
 	@Override
 	public int getRank() {
-//		if (mBodyPreds.isEmpty()) {//mTransitionFormula.getInVars().isEmpty()) {
-//			// Initial state
-//			return 1;
-//		}
+		// if (mBodyPreds.isEmpty())
+		// {//mTransitionFormula.getInVars().isEmpty()) {
+		// // Initial state
+		// return 1;
+		// }
 		return mBodyPreds.size();// mTransitionFormula.getInVars().size();
 	}
+
 	public Term getFormula() {
 		return mFormula;
 	}

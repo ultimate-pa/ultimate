@@ -48,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.icfgtransformer.IcfgTransformerSequen
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.LocalTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.MapEliminationTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.HeapSepTransFormulaTransformer;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.StoreIndexExposer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.ExampleLoopAccelerationTransformulaTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.ahmed.AhmedLoopAccelerationIcfgTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.biesenbach.IcfgLoopAcceleration;
@@ -200,8 +201,8 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 
 		final List<ITransformulaTransformer> transformers = new ArrayList<>();
 
-//		final StoreIndexExposer sie = new StoreIndexExposer(icfg.getCfgSmtToolkit());
-//		transformers.add(sie);
+		final StoreIndexExposer sie = new StoreIndexExposer(icfg.getCfgSmtToolkit());
+		transformers.add(sie);
 
 		final HeapSepTransFormulaTransformer hstftf =
 				new HeapSepTransFormulaTransformer(icfg.getCfgSmtToolkit(), mServices, equalityProvider);

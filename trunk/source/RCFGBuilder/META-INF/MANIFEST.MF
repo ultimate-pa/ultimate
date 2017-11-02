@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: RCFGBuilder
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder;singleton:=true
-Bundle-Version: 0.1.23
+Bundle-Version: 0.1.22
 Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.core,
  de.uni_freiburg.informatik.ultimate.lib.smtlib,

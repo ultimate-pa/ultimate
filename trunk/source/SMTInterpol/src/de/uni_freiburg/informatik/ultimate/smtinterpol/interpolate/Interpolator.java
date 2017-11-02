@@ -666,7 +666,7 @@ public class Interpolator extends NonRecursive {
 							mCheckingSolver.assertTerm(mTheory.equals(lhs, rhs));
 						}
 					}
-				} else if (litTermInfo.isLAEquality()) {
+				} else if (litTermInfo.isLAEquality() && litTermInfo.isNegated()) {
 					// handle mixed LA disequalities.
 					final InterpolatorAffineTerm at = new InterpolatorAffineTerm();
 					final Term eq = mTheory.not(lit);

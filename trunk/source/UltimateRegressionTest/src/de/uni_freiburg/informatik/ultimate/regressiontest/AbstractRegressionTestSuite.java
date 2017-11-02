@@ -65,6 +65,8 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 	protected String mRootFolder;
 	protected String mExcludeFilterRegex;
 	protected String mIncludeFilterRegex;
+	protected String mFileExcludeFilterRegex;
+	protected String mFileIncludeFilterRegex;
 	protected String[] mFiletypesToConsider;
 
 	public AbstractRegressionTestSuite() {
@@ -72,16 +74,19 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 		mTimeout = 1000;
 		mExcludeFilterRegex = "";
 		mIncludeFilterRegex = "";
+		mFileExcludeFilterRegex = "";
+		mFileIncludeFilterRegex = "";
 		mFiletypesToConsider = new String[] { ".c", ".bpl", ".i", ".ats" };
 	}
 
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
 		final List<UltimateTestCase> rtr = new ArrayList<>();
-		final Collection<Pair> runConfigurations = getRunConfiguration();
 
+		final Collection<Pair> runConfigurations = getRunConfiguration();
+		final Predicate<File> filesRegexFilter = getFilesRegexFilter();
 		for (final Pair runConfiguration : runConfigurations) {
-			final Collection<File> inputFiles = getInputFiles(runConfiguration);
+			final Collection<File> inputFiles = getInputFiles(filesRegexFilter, runConfiguration);
 
 			for (final File inputFile : inputFiles) {
 				final UltimateRunDefinition urd = new UltimateRunDefinition(inputFile,
@@ -98,6 +103,8 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 	 * Get a collection of toolchain/settings pairs of which the settings name starts with the toolchains name (without
 	 * ending) or vice versa.
 	 *
+	 * @param regexFilter
+	 *
 	 * @return A collection of {@link Pair}s of files. The first file represents a toolchain and the second represents
 	 *         settings.
 	 */
@@ -109,19 +116,8 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 			return rtr;
 		}
 
+		final Predicate<File> regexFilter = getToolchainSettingsRegexFilter();
 		final List<File> tcAndSettingsFiles = TestUtil.getFiles(root, new String[] { ".xml", ".epf" });
-
-		final List<String> regexes = new ArrayList<>();
-		regexes.add(".*regression.*");
-		if (!mIncludeFilterRegex.isEmpty()) {
-			regexes.add(mIncludeFilterRegex);
-		}
-		Predicate<File> regexFilter;
-		if (!mExcludeFilterRegex.isEmpty()) {
-			regexFilter = TestUtil.getRegexTest(regexes).and(TestUtil.getRegexTest(mExcludeFilterRegex).negate());
-		} else {
-			regexFilter = TestUtil.getRegexTest(regexes);
-		}
 
 		final Collection<File> toolchainFiles =
 				tcAndSettingsFiles.stream().filter(FILTER_XML.and(regexFilter)).collect(Collectors.toSet());
@@ -144,6 +140,35 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 		}
 
 		return rtr;
+	}
+
+	private Predicate<File> getToolchainSettingsRegexFilter() {
+		final List<String> regexes = new ArrayList<>();
+		regexes.add(".*regression.*");
+		if (!mIncludeFilterRegex.isEmpty()) {
+			regexes.add(mIncludeFilterRegex);
+		}
+		Predicate<File> regexFilter;
+		if (!mExcludeFilterRegex.isEmpty()) {
+			regexFilter = TestUtil.getRegexTest(regexes).and(TestUtil.getRegexTest(mExcludeFilterRegex).negate());
+		} else {
+			regexFilter = TestUtil.getRegexTest(regexes);
+		}
+		return regexFilter;
+	}
+
+	private Predicate<File> getFilesRegexFilter() {
+		final List<String> regexes = new ArrayList<>();
+		if (!mFileIncludeFilterRegex.isEmpty()) {
+			regexes.add(mFileIncludeFilterRegex);
+		}
+		Predicate<File> regexFilter;
+		if (!mFileExcludeFilterRegex.isEmpty()) {
+			regexFilter = TestUtil.getRegexTest(regexes).and(TestUtil.getRegexTest(mFileExcludeFilterRegex).negate());
+		} else {
+			regexFilter = TestUtil.getRegexTest(regexes);
+		}
+		return regexFilter;
 	}
 
 	@Override
@@ -189,11 +214,12 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 	}
 
 	/**
+	 * @param regexFilter
 	 * @return All the files that should be used in this test suite. The default implementation uses all files that can
 	 *         be found recursively under the folder in which the deeper file (settings or toolchain, specified in
 	 *         runConfiguration) lies and that have the endings specified by mFileTypesToConsider.
 	 */
-	protected Collection<File> getInputFiles(final Pair runConfiguration) {
+	protected Collection<File> getInputFiles(final Predicate<File> regexFilter, final Pair runConfiguration) {
 		final File tcParent = runConfiguration.getToolchainFile().getParentFile();
 		final File settingParent = runConfiguration.getSettingsFile().getParentFile();
 		final File parent;
@@ -202,7 +228,8 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 		} else {
 			parent = tcParent;
 		}
-		return TestUtil.getFiles(parent, mFiletypesToConsider);
+		return TestUtil.getFiles(parent, mFiletypesToConsider).stream().filter(regexFilter)
+				.collect(Collectors.toList());
 	}
 
 	protected abstract ITestResultDecider getTestResultDecider(UltimateRunDefinition runDefinition);

@@ -50,3 +50,10 @@ file_export_version=3.0
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2=
 /instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2/Abstract\ domain\ for\ RCFG-of-the-future=VPDomain
 /instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2/Use\ the\ RCFG-of-the-future\ interface=true
+
+
+#Tue Oct 17 08:38:02 CEST 2017
+file_export_version=3.0
+@de.uni_freiburg.informatik.ultimate.plugins.icfgtransformation=0.1.23
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.icfgtransformation=
+/instance/de.uni_freiburg.informatik.ultimate.plugins.icfgtransformation/TransformationType=HEAP_SEPARATOR

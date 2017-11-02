@@ -33,6 +33,7 @@ import java.util.Collections;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.automata.Acc;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.automata.AccGenBuchi;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.automata.BuchiWa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.automata.IBuchiWa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util.IntSet;
@@ -110,59 +111,19 @@ public class GeneralizedBuchiIntersection extends BuchiWa implements IBuchiWaInt
 		return (AccBuchiIntersection)acc;
 	}
 	
-	private class AccBuchiIntersection implements Acc {
+	private class AccBuchiIntersection extends AccGenBuchi {
 
-		private final List<IntSet> accs;
 		public AccBuchiIntersection() {
-			accs = new ArrayList<>();
-			for(int i = 0; i < mFstOperand.getAcceptance().getAccs().size(); i ++) {
-				accs.add(UtilIntSet.newIntSet());
-			}
-			
-			for(int i = 0; i < mSndOperand.getAcceptance().getAccs().size(); i ++) {
-				accs.add(UtilIntSet.newIntSet());
-			}
+			super(mFstOperand.getAcceptance().getAccSize() + mSndOperand.getAcceptance().getAccSize());
 		}
 		
 		protected void setAcc(GeneralizedState state) {
-			int i = 0;
-			for(IntSet set : mFstOperand.getAcceptance().getAccs()) {
-				if(set.get(state.getLeft())) {
-					accs.get(i).set(state.getId());
-				}
-				i ++;
+			IntSet result = UtilIntSet.newIntSet(); 
+			result.or(mFstOperand.getAcceptance().getLabels(state.getLeft()));
+			for(int label : mSndOperand.getAcceptance().getLabels(state.getRight()).iterable()) {
+				result.set(mFstOperand.getAcceptance().getAccSize() + label);
 			}
-			
-			for(IntSet set : mSndOperand.getAcceptance().getAccs()) {
-				if(set.get(state.getRight())) {
-					accs.get(i).set(state.getId());
-				}
-				i ++;
-			}
-		}
-		
-		@Override
-		public boolean isAccepted(IntSet set) {
-			for(IntSet acc : accs) {
-				if(!acc.overlap(set)) return false;
-			}
-			return true;
-		}
-
-		@Override
-		public List<IntSet> getAccs() {
-			return Collections.unmodifiableList(accs);
-		}
-
-		@Override
-		public IntSet getLabels(int state) {
-			IntSet labels = UtilIntSet.newIntSet();
-			for(int i = 0; i < accs.size(); i ++) {
-				if(accs.get(i).get(state)) {
-					labels.set(i);
-				}
-			}
-			return labels;
+			this.setLabel(state.getId(), result);
 		}
 	}
 

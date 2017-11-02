@@ -35,10 +35,10 @@ public class GeneralizedBuchiWa extends BuchiWa {
     }
     
     @Override
-    public AccGenBuchi getAcceptance() {
+    public Acc getAcceptance() {
         if(acc == null) {
             acc = new AccGenBuchi(getFinalStates());
         }
-        return (AccGenBuchi) acc;
+        return acc;
     }
 }

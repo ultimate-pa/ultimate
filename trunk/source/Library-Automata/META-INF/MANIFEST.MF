@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Library-Automata
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.lib.automata
-Bundle-Version: 0.1.23
+Bundle-Version: 0.1.22
 Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.core,
  de.uni_freiburg.informatik.ultimate.smtinterpol,
@@ -268,6 +268,7 @@ Export-Package: de.uni_freiburg.informatik.ultimate.automata;
    de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.incrementalinclusion",
  de.uni_freiburg.informatik.ultimate.automata.tree;uses:="de.uni_freiburg.informatik.ultimate.automata.statefactory,de.uni_freiburg.informatik.ultimate.automata,de.uni_freiburg.informatik.ultimate.core.model.models",
  de.uni_freiburg.informatik.ultimate.automata.tree.operations;uses:="de.uni_freiburg.informatik.ultimate.automata.statefactory,de.uni_freiburg.informatik.ultimate.automata.tree,de.uni_freiburg.informatik.ultimate.automata",
+ de.uni_freiburg.informatik.ultimate.automata.tree.operations.difference,
  de.uni_freiburg.informatik.ultimate.automata.tree.operations.minimization,
  de.uni_freiburg.informatik.ultimate.automata.tree.operations.minimization.hopcroft,
  de.uni_freiburg.informatik.ultimate.automata.tree.operations.minimization.performance,

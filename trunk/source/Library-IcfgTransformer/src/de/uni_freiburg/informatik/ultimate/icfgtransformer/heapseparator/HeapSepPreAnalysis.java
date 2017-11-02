@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayEquality;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSort;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalStore;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
@@ -53,12 +54,12 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.SymmetricHashRelation;
 
 /**
- * Does a preanalysis on the program before the actual heap separation is done (using the
- * abstract interpretation result from the equality domain).
- * Computes:
- *  - which arrays are equated, anywhere in the program (occur left and right each of an equality in a TransFormula)
- *  - for each array in the program the locations where it is accessed
- *     (question: does this mean that large block encoding is detrimental to heapseparation?)
+ * Does a preanalysis on the program before the actual heap separation is done
+ * (using the abstract interpretation result from the equality domain).
+ * Computes: - which arrays are equated, anywhere in the program (occur left and
+ * right each of an equality in a TransFormula) - for each array in the program
+ * the locations where it is accessed (question: does this mean that large block
+ * encoding is detrimental to heapseparation?)
  *
  * @author Alexander Nutz
  *
@@ -74,9 +75,10 @@ public class HeapSepPreAnalysis {
 	private final ManagedScript mScript;
 
 	/**
-	 * The HeapSepPreAnalysisVisitor computes and provides the following information:
-	 *  - which arrays (base arrays, not store terms) are equated in the program
-	 *  - for each array at which locations in the CFG it is accessed
+	 * The HeapSepPreAnalysisVisitor computes and provides the following
+	 * information: - which arrays (base arrays, not store terms) are equated in the
+	 * program - for each array at which locations in the CFG it is accessed
+	 *
 	 * @param logger
 	 * @param equalityProvider
 	 */
@@ -111,27 +113,37 @@ public class HeapSepPreAnalysis {
 		/*
 		 * handle selects in the formula
 		 */
-		final List<MultiDimensionalSelect> mdSelectsAll =
-				MultiDimensionalSelect.extractSelectDeep(tf.getFormula(), false);
-		final List<MultiDimensionalSelect> mdSelectsFiltered =
-							mdSelectsAll.stream()
-							.filter(mds -> isArrayTracked(mds.getArray(), tf))
-							.collect(Collectors.toList());
-		mdSelectsFiltered.forEach(mds -> result.addPair(
-				VPDomainHelpers.normalizeTerm(getInnerMostArray(mds.getArray()), tf, mScript),
-					VPDomainHelpers.normalizeArrayIndex(mds.getIndex(), tf, mScript)));
+		final List<MultiDimensionalSelect> mdSelectsAll = MultiDimensionalSelect.extractSelectShallow(tf.getFormula(),
+				false);
+		// MultiDimensionalSelect.extractSelectDeep(tf.getFormula(), false);
+		final List<MultiDimensionalSelect> mdSelectsFiltered = mdSelectsAll.stream()
+				.filter(mds -> isArrayTracked(mds.getArray(), tf)).collect(Collectors.toList());
+		for (final MultiDimensionalSelect mds : mdSelectsFiltered) {
+			final Term array = VPDomainHelpers.normalizeTerm(getInnerMostArray(mds.getArray()), tf, mScript);
+			final ArrayIndex index = VPDomainHelpers.normalizeArrayIndex(mds.getIndex(), tf, mScript);
+			assert index.size() == new MultiDimensionalSort(mds.getArray().getSort()).getDimension();
+			result.addPair(array, index);
+		}
 
 		/*
 		 * handle stores in the formula
 		 */
-		final List<MultiDimensionalStore> mdStoresAll =
-				MultiDimensionalStore.extractArrayStoresDeep(tf.getFormula());
+		final List<MultiDimensionalStore> mdStoresAll = MultiDimensionalStore
+				.extractArrayStoresShallow(tf.getFormula());
+//				.extractArrayStoresDeep(tf.getFormula());
 		final List<MultiDimensionalStore> mdStoresFiltered = mdStoresAll.stream()
-				.filter(mds -> isArrayTracked(mds.getArray(), tf))
-				.collect(Collectors.toList());
-		mdStoresFiltered.forEach(mds -> result.addPair(
-				VPDomainHelpers.normalizeTerm(getInnerMostArray(mds.getArray()), tf, mScript),
-					VPDomainHelpers.normalizeArrayIndex(mds.getIndex(), tf, mScript)));
+				.filter(mds -> isArrayTracked(mds.getArray(), tf)).collect(Collectors.toList());
+		// mdStoresFiltered.forEach(mds -> result.addPair(
+		// VPDomainHelpers.normalizeTerm(getInnerMostArray(mds.getArray()), tf,
+		// mScript),
+		// VPDomainHelpers.normalizeArrayIndex(mds.getIndex(), tf, mScript)));
+		for (final MultiDimensionalStore mds : mdStoresFiltered) {
+			final Term array = VPDomainHelpers.normalizeTerm(getInnerMostArray(mds.getArray()), tf, mScript);
+			final ArrayIndex index = VPDomainHelpers.normalizeArrayIndex(mds.getIndex(), tf, mScript);
+			// assert index.size() == mds.getArray().getSort().getArguments().length - 1;
+			assert index.size() == new MultiDimensionalSort(mds.getArray().getSort()).getDimension();
+			result.addPair(array, index);
+		}
 
 		return result;
 	}
@@ -150,7 +162,8 @@ public class HeapSepPreAnalysis {
 			if (!isArrayTracked(pv)) {
 				continue;
 			}
-			// we have an array variable --> store that it occurs after the source location of the edge
+			// we have an array variable --> store that it occurs after the source location
+			// of the edge
 			result.addPair(pv.getTerm(), edge.getSource());
 		}
 		for (final Entry<IProgramVar, TermVariable> en : edge.getTransformula().getOutVars().entrySet()) {
@@ -161,7 +174,8 @@ public class HeapSepPreAnalysis {
 			if (!isArrayTracked(pv)) {
 				continue;
 			}
-			// we have an array variable --> store that it occurs after the source location of the edge
+			// we have an array variable --> store that it occurs after the source location
+			// of the edge
 			result.addPair(pv.getTerm(), edge.getSource());
 		}
 		return result;
@@ -182,17 +196,27 @@ public class HeapSepPreAnalysis {
 	public Term getInnerMostArray(final Term arrayTerm) {
 		assert arrayTerm.getSort().isArraySort();
 		Term innerArray = arrayTerm;
-		while (SmtUtils.containsFunctionApplication(innerArray, "store")) {
-			innerArray = ((ApplicationTerm) innerArray).getParameters()[0];
+		// while (SmtUtils.containsFunctionApplication(innerArray, "store")) {
+		while (true) {
+			boolean madeChange = false;
+			if (SmtUtils.isFunctionApplication(innerArray, "store")) {
+				innerArray = ((ApplicationTerm) innerArray).getParameters()[0];
+				madeChange = true;
+			} else if (SmtUtils.isFunctionApplication(innerArray, "select")) {
+				innerArray = ((ApplicationTerm) innerArray).getParameters()[0];
+				madeChange = true;
+			}
+			if (!madeChange) {
+				break;
+			}
 		}
 		assert innerArray instanceof TermVariable;
 		return innerArray;
 	}
 
 	public Set<ArrayIndex> getAccessingIndicesForArrays(final Set<Term> arrayGroup) {
-		 final Set<ArrayIndex> result = new HashSet<>();
-		 arrayGroup.forEach(array ->
-		 	result.addAll(getArrayToAccessingIndices().getImage(array)));
+		final Set<ArrayIndex> result = new HashSet<>();
+		arrayGroup.forEach(array -> result.addAll(getArrayToAccessingIndices().getImage(array)));
 		return result;
 	}
 

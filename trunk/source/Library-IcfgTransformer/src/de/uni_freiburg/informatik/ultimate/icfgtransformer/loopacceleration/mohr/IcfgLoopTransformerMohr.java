@@ -53,6 +53,8 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgCallTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.SimultaneousUpdate;
@@ -69,6 +71,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.Simpli
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 public class IcfgLoopTransformerMohr<INLOC extends IcfgLocation, OUTLOC extends IcfgLocation>
 		implements IIcfgTransformer<OUTLOC> {
@@ -120,7 +123,6 @@ public class IcfgLoopTransformerMohr<INLOC extends IcfgLocation, OUTLOC extends 
 		final Map<INLOC, UnmodifiableTransFormula> loopSummaries = new HashMap<>();
 		final Map<INLOC, Set<Pair<UnmodifiableTransFormula, INLOC>>> loopExits = new HashMap<>();
 		if (!loops.isEmpty()) {
-			// TODO: consider nested loops
 			for (final IcfgLoop<INLOC> loop : loops) {
 				loopHeads.add(loop.getHead());
 				loopNodes.addAll(loop.getLoopbody());
@@ -141,6 +143,9 @@ public class IcfgLoopTransformerMohr<INLOC extends IcfgLocation, OUTLOC extends 
 		final ArrayDeque<INLOC> queue = new ArrayDeque<>();
 		final Set<INLOC> visited = new HashSet<>();
 		queue.add(origIcfg.getInitialNodes().iterator().next());
+
+		final List<Triple<OUTLOC, OUTLOC, IcfgEdge>> rtrTransitions = new ArrayList<>();
+
 		while (!queue.isEmpty()) {
 			final INLOC node = queue.removeFirst();
 			visited.add(node);
@@ -175,10 +180,21 @@ public class IcfgLoopTransformerMohr<INLOC extends IcfgLocation, OUTLOC extends 
 					}
 
 				} else {
-					mTib.createNewTransition(newSource, newTarget, edge);
+					if (edge instanceof IIcfgReturnTransition<?, ?>) {
+						mLogger.info("Return: " + newSource + " - " + edge + " -> " + newTarget);
+						rtrTransitions.add(new Triple<OUTLOC, OUTLOC, IcfgEdge>(newSource, newTarget, edge));
+					} else {
+						if (edge instanceof IIcfgCallTransition<?>) {
+							mLogger.info("Call: " + newSource + " - " + edge + " -> " + newTarget);
+						}
+						mLogger.info("Internal: " + newSource + " - " + edge + " -> " + newTarget);
+						mTib.createNewTransition(newSource, newTarget, edge);
+					}
 				}
 			}
 		}
+
+		rtrTransitions.forEach(a -> mTib.createNewTransition(a.getFirst(), a.getSecond(), a.getThird()));
 
 	}
 
@@ -189,11 +205,9 @@ public class IcfgLoopTransformerMohr<INLOC extends IcfgLocation, OUTLOC extends 
 		final SymbolicMemory symbolicMemory = new SymbolicMemory(mManagedScript, mLogger);
 		int pathCount = 0;
 
+		final ArrayDeque<TransFormula> queue = new ArrayDeque<>();
+
 		for (final ArrayList<IcfgEdge> path : loop.getPaths()) {
-
-			symbolicMemory.newPath();
-
-			pathSymbolicMemory.add(new HashMap<>());
 			final List<UnmodifiableTransFormula> formulas = new ArrayList<>();
 			for (final IcfgEdge edge : path) {
 				if (loop.getNestedLoopHeads().contains(edge.getSource())) {
@@ -203,50 +217,56 @@ public class IcfgLoopTransformerMohr<INLOC extends IcfgLocation, OUTLOC extends 
 				}
 				formulas.add(edge.getTransformula());
 			}
+
 			final UnmodifiableTransFormula composition = TransFormulaUtils.sequentialComposition(mLogger, mServices,
 					mManagedScript, false, false, false, null, SimplificationTechnique.NONE, formulas);
+
 			mLogger.debug("Path formulas: " + formulas);
 			mLogger.debug("Composition: " + composition);
 
-			// DD: It is not enough to just construct the DNF. You have to use it as input to the SimultaneousUpdate!
-			final List<TransFormula> disjunctsOfTransformula = getDisjunctsFromTransformula(composition);
+			queue.addAll(getDisjunctsFromTransformula(composition));
 
-			// DD: It is possible that you have multiple paths instead of one. You should deal with that. I just copied
-			// your
-			// code in the for-loop (I think this is not enough)
+		}
+
+		while (!queue.isEmpty()) {
+
+			final TransFormula path = queue.remove();
+			symbolicMemory.newPath();
+
+			pathSymbolicMemory.add(new HashMap<>());
+
 			// DD: Note that the issue with the "IllegalArgumentException: cannot bring into simultaneous update form
 			// xxx outvar occurs in several conjuncts" still persists. I have to check with Matthias if we can fix this.
 			// Until then, you can just ignore these errors.
-			for (final TransFormula disjunct : disjunctsOfTransformula) {
-				final SimultaneousUpdate su = new SimultaneousUpdate(disjunct, mManagedScript);
-				final Map<IProgramVar, Term> varUpdates = su.getUpdatedVars();
-				final Set<IProgramVar> havocVars = su.getHavocedVars();
-				mLogger.debug("Updates: " + varUpdates + " havocs: " + havocVars);
-				if (!havocVars.isEmpty()) {
-					mOverApproximation.put(loop.getHead(), true);
-				}
-				pathGuards.add(TransFormulaUtils.computeGuard(composition, mManagedScript, mServices, mLogger));
 
-				// calculate symbolic memory of the path
-				for (final Map.Entry<IProgramVar, Term> newValue : varUpdates.entrySet()) {
-					if (newValue.getValue() instanceof ConstantTerm || newValue.getValue() instanceof TermVariable) {
-						symbolicMemory.updateConst(newValue.getKey(), newValue.getValue(), mSymbolTable);
-					} else if (newValue.getValue() instanceof ApplicationTerm
-							&& ("+".equals(((ApplicationTerm) newValue.getValue()).getFunction().getName())
-									|| "-".equals(((ApplicationTerm) newValue.getValue()).getFunction().getName()))) {
-						final Set<TermVariable> freeVars =
-								new HashSet<>(Arrays.asList(newValue.getValue().getFreeVars()));
-						if (freeVars.contains(newValue.getKey().getTermVariable())) {
-							symbolicMemory.updateInc(newValue.getKey(), newValue.getValue(), mSymbolTable);
-						} else {
-							symbolicMemory.updateConst(newValue.getKey(), newValue.getValue(), mSymbolTable);
-						}
-					} else {
-						symbolicMemory.updateUndefined(newValue.getKey(), mSymbolTable);
-					}
-				}
-				pathCount++;
+			final SimultaneousUpdate su = new SimultaneousUpdate(path, mManagedScript);
+			final Map<IProgramVar, Term> varUpdates = su.getUpdatedVars();
+			final Set<IProgramVar> havocVars = su.getHavocedVars();
+			mLogger.debug("Updates: " + varUpdates + " havocs: " + havocVars);
+			if (!havocVars.isEmpty()) {
+				mOverApproximation.put(loop.getHead(), true);
 			}
+			pathGuards.add(TransFormulaUtils.computeGuard((UnmodifiableTransFormula) path, mManagedScript, mServices, mLogger));
+
+			// calculate symbolic memory of the path
+			for (final Map.Entry<IProgramVar, Term> newValue : varUpdates.entrySet()) {
+				if (newValue.getValue() instanceof ConstantTerm || newValue.getValue() instanceof TermVariable) {
+					symbolicMemory.updateConst(newValue.getKey(), newValue.getValue(), mSymbolTable);
+				} else if (newValue.getValue() instanceof ApplicationTerm
+						&& ("+".equals(((ApplicationTerm) newValue.getValue()).getFunction().getName())
+								|| "-".equals(((ApplicationTerm) newValue.getValue()).getFunction().getName()))) {
+					final Set<TermVariable> freeVars =
+							new HashSet<>(Arrays.asList(newValue.getValue().getFreeVars()));
+					if (freeVars.contains(newValue.getKey().getTermVariable())) {
+						symbolicMemory.updateInc(newValue.getKey(), newValue.getValue(), mSymbolTable);
+					} else {
+						symbolicMemory.updateConst(newValue.getKey(), newValue.getValue(), mSymbolTable);
+					}
+				} else {
+					symbolicMemory.updateUndefined(newValue.getKey(), mSymbolTable);
+				}
+			}
+			pathCount++;
 		}
 
 		final List<Term> pathTerms = new ArrayList<>();

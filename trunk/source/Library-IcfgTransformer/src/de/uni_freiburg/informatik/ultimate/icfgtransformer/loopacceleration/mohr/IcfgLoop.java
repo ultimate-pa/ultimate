@@ -71,6 +71,11 @@ public class IcfgLoop<INLOC extends IcfgLocation> {
 	}
 
 	public void addNestedLoop(final IcfgLoop<INLOC> loop) {
+		if (loop.getLoopbody().equals(mLoopbody)) {
+			// @loop is no nested loop, but the same loop
+			return;
+		}
+
 		for (final IcfgLoop<INLOC> nestedLoop : mNestedLoops.values()) {
 			if (nestedLoop.contains(loop.getHead())) {
 				nestedLoop.addNestedLoop(loop);
@@ -124,6 +129,11 @@ public class IcfgLoop<INLOC extends IcfgLocation> {
 	private void loopPaths() {
 		final Deque<ArrayList<IcfgEdge>> queue = new ArrayDeque<>();
 		final List<List<IcfgEdge>> breakPaths = new ArrayList<>();
+		final Map<INLOC, List<Pair<List<IcfgEdge>, INLOC>>> nestedBreakPaths = new HashMap<>();
+		for (final IcfgLoop loop: mNestedLoops.values()) {
+			loop.getPaths();
+			nestedBreakPaths.put((INLOC) loop.getHead(), loop.getLoopExits());
+		}
 		for (final IcfgEdge edge : mHead.getOutgoingEdges()) {
 			if (mLoopbody.contains(edge.getTarget())) {
 				final ArrayList<IcfgEdge> a = new ArrayList<>();
@@ -139,6 +149,22 @@ public class IcfgLoop<INLOC extends IcfgLocation> {
 				mPaths.add(path);
 				continue;
 			}
+
+			// Consider possible exit paths in nested loops
+			if (nestedBreakPaths.containsKey(destination)) {
+				for (final Pair<List<IcfgEdge>, INLOC> p: nestedBreakPaths.get(destination)) {
+					if (mLoopbody.contains(p.getSecond())) {
+						final ArrayList<IcfgEdge> addPath = new ArrayList<>(path);
+						addPath.addAll(p.getFirst());
+						queue.add(addPath);
+					} else {
+						final ArrayList<IcfgEdge> addPath = new ArrayList<>(path);
+						addPath.addAll(p.getFirst());
+						breakPaths.add(addPath);
+					}
+				}
+			}
+
 			for (final IcfgEdge edge : destination.getOutgoingEdges()) {
 				if (!mNestedNodes.contains(edge.getTarget()) &&
 						mLoopbody.contains(edge.getTarget()) &&

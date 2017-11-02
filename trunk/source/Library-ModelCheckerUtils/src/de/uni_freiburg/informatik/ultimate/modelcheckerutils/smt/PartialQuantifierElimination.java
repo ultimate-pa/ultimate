@@ -73,8 +73,8 @@ public class PartialQuantifierElimination {
 	static final boolean USE_UPD = true;
 	static final boolean USE_IRD = true;
 	static final boolean USE_TIR = true;
-	static final boolean USE_SSD = false;
-	static final boolean USE_SOS = true;
+	static final boolean USE_SSD = true;
+	static final boolean USE_SOS = false;
 	static final boolean USE_USR = false;
 	private static boolean mPushPull = true;
 	private static final boolean DEBUG_EXTENDED_RESULT_CHECK = false;
@@ -265,8 +265,11 @@ public class PartialQuantifierElimination {
 		}
 		
 		if (USE_SSD) {
+			final EliminationTask inputEliminationTask = new EliminationTask(quantifier, eliminatees, result);
 			final EliminationTask esp = new ElimStorePlain(mgdScript, services, simplificationTechnique)
-					.elimAll(new EliminationTask(quantifier, eliminatees, result));
+					.elimAllRec(new EliminationTask(quantifier, eliminatees, result));
+			assert EliminationTask.areDistinct(script, esp, inputEliminationTask) != LBool.SAT : "Array QEs incorrect. Esp: "
+					+ esp + " Input:" + inputEliminationTask;
 			if (DEBUG_APPLY_ARRAY_PQE_ALSO_TO_NEGATION) {
 				final int quantifierNegated = (quantifier * -1) + 1;
 				final Term negatedInput = new NnfTransformer(mgdScript, services, QuantifierHandling.CRASH)
@@ -288,7 +291,10 @@ public class PartialQuantifierElimination {
 				if (doSizeCheck) {
 					final long espTreeSize = new DAGSize().treesize(esp.getTerm());
 					final long sosTreeSize = new DAGSize().treesize(sosResult.getTerm());
-					assert espTreeSize <= sosTreeSize : "unexpected size! esp:" + espTreeSize + " sos" + sosTreeSize;
+					assert espTreeSize <= sosTreeSize * 2 : "unexpected size! esp:" + espTreeSize + " sos" + sosTreeSize;
+					if (sosTreeSize > 1 && sosTreeSize * 2 < espTreeSize) {
+						throw new AssertionError("unexpected size! esp:" + espTreeSize + " sos" + sosTreeSize);
+					}
 				}
 			}
 			result = esp.getTerm();
@@ -317,7 +323,7 @@ public class PartialQuantifierElimination {
 		}
 
 		// simplification
-		result = SmtUtils.simplify(mgdScript, result, services, simplificationTechnique);
+//		result = SmtUtils.simplify(mgdScript, result, services, simplificationTechnique);
 		
 
 		// (new SimplifyDDA(script)).getSimplifiedTerm(result);

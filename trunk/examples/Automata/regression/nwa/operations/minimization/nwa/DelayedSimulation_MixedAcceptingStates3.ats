@@ -16,6 +16,7 @@ int reduceNwaDirectFullMultipebbleSimulationSize = numberOfStates(reduceNwaDirec
 // int reduceNwaDelayedSimulationBSize = numberOfStates(reduceNwaDelayedSimulationB(preprocessed)); // TODO the result is wrong
 // int reduceNwaDelayedFullMultipebbleSimulationSize = numberOfStates(reduceNwaDelayedFullMultipebbleSimulation(preprocessed)); // TODO the result is wrong
 int minimizeNwaPmaxSatDelayedBiSize = numberOfStates(minimizeNwaPmaxSatDelayedBi(preprocessed));
+int minimizeNwaPmaxSatDelayedSize = numberOfStates(minimizeNwaPmaxSatDelayed(preprocessed));
 
 assert(minimizeSevpaSize == 6);
 assert(shrinkNwaSize == 6);
@@ -28,6 +29,7 @@ assert(reduceNwaDirectFullMultipebbleSimulationSize == 6);
 // // assert(reduceNwaDelayedSimulationBSize == 4); // TODO correct after fixing the method
 // assert(reduceNwaDelayedFullMultipebbleSimulationSize == 4); // TODO correct after fixing the method
 // assert(minimizeNwaPmaxSatDelayedBiSize == 5);
+// assert(minimizeNwaPmaxSatDelayedSize == 6);
 
 NestedWordAutomaton nwa = (
 	callAlphabet = {c1 c2},

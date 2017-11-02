@@ -31,11 +31,11 @@
 	<parent>
 		<artifactId>mavenparent</artifactId>
 		<groupId>de.uni_freiburg.informatik.ultimate</groupId>
-		<version>0.1.23</version>
+		<version>0.1.22</version>
 		<relativePath>../BA_MavenParentUltimate/pom.xml</relativePath>
 	</parent>
 
 	<artifactId>de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils</artifactId>
-	<version>0.1.23</version>
+	<version>0.1.22</version>
 	<packaging>eclipse-plugin</packaging>
 </project>

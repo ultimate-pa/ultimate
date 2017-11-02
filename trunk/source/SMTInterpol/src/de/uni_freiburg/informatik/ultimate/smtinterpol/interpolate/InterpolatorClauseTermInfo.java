@@ -33,50 +33,50 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.InfinitNumbe
 
 /**
  * This class is used to gather the information from a proof term which is relevant for the interpolator.
- * 
+ *
  * @author Tanja Schindler
  */
 public class InterpolatorClauseTermInfo {
-	
+
 	/**
 	 * All literals occurring in this term
 	 */
 	private final ArrayList<Term> mLiterals;
-	
+
 	private boolean mIsResolution;
-	
+
 	private boolean mIsLeaf;
-	
+
 	/**
 	 * The type of this leaf term, i.e. lemma or clause
 	 */
 	private String mLeafKind;
-	
+
 	/**
 	 * The type of this lemma, i.e. EQ, CC, LA, weakeq-ext, read-over-weakeq
 	 */
 	private String mLemmaType;
-	
+
 	/**
 	 * The primary of this resolution term
 	 */
 	private Term mPrimary;
-	
+
 	/**
 	 * The antecedents of this resolution term
 	 */
 	private AnnotatedTerm[] mAntecedents;
-	
+
 	/**
 	 * The source partition of this input term or literal
 	 */
 	private String mSource;
-	
+
 	/**
 	 * The disequality literal in this CC lemma
 	 */
 	private Term mDiseq;
-	
+
 	/**
 	 * The paths in CC and array lemmata
 	 */
@@ -85,22 +85,22 @@ public class InterpolatorClauseTermInfo {
 	 * The CC equality in this EQ lemma
 	 */
 	private Term mCCEq;
-	
+
 	/**
 	 * The LA equality in this EQ lemma
 	 */
 	private Term mLAEq;
-	
+
 	/**
 	 * The factor in this EQ lemma
 	 */
 	private Rational mLAFactor;
-	
+
 	/**
 	 * The Literals of this LA lemma and their corresponding Farkas coefficients
 	 */
 	private HashMap<Term, Rational> mFarkasCoeffs;
-	
+
 	/**
 	 * This class is used to store subpaths and weakpaths of CC and array lemmas in a way convenient for the
 	 * interpolation procedure. It stores the path index for weakpaths (null for subpaths) and the path as an array of
@@ -109,8 +109,8 @@ public class InterpolatorClauseTermInfo {
 	class ProofPath {
 		private final Term mPathIndex;
 		private final Term[] mPath;
-		
-		private ProofPath(String type, Object path) {
+
+		private ProofPath(final String type, final Object path) {
 			if (type.equals(":subpath")) {
 				assert (path instanceof Term[]);
 				mPathIndex = null;
@@ -122,16 +122,16 @@ public class InterpolatorClauseTermInfo {
 				mPath = (Term[]) ((Object[]) path)[1];
 			}
 		}
-		
+
 		public Term getIndex() {
 			return mPathIndex;
 		}
-		
+
 		public Term[] getPath() {
 			return mPath;
 		}
 	}
-	
+
 	public InterpolatorClauseTermInfo() {
 		mIsResolution = false;
 		mIsLeaf = false;
@@ -140,22 +140,22 @@ public class InterpolatorClauseTermInfo {
 		mLiterals = new ArrayList<Term>();
 		mPrimary = null;
 		mAntecedents = null;
-		
+
 		mSource = null;
-		
+
 		mDiseq = null;
 		mPaths = null;
-		
+
 		mCCEq = null;
 		mLAEq = null;
 		mLAFactor = null;
 		mFarkasCoeffs = null;
 	}
-	
+
 	/**
 	 * Fill in all relevant fields for the given proof term.
 	 */
-	public void computeClauseTermInfo(Term term) {
+	public void computeClauseTermInfo(final Term term) {
 		assert isComplexTerm(term);
 		if (isResolutionTerm(term)) {
 			computeResolutionTermInfo(term);
@@ -163,11 +163,11 @@ public class InterpolatorClauseTermInfo {
 			computeLeafTermInfo(term);
 		}
 	}
-	
+
 	/**
 	 * Fill in the field mLiterals for this resolution term only if needed (i.e. if deep check is switched on)
 	 */
-	public void computeResolutionLiterals(Interpolator interpolator) {
+	public void computeResolutionLiterals(final Interpolator interpolator) {
 		assert mIsResolution;
 		final LinkedHashSet<Term> literals = new LinkedHashSet<Term>();
 		final InterpolatorClauseTermInfo primInfo = interpolator.mClauseTermInfos.get(mPrimary);
@@ -176,17 +176,20 @@ public class InterpolatorClauseTermInfo {
 			final Term pivot = computePivot(antecedent);
 			final InterpolatorClauseTermInfo antecedentInfo =
 					interpolator.mClauseTermInfos.get(antecedent.getSubterm());
-			literals.addAll(antecedentInfo.getLiterals());
-			literals.remove(pivot);
 			literals.remove(interpolator.mTheory.not(pivot));
+			for (final Term antLit : antecedentInfo.getLiterals()) {
+				if (antLit != pivot) {
+					literals.add(antLit);
+				}
+			}
 		}
 		mLiterals.addAll(literals);
 	}
-	
+
 	/**
 	 * Collect the information needed to interpolate this resolution term.
 	 */
-	private void computeResolutionTermInfo(Term term) {
+	private void computeResolutionTermInfo(final Term term) {
 		ApplicationTerm resTerm;
 		if (term instanceof AnnotatedTerm) {
 			resTerm = (ApplicationTerm) ((AnnotatedTerm) term).getSubterm();
@@ -202,11 +205,11 @@ public class InterpolatorClauseTermInfo {
 		mPrimary = params[0];
 		mAntecedents = antes;
 	}
-	
+
 	/**
 	 * Collect the information needed to interpolate this leaf term.
 	 */
-	private void computeLeafTermInfo(Term term) {
+	private void computeLeafTermInfo(final Term term) {
 		Term leafTerm = term;
 		if (term instanceof AnnotatedTerm) {
 			leafTerm = ((AnnotatedTerm) term).getSubterm();
@@ -231,11 +234,11 @@ public class InterpolatorClauseTermInfo {
 			computeInputTermInfo(leafTerm);
 		}
 	}
-	
+
 	/**
 	 * Collect the information needed to interpolate this EQ lemma
 	 */
-	private void computeEQLemmaInfo(Term term) {
+	private void computeEQLemmaInfo(final Term term) {
 		mLemmaType = ":EQ";
 		final Object[] eqParams = computeLiterals(term).toArray();
 		Term term1 = (Term) eqParams[0];
@@ -249,37 +252,37 @@ public class InterpolatorClauseTermInfo {
 		mLAEq = term2;
 		mLAFactor = computeLAFactor(computeAtom(term1), computeAtom(term2));
 	}
-	
+
 	/**
 	 * Collect the information needed to interpolate this CC lemma
 	 */
-	private void computeCCLemmaInfo(Term term) {
+	private void computeCCLemmaInfo(final Term term) {
 		mLemmaType = computeLemmaType(term);
 		mDiseq = computeDiseq(term);
 		mPaths = computePaths(term);
 	}
-	
+
 	/**
 	 * Collect the information needed to interpolate this LA lemma
 	 */
-	private void computeLALemmaInfo(Term term) {
+	private void computeLALemmaInfo(final Term term) {
 		mLemmaType = computeLemmaType(term);
 		final AnnotatedTerm inner = (AnnotatedTerm) ((ApplicationTerm) term).getParameters()[0];
 		mFarkasCoeffs = computeCoefficients(inner);
 	}
-	
+
 	/**
 	 * Collect the information needed to interpolate this input term
 	 */
-	private void computeInputTermInfo(Term term) {
+	private void computeInputTermInfo(final Term term) {
 		mLeafKind = computeLeafKind(term);
 		mSource = computeSource(term);
 	}
-	
+
 	/**
 	 * Determine if a proof term is a complex term such as a resolution or leaf.
 	 */
-	private boolean isComplexTerm(Term term) {
+	private boolean isComplexTerm(final Term term) {
 		if (term instanceof ApplicationTerm) {
 			return ((ApplicationTerm) term).getFunction().getName().contains("@");
 		}
@@ -288,11 +291,11 @@ public class InterpolatorClauseTermInfo {
 		}
 		return false;
 	}
-	
+
 	/**
 	 * Determine if a proof term represents a resolution.
 	 */
-	private boolean isResolutionTerm(Term term) {
+	private boolean isResolutionTerm(final Term term) {
 		Term inner = term;
 		if (term instanceof AnnotatedTerm) {
 			inner = ((AnnotatedTerm) term).getSubterm();
@@ -302,11 +305,11 @@ public class InterpolatorClauseTermInfo {
 		}
 		return false;
 	}
-	
+
 	/**
 	 * Compute the kind of a leaf proof term
 	 */
-	private String computeLeafKind(Term term) {
+	private String computeLeafKind(final Term term) {
 		ApplicationTerm leafTerm;
 		if (term instanceof AnnotatedTerm) {
 			leafTerm = (ApplicationTerm) ((AnnotatedTerm) term).getSubterm();
@@ -315,11 +318,11 @@ public class InterpolatorClauseTermInfo {
 		}
 		return leafTerm.getFunction().getName();
 	}
-	
+
 	/**
 	 * Compute the literals of this leaf term
 	 */
-	private LinkedHashSet<Term> computeLiterals(Term term) {
+	private LinkedHashSet<Term> computeLiterals(final Term term) {
 		final LinkedHashSet<Term> literals = new LinkedHashSet<Term>();
 		final String leafKind = computeLeafKind(term);
 		if (leafKind.equals("@lemma")) {
@@ -357,26 +360,26 @@ public class InterpolatorClauseTermInfo {
 		}
 		return literals;
 	}
-	
+
 	/**
 	 * For an antecedent of a hyper-resolution step, get the pivot term.
 	 */
-	private Term computePivot(AnnotatedTerm term) {
+	private Term computePivot(final AnnotatedTerm term) {
 		return (Term) term.getAnnotations()[0].getValue();
 	}
-	
+
 	/**
 	 * For a lemma term, get the theory which created the lemma
 	 */
-	private String computeLemmaType(Term term) {
+	private String computeLemmaType(final Term term) {
 		final AnnotatedTerm innerLemma = (AnnotatedTerm) ((ApplicationTerm) term).getParameters()[0];
 		return innerLemma.getAnnotations()[0].getKey();
 	}
-	
+
 	/**
 	 * For a leaf term get the source partition
 	 */
-	private String computeSource(Term proofTerm) {
+	private String computeSource(final Term proofTerm) {
 		final String leafKind = computeLeafKind(proofTerm);
 		if (!leafKind.equals("@clause") && !leafKind.equals("@asserted")) {
 			return null;
@@ -389,12 +392,12 @@ public class InterpolatorClauseTermInfo {
 		}
 		return (String) inputTerm.getAnnotations()[0].getValue();
 	}
-	
+
 	/**
 	 * Compute the LA factor for this EQ lemma. This is the factor f, such that
 	 * <code>f * (ccEq.getLhs() - ccEq.getRhs()) == laEq.getLhs())</code>
 	 */
-	private Rational computeLAFactor(Term ccEq, Term laEq) {
+	private Rational computeLAFactor(final Term ccEq, final Term laEq) {
 		final InterpolatorAffineTerm ccLeft = Interpolator.termToAffine(((ApplicationTerm) ccEq).getParameters()[0]);
 		final InterpolatorAffineTerm ccRight = Interpolator.termToAffine(((ApplicationTerm) ccEq).getParameters()[1]);
 		final InterpolatorAffineTerm ccAffine = new InterpolatorAffineTerm(ccLeft);
@@ -409,11 +412,11 @@ public class InterpolatorClauseTermInfo {
 		}
 		return factor;
 	}
-	
+
 	/**
 	 * Compute the literals and corresponding Farkas coefficients for this LA lemma
 	 */
-	private HashMap<Term, Rational> computeCoefficients(AnnotatedTerm annotTerm) {
+	private HashMap<Term, Rational> computeCoefficients(final AnnotatedTerm annotTerm) {
 		final Annotation annot = annotTerm.getAnnotations()[0];
 		final HashMap<Term, Rational> coeffMap = new HashMap<Term, Rational>();
 		Term term;
@@ -438,14 +441,14 @@ public class InterpolatorClauseTermInfo {
 		}
 		return coeffMap;
 	}
-	
+
 	/**
 	 * For a CC or array lemma, get the disequality explained by this lemma.
-	 * 
+	 *
 	 * @param lemma
 	 * @return
 	 */
-	private Term computeDiseq(Term lemma) {
+	private Term computeDiseq(final Term lemma) {
 		final AnnotatedTerm inner = (AnnotatedTerm) ((ApplicationTerm) lemma).getParameters()[0];
 		final Annotation annotation = inner.getAnnotations()[0];
 		final Object value = ((Object[]) annotation.getValue())[0];
@@ -454,13 +457,13 @@ public class InterpolatorClauseTermInfo {
 		}
 		return null;
 	}
-	
+
 	/**
 	 * For a CC or array lemma, get the sub- and weak paths.
-	 * 
+	 *
 	 * @return paths an array containing the proof paths
 	 */
-	private ProofPath[] computePaths(Term lemma) {
+	private ProofPath[] computePaths(final Term lemma) {
 		final AnnotatedTerm inner = (AnnotatedTerm) ((ApplicationTerm) lemma).getParameters()[0];
 		final Annotation annotation = inner.getAnnotations()[0];
 		assert annotation.getValue() instanceof Object[];
@@ -469,17 +472,17 @@ public class InterpolatorClauseTermInfo {
 		final ProofPath[] paths = new ProofPath[length];
 		for (int i = 0; i < length; i++) {
 			final int j = 2 * i + (hasDiseq ? 1 : 0);
-			String type = (String) ((Object[]) annotation.getValue())[j];
-			Object[] path = (Object[]) ((Object[]) annotation.getValue())[j + 1];
+			final String type = (String) ((Object[]) annotation.getValue())[j];
+			final Object[] path = (Object[]) ((Object[]) annotation.getValue())[j + 1];
 			paths[i] = new ProofPath(type, path);
 		}
 		return paths;
 	}
-	
+
 	/**
 	 * Compute the underlying atomic term for an annotated or negated term
 	 */
-	private Term computeAtom(Term term) {
+	private Term computeAtom(final Term term) {
 		Term inner = term;
 		if (isNegated(inner)) {
 			inner = ((ApplicationTerm) inner).getParameters()[0];
@@ -489,7 +492,7 @@ public class InterpolatorClauseTermInfo {
 		}
 		return inner;
 	}
-	
+
 	/**
 	 * Check if a term is negated
 	 */
@@ -503,12 +506,12 @@ public class InterpolatorClauseTermInfo {
 			return false;
 		}
 	}
-	
+
 	/**
 	 * Check if this atom is a LA equality. Note that some CC equalities look like LA equalities, but in those cases,
 	 * they are treated the same way.
 	 */
-	private boolean isLAEquality(Term atom) {
+	private boolean isLAEquality(final Term atom) {
 		if ((atom instanceof ApplicationTerm)) {
 			if (((ApplicationTerm) atom).getFunction().getName().equals("=")) {
 				final Term secondParam = ((ApplicationTerm) atom).getParameters()[1];
@@ -519,59 +522,59 @@ public class InterpolatorClauseTermInfo {
 		}
 		return false;
 	}
-	
+
 	public boolean isResolution() {
 		return mIsResolution;
 	}
-	
+
 	public boolean isLeaf() {
 		return mIsLeaf;
 	}
-	
+
 	public String getLeafKind() {
 		return mLeafKind;
 	}
-	
+
 	public String getLemmaType() {
 		return mLemmaType;
 	}
-	
+
 	public ArrayList<Term> getLiterals() {
 		return mLiterals;
 	}
-	
+
 	public Term getPrimary() {
 		return mPrimary;
 	}
-	
+
 	public AnnotatedTerm[] getAntecedents() {
 		return mAntecedents;
 	}
-	
+
 	public String getSource() {
 		return mSource;
 	}
-	
+
 	public Term getDiseq() {
 		return mDiseq;
 	}
-	
+
 	public ProofPath[] getPaths() {
 		return mPaths;
 	}
-	
+
 	public Term getCCEq() {
 		return mCCEq;
 	}
-	
+
 	public Term getLAEq() {
 		return mLAEq;
 	}
-	
+
 	public Rational getLAFactor() {
 		return mLAFactor;
 	}
-	
+
 	public HashMap<Term, Rational> getFarkasCoeffs() {
 		return mFarkasCoeffs;
 	}

@@ -97,12 +97,13 @@ public class TraceAbstractionStarter {
 	private IElement mRootOfNewModel;
 	private Result mOverallResult;
 	private IElement mArtifact;
-	
-	private final List<AbstractInterpolantAutomaton<IIcfgTransition<?>>> mFloydHoareAutomataFromOtherErrorLocations = new ArrayList<>();
+
+	private final List<AbstractInterpolantAutomaton<IIcfgTransition<?>>> mFloydHoareAutomataFromOtherErrorLocations =
+			new ArrayList<>();
 
 	public TraceAbstractionStarter(final IUltimateServiceProvider services, final IToolchainStorage storage,
 			final IIcfg<IcfgLocation> rcfgRootNode,
-			final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> witnessAutomaton, 
+			final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> witnessAutomaton,
 			final List<NestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile) {
 		mServices = services;
 		mToolchainStorage = storage;
@@ -111,11 +112,12 @@ public class TraceAbstractionStarter {
 	}
 
 	private void runCegarLoops(final IIcfg<IcfgLocation> icfg,
-			final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> witnessAutomaton, 
+			final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> witnessAutomaton,
 			final List<NestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile) {
 		final TAPreferences taPrefs = new TAPreferences(mServices);
 		if (taPrefs.getFloydHoareAutomataReuse() != FloydHoareAutomataReuse.NONE && taPrefs.allErrorLocsAtOnce()) {
-			throw new IllegalStateException("Incompatible settings: no reuse possible if you check all error locations at once.");
+			throw new IllegalStateException(
+					"Incompatible settings: no reuse possible if you check all error locations at once.");
 		}
 
 		String settings = "Automizer settings:";
@@ -152,21 +154,14 @@ public class TraceAbstractionStarter {
 				mServices.getProgressMonitorService().setSubtask(errorLoc.toString());
 				iterate(name, icfg, taPrefs, csToolkit, predicateFactory, traceAbstractionBenchmark, errorLocs,
 						witnessAutomaton, rawFloydHoareAutomataFromFile);
-				reportBenchmarkForErrLocation(traceAbstractionBenchmark,errorLoc.toString());
+				reportBenchmarkForErrLocation(traceAbstractionBenchmark, errorLoc.toString());
 				traceAbstractionBenchmark = new TraceAbstractionBenchmarks(icfg);
 			}
 		}
 		logNumberOfWitnessInvariants(errNodesOfAllProc);
 		if (mOverallResult == Result.SAFE) {
-			final String longDescription;
-			if (errNodesOfAllProc.isEmpty()) {
-				longDescription = "We were not able to verify any"
-						+ " specifiation because the program does not contain any specification.";
-			} else {
-				longDescription = errNodesOfAllProc.size() + " specifications checked. All of them hold";
-			}
-			final AllSpecificationsHoldResult result =
-					new AllSpecificationsHoldResult(Activator.PLUGIN_NAME, longDescription);
+			final AllSpecificationsHoldResult result = AllSpecificationsHoldResult
+					.createAllSpecificationsHoldResult(Activator.PLUGIN_NAME, errNodesOfAllProc.size());
 			reportResult(result);
 		}
 
@@ -288,7 +283,7 @@ public class TraceAbstractionStarter {
 	private void iterate(final String name, final IIcfg<IcfgLocation> root, final TAPreferences taPrefs,
 			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
 			final TraceAbstractionBenchmarks taBenchmark, final Collection<IcfgLocation> errorLocs,
-			final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> witnessAutomaton, 
+			final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> witnessAutomaton,
 			final List<NestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile) {
 		final BasicCegarLoop<? extends IIcfgTransition<?>> basicCegarLoop = constructCegarLoop(name, root, taPrefs,
 				csToolkit, predicateFactory, taBenchmark, errorLocs, rawFloydHoareAutomataFromFile);
@@ -298,7 +293,8 @@ public class TraceAbstractionStarter {
 		basicCegarLoop.finish();
 		if (taPrefs.getFloydHoareAutomataReuse() != FloydHoareAutomataReuse.NONE) {
 			final LinkedHashSet<?> fhs = basicCegarLoop.getFloydHoareAutomata();
-			mFloydHoareAutomataFromOtherErrorLocations.addAll((LinkedHashSet<AbstractInterpolantAutomaton<IIcfgTransition<?>>>) fhs);
+			mFloydHoareAutomataFromOtherErrorLocations
+					.addAll((LinkedHashSet<AbstractInterpolantAutomaton<IIcfgTransition<?>>>) fhs);
 		}
 
 		mOverallResult = computeOverallResult(errorLocs, basicCegarLoop, result);
@@ -332,7 +328,7 @@ public class TraceAbstractionStarter {
 			final List<NestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile) {
 		final LanguageOperation languageOperation = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getEnum(TraceAbstractionPreferenceInitializer.LABEL_LANGUAGE_OPERATION, LanguageOperation.class);
-		
+
 		BasicCegarLoop<IIcfgTransition<?>> result;
 		if (languageOperation == LanguageOperation.DIFFERENCE) {
 			if (taPrefs.interpolantAutomaton() == InterpolantAutomaton.TOTALINTERPOLATION) {
@@ -343,13 +339,13 @@ public class TraceAbstractionStarter {
 				switch (taPrefs.getFloydHoareAutomataReuse()) {
 				case EAGER:
 					result = new EagerReuseCegarLoop<>(name, root, csToolkit, predicateFactory, taPrefs, errorLocs,
-							taPrefs.interpolation(), taPrefs.computeHoareAnnotation(), mServices, mToolchainStorage, mFloydHoareAutomataFromOtherErrorLocations, 
-							rawFloydHoareAutomataFromFile);
+							taPrefs.interpolation(), taPrefs.computeHoareAnnotation(), mServices, mToolchainStorage,
+							mFloydHoareAutomataFromOtherErrorLocations, rawFloydHoareAutomataFromFile);
 					break;
 				case LAZY_IN_ORDER:
 					result = new LazyReuseCegarLoop<>(name, root, csToolkit, predicateFactory, taPrefs, errorLocs,
-							taPrefs.interpolation(), taPrefs.computeHoareAnnotation(), mServices, mToolchainStorage, mFloydHoareAutomataFromOtherErrorLocations, 
-							rawFloydHoareAutomataFromFile);
+							taPrefs.interpolation(), taPrefs.computeHoareAnnotation(), mServices, mToolchainStorage,
+							mFloydHoareAutomataFromOtherErrorLocations, rawFloydHoareAutomataFromFile);
 					break;
 				case NONE:
 					result = new BasicCegarLoop<>(name, root, csToolkit, predicateFactory, taPrefs, errorLocs,
@@ -361,8 +357,8 @@ public class TraceAbstractionStarter {
 			}
 		} else {
 			result = new IncrementalInclusionCegarLoop<>(name, root, csToolkit, predicateFactory, taPrefs, errorLocs,
-				taPrefs.interpolation(), taPrefs.computeHoareAnnotation(), mServices, mToolchainStorage,
-				languageOperation);
+					taPrefs.interpolation(), taPrefs.computeHoareAnnotation(), mServices, mToolchainStorage,
+					languageOperation);
 		}
 		return result;
 	}
@@ -469,8 +465,9 @@ public class TraceAbstractionStarter {
 		final StatisticsResult<T> res = new StatisticsResult<>(Activator.PLUGIN_NAME, shortDescription, benchmark);
 		reportResult(res);
 	}
-	
-	private <T> void reportBenchmarkForErrLocation(final ICsvProviderProvider<T> benchmark, final String errLocDescription) {
+
+	private <T> void reportBenchmarkForErrLocation(final ICsvProviderProvider<T> benchmark,
+			final String errLocDescription) {
 		final String shortDescription = "Ultimate Automizer benchmark data for error location: " + errLocDescription;
 		final StatisticsResult<T> res = new StatisticsResult<>(Activator.PLUGIN_NAME, shortDescription, benchmark);
 		reportResult(res);

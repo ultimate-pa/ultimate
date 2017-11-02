@@ -55,12 +55,12 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 // TODO support on-demand exploration
 public class WaToBuchiWrapper<LETTER, STATE> extends BuchiWa {
 
-	private final Map<LETTER, Integer> mLetterMap;
-	private final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mInnerBuchi;
+	protected final Map<LETTER, Integer> mLetterMap;
+	protected final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mInnerBuchi;
 
-	private final Map<STATE, IStateWa> mStateMap;
-	private final List<STATE> mStateArr;
-	private final List<LETTER> mLetterArr;
+	protected final Map<STATE, IStateWa> mStateMap;
+	protected final List<STATE> mStateArr;
+	protected final List<LETTER> mLetterArr;
 	
 	public WaToBuchiWrapper(int alphabetSize, Map<LETTER, Integer> letterMap,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> buchi) {
@@ -80,7 +80,7 @@ public class WaToBuchiWrapper<LETTER, STATE> extends BuchiWa {
 		computeInitialStates();
 	}
 	
-	private IStateWa getOrAddState(STATE str) {
+	protected IStateWa getOrAddState(STATE str) {
 		IStateWa state = mStateMap.get(str);
 		if(state == null) {
 			state = addState();
@@ -91,7 +91,7 @@ public class WaToBuchiWrapper<LETTER, STATE> extends BuchiWa {
 		return state;
 	}
 	
-	private void computeInitialStates() {
+	protected void computeInitialStates() {
 		Iterable<STATE> states = mInnerBuchi.getInitialStates();
 		for(STATE s : states) {
 			IStateWa state = getOrAddState(s);

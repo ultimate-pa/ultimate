@@ -54,9 +54,12 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareT
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IncrementalPlicationChecker.Plication;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.ExtendedSimplificationResult;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArraySelect;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArraySelectOverStore;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayStore;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelectOverStore;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSort;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierPusher.PqeTechniques;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -156,7 +159,7 @@ public class Elim1Store {
 			throw new AssertionError("several disjuncts! " + inputTerm);
 		}
 		
-		if (SELECT_OVER_STORE_PREPROCESSING) {
+		if (false && SELECT_OVER_STORE_PREPROCESSING) {
 			final Set<ApplicationTerm> allSelectTerms = new ApplicationTermFinder("select", false).findMatchingSubterms(inputTerm);
 			for (final ApplicationTerm selectTerm : allSelectTerms) {
 				final ArraySelectOverStore asos = ArraySelectOverStore.convert(selectTerm);
@@ -223,8 +226,36 @@ public class Elim1Store {
 
 		final List<ApplicationTerm> selectTerms = extractArrayReads(eliminatee, preprocessedInput);
 		final Set<Term> selectIndices = new HashSet<>();
-
-		
+		if (SELECT_OVER_STORE_PREPROCESSING) {
+			final Set<ApplicationTerm> allSelectTerms = new ApplicationTermFinder("select", false).findMatchingSubterms(preprocessedInput);
+			final Map<Term, Term> substitutionMappingPre = new HashMap<>();
+			for (final ApplicationTerm selectTerm : allSelectTerms) {
+				final MultiDimensionalSelectOverStore mdsos = MultiDimensionalSelectOverStore.convert(selectTerm);
+				if (mdsos != null) {
+					if (mdsos.getStore().getArray().equals(eliminatee)) {
+						final ArrayIndex selectIndex = mdsos.getSelect().getIndex();
+						final ArrayIndex storeIndex = mdsos.getStore().getIndex();
+						final ThreeValuedEquivalenceRelation<Term> tver = analyzeIndexEqualities(selectIndex, storeIndex, quantifier, xjunctsOuter);
+						final EqualityStatus indexEquality = checkIndexEquality(selectIndex, storeIndex, tver);
+						switch (indexEquality) {
+						case EQUAL:
+							substitutionMappingPre.put(selectTerm, mdsos.getStore().getValue());
+							break;
+						case NOT_EQUAL:
+							final MultiDimensionalSelect mds = new MultiDimensionalSelect(mdsos.getStore().getArray(), selectIndex, mScript);
+							substitutionMappingPre.put(selectTerm, mds.getSelectTerm());
+							break;
+						case UNKNOWN:
+							// do nothing
+							break;
+						default:
+							throw new AssertionError();
+						}
+					}
+				}
+			}
+			new SubstitutionWithLocalSimplification(mMgdScript, substitutionMappingPre);
+		}
 		
 		
 		final List<ArrayStore> stores = extractStores(eliminatee, inputTerm);
@@ -454,6 +485,28 @@ public class Elim1Store {
 	}
 	
 	
+	private EqualityStatus checkIndexEquality(final ArrayIndex selectIndex, final ArrayIndex storeIndex,
+			final ThreeValuedEquivalenceRelation<Term> tver) {
+		for (int i=0; i<selectIndex.size(); i++) {
+			final EqualityStatus eqStaus = tver.getEqualityStatus(selectIndex.get(i), storeIndex.get(i));
+			if (eqStaus == EqualityStatus.NOT_EQUAL || eqStaus == EqualityStatus.UNKNOWN) {
+				return eqStaus;
+			}
+		}
+		return EqualityStatus.EQUAL;
+	}
+
+	private ThreeValuedEquivalenceRelation<Term> analyzeIndexEqualities(final ArrayIndex selectIndex, final ArrayIndex storeIndex, final int quantifier, final Term[] context) {
+		final ThreeValuedEquivalenceRelation<Term> tver = new ThreeValuedEquivalenceRelation<>();
+		for (final Term term : selectIndex) {
+			addComplimentaryEqualityInformation(mScript, quantifier, context, term, tver);
+		}
+		for (final Term term : storeIndex) {
+			addComplimentaryEqualityInformation(mScript, quantifier, context, term, tver);
+		}
+		return tver;
+	}
+
 	private Term equivalencesToTerm(final Script script, final ThreeValuedEquivalenceRelation<Term> tver, final int quantifier) {
 
 		final List<Term> elementEqualities = tver.getSupportingEqualities().entrySet().stream()

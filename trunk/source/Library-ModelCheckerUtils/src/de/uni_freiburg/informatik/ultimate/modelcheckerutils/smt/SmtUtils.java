@@ -95,15 +95,13 @@ public final class SmtUtils {
 		SIMPLIFY_BDD_PROP, SIMPLIFY_BDD_FIRST_ORDER, SIMPLIFY_QUICK, SIMPLIFY_DDA, NONE
 	}
 
-	private static final boolean EXTENDED_LOCAL_SIMPLIFICATION = false;
-	
+	private static final boolean EXTENDED_LOCAL_SIMPLIFICATION = true;
+
 	/**
-	 * Has problems with {@link ElimStore3}. Set to true once 
-	 * {@link ElimStore3} has been replace by {@link ElimStorePlain}.
+	 * Has problems with {@link ElimStore3}. Set to true once {@link ElimStore3} has been replace by
+	 * {@link ElimStorePlain}.
 	 */
 	private static final boolean FLATTEN_ARRAY_TERMS = true;
-	
-	
 
 	private SmtUtils() {
 		// Prevent instantiation of this utility class
@@ -160,7 +158,7 @@ public final class SmtUtils {
 		final long sizeAfter = new DAGSize().treesize(simplified);
 		final long endTime = System.nanoTime();
 		final ExtendedSimplificationResult result = new ExtendedSimplificationResult(simplified, endTime - startTime,
-				sizeBefore - sizeAfter, ((double) sizeAfter) / sizeBefore * 100);
+				sizeBefore - sizeAfter, (double) sizeAfter / sizeBefore * 100);
 		return result;
 	}
 
@@ -788,7 +786,7 @@ public final class SmtUtils {
 		}
 		return false;
 	}
-	
+
 	/**
 	 * @return true iff term is some literal of sort Int whose value is the input number.
 	 */
@@ -883,8 +881,8 @@ public final class SmtUtils {
 		final Set<Term> resultJuncts = new HashSet<>();
 		final Set<Term> negativeJuncts = new HashSet<>();
 		final String connective = "and";
-		final Predicate<Term> isNeutral = (x -> SmtUtils.isTrue(x));
-		final Predicate<Term> isAbsorbing = (x -> SmtUtils.isFalse(x));
+		final Predicate<Term> isNeutral = x -> SmtUtils.isTrue(x);
+		final Predicate<Term> isAbsorbing = x -> SmtUtils.isFalse(x);
 		final boolean resultIsAbsorbingElement = recursiveAndOrSimplificationHelper(script, connective, isNeutral,
 				isAbsorbing, terms, resultJuncts, negativeJuncts);
 		if (resultIsAbsorbingElement) {
@@ -903,8 +901,8 @@ public final class SmtUtils {
 		final Set<Term> resultJuncts = new HashSet<>();
 		final Set<Term> negativeJuncts = new HashSet<>();
 		final String connective = "or";
-		final Predicate<Term> isNeutral = (x -> SmtUtils.isFalse(x));
-		final Predicate<Term> isAbsorbing = (x -> SmtUtils.isTrue(x));
+		final Predicate<Term> isNeutral = x -> SmtUtils.isFalse(x);
+		final Predicate<Term> isAbsorbing = x -> SmtUtils.isTrue(x);
 		final boolean resultIsAbsorbingElement = recursiveAndOrSimplificationHelper(script, connective, isNeutral,
 				isAbsorbing, terms, resultJuncts, negativeJuncts);
 		if (resultIsAbsorbingElement) {
@@ -1225,7 +1223,7 @@ public final class SmtUtils {
 		}
 		return result;
 	}
-	
+
 	public static Term select(final Script script, final Term array, final Term index) {
 		final Term result;
 		if (FLATTEN_ARRAY_TERMS) {
@@ -1248,8 +1246,7 @@ public final class SmtUtils {
 		}
 		return result;
 	}
-	
-	
+
 	public static Term store(final Script script, final Term array, final Term index, final Term value) {
 		final Term result;
 		if (FLATTEN_ARRAY_TERMS) {
@@ -1391,7 +1388,7 @@ public final class SmtUtils {
 	public static Rational toRational(final BigInteger bigInt) {
 		return Rational.valueOf(bigInt, BigInteger.ONE);
 	}
-	
+
 	public static Rational toRational(final BigDecimal bigDec) {
 		Rational rat;
 		if (bigDec.scale() <= 0) {
@@ -1738,12 +1735,43 @@ public final class SmtUtils {
 			throw new AssertionError("unknown quantifier");
 		}
 	}
-	
+
 	/**
-	 * This is an (the) alternative to script.numeral that constructs an integer
-	 * constant that respects the UltimateNormalForm. See {@link UltimateNormalFormUtils}.
+	 * This is an (the) alternative to script.numeral that constructs an integer constant that respects the
+	 * UltimateNormalForm. See {@link UltimateNormalFormUtils}.
 	 */
 	public static Term constructIntValue(final Script script, final BigInteger number) {
 		return Rational.valueOf(number, BigInteger.ONE).toTerm(SmtSortUtils.getIntSort(script));
+	}
+
+	/**
+	 * Returns a filtered Term of {@code formula} w.r.t to the given {@code variables}. This is done by checking for
+	 * checking for each conjunct, if any of the free variables is contained in {@code variables}. Depending on
+	 * {@code keepIfFound} these conjuncts are kept or discarded. <br>
+	 * <br>
+	 * Example: <br>
+	 * Given: variables={x}, formula=(x > 0 and y < 0),<br>
+	 * this method returns x > 0 for keepIfFound=true and y < 0 for keepIfFound=false
+	 */
+	public static Term filterFormula(final Term formula, final Set<TermVariable> variables, final Script script,
+			final boolean keepIfFound) {
+		final Term[] oldConjuncts = getConjuncts(formula);
+		final List<Term> newConjuncts = new ArrayList<>(oldConjuncts.length);
+		for (final Term c : oldConjuncts) {
+			final Set<TermVariable> freeVars = new HashSet<>(Arrays.asList(c.getFreeVars()));
+			freeVars.retainAll(variables);
+			if (!freeVars.isEmpty() == keepIfFound) {
+				newConjuncts.add(c);
+			}
+		}
+		return and(script, newConjuncts);
+	}
+
+	/**
+	 * Returns true iff the the boolean formulas formula1 and formula2 are equivalent w.r.t script.
+	 */
+	public static boolean areFormulasEquivalent(final Term formula1, final Term formula2, final Script script) {
+		final Term notEq = binaryBooleanNotEquals(script, formula1, formula2);
+		return Util.checkSat(script, notEq) == LBool.UNSAT;
 	}
 }

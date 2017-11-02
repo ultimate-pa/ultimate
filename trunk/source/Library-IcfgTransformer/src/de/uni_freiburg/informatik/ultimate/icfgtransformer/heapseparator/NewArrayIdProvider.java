@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -427,6 +428,8 @@ class PartitionInformation {
 		sb.append(" --- PartitionInformation for array group: " + arrayIds + " --- \n");
 
 		sb.append(" " + indexPartitions.size() + " partitions: " + indexPartitions);
+		sb.append("\n");
+		sb.append(" partition sizes: " + indexPartitions.stream().map(ip -> ip.indices.size()).collect(Collectors.toList()));
 		sb.append("\n");
 
 		return sb.toString();

@@ -57,7 +57,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.generic.SilentReporter;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.IcfgTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RCFGLiteralCollector;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgLibraryModeResultReporter;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgLoopDetector;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgResultReporter;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.dataflow.DataflowDomain;
@@ -108,7 +107,7 @@ public final class AbstractInterpreter {
 		final AbsIntResult<STATE, IcfgEdge, IcfgLocation> result = fxpe.run(root.getInitialNodes(), script);
 
 		final ILogger logger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		return postProcessResult(services, logger, false, root.getInitialNodes().size() > 1, result);
+		return postProcessResult(services, logger, false, result, root);
 	}
 
 	/**
@@ -151,7 +150,7 @@ public final class AbstractInterpreter {
 				AbsIntUtil.logPredicates(Collections.singletonMap(initial, result.getLoc2Term()), script,
 						logger::debug);
 			}
-			return postProcessResult(services, logger, true, false, result);
+			return postProcessResult(services, logger, true, result, root);
 		} catch (final ToolchainCanceledException tce) {
 			// suppress timeout results / timeouts
 			logger.warn("Abstract interpretation run out of time");
@@ -183,12 +182,12 @@ public final class AbstractInterpreter {
 			initialNodes = getSinks(root);
 			fxpe = new BackwardFixpointEngine<>(params.setMaxParallelStates(1));
 			final AbsIntResult<STATE, IcfgEdge, IcfgLocation> result = fxpe.run(initialNodes, script);
-			return postProcessResult(services, logger, true, initialNodes.size() > 1, result);
+			return postProcessResult(services, logger, true, result, root);
 		}
 		initialNodes = root.getInitialNodes().stream().collect(Collectors.toSet());
 		fxpe = new FixpointEngine<>(params);
 		final AbsIntResult<STATE, IcfgEdge, IcfgLocation> result = fxpe.run(initialNodes, script);
-		return postProcessResult(services, logger, isSilent, initialNodes.size() > 1, result);
+		return postProcessResult(services, logger, isSilent, result, root);
 	}
 
 	/**
@@ -246,32 +245,24 @@ public final class AbstractInterpreter {
 				p -> new BackwardFixpointEngine<>(p));
 	}
 
-	/**
-	 *
-	 * @param services
-	 * @param logger
-	 * @param isSilent
-	 * @param filteredInitialElements
-	 * @param result
-	 * @return
-	 */
 	private static <STATE extends IAbstractState<STATE>, ACTION extends IcfgEdge, LOC extends IcfgLocation>
 			IAbstractInterpretationResult<STATE, ACTION, LOC> postProcessResult(final IUltimateServiceProvider services,
-					final ILogger logger, final boolean isSilent, final boolean isLib,
-					final AbsIntResult<STATE, ACTION, LOC> result) {
+					final ILogger logger, final boolean isSilent, final AbsIntResult<STATE, ACTION, LOC> result,
+					final IIcfg<?> icfg) {
 		if (result == null) {
 			logger.error("Could not run because no initial element could be found");
 			return null;
 		}
 		if (result.hasReachedError()) {
 			logger.info("Some error location(s) were reachable");
-			final IResultReporter<STATE, ACTION, LOC> reporter = getReporter(services, isLib, isSilent);
-			result.getCounterexamples().forEach(reporter::reportPossibleError);
+
 		} else {
 			logger.info("Error location(s) were unreachable");
-			getReporter(services, false, isSilent).reportSafe(null);
 		}
 
+		final IResultReporter<STATE, ACTION, LOC> reporter = getReporter(services, isSilent, (IIcfg<LOC>) icfg);
+		result.getCounterexamples().forEach(reporter::reportPossibleError);
+		reporter.reportFinished();
 		logger.info(result.getBenchmark());
 		return result;
 	}
@@ -310,13 +301,10 @@ public final class AbstractInterpreter {
 			return null;
 		}
 
-		final boolean isLib = initialNodes.size() > 1;
-		if (result.hasReachedError()) {
-			final IResultReporter<STATE, IcfgEdge, IcfgLocation> reporter = getReporter(services, isLib, isSilent);
-			result.getCounterexamples().forEach(reporter::reportPossibleError);
-		} else {
-			getReporter(services, false, isSilent).reportSafe(null);
-		}
+		final IResultReporter<STATE, IcfgEdge, IcfgLocation> reporter =
+				getReporter(services, isSilent, (IIcfg<IcfgLocation>) root);
+		result.getCounterexamples().forEach(reporter::reportPossibleError);
+		reporter.reportFinished();
 
 		logger.info(result.getBenchmark());
 		return result;
@@ -341,14 +329,11 @@ public final class AbstractInterpreter {
 
 	private static <STATE extends IAbstractState<STATE>, ACTION extends IcfgEdge, LOC extends IcfgLocation>
 			IResultReporter<STATE, ACTION, LOC>
-			getReporter(final IUltimateServiceProvider services, final boolean isLibrary, final boolean isSilent) {
+			getReporter(final IUltimateServiceProvider services, final boolean isSilent, final IIcfg<LOC> icfg) {
 		if (isSilent) {
 			return new SilentReporter<>();
 		}
-		if (isLibrary) {
-			return new RcfgLibraryModeResultReporter<>(services);
-		}
-		return new RcfgResultReporter<>(services);
+		return new RcfgResultReporter<>(icfg, services);
 	}
 
 	/**

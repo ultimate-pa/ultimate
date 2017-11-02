@@ -52,17 +52,20 @@ public class PredicateTree<T extends IPredicate> {
 	private final Term mFalse;
 
 	private final ManagedScript mScript;
-	private Node mRoot;
+	private INode<T> mRoot;
 
 	public PredicateTree(final ManagedScript script) {
+		this(script, script.getScript().term("true"), script.getScript().term("false"));
+	}
+
+	public PredicateTree(final ManagedScript script, final Term trueTerm, final Term falseTerm) {
 		assert script != null;
 		mScript = script;
-		mTrue = script.getScript().term("true");
-		mFalse = script.getScript().term("false");
+		mTrue = trueTerm;
+		mFalse = falseTerm;
 		mRoot = null;
 	}
 
-	@SuppressWarnings("unchecked")
 	public T unifyPredicate(final T predicate) {
 		if (predicate == null) {
 			return null;
@@ -75,10 +78,10 @@ public class PredicateTree<T extends IPredicate> {
 			return unifyAndUpdate((Leaf) mRoot, null, predicate);
 		}
 
-		Node current = mRoot;
-		Node last = current;
+		INode<T> current = mRoot;
+		INode<T> last = current;
 		while (current != null) {
-			final Node next = current.next(predicate);
+			final INode<T> next = current.next(predicate);
 			if (next != null) {
 				// current is an inner node, follow it
 				last = current;
@@ -95,11 +98,11 @@ public class PredicateTree<T extends IPredicate> {
 			return "";
 		}
 		final StringBuilder sb = new StringBuilder();
-		final Deque<Pair<String, Node>> worklist = new ArrayDeque<>();
+		final Deque<Pair<String, INode<T>>> worklist = new ArrayDeque<>();
 		worklist.addFirst(new Pair<>("", mRoot));
 		while (!worklist.isEmpty()) {
-			final Pair<String, Node> currentP = worklist.removeFirst();
-			final Node current = currentP.getSecond();
+			final Pair<String, INode<T>> currentP = worklist.removeFirst();
+			final INode<T> current = currentP.getSecond();
 			if (current instanceof PredicateTree.Leaf) {
 				sb.append(currentP.getFirst());
 				sb.append(current.toString());
@@ -107,7 +110,6 @@ public class PredicateTree<T extends IPredicate> {
 				continue;
 			}
 
-			@SuppressWarnings("unchecked")
 			final InnerNode inner = ((PredicateTree<T>.InnerNode) current);
 			sb.append(currentP.getFirst());
 			sb.append(inner.toString());
@@ -166,7 +168,7 @@ public class PredicateTree<T extends IPredicate> {
 				vars.addAll(predicateToUnify.getVars());
 				vars.addAll(localPred.getVars());
 				final Set<ApplicationTerm> terms =
-						vars.stream().map(a -> a.getDefaultConstant()).collect(Collectors.toSet());
+						vars.stream().map(IProgramVar::getDefaultConstant).collect(Collectors.toSet());
 
 				// this is a witness that should be accepted by one and rejected by the other
 				final Map<Term, Term> witness = mScript.getScript().getValue(terms.toArray(new Term[terms.size()]));
@@ -196,16 +198,17 @@ public class PredicateTree<T extends IPredicate> {
 		return mTrue.equals(result);
 	}
 
-	private abstract class Node {
-		abstract Node next(T predicate);
+	@FunctionalInterface
+	private interface INode<T> {
+		INode<T> next(T predicate);
 	}
 
-	private final class InnerNode extends Node {
+	private final class InnerNode implements INode<T> {
 		private final Map<Term, Term> mWitness;
-		private Node mLeftChild;
-		private Node mRightChild;
+		private INode<T> mLeftChild;
+		private INode<T> mRightChild;
 
-		private InnerNode(final Node left, final Node right, final Map<Term, Term> witness) {
+		private InnerNode(final INode<T> left, final INode<T> right, final Map<Term, Term> witness) {
 			assert witness != null && !witness.isEmpty();
 			assert left != null;
 			assert right != null;
@@ -215,7 +218,7 @@ public class PredicateTree<T extends IPredicate> {
 		}
 
 		@Override
-		Node next(final T predicate) {
+		public INode<T> next(final T predicate) {
 			if (goLeft(mWitness, predicate)) {
 				return mLeftChild;
 			}
@@ -228,7 +231,7 @@ public class PredicateTree<T extends IPredicate> {
 		}
 	}
 
-	private final class Leaf extends Node {
+	private final class Leaf implements INode<T> {
 		private final T mPredicate;
 
 		private Leaf(final T pred) {
@@ -237,7 +240,7 @@ public class PredicateTree<T extends IPredicate> {
 		}
 
 		@Override
-		Node next(final T predicate) {
+		public INode<T> next(final T predicate) {
 			return null;
 		}
 

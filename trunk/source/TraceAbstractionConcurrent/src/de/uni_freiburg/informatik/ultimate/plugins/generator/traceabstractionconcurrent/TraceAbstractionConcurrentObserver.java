@@ -209,12 +209,7 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 	}
 
 	private void reportPositiveResults(final Collection<BoogieIcfgLocation> errorLocs) {
-		final String longDescription;
-		if (errorLocs.isEmpty()) {
-			longDescription = "We were not able to verify any"
-					+ " specifiation because the program does not contain any specification.";
-		} else {
-			longDescription = errorLocs.size() + " specifications checked. All of them hold";
+		if (!errorLocs.isEmpty()) {
 			for (final BoogieIcfgLocation errorLoc : errorLocs) {
 				final PositiveResult<IIcfgElement> pResult =
 						new PositiveResult<>(Activator.PLUGIN_NAME, errorLoc, mServices.getBacktranslationService());
@@ -222,7 +217,7 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 			}
 		}
 		final AllSpecificationsHoldResult result =
-				new AllSpecificationsHoldResult(Activator.PLUGIN_NAME, longDescription);
+				AllSpecificationsHoldResult.createAllSpecificationsHoldResult(Activator.PLUGIN_NAME, errorLocs.size());
 		reportResult(result);
 		mLogger.info(result.getShortDescription() + " " + result.getLongDescription());
 	}

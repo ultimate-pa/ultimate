@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ApplicationTermFinder;
 
@@ -84,6 +85,17 @@ public class MultiDimensionalSelect {
 		assert classInvariant();
 	}
 	
+
+	
+	public MultiDimensionalSelect(final Term array, final ArrayIndex index, final Script script) {
+		super();
+		mArray = array;
+		mIndex = index;
+		mSelectTerm = null;
+	}
+
+
+
 	private boolean classInvariant() {
 		if (mArray == null) {
 			return mIndex.size() == 0;
@@ -111,7 +123,7 @@ public class MultiDimensionalSelect {
 	}
 	
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(final Object obj) {
 		if (obj instanceof MultiDimensionalSelect) {
 			return mSelectTerm.equals(((MultiDimensionalSelect) obj).getSelectTerm());
 		} else {
@@ -138,7 +150,7 @@ public class MultiDimensionalSelect {
 	 * multidimensional store terms).
 	 */
 	public static List<MultiDimensionalSelect> extractSelectShallow(
-			Term term, boolean allowArrayValues) {
+			final Term term, final boolean allowArrayValues) {
 		final List<MultiDimensionalSelect> result = new ArrayList<MultiDimensionalSelect>();
 		final Set<ApplicationTerm> selectTerms = 
 				(new ApplicationTermFinder("select", true)).findMatchingSubterms(term);
@@ -167,7 +179,7 @@ public class MultiDimensionalSelect {
 	 * multidimensional store terms).
 	 */
 	public static List<MultiDimensionalSelect> extractSelectDeep(
-			Term term, boolean allowArrayValues) {
+			final Term term, final boolean allowArrayValues) {
 		final List<MultiDimensionalSelect> result = new LinkedList<MultiDimensionalSelect>();
 		List<MultiDimensionalSelect> foundInThisIteration = extractSelectShallow(term, allowArrayValues);
 		while (!foundInThisIteration.isEmpty()) {

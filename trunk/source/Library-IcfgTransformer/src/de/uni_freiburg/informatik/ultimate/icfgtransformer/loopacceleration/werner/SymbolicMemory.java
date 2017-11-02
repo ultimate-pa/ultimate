@@ -31,6 +31,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -41,6 +42,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Tra
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
@@ -52,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 
 public class SymbolicMemory {
 
+	private final IUltimateServiceProvider mServices;
 	private final Map<IProgramVar, Term> mMemoryMapping;
 	private final ManagedScript mScript;
 	private final ILogger mLogger;
@@ -76,10 +80,11 @@ public class SymbolicMemory {
 	 *            {@link TermVariable} to an {@link IProgramVar} for changing in
 	 *            the memory.
 	 */
-	public SymbolicMemory(final ManagedScript script, final ILogger logger, final TransFormula tf,
-			final IIcfgSymbolTable oldSymbolTable) {
+	public SymbolicMemory(final ManagedScript script, final IUltimateServiceProvider services, final ILogger logger,
+			final TransFormula tf, final IIcfgSymbolTable oldSymbolTable) {
 
 		mScript = script;
+		mServices = services;
 		mLogger = logger;
 		mOldSymbolTable = oldSymbolTable;
 		mInVars = tf.getInVars();
@@ -88,6 +93,11 @@ public class SymbolicMemory {
 
 		for (final Entry<IProgramVar, TermVariable> entry : mInVars.entrySet()) {
 			mMemoryMapping.put(entry.getKey(), (TermVariable) entry.getValue());
+		}
+		for (final Entry<IProgramVar, TermVariable> entry : mOutVars.entrySet()) {
+			if (!mMemoryMapping.containsKey(entry.getKey())) {
+				mMemoryMapping.put(entry.getKey(), (TermVariable) entry.getValue());
+			}
 		}
 	}
 
@@ -104,20 +114,21 @@ public class SymbolicMemory {
 			final Term t = entry.getValue();
 			final Map<Term, Term> substitution = new HashMap<>();
 
-			if (t instanceof TermVariable) {
-				if (mMemoryMapping.containsKey(entry.getKey())) {
-					substitution.put(t, mMemoryMapping.get(entry.getKey()));
-				}
+			if (t instanceof TermVariable && mMemoryMapping.containsKey(entry.getKey())) {
+				substitution.put(t, mMemoryMapping.get(entry.getKey()));
+			}
+
+			if (t instanceof TermVariable && !mMemoryMapping.containsKey(entry.getKey())) {
+				mMemoryMapping.put(entry.getKey(), entry.getValue());
 				continue;
 			}
 
 			if (t instanceof ConstantTerm) {
 				substitution.put(mMemoryMapping.get(entry.getKey()), t);
-				continue;
+			} else {
+				final ApplicationTerm appTerm = (ApplicationTerm) t;
+				substitution.putAll(termUnravel(appTerm));
 			}
-
-			final ApplicationTerm appTerm = (ApplicationTerm) t;
-			substitution.putAll(termUnravel(appTerm));
 
 			final Substitution sub = new Substitution(mScript, substitution);
 			final Term t2 = sub.transform(t);
@@ -141,7 +152,9 @@ public class SymbolicMemory {
 
 		final Substitution sub = new Substitution(mScript, substitution);
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(mInVars, mOutVars, true, null, true, null, true);
-		tfb.setFormula(sub.transform(tf.getFormula()));
+		final Term term = sub.transform(tf.getFormula());
+
+		tfb.setFormula(SmtUtils.simplify(mScript, term, mServices, SimplificationTechnique.SIMPLIFY_DDA));
 		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
 
 		return tfb.finishConstruction(mScript);
@@ -189,7 +202,8 @@ public class SymbolicMemory {
 		if (term instanceof TermVariable) {
 
 			for (final Entry<IProgramVar, TermVariable> entry : progVars.entrySet()) {
-				if (entry.getValue().equals(term) && (mMemoryMapping.containsKey(entry.getKey()))) {
+				if (entry.getValue().equals(term) && (mMemoryMapping.containsKey(entry.getKey()))
+						&& !(mMemoryMapping.get(entry.getKey()) instanceof ConstantTerm)) {
 					result.put(term, mMemoryMapping.get(entry.getKey()));
 				}
 			}

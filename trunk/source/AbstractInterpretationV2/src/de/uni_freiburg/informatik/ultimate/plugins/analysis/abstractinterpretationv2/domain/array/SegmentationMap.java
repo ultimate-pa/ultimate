@@ -74,12 +74,26 @@ public class SegmentationMap {
 		return mEqualArrays.getAllElements();
 	}
 
-	public Set<IProgramVarOrConst> getAuxVars() {
+	public Set<IProgramVarOrConst> getValueVars() {
+		final Set<IProgramVarOrConst> variables = new HashSet<>();
+		for (final Segmentation s : mRepresentiveSegmentations.values()) {
+			variables.addAll(s.getValues());
+		}
+		return variables;
+	}
+
+	public Set<IProgramVarOrConst> getBoundVars() {
 		final Set<IProgramVarOrConst> variables = new HashSet<>();
 		for (final Segmentation s : mRepresentiveSegmentations.values()) {
 			variables.addAll(s.getBounds());
-			variables.addAll(s.getValues());
 		}
+		return variables;
+	}
+
+	public Set<IProgramVarOrConst> getAuxVars() {
+		final Set<IProgramVarOrConst> variables = new HashSet<>();
+		variables.addAll(getBoundVars());
+		variables.addAll(getValueVars());
 		return variables;
 	}
 

@@ -121,7 +121,6 @@ public class CACSL2BoogieBacktranslator
 	 * {@link VariableType} is used to distinguish various special variables after they are converted to strings.
 	 *
 	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
-	 *
 	 */
 	private enum VariableType {
 		RESULT,
@@ -361,15 +360,15 @@ public class CACSL2BoogieBacktranslator
 		final EnumSet<StepInfo> set = EnumSet.noneOf(StepInfo.class);
 		for (final StepInfo oldSi : oldSiSet) {
 			switch (oldSi) {
-			case CONDITION_EVAL_FALSE:
-				set.add(StepInfo.CONDITION_EVAL_TRUE);
-				break;
-			case CONDITION_EVAL_TRUE:
-				set.add(StepInfo.CONDITION_EVAL_FALSE);
-				break;
-			default:
-				set.add(oldSi);
-				break;
+				case CONDITION_EVAL_FALSE:
+					set.add(StepInfo.CONDITION_EVAL_TRUE);
+					break;
+				case CONDITION_EVAL_TRUE:
+					set.add(StepInfo.CONDITION_EVAL_FALSE);
+					break;
+				default:
+					set.add(oldSi);
+					break;
 			}
 		}
 		return set;
@@ -377,9 +376,8 @@ public class CACSL2BoogieBacktranslator
 
 	/**
 	 * If we encounter a {@link CASTFunctionCallExpression} during backtranslation, we have to consider various special
-	 * cases. Sometimes we need to ignore it, sometimes we compress multiple statements to one.
-	 *
-	 * This function handles all these cases and returns the index the loop should increase and continue.
+	 * cases. Sometimes we need to ignore it, sometimes we compress multiple statements to one. This function handles
+	 * all these cases and returns the index the loop should increase and continue.
 	 *
 	 * @param programExecution
 	 *            The {@link IProgramExecution} that is translated
@@ -452,9 +450,10 @@ public class CACSL2BoogieBacktranslator
 			if (i < programExecution.getLength()) {
 				final AtomicTraceElement<BoogieASTNode> nextATE = programExecution.getTraceElement(i);
 				if (nextATE.hasStepInfo(StepInfo.PROC_RETURN)) {
-					translatedAtomicTraceElements.add(new AtomicTraceElement<CACSLLocation>(cloc, cloc,
-							StepInfo.FUNC_CALL, currentATE.getRelevanceInformation(),
-							currentATE.getPrecedingProcedure(), currentATE.getPrecedingProcedure()));
+					final IRelevanceInformation relevanceInfo = getCombinedRelevanceInfo(currentATE, nextATE);
+					translatedAtomicTraceElements
+							.add(new AtomicTraceElement<CACSLLocation>(cloc, cloc, StepInfo.FUNC_CALL, relevanceInfo,
+									currentATE.getPrecedingProcedure(), currentATE.getPrecedingProcedure()));
 					translatedProgramStates.add(translateProgramState(programExecution.getProgramState(i)));
 					return i;
 				}
@@ -485,10 +484,25 @@ public class CACSL2BoogieBacktranslator
 	}
 
 	/**
+	 * Combine the relevance information of call and return statement. Be careful if one of them is null.
+	 */
+	private static IRelevanceInformation getCombinedRelevanceInfo(final AtomicTraceElement<BoogieASTNode> ate1,
+			final AtomicTraceElement<BoogieASTNode> ate2) {
+		final IRelevanceInformation info1 = ate1.getRelevanceInformation();
+		final IRelevanceInformation info2 = ate2.getRelevanceInformation();
+		if (info1 == null) {
+			return info2;
+		}
+		if (info2 == null) {
+			return info1;
+		}
+		return info1.merge(info2);
+	}
+
+	/**
 	 * Starts from some point in the programExecution i and finds a j >= i && j < programExecution.length s.t. all
-	 * elements [i..j] have the same location.
-	 *
-	 * If i is invalid (outside of [0..programExecution.length-1]), this method throws an IllegalArgumentException.
+	 * elements [i..j] have the same location. If i is invalid (outside of [0..programExecution.length-1]), this method
+	 * throws an IllegalArgumentException.
 	 *
 	 * @param programExecution
 	 * @param i
@@ -944,82 +958,82 @@ public class CACSL2BoogieBacktranslator
 		final String smtFunction = reversed.getFirst();
 
 		switch (smtFunction) {
-		case "fp":
-			// this function is used to construct floating points
-			return translateFloatConstConstructor(cType, fun, reversed.getSecond());
-		case "NaN":
-			return translateFloatNaNConstructor(cType, fun, reversed.getSecond());
-		default:
-			reportUnfinishedBacktranslation(
-					UNFINISHED_BACKTRANSLATION + " could not match function " + fun.getIdentifier());
-			return null;
+			case "fp":
+				// this function is used to construct floating points
+				return translateFloatConstConstructor(cType, fun, reversed.getSecond());
+			case "NaN":
+				return translateFloatNaNConstructor(cType, fun, reversed.getSecond());
+			default:
+				reportUnfinishedBacktranslation(
+						UNFINISHED_BACKTRANSLATION + " could not match function " + fun.getIdentifier());
+				return null;
 		}
 	}
 
 	private IASTExpression translateFloatConstConstructor(final CType cType, final FunctionApplication fun,
 			final CPrimitives floatType) {
 		switch (floatType) {
-		case LONGDOUBLE:
-			// ~fp~LONGDOUBLE(in0 : bv1, in1 : bv15, in2 : bv112)
-			final BitvecLiteral sign = (BitvecLiteral) fun.getArguments()[0];
-			final BitvecLiteral exponent = (BitvecLiteral) fun.getArguments()[1];
-			final BitvecLiteral fraction = (BitvecLiteral) fun.getArguments()[2];
-			return createFakeFloat(sign, exponent, fraction);
-		case BOOL:
-		case CHAR:
-		case INT:
-		case LONG:
-		case LONGLONG:
-		case SCHAR:
-		case SHORT:
-		case UCHAR:
-		case UINT:
-		case ULONG:
-		case ULONGLONG:
-		case USHORT:
-		case VOID:
-			throw new IllegalArgumentException(floatType + " is not a float type");
-		case COMPLEX_DOUBLE:
-		case COMPLEX_FLOAT:
-		case COMPLEX_LONGDOUBLE:
-		case DOUBLE:
-		case FLOAT:
-		default:
-			reportUnfinishedBacktranslation(UNFINISHED_BACKTRANSLATION + " " + floatType + " is not yet converted ("
-					+ fun.getIdentifier() + ")");
-			return null;
+			case LONGDOUBLE:
+				// ~fp~LONGDOUBLE(in0 : bv1, in1 : bv15, in2 : bv112)
+				final BitvecLiteral sign = (BitvecLiteral) fun.getArguments()[0];
+				final BitvecLiteral exponent = (BitvecLiteral) fun.getArguments()[1];
+				final BitvecLiteral fraction = (BitvecLiteral) fun.getArguments()[2];
+				return createFakeFloat(sign, exponent, fraction);
+			case BOOL:
+			case CHAR:
+			case INT:
+			case LONG:
+			case LONGLONG:
+			case SCHAR:
+			case SHORT:
+			case UCHAR:
+			case UINT:
+			case ULONG:
+			case ULONGLONG:
+			case USHORT:
+			case VOID:
+				throw new IllegalArgumentException(floatType + " is not a float type");
+			case COMPLEX_DOUBLE:
+			case COMPLEX_FLOAT:
+			case COMPLEX_LONGDOUBLE:
+			case DOUBLE:
+			case FLOAT:
+			default:
+				reportUnfinishedBacktranslation(UNFINISHED_BACKTRANSLATION + " " + floatType + " is not yet converted ("
+						+ fun.getIdentifier() + ")");
+				return null;
 		}
 	}
 
 	private IASTExpression translateFloatNaNConstructor(final CType cType, final FunctionApplication fun,
 			final CPrimitives floatType) {
 		switch (floatType) {
-		case BOOL:
-		case CHAR:
-		case INT:
-		case LONG:
-		case LONGLONG:
-		case SCHAR:
-		case SHORT:
-		case UCHAR:
-		case UINT:
-		case ULONG:
-		case ULONGLONG:
-		case USHORT:
-		case VOID:
-			throw new IllegalArgumentException(floatType + " is not a float type");
-		case COMPLEX_DOUBLE:
-		case COMPLEX_FLOAT:
-		case COMPLEX_LONGDOUBLE:
-		case DOUBLE:
-		case FLOAT:
-		case LONGDOUBLE:
-			// ~NaN~FLOAT() returns (out : C_FLOAT)
-			return new FakeExpression(String.valueOf(Float.NaN));
-		default:
-			reportUnfinishedBacktranslation(UNFINISHED_BACKTRANSLATION + " " + floatType + " is not yet converted ("
-					+ fun.getIdentifier() + ")");
-			return null;
+			case BOOL:
+			case CHAR:
+			case INT:
+			case LONG:
+			case LONGLONG:
+			case SCHAR:
+			case SHORT:
+			case UCHAR:
+			case UINT:
+			case ULONG:
+			case ULONGLONG:
+			case USHORT:
+			case VOID:
+				throw new IllegalArgumentException(floatType + " is not a float type");
+			case COMPLEX_DOUBLE:
+			case COMPLEX_FLOAT:
+			case COMPLEX_LONGDOUBLE:
+			case DOUBLE:
+			case FLOAT:
+			case LONGDOUBLE:
+				// ~NaN~FLOAT() returns (out : C_FLOAT)
+				return new FakeExpression(String.valueOf(Float.NaN));
+			default:
+				reportUnfinishedBacktranslation(UNFINISHED_BACKTRANSLATION + " " + floatType + " is not yet converted ("
+						+ fun.getIdentifier() + ")");
+				return null;
 		}
 	}
 
@@ -1274,13 +1288,10 @@ public class CACSL2BoogieBacktranslator
 	}
 
 	/**
-	 * A subtree check that sacrifices memory consumption for speed. It is about 20x faster, but uses a lookup table.
-	 *
-	 * A subtree check is used to determine if a trace element is actually a nesting of some later trace element in the
+	 * A subtree check that sacrifices memory consumption for speed. It is about 20x faster, but uses a lookup table. A
+	 * subtree check is used to determine if a trace element is actually a nesting of some later trace element in the
 	 * error path (like in x = x++ + ++x, were x++ and ++x are nestings of +, and + is a nesting of the assignment).
-	 *
 	 * There may be a better solution to this (its rather expensive).
-	 *
 	 */
 	protected static List<AtomicTraceElement<CACSLLocation>>
 			checkForSubtreeInclusion(final List<AtomicTraceElement<CACSLLocation>> translatedAtomicTraceElements) {
@@ -1409,11 +1420,9 @@ public class CACSL2BoogieBacktranslator
 
 	/**
 	 * Translates Boogie identifiers of variables and functions back to the identifiers of variables and operators in C.
-	 *
 	 * This class is in an immature state and translates Strings to Strings.
 	 *
 	 * @author heizmann@informatik.uni-freiburg.de
-	 *
 	 */
 	private static final class Boogie2C {
 
@@ -1579,23 +1588,23 @@ public class CACSL2BoogieBacktranslator
 		@Override
 		public String toString() {
 			switch (mVarType) {
-			case OLD:
-			case INVAR:
-				return "\\old(" + mName + ")";
-			case NORMAL:
-			case POINTER_BASE:
-			case POINTER_OFFSET:
-				return mName;
-			case RESULT:
-				return "\\result";
-			case VALID:
-				return "\\valid";
-			case AUX:
-				return "aux-" + mName + "-aux";
-			case UNKNOWN:
-				return "unknown-" + mName + "-unknown";
-			default:
-				throw new UnsupportedOperationException("VariableType " + mVarType + " not yet implemented");
+				case OLD:
+				case INVAR:
+					return "\\old(" + mName + ")";
+				case NORMAL:
+				case POINTER_BASE:
+				case POINTER_OFFSET:
+					return mName;
+				case RESULT:
+					return "\\result";
+				case VALID:
+					return "\\valid";
+				case AUX:
+					return "aux-" + mName + "-aux";
+				case UNKNOWN:
+					return "unknown-" + mName + "-unknown";
+				default:
+					throw new UnsupportedOperationException("VariableType " + mVarType + " not yet implemented");
 			}
 		}
 	}

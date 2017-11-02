@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <benchmark tool="ultimateautomizer" memlimit="6GB" timelimit="90" hardtimelimit="112" cpuCores="4">
-	<rundefinition name="AbsInt">
-		<option name="-tc">/storage/ultimate/trunk/examples/toolchains/AbstractInterpretationC.xml</option>
+	<rundefinition name="HeapSeparator">
+		<option name="-tc">/storage/ultimate/trunk/examples/toolchains/IcfgTransformerC.xml</option>
 		<option name="--generate-csv" />
 		<option name="--csv-dir">/storage/ultimate/releaseScripts/default/UAutomizer-linux/csv</option>
 

@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.test.decider.TerminationAnalysisTestR
  * @author dietsch@informatik.uni-freiburg.de, heizmann@informatik.uni-freiburg.de
  *
  */
-public class Svcomp17AutomizerTerminationTestSuite extends AbstractSVCOMPTestSuite {
+public class Svcomp17AutomizerTerminationTestSuite extends AbstractSvcompTestSuite {
 	
 	@Override
 	protected ITestResultDecider getTestResultDecider(final UltimateRunDefinition urd) {
@@ -58,8 +58,8 @@ public class Svcomp17AutomizerTerminationTestSuite extends AbstractSVCOMPTestSui
 	}
 	
 	@Override
-	protected List<SVCOMPTestDefinition> getTestDefinitions() {
-		final List<SVCOMPTestDefinition> rtr = new ArrayList<>();
+	protected List<SvcompTestDefinition> getTestDefinitions() {
+		final List<SvcompTestDefinition> rtr = new ArrayList<>();
 		//@formatter:off
 
 		// available sets:
@@ -74,16 +74,16 @@ public class Svcomp17AutomizerTerminationTestSuite extends AbstractSVCOMPTestSui
 		return rtr;
 	}
 	
-	private List<SVCOMPTestDefinition> getForAll(final String set, final int limit) {
+	private List<SvcompTestDefinition> getForAll(final String set, final int limit) {
 		return getForAll(set, getTimeout(), limit);
 	}
 	
-	private List<SVCOMPTestDefinition> getForAll(final String set) {
+	private List<SvcompTestDefinition> getForAll(final String set) {
 		return getForAll(set, getTimeout(), getFilesPerCategory());
 	}
 	
-	private List<SVCOMPTestDefinition> getForAll(final String set, final long timeout, final int limit) {
-		final List<SVCOMPTestDefinition> rtr = new ArrayList<>();
+	private List<SvcompTestDefinition> getForAll(final String set, final long timeout, final int limit) {
+		final List<SvcompTestDefinition> rtr = new ArrayList<>();
 		rtr.add(getTestDefinitionFromExamples(set, "BuchiAutomizerCInline.xml", "svcomp2017/automizer/svcomp-Termination-64bit-Automizer_Default.epf",
 				timeout, limit));
 		return rtr;

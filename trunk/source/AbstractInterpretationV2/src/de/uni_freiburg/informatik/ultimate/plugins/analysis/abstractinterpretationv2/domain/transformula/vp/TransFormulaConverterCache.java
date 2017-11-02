@@ -26,6 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -53,8 +55,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  */
-public class TransFormulaConverterCache//<ACTION extends IIcfgTransition<IcfgLocation>> {
-{
+public class TransFormulaConverterCache {
 
 	private final EqConstraintFactory<EqNode> mEqConstraintFactory;
 	private final EqNodeAndFunctionFactory mEqNodeAndFunctionFactory;
@@ -78,17 +79,15 @@ public class TransFormulaConverterCache//<ACTION extends IIcfgTransition<IcfgLoc
 	public EqTransitionRelation getEqTransitionRelationFromTransformula(final TransFormula tf) {
 		EqTransitionRelation result = mTransformulaToEqTransitionRelationCache.get(tf);
 		if (result == null) {
-			result = convertTransformulaToEqTransitionRelation(tf, mEqConstraintFactory, mEqNodeAndFunctionFactory);
+			result = convertTransformulaToEqTransitionRelation(tf);
 			mTransformulaToEqTransitionRelationCache.put(tf, result);
 		}
 		return result;
 	}
 
-	private EqTransitionRelation convertTransformulaToEqTransitionRelation(final TransFormula tf,
-			final EqConstraintFactory<EqNode> eqConstraintFactory,
-			final EqNodeAndFunctionFactory eqNodeAndFunctionFactory) {
+	private EqTransitionRelation convertTransformulaToEqTransitionRelation(final TransFormula tf) {
 		final EqDisjunctiveConstraint<EqNode> constraint =
-				new FormulaToEqDisjunctiveConstraintConverter<>(mServices, mMgdScript, mEqConstraintFactory,
+				new FormulaToEqDisjunctiveConstraintConverter(mServices, mMgdScript, mEqConstraintFactory,
 						mEqNodeAndFunctionFactory, tf.getFormula()).getResult();
 
 		assert transformulaImpliesResultConstraint(tf, constraint);
@@ -146,5 +145,13 @@ public class TransFormulaConverterCache//<ACTION extends IIcfgTransition<IcfgLoc
 			assert false;
 		}
 		return result == LBool.UNSAT;
+	}
+
+	/**
+	 *
+	 * @return all EqTransitionRelations that have been computed so far
+	 */
+	public Collection<EqTransitionRelation> getAllTransitionRelations() {
+		return Collections.unmodifiableCollection(mTransformulaToEqTransitionRelationCache.values());
 	}
 }

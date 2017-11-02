@@ -1,7 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.array;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,7 +24,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractSta
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalTermUtils;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class ArrayDomainExpressionProcessor<STATE extends IAbstractState<STATE>> {
@@ -50,7 +48,7 @@ public class ArrayDomainExpressionProcessor<STATE extends IAbstractState<STATE>>
 		} else if (expression instanceof UnaryExpression) {
 			return processUnaryExpression((UnaryExpression) expression, state, isAssume);
 		}
-		return new ExpressionResult<>(expression, state, Collections.emptySet());
+		return new ExpressionResult<>(expression, state);
 	}
 
 	private ExpressionResult<STATE> processArrayAccessExpression(final ArrayAccessExpression expression,
@@ -81,10 +79,10 @@ public class ArrayDomainExpressionProcessor<STATE extends IAbstractState<STATE>>
 				disjuncts.add(SmtUtils.binaryEquality(script, auxTerm, value));
 			}
 			final AssumeStatement assume = createAssume(SmtUtils.or(script, disjuncts));
-			final STATE newBoundState = mToolkit.handleStatementBySubdomain(newState.getSubState(), assume);
-			newState = newState.updateState(newBoundState);
+			final STATE newSubState = mToolkit.handleStatementBySubdomain(newState.getSubState(), assume);
+			newState = newState.updateState(newSubState);
 		}
-		return new ExpressionResult<>(newExpr, newState, Collections.singleton(auxVar));
+		return new ExpressionResult<>(newExpr, newState);
 	}
 
 	private ExpressionResult<STATE> processBinaryExpression(final BinaryExpression expression,
@@ -159,22 +157,14 @@ public class ArrayDomainExpressionProcessor<STATE extends IAbstractState<STATE>>
 
 	private ExpressionResult<STATE> processArrayAssumption(final ExpressionResult<STATE> leftResult,
 			final ExpressionResult<STATE> rightResult, final Operator operator) {
-		final Set<IProgramVarOrConst> auxVars =
-				DataStructureUtils.union(leftResult.getAuxVars(), rightResult.getAuxVars());
-		if (auxVars.isEmpty()) {
-			return intersectResults(leftResult, rightResult, operator);
-		}
-		// TODO: Forall aux-vars introduce refined versions as values
-		for (final IProgramVarOrConst v : auxVars) {
-
-		}
+		// TODO
 		return null;
 	}
 
 	private ExpressionResult<STATE> processQuantifierExpression(final QuantifierExpression expression,
 			final ArrayDomainState<STATE> state, final boolean isAssume) {
 		// TODO: Check if has special array form
-		return new ExpressionResult<>(expression, state, Collections.emptySet());
+		return new ExpressionResult<>(expression, state);
 	}
 
 	private ExpressionResult<STATE> processUnaryExpression(final UnaryExpression expression,
@@ -184,7 +174,7 @@ public class ArrayDomainExpressionProcessor<STATE extends IAbstractState<STATE>>
 		case ARITHNEGATIVE: {
 			final ExpressionResult<STATE> subResult = process(subExpression, state, isAssume);
 			final Expression newExpr = new UnaryExpression(null, expression.getOperator(), subResult.getExpression());
-			return new ExpressionResult<>(newExpr, subResult.getState(), subResult.getAuxVars());
+			return new ExpressionResult<>(newExpr, subResult.getState());
 		}
 		case LOGICNEG:
 			if (subExpression instanceof UnaryExpression) {
@@ -201,7 +191,7 @@ public class ArrayDomainExpressionProcessor<STATE extends IAbstractState<STATE>>
 			}
 			final ExpressionResult<STATE> subResult = process(subExpression, state, isAssume);
 			final Expression newExpr = new UnaryExpression(null, expression.getOperator(), subResult.getExpression());
-			return new ExpressionResult<>(newExpr, subResult.getState(), subResult.getAuxVars());
+			return new ExpressionResult<>(newExpr, subResult.getState());
 		case OLD:
 			// TODO: How to handle this?
 		default:
@@ -291,12 +281,12 @@ public class ArrayDomainExpressionProcessor<STATE extends IAbstractState<STATE>>
 		final Expression leftExpression = leftResult.getExpression();
 		final Expression rightExpression = rightResult.getExpression();
 		final Expression newExpression = new BinaryExpression(null, operator, leftExpression, rightExpression);
-		final Set<IProgramVarOrConst> leftAuxVars = leftResult.getAuxVars();
-		final Set<IProgramVarOrConst> rightAuxVars = rightResult.getAuxVars();
+		final Set<IProgramVarOrConst> leftAuxVars = rightResult.getState().getUnusedAuxVars();
+		final Set<IProgramVarOrConst> rightAuxVars = rightResult.getState().getUnusedAuxVars();
 		final ArrayDomainState<STATE> leftState = leftResult.getState().addVariables(rightAuxVars);
 		final ArrayDomainState<STATE> rightState = rightResult.getState().addVariables(leftAuxVars);
 		final ArrayDomainState<STATE> newState = leftState.intersect(rightState);
-		return new ExpressionResult<>(newExpression, newState, DataStructureUtils.union(leftAuxVars, rightAuxVars));
+		return new ExpressionResult<>(newExpression, newState);
 	}
 
 	private ExpressionResult<STATE> unionResults(final ExpressionResult<STATE> leftResult,
@@ -304,13 +294,12 @@ public class ArrayDomainExpressionProcessor<STATE extends IAbstractState<STATE>>
 		final Expression leftExpression = leftResult.getExpression();
 		final Expression rightExpression = rightResult.getExpression();
 		final Expression newExpression = new BinaryExpression(null, operator, leftExpression, rightExpression);
-		final Set<IProgramVarOrConst> leftAuxVars = leftResult.getAuxVars();
-		final Set<IProgramVarOrConst> rightAuxVars = rightResult.getAuxVars();
-		// TODO: Same problem?
+		final Set<IProgramVarOrConst> leftAuxVars = rightResult.getState().getUnusedAuxVars();
+		final Set<IProgramVarOrConst> rightAuxVars = rightResult.getState().getUnusedAuxVars();
 		final ArrayDomainState<STATE> leftState = leftResult.getState().addVariables(rightAuxVars);
 		final ArrayDomainState<STATE> rightState = rightResult.getState().addVariables(leftAuxVars);
 		final ArrayDomainState<STATE> newState = leftState.union(rightState);
-		return new ExpressionResult<>(newExpression, newState, DataStructureUtils.union(leftAuxVars, rightAuxVars));
+		return new ExpressionResult<>(newExpression, newState);
 	}
 
 	private AssumeStatement createAssume(final Term term) {

@@ -13,25 +13,11 @@ public interface ICongruenceClosureElement<ELEM extends ICongruenceClosureElemen
 
 	ELEM getArgument();
 
-//	void addAfParent(ELEM parent);
-//
-//	void addArgParent(ELEM parent);
-//
-//	void removeAfParent(ELEM parent);
-//
-//	void removeArgParent(ELEM parent);
-//
-//	Set<ELEM> getAfParents();
-//
-//	Set<ELEM> getArgParents();
-
 	ELEM replaceAppliedFunction(ELEM replacer);
 
 	ELEM replaceArgument(ELEM replacer);
 
 	ELEM replaceSubNode(Map<ELEM, ELEM> replacementMapping);
-
-//	int getHeight();
 
 	boolean isLiteral();
 

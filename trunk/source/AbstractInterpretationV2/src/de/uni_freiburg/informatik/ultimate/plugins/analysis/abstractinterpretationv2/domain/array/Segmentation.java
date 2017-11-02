@@ -29,16 +29,17 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.Collections;
 import java.util.List;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
+
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
 /**
  * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  */
 public class Segmentation {
-	private final List<IProgramVarOrConst> mBounds;
-	private final List<IProgramVarOrConst> mValues;
+	private final List<IProgramVar> mBounds;
+	private final List<IProgramVar> mValues;
 
-	public Segmentation(final List<IProgramVarOrConst> bounds, final List<IProgramVarOrConst> values) {
+	public Segmentation(final List<IProgramVar> bounds, final List<IProgramVar> values) {
 		if (bounds.size() != values.size() + 1) {
 			throw new IllegalArgumentException("Incompatible sizes of bounds and values");
 		}
@@ -46,19 +47,19 @@ public class Segmentation {
 		mValues = values;
 	}
 
-	public List<IProgramVarOrConst> getBounds() {
+	public List<IProgramVar> getBounds() {
 		return Collections.unmodifiableList(mBounds);
 	}
 
-	public List<IProgramVarOrConst> getValues() {
+	public List<IProgramVar> getValues() {
 		return Collections.unmodifiableList(mValues);
 	}
 
-	public IProgramVarOrConst getBound(final int i) {
+	public IProgramVar getBound(final int i) {
 		return mBounds.get(i);
 	}
 
-	public IProgramVarOrConst getValue(final int i) {
+	public IProgramVar getValue(final int i) {
 		return mValues.get(i);
 	}
 

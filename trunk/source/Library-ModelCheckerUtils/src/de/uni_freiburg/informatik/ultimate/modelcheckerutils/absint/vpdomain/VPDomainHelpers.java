@@ -284,8 +284,7 @@ public class VPDomainHelpers {
 		return true;
 	}
 
-	public static <//ACTION extends IIcfgTransition<IcfgLocation>,
-		NODE extends IEqNodeIdentifier<NODE>> boolean
+	public static <NODE extends IEqNodeIdentifier<NODE>> boolean
 			constraintFreeOfVars(final Collection<Term> varsToProjectAway,
 					final EqConstraint<NODE> unfrozen,
 					final Script script) {
@@ -319,22 +318,6 @@ public class VPDomainHelpers {
 		return true;
 	}
 
-//	public static <NODE extends IEqNodeIdentifier<NODE, FUNCTION>,
-//		FUNCTION extends IEqFunctionIdentifier<NODE, FUNCTION>> boolean
-//			representativePointersAreConsistent(final Collection<EqGraphNode<NODE, FUNCTION>> values) {
-//		for (final EqGraphNode<NODE, FUNCTION> eqgn : values) {
-//			for (final EqGraphNode<NODE, FUNCTION> rr : eqgn.getReverseRepresentative()) {
-//				if (rr.getRepresentative() != eqgn) {
-//					return false;
-//				}
-//			}
-//			if (!eqgn.getRepresentative().getReverseRepresentative().contains(eqgn)) {
-//				return false;
-//			}
-//		}
-//		return true;
-//	}
-
 	public static Term normalizeTerm(final Term term, final TransFormula tf, final ManagedScript mgdScript) {
 		final Map<Term, Term> subs = computeNormalizingSubstitution(tf);
 		return new Substitution(mgdScript, subs).transform(term);
@@ -346,8 +329,8 @@ public class VPDomainHelpers {
 		return new Substitution(mgdScript, subs).transform(t);
 	}
 
-//	public static List<Term> normalizeArrayIndex(final ArrayIndex index, final TransFormula tf, final ManagedScript script) {
-	public static ArrayIndex normalizeArrayIndex(final ArrayIndex index, final TransFormula tf, final ManagedScript script) {
+	public static ArrayIndex normalizeArrayIndex(final ArrayIndex index, final TransFormula tf,
+			final ManagedScript script) {
 		return new ArrayIndex(index.stream()
 				.map(t -> normalizeTerm(t, tf, script))
 				.collect(Collectors.toList()));
@@ -371,10 +354,6 @@ public class VPDomainHelpers {
 	}
 
 	public static <NODE extends IEqNodeIdentifier<NODE>> boolean haveSameType(final NODE func1, final NODE func2) {
-		if (func1.isFunction() != func2.isFunction()) {
-			assert false;
-			return false;
-		}
 		if (func1.getTerm().getSort() != func2.getTerm().getSort()) {
 			assert false;
 			return false;

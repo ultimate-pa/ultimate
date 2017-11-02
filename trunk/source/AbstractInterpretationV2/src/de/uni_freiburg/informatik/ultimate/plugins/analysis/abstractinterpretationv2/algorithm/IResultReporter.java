@@ -31,6 +31,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.AbstractCounterexample;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.DisjunctiveAbstractState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 
 /**
  *
@@ -42,7 +43,8 @@ public interface IResultReporter<STATE extends IAbstractState<STATE>, ACTION, LO
 
 	void reportPossibleError(AbstractCounterexample<DisjunctiveAbstractState<STATE>, ACTION, LOCATION> cex);
 
-	void reportSafe(ACTION elem);
-
-	void reportSafe(ACTION elem, String msg);
+	/**
+	 * Report that fixpoint engine finished exploring the {@link IIcfg}.
+	 */
+	void reportFinished();
 }

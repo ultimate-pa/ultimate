@@ -30,7 +30,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.arraytheory.SMTTheoryDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.poorman.PoormanAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomain;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainPreanalysis;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
 
 public class FixpointEngineFutureParameterFactory {
@@ -163,11 +162,9 @@ public class FixpointEngineFutureParameterFactory {
 
 	public static VPDomain<IcfgEdge> createEqualityDomain(final ILogger logger, final IIcfg<?> root,
 			final IUltimateServiceProvider services) {
-		final VPDomainPreanalysis preAnalysis = new VPDomainPreanalysis(root, logger, services);
-		preAnalysis.postProcess();
 		// final VPTfStateBuilderPreparer tfPreparer =
 		// new VPTfStateBuilderPreparer(preAnalysis, root, logger);
-		return new VPDomain<>(logger, services, root.getCfgSmtToolkit(), preAnalysis);
+		return new VPDomain<>(logger, services, root.getCfgSmtToolkit());
 	}
 
 	private static String getFailureString(final String selectedDomain) {

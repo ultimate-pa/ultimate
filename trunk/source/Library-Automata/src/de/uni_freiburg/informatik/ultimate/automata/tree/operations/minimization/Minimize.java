@@ -233,8 +233,8 @@ public class Minimize<LETTER extends IRankedLetter, STATE> extends GeneralOperat
 			res.addRule(
 					new TreeAutomatonRule<>(rule.getLetter(), src, minimize(worklist.getPartition(rule.getDest()))));
 		}
-		return res;
-		// return removeUnreachables(res);
+		//return res;
+		return removeUnreachables(res);
 
 	}
 

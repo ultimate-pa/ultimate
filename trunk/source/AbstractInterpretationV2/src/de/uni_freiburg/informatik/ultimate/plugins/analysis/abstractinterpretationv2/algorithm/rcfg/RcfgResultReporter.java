@@ -30,10 +30,13 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.PositiveResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovableResult;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -42,11 +45,15 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.AbstractCounterexample;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.DisjunctiveAbstractState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IcfgUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgElement;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.IResultReporter;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgProgramExecution;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
@@ -58,9 +65,15 @@ public class RcfgResultReporter<STATE extends IAbstractState<STATE>, ACTION exte
 		implements IResultReporter<STATE, ACTION, LOC> {
 
 	protected final IUltimateServiceProvider mServices;
+	private final IIcfg<LOC> mIcfg;
+	private final Set<LOC> mUnsafeLocs;
+	private boolean mIsFinished;
 
-	public RcfgResultReporter(final IUltimateServiceProvider services) {
+	public RcfgResultReporter(final IIcfg<LOC> icfg, final IUltimateServiceProvider services) {
 		mServices = services;
+		mIcfg = icfg;
+		mUnsafeLocs = new HashSet<>();
+		mIsFinished = false;
 	}
 
 	@Override
@@ -78,7 +91,11 @@ public class RcfgResultReporter<STATE extends IAbstractState<STATE>, ACTION exte
 		}
 		final IcfgProgramExecution pex = new IcfgProgramExecution(trace, programStates);
 
-		final IResult result = new UnprovableResult<>(Activator.PLUGIN_ID, getLast(cex),
+		final LOC errorLoc = getLast(cex);
+		if (!mUnsafeLocs.add(errorLoc)) {
+			throw new AssertionError("You added a possible error for this location twice: " + errorLoc);
+		}
+		final IResult result = new UnprovableResult<>(Activator.PLUGIN_ID, errorLoc,
 				mServices.getBacktranslationService(), pex, "abstract domain could reach this error location");
 
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID, result);
@@ -95,14 +112,27 @@ public class RcfgResultReporter<STATE extends IAbstractState<STATE>, ACTION exte
 	}
 
 	@Override
-	public void reportSafe(final ACTION first) {
-		reportSafe(first, "No error locations were reached.");
+	public void reportFinished() {
+		assert !mIsFinished : "You should not call this method twice";
+		mIsFinished = true;
+
+		final Set<LOC> errorLocs = IcfgUtils.getErrorLocations(mIcfg);
+		if (mUnsafeLocs.isEmpty()) {
+			final AllSpecificationsHoldResult result = AllSpecificationsHoldResult
+					.createAllSpecificationsHoldResult(Activator.PLUGIN_NAME, errorLocs.size());
+			reportResult(result);
+		}
+
+		final Set<LOC> safeLocs = DataStructureUtils.difference(errorLocs, mUnsafeLocs);
+		for (final IcfgLocation safeErrorLoc : safeLocs) {
+			final PositiveResult<IIcfgElement> pResult =
+					new PositiveResult<>(Activator.PLUGIN_NAME, safeErrorLoc, mServices.getBacktranslationService());
+			reportResult(pResult);
+		}
 	}
 
-	@Override
-	public void reportSafe(final ACTION first, final String msg) {
-		mServices.getResultService().reportResult(Activator.PLUGIN_ID,
-				new AllSpecificationsHoldResult(Activator.PLUGIN_NAME, msg));
+	private void reportResult(final IResult result) {
+		mServices.getResultService().reportResult(Activator.PLUGIN_ID, result);
 	}
 
 }

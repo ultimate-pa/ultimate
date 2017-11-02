@@ -39,6 +39,8 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.tree.IRankedLetter;
 import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeRun;
+import de.uni_freiburg.informatik.ultimate.automata.tree.operations.difference.Difference;
+import de.uni_freiburg.informatik.ultimate.automata.tree.operations.difference.LazyDifference;
 
 /**
  * Computes if the language of a given bottom-up tree automaton is included in

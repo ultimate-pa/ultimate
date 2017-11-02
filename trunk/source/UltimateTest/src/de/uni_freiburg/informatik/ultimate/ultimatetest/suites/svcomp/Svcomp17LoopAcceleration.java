@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.test.decider.SvcompReachTestResultDec
  * @author dietsch@informatik.uni-freiburg.de
  *
  */
-public class Svcomp17LoopAcceleration extends AbstractSVCOMPTestSuite {
+public class Svcomp17LoopAcceleration extends AbstractSvcompTestSuite {
 
 	@Override
 	protected ITestResultDecider getTestResultDecider(final UltimateRunDefinition urd) {
@@ -58,8 +58,8 @@ public class Svcomp17LoopAcceleration extends AbstractSVCOMPTestSuite {
 	}
 
 	@Override
-	protected List<SVCOMPTestDefinition> getTestDefinitions() {
-		final List<SVCOMPTestDefinition> rtr = new ArrayList<>();
+	protected List<SvcompTestDefinition> getTestDefinitions() {
+		final List<SvcompTestDefinition> rtr = new ArrayList<>();
 		// contains 135 examples
 		// rtr.addAll(getForAll("ReachSafety-Arrays", true));
 
@@ -90,17 +90,17 @@ public class Svcomp17LoopAcceleration extends AbstractSVCOMPTestSuite {
 		return rtr;
 	}
 
-	private List<SVCOMPTestDefinition> getForAll(final String set, final int limit, final boolean arch32) {
+	private List<SvcompTestDefinition> getForAll(final String set, final int limit, final boolean arch32) {
 		return getForAll(set, getTimeout(), limit, arch32);
 	}
 
-	private List<SVCOMPTestDefinition> getForAll(final String set, final boolean arch32) {
+	private List<SvcompTestDefinition> getForAll(final String set, final boolean arch32) {
 		return getForAll(set, getTimeout(), getFilesPerCategory(), arch32);
 	}
 
-	private List<SVCOMPTestDefinition> getForAll(final String set, final long timeout, final int limit,
+	private List<SvcompTestDefinition> getForAll(final String set, final long timeout, final int limit,
 			final boolean arch32) {
-		final List<SVCOMPTestDefinition> rtr = new ArrayList<>();
+		final List<SvcompTestDefinition> rtr = new ArrayList<>();
 
 		// rtr.add(getTestDefinitionFromExamples(set, "AutomizerCInline.xml",
 		// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Woelfing.epf", timeout, limit));
@@ -121,15 +121,15 @@ public class Svcomp17LoopAcceleration extends AbstractSVCOMPTestSuite {
 		// rtr.add(getTestDefinitionFromExamples(set, "AutomizerCInlineTransformed.xml",
 		// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_FastUpr_noMod_LE.epf", timeout, limit));
 
-		// rtr.add(getTestDefinitionFromExamples(set, "AutomizerCInline.xml",
-		// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Mohr.epf", timeout, limit));
-		// rtr.add(getTestDefinitionFromExamples(set, "AutomizerCInlineTransformed.xml",
-		// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Mohr.epf", timeout, limit));
-
 		rtr.add(getTestDefinitionFromExamples(set, "AutomizerCInline.xml",
-				"loopacceleration/svcomp-Reach-32bit-Automizer_Default_Werner.epf", timeout, limit));
+				"loopacceleration/svcomp-Reach-32bit-Automizer_Default_Mohr.epf", timeout, limit));
 		rtr.add(getTestDefinitionFromExamples(set, "AutomizerCInlineTransformed.xml",
-				"loopacceleration/svcomp-Reach-32bit-Automizer_Default_Werner.epf", timeout, limit));
+				"loopacceleration/svcomp-Reach-32bit-Automizer_Default_Mohr.epf", timeout, limit));
+
+		// rtr.add(getTestDefinitionFromExamples(set, "AutomizerCInline.xml",
+		// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Werner.epf", timeout, limit));
+		// rtr.add(getTestDefinitionFromExamples(set, "AutomizerCInlineTransformed.xml",
+		// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Werner.epf", timeout, limit));
 
 		return rtr;
 	}

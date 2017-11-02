@@ -642,9 +642,11 @@ public class FunctionHandler {
 				}
 				spec[nrSpec] = new ModifiesSpecification(loc, false, modifyList);
 			}
-			if (memoryHandler.getRequiredMemoryModelFeatures().isMemoryModelInfrastructureRequired()
-					&& (main.getCheckedMethod() == SFO.EMPTY || main.getCheckedMethod().equals(mId))
-					&& main.getPreferences().getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_MEMORY_LEAK_IN_MAIN)) {
+			final String lol = main.getCheckedMethod();
+			if (memoryHandler.getRequiredMemoryModelFeatures().isMemoryModelInfrastructureRequired() && (main
+					.getPreferences().getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_ALLOCATION_PURITY)
+					|| (main.getCheckedMethod().equals(SFO.EMPTY) || main.getCheckedMethod().equals(mId)) && main
+							.getPreferences().getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_MEMORY_LEAK_IN_MAIN))) {
 				// add a specification to check for memory leaks
 				final Expression vIe = new IdentifierExpression(loc, SFO.VALID);
 				final int nrSpec = spec.length;

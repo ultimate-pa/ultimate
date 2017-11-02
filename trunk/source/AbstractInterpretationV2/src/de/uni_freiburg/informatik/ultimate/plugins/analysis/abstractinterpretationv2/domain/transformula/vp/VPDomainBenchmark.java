@@ -40,16 +40,16 @@ import de.uni_freiburg.informatik.ultimate.util.csv.SimpleCsvProvider;
 
 public class VPDomainBenchmark implements ICsvProviderProvider<Integer> {
 
-	private int mSupportingEqualitiesCounter;
 	private int mLocationsCounter;
-	private int mSupportingDisequalitiesCounter;
+	private int mTransitionsCounter;
 
-
-	private boolean alreadyGeneratedColumnTitlesAndResults = false;
+	private boolean mAlreadyGeneratedColumnTitlesAndResults = false;
 	final private List<String> mColumnTitles = new ArrayList<>();
 	final private List<Integer> mResults = new ArrayList<>();
 
-	Map<VPStatistics, Integer> mAggregateStatistics = new HashMap<>();
+	Map<VPStatistics, Integer> mLocationAggregateStatistics = new HashMap<>();
+	Map<VPStatistics, Integer> mTransitionAggregateStatistics = new HashMap<>();
+
 
 	@Override
 	public ICsvProvider<Integer> createCsvProvider() {
@@ -62,45 +62,34 @@ public class VPDomainBenchmark implements ICsvProviderProvider<Integer> {
 	}
 
 	protected void generateColumnTitlesAndResults() {
-		if (alreadyGeneratedColumnTitlesAndResults) {
+		if (mAlreadyGeneratedColumnTitlesAndResults) {
 			return;
 		}
 
-//		mColumnTitles.add("#Locations");
-//		mResults.add(mLocationsCounter);
-//
-//		mColumnTitles.add("#SupportingEqualities");
-//		mResults.add(mSupportingEqualitiesCounter);
-//
-//		mColumnTitles.add("#SupportingDisequalities");
-//		mResults.add(mSupportingDisequalitiesCounter);
-//
-//		mColumnTitles.add("Average#SupportingEqualities");
-//		mResults.add(mSupportingEqualitiesCounter/mLocationsCounter);
-//
-//		mColumnTitles.add("Average#SupportingDisequalities");
-//		mResults.add(mSupportingDisequalitiesCounter/mLocationsCounter);
-//
-//		assert mColumnTitles.size() == mResults.size();
-
+		mColumnTitles.add("#Locations");
+		mResults.add(mLocationsCounter);
 		for (final VPStatistics stat : VPStatistics.values()) {
-			mColumnTitles.add(stat.toString());
-			mResults.add(mAggregateStatistics.get(stat));
+			mColumnTitles.add("LocStat_" + stat.toString());
+			mResults.add(mLocationAggregateStatistics.get(stat));
 		}
 
-		alreadyGeneratedColumnTitlesAndResults = true;
+		mColumnTitles.add("#Transitions");
+		mResults.add(mTransitionsCounter);
+		for (final VPStatistics stat : VPStatistics.values()) {
+			mColumnTitles.add("TransStat_" + stat.toString());
+			mResults.add(mTransitionAggregateStatistics.get(stat));
+		}
+
+
+		mAlreadyGeneratedColumnTitlesAndResults = true;
 	}
 
-	public void setSupportingEqualitiesCounter(final int supportingEqualitiesCounter) {
-		mSupportingEqualitiesCounter = supportingEqualitiesCounter;
+	public void setLocationsCounter(final int locationsCounter) {
+		mLocationsCounter = locationsCounter;
 	}
 
-//	public void setLocationsCounter(final int locationsCounter) {
-//		mLocationsCounter = locationsCounter;
-//	}
-
-	public void setSupportingDisequalitiesCounter(final int supportingDisequalitiesCounter) {
-		mSupportingDisequalitiesCounter = supportingDisequalitiesCounter;
+	public void setTransitionsCounter(final int transitionsCounter) {
+		mTransitionsCounter = transitionsCounter;
 	}
 
 	@Override
@@ -113,26 +102,33 @@ public class VPDomainBenchmark implements ICsvProviderProvider<Integer> {
 
 		for (int i = 0; i < mColumnTitles.size(); i++) {
 			sb.append(String.format("%-40s : %7d %n", mColumnTitles.get(i), mResults.get(i)));
-//			sb.append("\t");
-//			sb.append(mColumnTitles.get(i));
-//			sb.append(":\t\t");
-//			sb.append(mResults.get(i));
-//			sb.append("\n");
 		}
 		return sb.toString();
 	}
 
-	public void reportStatsForLocation(final Function<VPStatistics, Integer> object) {
-		mLocationsCounter++;
+	public void reportStatsForLocation(final Function<VPStatistics, Integer> getStat) {
 		for (final VPStatistics stat : VPStatistics.values()) {
-			Integer currentVal = mAggregateStatistics.get(stat);
+			Integer currentVal = mLocationAggregateStatistics.get(stat);
 			if (currentVal == null) {
 				currentVal = VPStatistics.getInitialValue(stat);
 			}
-			final Integer valueForLoc = object.apply(stat);
+			final Integer valueForLoc = getStat.apply(stat);
 			final BinaryOperator<Integer> agg = VPStatistics.getAggregator(stat);
 			final Integer newVal = agg.apply(currentVal, valueForLoc);
-			mAggregateStatistics.put(stat, newVal);
+			mLocationAggregateStatistics.put(stat, newVal);
+		}
+	}
+
+	public void reportStatsForTransitionRelation(final Function<VPStatistics, Integer> getStat) {
+		for (final VPStatistics stat : VPStatistics.values()) {
+			Integer currentVal = mTransitionAggregateStatistics.get(stat);
+			if (currentVal == null) {
+				currentVal = VPStatistics.getInitialValue(stat);
+			}
+			final Integer valueForLoc = getStat.apply(stat);
+			final BinaryOperator<Integer> agg = VPStatistics.getAggregator(stat);
+			final Integer newVal = agg.apply(currentVal, valueForLoc);
+			mTransitionAggregateStatistics.put(stat, newVal);
 		}
 	}
 }

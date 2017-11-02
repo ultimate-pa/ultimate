@@ -99,11 +99,6 @@ public abstract class EqNode implements IEqNodeIdentifier<EqNode>, ICongruenceCl
 	}
 
 	@Override
-	public boolean isFunction() {
-		return mMdSort != null;
-	}
-
-	@Override
 	public String toString() {
 		return mTerm.toString();
 	}

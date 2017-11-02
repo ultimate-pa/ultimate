@@ -73,7 +73,7 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 	 */
 	private Set<IProgramVarOrConst> mPvocs;
 	private Term mTerm;
-	private boolean mIsInconsistent;
+//	private boolean mIsInconsistent;
 
 	private final int mId;
 
@@ -90,7 +90,8 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 
 	public EqConstraint(final int id, final WeqCongruenceClosure<NODE> cClosure,
 			final EqConstraintFactory<NODE> factory) {
-		this(id, factory, new WeqCongruenceClosure<>(cClosure));
+		this(id, factory, factory.getCcManager().makeCopy(cClosure));
+//		this(id, factory, new WeqCongruenceClosure<>(cClosure));
 	}
 
 	/**
@@ -99,7 +100,8 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 	 * @param constraint
 	 */
 	public EqConstraint(final int id, final EqConstraint<NODE> constraint) {
-		this(id, constraint.mFactory, new WeqCongruenceClosure<>(constraint.mPartialArrangement));
+		this(id, constraint.mFactory,  constraint.mFactory.getCcManager().makeCopy(constraint.mPartialArrangement));
+		//new WeqCongruenceClosure<>(constraint.mPartialArrangement));
 	}
 
 	private EqConstraint(final int id, final EqConstraintFactory<NODE> factory,
@@ -125,7 +127,7 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 	 * @return
 	 */
 	public boolean isBottom() {
-		assert !mIsInconsistent : "this should only be called on EqConstraints that are either consistent or an "
+		assert !isInconsistent() : "this should only be called on EqConstraints that are either consistent or an "
 				+ "instance of EqBottomConstraint";
 		assert !mPartialArrangement.isInconsistent();
 		return false;
@@ -136,36 +138,33 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 	}
 
 	public boolean reportEquality(final NODE node1, final NODE node2) {
-		assert !mIsInconsistent;
+		assert !isInconsistent();
 		assert !mIsFrozen;
 
 		return mPartialArrangement.reportEquality(node1, node2);
 	}
 
 	public boolean reportDisequality(final NODE node1, final NODE node2) {
-		assert !mIsInconsistent;
+		assert !isInconsistent();
 		assert !mIsFrozen;
 		final boolean paHasChanged = mPartialArrangement.reportDisequality(node1, node2);
 		return paHasChanged;
 	}
 
 	public void reportWeakEquivalence(final NODE array1, final NODE array2, final NODE storeIndex) {
-		assert !mIsInconsistent;
+		assert !isInconsistent();
 		assert !mIsFrozen;
 		mPartialArrangement.reportWeakEquivalence(array1, array2, storeIndex);
-		if (mPartialArrangement.isInconsistent()) {
-			mIsInconsistent = true;
-		}
 	}
 
 	public boolean isFrozen() {
-		assert !mIsFrozen || !mIsInconsistent : "an inconsistent constraint that is not EqBottomConstraint should "
+		assert !mIsFrozen || !isInconsistent() : "an inconsistent constraint that is not EqBottomConstraint should "
 				+ "never be frozen.";
 		return mIsFrozen;
 	}
 
 	public boolean isInconsistent() {
-		return mIsInconsistent;
+		return mPartialArrangement.isInconsistent();
 	}
 
 	private static <E, F extends E> boolean arrayContains(final E[] freeVars, final F var) {
@@ -179,7 +178,8 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 
 	public void renameVariables(final Map<Term, Term> substitutionMapping) {
 		assert !mIsFrozen;
-		mPartialArrangement.renameVariables(substitutionMapping);
+//		mPartialArrangement.renameVariables(substitutionMapping);
+		mPartialArrangement.transformElementsAndFunctions(e -> e.renameVariables(substitutionMapping));
 		resetCachingFields();
 	}
 
@@ -308,10 +308,6 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 
 		assert !mPvocs.stream().anyMatch(Objects::isNull);
 		return mPvocs;
-	}
-
-	public boolean hasNode(final NODE node) {
-		return mPartialArrangement.getAllElements().contains(node);
 	}
 
 	public boolean isTop() {

@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -81,16 +82,16 @@ public class EqDisjunctiveConstraint<NODE extends IEqNodeIdentifier<NODE>>  {
 	}
 
 
-	public EqDisjunctiveConstraint<NODE> projectExistentially(
-			final Collection<Term> termsToProjectAway) {
-		return mFactory.getDisjunctiveConstraint(
-				mConstraints.stream()
-					.map(conjConstraint -> mFactory.projectExistentially(termsToProjectAway, conjConstraint))
-					.collect(Collectors.toSet()));
+	public EqDisjunctiveConstraint<NODE> projectExistentially(final Collection<Term> termsToProjectAway) {
+		final Collection<EqConstraint<NODE>> newConstraints = new ArrayList<>();
+		for (final EqConstraint<NODE> c : mConstraints) {
+			newConstraints.add(mFactory.projectExistentially(termsToProjectAway, c));
+		}
+		return mFactory.getDisjunctiveConstraint(newConstraints);
 	}
 
 	public Set<EqConstraint<NODE>> getConstraints() {
-		return mConstraints;
+		return Collections.unmodifiableSet(mConstraints);
 	}
 
 	/**
@@ -151,6 +152,7 @@ public class EqDisjunctiveConstraint<NODE extends IEqNodeIdentifier<NODE>>  {
 		return areUnequal(n1, n2);
 	}
 
+	@Deprecated
 	public EqDisjunctiveConstraint<NODE> reportEquality(final NODE node1, final NODE node2) {
 		final Collection<EqConstraint<NODE>> constraintList = new ArrayList<>();
 		for (final EqConstraint<NODE> constraint : mConstraints) {
@@ -162,12 +164,14 @@ public class EqDisjunctiveConstraint<NODE extends IEqNodeIdentifier<NODE>>  {
 		return mFactory.getDisjunctiveConstraint(constraintList);
 	}
 
+	@Deprecated
 	public EqDisjunctiveConstraint<NODE> reportEquality(final Term node1, final Term node2) {
 		final NODE n1 = mNodeAndFunctionFactory.getOrConstructNode(node1);
 		final NODE n2 = mNodeAndFunctionFactory.getOrConstructNode(node2);
 		return reportEquality(n1, n2);
 	}
 
+	@Deprecated
 	public EqDisjunctiveConstraint<NODE> reportDisequality(final NODE node1, final NODE node2) {
 		final Collection<EqConstraint<NODE>> constraintList = new ArrayList<>();
 		for (final EqConstraint<NODE> constraint : mConstraints) {
@@ -179,6 +183,7 @@ public class EqDisjunctiveConstraint<NODE extends IEqNodeIdentifier<NODE>>  {
 		return mFactory.getDisjunctiveConstraint(constraintList);
 	}
 
+	@Deprecated
 	public EqDisjunctiveConstraint<NODE> reportDisequality(final Term node1, final Term node2) {
 		final NODE n1 = mNodeAndFunctionFactory.getOrConstructNode(node1);
 		final NODE n2 = mNodeAndFunctionFactory.getOrConstructNode(node2);
@@ -252,5 +257,19 @@ public class EqDisjunctiveConstraint<NODE extends IEqNodeIdentifier<NODE>>  {
 			return false;
 		}
 		return true;
+	}
+
+	public Integer getStatistics(final VPStatistics stat) {
+		switch (stat) {
+		case NO_DISJUNCTIONS:
+		case MAX_NO_DISJUNCTIONS:
+			return mConstraints.size();
+		default:
+			Integer val = VPStatistics.getInitialValue(stat);
+			for (final EqConstraint<NODE> c : mConstraints) {
+				val = VPStatistics.getAggregator(stat).apply(val, c.getStatistics(stat));
+			}
+			return val;
+		}
 	}
 }
