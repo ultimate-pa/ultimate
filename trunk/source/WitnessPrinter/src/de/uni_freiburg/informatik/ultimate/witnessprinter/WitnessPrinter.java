@@ -166,11 +166,12 @@ public class WitnessPrinter implements IOutput {
 		cexVerifier.run(Collections.singleton(new Triple<>(result, filename, witness)));
 	}
 
+	@SuppressWarnings("rawtypes")
 	private void generateReachabilityCounterexampleWitness(final WitnessManager cexVerifier,
 			final List<IResult> results) throws IOException, InterruptedException {
 		final Collection<Triple<IResult, String, String>> suppliers = new ArrayList<>();
 		final Collection<CounterExampleResult> cexResults =
-				ResultUtil.filterResults(mServices.getResultService().getResults(), CounterExampleResult.class);
+				ResultUtil.filterResults(results, CounterExampleResult.class);
 		final IBacktranslationService backtrans = mServices.getBacktranslationService();
 		final BoogieIcfgContainer root = mRCFGCatcher.getModel();
 		final String filename = ILocation.getAnnotation(root).getFileName();
@@ -183,22 +184,31 @@ public class WitnessPrinter implements IOutput {
 		cexVerifier.run(suppliers);
 	}
 
+	@SuppressWarnings("rawtypes")
 	private void generateNonTerminationWitness(final WitnessManager cexVerifier, final List<IResult> results)
 			throws IOException, InterruptedException {
 		final Collection<Triple<IResult, String, String>> suppliers = new ArrayList<>();
-		final Collection<LassoShapedNonTerminationArgument> cexResults = ResultUtil
-				.filterResults(mServices.getResultService().getResults(), LassoShapedNonTerminationArgument.class);
+		final Collection<LassoShapedNonTerminationArgument> cexResults =
+				ResultUtil.filterResults(results, LassoShapedNonTerminationArgument.class);
 		final IBacktranslationService backtrans = mServices.getBacktranslationService();
 		final BoogieIcfgContainer root = mRCFGCatcher.getModel();
 		final String filename = ILocation.getAnnotation(root).getFileName();
 
 		for (final LassoShapedNonTerminationArgument<?, ?> cex : cexResults) {
-			final IProgramExecution<?, ?> stem = backtrans.translateProgramExecution(cex.getStemExecution());
-			final IProgramExecution<?, ?> loop = backtrans.translateProgramExecution(cex.getLoopExecution());
-			final String witness = new ViolationWitnessGenerator<>(stem, mLogger, mServices).makeGraphMLString();
+			final String witness = getWitness(backtrans, cex);
 			suppliers.add(new Triple<>(cex, filename, witness));
 		}
 		cexVerifier.run(suppliers);
+	}
+
+	@SuppressWarnings("unchecked")
+	private <TE, T> String getWitness(final IBacktranslationService backtrans,
+			final LassoShapedNonTerminationArgument<?, ?> cex) {
+		final IProgramExecution<TE, T> stem =
+				(IProgramExecution<TE, T>) backtrans.translateProgramExecution(cex.getStemExecution());
+		final IProgramExecution<TE, T> loop =
+				(IProgramExecution<TE, T>) backtrans.translateProgramExecution(cex.getLoopExecution());
+		return new ViolationWitnessGenerator<>(stem, loop, mLogger, mServices).makeGraphMLString();
 	}
 
 	@Override
