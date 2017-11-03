@@ -315,7 +315,7 @@ def create_cli_settings(prop, validate_witness, architecture, c_file):
         # but only for reachability witness validation
         ret.append('--traceabstraction.compute.hoare.annotation.of.negated.interpolant.automaton,.abstraction.and.cfg')
         ret.append('false')
-    else:
+    elif not validate_witness:
         # we are not in validation mode, so we should generate a witness and need
         # to pass some things to the witness printer
         ret.append('--witnessprinter.witness.directory')
