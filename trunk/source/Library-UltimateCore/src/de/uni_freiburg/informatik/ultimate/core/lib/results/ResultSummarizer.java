@@ -33,6 +33,7 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AutomataScriptInterpreterOverallResult.OverallResult;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
+import de.uni_freiburg.informatik.ultimate.core.model.results.ITimeoutResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IResultService;
 
 /**
@@ -48,7 +49,7 @@ public final class ResultSummarizer {
 	 *
 	 */
 	public enum ToolchainResult {
-		NORESULT(-1), GENERICRESULT(0), CORRECT(1), UNPROVABLE(2), TIMEOUT(3), INCORRECT(4), SYNTAXERROR(5);
+		NORESULT(-1), GENERICRESULT(0), CORRECT(1), UNPROVABLE(2), TIMEOUT(3), INCORRECT(4), SYNTAXERROR(5), ERROR(5);
 
 		private int mValue;
 
@@ -91,14 +92,10 @@ public final class ResultSummarizer {
 						description = "unable to determine feasibility of some traces";
 					}
 				} else if (result instanceof CounterExampleResult) {
-					if (toolchainResult.isLess(ToolchainResult.INCORRECT)) {
-						toolchainResult = ToolchainResult.INCORRECT;
-					}
+					toolchainResult = updateIfLess(toolchainResult, ToolchainResult.INCORRECT);
 				} else if (result instanceof PositiveResult) {
-					if (toolchainResult.isLess(ToolchainResult.CORRECT)) {
-						toolchainResult = ToolchainResult.CORRECT;
-					}
-				} else if (result instanceof TimeoutResultAtElement) {
+					toolchainResult = updateIfLess(toolchainResult, ToolchainResult.CORRECT);
+				} else if (result instanceof ITimeoutResult) {
 					if (toolchainResult.isLess(ToolchainResult.TIMEOUT)) {
 						toolchainResult = ToolchainResult.TIMEOUT;
 						description = "Timeout";
@@ -114,11 +111,26 @@ public final class ResultSummarizer {
 					toolchainResult = translateAutomataScriptInterpreterOverallResult(
 							autScriptInterpreterResult.getOverallResult());
 					description = result.getLongDescription();
+				} else if (result instanceof NonterminatingLassoResult) {
+					toolchainResult = updateIfLess(toolchainResult, ToolchainResult.INCORRECT);
+				} else if (result instanceof AllSpecificationsHoldResult) {
+					toolchainResult = updateIfLess(toolchainResult, ToolchainResult.CORRECT);
+				} else if (result instanceof TerminationArgumentResult<?, ?>) {
+					toolchainResult = updateIfLess(toolchainResult, ToolchainResult.CORRECT);
+				} else if (result instanceof ExceptionOrErrorResult) {
+					toolchainResult = updateIfLess(toolchainResult, ToolchainResult.ERROR);
 				}
 			}
 		}
 		mSummary = toolchainResult;
 		mDescription = description;
+	}
+
+	private static ToolchainResult updateIfLess(final ToolchainResult current, final ToolchainResult desired) {
+		if (current.isLess(desired)) {
+			return desired;
+		}
+		return current;
 	}
 
 	private static ToolchainResult translateAutomataScriptInterpreterOverallResult(final OverallResult overallResult) {
