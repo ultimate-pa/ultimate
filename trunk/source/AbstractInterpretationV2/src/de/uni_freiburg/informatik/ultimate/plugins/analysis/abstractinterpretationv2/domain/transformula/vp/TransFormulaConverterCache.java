@@ -33,8 +33,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
-import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.For
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ProgramVarUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -106,9 +107,11 @@ public class TransFormulaConverterCache {
 			substitutionMapping.put(iv.getValue(), iv.getKey().getDefaultConstant());
 		}
 		for (final TermVariable auxVar : tf.getAuxVars()) {
-			final String constName = "tf2EqTR_" + auxVar.getName();
-			mgdScript.declareFun(this, constName, new Sort[0], auxVar.getSort());
-			substitutionMapping.put(auxVar, mgdScript.term(this, constName));
+//			final String constName = "tf2EqTR_" + auxVar.getName();
+//			mgdScript.declareFun(this, constName, new Sort[0], auxVar.getSort());
+//			substitutionMapping.put(auxVar, mgdScript.term(this, constName));
+			final Term auxVarConst = ProgramVarUtils.getAuxVarConstant(mgdScript, auxVar);
+			substitutionMapping.put(auxVar, auxVarConst);
 		}
 
 		final Substitution subs = new Substitution(mgdScript, substitutionMapping);
@@ -123,12 +126,14 @@ public class TransFormulaConverterCache {
 	private boolean transformulaImpliesResultConstraint(final TransFormula tf,
 			final EqDisjunctiveConstraint<EqNode> constraint) {
 		mMgdScript.lock(this);
+		mMgdScript.echo(this, new QuotedObject("Start implication check"));
 		mMgdScript.push(this, 1);
 		final Pair<Term, Term> anteAndSucc = makeShiftVariableSubstitution(mMgdScript, tf, constraint);
 
 		final boolean result = implicationCheck(anteAndSucc.getFirst(), anteAndSucc.getSecond());
 
 		mMgdScript.pop(this, 1);
+		mMgdScript.echo(this, new QuotedObject("End implication check"));
 		mMgdScript.unlock(this);
 
 		return result;
