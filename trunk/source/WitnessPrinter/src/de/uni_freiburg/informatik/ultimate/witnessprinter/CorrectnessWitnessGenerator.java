@@ -71,6 +71,7 @@ public class CorrectnessWitnessGenerator<TTE, TE> extends BaseWitnessGenerator<T
 	private final IBacktranslatedCFG<?, TTE> mTranslatedCFG;
 	private final boolean mIsACSLForbidden;
 
+	@SuppressWarnings("unchecked")
 	public CorrectnessWitnessGenerator(final IBacktranslatedCFG<?, TTE> translatedCFG, final ILogger logger,
 			final IUltimateServiceProvider services) {
 		super(services);
@@ -128,6 +129,7 @@ public class CorrectnessWitnessGenerator<TTE, TE> extends BaseWitnessGenerator<T
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	private Hypergraph<GeneratedWitnessNode, GeneratedWitnessEdge<TTE, TE>> getGraph() {
 		// cast is dirty hack because java does not allow casting s.t. TE is hidden (?!)
 		final List<IExplicitEdgesMultigraph<?, ?, ?, TTE, ?>> roots =
@@ -199,14 +201,21 @@ public class CorrectnessWitnessGenerator<TTE, TE> extends BaseWitnessGenerator<T
 
 	private GeneratedWitnessNode annotateInvariant(final IExplicitEdgesMultigraph<?, ?, ?, TTE, ?> node,
 			final GeneratedWitnessNode wnode) {
-		final String invariant = filterInvariant(node.getLabel().toString());
+		final String invariant = filterInvariant(node);
 		if (invariant != null) {
 			wnode.setInvariant(invariant);
 		}
 		return wnode;
 	}
 
-	private String filterInvariant(final String label) {
+	private String filterInvariant(final IExplicitEdgesMultigraph<?, ?, ?, TTE, ?> node) {
+		if (node == null) {
+			return null;
+		}
+		if (node.getLabel() == null) {
+			return null;
+		}
+		final String label = node.getLabel().toString();
 		if (mIsACSLForbidden && label != null && Arrays.stream(ACSL_SUBSTRING).anyMatch(label::contains)) {
 			mLogger.warn("Not writing invariant because ACSL is forbidden: " + label);
 			return null;
