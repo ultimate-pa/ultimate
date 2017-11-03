@@ -163,7 +163,7 @@ public class ViolationWitnessGenerator<TE, E> extends BaseWitnessGenerator<TE, E
 			final GeneratedWitnessNode honda = fac.createHondaWitnessNode();
 			funCreateLastNode = () -> honda;
 			addProgramExecution(graph, fac, current, reducedStem, funCreateLastNode);
-			addProgramExecution(graph, fac, honda, reducedStem, funCreateLastNode);
+			addProgramExecution(graph, fac, honda, reducedLoop, funCreateLastNode);
 		}
 
 		return graph;
