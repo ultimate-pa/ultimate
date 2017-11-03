@@ -304,18 +304,18 @@ def create_cli_settings(prop, validate_witness, architecture, c_file):
     # append detected init method
     ret = ['--cacsl2boogietranslator.entry.function', prop.get_init_method()]
 
-    if prop.is_termination() or prop.is_ltl():
-        # we can neither validate nor produce witnesses in termination or ltl mode,
+    if prop.is_ltl():
+        # we can neither validate nor produce witnesses in ltl mode,
         # so no additional arguments are required
         return ret
 
-        # this is neither ltl nor termination mode
+    # this is not ltl mode
     if validate_witness:
         # we need to disable hoare triple generation as workaround for an internal bug
         ret.append('--traceabstraction.compute.hoare.annotation.of.negated.interpolant.automaton,.abstraction.and.cfg')
         ret.append('false')
     else:
-        # we are neither in termination nor in validation mode, so we should generate a witness and need 
+        # we are not in validation mode, so we should generate a witness and need
         # to pass some things to the witness printer
         ret.append('--witnessprinter.witness.directory')
         ret.append(witnessdir)
@@ -475,7 +475,10 @@ def create_settings_search_string(prop, architecture):
 
 def get_toolchain_path(prop, witnessmode):
     if prop.is_termination():
-        search_string = '*Termination.xml'
+        if witnessmode:
+            search_string = '*TerminationWitnessValidation.xml'
+        else:
+            search_string = '*Termination.xml'
     elif witnessmode:
         search_string = '*WitnessValidation.xml'
     elif prop.is_mem_deref_memtrack():

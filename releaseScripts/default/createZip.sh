@@ -22,7 +22,8 @@ if [ $# -le 2 ]; then
 	echo "5. (optional) the witness validation toolchain or NONE"
 	echo "6. (optional) the memsafety deref and memtrack toolchain or NONE"
 	echo "7. (optional) the ltl toolchain or NONE"
-	exit 1
+	echo "8. (optional) the termination witness validation toolchain or NONE"
+    exit 1
 fi
 
 TOOLNAME="$1"
@@ -97,6 +98,13 @@ else
 	LTLTOOLCHAIN=
 fi
 
+if [ ! -z "$8" -a ! "NONE" = "$8" ]; then
+	TERMVALTOOLCHAIN=../../trunk/examples/toolchains/${8}
+else 
+	echo "No termination witness validation toolchain specified, ommitting..."
+	TERMVALTOOLCHAIN=
+fi
+
 SETTINGS=../../trunk/examples/settings/default/${LCTOOLNAME}/*${TOOLNAME}*
 
 if [ -d "$TARGETDIR" ]; then
@@ -128,6 +136,9 @@ if [ ! -z "$MEMDEREFMEMTRACKTOOLCHAIN" ]; then
 fi
 if [ ! -z "$LTLTOOLCHAIN" ]; then 
 	test cp "$LTLTOOLCHAIN" "$CONFIGDIR"/"$TOOLNAME"LTL.xml
+fi
+if [ ! -z "$TERMVALTOOLCHAIN" ]; then 
+	test cp "$TERMVALTOOLCHAIN" "$CONFIGDIR"/"$TOOLNAME"TerminationWitnessValidation.xml
 fi
 
 
