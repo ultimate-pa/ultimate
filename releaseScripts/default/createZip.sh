@@ -143,6 +143,7 @@ fi
 
 
 test cp adds/LICENSE* "$TARGETDIR"/
+test cp adds/*LICENSE "$TARGETDIR"/
 test cp ${SETTINGS} "$CONFIGDIR"/.
 test cp adds/Ultimate.py "$TARGETDIR"/
 test cp adds/Ultimate.ini "$TARGETDIR"/
