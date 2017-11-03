@@ -310,8 +310,9 @@ def create_cli_settings(prop, validate_witness, architecture, c_file):
         return ret
 
     # this is not ltl mode
-    if validate_witness:
+    if validate_witness and not prop.is_termination():
         # we need to disable hoare triple generation as workaround for an internal bug
+        # but only for reachability witness validation
         ret.append('--traceabstraction.compute.hoare.annotation.of.negated.interpolant.automaton,.abstraction.and.cfg')
         ret.append('false')
     else:
