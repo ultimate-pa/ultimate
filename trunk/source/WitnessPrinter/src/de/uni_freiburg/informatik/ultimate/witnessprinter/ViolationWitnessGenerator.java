@@ -115,6 +115,7 @@ public class ViolationWitnessGenerator<TE, E> extends BaseWitnessGenerator<TE, E
 		addEdgeData(graphWriter, "originfile", filename, GeneratedWitnessEdge<TE, E>::getOriginFileName);
 		addEdgeData(graphWriter, "enterFunction", null, GeneratedWitnessEdge<TE, E>::getEnterFunction);
 		addEdgeData(graphWriter, "returnFrom", null, GeneratedWitnessEdge<TE, E>::getReturnFunction);
+		addEdgeData(graphWriter, "enterLoopHead", "false", edge -> edge.isEnteringLoopHead());
 
 		addVertexData(graphWriter, "nodetype", "path", vertex -> null);
 		addVertexData(graphWriter, "entry", "false", vertex -> vertex.isEntry() ? "true" : null);
@@ -185,11 +186,7 @@ public class ViolationWitnessGenerator<TE, E> extends BaseWitnessGenerator<TE, E
 			}
 
 			graph.addVertex(next);
-			if (currentState == null) {
-				graph.addEdge(fac.createWitnessEdge(currentATE), current, next);
-			} else {
-				graph.addEdge(fac.createWitnessEdge(currentATE, currentState), current, next);
-			}
+			graph.addEdge(fac.createWitnessEdge(currentATE, currentState, next.isHonda()), current, next);
 			current = next;
 		}
 	}
