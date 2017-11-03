@@ -76,11 +76,11 @@ import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 
 public class NestedInterpolantsBuilder {
 
-	// TODO 2017-10-13 Matthias: When Jochen implement support for "@diff" this 
+	// TODO 2017-10-13 Matthias: When Jochen implement support for "@diff" this
 	// probably has to become a parameter for this class.
-	private static final boolean ALLOW_AT_DIFF = false;
+	private static final boolean ALLOW_AT_DIFF = true;
 	public static final String DIFF_IS_UNSUPPORTED = "@diff is unsupported";
-	
+
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private final SimplificationTechnique mSimplificationTechnique;
@@ -250,7 +250,7 @@ public class NestedInterpolantsBuilder {
 			}
 
 		}
-		final Term[] interpolInput = this.mInterpolInput.toArray(new Term[0]);
+		final Term[] interpolInput = mInterpolInput.toArray(new Term[0]);
 		// add precondition to first term
 		// special case: if first position is non pending call, then we add the
 		// precondition to the corresponding return.
@@ -569,7 +569,8 @@ public class NestedInterpolantsBuilder {
 					if (mInstantiateArrayExt) {
 						withoutIndices = instantiateArrayExt(withoutIndices);
 					}
-					if (!ALLOW_AT_DIFF && new SubtermPropertyChecker(x -> isAtDiffTerm(x)).isPropertySatisfied(withoutIndices)) {
+					if (!ALLOW_AT_DIFF
+							&& new SubtermPropertyChecker(x -> isAtDiffTerm(x)).isPropertySatisfied(withoutIndices)) {
 						throw new UnsupportedOperationException(DIFF_IS_UNSUPPORTED);
 					}
 					final Term lessQuantifiers = PartialQuantifierElimination.tryToEliminate(mServices, mLogger,
@@ -598,8 +599,8 @@ public class NestedInterpolantsBuilder {
 	 * this axiom, hence we instantiate it for each occurrence.
 	 */
 	private Term instantiateArrayExt(final Term interpolantWithoutIndices) {
-		final Term nnf =
-				new NnfTransformer(mMgdScriptCfg, mServices, QuantifierHandling.PULL).transform(interpolantWithoutIndices);
+		final Term nnf = new NnfTransformer(mMgdScriptCfg, mServices, QuantifierHandling.PULL)
+				.transform(interpolantWithoutIndices);
 		// not needed, at the moment our NNF transformation also produces
 		// Term prenex = (new PrenexNormalForm(mCsToolkitPredicates.getScript(),
 		// mCsToolkitPredicates.getVariableManager())).transform(nnf);
@@ -793,7 +794,7 @@ public class NestedInterpolantsBuilder {
 			pW.flush();
 		}
 	}
-	
+
 	private static boolean isAtDiffTerm(final Term term) {
 		if (term instanceof ApplicationTerm) {
 			return ((ApplicationTerm) term).getFunction().getName().equals("@diff");

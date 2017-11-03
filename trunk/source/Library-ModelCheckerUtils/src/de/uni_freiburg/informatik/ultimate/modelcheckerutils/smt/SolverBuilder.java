@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.DiffWrapperScript;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.LogProxy;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.TerminationRequest;
@@ -89,10 +90,10 @@ public class SolverBuilder {
 
 	private static Script createExternalSolver(final IUltimateServiceProvider services, final IToolchainStorage storage,
 			final String command, final boolean fakeNonIncrementalScript, final boolean dumpFakeNonIncrementalScript,
-			final String pathOfDumpedFakeNonIncrementalScript, final String basenameOfDumpedFakeNonIcrementalScript)
-			throws IOException {
+			final String pathOfDumpedFakeNonIncrementalScript, final String basenameOfDumpedFakeNonIcrementalScript,
+			final boolean useDiffWrapper) throws IOException {
 		final ILogger solverLogger = services.getLoggingService().getLoggerForExternalTool(SOLVER_LOGGER_NAME);
-		final Script script;
+		Script script;
 		if (fakeNonIncrementalScript) {
 			script = new NonIncrementalScriptor(command, solverLogger, services, storage, "External_FakeNonIncremental",
 					dumpFakeNonIncrementalScript, pathOfDumpedFakeNonIncrementalScript,
@@ -100,15 +101,22 @@ public class SolverBuilder {
 		} else {
 			script = new Scriptor(command, solverLogger, services, storage, "External");
 		}
+		if (useDiffWrapper) {
+			script = new DiffWrapperScript(script);
+		}
 		return script;
 	}
 
 	private static Script createExternalSolverWithInterpolation(final IUltimateServiceProvider services,
-			final IToolchainStorage storage, final String command, final ExternalInterpolator externalInterpolator)
-			throws IOException {
+			final IToolchainStorage storage, final String command, final ExternalInterpolator externalInterpolator,
+			final boolean useDiffWrapper) throws IOException {
 		final ILogger solverLogger = services.getLoggingService().getLoggerForExternalTool(SOLVER_LOGGER_NAME);
-		return new ScriptorWithGetInterpolants(command, solverLogger, services, storage, externalInterpolator,
+		Script script = new ScriptorWithGetInterpolants(command, solverLogger, services, storage, externalInterpolator,
 				"ExternalInterpolator");
+		if (useDiffWrapper) {
+			script = new DiffWrapperScript(script);
+		}
+		return script;
 	}
 
 	private static final class SMTInterpolTerminationRequest implements TerminationRequest {
@@ -140,12 +148,14 @@ public class SolverBuilder {
 				if (settings.getExternalInterpolator() == null) {
 					result = createExternalSolver(services, storage, settings.getCommandExternalSolver(),
 							settings.fakeNonIncrementalScript(), settings.dumpSmtScriptToFile(),
-							settings.getPathOfDumpedScript(), settings.getBaseNameOfDumpedScript());
+							settings.getPathOfDumpedScript(), settings.getBaseNameOfDumpedScript(),
+							settings.useExternalSolver());
 				} else {
 					solverLogger.info(
 							"external solver will use " + settings.getExternalInterpolator() + " interpolation mode");
 					result = createExternalSolverWithInterpolation(services, storage,
-							settings.getCommandExternalSolver(), settings.getExternalInterpolator());
+							settings.getCommandExternalSolver(), settings.getExternalInterpolator(),
+							settings.useExternalSolver());
 				}
 			} catch (final IOException e) {
 				solverLogger.fatal("Unable to construct solver");
@@ -182,6 +192,14 @@ public class SolverBuilder {
 				final String commandExternalSolver, final long timeoutSmtInterpol,
 				final ExternalInterpolator externalInterpolator, final boolean dumpSmtScriptToFile,
 				final String pathOfDumpedScript, final String baseNameOfDumpedScript) {
+			this(fakeNonIncrementalScript, useExternalSolver, commandExternalSolver, timeoutSmtInterpol,
+					externalInterpolator, dumpSmtScriptToFile, pathOfDumpedScript, baseNameOfDumpedScript, false);
+		}
+
+		public Settings(final boolean fakeNonIncrementalScript, final boolean useExternalSolver,
+				final String commandExternalSolver, final long timeoutSmtInterpol,
+				final ExternalInterpolator externalInterpolator, final boolean dumpSmtScriptToFile,
+				final String pathOfDumpedScript, final String baseNameOfDumpedScript, final boolean useDiffWrapper) {
 			super();
 			mFakeNonIncrementalScript = fakeNonIncrementalScript;
 			mUseExternalSolver = useExternalSolver;
@@ -191,6 +209,7 @@ public class SolverBuilder {
 			mDumpSmtScriptToFile = dumpSmtScriptToFile;
 			mPathOfDumpedScript = pathOfDumpedScript;
 			mBaseNameOfDumpedScript = baseNameOfDumpedScript;
+			mUseDiffWrapper = useDiffWrapper;
 		}
 
 		/**
@@ -225,6 +244,11 @@ public class SolverBuilder {
 		 */
 		private final String mBaseNameOfDumpedScript;
 
+		/**
+		 * Use the diff wrapper script to add support for the diff function.
+		 */
+		private final boolean mUseDiffWrapper;
+
 		public boolean fakeNonIncrementalScript() {
 			return mFakeNonIncrementalScript;
 		}
@@ -257,6 +281,13 @@ public class SolverBuilder {
 			return mBaseNameOfDumpedScript;
 		}
 
+		/**
+		 * Check whether to use the diff wrapper script to add support for the diff function.
+		 */
+		public boolean getUseDiffWrapper() {
+			return mUseDiffWrapper;
+		}
+
 		public String constructFullPathOfDumpedScript() {
 			String result = getPathOfDumpedScript();
 			result = addFileSeparator(result);
@@ -280,6 +311,7 @@ public class SolverBuilder {
 			final boolean fakeNonIncrementalScript, final String commandExternalSolver,
 			final boolean dumpSmtScriptToFile, final String pathOfDumpedScript) throws AssertionError {
 		final boolean useExternalSolver;
+		boolean useDiffWrapper = false;
 
 		final int timeoutSmtInterpol;
 		final ExternalInterpolator externalInterpolator;
@@ -290,24 +322,28 @@ public class SolverBuilder {
 			useExternalSolver = true;
 			timeoutSmtInterpol = -1;
 			externalInterpolator = null;
+			useDiffWrapper = true;
 		}
 			break;
 		case External_PrincessInterpolationMode: {
 			useExternalSolver = true;
 			timeoutSmtInterpol = -1;
 			externalInterpolator = ExternalInterpolator.PRINCESS;
+			useDiffWrapper = true;
 		}
 			break;
 		case External_SMTInterpolInterpolationMode: {
 			useExternalSolver = true;
 			timeoutSmtInterpol = -1;
 			externalInterpolator = ExternalInterpolator.SMTINTERPOL;
+			useDiffWrapper = false;
 		}
 			break;
 		case External_Z3InterpolationMode: {
 			useExternalSolver = true;
 			timeoutSmtInterpol = -1;
 			externalInterpolator = ExternalInterpolator.IZ3;
+			useDiffWrapper = true;
 		}
 			break;
 		case Internal_SMTInterpol: {
@@ -319,8 +355,9 @@ public class SolverBuilder {
 		default:
 			throw new AssertionError("unknown solver mode");
 		}
-		final Settings solverSettings = new Settings(fakeNonIncrementalScript, useExternalSolver, commandExternalSolver,
-				timeoutSmtInterpol, externalInterpolator, dumpSmtScriptToFile, pathOfDumpedScript, filename);
+		final Settings solverSettings =
+				new Settings(fakeNonIncrementalScript, useExternalSolver, commandExternalSolver, timeoutSmtInterpol,
+						externalInterpolator, dumpSmtScriptToFile, pathOfDumpedScript, filename, useDiffWrapper);
 		return solverSettings;
 	}
 
