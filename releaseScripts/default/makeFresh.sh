@@ -16,7 +16,7 @@ popd > /dev/null
 
 # createZip <toolname> <targetarch> <reachtc> <termtc> <witnessvaltc> <memsafetytc> <ltlc>
 exitOnFail bash createZip.sh Taipan linux AutomizerCInline_WitnessPrinter.xml NONE AutomizerCInline.xml AutomizerCInline_WitnessPrinter.xml NONE
-exitOnFail bash createZip.sh Automizer linux AutomizerC_WitnessPrinter.xml BuchiAutomizerCInline.xml AutomizerC.xml AutomizerC_WitnessPrinter.xml LTLAutomizerC.xml
+exitOnFail bash createZip.sh Automizer linux AutomizerC_WitnessPrinter.xml BuchiAutomizerCInline_WitnessPrinter.xml AutomizerC.xml AutomizerC_WitnessPrinter.xml LTLAutomizerC.xml
 exitOnFail bash createZip.sh Kojak linux KojakC_WitnessPrinter.xml NONE NONE KojakC_WitnessPrinter.xml NONE
 
 exit 0
