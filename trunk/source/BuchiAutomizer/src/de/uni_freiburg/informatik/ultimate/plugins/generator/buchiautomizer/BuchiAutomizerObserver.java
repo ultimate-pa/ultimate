@@ -89,11 +89,15 @@ import de.uni_freiburg.informatik.ultimate.util.csv.SimpleCsvProvider;
  */
 public class BuchiAutomizerObserver implements IUnmanagedObserver {
 
-	private TAPreferences mPref;
+//	private TAPreferences mPref;
 
-	private IIcfg<?> mIcfg;
+//	private IIcfg<?> mIcfg;
 	private final IUltimateServiceProvider mServices;
 	private final IToolchainStorage mStorage;
+	private boolean mLastModel;
+	private ModelType mCurrentGraphType;
+	private IElement mRootOfNewModel;
+
 
 	public BuchiAutomizerObserver(final IUltimateServiceProvider services, final IToolchainStorage storage) {
 		mServices = services;
@@ -105,18 +109,24 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		if (!(root instanceof IIcfg<?>)) {
 			return false;
 		}
-		mIcfg = (IIcfg<?>) root;
+		final IIcfg<?> icfg = (IIcfg<?>) root;
+		doTerminationAnalysis(icfg);
+		mRootOfNewModel = icfg;
+		return false;
+	}
+
+	private void doTerminationAnalysis(final IIcfg<?> icfg) throws IOException, AssertionError {
 		final TAPreferences taPrefs = new TAPreferences(mServices);
 
-		mPref = taPrefs;
-		final RankVarConstructor rankVarConstructor = new RankVarConstructor(mIcfg.getCfgSmtToolkit());
+//		mPref = taPrefs;
+		final RankVarConstructor rankVarConstructor = new RankVarConstructor(icfg.getCfgSmtToolkit());
 		final PredicateFactory predicateFactory =
-				new PredicateFactory(mServices, mIcfg.getCfgSmtToolkit().getManagedScript(),
+				new PredicateFactory(mServices, icfg.getCfgSmtToolkit().getManagedScript(),
 						rankVarConstructor.getCsToolkitWithRankVariables().getSymbolTable(),
 						taPrefs.getSimplificationTechnique(), taPrefs.getXnfConversionTechnique());
 
-		final BuchiCegarLoop<?> bcl = new BuchiCegarLoop<>(mIcfg, mIcfg.getCfgSmtToolkit(), rankVarConstructor,
-				predicateFactory, mPref, mServices, mStorage);
+		final BuchiCegarLoop<?> bcl = new BuchiCegarLoop<>(icfg, icfg.getCfgSmtToolkit(), rankVarConstructor,
+				predicateFactory, taPrefs, mServices, mStorage);
 		final Result result = bcl.iterate();
 		final BuchiCegarLoopBenchmarkGenerator benchGen = bcl.getBenchmarkGenerator();
 		benchGen.stop(CegarLoopStatisticsDefinitions.OverallTime.toString());
@@ -137,8 +147,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		final IResult benchTiming = new StatisticsResult<>(Activator.PLUGIN_ID, "Timing statistics", timingBenchmark);
 		reportResult(benchTiming);
 
-		interpretAndReportResult(bcl, result);
-		return false;
+		interpretAndReportResult(bcl, result, icfg);
 	}
 
 	/**
@@ -177,11 +186,11 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		reportResult(result);
 	}
 
-	private void interpretAndReportResult(final BuchiCegarLoop<?> bcl, final Result result) throws AssertionError {
+	private void interpretAndReportResult(final BuchiCegarLoop<?> bcl, final Result result, final IIcfg<?> icfg) throws AssertionError {
 		String whatToProve = "termination";
 
 		if (bcl.isInLTLMode()) {
-			final LTLPropertyCheck ltlAnnot = LTLPropertyCheck.getAnnotation(mIcfg);
+			final LTLPropertyCheck ltlAnnot = LTLPropertyCheck.getAnnotation(icfg);
 			switch (result) {
 			case NONTERMINATING:
 				// there is a violation of the LTL property
@@ -220,7 +229,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 					new TerminationAnalysisResult(Activator.PLUGIN_ID, Termination.UNKNOWN, longDescr.toString());
 			reportResult(reportRes);
 		} else if (result == Result.TIMEOUT) {
-			final IcfgLocation position = mIcfg.getProcedureEntryNodes().values().iterator().next();
+			final IcfgLocation position = icfg.getProcedureEntryNodes().values().iterator().next();
 			final String longDescr = "Timeout while trying to prove " + whatToProve + ". "
 					+ bcl.getToolchainCancelledException().printRunningTaskMessage();
 			final IResult reportRes = new TimeoutResultAtElement<IIcfgElement>(position, Activator.PLUGIN_ID,
@@ -340,7 +349,10 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 
 	@Override
 	public void init(final ModelType modelType, final int currentModelIndex, final int numberOfModels) {
-		// not needed
+		mCurrentGraphType = modelType;
+		if (currentModelIndex == numberOfModels - 1) {
+			mLastModel = true;
+		}
 	}
 
 	@Override
@@ -349,7 +361,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 	}
 
 	public IElement getModel() {
-		return mIcfg;
+		return mRootOfNewModel;
 	}
 
 	// public static TransFormula sequentialComposition(int serialNumber,
