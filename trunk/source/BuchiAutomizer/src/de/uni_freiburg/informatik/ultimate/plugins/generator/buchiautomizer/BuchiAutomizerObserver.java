@@ -37,6 +37,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoWord;
 import de.uni_freiburg.informatik.ultimate.boogie.annotation.LTLPropertyCheck;
@@ -54,9 +55,11 @@ import de.uni_freiburg.informatik.ultimate.core.lib.results.TimeoutResultAtEleme
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType.Type;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
@@ -76,42 +79,64 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiCegarLoop.Result;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.BuchiAutomizerPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgProgramExecution;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.witnesschecking.WitnessModelToAutomatonTransformer;
+import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AutomataTestFileAST;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.SimpleCsvProvider;
+import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdge;
+import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 
 /**
  * Auto-Generated Stub for the plug-in's Observer
  */
 public class BuchiAutomizerObserver implements IUnmanagedObserver {
 
+	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
-	private final IToolchainStorage mStorage;
-	private boolean mLastModel;
-	private ModelType mCurrentGraphType;
+
+	private final List<IIcfg<?>> mIcfgs;
 	private IElement mRootOfNewModel;
+	private WitnessNode mWitnessNode;
+	private final List<AutomataTestFileAST> mAutomataTestFileAsts;
+	private boolean mLastModel;
+	private final IToolchainStorage mStorage;
+	private ModelType mCurrentGraphType;
 
 
 	public BuchiAutomizerObserver(final IUltimateServiceProvider services, final IToolchainStorage storage) {
 		mServices = services;
 		mStorage = storage;
+		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		mLastModel = false;
+		mIcfgs = new ArrayList<>();
+		mAutomataTestFileAsts = new ArrayList<>();
 	}
 
 	@Override
 	public boolean process(final IElement root) throws IOException {
-		if (!(root instanceof IIcfg<?>)) {
-			return false;
+		if (root instanceof IIcfg<?>) {
+			mIcfgs.add((IIcfg<?>) root);
 		}
-		final IIcfg<?> icfg = (IIcfg<?>) root;
-		mRootOfNewModel = doTerminationAnalysis(icfg);;
+		if (root instanceof WitnessNode && mCurrentGraphType.getType() == Type.VIOLATION_WITNESS) {
+			if (mWitnessNode == null) {
+				mWitnessNode = (WitnessNode) root;
+			} else {
+				throw new UnsupportedOperationException("two witness models");
+			}
+		}
+		if (root instanceof AutomataTestFileAST) {
+			mAutomataTestFileAsts.add((AutomataTestFileAST) root);
+		}
 		return false;
 	}
 
-	private IIcfg<?> doTerminationAnalysis(final IIcfg<?> icfg) throws IOException, AssertionError {
+	private IIcfg<?> doTerminationAnalysis(final IIcfg<?> icfg, final INestedWordAutomaton<WitnessEdge, WitnessNode> witnessAutomaton) throws IOException, AssertionError {
 		final TAPreferences taPrefs = new TAPreferences(mServices);
 
 		final RankVarConstructor rankVarConstructor = new RankVarConstructor(icfg.getCfgSmtToolkit());
@@ -339,8 +364,27 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 	}
 
 	@Override
-	public void finish() {
-		// not needed
+	public void finish() throws IOException {
+		if (mLastModel) {
+			@SuppressWarnings("unchecked")
+			final IIcfg<IcfgLocation> rcfgRootNode = (IIcfg<IcfgLocation>) mIcfgs.stream()
+					.filter(a -> IcfgLocation.class.isAssignableFrom(a.getLocationClass())).reduce((a, b) -> b)
+					.orElseThrow(UnsupportedOperationException::new);
+
+			if (rcfgRootNode == null) {
+				throw new UnsupportedOperationException("TraceAbstraction needs an RCFG");
+			}
+			mLogger.info("Analyzing ICFG " + rcfgRootNode.getIdentifier());
+			INestedWordAutomaton<WitnessEdge, WitnessNode> witnessAutomaton;
+			if (mWitnessNode == null) {
+				witnessAutomaton = null;
+			} else {
+				mLogger.warn(
+						"Found a witness automaton. I will only consider traces that are accepted by the witness automaton");
+				witnessAutomaton = new WitnessModelToAutomatonTransformer(mWitnessNode, mServices).getResult();
+			}
+			mRootOfNewModel = doTerminationAnalysis(rcfgRootNode, witnessAutomaton);
+		}
 	}
 
 	@Override
