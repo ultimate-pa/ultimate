@@ -89,9 +89,6 @@ import de.uni_freiburg.informatik.ultimate.util.csv.SimpleCsvProvider;
  */
 public class BuchiAutomizerObserver implements IUnmanagedObserver {
 
-//	private TAPreferences mPref;
-
-//	private IIcfg<?> mIcfg;
 	private final IUltimateServiceProvider mServices;
 	private final IToolchainStorage mStorage;
 	private boolean mLastModel;
@@ -110,15 +107,13 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 			return false;
 		}
 		final IIcfg<?> icfg = (IIcfg<?>) root;
-		doTerminationAnalysis(icfg);
-		mRootOfNewModel = icfg;
+		mRootOfNewModel = doTerminationAnalysis(icfg);;
 		return false;
 	}
 
-	private void doTerminationAnalysis(final IIcfg<?> icfg) throws IOException, AssertionError {
+	private IIcfg<?> doTerminationAnalysis(final IIcfg<?> icfg) throws IOException, AssertionError {
 		final TAPreferences taPrefs = new TAPreferences(mServices);
 
-//		mPref = taPrefs;
 		final RankVarConstructor rankVarConstructor = new RankVarConstructor(icfg.getCfgSmtToolkit());
 		final PredicateFactory predicateFactory =
 				new PredicateFactory(mServices, icfg.getCfgSmtToolkit().getManagedScript(),
@@ -148,6 +143,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		reportResult(benchTiming);
 
 		interpretAndReportResult(bcl, result, icfg);
+		return icfg;
 	}
 
 	/**
