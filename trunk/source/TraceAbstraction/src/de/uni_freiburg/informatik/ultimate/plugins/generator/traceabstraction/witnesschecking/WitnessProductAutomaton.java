@@ -134,8 +134,8 @@ public class WitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 		mControlFlowAutomaton = controlFlowAutomaton;
 		mWitnessAutomaton = witnessAutomaton;
 		mPredicateFactory = predicateFactory;
-		mInitialStates = constructInitialStates();
 		mFinalStates = new HashSet<>();
+		mInitialStates = constructInitialStates();
 		mEmptyStackState = stateFactory.createEmptyStackState();
 	}
 
