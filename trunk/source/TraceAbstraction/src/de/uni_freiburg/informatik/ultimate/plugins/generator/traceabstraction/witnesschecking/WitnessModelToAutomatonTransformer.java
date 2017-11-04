@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdge;
@@ -49,7 +50,12 @@ public class WitnessModelToAutomatonTransformer {
 		super();
 		mWitnessRoot = witnessRoot;
 		final Set<WitnessEdge> internalAlphabet = new LinkedHashSet<>();
-		final IStateFactory<WitnessNode> stateFactory = new IStateFactory<WitnessNode>() {
+		final IStateFactory<WitnessNode> stateFactory = new IEmptyStackStateFactory<WitnessNode>() {
+
+			@Override
+			public WitnessNode createEmptyStackState() {
+				return new WitnessNode("EmptyStack");
+			}
 		};
 		mResult = new NestedWordAutomaton<>(new AutomataLibraryServices(services), new VpAlphabet<>(internalAlphabet), stateFactory);
 		constructAutomaton(internalAlphabet);
