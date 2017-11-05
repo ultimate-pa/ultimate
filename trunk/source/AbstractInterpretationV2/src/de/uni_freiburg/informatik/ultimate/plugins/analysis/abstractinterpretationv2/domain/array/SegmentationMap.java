@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
@@ -74,24 +75,24 @@ public class SegmentationMap {
 		return mEqualArrays.getAllElements();
 	}
 
-	public Set<IProgramVarOrConst> getValueVars() {
-		final Set<IProgramVarOrConst> variables = new HashSet<>();
+	public Set<IProgramVar> getValueVars() {
+		final Set<IProgramVar> variables = new HashSet<>();
 		for (final Segmentation s : mRepresentiveSegmentations.values()) {
 			variables.addAll(s.getValues());
 		}
 		return variables;
 	}
 
-	public Set<IProgramVarOrConst> getBoundVars() {
-		final Set<IProgramVarOrConst> variables = new HashSet<>();
+	public Set<IProgramVar> getBoundVars() {
+		final Set<IProgramVar> variables = new HashSet<>();
 		for (final Segmentation s : mRepresentiveSegmentations.values()) {
 			variables.addAll(s.getBounds());
 		}
 		return variables;
 	}
 
-	public Set<IProgramVarOrConst> getAuxVars() {
-		final Set<IProgramVarOrConst> variables = new HashSet<>();
+	public Set<IProgramVar> getAuxVars() {
+		final Set<IProgramVar> variables = new HashSet<>();
 		variables.addAll(getBoundVars());
 		variables.addAll(getValueVars());
 		return variables;

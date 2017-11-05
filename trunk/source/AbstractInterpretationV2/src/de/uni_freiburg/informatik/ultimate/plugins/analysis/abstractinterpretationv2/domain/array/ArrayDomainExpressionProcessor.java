@@ -20,7 +20,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalTermUtils;
@@ -28,8 +30,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class ArrayDomainExpressionProcessor<STATE extends IAbstractState<STATE>> {
 	private final ArrayDomainToolkit<STATE> mToolkit;
-	private final Map<ArrayAccessExpression, IProgramVarOrConst> mAuxVarCache;
-	private final Map<IProgramVarOrConst, ArrayAccessExpression> mAuxVarCacheInverse;
+	private final Map<ArrayAccessExpression, IProgramVar> mAuxVarCache;
+	private final Map<IProgramVar, ArrayAccessExpression> mAuxVarCacheInverse;
 
 	public ArrayDomainExpressionProcessor(final ArrayDomainToolkit<STATE> toolkit) {
 		mToolkit = toolkit;
@@ -39,26 +41,27 @@ public class ArrayDomainExpressionProcessor<STATE extends IAbstractState<STATE>>
 
 	public ExpressionResult<STATE> process(final Expression expression, final ArrayDomainState<STATE> state,
 			final boolean isAssume) {
-		if (expression instanceof ArrayAccessExpression) {
-			return processArrayAccessExpression((ArrayAccessExpression) expression, state);
-		} else if (expression instanceof BinaryExpression) {
-			return processBinaryExpression((BinaryExpression) expression, state, isAssume);
-		} else if (expression instanceof QuantifierExpression) {
-			return processQuantifierExpression((QuantifierExpression) expression, state, isAssume);
-		} else if (expression instanceof UnaryExpression) {
-			return processUnaryExpression((UnaryExpression) expression, state, isAssume);
-		}
+		// TODO: For no don't process any expressions (e.g. assume-statements)
+		// if (expression instanceof ArrayAccessExpression) {
+		// return processArrayAccessExpression((ArrayAccessExpression) expression, state);
+		// } else if (expression instanceof BinaryExpression) {
+		// return processBinaryExpression((BinaryExpression) expression, state, isAssume);
+		// } else if (expression instanceof QuantifierExpression) {
+		// return processQuantifierExpression((QuantifierExpression) expression, state, isAssume);
+		// } else if (expression instanceof UnaryExpression) {
+		// return processUnaryExpression((UnaryExpression) expression, state, isAssume);
+		// }
 		return new ExpressionResult<>(expression, state);
 	}
 
 	private ExpressionResult<STATE> processArrayAccessExpression(final ArrayAccessExpression expression,
 			final ArrayDomainState<STATE> state) {
 		if (!mAuxVarCache.containsKey(expression)) {
-			final IProgramVarOrConst created = mToolkit.createValueVar(expression.getType());
+			final IProgramVar created = mToolkit.createValueVar(expression.getType());
 			mAuxVarCache.put(expression, created);
 			mAuxVarCacheInverse.put(created, expression);
 		}
-		final IProgramVarOrConst auxVar = mAuxVarCache.get(expression);
+		final IProgramVar auxVar = mAuxVarCache.get(expression);
 		final Expression newExpr = getExpression(auxVar);
 		ArrayDomainState<STATE> newState = state.addVariable(auxVar);
 		final Expression array = expression.getArray();
@@ -68,18 +71,18 @@ public class ArrayDomainExpressionProcessor<STATE extends IAbstractState<STATE>>
 		// Add assumptions for the created aux-var based on the segmentation
 		if (indices.length == 1) {
 			final Expression index = indices[0];
-			final Segmentation segmentation = state.getSegmentation(array);
-			final Pair<Integer, Integer> bounds = state.getContainedBoundIndices(array, index);
+			final Pair<STATE, Segmentation> segmentationPair = newState.getSegmentation(array);
+			final Segmentation segmentation = segmentationPair.getSecond();
+			final Pair<Integer, Integer> bounds = state.getContainedBoundIndices(segmentation, index);
 			final int min = bounds.getFirst();
 			final int max = bounds.getSecond();
-			final Term auxTerm = NonrelationalTermUtils.getTermVar(auxVar);
 			final List<Term> disjuncts = new ArrayList<>();
 			for (int i = min; i < max; i++) {
-				final Term value = NonrelationalTermUtils.getTermVar(segmentation.getValue(i));
-				disjuncts.add(SmtUtils.binaryEquality(script, auxTerm, value));
+				final TermVariable value = segmentation.getValue(i).getTermVariable();
+				disjuncts.add(SmtUtils.binaryEquality(script, auxVar.getTermVariable(), value));
 			}
 			final AssumeStatement assume = createAssume(SmtUtils.or(script, disjuncts));
-			final STATE newSubState = mToolkit.handleStatementBySubdomain(newState.getSubState(), assume);
+			final STATE newSubState = mToolkit.handleStatementBySubdomain(segmentationPair.getFirst(), assume);
 			newState = newState.updateState(newSubState);
 		}
 		return new ExpressionResult<>(newExpr, newState);
@@ -110,9 +113,8 @@ public class ArrayDomainExpressionProcessor<STATE extends IAbstractState<STATE>>
 			}
 			if (left.getType() instanceof ArrayType) {
 				// TODO: a==b
-				final Segmentation leftSegmentation = state.getSegmentation(left);
-				final Segmentation rightSegmentation = state.getSegmentation(right);
-				// TODO: unify, if IdentifierExpression
+				// final Segmentation leftSegmentation = state.getSegmentation(left);
+				// final Segmentation rightSegmentation = state.getSegmentation(right);
 			}
 			final ExpressionResult<STATE> leftResult = process(left, state, isAssume);
 			final ExpressionResult<STATE> rightResult = process(left, state, isAssume);

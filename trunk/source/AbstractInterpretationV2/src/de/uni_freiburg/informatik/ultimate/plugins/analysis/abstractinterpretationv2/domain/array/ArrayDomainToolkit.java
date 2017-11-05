@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
@@ -12,6 +13,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPostOperator;
@@ -20,6 +22,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractSta
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieNonOldVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TypeSortTranslator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Expression2Term.IIdentifierTranslator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
@@ -35,6 +38,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Boo
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlockFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence.Origin;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class ArrayDomainToolkit<STATE extends IAbstractState<STATE>> {
 	private static final String BOUND_NAME = "b";
@@ -46,10 +51,10 @@ public class ArrayDomainToolkit<STATE extends IAbstractState<STATE>> {
 	private final CodeBlockFactory mCodeBlockFactory;
 	private final ManagedScript mManagedScript;
 	private final CallInfoCache mCallInfoCache;
-	private final TemporaryBoogieVar mTopValue;
 	private final TemporaryBoogieVar mMinBound;
 	private final TemporaryBoogieVar mMaxBound;
-	private final Segmentation mDefaultSegmentation;
+	private final TypeSortTranslator mTypeSortTranslator;
+	private final EquivalenceFinder mEquivalenceFinder;
 
 	public ArrayDomainToolkit(final IAbstractDomain<STATE, IcfgEdge> subDomain, final IIcfg<?> icfg,
 			final IUltimateServiceProvider services, final BoogieSymbolTable boogieSymbolTable) {
@@ -61,18 +66,22 @@ public class ArrayDomainToolkit<STATE extends IAbstractState<STATE>> {
 		mManagedScript = new ManagedScript(services, script);
 		mBoogieVarFactory = new BoogieVarFactory(mManagedScript);
 		mCallInfoCache = new CallInfoCache(icfg.getCfgSmtToolkit(), boogieSymbolTable);
-		mTopValue = createValueVar(PrimitiveType.TYPE_INT);
 		mMinBound = createBoundVar(PrimitiveType.TYPE_INT);
 		mMaxBound = createBoundVar(PrimitiveType.TYPE_INT);
-		mDefaultSegmentation = new Segmentation(Arrays.asList(mMinBound, mMaxBound), Arrays.asList(mTopValue));
+		mTypeSortTranslator = new TypeSortTranslator(script, services);
+		mEquivalenceFinder = new EquivalenceFinder(services, mManagedScript);
+	}
+
+	public TemporaryBoogieVar createVariable(final String name, final IBoogieType type) {
+		return mBoogieVarFactory.createFreshBoogieVar(name, type);
 	}
 
 	public TemporaryBoogieVar createBoundVar(final IBoogieType type) {
-		return mBoogieVarFactory.createFreshBoogieVar(BOUND_NAME, type);
+		return createVariable(BOUND_NAME, type);
 	}
 
 	public TemporaryBoogieVar createValueVar(final IBoogieType type) {
-		return mBoogieVarFactory.createFreshBoogieVar(VALUE_NAME, type);
+		return createVariable(VALUE_NAME, type);
 	}
 
 	public IAbstractDomain<STATE, IcfgEdge> getSubDomain() {
@@ -91,20 +100,12 @@ public class ArrayDomainToolkit<STATE extends IAbstractState<STATE>> {
 		return mCallInfoCache;
 	}
 
-	public TemporaryBoogieVar getTopValue() {
-		return mTopValue;
-	}
-
 	public TemporaryBoogieVar getMinBound() {
 		return mMinBound;
 	}
 
 	public TemporaryBoogieVar getMaxBound() {
 		return mMaxBound;
-	}
-
-	public Segmentation getDefaultSegmentation() {
-		return mDefaultSegmentation;
 	}
 
 	public IAbstractStateBinaryOperator<STATE> getWideningOperator() {
@@ -165,5 +166,19 @@ public class ArrayDomainToolkit<STATE extends IAbstractState<STATE>> {
 		}
 		assert rtr != null : "Could not find boogie var";
 		return rtr;
+	}
+
+	public IBoogieType getType(final Sort sort) {
+		return mTypeSortTranslator.getType(sort);
+	}
+
+	public UnionFind<Term> getEquivalences(final Term term, final Set<Term> neededEquivalenceClasses) {
+		return mEquivalenceFinder.getEquivalences(term, neededEquivalenceClasses);
+	}
+
+	public Pair<IProgramVar, Segmentation> createTopSegmentation(final IBoogieType type) {
+		final IProgramVar newValue = createValueVar(type);
+		final Segmentation segmentation = new Segmentation(Arrays.asList(mMinBound, mMaxBound), Arrays.asList(newValue));
+		return new Pair<>(newValue, segmentation);
 	}
 }
