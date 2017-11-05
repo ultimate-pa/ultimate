@@ -57,11 +57,10 @@ public class Svcomp17FoldersAutomizerTermination extends AbstractBuchiAutomizerT
 		/***** Category 5. Termination *****/
 		/*** Subcategory  Termination-MainControlFlow ***/
 
-		new DirectoryFileEndingsPair("examples/svcomp/c/locks/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET, mFilesPerDirectoryLimit),
-		new DirectoryFileEndingsPair("examples/svcomp/c/termination-crafted/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET, mFilesPerDirectoryLimit),
-		new DirectoryFileEndingsPair("examples/svcomp/c/termination-crafted-lit/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET, mFilesPerDirectoryLimit),
-		new DirectoryFileEndingsPair("examples/svcomp/c/termination-numeric/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET, mFilesPerDirectoryLimit),
-		new DirectoryFileEndingsPair("examples/svcomp/c/termination-restricted-15/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET, mFilesPerDirectoryLimit),
+		new DirectoryFileEndingsPair("examples/svcomp/termination-crafted/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET, mFilesPerDirectoryLimit),
+		new DirectoryFileEndingsPair("examples/svcomp/termination-crafted-lit/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET, mFilesPerDirectoryLimit),
+		new DirectoryFileEndingsPair("examples/svcomp/termination-numeric/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET, mFilesPerDirectoryLimit),
+		new DirectoryFileEndingsPair("examples/svcomp/termination-restricted-15/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET, mFilesPerDirectoryLimit),
 		
 		new DirectoryFileEndingsPair("examples/svcomp/termination-crafted-todo/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET, mFilesPerDirectoryLimit),
 		new DirectoryFileEndingsPair("examples/svcomp/termination-crafted-lit-todo/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET, mFilesPerDirectoryLimit),
@@ -124,7 +123,8 @@ public class Svcomp17FoldersAutomizerTermination extends AbstractBuchiAutomizerT
 
 	private static final String[] mCToolchains = {
 			// "BuchiAutomizerCInlineWithBlockEncoding.xml",
-			"BuchiAutomizerCInline.xml", 
+			"BuchiAutomizerCInline.xml",
+//			"BuchiAutomizerCInline_WitnessPrinter.xml"
 		};
 
 	@Override
