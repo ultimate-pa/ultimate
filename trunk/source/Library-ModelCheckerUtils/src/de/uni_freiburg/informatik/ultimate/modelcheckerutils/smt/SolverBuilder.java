@@ -149,13 +149,13 @@ public class SolverBuilder {
 					result = createExternalSolver(services, storage, settings.getCommandExternalSolver(),
 							settings.fakeNonIncrementalScript(), settings.dumpSmtScriptToFile(),
 							settings.getPathOfDumpedScript(), settings.getBaseNameOfDumpedScript(),
-							settings.useExternalSolver());
+							settings.getUseDiffWrapper());
 				} else {
 					solverLogger.info(
 							"external solver will use " + settings.getExternalInterpolator() + " interpolation mode");
 					result = createExternalSolverWithInterpolation(services, storage,
 							settings.getCommandExternalSolver(), settings.getExternalInterpolator(),
-							settings.useExternalSolver());
+							settings.getUseDiffWrapper());
 				}
 			} catch (final IOException e) {
 				solverLogger.fatal("Unable to construct solver");
