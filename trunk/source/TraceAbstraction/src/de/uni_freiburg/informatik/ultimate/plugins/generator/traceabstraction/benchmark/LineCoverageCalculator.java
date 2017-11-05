@@ -127,44 +127,15 @@ public class LineCoverageCalculator<LETTER extends IIcfgTransition<?>> {
 			if (!(edge instanceof CodeBlock)) {
 				throw new UnsupportedOperationException("Cannot work with edges that do not provide Boogie code");
 			}
-			final List<Statement> statements = getStatements((CodeBlock) edge);
-			for (final Statement stmt : statements) {
-				final ILocation location = getLocation(stmt);
-				if (location == null) {
-					mLogger.warn("Skipping empty location or mult-line location for statement "
-							+ BoogiePrettyPrinter.print(stmt));
-					continue;
-				}
-				addLines(rtr, location);
-			}
+			rtr.addAll(calculateLineNumbers((CodeBlock) edge));
 		}
 		return rtr;
 	}
 
-	private static ILocation getLocation(final Statement stmt) {
-		if (stmt instanceof AssumeStatement) {
-			return ((AssumeStatement) stmt).getFormula().getLocation();
-		} else if (stmt instanceof CallStatement) {
-			final CallStatement call = (CallStatement) stmt;
-			if (call.getLocation().getStartLine() == call.getLocation().getEndLine()) {
-				return call.getLocation();
-			}
-			return null;
-		}
-		return stmt.getLocation();
-	}
-
-	private static List<Statement> getStatements(final CodeBlock edge) {
-		return new StatementExtractor().process(edge);
-	}
-
-	private static void addLines(final Set<Integer> rtr, final ILocation location) {
-		final int start = location.getStartLine();
-		final int end = location.getEndLine();
-
-		if (start == end) {
-			rtr.add(start);
-		}
+	private Set<Integer> calculateLineNumbers(final CodeBlock cb) {
+		final LineCoverageOfEdges stmtExtr = new LineCoverageOfEdges(mLogger);
+		stmtExtr.process(cb);
+		return stmtExtr.mLineNumbers;
 	}
 
 	private Set<LETTER> getCodeblocks(final IAutomaton<LETTER, IPredicate> automaton) {
@@ -193,40 +164,71 @@ public class LineCoverageCalculator<LETTER extends IIcfgTransition<?>> {
 		}
 	}
 
-	private static final class StatementExtractor extends RCFGEdgeVisitor {
+	private static final class LineCoverageOfEdges extends RCFGEdgeVisitor {
 
-		private List<Statement> mStatements;
+		private final Set<Integer> mLineNumbers;
+		private final ILogger mLogger;
 
-		private StatementExtractor() {
+		private LineCoverageOfEdges(final ILogger logger) {
+			mLineNumbers = new HashSet<>();
+			mLogger = logger;
 		}
 
-		public List<Statement> process(final IcfgEdge edge) {
-			mStatements = new ArrayList<>();
+		private static ILocation getLocation(final Statement stmt) {
+			if (stmt instanceof AssumeStatement) {
+				return ((AssumeStatement) stmt).getFormula().getLocation();
+			} else if (stmt instanceof CallStatement) {
+				final CallStatement call = (CallStatement) stmt;
+				if (call.getLocation().getStartLine() == call.getLocation().getEndLine()) {
+					return call.getLocation();
+				}
+				return null;
+			}
+			return stmt.getLocation();
+		}
+
+		private void addLines(final Statement stmt) {
+			final ILocation location = getLocation(stmt);
+			if (location == null) {
+				mLogger.warn("Skipping empty location or multi-line location for statement "
+						+ BoogiePrettyPrinter.print(stmt));
+				return;
+			}
+
+			final int start = location.getStartLine();
+			final int end = location.getEndLine();
+
+			if (start == end) {
+				mLineNumbers.add(start);
+			}
+		}
+
+		public void process(final IcfgEdge edge) {
 			visit(edge);
-			return mStatements;
 		}
 
 		@Override
 		protected void visit(final ParallelComposition c) {
-			throw new UnsupportedOperationException("Cannot merge ParallelComposition");
+			for (final CodeBlock cb : c.getCodeBlocks()) {
+				visit(cb);
+			}
 		}
 
 		@Override
 		protected void visit(final StatementSequence c) {
-			mStatements.addAll(c.getStatements());
-			super.visit(c);
+			for (final Statement stmt : c.getStatements()) {
+				addLines(stmt);
+			}
 		}
 
 		@Override
 		protected void visit(final Call c) {
-			mStatements.add(c.getCallStatement());
-			super.visit(c);
+			addLines(c.getCallStatement());
 		}
 
 		@Override
 		protected void visit(final Return c) {
-			mStatements.add(c.getCallStatement());
-			super.visit(c);
+			addLines(c.getCallStatement());
 		}
 	}
 
