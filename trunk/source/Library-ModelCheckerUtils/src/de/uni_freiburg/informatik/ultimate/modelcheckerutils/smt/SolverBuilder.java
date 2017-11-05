@@ -322,14 +322,14 @@ public class SolverBuilder {
 			useExternalSolver = true;
 			timeoutSmtInterpol = -1;
 			externalInterpolator = null;
-			useDiffWrapper = true;
+			useDiffWrapper = false;
 		}
 			break;
 		case External_PrincessInterpolationMode: {
 			useExternalSolver = true;
 			timeoutSmtInterpol = -1;
 			externalInterpolator = ExternalInterpolator.PRINCESS;
-			useDiffWrapper = true;
+			useDiffWrapper = false;
 		}
 			break;
 		case External_SMTInterpolInterpolationMode: {
@@ -343,7 +343,7 @@ public class SolverBuilder {
 			useExternalSolver = true;
 			timeoutSmtInterpol = -1;
 			externalInterpolator = ExternalInterpolator.IZ3;
-			useDiffWrapper = true;
+			useDiffWrapper = false;
 		}
 			break;
 		case Internal_SMTInterpol: {
