@@ -32,7 +32,7 @@ import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveDeadEnds;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveUnreachable;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveNonLiveStates;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
@@ -45,7 +45,9 @@ import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdge;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 
 public class WitnessUtils {
-
+	
+	public enum Property { NON_REACHABILITY, TERMINATION };
+	
 
 	public WitnessUtils() {
 		// do not instantiate
@@ -55,17 +57,25 @@ public class WitnessUtils {
 			final IUltimateServiceProvider services, final IAutomaton<LETTER, IPredicate> abstraction,
 			final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> witnessAutomaton,
 			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
-			final PredicateFactoryRefinement stateFactoryForRefinement, final ILogger logger)
+			final PredicateFactoryRefinement stateFactoryForRefinement, final ILogger logger, final Property property)
 			throws AutomataOperationCanceledException {
-		final WitnessProductAutomaton<LETTER> wpa = new WitnessProductAutomaton<>(services,
+		final WitnessProductAutomaton<LETTER> wpa = new WitnessProductAutomaton<LETTER>(services,
 				(INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate>) abstraction, witnessAutomaton,
 				csToolkit, predicateFactory, stateFactoryForRefinement);
-		final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> test =
-				new RemoveUnreachable<>(new AutomataLibraryServices(services), wpa).getResult();
-		logger.info("Full witness product has " + test.sizeInformation());
-		logger.info(wpa.generateBadWitnessInformation());
+		
 		final LineCoverageCalculator<LETTER> origCoverage = new LineCoverageCalculator<>(services, abstraction);
-		final IDoubleDeckerAutomaton<LETTER, IPredicate> newAbstraction = new RemoveDeadEnds<>(new AutomataLibraryServices(services), wpa).getResult();
+		final IDoubleDeckerAutomaton<LETTER, IPredicate> newAbstraction;
+		switch (property) {
+		case NON_REACHABILITY:
+			newAbstraction = new RemoveDeadEnds<>(new AutomataLibraryServices(services), wpa).getResult();
+			break;
+		case TERMINATION:
+			newAbstraction = new RemoveNonLiveStates<>(new AutomataLibraryServices(services), wpa).getResult();
+			break;
+		default:
+			throw new AssertionError();
+		}
+		logger.info(wpa.generateBadWitnessInformation());
 		new LineCoverageCalculator<>(services, abstraction, origCoverage).reportCoverage("Witness product");
 		return newAbstraction;
 	}
