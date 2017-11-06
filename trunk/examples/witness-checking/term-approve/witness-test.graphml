@@ -74,20 +74,19 @@
       <data key="endline">12</data>
     </edge>
     <node id="A30"/>
-    <edge source="A24" target="sink">
+    <edge source="A23" target="sink">
       <data key="sourcecode">[!(x >= 0)]</data>
       <data key="startline">11</data>
       <data key="endline">11</data>
       <data key="control">condition-false</data>
     </edge>
-    <edge source="A24" target="A30">
+    <edge source="A23" target="A30">
       <data key="sourcecode">[x >= 0]</data>
       <data key="startline">11</data>
       <data key="endline">11</data>
       <data key="control">condition-true</data>
     </edge>
-    <node id="A24"/>
-    <edge source="A30" target="A24">
+    <edge source="A30" target="A23">
       <data key="enterLoopHead">true</data>
       <data key="sourcecode">x = x + c;</data>
       <data key="startline">12</data>
