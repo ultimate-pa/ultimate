@@ -109,6 +109,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UndeclaredFunctionException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CompoundStatementExpressionResult;
@@ -504,8 +505,11 @@ public class FunctionHandler {
 	 */
 	public List<Declaration> calculateTransitiveModifiesClause(final Dispatcher main,
 			final MemoryHandler memoryHandler) {
-		assert isEveryCalledProcedureDeclared() == null : "a function that is called in the program "
-				+ "is not declared in the program:" + isEveryCalledProcedureDeclared();
+		final String notDeclaredProcedureName = isEveryCalledProcedureDeclared();
+		if (notDeclaredProcedureName != null) {
+			throw new UndeclaredFunctionException(null, "a function that is called in the program "
+					+ "is not declared in the program: " + notDeclaredProcedureName);
+		}
 		// calculate SCCs and a mapping for each methodId to its SCC
 		// O(|edges| + |calls|)
 		final Set<Set<String>> sccs = new TarjanSCC().getSCCs(mCallGraph);
@@ -784,12 +788,10 @@ public class FunctionHandler {
 			final VarList[] procParams =
 					new VarList[mProcedureToCFunctionType.get(methodName).getParameterTypes().length];
 			for (int i = 0; i < procParams.length; i++) {
-				procParams[i] =
-						new VarList(loc,
-								new String[] {
-										mProcedureToCFunctionType.get(methodName).getParameterTypes()[i].getName() },
-								((TypeHandler) main.mTypeHandler).cType2AstType(loc,
-										mProcedureToCFunctionType.get(methodName).getParameterTypes()[i].getType()));
+				procParams[i] = new VarList(loc,
+						new String[] { mProcedureToCFunctionType.get(methodName).getParameterTypes()[i].getName() },
+						((TypeHandler) main.mTypeHandler).cType2AstType(loc,
+								mProcedureToCFunctionType.get(methodName).getParameterTypes()[i].getType()));
 			}
 			final Procedure currentProc = mProcedures.get(methodName);
 			final Procedure newProc = new Procedure(currentProc.getLocation(), currentProc.getAttributes(),
@@ -1035,15 +1037,12 @@ public class FunctionHandler {
 						MemoryHandler.getPointerOffset(tmpExpr, loc),
 						expressionTranslation.getCTypeOfPointerComponents());
 				// res.offset < length(arg_s.base)
-				final Expression offsetSmallerLength =
-						expressionTranslation
-								.constructBinaryComparisonIntegerExpression(loc, IASTBinaryExpression.op_lessEqual,
-										MemoryHandler.getPointerOffset(tmpExpr, loc),
-										expressionTranslation.getCTypeOfPointerComponents(),
-										new ArrayAccessExpression(loc, memoryHandler.getLengthArray(loc),
-												new Expression[] { MemoryHandler
-														.getPointerBaseAddress(argS.lrVal.getValue(), loc) }),
-										expressionTranslation.getCTypeOfPointerComponents());
+				final Expression offsetSmallerLength = expressionTranslation.constructBinaryComparisonIntegerExpression(
+						loc, IASTBinaryExpression.op_lessEqual, MemoryHandler.getPointerOffset(tmpExpr, loc),
+						expressionTranslation.getCTypeOfPointerComponents(),
+						new ArrayAccessExpression(loc, memoryHandler.getLengthArray(loc),
+								new Expression[] { MemoryHandler.getPointerBaseAddress(argS.lrVal.getValue(), loc) }),
+						expressionTranslation.getCTypeOfPointerComponents());
 				// res.base == arg_s.base && res.offset >= 0 && res.offset <= length(arg_s.base)
 				final BinaryExpression inRange = new BinaryExpression(loc, Operator.LOGICAND, baseEquals,
 						new BinaryExpression(loc, Operator.LOGICAND, offsetNonNegative, offsetSmallerLength));
@@ -1235,8 +1234,8 @@ public class FunctionHandler {
 
 	/**
 	 * Construct assert statements that do memsafety checks for {@link pointerValue} if the corresponding settings are
-	 * active. settings concerned are: - "Pointer base address is valid at dereference" -
-	 * "Pointer to allocated memory at dereference"
+	 * active. settings concerned are: - "Pointer base address is valid at dereference" - "Pointer to allocated memory
+	 * at dereference"
 	 */
 	private static List<Statement> constructMemsafetyChecksForPointerExpression(final ILocation loc,
 			final Expression pointerValue, final MemoryHandler memoryHandler,
