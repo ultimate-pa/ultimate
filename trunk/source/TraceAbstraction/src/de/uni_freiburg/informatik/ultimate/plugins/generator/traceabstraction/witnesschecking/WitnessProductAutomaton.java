@@ -386,7 +386,8 @@ public class WitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 		return wan.isSink();
 	}
 
-	private Collection<OutgoingInternalTransition<WitnessEdge, WitnessNode>> skipNonLETTEREdges(final OutgoingInternalTransition<WitnessEdge, WitnessNode> trans) {
+	private Collection<OutgoingInternalTransition<WitnessEdge, WitnessNode>> skipNonLETTEREdges(
+			final OutgoingInternalTransition<WitnessEdge, WitnessNode> trans) {
 		final Set<OutgoingInternalTransition<WitnessEdge, WitnessNode>> result = new HashSet<>();
 		if (isLETTEREdge(trans.getLetter())) {
 			result.add(trans);
