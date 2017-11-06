@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomatonFilteredStates;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiClosureNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiIsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.GeneralizedBuchiIsEmpty;
@@ -57,6 +58,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Differ
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsDeterministic;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveNonLiveStates;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.boogie.annotation.LTLPropertyCheck;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
@@ -116,7 +118,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.RefinementStrategyFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TaCheckAndRefinementPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TraceAbstractionRefinementEngine;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.witnesschecking.WitnessUtils;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.witnesschecking.WitnessUtils.Property;
 import de.uni_freiburg.informatik.ultimate.util.HistogramOfIterable;
+import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdge;
+import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 
 public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 
@@ -243,6 +249,8 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 
 	private final RefinementStrategyFactory<LETTER> mRefinementStrategyFactory;
 	private final TaskIdentifier mTaskIdentifier;
+	
+	private final INestedWordAutomaton<WitnessEdge, WitnessNode> mWitnessAutomaton;
 
 	public ToolchainCanceledException getToolchainCancelledException() {
 		return mToolchainCancelledException;
@@ -254,7 +262,8 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 
 	public BuchiCegarLoop(final IIcfg<?> icfg, final CfgSmtToolkit csToolkitWithoutRankVars,
 			final RankVarConstructor rankVarConstructor, final PredicateFactory predicateFactory,
-			final TAPreferences taPrefs, final IUltimateServiceProvider services, final IToolchainStorage storage) {
+			final TAPreferences taPrefs, final IUltimateServiceProvider services, final IToolchainStorage storage,
+			final INestedWordAutomaton<WitnessEdge, WitnessNode> witnessAutomaton) {
 		assert services != null;
 		mIcfg = icfg;
 		// TODO: TaskIdentifier should probably be provided by caller
@@ -266,6 +275,7 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 		mMDBenchmark = new BuchiAutomizerModuleDecompositionBenchmark(mServices.getBacktranslationService());
 		mName = "BuchiCegarLoop";
 		mPredicateFactory = predicateFactory;
+		mWitnessAutomaton = witnessAutomaton;
 		mRankVarConstructor = rankVarConstructor;
 		mCsToolkitWithoutRankVars = csToolkitWithoutRankVars;
 		mCsToolkitWithRankVars = mRankVarConstructor.getCsToolkitWithRankVariables();
@@ -711,7 +721,7 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 
 	private boolean isAbstractionCorrect() throws AutomataLibraryException {
 		if(mAbstraction instanceof IGeneralizedNestedWordAutomaton) {
-			IGeneralizedNestedWordAutomaton<LETTER, IPredicate> abstraction 
+			final IGeneralizedNestedWordAutomaton<LETTER, IPredicate> abstraction 
 			           = (IGeneralizedNestedWordAutomaton<LETTER, IPredicate>)mAbstraction;
 			final GeneralizedBuchiIsEmpty<LETTER, IPredicate> ec =
 					new GeneralizedBuchiIsEmpty<>(new AutomataLibraryServices(mServices), abstraction);
@@ -747,7 +757,7 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 	private void getInitialAbstraction() {
 		final CFG2NestedWordAutomaton<LETTER> cFG2NestedWordAutomaton = new CFG2NestedWordAutomaton<>(mServices,
 				mPref.interprocedural(), mCsToolkitWithoutRankVars, mPredicateFactory, mLogger);
-		Collection<IcfgLocation> acceptingNodes;
+		final Collection<IcfgLocation> acceptingNodes;
 		final Collection<IcfgLocation> allNodes = new HashSet<>();
 		for (final Map<String, ? extends IcfgLocation> prog2pp : mIcfg.getProgramPoints().values()) {
 			allNodes.addAll(prog2pp.values());
@@ -767,6 +777,20 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 		if (!ALLOW_CALLS && !mAbstraction.getVpAlphabet().getCallAlphabet().isEmpty()) {
 			throw new AssertionError("Calls are not allowed in this debugging mode");
 		}
+		if (mWitnessAutomaton != null) {
+			try {
+				final AutomataLibraryServices services = new AutomataLibraryServices(mServices);
+				final NestedWordAutomatonReachableStates<WitnessEdge, WitnessNode> reach = new NestedWordAutomatonReachableStates<>(services, mWitnessAutomaton);
+				final INestedWordAutomaton<WitnessEdge, WitnessNode> allAccepting = new NestedWordAutomatonFilteredStates<WitnessEdge, WitnessNode>(services, reach,
+						mWitnessAutomaton.getStates(), mWitnessAutomaton.getInitialStates(), mWitnessAutomaton.getStates());
+				mAbstraction = WitnessUtils.constructIcfgAndWitnessProduct(mServices, mAbstraction, allAccepting,
+						mCsToolkitWithoutRankVars, mPredicateFactory, mStateFactoryForRefinement, mLogger, Property.TERMINATION);
+			} catch (final AutomataOperationCanceledException e) {
+				final RunningTaskInfo rti = new RunningTaskInfo(getClass(),
+						"constructing product with witness of size " + mWitnessAutomaton.size());
+				throw new ToolchainCanceledException(e, rti);
+			}
+		}
 	}
 
 	/**
@@ -785,7 +809,7 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 	 */
 	private void refineFinite(final LassoCheck<LETTER> lassoCheck) throws AutomataOperationCanceledException {
 		mBenchmarkGenerator.start(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
-		final TraceAbstractionRefinementEngine traceCheck;
+		final TraceAbstractionRefinementEngine<LETTER> traceCheck;
 		final NestedRun<LETTER, IPredicate> run;
 		final LassoCheck<LETTER>.LassoCheckResult lcr = lassoCheck.getLassoCheckResult();
 		if (lassoCheck.getLassoCheckResult().getStemFeasibility() == TraceCheckResult.INFEASIBLE) {

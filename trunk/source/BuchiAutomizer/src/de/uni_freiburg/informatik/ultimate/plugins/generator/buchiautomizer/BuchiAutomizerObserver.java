@@ -146,7 +146,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 						taPrefs.getSimplificationTechnique(), taPrefs.getXnfConversionTechnique());
 
 		final BuchiCegarLoop<?> bcl = new BuchiCegarLoop<>(icfg, icfg.getCfgSmtToolkit(), rankVarConstructor,
-				predicateFactory, taPrefs, mServices, mStorage);
+				predicateFactory, taPrefs, mServices, mStorage, witnessAutomaton);
 		final Result result = bcl.iterate();
 		final BuchiCegarLoopBenchmarkGenerator benchGen = bcl.getBenchmarkGenerator();
 		benchGen.stop(CegarLoopStatisticsDefinitions.OverallTime.toString());
