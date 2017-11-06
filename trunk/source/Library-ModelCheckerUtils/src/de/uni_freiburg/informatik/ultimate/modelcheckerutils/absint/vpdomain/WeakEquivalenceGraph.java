@@ -177,7 +177,8 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>> {
 				 *   <li> keep the edge for now, as we may still want to do propagations based on it, it will be removed
 				 *     later
 				 */
-				mArrayEqualities.addPair(edge.getKey().getOneElement(), edge.getKey().getOtherElement());
+//				mArrayEqualities.addPair(edge.getKey().getOneElement(), edge.getKey().getOtherElement());
+				addArrayEquality(edge.getKey().getOneElement(), edge.getKey().getOtherElement());
 				madeChanges = true;
 			}
 			mWeakEquivalenceEdges.put(edge.getKey(), newLabel);
@@ -424,7 +425,8 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>> {
 			dnfAsCubeList.add(arrayEquation);
 
 			final Term edgeFormula = SmtUtils.quantifier(script, QuantifiedFormula.FORALL,
-					new HashSet<TermVariable>(computeWeqIndicesForArray(edge.getKey().getOneElement())), SmtUtils.or(script, dnfAsCubeList));
+					new HashSet<TermVariable>(computeWeqIndicesForArray(edge.getKey().getOneElement())),
+					SmtUtils.or(script, dnfAsCubeList));
 			result.add(edgeFormula);
 		}
 		return result;
@@ -502,7 +504,8 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>> {
 
 		if (paList.isEmpty()) {
 			mWeakEquivalenceEdges.put(sourceAndTarget, new WeakEquivalenceEdgeLabel<NODE>(this, paList));
-			mArrayEqualities.addPair(sourceAndTarget.getOneElement(), sourceAndTarget.getOtherElement());
+//			mArrayEqualities.addPair(sourceAndTarget.getOneElement(), sourceAndTarget.getOtherElement());
+			addArrayEquality(sourceAndTarget.getOneElement(), sourceAndTarget.getOtherElement());
 			return oldLabel == null || !oldLabel.isInconsistent();
 		}
 
@@ -538,7 +541,8 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>> {
 
 		// inconsistency check
 		if (strengthenedEdgeLabel.isInconsistent()) {
-			mArrayEqualities.addPair(sourceAndTarget.getOneElement(), sourceAndTarget.getOtherElement());
+//			mArrayEqualities.addPair(sourceAndTarget.getOneElement(), sourceAndTarget.getOtherElement());
+			addArrayEquality(sourceAndTarget.getOneElement(), sourceAndTarget.getOtherElement());
 		}
 
 		assert strengthenedEdgeLabel.sanityCheck();
@@ -794,7 +798,8 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>> {
 			edgeLabel.getValue().meetWithWeqGpa(originalPa);
 
 			if (edgeLabel.getValue().isInconsistent()) {
-				mArrayEqualities.addPair(edgeLabel.getKey().getOneElement(), edgeLabel.getKey().getOtherElement());
+//				mArrayEqualities.addPair(edgeLabel.getKey().getOneElement(), edgeLabel.getKey().getOtherElement());
+				addArrayEquality(edgeLabel.getKey().getOneElement(), edgeLabel.getKey().getOtherElement());
 			}
 		}
 //		mWeqMeetMode = true;
@@ -806,10 +811,15 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>> {
 				: mWeakEquivalenceEdges.entrySet()) {
 			edgeLabel.getValue().meetWithCcGpa();
 			if (edgeLabel.getValue().isInconsistent()) {
-				mArrayEqualities.addPair(edgeLabel.getKey().getOneElement(), edgeLabel.getKey().getOtherElement());
+//				mArrayEqualities.addPair(edgeLabel.getKey().getOneElement(), edgeLabel.getKey().getOtherElement());
+				addArrayEquality(edgeLabel.getKey().getOneElement(), edgeLabel.getKey().getOtherElement());
 			}
 		}
 //		mWeqMeetMode = false;
+	}
+
+	private void addArrayEquality(final NODE oneElement, final NODE otherElement) {
+		mArrayEqualities.addPair(oneElement, otherElement);
 	}
 
 	public boolean elementIsFullyRemoved(final NODE elem) {

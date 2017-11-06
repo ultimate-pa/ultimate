@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDim
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.BidirectionalMap;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CongruenceClosureComparator;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.CrossProducts;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
@@ -131,16 +132,17 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 		final List<Set<EqConstraint<NODE>>> listOfConstraintSets = conjuncts.stream()
 				.map(conjunct -> conjunct.getConstraints()).collect(Collectors.toList());
 
-		final Set<List<EqConstraint<NODE>>> crossProduct =
-				VPDomainHelpers.computeCrossProduct(listOfConstraintSets, mServices);
+		final List<List<EqConstraint<NODE>>> crossProduct =
+				CrossProducts.crossProductOfSets(listOfConstraintSets);
+//				VPDomainHelpers.computeCrossProduct(listOfConstraintSets, mServices);
 
-		if (crossProduct == null) {
-			if (!mServices.getProgressMonitorService().continueProcessing()) {
-				return getTopDisjunctiveConstraint();
-			} else {
-				throw new AssertionError("cross product should only return null if there is a timeout");
-			}
-		}
+//		if (crossProduct == null) {
+//			if (!mServices.getProgressMonitorService().continueProcessing()) {
+//				return getTopDisjunctiveConstraint();
+//			} else {
+//				throw new AssertionError("cross product should only return null if there is a timeout");
+//			}
+//		}
 
 		// for each tuple in the cross product: construct the meet, and add it to the resulting constraintList
 		final List<EqConstraint<NODE>> constraintList = crossProduct.stream()
@@ -311,10 +313,13 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 				return getBottomConstraint();
 			}
 
-
 			// havoccing an element
 			final NODE nodeToHavoc = getEqNodeAndFunctionFactory().getExistingNode(term);
 			unfrozen.removeElement(nodeToHavoc);
+
+			if (unfrozen.isInconsistent()) {
+				return getBottomConstraint();
+			}
 
 			assert unfrozen.sanityCheck();
 		}
