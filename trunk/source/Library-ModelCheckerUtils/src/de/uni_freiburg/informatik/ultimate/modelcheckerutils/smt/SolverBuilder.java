@@ -80,6 +80,7 @@ public class SolverBuilder {
 
 	private static final String SOLVER_LOGGER_NAME = "SolverLogger";
 	private static final boolean USE_WRAPPER_SCRIPT_WITH_TERM_CONSTRUCTION_CHECKS = false;
+	public static final boolean USE_DIFF_WRAPPER_SCRIPT = false;
 
 	private static Script createSMTInterpol(final IUltimateServiceProvider services, final IToolchainStorage storage) {
 		final ILogger solverLogger = services.getLoggingService().getLoggerForExternalTool(SOLVER_LOGGER_NAME);
@@ -322,28 +323,27 @@ public class SolverBuilder {
 			useExternalSolver = true;
 			timeoutSmtInterpol = -1;
 			externalInterpolator = null;
-			useDiffWrapper = false;
+			useDiffWrapper = USE_DIFF_WRAPPER_SCRIPT;
 		}
 			break;
 		case External_PrincessInterpolationMode: {
 			useExternalSolver = true;
 			timeoutSmtInterpol = -1;
 			externalInterpolator = ExternalInterpolator.PRINCESS;
-			useDiffWrapper = false;
+			useDiffWrapper = USE_DIFF_WRAPPER_SCRIPT;
 		}
 			break;
 		case External_SMTInterpolInterpolationMode: {
 			useExternalSolver = true;
 			timeoutSmtInterpol = -1;
 			externalInterpolator = ExternalInterpolator.SMTINTERPOL;
-			useDiffWrapper = false;
 		}
 			break;
 		case External_Z3InterpolationMode: {
 			useExternalSolver = true;
 			timeoutSmtInterpol = -1;
 			externalInterpolator = ExternalInterpolator.IZ3;
-			useDiffWrapper = false;
+			useDiffWrapper = USE_DIFF_WRAPPER_SCRIPT;
 		}
 			break;
 		case Internal_SMTInterpol: {

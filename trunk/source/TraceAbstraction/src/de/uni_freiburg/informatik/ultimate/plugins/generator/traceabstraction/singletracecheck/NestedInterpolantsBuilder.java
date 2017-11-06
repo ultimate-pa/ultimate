@@ -57,6 +57,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifi
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SubtermPropertyChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
@@ -78,7 +79,7 @@ public class NestedInterpolantsBuilder {
 
 	// TODO 2017-10-13 Matthias: When Jochen implement support for "@diff" this
 	// probably has to become a parameter for this class.
-	private static final boolean ALLOW_AT_DIFF = true;
+	private static final boolean ALLOW_AT_DIFF = SolverBuilder.USE_DIFF_WRAPPER_SCRIPT;
 	public static final String DIFF_IS_UNSUPPORTED = "@diff is unsupported";
 
 	private final IUltimateServiceProvider mServices;
