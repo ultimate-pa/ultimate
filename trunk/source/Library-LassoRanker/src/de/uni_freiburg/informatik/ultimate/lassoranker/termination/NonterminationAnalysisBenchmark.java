@@ -48,6 +48,7 @@ public class NonterminationAnalysisBenchmark
 	
 	// column headers of the resulting csv
 	public static final String s_Label_ConstraintsSatisfiability = "ConstraintsSatisfiability";
+	public static final String s_Label_IsFixpoint = "IsFixpoint";
 	public static final String s_Label_Time = "Time";
 	public static final String s_Label_VariablesStem = "VariablesStem";
 	public static final String s_Label_VariablesLoop = "VariablesLoop";
@@ -55,6 +56,7 @@ public class NonterminationAnalysisBenchmark
 	public static final String s_Label_DisjunctsLoop = "DisjunctsLoop";
 	
 	private final LBool mConstraintsSatisfiability;
+	private final boolean mIsFixpoint;
 	private final int mVariablesStem;
 	private final int mVariablesLoop;
 	private final int mDisjunctsStem;
@@ -62,10 +64,11 @@ public class NonterminationAnalysisBenchmark
 	private final long mTime;
 	
 	public NonterminationAnalysisBenchmark(
-			LBool constraintsSatisfiability, int variablesStem,
-			int variablesLoop, int disjunctsStem, int disjunctsLoop,
-			long time) {
+			final LBool constraintsSatisfiability, final boolean isFixpoint, final int variablesStem,
+			final int variablesLoop, final int disjunctsStem, final int disjunctsLoop,
+			final long time) {
 		mConstraintsSatisfiability = constraintsSatisfiability;
+		mIsFixpoint = isFixpoint;
 		mVariablesStem = variablesStem;
 		mVariablesLoop = variablesLoop;
 		mDisjunctsStem = disjunctsStem;
@@ -77,6 +80,10 @@ public class NonterminationAnalysisBenchmark
 		return mConstraintsSatisfiability;
 	}
 	
+	public boolean isFixpoint() {
+		return mIsFixpoint;
+	}
+
 	public int getVariablesStem() {
 		return mVariablesStem;
 	}
@@ -124,6 +131,7 @@ public class NonterminationAnalysisBenchmark
 	public Map<String, Object> getKeyValueMap() {
 		final Map<String, Object> result = new LinkedHashMap<String, Object>();
 		result.put(s_Label_ConstraintsSatisfiability, mConstraintsSatisfiability);
+		result.put(s_Label_IsFixpoint, mIsFixpoint);
 		result.put(s_Label_Time, mTime);
 		result.put(s_Label_VariablesStem, mVariablesStem);
 		result.put(s_Label_VariablesLoop, mVariablesLoop);
