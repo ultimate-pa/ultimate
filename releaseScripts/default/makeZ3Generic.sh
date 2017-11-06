@@ -73,16 +73,24 @@ function print_setup()
 	echo -en "  dest-dir:\t\t\t${DEST_DIR}"
 	if [ ${DEFAULT_DEST} = true ]; then
 		echo " (default)"
-	else echo
+	else
+		echo
 	fi
 	echo -e "  Additional parameters:\t${ADDITIONAL_FLAGS}"
 	echo -e "  Number of parallel jobs:\t${NUMCPUS}"
+	echo
 }
 
 function checkout_z3()
 {
 	if [ ${DEFAULT_WORKING} = false ]; then
 		return
+	fi
+
+	if [ -d "${WORKING_DIR}" ]; then
+		echo "Error: The directory for the Git checkout \"${WORKING_DIR}\" already exists."
+		echo "       Please remove the directory first or use the -g option."
+		exit 1
 	fi
 
 	echo "Cloning z3 into ${WORKING_DIR} ..."
