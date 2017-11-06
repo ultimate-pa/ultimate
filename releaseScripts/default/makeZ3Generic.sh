@@ -231,13 +231,13 @@ function cleanup()
 
 	cd "${WORKING_DIR}"
 
-	rm -rv "${BUILD_DIR}"
+	rm -r "${BUILD_DIR}"
 
 	cd "${ROOT}"
 
 	if [ ${DEFAULT_WORKING} = true ]; then
 		rm -rf "${WORKING_DIR}/.git"
-		rm -rv "${WORKING_DIR}"
+		rm -r "${WORKING_DIR}"
 	fi
 }
 
