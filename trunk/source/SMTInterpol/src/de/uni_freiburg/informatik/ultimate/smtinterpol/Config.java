@@ -20,19 +20,19 @@ package de.uni_freiburg.informatik.ultimate.smtinterpol;
 
 /**
  * Basic configuration of SMTInterpol.
+ *
  * @author Juergen Christ
  */
 public interface Config {
 
 	/// Competition mode
 	public final static boolean COMPETITION = false;
-	
+
 	////// General configuration
 	/// Create timing statistics
 	public final static boolean PROFILE_TIME = !COMPETITION;
 	/// Default log level
-	public final static int DEFAULT_LOG_LEVEL = 
-			COMPETITION ? LogProxy.LOGLEVEL_ERROR : LogProxy.LOGLEVEL_INFO;
+	public final static int DEFAULT_LOG_LEVEL = COMPETITION ? LogProxy.LOGLEVEL_ERROR : LogProxy.LOGLEVEL_INFO;
 	/// Check the status set by the user against our check-sat status
 	public final static boolean CHECK_STATUS_SET = !COMPETITION;
 
@@ -43,7 +43,7 @@ public interface Config {
 	public static final int OCC_INLINE_THRESHOLD = 1;
 	/// Number of occurrences when nested term ITEs are still inlined.
 	public static final int OCC_INLINE_TERMITE_THRESHOLD = 1;
-	
+
 	////// DPLL configuration
 	/// Activity limit
 	public final static double LIMIT = 1e250;
@@ -62,24 +62,24 @@ public interface Config {
 	public final static long RANDOM_SEED = 11350294L;
 	/// How often to split
 	public final static int RANDOM_SPLIT_BASE = 10000;
-	/// The frequency of random case splits 
+	/// The frequency of random case splits
 	/// (number per RANDOM_SPLIT_BASE elements)
 	public final static int RANDOM_SPLIT_FREQ = 2;
 	/// Compute an initial phase bias based on Jeruslaw Wang heuristics
 	public static final boolean INITIAL_PHASE_BIAS_JW = true;
 	/// Print information statistics on restarts
 	public static final boolean PRINT_STATISTICS = !COMPETITION;
-	
+
 	////// Quantifier Support
 	/// Debug unused variable elimination
 	public final static boolean DEBUG_QVAR_ELIMINATION = true;
 	/// Don't infer looping patterns
 	public final static boolean FEATURE_BLOCK_LOOPING_PATTERN = true;
-	
+
 	////// Proofs
 	/// Check proofs for propositional validity
 	public final static boolean CHECK_PROP_PROOF = false;
-	
+
 	////// Printing of results
 	/// Include line breaks in output of lists
 	public final static boolean RESULTS_ONE_PER_LINE = true;
@@ -89,7 +89,7 @@ public interface Config {
 	////// Usage Checks
 	/// Stronger checks for usage (e.g., closed check in assertTerm)
 	public final static boolean STRONG_USAGE_CHECKS = !COMPETITION;
-	
+
 	////// Optimizer
 	/// Call optimizer for every formula
 	public final static boolean OPTIMIZE_ALWAYS = false;
