@@ -54,6 +54,7 @@ import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransform
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.SimplifyPreprocessor;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.TermException;
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.GeometricNonTerminationArgument;
+import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.INonTerminationAnalysisSettings;
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.NonTerminationAnalysisSettings;
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.NonTerminationArgumentSynthesizer;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.LassoPartitioneerPreprocessor;
@@ -415,13 +416,26 @@ public class LassoAnalysis {
 		for (final Lasso lasso : mLassos) {
 
 			final long startTime = System.nanoTime();
-			final NonTerminationArgumentSynthesizer nas =
-					new NonTerminationArgumentSynthesizer(lasso, mPreferences, settings, mServices, mStorage);
-			final LBool constraintSat = nas.synthesize();
+			final NonTerminationAnalysisSettings gev0settings = constructGev0Copy(settings);
+			NonTerminationArgumentSynthesizer nas =
+					new NonTerminationArgumentSynthesizer(lasso, mPreferences, gev0settings, mServices, mStorage);
+			LBool constraintSat = nas.synthesize();
+			if (constraintSat == LBool.UNSAT) {
+				nas.close();
+				nas = new NonTerminationArgumentSynthesizer(lasso, mPreferences, settings, mServices, mStorage);
+				constraintSat = nas.synthesize();
+			}
+			
 			final long endTime = System.nanoTime();
 
+			final boolean isFixpoint;
+			if (constraintSat == LBool.SAT) {
+				isFixpoint = nas.getArgument().getLambdas().isEmpty() || nas.getArgument().getGEVs().isEmpty();
+			} else {
+				isFixpoint = false;
+			}
 			final NonterminationAnalysisBenchmark nab =
-					new NonterminationAnalysisBenchmark(constraintSat, lasso.getStemVarNum(), lasso.getLoopVarNum(),
+					new NonterminationAnalysisBenchmark(constraintSat, isFixpoint, lasso.getStemVarNum(), lasso.getLoopVarNum(),
 							lasso.getStemDisjuncts(), lasso.getLoopDisjuncts(), endTime - startTime);
 			mLassoNonterminationAnalysisBenchmarks.add(nab);
 
@@ -452,6 +466,18 @@ public class LassoAnalysis {
 			nta = nta.join(ntas.get(i));
 		}
 		return nta;
+	}
+	
+	
+	private NonTerminationAnalysisSettings constructGev0Copy(final INonTerminationAnalysisSettings settings) {
+		return new NonTerminationAnalysisSettings(new NonTerminationAnalysisSettings(settings) {
+
+			@Override
+			public int getNumberOfGevs() {
+				return 0;
+			}
+
+		});
 	}
 
 	/**
