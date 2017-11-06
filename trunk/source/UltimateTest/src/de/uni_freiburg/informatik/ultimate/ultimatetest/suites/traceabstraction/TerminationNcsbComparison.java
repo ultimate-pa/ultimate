@@ -362,7 +362,9 @@ public class TerminationNcsbComparison extends AbstractBuchiAutomizerTestSuite {
 	
 
 	private static final String[] mCurrentBugs = {};
-
+	private static final DirectoryFileEndingsPair[] mDirectoryBugPairs = { 
+			new DirectoryFileEndingsPair("examples/svcomp/test/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET, mFilesPerDirectoryLimit)
+			};
 	/**
 	 * {@inheritDoc}
 	 */
@@ -385,11 +387,19 @@ public class TerminationNcsbComparison extends AbstractBuchiAutomizerTestSuite {
 //			"buchiAutomizer/ncsb/ORIGINAL-SAVE-AUT.epf",
 //			"buchiAutomizer/ncsb/INTSET_LAZY2-SAVE-AUT.epf",
 //			"buchiAutomizer/ncsb/INTSET_LAZY3-SAVE-AUT.epf",
-			"buchiAutomizer/ncsb/INTSET_LAZY2.epf",
-			"buchiAutomizer/ncsb/SUNFLOWER-INTSET_LAZY2.epf",
-			"buchiAutomizer/ncsb/INTSET_LAZY3.epf",
-			"buchiAutomizer/ncsb/SUNFLOWER-INTSET_LAZY3.epf",
-			"buchiAutomizer/ncsb/ORIGINAL.epf",
+//			"buchiAutomizer/ncsb/INTSET_LAZY2.epf",
+//			"buchiAutomizer/ncsb/INTSET_LAZY3.epf",
+//			"buchiAutomizer/ncsb/INTSET.epf",
+//			"buchiAutomizer/ncsb/SUNFLOWER-INTSET_LAZY.epf",
+//			"buchiAutomizer/ncsb/SUNFLOWER-INTSET
+//			"buchiAutomizer/ncsb/SUNFLOWER-INTSET_LAZY2.epf",
+//			"buchiAutomizer/ncsb/SUNFLOWER-INTSET_LAZY3.epf",
+//			"buchiAutomizer/ncsb/INTSET_GBA.epf",
+//			"buchiAutomizer/ncsb/SUNFLOWER-INTSET_GBA.epf",
+//			"buchiAutomizer/ncsb/INTSET_GBA_ANTICHAIN.epf",
+//			"buchiAutomizer/ncsb/SUNFLOWER-INTSET_GBA_ANTICHAIN.epf",
+//			"buchiAutomizer/ncsb/SUNFLOWER-INTSET_LAZY3.epf",
+//			"buchiAutomizer/ncsb/ORIGINAL.epf",
 			"buchiAutomizer/ncsb/SUNFLOWER-ORIGINAL.epf",
 	};
 
@@ -405,7 +415,7 @@ public class TerminationNcsbComparison extends AbstractBuchiAutomizerTestSuite {
 			mPairsToTry=mDirectoryFileEndingsPairsForSelectedCases;
 		}
 		
-		
+				mPairsToTry = mDirectoryBugPairs;
 		for (final DirectoryFileEndingsPair dfep : mPairsToTry) {
 			for (final String toolchain : mCToolchains) {
 				addTestCase(UltimateRunDefinitionGenerator.getRunDefinitionsFromTrunkRegex(

@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- * Copyright (C) 2013-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * Copyright (C) 2017 Yong Li (liyong@ios.ac.cn)
+ * Copyright (C) 2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
  *
  * This file is part of the ULTIMATE Automata Library.
@@ -37,37 +37,24 @@ import java.util.Stack;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-
-import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.IGeneralizedNestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IGeneralizedNwaOutgoingLetterAndTransitionProvider;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiToGeneralizedBuchi;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoRun;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.Options;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingCallTransition;
+
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingInternalTransition;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingReturnTransition;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
-
-
 import gnu.trove.map.TObjectIntMap;
 import gnu.trove.map.hash.TObjectIntHashMap;
 
-/**
- * A nested word automaton with reachable states information.
- *
- * @author Yong Li (liyong@ios.ac.cn)
- * @param <LETTER>
- *            letter type
- * @param <STATE>
- *            state type
- */
-public class GeneralizedNestedWordAutomatonReachableStates<LETTER, STATE> extends AbstractGeneralizedAutomatonReachableStates<LETTER, STATE> {
+public class GetLassoRunFromLassoWord<LETTER, STATE> extends AbstractGeneralizedAutomatonReachableStates<LETTER, STATE> {
 	
 	private final IGeneralizedNwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mOperand;
 	
@@ -76,16 +63,32 @@ public class GeneralizedNestedWordAutomatonReachableStates<LETTER, STATE> extend
 	private final Map<STATE, StateContainer<LETTER, STATE>> mStates = new HashMap<>();
 	
 	private final ReachableStatesComputationTarjan mReach;
-		
-	public GeneralizedNestedWordAutomatonReachableStates(final AutomataLibraryServices services,
-			final IGeneralizedNwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand) throws AutomataOperationCanceledException {
+	
+	private final NestedWord<LETTER> mStem;
+	private final NestedWord<LETTER> mLoop;
+	
+	@SuppressWarnings("unchecked")
+	public GetLassoRunFromLassoWord(AutomataLibraryServices services,
+			INestedWordAutomaton<LETTER, STATE> operand, NestedLassoWord<LETTER> lassoWord)  throws AutomataOperationCanceledException {
 		super(services, operand.getVpAlphabet());
-		mOperand = operand;
 		mStateFactory = operand.getStateFactory();
 		mDownStates.add(operand.getEmptyStackState());
+		if(operand instanceof IGeneralizedNwaOutgoingLetterAndTransitionProvider) {
+			mOperand = (IGeneralizedNwaOutgoingLetterAndTransitionProvider<LETTER, STATE>)operand;
+		}else {
+			mOperand = new BuchiToGeneralizedBuchi<LETTER, STATE>(operand);
+		}
+		mStem = lassoWord.getStem();
+		mLoop = lassoWord.getLoop();
+		if(!mOperand.getVpAlphabet().getCallAlphabet().isEmpty()
+		|| !mOperand.getVpAlphabet().getReturnAlphabet().isEmpty()) {
+			throw new UnsupportedOperationException("Calls or Returns are not empty");
+		}
+		if(mLoop.length() == 0) {
+			throw new UnsupportedOperationException("Loop is empty");
+		}
 		try {
 			mReach = new ReachableStatesComputationTarjan();
-			System.out.println("States number: " + mStates.size());
 		} catch (final ToolchainCanceledException tce) {
 			throw tce;
 		} catch (final Error | RuntimeException e) {
@@ -94,6 +97,28 @@ public class GeneralizedNestedWordAutomatonReachableStates<LETTER, STATE> extend
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug(stateContainerInformation());
 		}
+	}
+	
+	// -------- use following like we have an automaton
+	// 0->st[1]->1->...->st[m]->m -> lp[1] -> m+1 -> ... -> lp[n] -> m+n -> lp[1] -> m+1
+	protected int getNextState(int index) {
+		if(index < mStem.length() + mLoop.length()) {
+			return index + 1;
+		}
+		assert index == mStem.length() + mLoop.length();
+		return mStem.length() + 1;
+	}
+	
+	protected LETTER getNextLetter(int state) {
+		assert state <= mStem.length() + mLoop.length();
+		if(state < mStem.length()) {
+			return mStem.getSymbol(state);
+		}
+		if(state < mStem.length() + mLoop.length()) {
+			return mLoop.getSymbol(state - mStem.length());
+		}
+		assert state == mStem.length() + mLoop.length();
+		return mLoop.getSymbol(0);
 	}
 	
 	@Override
@@ -140,25 +165,17 @@ public class GeneralizedNestedWordAutomatonReachableStates<LETTER, STATE> extend
 	
 	class ReachableStatesComputationTarjan {
 		private Tarjan mTarjan ;
-		private Ascc mAscc;
 		
 		public ReachableStatesComputationTarjan() throws AutomataOperationCanceledException {
 			mNumberOfConstructedStates = 0;
 			mTarjan = new Tarjan();
-//			mAscc = new Ascc();
 		}
 		
 		public Boolean isEmpty() {
-			if(mTarjan == null) {
-				return mAscc.mIsEmpty;
-			}
 			return mTarjan.mIsEmpty;
 		}
 		
 		public List<List<STATE>> getLoopList() {
-			if(mTarjan == null) {
-				return mAscc.mSCC;
-			}
 			return mTarjan.mSCC;
 		}
 
@@ -181,7 +198,7 @@ public class GeneralizedNestedWordAutomatonReachableStates<LETTER, STATE> extend
 	            for(STATE state : mOperand.getInitialStates()) {
 	            	mInitialStates.add(state);
 	                if(! mIndexMap.containsKey(state)){
-	                    strongConnect(state);
+	                    strongConnect(state, 0);
 	                }
 	            }
 	            
@@ -190,7 +207,7 @@ public class GeneralizedNestedWordAutomatonReachableStates<LETTER, STATE> extend
 	            }
 	        }
 	        
-	        void strongConnect(STATE state) throws AutomataOperationCanceledException {
+	        void strongConnect(STATE state, int wordState) throws AutomataOperationCanceledException {
 	            
 	    		mStack.push(state);
 	    		mIndexMap.put(state, mIndex);
@@ -200,14 +217,14 @@ public class GeneralizedNestedWordAutomatonReachableStates<LETTER, STATE> extend
 	            ++ mNumberOfConstructedStates;
 	            
 	            StateContainer<LETTER, STATE> cont = getOrAddState(state);
-	            for (final OutgoingInternalTransition<LETTER, STATE> trans : mOperand.internalSuccessors(state)) {
+	            for (final OutgoingInternalTransition<LETTER, STATE> trans : mOperand.internalSuccessors(state, getNextLetter(wordState))) {
 					if (! getServices().getProgressAwareTimer().continueProcessing()) {
 						final RunningTaskInfo rti = constructRunningTaskInfo();
 						throw new AutomataOperationCanceledException(rti);
 					}
 					STATE succ = trans.getSucc();
 					if(! mIndexMap.containsKey(succ)) {
-						strongConnect(succ); // did not visit succ before
+						strongConnect(succ, getNextState(wordState)); // did not visit succ before
 	                    mLowlinkMap.put(state, Math.min(mLowlinkMap.get(state), mLowlinkMap.get(succ)));					
 					}else if(mStack.contains(succ)) {
 					    mLowlinkMap.put(state, Math.min(mLowlinkMap.get(state), mIndexMap.get(succ)));					
@@ -227,112 +244,6 @@ public class GeneralizedNestedWordAutomatonReachableStates<LETTER, STATE> extend
 	    			while(! mStack.empty()){
 	    				STATE stackTop = mStack.pop();
 	    				labels.addAll(mOperand.getAcceptanceLabels(stackTop));
-	    				sccList.add(stackTop);
-	    				if(stackTop.equals(state))
-	    					break;
-	    			}
-
-	    			boolean hasAcc = mOperand.getAcceptanceSize() == labels.size();	    			
-	    			if(sccList.size() == 1 // only has a single state
-	    					&& hasAcc            // it is an accepting states
-	    					) {
-	    				// if there is no self loop
-	    				if(! cont.hashSelfloop()) hasAcc = false;
-	    			}
-	    							
-	    			if(hasAcc) {
-	    				mIsEmpty = false;
-	    				mSCC.add(sccList);
-	    				if(Options.verbose) {
-	    					System.out.println("Loop: " + sccList);
-	    				}
-	    			}
-	    		}
-	        }
-	    }
-	    
-	    private class AsccElem {
-	    	STATE mState;
-	    	Set<Integer> mLabels;
-	    	AsccElem(STATE state, Set<Integer> labels) {
-	    		mState = state;
-	    		mLabels = labels;
-	    	}
-	    }
-	    
-	    private class Ascc {
-	        private int mIndex;
-	        private final Stack<AsccElem> mStack;             // tarjan's stack
-	    	private final Stack<STATE> mActive;
-	    	private final TObjectIntMap<STATE> mDfsnum;
-	        private List<List<STATE>> mSCC;
-	        private Boolean mIsEmpty = null;
-	                
-	        public Ascc() throws AutomataOperationCanceledException {
-	            
-	            this.mStack = new Stack<>();
-	            this.mActive = new Stack<>();
-	            this.mDfsnum = new TObjectIntHashMap<>();
-	            this.mSCC = new ArrayList<>();
-	            this.mIndex = 0;
-	            for(STATE state : mOperand.getInitialStates()) {
-	            	mInitialStates.add(state);
-	                if(! mDfsnum.containsKey(state)){
-	                    strongConnect(state);
-	                }
-	            }
-	            
-	            if(mIsEmpty == null) {
-	                mIsEmpty = true;
-	            }
-	        }
-	        
-	        void strongConnect(STATE state) throws AutomataOperationCanceledException {
-	            
-	    		mStack.push(new AsccElem(state, mOperand.getAcceptanceLabels(state)));
-	    		mDfsnum.put(state, mIndex);
-	    		mActive.push(state);
-	    		
-	    		++ mIndex;	
-	            ++ mNumberOfConstructedStates;
-//	            boolean notEmpty = false;
-	            
-	            StateContainer<LETTER, STATE> cont = getOrAddState(state);
-	            for (final OutgoingInternalTransition<LETTER, STATE> trans : mOperand.internalSuccessors(state)) {
-					if (! getServices().getProgressAwareTimer().continueProcessing()) {
-						final RunningTaskInfo rti = constructRunningTaskInfo();
-						throw new AutomataOperationCanceledException(rti);
-					}
-					STATE succ = trans.getSucc();
-					if(! mDfsnum.containsKey(succ)) {
-						strongConnect(succ); // did not visit succ before
-					}else if(mActive.contains(succ)) {
-						Set<Integer> labels = new HashSet<>();
-                        STATE topState;
-                        do {
-                        	AsccElem elem = mStack.pop();
-                        	topState = elem.mState;
-                        	labels.addAll(elem.mLabels);
-//                            if(labels.size() == getAcceptanceSize()) {
-//                                notEmpty = true;
-//                            }
-                        }while(mDfsnum.get(topState) > mDfsnum.get(succ));
-                        mStack.push(new AsccElem(topState, labels));				
-					}
-					// explore new states, then we should add state information
-					cont.addInternalOutgoing(trans);
-					StateContainer<LETTER, STATE> succSc = getOrAddState(succ);
-					succSc.addInternalIncoming(new IncomingInternalTransition<>(state, trans.getLetter()));
-                }
-
-	    		// found one strongly connected component
-	    		if(mStack.peek().mState.equals(state)){
-	    			
-	    			Set<Integer> labels = mStack.peek().mLabels;
-	    			List<STATE> sccList = new ArrayList<>();
-	    			mStack.pop();
-	    			while(! mActive.empty()){
-	    				STATE stackTop = mActive.pop();
 	    				sccList.add(stackTop);
 	    				if(stackTop.equals(state))
 	    					break;
@@ -442,6 +353,5 @@ public class GeneralizedNestedWordAutomatonReachableStates<LETTER, STATE> extend
 	public boolean isFinal(STATE state) {
 		return !getAcceptanceLabels(state).isEmpty();
 	}
-
 
 }

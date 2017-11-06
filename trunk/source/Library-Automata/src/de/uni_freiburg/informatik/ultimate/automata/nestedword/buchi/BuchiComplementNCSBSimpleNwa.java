@@ -236,7 +236,7 @@ public class BuchiComplementNCSBSimpleNwa<LETTER, STATE> implements INwaSuccesso
 
 	@Override
 	public String sizeInformation() {
-		return "size Information not available";
+		return "State size: " + size();
 	}
 
 	@Override

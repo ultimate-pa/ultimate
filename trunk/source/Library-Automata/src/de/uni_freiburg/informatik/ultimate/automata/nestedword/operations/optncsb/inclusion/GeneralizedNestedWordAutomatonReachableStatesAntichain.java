@@ -249,11 +249,13 @@ public class GeneralizedNestedWordAutomatonReachableStatesAntichain<LETTER, STAT
             		ProductState succProd = mStates.get(succState).getProd();
             		prodStateCont.addInternalOutgoing(new OutgoingInternalTransition<>(fstTrans.getLetter(), succState));
             		mStates.get(succState).addInternalIncoming(new IncomingInternalTransition<>(state, fstTrans.getLetter()));
-            		if(mAntichain.covers(succProd)) 
+            		if(mAntichain.covers(succProd)) {
             			continue;
+            		}
             		if(! mDfsNum.containsKey(succState)) {
             			// whether there is accepting loop in the following
-            			notEmpty |= construct(succState); 
+//            			notEmpty |= construct(succState);
+            			notEmpty = construct(succState) || notEmpty;
             		}else if(mActiveStack.contains(succState)) {
             			Set<Integer> labels = new HashSet<>();
                         STATE topState;
@@ -280,12 +282,21 @@ public class GeneralizedNestedWordAutomatonReachableStatesAntichain<LETTER, STAT
                     scc.add(topState);
                     if(!notEmpty) { // empty language
                     	mAntichain.addState(mStates.get(topState).mProdState);
+//                    	// remove all incoming transitions to topState
+//                    	ProductStateContainer cont = mStates.get(topState);
+//                    	Set<STATE> pred = new HashSet<>();
+//                    	for(IncomingInternalTransition<LETTER, STATE> trans : cont.internalPredecessors()) {
+//                    		ProductStateContainer predCont = mStates.get(trans.getPred());
+//                    		predCont.removeSuccessor(topState);
+//                    		pred.add(trans.getPred());
+//                    	}
+//                    	cont.removePredecessors(pred);
                     }
                 }while(!topState.equals(state)); 
-                // 
+                // whether there is accepting loop
                 if(pair.mLabels.size() == getAcceptanceSize()) {
                 	if(scc.size() > 1
-                	|| prodStateCont.getLetterOfSuccessor(state) != null) {
+                	|| prodStateCont.hashSelfloop()) {
                 		mSccList.add(scc);
                         mIsEmpty = false;
                 	}

@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncs
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.automata.IBuchiWa;
 
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.inclusion.BuchiWaDifferenceAscc;
+//import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.inclusion.BuchiWaDifferenceAscc;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiComplementNcsbStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiIntersectStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
@@ -124,8 +124,8 @@ public final class BuchiIsIncludedNCSBSimple2<LETTER, STATE> extends BinaryNwaOp
 //		}
 		
 		//TODO should be able to terminate the procedure if time exceed the limit
-		BuchiWaDifferenceAscc checker = new BuchiWaDifferenceAscc(fstBuchi, sndBuchi);
-		mResult = checker.isIncluded(); //services
+//		BuchiWaDifferenceAscc checker = new BuchiWaDifferenceAscc(fstBuchi, sndBuchi);
+		mResult = null;//checker.isIncluded(); //services
 		
 		if(mResult == null) {
 			throw new AutomataOperationCanceledException(getClass());
@@ -143,12 +143,12 @@ public final class BuchiIsIncludedNCSBSimple2<LETTER, STATE> extends BinaryNwaOp
 		}
 	}
 	
-	private RunningTaskInfo constructRunningTaskInfo(BuchiWaDifferenceAscc complement) {
-		final String taskDescription = "computing complement states (" + complement.getSecondBuchiComplement().getStateSize()
-				+ " states constructed" + "input type " + getClass().getSimpleName() + ")";
-		final RunningTaskInfo rti = new RunningTaskInfo(getClass(), taskDescription);
-		return rti;
-	}
+//	private RunningTaskInfo constructRunningTaskInfo(BuchiWaDifferenceAscc complement) {
+//		final String taskDescription = "computing complement states (" + complement.getSecondBuchiComplement().getStateSize()
+//				+ " states constructed" + "input type " + getClass().getSimpleName() + ")";
+//		final RunningTaskInfo rti = new RunningTaskInfo(getClass(), taskDescription);
+//		return rti;
+//	}
 
 	@Override
 	public String exitMessage() {

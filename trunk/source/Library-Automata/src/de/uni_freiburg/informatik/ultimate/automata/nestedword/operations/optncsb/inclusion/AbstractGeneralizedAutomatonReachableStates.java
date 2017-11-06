@@ -1,4 +1,5 @@
 /*
+ * Copyright (C) 2014-2015 Yong Li (liyong@ios.ac.cn)
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2013-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
@@ -27,16 +28,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.inclusion;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import java.util.Stack;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
@@ -57,7 +53,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 
 /**
- * A nested word automaton with reachable states information.
+ * A generalized nested word automaton with reachable states information.
+ * For now, we only support generalized word automata.
  *
  * @author Yong Li (liyong@ios.ac.cn)
  * @param <LETTER>

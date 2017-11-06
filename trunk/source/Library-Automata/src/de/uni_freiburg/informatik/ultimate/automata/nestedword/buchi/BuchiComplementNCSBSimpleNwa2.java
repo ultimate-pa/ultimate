@@ -254,7 +254,7 @@ public class BuchiComplementNCSBSimpleNwa2<LETTER, STATE> implements INwaSuccess
 
 	@Override
 	public String sizeInformation() {
-		return "size Information not available";
+		return "State size: " + mSetOfStates.getStates().size();
 	}
 
 	@Override

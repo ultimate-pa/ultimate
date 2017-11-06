@@ -68,7 +68,7 @@ public abstract class AbstractGeneralizedBuchiDifference<LETTER, STATE> extends 
 		// first we get the complement
 		final BuchiComplementNCSBSimpleNwa<LETTER, STATE> onDemandComplemented = new BuchiComplementNCSBSimpleNwa<>(mServices, stateFactory, mSndOperand);
 		Options.lazyS = true;
-		Options.lazyB = true;
+		Options.lazyB = false;
 		mSndComplemented = new ComplementNwaOutgoingLetterAndTransitionAdapter<LETTER, STATE>(onDemandComplemented);
 		constructDifferenceFromComplement(stateFactory);
 	}
