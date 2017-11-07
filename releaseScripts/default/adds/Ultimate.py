@@ -124,6 +124,13 @@ class PropParser:
     def get_ltl_formula(self):
         return self.ltlformula
 
+class AbortButPrint(Exception):
+    def __init__(self, value):
+        self.value = value
+
+    def __str__(self):
+        return repr(self.value)
+
 
 def check_string_contains(strings, words):
     for string in strings:
@@ -356,7 +363,7 @@ def get_settings_path(bitprecise, settings_search_string):
     if settings_argument == '' or settings_argument is None:
         print('No suitable settings file found using ' + settings_search_string)
         print('ERROR: UNSUPPORTED PROPERTY')
-        sys.exit(1)
+        raise AbortButPrint('ERROR: UNSUPPORTED PROPERTY')
     return settings_argument
 
 
@@ -516,7 +523,11 @@ def main():
 
     toolchain_file = get_toolchain_path(prop, validate_witness)
     settings_search_string = create_settings_search_string(prop, architecture)
-    settings_file = get_settings_path(False, settings_search_string)
+    try:
+        settings_file = get_settings_path(False, settings_search_string)
+    except AbortButPrint:
+        # just abort, there is nothing to print left 
+        sys.exit(1)
 
     # create manual settings that override settings files for witness passthrough (collecting various things)
     # and for witness validation
@@ -534,14 +545,18 @@ def main():
     result, result_msg, overapprox, ultimate_output, error_path = run_ultimate(ultimate_call, prop)
 
     if overapprox:
-        # we did fail because we had to overapproximate. Lets rerun with bit-precision 
-        print('Retrying with bit-precise analysis')
-        settings_file = get_settings_path(True, settings_search_string)
-        ultimate_call = create_ultimate_call(ultimate_bin,
-                                             ['-tc', toolchain_file, '-i', input_files, '-s', settings_file,
-                                              cli_arguments])
-        result, result_msg, overapprox, ultimate_bitprecise_output, error_path = run_ultimate(ultimate_call, prop)
-        ultimate_output = ultimate_output + '\n### Bit-precise run ###\n' + ultimate_bitprecise_output
+        try:
+            settings_file = get_settings_path(True, settings_search_string)
+        except AbortButPrint:
+            # there is no settings file for a bit-precise run 
+        else:
+            # we did fail because we had to overapproximate. Lets rerun with bit-precision 
+            print('Retrying with bit-precise analysis')
+            ultimate_call = create_ultimate_call(ultimate_bin,
+                                                 ['-tc', toolchain_file, '-i', input_files, '-s', settings_file,
+                                                  cli_arguments])
+            result, result_msg, overapprox, ultimate_bitprecise_output, error_path = run_ultimate(ultimate_call, prop)
+            ultimate_output = ultimate_output + '\n### Bit-precise run ###\n' + ultimate_bitprecise_output
 
     # summarize results
     if write_ultimate_output_to_file:
