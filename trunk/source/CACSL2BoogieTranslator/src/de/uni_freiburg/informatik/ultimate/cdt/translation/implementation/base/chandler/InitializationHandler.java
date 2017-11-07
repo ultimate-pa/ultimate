@@ -52,8 +52,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.AExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.BitvectorTranslation;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType.Type;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CNamed;
@@ -67,6 +65,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionListRecResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.HeapLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
@@ -139,18 +138,364 @@ public class InitializationHandler {
 		}
 
 		if (var == null) {
-			return initVar(loc, main, cType, initializerRaw);
+			return makeVarInitializationNoReturnValue(loc, main, cType, initializerRaw);
 		} else {
-			return initVar(loc, main, var, cType, initializerRaw);
+			return makeVarInitializationWithGivenReturnValue(loc, main, var, cType, initializerRaw);
 		}
+	}
+
+
+	public ExpressionResult initVarNew(final ILocation loc, final Dispatcher main, final LeftHandSide lhsRaw,
+			final CType cTypeRaw, final ExpressionResult initializerRaw) {
+
+		boolean onHeap = false;
+		if (lhsRaw != null && lhsRaw instanceof VariableLHS) {
+			onHeap = ((CHandler) main.mCHandler).isHeapVar(((VariableLHS) lhsRaw).getIdentifier());
+		}
+
+		LRValue lhs = null;
+		if (onHeap) {
+			// lhsRaw must be non-null at this point because of the above code that determined "onHeap"
+			lhs = new HeapLValue(new IdentifierExpression(loc, ((VariableLHS) lhsRaw).getIdentifier()), cTypeRaw);
+		} else {
+			lhs = lhsRaw == null ? null : new LocalLValue(lhsRaw, cTypeRaw);
+		}
+
+
+		return initVarRec(loc, main, cTypeRaw, initializerRaw, onHeap, lhs);
+	}
+
+	private ExpressionResult initVarRec(final ILocation loc, final Dispatcher main, final CType cTypeRaw,
+			final ExpressionResult initializerRaw, final boolean onHeap, final LRValue lhs) {
+		final CType cType = cTypeRaw.getUnderlyingType();
+
+		if (cType instanceof CPrimitive || cType instanceof CEnum || cType instanceof CPointer) {
+			/*
+			 * We are dealing with an initialization of a value with non-struct type.
+			 * We construct a builder from the given initializer which will later constitute the initialization code,
+			 * i.e, the result of this method
+			 * The initializerRaw may already contain some statements and declarations that we need to carry over (for
+			 *  example if the C code contained a function call), so we carry those over into the builder.
+			 */
+			assert !(initializerRaw instanceof ExpressionListRecResult);
+			ExpressionResultBuilder initializer = null;
+			if (initializerRaw != null ) {
+				final ExpressionResult initializerRawSwitched =
+						initializerRaw.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
+				initializerRawSwitched.rexBoolToIntIfNecessary(loc, mExpressionTranslation);
+				// TODO: why do we need to do this?
+				main.mCHandler.convert(loc, initializerRawSwitched, cType);
+
+				initializer = new ExpressionResultBuilder();
+				initializer.addStatements(initializerRawSwitched.getStatements());
+				initializer.addDeclarations(initializerRawSwitched.getDeclarations());
+				initializer.addOverapprox(initializerRawSwitched.getOverapprs());
+				initializer.putAuxVars(initializerRawSwitched.getAuxVars());
+				initializer.setLRVal(initializerRawSwitched.getLrValue());
+				assert initializerRawSwitched.otherUnionFields == null || initializerRawSwitched.otherUnionFields.isEmpty();
+			}
+
+			if (cType instanceof CPrimitive) {
+				return initCPrimitiveOrCEnum(loc, main, lhs, onHeap, cType, initializer);
+			} else if (cType instanceof CEnum) {
+				return initCPrimitiveOrCEnum(loc, main, lhs, onHeap, cType, initializer);
+//				return initCEnum(loc, main, lhs, onHeap, (CEnum) cType, initializer);
+			} else if (cType instanceof CPointer) {
+				return initCPointer(loc, main, lhs, onHeap, (CPointer) cType, initializer);
+			} else {
+				throw new UnsupportedOperationException("missing case for simple CType");
+			}
+		} else if (cType instanceof CStruct && onHeap) {
+			return initCStructOnHeap(loc, main, lhs, (CStruct) cType, (ExpressionListRecResult) initializerRaw);
+		} else if (cType instanceof CStruct && !onHeap) {
+			return initCStructOffHeap(loc, main, lhs, (CStruct) cType, (ExpressionListRecResult) initializerRaw);
+		} else if (cType instanceof CArray) {
+			return initCArray(loc, main, lhs, onHeap, cType,
+					initializerRaw == null ? null : ((ExpressionListRecResult) initializerRaw).list);
+		} else {
+			throw new UnsupportedOperationException("missing case for CType");
+		}
+	}
+
+
+	private ExpressionResult initCPrimitiveOrCEnum(final ILocation loc, final Dispatcher main, final LRValue lhsIfAny,
+			final boolean onHeap, final CType cType, final ExpressionResultBuilder initializerIfAny) {
+		assert cType instanceof CPrimitive || cType instanceof CEnum;
+
+		final Expression initializationValue;
+		final ExpressionResultBuilder initializer;
+
+		if (initializerIfAny != null) {
+			// there is initialization code in the C program
+			initializationValue = initializerIfAny.mLrVal.getValue();
+			initializer = initializerIfAny;
+		} else {
+			// there is no initialization code in the C program --> initialize to defaults
+			initializationValue = getDefaultValue(loc, cType);
+			initializer = new ExpressionResultBuilder();
+			initializer.setLRVal(new RValue(initializationValue, cType));
+		}
+
+		if (lhsIfAny != null && onHeap) {
+			initializer.addStatements(mMemoryHandler.getWriteCall(loc, (HeapLValue) lhsIfAny, initializationValue,
+					cType));
+		} else if (lhsIfAny != null && !onHeap) {
+			final AssignmentStatement assignment =
+					new AssignmentStatement(loc,
+							new LeftHandSide[] { ((LocalLValue) lhsIfAny).getLHS() },
+							new Expression[] { initializationValue });
+			addOverApprToStatementAnnots(initializer.mOverappr, assignment);
+			initializer.addStatement(assignment);
+		}
+
+		return initializer.build();
+	}
+
+
+
+//	private ExpressionResult initCEnum(final ILocation loc, final Dispatcher main, final LRValue lhsIfAny,
+//			final boolean onHeap, final CEnum cType, final ExpressionResultBuilder initializerIfAny) {
+//
+//		final Expression initializationValue;
+//		final ExpressionResultBuilder initializer;
+//
+//		if (initializerIfAny != null) {
+//			// there is initialization code in the C program
+//			initializationValue = initializerIfAny.mLrVal.getValue();
+//			initializer = initializerIfAny;
+//		} else {
+//			// there is no initialization code in the C program --> initialize to defaults
+//
+//			// default initialization value for an enum the same as for "int"
+//			initializationValue = getDefaultValue(loc, new CPrimitive(CPrimitives.INT));
+//
+//			initializer = new ExpressionResultBuilder();
+//			initializer.setLRVal(new RValue(initializationValue, cType));
+//		}
+//
+//		if (lhsIfAny != null && onHeap) {
+//			initializer.addStatements(mMemoryHandler.getWriteCall(loc, (HeapLValue) lhsIfAny, initializationValue,
+//					cType));
+//		} else if (lhsIfAny != null && !onHeap) {
+//			final AssignmentStatement assignment =
+//					new AssignmentStatement(loc,
+//							new LeftHandSide[] { ((LocalLValue) lhsIfAny).getLHS() },
+//							new Expression[] { initializationValue });
+//			addOverApprToStatementAnnots(initializer.mOverappr, assignment);
+//			initializer.addStatement(assignment);
+//		}
+//
+//		return initializer.build();
+//	}
+
+	private ExpressionResult initCPointer(final ILocation loc, final Dispatcher main, final LRValue lhsIfAny,
+			final boolean onHeap, final CPointer cType, final ExpressionResultBuilder initializerIfAny) {
+
+		final Expression initializationValue;
+		final ExpressionResultBuilder initializer;
+
+		if (initializerIfAny != null) {
+			// there is initialization code in the C program
+			initializationValue = initializerIfAny.mLrVal.getValue();
+			initializer = initializerIfAny;
+		} else {
+			// there is no initialization code in the C program --> initialize to defaults
+			initializationValue = getDefaultValue(loc, cType);
+			initializer = new ExpressionResultBuilder();
+			initializer.setLRVal(new RValue(initializationValue, cType));
+		}
+
+		if (lhsIfAny != null && onHeap) {
+			initializer.addStatements(mMemoryHandler.getWriteCall(loc, (HeapLValue) lhsIfAny, initializationValue,
+					cType));
+		} else if (lhsIfAny != null && !onHeap) {
+			final AssignmentStatement assignment =
+					new AssignmentStatement(loc,
+							new LeftHandSide[] { ((LocalLValue) lhsIfAny).getLHS() },
+							new Expression[] { initializationValue });
+			addOverApprToStatementAnnots(initializer.mOverappr, assignment);
+			initializer.addStatement(assignment);
+		}
+
+		return initializer.build();
+
+
+		// nolhs
+//		if (initializer == null) {
+//			rhs = mExpressionTranslation.constructNullPointer(loc);
+//		} else {
+//			final CType initializerUnderlyingType = initializer.lrVal.getCType().getUnderlyingType();
+//			if (initializerUnderlyingType instanceof CPointer || initializerUnderlyingType instanceof CArray) {
+//				rhs = initializer.lrVal.getValue();
+//			} else if (initializerUnderlyingType instanceof CPrimitive
+//					&& ((CPrimitive) initializerUnderlyingType).getGeneralType() == CPrimitiveCategory.INTTYPE) {
+//				final BigInteger pointerOffsetValue =
+//						mExpressionTranslation.extractIntegerValue((RValue) initializer.lrVal);
+//				if (pointerOffsetValue == null) {
+//					throw new IllegalArgumentException("unable to understand " + initializer.lrVal);
+//				}
+//				if (pointerOffsetValue.equals(BigInteger.ZERO)) {
+//					rhs = mExpressionTranslation.constructNullPointer(loc);
+//				} else {
+//					final BigInteger pointerBaseValue = BigInteger.ZERO;
+//					rhs = mExpressionTranslation.constructPointerForIntegerValues(loc, pointerBaseValue,
+//							pointerOffsetValue);
+//				}
+//			} else {
+//				throw new AssertionError(
+//						"trying to initialize a pointer with something different from int and pointer");
+//			}
+//		}
+//
+//		lrVal = new RValue(rhs, lCType);
+
+		// lhs
+//		if (initializer == null) {
+//			rhs = mExpressionTranslation.constructNullPointer(loc);
+//		} else {
+//			final CType initializerUnderlyingType = initializer.lrVal.getCType().getUnderlyingType();
+//			if (initializerUnderlyingType instanceof CPointer || initializerUnderlyingType instanceof CArray) {
+//				rhs = initializer.lrVal.getValue();
+//			} else if (initializerUnderlyingType instanceof CPrimitive
+//					&& ((CPrimitive) initializerUnderlyingType).getGeneralType() == CPrimitiveCategory.INTTYPE) {
+//				final BigInteger offsetValue =
+//						mExpressionTranslation.extractIntegerValue((RValue) initializer.lrVal);
+//				if (offsetValue.equals(BigInteger.ZERO)) {
+//					rhs = mExpressionTranslation.constructNullPointer(loc);
+//				} else {
+//					final Expression base = mExpressionTranslation.constructLiteralForIntegerType(loc,
+//							mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
+//					final Expression offset = mExpressionTranslation.constructLiteralForIntegerType(loc,
+//							mExpressionTranslation.getCTypeOfPointerComponents(), offsetValue);
+//					rhs = MemoryHandler.constructPointerFromBaseAndOffset(base, offset, loc);
+//				}
+//			} else {
+//				throw new AssertionError(
+//						"trying to initialize a pointer with something different from int and pointer");
+//			}
+//		}
+//		if (onHeap) {
+//			stmt.addAll(mMemoryHandler.getWriteCall(loc, (HeapLValue) var, rhs, lCType));
+//		} else {
+//			assert lhs != null;
+//			final AssignmentStatement assignment =
+//					new AssignmentStatement(loc, new LeftHandSide[] { lhs }, new Expression[] { rhs });
+//			addOverApprToStatementAnnots(overappr, assignment);
+//			stmt.add(assignment);
+//		}
+
+	}
+	private ExpressionResult initCStructOffHeap(final ILocation loc, final Dispatcher main, final LRValue lhsIfAny,
+			final CStruct cType, final ExpressionListRecResult initializerRaw) {
+		/*
+		 *  list that collects the initialization values for each field
+		 */
+		final ArrayList<Expression> fieldValues = new ArrayList<>();
+		/*
+		 *  builder to collect any auxiliary declarations, statements etc. that may occur during obtaining the field
+		 *  values
+		 */
+		final ExpressionResultBuilder initializer = new ExpressionResultBuilder();
+
+		for (int i = 0; i < cType.getFieldCount(); i++) {
+			final ExpressionResult currentFieldInitializer;
+			{
+				final CType currentFieldUnderlyingType = cType.getFieldTypes()[i].getUnderlyingType();
+				final ExpressionListRecResult	currentFieldInitializerRawIfAny = null; //TODO
+
+				currentFieldInitializer =
+						initVarRec(loc, main, currentFieldUnderlyingType, currentFieldInitializerRawIfAny, false, null);
+			}
+			initializer.addAllExceptLrValue(currentFieldInitializer);
+			fieldValues.add(currentFieldInitializer.getLrValue().getValue());
+		}
+
+		final StructConstructor initializationValue = new StructConstructor(loc,
+				cType.getFieldIds(),
+				fieldValues.toArray(new Expression[fieldValues.size()]));
+
+
+		if (lhsIfAny != null) {
+			final AssignmentStatement assignment =
+					new AssignmentStatement(loc,
+							new LeftHandSide[] { ((LocalLValue) lhsIfAny).getLHS() },
+							new Expression[] { initializationValue });
+			addOverApprToStatementAnnots(initializer.mOverappr, assignment);
+			initializer.addStatement(assignment);
+		} else {
+			initializer.setLRVal(new RValue(initializationValue, cType));
+		}
+
+		return initializer.build();
+	}
+
+	private ExpressionResult initCStructOnHeap(final ILocation loc, final Dispatcher main, final LRValue lhsIfAny,
+			final CStruct cType, final ExpressionListRecResult initializerRaw) {
+
+
+		final ExpressionResultBuilder initializer = new ExpressionResultBuilder();
+
+		final String[] fieldIds = cType.getFieldIds();
+		final CType[] fieldTypes = cType.getFieldTypes();
+
+		// the new Arrays for the StructConstructor
+		final ArrayList<String> fieldIdentifiers = new ArrayList<>();
+		final ArrayList<Expression> fieldValues = new ArrayList<>();
+
+		for (int i = 0; i < cType.getFieldCount(); i++) {
+			fieldIdentifiers.add(fieldIds[i]);
+
+			final CType currentFieldsUnderlyingType = fieldTypes[i].getUnderlyingType();
+
+			final ExpressionResult fieldContents = null;
+
+		}
+
+		return initializer.build();
+
+		// nolhs
+//		final CStruct structType = (CStruct) lCType;
+//
+//		final ExpressionResult scRex =
+//				makeStructConstructorFromRERL(main, loc, (ExpressionListRecResult) initializer, structType);
+//
+//		stmt.addAll(scRex.stmt);
+//		decl.addAll(scRex.decl);
+//		overappr.addAll(scRex.overappr);
+//		auxVars.putAll(scRex.auxVars);
+//		rhs = null;
+//		lrVal = new RValue(rhs, lCType);
+
+		// lhs
+//		final CStruct structType = (CStruct) lCType;
+//
+//		if (onHeap) {
+//			assert var != null;
+//			final ExpressionResult heapWrites = initStructOnHeapFromRERL(main, loc, ((HeapLValue) var).getAddress(),
+//					(ExpressionListRecResult) initializer, structType);
+//
+//			stmt.addAll(heapWrites.stmt);
+//			decl.addAll(heapWrites.decl);
+//			overappr.addAll(heapWrites.overappr);
+//			auxVars.putAll(heapWrites.auxVars);
+//		} else {
+// ...
+//		}
+
+	}
+
+	private ExpressionResult initCArray(final ILocation loc, final Dispatcher main, final LRValue lhsIfAny,
+			final boolean onHeap, final CType cType, final List<ExpressionListRecResult> initializerIfAny) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 	/**
 	 * Helper for variable initialization. This version does not take any form of the initialized variable as an
 	 * argument but instead returns a ResultExpression with an lrValue that can be stored in such a variable.
 	 */
-	private ExpressionResult initVar(final ILocation loc, final Dispatcher main, final CType cType,
-			final ExpressionResult initializerRaw) {
+	private ExpressionResult makeVarInitializationNoReturnValue(final ILocation loc, final Dispatcher main,
+			final CType cType, final ExpressionResult initializerRaw) {
 		final CType lCType = cType.getUnderlyingType();
 
 		final ArrayList<Statement> stmt = new ArrayList<Statement>();
@@ -280,7 +625,7 @@ public class InitializationHandler {
 	 * Same as other initVar but with an LRValue as argument, not a LHS if var is a HeapLValue, something on Heap is
 	 * initialized, if it is a LocalLValue something off the Heap is initialized
 	 */
-	private ExpressionResult initVar(final ILocation loc, final Dispatcher main, final LRValue var, final CType cType,
+	private ExpressionResult makeVarInitializationWithGivenReturnValue(final ILocation loc, final Dispatcher main, final LRValue var, final CType cType,
 			final ExpressionResult initializerRaw) {
 		assert var != null;
 
@@ -499,7 +844,7 @@ public class InitializationHandler {
 		return new ExpressionResult(stmt, null, decl, auxVars, overappr);
 	}
 
-	public static void addOverApprToStatementAnnots(final List<Overapprox> overappr, final Statement stm) {
+	private static void addOverApprToStatementAnnots(final List<Overapprox> overappr, final Statement stm) {
 		for (final Overapprox overapprItem : overappr) {
 			overapprItem.annotate(stm);
 		}
@@ -837,7 +1182,7 @@ public class InitializationHandler {
 						&& (underlyingFieldType instanceof CStruct
 								|| rerl.list.get(0).lrVal.getCType().equals(underlyingFieldType))) {
 					// use the value from the rerl to initialize the union
-					fieldWrites = main.mCHandler.getInitHandler().initVar(loc, main, fieldHlv, underlyingFieldType,
+					fieldWrites = main.mCHandler.getInitHandler().makeVarInitializationWithGivenReturnValue(loc, main, fieldHlv, underlyingFieldType,
 							rerl.list.get(0));
 					unionAlreadyInitialized = true;
 				} else {
@@ -856,10 +1201,10 @@ public class InitializationHandler {
 
 			} else {
 				if (underlyingFieldType instanceof CPrimitive) {
-					fieldWrites = main.mCHandler.getInitHandler().initVar(loc, main, fieldHlv, underlyingFieldType,
+					fieldWrites = main.mCHandler.getInitHandler().makeVarInitializationWithGivenReturnValue(loc, main, fieldHlv, underlyingFieldType,
 							i < rerl.list.size() ? rerl.list.get(i) : null);
 				} else if (underlyingFieldType instanceof CPointer) {
-					fieldWrites = main.mCHandler.getInitHandler().initVar(loc, main, fieldHlv, underlyingFieldType,
+					fieldWrites = main.mCHandler.getInitHandler().makeVarInitializationWithGivenReturnValue(loc, main, fieldHlv, underlyingFieldType,
 							i < rerl.list.size() ? rerl.list.get(i) : null);
 				} else if (underlyingFieldType instanceof CArray) {
 					final ArrayList<Statement> fieldStmt = new ArrayList<Statement>();
@@ -884,7 +1229,7 @@ public class InitializationHandler {
 					fieldWrites = new ExpressionResult(fieldStmt, null, fieldDecl, fieldAuxVars, fieldOverApp);
 				} else if (underlyingFieldType instanceof CEnum) {
 					// like CPrimitive (?)
-					fieldWrites = main.mCHandler.getInitHandler().initVar(loc, main, fieldHlv, underlyingFieldType,
+					fieldWrites = main.mCHandler.getInitHandler().makeVarInitializationWithGivenReturnValue(loc, main, fieldHlv, underlyingFieldType,
 							i < rerl.list.size() ? rerl.list.get(i) : null);
 					// throw new UnsupportedSyntaxException(loc, "..");
 				} else if (underlyingFieldType instanceof CStruct) {
@@ -1046,12 +1391,48 @@ public class InitializationHandler {
 				throw new AssertionError();
 			}
 		}
-		final StructConstructor sc = new StructConstructor(loc, new InferredType(Type.Struct),
+//		final StructConstructor sc = new StructConstructor(loc, new InferredType(Type.Struct),
+		final StructConstructor sc = new StructConstructor(loc, //new InferredType(Type.Struct),
 				fieldIdentifiers.toArray(new String[fieldIdentifiers.size()]),
 				fieldValues.toArray(new Expression[fieldValues.size()]));
 
 		final ExpressionResult result =
 				new ExpressionResult(newStmt, new RValue(sc, structType), newDecl, newAuxVars, newOverappr);
 		return result;
+	}
+
+	private Expression getDefaultValue(final ILocation loc, final CType cType) {
+		if (cType instanceof CPrimitive) {
+			final CPrimitive cPrimitive = (CPrimitive) cType;
+			switch (cPrimitive.getGeneralType()) {
+			case INTTYPE:
+				return mExpressionTranslation.constructLiteralForIntegerType(loc, cPrimitive,
+						BigInteger.ZERO);
+			case FLOATTYPE:
+				// TODO: which methods in expression translation to use??
+				//				if (cPrimitive.getType().equals(CPrimitives.FLOAT)) {
+				//					rhs = mExpressionTranslation.translateFloatingLiteral(loc, "0.0f").getValue();
+				//				} else if (cPrimitive.getType().equals(CPrimitives.DOUBLE)) {
+				//					rhs = mExpressionTranslation.translateFloatingLiteral(loc, "0.0").getValue();
+				//				} else if (cPrimitive.getType().equals(CPrimitives.LONGDOUBLE)) {
+				//					rhs = mExpressionTranslation.translateFloatingLiteral(loc, "0.0l").getValue();
+				//				} else {
+				//					throw new UnsupportedOperationException("UNsopported Floating Type");
+				//				}
+				return mExpressionTranslation.constructLiteralForFloatingType(loc, cPrimitive,
+						BigDecimal.ZERO);
+			case VOID:
+				throw new AssertionError("cannot initialize something that has type void");
+			default:
+				throw new AssertionError("unknown category of type");
+			}
+		} else if (cType instanceof CEnum) {
+			return mExpressionTranslation.constructLiteralForIntegerType(loc, new CPrimitive(CPrimitives.INT),
+					BigInteger.ZERO);
+		} else if (cType instanceof CPointer) {
+			return null; //TODO
+		} else {
+			throw new UnsupportedOperationException("missing case?");
+		}
 	}
 }

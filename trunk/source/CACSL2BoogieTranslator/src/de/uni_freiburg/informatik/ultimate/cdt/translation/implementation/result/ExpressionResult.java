@@ -35,6 +35,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.resul
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -53,7 +54,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructConstructor;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.StructLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
@@ -185,13 +185,13 @@ public class ExpressionResult extends Result {
 	 * one it is not used any more.
 	 */
 	public static ExpressionResult copyStmtDeclAuxvarOverapprox(final ExpressionResult... resExprs) {
-		ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 		for (final ExpressionResult resExpr : resExprs) {
 			builder.addStatements(resExpr.stmt);
 			builder.addDeclarations(resExpr.decl);
 			builder.putAuxVars(resExpr.auxVars);
 			builder.addOverapprox(resExpr.overappr);
-			if (resExpr.otherUnionFields != null 
+			if (resExpr.otherUnionFields != null
 					&& !resExpr.otherUnionFields.isEmpty()) {
 				builder.addNeighbourUnionFields(resExpr.otherUnionFields);
 			}
@@ -632,9 +632,34 @@ public class ExpressionResult extends Result {
 			// do nothing
 		}
 	}
-	
+
 	@Override
 	public String toString() {
 		return "ExpressionResult, LrVal: " + lrVal.toString();
 	}
+
+	public LRValue getLrValue() {
+		return lrVal;
+	}
+
+	public Collection<Statement> getStatements() {
+		return Collections.unmodifiableCollection(stmt);
+	}
+
+	public Collection<Declaration> getDeclarations() {
+		return Collections.unmodifiableCollection(decl);
+	}
+
+	public Collection<Overapprox> getOverapprs() {
+		return Collections.unmodifiableCollection(overappr);
+	}
+
+	public Map<VariableDeclaration, ILocation> getAuxVars() {
+		return Collections.unmodifiableMap(auxVars);
+	}
+
+	public Collection<ExpressionResult> getNeighbourUnionFields() {
+		return Collections.unmodifiableCollection(otherUnionFields);
+	}
+
 }
