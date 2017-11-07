@@ -156,7 +156,6 @@ public class UtilFixedCounterexample<LETTER, STATE> {
 		if(!dir.exists()) return ;
 		final String fileName = PATH + "/" + name + iteration;
         File file = new File(fileName);
-		if(!file.exists()) return;
         writeWordToFile(lassoRun.getNestedLassoWord(), file);
 	}
 	
