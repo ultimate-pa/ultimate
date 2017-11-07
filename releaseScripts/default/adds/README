@@ -7,21 +7,29 @@ https://github.com/ultimate-pa/ultimate
 https://ultimate.informatik.uni-freiburg.de/
 
 Maintainers:
-dietsch@informatik.uni-freiburg.de
-heizmann@informatik.uni-freiburg.de
-nutz@informatik.uni-freiburg.de
-greitsch@informatik.uni-freiburg.de
-schillic@informatik.uni-freiburg.de
+Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+Alexander Nutz (nutz@informatik.uni-freiburg.de)
+Marius Greitschus (greitsch@informatik.uni-freiburg.de)
+Christian Schilling (schillic@informatik.uni-freiburg.de)
 
 This archive also contains binaries for different theorem provers:
- * Z3 (https://github.com/Z3Prover/z3 master 870017e2ceb5da85f5c7314bd7b35ca865af9a97)
- * CVC4 (http://cvc4.cs.nyu.edu/, 04-Aug-2016 05:31)
+ * Z3 (https://github.com/Z3Prover/z3) 
+   - Linux
+     master 861a0745
+   - Windows
+     master 870017e2ceb5da85f5c7314bd7b35ca865af9a97
+ * CVC4 (http://cvc4.cs.nyu.edu/)
+   04-Aug-2016 05:31
  * MathSAT5 (http://mathsat.fbk.eu)  
-	Windows: MathSAT5 version 84cb666a6c83 (Jul 12 2017 09:48:48, gmp 5.0.1, gcc 6.3.0, 64-bit)
-	Linux: MathSAT5 version 84cb666a6c83 (Jul 12 2017 09:38:53, gmp 5.1.3, gcc 4.8.4, 64-bit)
+   - Windows
+     MathSAT5 version 84cb666a6c83 
+     (Jul 12 2017 09:48:48, gmp 5.0.1, gcc 6.3.0, 64-bit)
+   - Linux 
+     MathSAT5 version 84cb666a6c83 
+     (Jul 12 2017 09:38:53, gmp 5.1.3, gcc 4.8.4, 64-bit)
 
-
---------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 
 1. Requirements
 You require a working version of Python2.7. Its executable should be present in
@@ -30,31 +38,37 @@ your PATH variable.
 2. Usage
 This Ultimate tool should be called by the Python wrapper script Ultimate.py. 
 The script supports the input parameters that are used in the SV-COMP and
-whould be invoked as follows.
+should be invoked as follows.
 
- $ ./Ultimate.py <propfile> <inputfile> <architecture>
+ $ ./Ultimate.py --spec <propfile> --file <inputfile> --architecture <architecture>
 
 where
  * <propfile> is a property file, usually with the ending *.prp,
  * <inputfile> is a C program,
- * <architecture> is either '32bit' or '64bit' (without quotes), and
+ * <architecture> is either '32bit' or '64bit' (without quotes).
 
-The output of the Ultimate tool is written to the file Ultimate.log and the
-result is written to stdout. 
+Additional information can be found by invoking 
+ $ ./Ultimate.py --help
+ 
+The output of the Ultimate tool is written to the file "Ultimate.log" in the
+current working directory and the result is written to stdout. 
 
-If the checked property, specified in the property file, does not hold, a human
-readable counterexample is written to UltimateCounterExample.errorpath and an
-error witness is written to witness.graphml.
+If the property specified in the property file does not hold, a human
+readable counterexample is written to UltimateCounterExample.errorpath.
+
+Ultimate writes for many properties a violation or correctness witness to the
+file witness.graphml.
 
 3. Choosing the right parameters
 3.1 Property files 
-You can use property files as defined by SV-COMP'17 (https://sv-comp.sosy-lab.org/2017/rules.php and 
+You can use property files as defined by SV-COMP'17 
+(https://sv-comp.sosy-lab.org/2017/rules.php and 
 https://github.com/sosy-lab/sv-benchmarks/releases/tag/svcomp17). 
  * PropertyMemSafety.prp
    The result is 'TRUE' iff all pointer dereferences are valid,
-   all deallocations are valid, and all allocated memory is eventually freed. 
+   all deallocations are valid, and all allocated memory is eventually freed.
  * PropertyOverflow.prp
-   The result is 'TRUE' iff no operations on signed integers results in an 
+   The result is 'TRUE' iff no operations on signed integers results in an
    overflow. (Operations on unsigned integers are not checked as their
    behaviour is always defined by the C standard.)
  * PropertyUnreachCall.prp
@@ -77,9 +91,10 @@ property is violated or not. The output can be one of the following:
   The property holds.
 * FALSE(P)
   Generally means that the property is violated. P specifies which property is
-  violated. If the result is "FALSE(P)", the wrapper script produces the file
-  "UltimateCounterExample.errorpath" in the current working directory. This
-  file contains a counterexample in human-readable form. 
-
-The wrapper script also records the original output of Ultimate in the file
-"Ultimate.log" in the current working directory. 
+  violated.
+* UNKNOWN
+  Ultimate is not able to decide whether the property is satisfied or not.
+* ERROR: MSG
+  Indicates an abnormal termination of Ultimate due to some error. MSG usually
+  describes the error.
+  

@@ -36,7 +36,6 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.function.Supplier;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -76,23 +75,21 @@ public class WitnessManager {
 	}
 
 	/**
-	 * @param funsResultSupplier
-	 *            A collection of functions were each provides a triple (IResult, filename, string that represents a
-	 *            valid SVCOMP witness).
+	 * @param witnessTriples
+	 *            A collection of triples (IResult, filename, string that represents a valid SVCOMP witness).
 	 * @throws IOException
 	 * @throws InterruptedException
 	 */
-	public void run(final Collection<Supplier<Triple<IResult, String, String>>> funsResultSupplier)
+	public void run(final Collection<Triple<IResult, String, String>> witnessTriples)
 			throws IOException, InterruptedException {
 		final IPreferenceProvider ups = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 
 		int cexNo = 0;
 		String suffix = null;
-		for (final Supplier<Triple<IResult, String, String>> funResultSupplier : funsResultSupplier) {
-			final Triple<IResult, String, String> triple = funResultSupplier.get();
-			final IResult cex = triple.getFirst();
-			final String originalFile = triple.getSecond();
-			final String svcompWitness = triple.getThird();
+		for (final Triple<IResult, String, String> witnessTriple : witnessTriples) {
+			final IResult cex = witnessTriple.getFirst();
+			final String originalFile = witnessTriple.getSecond();
+			final String svcompWitness = witnessTriple.getThird();
 
 			final String witnessDir = ups.getString(PreferenceInitializer.LABEL_WITNESS_DIRECTORY);
 			final String witnessFilename = ups.getString(PreferenceInitializer.LABEL_WITNESS_NAME);

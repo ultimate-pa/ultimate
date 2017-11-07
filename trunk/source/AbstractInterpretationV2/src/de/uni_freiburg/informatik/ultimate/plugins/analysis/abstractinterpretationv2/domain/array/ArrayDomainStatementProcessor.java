@@ -21,6 +21,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class ArrayDomainStatementProcessor<STATE extends IAbstractState<STATE>> {
 	private final ArrayDomainExpressionProcessor<STATE> mExpressionProcessor;
@@ -97,7 +98,9 @@ public class ArrayDomainStatementProcessor<STATE extends IAbstractState<STATE>> 
 					final IProgramVarOrConst rightVar = mToolkit.getBoogieVar((IdentifierExpression) newExpr);
 					newSegmentationMap.move(leftVar, rightVar);
 				} else {
-					final Segmentation newSegmentation = oldstate.getSegmentation(newExpr);
+					final Pair<STATE, Segmentation> segmentationPair = oldstate.getSegmentation(newExpr);
+					newSubState = segmentationPair.getFirst();
+					final Segmentation newSegmentation = segmentationPair.getSecond();
 					newSegmentationMap.remove(leftVar);
 					newSegmentationMap.add(leftVar, newSegmentation);
 				}

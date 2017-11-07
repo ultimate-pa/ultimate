@@ -37,4 +37,5 @@ Export-Package: de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstr
  de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences,
  de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck,
  de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling,
- de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.interactive
+ de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.interactive,
+ de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.witnesschecking

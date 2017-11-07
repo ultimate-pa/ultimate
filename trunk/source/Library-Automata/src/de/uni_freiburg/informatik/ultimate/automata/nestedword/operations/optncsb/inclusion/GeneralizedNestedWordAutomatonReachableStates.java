@@ -28,11 +28,8 @@
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.inclusion;
 
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -48,19 +45,14 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.IGeneralizedNwaOu
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.Options;
-
-
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.SummaryReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 
 import gnu.trove.map.TObjectIntMap;
@@ -75,39 +67,25 @@ import gnu.trove.map.hash.TObjectIntHashMap;
  * @param <STATE>
  *            state type
  */
-public class GeneralizedNestedWordAutomatonReachableStates<LETTER, STATE> implements IGeneralizedNestedWordAutomaton<LETTER, STATE>
-                                  , IDoubleDeckerAutomaton<LETTER, STATE> {
+public class GeneralizedNestedWordAutomatonReachableStates<LETTER, STATE> extends AbstractGeneralizedAutomatonReachableStates<LETTER, STATE> {
 	
 	private final IGeneralizedNwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mOperand;
 	
 	protected final IStateFactory<STATE> mStateFactory;
 
-	private final AutomataLibraryServices mServices;
-	private final ILogger mLogger;
-	
-	private final VpAlphabet<LETTER> mVpAlphabet;
-	
-    private int mNumberOfConstructedStates;
-
 	private final Map<STATE, StateContainer<LETTER, STATE>> mStates = new HashMap<>();
 	
-	private final Set<STATE> mInitialStates = new HashSet<>();
-	private final Set<STATE> mFinalStates = new HashSet<>();
-	
 	private final ReachableStatesComputationTarjan mReach;
-	
-	private final Set<STATE> mDownStates = new HashSet<>();
-	
+		
 	public GeneralizedNestedWordAutomatonReachableStates(final AutomataLibraryServices services,
 			final IGeneralizedNwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand) throws AutomataOperationCanceledException {
-		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		super(services, operand.getVpAlphabet());
 		mOperand = operand;
-		mVpAlphabet = operand.getVpAlphabet();
 		mStateFactory = operand.getStateFactory();
 		mDownStates.add(operand.getEmptyStackState());
 		try {
 			mReach = new ReachableStatesComputationTarjan();
+			System.out.println("States number: " + mStates.size());
 		} catch (final ToolchainCanceledException tce) {
 			throw tce;
 		} catch (final Error | RuntimeException e) {
@@ -118,6 +96,7 @@ public class GeneralizedNestedWordAutomatonReachableStates<LETTER, STATE> implem
 		}
 	}
 	
+	@Override
 	protected StateContainer<LETTER, STATE> getStateContainer(STATE state) {
 		return mStates.get(state);
 	}
@@ -135,13 +114,13 @@ public class GeneralizedNestedWordAutomatonReachableStates<LETTER, STATE> implem
 		return cont;
 	}
 	
+	@Override
 	public Boolean isEmpty() {
 		return mReach.isEmpty();
 	}
-	
-	private NestedLassoRun<LETTER, STATE> mLasso = null;
-	
+		
 	// have to use information in tarjan
+	@Override
 	public NestedLassoRun<LETTER, STATE> getNestedLassoRun() throws AutomataOperationCanceledException {
 		if(mReach.isEmpty()) return null;
 		// construct lasso run
@@ -161,17 +140,25 @@ public class GeneralizedNestedWordAutomatonReachableStates<LETTER, STATE> implem
 	
 	class ReachableStatesComputationTarjan {
 		private Tarjan mTarjan ;
+		private Ascc mAscc;
 		
 		public ReachableStatesComputationTarjan() throws AutomataOperationCanceledException {
 			mNumberOfConstructedStates = 0;
 			mTarjan = new Tarjan();
+//			mAscc = new Ascc();
 		}
 		
 		public Boolean isEmpty() {
+			if(mTarjan == null) {
+				return mAscc.mIsEmpty;
+			}
 			return mTarjan.mIsEmpty;
 		}
 		
 		public List<List<STATE>> getLoopList() {
+			if(mTarjan == null) {
+				return mAscc.mSCC;
+			}
 			return mTarjan.mSCC;
 		}
 
@@ -263,6 +250,112 @@ public class GeneralizedNestedWordAutomatonReachableStates<LETTER, STATE> implem
 	    		}
 	        }
 	    }
+	    
+	    private class AsccElem {
+	    	STATE mState;
+	    	Set<Integer> mLabels;
+	    	AsccElem(STATE state, Set<Integer> labels) {
+	    		mState = state;
+	    		mLabels = labels;
+	    	}
+	    }
+	    
+	    private class Ascc {
+	        private int mIndex;
+	        private final Stack<AsccElem> mStack;             // tarjan's stack
+	    	private final Stack<STATE> mActive;
+	    	private final TObjectIntMap<STATE> mDfsnum;
+	        private List<List<STATE>> mSCC;
+	        private Boolean mIsEmpty = null;
+	                
+	        public Ascc() throws AutomataOperationCanceledException {
+	            
+	            this.mStack = new Stack<>();
+	            this.mActive = new Stack<>();
+	            this.mDfsnum = new TObjectIntHashMap<>();
+	            this.mSCC = new ArrayList<>();
+	            this.mIndex = 0;
+	            for(STATE state : mOperand.getInitialStates()) {
+	            	mInitialStates.add(state);
+	                if(! mDfsnum.containsKey(state)){
+	                    strongConnect(state);
+	                }
+	            }
+	            
+	            if(mIsEmpty == null) {
+	                mIsEmpty = true;
+	            }
+	        }
+	        
+	        void strongConnect(STATE state) throws AutomataOperationCanceledException {
+	            
+	    		mStack.push(new AsccElem(state, mOperand.getAcceptanceLabels(state)));
+	    		mDfsnum.put(state, mIndex);
+	    		mActive.push(state);
+	    		
+	    		++ mIndex;	
+	            ++ mNumberOfConstructedStates;
+//	            boolean notEmpty = false;
+	            
+	            StateContainer<LETTER, STATE> cont = getOrAddState(state);
+	            for (final OutgoingInternalTransition<LETTER, STATE> trans : mOperand.internalSuccessors(state)) {
+					if (! getServices().getProgressAwareTimer().continueProcessing()) {
+						final RunningTaskInfo rti = constructRunningTaskInfo();
+						throw new AutomataOperationCanceledException(rti);
+					}
+					STATE succ = trans.getSucc();
+					if(! mDfsnum.containsKey(succ)) {
+						strongConnect(succ); // did not visit succ before
+					}else if(mActive.contains(succ)) {
+						Set<Integer> labels = new HashSet<>();
+                        STATE topState;
+                        do {
+                        	AsccElem elem = mStack.pop();
+                        	topState = elem.mState;
+                        	labels.addAll(elem.mLabels);
+//                            if(labels.size() == getAcceptanceSize()) {
+//                                notEmpty = true;
+//                            }
+                        }while(mDfsnum.get(topState) > mDfsnum.get(succ));
+                        mStack.push(new AsccElem(topState, labels));				
+					}
+					// explore new states, then we should add state information
+					cont.addInternalOutgoing(trans);
+					StateContainer<LETTER, STATE> succSc = getOrAddState(succ);
+					succSc.addInternalIncoming(new IncomingInternalTransition<>(state, trans.getLetter()));
+                }
+
+	    		// found one strongly connected component
+	    		if(mStack.peek().mState.equals(state)){
+	    			
+	    			Set<Integer> labels = mStack.peek().mLabels;
+	    			List<STATE> sccList = new ArrayList<>();
+	    			mStack.pop();
+	    			while(! mActive.empty()){
+	    				STATE stackTop = mActive.pop();
+	    				sccList.add(stackTop);
+	    				if(stackTop.equals(state))
+	    					break;
+	    			}
+
+	    			boolean hasAcc = mOperand.getAcceptanceSize() == labels.size();	    			
+	    			if(sccList.size() == 1 // only has a single state
+	    					&& hasAcc            // it is an accepting states
+	    					) {
+	    				// if there is no self loop
+	    				if(! cont.hashSelfloop()) hasAcc = false;
+	    			}
+	    							
+	    			if(hasAcc) {
+	    				mIsEmpty = false;
+	    				mSCC.add(sccList);
+	    				if(Options.verbose) {
+	    					System.out.println("Loop: " + sccList);
+	    				}
+	    			}
+	    		}
+	        }
+	    }
 	}
 
 
@@ -277,22 +370,10 @@ public class GeneralizedNestedWordAutomatonReachableStates<LETTER, STATE> implem
 		return rti;
 	}
 
-	
 	@Override
 	public Set<STATE> getStates() {
 		return mStates.keySet();
 	}
-
-	@Override
-	public Set<STATE> getInitialStates() {
-		return Collections.unmodifiableSet(mInitialStates);
-	}
-
-	@Override
-	public Collection<STATE> getFinalStates() {
-		return Collections.unmodifiableSet(mFinalStates);
-	}
-
 
 	@Override
 	public Set<LETTER> lettersInternalIncoming(STATE state) {
@@ -315,12 +396,6 @@ public class GeneralizedNestedWordAutomatonReachableStates<LETTER, STATE> implem
 		return mStates.get(state).internalSuccessors(letter);
 	}
 
-
-	@Override
-	public Set<LETTER> getAlphabet() {
-		return mVpAlphabet.getInternalAlphabet();
-	}
-
 	@Override
 	public IStateFactory<STATE> getStateFactory() {
 		return mStateFactory;
@@ -334,11 +409,6 @@ public class GeneralizedNestedWordAutomatonReachableStates<LETTER, STATE> implem
 	@Override
 	public String sizeInformation() {
 		return null;
-	}
-
-	@Override
-	public VpAlphabet<LETTER> getVpAlphabet() {
-		return mVpAlphabet;
 	}
 
 	@Override
@@ -372,139 +442,6 @@ public class GeneralizedNestedWordAutomatonReachableStates<LETTER, STATE> implem
 	public boolean isFinal(STATE state) {
 		return !getAcceptanceLabels(state).isEmpty();
 	}
-
-	@Override
-	public boolean isDoubleDecker(STATE upState, STATE downState) {
-		return mDownStates.contains(downState);
-	}
-
-	@Override
-	public Set<STATE> getDownStates(STATE upState) {
-		return Collections.unmodifiableSet(mDownStates);
-	}
-	
-	private final Set<LETTER> mEmptyLetterSet = new HashSet<>();
-	// ---------------------------------------------------------------------
-	@Override
-	public Set<LETTER> lettersReturn(STATE state) {
-		return mEmptyLetterSet;
-	}
-
-	@Override
-	public Set<LETTER> lettersCallIncoming(STATE state) {
-		return mEmptyLetterSet;
-	}
-
-	@Override
-	public Set<LETTER> lettersReturnIncoming(STATE state) {
-		return mEmptyLetterSet;
-	}
-
-	@Override
-	public Set<LETTER> lettersSummary(STATE state) {
-		return mEmptyLetterSet;
-	}
-	
-	@Override
-	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(STATE state, LETTER letter) {
-		return () -> new Iterator<OutgoingCallTransition<LETTER, STATE>>() {
-			@Override
-			public boolean hasNext() {
-				return false;
-			}
-
-			@Override
-			public OutgoingCallTransition<LETTER, STATE> next() {
-				return null;
-			}
-		};
-	}
-
-	@Override
-	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(STATE state, STATE hier, LETTER letter) {
-		return returnSuccessors(state);
-	}
-
-	@Override
-	public Iterable<IncomingCallTransition<LETTER, STATE>> callPredecessors(STATE succ, LETTER letter) {
-		return callPredecessors(succ);
-	}
-
-	@Override
-	public Iterable<IncomingCallTransition<LETTER, STATE>> callPredecessors(STATE succ) {
-		return () -> new Iterator<IncomingCallTransition<LETTER, STATE>>() {
-			@Override
-			public boolean hasNext() {
-				return false;
-			}
-
-			@Override
-			public IncomingCallTransition<LETTER, STATE> next() {
-				return null;
-			}
-		};
-	}
-
-	@Override
-	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(STATE succ, STATE hier, LETTER letter) {
-		return returnPredecessors(succ);
-	}
-
-	@Override
-	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(STATE succ, LETTER letter) {
-		return returnPredecessors(succ);
-	}
-
-	@Override
-	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(STATE succ) {
-		return () -> new Iterator<IncomingReturnTransition<LETTER, STATE>>() {
-			@Override
-			public boolean hasNext() {
-				return false;
-			}
-
-			@Override
-			public IncomingReturnTransition<LETTER, STATE> next() {
-				return null;
-			}
-		};
-	}
-
-	@Override
-	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(STATE state) {
-		return () -> new Iterator<OutgoingReturnTransition<LETTER, STATE>>() {
-			@Override
-			public boolean hasNext() {
-				return false;
-			}
-
-			@Override
-			public OutgoingReturnTransition<LETTER, STATE> next() {
-				return null;
-			}
-		};
-	}
-
-	@Override
-	public Iterable<SummaryReturnTransition<LETTER, STATE>> summarySuccessors(STATE hier, LETTER letter) {
-		return summarySuccessors(hier);
-	}
-
-	@Override
-	public Iterable<SummaryReturnTransition<LETTER, STATE>> summarySuccessors(STATE hier) {
-		return () -> new Iterator<SummaryReturnTransition<LETTER, STATE>>() {
-			@Override
-			public boolean hasNext() {
-				return false;
-			}
-
-			@Override
-			public SummaryReturnTransition<LETTER, STATE> next() {
-				return null;
-			}
-		};
-	}
-	
 
 
 }

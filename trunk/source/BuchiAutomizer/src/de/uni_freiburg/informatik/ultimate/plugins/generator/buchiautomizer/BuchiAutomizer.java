@@ -56,6 +56,7 @@ public class BuchiAutomizer implements IGenerator {
 	private ILogger mLogger;
 
 	private BuchiAutomizerObserver mObserver;
+	private List<IObserver> mObservers;
 	private ModelType mInputDefinition;
 	private IUltimateServiceProvider mServices;
 	private IToolchainStorage mStorage;
@@ -72,11 +73,13 @@ public class BuchiAutomizer implements IGenerator {
 
 	@Override
 	public void init() {
+		mObserver = new BuchiAutomizerObserver(mServices, mStorage);
+		mObservers = Collections.singletonList((IObserver) mObserver);
 	}
 
 	@Override
 	public ModelQuery getModelQuery() {
-		return ModelQuery.LAST;
+		return ModelQuery.ALL;
 	}
 
 	@Override
@@ -86,7 +89,7 @@ public class BuchiAutomizer implements IGenerator {
 	}
 
 	@Override
-	public void setInputDefinition(ModelType graphType) {
+	public void setInputDefinition(final ModelType graphType) {
 		mInputDefinition = graphType;
 	}
 
@@ -97,8 +100,7 @@ public class BuchiAutomizer implements IGenerator {
 			return Collections.emptyList();
 		} else {
 			mLogger.info("Safety of program was proven or not checked, " + "starting termination analysis");
-			mObserver = new BuchiAutomizerObserver(mServices, mStorage);
-			return Collections.singletonList((IObserver) mObserver);
+			return mObservers;
 		}
 	}
 
@@ -129,7 +131,7 @@ public class BuchiAutomizer implements IGenerator {
 		return new BuchiAutomizerPreferenceInitializer();
 	}
 
-	private boolean programContainsErrors(IResultService service) {
+	private boolean programContainsErrors(final IResultService service) {
 		for (final Entry<String, List<IResult>> entry : service.getResults().entrySet()) {
 			for (final IResult resul : entry.getValue()) {
 				if (resul instanceof CounterExampleResult) {
@@ -141,12 +143,12 @@ public class BuchiAutomizer implements IGenerator {
 	}
 
 	@Override
-	public void setToolchainStorage(IToolchainStorage storage) {
+	public void setToolchainStorage(final IToolchainStorage storage) {
 		mStorage = storage;
 	}
 
 	@Override
-	public void setServices(IUltimateServiceProvider services) {
+	public void setServices(final IUltimateServiceProvider services) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 

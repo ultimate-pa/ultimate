@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncs
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.Options;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.automata.IBuchiWa;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.inclusion.BuchiWaDifferenceAscc;
+//import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.inclusion.BuchiWaDifferenceAscc;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiComplementNcsbStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiIntersectStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
@@ -114,8 +114,8 @@ public final class BuchiIsIncludedNCSBLazy2<LETTER, STATE> extends BinaryNwaOper
 		IBuchiWa sndBuchi = new WaToBuchiWrapper(letterMap.size(), letterMap, mSndOperand);
 
 		//TODO should be able to terminate the procedure if time exceed the limit
-		BuchiWaDifferenceAscc checker = new BuchiWaDifferenceAscc(fstBuchi, sndBuchi);
-		mResult = checker.isIncluded(); //services
+//		BuchiWaDifferenceAscc checker = new BuchiWaDifferenceAscc(fstBuchi, sndBuchi);
+		mResult = null; //checker.isIncluded(); //services
 		
 		if(mResult == null) {
 			throw new AutomataOperationCanceledException(getClass());

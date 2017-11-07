@@ -57,7 +57,8 @@ public class BuchiCegarLoopBenchmarkGenerator extends CegarLoopStatisticsGenerat
 			new ArrayList<>();
 	private final List<NonterminationAnalysisBenchmark> mNonterminationAnalysisBenchmarks =
 			new ArrayList<>();
-	private int mLassoNonterminationAnalysisSAT = 0;
+	private int mLassoNonterminationAnalysisSATFixpoint = 0;
+	private int mLassoNonterminationAnalysisSATUnbounded = 0;
 	private int mLassoNonterminationAnalysisUNSAT = 0;
 	private int mLassoNonterminationAnalysisUNKOWN = 0;
 	private long mLassoNonterminationAnalysisTime = 0;
@@ -118,8 +119,10 @@ public class BuchiCegarLoopBenchmarkGenerator extends CegarLoopStatisticsGenerat
 			return mPreprocessingBenchmarks;
 		case BuchiCegarLoopBenchmark.s_LassoTerminationAnalysisBenchmarks:
 			return mTerminationAnalysisBenchmarks;
-		case BuchiCegarLoopBenchmark.s_LassoNonterminationAnalysisSAT:
-			return mLassoNonterminationAnalysisSAT;
+		case BuchiCegarLoopBenchmark.s_LassoNonterminationAnalysisSATFixpoint:
+			return mLassoNonterminationAnalysisSATFixpoint;
+		case BuchiCegarLoopBenchmark.s_LassoNonterminationAnalysisSATUnbounded:
+			return mLassoNonterminationAnalysisSATUnbounded;
 		case BuchiCegarLoopBenchmark.s_LassoNonterminationAnalysisUNSAT:
 			return mLassoNonterminationAnalysisUNSAT;
 		case BuchiCegarLoopBenchmark.s_LassoNonterminationAnalysisUNKNOWN:
@@ -143,7 +146,11 @@ public class BuchiCegarLoopBenchmarkGenerator extends CegarLoopStatisticsGenerat
 		for (final NonterminationAnalysisBenchmark nab : lassoCheck.getNonterminationAnalysisBenchmarks()) {
 			switch (nab.getConstraintsSatisfiability()) {
 			case SAT:
-				mLassoNonterminationAnalysisSAT++;
+				if (nab.isFixpoint()) {
+					mLassoNonterminationAnalysisSATFixpoint++;
+				} else {
+					mLassoNonterminationAnalysisSATUnbounded++;
+				}
 				break;
 			case UNKNOWN:
 				mLassoNonterminationAnalysisUNKOWN++;

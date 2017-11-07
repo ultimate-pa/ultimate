@@ -446,7 +446,7 @@ public class CHandler implements ICHandler {
 		// process function body in a second pass
 		final List<IASTNode> complexNodes = new ArrayList<>();
 		for (final IASTNode child : node.getChildren()) {
-			final String raw = child.getRawSignature();
+			// final String raw = child.getRawSignature();
 			if (child instanceof IASTSimpleDeclaration) {
 				final IASTSimpleDeclaration simpleDecl = (IASTSimpleDeclaration) child;
 				if (simpleDecl.getDeclSpecifier() instanceof IASTElaboratedTypeSpecifier
@@ -473,10 +473,9 @@ public class CHandler implements ICHandler {
 		for (final Entry<String, Integer> en : main.getFunctionToIndex().entrySet()) {
 			final String funcId = SFO.FUNCTION_ADDRESS + en.getKey();
 			final VarList varList = new VarList(loc, new String[] { funcId }, mTypeHandler.constructPointerType(loc));
-			decl.add(new ConstDeclaration(loc, new Attribute[0], false, varList, null, false));// would unique make
-																								// sense here?? -- would
-																								// potentially add lots
-																								// of axioms
+			// would unique make sense here?? -- would potentially add lots of axioms
+			decl.add(new ConstDeclaration(loc, new Attribute[0], false, varList, null, false));
+
 			final BigInteger offsetValue = BigInteger.valueOf(en.getValue());
 			decl.add(new Axiom(loc, new Attribute[0], ExpressionFactory.newBinaryExpression(loc,
 					BinaryExpression.Operator.COMPEQ, new IdentifierExpression(loc, funcId), mExpressionTranslation
@@ -541,8 +540,6 @@ public class CHandler implements ICHandler {
 		return new Result(boogieUnit);
 	}
 
-
-
 	private void processTUchild(final Dispatcher main, final ArrayList<Declaration> decl, final IASTNode child) {
 		checkForACSL(main, null, decl, child, null);
 		final Result childRes = main.dispatch(child);
@@ -595,7 +592,7 @@ public class CHandler implements ICHandler {
 		}
 
 		for (final IASTNode child : node.getChildren()) {
-			final String raw = child.getRawSignature();
+			// final String raw = child.getRawSignature();
 			checkForACSL(main, stmt, decl, child, null);
 			final Result r = main.dispatch(child);
 			if (r instanceof ExpressionResult) {
@@ -752,8 +749,8 @@ public class CHandler implements ICHandler {
 				// FunctionHandler.procedures.
 				if (cDec.getType() instanceof CFunction && storageClass != CStorageClass.TYPEDEF) {
 					// update functionHandler.procedures instead of symbol table
-					mFunctionHandler.handleFunctionDeclarator(main, main.getLocationFactory().createCLocation(d), mContract,
-							cDec);
+					mFunctionHandler.handleFunctionDeclarator(main, main.getLocationFactory().createCLocation(d),
+							mContract, cDec);
 					continue;
 				}
 
@@ -1899,13 +1896,13 @@ public class CHandler implements ICHandler {
 
 		final Expression divisorNotZero;
 		if (divisorType.isIntegerType()) {
-			final Expression zero = mExpressionTranslation.constructLiteralForIntegerType(loc, divisorType,
-					BigInteger.ZERO);
+			final Expression zero =
+					mExpressionTranslation.constructLiteralForIntegerType(loc, divisorType, BigInteger.ZERO);
 			divisorNotZero = mExpressionTranslation.constructBinaryEqualityExpression(loc,
 					IASTBinaryExpression.op_notequals, divisor, divisorType, zero, divisorType);
 		} else if (divisorType.isFloatingType()) {
-			final Expression zero = mExpressionTranslation.constructLiteralForFloatingType(loc, divisorType,
-					BigDecimal.ZERO);
+			final Expression zero =
+					mExpressionTranslation.constructLiteralForFloatingType(loc, divisorType, BigDecimal.ZERO);
 			divisorNotZero = mExpressionTranslation.constructBinaryComparisonFloatingPointExpression(loc,
 					IASTBinaryExpression.op_notequals, divisor, divisorType, zero, divisorType);
 		} else {
@@ -1924,7 +1921,6 @@ public class CHandler implements ICHandler {
 		}
 		divisorExpRes.stmt.add(additionalStatement);
 	}
-	
 
 	/**
 	 * Handle additive operators according to Sections 6.5.6 of C11. Assumes that left (resp. right) are the results
@@ -2714,7 +2710,8 @@ public class CHandler implements ICHandler {
 	public Result visit(final Dispatcher main, final IASTCaseStatement node) {
 		final ILocation loc = main.getLocationFactory().createCLocation(node);
 		ExpressionResult c = (ExpressionResult) main.dispatch(node.getExpression());
-		c = c.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, main.getLocationFactory().createCLocation(node));
+		c = c.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler,
+				main.getLocationFactory().createCLocation(node));
 		mExpressionTranslation.convertIntToInt(loc, c, new CPrimitive(CPrimitives.INT));
 		return c;
 	}
@@ -2725,8 +2722,10 @@ public class CHandler implements ICHandler {
 		final ArrayList<Declaration> decl = new ArrayList<>();
 		final Map<VariableDeclaration, ILocation> emptyAuxVars = new LinkedHashMap<>(0);
 		final List<Overapprox> overappr = new ArrayList<>();
-		return new ExpressionResult(stmt, new RValue(new BooleanLiteral(main.getLocationFactory().createCLocation(node), true),
-				new CPrimitive(CPrimitives.INT)), decl, emptyAuxVars, overappr);
+		return new ExpressionResult(stmt,
+				new RValue(new BooleanLiteral(main.getLocationFactory().createCLocation(node), true),
+						new CPrimitive(CPrimitives.INT)),
+				decl, emptyAuxVars, overappr);
 	}
 
 	@Override
@@ -3232,7 +3231,7 @@ public class CHandler implements ICHandler {
 	/**
 	 * add havocs if we have a write to a union (which is not on heap, otherwise the heap model should deal with
 	 * everything)
-	 * 
+	 *
 	 * @param loc
 	 * @param rVal
 	 * @param unionFieldsToCType

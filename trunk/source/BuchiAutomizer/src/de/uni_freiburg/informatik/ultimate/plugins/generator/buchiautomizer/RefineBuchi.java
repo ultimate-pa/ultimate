@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLette
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.AbstractBuchiDifference;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.AbstractGeneralizedBuchiDifference;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiAccepts;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiComplementFKV;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiDifferenceFKV;
@@ -52,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiDiffer
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiDifferenceNCSBSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiIntersect;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiToGeneralizedBuchi;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.GeneralizedBuchiDifferenceNCSBAntichain;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.GeneralizedBuchiDifferenceNCSBSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.MultiOptimizationLevelRankingGenerator.FkvOptimization;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoRun;
@@ -61,6 +63,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsDete
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsSemiDeterministic;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveUnreachable;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.inclusion.BenchmarkRecord;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -236,13 +239,16 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 		if (mDifference) {
 			if (complementationConstruction == BuchiComplementationConstruction.Ncsb) {
 				if (setting.isAlwaysSemiDeterministic()) {
+					BenchmarkRecord.addCounterexampleAutomaton(mIteration, 0, 0, 1);
 					newAbstraction = nsbcDifference(abstraction, setting, benchmarkGenerator);
 				} else {
+					BenchmarkRecord.addCounterexampleAutomaton(mIteration, 0, 0, 0);
 					final FkvOptimization optimization = FkvOptimization.ELASTIC;
 					newAbstraction = rankBasedOptimization(abstraction, setting, benchmarkGenerator, stateDeterminizer,
 							optimization);
 				}
 			} else {
+				BenchmarkRecord.addCounterexampleAutomaton(mIteration, 0, 0, 1);
 				final FkvOptimization optimization;
 				switch (complementationConstruction) {
 				case Elastic:
@@ -292,6 +298,7 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 			// (newDiff.getResult()).sizeInformation());
 
 		} else {
+			BenchmarkRecord.addCounterexampleAutomaton(mIteration, 0, 0, 1);
 			final BuchiComplementFKV<LETTER, IPredicate> complNwa = new BuchiComplementFKV<>(
 					new AutomataLibraryServices(mServices), mStateFactoryInterpolAutom,
 					mInterpolAutomatonUsedInRefinement, stateDeterminizer);
@@ -440,29 +447,48 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 			final BuchiInterpolantAutomatonConstructionStyle setting,
 			final BuchiCegarLoopBenchmarkGenerator benchmarkGenerator) throws AutomataLibraryException {
 		INestedWordAutomaton<LETTER, IPredicate> newAbstraction;
-		final AbstractBuchiDifference<LETTER, IPredicate> diff;
-		GeneralizedBuchiDifferenceNCSBSimple<LETTER, IPredicate> gbaDiff = null;
+		AbstractBuchiDifference<LETTER, IPredicate> diff = null;
+		AbstractGeneralizedBuchiDifference<LETTER, IPredicate> gbaDiff = null;
+		final IGeneralizedNwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> gbaAbstraction;
 		switch (mNcsbImplementation) {
 		case INTSET:
-			if(!abstraction.getVpAlphabet().getReturnAlphabet().isEmpty()
-			|| !abstraction.getVpAlphabet().getCallAlphabet().isEmpty()) {
-				diff = new BuchiDifferenceNCSBSimple<LETTER, IPredicate>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement,
-				abstraction, mInterpolAutomatonUsedInRefinement);
-				break;
-			}
-			final IGeneralizedNwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> gbaAbstraction;
-			if(abstraction instanceof IGeneralizedNwaOutgoingLetterAndTransitionProvider) {
-				gbaAbstraction = (IGeneralizedNwaOutgoingLetterAndTransitionProvider)abstraction;
-			}else {
-				gbaAbstraction = new BuchiToGeneralizedBuchi<LETTER, IPredicate>(abstraction);
-			}
-			gbaDiff = new GeneralizedBuchiDifferenceNCSBSimple<LETTER, IPredicate>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement,
-					gbaAbstraction, mInterpolAutomatonUsedInRefinement);
-			diff = null;
+			diff = new BuchiDifferenceNCSBSimple<LETTER, IPredicate>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement,
+					abstraction, mInterpolAutomatonUsedInRefinement);
 			break;
 		case INTSET_LAZY:
 			diff = new BuchiDifferenceNCSBLazy<LETTER, IPredicate>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement,
 					abstraction, mInterpolAutomatonUsedInRefinement);
+			break;
+		case INTSET_GBA:
+			if(abstraction.getVpAlphabet().getCallAlphabet().isEmpty()
+			&& abstraction.getVpAlphabet().getReturnAlphabet().isEmpty()) {
+				if(abstraction instanceof IGeneralizedNwaOutgoingLetterAndTransitionProvider) {
+					gbaAbstraction = (IGeneralizedNwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate>)abstraction;
+				}else {
+					gbaAbstraction = new BuchiToGeneralizedBuchi<LETTER, IPredicate>(abstraction);
+				}
+				gbaDiff = new GeneralizedBuchiDifferenceNCSBSimple<>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement,
+						gbaAbstraction, mInterpolAutomatonUsedInRefinement);
+			}else {
+				diff = new BuchiDifferenceNCSBLazy3<LETTER, IPredicate>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement,
+						abstraction, mInterpolAutomatonUsedInRefinement);
+			}
+
+			break;
+		case INTSET_GBA_ANTICHAIN:
+			if(abstraction.getVpAlphabet().getCallAlphabet().isEmpty()
+					&& abstraction.getVpAlphabet().getReturnAlphabet().isEmpty()) {
+				if(abstraction instanceof IGeneralizedNwaOutgoingLetterAndTransitionProvider) {
+					gbaAbstraction = (IGeneralizedNwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate>)abstraction;
+				}else {
+					gbaAbstraction = new BuchiToGeneralizedBuchi<LETTER, IPredicate>(abstraction);
+				}
+				gbaDiff = new GeneralizedBuchiDifferenceNCSBAntichain<>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement,
+						gbaAbstraction, mInterpolAutomatonUsedInRefinement);
+			}else {
+				diff = new BuchiDifferenceNCSBLazy3<LETTER, IPredicate>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement,
+						abstraction, mInterpolAutomatonUsedInRefinement);
+			}
 			break;
 		case INTSET_LAZY2:
 			diff = new BuchiDifferenceNCSBLazy2<LETTER, IPredicate>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement,

@@ -134,8 +134,8 @@ public class WitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 		mControlFlowAutomaton = controlFlowAutomaton;
 		mWitnessAutomaton = witnessAutomaton;
 		mPredicateFactory = predicateFactory;
-		mInitialStates = constructInitialStates();
 		mFinalStates = new HashSet<>();
+		mInitialStates = constructInitialStates();
 		mEmptyStackState = stateFactory.createEmptyStackState();
 	}
 
@@ -160,8 +160,7 @@ public class WitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 
 	@Override
 	public int size() {
-		// TODO Auto-generated method stub
-		return 0;
+		return mResult2Product.size();
 	}
 
 	@Override
@@ -331,25 +330,26 @@ public class WitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 
 		final ArrayDeque<WitnessNode> wsSuccStates = new ArrayDeque<>();
 		final Set<WitnessNode> visited = new HashSet<>();
-		wsSuccStates.addAll(skipNonLETTEREdges(ps.getWitnessNode()));
+		wsSuccStates.add(ps.getWitnessNode());
+		visited.add(ps.getWitnessNode());
 		while (!wsSuccStates.isEmpty()) {
 			final WitnessNode ws = wsSuccStates.removeFirst();
 			for (final OutgoingInternalTransition<WitnessEdge, WitnessNode> out : mWitnessAutomaton
 					.internalSuccessors(ws)) {
-				for (final WitnessNode succ : skipNonLETTEREdges(out.getSucc())) {
-					if (!visited.contains(succ)) {
-						visited.add(succ);
-						if (isSink(out.getSucc())) {
-							// successor is sink, do nothing
-						} else {
-							if (isCompatible(cb, out.getLetter())) {
-								mGoodWitnessEdges.add(out.getLetter());
-								final ProductState succProd = getOrConstructProductState(cfgSucc, succ, 0);
-								result.add(succProd.getResultState());
-								wsSuccStates.addLast(succ);
-							} else {
-								mBadWitnessEdges.add(out.getLetter());
+				for (final OutgoingInternalTransition<WitnessEdge, WitnessNode> outLetter : skipNonLETTEREdges(out)) {
+					if (isSink(outLetter.getSucc())) {
+						// successor is sink, do nothing
+					} else {
+						if (isCompatible(cb, outLetter.getLetter())) {
+							mGoodWitnessEdges.add(outLetter.getLetter());
+							final ProductState succProd = getOrConstructProductState(cfgSucc, outLetter.getSucc(), 0);
+							result.add(succProd.getResultState());
+							if (!visited.contains(outLetter.getSucc())) {
+								wsSuccStates.addLast(outLetter.getSucc());
+								visited.add(outLetter.getSucc());
 							}
+						} else {
+							mBadWitnessEdges.add(outLetter.getLetter());
 						}
 					}
 				}
@@ -386,20 +386,16 @@ public class WitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 		return wan.isSink();
 	}
 
-	private Collection<WitnessNode> skipNonLETTEREdges(final WitnessNode node) {
-		final Set<WitnessNode> result = new HashSet<>();
-		boolean hasOutgoingNodes = false;
-		for (final OutgoingInternalTransition<WitnessEdge, WitnessNode> out : mWitnessAutomaton
-				.internalSuccessors(node)) {
-			hasOutgoingNodes = true;
-			if (isLETTEREdge(out.getLetter())) {
-				result.add(node);
-			} else {
-				result.addAll(skipNonLETTEREdges(out.getSucc()));
+	private Collection<OutgoingInternalTransition<WitnessEdge, WitnessNode>> skipNonLETTEREdges(
+			final OutgoingInternalTransition<WitnessEdge, WitnessNode> trans) {
+		final Set<OutgoingInternalTransition<WitnessEdge, WitnessNode>> result = new HashSet<>();
+		if (isLETTEREdge(trans.getLetter())) {
+			result.add(trans);
+		} else {
+			for (final OutgoingInternalTransition<WitnessEdge, WitnessNode> out : mWitnessAutomaton
+					.internalSuccessors(trans.getSucc())) {
+				result.addAll(skipNonLETTEREdges(out));	
 			}
-		}
-		if (!hasOutgoingNodes) {
-			result.add(node);
 		}
 		return result;
 	}
@@ -503,5 +499,5 @@ public class WitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 		sb.append(correspondingLocations);
 		return sb.toString();
 	}
-
+	
 }

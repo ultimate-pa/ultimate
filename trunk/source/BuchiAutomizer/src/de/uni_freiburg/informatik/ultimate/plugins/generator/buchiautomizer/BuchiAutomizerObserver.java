@@ -37,7 +37,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoRun;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoWord;
 import de.uni_freiburg.informatik.ultimate.boogie.annotation.LTLPropertyCheck;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.FixpointNonTerminationResult;
@@ -53,9 +55,11 @@ import de.uni_freiburg.informatik.ultimate.core.lib.results.TimeoutResultAtEleme
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType.Type;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
@@ -75,47 +79,74 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiCegarLoop.Result;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.BuchiAutomizerPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgProgramExecution;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.witnesschecking.WitnessModelToAutomatonTransformer;
+import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AutomataTestFileAST;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.SimpleCsvProvider;
+import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdge;
+import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 
 /**
  * Auto-Generated Stub for the plug-in's Observer
  */
 public class BuchiAutomizerObserver implements IUnmanagedObserver {
 
-	private TAPreferences mPref;
-
-	private IIcfg<?> mIcfg;
+	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
+
+	private final List<IIcfg<?>> mIcfgs;
+	private IElement mRootOfNewModel;
+	private WitnessNode mWitnessNode;
+	private final List<AutomataTestFileAST> mAutomataTestFileAsts;
+	private boolean mLastModel;
 	private final IToolchainStorage mStorage;
+	private ModelType mCurrentGraphType;
+
 
 	public BuchiAutomizerObserver(final IUltimateServiceProvider services, final IToolchainStorage storage) {
 		mServices = services;
 		mStorage = storage;
+		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		mLastModel = false;
+		mIcfgs = new ArrayList<>();
+		mAutomataTestFileAsts = new ArrayList<>();
 	}
 
 	@Override
 	public boolean process(final IElement root) throws IOException {
-		if (!(root instanceof IIcfg<?>)) {
-			return false;
+		if (root instanceof IIcfg<?>) {
+			mIcfgs.add((IIcfg<?>) root);
 		}
-		mIcfg = (IIcfg<?>) root;
+		if (root instanceof WitnessNode && mCurrentGraphType.getType() == Type.VIOLATION_WITNESS) {
+			if (mWitnessNode == null) {
+				mWitnessNode = (WitnessNode) root;
+			} else {
+				throw new UnsupportedOperationException("two witness models");
+			}
+		}
+		if (root instanceof AutomataTestFileAST) {
+			mAutomataTestFileAsts.add((AutomataTestFileAST) root);
+		}
+		return false;
+	}
+
+	private IIcfg<?> doTerminationAnalysis(final IIcfg<?> icfg, final INestedWordAutomaton<WitnessEdge, WitnessNode> witnessAutomaton) throws IOException, AssertionError {
 		final TAPreferences taPrefs = new TAPreferences(mServices);
 
-		mPref = taPrefs;
-		final RankVarConstructor rankVarConstructor = new RankVarConstructor(mIcfg.getCfgSmtToolkit());
+		final RankVarConstructor rankVarConstructor = new RankVarConstructor(icfg.getCfgSmtToolkit());
 		final PredicateFactory predicateFactory =
-				new PredicateFactory(mServices, mIcfg.getCfgSmtToolkit().getManagedScript(),
+				new PredicateFactory(mServices, icfg.getCfgSmtToolkit().getManagedScript(),
 						rankVarConstructor.getCsToolkitWithRankVariables().getSymbolTable(),
 						taPrefs.getSimplificationTechnique(), taPrefs.getXnfConversionTechnique());
 
-		final BuchiCegarLoop<?> bcl = new BuchiCegarLoop<>(mIcfg, mIcfg.getCfgSmtToolkit(), rankVarConstructor,
-				predicateFactory, mPref, mServices, mStorage);
+		final BuchiCegarLoop<?> bcl = new BuchiCegarLoop<>(icfg, icfg.getCfgSmtToolkit(), rankVarConstructor,
+				predicateFactory, taPrefs, mServices, mStorage, witnessAutomaton);
 		final Result result = bcl.iterate();
 		final BuchiCegarLoopBenchmarkGenerator benchGen = bcl.getBenchmarkGenerator();
 		benchGen.stop(CegarLoopStatisticsDefinitions.OverallTime.toString());
@@ -136,15 +167,20 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		final IResult benchTiming = new StatisticsResult<>(Activator.PLUGIN_ID, "Timing statistics", timingBenchmark);
 		reportResult(benchTiming);
 
-		interpretAndReportResult(bcl, result);
-		return false;
+		interpretAndReportResult(bcl, result, icfg);
+		return icfg;
 	}
 
 	/**
 	 * Report a nontermination argument back to Ultimate's toolchain
+	 * @param nestedLassoWord 
 	 */
-	private void reportNonTerminationResult(final IcfgLocation honda, final NonTerminationArgument nta) {
-		final NonTerminationArgumentResult<IIcfgElement, Term> result;
+	private void reportNonTerminationResult(final IcfgLocation honda, final NonTerminationArgument nta,
+			final NestedLassoWord<? extends IIcfgTransition<?>> nestedLassoWord) {
+		final IcfgProgramExecution stemExecution = new IcfgProgramExecution(nestedLassoWord.getStem().asList(), Collections.emptyMap());
+		final IcfgProgramExecution loopExecution = new IcfgProgramExecution(nestedLassoWord.getLoop().asList(), Collections.emptyMap());
+		final NonTerminationArgumentResult<IcfgEdge, Term> result;
+		final IcfgEdge honda1 = (IcfgEdge) nestedLassoWord.getLoop().getSymbol(0);
 		if (nta instanceof GeometricNonTerminationArgument) {
 			final GeometricNonTerminationArgument gnta = (GeometricNonTerminationArgument) nta;
 			// TODO: translate also the rational coefficients to Expressions?
@@ -157,24 +193,25 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 			states.addAll(gnta.getGEVs());
 			final List<Map<Term, Rational>> initHondaRays = BacktranslationUtil.rank2Rcfg(states);
 
-			result = new GeometricNonTerminationArgumentResult<>(honda, Activator.PLUGIN_NAME, initHondaRays.get(0),
+			result = new GeometricNonTerminationArgumentResult<>(honda1, Activator.PLUGIN_NAME, initHondaRays.get(0),
 					initHondaRays.get(1), initHondaRays.subList(2, initHondaRays.size()), gnta.getLambdas(),
-					gnta.getNus(), getBacktranslationService(), Term.class);
+					gnta.getNus(), getBacktranslationService(), Term.class, stemExecution, loopExecution);
 		} else if (nta instanceof InfiniteFixpointRepetition) {
 			final InfiniteFixpointRepetition ifr = (InfiniteFixpointRepetition) nta;
-			result = new FixpointNonTerminationResult<>(honda, Activator.PLUGIN_NAME, ifr.getValuesAtInit(),
-					ifr.getValuesAtHonda(), getBacktranslationService(), Term.class);
+			
+			result = new FixpointNonTerminationResult<IcfgEdge, Term>(honda1, Activator.PLUGIN_NAME, ifr.getValuesAtInit(),
+					ifr.getValuesAtHonda(), getBacktranslationService(), Term.class, stemExecution, loopExecution);
 		} else {
 			throw new IllegalArgumentException("unknown TerminationArgument");
 		}
 		reportResult(result);
 	}
 
-	private void interpretAndReportResult(final BuchiCegarLoop<?> bcl, final Result result) throws AssertionError {
+	private void interpretAndReportResult(final BuchiCegarLoop<?> bcl, final Result result, final IIcfg<?> icfg) throws AssertionError {
 		String whatToProve = "termination";
 
 		if (bcl.isInLTLMode()) {
-			final LTLPropertyCheck ltlAnnot = LTLPropertyCheck.getAnnotation(mIcfg);
+			final LTLPropertyCheck ltlAnnot = LTLPropertyCheck.getAnnotation(icfg);
 			switch (result) {
 			case NONTERMINATING:
 				// there is a violation of the LTL property
@@ -213,7 +250,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 					new TerminationAnalysisResult(Activator.PLUGIN_ID, Termination.UNKNOWN, longDescr.toString());
 			reportResult(reportRes);
 		} else if (result == Result.TIMEOUT) {
-			final IcfgLocation position = mIcfg.getProcedureEntryNodes().values().iterator().next();
+			final IcfgLocation position = icfg.getProcedureEntryNodes().values().iterator().next();
 			final String longDescr = "Timeout while trying to prove " + whatToProve + ". "
 					+ bcl.getToolchainCancelledException().printRunningTaskMessage();
 			final IResult reportRes = new TimeoutResultAtElement<IIcfgElement>(position, Activator.PLUGIN_ID,
@@ -229,7 +266,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 			final IPredicate hondaPredicate = counterexample.getLoop().getStateAtPosition(0);
 			final IcfgLocation honda = ((ISLPredicate) hondaPredicate).getProgramPoint();
 			final NonTerminationArgument nta = bcl.getNonTerminationArgument();
-			reportNonTerminationResult(honda, nta);
+			reportNonTerminationResult(honda, nta, counterexample.getNestedLassoWord());
 			reportResult(new StatisticsResult<>(Activator.PLUGIN_NAME, "NonterminationBenchmark",
 					new NonterminationBenchmark(nta)));
 
@@ -327,13 +364,35 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 	}
 
 	@Override
-	public void finish() {
-		// not needed
+	public void finish() throws IOException {
+		if (mLastModel) {
+			@SuppressWarnings("unchecked")
+			final IIcfg<IcfgLocation> rcfgRootNode = (IIcfg<IcfgLocation>) mIcfgs.stream()
+					.filter(a -> IcfgLocation.class.isAssignableFrom(a.getLocationClass())).reduce((a, b) -> b)
+					.orElseThrow(UnsupportedOperationException::new);
+
+			if (rcfgRootNode == null) {
+				throw new UnsupportedOperationException("TraceAbstraction needs an RCFG");
+			}
+			mLogger.info("Analyzing ICFG " + rcfgRootNode.getIdentifier());
+			INestedWordAutomaton<WitnessEdge, WitnessNode> witnessAutomaton;
+			if (mWitnessNode == null) {
+				witnessAutomaton = null;
+			} else {
+				mLogger.warn(
+						"Found a witness automaton. I will only consider traces that are accepted by the witness automaton");
+				witnessAutomaton = new WitnessModelToAutomatonTransformer(mWitnessNode, mServices).getResult();
+			}
+			mRootOfNewModel = doTerminationAnalysis(rcfgRootNode, witnessAutomaton);
+		}
 	}
 
 	@Override
 	public void init(final ModelType modelType, final int currentModelIndex, final int numberOfModels) {
-		// not needed
+		mCurrentGraphType = modelType;
+		if (currentModelIndex == numberOfModels - 1) {
+			mLastModel = true;
+		}
 	}
 
 	@Override
@@ -342,7 +401,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 	}
 
 	public IElement getModel() {
-		return mIcfg;
+		return mRootOfNewModel;
 	}
 
 	// public static TransFormula sequentialComposition(int serialNumber,

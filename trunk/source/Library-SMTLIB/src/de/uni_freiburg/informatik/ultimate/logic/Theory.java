@@ -546,18 +546,18 @@ public class Theory {
 		return mLogic;
 	}
 
-	FunctionSymbol declareInternalFunction(final String name, final Sort[] paramTypes, final Sort resultType,
+	public FunctionSymbol declareInternalFunction(final String name, final Sort[] paramTypes, final Sort resultType,
 			final int flags) {
 		return defineFunction(name, paramTypes, resultType, null, null, flags | FunctionSymbol.INTERNAL);
 	}
 
-	FunctionSymbol declareInternalFunction(final String name, final Sort[] paramTypes, final TermVariable[] defVars,
+	public FunctionSymbol declareInternalFunction(final String name, final Sort[] paramTypes, final TermVariable[] defVars,
 			final Term definition, final int flags) {
 		return defineFunction(name, paramTypes, definition.getSort(), defVars, definition,
 				flags | FunctionSymbol.INTERNAL);
 	}
 
-	PolymorphicFunctionSymbol declareInternalPolymorphicFunction(final String name, final Sort[] sortParams,
+	public PolymorphicFunctionSymbol declareInternalPolymorphicFunction(final String name, final Sort[] sortParams,
 			final Sort[] paramTypes, final Sort resultType, final int flags) {
 		assert !mFunFactory.containsKey(name);
 		final PolymorphicFunctionSymbol f = new PolymorphicFunctionSymbol(name, sortParams, paramTypes, resultType,
@@ -1204,7 +1204,7 @@ public class Theory {
 		return sorts;
 	}
 
-	SortSymbol declareInternalSort(final String name, final int paramCount, final int flags) {
+	public SortSymbol declareInternalSort(final String name, final int paramCount, final int flags) {
 		return defineSort(name, paramCount, null, flags | SortSymbol.INTERNAL);
 	}
 

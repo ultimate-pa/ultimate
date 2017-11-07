@@ -81,7 +81,7 @@ public class BuchiToGeneralizedBuchi<LETTER, STATE> implements IGeneralizedNwaOu
 
 	@Override
 	public boolean isFinal(STATE state, int index) {
-		if(index > 0 && index < 0) return false;
+		if(index > 0 || index < 0) return false;
 		return mOperand.isFinal(state);
 	}
 

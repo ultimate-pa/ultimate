@@ -4248,11 +4248,6 @@
 		<include>/storage/svcomp/c/ldv-memsafety/ArraysWithLenghtAtDeclaration_false-valid-deref-write.c</include>
 		<include>/storage/svcomp/c/ldv-memsafety/ArraysOfVariableLength2_false-valid-deref-read.c</include>
 		<include>/storage/svcomp/c/ldv-memsafety/memset_false-valid-deref-write.c</include>
-		<include>/storage/svcomp/c/ldv-memsafety/memleaks-notpreprocessed/memleaks_test14_3_false-valid-deref.c</include>
-		<include>/storage/svcomp/c/ldv-memsafety/memleaks-notpreprocessed/memleaks_test23_2_false-valid-deref.c</include>
-		<include>/storage/svcomp/c/ldv-memsafety/memleaks-notpreprocessed/memleaks_test22_5_false-valid-deref.c</include>
-		<include>/storage/svcomp/c/ldv-memsafety/memleaks-notpreprocessed/memleaks_test22_3_false-valid-deref.c</include>
-		<include>/storage/svcomp/c/ldv-memsafety/memleaks-notpreprocessed/memleaks_test23_4_false-valid-deref.c</include>
 		<include>/storage/svcomp/c/ldv-memsafety/ArraysOfVariableLength_false-valid-deref-read.c</include>
 		<include>/storage/svcomp/c/ldv-memsafety/memset2_false-valid-deref-write.c</include>
 		<include>/storage/svcomp/c/ldv-memsafety/memsetNonZero3_false-valid-deref-write.c</include>
@@ -4266,32 +4261,6 @@
 		<include>/storage/svcomp/c/ldv-memsafety/StructInitialization1_true-valid-memsafety.c</include>
 		<include>/storage/svcomp/c/ldv-memsafety/memsetNonZero2_true-valid-memsafety.c</include>
 		<include>/storage/svcomp/c/ldv-memsafety/StructInitialization_true-valid-memsafety.c</include>
-		<include>/storage/svcomp/c/ldv-memsafety/memleaks-notpreprocessed/memleaks_test11_true-valid-memsafety.c</include>
-		<include>/storage/svcomp/c/ldv-memsafety/memleaks-notpreprocessed/memleaks_test15_true-valid-memsafety.c</include>
-		<include>/storage/svcomp/c/ldv-memsafety/memleaks-notpreprocessed/memleaks_test4_true-valid-memsafety.c</include>
-		<include>/storage/svcomp/c/ldv-memsafety/memleaks-notpreprocessed/memleaks_test14_true-valid-memsafety.c</include>
-		<include>/storage/svcomp/c/ldv-memsafety/memleaks-notpreprocessed/memleaks_test20_true-valid-memsafety.c</include>
-		<include>/storage/svcomp/c/ldv-memsafety/memleaks-notpreprocessed/memleaks_test22_3_true-valid-memsafety.c</include>
-		<include>/storage/svcomp/c/ldv-memsafety/memleaks-notpreprocessed/memleaks_test22_1_true-valid-memsafety.c</include>
-		<include>/storage/svcomp/c/ldv-memsafety/memleaks-notpreprocessed/memleaks_test18_true-valid-memsafety.c</include>
-		<include>/storage/svcomp/c/ldv-memsafety/memleaks-notpreprocessed/memleaks_test17_2_true-valid-memsafety.c</include>
-		<include>/storage/svcomp/c/ldv-memsafety/memleaks-notpreprocessed/memleaks_test6_true-valid-memsafety.c</include>
-		<include>/storage/svcomp/c/ldv-memsafety/memleaks-notpreprocessed/memleaks_test22_2_true-valid-memsafety.c</include>
-		<include>/storage/svcomp/c/ldv-memsafety/memleaks-notpreprocessed/memleaks_test3_true-valid-memsafety.c</include>
-		<include>/storage/svcomp/c/ldv-memsafety/memleaks-notpreprocessed/memleaks_test5_true-valid-memsafety.c</include>
-		<include>/storage/svcomp/c/ldv-memsafety/memleaks-notpreprocessed/memleaks_test21_true-valid-memsafety.c</include>
-		<include>/storage/svcomp/c/ldv-memsafety/memleaks-notpreprocessed/memleaks_test23_3_true-valid-memsafety.c</include>
-		<include>/storage/svcomp/c/ldv-memsafety/memleaks-notpreprocessed/memleaks_test19_true-valid-memsafety.c</include>
-		<include>/storage/svcomp/c/ldv-memsafety/memleaks-notpreprocessed/memleaks_test12_true-valid-memsafety.c</include>
-		<include>/storage/svcomp/c/ldv-memsafety/memleaks-notpreprocessed/memleaks_test7_true-valid-memsafety.c</include>
-		<include>/storage/svcomp/c/ldv-memsafety/memleaks-notpreprocessed/memleaks_test10_true-valid-memsafety.c</include>
-		<include>/storage/svcomp/c/ldv-memsafety/memleaks-notpreprocessed/memleaks_test23_1_true-valid-memsafety.c</include>
-		<include>/storage/svcomp/c/ldv-memsafety/memleaks-notpreprocessed/memleaks_test17_1_true-valid-memsafety.c</include>
-		<include>/storage/svcomp/c/ldv-memsafety/memleaks-notpreprocessed/memleaks_test1_true-valid-memsafety.c</include>
-		<include>/storage/svcomp/c/ldv-memsafety/memleaks-notpreprocessed/memleaks_test9_true-valid-memsafety.c</include>
-		<include>/storage/svcomp/c/ldv-memsafety/memleaks-notpreprocessed/memleaks_test16_true-valid-memsafety.c</include>
-		<include>/storage/svcomp/c/ldv-memsafety/memleaks-notpreprocessed/memleaks_test13_true-valid-memsafety.c</include>
-		<include>/storage/svcomp/c/ldv-memsafety/memleaks-notpreprocessed/memleaks_test8_true-valid-memsafety.c</include>
 		<include>/storage/svcomp/c/ldv-memsafety/memset2_true-valid-memsafety.c</include>
 		<include>/storage/svcomp/c/ldv-memsafety/ArraysOfVariableLength_true-valid-memsafety.c</include>
 		<include>/storage/svcomp/c/ldv-memsafety/ArraysOfVariableLength4_true-valid-memsafety.c</include>

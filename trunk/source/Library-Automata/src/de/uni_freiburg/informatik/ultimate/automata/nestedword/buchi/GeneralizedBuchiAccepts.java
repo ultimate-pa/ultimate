@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import gnu.trove.map.TObjectIntMap;
 import gnu.trove.map.hash.TObjectIntHashMap;
 
@@ -214,10 +215,28 @@ public final class GeneralizedBuchiAccepts<LETTER, STATE> extends UnaryNwaOperat
 		return state > mStem.length();
 	}
 	
+	private class AsccPair {
+		StackElement<LETTER, STATE> mElem;
+		Set<Integer> mLabels;
+		AsccPair(StackElement<LETTER, STATE> elem, Set<Integer> labels) {
+			mElem = elem;
+			mLabels = labels;
+		}
+	}
+	
+	private Set<Integer> getAcceptanceLabels(StackElement<LETTER, STATE> prod) {
+		Set<Integer> labels = new HashSet<>();
+		labels.addAll(mOperand.getAcceptanceLabels(prod.mState));
+		if(isFinalState(prod.mIndex)) {
+			labels.add(mOperand.getAcceptanceSize());
+		}
+		return labels;
+	}
+	
     private class Ascc {
         
         private int mDepth;
-        private final Stack<StackElement<LETTER, STATE>> mRootsStack;             // C99 's root stack
+        private final Stack<AsccPair> mRootsStack;             // C99 's root stack
         private final Stack<StackElement<LETTER, STATE>> mActiveStack;            // tarjan's stack
         private final TObjectIntMap<StackElement<LETTER, STATE>> mDfsNum;
         private final Set<StackElement<LETTER, STATE>> mCurrent;
@@ -247,7 +266,7 @@ public final class GeneralizedBuchiAccepts<LETTER, STATE> extends UnaryNwaOperat
             
             ++ mDepth;
             mDfsNum.put(prod, mDepth);
-            mRootsStack.push(prod);
+            mRootsStack.push(new AsccPair(prod, getAcceptanceLabels(prod)));
             mActiveStack.push(prod);
             mCurrent.add(prod);
             
@@ -265,17 +284,15 @@ public final class GeneralizedBuchiAccepts<LETTER, STATE> extends UnaryNwaOperat
                     Set<Integer> labels = new HashSet<>();
                     while(true) {
                         //pop element u
-                    	StackElement<LETTER, STATE> stackTop = mRootsStack.pop();
-                    	labels.addAll(mOperand.getAcceptanceLabels(stackTop.mState));
-                    	if(isFinalState(stackTop.mIndex)) {
-                    		labels.add(mOperand.getAcceptanceSize());
-                    	}
+                    	AsccPair pair = mRootsStack.pop();
+                    	StackElement<LETTER, STATE> stackTop = pair.mElem;
+                    	labels.addAll(pair.mLabels);
                         // found one accepting scc
                         if(labels.size() == mOperand.getAcceptanceSize() + 1) {
                             mIsEmpty = false;
                         }
                         if(mDfsNum.get(stackTop) <= mDfsNum.get(prodSucc)) {
-                            mRootsStack.push(stackTop); // push back
+                            mRootsStack.push(new AsccPair(stackTop, labels)); // push back
                             break;
                         }
                     }
@@ -285,7 +302,7 @@ public final class GeneralizedBuchiAccepts<LETTER, STATE> extends UnaryNwaOperat
             // if current state is done, 
             // then we should remove all 
             // active states in the same scc
-            if(mRootsStack.peek().equals(prod)) {
+            if(mRootsStack.peek().mElem.equals(prod)) {
                 mRootsStack.pop();
                 while(true) {
                     StackElement<LETTER, STATE> stackTop = mActiveStack.pop(); // Tarjan' Stack

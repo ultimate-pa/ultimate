@@ -14,6 +14,8 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder,
  de.uni_freiburg.informatik.ultimate.lib.icfgtransformer;bundle-version="0.0.1",
  de.uni_freiburg.informatik.ultimate.lib.lassoranker,
+ de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser,
+ de.uni_freiburg.informatik.ultimate.witnessparser,
  de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8

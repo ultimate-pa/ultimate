@@ -1,3 +1,30 @@
+/*
+ * Copyright (C) 2017 Yong Li (liyong@ios.ac.cn)
+ * Copyright (C) 2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * Copyright (C) 2009-2015 University of Freiburg
+ *
+ * This file is part of the ULTIMATE Automata Library.
+ *
+ * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Additional permission under GNU GPL version 3 section 7:
+ * If you modify the ULTIMATE Automata Library, or any covered work, by linking
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
+ * to convey the resulting work.
+ */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.inclusion;
 
 import java.util.Comparator;
@@ -20,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 class LassoConstructor<LETTER, STATE> {
 	
 	private final AutomataLibraryServices mServices;
-	private final GeneralizedNestedWordAutomatonReachableStates<LETTER, STATE> mReach;
+	private final AbstractGeneralizedAutomatonReachableStates<LETTER, STATE> mReach;
 	private NestedRun<LETTER, STATE> mLoop;
 	private NestedRun<LETTER, STATE> mStem;
 	private StateContainer<LETTER, STATE> mGoal;
@@ -28,8 +55,9 @@ class LassoConstructor<LETTER, STATE> {
 	private final List<STATE> mSCC;
 	private final Set<STATE> mSCCSet;
 	
+	// here we should make sure that all necessary accepting states are in the sccList
 	LassoConstructor(final AutomataLibraryServices services,
-			final GeneralizedNestedWordAutomatonReachableStates<LETTER, STATE> reach
+			final AbstractGeneralizedAutomatonReachableStates<LETTER, STATE> reach
 			, final List<STATE> sccList) throws AutomataOperationCanceledException {
 		mServices = services;
 		mReach = reach;
@@ -69,7 +97,7 @@ class LassoConstructor<LETTER, STATE> {
 		StateContainer<LETTER, STATE> stateCont = mGoal;
 		Set<Integer> labels = new HashSet<>();
 		labels.addAll(mReach.getAcceptanceLabels(stateCont.getState()));
-		STATE backState = null;
+		STATE backState = mGoal.getState();
 		for(STATE current : newList) {
 			testTimeoutCancelException(this.getClass());
 			LETTER letter = stateCont.getLetterOfSuccessor(current);
@@ -97,6 +125,13 @@ class LassoConstructor<LETTER, STATE> {
 			stateCont = mReach.getStateContainer(current);
 		}
 		assert labels.size() == mReach.getAcceptanceSize();
+		if(backState.equals(mGoal.getState())) {
+			LETTER letter = mGoal.getLetterOfSuccessor(backState);
+			assert letter != null;
+			mLoop = new NestedRun<>(backState, letter, NestedWord.INTERNAL_POSITION,
+					backState);
+			return ;
+		}
 		final Set<STATE> source = new HashSet<>();
 		final Set<STATE> target = new HashSet<>();
 		source.add(backState);
@@ -230,7 +265,6 @@ class LassoConstructor<LETTER, STATE> {
 		private void breathFirstSearch() throws AutomataOperationCanceledException {
 			// construct a run from initial state to mGoal
 			PriorityQueue<SuccessorInfo> queue = new PriorityQueue<>(new ComparatorSuccessorInfo());
-			
 			// initialize sources
 			for (STATE state : mSources) {
 				SuccessorInfo succInfo = getSuccessorInfoPrivate(state);

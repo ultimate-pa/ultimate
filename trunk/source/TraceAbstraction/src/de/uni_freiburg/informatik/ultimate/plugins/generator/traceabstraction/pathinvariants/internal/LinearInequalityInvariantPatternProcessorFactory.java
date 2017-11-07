@@ -141,7 +141,11 @@ public class LinearInequalityInvariantPatternProcessorFactory
 	 * @return SMT solver instance to use
 	 */
 	protected Script produceSmtSolver() {
-		final boolean useAlsoIntegers = mKindOfInvariant == KindOfInvariant.DANGER;
+		final boolean useAlsoIntegers;
+		// 2017-11-05 Matthias:
+		// seems like we always need integers since program variables can have sort Int.
+//		useAlsoIntegers = (mKindOfInvariant == KindOfInvariant.DANGER);
+		useAlsoIntegers = true;
 		final Linearity linearity = mUseNonlinearConstraints ? Linearity.NONLINEAR : Linearity.LINEAR;
 		final Logics logic = ConstraintSynthesisUtils.getLogic(linearity, useAlsoIntegers);
 

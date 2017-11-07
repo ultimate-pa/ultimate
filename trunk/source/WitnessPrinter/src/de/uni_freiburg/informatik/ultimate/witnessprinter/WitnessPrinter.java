@@ -32,11 +32,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.LassoShapedNonTerminationArgument;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultUtil;
 import de.uni_freiburg.informatik.ultimate.core.lib.translation.BacktranslatedCFG;
 import de.uni_freiburg.informatik.ultimate.core.model.IOutput;
@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationS
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.core.model.translation.IBacktranslatedCFG;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgGraphProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
@@ -63,14 +63,9 @@ import de.uni_freiburg.informatik.ultimate.witnessprinter.preferences.Preference
  */
 public class WitnessPrinter implements IOutput {
 
-	private enum Mode {
-		TRUE_WITNESS, FALSE_WITNESS, NO_WITNESS
-	}
-
 	private ILogger mLogger;
 	private IUltimateServiceProvider mServices;
 	private IToolchainStorage mStorage;
-	private Mode mMode;
 	private RCFGCatcher mRCFGCatcher;
 	private boolean mMatchingModel;
 
@@ -122,76 +117,98 @@ public class WitnessPrinter implements IOutput {
 
 	@Override
 	public void init() {
-		mMode = Mode.NO_WITNESS;
-		if (!mServices.getPreferenceProvider(Activator.PLUGIN_ID).getBoolean(PreferenceInitializer.LABEL_WITNESS_GEN)) {
-			mLogger.info("Witness generation is disabled");
-			return;
-		}
-
-		// determine if there are true or false witnesses
-		final Map<String, List<IResult>> results = mServices.getResultService().getResults();
-		if (!ResultUtil.filterResults(results, CounterExampleResult.class).isEmpty()) {
-			mLogger.info("Generating witness for counterexample");
-			mMode = Mode.FALSE_WITNESS;
-		} else if (!ResultUtil.filterResults(results, AllSpecificationsHoldResult.class).isEmpty()) {
-			mLogger.info("Generating witness for proof");
-			mMode = Mode.TRUE_WITNESS;
-		}
+		// not needed
 	}
 
 	@Override
 	public void finish() {
-		final Collection<Supplier<Triple<IResult, String, String>>> supplier;
-		switch (mMode) {
-		case FALSE_WITNESS:
-			supplier = generateFalseWitnessSupplier();
-			break;
-		case TRUE_WITNESS:
-			supplier = generateTrueWitnessSupplier();
-			break;
-		case NO_WITNESS:
-		default:
-			// do nothing
-			return;
-		}
-
-		final WitnessManager cexVerifier = new WitnessManager(mLogger, mServices, mStorage);
 		try {
-			cexVerifier.run(supplier);
+			if (!mServices.getPreferenceProvider(Activator.PLUGIN_ID)
+					.getBoolean(PreferenceInitializer.LABEL_WITNESS_GEN)) {
+				mLogger.info("Witness generation is disabled");
+				return;
+			}
+
+			// determine if there are true or false witnesses
+			final List<IResult> results = mServices.getResultService().getResults().entrySet().stream()
+					.flatMap(a -> a.getValue().stream()).collect(Collectors.toList());
+
+			final WitnessManager cexVerifier = new WitnessManager(mLogger, mServices, mStorage);
+			if (results.stream().anyMatch(a -> a instanceof CounterExampleResult<?, ?, ?>)) {
+				mLogger.info("Generating witness for reachability counterexample");
+				generateReachabilityCounterexampleWitness(cexVerifier, results);
+			} else if (results.stream().anyMatch(a -> a instanceof LassoShapedNonTerminationArgument<?, ?>)) {
+				mLogger.info("Generating witness for non-termination counterexample");
+				generateNonTerminationWitness(cexVerifier, results);
+			} else if (results.stream().anyMatch(a -> a instanceof AllSpecificationsHoldResult)) {
+				mLogger.info("Generating witness for correct program");
+				generateProofWitness(cexVerifier, results);
+			} else {
+				mLogger.info("No result that supports witness generation found");
+			}
+
 		} catch (IOException | InterruptedException e) {
 			throw new RuntimeException(e);
 		}
 	}
 
-	private Collection<Supplier<Triple<IResult, String, String>>> generateTrueWitnessSupplier() {
-		final Collection<AllSpecificationsHoldResult> validResults =
-				ResultUtil.filterResults(mServices.getResultService().getResults(), AllSpecificationsHoldResult.class);
-
-		// we take only one AllSpecificationsHold result
-		final AllSpecificationsHoldResult result = validResults.stream().findFirst().orElse(null);
+	private void generateProofWitness(final WitnessManager cexVerifier, final List<IResult> results)
+			throws IOException, InterruptedException {
+		final AllSpecificationsHoldResult result =
+				ResultUtil.filterResults(results, AllSpecificationsHoldResult.class).stream().findFirst().orElse(null);
 		final IBacktranslationService backtrans = mServices.getBacktranslationService();
 		final BoogieIcfgContainer root = mRCFGCatcher.getModel();
 		final String filename = ILocation.getAnnotation(root).getFileName();
 		final BacktranslatedCFG<?, IcfgEdge> origCfg =
 				new BacktranslatedCFG<>(filename, IcfgGraphProvider.getVirtualRoot(root), IcfgEdge.class);
-		final IBacktranslatedCFG<?, ?> translatedCFG = backtrans.translateCFG(origCfg);
-
-		return Collections.singleton(() -> new Triple<>(result, filename, translatedCFG.getSVCOMPWitnessString()));
+		final String witness = new CorrectnessWitnessGenerator<>(backtrans.translateCFG(origCfg), mLogger, mServices)
+				.makeGraphMLString();
+		cexVerifier.run(Collections.singleton(new Triple<>(result, filename, witness)));
 	}
 
-	@SuppressWarnings({ "rawtypes", "unchecked" })
-	private Collection<Supplier<Triple<IResult, String, String>>> generateFalseWitnessSupplier() {
-		final Collection<Supplier<Triple<IResult, String, String>>> supplier = new ArrayList<>();
+	@SuppressWarnings("rawtypes")
+	private void generateReachabilityCounterexampleWitness(final WitnessManager cexVerifier,
+			final List<IResult> results) throws IOException, InterruptedException {
+		final Collection<Triple<IResult, String, String>> suppliers = new ArrayList<>();
 		final Collection<CounterExampleResult> cexResults =
-				ResultUtil.filterResults(mServices.getResultService().getResults(), CounterExampleResult.class);
+				ResultUtil.filterResults(results, CounterExampleResult.class);
 		final IBacktranslationService backtrans = mServices.getBacktranslationService();
 		final BoogieIcfgContainer root = mRCFGCatcher.getModel();
 		final String filename = ILocation.getAnnotation(root).getFileName();
-		for (final CounterExampleResult cex : cexResults) {
-			supplier.add(() -> new Triple<>(cex, filename,
-					backtrans.translateProgramExecution(cex.getProgramExecution()).getSVCOMPWitnessString()));
+
+		for (final CounterExampleResult<?, ?, ?> cex : cexResults) {
+			final IProgramExecution<?, ?> backtransPe = backtrans.translateProgramExecution(cex.getProgramExecution());
+			final String witness = new ViolationWitnessGenerator<>(backtransPe, mLogger, mServices).makeGraphMLString();
+			suppliers.add(new Triple<>(cex, filename, witness));
 		}
-		return supplier;
+		cexVerifier.run(suppliers);
+	}
+
+	@SuppressWarnings("rawtypes")
+	private void generateNonTerminationWitness(final WitnessManager cexVerifier, final List<IResult> results)
+			throws IOException, InterruptedException {
+		final Collection<Triple<IResult, String, String>> suppliers = new ArrayList<>();
+		final Collection<LassoShapedNonTerminationArgument> cexResults =
+				ResultUtil.filterResults(results, LassoShapedNonTerminationArgument.class);
+		final IBacktranslationService backtrans = mServices.getBacktranslationService();
+		final BoogieIcfgContainer root = mRCFGCatcher.getModel();
+		final String filename = ILocation.getAnnotation(root).getFileName();
+
+		for (final LassoShapedNonTerminationArgument<?, ?> cex : cexResults) {
+			final String witness = getWitness(backtrans, cex);
+			suppliers.add(new Triple<>(cex, filename, witness));
+		}
+		cexVerifier.run(suppliers);
+	}
+
+	@SuppressWarnings("unchecked")
+	private <TE, T> String getWitness(final IBacktranslationService backtrans,
+			final LassoShapedNonTerminationArgument<?, ?> cex) {
+		final IProgramExecution<TE, T> stem =
+				(IProgramExecution<TE, T>) backtrans.translateProgramExecution(cex.getStemExecution());
+		final IProgramExecution<TE, T> loop =
+				(IProgramExecution<TE, T>) backtrans.translateProgramExecution(cex.getLoopExecution());
+		return new ViolationWitnessGenerator<>(stem, loop, mLogger, mServices).makeGraphMLString();
 	}
 
 	@Override

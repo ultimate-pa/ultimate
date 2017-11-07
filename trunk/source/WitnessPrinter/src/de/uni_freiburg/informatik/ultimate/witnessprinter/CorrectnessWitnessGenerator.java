@@ -68,15 +68,15 @@ public class CorrectnessWitnessGenerator<TTE, TE> extends BaseWitnessGenerator<T
 
 	private final ILogger mLogger;
 	private final IBacktranslationValueProvider<TTE, TE> mStringProvider;
-	private final IBacktranslatedCFG<String, TTE> mTranslatedCFG;
+	private final IBacktranslatedCFG<?, TTE> mTranslatedCFG;
 	private final boolean mIsACSLForbidden;
 
-	public CorrectnessWitnessGenerator(final IBacktranslatedCFG<String, TTE> translatedCFG,
-			final IBacktranslationValueProvider<TTE, TE> provider, final ILogger logger,
+	@SuppressWarnings("unchecked")
+	public CorrectnessWitnessGenerator(final IBacktranslatedCFG<?, TTE> translatedCFG, final ILogger logger,
 			final IUltimateServiceProvider services) {
 		super(services);
 		mLogger = logger;
-		mStringProvider = provider;
+		mStringProvider = (IBacktranslationValueProvider<TTE, TE>) translatedCFG.getBacktranslationValueProvider();
 		mTranslatedCFG = translatedCFG;
 		mIsACSLForbidden =
 				PreferenceInitializer.getPreferences(services).getBoolean(PreferenceInitializer.LABEL_DO_NOT_USE_ACSL);
@@ -129,14 +129,17 @@ public class CorrectnessWitnessGenerator<TTE, TE> extends BaseWitnessGenerator<T
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	private Hypergraph<GeneratedWitnessNode, GeneratedWitnessEdge<TTE, TE>> getGraph() {
-		final List<IExplicitEdgesMultigraph<?, ?, String, TTE, ?>> roots = mTranslatedCFG.getCFGs();
+		// cast is dirty hack because java does not allow casting s.t. TE is hidden (?!)
+		final List<IExplicitEdgesMultigraph<?, ?, ?, TTE, ?>> roots =
+				(List<IExplicitEdgesMultigraph<?, ?, ?, TTE, ?>>) (List<?>) mTranslatedCFG.getCFGs();
 		if (roots.size() != 1) {
 			throw new UnsupportedOperationException("Cannot generate correctness witnesses in library mode");
 		}
-		final IExplicitEdgesMultigraph<?, ?, String, TTE, ?> root = roots.get(0);
-		final Deque<IExplicitEdgesMultigraph<?, ?, String, TTE, ?>> worklist = new ArrayDeque<>();
-		final Map<IExplicitEdgesMultigraph<?, ?, String, TTE, ?>, GeneratedWitnessNode> nodecache = new HashMap<>();
+		final IExplicitEdgesMultigraph<?, ?, ?, TTE, ?> root = roots.get(0);
+		final Deque<IExplicitEdgesMultigraph<?, ?, ?, TTE, ?>> worklist = new ArrayDeque<>();
+		final Map<IExplicitEdgesMultigraph<?, ?, ?, TTE, ?>, GeneratedWitnessNode> nodecache = new HashMap<>();
 		final DirectedOrderedSparseMultigraph<GeneratedWitnessNode, GeneratedWitnessEdge<TTE, TE>> graph =
 				new DirectedOrderedSparseMultigraph<>();
 		final GeneratedWitnessNodeEdgeFactory<TTE, TE> fac = new GeneratedWitnessNodeEdgeFactory<>(mStringProvider);
@@ -144,14 +147,14 @@ public class CorrectnessWitnessGenerator<TTE, TE> extends BaseWitnessGenerator<T
 		// add initial node to nodecache s.t. it will always be initial
 		nodecache.put(root, annotateInvariant(root, fac.createInitialWitnessNode()));
 
-		final Set<IMultigraphEdge<?, ?, String, TTE, ?>> closed = new HashSet<>();
+		final Set<IMultigraphEdge<?, ?, ?, TTE, ?>> closed = new HashSet<>();
 		worklist.add(root);
 
 		while (!worklist.isEmpty()) {
-			final IExplicitEdgesMultigraph<?, ?, String, TTE, ?> sourceNode = worklist.remove();
+			final IExplicitEdgesMultigraph<?, ?, ?, TTE, ?> sourceNode = worklist.remove();
 			final GeneratedWitnessNode sourceWNode = getWitnessNode(sourceNode, mStringProvider, fac, nodecache);
 
-			for (final IMultigraphEdge<?, ?, String, TTE, ?> outgoing : sourceNode.getOutgoingEdges()) {
+			for (final IMultigraphEdge<?, ?, ?, TTE, ?> outgoing : sourceNode.getOutgoingEdges()) {
 				if (!closed.add(outgoing)) {
 					continue;
 				}
@@ -183,10 +186,10 @@ public class CorrectnessWitnessGenerator<TTE, TE> extends BaseWitnessGenerator<T
 		return graph;
 	}
 
-	private GeneratedWitnessNode getWitnessNode(final IExplicitEdgesMultigraph<?, ?, String, TTE, ?> node,
+	private GeneratedWitnessNode getWitnessNode(final IExplicitEdgesMultigraph<?, ?, ?, TTE, ?> node,
 			final IBacktranslationValueProvider<TTE, TE> stringProvider,
 			final GeneratedWitnessNodeEdgeFactory<TTE, TE> fac,
-			final Map<IExplicitEdgesMultigraph<?, ?, String, TTE, ?>, GeneratedWitnessNode> nodecache) {
+			final Map<IExplicitEdgesMultigraph<?, ?, ?, TTE, ?>, GeneratedWitnessNode> nodecache) {
 		GeneratedWitnessNode wnode = nodecache.get(node);
 		if (wnode != null) {
 			return wnode;
@@ -196,16 +199,23 @@ public class CorrectnessWitnessGenerator<TTE, TE> extends BaseWitnessGenerator<T
 		return wnode;
 	}
 
-	private GeneratedWitnessNode annotateInvariant(final IExplicitEdgesMultigraph<?, ?, String, TTE, ?> node,
+	private GeneratedWitnessNode annotateInvariant(final IExplicitEdgesMultigraph<?, ?, ?, TTE, ?> node,
 			final GeneratedWitnessNode wnode) {
-		final String invariant = filterInvariant(node.getLabel());
+		final String invariant = filterInvariant(node);
 		if (invariant != null) {
 			wnode.setInvariant(invariant);
 		}
 		return wnode;
 	}
 
-	private String filterInvariant(final String label) {
+	private String filterInvariant(final IExplicitEdgesMultigraph<?, ?, ?, TTE, ?> node) {
+		if (node == null) {
+			return null;
+		}
+		if (node.getLabel() == null) {
+			return null;
+		}
+		final String label = node.getLabel().toString();
 		if (mIsACSLForbidden && label != null && Arrays.stream(ACSL_SUBSTRING).anyMatch(label::contains)) {
 			mLogger.warn("Not writing invariant because ACSL is forbidden: " + label);
 			return null;

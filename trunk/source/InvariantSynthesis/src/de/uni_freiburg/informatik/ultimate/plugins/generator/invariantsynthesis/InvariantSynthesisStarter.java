@@ -74,7 +74,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.invariantsynthesis.
 import de.uni_freiburg.informatik.ultimate.plugins.generator.invariantsynthesis.preferences.InvariantSynthesisPreferenceInitializer.IncreasingStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
+
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.HoareAnnotation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.InvariantSynthesisSettings;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.AbstractTemplateIncreasingDimensionsStrategy;
@@ -126,7 +126,7 @@ public class InvariantSynthesisStarter {
 		final InvariantSynthesisSettings invSynthSettings = constructSettings(icfg.getIdentifier());
 
 		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
-		final KindOfInvariant kindOfInvariant =
+		final KindOfInvariant kindOfInvariant = 
 				prefs.getEnum(InvariantSynthesisPreferenceInitializer.LABEL_KIND_INVARIANT, KindOfInvariant.class);
 
 		IPredicate precondition;
@@ -276,10 +276,10 @@ public class InvariantSynthesisStarter {
 		final boolean useAbstractInterpretationPredicates = false;
 		final boolean useWPForPathInvariants = false;
 
-		final int initialDisjuncts = prefs.getInt(InvariantSynthesisPreferenceInitializer.LABEL_INITIAL_DISJUNCTS);
-		final int disjunctsStep = prefs.getInt(InvariantSynthesisPreferenceInitializer.LABEL_STEP_DISJUNCTS);
-		final int initialConjuncts = prefs.getInt(InvariantSynthesisPreferenceInitializer.LABEL_INITIAL_CONJUNCTS);
-		final int conjunctsStep = prefs.getInt(InvariantSynthesisPreferenceInitializer.LABEL_STEP_CONJUNCTS);
+		final int initialDisjuncts = 1;//prefs.getInt(InvariantSynthesisPreferenceInitializer.LABEL_INITIAL_DISJUNCTS);
+		final int disjunctsStep = 1;//prefs.getInt(InvariantSynthesisPreferenceInitializer.LABEL_STEP_DISJUNCTS);
+		final int initialConjuncts = 3;//prefs.getInt(InvariantSynthesisPreferenceInitializer.LABEL_INITIAL_CONJUNCTS);
+		final int conjunctsStep = 1;//prefs.getInt(InvariantSynthesisPreferenceInitializer.LABEL_STEP_CONJUNCTS);
 
 		AbstractTemplateIncreasingDimensionsStrategy templateIncrDimensionsStrat = null;
 		final IncreasingStrategy incrStrat = prefs.getEnum(InvariantSynthesisPreferenceInitializer.LABEL_INCR_STRATEGY,

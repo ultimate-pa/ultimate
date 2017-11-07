@@ -33,6 +33,7 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.IExplicitEdgesMultigraph;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IBacktranslatedCFG;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.IBacktranslationValueProvider;
 
 /**
  *
@@ -76,13 +77,13 @@ public class BacktranslatedCFG<VL, TE> implements IBacktranslatedCFG<VL, TE> {
 	}
 
 	@Override
-	public String getSVCOMPWitnessString() {
-		return null;
-	}
-
-	@Override
 	public String toString() {
 		return "BacktranslatedCFG with CFG " + mCFGs.getClass().getSimpleName() + " and trace element "
 				+ mTraceElementClass.getSimpleName();
+	}
+
+	@Override
+	public IBacktranslationValueProvider<TE, ?> getBacktranslationValueProvider() {
+		return null;
 	}
 }

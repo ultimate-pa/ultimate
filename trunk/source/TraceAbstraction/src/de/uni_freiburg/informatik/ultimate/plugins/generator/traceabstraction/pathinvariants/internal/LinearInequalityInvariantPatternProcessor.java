@@ -1398,7 +1398,11 @@ public final class LinearInequalityInvariantPatternProcessor
 			mSolver.setOption(":produce-unsat-cores", true);
 		}
 
-		final boolean useAlsoIntegers = mKindOfInvariant == KindOfInvariant.DANGER;
+		final boolean useAlsoIntegers;
+		// 2017-11-05 Matthias:
+		// seems like we always need integers since program variables can have sort Int.
+//		useAlsoIntegers = (mKindOfInvariant == KindOfInvariant.DANGER);
+		useAlsoIntegers = true;
 		final Linearity linearity = mUseNonlinearConstraints ? Linearity.NONLINEAR : Linearity.LINEAR;
 		final Logics logic = ConstraintSynthesisUtils.getLogic(linearity, useAlsoIntegers);
 		mSolver.setLogic(logic);

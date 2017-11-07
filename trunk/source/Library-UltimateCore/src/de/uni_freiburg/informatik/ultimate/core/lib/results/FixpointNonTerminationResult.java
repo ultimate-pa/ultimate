@@ -30,6 +30,7 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 
 /**
  * Repeating program execution.
@@ -38,14 +39,15 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationS
  * @param <P>
  *            program position class
  */
-public class FixpointNonTerminationResult<P extends IElement, E> extends NonTerminationArgumentResult<P, E> {
+public class FixpointNonTerminationResult<P extends IElement, E> extends LassoShapedNonTerminationArgument<P, E> {
 
 	private final Map<E, E> mStateInit;
 	private final Map<E, E> mStateHonda;
 
 	public FixpointNonTerminationResult(final P position, final String plugin, final Map<E, E> stateInit,
-			final Map<E, E> stateHonda, final IBacktranslationService translatorSequence, final Class<E> exprClazz) {
-		super(position, plugin, translatorSequence, exprClazz);
+			final Map<E, E> stateHonda, final IBacktranslationService translatorSequence, final Class<E> exprClazz, 
+			final IProgramExecution<P, E> stem, final IProgramExecution<P, E> loop) {
+		super(position, plugin, translatorSequence, exprClazz, stem, loop);
 		mStateInit = stateInit;
 		mStateHonda = stateHonda;
 	}

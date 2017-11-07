@@ -325,40 +325,32 @@ public class InterpolatorClauseTermInfo {
 	private LinkedHashSet<Term> computeLiterals(final Term term) {
 		final LinkedHashSet<Term> literals = new LinkedHashSet<Term>();
 		final String leafKind = computeLeafKind(term);
+		Term clause;
 		if (leafKind.equals("@lemma")) {
 			final AnnotatedTerm innerLemma = (AnnotatedTerm) ((ApplicationTerm) term).getParameters()[0];
-			final ApplicationTerm lemmaClause = (ApplicationTerm) innerLemma.getSubterm();
-			for (final Term literal : lemmaClause.getParameters()) {
-				literals.add(literal);
-			}
+			clause = innerLemma.getSubterm();
 		} else if (leafKind.equals("@clause")) {
 			final AnnotatedTerm annotLit = (AnnotatedTerm) ((ApplicationTerm) term).getParameters()[1];
-			final Term literal = annotLit.getSubterm();
-			if (literal instanceof ApplicationTerm
-					&& ((ApplicationTerm) literal).getFunction().getName().equals("or")) {
-				final ApplicationTerm appLit = (ApplicationTerm) literal;
-				for (final Term arg : appLit.getParameters()) {
-					literals.add(arg);
-				}
-			} else {
-				literals.add(literal);
-			}
+			clause = annotLit.getSubterm();
 		} else if (leafKind.equals("@asserted")) {
 			final AnnotatedTerm annotLit = (AnnotatedTerm) ((ApplicationTerm) term).getParameters()[0];
-			final Term literal = annotLit.getSubterm();
-			if (literal instanceof ApplicationTerm
-					&& ((ApplicationTerm) literal).getFunction().getName().equals("or")) {
-				final ApplicationTerm appLit = (ApplicationTerm) literal;
-				for (final Term arg : appLit.getParameters()) {
-					literals.add(arg);
-				}
-			} else {
-				literals.add(literal);
-			}
+			clause = annotLit.getSubterm();
 		} else {
 			throw new RuntimeException("There is another leafkind which has " + "not yet been implemented.");
 		}
+		if (clause instanceof ApplicationTerm && ((ApplicationTerm) clause).getFunction().getName().equals("or")) {
+			final ApplicationTerm appLit = (ApplicationTerm) clause;
+			for (final Term arg : appLit.getParameters()) {
+				literals.add(arg);
+			}
+		} else if (clause instanceof ApplicationTerm
+				&& ((ApplicationTerm) clause).getFunction().getName().equals("false")) {
+			// empty clause
+		} else {
+			literals.add(clause);
+		}
 		return literals;
+
 	}
 
 	/**

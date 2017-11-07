@@ -123,15 +123,8 @@ exitOnFailPop git rebase
 exitOnFailPop git push
 exitOnFailPop git push origin --tags
 
-pushd ../../trunk/source/BA_MavenParentUltimate/ > /dev/null
-exitOnFailPop mvn clean install -Pmaterialize
-popd > /dev/null
-
-
-# createZip <toolname> <targetarch> <reachtc> <termtc> <witnessvaltc> <memsafetytc> <ltl>
-./createZip.sh Taipan linux AutomizerCInline_WitnessPrinter.xml NONE AutomizerCInline.xml AutomizerCInline_WitnessPrinter.xml NONE
-./createZip.sh Automizer linux AutomizerC_WitnessPrinter.xml BuchiAutomizerCInline.xml AutomizerC.xml AutomizerC_WitnessPrinter.xml LTLAutomizerC.xml
-./createZip.sh Kojak linux KojakC_WitnessPrinter.xml NONE NONE KojakC_WitnessPrinter.xml NONE
+# actually build Ultimate 
+exitOnFail bash makeFresh.sh
 
 if [ "$TO_GITHUB" = true ]; then
 	DESC=`git shortlog ${LAST_RELEASE}.. --no-merges --numbered -w0,6,9 --format="%s ( https://github.com/ultimate-pa/ultimate/commit/%h )"`

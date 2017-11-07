@@ -51,10 +51,12 @@ import de.uni_freiburg.informatik.ultimate.cdt.decorator.ASTDecorator;
 import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratorNode;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.MainDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UndeclaredFunctionException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.svcomp.SvComp14MainDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.WrapperNode;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.ExceptionOrErrorResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.SyntaxErrorResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.UnsupportedSyntaxResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
@@ -128,9 +130,10 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 			mWitnessExtractor.setAST(mInputTU);
 			return false;
 		}
-		
+
 		if (root instanceof Unit) {
-			throw new UnsupportedOperationException("Your input file is a Boogie program. This plugin takes as input a C program.");
+			throw new UnsupportedOperationException(
+					"Your input file is a Boogie program. This plugin takes as input a C program.");
 		}
 		return false;
 	}
@@ -237,7 +240,8 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 		// build a list of ACSL ASTs
 		final FunctionLineVisitor visitor = new FunctionLineVisitor();
 		mInputTU.accept(visitor);
-		final CommentParser cparser = new CommentParser(mInputTU.getComments(), visitor.getLineRange(), mLogger, main);
+		final CommentParser cparser =
+				new CommentParser(mInputTU.getComments(), visitor.getLineRange(), mLogger, mService);
 		final List<ACSLNode> acslNodes = cparser.processComments();
 
 		validateLTLProperty(acslNodes);
@@ -266,6 +270,9 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 		} catch (final UnsupportedSyntaxException e) {
 			final IResult result =
 					new UnsupportedSyntaxResult<>(Activator.PLUGIN_NAME, e.getLocation(), e.getLocalizedMessage());
+			commonDoTranslationExceptionHandling(result);
+		} catch (final UndeclaredFunctionException e) {
+			final IResult result = new ExceptionOrErrorResult(Activator.PLUGIN_NAME, e);
 			commonDoTranslationExceptionHandling(result);
 		}
 	}

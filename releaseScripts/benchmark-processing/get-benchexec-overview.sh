@@ -12,6 +12,7 @@ declare -A safe
 declare -A unsafe
 
 known_exceptions=( 
+"we do not support pthread"
 "UnsupportedSyntaxResult"
 "TypeErrorResult"
 "SyntaxErrorResult"

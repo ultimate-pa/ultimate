@@ -44,40 +44,47 @@ public class GeneratedWitnessNodeEdgeFactory<TE, E> {
 	}
 
 	public GeneratedWitnessNode createWitnessNode() {
-		return createWitnessNode(false, false, false);
+		return createWitnessNode(false, false, false, false);
 	}
 
 	public GeneratedWitnessNode createInitialWitnessNode() {
-		return createWitnessNode(true, false, false);
+		return createWitnessNode(true, false, false, false);
 	}
 
 	public GeneratedWitnessNode createErrorWitnessNode() {
-		return createWitnessNode(false, true, false);
+		return createWitnessNode(false, true, false, false);
 	}
 
-	public GeneratedWitnessNode createWitnessNode(final boolean isInitial, final boolean isError,
-			final boolean isSink) {
+	public GeneratedWitnessNode createHondaWitnessNode() {
+		return createWitnessNode(false, false, false, true);
+	}
+
+	public GeneratedWitnessNode createWitnessNode(final boolean isInitial, final boolean isError, final boolean isSink,
+			final boolean isHonda) {
 		mCurrentNodeId++;
-		return new GeneratedWitnessNode(mCurrentNodeId, isInitial, isError, isSink);
+		return new GeneratedWitnessNode(mCurrentNodeId, isInitial, isError, isSink, isHonda);
+	}
+
+	public GeneratedWitnessEdge<TE, E> createDummyWitnessEdge() {
+		return createWitnessEdge(null, null, false);
 	}
 
 	public GeneratedWitnessEdge<TE, E> createWitnessEdge(final AtomicTraceElement<TE> traceElement,
 			final ProgramState<E> state) {
-		mCurrentEdgeId++;
-		return new GeneratedWitnessEdge<>(traceElement, state, false, mStringProvider, mCurrentEdgeId);
+		return createWitnessEdge(traceElement, state, false);
 	}
 
 	public GeneratedWitnessEdge<TE, E> createWitnessEdge(final AtomicTraceElement<TE> traceElement) {
-		return createWitnessEdge(traceElement, false);
-	}
-
-	public GeneratedWitnessEdge<TE, E> createDummyWitnessEdge() {
-		mCurrentEdgeId++;
-		return new GeneratedWitnessEdge<>(null, null, false, mStringProvider, mCurrentEdgeId);
+		return createWitnessEdge(traceElement, null, false);
 	}
 
 	public GeneratedWitnessEdge<TE, E> createWitnessEdge(final AtomicTraceElement<TE> traceElement,
 			final boolean isEnteringLoopHead) {
+		return createWitnessEdge(traceElement, null, isEnteringLoopHead);
+	}
+
+	public GeneratedWitnessEdge<TE, E> createWitnessEdge(final AtomicTraceElement<TE> traceElement,
+			final ProgramState<E> state, final boolean isEnteringLoopHead) {
 		mCurrentEdgeId++;
 		return new GeneratedWitnessEdge<>(traceElement, null, isEnteringLoopHead, mStringProvider, mCurrentEdgeId);
 	}

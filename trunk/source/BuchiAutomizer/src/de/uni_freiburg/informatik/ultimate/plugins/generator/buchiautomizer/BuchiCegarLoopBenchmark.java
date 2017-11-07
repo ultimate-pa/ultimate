@@ -66,7 +66,8 @@ public class BuchiCegarLoopBenchmark extends CegarStatisticsType implements ISta
 	public static final String s_LassoPreprocessingBenchmarks = "LassoPreprocessingBenchmarks";
 	public static final String s_LassoTerminationAnalysisBenchmarks = "LassoTerminationAnalysisBenchmarks";
 	public static final String s_LassoNonterminationAnalysisBenchmarks = "LassoNonterminationAnalysisBenchmarks";
-	public static final String s_LassoNonterminationAnalysisSAT = "LassoNonterminationAnalysisSat";
+	public static final String s_LassoNonterminationAnalysisSATFixpoint = "LassoNonterminationAnalysisSatFixpoint";
+	public static final String s_LassoNonterminationAnalysisSATUnbounded = "LassoNonterminationAnalysisSatUnbounded";
 	public static final String s_LassoNonterminationAnalysisUNSAT = "LassoNonterminationAnalysisUnsat";
 	public static final String s_LassoNonterminationAnalysisUNKNOWN = "LassoNonterminationAnalysisUnknown";
 	public static final String s_LassoNonterminationAnalysisTIME = "LassoNonterminationAnalysisTime";
@@ -90,7 +91,8 @@ public class BuchiCegarLoopBenchmark extends CegarStatisticsType implements ISta
 		keyList.add(s_InterpolantCoveringCapabilityBuchi);
 		keyList.add(s_LassoPreprocessingBenchmarks);
 		keyList.add(s_LassoTerminationAnalysisBenchmarks);
-		keyList.add(s_LassoNonterminationAnalysisSAT);
+		keyList.add(s_LassoNonterminationAnalysisSATFixpoint);
+		keyList.add(s_LassoNonterminationAnalysisSATUnbounded);
 		keyList.add(s_LassoNonterminationAnalysisUNSAT);
 		keyList.add(s_LassoNonterminationAnalysisUNKNOWN);
 		keyList.add(s_LassoNonterminationAnalysisTIME);
@@ -139,7 +141,8 @@ public class BuchiCegarLoopBenchmark extends CegarStatisticsType implements ISta
 		case s_LassoPreprocessingBenchmarks:
 		case s_LassoTerminationAnalysisBenchmarks:
 		case s_HighestRank:
-		case s_LassoNonterminationAnalysisSAT:
+		case s_LassoNonterminationAnalysisSATFixpoint:
+		case s_LassoNonterminationAnalysisSATUnbounded:
 		case s_LassoNonterminationAnalysisUNSAT:
 		case s_LassoNonterminationAnalysisUNKNOWN:
 		case s_LassoNonterminationAnalysisTIME:
@@ -259,10 +262,16 @@ public class BuchiCegarLoopBenchmark extends CegarStatisticsType implements ISta
 		sb.append(prettyPrintTerminationAnalysisBenchmark(tabbench));
 		sb.append(s_LassoTerminationAnalysisBenchmarks);
 		sb.append(": ");
-		
-		sb.append(s_LassoNonterminationAnalysisSAT);
+
+		sb.append(s_LassoNonterminationAnalysisSATFixpoint);
 		sb.append(": ");
-		sb.append(benchmarkData.getValue(s_LassoNonterminationAnalysisSAT));
+		sb.append(benchmarkData.getValue(s_LassoNonterminationAnalysisSATFixpoint));
+		sb.append("\t");
+
+		
+		sb.append(s_LassoNonterminationAnalysisSATUnbounded);
+		sb.append(": ");
+		sb.append(benchmarkData.getValue(s_LassoNonterminationAnalysisSATUnbounded));
 		sb.append("\t");
 		
 		sb.append(s_LassoNonterminationAnalysisUNSAT);

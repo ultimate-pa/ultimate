@@ -115,6 +115,30 @@ public enum BuchiInterpolantAutomatonConstructionStrategy {
 		}
 	},
 	
+	ROSE { // only NBA
+		@Override
+		public List<BuchiInterpolantAutomatonConstructionStyle> getBiaConstrucionStyleSequence(final IPreferenceProvider pp) {
+			return Arrays.asList(new BuchiInterpolantAutomatonConstructionStyle[] {
+					new BuchiInterpolantAutomatonConstructionStyle(BuchiInterpolantAutomaton.ScroogeNondeterminism, 
+							false, false, true, true, false), //NBA
+			});
+		}
+	},
+	
+	DAISY { // CAV14 strategy
+		@Override
+		public List<BuchiInterpolantAutomatonConstructionStyle> getBiaConstrucionStyleSequence(final IPreferenceProvider pp) {
+			return Arrays.asList(new BuchiInterpolantAutomatonConstructionStyle[] {
+					new BuchiInterpolantAutomatonConstructionStyle(BuchiInterpolantAutomaton.Deterministic,
+							true, false, false, false, false), //DBA
+					new BuchiInterpolantAutomatonConstructionStyle(BuchiInterpolantAutomaton.Deterministic,
+							true, true, false, false, false),  //DBA
+					new BuchiInterpolantAutomatonConstructionStyle(BuchiInterpolantAutomaton.ScroogeNondeterminism, 
+							false, false, true, true, false),  //NBA
+			});
+		}
+	},
+	
 	DANDELION {
 		@Override
 		public List<BuchiInterpolantAutomatonConstructionStyle> getBiaConstrucionStyleSequence(final IPreferenceProvider pp) {

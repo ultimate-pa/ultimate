@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.translation.DefaultTranslato
 import de.uni_freiburg.informatik.ultimate.core.lib.translation.ProgramExecutionFormatter;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.IBacktranslationValueProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.ITranslator;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IValuation;
@@ -110,8 +111,8 @@ public class BoogieProgramExecution implements IProgramExecution<BoogieASTNode, 
 	}
 
 	@Override
-	public String getSVCOMPWitnessString() {
-		return null;
+	public IBacktranslationValueProvider<BoogieASTNode, Expression> getBacktranslationValueProvider() {
+		return new BoogieBacktranslationValueProvider();
 	}
 
 	private final class BoogieValuation implements IValuation {

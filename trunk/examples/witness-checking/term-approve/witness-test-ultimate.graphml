@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+<key id="programfile" attr.name="programfile" for="graph"/>
+<key id="programhash" attr.name="programhash" for="graph"/>
+<key id="sourcecodelang" attr.name="sourcecodelang" for="graph"/>
+<key id="producer" attr.name="producer" for="graph"/>
+<key id="specification" attr.name="specification" for="graph"/>
+<key id="creationtime" attr.name="creationtime" for="graph"/>
+<key id="witness-type" attr.name="witness-type" for="graph"/>
+<key id="architecture" attr.name="architecture" for="graph"/>
+<key id="entry" attr.name="entry" for="node">
+<default>false</default>
+</key>
+<key id="nodetype" attr.name="nodetype" for="node">
+<default>path</default>
+</key>
+<key id="violation" attr.name="violation" for="node">
+<default>false</default>
+</key>
+<key id="cyclehead" attr.name="cyclehead" for="node">
+<default>false</default>
+</key>
+<key id="invariant" attr.name="invariant" for="node">
+<default>true</default>
+</key>
+<key id="endline" attr.name="endline" for="edge"/>
+<key id="enterLoopHead" attr.name="enterLoopHead" for="edge">
+<default>false</default>
+</key>
+<key id="enterFunction" attr.name="enterFunction" for="edge"/>
+<key id="startline" attr.name="startline" for="edge"/>
+<key id="returnFrom" attr.name="returnFrom" for="edge"/>
+<key id="assumption" attr.name="assumption" for="edge"/>
+<key id="tokens" attr.name="tokens" for="edge"/>
+<key id="control" attr.name="control" for="edge"/>
+<key id="originfile" attr.name="originfile" for="edge">
+<default>/storage/ultimate/trunk/examples/witness-checking/term-approve/test.c</default>
+</key>
+<key id="sourcecode" attr.name="sourcecode" for="edge"/>
+<graph edgedefault="directed">
+<data key="programfile">/storage/ultimate/trunk/examples/witness-checking/term-approve/test.c</data>
+<data key="programhash">288ca3f148c8d4a0d39680d24f7137f16497fc3c</data>
+<data key="sourcecodelang">C</data>
+<data key="producer">Automizer</data>
+<data key="specification">CHECK( init(main()), LTL(F end) )
+
+</data>
+<data key="creationtime">2017-11-03T15:59Z</data>
+<data key="witness-type">violation_witness</data>
+<data key="architecture">64bit</data>
+<node id="N0">
+<data key="entry">true</data>
+</node>
+<node id="N2"/>
+<node id="N3"/>
+<node id="N4"/>
+<node id="N1">
+<data key="cyclehead">true</data>
+</node>
+<node id="N5"/>
+<edge id="E0" source="N0" target="N2">
+<data key="endline">7</data>
+<data key="startline">7</data>
+<data key="originfile">/storage/ultimate/trunk/examples/witness-checking/term-approve/test.c</data>
+<data key="sourcecode">int c, x;</data>
+</edge>
+<edge id="E1" source="N2" target="N3">
+<data key="endline">8</data>
+<data key="startline">8</data>
+<data key="originfile">/storage/ultimate/trunk/examples/witness-checking/term-approve/test.c</data>
+<data key="sourcecode">x = __VERIFIER_nondet_int()</data>
+</edge>
+<edge id="E2" source="N3" target="N4">
+<data key="endline">9</data>
+<data key="startline">9</data>
+<data key="originfile">/storage/ultimate/trunk/examples/witness-checking/term-approve/test.c</data>
+<data key="sourcecode">c = __VERIFIER_nondet_int()</data>
+</edge>
+<edge id="E3" source="N4" target="N1">
+<data key="endline">10</data>
+<data key="enterLoopHead">true</data>
+<data key="startline">10</data>
+<data key="control">condition-true</data>
+<data key="originfile">/storage/ultimate/trunk/examples/witness-checking/term-approve/test.c</data>
+<data key="sourcecode">[c == 0]</data>
+</edge>
+<edge id="E4" source="N1" target="N5">
+<data key="endline">11</data>
+<data key="startline">11</data>
+<data key="control">condition-true</data>
+<data key="originfile">/storage/ultimate/trunk/examples/witness-checking/term-approve/test.c</data>
+<data key="sourcecode">[x &gt;= 0]</data>
+</edge>
+<edge id="E5" source="N5" target="N1">
+<data key="endline">12</data>
+<data key="enterLoopHead">true</data>
+<data key="startline">12</data>
+<data key="originfile">/storage/ultimate/trunk/examples/witness-checking/term-approve/test.c</data>
+<data key="sourcecode">x = x + c</data>
+</edge>
+</graph>
+</graphml>
