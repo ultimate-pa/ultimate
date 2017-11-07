@@ -40,11 +40,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiAccepts;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoWord;
 /**
@@ -65,13 +66,11 @@ public class UtilFixedCounterexample<LETTER, STATE> {
 	public NestedLassoRun<LETTER, STATE> getNestedLassoRun(
 			AutomataLibraryServices services,
 			INestedWordAutomaton<LETTER, STATE> automaton, String name, int iteration) throws AutomataOperationCanceledException {
+		File dir = new File(PATH);
+		if(!dir.exists()) return null;
 		final String fileName = PATH + "/" + name + iteration;
 		File file = new File(fileName);
-		if(!file.exists()) {
-			File dir = new File(PATH);
-			if(!dir.exists()) dir.mkdirs();
-			return null;
-		}
+		if(!file.exists()) return null;
 		mMap.clear();
 		BufferedReader reader = null;
         try {
@@ -120,8 +119,16 @@ public class UtilFixedCounterexample<LETTER, STATE> {
         if(word == null) return null;
         GetLassoRunFromLassoWord<LETTER, STATE> getter = new GetLassoRunFromLassoWord<>(services, automaton, word);
         NestedLassoRun<LETTER, STATE> run = getter.getNestedLassoRun();
+        
         if(run == null) {
         	System.err.println("Wrong automaton");
+        	try {
+				BuchiAccepts<LETTER, STATE> accepts = new BuchiAccepts<>(services, automaton, word);
+				System.err.println(accepts.getResult());
+			} catch (AutomataLibraryException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
         	System.exit(-1);
         }
         return run;
@@ -145,11 +152,11 @@ public class UtilFixedCounterexample<LETTER, STATE> {
 		if(!hasOnlyInternalLetters(automaton)) {
 			return ;
 		}
+		File dir = new File(PATH);
+		if(!dir.exists()) return ;
 		final String fileName = PATH + "/" + name + iteration;
         File file = new File(fileName);
-		if(!file.exists()) {
-			return;
-		}
+		if(!file.exists()) return;
         writeWordToFile(lassoRun.getNestedLassoWord(), file);
 	}
 	
