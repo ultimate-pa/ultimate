@@ -983,8 +983,10 @@ public class ArrayInterpolator {
 				mTail.closeAPath(mHead, boundaryTailTerm, mDiseqInfo);
 
 				if (mLemmaInfo.getLemmaType().equals(":read-over-weakeq")) {
-					final LitInfo indexEqInfo = mInterpolator.getLiteralInfo(mIndexEquality);
-					mTail.addSelectIndexEqAllColors(mHead, indexEqInfo, mIndexEquality, indexEqInfo);
+					if (mIndexEquality != null) {
+						final LitInfo indexEqInfo = mInterpolator.getLiteralInfo(mIndexEquality);
+						mTail.addSelectIndexEqAllColors(mHead, indexEqInfo, mIndexEquality, indexEqInfo);
+					}
 
 					mHead.closeAPath(mTail, mDiseq, tailOcc);
 					mTail.closeAPath(mHead, mDiseq, headOcc);
