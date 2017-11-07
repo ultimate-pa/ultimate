@@ -384,7 +384,7 @@ def parse_args():
 
     parser = argparse.ArgumentParser(description='Ultimate wrapper script for SVCOMP')
     parser.add_argument('--version', action='store_true',
-                        help='Print Ultimate\'s version and exit')
+                        help='Print Ultimate.py\'s version and exit')
     parser.add_argument('--config', nargs=1, metavar='<dir>', type=check_dir,
                         help='Specify the directory in which the static config files are located; default is config/ '
                              'relative to the location of this script')

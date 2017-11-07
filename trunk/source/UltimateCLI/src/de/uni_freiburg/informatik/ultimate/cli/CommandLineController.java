@@ -116,10 +116,7 @@ public class CommandLineController implements IController<RunDefinition> {
 		}
 
 		if (toolchainStageParams.isVersionRequested()) {
-			mLogger.info("Version is " + RcpUtils.getVersion(Activator.PLUGIN_ID));
-			mLogger.info(
-					"Maximal heap size is " + CoreUtil.humanReadableByteCount(Runtime.getRuntime().maxMemory(), true));
-			mLogger.info("This is Ultimate " + core.getUltimateVersionString());
+			printVersion(core);
 			return IApplication.EXIT_OK;
 		}
 
@@ -188,6 +185,26 @@ public class CommandLineController implements IController<RunDefinition> {
 			return -1;
 		}
 		return IApplication.EXIT_OK;
+	}
+
+	private void printVersion(final ICore<RunDefinition> core) {
+		mLogger.info("This is Ultimate " + core.getUltimateVersionString());
+		// DD: note that the next line is used in benchexec
+		mLogger.info("Version is " + RcpUtils.getVersion(Activator.PLUGIN_ID));
+		mLogger.info("Maximal heap size is set to "
+				+ CoreUtil.humanReadableByteCount(Runtime.getRuntime().maxMemory(), true));
+		final String[] sysProps = new String[] { "java.version", "java.specification.name", "java.specification.vendor",
+				"java.specification.version", "java.runtime.version", "java.vm.name", "java.vm.vendor",
+				"java.vm.version", };
+
+		for (final String sysProp : sysProps) {
+			String value = System.getProperty(sysProp);
+			if (value == null) {
+				value = "unknown";
+			}
+			mLogger.info("Value of " + sysProp + " is " + value);
+		}
+
 	}
 
 	private static String generateCsvPrefix(final ParsedParameter fullParams)
