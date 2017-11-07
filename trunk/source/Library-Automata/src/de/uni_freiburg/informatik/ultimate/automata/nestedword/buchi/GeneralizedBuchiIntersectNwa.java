@@ -295,7 +295,7 @@ public class GeneralizedBuchiIntersectNwa<LETTER, STATE> implements IGeneralized
 	@Override
 	public String sizeInformation() {
 		// TODO Auto-generated method stub
-		return null;
+		return mRes2prod.size() + " states";
 	}
 
 	/**

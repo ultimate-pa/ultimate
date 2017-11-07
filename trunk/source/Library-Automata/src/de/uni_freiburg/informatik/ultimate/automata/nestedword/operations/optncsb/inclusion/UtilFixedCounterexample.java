@@ -67,7 +67,11 @@ public class UtilFixedCounterexample<LETTER, STATE> {
 			INestedWordAutomaton<LETTER, STATE> automaton, String name, int iteration) throws AutomataOperationCanceledException {
 		final String fileName = PATH + "/" + name + iteration;
 		File file = new File(fileName);
-		if(!file.exists()) return null;
+		if(!file.exists()) {
+			File dir = new File(PATH);
+			if(!dir.exists()) dir.mkdirs();
+			return null;
+		}
 		mMap.clear();
 		BufferedReader reader = null;
         try {
@@ -116,6 +120,10 @@ public class UtilFixedCounterexample<LETTER, STATE> {
         if(word == null) return null;
         GetLassoRunFromLassoWord<LETTER, STATE> getter = new GetLassoRunFromLassoWord<>(services, automaton, word);
         NestedLassoRun<LETTER, STATE> run = getter.getNestedLassoRun();
+        if(run == null) {
+        	System.err.println("Wrong automaton");
+        	System.exit(-1);
+        }
         return run;
 	}
 	
@@ -139,6 +147,9 @@ public class UtilFixedCounterexample<LETTER, STATE> {
 		}
 		final String fileName = PATH + "/" + name + iteration;
         File file = new File(fileName);
+		if(!file.exists()) {
+			return;
+		}
         writeWordToFile(lassoRun.getNestedLassoWord(), file);
 	}
 	

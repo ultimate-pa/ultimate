@@ -32,9 +32,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 
 /**
  * This class is used to record the information of generated interpolant automaton
@@ -46,7 +44,7 @@ public class BenchmarkRecord {
 	private static int mNumOfSDBAs = 0;
 	private static int mNumOfDBAs = 0;
 	private static int mNumOfFAs = 0;
-	private static List<AutomatonInfo> mInfoOfInterpolantAtIteration;
+//	private static List<AutomatonInfo> mInfoOfInterpolantAtIteration;
 //	private static List<AutomatonInfo> mInfoOfCeAtIteration;
 	private static PrintWriter mOutput = null;
 	private static String mOutputFile = null;
@@ -112,39 +110,49 @@ public class BenchmarkRecord {
 		mNumOfSDBAs = 0;
 		mNumOfDBAs = 0;
 		mNumOfFAs = 0;
-		mInfoOfInterpolantAtIteration = new ArrayList<>();
+//		mInfoOfInterpolantAtIteration = new ArrayList<>();
 //		mInfoOfCeAtIteration = new ArrayList<>();
 	}
 	
     public static void addCounterexampleAutomaton(int iteration, int numOfStates, int numOfTrans, int type) {
 		
 //		AutomatonType autType = null;
-		if(type == 0) {
-			mNumOfNBAs ++;
-		}else if(type == 1) {
-			mNumOfSDBAs ++;
-		}else if(type == 2) {
-			mNumOfDBAs ++;
-		}else if(type == 3) {
-			mNumOfFAs ++;
-		}		
+//		if(type == 0) {
+//			mNumOfNBAs ++;
+//		}else if(type == 1) {
+//			mNumOfSDBAs ++;
+//		}else if(type == 2) {
+//			mNumOfDBAs ++;
+//		}else if(type == 3) {
+//			mNumOfFAs ++;
+//		}		
 	}
 
 	public static void addInterpolantAutomaton(int iteration, int numOfStates, int numOfTrans, int type) {
 		
 		AutomatonType autType = null;
 		if(type == 0) {
-			autType = AutomatonType.DBA;
+			autType = AutomatonType.NBA;
+			mNumOfNBAs ++;
 		}else if(type == 1) {
 			autType = AutomatonType.SDBA;
+			mNumOfSDBAs ++;
 		}else if(type == 2) {
 			autType = AutomatonType.DBA;
+			mNumOfDBAs ++;
 		}else if(type == 3) {
 			autType = AutomatonType.FA;
+			mNumOfFAs ++;
 		}
-		
-		mInfoOfInterpolantAtIteration.add(new AutomatonInfo(iteration, numOfStates, numOfTrans, autType));
-		
+		try {
+			mOutput = new PrintWriter(new BufferedWriter(new FileWriter(mOutputFile, true)));
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		AutomatonInfo info = new AutomatonInfo(iteration, numOfStates, numOfTrans, autType);
+		mOutput.print(info + ", ");
+		mOutput.close();
 	}
 	
 	public static void finish() {
@@ -154,33 +162,11 @@ public class BenchmarkRecord {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		mOutput.println("# CE NBAs = " + mNumOfNBAs);
-		mOutput.println("# CE SDBAs = " + mNumOfSDBAs);
-		mOutput.println("# CE DBAs = " + mNumOfDBAs);
-		mOutput.println("# CE FAs = " + mNumOfFAs);
-		mOutput.println("Information about generated Interpolant automaton");
-		int numOfNbas = 0, numOfSdbas = 0, numOfDbas = 0, numOfFas = 0;
-		for(AutomatonInfo autType : mInfoOfInterpolantAtIteration) {
-			mOutput.print(autType + ", ");
-			if(autType.mAutType == AutomatonType.NBA) {
-				numOfNbas ++;
-			}else if(autType.mAutType == AutomatonType.SDBA) {
-				numOfSdbas ++;
-			}else if(autType.mAutType == AutomatonType.DBA) {
-				numOfDbas ++;
-			}else if(autType.mAutType == AutomatonType.FA) {
-				numOfFas ++;
-			}
-		}
 		mOutput.println();
-		mOutput.println("# interpolant NBAs = " + numOfNbas);
-		mOutput.println("# interpolant SDBAs = " + numOfSdbas);
-		mOutput.println("# interpolant DBAs = " + numOfDbas);
-		mOutput.println("# interpolant FAs = " + numOfFas);
+		mOutput.println("# interpolant NBAs = " + mNumOfNBAs);
+		mOutput.println("# interpolant SDBAs = " + mNumOfSDBAs);
+		mOutput.println("# interpolant DBAs = " + mNumOfDBAs);
+		mOutput.println("# interpolant FAs = " + mNumOfFAs);
 		mOutput.close();
 	}
-	
-	
-
-
 }

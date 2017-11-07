@@ -370,7 +370,8 @@ public class TerminationNcsbComparison extends AbstractBuchiAutomizerTestSuite {
 	 */
 	@Override
 	public long getTimeout() {
-		return 900 * 1000;
+		return Integer.MAX_VALUE;
+//		return 100 * 1000;
 	}
 
 	/**
@@ -400,7 +401,10 @@ public class TerminationNcsbComparison extends AbstractBuchiAutomizerTestSuite {
 //			"buchiAutomizer/ncsb/SUNFLOWER-INTSET_GBA_ANTICHAIN.epf",
 //			"buchiAutomizer/ncsb/SUNFLOWER-INTSET_LAZY3.epf",
 //			"buchiAutomizer/ncsb/ORIGINAL.epf",
-			"buchiAutomizer/ncsb/SUNFLOWER-ORIGINAL.epf",
+			"buchiAutomizer/ncsb/SUNFLOWER-ORIGINAL.epf", //
+			"buchiAutomizer/ncsb/A-ORIGINAL.epf", // svcomp
+			"buchiAutomizer/ncsb/ROSE-ORIGINAL.epf", //FA, NBA
+			"buchiAutomizer/ncsb/DAISY-ORIGINAL.epf", //CAV 14
 	};
 
 	private static final String[] mCToolchains = {
@@ -415,7 +419,7 @@ public class TerminationNcsbComparison extends AbstractBuchiAutomizerTestSuite {
 			mPairsToTry=mDirectoryFileEndingsPairsForSelectedCases;
 		}
 		
-				mPairsToTry = mDirectoryBugPairs;
+	    mPairsToTry = mDirectoryBugPairs;
 		for (final DirectoryFileEndingsPair dfep : mPairsToTry) {
 			for (final String toolchain : mCToolchains) {
 				addTestCase(UltimateRunDefinitionGenerator.getRunDefinitionsFromTrunkRegex(

@@ -180,6 +180,11 @@ public class GeneralizedNestedWordAutomatonReachableStatesAntichain<LETTER, STAT
 			if(mIsEmpty == null) {
 				mIsEmpty = true;
 			}
+			
+			for(STATE state : mAntichain.getStates()) {
+				mStates.remove(state);
+			}
+			
 		}
 
 		private void computeInitialStates() {
@@ -283,14 +288,14 @@ public class GeneralizedNestedWordAutomatonReachableStatesAntichain<LETTER, STAT
                     if(!notEmpty) { // empty language
                     	mAntichain.addState(mStates.get(topState).mProdState);
 //                    	// remove all incoming transitions to topState
-//                    	ProductStateContainer cont = mStates.get(topState);
-//                    	Set<STATE> pred = new HashSet<>();
-//                    	for(IncomingInternalTransition<LETTER, STATE> trans : cont.internalPredecessors()) {
-//                    		ProductStateContainer predCont = mStates.get(trans.getPred());
-//                    		predCont.removeSuccessor(topState);
-//                    		pred.add(trans.getPred());
-//                    	}
-//                    	cont.removePredecessors(pred);
+                    	ProductStateContainer cont = mStates.get(topState);
+                    	Set<STATE> pred = new HashSet<>();
+                    	for(IncomingInternalTransition<LETTER, STATE> trans : cont.internalPredecessors()) {
+                    		ProductStateContainer predCont = mStates.get(trans.getPred());
+                    		predCont.removeSuccessor(topState);
+                    		pred.add(trans.getPred());
+                    	}
+                    	cont.removePredecessors(pred);
                     }
                 }while(!topState.equals(state)); 
                 // whether there is accepting loop
@@ -502,6 +507,10 @@ public class GeneralizedNestedWordAutomatonReachableStatesAntichain<LETTER, STAT
 	    
 	    public Antichain() {
 	    	mResStateMap = new HashMap<>();
+	    }
+	    
+	    Set<STATE> getStates() {
+	    	return mResStateMap.keySet();
 	    }
 	    
 	    public boolean addState(ProductState state) {
