@@ -240,7 +240,8 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 		// build a list of ACSL ASTs
 		final FunctionLineVisitor visitor = new FunctionLineVisitor();
 		mInputTU.accept(visitor);
-		final CommentParser cparser = new CommentParser(mInputTU.getComments(), visitor.getLineRange(), mLogger, main);
+		final CommentParser cparser =
+				new CommentParser(mInputTU.getComments(), visitor.getLineRange(), mLogger, mService);
 		final List<ACSLNode> acslNodes = cparser.processComments();
 
 		validateLTLProperty(acslNodes);
