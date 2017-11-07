@@ -49,6 +49,10 @@ public class BenchmarkRecord {
 	private static PrintWriter mOutput = null;
 	private static String mOutputFile = null;
 	
+	public static boolean includeDiffTransition() {
+		return true;
+	}
+	
 	private BenchmarkRecord() {
 		
 	}
@@ -128,7 +132,8 @@ public class BenchmarkRecord {
 //		}		
 	}
 
-	public static void addInterpolantAutomaton(int iteration, int numOfStates, int numOfTrans, int type) {
+	public static void addInterpolantOrDifferenceAutomaton(int iteration, int numOfStates, int numOfTrans, int type
+			, int numofStatesOfDiff, int numOfTransOfDiff) {
 		
 		AutomatonType autType = null;
 		if(type == 0) {

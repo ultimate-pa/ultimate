@@ -40,12 +40,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiAccepts;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoWord;
 /**
@@ -121,15 +119,7 @@ public class UtilFixedCounterexample<LETTER, STATE> {
         NestedLassoRun<LETTER, STATE> run = getter.getNestedLassoRun();
         
         if(run == null) {
-        	System.err.println("Wrong automaton");
-        	try {
-				BuchiAccepts<LETTER, STATE> accepts = new BuchiAccepts<>(services, automaton, word);
-				System.err.println(accepts.getResult());
-			} catch (AutomataLibraryException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-        	System.exit(-1);
+        	throw new UnsupportedOperationException("Wrong automaton for the difference");
         }
         return run;
 	}

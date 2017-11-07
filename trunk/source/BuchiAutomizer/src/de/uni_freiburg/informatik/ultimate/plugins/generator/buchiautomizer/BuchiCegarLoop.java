@@ -933,9 +933,12 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 		mBenchmarkGenerator.stop(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
 	}
     private void dumpAutomatonInformation(INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> automaton, boolean isFinite) throws AutomataOperationCanceledException {
-		int numOfTrans = (new NumberOfTransitions<>(new AutomataLibraryServices(mServices), automaton)).getResult();		
+		final int numOfTrans = (new NumberOfTransitions<>(new AutomataLibraryServices(mServices), automaton)).getResult();		
+		final boolean includeDiff = BenchmarkRecord.includeDiffTransition();
+		final int numOfTransOfDiff = includeDiff ? (new NumberOfTransitions<>(new AutomataLibraryServices(mServices), mAbstraction)).getResult()
+				: 0;
 		if(isFinite) {
-			BenchmarkRecord.addInterpolantAutomaton(mIteration, automaton.size(), numOfTrans, 3);
+			BenchmarkRecord.addInterpolantOrDifferenceAutomaton(mIteration, automaton.size(), numOfTrans, 3, mAbstraction.size(), numOfTransOfDiff);
 			return ;
 		}
 		
@@ -945,11 +948,11 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 				new IsDeterministic<>(new AutomataLibraryServices(mServices), automaton)
 						.getResult();
 		if (isDeterministic) {
-			BenchmarkRecord.addInterpolantAutomaton(mIteration, automaton.size(), numOfTrans, 2);
+			BenchmarkRecord.addInterpolantOrDifferenceAutomaton(mIteration, automaton.size(), numOfTrans, 2, mAbstraction.size(), numOfTransOfDiff);
 		} else if (isSemiDeterministic) {
-			BenchmarkRecord.addInterpolantAutomaton(mIteration, automaton.size(), numOfTrans, 1);
+			BenchmarkRecord.addInterpolantOrDifferenceAutomaton(mIteration, automaton.size(), numOfTrans, 1, mAbstraction.size(), numOfTransOfDiff);
 		} else {
-			BenchmarkRecord.addInterpolantAutomaton(mIteration, automaton.size(), numOfTrans, 0);
+			BenchmarkRecord.addInterpolantOrDifferenceAutomaton(mIteration, automaton.size(), numOfTrans, 0, mAbstraction.size(), numOfTransOfDiff);
 		}
 	}
 
