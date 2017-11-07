@@ -549,6 +549,7 @@ def main():
             settings_file = get_settings_path(True, settings_search_string)
         except AbortButPrint:
             # there is no settings file for a bit-precise run 
+            pass
         else:
             # we did fail because we had to overapproximate. Lets rerun with bit-precision 
             print('Retrying with bit-precise analysis')
