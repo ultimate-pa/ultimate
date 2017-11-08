@@ -41,11 +41,12 @@ import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Scanner;
 import java.util.stream.Collectors;
 
@@ -77,6 +78,7 @@ import org.eclipse.cdt.core.parser.IncludeFileContentProvider;
 import org.eclipse.cdt.core.parser.ParserLanguage;
 import org.eclipse.cdt.core.parser.ParserMode;
 import org.eclipse.cdt.core.parser.ScannerInfo;
+import org.eclipse.cdt.core.parser.util.ASTPrinter;
 import org.eclipse.cdt.core.settings.model.CSourceEntry;
 import org.eclipse.cdt.core.settings.model.ICSettingEntry;
 import org.eclipse.cdt.core.settings.model.ICSourceEntry;
@@ -101,6 +103,9 @@ import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.jobs.Job;
 
+import de.uni_freiburg.informatik.ultimate.cdt.CommentParser;
+import de.uni_freiburg.informatik.ultimate.cdt.FunctionLineVisitor;
+import de.uni_freiburg.informatik.ultimate.cdt.decorator.ASTDecorator;
 import de.uni_freiburg.informatik.ultimate.cdt.parser.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.WrapperNode;
 import de.uni_freiburg.informatik.ultimate.core.model.ISource;
@@ -111,6 +116,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferencePro
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 
 /**
  * @author Markus Lindenmann
@@ -119,6 +125,10 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
  * @date 02.02.2012
  */
 public class CDTParser implements ISource {
+	/**
+	 * Whether to print the AST and some debug information for the parsed translation units, or not.
+	 */
+	private static final boolean EXTENDED_DEBUG_OUTPUT = false;
 
 	private static final IProgressMonitor NULL_MONITOR = new NullProgressMonitor();
 	private final String[] mFileTypes;
@@ -163,17 +173,89 @@ public class CDTParser implements ISource {
 
 	@Override
 	public IElement parseAST(final File[] files) throws Exception {
+		final Collection<IASTTranslationUnit> tuCollection;
 		if (files.length == 1) {
-			return parseAST(files[0]);
+			// This might be a special case of the below...
+			tuCollection = Collections.singletonList(parseAST(files[0]));
+		} else {
+			tuCollection = performCDTProjectOperations(files);
 		}
-
-		performCDTProjectOperations(files);
-
-		// throw new UnsupportedOperationException("Cannot parse multiple C
-		// files");
-		return null;
-
+		
+		if (EXTENDED_DEBUG_OUTPUT) {
+			for (IASTTranslationUnit tu : tuCollection) {
+				ASTPrinter.print(tu);
+			} 
+		}
+		
+		final Collection<ASTDecorator> decorators = createASTDecoratorsFromTUs(tuCollection);
+		
+		// As the CACSL plugin doesn't support multiple nodes yet
+		return new WrapperNode(null, decorators.stream().findFirst().orElse(null));
 	}
+	
+	private Collection<ASTDecorator> createASTDecoratorsFromTUs(
+			final Collection<IASTTranslationUnit> translationUnits) {
+		final Collection<ASTDecorator> result = new ArrayList<>();
+		for (IASTTranslationUnit tu : translationUnits) {
+			final ASTDecorator decorator = new ASTDecorator();
+			final FunctionLineVisitor visitor = new FunctionLineVisitor();
+			tu.accept(visitor);
+			final CommentParser parser = 
+					new CommentParser(tu.getComments(), visitor.getLineRange(), mLogger, mServices);
+			final List<ACSLNode> acslNodes = parser.processComments();
+			
+			// validateLTLProperty(acslNodes); See comment at method below
+			decorator.setAcslASTs(acslNodes);
+			decorator.mapASTs(tu);
+			
+			result.add(decorator);
+		}
+		return result;
+	}
+
+	// This needs LTLExpressionExtractor which is also needed by CACSL2BoogieTranslator
+	/*private void validateLTLProperty(final List<ACSLNode> acslNodes) {
+		// test "pretty printer"
+		for (final ACSLNode acslNode : acslNodes) {
+			if (acslNode instanceof GlobalLTLInvariant) {
+				final LTLPrettyPrinter printer = new LTLPrettyPrinter();
+				final String orig = printer.print(acslNode);
+				mLogger.info("Original: " + orig);
+
+				final LTLExpressionExtractor extractor = new LTLExpressionExtractor();
+				final String origNormalized = printer.print(extractor.removeWeakUntil(acslNode));
+				mLogger.info("Original normalized: " + origNormalized);
+				if (!extractor.run(acslNode)) {
+					continue;
+				}
+				String extracted = extractor.getLTLFormatString();
+				mLogger.info("Extracted: " + extracted);
+				final Set<String> equivalence = new HashSet<>();
+				for (final Entry<String, Expression> subexp : extractor.getAP2SubExpressionMap().entrySet()) {
+					final String exprAsString = printer.print(subexp.getValue());
+					equivalence.add(exprAsString);
+					mLogger.info(subexp.getKey() + ": " + exprAsString);
+					extracted = extracted.replaceAll(subexp.getKey(), exprAsString);
+				}
+				mLogger.info("Orig from extracted: " + extracted);
+				// the extraction did something weird if this does not hold
+				assert extracted.equals(origNormalized);
+				// our APs are not atomic if this does not hold
+				assert equivalence.size() == extractor.getAP2SubExpressionMap().size();
+
+				// TODO: Alex
+				// List<VariableDeclaration> globalDeclarations = null;
+				// //create this from extractor.getAP2SubExpressionMap()
+				// Map<String, CheckableExpression> ap2expr = null;
+				// LTLPropertyCheck x = new
+				// LTLPropertyCheck(extractor.getLTLFormatString(), ap2expr,
+				// globalDeclarations);
+				// //annotate translation unit with x
+
+			}
+		}
+		// end test
+	}*/
 
 	// created by Hamiz for entering multiple files
 	private ICProject createCDTProjectFromFiles(final File[] files)
@@ -200,8 +282,9 @@ public class CDTParser implements ISource {
 		return icdtProject;
 	}
 
-	public static List<ITranslationUnit> getProjectTranslationUnits(final ICProject cproject) {
-		final List<ITranslationUnit> tuList = new ArrayList<>();
+	public static List<IASTTranslationUnit> getProjectTranslationUnits(final ICProject cproject) 
+			throws CoreException {
+		final List<IASTTranslationUnit> tuList = new ArrayList<>();
 
 		// get source folders
 		try {
@@ -213,7 +296,7 @@ public class CDTParser implements ISource {
 						recursiveContainerTraversal((ICContainer) element, tuList);
 					} else {
 						final ITranslationUnit tu = (ITranslationUnit) element;
-						tuList.add(tu);
+						tuList.add(tu.getAST());
 					}
 				}
 			}
@@ -223,18 +306,18 @@ public class CDTParser implements ISource {
 		return tuList;
 	}
 
-	private static void recursiveContainerTraversal(final ICContainer container, final List<ITranslationUnit> tuList)
-			throws CModelException {
+	private static void recursiveContainerTraversal(final ICContainer container, final List<IASTTranslationUnit> tuList)
+			throws CoreException {
 		for (final ICContainer inContainer : container.getCContainers()) {
 			recursiveContainerTraversal(inContainer, tuList);
 		}
 
 		for (final ITranslationUnit tu : container.getTranslationUnits()) {
-			tuList.add(tu);
+			tuList.add(tu.getAST());
 		}
 	}
 
-	private void performCDTProjectOperations(final File[] files)
+	private Collection<IASTTranslationUnit> performCDTProjectOperations(final File[] files)
 			throws OperationCanceledException, FileNotFoundException, CoreException {
 		final ICProject icdtProject = createCDTProjectFromFiles(files);
 
@@ -242,21 +325,24 @@ public class CDTParser implements ISource {
 
 		final IIndexManager indexManager = CCorePlugin.getIndexManager();
 		final boolean isIndexed = indexManager.isProjectIndexed(icdtProject);
-		final List<ITranslationUnit> listTu = getProjectTranslationUnits(icdtProject);
+		final List<IASTTranslationUnit> listTu = getProjectTranslationUnits(icdtProject);
 
-		final FunctionTableBuilderDuplicate visitor = new FunctionTableBuilderDuplicate();
-		for (final ITranslationUnit tu : listTu) {
-			final IASTTranslationUnit actualTU = tu.getAST();
-			actualTU.accept(visitor);
-		}
-		for (final Entry<String, IASTNode> entry : visitor.getFunctionTable().entrySet()) {
-			mLogger.info(entry.getKey() + ": " + entry.getValue().getRawSignature());
-		}
+		// final FunctionTableBuilderDuplicate visitor = new FunctionTableBuilderDuplicate();
+		// for (final ITranslationUnit tu : listTu) {
+		// 	final IASTTranslationUnit actualTU = tu.getAST();
+		// 	actualTU.accept(visitor);
+		// }
+		// for (final Entry<String, IASTNode> entry : visitor.getFunctionTable().entrySet()) {
+		// 	mLogger.info(entry.getKey() + ": " + entry.getValue().getRawSignature());
+		// }
 
 		mLogger.info("IsIndexed: " + isIndexed);
+		mLogger.info("Found " + listTu.size() + " translation units.");
+
+		return listTu;
 	}
 
-	private IElement parseAST(final File file) throws Exception {
+	private IASTTranslationUnit parseAST(final File file) throws Exception {
 
 		if (file == null || !file.canRead()) {
 			throw new IllegalArgumentException("Input file does not exist");
@@ -308,7 +394,7 @@ public class CDTParser implements ISource {
 		parser.setMaximumTrivialExpressionsInAggregateInitializers(Integer.MAX_VALUE);
 
 		final IASTTranslationUnit translationUnit = parser.parse();
-		return new WrapperNode(null, translationUnit);
+		return translationUnit;
 	}
 
 	@Override

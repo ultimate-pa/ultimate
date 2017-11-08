@@ -41,5 +41,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.parser;
 public class Activator {
 
 	public static final String PLUGIN_ID = "CDTParser";
+
+	public static final String PLUGIN_NAME = "CDTParser";
 	
 }

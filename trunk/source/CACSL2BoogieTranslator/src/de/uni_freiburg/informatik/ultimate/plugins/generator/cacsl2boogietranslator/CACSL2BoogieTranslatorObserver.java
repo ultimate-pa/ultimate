@@ -45,8 +45,6 @@ import org.eclipse.cdt.core.parser.util.ASTPrinter;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieAstCopier;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
-import de.uni_freiburg.informatik.ultimate.cdt.CommentParser;
-import de.uni_freiburg.informatik.ultimate.cdt.FunctionLineVisitor;
 import de.uni_freiburg.informatik.ultimate.cdt.decorator.ASTDecorator;
 import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratorNode;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.MainDispatcher;
@@ -86,10 +84,6 @@ import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
  */
 public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 	/**
-	 * Whether to print the AST and some debug information for the translation, or not.
-	 */
-	private static final boolean EXTENDED_DEBUG_OUTPUT = false;
-	/**
 	 * The logger instance.
 	 */
 	private final ILogger mLogger;
@@ -102,7 +96,7 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 	private final IUltimateServiceProvider mService;
 
 	private final CorrectnessWitnessExtractor mWitnessExtractor;
-	private IASTTranslationUnit mInputTU;
+	private ASTDecorator mInputDecorator;
 	private boolean mLastModel;
 	private Map<IASTNode, ExtractedWitnessInvariant> mWitnessInvariants;
 	private final ACSLObjectContainerObserver mAdditionalAnnotationObserver;
@@ -125,9 +119,9 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 			return false;
 		}
 
-		if ((root instanceof WrapperNode) && (((WrapperNode) root).getBacking() instanceof IASTTranslationUnit)) {
-			mInputTU = (IASTTranslationUnit) ((WrapperNode) root).getBacking();
-			mWitnessExtractor.setAST(mInputTU);
+		if ((root instanceof WrapperNode) && (((WrapperNode) root).getBacking() instanceof ASTDecorator)) {
+			mInputDecorator = (ASTDecorator) ((WrapperNode) root).getBacking();
+			// mWitnessExtractor.setAST(mInputDecorator);  this needs another solution, disabled for now!
 			return false;
 		}
 
@@ -153,49 +147,6 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 		}
 	}
 
-	private void validateLTLProperty(final List<ACSLNode> acslNodes) {
-		// test "pretty printer"
-		for (final ACSLNode acslNode : acslNodes) {
-			if (acslNode instanceof GlobalLTLInvariant) {
-				final LTLPrettyPrinter printer = new LTLPrettyPrinter();
-				final String orig = printer.print(acslNode);
-				mLogger.info("Original: " + orig);
-
-				final LTLExpressionExtractor extractor = new LTLExpressionExtractor();
-				final String origNormalized = printer.print(extractor.removeWeakUntil(acslNode));
-				mLogger.info("Original normalized: " + origNormalized);
-				if (!extractor.run(acslNode)) {
-					continue;
-				}
-				String extracted = extractor.getLTLFormatString();
-				mLogger.info("Extracted: " + extracted);
-				final Set<String> equivalence = new HashSet<>();
-				for (final Entry<String, Expression> subexp : extractor.getAP2SubExpressionMap().entrySet()) {
-					final String exprAsString = printer.print(subexp.getValue());
-					equivalence.add(exprAsString);
-					mLogger.info(subexp.getKey() + ": " + exprAsString);
-					extracted = extracted.replaceAll(subexp.getKey(), exprAsString);
-				}
-				mLogger.info("Orig from extracted: " + extracted);
-				// the extraction did something weird if this does not hold
-				assert extracted.equals(origNormalized);
-				// our APs are not atomic if this does not hold
-				assert equivalence.size() == extractor.getAP2SubExpressionMap().size();
-
-				// TODO: Alex
-				// List<VariableDeclaration> globalDeclarations = null;
-				// //create this from extractor.getAP2SubExpressionMap()
-				// Map<String, CheckableExpression> ap2expr = null;
-				// LTLPropertyCheck x = new
-				// LTLPropertyCheck(extractor.getLTLFormatString(), ap2expr,
-				// globalDeclarations);
-				// //annotate translation unit with x
-
-			}
-		}
-		// end test
-	}
-
 	@Override
 	public void finish() {
 		if (mWitnessExtractor.isReady()) {
@@ -209,10 +160,6 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 	}
 
 	private void doTranslation() {
-		if (EXTENDED_DEBUG_OUTPUT) {
-			ASTPrinter.print(mInputTU);
-		}
-
 		// translate to Boogie
 		final Dispatcher main;
 		final IPreferenceProvider prefs = mService.getPreferenceProvider(Activator.PLUGIN_ID);
@@ -236,27 +183,16 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 		}
 		mStorage.putStorable(IdentifierMapping.getStorageKey(), new IdentifierMapping<String, String>());
 
-		final ASTDecorator decorator = new ASTDecorator();
-		// build a list of ACSL ASTs
-		final FunctionLineVisitor visitor = new FunctionLineVisitor();
-		mInputTU.accept(visitor);
-		final CommentParser cparser =
-				new CommentParser(mInputTU.getComments(), visitor.getLineRange(), mLogger, mService);
-		final List<ACSLNode> acslNodes = cparser.processComments();
-
-		validateLTLProperty(acslNodes);
-		decorator.setAcslASTs(acslNodes);
-		// build decorator tree
-		decorator.mapASTs(mInputTU);
 		// if an additional Annotation was parsed put it into the root node
 		if (mAdditionalAnnotationObserver.getAnnotation() != null) {
 			final ACSLNode node = mAdditionalAnnotationObserver.getAnnotation();
 			node.setLocation(new ACSLSourceLocation(1, 0, 1, 0));
-			decorator.getRootNode().getChildren().add(0, new DecoratorNode(decorator.getRootNode(), node));
+			mInputDecorator.getRootNode().getChildren().add(0, 
+					new DecoratorNode(mInputDecorator.getRootNode(), node));
 		}
 
 		try {
-			BoogieASTNode outputTU = main.run(decorator.getRootNode()).node;
+			BoogieASTNode outputTU = main.run(mInputDecorator.getRootNode()).node;
 			outputTU = new BoogieAstCopier().copy((Unit) outputTU);
 			mRootNode = new WrapperNode(null, outputTU);
 			final IdentifierMapping<String, String> map = new IdentifierMapping<>();
