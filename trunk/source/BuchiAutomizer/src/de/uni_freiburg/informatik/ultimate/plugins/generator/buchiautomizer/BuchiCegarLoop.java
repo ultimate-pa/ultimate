@@ -63,6 +63,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Powers
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveNonLiveStates;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.inclusion.BenchmarkRecord;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.inclusion.GeneralizedBuchiToBuchi;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.inclusion.GeneralizedDifference;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.inclusion.NumberOfTransitions;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.inclusion.UtilFixedCounterexample;
@@ -387,7 +388,12 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 		}
 		if (mPref.dumpAutomata()) {
 			final String filename = mIcfg.getIdentifier() + "_" + mName + "Abstraction" + mIteration;
-			writeAutomatonToFile(mServices, mAbstraction, mPref.dumpPath(), filename, mPref.getAutomataFormat(), "");
+			if(mAbstraction instanceof IGeneralizedNestedWordAutomaton) {
+				GeneralizedBuchiToBuchi<LETTER, IPredicate> gba2ba = new GeneralizedBuchiToBuchi<>(mStateFactoryForRefinement, mAbstraction);
+				writeAutomatonToFile(mServices, gba2ba, mPref.dumpPath(), filename, mPref.getAutomataFormat(), "");
+			}else {
+				writeAutomatonToFile(mServices, mAbstraction, mPref.dumpPath(), filename, mPref.getAutomataFormat(), "");				
+			}
 		}
 		final boolean pldiDump = true;
 		if(pldiDump) {
