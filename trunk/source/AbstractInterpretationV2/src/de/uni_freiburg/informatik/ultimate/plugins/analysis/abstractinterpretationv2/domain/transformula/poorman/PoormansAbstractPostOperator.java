@@ -193,9 +193,9 @@ public class PoormansAbstractPostOperator<BACKING extends IAbstractState<BACKING
 				oldstate.renameVariables(renamedInVars).addVariables(addedVariables);
 
 		// Compute the abstract post
-		final TermConjunctEvaluator<BACKING> ts =
-				new TermConjunctEvaluator<>(mLogger, preState, transformula.getFormula(), mBackingDomain,
-						variableRetainmentSet, alternateOldNames, mMappedTerm2Expression, mCodeBlockFactory);
+		final TermConjunctEvaluator<BACKING> ts = new TermConjunctEvaluator<>(mLogger, preState,
+				transformula.getFormula(), mBackingDomain, variableRetainmentSet, alternateOldNames,
+				mMappedTerm2Expression, mCodeBlockFactory, mBoogie2Smt.getScript());
 		final List<BACKING> postStates = ts.getResult();
 
 		List<BACKING> postPostStates = new ArrayList<>();

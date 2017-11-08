@@ -29,10 +29,12 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.poorman.util;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -40,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.LetTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractDomain;
@@ -59,17 +62,19 @@ public class TermConjunctEvaluator<STATE extends IAbstractState<STATE>> {
 	private final Map<TermVariable, String> mAlternateOldNames;
 	private final CodeBlockFactory mCodeBlockFactory;
 	private final List<STATE> mResult;
+	private final Script mScript;
 
 	public TermConjunctEvaluator(final ILogger logger, final PoormanAbstractState<STATE> prestate, final Term term,
 			final IAbstractDomain<STATE, IcfgEdge> backingDomain, final Set<TermVariable> variableRetainmentSet,
 			final Map<TermVariable, String> alternateOldNames, final MappedTerm2Expression mappedTerm2Expression,
-			final CodeBlockFactory codeBlockFactory) {
+			final CodeBlockFactory codeBlockFactory, final Script script) {
 		mLogger = logger;
 		mBackingDomain = backingDomain;
 		mVariableRetainmentSet = variableRetainmentSet;
 		mAlternateOldNames = alternateOldNames;
 		mMappedTerm2Expression = mappedTerm2Expression;
 		mCodeBlockFactory = codeBlockFactory;
+		mScript = script;
 		mResult = visit(term, Collections.singletonList(prestate.getBackingState()));
 	}
 
@@ -145,10 +150,54 @@ public class TermConjunctEvaluator<STATE extends IAbstractState<STATE>> {
 			}
 			return returnStates;
 		} else if (functionName.equals("not")) {
-			throw new UnsupportedOperationException("Unhandled logical function: not");
+			if (term.getParameters().length != 1) {
+				throw new UnsupportedOperationException("Not-Term has more than one paramter.");
+			}
+			final Term param = term.getParameters()[0];
+			if (param instanceof ApplicationTerm) {
+				final ApplicationTerm appParam = (ApplicationTerm) param;
+				final Term invertedTerm = negateTerm(appParam);
+				return visit(invertedTerm, prestates);
+			}
 		}
 
 		return applyPost(prestates, term);
+	}
+
+	private Term negateTerm(final ApplicationTerm term) {
+		final String function = term.getFunction().getName();
+		String newFunction;
+
+		switch (function) {
+		case "and":
+			newFunction = "or";
+			break;
+		case "or":
+			newFunction = "and";
+			break;
+		case ">=":
+			assert term.getParameters().length == 2;
+			return mScript.term("<", term.getParameters());
+		case ">":
+			assert term.getParameters().length == 2;
+			return mScript.term("<=", term.getParameters());
+		case "<=":
+			assert term.getParameters().length == 2;
+			return mScript.term(">", term.getParameters());
+		case "<":
+			assert term.getParameters().length == 2;
+			return mScript.term(">=", term.getParameters());
+		case "not":
+			assert term.getParameters().length == 1;
+			return term.getParameters()[0];
+		default:
+			throw new UnsupportedOperationException("Unhandled function for negation: " + function);
+		}
+
+		final List<Term> negatedParams = Arrays.stream(term.getParameters()).map(param -> mScript.term("not", param))
+				.collect(Collectors.toList());
+		final Term[] negatedParamsArray = negatedParams.toArray(new Term[negatedParams.size()]);
+		return mScript.term(newFunction, negatedParamsArray);
 	}
 
 	private List<STATE> applyPost(final List<STATE> preStates, final Term... term) {
