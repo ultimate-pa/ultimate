@@ -7,7 +7,9 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.SetOfStates;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.IGeneralizedNestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IGeneralizedNwaOutgoingLetterAndTransitionProvider;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
@@ -37,6 +39,22 @@ public class GeneralizedBuchiToBuchi<LETTER, STATE> implements INwaOutgoingLette
 		mTrackStateMap = new HashMap<>();
 		constructInitialStates();
 	}
+	
+	public <SF extends IBuchiIntersectStateFactory<STATE> & IEmptyStackStateFactory<STATE>> GeneralizedBuchiToBuchi(
+			final SF stateFactory,
+			final INestedWordAutomaton<LETTER, STATE> operand){
+		if(! (operand instanceof IGeneralizedNestedWordAutomaton)) {
+			throw new UnsupportedOperationException("Input automaton is not GBA");
+		}
+		mOperand = (IGeneralizedNwaOutgoingLetterAndTransitionProvider<LETTER, STATE>)operand;;
+		mStateFactory = stateFactory;
+		mEmptyStackState = stateFactory.createEmptyStackState();
+		mSetOfStates = new SetOfStates<>(mEmptyStackState);
+		mAcceptanceSize = mOperand.getAcceptanceSize();
+		mTrackStateMap = new HashMap<>();
+		constructInitialStates();
+	}
+	
 	private void constructInitialStates() {
 		for (final STATE st : mOperand.getInitialStates()) {
 			final int track = 0;
