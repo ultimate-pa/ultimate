@@ -28,7 +28,10 @@
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.visualization;
 
 import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -59,11 +62,17 @@ public final class NwaWriterUniqueId<LETTER, STATE> extends NwaWriter<LETTER, ST
 		super(writer, name, nwa);
 	}
 
+	
+	
 	@Override
 	protected Map<LETTER, String> getAlphabetMapping(final Collection<LETTER> alphabet, final char symbol) {
 		int counter = 0;
 		final Map<LETTER, String> alphabetMapping = new LinkedHashMap<>();
-		for (final LETTER letter : alphabet) {
+		
+		ArrayList<LETTER> alphabetList=new ArrayList<LETTER>(alphabet);
+		
+		Collections.sort(alphabetList, new sortLetter<LETTER>());
+		for (final LETTER letter : alphabetList) {
 			alphabetMapping.put(letter, symbol + Integer.toString(counter));
 			counter++;
 		}
@@ -80,4 +89,12 @@ public final class NwaWriterUniqueId<LETTER, STATE> extends NwaWriter<LETTER, ST
 		}
 		return stateMapping;
 	}
+}
+
+class sortLetter<LETTER> implements Comparator<LETTER>
+{
+    public int compare(LETTER a, LETTER b)
+    {
+        return a.toString().compareTo(b.toString());
+    }
 }

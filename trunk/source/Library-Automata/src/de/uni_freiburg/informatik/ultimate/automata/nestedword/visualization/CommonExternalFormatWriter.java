@@ -28,7 +28,9 @@
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.visualization;
 
 import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -67,9 +69,13 @@ public abstract class CommonExternalFormatWriter<LETTER, STATE> extends GeneralA
 	private Map<LETTER, String> getAlphabetMapping(final Collection<LETTER> alphabet) {
 		int counter = 0;
 		final Map<LETTER, String> alphabetMapping = new LinkedHashMap<>();
-		for (final LETTER letter : alphabet) {
+		
+		ArrayList<LETTER> alphabetList=new ArrayList<LETTER>(alphabet);
+		
+		Collections.sort(alphabetList, new sortLetter<LETTER>());
+		for (final LETTER letter : alphabetList) {
 			alphabetMapping.put(letter, Integer.toString(counter));
-			++counter;
+			counter++;
 		}
 		return alphabetMapping;
 	}
