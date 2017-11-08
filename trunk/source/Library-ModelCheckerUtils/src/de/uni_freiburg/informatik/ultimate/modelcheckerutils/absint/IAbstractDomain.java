@@ -28,6 +28,8 @@
 
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint;
 
+import de.uni_freiburg.informatik.ultimate.logic.Term;
+
 /**
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
@@ -66,8 +68,22 @@ public interface IAbstractDomain<STATE extends IAbstractState<STATE>, ACTION> {
 		throw new UnsupportedOperationException("This domain does not support the post operator");
 	}
 
+	/**
+	 * @return The pre operator for the current abstract domain.
+	 */
 	default IAbstractTransformer<STATE, ACTION> getPreOperator() {
 		throw new UnsupportedOperationException("This domain does not support the pre operator");
+	}
+
+	/**
+	 * Determines whether a given term is abstractable in the abstract domain.
+	 *
+	 * @param term
+	 *            The term to check.
+	 * @return <code>true</code> iff the term is abstractable, <code>false</code> otherwise.
+	 */
+	default boolean isAbstractable(final Term term) {
+		return false;
 	}
 
 	/**
