@@ -397,7 +397,7 @@ public class TerminationNcsbComparison extends AbstractBuchiAutomizerTestSuite {
 //			"buchiAutomizer/ncsb/SUNFLOWER-INTSET_LAZY3.epf",
 //			"buchiAutomizer/ncsb/INTSET_GBA.epf",
 //			"buchiAutomizer/ncsb/SUNFLOWER-INTSET_GBA.epf",
-//			"buchiAutomizer/ncsb/INTSET_GBA_ANTICHAIN.epf",
+			"buchiAutomizer/ncsb/INTSET_GBA_ANTICHAIN.epf",
 //			"buchiAutomizer/ncsb/SUNFLOWER-INTSET_GBA_ANTICHAIN.epf",
 //			"buchiAutomizer/ncsb/SUNFLOWER-INTSET_LAZY3.epf",
 //			"buchiAutomizer/ncsb/ORIGINAL.epf",
