@@ -35,71 +35,71 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 /**
- * This class is used to record the information of generated interpolant automaton
- * at each iteration
- * */
+ * This class is used to record the information of generated interpolant automaton at each iteration
+ */
 public class BenchmarkRecord {
-		
+
 	private static int mNumOfNBAs = 0;
 	private static int mNumOfSDBAs = 0;
 	private static int mNumOfDBAs = 0;
 	private static int mNumOfFAs = 0;
-//	private static List<AutomatonInfo> mInfoOfInterpolantAtIteration;
-//	private static List<AutomatonInfo> mInfoOfCeAtIteration;
+	// private static List<AutomatonInfo> mInfoOfInterpolantAtIteration;
+	// private static List<AutomatonInfo> mInfoOfCeAtIteration;
 	private static PrintWriter mOutput = null;
 	private static String mOutputFile = null;
-	
+
 	public static boolean includeDiffTransition() {
 		return true;
 	}
-	
+
 	private BenchmarkRecord() {
-		
+
 	}
-	
+
 	private static enum AutomatonType {
-		NBA,
-		SDBA,
-		DBA,
-		FA;
-		
+		NBA, SDBA, DBA, FA;
+
+		@Override
 		public String toString() {
-			if(this == NBA) {
+			if (this == NBA) {
 				return "NBA";
-			}else if(this == SDBA) {
+			} else if (this == SDBA) {
 				return "SDBA";
-			}else if(this == DBA) {
+			} else if (this == DBA) {
 				return "DBA";
-			}else {
+			} else {
 				return "FA";
 			}
 		}
 	}
-	
+
 	private static class AutomatonInfo {
 		int mNumOfStates;
 		int mNumOfTrans;
 		AutomatonType mAutType;
 		int mIteration;
-		AutomatonInfo(int iteration, int numOfStates, int numOfTrans, AutomatonType autType) {
+
+		AutomatonInfo(final int iteration, final int numOfStates, final int numOfTrans, final AutomatonType autType) {
 			mIteration = iteration;
 			mNumOfStates = numOfStates;
 			mNumOfTrans = numOfTrans;
 			mAutType = autType;
 		}
+
+		@Override
 		public String toString() {
-			return "( " + mIteration + ", "  + mNumOfStates + ", " + mNumOfTrans + ", " + mAutType + ")"; 
+			return "( " + mIteration + ", " + mNumOfStates + ", " + mNumOfTrans + ", " + mAutType + ")";
 		}
- 	}
-	
-	public static void start(String name, String algorithm) {
-		if(mOutputFile == null) {
-			SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss");
+	}
+
+	public static void start(final String name, final String algorithm) {
+		if (mOutputFile == null) {
+			final SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss");
 			mOutputFile = "Info-" + format.format(new Date()) + ".log";
 		}
 		try {
 			mOutput = new PrintWriter(new BufferedWriter(new FileWriter(mOutputFile, true)));
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
@@ -108,59 +108,67 @@ public class BenchmarkRecord {
 		mOutput.close();
 		clear();
 	}
-	
+
 	private static void clear() {
 		mNumOfNBAs = 0;
 		mNumOfSDBAs = 0;
 		mNumOfDBAs = 0;
 		mNumOfFAs = 0;
-//		mInfoOfInterpolantAtIteration = new ArrayList<>();
-//		mInfoOfCeAtIteration = new ArrayList<>();
-	}
-	
-    public static void addComplementAutomaton(int iteration, int numOfStates, int numOfTrans) {
-		try {
-			mOutput = new PrintWriter(new BufferedWriter(new FileWriter(mOutputFile, true)));
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		mOutput.print("(" + iteration + ", " + numOfStates + "), ");
-		mOutput.close();
+		// mInfoOfInterpolantAtIteration = new ArrayList<>();
+		// mInfoOfCeAtIteration = new ArrayList<>();
 	}
 
-	public static void addInterpolantOrDifferenceAutomaton(int iteration, int numOfStates, int numOfTrans, int type
-			, int numOfStatesOfDiff, int numOfTransOfDiff) {
-		
-		AutomatonType autType = null;
-		if(type == 0) {
-			autType = AutomatonType.NBA;
-			mNumOfNBAs ++;
-		}else if(type == 1) {
-			autType = AutomatonType.SDBA;
-			mNumOfSDBAs ++;
-		}else if(type == 2) {
-			autType = AutomatonType.DBA;
-			mNumOfDBAs ++;
-		}else if(type == 3) {
-			autType = AutomatonType.FA;
-			mNumOfFAs ++;
+	public static void addComplementAutomaton(final int iteration, final int numOfStates, final int numOfTrans) {
+		if (mOutputFile == null) {
+			return;
 		}
 		try {
 			mOutput = new PrintWriter(new BufferedWriter(new FileWriter(mOutputFile, true)));
-		} catch (IOException e) {
+			mOutput.print("(" + iteration + ", " + numOfStates + "), ");
+			mOutput.close();
+		} catch (final IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	public static void addInterpolantOrDifferenceAutomaton(final int iteration, final int numOfStates,
+			final int numOfTrans, final int type, final int numOfStatesOfDiff, final int numOfTransOfDiff) {
+
+		AutomatonType autType = null;
+		if (type == 0) {
+			autType = AutomatonType.NBA;
+			mNumOfNBAs++;
+		} else if (type == 1) {
+			autType = AutomatonType.SDBA;
+			mNumOfSDBAs++;
+		} else if (type == 2) {
+			autType = AutomatonType.DBA;
+			mNumOfDBAs++;
+		} else if (type == 3) {
+			autType = AutomatonType.FA;
+			mNumOfFAs++;
+		}
+		if (mOutputFile == null) {
+			return;
+		}
+		try {
+			mOutput = new PrintWriter(new BufferedWriter(new FileWriter(mOutputFile, true)));
+		} catch (final IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		AutomatonInfo info = new AutomatonInfo(iteration, numOfStates, numOfTrans, autType);
+		final AutomatonInfo info = new AutomatonInfo(iteration, numOfStates, numOfTrans, autType);
 		mOutput.print("[" + info + ", " + numOfStatesOfDiff + ", " + numOfTransOfDiff + "], ");
 		mOutput.close();
 	}
-	
+
 	public static void finish() {
+		if (mOutputFile == null) {
+			return;
+		}
 		try {
 			mOutput = new PrintWriter(new BufferedWriter(new FileWriter(mOutputFile, true)));
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
