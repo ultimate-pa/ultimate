@@ -26,6 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -46,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStruct;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionListRecResult;
@@ -102,57 +105,6 @@ public class InitializationHandler {
 	}
 
 	/**
-	 * Initializes global variables recursively, according to ISO/IEC 9899:TC3, 6.7.8 §10:<br>
-	 * <blockquote cite="http://www.open-std.org/jtc1/sc22/wg14/www/docs/n1256.pdf"><i>"If an object that has automatic
-	 * storage duration is not initialized explicitly, its value is indeterminate. If an object that has static storage
-	 * duration is not initialized explicitly, then:
-	 * <ul>
-	 * <li>if it has pointer type, it is initialized to a null pointer;</li>
-	 * <li>if it has arithmetic type, it is initialized to (positive or unsigned) zero;</li>
-	 * <li>if it is an aggregate, every member is initialized (recursively) according to these rules;</li>
-	 * <li>if it is a union, the first named member is initialized (recursively) according to these rules."</li>
-	 * </ul>
-	 * </i></blockquote> where (from 6.2.5 Types §21):
-	 * <blockquote cite="http://www.open-std.org/jtc1/sc22/wg14/www/docs/n1256.pdf" ><i>"Arithmetic types and pointer
-	 * types are collectively called scalar types. Array and structure types are collectively called aggregate
-	 * types."</i></blockquote>
-	 *
-	 * -- version for Expression that have an identifier in the program, i.e. where onHeap is determined via the
-	 * corresponding store in the CHandler --
-	 *
-	 * @param lhs
-	 *            the LeftHandSide to initialize. If this is null, the initializing value is returned in the lrValue of
-	 *            the returned ResultExpression which otherwise is null. (Detail: if we initialize something onHeap, lhs
-	 *            may not be null)
-	 * @param cType
-	 *            The CType of the initialized variable
-	 *
-	 * @return
-	 */
-	public ExpressionResult initVar(final ILocation loc, final Dispatcher main, final LeftHandSide lhs,
-			final CType cType, final ExpressionResult initializerRaw) {
-
-		boolean onHeap = false;
-		if (lhs != null && lhs instanceof VariableLHS) {
-			onHeap = ((CHandler) main.mCHandler).isHeapVar(((VariableLHS) lhs).getIdentifier());
-		}
-
-		LRValue var = null;
-		if (onHeap) {
-			var = new HeapLValue(new IdentifierExpression(loc, ((VariableLHS) lhs).getIdentifier()), cType);
-		} else {
-			var = lhs == null ? null : new LocalLValue(lhs, cType);
-		}
-
-		if (var == null) {
-			return makeVarInitializationNoReturnValue(loc, main, cType, initializerRaw);
-		} else {
-			return makeVarInitializationWithGivenReturnValue(loc, main, var, cType, initializerRaw);
-		}
-	}
-
-
-	/**
 	 *
 	 *
 	 * Either an expression that is to be initialized is given (via a LeftHandSide). Or we return an ExpressionResult
@@ -167,7 +119,7 @@ public class InitializationHandler {
 	 * @return
 	 */
 	public ExpressionResult initVarNew(final ILocation loc, final Dispatcher main, final LeftHandSide lhsRaw,
-			final CType cTypeRaw, final ExpressionResult initializerRaw) {
+			final CType cTypeRaw, final Result initializerRaw) {
 
 		boolean onHeap = false;
 		if (lhsRaw != null && lhsRaw instanceof VariableLHS) {
@@ -701,7 +653,7 @@ public class InitializationHandler {
 	 * @param valueType the type that the entries in the innermost arrays have
 	 * @return
 	 */
-	private Statement getInitializerArrayCall(final Expression lhs, final CArray arrayType) {
+	private Statement getInitializerArrayCall(final LocalLValue lhs, final CArray arrayType) {
 		mDeclareArrayInitializationFunction = true;
 
 		// TODO Auto-generated method stub
@@ -839,7 +791,7 @@ public class InitializationHandler {
 	//		// lrVal is null in case we got a lhs to assign to, the initializing value otherwise
 	//		return new ExpressionResult(stmt, lrVal, decl, auxVars, overappr);
 	//	}
-	
+
 	//	/**
 	//	 * Same as other initVar but with an LRValue as argument, not a LHS if var is a HeapLValue, something on Heap is
 	//	 * initialized, if it is a LocalLValue something off the Heap is initialized
@@ -1062,7 +1014,7 @@ public class InitializationHandler {
 	//
 	//		return new ExpressionResult(stmt, null, decl, auxVars, overappr);
 	//	}
-	
+
 		//	/**
 		//	 * Initializes an array that lies on heap, either with some given values or to its default values.
 		//	 *
@@ -1194,7 +1146,7 @@ public class InitializationHandler {
 		//			return new ExpressionResult(stmt, null, decl, auxVars, overApp);
 		//		}
 		//	}
-		
+
 		//	/**
 		//	 * Initializes an array that is represented as a boogie array, either with some given values or to its default
 		//	 * values.
@@ -1648,8 +1600,8 @@ public class InitializationHandler {
 		//			throw new UnsupportedOperationException("missing case?");
 		//		}
 		//	}
-		
-		
+
+
 			/**
 	 * Returns a call to the special array initialization procedure. ("on-heap" case)
 	 * The initialization procedure takes as arguments a memory address and signature and range information for an
@@ -1806,7 +1758,7 @@ public class InitializationHandler {
 			//		// lrVal is null in case we got a lhs to assign to, the initializing value otherwise
 			//		return new ExpressionResult(stmt, lrVal, decl, auxVars, overappr);
 			//	}
-			
+
 			//	/**
 			//	 * Same as other initVar but with an LRValue as argument, not a LHS if var is a HeapLValue, something on Heap is
 			//	 * initialized, if it is a LocalLValue something off the Heap is initialized
@@ -2029,7 +1981,7 @@ public class InitializationHandler {
 			//
 			//		return new ExpressionResult(stmt, null, decl, auxVars, overappr);
 			//	}
-			
+
 				//	/**
 				//	 * Initializes an array that lies on heap, either with some given values or to its default values.
 				//	 *
@@ -2161,7 +2113,7 @@ public class InitializationHandler {
 				//			return new ExpressionResult(stmt, null, decl, auxVars, overApp);
 				//		}
 				//	}
-				
+
 				//	/**
 				//	 * Initializes an array that is represented as a boogie array, either with some given values or to its default
 				//	 * values.
@@ -2615,8 +2567,8 @@ public class InitializationHandler {
 				//			throw new UnsupportedOperationException("missing case?");
 				//		}
 				//	}
-				
-				
+
+
 					public List<Declaration> declareInitializationInfrastructure(final Dispatcher main, final ILocation loc) {
 						return Collections.emptyList();
 					}
@@ -3106,7 +3058,7 @@ public class InitializationHandler {
 	//			return new ExpressionResult(stmt, null, decl, auxVars, overApp);
 	//		}
 	//	}
-	
+
 	//	/**
 	//	 * Initializes an array that is represented as a boogie array, either with some given values or to its default
 	//	 * values.
@@ -3526,40 +3478,40 @@ public class InitializationHandler {
 	//		return result;
 	//	}
 	//
-	//	private Expression getDefaultValueForSimpleType(final ILocation loc, final CType cType) {
-	//		if (cType instanceof CPrimitive) {
-	//			final CPrimitive cPrimitive = (CPrimitive) cType;
-	//			switch (cPrimitive.getGeneralType()) {
-	//			case INTTYPE:
-	//				return mExpressionTranslation.constructLiteralForIntegerType(loc, cPrimitive,
-	//						BigInteger.ZERO);
-	//			case FLOATTYPE:
-	//				// TODO: which methods in expression translation to use??
-	//				//				if (cPrimitive.getType().equals(CPrimitives.FLOAT)) {
-	//				//					rhs = mExpressionTranslation.translateFloatingLiteral(loc, "0.0f").getValue();
-	//				//				} else if (cPrimitive.getType().equals(CPrimitives.DOUBLE)) {
-	//				//					rhs = mExpressionTranslation.translateFloatingLiteral(loc, "0.0").getValue();
-	//				//				} else if (cPrimitive.getType().equals(CPrimitives.LONGDOUBLE)) {
-	//				//					rhs = mExpressionTranslation.translateFloatingLiteral(loc, "0.0l").getValue();
-	//				//				} else {
-	//				//					throw new UnsupportedOperationException("UNsopported Floating Type");
-	//				//				}
-	//				return mExpressionTranslation.constructLiteralForFloatingType(loc, cPrimitive,
-	//						BigDecimal.ZERO);
-	//			case VOID:
-	//				throw new AssertionError("cannot initialize something that has type void");
-	//			default:
-	//				throw new AssertionError("unknown category of type");
-	//			}
-	//		} else if (cType instanceof CEnum) {
-	//			return mExpressionTranslation.constructLiteralForIntegerType(loc, new CPrimitive(CPrimitives.INT),
-	//					BigInteger.ZERO);
-	//		} else if (cType instanceof CPointer) {
-	//			return mExpressionTranslation.constructNullPointer(loc);
-	//		} else {
-	//			throw new UnsupportedOperationException("missing case?");
-	//		}
-	//	}
+					private Expression getDefaultValueForSimpleType(final ILocation loc, final CType cType) {
+						if (cType instanceof CPrimitive) {
+							final CPrimitive cPrimitive = (CPrimitive) cType;
+							switch (cPrimitive.getGeneralType()) {
+							case INTTYPE:
+								return mExpressionTranslation.constructLiteralForIntegerType(loc, cPrimitive,
+										BigInteger.ZERO);
+							case FLOATTYPE:
+								// TODO: which methods in expression translation to use??
+								//				if (cPrimitive.getType().equals(CPrimitives.FLOAT)) {
+								//					rhs = mExpressionTranslation.translateFloatingLiteral(loc, "0.0f").getValue();
+								//				} else if (cPrimitive.getType().equals(CPrimitives.DOUBLE)) {
+								//					rhs = mExpressionTranslation.translateFloatingLiteral(loc, "0.0").getValue();
+								//				} else if (cPrimitive.getType().equals(CPrimitives.LONGDOUBLE)) {
+								//					rhs = mExpressionTranslation.translateFloatingLiteral(loc, "0.0l").getValue();
+								//				} else {
+								//					throw new UnsupportedOperationException("UNsopported Floating Type");
+								//				}
+								return mExpressionTranslation.constructLiteralForFloatingType(loc, cPrimitive,
+										BigDecimal.ZERO);
+							case VOID:
+								throw new AssertionError("cannot initialize something that has type void");
+							default:
+								throw new AssertionError("unknown category of type");
+							}
+						} else if (cType instanceof CEnum) {
+							return mExpressionTranslation.constructLiteralForIntegerType(loc, new CPrimitive(CPrimitives.INT),
+									BigInteger.ZERO);
+						} else if (cType instanceof CPointer) {
+							return mExpressionTranslation.constructNullPointer(loc);
+						} else {
+							throw new UnsupportedOperationException("missing case?");
+						}
+					}
 
 
 //	/**
