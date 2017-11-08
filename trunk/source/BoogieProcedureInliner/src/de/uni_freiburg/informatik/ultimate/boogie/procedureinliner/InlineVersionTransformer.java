@@ -1301,9 +1301,8 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 	private String inOldExprOfProc() {
 		if (inInlinedOldExpr()) {
 			return currentProcId();
-		} else {
-			return null;
 		}
+		return null;
 	}
 
 	private void checkTimeout() {

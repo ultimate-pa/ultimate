@@ -174,10 +174,9 @@ public class Inliner implements IUnmanagedObserver {
 				.getBoolean(PreferenceItem.ENTRY_PROCEDURE_FALLBACK.getName())) {
 			mLogger.warn("Fallback enabled. All procedures will be processed.");
 			return mCallGraph.values();
-		} else {
-			mLogger.warn("Fallback not enabled! The resulting program might be not inlined or even empty.");
-			return entryAndReEntryProcedures(entryProcedures);
 		}
+		mLogger.warn("Fallback not enabled! The resulting program might be not inlined or even empty.");
+		return entryAndReEntryProcedures(entryProcedures);
 	}
 
 	private Collection<String> missingEntryProcedures(final Collection<String> procedureIds) {
