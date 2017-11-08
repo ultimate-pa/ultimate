@@ -134,6 +134,10 @@ public class GeneralizedDifference<LETTER, STATE>
 	public INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> getSecondOperand() {
 		return mSndOperand;
 	}
+	
+	public INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> getSecondComplemented() {
+		return mSndComplemented;
+	} 
 
 	@Override
 	public INestedWordAutomaton<LETTER, STATE> getResult() {

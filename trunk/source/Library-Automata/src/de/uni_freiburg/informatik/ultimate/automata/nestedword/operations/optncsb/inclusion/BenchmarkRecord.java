@@ -118,22 +118,19 @@ public class BenchmarkRecord {
 //		mInfoOfCeAtIteration = new ArrayList<>();
 	}
 	
-    public static void addCounterexampleAutomaton(int iteration, int numOfStates, int numOfTrans, int type) {
-		
-//		AutomatonType autType = null;
-//		if(type == 0) {
-//			mNumOfNBAs ++;
-//		}else if(type == 1) {
-//			mNumOfSDBAs ++;
-//		}else if(type == 2) {
-//			mNumOfDBAs ++;
-//		}else if(type == 3) {
-//			mNumOfFAs ++;
-//		}		
+    public static void addComplementAutomaton(int iteration, int numOfStates, int numOfTrans) {
+		try {
+			mOutput = new PrintWriter(new BufferedWriter(new FileWriter(mOutputFile, true)));
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		mOutput.print("(" + iteration + ", " + numOfStates + "), ");
+		mOutput.close();
 	}
 
 	public static void addInterpolantOrDifferenceAutomaton(int iteration, int numOfStates, int numOfTrans, int type
-			, int numofStatesOfDiff, int numOfTransOfDiff) {
+			, int numOfStatesOfDiff, int numOfTransOfDiff) {
 		
 		AutomatonType autType = null;
 		if(type == 0) {
@@ -156,7 +153,7 @@ public class BenchmarkRecord {
 			e.printStackTrace();
 		}
 		AutomatonInfo info = new AutomatonInfo(iteration, numOfStates, numOfTrans, autType);
-		mOutput.print(info + ", ");
+		mOutput.print("[" + info + ", " + numOfStatesOfDiff + ", " + numOfTransOfDiff + "], ");
 		mOutput.close();
 	}
 	

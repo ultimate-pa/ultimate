@@ -40,12 +40,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.IGeneralizedNwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiAccepts;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.GeneralizedBuchiAccepts;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoWord;
+
 /**
  * This is only used to fix the counterexample in the experiments
  * **/
@@ -60,10 +66,9 @@ public class UtilFixedCounterexample<LETTER, STATE> {
 	public UtilFixedCounterexample() {
 	}
 	
-	
-	public NestedLassoRun<LETTER, STATE> getNestedLassoRun(
-			AutomataLibraryServices services,
-			INestedWordAutomaton<LETTER, STATE> automaton, String name, int iteration) throws AutomataOperationCanceledException {
+	public NestedLassoWord<LETTER> getNestedLassoWord(
+			INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> automaton, String name, int iteration) 
+		 throws AutomataOperationCanceledException {
 		File dir = new File(PATH);
 		if(!dir.exists()) return null;
 		final String fileName = PATH + "/" + name + iteration;
@@ -114,6 +119,14 @@ public class UtilFixedCounterexample<LETTER, STATE> {
         if(isOk) {
         	word = new NestedLassoWord<>(stem, loop);
         }
+		return word;
+	}
+	
+	
+	public NestedLassoRun<LETTER, STATE> getNestedLassoRun(
+			AutomataLibraryServices services,
+			INestedWordAutomaton<LETTER, STATE> automaton, String name, int iteration) throws AutomataOperationCanceledException {
+        NestedLassoWord<LETTER> word = getNestedLassoWord(automaton, name, iteration);
         if(word == null) return null;
         GetLassoRunFromLassoWord<LETTER, STATE> getter = new GetLassoRunFromLassoWord<>(services, automaton, word);
         NestedLassoRun<LETTER, STATE> run = getter.getNestedLassoRun();
@@ -168,12 +181,30 @@ public class UtilFixedCounterexample<LETTER, STATE> {
 		}
 	}
 	
-	private final boolean hasOnlyInternalLetters(INestedWordAutomaton<LETTER, STATE> automaton) {
+	private final boolean hasOnlyInternalLetters(INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> automaton) {
         if(automaton.getVpAlphabet().getCallAlphabet().isEmpty()
         && automaton.getVpAlphabet().getReturnAlphabet().isEmpty()) {
         	return true;
         }
         return false;
+	}
+	
+	public void checkAcceptance(
+			AutomataLibraryServices services, INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> automaton, String name, int iteration) 
+		 throws AutomataLibraryException {
+		NestedLassoWord<LETTER> word = this.getNestedLassoWord(automaton, name, iteration);
+		if(word == null) {
+			System.err.println("Empty word");
+			System.exit(-1);
+		}
+		if(automaton instanceof IGeneralizedNwaOutgoingLetterAndTransitionProvider) {
+			IGeneralizedNwaOutgoingLetterAndTransitionProvider<LETTER, STATE> gba = (IGeneralizedNwaOutgoingLetterAndTransitionProvider<LETTER, STATE>)automaton;
+			GeneralizedBuchiAccepts<LETTER, STATE> accepts = new GeneralizedBuchiAccepts<>(services, gba, word);
+			System.err.println("Accepts: " + accepts.getResult());
+		}else {
+			BuchiAccepts<LETTER, STATE> accepts = new BuchiAccepts<>(services, automaton, word);
+			System.err.println("Accepts: " + accepts.getResult());
+		}
 	}
 
 }

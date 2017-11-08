@@ -63,6 +63,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsDete
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsSemiDeterministic;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveUnreachable;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.inclusion.BenchmarkRecord;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -160,6 +161,8 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 	public BackwardCoveringInformation getBci() {
 		return mBci;
 	}
+	
+	private int mIteration;
 
 	INestedWordAutomaton<LETTER, IPredicate> refineBuchi(
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> abstraction,
@@ -168,6 +171,7 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 			final ModifiableGlobalsTable modifiableGlobalsTable, final InterpolationTechnique interpolation,
 			final BuchiCegarLoopBenchmarkGenerator benchmarkGenerator,
 			final BuchiComplementationConstruction complementationConstruction) throws AutomataLibraryException {
+		this.mIteration = mIteration;
 		final NestedWord<LETTER> stem = mCounterexample.getStem().getWord();
 		// if (emptyStem(mCounterexample)) {
 		// stem = mCounterexample.getLoop().getWord();
@@ -505,8 +509,10 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 		if(gbaDiff == null) {
 			assert diff.checkResult(mStateFactoryInterpolAutom);
 			newAbstraction = diff.getResult();
+			BenchmarkRecord.addComplementAutomaton(mIteration, diff.getSndComplemented().size(), 0);
 		}else {
 			newAbstraction = gbaDiff.getResult();
+			BenchmarkRecord.addComplementAutomaton(mIteration, gbaDiff.getSndComplemented().size(), 0);
 		}
 		
 		return newAbstraction;
