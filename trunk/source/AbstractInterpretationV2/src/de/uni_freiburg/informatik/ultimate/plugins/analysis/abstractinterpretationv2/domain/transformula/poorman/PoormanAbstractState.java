@@ -203,7 +203,7 @@ public class PoormanAbstractState<BACKING extends IAbstractState<BACKING>>
 	/**
 	 * @return The backing state for Boogie ICFGs corresponding to this poor man's abstract state.
 	 */
-	protected BACKING getBackingState() {
+	public BACKING getBackingState() {
 		return mBackingState;
 	}
 }
