@@ -713,7 +713,7 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 			} catch (final AutomataLibraryException e) {
 				throw new AssertionError(e.getMessage());
 			}
-			final boolean pldiDump = true;
+			final boolean pldiDump = false;
 			if(pldiDump) {
 				dumpAutomatonInformation(mRefineBuchi.getInterpolAutomatonUsedInRefinement(), false);
 			}
@@ -923,10 +923,9 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 		}else {
 			mAbstraction = gbaDiff.getResult();
 		}
-		final boolean pldiDump = true;
+		final boolean pldiDump = false;
 		if(pldiDump) {
 			dumpAutomatonInformation(determinized, true);
-			BenchmarkRecord.addCounterexampleAutomaton(mIteration, 0, 0, 3);
 		}
 		assert automatonUsesISLPredicates(mAbstraction) : "used wrong StateFactory";
 		mBenchmarkGenerator.addEdgeCheckerData(htc.getEdgeCheckerBenchmark());

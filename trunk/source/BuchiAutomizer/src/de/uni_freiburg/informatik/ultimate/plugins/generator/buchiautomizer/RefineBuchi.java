@@ -63,7 +63,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsDete
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsSemiDeterministic;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveUnreachable;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.inclusion.BenchmarkRecord;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -239,16 +238,13 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 		if (mDifference) {
 			if (complementationConstruction == BuchiComplementationConstruction.Ncsb) {
 				if (setting.isAlwaysSemiDeterministic()) {
-					BenchmarkRecord.addCounterexampleAutomaton(mIteration, 0, 0, 1);
 					newAbstraction = nsbcDifference(abstraction, setting, benchmarkGenerator);
 				} else {
-					BenchmarkRecord.addCounterexampleAutomaton(mIteration, 0, 0, 0);
 					final FkvOptimization optimization = FkvOptimization.ELASTIC;
 					newAbstraction = rankBasedOptimization(abstraction, setting, benchmarkGenerator, stateDeterminizer,
 							optimization);
 				}
 			} else {
-				BenchmarkRecord.addCounterexampleAutomaton(mIteration, 0, 0, 1);
 				final FkvOptimization optimization;
 				switch (complementationConstruction) {
 				case Elastic:
@@ -298,7 +294,6 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 			// (newDiff.getResult()).sizeInformation());
 
 		} else {
-			BenchmarkRecord.addCounterexampleAutomaton(mIteration, 0, 0, 1);
 			final BuchiComplementFKV<LETTER, IPredicate> complNwa = new BuchiComplementFKV<>(
 					new AutomataLibraryServices(mServices), mStateFactoryInterpolAutom,
 					mInterpolAutomatonUsedInRefinement, stateDeterminizer);
