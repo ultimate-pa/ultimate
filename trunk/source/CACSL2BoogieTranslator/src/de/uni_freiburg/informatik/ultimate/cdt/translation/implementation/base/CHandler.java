@@ -838,9 +838,9 @@ public class CHandler implements ICHandler {
 
 						if (cDec.hasInitializer()) { // must be a non-real initializer for variable length array size
 														// --> need to pass this on
-							((ExpressionResult) result).decl.addAll(cDec.getInitializer().decl);
-							((ExpressionResult) result).stmt.addAll(cDec.getInitializer().stmt);
-							((ExpressionResult) result).auxVars.putAll(cDec.getInitializer().auxVars);
+							((ExpressionResult) result).getDeclarations().addAll(((ExpressionResult) cDec.getInitializer()).getDeclarations());
+							((ExpressionResult) result).getStatements().addAll(((ExpressionResult) cDec.getInitializer()).getStatements());
+							((ExpressionResult) result).getAuxVars().putAll(((ExpressionResult) cDec.getInitializer()).getAuxVars());
 						}
 
 						// no initializer --> essentially needs to be havoced f.i. in each loop iteration
@@ -861,7 +861,7 @@ public class CHandler implements ICHandler {
 						assert result instanceof SkipResult || result instanceof ExpressionResult;
 						final VariableLHS lhs = new VariableLHS(loc, bId);
 						final ExpressionResult initRex =
-								mInitHandler.initVar(loc, main, lhs, cDec.getType(), cDec.getInitializer());
+								mInitHandler.initVarNew(loc, main, lhs, cDec.getType(), cDec.getInitializer());
 						if (result instanceof SkipResult) {
 							result = new ExpressionResult((LRValue) null);
 						}

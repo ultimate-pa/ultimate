@@ -3,22 +3,22 @@
  * Copyright (C) 2015 Markus Lindenmann (lindenmm@informatik.uni-freiburg.de)
  * Copyright (C) 2013-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE CACSL2BoogieTranslator plug-in.
- * 
+ *
  * The ULTIMATE CACSL2BoogieTranslator plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE CACSL2BoogieTranslator plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE CACSL2BoogieTranslator plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE CACSL2BoogieTranslator plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -83,6 +83,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.except
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.BoogieASTUtil;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
@@ -93,7 +94,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 /**
  * Class caring for some post processing steps, like creating an initializer
  * procedure and the start procedure.
- * 
+ *
  * @author Markus Lindenmann
  * @date 12.10.2012
  */
@@ -106,7 +107,7 @@ public class PostProcessor {
 
 	private final Dispatcher mDispatcher;
 	private final ILogger mLogger;
-	
+
 	private final AExpressionTranslation mExpressionTranslation;
 	private final boolean mOverapproximateFloatingPointOperations;
 
@@ -134,7 +135,7 @@ public class PostProcessor {
 
 	/**
 	 * Start method for the post processing.
-	 * 
+	 *
 	 * @param main
 	 *            a reference to the main dispatcher.
 	 * @param loc
@@ -171,7 +172,7 @@ public class PostProcessor {
 		decl.addAll(createUltimateStartProcedure(main, loc, functionHandler));
 		decl.addAll(declareFunctionPointerProcedures(main, functionHandler, memoryHandler, structHandler));
 		decl.addAll(declareConversionFunctions(main, functionHandler, memoryHandler, structHandler));
-		
+
 		if ((typeHandler).isBitvectorTranslation()) {
 			decl.addAll(PostProcessor.declarePrimitiveDataTypeSynonyms(loc, main.getTypeSizes(),
 					typeHandler));
@@ -179,14 +180,14 @@ public class PostProcessor {
 			if ((typeHandler).areFloatingTypesNeeded()) {
 				decl.addAll(PostProcessor.declareFloatDataTypes(loc, main.getTypeSizes(), typeHandler, mOverapproximateFloatingPointOperations, expressionTranslation));
 			}
-			
+
 			final String[] importantFunctions = new String[]{ "bvadd" };
 			final BitvectorTranslation bitvectorTranslation = (BitvectorTranslation) expressionTranslation;
 			bitvectorTranslation.declareBinaryBitvectorFunctionsForAllIntegerDatatypes(loc, importantFunctions);
 		}
 		return decl;
 	}
-	
+
 	private ArrayList<Declaration> declareConversionFunctions(
 			final Dispatcher main, final FunctionHandler functionHandler,
 			final MemoryHandler memoryHandler, final StructHandler structHandler) {
@@ -194,8 +195,8 @@ public class PostProcessor {
 		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
 
 		final ArrayList<Declaration> decls = new ArrayList<>();
-		
-		
+
+
 		// function to_int
 		final String inReal = "inReal";
 //		IdentifierExpression inRealIdex = new IdentifierExpression(ignoreLoc, inReal);
@@ -240,7 +241,7 @@ public class PostProcessor {
 		final ArrayList<Declaration> result = new ArrayList<>();
 		for (final ProcedureSignature cFunc : functionHandler.getFunctionsSignaturesWithFunctionPointers()) {
 			final String procName = cFunc.toString();
-			
+
 			final VarList[] inParams = functionHandler.getProcedures().get(procName).getInParams();
 			final VarList[] outParams = functionHandler.getProcedures().get(procName).getOutParams();
 			assert outParams.length <= 1;
@@ -263,7 +264,7 @@ public class PostProcessor {
 
 	/**
 	 * Declares a type for each identifier in the set.
-	 * 
+	 *
 	 * @param loc
 	 *            the location to be used for the declarations.
 	 * @param undefinedTypes
@@ -282,7 +283,7 @@ public class PostProcessor {
 
 	/**
 	 * Create the Ultimate initializer procedure for global variables.
-	 * 
+	 *
 	 * @param translationUnitLoc
 	 *            the location of the translation unit. declaration.
 	 * @param main
@@ -345,8 +346,8 @@ public class PostProcessor {
 				continue;
 			}
 			final ILocation currentDeclsLoc = en.getKey().getLocation();
-			final ExpressionResult initializer = en.getValue().getInitializer();
-			
+			final Result initializer = en.getValue().getInitializer();
+
 			/*
 			 * global variables with external linkage are not implicitly initialized. (They are initialized by
 			 * the module that provides them..)
@@ -367,7 +368,7 @@ public class PostProcessor {
 					//						assert ((VariableDeclaration)en.getKey()).getVariables().length == 1
 					//								&& ((VariableDeclaration)en.getKey()).getVariables()[0].getIdentifiers().length == 1;
 					final ExpressionResult initRex =
-							main.mCHandler.getInitHandler().initVar(currentDeclsLoc, main,
+							main.mCHandler.getInitHandler().initVarNew(currentDeclsLoc, main,
 									new VariableLHS(currentDeclsLoc, id), en.getValue().getType(), initializer);
 					initStatements.addAll(initRex.stmt);
 					initStatements.addAll(CHandler.createHavocsForAuxVars(initRex.auxVars));
@@ -417,10 +418,10 @@ public class PostProcessor {
 	/**
 	 * Create the Ultimate start procedure, calling the init method, and the
 	 * checked method (defined in an Eclipse setting).
-	 * 
+	 *
 	 * @param main
 	 *            a reference to the main dispatcher.
-	 * 
+	 *
 	 * @param loc
 	 *            the location of the translation unit.
 	 * @param procedures
@@ -440,7 +441,7 @@ public class PostProcessor {
 			mLogger.info("Settings: Checked method=" + checkedMethod);
 
 			functionHandler.beginUltimateInitOrStart(main, loc, SFO.START);
-			
+
 			Procedure startDeclaration = null;
 			Specification[] specsStart = new Specification[0];
 
@@ -466,7 +467,7 @@ public class PostProcessor {
 				}
 			}
 			startStmt.addAll(reqSpecsAssumes);
-			
+
 			final ArrayList<Expression> args = new ArrayList<Expression>();
 			if (checkedMethodInParams.length > 0) {
 				startDecl
@@ -526,7 +527,7 @@ public class PostProcessor {
 			//					+ checkMethod
 			//					+ "\n The program does not have this method. ULTIMATE will continue in library mode (i.e., each procedure can be starting procedure and global variables are not initialized).";
 			//			Dispatcher.warn(loc, msg);
-			
+
 			startDeclaration = new Procedure(loc, new Attribute[0], SFO.START,
 					new String[0], new VarList[0], new VarList[0], specsStart,
 					null);
@@ -540,7 +541,7 @@ public class PostProcessor {
 		}
 		return decl;
 	}
-	
+
 	/**
 	 * Generate type declarations like, e.g., the following.
 	 *     type { :isUnsigned true } { :bitsize 16 } C_USHORT = bv16;
@@ -587,7 +588,7 @@ public class PostProcessor {
 			final TypeSizes typesizes, final TypeHandler typeHandler,
 			final boolean overapproximateFloat, final AExpressionTranslation expressionTranslation) {
 		final ArrayList<Declaration> decls = new ArrayList<Declaration>();
-		
+
 		//Roundingmodes, for now RNE hardcoded
 		final Attribute[] attributesRM;
 		if (overapproximateFloat) {
@@ -615,14 +616,14 @@ public class PostProcessor {
 				new NamedType(loc, BitvectorTranslation.BOOGIE_ROUNDING_MODE_IDENTIFIER, new ASTType[0])),null, false));
 		decls.add(new ConstDeclaration(loc, attributesRTZ, false, new VarList(loc, new String[]{BitvectorTranslation.BOOGIE_ROUNDING_MODE_RTZ},
 				new NamedType(loc, BitvectorTranslation.BOOGIE_ROUNDING_MODE_IDENTIFIER, new ASTType[0])),null, false));
-		
+
 		for (final CPrimitive.CPrimitives cPrimitive: CPrimitive.CPrimitives.values()) {
-			
+
 			final CPrimitive cPrimitive0 = new CPrimitive(cPrimitive);
-			
+
 			if (cPrimitive0.getGeneralType() == CPrimitiveCategory.FLOATTYPE
 					&& !cPrimitive0.isComplexType()) {
-				
+
 				if (!overapproximateFloat) {
 					final BitvectorTranslation bt = ((BitvectorTranslation) expressionTranslation);
 					// declare floating point constructors here because we might
@@ -671,7 +672,7 @@ public class PostProcessor {
 		}
 		return decls;
 	}
-			
+
 	public Body getFunctionPointerFunctionBody(final ILocation loc, final Dispatcher main, final FunctionHandler functionHandler, final MemoryHandler memoryHandler,
 			final StructHandler structHandler, final String fpfName, final ProcedureSignature funcSignature, final VarList[] inParams,
 			final VarList[] outParam) {
