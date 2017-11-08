@@ -45,10 +45,19 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
 /**
+ * A Result for the C to Boogie translation.
+ * Stores the result of translating a complex initializer, that consists of possibly nested initializer-lists.
+ *
+ * For example this may represent the translation of a struct initializer or of an initializer for a (multidimensional)
+ * array.
+ *
  * @author Markus Lindenmann
+ * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  * @date 04.08.2012
  */
-public class ExpressionListRecResult extends ExpressionResult {
+public class ExpressionListRecResult extends Result {
+
+
 	/**
 	 * The list holding the single elements.
 	 */
@@ -57,6 +66,13 @@ public class ExpressionListRecResult extends ExpressionResult {
 	 * The name of this field, for designated initializers.
 	 */
 	public final String field;
+
+	/**
+	 *
+	 */
+	public final ExpressionResult mExpressionResult;
+
+	private List<List<Integer>> mTreeNodeIds;
 
 	/**
 	 * Constructor.
@@ -72,7 +88,9 @@ public class ExpressionListRecResult extends ExpressionResult {
 	 *            the name of the field e.g. in designated initializers.
 	 */
 	public ExpressionListRecResult(final String field) {
-		super(null, new LinkedHashMap<VariableDeclaration, ILocation>(0));
+//		super(null, new LinkedHashMap<VariableDeclaration, ILocation>(0));
+		super(null);
+		mExpressionResult = new ExpressionResult(null, new LinkedHashMap<VariableDeclaration, ILocation>(0));
 		this.field = field;
 		list = new ArrayList<ExpressionListRecResult>();
 	}
@@ -107,15 +125,18 @@ public class ExpressionListRecResult extends ExpressionResult {
 	public ExpressionListRecResult(final String field, final List<Statement> stmt, final LRValue lrVal,
 			final List<Declaration> decl, final Map<VariableDeclaration, ILocation> auxVars,
 			final List<Overapprox> overappr) {
-		super(stmt, lrVal, decl, auxVars, overappr);
+//		super(stmt, lrVal, decl, auxVars, overappr);
+		super(null);
+		mExpressionResult = new ExpressionResult(stmt, lrVal, decl, auxVars, overappr);
 		this.field = field;
 		list = new ArrayList<ExpressionListRecResult>();
 	}
 
-	@Override
 	public ExpressionListRecResult switchToRValueIfNecessary(final Dispatcher main, final MemoryHandler memoryHandler,
 			final StructHandler structHandler, final ILocation loc) {
-		final ExpressionResult re = super.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
+//		final ExpressionResult re = super.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
+		final ExpressionResult re =
+				mExpressionResult.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
 
 		final List<ExpressionListRecResult> newList = new ArrayList<ExpressionListRecResult>();
 		if (list != null) {
@@ -128,4 +149,41 @@ public class ExpressionListRecResult extends ExpressionResult {
 		rerl.list.addAll(newList);
 		return rerl;
 	}
+
+	public List<List<Integer>> getTreeNodeIds() {
+		return mTreeNodeIds;
+	}
+
+	public ExpressionResult getTreeNode(final List<Integer> nodeId) {
+		return null;
+	}
+
+	public ExpressionResult getExpressionResult() {
+		return mExpressionResult;
+	}
+
+//	public LRValue getLrVal() {
+//		return mExpressionResult.getLrValue();
+//	}
+//
+//	public Collection<? extends Declaration> getDeclarations() {
+//		return mExpressionResult.getDeclarations();
+//	}
+//
+//	public Collection<? extends Statement> getStatements() {
+//		return mExpressionResult.getStatements();
+//	}
+//
+//	public Map<? extends VariableDeclaration, ? extends ILocation> getAuxVars() {
+//		return mExpressionResult.getAuxVars();
+//	}
+//
+//	public Collection<? extends Overapprox> getOverapprs() {
+//		// TODO Auto-generated method stub
+//		return null;
+//	}
+
+//	public Map<List<Integer>, ExpressionResult> getTree
+
+//	public List<List<Integer>, ExpressionResult> get
 }
