@@ -498,6 +498,7 @@ public class CHandler implements ICHandler {
 		decl.addAll(mTypeSizeComputer.getConstants());
 		decl.addAll(mTypeSizeComputer.getAxioms());
 		decl.addAll(mMemoryHandler.declareMemoryModelInfrastructure(main, loc));
+		decl.addAll(mInitHandler.declareInitializationInfrastructure(main, loc));
 
 		// add type declarations introduced by the translation, e.g., $Pointer$
 		decl.addAll(((TypeHandler) mTypeHandler).constructTranslationDefiniedDelarations(loc, mExpressionTranslation));
