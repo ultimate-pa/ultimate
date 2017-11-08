@@ -166,12 +166,12 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 
 	INestedWordAutomaton<LETTER, IPredicate> refineBuchi(
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> abstraction,
-			final NestedLassoRun<LETTER, IPredicate> mCounterexample, final int mIteration,
+			final NestedLassoRun<LETTER, IPredicate> mCounterexample, final int iteration,
 			final BuchiInterpolantAutomatonConstructionStyle setting, final BinaryStatePredicateManager bspm,
 			final ModifiableGlobalsTable modifiableGlobalsTable, final InterpolationTechnique interpolation,
 			final BuchiCegarLoopBenchmarkGenerator benchmarkGenerator,
 			final BuchiComplementationConstruction complementationConstruction) throws AutomataLibraryException {
-		this.mIteration = mIteration;
+		mIteration = iteration;
 		final NestedWord<LETTER> stem = mCounterexample.getStem().getWord();
 		// if (emptyStem(mCounterexample)) {
 		// stem = mCounterexample.getLoop().getWord();
@@ -219,7 +219,7 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 						bspm.getHondaPredicate(), loop, loopInterpolants, abstraction);
 		if (mDumpAutomata) {
 
-			final String filename = mICfgContainer.getIdentifier() + "_" + "InterpolantAutomatonBuchi" + mIteration;
+			final String filename = mICfgContainer.getIdentifier() + "_" + "InterpolantAutomatonBuchi" + iteration;
 			final String message = setting.toString();
 			BuchiCegarLoop.writeAutomatonToFile(mServices, mInterpolAutomaton, mDumpPath, filename, mFormat, message);
 		}
@@ -335,7 +335,7 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 			} else {
 				automatonString = "interpolBuchiNestedWordAutomatonUsedInRefinement";
 			}
-			final String filename = mICfgContainer.getIdentifier() + "_" + automatonString + mIteration + "after";
+			final String filename = mICfgContainer.getIdentifier() + "_" + automatonString + iteration + "after";
 			final String message = setting.toString();
 			BuchiCegarLoop.writeAutomatonToFile(mServices, mInterpolAutomatonUsedInRefinement, mDumpPath, filename,
 					mFormat, message);
@@ -363,7 +363,7 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 				automatonString = "interpolBuchiNestedWordAutomatonUsedInRefinement";
 			}
 			final String filename =
-					mICfgContainer.getIdentifier() + "_" + determinicity + automatonString + mIteration + "after";
+					mICfgContainer.getIdentifier() + "_" + determinicity + automatonString + iteration + "after";
 			final String message = setting.toString();
 			BuchiCegarLoop.writeAutomatonToFile(mServices, mInterpolAutomatonUsedInRefinement, mDumpPath, filename,
 					mFormat, message);
@@ -453,12 +453,12 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 		final IGeneralizedNwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> gbaAbstraction;
 		switch (mNcsbImplementation) {
 		case INTSET:
-			diff = new BuchiDifferenceNCSBSimple<>(new AutomataLibraryServices(mServices),
-					mStateFactoryForRefinement, abstraction, mInterpolAutomatonUsedInRefinement);
+			diff = new BuchiDifferenceNCSBSimple<>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement,
+					abstraction, mInterpolAutomatonUsedInRefinement);
 			break;
 		case INTSET_LAZY:
-			diff = new BuchiDifferenceNCSBLazy<>(new AutomataLibraryServices(mServices),
-					mStateFactoryForRefinement, abstraction, mInterpolAutomatonUsedInRefinement);
+			diff = new BuchiDifferenceNCSBLazy<>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement,
+					abstraction, mInterpolAutomatonUsedInRefinement);
 			break;
 		case INTSET_GBA:
 			if (abstraction.getVpAlphabet().getCallAlphabet().isEmpty()
@@ -494,12 +494,12 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 			}
 			break;
 		case INTSET_LAZY2:
-			diff = new BuchiDifferenceNCSBLazy2<>(new AutomataLibraryServices(mServices),
-					mStateFactoryForRefinement, abstraction, mInterpolAutomatonUsedInRefinement);
+			diff = new BuchiDifferenceNCSBLazy2<>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement,
+					abstraction, mInterpolAutomatonUsedInRefinement);
 			break;
 		case INTSET_LAZY3:
-			diff = new BuchiDifferenceNCSBLazy3<>(new AutomataLibraryServices(mServices),
-					mStateFactoryForRefinement, abstraction, mInterpolAutomatonUsedInRefinement);
+			diff = new BuchiDifferenceNCSBLazy3<>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement,
+					abstraction, mInterpolAutomatonUsedInRefinement);
 			break;
 		case ORIGINAL:
 			diff = new BuchiDifferenceNCSB<>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement,
