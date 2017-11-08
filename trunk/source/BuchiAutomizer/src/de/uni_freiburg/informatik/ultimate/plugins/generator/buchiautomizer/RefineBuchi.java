@@ -133,8 +133,8 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 			final PredicateFactoryRefinement stateFactoryForRefinement, final boolean useDoubleDeckers,
 			final String dumpPath, final Format format, final InterpolationTechnique interpolation,
 			final IUltimateServiceProvider services, final ILogger logger,
-			final SimplificationTechnique simplificationTechnique,
-			final XnfConversionTechnique xnfConversionTechnique, final NcsbImplementation ncsbImplementation) {
+			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
+			final NcsbImplementation ncsbImplementation) {
 		super();
 		mServices = services;
 		mLogger = logger;
@@ -161,7 +161,7 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 	public BackwardCoveringInformation getBci() {
 		return mBci;
 	}
-	
+
 	private int mIteration;
 
 	INestedWordAutomaton<LETTER, IPredicate> refineBuchi(
@@ -193,8 +193,8 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 			stemInterpolants = null;
 		} else {
 
-			traceCheck = constructTraceCheck(bspm.getStemPrecondition(), bspm.getStemPostcondition(), stem,
-					mCsToolkit, pu, mInterpolation);
+			traceCheck = constructTraceCheck(bspm.getStemPrecondition(), bspm.getStemPostcondition(), stem, mCsToolkit,
+					pu, mInterpolation);
 			final LBool stemCheck = traceCheck.isCorrect();
 			if (stemCheck == LBool.UNSAT) {
 				stemInterpolants = traceCheck.getInterpolants();
@@ -298,9 +298,9 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 			// (newDiff.getResult()).sizeInformation());
 
 		} else {
-			final BuchiComplementFKV<LETTER, IPredicate> complNwa = new BuchiComplementFKV<>(
-					new AutomataLibraryServices(mServices), mStateFactoryInterpolAutom,
-					mInterpolAutomatonUsedInRefinement, stateDeterminizer);
+			final BuchiComplementFKV<LETTER, IPredicate> complNwa =
+					new BuchiComplementFKV<>(new AutomataLibraryServices(mServices), mStateFactoryInterpolAutom,
+							mInterpolAutomatonUsedInRefinement, stateDeterminizer);
 			finishComputation(mInterpolAutomatonUsedInRefinement, setting);
 			benchmarkGenerator.reportHighestRank(complNwa.getHighestRank());
 			assert complNwa.checkResult(mStateFactoryInterpolAutom);
@@ -372,13 +372,15 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 		return newAbstraction;
 	}
 
-	private INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> buildBuchiInterpolantAutomatonForOnDemandConstruction(
-			final NestedLassoRun<LETTER, IPredicate> mCounterexample,
-			final BuchiInterpolantAutomatonConstructionStyle biaConstructionStyle,
-			final BinaryStatePredicateManager bspm, final InterpolationTechnique interpolation,
-			final NestedWord<LETTER> stem, final NestedWord<LETTER> loop, final PredicateUnifier pu,
-			final IPredicate[] stemInterpolants, final IPredicate[] loopInterpolants,
-			final NestedWordAutomaton<LETTER, IPredicate> mInterpolAutomaton, final BuchiHoareTripleChecker bhtc) {
+	private INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate>
+			buildBuchiInterpolantAutomatonForOnDemandConstruction(
+					final NestedLassoRun<LETTER, IPredicate> mCounterexample,
+					final BuchiInterpolantAutomatonConstructionStyle biaConstructionStyle,
+					final BinaryStatePredicateManager bspm, final InterpolationTechnique interpolation,
+					final NestedWord<LETTER> stem, final NestedWord<LETTER> loop, final PredicateUnifier pu,
+					final IPredicate[] stemInterpolants, final IPredicate[] loopInterpolants,
+					final NestedWordAutomaton<LETTER, IPredicate> mInterpolAutomaton,
+					final BuchiHoareTripleChecker bhtc) {
 		INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> buchiInterpolantAutomatonForOnDemandConstruction;
 		switch (biaConstructionStyle.getInterpolantAutomaton()) {
 		case LassoAutomaton:
@@ -451,51 +453,53 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 		final IGeneralizedNwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> gbaAbstraction;
 		switch (mNcsbImplementation) {
 		case INTSET:
-			diff = new BuchiDifferenceNCSBSimple<LETTER, IPredicate>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement,
-					abstraction, mInterpolAutomatonUsedInRefinement);
+			diff = new BuchiDifferenceNCSBSimple<>(new AutomataLibraryServices(mServices),
+					mStateFactoryForRefinement, abstraction, mInterpolAutomatonUsedInRefinement);
 			break;
 		case INTSET_LAZY:
-			diff = new BuchiDifferenceNCSBLazy<LETTER, IPredicate>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement,
-					abstraction, mInterpolAutomatonUsedInRefinement);
+			diff = new BuchiDifferenceNCSBLazy<>(new AutomataLibraryServices(mServices),
+					mStateFactoryForRefinement, abstraction, mInterpolAutomatonUsedInRefinement);
 			break;
 		case INTSET_GBA:
-			if(abstraction.getVpAlphabet().getCallAlphabet().isEmpty()
-			&& abstraction.getVpAlphabet().getReturnAlphabet().isEmpty()) {
-				if(abstraction instanceof IGeneralizedNwaOutgoingLetterAndTransitionProvider) {
-					gbaAbstraction = (IGeneralizedNwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate>)abstraction;
-				}else {
-					gbaAbstraction = new BuchiToGeneralizedBuchi<LETTER, IPredicate>(abstraction);
+			if (abstraction.getVpAlphabet().getCallAlphabet().isEmpty()
+					&& abstraction.getVpAlphabet().getReturnAlphabet().isEmpty()) {
+				if (abstraction instanceof IGeneralizedNwaOutgoingLetterAndTransitionProvider) {
+					gbaAbstraction =
+							(IGeneralizedNwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate>) abstraction;
+				} else {
+					gbaAbstraction = new BuchiToGeneralizedBuchi<>(abstraction);
 				}
-				gbaDiff = new GeneralizedBuchiDifferenceNCSBSimple<>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement,
-						gbaAbstraction, mInterpolAutomatonUsedInRefinement);
-			}else {
-				diff = new BuchiDifferenceNCSBLazy3<LETTER, IPredicate>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement,
-						abstraction, mInterpolAutomatonUsedInRefinement);
+				gbaDiff = new GeneralizedBuchiDifferenceNCSBSimple<>(new AutomataLibraryServices(mServices),
+						mStateFactoryForRefinement, gbaAbstraction, mInterpolAutomatonUsedInRefinement);
+			} else {
+				diff = new BuchiDifferenceNCSBLazy3<>(new AutomataLibraryServices(mServices),
+						mStateFactoryForRefinement, abstraction, mInterpolAutomatonUsedInRefinement);
 			}
 
 			break;
 		case INTSET_GBA_ANTICHAIN:
-			if(abstraction.getVpAlphabet().getCallAlphabet().isEmpty()
+			if (abstraction.getVpAlphabet().getCallAlphabet().isEmpty()
 					&& abstraction.getVpAlphabet().getReturnAlphabet().isEmpty()) {
-				if(abstraction instanceof IGeneralizedNwaOutgoingLetterAndTransitionProvider) {
-					gbaAbstraction = (IGeneralizedNwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate>)abstraction;
-				}else {
-					gbaAbstraction = new BuchiToGeneralizedBuchi<LETTER, IPredicate>(abstraction);
+				if (abstraction instanceof IGeneralizedNwaOutgoingLetterAndTransitionProvider) {
+					gbaAbstraction =
+							(IGeneralizedNwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate>) abstraction;
+				} else {
+					gbaAbstraction = new BuchiToGeneralizedBuchi<>(abstraction);
 				}
-				gbaDiff = new GeneralizedBuchiDifferenceNCSBAntichain<>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement,
-						gbaAbstraction, mInterpolAutomatonUsedInRefinement);
-			}else {
-				diff = new BuchiDifferenceNCSBLazy3<LETTER, IPredicate>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement,
-						abstraction, mInterpolAutomatonUsedInRefinement);
+				gbaDiff = new GeneralizedBuchiDifferenceNCSBAntichain<>(new AutomataLibraryServices(mServices),
+						mStateFactoryForRefinement, gbaAbstraction, mInterpolAutomatonUsedInRefinement);
+			} else {
+				diff = new BuchiDifferenceNCSBLazy3<>(new AutomataLibraryServices(mServices),
+						mStateFactoryForRefinement, abstraction, mInterpolAutomatonUsedInRefinement);
 			}
 			break;
 		case INTSET_LAZY2:
-			diff = new BuchiDifferenceNCSBLazy2<LETTER, IPredicate>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement,
-					abstraction, mInterpolAutomatonUsedInRefinement);
+			diff = new BuchiDifferenceNCSBLazy2<>(new AutomataLibraryServices(mServices),
+					mStateFactoryForRefinement, abstraction, mInterpolAutomatonUsedInRefinement);
 			break;
 		case INTSET_LAZY3:
-			diff = new BuchiDifferenceNCSBLazy3<LETTER, IPredicate>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement,
-					abstraction, mInterpolAutomatonUsedInRefinement);
+			diff = new BuchiDifferenceNCSBLazy3<>(new AutomataLibraryServices(mServices),
+					mStateFactoryForRefinement, abstraction, mInterpolAutomatonUsedInRefinement);
 			break;
 		case ORIGINAL:
 			diff = new BuchiDifferenceNCSB<>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement,
@@ -506,15 +510,15 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 		}
 		finishComputation(mInterpolAutomatonUsedInRefinement, setting);
 		benchmarkGenerator.reportHighestRank(3);
-		if(gbaDiff == null) {
+		if (gbaDiff == null) {
 			assert diff.checkResult(mStateFactoryInterpolAutom);
 			newAbstraction = diff.getResult();
 			BenchmarkRecord.addComplementAutomaton(mIteration, diff.getSndComplemented().size(), 0);
-		}else {
+		} else {
 			newAbstraction = gbaDiff.getResult();
 			BenchmarkRecord.addComplementAutomaton(mIteration, gbaDiff.getSndComplemented().size(), 0);
 		}
-		
+
 		return newAbstraction;
 	}
 
@@ -543,8 +547,8 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 		case Craig_NestedInterpolation:
 		case Craig_TreeInterpolation: {
 			itc = new InterpolatingTraceCheckCraig(precond, postcond, new TreeMap<Integer, IPredicate>(), word,
-					mCsToolkit, AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, false, mPredicateFactory, pu, interpolation, true,
-					mXnfConversionTechnique, mSimplificationTechnique, null);
+					mCsToolkit, AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, false, mPredicateFactory, pu,
+					interpolation, true, mXnfConversionTechnique, mSimplificationTechnique, null);
 			break;
 		}
 		case ForwardPredicates:
@@ -552,9 +556,9 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 		case FPandBP:
 		case FPandBPonlyIfFpWasNotPerfect: {
 			itc = new TraceCheckSpWp(precond, postcond, new TreeMap<Integer, IPredicate>(), word, mCsToolkit,
-					AssertCodeBlockOrder.NOT_INCREMENTALLY, UnsatCores.CONJUNCT_LEVEL, true, mServices, false, mPredicateFactory, pu,
-					interpolation, mCsToolkit.getManagedScript(), mXnfConversionTechnique, mSimplificationTechnique,
-					null);
+					AssertCodeBlockOrder.NOT_INCREMENTALLY, UnsatCores.CONJUNCT_LEVEL, true, mServices, false,
+					mPredicateFactory, pu, interpolation, mCsToolkit.getManagedScript(), mXnfConversionTechnique,
+					mSimplificationTechnique, null);
 			break;
 		}
 		default:
@@ -605,7 +609,8 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 		return true;
 	}
 
-	private void finishComputation(final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> interpolantAutomaton,
+	private void finishComputation(
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> interpolantAutomaton,
 			final BuchiInterpolantAutomatonConstructionStyle setting) {
 		switch (setting.getInterpolantAutomaton()) {
 		case LassoAutomaton:
@@ -627,8 +632,8 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 			final NestedWord<LETTER> stem, final IPredicate[] stemInterpolants, final IPredicate honda,
 			final NestedWord<LETTER> loop, final IPredicate[] loopInterpolants,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> abstraction) {
-		final NestedWordAutomaton<LETTER, IPredicate> result =
-				new NestedWordAutomaton<>(new AutomataLibraryServices(mServices), abstraction.getVpAlphabet(), abstraction.getStateFactory());
+		final NestedWordAutomaton<LETTER, IPredicate> result = new NestedWordAutomaton<>(
+				new AutomataLibraryServices(mServices), abstraction.getVpAlphabet(), abstraction.getStateFactory());
 		final boolean emptyStem = stem.length() == 0;
 		if (emptyStem) {
 			result.addState(true, true, honda);
