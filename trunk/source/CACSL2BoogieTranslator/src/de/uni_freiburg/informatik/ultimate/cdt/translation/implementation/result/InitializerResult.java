@@ -46,38 +46,44 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
 /**
  * A Result for the C to Boogie translation.
- * Stores the result of translating a complex initializer, that consists of possibly nested initializer-lists.
+ * Stores the result of translating an initializer.
+ * An initializer essentially is a nested structure of ExpressionResults.
  *
- * For example this may represent the translation of a struct initializer or of an initializer for a (multidimensional)
+ * As a special case an initializer may contain only one ExpressionResult, for example for initializing simple type
+ * variables, like ints.
+ *
+ * This may also represent the translation of a struct initializer or of an initializer for a (multidimensional)
  * array.
+ *
+ * This implementation tries to follow section 6.7.9 of the C11 standard.
  *
  * @author Markus Lindenmann
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
- * @date 04.08.2012
  */
-public class ExpressionListRecResult extends Result {
-
-
-	/**
-	 * The list holding the single elements.
-	 */
-	public final List<ExpressionListRecResult> list;
-	/**
-	 * The name of this field, for designated initializers.
-	 */
-	public final String field;
+public class InitializerResult extends Result {
 
 	/**
-	 *
+	 * The list holding the children elements.
 	 */
-	public final ExpressionResult mExpressionResult;
+	private final List<InitializerResult> list;
+
+	/**
+	 * The initializer contents for this tree node.
+	 */
+	private final ExpressionResult mExpressionResult;
+
+	/**
+	 * It is possible to give a struct initializer that lists the fields out of order by giving designators for each
+	 * initialization value.
+	 */
+	private final String mDesignator;
 
 	private List<List<Integer>> mTreeNodeIds;
 
 	/**
 	 * Constructor.
 	 */
-	public ExpressionListRecResult() {
+	public InitializerResult() {
 		this(null);
 	}
 
@@ -87,12 +93,12 @@ public class ExpressionListRecResult extends Result {
 	 * @param field
 	 *            the name of the field e.g. in designated initializers.
 	 */
-	public ExpressionListRecResult(final String field) {
+	public InitializerResult(final String field) {
 //		super(null, new LinkedHashMap<VariableDeclaration, ILocation>(0));
 		super(null);
 		mExpressionResult = new ExpressionResult(null, new LinkedHashMap<VariableDeclaration, ILocation>(0));
-		this.field = field;
-		list = new ArrayList<ExpressionListRecResult>();
+		mDesignator = field;
+		list = new ArrayList<InitializerResult>();
 	}
 
 	/**
@@ -105,7 +111,7 @@ public class ExpressionListRecResult extends Result {
 	 * @param decl
 	 *            the declaration list to hold.
 	 */
-	public ExpressionListRecResult(final List<Statement> stmt, final LRValue lrVal, final List<Declaration> decl,
+	public InitializerResult(final List<Statement> stmt, final LRValue lrVal, final List<Declaration> decl,
 			final Map<VariableDeclaration, ILocation> auxVars, final List<Overapprox> overappr) {
 		this(null, stmt, lrVal, decl, auxVars, overappr);
 	}
@@ -122,30 +128,30 @@ public class ExpressionListRecResult extends Result {
 	 * @param decl
 	 *            the declaration list to hold.
 	 */
-	public ExpressionListRecResult(final String field, final List<Statement> stmt, final LRValue lrVal,
+	public InitializerResult(final String field, final List<Statement> stmt, final LRValue lrVal,
 			final List<Declaration> decl, final Map<VariableDeclaration, ILocation> auxVars,
 			final List<Overapprox> overappr) {
 //		super(stmt, lrVal, decl, auxVars, overappr);
 		super(null);
 		mExpressionResult = new ExpressionResult(stmt, lrVal, decl, auxVars, overappr);
-		this.field = field;
-		list = new ArrayList<ExpressionListRecResult>();
+		this.mDesignator = field;
+		list = new ArrayList<InitializerResult>();
 	}
 
-	public ExpressionListRecResult switchToRValueIfNecessary(final Dispatcher main, final MemoryHandler memoryHandler,
+	public InitializerResult switchToRValueIfNecessary(final Dispatcher main, final MemoryHandler memoryHandler,
 			final StructHandler structHandler, final ILocation loc) {
 //		final ExpressionResult re = super.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
 		final ExpressionResult re =
 				mExpressionResult.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
 
-		final List<ExpressionListRecResult> newList = new ArrayList<ExpressionListRecResult>();
+		final List<InitializerResult> newList = new ArrayList<InitializerResult>();
 		if (list != null) {
-			for (final ExpressionListRecResult innerRerl : list) {
+			for (final InitializerResult innerRerl : list) {
 				newList.add(innerRerl.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc));
 			}
 		}
-		final ExpressionListRecResult rerl =
-				new ExpressionListRecResult(field, re.stmt, re.lrVal, re.decl, re.auxVars, re.overappr);
+		final InitializerResult rerl =
+				new InitializerResult(mDesignator, re.stmt, re.lrVal, re.decl, re.auxVars, re.overappr);
 		rerl.list.addAll(newList);
 		return rerl;
 	}
