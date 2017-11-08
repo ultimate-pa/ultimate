@@ -28,10 +28,8 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.poorman.util;
 
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Deque;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -57,7 +55,6 @@ public class TermConjunctEvaluator<STATE extends IAbstractState<STATE>> {
 	private final ILogger mLogger;
 	IAbstractDomain<STATE, IcfgEdge> mBackingDomain;
 	private final MappedTerm2Expression mMappedTerm2Expression;
-	private final Deque<List<STATE>> mPostApplicationStack;
 	private final Set<TermVariable> mVariableRetainmentSet;
 	private final Map<TermVariable, String> mAlternateOldNames;
 	private final CodeBlockFactory mCodeBlockFactory;
@@ -71,11 +68,8 @@ public class TermConjunctEvaluator<STATE extends IAbstractState<STATE>> {
 		mBackingDomain = backingDomain;
 		mVariableRetainmentSet = variableRetainmentSet;
 		mAlternateOldNames = alternateOldNames;
-		mPostApplicationStack = new ArrayDeque<>();
 		mMappedTerm2Expression = mappedTerm2Expression;
 		mCodeBlockFactory = codeBlockFactory;
-		// TODO: Remove the following line! This breaks logic!!
-		mPostApplicationStack.push(Collections.singletonList(prestate.getBackingState()));
 		mResult = visit(term, Collections.singletonList(prestate.getBackingState()));
 	}
 
@@ -145,7 +139,13 @@ public class TermConjunctEvaluator<STATE extends IAbstractState<STATE>> {
 			}
 			return returnStates;
 		} else if (functionName.equals("or")) {
-			throw new UnsupportedOperationException("Unhandled function: " + term.getFunction().getName());
+			final List<STATE> returnStates = new ArrayList<>();
+			for (final Term param : term.getParameters()) {
+				returnStates.addAll(visit(param, prestates));
+			}
+			return returnStates;
+		} else if (functionName.equals("not")) {
+			throw new UnsupportedOperationException("Unhandled logical function: not");
 		}
 
 		return applyPost(prestates, term);
