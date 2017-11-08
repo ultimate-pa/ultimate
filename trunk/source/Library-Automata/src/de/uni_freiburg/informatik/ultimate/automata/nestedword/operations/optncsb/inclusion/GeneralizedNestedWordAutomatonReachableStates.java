@@ -169,6 +169,7 @@ public class GeneralizedNestedWordAutomatonReachableStates<LETTER, STATE> extend
 	    	private final TObjectIntMap<STATE> mIndexMap ;
 	    	private final TObjectIntMap<STATE> mLowlinkMap;
 	        private List<List<STATE>> mSCC;
+	        private Set<STATE> mEmptyStates;
 	        private Boolean mIsEmpty = null;
 	                
 	        public Tarjan() throws AutomataOperationCanceledException {
@@ -177,6 +178,7 @@ public class GeneralizedNestedWordAutomatonReachableStates<LETTER, STATE> extend
 	            this.mIndexMap = new TObjectIntHashMap<>();
 	            this.mLowlinkMap = new TObjectIntHashMap<>();
 	            this.mSCC = new ArrayList<>();
+	            this.mEmptyStates = new HashSet<>();
 	            this.mIndex = 0;
 	            for(STATE state : mOperand.getInitialStates()) {
 	            	mInitialStates.add(state);
@@ -188,9 +190,25 @@ public class GeneralizedNestedWordAutomatonReachableStates<LETTER, STATE> extend
 	            if(mIsEmpty == null) {
 	                mIsEmpty = true;
 	            }
+//	            
+//	            // now remove all states
+//				for(STATE st : mEmptyStates) {
+//					StateContainer<LETTER, STATE> stCont = mStates.get(st);
+//                	Set<STATE> pred = new HashSet<>();
+//                	for(IncomingInternalTransition<LETTER, STATE> trans : stCont.internalPredecessors()) {
+//                		StateContainer<LETTER, STATE> predCont = mStates.get(trans.getPred());
+//                		if(predCont != null) predCont.removeSuccessor(st);
+//                		pred.add(trans.getPred());
+//                	}
+//                	stCont.removePredecessors(pred);
+//                	mStates.remove(st);
+//	            	mInitialStates.remove(st);
+//	            	mFinalStates.remove(st);
+//				}
+	            
 	        }
 	        
-	        void strongConnect(STATE state) throws AutomataOperationCanceledException {
+	        boolean strongConnect(STATE state) throws AutomataOperationCanceledException {
 	            
 	    		mStack.push(state);
 	    		mIndexMap.put(state, mIndex);
@@ -198,6 +216,7 @@ public class GeneralizedNestedWordAutomatonReachableStates<LETTER, STATE> extend
 	    		
 	    		++ mIndex;	
 	            ++ mNumberOfConstructedStates;
+	            boolean notEmpty = false;
 	            
 	            StateContainer<LETTER, STATE> cont = getOrAddState(state);
 	            for (final OutgoingInternalTransition<LETTER, STATE> trans : mOperand.internalSuccessors(state)) {
@@ -207,7 +226,7 @@ public class GeneralizedNestedWordAutomatonReachableStates<LETTER, STATE> extend
 					}
 					STATE succ = trans.getSucc();
 					if(! mIndexMap.containsKey(succ)) {
-						strongConnect(succ); // did not visit succ before
+						notEmpty = strongConnect(succ) || notEmpty; // did not visit succ before
 	                    mLowlinkMap.put(state, Math.min(mLowlinkMap.get(state), mLowlinkMap.get(succ)));					
 					}else if(mStack.contains(succ)) {
 					    mLowlinkMap.put(state, Math.min(mLowlinkMap.get(state), mIndexMap.get(succ)));					
@@ -241,13 +260,18 @@ public class GeneralizedNestedWordAutomatonReachableStates<LETTER, STATE> extend
 	    			}
 	    							
 	    			if(hasAcc) {
+	    				notEmpty = true;
 	    				mIsEmpty = false;
 	    				mSCC.add(sccList);
 	    				if(Options.verbose) {
 	    					System.out.println("Loop: " + sccList);
 	    				}
 	    			}
+	    			if(!notEmpty) {
+	    				mEmptyStates.addAll(sccList);   				
+	    			}
 	    		}
+	    		return notEmpty;
 	        }
 	    }
 	    

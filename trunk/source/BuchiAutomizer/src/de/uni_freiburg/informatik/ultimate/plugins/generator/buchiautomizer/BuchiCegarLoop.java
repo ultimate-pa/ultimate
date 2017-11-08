@@ -395,6 +395,7 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 				writeAutomatonToFile(mServices, mAbstraction, mPref.dumpPath(), filename, mPref.getAutomataFormat(), "");				
 			}
 		}
+		
 		final boolean pldiDump = true;
 		if(pldiDump) {
 			BenchmarkRecord.start(mIcfg.getIdentifier() + "_" + mName
@@ -424,7 +425,6 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 		for (mIteration = 1; mIteration <= mPref.maxIterations(); mIteration++) {
 			mLogger.info("======== Iteration " + mIteration + "============");
 			mBenchmarkGenerator.announceNextIteration();
-
 			boolean abstractionCorrect;
 			try {
 				abstractionCorrect = isAbstractionCorrect();
@@ -585,9 +585,13 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 				}
 
 				if (mPref.dumpAutomata()) {
-					final String filename = mIcfg.getIdentifier() + "_" + "Abstraction" + mIteration;
-					writeAutomatonToFile(mServices, mAbstraction, mPref.dumpPath(), filename, mPref.getAutomataFormat(),
-							"");
+					final String filename = mIcfg.getIdentifier() + "_" + mName + "Abstraction" + mIteration;
+					if(mAbstraction instanceof IGeneralizedNestedWordAutomaton) {
+						GeneralizedBuchiToBuchi<LETTER, IPredicate> gba2ba = new GeneralizedBuchiToBuchi<>(mStateFactoryForRefinement, mAbstraction);
+						writeAutomatonToFile(mServices, gba2ba, mPref.dumpPath(), filename, mPref.getAutomataFormat(), "");
+					}else {
+						writeAutomatonToFile(mServices, mAbstraction, mPref.dumpPath(), filename, mPref.getAutomataFormat(), "");				
+					}
 				}
 				final boolean newMaximumReached =
 						mBenchmarkGenerator.reportAbstractionSize(mAbstraction.size(), mIteration);

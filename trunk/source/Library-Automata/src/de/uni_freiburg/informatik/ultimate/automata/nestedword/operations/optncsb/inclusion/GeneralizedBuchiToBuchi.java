@@ -69,7 +69,11 @@ public class GeneralizedBuchiToBuchi<LETTER, STATE> implements INwaOutgoingLette
 			STATE res = mStateFactory.intersectBuchi(state, state, track);
 			trackState.setBuchiState(res);
 			mTrackStateMap.put(res, trackState);
-			mSetOfStates.addState(isInitial, track == 0 && mOperand.getAcceptanceLabels(state).contains(0), res);
+			final boolean isAccepting = track == 0 && mOperand.getAcceptanceLabels(state).contains(0);
+			if(isAccepting) {
+				System.err.println("Accepting");
+			}
+			mSetOfStates.addState(isInitial, isAccepting, res);
 		}
 		return trackState;
 	}
