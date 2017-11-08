@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStruct;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionListRecResult;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.InitializerResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.HeapLValue;
@@ -140,7 +140,7 @@ public class InitializationHandler {
 
 	private ExpressionResult initVarRec(final ILocation loc, final Dispatcher main, final CType cTypeRaw,
 			final Result initializerRaw, final boolean onHeap, final LRValue lhs) {
-		assert initializerRaw instanceof ExpressionResult || initializerRaw instanceof ExpressionListRecResult;
+		assert initializerRaw instanceof ExpressionResult || initializerRaw instanceof InitializerResult;
 		final CType cType = cTypeRaw.getUnderlyingType();
 
 		if (cType instanceof CPrimitive || cType instanceof CEnum || cType instanceof CPointer) {
@@ -151,7 +151,7 @@ public class InitializationHandler {
 			 * The initializerRaw may already contain some statements and declarations that we need to carry over (for
 			 *  example if the C code contained a function call), so we carry those over into the builder.
 			 */
-			assert !(initializerRaw instanceof ExpressionListRecResult);
+			assert !(initializerRaw instanceof InitializerResult);
 			ExpressionResultBuilder initializer = null;
 			if (initializerRaw != null ) {
 				final ExpressionResult initializerRawSwitched =
@@ -177,15 +177,15 @@ public class InitializationHandler {
 
 			return initExpressionWithSimpleType(loc, main, lhs, onHeap, cType, initializer);
 		} else if (cType instanceof CStruct && onHeap) {
-			return initCStructOnHeap(loc, main, lhs, (CStruct) cType, (ExpressionListRecResult) initializerRaw);
+			return initCStructOnHeap(loc, main, lhs, (CStruct) cType, (InitializerResult) initializerRaw);
 		} else if (cType instanceof CStruct && !onHeap) {
-			return initCStructOffHeap(loc, main, lhs, (CStruct) cType, (ExpressionListRecResult) initializerRaw);
+			return initCStructOffHeap(loc, main, lhs, (CStruct) cType, (InitializerResult) initializerRaw);
 		} else if (cType instanceof CArray && onHeap) {
 			return initCArrayOnHeap(loc, main, (HeapLValue) lhs, (CArray) cType,
-					initializerRaw == null ? null : ((ExpressionListRecResult) initializerRaw).list);
+					initializerRaw == null ? null : ((InitializerResult) initializerRaw).list);
 		} else if (cType instanceof CArray && !onHeap) {
 			return initCArrayOffHeap(loc, main, (LocalLValue) lhs, (CArray) cType,
-					initializerRaw == null ? null : ((ExpressionListRecResult) initializerRaw).list);
+					initializerRaw == null ? null : ((InitializerResult) initializerRaw).list);
 		} else {
 			throw new UnsupportedOperationException("missing case for CType");
 		}
@@ -231,7 +231,7 @@ public class InitializationHandler {
 	}
 
 	private ExpressionResult initCStructOffHeap(final ILocation loc, final Dispatcher main, final LRValue lhsIfAny,
-			final CStruct cType, final ExpressionListRecResult initializerRaw) {
+			final CStruct cType, final InitializerResult initializerRaw) {
 		/*
 		 *  list that collects the initialization values for each field
 		 */
@@ -246,7 +246,7 @@ public class InitializationHandler {
 			final ExpressionResult currentFieldInitializer;
 			{
 				final CType currentFieldUnderlyingType = cType.getFieldTypes()[i].getUnderlyingType();
-				final ExpressionListRecResult	currentFieldInitializerRawIfAny = null; //TODO
+				final InitializerResult	currentFieldInitializerRawIfAny = null; //TODO
 
 				currentFieldInitializer =
 						initVarRec(loc, main, currentFieldUnderlyingType, currentFieldInitializerRawIfAny, false, null);
@@ -275,7 +275,7 @@ public class InitializationHandler {
 	}
 
 	private ExpressionResult initCStructOnHeap(final ILocation loc, final Dispatcher main, final LRValue lhsIfAny,
-			final CStruct cType, final ExpressionListRecResult initializerRaw) {
+			final CStruct cType, final InitializerResult initializerRaw) {
 
 
 		final ExpressionResultBuilder initializer = new ExpressionResultBuilder();
@@ -330,13 +330,13 @@ public class InitializationHandler {
 	}
 
 	private ExpressionResult initCArrayOnHeap(final ILocation loc, final Dispatcher main, final HeapLValue lhsIfAny,
-			final CArray cType, final List<ExpressionListRecResult> initializerIfAny) {
+			final CArray cType, final List<InitializerResult> initializerIfAny) {
 
 		return null;
 	}
 
 	private ExpressionResult initCArrayOffHeap(final ILocation loc, final Dispatcher main, final LocalLValue lhsIfAny,
-			final CArray cArrayType, final List<ExpressionListRecResult> initializerIfAny) {
+			final CArray cArrayType, final List<InitializerResult> initializerIfAny) {
 
 		final ExpressionResultBuilder initializer = new ExpressionResultBuilder();
 

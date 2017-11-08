@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CUnion;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionListRecResult;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.InitializerResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.HeapLValue;
@@ -315,25 +315,25 @@ public class StructHandler {
 		final ILocation loc = main.getLocationFactory().createCLocation(node);
 		assert node.getDesignators().length == 1;
 		assert node.getDesignators()[0] instanceof CASTFieldDesignator;
-		final CASTFieldDesignator fr = (CASTFieldDesignator) node.getDesignators()[0];
-		final String id = fr.getName().toString();
-		final Result r = main.dispatch(node.getOperand());
-		if (r instanceof ExpressionListRecResult) {
-			final ExpressionListRecResult relr = (ExpressionListRecResult) r;
+		final CASTFieldDesignator fieldDesignator = (CASTFieldDesignator) node.getDesignators()[0];
+		final String fieldDesignatorName = fieldDesignator.getName().toString();
+		final Result initializerResult = main.dispatch(node.getOperand());
+		if (initializerResult instanceof InitializerResult) {
+			final InitializerResult relr = (InitializerResult) initializerResult;
 			if (!relr.list.isEmpty()) {
 				assert relr.getExpressionResult().stmt.isEmpty();
 				//                assert relr.expr == null;//TODO??
 				assert relr.getExpressionResult().lrVal == null;
 				assert relr.getExpressionResult().decl.isEmpty();
-				final ExpressionListRecResult named = new ExpressionListRecResult(id);
+				final InitializerResult named = new InitializerResult(fieldDesignatorName);
 				named.list.addAll(relr.list);
 				return named;
 			}
-			return new ExpressionListRecResult(id, relr.getExpressionResult().stmt, relr.getExpressionResult().lrVal,
+			return new InitializerResult(fieldDesignatorName, relr.getExpressionResult().stmt, relr.getExpressionResult().lrVal,
 					relr.getExpressionResult().decl, relr.getExpressionResult().auxVars, relr.getExpressionResult().overappr).switchToRValueIfNecessary(
 					        main, memoryHandler, structHandler, loc);
-		} else if (r instanceof ExpressionResult) {
-			final ExpressionResult rex = (ExpressionResult) r;
+		} else if (initializerResult instanceof ExpressionResult) {
+			final ExpressionResult rex = (ExpressionResult) initializerResult;
 			return rex.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
 		} else {
 			final String msg = "Unexpected result";

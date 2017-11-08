@@ -189,7 +189,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ContractResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.DeclarationResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.DeclaratorResult;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionListRecResult;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.InitializerResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionListResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
@@ -820,7 +820,7 @@ public class CHandler implements ICHandler {
 					 * for the array's size. We do not want to treat this like other initializers (call initVar and so).
 					 */
 					final boolean hasRealInitializer = cDec.hasInitializer() && !(cDec.getType() instanceof CArray
-							&& !(cDec.getInitializer() instanceof ExpressionListRecResult));
+							&& !(cDec.getInitializer() instanceof InitializerResult));
 
 					if (!hasRealInitializer && !mFunctionHandler.noCurrentProcedure()
 							&& !mTypeHandler.isStructDeclaration()) {
@@ -2487,15 +2487,15 @@ public class CHandler implements ICHandler {
 			throw new IllegalArgumentException("You might have parsed your code with "
 					+ "ITranslationUnit.AST_SKIP_TRIVIAL_EXPRESSIONS_IN_AGGREGATE_INITIALIZERS!");
 		}
-		final ExpressionListRecResult result = new ExpressionListRecResult();
+		final InitializerResult result = new InitializerResult();
 		for (final IASTInitializerClause i : node.getClauses()) {
 			final Result r = main.dispatch(i);
-			if (r instanceof ExpressionListRecResult) {
-				result.list.add((ExpressionListRecResult) r);
+			if (r instanceof InitializerResult) {
+				result.list.add((InitializerResult) r);
 			} else if (r instanceof ExpressionResult) {
 				ExpressionResult rex = (ExpressionResult) r;
 				rex = rex.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
-				result.list.add(new ExpressionListRecResult(rex.stmt, rex.lrVal, rex.decl, rex.auxVars, rex.overappr));
+				result.list.add(new InitializerResult(rex.stmt, rex.lrVal, rex.decl, rex.auxVars, rex.overappr));
 				// result.auxVars.putAll(((ResultExpression) r).auxVars);//what for??
 			} else {
 				final String msg = "Unexpected result";
