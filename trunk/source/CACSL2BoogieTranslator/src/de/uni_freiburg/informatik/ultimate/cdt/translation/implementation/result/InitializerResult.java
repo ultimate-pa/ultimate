@@ -168,6 +168,15 @@ public class InitializerResult extends Result {
 		return mExpressionResult;
 	}
 
+	/**
+	 * Return the direct children of this node
+	 * @return
+	 */
+	public List<InitializerResult> getTopLevelChildren() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 //	public LRValue getLrVal() {
 //		return mExpressionResult.getLrValue();
 //	}
