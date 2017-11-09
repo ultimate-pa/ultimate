@@ -445,7 +445,7 @@ public class TerminationNcsbComparison extends AbstractBuchiAutomizerTestSuite {
 						dfep.getOffset(), dfep.getLimit()));
 			}
 		}
-		return super.createTestCasesMultipleMachine(mNumberOfMachines,mCurrentMachineNumber);
+		return super.createTestCasesMultipleMachine(mNumberOfMachines,mCurrentMachineNumber,mSettings.length);
 	}
 	// @formatter:on
 }

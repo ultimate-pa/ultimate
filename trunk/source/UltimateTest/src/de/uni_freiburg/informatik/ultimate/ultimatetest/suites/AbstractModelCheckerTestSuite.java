@@ -70,15 +70,16 @@ public abstract class AbstractModelCheckerTestSuite extends UltimateTestSuite {
 	
 	/**
 	 * Added by Yu-Fang Chen for performing experiments on multiple machines and fairly distributed the work load
+	 * @param numberOfStrategies 
 	 * 
 	 */
-	public Collection<UltimateTestCase> createTestCasesMultipleMachine(final int numberOfMachines, final int currentMachineNumber) {
+	public Collection<UltimateTestCase> createTestCasesMultipleMachine(final int numberOfMachines, final int currentMachineNumber, int numberOfStrategies) {
 		mTestCases.sort(null);
 		int i=0;
 		for (Iterator<?> it = mTestCases.iterator(); it.hasNext(); )
 	    {
 	        it.next();
-	        if (i % numberOfMachines != currentMachineNumber)
+	        if ((i/numberOfStrategies) % numberOfMachines != currentMachineNumber)
 	        {
 	            it.remove();
 	        }
