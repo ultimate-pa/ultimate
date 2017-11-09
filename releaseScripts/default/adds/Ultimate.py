@@ -151,7 +151,7 @@ class _ExitCode:
 
     def __getattr__(self, name):
         if name in _ExitCode._exit_codes:
-            return (_ExitCode._exit_codes.index(name) + 1)
+            return _ExitCode._exit_codes.index(name)
         raise AttributeError("Exit code %s not found" % name)
 
 
