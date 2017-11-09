@@ -42,12 +42,11 @@ import java.util.Stack;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-
-
+import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
+import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IGeneralizedNwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoRun;
-
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 
@@ -81,7 +80,7 @@ public class GeneralizedNestedWordAutomatonReachableStatesAntichain<LETTER, STAT
 	private final IBuchiIntersectStateFactory<STATE> mStateFactory;
 	private final STATE mEmptyStackState;
 	private final int mAcceptanceSize;
-	
+	private static int mNumber = 0;
 	
 	public <FACTORY extends IBuchiIntersectStateFactory<STATE> & IEmptyStackStateFactory<STATE>> GeneralizedNestedWordAutomatonReachableStatesAntichain(final AutomataLibraryServices services,
 			final IGeneralizedNwaOutgoingLetterAndTransitionProvider<LETTER, STATE> fstOperand,
@@ -100,7 +99,6 @@ public class GeneralizedNestedWordAutomatonReachableStatesAntichain<LETTER, STAT
 		mAcceptanceSize = fstOperand.getAcceptanceSize() + 1;
 		try {
 			mReach = new ReachableStatesComputation();
-			System.out.println("States number: " + mStates.size());
 		} catch (final ToolchainCanceledException tce) {
 			throw tce;
 		} catch (final Error | RuntimeException e) {
@@ -108,6 +106,19 @@ public class GeneralizedNestedWordAutomatonReachableStatesAntichain<LETTER, STAT
 		}
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug(stateContainerInformation());
+		}
+		
+		final boolean dumpFile = true;
+		if(dumpFile) {
+			mNumber ++;
+			GeneralizedBuchiToBuchi<LETTER, STATE> gba2ba = new GeneralizedBuchiToBuchi<>(stateFactory, mFstOperand);
+			new AutomatonDefinitionPrinter<String, String>(mServices, "Program",
+					"./program" + mNumber, Format.BA, "", gba2ba);
+			new AutomatonDefinitionPrinter<String, String>(mServices, "Complement",
+					"./complement" + mNumber, Format.BA, "", mSndOperand);
+			gba2ba = new GeneralizedBuchiToBuchi<>(stateFactory, this);
+			new AutomatonDefinitionPrinter<String, String>(mServices, "Difference",
+					"./difference" + mNumber, Format.BA, "", gba2ba);
 		}
 	}
 	
@@ -403,7 +414,7 @@ public class GeneralizedNestedWordAutomatonReachableStatesAntichain<LETTER, STAT
 
 	@Override
 	public String sizeInformation() {
-		return null;
+		return size() + " states";
 	}
 
 	@Override
