@@ -47,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState.SubsetResult;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.MappedTerm2Expression;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.poorman.PoormanAbstractState;
@@ -130,19 +131,9 @@ public class TermConjunctEvaluator<STATE extends IAbstractState<STATE>> {
 					nonAbstractables.add(param);
 				}
 			}
-			List<STATE> preState = prestates;
-			if (!abstractables.isEmpty()) {
-				preState = applyPost(preState, abstractables.toArray(new Term[abstractables.size()]));
-			}
-
-			// Compute post for non-abstractables
-			// TODO: Order them! for example in intervals, x <= 0 && z == y && y == x has two different orderings of
-			// which one is more precise than the other.
-			List<STATE> returnStates = preState;
-			for (final Term nonAbstractable : nonAbstractables) {
-				returnStates = visit(nonAbstractable, returnStates);
-			}
-			return returnStates;
+			final List<STATE> preStatesAfterAbstractables =
+					applyPost(prestates, abstractables.toArray(new Term[abstractables.size()]));
+			return computeFixpoint(nonAbstractables, preStatesAfterAbstractables);
 		} else if (functionName.equals("or")) {
 			final List<STATE> returnStates = new ArrayList<>();
 			for (final Term param : term.getParameters()) {
@@ -150,13 +141,16 @@ public class TermConjunctEvaluator<STATE extends IAbstractState<STATE>> {
 			}
 			return returnStates;
 		} else if (functionName.equals("not")) {
-			if (term.getParameters().length != 1) {
-				throw new UnsupportedOperationException("Not-Term has more than one paramter.");
-			}
+			assert term.getParameters().length == 1;
 			final Term param = term.getParameters()[0];
 			if (param instanceof ApplicationTerm) {
 				final ApplicationTerm appParam = (ApplicationTerm) param;
 				final Term invertedTerm = negateTerm(appParam);
+				if (invertedTerm == appParam) {
+					// If the term is something like (not (= x y)), compute the post right away and let the domain deal
+					// with the negation.
+					return applyPost(prestates, term);
+				}
 				return visit(invertedTerm, prestates);
 			}
 		}
@@ -164,7 +158,46 @@ public class TermConjunctEvaluator<STATE extends IAbstractState<STATE>> {
 		return applyPost(prestates, term);
 	}
 
+	private List<STATE> computeFixpoint(final List<Term> nonAbstractables, final List<STATE> preStates) {
+		if (nonAbstractables.isEmpty()) {
+			return preStates;
+		}
+
+		List<STATE> currentStates = preStates;
+		boolean fixpointReached = false;
+
+		while (!fixpointReached) {
+			List<STATE> intermediateResult = currentStates;
+
+			for (final Term nonAbstractable : nonAbstractables) {
+				intermediateResult = visit(nonAbstractable, intermediateResult);
+				if (intermediateResult.stream().allMatch(state -> state.isBottom())) {
+					return intermediateResult;
+				}
+			}
+
+			final List<STATE> compareList = new ArrayList<>();
+			for (final STATE res : intermediateResult) {
+				if (currentStates.stream().anyMatch(state -> state.isSubsetOf(res) == SubsetResult.NON_STRICT)) {
+					continue;
+				}
+				compareList.add(res);
+			}
+
+			if (compareList.isEmpty()) {
+				fixpointReached = true;
+			} else {
+				currentStates = compareList;
+				fixpointReached = false;
+			}
+		}
+
+		return currentStates;
+	}
+
 	private Term negateTerm(final ApplicationTerm term) {
+		// TODO: Use TermTransformer
+
 		final String function = term.getFunction().getName();
 		String newFunction;
 
@@ -190,6 +223,8 @@ public class TermConjunctEvaluator<STATE extends IAbstractState<STATE>> {
 		case "not":
 			assert term.getParameters().length == 1;
 			return term.getParameters()[0];
+		case "=":
+			return term;
 		default:
 			throw new UnsupportedOperationException("Unhandled function for negation: " + function);
 		}
@@ -201,6 +236,9 @@ public class TermConjunctEvaluator<STATE extends IAbstractState<STATE>> {
 	}
 
 	private List<STATE> applyPost(final List<STATE> preStates, final Term... term) {
+		if (term.length == 0) {
+			return preStates;
+		}
 
 		final List<STATE> returnStates = new ArrayList<>();
 
