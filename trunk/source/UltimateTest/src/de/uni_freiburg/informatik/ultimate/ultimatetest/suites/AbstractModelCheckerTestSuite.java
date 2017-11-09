@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.ultimatetest.suites;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
@@ -64,6 +65,25 @@ public abstract class AbstractModelCheckerTestSuite extends UltimateTestSuite {
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
 		mTestCases.sort(null);
+		return mTestCases;
+	}
+	
+	/**
+	 * Added by Yu-Fang Chen for performing experiments on multiple machines and fairly distributed the work load
+	 * 
+	 */
+	public Collection<UltimateTestCase> createTestCasesMultipleMachine(final int numberOfMachines, final int currentMachineNumber) {
+		mTestCases.sort(null);
+		int i=0;
+		for (Iterator<?> it = mTestCases.iterator(); it.hasNext(); )
+	    {
+	        it.next();
+	        if (i % numberOfMachines != currentMachineNumber)
+	        {
+	            it.remove();
+	        }
+	        i++;
+	    }
 		return mTestCases;
 	}
 

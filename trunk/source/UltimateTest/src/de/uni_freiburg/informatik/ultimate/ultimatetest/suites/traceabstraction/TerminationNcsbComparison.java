@@ -163,7 +163,7 @@ public class TerminationNcsbComparison extends AbstractBuchiAutomizerTestSuite {
 	}; 		
 	private static final String[] NormalCases_termination_restricted_15={
 			"/UpAndDown_false-termination_true-no-overflow.c",
-			"/WhileDecr_true-termination_true-no-overflow.c"
+//			"/WhileDecr_true-termination_true-no-overflow.c"
 	}; 	
 	
 	private static final String[] NormalCases_termination_memory_alloca={
@@ -292,34 +292,34 @@ public class TerminationNcsbComparison extends AbstractBuchiAutomizerTestSuite {
 			"/strpbrk_true-termination.c.i",
 	};		
 	private static final DirectoryFileEndingsPair[] mDirectoryFileEndingsPairsForSelectedCases = {
-			new DirectoryFileEndingsPair("examples/svcomp/product-lines/", NormalCases_product_lines, FILE_OFFSET, mFilesPerDirectoryLimit),
-			new DirectoryFileEndingsPair("examples/svcomp/seq-mthreaded/", NormalCases_seq_mthreaded, FILE_OFFSET, mFilesPerDirectoryLimit),
-			new DirectoryFileEndingsPair("examples/svcomp/systemc/", NormalCases_systemc, FILE_OFFSET, mFilesPerDirectoryLimit),
-			new DirectoryFileEndingsPair("examples/svcomp/locks/", NormalCases_locks, FILE_OFFSET, mFilesPerDirectoryLimit),
-			new DirectoryFileEndingsPair("examples/svcomp/recursive-simple/", NormalCases_recursive_simple, FILE_OFFSET, mFilesPerDirectoryLimit),
-			new DirectoryFileEndingsPair("examples/svcomp/recursive/", NormalCases_recursive, FILE_OFFSET, mFilesPerDirectoryLimit),
-			new DirectoryFileEndingsPair("examples/svcomp/termination-crafted-lit-todo/", NormalCases_termination_crafted_lit_todo, FILE_OFFSET, mFilesPerDirectoryLimit),
-			new DirectoryFileEndingsPair("examples/svcomp/termination-crafted/", NormalCases_termination_crafted, FILE_OFFSET, mFilesPerDirectoryLimit),
-			new DirectoryFileEndingsPair("examples/svcomp/termination-15/", NormalCases_termination_15, FILE_OFFSET, mFilesPerDirectoryLimit),
-			new DirectoryFileEndingsPair("examples/svcomp/termination-numeric-todo/", NormalCases_numeric_todo, FILE_OFFSET, mFilesPerDirectoryLimit),
-			new DirectoryFileEndingsPair("examples/svcomp/termination-numeric/", NormalCases_numeric, FILE_OFFSET, mFilesPerDirectoryLimit),
-			new DirectoryFileEndingsPair("examples/svcomp/termination-restricted-15-todo/", NormalCases_termination_restricted_15_todo, FILE_OFFSET, mFilesPerDirectoryLimit),
+//			new DirectoryFileEndingsPair("examples/svcomp/product-lines/", NormalCases_product_lines, FILE_OFFSET, mFilesPerDirectoryLimit),
+//			new DirectoryFileEndingsPair("examples/svcomp/seq-mthreaded/", NormalCases_seq_mthreaded, FILE_OFFSET, mFilesPerDirectoryLimit),
+//			new DirectoryFileEndingsPair("examples/svcomp/systemc/", NormalCases_systemc, FILE_OFFSET, mFilesPerDirectoryLimit),
+//			new DirectoryFileEndingsPair("examples/svcomp/locks/", NormalCases_locks, FILE_OFFSET, mFilesPerDirectoryLimit),
+//			new DirectoryFileEndingsPair("examples/svcomp/recursive-simple/", NormalCases_recursive_simple, FILE_OFFSET, mFilesPerDirectoryLimit),
+//			new DirectoryFileEndingsPair("examples/svcomp/recursive/", NormalCases_recursive, FILE_OFFSET, mFilesPerDirectoryLimit),
+//			new DirectoryFileEndingsPair("examples/svcomp/termination-crafted-lit-todo/", NormalCases_termination_crafted_lit_todo, FILE_OFFSET, mFilesPerDirectoryLimit),
+//			new DirectoryFileEndingsPair("examples/svcomp/termination-crafted/", NormalCases_termination_crafted, FILE_OFFSET, mFilesPerDirectoryLimit),
+//			new DirectoryFileEndingsPair("examples/svcomp/termination-15/", NormalCases_termination_15, FILE_OFFSET, mFilesPerDirectoryLimit),
+//			new DirectoryFileEndingsPair("examples/svcomp/termination-numeric-todo/", NormalCases_numeric_todo, FILE_OFFSET, mFilesPerDirectoryLimit),
+//			new DirectoryFileEndingsPair("examples/svcomp/termination-numeric/", NormalCases_numeric, FILE_OFFSET, mFilesPerDirectoryLimit),
+//			new DirectoryFileEndingsPair("examples/svcomp/termination-restricted-15-todo/", NormalCases_termination_restricted_15_todo, FILE_OFFSET, mFilesPerDirectoryLimit),
 			new DirectoryFileEndingsPair("examples/svcomp/termination-restricted-15/", NormalCases_termination_restricted_15, FILE_OFFSET, mFilesPerDirectoryLimit),
-			new DirectoryFileEndingsPair("examples/svcomp/termination-memory-alloca/", NormalCases_termination_memory_alloca, FILE_OFFSET, mFilesPerDirectoryLimit),
-			new DirectoryFileEndingsPair("examples/svcomp/seq-mthreaded/", DifficultCases_seq_mthreaded, FILE_OFFSET, mFilesPerDirectoryLimit),
-			new DirectoryFileEndingsPair("examples/svcomp/product-lines/", DifficultCases_product_lines, FILE_OFFSET, mFilesPerDirectoryLimit),
-			new DirectoryFileEndingsPair("examples/svcomp/systemc/", DifficultCases_systemc, FILE_OFFSET, mFilesPerDirectoryLimit),
-			new DirectoryFileEndingsPair("examples/svcomp/termination-memory-alloca/", DifficultCases_termination_memory_alloca, FILE_OFFSET, mFilesPerDirectoryLimit),
-			new DirectoryFileEndingsPair("examples/svcomp/recursive/", DifficultCases_recursive, FILE_OFFSET, mFilesPerDirectoryLimit),
-			new DirectoryFileEndingsPair("examples/svcomp/termination-crafted-lit-todo/", DifficultCases_termination_crafted_lit_todo, FILE_OFFSET, mFilesPerDirectoryLimit),
-			new DirectoryFileEndingsPair("examples/svcomp/termination-crafted-lit/", DifficultCases_termination_crafted_lit, FILE_OFFSET, mFilesPerDirectoryLimit),
-			new DirectoryFileEndingsPair("examples/svcomp/termination-crafted-todo/", DifficultCases_termination_crafted_todo, FILE_OFFSET, mFilesPerDirectoryLimit),
-			new DirectoryFileEndingsPair("examples/svcomp/termination-crafted/", DifficultCases_termination_crafted, FILE_OFFSET, mFilesPerDirectoryLimit),
-			new DirectoryFileEndingsPair("examples/svcomp/termination-15/", DifficultCases_termination_15, FILE_OFFSET, mFilesPerDirectoryLimit),
-			new DirectoryFileEndingsPair("examples/svcomp/termination-numeric/", DifficultCases_termination_numeric, FILE_OFFSET, mFilesPerDirectoryLimit),
-			new DirectoryFileEndingsPair("examples/svcomp/termination-restricted-15-todo/", DifficultCases_restricted_15_todo, FILE_OFFSET, mFilesPerDirectoryLimit),
-			new DirectoryFileEndingsPair("examples/svcomp/termination-restricted-15/", DifficultCases_restricted_15, FILE_OFFSET, mFilesPerDirectoryLimit),
-			new DirectoryFileEndingsPair("examples/svcomp/termination-libowfat/", DifficultCases_libowfat, FILE_OFFSET, mFilesPerDirectoryLimit),			
+//			new DirectoryFileEndingsPair("examples/svcomp/termination-memory-alloca/", NormalCases_termination_memory_alloca, FILE_OFFSET, mFilesPerDirectoryLimit),
+//			new DirectoryFileEndingsPair("examples/svcomp/seq-mthreaded/", DifficultCases_seq_mthreaded, FILE_OFFSET, mFilesPerDirectoryLimit),
+//			new DirectoryFileEndingsPair("examples/svcomp/product-lines/", DifficultCases_product_lines, FILE_OFFSET, mFilesPerDirectoryLimit),
+//			new DirectoryFileEndingsPair("examples/svcomp/systemc/", DifficultCases_systemc, FILE_OFFSET, mFilesPerDirectoryLimit),
+//			new DirectoryFileEndingsPair("examples/svcomp/termination-memory-alloca/", DifficultCases_termination_memory_alloca, FILE_OFFSET, mFilesPerDirectoryLimit),
+//			new DirectoryFileEndingsPair("examples/svcomp/recursive/", DifficultCases_recursive, FILE_OFFSET, mFilesPerDirectoryLimit),
+//			new DirectoryFileEndingsPair("examples/svcomp/termination-crafted-lit-todo/", DifficultCases_termination_crafted_lit_todo, FILE_OFFSET, mFilesPerDirectoryLimit),
+//			new DirectoryFileEndingsPair("examples/svcomp/termination-crafted-lit/", DifficultCases_termination_crafted_lit, FILE_OFFSET, mFilesPerDirectoryLimit),
+//			new DirectoryFileEndingsPair("examples/svcomp/termination-crafted-todo/", DifficultCases_termination_crafted_todo, FILE_OFFSET, mFilesPerDirectoryLimit),
+//			new DirectoryFileEndingsPair("examples/svcomp/termination-crafted/", DifficultCases_termination_crafted, FILE_OFFSET, mFilesPerDirectoryLimit),
+//			new DirectoryFileEndingsPair("examples/svcomp/termination-15/", DifficultCases_termination_15, FILE_OFFSET, mFilesPerDirectoryLimit),
+//			new DirectoryFileEndingsPair("examples/svcomp/termination-numeric/", DifficultCases_termination_numeric, FILE_OFFSET, mFilesPerDirectoryLimit),
+//			new DirectoryFileEndingsPair("examples/svcomp/termination-restricted-15-todo/", DifficultCases_restricted_15_todo, FILE_OFFSET, mFilesPerDirectoryLimit),
+//			new DirectoryFileEndingsPair("examples/svcomp/termination-restricted-15/", DifficultCases_restricted_15, FILE_OFFSET, mFilesPerDirectoryLimit),
+//			new DirectoryFileEndingsPair("examples/svcomp/termination-libowfat/", DifficultCases_libowfat, FILE_OFFSET, mFilesPerDirectoryLimit),			
 	};
 	
 	private static final DirectoryFileEndingsPair[] mDirectoryFileEndingsPairs = {
@@ -371,7 +371,7 @@ public class TerminationNcsbComparison extends AbstractBuchiAutomizerTestSuite {
 	@Override
 	public long getTimeout() {
 //		return Integer.MAX_VALUE;
-		return 60 * 1000;
+		return 200 * 1000;
 	}
 
 	/**
@@ -397,7 +397,7 @@ public class TerminationNcsbComparison extends AbstractBuchiAutomizerTestSuite {
 //			"buchiAutomizer/ncsb/SUNFLOWER-INTSET_LAZY3.epf",
 //			"buchiAutomizer/ncsb/INTSET_GBA.epf",
 //			"buchiAutomizer/ncsb/SUNFLOWER-INTSET_GBA.epf",
-			"buchiAutomizer/ncsb/INTSET_GBA_ANTICHAIN.epf",
+//			"buchiAutomizer/ncsb/INTSET_GBA_ANTICHAIN.epf",
 //			"buchiAutomizer/ncsb/SUNFLOWER-INTSET_GBA_ANTICHAIN.epf",
 //			"buchiAutomizer/ncsb/SUNFLOWER-INTSET_LAZY3.epf",
 //			"buchiAutomizer/ncsb/ORIGINAL.epf",
@@ -414,6 +414,9 @@ public class TerminationNcsbComparison extends AbstractBuchiAutomizerTestSuite {
 
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
+		int mNumberOfMachines = 4;
+		int mCurrentMachineNumber = 0;
+		
 		DirectoryFileEndingsPair[] mPairsToTry=mDirectoryFileEndingsPairs;
 		if(runOnlySelectedExample){
 			mPairsToTry=mDirectoryFileEndingsPairsForSelectedCases;
@@ -423,16 +426,12 @@ public class TerminationNcsbComparison extends AbstractBuchiAutomizerTestSuite {
 	    int counter = 0;
 		for (final DirectoryFileEndingsPair dfep : mPairsToTry) {
 			for (final String toolchain : mCToolchains) {
-				if(counter % mod == left) {
 					addTestCase(UltimateRunDefinitionGenerator.getRunDefinitionsFromTrunkRegex(
 						new String[] { dfep.getDirectory() }, dfep.getFileEndings(), mSettings, toolchain, getTimeout(),
 						dfep.getOffset(), dfep.getLimit()));
-				
-				}
-				counter ++;
 			}
 		}
-		return super.createTestCases();
+		return super.createTestCasesMultipleMachine(4,0);
 	}
 	// @formatter:on
 }
