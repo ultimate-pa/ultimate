@@ -419,6 +419,11 @@ def debug_environment():
     for env in os.environ:
         print(str(env) + '=' + str(os.environ.get(env)))
 
+    print('--- Machine ---')
+    call_relaxed_and_print(['uname', '-a'])
+    call_relaxed_and_print(['cat', '/proc/cpuinfo'])
+    call_relaxed_and_print(['cat', '/proc/meminfo'])
+
     print('--- Java ---')
     call_relaxed(['java', '-version'])
 
@@ -497,6 +502,9 @@ def parse_args():
                         help='Specify a filename for the generated witness; default is witness.graphml')
 
     args = parser.parse_args()
+
+    # print debug_environment no matter what to find the error
+    # debug_environment()
 
     if args.envdebug:
         debug_environment()
