@@ -30,6 +30,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.ultimatetest.suites.traceabstraction;
 
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.Collection;
 
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
@@ -414,16 +418,26 @@ public class TerminationNcsbComparison extends AbstractBuchiAutomizerTestSuite {
 
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
-		int mNumberOfMachines = 4;
+		int mNumberOfMachines = 1;
 		int mCurrentMachineNumber = 0;
+		
+		try(BufferedReader br = new BufferedReader(new FileReader("machine.conf"))) {
+		    String line = br.readLine();
+		    mNumberOfMachines = Integer.parseInt(line.substring(0, line.indexOf(' ')));
+		    line = br.readLine();
+		    mCurrentMachineNumber = Integer.parseInt(line.substring(0, line.indexOf(' ')));
+
+		} catch (Exception e) {
+			//use single machine
+			mNumberOfMachines = 1;
+			mCurrentMachineNumber = 0;
+		}
+		
 		
 		DirectoryFileEndingsPair[] mPairsToTry=mDirectoryFileEndingsPairs;
 		if(runOnlySelectedExample){
 			mPairsToTry=mDirectoryFileEndingsPairsForSelectedCases;
 		}
-		final int mod = 4, left = 0;
-//	    mPairsToTry = mDirectoryBugPairs;
-	    int counter = 0;
 		for (final DirectoryFileEndingsPair dfep : mPairsToTry) {
 			for (final String toolchain : mCToolchains) {
 					addTestCase(UltimateRunDefinitionGenerator.getRunDefinitionsFromTrunkRegex(
