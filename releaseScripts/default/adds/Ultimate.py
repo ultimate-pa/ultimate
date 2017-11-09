@@ -298,7 +298,7 @@ def call_desperate(call_args):
 
     try:
         child_process = subprocess.Popen(call_args, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                                         stderr=subprocess.PIPE, shell=False)
+                                         stderr=subprocess.STDOUT, shell=False)
     except:
         print('Error trying to open subprocess ' + str(call_args))
         sys.exit(ExitCode.FAIL_OPEN_SUBPROCESS)
