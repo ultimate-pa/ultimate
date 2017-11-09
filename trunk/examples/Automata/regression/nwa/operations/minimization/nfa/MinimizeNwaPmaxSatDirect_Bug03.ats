@@ -1,12 +1,30 @@
-// Testfile dumped by Ultimate at 2012/10/13 16:45:45
-//
 // Reduced version of MinimizeSevpa_Bug10.
 // Reduced by Christian Schilling on 2017-03-16.
 // Revealed a soundness bug in MinimizeNwaPmaxSatDirect for return transitions.
 
 NestedWordAutomaton preprocessed = removeUnreachable(nwa);
 
-print(minimizeNwaPmaxSatDirect(preprocessed));
+int minimizeSevpaSize = numberOfStates(minimizeSevpa(preprocessed));
+int shrinkNwaSize = numberOfStates(shrinkNwa(preprocessed));
+int minimizeNwaPmaxSatDirectBiSize = numberOfStates(minimizeNwaPmaxSatDirectBi(preprocessed));
+int minimizeNwaPmaxSatDirectSize = numberOfStates(minimizeNwaPmaxSatDirect(preprocessed));
+int reduceNwaDirectSimulationSize = numberOfStates(reduceNwaDirectSimulation(preprocessed));
+int reduceNwaDirectSimulationBSize = numberOfStates(reduceNwaDirectSimulationB(preprocessed));
+int reduceNwaDirectFullMultipebbleSimulationSize = numberOfStates(reduceNwaDirectFullMultipebbleSimulation(preprocessed));
+// int reduceNwaDelayedSimulationSize = numberOfStates(reduceNwaDelayedSimulation(preprocessed)); TODO wrong result!
+int reduceNwaDelayedSimulationBSize = numberOfStates(reduceNwaDelayedSimulationB(preprocessed));
+// int reduceNwaDelayedFullMultipebbleSimulationSize = numberOfStates(reduceNwaDelayedFullMultipebbleSimulation(preprocessed));
+
+assert(minimizeSevpaSize == 10);
+assert(shrinkNwaSize == 10);
+assert(minimizeNwaPmaxSatDirectBiSize == 10);
+assert(minimizeNwaPmaxSatDirectSize == 10);
+assert(reduceNwaDirectSimulationSize == 10);
+assert(reduceNwaDirectSimulationBSize == 10);
+assert(reduceNwaDirectFullMultipebbleSimulationSize == 10);
+// assert(reduceNwaDelayedSimulationSize == 10);
+assert(reduceNwaDelayedSimulationBSize == 9);
+// assert(reduceNwaDelayedFullMultipebbleSimulationSize == 10);
 
 NestedWordAutomaton nwa = (
 	callAlphabet = {"c1" "c2" },
