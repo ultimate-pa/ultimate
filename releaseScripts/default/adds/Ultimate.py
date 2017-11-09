@@ -8,6 +8,7 @@ import os
 import re
 import subprocess
 import sys
+from stat import ST_MODE
 
 version = '47e1251f'
 toolname = 'wrong toolname'
@@ -42,7 +43,7 @@ termination_path_end = 'End of lasso representation.'
 overflow_false_string = 'overflow possible'
 
 
-class PropParser:
+class _PropParser:
     prop_regex = re.compile('^\s*CHECK\s*\(\s*init\s*\((.*)\)\s*,\s*LTL\((.*)\)\s*\)\s*$', re.MULTILINE)
     funid_regex = re.compile('\s*(\S*)\s*\(.*\)')
     word_regex = re.compile('\b[^\W\d_]+\b')
@@ -124,12 +125,37 @@ class PropParser:
     def get_ltl_formula(self):
         return self.ltlformula
 
-class AbortButPrint(Exception):
+
+class _AbortButPrint(Exception):
     def __init__(self, value):
         self.value = value
 
     def __str__(self):
         return repr(self.value)
+
+
+class _CallFailed(Exception):
+    def __init__(self, value):
+        self.value = value
+
+    def __str__(self):
+        return repr(self.value)
+
+
+class _ExitCode:
+    _exit_codes = ["SUCCESS", "FAIL_OPEN_SUBPROCESS", "FAIL_NO_INPUT_FILE", "FAIL_NO_WITNESS_TO_VALIDATE",
+                   "FAIL_MULTIPLE_FILES", "FAIL_NO_TOOLCHAIN_FOUND", "FAIL_NO_SETTINGS_FILE_FOUND"]
+
+    def __init__(self):
+        pass
+
+    def __getattr__(self, name):
+        if name in _ExitCode._exit_codes:
+            return (_ExitCode._exit_codes.index(name) + 1)
+        raise AttributeError("Exit code %s not found" % name)
+
+
+ExitCode = _ExitCode()
 
 
 def check_string_contains(strings, words):
@@ -141,10 +167,6 @@ def check_string_contains(strings, words):
 
 
 def get_binary():
-    # currently unused because of rcp launcher bug 
-    # currentPlatform = platform.system()
-    # if currentPlatform == 'Windows':
-
     ultimate_bin = [
         'java',
         '-Xmx12G',
@@ -152,12 +174,6 @@ def get_binary():
         '-jar', os.path.join(ultimatedir, 'plugins/org.eclipse.equinox.launcher_1.3.100.v20150511-1540.jar'),
         '-data', datadir
     ]
-
-    # check if ultimate bin is there 
-    # if not os.path.isfile(ultimate_bin):
-    #    print("Ultimate binary not found, expected " + ultimate_bin)
-    #    sys.exit(1)
-
     return ultimate_bin
 
 
@@ -192,12 +208,7 @@ def contains_overapproximation_result(line):
 def run_ultimate(ultimate_call, prop):
     print('Calling Ultimate with: ' + " ".join(ultimate_call))
 
-    try:
-        ultimate_process = subprocess.Popen(ultimate_call, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                                            stderr=subprocess.PIPE, shell=False)
-    except:
-        print('Error trying to open subprocess')
-        sys.exit(1)
+    ultimate_process = call_desperate(ultimate_call)
 
     result = 'UNKNOWN'
     result_msg = 'NONE'
@@ -281,14 +292,41 @@ def run_ultimate(ultimate_call, prop):
     return result, result_msg, overapprox, ultimate_output, error_path
 
 
-def create_ultimate_call(call, arguments):
+def call_desperate(call_args):
+    if call_args is None:
+        call_args = []
+
+    try:
+        child_process = subprocess.Popen(call_args, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                                         stderr=subprocess.PIPE, shell=False)
+    except:
+        print('Error trying to open subprocess ' + str(call_args))
+        sys.exit(ExitCode.FAIL_OPEN_SUBPROCESS)
+    return child_process
+
+
+def call_relaxed(call_args):
+    if call_args is None:
+        print('No call_args given')
+        return ('', None)
+
+    try:
+        child_process = subprocess.Popen(call_args, stdout=subprocess.PIPE)
+        return child_process.communicate()
+    except Exception as ex:
+        print('Error trying to start ' + str(call_args))
+        print(str(ex))
+        return ('', None)
+
+
+def create_callargs(callargs, arguments):
     for arg in arguments:
         if isinstance(arg, list):
             for subarg in flatten(arg):
-                call = call + [subarg]
+                callargs = callargs + [subarg]
         else:
-            call = call + [arg]
-    return call
+            callargs = callargs + [arg]
+    return callargs
 
 
 def flatten(l):
@@ -340,12 +378,8 @@ def create_cli_settings(prop, validate_witness, architecture, c_file):
         ret.append(architecture)
         ret.append('--witnessprinter.graph.data.programhash')
 
-        try:
-            sha = subprocess.Popen(['sha1sum', c_file[0]], stdout=subprocess.PIPE).communicate()[0]
-            ret.append(sha.split()[0])
-        except:
-            print('Error trying to start sha1sum')
-            sys.exit(1)
+        sha = call_desperate(['sha1sum', c_file[0]])
+        ret.append(sha.communicate()[0].split()[0])
 
     return ret
 
@@ -363,7 +397,7 @@ def get_settings_path(bitprecise, settings_search_string):
     if settings_argument == '' or settings_argument is None:
         print('No suitable settings file found using ' + settings_search_string)
         print('ERROR: UNSUPPORTED PROPERTY')
-        raise AbortButPrint('ERROR: UNSUPPORTED PROPERTY')
+        raise _AbortButPrint('ERROR: UNSUPPORTED PROPERTY')
     return settings_argument
 
 
@@ -379,6 +413,48 @@ def check_dir(d):
     return d
 
 
+def debug_environment():
+    # first, list all environment variables
+    print('--- Environment variables ---')
+    for env in os.environ:
+        print(str(env) + '=' + str(os.environ.get(env)))
+
+    print('--- Java ---')
+    call_relaxed(['java', '-version'])
+
+    print('--- Files ---')
+    file_counter = 0
+    dir_counter = 0
+    for root, dirs, files in os.walk(ultimatedir):
+        for dir in dirs:
+            absdir = os.path.join(root, dir)
+            rights = oct(os.stat(absdir)[ST_MODE])[-3:]
+            print(str(rights) + ' D ' + str(absdir))
+            dir_counter = dir_counter + 1
+        for file in files:
+            absfile = os.path.join(root, file)
+            rights = oct(os.stat(absfile)[ST_MODE])[-3:]
+            print(str(rights) + ' F ' + str(absfile))
+            file_counter = file_counter + 1
+    print(str(file_counter) + ' files total, ' + str(dir_counter) + ' dirs total')
+
+    print('--- Versions ---')
+    print(version)
+    call_relaxed_and_print(create_callargs(get_binary(), ['--version']))
+
+    strace = create_callargs(['strace'], ['-f', get_binary(), '--version'])
+    print('--- ' + str(strace) + ' ---')
+    call_relaxed_and_print(strace)
+
+
+def call_relaxed_and_print(call_args):
+    stdout, stderr = call_relaxed(call_args)
+    print(stdout)
+    if stderr is not None:
+        print('sdterr:')
+        print(stderr)
+
+
 def parse_args():
     # parse command line arguments
     global configdir
@@ -387,7 +463,11 @@ def parse_args():
     global witnessname
     if (len(sys.argv) == 2) and (sys.argv[1] == '--version'):
         print(version)
-        sys.exit(0)
+        sys.exit(ExitCode.SUCCESS)
+
+    if (len(sys.argv) == 2) and (sys.argv[1] == '--envdebug'):
+        debug_environment()
+        sys.exit(ExitCode.SUCCESS)
 
     parser = argparse.ArgumentParser(description='Ultimate wrapper script for SVCOMP')
     parser.add_argument('--version', action='store_true',
@@ -400,6 +480,8 @@ def parse_args():
                              'relative to the location of this script')
     parser.add_argument('--full-output', action='store_true',
                         help='Print Ultimate\'s full output to stderr after verification ends')
+    parser.add_argument('--envdebug', action='store_true',
+                        help='Before doing anything, print as much information about the environment as possible')
     parser.add_argument('--validate', nargs=1, metavar='<file>', type=check_file,
                         help='Activate witness validation mode (if supported) and specify a .graphml file as witness')
     parser.add_argument('--spec', metavar='<file>', nargs=1, type=check_file, required=True,
@@ -416,9 +498,12 @@ def parse_args():
 
     args = parser.parse_args()
 
+    if args.envdebug:
+        debug_environment()
+
     if args.version:
         print(version)
-        sys.exit(0)
+        sys.exit(ExitCode.SUCCESS)
 
     witness = None
     c_file = args.file[0]
@@ -437,20 +522,20 @@ def parse_args():
         witnessname = args.witness_name[0]
 
     if args.data:
-        print("setting data dir to {0}".format(args.data[0]))
+        print("Setting data dir to {0}".format(args.data[0]))
         datadir = args.data[0]
 
     if c_file is None and witness is not None:
         print_err("You did not specify a C file with your witness")
-        sys.exit(1)
+        sys.exit(ExitCode.FAIL_NO_INPUT_FILE)
 
     if not args.validate and witness is not None:
         print_err("You did specify a witness but not --validate")
-        sys.exit(1)
+        sys.exit(ExitCode.FAIL_MULTIPLE_FILES)
 
     if args.validate and witness is None:
         print_err("You did specify --validate but no witness")
-        sys.exit(1)
+        sys.exit(ExitCode.FAIL_NO_WITNESS_TO_VALIDATE)
 
     if args.validate:
         return property_file, args.architecture, [args.file[0], witness], args.full_output, args.validate
@@ -500,7 +585,7 @@ def get_toolchain_path(prop, witnessmode):
 
     if toolchain == '' or toolchain is None:
         print('No suitable toolchain file found using ' + search_string)
-        sys.exit(1)
+        sys.exit(ExitCode.FAIL_NO_TOOLCHAIN_FOUND)
 
     return toolchain
 
@@ -519,15 +604,15 @@ def print_err(*objs):
 
 def main():
     property_file, architecture, input_files, verbose, validate_witness = parse_args()
-    prop = PropParser(property_file)
+    prop = _PropParser(property_file)
 
     toolchain_file = get_toolchain_path(prop, validate_witness)
     settings_search_string = create_settings_search_string(prop, architecture)
     try:
         settings_file = get_settings_path(False, settings_search_string)
-    except AbortButPrint:
+    except _AbortButPrint:
         # just abort, there is nothing to print left 
-        sys.exit(1)
+        sys.exit(ExitCode.FAIL_NO_SETTINGS_FILE_FOUND)
 
     # create manual settings that override settings files for witness passthrough (collecting various things)
     # and for witness validation
@@ -538,8 +623,8 @@ def main():
     # execute ultimate
     print('Version ' + version)
     ultimate_bin = get_binary()
-    ultimate_call = create_ultimate_call(ultimate_bin,
-                                         ['-tc', toolchain_file, '-i', input_files, '-s', settings_file, cli_arguments])
+    ultimate_call = create_callargs(ultimate_bin,
+                                    ['-tc', toolchain_file, '-i', input_files, '-s', settings_file, cli_arguments])
 
     # actually run Ultimate 
     result, result_msg, overapprox, ultimate_output, error_path = run_ultimate(ultimate_call, prop)
@@ -547,15 +632,15 @@ def main():
     if overapprox:
         try:
             settings_file = get_settings_path(True, settings_search_string)
-        except AbortButPrint:
+        except _AbortButPrint:
             # there is no settings file for a bit-precise run 
             pass
         else:
             # we did fail because we had to overapproximate. Lets rerun with bit-precision 
             print('Retrying with bit-precise analysis')
-            ultimate_call = create_ultimate_call(ultimate_bin,
-                                                 ['-tc', toolchain_file, '-i', input_files, '-s', settings_file,
-                                                  cli_arguments])
+            ultimate_call = create_callargs(ultimate_bin,
+                                            ['-tc', toolchain_file, '-i', input_files, '-s', settings_file,
+                                             cli_arguments])
             result, result_msg, overapprox, ultimate_bitprecise_output, error_path = run_ultimate(ultimate_call, prop)
             ultimate_output = ultimate_output + '\n### Bit-precise run ###\n' + ultimate_bitprecise_output
 
@@ -578,6 +663,7 @@ def main():
         print('--- Real Ultimate output ---')
         print(ultimate_output.encode('UTF-8', 'replace'))
 
+    sys.exit(ExitCode.SUCCESS)
     return
 
 
