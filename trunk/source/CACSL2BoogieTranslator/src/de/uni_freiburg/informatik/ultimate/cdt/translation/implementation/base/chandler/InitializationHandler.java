@@ -67,7 +67,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 /**
  * Generates Boogie code that models initializations that happen in the C program.
  * Initializations may happen implicitly, e.g., for static variables, or explicitly via an initializer.
- * The "uninitialized" case is not treated here (we havoc each variable at its initialization position, by default).
+ * <p>
+ * The "uninitialized" case is not treated here (We havoc each variable at its initialization position, by default.
+ * That is done somewhere else.).
  * <p>
  * One relevant entry in C11 draft, 6.7.9.10:
  * If an object that has automatic storage duration is not initialized explicitly, its value is

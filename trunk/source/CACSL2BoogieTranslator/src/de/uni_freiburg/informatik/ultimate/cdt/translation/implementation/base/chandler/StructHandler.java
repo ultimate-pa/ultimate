@@ -310,38 +310,50 @@ public class StructHandler {
 	 *            the node to translate.
 	 * @return the translation result.
 	 */
-	public Result handleDesignatedInitializer(final Dispatcher main,
-			final MemoryHandler memoryHandler, final StructHandler structHandler,
-			final CASTDesignatedInitializer node) {
+	public Result handleDesignatedInitializer(final Dispatcher main, final MemoryHandler memoryHandler,
+			final StructHandler structHandler, final CASTDesignatedInitializer node) {
 		final ILocation loc = main.getLocationFactory().createCLocation(node);
 		assert node.getDesignators().length == 1;
 		assert node.getDesignators()[0] instanceof CASTFieldDesignator;
 		final CASTFieldDesignator fieldDesignator = (CASTFieldDesignator) node.getDesignators()[0];
 		final String fieldDesignatorName = fieldDesignator.getName().toString();
-		final Result initializerResult = main.dispatch(node.getOperand());
-		if (initializerResult instanceof InitializerResult) {
-			final InitializerResult relr = (InitializerResult) initializerResult;
-//			if (!relr.list.isEmpty()) {
-			if (!relr.getTopLevelChildren().isEmpty()) {
-				assert relr.getExpressionResult().stmt.isEmpty();
-				//                assert relr.expr == null;//TODO??
-				assert relr.getExpressionResult().lrVal == null;
-				assert relr.getExpressionResult().decl.isEmpty();
-//				final InitializerResult named = new InitializerResult(fieldDesignatorName);
-				final InitializerResultBuilder named = new InitializerResultBuilder(fieldDesignatorName);
-//				named.list.addAll(relr.list);
-				for (final InitializerResult tlc : relr.getTopLevelChildren()) {
-					named.addListEntry(tlc);
+		final Result innerInitializerResult = main.dispatch(node.getOperand());
+		if (innerInitializerResult instanceof InitializerResult) {
+//			final InitializerResult relr = (InitializerResult) initializerResult;
+////			if (!relr.list.isEmpty()) {
+//			if (!relr.getTopLevelChildren().isEmpty()) {
+//				assert relr.getExpressionResult().stmt.isEmpty();
+//				//                assert relr.expr == null;//TODO??
+//				assert relr.getExpressionResult().lrVal == null;
+//				assert relr.getExpressionResult().decl.isEmpty();
+////				final InitializerResult named = new InitializerResult(fieldDesignatorName);
+//				final InitializerResultBuilder named = new InitializerResultBuilder(fieldDesignatorName);
+////				named.list.addAll(relr.list);
+//				for (final InitializerResult tlc : relr.getTopLevelChildren()) {
+//					named.addListEntry(tlc);
+//
+//				}
+//				return named.build();
+//			}
+//			return new InitializerResult(fieldDesignatorName, relr.getExpressionResult().stmt, relr.getExpressionResult().lrVal,
+//					relr.getExpressionResult().decl, relr.getExpressionResult().auxVars, relr.getExpressionResult().overappr).switchToRValueIfNecessary(
+//					        main, memoryHandler, structHandler, loc);
 
-				}
-				return named.build();
-			}
-			return new InitializerResult(fieldDesignatorName, relr.getExpressionResult().stmt, relr.getExpressionResult().lrVal,
-					relr.getExpressionResult().decl, relr.getExpressionResult().auxVars, relr.getExpressionResult().overappr).switchToRValueIfNecessary(
-					        main, memoryHandler, structHandler, loc);
-		} else if (initializerResult instanceof ExpressionResult) {
-			final ExpressionResult rex = (ExpressionResult) initializerResult;
-			return rex.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
+			final InitializerResult initializerResult = (InitializerResult) innerInitializerResult;
+			assert !initializerResult.hasRootDesignator();
+
+			final InitializerResultBuilder irBuilder = new InitializerResultBuilder(initializerResult);
+			irBuilder.setRootDesignator(fieldDesignatorName);
+//			irBuilder.setRootExpressionResult(initializerResult.getExpressionResult());
+//			irBuilder.copyTreeFrom(initializerResult);
+
+			return irBuilder.build();
+		} else if (innerInitializerResult instanceof ExpressionResult) {
+//			final ExpressionResult rex = (ExpressionResult) initializerResult;
+//			return rex.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
+			return new InitializerResultBuilder()
+					.setRootExpressionResult((ExpressionResult) innerInitializerResult)
+					.setRootDesignator(fieldDesignatorName).build();
 		} else {
 			final String msg = "Unexpected result";
 			throw new UnsupportedSyntaxException(loc, msg);

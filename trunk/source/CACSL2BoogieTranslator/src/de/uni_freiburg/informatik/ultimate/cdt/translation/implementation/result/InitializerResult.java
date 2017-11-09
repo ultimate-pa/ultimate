@@ -30,19 +30,12 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.StructHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
-import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
 
 /**
  * A Result for the C to Boogie translation.
@@ -63,105 +56,60 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 public class InitializerResult extends Result {
 
 	/**
-	 * The list holding the children elements.
-	 */
-	private final List<InitializerResult> list;
-
-	/**
-	 * The initializer contents for this tree node.
+	 * Stores all the code that is needed for evaluating the initializer.
+	 * The values we store as RValues.
+	 * So, if a switchToRValue introduced some Boogie code, it is saved in this top-level ExpressionResult.
+	 *
+	 * The RValue at the root of the tree is the RValue of this ExpressionResult.
+	 *
+	 * (We can/could also use this class for
+	 *  initializers of non-aggregate type)
 	 */
 	private final ExpressionResult mExpressionResult;
+
+	/**
+	 * The RValue in mExpressionResult may have a designator. This field stores it.
+	 * (Can happen only if we are inside a nested initializer.)
+	 */
+	private String mRootDesignator;
+
+	private final List<List<Integer>> mTreeNodeIds;
+
+	private final Map<List<Integer>, RValue> mTreeNodeIdToRValue;
+
 
 	/**
 	 * It is possible to give a struct initializer that lists the fields out of order by giving designators for each
 	 * initialization value.
 	 */
-	private final String mDesignator;
+	private final Map<List<Integer>, String> mTreeNodeIdToDesignatorName;
 
-	private List<List<Integer>> mTreeNodeIds;
-
-	/**
-	 * Constructor.
-	 */
-	public InitializerResult() {
-		this(null);
-	}
 
 	/**
-	 * Constructor.
 	 *
-	 * @param field
-	 *            the name of the field e.g. in designated initializers.
+	 * @param node just for handing through to super class, can be null
+	 * @param expressionResult
+	 * @param treeNodeIds
+	 * @param treeNodeIdToRValue
+	 * @param treeNodeIdToDesignatorName
 	 */
-	public InitializerResult(final String field) {
-//		super(null, new LinkedHashMap<VariableDeclaration, ILocation>(0));
-		super(null);
-		mExpressionResult = new ExpressionResult(null, new LinkedHashMap<VariableDeclaration, ILocation>(0));
-		mDesignator = field;
-		list = new ArrayList<InitializerResult>();
+	InitializerResult(final BoogieASTNode node, final ExpressionResult expressionResult,
+			final List<List<Integer>> treeNodeIds, final Map<List<Integer>, RValue> treeNodeIdToRValue,
+			final Map<List<Integer>, String> treeNodeIdToDesignatorName) {
+		super(node);
+		mExpressionResult = expressionResult;
+		mTreeNodeIds = treeNodeIds;
+		mTreeNodeIdToRValue = treeNodeIdToRValue;
+		mTreeNodeIdToDesignatorName = treeNodeIdToDesignatorName;
 	}
 
-	/**
-	 * Constructor.
-	 *
-	 * @param stmt
-	 *            the statement list to hold.
-	 * @param lrVal
-	 *            the expression list to hold.
-	 * @param decl
-	 *            the declaration list to hold.
-	 */
-	public InitializerResult(final List<Statement> stmt, final LRValue lrVal, final List<Declaration> decl,
-			final Map<VariableDeclaration, ILocation> auxVars, final List<Overapprox> overappr) {
-		this(null, stmt, lrVal, decl, auxVars, overappr);
-	}
-
-	/**
-	 * Constructor.
-	 *
-	 * @param field
-	 *            the name of the field e.g. in designated initializers.
-	 * @param stmt
-	 *            the statement list to hold.
-	 * @param lrVal
-	 *            the expression list to hold.
-	 * @param decl
-	 *            the declaration list to hold.
-	 */
-	public InitializerResult(final String field, final List<Statement> stmt, final LRValue lrVal,
-			final List<Declaration> decl, final Map<VariableDeclaration, ILocation> auxVars,
-			final List<Overapprox> overappr) {
-//		super(stmt, lrVal, decl, auxVars, overappr);
-		super(null);
-		mExpressionResult = new ExpressionResult(stmt, lrVal, decl, auxVars, overappr);
-		this.mDesignator = field;
-		list = new ArrayList<InitializerResult>();
-	}
-
-	public InitializerResult switchToRValueIfNecessary(final Dispatcher main, final MemoryHandler memoryHandler,
-			final StructHandler structHandler, final ILocation loc) {
-//		final ExpressionResult re = super.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
-		final ExpressionResult re =
-				mExpressionResult.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
-
-		final List<InitializerResult> newList = new ArrayList<InitializerResult>();
-		if (list != null) {
-			for (final InitializerResult innerRerl : list) {
-				newList.add(innerRerl.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc));
-			}
-		}
-		final InitializerResult rerl =
-				new InitializerResult(mDesignator, re.stmt, re.lrVal, re.decl, re.auxVars, re.overappr);
-		rerl.list.addAll(newList);
-		return rerl;
-	}
-
-	public List<List<Integer>> getTreeNodeIds() {
+	public Collection<List<Integer>> getTreeNodeIds() {
+		assert assertNoDuplicateTreeNodeIds();
 		return mTreeNodeIds;
 	}
 
-	public ExpressionResult getTreeNode(final List<Integer> nodeId) {
-		return null;
+	public RValue getTreeNode(final List<Integer> nodeId) {
+		return mTreeNodeIdToRValue.get(nodeId);
 	}
 
 	public ExpressionResult getExpressionResult() {
@@ -175,6 +123,15 @@ public class InitializerResult extends Result {
 	public List<InitializerResult> getTopLevelChildren() {
 		// TODO Auto-generated method stub
 		return null;
+	}
+
+	private boolean assertNoDuplicateTreeNodeIds() {
+		assert new HashSet<>(mTreeNodeIds).size() == mTreeNodeIds.size();
+		return true;
+	}
+
+	public boolean hasRootDesignator() {
+		return mRootDesignator != null;
 	}
 
 //	public LRValue getLrVal() {
