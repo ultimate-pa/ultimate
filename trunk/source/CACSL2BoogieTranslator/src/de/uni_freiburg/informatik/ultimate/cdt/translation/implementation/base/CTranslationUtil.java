@@ -31,7 +31,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarHelper;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO.AUXVAR;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
@@ -49,7 +49,7 @@ public class CTranslationUtil {
 		// don't instantiate this utility class
 	}
 
-	public static AuxVarInfo makeAuxVarDeclaration(final ILocation loc, final Dispatcher main,
+	public static AuxVarHelper makeAuxVarDeclaration(final ILocation loc, final Dispatcher main,
 			final AUXVAR auxVarType, final CType cType) {
 		final String id = main.mNameHandler.getTempVarUID(auxVarType, cType);
 		final VariableDeclaration decl = new VariableDeclaration(loc,
@@ -61,6 +61,6 @@ public class CTranslationUtil {
 
 		final IdentifierExpression exp = new IdentifierExpression(loc, id);
 
-		return new AuxVarInfo(decl, lhs, exp);
+		return new AuxVarHelper(decl, lhs, exp);
 	}
 }

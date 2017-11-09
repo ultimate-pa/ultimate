@@ -51,10 +51,11 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CUnion;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.InitializerResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.HeapLValue;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.InitializerResult;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.InitializerResultBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
@@ -320,14 +321,20 @@ public class StructHandler {
 		final Result initializerResult = main.dispatch(node.getOperand());
 		if (initializerResult instanceof InitializerResult) {
 			final InitializerResult relr = (InitializerResult) initializerResult;
-			if (!relr.list.isEmpty()) {
+//			if (!relr.list.isEmpty()) {
+			if (!relr.getTopLevelChildren().isEmpty()) {
 				assert relr.getExpressionResult().stmt.isEmpty();
 				//                assert relr.expr == null;//TODO??
 				assert relr.getExpressionResult().lrVal == null;
 				assert relr.getExpressionResult().decl.isEmpty();
-				final InitializerResult named = new InitializerResult(fieldDesignatorName);
-				named.list.addAll(relr.list);
-				return named;
+//				final InitializerResult named = new InitializerResult(fieldDesignatorName);
+				final InitializerResultBuilder named = new InitializerResultBuilder(fieldDesignatorName);
+//				named.list.addAll(relr.list);
+				for (final InitializerResult tlc : relr.getTopLevelChildren()) {
+					named.addListEntry(tlc);
+
+				}
+				return named.build();
 			}
 			return new InitializerResult(fieldDesignatorName, relr.getExpressionResult().stmt, relr.getExpressionResult().lrVal,
 					relr.getExpressionResult().decl, relr.getExpressionResult().auxVars, relr.getExpressionResult().overappr).switchToRValueIfNecessary(

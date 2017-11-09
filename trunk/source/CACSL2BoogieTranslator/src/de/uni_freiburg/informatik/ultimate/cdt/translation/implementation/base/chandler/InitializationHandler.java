@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationUtil;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.AExpressionTranslation;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarHelper;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
@@ -51,10 +51,10 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStruct;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.InitializerResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.HeapLValue;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.InitializerResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
@@ -182,10 +182,11 @@ public class InitializationHandler {
 			return initCStructOffHeap(loc, main, lhs, (CStruct) cType, (InitializerResult) initializerRaw);
 		} else if (cType instanceof CArray && onHeap) {
 			return initCArrayOnHeap(loc, main, (HeapLValue) lhs, (CArray) cType,
-					initializerRaw == null ? null : ((InitializerResult) initializerRaw).list);
+//					initializerRaw == null ? null : ((InitializerResult) initializerRaw).list);
+					initializerRaw == null ? null : ((InitializerResult) initializerRaw).getTopLevelChildren());
 		} else if (cType instanceof CArray && !onHeap) {
 			return initCArrayOffHeap(loc, main, (LocalLValue) lhs, (CArray) cType,
-					initializerRaw == null ? null : ((InitializerResult) initializerRaw).list);
+					initializerRaw == null ? null : ((InitializerResult) initializerRaw).getTopLevelChildren());
 		} else {
 			throw new UnsupportedOperationException("missing case for CType");
 		}
@@ -347,7 +348,7 @@ public class InitializationHandler {
 //			String initializerValueId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.ARRAYINIT, cArrayType);
 //			initializer.addDeclaration(new VariableDeclaration(loc, new Attribute[0], new VarList[] { new Varli }));
 //			initializedArray = new LocalLValue(new VariableLHS(loc, identifier), cArrayType);
-			final AuxVarInfo initializerValueAuxVar = CTranslationUtil.makeAuxVarDeclaration(loc, main,
+			final AuxVarHelper initializerValueAuxVar = CTranslationUtil.makeAuxVarDeclaration(loc, main,
 					SFO.AUXVAR.ARRAYINIT, cArrayType);
 			initializer.addDeclaration(initializerValueAuxVar.getVarDec());
 			initializedArray = new LocalLValue(initializerValueAuxVar.getLhs(), cArrayType);
