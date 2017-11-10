@@ -619,6 +619,9 @@ def print_err(*objs):
 
 
 def main():
+    # before doing anything, set permissions
+    call_relaxed(['chmod', 'ug+rwx', '-R', ultimatedir])
+
     property_file, architecture, input_files, verbose, validate_witness = parse_args()
     prop = _PropParser(property_file)
 
