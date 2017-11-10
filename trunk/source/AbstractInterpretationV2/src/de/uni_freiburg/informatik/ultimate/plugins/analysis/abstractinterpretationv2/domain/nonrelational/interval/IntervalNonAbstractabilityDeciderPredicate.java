@@ -93,6 +93,10 @@ public class IntervalNonAbstractabilityDeciderPredicate implements Predicate<Ter
 
 			// TODO: what about bool1 = bool2?
 			return true;
+		case "select":
+		case "store":
+			// TODO: Handle array access.
+			return true;
 		default:
 			throw new UnsupportedOperationException(term.toString());
 		}

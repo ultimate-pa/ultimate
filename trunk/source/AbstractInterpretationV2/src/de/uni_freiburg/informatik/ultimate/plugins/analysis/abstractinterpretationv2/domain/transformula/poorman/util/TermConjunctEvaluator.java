@@ -163,36 +163,26 @@ public class TermConjunctEvaluator<STATE extends IAbstractState<STATE>> {
 			return preStates;
 		}
 
-		List<STATE> currentStates = preStates;
-		boolean fixpointReached = false;
-
-		while (!fixpointReached) {
-			List<STATE> intermediateResult = currentStates;
-
+		List<STATE> pres = preStates;
+		while (true) {
+			// Compute everything for the prestate
+			List<STATE> abstractableResult = pres;
 			for (final Term nonAbstractable : nonAbstractables) {
-				intermediateResult = visit(nonAbstractable, intermediateResult);
-				if (intermediateResult.stream().allMatch(state -> state.isBottom())) {
-					return intermediateResult;
+				abstractableResult = visit(nonAbstractable, abstractableResult);
+				if (abstractableResult.stream().allMatch(state -> state.isBottom())) {
+					return abstractableResult;
 				}
 			}
 
-			final List<STATE> compareList = new ArrayList<>();
-			for (final STATE res : intermediateResult) {
-				if (currentStates.stream().anyMatch(state -> state.isSubsetOf(res) == SubsetResult.NON_STRICT)) {
-					continue;
-				}
-				compareList.add(res);
+			final List<STATE> previousPres = pres;
+			// If for all computed post states there is one state in the prestates which covers the post state, we have
+			// found a fixpoint and may return.
+			if (abstractableResult.stream().allMatch(
+					result -> previousPres.stream().anyMatch(prev -> result.isSubsetOf(prev) != SubsetResult.NONE))) {
+				return abstractableResult;
 			}
-
-			if (compareList.isEmpty()) {
-				fixpointReached = true;
-			} else {
-				currentStates = compareList;
-				fixpointReached = false;
-			}
+			pres = abstractableResult;
 		}
-
-		return currentStates;
 	}
 
 	private Term negateTerm(final ApplicationTerm term) {
@@ -225,6 +215,10 @@ public class TermConjunctEvaluator<STATE extends IAbstractState<STATE>> {
 			return term.getParameters()[0];
 		case "=":
 			return term;
+		case "select":
+			return mScript.term("=", term, mScript.term("false"));
+		case "store":
+			// TODO: Handle this as well, maybe.
 		default:
 			throw new UnsupportedOperationException("Unhandled function for negation: " + function);
 		}
@@ -245,6 +239,14 @@ public class TermConjunctEvaluator<STATE extends IAbstractState<STATE>> {
 		final AssumeStatement[] assume = AssumptionBuilder.constructBoogieAssumeStatement(mLogger,
 				mVariableRetainmentSet, mAlternateOldNames, mMappedTerm2Expression, term);
 
+		mLogger.debug("PreStates: " + preStates);
+
+		// If all preStates are bottom, we just return them and do nothing.
+		if (preStates.stream().allMatch(state -> state.isBottom())) {
+			mLogger.debug("PostStates: " + preStates);
+			return preStates;
+		}
+
 		for (final STATE state : preStates) {
 			// Skip bottom states
 			if (state.isBottom()) {
@@ -254,10 +256,7 @@ public class TermConjunctEvaluator<STATE extends IAbstractState<STATE>> {
 			returnStates.addAll(mBackingDomain.getPostOperator().apply(state, codeBlock));
 		}
 
-		// If returnStates is empty, that means that all preStates were bottom. Therefore, we just return them.
-		if (returnStates.isEmpty()) {
-			return preStates;
-		}
+		mLogger.debug("PostStates: " + returnStates);
 
 		return returnStates;
 	}
