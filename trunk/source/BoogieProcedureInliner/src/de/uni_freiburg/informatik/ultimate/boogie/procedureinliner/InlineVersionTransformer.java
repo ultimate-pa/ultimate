@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Body;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BreakStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ConstDeclaration;
@@ -63,6 +64,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Label;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LoopInvariantSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ModifiesSpecification;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.QuantifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.RequiresSpecification;
@@ -80,7 +82,9 @@ import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.callgraph.Cal
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.exceptions.CancelToolchainException;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.exceptions.InliningUnsupportedException;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.ModernAnnotations;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
@@ -96,6 +100,10 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
  * @author schaetzc@informatik.uni-freiburg.de
  */
 public class InlineVersionTransformer extends BoogieCopyTransformer {
+
+	private static final String ATTR_PREFIX_END_INLINE = "end_inline_";
+
+	public static final String ATTR_PREFIX_BEGIN_INLINE = "begin_inline_";
 
 	/**
 	 * Used to manage Declarations which aren't changed, but have an effect on the inlining process. Instances of this
@@ -1028,6 +1036,8 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 			inlineBlock.add(assignStat);
 		}
 		// note: some lists may be empty
+
+		inlineBlock.add(getAssumeCallMarker(ATTR_PREFIX_BEGIN_INLINE + procId, callLocation, call, false));
 		inlineBlock.addAll(writeToInParams);
 		inlineBlock.addAll(assertRequires);
 		inlineBlock.addAll(assumeRequires);
@@ -1035,11 +1045,56 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 		inlineBlock.addAll(assertEnsures);
 		inlineBlock.addAll(assumeEnsures);
 		inlineBlock.addAll(writeFromOutParams);
-
+		inlineBlock.add(getAssumeCallMarker(ATTR_PREFIX_END_INLINE + procId, callLocation, call, true));
 		return inlineBlock;
 	}
 
-	private List<VariableLHS> varListsToVarLHSs(final VarList[] varLists, final DeclarationInformation declInfo) {
+	private AssumeStatement getAssumeCallMarker(final String attrName, final ILocation callLocation,
+			final CallStatement callStmt, final boolean isReturn) {
+		final AssumeStatement rtr = new AssumeStatement(callLocation,
+				new NamedAttribute[] { new NamedAttribute(callLocation, attrName, new Expression[] {}) },
+				new BooleanLiteral(callLocation, true));
+		addBacktranslation(rtr, null);
+		new InlinedCallAnnotation(callStmt, isReturn).annotate(rtr);
+		return rtr;
+	}
+
+	public static class InlinedCallAnnotation extends ModernAnnotations {
+
+		private static final long serialVersionUID = 1L;
+		private final CallStatement mCallStatement;
+		private final boolean mIsReturn;
+
+		public InlinedCallAnnotation(final CallStatement callStmt, final boolean isReturn) {
+			mCallStatement = callStmt;
+			mIsReturn = isReturn;
+		}
+
+		public CallStatement getCallStatement() {
+			return mCallStatement;
+		}
+
+		public boolean isReturn() {
+			return mIsReturn;
+		}
+
+		public void annotate(final IElement node) {
+			node.getPayload().getAnnotations().put(InlinedCallAnnotation.class.getName(), this);
+		}
+
+		public static InlinedCallAnnotation getAnnotation(final IElement node) {
+			return ModelUtils.getAnnotation(node, InlinedCallAnnotation.class.getName(),
+					a -> (InlinedCallAnnotation) a);
+		}
+
+		@Override
+		public String toString() {
+			return String.valueOf(mCallStatement);
+		}
+	}
+
+	private static List<VariableLHS> varListsToVarLHSs(final VarList[] varLists,
+			final DeclarationInformation declInfo) {
 		final List<VariableLHS> varLHSs = new ArrayList<>(3 * varLists.length);
 		for (final VarList varList : varLists) {
 			final IBoogieType type = varList.getType().getBoogieType();
