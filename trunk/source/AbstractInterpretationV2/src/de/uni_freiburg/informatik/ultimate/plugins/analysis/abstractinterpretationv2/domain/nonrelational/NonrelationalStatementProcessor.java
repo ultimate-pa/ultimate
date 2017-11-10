@@ -367,7 +367,8 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 				// states. Otherwise, the return state will be bottom.
 				final List<STATE> resultStates = mExpressionEvaluator.getRootEvaluator().inverseEvaluate(
 						new NonrelationalEvaluationResult<>(res.getValue(), BooleanValue.TRUE), mOldState);
-				mReturnState.addAll(resultStates);
+				mReturnState.addAll(
+						resultStates.stream().map(state -> state.intersect(mOldState)).collect(Collectors.toList()));
 			}
 		}
 	}
