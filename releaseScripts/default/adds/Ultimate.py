@@ -292,13 +292,18 @@ def run_ultimate(ultimate_call, prop):
     return result, result_msg, overapprox, ultimate_output, error_path
 
 
+def _init_child_process():
+    new_umask = 022
+    os.umask(new_umask)
+
+
 def call_desperate(call_args):
     if call_args is None:
         call_args = []
 
     try:
         child_process = subprocess.Popen(call_args, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                                         stderr=subprocess.STDOUT, shell=False)
+                                         stderr=subprocess.STDOUT, shell=False, preexec_fn=_init_child_process)
     except:
         print('Error trying to open subprocess ' + str(call_args))
         sys.exit(ExitCode.FAIL_OPEN_SUBPROCESS)
@@ -308,15 +313,15 @@ def call_desperate(call_args):
 def call_relaxed(call_args):
     if call_args is None:
         print('No call_args given')
-        return ('', None)
+        return '', None
 
     try:
-        child_process = subprocess.Popen(call_args, stdout=subprocess.PIPE)
+        child_process = subprocess.Popen(call_args, stdout=subprocess.PIPE, preexec_fn=_init_child_process)
         return child_process.communicate()
     except Exception as ex:
         print('Error trying to start ' + str(call_args))
         print(str(ex))
-        return ('', None)
+        return '', None
 
 
 def create_callargs(callargs, arguments):
@@ -431,13 +436,13 @@ def debug_environment():
     file_counter = 0
     dir_counter = 0
     for root, dirs, files in os.walk(ultimatedir):
-        for dir in dirs:
-            absdir = os.path.join(root, dir)
+        for a_dir in dirs:
+            absdir = os.path.join(root, a_dir)
             rights = oct(os.stat(absdir)[ST_MODE])[-3:]
             print(str(rights) + ' D ' + str(absdir))
             dir_counter = dir_counter + 1
-        for file in files:
-            absfile = os.path.join(root, file)
+        for a_file in files:
+            absfile = os.path.join(root, a_file)
             rights = oct(os.stat(absfile)[ST_MODE])[-3:]
             print(str(rights) + ' F ' + str(absfile))
             file_counter = file_counter + 1
@@ -447,15 +452,17 @@ def debug_environment():
     print(version)
     call_relaxed_and_print(create_callargs(get_binary(), ['--version']))
 
-    strace = create_callargs(['strace'], ['-f', get_binary(), '--version'])
-    print('--- ' + str(strace) + ' ---')
-    call_relaxed_and_print(strace)
+    print('--- umask ---')
+    call_relaxed_and_print(['touch', 'testfile'])
+    call_relaxed_and_print(['ls', '-al', 'testfile'])
+    call_relaxed_and_print(['rm', 'testfile'])
 
 
 def call_relaxed_and_print(call_args):
     stdout, stderr = call_relaxed(call_args)
-    print(stdout)
-    if stderr is not None:
+    if stdout:
+        print(stdout)
+    if stderr:
         print('sdterr:')
         print(stderr)
 
@@ -502,9 +509,6 @@ def parse_args():
                         help='Specify a filename for the generated witness; default is witness.graphml')
 
     args = parser.parse_args()
-
-    # print debug_environment no matter what to find the error
-    # debug_environment()
 
     if args.envdebug:
         debug_environment()
@@ -611,6 +615,9 @@ def print_err(*objs):
 
 
 def main():
+    # first, debug environment no matter what to find the error
+    # debug_environment()
+
     property_file, architecture, input_files, verbose, validate_witness = parse_args()
     prop = _PropParser(property_file)
 
@@ -672,7 +679,6 @@ def main():
         print(ultimate_output.encode('UTF-8', 'replace'))
 
     sys.exit(ExitCode.SUCCESS)
-    return
 
 
 if __name__ == "__main__":
