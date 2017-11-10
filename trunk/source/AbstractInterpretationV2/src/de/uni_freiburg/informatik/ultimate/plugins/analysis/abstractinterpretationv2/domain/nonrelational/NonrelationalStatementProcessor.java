@@ -344,7 +344,9 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 			// handle the special case of a boolean literal
 			final BooleanLiteral boolform = (BooleanLiteral) formula;
 			if (!boolform.getValue()) {
-				mReturnState.add(mOldState.bottomState());
+				if (!mOldState.getVariables().isEmpty()) {
+					mReturnState.add(mOldState.bottomState());
+				}
 			} else {
 				mReturnState.add(mOldState);
 			}
