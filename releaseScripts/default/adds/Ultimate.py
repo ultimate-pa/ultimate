@@ -517,6 +517,10 @@ def parse_args():
         print(version)
         sys.exit(ExitCode.SUCCESS)
 
+    # first, debug environment no matter what to find the error
+#    if not args.envdebug:
+#        debug_environment()
+
     witness = None
     c_file = args.file[0]
     property_file = args.spec[0]
@@ -615,9 +619,6 @@ def print_err(*objs):
 
 
 def main():
-    # first, debug environment no matter what to find the error
-    # debug_environment()
-
     property_file, architecture, input_files, verbose, validate_witness = parse_args()
     prop = _PropParser(property_file)
 
