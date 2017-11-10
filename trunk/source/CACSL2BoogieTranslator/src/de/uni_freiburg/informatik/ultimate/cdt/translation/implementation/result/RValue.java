@@ -26,10 +26,17 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result;
 
+import java.math.BigInteger;
+
+import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.AExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
 public class RValue extends LRValue {
 
@@ -81,5 +88,16 @@ public class RValue extends LRValue {
 			throw new IllegalArgumentException("RValues cannot have function type");
 		}
 
+	}
+
+	static RValue boolToInt(final ILocation loc, final RValue rVal,
+			final AExpressionTranslation expressionTranslation) {
+		assert rVal.isBoogieBool();
+		final Expression one = expressionTranslation.constructLiteralForIntegerType(loc,
+				new CPrimitive(CPrimitives.INT), BigInteger.ONE);
+		final Expression zero = expressionTranslation.constructLiteralForIntegerType(loc,
+				new CPrimitive(CPrimitives.INT), BigInteger.ZERO);
+		return new RValue(ExpressionFactory.newIfThenElseExpression(loc, rVal.getValue(), one, zero), rVal.getCType(),
+				false);
 	}
 }

@@ -31,11 +31,22 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.AExpressionTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStruct;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
 /**
  * A Result for the C to Boogie translation.
@@ -55,10 +66,21 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
  */
 public class InitializerResult extends Result {
 
+
+	/**
+	 * Indicates if this initializer has already been converted for a target type.
+	 * Used for sanity checks.
+	 */
+	boolean mIsConvertedToTargetType;
+
+
 	/**
 	 * Stores all the code that is needed for evaluating the initializer.
+	 *
 	 * The values we store as RValues.
 	 * So, if a switchToRValue introduced some Boogie code, it is saved in this top-level ExpressionResult.
+	 * EDIT: because conversions work on ExpressionResults, we need to store ExpressionResults in the nodes (those can
+	 *  can always hold RValues, though). We will need some flattening or so to get all Boogie code from all the nodes.
 	 *
 	 * The RValue at the root of the tree is the RValue of this ExpressionResult.
 	 *
@@ -73,9 +95,14 @@ public class InitializerResult extends Result {
 	 */
 	private String mRootDesignator;
 
+	/**
+	 * We store this as a list to keep the ordering.
+	 * Otherwise we could use mTreeNodeIdToValue.keySet() instead.
+	 * (maybe we switch to a more elegant solution some time..)
+	 */
 	private final List<List<Integer>> mTreeNodeIds;
 
-	private final Map<List<Integer>, RValue> mTreeNodeIdToRValue;
+	private final Map<List<Integer>, ExpressionResult> mTreeNodeIdToValue;
 
 
 	/**
@@ -94,12 +121,12 @@ public class InitializerResult extends Result {
 	 * @param treeNodeIdToDesignatorName
 	 */
 	InitializerResult(final BoogieASTNode node, final ExpressionResult expressionResult,
-			final List<List<Integer>> treeNodeIds, final Map<List<Integer>, RValue> treeNodeIdToRValue,
+			final List<List<Integer>> treeNodeIds, final Map<List<Integer>, ExpressionResult> treeNodeIdToRValue,
 			final Map<List<Integer>, String> treeNodeIdToDesignatorName) {
 		super(node);
 		mExpressionResult = expressionResult;
 		mTreeNodeIds = treeNodeIds;
-		mTreeNodeIdToRValue = treeNodeIdToRValue;
+		mTreeNodeIdToValue = treeNodeIdToRValue;
 		mTreeNodeIdToDesignatorName = treeNodeIdToDesignatorName;
 	}
 
@@ -108,8 +135,8 @@ public class InitializerResult extends Result {
 		return mTreeNodeIds;
 	}
 
-	public RValue getTreeNode(final List<Integer> nodeId) {
-		return mTreeNodeIdToRValue.get(nodeId);
+	public ExpressionResult getTreeNode(final List<Integer> nodeId) {
+		return mTreeNodeIdToValue.get(nodeId);
 	}
 
 	public ExpressionResult getExpressionResult() {
@@ -125,14 +152,76 @@ public class InitializerResult extends Result {
 		return null;
 	}
 
+	public boolean hasRootDesignator() {
+		return mRootDesignator != null;
+	}
+
+	public InitializerResult rexBoolToIntIfNecessary(final ILocation loc, final AExpressionTranslation expressionTranslation) {
+		mExpressionResult.rexBoolToIntIfNecessary(loc, expressionTranslation);
+
+		for (final Entry<List<Integer>, ExpressionResult> en : new HashMap<>(mTreeNodeIdToValue).entrySet()) {
+			en.getValue().rexBoolToIntIfNecessary(loc, expressionTranslation);
+//			final RValue rVal = en.getValue();
+//
+//			if (rVal.isBoogieBool()) {
+//				final RValue newRVal = RValue.boolToInt(loc, rVal, expressionTranslation);
+//				mTreeNodeIdToValue.remove(en.getKey());
+//				mTreeNodeIdToValue.put(en.getKey(), newRVal);
+//			} else {
+//				// do nothing
+//			}
+		}
+
+		throw new AssertionError("TODO: immutable-stlye?..");
+	}
+
+	/**
+	 * Should only happen when this is a non-aggregate initializer.
+	 *
+	 * @param loc
+	 * @param main
+	 * @param targetCType
+	 */
+	public InitializerResult convert(final ILocation loc, final Dispatcher main, final CType targetCType) {
+
+
+		/*
+		 * TODO: this conversion should also do the reordering due to designated intitializers (as the targetCType has
+		 *  the information necessary for the reordering)
+		 */
+
+		if (targetCType instanceof CPrimitive || targetCType instanceof CEnum || targetCType instanceof CPointer) {
+			assert mRootDesignator == null;
+			assert mTreeNodeIds.isEmpty();
+
+			main.mCHandler.convert(loc, mExpressionResult, targetCType);
+			throw new AssertionError("TODO"); //TODO
+		} else if (targetCType instanceof CStruct) {
+			throw new AssertionError("TODO"); //TODO
+		} else if (targetCType instanceof CArray) {
+			throw new AssertionError("TODO"); //TODO
+		} else {
+			throw new UnsupportedOperationException("missing case?");
+		}
+
+
+		// TODO assert that all Boogie code from the ExpressionResults in the returned InitializerResult has been moved
+		// to the root ExpressionResult.
+	}
+
 	private boolean assertNoDuplicateTreeNodeIds() {
 		assert new HashSet<>(mTreeNodeIds).size() == mTreeNodeIds.size();
 		return true;
 	}
 
-	public boolean hasRootDesignator() {
-		return mRootDesignator != null;
+	public boolean hasBeenConvertedToTargetType() {
+		return mIsConvertedToTargetType;
 	}
+
+	public boolean hasTreeNode(final List<Integer> arrayIndex) {
+		return mTreeNodeIdToValue.containsKey(arrayIndex);
+	}
+
 
 //	public LRValue getLrVal() {
 //		return mExpressionResult.getLrValue();
