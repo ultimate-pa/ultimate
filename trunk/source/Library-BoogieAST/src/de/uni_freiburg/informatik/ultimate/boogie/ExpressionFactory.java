@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.IfThenElseExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.StructConstructor;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
@@ -394,5 +395,11 @@ public class ExpressionFactory extends BoogieTransformer {
 			final Expression[] indices) {
 		// TODO: infer BoogieType and add to constructor parameters
 		return new ArrayLHS(loc, array, indices);
+	}
+
+	public static StructConstructor constructStructConstructor(final ILocation loc, final String[] fieldIds,
+			final Expression[] fieldValues) {
+		// TODO: infer BoogieType and add to constructor parameters
+		return new StructConstructor(loc, fieldIds, fieldValues);
 	}
 }

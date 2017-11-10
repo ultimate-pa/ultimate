@@ -368,7 +368,7 @@ public class PostProcessor {
 					//						assert ((VariableDeclaration)en.getKey()).getVariables().length == 1
 					//								&& ((VariableDeclaration)en.getKey()).getVariables()[0].getIdentifiers().length == 1;
 					final ExpressionResult initRex =
-							main.mCHandler.getInitHandler().initVarNew(currentDeclsLoc, main,
+							main.mCHandler.getInitHandler().initialize(currentDeclsLoc, main,
 									new VariableLHS(currentDeclsLoc, id), en.getValue().getType(), initializer);
 					initStatements.addAll(initRex.stmt);
 					initStatements.addAll(CHandler.createHavocsForAuxVars(initRex.auxVars));
