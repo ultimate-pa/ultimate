@@ -36,6 +36,7 @@ file_export_version=3.0
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer=
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Rank\ analysis=LINEAR_WITH_GUESSES
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Use\ external\ solver\ (rank\ synthesis)=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Trace\ refinement\ strategy=CAMEL
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Dump\ automata\ to\ files=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Output\ format\ of\ dumped\ automata=ATS_NUMERATE
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Dump\ automata\ to\ the\ following\ directory=/home/matthias/ultimate/dump/auto
