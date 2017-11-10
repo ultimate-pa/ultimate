@@ -872,7 +872,7 @@ public class CHandler implements ICHandler {
 						assert result instanceof SkipResult || result instanceof ExpressionResult;
 						final VariableLHS lhs = new VariableLHS(loc, bId);
 						final ExpressionResult initRex =
-								mInitHandler.initVarNew(loc, main, lhs, cDec.getType(), cDec.getInitializer());
+								mInitHandler.initialize(loc, main, lhs, cDec.getType(), cDec.getInitializer());
 						if (result instanceof SkipResult) {
 							result = new ExpressionResult((LRValue) null);
 						}

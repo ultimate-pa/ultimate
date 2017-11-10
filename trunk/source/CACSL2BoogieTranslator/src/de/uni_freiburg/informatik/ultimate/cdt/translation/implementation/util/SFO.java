@@ -231,7 +231,7 @@ public final class SFO {
 		/**
 		 * Auxiliary variable used to initialize array values.
 		 */
-		ARRAYINIT("init"),
+		ARRAYINIT("arrayinit"),
 
 		/**
 		 * Auxiliary variable used as iterator variable for loops that initializer array values.
@@ -279,6 +279,11 @@ public final class SFO {
 		 * Auxiliary variable used for union initialisation.
 		 */
 		UNION("union"),
+
+		/**
+		 * Auxiliary variable used for struct initialisation.
+		 */
+		STRUCTINIT("structinit"),
 
 		/**
 		 *

@@ -41,8 +41,12 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.e
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarHelper;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStruct;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.HeapLValue;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO.AUXVAR;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
@@ -60,7 +64,16 @@ public class CTranslationUtil {
 	}
 
 	public static AuxVarHelper makeAuxVarDeclaration(final ILocation loc, final Dispatcher main,
-			final AUXVAR auxVarType, final CType cType) {
+			final CType cType) {
+		final AUXVAR auxVarType;
+		if (cType instanceof CArray) {
+			auxVarType = SFO.AUXVAR.ARRAYINIT;
+		} else if (cType instanceof CStruct) {
+			auxVarType = SFO.AUXVAR.STRUCTINIT;
+		} else {
+			throw new UnsupportedOperationException();
+		}
+
 		final String id = main.mNameHandler.getTempVarUID(auxVarType, cType);
 		final VariableDeclaration decl = new VariableDeclaration(loc,
 				new Attribute[0],
@@ -90,5 +103,23 @@ public class CTranslationUtil {
 		final ArrayLHS alhs = ExpressionFactory.constructArrayLhs(loc, arrayLhsToInitialize.getLHS(), index);
 
 		return new LocalLValue(alhs, cArrayType.getValueType());
+	}
+
+	public static LRValue constructStructAccessLhs(final LocalLValue structBaseLhs, final int i) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public static HeapLValue constructAddressForArrayAtIndex(final HeapLValue arrayBaseAddress,
+			final List<Integer> arrayIndex) {
+		final CArray cArrayType = (CArray) arrayBaseAddress.getCType();
+//		MemoryHandler.
+		return null;
+	}
+
+	public static LRValue constructAddressForStructField(final HeapLValue structBaseAddress, final int fieldNr) {
+		final CStruct cStructType = (CStruct) structBaseAddress.getCType();
+		// TODO Auto-generated method stub
+		return null;
 	}
 }
