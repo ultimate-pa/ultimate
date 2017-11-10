@@ -169,6 +169,7 @@ def check_string_contains(strings, words):
 def get_binary():
     ultimate_bin = [
         'java',
+        '-Dosgi.configuration.area=' + os.path.join(datadir, 'config'),
         '-Xmx12G',
         '-Xms1G',
         '-jar', os.path.join(ultimatedir, 'plugins/org.eclipse.equinox.launcher_1.3.100.v20150511-1540.jar'),
@@ -518,8 +519,8 @@ def parse_args():
         sys.exit(ExitCode.SUCCESS)
 
     # first, debug environment no matter what to find the error
-#    if not args.envdebug:
-#        debug_environment()
+    #if not args.envdebug:
+    #    debug_environment()
 
     witness = None
     c_file = args.file[0]
@@ -620,7 +621,7 @@ def print_err(*objs):
 
 def main():
     # before doing anything, set permissions
-    call_relaxed(['chmod', 'ug+rwx', '-R', ultimatedir])
+    # call_relaxed(['chmod', 'ug+rwx', '-R', ultimatedir])
 
     property_file, architecture, input_files, verbose, validate_witness = parse_args()
     prop = _PropParser(property_file)
