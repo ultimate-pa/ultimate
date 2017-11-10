@@ -70,7 +70,6 @@ public abstract class AbstractModelCheckerTestSuite extends UltimateTestSuite {
 	
 	/**
 	 * Added by Yu-Fang Chen for performing experiments on multiple machines and fairly distributed the work load
-	 * @param numberOfStrategies 
 	 * 
 	 */
 	public Collection<UltimateTestCase> createTestCasesMultipleMachine(final int numberOfMachines, final int currentMachineNumber, int numberOfStrategies) {

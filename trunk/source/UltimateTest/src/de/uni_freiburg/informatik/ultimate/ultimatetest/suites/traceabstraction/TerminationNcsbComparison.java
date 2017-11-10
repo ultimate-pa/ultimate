@@ -53,7 +53,7 @@ public class TerminationNcsbComparison extends AbstractBuchiAutomizerTestSuite {
 
 //	 private static int mFilesPerDirectoryLimit = 1;
 	 private static final int FILE_OFFSET = 0;
-    private static final boolean runOnlySelectedExample=false;
+    private static final boolean runOnlySelectedExample=true;
 
 	// @formatter:off
 	private static final String STANDARD_DOT_C_PATTERN = ".*_false-termination.*\\.c|.*_true-termination.*\\.c";
@@ -167,7 +167,7 @@ public class TerminationNcsbComparison extends AbstractBuchiAutomizerTestSuite {
 	}; 		
 	private static final String[] NormalCases_termination_restricted_15={
 			"/UpAndDown_false-termination_true-no-overflow.c",
-//			"/WhileDecr_true-termination_true-no-overflow.c"
+			"/WhileDecr_true-termination_true-no-overflow.c"
 	}; 	
 	
 	private static final String[] NormalCases_termination_memory_alloca={
@@ -375,7 +375,7 @@ public class TerminationNcsbComparison extends AbstractBuchiAutomizerTestSuite {
 	@Override
 	public long getTimeout() {
 //		return Integer.MAX_VALUE;
-		return 200 * 1000;
+		return 900 * 1000;
 	}
 
 	/**

@@ -94,11 +94,10 @@ public class BenchmarkRecord {
 
 	public static void start(final String name, final String algorithm) {
 		if (mOutputFile == null) {
-			final SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss");
-			mOutputFile = "Info-" + format.format(new Date()) + ".log";
+			mOutputFile = "Info.log";
 		}
 		try {
-			mOutput = new PrintWriter(new BufferedWriter(new FileWriter(mOutputFile, true)));
+			mOutput = new PrintWriter(new BufferedWriter(new FileWriter(mOutputFile, false)));
 		} catch (final IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
