@@ -45,7 +45,7 @@ public class InitializerResultBuilder {
 	public InitializerResult build() {
 		final ExpressionResult expressionResult = null;
 		final List<List<Integer>> treeNodeIds = null;
-		final Map<List<Integer>, RValue> treeNodeIdToRValue = null;
+		final Map<List<Integer>, ExpressionResult> treeNodeIdToRValue = null;
 		final Map<List<Integer>, String> treeNodeIdToDesignatorName = null;
 		//		return new InitializerResult(mExpressionResult, mDesignator, mList);
 		return new InitializerResult(null, expressionResult, treeNodeIds, treeNodeIdToRValue,

@@ -225,4 +225,38 @@ public final class CrossProducts {
 		}
 		return result;
 	}
+
+	/**
+	 * Example:
+	 * input: [2, 2, 3]
+	 * output: crossproduct([[0, 1], [0, 1], [0, 1, 2]]) = [[0, 0, 0], [0, 0, 1], [0, 1, 0], ...]
+	 *
+	 * @param exclusiveBounds
+	 * @return
+	 */
+	public static List<List<Integer>> crossProductOfSetsOfFirstNaturalNumbers(final List<Integer> exclusiveBounds) {
+		final List<List<Integer>> firstN = new ArrayList<>();
+		for (final Integer b : exclusiveBounds) {
+			final List<Integer> fn = new ArrayList<>();
+			for (int i = 0; i < b; i++) {
+				fn.add(i);
+			}
+			firstN.add(fn);
+		}
+		return crossProduct(firstN);
+//		List<List<Integer>> result = new ArrayList<>();
+//		for (final Integer bound : bounds) {
+//			final List<List<Integer>> newResult = new ArrayList<>(result);
+//			for (final List<Integer> initialList : result) {
+//				for (int i = 0; i < bound; i++) {
+//					List<Integer> appended = new ArrayList<>(initialList);
+//					appended.add(i);
+//
+//				}
+//			}
+////			oldResult = result;
+//			result = newResult;
+//		}
+//		return result;
+	}
 }

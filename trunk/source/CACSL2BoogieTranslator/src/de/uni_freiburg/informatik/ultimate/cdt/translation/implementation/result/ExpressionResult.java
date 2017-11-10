@@ -594,17 +594,6 @@ public class ExpressionResult extends Result {
 		return new RValue(resultEx, new CPrimitive(CPrimitives.INT), true);
 	}
 
-	private static RValue boolToInt(final ILocation loc, final RValue rVal,
-			final AExpressionTranslation expressionTranslation) {
-		assert rVal.isBoogieBool();
-		final Expression one = expressionTranslation.constructLiteralForIntegerType(loc,
-				new CPrimitive(CPrimitives.INT), BigInteger.ONE);
-		final Expression zero = expressionTranslation.constructLiteralForIntegerType(loc,
-				new CPrimitive(CPrimitives.INT), BigInteger.ZERO);
-		return new RValue(ExpressionFactory.newIfThenElseExpression(loc, rVal.getValue(), one, zero), rVal.getCType(),
-				false);
-	}
-
 	/**
 	 * int <code>x</code> of form <code>y ? 1 : 0</code> becomes <code>!y ? 1 : 0</code> /** int <code>x</code> becomes
 	 * <code>x == 0 ? 1 : 0</code>
@@ -627,7 +616,7 @@ public class ExpressionResult extends Result {
 			throw new UnsupportedOperationException("only RValue can switch");
 		}
 		if (lrVal.isBoogieBool()) {
-			lrVal = boolToInt(loc, (RValue) lrVal, expressionTranslation);
+			lrVal = RValue.boolToInt(loc, (RValue) lrVal, expressionTranslation);
 		} else {
 			// do nothing
 		}

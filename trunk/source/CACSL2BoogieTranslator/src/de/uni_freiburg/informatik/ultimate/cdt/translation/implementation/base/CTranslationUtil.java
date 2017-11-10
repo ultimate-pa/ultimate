@@ -26,13 +26,23 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 
+import java.math.BigInteger;
+import java.util.List;
+
+import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.AExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarHelper;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO.AUXVAR;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
@@ -62,5 +72,23 @@ public class CTranslationUtil {
 		final IdentifierExpression exp = new IdentifierExpression(loc, id);
 
 		return new AuxVarHelper(decl, lhs, exp);
+	}
+
+	public static LocalLValue constructArrayAccessLhs(final ILocation loc, final LocalLValue arrayLhsToInitialize,
+			final List<Integer> arrayIndex, final AExpressionTranslation expressionTranslation) {
+		final CArray cArrayType = (CArray) arrayLhsToInitialize.getCType();
+
+		assert cArrayType.getDimensions().length == arrayIndex.size();
+
+		final Expression[] index = new Expression[arrayIndex.size()];
+		for (int i = 0; i < arrayIndex.size(); i++) {
+			final CPrimitive currentIndexType = (CPrimitive) cArrayType.getDimensions()[i].getCType();
+			index[i] = expressionTranslation.constructLiteralForIntegerType(loc, currentIndexType,
+					new BigInteger(arrayIndex.get(i).toString()));
+		}
+
+		final ArrayLHS alhs = ExpressionFactory.constructArrayLhs(loc, arrayLhsToInitialize.getLHS(), index);
+
+		return new LocalLValue(alhs, cArrayType.getValueType());
 	}
 }
