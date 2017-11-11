@@ -88,7 +88,7 @@ public class CallReinserter {
 		}
 
 		if (callAnnot.isReturn()) {
-			recoveredCalls.add(makeAtomicReturn(callAnnot.getCallStatement(), null));
+			recoveredCalls.add(makeAtomicReturn(callAnnot.getCallStatement(), relevanceInfoForInlinedReturn));
 		} else {
 			recoveredCalls.add(makeAtomicCall(callAnnot.getCallStatement()));
 		}
