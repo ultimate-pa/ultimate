@@ -53,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiDiffer
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiDifferenceNCSBSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiIntersect;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiToGeneralizedBuchi;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.GeneralizedBuchiDifferenceFKV;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.GeneralizedBuchiDifferenceNCSBAntichain;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.GeneralizedBuchiDifferenceNCSBSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.MultiOptimizationLevelRankingGenerator.FkvOptimization;
@@ -529,13 +530,27 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 			final IStateDeterminizer<LETTER, IPredicate> stateDeterminizer, final FkvOptimization optimization)
 			throws AutomataLibraryException {
 		INestedWordAutomaton<LETTER, IPredicate> newAbstraction;
-		final BuchiDifferenceFKV<LETTER, IPredicate> diff = new BuchiDifferenceFKV<>(
-				new AutomataLibraryServices(mServices), mStateFactoryForRefinement, abstraction,
-				mInterpolAutomatonUsedInRefinement, stateDeterminizer, optimization, Integer.MAX_VALUE);
+		GeneralizedBuchiDifferenceFKV<LETTER, IPredicate> gbaDiff = null;
+		BuchiDifferenceFKV<LETTER, IPredicate> diff = null;
+		if (abstraction instanceof IGeneralizedNwaOutgoingLetterAndTransitionProvider) {
+			IGeneralizedNwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> gbaAbstraction =
+					(IGeneralizedNwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate>) abstraction;
+			gbaDiff = new GeneralizedBuchiDifferenceFKV<>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement, gbaAbstraction,
+					mInterpolAutomatonUsedInRefinement, stateDeterminizer, optimization, Integer.MAX_VALUE);
+		}else {
+			diff = new BuchiDifferenceFKV<>(
+					new AutomataLibraryServices(mServices), mStateFactoryForRefinement, abstraction,
+					mInterpolAutomatonUsedInRefinement, stateDeterminizer, optimization, Integer.MAX_VALUE);
+		}
 		finishComputation(mInterpolAutomatonUsedInRefinement, setting);
-		benchmarkGenerator.reportHighestRank(diff.getHighestRank());
-		assert diff.checkResult(mStateFactoryInterpolAutom);
-		newAbstraction = diff.getResult();
+		if(gbaDiff == null) {
+			benchmarkGenerator.reportHighestRank(diff.getHighestRank());
+			assert diff.checkResult(mStateFactoryInterpolAutom);
+			newAbstraction = diff.getResult();
+		}else {
+			newAbstraction = gbaDiff.getResult();
+		}
+		
 		return newAbstraction;
 	}
 

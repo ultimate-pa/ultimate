@@ -129,6 +129,19 @@ public class BenchmarkRecord {
 			e.printStackTrace();
 		}
 	}
+	
+	public static void addDiffComparison(final int numOfStatesOfBA, final int numOfStatesOfGBA, final int numOfStatesOfGBA2BA) {
+		if (mOutputFile == null) {
+			return;
+		}
+		try {
+			mOutput = new PrintWriter(new BufferedWriter(new FileWriter(mOutputFile, true)));
+			mOutput.print("( BA:" + numOfStatesOfBA + ", GBA: " + numOfStatesOfGBA + ", GBA2BA: " + numOfStatesOfGBA2BA + "), ");
+			mOutput.close();
+		} catch (final IOException e) {
+			e.printStackTrace();
+		}
+	}
 
 	public static void addInterpolantOrDifferenceAutomaton(final int iteration, final int numOfStates,
 			final int numOfTrans, final int type, final int numOfStatesOfDiff, final int numOfTransOfDiff) {

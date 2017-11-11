@@ -5,30 +5,31 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.BinaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IGeneralizedNwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.Options;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NwaOutgoingLetterAndTransitionAdapter;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.MultiOptimizationLevelRankingGenerator.FkvOptimization;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IStateDeterminizer;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.inclusion.AbstractGeneralizedAutomatonReachableStates;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.inclusion.BuchiDifferenceTest;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.inclusion.ComplementNwaOutgoingLetterAndTransitionAdapter;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.inclusion.ComplementTest;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.inclusion.GeneralizedNestedWordAutomatonReachableStatesAntichain;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiComplementNcsbStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.inclusion.GeneralizedNestedWordAutomatonReachableStates;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiComplementFkvStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiIntersectStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
-public abstract class AbstractGeneralizedBuchiDifference<LETTER, STATE> extends BinaryNwaOperation<LETTER, STATE, IStateFactory<STATE>> {
+public class GeneralizedBuchiDifferenceFKV<LETTER, STATE> extends BinaryNwaOperation<LETTER, STATE, IStateFactory<STATE>> {
 
 
-	protected final IGeneralizedNwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mFstOperand;
-	protected final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mSndOperand;
-	protected ComplementNwaOutgoingLetterAndTransitionAdapter<LETTER, STATE> mSndComplemented;
-	protected AbstractGeneralizedAutomatonReachableStates<LETTER, STATE> mResult;
+	private final IGeneralizedNwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mFstOperand;
+	private final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mSndOperand;
+	private NwaOutgoingLetterAndTransitionAdapter<LETTER, STATE> mSndComplemented;
+	private AbstractGeneralizedAutomatonReachableStates<LETTER, STATE> mResult;
+	private GeneralizedBuchiIntersectNwa<LETTER, STATE> mIntersect; 
 
 	/**
 	 * Constructor.
@@ -44,42 +45,55 @@ public abstract class AbstractGeneralizedBuchiDifference<LETTER, STATE> extends 
 	 * @throws AutomataLibraryException
 	 *             if construction fails
 	 */
-	public <SF extends IBuchiComplementNcsbStateFactory<STATE> & IBuchiIntersectStateFactory<STATE> & IEmptyStackStateFactory<STATE>> AbstractGeneralizedBuchiDifference(
+	public <SF extends IDeterminizeStateFactory<STATE> & IBuchiComplementFkvStateFactory<STATE> & IBuchiIntersectStateFactory<STATE> & IEmptyStackStateFactory<STATE>> GeneralizedBuchiDifferenceFKV(
 			final AutomataLibraryServices services, final SF stateFactory,
 			final IGeneralizedNwaOutgoingLetterAndTransitionProvider<LETTER, STATE> fstOperand,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> sndOperand) throws AutomataLibraryException {
-		super(services);
-		mFstOperand = fstOperand;
-		mSndOperand = sndOperand;
+		this(services, stateFactory, fstOperand, sndOperand, new PowersetDeterminizer<>(sndOperand, true, stateFactory),
+				FkvOptimization.HEIMAT2, Integer.MAX_VALUE);
 		
 		if (!NestedWordAutomataUtils.isFiniteAutomaton(sndOperand)) {
 			throw new UnsupportedOperationException("Calls and returns are not yet supported.");
 		}
 
-		if (mLogger.isInfoEnabled()) {
-			mLogger.info(startMessage());
-		}
-		constructResult(stateFactory);
-		if (mLogger.isInfoEnabled()) {
-			mLogger.info(exitMessage());
-		}
-
 //		new ComplementTest<>(mServices, stateFactory, mSndOperand);
 //		new BuchiDifferenceTest<>(mServices, stateFactory, getResult(), mFstOperand, mSndOperand);
 	}
-
-	protected <SF extends IBuchiComplementNcsbStateFactory<STATE> & IBuchiIntersectStateFactory<STATE> & IEmptyStackStateFactory<STATE>>
-			void constructResult(final SF stateFactory) throws AutomataLibraryException {
-		// first we get the complement
-		final BuchiComplementNCSBSimpleNwa<LETTER, STATE> onDemandComplemented = new BuchiComplementNCSBSimpleNwa<>(mServices, stateFactory, mSndOperand);
-		Options.lazyS = true;
-		Options.lazyB = false;
-		mSndComplemented = new ComplementNwaOutgoingLetterAndTransitionAdapter<LETTER, STATE>(onDemandComplemented);
-		constructDifferenceFromComplement(stateFactory);
+	
+	public <SF extends IBuchiComplementFkvStateFactory<STATE> & IBuchiIntersectStateFactory<STATE> & IEmptyStackStateFactory<STATE>> GeneralizedBuchiDifferenceFKV(
+			final AutomataLibraryServices services, final SF stateFactory,
+			final IGeneralizedNwaOutgoingLetterAndTransitionProvider<LETTER, STATE> fstOperand,
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> sndOperand,
+			final IStateDeterminizer<LETTER, STATE> stateDeterminizer, final FkvOptimization optimization,
+			final int userDefinedMaxRank) throws AutomataLibraryException {
+        super(services);
+		mFstOperand = fstOperand;
+		mSndOperand = sndOperand;
+		
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info(startMessage());
+		}
+		constructResult(stateFactory, stateDeterminizer, userDefinedMaxRank, optimization);
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info(exitMessage());
+		}
 	}
 
-	protected abstract <SF extends IBuchiIntersectStateFactory<STATE> & IEmptyStackStateFactory<STATE>> void constructDifferenceFromComplement(SF stateFactory)
-			throws AutomataLibraryException;
+	private <SF extends IBuchiComplementFkvStateFactory<STATE> & IBuchiIntersectStateFactory<STATE> & IEmptyStackStateFactory<STATE>>
+		void constructResult(final SF stateFactory, final IStateDeterminizer<LETTER, STATE> stateDeterminizer,
+			final int userDefinedMaxRank, final FkvOptimization optimization) throws AutomataLibraryException {
+		final BuchiComplementFKVNwa<LETTER, STATE> mOnDemandComplemented = new BuchiComplementFKVNwa<>(mServices, mSndOperand, stateDeterminizer, stateFactory,
+				optimization, userDefinedMaxRank);
+        mSndComplemented = new NwaOutgoingLetterAndTransitionAdapter<LETTER, STATE>(mOnDemandComplemented);
+        constructDifferenceFromComplement(stateFactory);
+	}
+
+	private <SF extends IBuchiIntersectStateFactory<STATE> & IEmptyStackStateFactory<STATE>> void constructDifferenceFromComplement(SF stateFactory)
+			throws AutomataLibraryException {
+		assert mFstOperand instanceof IGeneralizedNwaOutgoingLetterAndTransitionProvider;
+	    mIntersect = new GeneralizedBuchiIntersectNwa<>(mFstOperand, getSndComplemented(), stateFactory);
+		mResult = new GeneralizedNestedWordAutomatonReachableStates<>(mServices, mIntersect);
+	}
 
 	@Override
 	public String exitMessage() {
