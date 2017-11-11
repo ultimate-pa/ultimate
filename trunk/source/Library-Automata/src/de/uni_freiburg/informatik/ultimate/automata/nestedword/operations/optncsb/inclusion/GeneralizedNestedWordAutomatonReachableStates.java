@@ -151,7 +151,7 @@ public class GeneralizedNestedWordAutomatonReachableStates<LETTER, STATE> extend
 		
 		public List<List<STATE>> getLoopList() {
 			if(mTarjan == null) {
-				return mAscc.mSCC;
+				return mAscc.mSccList;
 			}
 			return mTarjan.mSCC;
 		}
@@ -252,6 +252,9 @@ public class GeneralizedNestedWordAutomatonReachableStates<LETTER, STATE> extend
 	    		mState = state;
 	    		mLabels = labels;
 	    	}
+	    	public String toString() {
+	    		return "(" + mState + "," + mLabels + ")";
+	    	}
 	    }
 	    
 	    private class Ascc {
@@ -261,7 +264,7 @@ public class GeneralizedNestedWordAutomatonReachableStates<LETTER, STATE> extend
 	    	private final TObjectIntMap<STATE> mDfsNum;
 	    	private final Set<STATE> mQPrime;
 	    	private final Set<STATE> mEmp;
-	    	private List<List<STATE>> mSCC;
+	    	private List<List<STATE>> mSccList;
 	        private Boolean mIsEmpty = null;
 	                
 	        public Ascc() throws AutomataOperationCanceledException {
@@ -269,7 +272,7 @@ public class GeneralizedNestedWordAutomatonReachableStates<LETTER, STATE> extend
 	            this.mSCCs = new Stack<>();
 	            this.mAct = new Stack<>();
 	            this.mDfsNum = new TObjectIntHashMap<>();
-	            this.mSCC = new ArrayList<>();
+	            this.mSccList = new ArrayList<>();
 	            this.mQPrime = new HashSet<>();
 	            this.mEmp = new HashSet<>();
 	            this.mCnt = 0;
@@ -284,21 +287,28 @@ public class GeneralizedNestedWordAutomatonReachableStates<LETTER, STATE> extend
 	            }
 	            
 	            mIsEmpty = ! is_nemp;
+	            Set<STATE> states = new HashSet<>();
+	            states.addAll(mStates.keySet());
 	            // remove states
-	            for(STATE st : mEmp) {
-	            	assert !mQPrime.contains(st) : "Wrong state in QPrime";
-	            	StateContainer<LETTER, STATE> cont = mStates.get(st);
-		        	Set<STATE> pred = new HashSet<>();
-		        	for(IncomingInternalTransition<LETTER, STATE> trans : cont.internalPredecessors()) {
-		        		if (! mServices.getProgressAwareTimer().continueProcessing()) {
-		    				final RunningTaskInfo rti = constructRunningTaskInfo();
-		    				throw new AutomataOperationCanceledException(rti);
-		    			}
-		        		StateContainer<LETTER, STATE> predCont = mStates.get(trans.getPred());
-		        		if(predCont != null) predCont.removeSuccessor(st);
-		        		pred.add(trans.getPred());
-		        	}
-		        	cont.removePredecessors(pred);
+	            for(STATE st : states) {
+	            	if(mQPrime.contains(st)) {
+	            		assert !mEmp.contains(st) : "Wrong state in mEmp";
+	            		continue;
+	            	}else if(mEmp.contains(st)) {
+	            		assert !mQPrime.contains(st) : "Wrong state in QPrime";
+		            	StateContainer<LETTER, STATE> cont = mStates.get(st);
+			        	Set<STATE> pred = new HashSet<>();
+			        	for(IncomingInternalTransition<LETTER, STATE> trans : cont.internalPredecessors()) {
+			        		if (! mServices.getProgressAwareTimer().continueProcessing()) {
+			    				final RunningTaskInfo rti = constructRunningTaskInfo();
+			    				throw new AutomataOperationCanceledException(rti);
+			    			}
+			        		StateContainer<LETTER, STATE> predCont = mStates.get(trans.getPred());
+			        		if(predCont != null) predCont.removeSuccessor(st);
+			        		pred.add(trans.getPred());
+			        	}
+			        	cont.removePredecessors(pred);
+	            	}
 		        	mStates.remove(st);
 					mInitialStates.remove(st);
 					mFinalStates.remove(st);
@@ -345,7 +355,6 @@ public class GeneralizedNestedWordAutomatonReachableStates<LETTER, STATE> extend
                         }while(mDfsNum.get(u) > mDfsNum.get(succ));
                         mSCCs.push(new AsccElem(u, B));				
 					}
-
                 }
 
 	    		// found one strongly connected component
@@ -354,23 +363,22 @@ public class GeneralizedNestedWordAutomatonReachableStates<LETTER, STATE> extend
 	    			Set<Integer> labels = mSCCs.peek().mLabels;
 	    			List<STATE> sccList = new ArrayList<>();
 	    			mSCCs.pop();
-	    			while(! mAct.empty()){
+	    			STATE u;
+	    			do{
 	    				assert !mAct.isEmpty() : "mAct is empty";
-	    				STATE u = mAct.pop();
+	    				u = mAct.pop();
 	    				if(is_nemp) {
 	    					mQPrime.add(u);
 	    				}else {
 	    					mEmp.add(u);
 	    				}
 	    				sccList.add(u);
-	    				if(u.equals(state))
-	    					break;
-	    			}
+	    			}while(! u.equals(state));
 	    			
 	    			if(labels.size() == getAcceptanceSize()) {
 	                	if(sccList.size() > 1
 	                	|| cont.hashSelfloop()) {
-	                		mSCC.add(sccList);
+	                		mSccList.add(sccList);
 	                	}
 	                }
 	    		}
