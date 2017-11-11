@@ -167,19 +167,6 @@ public class ExpressionResult extends Result {
 	}
 
 	/**
-	 * copy constructor Note. Does _not_ construct a deep copy of the object.
-	 */
-	public ExpressionResult(final ExpressionResult rex) {
-		super(null);
-		stmt = rex.stmt;
-		lrVal = rex.lrVal;
-		decl = rex.decl;
-		auxVars = rex.auxVars;
-		overappr = rex.overappr;
-		otherUnionFields = rex.otherUnionFields;
-	}
-
-	/**
 	 * Construct a new {@link ExpressionResult} without an {@link LRValue} whose statements, declarations, auxVars and
 	 * overapproximations contain all respective elements of resExprs. TODO: This could remove the old copy constructor
 	 * one it is not used any more.
