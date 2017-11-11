@@ -845,9 +845,9 @@ public class CHandler implements ICHandler {
 						if (cDec.hasInitializer()) { // must be a non-real initializer for variable length array size
 														// --> need to pass this on
 							// TODO: double check this
-							((ExpressionResult) result).getDeclarations().addAll(cDec.getInitializer().getExpressionResult().getDeclarations());
-							((ExpressionResult) result).getStatements().addAll(cDec.getInitializer().getExpressionResult().getStatements());
-							((ExpressionResult) result).getAuxVars().putAll(cDec.getInitializer().getExpressionResult().getAuxVars());
+							((ExpressionResult) result).getDeclarations().addAll(cDec.getInitializer().getRootExpressionResult().getDeclarations());
+							((ExpressionResult) result).getStatements().addAll(cDec.getInitializer().getRootExpressionResult().getStatements());
+							((ExpressionResult) result).getAuxVars().putAll(cDec.getInitializer().getRootExpressionResult().getAuxVars());
 						}
 
 						// no initializer --> essentially needs to be havoced f.i. in each loop iteration
@@ -2495,14 +2495,14 @@ public class CHandler implements ICHandler {
 			final Result r = main.dispatch(i);
 			if (r instanceof InitializerResult) {
 //				result.list.add((InitializerResult) r);
-				result.addListEntry((InitializerResult) r);
+				result.addChild((InitializerResult) r);
 			} else if (r instanceof ExpressionResult) {
 				ExpressionResult rex = (ExpressionResult) r;
 				rex = rex.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
 //				result.list.add(new InitializerResult(rex.stmt, rex.lrVal, rex.decl, rex.auxVars, rex.overappr));
 
 //				result.addListEntry(new InitializerResult(rex.stmt, rex.lrVal, rex.decl, rex.auxVars, rex.overappr));
-				result.addListEntry(new InitializerResultBuilder().setRootExpressionResult(rex).build());
+				result.addChild(new InitializerResultBuilder().setRootExpressionResult(rex).build());
 
 				// result.auxVars.putAll(((ResultExpression) r).auxVars);//what for??
 			} else {

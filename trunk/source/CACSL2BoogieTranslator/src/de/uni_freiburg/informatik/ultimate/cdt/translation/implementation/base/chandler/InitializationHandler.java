@@ -407,10 +407,11 @@ public class InitializationHandler {
 	private ExpressionResult makeOnHeapDefaultInitializationForType(final ILocation loc, final Dispatcher main,
 			final HeapLValue baseAddress, final CType cType, final boolean sophisticated) {
 		if (cType instanceof CPrimitive || cType instanceof CEnum || cType instanceof CPointer) {
-//			return new ExpressionResultBuilder()
-//					.setLRVal(new RValue(getDefaultValueForSimpleType(loc, cType), cType))
-//					.build();
-			throw new UnsupportedOperationException("TODO");
+			final ExpressionResultBuilder initialization = new ExpressionResultBuilder();
+			final List<Statement> defaultInit = makeAssignmentStatements(loc, baseAddress, true, cType,
+					getDefaultValueForSimpleType(loc, cType), Collections.emptyList());
+			initialization.addStatements(defaultInit);
+			return initialization.build();
 		} else if (cType instanceof CUnion) {
 			throw new UnsupportedOperationException("TODO");
 		} else if (cType instanceof CStruct) {
@@ -466,7 +467,7 @@ public class InitializationHandler {
 			}
 
 			final List<Expression> fieldValues = fieldLrValues.stream()
-					.map(fieldLrValue -> fieldLrValue.getValue())
+					.map(LRValue::getValue)
 					.collect(Collectors.toList());
 			final StructConstructor initializationValue = ExpressionFactory.constructStructConstructor(loc,
 					cStructType.getFieldIds(),
@@ -510,7 +511,6 @@ public class InitializationHandler {
 
 				final ExpressionResult arrayIndexInitialization =
 						makeOffHeapDefaultInitializationForType(loc, main, cArrayType.getValueType(), false);
-	//					makeNaiveOffHeapDefaultInitializationForType(loc, main, cArrayType.getValueType());
 				initialization.addAllExceptLrValue(arrayIndexInitialization);
 
 				final LocalLValue arrayAccessLhs = CTranslationUtil.constructArrayAccessLhs(loc,
@@ -765,8 +765,8 @@ public class InitializationHandler {
 
 
 	/**
-	 * Represents all information that is needed to initialize a given expresion with a given initializer.
-	 * Is generated from an InitializerResult together with a target CType.
+	 * Represents all information that is needed to initialize a given target expression with a given initializer.
+	 * Is generated from an InitializerResult together with the target expression's CType.
 	 *
 	 * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
 	 *
@@ -775,6 +775,45 @@ public class InitializationHandler {
 
 		public InitializerInfo(final InitializerResult initializerResult, final CType targetCType) {
 			convert(initializerResult, targetCType);
+		}
+
+		/**
+		 * Converts a given InitializerResult to an InitializerInfo with respect to a given target CType.
+		 *
+		 * The target CType is the CType of the C object that will be initialized with the initializer that the
+		 * InitializerResult has been generated from.
+		 * Conceptually, the target CType is important because conversions may need to be applied according to it
+		 * (e.g. a "0" may become the NULL pointer), and designated initializers may need to be reordered according to
+		 * the field names of a target CStruct type.
+		 *
+		 * @param initializerResult
+		 * @param targetCType
+		 */
+		private void convert(final InitializerResult initializerResult, final CType targetCType) {
+
+
+					//		assert initializerIfAnyRaw instanceof InitializerResult;
+
+		//		InitializerResult initializerConverted = null;
+		//		if (initializerIfAnyRaw != null ) {
+		//			//				final ExpressionResult initializerRawSwitched =
+		//			//						((ExpressionResult) initializerRaw).switchToRValueIfNecessary(main, mMemoryHandler,
+		//			//								mStructHandler, loc);
+		//			//				initializerRawSwitched.rexBoolToIntIfNecessary(loc, mExpressionTranslation);
+		//			final InitializerResult initializerBoolToInt =
+		//					initializerIfAnyRaw.rexBoolToIntIfNecessary(loc, mExpressionTranslation);
+		//
+		//			/*
+		//			 * Conversions need to be applied here (like for a normal assignment), because the rhs of an
+		//			 * initialization may not be of the right type.
+		//			 * Simplest example: "int * i = 0", here the "0" must be converted to the null pointer.
+		//			 */
+		//			//				main.mCHandler.convert(loc, initializerRawSwitched, cType);
+		//			initializerConverted =
+		//					initializerBoolToInt.convert(loc, main, targetCType);
+		//
+		//			assert initializerConverted.getTreeNodeIds().isEmpty();
+		//		}
 		}
 
 
@@ -831,32 +870,6 @@ public class InitializationHandler {
 
 			// TODO Auto-generated method stub
 			return null;
-		}
-
-
-		void convert(final InitializerResult initializerResult, final CType targetCType) {
-			//		assert initializerIfAnyRaw instanceof InitializerResult;
-
-//		InitializerResult initializerConverted = null;
-//		if (initializerIfAnyRaw != null ) {
-//			//				final ExpressionResult initializerRawSwitched =
-//			//						((ExpressionResult) initializerRaw).switchToRValueIfNecessary(main, mMemoryHandler,
-//			//								mStructHandler, loc);
-//			//				initializerRawSwitched.rexBoolToIntIfNecessary(loc, mExpressionTranslation);
-//			final InitializerResult initializerBoolToInt =
-//					initializerIfAnyRaw.rexBoolToIntIfNecessary(loc, mExpressionTranslation);
-//
-//			/*
-//			 * Conversions need to be applied here (like for a normal assignment), because the rhs of an
-//			 * initialization may not be of the right type.
-//			 * Simplest example: "int * i = 0", here the "0" must be converted to the null pointer.
-//			 */
-//			//				main.mCHandler.convert(loc, initializerRawSwitched, cType);
-//			initializerConverted =
-//					initializerBoolToInt.convert(loc, main, targetCType);
-//
-//			assert initializerConverted.getTreeNodeIds().isEmpty();
-//		}
 		}
 
 	}
