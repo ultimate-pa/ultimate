@@ -227,7 +227,7 @@ public class InitializationHandler {
 				currentFieldLhs = CTranslationUtil.constructAddressForStructField(
 						(HeapLValue) structBaseLhsToInitialize, i);
 			} else {
-				currentFieldLhs = CTranslationUtil.constructStructAccessLhs((LocalLValue) structBaseLhsToInitialize, i);
+				currentFieldLhs = CTranslationUtil.constructOffHeapStructAccessLhs((LocalLValue) structBaseLhsToInitialize, i);
 			}
 
 			final ExpressionResult currentFieldInitialization;
@@ -414,7 +414,22 @@ public class InitializationHandler {
 		} else if (cType instanceof CUnion) {
 			throw new UnsupportedOperationException("TODO");
 		} else if (cType instanceof CStruct) {
-			throw new UnsupportedOperationException("TODO");
+			final CStruct cStructType = (CStruct) cType;
+
+			final ExpressionResultBuilder initialization = new ExpressionResultBuilder();
+
+			final String[] fieldIds = cStructType.getFieldIds();
+
+			for (int i = 0; i < fieldIds.length; i++) {
+				final HeapLValue fieldPointer = CTranslationUtil.constructOnHeapStructAccessLhs(baseAddress, i);
+
+				final ExpressionResult fieldDefaultInit =
+						makeOnHeapDefaultInitializationForType(loc, main, fieldPointer, cStructType.getFieldTypes()[i],
+								sophisticated);
+
+				initialization.addAllExceptLrValue(fieldDefaultInit);
+			}
+			return initialization.build();
 		} else if (cType instanceof CArray) {
 			if (sophisticated) {
 				return makeSophisticatedOnHeapDefaultInitializationForArray(loc, main, (CArray) cType);
@@ -445,7 +460,6 @@ public class InitializationHandler {
 				final ExpressionResult fieldDefaultInit =
 						makeOffHeapDefaultInitializationForType(loc, main, cStructType.getFieldTypes()[i],
 								sophisticated);
-//						makeNaiveOffHeapDefaultInitializationForType(loc, main, cStructType.getFieldTypes()[i]);
 
 				initialization.addAllExceptLrValue(fieldDefaultInit);
 				fieldLrValues.add(fieldDefaultInit.getLrValue());

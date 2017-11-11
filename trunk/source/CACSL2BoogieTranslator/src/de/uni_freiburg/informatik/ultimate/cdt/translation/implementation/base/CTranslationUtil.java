@@ -105,8 +105,15 @@ public class CTranslationUtil {
 		return new LocalLValue(alhs, cArrayType.getValueType());
 	}
 
-	public static LRValue constructStructAccessLhs(final LocalLValue structBaseLhs, final int i) {
-		// TODO Auto-generated method stub
+	public static LRValue constructOffHeapStructAccessLhs(final LocalLValue structBaseLhs, final int i) {
+		final CStruct cStructType = (CStruct) structBaseLhs.getCType();
+		// TODO
+		return null;
+	}
+
+	public static HeapLValue constructOnHeapStructAccessLhs(final HeapLValue structBaseLhs, final int i) {
+		final CStruct cStructType = (CStruct) structBaseLhs.getCType();
+		// TODO
 		return null;
 	}
 
