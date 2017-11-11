@@ -133,13 +133,13 @@ public class GeneralizedNestedWordAutomatonReachableStates<LETTER, STATE> extend
 	}
 	
 	class ReachableStatesComputationTarjan {
-		private Tarjan mTarjan ;
+		private Tarjan mTarjan = null;
 		private Ascc mAscc;
 		
 		public ReachableStatesComputationTarjan() throws AutomataOperationCanceledException {
 			mNumberOfConstructedStates = 0;
-			mTarjan = new Tarjan();
-//			mAscc = new Ascc();
+//			mTarjan = new Tarjan();
+			mAscc = new Ascc();
 		}
 		
 		public Boolean isEmpty() {
@@ -255,41 +255,64 @@ public class GeneralizedNestedWordAutomatonReachableStates<LETTER, STATE> extend
 	    }
 	    
 	    private class Ascc {
-	        private int mIndex;
-	        private final Stack<AsccElem> mStack;             // tarjan's stack
-	    	private final Stack<STATE> mActive;
-	    	private final TObjectIntMap<STATE> mDfsnum;
-	        private List<List<STATE>> mSCC;
+	        private int mCnt;
+	        private final Stack<AsccElem> mSCCs;             // tarjan's stack
+	    	private final Stack<STATE> mAct;
+	    	private final TObjectIntMap<STATE> mDfsNum;
+	    	private final Set<STATE> mQPrime;
+	    	private final Set<STATE> mEmp;
+	    	private List<List<STATE>> mSCC;
 	        private Boolean mIsEmpty = null;
 	                
 	        public Ascc() throws AutomataOperationCanceledException {
 	            
-	            this.mStack = new Stack<>();
-	            this.mActive = new Stack<>();
-	            this.mDfsnum = new TObjectIntHashMap<>();
+	            this.mSCCs = new Stack<>();
+	            this.mAct = new Stack<>();
+	            this.mDfsNum = new TObjectIntHashMap<>();
 	            this.mSCC = new ArrayList<>();
-	            this.mIndex = 0;
+	            this.mQPrime = new HashSet<>();
+	            this.mEmp = new HashSet<>();
+	            this.mCnt = 0;
+	            
+	            boolean is_nemp = false;
 	            for(STATE state : mOperand.getInitialStates()) {
 	            	mInitialStates.add(state);
-	                if(! mDfsnum.containsKey(state)){
-	                    strongConnect(state);
+	                if(! mDfsNum.containsKey(state)){
+	                    boolean result = construct(state);
+	                    is_nemp = result || is_nemp;
 	                }
 	            }
 	            
-	            if(mIsEmpty == null) {
-	                mIsEmpty = true;
+	            mIsEmpty = ! is_nemp;
+	            // remove states
+	            for(STATE st : mEmp) {
+	            	assert !mQPrime.contains(st) : "Wrong state in QPrime";
+	            	StateContainer<LETTER, STATE> cont = mStates.get(st);
+		        	Set<STATE> pred = new HashSet<>();
+		        	for(IncomingInternalTransition<LETTER, STATE> trans : cont.internalPredecessors()) {
+		        		if (! mServices.getProgressAwareTimer().continueProcessing()) {
+		    				final RunningTaskInfo rti = constructRunningTaskInfo();
+		    				throw new AutomataOperationCanceledException(rti);
+		    			}
+		        		StateContainer<LETTER, STATE> predCont = mStates.get(trans.getPred());
+		        		if(predCont != null) predCont.removeSuccessor(st);
+		        		pred.add(trans.getPred());
+		        	}
+		        	cont.removePredecessors(pred);
+		        	mStates.remove(st);
+					mInitialStates.remove(st);
+					mFinalStates.remove(st);
 	            }
 	        }
 	        
-	        void strongConnect(STATE state) throws AutomataOperationCanceledException {
-	            
-	    		mStack.push(new AsccElem(state, mOperand.getAcceptanceLabels(state)));
-	    		mDfsnum.put(state, mIndex);
-	    		mActive.push(state);
+	        boolean construct(STATE state) throws AutomataOperationCanceledException {
+	        	++ mCnt;
+	        	mDfsNum.put(state, mCnt);
+	        	mSCCs.push(new AsccElem(state, mOperand.getAcceptanceLabels(state)));
+	    		mAct.push(state);
 	    		
-	    		++ mIndex;	
 	            ++ mNumberOfConstructedStates;
-//	            boolean notEmpty = false;
+	            boolean is_nemp = false;
 	            
 	            StateContainer<LETTER, STATE> cont = getOrAddState(state);
 	            for (final OutgoingInternalTransition<LETTER, STATE> trans : mOperand.internalSuccessors(state)) {
@@ -298,56 +321,60 @@ public class GeneralizedNestedWordAutomatonReachableStates<LETTER, STATE> extend
 						throw new AutomataOperationCanceledException(rti);
 					}
 					STATE succ = trans.getSucc();
-					if(! mDfsnum.containsKey(succ)) {
-						strongConnect(succ); // did not visit succ before
-					}else if(mActive.contains(succ)) {
-						Set<Integer> labels = new HashSet<>();
-                        STATE topState;
-                        do {
-                        	AsccElem elem = mStack.pop();
-                        	topState = elem.mState;
-                        	labels.addAll(elem.mLabels);
-//                            if(labels.size() == getAcceptanceSize()) {
-//                                notEmpty = true;
-//                            }
-                        }while(mDfsnum.get(topState) > mDfsnum.get(succ));
-                        mStack.push(new AsccElem(topState, labels));				
-					}
 					// explore new states, then we should add state information
 					cont.addInternalOutgoing(trans);
 					StateContainer<LETTER, STATE> succSc = getOrAddState(succ);
 					succSc.addInternalIncoming(new IncomingInternalTransition<>(state, trans.getLetter()));
+					if(mQPrime.contains(succ)) {
+						is_nemp = true;
+					}else if(mEmp.contains(succ)) {
+						continue;
+					}else if(! mAct.contains(succ)) {
+						boolean result = construct(succ); // did not visit succ before
+						is_nemp = result || is_nemp;
+					}else {
+						Set<Integer> B = new HashSet<>();
+                        STATE u;
+                        do {
+                        	AsccElem elem = mSCCs.pop();
+                        	u = elem.mState;
+                        	B.addAll(elem.mLabels);
+                            if(B.size() == getAcceptanceSize()) {
+                                is_nemp = true;
+                            }
+                        }while(mDfsNum.get(u) > mDfsNum.get(succ));
+                        mSCCs.push(new AsccElem(u, B));				
+					}
+
                 }
 
 	    		// found one strongly connected component
-	    		if(mStack.peek().mState.equals(state)){
+	    		if(mSCCs.peek().mState.equals(state)){
 	    			
-	    			Set<Integer> labels = mStack.peek().mLabels;
+	    			Set<Integer> labels = mSCCs.peek().mLabels;
 	    			List<STATE> sccList = new ArrayList<>();
-	    			mStack.pop();
-	    			while(! mActive.empty()){
-	    				STATE stackTop = mActive.pop();
-	    				sccList.add(stackTop);
-	    				if(stackTop.equals(state))
+	    			mSCCs.pop();
+	    			while(! mAct.empty()){
+	    				assert !mAct.isEmpty() : "mAct is empty";
+	    				STATE u = mAct.pop();
+	    				if(is_nemp) {
+	    					mQPrime.add(u);
+	    				}else {
+	    					mEmp.add(u);
+	    				}
+	    				sccList.add(u);
+	    				if(u.equals(state))
 	    					break;
 	    			}
-
-	    			boolean hasAcc = mOperand.getAcceptanceSize() == labels.size();	    			
-	    			if(sccList.size() == 1 // only has a single state
-	    					&& hasAcc            // it is an accepting states
-	    					) {
-	    				// if there is no self loop
-	    				if(! cont.hashSelfloop()) hasAcc = false;
-	    			}
-	    							
-	    			if(hasAcc) {
-	    				mIsEmpty = false;
-	    				mSCC.add(sccList);
-	    				if(Options.verbose) {
-	    					System.out.println("Loop: " + sccList);
-	    				}
-	    			}
+	    			
+	    			if(labels.size() == getAcceptanceSize()) {
+	                	if(sccList.size() > 1
+	                	|| cont.hashSelfloop()) {
+	                		mSCC.add(sccList);
+	                	}
+	                }
 	    		}
+	    		return is_nemp;
 	        }
 	    }
 	}

@@ -97,7 +97,7 @@ public class BenchmarkRecord {
 			mOutputFile = "Info.log";
 		}
 		try {
-			mOutput = new PrintWriter(new BufferedWriter(new FileWriter(mOutputFile, false)));
+			mOutput = new PrintWriter(new BufferedWriter(new FileWriter(mOutputFile, true)));
 		} catch (final IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

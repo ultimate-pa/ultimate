@@ -31,6 +31,7 @@
 package de.uni_freiburg.informatik.ultimate.ultimatetest.suites.traceabstraction;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
@@ -399,13 +400,13 @@ public class TerminationNcsbComparison extends AbstractBuchiAutomizerTestSuite {
 //			"buchiAutomizer/ncsb/SUNFLOWER-INTSET
 //			"buchiAutomizer/ncsb/SUNFLOWER-INTSET_LAZY2.epf",
 //			"buchiAutomizer/ncsb/SUNFLOWER-INTSET_LAZY3.epf",
-//			"buchiAutomizer/ncsb/INTSET_GBA.epf",
+			"buchiAutomizer/ncsb/INTSET_GBA.epf",
 //			"buchiAutomizer/ncsb/SUNFLOWER-INTSET_GBA.epf",
 			"buchiAutomizer/ncsb/INTSET_GBA_ANTICHAIN.epf",
-			"buchiAutomizer/ncsb/SUNFLOWER-INTSET_GBA_ANTICHAIN.epf",
+//			"buchiAutomizer/ncsb/SUNFLOWER-INTSET_GBA_ANTICHAIN.epf",
 //			"buchiAutomizer/ncsb/SUNFLOWER-INTSET_LAZY3.epf",
 //			"buchiAutomizer/ncsb/ORIGINAL.epf",
-			"buchiAutomizer/ncsb/SUNFLOWER-ORIGINAL.epf", //
+//			"buchiAutomizer/ncsb/SUNFLOWER-ORIGINAL.epf", //
 			"buchiAutomizer/ncsb/A-ORIGINAL.epf", // svcomp
 //			"buchiAutomizer/ncsb/ROSE-ORIGINAL.epf", //FA, NBA
 //			"buchiAutomizer/ncsb/DAISY-ORIGINAL.epf", //CAV 14
@@ -433,6 +434,10 @@ public class TerminationNcsbComparison extends AbstractBuchiAutomizerTestSuite {
 			mCurrentMachineNumber = 0;
 		}
 		
+		File infoFile = new File("Info.log");
+		if(infoFile.exists()) {
+			infoFile.delete();
+		}
 		
 		DirectoryFileEndingsPair[] mPairsToTry=mDirectoryFileEndingsPairs;
 		if(runOnlySelectedExample){
