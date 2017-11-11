@@ -138,8 +138,8 @@ public class GeneralizedNestedWordAutomatonReachableStates<LETTER, STATE> extend
 		
 		public ReachableStatesComputationTarjan() throws AutomataOperationCanceledException {
 			mNumberOfConstructedStates = 0;
-//			mTarjan = new Tarjan();
-			mAscc = new Ascc();
+			mTarjan = new Tarjan();
+//			mAscc = new Ascc();
 		}
 		
 		public Boolean isEmpty() {
