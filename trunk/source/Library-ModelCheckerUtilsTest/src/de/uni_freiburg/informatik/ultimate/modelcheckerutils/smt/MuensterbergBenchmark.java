@@ -168,4 +168,27 @@ public class MuensterbergBenchmark {
 				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 		mLogger.info(result);
 	}
+	
+	
+	/**
+	 * Too many recursive steps in new PQE
+	 */
+	public void dll_queue_false_unreach_call_false_valid_memcleanup_2() {
+		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
+		final Sort intintintArraySort = SmtSortUtils.getArraySort(mScript, intSort, SmtSortUtils.getArraySort(mScript, intSort, intSort));
+		mScript.declareFun("main_~item~5.offset", new Sort[0], intSort);
+		mScript.declareFun("main_~head~5.offset", new Sort[0], intSort);
+		mScript.declareFun("#memory_$Pointer$.base", new Sort[0], intintintArraySort);
+		mScript.declareFun("main_~item~5.base", new Sort[0], intSort);
+		mScript.declareFun("main_~head~5.base", new Sort[0], intSort);
+		final String formulaAsString = "(forall ((|#memory_$Pointer$.offset| (Array Int (Array Int Int))) (v_DerPreprocessor_28 Int) (v_DerPreprocessor_22 Int) (v_prenex_65 (Array Int (Array Int Int))) (v_DerPreprocessor_24 Int) (v_DerPreprocessor_26 Int)) (and (= 0 (select (select (store |#memory_$Pointer$.offset| (select (select |#memory_$Pointer$.base| main_~item~5.base) main_~item~5.offset) (store (store (select |#memory_$Pointer$.offset| (select (select |#memory_$Pointer$.base| main_~item~5.base) main_~item~5.offset)) (select (select |#memory_$Pointer$.offset| main_~item~5.base) main_~item~5.offset) 0) (+ (select (select |#memory_$Pointer$.offset| main_~item~5.base) main_~item~5.offset) 8) v_DerPreprocessor_22)) (select (select (store |#memory_$Pointer$.base| (select (select |#memory_$Pointer$.base| main_~item~5.base) main_~item~5.offset) (store (store (select |#memory_$Pointer$.base| (select (select |#memory_$Pointer$.base| main_~item~5.base) main_~item~5.offset)) (select (select |#memory_$Pointer$.offset| main_~item~5.base) main_~item~5.offset) 0) (+ (select (select |#memory_$Pointer$.offset| main_~item~5.base) main_~item~5.offset) 8) v_DerPreprocessor_28)) main_~head~5.base) main_~head~5.offset)) (select (select (store |#memory_$Pointer$.offset| (select (select |#memory_$Pointer$.base| main_~item~5.base) main_~item~5.offset) (store (store (select |#memory_$Pointer$.offset| (select (select |#memory_$Pointer$.base| main_~item~5.base) main_~item~5.offset)) (select (select |#memory_$Pointer$.offset| main_~item~5.base) main_~item~5.offset) 0) (+ (select (select |#memory_$Pointer$.offset| main_~item~5.base) main_~item~5.offset) 8) v_DerPreprocessor_22)) main_~head~5.base) main_~head~5.offset))) (= 0 (select (select (store |#memory_$Pointer$.base| (select (select |#memory_$Pointer$.base| main_~item~5.base) main_~item~5.offset) (store (store (select |#memory_$Pointer$.base| (select (select |#memory_$Pointer$.base| main_~item~5.base) main_~item~5.offset)) (select (select v_prenex_65 main_~item~5.base) main_~item~5.offset) 0) (+ (select (select v_prenex_65 main_~item~5.base) main_~item~5.offset) 8) v_DerPreprocessor_24)) (select (select (store |#memory_$Pointer$.base| (select (select |#memory_$Pointer$.base| main_~item~5.base) main_~item~5.offset) (store (store (select |#memory_$Pointer$.base| (select (select |#memory_$Pointer$.base| main_~item~5.base) main_~item~5.offset)) (select (select v_prenex_65 main_~item~5.base) main_~item~5.offset) 0) (+ (select (select v_prenex_65 main_~item~5.base) main_~item~5.offset) 8) v_DerPreprocessor_24)) main_~head~5.base) main_~head~5.offset)) (select (select (store v_prenex_65 (select (select |#memory_$Pointer$.base| main_~item~5.base) main_~item~5.offset) (store (store (select v_prenex_65 (select (select |#memory_$Pointer$.base| main_~item~5.base) main_~item~5.offset)) (select (select v_prenex_65 main_~item~5.base) main_~item~5.offset) 0) (+ (select (select v_prenex_65 main_~item~5.base) main_~item~5.offset) 8) v_DerPreprocessor_26)) main_~head~5.base) main_~head~5.offset)))))";
+		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
+
+		final Term result = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mMgdScript, formulaAsTerm,
+				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+	mLogger.info(result);
+}
+	
+	
+	
 }
