@@ -106,6 +106,8 @@ import org.eclipse.core.runtime.jobs.Job;
 import de.uni_freiburg.informatik.ultimate.cdt.CommentParser;
 import de.uni_freiburg.informatik.ultimate.cdt.FunctionLineVisitor;
 import de.uni_freiburg.informatik.ultimate.cdt.decorator.ASTDecorator;
+import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratedUnit;
+import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratorNode;
 import de.uni_freiburg.informatik.ultimate.cdt.parser.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.WrapperNode;
 import de.uni_freiburg.informatik.ultimate.core.model.ISource;
@@ -173,13 +175,7 @@ public class CDTParser implements ISource {
 
 	@Override
 	public IElement parseAST(final File[] files) throws Exception {
-		final Collection<IASTTranslationUnit> tuCollection;
-		if (files.length == 1) {
-			// This might be a special case of the below...
-			tuCollection = Collections.singletonList(parseAST(files[0]));
-		} else {
-			tuCollection = performCDTProjectOperations(files);
-		}
+		final Collection<IASTTranslationUnit> tuCollection = performCDTProjectOperations(files);
 		
 		if (EXTENDED_DEBUG_OUTPUT) {
 			for (IASTTranslationUnit tu : tuCollection) {
@@ -187,17 +183,15 @@ public class CDTParser implements ISource {
 			} 
 		}
 		
-		final Collection<ASTDecorator> decorators = createASTDecoratorsFromTUs(tuCollection);
-		
-		// As the CACSL plugin doesn't support multiple nodes yet
-		return new WrapperNode(null, decorators.stream().findFirst().orElse(null));
+		final ASTDecorator decorator = decorateTranslationUnits(tuCollection);
+		return new WrapperNode(null, decorator);
 	}
 	
-	private Collection<ASTDecorator> createASTDecoratorsFromTUs(
+	private ASTDecorator decorateTranslationUnits(
 			final Collection<IASTTranslationUnit> translationUnits) {
-		final Collection<ASTDecorator> result = new ArrayList<>();
+		int i = 0;
+		final ASTDecorator decorator = new ASTDecorator();
 		for (IASTTranslationUnit tu : translationUnits) {
-			final ASTDecorator decorator = new ASTDecorator();
 			final FunctionLineVisitor visitor = new FunctionLineVisitor();
 			tu.accept(visitor);
 			final CommentParser parser = 
@@ -205,12 +199,13 @@ public class CDTParser implements ISource {
 			final List<ACSLNode> acslNodes = parser.processComments();
 			
 			// validateLTLProperty(acslNodes); See comment at method below
-			decorator.setAcslASTs(acslNodes);
-			decorator.mapASTs(tu);
+			decorator.provideAcslASTs(acslNodes);
+			final DecoratorNode rootNode = decorator.mapASTs(tu);
 			
-			result.add(decorator);
+			final DecoratedUnit unit = new DecoratedUnit(rootNode, tu);
+			decorator.addDecoratedUnit(unit);
 		}
-		return result;
+		return decorator;
 	}
 
 	// This needs LTLExpressionExtractor which is also needed by CACSL2BoogieTranslator

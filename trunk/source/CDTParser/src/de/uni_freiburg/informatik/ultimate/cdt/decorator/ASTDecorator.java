@@ -48,17 +48,21 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
  */
 public class ASTDecorator {
 	/**
-	 * All ACSL ASTs in the file, specified with there root node.
+	 * All decorated units
+	 */
+	private List<DecoratedUnit> mDecoratedUnits;
+	/**
+	 * All ACSL ASTs in the file, specified with their root node.
 	 */
 	private List<ACSLNode> mAcslASTs;
-	/**
-	 * The root node of the decorator.
-	 */
-	private DecoratorNode mRootNode;
 	/**
 	 * Helper variable, required for mapASTs().
 	 */
 	private int mCurrentStartLineNr;
+	
+	public ASTDecorator() {
+		mDecoratedUnits = new ArrayList<>();
+	}
 
 	/**
 	 * Entry point to recursive method to generate the mapping between CDT AST
@@ -67,15 +71,16 @@ public class ASTDecorator {
 	 * 
 	 * @param node
 	 *            the start node
+	 * @return the root node of the decorator
 	 */
-	public void mapASTs(IASTNode node) {
+	public DecoratorNode mapASTs(IASTNode node) {
 		if(!(node instanceof IASTTranslationUnit)) {
 			throw new IllegalArgumentException("First node of C-AST must be TU!");
 		}
 		mCurrentStartLineNr = 1;
 		final DecoratorNode result = mapASTs(node, null).get(0);
 		assert mAcslASTs.isEmpty();
-		setRootNode(result);
+		return result;
 	}
 
 	/**
@@ -190,31 +195,38 @@ public class ASTDecorator {
 	}
 
 	/**
-	 * Getter for root node.
-	 * 
-	 * @return the rootNode
-	 */
-	public DecoratorNode getRootNode() {
-		return mRootNode;
-	}
-
-	/**
-	 * Setter for root node.
-	 * 
-	 * @param node
-	 *            the root node
-	 */
-	private void setRootNode(DecoratorNode node) {
-		mRootNode = node;
-	}
-
-	/**
-	 * Setter for the ACSL AST list.
+	 * Provides ACSL ASTs for the decoration process
 	 * 
 	 * @param acslASTs
-	 *            the acslASTs to set
+	 *            the acslASTs to provide
 	 */
-	public void setAcslASTs(List<ACSLNode> acslASTs) {
+	public void provideAcslASTs(final List<ACSLNode> acslASTs) {
 		mAcslASTs = acslASTs;
+	}
+	
+	/**
+	 * Adds another {@link DecoratedUnit} to this decorator
+	 */
+	public void addDecoratedUnit(final DecoratedUnit unit) {
+		mDecoratedUnits.add(unit);
+	}
+	
+	/**
+	 * Counts the number of decorated units in this decorator
+	 * 
+	 * @return the number of {@link DecoratedUnit}s
+	 */
+	public int countUnits() {
+		return mDecoratedUnits.size();
+	}
+	
+	/**
+	 * Gets the k-th decorated unit
+	 * 
+	 * @param k the index of the unit
+	 * @return the decorated unit at index k
+	 */
+	public DecoratedUnit getUnit(final int k) {
+		return mDecoratedUnits.get(k);
 	}
 }

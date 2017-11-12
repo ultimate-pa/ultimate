@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.BoogieAstCopier;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.cdt.decorator.ASTDecorator;
+import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratedUnit;
 import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratorNode;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.MainDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
@@ -121,7 +122,11 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 
 		if ((root instanceof WrapperNode) && (((WrapperNode) root).getBacking() instanceof ASTDecorator)) {
 			mInputDecorator = (ASTDecorator) ((WrapperNode) root).getBacking();
-			// mWitnessExtractor.setAST(mInputDecorator);  this needs another solution, disabled for now!
+			if (mInputDecorator.countUnits() == 1) {
+				mWitnessExtractor.setAST(mInputDecorator.getUnit(0).getSourceTranslationUnit());
+			} else {
+				mLogger.info("Witness extractor is disabled for multiple files");
+			}
 			return false;
 		}
 
@@ -183,16 +188,19 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 		}
 		mStorage.putStorable(IdentifierMapping.getStorageKey(), new IdentifierMapping<String, String>());
 
+		// For now this only knows ONE root node. This needs to be solved
+		final DecoratorNode rootNode = mInputDecorator.getUnit(0).getRootNode();
+		
 		// if an additional Annotation was parsed put it into the root node
 		if (mAdditionalAnnotationObserver.getAnnotation() != null) {
 			final ACSLNode node = mAdditionalAnnotationObserver.getAnnotation();
 			node.setLocation(new ACSLSourceLocation(1, 0, 1, 0));
-			mInputDecorator.getRootNode().getChildren().add(0, 
-					new DecoratorNode(mInputDecorator.getRootNode(), node));
+			rootNode.getChildren().add(0, 
+					new DecoratorNode(rootNode, node));
 		}
 
 		try {
-			BoogieASTNode outputTU = main.run(mInputDecorator.getRootNode()).node;
+			BoogieASTNode outputTU = main.run(rootNode).node;
 			outputTU = new BoogieAstCopier().copy((Unit) outputTU);
 			mRootNode = new WrapperNode(null, outputTU);
 			final IdentifierMapping<String, String> map = new IdentifierMapping<>();
