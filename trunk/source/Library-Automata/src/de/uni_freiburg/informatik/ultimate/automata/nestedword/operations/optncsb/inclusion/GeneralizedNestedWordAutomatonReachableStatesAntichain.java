@@ -271,7 +271,7 @@ public class GeneralizedNestedWordAutomatonReachableStatesAntichain<LETTER, STAT
                 }
             }
 			
-			mIsEmpty = is_nemp;
+			mIsEmpty = !is_nemp;
 			Set<STATE> states = new HashSet<>();
 			states.addAll(mStates.keySet());
 //			System.err.println
