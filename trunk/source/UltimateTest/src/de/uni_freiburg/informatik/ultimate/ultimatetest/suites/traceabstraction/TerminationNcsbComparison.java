@@ -54,7 +54,7 @@ public class TerminationNcsbComparison extends AbstractBuchiAutomizerTestSuite {
 
 //	 private static int mFilesPerDirectoryLimit = 1;
 	 private static final int FILE_OFFSET = 0;
-    private static final boolean runOnlySelectedExample=true;
+    private static final boolean runOnlySelectedExample=false;
 
 	// @formatter:off
 	private static final String STANDARD_DOT_C_PATTERN = ".*_false-termination.*\\.c|.*_true-termination.*\\.c";
@@ -376,7 +376,7 @@ public class TerminationNcsbComparison extends AbstractBuchiAutomizerTestSuite {
 	@Override
 	public long getTimeout() {
 //		return Integer.MAX_VALUE;
-		return 70 * 1000;
+		return 900 * 1000;
 	}
 
 	/**
@@ -443,7 +443,7 @@ public class TerminationNcsbComparison extends AbstractBuchiAutomizerTestSuite {
 		if(runOnlySelectedExample){
 			mPairsToTry=mDirectoryFileEndingsPairsForSelectedCases;
 		}
-	    mPairsToTry = mDirectoryBugPairs;
+//	    mPairsToTry = mDirectoryBugPairs;
 		for (final DirectoryFileEndingsPair dfep : mPairsToTry) {
 			for (final String toolchain : mCToolchains) {
 					addTestCase(UltimateRunDefinitionGenerator.getRunDefinitionsFromTrunkRegex(
