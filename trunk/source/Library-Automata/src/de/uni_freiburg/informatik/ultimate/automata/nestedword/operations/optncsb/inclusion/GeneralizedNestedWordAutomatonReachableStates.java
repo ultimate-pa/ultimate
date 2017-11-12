@@ -104,6 +104,7 @@ public class GeneralizedNestedWordAutomatonReachableStates<LETTER, STATE> extend
 		if(cont == null) {
 			cont = new StateContainer<>(state);
 			mStates.put(state, cont);
+            if(mOperand.isFinal(state)) mFinalStates.add(state); // we have to add final states here
 		}
 		return cont;
 	}
@@ -138,8 +139,8 @@ public class GeneralizedNestedWordAutomatonReachableStates<LETTER, STATE> extend
 		
 		public ReachableStatesComputationTarjan() throws AutomataOperationCanceledException {
 			mNumberOfConstructedStates = 0;
-			mTarjan = new Tarjan();
-//			mAscc = new Ascc();
+//			mTarjan = new Tarjan();
+			mAscc = new Ascc();
 		}
 		
 		public Boolean isEmpty() {
@@ -194,7 +195,7 @@ public class GeneralizedNestedWordAutomatonReachableStates<LETTER, STATE> extend
 	            ++ mNumberOfConstructedStates;
 	            
 	            StateContainer<LETTER, STATE> cont = getOrAddState(state);
-	            if(mOperand.isFinal(state)) mFinalStates.add(state);
+//	            if(mOperand.isFinal(state)) mFinalStates.add(state);
 	            for (final OutgoingInternalTransition<LETTER, STATE> trans : mOperand.internalSuccessors(state)) {
 					if (! getServices().getProgressAwareTimer().continueProcessing()) {
 						final RunningTaskInfo rti = constructRunningTaskInfo();
@@ -266,6 +267,12 @@ public class GeneralizedNestedWordAutomatonReachableStates<LETTER, STATE> extend
 	    	private final Set<STATE> mEmp;
 	    	private List<List<STATE>> mSccList;
 	        private Boolean mIsEmpty = null;
+	        
+	        private void asccClear() {
+	        	mDfsNum.clear();
+	        	mQPrime.clear();
+	        	mEmp.clear();
+	        }
 	                
 	        public Ascc() throws AutomataOperationCanceledException {
 	            
@@ -308,11 +315,14 @@ public class GeneralizedNestedWordAutomatonReachableStates<LETTER, STATE> extend
 			        		pred.add(trans.getPred());
 			        	}
 			        	cont.removePredecessors(pred);
+	            	}else {
+	            		assert false : "You should never be here";
 	            	}
 		        	mStates.remove(st);
 					mInitialStates.remove(st);
 					mFinalStates.remove(st);
 	            }
+	            asccClear();
 	        }
 	        
 	        boolean construct(STATE state) throws AutomataOperationCanceledException {
@@ -385,6 +395,13 @@ public class GeneralizedNestedWordAutomatonReachableStates<LETTER, STATE> extend
 	    		return is_nemp;
 	        }
 	    }
+	}
+	
+	@Override
+	protected void removeStates(STATE state) {
+		mStates.remove(state);
+		mInitialStates.remove(state);
+		mFinalStates.remove(state);
 	}
 
 

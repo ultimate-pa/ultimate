@@ -376,7 +376,7 @@ public class TerminationNcsbComparison extends AbstractBuchiAutomizerTestSuite {
 	@Override
 	public long getTimeout() {
 //		return Integer.MAX_VALUE;
-		return 900 * 1000;
+		return 70 * 1000;
 	}
 
 	/**

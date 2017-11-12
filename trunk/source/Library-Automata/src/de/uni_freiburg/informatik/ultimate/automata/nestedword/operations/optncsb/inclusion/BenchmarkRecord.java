@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.inclusion;
 
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -50,6 +51,14 @@ public class BenchmarkRecord {
 
 	public static boolean includeDiffTransition() {
 		return true;
+	}
+	
+	public static boolean canDump() {
+		File f = new File("machine.conf");
+		if(f.exists()) { 
+			return true;
+		}
+		return false;
 	}
 
 	private BenchmarkRecord() {

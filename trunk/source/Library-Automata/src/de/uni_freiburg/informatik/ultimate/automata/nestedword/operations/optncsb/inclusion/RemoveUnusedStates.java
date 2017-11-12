@@ -58,10 +58,11 @@ public class RemoveUnusedStates<LETTER, STATE> {
     				throw new AutomataOperationCanceledException(rti);
     			}
         		StateContainer<LETTER, STATE> predCont = mOperand.getStateContainer(trans.getPred());
-        		predCont.removeSuccessor(st);
+        		if(predCont != null) predCont.removeSuccessor(st);
         		pred.add(trans.getPred());
         	}
         	cont.removePredecessors(pred);
+        	mOperand.removeStates(st);
 		}
 	}
 	

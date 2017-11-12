@@ -91,6 +91,10 @@ public abstract class AbstractGeneralizedAutomatonReachableStates<LETTER, STATE>
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mVpAlphabet = vpAlphabet;
 	}
+	
+	protected void removeStates(STATE state) {
+		
+	}
 
 	@Override
 	public boolean isDoubleDecker(STATE upState, STATE downState) {

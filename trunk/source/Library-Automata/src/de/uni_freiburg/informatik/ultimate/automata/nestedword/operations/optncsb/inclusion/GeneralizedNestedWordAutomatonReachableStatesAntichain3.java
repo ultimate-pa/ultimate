@@ -158,6 +158,10 @@ public class GeneralizedNestedWordAutomatonReachableStatesAntichain3<LETTER, STA
 		return mLasso;
 	}
 	
+	@Override
+	protected void removeStates(STATE state) {
+		
+	}
 	/**
 	 * We use Antichain to reduce some states in reachability analysis
 	 * */

@@ -37,7 +37,7 @@ public class ComplementTest<LETTER, STATE> {
 		mSndComplemented = new NwaOutgoingLetterAndTransitionAdapter<LETTER, STATE>(onDemandComplemented);
 		final BuchiComplementNCSBNwa<LETTER, STATE> complemented = new BuchiComplementNCSBNwa<>(mServices, ncsbSf, mOperand, false);
 		mSndComplementedStandard = new NwaOutgoingLetterAndTransitionAdapter<LETTER, STATE>(complemented);
-//		mNumber ++;
+		mNumber ++;
 		new AutomatonDefinitionPrinter<String, String>(mServices, "complement",
 		"./complement" + mNumber + "_1", Format.BA, "", mSndComplemented);
 		new AutomatonDefinitionPrinter<String, String>(mServices, "complement",

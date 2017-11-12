@@ -401,16 +401,12 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 			}
 		}
 
-		boolean pldiDump = false;
+		
 		// DD: Please take care that you do not commit enabled debug code. You should ask Matthias about integrating
 		// your own statistics into Ultimate's .csv infrastructure.
 		// YFC: Now by default it is disabled. It is enabled only when a special file machine.conf is in the system.
-		
-		File f = new File("machine.conf");
-		if(f.exists()) { 
-			pldiDump=true;
-		}
-		
+		// By default no machine.conf
+		final boolean pldiDump = BenchmarkRecord.canDump();
 		if (pldiDump) {
 			BenchmarkRecord.start(mIcfg.getIdentifier() + "_" + mName,
 					mServices.getPreferenceProvider(Activator.PLUGIN_ID)
@@ -678,9 +674,8 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 	private void reduceAbstractionSize(final Minimization automataMinimization)
 			throws AutomataOperationCanceledException, AssertionError {
 		//added by Yu-Fang Chen for experiments, if machine.conf is there, disable minimization
-		File f = new File("machine.conf");
-		if(f.exists()) { 
-			return;
+		if(BenchmarkRecord.canDump()) { 
+			return ;
 		}
 		//end of the code added by Yu-Fang Chen
 		
@@ -772,8 +767,8 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 			} catch (final AutomataLibraryException e) {
 				throw new AssertionError(e.getMessage());
 			}
-			final boolean pldiDump = true;
-			if (pldiDump) {
+
+			if (BenchmarkRecord.canDump()) {
 				dumpAutomatonInformation(mRefineBuchi.getInterpolAutomatonUsedInRefinement(), false);
 			}
 			// UtilFixedCounterexample<LETTER, IPredicate> utilFixedCe = new UtilFixedCounterexample<>();
@@ -1011,7 +1006,9 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 		mMDBenchmark.reportTrivialModule(mIteration, mInterpolAutomaton.size());
 		assert new InductivityCheck<>(mServices, mInterpolAutomaton, false, true,
 				new IncrementalHoareTripleChecker(mCsToolkitWithRankVars)).getResult();
-		final boolean pldiDump = true;
+		// If no machine.conf file is in UltimateTest directory, then this flag is false
+		// by default, NO machine.conf
+		final boolean pldiDump = BenchmarkRecord.canDump();
 		if (gbaDiff == null) {
 			mAbstraction = diff.getResult();
 			if (pldiDump) {
