@@ -129,7 +129,7 @@ if [ ! -z "$TERMTOOLCHAIN" ]; then
 	test cp "$TERMTOOLCHAIN" "$CONFIGDIR"/"$TOOLNAME"Termination.xml
 fi
 if [ ! -z "$VALTOOLCHAIN" ]; then 
-	test cp "$VALTOOLCHAIN" "$CONFIGDIR"/"$TOOLNAME"WitnessValidation.xml
+	test cp "$VALTOOLCHAIN" "$CONFIGDIR"/"$TOOLNAME"ReachWitnessValidation.xml
 fi
 if [ ! -z "$MEMDEREFMEMTRACKTOOLCHAIN" ]; then 
 	test cp "$MEMDEREFMEMTRACKTOOLCHAIN" "$CONFIGDIR"/"$TOOLNAME"MemDerefMemtrack.xml

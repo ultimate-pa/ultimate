@@ -590,7 +590,7 @@ def get_toolchain_path(prop, witnessmode):
         else:
             search_string = '*Termination.xml'
     elif witnessmode:
-        search_string = '*WitnessValidation.xml'
+        search_string = '*ReachWitnessValidation.xml'
     elif prop.is_mem_deref_memtrack():
         search_string = '*MemDerefMemtrack.xml'
     elif prop.is_ltl():
