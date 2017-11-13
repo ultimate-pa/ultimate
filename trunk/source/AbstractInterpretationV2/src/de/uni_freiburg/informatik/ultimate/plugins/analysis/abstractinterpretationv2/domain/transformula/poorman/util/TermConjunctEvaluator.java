@@ -131,6 +131,8 @@ public class TermConjunctEvaluator<STATE extends IAbstractState<STATE>> {
 					nonAbstractables.add(param);
 				}
 			}
+			mLogger.debug("Abstractables:     " + abstractables);
+			mLogger.debug("Non-Abstractables: " + nonAbstractables);
 			final List<STATE> preStatesAfterAbstractables =
 					applyPost(prestates, abstractables.toArray(new Term[abstractables.size()]));
 			return computeFixpoint(nonAbstractables, preStatesAfterAbstractables);
@@ -165,6 +167,7 @@ public class TermConjunctEvaluator<STATE extends IAbstractState<STATE>> {
 
 		List<STATE> pres = preStates;
 		while (true) {
+			mLogger.debug("Beginning new fixpoint iteration of assumes...");
 			// Compute everything for the prestate
 			List<STATE> abstractableResult = pres;
 			for (final Term nonAbstractable : nonAbstractables) {
@@ -178,7 +181,8 @@ public class TermConjunctEvaluator<STATE extends IAbstractState<STATE>> {
 			// If for all computed post states there is one state in the prestates which covers the post state, we have
 			// found a fixpoint and may return.
 			if (abstractableResult.stream().allMatch(
-					result -> previousPres.stream().anyMatch(prev -> result.isSubsetOf(prev) != SubsetResult.NONE))) {
+					result -> previousPres.stream().anyMatch(prev -> result.isSubsetOf(prev) != SubsetResult.NONE
+							&& prev.isSubsetOf(result) != SubsetResult.NONE))) {
 				return abstractableResult;
 			}
 			pres = abstractableResult;
