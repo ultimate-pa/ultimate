@@ -1,4 +1,4 @@
-//@Safe
+//#Safe
 #include<stdio.h>
 int main() {
   struct structtype {
