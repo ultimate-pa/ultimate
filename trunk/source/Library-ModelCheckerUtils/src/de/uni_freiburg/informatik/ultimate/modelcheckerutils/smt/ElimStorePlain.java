@@ -40,7 +40,6 @@ import java.util.Stack;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
@@ -111,6 +110,8 @@ public class ElimStorePlain {
 	private final ILogger mLogger;
 	private final SimplificationTechnique mSimplificationTechnique;
 	private int mRecursiveCallCounter = -1;
+	
+	private static final boolean DEBUG_CHECK_FOR_AVOIDABLE_BLOWUP = false;
 
 	public ElimStorePlain(final ManagedScript mgdScript, final IUltimateServiceProvider services,
 			final SimplificationTechnique simplificationTechnique) {
@@ -228,29 +229,30 @@ public class ElimStorePlain {
 	private EliminationTask doElimAllRec(final EliminationTask eTask) {
 		mRecursiveCallCounter++;
 		final int thisRecursiveCallNumber = mRecursiveCallCounter;
-		final TreeRelation<Integer, TermVariable> tr = classifyEliminatees(eTask.getEliminatees());
-		Term currentTerm = eTask.getTerm();
+		final EliminationTask eTaskWithoutSos = ArrayQuantifierEliminationUtils.elimAllSos(eTask, mMgdScript, mServices, mLogger);
+		final TreeRelation<Integer, TermVariable> tr = classifyEliminatees(eTaskWithoutSos.getEliminatees());
+		Term currentTerm = eTaskWithoutSos.getTerm();
 		final Set<TermVariable> newElimnatees = new LinkedHashSet<>();
 		for (final Entry<Integer, TermVariable> entry : tr.entrySet()) {
 			if (entry.getKey() != 0) {
-				final Term[] xjuncts = split(eTask.getQuantifier(), entry.getValue(), currentTerm);
+				final Term[] xjuncts = split(eTaskWithoutSos.getQuantifier(), entry.getValue(), currentTerm);
 				final List<Term> resXJuncts = new ArrayList<>();
 				for (final Term xjunct : xjuncts) {
 					if (Arrays.asList(xjunct.getFreeVars()).contains(entry.getValue())) {
-						final EliminationTask res = doElimOneRec(new EliminationTask(eTask.getQuantifier(), Collections.singleton(entry.getValue()), xjunct));
+						final EliminationTask res = doElimOneRec(new EliminationTask(eTaskWithoutSos.getQuantifier(), Collections.singleton(entry.getValue()), xjunct));
 						newElimnatees.addAll(res.getEliminatees());
 						resXJuncts.add(res.getTerm());
 					} else {
 						resXJuncts.add(xjunct);
 					}
 				}
-				currentTerm = compose(eTask.getQuantifier(), resXJuncts);
+				currentTerm = compose(eTaskWithoutSos.getQuantifier(), resXJuncts);
 				currentTerm = SmtUtils.simplify(mMgdScript, currentTerm, mServices, mSimplificationTechnique);
 			}
 		}
 		final Set<TermVariable> resultEliminatees = new HashSet<>(newElimnatees);
-		resultEliminatees.addAll(eTask.getEliminatees());
-		final EliminationTask resultEliminationTask = new EliminationTask(eTask.getQuantifier(), resultEliminatees, currentTerm);
+		resultEliminatees.addAll(eTaskWithoutSos.getEliminatees());
+		final EliminationTask resultEliminationTask = new EliminationTask(eTaskWithoutSos.getQuantifier(), resultEliminatees, currentTerm);
 		final EliminationTask finalResult = applyNonSddEliminations(mServices, mMgdScript,
 				resultEliminationTask, PqeTechniques.ALL_LOCAL);
 		if (mLogger.isInfoEnabled()) {
@@ -269,14 +271,17 @@ public class ElimStorePlain {
 	}
 
 	private Term[] split(final int quantifier, final TermVariable value, final Term term) {
+		if (DEBUG_CHECK_FOR_AVOIDABLE_BLOWUP) {
+			final Term[] xjuncts = QuantifierUtils.getXjunctsInner(quantifier, term);
+			for (final Term xjunct : xjuncts) {
+				if (!Arrays.asList(xjunct.getFreeVars()).contains(value)) {
+					throw new AssertionError("avoidable blowup");
+				}
+			}
+		}
 		final Term xnf = QuantifierUtils.transformToXnf(mServices, mMgdScript.getScript(), quantifier, mMgdScript, term,
 				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 		final Term[] result = QuantifierUtils.getXjunctsOuter(quantifier, xnf);
-		if (term instanceof ApplicationTerm) {
-			if (((ApplicationTerm) term).getParameters().length < result.length) {
-				"lol".toString();
-			}
-		}
 		return result;
 	}
 
