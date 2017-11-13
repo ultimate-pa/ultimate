@@ -37,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.BackTransValue;
-import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.InlineVersionTransformer.InlinedCallAnnotation;
+import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.InlinedCallAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IRelevanceInformation;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement.StepInfo;
@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceEle
 public class CallReinserter {
 
 	/** The processing takes place, right after an non-inlined call. */
-	private final boolean mAfterNonInlinedCall = false;
+	// private final boolean mAfterNonInlinedCall = false;
 
 	/**
 	 * Last BackTransValues for all trace sections with the same inline entry point.

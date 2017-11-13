@@ -82,9 +82,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.callgraph.Cal
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.exceptions.CancelToolchainException;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.exceptions.InliningUnsupportedException;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.ModernAnnotations;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
-import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
@@ -1057,40 +1055,6 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 		addBacktranslation(rtr, null);
 		new InlinedCallAnnotation(callStmt, isReturn).annotate(rtr);
 		return rtr;
-	}
-
-	public static class InlinedCallAnnotation extends ModernAnnotations {
-
-		private static final long serialVersionUID = 1L;
-		private final CallStatement mCallStatement;
-		private final boolean mIsReturn;
-
-		public InlinedCallAnnotation(final CallStatement callStmt, final boolean isReturn) {
-			mCallStatement = callStmt;
-			mIsReturn = isReturn;
-		}
-
-		public CallStatement getCallStatement() {
-			return mCallStatement;
-		}
-
-		public boolean isReturn() {
-			return mIsReturn;
-		}
-
-		public void annotate(final IElement node) {
-			node.getPayload().getAnnotations().put(InlinedCallAnnotation.class.getName(), this);
-		}
-
-		public static InlinedCallAnnotation getAnnotation(final IElement node) {
-			return ModelUtils.getAnnotation(node, InlinedCallAnnotation.class.getName(),
-					a -> (InlinedCallAnnotation) a);
-		}
-
-		@Override
-		public String toString() {
-			return String.valueOf(mCallStatement);
-		}
 	}
 
 	private static List<VariableLHS> varListsToVarLHSs(final VarList[] varLists,
