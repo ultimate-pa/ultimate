@@ -269,7 +269,7 @@ public class MainDispatcher extends Dispatcher {
 	public MainDispatcher(final CACSL2BoogieBacktranslator backtranslator,
 			final Map<IASTNode, ExtractedWitnessInvariant> witnessInvariants, final IUltimateServiceProvider services,
 			final ILogger logger) {
-		super(backtranslator, services, logger);
+		super(backtranslator, services, logger, null);
 		mBitvectorTranslation = getPreferences().getBoolean(CACSLPreferenceInitializer.LABEL_BITVECTOR_TRANSLATION);
 		mOverapproximateFloatingPointOperations =
 				getPreferences().getBoolean(CACSLPreferenceInitializer.LABEL_OVERAPPROXIMATE_FLOATS);
@@ -326,9 +326,7 @@ public class MainDispatcher extends Dispatcher {
 
 	@Override
 	protected void preRun(final DecoratorNode node) {
-		assert node.getCNode() != null;
-		assert node.getCNode() instanceof IASTTranslationUnit;
-
+		super.preRun(node);
 		final IASTTranslationUnit tu = (IASTTranslationUnit) node.getCNode();
 
 		mVariablesOnHeap = new LinkedHashSet<>();
@@ -352,8 +350,8 @@ public class MainDispatcher extends Dispatcher {
 			mReachableDeclarations = null;
 		}
 
-		final PRDispatcher prd =
-				new PRDispatcher(mBacktranslator, mServices, mLogger, mFunctionToIndex, mReachableDeclarations);
+		final PRDispatcher prd = new PRDispatcher(mBacktranslator, mServices, mLogger, mFunctionToIndex,
+				mReachableDeclarations, getLocationFactory());
 		prd.init();
 		prd.dispatch(node);
 		mVariablesOnHeap.addAll(prd.getVariablesOnHeap());

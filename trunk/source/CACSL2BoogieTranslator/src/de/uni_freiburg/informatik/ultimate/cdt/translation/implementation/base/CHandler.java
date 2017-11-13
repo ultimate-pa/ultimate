@@ -154,7 +154,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.LineDirectiveMapping;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.SymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.ArrayHandler;
@@ -418,9 +417,6 @@ public class CHandler implements ICHandler {
 
 	@Override
 	public Result visit(final Dispatcher main, final IASTTranslationUnit node) {
-		final LineDirectiveMapping lineDirectiveMapping = new LineDirectiveMapping(node.getRawSignature());
-		main.setLineDirectiveMapping(lineDirectiveMapping);
-
 		for (final IASTPreprocessorStatement preS : node.getAllPreprocessorStatements()) {
 			final Result r = main.dispatch(preS);
 			if (!(r instanceof SkipResult)) {
