@@ -27,16 +27,22 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.List;
+
+import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.StructConstructor;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.AExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarHelper;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
@@ -46,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.HeapLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO.AUXVAR;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
@@ -111,22 +118,71 @@ public class CTranslationUtil {
 		return null;
 	}
 
-	public static HeapLValue constructOnHeapStructAccessLhs(final HeapLValue structBaseLhs, final int i) {
-		final CStruct cStructType = (CStruct) structBaseLhs.getCType();
-		// TODO
-		return null;
-	}
+//	public static HeapLValue constructOnHeapStructAccessLhs(final HeapLValue structBaseLhs, final int i) {
+//		final CStruct cStructType = (CStruct) structBaseLhs.getCType();
+//		// TODO
+//		return null;
+//	}
 
-	public static HeapLValue constructAddressForArrayAtIndex(final HeapLValue arrayBaseAddress,
-			final List<Integer> arrayIndex) {
+	public static HeapLValue constructAddressForArrayAtIndex(final ILocation loc, final Dispatcher main,
+			final HeapLValue arrayBaseAddress, final List<Integer> arrayIndex) {
 		final CArray cArrayType = (CArray) arrayBaseAddress.getCType();
-//		MemoryHandler.
-		return null;
+
+		final List<Integer> arrayBounds = getConstantDimensionsOfArray(cArrayType);
+
+		Integer product = 0;
+		for (int i = 0; i < arrayIndex.size(); i++) {
+			final int factor = i == arrayIndex.size() - 1 ? 1 : arrayBounds.get(i + 1);
+			product = product +  factor * arrayIndex.get(i);
+		}
+		final CPrimitive sizeT = main.mCHandler.getTypeSizeAndOffsetComputer().getSizeT();
+
+		final Expression flatCellNumber = main.mCHandler.getExpressionTranslation()
+				.constructLiteralForIntegerType(loc, sizeT, new BigInteger(product.toString()));
+
+		final Expression pointerBase = MemoryHandler.getPointerBaseAddress(arrayBaseAddress.getAddress(), loc);
+		final Expression pointerOffset = MemoryHandler.getPointerOffset(arrayBaseAddress.getAddress(), loc);
+		final Expression cellOffset = main.mCHandler.getMemoryHandler().multiplyWithSizeOfAnotherType(loc,
+				cArrayType.getValueType(), flatCellNumber, sizeT);
+		final Expression sum = main.mCHandler.getExpressionTranslation().constructArithmeticExpression(loc,
+				IASTBinaryExpression.op_plus, pointerOffset, sizeT, cellOffset, sizeT);
+		final StructConstructor newPointer = MemoryHandler.constructPointerFromBaseAndOffset(pointerBase, sum, loc);
+
+		return new HeapLValue(newPointer, cArrayType.getValueType());
 	}
 
-	public static LRValue constructAddressForStructField(final HeapLValue structBaseAddress, final int fieldNr) {
-		final CStruct cStructType = (CStruct) structBaseAddress.getCType();
-		// TODO Auto-generated method stub
-		return null;
+//	public static HeapLValue constructAddressForStructField(final ILocation loc, final Dispatcher main,
+//			final HeapLValue structBaseAddress, final int fieldNr) {
+//		final CStruct cStructType = (CStruct) structBaseAddress.getCType();
+//		main.mCHandler.getTypeSizeAndOffsetComputer().constructOffsetForField(loc, cStructType, fieldNr);
+//		return null;
+//	}
+
+
+	public static boolean isVarlengthArray(final CArray cArrayType) {
+		for (final RValue dimRVal : cArrayType.getDimensions()) {
+			if (!(dimRVal.getValue() instanceof IntegerLiteral)) {
+				return true;
+			}
+		}
+		return false;
 	}
+
+
+	public static List<Integer> getConstantDimensionsOfArray(final CArray cArrayType) {
+		if (CTranslationUtil.isVarlengthArray(cArrayType)) {
+			throw new IllegalArgumentException("only call this for non-varlength array types");
+		}
+		final List<Integer> result = new ArrayList<>();
+		for (final RValue dimRVal : cArrayType.getDimensions()) {
+			final int dimInt = Integer.parseUnsignedInt(((IntegerLiteral) dimRVal.getValue()).getValue());
+			result.add(dimInt);
+		}
+		return result;
+	}
+
+	public static boolean isAggregateType(final CType valueType) {
+		return valueType instanceof CStruct || valueType instanceof CArray;
+	}
+
 }

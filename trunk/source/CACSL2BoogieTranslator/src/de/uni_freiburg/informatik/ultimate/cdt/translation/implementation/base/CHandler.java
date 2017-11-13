@@ -4081,11 +4081,18 @@ public class CHandler implements ICHandler {
 		return mInitHandler;
 	}
 
+	@Override
 	public MemoryHandler getMemoryHandler() {
 		return mMemoryHandler;
 	}
 
+	@Override
 	public AExpressionTranslation getExpressionTranslation() {
 		return mExpressionTranslation;
+	}
+
+	@Override
+	public TypeSizeAndOffsetComputer getTypeSizeAndOffsetComputer() {
+		return mTypeSizeComputer;
 	}
 }

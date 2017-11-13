@@ -51,7 +51,7 @@ public class InitializerResultBuilder {
 	/**
 	 * The list holding the children elements.
 	 */
-	private List<InitializerResult> mChildren;
+	private List<InitializerResult> mChildren = null;
 
 	public InitializerResultBuilder() {
 		// do nothing
@@ -60,7 +60,7 @@ public class InitializerResultBuilder {
 	public InitializerResultBuilder(final InitializerResult initializerResult) {
 		mRootDesignator = initializerResult.getRootDesignator();
 		mRootExpressionResult = new ExpressionResultBuilder(initializerResult.getRootExpressionResult()).build();
-		mChildren = new ArrayList<>(initializerResult.getChildren());
+		mChildren = initializerResult.isInitializerList() ? new ArrayList<>(initializerResult.getChildren()) : null;
 	}
 
 	public InitializerResult build() {
@@ -68,6 +68,9 @@ public class InitializerResultBuilder {
 	}
 
 	public void addChild(final InitializerResult r) {
+		if (mChildren == null) {
+			mChildren = new ArrayList<>();
+		}
 		mChildren.add(r);
 	}
 

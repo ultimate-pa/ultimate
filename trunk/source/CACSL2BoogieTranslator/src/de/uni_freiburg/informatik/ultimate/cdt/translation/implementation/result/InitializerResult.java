@@ -85,7 +85,7 @@ public class InitializerResult extends Result {
 		super(node);
 		mRootDesignator = rootDesignator;
 		mRootExpressionResult = expressionResult;
-		mChildren = Collections.unmodifiableList(children);
+		mChildren = children == null ? null : Collections.unmodifiableList(children);
 	}
 
 	public String getRootDesignator() {
@@ -94,6 +94,10 @@ public class InitializerResult extends Result {
 
 	public ExpressionResult getRootExpressionResult() {
 		return mRootExpressionResult;
+	}
+
+	public boolean isInitializerList() {
+		return mChildren != null;
 	}
 
 	public List<InitializerResult> getChildren() {

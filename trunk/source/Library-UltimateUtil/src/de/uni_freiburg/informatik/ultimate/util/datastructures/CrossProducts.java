@@ -228,8 +228,8 @@ public final class CrossProducts {
 
 	/**
 	 * Example:
-	 * input: [2, 2, 3]
-	 * output: crossproduct([[0, 1], [0, 1], [0, 1, 2]]) = [[0, 0, 0], [0, 0, 1], [0, 1, 0], ...]
+	 *  input: [2, 2, 3]
+	 *  output: {0, 1} X {0, 1} X {0, 1, 2} = {(0, 0, 0), (0, 0, 1), (0, 0, 2), (0, 1, 0), ...}
 	 *
 	 * @param exclusiveBounds
 	 * @return

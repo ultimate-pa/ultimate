@@ -313,8 +313,21 @@ public class StructHandler {
 	public Result handleDesignatedInitializer(final Dispatcher main, final MemoryHandler memoryHandler,
 			final StructHandler structHandler, final CASTDesignatedInitializer node) {
 		final ILocation loc = main.getLocationFactory().createCLocation(node);
-		assert node.getDesignators().length == 1;
-		assert node.getDesignators()[0] instanceof CASTFieldDesignator;
+//		assert node.getDesignators().length == 1;
+//		assert node.getDesignators()[0] instanceof CASTFieldDesignator;
+		if (node.getDesignators().length != 1 || !(node.getDesignators()[0] instanceof CASTFieldDesignator)) {
+			/*
+			 * Designators can be complex.
+			 *
+			 * Example from C11 6.7.9.35:
+			 * <code> struct { int a[3], b; } w[] = { [0].a = {1}, [1].a[0] = 2 };</code>
+			 *
+			 * Currently we only support designators that refer to a struct field, like in
+			 * <code> struct { int a; int b; } = { .b = 2 }; </code>
+			 */
+			throw new UnsupportedSyntaxException(loc, "Designators in initializers beyond simple struct field "
+					+ "designators are currently unsupported");
+		}
 		final CASTFieldDesignator fieldDesignator = (CASTFieldDesignator) node.getDesignators()[0];
 		final String fieldDesignatorName = fieldDesignator.getName().toString();
 		final Result innerInitializerResult = main.dispatch(node.getOperand());
