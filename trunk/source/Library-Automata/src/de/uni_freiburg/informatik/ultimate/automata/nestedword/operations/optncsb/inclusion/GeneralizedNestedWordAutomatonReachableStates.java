@@ -78,7 +78,7 @@ public class GeneralizedNestedWordAutomatonReachableStates<LETTER, STATE> extend
 		mDownStates.add(operand.getEmptyStackState());
 		try {
 			mReach = new ReachableStatesComputationTarjan();
-			new RemoveUnusedStates<>(mServices, this);
+//			new RemoveUnusedStates<>(mServices, this);
 			mFinalStates.clear();
 		} catch (final ToolchainCanceledException tce) {
 			throw tce;

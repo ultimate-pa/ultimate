@@ -106,7 +106,7 @@ public class GeneralizedNestedWordAutomatonReachableStatesAntichain<LETTER, STAT
 		mAcceptanceSize = fstOperand.getAcceptanceSize() + 1;
 		try {
 			mReach = new ReachableStatesComputation();
-			new RemoveUnusedStates<>(mServices, this);
+//			new RemoveUnusedStates<>(mServices, this);
 			mFinalStates.clear();
 		} catch (final ToolchainCanceledException tce) {
 			throw tce;
