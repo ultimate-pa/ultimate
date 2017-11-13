@@ -51,12 +51,13 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiAccept
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.GeneralizedBuchiAccepts;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoWord;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 
 /**
  * This is only used to fix the counterexample in the experiments
  * **/
 
-public class UtilFixedCounterexample<LETTER, STATE> {
+public class UtilFixedCounterexample<LETTER extends IIcfgTransition<?>, STATE> {
 	
 	private final String PATH = "counterexamples";
 	private final String SEPARATOR = "----";
@@ -132,7 +133,7 @@ public class UtilFixedCounterexample<LETTER, STATE> {
         NestedLassoRun<LETTER, STATE> run = getter.getNestedLassoRun();
         
         if(run == null) {
-        	throw new UnsupportedOperationException("Wrong automaton for the difference");
+        	assert false : "Wrong automaton for the difference";
         }
         return run;
 	}
@@ -141,9 +142,9 @@ public class UtilFixedCounterexample<LETTER, STATE> {
 	private final void addLettersToStringMap(Map<String, LETTER> map,
 			final Set<LETTER> letters) {
 		for (LETTER letter : letters) {
-			String letterStr = letter.toString();
+			String letterStr = getLetterString(letter);
 			if (map.containsKey(letterStr)) {
-				new AssertionError("Letters with the same string: " + letter);
+				assert false : "Letters with the same string: " + letter;
 			} else {
 				map.put(letterStr, letter);
 			}
@@ -177,7 +178,7 @@ public class UtilFixedCounterexample<LETTER, STATE> {
 	
 	private final void writeLettersToFile(PrintStream out, List<LETTER> word) {
 		for (LETTER letter : word) {
-			out.println(letter.toString()); // one line one letter
+			out.println(getLetterString(letter)); // one line one letter
 		}
 	}
 	
@@ -187,6 +188,11 @@ public class UtilFixedCounterexample<LETTER, STATE> {
         	return true;
         }
         return false;
+	}
+	
+	private final String getLetterString(LETTER letter) {
+		String letterStr = letter.getSource() + "," + letter.toString() + letter.getTarget();
+		return letterStr;
 	}
 	
 	public void checkAcceptance(
