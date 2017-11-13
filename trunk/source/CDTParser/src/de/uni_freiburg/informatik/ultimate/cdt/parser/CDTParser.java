@@ -105,6 +105,7 @@ import org.eclipse.core.runtime.jobs.Job;
 
 import de.uni_freiburg.informatik.ultimate.cdt.CommentParser;
 import de.uni_freiburg.informatik.ultimate.cdt.FunctionLineVisitor;
+import de.uni_freiburg.informatik.ultimate.cdt.MultiparseSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.decorator.ASTDecorator;
 import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratedUnit;
 import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratorNode;
@@ -131,6 +132,10 @@ public class CDTParser implements ISource {
 	 * Whether to print the AST and some debug information for the parsed translation units, or not.
 	 */
 	private static final boolean EXTENDED_DEBUG_OUTPUT = false;
+	/**
+	 * The name of the CDT project for multiple files
+	 */
+	private static final String TEMPORARY_CDT_PROJECT_NAME = "TempCDTProject";
 
 	private static final IProgressMonitor NULL_MONITOR = new NullProgressMonitor();
 	private final String[] mFileTypes;
@@ -178,13 +183,39 @@ public class CDTParser implements ISource {
 		final Collection<IASTTranslationUnit> tuCollection = performCDTProjectOperations(files);
 		
 		if (EXTENDED_DEBUG_OUTPUT) {
-			for (IASTTranslationUnit tu : tuCollection) {
+			for (final IASTTranslationUnit tu : tuCollection) {
 				ASTPrinter.print(tu);
 			} 
 		}
 		
+		final MultiparseSymbolTable mps = new MultiparseSymbolTable(mLogger);
+		for (final IASTTranslationUnit tu : tuCollection) {
+			mLogger.info("Scanning " + normalizeCDTFilename(tu.getFilePath()));
+			tu.accept(mps);
+		}
+		
+		// Print the mappings to the logger for debugging purposes
+		mps.printMappings();
+		
 		final ASTDecorator decorator = decorateTranslationUnits(tuCollection);
+		decorator.setSymbolTable(mps);
+		
 		return new WrapperNode(null, decorator);
+	}
+	
+	/**
+	 * Normalizes a CDT project file name to the part just after the source folder (/src/<...>)
+	 * 
+	 * @param in the CDT file name
+	 * @return the normalized file name
+	 */
+	public static String normalizeCDTFilename(final String in) {
+		// Let's just assume that this string (TempCDTProject/src/) is unique in the path...
+		final String lookingFor = TEMPORARY_CDT_PROJECT_NAME + File.separator + "src" + File.separator;
+		final int posInInput = in.indexOf(lookingFor);
+		assert posInInput != -1 : "Somehow a non-CDT project filename was normalized";
+		
+		return in.substring(posInInput + lookingFor.length());
 	}
 	
 	private ASTDecorator decorateTranslationUnits(
@@ -255,7 +286,7 @@ public class CDTParser implements ISource {
 	// created by Hamiz for entering multiple files
 	private ICProject createCDTProjectFromFiles(final File[] files)
 			throws OperationCanceledException, CoreException, FileNotFoundException {
-		final IProject proj = createCDTProject("TempCDTProject");
+		final IProject proj = createCDTProject(TEMPORARY_CDT_PROJECT_NAME);
 		mCdtProject = proj;
 		mLogger.info("Created temporary CDT project at " + getFullPath(mCdtProject));
 

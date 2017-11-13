@@ -38,6 +38,7 @@ import java.util.List;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 
+import de.uni_freiburg.informatik.ultimate.cdt.MultiparseSymbolTable;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 
 /**
@@ -51,6 +52,10 @@ public class ASTDecorator {
 	 * All decorated units
 	 */
 	private List<DecoratedUnit> mDecoratedUnits;
+	/**
+	 * The symbol table of the multiparse operation
+	 */
+	private MultiparseSymbolTable mSymbolTable;
 	/**
 	 * All ACSL ASTs in the file, specified with their root node.
 	 */
@@ -228,5 +233,14 @@ public class ASTDecorator {
 	 */
 	public DecoratedUnit getUnit(final int k) {
 		return mDecoratedUnits.get(k);
+	}
+	
+	/**
+	 * Sets the symbol table for this decorator
+	 * 
+	 * @param mst the symbol table
+	 */
+	public void setSymbolTable(final MultiparseSymbolTable mst) {
+		mSymbolTable = mst;
 	}
 }
