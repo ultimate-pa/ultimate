@@ -51,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncs
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiIntersectStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
@@ -78,16 +79,25 @@ public class GetLassoRunFromLassoWord<LETTER, STATE> extends AbstractGeneralized
 		mDownStates.add(operand.getEmptyStackState());
 		if(operand instanceof IGeneralizedNwaOutgoingLetterAndTransitionProvider) {
 			mOperand = (IGeneralizedNwaOutgoingLetterAndTransitionProvider<LETTER, STATE>)operand;
+//			IBuchiIntersectStateFactory<STATE> sf = (IBuchiIntersectStateFactory<STATE>)operand.getStateFactory();
+//			GeneralizedBuchiToBuchi<LETTER, STATE> buchi = new GeneralizedBuchiToBuchi<>(sf, mOperand);
+//			BuchiAccepts<LETTER, STATE> checker;
+//			try {
+//				checker = new BuchiAccepts<>(services,buchi, lassoWord);
+//				System.err.println("Accepts: " + checker.getResult());
+//			} catch (AutomataLibraryException e) {
+//				// TODO Auto-generated catch block
+//				e.printStackTrace();
+//			}
 		}else {
 			mOperand = new BuchiToGeneralizedBuchi<LETTER, STATE>(operand);
-			try {
-				BuchiAccepts<LETTER, STATE> checker = new BuchiAccepts<>(services, operand, lassoWord);
-				System.out.println("Accepts: " + checker.getResult());
-			} catch (AutomataLibraryException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			
+//			try {
+//				BuchiAccepts<LETTER, STATE> checker = new BuchiAccepts<>(services, operand, lassoWord);
+//				System.err.println("Accepts: " + checker.getResult());
+//			} catch (AutomataLibraryException e) {
+//				// TODO Auto-generated catch block
+//				e.printStackTrace();
+//			}
 		}
 		mStem = lassoWord.getStem();
 		mLoop = lassoWord.getLoop();

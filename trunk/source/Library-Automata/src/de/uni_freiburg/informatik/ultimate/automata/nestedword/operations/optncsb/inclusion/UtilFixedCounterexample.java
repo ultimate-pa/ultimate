@@ -132,9 +132,9 @@ public class UtilFixedCounterexample<LETTER extends IIcfgTransition<?>, STATE> {
         GetLassoRunFromLassoWord<LETTER, STATE> getter = new GetLassoRunFromLassoWord<>(services, automaton, word);
         NestedLassoRun<LETTER, STATE> run = getter.getNestedLassoRun();
         
-        if(run == null) {
-        	assert false : "Wrong automaton for the difference";
-        }
+//        if(run == null) {
+//        	assert false : "Wrong automaton for the difference";
+//        }
         return run;
 	}
 	
