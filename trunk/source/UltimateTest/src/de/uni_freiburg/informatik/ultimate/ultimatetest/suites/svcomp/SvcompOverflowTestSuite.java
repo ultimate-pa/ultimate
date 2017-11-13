@@ -68,10 +68,12 @@ public class SvcompOverflowTestSuite extends AbstractSvcompTestSuite {
 	@Override
 	protected List<SvcompTestDefinition> getTestDefinitions() {
 		final List<SvcompTestDefinition> rtr = new ArrayList<>();
-		// contains 54 examples, arch unknown (32bit)
+		// numbers for sha 962c42fc0f6ab4529897b173ef71cbfcf7a480b3
+
+		// contains 57 examples, arch unknown (32bit)
 		rtr.addAll(createTests("NoOverflows-Other", "32bit", "Overflow"));
 
-		// contains 274 examples, arch unknown (32bit)
+		// contains 280 examples, arch unknown (32bit)
 		rtr.addAll(createTests("NoOverflows-BitVectors", "32bit", "Overflow"));
 
 		return rtr;

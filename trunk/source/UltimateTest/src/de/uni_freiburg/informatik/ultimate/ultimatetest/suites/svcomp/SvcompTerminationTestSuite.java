@@ -68,13 +68,15 @@ public class SvcompTerminationTestSuite extends AbstractSvcompTestSuite {
 	@Override
 	protected List<SvcompTestDefinition> getTestDefinitions() {
 		final List<SvcompTestDefinition> rtr = new ArrayList<>();
-		// contains 247 examples, 64bit
+		// numbers for sha 962c42fc0f6ab4529897b173ef71cbfcf7a480b3
+
+		// contains 250 examples, 64bit
 		rtr.addAll(createTests("Termination-MainControlFlow", "64bit", "Reach"));
 
-		// contains 262 examples, 64bit
+		// contains 260 examples, 64bit
 		rtr.addAll(createTests("Termination-MainHeap", "64bit", "Reach"));
 
-		// contains 928 examples, 32bit
+		// contains 1512 examples, 32bit
 		rtr.addAll(createTests("Termination-Other", "32bit", "Reach"));
 
 		return rtr;

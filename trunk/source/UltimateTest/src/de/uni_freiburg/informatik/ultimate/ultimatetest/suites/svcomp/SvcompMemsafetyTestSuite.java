@@ -68,6 +68,7 @@ public class SvcompMemsafetyTestSuite extends AbstractSvcompTestSuite {
 	@Override
 	protected List<SvcompTestDefinition> getTestDefinitions() {
 		final List<SvcompTestDefinition> rtr = new ArrayList<>();
+		// numbers for sha 962c42fc0f6ab4529897b173ef71cbfcf7a480b3
 
 		// contains 69 examples, 32bit
 		rtr.addAll(createTests("MemSafety-Arrays", "32bit", "DerefFreeMemtrack"));

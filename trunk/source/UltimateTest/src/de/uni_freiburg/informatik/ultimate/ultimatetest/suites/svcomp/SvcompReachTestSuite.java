@@ -68,6 +68,8 @@ public class SvcompReachTestSuite extends AbstractSvcompTestSuite {
 	@Override
 	protected List<SvcompTestDefinition> getTestDefinitions() {
 		final List<SvcompTestDefinition> rtr = new ArrayList<>();
+		// numbers for sha 962c42fc0f6ab4529897b173ef71cbfcf7a480b3
+
 		// contains 135 examples, 32bit
 		rtr.addAll(createTests("ReachSafety-Arrays", "32bit", "Reach"));
 
@@ -90,13 +92,13 @@ public class SvcompReachTestSuite extends AbstractSvcompTestSuite {
 		rtr.addAll(createTests("ReachSafety-Loops", "32bit", "Reach"));
 
 		// contains 597 examples, 32bit
-		rtr.addAll(createTests("ReachSafety-ProductLines", 50, "32bit", "Reach"));
+		rtr.addAll(createTests("ReachSafety-ProductLines", 100, "32bit", "Reach"));
 
 		// contains 98 examples, 32bit
 		rtr.addAll(createTests("ReachSafety-Recursive", "32bit", "Reach"));
 
 		// contains 273 examples, 32bit
-		rtr.addAll(createTests("ReachSafety-Sequentialized", 50, "32bit", "Reach"));
+		rtr.addAll(createTests("ReachSafety-Sequentialized", 100, "32bit", "Reach"));
 
 		// contains 2795 examples, 64bit
 		rtr.addAll(createTests("Systems_DeviceDriversLinux64_ReachSafety", 100, "64bit", "Reach"));
