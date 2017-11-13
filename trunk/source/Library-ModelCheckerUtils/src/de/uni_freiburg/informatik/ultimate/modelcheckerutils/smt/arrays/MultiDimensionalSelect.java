@@ -35,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ApplicationTermFinder;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 
 /**
  * Data structure for a (possibly) array select expression.
@@ -91,7 +92,11 @@ public class MultiDimensionalSelect {
 		super();
 		mArray = array;
 		mIndex = index;
-		mSelectTerm = null;
+		Term tmp = array;
+		for (final Term entry : index) {
+			tmp = SmtUtils.select(script, tmp, entry);
+		}
+		mSelectTerm = (ApplicationTerm) tmp;
 	}
 
 
