@@ -144,7 +144,8 @@ class _CallFailed(Exception):
 
 class _ExitCode:
     _exit_codes = ["SUCCESS", "FAIL_OPEN_SUBPROCESS", "FAIL_NO_INPUT_FILE", "FAIL_NO_WITNESS_TO_VALIDATE",
-                   "FAIL_MULTIPLE_FILES", "FAIL_NO_TOOLCHAIN_FOUND", "FAIL_NO_SETTINGS_FILE_FOUND"]
+                   "FAIL_MULTIPLE_FILES", "FAIL_NO_TOOLCHAIN_FOUND", "FAIL_NO_SETTINGS_FILE_FOUND",
+                   "FAIL_ULTIMATE_ERROR"]
 
     def __init__(self):
         pass
@@ -519,7 +520,7 @@ def parse_args():
         sys.exit(ExitCode.SUCCESS)
 
     # first, debug environment no matter what to find the error
-    #if not args.envdebug:
+    # if not args.envdebug:
     #    debug_environment()
 
     witness = None
@@ -682,6 +683,9 @@ def main():
     if verbose:
         print('--- Real Ultimate output ---')
         print(ultimate_output.encode('UTF-8', 'replace'))
+
+    if result.startswith('ERROR'):
+        sys.exit(ExitCode.FAIL_ULTIMATE_ERROR)
 
     sys.exit(ExitCode.SUCCESS)
 
