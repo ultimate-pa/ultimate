@@ -58,7 +58,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayInd
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArraySelect;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArraySelectOverStore;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayStore;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelectOverStore;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSort;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierPusher.PqeTechniques;
@@ -200,7 +199,7 @@ public class Elim1Store {
 
 
 		final Set<TermVariable> newAuxVars = new LinkedHashSet<>();
-		final Term preprocessedInput;
+		Term preprocessedInput;
 
 		{
 			//anti-DER preprocessing
@@ -229,6 +228,8 @@ public class Elim1Store {
 		if (SELECT_OVER_STORE_PREPROCESSING) {
 			final Set<ApplicationTerm> allSelectTerms = new ApplicationTermFinder("select", false).findMatchingSubterms(preprocessedInput);
 			final Map<Term, Term> substitutionMappingPre = new HashMap<>();
+			int singleCaseReplacements = 0;
+			int multiCaseReplacements = 0;
 			for (final ApplicationTerm selectTerm : allSelectTerms) {
 				final MultiDimensionalSelectOverStore mdsos = MultiDimensionalSelectOverStore.convert(selectTerm);
 				if (mdsos != null) {
@@ -239,13 +240,17 @@ public class Elim1Store {
 						final EqualityStatus indexEquality = checkIndexEquality(selectIndex, storeIndex, tver);
 						switch (indexEquality) {
 						case EQUAL:
-							substitutionMappingPre.put(selectTerm, mdsos.getStore().getValue());
+							substitutionMappingPre.put(selectTerm, mdsos.constructEqualsReplacement());
+							singleCaseReplacements++;
 							break;
 						case NOT_EQUAL:
-							final MultiDimensionalSelect mds = new MultiDimensionalSelect(mdsos.getStore().getArray(), selectIndex, mScript);
-							substitutionMappingPre.put(selectTerm, mds.getSelectTerm());
+							substitutionMappingPre.put(selectTerm, mdsos.constructNotEqualsReplacement(mScript));
+							singleCaseReplacements++;
 							break;
 						case UNKNOWN:
+							substitutionMappingPre.put(selectTerm, ArrayQuantifierEliminationUtils
+									.transformMultiDimensionalSelectOverStoreToIte(mdsos, mMgdScript));
+							multiCaseReplacements++;
 							// do nothing
 							break;
 						default:
@@ -254,7 +259,14 @@ public class Elim1Store {
 					}
 				}
 			}
-			new SubstitutionWithLocalSimplification(mMgdScript, substitutionMappingPre);
+			if (multiCaseReplacements > 0 || singleCaseReplacements > 0) {
+				preprocessedInput = new SubstitutionWithLocalSimplification(mMgdScript, substitutionMappingPre).transform(preprocessedInput);
+				if (multiCaseReplacements > 0) {
+					newAuxVars.add(eliminatee);
+					final Term newTerm = new IteRemover(mMgdScript).transform(preprocessedInput);
+					return new EliminationTask(quantifier, newAuxVars, newTerm);
+				}
+			}
 		}
 		
 		
@@ -484,7 +496,34 @@ public class Elim1Store {
 
 	}
 	
+
 	
+	
+	private Term resolveMultiDimensionalSelectOverStore(final MultiDimensionalSelectOverStore mdsos, final Term preprocessedInput, final ManagedScript mgdScript) {
+		final ArrayIndex selectIndex = mdsos.getSelect().getIndex();
+		final ArrayIndex storeIndex = mdsos.getStore().getIndex();
+		
+		Term eqConjunction;
+		{
+			final Term eq = ArrayIndex.constructPairwiseEquality(selectIndex, storeIndex, mScript);
+			final Term mdsosReplacement = mdsos.constructEqualsReplacement();
+			final Term eqCopy = new SubstitutionWithLocalSimplification(mgdScript, Collections.singletonMap(mdsos.toTerm(), mdsosReplacement)).transform(preprocessedInput);
+			eqConjunction = SmtUtils.and(mgdScript.getScript(), eq, eqCopy);
+		}
+		final Term neqConjunction;
+		{
+			final Term neq = constructDisequality(selectIndex, storeIndex);
+			final Term mdsosReplacement = mdsos.constructNotEqualsReplacement(mgdScript.getScript());
+			final Term neqCopy = new SubstitutionWithLocalSimplification(mgdScript, Collections.singletonMap(mdsos.toTerm(), mdsosReplacement)).transform(preprocessedInput);
+			neqConjunction = SmtUtils.and(mgdScript.getScript(), neq, neqCopy);
+		}
+		return SmtUtils.or(mgdScript.getScript(), eqConjunction, neqConjunction);
+	}
+
+	private Term constructDisequality(final ArrayIndex selectIndex, final ArrayIndex storeIndex) {
+		return SmtUtils.not(mScript, ArrayIndex.constructPairwiseEquality(selectIndex, storeIndex, mScript));
+	}
+
 	private EqualityStatus checkIndexEquality(final ArrayIndex selectIndex, final ArrayIndex storeIndex,
 			final ThreeValuedEquivalenceRelation<Term> tver) {
 		for (int i=0; i<selectIndex.size(); i++) {
