@@ -136,7 +136,15 @@ public class CDeclaration {
 		assert !mIsInitializerTranslated : "initializer has already been translated";
 		if (mCAstInitializer != null) {
 			assert mInitializer == null;
-			mInitializer = (InitializerResult) main.dispatch(mCAstInitializer);
+			final Result res = main.dispatch(mCAstInitializer);
+
+			if (res instanceof InitializerResult) {
+				mInitializer = (InitializerResult) res;
+			} else if (res instanceof ExpressionResult) {
+				mInitializer = new InitializerResultBuilder().setRootExpressionResult((ExpressionResult) res).build();
+			} else {
+				throw new AssertionError("should not happen");
+			}
 		}
 		mIsInitializerTranslated = true;
 	}

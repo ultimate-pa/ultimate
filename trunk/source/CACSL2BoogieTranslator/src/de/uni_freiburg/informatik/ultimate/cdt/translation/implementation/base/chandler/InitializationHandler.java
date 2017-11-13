@@ -28,10 +28,15 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Deque;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Stack;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
@@ -39,7 +44,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructConstructor;
@@ -75,7 +79,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.CrossProducts;
  * The "uninitialized" case is not treated here (We havoc each variable at its initialization position, by default.
  * That is done somewhere else.).
  * <p>
- * One relevant entry in C11 draft, 6.7.9.10:
+ * C11 draft, 6.7.9.10: (concerning) default initialization)
  * If an object that has automatic storage duration is not initialized explicitly, its value is
  * indeterminate. If an object that has static or thread storage duration is not initialized
  * explicitly, then:
@@ -85,6 +89,15 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.CrossProducts;
  *    and any padding is initialized to zero bits;
  *  <li> if it is a union, the first named member is initialized (recursively) according to these
  *    rules, and any padding is initialized to zero bits;
+ * <p>
+ * Some other special cases mentioned in C11 draft, 6.7.9, mostly concerning designators:
+ *  <li> Unnamed fields of a struct are uninitialized after initialization with an initializer. However after
+ *   initialization with a fitting struct object identifier they are initialized according to the object.
+ *  <li> array designators may specify start points for the initialization of an array
+ *  <li> array designators must use constant expressions (6.6. : such expression can be evaluated at compile-time).
+ *  <li> array designators can lead to a cell being assigned twice, when they overlap
+ *  <li> struct designators may specify which field is initialized next, regardless of order in the initializer list
+ *  <li> struct and array designators can be mixed.
  *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  */
@@ -143,7 +156,8 @@ public class InitializationHandler {
 		final InitializerInfo initializerInfo;
 		if (initializerRaw != null) {
 			// construct an InitializerInfo from the InitializerResult
-			initializerInfo = new InitializerInfo(initializerRaw, targetCTypeRaw);
+			initializerInfo = InitializerInfo.constructInitializerInfo(loc, main, mMemoryHandler, mStructHandler, mExpressionTranslation,
+					initializerRaw, targetCTypeRaw);
 		} else {
 			initializerInfo = null;
 		}
@@ -224,8 +238,15 @@ public class InitializationHandler {
 			final LRValue currentFieldLhs;
 			if (onHeap) {
 				assert lhsIfAny != null && lhsIfAny instanceof HeapLValue;
-				currentFieldLhs = CTranslationUtil.constructAddressForStructField(
-						(HeapLValue) structBaseLhsToInitialize, i);
+//				currentFieldLhs = CTranslationUtil.constructAddressForStructField(
+//						(HeapLValue) structBaseLhsToInitialize, i);
+
+				final Expression fieldAddress = main.mCHandler.getTypeSizeAndOffsetComputer().constructOffsetForField(
+						loc, cType, i);
+				currentFieldLhs = new HeapLValue(fieldAddress, cType.getFieldTypes()[i]);
+//						CTranslationUtil.constructAddressForStructField(
+//						(HeapLValue) structBaseLhsToInitialize, i);
+
 			} else {
 				currentFieldLhs = CTranslationUtil.constructOffHeapStructAccessLhs((LocalLValue) structBaseLhsToInitialize, i);
 			}
@@ -233,11 +254,11 @@ public class InitializationHandler {
 			final ExpressionResult currentFieldInitialization;
 			{
 				final CType currentFieldUnderlyingType = cType.getFieldTypes()[i].getUnderlyingType();
-				final InitializerInfo	currentFieldInitializerRawIfAny = initInfo.getInitInfoForStructFieldNr(i);
+				final InitializerInfo currentFieldInitializerRawIfAny = initInfo.hasInitInfoForStructFieldNr(i) ?
+						initInfo.getInitInfoForStructFieldNr(i) : null;
 
-				currentFieldInitialization =
-						initRec(loc, main, currentFieldUnderlyingType, currentFieldInitializerRawIfAny, onHeap,
-								currentFieldLhs);
+				currentFieldInitialization = initRec(loc, main, currentFieldUnderlyingType,
+						currentFieldInitializerRawIfAny, onHeap, currentFieldLhs);
 			}
 			// add the initialization code
 			initialization.addAllExceptLrValue(currentFieldInitialization);
@@ -280,7 +301,9 @@ public class InitializationHandler {
 		final ExpressionResultBuilder initialization = new ExpressionResultBuilder();
 
 		// take over code from the (converted) initializer
-		initialization.addAllExceptLrValue(initInfo.getExpressionResult());
+		if (initInfo.hasExpressionResult()) {
+			initialization.addAllExceptLrValue(initInfo.getExpressionResult());
+		}
 
 		/*
 		 * On-heap:
@@ -305,7 +328,8 @@ public class InitializationHandler {
 		 * Otherwise all cells are updated
 		 */
 		final List<List<Integer>> allIndicesToInitialize =
-				CrossProducts.crossProductOfSetsOfFirstNaturalNumbers(getConstantDimensions(cArrayType));
+				CrossProducts.crossProductOfSetsOfFirstNaturalNumbers(
+						CTranslationUtil.getConstantDimensionsOfArray(cArrayType));
 		for (final List<Integer> arrayIndex : allIndicesToInitialize) {
 			final InitializerInfo arrayIndexInitInfo;
 			if (initInfo.hasInitInfoForArrayIndex(arrayIndex)) {
@@ -349,7 +373,7 @@ public class InitializationHandler {
 			 * initialize the array cell, if the value type is an aggregate type, this means, we have to initializer
 			 * the "subcells"
 			 */
-			final HeapLValue arrayCellAddress = CTranslationUtil.constructAddressForArrayAtIndex(
+			final HeapLValue arrayCellAddress = CTranslationUtil.constructAddressForArrayAtIndex(loc, main,
 					(HeapLValue) arrayLhsToInitialize, arrayIndex);
 
 			// generate and add code to initialize the array cell (and possibly its subcells)
@@ -376,11 +400,21 @@ public class InitializationHandler {
 		}
 	}
 
-	private ExpressionResult makeDefaultInitialization(final ILocation loc, final Dispatcher main, final LRValue lhsIfAny,
-			final CType cType, final boolean onHeap) {
+	private ExpressionResult makeDefaultInitialization(final ILocation loc, final Dispatcher main,
+			final LRValue lhsIfAny, final CType cType, final boolean onHeap) {
 		assert !onHeap || lhsIfAny != null : "for on-heap initialization we need a start address";
 
 		final boolean sophisticated = determineIfSophisticatedDefaultInit(cType);
+
+		/*
+		 * If one of the following conditions holds, we must have an lhs for initialization.
+		 * <li> we initialize something on-heap (we need a start-address to assign to
+		 * <li> we initialize an array
+		 */
+		if (!onHeap && !(cType instanceof CArray)) {
+			return makeOffHeapDefaultInitializationForType(loc, main, cType, sophisticated);
+		}
+		// array case or on-heap case, using an lhs
 
 		final ExpressionResultBuilder initialization = new ExpressionResultBuilder();
 
@@ -422,7 +456,10 @@ public class InitializationHandler {
 			final String[] fieldIds = cStructType.getFieldIds();
 
 			for (int i = 0; i < fieldIds.length; i++) {
-				final HeapLValue fieldPointer = CTranslationUtil.constructOnHeapStructAccessLhs(baseAddress, i);
+//				final HeapLValue fieldPointer = CTranslationUtil.constructAddressForStructField(baseAddress, i);
+				final Expression fieldAddress = main.mCHandler.getTypeSizeAndOffsetComputer().constructOffsetForField(
+						loc, cStructType, i);
+				final HeapLValue fieldPointer = new HeapLValue(fieldAddress, cStructType.getFieldTypes()[i]);
 
 				final ExpressionResult fieldDefaultInit =
 						makeOnHeapDefaultInitializationForType(loc, main, fieldPointer, cStructType.getFieldTypes()[i],
@@ -433,9 +470,9 @@ public class InitializationHandler {
 			return initialization.build();
 		} else if (cType instanceof CArray) {
 			if (sophisticated) {
-				return makeSophisticatedOnHeapDefaultInitializationForArray(loc, main, (CArray) cType);
+				return makeSophisticatedOnHeapDefaultInitializationForArray(loc, main, baseAddress, (CArray) cType);
 			} else {
-				return makeNaiveOnHeapDefaultInitializationForArray(loc, main, (CArray) cType);
+				return makeNaiveOnHeapDefaultInitializationForArray(loc, main, baseAddress, (CArray) cType);
 			}
 		} else {
 			throw new UnsupportedOperationException("missing case?");
@@ -487,15 +524,26 @@ public class InitializationHandler {
 	}
 
 	private ExpressionResult makeNaiveOnHeapDefaultInitializationForArray(final ILocation loc, final Dispatcher main,
-			final CArray cType) {
-		// TODO Auto-generated method stub
-		return null;
+			final HeapLValue baseAddress, final CArray cArrayType) {
+		final ExpressionResultBuilder initialization = new ExpressionResultBuilder();
+
+		final List<List<Integer>> allIndicesToInitialize =
+				CrossProducts.crossProductOfSetsOfFirstNaturalNumbers(
+						CTranslationUtil.getConstantDimensionsOfArray(cArrayType));
+		for (final List<Integer> arrayIndex : allIndicesToInitialize) {
+			final HeapLValue arrayAccessLhs = CTranslationUtil.constructAddressForArrayAtIndex(loc, main, baseAddress,
+					arrayIndex);
+
+			final ExpressionResult arrayIndexInitialization =
+					makeOnHeapDefaultInitializationForType(loc, main, arrayAccessLhs, cArrayType.getValueType(), false);
+			initialization.addAllExceptLrValue(arrayIndexInitialization);
+		}
+		return initialization.build();
 	}
 
 	private ExpressionResult makeSophisticatedOnHeapDefaultInitializationForArray(final ILocation loc,
-			final Dispatcher main, final CArray cType) {
-		// TODO Auto-generated method stub
-		return null;
+			final Dispatcher main, final HeapLValue baseAddress, final CArray cType) {
+		throw new UnsupportedOperationException("TODO"); //TODO
 	}
 
 	private ExpressionResult makeNaiveOffHeapDefaultInitializationForArray(final ILocation loc, final Dispatcher main,
@@ -506,7 +554,8 @@ public class InitializationHandler {
 			final LocalLValue arrayLhsToInitialize = obtainAuxVarLocalLValue(loc, main, cArrayType, initialization);
 
 			final List<List<Integer>> allIndicesToInitialize =
-					CrossProducts.crossProductOfSetsOfFirstNaturalNumbers(getConstantDimensions(cArrayType));
+					CrossProducts.crossProductOfSetsOfFirstNaturalNumbers(
+							CTranslationUtil.getConstantDimensionsOfArray(cArrayType));
 			for (final List<Integer> arrayIndex : allIndicesToInitialize) {
 
 				final ExpressionResult arrayIndexInitialization =
@@ -527,7 +576,7 @@ public class InitializationHandler {
 
 	private ExpressionResult makeSophisticatedOffHeapDefaultInitializationForArray(final ILocation loc,
 			final Dispatcher main, final CArray cArrayType) {
-		throw new UnsupportedOperationException("TODO");
+		throw new UnsupportedOperationException("TODO"); //TODO
 	}
 
 	/**
@@ -597,27 +646,6 @@ public class InitializationHandler {
 		return arrayLhsToInitialize;
 	}
 
-	private List<Integer> getConstantDimensions(final CArray cArrayType) {
-		if (isVarlength(cArrayType)) {
-			throw new IllegalArgumentException("only call this for non-varlength array types");
-		}
-		final List<Integer> result = new ArrayList<>();
-		for (final RValue dimRVal : cArrayType.getDimensions()) {
-			final int dimInt = Integer.parseUnsignedInt(((IntegerLiteral) dimRVal.getValue()).getValue());
-			result.add(dimInt);
-		}
-		return result;
-	}
-
-	private boolean isVarlength(final CArray cArrayType) {
-		for (final RValue dimRVal : cArrayType.getDimensions()) {
-			if (!(dimRVal.getValue() instanceof IntegerLiteral)) {
-				return true;
-			}
-		}
-		return false;
-	}
-
 	/**
 	 * Returns a call to the special array initialization procedure. ("off-heap" case)
 	 * This procedure returns an array with the given signature where all cells within the given ranges have been
@@ -662,6 +690,9 @@ public class InitializationHandler {
 	}
 
 	private static void addOverApprToStatementAnnots(final Collection<Overapprox> overappr, final Statement stm) {
+		if (overappr == null) {
+			return;
+		}
 		for (final Overapprox overapprItem : overappr) {
 			overapprItem.annotate(stm);
 		}
@@ -773,9 +804,53 @@ public class InitializationHandler {
 	 */
 	static class InitializerInfo {
 
-		public InitializerInfo(final InitializerResult initializerResult, final CType targetCType) {
-			convert(initializerResult, targetCType);
+		private final ExpressionResult mExpressionResult;
+		private final Collection<Overapprox> mOverApprs;
+
+
+		/*
+		 * Initialization information for when the target CType is a CArray
+		 */
+		private final Map<List<Integer>, InitializerInfo> mArrayIndexToInitInfo;
+
+		/*
+		 * Initialization information for when the target CType is a CStruct.
+		 * Note that his list may have "gaps" (i.e. null entries) because of designated initializers.
+		 */
+		private final List<InitializerInfo> mStructFieldInitInfos;
+
+//		/**
+//		 *
+//		 * @param initializerResult
+//		 * @param targetCType
+//		 */
+//		public InitializerInfo(final ILocation loc, final Dispatcher main, final MemoryHandler memoryHandler,
+//				final StructHandler structHandler, final AExpressionTranslation expressionTranslation,
+//				final InitializerResult initializerResult, final CType targetCType) {
+//			convert(loc, main, memoryHandler, structHandler, expressionTranslation, initializerResult, targetCType);
+//		}
+
+		private InitializerInfo(final ExpressionResult expressionResult) {
+			mExpressionResult = expressionResult;
+			mOverApprs = expressionResult.getOverapprs();
+			mArrayIndexToInitInfo = null;
+			mStructFieldInitInfos = null;
 		}
+
+		private InitializerInfo(final Map<List<Integer>, InitializerInfo> arrayIndexToInitInfo) {
+			mExpressionResult = null;
+			mOverApprs = null;
+			mArrayIndexToInitInfo = arrayIndexToInitInfo;
+			mStructFieldInitInfos = null;
+		}
+
+		private InitializerInfo(final List<InitializerInfo> structFieldInitInfos) {
+			mExpressionResult = null;
+			mOverApprs = null;
+			mArrayIndexToInitInfo = null;
+			mStructFieldInitInfos = structFieldInitInfos;
+		}
+
 
 		/**
 		 * Converts a given InitializerResult to an InitializerInfo with respect to a given target CType.
@@ -789,75 +864,305 @@ public class InitializationHandler {
 		 * @param initializerResult
 		 * @param targetCType
 		 */
-		private void convert(final InitializerResult initializerResult, final CType targetCType) {
+		public static InitializerInfo constructInitializerInfo(final ILocation loc, final Dispatcher main,
+				final MemoryHandler memoryHandler, final StructHandler structHandler,
+				final AExpressionTranslation expressionTranslation, final InitializerResult initializerResult,
+				final CType targetCType) {
+			if (targetCType instanceof CPrimitive || targetCType instanceof CEnum || targetCType instanceof CPointer) {
+				// do the necessary conversions
+				final ExpressionResult expressionResultSwitched = initializerResult.getRootExpressionResult()
+						.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
+				expressionResultSwitched.rexBoolToIntIfNecessary(loc, expressionTranslation);
+				main.mCHandler.convert(loc, expressionResultSwitched, targetCType);
+
+				return new InitializerInfo(expressionResultSwitched);
+			} else if (targetCType instanceof CUnion) {
+				throw new UnsupportedOperationException("TODO"); //TODO
+			} else if (targetCType instanceof CStruct) {
+				return constructStructFieldInitInfos(loc, main, memoryHandler, structHandler, expressionTranslation,
+						initializerResult, (CStruct) targetCType);
+			} else if (targetCType instanceof CArray) {
+				return constructArrayIndexToInitInfo(loc, main, memoryHandler, structHandler, expressionTranslation,
+						initializerResult, (CArray) targetCType);
+			} else {
+				throw new UnsupportedOperationException("missing case?");
+			}
+		}
+
+		private static InitializerInfo constructStructFieldInitInfos(final ILocation loc, final Dispatcher main,
+				final MemoryHandler memoryHandler, final StructHandler structHandler,
+				final AExpressionTranslation expressionTranslation, final InitializerResult initializerResult,
+				final CStruct targetCType) {
+			assert initializerResult.getRootDesignator() == null;
+			assert initializerResult.getRootExpressionResult() == null;
+
+			final List<InitializerResult> children = initializerResult.getChildren();
 
 
-					//		assert initializerIfAnyRaw instanceof InitializerResult;
+			// initialize the structFieldInfos to null
+			final List<InitializerInfo> structFieldInitInfos = new ArrayList<>(targetCType.getFieldCount());
+			for (int fieldNr = 0; fieldNr < children.size(); fieldNr++) {
+				structFieldInitInfos.add(null);
+			}
 
-		//		InitializerResult initializerConverted = null;
-		//		if (initializerIfAnyRaw != null ) {
-		//			//				final ExpressionResult initializerRawSwitched =
-		//			//						((ExpressionResult) initializerRaw).switchToRValueIfNecessary(main, mMemoryHandler,
-		//			//								mStructHandler, loc);
-		//			//				initializerRawSwitched.rexBoolToIntIfNecessary(loc, mExpressionTranslation);
-		//			final InitializerResult initializerBoolToInt =
-		//					initializerIfAnyRaw.rexBoolToIntIfNecessary(loc, mExpressionTranslation);
-		//
-		//			/*
-		//			 * Conversions need to be applied here (like for a normal assignment), because the rhs of an
-		//			 * initialization may not be of the right type.
-		//			 * Simplest example: "int * i = 0", here the "0" must be converted to the null pointer.
-		//			 */
-		//			//				main.mCHandler.convert(loc, initializerRawSwitched, cType);
-		//			initializerConverted =
-		//					initializerBoolToInt.convert(loc, main, targetCType);
-		//
-		//			assert initializerConverted.getTreeNodeIds().isEmpty();
-		//		}
+			for (int childNr = 0; childNr < children.size(); childNr++) {
+				final InitializerResult currentChild  = children.get(childNr);
+
+				final int targetFieldIndex;
+				if (currentChild.hasRootDesignator()) {
+					targetFieldIndex = findIndexOfFieldForDesignator(targetCType, currentChild.getRootDesignator());
+				} else {
+					targetFieldIndex = childNr;
+				}
+				structFieldInitInfos.set(targetFieldIndex, constructInitializerInfo(loc, main, memoryHandler,
+						structHandler, expressionTranslation, currentChild,
+						targetCType.getFieldTypes()[targetFieldIndex]));
+			}
+			return new InitializerInfo(structFieldInitInfos);
+		}
+
+		private static int findIndexOfFieldForDesignator(final CStruct targetCType, final String rootDesignator) {
+			for (int i = 0; i < targetCType.getFieldCount(); i++) {
+				if (rootDesignator.equals(targetCType.getFieldIds()[i])) {
+					return i;
+				}
+			}
+			throw new IllegalArgumentException("unable to find field in given CStruct for given designator");
+		}
+
+		private static InitializerInfo constructArrayIndexToInitInfo(final ILocation loc, final Dispatcher main,
+				final MemoryHandler memoryHandler, final StructHandler structHandler,
+				final AExpressionTranslation expressionTranslation, final InitializerResult initializerResult,
+				final CArray targetCType) {
+			assert initializerResult.getRootDesignator() == null;
+			assert initializerResult.getRootExpressionResult() == null;
+
+			if (CTranslationUtil.isVarlengthArray(targetCType)) {
+				// we have a variable length array
+				throw new UnsupportedOperationException("initialization of varlength arrays not yet implemented");
+			}
+			// we have a fixed length array
+
+			// how many dimensions the initialized array has
+			final int dimensionality = targetCType.getDimensions().length;
+
+			final List<Integer> arrayBounds = CTranslationUtil.getConstantDimensionsOfArray(targetCType);
+
+			// a field which holds the array index that the next initializer entry that we see will initialize
+			List<Integer> nextIndexToInitialize = new ArrayList<Integer>();
+			for (int dim = 0; dim < dimensionality; dim++) {
+				nextIndexToInitialize.add(0);
+			}
+
+			final Map<List<Integer>, InitializerInfo> arrayIndexToInitInfo = new HashMap<>();
+
+//			final Stack<Iterator<InitializerResult>> iteratorStack = new Stack<>();
+			final Stack<Deque<InitializerResult>> iteratorStack = new Stack<>();
+//			iteratorStack.push(initializerResult.getChildren().iterator());
+			iteratorStack.push(new ArrayDeque<>(initializerResult.getChildren()));
+
+			int currentInitializerLevel = 1;
+//			boolean currentLevelHasBeenTouched = false;
+
+			while (!iteratorStack.isEmpty()) {
+				if (!iteratorStack.peek().isEmpty()) {
+					final InitializerResult next = iteratorStack.peek().pollFirst();
+
+					if (next.isInitializerList()) {
+
+						if ((currentInitializerLevel == dimensionality && next.isInitializerList())) {
+							/*
+							 * We are in the process of initializing array cells but a brace is opened in the
+							 * initializer.
+							 */
+							if (CTranslationUtil.isAggregateType(targetCType.getValueType())) {
+								/*
+								 * the inner initializer refers to an aggregate type inside the value type
+								 * --> go on as normal (TODO: refactor the control flow)
+								 */
+
+							} else {
+								/*
+								 *  there are superfluous braces
+								 *  (example: we get { 1, 2 } where a single int is expected)
+								 *  we throw away all entries but the first
+								 */
+								iteratorStack.peek().addLast(next.getChildren().get(0));
+							}
+							continue;
+						}
+
+						/*
+						 * current first element on the top of the stack still refers to cells of the array being
+						 * initialized. --> we unpack it by adding another iterator
+						 */
+						iteratorStack.push(new ArrayDeque<>(next.getChildren()));
+						currentInitializerLevel++;
+
+						continue;
+					}
+
+					currentInitializerLevel = dimensionality;
+
+					/*
+					 * There is no more initializer-list inside, or we have reached the array-cell level (i.e., if we
+					 * have a list inside it refers to elements of the value type of the array which is again an
+					 * aggregate type.
+					 */
+					final InitializerResult cellInitializer = next;
+
+					final InitializerInfo cellInitInfo = constructInitializerInfo(loc, main, memoryHandler,
+							structHandler, expressionTranslation, cellInitializer, targetCType.getValueType());
+
+					arrayIndexToInitInfo.put(nextIndexToInitialize, cellInitInfo);
+
+					nextIndexToInitialize = incrementArrayIndex(nextIndexToInitialize, arrayBounds);
+				} else {
+					iteratorStack.pop();
+//					currentInitializerLevel--;
+					currentInitializerLevel = iteratorStack.size();
+					if (iteratorStack.isEmpty()) {
+						break;
+					}
+
+					final List<Integer> hypotheticalNextIndexToInitialize =
+							incrementArrayIndexAtDimensionIfNecessary(nextIndexToInitialize, arrayBounds,
+									currentInitializerLevel - 1);
+					if (hypotheticalNextIndexToInitialize == null) {
+						/*
+						 * We have arrived at the last index within the given array bounds --> mapping is complete
+						 * If any further values are present in the initializer, they are ignored.
+						 */
+						break;
+					} else {
+						nextIndexToInitialize = hypotheticalNextIndexToInitialize;
+					}
+				}
+				// check if continue statements are needed above before inserting code here
+			}
+			return new InitializerInfo(arrayIndexToInitInfo);
 		}
 
 
-		public InitializerInfo getInitInfoForStructFieldNr(final int i) {
-			// TODO Auto-generated method stub
-			return null;
+		/**
+		 * Increment at dimension posToIncrement, reset everything behind that dimension to 0.
+		 *
+		 * @param arrayIndex
+		 * @param arrayBounds only needed for sanity check
+		 * @param posToIncrement
+		 * @return
+		 */
+		private static List<Integer> incrementArrayIndexAtDimensionIfNecessary(final List<Integer> arrayIndex,
+				final List<Integer> arrayBounds,
+				final int posToIncrement) {
+
+			// if all index entries behind posToIncrement are 0, don't do anything
+			if (allHigherIndicesAreZero(arrayIndex, posToIncrement)) {
+				return arrayIndex;
+			}
+
+			assert arrayIndex.size() == arrayBounds.size();
+			final List<Integer> result = new ArrayList<>(arrayIndex);
+
+			final int lastPos = arrayIndex.size() - 1;
+
+			if (arrayIndex.get(posToIncrement) >= arrayBounds.get(posToIncrement) - 1) {
+//				throw new IllegalStateException("cannot increment array index beyond array dimensions");
+				return null;
+			}
+
+			// increment the posToIncrement
+			result.set(posToIncrement, arrayIndex.get(posToIncrement) + 1);
+
+			// set the higher positions to 0
+			for (int i = posToIncrement + 1; i < arrayIndex.size(); i++) {
+				result.set(i, 0);
+			}
+			return Collections.unmodifiableList(result);
 		}
 
+		private static boolean allHigherIndicesAreZero(final List<Integer> arrayIndex, final int posToIncrement) {
+			assert posToIncrement < arrayIndex.size();
+			for (int i = posToIncrement + 1; i < arrayIndex.size(); i++) {
+				if (arrayIndex.get(i) != 0) {
+					return false;
+				}
+			}
+			return true;
+		}
+
+		/**
+		 *
+		 * @param arrayIndex
+		 * @param arrayBounds
+		 * @return the next index within the given array bounds, -1 if no such index exists
+		 */
+		private static List<Integer> incrementArrayIndex(final List<Integer> arrayIndex,
+				final List<Integer> arrayBounds) {
+			assert arrayIndex.size() == arrayBounds.size();
+			final List<Integer> result = new ArrayList<>(arrayIndex);
+
+			final int lastPos = arrayIndex.size() - 1;
+			final int lastPosValueIncremented = arrayIndex.get(lastPos) + 1;
+
+			if (lastPosValueIncremented < arrayBounds.get(lastPos)) {
+				result.set(lastPos, arrayIndex.get(lastPos) + 1);
+			} else {
+				// lastPosValueIncremented >= dimensions.get(lastPos)
+
+				int posToIncrement = lastPos;
+				while (posToIncrement >= 0 && arrayIndex.get(posToIncrement) == arrayBounds.get(posToIncrement) - 1) {
+					result.set(posToIncrement, 0);
+					posToIncrement--;
+				}
+
+				if (posToIncrement == - 1) {
+//					throw new IllegalStateException("initializer gives more values than the array has dimensions !?");
+					// there is no next index withing the given array bounds
+					return null;
+				}
+
+				result.set(posToIncrement, arrayIndex.get(posToIncrement) + 1);
+
+			}
+			return Collections.unmodifiableList(result);
+		}
+
+		public boolean hasExpressionResult() {
+			return mExpressionResult != null;
+		}
 
 		public RValue getRValue() {
-			// TODO Auto-generated method stub
-			return null;
+			return (RValue) mExpressionResult.getLrValue();
 		}
-
-
-		public boolean doSophisticatedArrayInitialization() {
-			// TODO Auto-generated method stub
-			return false;
-		}
-
-
-		public Collection<List<Integer>> getArrayIndicesWithInitInfo() {
-			// TODO Auto-generated method stub
-			return null;
-		}
-
-
-		public boolean hasInitInfoForArrayIndex(final List<Integer> arrayIndex) {
-			// TODO Auto-generated method stub
-			return false;
-		}
-
-
-		public InitializerInfo getInitInfoForArrayIndex(final List<Integer> arrayIndex) {
-			// TODO Auto-generated method stub
-			return null;
-		}
-
 
 		public ExpressionResult getExpressionResult() {
-			// TODO Auto-generated method stub
-			return null;
+			return mExpressionResult;
 		}
 
+		public boolean hasInitInfoForStructFieldNr(final int i) {
+			return mStructFieldInitInfos.size() > i && mStructFieldInitInfos.get(i) != null;
+		}
+
+		public InitializerInfo getInitInfoForStructFieldNr(final int i) {
+			if (!hasInitInfoForStructFieldNr(i)) {
+				throw new IllegalArgumentException("check hasInitInfoForStructFieldNr before calling this method");
+			}
+			return mStructFieldInitInfos.get(i);
+		}
+
+		public Collection<List<Integer>> getArrayIndicesWithInitInfo() {
+			return mArrayIndexToInitInfo.keySet();
+		}
+
+		public boolean hasInitInfoForArrayIndex(final List<Integer> arrayIndex) {
+			return getArrayIndicesWithInitInfo().contains(arrayIndex);
+		}
+
+		public InitializerInfo getInitInfoForArrayIndex(final List<Integer> arrayIndex) {
+			assert mArrayIndexToInitInfo.get(arrayIndex) != null;
+			return mArrayIndexToInitInfo.get(arrayIndex);
+		}
 
 		public Collection<Overapprox> getOverapprs() {
 			//		/*
@@ -866,11 +1171,21 @@ public class InitializationHandler {
 //		 * The variable overAppr holds them.
 //		 */
 //		final Collection<Overapprox> overAppr = initInfo.getOverapprs();
-
-
-			// TODO Auto-generated method stub
-			return null;
+			return mOverApprs;
 		}
 
+		@Override
+		public String toString() {
+			if (mExpressionResult != null) {
+				return mExpressionResult.toString();
+			}
+			if (mArrayIndexToInitInfo != null) {
+				return mArrayIndexToInitInfo.toString();
+			}
+			if (mStructFieldInitInfos != null) {
+				return mStructFieldInitInfos.toString();
+			}
+			return "?";
+		}
 	}
 }
