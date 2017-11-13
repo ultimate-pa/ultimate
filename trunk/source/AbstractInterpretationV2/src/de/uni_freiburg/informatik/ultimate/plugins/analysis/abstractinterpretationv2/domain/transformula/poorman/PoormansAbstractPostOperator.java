@@ -43,12 +43,8 @@ import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
-import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -70,13 +66,14 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.poorman.util.AssumptionBuilder;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.poorman.util.TermConjunctEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlockFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence.Origin;
 
 /**
  * The post operator for the poorman abstract domain. This post operator converts a given transformula to a sequence of
@@ -188,18 +185,6 @@ public class PoormansAbstractPostOperator<BACKING extends IAbstractState<BACKING
 		}
 		variableRetainmentSet.addAll(transformula.getInVars().values());
 		variableRetainmentSet.addAll(transformula.getAuxVars());
-		final AssumeStatement assumeStmt =
-				constructBoogieAssumeStatement(transformula, variableRetainmentSet, alternateOldNames);
-		final HavocStatement havocStmt = constructBoogieHavocStatementOfUnmappedOutVars(transformula);
-
-		final List<Statement> statementList = new ArrayList<>();
-		statementList.add(assumeStmt);
-		if (havocStmt != null) {
-			statementList.add(havocStmt);
-		}
-
-		final CodeBlock codeBlock =
-				mCodeBlockFactory.constructStatementSequence(null, null, statementList, Origin.IMPLEMENTATION);
 
 		obtainVariableMappingFromTransformula(transformula, oldTermVarMapping, renamedInVars, newOutVars, newAuxVars,
 				outVarRenaming, addedVariables, inAuxVars);
@@ -208,13 +193,45 @@ public class PoormansAbstractPostOperator<BACKING extends IAbstractState<BACKING
 				oldstate.renameVariables(renamedInVars).addVariables(addedVariables);
 
 		// Compute the abstract post
-		final List<BACKING> postStates = mBackingDomain.getPostOperator().apply(preState.getBackingState(), codeBlock);
+		final TermConjunctEvaluator<BACKING> ts = new TermConjunctEvaluator<>(mLogger, preState,
+				transformula.getFormula(), mBackingDomain, variableRetainmentSet, alternateOldNames,
+				mMappedTerm2Expression, mCodeBlockFactory, mBoogie2Smt.getScript());
+		final List<BACKING> postStates = ts.getResult();
+
+		List<BACKING> postPostStates = new ArrayList<>();
+		// Construct and apply havocs.
+		final HavocStatement havocStmt = constructBoogieHavocStatementOfUnmappedOutVars(transformula);
+		if (havocStmt != null) {
+			final CodeBlock havocCodeBlock = AssumptionBuilder.constructCodeBlock(mCodeBlockFactory, havocStmt);
+
+			for (final BACKING postState : postStates) {
+				// Discard all bottom states for havoc (post of bottom state cannot be computed).
+				if (postState.isBottom()) {
+					continue;
+				}
+				final List<BACKING> havocedPostStates =
+						mBackingDomain.getPostOperator().apply(postState, havocCodeBlock);
+				if (havocedPostStates.size() != 1) {
+					throw new UnsupportedOperationException(
+							"The number of states after the application of a havoc statement should be one, but is something else here.");
+				}
+				postPostStates.addAll(havocedPostStates);
+			}
+		} else {
+			postPostStates = postStates;
+		}
+
+		// If postPostStates is empty, that means that all postStates were bottom. We just use the postStates here then
+		// instead.
+		if (postPostStates.isEmpty()) {
+			postPostStates = postStates;
+		}
 
 		// Remove all added temporary variables from the symbol table
 		mBoogie2SmtSymbolTable.clearTemporaryVariables();
 
 		final List<PoormanAbstractState<BACKING>> returnList = new ArrayList<>();
-		for (final BACKING state : postStates) {
+		for (final BACKING state : postPostStates) {
 			// Remove all variables that are the target of the renaming later on
 			final Set<IProgramVarOrConst> removeOverwrittenOuts = state.getVariables().stream()
 					.filter(var -> outVarRenaming.values().stream()
@@ -235,7 +252,8 @@ public class PoormansAbstractPostOperator<BACKING extends IAbstractState<BACKING
 	 *
 	 * @param transformula
 	 *            The transformula.
-	 * @return A havoc statement in which the implicitly havoc'ed variables are explicitly havoc'ed.
+	 * @return A havoc statement in which the implicitly havoc'ed variables are explicitly havoc'ed. If none exists,
+	 *         <code>null</code> is returned.
 	 */
 	private HavocStatement constructBoogieHavocStatementOfUnmappedOutVars(final UnmodifiableTransFormula transformula) {
 		// Variable occurs in inVars, but not in outVars
@@ -437,32 +455,6 @@ public class PoormansAbstractPostOperator<BACKING extends IAbstractState<BACKING
 							+ entry.getKey().hashCode() + ") --> " + entry.getValue().getGloballyUniqueId() + " ("
 							+ entry.getValue().hashCode() + ")"));
 		}
-	}
-
-	/**
-	 * Constructs a Boogie {@link CodeBlock} in which the transformula is converted into an assume statement.
-	 *
-	 * @param transformula
-	 *            The transformula to construct an assume statement for.
-	 * @param variableRetainmentSet
-	 *            The set of variables whose names should be looked up in the temporary variable set of the symbol table
-	 *            instead of the Boogie symbol table itself.
-	 * @param alternateOldNames
-	 *            The renamed old variables.
-	 * @return A {@link CodeBlock} containing the conversion of the transformula to an assume statement.
-	 */
-	private AssumeStatement constructBoogieAssumeStatement(final UnmodifiableTransFormula transformula,
-			final Set<TermVariable> variableRetainmentSet, final Map<TermVariable, String> alternateOldNames) {
-		final Expression termExpression =
-				mMappedTerm2Expression.translate(transformula.getFormula(), variableRetainmentSet, alternateOldNames);
-		final AssumeStatement assume = new AssumeStatement(termExpression.getLoc(), termExpression);
-
-		if (mLogger.isDebugEnabled()) {
-			mLogger.debug("Transformula: " + transformula);
-			mLogger.debug("Constructed assume expression: " + BoogiePrettyPrinter.print(termExpression));
-		}
-
-		return assume;
 	}
 
 	private IProgramVar getCachedFreshProgramVar(final TermVariable var, final String alternateName) {

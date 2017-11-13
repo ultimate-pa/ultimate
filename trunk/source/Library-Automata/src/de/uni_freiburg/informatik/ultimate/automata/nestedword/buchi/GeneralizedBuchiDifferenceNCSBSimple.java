@@ -68,8 +68,8 @@ public final class GeneralizedBuchiDifferenceNCSBSimple<LETTER, STATE> extends A
 	public <SF extends IBuchiComplementNcsbStateFactory<STATE> & IBuchiIntersectStateFactory<STATE> & IEmptyStackStateFactory<STATE>> GeneralizedBuchiDifferenceNCSBSimple(
 			final AutomataLibraryServices services, final SF stateFactory,
 			final IGeneralizedNwaOutgoingLetterAndTransitionProvider<LETTER, STATE> fstOperand,
-			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> sndOperand) throws AutomataLibraryException {
-		super(services, stateFactory, fstOperand, sndOperand);
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> sndOperand, boolean lazyOptimization) throws AutomataLibraryException {
+		super(services, stateFactory, fstOperand, sndOperand, lazyOptimization);
 	}
 
 	

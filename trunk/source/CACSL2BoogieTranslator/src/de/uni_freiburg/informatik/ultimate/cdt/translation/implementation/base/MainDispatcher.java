@@ -269,7 +269,7 @@ public class MainDispatcher extends Dispatcher {
 	public MainDispatcher(final CACSL2BoogieBacktranslator backtranslator,
 			final Map<IASTNode, ExtractedWitnessInvariant> witnessInvariants, final IUltimateServiceProvider services,
 			final ILogger logger) {
-		super(backtranslator, services, logger);
+		super(backtranslator, services, logger, null);
 		mBitvectorTranslation = getPreferences().getBoolean(CACSLPreferenceInitializer.LABEL_BITVECTOR_TRANSLATION);
 		mOverapproximateFloatingPointOperations =
 				getPreferences().getBoolean(CACSLPreferenceInitializer.LABEL_OVERAPPROXIMATE_FLOATS);
@@ -287,7 +287,7 @@ public class MainDispatcher extends Dispatcher {
 
 	void addBoogieDeclarationOfVariableOnHeap(final VariableDeclaration vd) {
 		if (mBoogieDeclarationsOfVariablesOnHeap == null) {
-			mBoogieDeclarationsOfVariablesOnHeap = new LinkedHashSet<VariableDeclaration>();
+			mBoogieDeclarationsOfVariablesOnHeap = new LinkedHashSet<>();
 		}
 		mBoogieDeclarationsOfVariablesOnHeap.add(vd);
 	}
@@ -326,9 +326,7 @@ public class MainDispatcher extends Dispatcher {
 
 	@Override
 	protected void preRun(final DecoratorNode node) {
-		assert node.getCNode() != null;
-		assert node.getCNode() instanceof IASTTranslationUnit;
-
+		super.preRun(node);
 		final IASTTranslationUnit tu = (IASTTranslationUnit) node.getCNode();
 
 		mVariablesOnHeap = new LinkedHashSet<>();
@@ -352,8 +350,8 @@ public class MainDispatcher extends Dispatcher {
 			mReachableDeclarations = null;
 		}
 
-		final PRDispatcher prd =
-				new PRDispatcher(mBacktranslator, mServices, mLogger, mFunctionToIndex, mReachableDeclarations);
+		final PRDispatcher prd = new PRDispatcher(mBacktranslator, mServices, mLogger, mFunctionToIndex,
+				mReachableDeclarations, getLocationFactory());
 		prd.init();
 		prd.dispatch(node);
 		mVariablesOnHeap.addAll(prd.getVariablesOnHeap());
@@ -648,16 +646,15 @@ public class MainDispatcher extends Dispatcher {
 				}
 			}
 			return invariants;
-		} else {
-			return Collections.emptyList();
 		}
+		return Collections.emptyList();
 	}
 
 	/**
 	 * Throw Exception if invariant contains quantifiers. It seems like our parser does not support quantifiers yet, For
 	 * the moment it seems to be better to crash here in order to get a meaningful error message.
 	 */
-	private void checkForQuantifiers(final String invariant) {
+	private static void checkForQuantifiers(final String invariant) {
 		if (invariant.contains("exists") || invariant.contains("forall")) {
 			throw new UnsupportedSyntaxException(LocationFactory.createIgnoreCLocation(),
 					"invariant contains quantifiers");
@@ -898,7 +895,7 @@ public class MainDispatcher extends Dispatcher {
 			return null;
 		}
 		// current = found ACSL node
-		final ArrayList<ACSLNode> acsl = new ArrayList<ACSLNode>();
+		final ArrayList<ACSLNode> acsl = new ArrayList<>();
 		checkACSLLocation(current);
 		acsl.add(current.getAcslNode());
 		if (!mDecoratorTreeIterator.hasNext()) {

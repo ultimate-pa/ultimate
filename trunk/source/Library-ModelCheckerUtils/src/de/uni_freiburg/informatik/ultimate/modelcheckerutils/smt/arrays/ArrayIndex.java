@@ -33,40 +33,42 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 
 /**
  * Represents a multi-dimensional array index which is a List of terms.
+ * 
  * @author Matthias Heizmann
  *
  */
 public class ArrayIndex implements List<Term> {
-	
+
 	private final List<Term> mIndexEntries;
-	
-	public ArrayIndex(List<Term> indexEntries) {
+
+	public ArrayIndex(final List<Term> indexEntries) {
 		mIndexEntries = indexEntries;
 	}
 
 	@Override
-	public boolean add(Term arg0) {
+	public boolean add(final Term arg0) {
 		throw new UnsupportedOperationException("ArrayIndex is immutable");
 	}
 
 	@Override
-	public void add(int arg0, Term arg1) {
+	public void add(final int arg0, final Term arg1) {
 		throw new UnsupportedOperationException("ArrayIndex is immutable");
 	}
 
 	@Override
-	public boolean addAll(Collection<? extends Term> arg0) {
+	public boolean addAll(final Collection<? extends Term> arg0) {
 		throw new UnsupportedOperationException("ArrayIndex is immutable");
 	}
 
 	@Override
-	public boolean addAll(int arg0, Collection<? extends Term> arg1) {
+	public boolean addAll(final int arg0, final Collection<? extends Term> arg1) {
 		throw new UnsupportedOperationException("ArrayIndex is immutable");
 	}
 
@@ -76,22 +78,22 @@ public class ArrayIndex implements List<Term> {
 	}
 
 	@Override
-	public boolean contains(Object arg0) {
+	public boolean contains(final Object arg0) {
 		return mIndexEntries.contains(arg0);
 	}
 
 	@Override
-	public boolean containsAll(Collection<?> arg0) {
+	public boolean containsAll(final Collection<?> arg0) {
 		return mIndexEntries.containsAll(arg0);
 	}
 
 	@Override
-	public Term get(int arg0) {
+	public Term get(final int arg0) {
 		return mIndexEntries.get(arg0);
 	}
 
 	@Override
-	public int indexOf(Object arg0) {
+	public int indexOf(final Object arg0) {
 		return mIndexEntries.indexOf(arg0);
 	}
 
@@ -106,7 +108,7 @@ public class ArrayIndex implements List<Term> {
 	}
 
 	@Override
-	public int lastIndexOf(Object arg0) {
+	public int lastIndexOf(final Object arg0) {
 		return mIndexEntries.lastIndexOf(arg0);
 	}
 
@@ -116,32 +118,32 @@ public class ArrayIndex implements List<Term> {
 	}
 
 	@Override
-	public ListIterator<Term> listIterator(int arg0) {
+	public ListIterator<Term> listIterator(final int arg0) {
 		return mIndexEntries.listIterator(arg0);
 	}
 
 	@Override
-	public boolean remove(Object arg0) {
+	public boolean remove(final Object arg0) {
 		throw new UnsupportedOperationException("ArrayIndex is immutable");
 	}
 
 	@Override
-	public Term remove(int arg0) {
+	public Term remove(final int arg0) {
 		throw new UnsupportedOperationException("ArrayIndex is immutable");
 	}
 
 	@Override
-	public boolean removeAll(Collection<?> arg0) {
+	public boolean removeAll(final Collection<?> arg0) {
 		throw new UnsupportedOperationException("ArrayIndex is immutable");
 	}
 
 	@Override
-	public boolean retainAll(Collection<?> arg0) {
+	public boolean retainAll(final Collection<?> arg0) {
 		throw new UnsupportedOperationException("ArrayIndex is immutable");
 	}
 
 	@Override
-	public Term set(int arg0, Term arg1) {
+	public Term set(final int arg0, final Term arg1) {
 		throw new UnsupportedOperationException("ArrayIndex is immutable");
 	}
 
@@ -151,7 +153,7 @@ public class ArrayIndex implements List<Term> {
 	}
 
 	@Override
-	public List<Term> subList(int arg0, int arg1) {
+	public List<Term> subList(final int arg0, final int arg1) {
 		return mIndexEntries.subList(arg0, arg1);
 	}
 
@@ -161,7 +163,7 @@ public class ArrayIndex implements List<Term> {
 	}
 
 	@Override
-	public <T> T[] toArray(T[] arg0) {
+	public <T> T[] toArray(final T[] arg0) {
 		return mIndexEntries.toArray(arg0);
 	}
 
@@ -169,13 +171,12 @@ public class ArrayIndex implements List<Term> {
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result
-				+ ((mIndexEntries == null) ? 0 : mIndexEntries.hashCode());
+		result = prime * result + ((mIndexEntries == null) ? 0 : mIndexEntries.hashCode());
 		return result;
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
 		}
@@ -205,36 +206,45 @@ public class ArrayIndex implements List<Term> {
 	 * Returns an new ArrayIndex that consists of the first k entries of this
 	 * index.
 	 */
-	public ArrayIndex getFirst(int k) {
+	public ArrayIndex getFirst(final int k) {
 		final List<Term> indexEntries = new ArrayList<>();
-		for (int i=0; i<k; i++) {
+		for (int i = 0; i < k; i++) {
 			indexEntries.add(mIndexEntries.get(i));
 		}
 		return new ArrayIndex(indexEntries);
 	}
-	
+
 	/**
 	 * Returns the free variable of all entries.
 	 */
 	public Set<TermVariable> getFreeVars() {
 		return SmtUtils.getFreeVars(mIndexEntries);
 	}
-	
+
 	/**
-	 * Returns true iff the free variables of all index terms are a subset
-	 * of tvSet.
+	 * Returns true iff the free variables of all index terms are a subset of
+	 * tvSet.
 	 */
-	public boolean freeVarsAreSubset(Set<TermVariable> tvSet) {
-	for (final Term term : mIndexEntries) {
-		for (final TermVariable tv : term.getFreeVars()) {
-			if (!tvSet.contains(tv)) {
-				return false;
-			} 
+	public boolean freeVarsAreSubset(final Set<TermVariable> tvSet) {
+		for (final Term term : mIndexEntries) {
+			for (final TermVariable tv : term.getFreeVars()) {
+				if (!tvSet.contains(tv)) {
+					return false;
+				}
+			}
 		}
+		return true;
 	}
-	return true;
-}
-	
-	
+
+
+	public static Term constructPairwiseEquality(final ArrayIndex index1, final ArrayIndex index2,
+			final Script script) {
+		assert index1.size() == index2.size();
+		final ArrayList<Term> conjuncts = new ArrayList<>(index1.size());
+		for (int i = 0; i < index1.size(); i++) {
+			conjuncts.add(SmtUtils.binaryEquality(script, index1.get(i), index2.get(i)));
+		}
+		return SmtUtils.and(script, conjuncts);
+	}
 
 }

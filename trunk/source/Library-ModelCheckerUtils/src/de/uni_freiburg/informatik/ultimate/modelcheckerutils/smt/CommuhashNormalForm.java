@@ -120,7 +120,7 @@ public class CommuhashNormalForm {
 		}
 
 		private Term tryToTransformToPositiveNormalForm(final Term simplified) throws NotAffineException {
-			final AffineRelation affRel = new AffineRelation(mScript, simplified, TransformInequality.STRICT2NONSTRICT);
+			final AffineRelation affRel = new AffineRelation(mScript, simplified, TransformInequality.NO_TRANFORMATION);
 			final Term pnf = affRel.positiveNormalForm(mScript);
 			return pnf;
 		}

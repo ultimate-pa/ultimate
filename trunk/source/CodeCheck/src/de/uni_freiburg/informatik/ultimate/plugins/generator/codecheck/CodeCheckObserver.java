@@ -108,7 +108,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferenc
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.CachingHoareTripleCheckerMap;
@@ -244,7 +243,9 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 
 		mGlobalSettings = new CodeCheckSettings();
 
-		mGlobalSettings.setChecker(prefs.getEnum(CodeCheckPreferenceInitializer.LABEL_CHECKER, Checker.class));
+		final Checker checker = prefs.getEnum(CodeCheckPreferenceInitializer.LABEL_CHECKER, Checker.class);
+
+		mGlobalSettings.setChecker(checker);
 
 		mGlobalSettings.setMemoizeNormalEdgeChecks(
 				prefs.getBoolean(CodeCheckPreferenceInitializer.LABEL_MEMOIZENORMALEDGECHECKS,

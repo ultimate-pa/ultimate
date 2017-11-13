@@ -502,6 +502,9 @@ public class BoogieOutput {
 	 *            the attributes to handle.
 	 */
 	private void appendAttributes(final StringBuilder sb, final Attribute[] attributes) {
+		if (attributes == null) {
+			return;
+		}
 		for (final Attribute a : attributes) {
 			if (a instanceof NamedAttribute) {
 				final NamedAttribute attr = (NamedAttribute) a;
@@ -783,11 +786,13 @@ public class BoogieOutput {
 		if (s instanceof AssertStatement) {
 			final AssertStatement assertstmt = (AssertStatement) s;
 			sb.append("assert ");
+			appendAttributes(sb, assertstmt.getAttributes());
 			appendExpression(sb, assertstmt.getFormula(), 0);
 			sb.append(";");
 		} else if (s instanceof AssumeStatement) {
 			final AssumeStatement assumestmt = (AssumeStatement) s;
 			sb.append("assume ");
+			appendAttributes(sb, assumestmt.getAttributes());
 			appendExpression(sb, assumestmt.getFormula(), 0);
 			sb.append(";");
 		} else if (s instanceof HavocStatement) {

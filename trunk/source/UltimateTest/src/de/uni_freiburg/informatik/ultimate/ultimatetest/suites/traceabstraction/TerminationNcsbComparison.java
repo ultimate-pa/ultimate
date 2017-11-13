@@ -30,6 +30,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.ultimatetest.suites.traceabstraction;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.Collection;
 
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
@@ -371,7 +376,7 @@ public class TerminationNcsbComparison extends AbstractBuchiAutomizerTestSuite {
 	@Override
 	public long getTimeout() {
 //		return Integer.MAX_VALUE;
-		return 60 * 1000;
+		return 900 * 1000;
 	}
 
 	/**
@@ -395,16 +400,16 @@ public class TerminationNcsbComparison extends AbstractBuchiAutomizerTestSuite {
 //			"buchiAutomizer/ncsb/SUNFLOWER-INTSET
 //			"buchiAutomizer/ncsb/SUNFLOWER-INTSET_LAZY2.epf",
 //			"buchiAutomizer/ncsb/SUNFLOWER-INTSET_LAZY3.epf",
-//			"buchiAutomizer/ncsb/INTSET_GBA.epf",
+			"buchiAutomizer/ncsb/INTSET_GBA.epf",
 //			"buchiAutomizer/ncsb/SUNFLOWER-INTSET_GBA.epf",
-//			"buchiAutomizer/ncsb/INTSET_GBA_ANTICHAIN.epf",
+			"buchiAutomizer/ncsb/INTSET_GBA_ANTICHAIN.epf",
 //			"buchiAutomizer/ncsb/SUNFLOWER-INTSET_GBA_ANTICHAIN.epf",
 //			"buchiAutomizer/ncsb/SUNFLOWER-INTSET_LAZY3.epf",
 //			"buchiAutomizer/ncsb/ORIGINAL.epf",
-			"buchiAutomizer/ncsb/SUNFLOWER-ORIGINAL.epf", //
+//			"buchiAutomizer/ncsb/SUNFLOWER-ORIGINAL.epf", //
 			"buchiAutomizer/ncsb/A-ORIGINAL.epf", // svcomp
-			"buchiAutomizer/ncsb/ROSE-ORIGINAL.epf", //FA, NBA
-			"buchiAutomizer/ncsb/DAISY-ORIGINAL.epf", //CAV 14
+//			"buchiAutomizer/ncsb/ROSE-ORIGINAL.epf", //FA, NBA
+//			"buchiAutomizer/ncsb/DAISY-ORIGINAL.epf", //CAV 14
 	};
 
 	private static final String[] mCToolchains = {
@@ -414,25 +419,39 @@ public class TerminationNcsbComparison extends AbstractBuchiAutomizerTestSuite {
 
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
+		int mNumberOfMachines = 1;
+		int mCurrentMachineNumber = 0;
+		
+		try(BufferedReader br = new BufferedReader(new FileReader("machine.conf"))) {
+		    String line = br.readLine();
+		    mNumberOfMachines = Integer.parseInt(line.substring(0, line.indexOf(' ')));
+		    line = br.readLine();
+		    mCurrentMachineNumber = Integer.parseInt(line.substring(0, line.indexOf(' ')));
+
+		} catch (Exception e) {
+			//use single machine
+			mNumberOfMachines = 1;
+			mCurrentMachineNumber = 0;
+		}
+		
+		File infoFile = new File("Info.log");
+		if(infoFile.exists()) {
+			infoFile.delete();
+		}
+		
 		DirectoryFileEndingsPair[] mPairsToTry=mDirectoryFileEndingsPairs;
 		if(runOnlySelectedExample){
 			mPairsToTry=mDirectoryFileEndingsPairsForSelectedCases;
 		}
-		final int mod = 4, left = 0;
 //	    mPairsToTry = mDirectoryBugPairs;
-	    int counter = 0;
 		for (final DirectoryFileEndingsPair dfep : mPairsToTry) {
 			for (final String toolchain : mCToolchains) {
-				if(counter % mod == left) {
 					addTestCase(UltimateRunDefinitionGenerator.getRunDefinitionsFromTrunkRegex(
 						new String[] { dfep.getDirectory() }, dfep.getFileEndings(), mSettings, toolchain, getTimeout(),
 						dfep.getOffset(), dfep.getLimit()));
-				
-				}
-				counter ++;
 			}
 		}
-		return super.createTestCases();
+		return super.createTestCasesMultipleMachine(mNumberOfMachines,mCurrentMachineNumber,mSettings.length);
 	}
 	// @formatter:on
 }

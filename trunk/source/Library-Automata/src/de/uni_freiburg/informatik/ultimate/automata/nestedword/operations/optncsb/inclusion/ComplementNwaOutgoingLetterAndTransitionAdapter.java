@@ -27,8 +27,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.inclusion;
 
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NwaOutgoingLetterAndTransitionAdapter;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiComplementNCSBSimpleNwa;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.complement.NCSB;
 
 /**
  * This class is a wrapper for the complement automaton to access the NCSB tuple
@@ -45,6 +47,14 @@ public class ComplementNwaOutgoingLetterAndTransitionAdapter<LETTER, STATE> exte
 
 	public boolean coveredBy(STATE fstState, STATE sndState) {
 		return mComplementNwa.coveredBy(fstState, sndState);
+	}
+	
+	public NCSB getNCSB(STATE state) {
+		return mComplementNwa.getRelatedNCSB(state);
+	}
+	
+	public INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> getOperand() {
+		return mComplementNwa.getOperand();
 	}
 
 }

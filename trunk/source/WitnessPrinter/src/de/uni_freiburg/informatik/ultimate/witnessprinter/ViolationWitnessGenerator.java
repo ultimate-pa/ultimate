@@ -62,19 +62,14 @@ public class ViolationWitnessGenerator<TE, E> extends BaseWitnessGenerator<TE, E
 	private final IProgramExecution<TE, E> mLoop;
 	private final IBacktranslationValueProvider<TE, E> mStringProvider;
 	private final ILogger mLogger;
+	private final String mFilename;
 
 	/**
 	 * Use this constructor if you want to construct a witness for the violation of a reachability property.
 	 */
 	public ViolationWitnessGenerator(final IProgramExecution<TE, E> stem, final ILogger logger,
 			final IUltimateServiceProvider services) {
-		super(services);
-		assert stem != null;
-		assert stem.getLength() > 0;
-		mLogger = logger;
-		mStem = stem;
-		mStringProvider = stem.getBacktranslationValueProvider();
-		mLoop = null;
+		this(stem, null, logger, services);
 	}
 
 	/**
@@ -84,22 +79,24 @@ public class ViolationWitnessGenerator<TE, E> extends BaseWitnessGenerator<TE, E
 			final ILogger logger, final IUltimateServiceProvider services) {
 		super(services);
 		assert stem != null;
-		assert loop != null;
-		assert stem.getLength() > 0;
-		assert loop.getLength() > 0;
+		assert (loop == null && stem.getLength() > 0)
+				|| (loop != null && loop.getLength() > 0) : "Stem or loop is empty";
 		mLogger = logger;
 		mStem = stem;
 		mLoop = loop;
 		mStringProvider = stem.getBacktranslationValueProvider();
-
+		if (stem.getLength() > 0) {
+			mFilename = mStringProvider.getFileNameFromStep(mStem.getTraceElement(0).getStep());
+		} else {
+			mFilename = mStringProvider.getFileNameFromStep(mLoop.getTraceElement(0).getStep());
+		}
 	}
 
 	@Override
 	public String makeGraphMLString() {
 		final UltimateGraphMLWriter<GeneratedWitnessNode, GeneratedWitnessEdge<TE, E>> graphWriter =
 				new UltimateGraphMLWriter<>();
-		final String filename =
-				StringEscapeUtils.escapeXml10(mStringProvider.getFileNameFromStep(mStem.getTraceElement(0).getStep()));
+		final String filename = StringEscapeUtils.escapeXml10(mFilename);
 
 		graphWriter.setEdgeIDs(GeneratedWitnessEdge<TE, E>::getName);
 		graphWriter.setVertexIDs(GeneratedWitnessNode::getName);
@@ -152,19 +149,32 @@ public class ViolationWitnessGenerator<TE, E> extends BaseWitnessGenerator<TE, E
 		final IProgramExecution<TE, E> reducedStem = reduceProgramExecution(mStem);
 		final IProgramExecution<TE, E> reducedLoop = mLoop == null ? null : reduceProgramExecution(mLoop);
 
-		final GeneratedWitnessNode current = insertStartNodeAndDummyEdges(fac, graph, 0);
+		final GeneratedWitnessNode current;
 		final Supplier<GeneratedWitnessNode> funCreateLastNode;
 		if (reducedLoop == null) {
 			// if we have only a stem just create an error node as the last node of the stem
+			// current is the initial node
+			current = fac.createInitialWitnessNode();
+			graph.addVertex(current);
 			funCreateLastNode = () -> fac.createErrorWitnessNode();
 			addProgramExecution(graph, fac, current, reducedStem, funCreateLastNode);
-		} else {
-			// if we have stem and loop, the last node of the stem is the honda, and the honda is the first and last
-			// node of the loop
+		} else if (reducedStem.getLength() > 0) {
+			// if we have stem and loop, and the stem actually exists, the last node of the stem is the honda, and the
+			// honda is the first and last node of the loop
+			// current is the initial node
 			final GeneratedWitnessNode honda = fac.createHondaWitnessNode();
 			funCreateLastNode = () -> honda;
+			current = fac.createInitialWitnessNode();
+			graph.addVertex(current);
 			addProgramExecution(graph, fac, current, reducedStem, funCreateLastNode);
 			addProgramExecution(graph, fac, honda, reducedLoop, funCreateLastNode);
+		} else {
+			// if we have stem and loop, but the stem has length 0, the honda is the first and last
+			// node of the loop and the initial node
+			current = fac.createWitnessNode(true, false, false, true);
+			graph.addVertex(current);
+			funCreateLastNode = () -> current;
+			addProgramExecution(graph, fac, current, reducedLoop, funCreateLastNode);
 		}
 
 		return graph;
@@ -189,23 +199,6 @@ public class ViolationWitnessGenerator<TE, E> extends BaseWitnessGenerator<TE, E
 			graph.addEdge(fac.createWitnessEdge(currentATE, currentState, next.isHonda()), current, next);
 			current = next;
 		}
-	}
-
-	private GeneratedWitnessNode insertStartNodeAndDummyEdges(final GeneratedWitnessNodeEdgeFactory<TE, E> fac,
-			final DirectedSparseGraph<GeneratedWitnessNode, GeneratedWitnessEdge<TE, E>> graph,
-			final int numberOfUselessEdgesAfterStart) {
-		GeneratedWitnessNode current = fac.createInitialWitnessNode();
-		GeneratedWitnessNode next;
-		graph.addVertex(current);
-
-		for (int i = 0; i < numberOfUselessEdgesAfterStart; ++i) {
-			next = fac.createWitnessNode();
-			graph.addVertex(next);
-			graph.addEdge(fac.createDummyWitnessEdge(), current, next);
-			current = next;
-		}
-
-		return current;
 	}
 
 	private IProgramExecution<TE, E> reduceProgramExecution(final IProgramExecution<TE, E> origPe) {

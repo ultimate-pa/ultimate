@@ -61,7 +61,8 @@ public class CodeCheckPreferenceInitializer extends UltimatePreferenceInitialize
 
 	public static final String LABEL_SOLVERANDINTERPOLATOR = "Interpolating solver";
 	public static final String LABEL_INTERPOLATIONMODE = "interpolation mode";
-	public static final String LABEL_INTERPOLANTCONSOLIDATION = "use interpolant consolidation (only useful for interpolationmode fp+bp)";
+	public static final String LABEL_INTERPOLANTCONSOLIDATION =
+			"use interpolant consolidation (only useful for interpolationmode fp+bp)";
 	public static final String LABEL_PREDICATEUNIFICATION = "Predicate Unification Mode";
 	public static final String LABEL_EDGECHECKOPTIMIZATION = "EdgeCheck Optimization Mode";
 
@@ -80,10 +81,12 @@ public class CodeCheckPreferenceInitializer extends UltimatePreferenceInitialize
 	public static final String LABEL_CHK_SAT = "Check edges satisfiability";
 
 	public static final String LABEL_USESEPARATETRACECHECKSOLVER = "Use separate solver for tracechecks";
-	public static final String LABEL_CHOOSESEPARATETRACECHECKSOLVER = "Choose which separate solver to use for tracechecks";
+	public static final String LABEL_CHOOSESEPARATETRACECHECKSOLVER =
+			"Choose which separate solver to use for tracechecks";
 	public static final String LABEL_SEPARATETRACECHECKSOLVERCOMMAND = "Command for calling external solver";
 	public static final String LABEL_SEPARATETRACECHECKSOLVERTHEORY = "Theory for external solver";
-	public static final String LABEL_USEFALLBACKFORSEPARATETRACECHECKSOLVER = "Use standard solver (from RCFGBuilder) with FP interpolation as fallback";
+	public static final String LABEL_USEFALLBACKFORSEPARATETRACECHECKSOLVER =
+			"Use standard solver (from RCFGBuilder) with FP interpolation as fallback";
 
 	public static final String LABEL_UNSAT_CORES = "Use unsat cores in FP/BP interpolation";
 	public static final String LABEL_LIVE_VARIABLES = "Use live variables in FP/BP interpolation";
@@ -134,66 +137,66 @@ public class CodeCheckPreferenceInitializer extends UltimatePreferenceInitialize
 	@Override
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
 		return new UltimatePreferenceItem<?>[] {
-		        /*
-		         * settings concerning the kojak/impulse algorithm
-		         */
-		        new UltimatePreferenceItem<>(LABEL_CHECKER, DEF_CHECKER, PreferenceType.Combo, Checker.values()),
-		        new UltimatePreferenceItem<>(LABEL_MEMOIZENORMALEDGECHECKS, DEF_MEMOIZENORMALEDGECHECKS,
-		                PreferenceType.Boolean),
-		        new UltimatePreferenceItem<>(LABEL_MEMOIZERETURNEDGECHECKS, DEF_MEMOIZERETURNEDGECHECKS,
-		                PreferenceType.Boolean),
-		        /*
-		         * settings concerning the interpolation and predicate handling in general
-		         */
-		        new UltimatePreferenceItem<>(LABEL_INTERPOLATIONMODE, DEF_INTERPOLATIONMODE, PreferenceType.Combo,
-		                InterpolationTechnique.values()),
-		        new UltimatePreferenceItem<>(LABEL_INTERPOLANTCONSOLIDATION, DEF_INTERPOLANTCONSOLIDATION,
-		                PreferenceType.Boolean),
-		        new UltimatePreferenceItem<>(LABEL_PREDICATEUNIFICATION, DEF_PREDICATEUNIFICATION, PreferenceType.Combo,
-		                PredicateUnification.values()),
-		        new UltimatePreferenceItem<>(LABEL_EDGECHECKOPTIMIZATION, DEF_EDGECHECKOPTIMIZATION,
-		                PreferenceType.Combo, EdgeCheckOptimization.values()),
-		        /*
-		         * settings concerning a separate solver for trace checks and interpolation
-		         */
-		        new UltimatePreferenceItem<>(LABEL_USESEPARATETRACECHECKSOLVER, DEF_USESEPARATETRACECHECKSOLVER,
-		                PreferenceType.Boolean),
-		        new UltimatePreferenceItem<>(LABEL_CHOOSESEPARATETRACECHECKSOLVER, DEF_CHOOSESEPARATETRACECHECKSOLVER,
-		                PreferenceType.Combo, SolverMode.values()),
-		        new UltimatePreferenceItem<>(LABEL_SEPARATETRACECHECKSOLVERCOMMAND, DEF_SEPARATETRACECHECKSOLVERCOMMAND,
-		                PreferenceType.String),
-		        new UltimatePreferenceItem<>(LABEL_SEPARATETRACECHECKSOLVERTHEORY, DEF_SEPARATETRACECHECKSOLVERTHEORY,
-		                PreferenceType.String),
-		        new UltimatePreferenceItem<>(LABEL_USEFALLBACKFORSEPARATETRACECHECKSOLVER,
-		                DEF_USEFALLBACKFORSEPARATETRACECHECKSOLVER, PreferenceType.Boolean),
-		        /*
-		         * settings concerning betim interpolation
-		         */
-		        new UltimatePreferenceItem<>(LABEL_UNSAT_CORES, UnsatCores.CONJUNCT_LEVEL, PreferenceType.Combo,
-		                UnsatCores.values()),
-		        new UltimatePreferenceItem<>(LABEL_LIVE_VARIABLES, true, PreferenceType.Boolean),
-		        /*
-		         * settings used mostly for debugging
-		         */
-		        new UltimatePreferenceItem<>(LABEL_GRAPHWRITERPATH, DEF_GRAPHWRITERPATH, PreferenceType.Directory),
-		        new UltimatePreferenceItem<>(LABEL_TIMEOUT, DEF_TIMEOUT, PreferenceType.Integer,
-		                new IUltimatePreferenceItemValidator.IntegerValidator(0, 100000)),
-		        new UltimatePreferenceItem<>(LABEL_ITERATIONS, DEF_ITERATIONS, PreferenceType.Integer,
-		                new IUltimatePreferenceItemValidator.IntegerValidator(-1, 100000)),
-		        /*
-		         * settings concerning only impulse
-		         */
-		        new UltimatePreferenceItem<>(LABEL_REDIRECTION, DEF_REDIRECTION, PreferenceType.Combo,
-		                RedirectionStrategy.values()),
-		        new UltimatePreferenceItem<>(LABEL_DEF_RED, DEF_DEF_RED, PreferenceType.Boolean),
-		        new UltimatePreferenceItem<>(LABEL_CHK_SAT, DEF_CHK_SAT, PreferenceType.Boolean),
-		        new UltimatePreferenceItem<>(LABEL_RmFALSE, DEF_RmFALSE, PreferenceType.Boolean),
+				/*
+				 * settings concerning the kojak/impulse algorithm
+				 */
+				new UltimatePreferenceItem<>(LABEL_CHECKER, DEF_CHECKER, PreferenceType.Combo, Checker.values()),
+				new UltimatePreferenceItem<>(LABEL_MEMOIZENORMALEDGECHECKS, DEF_MEMOIZENORMALEDGECHECKS,
+						PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_MEMOIZERETURNEDGECHECKS, DEF_MEMOIZERETURNEDGECHECKS,
+						PreferenceType.Boolean),
+				/*
+				 * settings concerning the interpolation and predicate handling in general
+				 */
+				new UltimatePreferenceItem<>(LABEL_INTERPOLATIONMODE, DEF_INTERPOLATIONMODE, PreferenceType.Combo,
+						InterpolationTechnique.values()),
+				new UltimatePreferenceItem<>(LABEL_INTERPOLANTCONSOLIDATION, DEF_INTERPOLANTCONSOLIDATION,
+						PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_PREDICATEUNIFICATION, DEF_PREDICATEUNIFICATION, PreferenceType.Combo,
+						PredicateUnification.values()),
+				new UltimatePreferenceItem<>(LABEL_EDGECHECKOPTIMIZATION, DEF_EDGECHECKOPTIMIZATION,
+						PreferenceType.Combo, EdgeCheckOptimization.values()),
+				/*
+				 * settings concerning a separate solver for trace checks and interpolation
+				 */
+				new UltimatePreferenceItem<>(LABEL_USESEPARATETRACECHECKSOLVER, DEF_USESEPARATETRACECHECKSOLVER,
+						PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_CHOOSESEPARATETRACECHECKSOLVER, DEF_CHOOSESEPARATETRACECHECKSOLVER,
+						PreferenceType.Combo, SolverMode.values()),
+				new UltimatePreferenceItem<>(LABEL_SEPARATETRACECHECKSOLVERCOMMAND, DEF_SEPARATETRACECHECKSOLVERCOMMAND,
+						PreferenceType.String),
+				new UltimatePreferenceItem<>(LABEL_SEPARATETRACECHECKSOLVERTHEORY, DEF_SEPARATETRACECHECKSOLVERTHEORY,
+						PreferenceType.String),
+				new UltimatePreferenceItem<>(LABEL_USEFALLBACKFORSEPARATETRACECHECKSOLVER,
+						DEF_USEFALLBACKFORSEPARATETRACECHECKSOLVER, PreferenceType.Boolean),
+				/*
+				 * settings concerning betim interpolation
+				 */
+				new UltimatePreferenceItem<>(LABEL_UNSAT_CORES, UnsatCores.CONJUNCT_LEVEL, PreferenceType.Combo,
+						UnsatCores.values()),
+				new UltimatePreferenceItem<>(LABEL_LIVE_VARIABLES, true, PreferenceType.Boolean),
+				/*
+				 * settings used mostly for debugging
+				 */
+				new UltimatePreferenceItem<>(LABEL_GRAPHWRITERPATH, DEF_GRAPHWRITERPATH, PreferenceType.Directory),
+				new UltimatePreferenceItem<>(LABEL_TIMEOUT, DEF_TIMEOUT, PreferenceType.Integer,
+						new IUltimatePreferenceItemValidator.IntegerValidator(0, 100000)),
+				new UltimatePreferenceItem<>(LABEL_ITERATIONS, DEF_ITERATIONS, PreferenceType.Integer,
+						new IUltimatePreferenceItemValidator.IntegerValidator(-1, 100000)),
+				/*
+				 * settings concerning only impulse
+				 */
+				new UltimatePreferenceItem<>(LABEL_REDIRECTION, DEF_REDIRECTION, PreferenceType.Combo,
+						RedirectionStrategy.values()),
+				new UltimatePreferenceItem<>(LABEL_DEF_RED, DEF_DEF_RED, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_CHK_SAT, DEF_CHK_SAT, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_RmFALSE, DEF_RmFALSE, PreferenceType.Boolean),
 
-		        /*
-		         * Abstract interpretation settings
-		         */
-		        new UltimatePreferenceItem<>(LABEL_USE_ABSTRACT_INTERPRETATION, DEF_USE_ABSTRACT_INTERPRETATION,
-		                PreferenceType.Boolean), };
+				/*
+				 * Abstract interpretation settings
+				 */
+				new UltimatePreferenceItem<>(LABEL_USE_ABSTRACT_INTERPRETATION, DEF_USE_ABSTRACT_INTERPRETATION,
+						PreferenceType.Boolean), };
 	}
 
 }

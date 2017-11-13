@@ -28,6 +28,7 @@
 
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.complement;
 
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.Options;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util.IntSet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util.UtilIntSet;
 
@@ -113,6 +114,9 @@ public class NCSB {
 	
 
 	public boolean coveredBy(NCSB other) {
+		if(Options.lazyS && ! other.mBSet.subsetOf(mBSet)) {
+			return false;
+		}
 		if(! other.mNSet.subsetOf(mNSet)
 		|| ! other.mCSet.subsetOf(mCSet)
 		|| ! other.mSSet.subsetOf(mSSet)) {

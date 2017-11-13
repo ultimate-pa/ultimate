@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.ultimatetest.suites;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
@@ -64,6 +65,42 @@ public abstract class AbstractModelCheckerTestSuite extends UltimateTestSuite {
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
 		mTestCases.sort(null);
+		return mTestCases;
+	}
+	
+	/**
+	 * Added by Yu-Fang Chen for performing experiments on multiple machines and fairly distributed the work load
+	 * 
+	 */
+	public Collection<UltimateTestCase> createTestCasesMultipleMachine(final int numberOfMachines, final int currentMachineNumber, int numberOfStrategies) {
+		mTestCases.sort(null);
+		List<UltimateTestCase> copy = new ArrayList<>();
+		for(int j = 0; j < mTestCases.size(); j ++) {
+			copy.add(mTestCases.get(j));
+		}
+		mTestCases.clear();
+		assert copy.size() >= 1 : "No test case available";
+		UltimateTestCase currTestCase = copy.get(0);
+		mTestCases.add(currTestCase);
+		for(int j = 1; j < copy.size(); j ++) {
+			if(currTestCase.equals(copy.get(j))) {
+				continue;
+			}else {
+				mTestCases.add(copy.get(j));
+				currTestCase = copy.get(j);
+			}
+		}
+
+		int i=0;
+		for (Iterator<?> it = mTestCases.iterator(); it.hasNext(); )
+	    {
+	        it.next();
+	        if ((i/numberOfStrategies) % numberOfMachines != currentMachineNumber)
+	        {
+	            it.remove();
+	        }
+	        i++;
+	    }
 		return mTestCases;
 	}
 

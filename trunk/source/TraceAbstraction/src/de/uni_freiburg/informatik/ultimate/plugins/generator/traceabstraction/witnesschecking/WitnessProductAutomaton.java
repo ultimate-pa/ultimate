@@ -336,7 +336,8 @@ public class WitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 			final WitnessNode ws = wsSuccStates.removeFirst();
 			for (final OutgoingInternalTransition<WitnessEdge, WitnessNode> out : mWitnessAutomaton
 					.internalSuccessors(ws)) {
-				for (final OutgoingInternalTransition<WitnessEdge, WitnessNode> outLetter : skipNonLETTEREdges(out)) {
+				for (final OutgoingInternalTransition<WitnessEdge, WitnessNode> outLetter : skipNonLETTEREdges(out,
+						new HashSet<>())) {
 					if (isSink(outLetter.getSucc())) {
 						// successor is sink, do nothing
 					} else {
@@ -387,14 +388,17 @@ public class WitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 	}
 
 	private Collection<OutgoingInternalTransition<WitnessEdge, WitnessNode>> skipNonLETTEREdges(
-			final OutgoingInternalTransition<WitnessEdge, WitnessNode> trans) {
+			final OutgoingInternalTransition<WitnessEdge, WitnessNode> trans, final Set<WitnessNode> visitedNodes) {
 		final Set<OutgoingInternalTransition<WitnessEdge, WitnessNode>> result = new HashSet<>();
 		if (isLETTEREdge(trans.getLetter())) {
 			result.add(trans);
 		} else {
-			for (final OutgoingInternalTransition<WitnessEdge, WitnessNode> out : mWitnessAutomaton
-					.internalSuccessors(trans.getSucc())) {
-				result.addAll(skipNonLETTEREdges(out));	
+			if (!visitedNodes.contains(trans.getSucc())) {
+				visitedNodes.add(trans.getSucc());
+				for (final OutgoingInternalTransition<WitnessEdge, WitnessNode> out : mWitnessAutomaton
+						.internalSuccessors(trans.getSucc())) {
+					result.addAll(skipNonLETTEREdges(out, visitedNodes));	
+				}
 			}
 		}
 		return result;

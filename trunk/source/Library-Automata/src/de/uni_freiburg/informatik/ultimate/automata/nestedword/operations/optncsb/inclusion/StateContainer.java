@@ -86,17 +86,27 @@ class StateContainer<LETTER, STATE> {
 	}
 	
 	protected void removeSuccessor(STATE succ) {
+		Map<LETTER, Set<STATE>> outs = new HashMap<>();
 		for(Entry<LETTER, Set<STATE>> entry : mInternalOut.entrySet()) {
 			Set<STATE> succs = entry.getValue();
 			if(succs.contains(succ)) succs.remove(succ);
+			if(!succs.isEmpty()) {
+				outs.put(entry.getKey(), succs);
+			}
 		}
+		mInternalOut = outs;
 	}
 	
 	protected void removePredecessors(Set<STATE> ps) {
+		Map<LETTER, Set<STATE>> ins = new HashMap<>();
 		for(Entry<LETTER, Set<STATE>> entry : mInternalIn.entrySet()) {
 			Set<STATE> preds = entry.getValue();
 			preds.removeAll(ps);
-		}
+			if(!preds.isEmpty()) {
+				ins.put(entry.getKey(), preds);
+			}
+ 		}
+		mInternalIn = ins;
 	}
 	
 	protected LETTER getLetterOfSuccessor(STATE succ) {

@@ -1,7 +1,7 @@
 /*
- * Copyright (C) 2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- * Copyright (C) 2015 Marius Greitschus (greitsch@informatik.uni-freiburg.de)
- * Copyright (C) 2015 University of Freiburg
+ * Copyright (C) 2015-2017 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2015-2017 Marius Greitschus (greitsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2015-2017 University of Freiburg
  *
  * This file is part of the ULTIMATE AbstractInterpretationV2 plug-in.
  *
@@ -34,12 +34,14 @@ import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieSymbolTableVariableProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SubtermPropertyChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.generic.LiteralCollection;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
@@ -60,6 +62,7 @@ public class IntervalDomain implements IAbstractDomain<IntervalDomainState, Icfg
 	private final IUltimateServiceProvider mServices;
 	private final BoogieIcfgContainer mRootAnnotation;
 	private final BoogieSymbolTable mSymbolTable;
+	private final SubtermPropertyChecker mAbstractablePropertyChecker;
 
 	private IAbstractStateBinaryOperator<IntervalDomainState> mWideningOperator;
 	private IAbstractPostOperator<IntervalDomainState, IcfgEdge> mPostOperator;
@@ -76,6 +79,7 @@ public class IntervalDomain implements IAbstractDomain<IntervalDomainState, Icfg
 		mRootAnnotation = icfg;
 		mSymbolTable = symbolTable;
 		mBpl2SmtSymbolTable = variableProvider;
+		mAbstractablePropertyChecker = new SubtermPropertyChecker(new IntervalNonAbstractabilityDeciderPredicate());
 	}
 
 	@Override
@@ -121,5 +125,10 @@ public class IntervalDomain implements IAbstractDomain<IntervalDomainState, Icfg
 					mRootAnnotation.getBoogie2SMT(), mCfgSmtToolkit);
 		}
 		return mPostOperator;
+	}
+
+	@Override
+	public boolean isAbstractable(final Term inputTerm) {
+		return !mAbstractablePropertyChecker.isPropertySatisfied(inputTerm);
 	}
 }

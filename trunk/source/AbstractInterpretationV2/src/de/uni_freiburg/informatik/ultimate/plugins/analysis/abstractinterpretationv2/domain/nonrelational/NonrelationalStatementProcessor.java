@@ -344,7 +344,9 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 			// handle the special case of a boolean literal
 			final BooleanLiteral boolform = (BooleanLiteral) formula;
 			if (!boolform.getValue()) {
-				mReturnState.add(mOldState.bottomState());
+				if (!mOldState.getVariables().isEmpty()) {
+					mReturnState.add(mOldState.bottomState());
+				}
 			} else {
 				mReturnState.add(mOldState);
 			}
@@ -367,7 +369,8 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 				// states. Otherwise, the return state will be bottom.
 				final List<STATE> resultStates = mExpressionEvaluator.getRootEvaluator().inverseEvaluate(
 						new NonrelationalEvaluationResult<>(res.getValue(), BooleanValue.TRUE), mOldState);
-				mReturnState.addAll(resultStates);
+				mReturnState.addAll(
+						resultStates.stream().map(state -> state.intersect(mOldState)).collect(Collectors.toList()));
 			}
 		}
 	}

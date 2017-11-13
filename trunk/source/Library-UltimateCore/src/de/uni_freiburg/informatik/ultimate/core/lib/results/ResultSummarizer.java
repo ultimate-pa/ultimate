@@ -119,6 +119,23 @@ public final class ResultSummarizer {
 					toolchainResult = updateIfLess(toolchainResult, ToolchainResult.CORRECT);
 				} else if (result instanceof ExceptionOrErrorResult) {
 					toolchainResult = updateIfLess(toolchainResult, ToolchainResult.ERROR);
+				} else if (result instanceof TerminationAnalysisResult) {
+					final TerminationAnalysisResult tar = (TerminationAnalysisResult) result;
+					switch (tar.getTermination()) {
+					case NONTERMINATING:
+						toolchainResult = updateIfLess(toolchainResult, ToolchainResult.INCORRECT);
+						break;
+					case TERMINATING:
+						toolchainResult = updateIfLess(toolchainResult, ToolchainResult.CORRECT);
+						break;
+					case UNKNOWN:
+					default:
+						if (toolchainResult.isLess(ToolchainResult.UNPROVABLE)) {
+							toolchainResult = ToolchainResult.UNPROVABLE;
+							description = "unable to determine termination";
+						}
+						break;
+					}
 				}
 			}
 		}

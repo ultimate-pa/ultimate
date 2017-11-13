@@ -1,27 +1,27 @@
 /*
  * Copyright (C) 2014-2015 Alexander Nutz (nutz@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE CACSL2BoogieTranslator plug-in.
- * 
+ *
  * The ULTIMATE CACSL2BoogieTranslator plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE CACSL2BoogieTranslator plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE CACSL2BoogieTranslator plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE CACSL2BoogieTranslator plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
@@ -119,6 +119,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratorNode;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.SymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
@@ -139,42 +140,43 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransla
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer;
 
 public class PRDispatcher extends Dispatcher {
-	
-	private final LinkedHashSet<IASTDeclaration> reachableDeclarations;
-	
-    private final LinkedHashSet<IASTNode> mVariablesOnHeap;
 
-	public PRDispatcher(final CACSL2BoogieBacktranslator backtranslator,
-			final IUltimateServiceProvider services, final ILogger logger, final LinkedHashMap<String,Integer> functionToIndex, final LinkedHashSet<IASTDeclaration> reachableDeclarations) {
-		super(backtranslator, services, logger);
+	private final LinkedHashSet<IASTDeclaration> mReachableDeclarations;
+	private final LinkedHashSet<IASTNode> mVariablesOnHeap;
+
+	public PRDispatcher(final CACSL2BoogieBacktranslator backtranslator, final IUltimateServiceProvider services,
+			final ILogger logger, final LinkedHashMap<String, Integer> functionToIndex,
+			final LinkedHashSet<IASTDeclaration> reachableDeclarations, final LocationFactory locFac) {
+		super(backtranslator, services, logger, locFac);
 		mFunctionToIndex = functionToIndex;
-		this.reachableDeclarations = reachableDeclarations;
+		mReachableDeclarations = reachableDeclarations;
 		mVariablesOnHeap = new LinkedHashSet<>();
 	}
-	
+
 	/**
-	 * Set variables that should be "on-Heap" in our implementation.
-	 * For each such variable the set contains the IASTNode of the last
-	 * variable declaration ("last" in case the variable has several 
-	 * declarations).
+	 * Set variables that should be "on-Heap" in our implementation. For each such variable the set contains the
+	 * IASTNode of the last variable declaration ("last" in case the variable has several declarations).
 	 */
-    public Set<IASTNode> getVariablesOnHeap() {
-    	return mVariablesOnHeap;
-    }	
+	public Set<IASTNode> getVariablesOnHeap() {
+		return mVariablesOnHeap;
+	}
 
 	@Override
 	protected void init() {
-		final boolean bitvectorTranslation = getPreferences().getBoolean(CACSLPreferenceInitializer.LABEL_BITVECTOR_TRANSLATION);
-		final boolean overapproximateFloatingPointOperations = getPreferences().getBoolean(CACSLPreferenceInitializer.LABEL_OVERAPPROXIMATE_FLOATS);
+		final boolean bitvectorTranslation =
+				getPreferences().getBoolean(CACSLPreferenceInitializer.LABEL_BITVECTOR_TRANSLATION);
+		final boolean overapproximateFloatingPointOperations =
+				getPreferences().getBoolean(CACSLPreferenceInitializer.LABEL_OVERAPPROXIMATE_FLOATS);
 		mNameHandler = new NameHandler(mBacktranslator);
 		mTypeHandler = new SVCompTypeHandler(bitvectorTranslation);
-		mCHandler = new SvComp14CHandler(this, mBacktranslator, mLogger, mTypeHandler, bitvectorTranslation, overapproximateFloatingPointOperations, mNameHandler);
+		mCHandler = new SvComp14CHandler(this, mBacktranslator, mLogger, mTypeHandler, bitvectorTranslation,
+				overapproximateFloatingPointOperations, mNameHandler);
 	}
 
 	@Override
 	public Result dispatch(final DecoratorNode node) {
-//		this.decoratorTree = node;
-//		this.decoratorTreeIterator = node.iterator();
+		// this.decoratorTree = node;
+		// this.decoratorTreeIterator = node.iterator();
 		if (node.getCNode() != null) {
 			return dispatch(node.getCNode());
 		}
@@ -426,7 +428,7 @@ public class PRDispatcher extends Dispatcher {
 
 	@Override
 	public Result dispatch(final IASTPreprocessorStatement node) {
-        return new SkipResult();
+		return new SkipResult();
 	}
 
 	@Override
@@ -450,12 +452,6 @@ public class PRDispatcher extends Dispatcher {
 	}
 
 	@Override
-	protected void preRun(final DecoratorNode node) {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
 	public NextACSL nextACSLStatement() throws ParseException {
 		// TODO Auto-generated method stub
 		return null;
@@ -466,14 +462,14 @@ public class PRDispatcher extends Dispatcher {
 		// TODO Auto-generated method stub
 		return false;
 	}
-	
+
 	@Override
 	public LinkedHashSet<IASTDeclaration> getReachableDeclarationsOrDeclarators() {
-		return reachableDeclarations;
+		return mReachableDeclarations;
 	}
-	
-	
-	public void moveArrayAndStructIdsOnHeap(final ILocation loc, final Expression expr, final Map<VariableDeclaration, ILocation> auxVars) {
+
+	public void moveArrayAndStructIdsOnHeap(final ILocation loc, final Expression expr,
+			final Map<VariableDeclaration, ILocation> auxVars) {
 		final Set<String> auxVarIds = new HashSet<>();
 		for (final VariableDeclaration decl : auxVars.keySet()) {
 			for (final VarList varList : decl.getVariables()) {
@@ -498,7 +494,7 @@ public class PRDispatcher extends Dispatcher {
 			}
 		}
 	}
-	
+
 	public void moveIdOnHeap(final ILocation loc, final IdentifierExpression idExpr) {
 		final String id = idExpr.getIdentifier();
 		final SymbolTable st = mCHandler.getSymbolTable();

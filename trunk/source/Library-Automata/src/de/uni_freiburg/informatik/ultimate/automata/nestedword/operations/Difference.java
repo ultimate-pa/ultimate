@@ -178,6 +178,10 @@ public final class Difference<LETTER, STATE> extends BinaryNwaOperation<LETTER, 
 	public INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> getSecondOperand() {
 		return mSndOperand;
 	}
+	
+	public INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> getSecondComplemented() {
+		return mSndComplemented;
+	} 
 
 	@Override
 	public IDoubleDeckerAutomaton<LETTER, STATE> getResult() {

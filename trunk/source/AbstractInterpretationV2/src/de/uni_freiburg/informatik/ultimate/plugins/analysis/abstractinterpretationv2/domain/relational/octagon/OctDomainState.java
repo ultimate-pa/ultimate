@@ -377,14 +377,16 @@ public final class OctDomainState implements IAbstractState<OctDomainState> {
 				continue;
 			}
 
-			if (!newState.mVariables.remove(oldVar)) {
+			if (!newState.mVariables.contains(oldVar)) {
 				continue;
 			}
 			isChanged = true;
 			unrefVariables(newState);
+			newState.mVariables.remove(oldVar);
 			newState.mVariables.add(newVar);
 
 			if (newState.mMapNumericVarToIndex.containsKey(oldVar)) {
+				unrefOtherMapNumericVarToIndex(newState);
 				final Integer idx = newState.mMapNumericVarToIndex.remove(oldVar);
 				newState.mMapNumericVarToIndex.put(newVar, idx);
 				if (mNumericNonIntVars.contains(oldVar)) {

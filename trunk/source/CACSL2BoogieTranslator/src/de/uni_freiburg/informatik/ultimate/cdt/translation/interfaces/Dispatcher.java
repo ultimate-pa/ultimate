@@ -5,22 +5,22 @@
  * Copyright (C) 2015 Oleksii Saukh (saukho@informatik.uni-freiburg.de)
  * Copyright (C) 2015 Stefan Wissert
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE CACSL2BoogieTranslator plug-in.
- * 
+ *
  * The ULTIMATE CACSL2BoogieTranslator plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE CACSL2BoogieTranslator plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE CACSL2BoogieTranslator plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE CACSL2BoogieTranslator plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -41,6 +41,7 @@ import java.util.Map;
 import org.eclipse.cdt.core.dom.ast.IASTDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTPreprocessorStatement;
+import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 import org.eclipse.cdt.core.dom.ast.IType;
 
 import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratorNode;
@@ -131,13 +132,14 @@ public abstract class Dispatcher {
 	private LocationFactory mLocationFactory;
 
 	public Dispatcher(final CACSL2BoogieBacktranslator backtranslator, final IUltimateServiceProvider services,
-			final ILogger logger) {
+			final ILogger logger, final LocationFactory locFac) {
 		mBacktranslator = backtranslator;
 		mLogger = logger;
 		mServices = services;
 		mPreferences = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 		mTypeSizes = new TypeSizes(mPreferences);
 		mTranslationSettings = new TranslationSettings(mPreferences);
+		mLocationFactory = locFac;
 	}
 
 	/**
@@ -147,7 +149,7 @@ public abstract class Dispatcher {
 
 	/**
 	 * Dispatch a given node to a specific handler.
-	 * 
+	 *
 	 * @param node
 	 *            the node to dispatch
 	 * @return the result for the given node
@@ -156,7 +158,7 @@ public abstract class Dispatcher {
 
 	/**
 	 * Dispatch a given C node to a specific handler.
-	 * 
+	 *
 	 * @param node
 	 *            the node to dispatch
 	 * @return the result for the given node
@@ -165,7 +167,7 @@ public abstract class Dispatcher {
 
 	/**
 	 * Dispatch a given C node to a specific handler.
-	 * 
+	 *
 	 * @param node
 	 *            the node to dispatch.
 	 * @return the resulting translation.
@@ -174,7 +176,7 @@ public abstract class Dispatcher {
 
 	/**
 	 * Dispatch a given IType to a specific handler.
-	 * 
+	 *
 	 * @param type
 	 *            the type to dispatch
 	 * @return the result for the given type.
@@ -183,7 +185,7 @@ public abstract class Dispatcher {
 
 	/**
 	 * Dispatch a given ACSL node to the specific handler.
-	 * 
+	 *
 	 * @param node
 	 *            the node to dispatch
 	 * @return the result for the given node
@@ -192,7 +194,7 @@ public abstract class Dispatcher {
 
 	/**
 	 * Entry point for a translation.
-	 * 
+	 *
 	 * @param node
 	 *            the root node from which the translation should be started
 	 * @return the result for the given node
@@ -205,16 +207,24 @@ public abstract class Dispatcher {
 
 	/**
 	 * The method implementing a pre-run, if required.
-	 * 
+	 *
 	 * @param node
 	 *            the node for which the pre run should be started
 	 */
-	protected abstract void preRun(DecoratorNode node);
+	protected void preRun(final DecoratorNode node) {
+		assert node.getCNode() != null;
+		assert node.getCNode() instanceof IASTTranslationUnit;
+
+		final IASTTranslationUnit tu = (IASTTranslationUnit) node.getCNode();
+		final LineDirectiveMapping lineDirectiveMapping = new LineDirectiveMapping(tu.getRawSignature());
+		mLocationFactory = new LocationFactory(lineDirectiveMapping);
+		mBacktranslator.setLocationFactory(mLocationFactory);
+	}
 
 	/**
 	 * Iterates to the next ACSL statement in the decorator tree and returns a list of ACSL nodes until the next C node
 	 * appears.
-	 * 
+	 *
 	 * @return a list of ACSL nodes until the next C node appears.
 	 * @throws ParseException
 	 *             if no trailing C node in the tree! The ACSL is in an unexpected and most probably unreachable
@@ -224,7 +234,7 @@ public abstract class Dispatcher {
 
 	/**
 	 * Report a syntax error to Ultimate. This will cancel the toolchain.
-	 * 
+	 *
 	 * @param loc
 	 *            where did it happen?
 	 * @param type
@@ -241,7 +251,7 @@ public abstract class Dispatcher {
 
 	/**
 	 * Report a unsupported syntax to Ultimate. This will cancel the toolchain.
-	 * 
+	 *
 	 * @param loc
 	 *            where did it happen?
 	 * @param type
@@ -258,7 +268,7 @@ public abstract class Dispatcher {
 
 	/**
 	 * Report possible source of unsoundness to Ultimate.
-	 * 
+	 *
 	 * @param loc
 	 *            where did it happen?
 	 * @param longDesc
@@ -279,7 +289,7 @@ public abstract class Dispatcher {
 
 	/**
 	 * Getter for the setting: checked method.
-	 * 
+	 *
 	 * @return the checked method's name.
 	 */
 	public String getCheckedMethod() {
@@ -295,7 +305,7 @@ public abstract class Dispatcher {
 
 	/**
 	 * Whether the memory model is required or not.
-	 * 
+	 *
 	 * @return whether the memory model is required or not.
 	 * @deprecated use check of MemoryHanlder instead
 	 */
@@ -304,7 +314,7 @@ public abstract class Dispatcher {
 
 	/**
 	 * Getter for the identifier mapping.
-	 * 
+	 *
 	 * @return the mapping of Boogie identifiers to origin C identifiers.
 	 */
 	public Map<String, String> getIdentifierMapping() {
@@ -329,35 +339,28 @@ public abstract class Dispatcher {
 		return mPreferences;
 	}
 
+	public LocationFactory getLocationFactory() {
+		return mLocationFactory;
+	}
+
 	public static final class TranslationSettings {
 		private final PointerCheckMode mDivisionByZeroOfIntegerTypes;
 		private final PointerCheckMode mDivisionByZeroOfFloatingTypes;
 
 		public TranslationSettings(final IPreferenceProvider preferences) {
-			mDivisionByZeroOfIntegerTypes = preferences.getEnum(CACSLPreferenceInitializer.LABEL_CHECK_DIVISION_BY_ZERO_OF_INTEGER_TYPES,
-					PointerCheckMode.class);
-			mDivisionByZeroOfFloatingTypes = preferences.getEnum(CACSLPreferenceInitializer.LABEL_CHECK_DIVISION_BY_ZERO_OF_FLOATING_TYPES,
-					PointerCheckMode.class);
+			mDivisionByZeroOfIntegerTypes = preferences.getEnum(
+					CACSLPreferenceInitializer.LABEL_CHECK_DIVISION_BY_ZERO_OF_INTEGER_TYPES, PointerCheckMode.class);
+			mDivisionByZeroOfFloatingTypes = preferences.getEnum(
+					CACSLPreferenceInitializer.LABEL_CHECK_DIVISION_BY_ZERO_OF_FLOATING_TYPES, PointerCheckMode.class);
 
 		}
 
 		public PointerCheckMode getDivisionByZeroOfIntegerTypes() {
 			return mDivisionByZeroOfIntegerTypes;
 		}
-		
+
 		public PointerCheckMode getDivisionByZeroOfFloatingTypes() {
 			return mDivisionByZeroOfFloatingTypes;
 		}
-
 	}
-
-	public void setLineDirectiveMapping(final LineDirectiveMapping lineDirectiveMapping) {
-		mLocationFactory = new LocationFactory(lineDirectiveMapping);
-		mBacktranslator.setLocationFactory(mLocationFactory);
-	}
-	
-	public LocationFactory getLocationFactory() {
-		return mLocationFactory;
-	}
-
 }
