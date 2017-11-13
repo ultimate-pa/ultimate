@@ -471,14 +471,30 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 					gbaAbstraction = new BuchiToGeneralizedBuchi<>(abstraction);
 				}
 				gbaDiff = new GeneralizedBuchiDifferenceNCSBSimple<>(new AutomataLibraryServices(mServices),
-						mStateFactoryForRefinement, gbaAbstraction, mInterpolAutomatonUsedInRefinement);
+						mStateFactoryForRefinement, gbaAbstraction, mInterpolAutomatonUsedInRefinement, false);
+			} else {
+				diff = new BuchiDifferenceNCSBLazy3<>(new AutomataLibraryServices(mServices),
+						mStateFactoryForRefinement, abstraction, mInterpolAutomatonUsedInRefinement);
+			}
+			break;
+		case INTSET_GBA_LAZY:
+			if (abstraction.getVpAlphabet().getCallAlphabet().isEmpty()
+					&& abstraction.getVpAlphabet().getReturnAlphabet().isEmpty()) {
+				if (abstraction instanceof IGeneralizedNwaOutgoingLetterAndTransitionProvider) {
+					gbaAbstraction =
+							(IGeneralizedNwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate>) abstraction;
+				} else {
+					gbaAbstraction = new BuchiToGeneralizedBuchi<>(abstraction);
+				}
+				gbaDiff = new GeneralizedBuchiDifferenceNCSBSimple<>(new AutomataLibraryServices(mServices),
+						mStateFactoryForRefinement, gbaAbstraction, mInterpolAutomatonUsedInRefinement, true);
 			} else {
 				diff = new BuchiDifferenceNCSBLazy3<>(new AutomataLibraryServices(mServices),
 						mStateFactoryForRefinement, abstraction, mInterpolAutomatonUsedInRefinement);
 			}
 
 			break;
-		case INTSET_GBA_ANTICHAIN:
+		case INTSET_GBA_LAZY_ANTICHAIN:
 			if (abstraction.getVpAlphabet().getCallAlphabet().isEmpty()
 					&& abstraction.getVpAlphabet().getReturnAlphabet().isEmpty()) {
 				if (abstraction instanceof IGeneralizedNwaOutgoingLetterAndTransitionProvider) {
@@ -488,7 +504,7 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 					gbaAbstraction = new BuchiToGeneralizedBuchi<>(abstraction);
 				}
 				gbaDiff = new GeneralizedBuchiDifferenceNCSBAntichain<>(new AutomataLibraryServices(mServices),
-						mStateFactoryForRefinement, gbaAbstraction, mInterpolAutomatonUsedInRefinement);
+						mStateFactoryForRefinement, gbaAbstraction, mInterpolAutomatonUsedInRefinement, true);
 			} else {
 				diff = new BuchiDifferenceNCSBLazy3<>(new AutomataLibraryServices(mServices),
 						mStateFactoryForRefinement, abstraction, mInterpolAutomatonUsedInRefinement);

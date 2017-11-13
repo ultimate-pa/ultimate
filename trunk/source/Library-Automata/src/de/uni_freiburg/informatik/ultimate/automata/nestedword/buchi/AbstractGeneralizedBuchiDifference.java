@@ -47,7 +47,7 @@ public abstract class AbstractGeneralizedBuchiDifference<LETTER, STATE> extends 
 	public <SF extends IBuchiComplementNcsbStateFactory<STATE> & IBuchiIntersectStateFactory<STATE> & IEmptyStackStateFactory<STATE>> AbstractGeneralizedBuchiDifference(
 			final AutomataLibraryServices services, final SF stateFactory,
 			final IGeneralizedNwaOutgoingLetterAndTransitionProvider<LETTER, STATE> fstOperand,
-			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> sndOperand) throws AutomataLibraryException {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> sndOperand, boolean lazyOptimization) throws AutomataLibraryException {
 		super(services);
 		mFstOperand = fstOperand;
 		mSndOperand = sndOperand;
@@ -59,7 +59,7 @@ public abstract class AbstractGeneralizedBuchiDifference<LETTER, STATE> extends 
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(startMessage());
 		}
-		constructResult(stateFactory);
+		constructResult(stateFactory, lazyOptimization);
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(exitMessage());
 		}
@@ -69,10 +69,10 @@ public abstract class AbstractGeneralizedBuchiDifference<LETTER, STATE> extends 
 	}
 
 	protected <SF extends IBuchiComplementNcsbStateFactory<STATE> & IBuchiIntersectStateFactory<STATE> & IEmptyStackStateFactory<STATE>>
-			void constructResult(final SF stateFactory) throws AutomataLibraryException {
+			void constructResult(final SF stateFactory, final boolean lazyOptimization) throws AutomataLibraryException {
 		// first we get the complement
 		final BuchiComplementNCSBSimpleNwa<LETTER, STATE> onDemandComplemented = new BuchiComplementNCSBSimpleNwa<>(mServices, stateFactory, mSndOperand);
-		Options.lazyS = true;
+		Options.lazyS = lazyOptimization;
 		Options.lazyB = false;
 		mSndComplemented = new ComplementNwaOutgoingLetterAndTransitionAdapter<LETTER, STATE>(onDemandComplemented);
 		constructDifferenceFromComplement(stateFactory);
