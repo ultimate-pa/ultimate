@@ -53,7 +53,7 @@ public final class BuchiComplementNCSBLazyNwa<LETTER, STATE> extends BuchiComple
 		super(services, stateFactory, operand);
 		// this is optimized lazy 3
 		Options.lazyS = true;
-		Options.lazyB = true;
+		Options.lazyB = false;
 	}
 
 }

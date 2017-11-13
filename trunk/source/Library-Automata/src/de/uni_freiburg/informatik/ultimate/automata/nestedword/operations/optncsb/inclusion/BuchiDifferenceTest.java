@@ -13,6 +13,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiComple
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiComplementNCSBNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiDifferenceNCSB;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiIntersectNwa;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiIsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEquivalent;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiComplementNcsbStateFactory;
@@ -60,6 +61,10 @@ public class BuchiDifferenceTest<LETTER, STATE> {
 		"./difference" + mNumber + "_1", Format.BA, "", reachBADiff);
 		new AutomatonDefinitionPrinter<String, String>(mServices, "difference",
 		"./difference" + mNumber + "_2", Format.BA, "", reach);
+		BuchiIsEmpty<LETTER, STATE> check = new BuchiIsEmpty<>(mServices, reach);
+		System.err.println("Difference empty from BA: " + check.getResult());
+		check = new BuchiIsEmpty<>(mServices, reachBADiff);
+		System.err.println("Difference empty from GBA: " + check.getResult());
 		BenchmarkRecord.addDiffComparison(reach.getStates().size(), mDifference.getStates().size(), reachBADiff.getStates().size());
 	}
 	

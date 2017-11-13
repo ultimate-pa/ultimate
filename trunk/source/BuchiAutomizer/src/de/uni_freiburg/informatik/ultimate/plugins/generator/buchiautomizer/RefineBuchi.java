@@ -514,10 +514,10 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 		if (gbaDiff == null) {
 			assert diff.checkResult(mStateFactoryInterpolAutom);
 			newAbstraction = diff.getResult();
-			BenchmarkRecord.addComplementAutomaton(mIteration, diff.getSndComplemented().size(), 0);
+			if(BenchmarkRecord.canDump()) BenchmarkRecord.addComplementAutomaton(mIteration, diff.getSndComplemented().size(), 0);
 		} else {
 			newAbstraction = gbaDiff.getResult();
-			BenchmarkRecord.addComplementAutomaton(mIteration, gbaDiff.getSndComplemented().size(), 0);
+			if(BenchmarkRecord.canDump()) BenchmarkRecord.addComplementAutomaton(mIteration, gbaDiff.getSndComplemented().size(), 0);
 		}
 
 		return newAbstraction;
