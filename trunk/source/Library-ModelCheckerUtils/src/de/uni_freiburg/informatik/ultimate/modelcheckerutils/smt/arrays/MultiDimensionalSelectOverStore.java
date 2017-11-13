@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
@@ -37,6 +38,7 @@ public class MultiDimensionalSelectOverStore {
 
 	private final MultiDimensionalSelect mSelect;
 	private final MultiDimensionalStore mStore;
+	private final Term mTerm;
 	
 	public MultiDimensionalSelectOverStore(final Term term) {
 		final MultiDimensionalSelect select = new MultiDimensionalSelect(term);
@@ -47,12 +49,14 @@ public class MultiDimensionalSelectOverStore {
 				if (store.getIndex().size() == select.getIndex().size()) {
 					mSelect = select;
 					mStore = store;
+					mTerm = term;
 					return;
 				}
 			}
 		}
 		mSelect = null;
 		mStore = null;
+		mTerm = null;
 	}
 
 	public MultiDimensionalSelect getSelect() {
@@ -62,8 +66,10 @@ public class MultiDimensionalSelectOverStore {
 	public MultiDimensionalStore getStore() {
 		return mStore;
 	}
-
 	
+	public Term toTerm() {
+		return mTerm;
+	}
 	
 	public static MultiDimensionalSelectOverStore convert(final Term term) {
 		final MultiDimensionalSelectOverStore mdsos = new MultiDimensionalSelectOverStore(term);
@@ -72,6 +78,25 @@ public class MultiDimensionalSelectOverStore {
 		} else {
 			return mdsos;
 		}
+	}
+	
+	
+	/**
+	 * @return Term that is equivalent to this {@link MultiDimensionalSelectOverStore}
+	 * if the index of the select and the index of the store are distinct.
+	 */
+	public Term constructNotEqualsReplacement(final Script script) {
+		final MultiDimensionalSelect mds = new MultiDimensionalSelect(getStore().getArray(), getSelect().getIndex(),
+				script);
+		return mds.getSelectTerm();
+	}
+	
+	/**
+	 * @return Term that is equivalent to this {@link MultiDimensionalSelectOverStore}
+	 * if the index of the select and the index of the store are equivalent.
+	 */
+	public Term constructEqualsReplacement() {
+		return getStore().getValue();
 	}
 
 }
