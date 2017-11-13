@@ -785,7 +785,7 @@ public class CHandler implements ICHandler {
 				// this .put() is only to have a minimal symbolTableEntry
 				// (containing boogieID) for
 				// translation of the initializer
-				mSymbolTable.put(cDec.getName(), new SymbolTableValue(bId, boogieDec, cDec, globalInBoogie, d));
+				mSymbolTable.put(cDec.getName(), new SymbolTableValue(bId, boogieDec, cDec, globalInBoogie, d, false));
 				cDec.translateInitializer(main);
 
 				ASTType translatedType = null;
@@ -893,7 +893,7 @@ public class CHandler implements ICHandler {
 					globalInBoogie |= mFunctionHandler.noCurrentProcedure();
 				}
 
-				mSymbolTable.put(cDec.getName(), new SymbolTableValue(bId, boogieDec, cDec, globalInBoogie, d));
+				mSymbolTable.put(cDec.getName(), new SymbolTableValue(bId, boogieDec, cDec, globalInBoogie, d, false));
 			}
 			mCurrentDeclaredTypes.pop();
 
@@ -1064,7 +1064,7 @@ public class CHandler implements ICHandler {
 		return result;
 	}
 
-	private int computeSizeOfInitializer(final IASTEqualsInitializer equalsInitializer) {
+	private static int computeSizeOfInitializer(final IASTEqualsInitializer equalsInitializer) {
 		final int intSizeFactor;
 		assert equalsInitializer.getInitializerClause() instanceof IASTInitializerList;
 		final IASTInitializerList initList = (IASTInitializerList) equalsInitializer.getInitializerClause();
@@ -1116,7 +1116,7 @@ public class CHandler implements ICHandler {
 			bId = mSymbolTable.get(cId, loc).getBoogieName();
 			cType = mSymbolTable.get(cId, loc).getCVariable();
 			useHeap = isHeapVar(bId);
-			intFromPtr = mSymbolTable.get(cId, loc).isIntFromPointer;
+			intFromPtr = mSymbolTable.get(cId, loc).isIntFromPointer();
 		} else if (mFunctionHandler.getProcedures().keySet().contains(cId)) {
 			// C11 6.3.2.1.4 says: A function designator is an expression that
 			// has function type.
@@ -3148,7 +3148,7 @@ public class CHandler implements ICHandler {
 				final Expression address = ((HeapLValue) lrVal).getAddress();
 				if (address instanceof IdentifierExpression) {
 					final String lId = ((IdentifierExpression) ((HeapLValue) lrVal).getAddress()).getIdentifier();
-					mSymbolTable.get(mSymbolTable.getCID4BoogieID(lId, loc), loc).isIntFromPointer = true;
+					markAsIntFromPointer(loc, lId);
 				} else {
 					// TODO
 				}
@@ -3157,7 +3157,7 @@ public class CHandler implements ICHandler {
 				final LeftHandSide value = ((LocalLValue) lrVal).getLHS();
 				if (value instanceof VariableLHS) {
 					lId = ((VariableLHS) value).getIdentifier();
-					mSymbolTable.get(mSymbolTable.getCID4BoogieID(lId, loc), loc).isIntFromPointer = true;
+					markAsIntFromPointer(loc, lId);
 				} else {
 					// TODO
 				}
@@ -3222,6 +3222,13 @@ public class CHandler implements ICHandler {
 		} else {
 			throw new AssertionError("Type error: trying to assign to an RValue in Statement" + loc.toString());
 		}
+	}
+
+	private void markAsIntFromPointer(final ILocation loc, final String lId) {
+		final String cId4Boogie = mSymbolTable.getCID4BoogieID(lId, loc);
+		final SymbolTableValue old = mSymbolTable.get(cId4Boogie, loc);
+		final SymbolTableValue newSTV = old.createMarkedIsIntFromPointer();
+		mSymbolTable.put(cId4Boogie, newSTV);
 	}
 
 	/**
@@ -3717,12 +3724,11 @@ public class CHandler implements ICHandler {
 			enumDomain[i] = newValue;
 			mAxioms.add(new Axiom(loc, new Attribute[0],
 					ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, l, newValue)));
-			mSymbolTable
-					.put(fId,
-							new SymbolTableValue(bId, cd,
-									new CDeclaration(typeOfEnumIdentifiers, fId,
-											scConstant2StorageClass(node.getDeclSpecifier().getStorageClass())),
-									true, node)); // FIXME ??
+			mSymbolTable.put(fId,
+					new SymbolTableValue(bId, cd,
+							new CDeclaration(typeOfEnumIdentifiers, fId,
+									scConstant2StorageClass(node.getDeclSpecifier().getStorageClass())),
+							true, node, false)); // FIXME ??
 		}
 		// return result;
 	}

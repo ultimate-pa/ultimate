@@ -1437,7 +1437,7 @@ public class FunctionHandler {
 			final String paramId = main.mNameHandler.getInParamIdentifier(paramDec.getName(), paramDec.getType());
 			in[i] = new VarList(loc, new String[] { paramId }, type);
 			main.mCHandler.getSymbolTable().put(paramDec.getName(),
-					new SymbolTableValue(paramId, null, paramDec, false, null));
+					new SymbolTableValue(paramId, null, paramDec, false, null, false));
 		}
 		updateCFunction(methodName, null, paramDecs, null, false);
 		return in;
@@ -1539,7 +1539,7 @@ public class FunctionHandler {
 				// Overwrite the information in the symbolTable for cId, s.t. it
 				// points to the locally declared variable.
 				main.mCHandler.getSymbolTable().put(cId,
-						new SymbolTableValue(auxInvar, inVarDecl, new CDeclaration(cvar, cId), false, paramDec));
+						new SymbolTableValue(auxInvar, inVarDecl, new CDeclaration(cvar, cId), false, paramDec, false));
 			}
 		}
 	}
