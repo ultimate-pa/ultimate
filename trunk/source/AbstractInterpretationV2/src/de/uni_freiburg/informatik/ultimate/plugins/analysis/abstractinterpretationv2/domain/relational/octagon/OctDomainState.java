@@ -385,6 +385,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState> {
 			newState.mVariables.add(newVar);
 
 			if (newState.mMapNumericVarToIndex.containsKey(oldVar)) {
+				unrefOtherMapNumericVarToIndex(newState);
 				final Integer idx = newState.mMapNumericVarToIndex.remove(oldVar);
 				newState.mMapNumericVarToIndex.put(newVar, idx);
 				if (mNumericNonIntVars.contains(oldVar)) {
