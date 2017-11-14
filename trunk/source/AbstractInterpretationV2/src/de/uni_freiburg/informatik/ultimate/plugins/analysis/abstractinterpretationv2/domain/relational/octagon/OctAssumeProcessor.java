@@ -30,7 +30,10 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
@@ -41,9 +44,16 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IfThenElseExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPostOperator;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalDomainState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.typeutils.TypeUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlockFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence.Origin;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -55,9 +65,17 @@ public class OctAssumeProcessor {
 
 	/** Post operator. */
 	private final OctPostOperator mPostOp;
+	private final ILogger mLogger;
+	private final IAbstractPostOperator<IntervalDomainState, IcfgEdge> mIntervalPostOperator;
+	private final CodeBlockFactory mCodeBlockFactory;
 
-	public OctAssumeProcessor(final OctPostOperator postOperator) {
+	public OctAssumeProcessor(final ILogger logger, final OctPostOperator postOperator,
+			final IAbstractPostOperator<IntervalDomainState, IcfgEdge> fallBackPostOperator,
+			final CodeBlockFactory codeBlockFactory) {
 		mPostOp = postOperator;
+		mLogger = logger;
+		mIntervalPostOperator = fallBackPostOperator;
+		mCodeBlockFactory = codeBlockFactory;
 	}
 
 	/**
@@ -308,7 +326,8 @@ public class OctAssumeProcessor {
 		boolean strictRelation = false;
 		switch (relOp) {
 		case COMPEQ:
-			return processAffineEqZero(affLeft.subtract(affRight), intRelation, oldStates);
+			return processAffineEqZero(mLogger, affLeft.subtract(affRight), intRelation, oldStates, binExpr,
+					mIntervalPostOperator, mCodeBlockFactory);
 		case COMPNEQ:
 			return processAffineNeZero(affLeft.subtract(affRight), intRelation, oldStates);
 		case COMPLT:
@@ -403,10 +422,17 @@ public class OctAssumeProcessor {
 	 *            The operands/variables are integers.
 	 * @param oldStates
 	 *            Pre-states -- may be modified in-place.
+	 * @param codeBlockFactory
+	 *            The code block factory.
+	 * @param binExpr
+	 *            The original expression.
+	 * @param statement
 	 * @return Post-states
 	 */
-	private static List<OctDomainState> processAffineEqZero(AffineExpression affExpr, final boolean intRelation,
-			final List<OctDomainState> oldStates) {
+	private static List<OctDomainState> processAffineEqZero(final ILogger logger, AffineExpression affExpr,
+			final boolean intRelation, final List<OctDomainState> oldStates, final Expression originalExpression,
+			final IAbstractPostOperator<IntervalDomainState, IcfgEdge> fallBackPostOperator,
+			final CodeBlockFactory codeBlockFactory) {
 
 		if (affExpr.isConstant()) {
 			if (affExpr.getConstant().signum() != 0) {
@@ -415,12 +441,41 @@ public class OctAssumeProcessor {
 			}
 			// (assume 0 == 0) is equivalent to (assume true)
 			return oldStates;
-
 		}
 
+		final AffineExpression backupExpr = affExpr;
 		if (affExpr.getCoefficients().size() > 2 || (affExpr = affExpr.unitCoefficientForm()) == null) {
-			// TODO: Deal with certain forms (project to intervalls?)
-			return oldStates;
+			// TODO: Deal with certain forms (project to intervals?)
+			logger.debug("Unable to handle affine expression " + backupExpr
+					+ " == 0 with Octagons. Projecting to intervals.");
+			final List<IntervalDomainState> intervalStates = oldStates.stream()
+					.map(state -> IntervalProjection.projectOctagonStateToIntervalDomainState(logger, state))
+					.collect(Collectors.toList());
+			final AssumeStatement assume = new AssumeStatement(originalExpression.getLoc(), originalExpression);
+			final StatementSequence assumeBlock = codeBlockFactory.constructStatementSequence(null, null,
+					Collections.singletonList(assume), Origin.IMPLEMENTATION);
+			logger.debug("Projection of current OctDomainState to Intervals: " + intervalStates);
+			logger.debug("Applying the following statement to each state: " + BoogiePrettyPrinter.print(assume));
+
+			final List<IntervalDomainState> computedIntervalPost = new ArrayList<>();
+			for (final IntervalDomainState iState : intervalStates) {
+				computedIntervalPost.addAll(fallBackPostOperator.apply(iState, assumeBlock));
+			}
+			logger.debug("Resulting interval states: " + computedIntervalPost);
+			logger.debug("Projecting back to octagons.");
+
+			final List<OctDomainState> returnStates = new ArrayList<>();
+
+			final Set<IProgramVarOrConst> relevantVars = backupExpr.getCoefficients().keySet();
+
+			for (final OctDomainState oldState : oldStates) {
+				for (final IntervalDomainState iState : computedIntervalPost) {
+					final OctDomainState newOld = oldState.deepCopy();
+					IntervalProjection.projectIntervalStateToOctagon(logger, iState, newOld, relevantVars);
+					returnStates.add(oldState.intersect(newOld));
+				}
+			}
+			return returnStates;
 		}
 
 		// from now on handle (affExpr - c == 0) as (affExpr == c) ----------------

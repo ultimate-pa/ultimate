@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractDomain;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IVariableProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieSymbolTableVariableProvider;
@@ -59,6 +60,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.empty.EmptyDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.congruence.CongruenceDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalDomain;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalDomainState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.sign.SignDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon.OctagonDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon.OctagonDomain.LiteralCollectorFactory;
@@ -141,8 +143,11 @@ public class FixpointEngineParameterFactory {
 			return new IntervalDomain(logger, mSymbolTable, mLiteralCollector.create().getLiteralCollection(),
 					mServices, mBoogieIcfg, mVariableProvider);
 		} else if (OctagonDomain.class.getSimpleName().equals(selectedDomain)) {
-			return new OctagonDomain(logger, mSymbolTable, mLiteralCollector, mServices, mBoogieIcfg,
-					mVariableProvider);
+			final IAbstractPostOperator<IntervalDomainState, IcfgEdge> intervalPostOperator =
+					new IntervalDomain(logger, mSymbolTable, mLiteralCollector.create().getLiteralCollection(),
+							mServices, mBoogieIcfg, mVariableProvider).getPostOperator();
+			return new OctagonDomain(logger, mSymbolTable, mLiteralCollector, mServices, mBoogieIcfg, mVariableProvider,
+					intervalPostOperator);
 		} else if (CongruenceDomain.class.getSimpleName().equals(selectedDomain)) {
 			return new CongruenceDomain(logger, mServices, mSymbolTable, mBoogieIcfg, mVariableProvider);
 		} else if (CompoundDomain.class.getSimpleName().equals(selectedDomain)) {
@@ -162,8 +167,11 @@ public class FixpointEngineParameterFactory {
 						mLiteralCollector.create().getLiteralCollection(), mServices, mBoogieIcfg, mVariableProvider));
 			}
 			if (prefs.getBoolean(CompoundDomainPreferences.LABEL_USE_OCTAGON_DOMAIN)) {
+				final IAbstractPostOperator<IntervalDomainState, IcfgEdge> intervalPostOperator =
+						new IntervalDomain(logger, mSymbolTable, mLiteralCollector.create().getLiteralCollection(),
+								mServices, mBoogieIcfg, mVariableProvider).getPostOperator();
 				domainList.add(new OctagonDomain(logger, mSymbolTable, mLiteralCollector, mServices, mBoogieIcfg,
-						mVariableProvider));
+						mVariableProvider, intervalPostOperator));
 			}
 			return new CompoundDomain(mServices, domainList, mBoogieIcfg);
 		}

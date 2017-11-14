@@ -578,7 +578,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState> {
 	 *            State with same numeric variables, possibly in another order.
 	 * @return {@code array[index of numeric variable from this state] = index of numeric variable from other state} if
 	 *         permuted, {@code null} otherwise.
-	 * @deprecated As of release 2017-04-21, a constant order of variables is enforced for al octagons.
+	 * @deprecated As of release 2017-04-21, a constant order of variables is enforced for all octagons.
 	 */
 	@Deprecated
 	private int[] matrixPermutationMap(final OctDomainState other) {
@@ -1220,6 +1220,24 @@ public final class OctDomainState implements IAbstractState<OctDomainState> {
 		assert assertNotBottomBeforeAssign();
 		mIsBottom = TVBool.UNCHECKED;
 		mBooleanAbstraction.put(var, mBooleanAbstraction.get(var).intersect(value));
+	}
+
+	/**
+	 * Obtains the boolean value for a given program var.
+	 *
+	 * @param var
+	 *            The var to obtain the value for.
+	 * @return The corresponding {@link BoolValue} representing the boolean value.
+	 */
+	protected BoolValue getBoolValue(final IProgramVarOrConst var) {
+		if (!SmtSortUtils.isBoolSort(var.getSort().getRealSort())) {
+			throw new UnsupportedOperationException("Not a boolean: " + var.getGloballyUniqueId());
+		}
+		if (!mBooleanAbstraction.containsKey(var)) {
+			throw new UnsupportedOperationException(
+					"Boolean variable " + var.getGloballyUniqueId() + " not found in this state.");
+		}
+		return mBooleanAbstraction.get(var);
 	}
 
 	/**

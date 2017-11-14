@@ -50,10 +50,12 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalDomainState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.CallInfoCache;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.CallInfoCache.CallInfo;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlockFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -74,7 +76,9 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Ic
 
 	public OctPostOperator(final ILogger logger, final BoogieSymbolTable symbolTable, final CfgSmtToolkit cfgSmtToolkit,
 			final int maxParallelStates, final boolean fallbackAssignIntervalProjection,
-			final IBoogieSymbolTableVariableProvider bpl2smtSymbolTable) {
+			final IBoogieSymbolTableVariableProvider bpl2smtSymbolTable,
+			final IAbstractPostOperator<IntervalDomainState, IcfgEdge> fallBackPostOperator,
+			final CodeBlockFactory codeBlockFactory) {
 		if (maxParallelStates < 1) {
 			throw new IllegalArgumentException("MaxParallelStates needs to be > 0, was " + maxParallelStates);
 		}
@@ -88,7 +92,7 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Ic
 		mHavocBundler = new HavocBundler();
 		mExprTransformer = new ExpressionTransformer(bpl2smtSymbolTable);
 		mStatementProcessor = new OctStatementProcessor(this);
-		mAssumeProcessor = new OctAssumeProcessor(this);
+		mAssumeProcessor = new OctAssumeProcessor(mLogger, this, fallBackPostOperator, codeBlockFactory);
 		mCallInfoCache = new CallInfoCache(cfgSmtToolkit, symbolTable);
 	}
 

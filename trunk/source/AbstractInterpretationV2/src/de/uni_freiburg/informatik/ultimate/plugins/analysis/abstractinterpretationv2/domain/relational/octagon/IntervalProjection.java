@@ -28,8 +28,11 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon;
 
 import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
@@ -37,9 +40,14 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieSymbolTableVariableProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalDomainState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalDomainValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.typeutils.TypeUtils;
@@ -187,4 +195,103 @@ public class IntervalProjection {
 		return resultInterval;
 	}
 
+	/**
+	 * Project an octagon to intervals and returns a new {@link IntervalDomainState}.
+	 *
+	 * @param state
+	 *            The given octagon state.
+	 * @return A new {@link IntervalDomainState} representing the projection of the octagon to intervals.
+	 */
+	protected static IntervalDomainState projectOctagonStateToIntervalDomainState(final ILogger logger,
+			final OctDomainState state) {
+		final Set<IProgramVarOrConst> variables = state.getVariables();
+		final Map<IProgramVarOrConst, IntervalDomainValue> numericValuesMap = new HashMap<>();
+		final Map<IProgramVarOrConst, BooleanValue> booleanValuesMap = new HashMap<>();
+
+		for (final IProgramVarOrConst var : variables) {
+			final Sort realSort = var.getSort().getRealSort();
+
+			if (SmtSortUtils.isNumericSort(realSort)) {
+				final IntervalDomainValue interval = state.projectToInterval(var).toIvlInterval();
+				numericValuesMap.put(var, interval);
+			} else if (SmtSortUtils.isBoolSort(realSort)) {
+				final BoolValue bool = state.getBoolValue(var);
+				BooleanValue boolValue;
+				switch (bool) {
+				case BOT:
+					boolValue = BooleanValue.BOTTOM;
+					break;
+				case FALSE:
+					boolValue = BooleanValue.FALSE;
+					break;
+				case TOP:
+					boolValue = BooleanValue.TOP;
+					break;
+				case TRUE:
+					boolValue = BooleanValue.TRUE;
+					break;
+				default:
+					throw new UnsupportedOperationException("Unsupported boolean value: " + bool);
+				}
+				booleanValuesMap.put(var, boolValue);
+			} else {
+				throw new UnsupportedOperationException("Unsupported sort: " + var.getSort());
+			}
+		}
+
+		return new IntervalDomainState(logger, variables, numericValuesMap, booleanValuesMap, state.isBottom());
+	}
+
+	/**
+	 * Projects the given {@link IntervalDomainState} to the given {@link OctDomainState}.
+	 *
+	 * @param logger
+	 *            The logger.
+	 * @param state
+	 *            The {@link IntervalDomainState} to apply to the {@link OctDomainState}.
+	 * @param previousOctState
+	 *            The {@link OctDomainState}. <b><u>This state is modified by this method!</b></u>
+	 * @param restrictedVars
+	 *            If not null, only the variables specified here will be updated in the previous state.
+	 */
+	protected static void projectIntervalStateToOctagon(final ILogger logger, final IntervalDomainState state,
+			final OctDomainState previousOctState, final Set<IProgramVarOrConst> restrictedVars) {
+
+		final Set<IProgramVarOrConst> variables = state.getVariables();
+
+		for (final IProgramVarOrConst var : variables) {
+			if (restrictedVars != null && !restrictedVars.contains(var)) {
+				continue;
+			}
+
+			final Sort realSort = var.getSort().getRealSort();
+
+			if (SmtSortUtils.isNumericSort(realSort)) {
+				final IntervalDomainValue interval = state.getValue(var);
+				previousOctState.assignNumericVarInterval(var, new OctInterval(interval));
+			} else if (SmtSortUtils.isBoolSort(realSort)) {
+				final BooleanValue bool = state.getBooleanValue(var);
+				BoolValue boolValue;
+				switch (bool) {
+				case BOTTOM:
+					boolValue = BoolValue.BOT;
+					break;
+				case FALSE:
+					boolValue = BoolValue.FALSE;
+					break;
+				case TOP:
+					boolValue = BoolValue.TOP;
+					break;
+				case TRUE:
+					boolValue = BoolValue.TRUE;
+					break;
+				default:
+					throw new UnsupportedOperationException("Unsupported bool value: " + bool);
+				}
+				previousOctState.assignBooleanVar(var, boolValue);
+			} else {
+				throw new UnsupportedOperationException("Unsupported sort: " + realSort);
+			}
+		}
+	}
 }
