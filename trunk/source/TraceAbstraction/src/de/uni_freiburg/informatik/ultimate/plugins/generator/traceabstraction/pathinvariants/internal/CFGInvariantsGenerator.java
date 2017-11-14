@@ -463,6 +463,18 @@ public final class CFGInvariantsGenerator {
 		result.add(1, maxNumOfConjuncts);
 		return result;
 	}
+	
+	/**
+	 * Compute a predicate via abstract interpretation for each location of the given path program.
+	 */
+	private Map<IcfgLocation, IPredicate> generatePredicatesViaAbstractInterpretation(final IIcfg<IcfgLocation> pathProgram) {
+		Map<IcfgLocation, IPredicate> locs2Predicates = null;
+		// allow for 20% of the remaining time
+		final IProgressAwareTimer timer = mServices.getProgressMonitorService().getChildTimer(0.2);
+		final IAbstractInterpretationResult<?, IcfgEdge, IcfgLocation> result = AbstractInterpreter.run(pathProgram, timer, mServices);
+		return locs2Predicates;
+	}
+
 
 	/**
 	 * Computes for each location of the given path program a set of variables which are <emph> live </emph> on that
