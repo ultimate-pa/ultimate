@@ -47,17 +47,20 @@ public class RelevanceInformation implements IRelevanceInformation
 	private final boolean mCriterion1UC;
 	private final boolean mCriterion1GF;
 	private final boolean mCriterion2UC;
-	private final boolean mCriterion2GF;	
+	private final boolean mCriterion2GF;
+	private final boolean mCriterion3DB;
 	
 	
 	public RelevanceInformation(List<IAction> actions, boolean criterion1uc, 
-			boolean criterion1gf, boolean criterion2uc, boolean criterion2gf) {
+			boolean criterion1gf, boolean criterion2uc, boolean criterion2gf,
+			boolean criterion3db) {
 		super();
 		mActions = actions;
 		mCriterion1UC = criterion1uc;
 		mCriterion1GF = criterion1gf;
 		mCriterion2UC = criterion2uc;
 		mCriterion2GF = criterion2gf;
+		mCriterion3DB = criterion3db;
 	}
 	
 	public List<IAction> getActions() {
@@ -78,6 +81,9 @@ public class RelevanceInformation implements IRelevanceInformation
 	public boolean getCriterion2GF(){
 		return mCriterion2GF;
 	}
+	public boolean getCriterion3DB() {
+		return mCriterion3DB;
+	}
 	
 
 
@@ -89,6 +95,7 @@ public class RelevanceInformation implements IRelevanceInformation
 		boolean criterion1gf = getCriterion1GF();
 		boolean criterion2uc = getCriterion2UC();
 		boolean criterion2gf = getCriterion2GF();
+		boolean criterion3db = getCriterion3DB();
 		final List<IAction> actions = new ArrayList<>();
 		for (final IRelevanceInformation iri : relevanceInformations) {
 			final RelevanceInformation ri = (RelevanceInformation) iri;
@@ -96,16 +103,18 @@ public class RelevanceInformation implements IRelevanceInformation
 			criterion1gf |= ri.getCriterion1GF();
 			criterion2uc |= ri.getCriterion2UC();
 			criterion2gf |= ri.getCriterion2GF();
+			criterion3db |= ri.getCriterion3DB();
 			actions.addAll(ri.getActions());
 		}
-		return new RelevanceInformation(actions, criterion1uc, criterion1gf, criterion2uc, criterion2gf);
+		return new RelevanceInformation(actions, criterion1uc, criterion1gf, criterion2uc, criterion2gf, criterion3db);
 	}
 
 	@Override
 	public String getShortString() {
-		
-		if (!getCriterion1UC() && !getCriterion1GF() && !getCriterion2UC() && !getCriterion2GF()) {
+		if (!getCriterion1UC() && !getCriterion1GF() && !getCriterion2UC() && !getCriterion2GF() && !getCriterion3DB()) {
 			return "-";
+		} else if(getCriterion3DB()){
+			return "$";
 		} else {
 			final StringBuilder sb = new StringBuilder();
 			if (getCriterion1UC()) {
