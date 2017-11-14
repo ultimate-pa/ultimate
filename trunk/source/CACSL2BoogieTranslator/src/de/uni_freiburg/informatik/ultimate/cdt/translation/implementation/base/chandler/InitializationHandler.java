@@ -505,7 +505,8 @@ public class InitializationHandler {
 							.setLRVal(new RValue(auxVar.getExp(), fieldType))
 							.addDeclaration(auxVar.getVarDec())
 							.putAuxVar(auxVar.getVarDec(), loc)
-							// TODO overapprox flag here?
+							.addOverapprox(new Overapprox("initialize union -- havoccing a field without explictit "
+									+ "initializer", loc))
 							.build();
 				} else {
 					fieldDefaultInit =
@@ -834,17 +835,6 @@ public class InitializationHandler {
 		 */
 		private final List<InitializerInfo> mStructFieldInitInfos;
 
-//		/**
-//		 *
-//		 * @param initializerResult
-//		 * @param targetCType
-//		 */
-//		public InitializerInfo(final ILocation loc, final Dispatcher main, final MemoryHandler memoryHandler,
-//				final StructHandler structHandler, final AExpressionTranslation expressionTranslation,
-//				final InitializerResult initializerResult, final CType targetCType) {
-//			convert(loc, main, memoryHandler, structHandler, expressionTranslation, initializerResult, targetCType);
-//		}
-
 		private InitializerInfo(final ExpressionResult expressionResult) {
 			mExpressionResult = expressionResult;
 			mOverApprs = expressionResult.getOverapprs();
@@ -865,7 +855,6 @@ public class InitializationHandler {
 			mArrayIndexToInitInfo = null;
 			mStructFieldInitInfos = structFieldInitInfos;
 		}
-
 
 		/**
 		 * Converts a given InitializerResult to an InitializerInfo with respect to a given target CType.
@@ -892,11 +881,6 @@ public class InitializationHandler {
 				main.mCHandler.convert(loc, expressionResultSwitched, targetCType);
 
 				return new InitializerInfo(expressionResultSwitched);
-//			} else if (targetCType instanceof CUnion) {
-//				if (initializerResult.getChildren().size() > 1) {
-//					throw new UnsupportedOperationException("TODO"); //TODO
-//				}
-//				..
 			} else if (targetCType instanceof CStruct) {
 				// this is also used for union initializers
 				return constructStructFieldInitInfos(loc, main, memoryHandler, structHandler, expressionTranslation,
@@ -975,13 +959,10 @@ public class InitializationHandler {
 
 			final Map<List<Integer>, InitializerInfo> arrayIndexToInitInfo = new HashMap<>();
 
-//			final Stack<Iterator<InitializerResult>> iteratorStack = new Stack<>();
 			final Stack<Deque<InitializerResult>> iteratorStack = new Stack<>();
-//			iteratorStack.push(initializerResult.getChildren().iterator());
 			iteratorStack.push(new ArrayDeque<>(initializerResult.getChildren()));
 
 			int currentInitializerLevel = 1;
-//			boolean currentLevelHasBeenTouched = false;
 
 			while (!iteratorStack.isEmpty()) {
 				if (!iteratorStack.peek().isEmpty()) {
@@ -1038,7 +1019,6 @@ public class InitializationHandler {
 					nextIndexToInitialize = incrementArrayIndex(nextIndexToInitialize, arrayBounds);
 				} else {
 					iteratorStack.pop();
-//					currentInitializerLevel--;
 					currentInitializerLevel = iteratorStack.size();
 					if (iteratorStack.isEmpty()) {
 						break;
@@ -1086,7 +1066,6 @@ public class InitializationHandler {
 			final int lastPos = arrayIndex.size() - 1;
 
 			if (arrayIndex.get(posToIncrement) >= arrayBounds.get(posToIncrement) - 1) {
-//				throw new IllegalStateException("cannot increment array index beyond array dimensions");
 				return null;
 			}
 
@@ -1136,7 +1115,6 @@ public class InitializationHandler {
 				}
 
 				if (posToIncrement == - 1) {
-//					throw new IllegalStateException("initializer gives more values than the array has dimensions !?");
 					// there is no next index withing the given array bounds
 					return null;
 				}
@@ -1184,12 +1162,6 @@ public class InitializationHandler {
 		}
 
 		public Collection<Overapprox> getOverapprs() {
-			//		/*
-//		 * We may create new Boogie statements in this method. Those need to get the overapproximation flags from the
-//		 * initializer if any are present.
-//		 * The variable overAppr holds them.
-//		 */
-//		final Collection<Overapprox> overAppr = initInfo.getOverapprs();
 			return mOverApprs;
 		}
 

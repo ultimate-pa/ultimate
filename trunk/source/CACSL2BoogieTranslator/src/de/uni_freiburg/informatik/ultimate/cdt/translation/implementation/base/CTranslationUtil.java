@@ -100,7 +100,7 @@ public class CTranslationUtil {
 
 	public static LocalLValue constructArrayAccessLhs(final ILocation loc, final LocalLValue arrayLhsToInitialize,
 			final List<Integer> arrayIndex, final AExpressionTranslation expressionTranslation) {
-		final CArray cArrayType = (CArray) arrayLhsToInitialize.getCType();
+		final CArray cArrayType = (CArray) arrayLhsToInitialize.getCType().getUnderlyingType();
 
 		assert cArrayType.getDimensions().length == arrayIndex.size();
 
@@ -116,7 +116,8 @@ public class CTranslationUtil {
 		return new LocalLValue(alhs, cArrayType.getValueType());
 	}
 
-	public static LRValue constructOffHeapStructAccessLhs(final ILocation loc, final LocalLValue structBaseLhs, final int i) {
+	public static LRValue constructOffHeapStructAccessLhs(final ILocation loc, final LocalLValue structBaseLhs,
+			final int i) {
 		final CStruct cStructType = (CStruct) structBaseLhs.getCType().getUnderlyingType();
 		final String fieldName = cStructType.getFieldIds()[i];
 		final StructLHS lhs = ExpressionFactory.constructStructAccessLhs(loc, structBaseLhs.getLHS(), fieldName);

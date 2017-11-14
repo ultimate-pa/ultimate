@@ -141,7 +141,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransla
  * @author Alexander Nutz
  */
 public class FunctionHandler {
-	private static final String MSG_ONLY_ONE_ARG = " has only one argument";
+	private static final String MSG_ONLY_ONE_ARG = " takes (exactly) one argument";
 
 	/**
 	 * A map from procedure name to procedure declaration.
