@@ -31,10 +31,12 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieVisitor;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
@@ -43,12 +45,15 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IfThenElseExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPostOperator;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieSymbolTableVariableProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalDomainState;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalPostOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.typeutils.TypeUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlockFactory;
@@ -68,14 +73,16 @@ public class OctAssumeProcessor {
 	private final ILogger mLogger;
 	private final IAbstractPostOperator<IntervalDomainState, IcfgEdge> mIntervalPostOperator;
 	private final CodeBlockFactory mCodeBlockFactory;
+	private final IBoogieSymbolTableVariableProvider mVariableProvider;
 
 	public OctAssumeProcessor(final ILogger logger, final OctPostOperator postOperator,
 			final IAbstractPostOperator<IntervalDomainState, IcfgEdge> fallBackPostOperator,
-			final CodeBlockFactory codeBlockFactory) {
+			final CodeBlockFactory codeBlockFactory, final IBoogieSymbolTableVariableProvider variableProvider) {
 		mPostOp = postOperator;
 		mLogger = logger;
 		mIntervalPostOperator = fallBackPostOperator;
 		mCodeBlockFactory = codeBlockFactory;
+		mVariableProvider = variableProvider;
 	}
 
 	/**
@@ -295,15 +302,23 @@ public class OctAssumeProcessor {
 		final List<OctDomainState> newStates = new ArrayList<>();
 		final IfExpressionTree ifExprTree = mPostOp.getExprTransformer().removeIfExprsCached(binExpr);
 		for (final Pair<Expression, List<OctDomainState>> leaf : ifExprTree.assumeLeafs(mPostOp, oldStates)) {
-			newStates.addAll(
-					processNumericRelationWithoutIfs((BinaryExpression) leaf.getFirst(), isNegated, leaf.getSecond()));
+			newStates.addAll(processNumericRelationWithoutIfs(mLogger, (BinaryExpression) leaf.getFirst(), isNegated,
+					leaf.getSecond(), mVariableProvider, mIntervalPostOperator, mCodeBlockFactory));
 		}
 		return mPostOp.joinDownToMax(newStates);
 	}
 
-	/** @see #processNumericRelation(BinaryExpression, boolean, List) */
-	private List<OctDomainState> processNumericRelationWithoutIfs(final BinaryExpression binExpr,
-			final boolean isNegated, final List<OctDomainState> oldStates) {
+	/**
+	 * @param variableProvider
+	 * @param codeBlockFactory
+	 * @param fallBackPostOperator
+	 * @see #processNumericRelation(BinaryExpression, boolean, List)
+	 */
+	private List<OctDomainState> processNumericRelationWithoutIfs(final ILogger logger, final BinaryExpression binExpr,
+			final boolean isNegated, final List<OctDomainState> oldStates,
+			final IBoogieSymbolTableVariableProvider variableProvider,
+			final IAbstractPostOperator<IntervalDomainState, IcfgEdge> fallBackPostOperator,
+			final CodeBlockFactory codeBlockFactory) {
 
 		Operator relOp = binExpr.getOperator();
 		if (relOp == BinaryExpression.Operator.COMPPO) {
@@ -318,8 +333,12 @@ public class OctAssumeProcessor {
 		final AffineExpression affLeft = mPostOp.getExprTransformer().affineExprCached(left);
 		final AffineExpression affRight = mPostOp.getExprTransformer().affineExprCached(right);
 		if (affLeft == null || affRight == null) {
-			// TODO (?) project to intervals and try to deduce (assume false) or even new intervals
-			return oldStates; // safe over-approximation
+			logger.debug("Unable to handle affine expression " + binExpr + " with Octagons. Projecting to intervals.");
+			final Set<IProgramVarOrConst> relevantVars =
+					new VariableCollector(binExpr, variableProvider).getVariables();
+
+			return projectAssumeOnIntervals(logger, oldStates, binExpr, fallBackPostOperator, codeBlockFactory,
+					relevantVars);
 		}
 		assert left.getType().equals(right.getType());
 		final boolean intRelation = TypeUtils.isNumericInt(left.getType());
@@ -445,37 +464,10 @@ public class OctAssumeProcessor {
 
 		final AffineExpression backupExpr = affExpr;
 		if (affExpr.getCoefficients().size() > 2 || (affExpr = affExpr.unitCoefficientForm()) == null) {
-			// TODO: Deal with certain forms (project to intervals?)
 			logger.debug("Unable to handle affine expression " + backupExpr
 					+ " == 0 with Octagons. Projecting to intervals.");
-			final List<IntervalDomainState> intervalStates = oldStates.stream()
-					.map(state -> IntervalProjection.projectOctagonStateToIntervalDomainState(logger, state))
-					.collect(Collectors.toList());
-			final AssumeStatement assume = new AssumeStatement(originalExpression.getLoc(), originalExpression);
-			final StatementSequence assumeBlock = codeBlockFactory.constructStatementSequence(null, null,
-					Collections.singletonList(assume), Origin.IMPLEMENTATION);
-			logger.debug("Projection of current OctDomainState to Intervals: " + intervalStates);
-			logger.debug("Applying the following statement to each state: " + BoogiePrettyPrinter.print(assume));
-
-			final List<IntervalDomainState> computedIntervalPost = new ArrayList<>();
-			for (final IntervalDomainState iState : intervalStates) {
-				computedIntervalPost.addAll(fallBackPostOperator.apply(iState, assumeBlock));
-			}
-			logger.debug("Resulting interval states: " + computedIntervalPost);
-			logger.debug("Projecting back to octagons.");
-
-			final List<OctDomainState> returnStates = new ArrayList<>();
-
-			final Set<IProgramVarOrConst> relevantVars = backupExpr.getCoefficients().keySet();
-
-			for (final OctDomainState oldState : oldStates) {
-				for (final IntervalDomainState iState : computedIntervalPost) {
-					final OctDomainState newOld = oldState.deepCopy();
-					IntervalProjection.projectIntervalStateToOctagon(logger, iState, newOld, relevantVars);
-					returnStates.add(oldState.intersect(newOld));
-				}
-			}
-			return returnStates;
+			return projectAssumeOnIntervals(logger, oldStates, originalExpression, fallBackPostOperator,
+					codeBlockFactory, backupExpr.getCoefficients().keySet());
 		}
 
 		// from now on handle (affExpr - c == 0) as (affExpr == c) ----------------
@@ -506,6 +498,55 @@ public class OctAssumeProcessor {
 			return oldStates; // safe over-approximation
 
 		}
+	}
+
+	/**
+	 * Projects a given expression on intervals, computes the interval post, and projects back on the original octagon
+	 * state in the hopes to deduce some more values.
+	 *
+	 * @param logger
+	 *            The logger.
+	 * @param oldStates
+	 *            The old {@link OctDomainState}s.
+	 * @param originalExpression
+	 *            The expression to assume.
+	 * @param fallBackPostOperator
+	 *            The post operator of the fall back domain, here an {@link IntervalPostOperator}.
+	 * @param codeBlockFactory
+	 *            The factory to construct code blocks.
+	 * @param backupExpr
+	 * @return
+	 */
+	private static List<OctDomainState> projectAssumeOnIntervals(final ILogger logger,
+			final List<OctDomainState> oldStates, final Expression originalExpression,
+			final IAbstractPostOperator<IntervalDomainState, IcfgEdge> fallBackPostOperator,
+			final CodeBlockFactory codeBlockFactory, final Set<IProgramVarOrConst> relevantVars) {
+		final List<IntervalDomainState> intervalStates = oldStates.stream()
+				.map(state -> IntervalProjection.projectOctagonStateToIntervalDomainState(logger, state))
+				.collect(Collectors.toList());
+		final AssumeStatement assume = new AssumeStatement(originalExpression.getLoc(), originalExpression);
+		final StatementSequence assumeBlock = codeBlockFactory.constructStatementSequence(null, null,
+				Collections.singletonList(assume), Origin.IMPLEMENTATION);
+		logger.debug("Projection of current OctDomainState to Intervals: " + intervalStates);
+		logger.debug("Applying the following statement to each state: " + BoogiePrettyPrinter.print(assume));
+
+		final List<IntervalDomainState> computedIntervalPost = new ArrayList<>();
+		for (final IntervalDomainState iState : intervalStates) {
+			computedIntervalPost.addAll(fallBackPostOperator.apply(iState, assumeBlock));
+		}
+		logger.debug("Resulting interval states: " + computedIntervalPost);
+		logger.debug("Projecting back to octagons.");
+
+		final List<OctDomainState> returnStates = new ArrayList<>();
+
+		for (final OctDomainState oldState : oldStates) {
+			for (final IntervalDomainState iState : computedIntervalPost) {
+				final OctDomainState newOld = oldState.deepCopy();
+				IntervalProjection.projectIntervalStateToOctagon(logger, iState, newOld, relevantVars);
+				returnStates.add(oldState.intersect(newOld));
+			}
+		}
+		return returnStates;
 	}
 
 	/**
@@ -578,4 +619,36 @@ public class OctAssumeProcessor {
 		}
 	}
 
+	/**
+	 * Collects all variables of a given Boogie {@link Expression};
+	 *
+	 * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
+	 *
+	 */
+	private static class VariableCollector extends BoogieVisitor {
+		private final Set<IProgramVarOrConst> mVariables;
+		private final IBoogieSymbolTableVariableProvider mVariableProvider;
+
+		private VariableCollector(final Expression expression,
+				final IBoogieSymbolTableVariableProvider variableProvider) {
+			mVariables = new HashSet<>();
+			mVariableProvider = variableProvider;
+			processExpression(expression);
+		}
+
+		private Set<IProgramVarOrConst> getVariables() {
+			return mVariables;
+		}
+
+		@Override
+		protected void visit(final VariableLHS lhs) {
+			mVariables.add(mVariableProvider.getBoogieVar(lhs.getIdentifier(), lhs.getDeclarationInformation(), false));
+		}
+
+		@Override
+		protected void visit(final IdentifierExpression expr) {
+			mVariables
+					.add(mVariableProvider.getBoogieVar(expr.getIdentifier(), expr.getDeclarationInformation(), false));
+		}
+	}
 }

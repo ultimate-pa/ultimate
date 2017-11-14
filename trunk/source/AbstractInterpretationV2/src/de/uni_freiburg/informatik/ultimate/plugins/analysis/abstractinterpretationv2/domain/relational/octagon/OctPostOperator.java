@@ -92,7 +92,8 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Ic
 		mHavocBundler = new HavocBundler();
 		mExprTransformer = new ExpressionTransformer(bpl2smtSymbolTable);
 		mStatementProcessor = new OctStatementProcessor(this);
-		mAssumeProcessor = new OctAssumeProcessor(mLogger, this, fallBackPostOperator, codeBlockFactory);
+		mAssumeProcessor =
+				new OctAssumeProcessor(mLogger, this, fallBackPostOperator, codeBlockFactory, bpl2smtSymbolTable);
 		mCallInfoCache = new CallInfoCache(cfgSmtToolkit, symbolTable);
 	}
 
