@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructConstructor;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.StructLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
@@ -399,7 +400,13 @@ public class ExpressionFactory extends BoogieTransformer {
 
 	public static StructConstructor constructStructConstructor(final ILocation loc, final String[] fieldIds,
 			final Expression[] fieldValues) {
+		assert fieldIds.length == fieldValues.length;
 		// TODO: infer BoogieType and add to constructor parameters
 		return new StructConstructor(loc, fieldIds, fieldValues);
+	}
+
+	public static StructLHS constructStructAccessLhs(final ILocation loc, final LeftHandSide lhs, final String field) {
+		// TODO: infer BoogieType and add to constructor parameters
+		return new StructLHS(loc, lhs, field);
 	}
 }

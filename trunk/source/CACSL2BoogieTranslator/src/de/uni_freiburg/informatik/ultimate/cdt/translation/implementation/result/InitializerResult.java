@@ -107,4 +107,8 @@ public class InitializerResult extends Result {
 	public boolean hasRootDesignator() {
 		return mRootDesignator != null;
 	}
+
+	public boolean hasRootExpressionResult() {
+		return mRootExpressionResult != null;
+	}
 }

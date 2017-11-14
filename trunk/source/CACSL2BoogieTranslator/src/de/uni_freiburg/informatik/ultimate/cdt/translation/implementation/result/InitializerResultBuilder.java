@@ -59,7 +59,9 @@ public class InitializerResultBuilder {
 
 	public InitializerResultBuilder(final InitializerResult initializerResult) {
 		mRootDesignator = initializerResult.getRootDesignator();
-		mRootExpressionResult = new ExpressionResultBuilder(initializerResult.getRootExpressionResult()).build();
+		mRootExpressionResult = initializerResult.hasRootExpressionResult() ?
+				new ExpressionResultBuilder(initializerResult.getRootExpressionResult()).build() :
+					null;
 		mChildren = initializerResult.isInitializerList() ? new ArrayList<>(initializerResult.getChildren()) : null;
 	}
 
