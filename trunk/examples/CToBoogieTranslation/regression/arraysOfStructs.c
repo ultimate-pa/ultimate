@@ -1,8 +1,7 @@
+//#Safe
 /*
- * author: nutz, 23.01.2014
+ * author: nutz, 23.01.2014, updated with "Safe" annotation in Nov 2017
  */
-
-
 int main() {
 
 	struct structType {
