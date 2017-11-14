@@ -211,6 +211,8 @@ public class PoormansAbstractPostOperator<BACKING extends IAbstractState<BACKING
 				}
 				final List<BACKING> havocedPostStates =
 						mBackingDomain.getPostOperator().apply(postState, havocCodeBlock);
+
+				mLogger.debug("Post-havoc states: " + havocedPostStates);
 				if (havocedPostStates.size() != 1) {
 					throw new UnsupportedOperationException(
 							"The number of states after the application of a havoc statement should be one, but is something else here.");
@@ -257,31 +259,27 @@ public class PoormansAbstractPostOperator<BACKING extends IAbstractState<BACKING
 	 */
 	private HavocStatement constructBoogieHavocStatementOfUnmappedOutVars(final UnmodifiableTransFormula transformula) {
 		// Variable occurs in inVars, but not in outVars
-		final Set<IProgramVar> havocedVars = transformula.getInVars().keySet().stream()
-				.filter(in -> !transformula.getOutVars().keySet().contains(in)).collect(Collectors.toSet());
+		final Set<TermVariable> hvcVar = transformula.getInVars().entrySet().stream()
+				.filter(entry -> !transformula.getOutVars().keySet().contains(entry.getKey()))
+				.map(entry -> entry.getValue()).collect(Collectors.toSet());
+
+		assert hvcVar != null;
 
 		final Set<TermVariable> tvSet = new HashSet<>(Arrays.asList(transformula.getFormula().getFreeVars()));
 
-		// Variable in outVars has a mapping to a TermVariable that does not occur in the term of the transformula
-		havocedVars
-				.addAll(transformula.getOutVars().entrySet().stream().filter(entry -> !tvSet.contains(entry.getValue()))
-						.map(Entry<IProgramVar, TermVariable>::getKey).collect(Collectors.toSet()));
+		// Variables in out vars that are not free are havoced as well.
+		hvcVar.addAll(transformula.getOutVars().entrySet().stream().filter(entry -> !tvSet.contains(entry.getValue()))
+				.map(Entry<IProgramVar, TermVariable>::getValue).collect(Collectors.toSet()));
 
-		if (havocedVars.isEmpty()) {
+		if (hvcVar.isEmpty()) {
 			return null;
 		}
 
 		final List<VariableLHS> variableLHSs = new ArrayList<>();
 
-		for (final IProgramVar var : havocedVars) {
-			variableLHSs.add(new VariableLHS(null, mBoogie2Smt.getTypeSortTranslator().getType(var.getSort()),
-					var.getGloballyUniqueId(), new DeclarationInformation(StorageClass.IMPLEMENTATION, null)));
-
-			// Note: The following is a somewhat "dirty" hack, but prevents that the lookup for the variable in the
-			// symbol table fails, since the declaration information that is used here together with the variable's name
-			// is inconsistent with the default symbol table's entries. Therefore, the lookup in
-			// Boogie2SmtSymbolTable.getBoogieVar would fail (line 210, AssertionError).
-			mBoogie2SmtSymbolTable.addTemporaryVariable(var);
+		for (final TermVariable tVar : hvcVar) {
+			variableLHSs.add(new VariableLHS(null, mBoogie2Smt.getTypeSortTranslator().getType(tVar.getSort()),
+					tVar.getName(), new DeclarationInformation(StorageClass.IMPLEMENTATION, null)));
 		}
 
 		final HavocStatement havoc =
