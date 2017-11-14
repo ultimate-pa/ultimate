@@ -1774,4 +1774,16 @@ public final class SmtUtils {
 		final Term notEq = binaryBooleanNotEquals(script, formula1, formula2);
 		return Util.checkSat(script, notEq) == LBool.UNSAT;
 	}
+
+	/**
+	 * Returns the dimension of an arraySort (0 otherwise).
+	 */
+	public static int getDimension(Sort sort) {
+		int i = 0;
+		while (sort.isArraySort()) {
+			sort = sort.getArguments()[1];
+			i++;
+		}
+		return i;
+	}
 }

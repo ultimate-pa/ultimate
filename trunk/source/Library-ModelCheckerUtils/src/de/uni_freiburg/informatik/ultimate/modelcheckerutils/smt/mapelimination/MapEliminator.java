@@ -246,7 +246,7 @@ public class MapEliminator {
 	 */
 	private void addArrayAccessToRelation(final Term array, final ArrayIndex index,
 			final ModifiableTransFormula transformula) {
-		if (!allVariablesAreVisible(array, transformula)) {
+		if (!allVariablesAreVisible(array, transformula) || index.size() != SmtUtils.getDimension(array.getSort())) {
 			return;
 		}
 		for (final Term t : index) {
@@ -639,7 +639,8 @@ public class MapEliminator {
 		final Set<ArrayIndex> processedIndices = new HashSet<>();
 		for (final Pair<ArrayIndex, Term> pair : arrayWrite.getIndexValuePairs()) {
 			final ArrayIndex assignedIndex = pair.getFirst();
-			if (processedIndices.contains(assignedIndex)) {
+			if (processedIndices.contains(assignedIndex)
+					|| assignedIndex.size() != SmtUtils.getDimension(oldArray.getSort())) {
 				continue;
 			}
 			final Term value = pair.getSecond();
@@ -790,6 +791,9 @@ public class MapEliminator {
 
 	private static boolean areIndicesEqual(final ArrayIndex index1, final ArrayIndex index2,
 			final EqualityAnalysisResult invariants) {
+		if (index1.size() != index2.size()) {
+			return false;
+		}
 		for (int i = 0; i < index1.size(); i++) {
 			final Term term1 = index1.get(i);
 			final Term term2 = index2.get(i);
@@ -802,6 +806,9 @@ public class MapEliminator {
 
 	private Term getEqualTerm(final ArrayIndex index1, final ArrayIndex index2,
 			final EqualityAnalysisResult invariants) {
+		if (index1.size() != index2.size()) {
+			return mScript.term("false");
+		}
 		final List<Term> result = new ArrayList<>();
 		for (int i = 0; i < index1.size(); i++) {
 			final Term term1 = index1.get(i);
