@@ -67,6 +67,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
@@ -184,8 +185,9 @@ public class InitializationHandler {
 			 * We are dealing with an initialization of a value with non-aggregate type.
 			 */
 			return initExpressionWithSimpleType(loc, main, lhsIfAny, onHeap, targetCType, initInfoIfAny);
-		} else if (targetCType instanceof CUnion) {
-			throw new UnsupportedOperationException("TODO");
+//		} else if (targetCType instanceof CUnion) {
+////			return initCUnion
+//			return initCUnion(loc, main, lhsIfAny, (CUnion) targetCType, initInfoIfAny, onHeap);
 		} else if (targetCType instanceof CStruct) {
 			return initCStruct(loc, main, lhsIfAny, (CStruct) targetCType, initInfoIfAny, onHeap);
 		} else if (targetCType instanceof CArray) {
@@ -232,23 +234,17 @@ public class InitializationHandler {
 		final LRValue structBaseLhsToInitialize = obtainLhsToInitialize(loc, main, lhsIfAny, cType, onHeap,
 				initialization);
 
-
 		for (int i = 0; i < cType.getFieldCount(); i++) {
 
 			final LRValue currentFieldLhs;
 			if (onHeap) {
 				assert lhsIfAny != null && lhsIfAny instanceof HeapLValue;
-//				currentFieldLhs = CTranslationUtil.constructAddressForStructField(
-//						(HeapLValue) structBaseLhsToInitialize, i);
-
-				final Expression fieldAddress = main.mCHandler.getTypeSizeAndOffsetComputer().constructOffsetForField(
-						loc, cType, i);
-				currentFieldLhs = new HeapLValue(fieldAddress, cType.getFieldTypes()[i]);
-//						CTranslationUtil.constructAddressForStructField(
-//						(HeapLValue) structBaseLhsToInitialize, i);
-
+				currentFieldLhs = CTranslationUtil.constructAddressForStructField(loc, main,
+						(HeapLValue) structBaseLhsToInitialize, i);
 			} else {
-				currentFieldLhs = CTranslationUtil.constructOffHeapStructAccessLhs((LocalLValue) structBaseLhsToInitialize, i);
+//				currentFieldLhs = CTranslationUtil.constructOffHeapStructAccessLhs(loc,
+//						(LocalLValue) structBaseLhsToInitialize, i);
+				currentFieldLhs = null;
 			}
 
 			final ExpressionResult currentFieldInitialization;
@@ -446,8 +442,8 @@ public class InitializationHandler {
 					getDefaultValueForSimpleType(loc, cType), Collections.emptyList());
 			initialization.addStatements(defaultInit);
 			return initialization.build();
-		} else if (cType instanceof CUnion) {
-			throw new UnsupportedOperationException("TODO");
+//		} else if (cType instanceof CUnion) {
+//			throw new UnsupportedOperationException("TODO");
 		} else if (cType instanceof CStruct) {
 			final CStruct cStructType = (CStruct) cType;
 
@@ -456,10 +452,8 @@ public class InitializationHandler {
 			final String[] fieldIds = cStructType.getFieldIds();
 
 			for (int i = 0; i < fieldIds.length; i++) {
-//				final HeapLValue fieldPointer = CTranslationUtil.constructAddressForStructField(baseAddress, i);
-				final Expression fieldAddress = main.mCHandler.getTypeSizeAndOffsetComputer().constructOffsetForField(
-						loc, cStructType, i);
-				final HeapLValue fieldPointer = new HeapLValue(fieldAddress, cStructType.getFieldTypes()[i]);
+				final HeapLValue fieldPointer =
+						CTranslationUtil.constructAddressForStructField(loc, main, baseAddress, i);
 
 				final ExpressionResult fieldDefaultInit =
 						makeOnHeapDefaultInitializationForType(loc, main, fieldPointer, cStructType.getFieldTypes()[i],
@@ -480,13 +474,15 @@ public class InitializationHandler {
 	}
 
 	private ExpressionResult makeOffHeapDefaultInitializationForType(final ILocation loc, final Dispatcher main,
-			final CType cType, final boolean sophisticated) {
+			final CType cTypeRaw, final boolean sophisticated) {
+		final CType cType = cTypeRaw.getUnderlyingType();
+
 		if (cType instanceof CPrimitive || cType instanceof CEnum || cType instanceof CPointer) {
 			return new ExpressionResultBuilder()
 					.setLRVal(new RValue(getDefaultValueForSimpleType(loc, cType), cType))
 					.build();
-		} else if (cType instanceof CUnion) {
-			throw new UnsupportedOperationException("TODO");
+//		} else if (cType instanceof CUnion) {
+//			throw new UnsupportedOperationException("TODO");
 		} else if (cType instanceof CStruct) {
 			final CStruct cStructType = (CStruct) cType;
 
@@ -495,9 +491,27 @@ public class InitializationHandler {
 			final ArrayList<LRValue> fieldLrValues = new ArrayList<>();
 
 			for (int i = 0; i < cStructType.getFieldCount(); i++) {
-				final ExpressionResult fieldDefaultInit =
+				final ExpressionResult fieldDefaultInit;
+				if (cType instanceof CUnion) {
+					/*
+					 * In case of a union, all fields not mentioned in the initializer are havocced, thus their default
+					 * initialization is a fresh auxiliary variable.
+					 */
+					final CType fieldType = cStructType.getFieldTypes()[i];
+					final AuxVarHelper auxVar = CTranslationUtil.makeAuxVarDeclaration(loc, main, fieldType,
+							SFO.AUXVAR.UNION);
+
+					fieldDefaultInit = new ExpressionResultBuilder()
+							.setLRVal(new RValue(auxVar.getExp(), fieldType))
+							.addDeclaration(auxVar.getVarDec())
+							.putAuxVar(auxVar.getVarDec(), loc)
+							// TODO overapprox flag here?
+							.build();
+				} else {
+					fieldDefaultInit =
 						makeOffHeapDefaultInitializationForType(loc, main, cStructType.getFieldTypes()[i],
 								sophisticated);
+				}
 
 				initialization.addAllExceptLrValue(fieldDefaultInit);
 				fieldLrValues.add(fieldDefaultInit.getLrValue());
@@ -642,6 +656,7 @@ public class InitializationHandler {
 		arrayLhsToInitialize = new LocalLValue(auxVar.getLhs(), cType);
 
 		initialization.addDeclaration(auxVar.getVarDec());
+		initialization.putAuxVar(auxVar.getVarDec(), loc);
 		initialization.setLRVal(arrayLhsToInitialize);
 		return arrayLhsToInitialize;
 	}
@@ -867,7 +882,8 @@ public class InitializationHandler {
 		public static InitializerInfo constructInitializerInfo(final ILocation loc, final Dispatcher main,
 				final MemoryHandler memoryHandler, final StructHandler structHandler,
 				final AExpressionTranslation expressionTranslation, final InitializerResult initializerResult,
-				final CType targetCType) {
+				final CType targetCTypeRaw) {
+			final CType targetCType = targetCTypeRaw.getUnderlyingType();
 			if (targetCType instanceof CPrimitive || targetCType instanceof CEnum || targetCType instanceof CPointer) {
 				// do the necessary conversions
 				final ExpressionResult expressionResultSwitched = initializerResult.getRootExpressionResult()
@@ -876,9 +892,13 @@ public class InitializationHandler {
 				main.mCHandler.convert(loc, expressionResultSwitched, targetCType);
 
 				return new InitializerInfo(expressionResultSwitched);
-			} else if (targetCType instanceof CUnion) {
-				throw new UnsupportedOperationException("TODO"); //TODO
+//			} else if (targetCType instanceof CUnion) {
+//				if (initializerResult.getChildren().size() > 1) {
+//					throw new UnsupportedOperationException("TODO"); //TODO
+//				}
+//				..
 			} else if (targetCType instanceof CStruct) {
+				// this is also used for union initializers
 				return constructStructFieldInitInfos(loc, main, memoryHandler, structHandler, expressionTranslation,
 						initializerResult, (CStruct) targetCType);
 			} else if (targetCType instanceof CArray) {
@@ -893,7 +913,6 @@ public class InitializationHandler {
 				final MemoryHandler memoryHandler, final StructHandler structHandler,
 				final AExpressionTranslation expressionTranslation, final InitializerResult initializerResult,
 				final CStruct targetCType) {
-			assert initializerResult.getRootDesignator() == null;
 			assert initializerResult.getRootExpressionResult() == null;
 
 			final List<InitializerResult> children = initializerResult.getChildren();
@@ -901,7 +920,7 @@ public class InitializationHandler {
 
 			// initialize the structFieldInfos to null
 			final List<InitializerInfo> structFieldInitInfos = new ArrayList<>(targetCType.getFieldCount());
-			for (int fieldNr = 0; fieldNr < children.size(); fieldNr++) {
+			for (int fieldNr = 0; fieldNr < targetCType.getFieldCount(); fieldNr++) {
 				structFieldInitInfos.add(null);
 			}
 

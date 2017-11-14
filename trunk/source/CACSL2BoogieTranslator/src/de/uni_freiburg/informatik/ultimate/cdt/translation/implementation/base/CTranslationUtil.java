@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructConstructor;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.StructLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
@@ -70,8 +71,7 @@ public class CTranslationUtil {
 		// don't instantiate this utility class
 	}
 
-	public static AuxVarHelper makeAuxVarDeclaration(final ILocation loc, final Dispatcher main,
-			final CType cType) {
+	public static AuxVarHelper makeAuxVarDeclaration(final ILocation loc, final Dispatcher main, final CType cType) {
 		final AUXVAR auxVarType;
 		if (cType instanceof CArray) {
 			auxVarType = SFO.AUXVAR.ARRAYINIT;
@@ -80,7 +80,11 @@ public class CTranslationUtil {
 		} else {
 			throw new UnsupportedOperationException();
 		}
+		return makeAuxVarDeclaration(loc, main, cType, auxVarType);
+	}
 
+	public static AuxVarHelper makeAuxVarDeclaration(final ILocation loc, final Dispatcher main, final CType cType,
+					final AUXVAR auxVarType) {
 		final String id = main.mNameHandler.getTempVarUID(auxVarType, cType);
 		final VariableDeclaration decl = new VariableDeclaration(loc,
 				new Attribute[0],
@@ -112,10 +116,11 @@ public class CTranslationUtil {
 		return new LocalLValue(alhs, cArrayType.getValueType());
 	}
 
-	public static LRValue constructOffHeapStructAccessLhs(final LocalLValue structBaseLhs, final int i) {
-		final CStruct cStructType = (CStruct) structBaseLhs.getCType();
-		// TODO
-		return null;
+	public static LRValue constructOffHeapStructAccessLhs(final ILocation loc, final LocalLValue structBaseLhs, final int i) {
+		final CStruct cStructType = (CStruct) structBaseLhs.getCType().getUnderlyingType();
+		final String fieldName = cStructType.getFieldIds()[i];
+		final StructLHS lhs = ExpressionFactory.constructStructAccessLhs(loc, structBaseLhs.getLHS(), fieldName);
+		return new LocalLValue(lhs, cStructType.getFieldTypes()[i]);
 	}
 
 //	public static HeapLValue constructOnHeapStructAccessLhs(final HeapLValue structBaseLhs, final int i) {
@@ -158,6 +163,29 @@ public class CTranslationUtil {
 //		return null;
 //	}
 
+
+	public static HeapLValue constructAddressForStructField(final ILocation loc, final Dispatcher main,
+			final HeapLValue baseAddress, final int fieldIndex) {
+		final CStruct cStructType = (CStruct) baseAddress.getCType().getUnderlyingType();
+
+		final CPrimitive sizeT = main.mCHandler.getTypeSizeAndOffsetComputer().getSizeT();
+
+		final Expression fieldOffset = main.mCHandler.getTypeSizeAndOffsetComputer().constructOffsetForField(
+						loc, cStructType, fieldIndex);
+//		final HeapLValue fieldPointer = new HeapLValue(fieldAddress, cStructType.getFieldTypes()[i]);
+
+
+		final Expression pointerBase = MemoryHandler.getPointerBaseAddress(baseAddress.getAddress(), loc);
+		final Expression pointerOffset = MemoryHandler.getPointerOffset(baseAddress.getAddress(), loc);
+//		final Expression cellOffset = main.mCHandler.getMemoryHandler().multiplyWithSizeOfAnotherType(loc,
+//				cArrayType.getValueType(), flatCellNumber, sizeT);
+		final Expression sum = main.mCHandler.getExpressionTranslation().constructArithmeticExpression(loc,
+				IASTBinaryExpression.op_plus, pointerOffset, sizeT, fieldOffset, sizeT);
+		final StructConstructor newPointer = MemoryHandler.constructPointerFromBaseAndOffset(pointerBase, sum, loc);
+
+
+		return new HeapLValue(newPointer, cStructType.getFieldTypes()[fieldIndex]);
+	}
 
 	public static boolean isVarlengthArray(final CArray cArrayType) {
 		for (final RValue dimRVal : cArrayType.getDimensions()) {
