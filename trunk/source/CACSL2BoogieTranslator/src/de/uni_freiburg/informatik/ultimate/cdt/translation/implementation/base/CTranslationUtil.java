@@ -37,7 +37,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructConstructor;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
@@ -134,7 +133,8 @@ public class CTranslationUtil {
 			final HeapLValue arrayBaseAddress, final List<Integer> arrayIndex) {
 		final CArray cArrayType = (CArray) arrayBaseAddress.getCType();
 
-		final List<Integer> arrayBounds = getConstantDimensionsOfArray(cArrayType);
+		final List<Integer> arrayBounds = getConstantDimensionsOfArray(cArrayType,
+				main.mCHandler.getExpressionTranslation());
 
 		Integer product = 0;
 		for (int i = 0; i < arrayIndex.size(); i++) {
@@ -188,9 +188,9 @@ public class CTranslationUtil {
 		return new HeapLValue(newPointer, cStructType.getFieldTypes()[fieldIndex]);
 	}
 
-	public static boolean isVarlengthArray(final CArray cArrayType) {
+	public static boolean isVarlengthArray(final CArray cArrayType, final AExpressionTranslation expressionTranslation) {
 		for (final RValue dimRVal : cArrayType.getDimensions()) {
-			if (!(dimRVal.getValue() instanceof IntegerLiteral)) {
+			if (expressionTranslation.extractIntegerValue(dimRVal) == null) {
 				return true;
 			}
 		}
@@ -198,13 +198,15 @@ public class CTranslationUtil {
 	}
 
 
-	public static List<Integer> getConstantDimensionsOfArray(final CArray cArrayType) {
-		if (CTranslationUtil.isVarlengthArray(cArrayType)) {
+	public static List<Integer> getConstantDimensionsOfArray(final CArray cArrayType,
+			final AExpressionTranslation expressionTranslation) {
+		if (CTranslationUtil.isVarlengthArray(cArrayType, expressionTranslation)) {
 			throw new IllegalArgumentException("only call this for non-varlength array types");
 		}
 		final List<Integer> result = new ArrayList<>();
 		for (final RValue dimRVal : cArrayType.getDimensions()) {
-			final int dimInt = Integer.parseUnsignedInt(((IntegerLiteral) dimRVal.getValue()).getValue());
+			final int dimInt = Integer.parseUnsignedInt(
+					expressionTranslation.extractIntegerValue(dimRVal).toString());
 			result.add(dimInt);
 		}
 		return result;

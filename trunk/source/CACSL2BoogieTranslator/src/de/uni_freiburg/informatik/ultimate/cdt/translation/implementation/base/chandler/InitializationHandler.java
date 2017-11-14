@@ -325,7 +325,7 @@ public class InitializationHandler {
 		 */
 		final List<List<Integer>> allIndicesToInitialize =
 				CrossProducts.crossProductOfSetsOfFirstNaturalNumbers(
-						CTranslationUtil.getConstantDimensionsOfArray(cArrayType));
+						CTranslationUtil.getConstantDimensionsOfArray(cArrayType, mExpressionTranslation));
 		for (final List<Integer> arrayIndex : allIndicesToInitialize) {
 			final InitializerInfo arrayIndexInitInfo;
 			if (initInfo.hasInitInfoForArrayIndex(arrayIndex)) {
@@ -544,7 +544,7 @@ public class InitializationHandler {
 
 		final List<List<Integer>> allIndicesToInitialize =
 				CrossProducts.crossProductOfSetsOfFirstNaturalNumbers(
-						CTranslationUtil.getConstantDimensionsOfArray(cArrayType));
+						CTranslationUtil.getConstantDimensionsOfArray(cArrayType, mExpressionTranslation));
 		for (final List<Integer> arrayIndex : allIndicesToInitialize) {
 			final HeapLValue arrayAccessLhs = CTranslationUtil.constructAddressForArrayAtIndex(loc, main, baseAddress,
 					arrayIndex);
@@ -570,7 +570,7 @@ public class InitializationHandler {
 
 			final List<List<Integer>> allIndicesToInitialize =
 					CrossProducts.crossProductOfSetsOfFirstNaturalNumbers(
-							CTranslationUtil.getConstantDimensionsOfArray(cArrayType));
+							CTranslationUtil.getConstantDimensionsOfArray(cArrayType, mExpressionTranslation));
 			for (final List<Integer> arrayIndex : allIndicesToInitialize) {
 
 				final ExpressionResult arrayIndexInitialization =
@@ -940,7 +940,7 @@ public class InitializationHandler {
 			assert initializerResult.getRootDesignator() == null;
 			assert initializerResult.getRootExpressionResult() == null;
 
-			if (CTranslationUtil.isVarlengthArray(targetCType)) {
+			if (CTranslationUtil.isVarlengthArray(targetCType, expressionTranslation)) {
 				// we have a variable length array
 				throw new UnsupportedOperationException("initialization of varlength arrays not yet implemented");
 			}
@@ -949,7 +949,8 @@ public class InitializationHandler {
 			// how many dimensions the initialized array has
 			final int dimensionality = targetCType.getDimensions().length;
 
-			final List<Integer> arrayBounds = CTranslationUtil.getConstantDimensionsOfArray(targetCType);
+			final List<Integer> arrayBounds = CTranslationUtil.getConstantDimensionsOfArray(targetCType,
+					expressionTranslation);
 
 			// a field which holds the array index that the next initializer entry that we see will initialize
 			List<Integer> nextIndexToInitialize = new ArrayList<Integer>();
