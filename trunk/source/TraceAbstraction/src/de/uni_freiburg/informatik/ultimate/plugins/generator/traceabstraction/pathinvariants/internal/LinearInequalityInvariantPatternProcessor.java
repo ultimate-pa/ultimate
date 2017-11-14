@@ -111,6 +111,11 @@ public final class LinearInequalityInvariantPatternProcessor
 	private static final String PREFIX_SEPARATOR = "_";
 
 	private static final String ANNOT_PREFIX = "LIIPP_Annot";
+
+	private static final boolean CHANGE_ONLY_MOST_FREQUENT_LOC = false;
+	private static final boolean ADD_ONLY_SUCC_LOC_TO_UNSAT_CORE = false;
+	private static final boolean ASSERT_INTEGER_COEFFICIENTS = false;
+
 	private int mAnnotTermCounter;
 	/**
 	 * Stores the mapping from annotation of a term to the original motzkin term. It is used to restore the original
@@ -158,11 +163,8 @@ public final class LinearInequalityInvariantPatternProcessor
 	private final IcfgLocation mStartLocation;
 	private final Set<IcfgLocation> mErrorLocations;
 
-	private static final boolean CHANGE_ONLY_MOST_FREQUENT_LOC = false;
-	private static final boolean ADD_ONLY_SUCC_LOC_TO_UNSAT_CORE = false;
-	private static boolean USE_UNDER_APPROX_AS_ADDITIONAL_CONSTRAINT = true;
-	private static boolean USE_OVER_APPROX_AS_ADDITIONAL_CONSTRAINT = true;
-	private static final boolean ASSERT_INTEGER_COEFFICIENTS = false;
+	private final boolean mUseUnderApproxAsAdditionalConstraint;
+	private final boolean mUseOverApproxAsAdditionalConstraint;
 
 	/**
 	 * Contains all coefficients of all patterns from the current round.
@@ -308,12 +310,12 @@ public final class LinearInequalityInvariantPatternProcessor
 		mUseNonlinearConstraints = useNonlinearConstraints;
 		mUseUnsatCores = useUnsatCores;
 		if (mUseUnsatCores) {
-			USE_UNDER_APPROX_AS_ADDITIONAL_CONSTRAINT = true;
-			USE_OVER_APPROX_AS_ADDITIONAL_CONSTRAINT = true;
+			mUseUnderApproxAsAdditionalConstraint = true;
+			mUseOverApproxAsAdditionalConstraint = true;
 		} else {
 			// If we don't use unsat cores, then the additional constraints are not needed
-			USE_UNDER_APPROX_AS_ADDITIONAL_CONSTRAINT = false;
-			USE_OVER_APPROX_AS_ADDITIONAL_CONSTRAINT = false;
+			mUseUnderApproxAsAdditionalConstraint = false;
+			mUseOverApproxAsAdditionalConstraint = false;
 		}
 		mAnnotTermCounter = 0;
 		mAnnotTerm2MotzkinTerm = new HashMap<>();
@@ -470,8 +472,7 @@ public final class LinearInequalityInvariantPatternProcessor
 	 * @return transformed pattern, equivalent to the negated pattern under the mapping
 	 */
 	private static Dnf<LinearInequality> mapAndNegatePattern(final IUltimateServiceProvider services,
-			final Dnf<AbstractLinearInvariantPattern> pattern,
-			final Map<IProgramVar, Term> mapping) {
+			final Dnf<AbstractLinearInvariantPattern> pattern, final Map<IProgramVar, Term> mapping) {
 		// This is the trivial algorithm (expanding). Feel free to optimize ;)
 		// 1. map Pattern, result is dnf
 		final Dnf<LinearInequality> mappedPattern = mapPattern(pattern, mapping);
@@ -509,8 +510,8 @@ public final class LinearInequalityInvariantPatternProcessor
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug("Transforming conjunct " + conjunct);
 			}
-			final MotzkinTransformation transformation = new MotzkinTransformation(mServices, mSolver, analysisType,
-					ANNOTATE_TERMS_FOR_DEBUGGING);
+			final MotzkinTransformation transformation =
+					new MotzkinTransformation(mServices, mSolver, analysisType, ANNOTATE_TERMS_FOR_DEBUGGING);
 			transformation.addInequalities(conjunct);
 			resultTerms.add(transformation.transform(new Rational[0]));
 			mMotzkinCoefficients2LinearInequalities.putAll(transformation.getMotzkinCoefficients2LinearInequalities());
@@ -755,7 +756,7 @@ public final class LinearInequalityInvariantPatternProcessor
 		if (!mServices.getProgressMonitorService().continueProcessing()) {
 			throw new ToolchainCanceledException(LinearInequalityInvariantPatternProcessor.class);
 		}
-		if (USE_UNDER_APPROX_AS_ADDITIONAL_CONSTRAINT && mCurrentRound >= 0) {
+		if (mUseUnderApproxAsAdditionalConstraint && mCurrentRound >= 0) {
 			final IcfgLocation loc = predicate.getTargetLocation();
 			// Add constraint SP_i ==> IT_i
 			if (!mErrorLocations.contains(loc) && mLoc2UnderApproximation.containsKey(loc)) {
@@ -785,7 +786,7 @@ public final class LinearInequalityInvariantPatternProcessor
 						spTemplateDNF, targetLocTemplateNegatedDNF));
 			}
 		}
-		if (USE_OVER_APPROX_AS_ADDITIONAL_CONSTRAINT && mCurrentRound >= 0) {
+		if (mUseOverApproxAsAdditionalConstraint && mCurrentRound >= 0) {
 			final IcfgLocation loc = predicate.getTargetLocation();
 			// Add constraint IT_i ==> WP_i
 			if (!mErrorLocations.contains(loc) && mLoc2OverApproximation.containsKey(loc)) {
@@ -843,7 +844,7 @@ public final class LinearInequalityInvariantPatternProcessor
 		mLogger.debug(s);
 	}
 
-	private void appendConstraintToStringBuilder(final StringBuilder sb, final String constraintName,
+	private static void appendConstraintToStringBuilder(final StringBuilder sb, final String constraintName,
 			final String toReplaceEmptyFormula, final Dnf<LinearInequality> patternDNF) {
 		sb.append(constraintName);
 		if (patternDNF.isEmpty()) {
@@ -858,7 +859,7 @@ public final class LinearInequalityInvariantPatternProcessor
 
 	}
 
-	private Set<IProgramVar> extractVarsFromPattern(final Dnf<AbstractLinearInvariantPattern> spTemplate) {
+	private static Set<IProgramVar> extractVarsFromPattern(final Dnf<AbstractLinearInvariantPattern> spTemplate) {
 		final Set<IProgramVar> result = new HashSet<>();
 		for (final Collection<AbstractLinearInvariantPattern> conjuncts : spTemplate) {
 			for (final AbstractLinearInvariantPattern conjunct : conjuncts) {
@@ -979,8 +980,9 @@ public final class LinearInequalityInvariantPatternProcessor
 				builder.setInfeasibility(Infeasibility.NOT_DETERMINED);
 				final UnmodifiableTransFormula transFormula =
 						builder.finishConstruction(new ManagedScript(mServices, mSolver));
-				final IcfgEdge dummyEdge =
-						new IcfgInternalTransition(null, ingredient.getSourceLocation(), null, transFormula);
+
+				final IcfgEdge dummyEdge = mCsToolkit.getIcfgEdgeFactory().createInternalTransition(null,
+						ingredient.getSourceLocation(), null, transFormula);
 				final Dnf<AbstractLinearInvariantPattern> pattern = getPatternForTransition(dummyEdge, mCurrentRound);
 				final Map<IProgramVar, Term> primedMapping = new HashMap<>(outVars);
 				final Dnf<LinearInequality> patternDnf =
@@ -1401,7 +1403,7 @@ public final class LinearInequalityInvariantPatternProcessor
 		final boolean useAlsoIntegers;
 		// 2017-11-05 Matthias:
 		// seems like we always need integers since program variables can have sort Int.
-//		useAlsoIntegers = (mKindOfInvariant == KindOfInvariant.DANGER);
+		// useAlsoIntegers = (mKindOfInvariant == KindOfInvariant.DANGER);
 		useAlsoIntegers = true;
 		final Linearity linearity = mUseNonlinearConstraints ? Linearity.NONLINEAR : Linearity.LINEAR;
 		final Logics logic = ConstraintSynthesisUtils.getLogic(linearity, useAlsoIntegers);
@@ -1449,8 +1451,8 @@ public final class LinearInequalityInvariantPatternProcessor
 	}
 
 	@Override
-	public Dnf<AbstractLinearInvariantPattern>
-			getInvariantPatternForLocation(final IcfgLocation location, final int round, final Set<IProgramVar> vars) {
+	public Dnf<AbstractLinearInvariantPattern> getInvariantPatternForLocation(final IcfgLocation location,
+			final int round, final Set<IProgramVar> vars) {
 
 		if (mStartLocation.equals(location) && !mSynthesizeEntryPattern) {
 			assert mEntryInvariantPattern != null : "call initializeEntryAndExitPattern() before this";

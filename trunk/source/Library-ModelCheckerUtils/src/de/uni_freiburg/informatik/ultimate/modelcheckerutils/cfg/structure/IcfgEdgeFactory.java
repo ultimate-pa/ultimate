@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2016 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * Copyright (C) 2016 University of Freiburg
+ * Copyright (C) 2017 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2017 University of Freiburg
  *
  * This file is part of the ULTIMATE ModelCheckerUtils Library.
  *
@@ -26,36 +26,42 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure;
 
-import java.util.Objects;
-
 import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
-import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 
 /**
- * Generic implementation of a {@link ICallAction} in an ICFG.
  *
- * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public final class IcfgCallTransition extends AbstractIcfgTransition implements IIcfgCallTransition<IcfgLocation> {
-	private static final long serialVersionUID = 277117187386915562L;
-	private final UnmodifiableTransFormula mLocalVarsAssignment;
+public final class IcfgEdgeFactory {
 
-	protected IcfgCallTransition(final IcfgLocation source, final IcfgLocation target, final IPayload payload,
-			final UnmodifiableTransFormula localVarsAssignment, final int id) {
-		super(source, target, payload, id);
-		mLocalVarsAssignment = Objects.requireNonNull(localVarsAssignment);
+	private int mNextFreeId;
+
+	public IcfgEdgeFactory() {
+		mNextFreeId = 0;
 	}
 
-	@Override
-	@Visualizable
-	public UnmodifiableTransFormula getLocalVarsAssignment() {
-		return mLocalVarsAssignment;
+	public IcfgCallTransition createCallTransition(final IcfgLocation source, final IcfgLocation target,
+			final IPayload payload, final UnmodifiableTransFormula localVarsAssignment) {
+		return new IcfgCallTransition(source, target, payload, localVarsAssignment, getNextFreeId());
 	}
 
-	@Override
-	public String toString() {
-		return toDebugString(mLocalVarsAssignment.toString());
+	public IcfgReturnTransition createReturnTransition(final IcfgLocation source, final IcfgLocation target,
+			final IIcfgCallTransition<IcfgLocation> correspondingCall, final IPayload payload,
+			final UnmodifiableTransFormula assignmentOfReturn,
+			final UnmodifiableTransFormula localVarsAssignmentOfCall) {
+		return new IcfgReturnTransition(source, target, correspondingCall, payload, assignmentOfReturn,
+				localVarsAssignmentOfCall, getNextFreeId());
 	}
+
+	public IcfgInternalTransition createInternalTransition(final IcfgLocation source, final IcfgLocation target,
+			final IPayload payload, final UnmodifiableTransFormula transFormula) {
+		return new IcfgInternalTransition(source, target, payload, transFormula, getNextFreeId());
+	}
+
+	private int getNextFreeId() {
+		return mNextFreeId++;
+	}
+
 }

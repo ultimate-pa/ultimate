@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalsTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdgeFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
@@ -67,7 +68,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  *
  */
 public class SpaceExModelBuilder {
-	
+
 	private final ILogger mLogger;
 	private final BasicIcfg<IcfgLocation> mModel;
 	private final SpaceExPreferenceContainer mPreferenceContainer;
@@ -75,7 +76,7 @@ public class SpaceExModelBuilder {
 	private final IUltimateServiceProvider mServices;
 	private final IToolchainStorage mToolchainStorage;
 	private final HybridVariableManager mVariableManager;
-	
+
 	public SpaceExModelBuilder(final Sspaceex spaceEx, final ILogger logger,
 			final SpaceExPreferenceContainer preferenceContainer, final SpaceExPreferenceManager preferenceManager,
 			final IUltimateServiceProvider services, final IToolchainStorage toolchainStorage) throws Exception {
@@ -87,7 +88,7 @@ public class SpaceExModelBuilder {
 		mVariableManager = new HybridVariableManager();
 		mModel = createModel(spaceEx);
 	}
-	
+
 	private BasicIcfg<IcfgLocation> createModel(final Sspaceex spaceEx) throws Exception {
 		// Create the model
 		mLogger.info("Starting creation of hybrid model...");
@@ -97,11 +98,11 @@ public class SpaceExModelBuilder {
 		mLogger.debug("SYSTEM:\n " + system);
 		final long estimatedTime = System.nanoTime() - startTime;
 		mLogger.info("Creation of hybrid model done in " + estimatedTime / (float) 1000000 + " milliseconds");
-		
+
 		// calculate the parallel Compositions of the different
 		// preferencegroups.
 		final Map<Integer, HybridAutomaton> parallelCompositions;
-		
+
 		// if the preferencemanager has preferencegroups, calculate the parallel
 		// compositions for those groups.
 		if (mPreferenceContainer.hasPreferenceGroups()) {
@@ -111,7 +112,7 @@ public class SpaceExModelBuilder {
 		} else {
 			parallelCompositions = new HashMap<>();
 		}
-		
+
 		// get some parallel composition for the toolkit generation, anyone will
 		// do,
 		// because we only need the variables of the automata.
@@ -127,60 +128,61 @@ public class SpaceExModelBuilder {
 		}
 		// generate a smt toolkit in order to build transformulas later on.
 		final CfgSmtToolkit smtToolkit = generateToolkit(automaton);
-		
+
 		// transform parallel compositions
 		final HybridIcfgGenerator gen =
 				new HybridIcfgGenerator(mLogger, mPreferenceContainer, smtToolkit, mVariableManager);
 		return gen.createIfcgFromComponents(automaton);
 	}
-	
+
 	private CfgSmtToolkit generateToolkit(final HybridAutomaton automaton) {
 		final Set<String> procedures = new HashSet<>();
 		procedures.add(HybridTranslatorConstants.PROC_NAME);
-		
+
 		final Script script = SolverBuilder.buildAndInitializeSolver(mServices, mToolchainStorage,
 				mPreferenceManager.getSolverMode(), mPreferenceManager.getSolverSettings(),
 				mPreferenceManager.isDumpUsatCoreTrackBenchmark(), mPreferenceManager.isDumpMainTrackBenchmark(),
 				mPreferenceManager.getLogicForExternalSolver(), "SpaceExTA");
-		
+
 		final ManagedScript managedScript = new ManagedScript(mServices, script);
 		mVariableManager.setScript(managedScript);
-		
+
 		final HybridIcfgSymbolTable symbolTable = new HybridIcfgSymbolTable(managedScript, automaton,
 				HybridTranslatorConstants.PROC_NAME, mVariableManager);
-		
+
 		final DefaultIcfgSymbolTable defaultTable = new DefaultIcfgSymbolTable(symbolTable, procedures);
 		defaultTable.finishConstruction();
-		
+
 		final HashRelation<String, IProgramNonOldVar> proc2globals = new HashRelation<>();
-		
+
 		final ModifiableGlobalsTable modifiableGlobalsTable = new ModifiableGlobalsTable(proc2globals);
-		
+
 		final IPredicate axioms = new IPredicate() {
-			
+
 			@Override
 			public Set<IProgramVar> getVars() {
 				return Collections.emptySet();
 			}
-			
+
 			@Override
 			public String[] getProcedures() {
 				return procedures.toArray(new String[procedures.size()]);
 			}
-			
+
 			@Override
 			public Term getFormula() {
 				return script.term("true");
 			}
-			
+
 			@Override
 			public Term getClosedFormula() {
 				return script.term("true");
 			}
 		};
-		return new CfgSmtToolkit(modifiableGlobalsTable, managedScript, defaultTable, axioms, procedures);
+		return new CfgSmtToolkit(modifiableGlobalsTable, managedScript, defaultTable, axioms, procedures,
+				new IcfgEdgeFactory());
 	}
-	
+
 	public BasicIcfg<IcfgLocation> getModel() {
 		return mModel;
 	}

@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdgeFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
@@ -125,11 +126,11 @@ public final class BranchUnfoldIcfgTransformer {
 
 		final String identifier = inputIcfg.getIdentifier() + this.getClass();
 		mResultIcfg = new BasicIcfg<>(identifier, inputIcfg.getCfgSmtToolkit(), IcfgLocation.class);
-
+		final IcfgEdgeFactory edgeFac = mResultIcfg.getCfgSmtToolkit().getIcfgEdgeFactory();
 		mWorklist = new ArrayDeque<>();
 		// mVisited = new HashSet<>();
 		for (final IcfgLocation loc : mInputIcfg.getInitialNodes()) {
-			final Pair<IcfgLocation, Integer> initialPair = new Pair<IcfgLocation, Integer>(loc, 0);
+			final Pair<IcfgLocation, Integer> initialPair = new Pair<>(loc, 0);
 			resultLocationConstructor.getOrConstruct(initialPair);
 		}
 		while (!mWorklist.isEmpty()) {
@@ -137,12 +138,11 @@ public final class BranchUnfoldIcfgTransformer {
 			final IcfgLocation sourceLoc = resultLocationConstructor.getOrConstruct(some);
 			for (final IcfgEdge edge : some.getFirst().getOutgoingEdges()) {
 				final Integer edgeNumber = edgeNumberConstructor.getOrConstruct(edge);
-				final Pair<IcfgLocation, Integer> targetPair =
-						new Pair<IcfgLocation, Integer>(edge.getTarget(), edgeNumber);
+				final Pair<IcfgLocation, Integer> targetPair = new Pair<>(edge.getTarget(), edgeNumber);
 				final IcfgLocation targetLoc = resultLocationConstructor.getOrConstruct(targetPair);
 
 				final IcfgInternalTransition newEdge =
-						new IcfgInternalTransition(sourceLoc, targetLoc, new Payload(), edge.getTransformula());
+						edgeFac.createInternalTransition(sourceLoc, targetLoc, new Payload(), edge.getTransformula());
 				sourceLoc.addOutgoing(newEdge);
 				newEdge.setSource(sourceLoc);
 				newEdge.setTarget(targetLoc);

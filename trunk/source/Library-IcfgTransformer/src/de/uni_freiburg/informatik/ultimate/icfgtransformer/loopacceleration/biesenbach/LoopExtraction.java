@@ -278,9 +278,12 @@ public class LoopExtraction<INLOC extends IcfgLocation, OUTLOC extends IcfgLocat
 					final INLOC oldTarget = (INLOC) oldTransition.getTarget();
 					open.add(oldTarget);
 					final OUTLOC newTarget = lst.createNewLocation(oldTarget);
-					final IcfgInternalTransition newTransition = new IcfgInternalTransition(newSource, newTarget,
-							getPayloadIfAvailable(oldTransition), loopExits.get(oldTransition));
+
 					// TODO when is it an over-approximation
+					final IcfgInternalTransition newTransition =
+							(IcfgInternalTransition) lst.createNewInternalTransition(newSource, newTarget,
+									loopExits.get(oldTransition), getPayloadIfAvailable(oldTransition), true);
+
 					new Overapprox("loop acceleration: ... ", null).annotate(newTransition);
 					newSource.addOutgoing(newTransition);
 					newTarget.addIncoming(newTransition);

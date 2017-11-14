@@ -47,12 +47,10 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgCallTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgInternalTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdgeFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocationIterator;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgReturnTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -65,7 +63,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 public class IcfgDuplicator {
 
 	private final ILogger mLogger;
-	private final IUltimateServiceProvider mServices;
 	private final BlockEncodingBacktranslator mBacktranslator;
 	private final Map<IIcfgCallTransition<IcfgLocation>, IIcfgCallTransition<IcfgLocation>> mCallCache;
 	private final ManagedScript mManagedScript;
@@ -73,7 +70,6 @@ public class IcfgDuplicator {
 	public IcfgDuplicator(final ILogger logger, final IUltimateServiceProvider services,
 			final ManagedScript managedScript, final BlockEncodingBacktranslator backtranslator) {
 		mLogger = logger;
-		mServices = services;
 		mBacktranslator = backtranslator;
 		mCallCache = new HashMap<>();
 		mManagedScript = Objects.requireNonNull(managedScript);
@@ -106,6 +102,7 @@ public class IcfgDuplicator {
 
 		assert noEdges(newIcfg) : "Icfg contains edges but should not";
 
+		final IcfgEdgeFactory edgeFactory = newIcfg.getCfgSmtToolkit().getIcfgEdgeFactory();
 		// second, add all non-return edges
 		for (final Entry<IcfgLocation, IcfgLocation> nodePair : old2new.entrySet()) {
 			final IcfgLocation newSource = nodePair.getValue();
@@ -122,12 +119,12 @@ public class IcfgDuplicator {
 						continue;
 					}
 				}
-				createEdgeCopy(old2new, newSource, oldEdge);
+				createEdgeCopy(old2new, newSource, oldEdge, edgeFactory);
 			}
 		}
 
 		// third, add all previously ignored return edges
-		openReturns.stream().forEach(a -> createEdgeCopy(old2new, a.getFirst(), a.getSecond()));
+		openReturns.stream().forEach(a -> createEdgeCopy(old2new, a.getFirst(), a.getSecond(), edgeFactory));
 
 		return newIcfg;
 	}
@@ -158,10 +155,10 @@ public class IcfgDuplicator {
 	}
 
 	private IcfgEdge createEdgeCopy(final Map<IcfgLocation, IcfgLocation> old2new, final IcfgLocation newSource,
-			final IcfgEdge oldEdge) {
+			final IcfgEdge oldEdge, final IcfgEdgeFactory edgeFactory) {
 		final IcfgLocation newTarget = old2new.get(oldEdge.getTarget());
 		assert newTarget != null;
-		final IcfgEdge newEdge = createUnconnectedCopy(newSource, newTarget, oldEdge);
+		final IcfgEdge newEdge = createUnconnectedCopy(newSource, newTarget, oldEdge, edgeFactory);
 		newSource.addOutgoing(newEdge);
 		newTarget.addIncoming(newEdge);
 		ModelUtils.copyAnnotations(oldEdge, newEdge);
@@ -171,15 +168,15 @@ public class IcfgDuplicator {
 
 	@SuppressWarnings("unchecked")
 	private IcfgEdge createUnconnectedCopy(final IcfgLocation newSource, final IcfgLocation newTarget,
-			final IIcfgTransition<?> oldEdge) {
+			final IIcfgTransition<?> oldEdge, final IcfgEdgeFactory edgeFactory) {
 		// contains transformula copy
 		final IAction newAction = ActionUtils.constructCopy(mManagedScript, oldEdge);
 
 		final IcfgEdge rtr;
 		if (oldEdge instanceof IIcfgInternalTransition<?>) {
-			rtr = new IcfgInternalTransition(newSource, newTarget, null, newAction.getTransformula());
+			rtr = edgeFactory.createInternalTransition(newSource, newTarget, null, newAction.getTransformula());
 		} else if (oldEdge instanceof IIcfgCallTransition<?>) {
-			rtr = createCopyCall(newSource, newTarget, oldEdge, newAction);
+			rtr = createCopyCall(newSource, newTarget, oldEdge, newAction, edgeFactory);
 		} else if (oldEdge instanceof IIcfgReturnTransition<?, ?>) {
 			final IIcfgReturnTransition<?, ?> oldReturn = (IIcfgReturnTransition<?, ?>) oldEdge;
 			final IIcfgCallTransition<?> oldCorrespondingCall = oldReturn.getCorrespondingCall();
@@ -187,11 +184,11 @@ public class IcfgDuplicator {
 			if (correspondingCall == null) {
 				mLogger.warn("Creating raw copy for unreachable call because return is reachable in graph view: "
 						+ oldCorrespondingCall);
-				correspondingCall =
-						(IIcfgCallTransition<IcfgLocation>) createUnconnectedCopy(null, null, oldCorrespondingCall);
+				correspondingCall = (IIcfgCallTransition<IcfgLocation>) createUnconnectedCopy(null, null,
+						oldCorrespondingCall, edgeFactory);
 			}
 			final IReturnAction rAction = (IReturnAction) newAction;
-			rtr = new IcfgReturnTransition(newSource, newTarget, correspondingCall, null,
+			rtr = edgeFactory.createReturnTransition(newSource, newTarget, correspondingCall, null,
 					rAction.getAssignmentOfReturn(), rAction.getLocalVarsAssignmentOfCall());
 		} else {
 			throw new UnsupportedOperationException("Unknown IcfgEdge subtype: " + oldEdge.getClass());
@@ -200,10 +197,10 @@ public class IcfgDuplicator {
 	}
 
 	private IcfgEdge createCopyCall(final IcfgLocation source, final IcfgLocation target,
-			final IIcfgTransition<?> oldEdge, final IAction newAction) {
+			final IIcfgTransition<?> oldEdge, final IAction newAction, final IcfgEdgeFactory edgeFactory) {
 		final IcfgEdge rtr;
 		final ICallAction cAction = (ICallAction) newAction;
-		rtr = new IcfgCallTransition(source, target, null, cAction.getLocalVarsAssignment());
+		rtr = edgeFactory.createCallTransition(source, target, null, cAction.getLocalVarsAssignment());
 		mCallCache.put((IIcfgCallTransition<IcfgLocation>) oldEdge, (IIcfgCallTransition<IcfgLocation>) rtr);
 		return rtr;
 	}

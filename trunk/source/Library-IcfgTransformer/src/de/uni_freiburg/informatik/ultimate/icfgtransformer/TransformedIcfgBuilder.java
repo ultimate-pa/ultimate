@@ -53,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgCallTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdgeFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgReturnTransition;
@@ -87,6 +88,7 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 	private final ITransformulaTransformer mTransformer;
 	private final IIcfg<INLOC> mOriginalIcfg;
 	private final BasicIcfg<OUTLOC> mResultIcfg;
+	private final IcfgEdgeFactory mEdgeFactory;
 	private boolean mIsFinished;
 
 	/**
@@ -116,6 +118,7 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 		mOldCalls2NewCalls = new HashMap<>();
 		mNewVars = new HashSet<>();
 		mIsFinished = false;
+		mEdgeFactory = originalIcfg.getCfgSmtToolkit().getIcfgEdgeFactory();
 	}
 
 	/**
@@ -172,11 +175,16 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 	 * @param newTf
 	 * @return
 	 */
-	public IcfgEdge createNewInternalTransition(final OUTLOC source, final OUTLOC target,
+	public IcfgInternalTransition createNewInternalTransition(final OUTLOC source, final OUTLOC target,
 			final UnmodifiableTransFormula transformula, final boolean isOverapprox) {
+		return createNewInternalTransition(source, target, transformula, null, isOverapprox);
+	}
+
+	public IcfgInternalTransition createNewInternalTransition(final OUTLOC source, final OUTLOC target,
+			final UnmodifiableTransFormula transformula, final IPayload payload, final boolean isOverapprox) {
 		assert !mIsFinished;
 		final IcfgInternalTransition localTrans = createNewLocalTransition(source, target,
-				new TransforumlaTransformationResult(transformula, isOverapprox), null);
+				new TransforumlaTransformationResult(transformula, isOverapprox), payload);
 		source.addOutgoing(localTrans);
 		target.addIncoming(localTrans);
 		rememberNewVariables(transformula);
@@ -278,8 +286,9 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 			newSymbolTable = result;
 		}
 
-		final CfgSmtToolkit csToolkit = new CfgSmtToolkit(oldToolkit.getModifiableGlobalsTable(),
-				oldToolkit.getManagedScript(), newSymbolTable, oldToolkit.getAxioms(), oldToolkit.getProcedures());
+		final CfgSmtToolkit csToolkit =
+				new CfgSmtToolkit(oldToolkit.getModifiableGlobalsTable(), oldToolkit.getManagedScript(), newSymbolTable,
+						oldToolkit.getAxioms(), oldToolkit.getProcedures(), oldToolkit.getIcfgEdgeFactory());
 		mResultIcfg.setCfgSmtToolkit(csToolkit);
 	}
 
@@ -293,7 +302,7 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 				mTransformer.transform(oldTransition.getAssignmentOfReturn());
 		final TransforumlaTransformationResult localVarAssign =
 				mTransformer.transform(oldTransition.getLocalVarsAssignmentOfCall());
-		final IcfgReturnTransition newTrans = new IcfgReturnTransition(source, target, newCorrespondingCall,
+		final IcfgReturnTransition newTrans = mEdgeFactory.createReturnTransition(source, target, newCorrespondingCall,
 				getPayloadIfAvailable(oldTransition), retAssign.getTransformula(), localVarAssign.getTransformula());
 		if (retAssign.isOverapproximation() || localVarAssign.isOverapproximation()) {
 			annotateOverapprox(newTrans);
@@ -304,8 +313,8 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 	private IcfgCallTransition createNewCallTransition(final IcfgLocation source, final IcfgLocation target,
 			final IIcfgCallTransition<INLOC> oldTransition) {
 		final TransforumlaTransformationResult unmodTf = mTransformer.transform(oldTransition.getLocalVarsAssignment());
-		final IcfgCallTransition newTrans =
-				new IcfgCallTransition(source, target, getPayloadIfAvailable(oldTransition), unmodTf.getTransformula());
+		final IcfgCallTransition newTrans = mEdgeFactory.createCallTransition(source, target,
+				getPayloadIfAvailable(oldTransition), unmodTf.getTransformula());
 		// cache the created call for usage during return creation
 		mOldCalls2NewCalls.put(oldTransition, newTrans);
 		if (unmodTf.isOverapproximation()) {
@@ -324,7 +333,8 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 	private IcfgInternalTransition createNewLocalTransition(final IcfgLocation source, final IcfgLocation target,
 			final TransforumlaTransformationResult unmodTf, final IPayload payload) {
 		final IcfgInternalTransition newTrans =
-				new IcfgInternalTransition(source, target, payload, unmodTf.getTransformula());
+				mEdgeFactory.createInternalTransition(source, target, payload, unmodTf.getTransformula());
+
 		if (unmodTf.isOverapproximation()) {
 			annotateOverapprox(newTrans);
 		}

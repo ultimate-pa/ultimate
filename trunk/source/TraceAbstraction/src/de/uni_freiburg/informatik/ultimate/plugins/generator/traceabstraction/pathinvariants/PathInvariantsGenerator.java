@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IActi
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdgeFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
@@ -123,7 +124,8 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 
 		mLogger.info("Current run: " + run);
-		final Set<? extends IcfgEdge> allowedTransitions = extractTransitionsFromRun(run);
+		final Set<? extends IcfgEdge> allowedTransitions =
+				extractTransitionsFromRun(run, icfg.getCfgSmtToolkit().getIcfgEdgeFactory());
 
 		final PathProgram.PathProgramConstructionResult ppResult =
 				PathProgram.constructPathProgram("PathInvariantsPathProgram", icfg, allowedTransitions);
@@ -160,8 +162,8 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		}
 	}
 
-	public static Set<? extends IcfgEdge>
-			extractTransitionsFromRun(final NestedRun<? extends IAction, IPredicate> run) {
+	public static Set<? extends IcfgEdge> extractTransitionsFromRun(final NestedRun<? extends IAction, IPredicate> run,
+			final IcfgEdgeFactory edgeFac) {
 		final int len = run.getLength();
 		final LinkedHashSet<IcfgInternalTransition> transitions = new LinkedHashSet<>(len - 1);
 		IcfgLocation previousLocation = null;
@@ -175,7 +177,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 				}
 				final UnmodifiableTransFormula transFormula =
 						((IInternalAction) run.getSymbol(i - 1)).getTransformula();
-				transitions.add(new IcfgInternalTransition(previousLocation, currentLocation,
+				transitions.add(edgeFac.createInternalTransition(previousLocation, currentLocation,
 						currentLocation.getPayload(), transFormula));
 			}
 			previousLocation = currentLocation;

@@ -38,7 +38,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IBacktranslationTracker;
@@ -197,7 +196,7 @@ public class LoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC 
 				final OUTLOC newTarget = lst.createNewLocation(oldTarget);
 
 				if (mBackbones.containsKey(oldSource)) {
-					final IcfgEdge newTransition = addAcceleratedTransition(oldTransition, newSource, newTarget);
+					final IcfgEdge newTransition = addAcceleratedTransition(oldTransition, newSource, newTarget, lst);
 					backtranslationTracker.rememberRelation(oldTransition, newTransition);
 				} else {
 					if (oldTransition instanceof IIcfgReturnTransition<?, ?>) {
@@ -232,7 +231,7 @@ public class LoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC 
 				final OUTLOC newSource = lst.createNewLocation(oldSource);
 				final OUTLOC newTarget = lst.createNewLocation(oldTarget);
 				if (i == 0) {
-					final IcfgEdge newTransition = addAcceleratedTransition(edge, newSource, newTarget);
+					final IcfgEdge newTransition = addAcceleratedTransition(edge, newSource, newTarget, lst);
 					backtranslationTracker.rememberRelation(edge, newTransition);
 				} else {
 					lst.createNewTransition(newSource, newTarget, edge);
@@ -245,7 +244,7 @@ public class LoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC 
 	}
 
 	private IcfgEdge addAcceleratedTransition(final IcfgEdge oldTransition, final OUTLOC newSource,
-			final OUTLOC newTarget) {
+			final OUTLOC newTarget, final TransformedIcfgBuilder<INLOC, OUTLOC> lst) {
 		final INLOC oldSource = (INLOC) oldTransition.getSource();
 		final IteratedSymbolicMemory iteratedSymbolicMemory = getIteratedSymbolicMemoryForLoop(oldSource);
 		final UnmodifiableTransFormula loopTf = getLoopTransFormula(iteratedSymbolicMemory, mBackbones.get(oldSource));
@@ -253,14 +252,12 @@ public class LoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC 
 				true, false, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION,
 				SimplificationTechnique.SIMPLIFY_DDA, Arrays.asList(loopTf, oldTransition.getTransformula()));
 		assert oldTransition instanceof IIcfgInternalTransition;
-		final IcfgInternalTransition newTransition = new IcfgInternalTransition(newSource, newTarget, null, tf);
-		if (iteratedSymbolicMemory.isOverapproximation() || iteratedSymbolicMemory.getLoopCounters().size() > 1) {
-			// When the iterated symbolic memory cannot represent the values of all variables or when there
-			// are multiple backbones the calculated loop transformula might be an overapproximation.
-			new Overapprox(getClass().getSimpleName(), null).annotate(newTransition);
-		}
-		newSource.addOutgoing(newTransition);
-		newTarget.addIncoming(newTransition);
+		// When the iterated symbolic memory cannot represent the values of all variables or when there
+		// are multiple backbones the calculated loop transformula might be an overapproximation.
+		final boolean isOverapprox =
+				iteratedSymbolicMemory.isOverapproximation() || iteratedSymbolicMemory.getLoopCounters().size() > 1;
+		final IcfgInternalTransition newTransition =
+				lst.createNewInternalTransition(newSource, newTarget, tf, isOverapprox);
 		return newTransition;
 	}
 
@@ -478,9 +475,9 @@ public class LoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC 
 
 				quantifiers.add(loopIterators.get(j));
 
-				final Term iteratorCondition =
-						SmtUtils.and(mScript.getScript(), mScript.getScript().term("<=", zeroTerm, loopIterators.get(j)),
-								mScript.getScript().term("<=", loopIterators.get(j), loopCounters.get(j)));
+				final Term iteratorCondition = SmtUtils.and(mScript.getScript(),
+						mScript.getScript().term("<=", zeroTerm, loopIterators.get(j)),
+						mScript.getScript().term("<=", loopIterators.get(j), loopCounters.get(j)));
 
 				term = SmtUtils.and(mScript.getScript(), iteratorCondition, term);
 			}

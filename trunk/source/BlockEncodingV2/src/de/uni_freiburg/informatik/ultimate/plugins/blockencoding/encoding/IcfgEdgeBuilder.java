@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdgeFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
@@ -78,6 +79,7 @@ public class IcfgEdgeBuilder {
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 	private final CfgSmtToolkit mCfgSmtToolkit;
+	private final IcfgEdgeFactory mEdgeFactory;
 
 	public IcfgEdgeBuilder(final CfgSmtToolkit toolkit, final IUltimateServiceProvider services,
 			final SimplificationTechnique simplificationTechnique,
@@ -88,6 +90,7 @@ public class IcfgEdgeBuilder {
 		mXnfConversionTechnique = xnfConversionTechnique;
 		mManagedScript = toolkit.getManagedScript();
 		mCfgSmtToolkit = toolkit;
+		mEdgeFactory = toolkit.getIcfgEdgeFactory();
 	}
 
 	public IcfgEdge constructSequentialComposition(final IcfgLocation source, final IcfgLocation target,
@@ -113,7 +116,7 @@ public class IcfgEdgeBuilder {
 				transitions.stream().map(IcfgUtils::getTransformula).collect(Collectors.toList());
 		final UnmodifiableTransFormula tf = TransFormulaUtils.sequentialComposition(mLogger, mServices, mManagedScript,
 				simplify, elimQuants, false, mXnfConversionTechnique, mSimplificationTechnique, transFormulas);
-		final IcfgInternalTransition rtr = new IcfgInternalTransition(source, target, null, tf);
+		final IcfgInternalTransition rtr = mEdgeFactory.createInternalTransition(source, target, null, tf);
 		source.addOutgoing(rtr);
 		target.addIncoming(rtr);
 		ModelUtils.mergeAnnotations(transitions, rtr);
@@ -147,7 +150,7 @@ public class IcfgEdgeBuilder {
 						callTf, oldVarsAssignment, globalVarsAssignment, procedureTf, returnTf, mLogger, mServices,
 						mXnfConversionTechnique, mSimplificationTechnique, symbolTable, modifiableGlobalsOfCallee);
 
-		final IcfgInternalTransition rtr = new IcfgInternalTransition(source, target, null, tf);
+		final IcfgInternalTransition rtr = mEdgeFactory.createInternalTransition(source, target, null, tf);
 		source.addOutgoing(rtr);
 		target.addIncoming(rtr);
 		ModelUtils.mergeAnnotations(rtr, callTrans, intermediateTrans, returnTrans);
@@ -164,7 +167,7 @@ public class IcfgEdgeBuilder {
 		final int serialNumber = HashUtils.hashHsieh(293, (Object[]) tfArray);
 		final UnmodifiableTransFormula parallelTf = TransFormulaUtils.parallelComposition(mLogger, mServices,
 				serialNumber, mManagedScript, null, false, mXnfConversionTechnique, tfArray);
-		final IcfgInternalTransition rtr = new IcfgInternalTransition(source, target, null, parallelTf);
+		final IcfgInternalTransition rtr = mEdgeFactory.createInternalTransition(source, target, null, parallelTf);
 		source.addOutgoing(rtr);
 		target.addIncoming(rtr);
 		ModelUtils.mergeAnnotations(transitions, rtr);
@@ -211,7 +214,7 @@ public class IcfgEdgeBuilder {
 	public IcfgEdge constructInternalTransition(final IcfgEdge oldTransition, final IcfgLocation source,
 			final IcfgLocation target, final UnmodifiableTransFormula tf) {
 		assert onlyInternal(oldTransition) : "You cannot have calls or returns in normal sequential compositions";
-		final IcfgInternalTransition rtr = new IcfgInternalTransition(source, target, null, tf);
+		final IcfgInternalTransition rtr = mEdgeFactory.createInternalTransition(source, target, null, tf);
 		source.addOutgoing(rtr);
 		target.addIncoming(rtr);
 		ModelUtils.copyAnnotations(oldTransition, rtr);

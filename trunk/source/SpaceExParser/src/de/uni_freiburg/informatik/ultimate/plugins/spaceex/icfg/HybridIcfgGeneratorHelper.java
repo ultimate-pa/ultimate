@@ -32,6 +32,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdgeFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
@@ -41,21 +42,23 @@ import de.uni_freiburg.informatik.ultimate.plugins.spaceex.util.HybridTranslator
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.util.SpaceExMathHelper;
 
 public class HybridIcfgGeneratorHelper {
-	
+
 	private final ILogger mLogger;
 	private final HybridVariableManager mVariableManager;
 	private final SpaceExPreferenceContainer mPreferenceContainer;
-	
+	private final IcfgEdgeFactory mEdgeFactory;
+
 	public HybridIcfgGeneratorHelper(final HybridVariableManager variableManager,
-			final SpaceExPreferenceContainer preferenceContainer, final ILogger logger) {
+			final SpaceExPreferenceContainer preferenceContainer, final IcfgEdgeFactory edgeFac, final ILogger logger) {
 		mLogger = logger;
 		mVariableManager = variableManager;
 		mPreferenceContainer = preferenceContainer;
+		mEdgeFactory = edgeFac;
 	}
-	
+
 	/**
 	 * function to check if a flow in infix noation is constant
-	 * 
+	 *
 	 * @param flow
 	 * @return
 	 */
@@ -72,10 +75,10 @@ public class HybridIcfgGeneratorHelper {
 		}
 		return true;
 	}
-	
+
 	/**
 	 * Function that analyses all parts of the flow and appends (currently) only the linear constant ODE solutions
-	 * 
+	 *
 	 * @param flowInfix
 	 * @return
 	 */
@@ -97,11 +100,11 @@ public class HybridIcfgGeneratorHelper {
 		}
 		return sb.toString();
 	}
-	
+
 	/**
 	 * function that replaces constants with their value before building the transformula. if you don't do this, SMT
 	 * will throw an exeption if it tries to solve terms like x=0*t-constvar*t
-	 * 
+	 *
 	 * @param infix
 	 * @param currentGroupID
 	 * @return
@@ -119,10 +122,10 @@ public class HybridIcfgGeneratorHelper {
 		}
 		return res;
 	}
-	
+
 	/**
 	 * Function that creates a IcfgInternalTransition.
-	 * 
+	 *
 	 * @param start
 	 * @param end
 	 * @param transformula
@@ -130,7 +133,7 @@ public class HybridIcfgGeneratorHelper {
 	 */
 	public IcfgInternalTransition createIcfgTransition(final IcfgLocation start, final IcfgLocation end,
 			final UnmodifiableTransFormula transformula) {
-		final IcfgInternalTransition trans = new IcfgInternalTransition(start, end, null, transformula);
+		final IcfgInternalTransition trans = mEdgeFactory.createInternalTransition(start, end, null, transformula);
 		start.addOutgoing(trans);
 		end.addIncoming(trans);
 		return trans;

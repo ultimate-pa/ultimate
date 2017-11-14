@@ -425,7 +425,8 @@ public final class CFGInvariantsGenerator {
 					final UnmodifiableTransFormula tf = ((IInternalAction) e).getTransformula();
 					allVariablesFromPP.addAll(tf.getInVars().keySet());
 					allVariablesFromPP.addAll(tf.getOutVars().keySet());
-					edges.addLast(new IcfgInternalTransition(e.getSource(), e.getTarget(), e.getPayload(), tf));
+					edges.addLast(pathProgram.getCfgSmtToolkit().getIcfgEdgeFactory()
+							.createInternalTransition(e.getSource(), e.getTarget(), e.getPayload(), tf));
 				}
 			}
 		}
