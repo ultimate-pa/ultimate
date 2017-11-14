@@ -79,9 +79,8 @@ public class RcfgVariableProvider<STATE extends IAbstractState<STATE>> implement
 
 	@Override
 	public STATE defineInitialVariables(final IcfgEdge current, final STATE state) {
-		assert current != null;
-		assert state != null;
-		assert state.isEmpty();
+		assert current != null : "edge is null";
+		assert state != null : "state is null";
 
 		final Set<IProgramVarOrConst> vars = getPreVariables(current);
 		if (vars.isEmpty()) {
