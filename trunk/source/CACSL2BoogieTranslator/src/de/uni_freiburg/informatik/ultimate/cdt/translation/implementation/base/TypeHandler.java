@@ -692,4 +692,19 @@ public class TypeHandler implements ITypeHandler {
 		return mFloatingTypesNeeded;
 	}
 
+	public static boolean isAggregateCType(final CType cTypeRaw) {
+		final CType cType = cTypeRaw.getUnderlyingType();
+
+		if (cType instanceof CPrimitive
+				|| cType instanceof CEnum
+				|| cType instanceof CPointer
+				|| cType instanceof CUnion
+				|| cType instanceof CFunction) {
+			return false;
+		} else if (cType instanceof CArray || cType instanceof CStruct) {
+			return true;
+		} else {
+			throw new UnsupportedOperationException("missed a type??");
+		}
+	}
 }

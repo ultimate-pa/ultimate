@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.StructConstructor;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationUtil;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.AExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarHelper;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
@@ -236,6 +237,11 @@ public class InitializationHandler {
 
 		for (int i = 0; i < cType.getFieldCount(); i++) {
 
+			if (cType instanceof CUnion && onHeap && !initInfo.hasInitInfoForIndex(i)) {
+				// in on-heap case: skip assignments to fields of unions except for the one that is really written
+				continue;
+			}
+
 			final LRValue currentFieldLhs;
 			if (onHeap) {
 				assert lhsIfAny != null && lhsIfAny instanceof HeapLValue;
@@ -255,14 +261,25 @@ public class InitializationHandler {
 				final InitializerInfo currentFieldInitializerRawIfAny = initInfo.hasInitInfoForIndex(i) ?
 						initInfo.getInitInfoForIndex(i) : null;
 
-				currentFieldInitialization = initRec(loc, main, currentFieldUnderlyingType,
+				if (cType instanceof CUnion && !initInfo.hasInitInfoForIndex(i)) {
+					assert !onHeap;
+					currentFieldInitialization = makeUnionAuxVarExpressionResult(loc, main, currentFieldUnderlyingType);
+				} else {
+					// normal case intitalize recursively with or without intitializer..
+					currentFieldInitialization = initRec(loc, main, currentFieldUnderlyingType,
 						currentFieldInitializerRawIfAny, onHeap, currentFieldLhs);
+				}
 			}
 			// add the initialization code
 			initialization.addAllExceptLrValue(currentFieldInitialization);
 
 			if (currentFieldInitialization.getLrValue() != null) {
 				fieldLrValues.add(currentFieldInitialization.getLrValue());
+			}
+
+			if (cType instanceof CUnion && onHeap && initInfo.hasInitInfoForIndex(i)) {
+				// only the first field of a union is initialized
+				break;
 			}
 		}
 
@@ -455,8 +472,6 @@ public class InitializationHandler {
 					getDefaultValueForSimpleType(loc, cType), Collections.emptyList());
 			initialization.addStatements(defaultInit);
 			return initialization.build();
-//		} else if (cType instanceof CUnion) {
-//			throw new UnsupportedOperationException("TODO");
 		} else if (cType instanceof CStruct) {
 			final CStruct cStructType = (CStruct) cType;
 
@@ -473,6 +488,11 @@ public class InitializationHandler {
 								sophisticated);
 
 				initialization.addAllExceptLrValue(fieldDefaultInit);
+
+				if (cType instanceof CUnion) {
+					// only the first field in the struct that we save for a union is initialized
+					break;
+				}
 			}
 			return initialization.build();
 		} else if (cType instanceof CArray) {
@@ -505,22 +525,14 @@ public class InitializationHandler {
 
 			for (int i = 0; i < cStructType.getFieldCount(); i++) {
 				final ExpressionResult fieldDefaultInit;
-				if (cType instanceof CUnion) {
+				if (cType instanceof CUnion && i != 0) {
 					/*
 					 * In case of a union, all fields not mentioned in the initializer are havocced, thus their default
 					 * initialization is a fresh auxiliary variable.
+					 * However there is one exception: the first field is default-inititalized.
 					 */
 					final CType fieldType = cStructType.getFieldTypes()[i];
-					final AuxVarHelper auxVar = CTranslationUtil.makeAuxVarDeclaration(loc, main, fieldType,
-							SFO.AUXVAR.UNION);
-
-					fieldDefaultInit = new ExpressionResultBuilder()
-							.setLRVal(new RValue(auxVar.getExp(), fieldType))
-							.addDeclaration(auxVar.getVarDec())
-							.putAuxVar(auxVar.getVarDec(), loc)
-							.addOverapprox(new Overapprox("initialize union -- havoccing a field without explictit "
-									+ "initializer", loc))
-							.build();
+					fieldDefaultInit = makeUnionAuxVarExpressionResult(loc, main, fieldType);
 				} else {
 					fieldDefaultInit =
 						makeOffHeapDefaultInitializationForType(loc, main, cStructType.getFieldTypes()[i],
@@ -549,6 +561,21 @@ public class InitializationHandler {
 		} else {
 			throw new UnsupportedOperationException("missing case?");
 		}
+	}
+
+	protected ExpressionResult makeUnionAuxVarExpressionResult(final ILocation loc, final Dispatcher main,
+			final CType fieldType) {
+		final AuxVarHelper auxVar = CTranslationUtil.makeAuxVarDeclaration(loc, main, fieldType,
+				SFO.AUXVAR.UNION);
+
+		final ExpressionResult x = new ExpressionResultBuilder()
+				.setLRVal(new RValue(auxVar.getExp(), fieldType))
+				.addDeclaration(auxVar.getVarDec())
+				.putAuxVar(auxVar.getVarDec(), loc)
+				.addOverapprox(new Overapprox("initialize union -- havoccing a field without explictit "
+						+ "initializer", loc))
+				.build();
+		return x;
 	}
 
 	private ExpressionResult makeNaiveOnHeapDefaultInitializationForArray(final ILocation loc, final Dispatcher main,
@@ -902,28 +929,52 @@ public class InitializationHandler {
 		 */
 		public static InitializerInfo constructInitializerInfo(final ILocation loc, final Dispatcher main,
 				final List<InitializerResult> initializerResult, final CType targetCTypeRaw) {
-			final CType targetCType = targetCTypeRaw.getUnderlyingType();
-			if (targetCType instanceof CPrimitive || targetCType instanceof CEnum || targetCType instanceof CPointer) {
+			final CType targetCTypeUnderlying = targetCTypeRaw.getUnderlyingType();
+//			if (targetCType instanceof CPrimitive || targetCType instanceof CEnum || targetCType instanceof CPointer) {
+			if (!TypeHandler.isAggregateCType(targetCTypeUnderlying)) {
+
+				if (targetCTypeUnderlying instanceof CUnion) {
+					return constructArrayIndexToInitInfo(loc, main, initializerResult, targetCTypeUnderlying);
+				}
+
+
 				// do the necessary conversions
 
-				final Deque<InitializerResult> ad = new ArrayDeque<>(initializerResult);
 
-//				final ExpressionResult expressionResultSwitched = initializerResult.get(0).getRootExpressionResult()
-				final ExpressionResult expressionResultSwitched = ad.pollFirst().getRootExpressionResult()
+				final Deque<InitializerResult> ad = new ArrayDeque<>(initializerResult);
+				final InitializerResult first = ad.pollFirst();
+
+				final CType targetCType = targetCTypeUnderlying;
+//				final CType targetCType;
+//				if (targetCTypeUnderlying instanceof CUnion) {
+//					// we are initializing a union -- we have to determine which field to initialize
+//					final CUnion union = (CUnion) targetCTypeUnderlying;
+//
+//					final String designator = first.getRootDesignator();
+//					if (designator != null) {
+//						// choose the target type according to the designator
+//						targetCType = union.getFieldType(designator);
+//					} else {
+//						// If no designator is present, the first union element is initialized.
+//						targetCType = union.getFieldTypes()[0];
+//					}
+//				} else {
+//					targetCType = targetCTypeUnderlying;
+//				}
+
+
+
+
+				final ExpressionResult expressionResultSwitched = first.getRootExpressionResult()
 						.switchToRValueIfNecessary(main, main.mCHandler.getMemoryHandler(), main.mCHandler.getStructHandler(), loc);
 				expressionResultSwitched.rexBoolToIntIfNecessary(loc, main.mCHandler.getExpressionTranslation());
 				main.mCHandler.convert(loc, expressionResultSwitched, targetCType);
 
+
 				return new InitializerInfo(expressionResultSwitched, new ArrayList<>(ad));
-			} else if (targetCType instanceof CUnion) {
-				throw new UnsupportedOperationException("todo : union case");
-//			} else if (targetCType instanceof CStruct) {
-//				// this is also used for union initializers
-//				return constructStructFieldInitInfos(loc, main, initializerResult, (CStruct) targetCType);
-			} else if (targetCType instanceof CArray || targetCType.getClass().equals(CStruct.class)) {
-				return constructArrayIndexToInitInfo(loc, main, initializerResult, targetCType);
 			} else {
-				throw new UnsupportedOperationException("missing case?");
+				// target type is an aggregate type (array or struct)
+				return constructArrayIndexToInitInfo(loc, main, initializerResult, targetCTypeUnderlying);
 			}
 		}
 
@@ -931,8 +982,8 @@ public class InitializationHandler {
 //				final List<InitializerResult> initializerResults, final CArray targetCType) {
 				final List<InitializerResult> initializerResults, final CType targetCType) {
 //			assert targetCType.isAggregateType();
-			assert targetCType instanceof CArray
-				|| (targetCType.getClass().equals(CStruct.class));
+//			assert targetCType instanceof CArray
+//				|| (targetCType.getClass().equals(CStruct.class));
 
 			final Map<Integer, InitializerInfo> indexInitInfos = new HashMap<>();
 
