@@ -463,18 +463,30 @@ public final class CFGInvariantsGenerator {
 		result.add(1, maxNumOfConjuncts);
 		return result;
 	}
-	
+
 	/**
 	 * Compute a predicate via abstract interpretation for each location of the given path program.
 	 */
-	private Map<IcfgLocation, IPredicate> generatePredicatesViaAbstractInterpretation(final IIcfg<IcfgLocation> pathProgram) {
-		Map<IcfgLocation, IPredicate> locs2Predicates = null;
+	private Map<IcfgLocation, IPredicate>
+			generatePredicatesViaAbstractInterpretation(final IIcfg<IcfgLocation> pathProgram) {
+
 		// allow for 20% of the remaining time
 		final IProgressAwareTimer timer = mServices.getProgressMonitorService().getChildTimer(0.2);
-		final IAbstractInterpretationResult<?, IcfgEdge, IcfgLocation> result = AbstractInterpreter.run(pathProgram, timer, mServices);
+		// this will run abstract interpretation with the domain specified by the settings and without generating any
+		// IResults
+		final IAbstractInterpretationResult<?, IcfgEdge, IcfgLocation> result =
+				AbstractInterpreter.runFuture(pathProgram, timer, mServices, true, mLogger);
+
+		// you still have to convert the term to a predicate. I do not know what kind of predicates you want, but I
+		// guess you can do it like this:
+		final Map<IcfgLocation, IPredicate> locs2Predicates = new HashMap<>();
+		final Map<IcfgLocation, Term> loc2term = result.getLoc2Term();
+		for (final Entry<IcfgLocation, Term> entry : loc2term.entrySet()) {
+			final IPredicate pred = mPredicateUnifier.getOrConstructPredicate(entry.getValue());
+			locs2Predicates.put(entry.getKey(), pred);
+		}
 		return locs2Predicates;
 	}
-
 
 	/**
 	 * Computes for each location of the given path program a set of variables which are <emph> live </emph> on that
