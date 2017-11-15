@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -59,7 +60,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieSymbo
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.MappedTerm2Expression;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
@@ -74,6 +74,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cal
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlockFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 
 /**
  * The post operator for the poorman abstract domain. This post operator converts a given transformula to a sequence of
@@ -130,10 +131,18 @@ public class PoormansAbstractPostOperator<BACKING extends IAbstractState<BACKING
 	public List<PoormanAbstractState<BACKING>> apply(final PoormanAbstractState<BACKING> stateBeforeLeaving,
 			final PoormanAbstractState<BACKING> stateAfterLeaving, final IcfgEdge transition) {
 		mFreshVarsCache = new HashMap<>();
-		if (transition instanceof ICallAction) {
-			return handleCallTransition(stateBeforeLeaving, stateAfterLeaving, (ICallAction) transition);
-		} else if (transition instanceof IReturnAction) {
-			return handleReturnTransition(stateBeforeLeaving, stateAfterLeaving, (IReturnAction) transition);
+		final IcfgEdge transitionLabel = transition.getLabel();
+		if (transitionLabel instanceof Summary) {
+			if (!((Summary) transition).calledProcedureHasImplementation()) {
+				// TODO fix WORKAROUND unsoundness for summary code blocks without procedure implementation
+				throw new UnsupportedOperationException("Summary for procedure without implementation: "
+						+ BoogiePrettyPrinter.print(((Summary) transitionLabel).getCallStatement()));
+			}
+			return handleReturnTransition(stateBeforeLeaving, stateAfterLeaving, transitionLabel);
+		} else if (transitionLabel instanceof Call) {
+			return handleCallTransition(stateBeforeLeaving, stateAfterLeaving, (Call) transitionLabel);
+		} else if (transitionLabel instanceof Return) {
+			return handleReturnTransition(stateBeforeLeaving, stateAfterLeaving, transitionLabel);
 		} else {
 			throw new UnsupportedOperationException(
 					"This post operator should not receive a transition different from ICallAction and IReturnAction.");
@@ -312,17 +321,11 @@ public class PoormansAbstractPostOperator<BACKING extends IAbstractState<BACKING
 
 	private List<PoormanAbstractState<BACKING>> handleReturnTransition(
 			final PoormanAbstractState<BACKING> stateBeforeLeaving,
-			final PoormanAbstractState<BACKING> stateAfterLeaving, final IReturnAction transition) {
-
-		if (!(transition instanceof Return)) {
-			throw new UnsupportedOperationException(
-					"Return transition type not supported: " + transition.getClass().getSimpleName());
-		}
-		final Return returnTransition = (Return) transition;
+			final PoormanAbstractState<BACKING> stateAfterLeaving, final IcfgEdge transition) {
 
 		// Apply the return
 		final List<BACKING> postStates = mBackingDomain.getPostOperator().apply(stateBeforeLeaving.getBackingState(),
-				stateAfterLeaving.getBackingState(), returnTransition);
+				stateAfterLeaving.getBackingState(), transition);
 
 		return postStates.stream().map(state -> new PoormanAbstractState<>(mServices, mBackingDomain, state))
 				.collect(Collectors.toList());

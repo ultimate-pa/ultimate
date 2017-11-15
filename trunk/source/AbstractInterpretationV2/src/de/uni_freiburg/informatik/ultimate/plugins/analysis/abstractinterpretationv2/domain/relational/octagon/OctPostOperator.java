@@ -188,7 +188,7 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Ic
 		final IcfgEdge transitionLabel = edge.getLabel();
 
 		// TODO fix WORKAROUND unsoundness for summary code blocks without procedure implementation
-		if (transitionLabel instanceof Summary && !((Summary) edge).calledProcedureHasImplementation()) {
+		if (transitionLabel instanceof Summary && !((Summary) transitionLabel).calledProcedureHasImplementation()) {
 			throw new UnsupportedOperationException("Summary for procedure without implementation");
 		} else if (transitionLabel instanceof Call) {
 			return applyCall(oldState, oldState, (Call) transitionLabel);
