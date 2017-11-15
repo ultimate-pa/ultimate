@@ -234,6 +234,8 @@ public class IntervalProjection {
 					throw new UnsupportedOperationException("Unsupported boolean value: " + bool);
 				}
 				booleanValuesMap.put(var, boolValue);
+			} else if (SmtSortUtils.isArraySort(realSort)) {
+				numericValuesMap.put(var, new IntervalDomainValue());
 			} else {
 				throw new UnsupportedOperationException("Unsupported sort: " + var.getSort());
 			}
@@ -289,6 +291,8 @@ public class IntervalProjection {
 					throw new UnsupportedOperationException("Unsupported bool value: " + bool);
 				}
 				previousOctState.assignBooleanVar(var, boolValue);
+			} else if (SmtSortUtils.isArraySort(realSort)) {
+				// Do nothing here, leave the value as it is.
 			} else {
 				throw new UnsupportedOperationException("Unsupported sort: " + realSort);
 			}
