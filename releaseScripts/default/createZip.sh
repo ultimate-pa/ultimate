@@ -1,7 +1,7 @@
 #!/bin/bash
-
-# Build latest version of Z3 or copy binary from Monteverdi
-# Get CVC4 here: http://cvc4.cs.nyu.edu/downloads/
+# This script generates a zip file for each Ultimate tool that should be deployed to GitHub or to some place else
+# It takes additional binaries from the adds/ folder. Currently, we use z3, cvc4 and mathsat
+# It also adds README, Ultimate.py, and various license files 
 
 function test {
     "$@"
@@ -152,7 +152,7 @@ test cp ${Z3PATH} "$TARGETDIR"/
 test cp ${CVC4PATH} "$TARGETDIR"/
 test cp ${MATHSATPATH} "$TARGETDIR"/
 
-echo "Creating .zip"
+echo "Modifying Ultimate.py with version and toolname"
 ## replacing version value in Ultimate.py
 test sed "s/version =.*/version = \'$VERSION\'/g" "$TARGETDIR"/Ultimate.py > "$TARGETDIR"/Ultimate.py.tmp && mv "$TARGETDIR"/Ultimate.py.tmp "$TARGETDIR"/Ultimate.py && chmod a+x "$TARGETDIR"/Ultimate.py
 
@@ -160,5 +160,6 @@ test sed "s/version =.*/version = \'$VERSION\'/g" "$TARGETDIR"/Ultimate.py > "$T
 test sed "s/toolname =.*/toolname = \'$TOOLNAME\'/g" "$TARGETDIR"/Ultimate.py > "$TARGETDIR"/Ultimate.py.tmp && mv "$TARGETDIR"/Ultimate.py.tmp "$TARGETDIR"/Ultimate.py && chmod a+x "$TARGETDIR"/Ultimate.py
 
 ## creating new zipfile 
+echo "Creating .zip"
 test zip -q ${ZIPFILE} -r "$TARGETDIR"/*
 
