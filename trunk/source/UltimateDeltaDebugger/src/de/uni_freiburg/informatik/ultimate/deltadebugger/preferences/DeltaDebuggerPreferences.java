@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.deltadebugger.Activator;
 
 /**
- * 
+ *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
@@ -67,9 +67,16 @@ public final class DeltaDebuggerPreferences extends UltimatePreferenceInitialize
 
 	public static final String LABEL_RESULT_SHORT_DESC_PREFIX = "Result short description prefix";
 	private static final String DESC_RESULT_SHORT_DESC_PREFIX =
-			"The provided string must be the prefix of one of the results that are interesting. "
-					+ "Use the empty string if all results of this type are interesting.";
+			"The provided string must be the prefix of the short description of one of the results that are "
+					+ "interesting. Use the empty string if all results of this type are interesting.";
 	private static final String DEFAULT_RESULT_SHORT_DESC_PREFIX = "";
+
+	public static final String LABEL_RESULT_LONG_DESC_PREFIX = "Result long description prefix";
+	private static final String DESC_RESULT_LONG_DESC_PREFIX =
+			"The provided string must be the prefix of the long description (normally written in the second line) of "
+					+ "one of the results that are interesting. "
+					+ "Use the empty string if all results of this type are interesting.";
+	private static final String DEFAULT_RESULT_LONG_DESC_PREFIX = "";
 
 	public static final String LABEL_EXTERNAL_TOOL_TIMEOUT = "External tool timeout";
 	private static final int DEFAULT_EXTERNAL_TOOL_TIMEOUT = 90000;
@@ -122,6 +129,8 @@ public final class DeltaDebuggerPreferences extends UltimatePreferenceInitialize
 						DESC_INTERESTING_RESULT_TYPE, PreferenceType.Combo, VALUES_INTERESTING_RESULT_TYPE),
 				new UltimatePreferenceItem<>(LABEL_RESULT_SHORT_DESC_PREFIX, DEFAULT_RESULT_SHORT_DESC_PREFIX,
 						DESC_RESULT_SHORT_DESC_PREFIX, PreferenceType.String),
+				new UltimatePreferenceItem<>(LABEL_RESULT_LONG_DESC_PREFIX, DEFAULT_RESULT_LONG_DESC_PREFIX,
+						DESC_RESULT_LONG_DESC_PREFIX, PreferenceType.String),
 
 				new UltimatePreferenceItem<>(LABEL_EXTERNAL_TOOL_MODE, ExternalComparison.NONE, DESC_EXTERNAL_TOOL_MODE,
 						PreferenceType.Combo, ExternalComparison.values()),
@@ -147,7 +156,7 @@ public final class DeltaDebuggerPreferences extends UltimatePreferenceInitialize
 
 	/**
 	 * Get the class of the IResult type the user is interested in.
-	 * 
+	 *
 	 * @param services
 	 *            The {@link IUltimateServiceProvider} instance of the current toolchain.
 	 * @return The {@link Class} of the {@link IResult} type the user is interested in.
