@@ -108,4 +108,8 @@ public interface IAbstractDomain<STATE extends IAbstractState<STATE>, ACTION> {
 	default <LOC> void afterFixpointComputation(final IAbstractInterpretationResult<STATE, ACTION, LOC> result) {
 		// default is doing nothing
 	}
+
+	default String domainDescription() {
+		return getClass().getSimpleName();
+	}
 }

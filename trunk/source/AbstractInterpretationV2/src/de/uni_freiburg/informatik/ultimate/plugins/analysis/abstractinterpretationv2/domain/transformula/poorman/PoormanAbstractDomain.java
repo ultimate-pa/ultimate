@@ -117,4 +117,13 @@ public class PoormanAbstractDomain<BACKING extends IAbstractState<BACKING>>
 		}
 		return mPostOperator;
 	}
+
+	@Override
+	public String domainDescription() {
+		final StringBuilder stringBuilder = new StringBuilder();
+		stringBuilder.append(IAbstractDomain.super.domainDescription());
+		stringBuilder.append(" with backing domain ");
+		stringBuilder.append(mBackingDomain.domainDescription());
+		return stringBuilder.toString();
+	}
 }
