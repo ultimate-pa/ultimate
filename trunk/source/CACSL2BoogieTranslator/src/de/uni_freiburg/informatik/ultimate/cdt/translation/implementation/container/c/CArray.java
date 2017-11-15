@@ -160,7 +160,8 @@ public class CArray extends CType {
                 dimString.append("_");
             } else {
 //                dimString = new StringBuilder("variableLength");
-                dimString.append("variableLength");
+//                dimString.append("variableLength");
+                dimString.append("unrecognizedDimensions");
                 dimString.append("_");
                 break;
             }

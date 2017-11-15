@@ -114,16 +114,9 @@ public class ArrayHandler {
 			// The result type will be an array where the first dimension is
 			// missing. E.g., if the input is a (int x int -> float) array
 			// the resulting array will be an (int -> float) array.
-			final CType resultCType;
-			if (cArray.getDimensions().length == 1) {
-				assert isOutermostSubscriptExpression(node) : "not outermost";
-				resultCType = cArray.getValueType();
-			} else {
-				final RValue[] newDimensions =
-						Arrays.copyOfRange(cArray.getDimensions(), 1, cArray.getDimensions().length);
-				assert newDimensions.length == cArray.getDimensions().length - 1;
-				resultCType = new CArray(newDimensions, cArray.getValueType());
-			}
+			assert cArray.getDimensions().length != 1 || isOutermostSubscriptExpression(node) : "not outermost";
+
+			final CType resultCType = popOneDimension(cArray);
 
 			if (leftExpRes.lrVal instanceof HeapLValue) {
 				// If the left hand side is an array represented as HeapLValue
@@ -182,6 +175,19 @@ public class ArrayHandler {
 		return result;
 	}
 
+	public static CType popOneDimension(final CArray cArray) {
+		final CType resultCType;
+		if (cArray.getDimensions().length == 1) {
+			resultCType = cArray.getValueType();
+		} else {
+			final RValue[] newDimensions =
+					Arrays.copyOfRange(cArray.getDimensions(), 1, cArray.getDimensions().length);
+			assert newDimensions.length == cArray.getDimensions().length - 1;
+			resultCType = new CArray(newDimensions, cArray.getValueType());
+		}
+		return resultCType;
+	}
+
 	/**
 	 * Add to exprResult a check that the index is within the bounds of an array. Depending on the preferences of this
 	 * plugin we
@@ -193,7 +199,7 @@ public class ArrayHandler {
 	 * For multidimensional arrays, this check has to be done separately for each index. This simple check ignores the
 	 * typesize of the value, compares only the index with the dimension and is hence only applicable if the array is
 	 * represented as a {@link LocalLValue}.
-	 * 
+	 *
 	 * @param currentIndex
 	 *            {@link Expression} that represents the index
 	 * @param currentDimension

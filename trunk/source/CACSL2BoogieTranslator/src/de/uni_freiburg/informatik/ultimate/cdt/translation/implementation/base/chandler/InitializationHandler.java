@@ -899,7 +899,7 @@ public class InitializationHandler {
 				final CStruct targetCType) {
 			assert initializerResult.getRootExpressionResult() == null;
 
-			final List<InitializerResult> children = initializerResult.getChildren();
+			final List<InitializerResult> children = initializerResult.getList();
 
 
 			// initialize the structFieldInfos to null
@@ -934,6 +934,34 @@ public class InitializationHandler {
 		}
 
 		private static InitializerInfo constructArrayIndexToInitInfo(final ILocation loc, final Dispatcher main,
+				final InitializerResult initializerResult, final CArray targetCType) {
+			final Stack<Deque<InitializerResult>> queueStack = new Stack<>();
+			final Map<List<Integer>, InitializerInfo> arrayIndexToInitInfo = new HashMap<>();
+
+			final List<Integer> arrayBounds = CTranslationUtil.getConstantDimensionsOfArray(targetCType,
+					main.mCHandler.getExpressionTranslation());
+
+//			final List<InitializerResult> list = initializerResult.getList();
+//			currentObject.add(0);
+//			currentTypeToInitialize = ArrayHandler.popOneDimension(targetCType);
+
+			final List<Integer> currentObjectIndex = new ArrayList<Integer>();
+			final CType currentObjectType = targetCType;
+			queueStack.push(new ArrayDeque<>(initializerResult.getList()));
+
+
+			while (!queueStack.isEmpty()) {
+				if (!queueStack.peek().isEmpty()) {
+
+
+				} else {
+
+				}
+			}
+			return new InitializerInfo(arrayIndexToInitInfo);
+		}
+
+		private static InitializerInfo constructArrayIndexToInitInfo(final ILocation loc, final Dispatcher main,
 				final MemoryHandler memoryHandler, final StructHandler structHandler,
 				final AExpressionTranslation expressionTranslation, final InitializerResult initializerResult,
 				final CArray targetCType) {
@@ -961,49 +989,36 @@ public class InitializationHandler {
 			final Map<List<Integer>, InitializerInfo> arrayIndexToInitInfo = new HashMap<>();
 
 			final Stack<Deque<InitializerResult>> iteratorStack = new Stack<>();
-			iteratorStack.push(new ArrayDeque<>(initializerResult.getChildren()));
+			iteratorStack.push(new ArrayDeque<>(initializerResult.getList()));
 
 			int currentInitializerLevel = 1;
+
+			final List<Integer> currentObject = new ArrayList<Integer>();
+			CType currentTypeToInitialize = targetCType;
 
 			while (!iteratorStack.isEmpty()) {
 				if (!iteratorStack.peek().isEmpty()) {
 					final InitializerResult next = iteratorStack.peek().pollFirst();
 
 					if (next.isInitializerList()) {
-
-						if ((currentInitializerLevel == dimensionality && next.isInitializerList())) {
+						if (currentTypeToInitialize instanceof CArray) {
 							/*
-							 * We are in the process of initializing array cells but a brace is opened in the
-							 * initializer.
+							 * current first element on the top of the stack still refers to cells of the array being
+							 * initialized. --> we unpack it by adding another iterator
 							 */
-							if (CTranslationUtil.isAggregateType(targetCType.getValueType())) {
-								/*
-								 * the inner initializer refers to an aggregate type inside the value type
-								 * --> go on as normal (TODO: refactor the control flow)
-								 */
-
-							} else {
-								/*
-								 *  there are superfluous braces
-								 *  (example: we get { 1, 2 } where a single int is expected)
-								 *  we throw away all entries but the first
-								 */
-								iteratorStack.peek().addLast(next.getChildren().get(0));
-							}
-							continue;
+							iteratorStack.push(new ArrayDeque<>(next.getList()));
+							currentInitializerLevel++;
+							currentTypeToInitialize = ArrayHandler.popOneDimension((CArray) currentTypeToInitialize);
+						} else {
+							// do nothing
 						}
 
-						/*
-						 * current first element on the top of the stack still refers to cells of the array being
-						 * initialized. --> we unpack it by adding another iterator
-						 */
-						iteratorStack.push(new ArrayDeque<>(next.getChildren()));
-						currentInitializerLevel++;
-
 						continue;
+					} else {
+
 					}
 
-					currentInitializerLevel = dimensionality;
+//					currentInitializerLevel = dimensionality;
 
 					/*
 					 * There is no more initializer-list inside, or we have reached the array-cell level (i.e., if we
@@ -1017,10 +1032,21 @@ public class InitializationHandler {
 
 					arrayIndexToInitInfo.put(nextIndexToInitialize, cellInitInfo);
 
-					nextIndexToInitialize = incrementArrayIndex(nextIndexToInitialize, arrayBounds);
+					final int maxxedIndices = getMaxxedIndices(nextIndexToInitialize, arrayBounds);
+					currentInitializerLevel -= maxxedIndices;
+
+//					nextIndexToInitialize = incrementArrayIndex(nextIndexToInitialize, arrayBounds);
+					final List<Integer> hypoNextIndex = incrementArrayIndex(nextIndexToInitialize, arrayBounds, maxxedIndices);
+					if (hypoNextIndex == null) {
+						// drop the rest of the current list
+					} else {
+						nextIndexToInitialize = hypoNextIndex;
+					}
+
 				} else {
 					iteratorStack.pop();
-					currentInitializerLevel = iteratorStack.size();
+//					currentInitializerLevel = iteratorStack.size();
+					currentInitializerLevel--;
 					if (iteratorStack.isEmpty()) {
 						break;
 					}
@@ -1043,6 +1069,28 @@ public class InitializationHandler {
 			return new InitializerInfo(arrayIndexToInitInfo);
 		}
 
+
+//		private static CType pop1(final CType currentTypeToInitialize) {
+//			if (currentTypeToInitialize instanceof CArray) {
+//				// decrease dimension
+//				oldDimension
+//			}
+//			return null;
+//		}
+
+		private static int getMaxxedIndices(final List<Integer> nextIndexToInitialize, final List<Integer> arrayBounds) {
+			final int result = 0;
+//			for (int i = arrayBounds.size() - 1; i >= 0; i--) {
+			final int lastIndex = arrayBounds.size() - 1;
+			assert nextIndexToInitialize.size() - 1 == lastIndex;
+
+			for (int i = 0; i < arrayBounds.size(); i++) {
+				if (nextIndexToInitialize.get(lastIndex - i) != arrayBounds.get(lastIndex - i) - 1) {
+					return i;
+				}
+			}
+			return nextIndexToInitialize.size();
+		}
 
 		/**
 		 * Increment at dimension posToIncrement, reset everything behind that dimension to 0.
@@ -1125,6 +1173,50 @@ public class InitializationHandler {
 			}
 			return Collections.unmodifiableList(result);
 		}
+
+
+		private static List<Integer> incrementArrayIndex(final List<Integer> arrayIndex,
+				final List<Integer> arrayBounds, final int level) {
+			assert arrayIndex.size() == arrayBounds.size();
+			final List<Integer> result = new ArrayList<>(arrayIndex);
+
+			final int lastPos = arrayIndex.size() - 1;
+			final int lastPosValueIncremented = arrayIndex.get(lastPos) + 1;
+
+
+			final int levelPos = lastPos - level;
+
+			final Integer oldValueAtLevelPos = arrayIndex.get(levelPos);
+			if (oldValueAtLevelPos + 1 > arrayBounds.get(levelPos) - 1) {
+				// cannot increment at that level
+				return null;
+			}
+
+			result.set(levelPos, oldValueAtLevelPos + 1);
+			return Collections.unmodifiableList(result);
+
+//			if (lastPosValueIncremented < arrayBounds.get(lastPos)) {
+//				result.set(lastPos, arrayIndex.get(lastPos) + 1);
+//			} else {
+//				// lastPosValueIncremented >= dimensions.get(lastPos)
+//
+//				int posToIncrement = lastPos;
+//				while (posToIncrement >= 0 && arrayIndex.get(posToIncrement) == arrayBounds.get(posToIncrement) - 1) {
+//					result.set(posToIncrement, 0);
+//					posToIncrement--;
+//				}
+//
+//				if (posToIncrement == - 1) {
+//					// there is no next index withing the given array bounds
+//					return null;
+//				}
+//
+//				result.set(posToIncrement, arrayIndex.get(posToIncrement) + 1);
+//
+//			}
+//			return Collections.unmodifiableList(result);
+		}
+
 
 		public boolean hasExpressionResult() {
 			return mExpressionResult != null;

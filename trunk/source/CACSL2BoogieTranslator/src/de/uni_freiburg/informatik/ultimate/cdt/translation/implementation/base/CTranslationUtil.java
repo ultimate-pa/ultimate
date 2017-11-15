@@ -205,8 +205,7 @@ public class CTranslationUtil {
 		}
 		final List<Integer> result = new ArrayList<>();
 		for (final RValue dimRVal : cArrayType.getDimensions()) {
-			final int dimInt = Integer.parseUnsignedInt(
-					expressionTranslation.extractIntegerValue(dimRVal).toString());
+			final int dimInt = Integer.parseUnsignedInt(expressionTranslation.extractIntegerValue(dimRVal).toString());
 			result.add(dimInt);
 		}
 		return result;

@@ -100,7 +100,7 @@ public class InitializerResult extends Result {
 		return mChildren != null;
 	}
 
-	public List<InitializerResult> getChildren() {
+	public List<InitializerResult> getList() {
 		return mChildren;
 	}
 
