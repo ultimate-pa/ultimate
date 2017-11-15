@@ -31,6 +31,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
@@ -45,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructConstructor;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
 /**
@@ -408,5 +410,20 @@ public class ExpressionFactory extends BoogieTransformer {
 	public static StructLHS constructStructAccessLhs(final ILocation loc, final LeftHandSide lhs, final String field) {
 		// TODO: infer BoogieType and add to constructor parameters
 		return new StructLHS(loc, lhs, field);
+	}
+
+	public static ArrayAccessExpression constructArrayAccessExpression(final ILocation loc, final Expression array,
+			final Expression[] indices) {
+		return new ArrayAccessExpression(loc, array, indices);
+	}
+
+	public static ArrayLHS constructArrayLHS(final ILocation loc, final LeftHandSide array, final Expression[] newIndices) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public static LeftHandSide constructArrayLHS(final ILocation loc, final IBoogieType type, final LeftHandSide lhs,
+			final Expression[] indices) {
+		return constructArrayLhs(loc, lhs, indices);
 	}
 }

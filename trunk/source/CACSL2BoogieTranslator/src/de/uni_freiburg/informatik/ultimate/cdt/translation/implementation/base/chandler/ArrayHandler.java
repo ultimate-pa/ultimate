@@ -158,10 +158,12 @@ public class ArrayHandler {
 					final Expression[] newIndices = new Expression[oldIndices.length + 1];
 					System.arraycopy(oldIndices, 0, newIndices, 0, oldIndices.length);
 					newIndices[newIndices.length - 1] = index.getValue();
-					newInnerArrayLHS = new ArrayLHS(loc, ((ArrayLHS) oldInnerArrayLHS).getArray(), newIndices);
+					newInnerArrayLHS = ExpressionFactory.constructArrayLHS(loc,
+							((ArrayLHS) oldInnerArrayLHS).getArray(), newIndices);
 				} else {
 					assert isInnermostSubscriptExpression(node) : "not innermost";
-					newInnerArrayLHS = new ArrayLHS(loc, oldInnerArrayLHS, new Expression[] { index.getValue() });
+					newInnerArrayLHS = ExpressionFactory.constructArrayLHS(loc, oldInnerArrayLHS,
+							new Expression[] { index.getValue() });
 				}
 				final LocalLValue lValue = new LocalLValue(newInnerArrayLHS, resultCType, false, false);
 				result = ExpressionResult.copyStmtDeclAuxvarOverapprox(leftExpRes, subscript);
