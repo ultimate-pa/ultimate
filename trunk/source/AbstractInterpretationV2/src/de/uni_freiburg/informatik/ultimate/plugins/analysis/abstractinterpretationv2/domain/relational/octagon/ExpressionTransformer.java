@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieSymbolTableVariableProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.typeutils.TypeUtils;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.BigDecimalSanitizer;
 
 /**
  * Methods to transform Boogie expressions into {@link AffineExpression}s {@link IfThenElseExpression}-free expressions
@@ -156,10 +157,10 @@ public class ExpressionTransformer {
 				+ expr;
 		if (expr instanceof IntegerLiteral) {
 			final String value = ((IntegerLiteral) expr).getValue();
-			return new AffineExpression(sanitizeBigDecimalValue(value));
+			return new AffineExpression(BigDecimalSanitizer.sanitizeBigDecimalValue(value));
 		} else if (expr instanceof RealLiteral) {
 			final String value = ((RealLiteral) expr).getValue();
-			return new AffineExpression(sanitizeBigDecimalValue(value));
+			return new AffineExpression(BigDecimalSanitizer.sanitizeBigDecimalValue(value));
 		} else if (expr instanceof IdentifierExpression) {
 			final IdentifierExpression ie = (IdentifierExpression) expr;
 			IProgramVarOrConst var =
@@ -231,28 +232,6 @@ public class ExpressionTransformer {
 		default:
 			return null;
 		}
-	}
-
-	/**
-	 * Accounts for found problems when passing values by string directly to BigDecimal, in order to avoid
-	 * NumberFormatExceptions.
-	 *
-	 * @param val
-	 *            The value as string.
-	 * @return A new {@link BigDecimal} object that contains the given value. It is also possible that an exception is
-	 *         thrown when the object is created if the given value is invalid or not handled.
-	 */
-	private static BigDecimal sanitizeBigDecimalValue(final String val) {
-		if (val.contains("/")) {
-			final String[] twoParts = val.split("/");
-			if (twoParts.length != 2) {
-				throw new NumberFormatException("Not a valid division value: " + val);
-			}
-			final BigDecimal one = new BigDecimal(twoParts[0]);
-			final BigDecimal two = new BigDecimal(twoParts[1]);
-			return one.divide(two);
-		}
-		return new BigDecimal(val);
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
