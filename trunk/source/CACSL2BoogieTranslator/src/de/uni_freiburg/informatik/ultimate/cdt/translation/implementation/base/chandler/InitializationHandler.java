@@ -28,9 +28,12 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Deque;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -153,8 +156,9 @@ public class InitializationHandler {
 		final InitializerInfo initializerInfo;
 		if (initializerRaw != null) {
 			// construct an InitializerInfo from the InitializerResult
-			initializerInfo = InitializerInfo.constructInitializerInfo(loc, main, mMemoryHandler, mStructHandler, mExpressionTranslation,
-					initializerRaw, targetCTypeRaw);
+			initializerInfo = InitializerInfo.constructInitializerInfo(loc, main,
+					initializerRaw.isInitializerList() ? initializerRaw.getList() : Collections.singletonList(initializerRaw),
+							targetCTypeRaw);
 		} else {
 			initializerInfo = null;
 		}
@@ -370,6 +374,9 @@ public class InitializationHandler {
 			final ExpressionResultBuilder initialization, final LRValue arrayLhsToInitialize,
 //			final List<Integer> arrayIndex, final InitializerInfo arrayIndexInitInfo) {
 			final int arrayIndex, final InitializerInfo arrayIndexInitInfo) {
+
+		final CType cellType = ArrayHandler.popOneDimension(cArrayType);
+
 		if (onHeap) {
 			/*
 			 * initialize the array cell, if the value type is an aggregate type, this means, we have to initialize
@@ -380,7 +387,7 @@ public class InitializationHandler {
 
 			// generate and add code to initialize the array cell (and possibly its subcells)
 			final ExpressionResult arrayIndexInitialization =
-					initRec(loc, main, cArrayType.getValueType(), arrayIndexInitInfo, true, arrayCellAddress);
+					initRec(loc, main, cellType, arrayIndexInitInfo, true, arrayCellAddress);
 			initialization.addAllExceptLrValue(arrayIndexInitialization);
 
 
@@ -390,7 +397,7 @@ public class InitializationHandler {
 			 * (we don't give a leftHandSide to initVarRec, and use the value that is given to the ExpressionResult)
 			 */
 			final ExpressionResult arrayIndexInitialization =
-					initRec(loc, main, cArrayType.getValueType(), arrayIndexInitInfo, false, null);
+					initRec(loc, main, cellType, arrayIndexInitInfo, false, null);
 			initialization.addAllExceptLrValue(arrayIndexInitialization);
 
 			final LocalLValue arrayAccessLhs = CTranslationUtil.constructArrayAccessLhs(loc,
@@ -850,13 +857,21 @@ public class InitializationHandler {
 		 */
 		private final List<InitializerResult> mUnusedListEntries;
 
-		private InitializerInfo(final ExpressionResult expressionResult) {
+		private InitializerInfo(final ExpressionResult expressionResult, final List<InitializerResult> rest) {
 			mExpressionResult = expressionResult;
 			mOverApprs = expressionResult.getOverapprs();
 			mElementInitInfos = null;
-			mUnusedListEntries = null;
+			mUnusedListEntries = rest;
 //			mArrayIndexToInitInfo = null;
 //			mStructFieldInitInfos = null;
+		}
+
+		public InitializerInfo(final Map<Integer, InitializerInfo> indexInitInfos,
+				final List<InitializerResult> unused) {
+			mExpressionResult = null;
+			mOverApprs = null;
+			mElementInitInfos = indexInitInfos;
+			mUnusedListEntries = unused;
 		}
 
 //		private InitializerInfo(final Map<List<Integer>, InitializerInfo> arrayIndexToInitInfo) {
@@ -886,39 +901,112 @@ public class InitializationHandler {
 		 * @param targetCType
 		 */
 		public static InitializerInfo constructInitializerInfo(final ILocation loc, final Dispatcher main,
-				final MemoryHandler memoryHandler, final StructHandler structHandler,
-				final AExpressionTranslation expressionTranslation, final InitializerResult initializerResult,
-				final CType targetCTypeRaw) {
+				final List<InitializerResult> initializerResult, final CType targetCTypeRaw) {
 			final CType targetCType = targetCTypeRaw.getUnderlyingType();
 			if (targetCType instanceof CPrimitive || targetCType instanceof CEnum || targetCType instanceof CPointer) {
 				// do the necessary conversions
-				final ExpressionResult expressionResultSwitched = initializerResult.getRootExpressionResult()
-						.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
-				expressionResultSwitched.rexBoolToIntIfNecessary(loc, expressionTranslation);
+
+				final Deque<InitializerResult> ad = new ArrayDeque<>(initializerResult);
+
+//				final ExpressionResult expressionResultSwitched = initializerResult.get(0).getRootExpressionResult()
+				final ExpressionResult expressionResultSwitched = ad.pollFirst().getRootExpressionResult()
+						.switchToRValueIfNecessary(main, main.mCHandler.getMemoryHandler(), main.mCHandler.getStructHandler(), loc);
+				expressionResultSwitched.rexBoolToIntIfNecessary(loc, main.mCHandler.getExpressionTranslation());
 				main.mCHandler.convert(loc, expressionResultSwitched, targetCType);
 
-				return new InitializerInfo(expressionResultSwitched);
-			} else if (targetCType instanceof CStruct) {
-				// this is also used for union initializers
-				return constructStructFieldInitInfos(loc, main, initializerResult, (CStruct) targetCType);
-			} else if (targetCType instanceof CArray) {
-				return constructArrayIndexToInitInfo(loc, main, initializerResult, (CArray) targetCType);
+				return new InitializerInfo(expressionResultSwitched, new ArrayList<>(ad));
+			} else if (targetCType instanceof CUnion) {
+				throw new UnsupportedOperationException("todo : union case");
+//			} else if (targetCType instanceof CStruct) {
+//				// this is also used for union initializers
+//				return constructStructFieldInitInfos(loc, main, initializerResult, (CStruct) targetCType);
+			} else if (targetCType instanceof CArray || targetCType.getClass().equals(CStruct.class)) {
+				return constructArrayIndexToInitInfo(loc, main, initializerResult, targetCType);
 			} else {
 				throw new UnsupportedOperationException("missing case?");
 			}
 		}
 
 		private static InitializerInfo constructArrayIndexToInitInfo(final ILocation loc, final Dispatcher main,
-				final InitializerResult initializerResult, final CArray targetCType) {
-			// TODO Auto-generated method stub
-			return null;
+//				final List<InitializerResult> initializerResults, final CArray targetCType) {
+				final List<InitializerResult> initializerResults, final CType targetCType) {
+//			assert targetCType.isAggregateType();
+			assert targetCType instanceof CArray
+				|| (targetCType.getClass().equals(CStruct.class));
+
+			final Map<Integer, InitializerInfo> indexInitInfos = new HashMap<>();
+
+			Deque<InitializerResult> rest = new ArrayDeque<>(initializerResults);
+
+			final int bound;
+			CType cellType = null;
+			{
+				if (targetCType instanceof CArray) {
+					cellType = ArrayHandler.popOneDimension((CArray) targetCType);
+					bound = CTranslationUtil.getConstantFirstDimensionOfArray((CArray) targetCType,
+							main.mCHandler.getExpressionTranslation());
+					if (CTranslationUtil.isToplevelVarlengthArray((CArray) targetCType,
+							main.mCHandler.getExpressionTranslation())) {
+						throw new UnsupportedOperationException("varlenght not yet supported here");
+					}
+				} else {
+					// targetCType instanceof CStruct
+					bound = ((CStruct) targetCType).getFieldCount();
+				}
+
+
+			}
+
+			/*
+			 * The currentCellIndex stands for the "current object" from the standard text.
+			 * Once we support array designators they will modify that index.
+			 */
+			for (int currentCellIndex = 0; currentCellIndex < bound; currentCellIndex++) {
+
+				if (rest.isEmpty()) {
+					// no more values in the current initializer list
+					break;
+				}
+
+				if (targetCType instanceof CStruct) {
+					cellType = ((CStruct) targetCType).getFieldTypes()[currentCellIndex];
+				}
+
+				if (rest.peekFirst().isInitializerList()) {
+					/*
+					 * case "{", i.e. one more brace opens
+					 * Then the cell is initialized with the list belonging to that brace (until the matching brace).
+					 * No residue is taken over if too many elements are left.
+					 */
+
+					final InitializerResult first = rest.pollFirst();
+					final InitializerInfo cellInitInfo = constructInitializerInfo(loc, main, first.getList(), cellType);
+
+					indexInitInfos.put(currentCellIndex, cellInitInfo);
+				} else {
+					/*
+					 * Case where the list starts with a value (or identifier, just not with a brace).
+					 * Then the current list is handed down to the cell, and if anything is left after processing that
+					 * cell we use it for the next cell.
+					 */
+					final InitializerInfo cellInitInfo = constructInitializerInfo(loc, main, new ArrayList<>(rest), cellType);
+					indexInitInfos.put(currentCellIndex, cellInitInfo);
+					rest = new ArrayDeque<>(cellInitInfo.getUnusedListEntries());
+				}
+			}
+
+			return new InitializerInfo(indexInitInfos, new ArrayList<>(rest));
 		}
 
-		private static InitializerInfo constructStructFieldInitInfos(final ILocation loc, final Dispatcher main,
-				final InitializerResult initializerResult, final CStruct targetCType) {
-			// TODO Auto-generated method stub
-			return null;
+		private List<InitializerResult> getUnusedListEntries() {
+			return Collections.unmodifiableList(mUnusedListEntries);
 		}
+
+//		private static InitializerInfo constructStructFieldInitInfos(final ILocation loc, final Dispatcher main,
+//				final List<InitializerResult> initializerResult, final CStruct targetCType) {
+//			// TODO Auto-generated method stub
+//			return null;
+//		}
 
 		public boolean hasExpressionResult() {
 			return mExpressionResult != null;

@@ -4097,4 +4097,9 @@ public class CHandler implements ICHandler {
 	public TypeSizeAndOffsetComputer getTypeSizeAndOffsetComputer() {
 		return mTypeSizeComputer;
 	}
+
+	@Override
+	public StructHandler getStructHandler() {
+		return mStructHandler;
+	}
 }

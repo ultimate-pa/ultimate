@@ -111,4 +111,28 @@ public class InitializerResult extends Result {
 	public boolean hasRootExpressionResult() {
 		return mRootExpressionResult != null;
 	}
+
+	@Override
+	public String toString() {
+		final StringBuilder sb = new StringBuilder();
+		if (hasRootDesignator()) {
+			sb.append(getRootDesignator());
+			sb.append(" : ");
+		}
+		if (hasRootExpressionResult()) {
+			sb.append(getRootExpressionResult().getLrValue().toString());
+		}
+
+		if (isInitializerList()) {
+			String comma = "";
+			sb.append("{ ");
+			for (final InitializerResult entry : getList()) {
+				sb.append(comma);
+				comma = ", ";
+				sb.append(entry.toString());
+			}
+			sb.append(" }");
+		}
+		return sb.toString();
+	}
 }
