@@ -119,8 +119,8 @@ public class AbsIntPredicateInterpolantSequenceWeakener<STATE extends IAbstractS
 		}
 
 		mLogger.debug("Unable to weaken prestate. Returning old prestate.");
-		throw new UnsupportedOperationException("This case should not happen");
-		// return preState;
+		// throw new UnsupportedOperationException("This case should not happen");
+		return preState;
 	}
 
 	/**
