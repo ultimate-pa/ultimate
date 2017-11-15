@@ -49,6 +49,9 @@ import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 public class CArray extends CType {
     /**
      * Array dimensions.
+     *
+     * TODO (alex): probably it would be best to have only one "bound" here, and nest array types for multidimensional
+     *  stuff.
      */
     private final RValue[] dimensions;
     /**
