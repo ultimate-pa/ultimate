@@ -659,10 +659,10 @@ public class MemoryHandler {
 				new CPrimitive(CPrimitives.VOID));
 		for (final HeapDataArray hda : heapDataArrays) {
 			final String memArrayName = hda.getVariableName();
-			final ArrayAccessExpression srcAcc = ExpressionFactory.constructArrayAccessExpression(ignoreLoc,
+			final ArrayAccessExpression srcAcc = ExpressionFactory.constructNestedArrayAccessExpression(ignoreLoc,
 					new IdentifierExpression(ignoreLoc, memArrayName), new Expression[] { currentSrc });
 			final ArrayLHS destAcc =
-					ExpressionFactory.constructArrayLHS(ignoreLoc, new VariableLHS(ignoreLoc, memArrayName),
+					ExpressionFactory.constructNestedArrayLHS(ignoreLoc, new VariableLHS(ignoreLoc, memArrayName),
 							new Expression[] { currentDest });
 			result.add(new AssignmentStatement(ignoreLoc, new LeftHandSide[] { destAcc }, new Expression[] { srcAcc }));
 
@@ -702,7 +702,7 @@ public class MemoryHandler {
 				convertedValue = exprRes.lrVal.getValue();
 			}
 			final String memArrayName = hda.getVariableName();
-			final ArrayLHS destAcc = ExpressionFactory.constructArrayLHS(ignoreLoc,
+			final ArrayLHS destAcc = ExpressionFactory.constructNestedArrayLHS(ignoreLoc,
 					new VariableLHS(ignoreLoc, memArrayName), new Expression[] { currentPtr });
 
 			result.add(new AssignmentStatement(ignoreLoc, new LeftHandSide[] { destAcc },
@@ -1048,7 +1048,7 @@ public class MemoryHandler {
 	private static Expression constructOneDimensionalArrayAccess(final ILocation loc, final Expression arr,
 			final Expression index) {
 		final Expression[] singletonIndex = new Expression[] { index };
-		return ExpressionFactory.constructArrayAccessExpression(loc, arr, singletonIndex);
+		return ExpressionFactory.constructNestedArrayAccessExpression(loc, arr, singletonIndex);
 	}
 
 	private static Expression constructOneDimensionalArrayStore(final ILocation loc, final Expression arr,
@@ -1065,7 +1065,7 @@ public class MemoryHandler {
 	public static AssignmentStatement constructOneDimensionalArrayUpdate(final ILocation loc, final Expression index,
 			final String arrayIdentifier, final Expression value) {
 		final LeftHandSide[] lhs = new LeftHandSide[] {
-				ExpressionFactory.constructArrayLHS(loc, new VariableLHS(loc, arrayIdentifier),
+				ExpressionFactory.constructNestedArrayLHS(loc, new VariableLHS(loc, arrayIdentifier),
 						new Expression[] { index }) };
 		final Expression[] rhs = new Expression[] { value };
 		final AssignmentStatement assignment = new AssignmentStatement(loc, lhs, rhs);
@@ -1145,7 +1145,7 @@ public class MemoryHandler {
 		{
 			final Expression ptrExpr = new IdentifierExpression(loc, ptrName);
 			final Expression ptrBase = getPointerBaseAddress(ptrExpr, loc);
-			final Expression aae = ExpressionFactory.constructArrayAccessExpression(loc, getLengthArray(loc), new Expression[] { ptrBase });
+			final Expression aae = ExpressionFactory.constructNestedArrayAccessExpression(loc, getLengthArray(loc), new Expression[] { ptrBase });
 			final Expression ptrOffset = getPointerOffset(ptrExpr, loc);
 			final Expression sum = constructPointerComponentAddition(loc, size, ptrOffset);
 			leq = constructPointerComponentLessEqual(loc, sum, aae);
@@ -1224,7 +1224,7 @@ public class MemoryHandler {
 	public Expression constructPointerBaseValidityCheck(final ILocation loc, final Expression ptr) {
 		final Expression ptrBase = getPointerBaseAddress(ptr, loc);
 		final ArrayAccessExpression aae =
-				ExpressionFactory.constructArrayAccessExpression(loc, getValidArray(loc), new Expression[] { ptrBase });
+				ExpressionFactory.constructNestedArrayAccessExpression(loc, getValidArray(loc), new Expression[] { ptrBase });
 		final Expression isValid = mBooleanArrayHelper.compareWithTrue(aae);
 		return isValid;
 	}
@@ -1308,7 +1308,7 @@ public class MemoryHandler {
 
 		// requires ~addr!base == 0 || #valid[~addr!base];
 		final Expression addrIsValid =
-				mBooleanArrayHelper.compareWithTrue(ExpressionFactory.constructArrayAccessExpression(tuLoc, valid, idcFree));
+				mBooleanArrayHelper.compareWithTrue(ExpressionFactory.constructNestedArrayAccessExpression(tuLoc, valid, idcFree));
 		final RequiresSpecification baseValid = new RequiresSpecification(tuLoc, free,
 				ExpressionFactory.newBinaryExpression(tuLoc, Operator.LOGICOR, isNullPtr, addrIsValid));
 
@@ -1338,7 +1338,7 @@ public class MemoryHandler {
 			// // havoc #memory[n];
 			// }
 			final LeftHandSide[] lhs =
-					new LeftHandSide[] { ExpressionFactory.constructArrayLHS(tuLoc, new VariableLHS(tuLoc, SFO.VALID),
+					new LeftHandSide[] { ExpressionFactory.constructNestedArrayLHS(tuLoc, new VariableLHS(tuLoc, SFO.VALID),
 							idcFree) };
 			final Expression[] rhsFree = new Expression[] { bLFalse };
 			final Body bodyFree = new Body(tuLoc, new VariableDeclaration[0],
@@ -1425,7 +1425,7 @@ public class MemoryHandler {
 		specMalloc
 				.add(new EnsuresSpecification(tuLoc, false,
 						ExpressionFactory.newBinaryExpression(tuLoc,
-								Operator.COMPEQ, ExpressionFactory.constructArrayAccessExpression(tuLoc, ExpressionFactory
+								Operator.COMPEQ, ExpressionFactory.constructNestedArrayAccessExpression(tuLoc, ExpressionFactory
 										.newUnaryExpression(tuLoc, UnaryExpression.Operator.OLD, valid), idcMalloc),
 								bLFalse)));
 		specMalloc.add(new EnsuresSpecification(tuLoc, false,ensuresArrayUpdate(tuLoc, bLTrue, base, valid)));
@@ -1467,7 +1467,7 @@ public class MemoryHandler {
 			block[1] = new AssumeStatement(tuLoc,
 					ExpressionFactory.newBinaryExpression(tuLoc, Operator.COMPNEQ, addrBase, nr0));
 			block[2] = new AssumeStatement(tuLoc, ExpressionFactory.newUnaryExpression(tuLoc,
-					UnaryExpression.Operator.LOGICNEG, ExpressionFactory.constructArrayAccessExpression(tuLoc, valid, idcAddrBase)));
+					UnaryExpression.Operator.LOGICNEG, ExpressionFactory.constructNestedArrayAccessExpression(tuLoc, valid, idcAddrBase)));
 			block[3] = new AssignmentStatement(tuLoc, new LeftHandSide[] { new VariableLHS(tuLoc, SFO.VALID) },
 					new Expression[] { new ArrayStoreExpression(tuLoc, valid, idcAddrBase, bLTrue) });
 			block[4] = new AssignmentStatement(tuLoc, new LeftHandSide[] { new VariableLHS(tuLoc, SFO.LENGTH) },
@@ -1849,7 +1849,7 @@ public class MemoryHandler {
 					// } else {
 					final Expression position = mExpressionTranslation.constructLiteralForIntegerType(loc,
 							mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.valueOf(pos));
-					arrayAccRVal = new RValue(ExpressionFactory.constructArrayAccessExpression(loc, value, new Expression[] { position }),
+					arrayAccRVal = new RValue(ExpressionFactory.constructNestedArrayAccessExpression(loc, value, new Expression[] { position }),
 							arrayType.getValueType());
 					// }
 					stmt.addAll(getWriteCall(loc,

@@ -1039,7 +1039,7 @@ public class FunctionHandler {
 				final Expression offsetSmallerLength = expressionTranslation.constructBinaryComparisonIntegerExpression(
 						loc, IASTBinaryExpression.op_lessEqual, MemoryHandler.getPointerOffset(tmpExpr, loc),
 						expressionTranslation.getCTypeOfPointerComponents(),
-						ExpressionFactory.constructArrayAccessExpression(loc, memoryHandler.getLengthArray(loc),
+						ExpressionFactory.constructNestedArrayAccessExpression(loc, memoryHandler.getLengthArray(loc),
 								new Expression[] { MemoryHandler.getPointerBaseAddress(argS.lrVal.getValue(), loc) }),
 						expressionTranslation.getCTypeOfPointerComponents());
 				// res.base == arg_s.base && res.offset >= 0 && res.offset <= length(arg_s.base)
@@ -1263,7 +1263,7 @@ public class FunctionHandler {
 			final Expression offsetSmallerLength = expressionTranslation.constructBinaryComparisonIntegerExpression(loc,
 					IASTBinaryExpression.op_lessThan, MemoryHandler.getPointerOffset(pointerValue, loc),
 					expressionTranslation.getCTypeOfPointerComponents(),
-					ExpressionFactory.constructArrayAccessExpression(loc, memoryHandler.getLengthArray(loc),
+					ExpressionFactory.constructNestedArrayAccessExpression(loc, memoryHandler.getLengthArray(loc),
 							new Expression[] { MemoryHandler.getPointerBaseAddress(pointerValue, loc) }),
 					expressionTranslation.getCTypeOfPointerComponents());
 

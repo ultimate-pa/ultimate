@@ -479,7 +479,7 @@ public class ExpressionResult extends Result {
 				auxVars.putAll(readRex.auxVars);
 				overApp.addAll(readRex.overappr);
 
-				final ArrayLHS aAcc = ExpressionFactory.constructArrayLHS(loc, new VariableLHS(loc, newArrayId),
+				final ArrayLHS aAcc = ExpressionFactory.constructNestedArrayLHS(loc, new VariableLHS(loc, newArrayId),
 						new Expression[] { exprTrans.constructLiteralForIntegerType(loc,
 								new CPrimitive(CPrimitives.INT), BigInteger.valueOf(pos)) });
 				final ExpressionResult assRex = ((CHandler) main.mCHandler).makeAssignment(main, loc, stmt,

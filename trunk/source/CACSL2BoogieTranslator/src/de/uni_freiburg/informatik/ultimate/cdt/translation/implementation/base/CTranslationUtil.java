@@ -110,7 +110,7 @@ public class CTranslationUtil {
 					new BigInteger(arrayIndex.get(i).toString()));
 		}
 
-		final ArrayLHS alhs = ExpressionFactory.constructArrayLhs(loc, arrayLhsToInitialize.getLHS(), index);
+		final ArrayLHS alhs = ExpressionFactory.constructNestedArrayLHS(loc, arrayLhsToInitialize.getLHS(), index);
 
 		return new LocalLValue(alhs, cArrayType.getValueType());
 	}
@@ -123,7 +123,7 @@ public class CTranslationUtil {
 		final Expression index = expressionTranslation.constructLiteralForIntegerType(loc, currentIndexType,
 					new BigInteger(arrayIndex.toString()));
 
-		final ArrayLHS alhs = ExpressionFactory.constructArrayLhs(loc, arrayLhsToInitialize.getLHS(), new Expression[] { index });
+		final ArrayLHS alhs = ExpressionFactory.constructNestedArrayLHS(loc, arrayLhsToInitialize.getLHS(), new Expression[] { index });
 
 		final CType cellType = ArrayHandler.popOneDimension(cArrayType);
 

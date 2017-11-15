@@ -117,7 +117,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.annotation.LTLPropertyCheck;
 import de.uni_freiburg.informatik.ultimate.boogie.annotation.LTLPropertyCheck.CheckableExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
@@ -3832,7 +3831,8 @@ public class CHandler implements ICHandler {
 		} else if (lhs instanceof ArrayLHS) {
 			final ArrayLHS alhs = (ArrayLHS) lhs;
 			final Expression array = convertLHSToExpression(alhs.getArray());
-			return new ArrayAccessExpression(alhs.getLocation(), alhs.getType(), array, alhs.getIndices());
+			return ExpressionFactory.constructNestedArrayAccessExpression(alhs.getLocation(), alhs.getType(), array,
+					alhs.getIndices());
 		} else if (lhs instanceof StructLHS) {
 			final StructLHS slhs = (StructLHS) lhs;
 			final Expression struct = convertLHSToExpression(slhs.getStruct());

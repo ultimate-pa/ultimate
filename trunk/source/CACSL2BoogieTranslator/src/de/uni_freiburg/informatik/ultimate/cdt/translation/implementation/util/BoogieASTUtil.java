@@ -145,7 +145,7 @@ public class BoogieASTUtil {
         if (e instanceof ArrayAccessExpression) {
             final ArrayAccessExpression aae = (ArrayAccessExpression) e;
             final LeftHandSide lhs = getLHSforExpression(aae.getArray());
-            return ExpressionFactory.constructArrayLHS(loc, aae.getType(), lhs, aae.getIndices());
+            return ExpressionFactory.constructNestedArrayLHS(loc, aae.getType(), lhs, aae.getIndices());
         }
         throw new IllegalArgumentException(
                 "Wrong implementation! This method is not intended to handle this argument!");

@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.boogie;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.Arrays;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression;
@@ -394,11 +395,11 @@ public class ExpressionFactory extends BoogieTransformer {
 				(x, y) -> new BinaryExpression(loc, Operator.LOGICAND, x, y));
 	}
 
-	public static ArrayLHS constructArrayLhs(final ILocation loc, final LeftHandSide array,
-			final Expression[] indices) {
-		// TODO: infer BoogieType and add to constructor parameters
-		return new ArrayLHS(loc, array, indices);
-	}
+//	public static ArrayLHS constructArrayLhs(final ILocation loc, final LeftHandSide array,
+//			final Expression[] indices) {
+//		// TODO: infer BoogieType and add to constructor parameters
+//		return new ArrayLHS(loc, array, indices);
+//	}
 
 	public static StructConstructor constructStructConstructor(final ILocation loc, final String[] fieldIds,
 			final Expression[] fieldValues) {
@@ -412,18 +413,41 @@ public class ExpressionFactory extends BoogieTransformer {
 		return new StructLHS(loc, lhs, field);
 	}
 
-	public static ArrayAccessExpression constructArrayAccessExpression(final ILocation loc, final Expression array,
+	public static ArrayAccessExpression constructNestedArrayAccessExpression(final ILocation loc, final Expression array,
 			final Expression[] indices) {
-		return new ArrayAccessExpression(loc, array, indices);
+		if (indices.length == 0) {
+			throw new AssertionError("attempting to build array access without indices");
+		}
+		if (indices.length == 1) {
+			return new ArrayAccessExpression(loc, array, indices);
+		} else {
+			final Expression[] innerIndices = Arrays.copyOfRange(indices, 0, indices.length - 1);
+			final Expression innerLhs = constructNestedArrayAccessExpression(loc, array, innerIndices);
+			return new ArrayAccessExpression(loc, innerLhs, new Expression[] { indices[indices.length - 1] });
+		}
 	}
 
-	public static ArrayLHS constructArrayLHS(final ILocation loc, final LeftHandSide array, final Expression[] newIndices) {
-		// TODO Auto-generated method stub
-		return null;
+	public static ArrayLHS constructNestedArrayLHS(final ILocation loc, final LeftHandSide array, final Expression[] indices) {
+		if (indices.length == 0) {
+			throw new AssertionError("attempting to build array access without indices");
+		}
+		if (indices.length == 1) {
+			return new ArrayLHS(loc, array, indices);
+		} else {
+			final Expression[] innerIndices = Arrays.copyOfRange(indices, 0, indices.length - 1);
+			final LeftHandSide innerLhs = constructNestedArrayLHS(loc, array, innerIndices);
+			return new ArrayLHS(loc, innerLhs, new Expression[] { indices[indices.length - 1] });
+		}
 	}
 
-	public static LeftHandSide constructArrayLHS(final ILocation loc, final IBoogieType type, final LeftHandSide lhs,
+	public static ArrayLHS constructNestedArrayLHS(final ILocation loc, final IBoogieType type, final LeftHandSide lhs,
 			final Expression[] indices) {
-		return constructArrayLhs(loc, lhs, indices);
+		return constructNestedArrayLHS(loc, lhs, indices);
+	}
+
+	public static Expression constructNestedArrayAccessExpression(final ILocation loc, final IBoogieType it,
+			final Expression array, final Expression[] indices) {
+		// TODO: don't throw away type?
+		return constructNestedArrayAccessExpression(loc, array, indices);
 	}
 }

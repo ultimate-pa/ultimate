@@ -158,11 +158,11 @@ public class ArrayHandler {
 					final Expression[] newIndices = new Expression[oldIndices.length + 1];
 					System.arraycopy(oldIndices, 0, newIndices, 0, oldIndices.length);
 					newIndices[newIndices.length - 1] = index.getValue();
-					newInnerArrayLHS = ExpressionFactory.constructArrayLHS(loc,
+					newInnerArrayLHS = ExpressionFactory.constructNestedArrayLHS(loc,
 							((ArrayLHS) oldInnerArrayLHS).getArray(), newIndices);
 				} else {
 					assert isInnermostSubscriptExpression(node) : "not innermost";
-					newInnerArrayLHS = ExpressionFactory.constructArrayLHS(loc, oldInnerArrayLHS,
+					newInnerArrayLHS = ExpressionFactory.constructNestedArrayLHS(loc, oldInnerArrayLHS,
 							new Expression[] { index.getValue() });
 				}
 				final LocalLValue lValue = new LocalLValue(newInnerArrayLHS, resultCType, false, false);

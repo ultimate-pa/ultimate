@@ -834,7 +834,7 @@ public class ACSLHandler implements IACSLHandler {
 			final String cId = main.mCHandler.getSymbolTable().getCID4BoogieID(bId, loc);
 			assert main.mCHandler.getSymbolTable().containsKey(cId);
 			final InferredType it = new InferredType(main.mCHandler.getSymbolTable().getTypeOfVariable(cId, loc));
-			expr = new de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression(loc, it, idEx, idx);
+			expr = ExpressionFactory.constructNestedArrayAccessExpression(loc, it, idEx, idx);
 		} else if (subExpr instanceof StructAccessExpression) {
 			final StructAccessExpression sae = (StructAccessExpression) subExpr;
 			final StructLHS lhs = (StructLHS) BoogieASTUtil.getLHSforExpression(sae);
@@ -843,7 +843,7 @@ public class ACSLHandler implements IACSLHandler {
 				final String msg = "Type mismatch - cannot take index on a not-array element!";
 				throw new IncorrectSyntaxException(loc, msg);
 			}
-			expr = ExpressionFactory.constructArrayAccessExpression(loc, sae, idx);
+			expr = ExpressionFactory.constructNestedArrayAccessExpression(loc, sae, idx);
 		} else {
 			final String msg = "Unexpected result type on left side of array!";
 			throw new UnsupportedSyntaxException(loc, msg);
@@ -904,7 +904,7 @@ public class ACSLHandler implements IACSLHandler {
 		final Expression[] idc = new Expression[] { idx };
 		final Expression arr = new IdentifierExpression(loc, SFO.VALID);
 		final Expression e =
-				new de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression(loc, it, arr, idc);
+				ExpressionFactory.constructNestedArrayAccessExpression(loc, it, arr, idc);
 		// TODO: CType
 		return new ExpressionResult(stmt, new RValue(e, new CPrimitive(CPrimitives.BOOL)), decl, auxVars, overappr);
 		// return new Result(e);
@@ -932,7 +932,7 @@ public class ACSLHandler implements IACSLHandler {
 		final Expression[] idc = new Expression[] { idx };
 		final Expression arr = new IdentifierExpression(loc, SFO.VALID);
 		final Expression valid =
-				new de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression(loc, it, arr, idc);
+				ExpressionFactory.constructNestedArrayAccessExpression(loc, it, arr, idc);
 		final Expression e = ExpressionFactory.newUnaryExpression(loc,
 				// it,
 				de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression.Operator.LOGICNEG, valid);
@@ -964,7 +964,7 @@ public class ACSLHandler implements IACSLHandler {
 		final Expression[] idc = new Expression[] { idx };
 		final Expression arr = new IdentifierExpression(loc, SFO.VALID);
 		final Expression e =
-				new de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression(loc, it, arr, idc);
+				ExpressionFactory.constructNestedArrayAccessExpression(loc, it, arr, idc);
 
 		// TODO: CType
 		return new ExpressionResult(stmt, new RValue(e, new CPrimitive(CPrimitives.INT)), decl, auxVars, overappr);

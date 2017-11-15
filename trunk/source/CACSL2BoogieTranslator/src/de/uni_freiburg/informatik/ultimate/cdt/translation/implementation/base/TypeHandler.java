@@ -142,8 +142,8 @@ public class TypeHandler implements ITypeHandler {
 	public Set<CPrimitive.CPrimitives> getOccurredPrimitiveTypes() {
 		return mOccurredPrimitiveTypes;
 	}
-	
-	
+
+
 
 	public boolean isBitvectorTranslation() {
 		return mBitvectorTranslation;
@@ -560,10 +560,17 @@ public class TypeHandler implements ITypeHandler {
 			final CArray cart = (CArray) cType;
 			final ASTType[] indexTypes = new ASTType[cart.getDimensions().length];
 			final String[] typeParams = new String[0]; // new String[cart.getDimensions().length];
+
 			for (int i = 0; i < cart.getDimensions().length; i++) {
 				indexTypes[i] = cType2AstType(loc, cart.getDimensions()[i].getCType());
 			}
-			return new ArrayType(loc, typeParams, indexTypes, cType2AstType(loc, cart.getValueType()));
+//			return new ArrayType(loc, typeParams, indexTypes, cType2AstType(loc, cart.getValueType()));
+
+			ASTType arrayType = cType2AstType(loc, cart.getValueType());
+			for (int i = 0; i < cart.getDimensions().length; i++) {
+				arrayType = new ArrayType(loc, typeParams, new ASTType[] { indexTypes[i] }, arrayType);
+			}
+			return arrayType;
 		} else if (cType instanceof CStruct) {
 			final CStruct cstruct = (CStruct) cType;
 			if (cstruct.isIncomplete()) {
@@ -595,14 +602,14 @@ public class TypeHandler implements ITypeHandler {
 			return null; // (alex:) seems to be lindemm's convention, see FunctionHandler.isInParamVoid(..)
 		case INTTYPE:
 			if (mBitvectorTranslation) {
-				return new NamedType(loc, "C_" + cPrimitive.getType().toString(), new ASTType[0]);				
+				return new NamedType(loc, "C_" + cPrimitive.getType().toString(), new ASTType[0]);
 			} else {
 				return new PrimitiveType(loc, SFO.INT);
 			}
 		case FLOATTYPE:
 			mFloatingTypesNeeded = true;
 			if (mBitvectorTranslation) {
-				return new NamedType(loc, "C_" + cPrimitive.getType().toString(), new ASTType[0]);				
+				return new NamedType(loc, "C_" + cPrimitive.getType().toString(), new ASTType[0]);
 			} else {
 				return new PrimitiveType(loc, SFO.REAL);
 			}
