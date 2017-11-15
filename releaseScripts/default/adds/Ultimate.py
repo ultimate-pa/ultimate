@@ -510,7 +510,7 @@ def parse_args():
     parser.add_argument('--witness-name', nargs=1,
                         help='Specify a filename for the generated witness; default is witness.graphml')
 
-    args = parser.parse_args()
+    args, extras = parser.parse_known_args()
 
     if args.envdebug:
         debug_environment()
@@ -556,9 +556,9 @@ def parse_args():
         sys.exit(ExitCode.FAIL_NO_WITNESS_TO_VALIDATE)
 
     if args.validate:
-        return property_file, args.architecture, [args.file[0], witness], args.full_output, args.validate
+        return property_file, args.architecture, [args.file[0], witness], args.full_output, args.validate, extras
     else:
-        return property_file, args.architecture, [args.file[0]], args.full_output, args.validate
+        return property_file, args.architecture, [args.file[0]], args.full_output, args.validate, extras
 
 
 def create_settings_search_string(prop, architecture):
@@ -624,7 +624,7 @@ def main():
     # before doing anything, set permissions
     # call_relaxed(['chmod', 'ug+rwx', '-R', ultimatedir])
 
-    property_file, architecture, input_files, verbose, validate_witness = parse_args()
+    property_file, architecture, input_files, verbose, validate_witness, extras = parse_args()
     prop = _PropParser(property_file)
 
     toolchain_file = get_toolchain_path(prop, validate_witness)
@@ -645,7 +645,10 @@ def main():
     print('Version ' + version)
     ultimate_bin = get_binary()
     ultimate_call = create_callargs(ultimate_bin,
-                                    ['-tc', toolchain_file, '-i', input_files, '-s', settings_file, cli_arguments])
+                                    ['-tc', toolchain_file, '-i', input_files, '-s', settings_file,
+                                     cli_arguments])
+    if extras:
+        ultimate_call = ultimate_call + extras
 
     # actually run Ultimate 
     result, result_msg, overapprox, ultimate_output, error_path = run_ultimate(ultimate_call, prop)
@@ -663,6 +666,8 @@ def main():
                                             ['-tc', toolchain_file, '-i', input_files, '-s', settings_file,
                                              cli_arguments, '--cacsl2boogietranslator.memory.model',
                                              'HoenickeLindenmann_8ByteResolution'])
+            if extras:
+                ultimate_call = ultimate_call + extras
             result, result_msg, overapprox, ultimate_bitprecise_output, error_path = run_ultimate(ultimate_call, prop)
             ultimate_output = ultimate_output + '\n### Bit-precise run ###\n' + ultimate_bitprecise_output
 
