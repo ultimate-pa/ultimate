@@ -17,9 +17,18 @@ java -Dosgi.configuration.area=./data/config -Xmx12G -Xms1G -jar ./plugins/org.e
 --deltadebugger.result.short.description.prefix "NullPointerException: null" \
 --deltadebugger.result.long.description.prefix "de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator: NullPointerException: null: de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.InitializationHandler$InitializerInfo.constructStructFieldInitInfos(InitializationHandler.java:911)" 
 */
+
+
+struct S
+{
+ int p;
+ int n;
+};
+struct S a[100000];
+
 void main()
 {
 
-  struct S s1 = 0   ;
+  struct S s1 = a[0]   ;
 
 }
