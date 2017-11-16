@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<benchmark tool="ultimateautomizer" memlimit="6GB" timelimit="360" hardtimelimit="112" cpuCores="2">
+
+    <option name="--full-output"/>
+
+    <rundefinition name="Automizer-DivByZero">
+        <propertyfile>/storage/ultimate/trunk/examples/svcomp/ReachSafety.prp</propertyfile>
+
+        <option name="--cacsl2boogietranslator.check.division.by.zero">ASSERTandASSUME</option>
+        <option name="--cacsl2boogietranslator.check.division.by.zero.for.floating.types">ASSERTandASSUME</option>
+        <option name="--cacsl2boogietranslator.check.unreachability.of.error.function.in.sv-comp.mode">false</option>
+    </rundefinition>
+
+    <rundefinition name="Automizer-Reach">
+        <propertyfile>/storage/ultimate/trunk/examples/svcomp/ReachSafety.prp</propertyfile>
+    </rundefinition>
+
+    <rundefinition name="Automizer-Memsafety">
+        <propertyfile>/storage/ultimate/trunk/examples/svcomp/MemSafety.prp</propertyfile>
+    </rundefinition>
+
+    <rundefinition name="Automizer-Termination">
+        <propertyfile>/storage/ultimate/trunk/examples/svcomp/Termination.prp</propertyfile>
+    </rundefinition>
+
+    <rundefinition name="Automizer-NoOverflows">
+        <propertyfile>/storage/ultimate/trunk/examples/svcomp/NoOverflows.prp</propertyfile>
+    </rundefinition>
+
+
+    <tasks name="ldv-issue-504">
+        <option name="--architecture">32bit</option>
+        <include>/storage/ultimate/trunk/examples/svcomp/ldv-consumption/32_7a_cilled_true-unreach-call_linux-3.8-rc1-32_7a-drivers--media--usb--gspca--gspca_topro.ko-ldv_main0_sequence_infinite_withcheck_stateful.cil.out.c</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/ldv-consumption/32_7a_cilled_true-unreach-call_linux-3.8-rc1-32_7a-drivers--video--smscufx.ko-ldv_main0_sequence_infinite_withcheck_stateful.cil.out.c</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/ldv-linux-3.4-simple/32_1_cilled_true-unreach-call_ok_nondet_linux-3.4-32_1-drivers--regulator--max1586.ko-ldv_main0_sequence_infinite_withcheck_stateful.cil.out.c</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/ldv-linux-3.4-simple/43_1a_cilled_true-unreach-call_ok_nondet_linux-43_1a-drivers--input--misc--rotary_encoder_false-termination.ko-ldv_main0_sequence_infinite_withcheck_stateful.cil.out.c</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/ldv-linux-3.4-simple/43_1a_cilled_true-unreach-call_ok_nondet_linux-43_1a-drivers--media--common--tuners--tda18218_false-termination.ko-ldv_main0_sequence_infinite_withcheck_stateful.cil.out.c</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/ldv-linux-3.4-simple/43_1a_cilled_true-unreach-call_ok_nondet_linux-43_1a-drivers--mtd--nftl.ko-ldv_main0_sequence_infinite_withcheck_stateful.cil.out.c</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/ldv-linux-3.4-simple/43_1a_cilled_true-unreach-call_ok_nondet_linux-43_1a-drivers--regulator--max1586.ko-ldv_main0_sequence_infinite_withcheck_stateful.cil.out.c</include>
+    </tasks>
+
+
+</benchmark>
