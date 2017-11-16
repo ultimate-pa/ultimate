@@ -2678,8 +2678,8 @@ public class CHandler implements ICHandler {
 				}
 			}
 		}
-		assert cond != null;
 		if (locC != null) {
+			assert cond != null;
 			final IfStatement ifStmt = new IfStatement(locC, new IdentifierExpression(locC, switchFlag),
 					ifBlock.toArray(new Statement[ifBlock.size()]), new Statement[0]);
 			for (final Overapprox overapprItem : overappr) {
