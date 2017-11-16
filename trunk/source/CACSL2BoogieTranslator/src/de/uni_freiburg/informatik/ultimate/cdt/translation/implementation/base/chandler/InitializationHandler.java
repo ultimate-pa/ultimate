@@ -427,8 +427,10 @@ public class InitializationHandler {
 	}
 
 	private ExpressionResult makeDefaultInitialization(final ILocation loc, final Dispatcher main,
-			final LRValue lhsIfAny, final CType cType, final boolean onHeap) {
+			final LRValue lhsIfAny, final CType cTypeRaw, final boolean onHeap) {
 		assert !onHeap || lhsIfAny != null : "for on-heap initialization we need a start address";
+
+		final CType cType = cTypeRaw.getUnderlyingType();
 
 		final boolean sophisticated = determineIfSophisticatedDefaultInit(cType);
 
@@ -793,7 +795,8 @@ public class InitializationHandler {
 		return assigningStatements;
 	}
 
-	private Expression getDefaultValueForSimpleType(final ILocation loc, final CType cType) {
+	private Expression getDefaultValueForSimpleType(final ILocation loc, final CType cTypeRaw) {
+		final CType cType = cTypeRaw.getUnderlyingType();
 		if (cType instanceof CPrimitive) {
 			final CPrimitive cPrimitive = (CPrimitive) cType;
 			switch (cPrimitive.getGeneralType()) {
@@ -985,6 +988,7 @@ public class InitializationHandler {
 //			assert targetCType.isAggregateType();
 //			assert targetCType instanceof CArray
 //				|| (targetCType.getClass().equals(CStruct.class));
+			assert targetCType instanceof CArray || targetCType instanceof CStruct;
 
 			final Map<Integer, InitializerInfo> indexInitInfos = new HashMap<>();
 
