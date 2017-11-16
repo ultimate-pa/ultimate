@@ -15,20 +15,18 @@ java -Dosgi.configuration.area=./data/config -Xmx12G -Xms1G -jar ./plugins/org.e
 
 */
 
-int __u32;
+typedef unsigned int __u32;
 
 struct watchdog_info {
  __u32 options;
-
 };
 
-void zf_ioctl(
-  )
+void main(  )
 {
 
  switch(0){
   case           sizeof(struct watchdog_info)          ? 0 : 0         :
-
+	break;
  }
 
 }
