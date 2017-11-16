@@ -413,16 +413,19 @@ public class InitializationHandler {
 			 * this expression result contains a value that holds the contents for the array cell at the current index
 			 * (we don't give a leftHandSide to initVarRec, and use the value that is given to the ExpressionResult)
 			 */
-			final ExpressionResult arrayIndexInitialization =
-					initRec(loc, main, cellType, arrayIndexInitInfo, false, null);
-			initialization.addAllExceptLrValue(arrayIndexInitialization);
 
+			// say we initialize multidimensional array a, build a lhs a[i] here (which still may have array type)
 			final LocalLValue arrayAccessLhs = CTranslationUtil.constructArrayAccessLhs(loc,
 					(LocalLValue) arrayLhsToInitialize, arrayIndex, mExpressionTranslation);
 
-			// assign the arrayIndexInitialization's value to the current array cell
-			initialization.addStatements(makeAssignmentStatements(loc, arrayAccessLhs, false,
-					cArrayType.getValueType(), arrayIndexInitialization.getLrValue().getValue(), initInfo.getOverapprs()));
+			final ExpressionResult arrayIndexInitialization =
+					initRec(loc, main, cellType, arrayIndexInitInfo, false, arrayAccessLhs);
+			initialization.addAllExceptLrValue(arrayIndexInitialization);
+
+
+//			// assign the arrayIndexInitialization's value to the current array cell
+//			initialization.addStatements(makeAssignmentStatements(loc, arrayAccessLhs, false,
+//					cArrayType.getValueType(), arrayIndexInitialization.getLrValue().getValue(), initInfo.getOverapprs()));
 		}
 	}
 
@@ -440,7 +443,7 @@ public class InitializationHandler {
 		 * <li> we initialize an array
 		 */
 		if (!onHeap && !(cType instanceof CArray)) {
-			return makeOffHeapDefaultInitializationForType(loc, main, cType, sophisticated);
+			return makeOffHeapDefaultInitializationForType(loc, main, cType, sophisticated, (LocalLValue) lhsIfAny);
 		}
 		// array case or on-heap case, using an lhs
 
@@ -455,12 +458,16 @@ public class InitializationHandler {
 			assert defaultInit.getLrValue() == null : "on-heap intialization does not need a return value";
 		} else {
 			final ExpressionResult defaultInit = makeOffHeapDefaultInitializationForType(loc, main, cType,
-					sophisticated);
+					sophisticated, (LocalLValue) lhsToInit);
 			initialization.addAllExceptLrValue(defaultInit);
+			if (defaultInit.getLrValue() != null) {
+				assert lhsToInit == null;
+				initialization.setLRVal(defaultInit.getLrValue());
+			}
 
-			final List<Statement> lhsAssignment = makeAssignmentStatements(loc, lhsToInit, false, cType,
-					defaultInit.getLrValue().getValue(), Collections.emptyList());
-			initialization.addStatements(lhsAssignment);
+//			final List<Statement> lhsAssignment = makeAssignmentStatements(loc, lhsToInit, false, cType,
+//					defaultInit.getLrValue().getValue(), Collections.emptyList());
+//			initialization.addStatements(lhsAssignment);
 		}
 
 		return initialization.build();
@@ -510,15 +517,24 @@ public class InitializationHandler {
 	}
 
 	private ExpressionResult makeOffHeapDefaultInitializationForType(final ILocation loc, final Dispatcher main,
-			final CType cTypeRaw, final boolean sophisticated) {
+			final CType cTypeRaw, final boolean sophisticated, final LocalLValue lhsToInitIfAny) {
 		final CType cType = cTypeRaw.getUnderlyingType();
 
 		if (cType instanceof CPrimitive || cType instanceof CEnum || cType instanceof CPointer) {
-			return new ExpressionResultBuilder()
-					.setLRVal(new RValue(getDefaultValueForSimpleType(loc, cType), cType))
-					.build();
-//		} else if (cType instanceof CUnion) {
-//			throw new UnsupportedOperationException("TODO");
+
+			final ExpressionResultBuilder initializer = new ExpressionResultBuilder();
+
+			final LRValue initializationValue = new RValue(getDefaultValueForSimpleType(loc, cType), cType);
+
+			if (lhsToInitIfAny != null) {
+				// we have a lhs given, insert assignments such that the lhs is initialized
+				final List<Statement> assigningStatements = makeAssignmentStatements(loc, lhsToInitIfAny, false, cType,
+						initializationValue.getValue(), Collections.emptyList());
+				initializer.addStatements(assigningStatements);
+			} else {
+				initializer.setLRVal(initializationValue);
+			}
+			return initializer.build();
 		} else if (cType instanceof CStruct) {
 			final CStruct cStructType = (CStruct) cType;
 
@@ -527,6 +543,20 @@ public class InitializationHandler {
 			final ArrayList<LRValue> fieldLrValues = new ArrayList<>();
 
 			for (int i = 0; i < cStructType.getFieldCount(); i++) {
+
+				final LocalLValue fieldLhs;
+				{
+					if (lhsToInitIfAny == null) {
+						fieldLhs = null;
+					} else {
+						final String fieldName = cStructType.getFieldIds()[i];
+						final LeftHandSide lhs = ExpressionFactory.constructStructAccessLhs(loc, lhsToInitIfAny.getLHS(),
+								fieldName);
+						fieldLhs = new LocalLValue(lhs, cStructType.getFieldTypes()[i]);
+					}
+				}
+
+
 				final ExpressionResult fieldDefaultInit;
 				if (cType instanceof CUnion && i != 0) {
 					/*
@@ -539,27 +569,29 @@ public class InitializationHandler {
 				} else {
 					fieldDefaultInit =
 						makeOffHeapDefaultInitializationForType(loc, main, cStructType.getFieldTypes()[i],
-								sophisticated);
+								sophisticated, fieldLhs);
 				}
 
 				initialization.addAllExceptLrValue(fieldDefaultInit);
 				fieldLrValues.add(fieldDefaultInit.getLrValue());
 			}
 
-			final List<Expression> fieldValues = fieldLrValues.stream()
-					.map(LRValue::getValue)
-					.collect(Collectors.toList());
-			final StructConstructor initializationValue = ExpressionFactory.constructStructConstructor(loc,
-					cStructType.getFieldIds(),
-					fieldValues.toArray(new Expression[fieldValues.size()]));
-			initialization.setLRVal(new RValue(initializationValue, cType));
+			if (lhsToInitIfAny == null) {
+				final List<Expression> fieldValues = fieldLrValues.stream()
+						.map(LRValue::getValue)
+						.collect(Collectors.toList());
+				final StructConstructor initializationValue = ExpressionFactory.constructStructConstructor(loc,
+						cStructType.getFieldIds(),
+						fieldValues.toArray(new Expression[fieldValues.size()]));
+				initialization.setLRVal(new RValue(initializationValue, cType));
+			}
 
 			return initialization.build();
 		} else if (cType instanceof CArray) {
 			if (sophisticated) {
 				return makeSophisticatedOffHeapDefaultInitializationForArray(loc, main, (CArray) cType);
 			} else {
-				return makeNaiveOffHeapDefaultInitializationForArray(loc, main, (CArray) cType);
+				return makeNaiveOffHeapDefaultInitializationForArray(loc, main, (CArray) cType, lhsToInitIfAny);
 			}
 		} else {
 			throw new UnsupportedOperationException("missing case?");
@@ -605,28 +637,33 @@ public class InitializationHandler {
 	}
 
 	private ExpressionResult makeNaiveOffHeapDefaultInitializationForArray(final ILocation loc, final Dispatcher main,
-				final CArray cArrayType) {
+				final CArray cArrayType, final LocalLValue lhsToInit) {
+			assert lhsToInit != null;
 
 			final ExpressionResultBuilder initialization = new ExpressionResultBuilder();
 
-			final LocalLValue arrayLhsToInitialize = obtainAuxVarLocalLValue(loc, main, cArrayType, initialization);
+//			final LocalLValue arrayLhsToInitialize = obtainAuxVarLocalLValue(loc, main, cArrayType, initialization);
+			//TODO cleanup
+			final LocalLValue arrayLhsToInitialize = lhsToInit;
 
 			final List<List<Integer>> allIndicesToInitialize =
 					CrossProducts.crossProductOfSetsOfFirstNaturalNumbers(
 							CTranslationUtil.getConstantDimensionsOfArray(cArrayType, mExpressionTranslation));
 			for (final List<Integer> arrayIndex : allIndicesToInitialize) {
 
-				final ExpressionResult arrayIndexInitialization =
-						makeOffHeapDefaultInitializationForType(loc, main, cArrayType.getValueType(), false);
-				initialization.addAllExceptLrValue(arrayIndexInitialization);
-
 				final LocalLValue arrayAccessLhs = CTranslationUtil.constructArrayAccessLhs(loc,
 						arrayLhsToInitialize, arrayIndex, mExpressionTranslation);
 
-				// assign the arrayIndexInitialization's value to the current array cell
-				initialization.addStatements(makeAssignmentStatements(loc, arrayAccessLhs, false,
-						cArrayType.getValueType(), arrayIndexInitialization.getLrValue().getValue(),
-						Collections.emptyList()));
+				final ExpressionResult arrayIndexInitialization =
+						makeOffHeapDefaultInitializationForType(loc, main, cArrayType.getValueType(), false,
+								arrayAccessLhs);
+				initialization.addAllExceptLrValue(arrayIndexInitialization);
+
+
+//				// assign the arrayIndexInitialization's value to the current array cell
+//				initialization.addStatements(makeAssignmentStatements(loc, arrayAccessLhs, false,
+//						cArrayType.getValueType(), arrayIndexInitialization.getLrValue().getValue(),
+//						Collections.emptyList()));
 			}
 
 			return initialization.build();
