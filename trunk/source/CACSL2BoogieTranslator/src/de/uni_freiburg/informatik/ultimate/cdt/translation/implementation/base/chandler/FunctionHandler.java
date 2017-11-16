@@ -91,6 +91,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLL
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.SymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationUtil;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.MainDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.PRDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
@@ -438,24 +439,27 @@ public class FunctionHandler {
 			final Statement havoc = new HavocStatement(loc, new VariableLHS[] { lhs });
 			stmt.add(havoc);
 		} else if (node.getReturnValue() != null) {
-			final ExpressionResult exprResult = ((ExpressionResult) main.dispatch(node.getReturnValue()))
+			final ExpressionResult returnValue = CTranslationUtil.convertExpressionListToExpressionResultIfNecessary(
+					loc, main, main.dispatch(node.getReturnValue()));
+
+			final ExpressionResult returnValueSwitched = returnValue
 					.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
-			exprResult.rexBoolToIntIfNecessary(loc, mExpressionTranslation);
+			returnValueSwitched.rexBoolToIntIfNecessary(loc, mExpressionTranslation);
 
 			// do some implicit casts
 			final CType functionResultType =
 					mProcedureToCFunctionType.get(mCurrentProcedure.getIdentifier()).getResultType();
-			if (!exprResult.lrVal.getCType().equals(functionResultType) && functionResultType instanceof CPointer
-					&& exprResult.lrVal.getCType() instanceof CPrimitive
-					&& exprResult.lrVal.getValue() instanceof IntegerLiteral
-					&& "0".equals(((IntegerLiteral) exprResult.lrVal.getValue()).getValue())) {
-				exprResult.lrVal = new RValue(mExpressionTranslation.constructNullPointer(loc), functionResultType);
+			if (!returnValueSwitched.lrVal.getCType().equals(functionResultType) && functionResultType instanceof CPointer
+					&& returnValueSwitched.lrVal.getCType() instanceof CPrimitive
+					&& returnValueSwitched.lrVal.getValue() instanceof IntegerLiteral
+					&& "0".equals(((IntegerLiteral) returnValueSwitched.lrVal.getValue()).getValue())) {
+				returnValueSwitched.lrVal = new RValue(mExpressionTranslation.constructNullPointer(loc), functionResultType);
 			}
 
-			stmt.addAll(exprResult.stmt);
-			decl.addAll(exprResult.decl);
-			auxVars.putAll(exprResult.auxVars);
-			overApp.addAll(exprResult.overappr);
+			stmt.addAll(returnValueSwitched.stmt);
+			decl.addAll(returnValueSwitched.decl);
+			auxVars.putAll(returnValueSwitched.auxVars);
+			overApp.addAll(returnValueSwitched.overappr);
 			if (outParams.length == 0) {
 				// void method which is returning something! We remove the
 				// return value!
@@ -467,7 +471,7 @@ public class FunctionHandler {
 			} else {
 				final String id = outParams[0].getIdentifiers()[0];
 				final VariableLHS[] lhs = new VariableLHS[] { new VariableLHS(loc, id) };
-				rExp.lrVal = exprResult.lrVal;
+				rExp.lrVal = returnValueSwitched.lrVal;
 				main.mCHandler.convert(loc, rExp, functionResultType);
 				final RValue castExprResultRVal = (RValue) rExp.lrVal;
 				stmt.add(new AssignmentStatement(loc, lhs, new Expression[] { castExprResultRVal.getValue() }));

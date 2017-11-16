@@ -1153,8 +1153,10 @@ public class CHandler implements ICHandler {
 
 	@Override
 	public Result visit(final Dispatcher main, final IASTUnaryExpression node) {
-		final ExpressionResult o = (ExpressionResult) main.dispatch(node.getOperand());
+//		final ExpressionResult o = (ExpressionResult) main.dispatch(node.getOperand());
 		final ILocation loc = main.getLocationFactory().createCLocation(node);
+		final ExpressionResult o = CTranslationUtil.convertExpressionListToExpressionResultIfNecessary(loc,
+				main, main.dispatch(node.getOperand()));
 
 		// for the cases we know that it's an RValue..
 		// ResultExpression rop = o.switchToRValueIfNecessary(main,

@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.ArrayHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.StructHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.AExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarHelper;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
@@ -50,9 +51,13 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStruct;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CUnion;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionListResult;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.HeapLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO.AUXVAR;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
@@ -285,6 +290,45 @@ public class CTranslationUtil {
 
 		final int dimInt = Integer.parseUnsignedInt(extracted.toString());
 		return dimInt;
+	}
+
+	/**
+	 * The given result must be an ExpressionResult or an ExpressionListResult.
+	 *  case ExpressionResult: the ExpressionResult is returned unchanged
+	 *  case ExpressionListResult: we evaluate all expressions, also switching to rvalue in every case, and we
+	 *    accumulate the corresponding statements in an ExpressionResult
+	 *
+	 * @param loc
+	 * @param main
+	 * @param dispatch
+	 * @return
+	 */
+	public static ExpressionResult convertExpressionListToExpressionResultIfNecessary(final ILocation loc,
+			final Dispatcher main, final Result dispatch) {
+		assert dispatch instanceof ExpressionListResult || dispatch instanceof ExpressionResult;
+		if (dispatch instanceof ExpressionResult) {
+			return (ExpressionResult) dispatch;
+		}
+		final ExpressionListResult listResult = (ExpressionListResult) dispatch;
+
+		final ExpressionResultBuilder result = new ExpressionResultBuilder();
+
+		final MemoryHandler memoryHandler = main.mCHandler.getMemoryHandler();
+		final StructHandler structHandler = main.mCHandler.getStructHandler();
+
+		for (int i = 0; i < listResult.list.size(); i++) {
+			/*
+			 * Note:
+			 * C11 6.5.17.2, footnote:
+			 *  A comma operator does not yield an lvalue.
+			 * --> thus we can immediately switch to rvalue here
+			 */
+			result.addAllExceptLrValue(listResult.list.get(i)
+					.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc));
+		}
+		result.setLRVal(listResult.list.get(listResult.list.size() - 1).getLrValue());
+
+		return result.build();
 	}
 
 }
