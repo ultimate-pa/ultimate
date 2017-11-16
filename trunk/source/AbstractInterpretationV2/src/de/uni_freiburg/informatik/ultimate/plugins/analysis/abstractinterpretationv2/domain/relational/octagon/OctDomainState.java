@@ -302,7 +302,10 @@ public final class OctDomainState implements IAbstractState<OctDomainState> {
 		return newState;
 	}
 
-	public OctDomainState toBottomState() {
+	/**
+	 * @return A new {@link OctDomainState} which is bottom.
+	 */
+	protected OctDomainState toBottomState() {
 		return new OctDomainState(mLogStringFunction, TVBool.TRUE);
 	}
 
