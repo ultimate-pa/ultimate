@@ -302,6 +302,10 @@ public final class OctDomainState implements IAbstractState<OctDomainState> {
 		return newState;
 	}
 
+	public OctDomainState toBottomState() {
+		return new OctDomainState(mLogStringFunction, TVBool.TRUE);
+	}
+
 	private void addNumericVariables(final OctDomainState newState, final Set<IProgramVarOrConst> addedNumVars) {
 		if (addedNumVars.isEmpty()) {
 			return;

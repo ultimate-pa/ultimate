@@ -257,7 +257,12 @@ public class IntervalProjection {
 	 *            If not null, only the variables specified here will be updated in the previous state.
 	 */
 	protected static void projectIntervalStateToOctagon(final ILogger logger, final IntervalDomainState state,
-			final OctDomainState previousOctState, final Set<IProgramVarOrConst> restrictedVars) {
+			OctDomainState previousOctState, final Set<IProgramVarOrConst> restrictedVars) {
+
+		if (state.isBottom()) {
+			previousOctState = previousOctState.toBottomState();
+			return;
+		}
 
 		final Set<IProgramVarOrConst> variables = state.getVariables();
 

@@ -521,9 +521,17 @@ public class OctAssumeProcessor {
 			final List<OctDomainState> oldStates, final Expression originalExpression,
 			final IAbstractPostOperator<IntervalDomainState, IcfgEdge> fallBackPostOperator,
 			final CodeBlockFactory codeBlockFactory, final Set<IProgramVarOrConst> relevantVars) {
-		final List<IntervalDomainState> intervalStates = oldStates.stream()
+		final List<IntervalDomainState> intervalStates = oldStates.stream().filter(state -> !state.isBottom())
 				.map(state -> IntervalProjection.projectOctagonStateToIntervalDomainState(logger, state))
 				.collect(Collectors.toList());
+
+		assert intervalStates.stream().noneMatch(state -> state
+				.isBottom()) : "At least one interval state became bottom during conversion. This should not happen";
+
+		// All oldstates are bottom
+		if (intervalStates.isEmpty()) {
+			return oldStates;
+		}
 		final AssumeStatement assume = new AssumeStatement(originalExpression.getLoc(), originalExpression);
 		final StatementSequence assumeBlock = codeBlockFactory.constructStatementSequence(null, null,
 				Collections.singletonList(assume), Origin.IMPLEMENTATION);
@@ -543,7 +551,11 @@ public class OctAssumeProcessor {
 			for (final IntervalDomainState iState : computedIntervalPost) {
 				final OctDomainState newOld = oldState.deepCopy();
 				IntervalProjection.projectIntervalStateToOctagon(logger, iState, newOld, relevantVars);
-				returnStates.add(oldState.intersect(newOld));
+				if (newOld.isBottom()) {
+					returnStates.add(newOld);
+				} else {
+					returnStates.add(oldState.intersect(newOld));
+				}
 			}
 		}
 		return returnStates;
