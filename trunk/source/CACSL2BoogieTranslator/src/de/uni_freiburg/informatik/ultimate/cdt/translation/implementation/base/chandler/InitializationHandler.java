@@ -173,7 +173,8 @@ public class InitializationHandler {
 //			final InitializerResult initializerIfAnyRaw, final boolean onHeap, final LRValue lhsIfAny) {
 			final InitializerInfo initInfoIfAny, final boolean onHeap, final LRValue lhsIfAny) {
 //		assert initializerRaw instanceof ExpressionResult || initializerRaw instanceof InitializerResult;
-		assert lhsIfAny == null || lhsIfAny.getCType().equals(targetCTypeRaw.getUnderlyingType());
+		assert lhsIfAny == null
+				|| lhsIfAny.getCType().getUnderlyingType().equals(targetCTypeRaw.getUnderlyingType());
 		assert !onHeap || lhsIfAny != null : "we need a start address for on-heap initialization";
 
 		final CType targetCType = targetCTypeRaw.getUnderlyingType();

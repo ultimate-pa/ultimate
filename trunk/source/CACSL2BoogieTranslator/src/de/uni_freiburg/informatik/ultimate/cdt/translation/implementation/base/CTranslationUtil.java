@@ -221,7 +221,7 @@ public class CTranslationUtil {
 
 		final StructConstructor newPointer = MemoryHandler.constructPointerFromBaseAndOffset(pointerBase, sum, loc);
 
-		return new HeapLValue(newPointer, cArrayType.getValueType());
+		return new HeapLValue(newPointer, cellType);
 	}
 
 	public static HeapLValue constructAddressForStructField(final ILocation loc, final Dispatcher main,
