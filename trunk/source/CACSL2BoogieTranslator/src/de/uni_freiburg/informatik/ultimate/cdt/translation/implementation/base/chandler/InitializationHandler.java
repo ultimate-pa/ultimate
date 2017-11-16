@@ -64,6 +64,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.HeapLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.InitializerResult;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.InitializerResultBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
@@ -158,8 +159,9 @@ public class InitializationHandler {
 		if (initializerRaw != null) {
 			// construct an InitializerInfo from the InitializerResult
 			initializerInfo = InitializerInfo.constructInitializerInfo(loc, main,
-					initializerRaw.isInitializerList() ? initializerRaw.getList() : Collections.singletonList(initializerRaw),
-							targetCTypeRaw);
+//					initializerRaw.isInitializerList() ? initializerRaw.getList() : Collections.singletonList(initializerRaw),
+					initializerRaw,
+					targetCTypeRaw);
 		} else {
 			initializerInfo = null;
 		}
@@ -185,7 +187,7 @@ public class InitializationHandler {
 			/*
 			 * We are dealing with an initialization of a value with non-aggregate type.
 			 */
-			return initExpressionWithSimpleType(loc, main, lhsIfAny, onHeap, targetCType, initInfoIfAny);
+			return initExpressionWithExpression(loc, main, lhsIfAny, onHeap, targetCType, initInfoIfAny);
 //		} else if (targetCType instanceof CUnion) {
 ////			return initCUnion
 //			return initCUnion(loc, main, lhsIfAny, (CUnion) targetCType, initInfoIfAny, onHeap);
@@ -199,9 +201,10 @@ public class InitializationHandler {
 		}
 	}
 
-	private ExpressionResult initExpressionWithSimpleType(final ILocation loc, final Dispatcher main,
+	private ExpressionResult initExpressionWithExpression(final ILocation loc, final Dispatcher main,
 			final LRValue lhsIfAny, final boolean onHeap, final CType cType, final InitializerInfo initInfo) {
-		assert cType instanceof CPrimitive || cType instanceof CEnum || cType instanceof CPointer;
+//		assert cType instanceof CPrimitive || cType instanceof CEnum || cType instanceof CPointer;
+		assert initInfo.hasExpressionResult();
 
 		final ExpressionResultBuilder initializer = new ExpressionResultBuilder();
 
@@ -222,6 +225,14 @@ public class InitializationHandler {
 
 	private ExpressionResult initCStruct(final ILocation loc, final Dispatcher main, final LRValue lhsIfAny,
 			final CStruct cType, final InitializerInfo initInfo, final boolean onHeap) {
+
+		if (initInfo.hasExpressionResult()) {
+			// we are initializing through a struct-typed expression, not an initializer list
+			return initExpressionWithExpression(loc, main, lhsIfAny, onHeap, cType, initInfo);
+		}
+		// we have an initializer list
+
+
 		/*
 		 * Builder to collect all the initialization code and possibly the result value.
 		 */
@@ -926,6 +937,8 @@ public class InitializationHandler {
 		private final List<InitializerResult> mUnusedListEntries;
 
 		private InitializerInfo(final ExpressionResult expressionResult, final List<InitializerResult> rest) {
+			assert expressionResult.getLrValue() == null || expressionResult.getLrValue() instanceof RValue :
+				"switch to RValue first!";
 			mExpressionResult = expressionResult;
 			mOverApprs = expressionResult.getOverapprs();
 			mElementInitInfos = null;
@@ -969,62 +982,42 @@ public class InitializationHandler {
 		 * @param targetCType
 		 */
 		public static InitializerInfo constructInitializerInfo(final ILocation loc, final Dispatcher main,
-				final List<InitializerResult> initializerResult, final CType targetCTypeRaw) {
-			final CType targetCTypeUnderlying = targetCTypeRaw.getUnderlyingType();
-//			if (targetCType instanceof CPrimitive || targetCType instanceof CEnum || targetCType instanceof CPointer) {
-			if (!TypeHandler.isAggregateCType(targetCTypeUnderlying)) {
+//				final List<InitializerResult> initializerResult, final CType targetCTypeRaw) {
+				final InitializerResult initializerResult, final CType targetCTypeRaw) {
+			final CType targetCType = targetCTypeRaw.getUnderlyingType();
 
-				if (targetCTypeUnderlying instanceof CUnion) {
-					return constructArrayIndexToInitInfo(loc, main, initializerResult, targetCTypeUnderlying);
-				}
+			if (!initializerResult.isInitializerList()) {
+				// we are initializing through a variable (as in "struct s s1 = s2;")
+				return new InitializerInfo(initializerResult.getRootExpressionResult()
+						.switchToRValueIfNecessary(main, loc), Collections.emptyList());
+			}
 
+			if (targetCType instanceof CArray || targetCType instanceof CStruct) {
+//				// aggregate or union type
+				return constructIndexToInitInfo(loc, main, initializerResult.getList(), targetCType);
+//			} else if (targetCType instanceof CStruct) {
+//				// target type is a struct or a union type
+//				return constructArrayIndexToInitInfo(loc, main, initializerResult.getList(), targetCType);
+			} else {
+				// target type is simple
 
 				// do the necessary conversions
-
-
-				final Deque<InitializerResult> ad = new ArrayDeque<>(initializerResult);
+				final Deque<InitializerResult> ad = new ArrayDeque<>(initializerResult.getList());
 				final InitializerResult first = ad.pollFirst();
 
-				final CType targetCType = targetCTypeUnderlying;
-//				final CType targetCType;
-//				if (targetCTypeUnderlying instanceof CUnion) {
-//					// we are initializing a union -- we have to determine which field to initialize
-//					final CUnion union = (CUnion) targetCTypeUnderlying;
-//
-//					final String designator = first.getRootDesignator();
-//					if (designator != null) {
-//						// choose the target type according to the designator
-//						targetCType = union.getFieldType(designator);
-//					} else {
-//						// If no designator is present, the first union element is initialized.
-//						targetCType = union.getFieldTypes()[0];
-//					}
-//				} else {
-//					targetCType = targetCTypeUnderlying;
-//				}
-
-
-
-
 				final ExpressionResult expressionResultSwitched = first.getRootExpressionResult()
-						.switchToRValueIfNecessary(main, main.mCHandler.getMemoryHandler(), main.mCHandler.getStructHandler(), loc);
+						.switchToRValueIfNecessary(main, loc);
 				expressionResultSwitched.rexBoolToIntIfNecessary(loc, main.mCHandler.getExpressionTranslation());
 				main.mCHandler.convert(loc, expressionResultSwitched, targetCType);
 
-
 				return new InitializerInfo(expressionResultSwitched, new ArrayList<>(ad));
-			} else {
-				// target type is an aggregate type (array or struct)
-				return constructArrayIndexToInitInfo(loc, main, initializerResult, targetCTypeUnderlying);
+
+
 			}
 		}
 
-		private static InitializerInfo constructArrayIndexToInitInfo(final ILocation loc, final Dispatcher main,
-//				final List<InitializerResult> initializerResults, final CArray targetCType) {
+		private static InitializerInfo constructIndexToInitInfo(final ILocation loc, final Dispatcher main,
 				final List<InitializerResult> initializerResults, final CType targetCType) {
-//			assert targetCType.isAggregateType();
-//			assert targetCType instanceof CArray
-//				|| (targetCType.getClass().equals(CStruct.class));
 			assert targetCType instanceof CArray || targetCType instanceof CStruct;
 
 			final Map<Integer, InitializerInfo> indexInitInfos = new HashMap<>();
@@ -1046,8 +1039,6 @@ public class InitializationHandler {
 					// targetCType instanceof CStruct
 					bound = ((CStruct) targetCType).getFieldCount();
 				}
-
-
 			}
 
 			/*
@@ -1065,15 +1056,29 @@ public class InitializationHandler {
 					cellType = ((CStruct) targetCType).getFieldTypes()[currentCellIndex];
 				}
 
-				if (rest.peekFirst().isInitializerList()) {
+
+
+				/*
+				 * C11 6.7.9.13
+				 *  The initializer for a structure or union object that has automatic storage duration shall be
+				 *  either an initializer list as described below, or a single expression that has compatible
+				 *  structure or union type. In the latter case, the initial value of the object, including
+				 *  unnamed members, is that of the expression.
+				 */
+				if (rest.peekFirst().isInitializerList() ||
+						TypeHandler.isCompatibleStructOrUnionType(cellType,
+								rest.peekFirst().getRootExpressionResult().getLrValue().getCType())) {
 					/*
 					 * case "{", i.e. one more brace opens
 					 * Then the cell is initialized with the list belonging to that brace (until the matching brace).
 					 * No residue is taken over if too many elements are left.
+					 *
+					 * other case: first list entry has a compatible struct or union type
 					 */
 
 					final InitializerResult first = rest.pollFirst();
-					final InitializerInfo cellInitInfo = constructInitializerInfo(loc, main, first.getList(), cellType);
+//					final InitializerInfo cellInitInfo = constructInitializerInfo(loc, main, first.getList(), cellType);
+					final InitializerInfo cellInitInfo = constructInitializerInfo(loc, main, first, cellType);
 
 					indexInitInfos.put(currentCellIndex, cellInitInfo);
 				} else {
@@ -1082,7 +1087,12 @@ public class InitializationHandler {
 					 * Then the current list is handed down to the cell, and if anything is left after processing that
 					 * cell we use it for the next cell.
 					 */
-					final InitializerInfo cellInitInfo = constructInitializerInfo(loc, main, new ArrayList<>(rest), cellType);
+					final InitializerResultBuilder restInitResultBuilder = new InitializerResultBuilder();
+					rest.forEach(restInitResultBuilder::addChild);
+					final InitializerInfo cellInitInfo = constructInitializerInfo(loc, main,
+							restInitResultBuilder.build(),
+//							new ArrayList<>(rest),
+							cellType);
 					indexInitInfos.put(currentCellIndex, cellInitInfo);
 					rest = new ArrayDeque<>(cellInitInfo.getUnusedListEntries());
 				}

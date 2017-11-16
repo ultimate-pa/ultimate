@@ -187,6 +187,18 @@ public class ExpressionResult extends Result {
 		return builder.build();
 	}
 
+	/**
+	 * deprecated: use the other overloading of this method instead:
+	 *  ExpressionResult switchToRValueIfNecessary(final Dispatcher main, final ILocation loc)
+	 * (because once can easily obtain the memoryhandler and structhandler from the Dispatcher)
+	 *
+	 * @param main
+	 * @param memoryHandler
+	 * @param structHandler
+	 * @param loc
+	 * @return
+	 */
+	@Deprecated
 	public ExpressionResult switchToRValueIfNecessary(final Dispatcher main, final MemoryHandler memoryHandler,
 			final StructHandler structHandler, final ILocation loc) {
 		final ExpressionResult result;
@@ -636,6 +648,11 @@ public class ExpressionResult extends Result {
 
 	public Collection<ExpressionResult> getNeighbourUnionFields() {
 		return Collections.unmodifiableCollection(otherUnionFields);
+	}
+
+	public ExpressionResult switchToRValueIfNecessary(final Dispatcher main, final ILocation loc) {
+		return switchToRValueIfNecessary(main, main.mCHandler.getMemoryHandler(), main.mCHandler.getStructHandler(),
+				loc);
 	}
 
 }

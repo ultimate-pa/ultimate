@@ -707,4 +707,11 @@ public class TypeHandler implements ITypeHandler {
 			throw new UnsupportedOperationException("missed a type??");
 		}
 	}
+
+
+
+	public static boolean isCompatibleStructOrUnionType(final CType cellType, final CType cType) {
+		// TODO: check the notion of compatibility with the standard
+		return cellType.equals(cType);
+	}
 }
