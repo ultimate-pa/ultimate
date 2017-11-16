@@ -465,7 +465,8 @@ public class InitializationHandler {
 	}
 
 	private ExpressionResult makeOnHeapDefaultInitializationForType(final ILocation loc, final Dispatcher main,
-			final HeapLValue baseAddress, final CType cType, final boolean sophisticated) {
+			final HeapLValue baseAddress, final CType cTypeRaw, final boolean sophisticated) {
+		final CType cType = cTypeRaw.getUnderlyingType();
 		if (cType instanceof CPrimitive || cType instanceof CEnum || cType instanceof CPointer) {
 			final ExpressionResultBuilder initialization = new ExpressionResultBuilder();
 			final List<Statement> defaultInit = makeAssignmentStatements(loc, baseAddress, true, cType,
