@@ -440,6 +440,9 @@ public class Elim1Store {
 			}
 			result = QuantifierUtils.applyDualFiniteConnective(mScript, quantifier, result, doubleCaseTermMod);
 		}
+		if (Arrays.asList(result.getFreeVars()).contains(eliminatee)) {
+			throw new AssertionError("var is still there: " + eliminatee + " term size " + new DagSizePrinter(result));
+		}
 		assert !Arrays.asList(result.getFreeVars()).contains(eliminatee) : "var is still there: " + eliminatee
 		+ " term size " + new DagSizePrinter(result);
 		{
