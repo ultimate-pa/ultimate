@@ -690,7 +690,7 @@ public class Interpolator extends NonRecursive {
 					} else {
 						assert !at.isConstant();
 						at.add(Rational.ONE, eqTermInfo.getLinVar());
-						at.add(eqTermInfo.getBound());
+						at.add(eqTermInfo.getBound().negate());
 						final boolean isInt = eqTermInfo.isInt();
 						final Sort sort = mTheory.getSort(isInt ? "Int" : "Real");
 						final Term t = at.toSMTLib(mTheory, isInt);
@@ -861,7 +861,7 @@ public class Interpolator extends NonRecursive {
 						// We need to divide sharedTerm by mixedFactor and check that it doesn't produce a remainder.
 						//
 						// Interpolant is: (and (= mixed (div sharedTerm mixedFactor))
-						//                      (= (mod sharedTerm mixedFactor) 0))
+						// (= (mod sharedTerm mixedFactor) 0))
 						interpolant = mTheory.and(mTheory.equals(mixed, mTheory.term("div", sharedTerm, divisor)),
 								mTheory.term("=", mTheory.term("mod", sharedTerm, divisor),
 										Rational.ZERO.toTerm(mixed.getSort())));
