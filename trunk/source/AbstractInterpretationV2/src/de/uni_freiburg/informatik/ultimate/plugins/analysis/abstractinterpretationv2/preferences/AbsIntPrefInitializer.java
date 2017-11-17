@@ -37,6 +37,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePrefer
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem.IUltimatePreferenceItemValidator;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItemContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.array.ArrayDomain;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.array.ArrayDomainPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.compound.CompoundDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.compound.CompoundDomainPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.empty.EmptyDomain;
@@ -62,9 +64,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  */
 public class AbsIntPrefInitializer extends UltimatePreferenceInitializer {
 
-	public static final String[] VALUES_ABSTRACT_DOMAIN = new String[] { EmptyDomain.class.getSimpleName(),
-			SignDomain.class.getSimpleName(), IntervalDomain.class.getSimpleName(), OctagonDomain.class.getSimpleName(),
-			CongruenceDomain.class.getSimpleName(), CompoundDomain.class.getSimpleName() };
+	public static final String[] VALUES_ABSTRACT_DOMAIN = new String[] {
+
+			EmptyDomain.class.getSimpleName(), SignDomain.class.getSimpleName(), IntervalDomain.class.getSimpleName(),
+			OctagonDomain.class.getSimpleName(), CongruenceDomain.class.getSimpleName(),
+			CompoundDomain.class.getSimpleName(), ArrayDomain.class.getSimpleName()
+
+	};
 
 	public static final String[] VALUES_ABSTRACT_DOMAIN_FUTURE =
 			new String[] { EmptyDomain.class.getSimpleName(), VPDomain.class.getSimpleName(),
@@ -138,6 +144,9 @@ public class AbsIntPrefInitializer extends UltimatePreferenceInitializer {
 
 		// Compound Domain
 		abstractDomainContainer.addAbstractItems(CompoundDomainPreferences.getPreferences());
+
+		// Array Domain
+		abstractDomainContainer.addAbstractItems(ArrayDomainPreferences.getPreferences());
 
 		rtr.add(abstractDomainContainer);
 

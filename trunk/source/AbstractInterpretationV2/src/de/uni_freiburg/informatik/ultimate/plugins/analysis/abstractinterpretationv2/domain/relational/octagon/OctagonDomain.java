@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieSymbo
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RCFGLiteralCollector;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalDomainState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon.OctagonDomainPreferences.LogMessageFormatting;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon.OctagonDomainPreferences.WideningOperator;
@@ -75,8 +76,7 @@ public class OctagonDomain implements IAbstractDomain<OctDomainState, IcfgEdge> 
 	public OctagonDomain(final ILogger logger, final BoogieSymbolTable symbolTable,
 			final LiteralCollectorFactory literalCollectorFactory, final IUltimateServiceProvider services,
 			final BoogieIcfgContainer icfg,
-			final IBoogieSymbolTableVariableProvider boogie2SmtSymbolTableVariableProvider,
-			final IAbstractPostOperator<IntervalDomainState, IcfgEdge> fallBackPostOperator) {
+			final IBoogieSymbolTableVariableProvider boogie2SmtSymbolTableVariableProvider) {
 		mLogger = logger;
 		mSymbolTable = symbolTable;
 		mLiteralCollectorFactory = literalCollectorFactory;
@@ -85,6 +85,9 @@ public class OctagonDomain implements IAbstractDomain<OctDomainState, IcfgEdge> 
 		final IPreferenceProvider ups = services.getPreferenceProvider(Activator.PLUGIN_ID);
 		mOctDomainStateFactory = makeDomainStateFactory(ups);
 		mWideningOperatorFactory = makeWideningOperatorFactory(ups);
+		final IAbstractPostOperator<IntervalDomainState, IcfgEdge> fallBackPostOperator =
+				new IntervalDomain(logger, mSymbolTable, mLiteralCollectorFactory.create().getLiteralCollection(),
+						services, mBoogieIcfg, boogie2SmtSymbolTableVariableProvider).getPostOperator();
 		mPostOperatorFactory = makePostOperatorFactory(ups, fallBackPostOperator, mBoogieIcfg.getCodeBlockFactory());
 		mBoogie2SmtSymbolTableVariableProvider = boogie2SmtSymbolTableVariableProvider;
 	}
