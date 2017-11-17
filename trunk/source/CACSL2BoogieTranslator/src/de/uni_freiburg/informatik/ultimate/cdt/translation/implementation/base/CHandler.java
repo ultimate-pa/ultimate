@@ -3872,7 +3872,7 @@ public class CHandler implements ICHandler {
 		final CType newType = newTypeRaw.getUnderlyingType();
 		final CType oldType = rValIn.getCType().getUnderlyingType();
 //		if (oldType.equals(newType)) {
-		if (TypeHandler.areMatchingTypes(oldType, oldType)) {
+		if (TypeHandler.areMatchingTypes(newType, oldType)) {
 			// types are already identical -- nothing to do
 			return;
 		}
