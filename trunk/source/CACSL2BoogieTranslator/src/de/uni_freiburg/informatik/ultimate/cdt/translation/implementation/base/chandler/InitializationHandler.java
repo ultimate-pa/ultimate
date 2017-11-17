@@ -988,9 +988,11 @@ public class InitializationHandler {
 			final CType targetCType = targetCTypeRaw.getUnderlyingType();
 
 			if (!initializerResult.isInitializerList()) {
-				// we are initializing through a variable (as in "struct s s1 = s2;")
-				return new InitializerInfo(initializerResult.getRootExpressionResult()
-						.switchToRValueIfNecessary(main, loc), Collections.emptyList());
+				// we are initializing through a struct-type expression (as in "struct s s1 = s2;")
+
+				final ExpressionResult converted = convertInitResultWithExpressionResult(loc, main, targetCType,
+						initializerResult);
+				return new InitializerInfo(converted, Collections.emptyList());
 			}
 
 			if (targetCType instanceof CArray || targetCType instanceof CStruct) {
@@ -1006,16 +1008,23 @@ public class InitializationHandler {
 				final Deque<InitializerResult> ad = new ArrayDeque<>(initializerResult.getList());
 				final InitializerResult first = ad.pollFirst();
 
-				final ExpressionResult expressionResultSwitched = first.getRootExpressionResult()
-						.switchToRValueIfNecessary(main, loc);
-				expressionResultSwitched.rexBoolToIntIfNecessary(loc, main.mCHandler.getExpressionTranslation());
-				main.mCHandler.convert(loc, expressionResultSwitched, targetCType);
+				final ExpressionResult expressionResultSwitched =
+						convertInitResultWithExpressionResult(loc, main, targetCType, first);
 
 				return new InitializerInfo(expressionResultSwitched, new ArrayList<>(ad));
 
 
 			}
 		}
+
+protected static ExpressionResult convertInitResultWithExpressionResult(final ILocation loc, final Dispatcher main, final CType targetCType,
+		final InitializerResult first) {
+	final ExpressionResult expressionResultSwitched = first.getRootExpressionResult()
+			.switchToRValueIfNecessary(main, loc);
+	expressionResultSwitched.rexBoolToIntIfNecessary(loc, main.mCHandler.getExpressionTranslation());
+	main.mCHandler.convert(loc, expressionResultSwitched, targetCType);
+	return expressionResultSwitched;
+}
 
 		private static InitializerInfo constructIndexToInitInfo(final ILocation loc, final Dispatcher main,
 				final List<InitializerResult> initializerResults, final CType targetCType) {

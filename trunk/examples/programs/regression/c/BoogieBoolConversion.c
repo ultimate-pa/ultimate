@@ -22,7 +22,7 @@ int main() {
 	
 	/* on initialization */
 	int c = ( 13 > 7);
-	//@ assert b == 1;
+	//@ assert c == 1;
 	
 	/* before cast */
 	long long d = (long long) (13 > 7);

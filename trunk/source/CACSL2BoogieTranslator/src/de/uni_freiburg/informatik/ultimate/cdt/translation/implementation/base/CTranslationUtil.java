@@ -188,20 +188,7 @@ public class CTranslationUtil {
 	public static HeapLValue constructAddressForArrayAtIndex(final ILocation loc, final Dispatcher main,
 			final HeapLValue arrayBaseAddress, final Integer arrayIndex) {
 		final CArray cArrayType = (CArray) arrayBaseAddress.getCType();
-//		final List<Integer> arrayBounds = getConstantDimensionsOfArray(cArrayType,
-//				main.mCHandler.getExpressionTranslation());
 
-//		Integer product = 0;
-//		for (int i = 0; i < arrayIndex.size(); i++) {
-//			final int factor = i == arrayIndex.size() - 1 ? 1 : arrayBounds.get(i + 1);
-//			product = product +  factor * arrayIndex.get(i);
-//		}
-
-//
-//		final Expression flatCellNumber = main.mCHandler.getExpressionTranslation()
-//				.constructLiteralForIntegerType(loc, sizeT, new BigInteger(product.toString()));
-
-//		final CPrimitive intType = new CPrimitive(CPrimitives.INT);
 		final CPrimitive pointerComponentType = main.mCHandler.getExpressionTranslation().getCTypeOfPointerComponents();
 
 		final Expression flatCellNumber = main.mCHandler.getExpressionTranslation()
