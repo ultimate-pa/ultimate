@@ -337,8 +337,10 @@ public class OctAssumeProcessor {
 			// Construct a new binary expression with the correct operator (if negated or not, determined above).
 			final BinaryExpression boogieBinExp = new BinaryExpression(binExpr.getLoc(), binExpr.getType(), relOp,
 					binExpr.getLeft(), binExpr.getRight());
-			logger.debug("Unable to handle expression " + BoogiePrettyPrinter.print(boogieBinExp)
-					+ " with Octagons (not affine). Projecting to intervals.");
+			if (logger.isDebugEnabled()) {
+				logger.debug("Unable to handle expression " + BoogiePrettyPrinter.print(boogieBinExp)
+						+ " with Octagons (not affine). Projecting to intervals.");
+			}
 			final Set<IProgramVarOrConst> relevantVars =
 					new VariableCollector(binExpr, variableProvider).getVariables();
 
@@ -544,15 +546,19 @@ public class OctAssumeProcessor {
 		final AssumeStatement assume = new AssumeStatement(originalExpression.getLoc(), originalExpression);
 		final StatementSequence assumeBlock = codeBlockFactory.constructStatementSequence(null, null,
 				Collections.singletonList(assume), Origin.IMPLEMENTATION);
-		logger.debug("Projection of current OctDomainState to Intervals: " + intervalStates);
-		logger.debug("Applying the following statement to each state: " + BoogiePrettyPrinter.print(assume));
+		if (logger.isDebugEnabled()) {
+			logger.debug("Projection of current OctDomainState to Intervals: " + intervalStates);
+			logger.debug("Applying the following statement to each state: " + BoogiePrettyPrinter.print(assume));
+		}
 
 		final List<IntervalDomainState> computedIntervalPost = new ArrayList<>();
 		for (final IntervalDomainState iState : intervalStates) {
 			computedIntervalPost.addAll(fallBackPostOperator.apply(iState, assumeBlock));
 		}
-		logger.debug("Resulting interval states: " + computedIntervalPost);
-		logger.debug("Projecting back to octagons.");
+		if (logger.isDebugEnabled()) {
+			logger.debug("Resulting interval states: " + computedIntervalPost);
+			logger.debug("Projecting back to octagons.");
+		}
 
 		final List<OctDomainState> returnStates = new ArrayList<>();
 
