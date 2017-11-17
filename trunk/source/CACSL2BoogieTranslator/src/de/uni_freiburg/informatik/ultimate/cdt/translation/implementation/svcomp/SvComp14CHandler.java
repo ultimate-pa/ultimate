@@ -41,6 +41,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.eclipse.cdt.core.dom.ast.IASTASMDeclaration;
+import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTCompoundStatement;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
 import org.eclipse.cdt.core.dom.ast.IASTIdExpression;
@@ -135,8 +136,7 @@ public class SvComp14CHandler extends CHandler {
 		map.put("__builtin_expect", (main, node, loc, name) -> handleBuiltinExpect(main, node));
 		map.put("__builtin_object_size", (main, node, loc, name) -> handleBuiltinObjectSize(main, loc));
 
-		// TODO: __builtin_isgreater, __builtin_isgreaterequal, __builtin_isunordered, __builtin_islessgreater,
-		// __builtin_islessequal, __builtin_isless
+		// TODO: __builtin_isunordered, __builtin_islessgreater,
 
 		map.put("abort", (main, node, loc, name) -> handleAbort(loc));
 
@@ -145,6 +145,7 @@ public class SvComp14CHandler extends CHandler {
 		map.put("__builtin_memcpy", (main, node, loc, name) -> handleMemCopy(main, node, loc));
 		map.put("memcpy", (main, node, loc, name) -> handleMemCopy(main, node, loc));
 
+		// various float builtins
 		map.put("nan", (main, node, loc, name) -> handleNaN(loc, name));
 		map.put("nanf", (main, node, loc, name) -> handleNaN(loc, name));
 		map.put("nanl", (main, node, loc, name) -> handleNaN(loc, name));
@@ -152,6 +153,14 @@ public class SvComp14CHandler extends CHandler {
 		map.put("__builtin_nanf", (main, node, loc, name) -> handleNaN(loc, "nanf"));
 		map.put("__builtin_nanl", (main, node, loc, name) -> handleNaN(loc, "nanl"));
 		map.put("__builtin_inff", (main, node, loc, name) -> handleNaN(loc, "inff"));
+		map.put("__builtin_isgreater", (main, node, loc, name) -> handleBuiltinBinaryFloatComparison(main, node, loc,
+				IASTBinaryExpression.op_greaterThan));
+		map.put("__builtin_isgreaterequal", (main, node, loc, name) -> handleBuiltinBinaryFloatComparison(main, node,
+				loc, IASTBinaryExpression.op_greaterEqual));
+		map.put("__builtin_isless", (main, node, loc, name) -> handleBuiltinBinaryFloatComparison(main, node, loc,
+				IASTBinaryExpression.op_lessThan));
+		map.put("__builtin_islessequal", (main, node, loc, name) -> handleBuiltinBinaryFloatComparison(main, node, loc,
+				IASTBinaryExpression.op_lessEqual));
 
 		map.put("__VERIFIER_ltl_step", (main, node, loc, name) -> handleLtlStep(main, node, loc));
 		map.put("__VERIFIER_error", (main, node, loc, name) -> handleErrorFunction(main, node, loc));
@@ -195,7 +204,7 @@ public class SvComp14CHandler extends CHandler {
 		return Collections.unmodifiableMap(map);
 	}
 
-	private Result handleBuiltinExpect(final Dispatcher main, final IASTFunctionCallExpression node) {
+	private static Result handleBuiltinExpect(final Dispatcher main, final IASTFunctionCallExpression node) {
 		// this is a gcc-builtin function that helps with branch prediction, it always returns the first argument.
 		return main.dispatch(node.getArguments()[0]);
 	}
@@ -276,6 +285,23 @@ public class SvComp14CHandler extends CHandler {
 
 	private Result handleNaN(final ILocation loc, final String methodName) {
 		return mExpressionTranslation.createNanOrInfinity(loc, methodName);
+	}
+
+	private Result handleBuiltinBinaryFloatComparison(final Dispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final int op) {
+
+		if (node.getArguments().length != 2) {
+			throw new UnsupportedSyntaxException(loc,
+					"Function has only two arguments, but was called with " + node.getArguments().length);
+		}
+
+		final ExpressionResult leftResult = (ExpressionResult) main.dispatch(node.getArguments()[0]);
+		final ExpressionResult rightResult = (ExpressionResult) main.dispatch(node.getArguments()[1]);
+
+		final ExpressionResult rl = leftResult.switchToRValueIfNecessary(main, getMemoryHandler(), mStructHandler, loc);
+		final ExpressionResult rr = rightResult.switchToRValueIfNecessary(main, getMemoryHandler(), mStructHandler, loc);
+
+		return handleRelationalOperators(main, loc, op, rl, rr);
 	}
 
 	private Result handleBuiltinObjectSize(final Dispatcher main, final ILocation loc) {

@@ -650,18 +650,17 @@ public class CHandler implements ICHandler {
 	/**
 	 * Visit the SimpleDeclaration (which may be quite complex in fact..). The return value here may have different
 	 * uses:
-	 *  <li> for global variables and declarations inside of struct definitions, it is a ResultDeclaration (containing
-	 * the Boogie Declaration of the variable)
-	 *  <li> for local variables that have an initializer, a ResultExpression is
-	 * returned which contains (Boogie) statements and declarations that make the initialization according to the
-	 * initializer
-	 *  <li> for local variables without an initializer, a havoc statement is inserted into the ResultExpression
-	 * instead The declarations themselves of the local variables (and f.i. typedefs) are stored in the symbolTable and
-	 * inserted into the Boogie code at the next endScope() Declarations of static variables are added to
+	 * <li>for global variables and declarations inside of struct definitions, it is a ResultDeclaration (containing the
+	 * Boogie Declaration of the variable)
+	 * <li>for local variables that have an initializer, a ResultExpression is returned which contains (Boogie)
+	 * statements and declarations that make the initialization according to the initializer
+	 * <li>for local variables without an initializer, a havoc statement is inserted into the ResultExpression instead
+	 * The declarations themselves of the local variables (and f.i. typedefs) are stored in the symbolTable and inserted
+	 * into the Boogie code at the next endScope() Declarations of static variables are added to
 	 * mDeclarationsGlobalInBoogie such that they can be declared and initialized globally.
 	 * <p>
-	 *  Variables/types that are global in Boogie but not in C are stored in the Symboltable to keep the association of
-	 *  BoogieId and CId.
+	 * Variables/types that are global in Boogie but not in C are stored in the Symboltable to keep the association of
+	 * BoogieId and CId.
 	 */
 	@Override
 	public Result visit(final Dispatcher main, final IASTSimpleDeclaration node) {
@@ -844,9 +843,12 @@ public class CHandler implements ICHandler {
 						if (cDec.hasInitializer()) { // must be a non-real initializer for variable length array size
 														// --> need to pass this on
 							// TODO: double check this
-							((ExpressionResult) result).getDeclarations().addAll(cDec.getInitializer().getRootExpressionResult().getDeclarations());
-							((ExpressionResult) result).getStatements().addAll(cDec.getInitializer().getRootExpressionResult().getStatements());
-							((ExpressionResult) result).getAuxVars().putAll(cDec.getInitializer().getRootExpressionResult().getAuxVars());
+							((ExpressionResult) result).getDeclarations()
+									.addAll(cDec.getInitializer().getRootExpressionResult().getDeclarations());
+							((ExpressionResult) result).getStatements()
+									.addAll(cDec.getInitializer().getRootExpressionResult().getStatements());
+							((ExpressionResult) result).getAuxVars()
+									.putAll(cDec.getInitializer().getRootExpressionResult().getAuxVars());
 						}
 
 						// no initializer --> essentially needs to be havoced f.i. in each loop iteration
@@ -1059,14 +1061,13 @@ public class CHandler implements ICHandler {
 			if (node.getInitializer() != null) {
 				final CDeclaration cdec = result.getDeclaration();
 				result = new DeclaratorResult(new CDeclaration(cdec.getType(), cdec.getName(), node.getInitializer(),
-						null, cdec.isOnHeap(), CStorageClass.UNSPECIFIED,
-						bitfieldSize));
+						null, cdec.isOnHeap(), CStorageClass.UNSPECIFIED, bitfieldSize));
 			}
 			return result;
 		}
-		final DeclaratorResult result = new DeclaratorResult(new CDeclaration(newResType.cType,
-				node.getName().toString(), node.getInitializer(), null,
-				newResType.isOnHeap, CStorageClass.UNSPECIFIED, bitfieldSize));
+		final DeclaratorResult result =
+				new DeclaratorResult(new CDeclaration(newResType.cType, node.getName().toString(),
+						node.getInitializer(), null, newResType.isOnHeap, CStorageClass.UNSPECIFIED, bitfieldSize));
 		return result;
 	}
 
@@ -1153,10 +1154,10 @@ public class CHandler implements ICHandler {
 
 	@Override
 	public Result visit(final Dispatcher main, final IASTUnaryExpression node) {
-//		final ExpressionResult o = (ExpressionResult) main.dispatch(node.getOperand());
+		// final ExpressionResult o = (ExpressionResult) main.dispatch(node.getOperand());
 		final ILocation loc = main.getLocationFactory().createCLocation(node);
-		final ExpressionResult o = CTranslationUtil.convertExpressionListToExpressionResultIfNecessary(loc,
-				main, main.dispatch(node.getOperand()));
+		final ExpressionResult o = CTranslationUtil.convertExpressionListToExpressionResultIfNecessary(loc, main,
+				main.dispatch(node.getOperand()));
 
 		// for the cases we know that it's an RValue..
 		// ResultExpression rop = o.switchToRValueIfNecessary(main,
@@ -1719,7 +1720,7 @@ public class CHandler implements ICHandler {
 	 * from handling the operands. Requires that the {@link LRValue} of operands is an {@link RValue} (i.e.,
 	 * switchToRValueIfNecessary was applied if needed).
 	 */
-	ExpressionResult handleRelationalOperators(final Dispatcher main, final ILocation loc, final int op,
+	protected ExpressionResult handleRelationalOperators(final Dispatcher main, final ILocation loc, final int op,
 			final ExpressionResult left, final ExpressionResult right) {
 		assert left.lrVal instanceof RValue : "no RValue";
 		assert right.lrVal instanceof RValue : "no RValue";
@@ -2490,19 +2491,19 @@ public class CHandler implements ICHandler {
 			throw new IllegalArgumentException("You might have parsed your code with "
 					+ "ITranslationUnit.AST_SKIP_TRIVIAL_EXPRESSIONS_IN_AGGREGATE_INITIALIZERS!");
 		}
-//		final InitializerResult result = new InitializerResult();
+		// final InitializerResult result = new InitializerResult();
 		final InitializerResultBuilder result = new InitializerResultBuilder();
 		for (final IASTInitializerClause i : node.getClauses()) {
 			final Result r = main.dispatch(i);
 			if (r instanceof InitializerResult) {
-//				result.list.add((InitializerResult) r);
+				// result.list.add((InitializerResult) r);
 				result.addChild((InitializerResult) r);
 			} else if (r instanceof ExpressionResult) {
 				ExpressionResult rex = (ExpressionResult) r;
 				rex = rex.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
-//				result.list.add(new InitializerResult(rex.stmt, rex.lrVal, rex.decl, rex.auxVars, rex.overappr));
+				// result.list.add(new InitializerResult(rex.stmt, rex.lrVal, rex.decl, rex.auxVars, rex.overappr));
 
-//				result.addListEntry(new InitializerResult(rex.stmt, rex.lrVal, rex.decl, rex.auxVars, rex.overappr));
+				// result.addListEntry(new InitializerResult(rex.stmt, rex.lrVal, rex.decl, rex.auxVars, rex.overappr));
 				result.addChild(new InitializerResultBuilder().setRootExpressionResult(rex).build());
 
 				// result.auxVars.putAll(((ResultExpression) r).auxVars);//what for??
