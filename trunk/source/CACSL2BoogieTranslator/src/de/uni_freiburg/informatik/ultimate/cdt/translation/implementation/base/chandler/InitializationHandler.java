@@ -1051,16 +1051,28 @@ protected static ExpressionResult convertInitResultWithExpressionResult(final IL
 				}
 			}
 
+
+
 			/*
 			 * The currentCellIndex stands for the "current object" from the standard text.
-			 * Once we support array designators they will modify that index.
+			 * Designators may modify that index otherwise it just counts up.
 			 */
-			for (int currentCellIndex = 0; currentCellIndex < bound; currentCellIndex++) {
-
-				if (rest.isEmpty()) {
-					// no more values in the current initializer list
-					break;
+			int currentCellIndex = -1;
+			while (currentCellIndex < bound && !rest.isEmpty()) {
+//			for (int currentCellIndex = 0; currentCellIndex < bound; currentCellIndex++) {
+				if (rest.peekFirst().hasRootDesignator()) {
+					assert targetCType instanceof CStruct : "array designators not yet supported and should not (yet)"
+							+ " show up here";
+					currentCellIndex = CTranslationUtil.findIndexOfStructField((CStruct) targetCType,
+							rest.peekFirst().getRootDesignator());
+				} else {
+					currentCellIndex++;
 				}
+
+//				if (rest.isEmpty()) {
+//					// no more values in the current initializer list
+//					break;
+//				}
 
 				if (targetCType instanceof CStruct) {
 					cellType = ((CStruct) targetCType).getFieldTypes()[currentCellIndex];

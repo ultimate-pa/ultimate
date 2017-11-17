@@ -151,7 +151,7 @@ public class CTranslationUtil {
 
 	public static HeapLValue constructAddressForArrayAtIndex(final ILocation loc, final Dispatcher main,
 			final HeapLValue arrayBaseAddress, final List<Integer> arrayIndex) {
-		final CArray cArrayType = (CArray) arrayBaseAddress.getCType();
+		final CArray cArrayType = (CArray) arrayBaseAddress.getCType().getUnderlyingType();
 
 		final List<Integer> arrayBounds = getConstantDimensionsOfArray(cArrayType,
 				main.mCHandler.getExpressionTranslation());
@@ -187,7 +187,7 @@ public class CTranslationUtil {
 
 	public static HeapLValue constructAddressForArrayAtIndex(final ILocation loc, final Dispatcher main,
 			final HeapLValue arrayBaseAddress, final Integer arrayIndex) {
-		final CArray cArrayType = (CArray) arrayBaseAddress.getCType();
+		final CArray cArrayType = (CArray) arrayBaseAddress.getCType().getUnderlyingType();
 
 		final CPrimitive pointerComponentType = main.mCHandler.getExpressionTranslation().getCTypeOfPointerComponents();
 
@@ -316,6 +316,15 @@ public class CTranslationUtil {
 		result.setLRVal(listResult.list.get(listResult.list.size() - 1).getLrValue());
 
 		return result.build();
+	}
+
+	public static int findIndexOfStructField(final CStruct targetCType, final String rootDesignator) {
+		for (int i = 0; i < targetCType.getFieldCount(); i++) {
+			if (targetCType.getFieldIds()[i].equals(rootDesignator)) {
+				return i;
+			}
+		}
+		throw new AssertionError("designator does not occur in struct type");
 	}
 
 }
