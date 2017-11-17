@@ -34,12 +34,11 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.svcom
 
 import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.eclipse.cdt.core.dom.ast.IASTASMDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTCompoundStatement;
@@ -96,28 +95,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransla
 public class SvComp14CHandler extends CHandler {
 
 	private static final int ARGS_COUNT_BUILTIN_MEMCPY = 3;
-	/**
-	 * The string representing SV-Comp's error method.
-	 */
-	private static final String FUNC_NAME_ERROR = "__VERIFIER_error";
-	/**
-	 * The string representing SV-Comp's havoc method.
-	 */
-	private static final String FUNC_NAME_NONDET = "__VERIFIER_nondet_";
-	/**
-	 * Nondet_X | X in {int, float, char, short, long, pointer}
-	 */
-	private static final String[] FUNC_NAME_NONDET_TYPE_SUFFIX = { "_Bool", "bool", "char", "float", "double", "size_t",
-			"int", "loff_t", "long", "short", "pchar", "pointer", "uchar", "unsigned", "uint", "ulong", "ushort" };
-	/**
-	 * The string representing SV-Comp's assert method.
-	 */
-	private static final String FUNC_NAME_ASSUME = "__VERIFIER_assume";
 
-	private static final String FUNC_NAME_LTL_STEP = "__VERIFIER_ltl_step";
-
-	private static final Set<String> NAME_UNSUPPORTED_FLOAT_OPERATIONS =
-			new HashSet<>(Arrays.asList(new String[] { "sin" }));
+	private final Map<String, IFunctionModelHandler> mFunctionModels;
 
 	/**
 	 * Constructor.
@@ -132,6 +111,98 @@ public class SvComp14CHandler extends CHandler {
 			final boolean overapproximateFloatingPointOperations, final INameHandler nameHandler) {
 		super(main, backtranslator, false, logger, typeHandler, bitvectorTranslation,
 				overapproximateFloatingPointOperations, nameHandler);
+		mFunctionModels = getFunctionModels();
+	}
+
+	private Map<String, IFunctionModelHandler> getFunctionModels() {
+		final Map<String, IFunctionModelHandler> map = new HashMap<>();
+
+		final IFunctionModelHandler skip = (main, node, loc, name) -> handleByIgnore(main, loc, name);
+		final IFunctionModelHandler die = (main, node, loc, name) -> handleByUnsupportedSyntaxException(loc, name);
+
+		map.put("pthread_create", die);
+		map.put("sin", die);
+
+		/*
+		 * builtin_prefetch according to https://gcc.gnu.org/onlinedocs/gcc-3.4.5/gcc/Other-Builtins.html (state:
+		 * 5.6.2015) triggers the processor to load something into cache, does nothing else is void thus has no return
+		 * value
+		 */
+		map.put("__builtin_prefetch", skip);
+		map.put("__builtin_va_start", skip);
+		map.put("__builtin_va_end", skip);
+
+		map.put("__builtin_expect", (main, node, loc, name) -> handleBuiltinExpect(main, node));
+		map.put("__builtin_object_size", (main, node, loc, name) -> handleBuiltinObjectSize(main, loc));
+
+		// TODO: __builtin_isgreater, __builtin_isgreaterequal, __builtin_isunordered, __builtin_islessgreater,
+		// __builtin_islessequal, __builtin_isless
+
+		map.put("abort", (main, node, loc, name) -> handleAbort(loc));
+
+		map.put("printf", (main, node, loc, name) -> handlePrintF(main, node, loc));
+
+		map.put("__builtin_memcpy", (main, node, loc, name) -> handleMemCopy(main, node, loc));
+		map.put("memcpy", (main, node, loc, name) -> handleMemCopy(main, node, loc));
+
+		map.put("nan", (main, node, loc, name) -> handleNaN(loc, name));
+		map.put("nanf", (main, node, loc, name) -> handleNaN(loc, name));
+		map.put("nanl", (main, node, loc, name) -> handleNaN(loc, name));
+		map.put("__builtin_nan", (main, node, loc, name) -> handleNaN(loc, "nan"));
+		map.put("__builtin_nanf", (main, node, loc, name) -> handleNaN(loc, "nanf"));
+		map.put("__builtin_nanl", (main, node, loc, name) -> handleNaN(loc, "nanl"));
+		map.put("__builtin_inff", (main, node, loc, name) -> handleNaN(loc, "inff"));
+
+		map.put("__VERIFIER_ltl_step", (main, node, loc, name) -> handleLtlStep(main, node, loc));
+		map.put("__VERIFIER_error", (main, node, loc, name) -> handleErrorFunction(main, node, loc));
+		map.put("__VERIFIER_assume", (main, node, loc, name) -> handleVerifierAssume(main, node, loc));
+
+		map.put("__VERIFIER_nondet_bool",
+				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.BOOL)));
+		map.put("__VERIFIER_nondet__Bool",
+				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.BOOL)));
+		map.put("__VERIFIER_nondet_char",
+				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.CHAR)));
+		map.put("__VERIFIER_nondet_pchar",
+				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.CHAR)));
+		map.put("__VERIFIER_nondet_float",
+				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.FLOAT)));
+		map.put("__VERIFIER_nondet_double",
+				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.DOUBLE)));
+		map.put("__VERIFIER_nondet_size_t",
+				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.INT)));
+		map.put("__VERIFIER_nondet_int",
+				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.INT)));
+		map.put("__VERIFIER_nondet_long",
+				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.LONG)));
+		map.put("__VERIFIER_nondet_loff_t",
+				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.LONG)));
+		map.put("__VERIFIER_nondet_short",
+				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.SHORT)));
+		map.put("__VERIFIER_nondet_pointer",
+				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.VOID)));
+		map.put("__VERIFIER_nondet_uchar",
+				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.UCHAR)));
+		map.put("__VERIFIER_nondet_unsigned",
+				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.UINT)));
+		map.put("__VERIFIER_nondet_uint",
+				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.UINT)));
+		map.put("__VERIFIER_nondet_ulong",
+				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.ULONG)));
+		map.put("__VERIFIER_nondet_ushort",
+				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.USHORT)));
+
+		return Collections.unmodifiableMap(map);
+	}
+
+	private Result handleBuiltinExpect(final Dispatcher main, final IASTFunctionCallExpression node) {
+		// this is a gcc-builtin function that helps with branch prediction, it always returns the first argument.
+		return main.dispatch(node.getArguments()[0]);
+	}
+
+	private static ExpressionResult handleAbort(final ILocation loc) {
+		return new ExpressionResult(Collections.singletonList(new AssumeStatement(loc, new BooleanLiteral(loc, false))),
+				null);
 	}
 
 	@Override
@@ -145,228 +216,166 @@ public class SvComp14CHandler extends CHandler {
 		final IASTIdExpression astIdExpression = (IASTIdExpression) node.getFunctionNameExpression();
 		final String methodName = astIdExpression.getName().toString();
 
-		if ("pthread_create".equals(methodName)) {
-			throw new UnsupportedSyntaxException(loc, "we do not support pthread");
-		}
-		if (NAME_UNSUPPORTED_FLOAT_OPERATIONS.contains(methodName)) {
-			throw new UnsupportedSyntaxException(loc, "unsupported float operation " + methodName);
+		final IFunctionModelHandler functionModel = mFunctionModels.get(methodName);
+		if (functionModel != null) {
+			return functionModel.handleFunction(main, node, loc, methodName);
 		}
 
+		return super.visit(main, node);
+	}
+
+	private Result handleVerifierNonDet(final Dispatcher main, final ILocation loc, final CType cType) {
+		final List<Statement> stmt = new ArrayList<>();
+		final List<Declaration> decl = new ArrayList<>();
+		final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
+		final ASTType type = mTypeHandler.cType2AstType(loc, cType);
+		final String tmpName = main.mNameHandler.getTempVarUID(SFO.AUXVAR.NONDET, cType);
+		final VariableDeclaration tVarDecl = SFO.getTempVarVariableDeclaration(tmpName, type, loc);
+		decl.add(tVarDecl);
+		auxVars.put(tVarDecl, loc);
+
+		final LRValue returnValue = new RValue(new IdentifierExpression(loc, tmpName), cType);
+		mExpressionTranslation.addAssumeValueInRangeStatements(loc, returnValue.getValue(), returnValue.getCType(),
+				stmt);
+
+		assert isAuxVarMapcomplete(main.mNameHandler, decl, auxVars);
+		return new ExpressionResult(stmt, returnValue, decl, auxVars);
+	}
+
+	private Result handleVerifierAssume(final Dispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc) {
 		final List<Statement> stmt = new ArrayList<>();
 		final List<Declaration> decl = new ArrayList<>();
 		final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
 		final List<Overapprox> overappr = new ArrayList<>();
-		LRValue returnValue = null;
-
-		if (methodName.equals(FUNC_NAME_LTL_STEP)) {
-			final LTLStepAnnotation ltlStep = new LTLStepAnnotation();
-			final AssumeStatement assumeStmt =
-					new AssumeStatement(loc, new BooleanLiteral(loc, new InferredType(Type.Boolean), true));
-			ltlStep.annotate(assumeStmt);
-			stmt.add(assumeStmt);
-			return new ExpressionResult(stmt, returnValue, decl, auxVars, overappr);
-		}
-
-		if (methodName.equals(FUNC_NAME_ERROR)) {
-			final boolean checkSvcompErrorfunction =
-					main.getPreferences().getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_SVCOMP_ERRORFUNCTION);
-			final Expression falseLiteral = new BooleanLiteral(loc, new InferredType(Type.Boolean), false);
-			Statement st;
-			if (checkSvcompErrorfunction) {
-				final Check check = new Check(Spec.ERROR_FUNCTION);
-				st = new AssertStatement(loc, falseLiteral);
-				check.annotate(st);
-			} else {
-				st = new AssumeStatement(loc, falseLiteral);
+		final LRValue returnValue = null;
+		final ArrayList<Expression> args = new ArrayList<>();
+		for (final IASTInitializerClause inParam : node.getArguments()) {
+			final ExpressionResult in = ((ExpressionResult) main.dispatch(inParam)).switchToRValueIfNecessary(main,
+					getMemoryHandler(), mStructHandler, loc);
+			if (in.lrVal.getValue() == null) {
+				final String msg = "Incorrect or invalid in-parameter! " + loc.toString();
+				throw new IncorrectSyntaxException(loc, msg);
 			}
-			stmt.add(st);
-			return new ExpressionResult(stmt, returnValue, decl, auxVars, overappr);
+			in.rexIntToBoolIfNecessary(loc, mExpressionTranslation, getMemoryHandler());
+			args.add(in.lrVal.getValue());
+			stmt.addAll(in.stmt);
+			decl.addAll(in.decl);
+			auxVars.putAll(in.auxVars);
+			overappr.addAll(in.overappr);
 		}
-		if (methodName.equals(FUNC_NAME_ASSUME)) {
-			final ArrayList<Expression> args = new ArrayList<>();
-			for (final IASTInitializerClause inParam : node.getArguments()) {
-				final ExpressionResult in = ((ExpressionResult) main.dispatch(inParam)).switchToRValueIfNecessary(main,
-						getMemoryHandler(), mStructHandler, loc);
-				if (in.lrVal.getValue() == null) {
-					final String msg = "Incorrect or invalid in-parameter! " + loc.toString();
-					throw new IncorrectSyntaxException(loc, msg);
-				}
-				in.rexIntToBoolIfNecessary(loc, mExpressionTranslation, getMemoryHandler());
-				args.add(in.lrVal.getValue());
-				stmt.addAll(in.stmt);
-				decl.addAll(in.decl);
-				auxVars.putAll(in.auxVars);
-				overappr.addAll(in.overappr);
-			}
-			// according to SV-Comp specification!
-			assert args.size() == 1;
-			for (final Expression a : args) {
-				// could just take the first as there is only one, but it's so easy to make it more general..
-				stmt.add(new AssumeStatement(loc, a));
-			}
-			assert isAuxVarMapcomplete(main.mNameHandler, decl, auxVars);
-			return new ExpressionResult(stmt, returnValue, decl, auxVars, overappr);
+		// according to SV-Comp specification!
+		assert args.size() == 1;
+		for (final Expression a : args) {
+			// could just take the first as there is only one, but it's so easy to make it more general..
+			stmt.add(new AssumeStatement(loc, a));
 		}
-		for (final String t : FUNC_NAME_NONDET_TYPE_SUFFIX) {
-			if (methodName.equals(FUNC_NAME_NONDET + t)) {
+		assert isAuxVarMapcomplete(main.mNameHandler, decl, auxVars);
+		return new ExpressionResult(stmt, returnValue, decl, auxVars, overappr);
+	}
 
-				CType cType;
-				switch (t) {
-				case "_Bool":
-				case "bool":
-					cType = new CPrimitive(CPrimitives.BOOL);
-					break;
-				case "char":
-					cType = new CPrimitive(CPrimitives.CHAR);
-					break;
-				case "float":
-					cType = new CPrimitive(CPrimitives.FLOAT);
-					break;
-				case "double":
-					cType = new CPrimitive(CPrimitives.DOUBLE);
-					break;
-				case "size_t":
-				case "int":
-					cType = new CPrimitive(CPrimitives.INT);
-					break;
-				case "loff_t":
-				case "long":
-					cType = new CPrimitive(CPrimitives.LONG);
-					break;
-				case "short":
-					cType = new CPrimitive(CPrimitives.SHORT);
-					break;
-				case "pchar":
-					cType = new CPointer(new CPrimitive(CPrimitives.CHAR));
-					break;
-				case "pointer":
-					cType = new CPointer(new CPrimitive(CPrimitives.VOID));
-					break;
-				case "uchar":
-					cType = new CPrimitive(CPrimitives.UCHAR);
-					break;
-				case "unsigned":
-				case "uint":
-					cType = new CPrimitive(CPrimitives.UINT);
-					break;
-				case "ulong":
-					cType = new CPrimitive(CPrimitives.ULONG);
-					break;
-				case "ushort":
-					cType = new CPrimitive(CPrimitives.USHORT);
-					break;
-				default:
-					throw new AssertionError("unknown type " + t);
-				}
-				final ASTType type = mTypeHandler.cType2AstType(loc, cType);
-				final String tmpName = main.mNameHandler.getTempVarUID(SFO.AUXVAR.NONDET, cType);
-				final VariableDeclaration tVarDecl = SFO.getTempVarVariableDeclaration(tmpName, type, loc);
-				decl.add(tVarDecl);
-				auxVars.put(tVarDecl, loc);
+	private Result handleNaN(final ILocation loc, final String methodName) {
+		return mExpressionTranslation.createNanOrInfinity(loc, methodName);
+	}
 
-				returnValue = new RValue(new IdentifierExpression(loc, tmpName), cType);
-				mExpressionTranslation.addAssumeValueInRangeStatements(loc, returnValue.getValue(),
-						returnValue.getCType(), stmt);
+	private Result handleBuiltinObjectSize(final Dispatcher main, final ILocation loc) {
+		main.warn(loc, "used trivial implementation of __builtin_object_size");
+		final CPrimitive cType = new CPrimitive(CPrimitives.INT);
+		final Expression zero = mExpressionTranslation.constructLiteralForIntegerType(loc, cType, BigInteger.ZERO);
+		return new ExpressionResult(new RValue(zero, cType));
+	}
 
-				assert isAuxVarMapcomplete(main.mNameHandler, decl, auxVars);
-				return new ExpressionResult(stmt, returnValue, decl, auxVars, overappr);
-			}
-		}
-		if ("printf".equals(methodName)) {
-			// skip if parent of parent is CompoundStatement
-			// otherwise, replace by havoced variable
-			if (node.getParent().getParent() instanceof IASTCompoundStatement) {
-				return new SkipResult();
-			}
-			// 2015-11-05 Matthias: TODO check if int is reasonable here
-			final CType returnType = new CPrimitive(CPrimitives.INT);
-			final ASTType tempType = mTypeHandler.cType2AstType(loc, returnType);
-			final String tId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.NONDET, null);
-			final VariableDeclaration tVarDecl = new VariableDeclaration(loc, new Attribute[0],
-					new VarList[] { new VarList(loc, new String[] { tId }, tempType) });
-			auxVars.put(tVarDecl, loc);
-			decl.add(tVarDecl);
-			stmt.add(new HavocStatement(loc, new VariableLHS[] { new VariableLHS(loc, tId) }));
-			returnValue = new RValue(new IdentifierExpression(loc, tId), null);
-			assert isAuxVarMapcomplete(main.mNameHandler, decl, auxVars);
-			return new ExpressionResult(stmt, returnValue, decl, auxVars, overappr);
-		}
-		// this is a gcc-builtin function that helps with branch prediction, it always returns the first argument.
-		if ("__builtin_expect".equals(methodName)) {
-			return main.dispatch(node.getArguments()[0]);
-		}
-
-		if ("__builtin_memcpy".equals(methodName) || "memcpy".equals(methodName)) {
-
-			assert node.getArguments().length == ARGS_COUNT_BUILTIN_MEMCPY : "wrong number of arguments";
-			ExpressionResult dest = (ExpressionResult) main.dispatch(node.getArguments()[0]);
-			dest = dest.switchToRValueIfNecessary(main, getMemoryHandler(), mStructHandler, loc);
-			main.mCHandler.convert(loc, dest, new CPointer(new CPrimitive(CPrimitives.VOID)));
-			ExpressionResult src = (ExpressionResult) main.dispatch(node.getArguments()[1]);
-			src = src.switchToRValueIfNecessary(main, getMemoryHandler(), mStructHandler, loc);
-			main.mCHandler.convert(loc, src, new CPointer(new CPrimitive(CPrimitives.VOID)));
-			ExpressionResult size = (ExpressionResult) main.dispatch(node.getArguments()[2]);
-			size = size.switchToRValueIfNecessary(main, getMemoryHandler(), mStructHandler, loc);
-			main.mCHandler.convert(loc, size, mTypeSizeComputer.getSizeT());
-
-			final ExpressionResult result = ExpressionResult.copyStmtDeclAuxvarOverapprox(dest, src, size);
-
-			final String tId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.MEMCPYRES, dest.lrVal.getCType());
-			final VariableDeclaration tVarDecl = new VariableDeclaration(loc, new Attribute[0], new VarList[] {
-					new VarList(loc, new String[] { tId }, main.mTypeHandler.constructPointerType(loc)) });
-			result.decl.add(tVarDecl);
-			result.auxVars.put(tVarDecl, loc);
-
-			final Statement call = getMemoryHandler().constructMemcpyCall(loc, dest.lrVal.getValue(),
-					src.lrVal.getValue(), size.lrVal.getValue(), tId);
-			result.stmt.add(call);
-			result.lrVal =
-					new RValue(new IdentifierExpression(loc, tId), new CPointer(new CPrimitive(CPrimitives.VOID)));
-
-			// add required information to function handler.
-			getFunctionHandler().addCallGraphNode(MemoryModelDeclarations.C_Memcpy.getName());
-			getFunctionHandler().addCallGraphEdge(getFunctionHandler().getCurrentProcedureID(), 
-					MemoryModelDeclarations.C_Memcpy.getName());
-			getFunctionHandler().addModifiedGlobalEntry(MemoryModelDeclarations.C_Memcpy.getName());
-
-			return result;
-		}
-
-		if ("__builtin_object_size".equals(methodName)) {
-			main.warn(loc, "used trivial implementation of __builtin_object_size");
-			final CPrimitive cType = new CPrimitive(CPrimitives.INT);
-			final Expression zero = mExpressionTranslation.constructLiteralForIntegerType(loc, cType, BigInteger.ZERO);
-			return new ExpressionResult(new RValue(zero, cType));
-		}
-
-		if ("nan".equals(methodName) || "nanf".equals(methodName) || "nanl".equals(methodName)) {
-
-			return mExpressionTranslation.createNanOrInfinity(loc, methodName);
-		}
-
-		if ("__builtin_nan".equals(methodName) || "__builtin_nanf".equals(methodName)
-				|| "__builtin_nanl".equals(methodName) || "__builtin_inff".equals(methodName)) {
-			final String functionName = methodName.substring(methodName.length() - 4);
-			return mExpressionTranslation.createNanOrInfinity(loc, functionName);
-		}
-
-		/*
-		 * builtin_prefetch according to https://gcc.gnu.org/onlinedocs/gcc-3.4.5/gcc/Other-Builtins.html (state:
-		 * 5.6.2015) triggers the processor to load something into cache, does nothing else is void thus has no return
-		 * value
-		 */
-		if ("__builtin_prefetch".equals(methodName) || "__builtin_va_start".equals(methodName)
-				|| "__builtin_va_end".equals(methodName)) {
-			main.warn(loc, "ignored call to " + methodName);
+	private Result handlePrintF(final Dispatcher main, final IASTFunctionCallExpression node, final ILocation loc) {
+		final List<Statement> stmt = new ArrayList<>();
+		final List<Declaration> decl = new ArrayList<>();
+		final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
+		final List<Overapprox> overappr = new ArrayList<>();
+		LRValue returnValue;
+		// skip if parent of parent is CompoundStatement
+		// otherwise, replace by havoced variable
+		if (node.getParent().getParent() instanceof IASTCompoundStatement) {
 			return new SkipResult();
 		}
+		// 2015-11-05 Matthias: TODO check if int is reasonable here
+		final CType returnType = new CPrimitive(CPrimitives.INT);
+		final ASTType tempType = mTypeHandler.cType2AstType(loc, returnType);
+		final String tId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.NONDET, null);
+		final VariableDeclaration tVarDecl = new VariableDeclaration(loc, new Attribute[0],
+				new VarList[] { new VarList(loc, new String[] { tId }, tempType) });
+		auxVars.put(tVarDecl, loc);
+		decl.add(tVarDecl);
+		stmt.add(new HavocStatement(loc, new VariableLHS[] { new VariableLHS(loc, tId) }));
+		returnValue = new RValue(new IdentifierExpression(loc, tId), null);
+		assert isAuxVarMapcomplete(main.mNameHandler, decl, auxVars);
+		return new ExpressionResult(stmt, returnValue, decl, auxVars, overappr);
+	}
 
-		if ("abort".equals(methodName)) {
-			stmt.add(new AssumeStatement(loc, new BooleanLiteral(loc, false)));
-			return new ExpressionResult(stmt, null, decl, auxVars, overappr);
+	private Result handleMemCopy(final Dispatcher main, final IASTFunctionCallExpression node, final ILocation loc) {
+		assert node.getArguments().length == ARGS_COUNT_BUILTIN_MEMCPY : "wrong number of arguments";
+		ExpressionResult dest = (ExpressionResult) handleBuiltinExpect(main, node);
+		dest = dest.switchToRValueIfNecessary(main, getMemoryHandler(), mStructHandler, loc);
+		main.mCHandler.convert(loc, dest, new CPointer(new CPrimitive(CPrimitives.VOID)));
+		ExpressionResult src = (ExpressionResult) main.dispatch(node.getArguments()[1]);
+		src = src.switchToRValueIfNecessary(main, getMemoryHandler(), mStructHandler, loc);
+		main.mCHandler.convert(loc, src, new CPointer(new CPrimitive(CPrimitives.VOID)));
+		ExpressionResult size = (ExpressionResult) main.dispatch(node.getArguments()[2]);
+		size = size.switchToRValueIfNecessary(main, getMemoryHandler(), mStructHandler, loc);
+		main.mCHandler.convert(loc, size, mTypeSizeComputer.getSizeT());
+
+		final ExpressionResult result = ExpressionResult.copyStmtDeclAuxvarOverapprox(dest, src, size);
+
+		final String tId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.MEMCPYRES, dest.lrVal.getCType());
+		final VariableDeclaration tVarDecl = new VariableDeclaration(loc, new Attribute[0],
+				new VarList[] { new VarList(loc, new String[] { tId }, main.mTypeHandler.constructPointerType(loc)) });
+		result.decl.add(tVarDecl);
+		result.auxVars.put(tVarDecl, loc);
+
+		final Statement call = getMemoryHandler().constructMemcpyCall(loc, dest.lrVal.getValue(), src.lrVal.getValue(),
+				size.lrVal.getValue(), tId);
+		result.stmt.add(call);
+		result.lrVal = new RValue(new IdentifierExpression(loc, tId), new CPointer(new CPrimitive(CPrimitives.VOID)));
+
+		// add required information to function handler.
+		getFunctionHandler().addCallGraphNode(MemoryModelDeclarations.C_Memcpy.getName());
+		getFunctionHandler().addCallGraphEdge(getFunctionHandler().getCurrentProcedureID(),
+				MemoryModelDeclarations.C_Memcpy.getName());
+		getFunctionHandler().addModifiedGlobalEntry(MemoryModelDeclarations.C_Memcpy.getName());
+
+		return result;
+	}
+
+	private static Result handleErrorFunction(final Dispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc) {
+		final boolean checkSvcompErrorfunction =
+				main.getPreferences().getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_SVCOMP_ERRORFUNCTION);
+		final Expression falseLiteral = new BooleanLiteral(loc, new InferredType(Type.Boolean), false);
+		Statement st;
+		if (checkSvcompErrorfunction) {
+			final Check check = new Check(Spec.ERROR_FUNCTION);
+			st = new AssertStatement(loc, falseLiteral);
+			check.annotate(st);
+		} else {
+			st = new AssumeStatement(loc, falseLiteral);
 		}
+		return new ExpressionResult(Collections.singletonList(st), null);
+	}
 
-		return super.visit(main, node);
+	private static Result handleLtlStep(final Dispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc) {
+		final LTLStepAnnotation ltlStep = new LTLStepAnnotation();
+		final AssumeStatement assumeStmt =
+				new AssumeStatement(loc, new BooleanLiteral(loc, new InferredType(Type.Boolean), true));
+		ltlStep.annotate(assumeStmt);
+		return new ExpressionResult(Collections.singletonList(assumeStmt), null);
+	}
+
+	private static Result handleByIgnore(final Dispatcher main, final ILocation loc, final String methodName) {
+		main.warn(loc, "ignored call to " + methodName);
+		return new SkipResult();
+	}
+
+	private static Result handleByUnsupportedSyntaxException(final ILocation loc, final String functionName) {
+		throw new UnsupportedSyntaxException(loc, "Unsupported function: " + functionName);
 	}
 
 	@Override
@@ -404,6 +413,17 @@ public class SvComp14CHandler extends CHandler {
 	public Result visit(final Dispatcher main, final IASTASMDeclaration node) {
 		// workaround for now: ignore inline assembler instructions
 		return new SkipResult();
+	}
+
+	/**
+	 *
+	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+	 *
+	 */
+	@FunctionalInterface
+	private interface IFunctionModelHandler {
+		Result handleFunction(final Dispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
+				String methodName);
 	}
 
 }
