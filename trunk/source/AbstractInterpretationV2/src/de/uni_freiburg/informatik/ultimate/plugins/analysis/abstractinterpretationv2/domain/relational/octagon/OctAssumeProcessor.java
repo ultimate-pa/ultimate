@@ -312,6 +312,7 @@ public class OctAssumeProcessor {
 	 * @param variableProvider
 	 * @param codeBlockFactory
 	 * @param fallBackPostOperator
+	 * @param octDomainStateFactory
 	 * @see #processNumericRelation(BinaryExpression, boolean, List)
 	 */
 	private List<OctDomainState> processNumericRelationWithoutIfs(final ILogger logger, final BinaryExpression binExpr,
@@ -443,6 +444,8 @@ public class OctAssumeProcessor {
 	 *            Pre-states -- may be modified in-place.
 	 * @param codeBlockFactory
 	 *            The code block factory.
+	 * @param octDomainStateFactory
+	 *            The state factory to create new octagon states.
 	 * @param binExpr
 	 *            The original expression.
 	 * @param statement
@@ -514,6 +517,7 @@ public class OctAssumeProcessor {
 	 *            The post operator of the fall back domain, here an {@link IntervalPostOperator}.
 	 * @param codeBlockFactory
 	 *            The factory to construct code blocks.
+	 * @param octDomainStateFactory
 	 * @param backupExpr
 	 * @return
 	 */
@@ -549,8 +553,8 @@ public class OctAssumeProcessor {
 
 		for (final OctDomainState oldState : oldStates) {
 			for (final IntervalDomainState iState : computedIntervalPost) {
-				final OctDomainState newOld = oldState.deepCopy();
-				IntervalProjection.projectIntervalStateToOctagon(logger, iState, newOld, relevantVars);
+				final OctDomainState newOld =
+						IntervalProjection.projectIntervalStateToOctagon(logger, iState, oldState, relevantVars);
 				if (newOld.isBottom()) {
 					returnStates.add(newOld);
 				} else {

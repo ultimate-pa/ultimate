@@ -252,19 +252,20 @@ public class IntervalProjection {
 	 * @param state
 	 *            The {@link IntervalDomainState} to apply to the {@link OctDomainState}.
 	 * @param previousOctState
-	 *            The {@link OctDomainState}. <b><u>This state is modified by this method!</b></u>
+	 *            The {@link OctDomainState}.
 	 * @param restrictedVars
 	 *            If not null, only the variables specified here will be updated in the previous state.
+	 * @param octDomainStateFactory
 	 */
-	protected static void projectIntervalStateToOctagon(final ILogger logger, final IntervalDomainState state,
-			OctDomainState previousOctState, final Set<IProgramVarOrConst> restrictedVars) {
+	protected static OctDomainState projectIntervalStateToOctagon(final ILogger logger, final IntervalDomainState state,
+			final OctDomainState previousOctState, final Set<IProgramVarOrConst> restrictedVars) {
 
 		if (state.isBottom()) {
-			previousOctState = previousOctState.toBottomState();
-			return;
+			return previousOctState.createFreshBottomState();
 		}
 
 		final Set<IProgramVarOrConst> variables = state.getVariables();
+		final OctDomainState newState = previousOctState.deepCopy();
 
 		for (final IProgramVarOrConst var : variables) {
 			if (restrictedVars != null && !restrictedVars.contains(var)) {
@@ -275,7 +276,7 @@ public class IntervalProjection {
 
 			if (SmtSortUtils.isNumericSort(realSort)) {
 				final IntervalDomainValue interval = state.getValue(var);
-				previousOctState.assignNumericVarInterval(var, new OctInterval(interval));
+				newState.assignNumericVarInterval(var, new OctInterval(interval));
 			} else if (SmtSortUtils.isBoolSort(realSort)) {
 				final BooleanValue bool = state.getBooleanValue(var);
 				BoolValue boolValue;
@@ -295,12 +296,14 @@ public class IntervalProjection {
 				default:
 					throw new UnsupportedOperationException("Unsupported bool value: " + bool);
 				}
-				previousOctState.assignBooleanVar(var, boolValue);
+				newState.assignBooleanVar(var, boolValue);
 			} else if (SmtSortUtils.isArraySort(realSort)) {
+				// TODO Handle proper array handling.
 				// Do nothing here, leave the value as it is.
 			} else {
 				throw new UnsupportedOperationException("Unsupported sort: " + realSort);
 			}
 		}
+		return newState;
 	}
 }

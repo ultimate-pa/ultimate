@@ -302,13 +302,6 @@ public final class OctDomainState implements IAbstractState<OctDomainState> {
 		return newState;
 	}
 
-	/**
-	 * @return A new {@link OctDomainState} which is bottom.
-	 */
-	protected OctDomainState toBottomState() {
-		return new OctDomainState(mLogStringFunction, TVBool.TRUE);
-	}
-
 	private void addNumericVariables(final OctDomainState newState, final Set<IProgramVarOrConst> addedNumVars) {
 		if (addedNumVars.isEmpty()) {
 			return;
@@ -1299,6 +1292,13 @@ public final class OctDomainState implements IAbstractState<OctDomainState> {
 	}
 
 	/**
+	 * @return The log string function associated with this state.
+	 */
+	protected Function<OctDomainState, String> getLogStringFunction() {
+		return mLogStringFunction;
+	}
+
+	/**
 	 * Creates a log string, representing this abstract state by printing the full octagon matrix.
 	 *
 	 * @return Log string with full octagon matrix
@@ -1477,5 +1477,12 @@ public final class OctDomainState implements IAbstractState<OctDomainState> {
 			}
 		}
 		return topVariables;
+	}
+
+	/**
+	 * @return A fresh {@link OctDomainState} which is set to bottom.
+	 */
+	protected OctDomainState createFreshBottomState() {
+		return createFreshState(mLogStringFunction, true);
 	}
 }
