@@ -188,8 +188,8 @@ public class SvComp14CHandler extends CHandler {
 				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.LONG)));
 		map.put("__VERIFIER_nondet_short",
 				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.SHORT)));
-		map.put("__VERIFIER_nondet_pointer",
-				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.VOID)));
+		map.put("__VERIFIER_nondet_pointer", (main, node, loc, name) -> handleVerifierNonDet(main, loc,
+						new CPointer(new CPrimitive(CPrimitives.VOID))));
 		map.put("__VERIFIER_nondet_uchar",
 				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.UCHAR)));
 		map.put("__VERIFIER_nondet_unsigned",
