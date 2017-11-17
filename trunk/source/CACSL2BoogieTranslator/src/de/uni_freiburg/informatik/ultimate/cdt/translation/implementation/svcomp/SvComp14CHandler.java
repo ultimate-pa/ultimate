@@ -136,8 +136,6 @@ public class SvComp14CHandler extends CHandler {
 		map.put("__builtin_expect", (main, node, loc, name) -> handleBuiltinExpect(main, node));
 		map.put("__builtin_object_size", (main, node, loc, name) -> handleBuiltinObjectSize(main, loc));
 
-		// TODO: __builtin_isunordered, __builtin_islessgreater,
-
 		map.put("abort", (main, node, loc, name) -> handleAbort(loc));
 
 		map.put("printf", (main, node, loc, name) -> handlePrintF(main, node, loc));
@@ -161,12 +159,8 @@ public class SvComp14CHandler extends CHandler {
 				IASTBinaryExpression.op_lessThan));
 		map.put("__builtin_islessequal", (main, node, loc, name) -> handleBuiltinBinaryFloatComparison(main, node, loc,
 				IASTBinaryExpression.op_lessEqual));
-
-		/*
-		 * Macro: int isunordered (real-floating x, real-floating y) This macro determines whether its arguments are
-		 * unordered. In other words, it is true if x or y are NaN, and false otherwise.
-		 */
 		map.put("__builtin_isunordered", (main, node, loc, name) -> handleBuiltinIsUnordered(main, node, loc));
+		map.put("__builtin_islessgreater", (main, node, loc, name) -> handleBuiltinIsLessGreater(main, node, loc));
 
 		map.put("__VERIFIER_ltl_step", (main, node, loc, name) -> handleLtlStep(main, node, loc));
 		map.put("__VERIFIER_error", (main, node, loc, name) -> handleErrorFunction(main, node, loc));
@@ -317,8 +311,10 @@ public class SvComp14CHandler extends CHandler {
 	private Result handleBuiltinIsUnordered(final Dispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc) {
 		/*
-		 * Macro: int isunordered (real-floating x, real-floating y) This macro determines whether its arguments are
-		 * unordered. In other words, it is true if x or y are NaN, and false otherwise.
+		 * int isunordered (real-floating x, real-floating y)
+		 *
+		 * This macro determines whether its arguments are unordered. In other words, it is true if x or y are NaN, and
+		 * false otherwise.
 		 */
 		if (node.getArguments().length != 2) {
 			throw new IncorrectSyntaxException(loc,
@@ -332,6 +328,20 @@ public class SvComp14CHandler extends CHandler {
 
 		// TODO: true if x or y are NaN, and false otherwise; build fp.isNaN(left) or fp.isNaN(right)
 		return handleByUnsupportedSyntaxException(loc, "__builtin_isunordered");
+	}
+
+	private Result handleBuiltinIsLessGreater(final Dispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc) {
+		/*
+		 * int islessgreater (real-floating x, real-floating y)
+		 *
+		 * This macro determines whether the argument x is less or greater than y. It is equivalent to (x) < (y) || (x)
+		 * > (y) (although it only evaluates x and y once), but no exception is raised if x or y are NaN.
+		 *
+		 * This macro is not equivalent to x != y, because that expression is true if x or y are NaN.
+		 */
+
+		return handleByUnsupportedSyntaxException(loc, "__builtin_islessgreater");
 	}
 
 	private Result handleBuiltinObjectSize(final Dispatcher main, final ILocation loc) {
