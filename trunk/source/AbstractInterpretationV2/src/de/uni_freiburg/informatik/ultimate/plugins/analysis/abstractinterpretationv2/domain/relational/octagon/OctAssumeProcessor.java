@@ -334,11 +334,15 @@ public class OctAssumeProcessor {
 		final AffineExpression affLeft = mPostOp.getExprTransformer().affineExprCached(left);
 		final AffineExpression affRight = mPostOp.getExprTransformer().affineExprCached(right);
 		if (affLeft == null || affRight == null) {
-			logger.debug("Unable to handle affine expression " + binExpr + " with Octagons. Projecting to intervals.");
+			// Construct a new binary expression with the correct operator (if negated or not, determined above).
+			final BinaryExpression boogieBinExp = new BinaryExpression(binExpr.getLoc(), binExpr.getType(), relOp,
+					binExpr.getLeft(), binExpr.getRight());
+			logger.debug("Unable to handle expression " + BoogiePrettyPrinter.print(boogieBinExp)
+					+ " with Octagons (not affine). Projecting to intervals.");
 			final Set<IProgramVarOrConst> relevantVars =
 					new VariableCollector(binExpr, variableProvider).getVariables();
 
-			return projectAssumeOnIntervals(logger, oldStates, binExpr, fallBackPostOperator, codeBlockFactory,
+			return projectAssumeOnIntervals(logger, oldStates, boogieBinExp, fallBackPostOperator, codeBlockFactory,
 					relevantVars);
 		}
 		assert left.getType().equals(right.getType());
@@ -536,6 +540,7 @@ public class OctAssumeProcessor {
 		if (intervalStates.isEmpty()) {
 			return oldStates;
 		}
+
 		final AssumeStatement assume = new AssumeStatement(originalExpression.getLoc(), originalExpression);
 		final StatementSequence assumeBlock = codeBlockFactory.constructStatementSequence(null, null,
 				Collections.singletonList(assume), Origin.IMPLEMENTATION);
@@ -562,6 +567,8 @@ public class OctAssumeProcessor {
 				}
 			}
 		}
+
+		logger.debug("Resulting octagon states: " + returnStates);
 		return returnStates;
 	}
 
