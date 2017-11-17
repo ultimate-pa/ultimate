@@ -1,0 +1,10 @@
+<rundefinition>
+	<name>Ultimate Toolchain</name>
+	<toolchain>
+		
+	<plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator"/>
+	<plugin id="de.uni_freiburg.informatik.ultimate.plugins.analysis.syntaxchecker"/>
+	<plugin id="de.uni_freiburg.informatik.ultimate.boogie.preprocessor"/>
+
+	</toolchain>
+</rundefinition>
