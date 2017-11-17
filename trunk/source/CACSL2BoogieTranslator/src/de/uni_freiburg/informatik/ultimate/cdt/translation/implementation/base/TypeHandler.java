@@ -95,6 +95,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.LinkedScopedHashMap;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.SymmetricHashRelation;
 
 /**
  * @author Markus Lindenmann
@@ -708,10 +709,193 @@ public class TypeHandler implements ITypeHandler {
 		}
 	}
 
+	/**
+	 * Checks if two CTypes are equivalent.
+	 * Replaces (some of) our uses of CType.equals(..).
+	 *
+	 * Avoids the potential endless recursion of the implementation of CType.equals(..) (which we should replace some
+	 *  time (Nov 17).
+	 *
+	 * Applications: (unclear, collect here)
+	 * <li> CHandler.convert: if this method returns true, no conversion is needed
+	 *
+	 * @param type1
+	 * @param type2
+	 * @return
+	 */
+	public static boolean areMatchingTypes(final CType type1, final CType type2) {
+		return areMatchingTypes(type1, type2, new SymmetricHashRelation<>());
+	}
+
+	private static boolean areMatchingTypes(final CType type1, final CType type2,
+			final SymmetricHashRelation<CType> visitedPairs) {
+		final CType ulType1 = type1.getUnderlyingType();
+		final CType ulType2 = type2.getUnderlyingType();
+
+		if (!ulType1.getClass().equals(ulType2.getClass())) {
+			return false;
+		}
+
+		visitedPairs.addPair(ulType1, ulType2);
+
+		if (ulType1.getClass().equals(CPrimitive.class)) {
+			return areMatchingTypes((CPrimitive) ulType1,(CPrimitive) ulType2, visitedPairs);
+		} else if (ulType1.getClass().equals(CEnum.class)) {
+			return areMatchingTypes((CEnum) ulType1, (CEnum) ulType2, visitedPairs);
+		} else if (ulType1.getClass().equals(CPointer.class)) {
+			return areMatchingTypes((CPointer) ulType1, (CPointer) ulType2, visitedPairs);
+		} else if (ulType1.getClass().equals(CUnion.class)) {
+			return areMatchingTypes((CUnion) ulType1, (CUnion) ulType2, visitedPairs);
+		} else if (ulType1.getClass().equals(CStruct.class)) {
+			return areMatchingTypes((CStruct) ulType1, (CStruct) ulType2, visitedPairs);
+		} else if (ulType1.getClass().equals(CArray.class)) {
+			return areMatchingTypes((CArray) ulType1, (CArray) ulType2, visitedPairs);
+		} else if (ulType1.getClass().equals(CFunction.class)) {
+			return areMatchingTypes((CFunction) ulType1, (CFunction) ulType2, visitedPairs);
+		} else {
+			throw new UnsupportedOperationException("unknown CType");
+		}
+	}
+
+	private static boolean areMatchingTypes(final CPrimitive type1, final CPrimitive type2,
+			final SymmetricHashRelation<CType> visitedPairs) {
+		if (visitedPairs.containsPair(type1, type2)) {
+			return true;
+		}
+		visitedPairs.addPair(type1, type2);
+		return type1.getType() == type1.getType();
+	}
+
+	private static boolean areMatchingTypes(final CEnum type1, final CEnum type2,
+			final SymmetricHashRelation<CType> visitedPairs) {
+		if (visitedPairs.containsPair(type1, type2)) {
+			return true;
+		}
+		visitedPairs.addPair(type1, type2);
+
+		if (!(type1.getIdentifier().equals(type2.getIdentifier()))) {
+			return false;
+		}
+		if (type1.getFieldIds().length != type2.getFieldIds().length) {
+			return false;
+		}
+		for (int i = 0; i < type1.getFieldIds().length; i++) {
+			if (!(type1.getFieldIds()[i].equals(type2.getFieldIds()[i]))) {
+				return false;
+			}
+		}
+		return true;
+	}
 
 
-	public static boolean isCompatibleStructOrUnionType(final CType cellType, final CType cType) {
+
+	private static boolean areMatchingTypes(final CPointer type1, final CPointer type2,
+			final SymmetricHashRelation<CType> visitedPairs) {
+		if (visitedPairs.containsPair(type1, type2)) {
+			return true;
+		}
+		visitedPairs.addPair(type1, type2);
+		return areMatchingTypes(type1.getTargetType(), type2.getTargetType(), visitedPairs);
+	}
+
+	private static boolean areMatchingTypes(final CFunction type1, final CFunction type2,
+			final SymmetricHashRelation<CType> visitedPairs) {
+		if (visitedPairs.containsPair(type1, type2)) {
+			return true;
+		}
+		visitedPairs.addPair(type1, type2);
+
+		if (type1.getParameterTypes().length != type2.getParameterTypes().length) {
+			return false;
+		}
+		if (!areMatchingTypes(type1.getResultType(), type2.getResultType(), visitedPairs)) {
+			return false;
+		}
+		for (int i = 0; i < type1.getParameterTypes().length; i++) {
+			if (!areMatchingTypes(type1.getParameterTypes()[i].getType(), type2.getParameterTypes()[i].getType())) {
+				return false;
+			}
+		}
+		if (type1.takesVarArgs() != type2.takesVarArgs()) {
+			return false;
+		}
+		return true;
+	}
+
+//	private static boolean areMatchingTypes(final CUnion type1, final CUnion type2,
+//			final SymmetricHashRelation<CType> visitedPairs) {
+//		if (visitedPairs.containsPair(type1, type2)) {
+//			return true;
+//		}
+//		visitedPairs.addPair(type1, type2);
+//		return false;
+//	}
+
+	private static boolean areMatchingTypes(final CStruct type1, final CStruct type2,
+			final SymmetricHashRelation<CType> visitedPairs) {
+		if (visitedPairs.containsPair(type1, type2)) {
+			return true;
+		}
+		visitedPairs.addPair(type1, type2);
+
+        if (type1.getFieldIds().length != type2.getFieldIds().length) {
+            return false;
+        }
+        for (int i = 0; i < type1.getFieldIds().length - 1; i++) {
+            if (!(type1.getFieldIds()[i].equals(type2.getFieldIds()[i]))) {
+                return false;
+            }
+        }
+        if (type1.getFieldTypes().length != type2.getFieldTypes().length) {
+            return false;
+        }
+        for (int i = 0; i < type1.getFieldTypes().length; i++) {
+            if (!(type1.getFieldTypes()[i].equals(type2.getFieldTypes()[i]))) {
+                return false;
+            }
+        }
+        return true;
+	}
+
+	private static boolean areMatchingTypes(final CArray type1, final CArray type2,
+			final SymmetricHashRelation<CType> visitedPairs) {
+		if (visitedPairs.containsPair(type1, type2)) {
+			return true;
+		}
+		visitedPairs.addPair(type1, type2);
+        if (!areMatchingTypes(type1.getValueType(), type2.getValueType(), visitedPairs)) {
+            return false;
+        }
+        if (type1.getDimensions().length != type2.getDimensions().length) {
+            return false;
+        }
+
+//        if (CTranslationUtil.isVarlengthArray(type1, expressionTranslation))
+
+        for (int i = 0; i < type1.getDimensions().length; i++) {
+        	// TODO: this check is a hack (but still better than what we had in CArray.equals)
+            if (!(type1.getDimensions()[i].toString()
+            		.equals(type2.getDimensions()[i].toString()))) {
+                return false;
+            }
+        }
+        return true;
+
+	}
+
+	/**
+	 * Checks if type1 and type2 have "compatible structure or union type", as in
+	 * C11 6.7.9.13
+	 *  The initializer for a structure or union object that has automatic storage duration shall be
+	 *  either an initializer list as described below, or a single expression that has compatible
+	 *  structure or union type.
+	 *
+	 * @param type1
+	 * @param type2
+	 * @return
+	 */
+	public static boolean isCompatibleStructOrUnionType(final CStruct type1, final CStruct type2) {
 		// TODO: check the notion of compatibility with the standard
-		return cellType.equals(cType);
+		return type1.equals(type2);
 	}
 }

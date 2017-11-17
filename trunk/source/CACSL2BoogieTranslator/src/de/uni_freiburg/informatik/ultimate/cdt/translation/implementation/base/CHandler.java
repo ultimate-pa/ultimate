@@ -3870,7 +3870,9 @@ public class CHandler implements ICHandler {
 		final RValue rValIn = (RValue) rexp.lrVal;
 		final CType newType = newTypeRaw.getUnderlyingType();
 		final CType oldType = rValIn.getCType().getUnderlyingType();
-		if (oldType.equals(newType)) {
+//		if (oldType.equals(newType)) {
+		if (TypeHandler.areMatchingTypes(oldType, oldType)) {
+			// types are already identical -- nothing to do
 			return;
 		}
 
