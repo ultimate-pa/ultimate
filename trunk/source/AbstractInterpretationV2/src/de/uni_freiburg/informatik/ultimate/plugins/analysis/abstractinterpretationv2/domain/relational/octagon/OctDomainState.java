@@ -73,7 +73,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 public final class OctDomainState implements IAbstractState<OctDomainState> {
 
-	private final static Comparator<IProgramVarOrConst> sLexicalVarComparator =
+	private final static Comparator<IProgramVarOrConst> LEXICAL_VAR_COMPARATOR =
 			(varA, varB) -> varA.getGloballyUniqueId().compareTo(varB.getGloballyUniqueId());
 
 	/** Counter for created objects. Used to set {@link #mId}. */
@@ -313,7 +313,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState> {
 		if (addedNumVars.isEmpty()) {
 			return;
 		}
-		final SortedMap<IProgramVarOrConst, Integer> varsSortedByName = new TreeMap<>(sLexicalVarComparator);
+		final SortedMap<IProgramVarOrConst, Integer> varsSortedByName = new TreeMap<>(LEXICAL_VAR_COMPARATOR);
 		varsSortedByName.putAll(mMapNumericVarToIndex);
 		addedNumVars.forEach(addedVar -> varsSortedByName.put(addedVar, -1));
 		newState.mMapNumericVarToIndex = new HashMap<>();
@@ -365,14 +365,14 @@ public final class OctDomainState implements IAbstractState<OctDomainState> {
 	}
 
 	@Override
-	public OctDomainState renameVariables(final Map<IProgramVarOrConst, IProgramVarOrConst> old2newVars) {
-		if (old2newVars == null || old2newVars.isEmpty()) {
+	public OctDomainState renameVariables(final Map<IProgramVarOrConst, IProgramVarOrConst> old2NewVars) {
+		if (old2NewVars == null || old2NewVars.isEmpty()) {
 			return this;
 		}
 
-		boolean isChanged = false;
-		final OctDomainState newState = shallowCopy();
-		for (final Entry<IProgramVarOrConst, IProgramVarOrConst> entry : old2newVars.entrySet()) {
+		// sanitize input
+		final Map<IProgramVarOrConst, IProgramVarOrConst> sanitizedOld2NewVars = new HashMap<>(old2NewVars);
+		for (final Entry<IProgramVarOrConst, IProgramVarOrConst> entry : old2NewVars.entrySet()) {
 			final IProgramVarOrConst oldVar = entry.getKey();
 			final IProgramVarOrConst newVar = entry.getValue();
 
@@ -381,36 +381,91 @@ public final class OctDomainState implements IAbstractState<OctDomainState> {
 			}
 
 			if (oldVar == newVar) {
-				continue;
+				// we do not need to rename to itself
+				sanitizedOld2NewVars.remove(oldVar);
 			}
 
-			if (!newState.mVariables.contains(oldVar)) {
-				continue;
-			}
-			isChanged = true;
-			unrefVariables(newState);
-			newState.mVariables.remove(oldVar);
-			newState.mVariables.add(newVar);
-
-			if (newState.mMapNumericVarToIndex.containsKey(oldVar)) {
-				unrefOtherMapNumericVarToIndex(newState);
-				final Integer idx = newState.mMapNumericVarToIndex.remove(oldVar);
-				newState.mMapNumericVarToIndex.put(newVar, idx);
-				if (mNumericNonIntVars.contains(oldVar)) {
-					unrefOtherNumericNonIntVars(newState);
-					newState.mNumericNonIntVars.remove(oldVar);
-					newState.mNumericNonIntVars.add(newVar);
-				}
-			} else if (mBooleanAbstraction.containsKey(oldVar)) {
-				unrefOtherBooleanAbstraction(newState);
-				final BoolValue value = newState.mBooleanAbstraction.remove(oldVar);
-				newState.mBooleanAbstraction.put(newVar, value);
+			if (!mVariables.contains(oldVar)) {
+				// we do not need to rename if variable is not present
+				sanitizedOld2NewVars.remove(oldVar);
 			}
 		}
-		if (isChanged) {
+
+		if (sanitizedOld2NewVars.isEmpty()) {
+			return this;
+		}
+
+		// create new state with independent mVariables and update mVariables
+		final OctDomainState newState = shallowCopy();
+		unrefVariables(newState);
+		sanitizedOld2NewVars.entrySet().stream().forEach(a -> {
+			newState.mVariables.remove(a.getKey());
+			newState.mVariables.add(a.getValue());
+		});
+
+		// partition in boolean and non-boolean variables
+		final List<Entry<IProgramVarOrConst, IProgramVarOrConst>> booleanOld2NewVars = sanitizedOld2NewVars.entrySet()
+				.stream().filter(a -> mBooleanAbstraction.containsKey(a.getKey())).collect(Collectors.toList());
+		final List<Entry<IProgramVarOrConst, IProgramVarOrConst>> numericOld2NewVars = sanitizedOld2NewVars.entrySet()
+				.stream().filter(a -> mMapNumericVarToIndex.containsKey(a.getKey())).collect(Collectors.toList());
+		// note: variables that are neither boolean nor numeric are of unsupported type and treated as always top
+
+		// rename boolean abstraction
+		if (!booleanOld2NewVars.isEmpty()) {
+			unrefOtherBooleanAbstraction(newState);
+			booleanOld2NewVars.stream().forEach(a -> {
+				final BoolValue value = newState.mBooleanAbstraction.remove(a.getKey());
+				newState.mBooleanAbstraction.put(a.getValue(), value);
+			});
+		}
+
+		// if we only needed to rename bools, we are finished
+		if (numericOld2NewVars.isEmpty()) {
 			return newState;
 		}
-		return this;
+
+		// get nonint-variables in numeric variables and update mNumericNonIntVars if necessary
+		final List<Entry<IProgramVarOrConst, IProgramVarOrConst>> numericNonIntOld2NewVars = numericOld2NewVars.stream()
+				.filter(a -> mNumericNonIntVars.contains(a.getKey())).collect(Collectors.toList());
+		if (!numericNonIntOld2NewVars.isEmpty()) {
+			unrefOtherNumericNonIntVars(newState);
+			numericNonIntOld2NewVars.stream().forEach(a -> {
+				newState.mNumericNonIntVars.remove(a.getKey());
+				newState.mNumericNonIntVars.add(a.getValue());
+			});
+		}
+
+		// update mMapNumericVarToIndex
+		unrefOtherMapNumericVarToIndex(newState);
+		numericOld2NewVars.stream().forEach(a -> {
+			final Integer idx = newState.mMapNumericVarToIndex.remove(a.getKey());
+			newState.mMapNumericVarToIndex.put(a.getValue(), idx);
+
+		});
+
+		// create new sorting for matrix
+		final SortedMap<IProgramVarOrConst, Integer> varsSortedByName = new TreeMap<>(LEXICAL_VAR_COMPARATOR);
+		varsSortedByName.putAll(newState.mMapNumericVarToIndex);
+		final int[] copyInstructions = new int[newState.mMapNumericVarToIndex.size()];
+		newState.mMapNumericVarToIndex = new HashMap<>();
+		int index = 0;
+		for (final Entry<IProgramVarOrConst, Integer> varFromSourceIndex : varsSortedByName.entrySet()) {
+			copyInstructions[index] = varFromSourceIndex.getValue();
+			varFromSourceIndex.setValue(index);
+			newState.mMapNumericVarToIndex.put(varFromSourceIndex.getKey(), index);
+			++index;
+		}
+
+		// determine if we need to rearrange the matrix
+		for (int i = 0; i < copyInstructions.length; ++i) {
+			if (copyInstructions[i] != i) {
+				// note: rearrange creates a fresh matrix
+				newState.mNumericAbstraction = mNumericAbstraction.rearrange(copyInstructions);
+				break;
+			}
+		}
+
+		return newState;
 	}
 
 	/**
@@ -578,32 +633,6 @@ public final class OctDomainState implements IAbstractState<OctDomainState> {
 		return mId == other.mId;
 	}
 
-	/**
-	 * Compute the permutation between two states with the same numeric variables.
-	 *
-	 * @param other
-	 *            State with same numeric variables, possibly in another order.
-	 * @return {@code array[index of numeric variable from this state] = index of numeric variable from other state} if
-	 *         permuted, {@code null} otherwise.
-	 * @deprecated As of release 2017-04-21, a constant order of variables is enforced for all octagons.
-	 */
-	@Deprecated
-	private int[] matrixPermutationMap(final OctDomainState other) {
-		assert mMapNumericVarToIndex.keySet().equals(other.mMapNumericVarToIndex.keySet());
-		boolean permuted = false;
-		final int[] mapThisVarIndexToOtherVarIndex = new int[mNumericAbstraction.variables()];
-		for (final Entry<IProgramVarOrConst, Integer> entry : mMapNumericVarToIndex.entrySet()) {
-			final IProgramVarOrConst var = entry.getKey();
-			final int thisVarIndex = entry.getValue();
-			final int otherVarIndex = other.mMapNumericVarToIndex.get(var);
-			if (thisVarIndex != otherVarIndex) {
-				permuted = true;
-			}
-			mapThisVarIndexToOtherVarIndex[thisVarIndex] = otherVarIndex;
-		}
-		return permuted ? mapThisVarIndexToOtherVarIndex : null;
-	}
-
 	/** For internal use in {@link #isEqualTo(OctDomainState)}. */
 	private boolean numericAbstractionIsEqualTo(final OctDomainState other) {
 		assert mMapNumericVarToIndex.keySet().equals(other.mMapNumericVarToIndex.keySet());
@@ -769,7 +798,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState> {
 		final OctDomainState patchedState = shallowCopy();
 		patchedState.mIsBottom = TVBool.UNCHECKED;
 		final SortedMap<IProgramVarOrConst, Integer> mapNumVarsToDominatorIndices =
-				new TreeMap<>(sLexicalVarComparator);
+				new TreeMap<>(LEXICAL_VAR_COMPARATOR);
 		mMapNumericVarToIndex.entrySet()
 				.forEach(varToOldIndex -> mapNumVarsToDominatorIndices.put(varToOldIndex.getKey(), null)); // patched
 																											// variables
