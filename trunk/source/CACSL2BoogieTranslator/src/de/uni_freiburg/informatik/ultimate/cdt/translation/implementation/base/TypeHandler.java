@@ -717,7 +717,6 @@ public class TypeHandler implements ITypeHandler {
 	 *  time (Nov 17).
 	 *
 	 * Applications: (unclear, collect here)
-	 * <li> CHandler.convert: if this method returns true, no conversion is needed
 	 *
 	 * @param type1
 	 * @param type2
@@ -894,8 +893,11 @@ public class TypeHandler implements ITypeHandler {
 	 * @param type2
 	 * @return
 	 */
-	public static boolean isCompatibleStructOrUnionType(final CStruct type1, final CStruct type2) {
+	public static boolean isCompatibleStructOrUnionType(final CType type1, final CType type2) {
+		if (!(type1 instanceof CStruct) || !(type2 instanceof CStruct)) {
+			return false;
+		}
 		// TODO: check the notion of compatibility with the standard
-		return type1.equals(type2);
+		return areMatchingTypes(type1, type2);
 	}
 }
