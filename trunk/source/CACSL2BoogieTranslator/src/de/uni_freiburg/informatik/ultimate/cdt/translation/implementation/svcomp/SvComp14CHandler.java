@@ -162,6 +162,12 @@ public class SvComp14CHandler extends CHandler {
 		map.put("__builtin_islessequal", (main, node, loc, name) -> handleBuiltinBinaryFloatComparison(main, node, loc,
 				IASTBinaryExpression.op_lessEqual));
 
+		/*
+		 * Macro: int isunordered (real-floating x, real-floating y) This macro determines whether its arguments are
+		 * unordered. In other words, it is true if x or y are NaN, and false otherwise.
+		 */
+		map.put("__builtin_isunordered", (main, node, loc, name) -> handleBuiltinIsUnordered(main, node, loc));
+
 		map.put("__VERIFIER_ltl_step", (main, node, loc, name) -> handleLtlStep(main, node, loc));
 		map.put("__VERIFIER_error", (main, node, loc, name) -> handleErrorFunction(main, node, loc));
 		map.put("__VERIFIER_assume", (main, node, loc, name) -> handleVerifierAssume(main, node, loc));
@@ -291,7 +297,7 @@ public class SvComp14CHandler extends CHandler {
 			final ILocation loc, final int op) {
 
 		if (node.getArguments().length != 2) {
-			throw new UnsupportedSyntaxException(loc,
+			throw new IncorrectSyntaxException(loc,
 					"Function has only two arguments, but was called with " + node.getArguments().length);
 		}
 
@@ -299,9 +305,33 @@ public class SvComp14CHandler extends CHandler {
 		final ExpressionResult rightResult = (ExpressionResult) main.dispatch(node.getArguments()[1]);
 
 		final ExpressionResult rl = leftResult.switchToRValueIfNecessary(main, getMemoryHandler(), mStructHandler, loc);
-		final ExpressionResult rr = rightResult.switchToRValueIfNecessary(main, getMemoryHandler(), mStructHandler, loc);
+		final ExpressionResult rr =
+				rightResult.switchToRValueIfNecessary(main, getMemoryHandler(), mStructHandler, loc);
+
+		// Note: this works because SMTLIB already ensures that all comparisons return false if one of the arguments is
+		// NaN
 
 		return handleRelationalOperators(main, loc, op, rl, rr);
+	}
+
+	private Result handleBuiltinIsUnordered(final Dispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc) {
+		/*
+		 * Macro: int isunordered (real-floating x, real-floating y) This macro determines whether its arguments are
+		 * unordered. In other words, it is true if x or y are NaN, and false otherwise.
+		 */
+		if (node.getArguments().length != 2) {
+			throw new IncorrectSyntaxException(loc,
+					"Function has only two arguments, but was called with " + node.getArguments().length);
+		}
+		final ExpressionResult leftResult = (ExpressionResult) main.dispatch(node.getArguments()[0]);
+		final ExpressionResult rightResult = (ExpressionResult) main.dispatch(node.getArguments()[1]);
+		final ExpressionResult rl = leftResult.switchToRValueIfNecessary(main, getMemoryHandler(), mStructHandler, loc);
+		final ExpressionResult rr =
+				rightResult.switchToRValueIfNecessary(main, getMemoryHandler(), mStructHandler, loc);
+
+		// TODO: true if x or y are NaN, and false otherwise; build fp.isNaN(left) or fp.isNaN(right)
+		return handleByUnsupportedSyntaxException(loc, "__builtin_isunordered");
 	}
 
 	private Result handleBuiltinObjectSize(final Dispatcher main, final ILocation loc) {

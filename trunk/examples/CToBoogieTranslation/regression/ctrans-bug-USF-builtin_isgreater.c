@@ -24,6 +24,7 @@ int main(void)
     __VERIFIER_assert(__builtin_isgreaterequal(1.0, 1.0));
     __VERIFIER_assert(__builtin_isgreaterequal((__builtin_inff()), 1.0));
     __VERIFIER_assert(!__builtin_isgreaterequal(1.0, (__builtin_nanf (""))));
+    __VERIFIER_assert(!__builtin_isgreaterequal((__builtin_nanf ("")),1.0));
 
     return 0;
 }
