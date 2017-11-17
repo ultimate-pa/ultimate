@@ -212,12 +212,12 @@ public class SvComp14CHandler extends CHandler {
 			return super.visit(main, node);
 		}
 
-		final ILocation loc = main.getLocationFactory().createCLocation(node);
 		final IASTIdExpression astIdExpression = (IASTIdExpression) node.getFunctionNameExpression();
 		final String methodName = astIdExpression.getName().toString();
 
 		final IFunctionModelHandler functionModel = mFunctionModels.get(methodName);
 		if (functionModel != null) {
+			final ILocation loc = main.getLocationFactory().createCLocation(node);
 			return functionModel.handleFunction(main, node, loc, methodName);
 		}
 
