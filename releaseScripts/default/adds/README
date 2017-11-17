@@ -23,11 +23,11 @@ This archive also contains binaries for different theorem provers:
    04-Aug-2016 05:31
  * MathSAT5 (http://mathsat.fbk.eu)  
    - Windows
-     MathSAT5 version 84cb666a6c83 
-     (Jul 12 2017 09:48:48, gmp 5.0.1, gcc 6.3.0, 64-bit)
+     MathSAT5 version 50d9330d8efd 
+     (Nov 16 2017 22:42:29, gmp 5.0.1, gcc 6.3.0, 64-bit)
    - Linux 
-     MathSAT5 version 84cb666a6c83 
-     (Jul 12 2017 09:38:53, gmp 5.1.3, gcc 4.8.4, 64-bit)
+     MathSAT5 version 50d9330d8efd 
+     (Nov 16 2017 22:36:38, gmp 5.1.3, gcc 4.8.4, 64-bit)
 
 -------------------------------------------------------------------------------
 
