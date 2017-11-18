@@ -665,7 +665,7 @@ def main():
             ultimate_call = create_callargs(ultimate_bin,
                                             ['-tc', toolchain_file, '-i', input_files, '-s', settings_file,
                                              cli_arguments, '--cacsl2boogietranslator.memory.model',
-                                             'HoenickeLindenmann_8ByteResolution'])
+                                             'HoenickeLindenmann_4ByteResolution'])
             if extras:
                 ultimate_call = ultimate_call + extras
             result, result_msg, overapprox, ultimate_bitprecise_output, error_path = run_ultimate(ultimate_call, prop)
