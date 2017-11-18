@@ -846,6 +846,10 @@ public class MapEliminator {
 			}
 			disjuncts.add(equality);
 		}
+		if (!value1.getSort().equals(value2.getSort())) {
+			throw new AssertionError(String.format("%s tries to combine %s and %s", this.getClass().getSimpleName(),
+					value1.getSort(), value2.getSort()));
+		}
 		disjuncts.add(SmtUtils.binaryEquality(mScript, value1, value2));
 		return SmtUtils.or(mScript, disjuncts);
 	}
