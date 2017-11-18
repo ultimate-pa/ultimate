@@ -2196,6 +2196,8 @@ public class CHandler implements ICHandler {
 		case IASTBinaryExpression.op_shiftRight: {
 			assert lhs == null : "no assignment";
 			final ExpressionResult result = ExpressionResult.copyStmtDeclAuxvarOverapprox(left, right);
+			addIntegerBoundsCheck(main, loc, result, (CPrimitive) rval.getCType(), op, left.lrVal.getValue(),
+					right.lrVal.getValue());
 			result.lrVal = rval;
 			return result;
 		}
@@ -2271,6 +2273,16 @@ public class CHandler implements ICHandler {
 		if (main.getPreferences().getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_SIGNED_INTEGER_BOUNDS)
 				&& resultType.isIntegerType() && !main.getTypeSizes().isUnsigned(resultType)) {
 			final Check check = new Check(Spec.INTEGER_OVERFLOW);
+			if (operation == IASTBinaryExpression.op_shiftLeft || operation == IASTBinaryExpression.op_shiftLeftAssign) {
+				// 2017-11-17 Matthias: maybe move this to separate method and 
+				// check for all undefined behavior related to bitvector operations.
+				final AssertStatement assertFalse = new AssertStatement(loc, new BooleanLiteral(loc, false));
+				check.annotate(assertFalse);
+				final Overapprox overapprox = new Overapprox(Overapprox.BITSHIFT_OVERFLOW, loc);
+				overapprox.annotate(assertFalse);
+				rex.stmt.add(assertFalse);
+				return;
+			}
 			final Expression operationResult;
 			if (operands.length == 1) {
 				operationResult =
