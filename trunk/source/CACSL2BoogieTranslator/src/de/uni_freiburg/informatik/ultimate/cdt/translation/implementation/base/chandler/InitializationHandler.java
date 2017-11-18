@@ -550,11 +550,11 @@ public class InitializationHandler {
 
 			final LRValue initializationValue;
 			if (nondet) {
-				initializationValue = new RValue(getDefaultValueForSimpleType(loc, cType), cType);
-			} else {
 				final ExpressionResult auxvar = makeUnionAuxVarExpressionResult(loc, main, cType);
 				initializer.addAllExceptLrValue(auxvar);
 				initializationValue = auxvar.getLrValue();
+			} else {
+				initializationValue = new RValue(getDefaultValueForSimpleType(loc, cType), cType);
 			}
 
 
