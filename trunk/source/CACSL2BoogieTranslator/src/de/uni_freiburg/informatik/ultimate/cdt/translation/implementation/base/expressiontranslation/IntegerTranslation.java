@@ -186,25 +186,23 @@ public class IntegerTranslation extends AExpressionTranslation {
 			funcname = "bitwiseXor";
 			break;
 		case IASTBinaryExpression.op_shiftLeft:
-		case IASTBinaryExpression.op_shiftLeftAssign:
+		case IASTBinaryExpression.op_shiftLeftAssign: {
 			final BigInteger integerLiteralValue = extractIntegerValue(right, typeRight);
 			if (integerLiteralValue != null) {
-				int exponent;
-				try {
-					exponent = integerLiteralValue.intValueExact();
-				} catch (final ArithmeticException ae) {
-					throw new UnsupportedOperationException("rhs of leftshift is larger than C standard allows " + ae);
-				}
-				final BigInteger shiftFactorBigInt = BigInteger.valueOf(2).pow(exponent);
-				final Expression shiftFactorExpr = constructLiteralForIntegerType(loc, typeRight, shiftFactorBigInt);
-				final Expression result = ExpressionFactory.newBinaryExpression(loc, Operator.ARITHMUL, left,
-						shiftFactorExpr);
-				return result;
+				return constructShiftWithLiteralOptimization(loc, left, typeRight, integerLiteralValue,
+						Operator.ARITHMUL);
 			}
+		}
 			funcname = "shiftLeft";
 			break;
 		case IASTBinaryExpression.op_shiftRight:
-		case IASTBinaryExpression.op_shiftRightAssign:
+		case IASTBinaryExpression.op_shiftRightAssign: {
+			final BigInteger integerLiteralValue = extractIntegerValue(right, typeRight);
+			if (integerLiteralValue != null) {
+				return constructShiftWithLiteralOptimization(loc, left, typeRight, integerLiteralValue,
+						Operator.ARITHDIV);
+			}
+		}
 			funcname = "shiftRight";
 			break;
 		default:
@@ -215,6 +213,23 @@ public class IntegerTranslation extends AExpressionTranslation {
 		final Expression func = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + funcname,
 				new Expression[] { left, right });
 		return func;
+	}
+
+	private Expression constructShiftWithLiteralOptimization(final ILocation loc, final Expression left,
+			final CPrimitive typeRight, final BigInteger integerLiteralValue, final Operator op1) {
+		// 2017-11-18 Matthias: this could be done analogously in the
+		// bitprecise translation
+		int exponent;
+		try {
+			exponent = integerLiteralValue.intValueExact();
+		} catch (final ArithmeticException ae) {
+			throw new UnsupportedOperationException("rhs of leftshift is larger than C standard allows " + ae);
+		}
+		final BigInteger shiftFactorBigInt = BigInteger.valueOf(2).pow(exponent);
+		final Expression shiftFactorExpr = constructLiteralForIntegerType(loc, typeRight, shiftFactorBigInt);
+		final Expression result = ExpressionFactory.newBinaryExpression(loc, op1, left,
+				shiftFactorExpr);
+		return result;
 	}
 
 	@Override

@@ -2196,14 +2196,20 @@ public class CHandler implements ICHandler {
 		case IASTBinaryExpression.op_shiftRight: {
 			assert lhs == null : "no assignment";
 			final ExpressionResult result = ExpressionResult.copyStmtDeclAuxvarOverapprox(left, right);
-			addIntegerBoundsCheck(main, loc, result, (CPrimitive) rval.getCType(), op, left.lrVal.getValue(),
-					right.lrVal.getValue());
+			if (op == IASTBinaryExpression.op_shiftLeft) {
+				addIntegerBoundsCheck(main, loc, result, (CPrimitive) rval.getCType(), op, left.lrVal.getValue(),
+						right.lrVal.getValue());
+			}
 			result.lrVal = rval;
 			return result;
 		}
 		case IASTBinaryExpression.op_shiftLeftAssign:
 		case IASTBinaryExpression.op_shiftRightAssign: {
 			final ExpressionResult copy = ExpressionResult.copyStmtDeclAuxvarOverapprox(left, right);
+			if (op == IASTBinaryExpression.op_shiftLeftAssign) {
+				addIntegerBoundsCheck(main, loc, copy, (CPrimitive) rval.getCType(), op, left.lrVal.getValue(),
+						right.lrVal.getValue());
+			}
 			final ExpressionResult result =
 					makeAssignment(main, loc, copy.stmt, lhs, rval, copy.decl, copy.auxVars, copy.overappr);
 			return result;
