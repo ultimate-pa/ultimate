@@ -7,6 +7,7 @@
 
     <tasks name="32bit">
         <option name="--architecture">32bit</option>
+        <include>/storage/ultimate/trunk/examples/svcomp/recursive-simple/id_o200_false-unreach-call_true-termination_true-no-overflow.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/termination-crafted/RecursiveNonterminating_false-no-overflow.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/termination-numeric/Binomial_true-termination_false-no-overflow.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/termination-crafted-lit/AliasDarteFeautrierGonnord-SAS2010-exmini_false-no-overflow.c</include>
@@ -43,6 +44,7 @@
         <include>/storage/ultimate/trunk/examples/svcomp/termination-crafted-lit/AliasDarteFeautrierGonnord-SAS2010-speedpldi4_true-termination_true-no-overflow.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/termination-crafted-lit/LeikeHeizmann-TACAS2014-Fig1_false-no-overflow.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/termination-crafted-lit/PodelskiRybalchenko-TACAS2011-Fig1_true-termination_true-no-overflow.c</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/recursive-simple/id2_b3_o5_true-unreach-call_true-termination_true-no-overflow.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/termination-crafted-lit/ChenFlurMukhopadhyay-SAS2012-Ex2.22_false-no-overflow.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/bitvector/gcd_2_true-unreach-call_true-no-overflow.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/recursive/EvenOdd01_true-unreach-call_true-no-overflow_true-termination.c</include>
@@ -56,6 +58,7 @@
         <include>/storage/ultimate/trunk/examples/svcomp/termination-crafted/NonTerminationSimple4_false-no-overflow.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/termination-numeric/Avg_true_false-no-overflow.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/termination-numeric/MultCommutative_false-no-overflow.c</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/recursive-simple/id_o100_false-unreach-call_true-termination_true-no-overflow.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/recursive/EvenOdd03_false-unreach-call_true-no-overflow_true-termination.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/recursive/Fibonacci05_false-unreach-call_true-no-overflow_true-termination.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/termination-crafted/Cairo_step2_true-no-overflow_false-termination_true-valid-memsafety.c</include>
@@ -89,6 +92,7 @@
         <include>/storage/ultimate/trunk/examples/svcomp/termination-numeric/Ackermann01_true-termination_true-no-overflow.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/termination-crafted/McCarthy91_Iteration_true-no-overflow_true-termination_true-valid-memsafety.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/termination-crafted-lit/LeikeHeizmann-WST2014-Ex6_false-no-overflow.c</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/recursive-simple/id_b3_o5_true-unreach-call_true-termination_true-no-overflow.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/termination-crafted-lit/ChenFlurMukhopadhyay-SAS2012-Fig1_false-no-overflow.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/recursive/Addition01_true-unreach-call_true-no-overflow_true-termination.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/signedintegeroverflow-regression/NoNegativeIntegerConstant_true-no-overflow_true-termination.c.i</include>
@@ -96,6 +100,7 @@
         <include>/storage/ultimate/trunk/examples/svcomp/termination-crafted-lit/PodelskiRybalchenko-TACAS2011-Fig3_false-no-overflow.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/termination-crafted/Collatz_unknown-termination_false-no-overflow.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/termination-crafted-lit/PodelskiRybalchenko-VMCAI2004-Ex1_false-no-overflow.c</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/recursive-simple/id_b2_o3_true-unreach-call_true-termination_true-no-overflow.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/termination-crafted-lit/ChenFlurMukhopadhyay-SAS2012-Ex3.05_false-no-overflow.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/termination-crafted-lit/LeeJonesBen-Amram-POPL2001-Ex3_false-no-overflow.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/termination-crafted-lit/HeizmannHoenickeLeikePodelski-ATVA2013-Fig7_false-no-overflow.c</include>
@@ -116,6 +121,7 @@
         <include>/storage/ultimate/trunk/examples/svcomp/termination-crafted-lit/HeizmannHoenickeLeikePodelski-ATVA2013-Fig9_false-no-overflow.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/signedintegeroverflow-regression/UnaryMinus_false-no-overflow.c.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/termination-crafted-lit/LeikeHeizmann-TACAS2014-Ex8_false-no-overflow.c</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/recursive-simple/sum_non_eq_false-unreach-call_true-termination_true-no-overflow.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/recursive/BallRajamani-SPIN2000-Fig1_false-unreach-call_true-no-overflow_true-termination.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/termination-crafted/Arrays02-EquivalentConstantIndices_true-no-overflow_false-termination.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/termination-crafted/Singapore_false-no-overflow.c</include>
@@ -144,6 +150,8 @@
         <include>/storage/ultimate/trunk/examples/svcomp/recursive/Addition02_false-unreach-call_true-no-overflow_true-termination.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/recursive/Fibonacci01_true-unreach-call_true-no-overflow.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/termination-crafted/NonTerminationSimple9_false-no-overflow.c</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/recursive-simple/id_b3_o2_false-no-overflow.c</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/recursive-simple/sum_non_eq_true-unreach-call_true-termination_true-no-overflow.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/signedintegeroverflow-regression/Multiplication_false-no-overflow.c.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/termination-crafted/Toulouse-BranchesToLoop_false-no-overflow.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/signedintegeroverflow-regression/Division_false-no-overflow.c.i</include>
@@ -165,6 +173,7 @@
         <include>/storage/ultimate/trunk/examples/svcomp/termination-numeric/LeUserDefRec_true-termination_true-no-overflow.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/termination-crafted-lit/ChenFlurMukhopadhyay-SAS2012-Ex2.13_false-no-overflow.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/termination-crafted/Hanoi_plus_false-no-overflow.c</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/recursive-simple/id_o1000_false-unreach-call_true-termination_true-no-overflow.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/termination-crafted-lit/ChenFlurMukhopadhyay-SAS2012-Ex2.02_false-no-overflow.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/termination-crafted/Stockholm_false-no-overflow.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/recursive/Addition03_false-no-overflow.c</include>
@@ -180,6 +189,7 @@
         <include>/storage/ultimate/trunk/examples/svcomp/termination-crafted/Hanoi_2vars_false-no-overflow.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/termination-crafted/Pure3Phase_false-no-overflow.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/termination-crafted-lit/Velroyen_false-termination_true-no-overflow.c</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/recursive-simple/id_o10_false-unreach-call_true-termination_true-no-overflow.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/termination-crafted-lit/LarrazOliverasRodriguez-CarbonellRubio-FMCAD2013-Fig1_true-termination_true-no-overflow.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/termination-crafted-lit/HeizmannHoenickeLeikePodelski-ATVA2013-Fig5_true-termination_true-no-overflow.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/termination-crafted-lit/AliasDarteFeautrierGonnord-SAS2010-aaron3_false-no-overflow.c</include>
@@ -199,6 +209,7 @@
         <include>/storage/ultimate/trunk/examples/svcomp/termination-crafted/Cairo_nondet_false-no-overflow.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/termination-crafted/Bangalore_v3_false-no-overflow.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/termination-crafted/Rotation180_false-no-overflow.c</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/recursive-simple/id_b5_o10_true-unreach-call_true-termination_true-no-overflow.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/termination-crafted-lit/CookSeeZuleger-TACAS2013-Fig1_true-termination_true-no-overflow.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/termination-crafted-lit/ChenFlurMukhopadhyay-SAS2012-Ex2.14_false-no-overflow.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/termination-crafted/NestedRecursion_1b_true-no-overflow_true-termination_true-valid-memsafety.c</include>
@@ -237,6 +248,7 @@
         <include>/storage/ultimate/trunk/examples/svcomp/termination-crafted-lit/LeikeHeizmann-TACAS2014-Ex7_false-no-overflow.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/bitvector/jain_6_true-unreach-call_true-no-overflow_false-termination.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/termination-crafted-lit/BrockschmidtCookFuhs-CAV2013-Fig1_true-termination_true-no-overflow.c</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/recursive-simple/id2_b5_o10_true-unreach-call_true-termination_true-no-overflow.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/termination-crafted/WhileFalse_true-no-overflow_true-termination_true-valid-memsafety.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/termination-crafted-lit/ChenFlurMukhopadhyay-SAS2012-Ex1.05_false-no-overflow.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/termination-crafted-lit/ChenFlurMukhopadhyay-SAS2012-Ex4.01_false-no-overflow.c</include>
@@ -257,6 +269,7 @@
         <include>/storage/ultimate/trunk/examples/svcomp/termination-crafted/Lobnya-Boolean-Reordered_false-no-overflow.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/termination-crafted-lit/PodelskiRybalchenko-LICS2004-Fig1_true-termination_true-no-overflow.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/termination-crafted-lit/LeikeHeizmann-WST2014-Ex9_true-termination_true-no-overflow.c</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/recursive-simple/sum_non_false-no-overflow.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/termination-crafted-lit/AliasDarteFeautrierGonnord-SAS2010-speedFails4_false-no-overflow.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/termination-crafted-lit/ChenFlurMukhopadhyay-SAS2012-Ex2.16_false-no-overflow.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/termination-numeric/Et4_true_false-no-overflow.c</include>
@@ -284,9 +297,11 @@
         <include>/storage/ultimate/trunk/examples/svcomp/termination-crafted-lit/CookSeeZuleger-TACAS2013-Fig8b_true-termination_true-no-overflow.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/termination-crafted-lit/LeeJonesBen-Amram-POPL2001-Ex2_false-no-overflow.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/bitvector/jain_1_false-no-overflow.i</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/recursive-simple/id_b3_o5_false-no-overflow.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/recursive/Primes_true-unreach-call_true-no-overflow_false-termination.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/termination-crafted-lit/ChenFlurMukhopadhyay-SAS2012-Ex2.09_false-no-overflow.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/termination-crafted/NonTermination3_true-no-overflow_false-termination.c</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/recursive-simple/id_o20_false-unreach-call_true-termination_true-no-overflow.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/signedintegeroverflow-regression/ConversionToSignedInt_true-no-overflow_true-termination.c.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/termination-crafted/Copenhagen_disj_false-no-overflow.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/termination-crafted-lit/PodelskiRybalchenko-TACAS2011-Fig4_true-termination_true-no-overflow.c</include>
@@ -300,24 +315,30 @@
         <include>/storage/ultimate/trunk/examples/svcomp/termination-crafted-lit/HeizmannHoenickeLeikePodelski-ATVA2013-Fig8_false-no-overflow.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/termination-crafted/WhileTrue_true-no-overflow_false-termination_true-valid-memsafety.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/termination-crafted-lit/ChenFlurMukhopadhyay-SAS2012-Ex2.05_false-no-overflow.c</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/recursive-simple/id2_b3_o2_false-unreach-call_true-termination_true-no-overflow.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/termination-crafted-lit/AliasDarteFeautrierGonnord-SAS2010-wise_true-termination_true-no-overflow.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/termination-crafted-lit/AliasDarteFeautrierGonnord-SAS2010-random1d_false-no-overflow.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/termination-crafted-lit/Masse-VMCAI2014-Fig1a_false-no-overflow.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/termination-numeric/TerminatorRec02_true-termination_false-no-overflow.c</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/recursive-simple/id_b5_o10_false-no-overflow.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/termination-crafted-lit/LeeJonesBen-Amram-POPL2001-Ex6_false-no-overflow.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/termination-crafted/Benghazi_nondet_false-no-overflow.c</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/recursive-simple/id_b3_o2_false-unreach-call_true-termination_true-no-overflow.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/termination-crafted-lit/ChenCookFuhsNimkarOHearn-TACAS2014-Introduction_false-termination_true-no-overflow.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/termination-crafted-lit/ChenFlurMukhopadhyay-SAS2012-Ex1.01_false-no-overflow.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/termination-crafted/NestedRecursion_1d_true-no-overflow_true-termination_true-valid-memsafety.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/termination-crafted-lit/min_rf_false-no-overflow.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/termination-crafted-lit/GulavaniGulwani-CAV2008-Fig1c_false-no-overflow.c</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/recursive-simple/sum_non_eq_false-no-overflow.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/termination-crafted/2Nested_false-no-overflow.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/termination-crafted-lit/ChawdharyCookGulwaniSagivYang-ESOP2008-random1d_true-termination_true-no-overflow.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/termination-crafted-lit/AliasDarteFeautrierGonnord-SAS2010-Fig2b_false-no-overflow.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/termination-crafted-lit/ChenFlurMukhopadhyay-SAS2012-Ex2.10_false-no-overflow.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/termination-crafted/Pure2Phase_false-no-overflow.c</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/recursive-simple/id_o3_false-unreach-call_true-termination_true-no-overflow.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/termination-crafted-lit/cstrcmp_true-termination_true-no-overflow.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/termination-crafted/Binary_Search_false-no-overflow.c</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/recursive-simple/id2_b2_o3_true-unreach-call_true-termination_true-no-overflow.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/termination-crafted-lit/BrockschmidtCookFuhs-CAV2013-Fig9a_true-termination_true-no-overflow.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/termination-crafted-lit/ChenFlurMukhopadhyay-SAS2012-Ex2.12_false-no-overflow.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/termination-crafted-lit/LeikeHeizmann-TACAS2014-Ex1_true-termination_true-no-overflow.c</include>
@@ -345,4 +366,5 @@
         <include>/storage/ultimate/trunk/examples/svcomp/termination-numeric/EvenOdd01_true-termination_true-no-overflow.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/termination-crafted-lit/cstrcspn_true-termination_true-no-overflow.c</include>
     </tasks>
+
 </benchmark>
