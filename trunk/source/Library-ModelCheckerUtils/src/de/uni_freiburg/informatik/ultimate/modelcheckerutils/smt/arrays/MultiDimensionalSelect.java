@@ -67,7 +67,11 @@ public class MultiDimensionalSelect {
 	 * index i2.
 	 */
 	public MultiDimensionalSelect(Term term) {
-		mSelectTerm = (ApplicationTerm) term;
+		if (term instanceof ApplicationTerm) {
+			mSelectTerm = (ApplicationTerm) term;
+		} else {
+			mSelectTerm = null;
+		}
 		final ArrayList<Term> index = new ArrayList<Term>();
 		while (true) {
 			if (!(term instanceof ApplicationTerm)) {
