@@ -187,6 +187,20 @@ public class IntegerTranslation extends AExpressionTranslation {
 			break;
 		case IASTBinaryExpression.op_shiftLeft:
 		case IASTBinaryExpression.op_shiftLeftAssign:
+			final BigInteger integerLiteralValue = extractIntegerValue(right, typeRight);
+			if (integerLiteralValue != null) {
+				int exponent;
+				try {
+					exponent = integerLiteralValue.intValueExact();
+				} catch (final ArithmeticException ae) {
+					throw new UnsupportedOperationException("rhs of leftshift is larger than C standard allows " + ae);
+				}
+				final BigInteger shiftFactorBigInt = BigInteger.valueOf(2).pow(exponent);
+				final Expression shiftFactorExpr = constructLiteralForIntegerType(loc, typeRight, shiftFactorBigInt);
+				final Expression result = ExpressionFactory.newBinaryExpression(loc, Operator.ARITHMUL, left,
+						shiftFactorExpr);
+				return result;
+			}
 			funcname = "shiftLeft";
 			break;
 		case IASTBinaryExpression.op_shiftRight:
