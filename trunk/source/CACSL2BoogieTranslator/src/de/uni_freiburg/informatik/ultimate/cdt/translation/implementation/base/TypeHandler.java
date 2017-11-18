@@ -728,6 +728,10 @@ public class TypeHandler implements ITypeHandler {
 
 	private static boolean areMatchingTypes(final CType type1, final CType type2,
 			final SymmetricHashRelation<CType> visitedPairs) {
+
+
+//		final CType ulType1 = type1;//.getUnderlyingType();
+//		final CType ulType2 = type2;//.getUnderlyingType();
 		final CType ulType1 = type1.getUnderlyingType();
 		final CType ulType2 = type2.getUnderlyingType();
 
@@ -735,7 +739,7 @@ public class TypeHandler implements ITypeHandler {
 			return false;
 		}
 
-		visitedPairs.addPair(ulType1, ulType2);
+//		visitedPairs.addPair(ulType1, ulType2);
 
 		if (ulType1.getClass().equals(CPrimitive.class)) {
 			return areMatchingTypes((CPrimitive) ulType1,(CPrimitive) ulType2, visitedPairs);
@@ -762,7 +766,7 @@ public class TypeHandler implements ITypeHandler {
 			return true;
 		}
 		visitedPairs.addPair(type1, type2);
-		return type1.getType() == type1.getType();
+		return type1.getType() == type2.getType();
 	}
 
 	private static boolean areMatchingTypes(final CEnum type1, final CEnum type2,
