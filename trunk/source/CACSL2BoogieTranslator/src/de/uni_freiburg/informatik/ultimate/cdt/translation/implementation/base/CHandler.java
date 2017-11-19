@@ -196,6 +196,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValueForOffHeapArrays;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.SkipResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.TypesResult;
@@ -3301,7 +3302,7 @@ public class CHandler implements ICHandler {
 				builder.addDeclaration(tVarDec).putAuxVar(tVarDec, loc);
 
 				final Expression tmpVarIdExpr = new IdentifierExpression(loc, tmpId);
-				final RValue tmpVarRVal = new RValue(tmpVarIdExpr, er.lrVal.getCType());
+				final RValue tmpVarRVal = new RValueForOffHeapArrays(tmpVarIdExpr, er.lrVal.getCType());
 
 				// builder.addOverapprox(new Overapprox("union field of non-heap union updated "
 				// + "--> havoccing other fields (CHandler.makeAssignment(..))", loc));
