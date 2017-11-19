@@ -34,11 +34,13 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.svcom
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.eclipse.cdt.core.dom.ast.IASTASMDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
@@ -52,6 +54,8 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
@@ -113,6 +117,62 @@ public class SvComp14CHandler extends CHandler {
 		super(main, backtranslator, false, logger, typeHandler, bitvectorTranslation,
 				overapproximateFloatingPointOperations, nameHandler);
 		mFunctionModels = getFunctionModels();
+	}
+
+	@Override
+	public Result visit(final Dispatcher main, final IASTFunctionCallExpression node) {
+
+		if (!(node.getFunctionNameExpression() instanceof IASTIdExpression)) {
+			return super.visit(main, node);
+		}
+
+		final IASTIdExpression astIdExpression = (IASTIdExpression) node.getFunctionNameExpression();
+		final String methodName = astIdExpression.getName().toString();
+
+		final IFunctionModelHandler functionModel = mFunctionModels.get(methodName);
+		if (functionModel != null) {
+			final ILocation loc = main.getLocationFactory().createCLocation(node);
+			return functionModel.handleFunction(main, node, loc, methodName);
+		}
+
+		return super.visit(main, node);
+	}
+
+	@Override
+	public Result visit(final Dispatcher main, final IASTIdExpression node) {
+		if (node == null) {
+			throw new IllegalArgumentException("node");
+		}
+		final IASTName nodeName = node.getName();
+		if (nodeName == null) {
+			throw new IllegalArgumentException("node has no name");
+		}
+		final String nodeNameStr = nodeName.toString();
+		final ILocation loc = main.getLocationFactory().createCLocation(node);
+
+		if ("null".equals(nodeNameStr)) {
+			return new ExpressionResult(new RValue(mExpressionTranslation.constructNullPointer(loc),
+					new CPointer(new CPrimitive(CPrimitives.VOID))));
+		}
+		if ("__PRETTY_FUNCTION__".equals(nodeNameStr) || "__FUNCTION__".equals(nodeNameStr)) {
+			final CType returnType = new CPointer(new CPrimitive(CPrimitives.CHAR));
+			final String tId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.NONDET, returnType);
+			final VariableDeclaration tVarDecl = new VariableDeclaration(loc, new Attribute[0], new VarList[] {
+					new VarList(loc, new String[] { tId }, main.mTypeHandler.constructPointerType(loc)) });
+			final RValue rvalue = new RValue(new IdentifierExpression(loc, tId), returnType);
+			final ArrayList<Declaration> decls = new ArrayList<>();
+			decls.add(tVarDecl);
+			final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
+			auxVars.put(tVarDecl, loc);
+			return new ExpressionResult(new ArrayList<Statement>(), rvalue, decls, auxVars);
+		}
+		return super.visit(main, node);
+	}
+
+	@Override
+	public Result visit(final Dispatcher main, final IASTASMDeclaration node) {
+		// workaround for now: ignore inline assembler instructions
+		return new SkipResult();
 	}
 
 	private Map<String, IFunctionModelHandler> getFunctionModels() {
@@ -189,7 +249,7 @@ public class SvComp14CHandler extends CHandler {
 		map.put("__VERIFIER_nondet_short",
 				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.SHORT)));
 		map.put("__VERIFIER_nondet_pointer", (main, node, loc, name) -> handleVerifierNonDet(main, loc,
-						new CPointer(new CPrimitive(CPrimitives.VOID))));
+				new CPointer(new CPrimitive(CPrimitives.VOID))));
 		map.put("__VERIFIER_nondet_uchar",
 				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.UCHAR)));
 		map.put("__VERIFIER_nondet_unsigned",
@@ -214,25 +274,6 @@ public class SvComp14CHandler extends CHandler {
 				null);
 	}
 
-	@Override
-	public Result visit(final Dispatcher main, final IASTFunctionCallExpression node) {
-
-		if (!(node.getFunctionNameExpression() instanceof IASTIdExpression)) {
-			return super.visit(main, node);
-		}
-
-		final IASTIdExpression astIdExpression = (IASTIdExpression) node.getFunctionNameExpression();
-		final String methodName = astIdExpression.getName().toString();
-
-		final IFunctionModelHandler functionModel = mFunctionModels.get(methodName);
-		if (functionModel != null) {
-			final ILocation loc = main.getLocationFactory().createCLocation(node);
-			return functionModel.handleFunction(main, node, loc, methodName);
-		}
-
-		return super.visit(main, node);
-	}
-
 	private Result handleVerifierNonDet(final Dispatcher main, final ILocation loc, final CType cType) {
 		final List<Statement> stmt = new ArrayList<>();
 		final List<Declaration> decl = new ArrayList<>();
@@ -247,40 +288,34 @@ public class SvComp14CHandler extends CHandler {
 		mExpressionTranslation.addAssumeValueInRangeStatements(loc, returnValue.getValue(), returnValue.getCType(),
 				stmt);
 
-		assert isAuxVarMapcomplete(main.mNameHandler, decl, auxVars);
+		assert isAuxVarMapComplete(main.mNameHandler, decl, auxVars);
 		return new ExpressionResult(stmt, returnValue, decl, auxVars);
 	}
 
 	private Result handleVerifierAssume(final Dispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc) {
-		final List<Statement> stmt = new ArrayList<>();
-		final List<Declaration> decl = new ArrayList<>();
-		final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
-		final List<Overapprox> overappr = new ArrayList<>();
-		final LRValue returnValue = null;
-		final ArrayList<Expression> args = new ArrayList<>();
+		final List<Expression> args = new ArrayList<>();
+		final List<ExpressionResult> results = new ArrayList<>();
 		for (final IASTInitializerClause inParam : node.getArguments()) {
 			final ExpressionResult in = ((ExpressionResult) main.dispatch(inParam)).switchToRValueIfNecessary(main,
 					getMemoryHandler(), mStructHandler, loc);
-			if (in.lrVal.getValue() == null) {
+			if (in.mLrVal.getValue() == null) {
 				final String msg = "Incorrect or invalid in-parameter! " + loc.toString();
 				throw new IncorrectSyntaxException(loc, msg);
 			}
 			in.rexIntToBoolIfNecessary(loc, mExpressionTranslation, getMemoryHandler());
-			args.add(in.lrVal.getValue());
-			stmt.addAll(in.stmt);
-			decl.addAll(in.decl);
-			auxVars.putAll(in.auxVars);
-			overappr.addAll(in.overappr);
+			args.add(in.getLrValue().getValue());
+			results.add(in);
 		}
 		// according to SV-Comp specification!
 		assert args.size() == 1;
+		final ExpressionResult rtr = combineExpressionResults(null, results);
 		for (final Expression a : args) {
 			// could just take the first as there is only one, but it's so easy to make it more general..
-			stmt.add(new AssumeStatement(loc, a));
+			rtr.addStatement(new AssumeStatement(loc, a));
 		}
-		assert isAuxVarMapcomplete(main.mNameHandler, decl, auxVars);
-		return new ExpressionResult(stmt, returnValue, decl, auxVars, overappr);
+		assert isAuxVarMapComplete(main.mNameHandler, rtr.getDeclarations(), rtr.getAuxVars());
+		return rtr;
 	}
 
 	private Result handleNaN(final ILocation loc, final String methodName) {
@@ -289,6 +324,19 @@ public class SvComp14CHandler extends CHandler {
 
 	private Result handleBuiltinBinaryFloatComparison(final Dispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final int op) {
+
+		/*
+		 * Handle the following float comparisons
+		 * 
+		 * http://en.cppreference.com/w/c/numeric/math/isless
+		 * 
+		 * http://en.cppreference.com/w/c/numeric/math/islessequal
+		 * 
+		 * http://en.cppreference.com/w/c/numeric/math/isgreater
+		 * 
+		 * http://en.cppreference.com/w/c/numeric/math/isgreaterequal
+		 * 
+		 */
 
 		if (node.getArguments().length != 2) {
 			throw new IncorrectSyntaxException(loc,
@@ -311,10 +359,13 @@ public class SvComp14CHandler extends CHandler {
 	private Result handleBuiltinIsUnordered(final Dispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc) {
 		/*
+		 * http://en.cppreference.com/w/c/numeric/math/isunordered
+		 * 
 		 * int isunordered (real-floating x, real-floating y)
 		 *
 		 * This macro determines whether its arguments are unordered. In other words, it is true if x or y are NaN, and
 		 * false otherwise.
+		 * 
 		 */
 		if (node.getArguments().length != 2) {
 			throw new IncorrectSyntaxException(loc,
@@ -322,26 +373,70 @@ public class SvComp14CHandler extends CHandler {
 		}
 		final ExpressionResult leftResult = (ExpressionResult) main.dispatch(node.getArguments()[0]);
 		final ExpressionResult rightResult = (ExpressionResult) main.dispatch(node.getArguments()[1]);
-		final ExpressionResult rl = leftResult.switchToRValueIfNecessary(main, getMemoryHandler(), mStructHandler, loc);
-		final ExpressionResult rr =
+		final ExpressionResult leftRvaluedResult =
+				leftResult.switchToRValueIfNecessary(main, getMemoryHandler(), mStructHandler, loc);
+		final ExpressionResult rightRvaluedResult =
 				rightResult.switchToRValueIfNecessary(main, getMemoryHandler(), mStructHandler, loc);
+		final ExpressionResult nanLResult = mExpressionTranslation.createNanOrInfinity(loc, "NAN");
+		final ExpressionResult nanRResult = mExpressionTranslation.createNanOrInfinity(loc, "NAN");
 
-		// TODO: true if x or y are NaN, and false otherwise; build fp.isNaN(left) or fp.isNaN(right)
-		return handleByUnsupportedSyntaxException(loc, "__builtin_isunordered");
+		mExpressionTranslation.usualArithmeticConversions(loc, nanLResult, leftRvaluedResult);
+		final BinaryExpression leftExpr = new BinaryExpression(loc, Operator.COMPEQ, leftResult.getLrValue().getValue(),
+				nanLResult.getLrValue().getValue());
+
+		mExpressionTranslation.usualArithmeticConversions(loc, nanRResult, rightRvaluedResult);
+		final BinaryExpression rightExpr = new BinaryExpression(loc, Operator.COMPEQ,
+				rightResult.getLrValue().getValue(), nanRResult.getLrValue().getValue());
+		final BinaryExpression expr = new BinaryExpression(loc, Operator.LOGICOR, leftExpr, rightExpr);
+		final LRValue lrVal = new RValue(expr, new CPrimitive(CPrimitives.INT), true);
+		final ExpressionResult rtr =
+				combineExpressionResults(lrVal, leftRvaluedResult, rightRvaluedResult, nanLResult, nanRResult);
+		assert isAuxVarMapComplete(main.mNameHandler, rtr.getDeclarations(), rtr.getAuxVars());
+		return rtr;
 	}
 
 	private Result handleBuiltinIsLessGreater(final Dispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc) {
 		/*
+		 * http://en.cppreference.com/w/c/numeric/math/islessgreater
+		 * 
 		 * int islessgreater (real-floating x, real-floating y)
 		 *
-		 * This macro determines whether the argument x is less or greater than y. It is equivalent to (x) < (y) || (x)
-		 * > (y) (although it only evaluates x and y once), but no exception is raised if x or y are NaN.
+		 * This macro determines whether the argument x is less or greater than y.
+		 * 
+		 * It is equivalent to (x) < (y) || (x) > (y) (although it only evaluates x and y once), but no exception is
+		 * raised if x or y are NaN.
 		 *
 		 * This macro is not equivalent to x != y, because that expression is true if x or y are NaN.
+		 * 
+		 * Note: I did not find any reference as to how often x and y are evaluated; it seems this can actually evaluate
+		 * x and y twice.
 		 */
+		if (node.getArguments().length != 2) {
+			throw new IncorrectSyntaxException(loc,
+					"Function has only two arguments, but was called with " + node.getArguments().length);
+		}
 
-		return handleByUnsupportedSyntaxException(loc, "__builtin_islessgreater");
+		final ExpressionResult leftResult = (ExpressionResult) main.dispatch(node.getArguments()[0]);
+		final ExpressionResult rightResult = (ExpressionResult) main.dispatch(node.getArguments()[1]);
+
+		final ExpressionResult leftRvaluedResult =
+				leftResult.switchToRValueIfNecessary(main, getMemoryHandler(), mStructHandler, loc);
+		final ExpressionResult rightRvaluedResult =
+				rightResult.switchToRValueIfNecessary(main, getMemoryHandler(), mStructHandler, loc);
+		mExpressionTranslation.usualArithmeticConversions(loc, leftRvaluedResult, rightRvaluedResult);
+
+		final ExpressionResult lessThan = handleRelationalOperators(main, loc, IASTBinaryExpression.op_lessThan,
+				leftRvaluedResult, rightRvaluedResult);
+		final ExpressionResult greaterThan = handleRelationalOperators(main, loc, IASTBinaryExpression.op_greaterThan,
+				leftRvaluedResult, rightRvaluedResult);
+
+		final BinaryExpression expr = new BinaryExpression(loc, Operator.LOGICOR, lessThan.getLrValue().getValue(),
+				greaterThan.getLrValue().getValue());
+		final LRValue lrVal = new RValue(expr, new CPrimitive(CPrimitives.INT), true);
+		final ExpressionResult rtr = combineExpressionResults(lrVal, lessThan, greaterThan);
+		assert isAuxVarMapComplete(main.mNameHandler, rtr.getDeclarations(), rtr.getAuxVars());
+		return rtr;
 	}
 
 	private Result handleBuiltinObjectSize(final Dispatcher main, final ILocation loc) {
@@ -352,27 +447,27 @@ public class SvComp14CHandler extends CHandler {
 	}
 
 	private Result handlePrintF(final Dispatcher main, final IASTFunctionCallExpression node, final ILocation loc) {
-		final List<Statement> stmt = new ArrayList<>();
-		final List<Declaration> decl = new ArrayList<>();
-		final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
-		final List<Overapprox> overappr = new ArrayList<>();
-		LRValue returnValue;
 		// skip if parent of parent is CompoundStatement
 		// otherwise, replace by havoced variable
 		if (node.getParent().getParent() instanceof IASTCompoundStatement) {
 			return new SkipResult();
 		}
+
+		final List<Statement> stmt = new ArrayList<>();
+		final List<Declaration> decl = new ArrayList<>();
+		final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
+		final List<Overapprox> overappr = new ArrayList<>();
+
 		// 2015-11-05 Matthias: TODO check if int is reasonable here
-		final CType returnType = new CPrimitive(CPrimitives.INT);
-		final ASTType tempType = mTypeHandler.cType2AstType(loc, returnType);
+		final ASTType tempType = mTypeHandler.cType2AstType(loc, new CPrimitive(CPrimitives.INT));
 		final String tId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.NONDET, null);
 		final VariableDeclaration tVarDecl = new VariableDeclaration(loc, new Attribute[0],
 				new VarList[] { new VarList(loc, new String[] { tId }, tempType) });
 		auxVars.put(tVarDecl, loc);
 		decl.add(tVarDecl);
 		stmt.add(new HavocStatement(loc, new VariableLHS[] { new VariableLHS(loc, tId) }));
-		returnValue = new RValue(new IdentifierExpression(loc, tId), null);
-		assert isAuxVarMapcomplete(main.mNameHandler, decl, auxVars);
+		final LRValue returnValue = new RValue(new IdentifierExpression(loc, tId), null);
+		assert isAuxVarMapComplete(main.mNameHandler, decl, auxVars);
 		return new ExpressionResult(stmt, returnValue, decl, auxVars, overappr);
 	}
 
@@ -390,16 +485,16 @@ public class SvComp14CHandler extends CHandler {
 
 		final ExpressionResult result = ExpressionResult.copyStmtDeclAuxvarOverapprox(dest, src, size);
 
-		final String tId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.MEMCPYRES, dest.lrVal.getCType());
+		final String tId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.MEMCPYRES, dest.mLrVal.getCType());
 		final VariableDeclaration tVarDecl = new VariableDeclaration(loc, new Attribute[0],
 				new VarList[] { new VarList(loc, new String[] { tId }, main.mTypeHandler.constructPointerType(loc)) });
-		result.decl.add(tVarDecl);
-		result.auxVars.put(tVarDecl, loc);
+		result.mDecl.add(tVarDecl);
+		result.mAuxVars.put(tVarDecl, loc);
 
-		final Statement call = getMemoryHandler().constructMemcpyCall(loc, dest.lrVal.getValue(), src.lrVal.getValue(),
-				size.lrVal.getValue(), tId);
-		result.stmt.add(call);
-		result.lrVal = new RValue(new IdentifierExpression(loc, tId), new CPointer(new CPrimitive(CPrimitives.VOID)));
+		final Statement call = getMemoryHandler().constructMemcpyCall(loc, dest.mLrVal.getValue(),
+				src.mLrVal.getValue(), size.mLrVal.getValue(), tId);
+		result.mStmt.add(call);
+		result.mLrVal = new RValue(new IdentifierExpression(loc, tId), new CPointer(new CPrimitive(CPrimitives.VOID)));
 
 		// add required information to function handler.
 		getFunctionHandler().addCallGraphNode(MemoryModelDeclarations.C_Memcpy.getName());
@@ -444,41 +539,26 @@ public class SvComp14CHandler extends CHandler {
 		throw new UnsupportedSyntaxException(loc, "Unsupported function: " + functionName);
 	}
 
-	@Override
-	public Result visit(final Dispatcher main, final IASTIdExpression node) {
-		if (node == null) {
-			throw new IllegalArgumentException("node");
-		}
-		final IASTName nodeName = node.getName();
-		if (nodeName == null) {
-			throw new IllegalArgumentException("node has no name");
-		}
-		final String nodeNameStr = nodeName.toString();
-		final ILocation loc = main.getLocationFactory().createCLocation(node);
+	private static ExpressionResult combineExpressionResults(final LRValue finalLRValue,
+			final List<ExpressionResult> results) {
+		final List<Statement> stmt = new ArrayList<>();
+		final List<Declaration> decl = new ArrayList<>();
+		final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
+		final List<Overapprox> overapprox = new ArrayList<>();
 
-		if ("null".equals(nodeNameStr)) {
-			return new ExpressionResult(new RValue(mExpressionTranslation.constructNullPointer(loc),
-					new CPointer(new CPrimitive(CPrimitives.VOID))));
+		for (final ExpressionResult result : results) {
+			stmt.addAll(result.getStatements());
+			decl.addAll(result.getDeclarations());
+			auxVars.putAll(result.getAuxVars());
+			overapprox.addAll(result.getOverapprs());
 		}
-		if ("__PRETTY_FUNCTION__".equals(nodeNameStr) || "__FUNCTION__".equals(nodeNameStr)) {
-			final CType returnType = new CPointer(new CPrimitive(CPrimitives.CHAR));
-			final String tId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.NONDET, returnType);
-			final VariableDeclaration tVarDecl = new VariableDeclaration(loc, new Attribute[0], new VarList[] {
-					new VarList(loc, new String[] { tId }, main.mTypeHandler.constructPointerType(loc)) });
-			final RValue rvalue = new RValue(new IdentifierExpression(loc, tId), returnType);
-			final ArrayList<Declaration> decls = new ArrayList<>();
-			decls.add(tVarDecl);
-			final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
-			auxVars.put(tVarDecl, loc);
-			return new ExpressionResult(new ArrayList<Statement>(), rvalue, decls, auxVars);
-		}
-		return super.visit(main, node);
+
+		return new ExpressionResult(stmt, finalLRValue, decl, auxVars, overapprox);
 	}
 
-	@Override
-	public Result visit(final Dispatcher main, final IASTASMDeclaration node) {
-		// workaround for now: ignore inline assembler instructions
-		return new SkipResult();
+	private static ExpressionResult combineExpressionResults(final LRValue finalLRValue,
+			final ExpressionResult... results) {
+		return combineExpressionResults(finalLRValue, Arrays.stream(results).collect(Collectors.toList()));
 	}
 
 	/**
