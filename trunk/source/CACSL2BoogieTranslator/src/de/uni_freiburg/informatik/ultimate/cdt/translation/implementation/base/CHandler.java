@@ -3992,7 +3992,12 @@ public class CHandler implements ICHandler {
 		} else if (oldType instanceof CFunction) {
 			throw new AssertionError("cannot convert from CFunction");
 		} else if (oldType instanceof CStruct) {
-			throw new UnsupportedSyntaxException(loc, "conversion from CStruct not implemented.");
+			if (newType.getType() == CPrimitives.VOID) {
+				// ok: we just keep the old value but change the type
+				// alternative might be to set the value to null because it should never be used
+			} else {
+				throw new UnsupportedSyntaxException(loc, "cannot convert from CStruct to " + newType);
+			}
 		} else {
 			throw new AssertionError("unknown type " + newType);
 		}
