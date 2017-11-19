@@ -680,8 +680,6 @@ public class InitializationHandler {
 
 			final ExpressionResultBuilder initialization = new ExpressionResultBuilder();
 
-//			final LocalLValue arrayLhsToInitialize = obtainAuxVarLocalLValue(loc, main, cArrayType, initialization);
-			//TODO cleanup
 			final LocalLValue arrayLhsToInitialize = lhsToInit;
 
 			final List<List<Integer>> allIndicesToInitialize =
@@ -1114,6 +1112,7 @@ public class InitializationHandler {
 				 *  unnamed members, is that of the expression.
 				 */
 				if (rest.peekFirst().isInitializerList() ||
+						// TODO: make a more general compatibility check, for example for array and pointer
 						TypeHandler.isCompatibleStructOrUnionType(cellType,
 								rest.peekFirst().getRootExpressionResult().getLrValue().getCType())) {
 					/*
@@ -1152,12 +1151,6 @@ public class InitializationHandler {
 		private List<InitializerResult> getUnusedListEntries() {
 			return Collections.unmodifiableList(mUnusedListEntries);
 		}
-
-//		private static InitializerInfo constructStructFieldInitInfos(final ILocation loc, final Dispatcher main,
-//				final List<InitializerResult> initializerResult, final CStruct targetCType) {
-//			// TODO Auto-generated method stub
-//			return null;
-//		}
 
 		public boolean hasExpressionResult() {
 			return mExpressionResult != null;
