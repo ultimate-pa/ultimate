@@ -22,6 +22,8 @@ known_exceptions=(
 "An exception occured during the execution of Ultimate: The toolchain threw an exception"
 "overapproximation of shiftRight"
 "overapproximation of overflow check for bitwise shift operation"
+"overapproximation of bitwiseAnd"
+"overapproximation of shiftLeft"
 "There is insufficient memory for the Java Runtime Environment to continue"
 )
 
