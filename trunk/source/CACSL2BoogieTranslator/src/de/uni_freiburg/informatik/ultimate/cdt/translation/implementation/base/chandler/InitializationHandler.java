@@ -257,6 +257,9 @@ public class InitializationHandler {
 				assert lhsIfAny != null && lhsIfAny instanceof HeapLValue;
 				currentFieldLhs = CTranslationUtil.constructAddressForStructField(loc, main,
 						(HeapLValue) structBaseLhsToInitialize, i);
+			} else if (lhsIfAny != null) {
+				currentFieldLhs = CTranslationUtil.constructOffHeapStructAccessLhs(loc,
+						(LocalLValue) structBaseLhsToInitialize, i);
 			} else {
 //				currentFieldLhs = CTranslationUtil.constructOffHeapStructAccessLhs(loc,
 //						(LocalLValue) structBaseLhsToInitialize, i);
@@ -296,6 +299,8 @@ public class InitializationHandler {
 		}
 
 		if (onHeap) {
+			// nothing to do
+		} else if (lhsIfAny != null) {
 			// nothing to do
 		} else {
 			/*

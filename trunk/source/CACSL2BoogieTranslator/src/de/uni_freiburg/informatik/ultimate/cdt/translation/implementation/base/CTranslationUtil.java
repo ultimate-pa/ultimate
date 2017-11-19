@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructConstructor;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.StructLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
@@ -325,6 +326,17 @@ public class CTranslationUtil {
 			}
 		}
 		throw new AssertionError("designator does not occur in struct type");
+	}
+
+	public static LocalLValue constructOffHeapStructAccessLhs(final ILocation loc,
+			final LocalLValue structBaseLhsToInitialize, final int i) {
+		final CStruct cStructType = (CStruct) structBaseLhsToInitialize.getCType().getUnderlyingType();
+
+		final String fieldId = cStructType.getFieldIds()[i];
+
+		final StructLHS lhs = ExpressionFactory.constructStructAccessLhs(loc, structBaseLhsToInitialize.getLHS(), fieldId);
+
+		return new LocalLValue(lhs, cStructType.getFieldTypes()[i]);
 	}
 
 }
