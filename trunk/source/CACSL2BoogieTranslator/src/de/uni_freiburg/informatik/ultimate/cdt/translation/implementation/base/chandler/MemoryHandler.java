@@ -691,7 +691,7 @@ public class MemoryHandler {
 						mExpressionTranslation.getCTypeOfPointerComponents());
 				final Expression zero = mExpressionTranslation.constructLiteralForIntegerType(ignoreLoc,
 						mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
-				convertedValue = constructPointerFromBaseAndOffset(zero, exprRes.lrVal.getValue(), ignoreLoc);
+				convertedValue = constructPointerFromBaseAndOffset(zero, exprRes.mLrVal.getValue(), ignoreLoc);
 			} else {
 				// convert to smallest
 				final List<ReadWriteDefinition> rwds =
@@ -699,7 +699,7 @@ public class MemoryHandler {
 				// PRIMITIVE primitive = getCprimitiveThatFitsBest(rwds);
 				final CPrimitives primitive = getCprimitiveThatFitsBest(hda.getSize());
 				mExpressionTranslation.convertIntToInt(ignoreLoc, exprRes, new CPrimitive(primitive));
-				convertedValue = exprRes.lrVal.getValue();
+				convertedValue = exprRes.mLrVal.getValue();
 			}
 			final String memArrayName = hda.getVariableName();
 			final ArrayLHS destAcc = ExpressionFactory.constructNestedArrayLHS(ignoreLoc,
@@ -795,7 +795,7 @@ public class MemoryHandler {
 		final ExpressionResult exprRes =
 				new ExpressionResult(new RValue(inParamValueExpr, new CPrimitive(CPrimitives.INT)));
 		mExpressionTranslation.convertIntToInt(ignoreLoc, exprRes, new CPrimitive(CPrimitives.UCHAR));
-		final Expression convertedValue = exprRes.lrVal.getValue();
+		final Expression convertedValue = exprRes.mLrVal.getValue();
 
 		final List<Statement> loopBody = constructMemsetLoopBody(heapDataArrays, loopCtr, inParamPtr, convertedValue);
 
@@ -1688,7 +1688,7 @@ public class MemoryHandler {
 			overapprItem.annotate(call);
 		}
 		stmt.add(call);
-		assert CHandler.isAuxVarMapcomplete(mNameHandler, decl, auxVars);
+		assert CHandler.isAuxVarMapComplete(mNameHandler, decl, auxVars);
 
 		ExpressionResult result;
 		if (bitvectorConversionNeeded) {
@@ -1701,9 +1701,9 @@ public class MemoryHandler {
 			decl.add(bvtVarDecl);
 			final VariableLHS[] bvlhs = new VariableLHS[] { new VariableLHS(loc, bvtmpId) };
 			final AssignmentStatement as =
-					new AssignmentStatement(loc, bvlhs, new Expression[] { result.lrVal.getValue() });
+					new AssignmentStatement(loc, bvlhs, new Expression[] { result.mLrVal.getValue() });
 			stmt.add(as);
-			result.lrVal = new RValue(new IdentifierExpression(loc, bvtmpId), resultType);
+			result.mLrVal = new RValue(new IdentifierExpression(loc, bvtmpId), resultType);
 		} else {
 			result = new ExpressionResult(stmt, new RValue(new IdentifierExpression(loc, tmpId), resultType), decl,
 					auxVars, overappr);

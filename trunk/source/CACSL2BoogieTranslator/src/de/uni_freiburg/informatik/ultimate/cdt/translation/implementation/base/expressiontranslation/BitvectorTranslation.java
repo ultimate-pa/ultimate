@@ -414,50 +414,50 @@ public class BitvectorTranslation extends AExpressionTranslation {
 		}
 
 		final int resultLength = mTypeSizes.getSize(resultPrimitive.getType()) * 8;
-		final int operandLength = mTypeSizes.getSize(((CPrimitive) operand.lrVal.getCType()).getType()) * 8;
+		final int operandLength = mTypeSizes.getSize(((CPrimitive) operand.mLrVal.getCType()).getType()) * 8;
 
 		if (resultLength == operandLength) {
-			final RValue oldRValue = (RValue) operand.lrVal;
+			final RValue oldRValue = (RValue) operand.mLrVal;
 			final RValue rVal = new RValue(oldRValue.getValue(), resultType, oldRValue.isBoogieBool(),
 					oldRValue.isIntFromPointer());
-			operand.lrVal = rVal;
+			operand.mLrVal = rVal;
 		} else if (resultLength > operandLength) {
 			extend(loc, operand, resultType, resultPrimitive, resultLength, operandLength);
 		} else {
-			final Expression bv = extractBits(loc, operand.lrVal.getValue(), resultLength, 0);
+			final Expression bv = extractBits(loc, operand.mLrVal.getValue(), resultLength, 0);
 			final RValue rVal = new RValue(bv, resultType);
-			operand.lrVal = rVal;
+			operand.mLrVal = rVal;
 		}
 	}
 	
 	
 	@Override
 	public void convertFloatToInt_NonBool(final ILocation loc, final ExpressionResult rexp, final CPrimitive newType) {
-		final String prefixedFunctionName = declareConversionFunction(loc, (CPrimitive) rexp.lrVal.getCType(), newType);
-		final Expression oldExpression = rexp.lrVal.getValue();
+		final String prefixedFunctionName = declareConversionFunction(loc, (CPrimitive) rexp.mLrVal.getCType(), newType);
+		final Expression oldExpression = rexp.mLrVal.getValue();
 		final IdentifierExpression roundingMode = new IdentifierExpression(null, BitvectorTranslation.BOOGIE_ROUNDING_MODE_RTZ);
 		roundingMode.setDeclarationInformation(new DeclarationInformation(StorageClass.GLOBAL, null));
 		final Expression resultExpression = new FunctionApplication(loc, prefixedFunctionName, new Expression[] {roundingMode, oldExpression});
 		final RValue rValue = new RValue(resultExpression, newType, false, false);
-		rexp.lrVal = rValue;
+		rexp.mLrVal = rValue;
 	}
 
 	@Override
 	public void convertIntToFloat(final ILocation loc, final ExpressionResult rexp, final CPrimitive newType) {
-		final String prefixedFunctionName = declareConversionFunction(loc, (CPrimitive) rexp.lrVal.getCType(), newType);
-		final Expression oldExpression = rexp.lrVal.getValue();
+		final String prefixedFunctionName = declareConversionFunction(loc, (CPrimitive) rexp.mLrVal.getCType(), newType);
+		final Expression oldExpression = rexp.mLrVal.getValue();
 		final Expression resultExpression = new FunctionApplication(loc, prefixedFunctionName, new Expression[] {getRoundingMode(), oldExpression});
 		final RValue rValue = new RValue(resultExpression, newType, false, false);
-		rexp.lrVal = rValue;
+		rexp.mLrVal = rValue;
 	}
 	
 	@Override
 	public void convertFloatToFloat(final ILocation loc, final ExpressionResult rexp, final CPrimitive newType) {
-		final String prefixedFunctionName = declareConversionFunction(loc, (CPrimitive) rexp.lrVal.getCType(), newType);
-		final Expression oldExpression = rexp.lrVal.getValue();
+		final String prefixedFunctionName = declareConversionFunction(loc, (CPrimitive) rexp.mLrVal.getCType(), newType);
+		final Expression oldExpression = rexp.mLrVal.getValue();
 		final Expression resultExpression = new FunctionApplication(loc, prefixedFunctionName, new Expression[] { getRoundingMode(), oldExpression});
 		final RValue rValue = new RValue(resultExpression, newType, false, false);
-		rexp.lrVal = rValue;
+		rexp.mLrVal = rValue;
 	}
 	
 
@@ -471,20 +471,20 @@ public class BitvectorTranslation extends AExpressionTranslation {
 			final CPrimitive resultPrimitive, final int resultLength, final int operandLength) {
 		final int[] indices = new int[] { resultLength - operandLength };
 		final String smtFunctionName;
-		if (mTypeSizes.isUnsigned(((CPrimitive) operand.lrVal.getCType()))) {
+		if (mTypeSizes.isUnsigned(((CPrimitive) operand.mLrVal.getCType()))) {
 			smtFunctionName = "zero_extend";
 		} else {
 			smtFunctionName = "sign_extend";
 		}
 		final String boogieFunctionName = smtFunctionName + "From"
-				+ mFunctionDeclarations.computeBitvectorSuffix(loc, (CPrimitive) operand.lrVal.getCType()) + "To"
+				+ mFunctionDeclarations.computeBitvectorSuffix(loc, (CPrimitive) operand.mLrVal.getCType()) + "To"
 				+ mFunctionDeclarations.computeBitvectorSuffix(loc, resultPrimitive);
 		declareBitvectorFunction(loc, smtFunctionName, boogieFunctionName, false, resultPrimitive, indices,
-				(CPrimitive) operand.lrVal.getCType());
+				(CPrimitive) operand.mLrVal.getCType());
 		final FunctionApplication func = new FunctionApplication(loc,
-				SFO.AUXILIARY_FUNCTION_PREFIX + boogieFunctionName, new Expression[] { operand.lrVal.getValue() });
+				SFO.AUXILIARY_FUNCTION_PREFIX + boogieFunctionName, new Expression[] { operand.mLrVal.getValue() });
 		final RValue rVal = new RValue(func, resultType);
-		operand.lrVal = rVal;
+		operand.mLrVal = rVal;
 	}
 
 	@Override

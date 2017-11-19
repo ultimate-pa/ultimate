@@ -108,11 +108,11 @@ public class StructHandler {
 
 		LRValue newValue = null;
 
-		final List<ExpressionResult> unionFieldToCType = fieldOwner.otherUnionFields == null
+		final List<ExpressionResult> unionFieldToCType = fieldOwner.mOtherUnionFields == null
 				? new ArrayList<>()
-						: new ArrayList<>(fieldOwner.otherUnionFields);
+						: new ArrayList<>(fieldOwner.mOtherUnionFields);
 
-		CType foType = fieldOwner.lrVal.getCType().getUnderlyingType();
+		CType foType = fieldOwner.mLrVal.getCType().getUnderlyingType();
 
 		foType = (node.isPointerDereference() ?
 				((CPointer)foType).pointsToType :
@@ -123,13 +123,13 @@ public class StructHandler {
 
 		if (node.isPointerDereference()) {
 			final ExpressionResult rFieldOwnerRex = fieldOwner.switchToRValueIfNecessary(main, mMemoryHandler, this, loc);
-			final Expression address = rFieldOwnerRex.lrVal.getValue();
-			fieldOwner = new ExpressionResult(rFieldOwnerRex.stmt, new HeapLValue(address, rFieldOwnerRex.lrVal.getCType()),
-					rFieldOwnerRex.decl, rFieldOwnerRex.auxVars, rFieldOwnerRex.overappr);
+			final Expression address = rFieldOwnerRex.mLrVal.getValue();
+			fieldOwner = new ExpressionResult(rFieldOwnerRex.mStmt, new HeapLValue(address, rFieldOwnerRex.mLrVal.getCType()),
+					rFieldOwnerRex.mDecl, rFieldOwnerRex.mAuxVars, rFieldOwnerRex.mOverappr);
 		}
 
-		if (fieldOwner.lrVal instanceof HeapLValue) {
-			final HeapLValue fieldOwnerHlv = (HeapLValue) fieldOwner.lrVal;
+		if (fieldOwner.mLrVal instanceof HeapLValue) {
+			final HeapLValue fieldOwnerHlv = (HeapLValue) fieldOwner.mLrVal;
 
 			//TODO: different calculations for unions
 			final Expression startAddress = fieldOwnerHlv.getAddress();
@@ -155,13 +155,13 @@ public class StructHandler {
 						computeNeighbourFieldsOfUnionField(
 								loc, field, unionFieldToCType, (CUnion) cStructType, fieldOwnerHlv));
 			}
-		} else if (fieldOwner.lrVal instanceof RValue) {
-			final RValue rVal = (RValue) fieldOwner.lrVal;
+		} else if (fieldOwner.mLrVal instanceof RValue) {
+			final RValue rVal = (RValue) fieldOwner.mLrVal;
 			final StructAccessExpression sexpr = new StructAccessExpression(loc,
 					rVal.getValue(), field);
 			newValue = new RValue(sexpr, cFieldType);
 		} else {
-			final LocalLValue lVal = (LocalLValue) fieldOwner.lrVal;
+			final LocalLValue lVal = (LocalLValue) fieldOwner.mLrVal;
 			final StructLHS slhs = new StructLHS(loc,
 					lVal.getLHS(), field);
 			newValue = new LocalLValue(slhs, cFieldType);
@@ -173,8 +173,8 @@ public class StructHandler {
 			}
 		}
 
-		return new ExpressionResult(fieldOwner.stmt, newValue, fieldOwner.decl, fieldOwner.auxVars,
-				fieldOwner.overappr, unionFieldToCType);
+		return new ExpressionResult(fieldOwner.mStmt, newValue, fieldOwner.mDecl, fieldOwner.mAuxVars,
+				fieldOwner.mOverappr, unionFieldToCType);
 	}
 
 
@@ -256,12 +256,12 @@ public class StructHandler {
 		final Map<VariableDeclaration, ILocation> auxVars =
 				new LinkedHashMap<VariableDeclaration, ILocation>();
 		final List<Overapprox> overappr = new ArrayList<Overapprox>();
-		stmt.addAll(call.stmt);
-		decl.addAll(call.decl);
-		auxVars.putAll(call.auxVars);
-		overappr.addAll(call.overappr);
+		stmt.addAll(call.mStmt);
+		decl.addAll(call.mDecl);
+		auxVars.putAll(call.mAuxVars);
+		overappr.addAll(call.mOverappr);
 		final ExpressionResult result = new ExpressionResult(stmt,
-		        new RValue(call.lrVal.getValue(), resultType), decl, auxVars,
+		        new RValue(call.mLrVal.getValue(), resultType), decl, auxVars,
 		        overappr);
 		return result;
 	}

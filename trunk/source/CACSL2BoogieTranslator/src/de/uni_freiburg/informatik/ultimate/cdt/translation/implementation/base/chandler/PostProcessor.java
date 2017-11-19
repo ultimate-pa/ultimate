@@ -370,9 +370,9 @@ public class PostProcessor {
 					final ExpressionResult initRex =
 							main.mCHandler.getInitHandler().initialize(currentDeclsLoc, main,
 									new VariableLHS(currentDeclsLoc, id), en.getValue().getType(), initializer);
-					initStatements.addAll(initRex.stmt);
-					initStatements.addAll(CHandler.createHavocsForAuxVars(initRex.auxVars));
-					for (final Declaration d : initRex.decl)
+					initStatements.addAll(initRex.mStmt);
+					initStatements.addAll(CHandler.createHavocsForAuxVars(initRex.mAuxVars));
+					for (final Declaration d : initRex.mDecl)
 					 {
 						initDecl.add((VariableDeclaration) d);
 					//					} else { //no initializer --> default initialization
@@ -730,18 +730,18 @@ public class PostProcessor {
 			final ExpressionResult rex = (ExpressionResult) functionHandler.makeTheFunctionCallItself(main, loc,
 					fittingFunctions.get(0), new ArrayList<Statement>(), new ArrayList<Declaration>(),
 					new LinkedHashMap<VariableDeclaration, ILocation>(), new ArrayList<Overapprox>(), args);
-			funcCallResult = (IdentifierExpression) rex.lrVal.getValue();
-			for (final Declaration dec : rex.decl) {
+			funcCallResult = (IdentifierExpression) rex.mLrVal.getValue();
+			for (final Declaration dec : rex.mDecl) {
 				decl.add((VariableDeclaration) dec);
 			}
 
-			stmt.addAll(rex.stmt);
+			stmt.addAll(rex.mStmt);
 			if (outParam.length == 1) {
 				stmt.add(new AssignmentStatement(loc,
 						new LeftHandSide[] { new VariableLHS(loc, outParam[0].getIdentifiers()[0]) },
 						new Expression[] { funcCallResult }));
 			}
-			stmt.addAll(CHandler.createHavocsForAuxVars(rex.auxVars));
+			stmt.addAll(CHandler.createHavocsForAuxVars(rex.mAuxVars));
 			stmt.add(new ReturnStatement(loc));
 			return new Body(loc, decl.toArray(new VariableDeclaration[decl.size()]),
 					stmt.toArray(new Statement[stmt.size()]));
@@ -763,17 +763,17 @@ public class PostProcessor {
 			final ExpressionResult firstElseRex = (ExpressionResult) functionHandler.makeTheFunctionCallItself(main, loc,
 					fittingFunctions.get(0), new ArrayList<Statement>(), new ArrayList<Declaration>(),
 					new LinkedHashMap<VariableDeclaration, ILocation>(), new ArrayList<Overapprox>(), args);
-			for (final Declaration dec : firstElseRex.decl) {
+			for (final Declaration dec : firstElseRex.mDecl) {
 				decl.add((VariableDeclaration) dec);
 			}
-			auxVars.putAll(firstElseRex.auxVars);
+			auxVars.putAll(firstElseRex.mAuxVars);
 
 			final ArrayList<Statement> firstElseStmt = new ArrayList<>();
-			firstElseStmt.addAll(firstElseRex.stmt);
+			firstElseStmt.addAll(firstElseRex.mStmt);
 			if (!resultTypeIsVoid) {
 				final AssignmentStatement assignment =
 						new AssignmentStatement(loc, new VariableLHS[] { new VariableLHS(loc, tmpId) },
-								new Expression[] { firstElseRex.lrVal.getValue() });
+								new Expression[] { firstElseRex.mLrVal.getValue() });
 				firstElseStmt.add(assignment);
 			}
 			IfStatement currentIfStmt = null;
@@ -782,17 +782,17 @@ public class PostProcessor {
 				final ExpressionResult currentRex = (ExpressionResult) functionHandler.makeTheFunctionCallItself(main, loc,
 						fittingFunctions.get(i), new ArrayList<Statement>(), new ArrayList<Declaration>(),
 						new LinkedHashMap<VariableDeclaration, ILocation>(), new ArrayList<Overapprox>(), args);
-				for (final Declaration dec : currentRex.decl) {
+				for (final Declaration dec : currentRex.mDecl) {
 					decl.add((VariableDeclaration) dec);
 				}
-				auxVars.putAll(currentRex.auxVars);
+				auxVars.putAll(currentRex.mAuxVars);
 
 				final ArrayList<Statement> newStmts = new ArrayList<>();
-				newStmts.addAll(currentRex.stmt);
+				newStmts.addAll(currentRex.mStmt);
 				if (!resultTypeIsVoid) {
 					final AssignmentStatement assignment =
 							new AssignmentStatement(loc, new VariableLHS[] { new VariableLHS(loc, tmpId) },
-									new Expression[] { currentRex.lrVal.getValue() });
+									new Expression[] { currentRex.mLrVal.getValue() });
 					newStmts.add(assignment);
 				}
 

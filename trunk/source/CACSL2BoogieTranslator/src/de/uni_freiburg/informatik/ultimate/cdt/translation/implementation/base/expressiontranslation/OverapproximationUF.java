@@ -78,10 +78,10 @@ public class OverapproximationUF implements IPointerIntegerConversion {
 		} else {
 			final String prefixedFunctionName = declareConvertPointerToIntFunction(
 					loc, newType);
-			final Expression pointerExpression = rexp.lrVal.getValue();
+			final Expression pointerExpression = rexp.mLrVal.getValue();
 			final Expression intExpression = new FunctionApplication(loc, prefixedFunctionName, new Expression[] {pointerExpression});
 			final RValue rValue = new RValue(intExpression, newType, false, false);
-			rexp.lrVal = rValue;
+			rexp.mLrVal = rValue;
 		}
 	}
 
@@ -93,17 +93,17 @@ public class OverapproximationUF implements IPointerIntegerConversion {
 			CPointer newType) {
 		final boolean overapproximate = false;
 		if (overapproximate) {
-			final String prefixedFunctionName = declareConvertIntToPointerFunction(loc, (CPrimitive) rexp.lrVal.getCType());
-			final Expression intExpression = rexp.lrVal.getValue();
+			final String prefixedFunctionName = declareConvertIntToPointerFunction(loc, (CPrimitive) rexp.mLrVal.getCType());
+			final Expression intExpression = rexp.mLrVal.getValue();
 			final Expression pointerExpression = new FunctionApplication(loc, prefixedFunctionName, new Expression[] {intExpression});
 			final RValue rValue = new RValue(pointerExpression, newType, false, false);
-			rexp.lrVal = rValue;
+			rexp.mLrVal = rValue;
 		} else {
 			mExpressionTranslation.convertIntToInt(loc, rexp, mExpressionTranslation.getCTypeOfPointerComponents());
 			final Expression zero = mExpressionTranslation.constructLiteralForIntegerType(
 					loc, mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
-			final RValue rValue = new RValue(MemoryHandler.constructPointerFromBaseAndOffset(zero, rexp.lrVal.getValue(), loc), newType, false, false);
-			rexp.lrVal = rValue;
+			final RValue rValue = new RValue(MemoryHandler.constructPointerFromBaseAndOffset(zero, rexp.mLrVal.getValue(), loc), newType, false, false);
+			rexp.mLrVal = rValue;
 		}
 	}
 	

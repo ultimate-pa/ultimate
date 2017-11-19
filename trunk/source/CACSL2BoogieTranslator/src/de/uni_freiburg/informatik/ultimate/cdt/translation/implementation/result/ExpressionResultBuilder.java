@@ -49,12 +49,12 @@ public class ExpressionResultBuilder {
 
 
 	public ExpressionResultBuilder(final ExpressionResult assignmentExprRes) {
-		mStatements.addAll(assignmentExprRes.stmt);
-		mDeclarations.addAll(assignmentExprRes.decl);
-		mOverappr.addAll(assignmentExprRes.overappr);
-		mAuxVars.putAll(assignmentExprRes.auxVars);
-		mNeighbourUnionFields.addAll(assignmentExprRes.otherUnionFields);
-		mLrVal = assignmentExprRes.lrVal;
+		mStatements.addAll(assignmentExprRes.mStmt);
+		mDeclarations.addAll(assignmentExprRes.mDecl);
+		mOverappr.addAll(assignmentExprRes.mOverappr);
+		mAuxVars.putAll(assignmentExprRes.mAuxVars);
+		mNeighbourUnionFields.addAll(assignmentExprRes.mOtherUnionFields);
+		mLrVal = assignmentExprRes.mLrVal;
 	}
 
 	/**

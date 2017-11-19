@@ -235,7 +235,7 @@ public class TypeHandler implements ITypeHandler {
 			 */
 			final Result opRes = main.dispatch(node.getDeclTypeExpression());
 			if (opRes instanceof ExpressionResult) {
-				final CType cType = ((ExpressionResult) opRes).lrVal.getCType();
+				final CType cType = ((ExpressionResult) opRes).mLrVal.getCType();
 				return new TypesResult(cType2AstType(loc, cType), node.isConst(), false, cType);
 			} else if (opRes instanceof DeclaratorResult) {
 				final CType cType = ((DeclaratorResult) opRes).getDeclaration().getType();
@@ -284,7 +284,7 @@ public class TypeHandler implements ITypeHandler {
 			fNames[i] = e.getName().toString();
 			if (e.getValue() != null) {
 				final ExpressionResult rex = (ExpressionResult) main.dispatch(e.getValue());
-				fValues[i] = rex.lrVal.getValue();
+				fValues[i] = rex.mLrVal.getValue();
 				// assert (fValues[i] instanceof IntegerLiteral) ||
 				// (fValues[i] instanceof BitvecLiteral) :
 				// "assuming that only IntegerLiterals or BitvecLiterals can occur while translating an enum constant";

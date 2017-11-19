@@ -87,26 +87,26 @@ public class ArrayHandler {
 		ExpressionResult subscript = (ExpressionResult) main.dispatch(node.getArgument());
 		subscript = subscript.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
 		subscript.rexBoolToIntIfNecessary(loc, ((CHandler) main.mCHandler).getExpressionTranslation());
-		assert subscript.lrVal.getCType().isIntegerType();
+		assert subscript.mLrVal.getCType().isIntegerType();
 
 		ExpressionResult leftExpRes = ((ExpressionResult) main.dispatch(node.getArrayExpression()));
 
 		final ExpressionResult result;
-		final CType cTypeLeft = leftExpRes.lrVal.getCType();
+		final CType cTypeLeft = leftExpRes.mLrVal.getCType();
 		if (cTypeLeft instanceof CPointer) {
 			// if p is a pointer, then p[42] is equivalent to *(p + 42)
 			leftExpRes = leftExpRes.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
-			assert cTypeLeft.equals(leftExpRes.lrVal.getCType());
-			final Expression oldAddress = leftExpRes.lrVal.getValue();
-			final RValue integer = (RValue) subscript.lrVal;
+			assert cTypeLeft.equals(leftExpRes.mLrVal.getCType());
+			final Expression oldAddress = leftExpRes.mLrVal.getValue();
+			final RValue integer = (RValue) subscript.mLrVal;
 			final CType valueType = ((CPointer) cTypeLeft).pointsToType;
 			final ExpressionResult newAddress_ER = ((CHandler) main.mCHandler).doPointerArithmeticWithConversion(main,
 					IASTBinaryExpression.op_plus, loc, oldAddress, integer, valueType);
-			final Expression newAddress = newAddress_ER.lrVal.getValue();
+			final Expression newAddress = newAddress_ER.mLrVal.getValue();
 			result = ExpressionResult.copyStmtDeclAuxvarOverapprox(leftExpRes, subscript);
 			final HeapLValue lValue = new HeapLValue(newAddress, valueType, false);
 			result.addAll(newAddress_ER);
-			result.lrVal = lValue;
+			result.mLrVal = lValue;
 		} else {
 			assert cTypeLeft.getUnderlyingType() instanceof CArray : "cType not instanceof CArray";
 			final CArray cArray = (CArray) cTypeLeft.getUnderlyingType();
@@ -118,7 +118,7 @@ public class ArrayHandler {
 
 			final CType resultCType = popOneDimension(cArray);
 
-			if (leftExpRes.lrVal instanceof HeapLValue) {
+			if (leftExpRes.mLrVal instanceof HeapLValue) {
 				// If the left hand side is an array represented as HeapLValue
 				// we use pointer arithmetic to compute the result.
 				// E.g., a[23] becomes addressOf(a) + 23 * sizeof(valueType)
@@ -131,27 +131,27 @@ public class ArrayHandler {
 				// We achieve this by doing pointer arithmetic where we use
 				// the "remaining" array as pointsToType, i.e., we compute
 				// addressOf(a) + 2 * sizeof(resultCType)
-				final Expression oldAddress = ((HeapLValue) leftExpRes.lrVal).getAddress();
-				final RValue index = (RValue) subscript.lrVal;
+				final Expression oldAddress = ((HeapLValue) leftExpRes.mLrVal).getAddress();
+				final RValue index = (RValue) subscript.mLrVal;
 				final ExpressionResult newAddress_ER = ((CHandler) main.mCHandler).doPointerArithmeticWithConversion(
 						main, IASTBinaryExpression.op_plus, loc, oldAddress, index, resultCType);
-				final Expression newAddress = newAddress_ER.lrVal.getValue();
+				final Expression newAddress = newAddress_ER.mLrVal.getValue();
 				final HeapLValue lValue = new HeapLValue(newAddress, resultCType, false);
 				result = ExpressionResult.copyStmtDeclAuxvarOverapprox(leftExpRes, subscript);
 				result.addAll(newAddress_ER);
-				result.lrVal = lValue;
-			} else if (leftExpRes.lrVal instanceof LocalLValue) {
+				result.mLrVal = lValue;
+			} else if (leftExpRes.mLrVal instanceof LocalLValue) {
 				// If the left hand side is an array represented as LocalLValue
 				// we return a copy of this LocalLValue where we added the
 				// current index.
-				final LeftHandSide oldInnerArrayLHS = ((LocalLValue) leftExpRes.lrVal).getLHS();
+				final LeftHandSide oldInnerArrayLHS = ((LocalLValue) leftExpRes.mLrVal).getLHS();
 				final RValue currentDimension = cArray.getDimensions()[0];
 				// The following is not in the standard, since there everything
 				// is defined via pointers. However, we have to make the subscript
 				// compatible to the type of the dimension of the array
 				final AExpressionTranslation et = ((CHandler) main.mCHandler).getExpressionTranslation();
 				et.convertIntToInt(loc, subscript, (CPrimitive) currentDimension.getCType());
-				final RValue index = (RValue) subscript.lrVal;
+				final RValue index = (RValue) subscript.mLrVal;
 				final ArrayLHS newInnerArrayLHS;
 				if (oldInnerArrayLHS instanceof ArrayLHS) {
 					final Expression[] oldIndices = ((ArrayLHS) oldInnerArrayLHS).getIndices();
@@ -167,7 +167,7 @@ public class ArrayHandler {
 				}
 				final LocalLValue lValue = new LocalLValue(newInnerArrayLHS, resultCType, false, false);
 				result = ExpressionResult.copyStmtDeclAuxvarOverapprox(leftExpRes, subscript);
-				result.lrVal = lValue;
+				result.mLrVal = lValue;
 				addArrayBoundsCheckForCurrentIndex(main, loc, index, currentDimension, result);
 			} else {
 				throw new AssertionError("result.lrVal has to be either HeapLValue or LocalLValue");
@@ -238,11 +238,11 @@ public class ArrayHandler {
 			final Statement assertStm = new AssertStatement(loc, inRange);
 			final Check chk = new Check(Spec.ARRAY_INDEX);
 			chk.annotate(assertStm);
-			exprResult.stmt.add(assertStm);
+			exprResult.mStmt.add(assertStm);
 			break;
 		case ASSUME:
 			final Statement assumeStm = new AssumeStatement(loc, inRange);
-			exprResult.stmt.add(assumeStm);
+			exprResult.mStmt.add(assumeStm);
 			break;
 		case IGNORE:
 			throw new AssertionError("case handled before");
