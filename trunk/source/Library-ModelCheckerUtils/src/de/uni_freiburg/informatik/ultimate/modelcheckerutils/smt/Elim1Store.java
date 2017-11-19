@@ -151,8 +151,9 @@ public class Elim1Store {
 		mLogger = mServices.getLoggingService().getLogger(ModelCheckerUtils.PLUGIN_ID);
 	}
 
-	public EliminationTask elim1(final int quantifier, final TermVariable eliminatee, final Term inputTerm) {
+	public EliminationTask elim1(final int quantifier, final TermVariable eliminatee, final Term inputTerm, final Term context) {
 		assert UltimateNormalFormUtils.respectsUltimateNormalForm(inputTerm) : "invalid input";
+		assert (!Arrays.asList(context.getFreeVars()).contains(eliminatee)) : "eliminatee must not occur in context";
 		final Term[] xjunctsOuter = QuantifierUtils.getXjunctsOuter(quantifier, inputTerm);
 		if (xjunctsOuter.length > 1) {
 			throw new AssertionError("several disjuncts! " + inputTerm);
@@ -276,11 +277,12 @@ public class Elim1Store {
 //		}
 		
 
-
+		final Term preprocessedInputWithContext = QuantifierUtils.applyDualFiniteConnective(mScript, quantifier,
+				preprocessedInput, context);
 
 
 		final ThreeValuedEquivalenceRelation<Term> equalityInformation = collectComplimentaryEqualityInformation(
-				mMgdScript.getScript(), quantifier, preprocessedInput, selectTerms, stores);
+				mMgdScript.getScript(), quantifier, preprocessedInputWithContext, selectTerms, stores);
 		if (equalityInformation == null) {
 			final Term absobingElement = QuantifierUtils.getNeutralElement(mScript, quantifier);
 			mLogger.warn("Array PQE input equivalent to " + absobingElement);
@@ -294,7 +296,7 @@ public class Elim1Store {
 		}
 
 		final Pair<ThreeValuedEquivalenceRelation<Term>, List<Term>> analysisResult =
-				analyzeIndexEqualities(quantifier, selectIndices, stores, preprocessedInput, equalityInformation, eliminatee);
+				analyzeIndexEqualities(quantifier, selectIndices, stores, preprocessedInputWithContext, equalityInformation, eliminatee);
 		if (analysisResult == null) {
 			final Term absobingElement = QuantifierUtils.getNeutralElement(mScript, quantifier);
 			mLogger.warn("Array PQE input equivalent to " + absobingElement);
@@ -357,7 +359,7 @@ public class Elim1Store {
 		final Map<ArrayStore, Term> newArrayMapping = new HashMap<>();
 		for (final ArrayStore store : stores) {
 			final Term newArray;
-			final EqProvider eqProvider = new EqProvider(preprocessedInput, eliminatee, quantifier);
+			final EqProvider eqProvider = new EqProvider(preprocessedInputWithContext, eliminatee, quantifier);
 			final Term eqArray = eqProvider.getEqTerm(store.toTerm(mScript));
 			if (eqArray != null) {
 				newArray = eqArray;
@@ -433,6 +435,7 @@ public class Elim1Store {
 			final Term doubleCaseTermMod; 
 			if (APPLY_DOUBLE_CASE_SIMPLIFICATION) {
 				final boolean contextIsDisjunctive = (quantifier == QuantifiedFormula.FORALL);
+				final Term resultWithContext = QuantifierUtils.applyDualFiniteConnective(mScript, quantifier, result, context);
 				doubleCaseTermMod = new SimplifyDDAWithTimeout(mScript, false, mServices, result, contextIsDisjunctive)
 						.getSimplifiedTerm(doubleCaseTerm);
 			} else {
