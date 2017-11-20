@@ -370,8 +370,8 @@ public class InitializationHandler {
 			throw new UnsupportedOperationException("handling varlength arrays not implemented for this case");
 		}
 		final int bound = CTranslationUtil.getConstantFirstDimensionOfArray(cArrayType, mExpressionTranslation);
-		
-		if (initInfo.getExpressionResult() != null && 
+
+		if (initInfo.getExpressionResult() != null &&
 				initInfo.getExpressionResult().getLrValue().getCType() instanceof CArray) {
 			// 2017-11-17 Matthias: This is a hack for dealing with strings that are
 			// assigned to char arrays.
@@ -382,12 +382,13 @@ public class InitializationHandler {
 			final RValue array = (RValue) initInfo.getExpressionResult().getLrValue();
 			if (!(arrayLhsToInitialize instanceof HeapLValue)) {
 				// do nothing we are not yet doing the final translation
-				assert (main instanceof PRDispatcher) : "only for PRDispatcher arrayLhsToInitialize is not HeapLValue"; 
+				assert (main instanceof PRDispatcher) : "only for PRDispatcher arrayLhsToInitialize is not HeapLValue";
 			} else {
 				final HeapLValue hlv = (HeapLValue) arrayLhsToInitialize;
 				final AssignmentStatement as = new AssignmentStatement(loc,
 						new LeftHandSide[] { constructVariableLhsFromAddress(loc, hlv) },
 						new Expression[] { array.getValue() });
+				addOverApprToStatementAnnots(initialization.mOverappr, as);
 				initialization.addStatement(as);
 			}
 			return initialization.build();
