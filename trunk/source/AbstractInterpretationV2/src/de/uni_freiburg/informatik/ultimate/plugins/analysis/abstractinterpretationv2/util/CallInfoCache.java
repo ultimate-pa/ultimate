@@ -34,7 +34,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
@@ -49,13 +48,10 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ILocalProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -172,26 +168,20 @@ public final class CallInfoCache {
 	 * </code>
 	 */
 	private AssignmentStatement getOldvarAssign(final CallStatement callStatement) {
-		final UnmodifiableTransFormula ova =
-				mCfgSmtToolkit.getOldVarsAssignmentCache().getOldVarsAssignment(callStatement.getMethodName());
-		final Map<IProgramVar, TermVariable> ovaOutvars = ova.getOutVars();
-		final Set<IProgramNonOldVar> modifiedGlobals = mCfgSmtToolkit.getSymbolTable().getGlobals().stream()
-				.filter(a -> ovaOutvars.containsKey(a)).collect(Collectors.toSet());
-		final int modglobsize = modifiedGlobals.size();
-		if (modglobsize == 0) {
-			return null;
-		}
-		final LeftHandSide[] lhs = new LeftHandSide[modglobsize];
-		final Expression[] rhs = new Expression[modglobsize];
+		final Set<IProgramNonOldVar> globals = mCfgSmtToolkit.getSymbolTable().getGlobals();
+		final int globalsSize = globals.size();
+
+		final LeftHandSide[] lhs = new LeftHandSide[globalsSize];
+		final Expression[] rhs = new Expression[globalsSize];
 		int i = 0;
 		final ILocation loc = callStatement.getLocation();
 
-		for (final IProgramNonOldVar modGlob : modifiedGlobals) {
+		for (final IProgramNonOldVar global : globals) {
 			final DeclarationInformation declInfo = new DeclarationInformation(StorageClass.GLOBAL, null);
 			final IBoogieType bType =
-					mSymbolTable.getTypeForVariableSymbol(modGlob.getGloballyUniqueId(), StorageClass.GLOBAL, null);
-			lhs[i] = new VariableLHS(loc, bType, modGlob.getOldVar().getGloballyUniqueId(), declInfo);
-			rhs[i] = new IdentifierExpression(loc, bType, modGlob.getGloballyUniqueId(), declInfo);
+					mSymbolTable.getTypeForVariableSymbol(global.getGloballyUniqueId(), StorageClass.GLOBAL, null);
+			lhs[i] = new VariableLHS(loc, bType, global.getOldVar().getGloballyUniqueId(), declInfo);
+			rhs[i] = new IdentifierExpression(loc, bType, global.getGloballyUniqueId(), declInfo);
 			++i;
 		}
 		return new AssignmentStatement(loc, lhs, rhs);
