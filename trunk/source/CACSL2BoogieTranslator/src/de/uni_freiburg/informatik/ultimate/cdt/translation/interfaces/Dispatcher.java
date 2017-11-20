@@ -168,7 +168,7 @@ public abstract class Dispatcher {
 		}
 	}
 
-	protected boolean isSvcomp() {
+	public boolean isSvcomp() {
 		return mUseSvcompSettings;
 	}
 

@@ -42,7 +42,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import org.eclipse.cdt.core.dom.ast.IASTASMDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTCompoundStatement;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
@@ -167,12 +166,6 @@ public class SvComp14CHandler extends CHandler {
 			return new ExpressionResult(new ArrayList<Statement>(), rvalue, decls, auxVars);
 		}
 		return super.visit(main, node);
-	}
-
-	@Override
-	public Result visit(final Dispatcher main, final IASTASMDeclaration node) {
-		// workaround for now: ignore inline assembler instructions
-		return new SkipResult();
 	}
 
 	private Map<String, IFunctionModelHandler> getFunctionModels() {
@@ -327,15 +320,15 @@ public class SvComp14CHandler extends CHandler {
 
 		/*
 		 * Handle the following float comparisons
-		 * 
+		 *
 		 * http://en.cppreference.com/w/c/numeric/math/isless
-		 * 
+		 *
 		 * http://en.cppreference.com/w/c/numeric/math/islessequal
-		 * 
+		 *
 		 * http://en.cppreference.com/w/c/numeric/math/isgreater
-		 * 
+		 *
 		 * http://en.cppreference.com/w/c/numeric/math/isgreaterequal
-		 * 
+		 *
 		 */
 
 		if (node.getArguments().length != 2) {
@@ -360,12 +353,12 @@ public class SvComp14CHandler extends CHandler {
 			final ILocation loc) {
 		/*
 		 * http://en.cppreference.com/w/c/numeric/math/isunordered
-		 * 
+		 *
 		 * int isunordered (real-floating x, real-floating y)
 		 *
 		 * This macro determines whether its arguments are unordered. In other words, it is true if x or y are NaN, and
 		 * false otherwise.
-		 * 
+		 *
 		 */
 		if (node.getArguments().length != 2) {
 			throw new IncorrectSyntaxException(loc,
@@ -399,16 +392,16 @@ public class SvComp14CHandler extends CHandler {
 			final ILocation loc) {
 		/*
 		 * http://en.cppreference.com/w/c/numeric/math/islessgreater
-		 * 
+		 *
 		 * int islessgreater (real-floating x, real-floating y)
 		 *
 		 * This macro determines whether the argument x is less or greater than y.
-		 * 
+		 *
 		 * It is equivalent to (x) < (y) || (x) > (y) (although it only evaluates x and y once), but no exception is
 		 * raised if x or y are NaN.
 		 *
 		 * This macro is not equivalent to x != y, because that expression is true if x or y are NaN.
-		 * 
+		 *
 		 * Note: I did not find any reference as to how often x and y are evaluated; it seems this can actually evaluate
 		 * x and y twice.
 		 */

@@ -402,6 +402,10 @@ public class CHandler implements ICHandler {
 
 	@Override
 	public Result visit(final Dispatcher main, final IASTASMDeclaration node) {
+		if (main.isSvcomp()) {
+			// workaround for now: ignore inline assembler instructions
+			return new SkipResult();
+		}
 		final String msg = "CHandler: Not yet implemented: \"" + node.getRawSignature() + "\" (Type: "
 				+ node.getClass().getName() + ")";
 		throw new UnsupportedSyntaxException(main.getLocationFactory().createCLocation(node), msg);
@@ -1594,8 +1598,8 @@ public class CHandler implements ICHandler {
 			final ArrayList<Statement> outerThenPart = new ArrayList<>();
 			outerThenPart.addAll(rr.mStmt);
 
-			outerThenPart.add(
-					new AssignmentStatement(loc, new LeftHandSide[] { lhs }, new Expression[] { rr.mLrVal.getValue() }));
+			outerThenPart.add(new AssignmentStatement(loc, new LeftHandSide[] { lhs },
+					new Expression[] { rr.mLrVal.getValue() }));
 			final IfStatement ifStatement = new IfStatement(loc, tmpRval.getValue(),
 					outerThenPart.toArray(new Statement[outerThenPart.size()]), new Statement[0]);
 			stmt.add(ifStatement);
@@ -1646,8 +1650,8 @@ public class CHandler implements ICHandler {
 			final ArrayList<Statement> outerElsePart = new ArrayList<>();
 			outerElsePart.addAll(rr.mStmt);
 
-			outerElsePart.add(
-					new AssignmentStatement(loc, new LeftHandSide[] { lhs }, new Expression[] { rr.mLrVal.getValue() }));
+			outerElsePart.add(new AssignmentStatement(loc, new LeftHandSide[] { lhs },
+					new Expression[] { rr.mLrVal.getValue() }));
 			final IfStatement ifStatement = new IfStatement(loc, tmpRval.getValue(), new Statement[0],
 					outerElsePart.toArray(new Statement[outerElsePart.size()]));
 			for (final Overapprox overapprItem : overappr) {
@@ -1871,7 +1875,8 @@ public class CHandler implements ICHandler {
 		case IASTBinaryExpression.op_multiplyAssign:
 		case IASTBinaryExpression.op_divideAssign:
 		case IASTBinaryExpression.op_moduloAssign: {
-			result = makeAssignment(main, loc, result.mStmt, lhs, rval, result.mDecl, result.mAuxVars, result.mOverappr);
+			result = makeAssignment(main, loc, result.mStmt, lhs, rval, result.mDecl, result.mAuxVars,
+					result.mOverappr);
 			return result;
 		}
 		default:
@@ -2017,7 +2022,8 @@ public class CHandler implements ICHandler {
 		}
 		case IASTBinaryExpression.op_plusAssign:
 		case IASTBinaryExpression.op_minusAssign: {
-			result = makeAssignment(main, loc, result.mStmt, lhs, rval, result.mDecl, result.mAuxVars, result.mOverappr);
+			result = makeAssignment(main, loc, result.mStmt, lhs, rval, result.mDecl, result.mAuxVars,
+					result.mOverappr);
 			return result;
 		}
 		default:
@@ -2159,8 +2165,8 @@ public class CHandler implements ICHandler {
 		}
 		// The result has type int (C11 6.5.9.1)
 		final CPrimitive typeOfResult = new CPrimitive(CPrimitives.INT);
-		final Expression expr = mExpressionTranslation.constructBinaryEqualityExpression(loc, op, left.mLrVal.getValue(),
-				left.mLrVal.getCType(), right.mLrVal.getValue(), right.mLrVal.getCType());
+		final Expression expr = mExpressionTranslation.constructBinaryEqualityExpression(loc, op,
+				left.mLrVal.getValue(), left.mLrVal.getCType(), right.mLrVal.getValue(), right.mLrVal.getCType());
 		final RValue rval = new RValue(expr, typeOfResult, true, false);
 		final ExpressionResult result = ExpressionResult.copyStmtDeclAuxvarOverapprox(left, right);
 		result.mLrVal = rval;
@@ -2281,9 +2287,10 @@ public class CHandler implements ICHandler {
 				&& resultType.isIntegerType() && !main.getTypeSizes().isUnsigned(resultType)) {
 			final Check check = new Check(Spec.INTEGER_OVERFLOW);
 			final Expression operationResult;
-			if (operation == IASTBinaryExpression.op_shiftLeft || operation == IASTBinaryExpression.op_shiftLeftAssign) {
+			if (operation == IASTBinaryExpression.op_shiftLeft
+					|| operation == IASTBinaryExpression.op_shiftLeftAssign) {
 				// 2017-11-18 Matthias: For this shift there are more possibilities of undefined behavior
-				// I don't know where we should check them and if we should call them 
+				// I don't know where we should check them and if we should call them
 				// "signed integer overflows" (probably not)
 				operationResult = mExpressionTranslation.constructBinaryBitwiseIntegerExpression(loc, operation,
 						operands[0], resultType, operands[1], resultType);
@@ -3886,7 +3893,7 @@ public class CHandler implements ICHandler {
 		final RValue rValIn = (RValue) rexp.mLrVal;
 		final CType newType = newTypeRaw.getUnderlyingType();
 		final CType oldType = rValIn.getCType().getUnderlyingType();
-//		if (oldType.equals(newType)) {
+		// if (oldType.equals(newType)) {
 		if (TypeHandler.areMatchingTypes(newType, oldType)) {
 			// types are already identical -- nothing to do
 			return;
