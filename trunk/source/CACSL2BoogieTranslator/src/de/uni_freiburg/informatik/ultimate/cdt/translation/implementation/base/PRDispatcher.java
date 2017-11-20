@@ -130,7 +130,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.except
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.SkipResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.svcomp.SvComp14CHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.svcomp.chandler.SVCompTypeHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -168,7 +167,7 @@ public class PRDispatcher extends Dispatcher {
 		final boolean overapproximateFloatingPointOperations =
 				getPreferences().getBoolean(CACSLPreferenceInitializer.LABEL_OVERAPPROXIMATE_FLOATS);
 		mNameHandler = new NameHandler(mBacktranslator);
-		mTypeHandler = new SVCompTypeHandler(bitvectorTranslation);
+		mTypeHandler = new TypeHandler(bitvectorTranslation);
 		mCHandler = new SvComp14CHandler(this, mBacktranslator, mLogger, mTypeHandler, bitvectorTranslation,
 				overapproximateFloatingPointOperations, mNameHandler);
 	}

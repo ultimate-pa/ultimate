@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.A
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.MainDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.NameHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.SideEffectHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.svcomp.chandler.SVCompTypeHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.CACSL2BoogieBacktranslator;
@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransla
 
 /**
  * TODO: rename this to 2015 perhaps??
- * 
+ *
  * @author Christian Schilling
  * @author nutz
  */
@@ -62,7 +62,7 @@ public class SvComp14MainDispatcher extends MainDispatcher {
 	@Override
 	protected void init() {
 		mSideEffectHandler = new SideEffectHandler();
-		mTypeHandler = new SVCompTypeHandler(mBitvectorTranslation);
+		mTypeHandler = new TypeHandler(mBitvectorTranslation);
 		mAcslHandler = new ACSLHandler(mWitnessInvariants != null);
 		mNameHandler = new NameHandler(mBacktranslator);
 		mCHandler = new SvComp14CHandler(this, mBacktranslator, mLogger, mTypeHandler, mBitvectorTranslation,
