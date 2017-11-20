@@ -55,6 +55,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.HoareTripleCheckerStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
@@ -463,6 +465,8 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE>, ACTIO
 		final Set<IProgramVarOrConst> requiredVars = new HashSet<>();
 		requiredVars.addAll(getVars(action));
 		requiredVars.addAll(succ.getVariables());
+		requiredVars.addAll(getMissingOldVars(requiredVars));
+
 		final Set<IProgramVarOrConst> preVars = validPreState.getVariables();
 		final Set<IProgramVarOrConst> toRemove = DataStructureUtils.difference(preVars, requiredVars);
 
@@ -472,6 +476,20 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE>, ACTIO
 		}
 
 		return validPreState.removeVariables(toRemove);
+	}
+
+	private Set<IProgramVarOrConst> getMissingOldVars(final Set<IProgramVarOrConst> requiredVars) {
+		final Set<IProgramVarOrConst> missingOldVars = new HashSet<>();
+		for (final IProgramVarOrConst requiredVar : requiredVars) {
+			if (requiredVar.isGlobal()) {
+				if (requiredVar instanceof IProgramNonOldVar) {
+					missingOldVars.add(((IProgramNonOldVar) requiredVar).getOldVar());
+				} else if (requiredVar instanceof IProgramOldVar) {
+					missingOldVars.add(((IProgramOldVar) requiredVar).getNonOldVar());
+				}
+			}
+		}
+		return missingOldVars;
 	}
 
 	private DisjunctiveAbstractState<STATE> createValidPostOpStateBeforeLeaving(final ACTION act,
