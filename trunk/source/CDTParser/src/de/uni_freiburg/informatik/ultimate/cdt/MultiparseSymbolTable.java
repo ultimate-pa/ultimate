@@ -95,6 +95,12 @@ public class MultiparseSymbolTable extends ASTVisitor {
 				final IASTPreprocessorIncludeStatement include =
 						(IASTPreprocessorIncludeStatement) stmt;
 				
+				if (include.isSystemInclude()) {
+					// Ignore system includes for now
+					mLogger.info("Ignoring system include " + include.getName());
+					continue;
+				}
+				
 				if (!include.isResolved()) {
 					throw new UnsupportedOperationException("Includes need to be present in the multiparse project.");
 				}
