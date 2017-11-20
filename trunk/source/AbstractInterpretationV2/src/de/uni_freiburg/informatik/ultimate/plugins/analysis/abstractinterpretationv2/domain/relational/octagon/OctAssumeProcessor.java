@@ -471,11 +471,19 @@ public class OctAssumeProcessor {
 			return oldStates;
 		}
 
+		final List<OctDomainState> nonBottomStates =
+				oldStates.stream().filter(state -> !state.isBottom()).collect(Collectors.toList());
+		if (nonBottomStates.isEmpty()) {
+			// If the list is empty, there were only bottom states in oldStates. Therefore, the expression cannot be
+			// assumed and bottom is returned.
+			return new ArrayList<>();
+		}
+
 		final AffineExpression backupExpr = affExpr;
 		if (affExpr.getCoefficients().size() > 2 || (affExpr = affExpr.unitCoefficientForm()) == null) {
 			logger.debug("Unable to handle affine expression " + backupExpr
 					+ " == 0 with Octagons. Projecting to intervals.");
-			return projectAssumeOnIntervals(logger, oldStates, originalExpression, fallBackPostOperator,
+			return projectAssumeOnIntervals(logger, nonBottomStates, originalExpression, fallBackPostOperator,
 					codeBlockFactory, backupExpr.getCoefficients().keySet());
 		}
 
@@ -487,25 +495,24 @@ public class OctAssumeProcessor {
 		}
 		affExpr = affExpr.withoutConstant();
 
-		AffineExpression.OneVarForm ovf;
-		AffineExpression.TwoVarForm tvf;
+		final AffineExpression.OneVarForm ovf;
+		final AffineExpression.TwoVarForm tvf;
+
+		// Apply the assume to all states that are not bottom and return the result.
 		if ((ovf = affExpr.getOneVarForm()) != null) {
 			final OctValue cOct = new OctValue(ovf.negVar ? c.negate() : c);
-			oldStates.forEach(state -> state.assumeNumericVarInterval(ovf.var, cOct, cOct));
-			return oldStates;
-
+			nonBottomStates.forEach(state -> state.assumeNumericVarInterval(ovf.var, cOct, cOct));
+			return nonBottomStates;
 		} else if ((tvf = affExpr.getTwoVarForm()) != null) {
 			final OctValue cOct = new OctValue(c);
 			final OctValue cOctNeg = new OctValue(c.negate());
-			oldStates.forEach(state -> state.assumeNumericVarRelationLeConstant(tvf.var1, tvf.negVar1, tvf.var2,
+			nonBottomStates.forEach(state -> state.assumeNumericVarRelationLeConstant(tvf.var1, tvf.negVar1, tvf.var2,
 					tvf.negVar2, cOct));
-			oldStates.forEach(state -> state.assumeNumericVarRelationLeConstant(tvf.var1, !tvf.negVar1, tvf.var2,
+			nonBottomStates.forEach(state -> state.assumeNumericVarRelationLeConstant(tvf.var1, !tvf.negVar1, tvf.var2,
 					!tvf.negVar2, cOctNeg));
-			return oldStates;
-
+			return nonBottomStates;
 		} else {
 			return oldStates; // safe over-approximation
-
 		}
 	}
 
