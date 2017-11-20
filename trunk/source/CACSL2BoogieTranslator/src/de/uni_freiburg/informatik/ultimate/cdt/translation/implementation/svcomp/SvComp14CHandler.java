@@ -47,7 +47,6 @@ import org.eclipse.cdt.core.dom.ast.IASTCompoundStatement;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
 import org.eclipse.cdt.core.dom.ast.IASTIdExpression;
 import org.eclipse.cdt.core.dom.ast.IASTInitializerClause;
-import org.eclipse.cdt.core.dom.ast.IASTName;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
@@ -134,37 +133,6 @@ public class SvComp14CHandler extends CHandler {
 			return functionModel.handleFunction(main, node, loc, methodName);
 		}
 
-		return super.visit(main, node);
-	}
-
-	@Override
-	public Result visit(final Dispatcher main, final IASTIdExpression node) {
-		if (node == null) {
-			throw new IllegalArgumentException("node");
-		}
-		final IASTName nodeName = node.getName();
-		if (nodeName == null) {
-			throw new IllegalArgumentException("node has no name");
-		}
-		final String nodeNameStr = nodeName.toString();
-		final ILocation loc = main.getLocationFactory().createCLocation(node);
-
-		if ("null".equals(nodeNameStr)) {
-			return new ExpressionResult(new RValue(mExpressionTranslation.constructNullPointer(loc),
-					new CPointer(new CPrimitive(CPrimitives.VOID))));
-		}
-		if ("__PRETTY_FUNCTION__".equals(nodeNameStr) || "__FUNCTION__".equals(nodeNameStr)) {
-			final CType returnType = new CPointer(new CPrimitive(CPrimitives.CHAR));
-			final String tId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.NONDET, returnType);
-			final VariableDeclaration tVarDecl = new VariableDeclaration(loc, new Attribute[0], new VarList[] {
-					new VarList(loc, new String[] { tId }, main.mTypeHandler.constructPointerType(loc)) });
-			final RValue rvalue = new RValue(new IdentifierExpression(loc, tId), returnType);
-			final ArrayList<Declaration> decls = new ArrayList<>();
-			decls.add(tVarDecl);
-			final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
-			auxVars.put(tVarDecl, loc);
-			return new ExpressionResult(new ArrayList<Statement>(), rvalue, decls, auxVars);
-		}
 		return super.visit(main, node);
 	}
 

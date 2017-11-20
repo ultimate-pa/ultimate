@@ -1095,9 +1095,22 @@ public class CHandler implements ICHandler {
 		final String cId = node.getName().toString();
 
 		// deal with builtin constants
-		if (cId.equals("NULL")) {
+		if (cId.equalsIgnoreCase("NULL")) {
 			return new ExpressionResult(new RValue(mExpressionTranslation.constructNullPointer(loc),
 					new CPointer(new CPrimitive(CPrimitives.VOID))));
+
+		} else if ("__PRETTY_FUNCTION__".equals(cId) || "__FUNCTION__".equals(cId)) {
+			// TODO: Was only in SvComp14Handler, but seems useful anywhere
+			final CType returnType = new CPointer(new CPrimitive(CPrimitives.CHAR));
+			final String tId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.NONDET, returnType);
+			final VariableDeclaration tVarDecl = new VariableDeclaration(loc, new Attribute[0], new VarList[] {
+					new VarList(loc, new String[] { tId }, main.mTypeHandler.constructPointerType(loc)) });
+			final RValue rvalue = new RValue(new IdentifierExpression(loc, tId), returnType);
+			final ArrayList<Declaration> decls = new ArrayList<>();
+			decls.add(tVarDecl);
+			final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
+			auxVars.put(tVarDecl, loc);
+			return new ExpressionResult(new ArrayList<Statement>(), rvalue, decls, auxVars);
 		} else if (!mSymbolTable.containsCSymbol(cId)
 				&& (cId.equals("NAN") || cId.equals("INFINITY") || cId.equals("inf"))) {
 			final ExpressionResult result = mExpressionTranslation.createNanOrInfinity(loc, cId);
