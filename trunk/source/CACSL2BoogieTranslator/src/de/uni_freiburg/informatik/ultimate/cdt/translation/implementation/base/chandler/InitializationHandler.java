@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.StructConstructor;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationUtil;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.PRDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.AExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarHelper;
@@ -375,17 +376,21 @@ public class InitializationHandler {
 			// 2017-11-17 Matthias: This is a hack for dealing with strings that are
 			// assigned to char arrays.
 			// If the rhs has type array, we presume that it stems from a string literal.
-			// Furthermore, we presume that the LHS is
+			// Furthermore, we presume that the LHS is an on-Heap variable.
+			// Hence we can do the initialization via an assignment of (Boogie) pointers
+			// and do not have to use memory read/write
 			final RValue array = (RValue) initInfo.getExpressionResult().getLrValue();
 			if (!(arrayLhsToInitialize instanceof HeapLValue)) {
-				throw new AssertionError("RHS should be HeapLValue");
+				// do nothing we are not yet doing the final translation
+				assert (main instanceof PRDispatcher) : "only for PRDispatcher arrayLhsToInitialize is not HeapLValue"; 
+			} else {
+				final HeapLValue hlv = (HeapLValue) arrayLhsToInitialize;
+				final AssignmentStatement as = new AssignmentStatement(loc,
+						new LeftHandSide[] { constructVariableLhsFromAddress(loc, hlv) },
+						new Expression[] { array.getValue() });
+				initialization.addStatement(as);
 			}
-//			final HeapLValue hlv = (HeapLValue) arrayLhsToInitialize;
-//			final AssignmentStatement as = new AssignmentStatement(loc,
-//					new LeftHandSide[] { ((LocalLValue) arrayLhsToInitialize).getLHS() },
-//					new Expression[] { array.getValue() });
-//			initialization.addStatement(as);
-//			return initialization.build();
+			return initialization.build();
 		}
 
 		for (int i = 0; i < bound; i++) {
@@ -407,6 +412,17 @@ public class InitializationHandler {
 		}
 
 		return initialization.build();
+	}
+
+	private VariableLHS constructVariableLhsFromAddress(final ILocation loc, final HeapLValue hlv)
+			throws AssertionError {
+		final Expression address = hlv.getAddress();
+		if (!(address instanceof IdentifierExpression)) {
+			throw new IllegalArgumentException("exprected identifier expression");
+		}
+		final IdentifierExpression ie = (IdentifierExpression) address;
+		final String id = ie.getIdentifier();
+		return new VariableLHS(loc, id);
 	}
 
 	/**
