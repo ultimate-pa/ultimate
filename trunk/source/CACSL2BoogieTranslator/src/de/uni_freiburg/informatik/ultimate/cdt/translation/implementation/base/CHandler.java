@@ -1738,7 +1738,7 @@ public class CHandler implements ICHandler {
 	 * from handling the operands. Requires that the {@link LRValue} of operands is an {@link RValue} (i.e.,
 	 * switchToRValueIfNecessary was applied if needed).
 	 */
-	protected ExpressionResult handleRelationalOperators(final Dispatcher main, final ILocation loc, final int op,
+	ExpressionResult handleRelationalOperators(final Dispatcher main, final ILocation loc, final int op,
 			final ExpressionResult left, final ExpressionResult right) {
 		assert left.mLrVal instanceof RValue : "no RValue";
 		assert right.mLrVal instanceof RValue : "no RValue";
@@ -2564,6 +2564,9 @@ public class CHandler implements ICHandler {
 			final Result standardFunction = mFunctionHandler.handleStandardFunctions(main, mMemoryHandler,
 					mStructHandler, mExpressionTranslation, loc, ((IASTIdExpression) functionName).getName().toString(),
 					node.getArguments());
+
+			// TODO call standardfunctionmodel instead
+
 			if (standardFunction != null) {
 				return standardFunction;
 			}

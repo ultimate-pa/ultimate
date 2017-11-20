@@ -1,9 +1,9 @@
 /*
- * Copyright (C) 2013-2015 Alexander Nutz (nutz@informatik.uni-freiburg.de)
- * Copyright (C) 2013-2015 Christian Schilling (schillic@informatik.uni-freiburg.de)
- * Copyright (C) 2013-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- * Copyright (C) 2013-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * Copyright (C) 2015 University of Freiburg
+ * Copyright (C) 2013-2017 Alexander Nutz (nutz@informatik.uni-freiburg.de)
+ * Copyright (C) 2013-2017 Christian Schilling (schillic@informatik.uni-freiburg.de)
+ * Copyright (C) 2013-2017 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2013-2017 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * Copyright (C) 2013-2017 University of Freiburg
  *
  * This file is part of the ULTIMATE CACSL2BoogieTranslator plug-in.
  *
@@ -27,10 +27,7 @@
  * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission
  * to convey the resulting work.
  */
-/**
- * CHandler variation for the SV-COMP 2014.
- */
-package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.svcomp;
+package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -63,8 +60,12 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.FunctionHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler.MemoryModelDeclarations;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.StructHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.AExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType.Type;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
@@ -80,60 +81,80 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.SkipResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.INameHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LTLStepAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.CACSL2BoogieBacktranslator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer;
 
 /**
- * @author Markus Lindenmann, Matthias Heizmann
- * @date 12.6.2012
+ * The {@link StandardFunctionHandler} creates the translation for various functions where we have our own specification
+ * or implementation. This is typically the case for functions defined in the C standard, but also for various standard
+ * libraries or SV-COMP extensions.
+ *
+ * @author Markus Lindenmann,
+ * @auhtor Matthias Heizmann
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
-public class SvComp14CHandler extends CHandler {
+public class StandardFunctionHandler {
 
 	private static final int ARGS_COUNT_BUILTIN_MEMCPY = 3;
 
 	private final Map<String, IFunctionModelHandler> mFunctionModels;
 
-	/**
-	 * Constructor.
-	 *
-	 * @param main
-	 *            a reference to the main dispatcher.
-	 * @param bitvectorTranslation
-	 * @param overapproximateFloatingPointOperations
-	 */
-	public SvComp14CHandler(final Dispatcher main, final CACSL2BoogieBacktranslator backtranslator,
-			final ILogger logger, final ITypeHandler typeHandler, final boolean bitvectorTranslation,
-			final boolean overapproximateFloatingPointOperations, final INameHandler nameHandler) {
-		super(main, backtranslator, false, logger, typeHandler, bitvectorTranslation,
-				overapproximateFloatingPointOperations, nameHandler);
+	private final ITypeHandler mTypeHandler;
+
+	private final AExpressionTranslation mExpressionTranslation;
+
+	private final MemoryHandler mMemoryHandler;
+
+	private final StructHandler mStructHandler;
+
+	private final TypeSizeAndOffsetComputer mTypeSizeComputer;
+
+	private final FunctionHandler mFunctionHandler;
+
+	private final CHandler mCHandler;
+
+	public StandardFunctionHandler(final ITypeHandler typeHandler, final AExpressionTranslation expressionTranslation,
+			final MemoryHandler memoryHandler, final StructHandler structHandler,
+			final TypeSizeAndOffsetComputer typeSizeComputer, final FunctionHandler functionHandler,
+			final CHandler cHandler) {
+		mTypeHandler = typeHandler;
+		mExpressionTranslation = expressionTranslation;
+		mMemoryHandler = memoryHandler;
+		mStructHandler = structHandler;
+		mTypeSizeComputer = typeSizeComputer;
+		mFunctionHandler = functionHandler;
+		mCHandler = cHandler;
+
 		mFunctionModels = getFunctionModels();
 	}
 
-	@Override
-	public Result visit(final Dispatcher main, final IASTFunctionCallExpression node) {
-
-		if (!(node.getFunctionNameExpression() instanceof IASTIdExpression)) {
-			return super.visit(main, node);
-		}
-
-		final IASTIdExpression astIdExpression = (IASTIdExpression) node.getFunctionNameExpression();
+	/**
+	 * Check if the given function has an "integrated" specification or implementation and return a {@link Result} that
+	 * contains a translation of the function if this is the case.
+	 *
+	 * Return null otherwise.
+	 *
+	 * @param main
+	 * @param node
+	 * @param astIdExpression
+	 * @return
+	 */
+	public Result translateStandardFunction(final Dispatcher main, final IASTFunctionCallExpression node,
+			final IASTIdExpression astIdExpression) {
+		assert node
+				.getFunctionNameExpression() == astIdExpression : "astIdExpression is not the name of the called function";
 		final String methodName = astIdExpression.getName().toString();
-
 		final IFunctionModelHandler functionModel = mFunctionModels.get(methodName);
 		if (functionModel != null) {
 			final ILocation loc = main.getLocationFactory().createCLocation(node);
 			return functionModel.handleFunction(main, node, loc, methodName);
 		}
-
-		return super.visit(main, node);
+		return null;
 	}
 
 	private Map<String, IFunctionModelHandler> getFunctionModels() {
@@ -249,7 +270,7 @@ public class SvComp14CHandler extends CHandler {
 		mExpressionTranslation.addAssumeValueInRangeStatements(loc, returnValue.getValue(), returnValue.getCType(),
 				stmt);
 
-		assert isAuxVarMapComplete(main.mNameHandler, decl, auxVars);
+		assert CHandler.isAuxVarMapComplete(main.mNameHandler, decl, auxVars);
 		return new ExpressionResult(stmt, returnValue, decl, auxVars);
 	}
 
@@ -259,12 +280,12 @@ public class SvComp14CHandler extends CHandler {
 		final List<ExpressionResult> results = new ArrayList<>();
 		for (final IASTInitializerClause inParam : node.getArguments()) {
 			final ExpressionResult in = ((ExpressionResult) main.dispatch(inParam)).switchToRValueIfNecessary(main,
-					getMemoryHandler(), mStructHandler, loc);
+					mMemoryHandler, mStructHandler, loc);
 			if (in.mLrVal.getValue() == null) {
 				final String msg = "Incorrect or invalid in-parameter! " + loc.toString();
 				throw new IncorrectSyntaxException(loc, msg);
 			}
-			in.rexIntToBoolIfNecessary(loc, mExpressionTranslation, getMemoryHandler());
+			in.rexIntToBoolIfNecessary(loc, mExpressionTranslation, mMemoryHandler);
 			args.add(in.getLrValue().getValue());
 			results.add(in);
 		}
@@ -275,7 +296,7 @@ public class SvComp14CHandler extends CHandler {
 			// could just take the first as there is only one, but it's so easy to make it more general..
 			rtr.addStatement(new AssumeStatement(loc, a));
 		}
-		assert isAuxVarMapComplete(main.mNameHandler, rtr.getDeclarations(), rtr.getAuxVars());
+		assert CHandler.isAuxVarMapComplete(main.mNameHandler, rtr.getDeclarations(), rtr.getAuxVars());
 		return rtr;
 	}
 
@@ -307,14 +328,13 @@ public class SvComp14CHandler extends CHandler {
 		final ExpressionResult leftResult = (ExpressionResult) main.dispatch(node.getArguments()[0]);
 		final ExpressionResult rightResult = (ExpressionResult) main.dispatch(node.getArguments()[1]);
 
-		final ExpressionResult rl = leftResult.switchToRValueIfNecessary(main, getMemoryHandler(), mStructHandler, loc);
-		final ExpressionResult rr =
-				rightResult.switchToRValueIfNecessary(main, getMemoryHandler(), mStructHandler, loc);
+		final ExpressionResult rl = leftResult.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
+		final ExpressionResult rr = rightResult.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
 
 		// Note: this works because SMTLIB already ensures that all comparisons return false if one of the arguments is
 		// NaN
 
-		return handleRelationalOperators(main, loc, op, rl, rr);
+		return mCHandler.handleRelationalOperators(main, loc, op, rl, rr);
 	}
 
 	private Result handleBuiltinIsUnordered(final Dispatcher main, final IASTFunctionCallExpression node,
@@ -335,9 +355,9 @@ public class SvComp14CHandler extends CHandler {
 		final ExpressionResult leftResult = (ExpressionResult) main.dispatch(node.getArguments()[0]);
 		final ExpressionResult rightResult = (ExpressionResult) main.dispatch(node.getArguments()[1]);
 		final ExpressionResult leftRvaluedResult =
-				leftResult.switchToRValueIfNecessary(main, getMemoryHandler(), mStructHandler, loc);
+				leftResult.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
 		final ExpressionResult rightRvaluedResult =
-				rightResult.switchToRValueIfNecessary(main, getMemoryHandler(), mStructHandler, loc);
+				rightResult.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
 		final ExpressionResult nanLResult = mExpressionTranslation.createNanOrInfinity(loc, "NAN");
 		final ExpressionResult nanRResult = mExpressionTranslation.createNanOrInfinity(loc, "NAN");
 
@@ -352,7 +372,7 @@ public class SvComp14CHandler extends CHandler {
 		final LRValue lrVal = new RValue(expr, new CPrimitive(CPrimitives.INT), true);
 		final ExpressionResult rtr =
 				combineExpressionResults(lrVal, leftRvaluedResult, rightRvaluedResult, nanLResult, nanRResult);
-		assert isAuxVarMapComplete(main.mNameHandler, rtr.getDeclarations(), rtr.getAuxVars());
+		assert CHandler.isAuxVarMapComplete(main.mNameHandler, rtr.getDeclarations(), rtr.getAuxVars());
 		return rtr;
 	}
 
@@ -382,21 +402,21 @@ public class SvComp14CHandler extends CHandler {
 		final ExpressionResult rightResult = (ExpressionResult) main.dispatch(node.getArguments()[1]);
 
 		final ExpressionResult leftRvaluedResult =
-				leftResult.switchToRValueIfNecessary(main, getMemoryHandler(), mStructHandler, loc);
+				leftResult.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
 		final ExpressionResult rightRvaluedResult =
-				rightResult.switchToRValueIfNecessary(main, getMemoryHandler(), mStructHandler, loc);
+				rightResult.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
 		mExpressionTranslation.usualArithmeticConversions(loc, leftRvaluedResult, rightRvaluedResult);
 
-		final ExpressionResult lessThan = handleRelationalOperators(main, loc, IASTBinaryExpression.op_lessThan,
-				leftRvaluedResult, rightRvaluedResult);
-		final ExpressionResult greaterThan = handleRelationalOperators(main, loc, IASTBinaryExpression.op_greaterThan,
-				leftRvaluedResult, rightRvaluedResult);
+		final ExpressionResult lessThan = mCHandler.handleRelationalOperators(main, loc,
+				IASTBinaryExpression.op_lessThan, leftRvaluedResult, rightRvaluedResult);
+		final ExpressionResult greaterThan = mCHandler.handleRelationalOperators(main, loc,
+				IASTBinaryExpression.op_greaterThan, leftRvaluedResult, rightRvaluedResult);
 
 		final BinaryExpression expr = new BinaryExpression(loc, Operator.LOGICOR, lessThan.getLrValue().getValue(),
 				greaterThan.getLrValue().getValue());
 		final LRValue lrVal = new RValue(expr, new CPrimitive(CPrimitives.INT), true);
 		final ExpressionResult rtr = combineExpressionResults(lrVal, lessThan, greaterThan);
-		assert isAuxVarMapComplete(main.mNameHandler, rtr.getDeclarations(), rtr.getAuxVars());
+		assert CHandler.isAuxVarMapComplete(main.mNameHandler, rtr.getDeclarations(), rtr.getAuxVars());
 		return rtr;
 	}
 
@@ -428,20 +448,20 @@ public class SvComp14CHandler extends CHandler {
 		decl.add(tVarDecl);
 		stmt.add(new HavocStatement(loc, new VariableLHS[] { new VariableLHS(loc, tId) }));
 		final LRValue returnValue = new RValue(new IdentifierExpression(loc, tId), null);
-		assert isAuxVarMapComplete(main.mNameHandler, decl, auxVars);
+		assert CHandler.isAuxVarMapComplete(main.mNameHandler, decl, auxVars);
 		return new ExpressionResult(stmt, returnValue, decl, auxVars, overappr);
 	}
 
 	private Result handleMemCopy(final Dispatcher main, final IASTFunctionCallExpression node, final ILocation loc) {
 		assert node.getArguments().length == ARGS_COUNT_BUILTIN_MEMCPY : "wrong number of arguments";
 		ExpressionResult dest = (ExpressionResult) handleBuiltinExpect(main, node);
-		dest = dest.switchToRValueIfNecessary(main, getMemoryHandler(), mStructHandler, loc);
+		dest = dest.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
 		main.mCHandler.convert(loc, dest, new CPointer(new CPrimitive(CPrimitives.VOID)));
 		ExpressionResult src = (ExpressionResult) main.dispatch(node.getArguments()[1]);
-		src = src.switchToRValueIfNecessary(main, getMemoryHandler(), mStructHandler, loc);
+		src = src.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
 		main.mCHandler.convert(loc, src, new CPointer(new CPrimitive(CPrimitives.VOID)));
 		ExpressionResult size = (ExpressionResult) main.dispatch(node.getArguments()[2]);
-		size = size.switchToRValueIfNecessary(main, getMemoryHandler(), mStructHandler, loc);
+		size = size.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
 		main.mCHandler.convert(loc, size, mTypeSizeComputer.getSizeT());
 
 		final ExpressionResult result = ExpressionResult.copyStmtDeclAuxvarOverapprox(dest, src, size);
@@ -452,16 +472,16 @@ public class SvComp14CHandler extends CHandler {
 		result.mDecl.add(tVarDecl);
 		result.mAuxVars.put(tVarDecl, loc);
 
-		final Statement call = getMemoryHandler().constructMemcpyCall(loc, dest.mLrVal.getValue(),
-				src.mLrVal.getValue(), size.mLrVal.getValue(), tId);
+		final Statement call = mMemoryHandler.constructMemcpyCall(loc, dest.mLrVal.getValue(), src.mLrVal.getValue(),
+				size.mLrVal.getValue(), tId);
 		result.mStmt.add(call);
 		result.mLrVal = new RValue(new IdentifierExpression(loc, tId), new CPointer(new CPrimitive(CPrimitives.VOID)));
 
 		// add required information to function handler.
-		getFunctionHandler().addCallGraphNode(MemoryModelDeclarations.C_Memcpy.getName());
-		getFunctionHandler().addCallGraphEdge(getFunctionHandler().getCurrentProcedureID(),
+		mFunctionHandler.addCallGraphNode(MemoryModelDeclarations.C_Memcpy.getName());
+		mFunctionHandler.addCallGraphEdge(mFunctionHandler.getCurrentProcedureID(),
 				MemoryModelDeclarations.C_Memcpy.getName());
-		getFunctionHandler().addModifiedGlobalEntry(MemoryModelDeclarations.C_Memcpy.getName());
+		mFunctionHandler.addModifiedGlobalEntry(MemoryModelDeclarations.C_Memcpy.getName());
 
 		return result;
 	}

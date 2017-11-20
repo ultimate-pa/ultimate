@@ -129,7 +129,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.SkipResult;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.svcomp.SvComp14CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -168,7 +167,7 @@ public class PRDispatcher extends Dispatcher {
 				getPreferences().getBoolean(CACSLPreferenceInitializer.LABEL_OVERAPPROXIMATE_FLOATS);
 		mNameHandler = new NameHandler(mBacktranslator);
 		mTypeHandler = new TypeHandler(bitvectorTranslation);
-		mCHandler = new SvComp14CHandler(this, mBacktranslator, mLogger, mTypeHandler, bitvectorTranslation,
+		mCHandler = new CHandler(this, mBacktranslator, false, mLogger, mTypeHandler, bitvectorTranslation,
 				overapproximateFloatingPointOperations, mNameHandler);
 	}
 

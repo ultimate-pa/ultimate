@@ -148,7 +148,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.except
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionListResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.svcomp.SvComp14CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
@@ -372,13 +371,8 @@ public class MainDispatcher extends Dispatcher {
 		mTypeHandler = new TypeHandler(mBitvectorTranslation);
 		mAcslHandler = new ACSLHandler(mWitnessInvariants != null);
 		mNameHandler = new NameHandler(mBacktranslator);
-		if (isSvcomp()) {
-			mCHandler = new SvComp14CHandler(this, mBacktranslator, mLogger, mTypeHandler, mBitvectorTranslation,
-					mOverapproximateFloatingPointOperations, mNameHandler);
-		} else {
-			mCHandler = new CHandler(this, mBacktranslator, true, mLogger, mTypeHandler, mBitvectorTranslation,
-					mOverapproximateFloatingPointOperations, mNameHandler);
-		}
+		mCHandler = new CHandler(this, mBacktranslator, true, mLogger, mTypeHandler, mBitvectorTranslation,
+				mOverapproximateFloatingPointOperations, mNameHandler);
 		mBacktranslator.setExpressionTranslation(((CHandler) mCHandler).getExpressionTranslation());
 		mPreprocessorHandler = new PreprocessorHandler(isSvcomp());
 		mReportWarnings = true;

@@ -442,18 +442,20 @@ public class FunctionHandler {
 			final ExpressionResult returnValue = CTranslationUtil.convertExpressionListToExpressionResultIfNecessary(
 					loc, main, main.dispatch(node.getReturnValue()));
 
-			final ExpressionResult returnValueSwitched = returnValue
-					.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
+			final ExpressionResult returnValueSwitched =
+					returnValue.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
 			returnValueSwitched.rexBoolToIntIfNecessary(loc, mExpressionTranslation);
 
 			// do some implicit casts
 			final CType functionResultType =
 					mProcedureToCFunctionType.get(mCurrentProcedure.getIdentifier()).getResultType();
-			if (!returnValueSwitched.mLrVal.getCType().equals(functionResultType) && functionResultType instanceof CPointer
+			if (!returnValueSwitched.mLrVal.getCType().equals(functionResultType)
+					&& functionResultType instanceof CPointer
 					&& returnValueSwitched.mLrVal.getCType() instanceof CPrimitive
 					&& returnValueSwitched.mLrVal.getValue() instanceof IntegerLiteral
 					&& "0".equals(((IntegerLiteral) returnValueSwitched.mLrVal.getValue()).getValue())) {
-				returnValueSwitched.mLrVal = new RValue(mExpressionTranslation.constructNullPointer(loc), functionResultType);
+				returnValueSwitched.mLrVal =
+						new RValue(mExpressionTranslation.constructNullPointer(loc), functionResultType);
 			}
 
 			stmt.addAll(returnValueSwitched.mStmt);
@@ -758,7 +760,8 @@ public class FunctionHandler {
 			// --> but from then on we know its parameters
 			if (procedureDeclaredWithOutInparamsButCalledWithInParams) {
 				// add the current parameter to the procedure's signature
-				updateCFunction(methodName, null, null, new CDeclaration(in.mLrVal.getCType(), SFO.IN_PARAM + i), false);
+				updateCFunction(methodName, null, null, new CDeclaration(in.mLrVal.getCType(), SFO.IN_PARAM + i),
+						false);
 			} else if (mProcedureToCFunctionType.containsKey(methodName)) {
 				// we already know the parameters: do implicit casts and bool/int conversion
 				CType expectedParamType =
@@ -919,8 +922,8 @@ public class FunctionHandler {
 			result.mDecl.add(tVarDecl);
 			result.mAuxVars.put(tVarDecl, loc);
 
-			result.mStmt.add(memoryHandler.constructUltimateMemsetCall(loc, argS.mLrVal.getValue(), argC.mLrVal.getValue(),
-					argN.mLrVal.getValue(), tId));
+			result.mStmt.add(memoryHandler.constructUltimateMemsetCall(loc, argS.mLrVal.getValue(),
+					argC.mLrVal.getValue(), argN.mLrVal.getValue(), tId));
 
 			if (mCallGraph.get(mCurrentProcedure.getIdentifier()) == null) {
 				mCallGraph.put(mCurrentProcedure.getIdentifier(), new LinkedHashSet<String>());
@@ -1079,8 +1082,8 @@ public class FunctionHandler {
 			builder.putAuxVars(arg.mAuxVars);
 			builder.addNeighbourUnionFields(arg.mOtherUnionFields);
 
-			builder.addStatements(constructMemsafetyChecksForPointerExpression(loc, arg.mLrVal.getValue(), memoryHandler,
-					expressionTranslation));
+			builder.addStatements(constructMemsafetyChecksForPointerExpression(loc, arg.mLrVal.getValue(),
+					memoryHandler, expressionTranslation));
 
 			// according to standard result is size_t, we use int for efficiency
 			final CPrimitive resultType = new CPrimitive(CPrimitives.INT);
