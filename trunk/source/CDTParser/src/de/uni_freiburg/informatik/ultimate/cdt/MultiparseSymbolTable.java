@@ -68,6 +68,10 @@ public class MultiparseSymbolTable extends ASTVisitor {
 	 */
 	private final Map<Pair<String, String>, IASTDeclarator> mGlobalsMapping;
 	/**
+	 * A mapping (File Name, Identifier) -> Prefixed name that is unique
+	 */
+	private final Map<Pair<String, String>, String> mNamePrefixMapping;
+	/**
 	 * A mapping File Name -> List<File Name>
 	 * which maps the files to the lists of files they include
 	 */
@@ -84,6 +88,7 @@ public class MultiparseSymbolTable extends ASTVisitor {
 		mLogger = logger;
 		mFunctionMapping = new HashMap<>();
 		mGlobalsMapping = new HashMap<>();
+		mNamePrefixMapping = new HashMap<>();
 		mIncludeMapping = new HashMap<>();
 	}
 	
@@ -142,12 +147,18 @@ public class MultiparseSymbolTable extends ASTVisitor {
 		}
 		final Pair<String, String> entry = new Pair<>(inFile, decl.getName().toString());
 		mGlobalsMapping.put(entry, decl);
+		mNamePrefixMapping.put(entry, generatePrefixedIdentifier(inFile, decl.getName().toString()));
 	}
 	
 	private void visitFunctionDefinition(final String inFile, final IASTFunctionDefinition fdef) {
 		final IASTDeclarator fdecl = fdef.getDeclarator();
 		final Pair<String, String> entry = new Pair<>(inFile, fdecl.getName().toString());
 		mFunctionMapping.put(entry, fdef);
+		mNamePrefixMapping.put(entry, generatePrefixedIdentifier(inFile, fdecl.getName().toString()));
+	}
+	
+	private static String generatePrefixedIdentifier(final String file, final String id) {
+		return "f" + file.replaceAll("[^a-zA-Z_]", "_") + "__" + id;
 	}
 	
 	/**
@@ -164,7 +175,8 @@ public class MultiparseSymbolTable extends ASTVisitor {
 		
 		mLogger.info("Function table:");
 		for (Pair<String, String> key : mFunctionMapping.keySet()) {
-			mLogger.info("Function definition of " + key.getSecond() + " in " + key.getFirst());
+			final String newName = mNamePrefixMapping.get(key);
+			mLogger.info("Function definition of " + newName + " in " + key.getFirst());
 		}
 		if (mFunctionMapping.isEmpty()) {
 			mLogger.info("<empty function table>");
@@ -172,7 +184,8 @@ public class MultiparseSymbolTable extends ASTVisitor {
 		
 		mLogger.info("Global variable table:");
 		for (Pair<String, String> key : mGlobalsMapping.keySet()) {
-			mLogger.info("Global variable declaration of " + key.getSecond() + " in " + key.getFirst());
+			final String newName = mNamePrefixMapping.get(key);
+			mLogger.info("Global variable declaration of " + newName + " in " + key.getFirst());
 		}
 		if (mGlobalsMapping.isEmpty()) {
 			mLogger.info("<empty global variable table>");
