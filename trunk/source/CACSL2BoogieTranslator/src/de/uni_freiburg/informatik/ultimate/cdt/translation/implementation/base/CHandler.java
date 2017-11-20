@@ -1212,20 +1212,17 @@ public class CHandler implements ICHandler {
 
 	@Override
 	public Result visit(final Dispatcher main, final IASTFunctionCallExpression node) {
-		final Check check = new Check(Check.Spec.PRE_CONDITION);
-		final ILocation loc = main.getLocationFactory().createCLocation(node, check);
 		final IASTExpression functionName = node.getFunctionNameExpression();
 		if (functionName instanceof IASTIdExpression) {
-			final Result standardFunction = mFunctionHandler.handleStandardFunctions(main, mMemoryHandler,
-					mStructHandler, mExpressionTranslation, loc, ((IASTIdExpression) functionName).getName().toString(),
-					node.getArguments());
-
-			// TODO call standardfunctionmodel instead
+			final Result standardFunction =
+					mStandardFunctionHandler.translateStandardFunction(main, node, (IASTIdExpression) functionName);
 
 			if (standardFunction != null) {
 				return standardFunction;
 			}
 		}
+		final Check check = new Check(Check.Spec.PRE_CONDITION);
+		final ILocation loc = main.getLocationFactory().createCLocation(node, check);
 		return mFunctionHandler.handleFunctionCallExpression(main, mMemoryHandler, mStructHandler, loc, functionName,
 				node.getArguments());
 	}
@@ -2333,7 +2330,7 @@ public class CHandler implements ICHandler {
 			// types are already identical -- nothing to do
 			return;
 		}
-	
+
 		if (newType instanceof CPrimitive) {
 			final CPrimitive cPrimitive = (CPrimitive) newType;
 			if (cPrimitive.isIntegerType()) {
@@ -2419,7 +2416,7 @@ public class CHandler implements ICHandler {
 	}
 
 	public Result handleLabelCommonCode(final Dispatcher main, final IASTLabelStatement node, final ILocation loc) {
-	
+
 		final ArrayList<Statement> stmt = new ArrayList<>();
 		final ArrayList<Declaration> decl = new ArrayList<>();
 		final Map<VariableDeclaration, ILocation> emptyAuxVars = new LinkedHashMap<>(0);
@@ -2471,13 +2468,13 @@ public class CHandler implements ICHandler {
 			final LRValue lrVal, final RValue rVal, final List<Declaration> declOld,
 			final Map<VariableDeclaration, ILocation> auxVarsOld, final List<Overapprox> overapprOld,
 			final List<ExpressionResult> unionFieldsToCType) {
-	
+
 		// do implicit cast -- assume the types are compatible
 		final ExpressionResult rExp = new ExpressionResultBuilder().addDeclarations(declOld).addStatements(stmtOld)
 				.putAuxVars(auxVarsOld).addNeighbourUnionFields(unionFieldsToCType).setLRVal(rVal).build();
 		convert(loc, rExp, lrVal.getCType());
 		final RValue rightHandSideWithConversionsApplied = (RValue) rExp.mLrVal;
-	
+
 		// for wraparound --> and avoiding it for ints that store pointers
 		// updates the value in the symbol table accordingly
 		// TODO: this is really ugly, do we still need this??
@@ -2501,43 +2498,43 @@ public class CHandler implements ICHandler {
 				}
 			}
 		}
-	
+
 		// add the assignment statement
 		if (lrVal instanceof HeapLValue) {
 			final ExpressionResultBuilder builder = new ExpressionResultBuilder().addDeclarations(declOld)
 					.addStatements(stmtOld).addOverapprox(overapprOld).putAuxVars(auxVarsOld)
 					.addNeighbourUnionFields(unionFieldsToCType);
-	
+
 			final HeapLValue hlv = (HeapLValue) lrVal;
-	
+
 			builder.addStatements(mMemoryHandler.getWriteCall(loc, hlv, rightHandSideWithConversionsApplied.getValue(),
 					rightHandSideWithConversionsApplied.getCType()));
-	
+
 			builder.setLRVal(rightHandSideWithConversionsApplied);
-	
+
 			return builder.build();
 		} else if (lrVal instanceof LocalLValue) {
 			ExpressionResultBuilder builder = new ExpressionResultBuilder().addDeclarations(declOld)
 					.addStatements(stmtOld).addOverapprox(overapprOld).putAuxVars(auxVarsOld)
 					.addNeighbourUnionFields(unionFieldsToCType);
-	
+
 			final LocalLValue lValue = (LocalLValue) lrVal;
 			builder.setLRVal(lValue);
-	
+
 			final AssignmentStatement assignStmt = new AssignmentStatement(loc, new LeftHandSide[] { lValue.getLHS() },
 					new Expression[] { rightHandSideWithConversionsApplied.getValue() });
-	
+
 			builder.addStatement(assignStmt);
-	
+
 			for (final Overapprox oa : overapprOld) {
 				for (final Statement stm : builder.mStatements) {
 					oa.annotate(stm);
 				}
 			}
-	
+
 			builder = assignorHavocUnionNeighbours(main, loc, rVal, unionFieldsToCType,
 					rightHandSideWithConversionsApplied, builder);
-	
+
 			if (!mFunctionHandler.noCurrentProcedure()) {
 				mFunctionHandler.checkIfModifiedGlobal(getSymbolTable(), BoogieASTUtil.getLHSId(lValue.getLHS()), loc);
 			}
