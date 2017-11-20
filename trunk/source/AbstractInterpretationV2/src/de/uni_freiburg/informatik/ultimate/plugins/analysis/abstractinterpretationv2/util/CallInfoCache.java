@@ -171,6 +171,10 @@ public final class CallInfoCache {
 		final Set<IProgramNonOldVar> globals = mCfgSmtToolkit.getSymbolTable().getGlobals();
 		final int globalsSize = globals.size();
 
+		if (globalsSize == 0) {
+			return null;
+		}
+
 		final LeftHandSide[] lhs = new LeftHandSide[globalsSize];
 		final Expression[] rhs = new Expression[globalsSize];
 		int i = 0;
