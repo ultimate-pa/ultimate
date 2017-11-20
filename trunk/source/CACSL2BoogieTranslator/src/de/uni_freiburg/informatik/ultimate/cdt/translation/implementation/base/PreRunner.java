@@ -41,6 +41,7 @@ import org.eclipse.cdt.core.dom.ast.IASTCompoundStatement;
 import org.eclipse.cdt.core.dom.ast.IASTDeclSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTDeclarator;
+import org.eclipse.cdt.core.dom.ast.IASTEqualsInitializer;
 import org.eclipse.cdt.core.dom.ast.IASTExpression;
 import org.eclipse.cdt.core.dom.ast.IASTFieldReference;
 import org.eclipse.cdt.core.dom.ast.IASTForStatement;
@@ -48,6 +49,7 @@ import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
 import org.eclipse.cdt.core.dom.ast.IASTIdExpression;
+import org.eclipse.cdt.core.dom.ast.IASTLiteralExpression;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTParameterDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTPointerOperator;
@@ -311,6 +313,24 @@ public class PreRunner extends ASTVisitor {
         			//TODO: deal with array and struct access??
         		}
         	}
+        } else if (expression instanceof IASTLiteralExpression) {
+        	// 2017-11-19 Matthias: This is a workaround that I introduced to
+        	// make all variables that occur in statements of the form
+        	// x = "someString"
+        	// on-heap.
+        	// It would probably be better to override some method
+        	// (don't know which) that handles nodes for initialization
+        	final IASTLiteralExpression litExpr = (IASTLiteralExpression) expression;
+        	if (litExpr.getKind() == IASTLiteralExpression.lk_string_literal) {
+        		if (litExpr.getParent() instanceof IASTEqualsInitializer) {
+        			final IASTEqualsInitializer eqinit = (IASTEqualsInitializer) litExpr.getParent();
+        			if (eqinit.getParent() instanceof IASTArrayDeclarator) {
+        				final IASTArrayDeclarator arrayDecl = (IASTArrayDeclarator) eqinit.getParent();
+        				variablesOnHeap.add(arrayDecl);
+        				
+        			}
+        		}
+        	}
         }
         return super.visit(expression);
     }
@@ -469,4 +489,7 @@ public class PreRunner extends ASTVisitor {
         }
         return sT.get(n);
     }
+    
+    
+    
 }
