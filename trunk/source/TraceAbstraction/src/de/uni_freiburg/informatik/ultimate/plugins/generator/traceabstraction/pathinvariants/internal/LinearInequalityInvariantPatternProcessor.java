@@ -122,6 +122,13 @@ public final class LinearInequalityInvariantPatternProcessor
 	 * terms from the annotations in unsat core.
 	 */
 	private Map<String, Term> mAnnotTerm2MotzkinTerm;
+	
+	private static final boolean USE_NEW_WAY_TO_COMPUTE_UNSAT_CORE_LOCS = false;
+	
+	/**
+	 * Maps annotated terms to the locations (i.e. source and target locations) of corresponding transitions. 
+	 */
+	private Map<String, Set<IcfgLocation>> mTermAnnotations2Locs;
 	/**
 	 * @see {@link MotzkinTransformation}.mMotzkinCoefficients2LinearInequalities
 	 */
@@ -319,6 +326,9 @@ public final class LinearInequalityInvariantPatternProcessor
 		}
 		mAnnotTermCounter = 0;
 		mAnnotTerm2MotzkinTerm = new HashMap<>();
+		if (USE_NEW_WAY_TO_COMPUTE_UNSAT_CORE_LOCS) {
+			mTermAnnotations2Locs = new HashMap<>();
+		}
 		mMotzkinCoefficients2LinearInequalities = new HashMap<>();
 		mLinearInequalities2Locations = new HashMap<>();
 		mAllPatternCoefficients = null;
@@ -371,6 +381,8 @@ public final class LinearInequalityInvariantPatternProcessor
 		mAnnotTermCounter = 0;
 		// Reset map that stores the mapping from the annotated term to the original term.
 		mAnnotTerm2MotzkinTerm = new HashMap<>();
+		
+		mTermAnnotations2Locs = new HashMap<>();
 		// Reset map that stores motzkin coefficients to linear inequalities
 		mMotzkinCoefficients2LinearInequalities = new HashMap<>();
 		// Reset settings of strategy
@@ -783,7 +795,7 @@ public final class LinearInequalityInvariantPatternProcessor
 				mSolver.echo(new QuotedObject("Assertion for SP: "
 						+ transformulaAsString.substring(0, transformulaAsString.indexOf("InVars"))));
 				annotateAndAssertTermAndStoreMapping(transformNegatedConjunction(ConstraintsType.Approximation,
-						spTemplateDNF, targetLocTemplateNegatedDNF));
+						spTemplateDNF, targetLocTemplateNegatedDNF), new HashSet<>(Arrays.asList(loc)));
 			}
 		}
 		if (mUseOverApproxAsAdditionalConstraint && mCurrentRound >= 0) {
@@ -819,7 +831,7 @@ public final class LinearInequalityInvariantPatternProcessor
 				mSolver.echo(new QuotedObject("Assertion for WP: "
 						+ transformulaAsString.substring(0, transformulaAsString.indexOf("InVars"))));
 				annotateAndAssertTermAndStoreMapping(transformNegatedConjunction(ConstraintsType.Approximation,
-						targetLocTemplateMappedDNF, wpTemplateNegatedDNF));
+						targetLocTemplateMappedDNF, wpTemplateNegatedDNF), new HashSet<>(Arrays.asList(loc)));
 			}
 		}
 		if (mLogger.isDebugEnabled()) {
@@ -1061,7 +1073,7 @@ public final class LinearInequalityInvariantPatternProcessor
 	 *            - the Term to be annotated and asserted
 	 * @author Betim Musa (musab@informaitk.uni-freiburg.de)
 	 */
-	private void annotateAndAssertTermAndStoreMapping(final Term term) {
+	private void annotateAndAssertTermAndStoreMapping(final Term term, Set<IcfgLocation> transitionLocs) {
 		assert term.getFreeVars().length == 0 : "Term has free vars";
 		// Annotate and assert the conjuncts of the term one by one
 		final Term[] conjunctsOfTerm = SmtUtils.getConjuncts(term);
@@ -1071,7 +1083,9 @@ public final class LinearInequalityInvariantPatternProcessor
 			final String conjunctAnnotName = termAnnotName + PREFIX_SEPARATOR + (conjunctCounter);
 			// Store mapping termAnnotName -> original term
 			mAnnotTerm2MotzkinTerm.put(conjunctAnnotName, conjunctsOfTerm[conjunctCounter]);
-
+			if (USE_NEW_WAY_TO_COMPUTE_UNSAT_CORE_LOCS) {
+				mTermAnnotations2Locs.put(conjunctAnnotName, transitionLocs);
+			}
 			final Annotation annot = new Annotation(":named", conjunctAnnotName);
 			final Term annotTerm = mSolver.annotate(conjunctsOfTerm[conjunctCounter], annot);
 			mSolver.assertTerm(annotTerm);
@@ -1095,11 +1109,11 @@ public final class LinearInequalityInvariantPatternProcessor
 		final Map<IProgramVar, Term> programVarsRecentlyOccurred = new HashMap<>();
 		// Generate and assert term for precondition
 		annotateAndAssertTermAndStoreMapping(buildImplicationTerm(mPrecondition, mEntryInvariantPattern, mStartLocation,
-				programVarsRecentlyOccurred));
+				programVarsRecentlyOccurred), new HashSet<>(Arrays.asList(mStartLocation)));
 		// Generate and assert term for post-condition
 		for (final IcfgLocation errorLocation : mErrorLocations) {
 			annotateAndAssertTermAndStoreMapping(buildBackwardImplicationTerm(mPostcondition, mExitInvariantPattern,
-					errorLocation, programVarsRecentlyOccurred));
+					errorLocation, programVarsRecentlyOccurred), new HashSet<>(Arrays.asList(errorLocation)));
 		}
 
 		// Generate and assert terms for intermediate transitions
@@ -1107,8 +1121,10 @@ public final class LinearInequalityInvariantPatternProcessor
 			final Set<TransitionConstraintIngredients<Dnf<AbstractLinearInvariantPattern>>> transitionIngredients =
 					successorIngredient.buildTransitionConstraintIngredients();
 			for (final TransitionConstraintIngredients<Dnf<AbstractLinearInvariantPattern>> transitionIngredient : transitionIngredients) {
+				Set<IcfgLocation> transitionLocs = new HashSet<>(Arrays.asList(transitionIngredient.getSourceLocation(),
+						transitionIngredient.getTargetLocation()));
 				annotateAndAssertTermAndStoreMapping(
-						buildPredicateTerm(transitionIngredient, programVarsRecentlyOccurred));
+						buildPredicateTerm(transitionIngredient, programVarsRecentlyOccurred), transitionLocs);
 				// final LBool smtResult = mSolver.checkSat();
 				// mLogger.info("Check-sat result: " + smtResult);
 			}
@@ -1217,16 +1233,21 @@ public final class LinearInequalityInvariantPatternProcessor
 			// to get the corresponding program variables
 			final Term[] unsatCoreAnnots = mSolver.getUnsatCore();
 			final Set<String> motzkinVariables = new HashSet<>();
+			final Set<IcfgLocation> unsatCoreLocsNewVariant = new HashSet<>();
 			for (final Term t : unsatCoreAnnots) {
 				final Term origMotzkinTerm = mAnnotTerm2MotzkinTerm.get(t.toStringDirect());
 				motzkinVariables.addAll(getTermVariablesFromTerm(origMotzkinTerm));
+				if (USE_NEW_WAY_TO_COMPUTE_UNSAT_CORE_LOCS) {
+					unsatCoreLocsNewVariant.addAll(mTermAnnotations2Locs.get(t.toStringDirect()));
+				}
 			}
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug("UnsatCoreAnnots: " + Arrays.toString(unsatCoreAnnots));
 				mLogger.debug("MotzkinVars in unsat core: " + motzkinVariables);
 			}
 			mVarsFromUnsatCore = new HashSet<>();
-			final Set<IcfgLocation> locsInUnsatCore = new HashSet<>();
+
+			Set<IcfgLocation> locsInUnsatCore = new HashSet<>();
 
 			final Map<IcfgLocation, Integer> locs2Frequency = new HashMap<>();
 			for (final String motzkinVar : motzkinVariables) {
@@ -1276,6 +1297,9 @@ public final class LinearInequalityInvariantPatternProcessor
 
 					}
 				}
+			}
+			if (USE_NEW_WAY_TO_COMPUTE_UNSAT_CORE_LOCS) {
+				locsInUnsatCore = unsatCoreLocsNewVariant;
 			}
 			mLocsInUnsatCore = locsInUnsatCore;
 			if (mLogger.isDebugEnabled()) {
