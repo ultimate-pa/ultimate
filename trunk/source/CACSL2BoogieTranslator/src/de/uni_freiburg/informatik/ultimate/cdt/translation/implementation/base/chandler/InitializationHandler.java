@@ -1046,7 +1046,12 @@ public class InitializationHandler {
 			final ExpressionResult expressionResultSwitched = first.getRootExpressionResult()
 					.switchToRValueIfNecessary(main, loc);
 			expressionResultSwitched.rexBoolToIntIfNecessary(loc, main.mCHandler.getExpressionTranslation());
-			main.mCHandler.convert(loc, expressionResultSwitched, targetCType);
+			// 2017-11-19 Matthias: introduced workaround to omit conversion
+			if ((expressionResultSwitched.getLrValue().getCType() instanceof CArray)) {
+				// omit conversion
+			} else {
+				main.mCHandler.convert(loc, expressionResultSwitched, targetCType);
+			}
 			return expressionResultSwitched;
 		}
 

@@ -30,10 +30,16 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 
-public class RValueForOffHeapArrays extends RValue {
+/**
+ * This is a workaround that can be used until we know how to deal with the
+ * Array and RValue problem.
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ *
+ */
+public class RValueForArrays extends RValue {
 
 	
-	public RValueForOffHeapArrays(final Expression value, final CType cType) {
+	public RValueForArrays(final Expression value, final CType cType) {
 		super(value, cType);
 	}
 

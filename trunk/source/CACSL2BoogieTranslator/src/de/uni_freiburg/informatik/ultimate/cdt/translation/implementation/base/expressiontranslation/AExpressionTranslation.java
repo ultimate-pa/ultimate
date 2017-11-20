@@ -60,6 +60,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.C
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
@@ -69,6 +70,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValueForArrays;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ISOIEC9899TC3;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ISOIEC9899TC3.FloatingPointLiteral;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
@@ -134,12 +136,18 @@ public abstract class AExpressionTranslation {
 			return new ExpressionResult(rVal);
 		}
 		case IASTLiteralExpression.lk_string_literal: {
-			// Translate string to uninitialized char pointer
-			final CPointer pointerType = new CPointer(new CPrimitive(CPrimitives.CHAR));
-			final String tId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.NONDET, pointerType);
+			// subtract two from length for quotes at beginning and end
+			final int arrayLength = node.getValue().length - 2;
+			final RValue dimension = new RValue(
+					constructLiteralForIntegerType(loc, getCTypeOfPointerComponents(), BigInteger.valueOf(arrayLength)),
+					getCTypeOfPointerComponents());
+			final RValue[] dimensions = { dimension };
+			final CArray arrayType = new CArray(dimensions, new CPrimitive(CPrimitives.CHAR));
+//			final CPointer arrayType = new CPointer(new CPrimitive(CPrimitives.CHAR));
+			final String tId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.NONDET, arrayType);
 			final VariableDeclaration tVarDecl = new VariableDeclaration(loc, new Attribute[0], new VarList[] { new VarList(
 					loc, new String[] { tId }, mTypeHandler.constructPointerType(loc)) });
-			final RValue rvalue = new RValue(new IdentifierExpression(loc, tId), pointerType);
+			final RValue rvalue = new RValueForArrays(new IdentifierExpression(loc, tId), arrayType);
 			final ArrayList<Declaration> decls = new ArrayList<Declaration>();
 			decls.add(tVarDecl);
 			final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<VariableDeclaration, ILocation>();
