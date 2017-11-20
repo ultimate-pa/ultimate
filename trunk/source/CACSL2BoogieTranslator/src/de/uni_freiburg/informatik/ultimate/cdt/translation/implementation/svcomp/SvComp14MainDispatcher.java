@@ -38,6 +38,7 @@ import org.eclipse.cdt.core.dom.ast.IASTNode;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.ACSLHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.MainDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.NameHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.PreprocessorHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.SideEffectHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -68,7 +69,7 @@ public class SvComp14MainDispatcher extends MainDispatcher {
 		mCHandler = new SvComp14CHandler(this, mBacktranslator, mLogger, mTypeHandler, mBitvectorTranslation,
 				mOverapproximateFloatingPointOperations, mNameHandler);
 		mBacktranslator.setExpressionTranslation(((SvComp14CHandler) mCHandler).getExpressionTranslation());
-		mPreprocessorHandler = new SvComp14PreprocessorHandler();
+		mPreprocessorHandler = new PreprocessorHandler(true);
 		mReportWarnings = false;
 	}
 }

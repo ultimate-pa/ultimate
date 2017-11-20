@@ -375,7 +375,7 @@ public class MainDispatcher extends Dispatcher {
 		mCHandler = new CHandler(this, mBacktranslator, true, mLogger, mTypeHandler, mBitvectorTranslation,
 				mOverapproximateFloatingPointOperations, mNameHandler);
 		mBacktranslator.setExpressionTranslation(((CHandler) mCHandler).getExpressionTranslation());
-		mPreprocessorHandler = new PreprocessorHandler();
+		mPreprocessorHandler = new PreprocessorHandler(false);
 		mReportWarnings = true;
 	}
 
