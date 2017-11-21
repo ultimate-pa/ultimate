@@ -161,32 +161,6 @@ public class StandardFunctionHandler {
 			final ILocation loc = getLoc(main, node);
 			return functionModel.handleFunction(main, node, loc, name);
 		}
-
-		// TODO: Unify treatment of float functions with mFunctionModels map
-		final FloatFunction floatFunction = FloatFunction.decode(name);
-		if (floatFunction != null) {
-			if (!FloatSupportInUltimate.getSupportedFloatOperations().contains(name)) {
-				throw new AssertionError("inconsistent information about supported float operations: " + name);
-			}
-			final ILocation loc = getLoc(main, node);
-			final IASTInitializerClause[] arguments = node.getArguments();
-			checkArguments(loc, 1, name, arguments);
-			final ExpressionResult arg = dispatchAndConvert(main, loc, arguments[0]);
-			final CPrimitive typeDeterminedByName = floatFunction.getType();
-			if (typeDeterminedByName != null) {
-				mExpressionTranslation.convertFloatToFloat(loc, arg, typeDeterminedByName);
-			}
-			final RValue rvalue =
-					mExpressionTranslation.constructOtherUnaryFloatOperation(loc, floatFunction, (RValue) arg.mLrVal);
-			final ExpressionResult result = ExpressionResult.copyStmtDeclAuxvarOverapprox(arg);
-			result.mLrVal = rvalue;
-			return result;
-		} else if (FloatSupportInUltimate.getUnsupportedFloatOperations().contains(name)) {
-			final ILocation loc = getLoc(main, node);
-			final String msg = "Float math.h operation not supported " + name;
-			throw new UnsupportedSyntaxException(loc, msg);
-		}
-
 		return null;
 	}
 
@@ -195,9 +169,14 @@ public class StandardFunctionHandler {
 
 		final IFunctionModelHandler skip = (main, node, loc, name) -> handleByIgnore(main, loc, name);
 		final IFunctionModelHandler die = (main, node, loc, name) -> handleByUnsupportedSyntaxException(loc, name);
+		final IFunctionModelHandler dieFloat =
+				(main, node, loc, name) -> handleByUnsupportedSyntaxExceptionKnown(loc, "math.h", name);
+
+		for (final String unsupportedFloatFunction : FloatSupportInUltimate.getUnsupportedFloatOperations()) {
+			fill(map, unsupportedFloatFunction, dieFloat);
+		}
 
 		fill(map, "pthread_create", die);
-		fill(map, "sin", die);
 
 		fill(map, "abort", (main, node, loc, name) -> handleAbort(loc));
 
@@ -254,7 +233,7 @@ public class StandardFunctionHandler {
 		fill(map, "__builtin_unreachable", (main, node, loc, name) -> handleBuiltinUnreachable(loc));
 		fill(map, "__builtin_object_size", (main, node, loc, name) -> handleBuiltinObjectSize(main, loc));
 
-		// various string builtins
+		/** various string builtins **/
 		fill(map, "__builtin_strchr", this::handleStrChr);
 		fill(map, "strchr", this::handleStrChr);
 		fill(map, "__builtin_strlen", this::handleStrLen);
@@ -262,7 +241,7 @@ public class StandardFunctionHandler {
 		fill(map, "__builtin_strcmp", this::handleStrCmp);
 		fill(map, "strcmp", this::handleStrCmp);
 
-		// various float builtins
+		/** various float builtins **/
 		fill(map, "nan", (main, node, loc, name) -> handleNaNOrInfinity(loc, name));
 		fill(map, "nanf", (main, node, loc, name) -> handleNaNOrInfinity(loc, name));
 		fill(map, "nanl", (main, node, loc, name) -> handleNaNOrInfinity(loc, name));
@@ -272,17 +251,73 @@ public class StandardFunctionHandler {
 		fill(map, "__builtin_inff", (main, node, loc, name) -> handleNaNOrInfinity(loc, "inff"));
 		fill(map, "__builtin_huge_val", (main, node, loc, name) -> handleNaNOrInfinity(loc, "inf"));
 		fill(map, "__builtin_huge_valf", (main, node, loc, name) -> handleNaNOrInfinity(loc, "inff"));
-		fill(map, "__builtin_isgreater", (main, node, loc, name) -> handleBuiltinBinaryFloatComparison(main, node, loc,
+		fill(map, "__builtin_isgreater", (main, node, loc, name) -> handleFloatBuiltinBinaryComparison(main, node, loc,
 				name, IASTBinaryExpression.op_greaterThan));
-		fill(map, "__builtin_isgreaterequal", (main, node, loc, name) -> handleBuiltinBinaryFloatComparison(main, node,
+		fill(map, "__builtin_isgreaterequal", (main, node, loc, name) -> handleFloatBuiltinBinaryComparison(main, node,
 				loc, name, IASTBinaryExpression.op_greaterEqual));
-		fill(map, "__builtin_isless", (main, node, loc, name) -> handleBuiltinBinaryFloatComparison(main, node, loc,
+		fill(map, "__builtin_isless", (main, node, loc, name) -> handleFloatBuiltinBinaryComparison(main, node, loc,
 				name, IASTBinaryExpression.op_lessThan));
-		fill(map, "__builtin_islessequal", (main, node, loc, name) -> handleBuiltinBinaryFloatComparison(main, node,
+		fill(map, "__builtin_islessequal", (main, node, loc, name) -> handleFloatBuiltinBinaryComparison(main, node,
 				loc, name, IASTBinaryExpression.op_lessEqual));
-		fill(map, "__builtin_isunordered", this::handleBuiltinIsUnordered);
-		fill(map, "__builtin_islessgreater", this::handleBuiltinIsLessGreater);
+		fill(map, "__builtin_isunordered", this::handleFloatBuiltinIsUnordered);
+		fill(map, "__builtin_islessgreater", this::handleFloatBuiltinIsLessGreater);
 
+		/** math.h float functions **/
+		// see 7.12.3.1 or http://en.cppreference.com/w/c/numeric/math/fpclassify
+		fill(map, "fpclassify", this::handleFloatFunction);
+		fill(map, "__fpclassify", this::handleFloatFunction); // ??
+		fill(map, "__fpclassifyf", this::handleFloatFunction); // ??
+		fill(map, "__fpclassifyl", this::handleFloatFunction); // ??
+
+		// see 7.12.3.2 or http://en.cppreference.com/w/c/numeric/math/isfinite
+		fill(map, "isfinite", this::handleFloatFunction);
+
+		// see https://linux.die.net/man/3/finite (! NOT PART OF ANSI-C)
+		fill(map, "finite", this::handleFloatFunction);
+		fill(map, "__finite", this::handleFloatFunction);
+		fill(map, "finitef", this::handleFloatFunction);
+		fill(map, "__finitef", this::handleFloatFunction); // ??
+		fill(map, "finitel", this::handleFloatFunction);
+		fill(map, "__finitel", this::handleFloatFunction); // ??
+
+		// see 7.12.3.3 or http://en.cppreference.com/w/c/numeric/math/isinf
+		fill(map, "isinf", this::handleFloatFunction);
+		fill(map, "__isinf", this::handleFloatFunction); // ??
+		// see https://linux.die.net/man/3/finite (! NOT PART OF ANSI-C)
+		fill(map, "isinff", this::handleFloatFunction);
+		fill(map, "__isinff", this::handleFloatFunction); // ??
+		fill(map, "isinfl", this::handleFloatFunction);
+		fill(map, "__isinfl", this::handleFloatFunction); // ??
+
+		// see 7.12.3.4 or http://en.cppreference.com/w/c/numeric/math/isnan
+		fill(map, "isnan", this::handleFloatFunction);
+		fill(map, "__isnan", this::handleFloatFunction); // ??
+		// see https://linux.die.net/man/3/finite (! NOT PART OF ANSI-C)
+		fill(map, "isnanf", this::handleFloatFunction);
+		fill(map, "isnanl", this::handleFloatFunction);
+		fill(map, "__isnanf", this::handleFloatFunction); // ??
+		fill(map, "__isnanl", this::handleFloatFunction); // ??
+
+		// see 7.12.3.5 or http://en.cppreference.com/w/c/numeric/math/isnormal
+		fill(map, "isnormal", this::handleFloatFunction);
+
+		// see 7.12.3.6 or http://en.cppreference.com/w/c/numeric/math/signbit
+		fill(map, "signbit", this::handleFloatFunction);
+		fill(map, "__signbit", this::handleFloatFunction); // ??
+		fill(map, "__signbitl", this::handleFloatFunction); // ??
+		fill(map, "__signbitf", this::handleFloatFunction); // ??
+
+		// see 7.12.7.5 or http://en.cppreference.com/w/c/numeric/math/sqrt
+		fill(map, "sqrt", this::handleFloatFunction);
+		fill(map, "sqrtf", this::handleFloatFunction);
+		fill(map, "sqrtl", this::handleFloatFunction);
+
+		// see 7.12.7.2 or http://en.cppreference.com/w/c/numeric/math/fabs
+		fill(map, "fabs", this::handleFloatFunction);
+		fill(map, "fabsf", this::handleFloatFunction);
+		fill(map, "fabsl", this::handleFloatFunction);
+
+		/** SV-COMP and modelling functions **/
 		fill(map, "__VERIFIER_ltl_step", (main, node, loc, name) -> handleLtlStep(main, node, loc));
 		fill(map, "__VERIFIER_error", (main, node, loc, name) -> handleErrorFunction(main, node, loc));
 		fill(map, "__VERIFIER_assume", this::handleVerifierAssume);
@@ -322,7 +357,55 @@ public class StandardFunctionHandler {
 		fill(map, "__VERIFIER_nondet_ushort",
 				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.USHORT)));
 
+		checkFloatSupport(map, dieFloat);
+
 		return Collections.unmodifiableMap(map);
+	}
+
+	private static void checkFloatSupport(final Map<String, IFunctionModelHandler> map,
+			final IFunctionModelHandler dieFloat) {
+
+		final List<String> declUnSupp = new ArrayList<>();
+		final List<String> declNotSupp = new ArrayList<>();
+		for (final String supportedFloatFunction : FloatSupportInUltimate.getSupportedFloatOperations()) {
+			final IFunctionModelHandler fun = map.get(supportedFloatFunction);
+			if (fun == dieFloat) {
+				declUnSupp.add(supportedFloatFunction);
+				continue;
+			}
+			if (fun == null) {
+				declNotSupp.add(supportedFloatFunction);
+				continue;
+			}
+		}
+
+		if (!declUnSupp.isEmpty()) {
+			throw new IllegalStateException("A supported float function is declared as unsupported: " + declUnSupp);
+		}
+		if (!declNotSupp.isEmpty()) {
+			throw new IllegalStateException("A supported float function is not declared: " + declNotSupp);
+		}
+	}
+
+	private Result handleFloatFunction(final Dispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name) {
+		final IASTInitializerClause[] arguments = node.getArguments();
+		checkArguments(loc, 1, name, arguments);
+		final FloatFunction floatFunction = FloatFunction.decode(name);
+		if (floatFunction == null) {
+			throw new IllegalArgumentException(
+					"Ultimate declared float handling for " + name + ", but is not known float function");
+		}
+		final ExpressionResult arg = dispatchAndConvert(main, loc, arguments[0]);
+		final CPrimitive typeDeterminedByName = floatFunction.getType();
+		if (typeDeterminedByName != null) {
+			mExpressionTranslation.convertFloatToFloat(loc, arg, typeDeterminedByName);
+		}
+		final RValue rvalue =
+				mExpressionTranslation.constructOtherUnaryFloatOperation(loc, floatFunction, (RValue) arg.mLrVal);
+		final ExpressionResult result = ExpressionResult.copyStmtDeclAuxvarOverapprox(arg);
+		result.mLrVal = rvalue;
+		return result;
 	}
 
 	private Result handleStrCmp(final Dispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
@@ -713,7 +796,7 @@ public class StandardFunctionHandler {
 		return mExpressionTranslation.createNanOrInfinity(loc, methodName);
 	}
 
-	private Result handleBuiltinBinaryFloatComparison(final Dispatcher main, final IASTFunctionCallExpression node,
+	private Result handleFloatBuiltinBinaryComparison(final Dispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name, final int op) {
 		/*
 		 * Handle the following float comparisons
@@ -739,7 +822,7 @@ public class StandardFunctionHandler {
 		return mCHandler.handleRelationalOperators(main, loc, op, rl, rr);
 	}
 
-	private Result handleBuiltinIsUnordered(final Dispatcher main, final IASTFunctionCallExpression node,
+	private Result handleFloatBuiltinIsUnordered(final Dispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name) {
 		/*
 		 * http://en.cppreference.com/w/c/numeric/math/isunordered
@@ -773,7 +856,7 @@ public class StandardFunctionHandler {
 		return rtr;
 	}
 
-	private Result handleBuiltinIsLessGreater(final Dispatcher main, final IASTFunctionCallExpression node,
+	private Result handleFloatBuiltinIsLessGreater(final Dispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name) {
 		/*
 		 * http://en.cppreference.com/w/c/numeric/math/islessgreater
@@ -908,6 +991,11 @@ public class StandardFunctionHandler {
 
 	private static Result handleByUnsupportedSyntaxException(final ILocation loc, final String functionName) {
 		throw new UnsupportedSyntaxException(loc, "Unsupported function: " + functionName);
+	}
+
+	private static Result handleByUnsupportedSyntaxExceptionKnown(final ILocation loc, final String lib,
+			final String functionName) {
+		throw new UnsupportedSyntaxException(loc, "Unsupported function from " + lib + ": " + functionName);
 	}
 
 	private static Result handleByOverapproximation(final Dispatcher main, final IASTFunctionCallExpression node,
