@@ -66,7 +66,8 @@ public class UltimateChecker extends CodeChecker {
 	public UltimateChecker(final CfgSmtToolkit cfgSmtToolkit, final IIcfg<IcfgLocation> originalRoot,
 			final ImpRootNode graphRoot, final GraphWriter graphWriter, final IHoareTripleChecker edgeChecker,
 			final PredicateUnifier predicateUnifier, final ILogger logger, final CodeCheckSettings globalSettings) {
-		super(cfgSmtToolkit, originalRoot, graphRoot, graphWriter, edgeChecker, predicateUnifier, logger, globalSettings);
+		super(cfgSmtToolkit, originalRoot, graphRoot, graphWriter, edgeChecker, predicateUnifier, logger,
+				globalSettings);
 	}
 
 	/**
@@ -94,6 +95,7 @@ public class UltimateChecker extends CodeChecker {
 			splitNode(nodes[i + 1], interpolants[i]);
 		}
 
+		mEdgeChecker.releaseLock();
 		return true;
 	}
 
