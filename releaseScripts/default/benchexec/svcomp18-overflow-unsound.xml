@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<benchmark tool="ultimateautomizer" memlimit="6GB" timelimit="360" hardtimelimit="112" cpuCores="2">
+
+
+    <rundefinition name="Overflow">
+        <propertyfile>/storage/ultimate/trunk/examples/svcomp/NoOverflows.prp</propertyfile>
+        <option name="--full-output"/>
+    </rundefinition>
+
+    <tasks name="Overflow32bit">
+        <option name="--architecture">32bit</option>
+
+    </tasks>
+
+    <tasks name="Overflow64Bit">
+        <option name="--architecture">64bit</option>
+
+        <include>/storage/ultimate/trunk/examples/svcomp/termination-numeric/TerminatorRec02_true-termination_false-no-overflow.c</include>
+    </tasks>
+
+</benchmark>
