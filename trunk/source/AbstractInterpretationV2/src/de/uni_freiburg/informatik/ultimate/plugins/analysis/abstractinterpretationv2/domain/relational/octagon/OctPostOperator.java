@@ -239,7 +239,7 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Ic
 
 		tmpStates = deepCopy(tmpStates);
 		final AssignmentStatement invarAssign = callInfo.getInParamAssign();
-		final AssignmentStatement oldvarAssign = callInfo.getOldVarAssign();
+		final AssignmentStatement oldvarAssign = callInfo.getOldVarAssign(stateAfterCall.getVariables());
 		if (invarAssign != null) {
 			for (int i = 0; i < invarAssign.getRhs().length; ++i) {
 				tmpStates = mStatementProcessor.processSingleAssignment(callInfo.getTempInParams().get(i),

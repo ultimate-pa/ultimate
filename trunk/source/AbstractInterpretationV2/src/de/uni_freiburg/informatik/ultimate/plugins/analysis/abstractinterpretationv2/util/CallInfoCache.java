@@ -34,6 +34,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
@@ -48,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ILocalProgramVar;
@@ -95,7 +97,8 @@ public final class CallInfoCache {
 	private CallInfo createCallInfo(final CallStatement callStatement) {
 		final Expression[] args = callStatement.getArguments();
 		final List<IProgramVarOrConst> realInParams = getInParams(callStatement);
-		final AssignmentStatement oldVarAssign = getOldvarAssign(callStatement);
+		final Map<IProgramVarOrConst, Pair<VariableLHS, IdentifierExpression>> oldVarAssign =
+				getOldvarAssignMap(callStatement);
 
 		// If there are no arguments, we don't need to rewrite states and thus no inparam assign.
 		if (args.length == 0) {
@@ -167,7 +170,8 @@ public final class CallInfoCache {
 	 * old(x1),...,old(xn) := x1, .... , xn;
 	 * </code>
 	 */
-	private AssignmentStatement getOldvarAssign(final CallStatement callStatement) {
+	private Map<IProgramVarOrConst, Pair<VariableLHS, IdentifierExpression>>
+			getOldvarAssignMap(final CallStatement callStatement) {
 		final Set<IProgramNonOldVar> globals = mCfgSmtToolkit.getSymbolTable().getGlobals();
 		final int globalsSize = globals.size();
 
@@ -175,27 +179,21 @@ public final class CallInfoCache {
 			return null;
 		}
 
-		final LeftHandSide[] lhs = new LeftHandSide[globalsSize];
-		final Expression[] rhs = new Expression[globalsSize];
-		int i = 0;
 		final ILocation loc = callStatement.getLocation();
-
+		final Map<IProgramVarOrConst, Pair<VariableLHS, IdentifierExpression>> oldVarAssign = new HashMap<>();
 		for (final IProgramNonOldVar global : globals) {
 			final DeclarationInformation declInfo = new DeclarationInformation(StorageClass.GLOBAL, null);
 			final IBoogieType bType =
 					mSymbolTable.getTypeForVariableSymbol(global.getGloballyUniqueId(), StorageClass.GLOBAL, null);
-			lhs[i] = new VariableLHS(loc, bType, global.getOldVar().getGloballyUniqueId(), declInfo);
-			rhs[i] = new IdentifierExpression(loc, bType, global.getGloballyUniqueId(), declInfo);
-			++i;
-		}
-		return new AssignmentStatement(loc, lhs, rhs);
-	}
 
-	// private Set<IProgramNonOldVar> getModifiableGlobals(final String methodName) {
-	// final Set<IProgramNonOldVar> modGlobs =
-	// mCfgSmtToolkit.getModifiableGlobalsTable().getModifiedBoogieVars(methodName);
-	// return AbsIntUtil.intersect(modGlobs, mCfgSmtToolkit.getSymbolTable().getGlobals());
-	// }
+			final Pair<VariableLHS, IdentifierExpression> assign =
+					new Pair<>(new VariableLHS(loc, bType, global.getOldVar().getGloballyUniqueId(), declInfo),
+							new IdentifierExpression(loc, bType, global.getGloballyUniqueId(), declInfo));
+			oldVarAssign.put(global, assign);
+		}
+
+		return oldVarAssign;
+	}
 
 	private List<IProgramVarOrConst> getInParams(final CallStatement callStatement) {
 		final Procedure procedure = getProcedure(callStatement.getMethodName());
@@ -249,14 +247,16 @@ public final class CallInfoCache {
 		private final List<IProgramVarOrConst> mTmpVars;
 		private final Map<LeftHandSide, IProgramVarOrConst> mTmpVarUses;
 		private final List<IProgramVarOrConst> mRealInParams;
-		private final AssignmentStatement mOldVarAssign;
+		private final Map<IProgramVarOrConst, Pair<VariableLHS, IdentifierExpression>> mOldVarAssign;
 		private final List<Pair<IProgramVarOrConst, IProgramVarOrConst>> mInParam2TmpVars;
 
-		private CallInfo(final List<IProgramVarOrConst> realInParams, final AssignmentStatement oldVarAssign) {
+		private CallInfo(final List<IProgramVarOrConst> realInParams,
+				final Map<IProgramVarOrConst, Pair<VariableLHS, IdentifierExpression>> oldVarAssign) {
 			this(realInParams, oldVarAssign, null, Collections.emptyList(), Collections.emptyMap());
 		}
 
-		private CallInfo(final List<IProgramVarOrConst> realInParams, final AssignmentStatement oldVarAssign,
+		private CallInfo(final List<IProgramVarOrConst> realInParams,
+				final Map<IProgramVarOrConst, Pair<VariableLHS, IdentifierExpression>> oldVarAssign,
 				final AssignmentStatement inParamAssign, final List<IProgramVarOrConst> tmpVars,
 				final Map<LeftHandSide, IProgramVarOrConst> tmpVarUses) {
 			mOldVarAssign = oldVarAssign;
@@ -294,8 +294,31 @@ public final class CallInfoCache {
 			return mInParamAssign;
 		}
 
-		public AssignmentStatement getOldVarAssign() {
-			return mOldVarAssign;
+		/**
+		 * Get an assignment statement that assigns all old-vars the value of the current global var.
+		 *
+		 * @param globalVars
+		 *            The set of vars for which such an assignment should be provided (should be
+		 *            {@link IAbstractState#getVariables()}.
+		 */
+		public AssignmentStatement getOldVarAssign(final Set<IProgramVarOrConst> globalVars) {
+			final List<Pair<VariableLHS, IdentifierExpression>> pairs = mOldVarAssign.entrySet().stream()
+					.filter(a -> globalVars.contains(a.getKey())).map(a -> a.getValue()).collect(Collectors.toList());
+
+			final int size = pairs.size();
+			if (size == 0) {
+				return null;
+			}
+			final ILocation loc = pairs.get(0).getFirst().getLocation();
+			final LeftHandSide[] lhs = new LeftHandSide[size];
+			final Expression[] rhs = new Expression[size];
+			int idx = 0;
+			for (final Pair<VariableLHS, IdentifierExpression> pair : pairs) {
+				lhs[idx] = pair.getFirst();
+				rhs[idx] = pair.getSecond();
+				idx++;
+			}
+			return new AssignmentStatement(loc, lhs, rhs);
 		}
 	}
 }
