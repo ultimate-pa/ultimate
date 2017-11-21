@@ -302,6 +302,9 @@ public final class CallInfoCache {
 		 *            {@link IAbstractState#getVariables()}.
 		 */
 		public AssignmentStatement getOldVarAssign(final Set<IProgramVarOrConst> globalVars) {
+			if (mOldVarAssign == null) {
+				return null;
+			}
 			final List<Pair<VariableLHS, IdentifierExpression>> pairs = mOldVarAssign.entrySet().stream()
 					.filter(a -> globalVars.contains(a.getKey())).map(a -> a.getValue()).collect(Collectors.toList());
 
