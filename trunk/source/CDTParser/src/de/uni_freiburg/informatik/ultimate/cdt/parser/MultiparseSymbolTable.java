@@ -28,7 +28,7 @@
  * licensors of the ULTIMATE CDTParser plug-in grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.cdt;
+package de.uni_freiburg.informatik.ultimate.cdt.parser;
 
 import org.eclipse.cdt.core.dom.ast.IASTPreprocessorIncludeStatement;
 import org.eclipse.cdt.core.dom.ast.IASTPreprocessorStatement;

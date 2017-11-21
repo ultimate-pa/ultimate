@@ -154,6 +154,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
+import de.uni_freiburg.informatik.ultimate.cdt.parser.MultiparseSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.SymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.ArrayHandler;
@@ -335,11 +336,13 @@ public class CHandler implements ICHandler {
 	 *            a reference to the Backtranslator object.
 	 * @param overapproximateFloatingPointOperations
 	 * @param nameHandler
+	 * @param mst
+	 *            the symbol table which contains the information about which file uses which declaration
 	 */
 	public CHandler(final Dispatcher main, final CACSL2BoogieBacktranslator backtranslator,
 			final boolean errorLabelWarning, final ILogger logger, final ITypeHandler typeHandler,
 			final boolean bitvectorTranslation, final boolean overapproximateFloatingPointOperations,
-			final INameHandler nameHandler) {
+			final INameHandler nameHandler, final MultiparseSymbolTable mst) {
 		final IPreferenceProvider prefs = main.getPreferences();
 		mLogger = logger;
 		mTypeHandler = typeHandler;
@@ -351,7 +354,7 @@ public class CHandler implements ICHandler {
 		mArrayHandler = new ArrayHandler(prefs);
 		final boolean checkPointerValidity = prefs.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_POINTER_VALIDITY);
 
-		mSymbolTable = new SymbolTable(main);
+		mSymbolTable = new SymbolTable(main, mst);
 
 		mDeclarationsGlobalInBoogie = new LinkedHashMap<>();
 		mAxioms = new LinkedHashSet<>();

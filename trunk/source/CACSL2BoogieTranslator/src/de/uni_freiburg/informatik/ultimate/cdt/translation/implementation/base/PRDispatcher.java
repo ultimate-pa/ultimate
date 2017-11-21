@@ -119,6 +119,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratorNode;
+import de.uni_freiburg.informatik.ultimate.cdt.parser.MultiparseSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.SymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
@@ -146,8 +147,9 @@ public class PRDispatcher extends Dispatcher {
 
 	public PRDispatcher(final CACSL2BoogieBacktranslator backtranslator, final IUltimateServiceProvider services,
 			final ILogger logger, final LinkedHashMap<String, Integer> functionToIndex,
-			final LinkedHashSet<IASTDeclaration> reachableDeclarations, final LocationFactory locFac) {
-		super(backtranslator, services, logger, locFac);
+			final LinkedHashSet<IASTDeclaration> reachableDeclarations, final LocationFactory locFac,
+			final MultiparseSymbolTable mst) {
+		super(backtranslator, services, logger, locFac, mst);
 		mFunctionToIndex = functionToIndex;
 		mReachableDeclarations = reachableDeclarations;
 		mVariablesOnHeap = new LinkedHashSet<>();
@@ -170,7 +172,7 @@ public class PRDispatcher extends Dispatcher {
 		mNameHandler = new NameHandler(mBacktranslator);
 		mTypeHandler = new SVCompTypeHandler(bitvectorTranslation);
 		mCHandler = new SvComp14CHandler(this, mBacktranslator, mLogger, mTypeHandler, bitvectorTranslation,
-				overapproximateFloatingPointOperations, mNameHandler);
+				overapproximateFloatingPointOperations, mNameHandler, mMultiparseTable);
 	}
 
 	@Override

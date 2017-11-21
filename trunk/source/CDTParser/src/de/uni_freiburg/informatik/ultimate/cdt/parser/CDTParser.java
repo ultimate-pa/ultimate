@@ -105,7 +105,6 @@ import org.eclipse.core.runtime.jobs.Job;
 
 import de.uni_freiburg.informatik.ultimate.cdt.CommentParser;
 import de.uni_freiburg.informatik.ultimate.cdt.FunctionLineVisitor;
-import de.uni_freiburg.informatik.ultimate.cdt.MultiparseSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.decorator.ASTDecorator;
 import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratedUnit;
 import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratorNode;

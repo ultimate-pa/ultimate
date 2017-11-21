@@ -35,6 +35,7 @@ import java.util.Map;
 
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 
+import de.uni_freiburg.informatik.ultimate.cdt.parser.MultiparseSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.ACSLHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.MainDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.NameHandler;
@@ -55,8 +56,8 @@ public class SvComp14MainDispatcher extends MainDispatcher {
 
 	public SvComp14MainDispatcher(final CACSL2BoogieBacktranslator backtranslator,
 			final Map<IASTNode, ExtractedWitnessInvariant> witnessInvariants, final IUltimateServiceProvider services,
-			final ILogger logger) {
-		super(backtranslator, witnessInvariants, services, logger);
+			final ILogger logger, final MultiparseSymbolTable mst) {
+		super(backtranslator, witnessInvariants, services, logger, mst);
 	}
 
 	@Override
@@ -66,7 +67,7 @@ public class SvComp14MainDispatcher extends MainDispatcher {
 		mAcslHandler = new ACSLHandler(mWitnessInvariants != null);
 		mNameHandler = new NameHandler(mBacktranslator);
 		mCHandler = new SvComp14CHandler(this, mBacktranslator, mLogger, mTypeHandler, mBitvectorTranslation,
-				mOverapproximateFloatingPointOperations, mNameHandler);
+				mOverapproximateFloatingPointOperations, mNameHandler, mMultiparseTable);
 		mBacktranslator.setExpressionTranslation(((SvComp14CHandler) mCHandler).getExpressionTranslation());
 		mPreprocessorHandler = new SvComp14PreprocessorHandler();
 		mReportWarnings = false;

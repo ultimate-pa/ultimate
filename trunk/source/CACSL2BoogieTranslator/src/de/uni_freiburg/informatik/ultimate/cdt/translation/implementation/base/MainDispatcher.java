@@ -141,6 +141,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.LoopInvariantSpecification
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratorNode;
+import de.uni_freiburg.informatik.ultimate.cdt.parser.MultiparseSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
@@ -268,8 +269,8 @@ public class MainDispatcher extends Dispatcher {
 
 	public MainDispatcher(final CACSL2BoogieBacktranslator backtranslator,
 			final Map<IASTNode, ExtractedWitnessInvariant> witnessInvariants, final IUltimateServiceProvider services,
-			final ILogger logger) {
-		super(backtranslator, services, logger, null);
+			final ILogger logger, final MultiparseSymbolTable mst) {
+		super(backtranslator, services, logger, null, mst);
 		mBitvectorTranslation = getPreferences().getBoolean(CACSLPreferenceInitializer.LABEL_BITVECTOR_TRANSLATION);
 		mOverapproximateFloatingPointOperations =
 				getPreferences().getBoolean(CACSLPreferenceInitializer.LABEL_OVERAPPROXIMATE_FLOATS);
@@ -351,7 +352,7 @@ public class MainDispatcher extends Dispatcher {
 		}
 
 		final PRDispatcher prd = new PRDispatcher(mBacktranslator, mServices, mLogger, mFunctionToIndex,
-				mReachableDeclarations, getLocationFactory());
+				mReachableDeclarations, getLocationFactory(), mMultiparseTable);
 		prd.init();
 		prd.dispatch(node);
 		mVariablesOnHeap.addAll(prd.getVariablesOnHeap());
@@ -373,7 +374,7 @@ public class MainDispatcher extends Dispatcher {
 		mAcslHandler = new ACSLHandler(mWitnessInvariants != null);
 		mNameHandler = new NameHandler(mBacktranslator);
 		mCHandler = new CHandler(this, mBacktranslator, true, mLogger, mTypeHandler, mBitvectorTranslation,
-				mOverapproximateFloatingPointOperations, mNameHandler);
+				mOverapproximateFloatingPointOperations, mNameHandler, mMultiparseTable);
 		mBacktranslator.setExpressionTranslation(((CHandler) mCHandler).getExpressionTranslation());
 		mPreprocessorHandler = new PreprocessorHandler();
 		mReportWarnings = true;

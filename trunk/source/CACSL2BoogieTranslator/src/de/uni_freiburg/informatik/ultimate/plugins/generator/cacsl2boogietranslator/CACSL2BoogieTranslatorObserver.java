@@ -178,10 +178,12 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 		mLogger.info("Settings: " + mode);
 		switch (mode) {
 		case BASE:
-			main = new MainDispatcher(backtranslator, mWitnessInvariants, mService, mLogger);
+			main = new MainDispatcher(backtranslator, mWitnessInvariants, mService, mLogger,
+						mInputDecorator.getSymbolTable());
 			break;
 		case SV_COMP14:
-			main = new SvComp14MainDispatcher(backtranslator, mWitnessInvariants, mService, mLogger);
+			main = new SvComp14MainDispatcher(backtranslator, mWitnessInvariants, mService, mLogger,
+						mInputDecorator.getSymbolTable());
 			break;
 		default:
 			throw new IllegalArgumentException("Unknown mode.");

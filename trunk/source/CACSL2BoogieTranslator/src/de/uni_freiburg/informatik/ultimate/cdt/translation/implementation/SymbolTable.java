@@ -37,6 +37,7 @@ import java.util.Stack;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
+import de.uni_freiburg.informatik.ultimate.cdt.parser.MultiparseSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
@@ -62,6 +63,8 @@ public class SymbolTable extends LinkedScopedHashMap<String, SymbolTableValue> {
     private int compoundCounter;
 
     private final Stack<Integer> compoundNrStack = new Stack<>();;
+    
+    private final MultiparseSymbolTable mMultiparseInformation;
 
     /**
      * A reference to the main dispatcher.
@@ -154,12 +157,13 @@ public class SymbolTable extends LinkedScopedHashMap<String, SymbolTableValue> {
      * @param main
      *            a reference to the main dispatcher.
      */
-    public SymbolTable(Dispatcher main) {
+    public SymbolTable(Dispatcher main, final MultiparseSymbolTable mst) {
         super();
         boogieID2CID = new HashMap<String, String>();
         mCDecl2BoogieDecl = new HashMap<CDeclaration, Declaration>();
         compoundCounter = 0;
         this.main = main;
+        mMultiparseInformation = mst;
     }
 
     /**

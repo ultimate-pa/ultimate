@@ -61,6 +61,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.cdt.parser.MultiparseSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler.MemoryModelDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
@@ -129,9 +130,10 @@ public class SvComp14CHandler extends CHandler {
 	 */
 	public SvComp14CHandler(final Dispatcher main, final CACSL2BoogieBacktranslator backtranslator,
 			final ILogger logger, final ITypeHandler typeHandler, final boolean bitvectorTranslation,
-			final boolean overapproximateFloatingPointOperations, final INameHandler nameHandler) {
+			final boolean overapproximateFloatingPointOperations, final INameHandler nameHandler,
+			final MultiparseSymbolTable mst) {
 		super(main, backtranslator, false, logger, typeHandler, bitvectorTranslation,
-				overapproximateFloatingPointOperations, nameHandler);
+				overapproximateFloatingPointOperations, nameHandler, mst);
 	}
 
 	@Override

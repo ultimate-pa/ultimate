@@ -45,6 +45,7 @@ import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 import org.eclipse.cdt.core.dom.ast.IType;
 
 import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratorNode;
+import de.uni_freiburg.informatik.ultimate.cdt.parser.MultiparseSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.LineDirectiveMapping;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.NextACSL;
@@ -130,9 +131,11 @@ public abstract class Dispatcher {
 	private final TranslationSettings mTranslationSettings;
 
 	private LocationFactory mLocationFactory;
+	
+	protected final MultiparseSymbolTable mMultiparseTable;
 
 	public Dispatcher(final CACSL2BoogieBacktranslator backtranslator, final IUltimateServiceProvider services,
-			final ILogger logger, final LocationFactory locFac) {
+			final ILogger logger, final LocationFactory locFac, final MultiparseSymbolTable mst) {
 		mBacktranslator = backtranslator;
 		mLogger = logger;
 		mServices = services;
@@ -140,6 +143,7 @@ public abstract class Dispatcher {
 		mTypeSizes = new TypeSizes(mPreferences);
 		mTranslationSettings = new TranslationSettings(mPreferences);
 		mLocationFactory = locFac;
+		mMultiparseTable = mst;
 	}
 
 	/**
