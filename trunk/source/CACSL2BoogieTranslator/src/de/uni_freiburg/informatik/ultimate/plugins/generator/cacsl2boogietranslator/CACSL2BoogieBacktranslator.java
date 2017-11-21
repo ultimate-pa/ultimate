@@ -82,7 +82,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.ACSLLo
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.AExpressionTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CNamed;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
@@ -147,7 +147,7 @@ public class CACSL2BoogieBacktranslator
 	private final Boogie2C mBoogie2C;
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
-	private AExpressionTranslation mExpressionTranslation;
+	private ExpressionTranslation mExpressionTranslation;
 	private boolean mGenerateBacktranslationWarnings;
 	private LocationFactory mLocationFactory;
 
@@ -159,7 +159,7 @@ public class CACSL2BoogieBacktranslator
 		mGenerateBacktranslationWarnings = true;
 	}
 
-	public void setExpressionTranslation(final AExpressionTranslation expressionTranslation) {
+	public void setExpressionTranslation(final ExpressionTranslation expressionTranslation) {
 		mExpressionTranslation = expressionTranslation;
 	}
 

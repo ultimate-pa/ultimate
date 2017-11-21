@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.C
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationUtil;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.PRDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.AExpressionTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarHelper;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
@@ -112,12 +112,12 @@ public class InitializationHandler {
 
 	private final MemoryHandler mMemoryHandler;
 
-	private final AExpressionTranslation mExpressionTranslation;
+	private final ExpressionTranslation mExpressionTranslation;
 
 	private boolean mDeclareArrayInitializationFunction;
 
 	public InitializationHandler(final FunctionHandler functionHandler, final StructHandler structHandler,
-			final MemoryHandler memoryHandler, final AExpressionTranslation expressionTranslation) {
+			final MemoryHandler memoryHandler, final ExpressionTranslation expressionTranslation) {
 		super();
 		mFunctionHandler = functionHandler;
 		mStructHandler = structHandler;

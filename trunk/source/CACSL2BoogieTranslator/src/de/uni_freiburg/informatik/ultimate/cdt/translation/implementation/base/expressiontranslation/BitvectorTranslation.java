@@ -68,7 +68,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.IT
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.PointerIntegerConversion;
 
-public class BitvectorTranslation extends AExpressionTranslation {
+public class BitvectorTranslation extends ExpressionTranslation {
 
 	private final Expression mRoundingMode;
 	public static final String BOOGIE_ROUNDING_MODE_IDENTIFIER = "FloatRoundingMode";

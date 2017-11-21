@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.StructAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructConstructor;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.AExpressionTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStruct;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
@@ -76,13 +76,13 @@ public class StructHandler {
 
 	private final MemoryHandler mMemoryHandler;
 	private final TypeSizeAndOffsetComputer mTypeSizeAndOffsetComputer;
-	private final AExpressionTranslation mExpressionTranslation;
+	private final ExpressionTranslation mExpressionTranslation;
 
 
 
 	public StructHandler(final MemoryHandler memoryHandler,
 			final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer,
-			final AExpressionTranslation expressionTranslation) {
+			final ExpressionTranslation expressionTranslation) {
 		super();
 		mMemoryHandler = memoryHandler;
 		mTypeSizeAndOffsetComputer = typeSizeAndOffsetComputer;

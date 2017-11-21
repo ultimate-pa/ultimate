@@ -33,7 +33,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 
 /**
  * Auxiliary class for decomposing and representing C float functions.
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */

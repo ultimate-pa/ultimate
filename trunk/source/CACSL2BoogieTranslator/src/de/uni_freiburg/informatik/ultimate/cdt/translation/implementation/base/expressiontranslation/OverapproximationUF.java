@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
 public class OverapproximationUF implements IPointerIntegerConversion {
 	
-	protected final  AExpressionTranslation mExpressionTranslation;
+	protected final  ExpressionTranslation mExpressionTranslation;
 	private final FunctionDeclarations mFunctionDeclarations;
 	private final ITypeHandler mTypeHandler;
 	
@@ -59,7 +59,7 @@ public class OverapproximationUF implements IPointerIntegerConversion {
 	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
 	 */
 
-	public OverapproximationUF(AExpressionTranslation expressionTranslation, FunctionDeclarations functionDeclarations,
+	public OverapproximationUF(ExpressionTranslation expressionTranslation, FunctionDeclarations functionDeclarations,
 			ITypeHandler typeHandler) {
 		super();
 		mExpressionTranslation = expressionTranslation;

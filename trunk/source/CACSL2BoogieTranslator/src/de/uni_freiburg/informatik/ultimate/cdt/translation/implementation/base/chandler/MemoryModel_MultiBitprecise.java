@@ -37,7 +37,7 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler.RequiredMemoryModelFeatures;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.AExpressionTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
@@ -53,7 +53,7 @@ public class MemoryModel_MultiBitprecise extends AMemoryModel {
 	private final Map<Integer, HeapDataArray> mSize2HeapFloatingArray = new HashMap<>();
 
 	public MemoryModel_MultiBitprecise(final TypeSizes typeSizes, final ITypeHandler typeHandler,
-			final AExpressionTranslation expressionTranslation) {
+			final ExpressionTranslation expressionTranslation) {
 		super(typeSizes, typeHandler, expressionTranslation);
 	}
 

@@ -35,7 +35,7 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler.RequiredMemoryModelFeatures;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.AExpressionTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
@@ -51,7 +51,7 @@ public class MemoryModel_Unbounded extends AMemoryModel {
 	private final HeapDataArray mIntegerArray;
 	private final HeapDataArray mFloatingArray;
 	
-	public MemoryModel_Unbounded(TypeSizes typeSizes, ITypeHandler typeHandler, AExpressionTranslation expressionTranslation) {
+	public MemoryModel_Unbounded(TypeSizes typeSizes, ITypeHandler typeHandler, ExpressionTranslation expressionTranslation) {
 		super(typeSizes, typeHandler, expressionTranslation);
 		
 		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();

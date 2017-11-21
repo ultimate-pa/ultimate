@@ -80,7 +80,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.PointerIntegerConversion;
 
-public abstract class AExpressionTranslation {
+public abstract class ExpressionTranslation {
 	
 	protected final FunctionDeclarations mFunctionDeclarations;
 	protected final TypeSizes mTypeSizes;
@@ -89,7 +89,7 @@ public abstract class AExpressionTranslation {
 	protected final boolean mOverapproximateFloatingPointOperations;
 
 
-	public AExpressionTranslation(final TypeSizes typeSizes, final ITypeHandler typeHandler,
+	public ExpressionTranslation(final TypeSizes typeSizes, final ITypeHandler typeHandler,
 			final PointerIntegerConversion pointerIntegerConversion,
 			final boolean overapproximateFloatingPointOperations) {
 		super();

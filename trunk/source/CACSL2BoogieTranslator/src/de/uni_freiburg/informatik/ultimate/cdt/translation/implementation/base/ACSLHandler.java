@@ -68,7 +68,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.StructHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.AExpressionTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
@@ -376,7 +376,7 @@ public class ACSLHandler implements IACSLHandler {
 		left = left.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
 		right = right.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
 
-		final AExpressionTranslation expressionTranslation = ((CHandler) main.mCHandler).getExpressionTranslation();
+		final ExpressionTranslation expressionTranslation = ((CHandler) main.mCHandler).getExpressionTranslation();
 
 		final ArrayList<Declaration> decl = new ArrayList<Declaration>();
 		final ArrayList<Statement> stmt = new ArrayList<Statement>();
@@ -522,7 +522,7 @@ public class ACSLHandler implements IACSLHandler {
 		 * return new Result( new de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral(
 		 * LocationFactory.createACSLLocation(node), node.getValue()));
 		 */
-		final AExpressionTranslation expressionTranslation = ((CHandler) main.mCHandler).getExpressionTranslation();
+		final ExpressionTranslation expressionTranslation = ((CHandler) main.mCHandler).getExpressionTranslation();
 		final ILocation loc = main.getLocationFactory().createACSLLocation(node);
 		final String val = node.getValue();
 		final RValue rValue = expressionTranslation.translateIntegerLiteral(loc, val);
@@ -544,7 +544,7 @@ public class ACSLHandler implements IACSLHandler {
 
 	@Override
 	public Result visit(final Dispatcher main, final RealLiteral node) {
-		final AExpressionTranslation expressionTranslation = ((CHandler) main.mCHandler).getExpressionTranslation();
+		final ExpressionTranslation expressionTranslation = ((CHandler) main.mCHandler).getExpressionTranslation();
 		final RValue rValue = expressionTranslation.translateFloatingLiteral(main.getLocationFactory().createACSLLocation(node),
 				node.getValue());
 		return new ExpressionResult(rValue);
@@ -979,7 +979,7 @@ public class ACSLHandler implements IACSLHandler {
 		final MemoryHandler memoryHandler = ((CHandler) main.mCHandler).getMemoryHandler();
 		final StructHandler structHandler = ((CHandler) main.mCHandler).mStructHandler;
 		expr = expr.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
-		final AExpressionTranslation expressionTranslation = ((CHandler) main.mCHandler).getExpressionTranslation();
+		final ExpressionTranslation expressionTranslation = ((CHandler) main.mCHandler).getExpressionTranslation();
 		expressionTranslation.convertIfNecessary(loc, expr, resultType);
 		return expr;
 	}

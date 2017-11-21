@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.ArrayHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.StructHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.AExpressionTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarHelper;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
@@ -104,7 +104,7 @@ public class CTranslationUtil {
 	}
 
 	public static LocalLValue constructArrayAccessLhs(final ILocation loc, final LocalLValue arrayLhsToInitialize,
-			final List<Integer> arrayIndex, final AExpressionTranslation expressionTranslation) {
+			final List<Integer> arrayIndex, final ExpressionTranslation expressionTranslation) {
 		final CArray cArrayType = (CArray) arrayLhsToInitialize.getCType().getUnderlyingType();
 
 		assert cArrayType.getDimensions().length == arrayIndex.size();
@@ -122,7 +122,7 @@ public class CTranslationUtil {
 	}
 
 	public static LocalLValue constructArrayAccessLhs(final ILocation loc, final LocalLValue arrayLhsToInitialize,
-			final Integer arrayIndex, final AExpressionTranslation expressionTranslation) {
+			final Integer arrayIndex, final ExpressionTranslation expressionTranslation) {
 		final CArray cArrayType = (CArray) arrayLhsToInitialize.getCType().getUnderlyingType();
 
 		final CPrimitive currentIndexType = (CPrimitive) cArrayType.getDimensions()[0].getCType();
@@ -235,7 +235,7 @@ public class CTranslationUtil {
 		return new HeapLValue(newPointer, cStructType.getFieldTypes()[fieldIndex]);
 	}
 
-	public static boolean isVarlengthArray(final CArray cArrayType, final AExpressionTranslation expressionTranslation) {
+	public static boolean isVarlengthArray(final CArray cArrayType, final ExpressionTranslation expressionTranslation) {
 		for (final RValue dimRVal : cArrayType.getDimensions()) {
 			if (expressionTranslation.extractIntegerValue(dimRVal) == null) {
 				return true;
@@ -245,13 +245,13 @@ public class CTranslationUtil {
 	}
 
 	public static boolean isToplevelVarlengthArray(final CArray cArrayType,
-			final AExpressionTranslation expressionTranslation) {
+			final ExpressionTranslation expressionTranslation) {
 		final RValue dimRVal = cArrayType.getDimensions()[0];
 		return expressionTranslation.extractIntegerValue(dimRVal) == null;
 	}
 
 	public static List<Integer> getConstantDimensionsOfArray(final CArray cArrayType,
-			final AExpressionTranslation expressionTranslation) {
+			final ExpressionTranslation expressionTranslation) {
 		if (CTranslationUtil.isVarlengthArray(cArrayType, expressionTranslation)) {
 			throw new IllegalArgumentException("only call this for non-varlength array types");
 		}
@@ -268,7 +268,7 @@ public class CTranslationUtil {
 	}
 
 	public static int getConstantFirstDimensionOfArray(final CArray cArrayType,
-			final AExpressionTranslation expressionTranslation) {
+			final ExpressionTranslation expressionTranslation) {
 		final RValue dimRVal = cArrayType.getDimensions()[0];
 
 		final BigInteger extracted = expressionTranslation.extractIntegerValue(dimRVal);

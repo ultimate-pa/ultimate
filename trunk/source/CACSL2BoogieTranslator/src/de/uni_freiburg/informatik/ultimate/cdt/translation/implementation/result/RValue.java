@@ -30,7 +30,7 @@ import java.math.BigInteger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.AExpressionTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
@@ -91,7 +91,7 @@ public class RValue extends LRValue {
 	}
 
 	static RValue boolToInt(final ILocation loc, final RValue rVal,
-			final AExpressionTranslation expressionTranslation) {
+			final ExpressionTranslation expressionTranslation) {
 		assert rVal.isBoogieBool();
 		final Expression one = expressionTranslation.constructLiteralForIntegerType(loc,
 				new CPrimitive(CPrimitives.INT), BigInteger.ONE);

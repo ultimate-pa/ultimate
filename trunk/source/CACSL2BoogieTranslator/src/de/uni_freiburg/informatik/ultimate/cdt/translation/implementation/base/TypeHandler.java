@@ -64,7 +64,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.StructType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.TypeDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.SymbolTable;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.AExpressionTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType.Type;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
@@ -684,7 +684,7 @@ public class TypeHandler implements ITypeHandler {
 	 * translation, e.g., pointers.
 	 */
 	public ArrayList<Declaration> constructTranslationDefiniedDelarations(final ILocation tuLoc,
-			final AExpressionTranslation expressionTranslation) {
+			final ExpressionTranslation expressionTranslation) {
 		final ArrayList<Declaration> decl = new ArrayList<>();
 		if (mPointerTypeNeeded) {
 			final VarList fBase = new VarList(tuLoc, new String[] { SFO.POINTER_BASE },

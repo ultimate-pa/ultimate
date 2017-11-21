@@ -47,10 +47,10 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
  */
 public class NonBijectiveMapping implements IPointerIntegerConversion {
 	
-	protected final  AExpressionTranslation mExpressionTranslation;
+	protected final  ExpressionTranslation mExpressionTranslation;
 	private final ITypeHandler mTypeHandler;
 	
-	public NonBijectiveMapping(AExpressionTranslation expressionTranslation,
+	public NonBijectiveMapping(ExpressionTranslation expressionTranslation,
 			ITypeHandler typeHandler) {
 		mExpressionTranslation = expressionTranslation;
 		mTypeHandler = typeHandler;

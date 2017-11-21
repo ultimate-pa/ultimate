@@ -77,7 +77,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransla
  * @author Thomas Lang
  *
  */
-public class IntegerTranslation extends AExpressionTranslation {
+public class IntegerTranslation extends ExpressionTranslation {
 
 	private static final boolean OVERAPPROXIMATE_INT_POINTER_CONVERSION = true;
 

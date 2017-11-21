@@ -74,7 +74,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.Locati
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.AExpressionTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.BitvectorTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
@@ -107,7 +107,7 @@ public class PostProcessor {
 	private final Dispatcher mDispatcher;
 	private final ILogger mLogger;
 
-	private final AExpressionTranslation mExpressionTranslation;
+	private final ExpressionTranslation mExpressionTranslation;
 	private final boolean mOverapproximateFloatingPointOperations;
 
 	/*
@@ -122,7 +122,7 @@ public class PostProcessor {
 	 * @param overapproximateFloatingPointOperations
 	 */
 	public PostProcessor(final Dispatcher dispatcher, final ILogger logger,
-			final AExpressionTranslation expressionTranslation, final boolean overapproximateFloatingPointOperations) {
+			final ExpressionTranslation expressionTranslation, final boolean overapproximateFloatingPointOperations) {
 		mInitializedGlobals = new LinkedHashSet<>();
 		mDispatcher = dispatcher;
 		mLogger = logger;
@@ -162,7 +162,7 @@ public class PostProcessor {
 			final MemoryHandler memoryHandler, final ArrayHandler arrayHandler, final FunctionHandler functionHandler,
 			final StructHandler structHandler, final TypeHandler typeHandler, final Set<String> undefinedTypes,
 			final LinkedHashMap<Declaration, CDeclaration> mDeclarationsGlobalInBoogie,
-			final AExpressionTranslation expressionTranslation) {
+			final ExpressionTranslation expressionTranslation) {
 		final ArrayList<Declaration> decl = new ArrayList<>();
 		decl.addAll(declareUndefinedTypes(loc, undefinedTypes));
 		decl.addAll(createUltimateInitProcedure(loc, main, memoryHandler, arrayHandler, functionHandler, structHandler,
@@ -303,7 +303,7 @@ public class PostProcessor {
 			final Dispatcher main, final MemoryHandler memoryHandler, final ArrayHandler arrayHandler,
 			final FunctionHandler functionHandler, final StructHandler structHandler,
 			final LinkedHashMap<Declaration, CDeclaration> declarationsGlobalInBoogie,
-			final AExpressionTranslation expressionTranslation) {
+			final ExpressionTranslation expressionTranslation) {
 		functionHandler.beginUltimateInitOrStart(main, translationUnitLoc, SFO.INIT);
 		final ArrayList<Statement> initStatements = new ArrayList<>();
 
@@ -576,7 +576,7 @@ public class PostProcessor {
 	 */
 	public static ArrayList<Declaration> declareFloatDataTypes(final ILocation loc, final TypeSizes typesizes,
 			final TypeHandler typeHandler, final boolean overapproximateFloat,
-			final AExpressionTranslation expressionTranslation) {
+			final ExpressionTranslation expressionTranslation) {
 		final ArrayList<Declaration> decls = new ArrayList<>();
 
 		// Roundingmodes, for now RNE hardcoded

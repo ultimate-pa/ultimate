@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.AExpressionTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
@@ -84,7 +84,7 @@ public class TypeSizeAndOffsetComputer {
 		private final TypeSizes mTypeSizes;
 		
 
-		private final AExpressionTranslation mExpressionTranslation;
+		private final ExpressionTranslation mExpressionTranslation;
 		
 		/**
 		 * Given the field of a struct myStruct.myField such that the offset
@@ -100,7 +100,7 @@ public class TypeSizeAndOffsetComputer {
 		
 	    private SizeTValue mTypeSizePointer = null;
 	    
-	    public TypeSizeAndOffsetComputer(TypeHandler typeHandler, AExpressionTranslation expressionTranslation, TypeSizes typeSizes) {
+	    public TypeSizeAndOffsetComputer(TypeHandler typeHandler, ExpressionTranslation expressionTranslation, TypeSizes typeSizes) {
 			mExpressionTranslation = expressionTranslation;
 	    	mTypeHandler = typeHandler;
 	    	mTypeSizes = typeSizes;

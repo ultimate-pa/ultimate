@@ -69,7 +69,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.c
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler.MemoryModelDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.StructHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.AExpressionTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.FloatFunction;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.FloatSupportInUltimate;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
@@ -113,7 +113,7 @@ public class StandardFunctionHandler {
 
 	private final ITypeHandler mTypeHandler;
 
-	private final AExpressionTranslation mExpressionTranslation;
+	private final ExpressionTranslation mExpressionTranslation;
 
 	private final MemoryHandler mMemoryHandler;
 
@@ -125,7 +125,7 @@ public class StandardFunctionHandler {
 
 	private final CHandler mCHandler;
 
-	public StandardFunctionHandler(final ITypeHandler typeHandler, final AExpressionTranslation expressionTranslation,
+	public StandardFunctionHandler(final ITypeHandler typeHandler, final ExpressionTranslation expressionTranslation,
 			final MemoryHandler memoryHandler, final StructHandler structHandler,
 			final TypeSizeAndOffsetComputer typeSizeComputer, final FunctionHandler functionHandler,
 			final CHandler cHandler) {
@@ -984,7 +984,7 @@ public class StandardFunctionHandler {
 	 */
 	private static List<Statement> constructMemsafetyChecksForPointerExpression(final ILocation loc,
 			final Expression pointerValue, final MemoryHandler memoryHandler,
-			final AExpressionTranslation expressionTranslation) {
+			final ExpressionTranslation expressionTranslation) {
 		final List<Statement> result = new ArrayList<>();
 
 		if (memoryHandler.getPointerBaseValidityCheckMode() != PointerCheckMode.IGNORE) {

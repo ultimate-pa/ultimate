@@ -61,7 +61,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.C
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.PRDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.StructHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.AExpressionTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
@@ -376,7 +376,7 @@ public class ExpressionResult extends Result {
 				final Expression innerStructOffset =
 						memoryHandler.getTypeSizeAndOffsetComputer().constructOffsetForField(loc, structType, i);
 
-				final AExpressionTranslation exprTrans = ((CHandler) main.mCHandler).getExpressionTranslation();
+				final ExpressionTranslation exprTrans = ((CHandler) main.mCHandler).getExpressionTranslation();
 				final Expression offsetSum = exprTrans.constructArithmeticExpression(loc, IASTBinaryExpression.op_plus,
 						currentStructOffset, exprTrans.getCTypeOfPointerComponents(), innerStructOffset,
 						exprTrans.getCTypeOfPointerComponents());
@@ -425,7 +425,7 @@ public class ExpressionResult extends Result {
 		final ArrayList<Overapprox> overApp = new ArrayList<>();
 
 		if (arrayType.getDimensions().length == 1) {
-			final AExpressionTranslation exprTrans = ((CHandler) main.mCHandler).getExpressionTranslation();
+			final ExpressionTranslation exprTrans = ((CHandler) main.mCHandler).getExpressionTranslation();
 			final BigInteger dimBigInteger = exprTrans.extractIntegerValue(arrayType.getDimensions()[0]);
 			if (dimBigInteger == null) {
 				throw new UnsupportedSyntaxException(loc, "variable length arrays not yet supported by this method");
@@ -565,7 +565,7 @@ public class ExpressionResult extends Result {
 	 * of the former conversion instead of applying a new one.
 	 */
 	private static RValue toBoolean(final ILocation loc, final RValue rVal,
-			final AExpressionTranslation expressionTranslation, final MemoryHandler memoryHandler) {
+			final ExpressionTranslation expressionTranslation, final MemoryHandler memoryHandler) {
 		assert !rVal.isBoogieBool();
 		CType underlyingType = rVal.getCType().getUnderlyingType();
 		underlyingType = CEnum.replaceEnumWithInt(underlyingType);
@@ -587,7 +587,7 @@ public class ExpressionResult extends Result {
 	 * int <code>x</code> of form <code>y ? 1 : 0</code> becomes <code>!y ? 1 : 0</code> /** int <code>x</code> becomes
 	 * <code>x == 0 ? 1 : 0</code>
 	 */
-	public void rexIntToBoolIfNecessary(final ILocation loc, final AExpressionTranslation expressionTranslation,
+	public void rexIntToBoolIfNecessary(final ILocation loc, final ExpressionTranslation expressionTranslation,
 			final MemoryHandler memoryHandler) {
 		if (!(mLrVal instanceof RValue)) {
 			throw new UnsupportedOperationException("only RValue can switch");
@@ -600,7 +600,7 @@ public class ExpressionResult extends Result {
 	}
 
 	/** boolean <code>p</code> becomes <code>!p ? 1 : 0</code> */
-	public void rexBoolToIntIfNecessary(final ILocation loc, final AExpressionTranslation expressionTranslation) {
+	public void rexBoolToIntIfNecessary(final ILocation loc, final ExpressionTranslation expressionTranslation) {
 		if (!(mLrVal instanceof RValue)) {
 			throw new UnsupportedOperationException("only RValue can switch");
 		}

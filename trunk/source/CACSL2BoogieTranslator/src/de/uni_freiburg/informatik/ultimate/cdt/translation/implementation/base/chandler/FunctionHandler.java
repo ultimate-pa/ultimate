@@ -91,7 +91,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.M
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.PRDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler.MemoryModelDeclarations;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.AExpressionTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
@@ -171,7 +171,7 @@ public class FunctionHandler {
 	 */
 	private final LinkedHashSet<ProcedureSignature> mFunctionSignaturesThatHaveAFunctionPointer;
 
-	private final AExpressionTranslation mExpressionTranslation;
+	private final ExpressionTranslation mExpressionTranslation;
 	private final TypeSizeAndOffsetComputer mTypeSizeComputer;
 
 	/**
@@ -181,7 +181,7 @@ public class FunctionHandler {
 	 * @param typeSizeComputer
 	 * @param checkMemoryLeakAtEndOfMain
 	 */
-	public FunctionHandler(final AExpressionTranslation expressionTranslation,
+	public FunctionHandler(final ExpressionTranslation expressionTranslation,
 			final TypeSizeAndOffsetComputer typeSizeComputer) {
 		mExpressionTranslation = expressionTranslation;
 		mTypeSizeComputer = typeSizeComputer;

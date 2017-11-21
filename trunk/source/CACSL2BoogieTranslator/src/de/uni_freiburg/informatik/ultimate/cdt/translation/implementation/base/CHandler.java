@@ -164,7 +164,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.c
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.StructHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.AExpressionTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.BitvectorTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.IntegerTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
@@ -474,7 +474,7 @@ public class CHandler implements ICHandler {
 	 */
 	protected final boolean mErrorLabelWarning;
 
-	protected final AExpressionTranslation mExpressionTranslation;
+	protected final ExpressionTranslation mExpressionTranslation;
 
 	protected final TypeSizeAndOffsetComputer mTypeSizeComputer;
 
@@ -2367,7 +2367,7 @@ public class CHandler implements ICHandler {
 	public ExpressionResult doPointerArithmeticWithConversion(final Dispatcher main, final int operator,
 			final ILocation loc, final Expression ptrAddress, final RValue integer, final CType valueType) {
 		final ExpressionResult eres = new ExpressionResult(integer);
-		final AExpressionTranslation exprTrans = ((CHandler) main.mCHandler).getExpressionTranslation();
+		final ExpressionTranslation exprTrans = ((CHandler) main.mCHandler).getExpressionTranslation();
 		exprTrans.convertIntToInt(loc, eres, exprTrans.getCTypeOfPointerComponents());
 		final Expression resultExpression =
 				mMemoryHandler.doPointerArithmetic(operator, loc, ptrAddress, (RValue) eres.mLrVal, valueType);
@@ -2376,7 +2376,7 @@ public class CHandler implements ICHandler {
 	}
 
 	@Override
-	public AExpressionTranslation getExpressionTranslation() {
+	public ExpressionTranslation getExpressionTranslation() {
 		return mExpressionTranslation;
 	}
 

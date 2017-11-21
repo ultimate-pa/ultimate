@@ -87,7 +87,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.Locati
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.AMemoryModel.ReadWriteDefinition;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.AExpressionTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CNamed;
@@ -158,7 +158,7 @@ public class MemoryHandler {
 	 */
 	private final LinkedScopedHashMap<LocalLValueILocationPair, Integer> mVariablesToBeFreed;
 
-	private final AExpressionTranslation mExpressionTranslation;
+	private final ExpressionTranslation mExpressionTranslation;
 
 	private final TypeSizeAndOffsetComputer mTypeSizeAndOffsetComputer;
 	private final TypeSizes mTypeSizes;
@@ -180,7 +180,7 @@ public class MemoryHandler {
 	 */
 	public MemoryHandler(final ITypeHandler typeHandler, final FunctionHandler functionHandler,
 			final boolean checkPointerValidity, final TypeSizeAndOffsetComputer typeSizeComputer,
-			final TypeSizes typeSizes, final AExpressionTranslation expressionTranslation,
+			final TypeSizes typeSizes, final ExpressionTranslation expressionTranslation,
 			final boolean bitvectorTranslation, final INameHandler nameHandler, final boolean smtBoolArrayWorkaround,
 			final IPreferenceProvider prefs) {
 		mTypeHandler = typeHandler;

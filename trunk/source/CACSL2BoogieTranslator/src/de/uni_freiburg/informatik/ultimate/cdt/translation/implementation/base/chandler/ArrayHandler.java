@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.AExpressionTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
@@ -149,7 +149,7 @@ public class ArrayHandler {
 				// The following is not in the standard, since there everything
 				// is defined via pointers. However, we have to make the subscript
 				// compatible to the type of the dimension of the array
-				final AExpressionTranslation et = ((CHandler) main.mCHandler).getExpressionTranslation();
+				final ExpressionTranslation et = ((CHandler) main.mCHandler).getExpressionTranslation();
 				et.convertIntToInt(loc, subscript, (CPrimitive) currentDimension.getCType());
 				final RValue index = (RValue) subscript.mLrVal;
 				final ArrayLHS newInnerArrayLHS;

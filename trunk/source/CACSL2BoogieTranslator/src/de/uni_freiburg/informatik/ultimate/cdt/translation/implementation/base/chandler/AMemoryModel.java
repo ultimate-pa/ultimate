@@ -40,7 +40,7 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler.RequiredMemoryModelFeatures;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.AExpressionTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitiveCategory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
@@ -60,7 +60,7 @@ public abstract class AMemoryModel {
 	
 	private final HeapDataArray mPointerArray;
 	
-	public AMemoryModel(final TypeSizes typeSizes, final ITypeHandler typeHandler, final AExpressionTranslation expressionTranslation) {
+	public AMemoryModel(final TypeSizes typeSizes, final ITypeHandler typeHandler, final ExpressionTranslation expressionTranslation) {
 		mTypeSizes = typeSizes;
 		mTypeHandler = typeHandler;
 		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
