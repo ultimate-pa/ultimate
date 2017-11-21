@@ -266,7 +266,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 	private void declareBitvectorFunction(final ILocation loc, final String prefixedFunctionName, final boolean boogieResultTypeBool,
 			final CPrimitive resultCType, final CPrimitive... paramCType) {
 		final String functionName = prefixedFunctionName.substring(1, prefixedFunctionName.length());
-		final Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.s_OVERAPPROX_IDENTIFIER,
+		final Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.OVERAPPROX_IDENTIFIER,
 				new Expression[] { new StringLiteral(loc, functionName) });
 		final Attribute[] attributes = new Attribute[] { attribute };
 		mFunctionDeclarations.declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + functionName, attributes,
@@ -681,7 +681,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 			final String functionName = "someBinary" + type1.toString() + "ComparisonOperation";
 			final String prefixedFunctionName = "~" + functionName;
 			if (!mFunctionDeclarations.getDeclaredFunctions().containsKey(prefixedFunctionName)) {
-				final Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.s_OVERAPPROX_IDENTIFIER,
+				final Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.OVERAPPROX_IDENTIFIER,
 						new Expression[] { new StringLiteral(loc, functionName) });
 				final Attribute[] attributes = new Attribute[] { attribute };
 				final ASTType paramAstType = mTypeHandler.cType2AstType(loc, type1);
@@ -726,7 +726,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 			final String functionName = "someUnary" + type.toString() + "operation";
 			final String prefixedFunctionName = "~" + functionName;
 			if (!mFunctionDeclarations.getDeclaredFunctions().containsKey(prefixedFunctionName)) {
-				final Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.s_OVERAPPROX_IDENTIFIER,
+				final Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.OVERAPPROX_IDENTIFIER,
 						new Expression[] { new StringLiteral(loc, functionName) });
 				final Attribute[] attributes = new Attribute[] { attribute };
 				final ASTType astType = mTypeHandler.cType2AstType(loc, type);
@@ -745,7 +745,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 			final String functionName = "someBinaryArithmetic" + type1.toString() + "operation";
 			final String prefixedFunctionName = "~" + functionName;
 			if (!mFunctionDeclarations.getDeclaredFunctions().containsKey(prefixedFunctionName)) {
-				final Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.s_OVERAPPROX_IDENTIFIER,
+				final Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.OVERAPPROX_IDENTIFIER,
 						new Expression[] { new StringLiteral(loc, functionName) });
 				final Attribute[] attributes = new Attribute[] { attribute };
 				final ASTType astType = mTypeHandler.cType2AstType(loc, type1);

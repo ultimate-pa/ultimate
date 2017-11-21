@@ -586,7 +586,7 @@ public class PostProcessor {
 		} else {
 			final String smtlibRmIdentifier = "RoundingMode";
 			attributesRM = new Attribute[1];
-			attributesRM[0] = new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER,
+			attributesRM[0] = new NamedAttribute(loc, FunctionDeclarations.BUILTIN_IDENTIFIER,
 					new Expression[] { new StringLiteral(loc, smtlibRmIdentifier) });
 		}
 		final String[] typeParamsRM = new String[0];
@@ -599,9 +599,9 @@ public class PostProcessor {
 			attributesRNE = new Attribute[0];
 			attributesRTZ = new Attribute[0];
 		} else {
-			final Attribute attributeRNE = new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER,
+			final Attribute attributeRNE = new NamedAttribute(loc, FunctionDeclarations.BUILTIN_IDENTIFIER,
 					new Expression[] { new StringLiteral(loc, "RNE") });
-			final Attribute attributeRTZ = new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER,
+			final Attribute attributeRTZ = new NamedAttribute(loc, FunctionDeclarations.BUILTIN_IDENTIFIER,
 					new Expression[] { new StringLiteral(loc, "RTZ") });
 			attributesRNE = new Attribute[] { attributeRNE };
 			attributesRTZ = new Attribute[] { attributeRTZ };
@@ -638,7 +638,7 @@ public class PostProcessor {
 					attributes = new Attribute[0];
 				} else {
 					attributes = new Attribute[2];
-					attributes[0] = new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER,
+					attributes[0] = new NamedAttribute(loc, FunctionDeclarations.BUILTIN_IDENTIFIER,
 							new Expression[] { new StringLiteral(loc, "FloatingPoint") });
 					final int bytesize = typesizes.getSize(cPrimitive);
 					final int[] indices = new int[2];
@@ -659,7 +659,7 @@ public class PostProcessor {
 					default:
 						throw new UnsupportedSyntaxException(loc, "unknown primitive type");
 					}
-					attributes[1] = new NamedAttribute(loc, FunctionDeclarations.s_INDEX_IDENTIFIER,
+					attributes[1] = new NamedAttribute(loc, FunctionDeclarations.INDEX_IDENTIFIER,
 							new Expression[] { new IntegerLiteral(loc, String.valueOf(indices[0])),
 									new IntegerLiteral(loc, String.valueOf(indices[1])) });
 				}

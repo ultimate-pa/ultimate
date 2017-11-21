@@ -111,7 +111,7 @@ public class OverapproximationUF implements IPointerIntegerConversion {
 		final String functionName = "convert" + newType.toString() + "toPointer";
 		final String prefixedFunctionName = "~" + functionName;
 		if (!mFunctionDeclarations.getDeclaredFunctions().containsKey(prefixedFunctionName)) {
-			final Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.s_OVERAPPROX_IDENTIFIER, new Expression[] { new StringLiteral(loc, functionName ) });
+			final Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.OVERAPPROX_IDENTIFIER, new Expression[] { new StringLiteral(loc, functionName ) });
 			final Attribute[] attributes = new Attribute[] { attribute };
 			final ASTType resultASTType = mTypeHandler.constructPointerType(loc); 
 			final ASTType paramASTType = mTypeHandler.cType2AstType(loc, newType);
@@ -124,7 +124,7 @@ public class OverapproximationUF implements IPointerIntegerConversion {
 		final String functionName = "convertPointerTo" + newType.toString();
 		final String prefixedFunctionName = "~" + functionName;
 		if (!mFunctionDeclarations.getDeclaredFunctions().containsKey(prefixedFunctionName)) {
-			final Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.s_OVERAPPROX_IDENTIFIER, new Expression[] { new StringLiteral(loc, functionName ) });
+			final Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.OVERAPPROX_IDENTIFIER, new Expression[] { new StringLiteral(loc, functionName ) });
 			final Attribute[] attributes = new Attribute[] { attribute };
 			final ASTType resultASTType = mTypeHandler.cType2AstType(loc, newType);
 			final ASTType paramASTType = mTypeHandler.constructPointerType(loc);
