@@ -106,6 +106,7 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 	private Map<LeftHandSide, IProgramVarOrConst> mTemporaryVars;
 
 	private final Map<Expression, Expression> mNormalizedExpressionCache;
+	private final Map<Expression, ExpressionEvaluator<V, STATE>> mEvaluatorCache;
 
 	private boolean mOldScope;
 
@@ -118,6 +119,7 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 		mLhsVariable = null;
 		mNormalizedExpressionCache = new HashMap<>();
 		mEvaluatorFactory = createEvaluatorFactory(maxParallelStates);
+		mEvaluatorCache = new HashMap<>();
 		assert mEvaluatorFactory != null;
 	}
 
@@ -300,11 +302,16 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 
 	private List<STATE> handleSingleAssignment(final IProgramVarOrConst lhsVar, final Expression rhs,
 			final STATE oldstate) {
-		mExpressionEvaluator = new ExpressionEvaluator<>();
-		processExpression(rhs);
+		if (mEvaluatorCache.containsKey(rhs)) {
+			mExpressionEvaluator = mEvaluatorCache.get(rhs);
+		} else {
+			mExpressionEvaluator = new ExpressionEvaluator<>();
+			processExpression(rhs);
 
-		assert mExpressionEvaluator.isFinished() : "Expression evaluator is not finished";
-		assert mExpressionEvaluator.getRootEvaluator() != null : "There is no root evaluator";
+			assert mExpressionEvaluator.isFinished() : "Expression evaluator is not finished";
+			assert mExpressionEvaluator.getRootEvaluator() != null : "There is no root evaluator";
+			mEvaluatorCache.put(rhs, mExpressionEvaluator);
+		}
 
 		final List<IEvaluationResult<V>> results = mExpressionEvaluator.getRootEvaluator().evaluate(oldstate);
 
@@ -336,10 +343,7 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 	}
 
 	private void handleAssumeStatement(final AssumeStatement statement) {
-		mExpressionEvaluator = new ExpressionEvaluator<>();
-
 		final Expression formula = statement.getFormula();
-
 		if (formula instanceof BooleanLiteral) {
 			// handle the special case of a boolean literal
 			final BooleanLiteral boolform = (BooleanLiteral) formula;
@@ -353,8 +357,15 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 			return;
 		}
 
-		processExpression(formula);
-		assert mExpressionEvaluator.isFinished();
+		// Caching of expression evaluators
+		if (mEvaluatorCache.containsKey(formula)) {
+			mExpressionEvaluator = mEvaluatorCache.get(formula);
+		} else {
+			mExpressionEvaluator = new ExpressionEvaluator<>();
+			processExpression(formula);
+			assert mExpressionEvaluator.isFinished();
+			mEvaluatorCache.put(formula, mExpressionEvaluator);
+		}
 
 		final List<IEvaluationResult<V>> result = mExpressionEvaluator.getRootEvaluator().evaluate(mOldState);
 
