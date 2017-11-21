@@ -24,11 +24,15 @@ import java.io.FileReader;
 import java.io.FilenameFilter;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collection;
 
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
 
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.DefaultLogger;
@@ -36,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.option.OptionMap;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.ParseEnvironment;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
 
-@RunWith(JUnit4.class)
+@RunWith(Parameterized.class)
 public class SystemTest {
 
 	private void performTest(final File f) throws SMTLIBException, FileNotFoundException {
@@ -63,7 +67,7 @@ public class SystemTest {
 		pe.parseStream(new FileReader(f), "TestStream");
 	}
 
-	private boolean shouldExecute(final File f) {
+	private static boolean shouldExecute(final File f) {
 		final String fname = f.getName();
 		if (fname.startsWith("tightrhombus-lira")) {
 			// remove tightrhombus-lira-xxx-yyy-
@@ -84,29 +88,40 @@ public class SystemTest {
 		return true;
 	}
 
-	@Test
-	public void testSystem() throws URISyntaxException, FileNotFoundException {
-		final String name = getClass().getPackage().getName();
-		final URL url = getClass().getClassLoader().getResource(name);
+	@Parameters // (name = "{0}")
+	public static Collection<File> testFiles() throws URISyntaxException, FileNotFoundException {
+		final Collection<File> testFiles = new ArrayList<>();
+
+		final String name = SystemTest.class.getPackage().getName();
+		final URL url = SystemTest.class.getClassLoader().getResource(name);
 		final File f = new File(url.toURI());
-		File[] lst = f.getParentFile().getParentFile().listFiles((FilenameFilter) (dir, name1) -> name1.equals("test"));
-		if (lst == null || lst.length != 1) {
-			return;
-		}
-		final File testDir = lst[0];
-		lst = testDir.listFiles();
-		for (final File dir : lst) {
-			for (final File tst : dir.listFiles(
-					(FilenameFilter) (dir1, name1) -> name1.endsWith(".smt2") && !name1.endsWith(".msat.smt2"))) {
-				try {
-					if (shouldExecute(tst)) {
-						performTest(tst);
-					}
-				} catch (final SMTLIBException e) {
-					Assert.fail("File " + tst.getAbsolutePath() + " produced error:\n" + e.getMessage());
+		final File[] lst = f.getParentFile().getParentFile().listFiles((FilenameFilter) (dir, name1) -> name1.equals("test"));
+		assert lst != null && lst.length == 1;
+		final ArrayDeque<File> todo = new ArrayDeque<>();
+		todo.add(lst[0]);
+		while (!todo.isEmpty()) {
+			final File file = todo.removeFirst();
+			if (file.isDirectory()) {
+				for (final File subFile : file.listFiles()) {
+					todo.add(subFile);
+				}
+			} else if (file.getName().endsWith(".smt2") && !file.getName().endsWith(".msat.smt2")) {
+				if (shouldExecute(file)) {
+					testFiles.add(file);
 				}
 			}
 		}
+		return testFiles;
 	}
 
+	public File mFile;
+
+	public SystemTest(final File file) {
+		mFile = file;
+	}
+
+	@Test
+	public void testSystem() throws FileNotFoundException {
+		performTest(mFile);
+	}
 }
