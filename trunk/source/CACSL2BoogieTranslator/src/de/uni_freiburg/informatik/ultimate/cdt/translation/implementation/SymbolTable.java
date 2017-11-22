@@ -267,4 +267,8 @@ public class SymbolTable extends LinkedScopedHashMap<String, SymbolTableValue> {
 		}
 		return result;
 	}
+
+	public String applyMultiparseFunctionRenaming(final String filePath, final String original) {
+		return mMultiparseInformation.getNameMappingIfExists(filePath, original);
+	}
 }

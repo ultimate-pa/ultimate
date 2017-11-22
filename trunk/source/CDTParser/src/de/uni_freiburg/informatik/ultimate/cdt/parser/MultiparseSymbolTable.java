@@ -191,4 +191,10 @@ public class MultiparseSymbolTable extends ASTVisitor {
 			mLogger.info("<empty global variable table>");
 		}
 	}
+	
+	public String getNameMappingIfExists(final String filePath, final String name) {
+		final String normalizedFile = CDTParser.normalizeCDTFilename(filePath);
+		final Pair<String, String> key = new Pair<>(normalizedFile, name);
+		return mNamePrefixMapping.getOrDefault(key, name);
+	}
 }

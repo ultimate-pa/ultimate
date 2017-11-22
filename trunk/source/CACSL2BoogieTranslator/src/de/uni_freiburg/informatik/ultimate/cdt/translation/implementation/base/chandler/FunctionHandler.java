@@ -402,7 +402,12 @@ public class FunctionHandler {
 		if (!(functionName instanceof IASTIdExpression)) {
 			return handleFunctionPointerCall(loc, main, memoryHandler, structHandler, functionName, arguments);
 		}
-		final String methodName = ((IASTIdExpression) functionName).getName().toString();
+
+		final String rawName = ((IASTIdExpression) functionName).getName().toString();
+		
+		// Resolve the function name (might be prefixed by multiparse)
+		final String methodName = main.mCHandler.getSymbolTable().applyMultiparseFunctionRenaming(
+				functionName.getContainingFilename(), rawName);
 
 		if (main.mCHandler.getSymbolTable().containsCSymbol(methodName)) {
 			return handleFunctionPointerCall(loc, main, memoryHandler, structHandler, functionName, arguments);

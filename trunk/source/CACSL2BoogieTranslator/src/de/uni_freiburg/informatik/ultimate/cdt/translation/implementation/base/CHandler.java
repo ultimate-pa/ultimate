@@ -937,6 +937,10 @@ public class CHandler implements ICHandler {
 			newResType.cType = new CPointer(newResType.cType);
 		}
 		final ExpressionResult variableLengthArrayAuxVarInitializer = null;
+		
+		// Adapt the name for multiparse input
+		final String declName;
+		
 
 		if (node instanceof IASTArrayDeclarator) {
 			final IASTArrayDeclarator arrDecl = (IASTArrayDeclarator) node;
@@ -1004,6 +1008,7 @@ public class CHandler implements ICHandler {
 			final CArray arrayType = new CArray(size.toArray(new RValue[size.size()]), newResType.cType);
 			newResType.cType = arrayType;
 
+			declName = node.getName().toString();
 		} else if (node instanceof IASTStandardFunctionDeclarator) {
 			final IASTStandardFunctionDeclarator funcDecl = (IASTStandardFunctionDeclarator) node;
 
@@ -1021,6 +1026,8 @@ public class CHandler implements ICHandler {
 			}
 			final CFunction funcType = new CFunction(newResType.cType, paramsParsed, funcDecl.takesVarArgs());
 			newResType.cType = funcType;
+			
+			declName = mSymbolTable.applyMultiparseFunctionRenaming(node.getContainingFilename(), node.getName().toString());
 		} else if (node instanceof ICASTKnRFunctionDeclarator) {
 			final ICASTKnRFunctionDeclarator funcDecl = (ICASTKnRFunctionDeclarator) node;
 
@@ -1037,9 +1044,13 @@ public class CHandler implements ICHandler {
 
 			final CFunction funcType = new CFunction(newResType.cType, paramsParsed, false);
 			newResType.cType = funcType;
+			
+			declName = mSymbolTable.applyMultiparseFunctionRenaming(node.getContainingFilename(), node.getName().toString());
 		} else {
 			// DD 2016-12-12: was effectively disabled, is now explicitly disabled
 			// throw new UnsupportedSyntaxException(loc, "Unknown Declarator " + node.getClass());
+			
+			declName = node.getName().toString();
 		}
 		final int bitfieldSize;
 		if (node instanceof IASTFieldDeclarator) {
@@ -1061,8 +1072,9 @@ public class CHandler implements ICHandler {
 			}
 			return result;
 		}
+		
 		final DeclaratorResult result = new DeclaratorResult(new CDeclaration(newResType.cType,
-				node.getName().toString(), node.getInitializer(), variableLengthArrayAuxVarInitializer,
+				declName, node.getInitializer(), variableLengthArrayAuxVarInitializer,
 				newResType.isOnHeap, CStorageClass.UNSPECIFIED, bitfieldSize));
 		return result;
 	}
@@ -2514,9 +2526,12 @@ public class CHandler implements ICHandler {
 		final ILocation loc = main.getLocationFactory().createCLocation(node, check);
 		final IASTExpression functionName = node.getFunctionNameExpression();
 		if (functionName instanceof IASTIdExpression) {
+			// Transform the name for multifile input
+			final String transformedName = mSymbolTable.applyMultiparseFunctionRenaming(node.getContainingFilename(), 
+					((IASTIdExpression) functionName).getName().toString());
+			
 			final Result standardFunction = mFunctionHandler.handleStandardFunctions(main, mMemoryHandler,
-					mStructHandler, mExpressionTranslation, loc, ((IASTIdExpression) functionName).getName().toString(),
-					node.getArguments());
+					mStructHandler, mExpressionTranslation, loc, transformedName, node.getArguments());
 			if (standardFunction != null) {
 				return standardFunction;
 			}
