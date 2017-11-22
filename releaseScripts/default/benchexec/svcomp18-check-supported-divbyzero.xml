@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<benchmark tool="ultimateautomizer" memlimit="6GB" timelimit="360" hardtimelimit="112" cpuCores="2">
+<benchmark tool="ultimateautomizer" memlimit="6GB" timelimit="360" hardtimelimit="400" cpuCores="2">
 
     <option name="--full-output"/>
 
@@ -31,12 +31,11 @@
     <tasks name="ldv-issue-504">
         <option name="--architecture">32bit</option>
         <include>/storage/ultimate/trunk/examples/svcomp/ldv-consumption/32_7a_cilled_true-unreach-call_linux-3.8-rc1-32_7a-drivers--media--usb--gspca--gspca_topro.ko-ldv_main0_sequence_infinite_withcheck_stateful.cil.out.c</include>
-        <include>/storage/ultimate/trunk/examples/svcomp/ldv-consumption/32_7a_cilled_true-unreach-call_linux-3.8-rc1-32_7a-drivers--video--smscufx.ko-ldv_main0_sequence_infinite_withcheck_stateful.cil.out.c</include>
-        <include>/storage/ultimate/trunk/examples/svcomp/ldv-linux-3.4-simple/32_1_cilled_true-unreach-call_ok_nondet_linux-3.4-32_1-drivers--regulator--max1586.ko-ldv_main0_sequence_infinite_withcheck_stateful.cil.out.c</include>
-        <include>/storage/ultimate/trunk/examples/svcomp/ldv-linux-3.4-simple/43_1a_cilled_true-unreach-call_ok_nondet_linux-43_1a-drivers--input--misc--rotary_encoder_false-termination.ko-ldv_main0_sequence_infinite_withcheck_stateful.cil.out.c</include>
-        <include>/storage/ultimate/trunk/examples/svcomp/ldv-linux-3.4-simple/43_1a_cilled_true-unreach-call_ok_nondet_linux-43_1a-drivers--media--common--tuners--tda18218_false-termination.ko-ldv_main0_sequence_infinite_withcheck_stateful.cil.out.c</include>
-        <include>/storage/ultimate/trunk/examples/svcomp/ldv-linux-3.4-simple/43_1a_cilled_true-unreach-call_ok_nondet_linux-43_1a-drivers--mtd--nftl.ko-ldv_main0_sequence_infinite_withcheck_stateful.cil.out.c</include>
-        <include>/storage/ultimate/trunk/examples/svcomp/ldv-linux-3.4-simple/43_1a_cilled_true-unreach-call_ok_nondet_linux-43_1a-drivers--regulator--max1586.ko-ldv_main0_sequence_infinite_withcheck_stateful.cil.out.c</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/ldv-consumption/32_7a_cilled_true-unreach-call_linux-3.8-rc1-32_7a-drivers--net--ethernet--cisco--enic--enic.ko-ldv_main0_sequence_infinite_withcheck_stateful.cil.out.c</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/ldv-consumption32_7a_cilled_true-unreach-call_linux-3.8-rc1-32_7a-drivers--video--udlfb.ko-ldv_main0_sequence_infinite_withcheck_stateful.cil.out.c</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/ldv-consumption32_7a_cilled_true-unreach-call_linux-3.8-rc1-drivers--video--udlfb.ko-main.cil.out.c</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/ldv-linux-3.16-rc1/43_2a_consumption_linux-3.16-rc1.tar.xz-43_2a-drivers--net--ethernet--cisco--enic--enic.ko-entry_point_true-unreach-call.cil.out.c</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/ldv-linux-3.4-simple/43_1a_cilled_true-unreach-call_ok_nondet_linux-43_1a-drivers--tty--serial--altera_uart.ko-ldv_main0_sequence_infinite_withcheck_stateful.cil.out.c</include>
     </tasks>
 
 
