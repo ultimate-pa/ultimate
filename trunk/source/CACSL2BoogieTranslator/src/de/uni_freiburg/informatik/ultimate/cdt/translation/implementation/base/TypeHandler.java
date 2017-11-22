@@ -897,11 +897,32 @@ public class TypeHandler implements ITypeHandler {
 	 * @param type2
 	 * @return
 	 */
-	public static boolean isCompatibleStructOrUnionType(final CType type1, final CType type2) {
-		if (!(type1 instanceof CStruct) || !(type2 instanceof CStruct)) {
+	public static boolean isCompatibleType(final CType type1, final CType type2) {
+		// TODO: check the notion of compatibility with the standard
+		if (isCharArray(type1) && isCharArray(type2)) {
+				return true;
+		}
+		if (type1 instanceof CStruct && type2 instanceof CStruct) {
+			return areMatchingTypes(type1, type2);
+		}
+		return false;
+	}
+
+	public static boolean isCharArray(final CType cTypeRaw) {
+		final CType cType = cTypeRaw.getUnderlyingType();
+		if (!(cType instanceof CArray)) {
 			return false;
 		}
-		// TODO: check the notion of compatibility with the standard
-		return areMatchingTypes(type1, type2);
+		final CArray cArrayType = (CArray) cType;
+		if (!(cArrayType.getValueType() instanceof CPrimitive)) {
+			return false;
+		}
+		final CPrimitive primitiveValueType = (CPrimitive) cArrayType.getValueType();
+		if (primitiveValueType.getType() != CPrimitives.CHAR
+				&& primitiveValueType.getType() != CPrimitives.UCHAR
+				&& primitiveValueType.getType() != CPrimitives.SCHAR) {
+			return false;
+		}
+		return true;
 	}
 }
