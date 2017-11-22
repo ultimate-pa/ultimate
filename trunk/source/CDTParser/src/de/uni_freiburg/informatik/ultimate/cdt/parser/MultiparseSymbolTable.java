@@ -158,7 +158,7 @@ public class MultiparseSymbolTable extends ASTVisitor {
 	}
 	
 	private static String generatePrefixedIdentifier(final String file, final String id) {
-		return "f" + file.replaceAll("[^a-zA-Z_]", "_") + "__" + id;
+		return "__U_CDT_f" + file.replaceAll("[^a-zA-Z_]", "_") + "__" + id;
 	}
 	
 	/**
