@@ -259,7 +259,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 			// TODO: having boogie deal with negative real literals would be the nice solution..
 			return ExpressionFactory.newBinaryExpression(loc, Operator.ARITHMINUS, new RealLiteral(loc, "0.0"), expr);
 		} else {
-			throw new IllegalArgumentException("unsupported " + type);
+			throw new IllegalArgumentException("Unsupported type for unary minus: " + type);
 		}
 	}
 
@@ -656,20 +656,20 @@ public class IntegerTranslation extends ExpressionTranslation {
 	@Override
 	public Expression extractBits(final ILocation loc, final Expression operand, final int high, final int low) {
 		// we probably also have to provide information if input is signed/unsigned
-		throw new UnsupportedOperationException("not yet implemented");
+		throw new UnsupportedOperationException("not yet implemented in non-bitprecise translation");
 	}
 
 	@Override
 	public Expression concatBits(final ILocation loc, final List<Expression> dataChunks, final int size) {
 		// we probably also have to provide information if input is signed/unsigned
-		throw new UnsupportedOperationException("not yet implemented");
+		throw new UnsupportedOperationException("not yet implemented in non-bitprecise translation");
 	}
 
 	@Override
 	public Expression signExtend(final ILocation loc, final Expression operand, final int bitsBefore,
 			final int bitsAfter) {
 		// we probably also have to provide information if input is signed/unsigned
-		throw new UnsupportedOperationException("not yet implemented");
+		throw new UnsupportedOperationException("not yet implemented in non-bitprecise translation");
 	}
 
 	@Override
@@ -832,24 +832,26 @@ public class IntegerTranslation extends ExpressionTranslation {
 
 	@Override
 	public ExpressionResult createNanOrInfinity(final ILocation loc, final String name) {
-		throw new UnsupportedOperationException("createNanOrInfinity is unsupported");
+		throw new UnsupportedOperationException("createNanOrInfinity is unsupported in non-bitprecise translation");
 	}
 
 	@Override
 	public Expression getRoundingMode() {
-		throw new UnsupportedOperationException("getRoundingMode is unsupported");
+		throw new UnsupportedOperationException("getRoundingMode is unsupported in non-bitprecise translation");
 	}
 
 	@Override
 	public RValue constructOtherUnaryFloatOperation(final ILocation loc, final FloatFunction floatFunction,
 			final RValue argument) {
-		throw new UnsupportedOperationException("other floating point operations not supported");
+		throw new UnsupportedOperationException("floating point operation not supported in non-bitprecise translation: "
+				+ floatFunction.getFunctionName());
 	}
 
 	@Override
 	public RValue constructOtherBinaryFloatOperation(final ILocation loc, final FloatFunction floatFunction,
 			final RValue first, final RValue second) {
-		throw new UnsupportedOperationException("other floating point operations not supported");
+		throw new UnsupportedOperationException("floating point operation not supported in non-bitprecise translation: "
+				+ floatFunction.getFunctionName());
 	}
 
 	@Override
@@ -907,13 +909,15 @@ public class IntegerTranslation extends ExpressionTranslation {
 	@Override
 	public Expression transformBitvectorToFloat(final ILocation loc, final Expression bitvector,
 			final CPrimitives floatType) {
-		throw new UnsupportedOperationException("not yet implemented");
+		throw new UnsupportedOperationException(
+				"conversion from bitvector to float not supported in non-bitprecise translation");
 	}
 
 	@Override
 	public Expression transformFloatToBitvector(final ILocation loc, final Expression value,
 			final CPrimitives cprimitive) {
-		throw new UnsupportedOperationException("not yet implemented");
+		throw new UnsupportedOperationException(
+				"conversion from float to bitvector not supported in non-bitprecise translation");
 	}
 
 }
