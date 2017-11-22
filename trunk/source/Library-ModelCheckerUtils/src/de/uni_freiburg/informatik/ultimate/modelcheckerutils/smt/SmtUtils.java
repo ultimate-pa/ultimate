@@ -880,11 +880,12 @@ public final class SmtUtils {
 	public static Term andWithExtendedLocalSimplification(final Script script, final Collection<Term> terms) {
 		final Set<Term> resultJuncts = new HashSet<>();
 		final Set<Term> negativeJuncts = new HashSet<>();
+		final InnerDualJunctTracker idjt = new InnerDualJunctTracker();
 		final String connective = "and";
 		final Predicate<Term> isNeutral = x -> SmtUtils.isTrue(x);
 		final Predicate<Term> isAbsorbing = x -> SmtUtils.isFalse(x);
 		final boolean resultIsAbsorbingElement = recursiveAndOrSimplificationHelper(script, connective, isNeutral,
-				isAbsorbing, terms, resultJuncts, negativeJuncts);
+				isAbsorbing, terms, resultJuncts, negativeJuncts, idjt);
 		if (resultIsAbsorbingElement) {
 			return script.term("false");
 		}
@@ -893,18 +894,58 @@ public final class SmtUtils {
 		} else if (resultJuncts.size() == 1) {
 			return resultJuncts.iterator().next();
 		} else {
+			final boolean applyDistributivity = false;
+			if (applyDistributivity && idjt.getInnerDualJuncts() != null && !idjt.getInnerDualJuncts().isEmpty()) {
+				final Term result = applyDistributivity(script, resultJuncts, connective, idjt.getInnerDualJuncts());
+				return result;
+			}
 			return script.term(connective, resultJuncts.toArray(new Term[resultJuncts.size()]));
 		}
+	}
+
+	private static Term applyDistributivity(final Script script, final Set<Term> dualJunctions,
+			final String outerConnective, final Set<Term> omnipresentInnerDualJuncts) {
+		final String innerConnective = QuantifierUtils.getDualBooleanConnective(outerConnective);
+		final Term[] resultDualJunctions = new Term[dualJunctions.size()];
+		int outerOffset = 0;
+		for (final Term dualJunction : dualJunctions) {
+			final Term[] innerDualJuncts = QuantifierUtils
+					.getXjunctsInner(QuantifierUtils.getCorrespondingQuantifier(outerConnective), dualJunction);
+			final Term[] remainingInnerDualJuncts = new Term[innerDualJuncts.length
+					- omnipresentInnerDualJuncts.size()];
+			int offset = 0;
+			for (final Term innerDualJunct : innerDualJuncts) {
+				if (!omnipresentInnerDualJuncts.contains(innerDualJunct)) {
+					remainingInnerDualJuncts[offset] = innerDualJunct;
+					offset++;
+				}
+			}
+			if (remainingInnerDualJuncts.length == 0) {
+				throw new AssertionError("optimization!!");
+			} else if (remainingInnerDualJuncts.length == 1) {
+				resultDualJunctions[outerOffset] = remainingInnerDualJuncts[0];
+			} else {
+				resultDualJunctions[outerOffset] = script.term(innerConnective, remainingInnerDualJuncts);
+			}
+			outerOffset++;
+		}
+		final Term resultInnerDistributed = script.term(outerConnective, resultDualJunctions);
+		final List<Term> resultOuter = new ArrayList<>(omnipresentInnerDualJuncts.size() + 1);
+		resultOuter.addAll(omnipresentInnerDualJuncts);
+		resultOuter.add(resultInnerDistributed);
+		final Term result = script.term(innerConnective, resultOuter.toArray(new Term[resultOuter.size()]));
+		return result;
 	}
 
 	public static Term orWithExtendedLocalSimplification(final Script script, final Collection<Term> terms) {
 		final Set<Term> resultJuncts = new HashSet<>();
 		final Set<Term> negativeJuncts = new HashSet<>();
+		final InnerDualJunctTracker idjt = new InnerDualJunctTracker();
 		final String connective = "or";
 		final Predicate<Term> isNeutral = x -> SmtUtils.isFalse(x);
 		final Predicate<Term> isAbsorbing = x -> SmtUtils.isTrue(x);
 		final boolean resultIsAbsorbingElement = recursiveAndOrSimplificationHelper(script, connective, isNeutral,
-				isAbsorbing, terms, resultJuncts, negativeJuncts);
+				isAbsorbing, terms, resultJuncts, negativeJuncts, idjt);
 		if (resultIsAbsorbingElement) {
 			return script.term("true");
 		}
@@ -949,7 +990,7 @@ public final class SmtUtils {
 	 */
 	private static boolean recursiveAndOrSimplificationHelper(final Script script, final String connective,
 			final Predicate<Term> isNeutral, final Predicate<Term> isAbsorbing, final Collection<Term> inputJuncts,
-			final Set<Term> resultJuncts, final Set<Term> negatedJuncts) {
+			final Set<Term> resultJuncts, final Set<Term> negatedJuncts, final InnerDualJunctTracker idjt) {
 		for (final Term junct : inputJuncts) {
 			if (isNeutral.test(junct)) {
 				// do nothing, junct will not contribute to result
@@ -965,7 +1006,7 @@ public final class SmtUtils {
 						// descend recusively to check and add its subjuncts
 						final boolean resultIsAbsorbingElement =
 								recursiveAndOrSimplificationHelper(script, connective, isNeutral, isAbsorbing,
-										Arrays.asList(appTerm.getParameters()), resultJuncts, negatedJuncts);
+										Arrays.asList(appTerm.getParameters()), resultJuncts, negatedJuncts, idjt);
 						if (resultIsAbsorbingElement) {
 							return true;
 						}
@@ -988,8 +1029,28 @@ public final class SmtUtils {
 				return true;
 			}
 			resultJuncts.add(junct);
+			idjt.addOuterJunct(junct, connective);
 		}
 		return false;
+	}
+	
+	private static class InnerDualJunctTracker {
+		
+		Set<Term> mInnerDualJuncts = null;
+		
+		public void addOuterJunct(final Term outerJunct, final String outerConnective) {
+			final Term[] innerDualJuncts = QuantifierUtils
+					.getXjunctsInner(QuantifierUtils.getCorrespondingQuantifier(outerConnective), outerJunct);
+			if (mInnerDualJuncts == null) {
+				mInnerDualJuncts = new HashSet<>(Arrays.asList(innerDualJuncts));
+			} else {
+				mInnerDualJuncts.retainAll(Arrays.asList(innerDualJuncts));
+			}
+		}
+		
+		public Set<Term> getInnerDualJuncts() {
+			return mInnerDualJuncts;
+		}
 	}
 
 	/**
