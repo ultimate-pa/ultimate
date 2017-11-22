@@ -635,6 +635,9 @@ public abstract class ExpressionTranslation {
 	public abstract RValue constructOtherUnaryFloatOperation(ILocation loc, FloatFunction floatFunction,
 			RValue argument);
 
+	public abstract RValue constructOtherBinaryFloatOperation(ILocation loc, FloatFunction floatFunction, RValue first,
+			RValue second);
+
 	public Expression constructOverapproximationFloatLiteral(final ILocation loc, final String val,
 			final CPrimitive type) {
 		final String functionName = "floatingLiteral_" + makeBoogieIdentifierSuffix(val) + "_" + type;

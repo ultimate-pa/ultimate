@@ -51,6 +51,8 @@ public class FloatFunction {
 			"isnormal", // see 7.12.3.5
 			"signbit", // see 7.12.3.6
 			"sqrt", "fabs", // see 7.12.7.2
+			"fmin", "fmax"
+
 	};
 
 	private static final String[] TYPE_SUFFIXES = { "f", "d", "l" };
@@ -80,10 +82,9 @@ public class FloatFunction {
 
 	public CPrimitive getType() {
 		switch (mTypeSuffix) {
-		case "":
-			return null;
 		case "f":
 			return new CPrimitive(CPrimitives.FLOAT);
+		case "":
 		case "d":
 			return new CPrimitive(CPrimitives.DOUBLE);
 		case "l":

@@ -264,58 +264,70 @@ public class StandardFunctionHandler {
 
 		/** math.h float functions **/
 		// see 7.12.3.1 or http://en.cppreference.com/w/c/numeric/math/fpclassify
-		fill(map, "fpclassify", this::handleFloatFunction);
-		fill(map, "__fpclassify", this::handleFloatFunction); // ??
-		fill(map, "__fpclassifyf", this::handleFloatFunction); // ??
-		fill(map, "__fpclassifyl", this::handleFloatFunction); // ??
+		fill(map, "fpclassify", this::handleUnaryFloatFunction);
+		fill(map, "__fpclassify", this::handleUnaryFloatFunction); // ??
+		fill(map, "__fpclassifyf", this::handleUnaryFloatFunction); // ??
+		fill(map, "__fpclassifyl", this::handleUnaryFloatFunction); // ??
 
 		// see 7.12.3.2 or http://en.cppreference.com/w/c/numeric/math/isfinite
-		fill(map, "isfinite", this::handleFloatFunction);
+		fill(map, "isfinite", this::handleUnaryFloatFunction);
 
 		// see https://linux.die.net/man/3/finite (! NOT PART OF ANSI-C)
-		fill(map, "finite", this::handleFloatFunction);
-		fill(map, "__finite", this::handleFloatFunction);
-		fill(map, "finitef", this::handleFloatFunction);
-		fill(map, "__finitef", this::handleFloatFunction); // ??
-		fill(map, "finitel", this::handleFloatFunction);
-		fill(map, "__finitel", this::handleFloatFunction); // ??
+		fill(map, "finite", this::handleUnaryFloatFunction);
+		fill(map, "__finite", this::handleUnaryFloatFunction);
+		fill(map, "finitef", this::handleUnaryFloatFunction);
+		fill(map, "__finitef", this::handleUnaryFloatFunction); // ??
+		fill(map, "finitel", this::handleUnaryFloatFunction);
+		fill(map, "__finitel", this::handleUnaryFloatFunction); // ??
 
 		// see 7.12.3.3 or http://en.cppreference.com/w/c/numeric/math/isinf
-		fill(map, "isinf", this::handleFloatFunction);
-		fill(map, "__isinf", this::handleFloatFunction); // ??
+		fill(map, "isinf", this::handleUnaryFloatFunction);
+		fill(map, "__isinf", this::handleUnaryFloatFunction); // ??
 		// see https://linux.die.net/man/3/finite (! NOT PART OF ANSI-C)
-		fill(map, "isinff", this::handleFloatFunction);
-		fill(map, "__isinff", this::handleFloatFunction); // ??
-		fill(map, "isinfl", this::handleFloatFunction);
-		fill(map, "__isinfl", this::handleFloatFunction); // ??
+		fill(map, "isinff", this::handleUnaryFloatFunction);
+		fill(map, "__isinff", this::handleUnaryFloatFunction); // ??
+		fill(map, "isinfl", this::handleUnaryFloatFunction);
+		fill(map, "__isinfl", this::handleUnaryFloatFunction); // ??
 
 		// see 7.12.3.4 or http://en.cppreference.com/w/c/numeric/math/isnan
-		fill(map, "isnan", this::handleFloatFunction);
-		fill(map, "__isnan", this::handleFloatFunction); // ??
+		fill(map, "isnan", this::handleUnaryFloatFunction);
+		fill(map, "__isnan", this::handleUnaryFloatFunction); // ??
 		// see https://linux.die.net/man/3/finite (! NOT PART OF ANSI-C)
-		fill(map, "isnanf", this::handleFloatFunction);
-		fill(map, "isnanl", this::handleFloatFunction);
-		fill(map, "__isnanf", this::handleFloatFunction); // ??
-		fill(map, "__isnanl", this::handleFloatFunction); // ??
+		fill(map, "isnanf", this::handleUnaryFloatFunction);
+		fill(map, "isnanl", this::handleUnaryFloatFunction);
+		fill(map, "__isnanf", this::handleUnaryFloatFunction); // ??
+		fill(map, "__isnanl", this::handleUnaryFloatFunction); // ??
 
 		// see 7.12.3.5 or http://en.cppreference.com/w/c/numeric/math/isnormal
-		fill(map, "isnormal", this::handleFloatFunction);
+		fill(map, "isnormal", this::handleUnaryFloatFunction);
 
 		// see 7.12.3.6 or http://en.cppreference.com/w/c/numeric/math/signbit
-		fill(map, "signbit", this::handleFloatFunction);
-		fill(map, "__signbit", this::handleFloatFunction); // ??
-		fill(map, "__signbitl", this::handleFloatFunction); // ??
-		fill(map, "__signbitf", this::handleFloatFunction); // ??
+		fill(map, "signbit", this::handleUnaryFloatFunction);
+		fill(map, "__signbit", this::handleUnaryFloatFunction); // ??
+		fill(map, "__signbitl", this::handleUnaryFloatFunction); // ??
+		fill(map, "__signbitf", this::handleUnaryFloatFunction); // ??
 
 		// see 7.12.7.5 or http://en.cppreference.com/w/c/numeric/math/sqrt
-		fill(map, "sqrt", this::handleFloatFunction);
-		fill(map, "sqrtf", this::handleFloatFunction);
-		fill(map, "sqrtl", this::handleFloatFunction);
+		fill(map, "sqrt", this::handleUnaryFloatFunction);
+		fill(map, "sqrtf", this::handleUnaryFloatFunction);
+		fill(map, "sqrtl", this::handleUnaryFloatFunction);
 
 		// see 7.12.7.2 or http://en.cppreference.com/w/c/numeric/math/fabs
-		fill(map, "fabs", this::handleFloatFunction);
-		fill(map, "fabsf", this::handleFloatFunction);
-		fill(map, "fabsl", this::handleFloatFunction);
+		fill(map, "fabs", this::handleUnaryFloatFunction);
+		fill(map, "fabsf", this::handleUnaryFloatFunction);
+		fill(map, "fabsl", this::handleUnaryFloatFunction);
+
+		// see 7.12.12.2 or http://en.cppreference.com/w/c/numeric/math/fmax
+		// NaN arguments are treated as missing data: if one argument is a NaN and the other numeric, then the
+		// fmin/fmax functions choose the numeric value.
+		fill(map, "fmax", this::handleBinaryFloatFunction);
+		fill(map, "fmaxf", this::handleBinaryFloatFunction);
+		fill(map, "fmaxl", this::handleBinaryFloatFunction);
+
+		// see 7.12.12.3 or http://en.cppreference.com/w/c/numeric/math/fmin
+		fill(map, "fmin", this::handleBinaryFloatFunction);
+		fill(map, "fminf", this::handleBinaryFloatFunction);
+		fill(map, "fminl", this::handleBinaryFloatFunction);
 
 		/** SV-COMP and modelling functions **/
 		fill(map, "__VERIFIER_ltl_step", (main, node, loc, name) -> handleLtlStep(main, node, loc));
@@ -385,27 +397,6 @@ public class StandardFunctionHandler {
 		if (!declNotSupp.isEmpty()) {
 			throw new IllegalStateException("A supported float function is not declared: " + declNotSupp);
 		}
-	}
-
-	private Result handleFloatFunction(final Dispatcher main, final IASTFunctionCallExpression node,
-			final ILocation loc, final String name) {
-		final IASTInitializerClause[] arguments = node.getArguments();
-		checkArguments(loc, 1, name, arguments);
-		final FloatFunction floatFunction = FloatFunction.decode(name);
-		if (floatFunction == null) {
-			throw new IllegalArgumentException(
-					"Ultimate declared float handling for " + name + ", but is not known float function");
-		}
-		final ExpressionResult arg = dispatchAndConvert(main, loc, arguments[0]);
-		final CPrimitive typeDeterminedByName = floatFunction.getType();
-		if (typeDeterminedByName != null) {
-			mExpressionTranslation.convertFloatToFloat(loc, arg, typeDeterminedByName);
-		}
-		final RValue rvalue =
-				mExpressionTranslation.constructOtherUnaryFloatOperation(loc, floatFunction, (RValue) arg.mLrVal);
-		final ExpressionResult result = ExpressionResult.copyStmtDeclAuxvarOverapprox(arg);
-		result.mLrVal = rvalue;
-		return result;
 	}
 
 	private Result handleStrCmp(final Dispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
@@ -796,6 +787,49 @@ public class StandardFunctionHandler {
 		return mExpressionTranslation.createNanOrInfinity(loc, methodName);
 	}
 
+	private Result handleUnaryFloatFunction(final Dispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name) {
+		final FloatFunction floatFunction = FloatFunction.decode(name);
+		final ExpressionResult arg = handleFloatArguments(main, node, loc, name, 1, floatFunction).get(0);
+		final RValue rvalue =
+				mExpressionTranslation.constructOtherUnaryFloatOperation(loc, floatFunction, (RValue) arg.mLrVal);
+		return combineExpressionResults(rvalue, arg);
+	}
+
+	private Result handleBinaryFloatFunction(final Dispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name) {
+		final FloatFunction floatFunction = FloatFunction.decode(name);
+		final List<ExpressionResult> args = handleFloatArguments(main, node, loc, name, 2, floatFunction);
+		final RValue rvalue = mExpressionTranslation.constructOtherBinaryFloatOperation(loc, floatFunction,
+				(RValue) args.get(0).getLrValue(), (RValue) args.get(1).getLrValue());
+		return combineExpressionResults(rvalue, args);
+	}
+
+	private List<ExpressionResult> handleFloatArguments(final Dispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name, final int numberOfArgs, final FloatFunction floatFunction) {
+		final IASTInitializerClause[] arguments = node.getArguments();
+		checkArguments(loc, numberOfArgs, name, arguments);
+		if (floatFunction == null) {
+			throw new IllegalArgumentException(
+					"Ultimate declared float handling for " + name + ", but is not known float function");
+		}
+		final List<ExpressionResult> rtr = new ArrayList<>();
+		for (final IASTInitializerClause argument : arguments) {
+			final ExpressionResult arg = dispatchAndConvert(main, loc, argument);
+			mExpressionTranslation.convertIfNecessary(loc, arg, floatFunction.getType());
+			rtr.add(arg);
+		}
+
+		final CPrimitive typeDeterminedByName = floatFunction.getType();
+		if (typeDeterminedByName != null) {
+			for (final ExpressionResult arg : rtr) {
+				mExpressionTranslation.convertFloatToFloat(loc, arg, typeDeterminedByName);
+			}
+
+		}
+		return rtr;
+	}
+
 	private Result handleFloatBuiltinBinaryComparison(final Dispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name, final int op) {
 		/*
@@ -1019,15 +1053,16 @@ public class StandardFunctionHandler {
 		final List<Declaration> decl = new ArrayList<>();
 		final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
 		final List<Overapprox> overapprox = new ArrayList<>();
-
+		final List<ExpressionResult> unionFields = new ArrayList<>();
 		for (final ExpressionResult result : results) {
 			stmt.addAll(result.getStatements());
 			decl.addAll(result.getDeclarations());
 			auxVars.putAll(result.getAuxVars());
 			overapprox.addAll(result.getOverapprs());
+			unionFields.addAll(result.getNeighbourUnionFields());
 		}
 
-		return new ExpressionResult(stmt, finalLRValue, decl, auxVars, overapprox);
+		return new ExpressionResult(stmt, finalLRValue, decl, auxVars, overapprox, unionFields);
 	}
 
 	private static ExpressionResult combineExpressionResults(final LRValue finalLRValue,
