@@ -920,7 +920,6 @@ public class CHandler implements ICHandler {
 
 		for (final IASTNode child : node.getChildren()) {
 			checkForACSL(main, stmt, decl, child, null);
-			System.out.println(child.getRawSignature());
 			final Result r = main.dispatch(child);
 			if (r instanceof ExpressionResult) {
 				final ExpressionResult res = (ExpressionResult) r;
