@@ -3,27 +3,27 @@
  * Copyright (C) 2015 Christian Schilling (schillic@informatik.uni-freiburg.de)
  * Copyright (C) 2012-2015 Markus Lindenmann (lindenmm@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE CACSL2BoogieTranslator plug-in.
- * 
+ *
  * The ULTIMATE CACSL2BoogieTranslator plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE CACSL2BoogieTranslator plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE CACSL2BoogieTranslator plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE CACSL2BoogieTranslator plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
@@ -49,6 +49,8 @@ import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
 import org.eclipse.cdt.core.dom.ast.IASTIdExpression;
+import org.eclipse.cdt.core.dom.ast.IASTInitializer;
+import org.eclipse.cdt.core.dom.ast.IASTInitializerList;
 import org.eclipse.cdt.core.dom.ast.IASTLiteralExpression;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTParameterDeclaration;
@@ -57,6 +59,7 @@ import org.eclipse.cdt.core.dom.ast.IASTStatement;
 import org.eclipse.cdt.core.dom.ast.IASTSwitchStatement;
 import org.eclipse.cdt.core.dom.ast.IASTTypeId;
 import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
+import org.eclipse.cdt.core.dom.ast.c.ICASTDesignatedInitializer;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTSimpleDeclaration;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
@@ -89,9 +92,9 @@ public class PreRunner extends ASTVisitor {
      * Whether or not the memory model is required.
      */
     private boolean isMMRequired;
-    
+
     /**
-     * every function that is pointed to gets assigned an index -- its "address". 
+     * every function that is pointed to gets assigned an index -- its "address".
      * This is the variable used for counting.
      */
     int pointedToFunctionCounter;
@@ -123,14 +126,14 @@ public class PreRunner extends ASTVisitor {
     /**
      * Returns a set of variables, that have to be translated using the memory
      * model.
-     * 
+     *
      * @return a set of variables, that have to be translated using the memory
      *         model.
      */
     public LinkedHashSet<IASTNode> getVarsForHeap() {
     	return variablesOnHeap;
     }
-    
+
     /**
      * @return a map of functions used as pointers.
      * @author Christian
@@ -141,15 +144,15 @@ public class PreRunner extends ASTVisitor {
 
     /**
      * Whether the memory model is required or not.
-     * 
+     *
      * @return true if the MM is required.
      */
     public boolean isMMRequired() {
     	return isMMRequired;
     }
-    
 
-    
+
+
     @Override
 	public int visit(final IASTDeclSpecifier declSpec) {
     	if (declSpec instanceof IASTCompositeTypeSpecifier) {
@@ -181,8 +184,8 @@ public class PreRunner extends ASTVisitor {
      	sT.put(name, declaration);
     	return super.visit(declaration);
  	}
-    
-    
+
+
     @Override
     public int visit(final IASTExpression expression) {
     	if (expression instanceof IASTUnaryExpression) {
@@ -196,7 +199,7 @@ public class PreRunner extends ASTVisitor {
     			final IASTNode operand = ue.getOperand();
     			// add the operand to VariablesOnHeap!
     			String id = null;
-     			
+
     			id = extraxtExpressionIdFromPossiblyComplexExpression(operand);
 
                 isMMRequired = true;
@@ -216,26 +219,26 @@ public class PreRunner extends ASTVisitor {
             }
     	} else if (expression instanceof IASTIdExpression) {
             final String id = ((IASTIdExpression) expression).getName().toString();
-            
+
             //a function address may be assigned to a function pointer without addressof
             // like fptr = f; where f is a function
             final IASTNode function = functionTable.get(id);
             if (function != null && sT.get(id) == null //id is the name of a function and not shadowed here
-            		&& !(expression.getParent() instanceof IASTFunctionCallExpression 
-            				&& ((IASTFunctionCallExpression) expression.getParent()).getFunctionNameExpression().equals(expression) 
+            		&& !(expression.getParent() instanceof IASTFunctionCallExpression
+            				&& ((IASTFunctionCallExpression) expression.getParent()).getFunctionNameExpression().equals(expression)
             				)
             		) {
             	updateFunctionPointers(id, function);
 //            	functionPointers.put(id, function);
             	updateFunctionToIndex(id);
             }
-            
+
             final IASTNode d = sT.get(id); // don't check contains here!
             //if the identifier refers to an array and is used in a functioncall, the Array has to go on the heap
             if (d instanceof IASTArrayDeclarator
             		&& expression.getParent() instanceof IASTFunctionCallExpression) {
             	variablesOnHeap.add(d);
-            	
+
             }
         } else if (expression instanceof IASTFieldReference) {
             // TODO
@@ -254,7 +257,7 @@ public class PreRunner extends ASTVisitor {
         } else if (expression instanceof IASTCastExpression) {
         	//if we cast an array to a pointer, the array must be onHeap
         	IASTNode toBePutOnHeap = null;
-        	
+
         	//is the operand an array?
         	boolean isArray = false;
         	final IASTExpression operand = ((IASTCastExpression) expression).getOperand();
@@ -272,8 +275,8 @@ public class PreRunner extends ASTVisitor {
         	} else {
         		//TODO: treat other cases
         	}
-        	
-        	
+
+
         	//do we cast to a pointer?
         	boolean castToPointer = false;
         	if (isArray) {
@@ -283,11 +286,11 @@ public class PreRunner extends ASTVisitor {
         			castToPointer = true;
         		}
         	}
-        	
+
         	if (isArray && castToPointer) {
         		variablesOnHeap.add(toBePutOnHeap);
         	}
-        	
+
         } else if (expression instanceof IASTBinaryExpression) {
         	final IASTBinaryExpression binEx = (IASTBinaryExpression) expression;
         	if (binEx.getOperator() == IASTBinaryExpression.op_assign) {
@@ -304,11 +307,11 @@ public class PreRunner extends ASTVisitor {
         					 * where both are declared as char (or other) pointers
         					 *  --> this was not what I was aiming for when I wrote it, I suppose..
         					 */
-//        					variablesOnHeap.add(rDecl); 
+//        					variablesOnHeap.add(rDecl);
         				}
-        					
+
         			}
-        			
+
         		} else {
         			//TODO: deal with array and struct access??
         		}
@@ -322,19 +325,38 @@ public class PreRunner extends ASTVisitor {
         	// (don't know which) that handles nodes for initialization
         	final IASTLiteralExpression litExpr = (IASTLiteralExpression) expression;
         	if (litExpr.getKind() == IASTLiteralExpression.lk_string_literal) {
-        		if (litExpr.getParent() instanceof IASTEqualsInitializer) {
-        			final IASTEqualsInitializer eqinit = (IASTEqualsInitializer) litExpr.getParent();
-        			if (eqinit.getParent() instanceof IASTArrayDeclarator) {
-        				final IASTArrayDeclarator arrayDecl = (IASTArrayDeclarator) eqinit.getParent();
-        				variablesOnHeap.add(arrayDecl);
-        				
-        			}
+        		if (litExpr.getParent() instanceof IASTInitializer) {
+        			final IASTEqualsInitializer eqinit = getEqualsInitializer((IASTInitializer) litExpr.getParent());
+
+        			variablesOnHeap.add(eqinit.getParent());
+
+//        			if (eqinit.getParent() instanceof IASTArrayDeclarator) {
+//        				final IASTArrayDeclarator arrayDecl = (IASTArrayDeclarator) eqinit.getParent();
+//        				variablesOnHeap.add(arrayDecl);
+//
+//        			}
         		}
         	}
         }
         return super.visit(expression);
     }
 
+
+    /**
+     * Starting from some initializer (must be one of IASTEqualsInitializer or IASTInitializerList
+     *  or ICASTDesignatedInitializer) returns for the enclosing IASTEqualsInitializer.
+     * @param node
+     * @return
+     */
+	private IASTEqualsInitializer getEqualsInitializer(final IASTInitializer node) {
+		assert node instanceof IASTEqualsInitializer || node instanceof IASTInitializerList
+			|| node instanceof ICASTDesignatedInitializer;
+		if (node instanceof IASTEqualsInitializer) {
+			return (IASTEqualsInitializer) node;
+		} else {
+			return getEqualsInitializer((IASTInitializer) node.getParent());
+		}
+	}
 
 	private void updateFunctionPointers(final String id, final IASTNode function) {
 		if (function instanceof IASTFunctionDefinition) {
@@ -349,7 +371,7 @@ public class PreRunner extends ASTVisitor {
 	/**
      * For an IdentifierExpression just return the identifier. For something like a struct access (s.a)
      * return the identifier that designates the storage array used by the expression (here: s).
-     * 
+     *
      */
     public static String extraxtExpressionIdFromPossiblyComplexExpression(
 			final IASTNode expression) {
@@ -390,7 +412,7 @@ public class PreRunner extends ASTVisitor {
                 		isMMRequired = true;
                 	}
                 	nd = nd.getNestedDeclarator();
-                	
+
                 } while (nd != null);
 
             }
@@ -419,7 +441,7 @@ public class PreRunner extends ASTVisitor {
         }
         return super.visit(declaration);
     }
-  
+
     @Override
     public int visit(final IASTStatement statement) {
         if (statement instanceof IASTCompoundStatement
@@ -435,7 +457,7 @@ public class PreRunner extends ASTVisitor {
         }
         return super.visit(statement);
     }
-    
+
     @Override
  	public int leave(final IASTStatement statement) {
      	if (statement instanceof IASTCompoundStatement
@@ -453,10 +475,10 @@ public class PreRunner extends ASTVisitor {
          }
  		return super.leave(statement);
  	}
-    
+
     public LinkedHashMap<String, Integer> getFunctionToIndex() {
 		return functionToIndex;
-    } 
+    }
     private void updateFunctionToIndex(final String id) {
     	if (!functionToIndex.containsKey(id)) {
     		functionToIndex.put(id, pointedToFunctionCounter++);
@@ -464,17 +486,17 @@ public class PreRunner extends ASTVisitor {
 	}
 //	IASTExpression removeBrackets(IASTExpression exp) {
 //    	IASTExpression result = exp;
-//    	while (result instanceof IASTUnaryExpression 
+//    	while (result instanceof IASTUnaryExpression
 //    			&& ((IASTUnaryExpression) result).getOperator() == IASTUnaryExpression.op_bracketedPrimary) {
 //    		result = ((IASTUnaryExpression) result).getOperand();
 //    	}
 //    	return result;
 //    }
-    
+
 
 	/**
      * Getter to access the symbol table.
-     * 
+     *
      * @param n
      *            the String name of the variable to retrieve from the symbol
      *            table.
@@ -489,7 +511,7 @@ public class PreRunner extends ASTVisitor {
         }
         return sT.get(n);
     }
-    
-    
-    
+
+
+
 }
