@@ -158,7 +158,7 @@ public class MultiparseSymbolTable extends ASTVisitor {
 	}
 	
 	private static String generatePrefixedIdentifier(final String file, final String id) {
-		return "__U_CDT_f" + file.replaceAll("[^a-zA-Z_]", "_") + "__" + id;
+		return "__U_MULTI_f" + file.replaceAll("[^a-zA-Z_]", "_") + "__" + id;
 	}
 	
 	/**
@@ -192,9 +192,32 @@ public class MultiparseSymbolTable extends ASTVisitor {
 		}
 	}
 	
+	/**
+	 * Applies a mapping of a unprefixed name to a prefixed name given the file the name was used in
+	 * 
+	 * @param filePath the file the name was used in. this is needed for include resolving / 'file-scopes'
+	 * @param name the name that has to be mapped
+	 * @return either the mapping of the name or the name itself if there is no such mapping
+	 */
 	public String getNameMappingIfExists(final String filePath, final String name) {
 		final String normalizedFile = CDTParser.normalizeCDTFilename(filePath);
 		final Pair<String, String> key = new Pair<>(normalizedFile, name);
+		
+		if (!mNamePrefixMapping.containsKey(key) && mIncludeMapping.containsKey(filePath)) {
+			// This name might be defined in an included file
+			// So we need to resolve the includes of the current file and check all included files too
+			final List<String> includesOfFile = mIncludeMapping.get(filePath);
+			for (final String include : includesOfFile) {
+				// Just try keys until one fits. This works because the n included scopes may not clash
+				final Pair<String, String> includeKey = new Pair<>(include, name);
+				if (mNamePrefixMapping.containsKey(includeKey)) {
+					return mNamePrefixMapping.get(includeKey);
+				}
+			}
+		}
+		
+		// Fallback: Check the defined names in the file itself & if no definition is found, just use the original name,
+		// i.e. no mapping of the name is performed.
 		return mNamePrefixMapping.getOrDefault(key, name);
 	}
 }
