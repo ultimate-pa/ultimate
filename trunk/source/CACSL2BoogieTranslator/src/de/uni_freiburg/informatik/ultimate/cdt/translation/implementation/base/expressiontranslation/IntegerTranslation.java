@@ -162,12 +162,10 @@ public class IntegerTranslation extends ExpressionTranslation {
 				final BigInteger maxValuePlusOne = typeSizes.getMaxValueOfPrimitiveType(cPrimitive).add(BigInteger.ONE);
 				return ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHMOD, operand,
 						new IntegerLiteral(loc, maxValuePlusOne.toString()));
-			} else {
-				throw new AssertionError("wraparound only for unsigned types");
 			}
-		} else {
-			throw new AssertionError("wraparound only for integer types");
+			throw new AssertionError("wraparound only for unsigned types");
 		}
+		throw new AssertionError("wraparound only for integer types");
 	}
 
 	@Override
@@ -253,7 +251,8 @@ public class IntegerTranslation extends ExpressionTranslation {
 		return new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + funcname, new Expression[] { expr });
 	}
 
-	private Expression constructUnaryIntExprMinus(final ILocation loc, final Expression expr, final CPrimitive type) {
+	private static Expression constructUnaryIntExprMinus(final ILocation loc, final Expression expr,
+			final CPrimitive type) {
 		if (type.getGeneralType() == CPrimitiveCategory.INTTYPE) {
 			return ExpressionFactory.newUnaryExpression(loc, UnaryExpression.Operator.ARITHNEGATIVE, expr);
 		} else if (type.getGeneralType() == CPrimitiveCategory.FLOATTYPE) {
@@ -328,7 +327,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 		}
 	}
 
-	private Expression constructArIntExprDiv(final ILocation loc, final Expression exp1, final Expression exp2,
+	private static Expression constructArIntExprDiv(final ILocation loc, final Expression exp1, final Expression exp2,
 			final boolean bothAreIntegerLiterals, final BigInteger leftValue, final BigInteger rightValue) {
 		final BinaryExpression.Operator operator;
 		operator = Operator.ARITHDIV;
@@ -339,50 +338,48 @@ public class IntegerTranslation extends ExpressionTranslation {
 		if (bothAreIntegerLiterals) {
 			final String constantResult = leftValue.divide(rightValue).toString();
 			return new IntegerLiteral(loc, constantResult);
-		} else {
-			final Expression leftSmallerZeroAndThereIsRemainder =
-					getLeftSmallerZeroAndThereIsRemainder(loc, exp1, exp2);
-			final Expression rightSmallerZero = ExpressionFactory.newBinaryExpression(loc,
-					BinaryExpression.Operator.COMPLT, exp2, new IntegerLiteral(loc, SFO.NR0));
-			final Expression normalDivision = ExpressionFactory.newBinaryExpression(loc, operator, exp1, exp2);
-			if (exp1 instanceof IntegerLiteral) {
-				if (leftValue.signum() == 1) {
-					return normalDivision;
-				} else if (leftValue.signum() == -1) {
-					return ExpressionFactory.newIfThenElseExpression(loc, rightSmallerZero,
-							ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHMINUS,
-									normalDivision, new IntegerLiteral(loc, SFO.NR1)),
-							ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHPLUS,
-									normalDivision, new IntegerLiteral(loc, SFO.NR1)));
-				} else {
-					return new IntegerLiteral(loc, SFO.NR0);
-				}
-			} else if (exp2 instanceof IntegerLiteral) {
-				if (rightValue.signum() == 1 || rightValue.signum() == 0) {
-					return ExpressionFactory.newIfThenElseExpression(loc, leftSmallerZeroAndThereIsRemainder,
-							ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHPLUS,
-									normalDivision, new IntegerLiteral(loc, SFO.NR1)),
-							normalDivision);
-				} else if (rightValue.signum() == -1) {
-					return ExpressionFactory.newIfThenElseExpression(loc, leftSmallerZeroAndThereIsRemainder,
-							ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHMINUS,
-									normalDivision, new IntegerLiteral(loc, SFO.NR1)),
-							normalDivision);
-				}
-				throw new UnsupportedOperationException("Is it expected that this is a fall-through switch?");
+		}
+		final Expression leftSmallerZeroAndThereIsRemainder = getLeftSmallerZeroAndThereIsRemainder(loc, exp1, exp2);
+		final Expression rightSmallerZero = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPLT,
+				exp2, new IntegerLiteral(loc, SFO.NR0));
+		final Expression normalDivision = ExpressionFactory.newBinaryExpression(loc, operator, exp1, exp2);
+		if (exp1 instanceof IntegerLiteral) {
+			if (leftValue.signum() == 1) {
+				return normalDivision;
+			} else if (leftValue.signum() == -1) {
+				return ExpressionFactory.newIfThenElseExpression(loc, rightSmallerZero,
+						ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHMINUS, normalDivision,
+								new IntegerLiteral(loc, SFO.NR1)),
+						ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHPLUS, normalDivision,
+								new IntegerLiteral(loc, SFO.NR1)));
 			} else {
-				return ExpressionFactory.newIfThenElseExpression(loc, leftSmallerZeroAndThereIsRemainder,
-						ExpressionFactory.newIfThenElseExpression(loc, rightSmallerZero,
-								ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHMINUS,
-										normalDivision, new IntegerLiteral(loc, SFO.NR1)),
-								ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHPLUS,
-										normalDivision, new IntegerLiteral(loc, SFO.NR1))),
+				return new IntegerLiteral(loc, SFO.NR0);
+			}
+		} else if (exp2 instanceof IntegerLiteral) {
+			if (rightValue.signum() == 1 || rightValue.signum() == 0) {
+				return ExpressionFactory.newIfThenElseExpression(
+						loc, leftSmallerZeroAndThereIsRemainder, ExpressionFactory.newBinaryExpression(loc,
+								BinaryExpression.Operator.ARITHPLUS, normalDivision, new IntegerLiteral(loc, SFO.NR1)),
+						normalDivision);
+			} else if (rightValue.signum() == -1) {
+				return ExpressionFactory.newIfThenElseExpression(
+						loc, leftSmallerZeroAndThereIsRemainder, ExpressionFactory.newBinaryExpression(loc,
+								BinaryExpression.Operator.ARITHMINUS, normalDivision, new IntegerLiteral(loc, SFO.NR1)),
 						normalDivision);
 			}
+			throw new UnsupportedOperationException("Is it expected that this is a fall-through switch?");
+		} else {
+			return ExpressionFactory.newIfThenElseExpression(loc, leftSmallerZeroAndThereIsRemainder,
+					ExpressionFactory.newIfThenElseExpression(loc, rightSmallerZero,
+							ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHMINUS,
+									normalDivision, new IntegerLiteral(loc, SFO.NR1)),
+							ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHPLUS,
+									normalDivision, new IntegerLiteral(loc, SFO.NR1))),
+					normalDivision);
 		}
 	}
 
-	private Expression constructArIntExprMod(final ILocation loc, final Expression exp1, final Expression exp2,
+	private static Expression constructArIntExprMod(final ILocation loc, final Expression exp1, final Expression exp2,
 			final boolean bothAreIntegerLiterals, final BigInteger leftValue, final BigInteger rightValue) {
 		final BinaryExpression.Operator operator;
 		operator = Operator.ARITHMOD;
@@ -414,50 +411,48 @@ public class IntegerTranslation extends ExpressionTranslation {
 				throw new UnsupportedOperationException("constant is not assigned");
 			}
 			return new IntegerLiteral(loc, constantResult);
-		} else {
-			final Expression leftSmallerZeroAndThereIsRemainder =
-					getLeftSmallerZeroAndThereIsRemainder(loc, exp1, exp2);
-			final Expression rightSmallerZero = ExpressionFactory.newBinaryExpression(loc,
-					BinaryExpression.Operator.COMPLT, exp2, new IntegerLiteral(loc, SFO.NR0));
-			final Expression normalModulo = ExpressionFactory.newBinaryExpression(loc, operator, exp1, exp2);
-			if (exp1 instanceof IntegerLiteral) {
-				if (leftValue.signum() == 1) {
-					return normalModulo;
-				} else if (leftValue.signum() == -1) {
-					return ExpressionFactory.newIfThenElseExpression(loc, rightSmallerZero,
-							ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHPLUS,
-									normalModulo, exp2),
-							ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHMINUS,
-									normalModulo, exp2));
-				} else {
-					return new IntegerLiteral(loc, SFO.NR0);
-				}
-			} else if (exp2 instanceof IntegerLiteral) {
-				if (rightValue.signum() == 1 || rightValue.signum() == 0) {
-					return ExpressionFactory.newIfThenElseExpression(loc, leftSmallerZeroAndThereIsRemainder,
-							ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHMINUS,
-									normalModulo, exp2),
-							normalModulo);
-				} else if (rightValue.signum() == -1) {
-					return ExpressionFactory.newIfThenElseExpression(loc, leftSmallerZeroAndThereIsRemainder,
-							ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHPLUS,
-									normalModulo, exp2),
-							normalModulo);
-				}
-				throw new UnsupportedOperationException("Is it expected that this is a fall-through switch?");
+		}
+		final Expression leftSmallerZeroAndThereIsRemainder = getLeftSmallerZeroAndThereIsRemainder(loc, exp1, exp2);
+		final Expression rightSmallerZero = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPLT,
+				exp2, new IntegerLiteral(loc, SFO.NR0));
+		final Expression normalModulo = ExpressionFactory.newBinaryExpression(loc, operator, exp1, exp2);
+		if (exp1 instanceof IntegerLiteral) {
+			if (leftValue.signum() == 1) {
+				return normalModulo;
+			} else if (leftValue.signum() == -1) {
+				return ExpressionFactory.newIfThenElseExpression(loc, rightSmallerZero,
+						ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHPLUS, normalModulo,
+								exp2),
+						ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHMINUS, normalModulo,
+								exp2));
 			} else {
+				return new IntegerLiteral(loc, SFO.NR0);
+			}
+		} else if (exp2 instanceof IntegerLiteral) {
+			if (rightValue.signum() == 1 || rightValue.signum() == 0) {
 				return ExpressionFactory.newIfThenElseExpression(loc, leftSmallerZeroAndThereIsRemainder,
-						ExpressionFactory.newIfThenElseExpression(loc, rightSmallerZero,
-								ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHPLUS,
-										normalModulo, exp2),
-								ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHMINUS,
-										normalModulo, exp2)),
+						ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHMINUS, normalModulo,
+								exp2),
+						normalModulo);
+			} else if (rightValue.signum() == -1) {
+				return ExpressionFactory.newIfThenElseExpression(loc, leftSmallerZeroAndThereIsRemainder,
+						ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHPLUS, normalModulo,
+								exp2),
 						normalModulo);
 			}
+			throw new UnsupportedOperationException("Is it expected that this is a fall-through switch?");
+		} else {
+			return ExpressionFactory.newIfThenElseExpression(loc, leftSmallerZeroAndThereIsRemainder,
+					ExpressionFactory.newIfThenElseExpression(loc, rightSmallerZero,
+							ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHPLUS,
+									normalModulo, exp2),
+							ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHMINUS,
+									normalModulo, exp2)),
+					normalModulo);
 		}
 	}
 
-	private Expression getLeftSmallerZeroAndThereIsRemainder(final ILocation loc, final Expression exp1,
+	private static Expression getLeftSmallerZeroAndThereIsRemainder(final ILocation loc, final Expression exp1,
 			final Expression exp2) {
 		final Expression leftModRight = ExpressionFactory.newBinaryExpression(loc, Operator.ARITHMOD, exp1, exp2);
 		final Expression thereIsRemainder = ExpressionFactory.newBinaryExpression(loc, Operator.COMPNEQ, leftModRight,
@@ -615,15 +610,12 @@ public class IntegerTranslation extends ExpressionTranslation {
 					final BigInteger maxValue = mTypeSizes.getMaxValueOfPrimitiveType((CPrimitive) cType);
 					final BigInteger maxValuePlusOne = maxValue.add(BigInteger.ONE);
 					return value.mod(maxValuePlusOne);
-				} else {
-					return value;
 				}
-			} else {
-				return null;
+				return value;
 			}
-		} else {
 			return null;
 		}
+		return null;
 	}
 
 	@Override
@@ -696,33 +688,32 @@ public class IntegerTranslation extends ExpressionTranslation {
 						paramAstType, paramAstType);
 			}
 			return new FunctionApplication(loc, prefixedFunctionName, new Expression[] { exp1, exp2 });
-		} else {
-			BinaryExpression.Operator op;
-			switch (nodeOperator) {
-			case IASTBinaryExpression.op_equals:
-				op = BinaryExpression.Operator.COMPEQ;
-				break;
-			case IASTBinaryExpression.op_greaterEqual:
-				op = BinaryExpression.Operator.COMPGEQ;
-				break;
-			case IASTBinaryExpression.op_greaterThan:
-				op = BinaryExpression.Operator.COMPGT;
-				break;
-			case IASTBinaryExpression.op_lessEqual:
-				op = BinaryExpression.Operator.COMPLEQ;
-				break;
-			case IASTBinaryExpression.op_lessThan:
-				op = BinaryExpression.Operator.COMPLT;
-				break;
-			case IASTBinaryExpression.op_notequals:
-				op = BinaryExpression.Operator.COMPNEQ;
-				break;
-			default:
-				throw new AssertionError("Unknown BinaryExpression operator " + nodeOperator);
-			}
-
-			return ExpressionFactory.newBinaryExpression(loc, op, exp1, exp2);
 		}
+		BinaryExpression.Operator op;
+		switch (nodeOperator) {
+		case IASTBinaryExpression.op_equals:
+			op = BinaryExpression.Operator.COMPEQ;
+			break;
+		case IASTBinaryExpression.op_greaterEqual:
+			op = BinaryExpression.Operator.COMPGEQ;
+			break;
+		case IASTBinaryExpression.op_greaterThan:
+			op = BinaryExpression.Operator.COMPGT;
+			break;
+		case IASTBinaryExpression.op_lessEqual:
+			op = BinaryExpression.Operator.COMPLEQ;
+			break;
+		case IASTBinaryExpression.op_lessThan:
+			op = BinaryExpression.Operator.COMPLT;
+			break;
+		case IASTBinaryExpression.op_notequals:
+			op = BinaryExpression.Operator.COMPNEQ;
+			break;
+		default:
+			throw new AssertionError("Unknown BinaryExpression operator " + nodeOperator);
+		}
+
+		return ExpressionFactory.newBinaryExpression(loc, op, exp1, exp2);
 	}
 
 	@Override
@@ -739,9 +730,8 @@ public class IntegerTranslation extends ExpressionTranslation {
 				mFunctionDeclarations.declareFunction(loc, prefixedFunctionName, attributes, astType, astType);
 			}
 			return new FunctionApplication(loc, prefixedFunctionName, new Expression[] { exp });
-		} else {
-			return constructUnaryIntExprMinus(loc, exp, type);
 		}
+		return constructUnaryIntExprMinus(loc, exp, type);
 	}
 
 	@Override
@@ -758,13 +748,12 @@ public class IntegerTranslation extends ExpressionTranslation {
 				mFunctionDeclarations.declareFunction(loc, prefixedFunctionName, attributes, astType, astType, astType);
 			}
 			return new FunctionApplication(loc, prefixedFunctionName, new Expression[] { exp1, exp2 });
-		} else {
-			return constructArithmeticExpression(loc, nodeOperator, exp1, exp2);
 		}
+		return constructArithmeticExpression(loc, nodeOperator, exp1, exp2);
 	}
 
-	private Expression constructArithmeticExpression(final ILocation loc, final int nodeOperator, final Expression exp1,
-			final Expression exp2) {
+	private static Expression constructArithmeticExpression(final ILocation loc, final int nodeOperator,
+			final Expression exp1, final Expression exp2) {
 		final BinaryExpression.Operator operator;
 		switch (nodeOperator) {
 		case IASTBinaryExpression.op_minusAssign:
@@ -800,9 +789,8 @@ public class IntegerTranslation extends ExpressionTranslation {
 		final String prefixedFunctionName = declareBinaryFloatComparisonOverApprox(loc, (CPrimitive) type1);
 		if (mOverapproximateFloatingPointOperations) {
 			return new FunctionApplication(loc, prefixedFunctionName, new Expression[] { exp1, exp2 });
-		} else {
-			return constructEquality(loc, nodeOperator, exp1, exp2);
 		}
+		return constructEquality(loc, nodeOperator, exp1, exp2);
 	}
 
 	@Override
@@ -825,7 +813,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 	/**
 	 * Construct either equals or not-equals relation, depending on nodeOperator.
 	 */
-	private Expression constructEquality(final ILocation loc, final int nodeOperator, final Expression leftExpr,
+	private static Expression constructEquality(final ILocation loc, final int nodeOperator, final Expression leftExpr,
 			final Expression rightExpr) {
 		if (nodeOperator == IASTBinaryExpression.op_equals) {
 			return ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ, leftExpr, rightExpr);
