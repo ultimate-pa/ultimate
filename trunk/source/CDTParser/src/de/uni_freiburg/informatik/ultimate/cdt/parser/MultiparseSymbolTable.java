@@ -151,6 +151,11 @@ public class MultiparseSymbolTable extends ASTVisitor {
 	}
 	
 	private void visitFunctionDefinition(final String inFile, final IASTFunctionDefinition fdef) {
+		if (!fdef.isPartOfTranslationUnitFile()) {
+			// This indicates that the definition comes from a resolved include
+			// So this will be ignored.
+			return;
+		}
 		final IASTDeclarator fdecl = fdef.getDeclarator();
 		final Pair<String, String> entry = new Pair<>(inFile, fdecl.getName().toString());
 		mFunctionMapping.put(entry, fdef);
@@ -203,10 +208,10 @@ public class MultiparseSymbolTable extends ASTVisitor {
 		final String normalizedFile = CDTParser.normalizeCDTFilename(filePath);
 		final Pair<String, String> key = new Pair<>(normalizedFile, name);
 		
-		if (!mNamePrefixMapping.containsKey(key) && mIncludeMapping.containsKey(filePath)) {
+		if (!mNamePrefixMapping.containsKey(key) && mIncludeMapping.containsKey(normalizedFile)) {
 			// This name might be defined in an included file
 			// So we need to resolve the includes of the current file and check all included files too
-			final List<String> includesOfFile = mIncludeMapping.get(filePath);
+			final List<String> includesOfFile = mIncludeMapping.get(normalizedFile);
 			for (final String include : includesOfFile) {
 				// Just try keys until one fits. This works because the n included scopes may not clash
 				final Pair<String, String> includeKey = new Pair<>(include, name);
