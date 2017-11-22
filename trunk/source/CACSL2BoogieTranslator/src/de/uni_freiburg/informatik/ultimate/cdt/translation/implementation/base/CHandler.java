@@ -941,7 +941,6 @@ public class CHandler implements ICHandler {
 		// Adapt the name for multiparse input
 		final String declName;
 		
-
 		if (node instanceof IASTArrayDeclarator) {
 			final IASTArrayDeclarator arrDecl = (IASTArrayDeclarator) node;
 
@@ -1050,7 +1049,13 @@ public class CHandler implements ICHandler {
 			// DD 2016-12-12: was effectively disabled, is now explicitly disabled
 			// throw new UnsupportedSyntaxException(loc, "Unknown Declarator " + node.getClass());
 			
-			declName = node.getName().toString();
+			// Check if this is a global variable
+			if (node.getParent().getParent() instanceof IASTTranslationUnit) {
+				declName = mSymbolTable.applyMultiparseFunctionRenaming(node.getContainingFilename(),
+						node.getName().toString());
+			} else {
+				declName = node.getName().toString();
+			}
 		}
 		final int bitfieldSize;
 		if (node instanceof IASTFieldDeclarator) {
@@ -1095,7 +1100,10 @@ public class CHandler implements ICHandler {
 	@Override
 	public Result visit(final Dispatcher main, final IASTIdExpression node) {
 		final ILocation loc = main.getLocationFactory().createCLocation(node);
-		final String cId = node.getName().toString();
+		
+		// Apply multifile input prefixing transformations to the ID
+		final String cId = mSymbolTable.applyMultiparseFunctionRenaming(node.getContainingFilename(),
+				node.getName().toString());
 
 		// deal with builtin constants
 		if (cId.equals("NULL")) {
