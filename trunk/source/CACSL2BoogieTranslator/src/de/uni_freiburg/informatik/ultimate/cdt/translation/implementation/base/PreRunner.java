@@ -51,7 +51,6 @@ import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
 import org.eclipse.cdt.core.dom.ast.IASTIdExpression;
 import org.eclipse.cdt.core.dom.ast.IASTInitializer;
 import org.eclipse.cdt.core.dom.ast.IASTInitializerList;
-import org.eclipse.cdt.core.dom.ast.IASTLiteralExpression;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTParameterDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTPointerOperator;
@@ -316,27 +315,27 @@ public class PreRunner extends ASTVisitor {
         			//TODO: deal with array and struct access??
         		}
         	}
-        } else if (expression instanceof IASTLiteralExpression) {
-        	// 2017-11-19 Matthias: This is a workaround that I introduced to
-        	// make all variables that occur in statements of the form
-        	// x = "someString"
-        	// on-heap.
-        	// It would probably be better to override some method
-        	// (don't know which) that handles nodes for initialization
-        	final IASTLiteralExpression litExpr = (IASTLiteralExpression) expression;
-        	if (litExpr.getKind() == IASTLiteralExpression.lk_string_literal) {
-        		if (litExpr.getParent() instanceof IASTInitializer) {
-        			final IASTEqualsInitializer eqinit = getEqualsInitializer((IASTInitializer) litExpr.getParent());
-
-        			variablesOnHeap.add(eqinit.getParent());
-
-//        			if (eqinit.getParent() instanceof IASTArrayDeclarator) {
-//        				final IASTArrayDeclarator arrayDecl = (IASTArrayDeclarator) eqinit.getParent();
-//        				variablesOnHeap.add(arrayDecl);
+//        } else if (expression instanceof IASTLiteralExpression) {
+//        	// 2017-11-19 Matthias: This is a workaround that I introduced to
+//        	// make all variables that occur in statements of the form
+//        	// x = "someString"
+//        	// on-heap.
+//        	// It would probably be better to override some method
+//        	// (don't know which) that handles nodes for initialization
+//        	final IASTLiteralExpression litExpr = (IASTLiteralExpression) expression;
+//        	if (litExpr.getKind() == IASTLiteralExpression.lk_string_literal) {
+//        		if (litExpr.getParent() instanceof IASTInitializer) {
+//        			final IASTEqualsInitializer eqinit = getEqualsInitializer((IASTInitializer) litExpr.getParent());
 //
-//        			}
-        		}
-        	}
+//        			variablesOnHeap.add(eqinit.getParent());
+//
+////        			if (eqinit.getParent() instanceof IASTArrayDeclarator) {
+////        				final IASTArrayDeclarator arrayDecl = (IASTArrayDeclarator) eqinit.getParent();
+////        				variablesOnHeap.add(arrayDecl);
+////
+////        			}
+//        		}
+//        	}
         }
         return super.visit(expression);
     }
