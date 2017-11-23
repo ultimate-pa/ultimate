@@ -2179,7 +2179,21 @@ public class MemoryHandler {
 				new CPrimitive(CPrimitives.CHAR));
 		final Expression valueExpr = mExpressionTranslation.constructLiteralForIntegerType(loc,
 				new CPrimitive(CPrimitives.CHAR), valueBigInt);
-		final AssignmentStatement statement = constructOneDimensionalArrayUpdate(loc, pointer, array, valueExpr);
+		final Expression possiblyExtendedValueExpr;
+		if (dhp.getSize() != 0) {
+			// if heap data array cannot store arbitrary sizes
+			final Integer sizeOfChar = mTypeSizes.getSize(CPrimitives.CHAR);
+			if (sizeOfChar > dhp.getSize()) {
+				throw new AssertionError("char bigger than size of data array");
+			}
+			possiblyExtendedValueExpr = mExpressionTranslation.signExtend(loc, valueExpr, sizeOfChar * 8,
+					dhp.getSize() * 8);
+		} else {
+			possiblyExtendedValueExpr = valueExpr;
+
+		}
+		final AssignmentStatement statement = constructOneDimensionalArrayUpdate(loc, pointer, array,
+				possiblyExtendedValueExpr);
 		return statement;
 	}
 
