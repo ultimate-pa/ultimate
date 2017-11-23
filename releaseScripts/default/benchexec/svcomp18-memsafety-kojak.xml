@@ -8,7 +8,6 @@
 
     <tasks name="Mem32bit">
         <option name="--architecture">32bit</option>
-        <include>/storage/ultimate/trunk/examples/svcomp/list-ext-properties/test-0232_1_false-valid-memtrack.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/forester-heap/sll-sorted_true-unreach-call_true-valid-memsafety.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/memleaks_test7_true-valid-memsafety_true-termination.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/ntdrivers-simplified/kbfiltr_simpl2_true-unreach-call_true-valid-memsafety_true-termination.cil.c</include>
@@ -24,33 +23,42 @@
         <include>/storage/ultimate/trunk/examples/svcomp/memsafety-ext2/optional_data_creation_test04_true-valid-memsafety.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/ddv-machzwd/ddv_machzwd_inb_true-unreach-call_false-valid-memtrack.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/forester-heap/dll-optional_true-unreach-call_true-valid-memsafety.i</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/memleaks-notpreprocessed/memleaks_test6_true-valid-memsafety_true-termination.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/memsafety/lockfree-3.1_false-valid-memtrack.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/ArraysOfVariableLength_true-valid-memsafety.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/list-ext-properties/list-ext_false-unreach-call_false-valid-deref.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety-bitfields/test-bitfields-1_true-valid-memsafety_true-termination.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/memleaks_test18_true-valid-memsafety_true-termination.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/memleaks_test22_3_true-valid-memsafety_true-termination.i</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/array-memsafety/selectionsort-alloca_true-valid-memsafety_true-termination.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/ddv-machzwd/ddv_machzwd_outb_p_true-unreach-call_false-valid-memtrack.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/memsafety-ext2/complex_data_creation_test01_false-valid-memtrack.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/list-properties/simple_built_from_end_true-unreach-call_false-valid-memtrack.i</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/array-memsafety/lis-alloca_true-valid-memsafety_true-termination.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/memsafety/test-0232_false-valid-memtrack.i</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/memleaks-notpreprocessed/memleaks_test12_true-valid-memsafety.c</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/memleaks-notpreprocessed/memleaks_test22_3_true-valid-memsafety_true-termination.c</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/memleaks-notpreprocessed/memleaks_test23_2_false-valid-deref.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/list-ext-properties/test-0504_1_true-valid-memsafety.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/memsafety-ext/tree_dsw_true-valid-memsafety_false-termination.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/array-memsafety/reverse_array_unsafe_false-valid-deref.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/locks/test_locks_12_true-unreach-call_true-valid-memsafety_false-termination.c</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/memleaks-notpreprocessed/memleaks_test1_true-valid-memsafety_true-termination.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/array-memsafety/openbsd_cmemset-alloca_true-valid-memsafety_true-termination.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/memsafety/test-0217_true-valid-memsafety_false-termination.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/array-memsafety/cstrpbrk_unsafe_false-valid-deref.i</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/ArraysOfVariableLength6_true-valid-memsafety_true-termination.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/memsafety-ext2/complex_data_creation_test01_true-valid-memsafety.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/memleaks_test14_true-valid-memsafety.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/array-memsafety/cstrlen-alloca_true-valid-memsafety_true-termination.i</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/memleaks-notpreprocessed/memleaks_test22_2_true-valid-memsafety_true-termination.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/array-memsafety/cstrcat-alloca_true-valid-memsafety_true-termination.i</include>
-        <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/memleaks_test17_2_true-valid-memsafety.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/array-memsafety/openbsd_cstrlcpy-alloca_true-valid-memsafety_true-termination.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/array-memsafety/subseq-alloca_true-valid-memsafety_true-termination.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/ArraysOfVariableLength5_true-valid-memsafety.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/list-ext-properties/test-0158_1_false-valid-memtrack_true-termination.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/array-examples/standard_strcpy_original_false-valid-deref.i</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/memleaks-notpreprocessed/memleaks_test17_2_true-valid-memsafety_true-termination.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/memsafety-ext2/split_list_test05_false-valid-deref.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/locks/test_locks_9_true-unreach-call_true-valid-memsafety_false-termination.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/array-memsafety/strreplace-alloca_true-valid-memsafety_true-termination.i</include>
@@ -58,23 +66,28 @@
         <include>/storage/ultimate/trunk/examples/svcomp/array-memsafety/bubblesort-alloca_true-valid-memsafety_true-termination.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/array-memsafety/openbsd_cstrlen-alloca_true-valid-memsafety_true-termination.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/memleaks_test6_true-valid-memsafety_true-termination.i</include>
-        <include>/storage/ultimate/trunk/examples/svcomp/array-memsafety/selectionsort-alloca_true-valid-memsafety.i</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/memleaks-notpreprocessed/memleaks_test14_true-valid-memsafety.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/forester-heap/sll-buckets_true-unreach-call_true-valid-memsafety.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/memsafety/test-0237_true-valid-memsafety.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/memsafety/960521-1_true-valid-memsafety.i</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/list-ext-properties/test-0232_1_true-valid-memsafety_true-termination.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/forester-heap/sll-token_true-unreach-call_true-valid-memsafety.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/memsetNonZero3_true-valid-memsafety_true-termination.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/memsafety/20020406-1_false-valid-memtrack.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/forester-heap/dll-reverse_true-unreach-call_true-valid-memsafety.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/memsafety/test-0019_true-valid-memsafety_true-termination.i</include>
-        <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/ArraysWithLenghtAtDeclaration_true-valid-memsafety.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/array-memsafety/lis_unsafe_false-valid-deref.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/array-memsafety/rec_strlen-alloca_true-valid-memsafety_true-termination.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/ddv-machzwd/ddv_machzwd_pthread_mutex_unlock_true-unreach-call_false-valid-memtrack.i</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/memleaks-notpreprocessed/memleaks_test7_true-valid-memsafety_true-termination.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/ArraysWithLenghtAtDeclaration_false-valid-deref-write.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/array-memsafety/cstrncpy-alloca_true-valid-memsafety_true-termination.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/forester-heap/dll-rb-cnstr_1_false-unreach-call_false-valid-deref.i</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety-bitfields/test-bitfields-2.1_true-valid-memsafety_true-termination.i</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety-bitfields/test-bitfields-3.1_true-valid-memsafety_true-termination.i</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/array-memsafety/openbsd_cstpncpy-alloca_true-valid-memsafety_true-termination.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/forester-heap/sll-rb-sentinel_true-unreach-call_true-valid-memsafety.i</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/memleaks-notpreprocessed/memleaks_test23_4_false-valid-deref.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/memsafety/test-0232_false-valid-free.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety-bitfields/test-bitfields-3.1_false-valid-deref.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/StructInitialization2_true-valid-memsafety.c</include>
@@ -92,7 +105,7 @@
         <include>/storage/ultimate/trunk/examples/svcomp/array-memsafety/stroeder2-alloca_true-valid-memsafety_true-termination.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/memleaks_test22_3_false-valid-deref.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/ArraysOfVariableLength_false-valid-deref-write.c</include>
-        <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/ArraysOfVariableLength6_true-valid-memsafety.c</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/memleaks-notpreprocessed/memleaks_test19_true-valid-memsafety_true-termination.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/memleaks_test14_1_false-valid-memtrack_true-termination.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/array-memsafety/stroeder1-alloca_true-valid-memsafety_true-termination.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/array-memsafety/add_last-alloca_true-valid-memsafety_true-termination.i</include>
@@ -103,6 +116,7 @@
         <include>/storage/ultimate/trunk/examples/svcomp/memsafety/test-0102_false-valid-memtrack.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/forester-heap/dll-01_true-unreach-call_true-valid-memsafety.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/memsafety-ext/tree_cnstr_true-valid-memsafety_false-termination.i</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/memleaks_test17_2_true-valid-memsafety_true-termination.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/StructInitialization_true-valid-memsafety_true-termination.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/memory-alloca/c.03-alloca_true-valid-memsafety.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/array-memsafety/cstrlen_unsafe_false-valid-deref.i</include>
@@ -118,17 +132,20 @@
         <include>/storage/ultimate/trunk/examples/svcomp/array-memsafety/mult_array_unsafe_false-valid-deref.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/memleaks_test12_true-valid-memsafety.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/ddv-machzwd/ddv_machzwd_outl_true-unreach-call_false-valid-memtrack.i</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/memleaks-notpreprocessed/memleaks_test5_true-valid-memsafety_true-termination.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/memleaks_test23_4_false-valid-deref.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/memleaks_test8_2_false-valid-free.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/list-ext-properties/test-0019_1_false-valid-memtrack_true-termination.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/heap-manipulation/dancing_true-unreach-call_false-valid-memtrack.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/memleaks_test5_true-valid-memsafety_true-termination.i</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/memleaks_test17_1_true-valid-memsafety_true-termination.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/array-memsafety/cstrncpy_unsafe_false-valid-deref.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/memleaks_test22_5_false-valid-deref.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/memsafety/test-0019_false-valid-memtrack_true-termination.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/ntdrivers-simplified/cdaudio_simpl1_false-unreach-call_true-valid-memsafety_true-termination.cil.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/ntdrivers-simplified/kbfiltr_simpl2_false-unreach-call_true-valid-memsafety_true-termination.cil.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/memset3_true-valid-memsafety_true-termination.c</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/list-ext-properties/test-0232_1_false-valid-memtrack_true-termination.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/locks/test_locks_5_true-unreach-call_true-valid-memsafety_false-termination.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/memsafety-ext/tree_of_cslls_true-valid-memsafety.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/ddv-machzwd/ddv_machzwd_inw_p_true-unreach-call_false-valid-memtrack.i</include>
@@ -142,9 +159,9 @@
         <include>/storage/ultimate/trunk/examples/svcomp/ddv-machzwd/ddv_machzwd_outb_false-unreach-call_true-valid-memsafety.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/forester-heap/sll-01_true-unreach-call_true-valid-memsafety.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/array-memsafety/cstrncmp-alloca_true-valid-memsafety_true-termination.i</include>
-        <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety-bitfields/test-bitfields-3.1_true-valid-memsafety.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/array-memsafety/openbsd_cstrcmp-alloca_true-valid-memsafety_true-termination.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/locks/test_locks_15_true-unreach-call_true-valid-memsafety_false-termination.c</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/memleaks-notpreprocessed/memleaks_test22_1_true-valid-memsafety_true-termination.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/array-memsafety/cstrncat_unsafe_false-valid-deref.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/array-memsafety/cstrpbrk-alloca_true-valid-memsafety_true-termination.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/list-ext-properties/test-0158_1_true-valid-memsafety_true-termination.i</include>
@@ -155,7 +172,7 @@
         <include>/storage/ultimate/trunk/examples/svcomp/array-memsafety/openbsd_cstpcpy-alloca_true-valid-memsafety_true-termination.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/memleaks_test6_2_false-valid-free.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/array-memsafety/cstrspn-alloca_true-valid-memsafety_true-termination.i</include>
-        <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety-bitfields/test-bitfields-3_true-valid-memsafety.i</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/memleaks-notpreprocessed/memleaks_test18_true-valid-memsafety_true-termination.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/array-memsafety/array01-alloca_true-valid-memsafety_true-termination.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/memsafety/test-0137_false-valid-deref.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/memleaks_test19_true-valid-memsafety_true-termination.i</include>
@@ -169,7 +186,9 @@
         <include>/storage/ultimate/trunk/examples/svcomp/array-memsafety/openbsd_cstrcpy-alloca_true-valid-memsafety_true-termination.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/memleaks_test23_3_true-valid-memsafety.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/array-examples/relax_false-valid-deref.i</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/memleaks-notpreprocessed/memleaks_test13_true-valid-memsafety.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/ntdrivers-simplified/floppy_simpl4_false-unreach-call_true-valid-memsafety_true-termination.cil.c</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/array-memsafety/mult_array-alloca_true-valid-memsafety_true-termination.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/memsafety/lockfree-3.0_true-valid-memsafety.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/locks/test_locks_7_true-unreach-call_true-valid-memsafety_false-termination.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/array-memsafety/knapsack_alloca_unsafe_false-valid-deref.i</include>
@@ -178,22 +197,23 @@
         <include>/storage/ultimate/trunk/examples/svcomp/array-memsafety/openbsd_cmemrchr-alloca_true-valid-memsafety_true-termination.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/array-memsafety/diff_usafe_false-valid-deref.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/heap-manipulation/tree_false-valid-deref.i</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/memleaks-notpreprocessed/memleaks_test15_true-valid-memsafety_true-termination.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/memleaks_test13_1_false-valid-memtrack_true-termination.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/list-ext-properties/test-0019_1_true-valid-memsafety_true-termination.i</include>
-        <include>/storage/ultimate/trunk/examples/svcomp/array-memsafety/openbsd_cstpncpy-alloca_true-valid-memsafety.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/StructInitialization1_true-valid-memsafety.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/memleaks_test4_true-valid-memsafety_true-termination.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/memsetNonZero2_false-valid-deref-write.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/array-memsafety/count_down_unsafe_false-valid-deref.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/array-memsafety/cstrcpy-alloca_true-valid-memsafety_true-termination.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/forester-heap/sll-queue_true-unreach-call_true-valid-memsafety.i</include>
-        <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/memleaks_test17_1_true-valid-memsafety.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/array-memsafety/cstrchr-alloca_true-valid-memsafety_true-termination.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/array-memsafety/openbsd_cstrncmp-alloca_true-valid-memsafety_true-termination.i</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/array-memsafety/count_down-alloca_true-valid-memsafety_true-termination.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/array-memsafety/array03-alloca_true-valid-memsafety_true-termination.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/list-ext-properties/960521-1_1_false-valid-deref.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/loop-acceleration/array3_false-valid-deref.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/ArraysOfVariableLength2_true-valid-memsafety.c</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/memleaks-notpreprocessed/memleaks_test9_true-valid-memsafety_true-termination.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/memsetNonZero_true-valid-memsafety_true-termination.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/ArraysOfVariableLength2_false-valid-deref-read.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/list-ext-properties/960521-1_1_true-valid-memsafety.i</include>
@@ -213,7 +233,9 @@
         <include>/storage/ultimate/trunk/examples/svcomp/memsafety/lockfree-3.2_false-valid-memtrack.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/memleaks_test3_false-valid-free.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/locks/test_locks_14_true-unreach-call_true-valid-memsafety_false-termination.c</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/ArraysWithLenghtAtDeclaration_true-valid-memsafety_true-termination.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/memleaks_test16_2_false-valid-memtrack_true-termination.i</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/memleaks-notpreprocessed/memleaks_test4_true-valid-memsafety_true-termination.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/memleaks_test22_1_true-valid-memsafety_true-termination.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/memleaks_test18_2_false-valid-memtrack_true-termination.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/locks/test_locks_11_true-unreach-call_true-valid-memsafety_false-termination.c</include>
@@ -223,11 +245,11 @@
         <include>/storage/ultimate/trunk/examples/svcomp/memsafety-ext/skiplist_2lvl_true-valid-memsafety.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/list-properties/alternating_list_true-unreach-call_true-valid-memsafety.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/array-memsafety/openbsd_cmemchr-alloca_true-valid-memsafety_true-termination.i</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/memleaks-notpreprocessed/memleaks_test20_true-valid-memsafety_true-termination.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/memsafety/test-0513_true-valid-memsafety.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/memleaks_test9_1_false-valid-memtrack_true-termination.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/memleaks_test8_1_false-valid-memtrack_true-termination.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/ddv-machzwd/ddv_machzwd_all_false-unreach-call_true-valid-memsafety.i</include>
-        <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/ArraysOfVariableLength4_true-valid-memsafety.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/memleaks_test5_1_false-valid-memtrack_true-termination.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/memleaks_test6_1_false-valid-memtrack_true-termination.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/memsafety/test-0158_false-valid-free.i</include>
@@ -246,12 +268,13 @@
         <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/memset_true-valid-memsafety_true-termination.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/ntdrivers/floppy_false-valid-deref.i.cil.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/array-memsafety/insertionsort-alloca_true-valid-memsafety_true-termination.i</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/ArraysOfVariableLength4_true-valid-memsafety_true-termination.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/memleaks_test20_false-valid-memtrack_true-termination.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/memsafety/test-0219_true-valid-memsafety.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/memleaks_test3_true-valid-memsafety_true-termination.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/memsafety/test-0218_true-valid-memsafety_false-termination.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/array-memsafety/diff-alloca_true-valid-memsafety_true-termination.i</include>
-        <include>/storage/ultimate/trunk/examples/svcomp/array-memsafety/mult_array-alloca_true-valid-memsafety.i</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/memleaks-notpreprocessed/memleaks_test23_3_true-valid-memsafety.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/ntdrivers-simplified/cdaudio_simpl1_true-unreach-call_true-valid-memsafety_true-termination.cil.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/memleaks_test16_1_false-valid-memtrack_true-termination.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/array-examples/standard_strcpy_false-valid-deref_ground.i</include>
@@ -262,12 +285,11 @@
         <include>/storage/ultimate/trunk/examples/svcomp/array-memsafety/openbsd_cstrspn-alloca_true-valid-memsafety_true-termination.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/memleaks_test13_true-valid-memsafety.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/ArraysOfVariableLength2_false-valid-deref-write.c</include>
-        <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety-bitfields/test-bitfields-2_true-valid-memsafety.i</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/memleaks-notpreprocessed/memleaks_test11_true-valid-memsafety_true-termination.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/memsafety/test-0134_true-valid-memsafety.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/memleaks_test19_false-valid-free.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/memsafety/test-0220_false-valid-memtrack.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/array-memsafety/openbsd_cstrstr-alloca_true-valid-memsafety_true-termination.i</include>
-        <include>/storage/ultimate/trunk/examples/svcomp/array-memsafety/count_down-alloca_true-valid-memsafety.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/memleaks_test8_true-valid-memsafety_true-termination.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/memleaks_test6_3_false-valid-memtrack_true-termination.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/locks/test_locks_13_true-unreach-call_true-valid-memsafety_false-termination.c</include>
@@ -276,20 +298,24 @@
         <include>/storage/ultimate/trunk/examples/svcomp/array-memsafety/cstrchr_unsafe_false-valid-deref.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/locks/test_locks_6_true-unreach-call_true-valid-memsafety_false-termination.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/memsafety/lockfree-3.3_false-valid-memtrack.i</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/memleaks-notpreprocessed/memleaks_test17_1_true-valid-memsafety_true-termination.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/memleaks_test11_1_false-valid-free.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/memsafety/test-0235_true-valid-memsafety.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/ddv-machzwd/ddv_machzwd_outw_p_true-unreach-call_false-valid-memtrack.i</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/memleaks-notpreprocessed/memleaks_test16_true-valid-memsafety_true-termination.c</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety-bitfields/test-bitfields-2_true-valid-memsafety_true-termination.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/array-memsafety/openbsd_cstrnlen-alloca_true-valid-memsafety_true-termination.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/memleaks_test14_3_false-valid-deref.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/forester-heap/dll-rb-sentinel_true-unreach-call_true-valid-memsafety.i</include>
-        <include>/storage/ultimate/trunk/examples/svcomp/array-memsafety/lis-alloca_true-valid-memsafety.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/list-ext-properties/test-0217_1_true-valid-memsafety.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/array-memsafety/add_last_unsafe_false-valid-deref.i</include>
-        <include>/storage/ultimate/trunk/examples/svcomp/memsafety/test-memleak_nexttime_true-valid-memsafety.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/memleaks_test7_false-valid-memtrack_true-termination.i</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/memleaks-notpreprocessed/memleaks_test22_5_false-valid-deref.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/forester-heap/sll-01_false-unreach-call_false-valid-deref.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/memleaks_test23_1_true-valid-memsafety.i</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/memleaks-notpreprocessed/memleaks_test21_true-valid-memsafety_true-termination.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/list-ext-properties/simple-ext_1_true-valid-memsafety.i</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/memsafety/test-memleak_nexttime_true-valid-memsafety_true-termination.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/heap-manipulation/bubble_sort_linux_true-unreach-call_true-valid-memsafety.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/memsafety/960521-1_false-valid-free.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/array-memsafety/reverse_array_alloca_unsafe_false-valid-deref.i</include>
@@ -297,8 +323,11 @@
         <include>/storage/ultimate/trunk/examples/svcomp/forester-heap/dll-queue_true-unreach-call_true-valid-memsafety.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/memleaks_test10_false-valid-memtrack_true-termination.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/memleaks_test5_2_false-valid-memtrack_true-termination.i</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/memleaks-notpreprocessed/memleaks_test23_1_true-valid-memsafety.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/memleaks_test13_2_false-valid-memtrack.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/list-ext-properties/list-ext_flag_1_true-valid-memsafety.i</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety-bitfields/test-bitfields-3_true-valid-memsafety_true-termination.i</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/memleaks-notpreprocessed/memleaks_test8_true-valid-memsafety_true-termination.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/memsetNonZero3_false-valid-deref-write.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/locks/test_locks_14_false-unreach-call_true-valid-memsafety_false-termination.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/list-ext-properties/test-0158_1_false-valid-free.i</include>
@@ -310,7 +339,6 @@
         <include>/storage/ultimate/trunk/examples/svcomp/locks/test_locks_15_false-unreach-call_true-valid-memsafety_false-termination.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/memleaks_test16_true-valid-memsafety_true-termination.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/ntdrivers-simplified/floppy_simpl3_true-unreach-call_true-valid-memsafety_true-termination.cil.c</include>
-        <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety-bitfields/test-bitfields-2.1_true-valid-memsafety.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/ddv-machzwd/ddv_machzwd_inb_p_true-unreach-call_false-valid-memtrack.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/memleaks_test21_false-valid-memtrack_true-termination.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/array-memsafety/openbsd_cstrcspn-alloca_true-valid-memsafety_true-termination.i</include>
@@ -322,18 +350,21 @@
         <include>/storage/ultimate/trunk/examples/svcomp/memsafety/test-0232_true-valid-memsafety.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/list-properties/list_true-unreach-call_false-valid-memtrack.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/memsafety/test-0234_false-valid-memtrack.i</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/memleaks-notpreprocessed/memleaks_test14_3_false-valid-deref.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/memleaks_test1_false-valid-memtrack_true-termination.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety-bitfields/test-bitfields-1_false-valid-deref.i</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/memleaks-notpreprocessed/memleaks_test3_true-valid-memsafety_true-termination.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/array-memsafety/bubblesort_unsafe_false-valid-deref.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/array-memsafety/cstrncat-alloca_true-valid-memsafety_true-termination.i</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/memleaks-notpreprocessed/memleaks_test22_3_false-valid-deref.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/memleaks_test18_3_false-valid-memtrack_true-termination.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/memleaks_test22_2_true-valid-memsafety_true-termination.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/memleaks_test11_true-valid-memsafety_true-termination.i</include>
-        <include>/storage/ultimate/trunk/examples/svcomp/list-ext-properties/test-0232_1_true-valid-memsafety.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/memset2_false-valid-deref-write.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/locks/test_locks_10_true-unreach-call_true-valid-memsafety_false-termination.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/memsafety/test-0158_true-valid-memsafety_true-termination.i</include>
         <include>/storage/ultimate/trunk/examples/svcomp/memsafety/20051113-1.c_false-valid-memtrack.i</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/ldv-memsafety/memleaks-notpreprocessed/memleaks_test10_true-valid-memsafety_true-termination.c</include>
     </tasks>
 
     <tasks name="Mem64Bit">

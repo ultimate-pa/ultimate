@@ -74,7 +74,7 @@ public class SvcompOverflowTestSuite extends AbstractSvcompTestSuite {
 		rtr.addAll(createTests("NoOverflows-Other", "32bit", "Overflow"));
 
 		// contains 280 examples, arch unknown (32bit)
-		rtr.addAll(createTests("NoOverflows-BitVectors", "32bit", "Overflow"));
+		rtr.addAll(createTests("NoOverflows-BitVectors", "64bit", "Overflow"));
 
 		return rtr;
 	}
