@@ -5,6 +5,7 @@
     <rundefinition name="Memsafety">
         <propertyfile>/storage/ultimate/trunk/examples/svcomp/MemSafety.prp</propertyfile>
         <option name="--full-output"/>
+        <option name="-ea" />
     </rundefinition>
 
     <tasks name="Memsafety32bit">

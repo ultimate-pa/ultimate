@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <benchmark tool="ultimateautomizer" memlimit="6GB" timelimit="1200" hardtimelimit="1200" cpuCores="2">
 
-
     <rundefinition name="Reach">
         <propertyfile>/storage/ultimate/trunk/examples/svcomp/ReachSafety.prp</propertyfile>
         <option name="--full-output"/>
+        <option name="-ea" />
     </rundefinition>
 
     <tasks name="Reach32bit">

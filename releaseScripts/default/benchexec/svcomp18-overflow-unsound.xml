@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <benchmark tool="ultimateautomizer" memlimit="6GB" timelimit="1200" hardtimelimit="1200" cpuCores="2">
 
-
     <rundefinition name="Overflow">
         <propertyfile>/storage/ultimate/trunk/examples/svcomp/NoOverflows.prp</propertyfile>
         <option name="--full-output"/>
+        <option name="-ea" />
     </rundefinition>
 
     <tasks name="Overflow32bit">
