@@ -53,16 +53,23 @@ public final class DeltaDebuggerPreferences extends UltimatePreferenceInitialize
 		NONE, CPACHECKER
 	}
 
+	public static final String LABEL_FORBIDDEN_RESULT_TYPE = "Ignore reduction with results of type";
+	private static final String DESC_FORBIDDEN_RESULT_TYPE =
+			"If a reduction produces a result of this type, the delta debugger assumes that this reduction is not interesting";
+	private static final String DEFAULT_FORBIDDEN_RESULT_TYPE = "";
+
 	public static final String LABEL_INTERESTING_RESULT_TYPE = "Look for result of type";
 	private static final String DESC_INTERESTING_RESULT_TYPE =
 			"Specify the name of a type that represents an Ultimate result "
 					+ "(i.e., some class implementing IResult with this name). "
 					+ "The delta debugger searchs for the presence of this result.";
-	private static final Class<?>[] INTERESTING_RESULT_TYPE_CLASSES = new Class<?>[] { ExceptionOrErrorResult.class,
-			SyntaxErrorResult.class, UnsupportedSyntaxResult.class, TypeErrorResult.class, CounterExampleResult.class };
-	private static final String[] VALUES_INTERESTING_RESULT_TYPE =
-			Arrays.stream(INTERESTING_RESULT_TYPE_CLASSES).map(a -> a.getSimpleName()).collect(Collectors.toList())
-					.toArray(new String[INTERESTING_RESULT_TYPE_CLASSES.length]);
+	private static final Class<?>[] RESULT_TYPE_CLASSES =
+			new Class<?>[] { ExceptionOrErrorResult.class, SyntaxErrorResult.class, UnsupportedSyntaxResult.class,
+					TypeErrorResult.class, CounterExampleResult.class, };
+
+	private static final String[] VALUES_RESULT_TYPES = Arrays.stream(RESULT_TYPE_CLASSES).map(a -> a.getSimpleName())
+			.collect(Collectors.toList()).toArray(new String[RESULT_TYPE_CLASSES.length]);
+
 	private static final String DEFAULT_INTERESTING_RESULT_TYPE = ExceptionOrErrorResult.class.getSimpleName();
 
 	public static final String LABEL_RESULT_SHORT_DESC_PREFIX = "Result short description prefix";
@@ -126,11 +133,14 @@ public final class DeltaDebuggerPreferences extends UltimatePreferenceInitialize
 		return new UltimatePreferenceItem<?>[] {
 
 				new UltimatePreferenceItem<>(LABEL_INTERESTING_RESULT_TYPE, DEFAULT_INTERESTING_RESULT_TYPE,
-						DESC_INTERESTING_RESULT_TYPE, PreferenceType.Combo, VALUES_INTERESTING_RESULT_TYPE),
+						DESC_INTERESTING_RESULT_TYPE, PreferenceType.Combo, VALUES_RESULT_TYPES),
 				new UltimatePreferenceItem<>(LABEL_RESULT_SHORT_DESC_PREFIX, DEFAULT_RESULT_SHORT_DESC_PREFIX,
 						DESC_RESULT_SHORT_DESC_PREFIX, PreferenceType.String),
 				new UltimatePreferenceItem<>(LABEL_RESULT_LONG_DESC_PREFIX, DEFAULT_RESULT_LONG_DESC_PREFIX,
 						DESC_RESULT_LONG_DESC_PREFIX, PreferenceType.String),
+
+				new UltimatePreferenceItem<>(LABEL_FORBIDDEN_RESULT_TYPE, DEFAULT_FORBIDDEN_RESULT_TYPE,
+						DESC_FORBIDDEN_RESULT_TYPE, PreferenceType.Combo, VALUES_RESULT_TYPES),
 
 				new UltimatePreferenceItem<>(LABEL_EXTERNAL_TOOL_MODE, ExternalComparison.NONE, DESC_EXTERNAL_TOOL_MODE,
 						PreferenceType.Combo, ExternalComparison.values()),
@@ -165,7 +175,18 @@ public final class DeltaDebuggerPreferences extends UltimatePreferenceInitialize
 	public static Class<? extends IResult> getInterestingClass(final IUltimateServiceProvider services) {
 		final IPreferenceProvider provider = services.getPreferenceProvider(Activator.PLUGIN_ID);
 		final String interestingType = provider.getString(LABEL_INTERESTING_RESULT_TYPE);
-		return (Class<? extends IResult>) Arrays.stream(INTERESTING_RESULT_TYPE_CLASSES)
+		return (Class<? extends IResult>) Arrays.stream(RESULT_TYPE_CLASSES)
+				.filter(a -> a.getSimpleName().equals(interestingType)).findAny().orElseThrow(
+						() -> new IllegalArgumentException("No result with name " + interestingType + " is known"));
+	}
+
+	public static Class<? extends IResult> getForbiddenClass(final IUltimateServiceProvider services) {
+		final IPreferenceProvider provider = services.getPreferenceProvider(Activator.PLUGIN_ID);
+		final String interestingType = provider.getString(LABEL_FORBIDDEN_RESULT_TYPE);
+		if ("".equals(interestingType)) {
+			return null;
+		}
+		return (Class<? extends IResult>) Arrays.stream(RESULT_TYPE_CLASSES)
 				.filter(a -> a.getSimpleName().equals(interestingType)).findAny().orElseThrow(
 						() -> new IllegalArgumentException("No result with name " + interestingType + " is known"));
 	}

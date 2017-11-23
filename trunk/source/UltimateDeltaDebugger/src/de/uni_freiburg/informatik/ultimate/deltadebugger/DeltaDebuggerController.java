@@ -153,6 +153,12 @@ public class DeltaDebuggerController extends CommandLineController {
 
 	private boolean isUltimateToolchainResultInteresting(final IPreferenceProvider prefProvider) {
 
+		final Class<? extends IResult> forbiddenResultType = DeltaDebuggerPreferences.getForbiddenClass(mServices);
+		if (forbiddenResultType != null
+				&& ResultUtil.filterResults(mResults.get(), forbiddenResultType).stream().findAny().isPresent()) {
+			return false;
+		}
+
 		final String resultShortPrefix =
 				prefProvider.getString(DeltaDebuggerPreferences.LABEL_RESULT_SHORT_DESC_PREFIX);
 		final String resultLongPrefix = prefProvider.getString(DeltaDebuggerPreferences.LABEL_RESULT_LONG_DESC_PREFIX);
@@ -163,6 +169,7 @@ public class DeltaDebuggerController extends CommandLineController {
 				a -> resultLongPrefix.isEmpty() || a.getLongDescription().startsWith(resultLongPrefix);
 
 		final Class<? extends IResult> interestingResultType = DeltaDebuggerPreferences.getInterestingClass(mServices);
+
 		return ResultUtil.filterResults(mResults.get(), interestingResultType).stream()
 				.anyMatch(predShort.and(predLong));
 	}
