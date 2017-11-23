@@ -967,7 +967,12 @@ public class Elim1Store {
 					}
 					final Term index1 = selectIndices.get(i);
 					final Term index2 = selectIndices.get(j);
-					if (selectTermsWithsimilarArray(index2value.get(index1), index2value.get(index2))) {
+					if (false && selectTermsWithsimilarArray(index2value.get(index1), index2value.get(index2))) {
+						// 2017-11-22 Matthias: Bug report from Marius shows that 
+						// this is unsound. Maybe we can introduce it again later
+						// but we need the indices on the other array are equivalent
+						// to the indices on this array.
+						
 						// Both old values are represented by a select on a 
 						// similar array (some new aux array).
 						// We omit this conjunct because the congruence
