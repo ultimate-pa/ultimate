@@ -556,8 +556,8 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE>, ACTIO
 			return true;
 		}
 		if (result == Validity.INVALID && checkedResult == Validity.VALID) {
-			mLogger.warn("Rejecting Hoare triple although it is actually valid (Domain "
-					+ mDomain.getClass().getSimpleName() + ")");
+			mLogger.warn("Rejecting Hoare triple although it is actually valid (Domain " + mDomain.domainDescription()
+					+ ")");
 			return ACCEPT_REJECTION_DUE_TO_IMPRECISION;
 		}
 

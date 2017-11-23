@@ -109,6 +109,10 @@ public interface IAbstractDomain<STATE extends IAbstractState<STATE>, ACTION> {
 		// default is doing nothing
 	}
 
+	/**
+	 * @return The name of the domain. If the domain is a domain comprising several subdomains, this method can be used
+	 *         to further classify the domain. See, e.g., {@link CompoundDomain#domainDescription}.
+	 */
 	default String domainDescription() {
 		return getClass().getSimpleName();
 	}
