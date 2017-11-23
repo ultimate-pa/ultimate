@@ -20,6 +20,7 @@ configdir = os.path.join(ultimatedir, 'config')
 datadir = os.path.join(ultimatedir, 'data')
 witnessdir = ultimatedir
 witnessname = "witness.graphml"
+enable_assertions = False
 
 # special strings in ultimate output
 unsupported_syntax_errorstring = 'ShortDescription: Unsupported Syntax'
@@ -173,9 +174,16 @@ def get_binary():
         '-Dosgi.configuration.area=' + os.path.join(datadir, 'config'),
         '-Xmx12G',
         '-Xms1G',
+    ]
+
+    if enable_assertions:
+        ultimate_bin = ultimate_bin + ['-ea']
+
+    ultimate_bin = ultimate_bin + [
         '-jar', os.path.join(ultimatedir, 'plugins/org.eclipse.equinox.launcher_1.3.100.v20150511-1540.jar'),
         '-data', datadir
     ]
+
     return ultimate_bin
 
 
@@ -475,6 +483,7 @@ def parse_args():
     global datadir
     global witnessdir
     global witnessname
+    global enable_assertions
     if (len(sys.argv) == 2) and (sys.argv[1] == '--version'):
         print(version)
         sys.exit(ExitCode.SUCCESS)
@@ -492,6 +501,8 @@ def parse_args():
     parser.add_argument('--data', nargs=1, metavar='<dir>', type=check_dir,
                         help='Specify the directory in which the RCP config files are located; default is data/ '
                              'relative to the location of this script')
+    parser.add_argument('-ea', '--enable-assertions', action='store_true',
+                        help='Enable Java assertions')
     parser.add_argument('--full-output', action='store_true',
                         help='Print Ultimate\'s full output to stderr after verification ends')
     parser.add_argument('--envdebug', action='store_true',
@@ -511,6 +522,9 @@ def parse_args():
                         help='Specify a filename for the generated witness; default is witness.graphml')
 
     args, extras = parser.parse_known_args()
+
+    if args.enable_assertions:
+        enable_assertions = True
 
     if args.envdebug:
         debug_environment()
