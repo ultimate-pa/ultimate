@@ -1018,9 +1018,9 @@ public class InitializationHandler {
 							slr.getLiteralString().length + 1);
 					literalString[literalString.length - 1] = '0';
 
-					// we overapproximate strings of length 7 or longer
-					final boolean useActualValues = literalString.length < 7;
-//					final List<Statement> statements = memoryHandler.writeStringToHeap(loc, tId, charArray, writeValues);
+					// we overapproximate strings of length STRING_OVERAPPROXIMATION_THRESHOLD or longer
+					final boolean useActualValues =
+							literalString.length < ExpressionTranslation.STRING_OVERAPPROXIMATION_THRESHOLD;
 					final List<Overapprox> overapproxList;
 					if (useActualValues) {
 						// make the list (in our case a map because we support sparse lists in other cases)

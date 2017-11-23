@@ -83,6 +83,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransla
 
 public abstract class ExpressionTranslation {
 
+	public static final int STRING_OVERAPPROXIMATION_THRESHOLD = 7;
+
 	protected final FunctionDeclarations mFunctionDeclarations;
 	protected final TypeSizes mTypeSizes;
 	protected final ITypeHandler mTypeHandler;
@@ -161,8 +163,8 @@ public abstract class ExpressionTranslation {
 				throw new UnsupportedOperationException(
 						"unsupported representation of string literal " + Arrays.toString(node.getValue()));
 			}
-			// overapproximate strings of length 7 or longer
-			final boolean writeValues = charArray.length < 7;
+			// overapproximate strings of length STRING_OVERAPPROXIMATION_THRESHOLD longer
+			final boolean writeValues = charArray.length < STRING_OVERAPPROXIMATION_THRESHOLD;
 			final List<Statement> statements = memoryHandler.writeStringToHeap(loc, tId, charArray, writeValues);
 			final List<Overapprox> overapproxList;
 			if (writeValues) {
