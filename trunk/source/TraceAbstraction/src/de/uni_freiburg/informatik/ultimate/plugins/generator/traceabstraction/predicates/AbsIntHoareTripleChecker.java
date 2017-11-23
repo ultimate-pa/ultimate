@@ -81,6 +81,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
 public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE>, ACTION extends IIcfgTransition<?>>
 		implements IHoareTripleChecker {
 
+	private static final boolean ACCEPT_REJECTION_DUE_TO_IMPRECISION = true;
 	private static final String MSG_BOTTOM_WAS_LOST = "Bottom was lost";
 	private static final String MSG_IS_SUBSET_OF_IS_UNSOUND = "isSubsetOf is unsound";
 	private static final String MSG_TRACKED_VARIABLES_DIFFER = "Tracked variables differ";
@@ -554,6 +555,12 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE>, ACTIO
 			mLogger.debug("HTC assert ok");
 			return true;
 		}
+		if (result == Validity.INVALID && checkedResult == Validity.VALID) {
+			mLogger.warn("Rejecting Hoare triple although it is actually valid (Domain "
+					+ mDomain.getClass().getSimpleName() + ")");
+			return ACCEPT_REJECTION_DUE_TO_IMPRECISION;
+		}
+
 		mLogger.fatal("Check was " + result + " but should have been " + checkedResult);
 
 		if (precondHier == null) {
