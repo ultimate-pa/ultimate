@@ -856,6 +856,8 @@ public class FunctionHandler {
 		// functionSignaturesThatHaveAFunctionPointer = null;
 		// TODO: use is compatible with instead of equals/set, make the name of the inserted procedure compatible to
 		// isCompatibleWith
+		// TODO: DD 2017-11-23: Could we remove this collection of unknown symbols if we had a complete function symbol
+		// table (perhaps collected in a prerun?)?
 		final ProcedureSignature procSig = new ProcedureSignature(main, calledFuncCFunction);
 		mFunctionSignaturesThatHaveAFunctionPointer.add(procSig);
 
