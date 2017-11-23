@@ -147,7 +147,7 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE>, ACTIO
 			return sdResult;
 		}
 		final Validity absIntResult = checkInternalAbsInt(prePred, act, succPred);
-		if (isFinalResult(absIntResult)) {
+		if (absIntResult == Validity.VALID) {
 			return absIntResult;
 		}
 		final Validity result = mHtcSmt.checkInternal(prePred, act, succPred);
@@ -166,7 +166,7 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE>, ACTIO
 			return sdResult;
 		}
 		final Validity absIntResult = checkCallAbsInt(prePred, act, succPred);
-		if (isFinalResult(absIntResult)) {
+		if (absIntResult == Validity.VALID) {
 			return absIntResult;
 		}
 		final Validity result = mHtcSmt.checkCall(prePred, act, succPred);
@@ -185,7 +185,7 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE>, ACTIO
 			return sdResult;
 		}
 		final Validity absIntResult = checkReturnAbsInt(preLinPred, preHierPred, act, succPred);
-		if (isFinalResult(absIntResult)) {
+		if (absIntResult == Validity.VALID) {
 			return absIntResult;
 		}
 		final Validity result = mHtcSmt.checkReturn(preLinPred, preHierPred, act, succPred);
