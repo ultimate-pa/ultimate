@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -43,7 +44,7 @@ public class CCInterpolator {
 
 	Interpolator mInterpolator;
 
-	HashMap<SymmetricPair<Term>, ApplicationTerm> mEqualities;
+	HashMap<SymmetricPair<Term>, AnnotatedTerm> mEqualities;
 	HashMap<SymmetricPair<Term>, PathInfo> mPaths;
 
 	Theory mTheory;
@@ -369,7 +370,7 @@ public class CCInterpolator {
 			for (int i = 0; i < mPath.length - 1; i++) {
 				final Term left = mPath[i];
 				final Term right = mPath[i + 1];
-				final ApplicationTerm lit = mEqualities.get(new SymmetricPair<>(left, right));
+				final AnnotatedTerm lit = mEqualities.get(new SymmetricPair<>(left, right));
 				if (lit == null) {
 					mTail.mergeCongPath(mHead, (ApplicationTerm) left, (ApplicationTerm) right);
 				} else {
@@ -416,7 +417,7 @@ public class CCInterpolator {
 
 		}
 
-		public void addDiseq(final ApplicationTerm diseq) {
+		public void addDiseq(final AnnotatedTerm diseq) {
 			final LitInfo info = mInterpolator.getLiteralInfo(diseq);
 			Term boundaryTailTerm, boundaryHeadTerm;
 			boundaryHeadTerm = mPath[0];
@@ -483,8 +484,10 @@ public class CCInterpolator {
 		for (final Term literal : proofTermInfo.getLiterals()) {
 			final InterpolatorLiteralTermInfo litTermInfo = mInterpolator.getLiteralTermInfo(literal);
 			if (litTermInfo.isNegated()) {
-				final ApplicationTerm eq = (ApplicationTerm) litTermInfo.getAtom();
-				mEqualities.put(new SymmetricPair<>(eq.getParameters()[0], eq.getParameters()[1]), eq);
+				assert litTermInfo.getAtom() instanceof AnnotatedTerm;
+				final ApplicationTerm eq = litTermInfo.getEquality();
+				mEqualities.put(new SymmetricPair<>(eq.getParameters()[0], eq.getParameters()[1]),
+						(AnnotatedTerm) litTermInfo.getAtom());
 			}
 		}
 
@@ -501,7 +504,7 @@ public class CCInterpolator {
 			}
 		}
 		mainPath.interpolatePathInfo();
-		final ApplicationTerm diseq = (ApplicationTerm) proofTermInfo.getDiseq();
+		final AnnotatedTerm diseq = (AnnotatedTerm) proofTermInfo.getDiseq();
 		if (diseq != null) {
 			mainPath.addDiseq(diseq);
 		}

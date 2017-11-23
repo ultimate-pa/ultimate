@@ -583,7 +583,7 @@ public class ProofChecker extends NonRecursive {
 		Term goalEquality;
 		if (ccAnnotation[0] instanceof Term) {
 			startSubpathAnnot++;
-			goalEquality = (Term) ccAnnotation[0];
+			goalEquality = unquote((Term) ccAnnotation[0]);
 		} else {
 			goalEquality = mSkript.term("false");
 		}
@@ -727,8 +727,8 @@ public class ProofChecker extends NonRecursive {
 	 * @param indexDiseqs
 	 *            the index disequality literals.
 	 */
-	void checkArrayPath(final Term weakIdx, final Term[] path, final HashSet<SymmetricPair<Term>> strongPaths, final HashSet<Term> weakPaths,
-			final HashSet<SymmetricPair<Term>> indexDiseqs) {
+	void checkArrayPath(final Term weakIdx, final Term[] path, final HashSet<SymmetricPair<Term>> strongPaths,
+			final HashSet<Term> weakPaths, final HashSet<SymmetricPair<Term>> indexDiseqs) {
 		if (path.length < 2) {
 			reportError("Short path in ArrayLemma");
 			return;
@@ -1527,9 +1527,8 @@ public class ProofChecker extends NonRecursive {
 		}
 		/* compute the proven equality (= x (f q1 ... qn)) */
 		final Theory theory = congruenceApp.getTheory();
-		final Term newEquality =
-				theory.term("=", ((ApplicationTerm) subProofs[0]).getParameters()[0],
-						theory.term(((ApplicationTerm) funcTerm).getFunction(), newFuncParams));
+		final Term newEquality = theory.term("=", ((ApplicationTerm) subProofs[0]).getParameters()[0],
+				theory.term(((ApplicationTerm) funcTerm).getFunction(), newFuncParams));
 		return newEquality;
 	}
 
@@ -2164,14 +2163,12 @@ public class ProofChecker extends NonRecursive {
 			return isApplication(divisible ? "true" : "false", rhs);
 		}
 		final Theory theory = lhs.getTheory();
-		final SMTAffineTerm expected =
-				SMTAffineTerm.create(num, theory.term("div", arg, num.toTerm(arg.getSort())));
+		final SMTAffineTerm expected = SMTAffineTerm.create(num, theory.term("div", arg, num.toTerm(arg.getSort())));
 		if (!isApplication("=", rhs)) {
 			return false;
 		}
 		final Term[] rhsArgs = ((ApplicationTerm) rhs).getParameters();
-		return rhsArgs[0] == arg &&
-				convertAffineTerm(rhsArgs[1]).equals(expected);
+		return rhsArgs[0] == arg && convertAffineTerm(rhsArgs[1]).equals(expected);
 	}
 
 	private Rational divConst(final Rational dividend, final Rational divisor) {
@@ -2562,8 +2559,7 @@ public class ProofChecker extends NonRecursive {
 			if (lhsParams.length != 2) {
 				return false;
 			}
-			SMTAffineTerm lhsAffine =
-					convertAffineTerm(lhsParams[0]).add(convertAffineTerm(lhsParams[1]).negate());
+			SMTAffineTerm lhsAffine = convertAffineTerm(lhsParams[0]).add(convertAffineTerm(lhsParams[1]).negate());
 
 			if (lhsAffine.isConstant()) {
 				/* simplify to true/false */
@@ -2919,9 +2915,12 @@ public class ProofChecker extends NonRecursive {
 		if (quotedTerm instanceof AnnotatedTerm) {
 			final AnnotatedTerm annTerm = (AnnotatedTerm) quotedTerm;
 			final Annotation[] annots = annTerm.getAnnotations();
-			if (annots.length == 1 && annots[0].getKey() == ":quoted") {
-				final Term result = annTerm.getSubterm();
-				return result;
+			if (annots.length == 1) {
+				final String annot = annots[0].getKey();
+				if (annot == ":quoted" || annot == ":quotedCC" || annot == ":quotedLA") {
+					final Term result = annTerm.getSubterm();
+					return result;
+				}
 			}
 		}
 		reportError("Expected quoted literal, but got " + quotedTerm);

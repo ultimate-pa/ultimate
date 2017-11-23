@@ -638,7 +638,7 @@ public class Interpolator extends NonRecursive {
 					// or some direct children
 				} else if (litTermInfo.isCCEquality()) {
 					// handle mixed (dis)equalities.
-					final ApplicationTerm cceq = (ApplicationTerm) litTermInfo.getAtom();
+					final ApplicationTerm cceq = litTermInfo.getEquality();
 					Term lhs = cceq.getParameters()[0];
 					Term rhs = cceq.getParameters()[1];
 					for (int child = part - 1; child >= mStartOfSubtrees[part]; child = mStartOfSubtrees[child] - 1) {
@@ -704,7 +704,7 @@ public class Interpolator extends NonRecursive {
 					if (litTermInfo.isBoundConstraint()) {
 						bound = new InfinitNumber(litTermInfo.getBound(), 0);
 						// adapt the bound for strict inequalities
-						if (((ApplicationTerm) litTermInfo.getAtom()).getFunction().getName().equals("<")) {
+						if (litTermInfo.isStrict()) {
 							bound = bound.sub(litTermInfo.getEpsilon());
 						}
 						// get the inverse bound for negated literals
@@ -806,7 +806,7 @@ public class Interpolator extends NonRecursive {
 				TermVariable mixed = null;
 				boolean negate = false;
 				// Get A part of ccEq:
-				final ApplicationTerm ccEqApp = (ApplicationTerm) ccTermInfo.getAtom();
+				final ApplicationTerm ccEqApp = ccTermInfo.getEquality();
 				if (ccInfo.isALocal(p)) {
 					iat.add(factor, termToAffine(ccEqApp.getParameters()[0]));
 					iat.add(factor.negate(), termToAffine(ccEqApp.getParameters()[1]));
@@ -903,7 +903,8 @@ public class Interpolator extends NonRecursive {
 			final String source = ((SourceAnnotation) ln.getTheoryAnnotation()).getAnnotation();
 			final int partition = mPartitions.containsKey(source) ? mPartitions.get(source) : -1;
 			for (int i = 0; i < clause.getSize(); i++) {
-				final Term literal = clause.getLiteral(i).getSMTFormula(mTheory);
+				// Take the quoted literal!
+				final Term literal = clause.getLiteral(i).getSMTFormula(mTheory, true);
 
 				final InterpolatorLiteralTermInfo litTermInfo = getLiteralTermInfo(literal);
 				final Term atom = litTermInfo.getAtom();
@@ -914,7 +915,11 @@ public class Interpolator extends NonRecursive {
 				}
 				if (!info.contains(partition)) {
 					info.occursIn(partition);
-					final HashSet<Term> subTerms = getSubTerms(atom);
+					Term unquoted = atom;
+					if (unquoted instanceof AnnotatedTerm) {
+						unquoted = ((AnnotatedTerm) unquoted).getSubterm();
+					}
+					final HashSet<Term> subTerms = getSubTerms(unquoted);
 					for (final Term sub : subTerms) {
 						addOccurrence(sub, source, partition);
 					}
@@ -1003,7 +1008,7 @@ public class Interpolator extends NonRecursive {
 		 */
 		Sort auxSort;
 		if (atomInfo.isCCEquality()) {
-			final ApplicationTerm eq = (ApplicationTerm) atom;
+			final ApplicationTerm eq = atomInfo.getEquality();
 			final Term l = eq.getParameters()[0];
 			final Term r = eq.getParameters()[1];
 			subterms.add(l);
@@ -1016,6 +1021,7 @@ public class Interpolator extends NonRecursive {
 				auxSort = mTheory.getRealSort();
 			}
 		} else {
+			assert atomInfo.isLAEquality() || atomInfo.isBoundConstraint();
 			final InterpolatorAffineTerm lv = atomInfo.getLinVar();
 			assert lv != null;
 			final Collection<Term> components = lv.getSummands().keySet();
@@ -1040,7 +1046,7 @@ public class Interpolator extends NonRecursive {
 		info.mMixedVar = mTheory.createFreshTermVariable("litaux", auxSort);
 
 		if (atomInfo.isCCEquality()) {
-			final ApplicationTerm eq = (ApplicationTerm) atom;
+			final ApplicationTerm eq = atomInfo.getEquality();
 			info.mLhsOccur = getOccurrence(eq.getParameters()[0], null);
 		} else if (atomInfo.isBoundConstraint() || atomInfo.isLAEquality()) {
 			final InterpolatorAffineTerm lv = atomInfo.getLinVar();
@@ -1541,14 +1547,15 @@ public class Interpolator extends NonRecursive {
 	 * @param literal
 	 * @return the literal without the quoted annotation
 	 */
-	private Term unquote(final Term literal) {
-		Term unquoted;
+	Term unquote(final Term literal) {
 		final InterpolatorLiteralTermInfo termInfo = getLiteralTermInfo(literal);
-		if (!termInfo.isNegated()) {
-			unquoted = termInfo.getAtom();
-		} else {
-			final Theory theory = termInfo.getAtom().getTheory();
-			unquoted = theory.term("not", termInfo.getAtom());
+		Term unquoted = termInfo.getAtom();
+		if (unquoted instanceof AnnotatedTerm) {
+			assert ((AnnotatedTerm) unquoted).getAnnotations()[0].getKey().startsWith(":quoted");
+			unquoted = ((AnnotatedTerm) unquoted).getSubterm();
+		}
+		if (termInfo.isNegated()) {
+			unquoted = mTheory.term("not", unquoted);
 		}
 		return unquoted;
 	}
