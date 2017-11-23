@@ -1087,7 +1087,8 @@ public class InitializationHandler {
 			 * Designators may modify that index otherwise it just counts up.
 			 */
 			int currentCellIndex = -1;
-			while (currentCellIndex < bound && !rest.isEmpty()) {
+			while (currentCellIndex < (bound - 1)
+					&& !rest.isEmpty()) {
 //			for (int currentCellIndex = 0; currentCellIndex < bound; currentCellIndex++) {
 				if (rest.peekFirst().hasRootDesignator()) {
 					assert targetCType instanceof CStruct : "array designators not yet supported and should not (yet)"
