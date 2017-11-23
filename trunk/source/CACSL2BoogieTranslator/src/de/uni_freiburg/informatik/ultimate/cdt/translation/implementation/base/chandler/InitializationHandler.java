@@ -386,7 +386,6 @@ public class InitializationHandler {
 	private void updateInitializationWithCodeForArrayCell(final ILocation loc, final Dispatcher main,
 			final CArray cArrayType, final InitializerInfo initInfo, final boolean onHeap,
 			final ExpressionResultBuilder initialization, final LRValue arrayLhsToInitialize,
-//			final List<Integer> arrayIndex, final InitializerInfo arrayIndexInitInfo) {
 			final int arrayIndex, final InitializerInfo arrayIndexInitInfo) {
 
 		final CType cellType = ArrayHandler.popOneDimension(cArrayType);

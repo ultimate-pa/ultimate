@@ -573,7 +573,7 @@ public class CHandler implements ICHandler {
 				prefs);
 		mStructHandler = new StructHandler(mMemoryHandler, mTypeSizeComputer, mExpressionTranslation);
 		mInitHandler =
-				new InitializationHandler(mFunctionHandler, mStructHandler, mMemoryHandler, mExpressionTranslation);
+				new InitializationHandler(mMemoryHandler, mExpressionTranslation);
 
 		mStandardFunctionHandler = new StandardFunctionHandler(mTypeHandler, mExpressionTranslation, mMemoryHandler,
 				mStructHandler, mTypeSizeComputer, mFunctionHandler, this);
