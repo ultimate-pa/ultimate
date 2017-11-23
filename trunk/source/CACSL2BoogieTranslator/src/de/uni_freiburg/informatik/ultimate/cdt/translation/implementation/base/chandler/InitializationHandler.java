@@ -30,6 +30,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Deque;
@@ -49,7 +50,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.StructConstructor;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationUtil;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.PRDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarHelper;
@@ -69,6 +69,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.StringLiteralResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
@@ -340,7 +341,7 @@ public class InitializationHandler {
 
 		/*
 		 * On-heap:
-		 * Obtain the start address HeapLValue for the array intialization.
+		 * Obtain the start address HeapLValue for the array initialization.
 		 *
 		 * Off-heap:
 		 * Obtain the array that we will assign to later. (Will be the lhs, if that is non-null, or some auxiliary
@@ -371,28 +372,32 @@ public class InitializationHandler {
 		}
 		final int bound = CTranslationUtil.getConstantFirstDimensionOfArray(cArrayType, mExpressionTranslation);
 
-		if (initInfo.getExpressionResult() != null &&
-				initInfo.getExpressionResult().getLrValue().getCType() instanceof CArray) {
-			// 2017-11-17 Matthias: This is a hack for dealing with strings that are
-			// assigned to char arrays.
-			// If the rhs has type array, we presume that it stems from a string literal.
-			// Furthermore, we presume that the LHS is an on-Heap variable.
-			// Hence we can do the initialization via an assignment of (Boogie) pointers
-			// and do not have to use memory read/write
-			final RValue array = (RValue) initInfo.getExpressionResult().getLrValue();
-			if (!(arrayLhsToInitialize instanceof HeapLValue)) {
-				// do nothing we are not yet doing the final translation
-				assert (main instanceof PRDispatcher) : "only for PRDispatcher arrayLhsToInitialize is not HeapLValue";
-			} else {
-				final HeapLValue hlv = (HeapLValue) arrayLhsToInitialize;
-				final AssignmentStatement as = new AssignmentStatement(loc,
-						new LeftHandSide[] { constructVariableLhsFromAddress(loc, hlv) },
-						new Expression[] { array.getValue() });
-				addOverApprToStatementAnnots(initialization.mOverappr, as);
-				initialization.addStatement(as);
-			}
-			return initialization.build();
-		}
+//		if (initInfo.getExpressionResult() != null &&
+//				initInfo.getExpressionResult().getLrValue().getCType() instanceof CArray) {
+//			// 2017-11-17 Matthias: This is a hack for dealing with strings that are
+//			// assigned to char arrays.
+//			// If the rhs has type array, we presume that it stems from a string literal.
+//			// Furthermore, we presume that the LHS is an on-Heap variable.
+//			// Hence we can do the initialization via an assignment of (Boogie) pointers
+//			// and do not have to use memory read/write
+//			final RValue array = (RValue) initInfo.getExpressionResult().getLrValue();
+//			if (!(arrayLhsToInitialize instanceof HeapLValue)) {
+//				// do nothing we are not yet doing the final translation
+//				assert (main instanceof PRDispatcher) : "only for PRDispatcher arrayLhsToInitialize is not HeapLValue";
+//			} else {
+//				final HeapLValue hlv = (HeapLValue) arrayLhsToInitialize;
+////				final AssignmentStatement as = new AssignmentStatement(loc,
+////						new LeftHandSide[] { constructVariableLhsFromAddress(loc, hlv) },
+////						new Expression[] { array.getValue() });
+////				addOverApprToStatementAnnots(initialization.mOverappr, as);
+////				initialization.addStatement(as);
+//
+////				initialization.addStatements(
+////						makeAssignmentStatements(loc, hlv, true, hlv.getCType(), array.getValue(),
+////								initialization.mOverappr));
+//			}
+//			return initialization.build();
+//		}
 
 		for (int i = 0; i < bound; i++) {
 			final InitializerInfo arrayIndexInitInfo;
@@ -1008,11 +1013,11 @@ public class InitializationHandler {
 		}
 
 		public InitializerInfo(final Map<Integer, InitializerInfo> indexInitInfos,
-				final List<InitializerResult> unused) {
+				final List<InitializerResult> rest) {
 			mExpressionResult = null;
 			mOverApprs = null;
 			mElementInitInfos = indexInitInfos;
-			mUnusedListEntries = unused;
+			mUnusedListEntries = rest;
 		}
 
 //		private InitializerInfo(final Map<List<Integer>, InitializerInfo> arrayIndexToInitInfo) {
@@ -1046,12 +1051,51 @@ public class InitializationHandler {
 				final InitializerResult initializerResult, final CType targetCTypeRaw) {
 			final CType targetCType = targetCTypeRaw.getUnderlyingType();
 
-			if (!initializerResult.isInitializerList()) {
-				// we are initializing through a struct-type expression (as in "struct s s1 = s2;")
+			if (initializerResult.hasRootExpressionResult()) {
+				/*
+				 * We are initializing through an (possibly aggregate-type) expression (not through a list of
+				 *  expressions).
+				 */
+				if (initializerResult.getRootExpressionResult() instanceof StringLiteralResult
+//						&& !(targetCTypeRaw instanceof CPointer)) {
+						&& targetCTypeRaw instanceof CArray) {
+					/*
+					 * case like 'char a[] = "bla"'
+					 * in C, initialization would copy the char array contents to a position on the stack
+					 * we create an InitializerInfo that corresponds to the initializer { 'b', 'l', 'a', '\0' }
+					 */
+					final StringLiteralResult slr = (StringLiteralResult) initializerResult.getRootExpressionResult();
 
-				final ExpressionResult converted = convertInitResultWithExpressionResult(loc, main, targetCType,
-						initializerResult);
-				return new InitializerInfo(converted, Collections.emptyList());
+					// append the '\0'
+					final char[] literalString = Arrays.copyOf(slr.getLiteralString(),
+							slr.getLiteralString().length + 1);
+					literalString[literalString.length - 1] = '0';
+
+					// make the list (in our case a map because we support sparse lists in other cases)
+					final Map<Integer, InitializerInfo> indexToInitInfo = new HashMap<>();
+					for (int i = 0; i < literalString.length; i++) {
+						final CPrimitive charCType = new CPrimitive(CPrimitives.CHAR);
+						final Expression charLitExp =
+								main.mCHandler.getExpressionTranslation().constructLiteralForIntegerType(loc,
+										charCType, BigInteger.valueOf(literalString[i]));
+						final ExpressionResult charResult = new ExpressionResultBuilder()
+								.setLRVal(new RValue(charLitExp, charCType))
+								.build();
+						indexToInitInfo.put(i, new InitializerInfo(charResult, Collections.emptyList()));
+					}
+					return new InitializerInfo(indexToInitInfo, Collections.emptyList());
+				} else {
+					/*
+					 * case like 'char *a = "bla"' --> initialization will make the variable'a' point to the special
+					 *   read-only memory area for strings. There is already code in the StringLiteralResult for this.
+					 *
+					 * or  case like "struct s s1 = s2;",
+					 * make initializerInfo with one ExpressionResult
+					 */
+					final ExpressionResult converted = convertInitResultWithExpressionResult(loc, main, targetCType,
+							initializerResult);
+					return new InitializerInfo(converted, Collections.emptyList());
+				}
 			}
 
 			if (targetCType instanceof CArray || targetCType instanceof CStruct) {
@@ -1153,7 +1197,7 @@ public class InitializationHandler {
 				 */
 				if (rest.peekFirst().isInitializerList() ||
 						// TODO: make a more general compatibility check, for example for array and pointer
-						TypeHandler.isCompatibleStructOrUnionType(cellType,
+						TypeHandler.isCompatibleType(cellType,
 								rest.peekFirst().getRootExpressionResult().getLrValue().getCType())) {
 					/*
 					 * case "{", i.e. one more brace opens

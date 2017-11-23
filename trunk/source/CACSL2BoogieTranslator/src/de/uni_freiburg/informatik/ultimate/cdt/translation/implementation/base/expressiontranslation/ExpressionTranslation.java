@@ -71,6 +71,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.except
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValueForArrays;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.StringLiteralResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ISOIEC9899TC3;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ISOIEC9899TC3.FloatingPointLiteral;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
@@ -143,7 +144,7 @@ public abstract class ExpressionTranslation {
 			final RValue[] dimensions = { dimension };
 			final CArray arrayType = new CArray(dimensions, new CPrimitive(CPrimitives.CHAR));
 			// final CPointer arrayType = new CPointer(new CPrimitive(CPrimitives.CHAR));
-			final String tId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.NONDET, arrayType);
+			final String tId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.STRINGLITERAL, arrayType);
 			final VariableDeclaration tVarDecl = new VariableDeclaration(loc, new Attribute[0],
 					new VarList[] { new VarList(loc, new String[] { tId }, mTypeHandler.constructPointerType(loc)) });
 			final RValue rvalue = new RValueForArrays(new IdentifierExpression(loc, tId), arrayType);
@@ -171,7 +172,7 @@ public abstract class ExpressionTranslation {
 				overapproxList = new ArrayList<>();
 				overapproxList.add(overapprox);
 			}
-			return new ExpressionResult(statements, rvalue, decls, auxVars, overapproxList);
+			return new StringLiteralResult(statements, rvalue, decls, auxVars, overapproxList, charArray);
 		}
 		case IASTLiteralExpression.lk_false:
 			return new ExpressionResult(new RValue(new BooleanLiteral(loc, false), new CPrimitive(CPrimitives.INT)));

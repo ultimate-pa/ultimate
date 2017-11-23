@@ -281,6 +281,12 @@ public final class SFO {
 		UNION("union"),
 
 		/**
+		 * Auxiliary variable used for the memory address of a string literal
+		 */
+		STRINGLITERAL("string"),
+
+
+		/**
 		 * Auxiliary variable used for struct initialisation.
 		 */
 		STRUCTINIT("structinit"),

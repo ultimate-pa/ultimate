@@ -914,10 +914,10 @@ public class TypeHandler implements ITypeHandler {
 			return false;
 		}
 		final CArray cArrayType = (CArray) cType;
-		if (!(cArrayType.getValueType() instanceof CPrimitive)) {
+		if (!(cArrayType.getValueType().getUnderlyingType() instanceof CPrimitive)) {
 			return false;
 		}
-		final CPrimitive primitiveValueType = (CPrimitive) cArrayType.getValueType();
+		final CPrimitive primitiveValueType = (CPrimitive) cArrayType.getValueType().getUnderlyingType();
 		if (primitiveValueType.getType() != CPrimitives.CHAR
 				&& primitiveValueType.getType() != CPrimitives.UCHAR
 				&& primitiveValueType.getType() != CPrimitives.SCHAR) {

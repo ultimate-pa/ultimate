@@ -112,6 +112,7 @@ import org.eclipse.cdt.core.dom.ast.gnu.IGNUASTCompoundStatementExpression;
 import org.eclipse.cdt.core.dom.ast.gnu.c.ICASTKnRFunctionDeclarator;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTDesignatedInitializer;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTFunctionDeclarator;
+import org.eclipse.cdt.internal.core.dom.parser.c.CASTLiteralExpression;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.annotation.LTLPropertyCheck;
@@ -305,10 +306,25 @@ public class CHandler implements ICHandler {
 
 	private static int computeSizeOfInitializer(final IASTEqualsInitializer equalsInitializer) {
 		final int intSizeFactor;
-		assert equalsInitializer.getInitializerClause() instanceof IASTInitializerList;
-		final IASTInitializerList initList = (IASTInitializerList) equalsInitializer.getInitializerClause();
-		intSizeFactor = initList.getSize();
-		return intSizeFactor;
+//		assert equalsInitializer.getInitializerClause() instanceof IASTInitializerList;
+
+		if (equalsInitializer.getInitializerClause() instanceof IASTInitializerList) {
+			final IASTInitializerList initList = (IASTInitializerList) equalsInitializer.getInitializerClause();
+			intSizeFactor = initList.getSize();
+			return intSizeFactor;
+		} else if (equalsInitializer.getInitializerClause() instanceof CASTLiteralExpression
+				&& ((CASTLiteralExpression) equalsInitializer.getInitializerClause()).getKind()
+					== IASTLiteralExpression.lk_string_literal) {
+			final CASTLiteralExpression lit = (CASTLiteralExpression) equalsInitializer.getInitializerClause();
+			/*
+			 *  subtracting -1 because lit.getValue includes the quotation marks (-2) and we will add a termination
+			 *  character (+1), for example the string literals "bla" will give us length 7, as C will store it as
+			 *  'b' 'l' 'a' '\0'
+			 */
+			return lit.getValue().length - 1;
+		} else {
+			throw new AssertionError("attempting to compute size of an unforseen kind of initializer expression");
+		}
 	}
 
 	private static void convertPointerToPointer(final ILocation loc, final ExpressionResult rexp,
