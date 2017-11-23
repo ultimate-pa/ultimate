@@ -40,12 +40,14 @@ exitOnFail bash makeFresh.sh
 # uncomment this after the final release 
 #for z in *.zip; do mv "$z" "${z%.zip}-post-final.zip"; done
 
+echo "Moving to SVCOMP GitLab repo $SVCOMP_GITLAB_DIR"
 # copy/rename to svcomp gitlab folder 
 for z in *.zip; do
         f=$(echo $z | sed 's/Ultimate\(.*\)-linux\.zip/u\1\.zip/g' | tr '[:upper:]' '[:lower:]')
         cp "$z" "$SVCOMP_GITLAB_DIR""/""$f"
 done
 
+echo "Copying to remote server $DEPLOY_SERVER"
 rsync -P --rsh="sshpass -e ssh -l me8 -oHostKeyAlgorithms=+ssh-dss" *.zip $CURRENTUSER@${DEPLOY_SERVER}:${DEPLOY_DIR}/. 
 rm *.zip 
 
