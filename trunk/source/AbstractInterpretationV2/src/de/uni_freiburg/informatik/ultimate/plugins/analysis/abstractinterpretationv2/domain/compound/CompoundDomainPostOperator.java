@@ -31,7 +31,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
@@ -148,12 +147,12 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 		returnStates.add(new CompoundDomainState(mServices, domains, resultingStates));
 
 		// if (mUseSmtSolverChecks) {
-		final List<CompoundDomainState> rtr =
-				returnStates.stream().filter(state -> checkSat(state)).collect(Collectors.toList());
-		if (rtr.size() != returnStates.size()) {
-			mLogger.debug("reduced");
-		}
-		return rtr;
+		// final List<CompoundDomainState> rtr =
+		// returnStates.stream().filter(state -> checkSat(state)).collect(Collectors.toList());
+		// if (rtr.size() != returnStates.size()) {
+		// mLogger.debug("reduced");
+		// }
+		return returnStates;
 		// }
 
 		// return returnStates;
@@ -297,12 +296,12 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 
 		assert resultingStates.size() == domainsBefore.size();
 		returnStates.add(new CompoundDomainState(mServices, domainsBefore, resultingStates));
-		final List<CompoundDomainState> rtr =
-				returnStates.stream().filter(state -> checkSat(state)).collect(Collectors.toList());
-		if (rtr.size() != returnStates.size()) {
-			mLogger.debug("reduced");
-		}
-		return rtr;
+		// final List<CompoundDomainState> rtr =
+		// returnStates.stream().filter(state -> checkSat(state)).collect(Collectors.toList());
+		// if (rtr.size() != returnStates.size()) {
+		// mLogger.debug("reduced");
+		// }
+		return returnStates;
 	}
 
 	private static List<IAbstractState> applyInternally(final IAbstractState<?> currentState,
