@@ -229,7 +229,7 @@ public class StandardFunctionHandler {
 		fill(map, "__builtin_va_start", skip);
 		fill(map, "__builtin_va_end", skip);
 
-		fill(map, "__builtin_expect", StandardFunctionHandler::handleBuiltinExpect);
+		fill(map, "__builtin_expect", this::handleBuiltinExpect);
 		fill(map, "__builtin_unreachable", (main, node, loc, name) -> handleBuiltinUnreachable(loc));
 		fill(map, "__builtin_object_size", (main, node, loc, name) -> handleBuiltinObjectSize(main, loc));
 
@@ -726,11 +726,33 @@ public class StandardFunctionHandler {
 		return builder.build();
 	}
 
-	private static Result handleBuiltinExpect(final Dispatcher main, final IASTFunctionCallExpression node,
+	private Result handleBuiltinExpect(final Dispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name) {
-		// this is a gcc-builtin function that helps with branch prediction, it always returns the first argument.
-		checkArguments(loc, 1, name, node.getArguments());
-		return main.dispatch(node.getArguments()[0]);
+		/**
+		 * Built-in Function: long __builtin_expect (long exp, long c)
+		 *
+		 * You may use __builtin_expect to provide the compiler with branch prediction information. In general, you
+		 * should prefer to use actual profile feedback for this (-fprofile-arcs), as programmers are notoriously bad at
+		 * predicting how their programs actually perform. However, there are applications in which this data is hard to
+		 * collect.
+		 *
+		 * The return value is the value of exp, which should be an integral expression. The semantics of the built-in
+		 * are that it is expected that exp == c. For example:
+		 *
+		 * <code>if (__builtin_expect (x, 0)) foo ();</code>
+		 *
+		 * indicates that we do not expect to call foo, since we expect x to be zero. Since you are limited to integral
+		 * expressions for exp, you should use constructions such as
+		 *
+		 * <code>if (__builtin_expect (ptr != NULL, 1)) foo (*ptr);</code>
+		 *
+		 * when testing pointer or floating-point values.
+		 */
+		final IASTInitializerClause[] arguments = node.getArguments();
+		checkArguments(loc, 2, name, arguments);
+		final ExpressionResult arg1 = dispatchAndConvert(main, loc, arguments[0]);
+		final ExpressionResult arg2 = dispatchAndConvert(main, loc, arguments[1]);
+		return combineExpressionResults(arg1.getLrValue(), arg1, arg2);
 	}
 
 	private static ExpressionResult handleAbort(final ILocation loc) {
