@@ -4,7 +4,6 @@
     <rundefinition name="Overflow">
         <propertyfile>/storage/ultimate/trunk/examples/svcomp/NoOverflows.prp</propertyfile>
         <option name="--full-output"/>
-        <option name="-ea" />
     </rundefinition>
 
     <tasks name="Overflow32bit">

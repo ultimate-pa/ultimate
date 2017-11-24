@@ -4,7 +4,6 @@
     <rundefinition name="Reach">
         <propertyfile>/storage/ultimate/trunk/examples/svcomp/ReachSafety.prp</propertyfile>
         <option name="--full-output"/>
-        <option name="-ea" />
     </rundefinition>
 
     <tasks name="Reach32bit">
