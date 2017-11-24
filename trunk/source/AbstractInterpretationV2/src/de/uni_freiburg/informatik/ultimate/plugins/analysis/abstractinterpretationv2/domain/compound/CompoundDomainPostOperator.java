@@ -173,11 +173,13 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 			mLogger.debug(new StringBuilder().append("Checking state term for satisfiability: ").append(stateTerm)
 					.toString());
 		}
-		final LBool result = SmtUtils.checkSatTerm(mScript, stateTerm);
+		// Use the negation of the state term and check for unsatisfiability. This should be easier for the SMT solvers
+		// than checking satisfiability for ne un-negated term.
+		final LBool result = SmtUtils.checkSatTerm(mScript, SmtUtils.not(mScript, stateTerm));
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug(new StringBuilder().append("Result of satisfiability check is: ").append(result).toString());
 		}
-		return result != LBool.UNSAT;
+		return result != LBool.SAT;
 	}
 
 	/**
