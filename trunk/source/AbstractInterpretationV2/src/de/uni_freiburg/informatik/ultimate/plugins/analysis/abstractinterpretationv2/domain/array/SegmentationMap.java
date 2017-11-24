@@ -160,7 +160,7 @@ public class SegmentationMap {
 		final StringBuilder stringBuilder = new StringBuilder();
 		for (final Entry<IProgramVarOrConst, Segmentation> entry : mRepresentiveSegmentations.entrySet()) {
 			stringBuilder.append(mEqualArrays.getEquivalenceClassMembers(entry.getKey()));
-			stringBuilder.append(" -> ").append(entry.getValue()).append(' ');
+			stringBuilder.append(" -> ").append(entry.getValue()).append('\n');
 		}
 		return stringBuilder.toString();
 	}
