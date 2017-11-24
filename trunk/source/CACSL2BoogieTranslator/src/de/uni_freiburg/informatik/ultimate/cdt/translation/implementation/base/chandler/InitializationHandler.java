@@ -422,14 +422,14 @@ public class InitializationHandler {
 			}
 			// generate and add code to initialize the array cell (and possibly its subcells)
 			final ExpressionResult arrayIndexInitialization;
-			if (arrayIndexInitInfo.isMakeNondeterministicInitialization()) {
-				arrayIndexInitialization =
-						makeDefaultOrNondetInitialization(loc, main, arrayCellLhs, cellType, onHeap, true);
-				initialization.addOverapprox(arrayIndexInitInfo.getOverapprs());
-			} else {
+//			if (arrayIndexInitInfo.isMakeNondeterministicInitialization()) {
+//				arrayIndexInitialization =
+//						makeDefaultOrNondetInitialization(loc, main, arrayCellLhs, cellType, onHeap, true);
+//				initialization.addOverapprox(arrayIndexInitInfo.getOverapprs());
+//			} else {
 				arrayIndexInitialization =
 						initRec(loc, main, cellType, arrayIndexInitInfo, onHeap, arrayCellLhs);
-			}
+//			}
 			initialization.addAllExceptLrValue(arrayIndexInitialization);
 
 
