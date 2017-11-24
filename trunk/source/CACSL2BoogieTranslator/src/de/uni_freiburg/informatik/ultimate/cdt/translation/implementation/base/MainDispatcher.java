@@ -269,7 +269,7 @@ public class MainDispatcher extends Dispatcher {
 	public MainDispatcher(final CACSL2BoogieBacktranslator backtranslator,
 			final Map<IASTNode, ExtractedWitnessInvariant> witnessInvariants, final IUltimateServiceProvider services,
 			final ILogger logger) {
-		super(backtranslator, services, logger, null);
+		super(backtranslator, services, logger, null, new LinkedHashMap<>());
 		mBitvectorTranslation = getPreferences().getBoolean(CACSLPreferenceInitializer.LABEL_BITVECTOR_TRANSLATION);
 		mOverapproximateFloatingPointOperations =
 				getPreferences().getBoolean(CACSLPreferenceInitializer.LABEL_OVERAPPROXIMATE_FLOATS);
@@ -333,7 +333,8 @@ public class MainDispatcher extends Dispatcher {
 
 		final FunctionTableBuilder ftb = new FunctionTableBuilder();
 		tu.accept(ftb);
-		final PreRunner pr = new PreRunner(ftb.getFunctionTable());
+		mFunctionTable.putAll(ftb.getFunctionTable());
+		final PreRunner pr = new PreRunner(mFunctionTable);
 		tu.accept(pr);
 
 		mVariablesOnHeap.addAll(pr.getVarsForHeap());
@@ -351,7 +352,7 @@ public class MainDispatcher extends Dispatcher {
 		}
 
 		final PRDispatcher prd = new PRDispatcher(mBacktranslator, mServices, mLogger, mFunctionToIndex,
-				mReachableDeclarations, getLocationFactory());
+				mReachableDeclarations, getLocationFactory(), mFunctionTable);
 		prd.init();
 		prd.dispatch(node);
 		mVariablesOnHeap.addAll(prd.getVariablesOnHeap());

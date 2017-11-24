@@ -144,8 +144,9 @@ public class PRDispatcher extends Dispatcher {
 
 	public PRDispatcher(final CACSL2BoogieBacktranslator backtranslator, final IUltimateServiceProvider services,
 			final ILogger logger, final LinkedHashMap<String, Integer> functionToIndex,
-			final LinkedHashSet<IASTDeclaration> reachableDeclarations, final LocationFactory locFac) {
-		super(backtranslator, services, logger, locFac);
+			final LinkedHashSet<IASTDeclaration> reachableDeclarations, final LocationFactory locFac,
+			final Map<String, IASTNode> functionTable) {
+		super(backtranslator, services, logger, locFac, functionTable);
 		mFunctionToIndex = functionToIndex;
 		mReachableDeclarations = reachableDeclarations;
 		mVariablesOnHeap = new LinkedHashSet<>();

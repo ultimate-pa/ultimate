@@ -42,8 +42,10 @@ import java.util.stream.Collectors;
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTCompoundStatement;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
+import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
 import org.eclipse.cdt.core.dom.ast.IASTIdExpression;
 import org.eclipse.cdt.core.dom.ast.IASTInitializerClause;
+import org.eclipse.cdt.core.dom.ast.IASTNode;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
@@ -158,6 +160,11 @@ public class StandardFunctionHandler {
 		final String name = astIdExpression.getName().toString();
 		final IFunctionModelHandler functionModel = mFunctionModels.get(name);
 		if (functionModel != null) {
+			final IASTNode funDecl = main.getFunctionTable().get(name);
+			if (funDecl instanceof IASTFunctionDefinition) {
+				// it is a function that already has a body
+				return null;
+			}
 			final ILocation loc = getLoc(main, node);
 			return functionModel.handleFunction(main, node, loc, name);
 		}
@@ -1190,10 +1197,9 @@ public class StandardFunctionHandler {
 		}
 	}
 
-	private ExpressionResult dispatchAndConvert(final Dispatcher main, final ILocation loc,
+	private static ExpressionResult dispatchAndConvert(final Dispatcher main, final ILocation loc,
 			final IASTInitializerClause initClause) {
-		return ((ExpressionResult) main.dispatch(initClause)).switchToRValueIfNecessary(main, mMemoryHandler,
-				mStructHandler, loc);
+		return ((ExpressionResult) main.dispatch(initClause)).switchToRValueIfNecessary(main, loc);
 	}
 
 	private static <K, V> void fill(final Map<K, V> map, final K key, final V value) {
@@ -1223,5 +1229,4 @@ public class StandardFunctionHandler {
 		Result handleFunction(final Dispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
 				String methodName);
 	}
-
 }

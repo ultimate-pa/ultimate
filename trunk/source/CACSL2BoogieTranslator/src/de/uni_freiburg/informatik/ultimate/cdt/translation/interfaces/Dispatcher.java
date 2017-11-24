@@ -34,6 +34,7 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces;
 
 import java.text.ParseException;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
@@ -134,8 +135,10 @@ public abstract class Dispatcher {
 
 	private final boolean mUseSvcompSettings;
 
+	protected final Map<String, IASTNode> mFunctionTable;
+
 	public Dispatcher(final CACSL2BoogieBacktranslator backtranslator, final IUltimateServiceProvider services,
-			final ILogger logger, final LocationFactory locFac) {
+			final ILogger logger, final LocationFactory locFac, final Map<String, IASTNode> functionTable) {
 		mBacktranslator = backtranslator;
 		mLogger = logger;
 		mServices = services;
@@ -143,6 +146,7 @@ public abstract class Dispatcher {
 		mTypeSizes = new TypeSizes(mPreferences);
 		mTranslationSettings = new TranslationSettings(mPreferences);
 		mLocationFactory = locFac;
+		mFunctionTable = functionTable;
 
 		mUseSvcompSettings = getSvcompMode();
 		if (mUseSvcompSettings) {
@@ -371,6 +375,10 @@ public abstract class Dispatcher {
 
 	public LocationFactory getLocationFactory() {
 		return mLocationFactory;
+	}
+
+	public Map<String, IASTNode> getFunctionTable() {
+		return Collections.unmodifiableMap(mFunctionTable);
 	}
 
 	public static final class TranslationSettings {
