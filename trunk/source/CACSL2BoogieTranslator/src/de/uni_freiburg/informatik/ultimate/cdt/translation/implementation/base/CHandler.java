@@ -200,6 +200,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValueForArrays;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.SkipResult;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.StringLiteralResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.TypesResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.BoogieASTUtil;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
@@ -3070,7 +3071,15 @@ public class CHandler implements ICHandler {
 		} else if (oldType instanceof CEnum) {
 			mExpressionTranslation.convertIntToPointer(loc, rexp, newType);
 		} else if (oldType instanceof CArray) {
-			throw new AssertionError("cannot convert from CArray");
+			if (rexp instanceof StringLiteralResult) {
+				/*
+				 *  a string literal decays to a pointer
+				 *  the stringLiteralResult already has the correct RValue, we just need to change the type
+				 */
+				rexp.mLrVal = new RValue(rexp.mLrVal.getValue(), new CPointer(new CPrimitive(CPrimitives.CHAR)));
+			} else {
+				throw new AssertionError("cannot convert from CArray");
+			}
 		} else if (oldType instanceof CFunction) {
 			throw new AssertionError("cannot convert from CFunction");
 		} else if (oldType instanceof CStruct) {

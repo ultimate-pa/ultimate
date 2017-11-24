@@ -1,3 +1,4 @@
+//#Safe
 /*
 2017-11-24  DD
 
@@ -17,11 +18,8 @@ java -Dosgi.configuration.area=./data/config -Xmx12G -Xms1G -jar ./plugins/org.e
 
 */ 
 
-void FloppyDeviceControl(      )
-{
-
-                              memcpy(0, "",
-                                     0);
-
+void main() {
+  int *p = malloc(sizeof(int));
+  memcpy(p, "", 1);
 }
 
