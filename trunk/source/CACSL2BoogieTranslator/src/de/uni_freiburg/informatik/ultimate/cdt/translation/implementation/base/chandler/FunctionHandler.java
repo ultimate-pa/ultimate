@@ -710,7 +710,7 @@ public class FunctionHandler {
 				&& !procedureDeclaredWithOutInparamsButCalledWithInParams) {
 			// ok, if the procedure is declared (and not implemented) as having no parameters --> then we may call it
 			// with parameters later
-			final String msg = "Function call has incorrect number of in-params!";
+			final String msg = "Function call has incorrect number of in-params: " + methodName;
 			throw new IncorrectSyntaxException(loc, msg);
 		}
 		// this means param of declaration is void and parameter
@@ -785,9 +785,8 @@ public class FunctionHandler {
 						((TypeHandler) main.mTypeHandler).cType2AstType(loc,
 								cFunction.getParameterTypes()[i].getType()));
 			}
-			final Procedure newProc = new Procedure(proc.getLocation(), proc.getAttributes(),
-					proc.getIdentifier(), proc.getTypeParams(), procParams, proc.getOutParams(),
-					proc.getSpecification(), proc.getBody());
+			final Procedure newProc = new Procedure(proc.getLocation(), proc.getAttributes(), proc.getIdentifier(),
+					proc.getTypeParams(), procParams, proc.getOutParams(), proc.getSpecification(), proc.getBody());
 			mProcedures.put(methodName, newProc);
 		}
 
