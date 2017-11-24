@@ -12,6 +12,7 @@
 
         <include>/storage/ultimate/trunk/examples/svcomp/product-lines/minepump_spec4_productSimulator_false-unreach-call_false-termination.cil.c</include>
         <include>/storage/ultimate/trunk/examples/svcomp/psyco/psyco_abp_1_false-unreach-call_false-termination.c</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/float-benchs/sqrt_poly2_false-unreach-call.c</include>
     </tasks>
 
     <tasks name="Reach64Bit">
