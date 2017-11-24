@@ -682,16 +682,17 @@ public class FunctionHandler {
 
 		mCallGraph.get(mCurrentProcedure.getIdentifier()).add(methodName);
 
+		final Procedure proc = mProcedures.get(methodName);
+
 		final boolean procedureDeclaredWithOutInparamsButCalledWithInParams =
-				mProcedures.get(methodName) != null && mProcedures.get(methodName).getBody() == null
-						&& mProcedures.get(methodName).getInParams().length == 0;
+				proc != null && proc.getBody() == null && proc.getInParams().length == 0;
 
 		// if the function has varArgs, we throw away all parameters that belong
 		// to the varArgs part and only keep the normal ones
 		IASTInitializerClause[] inParams = arguments;
-		if (mProcedureToCFunctionType.containsKey(methodName)
-				&& mProcedureToCFunctionType.get(methodName).takesVarArgs()) {
-			final int noParameterWOVarArgs = mProcedureToCFunctionType.get(methodName).getParameterTypes().length;
+		final CFunction cFunction = mProcedureToCFunctionType.get(methodName);
+		if (cFunction != null && cFunction.takesVarArgs()) {
+			final int noParameterWOVarArgs = cFunction.getParameterTypes().length;
 			inParams = new IASTInitializerClause[noParameterWOVarArgs];
 			System.arraycopy(arguments, 0, inParams, 0, noParameterWOVarArgs);
 			// .. and if it is really called with more that its normal parameter
@@ -704,9 +705,8 @@ public class FunctionHandler {
 			}
 		}
 
-		if (mProcedures.containsKey(methodName) && inParams.length != mProcedures.get(methodName).getInParams().length
-				&& !(mProcedures.get(methodName).getInParams().length == 1
-						&& mProcedures.get(methodName).getInParams()[0].getType() == null && inParams.length == 0)
+		if (proc != null && inParams.length != proc.getInParams().length
+				&& !(proc.getInParams().length == 1 && proc.getInParams()[0].getType() == null && inParams.length == 0)
 				&& !procedureDeclaredWithOutInparamsButCalledWithInParams) {
 			// ok, if the procedure is declared (and not implemented) as having no parameters --> then we may call it
 			// with parameters later
@@ -751,10 +751,9 @@ public class FunctionHandler {
 				// add the current parameter to the procedure's signature
 				updateCFunction(methodName, null, null, new CDeclaration(in.mLrVal.getCType(), SFO.IN_PARAM + i),
 						false);
-			} else if (mProcedureToCFunctionType.containsKey(methodName)) {
+			} else if (cFunction != null) {
 				// we already know the parameters: do implicit casts and bool/int conversion
-				CType expectedParamType =
-						mProcedureToCFunctionType.get(methodName).getParameterTypes()[i].getType().getUnderlyingType();
+				CType expectedParamType = cFunction.getParameterTypes()[i].getType().getUnderlyingType();
 				// bool/int conversion
 				if (expectedParamType instanceof CPrimitive
 						&& ((CPrimitive) expectedParamType).getGeneralType() == CPrimitiveCategory.INTTYPE
@@ -780,18 +779,15 @@ public class FunctionHandler {
 		}
 
 		if (procedureDeclaredWithOutInparamsButCalledWithInParams) {
-			final VarList[] procParams =
-					new VarList[mProcedureToCFunctionType.get(methodName).getParameterTypes().length];
+			final VarList[] procParams = new VarList[cFunction.getParameterTypes().length];
 			for (int i = 0; i < procParams.length; i++) {
-				procParams[i] = new VarList(loc,
-						new String[] { mProcedureToCFunctionType.get(methodName).getParameterTypes()[i].getName() },
+				procParams[i] = new VarList(loc, new String[] { cFunction.getParameterTypes()[i].getName() },
 						((TypeHandler) main.mTypeHandler).cType2AstType(loc,
-								mProcedureToCFunctionType.get(methodName).getParameterTypes()[i].getType()));
+								cFunction.getParameterTypes()[i].getType()));
 			}
-			final Procedure currentProc = mProcedures.get(methodName);
-			final Procedure newProc = new Procedure(currentProc.getLocation(), currentProc.getAttributes(),
-					currentProc.getIdentifier(), currentProc.getTypeParams(), procParams, currentProc.getOutParams(),
-					currentProc.getSpecification(), currentProc.getBody());
+			final Procedure newProc = new Procedure(proc.getLocation(), proc.getAttributes(),
+					proc.getIdentifier(), proc.getTypeParams(), procParams, proc.getOutParams(),
+					proc.getSpecification(), proc.getBody());
 			mProcedures.put(methodName, newProc);
 		}
 
