@@ -30,6 +30,7 @@ import java.util.Arrays;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.preferences.UltimatePreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ExceptionOrErrorResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.SyntaxErrorResult;
@@ -65,7 +66,7 @@ public final class DeltaDebuggerPreferences extends UltimatePreferenceInitialize
 					+ "The delta debugger searchs for the presence of this result.";
 	private static final Class<?>[] RESULT_TYPE_CLASSES =
 			new Class<?>[] { ExceptionOrErrorResult.class, SyntaxErrorResult.class, UnsupportedSyntaxResult.class,
-					TypeErrorResult.class, CounterExampleResult.class, };
+					TypeErrorResult.class, CounterExampleResult.class, AllSpecificationsHoldResult.class };
 
 	private static final String[] VALUES_RESULT_TYPES = Arrays.stream(RESULT_TYPE_CLASSES).map(a -> a.getSimpleName())
 			.collect(Collectors.toList()).toArray(new String[RESULT_TYPE_CLASSES.length]);
