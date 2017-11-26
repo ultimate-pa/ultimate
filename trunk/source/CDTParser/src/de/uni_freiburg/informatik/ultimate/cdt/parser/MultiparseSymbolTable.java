@@ -159,7 +159,11 @@ public class MultiparseSymbolTable extends ASTVisitor {
 		final IASTDeclarator fdecl = fdef.getDeclarator();
 		final Pair<String, String> entry = new Pair<>(inFile, fdecl.getName().toString());
 		mFunctionMapping.put(entry, fdef);
-		mNamePrefixMapping.put(entry, generatePrefixedIdentifier(inFile, fdecl.getName().toString()));
+		
+		// Don't rename the main method. There only may be one in the whole project.
+		if (!fdecl.getName().toString().equalsIgnoreCase("main")) {
+			mNamePrefixMapping.put(entry, generatePrefixedIdentifier(inFile, fdecl.getName().toString()));
+		}
 	}
 	
 	private static String generatePrefixedIdentifier(final String file, final String id) {
