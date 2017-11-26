@@ -238,7 +238,7 @@ public class StandardFunctionHandler {
 
 		fill(map, "__builtin_expect", this::handleBuiltinExpect);
 		fill(map, "__builtin_unreachable", (main, node, loc, name) -> handleBuiltinUnreachable(loc));
-		fill(map, "__builtin_object_size", (main, node, loc, name) -> handleBuiltinObjectSize(main, loc));
+		fill(map, "__builtin_object_size", this::handleBuiltinObjectSize);
 
 		/** various string builtins **/
 		fill(map, "__builtin_strchr", this::handleStrChr);
@@ -957,11 +957,17 @@ public class StandardFunctionHandler {
 		return rtr;
 	}
 
-	private Result handleBuiltinObjectSize(final Dispatcher main, final ILocation loc) {
-		main.warn(loc, "used trivial implementation of __builtin_object_size");
-		final CPrimitive cType = new CPrimitive(CPrimitives.INT);
-		final Expression zero = mExpressionTranslation.constructLiteralForIntegerType(loc, cType, BigInteger.ZERO);
-		return new ExpressionResult(new RValue(zero, cType));
+	private Result handleBuiltinObjectSize(final Dispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name) {
+		// DD: builtin-object size is way more complicated that the old implementation!
+		// Read https://gcc.gnu.org/onlinedocs/gcc/Object-Size-Checking.html
+		// For testing, overapproximate and do not dispatch arguments (I understand the spec as this is whats happening,
+		// but I am not sure)
+		return handleByOverapproximationWithoutDispatch(main, node, loc, name, 2, new CPrimitive(CPrimitives.INT));
+		// main.warn(loc, "used trivial implementation of __builtin_object_size");
+		// final CPrimitive cType = new CPrimitive(CPrimitives.INT);
+		// final Expression zero = mExpressionTranslation.constructLiteralForIntegerType(loc, cType, BigInteger.ZERO);
+		// return new ExpressionResult(new RValue(zero, cType));
 	}
 
 	private Result handlePrintF(final Dispatcher main, final IASTFunctionCallExpression node, final ILocation loc) {
@@ -1074,6 +1080,14 @@ public class StandardFunctionHandler {
 				constructOverapproximationForFunctionCall(main, loc, methodName, resultType);
 		results.add(overapproxCall);
 		return combineExpressionResults(overapproxCall.getLrValue(), results);
+	}
+
+	private static Result handleByOverapproximationWithoutDispatch(final Dispatcher main,
+			final IASTFunctionCallExpression node, final ILocation loc, final String methodName, final int numberOfArgs,
+			final CType resultType) {
+		final IASTInitializerClause[] arguments = node.getArguments();
+		checkArguments(loc, numberOfArgs, methodName, arguments);
+		return constructOverapproximationForFunctionCall(main, loc, methodName, resultType);
 	}
 
 	private static ExpressionResult combineExpressionResults(final LRValue finalLRValue,
