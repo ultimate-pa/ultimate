@@ -1,6 +1,6 @@
 #include "foo.h"
 
-int doStuff() {
+int main() {
     // Use a function from the header
     int pick = randomNumber();
     
