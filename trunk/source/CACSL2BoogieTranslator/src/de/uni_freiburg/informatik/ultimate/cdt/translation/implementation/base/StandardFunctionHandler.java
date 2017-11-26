@@ -698,7 +698,7 @@ public class StandardFunctionHandler {
 		// for alloc a we have to free the variable ourselves when the
 		// stackframe is closed, i.e. at a return
 		if ("alloca".equals(methodName) || "__builtin_alloca".equals(methodName)) {
-			final LocalLValue llVal = new LocalLValue(new VariableLHS(loc, tmpId), resultType);
+			final LocalLValue llVal = new LocalLValue(new VariableLHS(loc, tmpId), resultType, null);
 			mMemoryHandler.addVariableToBeFreed(main,
 					new LocalLValueILocationPair(llVal, LocationFactory.createIgnoreLocation(loc)));
 			// we need to clear auxVars because otherwise the malloc auxvar is havocced after

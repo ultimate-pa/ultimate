@@ -145,9 +145,9 @@ public class InitializationHandler {
 		LRValue lhs = null;
 		if (onHeap) {
 			// lhsRaw must be non-null at this point because of the above code that determined "onHeap"
-			lhs = new HeapLValue(new IdentifierExpression(loc, ((VariableLHS) lhsRaw).getIdentifier()), targetCTypeRaw);
+			lhs = new HeapLValue(new IdentifierExpression(loc, ((VariableLHS) lhsRaw).getIdentifier()), targetCTypeRaw, null);
 		} else {
-			lhs = lhsRaw == null ? null : new LocalLValue(lhsRaw, targetCTypeRaw);
+			lhs = lhsRaw == null ? null : new LocalLValue(lhsRaw, targetCTypeRaw, null);
 		}
 
 		final InitializerInfo initializerInfo;
@@ -577,7 +577,7 @@ public class InitializationHandler {
 						final String fieldName = cStructType.getFieldIds()[i];
 						final LeftHandSide lhs = ExpressionFactory.constructStructAccessLhs(loc, lhsToInitIfAny.getLHS(),
 								fieldName);
-						fieldLhs = new LocalLValue(lhs, cStructType.getFieldTypes()[i]);
+						fieldLhs = new LocalLValue(lhs, cStructType.getFieldTypes()[i], null);
 					}
 				}
 
@@ -752,7 +752,7 @@ public class InitializationHandler {
 		final LocalLValue arrayLhsToInitialize;
 		final AuxVarHelper auxVar = CTranslationUtil.makeAuxVarDeclaration(loc, main, cType);
 
-		arrayLhsToInitialize = new LocalLValue(auxVar.getLhs(), cType);
+		arrayLhsToInitialize = new LocalLValue(auxVar.getLhs(), cType, null);
 
 		initialization.addDeclaration(auxVar.getVarDec());
 		initialization.putAuxVar(auxVar.getVarDec(), loc);

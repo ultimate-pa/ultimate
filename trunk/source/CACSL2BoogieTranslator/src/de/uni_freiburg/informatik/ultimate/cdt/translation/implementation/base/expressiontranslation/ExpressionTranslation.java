@@ -626,6 +626,16 @@ public abstract class ExpressionTranslation {
 	 * (i.e., the bit at the higher index is not included, the bit at the lower index is included).
 	 */
 	public abstract Expression extractBits(ILocation loc, Expression operand, int high, int low);
+	
+	/**
+	 * Presume that the input represents an integer that has inputWidth bit.
+	 * Set all most significant bits to zero except the remainingWith least 
+	 * significant bits.
+	 * I.e., the result is input representation that consists only of the bits.
+	 * low-1, low-2, ..., 0
+	 * If inputWidth and remainingWith are different the result is always positive.
+	 */
+	public abstract Expression erazeBits(ILocation loc, Expression value, CPrimitive cType, int remainingWith);
 
 	public abstract Expression concatBits(ILocation loc, List<Expression> dataChunks, int size);
 
@@ -739,5 +749,7 @@ public abstract class ExpressionTranslation {
 	public abstract Expression transformBitvectorToFloat(ILocation loc, Expression bitvector, CPrimitives floatType);
 
 	public abstract Expression transformFloatToBitvector(ILocation loc, Expression value, CPrimitives cprimitive);
+
+
 
 }

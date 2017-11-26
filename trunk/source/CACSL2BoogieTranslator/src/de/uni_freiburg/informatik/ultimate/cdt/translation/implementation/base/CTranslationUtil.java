@@ -118,7 +118,7 @@ public class CTranslationUtil {
 
 		final ArrayLHS alhs = ExpressionFactory.constructNestedArrayLHS(loc, arrayLhsToInitialize.getLHS(), index);
 
-		return new LocalLValue(alhs, cArrayType.getValueType());
+		return new LocalLValue(alhs, cArrayType.getValueType(), null);
 	}
 
 	public static LocalLValue constructArrayAccessLhs(final ILocation loc, final LocalLValue arrayLhsToInitialize,
@@ -133,7 +133,7 @@ public class CTranslationUtil {
 
 		final CType cellType = ArrayHandler.popOneDimension(cArrayType);
 
-		return new LocalLValue(alhs, cellType);
+		return new LocalLValue(alhs, cellType, null);
 	}
 
 //	public static LRValue constructOffHeapStructAccessLhs(final ILocation loc, final LocalLValue structBaseLhs,
@@ -175,7 +175,7 @@ public class CTranslationUtil {
 				IASTBinaryExpression.op_plus, pointerOffset, sizeT, cellOffset, sizeT);
 		final StructConstructor newPointer = MemoryHandler.constructPointerFromBaseAndOffset(pointerBase, sum, loc);
 
-		return new HeapLValue(newPointer, cArrayType.getValueType());
+		return new HeapLValue(newPointer, cArrayType.getValueType(), null);
 	}
 
 //	public static HeapLValue constructAddressForStructField(final ILocation loc, final Dispatcher main,
@@ -209,7 +209,7 @@ public class CTranslationUtil {
 
 		final StructConstructor newPointer = MemoryHandler.constructPointerFromBaseAndOffset(pointerBase, sum, loc);
 
-		return new HeapLValue(newPointer, cellType);
+		return new HeapLValue(newPointer, cellType, null);
 	}
 
 	public static HeapLValue constructAddressForStructField(final ILocation loc, final Dispatcher main,
@@ -232,7 +232,7 @@ public class CTranslationUtil {
 		final StructConstructor newPointer = MemoryHandler.constructPointerFromBaseAndOffset(pointerBase, sum, loc);
 
 
-		return new HeapLValue(newPointer, cStructType.getFieldTypes()[fieldIndex]);
+		return new HeapLValue(newPointer, cStructType.getFieldTypes()[fieldIndex], null);
 	}
 
 	public static boolean isVarlengthArray(final CArray cArrayType, final ExpressionTranslation expressionTranslation) {
@@ -336,7 +336,7 @@ public class CTranslationUtil {
 
 		final StructLHS lhs = ExpressionFactory.constructStructAccessLhs(loc, structBaseLhsToInitialize.getLHS(), fieldId);
 
-		return new LocalLValue(lhs, cStructType.getFieldTypes()[i]);
+		return new LocalLValue(lhs, cStructType.getFieldTypes()[i], null);
 	}
 
 }

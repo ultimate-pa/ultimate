@@ -74,8 +74,8 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.Locati
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.BitvectorTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitiveCategory;
@@ -363,7 +363,7 @@ public class PostProcessor {
 				for (final String id : vl.getIdentifiers()) {
 					if (main.mCHandler.isHeapVar(id)) {
 						final LocalLValue llVal =
-								new LocalLValue(new VariableLHS(currentDeclsLoc, id), en.getValue().getType());
+								new LocalLValue(new VariableLHS(currentDeclsLoc, id), en.getValue().getType(), null);
 						initStatements.add(memoryHandler.getMallocCall(llVal, currentDeclsLoc));
 					}
 

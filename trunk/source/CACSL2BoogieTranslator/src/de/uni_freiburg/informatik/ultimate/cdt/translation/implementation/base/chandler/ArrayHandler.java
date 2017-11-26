@@ -104,7 +104,7 @@ public class ArrayHandler {
 					IASTBinaryExpression.op_plus, loc, oldAddress, integer, valueType);
 			final Expression newAddress = newAddress_ER.mLrVal.getValue();
 			result = ExpressionResult.copyStmtDeclAuxvarOverapprox(leftExpRes, subscript);
-			final HeapLValue lValue = new HeapLValue(newAddress, valueType, false);
+			final HeapLValue lValue = new HeapLValue(newAddress, valueType, false, null);
 			result.addAll(newAddress_ER);
 			result.mLrVal = lValue;
 		} else {
@@ -136,7 +136,7 @@ public class ArrayHandler {
 				final ExpressionResult newAddress_ER = ((CHandler) main.mCHandler).doPointerArithmeticWithConversion(
 						main, IASTBinaryExpression.op_plus, loc, oldAddress, index, resultCType);
 				final Expression newAddress = newAddress_ER.mLrVal.getValue();
-				final HeapLValue lValue = new HeapLValue(newAddress, resultCType, false);
+				final HeapLValue lValue = new HeapLValue(newAddress, resultCType, false, null);
 				result = ExpressionResult.copyStmtDeclAuxvarOverapprox(leftExpRes, subscript);
 				result.addAll(newAddress_ER);
 				result.mLrVal = lValue;
@@ -165,7 +165,7 @@ public class ArrayHandler {
 					newInnerArrayLHS = ExpressionFactory.constructNestedArrayLHS(loc, oldInnerArrayLHS,
 							new Expression[] { index.getValue() });
 				}
-				final LocalLValue lValue = new LocalLValue(newInnerArrayLHS, resultCType, false, false);
+				final LocalLValue lValue = new LocalLValue(newInnerArrayLHS, resultCType, false, false, null);
 				result = ExpressionResult.copyStmtDeclAuxvarOverapprox(leftExpRes, subscript);
 				result.mLrVal = lValue;
 				addArrayBoundsCheckForCurrentIndex(main, loc, index, currentDimension, result);

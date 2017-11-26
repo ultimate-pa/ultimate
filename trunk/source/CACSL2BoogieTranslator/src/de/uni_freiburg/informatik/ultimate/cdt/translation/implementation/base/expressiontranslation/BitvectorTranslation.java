@@ -540,11 +540,11 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	@Override
 	public Expression signExtend(final ILocation loc, final Expression operand, final int bitsBefore,
 			final int bitsAfter) {
+		final String smtFunctionName = "sign_extend";
 		final ASTType resultType =
 				((TypeHandler) mTypeHandler).bytesize2asttype(loc, CPrimitiveCategory.INTTYPE, bitsAfter / 8);
 		final ASTType inputType =
 				((TypeHandler) mTypeHandler).bytesize2asttype(loc, CPrimitiveCategory.INTTYPE, bitsBefore / 8);
-		final String smtFunctionName = "sign_extend";
 		final String boogieFunctionName = smtFunctionName + "From" + bitsBefore + "To" + bitsAfter;
 		if (!mFunctionDeclarations.getDeclaredFunctions()
 				.containsKey(SFO.AUXILIARY_FUNCTION_PREFIX + boogieFunctionName)) {
@@ -555,6 +555,14 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		}
 		return new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + boogieFunctionName,
 				new Expression[] { operand });
+	}
+	
+	@Override
+	public Expression erazeBits(final ILocation loc, final Expression value, final CPrimitive cType, final int remainingWith) {
+			final BigInteger bitmaskNumber = BigInteger.valueOf(2).pow(remainingWith).subtract(BigInteger.ONE);
+			final Expression bitmask = constructLiteralForIntegerType(loc, cType, bitmaskNumber);
+			final Expression result = constructBinaryBitwiseExpression(loc, IASTBinaryExpression.op_binaryAnd, value, cType, bitmask, cType);
+			return result;
 	}
 
 	@Override
@@ -998,5 +1006,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			}
 		}
 	}
+
+
 
 }

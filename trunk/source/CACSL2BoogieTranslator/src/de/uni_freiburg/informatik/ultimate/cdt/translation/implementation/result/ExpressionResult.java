@@ -441,7 +441,7 @@ public class ExpressionResult extends Result {
 									main.mTypeHandler.cType2AstType(loc, arrayType.getValueType())));
 			final VariableDeclaration newArrayDec =
 					new VariableDeclaration(loc, new Attribute[0], new VarList[] { newArrayVl });
-			xfieldHeapLValue = new HeapLValue(new IdentifierExpression(loc, newArrayId), arrayType);
+			xfieldHeapLValue = new HeapLValue(new IdentifierExpression(loc, newArrayId), arrayType, null);
 
 			decl.add(newArrayDec);
 			auxVars.put(newArrayDec, loc);
@@ -481,7 +481,7 @@ public class ExpressionResult extends Result {
 						new Expression[] { exprTrans.constructLiteralForIntegerType(loc,
 								new CPrimitive(CPrimitives.INT), BigInteger.valueOf(pos)) });
 				final ExpressionResult assRex = ((CHandler) main.mCHandler).makeAssignment(main, loc, stmt,
-						new LocalLValue(aAcc, arrayType.getValueType()), (RValue) readRex.mLrVal, decl, auxVars,
+						new LocalLValue(aAcc, arrayType.getValueType(), null), (RValue) readRex.mLrVal, decl, auxVars,
 						mOverappr);
 				decl = assRex.mDecl;
 				stmt = assRex.mStmt;

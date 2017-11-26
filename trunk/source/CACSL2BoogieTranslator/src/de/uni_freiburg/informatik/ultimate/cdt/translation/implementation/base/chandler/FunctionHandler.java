@@ -1022,11 +1022,11 @@ public class FunctionHandler {
 				final ILocation igLoc = LocationFactory.createIgnoreLocation(loc);
 				if (isOnHeap && !(cvar instanceof CArray)) {
 					// we treat an array argument as a pointer -- thus no onHeap treatment here
-					final LocalLValue llv = new LocalLValue(tempLHS, cvar);
+					final LocalLValue llv = new LocalLValue(tempLHS, cvar, null);
 					// malloc
 					memoryHandler.addVariableToBeFreed(main, new LocalLValueILocationPair(llv, igLoc));
 					// dereference
-					final HeapLValue hlv = new HeapLValue(llv.getValue(), cvar);
+					final HeapLValue hlv = new HeapLValue(llv.getValue(), cvar, null);
 
 					// convention: if a variable is put on heap or not, its ctype stays the same
 					final ExpressionResult assign = ((CHandler) main.mCHandler).makeAssignment(main, igLoc, stmt, hlv,

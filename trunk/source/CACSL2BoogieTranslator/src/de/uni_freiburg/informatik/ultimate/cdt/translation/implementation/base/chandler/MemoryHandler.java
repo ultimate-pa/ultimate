@@ -1772,7 +1772,7 @@ public class MemoryHandler {
 								newStartAddressOffset, mExpressionTranslation.getCTypeOfPointerComponents(),
 								fieldOffset, mExpressionTranslation.getCTypeOfPointerComponents());
 				final HeapLValue fieldHlv = new HeapLValue(
-						constructPointerFromBaseAndOffset(newStartAddressBase, newOffset, loc), fieldType);
+						constructPointerFromBaseAndOffset(newStartAddressBase, newOffset, loc), fieldType, null);
 				stmt.addAll(getWriteCall(loc, fieldHlv, sae, fieldType));
 			}
 
@@ -1825,7 +1825,7 @@ public class MemoryHandler {
 					// }
 					stmt.addAll(getWriteCall(loc,
 							new HeapLValue(constructPointerFromBaseAndOffset(newStartAddressBase,
-									arrayEntryAddressOffset, loc), arrayType.getValueType()),
+									arrayEntryAddressOffset, loc), arrayType.getValueType(), null),
 							arrayAccRVal.getValue(), arrayAccRVal.getCType()));
 					// TODO 2015-10-11 Matthias: Why is there an addition of value Type size
 					// and no multiplication? Check this more carefully.

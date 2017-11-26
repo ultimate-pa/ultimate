@@ -51,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CUnion;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.BitfieldInformation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.HeapLValue;
@@ -120,11 +121,12 @@ public class StructHandler {
 
 		final CStruct cStructType = (CStruct) foType.getUnderlyingType();
 		final CType cFieldType = cStructType.getFieldType(field);
+		final int bitfieldWidth = cStructType.getBitfieldWidth(field);
 
 		if (node.isPointerDereference()) {
 			final ExpressionResult rFieldOwnerRex = fieldOwner.switchToRValueIfNecessary(main, mMemoryHandler, this, loc);
 			final Expression address = rFieldOwnerRex.mLrVal.getValue();
-			fieldOwner = new ExpressionResult(rFieldOwnerRex.mStmt, new HeapLValue(address, rFieldOwnerRex.mLrVal.getCType()),
+			fieldOwner = new ExpressionResult(rFieldOwnerRex.mStmt, new HeapLValue(address, rFieldOwnerRex.mLrVal.getCType(), null),
 					rFieldOwnerRex.mDecl, rFieldOwnerRex.mAuxVars, rFieldOwnerRex.mOverappr);
 		}
 
@@ -148,7 +150,8 @@ public class StructHandler {
 					mExpressionTranslation.getCTypeOfPointerComponents(), fieldOffset, mExpressionTranslation.getCTypeOfPointerComponents());
 			final Expression newPointer = MemoryHandler.constructPointerFromBaseAndOffset(
 					newStartAddressBase, sumOffset, loc);
-			newValue = new HeapLValue(newPointer, cFieldType);
+			final BitfieldInformation bi = constructBitfieldInformation(bitfieldWidth);
+			newValue = new HeapLValue(newPointer, cFieldType, bi);
 
 			if (cStructType instanceof CUnion) {
 				unionFieldToCType.addAll(
@@ -164,7 +167,8 @@ public class StructHandler {
 			final LocalLValue lVal = (LocalLValue) fieldOwner.mLrVal;
 			final StructLHS slhs = new StructLHS(loc,
 					lVal.getLHS(), field);
-			newValue = new LocalLValue(slhs, cFieldType);
+			final BitfieldInformation bi = constructBitfieldInformation(bitfieldWidth);
+			newValue = new LocalLValue(slhs, cFieldType, bi);
 
 			if (cStructType instanceof CUnion) {
 				unionFieldToCType.addAll(
@@ -175,6 +179,17 @@ public class StructHandler {
 
 		return new ExpressionResult(fieldOwner.mStmt, newValue, fieldOwner.mDecl, fieldOwner.mAuxVars,
 				fieldOwner.mOverappr, unionFieldToCType);
+	}
+
+
+	private BitfieldInformation constructBitfieldInformation(final int bitfieldWidth) {
+		BitfieldInformation bi;
+		if (bitfieldWidth != -1) {
+			bi = new BitfieldInformation(bitfieldWidth);
+		} else {
+			bi = null;
+		}
+		return bi;
 	}
 
 
@@ -200,7 +215,7 @@ public class StructHandler {
 
 			if (fieldOwner instanceof LocalLValue) {
 				final StructLHS havocSlhs = new StructLHS(loc, ((LocalLValue) fieldOwner).getLHS(), neighbourField);
-				builder.setLRVal(new LocalLValue(havocSlhs, foType.getFieldType(neighbourField)));
+				builder.setLRVal(new LocalLValue(havocSlhs, foType.getFieldType(neighbourField), null));
 			} else {
 				assert fieldOwner instanceof HeapLValue;
 				final Expression fieldOffset = mTypeSizeAndOffsetComputer.constructOffsetForField(loc, foType, neighbourField);
@@ -219,7 +234,7 @@ public class StructHandler {
 				builder.setLRVal(
 						new HeapLValue(
 								neighbourFieldAddress,
-								foType.getFieldType(neighbourField)));
+								foType.getFieldType(neighbourField), null));
 
 			}
 

@@ -1349,10 +1349,10 @@ public class CHandler implements ICHandler {
 			final IdentifierExpression idExp = new IdentifierExpression(loc, bId);
 			// convention: the ctype in the symbol table of something that we put on the heap
 			// is the same as it would be if we did not put it on heap
-			lrVal = new HeapLValue(idExp, cType, intFromPtr);
+			lrVal = new HeapLValue(idExp, cType, intFromPtr, null);
 		} else {
 			final VariableLHS idLhs = new VariableLHS(loc, bId);
-			lrVal = new LocalLValue(idLhs, cType, false, intFromPtr);
+			lrVal = new LocalLValue(idLhs, cType, false, intFromPtr, null);
 		}
 		return new ExpressionResult(lrVal);
 	}
@@ -1786,7 +1786,7 @@ public class CHandler implements ICHandler {
 						if (!onHeap) {
 							((ExpressionResult) result).mStmt.add(new HavocStatement(loc, new VariableLHS[] { lhs }));
 						} else {
-							final LocalLValue llVal = new LocalLValue(lhs, cDec.getType());
+							final LocalLValue llVal = new LocalLValue(lhs, cDec.getType(), null);
 							// old solution: havoc via an auxvar, new solution (below):
 							// just malloc at the right place (much shorter for arrays and structs..)
 							((ExpressionResult) result).mStmt.add(mMemoryHandler.getMallocCall(llVal, loc));
@@ -1806,7 +1806,7 @@ public class CHandler implements ICHandler {
 						}
 
 						if (onHeap) {
-							final LocalLValue llVal = new LocalLValue(lhs, cDec.getType());
+							final LocalLValue llVal = new LocalLValue(lhs, cDec.getType(), null);
 							mMemoryHandler.addVariableToBeFreed(main, new LocalLValueILocationPair(llVal, loc));
 							((ExpressionResult) result).mStmt.add(mMemoryHandler.getMallocCall(llVal, loc));
 						}
@@ -2513,6 +2513,7 @@ public class CHandler implements ICHandler {
 					// TODO
 				}
 			}
+			throw new AssertionError("Presumed that IntFromPointer workaound is not used any more.");
 		}
 
 		// add the assignment statement
@@ -2522,8 +2523,16 @@ public class CHandler implements ICHandler {
 					.addNeighbourUnionFields(unionFieldsToCType);
 
 			final HeapLValue hlv = (HeapLValue) lrVal;
-
-			builder.addStatements(mMemoryHandler.getWriteCall(loc, hlv, rightHandSideWithConversionsApplied.getValue(),
+			
+			Expression rhsWithBitfieldTreatment;
+			if (hlv.getBitfieldInformation() != null) {
+				final int bitfieldWidth = hlv.getBitfieldInformation().getNumberOfBits();
+				rhsWithBitfieldTreatment = mExpressionTranslation.erazeBits(loc,
+						rightHandSideWithConversionsApplied.getValue(), (CPrimitive) hlv.getCType(), bitfieldWidth);
+			} else {
+				rhsWithBitfieldTreatment = rightHandSideWithConversionsApplied.getValue();
+			}
+			builder.addStatements(mMemoryHandler.getWriteCall(loc, hlv, rhsWithBitfieldTreatment,
 					rightHandSideWithConversionsApplied.getCType()));
 
 			builder.setLRVal(rightHandSideWithConversionsApplied);
@@ -2536,9 +2545,17 @@ public class CHandler implements ICHandler {
 
 			final LocalLValue lValue = (LocalLValue) lrVal;
 			builder.setLRVal(lValue);
-
+			
+			Expression rhsWithBitfieldTreatment;
+			if (lValue.getBitfieldInformation() != null) {
+				final int bitfieldWidth = lValue.getBitfieldInformation().getNumberOfBits();
+				rhsWithBitfieldTreatment = mExpressionTranslation.erazeBits(loc,
+						rightHandSideWithConversionsApplied.getValue(), (CPrimitive) lValue.getCType(), bitfieldWidth);
+			} else {
+				rhsWithBitfieldTreatment = rightHandSideWithConversionsApplied.getValue();
+			}
 			final AssignmentStatement assignStmt = new AssignmentStatement(loc, new LeftHandSide[] { lValue.getLHS() },
-					new Expression[] { rightHandSideWithConversionsApplied.getValue() });
+					new Expression[] { rhsWithBitfieldTreatment });
 
 			builder.addStatement(assignStmt);
 
@@ -3133,7 +3150,7 @@ public class CHandler implements ICHandler {
 			throw new IncorrectSyntaxException(loc, "Pointer dereference of incomplete type");
 		}
 
-		return new ExpressionResult(rop.mStmt, new HeapLValue(rValue.getValue(), pointedType), rop.mDecl, rop.mAuxVars,
+		return new ExpressionResult(rop.mStmt, new HeapLValue(rValue.getValue(), pointedType, null), rop.mDecl, rop.mAuxVars,
 				rop.mOverappr);
 	}
 
