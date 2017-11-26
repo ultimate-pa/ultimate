@@ -134,10 +134,9 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 	protected static final boolean TRACE_HISTOGRAMM_BAILOUT = false;
 	protected static final int MINIMIZATION_TIMEOUT = 1_000;
 	private static final boolean NON_EA_INDUCTIVITY_CHECK = false;
-	
+
 	/**
-	 * If the trace histogram max is larger than this number we try to find
-	 * a danger invariant. Only used for debugging.
+	 * If the trace histogram max is larger than this number we try to find a danger invariant. Only used for debugging.
 	 */
 	private static final int DEBUG_DANGER_INVARIANTS_THRESHOLD = Integer.MAX_VALUE;
 
@@ -282,7 +281,6 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		mInteractive.send(mAbstraction);
 	}
 
-
 	@Override
 	protected boolean isAbstractionEmpty() throws AutomataOperationCanceledException {
 		final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> abstraction =
@@ -335,10 +333,11 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 	}
 
 	private void checkForDangerInvariantAndReport() {
-		final Set<? extends IcfgEdge> allowedTransitions = PathInvariantsGenerator
-				.extractTransitionsFromRun((NestedRun<? extends IAction, IPredicate>) mCounterexample);
-		final PathProgramConstructionResult ppResult = PathProgram.constructPathProgram("PathInvariantsPathProgram",
-				mIcfg, allowedTransitions);
+		final Set<? extends IcfgEdge> allowedTransitions = PathInvariantsGenerator.extractTransitionsFromRun(
+				(NestedRun<? extends IAction, IPredicate>) mCounterexample,
+				mIcfg.getCfgSmtToolkit().getIcfgEdgeFactory());
+		final PathProgramConstructionResult ppResult =
+				PathProgram.constructPathProgram("PathInvariantsPathProgram", mIcfg, allowedTransitions);
 		final IIcfg<IcfgLocation> pathProgram = ppResult.getPathProgram();
 		final PredicateFactory predicateFactory = mPredicateFactory;
 		final IPredicateUnifier predicateUnifier = new PredicateUnifier(mServices, mCsToolkit.getManagedScript(),

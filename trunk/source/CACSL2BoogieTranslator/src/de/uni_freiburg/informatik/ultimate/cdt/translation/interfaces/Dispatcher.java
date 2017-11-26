@@ -34,6 +34,7 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces;
 
 import java.text.ParseException;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
@@ -71,6 +72,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.CACSL2BoogieBacktranslator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.TranslationMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.PointerCheckMode;
 
@@ -134,8 +136,13 @@ public abstract class Dispatcher {
 	
 	protected final MultiparseSymbolTable mMultiparseTable;
 
+	private final boolean mUseSvcompSettings;
+
+	protected final Map<String, IASTNode> mFunctionTable;
+
 	public Dispatcher(final CACSL2BoogieBacktranslator backtranslator, final IUltimateServiceProvider services,
-			final ILogger logger, final LocationFactory locFac, final MultiparseSymbolTable mst) {
+			final ILogger logger, final LocationFactory locFac, final Map<String, IASTNode> functionTable,
+			final MultiparseSymbolTable mst) {
 		mBacktranslator = backtranslator;
 		mLogger = logger;
 		mServices = services;
@@ -144,6 +151,34 @@ public abstract class Dispatcher {
 		mTranslationSettings = new TranslationSettings(mPreferences);
 		mLocationFactory = locFac;
 		mMultiparseTable = mst;
+		mFunctionTable = functionTable;
+
+		mUseSvcompSettings = getSvcompMode();
+		if (mUseSvcompSettings) {
+			mLogger.info("Using SV-COMP mode");
+		}
+	}
+
+	private boolean getSvcompMode() {
+		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
+		TranslationMode mode = TranslationMode.BASE;
+		try {
+			mode = prefs.getEnum(CACSLPreferenceInitializer.LABEL_MODE, TranslationMode.class);
+		} catch (final Exception e) {
+			throw new IllegalArgumentException("Unable to determine preferred mode.");
+		}
+		switch (mode) {
+		case BASE:
+			return false;
+		case SV_COMP14:
+			return true;
+		default:
+			throw new IllegalArgumentException("Unknown mode.");
+		}
+	}
+
+	public boolean isSvcomp() {
+		return mUseSvcompSettings;
 	}
 
 	/**
@@ -345,6 +380,10 @@ public abstract class Dispatcher {
 
 	public LocationFactory getLocationFactory() {
 		return mLocationFactory;
+	}
+
+	public Map<String, IASTNode> getFunctionTable() {
+		return Collections.unmodifiableMap(mFunctionTable);
 	}
 
 	public static final class TranslationSettings {

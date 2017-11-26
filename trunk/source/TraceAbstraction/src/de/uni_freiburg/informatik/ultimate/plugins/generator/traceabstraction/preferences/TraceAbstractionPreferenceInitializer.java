@@ -177,10 +177,10 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 		return new UltimatePreferenceItem<?>[] {
 				new UltimatePreferenceItem<>(LABEL_INTERPROCEDUTAL, DEF_INTERPROCEDUTAL, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_ALL_ERRORS_AT_ONCE, DEF_ALL_ERRORS_AT_ONCE, PreferenceType.Boolean),
-				
-				new UltimatePreferenceItem<>(LABEL_FLOYD_HOARE_AUTOMATA_REUSE, DEF_FLOYD_HOARE_AUTOMATA_REUSE, PreferenceType.Combo,
-						FloydHoareAutomataReuse.values()),
-				
+
+				new UltimatePreferenceItem<>(LABEL_FLOYD_HOARE_AUTOMATA_REUSE, DEF_FLOYD_HOARE_AUTOMATA_REUSE,
+						PreferenceType.Combo, FloydHoareAutomataReuse.values()),
+
 				new UltimatePreferenceItem<>(LABEL_ITERATIONS, DEF_ITERATIONS, PreferenceType.Integer,
 						new IUltimatePreferenceItemValidator.IntegerValidator(0, 1_000_000)),
 				new UltimatePreferenceItem<>(LABEL_ARTIFACT, Artifact.RCFG, PreferenceType.Combo, Artifact.values()),
@@ -417,11 +417,21 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 		 */
 		PENGUIN,
 		/**
-		 * Multi track strategy that tries Sp/Wp interpolation and Craig interpolation.
+		 * Multi track strategy that tries Sp/Wp interpolation with CVC4, Z3 and Mathsat with a high interpolant
+		 * threshold
 		 */
 		WALRUS,
 
-		CAMEL, WOLF,
+		CAMEL,
+		/**
+		 * Multi track strategy that tries Sp/Wp interpolation with CVC4, Z3 and Mathsat with a low interpolant
+		 * threshold
+		 */
+		WOLF,
+		/**
+		 * Multi track strategy that tries Sp interpolation with CVC4, Z3 and Mathsat with a high interpolant threshold
+		 */
+		WARTHOG,
 	}
 
 	/**
@@ -448,10 +458,10 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 		 */
 		ALL
 	}
-	
+
 	/**
-	 * Reuse Floyd-Hoare that were built for one error location for succeeding 
-	 * error locations. 
+	 * Reuse Floyd-Hoare that were built for one error location for succeeding error locations.
+	 * 
 	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
 	 *
 	 */
@@ -461,10 +471,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 		 */
 		NONE,
 		/**
-		 * Take initially the difference of the control flow graph and
-		 * all yet constructed Floyd-Hoare automata. Extend the
-		 * Floyd-Hoare automata on-demand (while difference is constructed
-		 * by new edges).
+		 * Take initially the difference of the control flow graph and all yet constructed Floyd-Hoare automata. Extend
+		 * the Floyd-Hoare automata on-demand (while difference is constructed by new edges).
 		 */
 		EAGER,
 		/**

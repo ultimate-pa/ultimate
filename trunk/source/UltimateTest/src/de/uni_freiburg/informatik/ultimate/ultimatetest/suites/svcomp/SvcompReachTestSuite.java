@@ -68,9 +68,9 @@ public class SvcompReachTestSuite extends AbstractSvcompTestSuite {
 	@Override
 	protected List<SvcompTestDefinition> getTestDefinitions() {
 		final List<SvcompTestDefinition> rtr = new ArrayList<>();
-		// numbers for sha 962c42fc0f6ab4529897b173ef71cbfcf7a480b3
+		// numbers for sha 8150d78d2b05e5fe0b77a20b7bcd640e6d40eccc
 
-		// contains 135 examples, 32bit
+		// contains 167 examples, 32bit
 		rtr.addAll(createTests("ReachSafety-Arrays", "32bit", "Reach"));
 
 		// contains 50 examples, 32bit
@@ -82,19 +82,19 @@ public class SvcompReachTestSuite extends AbstractSvcompTestSuite {
 		// contains 1149 examples, 32bit
 		rtr.addAll(createTests("ReachSafety-ECA", 100, "32bit", "Reach"));
 
-		// contains 173 examples, 32bit
+		// contains 172 examples, 32bit
 		rtr.addAll(createTests("ReachSafety-Floats", "32bit", "Reach"));
 
 		// contains 181 examples, 32bit
 		rtr.addAll(createTests("ReachSafety-Heap", "32bit", "Reach"));
 
-		// contains 159 examples, 32bit
+		// contains 166 examples, 32bit
 		rtr.addAll(createTests("ReachSafety-Loops", "32bit", "Reach"));
 
 		// contains 597 examples, 32bit
 		rtr.addAll(createTests("ReachSafety-ProductLines", 100, "32bit", "Reach"));
 
-		// contains 98 examples, 32bit
+		// contains 96 examples, 32bit
 		rtr.addAll(createTests("ReachSafety-Recursive", "32bit", "Reach"));
 
 		// contains 273 examples, 32bit

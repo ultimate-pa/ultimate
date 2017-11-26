@@ -22,8 +22,10 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
+import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 
@@ -34,20 +36,23 @@ public class SymbolChecker extends TermTransformer {
 	private HashSet<FunctionSymbol> mLeftErrors;
 	private HashSet<FunctionSymbol> mRightErrors;
 	private final Set<FunctionSymbol> mGlobals;
-	
+
 	public SymbolChecker(Set<FunctionSymbol> globals) {
 		mGlobals = globals;
 	}
-	
+
 	/**
 	 * Check whether an interpolant contains only allowed symbols.
-	 * @param interpolant  The interpolant.
-	 * @param leftAllowed  The symbols allowed from the left-hand side.
-	 * @param rightAllowed The symbols allowed from the right-hand side.
+	 * 
+	 * @param interpolant
+	 *            The interpolant.
+	 * @param leftAllowed
+	 *            The symbols allowed from the left-hand side.
+	 * @param rightAllowed
+	 *            The symbols allowed from the right-hand side.
 	 * @return <code>true</code> if an error has been detected.
 	 */
-	public final boolean check(Term interpolant,
-			Map<FunctionSymbol, Integer> leftAllowed,
+	public final boolean check(Term interpolant, Map<FunctionSymbol, Integer> leftAllowed,
 			Map<FunctionSymbol, Integer> rightAllowed) {
 		mLeftAllowed = leftAllowed;
 		mRightAllowed = rightAllowed;
@@ -55,6 +60,14 @@ public class SymbolChecker extends TermTransformer {
 		mRightErrors = new HashSet<FunctionSymbol>();
 		transform(interpolant);
 		return !(mLeftErrors.isEmpty() && mRightErrors.isEmpty());
+	}
+
+	@Override
+	public void convert(Term term) {
+		if (term instanceof AnnotatedTerm) {
+			throw new SMTLIBException("Interpolant contains annotated term: " + term);
+		}
+		super.convert(term);
 	}
 
 	@Override
@@ -73,13 +86,13 @@ public class SymbolChecker extends TermTransformer {
 		}
 		super.convertApplicationTerm(appTerm, newArgs);
 	}
-	
+
 	public Set<FunctionSymbol> getLeftErrors() {
 		return mLeftErrors;
 	}
-	
+
 	public Set<FunctionSymbol> getRightErrors() {
 		return mRightErrors;
 	}
-	
+
 }

@@ -31,9 +31,11 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
@@ -62,10 +64,11 @@ public class TermConjunctEvaluator<STATE extends IAbstractState<STATE>> {
 	private final Set<TermVariable> mVariableRetainmentSet;
 	private final Map<TermVariable, String> mAlternateOldNames;
 	private final CodeBlockFactory mCodeBlockFactory;
-	private final List<STATE> mResult;
+	private final Function<List<STATE>, List<STATE>> mPostFunction;
 	private final Script mScript;
+	private final Map<Term[], CodeBlock> mCachedCodeBlocks;
 
-	public TermConjunctEvaluator(final ILogger logger, final PoormanAbstractState<STATE> prestate, final Term term,
+	public TermConjunctEvaluator(final ILogger logger, final Term term,
 			final IAbstractDomain<STATE, IcfgEdge> backingDomain, final Set<TermVariable> variableRetainmentSet,
 			final Map<TermVariable, String> alternateOldNames, final MappedTerm2Expression mappedTerm2Expression,
 			final CodeBlockFactory codeBlockFactory, final Script script) {
@@ -76,49 +79,52 @@ public class TermConjunctEvaluator<STATE extends IAbstractState<STATE>> {
 		mMappedTerm2Expression = mappedTerm2Expression;
 		mCodeBlockFactory = codeBlockFactory;
 		mScript = script;
-		mResult = visit(term, Collections.singletonList(prestate.getBackingState()));
+		mCachedCodeBlocks = new HashMap<>();
+		mPostFunction = visit(term);
 	}
 
-	public List<STATE> getResult() {
-		if (mResult == null) {
+	public List<STATE> computePost(final PoormanAbstractState<STATE> prestate) {
+		if (mPostFunction == null) {
 			throw new UnsupportedOperationException("No result produced.");
 		}
-		return mResult;
+		return mPostFunction.apply(Collections.singletonList(prestate.getBackingState()));
 	}
 
-	private List<STATE> visit(final Term term, final List<STATE> prestates) {
+	private Function<List<STATE>, List<STATE>> visit(final Term term) {
 		if (term instanceof ApplicationTerm) {
-			return visit((ApplicationTerm) term, prestates);
+			return visit((ApplicationTerm) term);
 		} else if (term instanceof AnnotatedTerm) {
-			return visit((AnnotatedTerm) term, prestates);
+			return visit((AnnotatedTerm) term);
 		} else if (term instanceof LetTerm) {
-			return visit((LetTerm) term, prestates);
+			return visit((LetTerm) term);
 		} else if (term instanceof QuantifiedFormula) {
-			return visit((QuantifiedFormula) term, prestates);
+			return visit((QuantifiedFormula) term);
 		} else if (term instanceof TermVariable) {
-			return visit((TermVariable) term, prestates);
+			return visit((TermVariable) term);
 		} else {
 			throw new UnsupportedOperationException("Unsupported term type: " + term.getClass().getSimpleName());
 		}
 	}
 
-	private List<STATE> visit(final TermVariable term, final List<STATE> prestates) {
-		return applyPost(prestates, term);
+	private Function<List<STATE>, List<STATE>> visit(final TermVariable term) {
+		return (prestate) -> {
+			return applyPost(prestate, term);
+		};
 	}
 
-	private List<STATE> visit(final QuantifiedFormula term, final List<STATE> prestates) {
+	private Function<List<STATE>, List<STATE>> visit(final QuantifiedFormula term) {
 		throw new UnsupportedOperationException("Quantified formulas cannot be handled right now.");
 	}
 
-	private List<STATE> visit(final LetTerm term, final List<STATE> prestates) {
+	private Function<List<STATE>, List<STATE>> visit(final LetTerm term) {
 		throw new UnsupportedOperationException("LetTerm formulas cannot be handled right now.");
 	}
 
-	private List<STATE> visit(final AnnotatedTerm term, final List<STATE> prestates) {
+	private Function<List<STATE>, List<STATE>> visit(final AnnotatedTerm term) {
 		throw new UnsupportedOperationException("AnnotatedTerm formulas cannot be handled right now.");
 	}
 
-	private List<STATE> visit(final ApplicationTerm term, final List<STATE> prestates) {
+	private Function<List<STATE>, List<STATE>> visit(final ApplicationTerm term) {
 		final String functionName = term.getFunction().getName();
 
 		if (functionName.equals("and")) {
@@ -131,17 +137,21 @@ public class TermConjunctEvaluator<STATE extends IAbstractState<STATE>> {
 					nonAbstractables.add(param);
 				}
 			}
-			mLogger.debug("Abstractables:     " + abstractables);
-			mLogger.debug("Non-Abstractables: " + nonAbstractables);
-			final List<STATE> preStatesAfterAbstractables =
-					applyPost(prestates, abstractables.toArray(new Term[abstractables.size()]));
-			return computeFixpoint(nonAbstractables, preStatesAfterAbstractables);
+			return (prestates) -> {
+				mLogger.debug("Abstractables:     " + abstractables);
+				mLogger.debug("Non-Abstractables: " + nonAbstractables);
+				final List<STATE> preStatesAfterAbstractables =
+						applyPost(prestates, abstractables.toArray(new Term[abstractables.size()]));
+				return computeFixpoint(nonAbstractables, preStatesAfterAbstractables);
+			};
 		} else if (functionName.equals("or")) {
-			final List<STATE> returnStates = new ArrayList<>();
-			for (final Term param : term.getParameters()) {
-				returnStates.addAll(visit(param, prestates));
-			}
-			return returnStates;
+			return (prestates) -> {
+				final List<STATE> returnStates = new ArrayList<>();
+				for (final Term param : term.getParameters()) {
+					returnStates.addAll(visit(param).apply(prestates));
+				}
+				return returnStates;
+			};
 		} else if (functionName.equals("not")) {
 			assert term.getParameters().length == 1;
 			final Term param = term.getParameters()[0];
@@ -151,13 +161,17 @@ public class TermConjunctEvaluator<STATE extends IAbstractState<STATE>> {
 				if (invertedTerm == appParam) {
 					// If the term is something like (not (= x y)), compute the post right away and let the domain deal
 					// with the negation.
-					return applyPost(prestates, term);
+					return (prestates) -> {
+						return applyPost(prestates, term);
+					};
 				}
-				return visit(invertedTerm, prestates);
+				return visit(invertedTerm);
 			}
 		}
 
-		return applyPost(prestates, term);
+		return (prestates) -> {
+			return applyPost(prestates, term);
+		};
 	}
 
 	private List<STATE> computeFixpoint(final List<Term> nonAbstractables, final List<STATE> preStates) {
@@ -171,7 +185,7 @@ public class TermConjunctEvaluator<STATE extends IAbstractState<STATE>> {
 			// Compute everything for the prestate
 			List<STATE> abstractableResult = pres;
 			for (final Term nonAbstractable : nonAbstractables) {
-				abstractableResult = visit(nonAbstractable, abstractableResult);
+				abstractableResult = visit(nonAbstractable).apply(abstractableResult);
 				if (abstractableResult.stream().allMatch(state -> state.isBottom())) {
 					return abstractableResult;
 				}
@@ -233,16 +247,27 @@ public class TermConjunctEvaluator<STATE extends IAbstractState<STATE>> {
 		return mScript.term(newFunction, negatedParamsArray);
 	}
 
-	private List<STATE> applyPost(final List<STATE> preStates, final Term... term) {
-		if (term.length == 0) {
-			return preStates;
+	private CodeBlock getCachedCodeBlock(final Term... term) {
+		if (mCachedCodeBlocks.containsKey(term)) {
+			return mCachedCodeBlocks.get(term);
 		}
 
-		final List<STATE> returnStates = new ArrayList<>();
+		if (term.length == 0) {
+			mCachedCodeBlocks.put(term, null);
+			return null;
+		}
 
 		final AssumeStatement[] assume = AssumptionBuilder.constructBoogieAssumeStatement(mLogger,
 				mVariableRetainmentSet, mAlternateOldNames, mMappedTerm2Expression, term);
 
+		final CodeBlock codeBlock = AssumptionBuilder.constructCodeBlock(mCodeBlockFactory, assume);
+
+		mCachedCodeBlocks.put(term, codeBlock);
+		return codeBlock;
+	}
+
+	private List<STATE> applyPost(final List<STATE> preStates, final Term... term) {
+		final List<STATE> returnStates = new ArrayList<>();
 		mLogger.debug("PreStates: " + preStates);
 
 		// If all preStates are bottom, we just return them and do nothing.
@@ -251,12 +276,15 @@ public class TermConjunctEvaluator<STATE extends IAbstractState<STATE>> {
 			return preStates;
 		}
 
+		final CodeBlock codeBlock = getCachedCodeBlock(term);
+		if (codeBlock == null) {
+			return preStates;
+		}
 		for (final STATE state : preStates) {
 			// Skip bottom states
 			if (state.isBottom()) {
 				continue;
 			}
-			final CodeBlock codeBlock = AssumptionBuilder.constructCodeBlock(mCodeBlockFactory, assume);
 			returnStates.addAll(mBackingDomain.getPostOperator().apply(state, codeBlock));
 		}
 

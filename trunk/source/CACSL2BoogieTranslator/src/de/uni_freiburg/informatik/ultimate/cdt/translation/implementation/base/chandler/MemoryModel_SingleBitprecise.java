@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler.RequiredMemoryModelFeatures;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.AExpressionTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitiveCategory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
@@ -52,7 +52,7 @@ public class MemoryModel_SingleBitprecise extends AMemoryModel {
 	private final HeapDataArray mDataArray;
 	private final int mResolution;
 	
-	public MemoryModel_SingleBitprecise(final int memoryModelResolution, final TypeSizes typeSizes, final TypeHandler typeHandler, final AExpressionTranslation expressionTranslation) {
+	public MemoryModel_SingleBitprecise(final int memoryModelResolution, final TypeSizes typeSizes, final TypeHandler typeHandler, final ExpressionTranslation expressionTranslation) {
 		super(typeSizes, typeHandler, expressionTranslation);
 		
 		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();

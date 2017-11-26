@@ -95,7 +95,7 @@ public final class PathProgram extends BasePayloadContainer implements IIcfg<Icf
 
 	/**
 	 * Create a new {@link PathProgram} from an {@link IIcfg} and from a set of transitions that should be retained.
-	 * 
+	 *
 	 * @param identifier
 	 *            The new {@link IIcfg} identifier of the path program.
 	 * @param originalIcfg
@@ -162,7 +162,7 @@ public final class PathProgram extends BasePayloadContainer implements IIcfg<Icf
 
 	/**
 	 * The result of a path program construction. Contains the path program and a mapping of locations.
-	 * 
+	 *
 	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
 	 *
 	 */
@@ -227,8 +227,9 @@ public final class PathProgram extends BasePayloadContainer implements IIcfg<Icf
 			final ModifiableGlobalsTable newModGlobTable =
 					constructModifiableGlobalsTable(oldCfgSmtToolkit.getModifiableGlobalsTable());
 
-			final CfgSmtToolkit newCfgSmtToolkit = new CfgSmtToolkit(newModGlobTable,
-					oldCfgSmtToolkit.getManagedScript(), mSymbolTable, oldCfgSmtToolkit.getAxioms(), mProcedures);
+			final CfgSmtToolkit newCfgSmtToolkit =
+					new CfgSmtToolkit(newModGlobTable, oldCfgSmtToolkit.getManagedScript(), mSymbolTable,
+							oldCfgSmtToolkit.getAxioms(), mProcedures, oldCfgSmtToolkit.getIcfgEdgeFactory());
 
 			final PathProgram pp = new PathProgram(nonNullIdentifier, newCfgSmtToolkit, mProgramPoints, mProcEntries,
 					mProcExits, mProcError, mInitialNodes, mLoopLocations);

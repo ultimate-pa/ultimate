@@ -6,5 +6,5 @@
 __inline static void seqcount_lockdep_reader_access(  ) 
 { 
   void *tmp ;
-  tmp = __builtin_return_address( );
+  tmp = __builtin_return_address(0);
 }

@@ -163,7 +163,8 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 		final CallInfo callInfo = mCallInfoCache.getCallInfo(callStatement);
 		// If there are no arguments, we don't need to rewrite states.
 		if (callInfo.getInParamAssign() == null) {
-			return addOldvars(Collections.singletonList(stateAfterLeaving), callInfo.getOldVarAssign());
+			return addOldvars(Collections.singletonList(stateAfterLeaving),
+					callInfo.getOldVarAssign(stateAfterLeaving.getVariables()));
 		}
 
 		// process assignment of expressions in old scope to inparams of procedure
@@ -199,7 +200,7 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 			returnList.add(returnState);
 		}
 		return addOldvars(NonrelationalUtils.mergeStatesIfNecessary(returnList, mParallelStates),
-				callInfo.getOldVarAssign());
+				callInfo.getOldVarAssign(stateAfterLeaving.getVariables()));
 	}
 
 	/**

@@ -1,6 +1,7 @@
 /*
- * Copyright (C) 2012-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * Copyright (C) 2015 University of Freiburg
+ * Copyright (C) 2015-2017 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * Copyright (C) 2015-2017 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2015-2017 University of Freiburg
  *
  * This file is part of the ULTIMATE ModelCheckerUtils Library.
  *
@@ -29,9 +30,16 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg;
 
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdgeFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 
+/**
+ *
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ *
+ */
 public class CfgSmtToolkit {
 
 	private final ManagedScript mManagedScript;
@@ -40,15 +48,18 @@ public class CfgSmtToolkit {
 	private final IPredicate mAxioms;
 	private final OldVarsAssignmentCache mOldVarsAssignmentCache;
 	private final Set<String> mProcedures;
+	private final IcfgEdgeFactory mIcfgEdgeFactory;
 
 	public CfgSmtToolkit(final ModifiableGlobalsTable modifiableGlobalsTable, final ManagedScript managedScript,
-			final IIcfgSymbolTable symbolTable, final IPredicate axioms, final Set<String> procedures) {
+			final IIcfgSymbolTable symbolTable, final IPredicate axioms, final Set<String> procedures,
+			final IcfgEdgeFactory icfgEdgeFactory) {
 		mManagedScript = managedScript;
 		mSymbolTable = symbolTable;
 		mModifiableGlobalsTable = modifiableGlobalsTable;
 		mOldVarsAssignmentCache = new OldVarsAssignmentCache(mManagedScript, mModifiableGlobalsTable);
 		mAxioms = axioms;
 		mProcedures = procedures;
+		mIcfgEdgeFactory = icfgEdgeFactory;
 	}
 
 	public ManagedScript getManagedScript() {
@@ -73,6 +84,10 @@ public class CfgSmtToolkit {
 
 	public Set<String> getProcedures() {
 		return mProcedures;
+	}
+
+	public IcfgEdgeFactory getIcfgEdgeFactory() {
+		return mIcfgEdgeFactory;
 	}
 
 }

@@ -3,22 +3,22 @@
  * Copyright (C) 2012-2015 Markus Lindenmann (lindenmm@informatik.uni-freiburg.de)
  * Copyright (C) 2012-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE CACSL2BoogieTranslator plug-in.
- * 
+ *
  * The ULTIMATE CACSL2BoogieTranslator plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE CACSL2BoogieTranslator plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE CACSL2BoogieTranslator plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE CACSL2BoogieTranslator plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -87,7 +87,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.Locati
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.AMemoryModel.ReadWriteDefinition;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.AExpressionTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CNamed;
@@ -158,7 +158,7 @@ public class MemoryHandler {
 	 */
 	private final LinkedScopedHashMap<LocalLValueILocationPair, Integer> mVariablesToBeFreed;
 
-	private final AExpressionTranslation mExpressionTranslation;
+	private final ExpressionTranslation mExpressionTranslation;
 
 	private final TypeSizeAndOffsetComputer mTypeSizeAndOffsetComputer;
 	private final TypeSizes mTypeSizes;
@@ -171,7 +171,7 @@ public class MemoryHandler {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param typeHandler
 	 * @param checkPointerValidity
 	 * @param typeSizeComputer
@@ -180,7 +180,7 @@ public class MemoryHandler {
 	 */
 	public MemoryHandler(final ITypeHandler typeHandler, final FunctionHandler functionHandler,
 			final boolean checkPointerValidity, final TypeSizeAndOffsetComputer typeSizeComputer,
-			final TypeSizes typeSizes, final AExpressionTranslation expressionTranslation,
+			final TypeSizes typeSizes, final ExpressionTranslation expressionTranslation,
 			final boolean bitvectorTranslation, final INameHandler nameHandler, final boolean smtBoolArrayWorkaround,
 			final IPreferenceProvider prefs) {
 		mTypeHandler = typeHandler;
@@ -210,7 +210,7 @@ public class MemoryHandler {
 						PointerCheckMode.class);
 		mMemoryModelPreference = prefs.getEnum(CACSLPreferenceInitializer.LABEL_MEMORY_MODEL, MemoryModel.class);
 		mFpToIeeeBvExtension = prefs.getBoolean(CACSLPreferenceInitializer.LABEL_FP_TO_IEEE_BV_EXTENSION);
-		
+
 		final MemoryModel memoryModelPreference = mMemoryModelPreference;
 		final AMemoryModel memoryModel = getMemoryModel(bitvectorTranslation, memoryModelPreference);
 		mMemoryModel = memoryModel;
@@ -279,7 +279,7 @@ public class MemoryHandler {
 
 	/**
 	 * Declare all variables required for the memory model.
-	 * 
+	 *
 	 * @param main
 	 *            a reference to the main dispatcher.
 	 * @param tuLoc
@@ -482,7 +482,7 @@ public class MemoryHandler {
 	/**
 	 * Construct specification and implementation for our Boogie representation of the memcpy function defined in
 	 * 7.24.2.1 of C11. void *memcpy(void * restrict s1, const void * restrict s2, size_t n);
-	 * 
+	 *
 	 * @param main
 	 * @param heapDataArrays
 	 * @return
@@ -582,10 +582,10 @@ public class MemoryHandler {
 	/**
 	 * Construct loop of the following form, where loopBody is a List of statements and the variables loopConterVariable
 	 * and loopBoundVariable have the translated type of size_t.
-	 * 
+	 *
 	 * loopConterVariable := 0; while (#t~loopctr4 < loopBoundVariable) { ___loopBody___ loopConterVariable :=
 	 * loopConterVariable + 1; }
-	 * 
+	 *
 	 * @param loopBoundVariableExpr
 	 * @param loopCounterVariableId
 	 * @param loopBody
@@ -631,10 +631,10 @@ public class MemoryHandler {
 
 	/**
 	 * Return the assignments that we do in the loop body of our memcpy implementation.
-	 * 
+	 *
 	 * #memory_int[{ base: dest!base, offset: dest!offset + #t~loopctr6 * 1 }] := #memory_int[{ base: src!base, offset:
 	 * src!offset + #t~loopctr6 * 1 }];
-	 * 
+	 *
 	 * @param heapDataArrays
 	 * @param loopCtr
 	 * @param destPtr
@@ -659,10 +659,10 @@ public class MemoryHandler {
 				new CPrimitive(CPrimitives.VOID));
 		for (final HeapDataArray hda : heapDataArrays) {
 			final String memArrayName = hda.getVariableName();
-			final ArrayAccessExpression srcAcc = new ArrayAccessExpression(ignoreLoc,
+			final ArrayAccessExpression srcAcc = ExpressionFactory.constructNestedArrayAccessExpression(ignoreLoc,
 					new IdentifierExpression(ignoreLoc, memArrayName), new Expression[] { currentSrc });
-			final ArrayLHS destAcc =
-					new ArrayLHS(ignoreLoc, new VariableLHS(ignoreLoc, memArrayName), new Expression[] { currentDest });
+			final ArrayLHS destAcc = ExpressionFactory.constructNestedArrayLHS(ignoreLoc,
+					new VariableLHS(ignoreLoc, memArrayName), new Expression[] { currentDest });
 			result.add(new AssignmentStatement(ignoreLoc, new LeftHandSide[] { destAcc }, new Expression[] { srcAcc }));
 
 		}
@@ -690,7 +690,7 @@ public class MemoryHandler {
 						mExpressionTranslation.getCTypeOfPointerComponents());
 				final Expression zero = mExpressionTranslation.constructLiteralForIntegerType(ignoreLoc,
 						mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
-				convertedValue = constructPointerFromBaseAndOffset(zero, exprRes.lrVal.getValue(), ignoreLoc);
+				convertedValue = constructPointerFromBaseAndOffset(zero, exprRes.mLrVal.getValue(), ignoreLoc);
 			} else {
 				// convert to smallest
 				final List<ReadWriteDefinition> rwds =
@@ -698,11 +698,11 @@ public class MemoryHandler {
 				// PRIMITIVE primitive = getCprimitiveThatFitsBest(rwds);
 				final CPrimitives primitive = getCprimitiveThatFitsBest(hda.getSize());
 				mExpressionTranslation.convertIntToInt(ignoreLoc, exprRes, new CPrimitive(primitive));
-				convertedValue = exprRes.lrVal.getValue();
+				convertedValue = exprRes.mLrVal.getValue();
 			}
 			final String memArrayName = hda.getVariableName();
-			final ArrayLHS destAcc =
-					new ArrayLHS(ignoreLoc, new VariableLHS(ignoreLoc, memArrayName), new Expression[] { currentPtr });
+			final ArrayLHS destAcc = ExpressionFactory.constructNestedArrayLHS(ignoreLoc,
+					new VariableLHS(ignoreLoc, memArrayName), new Expression[] { currentPtr });
 
 			result.add(new AssignmentStatement(ignoreLoc, new LeftHandSide[] { destAcc },
 					new Expression[] { convertedValue }));
@@ -753,7 +753,7 @@ public class MemoryHandler {
 	/**
 	 * Construct specification and implementation for our Boogie representation of the memset function defined in
 	 * 7.24.6.1 of C11. void *memset(void *s, int c, size_t n);
-	 * 
+	 *
 	 * @param main
 	 * @param heapDataArrays
 	 * @return
@@ -794,7 +794,7 @@ public class MemoryHandler {
 		final ExpressionResult exprRes =
 				new ExpressionResult(new RValue(inParamValueExpr, new CPrimitive(CPrimitives.INT)));
 		mExpressionTranslation.convertIntToInt(ignoreLoc, exprRes, new CPrimitive(CPrimitives.UCHAR));
-		final Expression convertedValue = exprRes.lrVal.getValue();
+		final Expression convertedValue = exprRes.mLrVal.getValue();
 
 		final List<Statement> loopBody = constructMemsetLoopBody(heapDataArrays, loopCtr, inParamPtr, convertedValue);
 
@@ -898,8 +898,7 @@ public class MemoryHandler {
 
 		final ModifiesSpecification mod = constructModifiesSpecification(loc, heapDataArrays, x -> x.getVariableName());
 		swrite.add(mod);
-		
-		
+
 		final boolean floating2bitvectorTransformationNeeded = ((mMemoryModel instanceof MemoryModel_SingleBitprecise)
 				&& rda.getCPrimitiveCategory().contains(CPrimitiveCategory.FLOATTYPE));
 		final CPrimitives cprimitive;
@@ -915,11 +914,13 @@ public class MemoryHandler {
 		}
 		final List<Expression> conjuncts = new ArrayList<>();
 		if (rda.getBytesize() == heapDataArray.getSize()) {
-			conjuncts.addAll(constructConjunctsForWriteEnsuresSpecification(loc, heapDataArrays, heapDataArray, value, x -> x, inPtr, x -> x));
+			conjuncts.addAll(constructConjunctsForWriteEnsuresSpecification(loc, heapDataArrays, heapDataArray, value,
+					x -> x, inPtr, x -> x));
 		} else if (rda.getBytesize() < heapDataArray.getSize()) {
 			final Function<Expression, Expression> valueExtension =
 					x -> mExpressionTranslation.signExtend(loc, x, rda.getBytesize() * 8, heapDataArray.getSize() * 8);
-					conjuncts.addAll(constructConjunctsForWriteEnsuresSpecification(loc, heapDataArrays, heapDataArray, value, valueExtension, inPtr, x -> x));
+			conjuncts.addAll(constructConjunctsForWriteEnsuresSpecification(loc, heapDataArrays, heapDataArray, value,
+					valueExtension, inPtr, x -> x));
 		} else {
 			assert rda.getBytesize() % heapDataArray.getSize() == 0 : "incompatible sizes";
 			for (int i = 0; i < rda.getBytesize() / heapDataArray.getSize(); i++) {
@@ -928,26 +929,31 @@ public class MemoryHandler {
 				extractBits = x -> mExpressionTranslation.extractBits(loc, x,
 						heapDataArray.getSize() * (currentI + 1) * 8, heapDataArray.getSize() * currentI * 8);
 				if (i == 0) {
-					conjuncts.addAll(constructConjunctsForWriteEnsuresSpecification(loc, heapDataArrays, heapDataArray, value, extractBits, inPtr, x -> x));
+					conjuncts.addAll(constructConjunctsForWriteEnsuresSpecification(loc, heapDataArrays, heapDataArray,
+							value, extractBits, inPtr, x -> x));
 				} else {
 					final BigInteger additionalOffset = BigInteger.valueOf(i * heapDataArray.getSize());
 					final Function<Expression, Expression> pointerAddition =
 							x -> addIntegerConstantToPointer(loc, x, additionalOffset);
-							conjuncts.addAll(constructConjunctsForWriteEnsuresSpecification(loc, heapDataArrays, heapDataArray, value, extractBits, inPtr,
-							pointerAddition));
+					conjuncts.addAll(constructConjunctsForWriteEnsuresSpecification(loc, heapDataArrays, heapDataArray,
+							value, extractBits, inPtr, pointerAddition));
 				}
 			}
 		}
 		if (floating2bitvectorTransformationNeeded && !mFpToIeeeBvExtension) {
 			final Expression valueAsBitvector = new IdentifierExpression(loc, "#valueAsBitvector");
-			final Expression transformedToFloat = mExpressionTranslation.transformBitvectorToFloat(loc, valueAsBitvector, cprimitive);
+			final Expression transformedToFloat =
+					mExpressionTranslation.transformBitvectorToFloat(loc, valueAsBitvector, cprimitive);
 			final Expression inputValue = new IdentifierExpression(loc, "#value");
-			final Expression eq = ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, transformedToFloat, inputValue);
+			final Expression eq =
+					ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, transformedToFloat, inputValue);
 			conjuncts.add(eq);
 			final Expression conjunction = ExpressionFactory.and(loc, conjuncts);
-			final ASTType type = ((TypeHandler) mTypeHandler).bytesize2asttype(loc, cprimitive.getPrimitiveCategory(), mTypeSizes.getSize(cprimitive));
-			final VarList[] parameters = new VarList[] { new VarList(loc, new String[] { "#valueAsBitvector" }, type) }; 
-			final QuantifierExpression qe = new QuantifierExpression(loc, false, new String[0], parameters, new Attribute[0], conjunction);
+			final ASTType type = ((TypeHandler) mTypeHandler).bytesize2asttype(loc, cprimitive.getPrimitiveCategory(),
+					mTypeSizes.getSize(cprimitive));
+			final VarList[] parameters = new VarList[] { new VarList(loc, new String[] { "#valueAsBitvector" }, type) };
+			final QuantifierExpression qe =
+					new QuantifierExpression(loc, false, new String[0], parameters, new Attribute[0], conjunction);
 			swrite.add(new EnsuresSpecification(loc, false, qe));
 		} else {
 			swrite.add(new EnsuresSpecification(loc, false, ExpressionFactory.and(loc, conjuncts)));
@@ -1016,13 +1022,13 @@ public class MemoryHandler {
 			}
 			dataFromHeap = mExpressionTranslation.concatBits(loc, Arrays.asList(dataChunks), hda.getSize());
 		}
-		
+
 		if ((mMemoryModel instanceof MemoryModel_SingleBitprecise)
 				&& rda.getCPrimitiveCategory().contains(CPrimitiveCategory.FLOATTYPE)) {
 			final CPrimitives cprimitive = rda.getPrimitives().iterator().next();
 			dataFromHeap = mExpressionTranslation.transformBitvectorToFloat(loc, dataFromHeap, cprimitive);
 		}
-		
+
 		final Expression valueExpr = new IdentifierExpression(loc, value);
 		final Expression equality =
 				ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, valueExpr, dataFromHeap);
@@ -1047,7 +1053,7 @@ public class MemoryHandler {
 	private static Expression constructOneDimensionalArrayAccess(final ILocation loc, final Expression arr,
 			final Expression index) {
 		final Expression[] singletonIndex = new Expression[] { index };
-		return new ArrayAccessExpression(loc, arr, singletonIndex);
+		return ExpressionFactory.constructNestedArrayAccessExpression(loc, arr, singletonIndex);
 	}
 
 	private static Expression constructOneDimensionalArrayStore(final ILocation loc, final Expression arr,
@@ -1063,8 +1069,8 @@ public class MemoryHandler {
 	 */
 	public static AssignmentStatement constructOneDimensionalArrayUpdate(final ILocation loc, final Expression index,
 			final String arrayIdentifier, final Expression value) {
-		final LeftHandSide[] lhs = new LeftHandSide[] {
-				new ArrayLHS(loc, new VariableLHS(loc, arrayIdentifier), new Expression[] { index }) };
+		final LeftHandSide[] lhs = new LeftHandSide[] { ExpressionFactory.constructNestedArrayLHS(loc,
+				new VariableLHS(loc, arrayIdentifier), new Expression[] { index }) };
 		final Expression[] rhs = new Expression[] { value };
 		final AssignmentStatement assignment = new AssignmentStatement(loc, lhs, rhs);
 		return assignment;
@@ -1088,8 +1094,8 @@ public class MemoryHandler {
 		return ensuresArrayUpdate(loc, aae, ptrModification.apply(ptrExpr), memArray);
 	}
 
-	private static Expression ensuresArrayUpdate(final ILocation loc, final Expression newValue,
-			final Expression index, final Expression arrayExpr) {
+	private static Expression ensuresArrayUpdate(final ILocation loc, final Expression newValue, final Expression index,
+			final Expression arrayExpr) {
 		final Expression oldArray = ExpressionFactory.newUnaryExpression(loc, UnaryExpression.Operator.OLD, arrayExpr);
 		final Expression ase = constructOneDimensionalArrayStore(loc, oldArray, index, newValue);
 		final Expression eq = ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, arrayExpr, ase);
@@ -1097,7 +1103,7 @@ public class MemoryHandler {
 	}
 
 	/**
-	 * 
+	 *
 	 * @param loc
 	 *            location of translation unit
 	 * @param vars
@@ -1123,7 +1129,7 @@ public class MemoryHandler {
 	 * mPointerBaseValidity is ASSERTandASSUME, we add the <b>free</b> requires specification
 	 * <code>free requires (#size + #ptr!offset <= #length[#ptr!base] && 0 <= #ptr!offset)</code>. In case
 	 * mPointerBaseValidity is IGNORE, we add nothing.
-	 * 
+	 *
 	 * @param loc
 	 *            location of translation unit
 	 * @param size
@@ -1143,7 +1149,8 @@ public class MemoryHandler {
 		{
 			final Expression ptrExpr = new IdentifierExpression(loc, ptrName);
 			final Expression ptrBase = getPointerBaseAddress(ptrExpr, loc);
-			final Expression aae = new ArrayAccessExpression(loc, getLengthArray(loc), new Expression[] { ptrBase });
+			final Expression aae = ExpressionFactory.constructNestedArrayAccessExpression(loc, getLengthArray(loc),
+					new Expression[] { ptrBase });
 			final Expression ptrOffset = getPointerOffset(ptrExpr, loc);
 			final Expression sum = constructPointerComponentAddition(loc, size, ptrOffset);
 			leq = constructPointerComponentLessEqual(loc, sum, aae);
@@ -1178,7 +1185,7 @@ public class MemoryHandler {
 	 * <code>requires #valid[#ptr!base]</code>. In case mPointerBaseValidity is ASSERTandASSUME, we add the <b>free</b>
 	 * requires specification <code>free requires #valid[#ptr!base]</code>. In case mPointerBaseValidity is IGNORE, we
 	 * add nothing.
-	 * 
+	 *
 	 * @param loc
 	 *            location of translation unit
 	 * @param ptrName
@@ -1215,14 +1222,14 @@ public class MemoryHandler {
 	 * <li>#valid[#ptr!base] == 1
 	 * <li>#valid[#ptr!base] == 1bv1
 	 * </ul>
-	 * 
-	 * 
-	 * 
+	 *
+	 *
+	 *
 	 */
 	public Expression constructPointerBaseValidityCheck(final ILocation loc, final Expression ptr) {
 		final Expression ptrBase = getPointerBaseAddress(ptr, loc);
-		final ArrayAccessExpression aae =
-				new ArrayAccessExpression(loc, getValidArray(loc), new Expression[] { ptrBase });
+		final ArrayAccessExpression aae = ExpressionFactory.constructNestedArrayAccessExpression(loc,
+				getValidArray(loc), new Expression[] { ptrBase });
 		final Expression isValid = mBooleanArrayHelper.compareWithTrue(aae);
 		return isValid;
 	}
@@ -1263,7 +1270,7 @@ public class MemoryHandler {
 
 	/**
 	 * Generate <code>procedure ~free(~addr:$Pointer$) returns()</code>'s declaration and implementation.
-	 * 
+	 *
 	 * @param tuLoc
 	 *            the location for the new nodes.
 	 * @return declaration and implementation of procedure <code>~free</code>
@@ -1305,8 +1312,8 @@ public class MemoryHandler {
 				ExpressionFactory.newBinaryExpression(tuLoc, Operator.COMPEQ, addrBase, ptrBaseZero);
 
 		// requires ~addr!base == 0 || #valid[~addr!base];
-		final Expression addrIsValid =
-				mBooleanArrayHelper.compareWithTrue(new ArrayAccessExpression(tuLoc, valid, idcFree));
+		final Expression addrIsValid = mBooleanArrayHelper
+				.compareWithTrue(ExpressionFactory.constructNestedArrayAccessExpression(tuLoc, valid, idcFree));
 		final RequiresSpecification baseValid = new RequiresSpecification(tuLoc, free,
 				ExpressionFactory.newBinaryExpression(tuLoc, Operator.LOGICOR, isNullPtr, addrIsValid));
 
@@ -1335,16 +1342,15 @@ public class MemoryHandler {
 			// #valid[~addr!base] := false;
 			// // havoc #memory[n];
 			// }
-			final LeftHandSide[] lhs =
-					new LeftHandSide[] { new ArrayLHS(tuLoc, new VariableLHS(tuLoc, SFO.VALID), idcFree) };
+			final LeftHandSide[] lhs = new LeftHandSide[] {
+					ExpressionFactory.constructNestedArrayLHS(tuLoc, new VariableLHS(tuLoc, SFO.VALID), idcFree) };
 			final Expression[] rhsFree = new Expression[] { bLFalse };
 			final Body bodyFree = new Body(tuLoc, new VariableDeclaration[0],
 					new Statement[] { new AssignmentStatement(tuLoc, lhs, rhsFree) });
-			decl.add(
-					new Procedure(tuLoc,
-							new Attribute[0], SFO.FREE, new String[0], new VarList[] { new VarList(tuLoc,
-									new String[] { ADDR }, mTypeHandler.constructPointerType(tuLoc)) },
-							new VarList[0], null, bodyFree));
+			decl.add(new Procedure(tuLoc, new Attribute[0], SFO.FREE, new String[0],
+					new VarList[] {
+							new VarList(tuLoc, new String[] { ADDR }, mTypeHandler.constructPointerType(tuLoc)) },
+					new VarList[0], null, bodyFree));
 		}
 		return decl;
 	}
@@ -1353,7 +1359,7 @@ public class MemoryHandler {
 	 * Generate <code>procedure ULTIMATE.dealloc(~addr:$Pointer$) returns()</code>'s declaration and implementation.
 	 * This procedure should be used for deallocations where do not want to check if given memory area is valid (because
 	 * we already know this) which is the case, e.g., for arrays that we store on the heap or for alloca.
-	 * 
+	 *
 	 * @param tuLoc
 	 *            the location for the new nodes.
 	 * @return declaration and implementation of procedure <code>~free</code>
@@ -1386,9 +1392,9 @@ public class MemoryHandler {
 
 	/**
 	 * Generate <code>procedure ~malloc(~size:int) returns (#res:$Pointer$);</code>'s declaration and implementation.
-	 * 
+	 *
 	 * @param typeHandler
-	 * 
+	 *
 	 * @param tuLoc
 	 *            the location for the new nodes.
 	 * @return declaration and implementation of procedure <code>~malloc</code>
@@ -1421,11 +1427,11 @@ public class MemoryHandler {
 
 		specMalloc
 				.add(new EnsuresSpecification(tuLoc, false,
-						ExpressionFactory.newBinaryExpression(tuLoc,
-								Operator.COMPEQ, new ArrayAccessExpression(tuLoc, ExpressionFactory
+						ExpressionFactory.newBinaryExpression(tuLoc, Operator.COMPEQ,
+								ExpressionFactory.constructNestedArrayAccessExpression(tuLoc, ExpressionFactory
 										.newUnaryExpression(tuLoc, UnaryExpression.Operator.OLD, valid), idcMalloc),
 								bLFalse)));
-		specMalloc.add(new EnsuresSpecification(tuLoc, false,ensuresArrayUpdate(tuLoc, bLTrue, base, valid)));
+		specMalloc.add(new EnsuresSpecification(tuLoc, false, ensuresArrayUpdate(tuLoc, bLTrue, base, valid)));
 		specMalloc.add(new EnsuresSpecification(tuLoc, false, ExpressionFactory.newBinaryExpression(tuLoc,
 				Operator.COMPEQ, new StructAccessExpression(tuLoc, res, SFO.POINTER_OFFSET), nr0)));
 		specMalloc.add(new EnsuresSpecification(tuLoc, false, ExpressionFactory.newBinaryExpression(tuLoc,
@@ -1463,8 +1469,9 @@ public class MemoryHandler {
 					ExpressionFactory.newBinaryExpression(tuLoc, Operator.COMPEQ, addrOffset, nr0));
 			block[1] = new AssumeStatement(tuLoc,
 					ExpressionFactory.newBinaryExpression(tuLoc, Operator.COMPNEQ, addrBase, nr0));
-			block[2] = new AssumeStatement(tuLoc, ExpressionFactory.newUnaryExpression(tuLoc,
-					UnaryExpression.Operator.LOGICNEG, new ArrayAccessExpression(tuLoc, valid, idcAddrBase)));
+			block[2] = new AssumeStatement(tuLoc,
+					ExpressionFactory.newUnaryExpression(tuLoc, UnaryExpression.Operator.LOGICNEG,
+							ExpressionFactory.constructNestedArrayAccessExpression(tuLoc, valid, idcAddrBase)));
 			block[3] = new AssignmentStatement(tuLoc, new LeftHandSide[] { new VariableLHS(tuLoc, SFO.VALID) },
 					new Expression[] { new ArrayStoreExpression(tuLoc, valid, idcAddrBase, bLTrue) });
 			block[4] = new AssignmentStatement(tuLoc, new LeftHandSide[] { new VariableLHS(tuLoc, SFO.LENGTH) },
@@ -1479,39 +1486,6 @@ public class MemoryHandler {
 					null, bodyMalloc));
 		}
 		return decl;
-	}
-
-	/**
-	 * Creates a function call expression for the ~free(e) function!
-	 * 
-	 * @param main
-	 *            a reference to the main dispatcher.
-	 * @param fh
-	 *            a reference to the FunctionHandler - required to add informations to the call graph.
-	 * @param e
-	 *            the expression referring to the pointer, that should be free'd.
-	 * @param loc
-	 *            Location for errors and new nodes in the AST.
-	 * @return a function call expression for ~free(e).
-	 */
-	public CallStatement getFreeCall(final Dispatcher main, final FunctionHandler fh, final LRValue lrVal,
-			final ILocation loc) {
-		assert lrVal instanceof RValue || lrVal instanceof LocalLValue;
-		getRequiredMemoryModelFeatures().require(MemoryModelDeclarations.Free);
-		// assert lrVal.cType instanceof CPointer;//TODO -> must be a pointer or onHeap -- add a complicated assertion
-		// or let it be??
-
-		// Further checks are done in the precondition of ~free()!
-		// ~free(E);
-		final CallStatement freeCall =
-				new CallStatement(loc, false, new VariableLHS[0], SFO.FREE, new Expression[] { lrVal.getValue() });
-		// add required information to function handler.
-		if (fh.getCurrentProcedureID() != null) {
-			fh.addModifiedGlobal(SFO.FREE, SFO.VALID);
-			fh.addCallGraphNode(SFO.FREE);
-			fh.addCallGraphEdge(fh.getCurrentProcedureID(), SFO.FREE);
-		}
-		return freeCall;
 	}
 
 	/*
@@ -1597,12 +1571,12 @@ public class MemoryHandler {
 	 * Generates a call of the read procedure and writes the returned value to a temp variable, returned in the
 	 * expression of the returned ResultExpression. Note that we only read simple types from the heap -- when reading
 	 * e.g. an array, we have to make readCalls for each cell.
-	 * 
+	 *
 	 * @param tPointer
 	 *            the address to read from.
 	 * @param pointerCType
 	 *            the CType of the pointer in tPointer
-	 * 
+	 *
 	 * @return all declarations and statements required to perform the read, plus an identifierExpression holding the
 	 *         read value.
 	 */
@@ -1685,7 +1659,7 @@ public class MemoryHandler {
 			overapprItem.annotate(call);
 		}
 		stmt.add(call);
-		assert CHandler.isAuxVarMapcomplete(mNameHandler, decl, auxVars);
+		assert CHandler.isAuxVarMapComplete(mNameHandler, decl, auxVars);
 
 		ExpressionResult result;
 		if (bitvectorConversionNeeded) {
@@ -1698,9 +1672,9 @@ public class MemoryHandler {
 			decl.add(bvtVarDecl);
 			final VariableLHS[] bvlhs = new VariableLHS[] { new VariableLHS(loc, bvtmpId) };
 			final AssignmentStatement as =
-					new AssignmentStatement(loc, bvlhs, new Expression[] { result.lrVal.getValue() });
+					new AssignmentStatement(loc, bvlhs, new Expression[] { result.mLrVal.getValue() });
 			stmt.add(as);
-			result.lrVal = new RValue(new IdentifierExpression(loc, bvtmpId), resultType);
+			result.mLrVal = new RValue(new IdentifierExpression(loc, bvtmpId), resultType);
 		} else {
 			result = new ExpressionResult(stmt, new RValue(new IdentifierExpression(loc, tmpId), resultType), decl,
 					auxVars, overappr);
@@ -1711,12 +1685,12 @@ public class MemoryHandler {
 	/**
 	 * Generates a procedure call to writeT(val, ptr), writing val to the according memory array. (for the C-methode the
 	 * argument order is value, target, for this method it's the other way around)
-	 * 
+	 *
 	 * @param hlv
 	 *            the HeapLvalue containing the address to write to
 	 * @param rval
 	 *            the value to write.
-	 * 
+	 *
 	 * @return the required Statements to perform the write.
 	 */
 	public ArrayList<Statement> getWriteCall(final ILocation loc, final HeapLValue hlv, final Expression value,
@@ -1846,8 +1820,8 @@ public class MemoryHandler {
 					// } else {
 					final Expression position = mExpressionTranslation.constructLiteralForIntegerType(loc,
 							mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.valueOf(pos));
-					arrayAccRVal = new RValue(new ArrayAccessExpression(loc, value, new Expression[] { position }),
-							arrayType.getValueType());
+					arrayAccRVal = new RValue(ExpressionFactory.constructNestedArrayAccessExpression(loc, value,
+							new Expression[] { position }), arrayType.getValueType());
 					// }
 					stmt.addAll(getWriteCall(loc,
 							new HeapLValue(constructPointerFromBaseAndOffset(newStartAddressBase,
@@ -1877,7 +1851,7 @@ public class MemoryHandler {
 	/**
 	 * Takes a pointer Expression and returns the pointers base address. If it is already given as a struct, then the
 	 * first field is returned, otherwise a StructAccessExpression pointer!base is returned.
-	 * 
+	 *
 	 * @param pointer
 	 */
 	public static Expression getPointerBaseAddress(final Expression pointer, final ILocation loc) {
@@ -1890,7 +1864,7 @@ public class MemoryHandler {
 	/**
 	 * Takes a pointer Expression and returns the pointers base address. If it is already given as a struct, then the
 	 * second field is returned, otherwise a StructAccessExpression pointer!offset is returned.
-	 * 
+	 *
 	 * @param pointer
 	 */
 	public static Expression getPointerOffset(final Expression pointer, final ILocation loc) {
@@ -1953,13 +1927,13 @@ public class MemoryHandler {
 	/**
 	 * Add or subtract a Pointer and an integer. Use this method only if you are sure that the type of the integer is
 	 * the same as the type that we use for our pointer components. Otherwise, use the method below.
-	 * 
+	 *
 	 * @param operator
 	 *            Either plus or minus.
 	 * @param integer
 	 * @param valueType
 	 *            The value type the pointer points to (we need it because we have to multiply with its size)
-	 * 
+	 *
 	 * @return a pointer of the form: {base: ptr.base, offset: ptr.offset + integer * sizeof(valueType)}
 	 */
 	public Expression doPointerArithmetic(final int operator, final ILocation loc, final Expression ptrAddress,
@@ -1981,7 +1955,7 @@ public class MemoryHandler {
 
 	/**
 	 * Multiply an integerExpresion with the size of another type.
-	 * 
+	 *
 	 * @param integerExpresionType
 	 *            {@link CType} whose translation is the Boogie type of integerExpression and the result.
 	 * @return An {@link Expression} that represents <i>integerExpression * sizeof(valueType)</i>
@@ -2160,14 +2134,14 @@ public class MemoryHandler {
 	 * is a call that allocates the memory The preceding statements write the (integer) values of the string literal to
 	 * the appropriate heap array. Finally we append 0, since string literals in C are null terminated. E.g., for the
 	 * string literal "New" the result is the following.
-	 * 
+	 *
 	 * call resultPointer := #Ultimate.alloc(value.length + 1); #memory_int[{ base: resultPointer!base, offset:
 	 * resultPointer!offset + 0 }] := 78; #memory_int[{ base: resultPointer!base, offset: resultPointer!offset + 1 }] :=
 	 * 101; #memory_int[{ base: resultPointer!base, offset: resultPointer!offset + 2 }] := 119; #memory_int[{ base:
 	 * resultPointer!base, offset: resultPointer!offset + 3 }] := 0;
-	 * 
+	 *
 	 * 2017-01-06 Matthias: This works for the our default memory model. I might not work for all our memory models.
-	 * 
+	 *
 	 * @param writeValues
 	 *            if not set we omit to write values and just allocate memory
 	 */
@@ -2205,7 +2179,21 @@ public class MemoryHandler {
 				new CPrimitive(CPrimitives.CHAR));
 		final Expression valueExpr = mExpressionTranslation.constructLiteralForIntegerType(loc,
 				new CPrimitive(CPrimitives.CHAR), valueBigInt);
-		final AssignmentStatement statement = constructOneDimensionalArrayUpdate(loc, pointer, array, valueExpr);
+		final Expression possiblyExtendedValueExpr;
+		if (dhp.getSize() != 0) {
+			// if heap data array cannot store arbitrary sizes
+			final Integer sizeOfChar = mTypeSizes.getSize(CPrimitives.CHAR);
+			if (sizeOfChar > dhp.getSize()) {
+				throw new AssertionError("char bigger than size of data array");
+			}
+			possiblyExtendedValueExpr = mExpressionTranslation.signExtend(loc, valueExpr, sizeOfChar * 8,
+					dhp.getSize() * 8);
+		} else {
+			possiblyExtendedValueExpr = valueExpr;
+
+		}
+		final AssignmentStatement statement = constructOneDimensionalArrayUpdate(loc, pointer, array,
+				possiblyExtendedValueExpr);
 		return statement;
 	}
 

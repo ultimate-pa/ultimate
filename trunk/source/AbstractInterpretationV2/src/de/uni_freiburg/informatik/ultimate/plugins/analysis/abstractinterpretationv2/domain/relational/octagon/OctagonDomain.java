@@ -43,10 +43,14 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieSymbo
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RCFGLiteralCollector;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalDomain;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalDomainState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon.OctagonDomainPreferences.LogMessageFormatting;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon.OctagonDomainPreferences.WideningOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.BigDecimalSanitizer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlockFactory;
 
 /**
  * Octagon abstract domain, based on A. Miné's "The octagon abstract domain"
@@ -81,7 +85,10 @@ public class OctagonDomain implements IAbstractDomain<OctDomainState, IcfgEdge> 
 		final IPreferenceProvider ups = services.getPreferenceProvider(Activator.PLUGIN_ID);
 		mOctDomainStateFactory = makeDomainStateFactory(ups);
 		mWideningOperatorFactory = makeWideningOperatorFactory(ups);
-		mPostOperatorFactory = makePostOperatorFactory(ups);
+		final IAbstractPostOperator<IntervalDomainState, IcfgEdge> fallBackPostOperator =
+				new IntervalDomain(logger, mSymbolTable, mLiteralCollectorFactory.create().getLiteralCollection(),
+						services, mBoogieIcfg, boogie2SmtSymbolTableVariableProvider).getPostOperator();
+		mPostOperatorFactory = makePostOperatorFactory(ups, fallBackPostOperator, mBoogieIcfg.getCodeBlockFactory());
 		mBoogie2SmtSymbolTableVariableProvider = boogie2SmtSymbolTableVariableProvider;
 	}
 
@@ -136,7 +143,7 @@ public class OctagonDomain implements IAbstractDomain<OctDomainState, IcfgEdge> 
 		case EXPONENTIAL:
 			final String thresholdString = ups.getString(OctagonDomainPreferences.EXP_WIDENING_THRESHOLD);
 			try {
-				final BigDecimal threshold = new BigDecimal(thresholdString);
+				final BigDecimal threshold = BigDecimalSanitizer.sanitizeBigDecimalValue(thresholdString);
 				return () -> new OctExponentialWideningOperator(threshold);
 			} catch (final NumberFormatException nfe) {
 				throw makeIllegalSettingException(settingLabel, settingValue);
@@ -155,15 +162,23 @@ public class OctagonDomain implements IAbstractDomain<OctDomainState, IcfgEdge> 
 	 *
 	 * @param ups
 	 *            Preferences
+	 * @param fallBackPostOperator
+	 *            The nonrelational post operator (preferably intervals) to fall back on if octagons can't compute
+	 *            affine expressions.
+	 * @param codeBlockFactory
+	 *            The {@link CodeBlockFactory} for the current Boogie environment.
 	 * @return Factory for creating widening operators
 	 */
-	private Supplier<IAbstractPostOperator<OctDomainState, IcfgEdge>>
-			makePostOperatorFactory(final IPreferenceProvider ups) {
+	private Supplier<IAbstractPostOperator<OctDomainState, IcfgEdge>> makePostOperatorFactory(
+			final IPreferenceProvider ups,
+			final IAbstractPostOperator<IntervalDomainState, IcfgEdge> fallBackPostOperator,
+			final CodeBlockFactory codeBlockFactory) {
 		final int maxParallelStates = ups.getInt(AbsIntPrefInitializer.LABEL_MAX_PARALLEL_STATES);
 		final boolean fallbackAssignIntervalProjection =
 				ups.getBoolean(OctagonDomainPreferences.FALLBACK_ASSIGN_INTERVAL_PROJECTION);
 		return () -> new OctPostOperator(mLogger, mSymbolTable, mBoogieIcfg.getCfgSmtToolkit(), maxParallelStates,
-				fallbackAssignIntervalProjection, mBoogie2SmtSymbolTableVariableProvider);
+				fallbackAssignIntervalProjection, mBoogie2SmtSymbolTableVariableProvider, fallBackPostOperator,
+				codeBlockFactory);
 	}
 
 	/**

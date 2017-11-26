@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2014-2015 Alexander Nutz (nutz@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE CACSL2BoogieTranslator plug-in.
- * 
+ *
  * The ULTIMATE CACSL2BoogieTranslator plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE CACSL2BoogieTranslator plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE CACSL2BoogieTranslator plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE CACSL2BoogieTranslator plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -35,9 +35,9 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher
 public class CDeclaration {
 	CType  mType;
 	String mName;
-	ExpressionResult mInitializer;
+	InitializerResult mInitializer;
 	IASTInitializer mCAstInitializer;
-	
+
 
 	boolean mIsOnHeap;
 	boolean mIsInitializerTranslated;
@@ -64,10 +64,10 @@ public class CDeclaration {
 	 * @param cAstInitializer
 	 * @param initializer
 	 * @param onHeap
-	 * @param bitfieldSize 
+	 * @param bitfieldSize
 	 */
 	public CDeclaration(final CType type, final String name, final IASTInitializer cAstInitializer,
-			final ExpressionResult initializer, final boolean onHeap, final CStorageClass storageClass, final int bitfieldSize) {
+			final InitializerResult initializer, final boolean onHeap, final CStorageClass storageClass, final int bitfieldSize) {
 		mType = type;
 		mName = name;
 		mCAstInitializer = cAstInitializer;
@@ -78,7 +78,7 @@ public class CDeclaration {
 		mstorageClass = storageClass;
 		mBitfieldSize = bitfieldSize;
 	}
-	
+
 //	public CDeclaration(CType type, String name, ResultExpression initializer) {
 //		mType = type;
 //		mName = name;
@@ -90,7 +90,7 @@ public class CDeclaration {
 	public CDeclaration(final CType type, final String name, final CStorageClass storageClass) {
 		this(type, name, null, null, false, storageClass, -1);
 	}
-	
+
 	public CDeclaration(final CType type, final String name) {
 		this(type, name, (IASTInitializer) null, null, false, CStorageClass.UNSPECIFIED, -1);
 	}
@@ -104,27 +104,27 @@ public class CDeclaration {
 	public String getName() {
 		return mName;
 	}
-	public ExpressionResult getInitializer() {
+	public InitializerResult getInitializer() {
 		if (!mIsInitializerTranslated) {
 			throw new AssertionError("Initializer must have been translated (with method CDeclaration.translateInitializer()) before this is called.");
 		}
 		return mInitializer;
 	}
-	
+
 	public boolean hasInitializer() {
 		return mCAstInitializer != null || mInitializer != null;
 	}
 
-	
+
 	public boolean isOnHeap() {
 		return mIsOnHeap;
 	}
-	
+
 	@Override
 	public String toString() {
 		return mType.toString() + ' ' + mName + " = " + mInitializer;
 	}
-	
+
 	/**
 	 * Triggers the translation of the untranslated initializer from the CAST into a ResultDeclaration
 	 * that we work with.
@@ -136,11 +136,19 @@ public class CDeclaration {
 		assert !mIsInitializerTranslated : "initializer has already been translated";
 		if (mCAstInitializer != null) {
 			assert mInitializer == null;
-			mInitializer = (ExpressionResult) main.dispatch(mCAstInitializer);
+			final Result res = main.dispatch(mCAstInitializer);
+
+			if (res instanceof InitializerResult) {
+				mInitializer = (InitializerResult) res;
+			} else if (res instanceof ExpressionResult) {
+				mInitializer = new InitializerResultBuilder().setRootExpressionResult((ExpressionResult) res).build();
+			} else {
+				throw new AssertionError("should not happen");
+			}
 		}
 		mIsInitializerTranslated = true;
 	}
-	
+
 	public boolean isStatic() {
     	return mstorageClass == CStorageClass.STATIC;
     }
@@ -156,6 +164,6 @@ public class CDeclaration {
 	public Integer getBitfieldSize() {
 		return mBitfieldSize;
 	}
-	
-	
+
+
 }

@@ -65,7 +65,7 @@ public class SyntaxChecker implements IAnalysis {
 	private IUltimateServiceProvider mServices;
 	private IToolchainStorage mStorage;
 
-	private final FilenameExtractionObserver mFilenameExtractionObserver = new FilenameExtractionObserver();
+	private FilenameExtractionObserver mFilenameExtractionObserver;
 
 	@Override
 	public ModelType getOutputDefinition() {
@@ -110,7 +110,7 @@ public class SyntaxChecker implements IAnalysis {
 
 	@Override
 	public void init() {
-		// no init needed
+		mFilenameExtractionObserver = new FilenameExtractionObserver(mLogger);
 	}
 
 	@Override

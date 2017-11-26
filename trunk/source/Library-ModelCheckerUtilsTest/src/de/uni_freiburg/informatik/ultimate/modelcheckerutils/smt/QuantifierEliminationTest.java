@@ -47,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfCon
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.PrenexNormalForm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.Scriptor;
+import de.uni_freiburg.informatik.ultimate.smtsolver.external.TermParseUtils;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
 
 /**
@@ -167,6 +168,22 @@ public class QuantifierEliminationTest {
 		// PartialQuantifierElimination.tryToEliminate(services, services.getLoggingService().getLogger("lol"),
 		// mgdScript, term, SimplificationTechnique.SIMPLIFY_DDA,
 		// XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+	}
+	
+	@Test
+	public void otherArrayBug() {
+		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
+		final Sort intintArraySort = SmtSortUtils.getArraySort(mScript, intSort, intSort);
+		mScript.declareFun("b", new Sort[0], intintArraySort);
+		mScript.declareFun("i", new Sort[0], intSort);
+		final String formulaAsString = "(exists ((a (Array Int Int))) (and (= (select a i) (select b 0)) (= (select a 0) (select b 1))))";
+		
+		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
+		
+		final Term result = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mMgdScript, formulaAsTerm,
+			SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+		mLogger.info(result);
+		Assert.assertTrue(!SmtUtils.isTrue(result));
 	}
 
 }

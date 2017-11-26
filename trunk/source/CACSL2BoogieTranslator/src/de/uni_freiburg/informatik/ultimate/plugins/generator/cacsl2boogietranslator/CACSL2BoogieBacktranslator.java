@@ -82,7 +82,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.ACSLLo
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.AExpressionTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CNamed;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
@@ -147,7 +147,7 @@ public class CACSL2BoogieBacktranslator
 	private final Boogie2C mBoogie2C;
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
-	private AExpressionTranslation mExpressionTranslation;
+	private ExpressionTranslation mExpressionTranslation;
 	private boolean mGenerateBacktranslationWarnings;
 	private LocationFactory mLocationFactory;
 
@@ -159,7 +159,7 @@ public class CACSL2BoogieBacktranslator
 		mGenerateBacktranslationWarnings = true;
 	}
 
-	public void setExpressionTranslation(final AExpressionTranslation expressionTranslation) {
+	public void setExpressionTranslation(final ExpressionTranslation expressionTranslation) {
 		mExpressionTranslation = expressionTranslation;
 	}
 
@@ -360,15 +360,15 @@ public class CACSL2BoogieBacktranslator
 		final EnumSet<StepInfo> set = EnumSet.noneOf(StepInfo.class);
 		for (final StepInfo oldSi : oldSiSet) {
 			switch (oldSi) {
-				case CONDITION_EVAL_FALSE:
-					set.add(StepInfo.CONDITION_EVAL_TRUE);
-					break;
-				case CONDITION_EVAL_TRUE:
-					set.add(StepInfo.CONDITION_EVAL_FALSE);
-					break;
-				default:
-					set.add(oldSi);
-					break;
+			case CONDITION_EVAL_FALSE:
+				set.add(StepInfo.CONDITION_EVAL_TRUE);
+				break;
+			case CONDITION_EVAL_TRUE:
+				set.add(StepInfo.CONDITION_EVAL_FALSE);
+				break;
+			default:
+				set.add(oldSi);
+				break;
 			}
 		}
 		return set;
@@ -461,9 +461,9 @@ public class CACSL2BoogieBacktranslator
 		}
 
 		final EnumSet<StepInfo> stepInfo = currentATE.getStepInfo();
-		if (currentATE.hasStepInfo(StepInfo.PROC_RETURN)) {
+		if (currentATE.hasStepInfo(StepInfo.PROC_RETURN) && !translatedAtomicTraceElements.isEmpty()) {
 			// we have to modify the previous statement in the translated list s.t it is the actual return and remove
-			// the return stepinfo from this statement.
+			// the return stepinfo from this statement, but only if there is already a statement present
 			stepInfo.remove(StepInfo.PROC_RETURN);
 			final AtomicTraceElement<CACSLLocation> last =
 					translatedAtomicTraceElements.remove(translatedAtomicTraceElements.size() - 1);
@@ -958,82 +958,82 @@ public class CACSL2BoogieBacktranslator
 		final String smtFunction = reversed.getFirst();
 
 		switch (smtFunction) {
-			case "fp":
-				// this function is used to construct floating points
-				return translateFloatConstConstructor(cType, fun, reversed.getSecond());
-			case "NaN":
-				return translateFloatNaNConstructor(cType, fun, reversed.getSecond());
-			default:
-				reportUnfinishedBacktranslation(
-						UNFINISHED_BACKTRANSLATION + " could not match function " + fun.getIdentifier());
-				return null;
+		case "fp":
+			// this function is used to construct floating points
+			return translateFloatConstConstructor(cType, fun, reversed.getSecond());
+		case "NaN":
+			return translateFloatNaNConstructor(cType, fun, reversed.getSecond());
+		default:
+			reportUnfinishedBacktranslation(
+					UNFINISHED_BACKTRANSLATION + " could not match function " + fun.getIdentifier());
+			return null;
 		}
 	}
 
 	private IASTExpression translateFloatConstConstructor(final CType cType, final FunctionApplication fun,
 			final CPrimitives floatType) {
 		switch (floatType) {
-			case LONGDOUBLE:
-				// ~fp~LONGDOUBLE(in0 : bv1, in1 : bv15, in2 : bv112)
-				final BitvecLiteral sign = (BitvecLiteral) fun.getArguments()[0];
-				final BitvecLiteral exponent = (BitvecLiteral) fun.getArguments()[1];
-				final BitvecLiteral fraction = (BitvecLiteral) fun.getArguments()[2];
-				return createFakeFloat(sign, exponent, fraction);
-			case BOOL:
-			case CHAR:
-			case INT:
-			case LONG:
-			case LONGLONG:
-			case SCHAR:
-			case SHORT:
-			case UCHAR:
-			case UINT:
-			case ULONG:
-			case ULONGLONG:
-			case USHORT:
-			case VOID:
-				throw new IllegalArgumentException(floatType + " is not a float type");
-			case COMPLEX_DOUBLE:
-			case COMPLEX_FLOAT:
-			case COMPLEX_LONGDOUBLE:
-			case DOUBLE:
-			case FLOAT:
-			default:
-				reportUnfinishedBacktranslation(UNFINISHED_BACKTRANSLATION + " " + floatType + " is not yet converted ("
-						+ fun.getIdentifier() + ")");
-				return null;
+		case LONGDOUBLE:
+			// ~fp~LONGDOUBLE(in0 : bv1, in1 : bv15, in2 : bv112)
+			final BitvecLiteral sign = (BitvecLiteral) fun.getArguments()[0];
+			final BitvecLiteral exponent = (BitvecLiteral) fun.getArguments()[1];
+			final BitvecLiteral fraction = (BitvecLiteral) fun.getArguments()[2];
+			return createFakeFloat(sign, exponent, fraction);
+		case BOOL:
+		case CHAR:
+		case INT:
+		case LONG:
+		case LONGLONG:
+		case SCHAR:
+		case SHORT:
+		case UCHAR:
+		case UINT:
+		case ULONG:
+		case ULONGLONG:
+		case USHORT:
+		case VOID:
+			throw new IllegalArgumentException(floatType + " is not a float type");
+		case COMPLEX_DOUBLE:
+		case COMPLEX_FLOAT:
+		case COMPLEX_LONGDOUBLE:
+		case DOUBLE:
+		case FLOAT:
+		default:
+			reportUnfinishedBacktranslation(UNFINISHED_BACKTRANSLATION + " " + floatType + " is not yet converted ("
+					+ fun.getIdentifier() + ")");
+			return null;
 		}
 	}
 
 	private IASTExpression translateFloatNaNConstructor(final CType cType, final FunctionApplication fun,
 			final CPrimitives floatType) {
 		switch (floatType) {
-			case BOOL:
-			case CHAR:
-			case INT:
-			case LONG:
-			case LONGLONG:
-			case SCHAR:
-			case SHORT:
-			case UCHAR:
-			case UINT:
-			case ULONG:
-			case ULONGLONG:
-			case USHORT:
-			case VOID:
-				throw new IllegalArgumentException(floatType + " is not a float type");
-			case COMPLEX_DOUBLE:
-			case COMPLEX_FLOAT:
-			case COMPLEX_LONGDOUBLE:
-			case DOUBLE:
-			case FLOAT:
-			case LONGDOUBLE:
-				// ~NaN~FLOAT() returns (out : C_FLOAT)
-				return new FakeExpression(String.valueOf(Float.NaN));
-			default:
-				reportUnfinishedBacktranslation(UNFINISHED_BACKTRANSLATION + " " + floatType + " is not yet converted ("
-						+ fun.getIdentifier() + ")");
-				return null;
+		case BOOL:
+		case CHAR:
+		case INT:
+		case LONG:
+		case LONGLONG:
+		case SCHAR:
+		case SHORT:
+		case UCHAR:
+		case UINT:
+		case ULONG:
+		case ULONGLONG:
+		case USHORT:
+		case VOID:
+			throw new IllegalArgumentException(floatType + " is not a float type");
+		case COMPLEX_DOUBLE:
+		case COMPLEX_FLOAT:
+		case COMPLEX_LONGDOUBLE:
+		case DOUBLE:
+		case FLOAT:
+		case LONGDOUBLE:
+			// ~NaN~FLOAT() returns (out : C_FLOAT)
+			return new FakeExpression(String.valueOf(Float.NaN));
+		default:
+			reportUnfinishedBacktranslation(UNFINISHED_BACKTRANSLATION + " " + floatType + " is not yet converted ("
+					+ fun.getIdentifier() + ")");
+			return null;
 		}
 	}
 
@@ -1588,23 +1588,23 @@ public class CACSL2BoogieBacktranslator
 		@Override
 		public String toString() {
 			switch (mVarType) {
-				case OLD:
-				case INVAR:
-					return "\\old(" + mName + ")";
-				case NORMAL:
-				case POINTER_BASE:
-				case POINTER_OFFSET:
-					return mName;
-				case RESULT:
-					return "\\result";
-				case VALID:
-					return "\\valid";
-				case AUX:
-					return "aux-" + mName + "-aux";
-				case UNKNOWN:
-					return "unknown-" + mName + "-unknown";
-				default:
-					throw new UnsupportedOperationException("VariableType " + mVarType + " not yet implemented");
+			case OLD:
+			case INVAR:
+				return "\\old(" + mName + ")";
+			case NORMAL:
+			case POINTER_BASE:
+			case POINTER_OFFSET:
+				return mName;
+			case RESULT:
+				return "\\result";
+			case VALID:
+				return "\\valid";
+			case AUX:
+				return "aux-" + mName + "-aux";
+			case UNKNOWN:
+				return "unknown-" + mName + "-unknown";
+			default:
+				throw new UnsupportedOperationException("VariableType " + mVarType + " not yet implemented");
 			}
 		}
 	}

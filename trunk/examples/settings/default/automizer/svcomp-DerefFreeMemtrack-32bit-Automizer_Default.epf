@@ -47,10 +47,20 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner/to\ procedures,\ called\ more\ than\ once=false
 
 
-#Fri Dec 16 03:49:09 CET 2016
-file_export_version=3.0
-/instance/de.uni_freiburg.informatik.ultimate.plugins.blockencoding/Create\ parallel\ compositions\ if\ possible=false
+#Tue Nov 21 08:04:41 CET 2017
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.blockencoding=
-@de.uni_freiburg.informatik.ultimate.plugins.blockencoding=0.0.1
+file_export_version=3.0
+@de.uni_freiburg.informatik.ultimate.plugins.blockencoding=0.1.22
+/instance/de.uni_freiburg.informatik.ultimate.plugins.blockencoding/Simplify\ transitions=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.blockencoding/Apply\ optimizations\ until\ nothing\ changes=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.blockencoding/Create\ parallel\ compositions\ if\ possible=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.blockencoding/Remove\ sink\ states=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.blockencoding/Rewrite\ not-equals=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.blockencoding/Iterate\ optimizations\ for\ n\ times\ (<\=0\ means\ until\ nothing\ changes)=0
+/instance/de.uni_freiburg.informatik.ultimate.plugins.blockencoding/Create\ interprocedural\ compositions=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.blockencoding/Remove\ infeasible\ edges=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.blockencoding/Maximize\ final\ states=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.blockencoding/Use\ SBE=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.blockencoding/Minimize\ states\ even\ if\ more\ edges\ are\ added\ than\ removed.=false
 
 

@@ -64,7 +64,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.StructType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.TypeDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.SymbolTable;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.AExpressionTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType.Type;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
@@ -95,6 +95,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.LinkedScopedHashMap;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.SymmetricHashRelation;
 
 /**
  * @author Markus Lindenmann
@@ -142,14 +143,10 @@ public class TypeHandler implements ITypeHandler {
 	public Set<CPrimitive.CPrimitives> getOccurredPrimitiveTypes() {
 		return mOccurredPrimitiveTypes;
 	}
-	
-	
 
 	public boolean isBitvectorTranslation() {
 		return mBitvectorTranslation;
 	}
-
-
 
 	/**
 	 * Constructor.
@@ -234,7 +231,7 @@ public class TypeHandler implements ITypeHandler {
 			 */
 			final Result opRes = main.dispatch(node.getDeclTypeExpression());
 			if (opRes instanceof ExpressionResult) {
-				final CType cType = ((ExpressionResult) opRes).lrVal.getCType();
+				final CType cType = ((ExpressionResult) opRes).mLrVal.getCType();
 				return new TypesResult(cType2AstType(loc, cType), node.isConst(), false, cType);
 			} else if (opRes instanceof DeclaratorResult) {
 				final CType cType = ((DeclaratorResult) opRes).getDeclaration().getType();
@@ -259,9 +256,23 @@ public class TypeHandler implements ITypeHandler {
 		final ILocation loc = main.getLocationFactory().createCLocation(node);
 		if (node instanceof CASTTypedefNameSpecifier) {
 			final String cId = node.getName().toString();
-			final String bId = main.mCHandler.getSymbolTable().get(cId, loc).getBoogieName();
-			return new TypesResult(new NamedType(loc, bId, null), false, false, // TODO: replace constants
-					new CNamed(bId, mDefinedTypes.get(bId).cType));
+
+			// quick solution --> TODO: maybe make this dependent on includes,
+			// maybe be more elegant (make an entry to symboltable, make a typedef in boogie file??)
+			if (cId.equals("size_t") || cId.equals("ssize_t")) {
+				return (new TypesResult(new PrimitiveType(loc, SFO.REAL), node.isConst(), false,
+						new CPrimitive(CPrimitives.UINT)));
+			} else if (cId.equals("__builtin_va_list")) {
+				return (new TypesResult(constructPointerType(loc), node.isConst(), false,
+						new CPointer(new CPrimitive(CPrimitives.CHAR))));
+			} else if (cId.equals("__pthread_list_t")) {
+				return (new TypesResult(constructPointerType(loc), node.isConst(), false,
+						new CPointer(new CPrimitive(CPrimitives.VOID))));
+			} else {
+				final String bId = main.mCHandler.getSymbolTable().get(cId, loc).getBoogieName();
+				return new TypesResult(new NamedType(loc, bId, null), false, false, // TODO: replace constants
+						new CNamed(bId, mDefinedTypes.get(bId).cType));
+			}
 		}
 		final String msg = "Unknown or unsupported type! " + node.toString();
 		throw new UnsupportedSyntaxException(loc, msg);
@@ -283,7 +294,7 @@ public class TypeHandler implements ITypeHandler {
 			fNames[i] = e.getName().toString();
 			if (e.getValue() != null) {
 				final ExpressionResult rex = (ExpressionResult) main.dispatch(e.getValue());
-				fValues[i] = rex.lrVal.getValue();
+				fValues[i] = rex.mLrVal.getValue();
 				// assert (fValues[i] instanceof IntegerLiteral) ||
 				// (fValues[i] instanceof BitvecLiteral) :
 				// "assuming that only IntegerLiterals or BitvecLiterals can occur while translating an enum constant";
@@ -560,10 +571,17 @@ public class TypeHandler implements ITypeHandler {
 			final CArray cart = (CArray) cType;
 			final ASTType[] indexTypes = new ASTType[cart.getDimensions().length];
 			final String[] typeParams = new String[0]; // new String[cart.getDimensions().length];
+
 			for (int i = 0; i < cart.getDimensions().length; i++) {
 				indexTypes[i] = cType2AstType(loc, cart.getDimensions()[i].getCType());
 			}
-			return new ArrayType(loc, typeParams, indexTypes, cType2AstType(loc, cart.getValueType()));
+			// return new ArrayType(loc, typeParams, indexTypes, cType2AstType(loc, cart.getValueType()));
+
+			ASTType arrayType = cType2AstType(loc, cart.getValueType());
+			for (int i = 0; i < cart.getDimensions().length; i++) {
+				arrayType = new ArrayType(loc, typeParams, new ASTType[] { indexTypes[i] }, arrayType);
+			}
+			return arrayType;
 		} else if (cType instanceof CStruct) {
 			final CStruct cstruct = (CStruct) cType;
 			if (cstruct.isIncomplete()) {
@@ -595,14 +613,14 @@ public class TypeHandler implements ITypeHandler {
 			return null; // (alex:) seems to be lindemm's convention, see FunctionHandler.isInParamVoid(..)
 		case INTTYPE:
 			if (mBitvectorTranslation) {
-				return new NamedType(loc, "C_" + cPrimitive.getType().toString(), new ASTType[0]);				
+				return new NamedType(loc, "C_" + cPrimitive.getType().toString(), new ASTType[0]);
 			} else {
 				return new PrimitiveType(loc, SFO.INT);
 			}
 		case FLOATTYPE:
 			mFloatingTypesNeeded = true;
 			if (mBitvectorTranslation) {
-				return new NamedType(loc, "C_" + cPrimitive.getType().toString(), new ASTType[0]);				
+				return new NamedType(loc, "C_" + cPrimitive.getType().toString(), new ASTType[0]);
 			} else {
 				return new PrimitiveType(loc, SFO.REAL);
 			}
@@ -666,7 +684,7 @@ public class TypeHandler implements ITypeHandler {
 	 * translation, e.g., pointers.
 	 */
 	public ArrayList<Declaration> constructTranslationDefiniedDelarations(final ILocation tuLoc,
-			final AExpressionTranslation expressionTranslation) {
+			final ExpressionTranslation expressionTranslation) {
 		final ArrayList<Declaration> decl = new ArrayList<>();
 		if (mPointerTypeNeeded) {
 			final VarList fBase = new VarList(tuLoc, new String[] { SFO.POINTER_BASE },
@@ -685,4 +703,226 @@ public class TypeHandler implements ITypeHandler {
 		return mFloatingTypesNeeded;
 	}
 
+	public static boolean isAggregateCType(final CType cTypeRaw) {
+		final CType cType = cTypeRaw.getUnderlyingType();
+
+		if (cType instanceof CPrimitive || cType instanceof CEnum || cType instanceof CPointer
+				|| cType instanceof CUnion || cType instanceof CFunction) {
+			return false;
+		} else if (cType instanceof CArray || cType instanceof CStruct) {
+			return true;
+		} else {
+			throw new UnsupportedOperationException("missed a type??");
+		}
+	}
+
+	/**
+	 * Checks if two CTypes are equivalent. Replaces (some of) our uses of CType.equals(..).
+	 *
+	 * Avoids the potential endless recursion of the implementation of CType.equals(..) (which we should replace some
+	 * time (Nov 17).
+	 *
+	 * Applications: (unclear, collect here)
+	 *
+	 * @param type1
+	 * @param type2
+	 * @return
+	 */
+	public static boolean areMatchingTypes(final CType type1, final CType type2) {
+		return areMatchingTypes(type1, type2, new SymmetricHashRelation<>());
+	}
+
+	private static boolean areMatchingTypes(final CType type1, final CType type2,
+			final SymmetricHashRelation<CType> visitedPairs) {
+
+		// final CType ulType1 = type1;//.getUnderlyingType();
+		// final CType ulType2 = type2;//.getUnderlyingType();
+		final CType ulType1 = type1.getUnderlyingType();
+		final CType ulType2 = type2.getUnderlyingType();
+
+		if (!ulType1.getClass().equals(ulType2.getClass())) {
+			return false;
+		}
+
+		// visitedPairs.addPair(ulType1, ulType2);
+
+		if (ulType1.getClass().equals(CPrimitive.class)) {
+			return areMatchingTypes((CPrimitive) ulType1, (CPrimitive) ulType2, visitedPairs);
+		} else if (ulType1.getClass().equals(CEnum.class)) {
+			return areMatchingTypes((CEnum) ulType1, (CEnum) ulType2, visitedPairs);
+		} else if (ulType1.getClass().equals(CPointer.class)) {
+			return areMatchingTypes((CPointer) ulType1, (CPointer) ulType2, visitedPairs);
+		} else if (ulType1.getClass().equals(CUnion.class)) {
+			return areMatchingTypes((CUnion) ulType1, (CUnion) ulType2, visitedPairs);
+		} else if (ulType1.getClass().equals(CStruct.class)) {
+			return areMatchingTypes((CStruct) ulType1, (CStruct) ulType2, visitedPairs);
+		} else if (ulType1.getClass().equals(CArray.class)) {
+			return areMatchingTypes((CArray) ulType1, (CArray) ulType2, visitedPairs);
+		} else if (ulType1.getClass().equals(CFunction.class)) {
+			return areMatchingTypes((CFunction) ulType1, (CFunction) ulType2, visitedPairs);
+		} else {
+			throw new UnsupportedOperationException("unknown CType");
+		}
+	}
+
+	private static boolean areMatchingTypes(final CPrimitive type1, final CPrimitive type2,
+			final SymmetricHashRelation<CType> visitedPairs) {
+		if (visitedPairs.containsPair(type1, type2)) {
+			return true;
+		}
+		visitedPairs.addPair(type1, type2);
+		return type1.getType() == type2.getType();
+	}
+
+	private static boolean areMatchingTypes(final CEnum type1, final CEnum type2,
+			final SymmetricHashRelation<CType> visitedPairs) {
+		if (visitedPairs.containsPair(type1, type2)) {
+			return true;
+		}
+		visitedPairs.addPair(type1, type2);
+
+		if (!(type1.getIdentifier().equals(type2.getIdentifier()))) {
+			return false;
+		}
+		if (type1.getFieldIds().length != type2.getFieldIds().length) {
+			return false;
+		}
+		for (int i = 0; i < type1.getFieldIds().length; i++) {
+			if (!(type1.getFieldIds()[i].equals(type2.getFieldIds()[i]))) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	private static boolean areMatchingTypes(final CPointer type1, final CPointer type2,
+			final SymmetricHashRelation<CType> visitedPairs) {
+		if (visitedPairs.containsPair(type1, type2)) {
+			return true;
+		}
+		visitedPairs.addPair(type1, type2);
+		return areMatchingTypes(type1.getTargetType(), type2.getTargetType(), visitedPairs);
+	}
+
+	private static boolean areMatchingTypes(final CFunction type1, final CFunction type2,
+			final SymmetricHashRelation<CType> visitedPairs) {
+		if (visitedPairs.containsPair(type1, type2)) {
+			return true;
+		}
+		visitedPairs.addPair(type1, type2);
+
+		if (type1.getParameterTypes().length != type2.getParameterTypes().length) {
+			return false;
+		}
+		if (!areMatchingTypes(type1.getResultType(), type2.getResultType(), visitedPairs)) {
+			return false;
+		}
+		for (int i = 0; i < type1.getParameterTypes().length; i++) {
+			if (!areMatchingTypes(type1.getParameterTypes()[i].getType(), type2.getParameterTypes()[i].getType())) {
+				return false;
+			}
+		}
+		if (type1.takesVarArgs() != type2.takesVarArgs()) {
+			return false;
+		}
+		return true;
+	}
+
+	// private static boolean areMatchingTypes(final CUnion type1, final CUnion type2,
+	// final SymmetricHashRelation<CType> visitedPairs) {
+	// if (visitedPairs.containsPair(type1, type2)) {
+	// return true;
+	// }
+	// visitedPairs.addPair(type1, type2);
+	// return false;
+	// }
+
+	private static boolean areMatchingTypes(final CStruct type1, final CStruct type2,
+			final SymmetricHashRelation<CType> visitedPairs) {
+		if (visitedPairs.containsPair(type1, type2)) {
+			return true;
+		}
+		visitedPairs.addPair(type1, type2);
+
+		if (type1.getFieldIds().length != type2.getFieldIds().length) {
+			return false;
+		}
+		for (int i = 0; i < type1.getFieldIds().length - 1; i++) {
+			if (!(type1.getFieldIds()[i].equals(type2.getFieldIds()[i]))) {
+				return false;
+			}
+		}
+		if (type1.getFieldTypes().length != type2.getFieldTypes().length) {
+			return false;
+		}
+		for (int i = 0; i < type1.getFieldTypes().length; i++) {
+			if (!(type1.getFieldTypes()[i].equals(type2.getFieldTypes()[i]))) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	private static boolean areMatchingTypes(final CArray type1, final CArray type2,
+			final SymmetricHashRelation<CType> visitedPairs) {
+		if (visitedPairs.containsPair(type1, type2)) {
+			return true;
+		}
+		visitedPairs.addPair(type1, type2);
+		if (!areMatchingTypes(type1.getValueType(), type2.getValueType(), visitedPairs)) {
+			return false;
+		}
+		if (type1.getDimensions().length != type2.getDimensions().length) {
+			return false;
+		}
+
+		// if (CTranslationUtil.isVarlengthArray(type1, expressionTranslation))
+
+		for (int i = 0; i < type1.getDimensions().length; i++) {
+			// TODO: this check is a hack (but still better than what we had in CArray.equals)
+			if (!(type1.getDimensions()[i].toString().equals(type2.getDimensions()[i].toString()))) {
+				return false;
+			}
+		}
+		return true;
+
+	}
+
+	/**
+	 * Checks if type1 and type2 have "compatible structure or union type", as in C11 6.7.9.13 The initializer for a
+	 * structure or union object that has automatic storage duration shall be either an initializer list as described
+	 * below, or a single expression that has compatible structure or union type.
+	 *
+	 * @param type1
+	 * @param type2
+	 * @return
+	 */
+	public static boolean isCompatibleType(final CType type1, final CType type2) {
+		// TODO: check the notion of compatibility with the standard
+		if (isCharArray(type1) && isCharArray(type2)) {
+				return true;
+		}
+		if (type1 instanceof CStruct && type2 instanceof CStruct) {
+			return areMatchingTypes(type1, type2);
+		}
+		return false;
+	}
+
+	public static boolean isCharArray(final CType cTypeRaw) {
+		final CType cType = cTypeRaw.getUnderlyingType();
+		if (!(cType instanceof CArray)) {
+			return false;
+		}
+		final CArray cArrayType = (CArray) cType;
+		if (!(cArrayType.getValueType().getUnderlyingType() instanceof CPrimitive)) {
+			return false;
+		}
+		final CPrimitive primitiveValueType = (CPrimitive) cArrayType.getValueType().getUnderlyingType();
+		if (primitiveValueType.getType() != CPrimitives.CHAR
+				&& primitiveValueType.getType() != CPrimitives.UCHAR
+				&& primitiveValueType.getType() != CPrimitives.SCHAR) {
+			return false;
+		}
+		return true;
+	}
 }

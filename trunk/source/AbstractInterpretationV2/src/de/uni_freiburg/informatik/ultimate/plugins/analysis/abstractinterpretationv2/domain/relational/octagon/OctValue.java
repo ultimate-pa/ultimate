@@ -31,6 +31,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalValue;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.BigDecimalSanitizer;
 
 /**
  * Values for {@link OctMatrix} entries.
@@ -39,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * <p>
  * Octagons are represented by constraints of the form "(+/-) x (+/-) y <= c" where c is a constant and can be
  * represented by objects of this class.
- * 
+ *
  * @author schaetzc@informatik.uni-freiburg.de
  */
 public class OctValue implements Comparable<OctValue> {
@@ -58,53 +59,53 @@ public class OctValue implements Comparable<OctValue> {
 
 	/**
 	 * Creates a new OctValue from an {@link IntervalValue}.
-	 * 
+	 *
 	 * @param ivlValue
 	 *            value
 	 */
-	public OctValue(IntervalValue ivlValue) {
+	public OctValue(final IntervalValue ivlValue) {
 		mValue = ivlValue.isInfinity() ? null : ivlValue.getValue();
 	}
 
 	/**
 	 * Creates a new OctValue with a value less than infinity. Use {@link #INFINITY} to represent infinity.
-	 * 
+	 *
 	 * @param value
 	 *            value less than infinity
 	 */
-	public OctValue(BigDecimal value) {
+	public OctValue(final BigDecimal value) {
 		assert value != null : "Use constant INFINITY to represent infinity.";
 		mValue = value;
 	}
 
 	/**
 	 * Creates a new OctValue from an integer value.
-	 * 
+	 *
 	 * @param i
 	 *            value
 	 */
-	public OctValue(int i) {
+	public OctValue(final int i) {
 		mValue = new BigDecimal(i);
 	}
 
 	/**
 	 * Creates a new OctValue by parsing a string. Any numbers (integers and decimals) parsable by {@link BigDecimal}
 	 * can be parsed. Infinity is represented as {@code "inf"}.
-	 * 
+	 *
 	 * @param s
 	 *            Value (integer, decimal, or infinity) in textual representation
 	 * @return New OctValue
 	 */
-	public static OctValue parse(String s) {
+	public static OctValue parse(final String s) {
 		if ("inf".equals(s)) {
 			return INFINITY;
 		}
-		return new OctValue(new BigDecimal(s));
+		return new OctValue(BigDecimalSanitizer.sanitizeBigDecimalValue(s));
 	}
 
 	/**
 	 * Converts this OctValue into an {@link IntervalValue}.
-	 * 
+	 *
 	 * @return IntervalValue
 	 */
 	public IntervalValue toIvlValue() {
@@ -118,7 +119,7 @@ public class OctValue implements Comparable<OctValue> {
 
 	/**
 	 * Returns the finite value of this OctValue, if available.
-	 * 
+	 *
 	 * @return Finite value or {@code null}
 	 */
 	public BigDecimal getValue() {
@@ -127,12 +128,12 @@ public class OctValue implements Comparable<OctValue> {
 
 	/**
 	 * Calculates the sum of this and another OctValue. The sum of infinity and something other is infinity.
-	 * 
+	 *
 	 * @param other
 	 *            summand
 	 * @return Sum
 	 */
-	public OctValue add(OctValue other) {
+	public OctValue add(final OctValue other) {
 		if (mValue == null || other.mValue == null) {
 			return OctValue.INFINITY;
 		}
@@ -142,14 +143,14 @@ public class OctValue implements Comparable<OctValue> {
 	/**
 	 * Calculates the difference of this and another OctValue. The difference of infinity and a finite value is
 	 * infinity.
-	 * 
+	 *
 	 * @param other
 	 *            (finite) subtrahend
 	 * @return Difference
 	 * @throws IllegalArgumentException
 	 *             when subtracting infinity
 	 */
-	public OctValue subtract(OctValue other) {
+	public OctValue subtract(final OctValue other) {
 		if (other.mValue == null) {
 			throw new IllegalArgumentException("Cannot subtract infinity.");
 		} else if (mValue == null) {
@@ -160,7 +161,7 @@ public class OctValue implements Comparable<OctValue> {
 
 	/**
 	 * Negates this OctValue.
-	 * 
+	 *
 	 * @return Negation
 	 * @throws IllegalStateException
 	 *             when this OctValue is infinity
@@ -174,7 +175,7 @@ public class OctValue implements Comparable<OctValue> {
 
 	/**
 	 * Negates this OctValue only if it is not infinity.
-	 * 
+	 *
 	 * @return Negation or infinity
 	 */
 	public OctValue negateIfNotInfinity() {
@@ -186,7 +187,7 @@ public class OctValue implements Comparable<OctValue> {
 
 	/**
 	 * Returns an {@linkplain OctValue} equal to {@code this / 2}. {@code  infinity / 2 = infinity}.
-	 * 
+	 *
 	 * @return {@code this / 2}
 	 */
 	public OctValue half() {
@@ -200,7 +201,7 @@ public class OctValue implements Comparable<OctValue> {
 
 	/**
 	 * Returns an {@linkplain OctValue} rounded towards {@code -infinity}. {@code infinity} is already rounded.
-	 * 
+	 *
 	 * @return floored {@linkplain OctValue}
 	 */
 	public OctValue floor() {
@@ -220,7 +221,7 @@ public class OctValue implements Comparable<OctValue> {
 
 	@SuppressWarnings("squid:S1698")
 	@Override
-	public int compareTo(OctValue other) {
+	public int compareTo(final OctValue other) {
 		if (this == other || mValue == other.mValue) {
 			return 0;
 		} else if (mValue == null) {
@@ -238,7 +239,7 @@ public class OctValue implements Comparable<OctValue> {
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
 		}
@@ -269,27 +270,27 @@ public class OctValue implements Comparable<OctValue> {
 
 	/**
 	 * Return the smaller of the two {@link OctValue}s.
-	 * 
+	 *
 	 * @param a
 	 *            The first operand.
 	 * @param b
 	 *            The second operand.
 	 * @return The smaller value of a and b, or a if they have the same value.
 	 */
-	public static OctValue min(OctValue a, OctValue b) {
+	public static OctValue min(final OctValue a, final OctValue b) {
 		return a.compareTo(b) <= 0 ? a : b;
 	}
 
 	/**
 	 * Return the larger of the two {@link OctValue}s.
-	 * 
+	 *
 	 * @param a
 	 *            The first operand.
 	 * @param b
 	 *            The second operand.
 	 * @return The larger value of a and b, or a if they have the same value.
 	 */
-	public static OctValue max(OctValue a, OctValue b) {
+	public static OctValue max(final OctValue a, final OctValue b) {
 		return a.compareTo(b) >= 0 ? a : b;
 	}
 

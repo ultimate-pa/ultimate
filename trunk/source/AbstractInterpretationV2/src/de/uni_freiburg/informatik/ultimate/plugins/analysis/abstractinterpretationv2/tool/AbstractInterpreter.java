@@ -143,7 +143,7 @@ public final class AbstractInterpreter {
 
 			final FixpointEngine<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> fxpe = new FixpointEngine<>(params);
 			final Set<? extends IcfgLocation> initial = root.getInitialNodes();
-			logger.info("Using domain " + params.getAbstractDomain().getClass().getSimpleName());
+			logger.info("Using domain " + params.getAbstractDomain().domainDescription());
 			final AbsIntResult<STATE, IcfgEdge, IcfgLocation> result = fxpe.run(initial, script);
 			if (logger.isDebugEnabled()) {
 				logger.debug("Found the following predicates:");

@@ -20,6 +20,7 @@ configdir = os.path.join(ultimatedir, 'config')
 datadir = os.path.join(ultimatedir, 'data')
 witnessdir = ultimatedir
 witnessname = "witness.graphml"
+enable_assertions = False
 
 # special strings in ultimate output
 unsupported_syntax_errorstring = 'ShortDescription: Unsupported Syntax'
@@ -173,9 +174,16 @@ def get_binary():
         '-Dosgi.configuration.area=' + os.path.join(datadir, 'config'),
         '-Xmx12G',
         '-Xms1G',
+    ]
+
+    if enable_assertions:
+        ultimate_bin = ultimate_bin + ['-ea']
+
+    ultimate_bin = ultimate_bin + [
         '-jar', os.path.join(ultimatedir, 'plugins/org.eclipse.equinox.launcher_1.3.100.v20150511-1540.jar'),
         '-data', datadir
     ]
+
     return ultimate_bin
 
 
@@ -475,6 +483,7 @@ def parse_args():
     global datadir
     global witnessdir
     global witnessname
+    global enable_assertions
     if (len(sys.argv) == 2) and (sys.argv[1] == '--version'):
         print(version)
         sys.exit(ExitCode.SUCCESS)
@@ -492,6 +501,8 @@ def parse_args():
     parser.add_argument('--data', nargs=1, metavar='<dir>', type=check_dir,
                         help='Specify the directory in which the RCP config files are located; default is data/ '
                              'relative to the location of this script')
+    parser.add_argument('-ea', '--enable-assertions', action='store_true',
+                        help='Enable Java assertions')
     parser.add_argument('--full-output', action='store_true',
                         help='Print Ultimate\'s full output to stderr after verification ends')
     parser.add_argument('--envdebug', action='store_true',
@@ -510,7 +521,10 @@ def parse_args():
     parser.add_argument('--witness-name', nargs=1,
                         help='Specify a filename for the generated witness; default is witness.graphml')
 
-    args = parser.parse_args()
+    args, extras = parser.parse_known_args()
+
+    if args.enable_assertions:
+        enable_assertions = True
 
     if args.envdebug:
         debug_environment()
@@ -556,9 +570,9 @@ def parse_args():
         sys.exit(ExitCode.FAIL_NO_WITNESS_TO_VALIDATE)
 
     if args.validate:
-        return property_file, args.architecture, [args.file[0], witness], args.full_output, args.validate
+        return property_file, args.architecture, [args.file[0], witness], args.full_output, args.validate, extras
     else:
-        return property_file, args.architecture, [args.file[0]], args.full_output, args.validate
+        return property_file, args.architecture, [args.file[0]], args.full_output, args.validate, extras
 
 
 def create_settings_search_string(prop, architecture):
@@ -624,7 +638,7 @@ def main():
     # before doing anything, set permissions
     # call_relaxed(['chmod', 'ug+rwx', '-R', ultimatedir])
 
-    property_file, architecture, input_files, verbose, validate_witness = parse_args()
+    property_file, architecture, input_files, verbose, validate_witness, extras = parse_args()
     prop = _PropParser(property_file)
 
     toolchain_file = get_toolchain_path(prop, validate_witness)
@@ -645,7 +659,10 @@ def main():
     print('Version ' + version)
     ultimate_bin = get_binary()
     ultimate_call = create_callargs(ultimate_bin,
-                                    ['-tc', toolchain_file, '-i', input_files, '-s', settings_file, cli_arguments])
+                                    ['-tc', toolchain_file, '-i', input_files, '-s', settings_file,
+                                     cli_arguments])
+    if extras:
+        ultimate_call = ultimate_call + extras
 
     # actually run Ultimate 
     result, result_msg, overapprox, ultimate_output, error_path = run_ultimate(ultimate_call, prop)
@@ -661,8 +678,9 @@ def main():
             print('Retrying with bit-precise analysis')
             ultimate_call = create_callargs(ultimate_bin,
                                             ['-tc', toolchain_file, '-i', input_files, '-s', settings_file,
-                                             cli_arguments, '--cacsl2boogietranslator.memory.model',
-                                             'HoenickeLindenmann_8ByteResolution'])
+                                             cli_arguments])
+            if extras:
+                ultimate_call = ultimate_call + extras
             result, result_msg, overapprox, ultimate_bitprecise_output, error_path = run_ultimate(ultimate_call, prop)
             ultimate_output = ultimate_output + '\n### Bit-precise run ###\n' + ultimate_bitprecise_output
 

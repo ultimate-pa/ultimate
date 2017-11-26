@@ -179,7 +179,7 @@ public class CCProofGenerator {
 		 * Collect the proof info for one path.
 		 */
 		private void collectStrongPath(final IndexedPath indexedPath) {
-			assert(indexedPath.getIndex() == null);
+			assert (indexedPath.getIndex() == null);
 			mProofPaths.add(indexedPath);
 			final CCTerm[] path = indexedPath.getPath();
 			// Check cases (i) - (iv) for all term pairs.
@@ -197,7 +197,7 @@ public class CCProofGenerator {
 		 * Collect the proof info for one path.
 		 */
 		private void collectWeakPath(final IndexedPath indexedPath) {
-			assert(indexedPath.getIndex() != null || mRule == RuleKind.WEAKEQ_EXT);
+			assert (indexedPath.getIndex() != null || mRule == RuleKind.WEAKEQ_EXT);
 			mProofPaths.add(indexedPath);
 			final CCTerm pathIndex = indexedPath.getIndex();
 			final CCTerm[] path = indexedPath.getPath();
@@ -238,8 +238,8 @@ public class CCProofGenerator {
 					final SymmetricPair<CCTerm> selectEq = findSelectPath(termPair, pathIndex);
 					if (selectEq != null) {
 						// TODO: decide should we add a trivial strong path for select equalities?
-						final IndexedPath selectPath = new IndexedPath(null,
-								new CCTerm[] { selectEq.getFirst(), selectEq.getSecond() });
+						final IndexedPath selectPath =
+								new IndexedPath(null, new CCTerm[] { selectEq.getFirst(), selectEq.getSecond() });
 						collectStrongPath(selectPath);
 						final CCTerm firstIndex = ArrayTheory.getIndexFromSelect((CCAppTerm) selectEq.getFirst());
 						final CCTerm secondIndex = ArrayTheory.getIndexFromSelect((CCAppTerm) selectEq.getSecond());
@@ -525,8 +525,7 @@ public class CCProofGenerator {
 	 * Build the proof term in the form of a resolution step of the main lemma resolved with the auxiliary lemmas in the
 	 * order determined by proofOrder.
 	 */
-	private Term buildProofTerm(final Clause clause, final Theory theory,
-			final ArrayList<ProofInfo> proofOrder,
+	private Term buildProofTerm(final Clause clause, final Theory theory, final ArrayList<ProofInfo> proofOrder,
 			final HashMap<SymmetricPair<CCTerm>, ProofInfo> proofGraph) {
 
 		// Store the self-built auxiliary equality literals, such that the
@@ -548,7 +547,7 @@ public class CCProofGenerator {
 			}
 			// Collect the new clause literals.
 			final Term[] args = new Term[info.getLiterals().size() + 1 + info.getSubProofs().size()];
-			final Annotation[] quote = new Annotation[] { new Annotation(":quoted", null) };
+			final Annotation[] quote = new Annotation[] { new Annotation(":quotedCC", null) };
 			int i = 0;
 			// First the (positive) diseq literal
 			args[i++] = theory.annotatedTerm(quote, diseq);
@@ -584,7 +583,7 @@ public class CCProofGenerator {
 			final HashSet<IndexedPath> paths = info.getPaths();
 			final Object[] subannots = new Object[2 * paths.size() + 1];
 			int k = 0;
-			subannots[k++] = diseq;
+			subannots[k++] = theory.annotatedTerm(quote, diseq);
 			for (final IndexedPath p : paths) {
 				final CCTerm index = p.getIndex();
 				final CCTerm[] path = p.getPath();

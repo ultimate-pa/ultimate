@@ -1,3 +1,29 @@
+/*
+ * Copyright (C) 2017 Alexander Nutz (nutz@informatik.uni-freiburg.de)
+ * Copyright (C) 2017 University of Freiburg
+ *
+ * This file is part of the ULTIMATE CACSL2BoogieTranslator plug-in.
+ *
+ * The ULTIMATE CACSL2BoogieTranslator plug-in is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * The ULTIMATE CACSL2BoogieTranslator plug-in is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the ULTIMATE CACSL2BoogieTranslator plug-in. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Additional permission under GNU GPL version 3 section 7:
+ * If you modify the ULTIMATE CACSL2BoogieTranslator plug-in, or any covered work, by linking
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission
+ * to convey the resulting work.
+ */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result;
 
 import java.util.ArrayList;
@@ -9,7 +35,6 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
@@ -17,79 +42,90 @@ public class ExpressionResultBuilder {
 
 	public final List<Statement> mStatements = new ArrayList<>();
 	public LRValue mLrVal;
-	public final List<Declaration> mDeclarations = new ArrayList<>(); 
+	public final List<Declaration> mDeclarations = new ArrayList<>();
 	public final List<Overapprox> mOverappr = new ArrayList<>();
 	public final Map<VariableDeclaration, ILocation> mAuxVars = new LinkedHashMap<>();
 	public final List<ExpressionResult> mNeighbourUnionFields = new ArrayList<>();
-	
-	
-	public ExpressionResultBuilder(ExpressionResult assignmentExprRes) {
-		mStatements.addAll(assignmentExprRes.stmt);
-		mDeclarations.addAll(assignmentExprRes.decl);
-		mOverappr.addAll(assignmentExprRes.overappr);
-		mAuxVars.putAll(assignmentExprRes.auxVars);
-		mNeighbourUnionFields.addAll(assignmentExprRes.otherUnionFields);
-		mLrVal = assignmentExprRes.lrVal;
+
+
+	public ExpressionResultBuilder(final ExpressionResult assignmentExprRes) {
+		mStatements.addAll(assignmentExprRes.mStmt);
+		mDeclarations.addAll(assignmentExprRes.mDecl);
+		mOverappr.addAll(assignmentExprRes.mOverappr);
+		mAuxVars.putAll(assignmentExprRes.mAuxVars);
+		mNeighbourUnionFields.addAll(assignmentExprRes.mOtherUnionFields);
+		mLrVal = assignmentExprRes.mLrVal;
 	}
 
 	/**
 	 * Creates an ExpressionResultBuidler with empty fields.
 	 */
 	public ExpressionResultBuilder() {
+		// do nothing
 	}
 
-	public ExpressionResultBuilder setLRVal(LRValue val) {
-		assert mLrVal == null : "LRValue has already been set";
+	public ExpressionResultBuilder setLRVal(final LRValue val) {
+		if (mLrVal != null) {
+			throw new IllegalStateException("LRValue has already been set");
+		}
 		mLrVal = val;
 		return this;
 	}
 
-	public ExpressionResultBuilder addStatement(Statement stm) {
+	public ExpressionResultBuilder addStatement(final Statement stm) {
 		mStatements.add(stm);
 		return this;
 	}
-	public ExpressionResultBuilder addStatements(Collection<Statement> stms) {
+	public ExpressionResultBuilder addStatements(final Collection<Statement> stms) {
 		mStatements.addAll(stms);
 		return this;
 	}
-	
-	public ExpressionResultBuilder addDeclaration(Declaration stm) {
+
+	public ExpressionResultBuilder addDeclaration(final Declaration stm) {
 		mDeclarations.add(stm);
 		return this;
 	}
-	public ExpressionResultBuilder addDeclarations(Collection<Declaration> stms) {
+	public ExpressionResultBuilder addDeclarations(final Collection<Declaration> stms) {
 		mDeclarations.addAll(stms);
 		return this;
 	}
-	
-	public ExpressionResultBuilder addOverapprox(Overapprox oa) {
+
+	public ExpressionResultBuilder addOverapprox(final Overapprox oa) {
 		mOverappr.add(oa);
 		return this;
 	}
-	public ExpressionResultBuilder addOverapprox(Collection<Overapprox> oas) {
+	public ExpressionResultBuilder addOverapprox(final Collection<Overapprox> oas) {
 		mOverappr.addAll(oas);
 		return this;
 	}
-	
-	public ExpressionResultBuilder putAuxVar(VariableDeclaration avDecl, ILocation avLoc) {
+
+	public ExpressionResultBuilder putAuxVar(final VariableDeclaration avDecl, final ILocation avLoc) {
 		mAuxVars.put(avDecl, avLoc);
 		return this;
 	}
-	public ExpressionResultBuilder putAuxVars(Map<VariableDeclaration, ILocation> auxVars) {
+	public ExpressionResultBuilder putAuxVars(final Map<VariableDeclaration, ILocation> auxVars) {
 		mAuxVars.putAll(auxVars);
 		return this;
 	}
 
-	public ExpressionResultBuilder addNeighbourUnionField(ExpressionResult unionField) {
+	public ExpressionResultBuilder addNeighbourUnionField(final ExpressionResult unionField) {
 		mNeighbourUnionFields.add(unionField);
 		return this;
 	}
-	public ExpressionResultBuilder addNeighbourUnionFields(Collection<ExpressionResult> unionFields) {
+	public ExpressionResultBuilder addNeighbourUnionFields(final Collection<ExpressionResult> unionFields) {
 		mNeighbourUnionFields.addAll(unionFields);
 		return this;
 	}
-	
+
 	public ExpressionResult build() {
 		return new ExpressionResult(mStatements, mLrVal, mDeclarations, mAuxVars, mOverappr, mNeighbourUnionFields);
+	}
+
+	public void addAllExceptLrValue(final ExpressionResult currentFieldInitializer) {
+		addDeclarations(currentFieldInitializer.getDeclarations());
+		addStatements(currentFieldInitializer.getStatements());
+		addOverapprox(currentFieldInitializer.getOverapprs());
+		putAuxVars(currentFieldInitializer.getAuxVars());
+		addNeighbourUnionFields(currentFieldInitializer.getNeighbourUnionFields());
 	}
 }

@@ -194,7 +194,26 @@ public class QuantifierUtils {
 	}
 
 
+	public static int getCorrespondingQuantifier(final String booleanConnective) {
+		if (booleanConnective.equals("and")) {
+			return QuantifiedFormula.FORALL;
+		} else if (booleanConnective.equals("or")) {
+			return QuantifiedFormula.EXISTS;
+		} else {
+			throw new AssertionError("unsupported connective " + booleanConnective);
+		}
+	}
 
 	
+	public static String getDualBooleanConnective(final String booleanConnective) {
+		if (booleanConnective.equals("and")) {
+			return "or";
+		} else if (booleanConnective.equals("or")) {
+			return "and";
+		} else {
+			throw new AssertionError("unsupported connective " + booleanConnective);
+		}
+	}
+
 	
 }

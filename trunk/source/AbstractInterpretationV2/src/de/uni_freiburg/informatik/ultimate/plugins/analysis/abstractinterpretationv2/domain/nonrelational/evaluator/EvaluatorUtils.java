@@ -110,11 +110,40 @@ public final class EvaluatorUtils {
 		final Function<IBoogieType, EvaluatorType> intFunction = t -> EvaluatorType.INTEGER;
 		final Function<IBoogieType, EvaluatorType> realFunction = t -> EvaluatorType.REAL;
 		final Function<IBoogieType, EvaluatorType> boolFunction = t -> EvaluatorType.BOOL;
-		final Function<IBoogieType, EvaluatorType> arrayFunction = t -> {
-			final ArrayType arrType = (ArrayType) type;
-			return TypeUtils.applyTypeFunction(intFunction, realFunction, boolFunction, null, arrType.getValueType());
-		};
+		final Function<IBoogieType, EvaluatorType> arrayFunction =
+				new ArrayFunction(type, intFunction, realFunction, boolFunction);
 
 		return TypeUtils.applyTypeFunction(intFunction, realFunction, boolFunction, arrayFunction, type);
+	}
+
+	/**
+	 * ArrayFunction to reference itself.
+	 *
+	 * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
+	 *
+	 */
+	private static final class ArrayFunction implements Function<IBoogieType, EvaluatorType> {
+
+		private final IBoogieType mType;
+		private final Function<IBoogieType, EvaluatorType> mIntFunction;
+		private final Function<IBoogieType, EvaluatorType> mRealFunction;
+		private final Function<IBoogieType, EvaluatorType> mBoolFunction;
+
+		private ArrayFunction(final IBoogieType type, final Function<IBoogieType, EvaluatorType> intFunction,
+				final Function<IBoogieType, EvaluatorType> realFunction,
+				final Function<IBoogieType, EvaluatorType> boolFunction) {
+			mType = type;
+			mIntFunction = intFunction;
+			mRealFunction = realFunction;
+			mBoolFunction = boolFunction;
+		}
+
+		@Override
+		public EvaluatorType apply(final IBoogieType t) {
+			final ArrayType arrType = (ArrayType) mType;
+			return TypeUtils.applyTypeFunction(mIntFunction, mRealFunction, mBoolFunction,
+					new ArrayFunction(t, mIntFunction, mRealFunction, mBoolFunction), arrType.getValueType());
+		}
+
 	}
 }

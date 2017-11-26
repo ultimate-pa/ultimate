@@ -3,22 +3,22 @@
  * Copyright (C) 2013-2015 Christian Schilling (schillic@informatik.uni-freiburg.de)
  * Copyright (C) 2012-2015 Markus Lindenmann (lindenmm@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE CACSL2BoogieTranslator plug-in.
- * 
+ *
  * The ULTIMATE CACSL2BoogieTranslator plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE CACSL2BoogieTranslator plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE CACSL2BoogieTranslator plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE CACSL2BoogieTranslator plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -49,6 +49,9 @@ import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 public class CArray extends CType {
     /**
      * Array dimensions.
+     *
+     * TODO (alex): probably it would be best to have only one "bound" here, and nest array types for multidimensional
+     *  stuff.
      */
     private final RValue[] dimensions;
     /**
@@ -56,11 +59,9 @@ public class CArray extends CType {
      */
     private final CType valueType;
 
-    private final boolean isOnHeap = false;
-    
     /**
      * Constructor.
-     * 
+     *
      * @param dimensions
      *            the dimensions of this array.
      * @param valueType
@@ -75,7 +76,7 @@ public class CArray extends CType {
         this.valueType = valueType;
 //        this.variableLength = false;
     }
-    
+
     /**
      * @return the dimensions
      */
@@ -162,12 +163,13 @@ public class CArray extends CType {
                 dimString.append("_");
             } else {
 //                dimString = new StringBuilder("variableLength");
-                dimString.append("variableLength");
+//                dimString.append("variableLength");
+                dimString.append("unrecognizedDimensions");
                 dimString.append("_");
                 break;
             }
         }
-        
+
 //        if (variableLength) {
 //        if (this.isVariableLength()) {
 //        	id.append("_VARLENGTH");
@@ -179,7 +181,7 @@ public class CArray extends CType {
         id.append("#");
         return id.toString();
     }
-    
+
 //    public boolean isVariableLength() {
 //    	boolean varL = false;
 //    	for (Expression sizeEx : this.dimensions) {
@@ -188,11 +190,11 @@ public class CArray extends CType {
 //    	return varL;
 ////    	return this.variableLength;
 //    }
-    
+
     /**
      * Computes the result of an integer arithmetic expression and
      * returns an the IntegerLiteral.
-     * 
+     *
      * @param loc location
      * @param e arithmetic expression in the integers
      * @return expression of the resulting integer
@@ -202,11 +204,11 @@ public class CArray extends CType {
         return new IntegerLiteral(e.getLocation(),
                 Integer.toString(getArithmeticResultAsInteger(e)));
     }
-    
+
     /**
      * Helper method for the computation of an arithmetic result from
      * expressions.
-     * 
+     *
      * @param e expression (unary or binary)
      * @return the result as an int
      */
@@ -259,7 +261,7 @@ public class CArray extends CType {
         if (!(oType instanceof CArray)) {
             return false;
         }
-        
+
         final CArray oArr = (CArray)oType;
         if (!(valueType.equals(oArr.valueType))) {
             return false;
@@ -281,12 +283,12 @@ public class CArray extends CType {
 				((CPrimitive) o).getType() == CPrimitives.VOID) {
 			return true;
 		}
-		
+
         final CType oType = o.getUnderlyingType();
         if (!(oType instanceof CArray)) {
 			return false;
 		}
-        
+
         final CArray oArr = (CArray) oType;
         if (!(valueType.isCompatibleWith(oArr.valueType))) {
             return false;
@@ -301,7 +303,7 @@ public class CArray extends CType {
         }
         return true;
 	}
-	
+
 	@Override
 	public int hashCode() {
 //		return HashUtils.hashJenkins(31, dimensions, valueType, variableLength);

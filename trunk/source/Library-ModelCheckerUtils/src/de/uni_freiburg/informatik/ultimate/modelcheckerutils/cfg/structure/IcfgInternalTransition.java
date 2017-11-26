@@ -38,13 +38,14 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Unm
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
-public class IcfgInternalTransition extends AbstractIcfgTransition implements IIcfgInternalTransition<IcfgLocation> {
+public final class IcfgInternalTransition extends AbstractIcfgTransition
+		implements IIcfgInternalTransition<IcfgLocation> {
 	private static final long serialVersionUID = -4893486021673688404L;
 	private final UnmodifiableTransFormula mTransFormula;
 
-	public IcfgInternalTransition(final IcfgLocation source, final IcfgLocation target, final IPayload payload,
-			final UnmodifiableTransFormula transFormula) {
-		super(source, target, payload);
+	protected IcfgInternalTransition(final IcfgLocation source, final IcfgLocation target, final IPayload payload,
+			final UnmodifiableTransFormula transFormula, final int id) {
+		super(source, target, payload, id);
 		mTransFormula = Objects.requireNonNull(transFormula, "A transformula is missing");
 	}
 

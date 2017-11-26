@@ -111,12 +111,20 @@ public final class LinearInequalityInvariantPatternProcessor
 	private static final String PREFIX_SEPARATOR = "_";
 
 	private static final String ANNOT_PREFIX = "LIIPP_Annot";
+
+	private static final boolean ASSERT_INTEGER_COEFFICIENTS = false;
+
 	private int mAnnotTermCounter;
 	/**
 	 * Stores the mapping from annotation of a term to the original motzkin term. It is used to restore the original
 	 * terms from the annotations in unsat core.
 	 */
 	private Map<String, Term> mAnnotTerm2MotzkinTerm;
+	
+	/**
+	 * Maps annotated terms to the locations (i.e. source and target locations) of corresponding transitions. 
+	 */
+	private Map<String, Set<IcfgLocation>> mTermAnnotations2Locs;
 	/**
 	 * @see {@link MotzkinTransformation}.mMotzkinCoefficients2LinearInequalities
 	 */
@@ -158,11 +166,8 @@ public final class LinearInequalityInvariantPatternProcessor
 	private final IcfgLocation mStartLocation;
 	private final Set<IcfgLocation> mErrorLocations;
 
-	private static final boolean CHANGE_ONLY_MOST_FREQUENT_LOC = false;
-	private static final boolean ADD_ONLY_SUCC_LOC_TO_UNSAT_CORE = false;
-	private static boolean USE_UNDER_APPROX_AS_ADDITIONAL_CONSTRAINT = true;
-	private static boolean USE_OVER_APPROX_AS_ADDITIONAL_CONSTRAINT = true;
-	private static final boolean ASSERT_INTEGER_COEFFICIENTS = false;
+	private final boolean mUseUnderApproxAsAdditionalConstraint;
+	private final boolean mUseOverApproxAsAdditionalConstraint;
 
 	/**
 	 * Contains all coefficients of all patterns from the current round.
@@ -308,15 +313,16 @@ public final class LinearInequalityInvariantPatternProcessor
 		mUseNonlinearConstraints = useNonlinearConstraints;
 		mUseUnsatCores = useUnsatCores;
 		if (mUseUnsatCores) {
-			USE_UNDER_APPROX_AS_ADDITIONAL_CONSTRAINT = true;
-			USE_OVER_APPROX_AS_ADDITIONAL_CONSTRAINT = true;
+			mUseUnderApproxAsAdditionalConstraint = true;
+			mUseOverApproxAsAdditionalConstraint = true;
 		} else {
 			// If we don't use unsat cores, then the additional constraints are not needed
-			USE_UNDER_APPROX_AS_ADDITIONAL_CONSTRAINT = false;
-			USE_OVER_APPROX_AS_ADDITIONAL_CONSTRAINT = false;
+			mUseUnderApproxAsAdditionalConstraint = false;
+			mUseOverApproxAsAdditionalConstraint = false;
 		}
 		mAnnotTermCounter = 0;
 		mAnnotTerm2MotzkinTerm = new HashMap<>();
+		mTermAnnotations2Locs = new HashMap<>();
 		mMotzkinCoefficients2LinearInequalities = new HashMap<>();
 		mLinearInequalities2Locations = new HashMap<>();
 		mAllPatternCoefficients = null;
@@ -369,6 +375,8 @@ public final class LinearInequalityInvariantPatternProcessor
 		mAnnotTermCounter = 0;
 		// Reset map that stores the mapping from the annotated term to the original term.
 		mAnnotTerm2MotzkinTerm = new HashMap<>();
+		
+		mTermAnnotations2Locs = new HashMap<>();
 		// Reset map that stores motzkin coefficients to linear inequalities
 		mMotzkinCoefficients2LinearInequalities = new HashMap<>();
 		// Reset settings of strategy
@@ -470,8 +478,7 @@ public final class LinearInequalityInvariantPatternProcessor
 	 * @return transformed pattern, equivalent to the negated pattern under the mapping
 	 */
 	private static Dnf<LinearInequality> mapAndNegatePattern(final IUltimateServiceProvider services,
-			final Dnf<AbstractLinearInvariantPattern> pattern,
-			final Map<IProgramVar, Term> mapping) {
+			final Dnf<AbstractLinearInvariantPattern> pattern, final Map<IProgramVar, Term> mapping) {
 		// This is the trivial algorithm (expanding). Feel free to optimize ;)
 		// 1. map Pattern, result is dnf
 		final Dnf<LinearInequality> mappedPattern = mapPattern(pattern, mapping);
@@ -509,8 +516,8 @@ public final class LinearInequalityInvariantPatternProcessor
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug("Transforming conjunct " + conjunct);
 			}
-			final MotzkinTransformation transformation = new MotzkinTransformation(mServices, mSolver, analysisType,
-					ANNOTATE_TERMS_FOR_DEBUGGING);
+			final MotzkinTransformation transformation =
+					new MotzkinTransformation(mServices, mSolver, analysisType, ANNOTATE_TERMS_FOR_DEBUGGING);
 			transformation.addInequalities(conjunct);
 			resultTerms.add(transformation.transform(new Rational[0]));
 			mMotzkinCoefficients2LinearInequalities.putAll(transformation.getMotzkinCoefficients2LinearInequalities());
@@ -755,7 +762,7 @@ public final class LinearInequalityInvariantPatternProcessor
 		if (!mServices.getProgressMonitorService().continueProcessing()) {
 			throw new ToolchainCanceledException(LinearInequalityInvariantPatternProcessor.class);
 		}
-		if (USE_UNDER_APPROX_AS_ADDITIONAL_CONSTRAINT && mCurrentRound >= 0) {
+		if (mUseUnderApproxAsAdditionalConstraint && mCurrentRound >= 0) {
 			final IcfgLocation loc = predicate.getTargetLocation();
 			// Add constraint SP_i ==> IT_i
 			if (!mErrorLocations.contains(loc) && mLoc2UnderApproximation.containsKey(loc)) {
@@ -782,10 +789,10 @@ public final class LinearInequalityInvariantPatternProcessor
 				mSolver.echo(new QuotedObject("Assertion for SP: "
 						+ transformulaAsString.substring(0, transformulaAsString.indexOf("InVars"))));
 				annotateAndAssertTermAndStoreMapping(transformNegatedConjunction(ConstraintsType.Approximation,
-						spTemplateDNF, targetLocTemplateNegatedDNF));
+						spTemplateDNF, targetLocTemplateNegatedDNF), new HashSet<>(Arrays.asList(loc)));
 			}
 		}
-		if (USE_OVER_APPROX_AS_ADDITIONAL_CONSTRAINT && mCurrentRound >= 0) {
+		if (mUseOverApproxAsAdditionalConstraint && mCurrentRound >= 0) {
 			final IcfgLocation loc = predicate.getTargetLocation();
 			// Add constraint IT_i ==> WP_i
 			if (!mErrorLocations.contains(loc) && mLoc2OverApproximation.containsKey(loc)) {
@@ -818,7 +825,7 @@ public final class LinearInequalityInvariantPatternProcessor
 				mSolver.echo(new QuotedObject("Assertion for WP: "
 						+ transformulaAsString.substring(0, transformulaAsString.indexOf("InVars"))));
 				annotateAndAssertTermAndStoreMapping(transformNegatedConjunction(ConstraintsType.Approximation,
-						targetLocTemplateMappedDNF, wpTemplateNegatedDNF));
+						targetLocTemplateMappedDNF, wpTemplateNegatedDNF), new HashSet<>(Arrays.asList(loc)));
 			}
 		}
 		if (mLogger.isDebugEnabled()) {
@@ -843,7 +850,7 @@ public final class LinearInequalityInvariantPatternProcessor
 		mLogger.debug(s);
 	}
 
-	private void appendConstraintToStringBuilder(final StringBuilder sb, final String constraintName,
+	private static void appendConstraintToStringBuilder(final StringBuilder sb, final String constraintName,
 			final String toReplaceEmptyFormula, final Dnf<LinearInequality> patternDNF) {
 		sb.append(constraintName);
 		if (patternDNF.isEmpty()) {
@@ -858,7 +865,7 @@ public final class LinearInequalityInvariantPatternProcessor
 
 	}
 
-	private Set<IProgramVar> extractVarsFromPattern(final Dnf<AbstractLinearInvariantPattern> spTemplate) {
+	private static Set<IProgramVar> extractVarsFromPattern(final Dnf<AbstractLinearInvariantPattern> spTemplate) {
 		final Set<IProgramVar> result = new HashSet<>();
 		for (final Collection<AbstractLinearInvariantPattern> conjuncts : spTemplate) {
 			for (final AbstractLinearInvariantPattern conjunct : conjuncts) {
@@ -979,8 +986,9 @@ public final class LinearInequalityInvariantPatternProcessor
 				builder.setInfeasibility(Infeasibility.NOT_DETERMINED);
 				final UnmodifiableTransFormula transFormula =
 						builder.finishConstruction(new ManagedScript(mServices, mSolver));
-				final IcfgEdge dummyEdge =
-						new IcfgInternalTransition(null, ingredient.getSourceLocation(), null, transFormula);
+
+				final IcfgEdge dummyEdge = mCsToolkit.getIcfgEdgeFactory().createInternalTransition(null,
+						ingredient.getSourceLocation(), null, transFormula);
 				final Dnf<AbstractLinearInvariantPattern> pattern = getPatternForTransition(dummyEdge, mCurrentRound);
 				final Map<IProgramVar, Term> primedMapping = new HashMap<>(outVars);
 				final Dnf<LinearInequality> patternDnf =
@@ -1059,7 +1067,7 @@ public final class LinearInequalityInvariantPatternProcessor
 	 *            - the Term to be annotated and asserted
 	 * @author Betim Musa (musab@informaitk.uni-freiburg.de)
 	 */
-	private void annotateAndAssertTermAndStoreMapping(final Term term) {
+	private void annotateAndAssertTermAndStoreMapping(final Term term, Set<IcfgLocation> transitionLocs) {
 		assert term.getFreeVars().length == 0 : "Term has free vars";
 		// Annotate and assert the conjuncts of the term one by one
 		final Term[] conjunctsOfTerm = SmtUtils.getConjuncts(term);
@@ -1069,7 +1077,7 @@ public final class LinearInequalityInvariantPatternProcessor
 			final String conjunctAnnotName = termAnnotName + PREFIX_SEPARATOR + (conjunctCounter);
 			// Store mapping termAnnotName -> original term
 			mAnnotTerm2MotzkinTerm.put(conjunctAnnotName, conjunctsOfTerm[conjunctCounter]);
-
+			mTermAnnotations2Locs.put(conjunctAnnotName, transitionLocs);
 			final Annotation annot = new Annotation(":named", conjunctAnnotName);
 			final Term annotTerm = mSolver.annotate(conjunctsOfTerm[conjunctCounter], annot);
 			mSolver.assertTerm(annotTerm);
@@ -1093,11 +1101,11 @@ public final class LinearInequalityInvariantPatternProcessor
 		final Map<IProgramVar, Term> programVarsRecentlyOccurred = new HashMap<>();
 		// Generate and assert term for precondition
 		annotateAndAssertTermAndStoreMapping(buildImplicationTerm(mPrecondition, mEntryInvariantPattern, mStartLocation,
-				programVarsRecentlyOccurred));
+				programVarsRecentlyOccurred), new HashSet<>(Arrays.asList(mStartLocation)));
 		// Generate and assert term for post-condition
 		for (final IcfgLocation errorLocation : mErrorLocations) {
 			annotateAndAssertTermAndStoreMapping(buildBackwardImplicationTerm(mPostcondition, mExitInvariantPattern,
-					errorLocation, programVarsRecentlyOccurred));
+					errorLocation, programVarsRecentlyOccurred), new HashSet<>(Arrays.asList(errorLocation)));
 		}
 
 		// Generate and assert terms for intermediate transitions
@@ -1105,8 +1113,10 @@ public final class LinearInequalityInvariantPatternProcessor
 			final Set<TransitionConstraintIngredients<Dnf<AbstractLinearInvariantPattern>>> transitionIngredients =
 					successorIngredient.buildTransitionConstraintIngredients();
 			for (final TransitionConstraintIngredients<Dnf<AbstractLinearInvariantPattern>> transitionIngredient : transitionIngredients) {
+				Set<IcfgLocation> transitionLocs = new HashSet<>(Arrays.asList(transitionIngredient.getSourceLocation(),
+						transitionIngredient.getTargetLocation()));
 				annotateAndAssertTermAndStoreMapping(
-						buildPredicateTerm(transitionIngredient, programVarsRecentlyOccurred));
+						buildPredicateTerm(transitionIngredient, programVarsRecentlyOccurred), transitionLocs);
 				// final LBool smtResult = mSolver.checkSat();
 				// mLogger.info("Check-sat result: " + smtResult);
 			}
@@ -1215,63 +1225,26 @@ public final class LinearInequalityInvariantPatternProcessor
 			// to get the corresponding program variables
 			final Term[] unsatCoreAnnots = mSolver.getUnsatCore();
 			final Set<String> motzkinVariables = new HashSet<>();
+			final Set<IcfgLocation> locsInUnsatCore = new HashSet<>();
 			for (final Term t : unsatCoreAnnots) {
 				final Term origMotzkinTerm = mAnnotTerm2MotzkinTerm.get(t.toStringDirect());
 				motzkinVariables.addAll(getTermVariablesFromTerm(origMotzkinTerm));
+				// Extract the corresponding locations for the current annotated term
+				locsInUnsatCore.addAll(mTermAnnotations2Locs.get(t.toStringDirect()));
 			}
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug("UnsatCoreAnnots: " + Arrays.toString(unsatCoreAnnots));
 				mLogger.debug("MotzkinVars in unsat core: " + motzkinVariables);
 			}
 			mVarsFromUnsatCore = new HashSet<>();
-			final Set<IcfgLocation> locsInUnsatCore = new HashSet<>();
-
-			final Map<IcfgLocation, Integer> locs2Frequency = new HashMap<>();
+			// Extract variables from terms which have been part of unsat core
 			for (final String motzkinVar : motzkinVariables) {
 				final LinearInequality linq = mMotzkinCoefficients2LinearInequalities.get(motzkinVar);
-				for (final Term varInLinq : linq.getVariables()) {
-					if (varInLinq instanceof TermVariable) {
-						mVarsFromUnsatCore.add((TermVariable) varInLinq);
-					}
-					// else if (varInLinq instanceof ApplicationTerm) {
-					//
-					// } else {
-					// throw new UnsupportedOperationException("Var in linear inequality is neither a TermVariable
-					// nor a Replacement-Variable.");
-					// }
-
-				}
-
-				// Extract the corresponding locations for the current inequality "linq"
-				if (round >= 0) {
-					final Set<Set<LinearInequality>> setsContainingLinq = mLinearInequalities2Locations.keySet()
-							.stream().filter(key -> key.contains(linq)).collect(Collectors.toSet());
-					for (final Set<LinearInequality> s : setsContainingLinq) {
-						final List<IcfgLocation> locs = mLinearInequalities2Locations.get(s);
-						if (ADD_ONLY_SUCC_LOC_TO_UNSAT_CORE) {
-							// add only locations from transitions to unsat core
-							if (locs.size() == 2) {
-								locsInUnsatCore.add(locs.get(1));
-								// Compute how often a location occurs in the unsat core
-								if (locs2Frequency.containsKey(locs.get(1))) {
-									Integer i = locs2Frequency.get(locs.get(1));
-									locs2Frequency.put(locs.get(1), ++i);
-								} else {
-									locs2Frequency.put(locs.get(1), new Integer(1));
-								}
-							}
-						} else {
-							locsInUnsatCore.addAll(locs);
-							for (final IcfgLocation loc : locs) {
-								if (locs2Frequency.containsKey(loc)) {
-									Integer i = locs2Frequency.get(loc);
-									locs2Frequency.put(loc, ++i);
-								} else {
-									locs2Frequency.put(loc, new Integer(1));
-								}
-							}
-						}
-
+				for (final Term term : linq.getVariables()) {
+					if (term instanceof TermVariable) {
+						mVarsFromUnsatCore.add((TermVariable) term);
+					} else {
+						 throw new UnsupportedOperationException("Linear inequality (" + term + ")is not a TermVariable");
 					}
 				}
 			}
@@ -1279,29 +1252,14 @@ public final class LinearInequalityInvariantPatternProcessor
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug("LocsInUnsatCore: " + locsInUnsatCore);
 			}
-			// Change for all locations the corresponding invariant patterns (i.e. increasing conjuncts and/or
+			// Change for all locations the corresponding invariant patterns (i.e. increase conjuncts and/or
 			// disjuncts)
 			if (round >= 0) {
-				if (mLogger.isDebugEnabled()) {
-					mLogger.debug("locsInUnsatCore2Frequency:" + locs2Frequency);
-				}
-				if (CHANGE_ONLY_MOST_FREQUENT_LOC) {
-					final IcfgLocation freqLoc =
-							Collections.max(locs2Frequency.entrySet(), Map.Entry.comparingByValue()).getKey();
-					if (((freqLoc != mStartLocation) || mSynthesizeEntryPattern)
-							&& !mErrorLocations.contains(freqLoc)) {
-						mStrategy.changePatternSettingForLocation(freqLoc, mCurrentRound);
+				for (final IcfgLocation loc : locsInUnsatCore) {
+					if (((loc != mStartLocation) || mSynthesizeEntryPattern) && !mErrorLocations.contains(loc)) {
+						mStrategy.changePatternSettingForLocation(loc, mCurrentRound, locsInUnsatCore);
 						if (mLogger.isDebugEnabled()) {
-							mLogger.debug("changed setting for most freq. loc: " + freqLoc);
-						}
-					}
-				} else {
-					for (final IcfgLocation loc : locsInUnsatCore) {
-						if (((loc != mStartLocation) || mSynthesizeEntryPattern) && !mErrorLocations.contains(loc)) {
-							mStrategy.changePatternSettingForLocation(loc, mCurrentRound, locsInUnsatCore);
-							if (mLogger.isDebugEnabled()) {
-								mLogger.debug("changed setting for loc: " + loc);
-							}
+							mLogger.debug("changed setting for loc: " + loc);
 						}
 					}
 				}
@@ -1401,7 +1359,7 @@ public final class LinearInequalityInvariantPatternProcessor
 		final boolean useAlsoIntegers;
 		// 2017-11-05 Matthias:
 		// seems like we always need integers since program variables can have sort Int.
-//		useAlsoIntegers = (mKindOfInvariant == KindOfInvariant.DANGER);
+		// useAlsoIntegers = (mKindOfInvariant == KindOfInvariant.DANGER);
 		useAlsoIntegers = true;
 		final Linearity linearity = mUseNonlinearConstraints ? Linearity.NONLINEAR : Linearity.LINEAR;
 		final Logics logic = ConstraintSynthesisUtils.getLogic(linearity, useAlsoIntegers);
@@ -1449,8 +1407,8 @@ public final class LinearInequalityInvariantPatternProcessor
 	}
 
 	@Override
-	public Dnf<AbstractLinearInvariantPattern>
-			getInvariantPatternForLocation(final IcfgLocation location, final int round, final Set<IProgramVar> vars) {
+	public Dnf<AbstractLinearInvariantPattern> getInvariantPatternForLocation(final IcfgLocation location,
+			final int round, final Set<IProgramVar> vars) {
 
 		if (mStartLocation.equals(location) && !mSynthesizeEntryPattern) {
 			assert mEntryInvariantPattern != null : "call initializeEntryAndExitPattern() before this";

@@ -35,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.BigDecimalSanitizer;
 
 /**
  * A value in the interval domain for abstract interpretation. This value can be of any numbered type or can be
@@ -123,29 +124,7 @@ public class IntervalValue implements Comparable<IntervalValue> {
 	 *            The value to set.
 	 */
 	public IntervalValue(final String val) {
-		this(sanitizeValue(val));
-	}
-
-	/**
-	 * Accounts for found problems when passing values by string directly to BigDecimal, in order to avoid
-	 * NumberFormatExceptions.
-	 *
-	 * @param val
-	 *            The value as string.
-	 * @return A new BigDecimal object that contains the given value. It is also possible that an exception is thrown
-	 *         when the object is created.
-	 */
-	private static BigDecimal sanitizeValue(final String val) {
-		if (val.contains("/")) {
-			final String[] twoParts = val.split("/");
-			if (twoParts.length != 2) {
-				throw new NumberFormatException("Not a valid division value: " + val);
-			}
-			final BigDecimal one = new BigDecimal(twoParts[0]);
-			final BigDecimal two = new BigDecimal(twoParts[1]);
-			return one.divide(two);
-		}
-		return new BigDecimal(val);
+		this(BigDecimalSanitizer.sanitizeBigDecimalValue(val));
 	}
 
 	/**

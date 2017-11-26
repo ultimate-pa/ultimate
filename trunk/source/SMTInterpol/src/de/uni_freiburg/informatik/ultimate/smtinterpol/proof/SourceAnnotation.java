@@ -62,12 +62,12 @@ public class SourceAnnotation implements IAnnotation {
 		Term res = cls.toTerm(theory);
 		if (mSource == null) {
 			// Partial proof mode
-			res = theory.term("@asserted", mAnnot.isEmpty() ? res
-					: theory.annotatedTerm(new Annotation[] { new Annotation(":input", mAnnot) }, res));
+			res = theory.term("@asserted", theory.annotatedTerm(
+					new Annotation[] { new Annotation(":input", mAnnot.isEmpty() ? null : mAnnot) }, res));
 		} else {
 			// Full proof mode
-			res = theory.term("@clause", mSource, mAnnot.isEmpty() ? res
-					: theory.annotatedTerm(new Annotation[] { new Annotation(":input", mAnnot) }, res));
+			res = theory.term("@clause", mSource, theory.annotatedTerm(
+					new Annotation[] { new Annotation(":input", mAnnot.isEmpty() ? null : mAnnot) }, res));
 		}
 		return res;
 	}

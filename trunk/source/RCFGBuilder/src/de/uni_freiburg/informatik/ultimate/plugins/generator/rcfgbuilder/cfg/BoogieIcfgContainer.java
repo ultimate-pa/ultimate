@@ -51,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdgeFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
@@ -114,7 +115,8 @@ public class BoogieIcfgContainer extends ModernAnnotations implements IIcfg<Boog
 		mCfgSmtToolkit = new CfgSmtToolkit(
 				new ModifiableGlobalsTable(
 						mBoogie2smt.getBoogie2SmtSymbolTable().constructProc2ModifiableGlobalsMapping()),
-				mgScript, mBoogie2smt.getBoogie2SmtSymbolTable(), mBoogie2SMT.getAxioms(), procs);
+				mgScript, mBoogie2smt.getBoogie2SmtSymbolTable(), mBoogie2SMT.getAxioms(), procs,
+				new IcfgEdgeFactory());
 		mCodeBlockFactory =
 				new CodeBlockFactory(services, mgScript, mCfgSmtToolkit, mBoogie2SMT.getBoogie2SmtSymbolTable());
 		mPayload = new Payload();
@@ -216,9 +218,8 @@ public class BoogieIcfgContainer extends ModernAnnotations implements IIcfg<Boog
 	public String getIdentifier() {
 		if (PREPEND_CLASSNAME_TO_IDENTIFIER) {
 			return getClass().getSimpleName() + "_" + getFilename();
-		} else {
-			return getFilename();
 		}
+		return getFilename();
 	}
 
 	@Override

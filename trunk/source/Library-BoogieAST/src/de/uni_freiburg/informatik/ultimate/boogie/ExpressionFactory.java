@@ -2,35 +2,38 @@
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2014-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Core.
- * 
+ *
  * The ULTIMATE Core is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Core is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Core. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Core, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Core grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Core grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.boogie;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.Arrays;
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BitVectorAccessExpression;
@@ -39,19 +42,23 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IfThenElseExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.StructConstructor;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.StructLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
 /**
  * Construct Boogie Expressions and do minor simplification if all operands
  * are literals.
- * 
+ *
  * @author Matthias Heizmann
- * 
+ *
  */
 public class ExpressionFactory extends BoogieTransformer {
-	
+
 	public static Expression newUnaryExpression(final ILocation loc, final UnaryExpression.Operator operator, final Expression expr) {
 		final Expression exprLiteral = filterLiteral(expr);
 		Expression result;
@@ -109,8 +116,8 @@ public class ExpressionFactory extends BoogieTransformer {
 		}
 		return result;
 	}
-	
-	
+
+
 	private static BooleanLiteral constructBinaryExpression_Bool(final ILocation loc, final Operator operator, final BooleanLiteral leftLiteral,
 			final BooleanLiteral rightLiteral) {
 		final boolean leftValue = leftLiteral.getValue();
@@ -152,8 +159,8 @@ public class ExpressionFactory extends BoogieTransformer {
 		}
 		return new BooleanLiteral(loc, result);
 	}
-	
-	
+
+
 	private static Expression constructBinaryExpression_Integer(final ILocation loc, final Operator operator, final IntegerLiteral leftLiteral,
 			final IntegerLiteral rightLiteral) {
 		final BigInteger leftValue = new BigInteger(leftLiteral.getValue());
@@ -214,7 +221,7 @@ public class ExpressionFactory extends BoogieTransformer {
 			throw new AssertionError("unknown operator " + operator);
 		}
 	}
-	
+
 	private static Expression constructBinaryExpression_Real(final ILocation loc, final Operator operator, final RealLiteral leftLiteral,
 			final RealLiteral rightLiteral) {
 		final BigDecimal leftValue = new BigDecimal(leftLiteral.getValue());
@@ -286,7 +293,7 @@ public class ExpressionFactory extends BoogieTransformer {
 		}
 		final int leftLength = leftLiteral.getLength();
 		final int rightLength = rightLiteral.getLength();
-		
+
 		switch (operator) {
 		case COMPEQ: {
 			if (leftLength != rightLength) {
@@ -310,7 +317,7 @@ public class ExpressionFactory extends BoogieTransformer {
 		case ARITHMOD:
 		case ARITHMUL:
 		case ARITHPLUS:
-		case COMPGEQ: 
+		case COMPGEQ:
 		case COMPGT:
 		case COMPLEQ:
 		case COMPLT:
@@ -324,7 +331,7 @@ public class ExpressionFactory extends BoogieTransformer {
 			throw new AssertionError("unknown operator " + operator);
 		}
 	}
-	
+
 	public static Expression newIfThenElseExpression(final ILocation loc, final Expression condition, final Expression thenPart, final Expression elsePart) {
 		final Expression condLiteral = filterLiteral(condition);
 		if (condLiteral instanceof BooleanLiteral) {
@@ -337,20 +344,20 @@ public class ExpressionFactory extends BoogieTransformer {
 		} else {
 			return new IfThenElseExpression(loc, condition, thenPart, elsePart);
 		}
-		
+
 	}
 
 	private static Expression filterLiteral(final Expression expr) {
-		if ((expr instanceof IntegerLiteral) || 
-				(expr instanceof BooleanLiteral) || 
-				(expr instanceof BitvecLiteral) || 
+		if ((expr instanceof IntegerLiteral) ||
+				(expr instanceof BooleanLiteral) ||
+				(expr instanceof BitvecLiteral) ||
 				(expr instanceof RealLiteral)) {
 			return expr;
 		} else {
 			return null;
 		}
 	}
-	
+
 	public static boolean isTrueLiteral(final Expression expr) {
 		if (expr instanceof BooleanLiteral) {
 			final BooleanLiteral bl = (BooleanLiteral) expr;
@@ -360,9 +367,9 @@ public class ExpressionFactory extends BoogieTransformer {
 		}
 		return false;
 	}
-	
+
 	/**
-	 * 
+	 *
 	 * @param loc
 	 * @param operand
 	 * @param high exclusive
@@ -382,9 +389,65 @@ public class ExpressionFactory extends BoogieTransformer {
 			return new BitVectorAccessExpression(loc, operand, high, low);
 		}
 	}
-	
+
 	public static Expression and(final ILocation loc, final List<Expression> exprs) {
 		return exprs.stream().reduce(new BooleanLiteral(loc, true),
 				(x, y) -> new BinaryExpression(loc, Operator.LOGICAND, x, y));
+	}
+
+//	public static ArrayLHS constructArrayLhs(final ILocation loc, final LeftHandSide array,
+//			final Expression[] indices) {
+//		// TODO: infer BoogieType and add to constructor parameters
+//		return new ArrayLHS(loc, array, indices);
+//	}
+
+	public static StructConstructor constructStructConstructor(final ILocation loc, final String[] fieldIds,
+			final Expression[] fieldValues) {
+		assert fieldIds.length == fieldValues.length;
+		// TODO: infer BoogieType and add to constructor parameters
+		return new StructConstructor(loc, fieldIds, fieldValues);
+	}
+
+	public static StructLHS constructStructAccessLhs(final ILocation loc, final LeftHandSide lhs, final String field) {
+		// TODO: infer BoogieType and add to constructor parameters
+		return new StructLHS(loc, lhs, field);
+	}
+
+	public static ArrayAccessExpression constructNestedArrayAccessExpression(final ILocation loc, final Expression array,
+			final Expression[] indices) {
+		if (indices.length == 0) {
+			throw new AssertionError("attempting to build array access without indices");
+		}
+		if (indices.length == 1) {
+			return new ArrayAccessExpression(loc, array, indices);
+		} else {
+			final Expression[] innerIndices = Arrays.copyOfRange(indices, 0, indices.length - 1);
+			final Expression innerLhs = constructNestedArrayAccessExpression(loc, array, innerIndices);
+			return new ArrayAccessExpression(loc, innerLhs, new Expression[] { indices[indices.length - 1] });
+		}
+	}
+
+	public static ArrayLHS constructNestedArrayLHS(final ILocation loc, final LeftHandSide array, final Expression[] indices) {
+		if (indices.length == 0) {
+			throw new AssertionError("attempting to build array access without indices");
+		}
+		if (indices.length == 1) {
+			return new ArrayLHS(loc, array, indices);
+		} else {
+			final Expression[] innerIndices = Arrays.copyOfRange(indices, 0, indices.length - 1);
+			final LeftHandSide innerLhs = constructNestedArrayLHS(loc, array, innerIndices);
+			return new ArrayLHS(loc, innerLhs, new Expression[] { indices[indices.length - 1] });
+		}
+	}
+
+	public static ArrayLHS constructNestedArrayLHS(final ILocation loc, final IBoogieType type, final LeftHandSide lhs,
+			final Expression[] indices) {
+		return constructNestedArrayLHS(loc, lhs, indices);
+	}
+
+	public static Expression constructNestedArrayAccessExpression(final ILocation loc, final IBoogieType it,
+			final Expression array, final Expression[] indices) {
+		// TODO: don't throw away type?
+		return constructNestedArrayAccessExpression(loc, array, indices);
 	}
 }

@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2012-2015 Markus Lindenmann (lindenmm@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE CACSL2BoogieTranslator plug-in.
- * 
+ *
  * The ULTIMATE CACSL2BoogieTranslator plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE CACSL2BoogieTranslator plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE CACSL2BoogieTranslator plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE CACSL2BoogieTranslator plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -32,6 +32,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util;
 import java.util.ArrayList;
 import java.util.Collections;
 
+import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
@@ -49,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 public class BoogieASTUtil {
     /**
      * Helper method, to get the left most identifier of a LeftHandSide.
-     * 
+     *
      * @param lhs
      *            the LHS to process.
      * @return the left most identifier.
@@ -68,7 +69,7 @@ public class BoogieASTUtil {
 
     /**
      * Helper method, to get the left most identifier of a Expression.
-     * 
+     *
      * @param expr
      *            the Expression to process (It is assumed, that
      *            <code>expr</code> is instance of one class in
@@ -95,7 +96,7 @@ public class BoogieASTUtil {
     /**
      * Flattens a LeftHandSide into a String Array. I.e. all accessed
      * identifiers are listed.
-     * 
+     *
      * @param lhs
      *            the LeftHandSide to flatten.
      * @return the flattened LHS as an array.
@@ -119,7 +120,7 @@ public class BoogieASTUtil {
 
     /**
      * Creates a LeftHandSide object for a given expression.
-     * 
+     *
      * @param e
      *            the expression to convert. It is assumed, that <code>e</code>
      *            is instance of one class in
@@ -144,7 +145,7 @@ public class BoogieASTUtil {
         if (e instanceof ArrayAccessExpression) {
             final ArrayAccessExpression aae = (ArrayAccessExpression) e;
             final LeftHandSide lhs = getLHSforExpression(aae.getArray());
-            return new ArrayLHS(loc, aae.getType(), lhs, aae.getIndices());
+            return ExpressionFactory.constructNestedArrayLHS(loc, aae.getType(), lhs, aae.getIndices());
         }
         throw new IllegalArgumentException(
                 "Wrong implementation! This method is not intended to handle this argument!");

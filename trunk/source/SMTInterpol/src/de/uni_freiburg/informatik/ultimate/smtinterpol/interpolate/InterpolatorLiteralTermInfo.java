@@ -49,9 +49,19 @@ public class InterpolatorLiteralTermInfo {
 	private boolean mIsLAEquality;
 
 	/**
-	 * The type of this literal, true if it represents a Bound constraint
+	 * The type of this literal, true if it represents a bound constraint
 	 */
 	private boolean mIsBoundConstraint;
+
+	/**
+	 * Is the bound constraint strict?
+	 */
+	private boolean mIsStrict;
+
+	/**
+	 * If this literal is a CC equality, then this contains the ApplicationTerm (= lhs rhs)
+	 */
+	private ApplicationTerm mCCEquality;
 
 	/**
 	 * The linear variable of this LA literal
@@ -86,25 +96,36 @@ public class InterpolatorLiteralTermInfo {
 	 * Collect information about this literal which is needed during interpolation
 	 */
 	public void computeLiteralTermInfo(final Term term) {
-		Term literal = term;
-		if (term instanceof AnnotatedTerm) {
-			literal = ((AnnotatedTerm) term).getSubterm();
-		}
-		mAtom = computeAtom(literal);
-		if (literal instanceof ApplicationTerm && ((ApplicationTerm) literal).getFunction().getName().equals("not")) {
+		Term atom = term;
+		String annot = null;
+		// Get the underlying atom
+		if (atom instanceof ApplicationTerm && ((ApplicationTerm) atom).getFunction().getName().equals("not")) {
 			mIsNegated = true;
+			atom = ((ApplicationTerm) atom).getParameters()[0];
 		}
-		mIsCCEquality = isCCEquality(mAtom);
-		mIsLAEquality = isLAEquality(mAtom);
-		mIsBoundConstraint = isBoundConstraint(mAtom);
+		// Annotations can be inside negations
+		if (atom instanceof AnnotatedTerm) {
+			assert ((AnnotatedTerm) atom).getAnnotations().length == 1;
+			annot = ((AnnotatedTerm) atom).getAnnotations()[0].getKey();
+		}
+		mAtom = atom;
+		mIsCCEquality = annot == ":quotedCC";
+		Term unquoted = mAtom instanceof AnnotatedTerm ? ((AnnotatedTerm) atom).getSubterm() : mAtom;
+		mIsBoundConstraint = isBoundConstraint(unquoted);
+		mIsLAEquality = annot == ":quotedLA" && !mIsBoundConstraint;
 
 		if (mIsLAEquality || mIsBoundConstraint) {
-			final InterpolatorAffineTerm lv = computeLinVarAndBound(mAtom);
+			final InterpolatorAffineTerm lv = computeLinVarAndBound(unquoted);
 			assert lv.getConstant().mEps == 0;
+			if (mIsBoundConstraint) {
+				mIsStrict = isStrict(unquoted);
+			}
 			mBound = lv.getConstant().negate().mA;
 			mLinVar = lv.add(mBound);
 			mIsInt = mLinVar.isInt();
-			mEpsilon = computeEpsilon(mAtom);
+			mEpsilon = computeEpsilon(unquoted);
+		} else if (mIsCCEquality) {
+			mCCEquality = (ApplicationTerm) ((AnnotatedTerm) atom).getSubterm();
 		}
 	}
 
@@ -120,18 +141,6 @@ public class InterpolatorLiteralTermInfo {
 			inner = ((AnnotatedTerm) inner).getSubterm();
 		}
 		return inner;
-	}
-
-	/**
-	 * Check if this atom is a CC equality.
-	 */
-	private boolean isCCEquality(final Term atom) {
-		if (atom instanceof ApplicationTerm && ((ApplicationTerm) atom).getFunction().isIntern()) {
-			if (((ApplicationTerm) atom).getFunction().getName().equals("=")) {
-				return !isLAEquality(atom);
-			}
-		}
-		return false;
 	}
 
 	/**
@@ -153,7 +162,7 @@ public class InterpolatorLiteralTermInfo {
 	/**
 	 * Check if this atom is a bound constraint
 	 */
-	private Boolean isBoundConstraint(final Term atom) {
+	private boolean isBoundConstraint(final Term atom) {
 		if (!(atom instanceof ApplicationTerm)) {
 			return false;
 		}
@@ -162,10 +171,18 @@ public class InterpolatorLiteralTermInfo {
 	}
 
 	/**
+	 * Check if a bound constraint is strict
+	 */
+	private boolean isStrict(final Term atom) {
+		assert mIsBoundConstraint;
+		final String func = ((ApplicationTerm) atom).getFunction().getName();
+		return func.equals("<");
+	}
+
+	/**
 	 * For an LA equality or bound constraint, get the linear variable.
 	 */
-	private InterpolatorAffineTerm computeLinVarAndBound(final Term laTerm) {
-		final Term laAtom = computeAtom(laTerm);
+	private InterpolatorAffineTerm computeLinVarAndBound(final Term laAtom) {
 		final Term[] params = ((ApplicationTerm) laAtom).getParameters();
 		final Term varTerm = params[0];
 
@@ -210,6 +227,14 @@ public class InterpolatorLiteralTermInfo {
 
 	public boolean isBoundConstraint() {
 		return mIsBoundConstraint;
+	}
+
+	public boolean isStrict() {
+		return mIsStrict;
+	}
+
+	public ApplicationTerm getEquality() {
+		return mCCEquality;
 	}
 
 	public InterpolatorAffineTerm getLinVar() {

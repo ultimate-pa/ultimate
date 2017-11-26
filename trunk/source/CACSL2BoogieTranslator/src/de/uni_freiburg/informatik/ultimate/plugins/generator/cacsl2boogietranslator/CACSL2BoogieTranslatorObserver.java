@@ -40,7 +40,6 @@ import java.util.Set;
 
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
-import org.eclipse.cdt.core.parser.util.ASTPrinter;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieAstCopier;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
@@ -52,7 +51,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.M
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UndeclaredFunctionException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.svcomp.SvComp14MainDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.WrapperNode;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ExceptionOrErrorResult;
@@ -61,7 +59,6 @@ import de.uni_freiburg.informatik.ultimate.core.lib.results.UnsupportedSyntaxRes
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
-import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
@@ -71,7 +68,6 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode.ACSLSourceLocatio
 import de.uni_freiburg.informatik.ultimate.model.acsl.LTLPrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.GlobalLTLInvariant;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness.CorrectnessWitnessExtractor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness.ExtractedWitnessInvariant;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessGraphAnnotation;
@@ -166,28 +162,9 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 
 	private void doTranslation() {
 		// translate to Boogie
-		final Dispatcher main;
-		final IPreferenceProvider prefs = mService.getPreferenceProvider(Activator.PLUGIN_ID);
-		TranslationMode mode = TranslationMode.BASE;
-		try {
-			mode = prefs.getEnum(CACSLPreferenceInitializer.LABEL_MODE, TranslationMode.class);
-		} catch (final Exception e) {
-			throw new IllegalArgumentException("Unable to determine preferred mode.");
-		}
 		final CACSL2BoogieBacktranslator backtranslator = new CACSL2BoogieBacktranslator(mService);
-		mLogger.info("Settings: " + mode);
-		switch (mode) {
-		case BASE:
-			main = new MainDispatcher(backtranslator, mWitnessInvariants, mService, mLogger,
-						mInputDecorator.getSymbolTable());
-			break;
-		case SV_COMP14:
-			main = new SvComp14MainDispatcher(backtranslator, mWitnessInvariants, mService, mLogger,
-						mInputDecorator.getSymbolTable());
-			break;
-		default:
-			throw new IllegalArgumentException("Unknown mode.");
-		}
+		final Dispatcher main = new MainDispatcher(backtranslator, mWitnessInvariants, mService, mLogger, 
+				mInputDecorator.getSymbolTable());
 		mStorage.putStorable(IdentifierMapping.getStorageKey(), new IdentifierMapping<String, String>());
 
 		// For now this only knows ONE root node. This needs to be solved

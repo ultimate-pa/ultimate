@@ -4,27 +4,27 @@
  * Copyright (C) 2015 Oleksii Saukh (saukho@informatik.uni-freiburg.de)
  * Copyright (C) 2015 Stefan Wissert
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE CACSL2BoogieTranslator plug-in.
- * 
+ *
  * The ULTIMATE CACSL2BoogieTranslator plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE CACSL2BoogieTranslator plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE CACSL2BoogieTranslator plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE CACSL2BoogieTranslator plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission
  * to convey the resulting work.
  */
 /**
@@ -84,6 +84,10 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.SymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.FunctionHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.InitializationHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.StructHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
@@ -104,14 +108,14 @@ public interface ICHandler extends IHandler {
 
 	/**
      * Holds the variables for the different scopes in a c program.
-     * 
+     *
      * @return the variables in scopes.
      */
     public SymbolTable getSymbolTable();
 
     /**
      * Setter for the ACSL contract.
-     * 
+     *
      * @param rc
      *            the contract to set, null to mark contract as handled.
      */
@@ -122,7 +126,7 @@ public interface ICHandler extends IHandler {
      * according the value in pointerOps.
      * Also in case the flag putOnHeap is set -- which is the case for our special
      * HeapVariables.
-     * 
+     *
      * @param main
      *            a reference to the main Dispatcher.
      * @param pointerOps
@@ -138,7 +142,7 @@ public interface ICHandler extends IHandler {
 
     /**
      * Translates an IASTTranslationUnit.
-     * 
+     *
      * @param main
      *            a reference to the main dispatcher
      * @param node
@@ -151,7 +155,7 @@ public interface ICHandler extends IHandler {
 
     /**
      * Translates an IASTFunctionDefinition.
-     * 
+     *
      * @param main
      *            a reference to the main dispatcher
      * @param node
@@ -162,7 +166,7 @@ public interface ICHandler extends IHandler {
 
     /**
      * Translates an IASTCompundStatement.
-     * 
+     *
      * @param main
      *            a reference to the main dispatcher
      * @param node
@@ -173,7 +177,7 @@ public interface ICHandler extends IHandler {
 
     /**
      * Translates an IASTSimpleDeclaration.
-     * 
+     *
      * @param main
      *            a reference to the main dispatcher
      * @param node
@@ -184,7 +188,7 @@ public interface ICHandler extends IHandler {
 
     /**
      * Translates an IASTParameterDeclaration.
-     * 
+     *
      * @param main
      *            a reference to the main dispatcher
      * @param node
@@ -195,7 +199,7 @@ public interface ICHandler extends IHandler {
 
     /**
      * Translates an IASTDeclarator.
-     * 
+     *
      * @param main
      *            a reference to the main dispatcher
      * @param node
@@ -206,7 +210,7 @@ public interface ICHandler extends IHandler {
 
     /**
      * Translates an IASTLiteralExpression.
-     * 
+     *
      * @param main
      *            a reference to the main dispatcher
      * @param node
@@ -217,7 +221,7 @@ public interface ICHandler extends IHandler {
 
     /**
      * Translates an IASTIdExpression.
-     * 
+     *
      * @param main
      *            a reference to the main dispatcher
      * @param node
@@ -228,7 +232,7 @@ public interface ICHandler extends IHandler {
 
     /**
      * Translates an IASTUnaryExpression.
-     * 
+     *
      * @param main
      *            a reference to the main dispatcher
      * @param node
@@ -239,7 +243,7 @@ public interface ICHandler extends IHandler {
 
     /**
      * Translates an IASTBinaryExpression.
-     * 
+     *
      * @param main
      *            a reference to the main dispatcher
      * @param node
@@ -250,7 +254,7 @@ public interface ICHandler extends IHandler {
 
     /**
      * Translates an IASTEqualsInitializer.
-     * 
+     *
      * @param main
      *            a reference to the main dispatcher
      * @param node
@@ -261,7 +265,7 @@ public interface ICHandler extends IHandler {
 
     /**
      * Translates an IASTDeclarationStatement.
-     * 
+     *
      * @param main
      *            a reference to the main dispatcher
      * @param node
@@ -272,7 +276,7 @@ public interface ICHandler extends IHandler {
 
     /**
      * Translates an IASTReturnStatement.
-     * 
+     *
      * @param main
      *            a reference to the main dispatcher
      * @param node
@@ -283,7 +287,7 @@ public interface ICHandler extends IHandler {
 
     /**
      * Translates an IASTExpressionStatement.
-     * 
+     *
      * @param main
      *            a reference to the main dispatcher
      * @param node
@@ -294,7 +298,7 @@ public interface ICHandler extends IHandler {
 
     /**
      * Translates an IASTIfStatement.
-     * 
+     *
      * @param main
      *            a reference to the main dispatcher
      * @param node
@@ -305,7 +309,7 @@ public interface ICHandler extends IHandler {
 
     /**
      * Translates an IASTWhileStatement.
-     * 
+     *
      * @param main
      *            a reference to the main dispatcher
      * @param node
@@ -316,7 +320,7 @@ public interface ICHandler extends IHandler {
 
     /**
      * Translates an IASTForStatement.
-     * 
+     *
      * @param main
      *            a reference to the main dispatcher
      * @param node
@@ -327,7 +331,7 @@ public interface ICHandler extends IHandler {
 
     /**
      * Translates an IASTDoStatement.
-     * 
+     *
      * @param main
      *            a reference to the main dispatcher
      * @param node
@@ -337,10 +341,10 @@ public interface ICHandler extends IHandler {
     public Result visit(Dispatcher main, IASTDoStatement node);
 
 	public Result visit(Dispatcher main, IASTContinueStatement cs);
-	
+
     /**
      * Translates an IASTExpressionList.
-     * 
+     *
      * @param main
      *            a reference to the main dispatcher
      * @param node
@@ -351,7 +355,7 @@ public interface ICHandler extends IHandler {
 
     /**
      * Translates an IASTFunctionCallExpression.
-     * 
+     *
      * @param main
      *            a reference to the main dispatcher
      * @param node
@@ -362,7 +366,7 @@ public interface ICHandler extends IHandler {
 
     /**
      * Translates an IASTBreakStatement.
-     * 
+     *
      * @param main
      *            a reference to the main dispatcher
      * @param node
@@ -373,7 +377,7 @@ public interface ICHandler extends IHandler {
 
     /**
      * Translates an CASTNullStatement.
-     * 
+     *
      * @param main
      *            a reference to the main dispatcher
      * @param node
@@ -384,7 +388,7 @@ public interface ICHandler extends IHandler {
 
     /**
      * Handles an IASTSwitchStatement.
-     * 
+     *
      * @param main
      *            a reference to the main dispatcher
      * @param node
@@ -395,7 +399,7 @@ public interface ICHandler extends IHandler {
 
     /**
      * Handles an IASTCaseStatement.
-     * 
+     *
      * @param main
      *            a reference to the main dispatcher
      * @param node
@@ -406,7 +410,7 @@ public interface ICHandler extends IHandler {
 
     /**
      * Handles an IASTDefaultStatement.
-     * 
+     *
      * @param main
      *            a reference to the main dispatcher
      * @param node
@@ -417,7 +421,7 @@ public interface ICHandler extends IHandler {
 
     /**
      * Handles an IASTLabelStatement.
-     * 
+     *
      * @param main
      *            a reference to the main dispatcher
      * @param node
@@ -428,7 +432,7 @@ public interface ICHandler extends IHandler {
 
     /**
      * Handles an IASTGotoStatement.
-     * 
+     *
      * @param main
      *            a reference to the main dispatcher
      * @param node
@@ -439,7 +443,7 @@ public interface ICHandler extends IHandler {
 
     /**
      * Handles an IASTCastExpression.
-     * 
+     *
      * @param main
      *            a reference to the main dispatcher
      * @param node
@@ -450,7 +454,7 @@ public interface ICHandler extends IHandler {
 
     /**
      * Handles an IASTConditionalExpression.
-     * 
+     *
      * @param main
      *            a reference to the main dispatcher
      * @param node
@@ -458,10 +462,10 @@ public interface ICHandler extends IHandler {
      * @return a result object
      */
 	public Result visit(Dispatcher main, IASTConditionalExpression node);
-    
+
     /**
      * Handles an IASTInitializerList.
-     * 
+     *
      * @param main
      *            a reference to the main dispatcher
      * @param node
@@ -472,7 +476,7 @@ public interface ICHandler extends IHandler {
 
     /**
      * Handles an IASTArraySubscriptExpression.
-     * 
+     *
      * @param main
      *            a reference to the main dispatcher
      * @param node
@@ -483,7 +487,7 @@ public interface ICHandler extends IHandler {
 
     /**
      * Handles an IASTInitializerClause.
-     * 
+     *
      * @param main
      *            a reference to the main dispatcher
      * @param node
@@ -494,7 +498,7 @@ public interface ICHandler extends IHandler {
 
     /**
      * Handles an IASTFieldReference (e.g. array field).
-     * 
+     *
      * @param main
      *            a reference to the main dispatcher
      * @param node
@@ -505,7 +509,7 @@ public interface ICHandler extends IHandler {
 
     /**
      * Handles an CASTDesignatedInitializer (e.g. struct initializer).
-     * 
+     *
      * @param main
      *            a reference to the main dispatcher
      * @param node
@@ -516,7 +520,7 @@ public interface ICHandler extends IHandler {
 
     /**
      * Handles an IASTProblemStatement.
-     * 
+     *
      * @param main
      *            a reference to the main dispatcher
      * @param node
@@ -527,7 +531,7 @@ public interface ICHandler extends IHandler {
 
     /**
      * Handles an IASTProblemDeclaration.
-     * 
+     *
      * @param main
      *            a reference to the main dispatcher
      * @param node
@@ -538,7 +542,7 @@ public interface ICHandler extends IHandler {
 
     /**
      * Handles an IASTProblemExpression.
-     * 
+     *
      * @param main
      *            a reference to the main dispatcher
      * @param node
@@ -549,7 +553,7 @@ public interface ICHandler extends IHandler {
 
     /**
      * Handles an IASTProblem.
-     * 
+     *
      * @param main
      *            a reference to the main dispatcher
      * @param node
@@ -560,7 +564,7 @@ public interface ICHandler extends IHandler {
 
     /**
      * Handles an IASTProblemTypeId.
-     * 
+     *
      * @param main
      *            a reference to the main dispatcher
      * @param node
@@ -571,7 +575,7 @@ public interface ICHandler extends IHandler {
 
     /**
      * Handles an IASTPointer.
-     * 
+     *
      * @param main
      *            a reference to the main dispatcher
      * @param node
@@ -582,7 +586,7 @@ public interface ICHandler extends IHandler {
 
     /**
      * Handles an IASTTypeIdExpression.
-     * 
+     *
      * @param main
      *            a reference to the main dispatcher
      * @param node
@@ -590,10 +594,10 @@ public interface ICHandler extends IHandler {
      * @return a result object
      */
     public Result visit(Dispatcher main, IASTTypeIdExpression node);
-    
-    
+
+
     public Result visit(Dispatcher main, IGNUASTCompoundStatementExpression node);
-    
+
     /**
      * central methods for beginning a scope in all necessary ScopedThings
      * (f.i. symbolTable,..)
@@ -615,8 +619,8 @@ public interface ICHandler extends IHandler {
 
 	/**
 	 * Modifies a given {@link ExpressionResult} such that the effect of
-	 * a cast from the current {@link CType} of the {@link ExpressionResult} 
-	 * to resultType is captured. 
+	 * a cast from the current {@link CType} of the {@link ExpressionResult}
+	 * to resultType is captured.
 	 * Method may exchange the {@link RValue} of the  {@link ExpressionResult}
 	 * and add additional objects (statements, auxVars, etc.).
 	 */
@@ -627,6 +631,14 @@ public interface ICHandler extends IHandler {
 	UnsignedTreatment getUnsignedTreatment();
 
 	FunctionHandler getFunctionHandler();
+
+	public MemoryHandler getMemoryHandler();
+
+	public TypeSizeAndOffsetComputer getTypeSizeAndOffsetComputer();
+
+	public ExpressionTranslation getExpressionTranslation();
+
+	public StructHandler getStructHandler();
 
 //	public ResultExpression initVar(ILocation loc, Dispatcher main,
 //			LRValue lrVal, CType underlyingFieldType,

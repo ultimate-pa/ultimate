@@ -50,10 +50,12 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalDomainState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.CallInfoCache;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.CallInfoCache.CallInfo;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlockFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -74,7 +76,9 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Ic
 
 	public OctPostOperator(final ILogger logger, final BoogieSymbolTable symbolTable, final CfgSmtToolkit cfgSmtToolkit,
 			final int maxParallelStates, final boolean fallbackAssignIntervalProjection,
-			final IBoogieSymbolTableVariableProvider bpl2smtSymbolTable) {
+			final IBoogieSymbolTableVariableProvider bpl2smtSymbolTable,
+			final IAbstractPostOperator<IntervalDomainState, IcfgEdge> fallBackPostOperator,
+			final CodeBlockFactory codeBlockFactory) {
 		if (maxParallelStates < 1) {
 			throw new IllegalArgumentException("MaxParallelStates needs to be > 0, was " + maxParallelStates);
 		}
@@ -88,7 +92,8 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Ic
 		mHavocBundler = new HavocBundler();
 		mExprTransformer = new ExpressionTransformer(bpl2smtSymbolTable);
 		mStatementProcessor = new OctStatementProcessor(this);
-		mAssumeProcessor = new OctAssumeProcessor(this);
+		mAssumeProcessor =
+				new OctAssumeProcessor(mLogger, this, fallBackPostOperator, codeBlockFactory, bpl2smtSymbolTable);
 		mCallInfoCache = new CallInfoCache(cfgSmtToolkit, symbolTable);
 	}
 
@@ -183,7 +188,7 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Ic
 		final IcfgEdge transitionLabel = edge.getLabel();
 
 		// TODO fix WORKAROUND unsoundness for summary code blocks without procedure implementation
-		if (transitionLabel instanceof Summary && !((Summary) edge).calledProcedureHasImplementation()) {
+		if (transitionLabel instanceof Summary && !((Summary) transitionLabel).calledProcedureHasImplementation()) {
 			throw new UnsupportedOperationException("Summary for procedure without implementation");
 		} else if (transitionLabel instanceof Call) {
 			return applyCall(oldState, oldState, (Call) transitionLabel);
@@ -234,7 +239,7 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Ic
 
 		tmpStates = deepCopy(tmpStates);
 		final AssignmentStatement invarAssign = callInfo.getInParamAssign();
-		final AssignmentStatement oldvarAssign = callInfo.getOldVarAssign();
+		final AssignmentStatement oldvarAssign = callInfo.getOldVarAssign(stateAfterCall.getVariables());
 		if (invarAssign != null) {
 			for (int i = 0; i < invarAssign.getRhs().length; ++i) {
 				tmpStates = mStatementProcessor.processSingleAssignment(callInfo.getTempInParams().get(i),

@@ -55,6 +55,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.HoareTripleCheckerStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
@@ -79,6 +81,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
 public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE>, ACTION extends IIcfgTransition<?>>
 		implements IHoareTripleChecker {
 
+	private static final boolean ACCEPT_REJECTION_DUE_TO_IMPRECISION = true;
 	private static final String MSG_BOTTOM_WAS_LOST = "Bottom was lost";
 	private static final String MSG_IS_SUBSET_OF_IS_UNSOUND = "isSubsetOf is unsound";
 	private static final String MSG_TRACKED_VARIABLES_DIFFER = "Tracked variables differ";
@@ -144,7 +147,7 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE>, ACTIO
 			return sdResult;
 		}
 		final Validity absIntResult = checkInternalAbsInt(prePred, act, succPred);
-		if (isFinalResult(absIntResult)) {
+		if (absIntResult == Validity.VALID) {
 			return absIntResult;
 		}
 		final Validity result = mHtcSmt.checkInternal(prePred, act, succPred);
@@ -163,7 +166,7 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE>, ACTIO
 			return sdResult;
 		}
 		final Validity absIntResult = checkCallAbsInt(prePred, act, succPred);
-		if (isFinalResult(absIntResult)) {
+		if (absIntResult == Validity.VALID) {
 			return absIntResult;
 		}
 		final Validity result = mHtcSmt.checkCall(prePred, act, succPred);
@@ -182,7 +185,7 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE>, ACTIO
 			return sdResult;
 		}
 		final Validity absIntResult = checkReturnAbsInt(preLinPred, preHierPred, act, succPred);
-		if (isFinalResult(absIntResult)) {
+		if (absIntResult == Validity.VALID) {
 			return absIntResult;
 		}
 		final Validity result = mHtcSmt.checkReturn(preLinPred, preHierPred, act, succPred);
@@ -463,6 +466,8 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE>, ACTIO
 		final Set<IProgramVarOrConst> requiredVars = new HashSet<>();
 		requiredVars.addAll(getVars(action));
 		requiredVars.addAll(succ.getVariables());
+		requiredVars.addAll(getMissingOldVars(requiredVars));
+
 		final Set<IProgramVarOrConst> preVars = validPreState.getVariables();
 		final Set<IProgramVarOrConst> toRemove = DataStructureUtils.difference(preVars, requiredVars);
 
@@ -472,6 +477,20 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE>, ACTIO
 		}
 
 		return validPreState.removeVariables(toRemove);
+	}
+
+	private Set<IProgramVarOrConst> getMissingOldVars(final Set<IProgramVarOrConst> requiredVars) {
+		final Set<IProgramVarOrConst> missingOldVars = new HashSet<>();
+		for (final IProgramVarOrConst requiredVar : requiredVars) {
+			if (requiredVar.isGlobal()) {
+				if (requiredVar instanceof IProgramNonOldVar) {
+					missingOldVars.add(((IProgramNonOldVar) requiredVar).getOldVar());
+				} else if (requiredVar instanceof IProgramOldVar) {
+					missingOldVars.add(((IProgramOldVar) requiredVar).getNonOldVar());
+				}
+			}
+		}
+		return missingOldVars;
 	}
 
 	private DisjunctiveAbstractState<STATE> createValidPostOpStateBeforeLeaving(final ACTION act,
@@ -536,6 +555,12 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE>, ACTIO
 			mLogger.debug("HTC assert ok");
 			return true;
 		}
+		if (result == Validity.INVALID && checkedResult == Validity.VALID) {
+			mLogger.warn("Rejecting Hoare triple although it is actually valid (Domain " + mDomain.domainDescription()
+					+ ")");
+			return ACCEPT_REJECTION_DUE_TO_IMPRECISION;
+		}
+
 		mLogger.fatal("Check was " + result + " but should have been " + checkedResult);
 
 		if (precondHier == null) {

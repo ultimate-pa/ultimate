@@ -35,7 +35,7 @@ def parsexml(filename):
     currentunsound = set()
 
     for run in root.findall('run'):
-        testFilename = run.get('files').split("/")[5].split("]")[0];
+        testFilename = run.get('files').split("/")[4].split("]")[0];
         for column in run.iter('column'):
             key = column.get('title')
             value = column.get('value')

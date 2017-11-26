@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.compound;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractDomain;
@@ -83,5 +84,16 @@ public class CompoundDomain implements IAbstractDomain<CompoundDomainState, Icfg
 			mPostOperator = new CompoundDomainPostOperator(mServices, mRootAnnotation);
 		}
 		return mPostOperator;
+	}
+
+	@Override
+	public String domainDescription() {
+		final StringBuilder stringBuilder = new StringBuilder();
+		stringBuilder.append(IAbstractDomain.super.domainDescription());
+		stringBuilder.append(" [");
+		stringBuilder.append(
+				mDomainList.stream().map(domain -> domain.domainDescription()).collect(Collectors.joining(", ")));
+		stringBuilder.append("]");
+		return stringBuilder.toString();
 	}
 }

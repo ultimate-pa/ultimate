@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PreprocessorAnnotation;
@@ -54,6 +55,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.IcfgAbstractStateStorageProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgDebugHelper;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgVariableProvider;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.array.ArrayDomain;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.array.ArrayDomainPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.compound.CompoundDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.compound.CompoundDomainPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.empty.EmptyDomain;
@@ -133,41 +136,71 @@ public class FixpointEngineParameterFactory {
 		final String selectedDomain = prefs.getString(AbsIntPrefInitializer.LABEL_ABSTRACT_DOMAIN);
 		final ILogger logger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 
-		if (EmptyDomain.class.getSimpleName().equals(selectedDomain)) {
-			return new EmptyDomain<>();
-		} else if (SignDomain.class.getSimpleName().equals(selectedDomain)) {
-			return new SignDomain(mServices, mBoogieIcfg, mSymbolTable, mVariableProvider);
-		} else if (IntervalDomain.class.getSimpleName().equals(selectedDomain)) {
-			return new IntervalDomain(logger, mSymbolTable, mLiteralCollector.create().getLiteralCollection(),
-					mServices, mBoogieIcfg, mVariableProvider);
-		} else if (OctagonDomain.class.getSimpleName().equals(selectedDomain)) {
-			return new OctagonDomain(logger, mSymbolTable, mLiteralCollector, mServices, mBoogieIcfg,
-					mVariableProvider);
-		} else if (CongruenceDomain.class.getSimpleName().equals(selectedDomain)) {
-			return new CongruenceDomain(logger, mServices, mSymbolTable, mBoogieIcfg, mVariableProvider);
+		final IAbstractDomain<?, IcfgEdge> domain = getFlatDomainOrNull(selectedDomain, logger);
+		if (domain != null) {
+			return domain;
+		}
+
+		if (ArrayDomain.class.getSimpleName().equals(selectedDomain)) {
+			final String subDomainName = prefs.getString(ArrayDomainPreferences.LABEL_ABSTRACT_DOMAIN);
+			final IAbstractDomain<?, IcfgEdge> subDomain;
+			if (CompoundDomain.class.getSimpleName().equals(subDomainName)) {
+				subDomain = createCompoundDomain(prefs, logger);
+			} else {
+				subDomain = getFlatDomainOrFail(subDomainName, logger);
+			}
+			return new ArrayDomain<>(subDomain, mBoogieIcfg, mServices, mSymbolTable);
 		} else if (CompoundDomain.class.getSimpleName().equals(selectedDomain)) {
-			@SuppressWarnings("rawtypes")
-			final List<IAbstractDomain> domainList = new ArrayList<>();
-			if (prefs.getBoolean(CompoundDomainPreferences.LABEL_USE_EMPTY_DOMAIN)) {
-				domainList.add(new EmptyDomain<>());
-			}
-			if (prefs.getBoolean(CompoundDomainPreferences.LABEL_USE_SIGN_DOMAIN)) {
-				domainList.add(new SignDomain(mServices, mBoogieIcfg, mSymbolTable, mVariableProvider));
-			}
-			if (prefs.getBoolean(CompoundDomainPreferences.LABEL_USE_CONGRUENCE_DOMAIN)) {
-				domainList.add(new CongruenceDomain(logger, mServices, mSymbolTable, mBoogieIcfg, mVariableProvider));
-			}
-			if (prefs.getBoolean(CompoundDomainPreferences.LABEL_USE_INTERVAL_DOMAIN)) {
-				domainList.add(new IntervalDomain(logger, mSymbolTable,
-						mLiteralCollector.create().getLiteralCollection(), mServices, mBoogieIcfg, mVariableProvider));
-			}
-			if (prefs.getBoolean(CompoundDomainPreferences.LABEL_USE_OCTAGON_DOMAIN)) {
-				domainList.add(new OctagonDomain(logger, mSymbolTable, mLiteralCollector, mServices, mBoogieIcfg,
-						mVariableProvider));
-			}
-			return new CompoundDomain(mServices, domainList, mBoogieIcfg);
+			return createCompoundDomain(prefs, logger);
 		}
 		throw new UnsupportedOperationException(getFailureString(selectedDomain));
+	}
+
+	private IAbstractDomain<?, IcfgEdge> createCompoundDomain(final IPreferenceProvider prefs, final ILogger logger) {
+		final List<String> domainNames = new ArrayList<>();
+		if (prefs.getBoolean(CompoundDomainPreferences.LABEL_USE_EMPTY_DOMAIN)) {
+			domainNames.add(EmptyDomain.class.getSimpleName());
+		}
+		if (prefs.getBoolean(CompoundDomainPreferences.LABEL_USE_SIGN_DOMAIN)) {
+			domainNames.add(SignDomain.class.getSimpleName());
+		}
+		if (prefs.getBoolean(CompoundDomainPreferences.LABEL_USE_CONGRUENCE_DOMAIN)) {
+			domainNames.add(CongruenceDomain.class.getSimpleName());
+		}
+		if (prefs.getBoolean(CompoundDomainPreferences.LABEL_USE_INTERVAL_DOMAIN)) {
+			domainNames.add(IntervalDomain.class.getSimpleName());
+		}
+		if (prefs.getBoolean(CompoundDomainPreferences.LABEL_USE_OCTAGON_DOMAIN)) {
+			domainNames.add(OctagonDomain.class.getSimpleName());
+		}
+		return new CompoundDomain(mServices,
+				domainNames.stream().map(a -> getFlatDomainOrFail(a, logger)).collect(Collectors.toList()),
+				mBoogieIcfg);
+	}
+
+	private IAbstractDomain<?, IcfgEdge> getFlatDomainOrNull(final String domainName, final ILogger logger) {
+		if (EmptyDomain.class.getSimpleName().equals(domainName)) {
+			return new EmptyDomain<>();
+		} else if (SignDomain.class.getSimpleName().equals(domainName)) {
+			return new SignDomain(mServices, mBoogieIcfg, mSymbolTable, mVariableProvider);
+		} else if (IntervalDomain.class.getSimpleName().equals(domainName)) {
+			return new IntervalDomain(logger, mSymbolTable, mLiteralCollector.create().getLiteralCollection(),
+					mServices, mBoogieIcfg, mVariableProvider);
+		} else if (OctagonDomain.class.getSimpleName().equals(domainName)) {
+			return new OctagonDomain(logger, mSymbolTable, mLiteralCollector, mServices, mBoogieIcfg,
+					mVariableProvider);
+		} else if (CongruenceDomain.class.getSimpleName().equals(domainName)) {
+			return new CongruenceDomain(logger, mServices, mSymbolTable, mBoogieIcfg, mVariableProvider);
+		}
+		return null;
+	}
+
+	private IAbstractDomain<?, IcfgEdge> getFlatDomainOrFail(final String domainName, final ILogger logger) {
+		final IAbstractDomain<?, IcfgEdge> rtr = getFlatDomainOrNull(domainName, logger);
+		if (rtr == null) {
+			throw new UnsupportedOperationException(getFailureString(domainName));
+		}
+		return rtr;
 	}
 
 	/**

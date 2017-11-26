@@ -30,8 +30,13 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieVisitor;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
@@ -40,10 +45,20 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IfThenElseExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPostOperator;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieSymbolTableVariableProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalDomainState;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalPostOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.typeutils.TypeUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlockFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence.Origin;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -55,9 +70,19 @@ public class OctAssumeProcessor {
 
 	/** Post operator. */
 	private final OctPostOperator mPostOp;
+	private final ILogger mLogger;
+	private final IAbstractPostOperator<IntervalDomainState, IcfgEdge> mIntervalPostOperator;
+	private final CodeBlockFactory mCodeBlockFactory;
+	private final IBoogieSymbolTableVariableProvider mVariableProvider;
 
-	public OctAssumeProcessor(final OctPostOperator postOperator) {
+	public OctAssumeProcessor(final ILogger logger, final OctPostOperator postOperator,
+			final IAbstractPostOperator<IntervalDomainState, IcfgEdge> fallBackPostOperator,
+			final CodeBlockFactory codeBlockFactory, final IBoogieSymbolTableVariableProvider variableProvider) {
 		mPostOp = postOperator;
+		mLogger = logger;
+		mIntervalPostOperator = fallBackPostOperator;
+		mCodeBlockFactory = codeBlockFactory;
+		mVariableProvider = variableProvider;
 	}
 
 	/**
@@ -277,15 +302,24 @@ public class OctAssumeProcessor {
 		final List<OctDomainState> newStates = new ArrayList<>();
 		final IfExpressionTree ifExprTree = mPostOp.getExprTransformer().removeIfExprsCached(binExpr);
 		for (final Pair<Expression, List<OctDomainState>> leaf : ifExprTree.assumeLeafs(mPostOp, oldStates)) {
-			newStates.addAll(
-					processNumericRelationWithoutIfs((BinaryExpression) leaf.getFirst(), isNegated, leaf.getSecond()));
+			newStates.addAll(processNumericRelationWithoutIfs(mLogger, (BinaryExpression) leaf.getFirst(), isNegated,
+					leaf.getSecond(), mVariableProvider, mIntervalPostOperator, mCodeBlockFactory));
 		}
 		return mPostOp.joinDownToMax(newStates);
 	}
 
-	/** @see #processNumericRelation(BinaryExpression, boolean, List) */
-	private List<OctDomainState> processNumericRelationWithoutIfs(final BinaryExpression binExpr,
-			final boolean isNegated, final List<OctDomainState> oldStates) {
+	/**
+	 * @param variableProvider
+	 * @param codeBlockFactory
+	 * @param fallBackPostOperator
+	 * @param octDomainStateFactory
+	 * @see #processNumericRelation(BinaryExpression, boolean, List)
+	 */
+	private List<OctDomainState> processNumericRelationWithoutIfs(final ILogger logger, final BinaryExpression binExpr,
+			final boolean isNegated, final List<OctDomainState> oldStates,
+			final IBoogieSymbolTableVariableProvider variableProvider,
+			final IAbstractPostOperator<IntervalDomainState, IcfgEdge> fallBackPostOperator,
+			final CodeBlockFactory codeBlockFactory) {
 
 		Operator relOp = binExpr.getOperator();
 		if (relOp == BinaryExpression.Operator.COMPPO) {
@@ -300,15 +334,26 @@ public class OctAssumeProcessor {
 		final AffineExpression affLeft = mPostOp.getExprTransformer().affineExprCached(left);
 		final AffineExpression affRight = mPostOp.getExprTransformer().affineExprCached(right);
 		if (affLeft == null || affRight == null) {
-			// TODO (?) project to intervals and try to deduce (assume false) or even new intervals
-			return oldStates; // safe over-approximation
+			// Construct a new binary expression with the correct operator (if negated or not, determined above).
+			final BinaryExpression boogieBinExp = new BinaryExpression(binExpr.getLoc(), binExpr.getType(), relOp,
+					binExpr.getLeft(), binExpr.getRight());
+			if (logger.isDebugEnabled()) {
+				logger.debug("Unable to handle expression " + BoogiePrettyPrinter.print(boogieBinExp)
+						+ " with Octagons (not affine). Projecting to intervals.");
+			}
+			final Set<IProgramVarOrConst> relevantVars =
+					new VariableCollector(binExpr, variableProvider).getVariables();
+
+			return projectAssumeOnIntervals(logger, oldStates, boogieBinExp, fallBackPostOperator, codeBlockFactory,
+					relevantVars);
 		}
 		assert left.getType().equals(right.getType());
 		final boolean intRelation = TypeUtils.isNumericInt(left.getType());
 		boolean strictRelation = false;
 		switch (relOp) {
 		case COMPEQ:
-			return processAffineEqZero(affLeft.subtract(affRight), intRelation, oldStates);
+			return processAffineEqZero(mLogger, affLeft.subtract(affRight), intRelation, oldStates, binExpr,
+					mIntervalPostOperator, mCodeBlockFactory);
 		case COMPNEQ:
 			return processAffineNeZero(affLeft.subtract(affRight), intRelation, oldStates);
 		case COMPLT:
@@ -403,10 +448,19 @@ public class OctAssumeProcessor {
 	 *            The operands/variables are integers.
 	 * @param oldStates
 	 *            Pre-states -- may be modified in-place.
+	 * @param codeBlockFactory
+	 *            The code block factory.
+	 * @param octDomainStateFactory
+	 *            The state factory to create new octagon states.
+	 * @param binExpr
+	 *            The original expression.
+	 * @param statement
 	 * @return Post-states
 	 */
-	private static List<OctDomainState> processAffineEqZero(AffineExpression affExpr, final boolean intRelation,
-			final List<OctDomainState> oldStates) {
+	private static List<OctDomainState> processAffineEqZero(final ILogger logger, AffineExpression affExpr,
+			final boolean intRelation, final List<OctDomainState> oldStates, final Expression originalExpression,
+			final IAbstractPostOperator<IntervalDomainState, IcfgEdge> fallBackPostOperator,
+			final CodeBlockFactory codeBlockFactory) {
 
 		if (affExpr.isConstant()) {
 			if (affExpr.getConstant().signum() != 0) {
@@ -415,12 +469,22 @@ public class OctAssumeProcessor {
 			}
 			// (assume 0 == 0) is equivalent to (assume true)
 			return oldStates;
-
 		}
 
+		final List<OctDomainState> nonBottomStates =
+				oldStates.stream().filter(state -> !state.isBottom()).collect(Collectors.toList());
+		if (nonBottomStates.isEmpty()) {
+			// If the list is empty, there were only bottom states in oldStates. Therefore, the expression cannot be
+			// assumed and bottom is returned.
+			return new ArrayList<>();
+		}
+
+		final AffineExpression backupExpr = affExpr;
 		if (affExpr.getCoefficients().size() > 2 || (affExpr = affExpr.unitCoefficientForm()) == null) {
-			// TODO: Deal with certain forms (project to intervalls?)
-			return oldStates;
+			logger.debug("Unable to handle affine expression " + backupExpr
+					+ " == 0 with Octagons. Projecting to intervals.");
+			return projectAssumeOnIntervals(logger, nonBottomStates, originalExpression, fallBackPostOperator,
+					codeBlockFactory, backupExpr.getCoefficients().keySet());
 		}
 
 		// from now on handle (affExpr - c == 0) as (affExpr == c) ----------------
@@ -431,26 +495,94 @@ public class OctAssumeProcessor {
 		}
 		affExpr = affExpr.withoutConstant();
 
-		AffineExpression.OneVarForm ovf;
-		AffineExpression.TwoVarForm tvf;
+		final AffineExpression.OneVarForm ovf;
+		final AffineExpression.TwoVarForm tvf;
+
+		// Apply the assume to all states that are not bottom and return the result.
 		if ((ovf = affExpr.getOneVarForm()) != null) {
 			final OctValue cOct = new OctValue(ovf.negVar ? c.negate() : c);
-			oldStates.forEach(state -> state.assumeNumericVarInterval(ovf.var, cOct, cOct));
-			return oldStates;
-
+			nonBottomStates.forEach(state -> state.assumeNumericVarInterval(ovf.var, cOct, cOct));
+			return nonBottomStates;
 		} else if ((tvf = affExpr.getTwoVarForm()) != null) {
 			final OctValue cOct = new OctValue(c);
 			final OctValue cOctNeg = new OctValue(c.negate());
-			oldStates.forEach(state -> state.assumeNumericVarRelationLeConstant(tvf.var1, tvf.negVar1, tvf.var2,
+			nonBottomStates.forEach(state -> state.assumeNumericVarRelationLeConstant(tvf.var1, tvf.negVar1, tvf.var2,
 					tvf.negVar2, cOct));
-			oldStates.forEach(state -> state.assumeNumericVarRelationLeConstant(tvf.var1, !tvf.negVar1, tvf.var2,
+			nonBottomStates.forEach(state -> state.assumeNumericVarRelationLeConstant(tvf.var1, !tvf.negVar1, tvf.var2,
 					!tvf.negVar2, cOctNeg));
-			return oldStates;
-
+			return nonBottomStates;
 		} else {
 			return oldStates; // safe over-approximation
-
 		}
+	}
+
+	/**
+	 * Projects a given expression on intervals, computes the interval post, and projects back on the original octagon
+	 * state in the hopes to deduce some more values.
+	 *
+	 * @param logger
+	 *            The logger.
+	 * @param oldStates
+	 *            The old {@link OctDomainState}s.
+	 * @param originalExpression
+	 *            The expression to assume.
+	 * @param fallBackPostOperator
+	 *            The post operator of the fall back domain, here an {@link IntervalPostOperator}.
+	 * @param codeBlockFactory
+	 *            The factory to construct code blocks.
+	 * @param octDomainStateFactory
+	 * @param backupExpr
+	 * @return
+	 */
+	private static List<OctDomainState> projectAssumeOnIntervals(final ILogger logger,
+			final List<OctDomainState> oldStates, final Expression originalExpression,
+			final IAbstractPostOperator<IntervalDomainState, IcfgEdge> fallBackPostOperator,
+			final CodeBlockFactory codeBlockFactory, final Set<IProgramVarOrConst> relevantVars) {
+		final List<IntervalDomainState> intervalStates = oldStates.stream().filter(state -> !state.isBottom())
+				.map(state -> IntervalProjection.projectOctagonStateToIntervalDomainState(logger, state))
+				.collect(Collectors.toList());
+
+		assert intervalStates.stream().noneMatch(state -> state
+				.isBottom()) : "At least one interval state became bottom during conversion. This should not happen";
+
+		// All oldstates are bottom
+		if (intervalStates.isEmpty()) {
+			return oldStates;
+		}
+
+		final AssumeStatement assume = new AssumeStatement(originalExpression.getLoc(), originalExpression);
+		final StatementSequence assumeBlock = codeBlockFactory.constructStatementSequence(null, null,
+				Collections.singletonList(assume), Origin.IMPLEMENTATION);
+		if (logger.isDebugEnabled()) {
+			logger.debug("Projection of current OctDomainState to Intervals: " + intervalStates);
+			logger.debug("Applying the following statement to each state: " + BoogiePrettyPrinter.print(assume));
+		}
+
+		final List<IntervalDomainState> computedIntervalPost = new ArrayList<>();
+		for (final IntervalDomainState iState : intervalStates) {
+			computedIntervalPost.addAll(fallBackPostOperator.apply(iState, assumeBlock));
+		}
+		if (logger.isDebugEnabled()) {
+			logger.debug("Resulting interval states: " + computedIntervalPost);
+			logger.debug("Projecting back to octagons.");
+		}
+
+		final List<OctDomainState> returnStates = new ArrayList<>();
+
+		for (final OctDomainState oldState : oldStates) {
+			for (final IntervalDomainState iState : computedIntervalPost) {
+				final OctDomainState newOld =
+						IntervalProjection.projectIntervalStateToOctagon(logger, iState, oldState, relevantVars);
+				if (newOld.isBottom()) {
+					returnStates.add(newOld);
+				} else {
+					returnStates.add(oldState.intersect(newOld));
+				}
+			}
+		}
+
+		logger.debug("Resulting octagon states: " + returnStates);
+		return returnStates;
 	}
 
 	/**
@@ -523,4 +655,36 @@ public class OctAssumeProcessor {
 		}
 	}
 
+	/**
+	 * Collects all variables of a given Boogie {@link Expression};
+	 *
+	 * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
+	 *
+	 */
+	private static class VariableCollector extends BoogieVisitor {
+		private final Set<IProgramVarOrConst> mVariables;
+		private final IBoogieSymbolTableVariableProvider mVariableProvider;
+
+		private VariableCollector(final Expression expression,
+				final IBoogieSymbolTableVariableProvider variableProvider) {
+			mVariables = new HashSet<>();
+			mVariableProvider = variableProvider;
+			processExpression(expression);
+		}
+
+		private Set<IProgramVarOrConst> getVariables() {
+			return mVariables;
+		}
+
+		@Override
+		protected void visit(final VariableLHS lhs) {
+			mVariables.add(mVariableProvider.getBoogieVar(lhs.getIdentifier(), lhs.getDeclarationInformation(), false));
+		}
+
+		@Override
+		protected void visit(final IdentifierExpression expr) {
+			mVariables
+					.add(mVariableProvider.getBoogieVar(expr.getIdentifier(), expr.getDeclarationInformation(), false));
+		}
+	}
 }

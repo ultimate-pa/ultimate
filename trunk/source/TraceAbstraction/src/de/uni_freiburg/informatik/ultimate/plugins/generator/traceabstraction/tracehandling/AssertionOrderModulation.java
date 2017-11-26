@@ -114,6 +114,7 @@ public class AssertionOrderModulation<LETTER> {
 		case Craig_NestedInterpolation:
 		case Craig_TreeInterpolation:
 			// for Craig interpolation only one result is working at the moment
+			mLogger.info("Craig nested/tree interpolation forces the following order");
 			return AssertCodeBlockOrder.NOT_INCREMENTALLY;
 		case ForwardPredicates:
 		case BackwardPredicates:

@@ -270,7 +270,7 @@ public class MainDispatcher extends Dispatcher {
 	public MainDispatcher(final CACSL2BoogieBacktranslator backtranslator,
 			final Map<IASTNode, ExtractedWitnessInvariant> witnessInvariants, final IUltimateServiceProvider services,
 			final ILogger logger, final MultiparseSymbolTable mst) {
-		super(backtranslator, services, logger, null, mst);
+		super(backtranslator, services, logger, null, new LinkedHashMap<>(), mst);
 		mBitvectorTranslation = getPreferences().getBoolean(CACSLPreferenceInitializer.LABEL_BITVECTOR_TRANSLATION);
 		mOverapproximateFloatingPointOperations =
 				getPreferences().getBoolean(CACSLPreferenceInitializer.LABEL_OVERAPPROXIMATE_FLOATS);
@@ -334,7 +334,8 @@ public class MainDispatcher extends Dispatcher {
 
 		final FunctionTableBuilder ftb = new FunctionTableBuilder();
 		tu.accept(ftb);
-		final PreRunner pr = new PreRunner(ftb.getFunctionTable());
+		mFunctionTable.putAll(ftb.getFunctionTable());
+		final PreRunner pr = new PreRunner(mFunctionTable);
 		tu.accept(pr);
 
 		mVariablesOnHeap.addAll(pr.getVarsForHeap());
@@ -352,7 +353,7 @@ public class MainDispatcher extends Dispatcher {
 		}
 
 		final PRDispatcher prd = new PRDispatcher(mBacktranslator, mServices, mLogger, mFunctionToIndex,
-				mReachableDeclarations, getLocationFactory(), mMultiparseTable);
+				mReachableDeclarations, getLocationFactory(), mFunctionTable, mMultiparseTable);
 		prd.init();
 		prd.dispatch(node);
 		mVariablesOnHeap.addAll(prd.getVariablesOnHeap());
@@ -368,7 +369,6 @@ public class MainDispatcher extends Dispatcher {
 
 	@Override
 	protected void init() {
-
 		mSideEffectHandler = new SideEffectHandler();
 		mTypeHandler = new TypeHandler(mBitvectorTranslation);
 		mAcslHandler = new ACSLHandler(mWitnessInvariants != null);
@@ -376,7 +376,7 @@ public class MainDispatcher extends Dispatcher {
 		mCHandler = new CHandler(this, mBacktranslator, true, mLogger, mTypeHandler, mBitvectorTranslation,
 				mOverapproximateFloatingPointOperations, mNameHandler, mMultiparseTable);
 		mBacktranslator.setExpressionTranslation(((CHandler) mCHandler).getExpressionTranslation());
-		mPreprocessorHandler = new PreprocessorHandler();
+		mPreprocessorHandler = new PreprocessorHandler(isSvcomp());
 		mReportWarnings = true;
 	}
 
@@ -557,7 +557,7 @@ public class MainDispatcher extends Dispatcher {
 			final ILocation loc = getLocationFactory().createCLocation(n);
 			if (result instanceof ExpressionResult) {
 				final ExpressionResult exprResult = (ExpressionResult) result;
-				final List<Statement> stmt = exprResult.stmt;
+				final List<Statement> stmt = exprResult.mStmt;
 				if (invariantBefore != null && !mNodeLabelsOfAddedWitnesses.contains(invariantBefore.getNodeLabels())) {
 					stmt.addAll(0, witnessInvariantsBefore);
 					mNodeLabelsOfAddedWitnesses.add(invariantBefore.getNodeLabels());
@@ -573,14 +573,14 @@ public class MainDispatcher extends Dispatcher {
 			} else if (result instanceof ExpressionListResult) {
 				final ExpressionListResult exlire = (ExpressionListResult) result;
 				if (invariantBefore != null && !mNodeLabelsOfAddedWitnesses.contains(invariantBefore.getNodeLabels())) {
-					final List<Statement> stmt = exlire.list.get(0).stmt;
+					final List<Statement> stmt = exlire.list.get(0).mStmt;
 					stmt.addAll(0, witnessInvariantsBefore);
 					mNodeLabelsOfAddedWitnesses.add(invariantBefore.getNodeLabels());
 					mLogger.warn("Checking witness invariant " + invariantBefore
 							+ " directly before the following code " + loc);
 				}
 				if (invariantAfter != null && !mNodeLabelsOfAddedWitnesses.contains(invariantAfter.getNodeLabels())) {
-					final List<Statement> stmt = exlire.list.get(exlire.list.size() - 1).stmt;
+					final List<Statement> stmt = exlire.list.get(exlire.list.size() - 1).mStmt;
 					stmt.addAll(witnessInvariantsAfter);
 					mNodeLabelsOfAddedWitnesses.add(invariantAfter.getNodeLabels());
 					mLogger.warn("Checking witness invariant " + invariantAfter + " directly after the following code "
@@ -623,23 +623,23 @@ public class MainDispatcher extends Dispatcher {
 			final List<AssertStatement> invariants = new ArrayList<>();
 			if (translationResult instanceof ExpressionResult) {
 				final ExpressionResult exprResult = (ExpressionResult) translationResult;
-				if (!exprResult.auxVars.isEmpty()) {
+				if (!exprResult.mAuxVars.isEmpty()) {
 					throw new UnsupportedSyntaxException(loc,
-							"must be translatable without auxvars " + exprResult.auxVars.toString());
+							"must be translatable without auxvars " + exprResult.mAuxVars.toString());
 				}
-				if (!exprResult.decl.isEmpty()) {
+				if (!exprResult.mDecl.isEmpty()) {
 					throw new UnsupportedSyntaxException(loc,
-							"must be translatable without new declarations" + exprResult.decl.toString());
+							"must be translatable without new declarations" + exprResult.mDecl.toString());
 				}
-				if (!exprResult.overappr.isEmpty()) {
+				if (!exprResult.mOverappr.isEmpty()) {
 					throw new UnsupportedSyntaxException(loc,
-							"must be translatable without new overapproximations" + exprResult.overappr.toString());
+							"must be translatable without new overapproximations" + exprResult.mOverappr.toString());
 				}
-				if (exprResult.stmt.size() > 1) {
+				if (exprResult.mStmt.size() > 1) {
 					throw new UnsupportedSyntaxException(loc,
-							"must be translatable without additional statements" + exprResult.stmt.toString());
+							"must be translatable without additional statements" + exprResult.mStmt.toString());
 				}
-				final Statement stmt = exprResult.stmt.get(0);
+				final Statement stmt = exprResult.mStmt.get(0);
 				if (stmt instanceof AssertStatement) {
 					invariants.add((AssertStatement) stmt);
 				} else {

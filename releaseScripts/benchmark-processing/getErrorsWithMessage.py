@@ -40,7 +40,8 @@ def parsexml(dir, filename):
     currenterror = set()
 
     for run in root.findall('run'):
-        testFilename = run.get('files').split("/")[5].split("]")[0];
+        #print(run.get('files').split("/"))
+        testFilename = run.get('files').split("/")[4].split("]")[0];
         #print testFilename
         for column in run.iter('column'):
             key = column.get('title')

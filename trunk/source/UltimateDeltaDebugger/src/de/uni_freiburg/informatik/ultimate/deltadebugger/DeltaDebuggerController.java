@@ -35,6 +35,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Predicate;
 
 import org.apache.commons.cli.ParseException;
 
@@ -115,7 +116,7 @@ public class DeltaDebuggerController extends CommandLineController {
 	 * Determines if the previous toolchain run showed the behavior of interest, i.e. the previous reduction was
 	 * successful.<br>
 	 * Check the values stored in mException and mResults to access the previous results and/or exception.
-	 * 
+	 *
 	 * @param inputFiles
 	 *
 	 * @return true iff the previous toolchain run showed the behavior of interest
@@ -152,14 +153,25 @@ public class DeltaDebuggerController extends CommandLineController {
 
 	private boolean isUltimateToolchainResultInteresting(final IPreferenceProvider prefProvider) {
 
-		final String resultPrefix = prefProvider.getString(DeltaDebuggerPreferences.LABEL_RESULT_SHORT_DESC_PREFIX);
+		final Class<? extends IResult> forbiddenResultType = DeltaDebuggerPreferences.getForbiddenClass(mServices);
+		if (forbiddenResultType != null
+				&& ResultUtil.filterResults(mResults.get(), forbiddenResultType).stream().findAny().isPresent()) {
+			return false;
+		}
+
+		final String resultShortPrefix =
+				prefProvider.getString(DeltaDebuggerPreferences.LABEL_RESULT_SHORT_DESC_PREFIX);
+		final String resultLongPrefix = prefProvider.getString(DeltaDebuggerPreferences.LABEL_RESULT_LONG_DESC_PREFIX);
+
+		final Predicate<IResult> predShort =
+				a -> resultShortPrefix.isEmpty() || a.getShortDescription().startsWith(resultShortPrefix);
+		final Predicate<IResult> predLong =
+				a -> resultLongPrefix.isEmpty() || a.getLongDescription().startsWith(resultLongPrefix);
 
 		final Class<? extends IResult> interestingResultType = DeltaDebuggerPreferences.getInterestingClass(mServices);
-		if (resultPrefix.isEmpty()) {
-			return ResultUtil.filterResults(mResults.get(), interestingResultType).stream().count() > 0;
-		}
+
 		return ResultUtil.filterResults(mResults.get(), interestingResultType).stream()
-				.anyMatch(a -> a.getShortDescription().startsWith(resultPrefix));
+				.anyMatch(predShort.and(predLong));
 	}
 
 	Optional<String> runDeltaDebuggerLoop(final ICore<RunDefinition> core, final ILogger logger,

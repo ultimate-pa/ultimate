@@ -163,7 +163,7 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 		final NestedWord<LETTER> counterexampleWord = counterexampleRun.getWord();
 		for (int i = 0; i < counterexampleWord.length(); i++) {
 			final IRelevanceInformation relevancyOfAction = new RelevanceInformation(
-					Collections.singletonList(counterexampleWord.getSymbolAt(i)), false, false, false, false);
+					Collections.singletonList(counterexampleWord.getSymbolAt(i)), false, false, false, false, false);
 			result[i] = relevancyOfAction;
 		}
 		return result;
@@ -312,23 +312,28 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 	/**
 	 * Computes relevance criterion variables (Unsatisfiable core , Golden Frame).
 	 */
-	private static boolean[] relevanceCriterionVariables(final ERelevanceStatus relevance) {
+	private static boolean[] relevanceCriterionVariables(final ERelevanceStatus relevance, final boolean lastErrorAdmittingFlag) {
 		final boolean relevanceCriterionUC;
 		final boolean relevanceCriterionGF;
+		final boolean relevanceCriterionDB;
 		if (relevance == ERelevanceStatus.InUnsatCore) {
 			// This is the case when the triple is unsatisfiable and the action is in the Unsatisfiable core.
 			relevanceCriterionUC = true;
 			relevanceCriterionGF = false;
+			relevanceCriterionDB = false;
 
 		} else if (relevance == ERelevanceStatus.Sat) {
 			// The case when we have HAVOC statements. In this case the action is relevant if the triple is satisfiable.
 			relevanceCriterionUC = false;
 			relevanceCriterionGF = true;
+			// if flag false at this point, that means this is the first error-admitting statement.
+			relevanceCriterionDB = !lastErrorAdmittingFlag; 
 		} else {
 			relevanceCriterionUC = false;
 			relevanceCriterionGF = false;
+			relevanceCriterionDB = false;
 		}
-		return new boolean[] { relevanceCriterionUC, relevanceCriterionGF };
+		return new boolean[] { relevanceCriterionUC, relevanceCriterionGF, relevanceCriterionDB };
 	}
 
 	private void doNonFlowSensitiveAnalysis(final NestedWord<LETTER> counterexampleWord, final IPredicate truePredicate,
@@ -372,6 +377,7 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 		}
 		// End of the calculation
 		
+		boolean lastErrorAdmittingFlag = false;
 		for (int i = counterexampleWord.length() - 1; i >= 0; i--) {
 			final IAction action = counterexampleWord.getSymbolAt(i);
 			// Calculate WP and PRE
@@ -385,9 +391,11 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 			relevance = computeRelevance(i, action, intersection, wp, null, weakestPreconditionSequence, counterexampleWord, rc,
 					csToolkit);
 
-			final boolean[] relevanceCriterionVariables = relevanceCriterionVariables(relevance);
+			final boolean[] relevanceCriterionVariables = relevanceCriterionVariables(relevance, lastErrorAdmittingFlag);
 			final boolean relevanceCriterion1uc = relevanceCriterionVariables[0];
 			final boolean relevanceCriterion1gf = relevanceCriterionVariables[1];
+			final boolean relevanceCriterion3db = relevanceCriterionVariables[2];
+			lastErrorAdmittingFlag |= relevanceCriterion3db; // if true, that means we already have found the last error admitting statement.
 			{
 				mErrorLocalizationStatisticsGenerator.reportIcfgEdge();
 				if (relevanceCriterion1uc) {
@@ -405,7 +413,7 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 			final RelevanceInformation ri =
 					new RelevanceInformation(Collections.singletonList(action), relevanceCriterion1uc,
 							relevanceCriterion1gf, ((RelevanceInformation) mRelevanceOfTrace[i]).getCriterion2UC(),
-							((RelevanceInformation) mRelevanceOfTrace[i]).getCriterion2GF());
+							((RelevanceInformation) mRelevanceOfTrace[i]).getCriterion2GF(), relevanceCriterion3db);
 
 			mRelevanceOfTrace[i] = ri;
 		}
@@ -570,13 +578,13 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 				final IAction action = counterexampleWord.getSymbolAt(position);
 				final ERelevanceStatus relevance = computeRelevance(position, action, pre, weakestPreconditionRight,
 						weakestPreconditionLeft, null, counterexampleWord, rc, csToolkit);
-				final boolean[] relevanceCriterionVariables = relevanceCriterionVariables(relevance);
+				final boolean[] relevanceCriterionVariables = relevanceCriterionVariables(relevance, false);
 				final boolean relevanceCriterion2uc = relevanceCriterionVariables[0];
 				final boolean relevanceCriterion2gf = relevanceCriterionVariables[1];
 				final RelevanceInformation ri = new RelevanceInformation(Collections.singletonList(action),
 						((RelevanceInformation) mRelevanceOfTrace[position]).getCriterion1UC(),
 						((RelevanceInformation) mRelevanceOfTrace[position]).getCriterion1GF(), relevanceCriterion2uc,
-						relevanceCriterion2gf);
+						relevanceCriterion2gf,false);
 				mRelevanceOfTrace[position] = ri;
 			}
 		}

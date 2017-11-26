@@ -130,8 +130,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.SkipResult;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.svcomp.SvComp14CHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.svcomp.chandler.SVCompTypeHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -148,8 +146,8 @@ public class PRDispatcher extends Dispatcher {
 	public PRDispatcher(final CACSL2BoogieBacktranslator backtranslator, final IUltimateServiceProvider services,
 			final ILogger logger, final LinkedHashMap<String, Integer> functionToIndex,
 			final LinkedHashSet<IASTDeclaration> reachableDeclarations, final LocationFactory locFac,
-			final MultiparseSymbolTable mst) {
-		super(backtranslator, services, logger, locFac, mst);
+			final Map<String, IASTNode> functionTable, final MultiparseSymbolTable mst) {
+		super(backtranslator, services, logger, locFac, functionTable, mst);
 		mFunctionToIndex = functionToIndex;
 		mReachableDeclarations = reachableDeclarations;
 		mVariablesOnHeap = new LinkedHashSet<>();
@@ -170,8 +168,8 @@ public class PRDispatcher extends Dispatcher {
 		final boolean overapproximateFloatingPointOperations =
 				getPreferences().getBoolean(CACSLPreferenceInitializer.LABEL_OVERAPPROXIMATE_FLOATS);
 		mNameHandler = new NameHandler(mBacktranslator);
-		mTypeHandler = new SVCompTypeHandler(bitvectorTranslation);
-		mCHandler = new SvComp14CHandler(this, mBacktranslator, mLogger, mTypeHandler, bitvectorTranslation,
+		mTypeHandler = new TypeHandler(bitvectorTranslation);
+		mCHandler = new CHandler(this, mBacktranslator, false, mLogger, mTypeHandler, bitvectorTranslation,
 				overapproximateFloatingPointOperations, mNameHandler, mMultiparseTable);
 	}
 

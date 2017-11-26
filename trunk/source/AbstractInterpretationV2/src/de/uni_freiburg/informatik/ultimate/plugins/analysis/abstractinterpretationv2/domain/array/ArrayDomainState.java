@@ -519,6 +519,7 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 	private Set<Term> getEquivalentTerms(final UnionFind<Term> unionFind, final Set<Term> terms) {
 		final Set<Term> result = new HashSet<>();
 		for (final Term eq : terms) {
+			unionFind.findAndConstructEquivalenceClassIfNeeded(eq);
 			for (final Term t : unionFind.getEquivalenceClassMembers(eq)) {
 				final Set<Term> containedExcludeVars = new HashSet<>(terms);
 				containedExcludeVars.retainAll(Arrays.asList(t.getFreeVars()));
@@ -552,8 +553,8 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 
 	@Override
 	public SubsetResult isSubsetOf(final ArrayDomainState<STATE> other) {
-		// TODO Auto-generated method stub
-		return null;
+		// TODO: Implement this (using unification)
+		return SubsetResult.NONE;
 	}
 
 	@Override
@@ -777,7 +778,7 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 	}
 
 	public Set<IProgramVarOrConst> getUnusedAuxVars() {
-		final Set<IProgramVarOrConst> vars = mSubState.getVariables();
+		final Set<IProgramVarOrConst> vars = new HashSet<>(mSubState.getVariables());
 		vars.removeAll(mVariables);
 		vars.removeAll(mSegmentationMap.getAuxVars());
 		return vars;

@@ -111,10 +111,11 @@ public class LAInterpolator {
 		final ArrayList<TermVariable>[] auxVars = new ArrayList[mInterpolator.mNumInterpolants];
 		/*
 		 * these variables are used for trichotomy clauses. The inequalityInfo will remember the information for one of
-		 * the inequalities to get the aux literal. The equality will remember the equality literal and equalityInfo
-		 * will remember its info.
+		 * the inequalities to get the aux literal. The equality will remember the equality literal (AnnotatedTerm), the
+		 * eqApp the equality (ApplicationTerm), and equalityInfo will remember its info.
 		 */
 		Term equality = null;
+		Term eqApp = null;
 		LitInfo equalityInfo = null;
 		Interpolator.Occurrence inequalityInfo = null;
 
@@ -134,7 +135,7 @@ public class LAInterpolator {
 					assert factor.signum() == (litTermInfo.isNegated() ? -1 : 1);
 					bound = new InfinitNumber(litTermInfo.getBound(), 0);
 					// adapt the bound value for strict inequalities
-					if (((ApplicationTerm) litTermInfo.getAtom()).getFunction().getName().equals("<")) {
+					if (litTermInfo.isStrict()) {
 						bound = bound.sub(litTermInfo.getEpsilon());
 					}
 					// get the inverse bound for negated literals
@@ -173,11 +174,12 @@ public class LAInterpolator {
 			} else if (litTermInfo.isNegated() && litTermInfo.isLAEquality()) {
 				// we have a Trichotomy Clause
 				equality = litTermInfo.getAtom();
-				final Term eq = equality;
 				// a trichotomy clause must contain exactly three parts
 				assert mLemmaInfo.getLiterals().size() == 3;// NOCHECKSTYLE
 				assert equalityInfo == null;
-				equalityInfo = mInterpolator.getLiteralInfo(eq);
+				equalityInfo = mInterpolator.getLiteralInfo(equality);
+				eqApp = mInterpolator.unquote(equality);
+				assert eqApp instanceof ApplicationTerm;
 				assert factor.abs() == Rational.ONE;
 
 				int part = equalityInfo.mInB.nextClearBit(0);
@@ -247,7 +249,7 @@ public class LAInterpolator {
 					 * a != b is in A, the interpolant is simply a != b. If a != b is in B, the interpolant is simply a
 					 * == b.
 					 */
-					final Term thisIpl = equalityInfo.isALocal(part) ? mInterpolator.mTheory.not(equality) : equality;
+					final Term thisIpl = equalityInfo.isALocal(part) ? mInterpolator.mTheory.not(eqApp) : eqApp;
 					mInterpolants[part].mTerm = thisIpl;
 				} else {
 					mInterpolants[part].mTerm = ipl[part].toLeq0(mInterpolator.mTheory);
