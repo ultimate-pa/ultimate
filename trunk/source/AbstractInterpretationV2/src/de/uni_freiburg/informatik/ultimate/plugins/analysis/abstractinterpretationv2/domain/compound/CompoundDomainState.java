@@ -31,6 +31,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -61,11 +62,15 @@ public class CompoundDomainState implements IAbstractState<CompoundDomainState> 
 
 	private static int sId;
 
+	private static final Map<Class<?>, String> mSanitizedShortNames = new HashMap<>();
+
 	private final IUltimateServiceProvider mServices;
 
 	private final List<IAbstractState<?>> mAbstractStates;
 	private final List<IAbstractDomain> mDomainList;
 	private final int mId;
+
+	private final String[] mCachedShortNames;
 
 	/**
 	 * Constructor for a new CompountDomainState from a given abstract state.
@@ -88,6 +93,7 @@ public class CompoundDomainState implements IAbstractState<CompoundDomainState> 
 		mServices = services;
 		mDomainList = domainList;
 		mAbstractStates = abstractStateList;
+		mCachedShortNames = initializeShortNames();
 	}
 
 	/**
@@ -112,6 +118,7 @@ public class CompoundDomainState implements IAbstractState<CompoundDomainState> 
 		} else {
 			mDomainList.forEach(a -> mAbstractStates.add(a.createTopState()));
 		}
+		mCachedShortNames = initializeShortNames();
 	}
 
 	@Override
@@ -216,19 +223,34 @@ public class CompoundDomainState implements IAbstractState<CompoundDomainState> 
 	public String toLogString() {
 		final StringBuilder sb = new StringBuilder();
 
-		for (final IAbstractState<?> state : mAbstractStates) {
-			sb.append(getShortName(state.getClass())).append(": ").append(state.toLogString()).append(", ");
+		for (int i = 0; i < mAbstractStates.size(); i++) {
+			sb.append(mCachedShortNames[i]).append(mAbstractStates.get(i).toLogString()).append(", ");
 		}
 
 		return sb.toString();
 	}
 
-	private static String getShortName(final Class<?> clazz) {
-		final String s = clazz.getSimpleName();
-		if (s.length() < 4) {
-			return s;
+	private String[] initializeShortNames() {
+		final String[] shortNames = new String[mAbstractStates.size()];
+		for (int i = 0; i < mAbstractStates.size(); i++) {
+			shortNames[i] =
+					new StringBuilder().append(getShortName(mAbstractStates.get(i).getClass())).append(": ").toString();
 		}
-		return s.substring(0, 3);
+		return shortNames;
+	}
+
+	private static String getShortName(final Class<?> clazz) {
+		if (mSanitizedShortNames.containsKey(clazz)) {
+			return mSanitizedShortNames.get(clazz);
+		}
+
+		String s = clazz.getSimpleName();
+		if (s.length() >= 4) {
+			s = s.substring(0, 3);
+		}
+
+		mSanitizedShortNames.put(clazz, s);
+		return s;
 	}
 
 	private CompoundDomainState performStateOperation(final Function<IAbstractState<?>, IAbstractState<?>> state) {
