@@ -1016,16 +1016,16 @@ public class StandardFunctionHandler {
 		final String tId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.MEMCPYRES, dest.mLrVal.getCType());
 		final VariableDeclaration tVarDecl = new VariableDeclaration(loc, new Attribute[0],
 				new VarList[] { new VarList(loc, new String[] { tId }, main.mTypeHandler.constructPointerType(loc)) });
-		result.mDecl.add(tVarDecl);
-		result.mAuxVars.put(tVarDecl, loc);
-
 		final CallStatement call = new CallStatement(loc, false, new VariableLHS[] { new VariableLHS(loc, tId) },
 				MemoryModelDeclarations.C_Memcpy.getName(), new Expression[] { dest.getLrValue().getValue(),
 						src.getLrValue().getValue(), size.getLrValue().getValue() });
-		mMemoryHandler.getRequiredMemoryModelFeatures().require(MemoryModelDeclarations.C_Memcpy);
-
+		result.mDecl.add(tVarDecl);
+		result.mAuxVars.put(tVarDecl, loc);
 		result.mStmt.add(call);
 		result.mLrVal = new RValue(new IdentifierExpression(loc, tId), new CPointer(new CPrimitive(CPrimitives.VOID)));
+
+		// add marker for global declaration to memory handler
+		mMemoryHandler.getRequiredMemoryModelFeatures().require(MemoryModelDeclarations.C_Memcpy);
 
 		// add required information to function handler.
 		mFunctionHandler.addCallGraphNode(MemoryModelDeclarations.C_Memcpy.getName());
