@@ -45,6 +45,7 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Use\ only\ trivial\ implications\ for\ index\ assignments=true
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Use\ only\ trivial\ implications\ for\ array\ writes=true
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Add\ implications\ only\ for\ indices\ occuring\ in\ the\ current\ formula=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/NCSB\ implementation=INTSET_LAZY3
 
 
 
