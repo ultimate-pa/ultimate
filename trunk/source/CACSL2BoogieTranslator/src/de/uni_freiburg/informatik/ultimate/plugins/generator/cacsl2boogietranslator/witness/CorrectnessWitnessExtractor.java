@@ -287,18 +287,16 @@ public class CorrectnessWitnessExtractor {
 		final Iterator<MatchedASTNode> iter = loopHeads.iterator();
 		while (iter.hasNext()) {
 			final MatchedASTNode loopHead = iter.next();
-			final Set<IASTStatement> loopStatements =
-					CdtASTUtils.findDesiredType(loopHead.getNode(), mLoopTypes);
+			final Set<IASTStatement> loopStatements = CdtASTUtils.findDesiredType(loopHead.getNode(), mLoopTypes);
 			if (loopStatements.isEmpty()) {
 				continue;
-			} else {
-				mLogger.info("Matched downward: " + loopHead.toStringSimple());
-				loopStatements.stream()
-						.map(a -> new ExtractedWitnessInvariant(dwnode.getInvariant(),
-								Collections.singletonList(dwnode.getName()), a, false, false, true))
-						.forEach(a -> rtr.put(a.getRelatedAstNode(), a));
-				iter.remove();
 			}
+			mLogger.info("Matched downward: " + loopHead.toStringSimple());
+			loopStatements.stream()
+					.map(a -> new ExtractedWitnessInvariant(dwnode.getInvariant(),
+							Collections.singletonList(dwnode.getName()), a, false, false, true))
+					.forEach(a -> rtr.put(a.getRelatedAstNode(), a));
+			iter.remove();
 		}
 		return rtr;
 	}
@@ -335,8 +333,8 @@ public class CorrectnessWitnessExtractor {
 		return rtr;
 	}
 
-	private Map<IASTNode, ExtractedWitnessInvariant> extractStatementInvariants(final DecoratedWitnessNode dwnode,
-			final Set<MatchedASTNode> candidateNodes) {
+	private static Map<IASTNode, ExtractedWitnessInvariant>
+			extractStatementInvariants(final DecoratedWitnessNode dwnode, final Set<MatchedASTNode> candidateNodes) {
 		final Map<IASTNode, ExtractedWitnessInvariant> rtr = new HashMap<>();
 		candidateNodes.stream()
 				.map(a -> new ExtractedWitnessInvariant(dwnode.getInvariant(),
@@ -399,7 +397,8 @@ public class CorrectnessWitnessExtractor {
 	/**
 	 * Remove all witness edges that have no linenumber and convert the remaining to {@link DecoratedWitnessEdge}s.
 	 */
-	private Set<DecoratedWitnessEdge> convertAndFilterEdges(final List<WitnessEdge> edges, final boolean isIncoming) {
+	private static Set<DecoratedWitnessEdge> convertAndFilterEdges(final List<WitnessEdge> edges,
+			final boolean isIncoming) {
 		return edges.stream().map(a -> new DecoratedWitnessEdge(a, isIncoming)).filter(a -> !a.hasNoLineNumber())
 				.collect(Collectors.toSet());
 	}
@@ -435,7 +434,7 @@ public class CorrectnessWitnessExtractor {
 		}
 	}
 
-	private IASTNode findCommonParentStatement(final Collection<MatchedASTNode> list) {
+	private static IASTNode findCommonParentStatement(final Collection<MatchedASTNode> list) {
 		if (list.isEmpty()) {
 			throw new IllegalArgumentException("Empty collection cannot have a parent");
 		}
@@ -463,8 +462,8 @@ public class CorrectnessWitnessExtractor {
 				return null;
 			}
 			final IASTNode pParent = possibleParent;
-			if (list.stream().allMatch(a -> a.getNode() == pParent
-					|| CdtASTUtils.isContainedInSubtree(a.getNode(), pParent))) {
+			if (list.stream()
+					.allMatch(a -> a.getNode() == pParent || CdtASTUtils.isContainedInSubtree(a.getNode(), pParent))) {
 				return pParent;
 			}
 			possibleParent = possibleParent.getParent();
@@ -472,33 +471,33 @@ public class CorrectnessWitnessExtractor {
 		return null;
 	}
 
-	private <T extends IHasIncoming> Stream<T> getIncomingStream(final Collection<T> edges) {
+	private static <T extends IHasIncoming> Stream<T> getIncomingStream(final Collection<T> edges) {
 		return edges.stream().filter(a -> a.isIncoming());
 	}
 
-	private <T extends IHasIncoming> Set<T> getIncomingSet(final Collection<T> edges) {
+	private static <T extends IHasIncoming> Set<T> getIncomingSet(final Collection<T> edges) {
 		return getIncomingStream(edges).collect(Collectors.toSet());
 	}
 
-	private <T extends IHasIncoming> Stream<T> getOutgoingStream(final Collection<T> edges) {
+	private static <T extends IHasIncoming> Stream<T> getOutgoingStream(final Collection<T> edges) {
 		return edges.stream().filter(a -> !a.isIncoming());
 	}
 
-	private <T extends IHasIncoming> Set<T> getOutgoingSet(final Collection<T> edges) {
+	private static <T extends IHasIncoming> Set<T> getOutgoingSet(final Collection<T> edges) {
 		return getOutgoingStream(edges).collect(Collectors.toSet());
 	}
 
-	private String toLogString(final IASTNode bScope, final IASTNode aScope) {
+	private static String toLogString(final IASTNode bScope, final IASTNode aScope) {
 		final String bScopeId = bScope == null ? "Global" : ("L" + bScope.getFileLocation().getStartingLineNumber());
 		final String aScopeId = aScope == null ? "Global" : ("L" + aScope.getFileLocation().getStartingLineNumber());
 		return "B=" + bScopeId + ", A=" + aScopeId;
 	}
 
-	private String toStringCollection(final Collection<?> stream) {
+	private static String toStringCollection(final Collection<?> stream) {
 		return toStringCollection(stream.stream());
 	}
 
-	private String toStringCollection(final Stream<?> stream) {
+	private static String toStringCollection(final Stream<?> stream) {
 		return String.join(", ", stream.map(a -> String.valueOf(a)).collect(Collectors.toList()));
 	}
 
@@ -661,9 +660,8 @@ public class CorrectnessWitnessExtractor {
 			}
 			if (annotation.getCondition().booleanValue()) {
 				return StepInfo.CONDITION_EVAL_TRUE;
-			} else {
-				return StepInfo.CONDITION_EVAL_FALSE;
 			}
+			return StepInfo.CONDITION_EVAL_FALSE;
 		}
 
 		public StepInfo getConditional() {
@@ -682,12 +680,14 @@ public class CorrectnessWitnessExtractor {
 		public int getLineNumber() {
 			if (mIsIncoming) {
 				return mEdge.getLocation().getEndLine();
-			} else {
-				return mEdge.getLocation().getStartLine();
 			}
+			return mEdge.getLocation().getStartLine();
 		}
 
 		public boolean isEnteringLoop() {
+			if (mAnnotation == null) {
+				return false;
+			}
 			return mAnnotation.getEnterLoopHead();
 		}
 
