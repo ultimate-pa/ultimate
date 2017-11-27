@@ -12,9 +12,9 @@
         <include>../../../trunk/examples/svcomp/product-lines/minepump_spec4_productSimulator_false-unreach-call_false-termination.cil.c</include>
         <include>../../../trunk/examples/svcomp/psyco/psyco_abp_1_false-unreach-call_false-termination.c</include>
         <include>../../../trunk/examples/svcomp/float-benchs/sqrt_poly2_false-unreach-call.c</include>
-        <include>../../../ssh/s3_clnt.blast.01_true-unreach-call.i.cil.c</include>
-        <include>../../../ssh/s3_clnt.blast.04_true-unreach-call.i.cil.c</include>
-        <include>../../../forester-heap/sll-buckets_false-unreach-call_false-valid-memcleanup.i</include>
+        <include>../../../trunk/examples/svcomp/ssh/s3_clnt.blast.01_true-unreach-call.i.cil.c</include>
+        <include>../../../trunk/examples/svcomp/ssh/s3_clnt.blast.04_true-unreach-call.i.cil.c</include>
+        <include>../../../trunk/examples/svcomp/forester-heap/sll-buckets_false-unreach-call_false-valid-memcleanup.i</include>
     </tasks>
 
     <tasks name="Reach64Bit">
