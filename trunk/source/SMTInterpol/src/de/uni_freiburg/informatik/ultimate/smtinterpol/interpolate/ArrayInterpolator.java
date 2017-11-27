@@ -1028,6 +1028,11 @@ public class ArrayInterpolator {
 					if (mTail.mTerm[color] != null) {
 						mTail.addInterpolantClauseAPath(color, null);
 					}
+					// The whole path and the diseq are in A, but there can still be B index(dis)eqs
+					if (mHead.mLastChange[color] == null && mTail.mLastChange[color] == null) {
+						// In this case, they are stored in mHead
+						mHead.addInterpolantClauseAPath(color, null);
+					}
 				} else {
 					// B-local paths must be closed, A-local ones are already closed.
 					if (mHead.mLastChange[color] != mHead.mTerm[color]) {
@@ -1035,6 +1040,11 @@ public class ArrayInterpolator {
 					}
 					if (mTail.mLastChange[color] != mTail.mTerm[color]) {
 						mTail.addInterpolantClauseBPath(color, null);
+					}
+					// The whole path and the diseq are in B, but there can still be A index(dis)eqs
+					if (mHead.mLastChange[color] == null && mTail.mLastChange[color] == null) {
+						// In this case, they are stored in mHead
+						mHead.addInterpolantClauseBPath(color, null);
 					}
 				}
 			}

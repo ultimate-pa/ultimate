@@ -161,7 +161,7 @@ public class SMTInterpol extends NoopScript {
 			}
 			if (mProofMode > 1) {
 				// Full proofs.
-				Sort[] polySorts = theory.createSortVariables("A");
+				final Sort[] polySorts = theory.createSortVariables("A");
 				declareInternalPolymorphicFunction(theory, "@refl", polySorts, polySorts, proof, 0);
 				declareInternalFunction(theory, "@trans", proof2, proof, leftassoc);
 				declareInternalFunction(theory, "@cong", proof2, proof, leftassoc);
@@ -997,6 +997,9 @@ public class SMTInterpol extends NoopScript {
 					tmpBench.exit();
 				}
 				if (error) {
+					if (mDDFriendly) {
+						System.exit(10);
+					}
 					throw new SMTLIBException("generated interpolants did not pass sanity check");
 				}
 			}
