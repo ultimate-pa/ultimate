@@ -1,3 +1,10 @@
+#Mon Nov 27 17:23:30 CET 2017
+\!/instance/de.uni_freiburg.informatik.ultimate.core=
+file_export_version=3.0
+@de.uni_freiburg.informatik.ultimate.core=0.1.22
+/instance/de.uni_freiburg.informatik.ultimate.core/Logger\ pattern=%-5p\: %m%n
+
+
 #Fri Oct 24 16:34:36 CEST 2014
 file_export_version=3.0
 
