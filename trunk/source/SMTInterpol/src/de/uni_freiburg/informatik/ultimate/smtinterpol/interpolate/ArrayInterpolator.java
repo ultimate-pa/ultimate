@@ -726,9 +726,9 @@ public class ArrayInterpolator {
 								rightSelect = selectEqApp.getParameters()[0];
 							}
 							// Add the index equality for the first select term
-							mTail.addSelectIndexEquality(mHead, leftSelect);
 							mTail.closeAPath(mHead, boundaryTerm, stepInfo);
 							mTail.openAPath(mHead, boundaryTerm, stepInfo);
+							mTail.addSelectIndexEquality(mHead, leftSelect);
 							// If the equality is mixed in some partition, we open or close the path at the mixed
 							// variable, storing the mixed equality as boundary term.
 							if (stepInfo.getMixedVar() != null) {
