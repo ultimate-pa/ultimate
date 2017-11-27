@@ -2,7 +2,7 @@
 <benchmark tool="ultimateautomizer" memlimit="6GB" timelimit="1200" hardtimelimit="1200" cpuCores="2">
 
     <rundefinition name="Overflow">
-        <propertyfile>/storage/ultimate/trunk/examples/svcomp/NoOverflows.prp</propertyfile>
+        <propertyfile>../../../trunk/examples/svcomp/NoOverflows.prp</propertyfile>
         <option name="--full-output"/>
     </rundefinition>
 
@@ -14,8 +14,8 @@
     <tasks name="Overflow64Bit">
         <option name="--architecture">64bit</option>
 
-        <include>/storage/ultimate/trunk/examples/svcomp/termination-numeric/TerminatorRec02_true-termination_false-no-overflow.c</include>
-        <include>/storage/ultimate/trunk/examples/svcomp/busybox-1.22.0/whoami-incomplete_false-no-overflow.i</include>
+        <include>../../../trunk/examples/svcomp/termination-numeric/TerminatorRec02_true-termination_false-no-overflow.c</include>
+        <include>../../../trunk/examples/svcomp/busybox-1.22.0/whoami-incomplete_false-no-overflow.i</include>
     </tasks>
 
 </benchmark>

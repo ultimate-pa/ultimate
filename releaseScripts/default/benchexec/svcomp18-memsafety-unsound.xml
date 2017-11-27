@@ -3,7 +3,7 @@
 
 
     <rundefinition name="Memsafety">
-        <propertyfile>/storage/ultimate/trunk/examples/svcomp/MemSafety.prp</propertyfile>
+        <propertyfile>../../../trunk/examples/svcomp/MemSafety.prp</propertyfile>
         <option name="--full-output"/>
     </rundefinition>
 
@@ -15,7 +15,7 @@
     <tasks name="Memsafety64Bit">
         <option name="--architecture">64bit</option>
 
-        <include>/storage/ultimate/trunk/examples/svcomp/busybox-1.22.0/test-incomplete_false-unreach-call_true-no-overflow_true-valid-memsafety.i</include>
+        <include>../../../trunk/examples/svcomp/busybox-1.22.0/test-incomplete_false-unreach-call_true-no-overflow_true-valid-memsafety.i</include>
     </tasks>
 
 </benchmark>
