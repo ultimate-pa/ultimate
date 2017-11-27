@@ -498,8 +498,8 @@ public class MemoryHandler {
 	 * @param heapDataArrays
 	 * @return
 	 */
-	private List<Declaration> declareMemcpyOrMemmove(final Dispatcher main, final Collection<HeapDataArray> heapDataArrays,
-			final MemoryModelDeclarations memModelDecl) {
+	private List<Declaration> declareMemcpyOrMemmove(final Dispatcher main,
+			final Collection<HeapDataArray> heapDataArrays, final MemoryModelDeclarations memModelDecl) {
 		assert memModelDecl == MemoryModelDeclarations.C_Memcpy || memModelDecl == MemoryModelDeclarations.C_Memmove;
 
 		final List<Declaration> memCpyDecl = new ArrayList<>();
@@ -590,7 +590,7 @@ public class MemoryHandler {
 	 *            an identifier expression pointing to the size variable that determines the interval of
 	 *            {@link SFO#MEMCPY_SRC} that should not overlap with {@link SFO#MEMCPY_DEST}.
 	 */
-	private static RequiresSpecification constructRequiresSourceDestNoOverlap(final ILocation loc,
+	private RequiresSpecification constructRequiresSourceDestNoOverlap(final ILocation loc,
 			final IdentifierExpression sizeIdExpr) {
 		// memcpy does not allow overlapping:
 		// add requires dest.base != src.base || src.offset + size < dest.offset || dest.offset + size < src.offset
@@ -604,14 +604,16 @@ public class MemoryHandler {
 
 		// dest.base != src.base
 		noOverlapExprs.add(ExpressionFactory.newBinaryExpression(loc, Operator.COMPNEQ, srcbase, destbase));
-
 		// src.offset + size < dest.offset
-		noOverlapExprs.add(ExpressionFactory.newBinaryExpression(loc, Operator.COMPLT,
-				ExpressionFactory.newBinaryExpression(loc, Operator.ARITHPLUS, srcoffset, sizeIdExpr), destoffset));
+
+		noOverlapExprs.add(constructPointerBinaryComparisonExpression(loc, IASTBinaryExpression.op_lessThan,
+				constructPointerBinaryArithmeticExpression(loc, IASTBinaryExpression.op_plus, srcoffset, sizeIdExpr),
+				destoffset));
 
 		// dest.offset + size < src.offset
-		noOverlapExprs.add(ExpressionFactory.newBinaryExpression(loc, Operator.COMPLT,
-				ExpressionFactory.newBinaryExpression(loc, Operator.ARITHPLUS, destoffset, sizeIdExpr), srcoffset));
+		noOverlapExprs.add(constructPointerBinaryComparisonExpression(loc, IASTBinaryExpression.op_lessThan,
+				constructPointerBinaryArithmeticExpression(loc, IASTBinaryExpression.op_plus, destoffset, sizeIdExpr),
+				srcoffset));
 
 		// || over all three
 		final RequiresSpecification noOverlapping =
@@ -1193,8 +1195,9 @@ public class MemoryHandler {
 			final Expression aae = ExpressionFactory.constructNestedArrayAccessExpression(loc, getLengthArray(loc),
 					new Expression[] { ptrBase });
 			final Expression ptrOffset = getPointerOffset(ptrExpr, loc);
-			final Expression sum = constructPointerComponentAddition(loc, size, ptrOffset);
-			leq = constructPointerComponentLessEqual(loc, sum, aae);
+			final Expression sum =
+					constructPointerBinaryArithmeticExpression(loc, IASTBinaryExpression.op_plus, size, ptrOffset);
+			leq = constructPointerBinaryComparisonExpression(loc, IASTBinaryExpression.op_lessEqual, sum, aae);
 		}
 		final Expression offsetGeqZero;
 		{
@@ -1202,7 +1205,8 @@ public class MemoryHandler {
 			final Expression ptrOffset = getPointerOffset(ptrExpr, loc);
 			final Expression nr0 = mExpressionTranslation.constructLiteralForIntegerType(loc,
 					mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
-			offsetGeqZero = constructPointerComponentLessEqual(loc, nr0, ptrOffset);
+			offsetGeqZero =
+					constructPointerBinaryComparisonExpression(loc, IASTBinaryExpression.op_lessEqual, nr0, ptrOffset);
 
 		}
 		final Expression offsetInAllocatedRange =
@@ -1295,16 +1299,28 @@ public class MemoryHandler {
 		return new IdentifierExpression(loc, SFO.VALID);
 	}
 
-	private Expression constructPointerComponentAddition(final ILocation loc, final Expression left,
-			final Expression right) {
-		return mExpressionTranslation.constructArithmeticExpression(loc, IASTBinaryExpression.op_plus, left,
+	/**
+	 * Compare a pointer component (base or offset) to another expression.
+	 *
+	 * @param op
+	 *            One of the comparison operators defined in {@link IASTBinaryExpression}.
+	 */
+	private Expression constructPointerBinaryComparisonExpression(final ILocation loc, final int op,
+			final Expression left, final Expression right) {
+		return mExpressionTranslation.constructBinaryComparisonExpression(loc, op, left,
 				mExpressionTranslation.getCTypeOfPointerComponents(), right,
 				mExpressionTranslation.getCTypeOfPointerComponents());
 	}
 
-	private Expression constructPointerComponentLessEqual(final ILocation loc, final Expression left,
-			final Expression right) {
-		return mExpressionTranslation.constructBinaryComparisonExpression(loc, IASTBinaryExpression.op_lessEqual, left,
+	/**
+	 * Create an arithmetic expression from a pointer component (base or offset) and another expression.
+	 *
+	 * @param op
+	 *            One of the arithmetic operators defined in {@link IASTBinaryExpression}.
+	 */
+	private Expression constructPointerBinaryArithmeticExpression(final ILocation loc, final int op,
+			final Expression left, final Expression right) {
+		return mExpressionTranslation.constructArithmeticExpression(loc, op, left,
 				mExpressionTranslation.getCTypeOfPointerComponents(), right,
 				mExpressionTranslation.getCTypeOfPointerComponents());
 	}
