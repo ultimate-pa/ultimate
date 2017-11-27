@@ -483,10 +483,12 @@ public class StandardFunctionHandler {
 	private Result handleStrChr(final Dispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
 			final String name) {
 		/*
-		 * C11, 7.21.5.2 says: "#include <string.h> char *strchr(const char *s, int c); Description: The strchr function
-		 * locates the first occurrence of c (converted to a char) in the string pointed to by s. The terminating null
-		 * character is considered to be part of the string. Returns : The strchr function returns a pointer to the
-		 * located character, or a null pointer if the character does not occur in the string."
+		 * C11, 7.21.5.2 says: "#include <string.h> char *strchr(const char *s, int c);
+		 *
+		 * Description: The strchr function locates the first occurrence of c (converted to a char) in the string
+		 * pointed to by s. The terminating null character is considered to be part of the string. Returns : The strchr
+		 * function returns a pointer to the located character, or a null pointer if the character does not occur in the
+		 * string."
 		 *
 		 * We replace the method call by a fresh char pointer variable which is havocced, and assumed to be either NULL
 		 * or a pointer into the area where the argument pointer is valid.
@@ -588,6 +590,15 @@ public class StandardFunctionHandler {
 	}
 
 	private static Result handleBuiltinUnreachable(final ILocation loc) {
+		/*
+		 * https://gcc.gnu.org/onlinedocs/gcc/Other-Builtins.html
+		 *
+		 * Built-in Function: void __builtin_unreachable (void)
+		 *
+		 * If control flow reaches the point of the __builtin_unreachable, the program is undefined. It is useful in
+		 * situations where the compiler cannot deduce the unreachability of the code.
+		 */
+
 		// TODO: Add option that allows us to check for builtin_unreachable by adding assert
 		// return new ExpressionResult(Collections.singletonList(new AssertStatement(loc,
 		// new de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral(loc, false))), null);
@@ -668,13 +679,31 @@ public class StandardFunctionHandler {
 		return result;
 	}
 
+	/**
+	 * Translates free(e) by creating a function call expression for the ~free(e) function and declaring its usage in
+	 * the memory model.
+	 */
 	private Result handleFree(final Dispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
 			final String name) {
 		final IASTInitializerClause[] arguments = node.getArguments();
 		checkArguments(loc, 1, name, arguments);
 
 		final ExpressionResult pRex = dispatchAndConvert(main, loc, arguments[0]);
-		pRex.mStmt.add(getFreeCall(main, pRex.mLrVal, loc));
+
+		mMemoryHandler.getRequiredMemoryModelFeatures().require(MemoryModelDeclarations.Free);
+
+		// Further checks are done in the precondition of ~free()!
+		// ~free(E);
+		final CallStatement freeCall = new CallStatement(loc, false, new VariableLHS[0], SFO.FREE,
+				new Expression[] { pRex.getLrValue().getValue() });
+		// add required information to function handler.
+		if (mFunctionHandler.getCurrentProcedureID() != null) {
+			mFunctionHandler.addModifiedGlobal(SFO.FREE, SFO.VALID);
+			mFunctionHandler.addCallGraphNode(SFO.FREE);
+			mFunctionHandler.addCallGraphEdge(mFunctionHandler.getCurrentProcedureID(), SFO.FREE);
+		}
+
+		pRex.mStmt.add(freeCall);
 		return pRex;
 	}
 
@@ -706,31 +735,6 @@ public class StandardFunctionHandler {
 			exprRes.mAuxVars.clear();
 		}
 		return exprRes;
-	}
-
-	/**
-	 * Construct an auxiliary variable that will be use as a substitute for a function call. The result will be marked
-	 * as an overapproximation. If you overapproximate a function call, don't forget to dispatch the function call's
-	 * arguments: the arguments may have side effects.
-	 *
-	 * @param functionName
-	 *            the named of the function will be annotated to the overapproximation
-	 * @param resultType
-	 *            CType that determinies the type of the auxiliary variable
-	 */
-	private static ExpressionResult constructOverapproximationForFunctionCall(final Dispatcher main,
-			final ILocation loc, final String functionName, final CType resultType) {
-		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
-		// introduce fresh aux variable
-		final String tmpId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.NONDET, resultType);
-		final ASTType astType = main.mTypeHandler.cType2AstType(loc, resultType);
-		final VariableDeclaration tmpVarDecl = SFO.getTempVarVariableDeclaration(tmpId, astType, loc);
-		builder.addDeclaration(tmpVarDecl);
-		builder.putAuxVar(tmpVarDecl, loc);
-		final IdentifierExpression tmpVarIdExpr = new IdentifierExpression(loc, tmpId);
-		builder.addOverapprox(new Overapprox(functionName, loc));
-		builder.setLRVal(new RValue(tmpVarIdExpr, resultType));
-		return builder.build();
 	}
 
 	private Result handleBuiltinExpect(final Dispatcher main, final IASTFunctionCallExpression node,
@@ -1090,6 +1094,31 @@ public class StandardFunctionHandler {
 		return constructOverapproximationForFunctionCall(main, loc, methodName, resultType);
 	}
 
+	/**
+	 * Construct an auxiliary variable that will be use as a substitute for a function call. The result will be marked
+	 * as an overapproximation. If you overapproximate a function call, don't forget to dispatch the function call's
+	 * arguments: the arguments may have side effects.
+	 *
+	 * @param functionName
+	 *            the named of the function will be annotated to the overapproximation
+	 * @param resultType
+	 *            CType that determinies the type of the auxiliary variable
+	 */
+	private static ExpressionResult constructOverapproximationForFunctionCall(final Dispatcher main,
+			final ILocation loc, final String functionName, final CType resultType) {
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		// introduce fresh aux variable
+		final String tmpId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.NONDET, resultType);
+		final ASTType astType = main.mTypeHandler.cType2AstType(loc, resultType);
+		final VariableDeclaration tmpVarDecl = SFO.getTempVarVariableDeclaration(tmpId, astType, loc);
+		builder.addDeclaration(tmpVarDecl);
+		builder.putAuxVar(tmpVarDecl, loc);
+		final IdentifierExpression tmpVarIdExpr = new IdentifierExpression(loc, tmpId);
+		builder.addOverapprox(new Overapprox(functionName, loc));
+		builder.setLRVal(new RValue(tmpVarIdExpr, resultType));
+		return builder.build();
+	}
+
 	private static ExpressionResult combineExpressionResults(final LRValue finalLRValue,
 			final List<ExpressionResult> results) {
 		final List<Statement> stmt = new ArrayList<>();
@@ -1111,36 +1140,6 @@ public class StandardFunctionHandler {
 	private static ExpressionResult combineExpressionResults(final LRValue finalLRValue,
 			final ExpressionResult... results) {
 		return combineExpressionResults(finalLRValue, Arrays.stream(results).collect(Collectors.toList()));
-	}
-
-	/**
-	 * Creates a function call expression for the ~free(e) function!
-	 *
-	 * @param main
-	 *            a reference to the main dispatcher.
-	 * @param fh
-	 *            a reference to the FunctionHandler - required to add informations to the call graph.
-	 * @param e
-	 *            the expression referring to the pointer, that should be free'd.
-	 * @param loc
-	 *            Location for errors and new nodes in the AST.
-	 * @return a function call expression for ~free(e).
-	 */
-	private CallStatement getFreeCall(final Dispatcher main, final LRValue lrVal, final ILocation loc) {
-		assert lrVal instanceof RValue || lrVal instanceof LocalLValue;
-		mMemoryHandler.getRequiredMemoryModelFeatures().require(MemoryModelDeclarations.Free);
-
-		// Further checks are done in the precondition of ~free()!
-		// ~free(E);
-		final CallStatement freeCall =
-				new CallStatement(loc, false, new VariableLHS[0], SFO.FREE, new Expression[] { lrVal.getValue() });
-		// add required information to function handler.
-		if (mFunctionHandler.getCurrentProcedureID() != null) {
-			mFunctionHandler.addModifiedGlobal(SFO.FREE, SFO.VALID);
-			mFunctionHandler.addCallGraphNode(SFO.FREE);
-			mFunctionHandler.addCallGraphEdge(mFunctionHandler.getCurrentProcedureID(), SFO.FREE);
-		}
-		return freeCall;
 	}
 
 	/**
