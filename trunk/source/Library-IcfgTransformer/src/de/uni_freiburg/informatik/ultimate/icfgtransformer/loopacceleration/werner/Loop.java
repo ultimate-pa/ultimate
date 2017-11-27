@@ -30,9 +30,11 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -61,8 +63,13 @@ public class Loop {
 	private Deque<IcfgEdge> mPath;
 	private Deque<Backbone> mBackbones;
 	private IteratedSymbolicMemory mIteratedMemory;
+	/**
+	 * @TODO maybe change to Set, so no duplicates
+	 */
 	private List<TermVariable> mAuxVars;
 	private Map<IcfgLocation, Backbone> mErrorPaths;
+	private Set<IcfgEdge> mBreakPaths;
+	private Set<UnmodifiableTransFormula> mBreakFormulas;
 	private Boolean mHasNestedLoops;
 	private Deque<Loop> mNestedLoops;
 	private Boolean mIsSummarized;
@@ -98,6 +105,8 @@ public class Loop {
 		mExitConditions = new ArrayList<>();
 		mExitTransitions = new ArrayList<>();
 		mEntryTransitions = new ArrayList<>();
+		mBreakPaths = new HashSet<>();
+		mBreakFormulas = new HashSet<>();
 
 		mFormula = null;
 	}
@@ -228,6 +237,14 @@ public class Loop {
 		return mLoopExit;
 	}
 
+	public Set<UnmodifiableTransFormula> getBreakFormulas() {
+		return mBreakFormulas;
+	}
+
+	public Set<IcfgEdge> getBreakPaths() {
+		return mBreakPaths;
+	}
+
 	public List<UnmodifiableTransFormula> getExitConditions() {
 		return mExitConditions;
 	}
@@ -265,7 +282,7 @@ public class Loop {
 		for (final IcfgEdge trans : icfgLocation.getIncomingEdges()) {
 			final IcfgLocation source = trans.getSource();
 			for (final IcfgEdge out : source.getOutgoingEdges()) {
-				if (mPath.contains(out)) {
+				if (mPath.contains(out) && source.equals(mLoopHead)) {
 					mExitTransitions.add(trans);
 					break;
 				}
@@ -274,6 +291,22 @@ public class Loop {
 		}
 	}
 
+	/**
+	 * add a new breakformula
+	 * 
+	 * @param tf
+	 *            the formula
+	 */
+	public void addBreakFormula(final UnmodifiableTransFormula tf) {
+		mBreakFormulas.add(tf);
+	}
+
+	/**
+	 * Add a new loop exit condition
+	 * 
+	 * @param exitCondition
+	 *            the exit condition
+	 */
 	public void addExitCondition(final UnmodifiableTransFormula exitCondition) {
 		mExitConditions.add(exitCondition);
 	}
@@ -291,6 +324,14 @@ public class Loop {
 		mErrorPaths.put(errorLocation, errorPath);
 	}
 
+	/**
+	 * Replace an error path in the loop
+	 * 
+	 * @param errorLocation
+	 *            the corresponding errorlocation
+	 * @param newErrorPath
+	 *            the new errorpath
+	 */
 	public void replaceErrorPath(final IcfgLocation errorLocation, final Backbone newErrorPath) {
 		mErrorPaths.replace(errorLocation, newErrorPath);
 	}
@@ -355,6 +396,16 @@ public class Loop {
 	 */
 	public void addVar(final List<TermVariable> vars) {
 		mAuxVars.addAll(vars);
+	}
+
+	/**
+	 * Add a new breakpath
+	 * 
+	 * @param icfgEdge
+	 *            the breakpath
+	 */
+	public void addBreakPath(final IcfgEdge icfgEdge) {
+		mBreakPaths.add(icfgEdge);
 	}
 
 	@Override

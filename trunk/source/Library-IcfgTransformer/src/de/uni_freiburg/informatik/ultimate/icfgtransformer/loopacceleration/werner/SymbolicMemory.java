@@ -58,7 +58,6 @@ public class SymbolicMemory {
 	private final IUltimateServiceProvider mServices;
 	private final Map<IProgramVar, Term> mMemoryMapping;
 	private final ManagedScript mScript;
-	private final ILogger mLogger;
 	private final IIcfgSymbolTable mOldSymbolTable;
 	private final Map<IProgramVar, TermVariable> mInVars;
 	private final Map<IProgramVar, TermVariable> mOutVars;
@@ -80,12 +79,11 @@ public class SymbolicMemory {
 	 *            {@link TermVariable} to an {@link IProgramVar} for changing in
 	 *            the memory.
 	 */
-	public SymbolicMemory(final ManagedScript script, final IUltimateServiceProvider services, final ILogger logger,
+	public SymbolicMemory(final ManagedScript script, final IUltimateServiceProvider services,
 			final TransFormula tf, final IIcfgSymbolTable oldSymbolTable) {
 
 		mScript = script;
 		mServices = services;
-		mLogger = logger;
 		mOldSymbolTable = oldSymbolTable;
 		mInVars = tf.getInVars();
 		mOutVars = tf.getOutVars();
@@ -94,6 +92,7 @@ public class SymbolicMemory {
 		for (final Entry<IProgramVar, TermVariable> entry : mInVars.entrySet()) {
 			mMemoryMapping.put(entry.getKey(), (TermVariable) entry.getValue());
 		}
+
 		for (final Entry<IProgramVar, TermVariable> entry : mOutVars.entrySet()) {
 			if (!mMemoryMapping.containsKey(entry.getKey())) {
 				mMemoryMapping.put(entry.getKey(), (TermVariable) entry.getValue());
@@ -141,6 +140,7 @@ public class SymbolicMemory {
 	 * memory compatible format.
 	 * 
 	 * @param tf
+	 *            {@link TransFormula}
 	 * @return
 	 */
 	public UnmodifiableTransFormula updateCondition(final UnmodifiableTransFormula tf) {

@@ -280,7 +280,7 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 		final DealingWithArraysTypes options = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getEnum(IcfgTransformationPreferences.LABEL_LA_WERNER_MODE, DealingWithArraysTypes.class);
 		return new WernerLoopAccelerationIcfgTransformer<>(mLogger, icfg, locFac, backtranslationTracker, outlocClass,
-				icfg.getIdentifier() + "IcfgDuplicate", transformer, mServices, options).getResult();
+				icfg.getIdentifier() + "IcfgDuplicate", transformer, mServices, options, 10).getResult();
 	}
 
 	private <INLOC extends IcfgLocation, OUTLOC extends IcfgLocation> IIcfg<OUTLOC> applyLoopAccelerationEx(
