@@ -555,7 +555,8 @@ public class MemoryHandler {
 		// add requires (#size + #src!offset <= #length[#src!base] && 0 <= #src!offset)
 		checkPointerTargetFullyAllocated(ignoreLoc, sizeIdExpr, SFO.MEMCPY_SRC, specs);
 
-		if (memModelDecl == MemoryModelDeclarations.C_Memcpy) {
+		if (memModelDecl == MemoryModelDeclarations.C_Memcpy && false) {
+			// disabled because underapprox. for undefined behavior is ok
 			final RequiresSpecification noOverlapping = constructRequiresSourceDestNoOverlap(ignoreLoc, sizeIdExpr);
 			specs.add(noOverlapping);
 		}
