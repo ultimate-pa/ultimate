@@ -34,6 +34,7 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces;
 
 import java.text.ParseException;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -45,6 +46,7 @@ import org.eclipse.cdt.core.dom.ast.IASTPreprocessorStatement;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 import org.eclipse.cdt.core.dom.ast.IType;
 
+import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratedUnit;
 import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratorNode;
 import de.uni_freiburg.informatik.ultimate.cdt.parser.MultiparseSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.LineDirectiveMapping;
@@ -234,11 +236,13 @@ public abstract class Dispatcher {
 	/**
 	 * Entry point for a translation.
 	 *
-	 * @param node
-	 *            the root node from which the translation should be started
+	 * @param nodes
+	 *            the root nodes from which the translation should be started
 	 * @return the result for the given node
 	 */
-	public final Result run(final DecoratorNode node) {
+	public final Result run(final Collection<DecoratedUnit> nodes) {
+		// Implement handling of multiple decorator nodes
+		DecoratorNode node = nodes.stream().findFirst().get().getRootNode();
 		preRun(node);
 		init();
 		return dispatch(node);

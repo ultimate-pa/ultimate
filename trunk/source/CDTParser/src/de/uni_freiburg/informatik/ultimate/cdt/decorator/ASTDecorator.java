@@ -33,6 +33,8 @@
 package de.uni_freiburg.informatik.ultimate.cdt.decorator;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import org.eclipse.cdt.core.dom.ast.IASTNode;
@@ -233,6 +235,15 @@ public class ASTDecorator {
 	 */
 	public DecoratedUnit getUnit(final int k) {
 		return mDecoratedUnits.get(k);
+	}
+	
+	/**
+	 * Gets all units
+	 * 
+	 * @return all units
+	 */
+	public Collection<DecoratedUnit> getUnits() {
+		return Collections.unmodifiableCollection(mDecoratedUnits);
 	}
 	
 	/**

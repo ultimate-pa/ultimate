@@ -166,12 +166,11 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 		final Dispatcher main = new MainDispatcher(backtranslator, mWitnessInvariants, mService, mLogger, 
 				mInputDecorator.getSymbolTable());
 		mStorage.putStorable(IdentifierMapping.getStorageKey(), new IdentifierMapping<String, String>());
-
-		// For now this only knows ONE root node. This needs to be solved
-		final DecoratorNode rootNode = mInputDecorator.getUnit(0).getRootNode();
 		
 		// if an additional Annotation was parsed put it into the root node
 		if (mAdditionalAnnotationObserver.getAnnotation() != null) {
+			// (needs a fix probably) attach it to the first root node
+			final DecoratorNode rootNode = mInputDecorator.getUnit(0).getRootNode();
 			final ACSLNode node = mAdditionalAnnotationObserver.getAnnotation();
 			node.setLocation(new ACSLSourceLocation(1, 0, 1, 0));
 			rootNode.getChildren().add(0, 
@@ -179,7 +178,7 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 		}
 
 		try {
-			BoogieASTNode outputTU = main.run(rootNode).node;
+			BoogieASTNode outputTU = main.run(mInputDecorator.getUnits()).node;
 			outputTU = new BoogieAstCopier().copy((Unit) outputTU);
 			mRootNode = new WrapperNode(null, outputTU);
 			final IdentifierMapping<String, String> map = new IdentifierMapping<>();
