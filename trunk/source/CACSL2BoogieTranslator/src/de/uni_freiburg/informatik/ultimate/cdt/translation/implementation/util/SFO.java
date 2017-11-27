@@ -175,7 +175,7 @@ public final class SFO {
 	/**
 	 * combined SFOs for memory arrays:
 	 */
-	public static final String MEMORY_INT = MEMORY + "_" + INT;
+//	public static final String MEMORY_INT = MEMORY + "_" + INT;
 	public static final String MEMORY_REAL = MEMORY + "_" + REAL;
 	public static final String MEMORY_POINTER = MEMORY + "_" + POINTER;
 

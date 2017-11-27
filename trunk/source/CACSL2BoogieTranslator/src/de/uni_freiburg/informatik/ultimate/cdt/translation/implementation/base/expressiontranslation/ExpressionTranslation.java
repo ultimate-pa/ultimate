@@ -56,7 +56,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.StringLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
@@ -139,22 +138,34 @@ public abstract class ExpressionTranslation {
 		}
 		case IASTLiteralExpression.lk_string_literal: {
 			// subtract two from length for quotes at beginning and end
-			final int arrayLength = node.getValue().length - 2;
-			final RValue dimension = new RValue(
-					constructLiteralForIntegerType(loc, getCTypeOfPointerComponents(), BigInteger.valueOf(arrayLength)),
-					getCTypeOfPointerComponents());
-			final RValue[] dimensions = { dimension };
-			final CArray arrayType = new CArray(dimensions, new CPrimitive(CPrimitives.CHAR));
-			// final CPointer arrayType = new CPointer(new CPrimitive(CPrimitives.CHAR));
-			final String tId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.STRINGLITERAL, arrayType);
-			final VariableDeclaration tVarDecl = new VariableDeclaration(loc, new Attribute[0],
-					new VarList[] { new VarList(loc, new String[] { tId }, mTypeHandler.constructPointerType(loc)) });
-			final RValue rvalue = new RValueForArrays(new IdentifierExpression(loc, tId), arrayType);
+			final VariableDeclaration tVarDecl;
+			final RValue rvalue;
+			final String tId;
+			{
+				final int arrayLength = node.getValue().length - 2;
+				final RValue dimension = new RValue(
+						constructLiteralForIntegerType(loc, getCTypeOfPointerComponents(),
+								BigInteger.valueOf(arrayLength)),
+						getCTypeOfPointerComponents());
+				final RValue[] dimensions = { dimension };
+				final CArray arrayType = new CArray(dimensions, new CPrimitive(CPrimitives.CHAR));
+				// final CPointer arrayType = new CPointer(new CPrimitive(CPrimitives.CHAR));
+				tId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.STRINGLITERAL, arrayType);
+				tVarDecl = new VariableDeclaration(loc, new Attribute[0],
+						new VarList[] { new VarList(loc, new String[] { tId }, mTypeHandler.constructPointerType(loc)) });
+				rvalue = new RValueForArrays(new IdentifierExpression(loc, tId), arrayType);
+			}
 			final ArrayList<Declaration> decls = new ArrayList<>();
 			decls.add(tVarDecl);
+//			main.mCHandler.getStaticObjectsHandler().addGlobalDeclarations(decls);
+
+
 			final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
 			auxVars.put(tVarDecl, loc);
-			final MemoryHandler memoryHandler = ((CHandler) main.mCHandler).getMemoryHandler();
+
+			/*
+			 * construct a char[] that may be used for intitializing off-heap string variables.
+			 */
 			final char[] charArray;
 			if (node.getValue().length >= 2 && node.getValue()[0] == '\"'
 					&& node.getValue()[node.getValue().length - 1] == '\"') {
@@ -163,9 +174,23 @@ public abstract class ExpressionTranslation {
 				throw new UnsupportedOperationException(
 						"unsupported representation of string literal " + Arrays.toString(node.getValue()));
 			}
-			// overapproximate strings of length STRING_OVERAPPROXIMATION_THRESHOLD longer
+
+			// overapproximate string literals of length STRING_OVERAPPROXIMATION_THRESHOLD or longer
 			final boolean writeValues = charArray.length < STRING_OVERAPPROXIMATION_THRESHOLD;
-			final List<Statement> statements = memoryHandler.writeStringToHeap(loc, tId, charArray, writeValues);
+
+			final List<Statement> statements =
+					main.mCHandler.getMemoryHandler().writeStringToHeap(loc, tId, charArray, writeValues);
+//			main.mCHandler.getStaticObjectsHandler().addStatementsForUltimateInit(statements);
+//			main.mCHandler.getStaticObjectsHandler().addVariableModifiedByUltimateInit(tId);
+//			main.mCHandler.getStaticObjectsHandler().addVariableModifiedByUltimateInit(SFO.VALID);
+//			main.mCHandler.getStaticObjectsHandler().addVariableModifiedByUltimateInit(SFO.LENGTH);
+//			if (writeValues) {
+////				main.mCHandler.getStaticObjectsHandler().addVariableModifiedByUltimateInit(SFO.MEMORY_INT);
+//				main.mCHandler.getStaticObjectsHandler().addVariableModifiedByUltimateInit(
+//						main.mCHandler.getMemoryHandler().getMemoryModel().getDataHeapArray(CPrimitives.CHAR)
+//							.getVariableName());
+//			}
+
 			final List<Overapprox> overapproxList;
 			if (writeValues) {
 				overapproxList = Collections.emptyList();
@@ -174,7 +199,10 @@ public abstract class ExpressionTranslation {
 				overapproxList = new ArrayList<>();
 				overapproxList.add(overapprox);
 			}
-			return new StringLiteralResult(statements, rvalue, decls, auxVars, overapproxList, charArray);
+			return new StringLiteralResult(statements, rvalue, decls, auxVars, overapproxList,
+					tId, charArray, !writeValues);
+//			return new StringLiteralResult(Collections.emptyList(), rvalue, Collections.emptyList(),
+//					Collections.emptyMap(), overapproxList, charArray);
 		}
 		case IASTLiteralExpression.lk_false:
 			return new ExpressionResult(new RValue(new BooleanLiteral(loc, false), new CPrimitive(CPrimitives.INT)));
@@ -626,10 +654,10 @@ public abstract class ExpressionTranslation {
 	 * (i.e., the bit at the higher index is not included, the bit at the lower index is included).
 	 */
 	public abstract Expression extractBits(ILocation loc, Expression operand, int high, int low);
-	
+
 	/**
 	 * Presume that the input represents an integer that has inputWidth bit.
-	 * Set all most significant bits to zero except the remainingWith least 
+	 * Set all most significant bits to zero except the remainingWith least
 	 * significant bits.
 	 * I.e., the result is input representation that consists only of the bits.
 	 * low-1, low-2, ..., 0

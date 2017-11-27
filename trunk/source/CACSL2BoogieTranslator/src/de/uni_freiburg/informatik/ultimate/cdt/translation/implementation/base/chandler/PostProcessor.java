@@ -118,7 +118,7 @@ public class PostProcessor {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param overapproximateFloatingPointOperations
 	 */
 	public PostProcessor(final Dispatcher dispatcher, final ILogger logger,
@@ -310,17 +310,19 @@ public class PostProcessor {
 		final ArrayList<Declaration> decl = new ArrayList<>();
 		final ArrayList<VariableDeclaration> initDecl = new ArrayList<>();
 		if (memoryHandler.getRequiredMemoryModelFeatures().isMemoryModelInfrastructureRequired()) {
-			if (memoryHandler.getRequiredMemoryModelFeatures().isMemoryModelInfrastructureRequired()) {
-				final Expression zero = mExpressionTranslation.constructLiteralForIntegerType(translationUnitLoc,
-						mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
-				final String lhsId = SFO.VALID;
-				final Expression literalThatRepresentsFalse = memoryHandler.getBooleanArrayHelper().constructFalse();
-				final AssignmentStatement assignment = MemoryHandler.constructOneDimensionalArrayUpdate(
-						translationUnitLoc, zero, lhsId, literalThatRepresentsFalse);
-				initStatements.add(0, assignment);
-				mInitializedGlobals.add(SFO.VALID);
-			}
+//			if (memoryHandler.getRequiredMemoryModelFeatures().isMemoryModelInfrastructureRequired()) {
+			// set #valid[0] = 0 (i.e., the memory at the NULL-pointer is not allocated)
+			final Expression zero = mExpressionTranslation.constructLiteralForIntegerType(translationUnitLoc,
+					mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
+			final String lhsId = SFO.VALID;
+			final Expression literalThatRepresentsFalse = memoryHandler.getBooleanArrayHelper().constructFalse();
+			final AssignmentStatement assignment = MemoryHandler.constructOneDimensionalArrayUpdate(
+					translationUnitLoc, zero, lhsId, literalThatRepresentsFalse);
+			initStatements.add(0, assignment);
+			mInitializedGlobals.add(SFO.VALID);
+//			}
 
+			// set the value of the NULL-constant to NULL = { base : 0, offset : 0 }
 			final VariableLHS slhs = new VariableLHS(translationUnitLoc, SFO.NULL);
 			initStatements.add(0, new AssignmentStatement(translationUnitLoc, new LeftHandSide[] { slhs },
 					new Expression[] { new StructConstructor(translationUnitLoc, new String[] { "base", "offset" },
@@ -332,15 +334,7 @@ public class PostProcessor {
 											BigInteger.ZERO) }) }));
 			mInitializedGlobals.add(SFO.NULL);
 		}
-		for (final Statement stmt : initStatements) {
-			if (stmt instanceof AssignmentStatement) {
-				final AssignmentStatement ass = (AssignmentStatement) stmt;
-				assert ass.getLhs().length == 1; // by construction ...
-				final LeftHandSide lhs = ass.getLhs()[0];
-				final String id = BoogieASTUtil.getLHSId(lhs);
-				mInitializedGlobals.add(id);
-			}
-		}
+		assert initializedGlobalsTracksAllInitializedVariables(initStatements);
 
 		// initialization for statics and other globals
 		for (final Entry<Declaration, CDeclaration> en : declarationsGlobalInBoogie.entrySet()) {
@@ -354,7 +348,6 @@ public class PostProcessor {
 			 * global variables with external linkage are not implicitly initialized. (They are initialized by the
 			 * module that provides them..)
 			 */
-			// if (main.cHandler.getSymbolTable().get(en.getValue().getName(), currentDeclsLoc).isExtern())
 			if (en.getValue().isExtern()) {
 				continue;
 			}
@@ -367,24 +360,12 @@ public class PostProcessor {
 						initStatements.add(memoryHandler.getMallocCall(llVal, currentDeclsLoc));
 					}
 
-					// if (initializer != null) {
-					// assert ((VariableDeclaration)en.getKey()).getVariables().length == 1
-					// && ((VariableDeclaration)en.getKey()).getVariables()[0].getIdentifiers().length == 1;
 					final ExpressionResult initRex = main.mCHandler.getInitHandler().initialize(currentDeclsLoc, main,
 							new VariableLHS(currentDeclsLoc, id), en.getValue().getType(), initializer);
 					initStatements.addAll(initRex.mStmt);
 					initStatements.addAll(CHandler.createHavocsForAuxVars(initRex.mAuxVars));
 					for (final Declaration d : initRex.mDecl) {
 						initDecl.add((VariableDeclaration) d);
-						// } else { //no initializer --> default initialization
-						// ResultExpression nullInitializer = main.cHandler.getInitHandler().initVar(loc, main,
-						// new VariableLHS(loc, id), en.getValue().getType(), null) ;
-						//
-						// initStatements.addAll(nullInitializer.stmt);
-						// initStatements.addAll(CHandler.createHavocsForNonMallocAuxVars(nullInitializer.auxVars));
-						// for (Declaration d : nullInitializer.decl)
-						// initDecl.add((VariableDeclaration) d);
-						// }
 					}
 				}
 			}
@@ -392,6 +373,13 @@ public class PostProcessor {
 				mInitializedGlobals.addAll(Arrays.asList(vl.getIdentifiers()));
 			}
 		}
+
+
+		/*
+		 * perhaps move more functionality into the following section, once StaticObjectsHandler is used more widely
+		 */
+		initStatements.addAll(main.mCHandler.getStaticObjectsHandler().getStatementsForUltimateInit());
+		mInitializedGlobals.addAll(main.mCHandler.getStaticObjectsHandler().getVariablesModifiedByUltimateInit());
 
 		mInitializedGlobals.addAll(functionHandler.getModifiedGlobals().get(SFO.INIT));
 
@@ -412,6 +400,28 @@ public class PostProcessor {
 
 		functionHandler.endUltimateInitOrStart(main, initProcedureDecl, SFO.INIT);
 		return decl;
+	}
+
+	/**
+	 *
+	 *
+	 * @param initStatements
+	 * @return
+	 */
+	private boolean initializedGlobalsTracksAllInitializedVariables(final Collection<Statement> initStatements) {
+		for (final Statement stmt : initStatements) {
+			if (stmt instanceof AssignmentStatement) {
+				final AssignmentStatement ass = (AssignmentStatement) stmt;
+				assert ass.getLhs().length == 1; // by construction ...
+				final LeftHandSide lhs = ass.getLhs()[0];
+				final String id = BoogieASTUtil.getLHSId(lhs);
+//				mInitializedGlobals.add(id);
+				if (!mInitializedGlobals.contains(id)) {
+					return false;
+				}
+			}
+		}
+		return true;
 	}
 
 	/**
@@ -539,7 +549,7 @@ public class PostProcessor {
 	 * This allow us to use type synonyms like C_USHORT during the translation. This is yet not consequently
 	 * implemented. This is desired not only for bitvectors: it makes our translation more modular and can ease
 	 * debugging. However, that this located in this class and fixed to bitvectors is a workaround.
-	 * 
+	 *
 	 * @param typeHandler
 	 */
 	public static ArrayList<Declaration> declarePrimitiveDataTypeSynonyms(final ILocation loc,
@@ -567,7 +577,7 @@ public class PostProcessor {
 
 	/**
 	 * Generate FloatingPoint types
-	 * 
+	 *
 	 * @param loc
 	 * @param typesizes
 	 * @param typeHandler

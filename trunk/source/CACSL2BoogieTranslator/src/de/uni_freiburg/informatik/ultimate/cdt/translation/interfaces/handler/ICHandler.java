@@ -85,6 +85,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.Symbol
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.FunctionHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.InitializationHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.StaticObjectsHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.StructHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
@@ -640,5 +641,5 @@ public interface ICHandler extends IHandler {
 
 	StructHandler getStructHandler();
 
-//	StaticObjectsHandler getStaticObjectsHandler();
+	StaticObjectsHandler getStaticObjectsHandler();
 }

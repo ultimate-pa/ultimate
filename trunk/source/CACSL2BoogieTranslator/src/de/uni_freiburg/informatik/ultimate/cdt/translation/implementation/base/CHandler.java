@@ -162,6 +162,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.c
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.LocalLValueILocationPair;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.PostProcessor;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.StaticObjectsHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.StructHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
@@ -429,6 +430,8 @@ public class CHandler implements ICHandler {
 
 	private final ArrayHandler mArrayHandler;
 
+	private final StaticObjectsHandler mStaticObjectsHandler;
+
 	private final FunctionHandler mFunctionHandler;
 
 	private final PostProcessor mPostProcessor;
@@ -539,6 +542,7 @@ public class CHandler implements ICHandler {
 				CACSLPreferenceInitializer.UnsignedTreatment.class);
 
 		mArrayHandler = new ArrayHandler(prefs);
+		mStaticObjectsHandler = new StaticObjectsHandler();
 
 		mSymbolTable = new SymbolTable(main);
 
@@ -1587,7 +1591,9 @@ public class CHandler implements ICHandler {
 	 * statements and declarations that make the initialization according to the initializer
 	 * <li>for local variables without an initializer, a havoc statement is inserted into the ResultExpression instead
 	 * The declarations themselves of the local variables (and f.i. typedefs) are stored in the symbolTable and inserted
-	 * into the Boogie code at the next endScope() Declarations of static variables are added to
+	 * into the Boogie code at the next endScope()
+	 * <p>
+	 * Declarations of static variables are added to
 	 * mDeclarationsGlobalInBoogie such that they can be declared and initialized globally.
 	 * <p>
 	 * Variables/types that are global in Boogie but not in C are stored in the Symboltable to keep the association of
@@ -2065,6 +2071,8 @@ public class CHandler implements ICHandler {
 			assert d instanceof ConstDeclaration || d instanceof VariableDeclaration || d instanceof TypeDeclaration;
 			decl.add(d);
 		}
+		decl.addAll(getStaticObjectsHandler().getGlobalDeclarations());
+
 		decl.addAll(mAxioms);
 
 		decl.addAll(0,
@@ -2417,6 +2425,11 @@ public class CHandler implements ICHandler {
 	}
 
 	@Override
+	public StaticObjectsHandler getStaticObjectsHandler() {
+		return mStaticObjectsHandler;
+	}
+
+	@Override
 	public SymbolTable getSymbolTable() {
 		return mSymbolTable;
 	}
@@ -2523,7 +2536,7 @@ public class CHandler implements ICHandler {
 					.addNeighbourUnionFields(unionFieldsToCType);
 
 			final HeapLValue hlv = (HeapLValue) lrVal;
-			
+
 			Expression rhsWithBitfieldTreatment;
 			if (hlv.getBitfieldInformation() != null) {
 				final int bitfieldWidth = hlv.getBitfieldInformation().getNumberOfBits();
@@ -2545,7 +2558,7 @@ public class CHandler implements ICHandler {
 
 			final LocalLValue lValue = (LocalLValue) lrVal;
 			builder.setLRVal(lValue);
-			
+
 			Expression rhsWithBitfieldTreatment;
 			if (lValue.getBitfieldInformation() != null) {
 				final int bitfieldWidth = lValue.getBitfieldInformation().getNumberOfBits();
@@ -3089,7 +3102,7 @@ public class CHandler implements ICHandler {
 		} else if (oldType instanceof CArray) {
 			if (rexp instanceof StringLiteralResult) {
 				/*
-				 *  a string literal decays to a pointer
+				 *  a string literal's char-array decays to a pointer
 				 *  the stringLiteralResult already has the correct RValue, we just need to change the type
 				 */
 				rexp.mLrVal = new RValue(rexp.mLrVal.getValue(), new CPointer(new CPrimitive(CPrimitives.CHAR)));
@@ -3570,8 +3583,19 @@ public class CHandler implements ICHandler {
 			final int op, final ExpressionResult left, final ExpressionResult right) {
 		assert left.mLrVal instanceof RValue : "no RValue";
 		assert right.mLrVal instanceof RValue : "no RValue";
-		final CType lType = left.mLrVal.getCType().getUnderlyingType();
+
+		CType lType = left.mLrVal.getCType().getUnderlyingType();
 		final CType rType = right.mLrVal.getCType().getUnderlyingType();
+
+
+		if (lType instanceof CArray && rType.isArithmeticType()) {
+			// arrays decay to pointers in this case
+			assert ((CArray) lType).getDimensions().length == 1 : "TODO: think about this case";
+			final CType valueType = ((CArray) lType).getValueType().getUnderlyingType();
+			convert(loc, left, new CPointer(valueType));
+			lType = left.mLrVal.getCType().getUnderlyingType();
+		}
+
 		ExpressionResult result;
 		final Expression expr;
 		final CType typeOfResult;
@@ -3631,10 +3655,25 @@ public class CHandler implements ICHandler {
 			}
 			addBaseEqualityCheck(main, loc, left.mLrVal.getValue(), right.mLrVal.getValue(), result);
 			expr = doPointerSubtraction(main, loc, left.mLrVal.getValue(), right.mLrVal.getValue(), pointsToType);
+
 		} else {
 			throw new UnsupportedOperationException("non-standard case of pointer arithmetic");
 		}
 		final RValue rval = new RValue(expr, typeOfResult, false, false);
+
+		/*
+		 * if we had a StringLiteralResult as input, we have to restore the StringLiteralResult from the
+		 * ExpressionResult.
+		 */
+		if (left instanceof StringLiteralResult) {
+			assert lhs == null : "unforseen case";
+
+			result = new StringLiteralResult(result.getStatements(), null,
+					result.getDeclarations(), result.getAuxVars(), result.getOverapprs(),
+					((StringLiteralResult) left).getAuxVarName(),
+					((StringLiteralResult) left).getLiteralString(),
+					((StringLiteralResult) left).overApproximatesLongStringLiteral());
+		}
 
 		switch (op) {
 		case IASTBinaryExpression.op_plus:

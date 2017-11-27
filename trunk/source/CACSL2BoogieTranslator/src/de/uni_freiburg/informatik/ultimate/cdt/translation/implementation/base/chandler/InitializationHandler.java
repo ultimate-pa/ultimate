@@ -229,6 +229,7 @@ public class InitializationHandler {
 			// we have a lhs given, insert assignments such that the lhs is initialized
 			final List<Statement> assigningStatements = makeAssignmentStatements(loc, lhsIfAny, onHeap, cType,
 					initializationValue.getValue(), initInfo.getOverapprs());
+			assigningStatements.forEach(stm -> addOverApprToStatementAnnots(initInfo.getOverapprs(), stm));
 			initializer.addStatements(assigningStatements);
 		} else {
 			initializer.setLRVal(initializationValue);
@@ -1016,11 +1017,11 @@ public class InitializationHandler {
 					// append the '\0'
 					final char[] literalString = Arrays.copyOf(slr.getLiteralString(),
 							slr.getLiteralString().length + 1);
-					literalString[literalString.length - 1] = '0';
+					literalString[literalString.length - 1] = '\0';
 
 					// we overapproximate strings of length STRING_OVERAPPROXIMATION_THRESHOLD or longer
-					final boolean useActualValues =
-							literalString.length < ExpressionTranslation.STRING_OVERAPPROXIMATION_THRESHOLD;
+					final boolean useActualValues = slr.overApproximatesLongStringLiteral();
+//							literalString.length < ExpressionTranslation.STRING_OVERAPPROXIMATION_THRESHOLD;
 					final List<Overapprox> overapproxList;
 					if (useActualValues) {
 						// make the list (in our case a map because we support sparse lists in other cases)
@@ -1042,11 +1043,51 @@ public class InitializationHandler {
 						overapproxList.add(overapprox);
 						return new InitializerInfo(overapprox);
 					}
-				} else {
+				} else if (initializerResult.getRootExpressionResult() instanceof StringLiteralResult
+						&& targetCTypeRaw instanceof CPointer) {
 					/*
 					 * case like 'char *a = "bla"' --> initialization will make the variable'a' point to the special
 					 *   read-only memory area for strings. There is already code in the StringLiteralResult for this.
 					 *
+					 * We use this code for a global declaration and code in Ultimate.init()
+					 * (currently the field auxVars has entries, but they are not needed and may be removed in the
+					 *  future)
+					 * The result we return here will only contain the RValue.
+					 */
+//					final ExpressionResult converted = convertInitResultWithExpressionResult(loc, main, targetCType,
+//							initializerResult);
+
+//					final ExpressionResult exprResult = initializerResult.getRootExpressionResult();
+					final StringLiteralResult exprResult = (StringLiteralResult)
+							convertInitResultWithExpressionResult(loc, main, targetCType, initializerResult);
+
+					main.mCHandler.getStaticObjectsHandler().addGlobalDeclarations(exprResult.getDeclarations());
+
+					main.mCHandler.getStaticObjectsHandler().addStatementsForUltimateInit(exprResult.getStatements());
+					main.mCHandler.getStaticObjectsHandler().addVariableModifiedByUltimateInit(
+							exprResult.getAuxVarName());
+					// statements contain an alloc-call --> add valid, length to modifies clause of Ultimate.init
+					main.mCHandler.getStaticObjectsHandler().addVariableModifiedByUltimateInit(SFO.VALID);
+					main.mCHandler.getStaticObjectsHandler().addVariableModifiedByUltimateInit(SFO.LENGTH);
+					/*
+					 * if the literal was short enought that we actually write it to memory, add the corresponding
+					 *  memory array
+					 */
+					if (!exprResult.overApproximatesLongStringLiteral()) {
+//						main.mCHandler.getStaticObjectsHandler().addVariableModifiedByUltimateInit(SFO.MEMORY_INT);
+						main.mCHandler.getStaticObjectsHandler().addVariableModifiedByUltimateInit(
+								main.mCHandler.getMemoryHandler().getMemoryModel().getDataHeapArray(CPrimitives.CHAR)
+									.getVariableName());
+					}
+
+					final ExpressionResult onlyRValueExprResult = new ExpressionResultBuilder()
+							.setLRVal(exprResult.getLrValue())
+							.addOverapprox(exprResult.getOverapprs())
+							.build();
+
+					return new InitializerInfo(onlyRValueExprResult, Collections.emptyList());
+				} else {
+					/*
 					 * or  case like "struct s s1 = s2;",
 					 * make initializerInfo with one ExpressionResult
 					 */
