@@ -6,22 +6,22 @@
  * Copyright (C) 2015 Oleksii Saukh (saukho@informatik.uni-freiburg.de)
  * Copyright (C) 2015 Stefan Wissert
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Core.
- * 
+ *
  * The ULTIMATE Core is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Core is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Core. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Core, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualiz
 
 /**
  * Specification that should be checked at position
- * 
+ *
  * @author Markus Lindenmann
  * @author Stefan Wissert
  * @author Oleksii Saukh
@@ -123,6 +123,10 @@ public class Check extends ModernAnnotations {
 		 * Unsigned int overflow
 		 */
 		UINT_OVERFLOW,
+		/**
+		 * Undefined behavior according to the standard
+		 */
+		UNDEFINED_BEHAVIOR
 		// add missing failure types...
 
 	}
@@ -203,8 +207,10 @@ public class Check extends ModernAnnotations {
 			return "unknown kind of specification holds";
 		case UINT_OVERFLOW:
 			return "there are no unsigned integer over- or underflows";
+		case UNDEFINED_BEHAVIOR:
+			return "there is no undefined behavior";
 		default:
-			throw new AssertionError();
+			return "a specification is correct but has no positive message: " + spec;
 		}
 	}
 
@@ -242,8 +248,10 @@ public class Check extends ModernAnnotations {
 			return "unknown kind of specification may be violated";
 		case UINT_OVERFLOW:
 			return "an unsigned integer over- or underflow may occur";
+		case UNDEFINED_BEHAVIOR:
+			return "undefined behavior may occur";
 		default:
-			throw new AssertionError();
+			return "a specification may be violated but has no negative message: " + spec;
 		}
 	}
 
@@ -264,7 +272,7 @@ public class Check extends ModernAnnotations {
 
 	/**
 	 * Adds this Check object to the annotations of a IElement.
-	 * 
+	 *
 	 * @param node
 	 *            the element
 	 */

@@ -491,19 +491,14 @@ public class MemoryHandler {
 		final ArrayList<Declaration> memCpyDecl = new ArrayList<>();
 		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
 
-		final String memcpyInParamSize = SFO.MEMCPY_SIZE;
-		final String memcpyInParamDest = SFO.MEMCPY_DEST;
-		final String memcpyInParamSrc = SFO.MEMCPY_SRC;
-		final String memcpyOutParam = SFO.RES;
-
-		final VarList inPDest = new VarList(ignoreLoc, new String[] { memcpyInParamDest },
-				mTypeHandler.constructPointerType(ignoreLoc));
+		final VarList inPDest =
+				new VarList(ignoreLoc, new String[] { SFO.MEMCPY_DEST }, mTypeHandler.constructPointerType(ignoreLoc));
 		final VarList inPSrc =
-				new VarList(ignoreLoc, new String[] { memcpyInParamSrc }, mTypeHandler.constructPointerType(ignoreLoc));
-		final VarList inPSize = new VarList(ignoreLoc, new String[] { memcpyInParamSize },
+				new VarList(ignoreLoc, new String[] { SFO.MEMCPY_SRC }, mTypeHandler.constructPointerType(ignoreLoc));
+		final VarList inPSize = new VarList(ignoreLoc, new String[] { SFO.MEMCPY_SIZE },
 				mTypeHandler.cType2AstType(ignoreLoc, mTypeSizeAndOffsetComputer.getSizeT()));
 		final VarList outP =
-				new VarList(ignoreLoc, new String[] { memcpyOutParam }, mTypeHandler.constructPointerType(ignoreLoc));
+				new VarList(ignoreLoc, new String[] { SFO.RES }, mTypeHandler.constructPointerType(ignoreLoc));
 		final VarList[] inParams = new VarList[] { inPDest, inPSrc, inPSize };
 		final VarList[] outParams = new VarList[] { outP };
 
@@ -517,12 +512,12 @@ public class MemoryHandler {
 		decl.add(loopCtrDec);
 
 		final List<Statement> loopBody =
-				constructMemcpyLoopBody(heapDataArrays, loopCtr, memcpyInParamDest, memcpyInParamSrc);
+				constructMemcpyLoopBody(heapDataArrays, loopCtr, SFO.MEMCPY_DEST, SFO.MEMCPY_SRC);
 
-		final IdentifierExpression memcpyInParamSizeExpr = new IdentifierExpression(ignoreLoc, memcpyInParamSize);
+		final IdentifierExpression sizeIdExpr = new IdentifierExpression(ignoreLoc, SFO.MEMCPY_SIZE);
 		final Expression one = mExpressionTranslation.constructLiteralForIntegerType(ignoreLoc,
 				mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ONE);
-		final List<Statement> stmt = constructCountingLoop(memcpyInParamSizeExpr, loopCtr, one, loopBody);
+		final List<Statement> stmt = constructCountingLoop(sizeIdExpr, loopCtr, one, loopBody);
 
 		final Body procBody = new Body(ignoreLoc, decl.toArray(new VariableDeclaration[decl.size()]),
 				stmt.toArray(new Statement[stmt.size()]));
@@ -536,23 +531,50 @@ public class MemoryHandler {
 		specs.add(modifiesSpec);
 
 		// add requires #valid[dest!base];
-		addPointerBaseValidityCheck(ignoreLoc, memcpyInParamDest, specs);
+		addPointerBaseValidityCheck(ignoreLoc, SFO.MEMCPY_DEST, specs);
 		// add requires #valid[src!base];
-		addPointerBaseValidityCheck(ignoreLoc, memcpyInParamSrc, specs);
-
-		final Expression memcpyParamSizeExpr = new IdentifierExpression(ignoreLoc, memcpyInParamSize);
+		addPointerBaseValidityCheck(ignoreLoc, SFO.MEMCPY_SRC, specs);
 
 		// add requires (#size + #dest!offset <= #length[#dest!base] && 0 <= #dest!offset)
-		checkPointerTargetFullyAllocated(ignoreLoc, memcpyParamSizeExpr, memcpyInParamDest, specs);
+		checkPointerTargetFullyAllocated(ignoreLoc, sizeIdExpr, SFO.MEMCPY_DEST, specs);
 
 		// add requires (#size + #src!offset <= #length[#src!base] && 0 <= #src!offset)
-		checkPointerTargetFullyAllocated(ignoreLoc, memcpyParamSizeExpr, memcpyInParamSrc, specs);
+		checkPointerTargetFullyAllocated(ignoreLoc, sizeIdExpr, SFO.MEMCPY_SRC, specs);
+
+		// memcpy does not allow overlapping:
+		// add requires dest.base != src.base || src.offset + size < dest.offset || dest.offset + size < src.offset
+		final List<Expression> noOverlapExprs = new ArrayList<>(3);
+		final IdentifierExpression srcpointer = new IdentifierExpression(ignoreLoc, SFO.MEMCPY_SRC);
+		final IdentifierExpression destpointer = new IdentifierExpression(ignoreLoc, SFO.MEMCPY_DEST);
+		final Expression srcbase = getPointerBaseAddress(srcpointer, ignoreLoc);
+		final Expression destbase = getPointerBaseAddress(destpointer, ignoreLoc);
+		final Expression srcoffset = getPointerOffset(srcpointer, ignoreLoc);
+		final Expression destoffset = getPointerOffset(destpointer, ignoreLoc);
+
+		// dest.base != src.base
+		noOverlapExprs.add(ExpressionFactory.newBinaryExpression(ignoreLoc, Operator.COMPNEQ, srcbase, destbase));
+
+		// src.offset + size < dest.offset
+		noOverlapExprs.add(ExpressionFactory.newBinaryExpression(ignoreLoc, Operator.COMPLT,
+				ExpressionFactory.newBinaryExpression(ignoreLoc, Operator.ARITHPLUS, srcoffset, sizeIdExpr),
+				destoffset));
+
+		// dest.offset + size < src.offset
+		noOverlapExprs.add(ExpressionFactory.newBinaryExpression(ignoreLoc, Operator.COMPLT,
+				ExpressionFactory.newBinaryExpression(ignoreLoc, Operator.ARITHPLUS, destoffset, sizeIdExpr),
+				srcoffset));
+
+		// || over all three
+		final RequiresSpecification noOverlapping =
+				new RequiresSpecification(ignoreLoc, false, ExpressionFactory.or(ignoreLoc, noOverlapExprs));
+		new Check(Spec.UNDEFINED_BEHAVIOR).annotate(noOverlapping);
+		specs.add(noOverlapping);
 
 		// free ensures #res == dest;
 		final EnsuresSpecification returnValue = new EnsuresSpecification(ignoreLoc, true,
 				ExpressionFactory.newBinaryExpression(ignoreLoc, Operator.COMPEQ,
-						new IdentifierExpression(ignoreLoc, memcpyOutParam),
-						new IdentifierExpression(ignoreLoc, memcpyInParamDest)));
+						new IdentifierExpression(ignoreLoc, SFO.RES),
+						new IdentifierExpression(ignoreLoc, SFO.MEMCPY_DEST)));
 		specs.add(returnValue);
 
 		// add the procedure declaration
