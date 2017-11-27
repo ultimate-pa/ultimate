@@ -344,9 +344,16 @@ public class MemoryHandler {
 
 		if (mRequiredMemoryModelFeatures.getRequiredMemoryModelDeclarations()
 				.contains(MemoryModelDeclarations.C_Memcpy)) {
-			decl.addAll(declareMemcpy(main, heapDataArrays));
+			decl.addAll(declareMemcpyOrMemmove(main, heapDataArrays, MemoryModelDeclarations.C_Memcpy));
 			mFunctionHandler.addCallGraphNode(MemoryModelDeclarations.C_Memcpy.getName());
 			mFunctionHandler.addModifiedGlobalEntry(MemoryModelDeclarations.C_Memcpy.getName());
+		}
+
+		if (mRequiredMemoryModelFeatures.getRequiredMemoryModelDeclarations()
+				.contains(MemoryModelDeclarations.C_Memmove)) {
+			decl.addAll(declareMemcpyOrMemmove(main, heapDataArrays, MemoryModelDeclarations.C_Memmove));
+			mFunctionHandler.addCallGraphNode(MemoryModelDeclarations.C_Memmove.getName());
+			mFunctionHandler.addModifiedGlobalEntry(MemoryModelDeclarations.C_Memmove.getName());
 		}
 		return decl;
 	}
@@ -480,15 +487,22 @@ public class MemoryHandler {
 	}
 
 	/**
-	 * Construct specification and implementation for our Boogie representation of the memcpy function defined in
-	 * 7.24.2.1 of C11. void *memcpy(void * restrict s1, const void * restrict s2, size_t n);
+	 * Construct specification and implementation for our Boogie representation of the memcpy and memmove functions
+	 * defined in 7.24.2.1 of C11.
+	 *
+	 * void *memcpy(void * restrict s1, const void * restrict s2, size_t n);
+	 *
+	 * void* memmove( void* dest, const void* src, size_t count );
 	 *
 	 * @param main
 	 * @param heapDataArrays
 	 * @return
 	 */
-	private List<Declaration> declareMemcpy(final Dispatcher main, final Collection<HeapDataArray> heapDataArrays) {
-		final ArrayList<Declaration> memCpyDecl = new ArrayList<>();
+	private List<Declaration> declareMemcpyOrMemmove(final Dispatcher main, final Collection<HeapDataArray> heapDataArrays,
+			final MemoryModelDeclarations memModelDecl) {
+		assert memModelDecl == MemoryModelDeclarations.C_Memcpy || memModelDecl == MemoryModelDeclarations.C_Memmove;
+
+		final List<Declaration> memCpyDecl = new ArrayList<>();
 		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
 
 		final VarList inPDest =
@@ -512,7 +526,7 @@ public class MemoryHandler {
 		decl.add(loopCtrDec);
 
 		final List<Statement> loopBody =
-				constructMemcpyLoopBody(heapDataArrays, loopCtr, SFO.MEMCPY_DEST, SFO.MEMCPY_SRC);
+				constructMemcpyOrMemmoveLoopBody(heapDataArrays, loopCtr, SFO.MEMCPY_DEST, SFO.MEMCPY_SRC);
 
 		final IdentifierExpression sizeIdExpr = new IdentifierExpression(ignoreLoc, SFO.MEMCPY_SIZE);
 		final Expression one = mExpressionTranslation.constructLiteralForIntegerType(ignoreLoc,
@@ -526,8 +540,8 @@ public class MemoryHandler {
 		final ArrayList<Specification> specs = new ArrayList<>();
 
 		// add modifies spec
-		final ModifiesSpecification modifiesSpec =
-				announceModifiedGlobals(MemoryModelDeclarations.C_Memcpy.getName(), heapDataArrays);
+
+		final ModifiesSpecification modifiesSpec = announceModifiedGlobals(memModelDecl.getName(), heapDataArrays);
 		specs.add(modifiesSpec);
 
 		// add requires #valid[dest!base];
@@ -541,34 +555,10 @@ public class MemoryHandler {
 		// add requires (#size + #src!offset <= #length[#src!base] && 0 <= #src!offset)
 		checkPointerTargetFullyAllocated(ignoreLoc, sizeIdExpr, SFO.MEMCPY_SRC, specs);
 
-		// memcpy does not allow overlapping:
-		// add requires dest.base != src.base || src.offset + size < dest.offset || dest.offset + size < src.offset
-		final List<Expression> noOverlapExprs = new ArrayList<>(3);
-		final IdentifierExpression srcpointer = new IdentifierExpression(ignoreLoc, SFO.MEMCPY_SRC);
-		final IdentifierExpression destpointer = new IdentifierExpression(ignoreLoc, SFO.MEMCPY_DEST);
-		final Expression srcbase = getPointerBaseAddress(srcpointer, ignoreLoc);
-		final Expression destbase = getPointerBaseAddress(destpointer, ignoreLoc);
-		final Expression srcoffset = getPointerOffset(srcpointer, ignoreLoc);
-		final Expression destoffset = getPointerOffset(destpointer, ignoreLoc);
-
-		// dest.base != src.base
-		noOverlapExprs.add(ExpressionFactory.newBinaryExpression(ignoreLoc, Operator.COMPNEQ, srcbase, destbase));
-
-		// src.offset + size < dest.offset
-		noOverlapExprs.add(ExpressionFactory.newBinaryExpression(ignoreLoc, Operator.COMPLT,
-				ExpressionFactory.newBinaryExpression(ignoreLoc, Operator.ARITHPLUS, srcoffset, sizeIdExpr),
-				destoffset));
-
-		// dest.offset + size < src.offset
-		noOverlapExprs.add(ExpressionFactory.newBinaryExpression(ignoreLoc, Operator.COMPLT,
-				ExpressionFactory.newBinaryExpression(ignoreLoc, Operator.ARITHPLUS, destoffset, sizeIdExpr),
-				srcoffset));
-
-		// || over all three
-		final RequiresSpecification noOverlapping =
-				new RequiresSpecification(ignoreLoc, false, ExpressionFactory.or(ignoreLoc, noOverlapExprs));
-		new Check(Spec.UNDEFINED_BEHAVIOR).annotate(noOverlapping);
-		specs.add(noOverlapping);
+		if (memModelDecl == MemoryModelDeclarations.C_Memcpy) {
+			final RequiresSpecification noOverlapping = constructRequiresSourceDestNoOverlap(ignoreLoc, sizeIdExpr);
+			specs.add(noOverlapping);
+		}
 
 		// free ensures #res == dest;
 		final EnsuresSpecification returnValue = new EnsuresSpecification(ignoreLoc, true,
@@ -578,17 +568,56 @@ public class MemoryHandler {
 		specs.add(returnValue);
 
 		// add the procedure declaration
-		final Procedure memCpyProcDecl =
-				new Procedure(ignoreLoc, new Attribute[0], MemoryModelDeclarations.C_Memcpy.getName(), new String[0],
-						inParams, outParams, specs.toArray(new Specification[specs.size()]), null);
+		final Procedure memCpyProcDecl = new Procedure(ignoreLoc, new Attribute[0], memModelDecl.getName(),
+				new String[0], inParams, outParams, specs.toArray(new Specification[specs.size()]), null);
 		memCpyDecl.add(memCpyProcDecl);
 
 		// add the procedure implementation
-		final Procedure memCpyProc = new Procedure(ignoreLoc, new Attribute[0],
-				MemoryModelDeclarations.C_Memcpy.getName(), new String[0], inParams, outParams, null, procBody);
+		final Procedure memCpyProc = new Procedure(ignoreLoc, new Attribute[0], memModelDecl.getName(), new String[0],
+				inParams, outParams, null, procBody);
 		memCpyDecl.add(memCpyProc);
 
 		return memCpyDecl;
+	}
+
+	/**
+	 * Construct a requires-clause that states that {@link SFO#MEMCPY_SRC} and {@link SFO#MEMCPY_DEST} do not overlap.
+	 * The clause is marked as {@link Check} for {@link Spec#UNDEFINED_BEHAVIOR}.
+	 *
+	 * @param loc
+	 *            The location of all expressions used in this requires-clause
+	 * @param sizeIdExpr
+	 *            an identifier expression pointing to the size variable that determines the interval of
+	 *            {@link SFO#MEMCPY_SRC} that should not overlap with {@link SFO#MEMCPY_DEST}.
+	 */
+	private static RequiresSpecification constructRequiresSourceDestNoOverlap(final ILocation loc,
+			final IdentifierExpression sizeIdExpr) {
+		// memcpy does not allow overlapping:
+		// add requires dest.base != src.base || src.offset + size < dest.offset || dest.offset + size < src.offset
+		final List<Expression> noOverlapExprs = new ArrayList<>(3);
+		final IdentifierExpression srcpointer = new IdentifierExpression(loc, SFO.MEMCPY_SRC);
+		final IdentifierExpression destpointer = new IdentifierExpression(loc, SFO.MEMCPY_DEST);
+		final Expression srcbase = getPointerBaseAddress(srcpointer, loc);
+		final Expression destbase = getPointerBaseAddress(destpointer, loc);
+		final Expression srcoffset = getPointerOffset(srcpointer, loc);
+		final Expression destoffset = getPointerOffset(destpointer, loc);
+
+		// dest.base != src.base
+		noOverlapExprs.add(ExpressionFactory.newBinaryExpression(loc, Operator.COMPNEQ, srcbase, destbase));
+
+		// src.offset + size < dest.offset
+		noOverlapExprs.add(ExpressionFactory.newBinaryExpression(loc, Operator.COMPLT,
+				ExpressionFactory.newBinaryExpression(loc, Operator.ARITHPLUS, srcoffset, sizeIdExpr), destoffset));
+
+		// dest.offset + size < src.offset
+		noOverlapExprs.add(ExpressionFactory.newBinaryExpression(loc, Operator.COMPLT,
+				ExpressionFactory.newBinaryExpression(loc, Operator.ARITHPLUS, destoffset, sizeIdExpr), srcoffset));
+
+		// || over all three
+		final RequiresSpecification noOverlapping =
+				new RequiresSpecification(loc, false, ExpressionFactory.or(loc, noOverlapExprs));
+		new Check(Spec.UNDEFINED_BEHAVIOR).annotate(noOverlapping);
+		return noOverlapping;
 	}
 
 	/**
@@ -653,7 +682,7 @@ public class MemoryHandler {
 	 * @param srcPtr
 	 * @return
 	 */
-	private ArrayList<Statement> constructMemcpyLoopBody(final Collection<HeapDataArray> heapDataArrays,
+	private ArrayList<Statement> constructMemcpyOrMemmoveLoopBody(final Collection<HeapDataArray> heapDataArrays,
 			final String loopCtr, final String destPtr, final String srcPtr) {
 
 		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
@@ -2114,6 +2143,7 @@ public class MemoryHandler {
 		Free(SFO.FREE),
 		Ultimate_MemInit("#Ultimate.meminit"),
 		C_Memcpy("#Ultimate.C_memcpy"),
+		C_Memmove("#Ultimate.C_memmove"),
 		C_Memset("#Ultimate.C_memset"),
 		Ultimate_Length("#length"),
 		Ultimate_Valid("#valid"),

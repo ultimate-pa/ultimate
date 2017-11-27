@@ -90,6 +90,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.SkipResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO.AUXVAR;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
@@ -190,7 +191,12 @@ public class StandardFunctionHandler {
 		fill(map, "printf", (main, node, loc, name) -> handlePrintF(main, node, loc));
 
 		fill(map, "__builtin_memcpy", this::handleMemcpy);
+		fill(map, "__memcpy", this::handleMemcpy);
 		fill(map, "memcpy", this::handleMemcpy);
+
+		fill(map, "__builtin_memmove", this::handleMemmove);
+		fill(map, "__memmove", this::handleMemmove);
+		fill(map, "memmove", this::handleMemmove);
 
 		fill(map, "malloc", this::handleAlloc);
 		fill(map, "alloca", this::handleAlloc);
@@ -1001,6 +1007,16 @@ public class StandardFunctionHandler {
 
 	private Result handleMemcpy(final Dispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
 			final String name) {
+		return handleMemCopyOrMove(main, node, loc, name, SFO.AUXVAR.MEMCPYRES, MemoryModelDeclarations.C_Memcpy);
+	}
+
+	private Result handleMemmove(final Dispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
+			final String name) {
+		return handleMemCopyOrMove(main, node, loc, name, SFO.AUXVAR.MEMMOVERES, MemoryModelDeclarations.C_Memmove);
+	}
+
+	private Result handleMemCopyOrMove(final Dispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name, final AUXVAR auxVar, final MemoryModelDeclarations mmDecl) {
 		final IASTInitializerClause[] arguments = node.getArguments();
 		checkArguments(loc, 3, name, arguments);
 		final ExpressionResult dest = dispatchAndConvert(main, loc, arguments[0]);
@@ -1013,25 +1029,25 @@ public class StandardFunctionHandler {
 
 		final ExpressionResult result = ExpressionResult.copyStmtDeclAuxvarOverapprox(dest, src, size);
 
-		final String tId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.MEMCPYRES, dest.mLrVal.getCType());
+		final String tId = main.mNameHandler.getTempVarUID(auxVar, dest.mLrVal.getCType());
 		final VariableDeclaration tVarDecl = new VariableDeclaration(loc, new Attribute[0],
 				new VarList[] { new VarList(loc, new String[] { tId }, main.mTypeHandler.constructPointerType(loc)) });
+
 		final CallStatement call = new CallStatement(loc, false, new VariableLHS[] { new VariableLHS(loc, tId) },
-				MemoryModelDeclarations.C_Memcpy.getName(), new Expression[] { dest.getLrValue().getValue(),
-						src.getLrValue().getValue(), size.getLrValue().getValue() });
+				mmDecl.getName(), new Expression[] { dest.getLrValue().getValue(), src.getLrValue().getValue(),
+						size.getLrValue().getValue() });
 		result.mDecl.add(tVarDecl);
 		result.mAuxVars.put(tVarDecl, loc);
 		result.mStmt.add(call);
 		result.mLrVal = new RValue(new IdentifierExpression(loc, tId), new CPointer(new CPrimitive(CPrimitives.VOID)));
 
 		// add marker for global declaration to memory handler
-		mMemoryHandler.getRequiredMemoryModelFeatures().require(MemoryModelDeclarations.C_Memcpy);
+		mMemoryHandler.getRequiredMemoryModelFeatures().require(mmDecl);
 
 		// add required information to function handler.
-		mFunctionHandler.addCallGraphNode(MemoryModelDeclarations.C_Memcpy.getName());
-		mFunctionHandler.addCallGraphEdge(mFunctionHandler.getCurrentProcedureID(),
-				MemoryModelDeclarations.C_Memcpy.getName());
-		mFunctionHandler.addModifiedGlobalEntry(MemoryModelDeclarations.C_Memcpy.getName());
+		mFunctionHandler.addCallGraphNode(mmDecl.getName());
+		mFunctionHandler.addCallGraphEdge(mFunctionHandler.getCurrentProcedureID(), mmDecl.getName());
+		mFunctionHandler.addModifiedGlobalEntry(mmDecl.getName());
 
 		return result;
 	}
