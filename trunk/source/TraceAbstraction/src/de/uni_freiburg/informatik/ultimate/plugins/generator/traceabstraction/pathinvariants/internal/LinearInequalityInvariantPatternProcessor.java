@@ -1244,7 +1244,8 @@ public final class LinearInequalityInvariantPatternProcessor
 					if (term instanceof TermVariable) {
 						mVarsFromUnsatCore.add((TermVariable) term);
 					} else {
-						 throw new UnsupportedOperationException("Linear inequality (" + term + ")is not a TermVariable");
+//						 throw new UnsupportedOperationException("Linear inequality (" + term + ")is not a TermVariable");
+						mLogger.warn("Linear inequality (" + term + ")is not a TermVariable");
 					}
 				}
 			}
