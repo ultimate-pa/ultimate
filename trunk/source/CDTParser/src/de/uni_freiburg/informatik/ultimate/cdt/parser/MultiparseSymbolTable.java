@@ -161,7 +161,7 @@ public class MultiparseSymbolTable extends ASTVisitor {
 		mFunctionMapping.put(entry, fdef);
 		
 		// Don't rename the main method. There only may be one in the whole project.
-		if (!fdecl.getName().toString().equalsIgnoreCase("main")) {
+		if (!fdecl.getName().toString().equals("main")) {
 			mNamePrefixMapping.put(entry, generatePrefixedIdentifier(inFile, fdecl.getName().toString()));
 		}
 	}

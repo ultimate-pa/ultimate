@@ -183,6 +183,7 @@ public class CDTParser implements ISource {
 		
 		if (EXTENDED_DEBUG_OUTPUT) {
 			for (final IASTTranslationUnit tu : tuCollection) {
+				mLogger.info("Printing AST for TU: " + tu.getFilePath());
 				ASTPrinter.print(tu);
 			} 
 		}
