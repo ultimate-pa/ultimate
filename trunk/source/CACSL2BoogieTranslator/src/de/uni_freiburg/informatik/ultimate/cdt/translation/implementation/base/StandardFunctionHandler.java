@@ -189,8 +189,8 @@ public class StandardFunctionHandler {
 
 		fill(map, "printf", (main, node, loc, name) -> handlePrintF(main, node, loc));
 
-		fill(map, "__builtin_memcpy", this::handleMemCopy);
-		fill(map, "memcpy", this::handleMemCopy);
+		fill(map, "__builtin_memcpy", this::handleMemcpy);
+		fill(map, "memcpy", this::handleMemcpy);
 
 		fill(map, "malloc", this::handleAlloc);
 		fill(map, "alloca", this::handleAlloc);
@@ -999,15 +999,16 @@ public class StandardFunctionHandler {
 		return new ExpressionResult(stmt, returnValue, decl, auxVars, overappr);
 	}
 
-	private Result handleMemCopy(final Dispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
+	private Result handleMemcpy(final Dispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
 			final String name) {
 		final IASTInitializerClause[] arguments = node.getArguments();
 		checkArguments(loc, 3, name, arguments);
 		final ExpressionResult dest = dispatchAndConvert(main, loc, arguments[0]);
-		main.mCHandler.convert(loc, dest, new CPointer(new CPrimitive(CPrimitives.VOID)));
 		final ExpressionResult src = dispatchAndConvert(main, loc, arguments[1]);
-		main.mCHandler.convert(loc, src, new CPointer(new CPrimitive(CPrimitives.VOID)));
 		final ExpressionResult size = dispatchAndConvert(main, loc, arguments[2]);
+
+		main.mCHandler.convert(loc, dest, new CPointer(new CPrimitive(CPrimitives.VOID)));
+		main.mCHandler.convert(loc, src, new CPointer(new CPrimitive(CPrimitives.VOID)));
 		main.mCHandler.convert(loc, size, mTypeSizeComputer.getSizeT());
 
 		final ExpressionResult result = ExpressionResult.copyStmtDeclAuxvarOverapprox(dest, src, size);
@@ -1018,8 +1019,11 @@ public class StandardFunctionHandler {
 		result.mDecl.add(tVarDecl);
 		result.mAuxVars.put(tVarDecl, loc);
 
-		final Statement call = mMemoryHandler.constructMemcpyCall(loc, dest.mLrVal.getValue(), src.mLrVal.getValue(),
-				size.mLrVal.getValue(), tId);
+		final CallStatement call = new CallStatement(loc, false, new VariableLHS[] { new VariableLHS(loc, tId) },
+				MemoryModelDeclarations.C_Memcpy.getName(), new Expression[] { dest.getLrValue().getValue(),
+						src.getLrValue().getValue(), size.getLrValue().getValue() });
+		mMemoryHandler.getRequiredMemoryModelFeatures().require(MemoryModelDeclarations.C_Memcpy);
+
 		result.mStmt.add(call);
 		result.mLrVal = new RValue(new IdentifierExpression(loc, tId), new CPointer(new CPrimitive(CPrimitives.VOID)));
 

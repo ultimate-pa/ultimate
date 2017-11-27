@@ -570,16 +570,6 @@ public class MemoryHandler {
 	}
 
 	/**
-	 * Returns call to our memcpy procedure and announces that memcpy is required by our memory model.
-	 */
-	public CallStatement constructMemcpyCall(final ILocation loc, final Expression dest, final Expression src,
-			final Expression size, final String resVarId) {
-		mRequiredMemoryModelFeatures.require(MemoryModelDeclarations.C_Memcpy);
-		return new CallStatement(loc, false, new VariableLHS[] { new VariableLHS(loc, resVarId) },
-				MemoryModelDeclarations.C_Memcpy.getName(), new Expression[] { dest, src, size });
-	}
-
-	/**
 	 * Construct loop of the following form, where loopBody is a List of statements and the variables loopConterVariable
 	 * and loopBoundVariable have the translated type of size_t.
 	 *
@@ -2186,14 +2176,14 @@ public class MemoryHandler {
 			if (sizeOfChar > dhp.getSize()) {
 				throw new AssertionError("char bigger than size of data array");
 			}
-			possiblyExtendedValueExpr = mExpressionTranslation.signExtend(loc, valueExpr, sizeOfChar * 8,
-					dhp.getSize() * 8);
+			possiblyExtendedValueExpr =
+					mExpressionTranslation.signExtend(loc, valueExpr, sizeOfChar * 8, dhp.getSize() * 8);
 		} else {
 			possiblyExtendedValueExpr = valueExpr;
 
 		}
-		final AssignmentStatement statement = constructOneDimensionalArrayUpdate(loc, pointer, array,
-				possiblyExtendedValueExpr);
+		final AssignmentStatement statement =
+				constructOneDimensionalArrayUpdate(loc, pointer, array, possiblyExtendedValueExpr);
 		return statement;
 	}
 
