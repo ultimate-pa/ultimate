@@ -435,6 +435,8 @@ public class ArrayInterpolator {
 			if (mainPath.mSharedIndex[color] != null && mainPath.mSharedIndex[color] == mStorePath.getIndex()) {
 				if (indexEqInfo.isALocal(color) && otherSelectOccur.isBorShared(color)) {
 					mInterpolants[color].add(mInterpolator.unquote(mIndexEquality));
+				} else if (indexEqInfo.isBLocal(color) && mDiseqInfo.isALocal(color)) {
+					mInterpolants[color].add(mTheory.not(mInterpolator.unquote(mIndexEquality)));
 				}
 			}
 		}
