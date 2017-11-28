@@ -447,10 +447,7 @@ public class FunctionHandler {
 						new RValue(mExpressionTranslation.constructNullPointer(loc), functionResultType);
 			}
 
-			stmt.addAll(returnValueSwitched.mStmt);
-			decl.addAll(returnValueSwitched.mDecl);
-			auxVars.putAll(returnValueSwitched.mAuxVars);
-			overApp.addAll(returnValueSwitched.mOverappr);
+
 			if (outParams.length == 0) {
 				// void method which is returning something! We remove the
 				// return value!
@@ -462,9 +459,15 @@ public class FunctionHandler {
 			} else {
 				final String id = outParams[0].getIdentifiers()[0];
 				final VariableLHS[] lhs = new VariableLHS[] { new VariableLHS(loc, id) };
+				// Ugly workaround: Apply the conversion to the result of the 
+				// dispatched argument. On should first construt a copy of returnValueSwitched
+				main.mCHandler.convert(loc, returnValueSwitched, functionResultType);
 				rExp.mLrVal = returnValueSwitched.mLrVal;
-				main.mCHandler.convert(loc, rExp, functionResultType);
 				final RValue castExprResultRVal = (RValue) rExp.mLrVal;
+				stmt.addAll(returnValueSwitched.mStmt);
+				decl.addAll(returnValueSwitched.mDecl);
+				auxVars.putAll(returnValueSwitched.mAuxVars);
+				overApp.addAll(returnValueSwitched.mOverappr);
 				stmt.add(new AssignmentStatement(loc, lhs, new Expression[] { castExprResultRVal.getValue() }));
 				// //assuming that we need no auxvars or overappr, here
 			}
