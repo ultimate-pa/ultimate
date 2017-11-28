@@ -668,7 +668,7 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 				final Term minEq = SmtUtils.binaryEquality(script, newMinBound.getTermVariable(),
 						segmentation.getBound(min).getTermVariable());
 				if (newSubState.evaluate(script, minEq) != EvalResult.TRUE) {
-					final IProgramVar freshMinValue = mToolkit.createBoundVar(index.getType());
+					final IProgramVar freshMinValue = mToolkit.createValueVar(index.getType());
 					final Term valueMinConstraint = getEqualities(freshMinValue, oldValues, Operator.LOGICOR);
 					newSubState = mToolkit.handleStatementBySubdomain(newSubState.addVariable(freshMinValue),
 							createAssume(valueMinConstraint));
@@ -677,16 +677,17 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 				}
 				newBounds.add(newMinBound);
 				newValues.add(newValue);
+				newBounds.add(newMaxBound);
 				final Term maxEq = SmtUtils.binaryEquality(script, newMaxBound.getTermVariable(),
 						segmentation.getBound(max).getTermVariable());
 				if (newSubState.evaluate(script, maxEq) != EvalResult.TRUE) {
-					final IProgramVar freshMaxValue = mToolkit.createBoundVar(index.getType());
+					final IProgramVar freshMaxValue = mToolkit.createValueVar(index.getType());
 					final Term valueMaxConstraint = getEqualities(freshMaxValue, oldValues, Operator.LOGICOR);
 					newSubState = mToolkit.handleStatementBySubdomain(newSubState.addVariable(freshMaxValue),
 							createAssume(valueMaxConstraint));
 					newValues.add(freshMaxValue);
 				}
-				for (int i = max + 1; i < segmentation.size(); i++) {
+				for (int i = max; i < segmentation.size(); i++) {
 					newBounds.add(segmentation.getBound(i));
 					newValues.add(segmentation.getValue(i));
 				}
@@ -719,8 +720,9 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 	}
 
 	private Term getEquality(final IProgramVarOrConst var1, final IProgramVarOrConst var2) {
-		return SmtUtils.binaryEquality(mToolkit.getScript(), NonrelationalTermUtils.getTermVar(var1),
-				NonrelationalTermUtils.getTermVar(var1));
+		final Term t1 = NonrelationalTermUtils.getTermVar(var1);
+		final Term t2 = NonrelationalTermUtils.getTermVar(var2);
+		return SmtUtils.binaryEquality(mToolkit.getScript(), t1, t2);
 	}
 
 	@Override

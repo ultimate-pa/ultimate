@@ -32,21 +32,27 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractDom
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractStateBinaryOperator;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieSymbolTableVariableProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.poorman.Boogie2SmtSymbolTableTmpVars;
 
 /**
  * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  */
-public class ArrayDomain<STATE extends IAbstractState<STATE>> implements IAbstractDomain<ArrayDomainState<STATE>, IcfgEdge> {
+public class ArrayDomain<STATE extends IAbstractState<STATE>>
+		implements IAbstractDomain<ArrayDomainState<STATE>, IcfgEdge> {
 	private IAbstractPostOperator<ArrayDomainState<STATE>, IcfgEdge> mPostOperator;
 	private final IAbstractDomain<STATE, IcfgEdge> mSubDomain;
 	private final ArrayDomainToolkit<STATE> mToolkit;
 
 	public ArrayDomain(final IAbstractDomain<STATE, IcfgEdge> subDomain, final IIcfg<?> icfg,
-			final IUltimateServiceProvider services, final BoogieSymbolTable boogieSymbolTable) {
+			final IUltimateServiceProvider services, final BoogieSymbolTable boogieSymbolTable,
+			final IBoogieSymbolTableVariableProvider variableProvider) {
+		assert variableProvider instanceof Boogie2SmtSymbolTableTmpVars;
 		mSubDomain = subDomain;
-		mToolkit = new ArrayDomainToolkit<>(subDomain, icfg, services, boogieSymbolTable);
+		mToolkit = new ArrayDomainToolkit<>(subDomain, icfg, services, boogieSymbolTable,
+				(Boogie2SmtSymbolTableTmpVars) variableProvider);
 	}
 
 	@Override

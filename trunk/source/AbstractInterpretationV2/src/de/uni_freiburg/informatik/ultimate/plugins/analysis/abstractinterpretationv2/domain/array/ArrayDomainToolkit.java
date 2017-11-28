@@ -24,17 +24,16 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractDom
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.MappedTerm2Expression;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TypeSortTranslator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Expression2Term.IIdentifierTranslator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.poorman.Boogie2SmtSymbolTableTmpVars;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.BoogieVarFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.CallInfoCache;
@@ -61,9 +60,11 @@ public class ArrayDomainToolkit<STATE extends IAbstractState<STATE>> {
 	private final EquivalenceFinder mEquivalenceFinder;
 	private final Set<TemporaryBoogieVar> mCreatedVars;
 	private final MappedTerm2Expression mMappedTerm2Expression;
+	private final Boogie2SmtSymbolTableTmpVars mVariableProvider;
 
 	public ArrayDomainToolkit(final IAbstractDomain<STATE, IcfgEdge> subDomain, final IIcfg<?> icfg,
-			final IUltimateServiceProvider services, final BoogieSymbolTable boogieSymbolTable) {
+			final IUltimateServiceProvider services, final BoogieSymbolTable boogieSymbolTable,
+			final Boogie2SmtSymbolTableTmpVars variableProvider) {
 		mSubDomain = subDomain;
 		final BoogieIcfgContainer rootAnnotation = AbsIntUtil.getBoogieIcfgContainer(icfg);
 		mBoogie2Smt = rootAnnotation.getBoogie2SMT();
@@ -72,18 +73,20 @@ public class ArrayDomainToolkit<STATE extends IAbstractState<STATE>> {
 		final ManagedScript managedScript = mBoogie2Smt.getManagedScript();
 		mBoogieVarFactory = new BoogieVarFactory(managedScript);
 		mCallInfoCache = new CallInfoCache(icfg.getCfgSmtToolkit(), boogieSymbolTable);
-		mCreatedVars = new HashSet<>();
-		mMinBound = createBoundVar(PrimitiveType.TYPE_INT);
-		mMaxBound = createBoundVar(PrimitiveType.TYPE_INT);
 		mTypeSortTranslator = new TypeSortTranslator(script, services);
 		mEquivalenceFinder = new EquivalenceFinder(services, managedScript);
 		mMappedTerm2Expression = new MappedTerm2Expression(mBoogie2Smt.getTypeSortTranslator(),
 				mBoogie2Smt.getBoogie2SmtSymbolTable(), managedScript);
+		mVariableProvider = variableProvider;
+		mCreatedVars = new HashSet<>();
+		mMinBound = createBoundVar(PrimitiveType.TYPE_INT);
+		mMaxBound = createBoundVar(PrimitiveType.TYPE_INT);
 	}
 
 	public TemporaryBoogieVar createVariable(final String name, final IBoogieType type) {
 		final TemporaryBoogieVar result = mBoogieVarFactory.createFreshBoogieVar(name, type);
 		mCreatedVars.add(result);
+		mVariableProvider.addTemporaryVariable(result);
 		return result;
 	}
 
@@ -148,29 +151,25 @@ public class ArrayDomainToolkit<STATE extends IAbstractState<STATE>> {
 	}
 
 	public IProgramVarOrConst getBoogieVar(final IdentifierExpression expr) {
-		final Boogie2SmtSymbolTable symbolTable = mBoogie2Smt.getBoogie2SmtSymbolTable();
 		IProgramVarOrConst returnVar =
-				symbolTable.getBoogieVar(expr.getIdentifier(), expr.getDeclarationInformation(), false);
+				mVariableProvider.getBoogieVar(expr.getIdentifier(), expr.getDeclarationInformation(), false);
 
 		if (returnVar != null) {
-			if (returnVar instanceof IProgramNonOldVar) {
-				return ((IProgramNonOldVar) returnVar).getOldVar();
-			}
 			return returnVar;
 		}
 
-		returnVar = symbolTable.getBoogieConst(expr.getIdentifier());
+		returnVar = mVariableProvider.getBoogieConst(expr.getIdentifier());
 		assert returnVar != null;
 		return returnVar;
 	}
 
-	public IProgramVar getBoogieVar(final VariableLHS expr) {
-		final Boogie2SmtSymbolTable symbolTable = mBoogie2Smt.getBoogie2SmtSymbolTable();
-		IProgramVar rtr = symbolTable.getBoogieVar(expr.getIdentifier(), expr.getDeclarationInformation(), false);
+	public IProgramVar getBoogieVar(final VariableLHS variable) {
+		IProgramVar rtr =
+				mVariableProvider.getBoogieVar(variable.getIdentifier(), variable.getDeclarationInformation(), false);
 		if (rtr == null) {
 			// hack for oldvars
-			final String newIdent = expr.getIdentifier().replaceAll("old\\((.*)\\)", "$1");
-			rtr = symbolTable.getBoogieVar(newIdent, expr.getDeclarationInformation(), false);
+			final String newIdent = variable.getIdentifier().replaceAll("old\\((.*)\\)", "$1");
+			rtr = mVariableProvider.getBoogieVar(newIdent, variable.getDeclarationInformation(), false);
 			rtr = ((BoogieNonOldVar) rtr).getOldVar();
 		}
 		assert rtr != null : "Could not find boogie var";
