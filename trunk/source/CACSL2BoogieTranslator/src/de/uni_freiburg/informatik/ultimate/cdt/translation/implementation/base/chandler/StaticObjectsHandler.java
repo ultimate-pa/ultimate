@@ -28,35 +28,51 @@ public class StaticObjectsHandler {
 	private final Collection<Statement> mStatementsForUltimateInit = new ArrayList<>();
 	private final Collection<String> mVariablesModifiedByUltimateInit = new ArrayList<>();
 
+	private boolean mIsFrozen = false;
+
+
 	public void addVariableModifiedByUltimateInit(final String varName) {
+		assert !mIsFrozen;
 		mVariablesModifiedByUltimateInit.add(varName);
 	}
 
 	public void addGlobalDeclaration(final Declaration decl) {
+		assert !mIsFrozen;
 		mGlobalDeclarations.add(decl);
 	}
 
 	public void addGlobalDeclarations(final Collection<Declaration> decls) {
+		assert !mIsFrozen;
 		mGlobalDeclarations.addAll(decls);
 	}
 
 	public void addStatementForUltimateInit(final Statement stmt) {
+		assert !mIsFrozen;
 		mStatementsForUltimateInit.add(stmt);
 	}
 
 	public void addStatementsForUltimateInit(final Collection<Statement> stmts) {
+		assert !mIsFrozen;
 		mStatementsForUltimateInit.addAll(stmts);
 	}
 
 	public Collection<Declaration> getGlobalDeclarations() {
+		assert mIsFrozen;
 		return mGlobalDeclarations;
 	}
 
 	public Collection<Statement> getStatementsForUltimateInit() {
+		assert mIsFrozen;
 		return mStatementsForUltimateInit;
 	}
 
 	public Collection<String> getVariablesModifiedByUltimateInit() {
+		assert mIsFrozen;
 		return mVariablesModifiedByUltimateInit;
+	}
+
+	public void freeze() {
+		assert !mIsFrozen;
+		mIsFrozen = true;
 	}
 }

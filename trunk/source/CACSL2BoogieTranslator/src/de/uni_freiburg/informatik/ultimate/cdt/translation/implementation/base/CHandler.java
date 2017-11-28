@@ -2071,7 +2071,6 @@ public class CHandler implements ICHandler {
 			assert d instanceof ConstDeclaration || d instanceof VariableDeclaration || d instanceof TypeDeclaration;
 			decl.add(d);
 		}
-		decl.addAll(getStaticObjectsHandler().getGlobalDeclarations());
 
 		decl.addAll(mAxioms);
 
@@ -2079,6 +2078,13 @@ public class CHandler implements ICHandler {
 				mPostProcessor.postProcess(main, loc, mMemoryHandler, mArrayHandler, mFunctionHandler, mStructHandler,
 						(TypeHandler) mTypeHandler, mTypeHandler.getUndefinedTypes(), mDeclarationsGlobalInBoogie,
 						mExpressionTranslation));
+
+
+		/*
+		 * this must come after the post processor because the post processor might add declarations when dispatching
+		 *  initializers of static variables
+		 */
+		decl.addAll(getStaticObjectsHandler().getGlobalDeclarations());
 
 		// this has to happen after postprocessing as pping may add sizeof
 		// constants for initializations

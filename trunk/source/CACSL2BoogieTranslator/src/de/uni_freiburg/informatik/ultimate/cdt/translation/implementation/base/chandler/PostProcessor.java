@@ -378,6 +378,7 @@ public class PostProcessor {
 		/*
 		 * perhaps move more functionality into the following section, once StaticObjectsHandler is used more widely
 		 */
+		main.mCHandler.getStaticObjectsHandler().freeze();
 		initStatements.addAll(main.mCHandler.getStaticObjectsHandler().getStatementsForUltimateInit());
 		mInitializedGlobals.addAll(main.mCHandler.getStaticObjectsHandler().getVariablesModifiedByUltimateInit());
 
