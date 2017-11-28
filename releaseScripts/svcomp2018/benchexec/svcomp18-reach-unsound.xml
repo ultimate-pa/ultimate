@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<benchmark tool="ultimateautomizer" memlimit="6GB" timelimit="1200" hardtimelimit="1200" cpuCores="2">
+
+    <rundefinition name="Reach">
+        <propertyfile>../../../trunk/examples/svcomp/ReachSafety.prp</propertyfile>
+        <option name="--full-output"/>
+    </rundefinition>
+
+    <tasks name="Reach32bit">
+        <option name="--architecture">32bit</option>
+
+        <include>../../../trunk/examples/svcomp/product-lines/minepump_spec4_productSimulator_false-unreach-call_false-termination.cil.c</include>
+        <include>../../../trunk/examples/svcomp/psyco/psyco_abp_1_false-unreach-call_false-termination.c</include>
+        <include>../../../trunk/examples/svcomp/float-benchs/sqrt_poly2_false-unreach-call.c</include>
+        <include>../../../trunk/examples/svcomp/ssh/s3_clnt.blast.01_true-unreach-call.i.cil.c</include>
+        <include>../../../trunk/examples/svcomp/ssh/s3_clnt.blast.04_true-unreach-call.i.cil.c</include>
+        <include>../../../trunk/examples/svcomp/forester-heap/sll-buckets_false-unreach-call_false-valid-memcleanup.i</include>
+    </tasks>
+
+    <tasks name="Reach64Bit">
+        <option name="--architecture">64bit</option>
+
+        <include>../../../trunk/examples/svcomp/ldv-linux-3.0/module_get_put-drivers-block-pktcdvd.ko_false-unreach-call.cil.out.i.pp.i</include>
+        <include>../../../trunk/examples/svcomp/ldv-linux-3.7.3/main4_false-unreach-call_drivers-scsi-mpt2sas-mpt2sas-ko--32_7a--linux-3.7.3.c</include>
+        <include>../../../trunk/examples/svcomp/ldv-consumption/linux-3.8-rc1-32_7a-drivers--scsi--mpt3sas--mpt3sas.ko-ldv_main4_false-unreach-call.cil.out.c</include>
+        <include>../../../trunk/examples/svcomp/ldv-linux-3.16-rc1/43_2a_bitvector_linux-3.16-rc1.tar.xz-43_2a-drivers--scsi--megaraid--megaraid_mm.ko-entry_point_false-unreach-call.cil.out.c</include>
+        <include>../../../trunk/examples/svcomp/ldv-linux-3.16-rc1/205_9a_array_safes_linux-3.16-rc1.tar.xz-205_9a-drivers--net--arcnet--capmode.ko-entry_point_true-unreach-call.cil.out.c</include>
+        <include>../../../trunk/examples/svcomp/ldv-linux-3.16-rc1/205_9a_array_safes_linux-3.16-rc1.tar.xz-205_9a-drivers--net--arcnet--rfc1051.ko-entry_point_true-unreach-call.cil.out.c</include>
+        <include>../../../trunk/examples/svcomp/ldv-linux-3.16-rc1/205_9a_array_safes_linux-3.16-rc1.tar.xz-205_9a-drivers--net--wan--lapbether.ko-entry_point_true-unreach-call.cil.out.c</include>
+        <include>../../../trunk/examples/svcomp/ldv-linux-3.16-rc1/205_9a_array_unsafes_linux-3.16-rc1.tar.xz-205_9a-drivers--net--wan--hdlc_x25.ko-entry_point_true-unreach-call.cil.out.c</include>
+        <include>../../../trunk/examples/svcomp/ldv-linux-3.16-rc1/205_9a_array_unsafes_linux-3.16-rc1.tar.xz-205_9a-drivers--net--ethernet--8390--8390.ko-entry_point_false-unreach-call.cil.out.c</include>
+        <include>../../../trunk/examples/svcomp/ldv-linux-4.2-rc1/linux-4.2-rc1.tar.xz-08_1a-drivers--char--raw.ko-entry_point_false-unreach-call.cil.out.c</include>
+        <include>../../../trunk/examples/svcomp/ldv-linux-4.2-rc1/linux-4.2-rc1.tar.xz-43_2a-drivers--scsi--megaraid--megaraid_mm.ko-entry_point_false-unreach-call.cil.out.c</include>
+        <include>../../../trunk/examples/svcomp/ldv-linux-4.2-rc1/linux-4.2-rc1.tar.xz-08_1a-drivers--media--usb--em28xx--em28xx-dvb.ko-entry_point_true-unreach-call.cil.out.c</include>
+        <include>../../../trunk/examples/svcomp/ldv-linux-3.4-simple/43_1a_cilled_false-unreach-call_ok_linux-43_1a-drivers--scsi--megaraid--megaraid_mm_true-termination.ko-ldv_main0_sequence_infinite_withcheck_stateful.cil.out.c</include>
+    </tasks>
+
+</benchmark>

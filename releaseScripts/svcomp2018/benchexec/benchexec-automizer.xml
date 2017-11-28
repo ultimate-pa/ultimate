@@ -1,0 +1,115 @@
+<?xml version="1.0"?>
+<!DOCTYPE benchmark PUBLIC "+//IDN sosy-lab.org//DTD BenchExec benchmark 1.0//EN" "http://www.sosy-lab.org/benchexec/benchmark-1.0.dtd">
+<benchmark tool="ultimateautomizer"
+           timelimit="60"
+           hardtimelimit="75"
+           memlimit="8GB"
+           cpuCores="4">
+
+  <rundefinition name="Test">
+  </rundefinition>
+  
+  <resultfiles>**.graphml</resultfiles>
+  
+  <option name="--full-output"/>
+  
+  <tasks name="LDV">
+    <include>../../../trunk/examples/svcomp/ldv-regression/1_3.c_false-unreach-call.i</include>
+    <include>../../../trunk/examples/svcomp/ldv-linux-3.16-rc1/205_9a_array_unsafes_linux-3.16-rc1.tar.xz-205_9a-drivers--net--arcnet--rfc1201.ko-entry_point_false-unreach-call.cil.out.c</include>
+    <include>../../../trunk/examples/svcomp/ldv-consumption/32_7a_cilled_false-unreach-call_linux-3.8-rc1-drivers--media--rc--rc-core.ko-main.cil.out.c</include>
+    <include>../../../trunk/examples/svcomp/ldv-linux-3.12-rc1/linux-3.12-rc1.tar.xz-144_2a-drivers--staging--media--lirc--lirc_sasem.ko-entry_point_false-unreach-call.cil.out.c</include>
+    <include>../../../trunk/examples/svcomp/ldv-regression/mutex_lock_int.c_false-unreach-call.i</include>
+    <propertyfile>../../../trunk/examples/svcomp/PropertyUnreachCall.prp</propertyfile>
+	<option name="--architecture">32bit</option>
+  </tasks>
+
+  <tasks name="Memsafety">
+    <include>../../../trunk/examples/svcomp/array-memsafety/diff_usafe_false-valid-deref.i</include>
+    <include>../../../trunk/examples/svcomp/array-memsafety/array02-alloca_true-valid-memsafety.i</include>
+    <include>../../../trunk/examples/svcomp/memsafety/test-0158_false-valid-free.i</include>
+    <include>../../../trunk/examples/svcomp/list-ext-properties/test-0158_1_false-valid-memtrack.i</include>
+	<include>../../../trunk/examples/svcomp/list-ext-properties/960521-1_1_false-valid-deref.i</include>
+	<include>../../../trunk/examples/svcomp/ldv-memsafety/ArraysOfVariableLength_false-valid-deref-read.c</include>
+	<include>../../../trunk/examples/svcomp/ldv-memsafety/memset2_false-valid-deref-write.c</include>
+	<include>../../../trunk/examples/svcomp/ldv-memsafety/memset_false-valid-deref-write.c</include>
+    <propertyfile>../../../trunk/examples/svcomp/PropertyMemSafety.prp</propertyfile>
+	<option name="--architecture">32bit</option>
+  </tasks>
+
+  <tasks name="Busybox-Memsafety">
+    <include>../../../trunk/examples/svcomp/busybox-1.22.0/basename_false-unreach-call_true-no-overflow_true-valid-memsafety.i</include>
+    <propertyfile>../../../trunk/examples/svcomp/Systems_BusyBox_MemSafety.prp</propertyfile>
+	<option name="--architecture">64bit</option>
+  </tasks>
+
+  <tasks name="Overflow">
+    <include>../../../trunk/examples/svcomp/signedintegeroverflow-regression/ConversionToSignedInt_true-no-overflow.c.i</include>
+    <include>../../../trunk/examples/svcomp/signedintegeroverflow-regression/AdditionIntMin_false-no-overflow.c.i</include>
+	<include>../../../trunk/examples/svcomp/signedintegeroverflow-regression/AdditionIntMax_false-no-overflow.c.i</include>
+    <propertyfile>../../../trunk/examples/svcomp/PropertyNoOverflow.prp</propertyfile>
+	<option name="--architecture">64bit</option>
+  </tasks>
+  
+  <tasks name="Reach">
+    <include>../../../trunk/examples/svcomp/ssh-simplified/s3_clnt_1_true-unreach-call.cil.c</include>
+    <include>../../../trunk/examples/svcomp/ssh-simplified/s3_clnt_1_false-unreach-call.cil.c</include>
+    <include>../../../trunk/examples/svcomp/loop-acceleration/array_true-unreach-call3_true-termination.i</include>
+    <include>../../../trunk/examples/svcomp/loop-acceleration/simple_false-unreach-call2_true-termination.i</include>
+	<include>../../../trunk/examples/svcomp/seq-pthread/cs_dekker_true-unreach-call.i</include>
+	<include>../../../trunk/examples/svcomp/float-benchs/addsub_double_exact_true-unreach-call.c</include>
+	<include>../../../trunk/examples/svcomp/floats-cbmc-regression/float-div1_true-unreach-call.i</include>
+	<include>../../../trunk/examples/svcomp/floats-esbmc-regression/fmod3_true-unreach-call.i</include>
+    <propertyfile>../../../trunk/examples/svcomp/PropertyUnreachCall.prp</propertyfile>
+	<option name="--architecture">32bit</option>
+  </tasks>
+
+  <tasks name="Bitvectors">
+	<include>../../../trunk/examples/svcomp/bitvector-loops/diamond_false-unreach-call2.i</include>
+	<include>../../../trunk/examples/svcomp/bitvector-regression/implicitunsignedconversion_false-unreach-call.c</include>
+	<include>../../../trunk/examples/svcomp/bitvector-regression/implicitunsignedconversion_true-unreach-call.c</include>
+	<include>../../../trunk/examples/svcomp/bitvector-regression/signextension2_false-unreach-call.c</include>
+	<include>../../../trunk/examples/svcomp/bitvector-regression/signextension2_true-unreach-call.c</include>
+	<include>../../../trunk/examples/svcomp/bitvector/gcd_4_true-unreach-call_true-no-overflow.c</include>
+	<include>../../../trunk/examples/svcomp/bitvector/jain_1_false-no-overflow.c</include>
+	<include>../../../trunk/examples/svcomp/bitvector-regression/integerpromotion_true-unreach-call.c</include>
+	<include>../../../trunk/examples/svcomp/bitvector-regression/integerpromotion_false-unreach-call.c</include>
+	<include>../../../trunk/examples/svcomp/bitvector/byte_add_false-unreach-call_true-no-overflow.c</include>
+	<include>../../../trunk/examples/svcomp/bitvector/num_conversion_1_true-unreach-call_true-no-overflow.i</include>
+	<include>../../../trunk/examples/svcomp/bitvector/s3_clnt_1_true-unreach-call_true-no-overflow.BV.c.cil.c</include>
+	<include>../../../trunk/examples/svcomp/bitvector/soft_float_2_true-unreach-call_true-no-overflow.c.cil.c</include>
+    <propertyfile>../../../trunk/examples/svcomp/PropertyUnreachCall.prp</propertyfile>
+	<option name="--architecture">32bit</option>
+  </tasks>
+
+  <tasks name="Recursive">
+    <include>../../../trunk/examples/svcomp/recursive/recHanoi02_true-unreach-call_true-no-overflow_true-termination.c</include>
+    <include>../../../trunk/examples/svcomp/recursive/McCarthy91_false-unreach-call_true-no-overflow_true-termination.c</include>
+    <propertyfile>../../../trunk/examples/svcomp/PropertyUnreachCall.prp</propertyfile>
+	<option name="--architecture">32bit</option>
+  </tasks>
+
+  <tasks name="Termination">
+    <include>../../../trunk/examples/svcomp/termination-15/cstrcmp_diffterm_alloca_*.i</include>
+	<include>../../../trunk/examples/svcomp/termination-15/cstrncpy_malloc_*.i</include>
+	<include>../../../trunk/examples/svcomp/termination-crafted-lit/AliasDarteFeautrierGonnord-SAS2010-easy1_true-termination_true-no-overflow.c</include>
+	<include>../../../trunk/examples/svcomp/termination-crafted/Madrid_*.c</include>
+	<include>../../../trunk/examples/svcomp/termination-crafted/McCarthy91_Iteration_*.c</include>
+	<include>../../../trunk/examples/svcomp/termination-crafted/NonTermination3_*.c</include>
+	<include>../../../trunk/examples/svcomp/termination-libowfat/strcpy_small_*.i</include>
+	<include>../../../trunk/examples/svcomp/termination-libowfat/strstr_*.i</include>
+	<include>../../../trunk/examples/svcomp/termination-memory-alloca/b.10-alloca_*.i</include>
+	<include>../../../trunk/examples/svcomp/termination-numeric/gcd01_true-termination_true-no-overflow.c</include>
+	<include>../../../trunk/examples/svcomp/termination-numeric/LeUserDefRec_*.c</include>
+	<include>../../../trunk/examples/svcomp/termination-restricted-15/NO_13_*.c</include>
+	<include>../../../trunk/examples/svcomp/termination-restricted-15/WhileDecr_true-termination_true-no-overflow.c</include>
+	<include>../../../trunk/examples/svcomp/termination-restricted-15/java_Continue1_*.c</include>
+    <include>../../../trunk/examples/svcomp/termination-memory-alloca/a.04-alloca_*.c.i</include>
+    <include>../../../trunk/examples/svcomp/termination-restricted-15/ConvLower_*.c</include>
+    <include>../../../trunk/examples/svcomp/termination-crafted/Collatz_*.c</include>
+	<include>../../../trunk/examples/svcomp/termination-libowfat/dirname_*.i</include>
+    <propertyfile>../../../trunk/examples/svcomp/Termination.prp</propertyfile>
+	<option name="--architecture">64bit</option>
+  </tasks>
+
+
+</benchmark>
