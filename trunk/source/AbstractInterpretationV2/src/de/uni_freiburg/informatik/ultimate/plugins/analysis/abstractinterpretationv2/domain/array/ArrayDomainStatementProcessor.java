@@ -8,7 +8,6 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayStoreExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
@@ -92,8 +91,8 @@ public class ArrayDomainStatementProcessor<STATE extends IAbstractState<STATE>> 
 		if (lhs instanceof VariableLHS) {
 			STATE newSubState = oldstate.getSubState();
 			final SegmentationMap newSegmentationMap = oldstate.getSegmentationMap();
-			if (newExpr.getType() instanceof ArrayType) {
-				final IProgramVarOrConst leftVar = mToolkit.getBoogieVar((VariableLHS) lhs);
+			final IProgramVarOrConst leftVar = mToolkit.getBoogieVar((VariableLHS) lhs);
+			if (leftVar.getSort().isArraySort()) {
 				if (newExpr instanceof IdentifierExpression) {
 					final IProgramVarOrConst rightVar = mToolkit.getBoogieVar((IdentifierExpression) newExpr);
 					newSegmentationMap.move(leftVar, rightVar);

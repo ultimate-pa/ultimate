@@ -643,7 +643,7 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 				final int max = minMax.getSecond();
 				final IProgramVar newMinBound = mToolkit.createBoundVar(index.getType());
 				final IProgramVar newMaxBound = mToolkit.createBoundVar(index.getType());
-				final IProgramVar newValue = mToolkit.createBoundVar(value.getType());
+				final IProgramVar newValue = mToolkit.createValueVar(value.getType());
 				final Script script = mToolkit.getScript();
 				final Term minConstraint =
 						SmtUtils.binaryEquality(script, newMinBound.getTermVariable(), mToolkit.getTerm(index));
