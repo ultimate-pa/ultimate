@@ -601,8 +601,8 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 		final Term arrayTerm = mSegmentationMap.getTerm(mToolkit.getManagedScript(), valueTerm);
 		final Term conjunction = Util.and(script, nonValueTerm, arrayTerm);
 		final Set<TermVariable> auxVars = DataStructureUtils.union(bounds, values);
-		// TODO: Simplify and apply QE
-		return SmtUtils.quantifier(script, QuantifiedFormula.EXISTS, auxVars, conjunction);
+		final Term result = SmtUtils.quantifier(script, QuantifiedFormula.EXISTS, auxVars, conjunction);
+		return mToolkit.simplifyTerm(result);
 	}
 
 	private Set<TermVariable> getTermVars(final Collection<IProgramVar> programVars) {
@@ -734,14 +734,11 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 	}
 
 	public ArrayDomainState<STATE> updateState(final STATE newSubState, final SegmentationMap newSegmentationMap) {
-		final Set<IProgramVarOrConst> newVariables = new HashSet<>(newSubState.getVariables());
-		newVariables.addAll(newSegmentationMap.getArrays());
-		newVariables.removeAll(newSegmentationMap.getAuxVars());
-		return new ArrayDomainState<>(newSubState, newSegmentationMap, newVariables, mToolkit);
+		return new ArrayDomainState<>(newSubState, newSegmentationMap, mVariables, mToolkit);
 	}
 
 	public ArrayDomainState<STATE> updateState(final STATE newSubState) {
-		return new ArrayDomainState<>(newSubState, getSegmentationMap(), mVariables, mToolkit);
+		return updateState(newSubState, getSegmentationMap());
 	}
 
 	public STATE getSubState() {

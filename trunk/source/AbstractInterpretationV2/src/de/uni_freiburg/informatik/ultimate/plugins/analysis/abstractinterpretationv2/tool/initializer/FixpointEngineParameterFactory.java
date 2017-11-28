@@ -151,7 +151,7 @@ public class FixpointEngineParameterFactory {
 			} else {
 				subDomain = getFlatDomainOrFail(subDomainName, logger);
 			}
-			return new ArrayDomain<>(subDomain, mBoogieIcfg, mServices, mSymbolTable, mVariableProvider);
+			return new ArrayDomain<>(subDomain, mBoogieIcfg, mServices, logger, mSymbolTable, mVariableProvider);
 		} else if (CompoundDomain.class.getSimpleName().equals(selectedDomain)) {
 			return createCompoundDomain(prefs, logger);
 		}

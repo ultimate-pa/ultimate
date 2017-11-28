@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.array;
 
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPostOperator;
@@ -47,11 +48,11 @@ public class ArrayDomain<STATE extends IAbstractState<STATE>>
 	private final ArrayDomainToolkit<STATE> mToolkit;
 
 	public ArrayDomain(final IAbstractDomain<STATE, IcfgEdge> subDomain, final IIcfg<?> icfg,
-			final IUltimateServiceProvider services, final BoogieSymbolTable boogieSymbolTable,
+			final IUltimateServiceProvider services, final ILogger logger, final BoogieSymbolTable boogieSymbolTable,
 			final IBoogieSymbolTableVariableProvider variableProvider) {
 		assert variableProvider instanceof Boogie2SmtSymbolTableTmpVars;
 		mSubDomain = subDomain;
-		mToolkit = new ArrayDomainToolkit<>(subDomain, icfg, services, boogieSymbolTable,
+		mToolkit = new ArrayDomainToolkit<>(subDomain, icfg, services, logger, boogieSymbolTable,
 				(Boogie2SmtSymbolTableTmpVars) variableProvider);
 	}
 
