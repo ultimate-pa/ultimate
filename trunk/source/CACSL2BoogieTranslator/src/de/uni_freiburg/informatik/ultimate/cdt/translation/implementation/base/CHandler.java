@@ -2547,7 +2547,8 @@ public class CHandler implements ICHandler {
 			if (hlv.getBitfieldInformation() != null) {
 				final int bitfieldWidth = hlv.getBitfieldInformation().getNumberOfBits();
 				rhsWithBitfieldTreatment = mExpressionTranslation.erazeBits(loc,
-						rightHandSideWithConversionsApplied.getValue(), (CPrimitive) hlv.getCType(), bitfieldWidth);
+						rightHandSideWithConversionsApplied.getValue(),
+							(CPrimitive) hlv.getCType().getUnderlyingType(), bitfieldWidth);
 			} else {
 				rhsWithBitfieldTreatment = rightHandSideWithConversionsApplied.getValue();
 			}

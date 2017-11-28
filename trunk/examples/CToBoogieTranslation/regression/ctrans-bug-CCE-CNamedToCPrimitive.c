@@ -17,7 +17,7 @@ typedef unsigned char UCHAR;
 
 struct _CDB10 {
 
-   UCHAR Reserved1 : 0 ;
+   UCHAR Reserved1 : 1 ;
 
 };
 
