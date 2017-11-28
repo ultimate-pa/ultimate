@@ -1286,7 +1286,7 @@ public class CHandler implements ICHandler {
 		final String cId = node.getName().toString();
 
 		// deal with builtin constants
-		if ("NULL".equalsIgnoreCase(cId)) {
+		if ("NULL".equals(cId)) {
 			return new ExpressionResult(new RValue(mExpressionTranslation.constructNullPointer(loc),
 					new CPointer(new CPrimitive(CPrimitives.VOID))));
 
@@ -1593,8 +1593,8 @@ public class CHandler implements ICHandler {
 	 * The declarations themselves of the local variables (and f.i. typedefs) are stored in the symbolTable and inserted
 	 * into the Boogie code at the next endScope()
 	 * <p>
-	 * Declarations of static variables are added to
-	 * mDeclarationsGlobalInBoogie such that they can be declared and initialized globally.
+	 * Declarations of static variables are added to mDeclarationsGlobalInBoogie such that they can be declared and
+	 * initialized globally.
 	 * <p>
 	 * Variables/types that are global in Boogie but not in C are stored in the Symboltable to keep the association of
 	 * BoogieId and CId.
@@ -2079,10 +2079,9 @@ public class CHandler implements ICHandler {
 						(TypeHandler) mTypeHandler, mTypeHandler.getUndefinedTypes(), mDeclarationsGlobalInBoogie,
 						mExpressionTranslation));
 
-
 		/*
 		 * this must come after the post processor because the post processor might add declarations when dispatching
-		 *  initializers of static variables
+		 * initializers of static variables
 		 */
 		decl.addAll(getStaticObjectsHandler().getGlobalDeclarations());
 
@@ -2546,9 +2545,9 @@ public class CHandler implements ICHandler {
 			Expression rhsWithBitfieldTreatment;
 			if (hlv.getBitfieldInformation() != null) {
 				final int bitfieldWidth = hlv.getBitfieldInformation().getNumberOfBits();
-				rhsWithBitfieldTreatment = mExpressionTranslation.erazeBits(loc,
-						rightHandSideWithConversionsApplied.getValue(),
-							(CPrimitive) hlv.getCType().getUnderlyingType(), bitfieldWidth);
+				rhsWithBitfieldTreatment =
+						mExpressionTranslation.erazeBits(loc, rightHandSideWithConversionsApplied.getValue(),
+								(CPrimitive) hlv.getCType().getUnderlyingType(), bitfieldWidth);
 			} else {
 				rhsWithBitfieldTreatment = rightHandSideWithConversionsApplied.getValue();
 			}
@@ -3109,8 +3108,8 @@ public class CHandler implements ICHandler {
 		} else if (oldType instanceof CArray) {
 			if (rexp instanceof StringLiteralResult) {
 				/*
-				 *  a string literal's char-array decays to a pointer
-				 *  the stringLiteralResult already has the correct RValue, we just need to change the type
+				 * a string literal's char-array decays to a pointer the stringLiteralResult already has the correct
+				 * RValue, we just need to change the type
 				 */
 				rexp.mLrVal = new RValue(rexp.mLrVal.getValue(), new CPointer(new CPrimitive(CPrimitives.CHAR)));
 			} else {
@@ -3170,8 +3169,8 @@ public class CHandler implements ICHandler {
 			throw new IncorrectSyntaxException(loc, "Pointer dereference of incomplete type");
 		}
 
-		return new ExpressionResult(rop.mStmt, new HeapLValue(rValue.getValue(), pointedType, null), rop.mDecl, rop.mAuxVars,
-				rop.mOverappr);
+		return new ExpressionResult(rop.mStmt, new HeapLValue(rValue.getValue(), pointedType, null), rop.mDecl,
+				rop.mAuxVars, rop.mOverappr);
 	}
 
 	/**
@@ -3594,7 +3593,6 @@ public class CHandler implements ICHandler {
 		CType lType = left.mLrVal.getCType().getUnderlyingType();
 		final CType rType = right.mLrVal.getCType().getUnderlyingType();
 
-
 		if (lType instanceof CArray && rType.isArithmeticType()) {
 			// arrays decay to pointers in this case
 			assert ((CArray) lType).getDimensions().length == 1 : "TODO: think about this case";
@@ -3675,9 +3673,8 @@ public class CHandler implements ICHandler {
 		if (left instanceof StringLiteralResult) {
 			assert lhs == null : "unforseen case";
 
-			result = new StringLiteralResult(result.getStatements(), null,
-					result.getDeclarations(), result.getAuxVars(), result.getOverapprs(),
-					((StringLiteralResult) left).getAuxVarName(),
+			result = new StringLiteralResult(result.getStatements(), null, result.getDeclarations(),
+					result.getAuxVars(), result.getOverapprs(), ((StringLiteralResult) left).getAuxVarName(),
 					((StringLiteralResult) left).getLiteralString(),
 					((StringLiteralResult) left).overApproximatesLongStringLiteral());
 		}
