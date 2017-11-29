@@ -30,6 +30,7 @@ import java.util.Set;
 import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CongruenceClosure;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.CongruenceClosure.RemoveElement;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ICongruenceClosureElement;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialComparator;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialComparator.ComparisonResult;
@@ -47,8 +48,8 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 		return getMeet(cc1, cc2, null);
 	}
 
-	public CongruenceClosure<ELEM> getMeet(final CongruenceClosure<ELEM> cc1,
-			final CongruenceClosure<ELEM> cc2, final CongruenceClosure<ELEM>.RemoveElement remInfo) {
+	public CongruenceClosure<ELEM> getMeet(final CongruenceClosure<ELEM> cc1, final CongruenceClosure<ELEM> cc2,
+			final RemoveElement<ELEM> remInfo) {
 		final CongruenceClosure<ELEM> result;
 		if (remInfo == null) {
 			result = cc1.meetRec(cc2);

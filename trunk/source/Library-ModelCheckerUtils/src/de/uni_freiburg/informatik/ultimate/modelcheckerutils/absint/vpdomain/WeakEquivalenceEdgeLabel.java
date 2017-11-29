@@ -17,6 +17,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CongruenceClosure;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.CongruenceClosure.RemoveElement;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ICongruenceClosure;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.PartialOrderCache;
 
 /**
@@ -66,7 +68,7 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>> {
 				mLabel.stream().reduce((cc1, cc2) -> cc1.join(cc1)).get()));
 	}
 
-	public void setExternalRemInfo(final CongruenceClosure<NODE>.RemoveElement remInfo) {
+	public void setExternalRemInfo(final RemoveElement<NODE> remInfo) {
 		for (final CongruenceClosure<NODE> lab : mLabel) {
 			lab.setExternalRemInfo(remInfo);
 		}
@@ -97,7 +99,8 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>> {
 	 * @param newLabelContents
 	 * @param weakEquivalenceGraph TODO
 	 */
-	public WeakEquivalenceEdgeLabel(final WeakEquivalenceGraph<NODE> weakEquivalenceGraph, final Set<CongruenceClosure<NODE>> newLabelContents) {
+	public WeakEquivalenceEdgeLabel(final WeakEquivalenceGraph<NODE> weakEquivalenceGraph,
+			final Set<CongruenceClosure<NODE>> newLabelContents) {
 		mWeakEquivalenceGraph = weakEquivalenceGraph;
 		mLabel = mWeakEquivalenceGraph.mCcManager.filterRedundantCcs(newLabelContents);
 		if (mLabel.size() == 1 && mLabel.iterator().next().isInconsistent()) {
@@ -298,7 +301,7 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>> {
 			assert mWeakEquivalenceGraph.mPartialArrangement.sanityCheck();
 			assert l.sanityCheckOnlyCc();
 			final CongruenceClosure<NODE> currentPaWgpa = mWeakEquivalenceGraph.mCcManager.getMeet(l,
-					mWeakEquivalenceGraph.mPartialArrangement,
+					mWeakEquivalenceGraph.mPartialArrangement.getCongruenceClosure(),
 					mWeakEquivalenceGraph.mPartialArrangement.getElementCurrentlyBeingRemoved());
 
 			if (currentPaWgpa.isInconsistent()) {
@@ -576,7 +579,7 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>> {
 			}
 
 			if (!paCopy.isInconsistent()) {
-				newLabelContents.add(paCopy);
+				newLabelContents.add(paCopy.getCongruenceClosure());
 			}
 		}
 
@@ -605,7 +608,9 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>> {
 //			if (meetWithFullWeqCc) {
 //				meet = mWeakEquivalenceGraph.mCcManager.getWeqMeet(l, mWeakEquivalenceGraph.mPartialArrangement);
 //			} else {
-				meet = mWeakEquivalenceGraph.mCcManager.getMeet(l, mWeakEquivalenceGraph.mPartialArrangement, mWeakEquivalenceGraph.mPartialArrangement.getElementCurrentlyBeingRemoved());
+				meet = mWeakEquivalenceGraph.mCcManager.getMeet(l,
+						mWeakEquivalenceGraph.mPartialArrangement.getCongruenceClosure(),
+						mWeakEquivalenceGraph.mPartialArrangement.getElementCurrentlyBeingRemoved());
 //			}
 
 			if (meet.isInconsistent()) {
@@ -633,7 +638,7 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>> {
 		assert sanityCheckDontEnforceProjectToWeqVars(mWeakEquivalenceGraph.mPartialArrangement);
 	}
 
-	boolean sanityCheckDontEnforceProjectToWeqVars(final CongruenceClosure<NODE> groundPartialArrangement) {
+	boolean sanityCheckDontEnforceProjectToWeqVars(final ICongruenceClosure<NODE> groundPartialArrangement) {
 		for (final CongruenceClosure<NODE> lab : mLabel) {
 			if (!lab.sanityCheckOnlyCc(groundPartialArrangement.getElementCurrentlyBeingRemoved())) {
 				assert false;

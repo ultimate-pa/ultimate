@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CongruenceClosure;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.CongruenceClosure.RemoveElement;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialComparator;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.PartialOrderCache;
 
@@ -41,7 +42,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 	}
 
 	WeqCongruenceClosure<NODE> getWeqMeet(final CongruenceClosure<NODE> cc,
-			final WeqCongruenceClosure<NODE> weqcc, final CongruenceClosure<NODE>.RemoveElement remInfo) {
+			final WeqCongruenceClosure<NODE> weqcc, final RemoveElement<NODE> remInfo) {
 
 		final WeqCongruenceClosure<NODE> result;
 		if (remInfo == null) {
@@ -82,7 +83,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 	}
 
 	public CongruenceClosure<NODE> getMeet(final CongruenceClosure<NODE> cc1, final CongruenceClosure<NODE> cc2,
-			final CongruenceClosure<NODE>.RemoveElement elementCurrentlyBeingRemoved) {
+			final RemoveElement<NODE> elementCurrentlyBeingRemoved) {
 		return mCcManager.getMeet(cc1, cc2, elementCurrentlyBeingRemoved);
 	}
 

@@ -283,7 +283,7 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>> {
 				// case "weak equivalence in this, strong equivalence in other"
 
 				final WeakEquivalenceEdgeLabel<NODE> newEdgeLabel = thisWeqEdge.getValue()
-						.meet(Collections.singleton(this.mPartialArrangement))
+						.meet(Collections.singleton(this.mPartialArrangement.getCongruenceClosure()))
 						.projectToElements(mFactory.getAllWeqNodes());
 
 				newWeakEquivalenceEdges.put(thisWeqEdge.getKey(), newEdgeLabel);
@@ -296,11 +296,11 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>> {
 			}
 
 			final WeakEquivalenceEdgeLabel<NODE> thisNewEdgeLabel = thisWeqEdge.getValue()
-						.meet(Collections.singleton(this.mPartialArrangement))
+						.meet(Collections.singleton(this.mPartialArrangement.getCongruenceClosure()))
 						.projectToElements(mFactory.getAllWeqNodes());
 			final WeakEquivalenceEdgeLabel<NODE> otherNewEdgeLabel =
 					correspondingWeqEdgeLabelInOther
-						.meet(Collections.singleton(other.mPartialArrangement))
+						.meet(Collections.singleton(other.mPartialArrangement.getCongruenceClosure()))
 						.projectToElements(mFactory.getAllWeqNodes());
 
 			newWeakEquivalenceEdges.put(thisWeqEdge.getKey(), thisNewEdgeLabel.union(otherNewEdgeLabel));
@@ -317,7 +317,7 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>> {
 			if (this.mPartialArrangement.hasElements(source, target)
 					&& this.mPartialArrangement.getEqualityStatus(source, target) == EqualityStatus.EQUAL) {
 				final WeakEquivalenceEdgeLabel<NODE> newEdgeLabel = otherWeqEdge.getValue()
-						.meet(Collections.singleton(other.mPartialArrangement))
+						.meet(Collections.singleton(other.mPartialArrangement.getCongruenceClosure()))
 						.projectToElements(mFactory.getAllWeqNodes());
 
 				newWeakEquivalenceEdges.put(otherWeqEdge.getKey(), newEdgeLabel);
