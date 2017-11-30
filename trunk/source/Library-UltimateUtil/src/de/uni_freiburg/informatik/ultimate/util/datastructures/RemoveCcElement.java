@@ -8,7 +8,6 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CongruenceClosure.CcSettings;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.CongruenceClosure.RemoveCcElement;
 
 public class RemoveCcElement<ELEM extends ICongruenceClosureElement<ELEM>> {
 
