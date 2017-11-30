@@ -24,6 +24,11 @@
 		<m2e-version>1.0.0</m2e-version>
 		<coveralls-version>4.2.0</coveralls-version>
 		<git-commit-id-version>2.2.3</git-commit-id-version>
+		<maven-clean-version>3.0.0</maven-clean-version>
+		<maven-antrun-version>1.8</maven-antrun-version>
+		<maven-war-version>3.2.0</maven-war-version>
+		<maven-assembly-version>3.1.0</maven-assembly-version>
+		<maven-resources-version>3.0.2</maven-resources-version>
 
 		<!-- reference to workspace root -->
 		<workspaceDir>${basedir}/..</workspaceDir>
@@ -48,6 +53,8 @@
 		<automatascriptparserDir>${workspaceDir}/AutomataScriptParser/src/de/uni_freiburg/informatik/ultimate/plugins/source/automatascriptparser</automatascriptparserDir>
 		<ltl2autParserDir>${workspaceDir}/LTL2aut/src/de/uni_freiburg/informatik/ultimate/ltl2aut </ltl2autParserDir>
 		<srparseparserDir>${workspaceDir}/Library-srParse/src/de/uni_freiburg/informatik/ultimate/lib/srparse</srparseparserDir>
+		<examplesDir>${workspaceDir}/../examples</examplesDir>
+		<websiteExamplesDir>${workspaceDir}/WebUltimateBridge/src/de/uni_freiburg/informatik/ultimate/webbridge/resources/examples</websiteExamplesDir>
 
 		<!-- Encoding settings -->
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -143,21 +150,26 @@
 	</properties>
 
 	<repositories>
+		<!-- We proxy repositories via monteverdi to reduce load and speed up the 
+			build in our LAN You can configure monteverdis proxy by visiting <url>https://monteverdi.informatik.uni-freiburg.de/nexus</url> 
+			The user/password is managed by DD -->
+
 		<repository>
 			<id>eclipse-mars</id>
 			<layout>p2</layout>
 			<url>https://monteverdi.informatik.uni-freiburg.de/nexus/content/repositories/eclipse-mars/</url>
-			<!-- Original URL is this: <url>http://download.eclipse.org/releases/mars</url> 
-				We use the above URL for proxying by monteverdi -->
+
 			<snapshots>
 				<enabled>false</enabled>
 			</snapshots>
 		</repository>
+		<!-- <repository> <id>eclipse-neon</id> <layout>p2</layout> <url>https://monteverdi.informatik.uni-freiburg.de/nexus/content/repositories/eclipse-neon/</url> 
+			<snapshots> <enabled>false</enabled> </snapshots> </repository> -->
+
 		<repository>
 			<id>javaxRepository</id>
 			<name>Java.net Repository for Maven</name>
 			<url>https://monteverdi.informatik.uni-freiburg.de/nexus/content/repositories/javaxRepository/</url>
-			<!-- The above URL proxies this url: <url>https://maven.java.net/content/repositories/releases/javax/</url> -->
 			<layout>default</layout>
 			<snapshots>
 				<enabled>false</enabled>
@@ -244,6 +256,16 @@
 				</configuration>
 			</plugin>
 
+
+			<plugin>
+				<groupId>org.eclipse.tycho</groupId>
+				<artifactId>tycho-compiler-plugin</artifactId>
+				<version>${tycho-version}</version>
+				<configuration>
+					<encoding>${project-build-sourceEncoding}</encoding>
+				</configuration>
+			</plugin>
+
 		</plugins>
 
 		<pluginManagement>
@@ -292,13 +314,8 @@
 	</build>
 
 	<modules>
-		<module>../BA_SiteRepository</module>
-		<module>../BA_FeatureUltimateDebug</module>
-		<module>../BA_FeatureUltimateCommandLine</module>
-		<module>../BA_FeatureUltimateDeltaDebugger</module>
-		<module>../BA_FeatureDependenciesCommandlineE4</module>
-		<module>../BA_FeatureDependenciesDebugE4</module>
-		<module>../BA_FeatureUltimateCommon</module>
+		<module>../WebInterface</module>
+		<module>../Website</module>
 		<module>../CoreRCP</module>
 		<module>../GuiRCP</module>
 		<module>../BlockEncodingV2</module>
@@ -376,6 +393,15 @@
 		<module>../TreeAutomizer</module>
 		<module>../UltimateDeltaDebugger</module>
 		<module>../InvariantSynthesis</module>
+		<module>../BA_FeatureUltimateDebug</module>
+		<module>../BA_FeatureUltimateCommandLine</module>
+		<module>../BA_FeatureUltimateDeltaDebugger</module>
+		<module>../BA_FeatureDependenciesCommandlineE4</module>
+		<module>../BA_FeatureDependenciesDebugE4</module>
+		<module>../BA_FeatureUltimateCommon</module>
+		<module>../BA_FeatureUltimateWebbridge</module>
+		<module>../BA_SiteRepository</module>
+		<module>../BA_Website</module>
 	</modules>
 
 	<profiles>

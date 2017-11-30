@@ -1,0 +1,59 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>de.uni_freiburg.informatik.ultimate</groupId>
+		<artifactId>mavenparent</artifactId>
+		<version>0.1.23</version>
+		<relativePath>../BA_MavenParentUltimate/pom.xml</relativePath>
+	</parent>
+
+	<groupId>de.uni_freiburg.informatik.ultimate</groupId>
+	<artifactId>UltimateWebsite</artifactId>
+	<version>0.1.23</version>
+	<packaging>war</packaging>
+
+	<dependencies>
+		<!-- The dependencies are here to ensure build order -->
+		<dependency>
+			<groupId>de.uni_freiburg.informatik.ultimate</groupId>
+			<artifactId>de.uni_freiburg.informatik.ultimate.webbridge</artifactId>
+			<version>[0.1.23,]</version>
+			<type>pom</type>
+		</dependency>
+	</dependencies>
+
+	<profiles>
+		<profile>
+			<id>materialize</id>
+
+			<build>
+				<finalName>Website</finalName>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-war-plugin</artifactId>
+						<version>${maven-war-version}</version>
+						<configuration>
+							<webResources>
+								<resource>
+									<!-- this is relative to the pom.xml directory -->
+									<directory>WebContent</directory>
+									<include>**/*</include>
+								</resource>
+								<resource>
+									<directory>../WebUltimateBridge/target/classes</directory>
+									<include>**/*</include>
+									<targetPath>WEB-INF/classes</targetPath>
+								</resource>
+							</webResources>
+						</configuration>
+					</plugin>
+
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
+
+</project>

@@ -9,9 +9,123 @@
 		<relativePath>../BA_MavenParentUltimate/pom.xml</relativePath>
 	</parent>
 
-
 	<groupId>de.uni_freiburg.informatik.ultimate</groupId>
 	<artifactId>de.uni_freiburg.informatik.ultimate.webbridge</artifactId>
 	<version>0.1.23</version>
 	<packaging>eclipse-plugin</packaging>
+
+	<build>
+		<plugins>
+			<plugin>
+				<artifactId>maven-antrun-plugin</artifactId>
+				<version>${maven-antrun-version}</version>
+				<executions>
+					<execution>
+						<id>generate parser sources</id>
+						<phase>generate-sources</phase>
+						<configuration>
+							<tasks>
+								<echo>Copying various files from ${examplesDir} to
+									${websiteExamplesDir}</echo>
+
+								<copy todir="${websiteExamplesDir}/ltlautomizer" verbose="true">
+									<fileset dir="${examplesDir}/LTL/coolant" includes="**" />
+								</copy>
+
+								<copy todir="${websiteExamplesDir}/rankC" verbose="true">
+									<fileset dir="${examplesDir}/svcomp/termination-crafted-lit/"
+										includes="*.c" />
+								</copy>
+
+								<copy todir="${websiteExamplesDir}/rankC" verbose="true">
+									<fileset dir="${examplesDir}/lassos/" includes="*.c" />
+								</copy>
+
+								<copy todir="${websiteExamplesDir}/rankBoogie" verbose="true">
+									<fileset dir="${examplesDir}/lassos/" includes="*.bpl" />
+								</copy>
+
+								<copy todir="${websiteExamplesDir}/terminationBoogie"
+									verbose="true">
+									<fileset dir="${examplesDir}/programs/termination/showcase"
+										includes="*.bpl" />
+								</copy>
+
+								<copy todir="${websiteExamplesDir}/terminationBoogie"
+									verbose="true">
+									<fileset dir="${examplesDir}/programs/termination/showcase"
+										includes="*.bpl" />
+								</copy>
+
+								<copy todir="${websiteExamplesDir}/terminationC" verbose="true">
+									<fileset dir="${examplesDir}/programs/termination/showcase"
+										includes="*.c" />
+								</copy>
+
+								<copy todir="${websiteExamplesDir}/terminationC" verbose="true">
+									<fileset dir="${examplesDir}/svcomp/termination-crafted-lit/"
+										includes="*.c" />
+								</copy>
+
+								<copy todir="${websiteExamplesDir}/verifyBoogie" verbose="true">
+									<fileset dir="${examplesDir}/programs/toy/showcase"
+										includes="*.bpl" />
+								</copy>
+
+								<copy todir="${websiteExamplesDir}/verifyC" verbose="true">
+									<fileset dir="${examplesDir}/programs/toy/showcase"
+										includes="*.c" />
+									<fileset dir="${examplesDir}/programs/quantifier/regression/c/"
+										includes="FunctionPointers01.c" />
+
+									<fileset dir="${examplesDir}/svcomp/ldv-regression/"
+										includes="nested_structure_true-unreach-call.c" />
+
+									<fileset dir="${examplesDir}/svcomp/list-properties/"
+										includes="list_flag_false-unreach-call.c" />
+
+									<fileset dir="${examplesDir}/svcomp/ldv-memsafety/"
+										includes="memsetNonZero_false-valid-deref-write.c" />
+								</copy>
+
+								<copy todir="${websiteExamplesDir}/AUTOMATA_SCRIPT"
+									verbose="true">
+									<fileset dir="${examplesDir}/Automata/website"
+										includes="*.ats" />
+								</copy>
+
+								<copy todir="${websiteExamplesDir}/verifyConcurrentBoogie"
+									verbose="true">
+									<fileset dir="${examplesDir}/concurrent/regression"
+										includes="*.bpl" />
+								</copy>
+
+
+							</tasks>
+						</configuration>
+						<goals>
+							<goal>run</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<artifactId>maven-clean-plugin</artifactId>
+				<version>${maven-clean-version}</version>
+				<configuration>
+					<filesets>
+						<fileset>
+							<directory>${websiteExamplesDir}</directory>
+							<includes>
+								<include>**/*.bpl</include>
+								<include>**/*.c</include>
+								<include>**/*.ats</include>
+							</includes>
+						</fileset>
+					</filesets>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+
 </project>
