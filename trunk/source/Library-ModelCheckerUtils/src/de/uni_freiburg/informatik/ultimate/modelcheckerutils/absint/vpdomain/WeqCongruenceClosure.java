@@ -41,14 +41,14 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.WeakEquivalenceGraph.WeqSettings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.CcAuxData;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CongruenceClosure;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.CongruenceClosure.CcAuxData;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.CongruenceClosure.RemoveElement;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.EqualityStatus;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ICcRemoveElement;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ICongruenceClosure;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.RemoveCcElement;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -188,7 +188,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 	}
 
 	private WeqCongruenceClosure<NODE> alignElementsAndFunctionsWeqRec(final CongruenceClosure<NODE> otherCC,
-			final RemoveElement<NODE> remInfo) {
+			final RemoveCcElement<NODE> remInfo) {
 		assert !isFrozen();
 		assert !this.isInconsistent() && !otherCC.isInconsistent();
 		assert remInfo == null;
@@ -313,8 +313,8 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		 *
 		 * look for fitting c[i], d[j] with i ~ j, array1 ~ c, array2 ~ d
 		 */
-		final Collection<NODE> ccps1 = mCongruenceClosure.getAuxData().getAfCcPars(mCongruenceClosure, array1Rep);
-		final Collection<NODE> ccps2 = mCongruenceClosure.getAuxData().getAfCcPars(mCongruenceClosure, array2Rep);
+		final Collection<NODE> ccps1 = mCongruenceClosure.getAuxData().getAfCcPars(array1Rep);
+		final Collection<NODE> ccps2 = mCongruenceClosure.getAuxData().getAfCcPars(array2Rep);
 		for (final NODE ccp1 : ccps1) {
 			if (!mCongruenceClosure.hasElements(ccp1, ccp1.getArgument(), ccp1.getAppliedFunction())) {
 				continue;
@@ -349,9 +349,9 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		 * roweq-1 propagations
 		 */
 		for (final Entry<NODE, NODE> ccc1 :
-					mCongruenceClosure.getAuxData().getCcChildren(mCongruenceClosure, array1Rep).entrySet()) {
+					mCongruenceClosure.getAuxData().getCcChildren(array1Rep).entrySet()) {
 			for (final Entry<NODE, NODE> ccc2 :
-					mCongruenceClosure.getAuxData().getCcChildren(mCongruenceClosure, array2Rep).entrySet()) {
+					mCongruenceClosure.getAuxData().getCcChildren(array2Rep).entrySet()) {
 				if (mCongruenceClosure.getEqualityStatus(ccc1.getValue(), ccc2.getValue()) != EqualityStatus.EQUAL) {
 					continue;
 				}
@@ -428,7 +428,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		// old means "before the merge", here..
 		final NODE node1OldRep = getRepresentativeElement(node1);
 		final NODE node2OldRep = getRepresentativeElement(node2);
-		final CongruenceClosure.CcAuxData<NODE> oldAuxData = new CcAuxData<>(mCongruenceClosure.getAuxData(), true);
+		final CcAuxData<NODE> oldAuxData = new CcAuxData<>(mCongruenceClosure, mCongruenceClosure.getAuxData(), true);
 
 		mWeakEquivalenceGraph.collapseEdgeAtMerge(node1OldRep, node2OldRep);
 
@@ -499,7 +499,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		//	goOn |= reportWeakEquivalenceDoOnlyRoweqPropagations(node1OldRep, node2OldRep, Collections.emptyList());
 		// we will treat roweqMerge during the other propagations below as it need similar matching..
 
-		for (final Entry<NODE, NODE> ccc1 : oldAuxData.getCcChildren(mCongruenceClosure, node1OldRep)) {
+		for (final Entry<NODE, NODE> ccc1 : oldAuxData.getCcChildren(node1OldRep)) {
 			// don't propagate something that uses the currently removed element
 			final NODE ccc1AfReplaced = ccc1.getKey();
 			final NODE ccc1ArgReplaced = ccc1.getValue();
@@ -507,7 +507,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 				continue;
 			}
 
-			for (final Entry<NODE, NODE> ccc2 : oldAuxData.getCcChildren(mCongruenceClosure, node2OldRep)) {
+			for (final Entry<NODE, NODE> ccc2 : oldAuxData.getCcChildren(node2OldRep)) {
 
 				// don't propagate something that uses the currently removed element
 				final NODE ccc2AfReplaced = ccc2.getKey();
@@ -539,8 +539,8 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		 */
 		// node1 = i, node2 = j in the rule
 		// for (final NODE ccp1 : mAuxData.getArgCcPars(node1)) {
-		for (final NODE ccp1 : oldAuxData.getArgCcPars(mCongruenceClosure, node1OldRep)) {
-			for (final NODE ccp2 : oldAuxData.getArgCcPars(mCongruenceClosure, node2OldRep)) {
+		for (final NODE ccp1 : oldAuxData.getArgCcPars(node1OldRep)) {
+			for (final NODE ccp2 : oldAuxData.getArgCcPars(node2OldRep)) {
 				// ccp1 = a[i], ccp2 = b[j] in the rule
 
 				if (!ccp1.getSort().equals(ccp2.getSort())) {
@@ -612,7 +612,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 
 	private boolean otherRoweqPropOnMerge(final NODE nodeOldRep, final CcAuxData<NODE> oldAuxData) {
 		boolean madeChanges = false;
-		for (final Entry<NODE, NODE> ccc : oldAuxData.getCcChildren(mCongruenceClosure, nodeOldRep)) {
+		for (final Entry<NODE, NODE> ccc : oldAuxData.getCcChildren(nodeOldRep)) {
 			// ccc = (b,j) , as in b[j]
 			for (final Entry<NODE, WeakEquivalenceEdgeLabel<NODE>> edgeAdjacentToNode
 					: mWeakEquivalenceGraph .getAdjacentWeqEdges(nodeOldRep).entrySet()) {
@@ -620,15 +620,14 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 				final WeakEquivalenceEdgeLabel<NODE> phi = edgeAdjacentToNode.getValue();
 
 				// TODO is it ok here to use that auxData from after the merge??
-				if (!oldAuxData.getArgCcPars(mCongruenceClosure, ccc.getValue())
+				if (!oldAuxData.getArgCcPars(ccc.getValue())
 						.contains(edgeAdjacentToNode.getKey())) {
 					continue;
 				}
 				// n in argccp(j)
 
 				// TODO is it ok here to use tha auxData from after the merge??
-				for (final Entry<NODE, NODE> aj :
-						oldAuxData.getCcChildren(mCongruenceClosure, edgeAdjacentToNode.getKey())) {
+				for (final Entry<NODE, NODE> aj : oldAuxData.getCcChildren(edgeAdjacentToNode.getKey())) {
 					// aj = (a,j), as in a[j]
 
 					// propagate b -- q != j, Phi+ -- a
@@ -903,7 +902,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		return false;
 	}
 
-	protected void registerNewElement(final NODE elem, final RemoveElement remInfo) {
+	protected void registerNewElement(final NODE elem, final RemoveCcElement remInfo) {
 		mCongruenceClosure.registerNewElement(elem, remInfo);
 
 		if (isInconsistent()) {
@@ -978,6 +977,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 	/**
 	 * is a simple element and all the elements that depend on it fully removed?
 	 */
+	@Override
 	public boolean assertSimpleElementIsFullyRemoved(final NODE elem) {
 		for (final NODE e : getAllElements()) {
 			if (e.isDependent() && e.getSupportingNodes().contains(elem)) {
@@ -1214,9 +1214,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 
 	@Override
 	public Set<NODE> collectElementsToRemove(final NODE elem) {
-		// TODO Auto-generated method stub
-		assert false;
-		return null;
+		return mCongruenceClosure.collectElementsToRemove(elem);
 	}
 
 	@Override
@@ -1233,13 +1231,12 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		return mCongruenceClosure.getRepresentativeAndAddElementIfNeeded(nodeToAdd);
 	}
 
-	public void removeSimpleElement(final NODE elemToHavoc) {
-		// TODO Auto-generated method stub
-
-	}
+//	public void removeSimpleElement(final NODE elem) {
+//		CongruenceClosure.removeSimpleElement(this, elem);
+//	}
 
 	@Override
-	public RemoveElement<NODE> getElementCurrentlyBeingRemoved() {
+	public RemoveCcElement<NODE> getElementCurrentlyBeingRemoved() {
 		return mCongruenceClosure.getElementCurrentlyBeingRemoved();
 	}
 
@@ -1249,6 +1246,11 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 
 	public CongruenceClosure<NODE> getCongruenceClosure() {
 		return mCongruenceClosure;
+	}
+
+	@Override
+	public void setElementCurrentlyBeingRemoved(final RemoveCcElement<NODE> re) {
+		mCongruenceClosure.setElementCurrentlyBeingRemoved(re);
 	}
 
 }

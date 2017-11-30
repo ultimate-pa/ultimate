@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ConstantFinder;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CongruenceClosure;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.EqualityStatus;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.RemoveCcElement;
 
 /**
  *
@@ -370,7 +371,8 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 	}
 
 	public void removeElement(final NODE elemToHavoc) {
-		mPartialArrangement.removeSimpleElement(elemToHavoc);
+//		mPartialArrangement.removeSimpleElement(elemToHavoc);
+		RemoveCcElement.removeSimpleElement(mPartialArrangement, elemToHavoc);
 		assert mPartialArrangement.assertSingleElementIsFullyRemoved(elemToHavoc);
 		assert mPartialArrangement.sanityCheck();
 	}

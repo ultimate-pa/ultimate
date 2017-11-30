@@ -28,4 +28,10 @@ public interface ICcRemoveElement<ELEM extends ICongruenceClosureElement<ELEM>> 
 	Set<ELEM> removeElementAndDependents(ELEM elem, Set<ELEM> elementsToRemove, Map<ELEM, ELEM> nodeToReplacementNode,
 			boolean useWeqGpa);
 
+	Object getElementCurrentlyBeingRemoved();
+
+	void setElementCurrentlyBeingRemoved(RemoveCcElement<ELEM> re);
+
+	boolean assertSimpleElementIsFullyRemoved(ELEM elem);
+
 }

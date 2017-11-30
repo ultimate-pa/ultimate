@@ -30,8 +30,8 @@ import java.util.Set;
 import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CongruenceClosure;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.CongruenceClosure.RemoveElement;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ICongruenceClosureElement;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.RemoveCcElement;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialComparator;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialComparator.ComparisonResult;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.PartialOrderCache;
@@ -49,7 +49,7 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 	}
 
 	public CongruenceClosure<ELEM> getMeet(final CongruenceClosure<ELEM> cc1, final CongruenceClosure<ELEM> cc2,
-			final RemoveElement<ELEM> remInfo) {
+			final RemoveCcElement<ELEM> remInfo) {
 		final CongruenceClosure<ELEM> result;
 		if (remInfo == null) {
 			result = cc1.meetRec(cc2);
@@ -132,7 +132,8 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 
 	public CongruenceClosure<ELEM> removeSimpleElement(final ELEM elem, final CongruenceClosure<ELEM> origCc) {
 		final CongruenceClosure<ELEM> unfrozen = unfreeze(origCc);
-		unfrozen.removeSimpleElement(elem);
+//		unfrozen.removeSimpleElement(elem);
+		RemoveCcElement.removeSimpleElement(unfrozen, elem);
 		unfrozen.freeze();
 		return unfrozen;
 	}
@@ -140,7 +141,8 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 	public CongruenceClosure<ELEM> removeSimpleElementDontIntroduceNewNodes(final ELEM elem,
 			final CongruenceClosure<ELEM> origCc) {
 		final CongruenceClosure<ELEM> unfrozen = unfreeze(origCc);
-		unfrozen.removeSimpleElementDontIntroduceNewNodes(elem);
+//		unfrozen.removeSimpleElementDontIntroduceNewNodes(elem);
+		RemoveCcElement.removeSimpleElementDontIntroduceNewNodes(unfrozen, elem);
 		unfrozen.freeze();
 		return unfrozen;
 
@@ -149,7 +151,8 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 	public Pair<CongruenceClosure<ELEM>, Set<ELEM>> removeSimpleElementDontUseWeqGpaTrackAddedNodes(final ELEM elem,
 			final CongruenceClosure<ELEM> origCc) {
 		final CongruenceClosure<ELEM> unfrozen = unfreeze(origCc);
-		final Set<ELEM> addedNodes = unfrozen.removeSimpleElementDontUseWeqGpaTrackAddedNodes(elem);
+//		final Set<ELEM> addedNodes = unfrozen.removeSimpleElementDontUseWeqGpaTrackAddedNodes(elem);
+		final Set<ELEM> addedNodes = RemoveCcElement.removeSimpleElementDontUseWeqGpaTrackAddedNodes(unfrozen, elem);
 		unfrozen.freeze();
 		return new Pair<>(unfrozen, addedNodes);
 	}

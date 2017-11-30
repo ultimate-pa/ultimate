@@ -17,8 +17,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CongruenceClosure;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.CongruenceClosure.RemoveElement;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ICongruenceClosure;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.RemoveCcElement;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.PartialOrderCache;
 
 /**
@@ -68,7 +68,7 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>> {
 				mLabel.stream().reduce((cc1, cc2) -> cc1.join(cc1)).get()));
 	}
 
-	public void setExternalRemInfo(final RemoveElement<NODE> remInfo) {
+	public void setExternalRemInfo(final RemoveCcElement<NODE> remInfo) {
 		for (final CongruenceClosure<NODE> lab : mLabel) {
 			lab.setExternalRemInfo(remInfo);
 		}
@@ -123,7 +123,8 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>> {
 
 	public void projectWeqVarNode(final NODE firstDimWeqVarNode) {
 		for (final CongruenceClosure<NODE> lab : mLabel) {
-			lab.removeSimpleElementDontIntroduceNewNodes(firstDimWeqVarNode);
+//			lab.removeSimpleElementDontIntroduceNewNodes(firstDimWeqVarNode);
+			RemoveCcElement.removeSimpleElementDontIntroduceNewNodes(lab, firstDimWeqVarNode);
 		}
 		assert sanityCheckDontEnforceProjectToWeqVars(mWeakEquivalenceGraph.mPartialArrangement);
 	}
@@ -163,7 +164,8 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>> {
 				 *  (i.e. lab is a WeqCongruenceClosure, not only a CongruenceClosure)
 				 *  use CcGpa inside this remove.. (avoids endless recursion)
 				 */
-				final Set<NODE> nodesAdded = lab.removeSimpleElementDontUseWeqGpaTrackAddedNodes(elem);
+//				final Set<NODE> nodesAdded = lab.removeSimpleElementDontUseWeqGpaTrackAddedNodes(elem);
+				final Set<NODE> nodesAdded = RemoveCcElement.removeSimpleElementDontUseWeqGpaTrackAddedNodes(lab, elem);
 				// some nodes may have been introduced
 				nodesAdded.stream()
 				.filter(n -> !CongruenceClosure.dependsOnAny(n, mWeakEquivalenceGraph.mFactory.getAllWeqPrimedNodes()))
@@ -173,7 +175,8 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>> {
 				 * lightweight case, current label is a CongruenceClosure, not a WeqCongruenceClosure
 				 * --> we do not allow introduction of new nodes during the remove operation in the labels here
 				 */
-				lab.removeSimpleElementDontIntroduceNewNodes(elem);
+//				lab.removeSimpleElementDontIntroduceNewNodes(elem);
+				RemoveCcElement.removeSimpleElementDontIntroduceNewNodes(lab, elem);
 			}
 
 			assert lab.assertSingleElementIsFullyRemoved(elem);

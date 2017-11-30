@@ -13,6 +13,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.AbstractCCElement
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CongruenceClosure;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.EqualityStatus;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ICongruenceClosureElement;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.RemoveCcElement;
 
 public class CongruenceClosureTest {
 
@@ -651,7 +652,7 @@ public class CongruenceClosureTest {
 		cc.reportEquality(a, b);
 		cc.reportEquality(b, c);
 		assertTrue(cc.getEqualityStatus(a, c) == EqualityStatus.EQUAL);
-		cc.removeSimpleElement(b);
+		RemoveCcElement.removeSimpleElement(cc, b);
 		assertTrue(cc.getEqualityStatus(a, c) == EqualityStatus.EQUAL);
 		cc.getRepresentativeAndAddElementIfNeeded(b);
 		assertTrue(cc.getEqualityStatus(a, b) == EqualityStatus.UNKNOWN);
@@ -681,7 +682,7 @@ public class CongruenceClosureTest {
 		cc.getRepresentativeAndAddElementIfNeeded(f_c);
 		assertTrue(cc.getEqualityStatus(f_a, f_b) == EqualityStatus.EQUAL);
 		assertTrue(cc.getEqualityStatus(f_c, f_b) == EqualityStatus.EQUAL);
-		cc.removeSimpleElement(b);
+		RemoveCcElement.removeSimpleElement(cc, b);
 		assertTrue(cc.getEqualityStatus(f_a, f_c) == EqualityStatus.EQUAL);
 		cc.getRepresentativeAndAddElementIfNeeded(f_b);
 		assertTrue(cc.getEqualityStatus(f_a, f_b) == EqualityStatus.UNKNOWN);
@@ -709,7 +710,7 @@ public class CongruenceClosureTest {
 		cc.getRepresentativeAndAddElementIfNeeded(f_a);
 		cc.getRepresentativeAndAddElementIfNeeded(f_c);
 		assertTrue(cc.getEqualityStatus(f_a, f_c) == EqualityStatus.EQUAL);
-		cc.removeSimpleElement(a);
+		RemoveCcElement.removeSimpleElement(cc, a);
 		cc.getRepresentativeAndAddElementIfNeeded(f_b);
 		assertTrue(cc.getEqualityStatus(f_b, f_c) == EqualityStatus.EQUAL);
 	}
@@ -733,7 +734,7 @@ public class CongruenceClosureTest {
 
 		cc.reportEquality(a_y, l1);
 		cc.reportEquality(i, y);
-		cc.removeSimpleElement(y);
+		RemoveCcElement.removeSimpleElement(cc, y);
 		cc.reportEquality(x, i);
 		cc.getRepresentativeAndAddElementIfNeeded(a_x);
 		assertTrue(cc.getEqualityStatus(a_x, l1) == EqualityStatus.EQUAL);
